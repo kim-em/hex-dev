@@ -305,8 +305,17 @@ theorem factor_entries_primitive_of_chosen_raw_primitive
             some rawFactors ∨
           (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
               none ∧
+            (Hex.factorSlowModularWithBound? f
+                (Hex.ZPoly.defaultFactorCoeffBound f)).isSome = true ∧
             rawFactors =
-              Hex.factorSlowFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f))) →
+              Hex.factorSlowFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)) ∨
+          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+              none ∧
+            Hex.factorSlowModularWithBound? f (Hex.ZPoly.defaultFactorCoeffBound f) =
+              none ∧
+            rawFactors =
+              Hex.factorSlowTrialFactorsWithBound f
+                (Hex.ZPoly.defaultFactorCoeffBound f))) →
         ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Primitive raw) :
     ∀ entry ∈ (Hex.factor f).factors, Hex.ZPoly.Primitive entry.1 :=
   Hex.factor_entries_primitive f h_raw
@@ -357,8 +366,17 @@ theorem factor_headline_contract_core_with_primitive
             some rawFactors ∨
           (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
               none ∧
+            (Hex.factorSlowModularWithBound? f
+                (Hex.ZPoly.defaultFactorCoeffBound f)).isSome = true ∧
             rawFactors =
-              Hex.factorSlowFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f))) →
+              Hex.factorSlowFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)) ∨
+          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+              none ∧
+            Hex.factorSlowModularWithBound? f (Hex.ZPoly.defaultFactorCoeffBound f) =
+              none ∧
+            rawFactors =
+              Hex.factorSlowTrialFactorsWithBound f
+                (Hex.ZPoly.defaultFactorCoeffBound f))) →
         ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Primitive raw) :
     Hex.Factorization.product (Hex.factor f) = f ∧
       (∀ entry ∈ (Hex.factor f).factors,
@@ -581,8 +599,17 @@ theorem factor_entries_not_associated
             some rawFactors ∨
           (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
               none ∧
+            (Hex.factorSlowModularWithBound? f
+                (Hex.ZPoly.defaultFactorCoeffBound f)).isSome = true ∧
             rawFactors =
-              Hex.factorSlowFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f))) →
+              Hex.factorSlowFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)) ∨
+          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+              none ∧
+            Hex.factorSlowModularWithBound? f (Hex.ZPoly.defaultFactorCoeffBound f) =
+              none ∧
+            rawFactors =
+              Hex.factorSlowTrialFactorsWithBound f
+                (Hex.ZPoly.defaultFactorCoeffBound f))) →
         ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Primitive raw) :
     List.Pairwise
       (fun a b : Hex.ZPoly × Nat =>
@@ -16282,7 +16309,11 @@ theorem factorWithBound_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
       ∀ rawFactors : Array Hex.ZPoly,
         (Hex.factorFastFactorsWithBound f B = some rawFactors ∨
           (Hex.factorFastFactorsWithBound f B = none ∧
-            rawFactors = Hex.factorSlowFactorsWithBound f B)) →
+            (Hex.factorSlowModularWithBound? f B).isSome = true ∧
+            rawFactors = Hex.factorSlowFactorsWithBound f B) ∨
+          (Hex.factorFastFactorsWithBound f B = none ∧
+            Hex.factorSlowModularWithBound? f B = none ∧
+            rawFactors = Hex.factorSlowTrialFactorsWithBound f B)) →
         ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw) :
     Hex.ZPoly.Irreducible entry.1 := by
   obtain ⟨rawFactors, hsource, raw, hraw_mem, hentry_eq⟩ :=
@@ -16304,8 +16335,17 @@ theorem factor_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
             some rawFactors ∨
           (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
               none ∧
+            (Hex.factorSlowModularWithBound? f
+                (Hex.ZPoly.defaultFactorCoeffBound f)).isSome = true ∧
             rawFactors =
-              Hex.factorSlowFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f))) →
+              Hex.factorSlowFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)) ∨
+          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+              none ∧
+            Hex.factorSlowModularWithBound? f
+                (Hex.ZPoly.defaultFactorCoeffBound f) = none ∧
+            rawFactors =
+              Hex.factorSlowTrialFactorsWithBound f
+                (Hex.ZPoly.defaultFactorCoeffBound f))) →
         ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw) :
     Hex.ZPoly.Irreducible entry.1 :=
   factorWithBound_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
@@ -16338,7 +16378,11 @@ theorem factorWithBound_entries_irreducible
       ∀ rawFactors : Array Hex.ZPoly,
         (Hex.factorFastFactorsWithBound f B = some rawFactors ∨
           (Hex.factorFastFactorsWithBound f B = none ∧
-            rawFactors = Hex.factorSlowFactorsWithBound f B)) →
+            (Hex.factorSlowModularWithBound? f B).isSome = true ∧
+            rawFactors = Hex.factorSlowFactorsWithBound f B) ∨
+          (Hex.factorFastFactorsWithBound f B = none ∧
+            Hex.factorSlowModularWithBound? f B = none ∧
+            rawFactors = Hex.factorSlowTrialFactorsWithBound f B)) →
         ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw) :
     ∀ entry ∈ (Hex.factorWithBound f B).factors, Hex.ZPoly.Irreducible entry.1 := by
   intro entry hentry
@@ -16357,8 +16401,17 @@ theorem factor_entries_irreducible
             some rawFactors ∨
           (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
               none ∧
+            (Hex.factorSlowModularWithBound? f
+                (Hex.ZPoly.defaultFactorCoeffBound f)).isSome = true ∧
             rawFactors =
-              Hex.factorSlowFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f))) →
+              Hex.factorSlowFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)) ∨
+          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+              none ∧
+            Hex.factorSlowModularWithBound? f
+                (Hex.ZPoly.defaultFactorCoeffBound f) = none ∧
+            rawFactors =
+              Hex.factorSlowTrialFactorsWithBound f
+                (Hex.ZPoly.defaultFactorCoeffBound f))) →
         ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw) :
     ∀ entry ∈ (Hex.factor f).factors, Hex.ZPoly.Irreducible entry.1 := by
   intro entry hentry
