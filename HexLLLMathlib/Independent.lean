@@ -1,4 +1,5 @@
 import HexLLL.Basic
+import HexLLLMathlib.Basic
 import HexGramSchmidtMathlib.Int
 import HexGramSchmidtMathlib.Update
 
@@ -818,6 +819,84 @@ theorem prefixLLLReduced.mono {b : Matrix Int n m} {k k' : Nat} {δ : Rat}
     exact h.1 i j (Nat.lt_of_lt_of_le hik' hk) hin hji
   · intro i hik' hin
     exact h.2 i (Nat.lt_of_lt_of_le hik' hk) hin
+
+/-- Extending the prefix by one row: given `prefixLLLReduced b k δ`, the new
+size-reducedness data for row `k` and the new Lovász data at the pair
+`(k - 1, k)` (vacuous when `k = 0`) jointly yield `prefixLLLReduced b (k + 1) δ`.
+This is the "add one row to the certified prefix" lemma consumed by the
+`lllLoop` advance branch. -/
+theorem prefixLLLReduced.advance {b : Matrix Int n m} {k : Nat} (hk : k < n) {δ : Rat}
+    (hpre : prefixLLLReduced b k δ)
+    (hsize : ∀ (j : Nat) (hj : j < k),
+      let kFin : Fin n := ⟨k, hk⟩
+      let jFin : Fin n := ⟨j, Nat.lt_trans hj hk⟩
+      let μ : Rat := (GramSchmidt.Int.coeffs b)[kFin][jFin]
+      4 * μ * μ ≤ 1)
+    (hlovasz : (hk0 : 0 < k) →
+      let kFin : Fin n := ⟨k, hk⟩
+      let km1Fin : Fin n := ⟨k - 1, Nat.lt_of_le_of_lt (Nat.sub_le k 1) hk⟩
+      let μ : Rat := (GramSchmidt.Int.coeffs b)[kFin][km1Fin]
+      δ * LLLCore.basisNormSq (GramSchmidt.Int.basis b) km1Fin ≤
+        LLLCore.basisNormSq (GramSchmidt.Int.basis b) kFin +
+          μ * μ * LLLCore.basisNormSq (GramSchmidt.Int.basis b) km1Fin) :
+    prefixLLLReduced b (k + 1) δ := by
+  refine ⟨?_, ?_⟩
+  · -- Size-reducedness at row i ≤ k.
+    intro i j hik' hin hji
+    rcases Nat.lt_or_ge i k with hik | hik
+    · exact hpre.1 i j hik hin hji
+    · have hi_eq : i = k := Nat.le_antisymm (Nat.lt_succ_iff.mp hik') hik
+      have hj_lt_k : j < k := hi_eq ▸ hji
+      have hg := hsize j hj_lt_k
+      let iFin : Fin n := ⟨i, hin⟩
+      let jFin : Fin n := ⟨j, Nat.lt_trans hji hin⟩
+      let μ : Rat := (GramSchmidt.Int.coeffs b)[iFin][jFin]
+      show 4 * μ * μ ≤ 1
+      have hi_fin : (⟨k, hk⟩ : Fin n) = iFin := Fin.ext hi_eq.symm
+      have hj_fin : (⟨j, Nat.lt_trans hj_lt_k hk⟩ : Fin n) = jFin :=
+        Fin.ext rfl
+      simpa [hi_fin, hj_fin] using hg
+  · -- Lovász at pair i ≤ k - 1, i + 1 ≤ k.
+    intro i hik' hin
+    rcases Nat.lt_or_ge (i + 1) k with hik | hik
+    · exact hpre.2 i hik hin
+    · have hip1_eq : i + 1 = k := Nat.le_antisymm (Nat.lt_succ_iff.mp hik') hik
+      have hk0 : 0 < k := by omega
+      have hi_eq : i = k - 1 := by omega
+      have hg := hlovasz hk0
+      have hin_i : i < n := Nat.lt_of_succ_lt hin
+      let iFin : Fin n := ⟨i, hin_i⟩
+      let ip1Fin : Fin n := ⟨i + 1, hin⟩
+      let μ : Rat := (GramSchmidt.Int.coeffs b)[ip1Fin][iFin]
+      let N_i : Rat := LLLCore.basisNormSq (GramSchmidt.Int.basis b) iFin
+      let N_ip1 : Rat := LLLCore.basisNormSq (GramSchmidt.Int.basis b) ip1Fin
+      show δ * N_i ≤ N_ip1 + μ * μ * N_i
+      have hi_fin : (⟨k - 1, Nat.lt_of_le_of_lt (Nat.sub_le k 1) hk⟩ : Fin n) = iFin :=
+        Fin.ext hi_eq.symm
+      have hip1_fin : (⟨k, hk⟩ : Fin n) = ip1Fin :=
+        Fin.ext (by show k = i + 1; omega)
+      simpa [hi_fin, hip1_fin] using hg
+
+/-- At the empty prefix `k = 1`, `prefixLLLReduced` holds vacuously: the
+`i < 1` (so `i = 0`, then `j < 0` impossible) and `i + 1 < 1` quantifiers are
+empty. This is the starting state for the `lllLoop` invariant induction. -/
+theorem prefixLLLReduced_one (b : Matrix Int n m) (δ : Rat) :
+    prefixLLLReduced b 1 δ := by
+  refine ⟨?_, ?_⟩
+  · intro i j hi _ hji
+    interval_cases i
+    exact absurd hji (Nat.not_lt_zero j)
+  · intro i hi _
+    omega
+
+/-- At the full prefix `k = n`, `prefixLLLReduced` is exactly `isLLLReduced`. -/
+theorem prefixLLLReduced_to_isLLLReduced (b : Matrix Int n m) (δ : Rat)
+    (h : prefixLLLReduced b n δ) : isLLLReduced b δ := by
+  refine ⟨?_, ?_⟩
+  · intro i j hi hji
+    exact h.1 i j hi hi hji
+  · intro i hi
+    exact h.2 i hi hi
 
 namespace LLLState
 
@@ -1979,6 +2058,350 @@ theorem lllLoop_fuel_sufficient
     omega
   · exact hfuel
 
+/-! ### Size-reduce coefficient-row preservation
+
+Size reduction at row `k` rewrites only that row's coefficients; rows at
+indices `i ≠ k` are preserved by every iteration of the inner foldl.  This
+packages the preservation as a single statement so the loop-invariant proof
+below can quote it without re-running the inductive `coeffs_sizeReduce_other_row`
+chain. -/
+
+private theorem sizeReduceColumn_coeffs_row_of_ne (s : LLLState n m) (j k : Fin n)
+    (hjk : j.val < k.val) (i : Fin n) (hik : i ≠ k) :
+    (GramSchmidt.Int.coeffs (s.sizeReduceColumn j k hjk).b).row i =
+      (GramSchmidt.Int.coeffs s.b).row i := by
+  unfold sizeReduceColumn
+  by_cases hreduce :
+      2 * Int.natAbs ((s.ν.get k).get j) >
+        s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
+  · rw [dif_pos hreduce]
+    exact GramSchmidt.Int.coeffs_sizeReduce_other_row s.b j k hjk _ i hik
+  · rw [dif_neg hreduce]
+
+private theorem sizeReduce_foldl_coeffs_row_of_ne {n m : Nat}
+    (k : Nat) (hk : k < n) (i : Fin n) (hik : i ≠ ⟨k, hk⟩) :
+    ∀ (xs : List (Fin k)) (s' : LLLState n m),
+      (GramSchmidt.Int.coeffs (xs.foldl
+          (fun state j =>
+            let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
+            state.sizeReduceColumn jFin ⟨k, hk⟩ j.isLt)
+          s').b).row i = (GramSchmidt.Int.coeffs s'.b).row i := by
+  intro xs
+  induction xs with
+  | nil => intro s'; rfl
+  | cons j js ih =>
+    intro s'
+    simp only [List.foldl_cons]
+    rw [ih _]
+    exact sizeReduceColumn_coeffs_row_of_ne s' _ _ j.isLt i hik
+
+/-- Coefficient rows at `i ≠ k` survive `s.sizeReduce k` intact. -/
+theorem sizeReduce_coeffs_row_of_ne (s : LLLState n m) (k : Nat) (i : Fin n)
+    (hik : i.val ≠ k) :
+    (GramSchmidt.Int.coeffs (s.sizeReduce k).b).row i =
+      (GramSchmidt.Int.coeffs s.b).row i := by
+  unfold sizeReduce
+  by_cases hk : k < n
+  · rw [dif_pos hk]
+    have hik' : i ≠ ⟨k, hk⟩ := fun h => hik (by rw [h])
+    exact sizeReduce_foldl_coeffs_row_of_ne k hk i hik' (List.finRange k).reverse s
+  · rw [dif_neg hk]
+
+/-- Size reduction preserves `prefixLLLReduced` at the same prefix length: rows
+strictly below `k` are unaffected by the row-`k` update, so the prefix invariant
+on the input transfers to the output. -/
+theorem sizeReduce_prefixLLLReduced (s : LLLState n m) (k : Nat) (δ : Rat)
+    (h : prefixLLLReduced s.b k δ) :
+    prefixLLLReduced (s.sizeReduce k).b k δ := by
+  refine ⟨?_, ?_⟩
+  · -- Size-reducedness for i < k: coefficient row at i is preserved.
+    intro i j hik hin hji
+    have hi_ne_k : (⟨i, hin⟩ : Fin n).val ≠ k := Nat.ne_of_lt hik
+    have hrow := sizeReduce_coeffs_row_of_ne s k ⟨i, hin⟩ hi_ne_k
+    let iFin : Fin n := ⟨i, hin⟩
+    let jFin : Fin n := ⟨j, Nat.lt_trans hji hin⟩
+    let μ_sr : Rat := (GramSchmidt.Int.coeffs (s.sizeReduce k).b)[iFin][jFin]
+    show 4 * μ_sr * μ_sr ≤ 1
+    have hμ_eq : μ_sr =
+        (GramSchmidt.Int.coeffs s.b)[iFin][jFin] := by
+      show ((GramSchmidt.Int.coeffs (s.sizeReduce k).b).row iFin)[jFin] =
+        ((GramSchmidt.Int.coeffs s.b).row iFin)[jFin]
+      rw [hrow]
+    rw [hμ_eq]
+    exact h.1 i j hik hin hji
+  · -- Lovász for i + 1 < k: basis (norm) and coeffs at row i+1 preserved.
+    intro i hik hin
+    have hbasis_eq := sizeReduce_basis s k
+    have hip1_ne_k : (⟨i + 1, hin⟩ : Fin n).val ≠ k := Nat.ne_of_lt hik
+    have hrow := sizeReduce_coeffs_row_of_ne s k ⟨i + 1, hin⟩ hip1_ne_k
+    have hin_i : i < n := Nat.lt_of_succ_lt hin
+    let iFin : Fin n := ⟨i, hin_i⟩
+    let ip1Fin : Fin n := ⟨i + 1, hin⟩
+    let N_sr_i : Rat :=
+      LLLCore.basisNormSq (GramSchmidt.Int.basis (s.sizeReduce k).b) iFin
+    let N_sr_ip1 : Rat :=
+      LLLCore.basisNormSq (GramSchmidt.Int.basis (s.sizeReduce k).b) ip1Fin
+    let μ_sr : Rat :=
+      (GramSchmidt.Int.coeffs (s.sizeReduce k).b)[ip1Fin][iFin]
+    show δ * N_sr_i ≤ N_sr_ip1 + μ_sr * μ_sr * N_sr_i
+    have hb_i : N_sr_i = LLLCore.basisNormSq (GramSchmidt.Int.basis s.b) iFin := by
+      show LLLCore.basisNormSq (GramSchmidt.Int.basis (s.sizeReduce k).b) iFin = _
+      rw [hbasis_eq]
+    have hb_ip1 : N_sr_ip1 =
+        LLLCore.basisNormSq (GramSchmidt.Int.basis s.b) ip1Fin := by
+      show LLLCore.basisNormSq (GramSchmidt.Int.basis (s.sizeReduce k).b) ip1Fin = _
+      rw [hbasis_eq]
+    have hμ_eq : μ_sr = (GramSchmidt.Int.coeffs s.b)[ip1Fin][iFin] := by
+      show ((GramSchmidt.Int.coeffs (s.sizeReduce k).b).row ip1Fin)[iFin] =
+        ((GramSchmidt.Int.coeffs s.b).row ip1Fin)[iFin]
+      rw [hrow]
+    rw [hb_i, hb_ip1, hμ_eq]
+    exact h.2 i hik hin
+
+/-! ### Loop invariant induction
+
+The `prefixLLLReduced` predicate is preserved by every iteration of `lllLoop`
+under the standard validity / independence hypotheses, and at the `k = n`
+base case it coincides with `isLLLReduced`. This packages those two facts
+into a single fuel-bounded induction. -/
+
+/-- With enough fuel and a starting state carrying `prefixLLLReduced s.b k δ`,
+`lllLoop` produces a `δ`-LLL-reduced basis. The fuel hypothesis
+`s.potential * (n + 1) + (n - k) < fuel` matches the measure used by
+`lllLoop_eq_of_fuel_gt_measure`. -/
+theorem lllLoop_isLLLReduced_of_fuel_gt_measure
+    (δ : Rat) (hδ : 1/4 < δ) (hδ' : δ ≤ 1) :
+    ∀ (fuel : Nat) (s : LLLState n m) (k : Nat) (hk : 1 ≤ k) (hkn : k ≤ n),
+      s.Valid → s.b.independent → prefixLLLReduced s.b k δ →
+      s.potential * (n + 1) + (n - k) < fuel →
+      isLLLReduced (lllLoop s k δ hδ hδ' hk hkn fuel) δ := by
+  intro fuel
+  induction fuel with
+  | zero =>
+    intros _ _ _ _ _ _ _ hmeasure
+    exact absurd hmeasure (Nat.not_lt_zero _)
+  | succ f ih =>
+    intros s k hk hkn hvalid hind hpre hmeasure
+    by_cases hkn_eq : k = n
+    · subst hkn_eq
+      rw [lllLoop_eq_b_at_n]
+      exact prefixLLLReduced_to_isLLLReduced s.b δ hpre
+    · have hlt : k < n := Nat.lt_of_le_of_ne hkn hkn_eq
+      have hsR_valid : (s.sizeReduce k).Valid := sizeReduce_valid s k hvalid
+      have hsR_ind : (s.sizeReduce k).b.independent :=
+        sizeReduce_independent s k hind hvalid hsR_valid
+      have hsR_pot : (s.sizeReduce k).potential = s.potential := sizeReduce_potential s k
+      have hsR_pre : prefixLLLReduced (s.sizeReduce k).b k δ :=
+        sizeReduce_prefixLLLReduced s k δ hpre
+      have hk0 : 0 < k := Nat.lt_of_lt_of_le Nat.zero_lt_one hk
+      rw [lllLoop_succ_eq_body s k δ hδ hδ' hk hkn hlt]
+      dsimp only [lllLoopBody]
+      split_ifs with hcond
+      · -- Advance branch: Lovász integer check holds, extend prefix and recurse.
+        have hpre_advance : prefixLLLReduced (s.sizeReduce k).b (k + 1) δ := by
+          apply prefixLLLReduced.advance hlt hsR_pre
+          · intro j hj
+            exact sizeReduce_size_reduced s k hlt hvalid hind j hj
+          · intro _hk0
+            have hiff := HexLLLMathlib.lovasz_check_iff_isLLLReduced_pair
+              (s.sizeReduce k) k hlt hk0 hsR_valid hsR_ind hδ hδ'
+            exact hiff.mp hcond
+        apply ih (s.sizeReduce k) (k + 1) (Nat.succ_pos k) (Nat.succ_le_of_lt hlt)
+          hsR_valid hsR_ind hpre_advance
+        rw [hsR_pot]
+        have : n - (k + 1) + 1 ≤ n - k := by omega
+        omega
+      · -- Swap branch: Lovász integer check fails, swap shortens prefix.
+        push_neg at hcond
+        obtain ⟨hnum_pos, hden_pos, hnum_le_den⟩ := lovasz_swap_hyps δ hδ hδ'
+        have hpot_lt :
+            ((s.sizeReduce k).swapStep k).potential < (s.sizeReduce k).potential :=
+          swapStep_potential_lt (s.sizeReduce k) k hsR_ind hsR_valid hk0 hlt
+            δ.num δ.den hnum_pos hden_pos hnum_le_den (by convert hcond using 2)
+        have hsS_pot_lt : ((s.sizeReduce k).swapStep k).potential < s.potential := by
+          rw [← hsR_pot]; exact hpot_lt
+        have hsS_valid : ((s.sizeReduce k).swapStep k).Valid :=
+          swapStep_valid (s.sizeReduce k) k hsR_ind hsR_valid
+        have hsS_ind : ((s.sizeReduce k).swapStep k).b.independent :=
+          swapStep_independent (s.sizeReduce k) k hsR_ind hsR_valid hk0 hlt
+        have hsS_pre :
+            prefixLLLReduced ((s.sizeReduce k).swapStep k).b (max (k - 1) 1) δ :=
+          swapStep_prefixLLLReduced (s.sizeReduce k) k δ hsR_pre
+        have hk'n : max (k - 1) 1 ≤ n :=
+          (Nat.max_le).2 ⟨Nat.le_trans (Nat.sub_le k 1) hkn, Nat.le_trans hk hkn⟩
+        apply ih ((s.sizeReduce k).swapStep k) (max (k - 1) 1)
+          (Nat.le_max_right (k - 1) 1) hk'n hsS_valid hsS_ind hsS_pre
+        -- Measure decrease.
+        have hmeasure_le : s.potential * (n + 1) + (n - k) ≤ f := Nat.lt_succ_iff.mp hmeasure
+        have hspot_pos : 0 < s.potential := by
+          have : 0 ≤ ((s.sizeReduce k).swapStep k).potential := Nat.zero_le _
+          omega
+        have hmul_bound :
+            ((s.sizeReduce k).swapStep k).potential * (n + 1) ≤
+              (s.potential - 1) * (n + 1) :=
+          Nat.mul_le_mul_right (n + 1)
+            (by omega : ((s.sizeReduce k).swapStep k).potential ≤ s.potential - 1)
+        have hsub_mul : (s.potential - 1) * (n + 1) + (n + 1) = s.potential * (n + 1) := by
+          have hp : s.potential = (s.potential - 1) + 1 := by omega
+          calc (s.potential - 1) * (n + 1) + (n + 1)
+              = ((s.potential - 1) + 1) * (n + 1) := by ring
+            _ = s.potential * (n + 1) := by rw [← hp]
+        have h_fpos : 0 < f := by
+          have h1 : 1 ≤ s.potential * (n + 1) := by
+            calc 1 = 1 * (n + 1) - n := by omega
+              _ ≤ s.potential * (n + 1) - n := by
+                have := Nat.mul_le_mul_right (n + 1) hspot_pos
+                omega
+              _ ≤ s.potential * (n + 1) := Nat.sub_le _ _
+          omega
+        have hnk' : n - max (k - 1) 1 ≤ n := Nat.sub_le n _
+        show ((s.sizeReduce k).swapStep k).potential * (n + 1) + (n - max (k - 1) 1) < f
+        omega
+
+/-- `lllLoop` preserves the independence of the starting basis: every iteration
+is either a `sizeReduce` (preserved by `sizeReduce_independent`) or an adjacent
+swap (preserved by `swapStep_independent`). -/
+theorem lllLoop_independent
+    (δ : Rat) (hδ : 1/4 < δ) (hδ' : δ ≤ 1) :
+    ∀ (fuel : Nat) (s : LLLState n m) (k : Nat) (hk : 1 ≤ k) (hkn : k ≤ n),
+      s.Valid → s.b.independent →
+      Matrix.independent (lllLoop s k δ hδ hδ' hk hkn fuel) := by
+  intro fuel
+  induction fuel with
+  | zero =>
+    intro s _ _ _ _ hind
+    exact hind
+  | succ f ih =>
+    intro s k hk hkn hvalid hind
+    by_cases hkn_eq : k = n
+    · subst hkn_eq
+      rw [lllLoop_eq_b_at_n]
+      exact hind
+    · have hlt : k < n := Nat.lt_of_le_of_ne hkn hkn_eq
+      have hsR_valid : (s.sizeReduce k).Valid := sizeReduce_valid s k hvalid
+      have hsR_ind : (s.sizeReduce k).b.independent :=
+        sizeReduce_independent s k hind hvalid hsR_valid
+      rw [lllLoop_succ_eq_body s k δ hδ hδ' hk hkn hlt]
+      dsimp only [lllLoopBody]
+      split_ifs
+      · exact ih (s.sizeReduce k) (k + 1) (Nat.succ_pos k)
+          (Nat.succ_le_of_lt hlt) hsR_valid hsR_ind
+      · have hk0 : 0 < k := Nat.lt_of_lt_of_le Nat.zero_lt_one hk
+        have hsS_valid : ((s.sizeReduce k).swapStep k).Valid :=
+          swapStep_valid (s.sizeReduce k) k hsR_ind hsR_valid
+        have hsS_ind : ((s.sizeReduce k).swapStep k).b.independent :=
+          swapStep_independent (s.sizeReduce k) k hsR_ind hsR_valid hk0 hlt
+        have hk'n : max (k - 1) 1 ≤ n :=
+          (Nat.max_le).2 ⟨Nat.le_trans (Nat.sub_le k 1) hkn, Nat.le_trans hk hkn⟩
+        exact ih ((s.sizeReduce k).swapStep k) (max (k - 1) 1)
+          (Nat.le_max_right (k - 1) 1) hk'n hsS_valid hsS_ind
+
 end LLLState
 
+/-! ### Capstones
+
+The unconditional LLL guarantees for `Hex.lll`: the output is `δ`-LLL-reduced,
+the generated lattice is preserved, and the first row of the output bounds the
+norm of any nonzero lattice vector by `(1 / (δ - 1/4))^(n - 1)`. -/
+
+/-- **Unconditional LLL reducedness.** For any independent integer basis `b`,
+`Hex.lll b δ ... hind` returns a `δ`-LLL-reduced matrix. Combines the fuel-
+sufficiency theorem (`lllLoop_fuel_sufficient`) with the loop invariant
+induction (`lllLoop_isLLLReduced_of_fuel_gt_measure`). -/
+theorem lll_isLLLReduced (b : Matrix Int n m) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
+    isLLLReduced (lll b δ hδ hδ' hn hind) δ := by
+  show isLLLReduced (lllLoop (LLLState.ofBasisUnchecked b) 1 δ hδ hδ'
+    (Nat.le_refl 1) hn (lllFuel (LLLState.ofBasisUnchecked b))) δ
+  set s := LLLState.ofBasisUnchecked b with hs_def
+  have hs_valid : s.Valid := by
+    show (LLLState.ofBasis b hind).Valid
+    exact HexLLLMathlib.LLLState.ofBasis_valid b hind
+  have hs_ind : s.b.independent := hind
+  have hs_pre : prefixLLLReduced s.b 1 δ := prefixLLLReduced_one s.b δ
+  apply LLLState.lllLoop_isLLLReduced_of_fuel_gt_measure δ hδ hδ' (lllFuel s) s 1
+    (Nat.le_refl 1) hn hs_valid hs_ind hs_pre
+  show s.potential * (n + 1) + (n - 1) < (s.potential + 1) * (n + 1)
+  have : (s.potential + 1) * (n + 1) = s.potential * (n + 1) + (n + 1) := by ring
+  omega
+
+/-- The generated lattice is preserved by `Hex.lll`. -/
+theorem lll_memLattice_iff (b : Matrix Int n m) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent)
+    (v : Vector Int m) :
+    Matrix.memLattice (lll b δ hδ hδ' hn hind) v ↔ Matrix.memLattice b v := by
+  show Matrix.memLattice (lllLoop (LLLState.ofBasisUnchecked b) 1 δ hδ hδ'
+    (Nat.le_refl 1) hn (lllFuel (LLLState.ofBasisUnchecked b))) v ↔ _
+  exact lllLoop_memLattice_iff _ 1 δ hδ hδ' (Nat.le_refl 1) hn _ v
+
+/-- **Unconditional LLL short-vector bound.** For any independent integer
+basis `b`, the first row of `Hex.lll b δ ... hind` has squared norm at most
+`(1 / (δ - 1/4))^(n - 1)` times the squared norm of any nonzero lattice vector
+of `b`. Combines `lll_isLLLReduced`, `lll_memLattice_iff`, and the conditional
+short-vector bound `Hex.lll_short_vector`. -/
+theorem lll_first_row_norm_sq_le_unconditional
+    (b : Matrix Int n m) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent)
+    {v : Vector Int m} (hv : Matrix.memLattice b v) (hv' : v ≠ 0) :
+    ((Vector.normSq ((lll b δ hδ hδ' hn hind).row
+        ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩) : Int) : Rat) ≤
+      (1 / (δ - 1 / 4)) ^ (n - 1) * ((Vector.normSq v : Int) : Rat) := by
+  have hred : isLLLReduced (lll b δ hδ hδ' hn hind) δ :=
+    lll_isLLLReduced b δ hδ hδ' hn hind
+  have hs_valid : (LLLState.ofBasisUnchecked b).Valid := by
+    show (LLLState.ofBasis b hind).Valid
+    exact HexLLLMathlib.LLLState.ofBasis_valid b hind
+  have hind' : (lll b δ hδ hδ' hn hind).independent := by
+    show (lllLoop (LLLState.ofBasisUnchecked b) 1 δ hδ hδ'
+      (Nat.le_refl 1) hn (lllFuel (LLLState.ofBasisUnchecked b))).independent
+    exact LLLState.lllLoop_independent δ hδ hδ' _ _ 1 (Nat.le_refl 1) hn hs_valid hind
+  have hv_lll : Matrix.memLattice (lll b δ hδ hδ' hn hind) v :=
+    (lll_memLattice_iff b δ hδ hδ' hn hind v).mpr hv
+  exact Hex.lll_short_vector (lll b δ hδ hδ' hn hind) hind' hred hδ hδ' hn hv_lll hv'
+
 end Hex
+
+namespace HexLLLMathlib
+
+/-- Membership in the Mathlib `latticeSubmodule` is preserved by `Hex.lll`. -/
+theorem lll_mem_latticeSubmodule_iff
+    (b : Hex.Matrix Int n m) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent)
+    (x : Fin m → ℤ) :
+    x ∈ latticeSubmodule (Hex.lll b δ hδ hδ' hn hind) ↔ x ∈ latticeSubmodule b := by
+  let v := HexMatrixMathlib.vectorEquiv.symm x
+  have hxv : x = HexMatrixMathlib.vectorEquiv v :=
+    (Equiv.apply_symm_apply _ x).symm
+  rw [hxv]
+  rw [mem_latticeSubmodule_iff (Hex.lll b δ hδ hδ' hn hind) v,
+      mem_latticeSubmodule_iff b v]
+  exact Hex.lll_memLattice_iff b δ hδ hδ' hn hind v
+
+/-- **Unconditional Mathlib-Euclidean LLL short-vector bound.** Combining
+`Hex.lll_isLLLReduced` with the conditional Euclidean bound
+`reduced_first_row_norm_sq_le_of_mem_latticeSubmodule`. -/
+theorem lll_first_row_norm_sq_le_unconditional
+    (b : Hex.Matrix Int n m) (δ : Rat)
+    (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (hind : b.independent)
+    (x : Fin m → ℤ) (hx : x ∈ latticeSubmodule b) (hx0 : x ≠ 0) :
+    ‖intRowToEuclidean
+        (Hex.Matrix.row (Hex.lll b δ hδ hδ' hn hind)
+          ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩)‖ ^ 2 ≤
+      (((1 / (δ - 1 / 4)) ^ (n - 1) : Rat) : ℝ) *
+        ‖intVectorToEuclidean x‖ ^ 2 := by
+  have hred : Hex.isLLLReduced (Hex.lll b δ hδ hδ' hn hind) δ :=
+    Hex.lll_isLLLReduced b δ hδ hδ' hn hind
+  have hs_valid : (Hex.LLLState.ofBasisUnchecked b).Valid :=
+    HexLLLMathlib.LLLState.ofBasis_valid b hind
+  have hind' : (Hex.lll b δ hδ hδ' hn hind).independent := by
+    show (Hex.lllLoop (Hex.LLLState.ofBasisUnchecked b) 1 δ hδ hδ'
+      (Nat.le_refl 1) hn (Hex.lllFuel (Hex.LLLState.ofBasisUnchecked b))).independent
+    exact Hex.LLLState.lllLoop_independent δ hδ hδ' _ _ 1
+      (Nat.le_refl 1) hn hs_valid hind
+  have hx_lll : x ∈ latticeSubmodule (Hex.lll b δ hδ hδ' hn hind) :=
+    (lll_mem_latticeSubmodule_iff b δ hδ hδ' hn hind x).mpr hx
+  exact reduced_first_row_norm_sq_le_of_mem_latticeSubmodule
+    (Hex.lll b δ hδ hδ' hn hind) δ hδ hδ' hn hind' hred x hx_lll hx0
+
+end HexLLLMathlib

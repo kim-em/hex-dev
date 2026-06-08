@@ -609,6 +609,38 @@ private theorem rowSwap_memLattice_iff
       rwa [Matrix.rowSwap_rowSwap]
     exact memLattice_of_rowSwap_memLattice (Matrix.rowSwap b i j) i j v hv'
 
+private theorem memLattice_of_rowAdd_memLattice
+    (b : Matrix Int n m) (src dst : Fin n) (c : Int) (v : Vector Int m) :
+    Matrix.memLattice (Matrix.rowAdd b src dst c) v → Matrix.memLattice b v := by
+  intro hv
+  rcases hv with ⟨w, hw⟩
+  let S : Matrix Int n n := Matrix.rowAdd (1 : Matrix Int n n) src dst c
+  have hrow : S * b = Matrix.rowAdd b src dst c := by
+    simp [S, Matrix.rowAdd_mul, Matrix.one_mul]
+  refine ⟨Matrix.transpose S * w, ?_⟩
+  calc
+    Matrix.rowCombination b (Matrix.transpose S * w)
+        = Matrix.transpose b * (Matrix.transpose S * w) := rfl
+    _ = (Matrix.transpose b * Matrix.transpose S) * w := by
+      rw [Matrix.mul_assoc_vec]
+    _ = Matrix.transpose (S * b) * w := by
+      rw [Matrix.transpose_mul_of_mul_comm (by intro a b; exact Int.mul_comm a b)]
+    _ = Matrix.transpose (Matrix.rowAdd b src dst c) * w := by
+      rw [hrow]
+    _ = Matrix.rowCombination (Matrix.rowAdd b src dst c) w := rfl
+    _ = v := hw
+
+private theorem rowAdd_memLattice_iff
+    (b : Matrix Int n m) {src dst : Fin n} (hne : src ≠ dst) (c : Int) (v : Vector Int m) :
+    Matrix.memLattice (Matrix.rowAdd b src dst c) v ↔ Matrix.memLattice b v := by
+  constructor
+  · exact memLattice_of_rowAdd_memLattice b src dst c v
+  · intro hv
+    have hv' : Matrix.memLattice
+        (Matrix.rowAdd (Matrix.rowAdd b src dst c) src dst (-c)) v := by
+      rwa [Matrix.rowAdd_rowAdd_neg b c hne]
+    exact memLattice_of_rowAdd_memLattice (Matrix.rowAdd b src dst c) src dst (-c) v hv'
+
 /-- Adjacent swaps preserve the generated lattice. -/
 theorem swapStep_memLattice_iff (s : LLLState n m) (k : Nat) (v : Vector Int m) :
     Matrix.memLattice (s.swapStep k).b v ↔ Matrix.memLattice s.b v := by
@@ -620,6 +652,42 @@ theorem swapStep_memLattice_iff (s : LLLState n m) (k : Nat) (v : Vector Int m) 
       simpa [GramSchmidt.Int.adjacentSwap] using
         rowSwap_memLattice_iff s.b (GramSchmidt.prevRow ⟨k, hk⟩ hk0) ⟨k, hk⟩ v
     · rw [dif_neg hk0]
+  · rw [dif_neg hk]
+
+/-- A single-column size reduction preserves the generated lattice. -/
+theorem sizeReduceColumn_memLattice_iff
+    (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) (v : Vector Int m) :
+    Matrix.memLattice (s.sizeReduceColumn j k hjk).b v ↔ Matrix.memLattice s.b v := by
+  unfold sizeReduceColumn
+  by_cases hreduce : 2 * Int.natAbs ((s.ν.get k).get j) >
+      s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
+  · rw [dif_pos hreduce]
+    have hne : j ≠ k := fun h => Nat.lt_irrefl j.val (h ▸ hjk)
+    exact rowAdd_memLattice_iff s.b hne _ v
+  · rw [dif_neg hreduce]
+
+private theorem sizeReduce_foldl_memLattice_iff (s : LLLState n m) (k : Nat) (hk : k < n)
+    (xs : List (Fin k)) (v : Vector Int m) :
+    Matrix.memLattice
+        (xs.foldl
+          (fun state j =>
+            let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
+            LLLState.sizeReduceColumn state jFin ⟨k, hk⟩ j.isLt)
+          s).b v ↔ Matrix.memLattice s.b v := by
+  induction xs generalizing s with
+  | nil => simp
+  | cons j js ih =>
+    simp only [List.foldl_cons]
+    rw [ih]
+    exact sizeReduceColumn_memLattice_iff s _ _ j.isLt v
+
+/-- Size reduction preserves the generated lattice. -/
+theorem sizeReduce_memLattice_iff (s : LLLState n m) (k : Nat) (v : Vector Int m) :
+    Matrix.memLattice (s.sizeReduce k).b v ↔ Matrix.memLattice s.b v := by
+  unfold sizeReduce
+  by_cases hk : k < n
+  · rw [dif_pos hk]
+    exact sizeReduce_foldl_memLattice_iff s k hk (List.finRange k).reverse v
   · rw [dif_neg hk]
 
 /-- The updated swap state still packages the intended scaled coefficient
@@ -729,6 +797,39 @@ def lllLoop (s : LLLState n m) (k : Nat) (δ : Rat)
               exact (Nat.max_le).2
                 ⟨Nat.le_trans (Nat.sub_le k 1) hkn, Nat.le_trans hk hkn⟩)
             fuel
+
+/-- `lllLoop` preserves the generated lattice: every iteration is either a
+`sizeReduce` (preserved by `sizeReduce_memLattice_iff`) or an adjacent swap
+(preserved by `swapStep_memLattice_iff`). -/
+theorem lllLoop_memLattice_iff (s : LLLState n m) (k : Nat) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hk : 1 ≤ k) (hkn : k ≤ n) (fuel : Nat)
+    (v : Vector Int m) :
+    Matrix.memLattice (lllLoop s k δ hδ hδ' hk hkn fuel) v ↔
+      Matrix.memLattice s.b v := by
+  induction fuel generalizing s k hk hkn with
+  | zero => rfl
+  | succ f ih =>
+    show Matrix.memLattice
+      (if hdone : k = n then s.b else _) v ↔ _
+    by_cases hdone : k = n
+    · rw [dif_pos hdone]
+    · rw [dif_neg hdone]
+      by_cases hcond : Int.ofNat δ.den *
+            (Int.ofNat ((s.sizeReduce k).d.get
+                ⟨k + 1, Nat.succ_lt_succ (Nat.lt_of_le_of_ne hkn hdone)⟩) *
+              Int.ofNat ((s.sizeReduce k).d.get
+                ⟨k - 1, Nat.lt_trans
+                  (Nat.lt_of_le_of_lt (Nat.sub_le k 1)
+                    (Nat.lt_of_le_of_ne hkn hdone))
+                  (Nat.lt_succ_self n)⟩) +
+              ((s.sizeReduce k).ν.get ⟨k, Nat.lt_of_le_of_ne hkn hdone⟩).get
+                ⟨k - 1, Nat.lt_of_le_of_lt (Nat.sub_le k 1)
+                  (Nat.lt_of_le_of_ne hkn hdone)⟩ ^ 2) ≥
+          δ.num * (Int.ofNat ((s.sizeReduce k).d.get
+            ⟨k, Nat.lt_succ_of_lt (Nat.lt_of_le_of_ne hkn hdone)⟩) ^ 2)
+      · rw [if_pos hcond, ih, LLLState.sizeReduce_memLattice_iff]
+      · rw [if_neg hcond, ih, LLLState.swapStep_memLattice_iff,
+          LLLState.sizeReduce_memLattice_iff]
 
 /-- Initial fuel bound for `lllLoop`; issue #6567 tracks the proof that this
 bound is sufficient for the public LLL pipeline. -/
