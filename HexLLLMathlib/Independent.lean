@@ -1100,6 +1100,348 @@ theorem sizeReduce_valid (s : LLLState n m) (k : Nat) (hvalid : s.Valid) :
   · rw [dif_neg hk]
     exact hvalid
 
+/-! ### Size-reduce size-reducedness
+
+After `LLLState.sizeReduce s k`, the row `k` of the integer scaled coefficients
+satisfies `2 * |ν[k][j]| ≤ d[j+1]` for every `j < k` (the integer formulation
+of the rational size-reducedness bound `|μ[k][j]| ≤ 1/2`).  Pair with
+`scaledCoeffs_eq` to get the rational bound `4 * μ[k][j]² ≤ 1` on the
+post-reduction Gram-Schmidt coefficients.  Closes the size-reduction half of
+the LLL loop invariant. -/
+
+private theorem nearestQuotient_residue_bound (νjk : Int) (dj1 : Nat)
+    (hdpos : 0 < dj1) :
+    2 * Int.natAbs (νjk - nearestQuotient νjk dj1 * Int.ofNat dj1) ≤ dj1 := by
+  set q : Int := nearestQuotient νjk dj1 with hq_def
+  unfold nearestQuotient at hq_def
+  have hdj_pos_int : (0 : Int) < Int.ofNat dj1 := by
+    show (0 : Int) < (dj1 : Int)
+    exact_mod_cast hdpos
+  have h2d_pos : (0 : Int) < 2 * Int.ofNat dj1 := by linarith
+  set a : Int := 2 * νjk + Int.ofNat dj1 with ha_def
+  have hqf : q = Int.fdiv a (2 * Int.ofNat dj1) := hq_def
+  have hm_eq : Int.fmod a (2 * Int.ofNat dj1) = a - q * (2 * Int.ofNat dj1) := by
+    rw [hqf, Int.fmod_def]; ring
+  have hm_nn : (0 : Int) ≤ Int.fmod a (2 * Int.ofNat dj1) :=
+    Int.fmod_nonneg_of_pos a h2d_pos
+  have hm_lt : Int.fmod a (2 * Int.ofNat dj1) < 2 * Int.ofNat dj1 :=
+    Int.fmod_lt_of_pos a h2d_pos
+  have h2res : 2 * (νjk - q * Int.ofNat dj1) =
+      Int.fmod a (2 * Int.ofNat dj1) - Int.ofNat dj1 := by
+    rw [hm_eq, ha_def]; ring
+  have hres_lb : -(Int.ofNat dj1) ≤ 2 * (νjk - q * Int.ofNat dj1) := by
+    rw [h2res]; omega
+  have hres_ub : 2 * (νjk - q * Int.ofNat dj1) ≤ Int.ofNat dj1 := by
+    rw [h2res]; omega
+  -- omega handles natAbs with linear bounds in Int.
+  have hres_lb' : -(dj1 : Int) ≤ 2 * (νjk - q * (dj1 : Int)) := by
+    have : (Int.ofNat dj1 : Int) = (dj1 : Int) := rfl
+    rw [this] at hres_lb; exact hres_lb
+  have hres_ub' : 2 * (νjk - q * (dj1 : Int)) ≤ (dj1 : Int) := by
+    have : (Int.ofNat dj1 : Int) = (dj1 : Int) := rfl
+    rw [this] at hres_ub; exact hres_ub
+  show 2 * Int.natAbs (νjk - q * Int.ofNat dj1) ≤ dj1
+  have : (Int.ofNat dj1 : Int) = (dj1 : Int) := rfl
+  rw [this]
+  omega
+
+private theorem sizeReduceColumn_b_gramDet (s : LLLState n m) (j k : Fin n)
+    (hjk : j.val < k.val) (t : Nat) (ht : t ≤ n) :
+    GramSchmidt.Int.gramDet (s.sizeReduceColumn j k hjk).b t ht =
+      GramSchmidt.Int.gramDet s.b t ht := by
+  unfold sizeReduceColumn
+  by_cases hreduce :
+      2 * Int.natAbs ((s.ν.get k).get j) >
+        s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
+  · rw [dif_pos hreduce]
+    exact GramSchmidt.Int.gramDet_sizeReduce s.b j k hjk _ t ht
+  · rw [dif_neg hreduce]
+
+private theorem sizeReduceColumn_independent (s : LLLState n m) (j k : Fin n)
+    (hjk : j.val < k.val) (hind : s.b.independent) :
+    (s.sizeReduceColumn j k hjk).b.independent := by
+  intro i
+  rw [sizeReduceColumn_b_gramDet s j k hjk]
+  exact hind i
+
+/-- Per-column pivot bound: after `sizeReduceColumn` at pivot `j`, the
+integer `ν[k][j]` satisfies `2 * |ν[k][j]| ≤ d[j+1]`. -/
+private theorem sizeReduceColumn_ν_pivot_bound (s : LLLState n m) (j k : Fin n)
+    (hjk : j.val < k.val)
+    (hdpos : 0 < s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩) :
+    2 * Int.natAbs (((s.sizeReduceColumn j k hjk).ν.get k).get j) ≤
+      s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩ := by
+  by_cases hreduce :
+      2 * Int.natAbs ((s.ν.get k).get j) >
+        s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
+  · rw [sizeReduceColumn_ν_get_k s j k hjk hreduce _ rfl]
+    rw [show ∀ (xs : Vector Int n) (x : Int),
+            (xs.set j.val x j.isLt).get j = x from
+          fun xs x => Vector.getElem_set_self j.isLt]
+    exact nearestQuotient_residue_bound _ _ hdpos
+  · have h_eq : s.sizeReduceColumn j k hjk = s := by
+      unfold sizeReduceColumn; rw [dif_neg hreduce]
+    rw [h_eq]
+    exact Nat.le_of_not_lt hreduce
+
+/-- Single-column preservation of `ν[k][l]` for columns `l` strictly above
+the pivot `j`. -/
+private theorem sizeReduceColumn_ν_get_above_pivot (s : LLLState n m)
+    (j k : Fin n) (hjk : j.val < k.val) (l : Fin n) (hjl : j.val < l.val) :
+    ((s.sizeReduceColumn j k hjk).ν.get k).get l = (s.ν.get k).get l := by
+  by_cases hreduce :
+      2 * Int.natAbs ((s.ν.get k).get j) >
+        s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
+  · rw [sizeReduceColumn_ν_get_k s j k hjk hreduce _ rfl]
+    have hj_ne_l : j.val ≠ l.val := Nat.ne_of_lt hjl
+    rw [show ∀ (xs : Vector Int n) (x : Int),
+            (xs.set j.val x j.isLt).get l = xs.get l from
+          fun xs x => Vector.getElem_set_ne j.isLt l.isLt hj_ne_l]
+    rw [LLLState.foldl_finRange_set_outerSubMul_get_eq j.val
+        (Nat.le_of_lt j.isLt) (s.ν.get k) (s.ν.get k) (s.ν.get j) _ l]
+    rw [if_neg (Nat.not_lt.mpr (Nat.le_of_lt hjl))]
+  · have h_eq : s.sizeReduceColumn j k hjk = s := by
+      unfold sizeReduceColumn; rw [dif_neg hreduce]
+    rw [h_eq]
+
+/-- `sizeReduceColumn` does not change `s.d`. -/
+private theorem sizeReduceColumn_d_get (s : LLLState n m) (j k : Fin n)
+    (hjk : j.val < k.val) (i : Fin (n + 1)) :
+    (s.sizeReduceColumn j k hjk).d.get i = s.d.get i := by
+  rw [sizeReduceColumn_d_eq s j k hjk]
+
+/-- Preservation of `ν[k][e]` under foldl, when every element of the foldl
+list has value strictly less than `e.val`. -/
+private theorem sizeReduce_foldl_preserves_ν_above {n m : Nat}
+    (k : Nat) (hk : k < n) (e : Fin n) :
+    ∀ (xs : List (Fin k)) (s' : LLLState n m),
+      (∀ l ∈ xs, l.val < e.val) →
+      ((xs.foldl
+          (fun state j =>
+            let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
+            state.sizeReduceColumn jFin ⟨k, hk⟩ j.isLt)
+          s').ν.get ⟨k, hk⟩).get e = (s'.ν.get ⟨k, hk⟩).get e := by
+  intro xs
+  induction xs with
+  | nil => intros; rfl
+  | cons j js ih =>
+    intro s' hxs
+    have hj_lt_e : j.val < e.val := hxs j List.mem_cons_self
+    have hjs_lt_e : ∀ l ∈ js, l.val < e.val := fun l hl =>
+      hxs l (List.mem_cons.mpr (Or.inr hl))
+    simp only [List.foldl_cons]
+    rw [ih _ hjs_lt_e]
+    let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
+    exact sizeReduceColumn_ν_get_above_pivot s' jFin ⟨k, hk⟩ j.isLt e hj_lt_e
+
+/-- Preservation of `s.d` under foldl. -/
+private theorem sizeReduce_foldl_d_get {n m : Nat}
+    (k : Nat) (hk : k < n) (i : Fin (n + 1)) :
+    ∀ (xs : List (Fin k)) (s' : LLLState n m),
+      (xs.foldl
+          (fun state j =>
+            let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
+            state.sizeReduceColumn jFin ⟨k, hk⟩ j.isLt)
+          s').d.get i = s'.d.get i := by
+  intro xs
+  induction xs with
+  | nil => intros; rfl
+  | cons j js ih =>
+    intro s'
+    simp only [List.foldl_cons]
+    rw [ih _]; rw [sizeReduceColumn_d_get]
+
+/-- Foldl invariant: if the iterating list is strictly decreasing, then after
+foldl every iterated column is size-reduced. -/
+private theorem sizeReduce_foldl_size_reduced {n m : Nat}
+    (k : Nat) (hk : k < n) :
+    ∀ (xs : List (Fin k)),
+      xs.Pairwise (fun a b : Fin k => b.val < a.val) →
+      ∀ (s' : LLLState n m), s'.Valid → s'.b.independent →
+        ∀ e ∈ xs,
+          2 * Int.natAbs
+              (((xs.foldl
+                  (fun state j =>
+                    let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
+                    state.sizeReduceColumn jFin ⟨k, hk⟩ j.isLt)
+                  s').ν.get ⟨k, hk⟩).get
+                ⟨e.val, Nat.lt_trans e.isLt hk⟩) ≤
+            s'.d.get ⟨e.val + 1, Nat.succ_lt_succ (Nat.lt_trans e.isLt hk)⟩ := by
+  intro xs
+  induction xs with
+  | nil =>
+    intro _ s' _ _ e he
+    exact absurd he List.not_mem_nil
+  | cons j js ih =>
+    intro hpairwise s' hvalid hind e he
+    have hpairwise' : js.Pairwise (fun a b : Fin k => b.val < a.val) :=
+      List.Pairwise.tail hpairwise
+    have hj_gt_js : ∀ l ∈ js, l.val < j.val := by
+      intro l hl
+      have := List.rel_of_pairwise_cons hpairwise hl
+      exact this
+    simp only [List.foldl_cons]
+    -- Set up the Fin n version of j and the post-step state.
+    set jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩ with hjFin_def
+    have hjFinLt : jFin.val < k := j.isLt
+    set s'' : LLLState n m := s'.sizeReduceColumn jFin ⟨k, hk⟩ hjFinLt with hs''_def
+    by_cases h_eq : e = j
+    · -- e = j: per-column bound + preservation through js.
+      subst h_eq
+      have hdpos :
+          0 < s'.d.get ⟨jFin.val + 1, Nat.succ_lt_succ jFin.isLt⟩ := by
+        have := hvalid.d_eq (jFin.val + 1) (Nat.succ_lt_succ jFin.isLt)
+        rw [this]
+        exact hind ⟨jFin.val, jFin.isLt⟩
+      have hpivot :=
+        sizeReduceColumn_ν_pivot_bound s' jFin ⟨k, hk⟩ hjFinLt hdpos
+      have hpres :=
+        sizeReduce_foldl_preserves_ν_above k hk
+          (⟨e.val, Nat.lt_trans e.isLt hk⟩ : Fin n) js
+          s'' hj_gt_js
+      show 2 * Int.natAbs ((((js.foldl _ s'').ν.get ⟨k, hk⟩).get _)) ≤ _
+      rw [hpres]
+      exact hpivot
+    · -- e ∈ js: apply IH (with d preserved through the head step).
+      have he_js : e ∈ js := by
+        rcases List.mem_cons.mp he with h | h
+        · exact absurd h h_eq
+        · exact h
+      have hd_step := sizeReduceColumn_d_get s' jFin ⟨k, hk⟩ hjFinLt
+        ⟨e.val + 1, Nat.succ_lt_succ (Nat.lt_trans e.isLt hk)⟩
+      rw [← hd_step]
+      exact ih hpairwise' s''
+        (sizeReduceColumn_valid s' jFin ⟨k, hk⟩ hjFinLt hvalid)
+        (sizeReduceColumn_independent s' jFin ⟨k, hk⟩ hjFinLt hind)
+        e he_js
+
+/-- `(List.finRange k).reverse` is Pairwise strictly decreasing. -/
+private theorem pairwise_finRange_reverse_lt (k : Nat) :
+    ((List.finRange k).reverse).Pairwise (fun a b : Fin k => b.val < a.val) := by
+  rw [List.pairwise_reverse]
+  rw [List.pairwise_iff_getElem]
+  intro i j hi hj hij
+  rw [List.length_finRange] at hi hj
+  rw [List.getElem_finRange (by rw [List.length_finRange]; exact hi)]
+  rw [List.getElem_finRange (by rw [List.length_finRange]; exact hj)]
+  exact hij
+
+/-- Integer formulation: after `s.sizeReduce k`, every column `j < k` of
+row `k` of the scaled coefficients satisfies `2 * |ν[k][j]| ≤ d[j+1]`. -/
+theorem sizeReduce_ν_bound (s : LLLState n m) (k : Nat) (hk : k < n)
+    (hvalid : s.Valid) (hind : s.b.independent) :
+    ∀ (j : Nat) (hj : j < k),
+      let kFin : Fin n := ⟨k, hk⟩
+      let jFin : Fin n := ⟨j, Nat.lt_trans hj hk⟩
+      2 * Int.natAbs (((s.sizeReduce k).ν.get kFin).get jFin) ≤
+        s.d.get ⟨j + 1, Nat.succ_lt_succ (Nat.lt_trans hj hk)⟩ := by
+  intro j hj
+  unfold sizeReduce
+  rw [dif_pos hk]
+  exact sizeReduce_foldl_size_reduced k hk (List.finRange k).reverse
+    (pairwise_finRange_reverse_lt k)
+    s hvalid hind ⟨j, hj⟩ (List.mem_reverse.mpr (List.mem_finRange _))
+
+/-- **The size-reduce size-reducedness theorem (Sub-issue A of #6576).**
+After `LLLState.sizeReduce s k`, the row `k` of the rational Gram-Schmidt
+coefficients is size-reduced: `4 * μ[k][j]² ≤ 1` for every `j < k`. -/
+theorem sizeReduce_size_reduced (s : LLLState n m) (k : Nat) (hk : k < n)
+    (hvalid : s.Valid) (hind : s.b.independent) :
+    ∀ (j : Nat) (hj : j < k),
+      let kFin : Fin n := ⟨k, hk⟩
+      let jFin : Fin n := ⟨j, Nat.lt_trans hj hk⟩
+      let μ := GramSchmidt.entry (GramSchmidt.Int.coeffs (s.sizeReduce k).b)
+        kFin jFin
+      4 * μ * μ ≤ 1 := by
+  intro j hj
+  have hjn : j < n := Nat.lt_trans hj hk
+  have hjsuc : j + 1 ≤ n := Nat.succ_le_of_lt hjn
+  -- Integer bound: 2 * |ν'[k][j]| ≤ d[j+1].
+  have hν_bound := sizeReduce_ν_bound s k hk hvalid hind j hj
+  -- Validity is preserved.
+  have hvalid' : (s.sizeReduce k).Valid := sizeReduce_valid s k hvalid
+  -- gramDet is preserved by sizeReduce (via d-vector preservation + post-Valid).
+  have hgramDet_preserved :
+      GramSchmidt.Int.gramDet (s.sizeReduce k).b (j + 1) hjsuc =
+        GramSchmidt.Int.gramDet s.b (j + 1) hjsuc := by
+    have h1 := hvalid'.d_eq (j + 1) (Nat.succ_lt_succ hjn)
+    have h2 := hvalid.d_eq (j + 1) (Nat.succ_lt_succ hjn)
+    have h3 : (s.sizeReduce k).d.get ⟨j + 1, Nat.succ_lt_succ hjn⟩ =
+        s.d.get ⟨j + 1, Nat.succ_lt_succ hjn⟩ := by
+      simpa using congrArg (fun d : Vector Nat (n + 1) =>
+        d.get ⟨j + 1, Nat.succ_lt_succ hjn⟩) (sizeReduce_d s k)
+    rw [← h1, h3, h2]
+  -- gramDet (s.sizeReduce k).b (j+1) > 0 from independence of s.b.
+  have hgd_pos : 0 < GramSchmidt.Int.gramDet (s.sizeReduce k).b (j + 1) hjsuc := by
+    rw [hgramDet_preserved]
+    exact hind ⟨j, hjn⟩
+  -- Bridge via scaledCoeffs_eq.
+  have hsc := GramSchmidt.Int.scaledCoeffs_eq (s.sizeReduce k).b
+    k j hk hj
+  -- Cast hν_bound to Rat as `|2 * ν'| ≤ d[j+1]`.
+  set kFin : Fin n := ⟨k, hk⟩
+  set jFin : Fin n := ⟨j, hjn⟩
+  set ν' : Int := ((s.sizeReduce k).ν.get kFin).get jFin with hν'_def
+  set d_jp1 : Nat := s.d.get ⟨j + 1, Nat.succ_lt_succ hjn⟩ with hd_jp1_def
+  set μ : Rat := GramSchmidt.entry (GramSchmidt.Int.coeffs (s.sizeReduce k).b)
+    kFin jFin with hμ_def
+  -- Cast d_jp1 to Rat is positive.
+  have hd_rat_pos : (0 : Rat) < (d_jp1 : Rat) := by
+    have hd_nat_pos : 0 < d_jp1 := by
+      rw [hd_jp1_def, hvalid.d_eq (j + 1) (Nat.succ_lt_succ hjn)]
+      exact hind ⟨j, hjn⟩
+    exact_mod_cast hd_nat_pos
+  have hd_ne : (d_jp1 : Rat) ≠ 0 := ne_of_gt hd_rat_pos
+  -- ν' bridges to μ via scaledCoeffs_eq + Valid.
+  have hν'_bridge : (ν' : Rat) = (d_jp1 : Rat) * μ := by
+    have hν_at : ν' =
+        ((GramSchmidt.Int.scaledCoeffs (s.sizeReduce k).b).get kFin).get jFin :=
+      hvalid'.ν_eq kFin.val jFin.val kFin.isLt jFin.isLt hj
+    have hd_eq_rat : (d_jp1 : Rat) =
+        ((GramSchmidt.Int.gramDet (s.sizeReduce k).b (j+1) hjsuc : Nat) : Rat) := by
+      rw [hgramDet_preserved]
+      show ((s.d.get _ : Nat) : Rat) = ((GramSchmidt.Int.gramDet s.b (j+1) hjsuc : Nat) : Rat)
+      rw [hvalid.d_eq (j + 1) (Nat.succ_lt_succ hjn)]
+    have hsc' : ((GramSchmidt.entry
+        (GramSchmidt.Int.scaledCoeffs (s.sizeReduce k).b) kFin jFin : Int) : Rat) =
+      ((GramSchmidt.Int.gramDet (s.sizeReduce k).b (j+1) hjsuc : Nat) : Rat) * μ := hsc
+    have hν'_eq : ((ν' : Int) : Rat) =
+        ((GramSchmidt.entry
+          (GramSchmidt.Int.scaledCoeffs (s.sizeReduce k).b) kFin jFin : Int) : Rat) := by
+      rw [hν_at]; rfl
+    rw [hν'_eq, hsc', hd_eq_rat]
+  -- Now: |2 * ν'| ≤ d_jp1 (as Int), so (2*ν')² ≤ d_jp1² (as Rat).
+  have h_int_le : 2 * (ν' : Int).natAbs ≤ (d_jp1 : Nat) := hν_bound
+  have habs2_int : |(2 * ν' : Int)| ≤ (d_jp1 : Int) := by
+    rw [Int.abs_eq_natAbs, Int.natAbs_mul]
+    show ((2 * ν'.natAbs : Nat) : Int) ≤ (d_jp1 : Int)
+    exact_mod_cast h_int_le
+  have habs2_rat : |(2 * ν' : Rat)| ≤ (d_jp1 : Rat) := by
+    have h_cast : |((2 * ν' : Int) : Rat)| ≤ ((d_jp1 : Int) : Rat) := by
+      exact_mod_cast habs2_int
+    push_cast at h_cast
+    exact h_cast
+  -- (2 * ν')² ≤ d_jp1² since |·| is bounded.
+  have hsq_le : (2 * (ν' : Rat))^2 ≤ (d_jp1 : Rat)^2 := by
+    have h := abs_le_abs habs2_rat (by linarith [abs_nonneg (2 * (ν' : Rat))])
+    have : |(2 * (ν' : Rat))| ≤ |((d_jp1 : Rat))| := by
+      rw [abs_of_nonneg (le_of_lt hd_rat_pos)]
+      exact habs2_rat
+    calc (2 * (ν' : Rat))^2 = |(2 * (ν' : Rat))|^2 := (sq_abs _).symm
+      _ ≤ |((d_jp1 : Rat))|^2 := by
+        exact pow_le_pow_left₀ (abs_nonneg _) this 2
+      _ = (d_jp1 : Rat)^2 := sq_abs _
+  -- Conclude 4μ² ≤ 1: 4μ² = (2ν')²/d_jp1² ≤ 1.
+  show 4 * μ * μ ≤ 1
+  have hμ_eq : μ = (ν' : Rat) / (d_jp1 : Rat) := by
+    field_simp
+    linarith [hν'_bridge]
+  rw [hμ_eq]
+  rw [show 4 * ((ν' : Rat) / (d_jp1 : Rat)) * ((ν' : Rat) / (d_jp1 : Rat)) =
+      (2 * (ν' : Rat))^2 / (d_jp1 : Rat)^2 by ring]
+  rw [div_le_one (by positivity)]
+  exact hsq_le
+
 /-! ### Potential strict-decrease under failing Lovász
 
 These lemmas package the multiplicative termination potential
