@@ -455,28 +455,33 @@ different `(δ, 11/20)`-reduced bases of the same lattice.
 
 **Certificate and checker.** An external candidate is a triple
 `(B', U, V)` — a reduced basis with integer transforms. It is accepted iff
-the executable checker `certCheck B B' U V δ : Bool` returns `true`, where
+the executable checker `certCheck B B' U V δ η : Bool` returns `true`, where
 `certCheck` verifies, over integer arithmetic only:
 
 - `U.mul B = B'` and `V.mul B' = B` (each a `Matrix.mul` equality), which
   together give `lattice B = lattice B'` by row-combination composition — no
   determinant and no matrix-inverse reasoning;
-- `B'` independent and `(δ, 11/20)`-size-reduced and Lovász, read off the
-  integer `d`/`ν` representation (`GramSchmidt.Int.data B'`): all `d` positive,
-  `20·(ν[i][j]).natAbs ≤ 11·d[j+1]`, and
+- `B'` independent and `(δ, η)`-size-reduced and Lovász, read off the integer
+  `d`/`ν` representation (`GramSchmidt.Int.data B'`): all `d` positive,
+  `η.den·(ν[i][j]).natAbs ≤ η.num·d[j+1]` (the integer form of `|μ| ≤ η`), and
   `δ.den·(d[i+2]·d[i] + ν[i+1][i]²) ≥ δ.num·d[i+1]²`.
 
-The single trusted theorem is
+The checker is generic in the size-reduction bound, matching the
+`isLLLReduced`/`short_vector_bound_of_size_bound` layer; the pin lives at the
+call site, not inside the mechanism. The single trusted theorem is
 
 ```lean
-theorem certCheck_sound (B B' U V : Matrix Int n m) (δ : Rat) :
-    certCheck B B' U V δ = true →
+theorem certCheck_sound (B B' U V : Matrix Int n m) (δ η : Rat) :
+    certCheck B B' U V δ η = true →
       (∀ v, B.memLattice v ↔ B'.memLattice v) ∧
-      B'.independent ∧ isLLLReduced B' δ (11/20)
+      B'.independent ∧ isLLLReduced B' δ η
 ```
 
-The dispatch's correctness depends only on `certCheck_sound`; the checker
-internals are not relied on elsewhere.
+No validity hypothesis on `η` is needed here (the bound's `1/2 ≤ η`, `η² < δ`
+conditions live on `short_vector_bound_of_size_bound`, not on the checker).
+The dispatched `lll` calls `certCheck … (11/20)`; the dispatch's correctness
+depends only on `certCheck_sound`, and the checker internals are not relied on
+elsewhere.
 
 **Provider hook.** `lll` consults an `opaque @[extern]` hook that supplies a
 candidate when an external reducer is registered and signals absence
