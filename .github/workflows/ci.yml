@@ -60,7 +60,14 @@ jobs:
             hexpolyfp_bench hexmodarith_bench hexgramschmidt_bench \
             hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
             hexlll_bench hexhensel_bench hexberlekamp_bench hexbz_bench \
-            hexconway_bench
+            hexconway_bench hexlll_provider_probe
+      - name: HexLLL provider probe
+        run: |
+          .lake/build/bin/hexlll_provider_probe absent
+          cc -shared -fPIC scripts/ci/hexlll_probe_provider.c \
+            -o .lake/build/hexlll_probe_provider.so
+          LD_PRELOAD="$PWD/.lake/build/hexlll_probe_provider.so" \
+            .lake/build/bin/hexlll_provider_probe present
       - name: Bench verify (smoke gate per SPEC/benchmarking.md §CI integration)
         env:
           # Hard cap enforced per SPEC/benchmarking.md §CI integration
@@ -98,4 +105,11 @@ jobs:
       - name: Verify Mathlib cache populated (hard fail on miss)
         run: bash scripts/ci/check_no_mathlib_rebuild.sh
       - name: Build hex (dyld symbol-resolution cross-check)
-        run: lake build
+        run: lake build hexlll_provider_probe
+      - name: HexLLL provider probe
+        run: |
+          .lake/build/bin/hexlll_provider_probe absent
+          cc -shared -fPIC scripts/ci/hexlll_probe_provider.c \
+            -o .lake/build/hexlll_probe_provider.dylib
+          DYLD_INSERT_LIBRARIES="$PWD/.lake/build/hexlll_probe_provider.dylib" \
+            .lake/build/bin/hexlll_provider_probe present

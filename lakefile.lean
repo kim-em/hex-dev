@@ -27,6 +27,13 @@ private def zmod64MulOTarget (pkg : Package) : FetchM (Job FilePath) := do
     let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
     compileO oFile srcFile flags
 
+private def hexlllProviderOTarget (pkg : Package) : FetchM (Job FilePath) := do
+  let oFile := pkg.dir / defaultBuildDir / "HexLLL" / "ffi" / "lean_hexlll_provider.o"
+  let srcTarget ← inputTextFile <| pkg.dir / "HexLLL" / "ffi" / "lean_hexlll_provider.c"
+  buildFileAfterDep oFile srcTarget fun srcFile => do
+    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
+    compileO oFile srcFile flags
+
 extern_lib hexgf2ffi (pkg) := do
   let name := nameToStaticLib "hexgf2ffi"
   let oTarget ← clmulOTarget pkg
@@ -48,6 +55,11 @@ extern_lib hexarithffi (pkg) := do
 extern_lib hexmodarithffi (pkg) := do
   let name := nameToStaticLib "hexmodarithffi"
   let oTarget ← zmod64MulOTarget pkg
+  buildStaticLib (pkg.staticLibDir / name) #[oTarget]
+
+extern_lib hexlllffi (pkg) := do
+  let name := nameToStaticLib "hexlllffi"
+  let oTarget ← hexlllProviderOTarget pkg
   buildStaticLib (pkg.staticLibDir / name) #[oTarget]
 
 lean_lib Hex where
@@ -79,6 +91,10 @@ lean_lib HexGF2 where
 lean_lib HexPolyZ where
 
 lean_lib HexLLL where
+  moreLinkArgs := #[
+    s!"{(defaultBuildDir / "lib" / nameToStaticLib "hexlllffi").toString}",
+    "-ldl"
+  ]
 
 lean_lib HexPolyFp where
 
@@ -202,6 +218,9 @@ lean_exe hexgfq_bench where
 
 lean_exe hexlll_bench where
   root := `HexLLL.Bench
+
+lean_exe hexlll_provider_probe where
+  root := `HexLLL.ProviderProbe
 
 lean_exe hexhensel_bench where
   root := `HexHensel.Bench

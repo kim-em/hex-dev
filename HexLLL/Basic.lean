@@ -939,4 +939,128 @@ def lll.shortVectors (b : Matrix Int n m) (δ : Rat)
     Array (Vector Int m) :=
   lll.shortVectorsUnchecked b δ hδ hδ' hn
 
+namespace LLLProvider
+
+@[extern "lean_hexlll_provider_available"]
+opaque providerAvailable : Unit → Bool
+
+@[extern "lean_hexlll_provider_reduce"]
+opaque providerReduce (rows cols : USize) (entries : @& Array String)
+    (delta eta : Float) (method : UInt8) (withInverse : Bool) :
+    Except String (Array Int)
+
+structure Candidate where
+  reduced : Array Int
+  transform : Array Int
+  inverse? : Option (Array Int)
+deriving Repr, BEq
+
+structure Diagnostics where
+  absent : Nat := 0
+  providerError : Nat := 0
+  rejected : Nat := 0
+  accepted : Nat := 0
+deriving Repr, BEq, Inhabited
+
+inductive Outcome where
+  | absent
+  | providerError
+  | rejected
+  | accepted
+deriving Repr, BEq
+
+private def bump (d : Diagnostics) : Outcome → Diagnostics
+  | .absent => { d with absent := d.absent + 1 }
+  | .providerError => { d with providerError := d.providerError + 1 }
+  | .rejected => { d with rejected := d.rejected + 1 }
+  | .accepted => { d with accepted := d.accepted + 1 }
+
+initialize diagnosticsRef : IO.Ref Diagnostics ← IO.mkRef {}
+
+def resetDiagnostics : IO Unit :=
+  diagnosticsRef.set {}
+
+def diagnostics : IO Diagnostics :=
+  diagnosticsRef.get
+
+def recordOutcome (outcome : Outcome) : IO Unit :=
+  diagnosticsRef.modify (fun d => bump d outcome)
+
+private def intNat? (x : Int) : Option Nat :=
+  if 0 ≤ x then
+    some x.toNat
+  else
+    none
+
+private def slice [Inhabited α] (xs : Array α) (start len : Nat) : Array α :=
+  (List.range len).foldl (fun acc i => acc.push xs[start + i]!) #[]
+
+def validateFlat (rows cols : Nat) (withInverse : Bool) (flat : Array Int) :
+    Option Candidate := do
+  let status ← flat[0]?
+  let rowsHeader ← flat[1]?
+  let colsHeader ← flat[2]?
+  let inverseHeader ← flat[3]?
+  if status != 0 then
+    none
+  let rowsSeen ← intNat? rowsHeader
+  let colsSeen ← intNat? colsHeader
+  let inverseSeen ← intNat? inverseHeader
+  if rowsSeen != rows || colsSeen != cols then
+    none
+  let hasInverse ←
+    match inverseSeen with
+    | 0 => some false
+    | 1 => some true
+    | _ => none
+  if hasInverse != withInverse then
+    none
+  let basisLen := rows * cols
+  let transformLen := rows * rows
+  let inverseLen := if hasInverse then transformLen else 0
+  let expectedLen := 4 + basisLen + transformLen + inverseLen
+  if flat.size != expectedLen then
+    none
+  let reduced := slice flat 4 basisLen
+  let transform := slice flat (4 + basisLen) transformLen
+  let inverse? :=
+    if hasInverse then
+      some (slice flat (4 + basisLen + transformLen) transformLen)
+    else
+      none
+  some { reduced, transform, inverse? }
+
+def tryReduce (rows cols : USize) (entries : Array String)
+    (delta eta : Float) (method : UInt8) (withInverse : Bool) :
+    IO (Option Candidate) := do
+  if !providerAvailable () then
+    recordOutcome .absent
+    return none
+  match providerReduce rows cols entries delta eta method withInverse with
+  | .error _ =>
+      recordOutcome .providerError
+      return none
+  | .ok flat =>
+      match validateFlat rows.toNat cols.toNat withInverse flat with
+      | some candidate =>
+          recordOutcome .accepted
+          return some candidate
+      | none =>
+          recordOutcome .rejected
+          return none
+
+#guard validateFlat 2 3 false #[0, 2, 3, 0, 1, 2, 3, 4, 5, 6, 1, 0, 0, 1] ==
+  some { reduced := #[1, 2, 3, 4, 5, 6], transform := #[1, 0, 0, 1], inverse? := none }
+#guard validateFlat 2 3 true #[0, 2, 3, 1, 1, 2, 3, 4, 5, 6, 1, 0, 0, 1, 1, 0, 0, 1] ==
+  some
+    { reduced := #[1, 2, 3, 4, 5, 6]
+      transform := #[1, 0, 0, 1]
+      inverse? := some #[1, 0, 0, 1] }
+#guard validateFlat 2 3 false #[1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 1, 0, 0, 1] == none
+#guard validateFlat 2 3 false #[0, 2, 4, 0, 1, 2, 3, 4, 5, 6, 1, 0, 0, 1] == none
+#guard validateFlat 2 3 false #[0, 2, 3, 1, 1, 2, 3, 4, 5, 6, 1, 0, 0, 1] == none
+#guard validateFlat 2 3 false #[0, 2, 3, 0, 1, 2, 3, 4, 5, 6, 1, 0, 0] == none
+
+end LLLProvider
+
 end Hex
