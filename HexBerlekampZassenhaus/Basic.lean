@@ -6638,11 +6638,31 @@ theorem exhaustiveSlowRawFactorsWithBound?_eq_some_of_isSome
   rw [choosePrimeData_eq_of_choosePrimeData?_some hchoose, hchoose]
   rfl
 
-/-- Raw factor array produced by the slow exhaustive recombination branch.
+/-- Raw factor array produced by the modular slow recombination branch.
 
 Exposed publicly so the Mathlib-side layer can express per-branch
 irreducibility hypotheses for the assembled output theorem.  Internal callers
-still go through the `factorSlow` wrapper. -/
+go through the `factorSlowModular` wrapper. This path returns `none` when no
+admissible modular prime is available. -/
+def factorSlowModularFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
+  let normalized := normalizeForFactor f
+  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+    some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
+  else
+    match quadraticIntegerRootFactors? normalized.squareFreeCore with
+    | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
+    | none =>
+        (choosePrimeData? normalized.squareFreeCore).map fun primeData =>
+          reassemblePolynomialFactors normalized
+            (exhaustiveCoreFactorsWithBound normalized.squareFreeCore B primeData)
+
+#guard factorSlowModularFactorsWithBound exhaustiveNonMonicQuadraticGuard 4 =
+  some #[exhaustiveNonMonicQuadraticGuard]
+
+/-- Transitional total raw modular factor array retained for existing proof
+surfaces while the public API moves to `factorSlowModularFactorsWithBound`.
+New callers should use the `Option`-valued modular name or the total
+`factorSlowTrialFactorsWithBound` backstop. -/
 def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
@@ -6656,45 +6676,19 @@ def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
           exhaustiveCoreFactorsWithBound normalized.squareFreeCore B primeData
         reassemblePolynomialFactors normalized coreFactors
 
-#guard factorSlowFactorsWithBound exhaustiveNonMonicQuadraticGuard 4 =
-  #[exhaustiveNonMonicQuadraticGuard]
+/-- Characterise the safe branch of `factorSlowModularFactorsWithBound`.
 
-/-- Option-returning slow-path raw factor array.
-
-Returns `some` precisely on the constant-core early-out, the
-quadratic-integer-root short-circuit, and the prime-data-available
-exhaustive case. Returns `none` precisely when both the
-quadratic-integer-root short-circuit fails and `choosePrimeData?` yields
-`none` on the normalized square-free core.
-
-This is the slow-path counterpart of the already-`Option`-returning
-`factorFastFactorsWithBound`. Provides the slow-side
-Option-propagating boundary recommended by #5831 (HO-5d-1b). -/
-def factorSlowFactorsWithBound? (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
-  let normalized := normalizeForFactor f
-  if normalized.squareFreeCore.degree?.getD 0 = 0 then
-    some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
-  else
-    match quadraticIntegerRootFactors? normalized.squareFreeCore with
-    | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
-    | none =>
-        (choosePrimeData? normalized.squareFreeCore).map fun primeData =>
-          reassemblePolynomialFactors normalized
-            (exhaustiveCoreFactorsWithBound normalized.squareFreeCore B primeData)
-
-/-- Characterise the `some` branch of `factorSlowFactorsWithBound?`.
-
-The `?` variant returns `some (factorSlowFactorsWithBound f B)` exactly
-on the safe branches and `none` precisely on the cascade the silent
-fallback would otherwise mask. Mirrors `factorWithBound?_eq_some_iff_safe_branch`
-for the slow raw-factor path. -/
-theorem factorSlowFactorsWithBound?_eq_some_iff_safe_branch (f : ZPoly) (B : Nat) :
-    factorSlowFactorsWithBound? f B =
+The modular form returns `some (factorSlowFactorsWithBound f B)` exactly on the
+constant, quadratic-root, and prime-data-available branches, and `none` on the
+branch that the transitional total array still handles through
+`choosePrimeData`. -/
+theorem factorSlowModularFactorsWithBound_eq_some_iff_safe_branch (f : ZPoly) (B : Nat) :
+    factorSlowModularFactorsWithBound f B =
       (if (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0 ∨
           (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome ∨
           (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
         then some (factorSlowFactorsWithBound f B) else none) := by
-  unfold factorSlowFactorsWithBound? factorSlowFactorsWithBound
+  unfold factorSlowModularFactorsWithBound factorSlowFactorsWithBound
   by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
   · simp [hdeg]
   · simp only [hdeg, if_false]
@@ -6782,16 +6776,92 @@ theorem factorSlowFactorsWithBound_branch_of_choosePrimeData?_some
   rw [hwf] at hbranch
   exact hbranch
 
+def factorSlowModularWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
+  (factorSlowModularFactorsWithBound f B).map (factorizationOfFactors f)
+
 private def factorSlowWithBound (f : ZPoly) (B : Nat) : Factorization :=
   factorizationOfFactors f (factorSlowFactorsWithBound f B)
 
+private theorem factorSlowModularFactorsWithBound_eq_some_eq_factorSlowFactorsWithBound
+    {f : ZPoly} {B : Nat} {rawFactors : Array ZPoly}
+    (h : factorSlowModularFactorsWithBound f B = some rawFactors) :
+    rawFactors = factorSlowFactorsWithBound f B := by
+  rw [factorSlowModularFactorsWithBound] at h
+  unfold factorSlowFactorsWithBound
+  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  · simp [hdeg] at h ⊢
+    exact h.symm
+  · simp only [hdeg, if_false] at h ⊢
+    cases hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
+    | some coreFactors =>
+        simp [hquad] at h ⊢
+        exact h.symm
+    | none =>
+        cases hchoose : choosePrimeData? (normalizeForFactor f).squareFreeCore with
+        | none =>
+            simp [hquad, hchoose] at h
+        | some primeData =>
+            have hchoose_total :
+                choosePrimeData (normalizeForFactor f).squareFreeCore = primeData :=
+              choosePrimeData_eq_of_choosePrimeData?_some hchoose
+            simp [hquad, hchoose, hchoose_total] at h ⊢
+            exact h.symm
+
 /--
-Factor using the exhaustive recombination path at the default Mignotte
-coefficient bound. This is the public slow-path backstop for the two-tier BZ
-API.
+Factor using the modular recombination path at the default Mignotte
+coefficient bound. This is the middle tier of the three-tier BZ API and
+returns `none` when no admissible modular prime is available.
 -/
+def factorSlowModular (f : ZPoly) : Option Factorization :=
+  factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f)
+
 def factorSlow (f : ZPoly) : Factorization :=
   factorSlowWithBound f (ZPoly.defaultFactorCoeffBound f)
+
+@[simp] theorem factorSlowModular_eq_factorSlowModularWithBound_default
+    (f : ZPoly) :
+    factorSlowModular f =
+      factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f) := rfl
+
+/-- Compatibility theorem for existing product proofs: when the canonical
+Option-valued modular path succeeds, its result agrees with the old total
+array view used internally by the current proof layer. -/
+theorem factorSlowModularWithBound_eq_some_eq_factorSlowWithBound
+    {f : ZPoly} {B : Nat} {φ : Factorization}
+    (h : factorSlowModularWithBound f B = some φ) :
+    φ = factorSlowWithBound f B := by
+  unfold factorSlowModularWithBound at h
+  cases hraw : factorSlowModularFactorsWithBound f B with
+  | none =>
+      rw [hraw] at h
+      simp at h
+  | some rawFactors =>
+      have hraw_eq :
+          rawFactors = factorSlowFactorsWithBound f B :=
+        factorSlowModularFactorsWithBound_eq_some_eq_factorSlowFactorsWithBound hraw
+      rw [hraw] at h
+      change some (factorizationOfFactors f rawFactors) = some φ at h
+      change φ = factorizationOfFactors f (factorSlowFactorsWithBound f B)
+      rw [← hraw_eq]
+      exact (Option.some.inj h).symm
+
+theorem factorSlowModularWithBound_eq_some_iff_safe_branch (f : ZPoly) (B : Nat) :
+    factorSlowModularWithBound f B =
+      (if (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0 ∨
+          (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome ∨
+          (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
+        then some (factorSlowWithBound f B) else none) := by
+  by_cases hsafe :
+      (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0 ∨
+        (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome ∨
+        (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
+  · rw [if_pos hsafe]
+    unfold factorSlowModularWithBound
+    rw [factorSlowModularFactorsWithBound_eq_some_iff_safe_branch, if_pos hsafe]
+    rfl
+  · unfold factorSlowModularWithBound
+    rw [factorSlowModularFactorsWithBound_eq_some_iff_safe_branch]
+    simp [hsafe]
 
 /-- Raw factor array produced by the integer trial-division slow path.
 
@@ -6827,80 +6897,8 @@ coefficient bound. This is the trial-division tier of the three-tier
 def factorSlowTrial (f : ZPoly) : Factorization :=
   factorSlowTrialWithBound f (ZPoly.defaultFactorCoeffBound f)
 
-#guard factorSlowTrial exhaustiveNonMonicQuadraticGuard =
-  factorSlow exhaustiveNonMonicQuadraticGuard
-
-/-- Option-returning wrapper over `factorSlowWithBound` that explicitly fails
-when the modular slow path would otherwise dispatch through the silent
-`choosePrimeDataFallback`.
-
-Returns `some (factorSlowWithBound f B)` on the constant-core early-out, the
-quadratic-integer-root short-circuit, and whenever
-`choosePrimeData? (normalizeForFactor f).squareFreeCore` is `some`. Returns
-`none` precisely when all three conditions fail, i.e. when the legacy slow
-path would have produced a wrong answer via the silent fallback.
-
-This is the modular tier of the three-tier `factor` combinator (SPEC PR #6580):
-the parent combinator routes to `factorSlowTrial` exactly when this wrapper
-returns `none`. -/
-def factorSlowModularWithBound? (f : ZPoly) (B : Nat) : Option Factorization :=
-  let normalized := normalizeForFactor f
-  if normalized.squareFreeCore.degree?.getD 0 = 0 then
-    some (factorSlowWithBound f B)
-  else if (quadraticIntegerRootFactors? normalized.squareFreeCore).isSome then
-    some (factorSlowWithBound f B)
-  else if (choosePrimeData? normalized.squareFreeCore).isSome then
-    some (factorSlowWithBound f B)
-  else
-    none
-
-/-- Default-bound Option-returning wrapper over `factorSlow`; the modular tier
-of the three-tier `factor` combinator. -/
-def factorSlowModular? (f : ZPoly) : Option Factorization :=
-  factorSlowModularWithBound? f (ZPoly.defaultFactorCoeffBound f)
-
-@[simp] theorem factorSlowModular?_eq_factorSlowModularWithBound?_default
-    (f : ZPoly) :
-    factorSlowModular? f =
-      factorSlowModularWithBound? f (ZPoly.defaultFactorCoeffBound f) := rfl
-
-/-- Characterise the `some` branch of `factorSlowModularWithBound?`. The
-wrapper returns `some (factorSlowWithBound f B)` exactly on the same safe
-branches identified by `factorSlowFactorsWithBound?_eq_some_iff_safe_branch`,
-and `none` precisely on the silent-fallback branch that the three-tier
-combinator reroutes to `factorSlowTrial`. -/
-theorem factorSlowModularWithBound?_eq_some_iff_safe_branch (f : ZPoly) (B : Nat) :
-    factorSlowModularWithBound? f B =
-      (if (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0 ∨
-          (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome ∨
-          (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
-        then some (factorSlowWithBound f B) else none) := by
-  unfold factorSlowModularWithBound?
-  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-  · simp [hdeg]
-  · by_cases hquad :
-      (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome
-    · simp [hdeg, hquad]
-    · by_cases hprime :
-        (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
-      · simp [hdeg, hquad, hprime]
-      · simp [hdeg, hquad, hprime]
-
-/-- A successful `factorSlowModularWithBound?` result is exactly
-`factorSlowWithBound f B`. -/
-theorem factorSlowModularWithBound?_eq_some_eq_factorSlowWithBound
-    {f : ZPoly} {B : Nat} {φ : Factorization}
-    (h : factorSlowModularWithBound? f B = some φ) :
-    φ = factorSlowWithBound f B := by
-  rw [factorSlowModularWithBound?_eq_some_iff_safe_branch] at h
-  by_cases hsafe :
-      (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0 ∨
-        (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome ∨
-        (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome
-  · rw [if_pos hsafe] at h
-    exact (Option.some.inj h).symm
-  · rw [if_neg hsafe] at h
-    cases h
+#guard factorSlowModular exhaustiveNonMonicQuadraticGuard =
+  some (factorSlowTrial exhaustiveNonMonicQuadraticGuard)
 
 /-- Raw factor array produced by the fast BHKS branch, when it succeeds.
 
@@ -7369,7 +7367,7 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
 Factor with an explicit coefficient bound for the recombination stage.
 
 Three-tier dispatch (SPEC PR #6580): the bounded fast path is tried first; on
-`none` the modular slow path (`factorSlowModularWithBound?`) is consulted; on
+`none` the modular slow path (`factorSlowModularWithBound`) is consulted; on
 its `none` (i.e. when `choosePrimeData?` would otherwise route through the
 silent fallback) the integer trial-division slow path supplies the returned
 `Factorization`.
@@ -7378,7 +7376,7 @@ def factorWithBound (f : ZPoly) (B : Nat) : Factorization :=
   match factorFastWithBound f B with
   | some r => r
   | none =>
-    match factorSlowModularWithBound? f B with
+    match factorSlowModularWithBound f B with
     | some r => r
     | none => factorSlowTrialWithBound f B
 
@@ -7469,32 +7467,31 @@ set_option maxHeartbeats 800000
 /-- The bounded public factorization is built from one of three raw factor
 arrays: the fast path's output (on `some`), the modular slow path's
 `factorSlowFactorsWithBound` (when the fast path returns `none` and
-`factorSlowModularWithBound?` returns `some`), or the integer trial-division
+`factorSlowModularWithBound` returns `some`), or the integer trial-division
 slow path's `factorSlowTrialFactorsWithBound` (when both predecessors return
 `none`). -/
 theorem factorWithBound_eq_factorizationOfFactors (f : ZPoly) (B : Nat) :
     ∃ rawFactors : Array ZPoly,
       (factorFastFactorsWithBound f B = some rawFactors ∨
         (factorFastFactorsWithBound f B = none ∧
-          (factorSlowModularWithBound? f B).isSome = true ∧
+          (factorSlowModularWithBound f B).isSome = true ∧
           rawFactors = factorSlowFactorsWithBound f B) ∨
         (factorFastFactorsWithBound f B = none ∧
-          factorSlowModularWithBound? f B = none ∧
+          factorSlowModularWithBound f B = none ∧
           rawFactors = factorSlowTrialFactorsWithBound f B)) ∧
       factorWithBound f B = factorizationOfFactors f rawFactors := by
   by_cases hfast : (factorFastFactorsWithBound f B).isSome
   · obtain ⟨rawFactors, hfast_some⟩ := Option.isSome_iff_exists.mp hfast
     refine ⟨rawFactors, Or.inl hfast_some, ?_⟩
-    simp only [factorWithBound, factorFastWithBound, hfast_some, Option.map_some,
-      Option.getD_some]
+    simp only [factorWithBound, factorFastWithBound, hfast_some, Option.map_some]
   · have hfast_none : factorFastFactorsWithBound f B = none :=
       Option.not_isSome_iff_eq_none.mp hfast
     have hfastWB : factorFastWithBound f B = none := by
       simp [factorFastWithBound, hfast_none]
-    by_cases hmod : (factorSlowModularWithBound? f B).isSome
+    by_cases hmod : (factorSlowModularWithBound f B).isSome
     · obtain ⟨φ, hmod_some⟩ := Option.isSome_iff_exists.mp hmod
       have hφ : φ = factorSlowWithBound f B :=
-        factorSlowModularWithBound?_eq_some_eq_factorSlowWithBound hmod_some
+        factorSlowModularWithBound_eq_some_eq_factorSlowWithBound hmod_some
       refine ⟨factorSlowFactorsWithBound f B,
         Or.inr (Or.inl ⟨hfast_none, hmod, rfl⟩), ?_⟩
       show factorWithBound f B =
@@ -7502,7 +7499,7 @@ theorem factorWithBound_eq_factorizationOfFactors (f : ZPoly) (B : Nat) :
       unfold factorWithBound
       rw [hfastWB, hmod_some]
       exact hφ.trans rfl
-    · have hmod_none : factorSlowModularWithBound? f B = none :=
+    · have hmod_none : factorSlowModularWithBound f B = none :=
         Option.not_isSome_iff_eq_none.mp hmod
       refine ⟨factorSlowTrialFactorsWithBound f B,
         Or.inr (Or.inr ⟨hfast_none, hmod_none, rfl⟩), ?_⟩
@@ -7659,7 +7656,7 @@ theorem factor_scalar_eq_zero_iff (f : ZPoly) :
 /-- Any recorded entry of `factorWithBound` comes from one of three raw factor
 arrays: the fast path's output, the modular slow path's
 `factorSlowFactorsWithBound` (when the fast path returns `none` and
-`factorSlowModularWithBound?` returns `some`), or the integer trial-division
+`factorSlowModularWithBound` returns `some`), or the integer trial-division
 slow path's `factorSlowTrialFactorsWithBound` (when both predecessors return
 `none`), after the `collectFactorMultiplicities` sign-normalization step. -/
 theorem factorWithBound_entry_mem_raw_source
@@ -7668,10 +7665,10 @@ theorem factorWithBound_entry_mem_raw_source
     ∃ rawFactors : Array ZPoly,
       (factorFastFactorsWithBound f B = some rawFactors ∨
         (factorFastFactorsWithBound f B = none ∧
-          (factorSlowModularWithBound? f B).isSome = true ∧
+          (factorSlowModularWithBound f B).isSome = true ∧
           rawFactors = factorSlowFactorsWithBound f B) ∨
         (factorFastFactorsWithBound f B = none ∧
-          factorSlowModularWithBound? f B = none ∧
+          factorSlowModularWithBound f B = none ∧
           rawFactors = factorSlowTrialFactorsWithBound f B)) ∧
       ∃ raw ∈ rawFactors.toList, entry.1 = normalizeFactorSign raw := by
   obtain ⟨rawFactors, hrawFactors, hfactor⟩ :=
@@ -7691,10 +7688,10 @@ theorem factorWithBound_entry_primitive_of_chosen_raw_primitive
       ∀ rawFactors : Array ZPoly,
         (factorFastFactorsWithBound f B = some rawFactors ∨
           (factorFastFactorsWithBound f B = none ∧
-            (factorSlowModularWithBound? f B).isSome = true ∧
+            (factorSlowModularWithBound f B).isSome = true ∧
             rawFactors = factorSlowFactorsWithBound f B) ∨
           (factorFastFactorsWithBound f B = none ∧
-            factorSlowModularWithBound? f B = none ∧
+            factorSlowModularWithBound f B = none ∧
             rawFactors = factorSlowTrialFactorsWithBound f B)) →
         ∀ raw ∈ rawFactors.toList, ZPoly.Primitive raw) :
     ZPoly.Primitive entry.1 := by
@@ -7711,10 +7708,10 @@ theorem factorWithBound_entries_primitive
       ∀ rawFactors : Array ZPoly,
         (factorFastFactorsWithBound f B = some rawFactors ∨
           (factorFastFactorsWithBound f B = none ∧
-            (factorSlowModularWithBound? f B).isSome = true ∧
+            (factorSlowModularWithBound f B).isSome = true ∧
             rawFactors = factorSlowFactorsWithBound f B) ∨
           (factorFastFactorsWithBound f B = none ∧
-            factorSlowModularWithBound? f B = none ∧
+            factorSlowModularWithBound f B = none ∧
             rawFactors = factorSlowTrialFactorsWithBound f B)) →
         ∀ raw ∈ rawFactors.toList, ZPoly.Primitive raw) :
     ∀ entry ∈ (factorWithBound f B).factors, ZPoly.Primitive entry.1 := by
@@ -7829,13 +7826,13 @@ theorem factor_entry_mem_raw_source
           some rawFactors ∨
         (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
             none ∧
-          (factorSlowModularWithBound? f (ZPoly.defaultFactorCoeffBound f)).isSome
+          (factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f)).isSome
             = true ∧
           rawFactors =
             factorSlowFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)) ∨
         (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
             none ∧
-          factorSlowModularWithBound? f (ZPoly.defaultFactorCoeffBound f) = none ∧
+          factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f) = none ∧
           rawFactors =
             factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f))) ∧
       ∃ raw ∈ rawFactors.toList, entry.1 = normalizeFactorSign raw := by
@@ -7855,13 +7852,13 @@ theorem factor_entry_primitive_of_chosen_raw_primitive
             some rawFactors ∨
           (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
               none ∧
-            (factorSlowModularWithBound? f (ZPoly.defaultFactorCoeffBound f)).isSome
+            (factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f)).isSome
               = true ∧
             rawFactors =
               factorSlowFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)) ∨
           (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
               none ∧
-            factorSlowModularWithBound? f (ZPoly.defaultFactorCoeffBound f) = none ∧
+            factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f) = none ∧
             rawFactors =
               factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f))) →
         ∀ raw ∈ rawFactors.toList, ZPoly.Primitive raw) :
@@ -7881,13 +7878,13 @@ theorem factor_entries_primitive
             some rawFactors ∨
           (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
               none ∧
-            (factorSlowModularWithBound? f (ZPoly.defaultFactorCoeffBound f)).isSome
+            (factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f)).isSome
               = true ∧
             rawFactors =
               factorSlowFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)) ∨
           (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
               none ∧
-            factorSlowModularWithBound? f (ZPoly.defaultFactorCoeffBound f) = none ∧
+            factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f) = none ∧
             rawFactors =
               factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f))) →
         ∀ raw ∈ rawFactors.toList, ZPoly.Primitive raw) :
@@ -7916,10 +7913,10 @@ theorem factorWithBound_entry_mem_exhaustive_branch_raw
   obtain ⟨hfast, hdeg, hquad, hprime⟩ := hbranch
   obtain ⟨rawFactors, hsource, raw, hraw_mem, hraw_norm⟩ :=
     factorWithBound_entry_mem_raw_source f B entry hmem
-  have hmod_some : (factorSlowModularWithBound? f B).isSome = true := by
-    rw [factorSlowModularWithBound?_eq_some_iff_safe_branch]
-    rw [if_pos (Or.inr (Or.inr hprime))]
-    rfl
+  have hmod_some : (factorSlowModularWithBound f B).isSome = true := by
+    unfold factorSlowModularWithBound factorSlowModularFactorsWithBound
+    rw [if_neg hdeg, hquad]
+    simpa using hprime
   rcases hsource with hfast_some | ⟨_, _, hrawFactors⟩ | ⟨_, hmod_none, _⟩
   · exfalso
     rw [hfast] at hfast_some
@@ -8187,12 +8184,9 @@ theorem factorWithBound_entry_mem_slow_quadratic_branch_raw
       entry.1 = normalizeFactorSign raw := by
   obtain ⟨rawFactors, hsource, raw, hraw_mem, hraw_norm⟩ :=
     factorWithBound_entry_mem_raw_source f B entry hmem
-  have hmod_some : (factorSlowModularWithBound? f B).isSome = true := by
-    rw [factorSlowModularWithBound?_eq_some_iff_safe_branch]
-    have hquad_some : (quadraticIntegerRootFactors?
-        (normalizeForFactor f).squareFreeCore).isSome = true := by
-      rw [hquad]; rfl
-    rw [if_pos (Or.inr (Or.inl hquad_some))]
+  have hmod_some : (factorSlowModularWithBound f B).isSome = true := by
+    unfold factorSlowModularWithBound factorSlowModularFactorsWithBound
+    rw [if_neg hdeg, hquad]
     rfl
   rcases hsource with hfast_some | ⟨_, _, hrawFactors⟩ | ⟨_, hmod_none, _⟩
   · exfalso
@@ -14909,9 +14903,9 @@ theorem factorWithBound_product (f : ZPoly) (B : Nat) :
   | some φ =>
       exact factorFastWithBound_product_of_some hfast
   | none =>
-      cases hmod : factorSlowModularWithBound? f B with
+      cases hmod : factorSlowModularWithBound f B with
       | some φ =>
-          rw [factorSlowModularWithBound?_eq_some_eq_factorSlowWithBound hmod]
+          rw [factorSlowModularWithBound_eq_some_eq_factorSlowWithBound hmod]
           exact factorSlowWithBound_product f B
       | none =>
           exact factorSlowTrialWithBound_product f B
