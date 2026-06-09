@@ -2388,36 +2388,60 @@ theorem lllNative_short_vector
   rw [hηη] at hbnd
   exact hbnd
 
-/-- The public LLL `lll` produces a `(δ, 11/20)`-LLL-reduced matrix.
-Obtained from `lllNative_isLLLReduced` (`η = 1/2`) by monotonic weakening
-of the size-reduction bound via `isLLLReduced.mono_η`. -/
+/-- Property triple for an accepted dispatch result: a `B'` returned by
+`LLLProvider.dispatch b δ` generates the same lattice as `b`, is independent,
+and is `(δ, 11/20)`-LLL-reduced. Composes `dispatch_some_certCheck` with
+`HexLLLMathlib.certCheck_sound`, the single trusted property-level bridge of
+`hex-lll` §"Certified external dispatch". -/
+theorem dispatch_some_property {b : Matrix Int n m} {δ : Rat}
+    {B' : Matrix Int n m} (h : LLLProvider.dispatch b δ = some B') :
+    (∀ v, b.memLattice v ↔ B'.memLattice v) ∧
+      B'.independent ∧ isLLLReduced B' δ (11 / 20) := by
+  obtain ⟨U, V, hcheck⟩ := LLLProvider.dispatch_some_certCheck h
+  exact HexLLLMathlib.certCheck_sound hcheck
+
+/-- The public LLL `lll` produces a `(δ, 11/20)`-LLL-reduced matrix. On the
+native fallback path this follows from `lllNative_isLLLReduced` (`η = 1/2`) and
+`isLLLReduced.mono_η`. On the certified-dispatch path it follows from
+`certCheck_sound` via `dispatch_some_property`. -/
 theorem lll_isLLLReduced (b : Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent) :
     isLLLReduced (lll b δ hδ hδ' hn hind) δ (11 / 20) := by
-  have hred := lllNative_isLLLReduced b δ
-    (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
-  show isLLLReduced (lllNative b δ
-    (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn) δ (11 / 20)
-  exact Hex.isLLLReduced.mono_η _ (by grind) (by grind) hred
+  unfold lll
+  cases hd : LLLProvider.dispatch b δ with
+  | none =>
+      have hred := lllNative_isLLLReduced b δ
+        (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
+      exact Hex.isLLLReduced.mono_η _ (by grind) (by grind) hred
+  | some B' =>
+      exact (dispatch_some_property hd).2.2
 
 /-- The generated lattice is preserved by `Hex.lll`. -/
 theorem lll_memLattice_iff (b : Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent) (v : Vector Int m) :
     Matrix.memLattice (lll b δ hδ hδ' hn hind) v ↔ Matrix.memLattice b v := by
-  show Matrix.memLattice (lllNative b δ
-    (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn) v ↔ _
-  exact lllNative_memLattice_iff b δ _ hδ' hn v
+  unfold lll
+  cases hd : LLLProvider.dispatch b δ with
+  | none =>
+      exact lllNative_memLattice_iff b δ
+        (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn v
+  | some B' =>
+      exact ((dispatch_some_property hd).1 v).symm
 
 /-- Independence is preserved by `Hex.lll`. -/
 theorem lll_independent (b : Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent) :
     (lll b δ hδ hδ' hn hind).independent := by
-  show (lllNative b δ
-    (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn).independent
-  exact lllNative_independent b δ _ hδ' hn hind
+  unfold lll
+  cases hd : LLLProvider.dispatch b δ with
+  | none =>
+      exact lllNative_independent b δ
+        (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
+  | some B' =>
+      exact (dispatch_some_property hd).2.1
 
 /-- Public LLL short-vector bound at `η = 11/20`. For any independent
 integer basis `b`, the first row of `Hex.lll b δ ... hind` has squared norm at
@@ -2470,9 +2494,13 @@ theorem lll_mem_latticeSubmodule_iff
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent) (x : Fin m → ℤ) :
     x ∈ latticeSubmodule (Hex.lll b δ hδ hδ' hn hind) ↔ x ∈ latticeSubmodule b := by
-  show x ∈ latticeSubmodule (Hex.lllNative b δ
-    (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn) ↔ _
-  exact lllNative_mem_latticeSubmodule_iff b δ _ hδ' hn x
+  let v := HexMatrixMathlib.vectorEquiv.symm x
+  have hxv : x = HexMatrixMathlib.vectorEquiv v :=
+    (Equiv.apply_symm_apply _ x).symm
+  rw [hxv]
+  rw [mem_latticeSubmodule_iff (Hex.lll b δ hδ hδ' hn hind) v,
+      mem_latticeSubmodule_iff b v]
+  exact Hex.lll_memLattice_iff b δ hδ hδ' hn hind v
 
 /-- Classical Mathlib-Euclidean LLL short-vector bound on `Hex.lllNative` at
 `η = 1/2`. Combines `Hex.lllNative_isLLLReduced` with the conditional

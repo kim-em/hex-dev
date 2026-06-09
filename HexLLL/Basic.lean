@@ -993,49 +993,6 @@ theorem one_quarter_lt_of_eta_eleven_twentieths {δ : Rat}
     (hδ : (121 / 400 : Rat) < δ) : (1 / 4 : Rat) < δ := by
   grind
 
-/-- Top-level LLL entry point. Wraps `lllNative` and carries the public
-`η = 11/20` precondition `121/400 < δ`. The proof-carrying
-`b.independent` argument supports downstream callers that already have it.
-Output guarantees are stated at `η = 11/20`; the underlying algorithm in fact
-achieves `|μ| ≤ 1/2`, so the η = 11/20 bound follows by monotonic weakening
-of the size-reduction bound. -/
-def lll (b : Matrix Int n m) (δ : Rat)
-    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
-    (_hind : b.independent) :
-    Matrix Int n m :=
-  lllNative b δ (one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn
-
-/-- Proof-free executable variant of `lll.firstShortVector`. Targets the
-native body directly with the classical precondition `1/4 < δ`. -/
-def lll.firstShortVectorUnchecked (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
-    Vector Int m :=
-  (lllNative b δ hδ hδ' hn)[0]
-
-/-- The first row of the reduced basis (shortest vector under the LLL
-guarantee). Canonical short-vector entry point for downstream callers
-such as `hex-berlekamp-zassenhaus` recombination. -/
-def lll.firstShortVector (b : Matrix Int n m) (δ : Rat)
-    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
-    (hind : b.independent) :
-    Vector Int m :=
-  (lll b δ hδ hδ' hn hind)[0]
-
-/-- Proof-free executable variant of `lll.shortVectors`. Targets the
-native body directly with the classical precondition `1/4 < δ`. -/
-def lll.shortVectorsUnchecked (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
-    Array (Vector Int m) :=
-  (lllNative b δ hδ hδ' hn).toArray
-
-/-- The full reduced basis viewed as an ordered array of candidate short
-vectors. -/
-def lll.shortVectors (b : Matrix Int n m) (δ : Rat)
-    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
-    (hind : b.independent) :
-    Array (Vector Int m) :=
-  (lll b δ hδ hδ' hn hind).toArray
-
 namespace LLLProvider
 
 @[extern "lean_hexlll_provider_available"]
@@ -1158,6 +1115,173 @@ def tryReduce (rows cols : USize) (entries : Array String)
 #guard validateFlat 2 3 false #[0, 2, 3, 1, 1, 2, 3, 4, 5, 6, 1, 0, 0, 1] == none
 #guard validateFlat 2 3 false #[0, 2, 3, 0, 1, 2, 3, 4, 5, 6, 1, 0, 0] == none
 
+/-- Side-effecting companion of `recordOutcome` callable from pure code.
+
+Definitionally `k`, so kernel reduction and proofs treat it as identity on the
+continuation. The `@[implemented_by]` attribute redirects compiled code to a
+side-effecting implementation that bumps `diagnosticsRef` via `unsafeBaseIO`
+before returning `k`, giving us the diagnostic tally that the SPEC requires
+without forcing `lll` into `IO`. The pattern mirrors `Init.Util.withPtrEq`. -/
+unsafe def withRecordOutcomeImpl {α : Sort u} (o : Outcome) (k : α) : α :=
+  match unsafeBaseIO (diagnosticsRef.modify (fun d => bump d o)) with
+  | () => k
+
+@[implemented_by withRecordOutcomeImpl]
+def withRecordOutcome {α : Sort u} (_o : Outcome) (k : α) : α := k
+
+/-- Approximate `Rat → Float` conversion used to forward the requested `δ` to
+the external reducer. Precision of the forwarded value is not part of
+correctness: the candidate is certified by integer arithmetic against the
+exact `δ`. -/
+private def ratToFloat (r : Rat) : Float :=
+  Float.ofInt r.num / Float.ofNat r.den
+
+/-- Row-major marshalling of an integer matrix into the `Array String` payload
+the external provider expects. -/
+def matrixToEntries (B : Hex.Matrix Int n m) : Array String :=
+  B.toArray.flatMap (fun row => row.toArray.map toString)
+
+/-- Reshape a flat row-major `Array Int` of length `rows * cols` into a
+`Matrix Int rows cols`. Returns `none` on length mismatch. -/
+def matrixFromArray (rows cols : Nat) (a : Array Int) :
+    Option (Hex.Matrix Int rows cols) :=
+  if h : a.size = rows * cols then
+    some (Vector.ofFn fun i =>
+      Vector.ofFn fun j =>
+        a[i.val * cols + j.val]'(by
+          have hi : i.val + 1 ≤ rows := Nat.succ_le_of_lt i.isLt
+          have h1 : (i.val + 1) * cols ≤ rows * cols :=
+            Nat.mul_le_mul_right cols hi
+          have hjlt : j.val < cols := j.isLt
+          have h2 : i.val * cols + j.val < (i.val + 1) * cols := by
+            rw [Nat.succ_mul]
+            exact Nat.add_lt_add_left hjlt _
+          have h3 : i.val * cols + j.val < rows * cols :=
+            Nat.lt_of_lt_of_le h2 h1
+          rw [h]; exact h3))
+  else
+    none
+
+/-- Bundled output of the shape/cert pipeline: the reduced basis `B'`,
+the two integer transforms, and a proof that they pass `Hex.certCheck` at
+`(δ, 11/20)`. Bundling the proof inside the option lets the extraction lemma
+read it off as a projection. -/
+def CertifiedTriple (B : Hex.Matrix Int n m) (δ : Rat) : Type :=
+  Σ' (B' : Hex.Matrix Int n m) (U V : Hex.Matrix Int n n),
+    Hex.certCheck B B' U V δ (11 / 20) = true
+
+/-- Pure shape/cert pipeline run on a flat provider payload. Validates the
+header, reshapes the reduced basis and the two transforms, and runs
+`Hex.certCheck` at `η = 11/20`. Returns the bundled certified triple on
+acceptance and `none` on any failure. -/
+def certifyFlat (B : Hex.Matrix Int n m) (δ : Rat) (flat : Array Int) :
+    Option (CertifiedTriple B δ) :=
+  match validateFlat n m true flat with
+  | none => none
+  | some candidate =>
+      match candidate.inverse? with
+      | none => none
+      | some invFlat =>
+          match matrixFromArray n m candidate.reduced with
+          | none => none
+          | some B' =>
+              match matrixFromArray n n candidate.transform with
+              | none => none
+              | some U =>
+                  match matrixFromArray n n invFlat with
+                  | none => none
+                  | some V =>
+                      match h : Hex.certCheck B B' U V δ (11 / 20) with
+                      | true => some ⟨B', U, V, h⟩
+                      | false => none
+
+/-- Pure certified-dispatch core. Gates on `providerAvailable ()` first so the
+native path pays only the cached probe; marshals input and certifies the
+candidate when the provider is present; updates the diagnostic tally via
+`withRecordOutcome` on each outcome.
+
+Returns the certified reduced basis `B'` on acceptance and `none` on absent /
+provider error / shape rejection / certificate rejection. The Mathlib-free
+correctness hook is `dispatch_some_certCheck`. -/
+def dispatch (B : Hex.Matrix Int n m) (δ : Rat) :
+    Option (Hex.Matrix Int n m) :=
+  if !providerAvailable () then
+    withRecordOutcome .absent none
+  else
+    match providerReduce (USize.ofNat n) (USize.ofNat m) (matrixToEntries B)
+        (ratToFloat δ) 0.55 0 true with
+    | .error _ => withRecordOutcome .providerError none
+    | .ok flat =>
+        match certifyFlat B δ flat with
+        | none => withRecordOutcome .rejected none
+        | some triple => withRecordOutcome .accepted (some triple.1)
+
+/-- An accepted `dispatch` result exhibits the integer transforms witnessing
+`certCheck B B' U V δ (11/20) = true`. The property-level extraction
+(`(same lattice, B'.independent, isLLLReduced B' δ (11/20))`) is `certCheck`'s
+soundness theorem in HexLLLMathlib. -/
+theorem dispatch_some_certCheck {B : Hex.Matrix Int n m} {δ : Rat}
+    {B' : Hex.Matrix Int n m} (h : dispatch B δ = some B') :
+    ∃ U V : Hex.Matrix Int n n, Hex.certCheck B B' U V δ (11 / 20) = true := by
+  unfold dispatch at h
+  simp only [withRecordOutcome] at h
+  split at h
+  · cases h
+  split at h
+  · cases h
+  split at h
+  · cases h
+  rename_i triple _
+  have heq : triple.1 = B' := Option.some.inj h
+  refine ⟨triple.2.1, triple.2.2.1, ?_⟩
+  rw [← heq]
+  exact triple.2.2.2
+
 end LLLProvider
+
+/-- Top-level LLL entry point. Dispatches first to the certified-external path:
+if `LLLProvider.providerAvailable ()` is true and the candidate passes
+`certCheck B B' U V δ (11/20)`, the certified `B'` is returned; otherwise the
+native body `lllNative` runs. The two paths satisfy the identical
+post-condition (`isLLLReduced (lll …) δ (11/20)`, same lattice, the public
+short-vector bound), so dispatch is invisible to callers and to proofs. -/
+def lll (b : Matrix Int n m) (δ : Rat)
+    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (_hind : b.independent) :
+    Matrix Int n m :=
+  match LLLProvider.dispatch b δ with
+  | some B' => B'
+  | none => lllNative b δ (one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn
+
+/-- Proof-free executable variant of `lll.firstShortVector`. Targets the
+native body directly with the classical precondition `1/4 < δ`. -/
+def lll.firstShortVectorUnchecked (b : Matrix Int n m) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
+    Vector Int m :=
+  (lllNative b δ hδ hδ' hn)[0]
+
+/-- The first row of the reduced basis (shortest vector under the LLL
+guarantee). Canonical short-vector entry point for downstream callers
+such as `hex-berlekamp-zassenhaus` recombination. -/
+def lll.firstShortVector (b : Matrix Int n m) (δ : Rat)
+    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (hind : b.independent) :
+    Vector Int m :=
+  (lll b δ hδ hδ' hn hind)[0]
+
+/-- Proof-free executable variant of `lll.shortVectors`. Targets the
+native body directly with the classical precondition `1/4 < δ`. -/
+def lll.shortVectorsUnchecked (b : Matrix Int n m) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
+    Array (Vector Int m) :=
+  (lllNative b δ hδ hδ' hn).toArray
+
+/-- The full reduced basis viewed as an ordered array of candidate short
+vectors. -/
+def lll.shortVectors (b : Matrix Int n m) (δ : Rat)
+    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (hind : b.independent) :
+    Array (Vector Int m) :=
+  (lll b δ hδ hδ' hn hind).toArray
 
 end Hex
