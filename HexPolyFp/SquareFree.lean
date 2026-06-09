@@ -4589,6 +4589,39 @@ private theorem yunScalarStep
     rw [hrawG]
     simpa [raw, g] using hquot
 
+/--
+Asymmetric scalar step bridge for the inner Yun recursion. Threads
+independent nonzero scalars `u_c`, `u_w` on `c`, `w` through one
+`yunFactorsContributionWithLevel` step: the executable `DensePoly.gcd`
+output picks up a single asymmetric scalar `v ≠ 0`, and both the quotient
+`c_raw / y_raw` and the descent tail `w_raw / y_raw` rescale by
+unit-paired prefactors `C (u_c · v⁻¹)` and `C (u_w · v⁻¹)`. Used by the
+recursive contribution sync as the induction step.
+-/
+private theorem yunFactorsContributionWithLevel_scalar_step_bridge
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    (c w : FpPoly p) {u_c u_w : ZMod64 p}
+    (hu_c : u_c ≠ 0) (hu_w : u_w ≠ 0)
+    (hg_ne : DensePoly.gcd c w ≠ 0) :
+    ∃ v : ZMod64 p, v ≠ 0 ∧
+      DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) =
+          DensePoly.C v * DensePoly.gcd c w ∧
+        (DensePoly.C u_c * c) /
+            DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) =
+          DensePoly.C (u_c * v⁻¹) * (c / DensePoly.gcd c w) ∧
+        (DensePoly.C u_w * w) /
+            DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) =
+          DensePoly.C (u_w * v⁻¹) * (w / DensePoly.gcd c w) := by
+  obtain ⟨v, hv_ne, hgcd⟩ :=
+    gcd_C_mul_left_C_mul_right_eq_C_mul_gcd hp u_c u_w hu_c hu_w c w
+  refine ⟨v, hv_ne, hgcd, ?_, ?_⟩
+  · rw [hgcd]
+    have hc_dvd : DensePoly.gcd c w ∣ c := DensePoly.gcd_dvd_left c w
+    exact div_C_mul_C_mul_of_dvd hp hu_c hv_ne c (DensePoly.gcd c w) hc_dvd hg_ne
+  · rw [hgcd]
+    have hw_dvd : DensePoly.gcd c w ∣ w := DensePoly.gcd_dvd_right c w
+    exact div_C_mul_C_mul_of_dvd hp hu_w hv_ne w (DensePoly.gcd c w) hw_dvd hg_ne
+
 private theorem coeff_derivative (f : FpPoly p) (n : Nat) :
     (DensePoly.derivative f).coeff n =
       ((n + 1 : Nat) : ZMod64 p) * f.coeff (n + 1) := by
