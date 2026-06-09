@@ -140,6 +140,36 @@ private theorem sqrtStep_ge_imp_sq_le {n x : Nat} (_hx : 0 < x)
     _ = (n / x) * x := Nat.mul_comm _ _
     _ ≤ n := Nat.div_mul_le_self n x
 
+private theorem sqrtStep_far_contracts
+    (n x : Nat) (hx : 0 < x) (hfar : 4 * n ≤ x * x) :
+    8 * sqrtStep n x ≤ 5 * x := by
+  have hq_mul : 4 * ((n / x) * x) ≤ x * x := by
+    exact Nat.le_trans (Nat.mul_le_mul_left 4 (Nat.div_mul_le_self n x)) hfar
+  have hq : 4 * (n / x) ≤ x := by
+    have hcancel := Nat.le_of_mul_le_mul_right
+      (by
+        calc
+          (4 * (n / x)) * x = 4 * ((n / x) * x) := by grind
+          _ ≤ x * x := hq_mul)
+      hx
+    simpa using hcancel
+  have hnext : 2 * sqrtStep n x ≤ x + n / x := by
+    unfold sqrtStep
+    exact Nat.mul_div_le (x + n / x) 2
+  calc
+    8 * sqrtStep n x = 4 * (2 * sqrtStep n x) := by grind
+    _ ≤ 4 * (x + n / x) := Nat.mul_le_mul_left 4 hnext
+    _ = 4 * x + 4 * (n / x) := by grind
+    _ ≤ 4 * x + x := Nat.add_le_add_left hq (4 * x)
+    _ = 5 * x := by grind
+
+private theorem sqrtStep_far_lt_self
+    (n x : Nat) (hx : 0 < x) (hfar : 4 * n ≤ x * x) :
+    sqrtStep n x < x := by
+  have hcontract := sqrtStep_far_contracts n x hx hfar
+  have hlt : 5 * x < 8 * x := by omega
+  exact Nat.lt_of_mul_lt_mul_left (Nat.lt_of_le_of_lt hcontract hlt)
+
 /-- The squared Euclidean norm of the coefficient vector of `f`. -/
 def coeffNormSq (f : ZPoly) : Nat :=
   (List.range f.size).foldl (fun acc i => acc + (f.coeff i).natAbs ^ 2) 0
