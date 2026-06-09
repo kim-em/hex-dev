@@ -84,16 +84,17 @@ def basisNormSq (basis : Matrix Rat n m) (i : Fin n) : Rat :=
 
 end LLLCore
 
-/-- A basis is `δ`-LLL-reduced when it is size-reduced and satisfies the
-Lovasz condition at every adjacent pair. -/
-def isLLLReduced (b : Matrix Int n m) (δ : Rat) : Prop :=
+/-- A basis is `(δ, η)`-LLL-reduced when it is size-reduced with bound `η`
+(`|μ| ≤ η` for every below-diagonal entry of the Gram-Schmidt coefficient
+matrix) and satisfies the Lovasz condition at every adjacent pair. -/
+def isLLLReduced (b : Matrix Int n m) (δ η : Rat) : Prop :=
   let basis := GramSchmidt.Int.basis b
   let coeffs := GramSchmidt.Int.coeffs b
   (∀ i j, (hi : i < n) → (hji : j < i) →
       let iFin : Fin n := ⟨i, hi⟩
       let jFin : Fin n := ⟨j, Nat.lt_trans hji hi⟩
       let μ := coeffs[iFin][jFin]
-      4 * μ * μ ≤ 1) ∧
+      μ * μ ≤ η * η) ∧
     ∀ i, (hi : i + 1 < n) →
       let iFin : Fin n := ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩
       let ip1Fin : Fin n := ⟨i + 1, hi⟩
@@ -122,21 +123,12 @@ theorem basisNormSq_nonneg (basis : Matrix Rat n m) (i : Fin n) :
   exact foldlNonneg (List.finRange m) (fun j => (basis.row i)[j] * (basis.row i)[j]) 0
     (by grind) (fun j => ratMulSelfNonneg ((basis.row i)[j]))
 
-private theorem coeffSq_le_quarter (μ : Rat) (hsize : 4 * μ * μ ≤ 1) :
-    μ * μ ≤ 1 / 4 := by
-  have hq_nonneg : (0 : Rat) ≤ 1 / 4 := by grind
-  have h := Rat.mul_le_mul_of_nonneg_left hsize hq_nonneg
-  have hleft : (1 / 4 : Rat) * (4 * μ * μ) = μ * μ := by grind
-  have hright : (1 / 4 : Rat) * 1 = 1 / 4 := by grind
-  simpa [hleft, hright] using h
-
-private theorem stepBound_arith (δ μ N Np : Rat)
-    (hN : 0 ≤ N) (hsize : 4 * μ * μ ≤ 1)
+private theorem stepBound_arith (δ η μ N Np : Rat)
+    (hN : 0 ≤ N) (hsize : μ * μ ≤ η * η)
     (hlov : δ * N ≤ Np + μ * μ * N) :
-    (δ - 1 / 4) * N ≤ Np := by
-  have hmu : μ * μ ≤ 1 / 4 := coeffSq_le_quarter μ hsize
-  have hcoef : δ - 1 / 4 ≤ δ - μ * μ := by grind
-  have hleft : (δ - 1 / 4) * N ≤ (δ - μ * μ) * N :=
+    (δ - η * η) * N ≤ Np := by
+  have hcoef : δ - η * η ≤ δ - μ * μ := by grind
+  have hleft : (δ - η * η) * N ≤ (δ - μ * μ) * N :=
     Rat.mul_le_mul_of_nonneg_right hcoef hN
   have hlov' : (δ - μ * μ) * N ≤ Np := by
     have hsub : δ * N - μ * μ * N ≤ (Np + μ * μ * N) - μ * μ * N := by
@@ -174,10 +166,10 @@ private theorem ratPow_nonneg (a : Rat) (ha : 0 ≤ a) (k : Nat) :
       exact Rat.mul_nonneg ih ha
 
 /-- Adjacent Gram-Schmidt norm bound from size reduction and Lovasz. -/
-theorem stepBound (b : Matrix Int n m) {δ : Rat}
-    (hred : isLLLReduced b δ) (_hδ : (1 / 4 : Rat) < δ)
+theorem stepBound (b : Matrix Int n m) {δ η : Rat}
+    (hred : isLLLReduced b δ η) (_hδη : η * η < δ)
     (i : Nat) (hi : i + 1 < n) :
-    (δ - 1 / 4) *
+    (δ - η * η) *
         basisNormSq (GramSchmidt.Int.basis b)
           ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩ ≤
       basisNormSq (GramSchmidt.Int.basis b) ⟨i + 1, hi⟩ := by
@@ -187,40 +179,40 @@ theorem stepBound (b : Matrix Int n m) {δ : Rat}
   let ip1Fin : Fin n := ⟨i + 1, hi⟩
   let μ := coeffs[ip1Fin][iFin]
   rcases hred with ⟨hsize, hlov⟩
-  have hsize' : 4 * μ * μ ≤ 1 := by
+  have hsize' : μ * μ ≤ η * η := by
     simpa [basis, coeffs, iFin, ip1Fin, μ] using
       hsize (i + 1) i hi (Nat.lt_succ_self i)
   have hlov' :
       δ * basisNormSq basis iFin ≤
         basisNormSq basis ip1Fin + μ * μ * basisNormSq basis iFin := by
     simpa [basis, coeffs, iFin, ip1Fin, μ] using hlov i hi
-  exact stepBound_arith δ μ (basisNormSq basis iFin) (basisNormSq basis ip1Fin)
+  exact stepBound_arith δ η μ (basisNormSq basis iFin) (basisNormSq basis ip1Fin)
     (basisNormSq_nonneg basis iFin) hsize' hlov'
 
 /-- Adjacent Gram-Schmidt norm bound in reciprocal form. -/
-theorem stepAlpha (b : Matrix Int n m) {δ : Rat}
-    (hred : isLLLReduced b δ) (hδ : (1 / 4 : Rat) < δ)
+theorem stepAlpha (b : Matrix Int n m) {δ η : Rat}
+    (hred : isLLLReduced b δ η) (hδη : η * η < δ)
     (i : Nat) (hi : i + 1 < n) :
     basisNormSq (GramSchmidt.Int.basis b)
         ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩ ≤
-      (1 / (δ - 1 / 4)) *
+      (1 / (δ - η * η)) *
         basisNormSq (GramSchmidt.Int.basis b) ⟨i + 1, hi⟩ := by
-  have hpos : 0 < δ - 1 / 4 := by grind
-  exact divStep_arith (δ - 1 / 4)
+  have hpos : 0 < δ - η * η := by grind
+  exact divStep_arith (δ - η * η)
     (basisNormSq (GramSchmidt.Int.basis b)
       ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩)
     (basisNormSq (GramSchmidt.Int.basis b) ⟨i + 1, hi⟩)
-    hpos (stepBound b hred hδ i hi)
+    hpos (stepBound b hred hδη i hi)
 
 /-- Telescoped Gram-Schmidt norm bound from the first vector to index `i`. -/
-theorem teleBound (b : Matrix Int n m) {δ : Rat}
-    (hred : isLLLReduced b δ) (hδ : (1 / 4 : Rat) < δ)
+theorem teleBound (b : Matrix Int n m) {δ η : Rat}
+    (hred : isLLLReduced b δ η) (hδη : η * η < δ)
     (i : Nat) (hi : i < n) :
     basisNormSq (GramSchmidt.Int.basis b)
         ⟨0, Nat.lt_of_le_of_lt (Nat.zero_le i) hi⟩ ≤
-      (1 / (δ - 1 / 4)) ^ i *
+      (1 / (δ - η * η)) ^ i *
         basisNormSq (GramSchmidt.Int.basis b) ⟨i, hi⟩ := by
-  let α : Rat := 1 / (δ - 1 / 4)
+  let α : Rat := 1 / (δ - η * η)
   induction i with
   | zero =>
       rw [Lean.Grind.Semiring.pow_zero]
@@ -237,13 +229,13 @@ theorem teleBound (b : Matrix Int n m) {δ : Rat}
             ⟨0, Nat.lt_of_le_of_lt (Nat.zero_le (i + 1)) hi⟩ :=
         Fin.ext rfl
       rw [hzero] at hih
-      have hstep := stepAlpha b hred hδ i hi
+      have hstep := stepAlpha b hred hδη i hi
       have hifin :
           (⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩ : Fin n) = ⟨i, hiPrev⟩ :=
         Fin.ext rfl
       rw [hifin] at hstep
       have hα_nonneg : 0 ≤ α := by
-        have hpos : 0 < δ - 1 / 4 := by grind
+        have hpos : 0 < δ - η * η := by grind
         have hα_pos : 0 < α := by
           dsimp [α]
           rw [Rat.div_def]
@@ -297,58 +289,85 @@ private theorem ratPow_le_pow_of_one_le {α : Rat} (hα : 1 ≤ α) :
 
 end LLLCore
 
-/-- LLL short-vector core inequality: for a `δ`-LLL-reduced basis with
-`1/4 < δ ≤ 1`, the squared norm of the first row is at most
-`(1 / (δ - 1/4)) ^ (n - 1)` times the squared norm of any nonzero lattice
-vector. Combines `LLLCore.teleBound` with the lower bound on the smallest
-Gram-Schmidt vector contained in the lattice. -/
-theorem lll_short_vector (b : Matrix Int n m) {δ : Rat}
-    (hli : Matrix.independent b) (hred : isLLLReduced b δ)
-    (hδ : (1 / 4 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+/-- LLL short-vector core inequality, parameterized by the size-reduction bound
+`η`. For a `(δ, η)`-LLL-reduced basis with `1/2 ≤ η`, `η² < δ ≤ 1`, the
+squared norm of the first row is at most `(1 / (δ - η²)) ^ (n - 1)` times the
+squared norm of any nonzero lattice vector. Combines `LLLCore.teleBound` with
+the lower bound on the smallest Gram-Schmidt vector contained in the
+lattice. -/
+theorem short_vector_bound_of_size_bound (b : Matrix Int n m) {δ η : Rat}
+    (hli : Matrix.independent b) (hred : isLLLReduced b δ η)
+    (hη : (1 / 2 : Rat) ≤ η) (hδη : η * η < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     {v : Vector Int m} (hv : Matrix.memLattice b v) (hv' : v ≠ 0) :
     ((Vector.normSq (b.row ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩) : Int) : Rat) ≤
-      (1 / (δ - 1 / 4)) ^ (n - 1) *
+      (1 / (δ - η * η)) ^ (n - 1) *
         ((Vector.normSq v : Int) : Rat) := by
   have h0n : 0 < n := Nat.lt_of_lt_of_le Nat.zero_lt_one hn
   obtain ⟨i, hi_norm⟩ :=
     GramSchmidt.Int.normSq_latticeVec_ge_min_basis_normSq b hli v hv hv'
-  have htele := LLLCore.teleBound b hred hδ i.val i.isLt
+  have htele := LLLCore.teleBound b hred hδη i.val i.isLt
   have e1 : (⟨0, Nat.lt_of_le_of_lt (Nat.zero_le i.val) i.isLt⟩ : Fin n) = ⟨0, h0n⟩ :=
     Fin.ext rfl
   have e2 : (⟨i.val, i.isLt⟩ : Fin n) = i := Fin.ext rfl
   rw [e1, e2, LLLCore.basisNormSq_zero b h0n] at htele
-  have hα_pos : 0 < δ - 1 / 4 := by grind
-  have hα_inv_pos : 0 < (1 / (δ - 1 / 4) : Rat) := by
+  have hα_pos : 0 < δ - η * η := by grind
+  have hα_inv_pos : 0 < (1 / (δ - η * η) : Rat) := by
     rw [Rat.div_def]
     simpa using (Rat.inv_pos.mpr hα_pos)
-  have hα_nn : (0 : Rat) ≤ 1 / (δ - 1 / 4) := by grind
-  have hα_one : (1 : Rat) ≤ 1 / (δ - 1 / 4) := by
-    have h_le : δ - 1 / 4 ≤ 1 := by grind
-    have hne : δ - 1 / 4 ≠ 0 := by grind
-    have hα_eq : (1 / (δ - 1 / 4)) * (δ - 1 / 4) = 1 := by
+  have hα_nn : (0 : Rat) ≤ 1 / (δ - η * η) := by grind
+  -- `η ≥ 1/2` implies `η² ≥ 1/4`, so `δ - η² ≤ δ - 1/4 ≤ 3/4 ≤ 1` and
+  -- `1 / (δ - η²) ≥ 1`.
+  have hηη_lb : (1 / 4 : Rat) ≤ η * η := by
+    have h2 : (0 : Rat) ≤ 1 / 2 := by grind
+    have hηnn : (0 : Rat) ≤ η := Rat.le_trans h2 hη
+    have hsq1 : (1 / 2 : Rat) * (1 / 2) ≤ (1 / 2 : Rat) * η :=
+      Rat.mul_le_mul_of_nonneg_left hη h2
+    have hsq2 : (1 / 2 : Rat) * η ≤ η * η :=
+      Rat.mul_le_mul_of_nonneg_right hη hηnn
+    have hsq : (1 / 2 : Rat) * (1 / 2) ≤ η * η := Rat.le_trans hsq1 hsq2
+    grind
+  have hα_one : (1 : Rat) ≤ 1 / (δ - η * η) := by
+    have h_le : δ - η * η ≤ 1 := by grind
+    have hne : δ - η * η ≠ 0 := by grind
+    have hα_eq : (1 / (δ - η * η)) * (δ - η * η) = 1 := by
       rw [Rat.div_def]
-      rw [show (1 : Rat) * (δ - 1 / 4)⁻¹ = (δ - 1 / 4)⁻¹ from by grind]
+      rw [show (1 : Rat) * (δ - η * η)⁻¹ = (δ - η * η)⁻¹ from by grind]
       exact Rat.inv_mul_cancel _ hne
-    have hstep : (1 / (δ - 1 / 4)) * (δ - 1 / 4) ≤ (1 / (δ - 1 / 4)) * 1 :=
+    have hstep : (1 / (δ - η * η)) * (δ - η * η) ≤ (1 / (δ - η * η)) * 1 :=
       Rat.mul_le_mul_of_nonneg_left h_le hα_nn
     rw [hα_eq] at hstep
     simpa using hstep
   have hi_le : i.val ≤ n - 1 := by omega
-  have hpow_mono : (1 / (δ - 1 / 4)) ^ i.val ≤ (1 / (δ - 1 / 4)) ^ (n - 1) :=
+  have hpow_mono : (1 / (δ - η * η)) ^ i.val ≤ (1 / (δ - η * η)) ^ (n - 1) :=
     LLLCore.ratPow_le_pow_of_one_le hα_one hi_le
   have hbasis_nn : 0 ≤ LLLCore.basisNormSq (GramSchmidt.Int.basis b) i :=
     LLLCore.basisNormSq_nonneg _ i
-  have hαpow_nn : 0 ≤ (1 / (δ - 1 / 4)) ^ (n - 1) :=
+  have hαpow_nn : 0 ≤ (1 / (δ - η * η)) ^ (n - 1) :=
     LLLCore.ratPow_nonneg _ hα_nn (n - 1)
   calc
     ((Vector.normSq (b.row ⟨0, h0n⟩) : Int) : Rat)
-        ≤ (1 / (δ - 1 / 4)) ^ i.val *
+        ≤ (1 / (δ - η * η)) ^ i.val *
             LLLCore.basisNormSq (GramSchmidt.Int.basis b) i := htele
-    _ ≤ (1 / (δ - 1 / 4)) ^ (n - 1) *
+    _ ≤ (1 / (δ - η * η)) ^ (n - 1) *
             LLLCore.basisNormSq (GramSchmidt.Int.basis b) i :=
         Rat.mul_le_mul_of_nonneg_right hpow_mono hbasis_nn
-    _ ≤ (1 / (δ - 1 / 4)) ^ (n - 1) * ((Vector.normSq v : Int) : Rat) :=
+    _ ≤ (1 / (δ - η * η)) ^ (n - 1) * ((Vector.normSq v : Int) : Rat) :=
         Rat.mul_le_mul_of_nonneg_left hi_norm hαpow_nn
+
+/-- Monotonicity of the size-reduction bound: a `(δ, η₁)`-LLL-reduced basis
+is also `(δ, η₂)`-LLL-reduced for any `η₂ ≥ η₁ ≥ 0`. The Lovász side is
+unchanged; the size-reduced side relaxes since `|μ| ≤ η₁ ≤ η₂` (in squared
+form, `μ² ≤ η₁² ≤ η₂²`). -/
+theorem isLLLReduced.mono_η (b : Matrix Int n m) {δ η₁ η₂ : Rat}
+    (hη₁ : 0 ≤ η₁) (hle : η₁ ≤ η₂) (hred : isLLLReduced b δ η₁) :
+    isLLLReduced b δ η₂ := by
+  rcases hred with ⟨hsize, hlov⟩
+  refine ⟨?_, hlov⟩
+  intro i j hi hji
+  have hη₂ : 0 ≤ η₂ := Rat.le_trans hη₁ hle
+  have hsq1 : η₁ * η₁ ≤ η₁ * η₂ := Rat.mul_le_mul_of_nonneg_left hle hη₁
+  have hsq2 : η₁ * η₂ ≤ η₂ * η₂ := Rat.mul_le_mul_of_nonneg_right hle hη₂
+  exact Rat.le_trans (hsize i j hi hji) (Rat.le_trans hsq1 hsq2)
 
 /-- Integer-only state for later LLL reduction steps. The proof-facing fields
 connect the stored Gram determinants and scaled coefficients to the executable
@@ -896,48 +915,64 @@ def lllAux (s : LLLState n m) (k : Nat) (δ : Rat)
     Matrix Int n m :=
   lllLoop s k δ hδ hδ' hk hkn (lllFuel s)
 
-/-- Proof-free executable LLL entry point. Builds the canonical integer state
-via `LLLState.ofBasisUnchecked` and dispatches to `lllAux`. Mathlib-free
-executable callers that do not need a proof-facing specification (benchmarks,
-fixture emitters, BHKS projected-row computation) use this directly. -/
-def lllUnchecked (b : Matrix Int n m) (δ : Rat)
+/-- Native (non-dispatched) executable LLL entry point. Builds the canonical
+integer state via `LLLState.ofBasisUnchecked` and dispatches to `lllAux`.
+This is the body the public `lll` runs by default; its output achieves the
+classical size-reduction bound `|μ| ≤ 1/2` (η = 1/2), so its short-vector
+guarantee uses `α = 1/(δ − 1/4)` with the classical precondition `1/4 < δ`. -/
+def lllNative (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
     Matrix Int n m :=
   lllAux (LLLState.ofBasisUnchecked b) 1 δ hδ hδ' (Nat.le_refl 1) hn
 
-/-- Top-level LLL entry point. Thin wrapper over `lllUnchecked` retaining the
-proof-facing `b.independent` argument for callers that already carry it. -/
-def lll (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (_hind : b.independent) :
-    Matrix Int n m :=
-  lllUnchecked b δ hδ hδ' hn
+/-- `121/400 < δ` implies `1/4 < δ`: relays the public `lll` (`η = 11/20`)
+precondition through to the native body (`η = 1/2`). -/
+theorem one_quarter_lt_of_eta_eleven_twentieths {δ : Rat}
+    (hδ : (121 / 400 : Rat) < δ) : (1 / 4 : Rat) < δ := by
+  grind
 
-/-- Proof-free executable variant of `lll.firstShortVector`. -/
+/-- Top-level LLL entry point. Wraps `lllNative` and carries the public
+`η = 11/20` precondition `121/400 < δ`. The proof-carrying
+`b.independent` argument supports downstream callers that already have it.
+Output guarantees are stated at `η = 11/20`; the underlying algorithm in fact
+achieves `|μ| ≤ 1/2`, so the η = 11/20 bound follows by monotonic weakening
+of the size-reduction bound. -/
+def lll (b : Matrix Int n m) (δ : Rat)
+    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (_hind : b.independent) :
+    Matrix Int n m :=
+  lllNative b δ (one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn
+
+/-- Proof-free executable variant of `lll.firstShortVector`. Targets the
+native body directly with the classical precondition `1/4 < δ`. -/
 def lll.firstShortVectorUnchecked (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
     Vector Int m :=
-  (lllUnchecked b δ hδ hδ' hn)[0]
+  (lllNative b δ hδ hδ' hn)[0]
 
 /-- The first row of the reduced basis (shortest vector under the LLL
 guarantee). Canonical short-vector entry point for downstream callers
 such as `hex-berlekamp-zassenhaus` recombination. -/
 def lll.firstShortVector (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (_hind : b.independent) :
+    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (hind : b.independent) :
     Vector Int m :=
-  lll.firstShortVectorUnchecked b δ hδ hδ' hn
+  (lll b δ hδ hδ' hn hind)[0]
 
-/-- Proof-free executable variant of `lll.shortVectors`. -/
+/-- Proof-free executable variant of `lll.shortVectors`. Targets the
+native body directly with the classical precondition `1/4 < δ`. -/
 def lll.shortVectorsUnchecked (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
     Array (Vector Int m) :=
-  (lllUnchecked b δ hδ hδ' hn).toArray
+  (lllNative b δ hδ hδ' hn).toArray
 
 /-- The full reduced basis viewed as an ordered array of candidate short
 vectors. -/
 def lll.shortVectors (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (_hind : b.independent) :
+    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (hind : b.independent) :
     Array (Vector Int m) :=
-  lll.shortVectorsUnchecked b δ hδ hδ' hn
+  (lll b δ hδ hδ' hn hind).toArray
 
 namespace LLLProvider
 

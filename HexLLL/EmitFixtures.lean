@@ -44,12 +44,12 @@ private theorem lll_delta_upper : (3 / 4 : Rat) ≤ 1 := by
   grind
 
 /-- Emit one `(lattice, result)` pair: serialise the input basis and
-the reduced basis Lean returns from `lllUnchecked b (3/4) ...`. -/
+the reduced basis Lean returns from `lllNative b (3/4) ...`. -/
 private def emitCase (id : String) {n m : Nat} (hn : 1 ≤ n)
     (b : Matrix Int n m) : IO Unit := do
   emitLatticeFixture lib id (basisRows b)
   let r : Matrix Int n m :=
-    lllUnchecked b (3 / 4) lll_delta_lower lll_delta_upper hn
+    lllNative b (3 / 4) lll_delta_lower lll_delta_upper hn
   emitResult lib id "lll" (latticeValue (basisRows r))
 
 /-! ## Known-reducible bases.

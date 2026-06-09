@@ -214,7 +214,7 @@ private def independentCheck (b : Matrix Int n m) : Bool :=
   (List.finRange n).all fun k =>
     0 < GramSchmidt.Int.gramDet b (k.val + 1) (Nat.succ_le_of_lt k.isLt)
 
-private noncomputable def lllReducedCheck (b : Matrix Int n m) (δ : Rat) : Bool :=
+private noncomputable def lllReducedCheck (b : Matrix Int n m) (δ η : Rat) : Bool :=
   let basis := GramSchmidt.Int.basis b
   let coeffs := GramSchmidt.Int.coeffs b
   let sizeReduced :=
@@ -225,7 +225,7 @@ private noncomputable def lllReducedCheck (b : Matrix Int n m) (δ : Rat) : Bool
             let iFin : Fin n := ⟨i, hi⟩
             let jFin : Fin n := ⟨j, Nat.lt_trans hji hi⟩
             let μ := coeffs[iFin][jFin]
-            4 * μ * μ ≤ 1
+            μ * μ ≤ η * η
           else
             true
       else
@@ -293,13 +293,13 @@ private def typicalState : LLLState 8 8 := stateOf typical8
 #guard (Matrix.row bzStyleBasis f1_3).get f3_4 = -1
 #guard (Matrix.row bzStyleBasis f2_3).get f3_4 = 2
 
-example (hδ : (1 / 4 : Rat) < 3 / 4) (hδ' : (3 / 4 : Rat) ≤ 1)
+example (hδ : (121 / 400 : Rat) < 3 / 4) (hδ' : (3 / 4 : Rat) ≤ 1)
     (hind : bzStyleBasis.independent) :
     lll.firstShortVector bzStyleBasis (3 / 4) hδ hδ' (by decide) hind =
       Matrix.row (lll bzStyleBasis (3 / 4) hδ hδ' (by decide) hind) f0_3 := by
   rfl
 
-example (hδ : (1 / 4 : Rat) < 3 / 4) (hδ' : (3 / 4 : Rat) ≤ 1)
+example (hδ : (121 / 400 : Rat) < 3 / 4) (hδ' : (3 / 4 : Rat) ≤ 1)
     (hind : bzStyleBasis.independent) :
     lll.shortVectors bzStyleBasis (3 / 4) hδ hδ' (by decide) hind =
       (lll bzStyleBasis (3 / 4) hδ hδ' (by decide) hind).toArray := by
