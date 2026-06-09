@@ -461,6 +461,16 @@ private theorem sqrtAux_phase_one_near_or_sq_le
     simp [sqrtAux]
   · exact sqrtAux_phase_one_sharp_core n hn
 
+private theorem sqrtAux_full_fuel_near_or_sq_le
+    (n : Nat) :
+    let y := sqrtAux n (2 * n.log2 + 1) n
+    y * y ≤ n ∨ sqrtNearEnvelope n y := by
+  have hfuel : 2 * n.log2 + 1 = (n.log2 + 1) + n.log2 := by omega
+  rw [hfuel, sqrtAux_append]
+  exact sqrtAux_preserves_sq_or_near n n.log2
+    (sqrtAux n (n.log2 + 1) n)
+    (sqrtAux_phase_one_near_or_sq_le n)
+
 /-- The squared Euclidean norm of the coefficient vector of `f`. -/
 def coeffNormSq (f : ZPoly) : Nat :=
   (List.range f.size).foldl (fun acc i => acc + (f.coeff i).natAbs ^ 2) 0
