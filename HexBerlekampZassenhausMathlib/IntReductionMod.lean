@@ -279,7 +279,7 @@ eventual Berlekamp singleton theorem can replace it directly.
 -/
 theorem squareFreeCore_irreducible_of_small_mod_singleton
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
-    (_hselected : primeData = Hex.choosePrimeData core)
+    (_hselected : Hex.choosePrimeData? core = some primeData)
     (_hsmall : primeData.factorsModP.size ≤ 1)
     (hprime : Nat.Prime primeData.p)
     (hfModP_eq :
@@ -4045,12 +4045,6 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f)
         primeData) := by
-  -- Convert the explicit-witness `primeData` back to the total `choosePrimeData`
-  -- form so the existing proof body applies unchanged.
-  have hpd :
-      Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore = primeData :=
-    Hex.choosePrimeData_eq_of_choosePrimeData?_some hchoose
-  subst hpd
   -- Base setup: discharge `hcore_record` and `hcore_ne` from the branch
   -- hypothesis + monicness.
   have hdeg :
@@ -4076,27 +4070,27 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
   obtain ⟨_, hnorm, hirr⟩ :=
     exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData_of_bound
       f hf_ne hbranch
-      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+      primeData
       hselected hchoose B' hcore_lc_le hvalid hprecision
   -- New base lemma: monicness and positive-degree of every emitted factor.
   have hmonic :=
     Hex.exhaustiveCoreFactorsWithBound_monic
       (Hex.normalizeForFactor f).squareFreeCore
       (Hex.ZPoly.defaultFactorCoeffBound f)
-      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+      primeData
       hcore_monic hcore_record
   have hdegree :=
     Hex.exhaustiveCoreFactorsWithBound_degree_pos
       (Hex.normalizeForFactor f).squareFreeCore
       (Hex.ZPoly.defaultFactorCoeffBound f)
-      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+      primeData
       hcore_monic hcore_record
   -- polyProduct = squareFreeCore.
   have hprod :=
     Hex.exhaustiveCoreFactorsWithBound_product
       (Hex.normalizeForFactor f).squareFreeCore
       (Hex.ZPoly.defaultFactorCoeffBound f)
-      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+      primeData
   -- Fuel bound: for any valid exponents, each exponent satisfies
   -- `e + 1 ≤ repeatedPart.size + 1`, via factorPower divisibility + size.
   have hrp_ne :
@@ -4105,7 +4099,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
   set coreFactors := Hex.exhaustiveCoreFactorsWithBound
       (Hex.normalizeForFactor f).squareFreeCore
       (Hex.ZPoly.defaultFactorCoeffBound f)
-      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+      primeData
     with hcoreFactors_def
   have hfuel :
       ∀ exponents : List Nat,
@@ -4256,12 +4250,6 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f)
         primeData) := by
-  -- Convert the explicit-witness `primeData` back to the total `choosePrimeData`
-  -- form so the existing proof body applies unchanged.
-  have hpd :
-      Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore = primeData :=
-    Hex.choosePrimeData_eq_of_choosePrimeData?_some hchoose
-  subst hpd
   -- Base setup: discharge `hcore_record` and `hcore_ne` from `hbranch` +
   -- `hcore_lc_pos`.
   have hdeg :
@@ -4287,7 +4275,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
   obtain ⟨_, hnorm, hirr⟩ :=
     exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData_of_bound
       f hf_ne hbranch
-      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+      primeData
       hselected hchoose B' hcore_lc_le hvalid hprecision
   -- Weakened-input base lemmas: positive-degree from #4946 deliv 6, primitivity
   -- from #4946 deliv 5.
@@ -4295,18 +4283,18 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
     Hex.exhaustiveCoreFactorsWithBound_degree_pos_of_primitive_pos_lc_core
       (Hex.normalizeForFactor f).squareFreeCore
       (Hex.ZPoly.defaultFactorCoeffBound f)
-      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+      primeData
       hcore_primitive hcore_lc_pos hcore_record
   -- polyProduct = squareFreeCore.
   have hprod :=
     Hex.exhaustiveCoreFactorsWithBound_product
       (Hex.normalizeForFactor f).squareFreeCore
       (Hex.ZPoly.defaultFactorCoeffBound f)
-      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+      primeData
   set coreFactors := Hex.exhaustiveCoreFactorsWithBound
       (Hex.normalizeForFactor f).squareFreeCore
       (Hex.ZPoly.defaultFactorCoeffBound f)
-      (Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore)
+      primeData
     with hcoreFactors_def
   -- Per-factor pos_lc: combine `q ≠ 0` (from irreducibility) with
   -- `normalizeFactorSign q = q` (forcing `leadingCoeff q ≥ 0`).

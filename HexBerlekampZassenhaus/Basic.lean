@@ -1151,6 +1151,13 @@ structure PrimeChoiceData where
   fModP : FpPoly p
   factorsModP : Array (FpPoly p)
 
+instance : Inhabited PrimeChoiceData where
+  default :=
+    { p := 3
+      bounds := bounds_three
+      fModP := 0
+      factorsModP := #[] }
+
 /--
 Data produced by Hensel lifting and consumed by integer recombination: the
 prime, the requested lift precision, and the lifted integer factors.
@@ -2108,18 +2115,6 @@ def choosePrimeData? (f : ZPoly) : Option PrimeChoiceData :=
       choosePrimeDataWalk? f 73 (choosePrimeDataWalkFuel f)
       |>.map (fun score => score.data)
 
-/-- Audited compatibility fallback for legacy total callers of
-`choosePrimeData`.
-
-The fallback stores the `p = 3` modular image and no modular factors. Callers
-that need a genuine selected good prime should match on `choosePrimeData?` and
-carry the local `some` witness. -/
-def choosePrimeDataFallback (f : ZPoly) : PrimeChoiceData :=
-  { p := 3
-    bounds := bounds_three
-    fModP := @ZPoly.modP 3 bounds_three f
-    factorsModP := #[] }
-
 /--
 Choose an admissible small prime and package the modular image together with
 its Berlekamp irreducible factor data for the rest of the pipeline.
@@ -2129,20 +2124,18 @@ callers can consume `fModP` and `factorsModP` directly without re-running the
 prime search or reconstructing typeclass evidence.
 
 This total wrapper is retained for compatibility with existing total slow-path
-statements. New call sites that require an actual selected prime should use
-`choosePrimeData?` directly.
+statements. It fails through `Option.get!` when no admissible prime is selected;
+new call sites that require an actual selected prime should use
+`choosePrimeData?` directly and carry the local `some` witness.
 -/
 def choosePrimeData (f : ZPoly) : PrimeChoiceData :=
-  match choosePrimeData? f with
-  | some data => data
-  | none => choosePrimeDataFallback f
+  (choosePrimeData? f).get!
 
 theorem choosePrimeData_eq_of_choosePrimeData?_some
     {f : ZPoly} {data : PrimeChoiceData}
     (hdata : choosePrimeData? f = some data) :
     choosePrimeData f = data := by
-  unfold choosePrimeData
-  rw [hdata]
+  simp [choosePrimeData, hdata]
 
 theorem choosePrimeData?_prime
     (f : ZPoly) (data : PrimeChoiceData)
@@ -2435,16 +2428,6 @@ theorem choosePrimeData?_berlekampFactor_factors_length_le_one_of_small
             (choosePrimeData?_prime f data hdata)))).factors.length ≤ 1 := by
     simpa [hform] using hsmall
   exact hlen
-
-/-- The prime selected by `choosePrimeData` is prime. -/
-theorem choosePrimeData_prime (f : ZPoly) :
-    Nat.Prime (choosePrimeData f).p := by
-  unfold choosePrimeData
-  match hdata : choosePrimeData? f with
-  | some data =>
-      simpa [hdata] using choosePrimeData?_prime f data hdata
-  | none =>
-      simpa [hdata, choosePrimeDataFallback] using prime_three
 
 /--
 Lift the chosen modular factors to the requested precision for integer
@@ -7391,7 +7374,7 @@ The standalone `factorFast` entry point exposes the proof-facing combined
 BHKS/Mignotte cap. The default total factorization combinator keeps the
 runtime-oriented coefficient bound before falling back to the modular slow
 path, and on no admissible prime continues to integer trial division so that
-the silent `choosePrimeDataFallback` is never consulted.
+the removed silent prime-data fallback is never consulted.
 -/
 def factor (f : ZPoly) : Factorization :=
   factorWithBound f (ZPoly.defaultFactorCoeffBound f)

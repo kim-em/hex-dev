@@ -334,10 +334,10 @@ candidates and hangs the benchmark harness. The
 
 Routing `factorSlowModular` as the only fallback is also a SPEC
 violation: on inputs where `choosePrimeData? f = none` (e.g.
-`X² − L²` with `L := ∏ HotPathCandidates`), the historical
-`choosePrimeDataFallback` returns `p = 3, factorsModP = #[]`, and
-`exhaustiveCoreFactorsWithBound` silently reports the input core
-as a single factor — a soundness bug, not slowness. The
+`X² − L²` with `L := ∏ HotPathCandidates`), the historical silent
+fallback returned `p = 3, factorsModP = #[]`, and
+`exhaustiveCoreFactorsWithBound` silently reported the input core
+as a single factor. That was a soundness bug, not slowness. The
 `factorSlowTrial` backstop is what catches these.
 
 The pathological-input characterisation (Group D obligation D2
