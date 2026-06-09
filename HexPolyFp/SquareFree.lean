@@ -4622,6 +4622,142 @@ private theorem yunFactorsContributionWithLevel_scalar_step_bridge
     have hw_dvd : DensePoly.gcd c w ∣ w := DensePoly.gcd_dvd_right c w
     exact div_C_mul_C_mul_of_dvd hp hu_w hv_ne w (DensePoly.gcd c w) hw_dvd hg_ne
 
+private theorem pow_C_form
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    {a : ZMod64 p} (ha : a ≠ 0) :
+    ∀ n : Nat, ∃ b : ZMod64 p, b ≠ 0 ∧
+      pow (DensePoly.C a : FpPoly p) n = DensePoly.C b
+  | 0 =>
+      ⟨1, zmod64_one_ne_zero_of_prime hp, by
+        rw [pow_eq_powLinear]
+        rfl⟩
+  | n + 1 =>
+      by
+        obtain ⟨b, hb, hpow⟩ := pow_C_form hp ha n
+        refine ⟨b * a, ?_, ?_⟩
+        · intro hzero
+          rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with hb_zero | ha_zero
+          · exact hb hb_zero
+          · exact ha ha_zero
+        · rw [pow_succ, hpow, fpPoly_C_mul_C_eq]
+
+private theorem constant_divisor_eq_C
+    [ZMod64.PrimeModulus p]
+    {d : FpPoly p} {k : ZMod64 p} (hk : k ≠ 0)
+    (hdvd : d ∣ (DensePoly.C k : FpPoly p)) :
+    ∃ v : ZMod64 p, v ≠ 0 ∧ d = DensePoly.C v := by
+  have hCk_ne : (DensePoly.C k : FpPoly p) ≠ 0 := C_ne_zero_of_ne_zero hk
+  have hd_ne : d ≠ 0 := by
+    intro hd_zero
+    rcases hdvd with ⟨q, hq⟩
+    apply hCk_ne
+    rw [hq, hd_zero, zero_mul]
+  have hd_size_le : d.size ≤ (DensePoly.C k : FpPoly p).size :=
+    size_le_of_dvd_of_ne_zero hdvd hCk_ne
+  have hCk_size : (DensePoly.C k : FpPoly p).size = 1 := by
+    have hcoeffs :
+        (DensePoly.C k : FpPoly p).coeffs = #[k] :=
+      DensePoly.coeffs_C_of_ne_zero hk
+    simpa [DensePoly.size] using congrArg Array.size hcoeffs
+  have hd_pos : 0 < d.size := size_pos_of_ne_zero hd_ne
+  have hd_size : d.size = 1 := by omega
+  exact ⟨d.coeff 0, coeff_zero_ne_zero_of_size_one hd_size, eq_C_of_size_one hd_size⟩
+
+/--
+If the active Yun state has a nonzero constant first component, the whole
+`yunFactorsContributionWithLevel` excursion only emits a nonzero constant
+contribution and leaves a residual that is explicitly a nonzero scalar
+multiple of another polynomial.
+This packages the constant-state TF/FT branch used by the recursive scalar
+synchronization proof.
+-/
+private theorem yunFactorsContributionWithLevel_constant_scalar_form
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    {k : ZMod64 p} (hk : k ≠ 0) (w : FpPoly p)
+    (base level fuel : Nat) :
+    ∃ s t : ZMod64 p, ∃ w0 : FpPoly p, s ≠ 0 ∧ t ≠ 0 ∧
+      (yunFactorsContributionWithLevel (DensePoly.C k : FpPoly p) w base level fuel).1 =
+        DensePoly.C s ∧
+      (yunFactorsContributionWithLevel (DensePoly.C k : FpPoly p) w base level fuel).2 =
+        DensePoly.C t * w0 := by
+  induction fuel generalizing k w level with
+  | zero =>
+      refine ⟨1, 1, w, zmod64_one_ne_zero_of_prime hp,
+        zmod64_one_ne_zero_of_prime hp, ?_, ?_⟩
+      · simp [yunFactorsContributionWithLevel]
+        rfl
+      · simp [yunFactorsContributionWithLevel]
+        change w = (1 : FpPoly p) * w
+        rw [one_mul]
+  | succ fuel ih =>
+      by_cases hc : isOne (DensePoly.C k : FpPoly p)
+      · refine ⟨1, 1, w, zmod64_one_ne_zero_of_prime hp,
+          zmod64_one_ne_zero_of_prime hp, ?_, ?_⟩
+        · simp [yunFactorsContributionWithLevel, hc]
+          rfl
+        · simp [yunFactorsContributionWithLevel, hc]
+          change w = (1 : FpPoly p) * w
+          rw [one_mul]
+      · let y : FpPoly p := DensePoly.gcd (DensePoly.C k : FpPoly p) w
+        let z : FpPoly p := (DensePoly.C k : FpPoly p) / y
+        have hy_dvd : y ∣ (DensePoly.C k : FpPoly p) :=
+          DensePoly.gcd_dvd_left (DensePoly.C k : FpPoly p) w
+        obtain ⟨v, hv, hy_eq⟩ := constant_divisor_eq_C hk hy_dvd
+        have hz_const : ∃ a : ZMod64 p, a ≠ 0 ∧ z = DensePoly.C a := by
+          have hquot_dvd : z ∣ (DensePoly.C k : FpPoly p) := by
+            refine ⟨y, ?_⟩
+            have hmod : (DensePoly.C k : FpPoly p) % y = 0 :=
+              DensePoly.mod_eq_zero_of_dvd (DensePoly.C k : FpPoly p) y hy_dvd
+            have hrec : z * y + (DensePoly.C k : FpPoly p) % y =
+                (DensePoly.C k : FpPoly p) := by
+              simpa [z] using
+                (DensePoly.div_mul_add_mod (DensePoly.C k : FpPoly p) y)
+            rw [hmod, add_zero] at hrec
+            exact hrec.symm
+          exact constant_divisor_eq_C hk hquot_dvd
+        obtain ⟨sTail, tTail, wTail, hsTail, htTail, htail₁, htail₂⟩ :=
+          ih hv (w / y) (level + 1)
+        have htail₁_y :
+            (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).1 =
+              DensePoly.C sTail := by
+          simpa [hy_eq] using htail₁
+        have htail₂_y :
+            (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).2 =
+              DensePoly.C tTail * wTail := by
+          simpa [hy_eq] using htail₂
+        by_cases hz_one : isOne z
+        · refine ⟨sTail, tTail, wTail, hsTail, htTail, ?_, ?_⟩
+          · have hz_true_y :
+                isOne ((DensePoly.C k : FpPoly p) / y) = true := by
+              simpa [z] using hz_one
+            simpa [yunFactorsContributionWithLevel, hc, y, z, hz_true_y] using htail₁_y
+          · have hz_true_y :
+                isOne ((DensePoly.C k : FpPoly p) / y) = true := by
+              simpa [z] using hz_one
+            simpa [yunFactorsContributionWithLevel, hc, y, z, hz_true_y] using htail₂_y
+        · obtain ⟨a, ha, hz_eq⟩ := hz_const
+          have hz_false : isOne z = false := by
+            cases h : isOne z
+            · rfl
+            · exfalso
+              exact hz_one h
+          have hz_false_y :
+              isOne ((DensePoly.C k : FpPoly p) / y) = false := by
+            simpa [z] using hz_false
+          have hz_eq_y : ((DensePoly.C k : FpPoly p) / y) = DensePoly.C a := by
+            simpa [z] using hz_eq
+          have hza_false : isOne (DensePoly.C a : FpPoly p) = false := by
+            simpa [hz_eq] using hz_false
+          obtain ⟨sPow, hsPow, hpow⟩ := pow_C_form hp ha (base * level)
+          refine ⟨sPow * sTail, tTail, wTail, ?_, htTail, ?_, ?_⟩
+          · intro hzero
+            rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with hsp_zero | hst_zero
+            · exact hsPow hsp_zero
+            · exact hsTail hst_zero
+          · simp [yunFactorsContributionWithLevel, hc, y, hz_eq_y,
+              hza_false, hpow, htail₁_y, fpPoly_C_mul_C_eq]
+          · simpa [yunFactorsContributionWithLevel, hc, y, z, hz_false_y] using htail₂_y
+
 private theorem coeff_derivative (f : FpPoly p) (n : Nat) :
     (DensePoly.derivative f).coeff n =
       ((n + 1 : Nat) : ZMod64 p) * f.coeff (n + 1) := by
