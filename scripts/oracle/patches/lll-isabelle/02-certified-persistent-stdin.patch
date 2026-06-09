@@ -1,0 +1,38 @@
+Loop certified driver on stdin for persistent benchmark protocol.
+
+Rewrap the Haskell entry point `Main_Certified.hs` so that one
+invocation of the resulting `svp_certified` binary handles many bench
+requests, instead of spawning a fresh process per call. Each line of
+stdin is one matrix in `[[Integer]]` Haskell-read syntax; each line of
+stdout is the squared norm emitted by `test_certified`. The binary exits
+cleanly on EOF.
+
+This mirrors `01-persistent-stdin.patch` for the native Isabelle LLL
+driver. The certified path additionally shells out to the `fplll` binary
+inside `test_certified`, so the persistent protocol amortizes only the
+Haskell driver startup and not the per-request external reducer process.
+
+--- a/haskell_sources/Main_Certified.hs
++++ b/haskell_sources/Main_Certified.hs
+@@ -1,11 +1,15 @@
+ {-# LANGUAGE LambdaCase #-}
+ module Main(main)
+   where
+-import System.Environment
++import System.IO
+ import LLL_SVP
+
+-main = do
+-  as <- getArgs
+-  input <- readFile (as !! 0)
+-  let mat = (read input :: [[Integer]])
+-  putStrLn (show (test_certified mat))
++main = do
++  hSetBuffering stdout LineBuffering
++  contents <- getContents
++  mapM_ runOne (lines contents)
++  where
++    runOne line = do
++      let mat = (read line :: [[Integer]])
++      putStrLn (show (test_certified mat))
++      hFlush stdout

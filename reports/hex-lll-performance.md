@@ -76,6 +76,8 @@
 - `Hex.LLLBench.runIsabelleHarshCubicNormSq50`: fixed, repeats `3`
 - `Hex.LLLBench.runIsabelleHarshCubicNormSq55`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorRandomBoundedNormSq60`: fixed, repeats `3`
+- `Hex.LLLBench.runIsabelleCertifiedRandomBoundedNormSq{30,45,60,75,90,120,150,180}`: fixed, repeats `3`
+- `Hex.LLLBench.runIsabelleCertifiedHarshCubicNormSq{15,20,25,30,35,40,45,50,55,60,65}`: fixed, repeats `3`
 
 ## Verdicts
 
@@ -322,13 +324,49 @@ lake exe hexlll_bench run \
   fplll-ffi provider is intentionally loaded and the dispatch tally reports
   `accepted = 0`, the registered dispatch smoke target fails.
 
-The external `verified Isabelle certified-LLL` executable is not yet present in
-the repository: no setup script, persistent driver, or binary-path override
-exists for AFP `Modular_arithmetic_LLL_and_HNF_algorithms`. Until that
-comparator is added, the certified-vs-Isabelle-certified ratio across the
-ladder is **unmeasured** and remains the open gating field for this comparator.
-The existing Isabelle rows below are for `verified Isabelle LLL`
-(`LLL_Basis_Reduction`), not for the certified-output configuration.
+The external `verified Isabelle certified-LLL` executable is now wired from the
+same Zenodo 2636367 archive as the native comparator:
+`scripts/oracle/setup_lll_isabelle.sh certified` builds
+`experiments/svp_certified`, and `HexLLL/Bench.lean` exposes persistent
+`runIsabelleCertified*NormSq` fixed targets for the random-bounded and
+harsh-cubic ladders.
+
+Certified-vs-Isabelle-certified smoke rows at worktree commit
+`b9f7859-dirty` on `carica` (Apple M2 Ultra, macOS):
+
+```sh
+HEX_LLL_ISABELLE_CERTIFIED_SVP="$(scripts/oracle/setup_lll_isabelle.sh certified)" \
+HEX_FPLLL_FFI_LIB="$(scripts/oracle/setup_fplll_ffi.sh)" \
+lake exe hexlll_bench run \
+  Hex.LLLBench.runCertifiedFirstShortVectorRandomBounded30Checksum \
+  Hex.LLLBench.runIsabelleCertifiedRandomBoundedNormSq30 \
+  --export-file reports/bench-results/hex-lll-isabelle-certified-smoke.json
+
+HEX_LLL_ISABELLE_CERTIFIED_SVP="$(scripts/oracle/setup_lll_isabelle.sh certified)" \
+HEX_FPLLL_FFI_LIB="$(scripts/oracle/setup_fplll_ffi.sh)" \
+lake exe hexlll_bench run \
+  Hex.LLLBench.runCertifiedFirstShortVectorHarshCubic15Checksum \
+  Hex.LLLBench.runIsabelleCertifiedHarshCubicNormSq15 \
+  --export-file reports/bench-results/hex-lll-isabelle-certified-harsh-smoke.json
+```
+
+| Family/rung | Hex certified median | Isabelle certified median | Hex/Isabelle-certified | speedup |
+| --- | ---: | ---: | ---: | ---: |
+| random-bounded `n = 30` | `4.371 ms` | `33.541 ms` | `0.1303` | `7.67×` |
+| harsh-cubic `n = 15` | `858.293 µs` | `22.555 ms` | `0.0381` | `26.28×` |
+
+Both Isabelle-certified rows had repeat-stable hashes and matched the Lean
+norm-squared expected hash. These rows are smoke evidence only; the full
+certified-vs-Isabelle-certified ladder remains a scheduled-run item.
+
+Architectural asymmetries for this ratio:
+
+- Hex's certified path calls `fplll-ffi` in process and then runs the Lean
+  integer certificate checker.
+- Isabelle's certified path shells out to the `fplll` binary per request, even
+  though the surrounding Haskell driver is persistent.
+- Hex checks reducedness with `lllReducedInt`; Isabelle confirms reducedness by
+  re-running the verified LLL reducer inside `test_certified`.
 
 ![Random-bounded comparator runtime plot](figures/hex-lll-comparator-random-bounded.svg)
 
@@ -339,6 +377,9 @@ The existing Isabelle rows below are for `verified Isabelle LLL`
 Both gating and informational comparators are wired through the persistent-subprocess protocol described at the top of `HexLLL/Bench.lean`. The per-call protocol overhead, measured on the audit host, is:
 
 - `Isabelle` (gating): **~9 µs** per steady-state request after the one-time GHC startup.
+- `Isabelle certified-LLL`: **~18.8 ms** per trivial end-to-end request through
+  persistent `svp_certified`; this includes the per-request `fplll` subprocess
+  and certificate/reducedness checks.
 - `fpLLL via fpylll` (informational): **~34 µs** per steady-state request after the one-time CPython + `import fpylll` startup.
 
 Both figures are below the 5 % overhead-to-measured-time floor that
