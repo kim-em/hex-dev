@@ -1624,6 +1624,301 @@ private theorem gcd_C_mul_C_mul_eq_C_mul_gcd
       _ = DensePoly.C (u * w) * DensePoly.gcd f g := by rw [hC_mul_C]
 
 /--
+Two-`DensePoly.C` constants combine into a single `DensePoly.C` of the
+product, in `FpPoly p`. Used by the asymmetric scalar bridges below to
+fold scalar factors during cancellation.
+-/
+private theorem fpPoly_C_mul_C_eq (a b : ZMod64 p) :
+    (DensePoly.C a * DensePoly.C b : FpPoly p) = DensePoly.C (a * b) := by
+  rw [C_mul_eq_scale]
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero : a * (0 : ZMod64 p) = 0 := Lean.Grind.Semiring.mul_zero a
+  rw [DensePoly.coeff_scale _ _ _ hzero, DensePoly.coeff_C, DensePoly.coeff_C]
+  cases n with
+  | zero => rfl
+  | succ n => exact hzero
+
+/--
+Unit-scalar swap on a divisibility hypothesis: if `C u · d ∣ a` for a
+nonzero scalar `u`, then for any other nonzero scalar `v`, `C v · d ∣ a`.
+The witness is rescaled by `C (u · v⁻¹)` so that
+`(C v · d) · (C (u · v⁻¹) · k) = (C u · d) · k`.
+-/
+private theorem C_mul_dvd_of_C_mul_dvd_unit_swap
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    {u v : ZMod64 p} (_hu : u ≠ 0) (hv : v ≠ 0) {d a : FpPoly p}
+    (h : DensePoly.C u * d ∣ a) : DensePoly.C v * d ∣ a := by
+  rcases h with ⟨k, hk⟩
+  refine ⟨DensePoly.C (u * v⁻¹) * k, ?_⟩
+  have hv_uv_inv : v * (u * v⁻¹) = u := by
+    have hcomm : u * v⁻¹ = v⁻¹ * u := by grind
+    have hv_inv : v * v⁻¹ = (1 : ZMod64 p) :=
+      zmod64_mul_inv_eq_one_of_prime_ne_zero hp hv
+    calc v * (u * v⁻¹)
+        = v * (v⁻¹ * u) := by rw [hcomm]
+      _ = (v * v⁻¹) * u := by grind
+      _ = 1 * u := by rw [hv_inv]
+      _ = u := by grind
+  have hCu_rewrite :
+      (DensePoly.C u : FpPoly p) = DensePoly.C v * DensePoly.C (u * v⁻¹) := by
+    rw [fpPoly_C_mul_C_eq, hv_uv_inv]
+  -- Polynomial algebra: (C v * d) * (C (u*v⁻¹) * k) = (C u * d) * k.
+  have hgoal :
+      (DensePoly.C v * d) * (DensePoly.C (u * v⁻¹) * k) =
+        (DensePoly.C u * d) * k := by
+    rw [hCu_rewrite]
+    calc (DensePoly.C v * d) * (DensePoly.C (u * v⁻¹) * k)
+        = ((DensePoly.C v * d) * DensePoly.C (u * v⁻¹)) * k :=
+          (DensePoly.mul_assoc_poly _ _ _).symm
+      _ = (DensePoly.C v * (d * DensePoly.C (u * v⁻¹))) * k :=
+          congrArg (fun x => x * k) (DensePoly.mul_assoc_poly _ _ _)
+      _ = (DensePoly.C v * (DensePoly.C (u * v⁻¹) * d)) * k :=
+          congrArg
+            (fun x => (DensePoly.C v * x) * k)
+            (DensePoly.mul_comm_poly d (DensePoly.C (u * v⁻¹) : FpPoly p))
+      _ = ((DensePoly.C v * DensePoly.C (u * v⁻¹)) * d) * k :=
+          congrArg (fun x => x * k)
+            (DensePoly.mul_assoc_poly _ _ _).symm
+  rw [hk, ← hgoal]
+
+/--
+Asymmetric gcd scalar-multiple bridge: scaling the two arguments of
+`DensePoly.gcd` by *different* nonzero constants `u_c`, `u_w` scales the
+gcd by some nonzero constant `v`. The proof routes through divisibility
+manipulation (rather than the Bezout factoring used by
+`gcd_C_mul_C_mul_eq_C_mul_gcd`) because the two scalars cannot be
+factored out as a single common constant. Used by the inner Yun split
+synchronization to thread scalar factors through one step of
+`yunFactorsContributionWithLevel`.
+-/
+private theorem gcd_C_mul_left_C_mul_right_eq_C_mul_gcd
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    (u_c u_w : ZMod64 p) (hu_c : u_c ≠ 0) (hu_w : u_w ≠ 0) (c w : FpPoly p) :
+    ∃ v : ZMod64 p, v ≠ 0 ∧
+      DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) =
+        DensePoly.C v * DensePoly.gcd c w := by
+  by_cases hgcd_zero : DensePoly.gcd c w = 0
+  · have hc_zero : c = 0 := by
+      have hdvd : DensePoly.gcd c w ∣ c := DensePoly.gcd_dvd_left c w
+      rw [hgcd_zero] at hdvd
+      rcases hdvd with ⟨k, hk⟩
+      rw [zero_mul] at hk
+      exact hk
+    have hw_zero : w = 0 := by
+      have hdvd : DensePoly.gcd c w ∣ w := DensePoly.gcd_dvd_right c w
+      rw [hgcd_zero] at hdvd
+      rcases hdvd with ⟨k, hk⟩
+      rw [zero_mul] at hk
+      exact hk
+    refine ⟨1, zmod64_one_ne_zero_of_prime hp, ?_⟩
+    have hCu_c_mul_c_zero : (DensePoly.C u_c : FpPoly p) * c = 0 := by
+      rw [hc_zero, mul_zero]
+    have hCu_w_mul_w_zero : (DensePoly.C u_w : FpPoly p) * w = 0 := by
+      rw [hw_zero, mul_zero]
+    rw [hCu_c_mul_c_zero, hCu_w_mul_w_zero, DensePoly.gcd_zero_zero,
+        hgcd_zero, mul_zero]
+  · have hCu_c_ne : (DensePoly.C u_c : FpPoly p) ≠ 0 := C_ne_zero_of_ne_zero hu_c
+    have hCu_w_ne : (DensePoly.C u_w : FpPoly p) ≠ 0 := C_ne_zero_of_ne_zero hu_w
+    let d : FpPoly p :=
+      DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w)
+    have hd_dvd_l : d ∣ DensePoly.C u_c * c :=
+      DensePoly.gcd_dvd_left (DensePoly.C u_c * c) (DensePoly.C u_w * w)
+    have hd_dvd_r : d ∣ DensePoly.C u_w * w :=
+      DensePoly.gcd_dvd_right (DensePoly.C u_c * c) (DensePoly.C u_w * w)
+    have hgcd_dvd_Cuc_c : DensePoly.gcd c w ∣ DensePoly.C u_c * c := by
+      rcases DensePoly.gcd_dvd_left c w with ⟨q, hq⟩
+      refine ⟨q * DensePoly.C u_c, ?_⟩
+      have step_c : (c * DensePoly.C u_c : FpPoly p) =
+          DensePoly.gcd c w * q * DensePoly.C u_c :=
+        congrArg (fun x => x * DensePoly.C u_c) hq
+      calc DensePoly.C u_c * c
+          = c * DensePoly.C u_c := DensePoly.mul_comm_poly _ _
+        _ = DensePoly.gcd c w * q * DensePoly.C u_c := step_c
+        _ = DensePoly.gcd c w * (q * DensePoly.C u_c) :=
+            DensePoly.mul_assoc_poly _ _ _
+    have hgcd_dvd_Cuw_w : DensePoly.gcd c w ∣ DensePoly.C u_w * w := by
+      rcases DensePoly.gcd_dvd_right c w with ⟨q, hq⟩
+      refine ⟨q * DensePoly.C u_w, ?_⟩
+      have step_w : (w * DensePoly.C u_w : FpPoly p) =
+          DensePoly.gcd c w * q * DensePoly.C u_w :=
+        congrArg (fun x => x * DensePoly.C u_w) hq
+      calc DensePoly.C u_w * w
+          = w * DensePoly.C u_w := DensePoly.mul_comm_poly _ _
+        _ = DensePoly.gcd c w * q * DensePoly.C u_w := step_w
+        _ = DensePoly.gcd c w * (q * DensePoly.C u_w) :=
+            DensePoly.mul_assoc_poly _ _ _
+    have hgcd_dvd_d : DensePoly.gcd c w ∣ d :=
+      DensePoly.dvd_gcd (DensePoly.gcd c w)
+        (DensePoly.C u_c * c) (DensePoly.C u_w * w)
+        hgcd_dvd_Cuc_c hgcd_dvd_Cuw_w
+    have huc_inv_uc : (u_c⁻¹ * u_c : ZMod64 p) = 1 := by
+      have hcomm : u_c * u_c⁻¹ = u_c⁻¹ * u_c := by grind
+      rw [← hcomm]
+      exact zmod64_mul_inv_eq_one_of_prime_ne_zero hp hu_c
+    have huw_inv_uw : (u_w⁻¹ * u_w : ZMod64 p) = 1 := by
+      have hcomm : u_w * u_w⁻¹ = u_w⁻¹ * u_w := by grind
+      rw [← hcomm]
+      exact zmod64_mul_inv_eq_one_of_prime_ne_zero hp hu_w
+    have hCC_uc_inv_uc :
+        (DensePoly.C u_c⁻¹ * DensePoly.C u_c : FpPoly p) = 1 := by
+      rw [fpPoly_C_mul_C_eq, huc_inv_uc]; rfl
+    have hCC_uw_inv_uw :
+        (DensePoly.C u_w⁻¹ * DensePoly.C u_w : FpPoly p) = 1 := by
+      rw [fpPoly_C_mul_C_eq, huw_inv_uw]; rfl
+    have hCucinv_d_dvd_c : DensePoly.C u_c⁻¹ * d ∣ c := by
+      rcases hd_dvd_l with ⟨k, hk⟩
+      refine ⟨k, ?_⟩
+      calc c
+          = 1 * c := (one_mul c).symm
+        _ = (DensePoly.C u_c⁻¹ * DensePoly.C u_c) * c := by rw [hCC_uc_inv_uc]
+        _ = DensePoly.C u_c⁻¹ * (DensePoly.C u_c * c) :=
+            DensePoly.mul_assoc_poly _ _ _
+        _ = DensePoly.C u_c⁻¹ * (d * k) := by rw [hk]
+        _ = (DensePoly.C u_c⁻¹ * d) * k :=
+            (DensePoly.mul_assoc_poly _ _ _).symm
+    have hCuwinv_d_dvd_w : DensePoly.C u_w⁻¹ * d ∣ w := by
+      rcases hd_dvd_r with ⟨k, hk⟩
+      refine ⟨k, ?_⟩
+      calc w
+          = 1 * w := (one_mul w).symm
+        _ = (DensePoly.C u_w⁻¹ * DensePoly.C u_w) * w := by rw [hCC_uw_inv_uw]
+        _ = DensePoly.C u_w⁻¹ * (DensePoly.C u_w * w) :=
+            DensePoly.mul_assoc_poly _ _ _
+        _ = DensePoly.C u_w⁻¹ * (d * k) := by rw [hk]
+        _ = (DensePoly.C u_w⁻¹ * d) * k :=
+            (DensePoly.mul_assoc_poly _ _ _).symm
+    have hCucinv_d_dvd_w : DensePoly.C u_c⁻¹ * d ∣ w :=
+      C_mul_dvd_of_C_mul_dvd_unit_swap hp
+        (zmod64_inv_ne_zero_of_prime_ne_zero hp hu_w)
+        (zmod64_inv_ne_zero_of_prime_ne_zero hp hu_c)
+        hCuwinv_d_dvd_w
+    have hCucinv_d_dvd_gcd : DensePoly.C u_c⁻¹ * d ∣ DensePoly.gcd c w :=
+      DensePoly.dvd_gcd (DensePoly.C u_c⁻¹ * d) c w
+        hCucinv_d_dvd_c hCucinv_d_dvd_w
+    have hd_dvd_Cuc_gcd : d ∣ DensePoly.C u_c * DensePoly.gcd c w := by
+      have hCmul :
+          DensePoly.C u_c * (DensePoly.C u_c⁻¹ * d) ∣
+            DensePoly.C u_c * DensePoly.gcd c w :=
+        C_mul_dvd_C_mul_of_dvd u_c hCucinv_d_dvd_gcd
+      have hd_eq :
+          DensePoly.C u_c * (DensePoly.C u_c⁻¹ * d) = d := by
+        calc DensePoly.C u_c * (DensePoly.C u_c⁻¹ * d)
+            = (DensePoly.C u_c * DensePoly.C u_c⁻¹) * d :=
+              (DensePoly.mul_assoc_poly _ _ _).symm
+          _ = (1 : FpPoly p) * d := by
+                have h_uc_swap :
+                    (DensePoly.C u_c * DensePoly.C u_c⁻¹ : FpPoly p) =
+                      DensePoly.C u_c⁻¹ * DensePoly.C u_c :=
+                  DensePoly.mul_comm_poly _ _
+                rw [h_uc_swap, hCC_uc_inv_uc]
+          _ = d := one_mul d
+      rw [← hd_eq]
+      exact hCmul
+    rcases hgcd_dvd_d with ⟨t, ht⟩
+    rcases hd_dvd_Cuc_gcd with ⟨t', ht'⟩
+    have hcancel :
+        DensePoly.C u_c * DensePoly.gcd c w =
+          DensePoly.gcd c w * (t * t') := by
+      calc DensePoly.C u_c * DensePoly.gcd c w
+          = d * t' := ht'
+        _ = (DensePoly.gcd c w * t) * t' := by rw [ht]
+        _ = DensePoly.gcd c w * (t * t') :=
+            DensePoly.mul_assoc_poly _ _ _
+    have hC_uc_eq_tt' : (DensePoly.C u_c : FpPoly p) = t * t' := by
+      have hcomm_l :
+          (DensePoly.C u_c : FpPoly p) * DensePoly.gcd c w =
+            DensePoly.gcd c w * DensePoly.C u_c :=
+        DensePoly.mul_comm_poly _ _
+      have hcomm_r :
+          DensePoly.gcd c w * (t * t') =
+            (t * t') * DensePoly.gcd c w :=
+        DensePoly.mul_comm_poly _ _
+      have hready :
+          (DensePoly.C u_c : FpPoly p) * DensePoly.gcd c w =
+            (t * t') * DensePoly.gcd c w := by
+        rw [hcancel, hcomm_r]
+      exact mul_right_cancel_of_ne_zero hgcd_zero hready
+    have htt'_eq_C_uc : (t * t' : FpPoly p) = DensePoly.C u_c :=
+      hC_uc_eq_tt'.symm
+    have hC_uc_inv_tt' : (DensePoly.C u_c⁻¹ * (t * t') : FpPoly p) = 1 := by
+      rw [htt'_eq_C_uc]
+      calc (DensePoly.C u_c⁻¹ * DensePoly.C u_c : FpPoly p)
+          = DensePoly.C (u_c⁻¹ * u_c) := fpPoly_C_mul_C_eq _ _
+        _ = DensePoly.C 1 := by rw [huc_inv_uc]
+        _ = 1 := rfl
+    have hCucinv_t_mul_t' : ((DensePoly.C u_c⁻¹ * t) * t' : FpPoly p) = 1 := by
+      calc (DensePoly.C u_c⁻¹ * t) * t'
+          = DensePoly.C u_c⁻¹ * (t * t') :=
+            DensePoly.mul_assoc_poly _ _ _
+        _ = 1 := hC_uc_inv_tt'
+    obtain ⟨w_unit, hw_unit_ne, hCucinv_t_eq⟩ :=
+      eq_C_of_mul_eq_one hp hCucinv_t_mul_t'
+    have ht_eq : t = DensePoly.C (u_c * w_unit) := by
+      have huc_uc_inv : u_c * u_c⁻¹ = (1 : ZMod64 p) :=
+        zmod64_mul_inv_eq_one_of_prime_ne_zero hp hu_c
+      have hCuc_Cucinv :
+          (DensePoly.C u_c * DensePoly.C u_c⁻¹ : FpPoly p) = 1 := by
+        rw [fpPoly_C_mul_C_eq, huc_uc_inv]; rfl
+      calc t
+          = 1 * t := (one_mul t).symm
+        _ = (DensePoly.C u_c * DensePoly.C u_c⁻¹) * t := by rw [hCuc_Cucinv]
+        _ = DensePoly.C u_c * (DensePoly.C u_c⁻¹ * t) :=
+            DensePoly.mul_assoc_poly _ _ _
+        _ = DensePoly.C u_c * DensePoly.C w_unit := by rw [hCucinv_t_eq]
+        _ = DensePoly.C (u_c * w_unit) := fpPoly_C_mul_C_eq _ _
+    have hu_c_w_unit_ne : u_c * w_unit ≠ 0 := by
+      intro hzero
+      rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with hh | hh
+      · exact hu_c hh
+      · exact hw_unit_ne hh
+    refine ⟨u_c * w_unit, hu_c_w_unit_ne, ?_⟩
+    show d = DensePoly.C (u_c * w_unit) * DensePoly.gcd c w
+    calc d
+        = DensePoly.gcd c w * t := ht
+      _ = DensePoly.gcd c w * DensePoly.C (u_c * w_unit) := by rw [ht_eq]
+      _ = DensePoly.C (u_c * w_unit) * DensePoly.gcd c w :=
+          DensePoly.mul_comm_poly _ _
+
+/--
+One-sided (left) gcd scalar-multiple bridge: a corollary of
+`gcd_C_mul_left_C_mul_right_eq_C_mul_gcd` with `u_w = 1`.
+-/
+private theorem gcd_C_mul_left_eq_C_mul_gcd
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    (u : ZMod64 p) (hu : u ≠ 0) (f g : FpPoly p) :
+    ∃ v : ZMod64 p, v ≠ 0 ∧
+      DensePoly.gcd (DensePoly.C u * f) g =
+        DensePoly.C v * DensePoly.gcd f g := by
+  have h1 : (DensePoly.C (1 : ZMod64 p) : FpPoly p) = 1 := rfl
+  have h2 : (DensePoly.C (1 : ZMod64 p) : FpPoly p) * g = g := by
+    rw [h1, one_mul]
+  obtain ⟨v, hv, heq⟩ :=
+    gcd_C_mul_left_C_mul_right_eq_C_mul_gcd hp u 1 hu
+      (zmod64_one_ne_zero_of_prime hp) f g
+  rw [h2] at heq
+  exact ⟨v, hv, heq⟩
+
+/--
+One-sided (right) gcd scalar-multiple bridge: a corollary of
+`gcd_C_mul_left_C_mul_right_eq_C_mul_gcd` with `u_c = 1`.
+-/
+private theorem gcd_C_mul_right_eq_C_mul_gcd
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    (u : ZMod64 p) (hu : u ≠ 0) (f g : FpPoly p) :
+    ∃ v : ZMod64 p, v ≠ 0 ∧
+      DensePoly.gcd f (DensePoly.C u * g) =
+        DensePoly.C v * DensePoly.gcd f g := by
+  have h1 : (DensePoly.C (1 : ZMod64 p) : FpPoly p) = 1 := rfl
+  have h2 : (DensePoly.C (1 : ZMod64 p) : FpPoly p) * f = f := by
+    rw [h1, one_mul]
+  obtain ⟨v, hv, heq⟩ :=
+    gcd_C_mul_left_C_mul_right_eq_C_mul_gcd hp 1 u
+      (zmod64_one_ne_zero_of_prime hp) hu f g
+  rw [h2] at heq
+  exact ⟨v, hv, heq⟩
+
+/--
 Quotient compatibility under scalar relation for the Yun `c = f / g` and
 tail `w / g` steps: when `g ∣ f` with `g ≠ 0` and both scalars `u, v` are
 nonzero, the scaled quotient `(C u · f) / (C v · g)` equals
