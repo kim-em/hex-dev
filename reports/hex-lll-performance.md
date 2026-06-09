@@ -464,9 +464,18 @@ fixes, and now to `0.6540`.
 
 Per the HO-18 issue body, the BZ family is reported for context only: its tiny matrix means per-call wall time on either side is dominated by process and input-marshalling overhead in the Isabelle executable, so the gating-goal verdict relies on `random-bounded` and `harsh-cubic`, not on this rung.
 
-### fpLLL via fpylll (informational)
+### fpLLL via fplll-ffi (informational)
 
-`SPEC/Libraries/hex-lll.md` classifies the fpLLL comparator as informational.
+`SPEC/Libraries/hex-lll.md` classifies the fpLLL comparator as informational
+and renames it to `fpLLL via fplll-ffi`: the SPEC now requires fpLLL to be
+measured through the in-process `fplll-ffi` FFI shim into `libfplll` (the
+same reducer the certified external-dispatch path resolves at runtime), not
+through a Python `fpylll` subprocess whose interpreter and IPC overhead the
+runtime path never pays. The data in this section was collected before that
+rename, via the legacy `fpylll` persistent-subprocess wiring (`Hex.LLLBench.runFpylll*`
+targets); it is retained as transitional context and will be replaced by an
+`fplll-ffi` sweep when the shim is wired into `hexlll_bench`.
+
 The most recent informational fpLLL sweep is from worktree commit
 `594364a5d86cc9daaf26c53a8b6a137998b38a6e` on `carica` (Apple M2 Ultra,
 macOS), command:
