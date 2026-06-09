@@ -37,28 +37,31 @@ Scientific registrations:
 
 Informational external comparator:
 
-* `fpLLL via fpylll`: process-call registrations send each matrix to
-  `scripts/oracle/lll_fpylll_bench_driver.py`, the persistent
-  subprocess driver wired in HO-17 (#3660). The driver imports
-  `fpylll` once at startup and calls `fpylll.LLL.reduction` with
-  `delta = 0.75` (matching Lean's `δ = 3/4`) per request. The
-  comparator is classified informational in
+* `fpLLL via fplll-ffi`: in-process FFI registrations call `libfplll`
+  through the `fplll-ffi` shim — one C++ call per request, no
+  subprocess. The shim's `lean_fplll_lll_reduce` symbol is resolved
+  by `HexLLL/ffi/lean_hexlll_provider.c` via `dlsym(RTLD_DEFAULT, ...)`
+  after an opportunistic `dlopen` of `HEX_FPLLL_FFI_LIB`, mirroring
+  the Isabelle binary-path override. The shim is built by
+  `scripts/oracle/setup_fplll_ffi.sh` (clone+lake build of
+  `kim-em/fplll-ffi`), keeping hex free of any Lake dependency on
+  it. The comparator is classified informational in
   `SPEC/Libraries/hex-lll.md` because fpLLL's floating-point
-  Gram-Schmidt implementation (Nguyen-Stehle; fpylll 0.6 or newer
-  supported by the existing oracle driver) bypasses the
-  exact-integer operand-size drift paid by this verified
-  implementation. Ratios are recorded for orientation but do not block
-  Phase 4. The conformance-mode entry point remains
-  `scripts/oracle/lll_fpylll.py --check`.
-* `fpLLL certified path`: process-call registrations send `CERT\t`
-  requests to the same persistent fpylll driver. The reply is a flat
-  `(B', U, V)` candidate payload; the Lean target runs
-  `LLLProvider.certifyFlat`, so the measured path is fpLLL candidate
-  production plus the executable checker. Companion checker-only
-  targets cache one candidate after warmup and re-run only
-  `certCheck`, giving the checker's cost share. Public-dispatch smoke
-  targets also guard that, if a real fplll-ffi provider is intentionally
-  loaded, the dispatch tally records at least one accepted candidate.
+  Gram-Schmidt implementation (Nguyen-Stehle) bypasses the
+  exact-integer operand-size drift this verified implementation
+  pays. Ratios are recorded for orientation but do not block
+  Phase 4. The conformance oracle keeps its independent fpylll
+  cross-check at `scripts/oracle/lll_fpylll.py --check`; only the
+  speed comparator switched to the FFI shim.
+* `fpLLL certified path`: the same in-process `fplll-ffi` call returns
+  the flat `(B', U, V)` candidate payload directly; the Lean target
+  runs `LLLProvider.certifyFlat`, so the measured path is fpLLL
+  candidate production plus the executable checker. Companion
+  checker-only targets cache one candidate after warmup and re-run
+  only `certCheck`, giving the checker's cost share. Public-dispatch
+  smoke targets guard that, when an `fplll-ffi` provider is
+  intentionally loaded via `HEX_FPLLL_FFI_LIB`, the dispatch tally
+  records at least one accepted candidate.
 
 External comparator:
 
@@ -75,74 +78,61 @@ External comparator:
   `HEX_LLL_ISABELLE_SVP` to an already-built binary to avoid setup in
   the first measured call.
 
-## Comparator-call protocol (persistent subprocess)
+## Comparator-call protocol
 
-Per `SPEC/benchmarking.md` (post-#3657) "External comparators / Process
-call", Phase-4 process-call comparators with non-negligible per-call
-overhead use a persistent subprocess: one driver is spawned per
-`lake exe hexlll_bench run` invocation, and each measured call sends one
-framed request to its stdin and reads one framed reply from its stdout.
+The `fpLLL via fplll-ffi` comparator is an in-process FFI call: each
+request marshals the matrix into the `Array String` payload the
+provider hook expects, calls `LLLProvider.providerReduce`, and reads
+the flat `(status, rows, cols, has_inverse, reduced, U, V?)` reply.
+No subprocess, no IPC, no interpreter startup; the per-call overhead
+is the FFI marshalling cost alone.
 
-**Framing.** Each request is one line containing the input matrix in
-Haskell's `[[Integer]]` read syntax — exactly the string produced by
-`matrixHaskell` — terminated by `\n`. The same request line feeds
-both the Isabelle and the fpylll persistent drivers; scalar requests emit a
-single scalar per request, terminated by `\n`. Isabelle returns the
-squared norm of its first reduced row; fpylll returns the integer
-first-row checksum matching `Hex.LLLBench.intVectorChecksum` (the
-scalar paired with `runFirstShortVector*Checksum`). Certified fpylll
-requests prefix the matrix with `CERT\t` and receive a whitespace-separated
-flat integer candidate. Malformed fpylll requests come back as
-`ERROR: <message>`; the Lean parser treats any error/non-integer reply as a
-driver fault and triggers the retry path.
+The `verified Isabelle LLL` comparator uses a persistent subprocess
+per `SPEC/benchmarking.md` (post-#3657) "External comparators /
+Process call": one `svp_verified` driver is spawned per
+`lake exe hexlll_bench run` invocation, and each measured call sends
+one framed request to its stdin and reads one framed reply from its
+stdout.
 
-**Lifetime.** Each driver is spawned lazily on first use into a
-module-level `IO.Ref (Option PersistentComparator)`
-(`isabelleChildRef` for Isabelle, `fpylllChildRef` for fpylll) and
-reused for every subsequent call in the same `hexlll_bench`
-process. The child's stdin is held by the bench process via
-`Child.takeStdin`; on process exit, the OS reaps each driver via
-EOF on stdin.
+**Isabelle framing.** Each request is one line containing the input
+matrix in Haskell's `[[Integer]]` read syntax — exactly the string
+produced by `matrixHaskell` — terminated by `\n`. Isabelle returns
+the squared norm of its first reduced row.
 
-**Error handling.** If `requestLine` raises any `IO` error, the
-bench wiring drops the cached child handle, re-spawns the
-relevant driver (Isabelle from
-`scripts/oracle/setup_lll_isabelle.sh`; fpylll from the path in
-`HEX_LLL_FPYLLL_BENCH_DRIVER` or the default
-`scripts/oracle/lll_fpylll_bench_driver.py`), and retries the
-request once. Persistent failure (e.g. setup script failure or
-repeated driver crash) surfaces as an `IO.userError`.
+**Isabelle lifetime.** The Isabelle driver is spawned lazily on first
+use into the module-level `isabelleChildRef`
+(`IO.Ref (Option PersistentComparator)`) and reused for every
+subsequent call in the same `hexlll_bench` process. The child's
+stdin is held by the bench process via `Child.takeStdin`; on process
+exit, the OS reaps the driver via EOF on stdin.
 
-**Per-call overhead.** Piping 10000 trivial inputs
-(`[[1,0],[0,1]]`) through the patched Isabelle binary on the audit
-host takes ~110 ms wall total (median of 5 trials), of which
-~22 ms is the one-time GHC startup; per-call Isabelle protocol
-overhead is ~9 µs in steady state. The persistent fpylll driver
-pays a one-time CPython + `import fpylll` startup and per-call
-steady-state overhead of ~34 µs (median of 5 trials of 1000
-trivial `[[1,0],[0,1]]` requests on the audit host). The previous
-shape paid ~116 ms per call to CPython start + fpylll import +
-single `fpylll.LLL.reduction`. Both persistent figures are three
-orders of magnitude below the per-call interpreter-start cost
-and well below the 5 % overhead-to-measured-time floor
-`SPEC/benchmarking.md` requires for honest ratios.
+**Isabelle error handling.** If `requestLine` raises any `IO` error,
+the bench wiring drops the cached child handle, re-spawns the
+Isabelle driver from `scripts/oracle/setup_lll_isabelle.sh`, and
+retries the request once. Persistent failure (e.g. setup script
+failure or repeated driver crash) surfaces as an `IO.userError`.
 
-**Interaction with `setup_fixed_benchmark`.** `lean-bench` spawns
-one fresh `hexlll_bench` child process per measured repeat of a
-fixed benchmark, so each repeat starts with cold `isabelleChildRef`
-and `fpylllChildRef`. The process-call comparator registrations set
-`minTotalSeconds := 1.0`, forcing the fixed child to run enough
-inner iterations to amortize the one-time GHC start (Isabelle) /
-CPython + fpylll import (fpylll) inside the child. The exported
-per-call time is therefore `total_nanos / inner_repeats`, not the
-cold interpreter startup floor.
+**Per-call overhead.** Piping 10000 trivial inputs (`[[1,0],[0,1]]`)
+through the patched Isabelle binary on the audit host takes ~110 ms
+wall total (median of 5 trials), of which ~22 ms is the one-time
+GHC startup; per-call Isabelle protocol overhead is ~9 µs in steady
+state. The `fplll-ffi` FFI call carries no interpreter startup; its
+per-call cost is one `dlsym`-resolved C++ call plus the
+`matrixToEntries` marshalling.
 
-**Driver path overrides.** `HEX_LLL_FPYLLL_BENCH_DRIVER` overrides
-the default driver script path (relative to the bench process's
-cwd, which is the repo root under `lake exe`).
-`HEX_LLL_FPYLLL_BENCH_PYTHON` overrides the interpreter command
-(default `python3`). The Isabelle binary path is controlled by
-`HEX_LLL_ISABELLE_SVP` as before.
+**Interaction with `setup_fixed_benchmark`.** `lean-bench` spawns one
+fresh `hexlll_bench` child process per measured repeat of a fixed
+benchmark, so each repeat starts with a cold `isabelleChildRef`; the
+process-call comparator registrations set `minTotalSeconds := 1.0`,
+forcing the fixed child to run enough inner iterations to amortize
+the one-time GHC start inside the child. For `fplll-ffi`, the
+per-process cost is the one-time `dlopen` performed lazily on the
+first probe via `HEX_FPLLL_FFI_LIB`.
+
+**Driver path overrides.** `HEX_FPLLL_FFI_LIB` selects the
+`fplll-ffi` shared library that the bench `dlopen`s at start-up
+(see `HexLLL/ffi/lean_hexlll_provider.c`). The Isabelle binary path
+is controlled by `HEX_LLL_ISABELLE_SVP` as before.
 
 **Signal-floor setting.** HexLLL scientific parametric registrations set
 `signalFloorMultiplier := 1.0`. The timed rows come from child-side
@@ -720,16 +710,33 @@ first row. If a real external provider is loaded, this target fails unless the
 certified dispatch accepts at least one candidate. -/
 def runDispatchedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO Int := do
   LLLProvider.resetDiagnostics
-  let reduced :=
-    match LLLProvider.dispatch input.basis (3 / 4 : Rat) with
-    | some B' => B'
-    | none => lllNative input.basis (3 / 4) lllDeltaLower lllDeltaUpper input.hn
+  have hrows : 1 ≤ input.rows := input.hn
+  let f0 : Fin input.rows := ⟨0, by omega⟩
+  -- Drive the dispatch via the IO-based `tryReduce` so the diagnostic
+  -- side-effects fire eagerly (the pure `dispatch` uses
+  -- `@[implemented_by]` side-effects that the compiled bench harness
+  -- otherwise defers past the `diagnostics` read below). On a successful
+  -- candidate we still run `certifyFlat` so the smoke target measures
+  -- the same certified path that `dispatch` exposes to the public `lll`
+  -- entry point.
+  let δ : Rat := 3 / 4
+  let δFloat : Float := Float.ofInt δ.num / Float.ofNat δ.den
+  let entries := LLLProvider.matrixToEntries input.basis
+  let candidate? ← LLLProvider.tryReduce
+    (USize.ofNat input.rows) (USize.ofNat input.cols) entries
+    δFloat 0.55 0 true
+  let reduced ← match candidate? with
+    | some cand =>
+        let flat := #[0, Int.ofNat input.rows, Int.ofNat input.cols, 1]
+          ++ cand.reduced ++ cand.transform ++ (cand.inverse?.getD #[])
+        match LLLProvider.certifyFlat input.basis δ flat with
+        | some triple => pure triple.1
+        | none => pure (lllNative input.basis δ lllDeltaLower lllDeltaUpper input.hn)
+    | none => pure (lllNative input.basis δ lllDeltaLower lllDeltaUpper input.hn)
   let diagnostics ← LLLProvider.diagnostics
   if LLLProvider.providerAvailable () && diagnostics.accepted = 0 then
     throw <| IO.userError
       s!"fplll provider loaded but certified dispatch accepted zero candidates: {repr diagnostics}"
-  have hrows : 1 ≤ input.rows := input.hn
-  let f0 : Fin input.rows := ⟨0, by omega⟩
   return intVectorChecksum (Matrix.row reduced f0)
 
 /-- Benchmark comparator observable: squared norm of Lean's first LLL vector.
@@ -846,93 +853,45 @@ def runIsabelleShortVectorNormSq (_tag : String) (input : FirstShortVectorInput)
   let request := matrixHaskell input.basis
   parseIsabelleNormSq (← requestIsabelleLineWithRetry request 1)
 
-initialize fpylllChildRef : IO.Ref (Option PersistentComparator) ←
-  IO.mkRef none
+/-- Approximate `Rat → Float` for forwarding `δ` to the FFI provider. Precision
+is not part of correctness: the certified path checks the resulting candidate
+against the exact `δ` via integer arithmetic. Mirrors `LLLProvider.ratToFloat`
+(which is private). -/
+private def ratToFloat (r : Rat) : Float :=
+  Float.ofInt r.num / Float.ofNat r.den
 
-private def envOr (name : String) (default : String) : IO String := do
-  match (← IO.getEnv name) with
-  | some v => return v
-  | none => return default
+/-- Invoke fplll-ffi in-process via the dlopened provider and return the flat
+`(status, rows, cols, has_inverse, reduced, U, V?)` payload. The same payload
+shape powers both the raw fpLLL comparator (first-row checksum) and the
+certified path (`LLLProvider.certifyFlat`), so one FFI call covers both.
 
-private def fpylllDriverPath : IO String :=
-  envOr "HEX_LLL_FPYLLL_BENCH_DRIVER" "scripts/oracle/lll_fpylll_bench_driver.py"
-
-private def fpylllPythonCommand : IO String :=
-  envOr "HEX_LLL_FPYLLL_BENCH_PYTHON" "python3"
-
-/-- Lazily spawn the persistent `lll_fpylll_bench_driver.py` driver,
-or return the cached handle. -/
-def resolveFpylllChild : IO PersistentComparator := do
-  if let some ch ← fpylllChildRef.get then
-    return ch
-  let py ← fpylllPythonCommand
-  let script ← fpylllDriverPath
-  let ch ← PersistentComparator.spawn py #[script]
-  fpylllChildRef.set (some ch)
-  return ch
-
-/-- Parse one reply line from `lll_fpylll_bench_driver.py`. The
-driver emits a single integer per request on success or a line
-beginning `ERROR:` on failure; treat the latter as a driver fault so
-the retry path can re-spawn. -/
-def parseFpylllChecksum (text : String) : IO Int := do
-  let trimmed := text.trimAscii.toString
-  if trimmed.startsWith "ERROR:" then
-    throw <| IO.userError s!"lll_fpylll_bench_driver: {trimmed}"
-  match trimmed.toInt? with
-  | some n => return n
-  | none =>
+Raises `IO.userError` if the provider is absent (no `HEX_FPLLL_FFI_LIB` /
+unresolved `lean_fplll_lll_reduce`) or returns an error from `libfplll`. -/
+def requestFpLLLFlat (input : FirstShortVectorInput) : IO (Array Int) := do
+  if !LLLProvider.providerAvailable () then
     throw <| IO.userError
-      s!"lll_fpylll_bench_driver emitted non-integer output: {text}"
+      "fplll-ffi provider absent — set HEX_FPLLL_FFI_LIB to libfplllffi"
+  let δ : Rat := 3 / 4
+  let entries := LLLProvider.matrixToEntries input.basis
+  match LLLProvider.providerReduce
+      (USize.ofNat input.rows) (USize.ofNat input.cols) entries
+      (ratToFloat δ) 0.55 0 true with
+  | .error e => throw <| IO.userError s!"fplll-ffi: {e}"
+  | .ok flat => return flat
 
-private def parseIntToken (token : String) : IO Int := do
-  match token.toInt? with
-  | some n => return n
-  | none => throw <| IO.userError s!"lll_fpylll_bench_driver emitted non-integer token: {token}"
+/-- Benchmark target: fpLLL reduction via fplll-ffi (one in-process C++ call
+into `libfplll`) on one prepared basis; checksum the first reduced row.
 
-/-- Parse a certified-candidate payload from `lll_fpylll_bench_driver.py`. -/
-def parseFpylllCertPayload (text : String) : IO (Array Int) := do
-  let trimmed := text.trimAscii.toString
-  if trimmed.startsWith "ERROR:" then
-    throw <| IO.userError s!"lll_fpylll_bench_driver: {trimmed}"
-  let tokens := (trimmed.splitOn " ").filter (fun token => !token.isEmpty)
-  if tokens.isEmpty then
-    throw <| IO.userError "lll_fpylll_bench_driver emitted empty certified payload"
-  tokens.foldlM (init := #[]) fun acc token => do
-    return acc.push (← parseIntToken token)
-
-/-- Send one matrix to the persistent fpylll driver and return the
-raw reply line.
-
-On process death, EOF before a reply line, or any IO error from the
-protocol, the cached handle is dropped, a fresh driver is spawned,
-and the call is retried once. Persistent failure surfaces as an
-`IO.userError` from the retry path. -/
-def requestFpylllLineWithRetry (request : String) : Nat → IO String
-  | 0 => do
-    let reply ← (← resolveFpylllChild).requestLine request
-    if reply.isEmpty then
-      throw <| IO.userError "lll_fpylll_bench_driver closed stdout before replying"
-    return reply
-  | Nat.succ remaining => do
-    try
-      let reply ← (← resolveFpylllChild).requestLine request
-      if reply.isEmpty then
-        throw <| IO.userError "lll_fpylll_bench_driver closed stdout before replying"
-      return reply
-    catch _ =>
-      fpylllChildRef.set none
-      requestFpylllLineWithRetry request remaining
-
-/-- Invoke fpylll on one prepared basis via the persistent driver
-and parse the first-row checksum. -/
-def runFpylllFirstShortVectorChecksum (input : FirstShortVectorInput) : IO Int := do
-  let request := matrixHaskell input.basis
-  parseFpylllChecksum (← requestFpylllLineWithRetry request 1)
-
-def requestFpylllCertifiedPayload (input : FirstShortVectorInput) : IO (Array Int) := do
-  let request := "CERT\t" ++ matrixHaskell input.basis
-  parseFpylllCertPayload (← requestFpylllLineWithRetry request 1)
+The header `[status, rows, cols, has_inverse]` precedes the row-major reduced
+basis at offset 4, so `flat[4 + j]` are the `cols` entries of the first row. -/
+def runFpLLLFirstShortVectorChecksum (input : FirstShortVectorInput) : IO Int := do
+  let flat ← requestFpLLLFlat input
+  if flat.size < 4 + input.cols then
+    throw <| IO.userError
+      s!"fplll-ffi returned undersized payload (size {flat.size}, cols {input.cols})"
+  return (List.range input.cols).foldl
+    (fun acc j => acc * 65_537 + (flat[4 + j]!))
+    0
 
 def certifyPayloadChecksum (input : FirstShortVectorInput) (payload : Array Int) : IO Int := do
   match LLLProvider.certifyFlat input.basis (3 / 4 : Rat) payload with
@@ -941,12 +900,14 @@ def certifyPayloadChecksum (input : FirstShortVectorInput) (payload : Array Int)
       let f0 : Fin input.rows := ⟨0, by omega⟩
       let last : Fin input.rows := ⟨input.rows - 1, by omega⟩
       return intRowPairChecksum triple.1 f0 last
-  | none => throw <| IO.userError "fpylll certified candidate rejected by certCheck"
+  | none => throw <| IO.userError "fplll-ffi certified candidate rejected by certCheck"
 
-/-- Benchmark target: fpLLL candidate production plus Lean's executable
-certificate checker. -/
+/-- Benchmark target: fpLLL candidate production via fplll-ffi plus Lean's
+executable certificate checker. The same in-process payload that drives
+`runFpLLLFirstShortVectorChecksum` feeds `LLLProvider.certifyFlat`, so the
+certified curve and the raw fpLLL curve measure the identical C++ reducer. -/
 def runCertifiedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO Int := do
-  certifyPayloadChecksum input (← requestFpylllCertifiedPayload input)
+  certifyPayloadChecksum input (← requestFpLLLFlat input)
 
 def runCertifiedCheckerChecksum
     (ref : IO.Ref (Option (FirstShortVectorInput × Array Int)))
@@ -956,7 +917,7 @@ def runCertifiedCheckerChecksum
     | some cached => pure cached
     | none =>
         let input := mk ()
-        let payload ← requestFpylllCertifiedPayload input
+        let payload ← requestFpLLLFlat input
         ref.set (some (input, payload))
         pure (input, payload)
   certifyPayloadChecksum input payload
@@ -976,103 +937,103 @@ def runFirstShortVectorHarshCubic15Checksum : Unit → IO Int := fun _ => do
   return runFirstShortVectorChecksum
     (← getCachedInput harshCubicInput15Ref (fun _ => prepHarshCubicInput 15))
 
-/-- fpylll comparator for the fixed BZ recombination input. -/
-def runFpylllFirstShortVectorBZRecombinationChecksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum (← bzRecombinationInputRef.get)
+/-- fpLLL comparator (via fplll-ffi) for the fixed BZ recombination input. -/
+def runFpLLLFirstShortVectorBZRecombinationChecksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← bzRecombinationInputRef.get)
 
-/-- fpylll comparator for the random-bounded bottom rung (`n = 30`). -/
-def runFpylllFirstShortVectorRandomBounded30Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the random-bounded bottom rung (`n = 30`). -/
+def runFpLLLFirstShortVectorRandomBounded30Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput randomBoundedInput30Ref (fun _ => prepRandomBoundedInput 30))
 
-/-- fpylll comparator for the random-bounded rung `n = 45`. -/
-def runFpylllFirstShortVectorRandomBounded45Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the random-bounded rung `n = 45`. -/
+def runFpLLLFirstShortVectorRandomBounded45Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput randomBoundedInput45Ref (fun _ => prepRandomBoundedInput 45))
 
-/-- fpylll comparator for the random-bounded rung `n = 60`. -/
-def runFpylllFirstShortVectorRandomBounded60Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the random-bounded rung `n = 60`. -/
+def runFpLLLFirstShortVectorRandomBounded60Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput randomBoundedInput60Ref (fun _ => prepRandomBoundedInput 60))
 
-/-- fpylll comparator for the random-bounded rung `n = 75`. -/
-def runFpylllFirstShortVectorRandomBounded75Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the random-bounded rung `n = 75`. -/
+def runFpLLLFirstShortVectorRandomBounded75Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput randomBoundedInput75Ref (fun _ => prepRandomBoundedInput 75))
 
-/-- fpylll comparator for the random-bounded rung `n = 90`. -/
-def runFpylllFirstShortVectorRandomBounded90Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the random-bounded rung `n = 90`. -/
+def runFpLLLFirstShortVectorRandomBounded90Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput randomBoundedInput90Ref (fun _ => prepRandomBoundedInput 90))
 
-/-- fpylll comparator for the random-bounded rung `n = 120`. -/
-def runFpylllFirstShortVectorRandomBounded120Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the random-bounded rung `n = 120`. -/
+def runFpLLLFirstShortVectorRandomBounded120Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput randomBoundedInput120Ref (fun _ => prepRandomBoundedInput 120))
 
-/-- fpylll comparator for the random-bounded rung `n = 150`. -/
-def runFpylllFirstShortVectorRandomBounded150Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the random-bounded rung `n = 150`. -/
+def runFpLLLFirstShortVectorRandomBounded150Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput randomBoundedInput150Ref (fun _ => prepRandomBoundedInput 150))
 
-/-- fpylll comparator for the random-bounded rung `n = 180`. -/
-def runFpylllFirstShortVectorRandomBounded180Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the random-bounded rung `n = 180`. -/
+def runFpLLLFirstShortVectorRandomBounded180Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput randomBoundedInput180Ref (fun _ => prepRandomBoundedInput 180))
 
-/-- fpylll comparator for the harsh-cubic bottom rung (`n = 15`). -/
-def runFpylllFirstShortVectorHarshCubic15Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the harsh-cubic bottom rung (`n = 15`). -/
+def runFpLLLFirstShortVectorHarshCubic15Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput harshCubicInput15Ref (fun _ => prepHarshCubicInput 15))
 
-/-- fpylll comparator for the harsh-cubic rung `n = 20`. -/
-def runFpylllFirstShortVectorHarshCubic20Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the harsh-cubic rung `n = 20`. -/
+def runFpLLLFirstShortVectorHarshCubic20Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput harshCubicInput20Ref (fun _ => prepHarshCubicInput 20))
 
-/-- fpylll comparator for the harsh-cubic rung `n = 25`. -/
-def runFpylllFirstShortVectorHarshCubic25Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the harsh-cubic rung `n = 25`. -/
+def runFpLLLFirstShortVectorHarshCubic25Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput harshCubicInput25Ref (fun _ => prepHarshCubicInput 25))
 
-/-- fpylll comparator for the harsh-cubic rung `n = 30`. -/
-def runFpylllFirstShortVectorHarshCubic30Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the harsh-cubic rung `n = 30`. -/
+def runFpLLLFirstShortVectorHarshCubic30Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput harshCubicInput30Ref (fun _ => prepHarshCubicInput 30))
 
-/-- fpylll comparator for the harsh-cubic rung `n = 35`. -/
-def runFpylllFirstShortVectorHarshCubic35Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the harsh-cubic rung `n = 35`. -/
+def runFpLLLFirstShortVectorHarshCubic35Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput harshCubicInput35Ref (fun _ => prepHarshCubicInput 35))
 
-/-- fpylll comparator for the harsh-cubic rung `n = 40`. -/
-def runFpylllFirstShortVectorHarshCubic40Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the harsh-cubic rung `n = 40`. -/
+def runFpLLLFirstShortVectorHarshCubic40Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput harshCubicInput40Ref (fun _ => prepHarshCubicInput 40))
 
-/-- fpylll comparator for the harsh-cubic rung `n = 45`. -/
-def runFpylllFirstShortVectorHarshCubic45Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the harsh-cubic rung `n = 45`. -/
+def runFpLLLFirstShortVectorHarshCubic45Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput harshCubicInput45Ref (fun _ => prepHarshCubicInput 45))
 
-/-- fpylll comparator for the harsh-cubic rung `n = 50`. -/
-def runFpylllFirstShortVectorHarshCubic50Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the harsh-cubic rung `n = 50`. -/
+def runFpLLLFirstShortVectorHarshCubic50Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput harshCubicInput50Ref (fun _ => prepHarshCubicInput 50))
 
-/-- fpylll comparator for the harsh-cubic rung `n = 55`. -/
-def runFpylllFirstShortVectorHarshCubic55Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the harsh-cubic rung `n = 55`. -/
+def runFpLLLFirstShortVectorHarshCubic55Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput harshCubicInput55Ref (fun _ => prepHarshCubicInput 55))
 
-/-- fpylll comparator for the harsh-cubic rung `n = 60`. -/
-def runFpylllFirstShortVectorHarshCubic60Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the harsh-cubic rung `n = 60`. -/
+def runFpLLLFirstShortVectorHarshCubic60Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput harshCubicInput60Ref (fun _ => prepHarshCubicInput 60))
 
-/-- fpylll comparator for the harsh-cubic rung `n = 65`. -/
-def runFpylllFirstShortVectorHarshCubic65Checksum : Unit → IO Int := fun _ => do
-  runFpylllFirstShortVectorChecksum
+/-- fpLLL comparator (via fplll-ffi) for the harsh-cubic rung `n = 65`. -/
+def runFpLLLFirstShortVectorHarshCubic65Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum
     (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
 
 def runDispatchedFirstShortVectorRandomBounded30Checksum : Unit → IO Int := fun _ => do
@@ -1512,12 +1473,12 @@ setup_fixed_benchmark runFirstShortVectorBZRecombinationChecksum where {
     expectedHash := some (Hashable.hash (runFirstShortVectorChecksum bzRecombinationInput))
   }
 
-/- Fixed bottom-rung Lean/fpylll comparison for the BZ recombination family.
-The fpylll target is informational and process-call based; scheduled and
-release bench runs use
-`compare runFirstShortVectorBZRecombinationChecksum runFpylllFirstShortVectorBZRecombinationChecksum`
+/- Fixed bottom-rung Lean/fpLLL comparison for the BZ recombination family.
+The fpLLL target is informational and FFI-call based via fplll-ffi; scheduled
+and release bench runs use
+`compare runFirstShortVectorBZRecombinationChecksum runFpLLLFirstShortVectorBZRecombinationChecksum`
 to record its ratio. -/
-setup_fixed_benchmark runFpylllFirstShortVectorBZRecombinationChecksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorBZRecombinationChecksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
@@ -1525,7 +1486,7 @@ setup_fixed_benchmark runFpylllFirstShortVectorBZRecombinationChecksum where {
     warmupFirstIter := true
   }
 
-/- Fixed Lean/fpylll comparison for the random-bounded family across the
+/- Fixed Lean/fpLLL comparison for the random-bounded family across the
 post-HO-18 densified ladder. -/
 setup_fixed_benchmark runFirstShortVectorRandomBounded30Checksum where {
     repeats := 5
@@ -1533,7 +1494,7 @@ setup_fixed_benchmark runFirstShortVectorRandomBounded30Checksum where {
     expectedHash := some (Hashable.hash (runFirstShortVectorChecksum (prepRandomBoundedInput 30)))
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded30Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorRandomBounded30Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
@@ -1541,49 +1502,49 @@ setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded30Checksum where {
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded45Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorRandomBounded45Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded60Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorRandomBounded60Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 30.0
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded75Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorRandomBounded75Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 30.0
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded90Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorRandomBounded90Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 40.0
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded120Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorRandomBounded120Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 60.0
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded150Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorRandomBounded150Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded180Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorRandomBounded180Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 120.0
@@ -1704,8 +1665,8 @@ setup_fixed_benchmark runCertifiedCheckerRandomBounded180Checksum where {
     warmupFirstIter := true
   }
 
-/- Fixed bottom-rung Lean/fpylll comparison for the harsh-cubic family at
-`n = 15`, the first rung of the scientific parametric ladder. The fpylll
+/- Fixed bottom-rung Lean/fpLLL comparison for the harsh-cubic family at
+`n = 15`, the first rung of the scientific parametric ladder. The fpLLL
 comparison also follows the full harsh-cubic comparator ladder. -/
 setup_fixed_benchmark runFirstShortVectorHarshCubic15Checksum where {
     repeats := 5
@@ -1713,7 +1674,7 @@ setup_fixed_benchmark runFirstShortVectorHarshCubic15Checksum where {
     expectedHash := some (Hashable.hash (runFirstShortVectorChecksum (prepHarshCubicInput 15)))
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic15Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorHarshCubic15Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
@@ -1721,69 +1682,69 @@ setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic15Checksum where {
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic20Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorHarshCubic20Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic25Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorHarshCubic25Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic30Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorHarshCubic30Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic35Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorHarshCubic35Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic40Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorHarshCubic40Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic45Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorHarshCubic45Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic50Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorHarshCubic50Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic55Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorHarshCubic55Checksum where {
     repeats := 5
     minTotalSeconds := 1.0
     maxSecondsPerCall := 20.0
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic60Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorHarshCubic60Checksum where {
     repeats := 5
     maxSecondsPerCall := 20.0
     warmupFirstIter := true
   }
 
-setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic65Checksum where {
+setup_fixed_benchmark runFpLLLFirstShortVectorHarshCubic65Checksum where {
     repeats := 5
     maxSecondsPerCall := 20.0
     warmupFirstIter := true

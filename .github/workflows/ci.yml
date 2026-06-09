@@ -20,7 +20,7 @@ jobs:
       - run: python3 scripts/check_phase4.py
       - name: Lint benches are Mathlib-free (SPEC/benchmarking.md §Mathlib-free benches)
         run: python3 scripts/ci/check_benches_mathlib_free.py
-      - run: sudo apt-get install -y libgmp-dev libfplll-dev libntl-dev
+      - run: sudo apt-get install -y libgmp-dev libfplll-dev libntl-dev libmpfr-dev libc++-dev libc++abi-dev autoconf automake libtool pkg-config
       - name: Install Python bench comparator dependencies
         run: python3 -m pip install --user cysignals fpylll python-flint
       - name: Set up Lean toolchain (no build)
@@ -79,6 +79,12 @@ jobs:
         run: |
           HEX_LLL_ISABELLE_SVP="$(scripts/oracle/setup_lll_isabelle.sh)"
           export HEX_LLL_ISABELLE_SVP
+          # fpLLL comparator (#6642): build the fplll-ffi shim and dlopen it
+          # at hexlll_bench start-up. The shim depends on Lean's
+          # libLake_shared.so, which is reachable via LD_LIBRARY_PATH set
+          # above ("Configure Lean shared library path").
+          HEX_FPLLL_FFI_LIB="$(scripts/oracle/setup_fplll_ffi.sh)"
+          export HEX_FPLLL_FFI_LIB
           bash scripts/ci/check_bench_verify_budget.sh \
             hexarith_bench hexmatrix_bench hexpoly_bench hexpolyz_bench \
             hexpolyfp_bench hexmodarith_bench hexgramschmidt_bench \
