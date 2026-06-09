@@ -16344,6 +16344,69 @@ theorem factor_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
     (by simpa [Hex.factor_eq_factorWithBound_default] using hmem)
     h_raw
 
+/-- Slow-trial fallback entry irreducibility at an explicit coefficient bound.
+
+When both earlier tiers of `Hex.factorWithBound f B` fail, recorded entries are
+sign-normalised images of raw factors from
+`Hex.factorSlowTrialFactorsWithBound f B`.  This wrapper packages that
+dispatch and the sign-normalisation lift, while leaving the actual
+trial-core irreducibility/completeness obligation as the local `h_trial`
+hypothesis. -/
+theorem factorWithBound_slowTrial_entry_zpolyIrreducible_of_raw
+    {f : Hex.ZPoly} {B : Nat} {entry : Hex.ZPoly × Nat}
+    (hmem : entry ∈ (Hex.factorWithBound f B).factors.toList)
+    (hfast_none : Hex.factorFastFactorsWithBound f B = none)
+    (hmod_none : Hex.factorSlowModularWithBound f B = none)
+    (h_trial :
+      ∀ raw ∈ (Hex.factorSlowTrialFactorsWithBound f B).toList,
+        entry.1 = Hex.normalizeFactorSign raw →
+          Hex.ZPoly.Irreducible raw) :
+    Hex.ZPoly.Irreducible entry.1 := by
+  obtain ⟨rawFactors, hsource, raw, hraw_mem, hentry_eq⟩ :=
+    Hex.factorWithBound_entry_mem_raw_source f B entry hmem
+  have hrawFactors :
+      rawFactors = Hex.factorSlowTrialFactorsWithBound f B := by
+    rcases hsource with hfast | hslow
+    · rw [hfast_none] at hfast
+      cases hfast
+    · rcases hslow with hmod | htrial
+      · rcases hmod with ⟨_, hmod_some⟩
+        unfold Hex.factorSlowModularWithBound at hmod_none
+        rw [hmod_some] at hmod_none
+        simp at hmod_none
+      · exact htrial.2.2
+  rw [hentry_eq]
+  exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
+    (h_trial raw (by simpa [hrawFactors] using hraw_mem) hentry_eq)
+
+/-- Default-precision slow-trial fallback entry wrapper for `Hex.factor`.
+
+This is the `Hex.factor` specialisation of
+`factorWithBound_slowTrial_entry_zpolyIrreducible_of_raw`, shaped for the
+three-tier public capstone: the caller supplies the two failed predecessor
+branches and the raw trial-factor irreducibility witness for the particular
+recorded entry. -/
+theorem factor_slowTrial_entry_zpolyIrreducible_of_raw
+    {f : Hex.ZPoly} {entry : Hex.ZPoly × Nat}
+    (hmem : entry ∈ (Hex.factor f).factors.toList)
+    (hfast_none :
+      Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+        none)
+    (hmod_none :
+      Hex.factorSlowModularWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
+        none)
+    (h_trial :
+      ∀ raw ∈
+          (Hex.factorSlowTrialFactorsWithBound f
+            (Hex.ZPoly.defaultFactorCoeffBound f)).toList,
+        entry.1 = Hex.normalizeFactorSign raw →
+          Hex.ZPoly.Irreducible raw) :
+    Hex.ZPoly.Irreducible entry.1 :=
+  factorWithBound_slowTrial_entry_zpolyIrreducible_of_raw
+    (f := f) (B := Hex.ZPoly.defaultFactorCoeffBound f)
+    (by simpa [Hex.factor_eq_factorWithBound_default] using hmem)
+    hfast_none hmod_none h_trial
+
 /-- **#3987 assembled output theorem.**
 
 Every recorded entry of `Hex.factorWithBound f B` is `Hex.ZPoly.Irreducible`,
