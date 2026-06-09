@@ -119,6 +119,27 @@ private theorem sqrtAux_upper_succ
     n ≤ (sqrtAux n fuel x + 1) ^ 2 :=
   sqrtAux_upper_succ_core n fuel x h
 
+/--
+Stop-condition lemma for the Newton iteration: when `sqrtStep n x ≥ x`
+and `x > 0`, the current `x` satisfies the lower-square bound
+`x * x ≤ n`.
+
+From `(x + n / x) / 2 ≥ x` we get `n / x ≥ x` via the Nat-division iff,
+and then `x * x ≤ x * (n / x) ≤ n` closes via `Nat.div_mul_le_self`.
+-/
+private theorem sqrtStep_ge_imp_sq_le {n x : Nat} (_hx : 0 < x)
+    (hstop : x ≤ sqrtStep n x) : x * x ≤ n := by
+  have hdiv : x ≤ n / x := by
+    have h1 : 2 * x ≤ x + n / x := by
+      have := hstop
+      unfold sqrtStep at this
+      omega
+    omega
+  calc x * x
+      ≤ x * (n / x) := Nat.mul_le_mul_left x hdiv
+    _ = (n / x) * x := Nat.mul_comm _ _
+    _ ≤ n := Nat.div_mul_le_self n x
+
 /-- The squared Euclidean norm of the coefficient vector of `f`. -/
 def coeffNormSq (f : ZPoly) : Nat :=
   (List.range f.size).foldl (fun acc i => acc + (f.coeff i).natAbs ^ 2) 0
