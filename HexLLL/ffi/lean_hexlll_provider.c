@@ -1,6 +1,7 @@
 #include <dlfcn.h>
 #include <stdint.h>
 #include <stdatomic.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <lean/lean.h>
 
@@ -20,8 +21,11 @@ static atomic_int lean_hexlll_provider_dlopen_done = 0;
 /* If `HEX_FPLLL_FFI_LIB` is set, `dlopen` the named shared library with
    `RTLD_GLOBAL` so its symbols (in particular `lean_fplll_lll_reduce`) become
    visible to `dlsym(RTLD_DEFAULT, ...)` below. Tried at most once per process.
-   Failures are silent: the subsequent `dlsym` probe will simply not find the
-   symbol and the provider stays absent. */
+   When the env var is unset the call is a no-op. When the env var is set but
+   `dlopen` fails, the error is written to stderr so CI surfaces the actual
+   loader diagnostic (typically an unresolved transitive dep like
+   `libLake_shared`) instead of silently falling through to "provider
+   absent". */
 static void lean_hexlll_dlopen_provider_lib(void) {
     int done = atomic_load_explicit(&lean_hexlll_provider_dlopen_done, memory_order_acquire);
     if (done) {
@@ -37,7 +41,11 @@ static void lean_hexlll_dlopen_provider_lib(void) {
     if (path == NULL || path[0] == '\0') {
         return;
     }
-    (void)dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+    if (dlopen(path, RTLD_NOW | RTLD_GLOBAL) == NULL) {
+        const char *err = dlerror();
+        fprintf(stderr, "hexlll: dlopen(\"%s\") failed: %s\n",
+                path, err != NULL ? err : "(no dlerror)");
+    }
 }
 
 static lean_fplll_lll_reduce_fn lean_hexlll_resolve_provider(void) {

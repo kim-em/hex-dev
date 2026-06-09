@@ -95,14 +95,64 @@ if ! elan toolchain list | grep -Fq "${toolchain}"; then
   elan toolchain install "${toolchain}" >&2
 fi
 
-lib_path="${src_dir}/.lake/build/lib/libfplllffi.${shared_ext}"
+static_path="${src_dir}/.lake/build/lib/libfplllffi.a"
 
-if [[ ! -f "${lib_path}" ]]; then
+if [[ ! -f "${static_path}" ]]; then
   (cd "${src_dir}" && lake build FPLLL >&2)
 fi
 
-if [[ ! -f "${lib_path}" ]]; then
-  echo "setup_fplll_ffi.sh: build did not produce ${lib_path}" >&2
+if [[ ! -f "${static_path}" ]]; then
+  echo "setup_fplll_ffi.sh: build did not produce ${static_path}" >&2
+  exit 1
+fi
+
+# Lake's auto-generated shared variant of `extern_lib` (i.e.
+# `libfplllffi.{so,dylib}` next to the `.a`) is intended for the Lean
+# compiler's `precompileModules` dlopen and therefore carries an
+# `@rpath`/`DT_NEEDED` reference to `libLake_shared`. That dep is not
+# satisfiable at the bench-binary's runtime dlopen, so we re-link the
+# static archive into a clean shared library here: link directly against
+# `libleanshared` (which provides `lean_alloc_mpz` and friends) plus the
+# system fplll/MPFR/GMP, and bake the toolchain lib dir into the rpath so
+# the dlopen at `HEX_FPLLL_FFI_LIB` does not depend on the caller's
+# `LD_LIBRARY_PATH`/`DYLD_LIBRARY_PATH`.
+lean_lib_dir="$(cd "$(dirname "$(elan which lean)")/../lib/lean" && pwd)"
+fplll_install_lib="${src_dir}/.lake/build/fplll-install/lib"
+out_dir="${cache_root}/shim"
+mkdir -p "${out_dir}"
+lib_path="${out_dir}/libfplllffi.${shared_ext}"
+
+case "$(uname -s)" in
+  Darwin)
+    cxx="${HEX_FPLLL_FFI_CXX:-c++}"
+    whole_start=("-Wl,-force_load,${static_path}")
+    whole_end=()
+    extra_link_args=()
+    if [[ -d "/opt/homebrew/lib" ]]; then
+      extra_link_args+=("-L/opt/homebrew/lib" "-Wl,-rpath,/opt/homebrew/lib")
+    fi
+    if [[ -d "/usr/local/lib" ]]; then
+      extra_link_args+=("-L/usr/local/lib" "-Wl,-rpath,/usr/local/lib")
+    fi
+    ;;
+  *)
+    cxx="${HEX_FPLLL_FFI_CXX:-clang++}"
+    whole_start=("-Wl,--whole-archive" "${static_path}")
+    whole_end=("-Wl,--no-whole-archive")
+    extra_link_args=("-stdlib=libc++" "-lpthread"
+                     "-L/usr/lib/x86_64-linux-gnu" "-L/usr/lib/aarch64-linux-gnu"
+                     "-L/usr/lib64" "-L/usr/lib")
+    ;;
+esac
+
+if ! "${cxx}" -shared -fPIC -o "${lib_path}" \
+    "${whole_start[@]}" "${whole_end[@]}" \
+    -L"${fplll_install_lib}" -Wl,-rpath,"${fplll_install_lib}" -lfplll \
+    -L"${lean_lib_dir}" -Wl,-rpath,"${lean_lib_dir}" -lleanshared \
+    "${extra_link_args[@]}" \
+    -lmpfr -lgmp \
+    >&2; then
+  echo "setup_fplll_ffi.sh: failed to link ${lib_path}" >&2
   exit 1
 fi
 
