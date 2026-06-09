@@ -7137,6 +7137,124 @@ private theorem yunFactorsDerivativeActiveReachable_nonzero
           cases ih.2
       simpa [y, z] using And.intro hy_nonzero hz_nonzero
 
+private theorem yunContribution_scalarSync_raw_one
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    {c w : FpPoly p} {u_c u_w : ZMod64 p}
+    (hu_c : u_c ≠ 0) (hu_w : u_w ≠ 0)
+    (base level fuel : Nat) (hc : isOne c = true) :
+    ∃ s u_tail : ZMod64 p, s ≠ 0 ∧ u_tail ≠ 0 ∧
+      yunFactorsContributionWithLevel
+          (DensePoly.C u_c * c) (DensePoly.C u_w * w) base level (fuel + 1) =
+        (DensePoly.C s *
+            (yunFactorsContributionWithLevel c w base level (fuel + 1)).1,
+          DensePoly.C u_tail *
+            (yunFactorsContributionWithLevel c w base level (fuel + 1)).2) := by
+  have hc_eq : c = 1 := eq_one_of_isOne_true c hc
+  obtain ⟨s, t, hs, ht, hscaled₁, hscaled₂⟩ :=
+    yunFactorsContributionWithLevel_constant_scalar_sync hp hu_c
+      (DensePoly.C u_w * w : FpPoly p) base level (fuel + 1)
+  refine ⟨s, t * u_w, hs, ?_, ?_⟩
+  · intro hzero
+    rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with ht_zero | huw_zero
+    · exact ht ht_zero
+    · exact hu_w huw_zero
+  · have htail :
+        DensePoly.C t * (DensePoly.C u_w * w : FpPoly p) =
+          DensePoly.C (t * u_w) * w := by
+      calc
+        DensePoly.C t * (DensePoly.C u_w * w : FpPoly p) =
+            (DensePoly.C t * DensePoly.C u_w : FpPoly p) * w :=
+              (DensePoly.mul_assoc_poly _ _ _).symm
+        _ = DensePoly.C (t * u_w) * w := by rw [fpPoly_C_mul_C_eq]
+    have hscaled₂' :
+        (yunFactorsContributionWithLevel
+              (DensePoly.C u_c * c) (DensePoly.C u_w * w)
+              base level (fuel + 1)).2 =
+          DensePoly.C (t * u_w) * w := by
+      simpa [hc_eq, htail] using hscaled₂
+    have hscaled₁' :
+        (yunFactorsContributionWithLevel
+              (DensePoly.C u_c * c) (DensePoly.C u_w * w)
+              base level (fuel + 1)).1 =
+          DensePoly.C s := by
+      simpa [hc_eq] using hscaled₁
+    apply Prod.ext
+    · calc
+        (yunFactorsContributionWithLevel
+              (DensePoly.C u_c * c) (DensePoly.C u_w * w)
+              base level (fuel + 1)).1 =
+            DensePoly.C s := hscaled₁'
+        _ = DensePoly.C s *
+              (yunFactorsContributionWithLevel c w base level (fuel + 1)).1 := by
+            simp [yunFactorsContributionWithLevel, hc]
+    · calc
+        (yunFactorsContributionWithLevel
+              (DensePoly.C u_c * c) (DensePoly.C u_w * w)
+              base level (fuel + 1)).2 =
+            DensePoly.C (t * u_w) * w := hscaled₂'
+        _ = DensePoly.C (t * u_w) *
+              (yunFactorsContributionWithLevel c w base level (fuel + 1)).2 := by
+            simp [yunFactorsContributionWithLevel, hc]
+
+private theorem yunContribution_scalarSync_scaled_one
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    {c w : FpPoly p} {u_c u_w : ZMod64 p}
+    (hu_c : u_c ≠ 0) (hu_w : u_w ≠ 0)
+    (base level fuel : Nat) (_hc_false : isOne c = false)
+    (hscaled_c : isOne (DensePoly.C u_c * c : FpPoly p) = true) :
+    ∃ s u_tail : ZMod64 p, s ≠ 0 ∧ u_tail ≠ 0 ∧
+      yunFactorsContributionWithLevel
+          (DensePoly.C u_c * c) (DensePoly.C u_w * w) base level (fuel + 1) =
+        (DensePoly.C s *
+            (yunFactorsContributionWithLevel c w base level (fuel + 1)).1,
+          DensePoly.C u_tail *
+            (yunFactorsContributionWithLevel c w base level (fuel + 1)).2) := by
+  have hc_unit : c = DensePoly.C u_c⁻¹ := by
+    apply C_mul_eq_one_inv_form hp hu_c
+    exact eq_one_of_isOne_true (DensePoly.C u_c * c : FpPoly p) hscaled_c
+  have hu_c_inv : u_c⁻¹ ≠ 0 :=
+    zmod64_inv_ne_zero_of_prime_ne_zero hp hu_c
+  obtain ⟨sRaw, tRaw, hsRaw, htRaw, hraw₁, hraw₂⟩ :=
+    yunFactorsContributionWithLevel_constant_scalar_sync hp hu_c_inv
+      w base level (fuel + 1)
+  refine ⟨sRaw⁻¹, u_w * tRaw⁻¹, ?_, ?_, ?_⟩
+  · exact zmod64_inv_ne_zero_of_prime_ne_zero hp hsRaw
+  · intro hzero
+    rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with huw_zero | ht_zero
+    · exact hu_w huw_zero
+    · exact zmod64_inv_ne_zero_of_prime_ne_zero hp htRaw ht_zero
+  · have hraw₁' :
+        (yunFactorsContributionWithLevel c w base level (fuel + 1)).1 =
+          DensePoly.C sRaw := by
+      simpa [hc_unit] using hraw₁
+    have hraw₂' :
+        (yunFactorsContributionWithLevel c w base level (fuel + 1)).2 =
+          DensePoly.C tRaw * w := by
+      simpa [hc_unit] using hraw₂
+    have hs_inv_mul : sRaw⁻¹ * sRaw = (1 : ZMod64 p) := by
+      have hcomm : sRaw * sRaw⁻¹ = sRaw⁻¹ * sRaw := by grind
+      rw [← hcomm]
+      exact zmod64_mul_inv_eq_one_of_prime_ne_zero hp hsRaw
+    have hfirst :
+        (1 : FpPoly p) =
+          DensePoly.C sRaw⁻¹ *
+            (yunFactorsContributionWithLevel c w base level (fuel + 1)).1 := by
+      rw [hraw₁']
+      calc
+        (1 : FpPoly p) = DensePoly.C (1 : ZMod64 p) := rfl
+        _ = DensePoly.C (sRaw⁻¹ * sRaw) := by rw [hs_inv_mul]
+        _ = DensePoly.C sRaw⁻¹ * DensePoly.C sRaw := by
+              rw [fpPoly_C_mul_C_eq]
+    have htail :
+        DensePoly.C u_w * w =
+          DensePoly.C (u_w * tRaw⁻¹) *
+            (yunFactorsContributionWithLevel c w base level (fuel + 1)).2 := by
+      rw [hraw₂']
+      exact (C_mul_C_mul_cancel_right hp htRaw w).symm
+    apply Prod.ext
+    · simpa [yunFactorsContributionWithLevel, hscaled_c] using hfirst
+    · simpa [yunFactorsContributionWithLevel, hscaled_c] using htail
+
 private theorem yunFactorsContributionWithLevel_scalar_sync_of_derivative_active_reachable
     [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
     {f c w : FpPoly p} {u_c u_w : ZMod64 p}
@@ -7159,102 +7277,15 @@ private theorem yunFactorsContributionWithLevel_scalar_sync_of_derivative_active
       simp
   | succ fuel ih =>
       by_cases hc : isOne c = true
-      · have hc_eq : c = 1 := eq_one_of_isOne_true c hc
-        obtain ⟨s, t, hs, ht, hscaled₁, hscaled₂⟩ :=
-          yunFactorsContributionWithLevel_constant_scalar_sync hp hu_c
-            (DensePoly.C u_w * w : FpPoly p) base level (fuel + 1)
-        refine ⟨s, t * u_w, hs, ?_, ?_⟩
-        · intro hzero
-          rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with ht_zero | huw_zero
-          · exact ht ht_zero
-          · exact hu_w huw_zero
-        · have htail :
-              DensePoly.C t * (DensePoly.C u_w * w : FpPoly p) =
-                DensePoly.C (t * u_w) * w := by
-            calc
-              DensePoly.C t * (DensePoly.C u_w * w : FpPoly p) =
-                  (DensePoly.C t * DensePoly.C u_w : FpPoly p) * w :=
-                    (DensePoly.mul_assoc_poly _ _ _).symm
-              _ = DensePoly.C (t * u_w) * w := by rw [fpPoly_C_mul_C_eq]
-          have hscaled₂' :
-              (yunFactorsContributionWithLevel
-                    (DensePoly.C u_c * c) (DensePoly.C u_w * w)
-                    base level (fuel + 1)).2 =
-                DensePoly.C (t * u_w) * w := by
-            simpa [hc_eq, htail] using hscaled₂
-          have hscaled₁' :
-              (yunFactorsContributionWithLevel
-                    (DensePoly.C u_c * c) (DensePoly.C u_w * w)
-                    base level (fuel + 1)).1 =
-                DensePoly.C s := by
-            simpa [hc_eq] using hscaled₁
-          apply Prod.ext
-          · calc
-              (yunFactorsContributionWithLevel
-                    (DensePoly.C u_c * c) (DensePoly.C u_w * w)
-                    base level (fuel + 1)).1 =
-                  DensePoly.C s := hscaled₁'
-              _ = DensePoly.C s *
-                    (yunFactorsContributionWithLevel c w base level (fuel + 1)).1 := by
-                  simp [yunFactorsContributionWithLevel, hc]
-          · calc
-              (yunFactorsContributionWithLevel
-                    (DensePoly.C u_c * c) (DensePoly.C u_w * w)
-                    base level (fuel + 1)).2 =
-                  DensePoly.C (t * u_w) * w := hscaled₂'
-              _ = DensePoly.C (t * u_w) *
-                    (yunFactorsContributionWithLevel c w base level (fuel + 1)).2 := by
-                  simp [yunFactorsContributionWithLevel, hc]
+      · exact yunContribution_scalarSync_raw_one hp hu_c hu_w
+          base level fuel hc
       · have hc_false : isOne c = false := by
           cases h : isOne c
           · rfl
           · exact False.elim (hc h)
         by_cases hscaled_c : isOne (DensePoly.C u_c * c : FpPoly p) = true
-        · have hc_unit : c = DensePoly.C u_c⁻¹ := by
-            apply C_mul_eq_one_inv_form hp hu_c
-            exact eq_one_of_isOne_true (DensePoly.C u_c * c : FpPoly p) hscaled_c
-          have hu_c_inv : u_c⁻¹ ≠ 0 :=
-            zmod64_inv_ne_zero_of_prime_ne_zero hp hu_c
-          obtain ⟨sRaw, tRaw, hsRaw, htRaw, hraw₁, hraw₂⟩ :=
-            yunFactorsContributionWithLevel_constant_scalar_sync hp hu_c_inv
-              w base level (fuel + 1)
-          refine ⟨sRaw⁻¹, u_w * tRaw⁻¹, ?_, ?_, ?_⟩
-          · exact zmod64_inv_ne_zero_of_prime_ne_zero hp hsRaw
-          · intro hzero
-            rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with huw_zero | ht_zero
-            · exact hu_w huw_zero
-            · exact zmod64_inv_ne_zero_of_prime_ne_zero hp htRaw ht_zero
-          · have hraw₁' :
-                (yunFactorsContributionWithLevel c w base level (fuel + 1)).1 =
-                  DensePoly.C sRaw := by
-              simpa [hc_unit] using hraw₁
-            have hraw₂' :
-                (yunFactorsContributionWithLevel c w base level (fuel + 1)).2 =
-                  DensePoly.C tRaw * w := by
-              simpa [hc_unit] using hraw₂
-            have hs_inv_mul : sRaw⁻¹ * sRaw = (1 : ZMod64 p) := by
-              have hcomm : sRaw * sRaw⁻¹ = sRaw⁻¹ * sRaw := by grind
-              rw [← hcomm]
-              exact zmod64_mul_inv_eq_one_of_prime_ne_zero hp hsRaw
-            have hfirst :
-                (1 : FpPoly p) =
-                  DensePoly.C sRaw⁻¹ *
-                    (yunFactorsContributionWithLevel c w base level (fuel + 1)).1 := by
-              rw [hraw₁']
-              calc
-                (1 : FpPoly p) = DensePoly.C (1 : ZMod64 p) := rfl
-                _ = DensePoly.C (sRaw⁻¹ * sRaw) := by rw [hs_inv_mul]
-                _ = DensePoly.C sRaw⁻¹ * DensePoly.C sRaw := by
-                      rw [fpPoly_C_mul_C_eq]
-            have htail :
-                DensePoly.C u_w * w =
-                  DensePoly.C (u_w * tRaw⁻¹) *
-                    (yunFactorsContributionWithLevel c w base level (fuel + 1)).2 := by
-              rw [hraw₂']
-              exact (C_mul_C_mul_cancel_right hp htRaw w).symm
-            apply Prod.ext
-            · simpa [yunFactorsContributionWithLevel, hscaled_c] using hfirst
-            · simpa [yunFactorsContributionWithLevel, hscaled_c] using htail
+        · exact yunContribution_scalarSync_scaled_one hp hu_c hu_w
+            base level fuel hc_false hscaled_c
         · have hscaled_c_false :
               isOne (DensePoly.C u_c * c : FpPoly p) = false := by
             cases h : isOne (DensePoly.C u_c * c : FpPoly p)
