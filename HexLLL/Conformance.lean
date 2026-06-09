@@ -246,6 +246,14 @@ private noncomputable def lllReducedCheck (b : Matrix Int n m) (δ η : Rat) : B
 #guard !independentCheck zero8
 #guard !independentCheck dependent8x4
 
+-- `lllReducedInt` matches the noncomputable rational checker on the canonical
+-- bases: identity is fully (3/4, 1/2)-reduced, zero fails independence,
+-- dependent fails independence. The `#guard` exercises the executable
+-- integer path on `GramSchmidt.Int.data`.
+#guard lllReducedInt identity8 (3/4 : Rat) (1/2 : Rat)
+#guard !lllReducedInt zero8 (3/4 : Rat) (1/2 : Rat)
+#guard !lllReducedInt dependent8x4 (3/4 : Rat) (1/2 : Rat)
+
 private def stateOf (b : Matrix Int n m) : LLLState n m :=
   let gs := GramSchmidt.Int.data b
   { b := b
