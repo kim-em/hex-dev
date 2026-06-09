@@ -1124,6 +1124,35 @@ theorem selectedFactorsOfMembers_polyProduct
   simp [Function.comp_def, liftedFactor, Array.getD]
 
 /--
+A successful BHKS indicator candidate represents the integer factor selected by
+the corresponding member-induced lifted-factor subset, once the core and lifted
+factors are monic.
+-/
+theorem bhksIndicatorCandidate?_representsIntegerFactorAtLift
+    {core : Hex.ZPoly} {d : Hex.LiftData} {indicator : Array Int}
+    {candidate quotient : Hex.ZPoly} {members : List Nat}
+    (h : Hex.bhksIndicatorCandidate? core d indicator = some (candidate, quotient))
+    (hselected :
+      Hex.bhksIndicatorSelectedFactors d.liftedFactors indicator =
+        some (selectedFactorsOfMembers d.liftedFactors members))
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hliftedFactor_monic :
+      ∀ i, i < d.liftedFactors.size →
+        Hex.DensePoly.Monic (d.liftedFactors.getD i 0))
+    (hp_two_lt : 2 < d.p ^ d.k) :
+      RepresentsIntegerFactorAtLift core d candidate
+        (liftedFactorSubsetOfMembers d members) := by
+  unfold RepresentsIntegerFactorAtLift scaledLiftedFactorProduct
+  rw [← selectedFactorsOfMembers_polyProduct d members]
+  exact bhksIndicatorCandidate?_reduceModPow_eq_of_monic h hselected hcore_monic
+    (by
+      intro factor hfactor
+      rw [selectedFactorsOfMembers_toList] at hfactor
+      rcases List.mem_map.mp hfactor with ⟨i, hi, rfl⟩
+      exact hliftedFactor_monic i (List.mem_range.mp (List.mem_filter.mp hi).1))
+    (Nat.le_of_lt hp_two_lt)
+
+/--
 The BHKS selected-factor operation succeeds on a nonempty class indicator whose
 members all lie inside the lifted-factor array.
 -/
@@ -1374,6 +1403,65 @@ theorem supportPartitionByMinColumn_class_lt {r : Nat}
   rw [List.mem_map] at hmem
   obtain ⟨rep, _, rfl⟩ := hmem
   exact ((mem_supportClassMembers_iff trueSupports rep j).mp hj).1
+
+/--
+Canonical per-class representation certificates extracted from a successful
+`ForwardRecoveryInputs` candidate fold.
+
+The candidate fold supplies, for each canonical indicator, the verified integer
+candidate returned by `bhksIndicatorCandidate?`; the support partition lemmas
+identify the same indicator with its selected lifted-factor subset.
+-/
+theorem bhksIndicatorCandidates?_canonicalRepresentations
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (h : ForwardRecoveryInputs f d)
+    (trueSupports :
+       Set (Set (Fin (projectedRowsOfLiftData f d h.rows_pos).factorCount)))
+    (hindicators :
+       h.expectedIndicators = expectedIndicatorArrayOfSupports trueSupports)
+    (hf_monic : Hex.DensePoly.Monic f)
+    (hliftedFactor_monic :
+      ∀ i, i < d.liftedFactors.size →
+        Hex.DensePoly.Monic (d.liftedFactors.getD i 0))
+    (hp_two_lt : 2 < d.p ^ d.k) :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        RepresentsIntegerFactorAtLift f d (h.expectedFactors.getD i 0)
+          ((liftedFactorSubsetsOfSupports d trueSupports).getD i ∅) := by
+  intro i hi
+  have hi_expected : i < h.expectedIndicators.size := by
+    simpa [hindicators] using hi
+  rcases Hex.bhksIndicatorCandidates?_getD_candidate h.candidates_eq i hi_expected with
+    ⟨quotient, hcandidate⟩
+  let classes := supportPartitionByMinColumn trueSupports
+  have hi_classes : i < classes.length := by
+    simpa [expectedIndicatorArrayOfSupports, classes] using hi
+  have hselected :
+      Hex.bhksIndicatorSelectedFactors d.liftedFactors
+          (h.expectedIndicators.getD i #[]) =
+        some (selectedFactorsOfMembers d.liftedFactors (classes.getD i [])) := by
+    have hs :=
+      bhksIndicatorSelectedFactors_expectedIndicatorArrayOfSupports
+        d trueSupports
+        (supportPartitionByMinColumn_class_nonempty trueSupports)
+        (supportPartitionByMinColumn_class_lt trueSupports)
+        i hi
+    have hselectedArray :
+        (selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[] =
+          selectedFactorsOfMembers d.liftedFactors (classes.getD i []) := by
+      simp [selectedFactorArraysOfSupports, classes, hi_classes]
+    have hs_expected :
+        Hex.bhksIndicatorSelectedFactors d.liftedFactors
+            (h.expectedIndicators.getD i #[]) =
+          some ((selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[]) := by
+      simpa [hindicators] using hs
+    rw [hselectedArray] at hs_expected
+    exact hs_expected
+  have hrep :
+      RepresentsIntegerFactorAtLift f d (h.expectedFactors.getD i 0)
+        (liftedFactorSubsetOfMembers d (classes.getD i [])) :=
+    bhksIndicatorCandidate?_representsIntegerFactorAtLift
+      hcandidate hselected hf_monic hliftedFactor_monic hp_two_lt
+  simpa [liftedFactorSubsetsOfSupports, classes, hi_classes] using hrep
 
 /--
 Build `ForwardRecoveryInputs` when the A2/exact-division obligation is
