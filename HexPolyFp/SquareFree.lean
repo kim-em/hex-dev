@@ -4247,6 +4247,53 @@ private theorem ne_zero_of_isZero_false {f : FpPoly p}
   rw [hzero_isZero] at hf
   cases hf
 
+/--
+One derivative-active Yun step is stable under a common nonzero scalar multiple.
+
+The executable `DensePoly.gcd` is only canonical up to a nonzero scalar, so the
+statement exposes the scalar `v` selected by the gcd bridge. With that scalar
+made explicit, both the repeated part `g = gcd f f'` and the quotient
+`c = f / g` synchronize across the raw scaled input `C u * f`.
+-/
+private theorem yunScalarStep
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    {u : ZMod64 p} (hu : u ≠ 0) (f : FpPoly p)
+    (hder : (DensePoly.derivative f).isZero = false) :
+    ∃ v : ZMod64 p, v ≠ 0 ∧
+      let g := DensePoly.gcd f (DensePoly.derivative f)
+      let raw := DensePoly.C u * f
+      let rawG := DensePoly.gcd raw (DensePoly.derivative raw)
+      rawG = DensePoly.C v * g ∧
+        raw / rawG = DensePoly.C (u * v⁻¹) * (f / g) := by
+  let g := DensePoly.gcd f (DensePoly.derivative f)
+  let raw := DensePoly.C u * f
+  have hder_raw :
+      DensePoly.derivative raw =
+        DensePoly.C u * DensePoly.derivative f := by
+    simpa [raw] using derivative_C_mul u f
+  obtain ⟨v, hv, hgcd⟩ :=
+    gcd_C_mul_C_mul_eq_C_mul_gcd hp u hu f (DensePoly.derivative f)
+  refine ⟨v, hv, ?_⟩
+  dsimp only
+  have hrawG :
+      DensePoly.gcd raw (DensePoly.derivative raw) =
+        DensePoly.C v * g := by
+    simpa [raw, g, hder_raw] using hgcd
+  constructor
+  · exact hrawG
+  · have hg_ne : g ≠ 0 := by
+      apply ne_zero_of_isZero_false
+      exact gcd_isZero_false_of_right_isZero_false
+        f (DensePoly.derivative f) hder
+    have hquot :=
+      div_C_mul_C_mul_of_dvd hp hu hv f g
+        (by
+          simpa [g] using
+            DensePoly.gcd_dvd_left f (DensePoly.derivative f))
+        hg_ne
+    rw [hrawG]
+    simpa [raw, g] using hquot
+
 private theorem coeff_derivative (f : FpPoly p) (n : Nat) :
     (DensePoly.derivative f).coeff n =
       ((n + 1 : Nat) : ZMod64 p) * f.coeff (n + 1) := by
