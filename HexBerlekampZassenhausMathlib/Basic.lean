@@ -17044,6 +17044,50 @@ private theorem liftedFactorSubsetPartition_analytic_obligation
   intro d
   sorry
 
+/--
+Initial-state support containment for unscaled recombination candidates in the
+successful `choosePrimeData?` lifted-factor package.
+
+This is a named projection of the localized lifted-partition analytic
+obligation.  The constructor below consumes this theorem directly so downstream
+proof packages can refer to the unscaled support field independently of the
+cover and pairwise/uniqueness fields.
+-/
+theorem liftedFactorSubsetPartition_initial_support_subset_of_dvd_recombinationCandidate_of_choosePrimeData
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData) :
+    let d := Hex.ZPoly.toMonicLiftData core B primeData
+    ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
+      Irreducible (HexPolyZMathlib.toPolynomial f) →
+      f ∣ core →
+      f ∣ liftedFactorProductCandidate d T →
+      RepresentsIntegerFactorAtLift core d f S →
+      S ⊆ T := by
+  intro d f S T hirr hdvd_core hdvd_candidate hrep
+  obtain ⟨_, _, _, hsupport, _⟩ :=
+    liftedFactorSubsetPartition_analytic_obligation core B primeData
+  exact hsupport hirr hdvd_core hdvd_candidate hrep
+
+/--
+Initial-state support containment for scaled recombination candidates in the
+successful `choosePrimeData?` lifted-factor package.
+
+This is the scaled analogue of
+`liftedFactorSubsetPartition_initial_support_subset_of_dvd_recombinationCandidate_of_choosePrimeData`.
+-/
+theorem liftedFactorSubsetPartition_initial_support_subset_of_dvd_scaledRecombinationCandidate_of_choosePrimeData
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData) :
+    let d := Hex.ZPoly.toMonicLiftData core B primeData
+    ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
+      Irreducible (HexPolyZMathlib.toPolynomial f) →
+      f ∣ core →
+      f ∣ scaledRecombinationCandidate core d T →
+      RepresentsIntegerFactorAtLift core d f S →
+      S ⊆ T := by
+  intro d f S T hirr hdvd_core hdvd_candidate hrep
+  obtain ⟨_, _, _, _, hsupport⟩ :=
+    liftedFactorSubsetPartition_analytic_obligation core B primeData
+  exact hsupport hirr hdvd_core hdvd_candidate hrep
+
 /-- **#4549 supporting lemma (HO-1).**
 
 Parametric constructor for `LiftedFactorSubsetPartition core d
@@ -17082,7 +17126,7 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     LiftedFactorSubsetPartition core d Finset.univ core := by
   intro d
-  obtain ⟨hcover, hdisj, huniq, hsup, hscaled_sup⟩ :=
+  obtain ⟨hcover, hdisj, huniq, _, _⟩ :=
     liftedFactorSubsetPartition_analytic_obligation core B primeData
   refine
     { toHenselSubsetCorrespondenceRest :=
@@ -17102,9 +17146,13 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
   · intro f g S T hirr_f hdvd_f _ hSrep hirr_g hdvd_g _ hTrep hassoc
     exact huniq hirr_f hdvd_f hSrep hirr_g hdvd_g hTrep hassoc
   · intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
-    exact hsup hirr hdvd_target hdvd_cand hSrep
+    exact
+      liftedFactorSubsetPartition_initial_support_subset_of_dvd_recombinationCandidate_of_choosePrimeData
+        core B primeData hirr hdvd_target hdvd_cand hSrep
   · intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
-    exact hscaled_sup hirr hdvd_target hdvd_cand hSrep
+    exact
+      liftedFactorSubsetPartition_initial_support_subset_of_dvd_scaledRecombinationCandidate_of_choosePrimeData
+        core B primeData hirr hdvd_target hdvd_cand hSrep
 
 /-- **#6172 supporting lemma (HO-1, non-monic-core sibling).**
 
@@ -17121,7 +17169,7 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     LiftedFactorSubsetPartition core d Finset.univ core := by
   intro d
-  obtain ⟨hcover, hdisj, huniq, hsup, hscaled_sup⟩ :=
+  obtain ⟨hcover, hdisj, huniq, _, _⟩ :=
     liftedFactorSubsetPartition_analytic_obligation core B primeData
   refine
     { toHenselSubsetCorrespondenceRest :=
@@ -17141,9 +17189,13 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData
   · intro f g S T hirr_f hdvd_f _ hSrep hirr_g hdvd_g _ hTrep hassoc
     exact huniq hirr_f hdvd_f hSrep hirr_g hdvd_g hTrep hassoc
   · intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
-    exact hsup hirr hdvd_target hdvd_cand hSrep
+    exact
+      liftedFactorSubsetPartition_initial_support_subset_of_dvd_recombinationCandidate_of_choosePrimeData
+        core B primeData hirr hdvd_target hdvd_cand hSrep
   · intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
-    exact hscaled_sup hirr hdvd_target hdvd_cand hSrep
+    exact
+      liftedFactorSubsetPartition_initial_support_subset_of_dvd_scaledRecombinationCandidate_of_choosePrimeData
+        core B primeData hirr hdvd_target hdvd_cand hSrep
 
 /-! ### `ModPSubsetPartitionHypotheses` existence/uniqueness assembly
 
@@ -17777,7 +17829,7 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData_success_descent
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     LiftedFactorSubsetPartition core d Finset.univ core := by
   intro d
-  obtain ⟨hcover, hdisj, huniq, hsup, hscaled_sup⟩ :=
+  obtain ⟨hcover, hdisj, huniq, _, _⟩ :=
     liftedFactorSubsetPartition_analytic_obligation core B primeData
   refine
     { toHenselSubsetCorrespondenceRest :=
@@ -17797,9 +17849,13 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData_success_descent
   · intro f g S T hirr_f hdvd_f _ hSrep hirr_g hdvd_g _ hTrep hassoc
     exact huniq hirr_f hdvd_f hSrep hirr_g hdvd_g hTrep hassoc
   · intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
-    exact hsup hirr hdvd_target hdvd_cand hSrep
+    exact
+      liftedFactorSubsetPartition_initial_support_subset_of_dvd_recombinationCandidate_of_choosePrimeData
+        core B primeData hirr hdvd_target hdvd_cand hSrep
   · intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
-    exact hscaled_sup hirr hdvd_target hdvd_cand hSrep
+    exact
+      liftedFactorSubsetPartition_initial_support_subset_of_dvd_scaledRecombinationCandidate_of_choosePrimeData
+        core B primeData hirr hdvd_target hdvd_cand hSrep
 
 /-- **#5214 supporting bundle (HO-1 slow-path substrate).**
 
