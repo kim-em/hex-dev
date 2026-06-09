@@ -292,7 +292,7 @@ checksum.
 The current implemented gating comparator is `verified Isabelle LLL (AFP LLL_Basis_Reduction; Haskell extraction from Zenodo 2636367)`, declared in `SPEC/Libraries/hex-lll.md`. The persistent-subprocess harness for it was wired in HO-16 (#3676); the matching fpylll persistent driver was wired in HO-17 (#4186). The densified `random-bounded` and `harsh-cubic` ladders are the post-HO-18 fixed-benchmark schedules — `random-bounded` `n ∈ {30, 45, 60, 75, 90, 120, 150, 180}`, `harsh-cubic` `n ∈ {15, 20, 25, 30, 35, 40, 45, 50, 55}` — per the post-#3657 §"Headline reports" densification rule.
 
 The certified external-dispatch SPEC also declares the gating comparator
-`verified Isabelle certified-LLL (JAR 2020 §7; AFP Modular_arithmetic_LLL_and_HNF_algorithms)`.
+`verified Isabelle certified-LLL (JAR 2020 §7; svp_certified from the Zenodo 2636367 LLL_Basis_Reduction extraction, same archive as the native comparator)`.
 The Hex certified path is now registered as fixed process-call targets:
 `runCertifiedFirstShortVectorRandomBounded{30,45,60,75,90,120,150,180}Checksum`
 and
