@@ -8090,6 +8090,56 @@ private theorem yunFactorsLevelCompletes_of_derivative_active_initial_split
     yunFactorsLevelCompletes_of_derivative_active_reachable
       hp f multiplicity fuel hmultiplicity hfuel hzero hdf hstate
 
+/-- Initial-split completion wrapper for the normalized derivative-active branch.
+
+This is the scalar-aware analogue of
+`yunFactorsLevelCompletes_of_derivative_active_initial_split`: it consumes the
+normalized state provider and proves the normalized completion predicate, so raw
+nonzero scalar-unit states do not need to satisfy `isOne c = true`. -/
+private theorem yunFactorsNormalizedLevelCompletes_of_derivative_active_initial_split
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (_hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 1)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = false)
+    (hstate : YunDerivativeActiveNormalizedStateProvider hp) :
+    let g := DensePoly.gcd f (DensePoly.derivative f)
+    let c := f / g
+    yunFactorsNormalizedLevelCompletes c g multiplicity 1 fuel := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  let g := DensePoly.gcd f (DensePoly.derivative f)
+  let c := f / g
+  cases fuel with
+  | zero =>
+      have hsize_pos : 0 < f.size := size_pos_of_isZero_false f hzero
+      omega
+  | succ fuel =>
+      have hdf_ne_true : (DensePoly.derivative f).isZero ≠ true := by
+        intro htrue
+        rw [htrue] at hdf
+        cases hdf
+      have hreachable :
+          yunFactorsDerivativeActiveReachable hp f c g (fuel + 1) := by
+        simpa [c, g] using
+          yunFactorsDerivativeActiveReachable_of_derivative_split hp f (fuel + 1) hdf_ne_true
+      have hnonzero :=
+        yunFactorsDerivativeActiveReachable_nonzero hp f c g (fuel + 1) hreachable
+      have hbound :
+          (normalizeMonic c).2.size + (normalizeMonic g).2.size ≤ fuel + 2 := by
+        have hf_ne : f ≠ 0 := ne_zero_of_isZero_false hzero
+        have hsize :
+            c.size + g.size = f.size + 1 := by
+          simpa [c, g] using
+            size_div_add_size_eq_size_add_one_of_dvd
+              (DensePoly.gcd_dvd_left f (DensePoly.derivative f)) hf_ne
+        have hc_size : (normalizeMonic c).2.size = c.size :=
+          normalizeMonic_nonzero_size_eq hp c hnonzero.1
+        have hg_size : (normalizeMonic g).2.size = g.size :=
+          normalizeMonic_nonzero_size_eq hp g hnonzero.2
+        omega
+      simpa [c, g] using
+        yunFactorsNormalizedLevelCompletes_of_size_bound_derivative_active
+          hp f c g multiplicity 1 (fuel + 1) hstate hreachable hbound
+
 /--
 Combined provider for `yunFactorsContributionResidualComplete` driven by a
 `yunFactorsLevelCompletes` termination witness and a pairwise reachability
