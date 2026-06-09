@@ -57,6 +57,12 @@
 - `Hex.LLLBench.runFpylllFirstShortVectorHarshCubic45Checksum`: fixed, repeats `5`
 - `Hex.LLLBench.runFpylllFirstShortVectorHarshCubic50Checksum`: fixed, repeats `5`
 - `Hex.LLLBench.runFpylllFirstShortVectorHarshCubic55Checksum`: fixed, repeats `5`
+- `Hex.LLLBench.runCertifiedFirstShortVectorRandomBounded{30,45,60,75,90,120,150,180}Checksum`: fixed, repeats `3`
+- `Hex.LLLBench.runCertifiedCheckerRandomBounded{30,45,60,75,90,120,150,180}Checksum`: fixed, repeats `3`
+- `Hex.LLLBench.runCertifiedFirstShortVectorHarshCubic{15,20,25,30,35,40,45,50,55}Checksum`: fixed, repeats `3`
+- `Hex.LLLBench.runCertifiedCheckerHarshCubic{15,20,25,30,35,40,45,50,55}Checksum`: fixed, repeats `3`
+- `Hex.LLLBench.runDispatchedFirstShortVectorRandomBounded30Checksum`: fixed, repeats `3`
+- `Hex.LLLBench.runDispatchedFirstShortVectorHarshCubic15Checksum`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq15`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq35`: fixed, repeats `3`
 - `Hex.LLLBench.runFirstShortVectorHarshCubicNormSq40`: fixed, repeats `3`
@@ -287,10 +293,42 @@ The current implemented gating comparator is `verified Isabelle LLL (AFP LLL_Bas
 
 The certified external-dispatch SPEC also declares the gating comparator
 `verified Isabelle certified-LLL (JAR 2020 §7; AFP Modular_arithmetic_LLL_and_HNF_algorithms)`.
-No certified-path benchmark rows are recorded here yet. Once that dispatch is
-implemented, this report must record the hex certified-path ratio against that
-comparator, the verified checker's cost share, and the candidate rejection
-rate at the largest eligible rung of each headline ladder.
+The Hex certified path is now registered as fixed process-call targets:
+`runCertifiedFirstShortVectorRandomBounded{30,45,60,75,90,120,150,180}Checksum`
+and
+`runCertifiedFirstShortVectorHarshCubic{15,20,25,30,35,40,45,50,55}Checksum`.
+Each target sends a `CERT\t` request to the persistent fpylll driver, receives a
+flat `(B', U, V)` payload, and runs `LLLProvider.certifyFlat`, so the measured
+path is fpLLL candidate production plus the Lean checker. Paired
+`runCertifiedChecker*` targets cache the same candidate and re-run only
+`certCheck` after warmup, giving the checker's share of certified-path cost.
+
+Current smoke evidence at worktree commit `3c1e99f-dirty` on `carica`
+(Apple M2 Ultra, macOS):
+
+```sh
+lake exe hexlll_bench run \
+  Hex.LLLBench.runCertifiedFirstShortVectorRandomBounded30Checksum \
+  Hex.LLLBench.runCertifiedCheckerRandomBounded30Checksum \
+  Hex.LLLBench.runDispatchedFirstShortVectorRandomBounded30Checksum
+```
+
+- `random-bounded n = 30` certified path: median `20.809 ms`.
+- `random-bounded n = 30` checker-only path: median `2.906 ms`.
+- Checker share at this rung: `13.97 %` of certified-path cost.
+- Candidate rejection rate in this smoke: `0 / 2 = 0 %`; both the full
+  certified target and checker-only target accepted the fpylll candidate.
+- Public dispatch guard: median `14.833 ms`, expected hash matched. If a real
+  fplll-ffi provider is intentionally loaded and the dispatch tally reports
+  `accepted = 0`, the registered dispatch smoke target fails.
+
+The external `verified Isabelle certified-LLL` executable is not yet present in
+the repository: no setup script, persistent driver, or binary-path override
+exists for AFP `Modular_arithmetic_LLL_and_HNF_algorithms`. Until that
+comparator is added, the certified-vs-Isabelle-certified ratio across the
+ladder is **unmeasured** and remains the open gating field for this comparator.
+The existing Isabelle rows below are for `verified Isabelle LLL`
+(`LLL_Basis_Reduction`), not for the certified-output configuration.
 
 ![Random-bounded comparator runtime plot](figures/hex-lll-comparator-random-bounded.svg)
 

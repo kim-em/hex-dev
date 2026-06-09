@@ -20,9 +20,9 @@ calls in the run.
 
 The request framing matches the Isabelle persistent driver wired
 in HO-16 so the same `HexLLL/Bench.lean` helper
-(`matrixHaskell`) feeds both comparators. Each request is one line
+(`matrixHaskell`) feeds both comparators. Each checksum request is one line
 containing the input matrix in Haskell's `[[Integer]]` read syntax
-(e.g. `[[1,2],[3,4]]`), terminated by `\n`. Each reply is one line
+(e.g. `[[1,2],[3,4]]`), terminated by `\n`. Each checksum reply is one line
 containing a single integer — the bench scalar `fpylll.LLL.reduction`
 produces for that matrix — terminated by `\n`.
 
@@ -32,6 +32,11 @@ basis, matching `Hex.LLLBench.intVectorChecksum`. This pairs with
 `HexLLL/Bench.lean`. Use the existing per-call `lll_fpylll.py
 --bench-checksum` path if you need the same scalar without the
 persistent shape.
+
+Certified-path requests prefix the same matrix syntax with `CERT\t`. The reply
+is the flat integer payload expected by `Hex.LLLProvider.certifyFlat`:
+`status rows cols hasInverse reduced... transform... inverse...`. This measures
+the fpLLL candidate-production path together with Lean's verified checker.
 
 EOF on stdin terminates the driver.
 
@@ -60,6 +65,7 @@ from __future__ import annotations
 import ast
 import sys
 import traceback
+from fractions import Fraction
 from typing import Iterable
 
 try:
@@ -119,6 +125,65 @@ def _reduce_and_checksum(rows: list[list[int]]) -> int:
     return _first_row_checksum(first_row)
 
 
+def _identity(n: int) -> list[list[int]]:
+    return [[1 if i == j else 0 for j in range(n)] for i in range(n)]
+
+
+def _invert_unimodular(matrix: list[list[int]]) -> list[list[int]]:
+    n = len(matrix)
+    left = [[Fraction(value) for value in row] for row in matrix]
+    right = [[Fraction(value) for value in row] for row in _identity(n)]
+    for col in range(n):
+        pivot = None
+        for row in range(col, n):
+            if left[row][col] != 0:
+                pivot = row
+                break
+        if pivot is None:
+            raise ValueError("fpylll transform is singular")
+        if pivot != col:
+            left[col], left[pivot] = left[pivot], left[col]
+            right[col], right[pivot] = right[pivot], right[col]
+        scale = left[col][col]
+        left[col] = [value / scale for value in left[col]]
+        right[col] = [value / scale for value in right[col]]
+        for row in range(n):
+            if row == col:
+                continue
+            factor = left[row][col]
+            if factor == 0:
+                continue
+            left[row] = [a - factor * b for a, b in zip(left[row], left[col])]
+            right[row] = [a - factor * b for a, b in zip(right[row], right[col])]
+    inverse: list[list[int]] = []
+    for row in right:
+        out_row: list[int] = []
+        for value in row:
+            if value.denominator != 1:
+                raise ValueError("fpylll transform inverse is not integral")
+            out_row.append(value.numerator)
+        inverse.append(out_row)
+    return inverse
+
+
+def _flatten(matrix: list[list[int]]) -> list[int]:
+    return [int(value) for row in matrix for value in row]
+
+
+def _reduce_cert_payload(rows: list[list[int]]) -> list[int]:
+    if IntegerMatrix is None or LLL is None:
+        raise RuntimeError(_fpylll_import_error or "fpylll unavailable")
+    n = len(rows)
+    cols = len(rows[0]) if rows else 0
+    M = IntegerMatrix.from_matrix(rows)
+    U = IntegerMatrix.identity(n)
+    LLL.reduction(M, U, delta=LLL_DELTA)
+    reduced = [[int(M[i, j]) for j in range(M.ncols)] for i in range(M.nrows)]
+    transform = [[int(U[i, j]) for j in range(U.ncols)] for i in range(U.nrows)]
+    inverse = _invert_unimodular(transform)
+    return [0, n, cols, 1, *_flatten(reduced), *_flatten(transform), *_flatten(inverse)]
+
+
 def _serve(stdin, stdout) -> None:
     for raw in stdin:
         line = raw.rstrip("\n")
@@ -127,9 +192,14 @@ def _serve(stdin, stdout) -> None:
             # not expecting a reply.
             continue
         try:
-            matrix = _parse_matrix(line)
-            checksum = _reduce_and_checksum(matrix)
-            stdout.write(f"{checksum}\n")
+            if line.startswith("CERT\t"):
+                matrix = _parse_matrix(line.removeprefix("CERT\t"))
+                payload = _reduce_cert_payload(matrix)
+                stdout.write(" ".join(str(value) for value in payload) + "\n")
+            else:
+                matrix = _parse_matrix(line)
+                checksum = _reduce_and_checksum(matrix)
+                stdout.write(f"{checksum}\n")
         except Exception as exc:
             stdout.write(f"ERROR: {type(exc).__name__}: {exc}\n")
         try:
