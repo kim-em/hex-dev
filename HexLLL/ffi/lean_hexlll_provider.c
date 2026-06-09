@@ -1,6 +1,7 @@
 #include <dlfcn.h>
 #include <stdint.h>
 #include <stdatomic.h>
+#include <stdlib.h>
 #include <lean/lean.h>
 
 typedef lean_obj_res (*lean_fplll_lll_reduce_fn)(
@@ -14,6 +15,30 @@ typedef lean_obj_res (*lean_fplll_lll_reduce_fn)(
 
 static atomic_int lean_hexlll_provider_state = 0;
 static atomic_uintptr_t lean_hexlll_provider_ptr = 0;
+static atomic_int lean_hexlll_provider_dlopen_done = 0;
+
+/* If `HEX_FPLLL_FFI_LIB` is set, `dlopen` the named shared library with
+   `RTLD_GLOBAL` so its symbols (in particular `lean_fplll_lll_reduce`) become
+   visible to `dlsym(RTLD_DEFAULT, ...)` below. Tried at most once per process.
+   Failures are silent: the subsequent `dlsym` probe will simply not find the
+   symbol and the provider stays absent. */
+static void lean_hexlll_dlopen_provider_lib(void) {
+    int done = atomic_load_explicit(&lean_hexlll_provider_dlopen_done, memory_order_acquire);
+    if (done) {
+        return;
+    }
+    int expected = 0;
+    if (!atomic_compare_exchange_strong_explicit(
+            &lean_hexlll_provider_dlopen_done, &expected, 1,
+            memory_order_acq_rel, memory_order_acquire)) {
+        return;
+    }
+    const char *path = getenv("HEX_FPLLL_FFI_LIB");
+    if (path == NULL || path[0] == '\0') {
+        return;
+    }
+    (void)dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+}
 
 static lean_fplll_lll_reduce_fn lean_hexlll_resolve_provider(void) {
     int state = atomic_load_explicit(&lean_hexlll_provider_state, memory_order_acquire);
@@ -24,6 +49,8 @@ static lean_fplll_lll_reduce_fn lean_hexlll_resolve_provider(void) {
         return (lean_fplll_lll_reduce_fn)
             atomic_load_explicit(&lean_hexlll_provider_ptr, memory_order_acquire);
     }
+
+    lean_hexlll_dlopen_provider_lib();
 
     void *sym = dlsym(RTLD_DEFAULT, "lean_fplll_lll_reduce");
     if (sym == NULL) {
