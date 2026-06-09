@@ -369,6 +369,56 @@ theorem isLLLReduced.mono_η (b : Matrix Int n m) {δ η₁ η₂ : Rat}
   have hsq2 : η₁ * η₂ ≤ η₂ * η₂ := Rat.mul_le_mul_of_nonneg_right hle hη₂
   exact Rat.le_trans (hsize i j hi hji) (Rat.le_trans hsq1 hsq2)
 
+/-- Executable integer `Bool` reducedness checker over the `GramSchmidt.Int`
+representation: leading Gram determinants `d` and integer scaled Gram-Schmidt
+coefficients `ν`.
+
+Verifies, over integer arithmetic only:
+
+* **independence**: every `d[k+1]` is positive (`k < n`);
+* **size-reduced at `η`**: `η.den · |ν[i][j]| ≤ η.num · d[j+1]` for all `j < i`
+  — the integer form of `|μ| ≤ η`;
+* **integer Lovász at `δ`**: `δ.den · (d[i+2] · d[i] + ν[i+1][i]²) ≥
+  δ.num · d[i+1]²` for all `i + 1 < n`.
+
+No validity hypothesis on `η` is required: a malformed `η` (e.g. negative) is
+incompatible with a positive `d[j+1]` and the size-reduced bound, so the
+checker simply returns `false`. Soundness
+(`lllReducedInt_sound`, HexLLLMathlib) bridges to the rational predicate
+`isLLLReduced` via the integer correspondence
+(`Hex.GramSchmidt.Int.scaledCoeffs_eq`, `basis_normSq`, `gramDet_pos`). -/
+def lllReducedInt (b : Matrix Int n m) (δ η : Rat) : Bool :=
+  let gs := GramSchmidt.Int.data b
+  let d := gs.d
+  let ν := gs.ν
+  let independent :=
+    (List.finRange n).all fun k =>
+      decide (0 < d.get ⟨k.val + 1, Nat.succ_lt_succ k.isLt⟩)
+  let sizeReduced :=
+    (List.finRange n).all fun i =>
+      (List.finRange i.val).all fun j =>
+        let iFin : Fin n := i
+        let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt i.isLt⟩
+        let νij : Int := (ν.get iFin).get jFin
+        let dj1 : Nat := d.get ⟨j.val + 1, Nat.succ_lt_succ
+          (Nat.lt_trans j.isLt i.isLt)⟩
+        decide ((η.den * νij.natAbs : Int) ≤ η.num * (dj1 : Int))
+  let lovasz :=
+    (List.finRange n).all fun i =>
+      if hi : i.val + 1 < n then
+        let iFin : Fin n := i
+        let ip1Fin : Fin n := ⟨i.val + 1, hi⟩
+        let di : Nat := d.get ⟨i.val, Nat.lt_succ_of_lt i.isLt⟩
+        let di1 : Nat := d.get ⟨i.val + 1, Nat.succ_lt_succ i.isLt⟩
+        let di2 : Nat := d.get ⟨i.val + 2, Nat.succ_lt_succ hi⟩
+        let B : Int := (ν.get ip1Fin).get iFin
+        decide
+          (δ.den * ((di2 : Int) * (di : Int) + B ^ 2) ≥
+            δ.num * (di1 : Int) ^ 2)
+      else
+        true
+  independent && sizeReduced && lovasz
+
 /-- Integer-only state for later LLL reduction steps. The proof-facing fields
 connect the stored Gram determinants and scaled coefficients to the executable
 Gram-Schmidt integer data for `b`. -/
