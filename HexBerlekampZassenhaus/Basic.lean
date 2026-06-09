@@ -560,6 +560,70 @@ private def hotPathCandidates : List SmallPrimeCandidate :=
 #guard hotPathCandidates.length == 94
 
 /--
+Converse of `Hex.Nat.isPrimeTrial_isPrime`: a `Hex.Nat.Prime` witness
+implies the trial-division boolean test returns `true`. Used to bridge
+between the propositional prime predicate and the kernel-decidable
+boolean surface needed to enumerate primes in a bounded range.
+-/
+private theorem isPrimeTrial_of_prime {n : Nat} (hn : Hex.Nat.Prime n) :
+    Hex.Nat.isPrimeTrial n = true := by
+  unfold Hex.Nat.isPrimeTrial
+  rw [Bool.and_eq_true]
+  refine ⟨decide_eq_true hn.two_le, ?_⟩
+  rw [List.all_eq_true]
+  intro k hk
+  have hkn : k < n := List.mem_range.mp hk
+  rw [Bool.or_eq_true]
+  by_cases hk2 : k < 2
+  · exact Or.inl (decide_eq_true hk2)
+  · refine Or.inr (decide_eq_true ?_)
+    have hk2' : 2 ≤ k := Nat.le_of_not_lt hk2
+    intro hmod
+    have hdvd : k ∣ n := Nat.dvd_of_mod_eq_zero hmod
+    rcases hn.2 k hdvd with hk1 | hkn'
+    · omega
+    · omega
+
+/--
+Soundness of the hot-path prime candidate list: every entry carries a
+prime in the closed range `[3, 500]`. The `Hex.Nat.Prime` conjunct is
+the structure field directly; the bounds follow by a decidable check
+over the 94 explicit primes in the list.
+-/
+theorem mem_hotPathCandidates_prime
+    {c : SmallPrimeCandidate} (hc : c ∈ hotPathCandidates) :
+    Hex.Nat.Prime c.p ∧ 3 ≤ c.p ∧ c.p ≤ 500 := by
+  have hmem : c.p ∈ hotPathCandidates.map (fun x : SmallPrimeCandidate => x.p) :=
+    List.mem_map_of_mem hc
+  have hbounds :
+      ∀ q ∈ hotPathCandidates.map (fun x : SmallPrimeCandidate => x.p),
+        3 ≤ q ∧ q ≤ 500 := by
+    decide
+  exact ⟨c.prime, (hbounds c.p hmem).1, (hbounds c.p hmem).2⟩
+
+set_option maxRecDepth 4096 in
+/--
+Coverage of the hot-path prime candidate list: every prime `p` with
+`3 ≤ p ≤ 500` appears as the `.p` field of some candidate in
+`hotPathCandidates`. Used by SPEC D2's
+`choosePrimeData?_none_implies_huge` bridge to walk the executable's
+candidate fold over any prime in the admissible range.
+-/
+theorem exists_mem_hotPathCandidates_of_prime
+    {p : Nat} (hprime : Hex.Nat.Prime p) (hge : 3 ≤ p) (hle : p ≤ 500) :
+    ∃ c ∈ hotPathCandidates, c.p = p := by
+  have htrial : Hex.Nat.isPrimeTrial p = true := isPrimeTrial_of_prime hprime
+  have key : ∀ q : Fin 501,
+      3 ≤ q.val → Hex.Nat.isPrimeTrial q.val = true →
+        q.val ∈ hotPathCandidates.map (fun x : SmallPrimeCandidate => x.p) := by
+    decide
+  have hmem :
+      p ∈ hotPathCandidates.map (fun x : SmallPrimeCandidate => x.p) :=
+    key ⟨p, Nat.lt_succ_of_le hle⟩ hge htrial
+  obtain ⟨c, hc, hcp⟩ := List.mem_map.mp hmem
+  exact ⟨c, hc, hcp⟩
+
+/--
 Coerce an admissible nonzero modular image to its monic representative by
 dividing by its leading coefficient.  `monicModularImage f = scale c⁻¹ f`
 where `c = leadingCoeff f`; the zero branch is a placeholder used to keep
