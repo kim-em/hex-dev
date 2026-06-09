@@ -889,12 +889,24 @@ theorem prefixLLLReduced_one (b : Matrix Int n m) (δ : Rat) :
   · intro i hi _
     omega
 
-/-- At the full prefix `k = n`, `prefixLLLReduced` is exactly `isLLLReduced`. -/
+/-- At the full prefix `k = n`, `prefixLLLReduced` upgrades to
+`isLLLReduced b δ (1/2)`: `prefixLLLReduced` always carries the algorithm's
+classical `|μ| ≤ 1/2` size-reduction guarantee, which is the
+`η = 1/2` instance of the size-reduced condition `μ² ≤ η²`. -/
 theorem prefixLLLReduced_to_isLLLReduced (b : Matrix Int n m) (δ : Rat)
-    (h : prefixLLLReduced b n δ) : isLLLReduced b δ := by
+    (h : prefixLLLReduced b n δ) : isLLLReduced b δ (1 / 2) := by
+  let coeffs := GramSchmidt.Int.coeffs b
   refine ⟨?_, ?_⟩
   · intro i j hi hji
-    exact h.1 i j hi hi hji
+    have h4 := h.1 i j hi hi hji
+    -- `h4 : 4 * μ * μ ≤ 1`. Goal: `μ * μ ≤ (1/2) * (1/2)`.
+    let iFin : Fin n := ⟨i, hi⟩
+    let jFin : Fin n := ⟨j, Nat.lt_trans hji hi⟩
+    let μ : Rat := coeffs[iFin][jFin]
+    show μ * μ ≤ (1 / 2 : Rat) * (1 / 2)
+    have h4' : 4 * μ * μ ≤ 1 := h4
+    have hhalf : (1 / 2 : Rat) * (1 / 2) = 1 / 4 := by grind
+    grind
   · intro i hi
     exact h.2 i hi hi
 
@@ -2174,7 +2186,7 @@ theorem lllLoop_isLLLReduced_of_fuel_gt_measure
     ∀ (fuel : Nat) (s : LLLState n m) (k : Nat) (hk : 1 ≤ k) (hkn : k ≤ n),
       s.Valid → s.b.independent → prefixLLLReduced s.b k δ →
       s.potential * (n + 1) + (n - k) < fuel →
-      isLLLReduced (lllLoop s k δ hδ hδ' hk hkn fuel) δ := by
+      isLLLReduced (lllLoop s k δ hδ hδ' hk hkn fuel) δ (1 / 2) := by
   intro fuel
   induction fuel with
   | zero =>
@@ -2300,19 +2312,25 @@ end LLLState
 
 /-! ### Capstones
 
-The unconditional LLL guarantees for `Hex.lll`: the output is `δ`-LLL-reduced,
-the generated lattice is preserved, and the first row of the output bounds the
-norm of any nonzero lattice vector by `(1 / (δ - 1/4))^(n - 1)`. -/
+The unconditional LLL guarantees split across two surfaces:
 
-/-- **Unconditional LLL reducedness.** For any independent integer basis `b`,
-`Hex.lll b δ ... hind` returns a `δ`-LLL-reduced matrix. Combines the fuel-
-sufficiency theorem (`lllLoop_fuel_sufficient`) with the loop invariant
+* **Native** (`Hex.lllNative`, classical bound, precondition `1/4 < δ`).
+  Carries `isLLLReduced … δ (1/2)` because the integer size-reduction step
+  inside the loop produces exact `|μ| ≤ 1/2`. The short-vector denominator
+  is `δ − 1/4`.
+* **Public** (`Hex.lll`, precondition `121/400 < δ`). Wraps `lllNative` and
+  carries `isLLLReduced … δ (11/20)` (the η = 1/2 native bound weakens to
+  η = 11/20 by `isLLLReduced.mono_η`). The short-vector denominator is
+  `δ − 121/400`. This is the uniform bound an external reducer can promise. -/
+
+/-- The native LLL body produces a `(δ, 1/2)`-LLL-reduced matrix. Combines the
+fuel-sufficiency theorem (`lllLoop_fuel_sufficient`) with the loop invariant
 induction (`lllLoop_isLLLReduced_of_fuel_gt_measure`). -/
-theorem lll_isLLLReduced (b : Matrix Int n m) (δ : Rat)
+theorem lllNative_isLLLReduced (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
-    isLLLReduced (lll b δ hδ hδ' hn hind) δ := by
+    isLLLReduced (lllNative b δ hδ hδ' hn) δ (1 / 2) := by
   show isLLLReduced (lllLoop (LLLState.ofBasisUnchecked b) 1 δ hδ hδ'
-    (Nat.le_refl 1) hn (lllFuel (LLLState.ofBasisUnchecked b))) δ
+    (Nat.le_refl 1) hn (lllFuel (LLLState.ofBasisUnchecked b))) δ (1 / 2)
   set s := LLLState.ofBasisUnchecked b with hs_def
   have hs_valid : s.Valid := by
     show (LLLState.ofBasis b hind).Valid
@@ -2325,83 +2343,192 @@ theorem lll_isLLLReduced (b : Matrix Int n m) (δ : Rat)
   have : (s.potential + 1) * (n + 1) = s.potential * (n + 1) + (n + 1) := by ring
   omega
 
-/-- The generated lattice is preserved by `Hex.lll`. -/
-theorem lll_memLattice_iff (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent)
+/-- The generated lattice is preserved by `Hex.lllNative`. -/
+theorem lllNative_memLattice_iff (b : Matrix Int n m) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (v : Vector Int m) :
-    Matrix.memLattice (lll b δ hδ hδ' hn hind) v ↔ Matrix.memLattice b v := by
+    Matrix.memLattice (lllNative b δ hδ hδ' hn) v ↔ Matrix.memLattice b v := by
   show Matrix.memLattice (lllLoop (LLLState.ofBasisUnchecked b) 1 δ hδ hδ'
     (Nat.le_refl 1) hn (lllFuel (LLLState.ofBasisUnchecked b))) v ↔ _
   exact lllLoop_memLattice_iff _ 1 δ hδ hδ' (Nat.le_refl 1) hn _ v
 
-/-- **Unconditional LLL short-vector bound.** For any independent integer
-basis `b`, the first row of `Hex.lll b δ ... hind` has squared norm at most
-`(1 / (δ - 1/4))^(n - 1)` times the squared norm of any nonzero lattice vector
-of `b`. Combines `lll_isLLLReduced`, `lll_memLattice_iff`, and the conditional
-short-vector bound `Hex.lll_short_vector`. -/
-theorem lll_first_row_norm_sq_le_unconditional
-    (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent)
-    {v : Vector Int m} (hv : Matrix.memLattice b v) (hv' : v ≠ 0) :
-    ((Vector.normSq ((lll b δ hδ hδ' hn hind).row
-        ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩) : Int) : Rat) ≤
-      (1 / (δ - 1 / 4)) ^ (n - 1) * ((Vector.normSq v : Int) : Rat) := by
-  have hred : isLLLReduced (lll b δ hδ hδ' hn hind) δ :=
-    lll_isLLLReduced b δ hδ hδ' hn hind
+/-- Independence is preserved by `Hex.lllNative`. -/
+theorem lllNative_independent (b : Matrix Int n m) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
+    (lllNative b δ hδ hδ' hn).independent := by
   have hs_valid : (LLLState.ofBasisUnchecked b).Valid := by
     show (LLLState.ofBasis b hind).Valid
     exact HexLLLMathlib.LLLState.ofBasis_valid b hind
-  have hind' : (lll b δ hδ hδ' hn hind).independent := by
-    show (lllLoop (LLLState.ofBasisUnchecked b) 1 δ hδ hδ'
-      (Nat.le_refl 1) hn (lllFuel (LLLState.ofBasisUnchecked b))).independent
-    exact LLLState.lllLoop_independent δ hδ hδ' _ _ 1 (Nat.le_refl 1) hn hs_valid hind
+  show (lllLoop (LLLState.ofBasisUnchecked b) 1 δ hδ hδ'
+    (Nat.le_refl 1) hn (lllFuel (LLLState.ofBasisUnchecked b))).independent
+  exact LLLState.lllLoop_independent δ hδ hδ' _ _ 1
+    (Nat.le_refl 1) hn hs_valid hind
+
+/-- Classical native LLL short-vector bound at `η = 1/2`. For any independent
+integer basis `b`, the first row of `Hex.lllNative b δ ...` has squared norm
+at most `(1 / (δ − 1/4))^(n − 1)` times the squared norm of any nonzero
+lattice vector. -/
+theorem lllNative_short_vector
+    (b : Matrix Int n m) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent)
+    {v : Vector Int m} (hv : Matrix.memLattice b v) (hv' : v ≠ 0) :
+    ((Vector.normSq ((lllNative b δ hδ hδ' hn).row
+        ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩) : Int) : Rat) ≤
+      (1 / (δ - 1 / 4)) ^ (n - 1) * ((Vector.normSq v : Int) : Rat) := by
+  have hred : isLLLReduced (lllNative b δ hδ hδ' hn) δ (1 / 2) :=
+    lllNative_isLLLReduced b δ hδ hδ' hn hind
+  have hind' : (lllNative b δ hδ hδ' hn).independent :=
+    lllNative_independent b δ hδ hδ' hn hind
+  have hv_lll : Matrix.memLattice (lllNative b δ hδ hδ' hn) v :=
+    (lllNative_memLattice_iff b δ hδ hδ' hn v).mpr hv
+  have hbnd := Hex.short_vector_bound_of_size_bound (lllNative b δ hδ hδ' hn) hind'
+    hred (by grind) (by grind) hδ' hn hv_lll hv'
+  -- Rewrite `(1/2) * (1/2)` as `1/4` in the resulting denominator.
+  have hηη : (1 / 2 : Rat) * (1 / 2) = 1 / 4 := by grind
+  rw [hηη] at hbnd
+  exact hbnd
+
+/-- The public LLL `lll` produces a `(δ, 11/20)`-LLL-reduced matrix.
+Obtained from `lllNative_isLLLReduced` (`η = 1/2`) by monotonic weakening
+of the size-reduction bound via `isLLLReduced.mono_η`. -/
+theorem lll_isLLLReduced (b : Matrix Int n m) (δ : Rat)
+    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (hind : b.independent) :
+    isLLLReduced (lll b δ hδ hδ' hn hind) δ (11 / 20) := by
+  have hred := lllNative_isLLLReduced b δ
+    (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
+  show isLLLReduced (lllNative b δ
+    (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn) δ (11 / 20)
+  exact Hex.isLLLReduced.mono_η _ (by grind) (by grind) hred
+
+/-- The generated lattice is preserved by `Hex.lll`. -/
+theorem lll_memLattice_iff (b : Matrix Int n m) (δ : Rat)
+    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (hind : b.independent) (v : Vector Int m) :
+    Matrix.memLattice (lll b δ hδ hδ' hn hind) v ↔ Matrix.memLattice b v := by
+  show Matrix.memLattice (lllNative b δ
+    (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn) v ↔ _
+  exact lllNative_memLattice_iff b δ _ hδ' hn v
+
+/-- Independence is preserved by `Hex.lll`. -/
+theorem lll_independent (b : Matrix Int n m) (δ : Rat)
+    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (hind : b.independent) :
+    (lll b δ hδ hδ' hn hind).independent := by
+  show (lllNative b δ
+    (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn).independent
+  exact lllNative_independent b δ _ hδ' hn hind
+
+/-- Public LLL short-vector bound at `η = 11/20`. For any independent
+integer basis `b`, the first row of `Hex.lll b δ ... hind` has squared norm at
+most `(1 / (δ − 121/400))^(n − 1)` times the squared norm of any nonzero
+lattice vector. -/
+theorem lll_short_vector
+    (b : Matrix Int n m) (δ : Rat)
+    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (hind : b.independent)
+    {v : Vector Int m} (hv : Matrix.memLattice b v) (hv' : v ≠ 0) :
+    ((Vector.normSq ((lll b δ hδ hδ' hn hind).row
+        ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩) : Int) : Rat) ≤
+      (1 / (δ - 121 / 400)) ^ (n - 1) * ((Vector.normSq v : Int) : Rat) := by
+  have hred : isLLLReduced (lll b δ hδ hδ' hn hind) δ (11 / 20) :=
+    lll_isLLLReduced b δ hδ hδ' hn hind
+  have hind' : (lll b δ hδ hδ' hn hind).independent :=
+    lll_independent b δ hδ hδ' hn hind
   have hv_lll : Matrix.memLattice (lll b δ hδ hδ' hn hind) v :=
     (lll_memLattice_iff b δ hδ hδ' hn hind v).mpr hv
-  exact Hex.lll_short_vector (lll b δ hδ hδ' hn hind) hind' hred hδ hδ' hn hv_lll hv'
+  have hδη : (11 / 20 : Rat) * (11 / 20) < δ := by
+    have : (11 / 20 : Rat) * (11 / 20) = 121 / 400 := by grind
+    grind
+  have hbnd := Hex.short_vector_bound_of_size_bound (lll b δ hδ hδ' hn hind)
+    hind' hred (by grind) hδη hδ' hn hv_lll hv'
+  have hηη : (11 / 20 : Rat) * (11 / 20) = 121 / 400 := by grind
+  simpa [hηη] using hbnd
 
 end Hex
 
 namespace HexLLLMathlib
 
-/-- Membership in the Mathlib `latticeSubmodule` is preserved by `Hex.lll`. -/
-theorem lll_mem_latticeSubmodule_iff
+/-- Membership in the Mathlib `latticeSubmodule` is preserved by
+`Hex.lllNative`. -/
+theorem lllNative_mem_latticeSubmodule_iff
     (b : Hex.Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (x : Fin m → ℤ) :
-    x ∈ latticeSubmodule (Hex.lll b δ hδ hδ' hn hind) ↔ x ∈ latticeSubmodule b := by
+    x ∈ latticeSubmodule (Hex.lllNative b δ hδ hδ' hn) ↔ x ∈ latticeSubmodule b := by
   let v := HexMatrixMathlib.vectorEquiv.symm x
   have hxv : x = HexMatrixMathlib.vectorEquiv v :=
     (Equiv.apply_symm_apply _ x).symm
   rw [hxv]
-  rw [mem_latticeSubmodule_iff (Hex.lll b δ hδ hδ' hn hind) v,
+  rw [mem_latticeSubmodule_iff (Hex.lllNative b δ hδ hδ' hn) v,
       mem_latticeSubmodule_iff b v]
-  exact Hex.lll_memLattice_iff b δ hδ hδ' hn hind v
+  exact Hex.lllNative_memLattice_iff b δ hδ hδ' hn v
 
-/-- **Unconditional Mathlib-Euclidean LLL short-vector bound.** Combining
-`Hex.lll_isLLLReduced` with the conditional Euclidean bound
-`reduced_first_row_norm_sq_le_of_mem_latticeSubmodule`. -/
-theorem lll_first_row_norm_sq_le_unconditional
+/-- Membership in the Mathlib `latticeSubmodule` is preserved by `Hex.lll`. -/
+theorem lll_mem_latticeSubmodule_iff
+    (b : Hex.Matrix Int n m) (δ : Rat)
+    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (hind : b.independent) (x : Fin m → ℤ) :
+    x ∈ latticeSubmodule (Hex.lll b δ hδ hδ' hn hind) ↔ x ∈ latticeSubmodule b := by
+  show x ∈ latticeSubmodule (Hex.lllNative b δ
+    (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn) ↔ _
+  exact lllNative_mem_latticeSubmodule_iff b δ _ hδ' hn x
+
+/-- Classical Mathlib-Euclidean LLL short-vector bound on `Hex.lllNative` at
+`η = 1/2`. Combines `Hex.lllNative_isLLLReduced` with the conditional
+Euclidean bound `reduced_first_row_norm_sq_le_of_mem_latticeSubmodule` at
+`η = 1/2`. -/
+theorem lllNative_first_row_norm_sq_le_unconditional
     (b : Hex.Matrix Int n m) (δ : Rat)
     (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent)
     (x : Fin m → ℤ) (hx : x ∈ latticeSubmodule b) (hx0 : x ≠ 0) :
     ‖intRowToEuclidean
-        (Hex.Matrix.row (Hex.lll b δ hδ hδ' hn hind)
+        (Hex.Matrix.row (Hex.lllNative b δ hδ hδ' hn)
           ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩)‖ ^ 2 ≤
       (((1 / (δ - 1 / 4)) ^ (n - 1) : Rat) : ℝ) *
         ‖intVectorToEuclidean x‖ ^ 2 := by
-  have hred : Hex.isLLLReduced (Hex.lll b δ hδ hδ' hn hind) δ :=
+  have hred : Hex.isLLLReduced (Hex.lllNative b δ hδ hδ' hn) δ (1 / 2) :=
+    Hex.lllNative_isLLLReduced b δ hδ hδ' hn hind
+  have hind' : (Hex.lllNative b δ hδ hδ' hn).independent :=
+    Hex.lllNative_independent b δ hδ hδ' hn hind
+  have hx_lll : x ∈ latticeSubmodule (Hex.lllNative b δ hδ hδ' hn) :=
+    (lllNative_mem_latticeSubmodule_iff b δ hδ hδ' hn x).mpr hx
+  have hbnd := reduced_first_row_norm_sq_le_of_mem_latticeSubmodule
+    (Hex.lllNative b δ hδ hδ' hn) δ (1 / 2) (by grind) (by grind) hδ' hn hind'
+    hred x hx_lll hx0
+  -- Rewrite `(1/2) * (1/2)` as `1/4` in the bound's denominator.
+  have hηη : (1 / 2 : Rat) * (1 / 2) = 1 / 4 := by grind
+  rw [hηη] at hbnd
+  exact hbnd
+
+/-- **Unconditional Mathlib-Euclidean LLL short-vector bound on `Hex.lll` at
+`η = 11/20`.** Combines `Hex.lll_isLLLReduced` (η = 11/20) with the
+conditional Euclidean bound `reduced_first_row_norm_sq_le_of_mem_latticeSubmodule`
+at `η = 11/20`. -/
+theorem lll_first_row_norm_sq_le_unconditional
+    (b : Hex.Matrix Int n m) (δ : Rat)
+    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (hind : b.independent)
+    (x : Fin m → ℤ) (hx : x ∈ latticeSubmodule b) (hx0 : x ≠ 0) :
+    ‖intRowToEuclidean
+        (Hex.Matrix.row (Hex.lll b δ hδ hδ' hn hind)
+          ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩)‖ ^ 2 ≤
+      (((1 / (δ - 121 / 400)) ^ (n - 1) : Rat) : ℝ) *
+        ‖intVectorToEuclidean x‖ ^ 2 := by
+  have hred : Hex.isLLLReduced (Hex.lll b δ hδ hδ' hn hind) δ (11 / 20) :=
     Hex.lll_isLLLReduced b δ hδ hδ' hn hind
-  have hs_valid : (Hex.LLLState.ofBasisUnchecked b).Valid :=
-    HexLLLMathlib.LLLState.ofBasis_valid b hind
-  have hind' : (Hex.lll b δ hδ hδ' hn hind).independent := by
-    show (Hex.lllLoop (Hex.LLLState.ofBasisUnchecked b) 1 δ hδ hδ'
-      (Nat.le_refl 1) hn (Hex.lllFuel (Hex.LLLState.ofBasisUnchecked b))).independent
-    exact Hex.LLLState.lllLoop_independent δ hδ hδ' _ _ 1
-      (Nat.le_refl 1) hn hs_valid hind
+  have hind' : (Hex.lll b δ hδ hδ' hn hind).independent :=
+    Hex.lll_independent b δ hδ hδ' hn hind
   have hx_lll : x ∈ latticeSubmodule (Hex.lll b δ hδ hδ' hn hind) :=
     (lll_mem_latticeSubmodule_iff b δ hδ hδ' hn hind x).mpr hx
-  exact reduced_first_row_norm_sq_le_of_mem_latticeSubmodule
-    (Hex.lll b δ hδ hδ' hn hind) δ hδ hδ' hn hind' hred x hx_lll hx0
+  have hδη : (11 / 20 : Rat) * (11 / 20) < δ := by
+    have : (11 / 20 : Rat) * (11 / 20) = 121 / 400 := by grind
+    grind
+  have hbnd := reduced_first_row_norm_sq_le_of_mem_latticeSubmodule
+    (Hex.lll b δ hδ hδ' hn hind) δ (11 / 20) (by grind) hδη hδ' hn hind'
+    hred x hx_lll hx0
+  have hηη : (11 / 20 : Rat) * (11 / 20) = 121 / 400 := by grind
+  simpa [hηη] using hbnd
 
 end HexLLLMathlib

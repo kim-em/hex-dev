@@ -52,7 +52,7 @@ private def runOne (n : Nat) (reps : Nat) (hn : 1 ≤ n) : IO Unit := do
   let t0 ← IO.monoNanosNow
   let mut chk : UInt64 := 0
   for _ in [0:reps] do
-    let reduced := Hex.lllUnchecked basis (3 / 4) hδLow hδHigh hn
+    let reduced := Hex.lllNative basis (3 / 4) hδLow hδHigh hn
     chk := chk ^^^ matrixChecksum reduced
   let t1 ← IO.monoNanosNow
   let nanos := (t1 - t0) / reps

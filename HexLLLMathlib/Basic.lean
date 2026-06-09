@@ -336,20 +336,25 @@ theorem norm_sq_intVectorToEuclidean (x : Fin m → ℤ) :
   rw [heq, norm_sq_intRowToEuclidean]
 
 /-- Mathlib-Euclidean-norm formulation of the LLL short-vector guarantee for
-an already `δ`-LLL-reduced executable basis.
+an already `(δ, η)`-LLL-reduced executable basis.
 
 The input vector is assumed to lie in the Mathlib `latticeSubmodule`.  The
 proof route converts that hypothesis back through `mem_latticeSubmodule_iff`,
-applies the executable `Hex.lll_short_vector` for the rational squared-norm
-inequality, then transports both sides through the concrete Euclidean norm
-coercions above. -/
+applies the executable `Hex.short_vector_bound_of_size_bound` for the
+rational squared-norm inequality, then transports both sides through the
+concrete Euclidean norm coercions above.
+
+Consumed downstream at `η = 11/20` for the public `Hex.lll` headline
+(`α = 1/(δ − 121/400)`, precondition `121/400 < δ`); also at `η = 1/2` for
+the native `Hex.lllNative` classical statement (`α = 1/(δ − 1/4)`,
+precondition `1/4 < δ`). -/
 theorem reduced_first_row_norm_sq_le_of_mem_latticeSubmodule
-    (b : Hex.Matrix Int n m) (δ : Rat)
-    (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
-    (hli : Hex.Matrix.independent b) (hred : Hex.isLLLReduced b δ)
+    (b : Hex.Matrix Int n m) (δ η : Rat)
+    (hη : (1 : Rat) / 2 ≤ η) (hδη : η * η < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (hli : Hex.Matrix.independent b) (hred : Hex.isLLLReduced b δ η)
     (x : Fin m → ℤ) (hx : x ∈ latticeSubmodule b) (hx0 : x ≠ 0) :
     ‖intRowToEuclidean (Hex.Matrix.row b ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩)‖ ^ 2 ≤
-      (((1 / (δ - 1 / 4)) ^ (n - 1) : Rat) : ℝ) *
+      (((1 / (δ - η * η)) ^ (n - 1) : Rat) : ℝ) *
         ‖intVectorToEuclidean x‖ ^ 2 := by
   let v : Vector Int m := HexMatrixMathlib.vectorEquiv.symm x
   have hxExec : Hex.Matrix.memLattice b v := by
@@ -363,7 +368,8 @@ theorem reduced_first_row_norm_sq_le_of_mem_latticeSubmodule
       ext j
       simp [hv]
     simpa [v] using hv'
-  have hRat := Hex.lll_short_vector b hli hred hδ hδ' hn hxExec hx0Exec
+  have hRat := Hex.short_vector_bound_of_size_bound b hli hred hη hδη hδ' hn
+    hxExec hx0Exec
   have hReal := (Rat.cast_le (K := ℝ)).mpr hRat
   rw [norm_sq_intRowToEuclidean, norm_sq_intVectorToEuclidean]
   simp only [Rat.cast_mul, Rat.cast_intCast] at hReal
