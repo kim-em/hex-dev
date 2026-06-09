@@ -4641,6 +4641,170 @@ private theorem pow_C_form
           · exact ha ha_zero
         · rw [pow_succ, hpow, fpPoly_C_mul_C_eq]
 
+private theorem pow_C_mul_sync
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    {a : ZMod64 p} (ha : a ≠ 0) (f : FpPoly p) (n : Nat) :
+    ∃ b : ZMod64 p, b ≠ 0 ∧
+      pow (DensePoly.C a * f : FpPoly p) n = DensePoly.C b * pow f n := by
+  obtain ⟨b, hb, hpow⟩ := pow_C_form hp ha n
+  refine ⟨b, hb, ?_⟩
+  calc
+    pow (DensePoly.C a * f : FpPoly p) n =
+        pow (DensePoly.C a : FpPoly p) n * pow f n := by
+          rw [pow_mul_base]
+    _ = DensePoly.C b * pow f n := by rw [hpow]
+
+private theorem C_mul_eq_one_inv_form
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    {a : ZMod64 p} (ha : a ≠ 0) {f : FpPoly p}
+    (h : (DensePoly.C a : FpPoly p) * f = 1) :
+    f = DensePoly.C a⁻¹ := by
+  have ha_inv_a : a⁻¹ * a = (1 : ZMod64 p) := by
+    have hcomm : a * a⁻¹ = a⁻¹ * a := by grind
+    rw [← hcomm]
+    exact zmod64_mul_inv_eq_one_of_prime_ne_zero hp ha
+  calc
+    f = (1 : FpPoly p) * f := (one_mul f).symm
+    _ = (DensePoly.C a⁻¹ * DensePoly.C a : FpPoly p) * f := by
+          rw [fpPoly_C_mul_C_eq, ha_inv_a]
+          rfl
+    _ = DensePoly.C a⁻¹ * ((DensePoly.C a : FpPoly p) * f) :=
+          DensePoly.mul_assoc_poly _ _ _
+    _ = DensePoly.C a⁻¹ := by rw [h, mul_one]
+
+private theorem C_mul_C_mul_cancel_right
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    {a b : ZMod64 p} (hb : b ≠ 0) (f : FpPoly p) :
+    DensePoly.C (a * b⁻¹) * (DensePoly.C b * f : FpPoly p) =
+      DensePoly.C a * f := by
+  have hb_inv : b⁻¹ * b = (1 : ZMod64 p) := by
+    have hcomm : b * b⁻¹ = b⁻¹ * b := by grind
+    rw [← hcomm]
+    exact zmod64_mul_inv_eq_one_of_prime_ne_zero hp hb
+  have hab : (a * b⁻¹) * b = a := by
+    calc (a * b⁻¹) * b
+        = a * (b⁻¹ * b) := by grind
+      _ = a * 1 := by rw [hb_inv]
+      _ = a := by grind
+  calc
+    DensePoly.C (a * b⁻¹) * (DensePoly.C b * f : FpPoly p) =
+        (DensePoly.C (a * b⁻¹) * DensePoly.C b : FpPoly p) * f :=
+          (DensePoly.mul_assoc_poly _ _ _).symm
+    _ = DensePoly.C a * f := by rw [fpPoly_C_mul_C_eq, hab]
+
+private theorem yunFactorsContributionWithLevel_scalar_branch_sync
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    {z zScaled tail₁ tail₂ tailScaled₁ tailScaled₂ : FpPoly p}
+    {u_z s_tail u_tail : ZMod64 p} (hu_z : u_z ≠ 0)
+    (hs_tail : s_tail ≠ 0) (hu_tail : u_tail ≠ 0)
+    (hzScaled : zScaled = DensePoly.C u_z * z)
+    (htail₁ : tailScaled₁ = DensePoly.C s_tail * tail₁)
+    (htail₂ : tailScaled₂ = DensePoly.C u_tail * tail₂)
+    (n : Nat) :
+    ∃ s u : ZMod64 p, s ≠ 0 ∧ u ≠ 0 ∧
+      (if isOne zScaled then tailScaled₁ else pow zScaled n * tailScaled₁) =
+        DensePoly.C s *
+          (if isOne z then tail₁ else pow z n * tail₁) ∧
+      tailScaled₂ = DensePoly.C u * tail₂ := by
+  by_cases hz : isOne z = true
+  · have hz_eq : z = 1 := eq_one_of_isOne_true z hz
+    by_cases hzs : isOne zScaled = true
+    · refine ⟨s_tail, u_tail, hs_tail, hu_tail, ?_, htail₂⟩
+      simp [hz, hzs, htail₁]
+    · have hzs_false : isOne zScaled = false := by
+        cases h : isOne zScaled
+        · rfl
+        · exact False.elim (hzs h)
+      have hzScaled_C : zScaled = DensePoly.C u_z := by
+        rw [hzScaled, hz_eq, mul_one]
+      obtain ⟨s_pow, hs_pow, hpow⟩ := pow_C_form hp hu_z n
+      refine ⟨s_pow * s_tail, u_tail, ?_, hu_tail, ?_, htail₂⟩
+      · intro hzero
+        rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with hpow_zero | htail_zero
+        · exact hs_pow hpow_zero
+        · exact hs_tail htail_zero
+      · have hC_false : isOne (DensePoly.C u_z : FpPoly p) = false := by
+          simpa [hzScaled_C] using hzs_false
+        have hmain :
+            pow (DensePoly.C u_z : FpPoly p) n *
+                (DensePoly.C s_tail * tail₁) =
+              DensePoly.C (s_pow * s_tail) * tail₁ := by
+          calc
+            pow (DensePoly.C u_z : FpPoly p) n *
+                (DensePoly.C s_tail * tail₁) =
+                DensePoly.C s_pow * (DensePoly.C s_tail * tail₁) := by
+                  rw [hpow]
+            _ = (DensePoly.C s_pow * DensePoly.C s_tail : FpPoly p) * tail₁ :=
+                  (DensePoly.mul_assoc_poly _ _ _).symm
+            _ = DensePoly.C (s_pow * s_tail) * tail₁ := by
+                  rw [fpPoly_C_mul_C_eq]
+        simpa [hz, hC_false, htail₁, hzScaled_C] using hmain
+  · have hz_false : isOne z = false := by
+      cases h : isOne z
+      · rfl
+      · exact False.elim (hz h)
+    by_cases hzs : isOne zScaled = true
+    · have hzs_eq : zScaled = 1 := eq_one_of_isOne_true zScaled hzs
+      have hz_unit : z = DensePoly.C u_z⁻¹ := by
+        apply C_mul_eq_one_inv_form hp hu_z
+        simpa [hzScaled] using hzs_eq
+      have hu_z_inv : u_z⁻¹ ≠ 0 :=
+        zmod64_inv_ne_zero_of_prime_ne_zero hp hu_z
+      obtain ⟨s_pow, hs_pow, hpow⟩ := pow_C_form hp hu_z_inv n
+      refine ⟨s_tail * s_pow⁻¹, u_tail, ?_, hu_tail, ?_, htail₂⟩
+      · intro hzero
+        rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with htail_zero | hinv_zero
+        · exact hs_tail htail_zero
+        · exact zmod64_inv_ne_zero_of_prime_ne_zero hp hs_pow hinv_zero
+      · have hraw_pow : pow z n = DensePoly.C s_pow := by
+          simpa [hz_unit] using hpow
+        simp [hz_false, hzs, htail₁, hraw_pow]
+        exact (C_mul_C_mul_cancel_right hp hs_pow tail₁).symm
+    · have hzs_false : isOne zScaled = false := by
+        cases h : isOne zScaled
+        · rfl
+        · exact False.elim (hzs h)
+      obtain ⟨s_pow, hs_pow, hpow⟩ :=
+        pow_C_mul_sync hp hu_z z n
+      refine ⟨s_pow * s_tail, u_tail, ?_, hu_tail, ?_, htail₂⟩
+      · intro hzero
+        rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with hpow_zero | htail_zero
+        · exact hs_pow hpow_zero
+        · exact hs_tail htail_zero
+      · have hmain :
+            pow zScaled n * (DensePoly.C s_tail * tail₁) =
+              DensePoly.C (s_pow * s_tail) * (pow z n * tail₁) := by
+          calc
+            pow zScaled n * (DensePoly.C s_tail * tail₁) =
+                (DensePoly.C s_pow * pow z n : FpPoly p) *
+                  (DensePoly.C s_tail * tail₁) := by
+                  rw [hzScaled, hpow]
+            _ = DensePoly.C s_pow *
+                  (pow z n * (DensePoly.C s_tail * tail₁)) :=
+                  DensePoly.mul_assoc_poly _ _ _
+            _ = DensePoly.C s_pow *
+                  ((pow z n * DensePoly.C s_tail : FpPoly p) * tail₁) := by
+                  exact congrArg (fun q => DensePoly.C s_pow * q)
+                    ((DensePoly.mul_assoc_poly (pow z n)
+                      (DensePoly.C s_tail : FpPoly p) tail₁).symm)
+            _ = DensePoly.C s_pow *
+                  ((DensePoly.C s_tail * pow z n : FpPoly p) * tail₁) := by
+                  exact congrArg
+                    (fun q : FpPoly p => DensePoly.C s_pow * (q * tail₁))
+                    (DensePoly.mul_comm_poly (pow z n)
+                      (DensePoly.C s_tail : FpPoly p))
+            _ = DensePoly.C s_pow *
+                  (DensePoly.C s_tail * (pow z n * tail₁)) := by
+                  exact congrArg (fun q => DensePoly.C s_pow * q)
+                    (DensePoly.mul_assoc_poly
+                      (DensePoly.C s_tail : FpPoly p) (pow z n) tail₁)
+            _ = (DensePoly.C s_pow * DensePoly.C s_tail : FpPoly p) *
+                  (pow z n * tail₁) :=
+                  (DensePoly.mul_assoc_poly _ _ _).symm
+            _ = DensePoly.C (s_pow * s_tail) * (pow z n * tail₁) := by
+                  rw [fpPoly_C_mul_C_eq]
+        simpa [hz_false, hzs_false, htail₁] using hmain
+
 private theorem constant_divisor_eq_C
     [ZMod64.PrimeModulus p]
     {d : FpPoly p} {k : ZMod64 p} (hk : k ≠ 0)
