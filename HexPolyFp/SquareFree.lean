@@ -7357,6 +7357,136 @@ private theorem yunFactorsContributionWithLevel_scalar_sync_of_derivative_active
           · simpa [yunFactorsContributionWithLevel, hc_false, hscaled_c_false,
               y, yScaled, z, zScaled] using hbranch₂
 
+private theorem yunFactorsContributionWithLevel_scaled_normalized_tail_reconstruct
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    {f c w : FpPoly p} {u_c u_w : ZMod64 p}
+    (hu_c : u_c ≠ 0) (hu_w : u_w ≠ 0)
+    (base level fuel : Nat)
+    (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel) :
+    ∃ u_tail : ZMod64 p, u_tail ≠ 0 ∧
+      let raw := yunFactorsContributionWithLevel c w base level fuel
+      let scaled :=
+        yunFactorsContributionWithLevel
+          (DensePoly.C u_c * c) (DensePoly.C u_w * w) base level fuel
+      DensePoly.C (normalizeMonic scaled.2).1 *
+          (normalizeMonic scaled.2).2 =
+        DensePoly.C u_tail * raw.2 := by
+  obtain ⟨_s, u_tail, _hs, hu_tail, hsync⟩ :=
+    yunFactorsContributionWithLevel_scalar_sync_of_derivative_active_reachable
+      hp hu_c hu_w base level fuel hreachable
+  refine ⟨u_tail, hu_tail, ?_⟩
+  let raw := yunFactorsContributionWithLevel c w base level fuel
+  let scaled :=
+    yunFactorsContributionWithLevel
+      (DensePoly.C u_c * c) (DensePoly.C u_w * w) base level fuel
+  have hscaled_tail : scaled.2 = DensePoly.C u_tail * raw.2 := by
+    exact congrArg Prod.snd hsync
+  have hreconstruct :
+      DensePoly.C (normalizeMonic scaled.2).1 * (normalizeMonic scaled.2).2 =
+        scaled.2 := by
+    simpa [scaled] using
+      yunFactorsContributionWithLevel_normalized_tail_reconstruct
+        hp (DensePoly.C u_c * c) (DensePoly.C u_w * w) base level fuel
+  dsimp only
+  exact hreconstruct.trans hscaled_tail
+
+private theorem yunFactorsContributionWithLevel_scaled_normalized_tail_product_sync
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    {f c w : FpPoly p} {u_c u_w : ZMod64 p}
+    (hu_c : u_c ≠ 0) (hu_w : u_w ≠ 0)
+    (base level fuel multiplicity : Nat)
+    (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel)
+    (hproduct :
+      let raw := yunFactorsContributionWithLevel c w base level fuel
+      raw.1 * pow raw.2 multiplicity = pow f multiplicity) :
+    ∃ s : ZMod64 p, s ≠ 0 ∧
+      let scaled :=
+        yunFactorsContributionWithLevel
+          (DensePoly.C u_c * c) (DensePoly.C u_w * w) base level fuel
+      scaled.1 *
+          (pow (DensePoly.C (normalizeMonic scaled.2).1) multiplicity *
+            pow (normalizeMonic scaled.2).2 multiplicity) =
+        DensePoly.C s * pow f multiplicity := by
+  obtain ⟨s, u_tail, hs, hu_tail, hsync⟩ :=
+    yunFactorsContributionWithLevel_scalar_sync_of_derivative_active_reachable
+      hp hu_c hu_w base level fuel hreachable
+  let raw := yunFactorsContributionWithLevel c w base level fuel
+  let scaled :=
+    yunFactorsContributionWithLevel
+      (DensePoly.C u_c * c) (DensePoly.C u_w * w) base level fuel
+  have hscaled₁ : scaled.1 = DensePoly.C s * raw.1 := by
+    exact congrArg Prod.fst hsync
+  have hscaled₂ : scaled.2 = DensePoly.C u_tail * raw.2 := by
+    exact congrArg Prod.snd hsync
+  obtain ⟨u_pow, hu_pow, hpow_tail⟩ :=
+    pow_C_mul_sync hp hu_tail raw.2 multiplicity
+  refine ⟨s * u_pow, ?_, ?_⟩
+  · intro hzero
+    rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with hs_zero | hupow_zero
+    · exact hs hs_zero
+    · exact hu_pow hupow_zero
+  · have hraw_product :
+        raw.1 * pow raw.2 multiplicity = pow f multiplicity := by
+      simpa [raw] using hproduct
+    have hreconstruct :
+        DensePoly.C (normalizeMonic scaled.2).1 * (normalizeMonic scaled.2).2 =
+          scaled.2 := by
+      simpa [scaled] using
+        yunFactorsContributionWithLevel_normalized_tail_reconstruct
+          hp (DensePoly.C u_c * c) (DensePoly.C u_w * w) base level fuel
+    calc
+      scaled.1 *
+          (pow (DensePoly.C (normalizeMonic scaled.2).1) multiplicity *
+            pow (normalizeMonic scaled.2).2 multiplicity) =
+          scaled.1 *
+            pow (DensePoly.C (normalizeMonic scaled.2).1 *
+              (normalizeMonic scaled.2).2) multiplicity := by
+            rw [pow_mul_base]
+      _ = scaled.1 * pow scaled.2 multiplicity := by
+            rw [hreconstruct]
+      _ = (DensePoly.C s * raw.1) *
+            pow (DensePoly.C u_tail * raw.2 : FpPoly p) multiplicity := by
+            rw [hscaled₁, hscaled₂]
+      _ = (DensePoly.C s * raw.1) *
+            (DensePoly.C u_pow * pow raw.2 multiplicity) := by
+            rw [hpow_tail]
+      _ = DensePoly.C (s * u_pow) *
+            (raw.1 * pow raw.2 multiplicity) := by
+            calc
+              (DensePoly.C s * raw.1) *
+                  (DensePoly.C u_pow * pow raw.2 multiplicity) =
+                  DensePoly.C s *
+                    (raw.1 * (DensePoly.C u_pow * pow raw.2 multiplicity)) :=
+                    DensePoly.mul_assoc_poly _ _ _
+              _ = DensePoly.C s *
+                    ((DensePoly.C u_pow * pow raw.2 multiplicity) * raw.1) := by
+                    exact congrArg (fun t => DensePoly.C s * t)
+                      (DensePoly.mul_comm_poly raw.1
+                        (DensePoly.C u_pow * pow raw.2 multiplicity))
+              _ = DensePoly.C s *
+                    (DensePoly.C u_pow *
+                      (pow raw.2 multiplicity * raw.1)) := by
+                    exact congrArg (fun t => DensePoly.C s * t)
+                      (DensePoly.mul_assoc_poly
+                        (DensePoly.C u_pow : FpPoly p)
+                        (pow raw.2 multiplicity) raw.1)
+              _ = DensePoly.C s *
+                    (DensePoly.C u_pow *
+                      (raw.1 * pow raw.2 multiplicity)) := by
+                    exact congrArg
+                      (fun t => DensePoly.C s * (DensePoly.C u_pow * t))
+                      (DensePoly.mul_comm_poly (pow raw.2 multiplicity) raw.1)
+              _ = (DensePoly.C s * DensePoly.C u_pow : FpPoly p) *
+                    (raw.1 * pow raw.2 multiplicity) := by
+                    exact (DensePoly.mul_assoc_poly
+                      (DensePoly.C s : FpPoly p) (DensePoly.C u_pow)
+                      (raw.1 * pow raw.2 multiplicity)).symm
+              _ = DensePoly.C (s * u_pow) *
+                    (raw.1 * pow raw.2 multiplicity) := by
+                    rw [fpPoly_C_mul_C_eq]
+      _ = DensePoly.C (s * u_pow) * pow f multiplicity := by
+            rw [hraw_product]
+
 private theorem yunFactorsContributionWithLevel_tail_nonzero_of_derivative_active_reachable
     (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (base level fuel : Nat)
     (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel) :
