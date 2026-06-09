@@ -28,9 +28,21 @@
    dependency.
 
 4. **Lean algorithms from the start.** All algorithms are implemented and
-   run in Lean natively. No external CAS in the loop. Certificate
-   structures exist for compact proof witnesses, but the algorithms that
-   generate and check certificates are both in Lean.
+   run in Lean natively, and the native algorithm is always the default and
+   carries the correctness guarantee. No *trusted* external CAS in the loop:
+   no result whose correctness the project relies on may come from outside
+   Lean. Certificate structures exist for compact proof witnesses, and the
+   algorithms that generate and check certificates are both in Lean.
+
+   A *checked* external oracle is admissible and is not "external CAS in the
+   loop" in the sense this rule forbids. An untrusted external implementation
+   may propose a candidate result, provided a verified Lean checker validates
+   it on every call and the native algorithm runs whenever the candidate is
+   absent or rejected. Correctness then depends only on the verified checker
+   and the native fallback, never on the external oracle, so the trusted
+   computing base is unchanged. The checker's soundness theorem, the
+   fallback, and the dispatch are all in Lean; the external oracle supplies
+   only a hint.
 
 5. **Clear DAG structure.** Libraries can be developed in parallel. LLL has
    no dependency on polynomial arithmetic. Hensel lifting is independent of

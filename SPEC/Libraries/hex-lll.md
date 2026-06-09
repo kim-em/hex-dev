@@ -35,45 +35,77 @@ def Vector.normSq (v : Vector Int m) : Int := v.dotProduct v
 `dotProduct`, `normSq`, and `gramMatrix` live in hex-matrix.
 `memLattice`, `independent`, and `isLLLReduced` live in hex-lll.
 
-**delta-LLL-reduced.** A basis b is delta-LLL-reduced (for
-delta in (1/4, 1]) if it satisfies two conditions:
+**delta-LLL-reduced.** Reducedness is parameterized by a size-reduction
+bound `η`. A basis `b` is `(δ, η)`-LLL-reduced (for `η ≥ 1/2` and
+`η² < δ ≤ 1`) if it satisfies two conditions:
 
-1. **Size-reduced:** |(coeffs b)[i][j]| <= 1/2 for all 0 <= j < i < n.
+1. **Size-reduced:** |(coeffs b)[i][j]| <= η for all 0 <= j < i < n.
 
 2. **Lovász condition:** For all 0 <= i < n-1:
        delta * ||(basis b)[i]||^2 <= ||(basis b)[i+1]||^2 + (coeffs b)[i+1][i]^2 * ||(basis b)[i]||^2
 
    Equivalently: (delta - (coeffs b)[i+1][i]^2) * ||(basis b)[i]||^2 <= ||(basis b)[i+1]||^2
 
-**Key properties.** All theorems require
-`hδ : 1/4 < δ`, `hδ' : δ ≤ 1`, `hn : 1 ≤ n`, and
-`hli : b.independent`.
+The predicate is `isLLLReduced b δ η`. Two values of `η` are pinned:
 
-`δ > 1/4` so that `α = 1/(δ - 1/4)` is well-defined and positive.
-`δ ≤ 1` for termination (the Lovász failure condition is strict, so
-each swap gives `gramDet b' k < δ · gramDet b k ≤ gramDet b k`,
-strictly decreasing the potential even at `δ = 1`). Linear
-independence ensures all Gram determinants `gramDet b k > 0`, which
-is needed for the GS orthogonalization to exist and for the
-scaledCoeffs denominators to be nonzero.
+- **`η = 1/2`** (the classical bound), carried by the native algorithm
+  `lllNative`, which produces exact-integer `|μ| ≤ 1/2`.
+- **`η = 11/20`**, carried by the public `lll`. This is the bound any
+  function that may route through an external reducer can guarantee
+  uniformly; it is reached either by `lllNative` (whose `|μ| ≤ 1/2` is
+  stronger) or by certifying an external candidate (see *Certified external
+  dispatch*).
+
+**Key properties.** Theorems require `hη : 1/2 ≤ η`, `hδη : η² < δ`,
+`hδ' : δ ≤ 1`, `hn : 1 ≤ n`, and `hli : b.independent`.
+
+`η² < δ` so that `α = 1/(δ − η²)` is well-defined and positive (at `η = 1/2`
+this is `δ > 1/4`). `δ ≤ 1` for termination (the Lovász failure condition is
+strict, so each swap gives `gramDet b' k < δ · gramDet b k ≤ gramDet b k`,
+strictly decreasing the potential even at `δ = 1`). Linear independence
+ensures all Gram determinants `gramDet b k > 0`, which is needed for the GS
+orthogonalization to exist and for the scaledCoeffs denominators to be
+nonzero.
+
+The short-vector bound is factored through one lemma over the size-reduction
+bound:
+
+```lean
+theorem short_vector_bound_of_size_bound (b : Matrix Int n m) {δ η : Rat}
+    (hη : 1/2 ≤ η) (hδη : η² < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
+    (hli : b.independent) (hred : isLLLReduced b δ η)
+    (v : Vector Int m) :
+    b.memLattice v → v ≠ 0 →
+    (b.row 0).normSq ≤ (1/(δ - η²))^(n-1) * v.normSq
+```
+
+The public `lll` (η = 11/20) and the native `lllNative` (η = 1/2) instantiate
+it:
 
 ```lean
 theorem lll_same_lattice (b : Matrix Int n m) (δ : Rat) ... :
     (lll b δ ...).memLattice v ↔ b.memLattice v
 
 theorem lll_reduced (b : Matrix Int n m) (δ : Rat) ... :
-    isLLLReduced (lll b δ ...) δ
+    isLLLReduced (lll b δ ...) δ (11/20)
 
 theorem lll_short_vector (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1)
+    (hδ : 121/400 < δ) (hδ' : δ ≤ 1)
     (hn : 1 ≤ n) (hli : b.independent)
     (v : Vector Int m) :
     b.memLattice v → v ≠ 0 →
-    (lll b δ hδ hδ' hn hli).row 0 |>.normSq ≤ α^(n-1) * v.normSq
-  where α := 1 / (δ - 1/4)
+    (lll b δ hδ hδ' hn hli).row 0 |>.normSq ≤ (1/(δ - 121/400))^(n-1) * v.normSq
+
+theorem lllNative_short_vector (b : Matrix Int n m) (δ : Rat)
+    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hli : b.independent)
+    (v : Vector Int m) :
+    b.memLattice v → v ≠ 0 →
+    (lllNative b δ hδ hδ' hn hli).row 0 |>.normSq ≤ (1/(δ - 1/4))^(n-1) * v.normSq
 ```
 
-The short vector guarantee with `δ = 3/4` gives `‖b₁‖ ≤ 2^{(n-1)/2} · λ₁`.
+The classical bound and the wide `δ > 1/4` range live on `lllNative`: at
+`δ = 3/4` it gives `‖b₁‖ ≤ 2^{(n-1)/2} · λ₁`. The public `lll` carries the
+`η = 11/20` bound (`α = 1/(δ − 121/400)`, precondition `δ > 121/400`).
 
 ## LLLState and algorithm
 
@@ -308,7 +340,7 @@ loop's traversal cost and nothing about size reduction or swaps.
 
 ### External comparators
 
-Two external comparators are required for HexLLL Phase 4. The
+Three external comparators are required for HexLLL Phase 4. The
 classification below is mirrored as structured metadata in
 [`libraries.yml`](../../libraries.yml) under `HexLLL.phase4.comparators`:
 
@@ -319,6 +351,18 @@ classification below is mirrored as structured metadata in
   algorithmic, so the ratio is recorded for orientation but does
   not gate Phase 4. See
   [SPEC/benchmarking.md §Comparator classification](../benchmarking.md#comparator-classification-gating-vs-informational).
+  fpLLL also serves as the external reducer behind *Certified external
+  dispatch*; the certified path's measured cost is fpLLL plus the
+  verified checker.
+- **`verified Isabelle certified-LLL`** — `gating`. The Isabelle
+  formalisation's own certified-output configuration (a verified checker
+  over an untrusted floating-point reducer; JAR 2020 §7 and the AFP entry
+  `Modular_arithmetic_LLL_and_HNF_algorithms`) is the apples-to-apples
+  yardstick for the certified path. **Performance goal:** the hex certified
+  path (fpLLL + checker) is **at least as fast as** the Isabelle
+  certified-LLL on shared canonical inputs at the largest eligible rung of
+  each `phase4.input_families` ladder. The headline report records the
+  ratio, the checker's share of the cost, and the candidate rejection rate.
 - **`verified Isabelle LLL`** — `gating`. The Bottesch–Divasón–
   Haslbeck–Joosten–Thiemann–Yamada formalisation in the Archive of
   Formal Proofs (entry `LLL_Basis_Reduction`) is the only other
@@ -397,6 +441,66 @@ but must not by itself erase the fixed Phase-4 ladder.
 The swap bound `potential_initial ≤ (maxNormSq b)^{n*(n-1)/2}` follows
 from Hadamard's inequality: `gramDet b k ≤ prod_{i<k} ||b[i]||^2 ≤
 (maxNormSq b)^k`.
+
+## Certified external dispatch
+
+The public `lll` runs the native algorithm `lllNative` by default, and when
+an optional external reducer is present in the process it instead certifies
+that reducer's output, falling back to `lllNative` whenever the candidate is
+absent or fails certification. The two paths satisfy the identical
+post-condition (`isLLLReduced (lll …) δ (11/20)`, same lattice, the
+`lll_short_vector` bound), so dispatch is invisible to callers and to proofs.
+`lll`'s guarantee is property-level, not value-level: two calls may return
+different `(δ, 11/20)`-reduced bases of the same lattice.
+
+**Certificate and checker.** An external candidate is a triple
+`(B', U, V)` — a reduced basis with integer transforms. It is accepted iff
+the executable checker `certCheck B B' U V δ η : Bool` returns `true`, where
+`certCheck` verifies, over integer arithmetic only:
+
+- `U.mul B = B'` and `V.mul B' = B` (each a `Matrix.mul` equality), which
+  together give `lattice B = lattice B'` by row-combination composition — no
+  determinant and no matrix-inverse reasoning;
+- `B'` independent and `(δ, η)`-size-reduced and Lovász, read off the integer
+  `d`/`ν` representation (`GramSchmidt.Int.data B'`): all `d` positive,
+  `η.den·(ν[i][j]).natAbs ≤ η.num·d[j+1]` (the integer form of `|μ| ≤ η`), and
+  `δ.den·(d[i+2]·d[i] + ν[i+1][i]²) ≥ δ.num·d[i+1]²`.
+
+The checker is generic in the size-reduction bound, matching the
+`isLLLReduced`/`short_vector_bound_of_size_bound` layer; the pin lives at the
+call site, not inside the mechanism. The single trusted theorem is
+
+```lean
+theorem certCheck_sound (B B' U V : Matrix Int n m) (δ η : Rat) :
+    certCheck B B' U V δ η = true →
+      (∀ v, B.memLattice v ↔ B'.memLattice v) ∧
+      B'.independent ∧ isLLLReduced B' δ η
+```
+
+No validity hypothesis on `η` is needed here (the bound's `1/2 ≤ η`, `η² < δ`
+conditions live on `short_vector_bound_of_size_bound`, not on the checker).
+The dispatched `lll` calls `certCheck … (11/20)`; the dispatch's correctness
+depends only on `certCheck_sound`, and the checker internals are not relied on
+elsewhere.
+
+**Provider hook.** `lll` consults an `opaque @[extern]` hook that supplies a
+candidate when an external reducer is registered and signals absence
+otherwise (governed by the *untrusted dispatch hooks* clause in
+[SPEC/SPEC.md](../SPEC.md)). The hook is process-stable (availability is fixed
+at first probe and cached), returns only a candidate, and is queried for
+availability *before* any input marshalling, so the native path pays at most a
+single cached probe. The hook's C body probes for the provider's versioned
+public symbol at runtime; the provider is an independent package that this
+library neither depends on nor names in its build, and which has no knowledge
+of this library. The candidate's shape (dimensions, array lengths) is
+validated in Lean before use; a malformed candidate is a rejection.
+
+**Reliability is empirical, soundness is not.** A candidate whose exact
+`|μ|` exceeds `11/20` is rejected and the native path runs; the `11/20` bound
+carries enough margin over a floating-point reducer's size-reduction
+threshold that acceptance is the common case, but correctness never depends on
+the reducer's numerical behaviour. The dispatch records an
+`absent / provider-error / rejected / accepted` tally for diagnostics.
 
 ## Loop invariant
 

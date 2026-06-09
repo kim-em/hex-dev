@@ -51,6 +51,20 @@ Until the C side performs work native to C (GMP call, CLMUL intrinsic,
 `__uint128_t` arithmetic, etc.), ship only the pure-Lean definition
 without `@[extern]`.
 
+**Untrusted dispatch hooks.** A second admissible category of `@[extern]`
+is a hook that supplies an *untrusted candidate* from an optional external
+provider, where correctness never depends on the candidate. Such a hook is
+`opaque` (so the kernel never reduces it; the `native_decide` ban above
+keeps this airtight), returns only a candidate value — never a
+proof-relevant fact, and no lemma may mention its availability — and is used
+only through a verified checker whose named soundness theorem establishes the
+post-condition, with the native algorithm running on absence or rejection.
+The hook's own C work — probing for the provider's symbol (`dlsym`), or
+adapting its ABI — is native to C and so satisfies the property above. The
+provider's symbol is versioned and its returned data is shape-validated in
+Lean before use; a mismatch is a rejection, not a fault. The per-library
+SPEC names the checker soundness theorem and the provider contract.
+
 ## Applications
 
 **Cryptographic field construction:** To build `GF(2^128)` for AES, you

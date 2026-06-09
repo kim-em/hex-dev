@@ -283,7 +283,14 @@ checksum.
 
 ## Comparator Ratios
 
-The gating comparator is `verified Isabelle LLL (AFP LLL_Basis_Reduction; Haskell extraction from Zenodo 2636367)`, declared in `SPEC/Libraries/hex-lll.md`. The persistent-subprocess harness for it was wired in HO-16 (#3676); the matching fpylll persistent driver was wired in HO-17 (#4186). The densified `random-bounded` and `harsh-cubic` ladders are the post-HO-18 fixed-benchmark schedules — `random-bounded` `n ∈ {30, 45, 60, 75, 90, 120, 150, 180}`, `harsh-cubic` `n ∈ {15, 20, 25, 30, 35, 40, 45, 50, 55}` — per the post-#3657 §"Headline reports" densification rule.
+The current implemented gating comparator is `verified Isabelle LLL (AFP LLL_Basis_Reduction; Haskell extraction from Zenodo 2636367)`, declared in `SPEC/Libraries/hex-lll.md`. The persistent-subprocess harness for it was wired in HO-16 (#3676); the matching fpylll persistent driver was wired in HO-17 (#4186). The densified `random-bounded` and `harsh-cubic` ladders are the post-HO-18 fixed-benchmark schedules — `random-bounded` `n ∈ {30, 45, 60, 75, 90, 120, 150, 180}`, `harsh-cubic` `n ∈ {15, 20, 25, 30, 35, 40, 45, 50, 55}` — per the post-#3657 §"Headline reports" densification rule.
+
+The certified external-dispatch SPEC also declares the gating comparator
+`verified Isabelle certified-LLL (JAR 2020 §7; AFP Modular_arithmetic_LLL_and_HNF_algorithms)`.
+No certified-path benchmark rows are recorded here yet. Once that dispatch is
+implemented, this report must record the hex certified-path ratio against that
+comparator, the verified checker's cost share, and the candidate rejection
+rate at the largest eligible rung of each headline ladder.
 
 ![Random-bounded comparator runtime plot](figures/hex-lll-comparator-random-bounded.svg)
 
