@@ -398,7 +398,7 @@ def runFactorFastChecksum (f : ZPoly) : UInt64 :=
 
 /-- Benchmark target: public exhaustive slow backstop. -/
 def runFactorSlowChecksum (f : ZPoly) : UInt64 :=
-  checksumFactorization (factorSlow f)
+  checksumFactorization (factorSlowTrial f)
 
 /-- Shared-domain compare target: public factorization on deterministic splits. -/
 def runFactorCompareChecksum (f : ZPoly) : UInt64 :=
@@ -406,7 +406,7 @@ def runFactorCompareChecksum (f : ZPoly) : UInt64 :=
 
 /-- Shared-domain compare target: exhaustive slow factorization on deterministic splits. -/
 def runFactorSlowCompareChecksum (f : ZPoly) : UInt64 :=
-  checksumFactorization (factorSlow f)
+  checksumFactorization (factorSlowTrial f)
 
 /--
 Shared-domain compare target: fast factorization on deterministic splits.
@@ -485,7 +485,7 @@ def runFactorFastDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
 
 /-- Benchmark target: bounded slow-path diagnostic over small degree/height cases. -/
 def runFactorSlowDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
-  checksumFactorization (factorSlow input.poly)
+  checksumFactorization (factorSlowTrial input.poly)
 
 /--
 Benchmark target: `verify`-budget-safe fast-path setup over encoded degree,

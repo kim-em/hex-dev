@@ -12,7 +12,7 @@ Covered operations:
 - `normalizeForFactor`, `normalizationPrefixFactors`, and
   `reassembleNormalizedFactors`
 - `henselLiftData`
-- `bhksRecover?`, `recombinationSearch`, `factorSlow`, and `factorFast`
+- `bhksRecover?`, `recombinationSearch`, `factorSlowTrial`, and `factorFast`
 - `factorWithBound` and `factor`
 - `PrimeFactorData.degreeSum`, `PrimeFactorData.factorProduct`,
   `PrimeFactorData.containsDegree`, `PrimeFactorData.hasSubsetDegree`,
@@ -490,7 +490,7 @@ private def extendedCascade2 : ZPoly :=
   | none => false
 
 #guard
-  Factorization.product (factorSlow liftedTarget3) = liftedTarget3
+  Factorization.product (factorSlowTrial liftedTarget3) = liftedTarget3
 #guard
   match factorFast (linear 3) with
   | some φ => Factorization.product φ = linear 3

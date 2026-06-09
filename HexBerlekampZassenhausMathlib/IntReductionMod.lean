@@ -3091,7 +3091,7 @@ expansion-complete side condition is discharged internally via
 
 The slow-quadratic branch is reachable through the public `Hex.factor` entry
 exactly when `factorFastFactorsWithBound f B = none` (so the public
-`factorWithBound = (fast).getD (slow)` falls through to `factorSlow`) and the
+`factorWithBound = (fast).getD (slow)` falls through to the slow path) and the
 slow path then takes its `match quadraticIntegerRootFactors? = some _` arm.
 Per the issue (#4575), this corresponds to one of:
 
