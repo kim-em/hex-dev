@@ -2043,6 +2043,49 @@ private theorem div_C_mul_C_mul_of_dvd
       (DensePoly.C (u * v⁻¹) * (f / g))
   exact mul_right_cancel_of_ne_zero hCvg_ne hcancel_eq
 
+private theorem gcd_eq_zero_forces_zero [ZMod64.PrimeModulus p] (c w : FpPoly p)
+    (h : DensePoly.gcd c w = 0) :
+    c = 0 ∧ w = 0 := by
+  constructor
+  · have hdvd : DensePoly.gcd c w ∣ c := DensePoly.gcd_dvd_left c w
+    rw [h] at hdvd
+    rcases hdvd with ⟨q, hq⟩
+    simpa using hq
+  · have hdvd : DensePoly.gcd c w ∣ w := DensePoly.gcd_dvd_right c w
+    rw [h] at hdvd
+    rcases hdvd with ⟨q, hq⟩
+    simpa using hq
+
+private theorem scaled_gcd_eq_zero
+    [ZMod64.PrimeModulus p]
+    (u_c u_w : ZMod64 p) (c w : FpPoly p)
+    (h : DensePoly.gcd c w = 0) :
+    DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) = 0 := by
+  rcases gcd_eq_zero_forces_zero c w h with ⟨hc, hw⟩
+  rw [hc, hw, mul_zero, mul_zero, DensePoly.gcd_zero_zero]
+
+private theorem div_zero_eq_zero (f : FpPoly p) :
+    f / (0 : FpPoly p) = 0 := by
+  have hpair :=
+    DensePoly.divMod_eq_zero_self_of_size_zero_core f (0 : FpPoly p) (by simp)
+  simpa [DensePoly.div] using congrArg Prod.fst hpair
+
+private theorem div_zero_C_mul_left
+    [ZMod64.PrimeModulus p]
+    (u : ZMod64 p) {c w : FpPoly p} (h : DensePoly.gcd c w = 0) :
+    (DensePoly.C u * c) / (0 : FpPoly p) =
+      DensePoly.C u * (c / (0 : FpPoly p)) := by
+  have hc : c = 0 := (gcd_eq_zero_forces_zero c w h).1
+  simp [hc, div_zero_eq_zero]
+
+private theorem div_zero_C_mul_right
+    [ZMod64.PrimeModulus p]
+    (u : ZMod64 p) {c w : FpPoly p} (h : DensePoly.gcd c w = 0) :
+    (DensePoly.C u * w) / (0 : FpPoly p) =
+      DensePoly.C u * (w / (0 : FpPoly p)) := by
+  have hw : w = 0 := (gcd_eq_zero_forces_zero c w h).2
+  simp [hw, div_zero_eq_zero]
+
 /--
 Yun's inner loop: peel off the factors with multiplicities `i`, `i + 1`, ...
 from the coprime/repeated split `(c, w)`, consing each discovered factor onto
