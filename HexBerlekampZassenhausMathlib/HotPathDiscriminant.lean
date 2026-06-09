@@ -224,6 +224,53 @@ theorem isGoodPrime_false_implies_dvd_resultant_deriv
       simpa [hphi_def] using hrm
     rw [hres_cast, hres_pair_zero, mul_zero]
 
+/-- SPEC D2 composition: when the executable prime search `Hex.choosePrimeData?`
+fails to select any small prime, every prime `p` in the SPEC hot-path interval
+`[3, 500]` divides the integer product
+`lc(f) · resultant(toPolynomial f, (toPolynomial f).derivative)` at the
+`(natDegree, natDegree − 1)` size arguments. Combined with B1's
+`bhksBound`-dominates-Mignotte chain, the conclusion forces the input
+polynomial's discriminant-like quantity to be "huge", which is the form
+consumed by the leaf-correctness wiring.
+
+The proof composes the executable provenance helper
+`Hex.mem_hotPathCandidates_isGoodPrime_false_of_choosePrimeData?_none` with
+the per-prime divisibility bridge `isGoodPrime_false_implies_dvd_resultant_deriv`
+and the hot-path coverage lemma `Hex.exists_mem_hotPathCandidates_of_prime`.
+
+The `Primitive` / `SquareFreeRat` hypotheses are downstream consumer
+preconditions; the divisibility conclusion itself holds for arbitrary `f`. -/
+theorem choosePrimeData?_none_implies_huge
+    (f : Hex.ZPoly) (_hp : Hex.ZPoly.Primitive f) (_hs : Hex.ZPoly.SquareFreeRat f)
+    (hf : Hex.choosePrimeData? f = none)
+    (p : Nat) (hp_range : 3 ≤ p ∧ p ≤ 500) (hp_prime : Nat.Prime p) :
+    (p : Int) ∣ ((Hex.DensePoly.leadingCoeff f) *
+      Polynomial.resultant
+        (HexPolyZMathlib.toPolynomial f)
+        (HexPolyZMathlib.toPolynomial f).derivative
+        (HexPolyZMathlib.toPolynomial f).natDegree
+        ((HexPolyZMathlib.toPolynomial f).natDegree - 1)) := by
+  -- Bridge Mathlib `Nat.Prime` to the Mathlib-free `Hex.Nat.Prime` used by the
+  -- hot-path enumeration coverage lemma.
+  have hp_hex : Hex.Nat.Prime p := by
+    refine ⟨hp_prime.two_le, ?_⟩
+    intro m hmdvd
+    rcases hp_prime.eq_one_or_self_of_dvd m hmdvd with h | h
+    · exact Or.inl h
+    · exact Or.inr h
+  -- Pull a hot-path candidate `c` with `c.p = p`.
+  obtain ⟨c, hc, hcp⟩ :=
+    Hex.exists_mem_hotPathCandidates_of_prime hp_hex hp_range.1 hp_range.2
+  -- `choosePrimeData? f = none` forces `isGoodPrime f c.p = false` for every
+  -- hot-path candidate.
+  have hgood_false : @Hex.isGoodPrime f c.p c.bounds = false :=
+    Hex.mem_hotPathCandidates_isGoodPrime_false_of_choosePrimeData?_none hf hc
+  -- Transport the conclusion along `c.p = p`.
+  subst hcp
+  letI : Hex.ZMod64.Bounds c.p := c.bounds
+  letI : Fact (Nat.Prime c.p) := ⟨hp_prime⟩
+  exact isGoodPrime_false_implies_dvd_resultant_deriv f c.p hp_range.1 hgood_false
+
 end
 
 end HexBerlekampZassenhausMathlib
