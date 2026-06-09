@@ -4060,6 +4060,56 @@ def ofCanonicalSupportRepresentations
         (factorFastCapLiftData f primeData) trueSupports)
       hrep)
 
+/--
+Actual-cap recovery-tail constructor from a closed `ForwardRecoveryInputs`
+package.
+
+This is the `factorFastCapLiftData`-specialised wrapper around
+`ForwardRecoveryInputs.bhksIndicatorCandidates?_canonicalRepresentations`.
+The square-free core monicness, lifted-factor monicness, and strict
+`2 < p^k` precision side condition stay explicit: the current normalization
+API does not expose an unconditional monic theorem for
+`(Hex.normalizeForFactor f).squareFreeCore`, and callers that have a stronger
+normalization surface can discharge those hypotheses before using this
+constructor.
+-/
+def ofForwardRecoveryInputsCanonicalRepresentations
+    {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    (h :
+      ForwardRecoveryInputs
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (trueSupports : Set (Set (Fin (projectedRowsOfLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)
+      h.rows_pos).factorCount)))
+    (hindicators :
+      h.expectedIndicators = expectedIndicatorArrayOfSupports trueSupports)
+    (projected_nonempty :
+      (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        h.rows_pos).projectedRows.isEmpty = false)
+    (classes_two :
+      2 ≤ (supportPartitionByMinColumn trueSupports).length)
+    (hf_ne_zero : (Hex.normalizeForFactor f).squareFreeCore ≠ 0)
+    (hf_monic : Hex.DensePoly.Monic (Hex.normalizeForFactor f).squareFreeCore)
+    (hliftedFactor_monic :
+      ∀ i, i < (factorFastCapLiftData f primeData).liftedFactors.size →
+        Hex.DensePoly.Monic
+          ((factorFastCapLiftData f primeData).liftedFactors.getD i 0))
+    (hp_two_lt :
+      2 < (factorFastCapLiftData f primeData).p ^
+        (factorFastCapLiftData f primeData).k) :
+    CanonicalRecoveryTailInputs f primeData h.rows_pos trueSupports :=
+  ofCanonicalSupportRepresentations projected_nonempty classes_two hf_ne_zero
+    h.expectedFactors
+    (by
+      simpa [hindicators] using
+        ForwardRecoveryInputs.expectedTrueFactors_of_monic hf_monic h)
+    (ForwardRecoveryInputs.bhksIndicatorCandidates?_canonicalRepresentations
+      h trueSupports hindicators hf_monic hliftedFactor_monic hp_two_lt)
+
 end CanonicalRecoveryTailInputs
 
 /--
