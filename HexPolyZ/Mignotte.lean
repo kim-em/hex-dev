@@ -309,147 +309,157 @@ private theorem sqrtStep_very_far_lt_self
   have hlt : 17 * x < 32 * x := by omega
   exact Nat.lt_of_mul_lt_mul_left (Nat.lt_of_le_of_lt hcontract hlt)
 
-private theorem sqrtStep_very_far_two_step_halves
-    (n x : Nat) (hx : 0 < x)
-    (hy : 0 < sqrtStep n x)
-    (hfar₁ : 16 * n ≤ x * x)
-    (hfar₂ : 16 * n ≤ sqrtStep n x * sqrtStep n x) :
-    2 * sqrtStep n (sqrtStep n x) < x := by
-  let y := sqrtStep n x
-  let z := sqrtStep n y
-  have hxy : 32 * y ≤ 17 * x := by
-    simpa [y] using sqrtStep_very_far_contracts n x hx hfar₁
-  have hyz : 32 * z ≤ 17 * y := by
-    simpa [y, z] using sqrtStep_very_far_contracts n y hy hfar₂
-  have h1024 : 1024 * z ≤ 289 * x := by
-    calc
-      1024 * z = 32 * (32 * z) := by grind
-      _ ≤ 32 * (17 * y) := Nat.mul_le_mul_left 32 hyz
-      _ = 17 * (32 * y) := by grind
-      _ ≤ 17 * (17 * x) := Nat.mul_le_mul_left 17 hxy
-      _ = 289 * x := by grind
-  have hlt : 1024 * z < 512 * x := by
-    have h289 : 289 * x < 512 * x := by omega
-    exact Nat.lt_of_le_of_lt h1024 h289
-  have hcancel : 512 * (2 * z) < 512 * x := by
-    calc
-      512 * (2 * z) = 1024 * z := by grind
-      _ < 512 * x := hlt
-  exact Nat.lt_of_mul_lt_mul_left hcancel
+private theorem sq_pow_mul (a k b : Nat) :
+    (a ^ k * b) ^ 2 = (a * a) ^ k * b ^ 2 := by
+  simp [Nat.pow_two, Nat.mul_pow, Nat.mul_assoc, Nat.mul_left_comm, Nat.mul_comm]
 
-private theorem log2_lt_of_two_mul_lt
-    {z x : Nat} (hz : 0 < z) (h : 2 * z < x) :
-    z.log2 < x.log2 := by
-  have hz_ne : z ≠ 0 := Nat.ne_of_gt hz
-  have hx_pos : 0 < x := by omega
-  have hx_ne : x ≠ 0 := Nat.ne_of_gt hx_pos
-  have hpow_le_z : 2 ^ z.log2 ≤ z := by
-    exact (Nat.le_log2 hz_ne).mp (Nat.le_refl z.log2)
-  have hpow_succ_le_x : 2 ^ (z.log2 + 1) ≤ x := by
-    have hpow : 2 ^ (z.log2 + 1) ≤ 2 * z := by
-      calc
-        2 ^ (z.log2 + 1) = 2 * 2 ^ z.log2 := by
-          rw [Nat.pow_succ]
-          grind
-        _ ≤ 2 * z := Nat.mul_le_mul_left 2 hpow_le_z
-    exact Nat.le_of_lt (Nat.lt_of_le_of_lt hpow h)
-  have hle : z.log2 + 1 ≤ x.log2 := by
-    exact (Nat.le_log2 hx_ne).mpr hpow_succ_le_x
-  omega
-
-private theorem sqrtStep_very_far_two_step_log2_lt
-    (n x : Nat) (hx : 0 < x)
-    (hy : 0 < sqrtStep n x)
-    (hz : 0 < sqrtStep n (sqrtStep n x))
-    (hfar₁ : 16 * n ≤ x * x)
-    (hfar₂ : 16 * n ≤ sqrtStep n x * sqrtStep n x) :
-    (sqrtStep n (sqrtStep n x)).log2 < x.log2 := by
-  exact log2_lt_of_two_mul_lt hz
-    (sqrtStep_very_far_two_step_halves n x hx hy hfar₁ hfar₂)
-
-private theorem sqrtAux_phase_one_core
-    (n x : Nat) (hx : 0 < x) :
-    let y := sqrtAux n (2 * x.log2 + 1) x
-    y * y ≤ n ∨ sqrtNearEnvelope n y := by
-  induction x using Nat.strongRecOn generalizing n with
-  | ind x ih =>
-      by_cases hfar₁ : 16 * n ≤ x * x
+private theorem sqrtAux_contract_of_not_done
+    (n fuel x : Nat) (hx : 0 < x)
+    (hnot_sq :
+      ¬ (sqrtAux n fuel x) * (sqrtAux n fuel x) ≤ n)
+    (hnot_near : ¬ sqrtNearEnvelope n (sqrtAux n fuel x)) :
+    32 ^ fuel * sqrtAux n fuel x ≤ 17 ^ fuel * x := by
+  induction fuel generalizing x with
+  | zero =>
+      simp [sqrtAux]
+  | succ fuel ih =>
+      by_cases hfar : 16 * n ≤ x * x
       · unfold sqrtAux
-        let y := sqrtStep n x
-        by_cases hstop₁ : y ≥ x
-        · simp [y, hstop₁]
-          exact Or.inl (sqrtStep_ge_imp_sq_le hx hstop₁)
-        · simp [y, hstop₁]
-          by_cases hy : 0 < y
-          · by_cases hnear_y : sqrtNearEnvelope n y
-            · exact sqrtAux_near_or_sq_le n (2 * x.log2) y hnear_y
-            · have hfar₂ : 16 * n ≤ y * y := by
-                unfold sqrtNearEnvelope at hnear_y
-                omega
-              have hx_log_pos : 0 < x.log2 := by
-                have hy_lt_x : y < x := Nat.lt_of_not_ge hstop₁
-                have hx_two : 2 ≤ x := by omega
-                have hx_ne : x ≠ 0 := Nat.ne_of_gt hx
-                have hle_log : 1 ≤ x.log2 := by
-                  exact (Nat.le_log2 hx_ne).mpr (by simpa using hx_two)
-                omega
-              have hfuel_step : 2 * x.log2 = (2 * x.log2 - 1) + 1 := by
-                omega
-              rw [hfuel_step]
-              unfold sqrtAux
-              let z := sqrtStep n y
-              by_cases hstop₂ : z ≥ y
-              · have hstop₂' :
-                    sqrtStep n x ≤ sqrtStep n (sqrtStep n x) := by
-                    simpa [y, z] using hstop₂
-                simp [hstop₂']
-                exact Or.inl (sqrtStep_ge_imp_sq_le hy hstop₂)
-              · have hstop₂' :
-                    ¬ sqrtStep n x ≤ sqrtStep n (sqrtStep n x) := by
-                    simpa [y, z] using hstop₂
-                simp [hstop₂']
-                by_cases hz : 0 < z
-                · have hz_lt_x : z < x := by
-                    have hhalf : 2 * z < x := by
-                      simpa [y, z] using
-                        sqrtStep_very_far_two_step_halves n x hx hy hfar₁ hfar₂
-                    omega
-                  have hz_log_lt : z.log2 < x.log2 := by
-                    simpa [y, z] using
-                      sqrtStep_very_far_two_step_log2_lt n x hx hy hz hfar₁ hfar₂
-                  have hrec :
-                      let w := sqrtAux n (2 * z.log2 + 1) z
-                      w * w ≤ n ∨ sqrtNearEnvelope n w :=
-                    ih z hz_lt_x n hz
-                  have hle : 2 * z.log2 + 1 ≤ 2 * x.log2 - 1 := by
-                    omega
-                  let extra := (2 * x.log2 - 1) - (2 * z.log2 + 1)
-                  have hfuel :
-                      2 * x.log2 - 1 = (2 * z.log2 + 1) + extra := by
-                    dsimp [extra]
-                    omega
-                  rw [hfuel, sqrtAux_append]
-                  exact sqrtAux_preserves_sq_or_near n extra
-                    (sqrtAux n (2 * z.log2 + 1) z) hrec
-                · have hz0 : z = 0 := by omega
-                  simpa [y, z, hz0, hstop₂'] using
-                    sqrtAux_preserves_sq_or_near n (2 * x.log2 - 1) 0
-                      (Or.inl (by simp))
-          · have hy0 : y = 0 := by omega
-            simpa [y, hy0] using
-              sqrtAux_preserves_sq_or_near n (2 * x.log2) 0
-                (Or.inl (by simp))
-      · exact sqrtAux_near_or_sq_le n (2 * x.log2 + 1) x
-          (sqrtNearEnvelope_of_not_very_far hfar₁)
+        let next := sqrtStep n x
+        by_cases hstop : next ≥ x
+        · have haux_stop : sqrtAux n (fuel + 1) x = x := by
+            simp [sqrtAux, next, hstop]
+          exact False.elim
+            (hnot_sq (by simpa [haux_stop] using sqrtStep_ge_imp_sq_le hx hstop))
+        · have hnot_sq_tail :
+              ¬ (sqrtAux n fuel next) * (sqrtAux n fuel next) ≤ n := by
+            intro hsq
+            exact hnot_sq (by simpa [sqrtAux, next, hstop] using hsq)
+          have hnot_near_tail :
+              ¬ sqrtNearEnvelope n (sqrtAux n fuel next) := by
+            intro hnear
+            exact hnot_near (by simpa [sqrtAux, next, hstop] using hnear)
+          have hnext_pos : 0 < next := by
+            by_cases hnext_pos : 0 < next
+            · exact hnext_pos
+            · have hnext_zero : next = 0 := by omega
+              have hdone :
+                  (sqrtAux n fuel next) * (sqrtAux n fuel next) ≤ n ∨
+                    sqrtNearEnvelope n (sqrtAux n fuel next) := by
+                simpa [hnext_zero] using
+                  sqrtAux_preserves_sq_or_near n fuel 0 (Or.inl (by simp))
+              cases hdone with
+              | inl hsq => exact False.elim (hnot_sq_tail hsq)
+              | inr hnear => exact False.elim (hnot_near_tail hnear)
+          have htail :
+              32 ^ fuel * sqrtAux n fuel next ≤ 17 ^ fuel * next :=
+            ih next hnext_pos hnot_sq_tail hnot_near_tail
+          have hstep : 32 * next ≤ 17 * x :=
+            sqrtStep_very_far_contracts n x hx hfar
+          have haux_step :
+              sqrtAux n (fuel + 1) x = sqrtAux n fuel next := by
+            simp [sqrtAux, next, hstop]
+          calc
+            32 ^ (fuel + 1) * sqrtAux n (fuel + 1) x
+                = 32 ^ (fuel + 1) * sqrtAux n fuel next := by rw [haux_step]
+            _ = 32 * (32 ^ fuel * sqrtAux n fuel next) := by
+                    rw [Nat.pow_succ]
+                    grind
+            _ ≤ 32 * (17 ^ fuel * next) :=
+                Nat.mul_le_mul_left 32 htail
+            _ = 17 ^ fuel * (32 * next) := by grind
+            _ ≤ 17 ^ fuel * (17 * x) :=
+                Nat.mul_le_mul_left (17 ^ fuel) hstep
+            _ = 17 ^ (fuel + 1) * x := by
+                rw [Nat.pow_succ]
+                grind
+      · exfalso
+        have hnear : sqrtNearEnvelope n x :=
+          sqrtNearEnvelope_of_not_very_far hfar
+        have hdone :
+            (sqrtAux n (fuel + 1) x) * (sqrtAux n (fuel + 1) x) ≤ n ∨
+              sqrtNearEnvelope n (sqrtAux n (fuel + 1) x) :=
+          sqrtAux_near_or_sq_le n (fuel + 1) x hnear
+        cases hdone with
+        | inl hsq => exact (hnot_sq hsq).elim
+        | inr hnear' => exact (hnot_near hnear').elim
+
+private theorem log2_succ_pow_bound (n : Nat) :
+    n < 2 ^ (n.log2 + 1) := by
+  simpa using (Nat.lt_log2_self : n < 2 ^ (n.log2 + 1))
+
+private theorem phase_one_power_contradiction (n : Nat) :
+    289 ^ (n.log2 + 1) * n < 16 * 1024 ^ (n.log2 + 1) := by
+  let k := n.log2 + 1
+  have hn_pow : n < 2 ^ k := by
+    simpa [k] using log2_succ_pow_bound n
+  have hmul : 289 ^ k * n < 289 ^ k * 2 ^ k :=
+    Nat.mul_lt_mul_of_pos_left hn_pow (Nat.pow_pos (by decide : 0 < 289))
+  have hpow : 289 ^ k * 2 ^ k = (289 * 2) ^ k := by
+    rw [← Nat.mul_pow]
+  have hbase : 289 * 2 ≤ 1024 := by decide
+  have hle : (289 * 2) ^ k ≤ 1024 ^ k :=
+    Nat.pow_le_pow_left hbase k
+  calc
+    289 ^ k * n < 289 ^ k * 2 ^ k := hmul
+    _ = (289 * 2) ^ k := hpow
+    _ ≤ 1024 ^ k := hle
+    _ ≤ 16 * 1024 ^ k := by
+      have hpos : 0 < 1024 ^ k := Nat.pow_pos (by decide : 0 < 1024)
+      omega
+
+private theorem sqrtAux_phase_one_sharp_core (n : Nat) (hn : n ≠ 0) :
+    let y := sqrtAux n (n.log2 + 1) n
+    y * y ≤ n ∨ sqrtNearEnvelope n y := by
+  let k := n.log2 + 1
+  let y := sqrtAux n k n
+  by_cases hsq : y * y ≤ n
+  · exact Or.inl hsq
+  · by_cases hnear : sqrtNearEnvelope n y
+    · exact Or.inr hnear
+    · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn
+      have hcontract : 32 ^ k * y ≤ 17 ^ k * n := by
+        simpa [k, y] using
+          sqrtAux_contract_of_not_done n k n hn_pos
+            (by simpa [y] using hsq) (by simpa [y] using hnear)
+      have hfar_y : 16 * n ≤ y * y := by
+        unfold sqrtNearEnvelope at hnear
+        omega
+      have hlower :
+          16 * 1024 ^ k * n ≤ (32 ^ k * y) ^ 2 := by
+        calc
+          16 * 1024 ^ k * n = 1024 ^ k * (16 * n) := by grind
+          _ ≤ 1024 ^ k * (y * y) :=
+              Nat.mul_le_mul_left (1024 ^ k) hfar_y
+          _ = (32 ^ k * y) ^ 2 := by
+              rw [sq_pow_mul]
+              simp [Nat.pow_two]
+      have hupper :
+          (32 ^ k * y) ^ 2 ≤ 289 ^ k * (n * n) := by
+        calc
+          (32 ^ k * y) ^ 2 ≤ (17 ^ k * n) ^ 2 :=
+              Nat.pow_le_pow_left hcontract 2
+          _ = 289 ^ k * (n * n) := by
+              rw [sq_pow_mul]
+              simp [Nat.pow_two]
+      have hlarge : 16 * 1024 ^ k ≤ 289 ^ k * n := by
+        have hchain : 16 * 1024 ^ k * n ≤ 289 ^ k * (n * n) :=
+          Nat.le_trans hlower hupper
+        have hrewrite : 289 ^ k * (n * n) = (289 ^ k * n) * n := by grind
+        rw [hrewrite] at hchain
+        exact Nat.le_of_mul_le_mul_right hchain hn_pos
+      have hsmall : 289 ^ k * n < 16 * 1024 ^ k := by
+        simpa [k] using phase_one_power_contradiction n
+      exact False.elim (Nat.not_lt_of_ge hlarge hsmall)
 
 private theorem sqrtAux_phase_one_near_or_sq_le
     (n : Nat) :
-    let y := sqrtAux n (2 * n.log2 + 1) n
+    let y := sqrtAux n (n.log2 + 1) n
     y * y ≤ n ∨ sqrtNearEnvelope n y := by
   by_cases hn : n = 0
   · subst n
     simp [sqrtAux]
-  · exact sqrtAux_phase_one_core n n (Nat.pos_of_ne_zero hn)
+  · exact sqrtAux_phase_one_sharp_core n hn
 
 /-- The squared Euclidean norm of the coefficient vector of `f`. -/
 def coeffNormSq (f : ZPoly) : Nat :=
