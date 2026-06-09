@@ -4663,6 +4663,52 @@ private theorem constant_divisor_eq_C
   have hd_size : d.size = 1 := by omega
   exact ⟨d.coeff 0, coeff_zero_ne_zero_of_size_one hd_size, eq_C_of_size_one hd_size⟩
 
+private theorem div_C_ne_zero_eq_C_inv_mul
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    {v : ZMod64 p} (hv : v ≠ 0) (w : FpPoly p) :
+    w / (DensePoly.C v : FpPoly p) = DensePoly.C v⁻¹ * w := by
+  have hCv_ne : (DensePoly.C v : FpPoly p) ≠ 0 := C_ne_zero_of_ne_zero hv
+  have hCv_zero : (DensePoly.C v : FpPoly p).isZero = false := by
+    cases hzero : (DensePoly.C v : FpPoly p).isZero
+    · rfl
+    · exact False.elim (hv ((DensePoly.isZero_C_eq_true_iff v).mp hzero))
+  have hvinv_v : v⁻¹ * v = (1 : ZMod64 p) := by
+    have hcomm : v * v⁻¹ = v⁻¹ * v := by grind
+    rw [← hcomm]
+    exact zmod64_mul_inv_eq_one_of_prime_ne_zero hp hv
+  have hcand_mul :
+      (DensePoly.C v⁻¹ * w : FpPoly p) * (DensePoly.C v : FpPoly p) = w := by
+    calc (DensePoly.C v⁻¹ * w : FpPoly p) * (DensePoly.C v : FpPoly p)
+        = DensePoly.C v⁻¹ * (w * DensePoly.C v) :=
+            DensePoly.mul_assoc_poly _ _ _
+      _ = DensePoly.C v⁻¹ * (DensePoly.C v * w) := by
+            exact congrArg (fun q => DensePoly.C v⁻¹ * q)
+              (DensePoly.mul_comm_poly w (DensePoly.C v : FpPoly p))
+      _ = (DensePoly.C v⁻¹ * DensePoly.C v : FpPoly p) * w :=
+            (DensePoly.mul_assoc_poly _ _ _).symm
+      _ = (DensePoly.C (v⁻¹ * v) : FpPoly p) * w := by
+            rw [fpPoly_C_mul_C_eq]
+      _ = (1 : FpPoly p) * w := by rw [hvinv_v]; rfl
+      _ = w := one_mul w
+  have hCv_dvd : (DensePoly.C v : FpPoly p) ∣ w :=
+    ⟨DensePoly.C v⁻¹ * w, by
+      calc w
+          = (DensePoly.C v⁻¹ * w : FpPoly p) * DensePoly.C v := hcand_mul.symm
+        _ = DensePoly.C v * (DensePoly.C v⁻¹ * w : FpPoly p) :=
+            DensePoly.mul_comm_poly _ _⟩
+  have hmod : w % (DensePoly.C v : FpPoly p) = 0 :=
+    DensePoly.mod_eq_zero_of_dvd w (DensePoly.C v : FpPoly p) hCv_dvd
+  have hrec :
+      (w / (DensePoly.C v : FpPoly p)) * (DensePoly.C v : FpPoly p) +
+          (w % (DensePoly.C v : FpPoly p)) = w :=
+    DensePoly.div_mul_add_mod w (DensePoly.C v : FpPoly p)
+  have hquot_mul :
+      (w / (DensePoly.C v : FpPoly p)) * (DensePoly.C v : FpPoly p) = w := by
+    rw [hmod, add_zero] at hrec
+    exact hrec
+  apply mul_right_cancel_of_ne_zero hCv_ne
+  rw [hquot_mul, hcand_mul]
+
 /--
 If the active Yun state has a nonzero constant first component, the whole
 `yunFactorsContributionWithLevel` excursion only emits a nonzero constant
@@ -4750,6 +4796,110 @@ private theorem yunFactorsContributionWithLevel_constant_scalar_form
             simpa [hz_eq] using hz_false
           obtain ⟨sPow, hsPow, hpow⟩ := pow_C_form hp ha (base * level)
           refine ⟨sPow * sTail, tTail, wTail, ?_, htTail, ?_, ?_⟩
+          · intro hzero
+            rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with hsp_zero | hst_zero
+            · exact hsPow hsp_zero
+            · exact hsTail hst_zero
+          · simp [yunFactorsContributionWithLevel, hc, y, hz_eq_y,
+              hza_false, hpow, htail₁_y, fpPoly_C_mul_C_eq]
+          · simpa [yunFactorsContributionWithLevel, hc, y, z, hz_false_y] using htail₂_y
+
+private theorem yunFactorsContributionWithLevel_constant_scalar_sync
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    {k : ZMod64 p} (hk : k ≠ 0) (w : FpPoly p)
+    (base level fuel : Nat) :
+    ∃ s t : ZMod64 p, s ≠ 0 ∧ t ≠ 0 ∧
+      (yunFactorsContributionWithLevel (DensePoly.C k : FpPoly p) w base level fuel).1 =
+        DensePoly.C s ∧
+      (yunFactorsContributionWithLevel (DensePoly.C k : FpPoly p) w base level fuel).2 =
+        DensePoly.C t * w := by
+  induction fuel generalizing k w level with
+  | zero =>
+      refine ⟨1, 1, zmod64_one_ne_zero_of_prime hp,
+        zmod64_one_ne_zero_of_prime hp, ?_, ?_⟩
+      · simp [yunFactorsContributionWithLevel]
+        rfl
+      · simp [yunFactorsContributionWithLevel]
+        change w = (1 : FpPoly p) * w
+        rw [one_mul]
+  | succ fuel ih =>
+      by_cases hc : isOne (DensePoly.C k : FpPoly p)
+      · refine ⟨1, 1, zmod64_one_ne_zero_of_prime hp,
+          zmod64_one_ne_zero_of_prime hp, ?_, ?_⟩
+        · simp [yunFactorsContributionWithLevel, hc]
+          rfl
+        · simp [yunFactorsContributionWithLevel, hc]
+          change w = (1 : FpPoly p) * w
+          rw [one_mul]
+      · let y : FpPoly p := DensePoly.gcd (DensePoly.C k : FpPoly p) w
+        let z : FpPoly p := (DensePoly.C k : FpPoly p) / y
+        have hy_dvd : y ∣ (DensePoly.C k : FpPoly p) :=
+          DensePoly.gcd_dvd_left (DensePoly.C k : FpPoly p) w
+        obtain ⟨v, hv, hy_eq⟩ := constant_divisor_eq_C hk hy_dvd
+        have hw_div_y :
+            w / y = DensePoly.C v⁻¹ * w := by
+          simpa [y, hy_eq] using div_C_ne_zero_eq_C_inv_mul hp hv w
+        have hv_inv_ne : v⁻¹ ≠ 0 :=
+          zmod64_inv_ne_zero_of_prime_ne_zero hp hv
+        have hz_const : ∃ a : ZMod64 p, a ≠ 0 ∧ z = DensePoly.C a := by
+          have hquot_dvd : z ∣ (DensePoly.C k : FpPoly p) := by
+            refine ⟨y, ?_⟩
+            have hmod : (DensePoly.C k : FpPoly p) % y = 0 :=
+              DensePoly.mod_eq_zero_of_dvd (DensePoly.C k : FpPoly p) y hy_dvd
+            have hrec : z * y + (DensePoly.C k : FpPoly p) % y =
+                (DensePoly.C k : FpPoly p) := by
+              simpa [z] using
+                (DensePoly.div_mul_add_mod (DensePoly.C k : FpPoly p) y)
+            rw [hmod, add_zero] at hrec
+            exact hrec.symm
+          exact constant_divisor_eq_C hk hquot_dvd
+        obtain ⟨sTail, tTail, hsTail, htTail, htail₁, htail₂⟩ :=
+          ih hv (w / y) (level + 1)
+        have htail₁_y :
+            (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).1 =
+              DensePoly.C sTail := by
+          simpa [hy_eq] using htail₁
+        have htail₂_y :
+            (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).2 =
+              DensePoly.C (tTail * v⁻¹) * w := by
+          calc
+            (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).2
+                = DensePoly.C tTail * (w / y) := by
+                    simpa [hy_eq] using htail₂
+            _ = DensePoly.C tTail * (DensePoly.C v⁻¹ * w) := by rw [hw_div_y]
+            _ = (DensePoly.C tTail * DensePoly.C v⁻¹ : FpPoly p) * w :=
+                    (DensePoly.mul_assoc_poly _ _ _).symm
+            _ = DensePoly.C (tTail * v⁻¹) * w := by rw [fpPoly_C_mul_C_eq]
+        have htTail_v_inv_ne : tTail * v⁻¹ ≠ 0 := by
+          intro hzero
+          rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with ht | hv'
+          · exact htTail ht
+          · exact hv_inv_ne hv'
+        by_cases hz_one : isOne z
+        · refine ⟨sTail, tTail * v⁻¹, hsTail, htTail_v_inv_ne, ?_, ?_⟩
+          · have hz_true_y :
+                isOne ((DensePoly.C k : FpPoly p) / y) = true := by
+              simpa [z] using hz_one
+            simpa [yunFactorsContributionWithLevel, hc, y, z, hz_true_y] using htail₁_y
+          · have hz_true_y :
+                isOne ((DensePoly.C k : FpPoly p) / y) = true := by
+              simpa [z] using hz_one
+            simpa [yunFactorsContributionWithLevel, hc, y, z, hz_true_y] using htail₂_y
+        · obtain ⟨a, ha, hz_eq⟩ := hz_const
+          have hz_false : isOne z = false := by
+            cases h : isOne z
+            · rfl
+            · exfalso
+              exact hz_one h
+          have hz_false_y :
+              isOne ((DensePoly.C k : FpPoly p) / y) = false := by
+            simpa [z] using hz_false
+          have hz_eq_y : ((DensePoly.C k : FpPoly p) / y) = DensePoly.C a := by
+            simpa [z] using hz_eq
+          have hza_false : isOne (DensePoly.C a : FpPoly p) = false := by
+            simpa [hz_eq] using hz_false
+          obtain ⟨sPow, hsPow, hpow⟩ := pow_C_form hp ha (base * level)
+          refine ⟨sPow * sTail, tTail * v⁻¹, ?_, htTail_v_inv_ne, ?_, ?_⟩
           · intro hzero
             rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with hsp_zero | hst_zero
             · exact hsPow hsp_zero
