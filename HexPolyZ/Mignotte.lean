@@ -715,6 +715,37 @@ theorem coeffNormSq_eq_sum (f : ZPoly) :
 theorem coeffL2NormBound_eq_ceilSqrt_coeffNormSq (f : ZPoly) :
     coeffL2NormBound f = ceilSqrt (coeffNormSq f) := rfl
 
+/-- The executable Euclidean-norm bound has square at most twice the exact
+squared coefficient norm. -/
+theorem coeffL2NormBound_sq_le_two_mul_coeffNormSq (f : ZPoly) :
+    (coeffL2NormBound f) ^ 2 ≤ 2 * coeffNormSq f := by
+  unfold coeffL2NormBound ceilSqrt
+  let r := floorSqrt (coeffNormSq f)
+  have hr_sq : r * r ≤ coeffNormSq f := by
+    dsimp [r]
+    exact floorSqrt_sq_le (coeffNormSq f)
+  by_cases hsq : r * r = coeffNormSq f
+  · rw [if_pos hsq]
+    rw [Nat.pow_two]
+    have hsq_floor :
+        floorSqrt (coeffNormSq f) * floorSqrt (coeffNormSq f) = coeffNormSq f := by
+      simpa [r] using hsq
+    omega
+  · rw [if_neg hsq]
+    rw [Nat.pow_two]
+    have hr_lt : r * r < coeffNormSq f := Nat.lt_of_le_of_ne hr_sq hsq
+    have hsucc_le : r * r + 1 ≤ coeffNormSq f := by omega
+    have htwo_r : 2 * r ≤ r * r + 1 := by
+      rcases r with _ | _ | r
+      · simp
+      · simp
+      · have htwo_le : 2 ≤ r + 2 := by omega
+        have hmul := Nat.mul_le_mul_right (r + 2) htwo_le
+        exact Nat.le_trans hmul (Nat.le_succ _)
+    have hmain : r * r + 2 * r + 1 ≤ 2 * coeffNormSq f := by omega
+    have hsquare : (r + 1) * (r + 1) = r * r + 2 * r + 1 := by grind
+    simpa [r, hsquare] using hmain
+
 theorem mignotteCoeffBound_eq (f : ZPoly) (k j : Nat) :
     mignotteCoeffBound f k j = binom k j * coeffL2NormBound f := rfl
 
