@@ -185,7 +185,7 @@ libraries:
         - tool: "verified Isabelle LLL (AFP LLL_Basis_Reduction; Haskell extraction from Zenodo 2636367)"
           class: gating
           goal: "Lean LLL is at least as fast as the verified Isabelle LLL on shared canonical inputs at the bottom of each phase4.input_families parameter ladder."
-        - tool: "verified Isabelle certified-LLL (JAR 2020 §7; AFP Modular_arithmetic_LLL_and_HNF_algorithms)"
+        - tool: "verified Isabelle certified-LLL (JAR 2020 §7; svp_certified from the Zenodo 2636367 LLL_Basis_Reduction extraction, same archive as the native comparator)"
           class: gating
           goal: "The hex certified path (fpLLL + verified checker) is at least as fast as the Isabelle certified-LLL on shared canonical inputs at the largest eligible rung of each phase4.input_families ladder; the headline report records the ratio, the checker's cost share, and the candidate rejection rate."
       input_families:

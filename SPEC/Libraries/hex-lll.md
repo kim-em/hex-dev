@@ -362,14 +362,23 @@ classification below is mirrored as structured metadata in
   dispatch*; the certified path's measured cost is the `fplll-ffi` call —
   which returns `(reduced, U, V)` directly — plus the verified checker.
 - **`verified Isabelle certified-LLL`** — `gating`. The Isabelle
-  formalisation's own certified-output configuration (a verified checker
-  over an untrusted floating-point reducer; JAR 2020 §7 and the AFP entry
-  `Modular_arithmetic_LLL_and_HNF_algorithms`) is the apples-to-apples
-  yardstick for the certified path. **Performance goal:** the hex certified
-  path (fpLLL + checker) is **at least as fast as** the Isabelle
-  certified-LLL on shared canonical inputs at the largest eligible rung of
-  each `phase4.input_families` ladder. The headline report records the
-  ratio, the checker's share of the cost, and the candidate rejection rate.
+  formalisation's own certified-output configuration (JAR 2020 §7): a
+  verified checker over an untrusted floating-point reducer. It is the
+  `svp_certified` executable of the same Zenodo 2636367 `LLL_Basis_Reduction`
+  extraction that supplies the native comparator — built from one extra
+  `make` target on that archive — which shells out to the `fplll` binary for
+  `(reduced, U, V)`, verifies the same two-transform certificate this library
+  uses (`F = U·reduced` ∧ `reduced = V·F`), and confirms reducedness by
+  re-running the verified LLL. It is the apples-to-apples yardstick for the
+  certified path. **Performance goal:** the hex certified path (fpLLL +
+  checker) is **at least as fast as** the Isabelle certified-LLL on shared
+  canonical inputs at the largest eligible rung of each
+  `phase4.input_families` ladder. The headline report records the ratio, the
+  checker's share of the cost, and the candidate rejection rate, and notes the
+  architectural asymmetries the comparison is read against — the Isabelle path
+  spawns the `fplll` binary per call (this library uses in-process `fplll-ffi`)
+  and re-runs the full verified LLL to confirm reducedness (this library runs
+  the `lllReducedInt` integer check).
 - **`verified Isabelle LLL`** — `gating`. The Bottesch–Divasón–
   Haslbeck–Joosten–Thiemann–Yamada formalisation in the Archive of
   Formal Proofs (entry `LLL_Basis_Reduction`) is the only other
@@ -431,8 +440,8 @@ classification below is mirrored as structured metadata in
      checker (`certCheck`); the certified external-dispatch path. Data comes
      from the `runCertified*` bench targets.
   5. **verified Isabelle certified-LLL** — fpLLL candidate production plus the
-     Isabelle verified checker (the `Modular_arithmetic_LLL_and_HNF_algorithms`
-     certifier).
+     Isabelle verified checker (the `svp_certified` JAR 2020 §7 configuration
+     of the Zenodo 2636367 extraction).
 
   Curves 1–3 compare the algorithms; curves 4–5 are the apples-to-apples
   verification comparison — the *same* fpLLL output certified by the Lean
