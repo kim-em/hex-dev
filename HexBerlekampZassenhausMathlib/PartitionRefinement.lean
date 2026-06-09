@@ -245,4 +245,41 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible
     (factorFastCoreWithBound_some_factor_count_eq trueSupports hcore_ne h
       htrue hpartition)
 
+/-- Forward-recovery-input form of the fast-core irreducibility wrapper.
+
+This is the proof-facing API for fast-branch callers that already carry the
+BHKS recovery package at the successful lift.  The executable success equation
+is still required to identify the returned factors, but the BHKS data are
+explicit hypotheses; in particular this theorem does not try to reconstruct
+`ExpectedTrueFactors` or the support-partition count from a bare
+`factorFastCoreWithBound = some _` premise. -/
+theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_forwardInputs
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat}
+    (hcore_ne : core ≠ 0)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hinputs :
+      BHKS.ForwardRecoveryInputs core (Hex.henselLiftData core k primeData))
+    (h :
+      Hex.factorFastCoreWithBound core B primeData k fuel =
+        some hinputs.expectedFactors)
+    (hindicators :
+      hinputs.expectedIndicators =
+        BHKS.expectedIndicatorArrayOfSupports hinputs.trueSupports)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn hinputs.trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    ∀ factor ∈ hinputs.expectedFactors.toList,
+      Hex.ZPoly.Irreducible factor := by
+  have htrue :
+      BHKS.ForwardRecoveryInputs.ExpectedTrueFactors core
+        (BHKS.expectedIndicatorArrayOfSupports hinputs.trueSupports)
+        hinputs.expectedFactors := by
+    rw [← hindicators]
+    exact BHKS.ForwardRecoveryInputs.expectedTrueFactors_of_monic hcore_monic hinputs
+  exact
+    factorFastCoreWithBound_some_factor_zpolyIrreducible hinputs.trueSupports
+      hcore_ne h htrue hpartition
+
 end HexBerlekampZassenhausMathlib
