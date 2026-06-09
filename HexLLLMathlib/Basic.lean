@@ -761,4 +761,30 @@ theorem lllReducedInt_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
     intro i hi
     exact lovasz_of_intCheck b δ η hi hindep (hlovasz i hi)
 
+/-- Soundness of the certified-dispatch checker `Hex.certCheck`: an accepted
+certificate `(B', U, V)` proves that `B` and `B'` generate the same integer row
+lattice, that `B'` is independent, and that `B'` is `(δ, η)`-LLL-reduced.
+
+Composes the two soundness ingredients:
+* `Hex.Matrix.sameLatticeCert_sound` (Mathlib-free, HexLLL/Basic.lean) for the
+  same-lattice clause, and
+* `Hex.lllReducedInt_sound` (above) for independence and reducedness.
+
+No validity hypothesis on `η`: the `1/2 ≤ η`, `η² < δ` conditions for the LLL
+short-vector bound live on `short_vector_bound_of_size_bound`, not on the
+checker. This is the single trusted soundness theorem feeding the
+certified-dispatch correctness of `lll`. -/
+theorem certCheck_sound {B B' : Hex.Matrix Int n m} {U V : Hex.Matrix Int n n}
+    {δ η : Rat} :
+    Hex.certCheck B B' U V δ η = true →
+      (∀ v, B.memLattice v ↔ B'.memLattice v) ∧
+        B'.independent ∧ Hex.isLLLReduced B' δ η := by
+  intro hcheck
+  unfold Hex.certCheck at hcheck
+  simp only [Bool.and_eq_true] at hcheck
+  obtain ⟨hsame, hred⟩ := hcheck
+  refine ⟨Hex.Matrix.sameLatticeCert_sound hsame, ?_, ?_⟩
+  · exact (lllReducedInt_sound B' δ η hred).2
+  · exact (lllReducedInt_sound B' δ η hred).1
+
 end HexLLLMathlib

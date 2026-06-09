@@ -419,6 +419,18 @@ def lllReducedInt (b : Matrix Int n m) (δ η : Rat) : Bool :=
         true
   independent && sizeReduced && lovasz
 
+/-- Executable certified-dispatch checker: verifies that `(B', U, V)` is a valid
+external candidate for reducing `B`, i.e. `B` and `B'` generate the same integer
+row lattice (witnessed by `U`, `V`) and `B'` is `(δ, η)`-reduced.
+
+Composes the two Mathlib-free Bool checkers `Matrix.sameLatticeCert` and
+`lllReducedInt`. Soundness (`certCheck_sound`, HexLLLMathlib) entails the
+property triple `(same lattice, B' independent, isLLLReduced B' δ η)` and is
+the single trusted bridge that the certified-dispatch path of `lll`
+depends on. -/
+def certCheck (B B' : Matrix Int n m) (U V : Matrix Int n n) (δ η : Rat) : Bool :=
+  Matrix.sameLatticeCert B B' U V && lllReducedInt B' δ η
+
 /-- Integer-only state for later LLL reduction steps. The proof-facing fields
 connect the stored Gram determinants and scaled coefficients to the executable
 Gram-Schmidt integer data for `b`. -/
