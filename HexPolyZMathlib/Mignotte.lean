@@ -114,6 +114,62 @@ theorem l2norm_toPolynomial_sq_le_coeffNormSq (f : Hex.ZPoly) :
     _ ≤ ∑ i ∈ Finset.range f.size, (p.coeff i : ℝ) ^ 2 := hsum_le
     _ = (Hex.ZPoly.coeffNormSq f : ℝ) := hnorm_sum.symm
 
+/--
+The transported Mathlib coefficient-vector norm squared is exactly the
+executable squared coefficient norm; the executable range only pads Mathlib's
+finite support with zero coefficients.
+-/
+theorem l2norm_toPolynomial_sq_eq_coeffNormSq (f : Hex.ZPoly) :
+    (l2norm (toPolynomial f)) ^ 2 = (Hex.ZPoly.coeffNormSq f : ℝ) := by
+  let p := toPolynomial f
+  have hsupport_subset : p.support ⊆ Finset.range f.size := by
+    intro i hi
+    by_contra hi_range
+    have hsize : f.size ≤ i := Nat.le_of_not_gt (by
+      simpa using hi_range)
+    have hcoeff_zero : p.coeff i = 0 := by
+      change (toPolynomial f).coeff i = 0
+      rw [coeff_toPolynomial]
+      exact Hex.DensePoly.coeff_eq_zero_of_size_le f hsize
+    exact (Polynomial.mem_support_iff.mp hi) hcoeff_zero
+  have hsqrt :
+      (l2norm p) ^ 2 = ∑ i ∈ p.support, (p.coeff i : ℝ) ^ 2 := by
+    unfold l2norm
+    rw [Real.sq_sqrt]
+    exact Finset.sum_nonneg fun i hi => sq_nonneg _
+  have hsupport_sum :
+      ∑ i ∈ p.support, (p.coeff i : ℝ) ^ 2 =
+        ∑ i ∈ Finset.range f.size, (p.coeff i : ℝ) ^ 2 := by
+    exact Finset.sum_subset hsupport_subset (by
+      intro i hi_range hi_support
+      have hcoeff_zero : p.coeff i = 0 := by
+        by_contra hcoeff_ne
+        exact hi_support ((Polynomial.mem_support_iff).mpr hcoeff_ne)
+      change (p.coeff i : ℝ) ^ 2 = 0
+      rw [hcoeff_zero]
+      norm_num)
+  have hnorm_sum :
+      (Hex.ZPoly.coeffNormSq f : ℝ) =
+        ∑ i ∈ Finset.range f.size, (p.coeff i : ℝ) ^ 2 := by
+    have hnat :
+        Hex.ZPoly.coeffNormSq f =
+          ∑ i ∈ Finset.range f.size, (f.coeff i).natAbs ^ 2 := by
+      rw [Hex.ZPoly.coeffNormSq_eq_sum, range_foldl_add_eq_finset_sum_nat]
+    rw [hnat]
+    calc
+      ((∑ i ∈ Finset.range f.size, (f.coeff i).natAbs ^ 2 : Nat) : ℝ) =
+          ∑ i ∈ Finset.range f.size, ((f.coeff i).natAbs : ℝ) ^ 2 := by
+        norm_cast
+      _ = ∑ i ∈ Finset.range f.size, (p.coeff i : ℝ) ^ 2 := by
+        apply Finset.sum_congr rfl
+        intro i hi
+        simp [p, sq_abs, Nat.cast_natAbs]
+  calc
+    (l2norm (toPolynomial f)) ^ 2 = (l2norm p) ^ 2 := rfl
+    _ = ∑ i ∈ p.support, (p.coeff i : ℝ) ^ 2 := hsqrt
+    _ = ∑ i ∈ Finset.range f.size, (p.coeff i : ℝ) ^ 2 := hsupport_sum
+    _ = (Hex.ZPoly.coeffNormSq f : ℝ) := hnorm_sum.symm
+
 private theorem foldl_binom_iter_eq_choose (n m : Nat) :
     (List.range m).foldl (fun acc i => acc * (n - i) / (i + 1)) 1 = Nat.choose n m := by
   induction m with
