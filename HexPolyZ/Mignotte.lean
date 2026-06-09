@@ -170,6 +170,107 @@ private theorem sqrtStep_far_lt_self
   have hlt : 5 * x < 8 * x := by omega
   exact Nat.lt_of_mul_lt_mul_left (Nat.lt_of_le_of_lt hcontract hlt)
 
+/--
+Near-root envelope used by the two-phase Newton convergence proof: the current
+state is no longer in the very-far region where `x^2` is at least `16 * n`.
+-/
+private def sqrtNearEnvelope (n x : Nat) : Prop :=
+  x * x < 16 * n
+
+private theorem sqrtNearEnvelope_of_not_very_far
+    {n x : Nat} (h : ¬ 16 * n ≤ x * x) :
+    sqrtNearEnvelope n x := by
+  unfold sqrtNearEnvelope
+  omega
+
+private theorem sqrtStep_very_far_contracts
+    (n x : Nat) (hx : 0 < x) (hfar : 16 * n ≤ x * x) :
+    32 * sqrtStep n x ≤ 17 * x := by
+  have hq_mul : 16 * ((n / x) * x) ≤ x * x := by
+    exact Nat.le_trans (Nat.mul_le_mul_left 16 (Nat.div_mul_le_self n x)) hfar
+  have hq : 16 * (n / x) ≤ x := by
+    have hcancel := Nat.le_of_mul_le_mul_right
+      (by
+        calc
+          (16 * (n / x)) * x = 16 * ((n / x) * x) := by grind
+          _ ≤ x * x := hq_mul)
+      hx
+    simpa using hcancel
+  have hnext : 2 * sqrtStep n x ≤ x + n / x := by
+    unfold sqrtStep
+    exact Nat.mul_div_le (x + n / x) 2
+  calc
+    32 * sqrtStep n x = 16 * (2 * sqrtStep n x) := by grind
+    _ ≤ 16 * (x + n / x) := Nat.mul_le_mul_left 16 hnext
+    _ = 16 * x + 16 * (n / x) := by grind
+    _ ≤ 16 * x + x := Nat.add_le_add_left hq (16 * x)
+    _ = 17 * x := by grind
+
+private theorem sqrtStep_very_far_lt_self
+    (n x : Nat) (hx : 0 < x) (hfar : 16 * n ≤ x * x) :
+    sqrtStep n x < x := by
+  have hcontract := sqrtStep_very_far_contracts n x hx hfar
+  have hlt : 17 * x < 32 * x := by omega
+  exact Nat.lt_of_mul_lt_mul_left (Nat.lt_of_le_of_lt hcontract hlt)
+
+private theorem sqrtStep_very_far_two_step_halves
+    (n x : Nat) (hx : 0 < x)
+    (hy : 0 < sqrtStep n x)
+    (hfar₁ : 16 * n ≤ x * x)
+    (hfar₂ : 16 * n ≤ sqrtStep n x * sqrtStep n x) :
+    2 * sqrtStep n (sqrtStep n x) < x := by
+  let y := sqrtStep n x
+  let z := sqrtStep n y
+  have hxy : 32 * y ≤ 17 * x := by
+    simpa [y] using sqrtStep_very_far_contracts n x hx hfar₁
+  have hyz : 32 * z ≤ 17 * y := by
+    simpa [y, z] using sqrtStep_very_far_contracts n y hy hfar₂
+  have h1024 : 1024 * z ≤ 289 * x := by
+    calc
+      1024 * z = 32 * (32 * z) := by grind
+      _ ≤ 32 * (17 * y) := Nat.mul_le_mul_left 32 hyz
+      _ = 17 * (32 * y) := by grind
+      _ ≤ 17 * (17 * x) := Nat.mul_le_mul_left 17 hxy
+      _ = 289 * x := by grind
+  have hlt : 1024 * z < 512 * x := by
+    have h289 : 289 * x < 512 * x := by omega
+    exact Nat.lt_of_le_of_lt h1024 h289
+  have hcancel : 512 * (2 * z) < 512 * x := by
+    calc
+      512 * (2 * z) = 1024 * z := by grind
+      _ < 512 * x := hlt
+  exact Nat.lt_of_mul_lt_mul_left hcancel
+
+private theorem log2_lt_of_two_mul_lt
+    {z x : Nat} (hz : 0 < z) (h : 2 * z < x) :
+    z.log2 < x.log2 := by
+  have hz_ne : z ≠ 0 := Nat.ne_of_gt hz
+  have hx_pos : 0 < x := by omega
+  have hx_ne : x ≠ 0 := Nat.ne_of_gt hx_pos
+  have hpow_le_z : 2 ^ z.log2 ≤ z := by
+    exact (Nat.le_log2 hz_ne).mp (Nat.le_refl z.log2)
+  have hpow_succ_le_x : 2 ^ (z.log2 + 1) ≤ x := by
+    have hpow : 2 ^ (z.log2 + 1) ≤ 2 * z := by
+      calc
+        2 ^ (z.log2 + 1) = 2 * 2 ^ z.log2 := by
+          rw [Nat.pow_succ]
+          grind
+        _ ≤ 2 * z := Nat.mul_le_mul_left 2 hpow_le_z
+    exact Nat.le_of_lt (Nat.lt_of_le_of_lt hpow h)
+  have hle : z.log2 + 1 ≤ x.log2 := by
+    exact (Nat.le_log2 hx_ne).mpr hpow_succ_le_x
+  omega
+
+private theorem sqrtStep_very_far_two_step_log2_lt
+    (n x : Nat) (hx : 0 < x)
+    (hy : 0 < sqrtStep n x)
+    (hz : 0 < sqrtStep n (sqrtStep n x))
+    (hfar₁ : 16 * n ≤ x * x)
+    (hfar₂ : 16 * n ≤ sqrtStep n x * sqrtStep n x) :
+    (sqrtStep n (sqrtStep n x)).log2 < x.log2 := by
+  exact log2_lt_of_two_mul_lt hz
+    (sqrtStep_very_far_two_step_halves n x hx hy hfar₁ hfar₂)
+
 /-- The squared Euclidean norm of the coefficient vector of `f`. -/
 def coeffNormSq (f : ZPoly) : Nat :=
   (List.range f.size).foldl (fun acc i => acc + (f.coeff i).natAbs ^ 2) 0
