@@ -16500,9 +16500,9 @@ recorded `factorWithBound` entry was emitted by the exhaustive branch and
 identifies with a `Hex.normalizeFactorSign`-image of an exhaustive
 square-free-core factor" to "the entry is irreducible as a `Hex.ZPoly`".
 
-This lemma specialises the hypothesis set of deliverable 1 to
-`primeData = Hex.choosePrimeData (Hex.normalizeForFactor f).squareFreeCore`
-(the slow path's actual prime-data source) and the outer coefficient bound
+This lemma specialises the hypothesis set of deliverable 1 to the
+`Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData`
+successful-selection witness used by the slow path and the outer coefficient bound
 `B = Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore`
 (the bound at which deliverable 1's coverage hypothesis is well-formed).
 The `hbranch` and `hentry_mem` arguments are not used by the proof, but
