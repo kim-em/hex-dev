@@ -9,7 +9,7 @@ Mode: always
 `SPEC/Libraries/hex-berlekamp-zassenhaus.md` pins the production fast path
 to the van Hoeij/BHKS CLD lattice, with exhaustive subset recombination
 retained only as the slow backstop.  This module operationalises that
-contract: for each fixture polynomial we run `factorSlow`, and when
+contract: for each fixture polynomial we run `factorSlowTrial`, and when
 fixed-precision `bhksRecover?` returns `some` on the committed lifted-factor
 set we check that the certified fast result preserves the same input product.
 If fixed-precision recovery returns `none`, the fast path has made no
@@ -121,11 +121,11 @@ the fixture product when recovery succeeds.
 
 The `none` branch means the fixed-precision fast path did not certify a
 recombination at `liftP ^ liftK`; it is accepted here because the public
-factorization API falls back to `factorSlow` in that case. -/
+factorization API falls back to `factorSlowTrial` in that case. -/
 private def crossCheck (roots : List Int) : Bool :=
   let f := fromRoots roots
   let liftData := liftDataOf roots
-  let slow := factorSlow f
+  let slow := factorSlowTrial f
   let fastMatches :=
     match bhksRecover? f liftData with
     | none => true
@@ -157,7 +157,7 @@ return `none`; if it returns `some`, the recovered buckets must match the
 committed integer factorization shape. -/
 private def crossCheckBuckets
     (f : ZPoly) (liftData : LiftData) (expectedFactors : Array ZPoly) : Bool :=
-  let slow := factorSlow f
+  let slow := factorSlowTrial f
   let fastMatches :=
     match bhksRecover? f liftData with
     | none => true
