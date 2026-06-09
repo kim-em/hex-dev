@@ -339,7 +339,7 @@ private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
 #guard modularFactorDegreesAt? quadSqrt2Sqrt3 23 = some #[1, 1, 1, 1]
 #guard modularFactorDegreesAt? swinnertonDyerSD3 71 = some #[1, 1, 1, 1, 1, 1, 1, 1]
 #guard modularFactorDegreesAt? phi15 31 = some #[1, 1, 1, 1, 1, 1, 1, 1]
-#guard modularFactorDegreesAt? x4Plus1 29 = none
+#guard modularFactorDegreesAt? x4Plus1 29 = some #[2, 2]
 #guard modularFactorDegreesAt? leadingCoeffDivisibleByFive 5 = none
 
 #guard choosePrime squareFreeTypical = 3
@@ -384,20 +384,16 @@ private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
 
 /-! ### Extended-search cascade (HO-5d-3, #5819)
 
-The `(x-1)(x-2)…(x-n)` cascade exhausts the fixed
-`smallPrimeCandidates` list once `n ≥ 72`, because then every prime
-`p ≤ 71` has a colliding residue pair somewhere in `{1, ..., n}` and the
-modular image fails the square-free predicate. Materializing the
-degree-72 input via `fromRoots` in kernel reduction time is
-prohibitively slow (~10 minutes of `#guard` cost), so the fixture
-instead uses the engineered degree-2 cascade
-`(x - 1)(x - (1 + D))` with `D = product p` over the fixed-list primes
-`p ∈ {3, 5, 7, 11, 13, 17, 19, 23, 31, 71}`. Mod every fixed-list
-prime, the two roots collapse to a single residue (so the modular
-image is the square `(x - 1)^2` and `isGoodPrime` rejects). Mod the
-next admissible prime (`73`), the difference `D mod 73 = 67` is
-nonzero, so the modular image is square-free. `choosePrimeData?`
-returns `some` with a selected prime from the post-prefix walk.
+The `(x-1)(x-2)…(x-n)` cascade exhausts the historical fixed prefix once
+`n ≥ 72`, because then every old prefix prime had a colliding residue pair
+somewhere in `{1, ..., n}` and the modular image failed the square-free
+predicate. Materializing the degree-72 input via `fromRoots` in kernel
+reduction time is prohibitively slow (~10 minutes of `#guard` cost), so the
+fixture instead uses the engineered degree-2 cascade
+`(x - 1)(x - (1 + D))` with `D = product p` over the old fixed-list primes
+`p ∈ {3, 5, 7, 11, 13, 17, 19, 23, 31, 71}`. The expanded SPEC prefix now
+includes `29`, and `D mod 29 ≠ 0`, so `choosePrimeData?` reaches the new
+candidate instead of falling through to the post-prefix range.
 -/
 
 /-- Product of the fixed-list primes, used to engineer the extended-
@@ -411,12 +407,12 @@ private def extendedCascade2 : ZPoly :=
 #guard
   match choosePrimeData? extendedCascade2 with
   | none => false
-  | some data => 71 < data.p
+  | some data => data.p == 29
 
 #guard
   match choosePrimeData? extendedCascade2 with
   | none => false
-  | some data => 73 ≤ data.p
+  | some data => 29 ≤ data.p
 
 #guard bhksBound (0 : ZPoly) = 1
 #guard bhksBound ZPoly.X = 9

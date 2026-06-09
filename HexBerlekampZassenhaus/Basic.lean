@@ -440,6 +440,12 @@ private structure SmallPrimeCandidate where
   [bounds : ZMod64.Bounds p]
   prime : Nat.Prime p
 
+private def smallPrimeCandidateOfTrial (p : Nat)
+    (hprime : Hex.Nat.isPrimeTrial p = true) (hbound : p ≤ UInt64.word) :
+    SmallPrimeCandidate :=
+  let prime := Hex.Nat.isPrimeTrial_isPrime hprime
+  { p, bounds := { pPos := prime.pos, pLeR := hbound }, prime }
+
 /-- A scored admissible small-prime candidate for default prime selection. -/
 structure PrimeCandidateScore where
   /-- Candidate prime. -/
@@ -448,16 +454,110 @@ structure PrimeCandidateScore where
   factorCount : Nat
 
 private def smallPrimeCandidates : List SmallPrimeCandidate :=
-  [ { p := 3, bounds := bounds_three, prime := prime_three },
-    { p := 5, bounds := bounds_five, prime := prime_five },
-    { p := 7, bounds := bounds_seven, prime := prime_seven },
-    { p := 11, bounds := bounds_eleven, prime := prime_eleven },
-    { p := 13, bounds := bounds_thirteen, prime := prime_thirteen },
-    { p := 17, bounds := bounds_seventeen, prime := prime_seventeen },
-    { p := 19, bounds := bounds_nineteen, prime := prime_nineteen },
-    { p := 23, bounds := bounds_twenty_three, prime := prime_twenty_three },
-    { p := 31, bounds := bounds_thirty_one, prime := prime_thirty_one },
-    { p := 71, bounds := bounds_seventy_one, prime := prime_seventy_one } ]
+  [ smallPrimeCandidateOfTrial 3 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 5 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 7 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 11 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 13 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 17 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 19 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 23 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 29 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 31 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 37 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 41 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 43 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 47 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 53 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 59 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 61 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 67 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 71 (by decide) (by decide) ]
+
+set_option maxRecDepth 10000 in
+private def extendedSmallPrimeCandidates : List SmallPrimeCandidate :=
+  [ smallPrimeCandidateOfTrial 73 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 79 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 83 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 89 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 97 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 101 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 103 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 107 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 109 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 113 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 127 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 131 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 137 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 139 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 149 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 151 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 157 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 163 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 167 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 173 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 179 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 181 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 191 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 193 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 197 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 199 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 211 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 223 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 227 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 229 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 233 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 239 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 241 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 251 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 257 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 263 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 269 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 271 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 277 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 281 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 283 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 293 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 307 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 311 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 313 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 317 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 331 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 337 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 347 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 349 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 353 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 359 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 367 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 373 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 379 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 383 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 389 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 397 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 401 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 409 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 419 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 421 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 431 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 433 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 439 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 443 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 449 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 457 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 461 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 463 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 467 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 479 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 487 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 491 (by decide) (by decide),
+    smallPrimeCandidateOfTrial 499 (by decide) (by decide) ]
+
+private def hotPathCandidates : List SmallPrimeCandidate :=
+  smallPrimeCandidates ++ extendedSmallPrimeCandidates
+
+#guard smallPrimeCandidates.length == 19
+#guard extendedSmallPrimeCandidates.length == 75
+#guard hotPathCandidates.length == 94
 
 /--
 Coerce an admissible nonzero modular image to its monic representative by
@@ -793,7 +893,7 @@ the leading coefficient vanishes modulo `p`; the Berlekamp branch also requires
 the usual good-prime predicate.
 -/
 def modularFactorDegreesAt? (f : ZPoly) (p : Nat) : Option (Array Nat) :=
-  smallPrimeCandidates.foldl
+  hotPathCandidates.foldl
     (fun found (c : SmallPrimeCandidate) =>
       match found with
       | some degrees => some degrees
@@ -814,6 +914,11 @@ def modularFactorDegreesAt? (f : ZPoly) (p : Nat) : Option (Array Nat) :=
           else
             none)
     none
+
+private def prefixTwentyNineGuard : ZPoly :=
+  DensePoly.ofCoeffs #[1, 1, 111546435]
+
+#guard (modularFactorDegreesAt? prefixTwentyNineGuard 29).isSome
 
 private def scoreCandidate (f : ZPoly) (c : SmallPrimeCandidate) : Option PrimeCandidateScore :=
   letI := c.bounds
@@ -837,9 +942,9 @@ private def choosePrimeScoreStep
   | some old, none => some old
   | some old, some new => some (betterScore old new)
 
-/-- Scan the fixed small-prime list and return the best admissible scored candidate, if any. -/
+/-- Scan the fixed hot-path prime list and return the best admissible scored candidate, if any. -/
 def choosePrimeScore? (f : ZPoly) : Option PrimeCandidateScore :=
-  smallPrimeCandidates.foldl (choosePrimeScoreStep f) none
+  hotPathCandidates.foldl (choosePrimeScoreStep f) none
 
 private theorem scoreCandidate_isGoodPrime
     (f : ZPoly) (c : SmallPrimeCandidate) (score : PrimeCandidateScore)
@@ -939,7 +1044,7 @@ theorem choosePrimeScore?_isGoodPrime
     ∃ hbounds : ZMod64.Bounds score.p,
       @isGoodPrime f score.p hbounds = true := by
   unfold choosePrimeScore? at hscore
-  exact choosePrimeScore?_fold_isGoodPrime f smallPrimeCandidates none score
+  exact choosePrimeScore?_fold_isGoodPrime f hotPathCandidates none score
     (by intro old hnone; cases hnone)
     hscore
 
@@ -2104,15 +2209,14 @@ the executable walk finds a good prime for `f`, and `none` otherwise.
 The search first folds `choosePrimeDataScoreStep` over the deterministic
 small-prime prefix. If that prefix selects an admissible prime, the original
 tie-breaking is preserved. If the prefix exhausts without selecting any prime,
-the search continues with a `Nat`-indexed odd-candidate walk using
-`Hex.Nat.isPrimeTrial`; the walk fuel is derived from `f`, so the runtime
-candidate set is not the old closed fixed list.
+the search folds over the fixed extended prime list through `499`, covering
+every odd prime in the SPEC hot-path interval `[3, 500]`.
 -/
 def choosePrimeData? (f : ZPoly) : Option PrimeChoiceData :=
   match smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
   | some score => some score.data
   | none =>
-      choosePrimeDataWalk? f 73 (choosePrimeDataWalkFuel f)
+      (extendedSmallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none)
       |>.map (fun score => score.data)
 
 /--
@@ -2153,14 +2257,14 @@ theorem choosePrimeData?_prime
   | none =>
       simp [hscore] at hdata
       cases hext :
-          choosePrimeDataWalk? f 73 (choosePrimeDataWalkFuel f) with
+          extendedSmallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
       | none =>
           simp [hext] at hdata
       | some escore =>
           simp [hext] at hdata
           cases hdata
-          exact choosePrimeDataWalk?_prime f 73 (choosePrimeDataWalkFuel f)
-            escore hext
+          exact choosePrimeDataScore_fold_prime f extendedSmallPrimeCandidates none
+            escore (by intro old hnone; cases hnone) hext
 
 theorem choosePrimeData?_fModP_eq
     (f : ZPoly) (data : PrimeChoiceData)
@@ -2178,14 +2282,14 @@ theorem choosePrimeData?_fModP_eq
   | none =>
       simp [hscore] at hdata
       cases hext :
-          choosePrimeDataWalk? f 73 (choosePrimeDataWalkFuel f) with
+          extendedSmallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
       | none =>
           simp [hext] at hdata
       | some escore =>
           simp [hext] at hdata
           cases hdata
-          exact choosePrimeDataWalk?_fModP_eq f 73 (choosePrimeDataWalkFuel f)
-            escore hext
+          exact choosePrimeDataScore_fold_fModP_eq f extendedSmallPrimeCandidates none
+            escore (by intro old hnone; cases hnone) hext
 
 /--
 When `choosePrimeData? f` succeeds, the selected prime is a good prime for `f`
@@ -2208,14 +2312,14 @@ theorem choosePrimeData?_isGoodPrime
   | none =>
       simp [hscore] at hdata
       cases hext :
-          choosePrimeDataWalk? f 73 (choosePrimeDataWalkFuel f) with
+          extendedSmallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
       | none =>
           simp [hext] at hdata
       | some escore =>
           simp [hext] at hdata
           cases hdata
-          exact choosePrimeDataWalk?_isGoodPrime f 73 (choosePrimeDataWalkFuel f)
-            escore hext
+          exact choosePrimeDataScore_fold_isGoodPrime f extendedSmallPrimeCandidates none
+            escore (by intro old hnone; cases hnone) hext
 
 /--
 Invariant capturing that `data.factorsModP` is exactly the Berlekamp factor
@@ -2375,15 +2479,16 @@ theorem choosePrimeData?_factorsModP_berlekamp_form
   | none =>
       simp [hscore] at hdata
       cases hext :
-          choosePrimeDataWalk? f 73 (choosePrimeDataWalkFuel f) with
+          extendedSmallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
       | none =>
           simp [hext] at hdata
       | some escore =>
           simp [hext] at hdata
           cases hdata
           have hform :=
-            choosePrimeDataWalk?_factorsModPBerlekampForm f 73
-              (choosePrimeDataWalkFuel f) escore hext
+            choosePrimeDataScore_fold_factorsModPBerlekampForm f
+              extendedSmallPrimeCandidates none escore
+              (by intro old hnone; cases hnone) hext
           obtain ⟨_, hzero, heq⟩ := hform
           exact ⟨hzero, heq⟩
 
@@ -7079,11 +7184,9 @@ private def finitePrimeSearchProduct : Int :=
 /--
 Regression fixture for the old bounded prime search. It is `P * X^2 + X + 1`,
 where `P` is the product of every odd prime in the former closed candidate set.
-For each formerly searched modulus the leading coefficient vanishes, while
-over `Z` the quadratic has negative discriminant and hence no integer root.
-The unbounded post-prefix walk now steps past that closed set and selects the
-next good word-sized trial prime, so prime selection no longer falls through to
-the no-prime branch on this input.
+The expanded SPEC prefix now includes primes that were not in that former set;
+this fixture confirms one of them is enough to keep prime selection from
+falling through to the no-prime branch on this input.
 -/
 private def finitePrimeSearchNoneQuadratic : ZPoly :=
   DensePoly.ofCoeffs #[1, 1, finitePrimeSearchProduct]
@@ -7091,7 +7194,7 @@ private def finitePrimeSearchNoneQuadratic : ZPoly :=
 #guard
   match choosePrimeData? finitePrimeSearchNoneQuadratic with
   | none => false
-  | some data => 317 < data.p
+  | some data => data.p == 29
 
 /-- Lift a `factorFastFactorsWithBound` success through the `.map` layer that
 defines `factorFastWithBound`. -/
