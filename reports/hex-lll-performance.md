@@ -235,13 +235,13 @@ The current fixed comparator registrations use the post-HO-18 densified
 headline ladders:
 
 - `random-bounded`: `n = 30, 45, 60, 75, 90, 120, 150, 180`.
-- `harsh-cubic`: `n = 15, 20, 25, 30, 35, 40, 45, 50, 55`.
+- `harsh-cubic`: `n = 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65`.
 - `bz-recombination`: one tiny fixed row, retained only as contextual
   comparator evidence because process overhead dominates this family.
 
 The committed densified Lean/Isabelle comparator sweep below covers the full
-`random-bounded` and `harsh-cubic` ladders. The harsh-cubic largest-rung
-verdict remains adverse, so `HexLLL.done_through` remains at `3`.
+`random-bounded` and `harsh-cubic` ladders. Both native comparator
+largest-rung verdicts are now met.
 
 Informational `fpLLL via fpylll` random-bounded ladder run at worktree
 commit `594364a5d86cc9daaf26c53a8b6a137998b38a6e` on `carica`
@@ -384,6 +384,16 @@ Both Isabelle-certified rows had repeat-stable hashes and matched the Lean
 norm-squared expected hash. These rows are smoke evidence only; the full
 certified-vs-Isabelle-certified ladder remains a scheduled-run item.
 
+Certified-vs-Isabelle-certified gating verdict on the largest shared committed
+rung in each family:
+
+- `random-bounded`, `n = 30`: Hex certified `4.371 ms` vs Isabelle certified
+  `33.541 ms`; ratio `0.1303`, Hex `7.67×` faster. Verdict: **met** for the
+  committed shared rung.
+- `harsh-cubic`, `n = 15`: Hex certified `858.293 µs` vs Isabelle certified
+  `22.555 ms`; ratio `0.0381`, Hex `26.28×` faster. Verdict: **met** for the
+  committed shared rung.
+
 Architectural asymmetries for this ratio:
 
 - Hex's certified path calls `fplll-ffi` in process and then runs the Lean
@@ -393,8 +403,11 @@ Architectural asymmetries for this ratio:
 - Hex checks reducedness with `lllReducedInt`; Isabelle confirms reducedness by
   re-running the verified LLL reducer inside `test_certified`.
 
-The embedded comparator plots show four labelled curves: Lean native,
-verified Isabelle LLL, Lean certified, and fpLLL via fplll-ffi.
+The embedded comparator plots show five labelled series: Lean native,
+verified Isabelle native LLL, Lean certified, verified Isabelle certified-LLL,
+and fpLLL via fplll-ffi. The Isabelle-certified series currently has one
+committed point per family; it is plotted as the fifth labelled marker rather
+than dropped silently.
 
 ![Random-bounded comparator runtime plot](figures/hex-lll-comparator-random-bounded.svg)
 
@@ -680,49 +693,10 @@ integer arithmetic.
 
 ## Concerns
 
-- **HexLLL Lean is approximately `1.9×` slower than the verified
-  Isabelle comparator across the upper harsh-cubic ladder, with a
-  residual constant-factor gap.** Under honest methodology
-  (post-#6330) with all four follow-up perf fixes in (`swapStep`
-  #6338, `stepScaledRows` #6339, `exactDiv` #6348, `setEntry`
-  #6350), the Lean/Isabelle ratio is `0.96` at `n = 15`, climbs
-  to a plateau around `1.14–1.24` from `n = 20` onward, and lands
-  at `1.14` at the largest eligible rung `n = 65`. The
-  gating-goal verdict ("Lean at least as fast as Isabelle on
-  shared canonical inputs at the bottom of each
-  `phase4.input_families` parameter ladder") is therefore **not
-  met** for harsh-cubic, and `HexLLL.done_through` remains `3`.
-
-  The four merged perf fixes between them dropped the Lean/Isabelle
-  harsh-cubic ratio at `n = 65` from `1.90×` to `1.14×` — a
-  substantial closing of the gap but not enough to clear the
-  Concern. The remaining `~14%` is a real residual constant-factor
-  deficit (the previous wording "stable constant-factor gap" of
-  `~1.9×` was based on pre-perf-fix data).
-
-  The previous Concern thread (#4334, follow-up #5966) cited
-  pre-`warmupFirstIter` numbers that overstated Lean's lead at
-  small `n`; the current ratios supersede those.
-
-  The residual gap is **algorithmic-structural**, not a
-  micro-optimisation target. A profile of the post-perf-fix state
-  shows 88% of harsh-cubic n=55 wall time is GMP arithmetic
-  (49.8% `__gmpn_addmul_1` alone); allocator and Lean-side
-  overhead are < 10% combined. A fused `mpz_fma_div_exact` C
-  helper was implemented (#6422) on the hypothesis that
-  per-inner-cell intermediate-mpz allocations were costly, but a
-  bench-host re-run showed **zero measurable Lean speedup** — the
-  intermediate `mpz_init`/`mpz_clear` are sub-microsecond per cell
-  on modern allocators, rounded down by the dominant
-  multiplication time. #6422 was reverted.
-
-  The structural difference was in the Gram-Schmidt setup itself.
-  The old `HexGramSchmidt.Int.stepScaledRows` path performed
-  column-major Bareiss elimination over the full lower sub-matrix;
-  for an `n × n` input it touched `≈ n³` cells per `ofBasis`. The
-  verified Isabelle LLL's `dmu_array_row` computes each `dmu[i][j]`
-  directly via a per-row Schur-complement recurrence (`sigma_array`
-  does one divide per recursion level); it touches `≈ n³/3` cells.
-  The Lean Schur recurrence now matches that shape, and the
-  benchmark gap is closed: harsh-cubic `n = 65` is Lean `621.32 ms`
-  vs Isabelle `950.08 ms`, ratio `0.6540`.
+- **The verified Isabelle certified-LLL series has only one committed point
+  per family.** This is sufficient for the five-way plot legend and the
+  bottom/shared-rung smoke verdict above, but it does not yet provide a
+  full-ladder certified-vs-certified trend. The native `verified Isabelle LLL`
+  gate is closed on both headline families: random-bounded `n = 180` is Lean
+  `4.76 s` vs Isabelle `7.55 s`, ratio `0.6304`, and harsh-cubic `n = 65` is
+  Lean `621.32 ms` vs Isabelle `950.08 ms`, ratio `0.6540`.
