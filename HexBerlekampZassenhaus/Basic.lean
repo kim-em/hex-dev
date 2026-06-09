@@ -11981,6 +11981,90 @@ private theorem trialDivisionPeelAux_factor_mem
                   exact List.mem_cons_of_mem c
                     (ih q rfact rres hrest factor (by simpa using hrest_mem))
 
+/-- A square-free integer polynomial over `Rat[x]` is not divisible by the
+square of any positive-degree integer polynomial.  This is the generic
+no-repeated-divisor bridge needed by the trial-division slow path: if
+`q * q ∣ core`, then `toRatPoly q` divides both `toRatPoly core` and its
+derivative, forcing the gcd in `SquareFreeRat core` to have size at least two. -/
+private theorem square_not_dvd_of_squareFreeRat
+    {core q : ZPoly} (hcore_ne : core ≠ 0)
+    (hsq : Hex.ZPoly.SquareFreeRat core)
+    (hq_degree : 0 < q.degree?.getD 0) :
+    ¬ (q * q) ∣ core := by
+  intro hdvd
+  rcases hdvd with ⟨g, hg⟩
+  let qRat := ZPoly.toRatPoly q
+  let gRat := ZPoly.toRatPoly g
+  let coreRat := ZPoly.toRatPoly core
+  have hcoreRat_eq : coreRat = qRat * (qRat * gRat) := by
+    show ZPoly.toRatPoly core = _
+    rw [hg, ZPoly.toRatPoly_mul, ZPoly.toRatPoly_mul, DensePoly.mul_assoc_poly]
+  have hqRat_dvd_qg : qRat ∣ qRat * gRat := ⟨gRat, rfl⟩
+  have hqRat_dvd_core : qRat ∣ coreRat := by
+    rw [hcoreRat_eq]
+    exact ⟨qRat * gRat, rfl⟩
+  have hqRat_dvd_derivative : qRat ∣ DensePoly.derivative coreRat := by
+    rw [hcoreRat_eq, DensePoly.derivative_mul qRat (qRat * gRat)]
+    apply DensePoly.dvd_add_poly
+    · exact DensePoly.dvd_mul_left_poly (DensePoly.derivative qRat) hqRat_dvd_qg
+    · exact ⟨DensePoly.derivative (qRat * gRat), rfl⟩
+  have hqRat_dvd_gcd :
+      qRat ∣ DensePoly.gcd coreRat (DensePoly.derivative coreRat) :=
+    DensePoly.dvd_gcd qRat _ _ hqRat_dvd_core hqRat_dvd_derivative
+  have hq_size_ge_two : 2 ≤ q.size := by
+    unfold DensePoly.degree? at hq_degree
+    by_cases hsize : q.size = 0
+    · simp [hsize] at hq_degree
+    · simp [hsize] at hq_degree
+      omega
+  have hqRat_size_ne : qRat.size ≠ 0 := by
+    rw [ZPoly.size_toRatPoly]
+    omega
+  have hcoreRat_ne : coreRat ≠ 0 :=
+    ZPoly.toRatPoly_ne_zero_of_ne_zero core hcore_ne
+  have hgcd_dvd_core :=
+    DensePoly.gcd_dvd_left coreRat (DensePoly.derivative coreRat)
+  have hgcd_ne :
+      DensePoly.gcd coreRat (DensePoly.derivative coreRat) ≠ 0 := by
+    intro h
+    apply hcoreRat_ne
+    rcases hgcd_dvd_core with ⟨k, hk⟩
+    rw [h, DensePoly.zero_mul] at hk
+    exact hk
+  have hgcd_size_ne :
+      (DensePoly.gcd coreRat (DensePoly.derivative coreRat)).size ≠ 0 := by
+    intro hsize
+    apply hgcd_ne
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega)]
+    exact (DensePoly.coeff_zero n).symm
+  have hsize_le :=
+    ZPoly.rat_size_le_of_dvd_nonzero hqRat_size_ne hgcd_size_ne hqRat_dvd_gcd
+  have hsq' :
+      (DensePoly.gcd coreRat (DensePoly.derivative coreRat)).size ≤ 1 := hsq
+  rw [ZPoly.size_toRatPoly] at hsize_le
+  omega
+
+/-- Any member of a factor list divides the ordered `Array.polyProduct` of that
+list. -/
+private theorem dvd_polyProduct_toArray_of_mem {q : ZPoly} :
+    ∀ factors : List ZPoly,
+      q ∈ factors → q ∣ Array.polyProduct factors.toArray
+  | [], hmem => by
+      exact absurd hmem List.not_mem_nil
+  | head :: tail, hmem => by
+      rw [ZPoly.polyProduct_cons_toArray]
+      rcases List.mem_cons.mp hmem with hhead | htail
+      · subst q
+        exact ⟨Array.polyProduct tail.toArray, rfl⟩
+      · rcases dvd_polyProduct_toArray_of_mem tail htail with ⟨k, hk⟩
+        refine ⟨head * k, ?_⟩
+        rw [hk]
+        rw [← DensePoly.mul_assoc_poly (S := Int) head q k]
+        rw [DensePoly.mul_comm_poly (S := Int) head q]
+        rw [DensePoly.mul_assoc_poly (S := Int) q head k]
+
 /-- A candidate that was tried by `trialDivisionPeelAux` but not emitted does
 not exactly divide the final residual.  This is the executable "no missed
 candidate" statement available without squarefreeness: emitted candidates may
@@ -12070,6 +12154,77 @@ private theorem trialDivisionPeelAux_no_missed_unemitted
                   simp [hmem_tail]
                 exact ih quotient htail_cand restFactors restResidual hrest
                   cand hc_tail hnot_tail
+
+/-- Under squarefreeness of the peel target, a positive-degree emitted candidate
+cannot also divide the final residual.  Combining a residual divisor with the
+product invariant would make `candidate * candidate` divide the original target,
+contradicting `SquareFreeRat`. -/
+private theorem trialDivisionPeelAux_no_emitted_residual_divisor_of_squareFreeRat
+    (target : ZPoly) (candidates : List ZPoly)
+    (htarget_ne : target ≠ 0) (hsq : Hex.ZPoly.SquareFreeRat target)
+    (hcand_degree : ∀ c ∈ candidates, 0 < c.degree?.getD 0) :
+    ∀ factors residual,
+      trialDivisionPeelAux target candidates = (factors, residual) →
+        ∀ c ∈ candidates, c ∈ factors.toList → ¬ c ∣ residual := by
+  intro factors residual hsplit c hcand hemitted hdiv_residual
+  rcases hdiv_residual with ⟨r, hresidual⟩
+  have hprod : residual * Array.polyProduct factors = target :=
+    trialDivisionPeelAux_product target candidates factors residual hsplit
+  have hcdvd_prod : c ∣ Array.polyProduct factors :=
+    dvd_polyProduct_toArray_of_mem factors.toList hemitted
+  rcases hcdvd_prod with ⟨k, hprod_c⟩
+  have hsquare_dvd : c * c ∣ target := by
+    refine ⟨r * k, ?_⟩
+    rw [← hprod, hresidual, hprod_c]
+    calc
+      (c * r) * (c * k) = c * (r * (c * k)) := by
+          rw [DensePoly.mul_assoc_poly (S := Int)]
+      _ = c * ((c * k) * r) := by
+          rw [DensePoly.mul_comm_poly (S := Int) r (c * k)]
+      _ = c * (c * (k * r)) := by
+          rw [DensePoly.mul_assoc_poly (S := Int) c k r]
+      _ = (c * c) * (k * r) := by
+          rw [← DensePoly.mul_assoc_poly (S := Int) c c (k * r)]
+      _ = (c * c) * (r * k) := by
+          rw [DensePoly.mul_comm_poly (S := Int) k r]
+  exact square_not_dvd_of_squareFreeRat htarget_ne hsq (hcand_degree c hcand) hsquare_dvd
+
+/-- If `candidate` does not divide `target`, the executable exact-quotient check
+must return `none`. -/
+private theorem exactQuotient?_eq_none_of_not_dvd_core
+    {target candidate : ZPoly} (hnot_dvd : ¬ candidate ∣ target) :
+    exactQuotient? target candidate = none := by
+  cases hcase : exactQuotient? target candidate with
+  | none => rfl
+  | some quotient =>
+      exfalso
+      apply hnot_dvd
+      have hmul : quotient * candidate = target := exactQuotient?_product hcase
+      exact ⟨quotient, by rw [DensePoly.mul_comm_poly (S := Int), hmul]⟩
+
+/-- For a square-free peel target, no tried candidate exactly divides the final
+residual.  Unemitted candidates are handled by the executable no-missed
+invariant; emitted candidates are ruled out by squarefreeness because another
+copy in the residual would make a square divisor of the original target. -/
+private theorem trialDivisionPeelAux_no_residual_candidate_of_squareFreeRat
+    (target : ZPoly) (candidates : List ZPoly)
+    (htarget_ne : target ≠ 0) (hsq : Hex.ZPoly.SquareFreeRat target)
+    (hcand :
+      ∀ c ∈ candidates,
+        0 < c.degree?.getD 0 ∧ 0 < DensePoly.leadingCoeff c) :
+    ∀ factors residual,
+      trialDivisionPeelAux target candidates = (factors, residual) →
+        ∀ c ∈ candidates, exactQuotient? residual c = none := by
+  intro factors residual hsplit c hc
+  by_cases hemitted : c ∈ factors.toList
+  · have hnot_dvd :
+        ¬ c ∣ residual :=
+      trialDivisionPeelAux_no_emitted_residual_divisor_of_squareFreeRat
+        target candidates htarget_ne hsq
+        (fun c hc => (hcand c hc).1) factors residual hsplit c hc hemitted
+    exact exactQuotient?_eq_none_of_not_dvd_core hnot_dvd
+  · exact trialDivisionPeelAux_no_missed_unemitted
+      target candidates hcand factors residual hsplit c hc hemitted
 
 /-- When the peel target has positive leading coefficient and every candidate
 in the input list has positive leading coefficient, the residual emitted by
