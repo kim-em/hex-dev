@@ -233,6 +233,146 @@ private theorem sqrtAux_eq_self_of_sq_le
       have hstop : next ≥ x := sqrtStep_ge_of_sq_le hsq
       simp [next, hstop]
 
+private def sqrtGap (n x : Nat) : Nat :=
+  x - n / x
+
+private theorem sqrtGap_pos_of_not_sq
+    {n x : Nat} (hx : 0 < x) (hnot_sq : ¬ x * x ≤ n) :
+    0 < sqrtGap n x := by
+  unfold sqrtGap
+  have hdiv_lt : n / x < x := by
+    by_cases hlt : n / x < x
+    · exact hlt
+    · have hx_le : x ≤ n / x := by omega
+      exact False.elim (hnot_sq ((Nat.le_div_iff_mul_le hx).mp hx_le))
+  omega
+
+private theorem sqrtStep_gap_halves
+    (n x : Nat) (hx : 0 < x) (hnot_sq : ¬ x * x ≤ n) :
+    2 * sqrtGap n (sqrtStep n x) ≤ sqrtGap n x := by
+  let q := n / x
+  let next := sqrtStep n x
+  have hq_lt_x : q < x := by
+    by_cases hlt : q < x
+    · exact hlt
+    · have hx_le : x ≤ q := by omega
+      exact False.elim (hnot_sq (by
+        unfold q at hx_le
+        exact (Nat.le_div_iff_mul_le hx).mp hx_le))
+  have hq_le_x : q ≤ x := Nat.le_of_lt hq_lt_x
+  by_cases hqnext : q ≤ next
+  · have hnext_le : 2 * next ≤ x + q := by
+      unfold next sqrtStep
+      exact Nat.mul_div_le (x + q) 2
+    have hq_le_div_next : q ≤ n / next := by
+      by_cases hnext_pos : 0 < next
+      · have hnext_le_x : next ≤ x := by omega
+        simpa [q] using Nat.div_le_div_left hnext_le_x hnext_pos
+      · have hnext_zero : next = 0 := by omega
+        simpa [hnext_zero] using hqnext
+    calc
+      2 * sqrtGap n next
+          = 2 * (next - n / next) := rfl
+      _ ≤ 2 * (next - q) := by
+          exact Nat.mul_le_mul_left 2 (Nat.sub_le_sub_left hq_le_div_next next)
+      _ ≤ x - q := by omega
+      _ = sqrtGap n x := rfl
+  · have hnext_lt_q : next < q := Nat.lt_of_not_ge hqnext
+    have hnext_le_div : next ≤ n / next := by
+      by_cases hnext_pos : 0 < next
+      · have hnext_le_x : next ≤ x := by
+          unfold next sqrtStep
+          have hmul : 2 * ((x + q) / 2) ≤ x + q := Nat.mul_div_le (x + q) 2
+          omega
+        have hq_le_div_next : q ≤ n / next :=
+          by simpa [q] using Nat.div_le_div_left hnext_le_x hnext_pos
+        omega
+      · have hnext_zero : next = 0 := by omega
+        simp [hnext_zero]
+    unfold sqrtGap
+    have hzero : next - n / next = 0 := Nat.sub_eq_zero_of_le hnext_le_div
+    rw [hzero]
+    simp
+
+private theorem sqrtAux_gap_contract_of_not_done
+    (n fuel x : Nat) (hx : 0 < x)
+    (hnot_sq :
+      ¬ (sqrtAux n fuel x) * (sqrtAux n fuel x) ≤ n) :
+    2 ^ fuel * sqrtGap n (sqrtAux n fuel x) ≤ sqrtGap n x := by
+  induction fuel generalizing x with
+  | zero =>
+      simp [sqrtAux]
+  | succ fuel ih =>
+      unfold sqrtAux
+      let next := sqrtStep n x
+      by_cases hstop : next ≥ x
+      · have hsq : x * x ≤ n := sqrtStep_ge_imp_sq_le hx hstop
+        have haux : sqrtAux n (fuel + 1) x = x := by
+          simp [sqrtAux, next, hstop]
+        exact False.elim (hnot_sq (by simpa [haux] using hsq))
+      · have hnext_lt : next < x := Nat.lt_of_not_ge hstop
+        have hnot_sq_current : ¬ x * x ≤ n := by
+          intro hsq
+          have hself : sqrtAux n (fuel + 1) x = x :=
+            sqrtAux_eq_self_of_sq_le n (fuel + 1) x hsq
+          exact hnot_sq (by simpa [hself] using hsq)
+        have hnot_sq_tail :
+            ¬ (sqrtAux n fuel next) * (sqrtAux n fuel next) ≤ n := by
+          intro hsq
+          have haux : sqrtAux n (fuel + 1) x = sqrtAux n fuel next := by
+            simp [sqrtAux, next, hstop]
+          exact hnot_sq (by simpa [haux] using hsq)
+        have hnext_pos : 0 < next := by
+          by_cases hnext_pos : 0 < next
+          · exact hnext_pos
+          · have hnext_zero : next = 0 := by omega
+            exact False.elim (hnot_sq_tail (by simp [hnext_zero, sqrtAux_eq_self_of_sq_le]))
+        have htail :
+            2 ^ fuel * sqrtGap n (sqrtAux n fuel next) ≤ sqrtGap n next :=
+          ih next hnext_pos hnot_sq_tail
+        have hstep : 2 * sqrtGap n next ≤ sqrtGap n x :=
+          sqrtStep_gap_halves n x hx hnot_sq_current
+        calc
+          2 ^ (fuel + 1) * sqrtGap n (sqrtAux n (fuel + 1) x)
+              = 2 * (2 ^ fuel * sqrtGap n (sqrtAux n fuel next)) := by
+                  simp [sqrtAux, next, hstop, Nat.pow_succ]
+                  grind
+          _ ≤ 2 * sqrtGap n next := Nat.mul_le_mul_left 2 htail
+          _ ≤ sqrtGap n x := hstep
+
+private theorem sqrtAux_phase_one_sq_le
+    (n : Nat) (hn : 0 < n) :
+    (sqrtAux n (n.log2 + 1) n) * (sqrtAux n (n.log2 + 1) n) ≤ n := by
+  by_cases hsq :
+      (sqrtAux n (n.log2 + 1) n) * (sqrtAux n (n.log2 + 1) n) ≤ n
+  · exact hsq
+  · have hcontract :
+        2 ^ (n.log2 + 1) * sqrtGap n (sqrtAux n (n.log2 + 1) n) ≤ sqrtGap n n :=
+      sqrtAux_gap_contract_of_not_done n (n.log2 + 1) n hn hsq
+    have hgap_pos :
+        0 < sqrtGap n (sqrtAux n (n.log2 + 1) n) := by
+      have hpos : 0 < sqrtAux n (n.log2 + 1) n := by
+        by_cases hpos : 0 < sqrtAux n (n.log2 + 1) n
+        · exact hpos
+        · have hzero : sqrtAux n (n.log2 + 1) n = 0 := by omega
+          exact False.elim (hsq (by simp [hzero]))
+      exact sqrtGap_pos_of_not_sq hpos hsq
+    have hpow_le :
+        2 ^ (n.log2 + 1) ≤ sqrtGap n n := by
+      calc
+        2 ^ (n.log2 + 1) ≤
+            2 ^ (n.log2 + 1) * sqrtGap n (sqrtAux n (n.log2 + 1) n) := by
+              exact Nat.le_mul_of_pos_right _ hgap_pos
+        _ ≤ sqrtGap n n := hcontract
+    have hgap_lt : sqrtGap n n < 2 ^ (n.log2 + 1) := by
+      unfold sqrtGap
+      have hdiv : n / n = 1 := Nat.div_self hn
+      rw [hdiv]
+      have hlt : n < 2 ^ (n.log2 + 1) := by
+        simpa using (Nat.lt_log2_self : n < 2 ^ (n.log2 + 1))
+      omega
+    exact False.elim (Nat.not_lt_of_ge hpow_le hgap_lt)
+
 private theorem sqrtAux_append
     (n fuel₁ fuel₂ x : Nat) :
     sqrtAux n (fuel₁ + fuel₂) x =
@@ -471,6 +611,21 @@ private theorem sqrtAux_full_fuel_near_or_sq_le
     (sqrtAux n (n.log2 + 1) n)
     (sqrtAux_phase_one_near_or_sq_le n)
 
+private theorem sqrtAux_full_fuel_sq_le
+    (n : Nat) (hn : 0 < n) :
+    (sqrtAux n (2 * n.log2 + 1) n) *
+      (sqrtAux n (2 * n.log2 + 1) n) ≤ n := by
+  have hfuel : 2 * n.log2 + 1 = (n.log2 + 1) + n.log2 := by omega
+  rw [hfuel, sqrtAux_append]
+  have hsq : (sqrtAux n (n.log2 + 1) n) *
+      (sqrtAux n (n.log2 + 1) n) ≤ n :=
+    sqrtAux_phase_one_sq_le n hn
+  have hself :
+      sqrtAux n n.log2 (sqrtAux n (n.log2 + 1) n) =
+        sqrtAux n (n.log2 + 1) n :=
+    sqrtAux_eq_self_of_sq_le n n.log2 (sqrtAux n (n.log2 + 1) n) hsq
+  simpa [hself] using hsq
+
 /-- The squared Euclidean norm of the coefficient vector of `f`. -/
 def coeffNormSq (f : ZPoly) : Nat :=
   (List.range f.size).foldl (fun acc i => acc + (f.coeff i).natAbs ^ 2) 0
@@ -513,6 +668,15 @@ theorem binom_eq_zero_of_lt {n k : Nat} (h : n < k) : binom n k = 0 := by
 
 @[simp] theorem floorSqrt_zero : floorSqrt 0 = 0 := by
   simp [floorSqrt]
+
+theorem floorSqrt_sq_le (n : Nat) : floorSqrt n * floorSqrt n ≤ n := by
+  by_cases hn : n = 0
+  · subst n
+    simp
+  · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn
+    unfold floorSqrt
+    rw [if_neg hn]
+    exact sqrtAux_full_fuel_sq_le n hn_pos
 
 @[simp] theorem ceilSqrt_zero : ceilSqrt 0 = 0 := by
   simp [ceilSqrt]
