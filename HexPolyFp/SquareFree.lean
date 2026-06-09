@@ -6219,6 +6219,17 @@ private theorem constant_nonzero_dvd
   rw [zmod64_mul_inv_eq_one_of_prime_ne_zero (ZMod64.PrimeModulus.prime (p := p)) hunit_ne]
   exact (scale_one_left f).symm
 
+private theorem normalizeMonic_C_ne_zero_eq_one
+    [ZMod64.PrimeModulus p] (k : ZMod64 p) (hk : k ≠ 0) :
+    (normalizeMonic (DensePoly.C k : FpPoly p)).2 = 1 := by
+  apply normalizeMonic_eq_one_of_dvd_one
+  apply constant_nonzero_dvd
+  · cases hzero : (DensePoly.C k : FpPoly p).isZero
+    · rfl
+    · exact False.elim (hk ((DensePoly.isZero_C_eq_true_iff k).mp hzero))
+  · rw [DensePoly.size_C_of_ne_zero hk]
+    omega
+
 private theorem yunStep_gcd_nonzero_of_left_nonzero
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p)
@@ -6236,6 +6247,32 @@ private theorem yunStep_gcd_nonzero_of_left_nonzero
         exact hq
       rw [hc_eq_zero] at hc_zero
       cases hc_zero
+
+private theorem gcd_C_ne_zero_dvd_one
+    [ZMod64.PrimeModulus p] (k : ZMod64 p) (hk : k ≠ 0) (w : FpPoly p) :
+    DensePoly.gcd (DensePoly.C k : FpPoly p) w ∣ (1 : FpPoly p) := by
+  have hC_zero : (DensePoly.C k : FpPoly p).isZero = false := by
+    cases hzero : (DensePoly.C k : FpPoly p).isZero
+    · rfl
+    · exact False.elim (hk ((DensePoly.isZero_C_eq_true_iff k).mp hzero))
+  have hC_ne : (DensePoly.C k : FpPoly p) ≠ 0 :=
+    ne_zero_of_isZero_false hC_zero
+  have hg_zero :
+      (DensePoly.gcd (DensePoly.C k : FpPoly p) w).isZero = false :=
+    yunStep_gcd_nonzero_of_left_nonzero (DensePoly.C k : FpPoly p) w hC_zero
+  apply constant_nonzero_dvd hg_zero
+  have hsize_le :
+      (DensePoly.gcd (DensePoly.C k : FpPoly p) w).size ≤
+        (DensePoly.C k : FpPoly p).size :=
+    size_le_of_dvd_of_ne_zero
+      (DensePoly.gcd_dvd_left (DensePoly.C k : FpPoly p) w) hC_ne
+  rw [DensePoly.size_C_of_ne_zero hk] at hsize_le
+  omega
+
+private theorem normalizeMonic_gcd_C_ne_zero_eq_one
+    [ZMod64.PrimeModulus p] (k : ZMod64 p) (hk : k ≠ 0) (w : FpPoly p) :
+    (normalizeMonic (DensePoly.gcd (DensePoly.C k : FpPoly p) w)).2 = 1 :=
+  normalizeMonic_eq_one_of_dvd_one (gcd_C_ne_zero_dvd_one k hk w)
 
 private theorem yunStep_gcd_dvd_one_of_constant_common_dvd_one
     [ZMod64.PrimeModulus p]
