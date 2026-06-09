@@ -7059,6 +7059,65 @@ theorem factorFast_terminates
     f primeData rows_pos trueSupports capInputs recoveryInputs
 
 /--
+SPEC D1 named wrapper: once the executable prime search succeeds, select its
+`PrimeChoiceData` witness and apply the packaged BHKS/recovery assembly for
+that witness.
+
+The remaining arguments are provider functions for the selected executable
+prime. They are exactly the mathematical packages consumed by
+`factorFast_terminates`; this wrapper only aligns the final surface with the
+`choosePrimeData? ≠ none → factorFast ≠ none` entry point.
+-/
+theorem factorFast_terminates_of_choosePrimeData
+    (f : Hex.ZPoly)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore ≠ none)
+    (rows_pos :
+      ∀ primeData,
+        Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+            some primeData →
+          HasPositiveDimension
+            (Hex.normalizeForFactor f).squareFreeCore
+            (factorFastCapLiftData f primeData))
+    (trueSupports :
+      ∀ primeData
+        (hselected :
+          Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+            some primeData),
+        Set (Set (Fin (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          (rows_pos primeData hselected)).factorCount)))
+    (capInputs :
+      ∀ primeData
+        (hselected :
+          Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+            some primeData),
+        FactorFastCapSeparationInputs f primeData
+          (rows_pos primeData hselected)
+          (trueSupports primeData hselected))
+    (recoveryInputs :
+      ∀ primeData
+        (hselected :
+          Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+            some primeData),
+        CanonicalRecoveryTailInputs f primeData
+          (rows_pos primeData hselected)
+          (trueSupports primeData hselected)) :
+    Hex.factorFast f ≠ none := by
+  cases hselected :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore with
+  | none =>
+      exact False.elim (hchoose hselected)
+  | some primeData =>
+      exact
+        factorFast_terminates f primeData
+          (rows_pos primeData hselected)
+          (trueSupports primeData hselected)
+          (capInputs primeData hselected)
+          (recoveryInputs primeData hselected)
+
+/--
 Final HO-4 wrapper threading the pointwise auxiliary bounds plus paper-threshold
 ingredients directly to the public success conclusion.
 
