@@ -33,6 +33,12 @@ DEFAULT_ISABELLE_BOTTOM = (
     ROOT / "reports/bench-results/hex-lll-isabelle-bottom-e211854d1435.json"
 )
 DEFAULT_CERTIFIED = ROOT / "reports/bench-results/hex-lll-certified-3e90e137.json"
+DEFAULT_ISABELLE_CERTIFIED_RANDOM = (
+    ROOT / "reports/bench-results/hex-lll-isabelle-certified-smoke.json"
+)
+DEFAULT_ISABELLE_CERTIFIED_HARSH = (
+    ROOT / "reports/bench-results/hex-lll-isabelle-certified-harsh-smoke.json"
+)
 DEFAULT_RANDOM_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-random-bounded.svg"
 DEFAULT_HARSH_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-harsh-cubic.svg"
 
@@ -44,6 +50,9 @@ FPLLL_RANDOM = re.compile(
 CERTIFIED_RANDOM = re.compile(
     r"runCertifiedFirstShortVectorRandomBounded([0-9]+)Checksum$"
 )
+ISABELLE_CERTIFIED_RANDOM = re.compile(
+    r"runIsabelleCertifiedRandomBoundedNormSq([0-9]+)$"
+)
 LEAN_HARSH = re.compile(r"runFirstShortVectorHarshCubicNormSq([0-9]+)$")
 ISABELLE_HARSH = re.compile(r"runIsabelleHarshCubicNormSq([0-9]+)$")
 FPLLL_HARSH = re.compile(
@@ -51,6 +60,9 @@ FPLLL_HARSH = re.compile(
 )
 CERTIFIED_HARSH = re.compile(
     r"runCertifiedFirstShortVectorHarshCubic([0-9]+)Checksum$"
+)
+ISABELLE_CERTIFIED_HARSH = re.compile(
+    r"runIsabelleCertifiedHarshCubicNormSq([0-9]+)$"
 )
 
 
@@ -67,8 +79,10 @@ class FamilyConfig:
     isabelle_pattern: re.Pattern[str]
     fpll_pattern: re.Pattern[str]
     certified_pattern: re.Pattern[str]
+    isabelle_certified_pattern: re.Pattern[str]
     fpll_path: Path
     certified_path: Path
+    isabelle_certified_path: Path
     output: Path
     title: str
     xlabel: str
@@ -84,8 +98,10 @@ FAMILIES = {
         isabelle_pattern=ISABELLE_RANDOM,
         fpll_pattern=FPLLL_RANDOM,
         certified_pattern=CERTIFIED_RANDOM,
+        isabelle_certified_pattern=ISABELLE_CERTIFIED_RANDOM,
         fpll_path=DEFAULT_RANDOM_CONSOLIDATED,
         certified_path=DEFAULT_CERTIFIED,
+        isabelle_certified_path=DEFAULT_ISABELLE_CERTIFIED_RANDOM,
         output=DEFAULT_RANDOM_OUTPUT,
         title="HexLLL random-bounded comparator runtime",
         xlabel="random-bounded dimension n",
@@ -97,8 +113,10 @@ FAMILIES = {
         isabelle_pattern=ISABELLE_HARSH,
         fpll_pattern=FPLLL_HARSH,
         certified_pattern=CERTIFIED_HARSH,
+        isabelle_certified_pattern=ISABELLE_CERTIFIED_HARSH,
         fpll_path=DEFAULT_HARSH_CONSOLIDATED,
         certified_path=DEFAULT_CERTIFIED,
+        isabelle_certified_path=DEFAULT_ISABELLE_CERTIFIED_HARSH,
         output=DEFAULT_HARSH_OUTPUT,
         title="HexLLL harsh-cubic comparator runtime",
         xlabel="harsh-cubic dimension n",
@@ -156,6 +174,7 @@ def plot(series: list[Series], output: Path, title: str, xlabel: str) -> None:
         {"marker": "s", "linewidth": 2.0},
         {"marker": "D", "linewidth": 2.0, "markersize": 6.5},
         {"marker": "^", "linewidth": 2.0, "markersize": 7.0},
+        {"marker": "v", "linewidth": 2.0, "markersize": 7.0},
     ]
     for item, style in zip(series, styles, strict=True):
         ax.plot(item.xs, [y / 1000.0 for y in item.ys], label=item.label, **style)
@@ -204,6 +223,12 @@ def main() -> None:
         default=None,
         help="Override the committed Lean-certified bench export.",
     )
+    parser.add_argument(
+        "--isabelle-certified",
+        type=Path,
+        default=None,
+        help="Override the committed Isabelle-certified bench export.",
+    )
     parser.add_argument("--output", type=Path, default=None)
     args = parser.parse_args()
     config = FAMILIES[args.family]
@@ -211,9 +236,9 @@ def main() -> None:
     output = args.output or config.output
 
     cons = load_results(cons_path)
-    lean = collect_series(cons, config.lean_pattern, "Lean")
+    lean = collect_series(cons, config.lean_pattern, "Lean native")
     isabelle = collect_series(cons, config.isabelle_pattern,
-                              "verified Isabelle LLL")
+                              "verified Isabelle native LLL")
     fpll_results = cons
     fpll = collect_series(
         fpll_results, config.fpll_pattern, "fpLLL via fplll-ffi"
@@ -222,11 +247,24 @@ def main() -> None:
     certified = collect_series(
         certified_results, config.certified_pattern, "Lean certified"
     )
+    isabelle_certified_results = load_results(
+        args.isabelle_certified or config.isabelle_certified_path
+    )
+    isabelle_certified = collect_series(
+        isabelle_certified_results,
+        config.isabelle_certified_pattern,
+        "verified Isabelle certified-LLL",
+    )
     if config.bottom_consistency:
         isabelle_bottom_results = load_results(args.isabelle_bottom)
         assert_bottom_consistent(isabelle_bottom_results, isabelle)
 
-    plot([lean, isabelle, certified, fpll], output, config.title, config.xlabel)
+    plot(
+        [lean, isabelle, certified, isabelle_certified, fpll],
+        output,
+        config.title,
+        config.xlabel,
+    )
 
 
 if __name__ == "__main__":
