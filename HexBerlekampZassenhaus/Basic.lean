@@ -11981,6 +11981,96 @@ private theorem trialDivisionPeelAux_factor_mem
                   exact List.mem_cons_of_mem c
                     (ih q rfact rres hrest factor (by simpa using hrest_mem))
 
+/-- A candidate that was tried by `trialDivisionPeelAux` but not emitted does
+not exactly divide the final residual.  This is the executable "no missed
+candidate" statement available without squarefreeness: emitted candidates may
+still divide the residual when the input target contains repeated factors,
+because each candidate is tried only once. -/
+private theorem trialDivisionPeelAux_no_missed_unemitted
+    (target : ZPoly) (candidates : List ZPoly)
+    (hcand :
+      ∀ c ∈ candidates,
+        0 < c.degree?.getD 0 ∧ 0 < DensePoly.leadingCoeff c) :
+    ∀ factors residual,
+      trialDivisionPeelAux target candidates = (factors, residual) →
+        ∀ c ∈ candidates, c ∉ factors.toList →
+          exactQuotient? residual c = none := by
+  induction candidates generalizing target with
+  | nil =>
+      intro factors residual hsplit cand hc
+      simp at hc
+  | cons head tail ih =>
+      intro factors residual hsplit cand hc hnot_mem
+      have htail_cand :
+          ∀ c ∈ tail,
+            0 < c.degree?.getD 0 ∧ 0 < DensePoly.leadingCoeff c := by
+        intro c hc
+        exact hcand c (List.mem_cons_of_mem head hc)
+      unfold trialDivisionPeelAux at hsplit
+      cases hhead : exactQuotient? target head with
+      | none =>
+          simp [hhead] at hsplit
+          have hc_dec : cand = head ∨ cand ∈ tail := by
+            simpa using hc
+          rcases hc_dec with hc_eq | hc_tail
+          · cases hresquot : exactQuotient? residual head with
+            | none =>
+                rw [hc_eq]
+                exact hresquot
+            | some q =>
+                exfalso
+                have hprod :
+                    residual * Array.polyProduct factors = target :=
+                  trialDivisionPeelAux_product target tail factors residual hsplit
+                have hres_mul : q * head = residual :=
+                  exactQuotient?_product hresquot
+                have hmul :
+                    (q * Array.polyProduct factors) * head = target := by
+                  calc
+                    (q * Array.polyProduct factors) * head
+                        = q * (Array.polyProduct factors * head) := by
+                            rw [DensePoly.mul_assoc_poly (S := Int)]
+                    _ = q * (head * Array.polyProduct factors) := by
+                            rw [DensePoly.mul_comm_poly (S := Int)
+                              (Array.polyProduct factors) head]
+                    _ = (q * head) * Array.polyProduct factors := by
+                            rw [← DensePoly.mul_assoc_poly (S := Int)]
+                    _ = residual * Array.polyProduct factors := by
+                            rw [hres_mul]
+                    _ = target := hprod
+                have hprops := hcand head List.mem_cons_self
+                have hsome :
+                    exactQuotient? target head =
+                      some (q * Array.polyProduct factors) :=
+                  exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq
+                    hprops.2 hprops.1 hmul
+                rw [hhead] at hsome
+                contradiction
+          · exact ih target htail_cand factors residual hsplit cand hc_tail hnot_mem
+      | some quotient =>
+          simp [hhead] at hsplit
+          cases hrest : trialDivisionPeelAux quotient tail with
+          | mk restFactors restResidual =>
+              simp [hrest] at hsplit
+              rcases hsplit with ⟨hfactors, hresidual⟩
+              subst factors
+              subst residual
+              have hc_dec : cand = head ∨ cand ∈ tail := by
+                simpa using hc
+              rcases hc_dec with hc_eq | hc_tail
+              · rw [hc_eq] at hnot_mem
+                exfalso
+                apply hnot_mem
+                rw [Array.toList_append]
+                simp
+              · have hnot_tail : cand ∉ restFactors.toList := by
+                  intro hmem_tail
+                  apply hnot_mem
+                  rw [Array.toList_append]
+                  simp [hmem_tail]
+                exact ih quotient htail_cand restFactors restResidual hrest
+                  cand hc_tail hnot_tail
+
 /-- When the peel target has positive leading coefficient and every candidate
 in the input list has positive leading coefficient, the residual emitted by
 `trialDivisionPeelAux` retains a positive leading coefficient. -/
