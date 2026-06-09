@@ -8,7 +8,21 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cache_root="${HEX_ORACLE_CACHE:-${repo_root}/.cache/oracles}/lll-isabelle"
 archive="${cache_root}/Experiments_LLL.zip"
 src_dir="${cache_root}/src"
-binary="${src_dir}/experiments/svp_verified"
+mode="${1:-verified}"
+case "${mode}" in
+  verified|--verified)
+    binary="${src_dir}/experiments/svp_verified"
+    make_target="svp_verified"
+    ;;
+  certified|--certified)
+    binary="${src_dir}/experiments/svp_certified"
+    make_target="svp_certified"
+    ;;
+  *)
+    echo "setup_lll_isabelle.sh: usage: $0 [verified|certified]" >&2
+    exit 2
+    ;;
+esac
 patch_dir="${repo_root}/scripts/oracle/patches/lll-isabelle"
 
 mkdir -p "${cache_root}"
@@ -51,6 +65,9 @@ need shasum
 need unzip
 need make
 need ghc
+if [[ "${make_target}" == "svp_certified" ]]; then
+  need fplll
+fi
 
 verify_archive() {
   local path="$1"
@@ -100,15 +117,15 @@ if (( ${#patches[@]} > 0 )); then
     mkdir -p "${src_dir}"
     unzip -q "${archive}" -d "${src_dir}"
     for patch in "${patches[@]}"; do
-      patch -d "${src_dir}" -p1 < "${patch}" >&2
+      patch -l -d "${src_dir}" -p1 < "${patch}" >&2
     done
     printf '%s\n' "${current_patch_sum}" > "${stamp}"
-    rm -f "${binary}"
+    rm -f "${src_dir}/experiments/svp_verified" "${src_dir}/experiments/svp_certified"
   fi
 fi
 
 if [[ ! -x "${binary}" ]]; then
-  make -C "${src_dir}/experiments" svp_verified >/dev/null
+  make -C "${src_dir}/experiments" "${make_target}" >/dev/null
 fi
 
 printf '%s\n' "${binary}"

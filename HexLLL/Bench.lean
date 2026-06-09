@@ -77,6 +77,13 @@ External comparator:
   of accepting a single matrix file path on argv. Set
   `HEX_LLL_ISABELLE_SVP` to an already-built binary to avoid setup in
   the first measured call.
+* `verified Isabelle certified-LLL` uses the same Zenodo archive's
+  `svp_certified` target (`haskell_sources/Main_Certified.hs`), not the
+  later AFP modular-HNF certifier. It verifies the external fpLLL
+  two-transform certificate, re-runs verified LLL to confirm reducedness,
+  and reports the same first-vector squared norm. Set
+  `HEX_LLL_ISABELLE_CERTIFIED_SVP` to an already-built persistent driver
+  to avoid setup in the first measured call.
 
 ## Comparator-call protocol
 
@@ -93,6 +100,11 @@ Process call": one `svp_verified` driver is spawned per
 `lake exe hexlll_bench run` invocation, and each measured call sends
 one framed request to its stdin and reads one framed reply from its
 stdout.
+
+The `verified Isabelle certified-LLL` comparator uses the same
+persistent protocol with the archive's `svp_certified` driver. Each
+request still shells out to the `fplll` binary from inside the generated
+certifier, unlike Hex's in-process `fplll-ffi` certified path.
 
 **Isabelle framing.** Each request is one line containing the input
 matrix in Haskell's `[[Integer]]` read syntax — exactly the string
@@ -132,7 +144,8 @@ first probe via `HEX_FPLLL_FFI_LIB`.
 **Driver path overrides.** `HEX_FPLLL_FFI_LIB` selects the
 `fplll-ffi` shared library that the bench `dlopen`s at start-up
 (see `HexLLL/ffi/lean_hexlll_provider.c`). The Isabelle binary path
-is controlled by `HEX_LLL_ISABELLE_SVP` as before.
+is controlled by `HEX_LLL_ISABELLE_SVP`; the Isabelle certified binary
+path is controlled by `HEX_LLL_ISABELLE_CERTIFIED_SVP`.
 
 **Signal-floor setting.** HexLLL scientific parametric registrations set
 `signalFloorMultiplier := 1.0`. The timed rows come from child-side
@@ -756,6 +769,8 @@ def matrixHaskell (b : Matrix Int n m) : String :=
 
 initialize isabelleBinaryRef : IO.Ref (Option String) ← IO.mkRef none
 
+initialize isabelleCertifiedBinaryRef : IO.Ref (Option String) ← IO.mkRef none
+
 def checkedProcessOutput (cmd : String) (args : Array String := #[]) : IO String := do
   let out ← IO.Process.output { cmd := cmd, args := args }
   if out.exitCode != 0 then
@@ -771,6 +786,16 @@ def resolveIsabelleBinary : IO String := do
     | some p => pure p
     | none => checkedProcessOutput "scripts/oracle/setup_lll_isabelle.sh"
   isabelleBinaryRef.set (some path)
+  return path
+
+def resolveIsabelleCertifiedBinary : IO String := do
+  if let some cached ← isabelleCertifiedBinaryRef.get then
+    return cached
+  let path ←
+    match (← IO.getEnv "HEX_LLL_ISABELLE_CERTIFIED_SVP") with
+    | some p => pure p
+    | none => checkedProcessOutput "scripts/oracle/setup_lll_isabelle.sh" #["certified"]
+  isabelleCertifiedBinaryRef.set (some path)
   return path
 
 def parseIsabelleNormSq (text : String) : IO Int := do
@@ -813,6 +838,9 @@ end PersistentComparator
 initialize isabelleChildRef : IO.Ref (Option PersistentComparator) ←
   IO.mkRef none
 
+initialize isabelleCertifiedChildRef : IO.Ref (Option PersistentComparator) ←
+  IO.mkRef none
+
 /-- Lazily spawn the persistent `svp_verified` driver, or return the
 cached handle. -/
 def resolveIsabelleChild : IO PersistentComparator := do
@@ -821,6 +849,16 @@ def resolveIsabelleChild : IO PersistentComparator := do
   let binary ← resolveIsabelleBinary
   let ch ← PersistentComparator.spawn binary
   isabelleChildRef.set (some ch)
+  return ch
+
+/-- Lazily spawn the persistent `svp_certified` driver, or return the
+cached handle. -/
+def resolveIsabelleCertifiedChild : IO PersistentComparator := do
+  if let some ch ← isabelleCertifiedChildRef.get then
+    return ch
+  let binary ← resolveIsabelleCertifiedBinary
+  let ch ← PersistentComparator.spawn binary
+  isabelleCertifiedChildRef.set (some ch)
   return ch
 
 /-- Send one matrix to the persistent driver and parse its reply.
@@ -848,10 +886,31 @@ def requestIsabelleLineWithRetry (request : String) : Nat → IO String
       isabelleChildRef.set none
       requestIsabelleLineWithRetry request remaining
 
+def requestIsabelleCertifiedLineWithRetry (request : String) : Nat → IO String
+  | 0 => do
+    let reply ← (← resolveIsabelleCertifiedChild).requestLine request
+    if reply.isEmpty then
+      throw <| IO.userError "svp_certified closed stdout before replying"
+    return reply
+  | Nat.succ remaining => do
+    try
+      let reply ← (← resolveIsabelleCertifiedChild).requestLine request
+      if reply.isEmpty then
+        throw <| IO.userError "svp_certified closed stdout before replying"
+      return reply
+    catch _ =>
+      isabelleCertifiedChildRef.set none
+      requestIsabelleCertifiedLineWithRetry request remaining
+
 def runIsabelleShortVectorNormSq (_tag : String) (input : FirstShortVectorInput) :
     IO Int := do
   let request := matrixHaskell input.basis
   parseIsabelleNormSq (← requestIsabelleLineWithRetry request 1)
+
+def runIsabelleCertifiedShortVectorNormSq (_tag : String) (input : FirstShortVectorInput) :
+    IO Int := do
+  let request := matrixHaskell input.basis
+  parseIsabelleNormSq (← requestIsabelleCertifiedLineWithRetry request 1)
 
 /-- Approximate `Rat → Float` for forwarding `δ` to the FFI provider. Precision
 is not part of correctness: the certified path checks the resulting candidate
@@ -1319,6 +1378,82 @@ def runFirstShortVectorHarshCubicNormSq65 : Unit → IO Int := fun _ => do
 
 def runIsabelleHarshCubicNormSq65 : Unit → IO Int := fun _ => do
   runIsabelleShortVectorNormSq "harsh-cubic-65"
+    (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
+
+def runIsabelleCertifiedRandomBoundedNormSq30 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "random-bounded-30"
+    (← getCachedInput randomBoundedInput30Ref (fun _ => prepRandomBoundedInput 30))
+
+def runIsabelleCertifiedRandomBoundedNormSq45 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "random-bounded-45"
+    (← getCachedInput randomBoundedInput45Ref (fun _ => prepRandomBoundedInput 45))
+
+def runIsabelleCertifiedRandomBoundedNormSq60 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "random-bounded-60"
+    (← getCachedInput randomBoundedInput60Ref (fun _ => prepRandomBoundedInput 60))
+
+def runIsabelleCertifiedRandomBoundedNormSq75 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "random-bounded-75"
+    (← getCachedInput randomBoundedInput75Ref (fun _ => prepRandomBoundedInput 75))
+
+def runIsabelleCertifiedRandomBoundedNormSq90 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "random-bounded-90"
+    (← getCachedInput randomBoundedInput90Ref (fun _ => prepRandomBoundedInput 90))
+
+def runIsabelleCertifiedRandomBoundedNormSq120 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "random-bounded-120"
+    (← getCachedInput randomBoundedInput120Ref (fun _ => prepRandomBoundedInput 120))
+
+def runIsabelleCertifiedRandomBoundedNormSq150 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "random-bounded-150"
+    (← getCachedInput randomBoundedInput150Ref (fun _ => prepRandomBoundedInput 150))
+
+def runIsabelleCertifiedRandomBoundedNormSq180 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "random-bounded-180"
+    (← getCachedInput randomBoundedInput180Ref (fun _ => prepRandomBoundedInput 180))
+
+def runIsabelleCertifiedHarshCubicNormSq15 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "harsh-cubic-15"
+    (← getCachedInput harshCubicInput15Ref (fun _ => prepHarshCubicInput 15))
+
+def runIsabelleCertifiedHarshCubicNormSq20 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "harsh-cubic-20"
+    (← getCachedInput harshCubicInput20Ref (fun _ => prepHarshCubicInput 20))
+
+def runIsabelleCertifiedHarshCubicNormSq25 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "harsh-cubic-25"
+    (← getCachedInput harshCubicInput25Ref (fun _ => prepHarshCubicInput 25))
+
+def runIsabelleCertifiedHarshCubicNormSq30 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "harsh-cubic-30"
+    (← getCachedInput harshCubicInput30Ref (fun _ => prepHarshCubicInput 30))
+
+def runIsabelleCertifiedHarshCubicNormSq35 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "harsh-cubic-35"
+    (← getCachedInput harshCubicInput35Ref (fun _ => prepHarshCubicInput 35))
+
+def runIsabelleCertifiedHarshCubicNormSq40 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "harsh-cubic-40"
+    (← getCachedInput harshCubicInput40Ref (fun _ => prepHarshCubicInput 40))
+
+def runIsabelleCertifiedHarshCubicNormSq45 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "harsh-cubic-45"
+    (← getCachedInput harshCubicInput45Ref (fun _ => prepHarshCubicInput 45))
+
+def runIsabelleCertifiedHarshCubicNormSq50 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "harsh-cubic-50"
+    (← getCachedInput harshCubicInput50Ref (fun _ => prepHarshCubicInput 50))
+
+def runIsabelleCertifiedHarshCubicNormSq55 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "harsh-cubic-55"
+    (← getCachedInput harshCubicInput55Ref (fun _ => prepHarshCubicInput 55))
+
+def runIsabelleCertifiedHarshCubicNormSq60 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "harsh-cubic-60"
+    (← getCachedInput harshCubicInput60Ref (fun _ => prepHarshCubicInput 60))
+
+def runIsabelleCertifiedHarshCubicNormSq65 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "harsh-cubic-65"
     (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
 
 /-- Parametric benchmark target: LCG random-bounded bases. -/
@@ -2188,6 +2323,159 @@ setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq65 where {
   }
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq65 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 65)
+    warmupFirstIter := true
+  }
+
+/- Verified-Isabelle certified-LLL registrations. These use the Zenodo
+`svp_certified` driver, which invokes the `fplll` binary per request and then
+checks the two-transform certificate before returning the squared norm. -/
+setup_fixed_benchmark runIsabelleCertifiedRandomBoundedNormSq30 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 20.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 30)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedRandomBoundedNormSq45 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 20.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 45)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedRandomBoundedNormSq60 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 60)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedRandomBoundedNormSq75 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 75)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedRandomBoundedNormSq90 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 40.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 90)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedRandomBoundedNormSq120 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 120)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedRandomBoundedNormSq150 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 150)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedRandomBoundedNormSq180 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 120.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 180)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedHarshCubicNormSq15 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 15)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedHarshCubicNormSq20 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 20)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedHarshCubicNormSq25 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 25)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedHarshCubicNormSq30 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 40.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 30)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedHarshCubicNormSq35 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 35)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedHarshCubicNormSq40 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 40)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedHarshCubicNormSq45 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 45)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedHarshCubicNormSq50 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 50)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedHarshCubicNormSq55 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 55)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedHarshCubicNormSq60 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 60)
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedHarshCubicNormSq65 where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 65)

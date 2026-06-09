@@ -2,7 +2,8 @@
 
 Patch files in this directory are applied by
 `scripts/oracle/setup_lll_isabelle.sh` after unpacking the Zenodo
-`Experiments_LLL.zip` archive and before building `svp_verified`.
+`Experiments_LLL.zip` archive and before building `svp_verified` or
+`svp_certified`.
 
 ## `01-persistent-stdin.patch`
 
@@ -24,3 +25,12 @@ caches the process handle in an `IO.Ref`, sends one request line per
 call, and parses one reply line back. On process death the wiring
 re-spawns once and retries; persistent failure surfaces as an
 `IO.userError`.
+
+## `02-certified-persistent-stdin.patch`
+
+Applies the same persistent stdin/stdout protocol to
+`haskell_sources/Main_Certified.hs`, whose output is the squared norm
+emitted by `test_certified`. The certified driver still invokes the
+`fplll` binary per request through the archive's generated verifier
+pipeline; the persistent protocol removes only the Haskell driver startup
+from each measured call.
