@@ -14,6 +14,7 @@ Covered operations:
 - `Hex.lll`
 - `Hex.lll.firstShortVector`
 - `Hex.lll.shortVectors`
+- `Hex.certCheck`
 - `Hex.LLLState.sizeReduceColumn`
 - `Hex.LLLState.sizeReduce`
 - `Hex.LLLState.swapStep`
@@ -31,6 +32,9 @@ Covered properties:
   determinant and scaled coefficients.
 - downstream short-vector entry points expose the first reduced row and the
   ordered reduced rows on a BZ-shaped integer coefficient basis.
+- certified-dispatch certificates accept a known-good reduced basis and reject
+  tampered basis/transform witnesses, malformed flat provider payloads, and
+  an `η = 11/20` size-reduction boundary violation.
 - stored rational Gram-Schmidt coefficients recover the quotient `ν[i][j]/d[j+1]`.
 - potential multiplies the stored determinant prefix `d₁, ..., dₙ₋₁`.
 
@@ -43,6 +47,8 @@ Covered edge cases:
   orthogonal-block position that exercises the multi-row update loop.
 - size-reduction at the highest valid row index that exercises the full
   earlier-row loop.
+- a certified-dispatch payload for a `2 × 2` triangular basis, including
+  explicit transforms in both row-lattice directions.
 - a downstream basis with one integer coefficient row per lifted local factor.
 - out-of-range `sizeReduce` / `swapStep` calls that leave the state unchanged.
 -/
@@ -111,6 +117,90 @@ private def bzStyleBasis : Matrix Int 3 4 :=
     | 2, 3 => 2
     | _, _ => 0
 
+private def certInput2 : Matrix Int 2 2 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 0 => 1
+    | 0, 1 => 12
+    | 1, 1 => 1
+    | _, _ => 0
+
+private def certReduced2 : Matrix Int 2 2 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 1 => 1
+    | 1, 0 => 1
+    | _, _ => 0
+
+private def certTransform2 : Matrix Int 2 2 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 1 => 1
+    | 1, 0 => 1
+    | 1, 1 => -12
+    | _, _ => 0
+
+private def certInverse2 : Matrix Int 2 2 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 0 => 12
+    | 0, 1 => 1
+    | 1, 0 => 1
+    | _, _ => 0
+
+private def tamperedReduced2 : Matrix Int 2 2 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 0 => 1
+    | 1, 1 => 1
+    | _, _ => 0
+
+private def tamperedTransform2 : Matrix Int 2 2 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 0 => 1
+    | 0, 1 => 1
+    | 1, 0 => 1
+    | 1, 1 => -12
+    | _, _ => 0
+
+private def tamperedInverse2 : Matrix Int 2 2 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 0 => 12
+    | 0, 1 => 1
+    | 1, 0 => 1
+    | 1, 1 => 1
+    | _, _ => 0
+
+private def etaBoundary2 : Matrix Int 2 2 :=
+  Matrix.ofFn fun i j =>
+    match i.val, j.val with
+    | 0, 0 => 10
+    | 1, 0 => 6
+    | 1, 1 => 1
+    | _, _ => 0
+
+private def goodFlat2 : Array Int :=
+  #[0, 2, 2, 1,
+    0, 1,
+    1, 0,
+    0, 1,
+    1, -12,
+    12, 1,
+    1, 0]
+
+private def malformedFlat2 : Array Int :=
+  #[0, 2, 3, 1,
+    0, 1,
+    1, 0,
+    0, 1,
+    1, -12,
+    12, 1,
+    1, 0]
+
+private abbrev f0_2 : Fin 2 := ⟨0, by decide⟩
+private abbrev f1_2 : Fin 2 := ⟨1, by decide⟩
 private abbrev f0_3 : Fin 3 := ⟨0, by decide⟩
 private abbrev f1_3 : Fin 3 := ⟨1, by decide⟩
 private abbrev f2_3 : Fin 3 := ⟨2, by decide⟩
@@ -214,45 +304,36 @@ private def independentCheck (b : Matrix Int n m) : Bool :=
   (List.finRange n).all fun k =>
     0 < GramSchmidt.Int.gramDet b (k.val + 1) (Nat.succ_le_of_lt k.isLt)
 
-private noncomputable def lllReducedCheck (b : Matrix Int n m) (δ η : Rat) : Bool :=
-  let basis := GramSchmidt.Int.basis b
-  let coeffs := GramSchmidt.Int.coeffs b
-  let sizeReduced :=
-    (List.range n).all fun i =>
-      if hi : i < n then
-        (List.range i).all fun j =>
-          if hji : j < i then
-            let iFin : Fin n := ⟨i, hi⟩
-            let jFin : Fin n := ⟨j, Nat.lt_trans hji hi⟩
-            let μ := coeffs[iFin][jFin]
-            μ * μ ≤ η * η
-          else
-            true
-      else
-        true
-  let lovasz :=
-    (List.range n).all fun i =>
-      if hi : i + 1 < n then
-        let iFin : Fin n := ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩
-        let ip1Fin : Fin n := ⟨i + 1, hi⟩
-        let μ := coeffs[ip1Fin][iFin]
-        δ * Vector.normSq (basis.row iFin) ≤
-          Vector.normSq (basis.row ip1Fin) + μ * μ * Vector.normSq (basis.row iFin)
-      else
-        true
-  sizeReduced && lovasz
-
 #guard independentCheck identity8
 #guard !independentCheck zero8
 #guard !independentCheck dependent8x4
 
--- `lllReducedInt` matches the noncomputable rational checker on the canonical
--- bases: identity is fully (3/4, 1/2)-reduced, zero fails independence,
--- dependent fails independence. The `#guard` exercises the executable
--- integer path on `GramSchmidt.Int.data`.
+-- `lllReducedInt` is the executable reducedness oracle over
+-- `GramSchmidt.Int.data`: identity is fully (3/4, 1/2)-reduced, while zero
+-- and dependent bases fail independence.
 #guard lllReducedInt identity8 (3/4 : Rat) (1/2 : Rat)
 #guard !lllReducedInt zero8 (3/4 : Rat) (1/2 : Rat)
 #guard !lllReducedInt dependent8x4 (3/4 : Rat) (1/2 : Rat)
+
+#guard Matrix.row certReduced2 f0_2 = Matrix.row certInput2 f1_2
+#guard Matrix.row certReduced2 f1_2 =
+  (Vector.ofFn fun j => if j.val = 0 then 1 else 0)
+
+#guard certCheck certInput2 certReduced2 certTransform2 certInverse2
+  (3/4 : Rat) (11/20 : Rat)
+#guard !certCheck certInput2 tamperedReduced2 certTransform2 certInverse2
+  (3/4 : Rat) (11/20 : Rat)
+#guard !certCheck certInput2 certReduced2 tamperedTransform2 certInverse2
+  (3/4 : Rat) (11/20 : Rat)
+#guard !certCheck certInput2 certReduced2 certTransform2 tamperedInverse2
+  (3/4 : Rat) (11/20 : Rat)
+#guard match LLLProvider.certifyFlat certInput2 (3/4 : Rat) goodFlat2 with
+  | some _ => true
+  | none => false
+#guard match LLLProvider.certifyFlat certInput2 (3/4 : Rat) malformedFlat2 with
+  | some _ => false
+  | none => true
+#guard !certCheck etaBoundary2 etaBoundary2 1 1 (3/4 : Rat) (11/20 : Rat)
 
 private def stateOf (b : Matrix Int n m) : LLLState n m :=
   let gs := GramSchmidt.Int.data b
