@@ -2901,6 +2901,20 @@ private def yunFactorsLevelCompletes (c w : FpPoly p) (base : Nat) :
           (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel
 
 /--
+Normalized termination predicate for the scaled Yun loop. This mirrors
+`yunFactorsLevelCompletes`, but tests the normalized current contribution.
+It is the right progress predicate for raw scalar-unit states, where `c` may
+be a non-one constant while `(normalizeMonic c).2 = 1`.
+-/
+private def yunFactorsNormalizedLevelCompletes (c w : FpPoly p) (base : Nat) :
+    Nat → Nat → Prop
+  | _, 0 => isOne (normalizeMonic c).2 = true
+  | level, fuel + 1 =>
+      isOne (normalizeMonic c).2 = true ∨
+        yunFactorsNormalizedLevelCompletes
+          (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel
+
+/--
 Conditional product invariant for the scaled Yun loop: when the loop
 terminates by `isOne c = true` within the supplied `fuel`, the loop's
 contribution times the power of its residual recovers
@@ -6879,6 +6893,54 @@ private theorem yunLevel_measure_lt_of_reachable_step
         c w hcontribution_reachable hc hc_zero hw_zero hy_nonconstant
         (yunFactorsPairwiseReachable_common_dvd_one c w fuel hreachable)
 
+private theorem yunLevel_measure_lt_of_nonconstant_step
+    [ZMod64.PrimeModulus p]
+    (c w : FpPoly p) (fuel : Nat)
+    (hc_size : 1 < c.size)
+    (hc_zero : c.isZero = false)
+    (hw_zero : w.isZero = false)
+    (hreachable : yunFactorsPairwiseReachable c w (fuel + 1)) :
+    (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size <
+      c.size + w.size := by
+  by_cases hy_nonconstant : 1 < (DensePoly.gcd c w).size
+  · have hw_ne : w ≠ 0 := by
+      intro hw_eq
+      rw [hw_eq] at hw_zero
+      exact (Bool.eq_not_self _).mp hw_zero.symm
+    have hsize :=
+      size_div_add_size_eq_size_add_one_of_dvd
+        (DensePoly.gcd_dvd_right c w) hw_ne
+    omega
+  · have hcommon :
+        ∀ d : FpPoly p,
+          d ∣ c / DensePoly.gcd c w →
+            d ∣ DensePoly.gcd c w →
+              d ∣ (1 : FpPoly p) :=
+      yunFactorsPairwiseReachable_common_dvd_one c w fuel hreachable
+    have _htail_common :
+        ∀ d : FpPoly p,
+          d ∣ DensePoly.gcd c w →
+            d ∣ w / DensePoly.gcd c w →
+              d ∣ (1 : FpPoly p) :=
+      yunStep_tail_common_dvd_one_of_constant_common_dvd_one
+        c w hc_zero hy_nonconstant hcommon
+    have hy_zero : (DensePoly.gcd c w).isZero = false :=
+      yunStep_gcd_nonzero_of_left_nonzero c w hc_zero
+    have hy_size : (DensePoly.gcd c w).size = 1 := by
+      have hy_pos : 0 < (DensePoly.gcd c w).size :=
+        size_pos_of_isZero_false (DensePoly.gcd c w) hy_zero
+      omega
+    have hw_ne : w ≠ 0 := by
+      intro hw_eq
+      rw [hw_eq] at hw_zero
+      exact (Bool.eq_not_self _).mp hw_zero.symm
+    have hsize :
+        (w / DensePoly.gcd c w).size + (DensePoly.gcd c w).size =
+          w.size + 1 :=
+      size_div_add_size_eq_size_add_one_of_dvd
+        (DensePoly.gcd_dvd_right c w) hw_ne
+    omega
+
 private theorem yunFactorsLevelCompletes_of_size_bound
     [ZMod64.PrimeModulus p] (c w : FpPoly p) (base level fuel : Nat)
     (hstate :
@@ -7653,6 +7715,79 @@ private theorem yunFactorsDerivativeActiveReachable_normalized_stateProvider
   have hc := normalizeMonic_squareFreeContributionPayload hp c hnonzero.1
   have hw := normalizeMonic_squareFreeContributionPayload hp w hnonzero.2
   exact ⟨hc.1, hc.2, hw.1, hw.2⟩
+
+private theorem yunFactorsNormalizedLevelCompletes_of_size_bound_derivative_active
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) (f c w : FpPoly p)
+    (base level fuel : Nat)
+    (hstate : YunDerivativeActiveNormalizedStateProvider hp)
+    (hreachable : yunFactorsDerivativeActiveReachable hp f c w fuel)
+    (hbound : (normalizeMonic c).2.size + (normalizeMonic w).2.size ≤ fuel + 1) :
+    yunFactorsNormalizedLevelCompletes c w base level fuel := by
+  induction fuel generalizing c w level with
+  | zero =>
+      have hcurrent := hstate f c w 0 hreachable
+      have hc_pos : 0 < (normalizeMonic c).2.size :=
+        size_pos_of_isZero_false (normalizeMonic c).2 hcurrent.2.1
+      have hw_pos : 0 < (normalizeMonic w).2.size :=
+        size_pos_of_isZero_false (normalizeMonic w).2 hcurrent.2.2.2
+      exfalso
+      omega
+  | succ fuel ih =>
+      by_cases hc_norm : isOne (normalizeMonic c).2 = true
+      · exact Or.inl hc_norm
+      · have hc_norm_false : isOne (normalizeMonic c).2 = false := by
+          cases h : isOne (normalizeMonic c).2
+          · rfl
+          · exact False.elim (hc_norm h)
+        have htail_reachable :
+            yunFactorsDerivativeActiveReachable hp f
+              (DensePoly.gcd c w)
+              (w / DensePoly.gcd c w)
+              fuel :=
+          yunFactorsDerivativeActiveReachable_step hp f c w fuel hreachable
+        have hpairwise :
+            yunFactorsPairwiseReachable c w (fuel + 1) :=
+          yunFactorsPairwiseReachable_of_derivative_active_reachable
+            hp f c w (fuel + 1) hreachable
+        have hcurrent := hstate f c w (fuel + 1) hreachable
+        have hraw_nonzero :=
+          yunFactorsDerivativeActiveReachable_nonzero hp f c w (fuel + 1) hreachable
+        have hnorm_c_size : 1 < (normalizeMonic c).2.size :=
+          one_lt_size_of_isOne_false_of_reachable
+            (normalizeMonic c).2 hcurrent.2.1 hc_norm_false hcurrent.1
+        have hc_size : 1 < c.size := by
+          have hsize := normalizeMonic_nonzero_size_eq hp c hraw_nonzero.1
+          omega
+        have hmeasure :
+            (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size <
+              c.size + w.size :=
+          yunLevel_measure_lt_of_nonconstant_step
+            c w fuel hc_size hraw_nonzero.1 hraw_nonzero.2 hpairwise
+        have htail_nonzero :=
+          yunFactorsDerivativeActiveReachable_nonzero hp f
+            (DensePoly.gcd c w) (w / DensePoly.gcd c w) fuel htail_reachable
+        have hcurrent_c_size :
+            (normalizeMonic c).2.size = c.size :=
+          normalizeMonic_nonzero_size_eq hp c hraw_nonzero.1
+        have hcurrent_w_size :
+            (normalizeMonic w).2.size = w.size :=
+          normalizeMonic_nonzero_size_eq hp w hraw_nonzero.2
+        have htail_g_size :
+            (normalizeMonic (DensePoly.gcd c w)).2.size =
+              (DensePoly.gcd c w).size :=
+          normalizeMonic_nonzero_size_eq hp (DensePoly.gcd c w) htail_nonzero.1
+        have htail_w_size :
+            (normalizeMonic (w / DensePoly.gcd c w)).2.size =
+              (w / DensePoly.gcd c w).size :=
+          normalizeMonic_nonzero_size_eq hp
+            (w / DensePoly.gcd c w) htail_nonzero.2
+        have htail_bound :
+            (normalizeMonic (DensePoly.gcd c w)).2.size +
+                (normalizeMonic (w / DensePoly.gcd c w)).2.size ≤ fuel + 1 := by
+          omega
+        exact Or.inr
+          (ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+            htail_reachable htail_bound)
 
 private theorem yunFactorsLevelCompletes_of_size_bound_derivative_active
     [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) (f c w : FpPoly p)
