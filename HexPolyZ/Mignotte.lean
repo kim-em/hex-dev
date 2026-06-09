@@ -183,6 +183,32 @@ private theorem sqrtNearEnvelope_of_not_very_far
   unfold sqrtNearEnvelope
   omega
 
+private theorem sqrtAux_near_or_sq_le
+    (n fuel x : Nat) (hnear : sqrtNearEnvelope n x) :
+    let y := sqrtAux n fuel x
+    y * y ≤ n ∨ sqrtNearEnvelope n y := by
+  induction fuel generalizing x with
+  | zero =>
+      simp [sqrtAux, hnear]
+  | succ fuel ih =>
+      unfold sqrtAux
+      let next := sqrtStep n x
+      by_cases hstop : next ≥ x
+      · simp [next, hstop]
+        by_cases hx : 0 < x
+        · exact Or.inl (sqrtStep_ge_imp_sq_le hx hstop)
+        · have hx0 : x = 0 := by omega
+          subst x
+          exact Or.inl (by simp)
+      · simp [next, hstop]
+        have hnext_le : next ≤ x := Nat.le_of_lt (Nat.lt_of_not_ge hstop)
+        have hsq_next : next * next ≤ x * x :=
+          Nat.mul_le_mul hnext_le hnext_le
+        have hnear_next : sqrtNearEnvelope n next := by
+          unfold sqrtNearEnvelope at hnear ⊢
+          exact Nat.lt_of_le_of_lt hsq_next hnear
+        exact ih next hnear_next
+
 private theorem sqrtStep_very_far_contracts
     (n x : Nat) (hx : 0 < x) (hfar : 16 * n ≤ x * x) :
     32 * sqrtStep n x ≤ 17 * x := by
