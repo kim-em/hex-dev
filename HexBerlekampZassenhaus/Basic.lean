@@ -435,7 +435,18 @@ private def fieldOfNatPrime {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) :
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
   inferInstance
 
-private structure SmallPrimeCandidate where
+/--
+A small-prime candidate for the Berlekamp-Zassenhaus prime-selection hot path.
+
+Bundles a candidate prime `p` together with the `ZMod64.Bounds p` instance and
+the propositional primality witness needed to drive the modular Berlekamp
+factorisation. Exposed (alongside `hotPathCandidates`) so that the SPEC D2
+composition theorem
+`HexBerlekampZassenhausMathlib.choosePrimeData?_none_implies_huge` can pull a
+specific candidate out of the fixed hot-path list and bridge to the Mathlib
+per-prime discriminant lemma.
+-/
+structure SmallPrimeCandidate where
   p : Nat
   [bounds : ZMod64.Bounds p]
   prime : Nat.Prime p
@@ -552,7 +563,13 @@ private def extendedSmallPrimeCandidates : List SmallPrimeCandidate :=
     smallPrimeCandidateOfTrial 491 (by decide) (by decide),
     smallPrimeCandidateOfTrial 499 (by decide) (by decide) ]
 
-private def hotPathCandidates : List SmallPrimeCandidate :=
+/--
+The SPEC hot-path prime candidate list: the deterministic small-prime prefix
+followed by every prime up to `499`. Exposed so that the SPEC D2 composition
+theorem can pull a specific candidate out and bridge to the Mathlib per-prime
+discriminant lemma.
+-/
+def hotPathCandidates : List SmallPrimeCandidate :=
   smallPrimeCandidates ++ extendedSmallPrimeCandidates
 
 #guard smallPrimeCandidates.length == 19
@@ -2384,6 +2401,91 @@ theorem choosePrimeData?_isGoodPrime
           cases hdata
           exact choosePrimeDataScore_fold_isGoodPrime f extendedSmallPrimeCandidates none
             escore (by intro old hnone; cases hnone) hext
+
+private theorem primeChoiceDataScore_eq_none_iff
+    (f : ZPoly) (c : SmallPrimeCandidate) :
+    primeChoiceDataScore f c = none ↔
+      @isGoodPrime f c.p c.bounds = false := by
+  unfold primeChoiceDataScore
+  letI := c.bounds
+  cases isGoodPrime f c.p with
+  | true => simp
+  | false => simp
+
+private theorem choosePrimeDataScoreStep_some_ne_none
+    (f : ZPoly) (old : PrimeChoiceDataScore) (c : SmallPrimeCandidate) :
+    choosePrimeDataScoreStep f (some old) c ≠ none := by
+  unfold choosePrimeDataScoreStep
+  cases primeChoiceDataScore f c <;> simp
+
+private theorem choosePrimeDataScore_fold_some_ne_none
+    (f : ZPoly) (candidates : List SmallPrimeCandidate)
+    (old : PrimeChoiceDataScore) :
+    candidates.foldl (choosePrimeDataScoreStep f) (some old) ≠ none := by
+  induction candidates generalizing old with
+  | nil => simp
+  | cons c cs ih =>
+      simp only [List.foldl_cons]
+      cases hstep : choosePrimeDataScoreStep f (some old) c with
+      | none => exact (choosePrimeDataScoreStep_some_ne_none f old c hstep).elim
+      | some new => exact ih new
+
+private theorem choosePrimeDataScore_fold_none_forall_isGoodPrime_false
+    (f : ZPoly) (candidates : List SmallPrimeCandidate)
+    (hfold : candidates.foldl (choosePrimeDataScoreStep f) none = none) :
+    ∀ c ∈ candidates, @isGoodPrime f c.p c.bounds = false := by
+  induction candidates with
+  | nil => intro c hc; exact absurd hc List.not_mem_nil
+  | cons c cs ih =>
+      simp only [List.foldl_cons] at hfold
+      have hstep_eq :
+          choosePrimeDataScoreStep f none c = primeChoiceDataScore f c := by
+        unfold choosePrimeDataScoreStep
+        cases primeChoiceDataScore f c <;> rfl
+      rw [hstep_eq] at hfold
+      cases hscore : primeChoiceDataScore f c with
+      | none =>
+          rw [hscore] at hfold
+          have hbad : @isGoodPrime f c.p c.bounds = false :=
+            (primeChoiceDataScore_eq_none_iff f c).mp hscore
+          intro c' hc'
+          rcases List.mem_cons.mp hc' with rfl | hin
+          · exact hbad
+          · exact ih hfold c' hin
+      | some new =>
+          rw [hscore] at hfold
+          exact (choosePrimeDataScore_fold_some_ne_none f cs new hfold).elim
+
+/--
+When `choosePrimeData? f` returns `none`, every candidate in the SPEC hot-path
+prime list fails the executable good-prime predicate `Hex.isGoodPrime f`.
+
+This is the provenance ingredient for SPEC D2's
+`choosePrimeData?_none_implies_huge` composition: the executable's failure to
+find any good prime over the fixed list means every prime in the admissible
+range was tried and rejected, and rejection (`isGoodPrime ... = false`) feeds
+the Mathlib-side per-prime divisibility bridge.
+-/
+theorem mem_hotPathCandidates_isGoodPrime_false_of_choosePrimeData?_none
+    {f : ZPoly} (hf : choosePrimeData? f = none)
+    {c : SmallPrimeCandidate} (hc : c ∈ hotPathCandidates) :
+    @isGoodPrime f c.p c.bounds = false := by
+  unfold choosePrimeData? at hf
+  cases hsmall :
+      smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
+  | some score => simp [hsmall] at hf
+  | none =>
+      simp [hsmall] at hf
+      cases hext :
+          extendedSmallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
+      | some score => simp [hext] at hf
+      | none =>
+          unfold hotPathCandidates at hc
+          rcases List.mem_append.mp hc with hsmall_mem | hext_mem
+          · exact choosePrimeDataScore_fold_none_forall_isGoodPrime_false f
+              smallPrimeCandidates hsmall c hsmall_mem
+          · exact choosePrimeDataScore_fold_none_forall_isGoodPrime_false f
+              extendedSmallPrimeCandidates hext c hext_mem
 
 /--
 Invariant capturing that `data.factorsModP` is exactly the Berlekamp factor
