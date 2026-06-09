@@ -261,14 +261,33 @@ threshold (see *Precision schedule* below).
 **bounded hot-path candidate set** `HotPathCandidates`, fixed in
 SPEC as
 
-> `HotPathCandidates := { p : Nat | 3 ≤ p ∧ p ≤ UInt64.word ∧ Nat.Prime p }`
+> `HotPathCandidates := { p : Nat | 3 ≤ p ∧ p ≤ 500 ∧ Nat.Prime p }`
 
-i.e. every prime in the closed range `[3, UInt64.word]` (the
-`ZMod64`-backed modular kernel's domain; `p = 2` is excluded by
-`isGoodPrime`). `choosePrimeData? f = none` when no element of
-`HotPathCandidates` satisfies `isGoodPrime f p`. This is by design;
-implementing an unbounded `BigInt`-modular fallback inside
-`choosePrimeData?` would cascade through every consumer of
+i.e. every prime in the closed range `[3, 500]` (`p = 2` is
+excluded by `isGoodPrime`). This set has 95 elements; their
+primorial `∏ HotPathCandidates ≈ 10^203`, which is the lower
+bound D2 below uses to characterise `factorSlowTrial` inputs.
+
+The cap of 500 is a SPEC choice balancing three constraints: the
+walk must visit *every* element of `HotPathCandidates` on every
+input (so the implementation can be a constant-size fixed walk,
+not input-dependent); the primorial must be large enough that no
+realistic polynomial reaches the lower bound; the cap must be
+small enough that the trial-division kernel uses `ZMod64`
+throughout. 95 primes is fast, the primorial `10^203` exceeds any
+realistic `|lc(f)·disc(f)|` by tens of orders of magnitude, and
+`p ≤ 500` is far inside `ZMod64`'s `UInt64.word` domain.
+
+The executable MUST walk exactly `HotPathCandidates` before
+returning `none`: a curated `smallPrimeCandidates`-style subset
+(skipping primes like `29, 37, 41, 43, 47, 53, 59, 61, 67`) is a
+SPEC violation, as is an input-dependent fuel cap. The
+implementation is a constant-size walk over a SPEC-fixed list.
+
+`choosePrimeData? f = none` when no element of
+`HotPathCandidates` satisfies `isGoodPrime f p`. This is by
+design; implementing an unbounded `BigInt`-modular fallback
+inside `choosePrimeData?` would cascade through every consumer of
 `PrimeChoiceData` (the `ZMod64.Bounds`-indexed fields prevent
 holding a non-ZMod64-backed `PrimeChoiceData`).
 
@@ -569,7 +588,7 @@ D2. **Tight characterisation of trial-backstop inputs.** Statement shape:
     theorem choosePrimeData?_none_implies_huge
         (f : ZPoly) (hp : f.Primitive) (hs : f.IsSquareFree)
         (hf : Hex.choosePrimeData? f = none)
-        (p : Nat) (hp_range : 3 ≤ p ∧ p ≤ UInt64.word) (hp_prime : Nat.Prime p) :
+        (p : Nat) (hp_range : 3 ≤ p ∧ p ≤ 500) (hp_prime : Nat.Prime p) :
         (p : ℤ) ∣ (f.leadingCoeff * f.discriminant)
     ```
 
@@ -585,7 +604,7 @@ D2. **Tight characterisation of trial-backstop inputs.** Statement shape:
 
     The bridge file gets one new theorem (`choosePrimeData?_none_implies_huge`) and a small helper unfolding `isGoodPrime`. No new mathematical content; the bound is a clean divisibility argument.
 
-    **Executable precondition.** D2 presumes the executable `choosePrimeData?` walks the entire `HotPathCandidates` set before returning `none`. If a fuel cap or other implementation shortcut stops the walk short, D2 is false. The implementation MUST visit every `p ∈ HotPathCandidates` before falling back; PR #6521's input-dependent fuel scheme satisfies this only when the fuel suffices to reach `UInt64.word`. Any worker noticing the walk can short-circuit before exhausting `HotPathCandidates` should file the fix as a prerequisite issue, not weaken D2's statement.
+    **Executable precondition.** D2 presumes the executable `choosePrimeData?` walks the entire `HotPathCandidates` set (the 95 primes in `[3, 500]`) before returning `none`. The implementation MUST visit every one — a curated `smallPrimeCandidates`-style subset that skips primes is a SPEC violation, as is an input-dependent fuel cap. Any worker noticing the walk can short-circuit before exhausting `HotPathCandidates` should file the fix as a prerequisite issue, not weaken D2's statement.
 
 ## Headline correctness theorem
 
