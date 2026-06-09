@@ -50,6 +50,15 @@ Informational external comparator:
   implementation. Ratios are recorded for orientation but do not block
   Phase 4. The conformance-mode entry point remains
   `scripts/oracle/lll_fpylll.py --check`.
+* `fpLLL certified path`: process-call registrations send `CERT\t`
+  requests to the same persistent fpylll driver. The reply is a flat
+  `(B', U, V)` candidate payload; the Lean target runs
+  `LLLProvider.certifyFlat`, so the measured path is fpLLL candidate
+  production plus the executable checker. Companion checker-only
+  targets cache one candidate after warmup and re-run only
+  `certCheck`, giving the checker's cost share. Public-dispatch smoke
+  targets also guard that, if a real fplll-ffi provider is intentionally
+  loaded, the dispatch tally records at least one accepted candidate.
 
 External comparator:
 
@@ -77,14 +86,15 @@ framed request to its stdin and reads one framed reply from its stdout.
 **Framing.** Each request is one line containing the input matrix in
 Haskell's `[[Integer]]` read syntax — exactly the string produced by
 `matrixHaskell` — terminated by `\n`. The same request line feeds
-both the Isabelle and the fpylll persistent drivers; each emits a
+both the Isabelle and the fpylll persistent drivers; scalar requests emit a
 single scalar per request, terminated by `\n`. Isabelle returns the
 squared norm of its first reduced row; fpylll returns the integer
 first-row checksum matching `Hex.LLLBench.intVectorChecksum` (the
-scalar paired with `runFirstShortVector*Checksum`). Malformed
-fpylll requests come back as `ERROR: <message>`; the Lean parser
-treats any non-integer reply as a driver fault and triggers the
-retry path.
+scalar paired with `runFirstShortVector*Checksum`). Certified fpylll
+requests prefix the matrix with `CERT\t` and receive a whitespace-separated
+flat integer candidate. Malformed fpylll requests come back as
+`ERROR: <message>`; the Lean parser treats any error/non-integer reply as a
+driver fault and triggers the retry path.
 
 **Lifetime.** Each driver is spawned lazily on first use into a
 module-level `IO.Ref (Option PersistentComparator)`
@@ -431,6 +441,57 @@ initialize harshCubicInput60Ref : IO.Ref (Option FirstShortVectorInput) ←
 initialize harshCubicInput65Ref : IO.Ref (Option FirstShortVectorInput) ←
   IO.mkRef none
 
+initialize certifiedRandomBounded30Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedRandomBounded45Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedRandomBounded60Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedRandomBounded75Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedRandomBounded90Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedRandomBounded120Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedRandomBounded150Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedRandomBounded180Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedHarshCubic15Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedHarshCubic20Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedHarshCubic25Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedHarshCubic30Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedHarshCubic35Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedHarshCubic40Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedHarshCubic45Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedHarshCubic50Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedHarshCubic55Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
 /-! ## Phase-4 `LLLState.ofBasis` input families. -/
 
 /-- Entry generator for bounded random-looking square bases. -/
@@ -645,11 +706,31 @@ private theorem lllDeltaLower : (1 / 4 : Rat) < 3 / 4 := by
 private theorem lllDeltaUpper : (3 / 4 : Rat) ≤ 1 := by
   grind
 
+private theorem lllCertifiedDeltaLower : (121 / 400 : Rat) < 3 / 4 := by
+  grind
+
 /-- Benchmark target: run LLL on one prepared basis and checksum the first row. -/
 def runFirstShortVectorChecksum (input : FirstShortVectorInput) : Int :=
   intVectorChecksum
     (lll.firstShortVectorUnchecked input.basis (3 / 4)
       lllDeltaLower lllDeltaUpper input.hn)
+
+/-- Benchmark target: run the public dispatched LLL path and checksum the
+first row. If a real external provider is loaded, this target fails unless the
+certified dispatch accepts at least one candidate. -/
+def runDispatchedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO Int := do
+  LLLProvider.resetDiagnostics
+  let reduced :=
+    match LLLProvider.dispatch input.basis (3 / 4 : Rat) with
+    | some B' => B'
+    | none => lllNative input.basis (3 / 4) lllDeltaLower lllDeltaUpper input.hn
+  let diagnostics ← LLLProvider.diagnostics
+  if LLLProvider.providerAvailable () && diagnostics.accepted = 0 then
+    throw <| IO.userError
+      s!"fplll provider loaded but certified dispatch accepted zero candidates: {repr diagnostics}"
+  have hrows : 1 ≤ input.rows := input.hn
+  let f0 : Fin input.rows := ⟨0, by omega⟩
+  return intVectorChecksum (Matrix.row reduced f0)
 
 /-- Benchmark comparator observable: squared norm of Lean's first LLL vector.
 The verified-Isabelle Haskell extraction reports the same scalar. -/
@@ -804,6 +885,22 @@ def parseFpylllChecksum (text : String) : IO Int := do
     throw <| IO.userError
       s!"lll_fpylll_bench_driver emitted non-integer output: {text}"
 
+private def parseIntToken (token : String) : IO Int := do
+  match token.toInt? with
+  | some n => return n
+  | none => throw <| IO.userError s!"lll_fpylll_bench_driver emitted non-integer token: {token}"
+
+/-- Parse a certified-candidate payload from `lll_fpylll_bench_driver.py`. -/
+def parseFpylllCertPayload (text : String) : IO (Array Int) := do
+  let trimmed := text.trimAscii.toString
+  if trimmed.startsWith "ERROR:" then
+    throw <| IO.userError s!"lll_fpylll_bench_driver: {trimmed}"
+  let tokens := (trimmed.splitOn " ").filter (fun token => !token.isEmpty)
+  if tokens.isEmpty then
+    throw <| IO.userError "lll_fpylll_bench_driver emitted empty certified payload"
+  tokens.foldlM (init := #[]) fun acc token => do
+    return acc.push (← parseIntToken token)
+
 /-- Send one matrix to the persistent fpylll driver and return the
 raw reply line.
 
@@ -832,6 +929,37 @@ and parse the first-row checksum. -/
 def runFpylllFirstShortVectorChecksum (input : FirstShortVectorInput) : IO Int := do
   let request := matrixHaskell input.basis
   parseFpylllChecksum (← requestFpylllLineWithRetry request 1)
+
+def requestFpylllCertifiedPayload (input : FirstShortVectorInput) : IO (Array Int) := do
+  let request := "CERT\t" ++ matrixHaskell input.basis
+  parseFpylllCertPayload (← requestFpylllLineWithRetry request 1)
+
+def certifyPayloadChecksum (input : FirstShortVectorInput) (payload : Array Int) : IO Int := do
+  match LLLProvider.certifyFlat input.basis (3 / 4 : Rat) payload with
+  | some triple =>
+      have hrows : 1 ≤ input.rows := input.hn
+      let f0 : Fin input.rows := ⟨0, by omega⟩
+      let last : Fin input.rows := ⟨input.rows - 1, by omega⟩
+      return intRowPairChecksum triple.1 f0 last
+  | none => throw <| IO.userError "fpylll certified candidate rejected by certCheck"
+
+/-- Benchmark target: fpLLL candidate production plus Lean's executable
+certificate checker. -/
+def runCertifiedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO Int := do
+  certifyPayloadChecksum input (← requestFpylllCertifiedPayload input)
+
+def runCertifiedCheckerChecksum
+    (ref : IO.Ref (Option (FirstShortVectorInput × Array Int)))
+    (mk : Unit → FirstShortVectorInput) : Unit → IO Int := fun _ => do
+  let (input, payload) ←
+    match (← ref.get) with
+    | some cached => pure cached
+    | none =>
+        let input := mk ()
+        let payload ← requestFpylllCertifiedPayload input
+        ref.set (some (input, payload))
+        pure (input, payload)
+  certifyPayloadChecksum input payload
 
 /-- Fixed benchmark target: BZ recombination hot path at `p = 5`, `k = 2`,
 and three lifted local factors. -/
@@ -946,6 +1074,133 @@ def runFpylllFirstShortVectorHarshCubic60Checksum : Unit → IO Int := fun _ => 
 def runFpylllFirstShortVectorHarshCubic65Checksum : Unit → IO Int := fun _ => do
   runFpylllFirstShortVectorChecksum
     (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
+
+def runDispatchedFirstShortVectorRandomBounded30Checksum : Unit → IO Int := fun _ => do
+  runDispatchedFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput30Ref (fun _ => prepRandomBoundedInput 30))
+
+def runCertifiedFirstShortVectorRandomBounded30Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput30Ref (fun _ => prepRandomBoundedInput 30))
+
+def runCertifiedCheckerRandomBounded30Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedRandomBounded30Ref (fun _ => prepRandomBoundedInput 30)
+
+def runCertifiedFirstShortVectorRandomBounded45Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput45Ref (fun _ => prepRandomBoundedInput 45))
+
+def runCertifiedCheckerRandomBounded45Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedRandomBounded45Ref (fun _ => prepRandomBoundedInput 45)
+
+def runCertifiedFirstShortVectorRandomBounded60Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput60Ref (fun _ => prepRandomBoundedInput 60))
+
+def runCertifiedCheckerRandomBounded60Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedRandomBounded60Ref (fun _ => prepRandomBoundedInput 60)
+
+def runCertifiedFirstShortVectorRandomBounded75Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput75Ref (fun _ => prepRandomBoundedInput 75))
+
+def runCertifiedCheckerRandomBounded75Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedRandomBounded75Ref (fun _ => prepRandomBoundedInput 75)
+
+def runCertifiedFirstShortVectorRandomBounded90Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput90Ref (fun _ => prepRandomBoundedInput 90))
+
+def runCertifiedCheckerRandomBounded90Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedRandomBounded90Ref (fun _ => prepRandomBoundedInput 90)
+
+def runCertifiedFirstShortVectorRandomBounded120Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput120Ref (fun _ => prepRandomBoundedInput 120))
+
+def runCertifiedCheckerRandomBounded120Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedRandomBounded120Ref (fun _ => prepRandomBoundedInput 120)
+
+def runCertifiedFirstShortVectorRandomBounded150Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput150Ref (fun _ => prepRandomBoundedInput 150))
+
+def runCertifiedCheckerRandomBounded150Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedRandomBounded150Ref (fun _ => prepRandomBoundedInput 150)
+
+def runCertifiedFirstShortVectorRandomBounded180Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput randomBoundedInput180Ref (fun _ => prepRandomBoundedInput 180))
+
+def runCertifiedCheckerRandomBounded180Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedRandomBounded180Ref (fun _ => prepRandomBoundedInput 180)
+
+def runDispatchedFirstShortVectorHarshCubic15Checksum : Unit → IO Int := fun _ => do
+  runDispatchedFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput15Ref (fun _ => prepHarshCubicInput 15))
+
+def runCertifiedFirstShortVectorHarshCubic15Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput15Ref (fun _ => prepHarshCubicInput 15))
+
+def runCertifiedCheckerHarshCubic15Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedHarshCubic15Ref (fun _ => prepHarshCubicInput 15)
+
+def runCertifiedFirstShortVectorHarshCubic20Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput20Ref (fun _ => prepHarshCubicInput 20))
+
+def runCertifiedCheckerHarshCubic20Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedHarshCubic20Ref (fun _ => prepHarshCubicInput 20)
+
+def runCertifiedFirstShortVectorHarshCubic25Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput25Ref (fun _ => prepHarshCubicInput 25))
+
+def runCertifiedCheckerHarshCubic25Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedHarshCubic25Ref (fun _ => prepHarshCubicInput 25)
+
+def runCertifiedFirstShortVectorHarshCubic30Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput30Ref (fun _ => prepHarshCubicInput 30))
+
+def runCertifiedCheckerHarshCubic30Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedHarshCubic30Ref (fun _ => prepHarshCubicInput 30)
+
+def runCertifiedFirstShortVectorHarshCubic35Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput35Ref (fun _ => prepHarshCubicInput 35))
+
+def runCertifiedCheckerHarshCubic35Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedHarshCubic35Ref (fun _ => prepHarshCubicInput 35)
+
+def runCertifiedFirstShortVectorHarshCubic40Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput40Ref (fun _ => prepHarshCubicInput 40))
+
+def runCertifiedCheckerHarshCubic40Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedHarshCubic40Ref (fun _ => prepHarshCubicInput 40)
+
+def runCertifiedFirstShortVectorHarshCubic45Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput45Ref (fun _ => prepHarshCubicInput 45))
+
+def runCertifiedCheckerHarshCubic45Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedHarshCubic45Ref (fun _ => prepHarshCubicInput 45)
+
+def runCertifiedFirstShortVectorHarshCubic50Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput50Ref (fun _ => prepHarshCubicInput 50))
+
+def runCertifiedCheckerHarshCubic50Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedHarshCubic50Ref (fun _ => prepHarshCubicInput 50)
+
+def runCertifiedFirstShortVectorHarshCubic55Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput55Ref (fun _ => prepHarshCubicInput 55))
+
+def runCertifiedCheckerHarshCubic55Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedHarshCubic55Ref (fun _ => prepHarshCubicInput 55)
 
 def runFirstShortVectorBZRecombinationNormSq : Unit → IO Int := fun _ => do
   return runFirstShortVectorNormSq (← bzRecombinationInputRef.get)
@@ -1335,6 +1590,120 @@ setup_fixed_benchmark runFpylllFirstShortVectorRandomBounded180Checksum where {
     warmupFirstIter := true
   }
 
+/- Certified-path fixed registrations for the random-bounded ladder. The
+`runCertifiedFirstShortVector*` targets measure fpLLL candidate production plus
+`certCheck`; the paired `runCertifiedChecker*` targets cache one fpLLL payload
+and re-run only Lean's checker after warmup. -/
+setup_fixed_benchmark runDispatchedFirstShortVectorRandomBounded30Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    expectedHash := some (Hashable.hash (runFirstShortVectorChecksum (prepRandomBoundedInput 30)))
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorRandomBounded30Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerRandomBounded30Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorRandomBounded45Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerRandomBounded45Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorRandomBounded60Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 40.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerRandomBounded60Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorRandomBounded75Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 50.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerRandomBounded75Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 40.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorRandomBounded90Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 60.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerRandomBounded90Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 50.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorRandomBounded120Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerRandomBounded120Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 80.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorRandomBounded150Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 120.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerRandomBounded150Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 120.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorRandomBounded180Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 180.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerRandomBounded180Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 180.0
+    warmupFirstIter := true
+  }
+
 /- Fixed bottom-rung Lean/fpylll comparison for the harsh-cubic family at
 `n = 15`, the first rung of the scientific parametric ladder. The fpylll
 comparison also follows the full harsh-cubic comparator ladder. -/
@@ -1416,6 +1785,130 @@ setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic60Checksum where {
 
 setup_fixed_benchmark runFpylllFirstShortVectorHarshCubic65Checksum where {
     repeats := 5
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+/- Certified-path fixed registrations for the harsh-cubic ladder. -/
+setup_fixed_benchmark runDispatchedFirstShortVectorHarshCubic15Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    expectedHash := some (Hashable.hash (runFirstShortVectorChecksum (prepHarshCubicInput 15)))
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorHarshCubic15Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerHarshCubic15Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorHarshCubic20Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerHarshCubic20Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorHarshCubic25Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerHarshCubic25Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorHarshCubic30Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerHarshCubic30Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorHarshCubic35Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerHarshCubic35Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorHarshCubic40Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerHarshCubic40Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorHarshCubic45Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerHarshCubic45Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorHarshCubic50Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerHarshCubic50Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorHarshCubic55Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerHarshCubic55Checksum where {
+    repeats := 3
     maxSecondsPerCall := 20.0
     warmupFirstIter := true
   }
