@@ -369,6 +369,167 @@ theorem isLLLReduced.mono_η (b : Matrix Int n m) {δ η₁ η₂ : Rat}
   have hsq2 : η₁ * η₂ ≤ η₂ * η₂ := Rat.mul_le_mul_of_nonneg_right hle hη₂
   exact Rat.le_trans (hsize i j hi hji) (Rat.le_trans hsq1 hsq2)
 
+/-! ### Fixed-precision dyadic interval kernel
+
+The certified-dispatch reducedness clause is decided first by a sound
+enclosure pass at fixed working precision; only on indecision does it fall
+back to the exact integer checker. The kernel below is the Mathlib-free
+executable surface: closed dyadic intervals whose endpoints are `Int`
+mantissas at a shared power-of-two scale. Per-operation containment lemmas
+and the composed soundness theorem (`lllReducedInterval_sound`) live in
+HexLLLMathlib. -/
+
+/-- Closed dyadic interval `[lo / S, hi / S]` whose endpoints are integer
+mantissas at a shared power-of-two scale `S = 2 ^ prec`. The scale is not
+stored; every operation that rounds takes `S` explicitly, so the working
+precision stays a parameter of the checker. -/
+structure Ival where
+  lo : Int
+  hi : Int
+deriving Repr, BEq, Inhabited
+
+namespace Ival
+
+/-- The rational `x` lies in the dyadic interval `I` read at scale `S`. -/
+def mem (S : Int) (I : Ival) (x : Rat) : Prop :=
+  (I.lo : Rat) ≤ x * (S : Rat) ∧ x * (S : Rat) ≤ (I.hi : Rat)
+
+/-- Exact embedding of an integer at scale `S`. -/
+def ofInt (S z : Int) : Ival :=
+  ⟨z * S, z * S⟩
+
+/-- Ceiling division for a positive divisor, via `Int.fdiv` of the
+negated dividend. -/
+def cdiv (a b : Int) : Int :=
+  -(Int.fdiv (-a) b)
+
+/-- One-ulp enclosure of a rational at scale `S`. -/
+def ofRat (S : Int) (q : Rat) : Ival :=
+  ⟨Int.fdiv (q.num * S) q.den, cdiv (q.num * S) q.den⟩
+
+/-- Interval addition. Fixed-point addition is exact: no rounding. -/
+def add (a b : Ival) : Ival :=
+  ⟨a.lo + b.lo, a.hi + b.hi⟩
+
+/-- Interval subtraction. Exact, like `add`. -/
+def sub (a b : Ival) : Ival :=
+  ⟨a.lo - b.hi, a.hi - b.lo⟩
+
+/-- Interval multiplication. Endpoint products land at scale `S²`, so the
+result rounds outward through one floor / ceiling division by `S`. -/
+def mul (S : Int) (a b : Ival) : Ival :=
+  let p₁ := a.lo * b.lo
+  let p₂ := a.lo * b.hi
+  let p₃ := a.hi * b.lo
+  let p₄ := a.hi * b.hi
+  ⟨Int.fdiv (min (min p₁ p₂) (min p₃ p₄)) S,
+    cdiv (max (max p₁ p₂) (max p₃ p₄)) S⟩
+
+/-- Interval division by an interval the caller has checked to be strictly
+positive (`0 < b.lo`). The numerator rescales by `S` so the quotient lands
+back at scale `S`. Well-defined but junk when the positivity precondition
+fails; the containment lemma is conditional on it. -/
+def divPos (S : Int) (a b : Ival) : Ival :=
+  ⟨min (Int.fdiv (a.lo * S) b.lo) (Int.fdiv (a.lo * S) b.hi),
+    max (cdiv (a.hi * S) b.lo) (cdiv (a.hi * S) b.hi)⟩
+
+end Ival
+
+namespace IntervalGS
+
+/-- One step of the Gram-Schmidt dot recurrence on enclosures:
+`g − Σ_{k < t} mu[k] · r[k]`, with `g` an exact Gram entry. With
+`mu = μ[j][·]` and `r = r[i][·]` this encloses `⟨b_i, b*_j⟩`; with
+`mu = r = ` row `i`'s own data it encloses `‖b*_i‖²`. -/
+def dotStep (S : Int) (mu r : Array Ival) (g : Int) (t : Nat) : Ival :=
+  (List.range t).foldl
+    (fun acc k => acc.sub (Ival.mul S mu[k]! r[k]!))
+    (Ival.ofInt S g)
+
+/-- One column step of the per-row fold: extend the `r` row with the
+enclosure of `⟨b_i, b*_j⟩` and the `μ` row with the enclosure of
+`μ[i][j] = ⟨b_i, b*_j⟩ / ‖b*_j‖²`. -/
+@[inline] def rowStep (S : Int) (gRow : Array Int) (mus : Array (Array Ival))
+    (bstars : Array Ival) (acc : Array Ival × Array Ival) (j : Nat) :
+    Array Ival × Array Ival :=
+  let r := dotStep S mus[j]! acc.1 gRow[j]! j
+  (acc.1.push r, acc.2.push (Ival.divPos S r bstars[j]!))
+
+/-- Enclosure pass for one basis row: from the exact Gram row `gRow` and the
+enclosure rows of all earlier indices, produce the `μ[i][·]` enclosure row
+and the `‖b*_i‖²` enclosure. The intermediate `r` row encloses the dot
+products `⟨b_i, b*_j⟩`. -/
+def row (S : Int) (gRow : Array Int) (mus : Array (Array Ival))
+    (bstars : Array Ival) (i : Nat) : Array Ival × Ival :=
+  let acc := (List.range i).foldl (rowStep S gRow mus bstars) (#[], #[])
+  (acc.2, dotStep S acc.2 acc.1 gRow[i]! i)
+
+/-- One row step of the pass fold: run `row`, demand a strictly positive
+norm enclosure, and extend the accumulated enclosure state. -/
+@[inline] def passStep (S : Int) (g : Array (Array Int))
+    (acc : Array (Array Ival) × Array Ival) (i : Nat) :
+    Option (Array (Array Ival) × Array Ival) :=
+  let r := row S g[i]! acc.1 acc.2 i
+  if 0 < r.2.lo then
+    some (acc.1.push r.1, acc.2.push r.2)
+  else
+    none
+
+/-- Full interval Gram-Schmidt pass over the exact `n × n` Gram matrix:
+`O(n³)` interval operations on fixed-scale mantissas, independent of the
+Gram-determinant bit growth of the input family. Returns the enclosure rows
+of the Gram-Schmidt coefficients and the squared basis norms, or `none` as
+soon as some norm enclosure fails strict positivity (the division by that
+norm would be unsound, and reducedness could not be decided either way). -/
+def pass (S : Int) (g : Array (Array Int)) (n : Nat) :
+    Option (Array (Array Ival) × Array Ival) :=
+  (List.range n).foldlM (passStep S g) (#[], #[])
+
+/-- Size-reduction clause on enclosures: every `μ[i][j]` interval lies
+inside `[−η, η]`, compared exactly through `η = η.num / η.den`. -/
+def sizeOK (S : Int) (η : Rat) (mus : Array (Array Ival)) (n : Nat) : Bool :=
+  (List.range n).all fun i =>
+    (List.range i).all fun j =>
+      let I := mus[i]![j]!
+      decide (I.hi * (η.den : Int) ≤ η.num * S) &&
+        decide (-(η.num * S) ≤ I.lo * (η.den : Int))
+
+/-- Lovász clause on enclosures at every adjacent pair: the largest possible
+`δ‖b*_i‖²` is at most the smallest possible `‖b*_{i+1}‖² + μ²‖b*_i‖²`. -/
+def lovaszOK (S : Int) (δ : Rat) (mus : Array (Array Ival))
+    (bstars : Array Ival) (n : Nat) : Bool :=
+  let Iδ := Ival.ofRat S δ
+  (List.range (n - 1)).all fun i =>
+    let μ := mus[i + 1]![i]!
+    let lhs := Ival.mul S Iδ bstars[i]!
+    let rhs := (bstars[i + 1]!).add (Ival.mul S (Ival.mul S μ μ) bstars[i]!)
+    decide (lhs.hi ≤ rhs.lo)
+
+end IntervalGS
+
+/-- Working precision (bits) of the interval reducedness checker. The
+inequalities being certified carry slack (`η = 11/20` against fplll's
+actual ≈ 1/2; Lovász at the requested `δ` against fplll's stronger
+reduction), so a fixed precision decides them on reduced candidates; any
+indecision falls back to the exact checker rather than failing. -/
+def intervalPrec : Nat := 128
+
+/-- Fixed-precision interval reducedness checker. Computes enclosures of
+the Gram-Schmidt data of `b` from its exact integer Gram matrix and accepts
+only when every independence, size-reduction, and Lovász inequality is
+decided with the enclosure strictly on the correct side. `false` means
+"not reduced or indecisive at this precision": callers must fall back to
+the exact checker `lllReducedInt`, which keeps completeness structural.
+Soundness (`lllReducedInterval_sound`, HexLLLMathlib) entails
+`b.independent ∧ isLLLReduced b δ η` at the exact rational parameters. -/
+def lllReducedInterval (b : Matrix Int n m) (δ η : Rat) : Bool :=
+  let S : Int := (2 : Int) ^ intervalPrec
+  let g := (Matrix.gramMatrix b).toArray.map Vector.toArray
+  match IntervalGS.pass S g n with
+  | none => false
+  | some (mus, bstars) =>
+      IntervalGS.sizeOK S η mus n && IntervalGS.lovaszOK S δ mus bstars n
+
 /-- Executable integer `Bool` reducedness checker over the `GramSchmidt.Int`
 representation: leading Gram determinants `d` and integer scaled Gram-Schmidt
 coefficients `ν`.
@@ -419,17 +580,70 @@ def lllReducedInt (b : Matrix Int n m) (δ η : Rat) : Bool :=
         true
   independent && sizeReduced && lovasz
 
+/-- Outcome of one certified-dispatch reducedness decision: decided by the
+interval checker, or referred to the exact integer fallback. -/
+inductive CheckerOutcome where
+  | interval
+  | exact
+deriving Repr, BEq
+
+/-- Tally of reducedness decisions, distinguishing enclosure-accepted from
+fallback decisions. Mirrors `LLLProvider.Diagnostics` for the dispatch
+outcomes; this tally is the observability hook that lets measurements
+verify the interval path decided every candidate. -/
+structure CheckerTally where
+  interval : Nat := 0
+  exact : Nat := 0
+deriving Repr, BEq, Inhabited
+
+initialize checkerTallyRef : IO.Ref CheckerTally ← IO.mkRef {}
+
+def resetCheckerTally : IO Unit :=
+  checkerTallyRef.set {}
+
+def checkerTally : IO CheckerTally :=
+  checkerTallyRef.get
+
+private def bumpChecker (t : CheckerTally) : CheckerOutcome → CheckerTally
+  | .interval => { t with interval := t.interval + 1 }
+  | .exact => { t with exact := t.exact + 1 }
+
+/-- Side-effecting tally bump callable from pure code; definitionally the
+continuation `k`, with an `@[implemented_by]` side effect in compiled code.
+The continuation value is returned *through* `unsafeBaseIO`, so the compiler
+cannot eliminate the effect as an unused pure binding (the
+`match unsafeBaseIO … with | () => k` shape of `LLLProvider.withRecordOutcome`
+is erasable and its tally is known not to fire eagerly; see the workaround
+comment on `runDispatchedFirstShortVectorChecksum`). -/
+unsafe def withRecordCheckerOutcomeImpl {α : Type} (o : CheckerOutcome) (k : α) : α :=
+  unsafeBaseIO do
+    checkerTallyRef.modify (fun t => bumpChecker t o)
+    pure k
+
+@[implemented_by withRecordCheckerOutcomeImpl]
+def withRecordCheckerOutcome {α : Type} (_o : CheckerOutcome) (k : α) : α := k
+
+/-- Reducedness clause of the certified dispatch: the fixed-precision
+interval checker decides first; on indecision the exact integer checker is
+the mandatory fallback, so completeness is structural rather than
+numerical. Records each decision in the checker tally. -/
+def lllReducedCheck (b : Matrix Int n m) (δ η : Rat) : Bool :=
+  if lllReducedInterval b δ η then
+    withRecordCheckerOutcome .interval true
+  else
+    withRecordCheckerOutcome .exact (lllReducedInt b δ η)
+
 /-- Executable certified-dispatch checker: verifies that `(B', U, V)` is a valid
 external candidate for reducing `B`, i.e. `B` and `B'` generate the same integer
 row lattice (witnessed by `U`, `V`) and `B'` is `(δ, η)`-reduced.
 
-Composes the two Mathlib-free Bool checkers `Matrix.sameLatticeCert` and
-`lllReducedInt`. Soundness (`certCheck_sound`, HexLLLMathlib) entails the
-property triple `(same lattice, B' independent, isLLLReduced B' δ η)` and is
-the single trusted bridge that the certified-dispatch path of `lll`
-depends on. -/
+Composes the Mathlib-free Bool checkers `Matrix.sameLatticeCert` and
+`lllReducedCheck` (interval decision with exact `lllReducedInt` fallback).
+Soundness (`certCheck_sound`, HexLLLMathlib) entails the property triple
+`(same lattice, B' independent, isLLLReduced B' δ η)` and is the single
+trusted bridge that the certified-dispatch path of `lll` depends on. -/
 def certCheck (B B' : Matrix Int n m) (U V : Matrix Int n n) (δ η : Rat) : Bool :=
-  Matrix.sameLatticeCert B B' U V && lllReducedInt B' δ η
+  Matrix.sameLatticeCert B B' U V && lllReducedCheck B' δ η
 
 /-- Integer-only state for later LLL reduction steps. The proof-facing fields
 connect the stored Gram determinants and scaled coefficients to the executable

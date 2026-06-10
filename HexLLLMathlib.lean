@@ -1,5 +1,6 @@
 import HexLLLMathlib.Basic
 import HexLLLMathlib.Independent
+import HexLLLMathlib.Interval
 
 /-!
 The `HexLLLMathlib` library identifies the executable `HexLLL` lattice
