@@ -253,7 +253,10 @@ def main() -> None:
     isabelle = collect_series(cons, config.isabelle_pattern, "Isabelle native")
     fpll = collect_series(cons, config.fpll_pattern, "fpLLL via fplll-ffi")
 
-    series = [lean, isabelle]
+    # Legend follows plot order; order the series slowest-to-fastest at large
+    # n (Isabelle native, Lean native, Isabelle certified, Lean certified,
+    # fpLLL) so the legend reads top-to-bottom like the stacked curves.
+    series = [isabelle, lean]
     if config.include_certified:
         certified_results = load_results(args.certified or config.certified_path)
         certified = collect_series(
@@ -267,7 +270,7 @@ def main() -> None:
             config.isabelle_certified_pattern,
             "Isabelle certified",
         )
-        series += [certified, isabelle_certified]
+        series += [isabelle_certified, certified]
     series.append(fpll)
 
     if config.bottom_consistency:
