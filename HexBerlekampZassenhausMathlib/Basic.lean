@@ -16640,119 +16640,6 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
     hcore_lc_le (defaultFactorCoeffBound_valid core hcore_ne) hprecision
     hcore_entry
 
-/-- **#4543 supporting lemma (HO-1).**
-
-Generic constructor for `HenselSubsetCorrespondenceHypotheses` over the
-executable `Hex.choosePrimeData`/`Hex.henselLiftData` surface, parametric
-in the core and the precision count `B` passed to `Hex.henselLiftData`.
-
-The slow exhaustive branch of `Hex.factorWithBound f B₀` (in particular the
-public entry point `Hex.factor f`, where `B₀ = Hex.ZPoly.defaultFactorCoeffBound f`)
-calls
-`Hex.henselLiftData core (Hex.precisionForCoeffBound B₀ primeData.p) primeData`
-on `core = (Hex.normalizeForFactor f).squareFreeCore` and
-`primeData = Hex.choosePrimeData core`.  Specialising this constructor at
-that `B := Hex.precisionForCoeffBound (Hex.ZPoly.defaultFactorCoeffBound f)
-primeData.p` therefore produces a value with the exact shape consumed by
-`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
-(the outer-bound slow-path wrapper landed in PR #4537), unblocking the
-slow-path arm of the HO-1 capstone `factor_irreducible_of_nonUnit` (#4170).
-See `henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData`
-below for the specialisation.
-
-The `admissiblePrime` and `successfulLift` proposition hooks are
-instantiated with `True`; the downstream callers depend on the
-`exists_subset`/`unique_subset` projections rather than on the hook
-propositions themselves (the hooks are markers reserved for a future
-analytic Hensel proof that needs to surface those predicates).
-
-The `exists_subset` and `unique_subset` fields encode the analytic
-square-free Hensel subset correspondence: every irreducible integer
-factor of `core` admits a unique subset of the executable lifted local
-factors whose `Hex.DensePoly.scale (leadingCoeff core)`-scaled product
-agrees with the factor modulo the Hensel modulus `d.p ^ d.k`.  A
-Mathlib-free proof would require either BHKS Theorem 5.2 machinery
-(tracked by #2567) or the classical square-free Hensel lemma transported
-to the executable `Hex.ZPoly` surface (not yet ported into
-`HexBerlekampZassenhausMathlib`).  Per #4543's explicit fallback
-allowance, the analytic obligation is left as a single localised `sorry`
-inside the `henselSubsetCorrespondence_analytic_obligation` helper;
-the constructor itself is `sorry`-free.  This is sorry-equivalent to the
-current slow-path arm of #4170 (which sits behind a single opaque
-`sorry` of the same analytic content), while exposing a strictly more
-useful API for the HO-1 assembly. -/
-private theorem henselSubsetCorrespondence_analytic_obligation
-    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData) :
-    let d := Hex.ZPoly.toMonicLiftData core B primeData
-    ∀ {factor : Hex.ZPoly},
-      Irreducible (HexPolyZMathlib.toPolynomial factor) →
-      factor ∣ core →
-      ∃! S : LiftedFactorSubset d, RepresentsIntegerFactorAtLift core d factor S := by
-  intro d factor _ _
-  sorry
-
-/-- **#4543 supporting lemma (HO-1).**
-
-Fallback `HenselSubsetCorrespondenceHypotheses` value in the successful
-`Hex.choosePrimeData? core = some primeData` branch, parametric in the
-precision count `B`.  The proof transports through
-`Hex.choosePrimeData_eq_of_choosePrimeData?_some` to reuse
-`henselSubsetCorrespondence_analytic_obligation`; see that helper for the
-single localised analytic fallback.
-
-Successful-branch callers that have explicit lifted-side descent and forward
-Hensel transport should prefer
-`henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent`,
-which composes through the mod-`p` partition and avoids this fallback. -/
-theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData
-    (core : Hex.ZPoly) (B : Nat)
-    (primeData : Hex.PrimeChoiceData)
-    (_hchoose : Hex.choosePrimeData? core = some primeData) :
-    let d := Hex.ZPoly.toMonicLiftData core B primeData
-    HenselSubsetCorrespondenceHypotheses core B primeData d True True := by
-  intro d
-  refine
-    { lift_eq := rfl
-      admissible_prime := trivial
-      successful_lift := trivial
-      exists_subset := ?_
-      unique_subset := ?_ }
-  · intro factor hirr hdvd
-    exact (henselSubsetCorrespondence_analytic_obligation core B primeData hirr hdvd).exists
-  · intro factor S T hirr hdvd hS hT
-    rcases henselSubsetCorrespondence_analytic_obligation core B primeData hirr hdvd with
-      ⟨_, _, huniq⟩
-    exact (huniq S hS).trans (huniq T hT).symm
-
-/-- **#6172 supporting lemma (HO-1, non-monic-core sibling).**
-
-`HenselSubsetCorrespondenceHypotheses` value in the successful
-`Hex.ZPoly.toMonicPrimeData? core = some primeData` branch.  Parallel to
-`henselSubsetCorrespondenceHypotheses_of_choosePrimeData` but consumes the
-witness for the monic-transform prime data directly, so callers whose
-square-free core is not already monic (e.g. the slow-path arm of #4170
-applied to `(Hex.normalizeForFactor f).squareFreeCore`) can build the
-correspondence without a monic-core hypothesis. -/
-theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData
-    (core : Hex.ZPoly) (B : Nat)
-    (primeData : Hex.PrimeChoiceData)
-    (_hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData) :
-    let d := Hex.ZPoly.toMonicLiftData core B primeData
-    HenselSubsetCorrespondenceHypotheses core B primeData d True True := by
-  intro d
-  refine
-    { lift_eq := rfl
-      admissible_prime := trivial
-      successful_lift := trivial
-      exists_subset := ?_
-      unique_subset := ?_ }
-  · intro factor hirr hdvd
-    exact (henselSubsetCorrespondence_analytic_obligation core B primeData hirr hdvd).exists
-  · intro factor S T hirr hdvd hS hT
-    rcases henselSubsetCorrespondence_analytic_obligation core B primeData hirr hdvd with
-      ⟨_, _, huniq⟩
-    exact (huniq S hS).trans (huniq T hT).symm
-
 /-- Initial lifted-partition evidence for `J = Finset.univ` and `target = core`.
 
 This is the deliberately explicit replacement for the old universal
@@ -16930,22 +16817,24 @@ matches the issue's option (a) for handling
 
 Composes:
 
-* `henselSubsetCorrespondenceRest_initial` applied to the witness-form
-  `henselSubsetCorrespondenceHypotheses_of_choosePrimeData` for
-  `toHenselSubsetCorrespondenceRest`;
+* `henselSubsetCorrespondenceRest_initial` applied to the explicit `hcorr`
+  witness for `toHenselSubsetCorrespondenceRest`;
 * `hcore_sqfree` for `target_squarefree`;
 * `hinitial` for the five genuinely analytic
   fields (`cover`, `pairwise_disjoint`, `unique_up_to_associated`,
   `support_subset_of_dvd_recombinationCandidate`,
   `support_subset_of_dvd_scaledRecombinationCandidate`).
 
-The constructor body no longer manufactures those fields from arbitrary
-`PrimeChoiceData`; callers must supply the successful-lift partition evidence
-explicitly. -/
+The constructor body does not manufacture correspondence or partition fields
+from arbitrary `PrimeChoiceData`; callers must supply the successful-lift
+correspondence and partition evidence explicitly. -/
 theorem liftedFactorSubsetPartition_of_choosePrimeData
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
-    (hchoose : Hex.choosePrimeData? core = some primeData)
+    (_hchoose : Hex.choosePrimeData? core = some primeData)
+    (hcorr :
+      HenselSubsetCorrespondenceHypotheses core B primeData
+        (Hex.ZPoly.toMonicLiftData core B primeData) True True)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
@@ -16956,9 +16845,7 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
       liftedFactorSubsetPartition_initial_fields hinitial
     exact
       { toHenselSubsetCorrespondenceRest :=
-          henselSubsetCorrespondenceRest_initial
-            (henselSubsetCorrespondenceHypotheses_of_choosePrimeData core B
-              primeData hchoose)
+          henselSubsetCorrespondenceRest_initial hcorr
         target_squarefree := hcore_sqfree
         cover := by
           intro i hi
@@ -16988,11 +16875,15 @@ Parallel to `liftedFactorSubsetPartition_of_choosePrimeData` but consumes
 the `Hex.ZPoly.toMonicPrimeData? core = some primeData` witness directly.
 Used by the non-monic-friendly substrate constructor
 `slowPathHenselSubstrate_of_toMonicChoosePrimeData` below, which feeds the
-slow-path arm of #4170 from `(Hex.normalizeForFactor f).squareFreeCore`. -/
+slow-path arm of #4170 from `(Hex.normalizeForFactor f).squareFreeCore`.
+The embedded Hensel correspondence is supplied explicitly as `hcorr`. -/
 theorem liftedFactorSubsetPartition_of_toMonicPrimeData
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
-    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (_hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcorr :
+      HenselSubsetCorrespondenceHypotheses core B primeData
+        (Hex.ZPoly.toMonicLiftData core B primeData) True True)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
@@ -17003,9 +16894,7 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData
       liftedFactorSubsetPartition_initial_fields hinitial
     exact
       { toHenselSubsetCorrespondenceRest :=
-          henselSubsetCorrespondenceRest_initial
-            (henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData core B
-              primeData hselected)
+          henselSubsetCorrespondenceRest_initial hcorr
         target_squarefree := hcore_sqfree
         cover := by
           intro i hi
@@ -17549,7 +17438,7 @@ The explicit `hchoose` hypothesis selects the analyzable
 `Hex.choosePrimeData? core = some primeData` branch, supplying the mod-`p`
 subset partition.  The Hensel-lift obligations remain packaged as
 an explicit `HenselSubsetLiftHypotheses` input, so callers do not have to use
-the older analytic fallback constructor. -/
+an arbitrary-prime correspondence assumption. -/
 theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
@@ -17633,12 +17522,12 @@ theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
 
 /--
 Successful-descent sibling of
-`henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData`.
+the `toMonicPrimeData?` Hensel subset correspondence surface.
 
 The `toMonicPrimeData?` witness certifies that the Hensel lift is using prime
 data selected for `(Hex.ZPoly.toMonic core).monic`.  The mod-`p` subset
 partition for the original `core` is an explicit hypothesis, so this constructor
-does not route through `henselSubsetCorrespondence_analytic_obligation`.
+does not assume a correspondence for arbitrary prime data.
 -/
 theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
     (core : Hex.ZPoly) (B : Nat)
@@ -17672,8 +17561,7 @@ theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
 Successful-branch sibling of `liftedFactorSubsetPartition_of_choosePrimeData`.
 The partition-cover fields still come from the localized partition analytic
 obligation, but the embedded Hensel subset correspondence is sourced from the
-non-circular descent/forward-transport path rather than from
-`henselSubsetCorrespondence_analytic_obligation`. -/
+non-circular descent/forward-transport path. -/
 theorem liftedFactorSubsetPartition_of_choosePrimeData_success_descent
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
@@ -17742,10 +17630,11 @@ positive-degree / square-free hypotheses on the core, without rediscovering
 each fact independently.
 
 * `corr` — `HenselSubsetCorrespondenceHypotheses` value (sourced from
-  `henselSubsetCorrespondenceHypotheses_of_choosePrimeData`).
+  explicit successful correspondence evidence).
 * `partition` — `LiftedFactorSubsetPartition core d Finset.univ core`
   covering / disjointness / recombination support (sourced from
-  `liftedFactorSubsetPartition_of_choosePrimeData`).
+  `liftedFactorSubsetPartition_of_choosePrimeData` with the same
+  correspondence evidence).
 * `liftedFactor_monic`, `liftedFactor_natDegree_pos`, `liftedFactor_inj` —
   per-lifted-factor monicness, positive transported natural degree,
   and `Function.Injective (liftedFactor d)`.
@@ -17785,12 +17674,14 @@ structure SlowPathHenselSubstrate
 
 Constructor for `SlowPathHenselSubstrate` from a `Hex.choosePrimeData?
 core = some primeData` witness together with monic, positive-degree, and
-square-free hypotheses on the core, plus `B ≠ 0`.
+square-free hypotheses on the core, plus `B ≠ 0` and an explicit successful
+Hensel subset correspondence package.
 
 Composes (no new analytic obligation):
 
-* `henselSubsetCorrespondenceHypotheses_of_choosePrimeData` for `corr`;
-* `liftedFactorSubsetPartition_of_choosePrimeData` for `partition`;
+* `hcorr` for `corr`;
+* `liftedFactorSubsetPartition_of_choosePrimeData` applied to `hcorr` for
+  `partition`;
 * the `_of_monicPrimeData` umbrellas
   (`Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData`,
   `..._natDegree_pos_of_monicPrimeData`,
@@ -17809,6 +17700,9 @@ theorem slowPathHenselSubstrate_of_choosePrimeData
     (hcore_pos : 0 < core.degree?.getD 0)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hB_ne_zero : B ≠ 0)
+    (hcorr :
+      HenselSubsetCorrespondenceHypotheses core B primeData
+        (Hex.ZPoly.toMonicLiftData core B primeData) True True)
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
         (Hex.ZPoly.toMonicLiftData core B primeData)) :
@@ -17844,10 +17738,9 @@ theorem slowPathHenselSubstrate_of_choosePrimeData
       liftedFactor_inj := ?_
       modulus := ?_
       precision := ?_ }
-  · exact henselSubsetCorrespondenceHypotheses_of_choosePrimeData
-      core B primeData hchoose
+  · exact hcorr
   · exact liftedFactorSubsetPartition_of_choosePrimeData
-      core B primeData hchoose hcore_sqfree hinitial
+      core B primeData hchoose hcorr hcore_sqfree hinitial
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
@@ -17863,11 +17756,10 @@ Successful-branch variant of `slowPathHenselSubstrate_of_choosePrimeData`.
 When callers supply primitive lifted-side descent plus forward Hensel transport,
 the `corr` field and the partition's embedded correspondence are built through
 `henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent`
-instead of the fallback `henselSubsetCorrespondence_analytic_obligation`.
+instead of assuming a correspondence for arbitrary prime data.
 
-This is intentionally successful-branch only: the parametric fallback
-constructor remains available for callers that cannot yet provide the explicit
-descent/forward-transport package. -/
+The older substrate constructor now consumes explicit correspondence evidence;
+this wrapper builds that evidence from the descent/forward-transport package. -/
 theorem slowPathHenselSubstrate_of_choosePrimeData_success_descent
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
@@ -17942,19 +17834,20 @@ theorem slowPathHenselSubstrate_of_choosePrimeData_success_descent
 Constructor for `SlowPathHenselSubstrate` from a
 `Hex.ZPoly.toMonicPrimeData? core = some primeData` witness together with
 positive-leading-coefficient, positive-degree, and square-free hypotheses
-on the core, plus `B ≠ 0`.  In contrast to
+on the core, plus `B ≠ 0` and an explicit successful Hensel subset
+correspondence package.  In contrast to
 `slowPathHenselSubstrate_of_choosePrimeData`, this sibling does not
 require `core` to be monic — the prime-data witness operates on the
 integral-normalisation `(Hex.ZPoly.toMonic core).monic`, so non-monic
 square-free cores (e.g. `(Hex.normalizeForFactor f).squareFreeCore`) can
 feed the slow-path arm of #4170 directly.
 
-Composes (no new analytic obligation beyond the existing
-`henselSubsetCorrespondence_analytic_obligation`; the initial partition fields
-come from the explicit `InitialLiftedFactorSubsetPartitionEvidence` argument):
+Composes (no new analytic obligation; the initial partition fields come from
+the explicit `InitialLiftedFactorSubsetPartitionEvidence` argument):
 
-* `henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData` for `corr`;
-* `liftedFactorSubsetPartition_of_toMonicPrimeData` for `partition`;
+* `hcorr` for `corr`;
+* `liftedFactorSubsetPartition_of_toMonicPrimeData` applied to `hcorr` for
+  `partition`;
 * the `_of_monicPrimeData` umbrellas
   (`Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData`,
   `..._natDegree_pos_of_monicPrimeData`,
@@ -17970,6 +17863,9 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData
     (hcore_pos : 0 < core.degree?.getD 0)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hB_ne_zero : B ≠ 0)
+    (hcorr :
+      HenselSubsetCorrespondenceHypotheses core B primeData
+        (Hex.ZPoly.toMonicLiftData core B primeData) True True)
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
         (Hex.ZPoly.toMonicLiftData core B primeData)) :
@@ -17997,10 +17893,9 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData
       liftedFactor_inj := ?_
       modulus := ?_
       precision := ?_ }
-  · exact henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData
-      core B primeData hselected
+  · exact hcorr
   · exact liftedFactorSubsetPartition_of_toMonicPrimeData
-      core B primeData hselected hcore_sqfree hinitial
+      core B primeData hselected hcorr hcore_sqfree hinitial
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
@@ -18015,9 +17910,9 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData
 Successful-descent variant of
 `slowPathHenselSubstrate_of_toMonicChoosePrimeData`.  The `corr` field is
 sourced from the non-circular `toMonicPrimeData?` correspondence constructor
-above.  The partition field intentionally continues to use
-`liftedFactorSubsetPartition_of_toMonicPrimeData`; replacing that fallback is
-tracked separately by the lifted-partition work.
+above.  The partition field uses the narrowed `liftedFactorSubsetPartition`
+wrapper with that same correspondence; the remaining partition-field evidence
+is still supplied by `InitialLiftedFactorSubsetPartitionEvidence`.
 -/
 theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData_success_descent
     (core : Hex.ZPoly) (B : Nat)
@@ -18072,7 +17967,10 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData_success_descent
   · exact henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
       core B primeData hselected hmod hdescent hlifted_of_modP
   · exact liftedFactorSubsetPartition_of_toMonicPrimeData
-      core B primeData hselected hcore_sqfree hinitial
+      core B primeData hselected
+      (henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
+        core B primeData hselected hmod hdescent hlifted_of_modP)
+      hcore_sqfree hinitial
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
