@@ -331,33 +331,39 @@ same Zenodo 2636367 archive as the native comparator:
 `runIsabelleCertified*NormSq` fixed targets for the random-bounded and
 harsh-cubic ladders.
 
-Certified-vs-Isabelle-certified smoke rows at worktree commit
-`b9f7859-dirty` on `carica` (Apple M2 Ultra, macOS):
+**Full certified-vs-Isabelle-certified ladder** on `carica` (Apple M2 Ultra,
+macOS), worktree commit `4c708c7-dirty`, both families measured in one run
+(`reports/bench-results/hex-lll-certified-carica.json`):
 
-```sh
-HEX_LLL_ISABELLE_CERTIFIED_SVP="$(scripts/oracle/setup_lll_isabelle.sh certified)" \
-HEX_FPLLL_FFI_LIB="$(scripts/oracle/setup_fplll_ffi.sh)" \
-lake exe hexlll_bench run \
-  Hex.LLLBench.runCertifiedFirstShortVectorRandomBounded30Checksum \
-  Hex.LLLBench.runIsabelleCertifiedRandomBoundedNormSq30 \
-  --export-file reports/bench-results/hex-lll-isabelle-certified-smoke.json
+| random-bounded `n` | Lean certified | Isabelle certified | speedup (Isab/Lean) |
+| ---: | ---: | ---: | ---: |
+| 30 | `4.27 ms` | `31.18 ms` | `7.30×` |
+| 45 | `15.28 ms` | `56.52 ms` | `3.70×` |
+| 60 | `36.80 ms` | `103.65 ms` | `2.82×` |
+| 75 | `73.36 ms` | `185.34 ms` | `2.53×` |
+| 90 | `126.67 ms` | `302.66 ms` | `2.39×` |
+| 120 | `328.73 ms` | `681.69 ms` | `2.07×` |
+| 150 | `650.77 ms` | `1.423 s` | `2.19×` |
+| 180 | `1.216 s` | `2.363 s` | `1.94×` |
 
-HEX_LLL_ISABELLE_CERTIFIED_SVP="$(scripts/oracle/setup_lll_isabelle.sh certified)" \
-HEX_FPLLL_FFI_LIB="$(scripts/oracle/setup_fplll_ffi.sh)" \
-lake exe hexlll_bench run \
-  Hex.LLLBench.runCertifiedFirstShortVectorHarshCubic15Checksum \
-  Hex.LLLBench.runIsabelleCertifiedHarshCubicNormSq15 \
-  --export-file reports/bench-results/hex-lll-isabelle-certified-harsh-smoke.json
-```
+| harsh-cubic `n` | Lean certified | Isabelle certified | speedup |
+| ---: | ---: | ---: | ---: |
+| 15 | `0.88 ms` | `20.32 ms` | `22.98×` |
+| 20 | `2.34 ms` | `23.51 ms` | `10.03×` |
+| 25 | `5.38 ms` | `28.59 ms` | `5.31×` |
+| 30 | `11.22 ms` | `39.79 ms` | `3.55×` |
+| 35 | `22.59 ms` | `56.10 ms` | `2.48×` |
+| 40 | `44.75 ms` | `93.00 ms` | `2.08×` |
+| 45 | `79.44 ms` | `147.86 ms` | `1.86×` |
+| 50 | `140.11 ms` | `244.41 ms` | `1.74×` |
+| 55 | `237.28 ms` | `400.37 ms` | `1.69×` |
 
-| Family/rung | Hex certified median | Isabelle certified median | Hex/Isabelle-certified | speedup |
-| --- | ---: | ---: | ---: | ---: |
-| random-bounded `n = 30` | `4.371 ms` | `33.541 ms` | `0.1303` | `7.67×` |
-| harsh-cubic `n = 15` | `858.293 µs` | `22.555 ms` | `0.0381` | `26.28×` |
-
-Both Isabelle-certified rows had repeat-stable hashes and matched the Lean
-norm-squared expected hash. These rows are smoke evidence only; the full
-certified-vs-Isabelle-certified ladder remains a scheduled-run item.
+**Gating verdict: met.** The Hex certified path is faster than the verified
+Isabelle certified-LLL at every measured rung — `1.94×` at the largest
+random-bounded rung (`n = 180`) and `1.69×` at the largest harsh-cubic rung
+(`n = 55`), widening to `7–23×` at small `n` where the Isabelle path's
+per-call `fplll` process spawn dominates. All Isabelle-certified rows had
+repeat-stable hashes matching the Lean norm-squared expected hash.
 
 Architectural asymmetries for this ratio:
 
@@ -367,6 +373,14 @@ Architectural asymmetries for this ratio:
   though the surrounding Haskell driver is persistent.
 - Hex checks reducedness with `lllReducedInt`; Isabelle confirms reducedness by
   re-running the verified LLL reducer inside `test_certified`.
+
+The plots below draw all five curves per family: Lean native and verified
+Isabelle native LLL from the densified ladders, `fpLLL via fplll-ffi` from
+`hex-lll-fpll-ffi-carica.json` (the in-process FFI comparator, replacing the
+earlier `fpylll` subprocess), and the two verification curves — Lean certified
+and verified Isabelle certified-LLL — from `hex-lll-certified-carica.json`. The
+two certified curves certify the *same* fpLLL output with the Lean checker
+versus the Isabelle checker; the gap between them is the checker comparison.
 
 ![Random-bounded comparator runtime plot](figures/hex-lll-comparator-random-bounded.svg)
 
