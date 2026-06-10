@@ -12573,6 +12573,120 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_shouldRecord
       unfold shouldRecordPolynomialFactor
       simp [hpeel_ne_zero, hres_one, hpeel_ne_neg_one]
 
+/-- Transitivity of `∣` on `ZPoly`.  Composes the witness multiplications
+explicitly because the file does not import a general `dvd_trans`. -/
+private theorem ZPoly_dvd_trans {a b c : ZPoly} (hab : a ∣ b) (hbc : b ∣ c) :
+    a ∣ c := by
+  rcases hab with ⟨q, hq⟩
+  rcases hbc with ⟨r, hr⟩
+  refine ⟨q * r, ?_⟩
+  rw [hr, hq, DensePoly.mul_assoc_poly (S := Int)]
+
+/-- Each factor emitted by the candidate peel divides the peel target.  Direct
+consequence of the product invariant `residual * polyProduct factors = target`
+together with `dvd_polyProduct_toArray_of_mem`. -/
+private theorem trialDivisionPeelAux_factor_dvd_target
+    (target : ZPoly) (candidates : List ZPoly)
+    (factors : Array ZPoly) (residual : ZPoly)
+    (hsplit : trialDivisionPeelAux target candidates = (factors, residual)) :
+    ∀ b ∈ factors.toList, b ∣ target := by
+  intro b hb
+  have hprod :=
+    trialDivisionPeelAux_product target candidates factors residual hsplit
+  have hb_pp : b ∣ Array.polyProduct factors :=
+    dvd_polyProduct_toArray_of_mem factors.toList hb
+  rcases hb_pp with ⟨k, hk⟩
+  refine ⟨residual * k, ?_⟩
+  calc target
+      = residual * Array.polyProduct factors := hprod.symm
+    _ = residual * (b * k) := by rw [hk]
+    _ = (residual * b) * k := by rw [← DensePoly.mul_assoc_poly (S := Int)]
+    _ = (b * residual) * k := by
+          rw [DensePoly.mul_comm_poly (S := Int) residual b]
+    _ = b * (residual * k) := by rw [DensePoly.mul_assoc_poly (S := Int)]
+
+/-- The peel residual divides the peel target.  Direct consequence of the
+product invariant `residual * polyProduct factors = target`. -/
+private theorem trialDivisionPeelAux_residual_dvd_target
+    (target : ZPoly) (candidates : List ZPoly)
+    (factors : Array ZPoly) (residual : ZPoly)
+    (hsplit : trialDivisionPeelAux target candidates = (factors, residual)) :
+    residual ∣ target := by
+  have hprod :=
+    trialDivisionPeelAux_product target candidates factors residual hsplit
+  exact ⟨Array.polyProduct factors, hprod.symm⟩
+
+/-- A nonzero divisor of size one of a primitive polynomial is a unit.  The
+divisor reduces to `C c` with `c.natAbs ∣ content core = 1`, hence `c = ±1`. -/
+private theorem isUnit_of_dvd_primitive_size_one
+    {core g : ZPoly}
+    (hcore_prim : ZPoly.Primitive core)
+    (hdvd : g ∣ core) (hsize : g.size = 1) :
+    ZPoly.IsUnit g := by
+  have hg_eq : g = DensePoly.C (g.coeff 0) :=
+    ZPoly.eq_C_of_size_eq_one g hsize
+  have hg_ne_zero : g ≠ 0 := by
+    intro hzero; rw [hzero] at hsize
+    change (0 : Nat) = 1 at hsize; omega
+  have hgc_ne : g.coeff 0 ≠ 0 := by
+    intro hzero; apply hg_ne_zero; rw [hg_eq, hzero]; rfl
+  rcases hdvd with ⟨h, hh⟩
+  have hcore_eq : core = DensePoly.C (g.coeff 0) * h :=
+    hh.trans (congrArg (· * h) hg_eq)
+  have hcoeff_core : ∀ n, ((g.coeff 0).natAbs : Int) ∣ core.coeff n := by
+    intro n
+    have hcoeff : core.coeff n = g.coeff 0 * h.coeff n := by
+      rw [hcore_eq, ZPoly.C_mul_eq_scale,
+        DensePoly.coeff_scale (R := Int) (g.coeff 0) h n (Int.mul_zero _)]
+    rw [hcoeff]
+    exact Int.natAbs_dvd.mpr ⟨h.coeff n, rfl⟩
+  have hcontent_dvd : ((g.coeff 0).natAbs : Int) ∣ ZPoly.content core :=
+    ZPoly.dvd_content_of_nat_dvd_coeff core _ hcoeff_core
+  rw [show ZPoly.content core = 1 from hcore_prim] at hcontent_dvd
+  have hnat_dvd : (g.coeff 0).natAbs ∣ (1 : Nat) :=
+    Int.ofNat_dvd.mp (by simpa using hcontent_dvd)
+  have hnat_le : (g.coeff 0).natAbs ≤ 1 :=
+    Nat.le_of_dvd (by omega) hnat_dvd
+  have hnat_pos : 1 ≤ (g.coeff 0).natAbs := by
+    rcases Nat.eq_zero_or_pos (g.coeff 0).natAbs with hz | hp
+    · exact absurd (Int.natAbs_eq_zero.mp hz) hgc_ne
+    · exact hp
+  have hnat_eq : (g.coeff 0).natAbs = 1 := by omega
+  rcases Int.natAbs_eq (g.coeff 0) with heq | heq
+  · left; rw [hg_eq, heq, hnat_eq]; rfl
+  · right; rw [hg_eq, heq, hnat_eq]; rfl
+
+/-- Coefficient `natAbs` is invariant under `scale (-1 : Int)`. Used to
+transport a universal coefficient bound across sign normalization. -/
+private theorem natAbs_coeff_scale_neg_one (p : ZPoly) (i : Nat) :
+    ((DensePoly.scale (-1 : Int) p).coeff i).natAbs = (p.coeff i).natAbs := by
+  rw [DensePoly.coeff_scale (R := Int) (-1 : Int) p i (Int.mul_zero _)]
+  rcases Int.natAbs_eq (p.coeff i) with hpos | hneg
+  · rw [hpos]; simp [Int.natAbs_neg]
+  · rw [hneg]; simp [Int.natAbs_neg]
+
+/-- `scale (-1)` is an involution on `ZPoly`: applying it twice returns the
+original polynomial. -/
+private theorem scale_neg_one_neg_one (p : ZPoly) :
+    DensePoly.scale (-1 : Int) (DensePoly.scale (-1 : Int) p) = p := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_scale (R := Int) (-1 : Int) _ n (Int.mul_zero _),
+      DensePoly.coeff_scale (R := Int) (-1 : Int) p n (Int.mul_zero _)]
+  show (-1 : Int) * ((-1 : Int) * p.coeff n) = p.coeff n
+  rw [← Int.mul_assoc]
+  show ((-1 : Int) * (-1 : Int)) * p.coeff n = p.coeff n
+  rw [show ((-1 : Int) * (-1 : Int)) = 1 from by decide, Int.one_mul]
+
+/-- The sign-negation polynomial divides the original: `scale (-1) p` and `p`
+are associates via the `±1` unit pair.  Witnesses via the involution
+`scale (-1) ∘ scale (-1) = id`. -/
+private theorem dvd_scale_neg_one (p : ZPoly) :
+    DensePoly.scale (-1 : Int) p ∣ p := by
+  refine ⟨DensePoly.C (-1 : Int), ?_⟩
+  rw [DensePoly.mul_comm_poly (S := Int), ZPoly.C_mul_eq_scale]
+  exact (scale_neg_one_neg_one p).symm
+
 /-- `positiveDivisors n` returns a duplicate-free list of natural divisors:
 the underlying source `List.range (n + 1)` is `Nodup`, and `List.filter`
 preserves this. -/
