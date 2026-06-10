@@ -433,6 +433,24 @@ def divPos (S : Int) (a b : Ival) : Ival :=
   ⟨min (Int.fdiv (a.lo * S) b.lo) (Int.fdiv (a.lo * S) b.hi),
     max (cdiv (a.hi * S) b.lo) (cdiv (a.hi * S) b.hi)⟩
 
+/-- Endpoint bounds of the product of two intervals, sign-cased so the
+common (sign-definite) cases cost two integer multiplications instead of
+four products plus comparisons. Returns `(lo, hi)` at the product scale of
+its inputs. -/
+@[inline] def prodBounds (a b : Ival) : Int × Int :=
+  if 0 ≤ a.lo then
+    if 0 ≤ b.lo then (a.lo * b.lo, a.hi * b.hi)
+    else if b.hi ≤ 0 then (a.hi * b.lo, a.lo * b.hi)
+    else (a.hi * b.lo, a.hi * b.hi)
+  else if a.hi ≤ 0 then
+    if 0 ≤ b.lo then (a.lo * b.hi, a.hi * b.lo)
+    else if b.hi ≤ 0 then (a.hi * b.hi, a.lo * b.lo)
+    else (a.lo * b.hi, a.lo * b.lo)
+  else
+    if 0 ≤ b.lo then (a.lo * b.hi, a.hi * b.hi)
+    else if b.hi ≤ 0 then (a.hi * b.lo, a.lo * b.lo)
+    else (min (a.lo * b.hi) (a.hi * b.lo), max (a.lo * b.lo) (a.hi * b.hi))
+
 end Ival
 
 namespace IntervalGS
@@ -440,11 +458,20 @@ namespace IntervalGS
 /-- One step of the Gram-Schmidt dot recurrence on enclosures:
 `g − Σ_{k < t} mu[k] · r[k]`, with `g` an exact Gram entry. With
 `mu = μ[j][·]` and `r = r[i][·]` this encloses `⟨b_i, b*_j⟩`; with
-`mu = r = ` row `i`'s own data it encloses `‖b*_i‖²`. -/
+`mu = r = ` row `i`'s own data it encloses `‖b*_i‖²`.
+
+The sum accumulates exactly at scale `S²` (endpoint products of scale-`S`
+mantissas) and rounds outward through a single floor / ceiling division at
+the end, so a length-`t` dot recurrence costs one rounding division rather
+than `t` of them. -/
 def dotStep (S : Int) (mu r : Array Ival) (g : Int) (t : Nat) : Ival :=
-  (List.range t).foldl
-    (fun acc k => acc.sub (Ival.mul S mu[k]! r[k]!))
-    (Ival.ofInt S g)
+  let acc :=
+    (List.range t).foldl
+      (fun (acc : Int × Int) k =>
+        let p := Ival.prodBounds mu[k]! r[k]!
+        (acc.1 - p.2, acc.2 - p.1))
+      (g * S * S, g * S * S)
+  ⟨Int.fdiv acc.1 S, Ival.cdiv acc.2 S⟩
 
 /-- One column step of the per-row fold: extend the `r` row with the
 enclosure of `⟨b_i, b*_j⟩` and the `μ` row with the enclosure of

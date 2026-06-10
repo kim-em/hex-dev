@@ -455,24 +455,184 @@ private theorem getElem!_push_size_eq {α : Type*} [Inhabited α] (a : Array α)
   subst hj
   exact getElem!_push_eq a x
 
+/-- Containment for the sign-cased product bounds: the pair
+`Ival.prodBounds a b` brackets the exact product `(x·S)·(y·S)` whenever the
+inputs bracket `x·S` and `y·S`. -/
+private theorem prodBounds_le {S : Int} {a b : Ival} {x y : Rat}
+    (ha : a.mem S x) (hb : b.mem S y) :
+    (((Ival.prodBounds a b).1 : Int) : Rat) ≤ (x * S) * (y * S) ∧
+      (x * S) * (y * S) ≤ (((Ival.prodBounds a b).2 : Int) : Rat) := by
+  obtain ⟨ha1, ha2⟩ := ha
+  obtain ⟨hb1, hb2⟩ := hb
+  unfold Ival.prodBounds
+  by_cases hA : 0 ≤ a.lo
+  · have hA' : (0 : Rat) ≤ (a.lo : Rat) := by exact_mod_cast hA
+    have hx : (0 : Rat) ≤ x * S := le_trans hA' ha1
+    by_cases hB : 0 ≤ b.lo
+    · have hB' : (0 : Rat) ≤ (b.lo : Rat) := by exact_mod_cast hB
+      have hy : (0 : Rat) ≤ y * S := le_trans hB' hb1
+      rw [if_pos hA, if_pos hB]
+      constructor <;> (push_cast; nlinarith)
+    · rw [if_pos hA, if_neg hB]
+      have hB' : (b.lo : Rat) < 0 := by exact_mod_cast not_le.mp hB
+      by_cases hB2 : b.hi ≤ 0
+      · have hB2' : (b.hi : Rat) ≤ 0 := by exact_mod_cast hB2
+        have hy : y * S ≤ 0 := le_trans hb2 hB2'
+        rw [if_pos hB2]
+        constructor <;> (push_cast; nlinarith)
+      · have hB2' : (0 : Rat) < (b.hi : Rat) := by exact_mod_cast not_le.mp hB2
+        rw [if_neg hB2]
+        constructor <;> (push_cast; nlinarith)
+  · have hA' : (a.lo : Rat) < 0 := by exact_mod_cast not_le.mp hA
+    rw [if_neg hA]
+    by_cases hA2 : a.hi ≤ 0
+    · have hA2' : (a.hi : Rat) ≤ 0 := by exact_mod_cast hA2
+      have hx : x * S ≤ 0 := le_trans ha2 hA2'
+      rw [if_pos hA2]
+      by_cases hB : 0 ≤ b.lo
+      · have hB' : (0 : Rat) ≤ (b.lo : Rat) := by exact_mod_cast hB
+        have hy : (0 : Rat) ≤ y * S := le_trans hB' hb1
+        rw [if_pos hB]
+        constructor <;> (push_cast; nlinarith)
+      · rw [if_neg hB]
+        have hB' : (b.lo : Rat) < 0 := by exact_mod_cast not_le.mp hB
+        by_cases hB2 : b.hi ≤ 0
+        · have hB2' : (b.hi : Rat) ≤ 0 := by exact_mod_cast hB2
+          have hy : y * S ≤ 0 := le_trans hb2 hB2'
+          rw [if_pos hB2]
+          constructor <;> (push_cast; nlinarith)
+        · have hB2' : (0 : Rat) < (b.hi : Rat) := by exact_mod_cast not_le.mp hB2
+          rw [if_neg hB2]
+          constructor <;> (push_cast; nlinarith)
+    · have hA2' : (0 : Rat) < (a.hi : Rat) := by exact_mod_cast not_le.mp hA2
+      rw [if_neg hA2]
+      by_cases hB : 0 ≤ b.lo
+      · have hB' : (0 : Rat) ≤ (b.lo : Rat) := by exact_mod_cast hB
+        have hy : (0 : Rat) ≤ y * S := le_trans hB' hb1
+        rw [if_pos hB]
+        constructor <;> (push_cast; nlinarith)
+      · rw [if_neg hB]
+        have hB' : (b.lo : Rat) < 0 := by exact_mod_cast not_le.mp hB
+        by_cases hB2 : b.hi ≤ 0
+        · have hB2' : (b.hi : Rat) ≤ 0 := by exact_mod_cast hB2
+          have hy : y * S ≤ 0 := le_trans hb2 hB2'
+          rw [if_pos hB2]
+          constructor <;> (push_cast; nlinarith)
+        · have hB2' : (0 : Rat) < (b.hi : Rat) := by exact_mod_cast not_le.mp hB2
+          rw [if_neg hB2]
+          -- both straddle zero: bound through the side picked by the sign
+          -- of `x·S`
+          constructor
+          · show ((min (a.lo * b.hi) (a.hi * b.lo) : Int) : Rat) ≤ _
+            have hcast : ((min (a.lo * b.hi) (a.hi * b.lo) : Int) : Rat) =
+                min ((a.lo : Rat) * (b.hi : Rat)) ((a.hi : Rat) * (b.lo : Rat)) := by
+              rcases le_total (a.lo * b.hi) (a.hi * b.lo) with h | h
+              · rw [min_eq_left h]
+                rw [min_eq_left (by exact_mod_cast h)]
+                push_cast
+                ring
+              · rw [min_eq_right h]
+                rw [min_eq_right (by exact_mod_cast h)]
+                push_cast
+                ring
+            rw [hcast]
+            rcases le_total 0 (x * (S : Rat)) with hx | hx
+            · exact le_trans (min_le_right _ _) (by nlinarith)
+            · exact le_trans (min_le_left _ _) (by nlinarith)
+          · show _ ≤ ((max (a.lo * b.lo) (a.hi * b.hi) : Int) : Rat)
+            have hcast : ((max (a.lo * b.lo) (a.hi * b.hi) : Int) : Rat) =
+                max ((a.lo : Rat) * (b.lo : Rat)) ((a.hi : Rat) * (b.hi : Rat)) := by
+              rcases le_total (a.lo * b.lo) (a.hi * b.hi) with h | h
+              · rw [max_eq_right h]
+                rw [max_eq_right (by exact_mod_cast h)]
+                push_cast
+                ring
+              · rw [max_eq_left h]
+                rw [max_eq_left (by exact_mod_cast h)]
+                push_cast
+                ring
+            rw [hcast]
+            rcases le_total 0 (x * (S : Rat)) with hx | hx
+            · exact le_trans (by nlinarith :
+                (x * S) * (y * S) ≤ (a.hi : Rat) * (b.hi : Rat)) (le_max_right _ _)
+            · exact le_trans (by nlinarith :
+                (x * S) * (y * S) ≤ (a.lo : Rat) * (b.lo : Rat)) (le_max_left _ _)
+
+/-- The body of `IntervalGS.dotStep`'s exact scale-`S²` accumulation. -/
+private def dotAccStep (muA rA : Array Ival) (acc : Int × Int) (k : Nat) :
+    Int × Int :=
+  let p := Ival.prodBounds muA[k]! rA[k]!
+  (acc.1 - p.2, acc.2 - p.1)
+
+/-- The scale-`S²` accumulator of `dotStep` encloses
+`(g − Σ_{k<t} x_k·y_k)·S²` exactly (no rounding inside the fold). -/
+private theorem dotAcc_bounds {S : Int}
+    (muA rA : Array Ival) (g : Int) (t : Nat) (xs ys : Fin t → Rat)
+    (hmu : ∀ k : Fin t, (muA[k.val]!).mem S (xs k))
+    (hr : ∀ k : Fin t, (rA[k.val]!).mem S (ys k)) :
+    let acc := (List.range t).foldl (dotAccStep muA rA) (g * S * S, g * S * S)
+    ((acc.1 : Rat) ≤ ((g : Rat) - ∑ k, xs k * ys k) * S * S ∧
+      ((g : Rat) - ∑ k, xs k * ys k) * S * S ≤ (acc.2 : Rat)) := by
+  induction t with
+  | zero =>
+      refine ⟨?_, ?_⟩ <;> simp
+  | succ t ih =>
+      obtain ⟨ih1, ih2⟩ := ih (fun k => xs k.castSucc) (fun k => ys k.castSucc)
+        (fun k => hmu k.castSucc) (fun k => hr k.castSucc)
+      obtain ⟨hp1, hp2⟩ := prodBounds_le (hmu (Fin.last t)) (hr (Fin.last t))
+      rw [show (List.range (t + 1)).foldl (dotAccStep muA rA) (g * S * S, g * S * S) =
+          dotAccStep muA rA
+            ((List.range t).foldl (dotAccStep muA rA) (g * S * S, g * S * S)) t from by
+        rw [List.range_succ, List.foldl_append, List.foldl_cons, List.foldl_nil]]
+      rw [Fin.sum_univ_castSucc]
+      unfold dotAccStep
+      set acc := (List.range t).foldl (dotAccStep muA rA) (g * S * S, g * S * S)
+      have hterm : (xs (Fin.last t) * S) * (ys (Fin.last t) * S) =
+          xs (Fin.last t) * ys (Fin.last t) * S * S := by ring
+      rw [hterm] at hp1 hp2
+      constructor
+      · push_cast
+        have heq : ((g : Rat) - (∑ k : Fin t, xs k.castSucc * ys k.castSucc +
+            xs (Fin.last t) * ys (Fin.last t))) * S * S =
+            ((g : Rat) - ∑ k : Fin t, xs k.castSucc * ys k.castSucc) * S * S -
+              xs (Fin.last t) * ys (Fin.last t) * S * S := by ring
+        rw [heq]
+        exact sub_le_sub ih1 hp2
+      · push_cast
+        have heq : ((g : Rat) - (∑ k : Fin t, xs k.castSucc * ys k.castSucc +
+            xs (Fin.last t) * ys (Fin.last t))) * S * S =
+            ((g : Rat) - ∑ k : Fin t, xs k.castSucc * ys k.castSucc) * S * S -
+              xs (Fin.last t) * ys (Fin.last t) * S * S := by ring
+        rw [heq]
+        exact sub_le_sub ih2 hp1
+
 private theorem dotStep_mem {S : Int} (hS : 0 < S)
     (muA rA : Array Ival) (g : Int) (t : Nat) (xs ys : Fin t → Rat)
     (hmu : ∀ k : Fin t, (muA[k.val]!).mem S (xs k))
     (hr : ∀ k : Fin t, (rA[k.val]!).mem S (ys k)) :
     (IntervalGS.dotStep S muA rA g t).mem S ((g : Rat) - ∑ k, xs k * ys k) := by
-  induction t with
-  | zero =>
-      simpa [IntervalGS.dotStep] using mem_ofInt S g
-  | succ t ih =>
-      have hstep : IntervalGS.dotStep S muA rA g (t + 1) =
-          (IntervalGS.dotStep S muA rA g t).sub (Ival.mul S muA[t]! rA[t]!) := by
-        unfold IntervalGS.dotStep
-        rw [List.range_succ, List.foldl_append, List.foldl_cons, List.foldl_nil]
-      rw [hstep, Fin.sum_univ_castSucc, sub_add_eq_sub_sub]
-      exact mem_sub
-        (ih (fun k => xs k.castSucc) (fun k => ys k.castSucc)
-          (fun k => hmu k.castSucc) (fun k => hr k.castSucc))
-        (mem_mul hS (hmu (Fin.last t)) (hr (Fin.last t)))
+  have hSQ : (0 : Rat) < (S : Rat) := by exact_mod_cast hS
+  obtain ⟨h1, h2⟩ := dotAcc_bounds muA rA g t xs ys hmu hr
+  have hfold : IntervalGS.dotStep S muA rA g t =
+      ⟨Int.fdiv ((List.range t).foldl (dotAccStep muA rA) (g * S * S, g * S * S)).1 S,
+        Ival.cdiv ((List.range t).foldl (dotAccStep muA rA) (g * S * S, g * S * S)).2 S⟩ := by
+    unfold IntervalGS.dotStep dotAccStep
+    rfl
+  rw [hfold]
+  set acc := (List.range t).foldl (dotAccStep muA rA) (g * S * S, g * S * S)
+  set V : Rat := (g : Rat) - ∑ k, xs k * ys k
+  constructor
+  · -- fdiv acc.1 S ≤ V·S
+    have hd : ((acc.1 : Rat)) / (S : Rat) ≤ V * S := by
+      rw [div_le_iff₀ hSQ]
+      calc (acc.1 : Rat) ≤ V * S * S := h1
+        _ = V * S * S := rfl
+    exact le_trans (intCast_fdiv_le _ hS) hd
+  · -- V·S ≤ cdiv acc.2 S
+    have hd : V * S ≤ ((acc.2 : Rat)) / (S : Rat) := by
+      rw [le_div_iff₀ hSQ]
+      exact h2
+    exact le_trans hd (div_le_intCast_cdiv _ hS)
 
 /-- Invariant carried by the pass across the first `t` rows: sizes are `t`,
 every `‖b*_j‖²` enclosure is strictly positive and contains the exact
