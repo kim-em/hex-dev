@@ -430,6 +430,14 @@ the certified curves add no story and are omitted to keep the figure legible.
 
 ![Harsh-cubic comparator runtime plot](figures/hex-lll-comparator-harsh-cubic.svg)
 
+For the asymptotic scaling of these curves — fitted exponents and constant
+factors per method, with reproduction steps — see
+[hex-lll-scaling.md](hex-lll-scaling.md). In brief: the five random-bounded
+methods share one empirical complexity (`~n³`) and differ only by a constant
+factor (Lean certified ~4× smaller than Lean native), while on harsh-cubic the
+native reducers (`~n^5.6`) and fpLLL (`~n^2.2`) have different exponents and
+fan out.
+
 ### Per-call comparator overhead
 
 Both gating and informational comparators are wired through the persistent-subprocess protocol described at the top of `HexLLL/Bench.lean`. The per-call protocol overhead, measured on the audit host, is:
