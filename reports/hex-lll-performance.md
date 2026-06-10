@@ -416,11 +416,17 @@ Architectural asymmetries for this ratio:
 - Hex checks reducedness with `lllReducedInt`; Isabelle confirms reducedness by
   re-running the verified LLL reducer inside `test_certified`.
 
-The embedded comparator plots show five labelled series: Lean native,
-verified Isabelle native LLL, Lean certified, verified Isabelle certified-LLL,
-and fpLLL via fplll-ffi. All five curves span the full committed ladder.
+The random-bounded plot shows five labelled series across the full committed
+ladder: Lean native, Isabelle native, Lean certified, Isabelle certified, and
+fpLLL via fplll-ffi.
 
 ![Random-bounded comparator runtime plot](figures/hex-lll-comparator-random-bounded.svg)
+
+The harsh-cubic plot shows only the three native/fpLLL series. On this family
+the certified paths run slightly slower than their native counterparts (Lean
+certified is `1.05..1.67×` Lean native, per the ratio table above): fpLLL's
+advantage on hard instances is too small to offset the certificate checker, so
+the certified curves add no story and are omitted to keep the figure legible.
 
 ![Harsh-cubic comparator runtime plot](figures/hex-lll-comparator-harsh-cubic.svg)
 
