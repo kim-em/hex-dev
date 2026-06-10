@@ -12687,6 +12687,124 @@ private theorem dvd_scale_neg_one (p : ZPoly) :
   rw [DensePoly.mul_comm_poly (S := Int), ZPoly.C_mul_eq_scale]
   exact (scale_neg_one_neg_one p).symm
 
+/-- `trialDivisionPeelAux` `cons` reduction when the head candidate fails the
+exact-division check.  Equational form of the `none` branch of the
+recursion, useful for goal rewriting without unfolding the body's
+right-hand occurrences. -/
+private theorem trialDivisionPeelAux_cons_none
+    (target c : ZPoly) (cs : List ZPoly)
+    (hquot : exactQuotient? target c = none) :
+    trialDivisionPeelAux target (c :: cs) = trialDivisionPeelAux target cs := by
+  show (match exactQuotient? target c with
+        | some quotient =>
+            let rest := trialDivisionPeelAux quotient cs
+            (#[c] ++ rest.1, rest.2)
+        | none => trialDivisionPeelAux target cs) = trialDivisionPeelAux target cs
+  rw [hquot]
+
+/-- `trialDivisionPeelAux` `cons` reduction when the head candidate exactly
+divides the running target.  Equational form of the `some` branch of the
+recursion. -/
+private theorem trialDivisionPeelAux_cons_some
+    (target c q : ZPoly) (cs : List ZPoly)
+    (hquot : exactQuotient? target c = some q) :
+    trialDivisionPeelAux target (c :: cs) =
+      (#[c] ++ (trialDivisionPeelAux q cs).1,
+       (trialDivisionPeelAux q cs).2) := by
+  show (match exactQuotient? target c with
+        | some quotient =>
+            let rest := trialDivisionPeelAux quotient cs
+            (#[c] ++ rest.1, rest.2)
+        | none => trialDivisionPeelAux target cs) =
+       (#[c] ++ (trialDivisionPeelAux q cs).1,
+        (trialDivisionPeelAux q cs).2)
+  rw [hquot]
+
+/-- Degree-ordered prefix-split decomposition of `trialDivisionPeelAux`.
+Peeling a concatenated candidate list `pre ++ suf` is the same as first
+peeling `pre` (producing `(preFactors, mid)`) and then peeling `suf` from
+`mid`: the emitted factors concatenate and the residual matches.
+This is the structural identity that the peel.1 case of the candidate-peel
+irreducibility argument uses to argue that a strictly smaller-degree
+candidate gets tested before any higher-degree emitted factor. -/
+private theorem trialDivisionPeelAux_split
+    (target : ZPoly) (pre suf : List ZPoly) :
+    ∀ preFactors mid,
+      trialDivisionPeelAux target pre = (preFactors, mid) →
+        trialDivisionPeelAux target (pre ++ suf) =
+          (preFactors ++ (trialDivisionPeelAux mid suf).1,
+           (trialDivisionPeelAux mid suf).2) := by
+  induction pre generalizing target with
+  | nil =>
+      intro preFactors mid hpre
+      simp [trialDivisionPeelAux] at hpre
+      rcases hpre with ⟨rfl, rfl⟩
+      simp [List.nil_append]
+  | cons c cs ih =>
+      intro preFactors mid hpre
+      cases hquot : exactQuotient? target c with
+      | none =>
+          rw [trialDivisionPeelAux_cons_none target c cs hquot] at hpre
+          have hih := ih target preFactors mid hpre
+          rw [List.cons_append,
+              trialDivisionPeelAux_cons_none target c (cs ++ suf) hquot]
+          exact hih
+      | some q =>
+          rw [trialDivisionPeelAux_cons_some target c q cs hquot] at hpre
+          cases hrest : trialDivisionPeelAux q cs with
+          | mk restFact restRes =>
+              rw [hrest] at hpre
+              simp at hpre
+              rcases hpre with ⟨rfl, rfl⟩
+              have hih := ih q restFact restRes hrest
+              rw [List.cons_append,
+                  trialDivisionPeelAux_cons_some target c q (cs ++ suf) hquot,
+                  hih]
+              generalize trialDivisionPeelAux restRes suf = tsuf
+              rcases tsuf with ⟨sfact, sres⟩
+              simp [Array.append_assoc]
+
+/-- `DensePoly.scale (-1)` preserves dense size on `ZPoly`. Both directions
+of the antisymmetric inequality come from the trim invariant: a strictly
+larger size on either side forces a zero coefficient at the top index that
+is also forced to be nonzero. -/
+private theorem size_scale_neg_one (p : ZPoly) :
+    (DensePoly.scale (-1 : Int) p).size = p.size := by
+  apply Nat.le_antisymm
+  · by_cases hle : (DensePoly.scale (-1 : Int) p).size ≤ p.size
+    · exact hle
+    · exfalso
+      have hlt : p.size < (DensePoly.scale (-1 : Int) p).size :=
+        Nat.lt_of_not_ge hle
+      let i := (DensePoly.scale (-1 : Int) p).size - 1
+      have hpos : 0 < (DensePoly.scale (-1 : Int) p).size := by
+        change 0 < (DensePoly.scale (-1 : Int) p).size; omega
+      have hp_le : p.size ≤ i := by change p.size ≤ _ - 1; omega
+      have hp_zero : p.coeff i = 0 :=
+        DensePoly.coeff_eq_zero_of_size_le p hp_le
+      have hscale_ne :
+          (DensePoly.scale (-1 : Int) p).coeff i ≠ 0 :=
+        DensePoly.coeff_last_ne_zero_of_pos_size _ hpos
+      rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero (-1 : Int)), hp_zero] at hscale_ne
+      exact hscale_ne (Int.mul_zero (-1 : Int))
+  · by_cases hle : p.size ≤ (DensePoly.scale (-1 : Int) p).size
+    · exact hle
+    · exfalso
+      have hlt : (DensePoly.scale (-1 : Int) p).size < p.size :=
+        Nat.lt_of_not_ge hle
+      let i := p.size - 1
+      have hp_pos : 0 < p.size := by change 0 < p.size; omega
+      have hscale_le : (DensePoly.scale (-1 : Int) p).size ≤ i := by
+        change _ ≤ p.size - 1; omega
+      have hscale_zero : (DensePoly.scale (-1 : Int) p).coeff i = 0 :=
+        DensePoly.coeff_eq_zero_of_size_le _ hscale_le
+      have hp_ne : p.coeff i ≠ 0 :=
+        DensePoly.coeff_last_ne_zero_of_pos_size p hp_pos
+      rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero (-1 : Int))] at hscale_zero
+      apply hp_ne
+      have : (-1 : Int) * p.coeff i = 0 := hscale_zero
+      omega
+
 /-- `positiveDivisors n` returns a duplicate-free list of natural divisors:
 the underlying source `List.range (n + 1)` is `Nodup`, and `List.filter`
 preserves this. -/
