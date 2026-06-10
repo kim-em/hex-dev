@@ -482,6 +482,66 @@ theorem l2norm_pow_le_bhksPaperCoeffNormFactorReal
   exact pow_le_pow_right₀ (one_le_l2norm_toPolynomial_of_ne_zero hf) hk
 
 /--
+The executable coefficient L2 bound raised to any exponent below the BHKS degree
+is absorbed by the paper coefficient-norm factor.
+-/
+theorem coeffL2NormBound_pow_le_bhksPaperCoeffNormFactorReal
+    {f : Hex.ZPoly} (hf : HexPolyZMathlib.toPolynomial f ≠ 0)
+    {k : Nat} (hk : k + 1 ≤ bhksDegree f) :
+    (Hex.ZPoly.coeffL2NormBound f : ℝ) ^ k ≤
+      bhksPaperCoeffNormFactorReal f := by
+  let c := Hex.ZPoly.coeffL2NormBound f
+  let x := HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)
+  let M := Hex.ZPoly.coeffNormSq f
+  have hx_one : 1 ≤ x := by
+    simpa [x] using one_le_l2norm_toPolynomial_of_ne_zero hf
+  have hx_sq : x ^ 2 = (M : ℝ) := by
+    simpa [x, M] using HexPolyZMathlib.l2norm_toPolynomial_sq_eq_coeffNormSq f
+  by_cases hM_small : M ≤ 1
+  · have hc_sq_nat : c ^ 2 ≤ 2 := by
+      have h : c ^ 2 ≤ 2 * M := by
+        simpa [c, M] using Hex.ZPoly.coeffL2NormBound_sq_le_two_mul_coeffNormSq f
+      omega
+    have hc_le_one_nat : c ≤ 1 := by
+      rw [Nat.pow_two] at hc_sq_nat
+      nlinarith
+    have hc_pow_le_one : (c : ℝ) ^ k ≤ 1 := by
+      simpa using
+        (pow_le_pow_left₀ (by positivity : (0 : ℝ) ≤ (c : ℝ))
+          (by exact_mod_cast hc_le_one_nat : (c : ℝ) ≤ 1) k)
+    have hone_le_factor : (1 : ℝ) ≤ bhksPaperCoeffNormFactorReal f := by
+      unfold bhksPaperCoeffNormFactorReal
+      simpa [x] using
+        (pow_le_pow_left₀ (by norm_num : (0 : ℝ) ≤ 1) hx_one (2 * bhksDegree f - 1))
+    exact hc_pow_le_one.trans hone_le_factor
+  · have hM_ge_two : 2 ≤ M := by omega
+    have hc_sq_real : (c : ℝ) ^ 2 ≤ 2 * (M : ℝ) := by
+      have h := Hex.ZPoly.coeffL2NormBound_sq_le_two_mul_coeffNormSq f
+      change (c ^ 2 : Nat) ≤ 2 * M at h
+      exact_mod_cast h
+    have htwoM_le_Msq : 2 * (M : ℝ) ≤ (M : ℝ) * (M : ℝ) := by
+      have hM_ge_two_real : (2 : ℝ) ≤ M := by exact_mod_cast hM_ge_two
+      nlinarith
+    have hc_sq_le_x_four : (c : ℝ) ^ 2 ≤ (x ^ 2) ^ 2 := by
+      calc
+        (c : ℝ) ^ 2 ≤ 2 * (M : ℝ) := hc_sq_real
+        _ ≤ (M : ℝ) * (M : ℝ) := htwoM_le_Msq
+        _ = (x ^ 2) ^ 2 := by rw [hx_sq]; ring
+    have hc_le_x_sq : (c : ℝ) ≤ x ^ 2 := by
+      have h_abs := (sq_le_sq).mp hc_sq_le_x_four
+      simpa [abs_of_nonneg (by positivity : (0 : ℝ) ≤ (c : ℝ)),
+        abs_of_nonneg (sq_nonneg x)] using h_abs
+    have hc_pow_le_x_pow :
+        (c : ℝ) ^ k ≤ x ^ (2 * k) := by
+      calc
+        (c : ℝ) ^ k ≤ (x ^ 2) ^ k :=
+          pow_le_pow_left₀ (by positivity : (0 : ℝ) ≤ (c : ℝ)) hc_le_x_sq k
+        _ = x ^ (2 * k) := by rw [pow_mul]
+    have hk_exp : 2 * k ≤ 2 * bhksDegree f - 1 := by omega
+    exact hc_pow_le_x_pow.trans
+      (l2norm_pow_le_bhksPaperCoeffNormFactorReal (f := f) hf hk_exp)
+
+/--
 Named analytic target for bounding the BHKS logarithmic factor by the packaged
 `Nat.log2` factor.
 -/
