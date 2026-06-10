@@ -356,43 +356,56 @@ same Zenodo 2636367 archive as the native comparator:
 `runIsabelleCertified*NormSq` fixed targets for the random-bounded and
 harsh-cubic ladders.
 
-Certified-vs-Isabelle-certified smoke rows at worktree commit
-`b9f7859-dirty` on `carica` (Apple M2 Ultra, macOS):
+The full certified-vs-Isabelle-certified ladder was measured in one run on
+`carica` (Apple M2 Ultra, macOS) at commit `4c708c7b`, with both engines
+hosted in the same process schedule so the gating ratio shares a host and
+candidate set:
 
 ```sh
 HEX_LLL_ISABELLE_CERTIFIED_SVP="$(scripts/oracle/setup_lll_isabelle.sh certified)" \
 HEX_FPLLL_FFI_LIB="$(scripts/oracle/setup_fplll_ffi.sh)" \
 lake exe hexlll_bench run \
-  Hex.LLLBench.runCertifiedFirstShortVectorRandomBounded30Checksum \
-  Hex.LLLBench.runIsabelleCertifiedRandomBoundedNormSq30 \
-  --export-file reports/bench-results/hex-lll-isabelle-certified-smoke.json
-
-HEX_LLL_ISABELLE_CERTIFIED_SVP="$(scripts/oracle/setup_lll_isabelle.sh certified)" \
-HEX_FPLLL_FFI_LIB="$(scripts/oracle/setup_fplll_ffi.sh)" \
-lake exe hexlll_bench run \
-  Hex.LLLBench.runCertifiedFirstShortVectorHarshCubic15Checksum \
-  Hex.LLLBench.runIsabelleCertifiedHarshCubicNormSq15 \
-  --export-file reports/bench-results/hex-lll-isabelle-certified-harsh-smoke.json
+  Hex.LLLBench.runCertifiedFirstShortVectorRandomBounded{30,45,60,75,90,120,150,180}Checksum \
+  Hex.LLLBench.runIsabelleCertifiedRandomBoundedNormSq{30,45,60,75,90,120,150,180} \
+  Hex.LLLBench.runCertifiedFirstShortVectorHarshCubic{15,20,25,30,35,40,45,50,55}Checksum \
+  Hex.LLLBench.runIsabelleCertifiedHarshCubicNormSq{15,20,25,30,35,40,45,50,55} \
+  --export-file reports/bench-results/hex-lll-certified-carica.json
 ```
 
-| Family/rung | Hex certified median | Isabelle certified median | Hex/Isabelle-certified | speedup |
-| --- | ---: | ---: | ---: | ---: |
-| random-bounded `n = 30` | `4.371 ms` | `33.541 ms` | `0.1303` | `7.67×` |
-| harsh-cubic `n = 15` | `858.293 µs` | `22.555 ms` | `0.0381` | `26.28×` |
+This is the export the comparator plots source for all four certified rungs.
 
-Both Isabelle-certified rows had repeat-stable hashes and matched the Lean
-norm-squared expected hash. These rows are smoke evidence only; the full
-certified-vs-Isabelle-certified ladder remains a scheduled-run item.
+Certified-vs-Isabelle-certified random-bounded ratios:
 
-Certified-vs-Isabelle-certified gating verdict on the largest shared committed
-rung in each family:
+| `n` | Hex certified median | Isabelle certified median | Hex/Isabelle-certified | speedup |
+|---:|---:|---:|---:|---:|
+| 30 | 4.27 ms | 31.18 ms | 0.137 | 7.30× |
+| 45 | 15.28 ms | 56.52 ms | 0.270 | 3.70× |
+| 60 | 36.80 ms | 103.65 ms | 0.355 | 2.82× |
+| 75 | 73.36 ms | 185.34 ms | 0.396 | 2.53× |
+| 90 | 126.67 ms | 302.66 ms | 0.419 | 2.39× |
+| 120 | 328.73 ms | 681.69 ms | 0.482 | 2.07× |
+| 150 | 650.77 ms | 1.42 s | 0.457 | 2.19× |
+| 180 | 1.22 s | 2.36 s | 0.515 | 1.94× |
 
-- `random-bounded`, `n = 30`: Hex certified `4.371 ms` vs Isabelle certified
-  `33.541 ms`; ratio `0.1303`, Hex `7.67×` faster. Verdict: **met** for the
-  committed shared rung.
-- `harsh-cubic`, `n = 15`: Hex certified `858.293 µs` vs Isabelle certified
-  `22.555 ms`; ratio `0.0381`, Hex `26.28×` faster. Verdict: **met** for the
-  committed shared rung.
+Certified-vs-Isabelle-certified harsh-cubic ratios:
+
+| `n` | Hex certified median | Isabelle certified median | Hex/Isabelle-certified | speedup |
+|---:|---:|---:|---:|---:|
+| 15 | 882 µs | 20.32 ms | 0.043 | 22.98× |
+| 20 | 2.34 ms | 23.51 ms | 0.100 | 10.03× |
+| 25 | 5.38 ms | 28.59 ms | 0.188 | 5.31× |
+| 30 | 11.22 ms | 39.79 ms | 0.282 | 3.55× |
+| 35 | 22.59 ms | 56.10 ms | 0.403 | 2.48× |
+| 40 | 44.75 ms | 93.00 ms | 0.481 | 2.08× |
+| 45 | 79.44 ms | 147.86 ms | 0.537 | 1.86× |
+| 50 | 140.11 ms | 244.41 ms | 0.573 | 1.74× |
+| 55 | 237.28 ms | 400.37 ms | 0.593 | 1.69× |
+
+Gating verdict: **met at every shared rung.** Hex's certified path is faster
+than Isabelle's certified path across both families — by `1.94..7.30×` on
+random-bounded and `1.69..22.98×` on harsh-cubic. The margin is widest at
+small `n` (where Isabelle's per-request `fplll` subprocess fork dominates) and
+narrows toward the largest rungs but never inverts.
 
 Architectural asymmetries for this ratio:
 
@@ -405,9 +418,7 @@ Architectural asymmetries for this ratio:
 
 The embedded comparator plots show five labelled series: Lean native,
 verified Isabelle native LLL, Lean certified, verified Isabelle certified-LLL,
-and fpLLL via fplll-ffi. The Isabelle-certified series currently has one
-committed point per family; it is plotted as the fifth labelled marker rather
-than dropped silently.
+and fpLLL via fplll-ffi. All five curves span the full committed ladder.
 
 ![Random-bounded comparator runtime plot](figures/hex-lll-comparator-random-bounded.svg)
 
