@@ -32,13 +32,12 @@ DEFAULT_HARSH_CONSOLIDATED = (
 DEFAULT_ISABELLE_BOTTOM = (
     ROOT / "reports/bench-results/hex-lll-isabelle-bottom-e211854d1435.json"
 )
-DEFAULT_CERTIFIED = ROOT / "reports/bench-results/hex-lll-certified-3e90e137.json"
-DEFAULT_ISABELLE_CERTIFIED_RANDOM = (
-    ROOT / "reports/bench-results/hex-lll-isabelle-certified-smoke.json"
-)
-DEFAULT_ISABELLE_CERTIFIED_HARSH = (
-    ROOT / "reports/bench-results/hex-lll-isabelle-certified-harsh-smoke.json"
-)
+# Full certified ladder measured in one carica run, so all four
+# certified rungs (Lean + Isabelle, random + harsh) share a host and
+# commit and the gating ratio is internally consistent.
+DEFAULT_CERTIFIED = ROOT / "reports/bench-results/hex-lll-certified-carica.json"
+DEFAULT_ISABELLE_CERTIFIED_RANDOM = DEFAULT_CERTIFIED
+DEFAULT_ISABELLE_CERTIFIED_HARSH = DEFAULT_CERTIFIED
 DEFAULT_RANDOM_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-random-bounded.svg"
 DEFAULT_HARSH_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-harsh-cubic.svg"
 
