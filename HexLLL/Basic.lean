@@ -71,17 +71,38 @@ def maxAbs (M : Matrix Int n m) : Nat :=
 def packWidth (M : Matrix Int n n) (A C : Matrix Int n m) : Nat :=
   (n * maxAbs M * maxAbs A + maxAbs C).log2 + 2
 
+/-- Every entry fits in a machine word. Comparison-only scan (no `natAbs`
+allocation) with short-circuit, so matrices with wide entries bail out at the
+first wide entry. -/
+private def wordScale (M : Matrix Int n m) : Bool :=
+  M.toList.all fun row => row.toList.all fun x =>
+    -(2 ^ 62 : Int) < x && x < 2 ^ 62
+
 /-- Packed product-equality certificate: decides `M * A = C` without forming
 the product. Each row of `A` and of `C` is packed into one integer in
 balanced base `2^K` at the width `packWidth M A C`, and row `i` of the
 (unformed) product is compared via the single packed dot product
 `Σ_l M[i][l] · packA[l]`: `n` big-integer dot products in place of the
-`n · m` entry dot products of a materialized `Matrix.mul`. -/
+`n · m` entry dot products of a materialized `Matrix.mul`.
+
+The packed evaluation pays only when the multiplications are big-by-small,
+i.e. when all entries involved are word-scale; on wide entries the packed
+dot products cost the same bit operations as the materialized product while
+the bound scan and the Horner repacking of wide rows add overhead. The
+certificate therefore gates on `wordScale` (a short-circuiting comparison
+scan, so a wide input bails out at its first wide entry) plus a dimension
+floor (below it the fixed cost of the bound scan and packing exceeds the
+whole sub-millisecond comparison) and falls back to the materialized
+comparison otherwise; both branches decide exactly `M * A = C`
+(`mulEqCert_iff`). -/
 def mulEqCert (M : Matrix Int n n) (A C : Matrix Int n m) : Bool :=
-  let K := packWidth M A C
-  let packs : Vector Int n := Vector.ofFn fun l => packRow K (row A l)
-  (List.finRange n).all fun i =>
-    Vector.dotProduct (row M i) packs == packRow K (row C i)
+  if 32 ≤ n && wordScale M && wordScale A && wordScale C then
+    let K := packWidth M A C
+    let packs : Vector Int n := Vector.ofFn fun l => packRow K (row A l)
+    (List.finRange n).all fun i =>
+      Vector.dotProduct (row M i) packs == packRow K (row C i)
+  else
+    M * A == C
 
 private theorem foldl_max_le_init {α : Type} (f : α → Nat) (l : List α) (acc : Nat) :
     acc ≤ l.foldl (fun a x => Nat.max a (f x)) acc := by
@@ -323,8 +344,11 @@ complete (`M * A = C` implies `= true`, by congruence through
 `dotProduct_packRow`). -/
 theorem mulEqCert_iff {M : Matrix Int n n} {A C : Matrix Int n m} :
     mulEqCert M A C = true ↔ M * A = C := by
-  simp only [mulEqCert, packWidth, List.all_eq_true, beq_iff_eq,
-    dotProduct_packRow]
+  unfold mulEqCert
+  split
+  case isFalse => exact beq_iff_eq
+  case isTrue _ =>
+  simp only [packWidth, List.all_eq_true, beq_iff_eq, dotProduct_packRow]
   constructor
   · intro h
     apply Vector.ext
