@@ -89,6 +89,10 @@ class FamilyConfig:
     # the densified file + the standalone Isabelle export.
     consolidated_path: Path | None = None
     bottom_consistency: bool = False
+    # On harsh-cubic the certified paths run slightly slower than their
+    # native counterparts (fpLLL's advantage is too small to offset the
+    # checker), so the certified curves are omitted from that figure.
+    include_certified: bool = True
 
 
 FAMILIES = {
@@ -120,7 +124,19 @@ FAMILIES = {
         title="HexLLL harsh-cubic comparator runtime",
         xlabel="harsh-cubic dimension n",
         consolidated_path=DEFAULT_HARSH_CONSOLIDATED,
+        include_certified=False,
     ),
+}
+
+
+# Marker style keyed by series label, so a curve keeps the same marker
+# whether or not the certified curves are present in a given figure.
+STYLE_BY_LABEL = {
+    "Lean native": {"marker": "o", "linewidth": 2.0},
+    "Isabelle native": {"marker": "s", "linewidth": 2.0},
+    "Lean certified": {"marker": "D", "linewidth": 2.0, "markersize": 6.5},
+    "Isabelle certified": {"marker": "^", "linewidth": 2.0, "markersize": 7.0},
+    "fpLLL via fplll-ffi": {"marker": "v", "linewidth": 2.0, "markersize": 7.0},
 }
 
 
@@ -168,15 +184,13 @@ def seconds_formatter(value: float, _position: int) -> str:
 
 def plot(series: list[Series], output: Path, title: str, xlabel: str) -> None:
     fig, ax = plt.subplots(figsize=(7.2, 4.8))
-    styles = [
-        {"marker": "o", "linewidth": 2.0},
-        {"marker": "s", "linewidth": 2.0},
-        {"marker": "D", "linewidth": 2.0, "markersize": 6.5},
-        {"marker": "^", "linewidth": 2.0, "markersize": 7.0},
-        {"marker": "v", "linewidth": 2.0, "markersize": 7.0},
-    ]
-    for item, style in zip(series, styles, strict=True):
-        ax.plot(item.xs, [y / 1000.0 for y in item.ys], label=item.label, **style)
+    for item in series:
+        ax.plot(
+            item.xs,
+            [y / 1000.0 for y in item.ys],
+            label=item.label,
+            **STYLE_BY_LABEL[item.label],
+        )
 
     ax.set_title(title)
     ax.set_xlabel(xlabel)
@@ -236,34 +250,31 @@ def main() -> None:
 
     cons = load_results(cons_path)
     lean = collect_series(cons, config.lean_pattern, "Lean native")
-    isabelle = collect_series(cons, config.isabelle_pattern,
-                              "verified Isabelle native LLL")
-    fpll_results = cons
-    fpll = collect_series(
-        fpll_results, config.fpll_pattern, "fpLLL via fplll-ffi"
-    )
-    certified_results = load_results(args.certified or config.certified_path)
-    certified = collect_series(
-        certified_results, config.certified_pattern, "Lean certified"
-    )
-    isabelle_certified_results = load_results(
-        args.isabelle_certified or config.isabelle_certified_path
-    )
-    isabelle_certified = collect_series(
-        isabelle_certified_results,
-        config.isabelle_certified_pattern,
-        "verified Isabelle certified-LLL",
-    )
+    isabelle = collect_series(cons, config.isabelle_pattern, "Isabelle native")
+    fpll = collect_series(cons, config.fpll_pattern, "fpLLL via fplll-ffi")
+
+    series = [lean, isabelle]
+    if config.include_certified:
+        certified_results = load_results(args.certified or config.certified_path)
+        certified = collect_series(
+            certified_results, config.certified_pattern, "Lean certified"
+        )
+        isabelle_certified_results = load_results(
+            args.isabelle_certified or config.isabelle_certified_path
+        )
+        isabelle_certified = collect_series(
+            isabelle_certified_results,
+            config.isabelle_certified_pattern,
+            "Isabelle certified",
+        )
+        series += [certified, isabelle_certified]
+    series.append(fpll)
+
     if config.bottom_consistency:
         isabelle_bottom_results = load_results(args.isabelle_bottom)
         assert_bottom_consistent(isabelle_bottom_results, isabelle)
 
-    plot(
-        [lean, isabelle, certified, isabelle_certified, fpll],
-        output,
-        config.title,
-        config.xlabel,
-    )
+    plot(series, output, config.title, config.xlabel)
 
 
 if __name__ == "__main__":
