@@ -16753,27 +16753,6 @@ theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData
       ⟨_, _, huniq⟩
     exact (huniq S hS).trans (huniq T hT).symm
 
-/-- **#4543 supporting lemma (HO-1), outer-bound specialisation.**
-
-Specialisation of `henselSubsetCorrespondenceHypotheses_of_choosePrimeData`
-at the precision count actually consumed by the slow exhaustive branch
-of `Hex.factor f` (i.e. `Hex.factorWithBound f
-(Hex.ZPoly.defaultFactorCoeffBound f)`).  The resulting structure value
-has the exact `core`/`B`/`primeData`/`d` shape expected by
-`factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`
-(PR #4537), so the HO-1 slow-path assembly can apply that wrapper
-directly. -/
-theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
-    (f : Hex.ZPoly)
-    (primeData : Hex.PrimeChoiceData)
-    (hchoose :
-      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData) :
-    let core := (Hex.normalizeForFactor f).squareFreeCore
-    let B := Hex.ZPoly.defaultFactorCoeffBound f
-    let d := Hex.ZPoly.toMonicLiftData core B primeData
-    HenselSubsetCorrespondenceHypotheses core B primeData d True True :=
-  henselSubsetCorrespondenceHypotheses_of_choosePrimeData _ _ primeData hchoose
-
 /-- Initial lifted-partition evidence for `J = Finset.univ` and `target = core`.
 
 This is the deliberately explicit replacement for the old universal
@@ -17617,6 +17596,40 @@ theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
     henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success core B primeData hchoose
       (henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData_descent
         core B primeData hchoose hdescent hlifted_of_modP)
+
+/-- **#6683 supporting lemma (HO-1), outer-bound successful branch.**
+
+Successful-descent specialisation of
+`henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent` at the
+precision count consumed by the slow exhaustive branch of `Hex.factor f`. -/
+theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
+    (f : Hex.ZPoly)
+    (primeData : Hex.PrimeChoiceData)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
+    (hdescent :
+      HenselLiftDescentHypotheses (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f) primeData
+        (Hex.ZPoly.toMonicLiftData (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f) primeData) True True)
+    (hlifted_of_modP :
+      ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset primeData},
+        Irreducible (HexPolyZMathlib.toPolynomial factor) →
+        factor ∣ (Hex.normalizeForFactor f).squareFreeCore →
+        RepresentsIntegerFactorModP primeData factor S →
+        RepresentsIntegerFactorAtLift (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.toMonicLiftData (Hex.normalizeForFactor f).squareFreeCore
+            (Hex.ZPoly.defaultFactorCoeffBound f) primeData) factor
+          (liftedSubsetOfModPSubset primeData
+            (Hex.ZPoly.toMonicLiftData (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.defaultFactorCoeffBound f) primeData)
+            hdescent.factor_count_eq S)) :
+    let core := (Hex.normalizeForFactor f).squareFreeCore
+    let B := Hex.ZPoly.defaultFactorCoeffBound f
+    let d := Hex.ZPoly.toMonicLiftData core B primeData
+    HenselSubsetCorrespondenceHypotheses core B primeData d True True :=
+  henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
+    _ _ primeData hchoose hdescent hlifted_of_modP
 
 /--
 Successful-descent sibling of
