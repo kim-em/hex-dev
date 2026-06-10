@@ -13427,6 +13427,103 @@ private theorem trialDivisionPeel_factor_irreducible
             exact square_not_dvd_of_squareFreeRat hcore_ne hcore_sq
               hq_deg_pos hqq_dvd_core
 
+/-- Every factor emitted by the standalone integer trial-division core is
+irreducible when `core` is a primitive, square-free polynomial with
+positive leading coefficient and the bound `B` covers the coefficients of
+every divisor of `core`.
+
+Three emitted-factor families are handled uniformly:
+
+- integer-root split factors (`split.1`), via
+  `splitIntegerRootFactorsAux_factor_irreducible`;
+- peeled bounded-coefficient candidates (`peel.1`), via
+  `trialDivisionPeel_factor_irreducible`;
+- the optional final residual (`peel.2`, when not `1`), via
+  `trialDivisionPeel_residual_irreducible`. -/
+theorem exhaustiveIntegerTrialCoreFactorsWithBound_factor_irreducible
+    (core : ZPoly) (B : Nat)
+    (hcore_ne : core ≠ 0)
+    (hcore_prim : ZPoly.Primitive core)
+    (hcore_pos : 0 < DensePoly.leadingCoeff core)
+    (hcore_sq : Hex.ZPoly.SquareFreeRat core)
+    (hbound : ∀ g, g ∣ core → ∀ i, (g.coeff i).natAbs ≤ B) :
+    ∀ factor ∈ (exhaustiveIntegerTrialCoreFactorsWithBound core B).toList,
+      ZPoly.Irreducible factor := by
+  intro factor hmem
+  let roots := integerRootCandidates core
+  let split := splitIntegerRootFactorsAux core roots roots.length
+  let candidates := trialDivisionCandidatesUpTo B (split.2.degree?.getD 0 / 2)
+  let peel := trialDivisionPeelAux split.2 candidates
+  have hsplit_prod : split.2 * Array.polyProduct split.1 = core :=
+    splitIntegerRootFactorsAux_product core roots roots.length split.1 split.2 rfl
+  have hsplit2_dvd_core : split.2 ∣ core :=
+    ⟨Array.polyProduct split.1, hsplit_prod.symm⟩
+  have hsplit_lc_pos :
+      0 < DensePoly.leadingCoeff (Array.polyProduct split.1) :=
+    splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos core roots
+      roots.length split.1 split.2 rfl
+  have hsplit1_ne : Array.polyProduct split.1 ≠ 0 := by
+    intro hz; rw [hz] at hsplit_lc_pos
+    change 0 < (0 : Int) at hsplit_lc_pos; omega
+  have hsplit2_ne : split.2 ≠ 0 := by
+    intro hz; apply hcore_ne
+    rw [← hsplit_prod, hz]; exact DensePoly.zero_mul _
+  have hsplit2_pos : 0 < DensePoly.leadingCoeff split.2 := by
+    have hlc :
+        DensePoly.leadingCoeff core =
+          DensePoly.leadingCoeff split.2 *
+            DensePoly.leadingCoeff (Array.polyProduct split.1) := by
+      rw [← hsplit_prod]
+      exact ZPoly.leadingCoeff_mul_of_nonzero split.2 (Array.polyProduct split.1)
+        hsplit2_ne hsplit1_ne
+    by_cases hp : 0 < DensePoly.leadingCoeff split.2
+    · exact hp
+    · exfalso
+      have hle : DensePoly.leadingCoeff split.2 ≤ 0 := by omega
+      have hnn : 0 ≤ DensePoly.leadingCoeff (Array.polyProduct split.1) :=
+        Int.le_of_lt hsplit_lc_pos
+      have hna : 0 ≤ -DensePoly.leadingCoeff split.2 := by omega
+      have hprod_neg :
+          0 ≤ -DensePoly.leadingCoeff split.2 *
+            DensePoly.leadingCoeff (Array.polyProduct split.1) :=
+        Int.mul_nonneg hna hnn
+      have hneg_eq :
+          -DensePoly.leadingCoeff split.2 *
+              DensePoly.leadingCoeff (Array.polyProduct split.1) =
+            -(DensePoly.leadingCoeff split.2 *
+                DensePoly.leadingCoeff (Array.polyProduct split.1)) :=
+        Int.neg_mul _ _
+      rw [hneg_eq, ← hlc] at hprod_neg
+      omega
+  change factor ∈
+      (if peel.2 = 1 then split.1 ++ peel.1 else (split.1 ++ peel.1).push peel.2).toList
+    at hmem
+  by_cases hres_one : peel.2 = 1
+  · rw [if_pos hres_one] at hmem
+    rw [Array.toList_append, List.mem_append] at hmem
+    rcases hmem with hsplit_mem | hpeel_mem
+    · exact splitIntegerRootFactorsAux_factor_irreducible
+        (target := core) (roots := roots) (fuel := roots.length)
+        (factors := split.1) (residual := split.2) rfl hsplit_mem
+    · exact trialDivisionPeel_factor_irreducible hcore_ne hcore_prim hcore_sq
+        hsplit2_dvd_core hsplit2_pos hbound rfl hpeel_mem
+  · rw [if_neg hres_one] at hmem
+    rw [Array.toList_push, List.mem_append] at hmem
+    rcases hmem with hpref_mem | hres_mem
+    · rw [Array.toList_append, List.mem_append] at hpref_mem
+      rcases hpref_mem with hsplit_mem | hpeel_mem
+      · exact splitIntegerRootFactorsAux_factor_irreducible
+          (target := core) (roots := roots) (fuel := roots.length)
+          (factors := split.1) (residual := split.2) rfl hsplit_mem
+      · exact trialDivisionPeel_factor_irreducible hcore_ne hcore_prim hcore_sq
+          hsplit2_dvd_core hsplit2_pos hbound rfl hpeel_mem
+    · have hfactor_eq : factor = peel.2 := by
+        rcases List.mem_singleton.mp hres_mem with rfl
+        rfl
+      rw [hfactor_eq]
+      exact trialDivisionPeel_residual_irreducible hcore_ne hcore_prim hcore_sq
+        hsplit2_dvd_core hsplit2_pos hbound rfl hres_one
+
 /-- `positiveDivisors n` returns a duplicate-free list of natural divisors:
 the underlying source `List.range (n + 1)` is `Nodup`, and `List.filter`
 preserves this. -/
