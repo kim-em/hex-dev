@@ -758,11 +758,23 @@ def runDispatchedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO I
   return intVectorChecksum (Matrix.row reduced f0)
 
 /-- Benchmark comparator observable: squared norm of Lean's first LLL vector.
-The verified-Isabelle Haskell extraction reports the same scalar. -/
+The verified-Isabelle Haskell extraction reports the same scalar. Runs the
+default native path (`lll.firstShortVectorUnchecked`, the approximation-steered
+reducer with certified output). -/
 def runFirstShortVectorNormSq (input : FirstShortVectorInput) : Int :=
   Vector.intNormSq
     (lll.firstShortVectorUnchecked input.basis (3 / 4)
       lllDeltaLower lllDeltaUpper input.hn)
+
+/-- Benchmark comparator observable for the exact `d`/`ν` reducer: squared norm
+of the first vector of `lllNative` run directly. This is the
+fplll-independent exact integer reducer that the steered path demotes to its
+certification fallback; measuring it directly keeps the exact-native curve of
+the comparator plot independent of the steered default. -/
+def runNativeFirstShortVectorNormSq (input : FirstShortVectorInput) : Int :=
+  Vector.intNormSq
+    ((lllNative input.basis (3 / 4) lllDeltaLower lllDeltaUpper input.hn).row
+      ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one input.hn⟩)
 
 def intRowHaskell (v : Vector Int n) : String :=
   "[" ++ String.intercalate "," ((List.finRange n).map fun j => toString v[j]) ++ "]"
@@ -1101,6 +1113,84 @@ def runFpLLLFirstShortVectorHarshCubic60Checksum : Unit → IO Int := fun _ => d
 /-- fpLLL comparator (via fplll-ffi) for the harsh-cubic rung `n = 65`. -/
 def runFpLLLFirstShortVectorHarshCubic65Checksum : Unit → IO Int := fun _ => do
   runFpLLLFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
+
+-- Exact `lllNative` ladder targets for the comparator's exact-native curve
+-- (the steered default lives on the `runFirstShortVector*NormSq` targets).
+def runNativeFirstShortVectorRandomBoundedNormSq30 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput30Ref (fun _ => prepRandomBoundedInput 30))
+
+def runNativeFirstShortVectorRandomBoundedNormSq45 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput45Ref (fun _ => prepRandomBoundedInput 45))
+
+def runNativeFirstShortVectorRandomBoundedNormSq60 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput60Ref (fun _ => prepRandomBoundedInput 60))
+
+def runNativeFirstShortVectorRandomBoundedNormSq75 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput75Ref (fun _ => prepRandomBoundedInput 75))
+
+def runNativeFirstShortVectorRandomBoundedNormSq90 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput90Ref (fun _ => prepRandomBoundedInput 90))
+
+def runNativeFirstShortVectorRandomBoundedNormSq120 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput120Ref (fun _ => prepRandomBoundedInput 120))
+
+def runNativeFirstShortVectorRandomBoundedNormSq150 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput150Ref (fun _ => prepRandomBoundedInput 150))
+
+def runNativeFirstShortVectorRandomBoundedNormSq180 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput randomBoundedInput180Ref (fun _ => prepRandomBoundedInput 180))
+
+def runNativeFirstShortVectorHarshCubicNormSq15 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput15Ref (fun _ => prepHarshCubicInput 15))
+
+def runNativeFirstShortVectorHarshCubicNormSq20 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput20Ref (fun _ => prepHarshCubicInput 20))
+
+def runNativeFirstShortVectorHarshCubicNormSq25 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput25Ref (fun _ => prepHarshCubicInput 25))
+
+def runNativeFirstShortVectorHarshCubicNormSq30 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput30Ref (fun _ => prepHarshCubicInput 30))
+
+def runNativeFirstShortVectorHarshCubicNormSq35 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput35Ref (fun _ => prepHarshCubicInput 35))
+
+def runNativeFirstShortVectorHarshCubicNormSq40 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput40Ref (fun _ => prepHarshCubicInput 40))
+
+def runNativeFirstShortVectorHarshCubicNormSq45 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput45Ref (fun _ => prepHarshCubicInput 45))
+
+def runNativeFirstShortVectorHarshCubicNormSq50 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput50Ref (fun _ => prepHarshCubicInput 50))
+
+def runNativeFirstShortVectorHarshCubicNormSq55 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput55Ref (fun _ => prepHarshCubicInput 55))
+
+def runNativeFirstShortVectorHarshCubicNormSq60 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput60Ref (fun _ => prepHarshCubicInput 60))
+
+def runNativeFirstShortVectorHarshCubicNormSq65 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq
     (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
 
 def runDispatchedFirstShortVectorRandomBounded30Checksum : Unit → IO Int := fun _ => do
@@ -2421,6 +2511,121 @@ setup_fixed_benchmark runFirstShortVectorHarshCubicNormSq65 where {
     maxSecondsPerCall := 60.0
     expectedHash := some (firstShortVectorHarshCubicNormSqHash 65)
   }
+
+setup_fixed_benchmark runNativeFirstShortVectorRandomBoundedNormSq30 where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 30)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorRandomBoundedNormSq45 where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 45)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorRandomBoundedNormSq60 where {
+    repeats := 3
+    maxSecondsPerCall := 30.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 60)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorRandomBoundedNormSq75 where {
+    repeats := 3
+    maxSecondsPerCall := 30.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 75)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorRandomBoundedNormSq90 where {
+    repeats := 3
+    maxSecondsPerCall := 40.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 90)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorRandomBoundedNormSq120 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 120)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorRandomBoundedNormSq150 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 150)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorRandomBoundedNormSq180 where {
+    repeats := 3
+    maxSecondsPerCall := 120.0
+    expectedHash := some (firstShortVectorRandomBoundedNormSqHash 180)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorHarshCubicNormSq15 where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 15)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorHarshCubicNormSq20 where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 20)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorHarshCubicNormSq25 where {
+    repeats := 3
+    maxSecondsPerCall := 30.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 25)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorHarshCubicNormSq30 where {
+    repeats := 3
+    maxSecondsPerCall := 40.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 30)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorHarshCubicNormSq35 where {
+    repeats := 3
+    maxSecondsPerCall := 40.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 35)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorHarshCubicNormSq40 where {
+    repeats := 3
+    maxSecondsPerCall := 50.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 40)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorHarshCubicNormSq45 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 45)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorHarshCubicNormSq50 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 50)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorHarshCubicNormSq55 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 55)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorHarshCubicNormSq60 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 60)
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorHarshCubicNormSq65 where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    expectedHash := some (firstShortVectorHarshCubicNormSqHash 65)
+  }
+
 
 setup_fixed_benchmark runIsabelleHarshCubicNormSq65 where {
     repeats := 3
