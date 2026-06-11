@@ -15739,6 +15739,69 @@ theorem squareFreeCore_leadingCoeff_pos_of_ne_zero
     ZPoly.leadingCoeff_ne_zero_of_ne_zero _ hne
   omega
 
+/-- A left factor of a primitive `ZPoly` product is itself primitive. Integer
+content is non-negative, so `content p * content q = 1` forces `content p = 1`.
+Local helper for `squareFreeCore_primitive_of_ne_zero`. -/
+private theorem ZPoly_primitive_left_of_mul (p q : ZPoly)
+    (h : ZPoly.Primitive (p * q)) : ZPoly.Primitive p := by
+  have hone : ZPoly.content p * ZPoly.content q = 1 := by
+    rw [← ZPoly.content_mul]; exact h
+  have hp_nn : 0 ≤ ZPoly.content p := by
+    show 0 ≤ DensePoly.content p
+    rw [DensePoly.content]
+    exact Int.natCast_nonneg _
+  have hdvd : ZPoly.content p ∣ (1 : Int) := ⟨ZPoly.content q, hone.symm⟩
+  have habs : (ZPoly.content p).natAbs ∣ (1 : Nat) := by
+    simpa using Int.natAbs_dvd_natAbs.mpr hdvd
+  have habs_le : (ZPoly.content p).natAbs ≤ 1 := Nat.le_of_dvd (by omega) habs
+  have hp_ne : ZPoly.content p ≠ 0 := by
+    intro hzero
+    rw [hzero, Int.zero_mul] at hone
+    omega
+  have habs_pos : 1 ≤ (ZPoly.content p).natAbs := by
+    rcases Nat.eq_zero_or_pos (ZPoly.content p).natAbs with hz | hp
+    · exact absurd (Int.natAbs_eq_zero.mp hz) hp_ne
+    · exact hp
+  have habs_eq : (ZPoly.content p).natAbs = 1 := by omega
+  show ZPoly.content p = 1
+  rcases Int.natAbs_eq (ZPoly.content p) with heq | heq
+  · rw [heq, habs_eq]; rfl
+  · rw [heq, habs_eq] at hp_nn
+    omega
+
+/-- The normalized square-free core is primitive whenever the input is nonzero.
+Discharges the `ZPoly.Primitive core` precondition of
+`exhaustiveIntegerTrialCoreFactorsWithBound_factor_irreducible` (`:13443`) and
+`quadraticIntegerRootFactors?_factor_irreducible_of_primitive` (`:14060`) when
+both are specialised to `(normalizeForFactor f).squareFreeCore`. The proof
+extracts the left factor of the `squareFreeCore * repeatedPart` primitivity
+invariant supplied by
+`ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive`.
+-/
+theorem squareFreeCore_primitive_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
+    ZPoly.Primitive (normalizeForFactor f).squareFreeCore := by
+  unfold normalizeForFactor
+  simp only
+  have hcore_ne := extractXPower_core_ne_zero_of_ne_zero f hf
+  have hprod_primitive :=
+    ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive _ hcore_ne
+  exact ZPoly_primitive_left_of_mul _ _ hprod_primitive
+
+/-- The normalized square-free core is square-free over `ℚ` whenever the input
+is nonzero. Discharges the `Hex.ZPoly.SquareFreeRat core` precondition of
+`exhaustiveIntegerTrialCoreFactorsWithBound_factor_irreducible` (`:13443`) and
+`quadraticIntegerRootFactors?_factor_irreducible_of_primitive` (`:14060`) when
+both are specialised to `(normalizeForFactor f).squareFreeCore`. The proof
+forwards the recorded core's non-zeroness (from `squareFreeCore_ne_zero_of_ne_zero`)
+to `ZPoly.primitiveSquareFreeDecomposition_squareFreeCore`, which gives the
+intrinsic square-free-over-`ℚ` invariant of the decomposition. -/
+theorem squareFreeCore_squareFreeRat_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
+    Hex.ZPoly.SquareFreeRat (normalizeForFactor f).squareFreeCore := by
+  have hcore_ne := squareFreeCore_ne_zero_of_ne_zero f hf
+  unfold normalizeForFactor at hcore_ne ⊢
+  simp only at hcore_ne ⊢
+  exact ZPoly.primitiveSquareFreeDecomposition_squareFreeCore _ hcore_ne
+
 /-- When the normalized square-free core has degree zero (and `f ≠ 0`), the
 primitive square-free decomposition forces the core to be exactly `1`.  Exposed
 publicly so Mathlib-side per-branch wrappers (in particular the fast-path
