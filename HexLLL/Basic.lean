@@ -869,10 +869,12 @@ def lovaszOK (S : Int) (δ : Rat) (mus : Array (Array Ival))
 end IntervalGS
 
 /-- Working precision (bits) of the interval reducedness checker. The
-inequalities being certified carry slack (`η = 11/20` against fplll's
-actual ≈ 1/2; Lovász at the requested `δ` against fplll's stronger
-reduction), so a fixed precision decides them on reduced candidates; any
-indecision falls back to the exact checker rather than failing. -/
+inequalities being certified carry slack by design: the dispatch requests a
+`(requestedDelta δ, requestedEta)`-reduced basis but certifies it against the
+weaker `(δ, 11/20)`, so size reduction clears `11/20` by `11/20 − requestedEta`
+and Lovász clears `δ` by `(requestedDelta δ − δ)·d[i+1]²`. A fixed precision
+decides them on a correctly-reduced candidate; any indecision falls back to
+the exact checker rather than failing. -/
 def intervalPrec : Nat := 128
 
 /-- Fixed-precision interval reducedness checker. Computes enclosures of
@@ -1748,6 +1750,62 @@ exact `δ`. -/
 private def ratToFloat (r : Rat) : Float :=
   Float.ofInt r.num / Float.ofNat r.den
 
+/-- Size-reduction bound *requested* from the external reducer, strictly
+stronger than the `η = 11/20` the checker certifies.
+
+The dispatch asks the reducer for a `(requestedDelta δ, requestedEta)`-reduced
+basis but certifies it against the public `(δ, 11/20)`. The two differ on
+purpose. `certCheck`'s reducedness clause is decided by a fixed-precision
+enclosure pass that resolves open inequalities only by *margin*; a candidate
+whose `|μ|` sits arbitrarily close to `11/20` would leave the enclosure
+straddling its threshold and force the exact fallback. Requesting
+`requestedEta < 11/20` instead guarantees a correctly-functioning reducer
+lands every size-reduction inequality a macroscopic `11/20 − requestedEta`
+clear of the certified bound, so the enclosure decides it.
+
+`requestedEta` must stay `> 1/2` (the reducer's hard floor) and `< 11/20`.
+Its exact value is untrusted: certification is against the exact `(δ, 11/20)`,
+so the requested bound is outside the trusted story entirely (the
+"reliability is empirical, soundness is not" clause). Varying it within
+`(1/2, 11/20)` only trades reducer work against enclosure margin; it cannot
+make a non-reduced basis certify. The value `107/200` sits a gap of `3/200`
+below `11/20` and `7/200` above `1/2`: a narrow gap from the certified bound
+keeps the small amount of extra work the stronger request costs the reducer
+inside measurement noise, while still clearing the bound by a margin the
+enclosure resolves. It is a `Rat`, forwarded to the reducer through
+`ratToFloat` like `requestedDelta`, so the design constant and the certified
+bound are comparable rationals. -/
+def requestedEta : Rat := 107 / 200
+
+/-- Lovász parameter *requested* from the external reducer: a fixed `1/100`
+margin above the caller's `δ`, but never past the midpoint `(δ + 1)/2`
+between `δ` and `1`.
+
+Mirrors `requestedEta`: the dispatch certifies the candidate against the
+caller's exact `δ` but asks the reducer for the stronger `requestedDelta δ`,
+so a correctly-functioning reducer clears every Lovász inequality by a
+positive margin `(requestedDelta δ − δ)·d[i+1]²` and the enclosure decides it
+rather than straddling.
+
+The midpoint cap is what keeps the request strictly between `δ` and `1` over
+the whole public surface `δ ≤ 1`. For `δ ≤ 49/50` the `1/100` term wins and
+the margin is the full `1/100`; for `49/50 < δ < 1` the midpoint wins and the
+margin is `(1 − δ)/2`, still positive, so `δ < requestedDelta δ < 1` holds for
+every `δ < 1`. At the boundary `δ = 1` the midpoint is `1`: no value is both
+`> δ` and `< 1`, so the request equals the certified `δ` and the prophylactic
+gap is unavoidably lost — a candidate the reducer cannot strengthen there
+falls back through certification to the native path, which stays sound.
+
+The Lovász condition governs how many swaps the reducer performs, so the
+requested `δ` drives the extra work the stronger request costs; the small
+`1/100` margin keeps that cost inside measurement noise while still giving the
+enclosure a decisive gap.
+
+Untrusted, exactly as `requestedEta`: the certificate is checked against the
+exact `δ`, never against this value, so the margin may vary without touching
+soundness. -/
+def requestedDelta (δ : Rat) : Rat := min (δ + 1 / 100) ((δ + 1) / 2)
+
 /-- Row-major marshalling of an integer matrix into the `Array String` payload
 the external provider expects. -/
 def matrixToEntries (B : Hex.Matrix Int n m) : Array String :=
@@ -1821,7 +1879,7 @@ def dispatch (B : Hex.Matrix Int n m) (δ : Rat) :
     withRecordOutcome .absent none
   else
     match providerReduce (USize.ofNat n) (USize.ofNat m) (matrixToEntries B)
-        (ratToFloat δ) 0.55 0 true with
+        (ratToFloat (requestedDelta δ)) (ratToFloat requestedEta) 0 true with
     | .error _ => withRecordOutcome .providerError none
     | .ok flat =>
         match certifyFlat B δ flat with

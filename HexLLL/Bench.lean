@@ -725,31 +725,36 @@ def runDispatchedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO I
   LLLProvider.resetDiagnostics
   have hrows : 1 ≤ input.rows := input.hn
   let f0 : Fin input.rows := ⟨0, by omega⟩
-  -- Drive the dispatch via the IO-based `tryReduce` so the diagnostic
-  -- side-effects fire eagerly (the pure `dispatch` uses
+  -- Drive the dispatch via the IO-based `tryReduce` so the provider call
+  -- (and its diagnostic side-effects) fire eagerly (the pure `dispatch` uses
   -- `@[implemented_by]` side-effects that the compiled bench harness
-  -- otherwise defers past the `diagnostics` read below). On a successful
-  -- candidate we still run `certifyFlat` so the smoke target measures
-  -- the same certified path that `dispatch` exposes to the public `lll`
-  -- entry point.
+  -- otherwise defers). Request the same stronger `(requestedDelta δ,
+  -- requestedEta)` the public dispatch asks of the reducer; certification
+  -- stays against `(δ, 11/20)`, exactly the path `dispatch` exposes to `lll`.
   let δ : Rat := 3 / 4
-  let δFloat : Float := Float.ofInt δ.num / Float.ofNat δ.den
+  let δFloat : Float := Float.ofInt (LLLProvider.requestedDelta δ).num
+    / Float.ofNat (LLLProvider.requestedDelta δ).den
+  let ηFloat : Float := Float.ofInt LLLProvider.requestedEta.num
+    / Float.ofNat LLLProvider.requestedEta.den
   let entries := LLLProvider.matrixToEntries input.basis
   let candidate? ← LLLProvider.tryReduce
     (USize.ofNat input.rows) (USize.ofNat input.cols) entries
-    δFloat 0.55 0 true
-  let reduced ← match candidate? with
+    δFloat ηFloat 0 true
+  -- Track whether `certCheck` itself accepted, not merely whether the payload
+  -- was shape-valid: `tryReduce`'s `accepted` tally counts shape validation,
+  -- so guarding on it would pass even if certification rejected and we fell
+  -- back to native. The smoke target must fail iff the certified path does.
+  let (reduced, certified) ← match candidate? with
     | some cand =>
         let flat := #[0, Int.ofNat input.rows, Int.ofNat input.cols, 1]
           ++ cand.reduced ++ cand.transform ++ (cand.inverse?.getD #[])
         match LLLProvider.certifyFlat input.basis δ flat with
-        | some triple => pure triple.1
-        | none => pure (lllNative input.basis δ lllDeltaLower lllDeltaUpper input.hn)
-    | none => pure (lllNative input.basis δ lllDeltaLower lllDeltaUpper input.hn)
-  let diagnostics ← LLLProvider.diagnostics
-  if LLLProvider.providerAvailable () && diagnostics.accepted = 0 then
+        | some triple => pure (triple.1, true)
+        | none => pure (lllNative input.basis δ lllDeltaLower lllDeltaUpper input.hn, false)
+    | none => pure (lllNative input.basis δ lllDeltaLower lllDeltaUpper input.hn, false)
+  if LLLProvider.providerAvailable () && !certified then
     throw <| IO.userError
-      s!"fplll provider loaded but certified dispatch accepted zero candidates: {repr diagnostics}"
+      "fplll provider loaded but the certified path rejected its candidate"
   return intVectorChecksum (Matrix.row reduced f0)
 
 /-- Benchmark comparator observable: squared norm of Lean's first LLL vector.
@@ -932,9 +937,12 @@ def requestFpLLLFlat (input : FirstShortVectorInput) : IO (Array Int) := do
       "fplll-ffi provider absent — set HEX_FPLLL_FFI_LIB to libfplllffi"
   let δ : Rat := 3 / 4
   let entries := LLLProvider.matrixToEntries input.basis
+  -- Request the same stronger `(requestedDelta δ, requestedEta)` the public
+  -- dispatch asks of the reducer, so the certified curve measures the exact
+  -- reducer call production makes; certification stays against `(δ, 11/20)`.
   match LLLProvider.providerReduce
       (USize.ofNat input.rows) (USize.ofNat input.cols) entries
-      (ratToFloat δ) 0.55 0 true with
+      (ratToFloat (LLLProvider.requestedDelta δ)) (ratToFloat LLLProvider.requestedEta) 0 true with
   | .error e => throw <| IO.userError s!"fplll-ffi: {e}"
   | .ok flat => return flat
 
