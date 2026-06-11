@@ -2237,9 +2237,11 @@ end LLLProvider
 /-- Top-level LLL entry point. Dispatches first to the certified-external path:
 if `LLLProvider.providerAvailable ()` is true and the candidate passes
 `certCheck B B' U V δ (11/20)`, the certified `B'` is returned; otherwise the
-native body `lllNative` runs. The two paths satisfy the identical
-post-condition (`isLLLReduced (lll …) δ (11/20)`, same lattice, the public
-short-vector bound), so dispatch is invisible to callers and to proofs. -/
+native body `lllSteered` runs (the approximation-steered reducer, which itself
+certifies its output at `(δ, 11/20)` and falls back to the exact `lllNative`).
+The paths satisfy the identical post-condition (`isLLLReduced (lll …) δ (11/20)`,
+same lattice, the public short-vector bound), so dispatch is invisible to callers
+and to proofs. -/
 def lll (b : Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (_hind : b.independent) :
