@@ -305,8 +305,8 @@ path is fpLLL candidate production plus the Lean checker. Paired
 `runCertifiedChecker*` targets cache the same candidate and re-run only
 `certCheck` after warmup, giving the checker's share of certified-path cost.
 
-Certified ladder export: `reports/bench-results/hex-lll-certified-3e90e137.json`,
-SHA-256 `0d9f2885c3637cfb9b1fd2f00972d28c4c764b7f52cf3634aa995a45f650cf75`.
+Certified ladder export: `reports/bench-results/hex-lll-certified-443bf8fb.json`,
+SHA-256 `8e8e53843d1db25a0ec8932f84558f97ec6dedf5894dda00c571d464a6973688`.
 The run used `HEX_FPLLL_FFI_LIB="$(scripts/oracle/setup_fplll_ffi.sh)"` so
 the certified-path cost is fpLLL candidate production through `fplll-ffi`
 plus Lean's checker. All certified-path and checker-only rows had
@@ -317,37 +317,42 @@ Lean-certified-vs-Lean-native random-bounded ratios:
 
 | `n` | Lean native median | Lean certified median | certified/native | checker share |
 |---:|---:|---:|---:|---:|
-| 30 | 15.14 ms | 4.33 ms | 0.2861 | 65.5 % |
-| 45 | 55.53 ms | 15.24 ms | 0.2744 | 65.8 % |
-| 60 | 142.01 ms | 37.16 ms | 0.2617 | 66.2 % |
-| 75 | 296.58 ms | 73.95 ms | 0.2493 | 66.4 % |
-| 90 | 495.68 ms | 132.37 ms | 0.2670 | 69.2 % |
-| 120 | 1.39 s | 337.90 ms | 0.2433 | 67.6 % |
-| 150 | 2.65 s | 666.27 ms | 0.2519 | 70.7 % |
-| 180 | 4.76 s | 1.22 s | 0.2558 | 73.4 % |
+| 30 | 15.14 ms | 4.24 ms | 0.2803 | 72.3 % |
+| 45 | 55.53 ms | 14.14 ms | 0.2546 | 63.8 % |
+| 60 | 142.01 ms | 32.97 ms | 0.2321 | 62.5 % |
+| 75 | 296.58 ms | 68.28 ms | 0.2302 | 62.2 % |
+| 90 | 495.68 ms | 112.58 ms | 0.2271 | 65.1 % |
+| 120 | 1.39 s | 285.19 ms | 0.2052 | 62.5 % |
+| 150 | 2.65 s | 572.02 ms | 0.2159 | 65.1 % |
+| 180 | 4.76 s | 1.04 s | 0.2193 | 69.7 % |
 
-Random-bounded trend: Lean certified remains about `0.24..0.29×` Lean
+Random-bounded trend: Lean certified sits at about `0.21..0.28×` Lean
 native. The checker is the dominant certified-path component, accounting for
-`65.5..73.4 %` of the measured full path.
+`62..72 %` of the measured full path.
 
 Lean-certified-vs-Lean-native harsh-cubic ratios:
 
 | `n` | Lean native median | Lean certified median | certified/native | checker share |
 |---:|---:|---:|---:|---:|
-| 15 | 515 µs | 859 µs | 1.6687 | 89.6 % |
-| 20 | 1.67 ms | 2.31 ms | 1.3819 | 88.2 % |
-| 25 | 4.15 ms | 5.35 ms | 1.2897 | 90.5 % |
-| 30 | 9.53 ms | 11.23 ms | 1.1782 | 91.0 % |
-| 35 | 19.65 ms | 21.61 ms | 1.0998 | 97.9 % |
-| 40 | 39.44 ms | 43.03 ms | 1.0910 | 96.3 % |
-| 45 | 75.83 ms | 79.95 ms | 1.0543 | 98.3 % |
-| 50 | 135.80 ms | 146.27 ms | 1.0771 | 94.6 % |
-| 55 | 234.28 ms | 250.98 ms | 1.0713 | 94.9 % |
+| 15 | 515 µs | 870 µs | 1.6894 | 89.0 % |
+| 20 | 1.67 ms | 2.31 ms | 1.3820 | 89.5 % |
+| 25 | 4.15 ms | 5.37 ms | 1.2951 | 93.6 % |
+| 30 | 9.53 ms | 11.44 ms | 1.2009 | 92.6 % |
+| 35 | 19.65 ms | 22.35 ms | 1.1372 | 97.0 % |
+| 40 | 39.44 ms | 44.09 ms | 1.1179 | 93.7 % |
+| 45 | 75.83 ms | 80.12 ms | 1.0566 | 96.7 % |
+| 50 | 135.80 ms | 140.29 ms | 1.0331 | 100.8 % |
+| 55 | 234.28 ms | 243.49 ms | 1.0393 | 97.1 % |
 
 Harsh-cubic trend: Lean certified is above Lean native at every reported rung,
-but the ratio narrows from `1.6687` at `n = 15` to about `1.05..1.08` on the
-upper ladder. Checker-only cost accounts for `88.2..98.3 %` of the full
-certified path, so the candidate-production component is small on this family.
+but the ratio narrows from `1.6894` at `n = 15` to about `1.03..1.04` on the
+upper ladder. Checker-only cost accounts for `89..101 %` of the full certified
+path (`n = 50` rounds above 100 % from independent-cache median noise: the
+cached checker payload happens to time slightly higher than the full path it
+was captured from); the candidate-production component is small on this
+family. The harsh-cubic entries are `2^(3.3n)` wide, so every rung leaves the
+word-scale regime of the packed product-equality certificate and the
+same-lattice clause runs the materialized comparison.
 
 The external `verified Isabelle certified-LLL` executable is now wired from the
 same Zenodo 2636367 archive as the native comparator:

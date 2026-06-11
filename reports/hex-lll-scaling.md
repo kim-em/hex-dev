@@ -50,7 +50,7 @@ commit) is printed above its table.
 
 ### random-bounded, rungs 120–180
 
-- `reports/bench-results/hex-lll-certified-carica.json` — host `carica`, commit `4c708c7b`
+- `reports/bench-results/hex-lll-certified-443bf8fb.json` — host `carica`, commit `443bf8fb`
 - `reports/bench-results/hex-lll-random-bounded-schur.json` — host `carica`, commit `56f34229`
 
 | method | exponent p | R² | C₃ (ns·n³) | × fpLLL |
@@ -58,23 +58,23 @@ commit) is printed above its table.
 | Isabelle native | 3.37 | 0.9996 | 1194 | 26.5× |
 | Lean native | 3.03 | 0.9990 | 801 | 17.8× |
 | Isabelle certified | 3.07 | 0.9977 | 407 | 9.0× |
-| Lean certified | 3.22 | 0.9989 | 197 | 4.4× |
+| Lean certified | 3.20 | 0.9997 | 169 | 3.8× |
 | fpLLL via fplll-ffi | 3.09 | 1.0000 | 45 | 1.0× |
 
-Exponents agree to within 0.33, so the five methods share one complexity
+Exponents agree to within 0.34, so the five methods share one complexity
 (empirically `~n³` on this instance family) and differ only by a constant
 factor. The headline reading:
 
-- **Certifying buys ~4× over native at matched provenance.** Lean certified
-  sits at 4.4× fpLLL against Lean native's 17.8× — the same answer for a
-  ~4× smaller constant, because fpLLL produces the basis and Lean only checks
-  it.
-- **Lean beats Isabelle by a constant ~1.5–2× on both rows.** Native
-  26.5/17.8 ≈ 1.5×; certified 9.0/4.4 ≈ 2.0×.
-- **fpLLL's raw constant is ~4× below even Lean certified**, the gap being the
-  checker (two big-integer matmuls plus a small-basis integer Gram–Schmidt),
-  which `reports/hex-lll-performance.md` measures as ~65–73% of the certified
-  path.
+- **Certifying buys ~4.7× over native at matched provenance.** Lean certified
+  sits at 3.8× fpLLL against Lean native's 17.8× — the same answer for a
+  ~4.7× smaller constant, because fpLLL produces the basis and Lean only
+  checks it.
+- **Lean beats Isabelle by a constant ~1.5–2.4× on both rows.** Native
+  26.5/17.8 ≈ 1.5×; certified 9.0/3.8 ≈ 2.4×.
+- **fpLLL's raw constant is ~3.8× below even Lean certified**, the gap being
+  the checker (the packed-evaluation same-lattice clause plus a small-basis
+  integer Gram–Schmidt), which `reports/hex-lll-performance.md` measures as
+  ~62–72% of the certified path.
 
 ### harsh-cubic, rungs 40–55
 
