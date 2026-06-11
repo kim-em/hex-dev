@@ -131,13 +131,28 @@ FAMILIES = {
 }
 
 
+# Fixed per-request floor of the Isabelle-certified pipeline, taken from
+# reports/hex-lll-performance.md §Per-call comparator overhead (~18.8 ms
+# for a trivial end-to-end `svp_certified` request, dominated by the
+# per-request `fplll` subprocess fork). The plotted Isabelle-certified
+# curve subtracts this constant so its small-n rungs show n-dependent
+# work rather than the fixed floor; the committed ratio tables keep the
+# raw medians.
+ISABELLE_CERTIFIED_FLOOR_MS = 18.8
+ISABELLE_CERTIFIED_ADJUSTED_LABEL = "Isabelle certified (adjusted)"
+
+
 # Marker style keyed by series label, so a curve keeps the same marker
 # whether or not the certified curves are present in a given figure.
 STYLE_BY_LABEL = {
     "Lean native": {"marker": "o", "linewidth": 2.0},
     "Isabelle native": {"marker": "s", "linewidth": 2.0},
     "Lean certified": {"marker": "D", "linewidth": 2.0, "markersize": 6.5},
-    "Isabelle certified": {"marker": "^", "linewidth": 2.0, "markersize": 7.0},
+    ISABELLE_CERTIFIED_ADJUSTED_LABEL: {
+        "marker": "^",
+        "linewidth": 2.0,
+        "markersize": 7.0,
+    },
     "fpLLL via fplll-ffi": {"marker": "v", "linewidth": 2.0, "markersize": 7.0},
 }
 
@@ -162,6 +177,25 @@ def collect_series(results: list[dict], pattern: re.Pattern[str], label: str) ->
         raise ValueError(f"no results found for {label}")
     xs = sorted(values)
     return Series(label=label, xs=xs, ys=[values[x] for x in xs])
+
+
+def subtract_request_floor(series: Series) -> Series:
+    """Subtract the fixed per-request floor from the Isabelle-certified series
+    and relabel it so the legend marks the adjustment. Raise if any rung sits
+    at or below the floor, which would push the log-scale curve nonpositive."""
+    too_low = [
+        x for x, y in zip(series.xs, series.ys) if y <= ISABELLE_CERTIFIED_FLOOR_MS
+    ]
+    if too_low:
+        raise ValueError(
+            f"Isabelle-certified rungs {too_low} are at or below the "
+            f"{ISABELLE_CERTIFIED_FLOOR_MS} ms request floor; cannot adjust"
+        )
+    return Series(
+        label=ISABELLE_CERTIFIED_ADJUSTED_LABEL,
+        xs=series.xs,
+        ys=[y - ISABELLE_CERTIFIED_FLOOR_MS for y in series.ys],
+    )
 
 
 def assert_bottom_consistent(bottom_results: list[dict], isabelle: Series) -> None:
@@ -204,6 +238,23 @@ def plot(series: list[Series], output: Path, title: str, xlabel: str) -> None:
     ax.grid(True, which="major", axis="x", alpha=0.15)
     ax.legend(frameon=False)
     fig.tight_layout()
+    # The plotted Isabelle-certified curve has its fixed per-request floor
+    # subtracted (see ISABELLE_CERTIFIED_FLOOR_MS). Footnote the adjustment,
+    # stating how much, whenever that series is plotted.
+    if any(item.label == ISABELLE_CERTIFIED_ADJUSTED_LABEL for item in series):
+        fig.subplots_adjust(bottom=0.16)
+        fig.text(
+            0.5,
+            0.01,
+            "Isabelle certified is adjusted down by its "
+            f"~{ISABELLE_CERTIFIED_FLOOR_MS:g} ms per-request floor, a fixed "
+            "trivial-request cost dominated by the fplll subprocess fork.",
+            ha="center",
+            va="bottom",
+            fontsize=7,
+            style="italic",
+            color="0.35",
+        )
     output.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output, format="svg", metadata={"Date": None})
     svg = output.read_text(encoding="utf-8")
@@ -267,10 +318,12 @@ def main() -> None:
         isabelle_certified_results = load_results(
             args.isabelle_certified or config.isabelle_certified_path
         )
-        isabelle_certified = collect_series(
-            isabelle_certified_results,
-            config.isabelle_certified_pattern,
-            "Isabelle certified",
+        isabelle_certified = subtract_request_floor(
+            collect_series(
+                isabelle_certified_results,
+                config.isabelle_certified_pattern,
+                "Isabelle certified",
+            )
         )
         series += [isabelle_certified, certified]
     series.append(fpll)

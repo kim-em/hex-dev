@@ -433,18 +433,29 @@ Architectural asymmetries for this ratio:
   re-running the verified LLL reducer inside `test_certified`.
 
 The random-bounded plot shows five labelled series across the full committed
-ladder: Lean native, Isabelle native, Lean certified, Isabelle certified, and
-fpLLL via fplll-ffi.
+ladder: Lean native, Isabelle native, Lean certified, Isabelle certified
+(adjusted), and fpLLL via fplll-ffi.
 
 ![Random-bounded comparator runtime plot](figures/hex-lll-comparator-random-bounded.svg)
 
-The harsh-cubic plot shows only the three native/fpLLL series. On this family
-the certified paths run slightly slower than their native counterparts (Lean
-certified is `1.05..1.67×` Lean native, per the ratio table above): fpLLL's
-advantage on hard instances is too small to offset the certificate checker, so
-the certified curves add no story and are omitted to keep the figure legible.
+The plotted Isabelle-certified curve is adjusted down by ~18.8 ms, its
+per-request `svp_certified` floor: the fixed trivial-request cost dominated by
+the `fplll` subprocess fork, taken as the audit-host figure from
+[§Per-call comparator overhead](#per-call-comparator-overhead). This floor
+otherwise dominates its small-`n` rungs. The ratio tables above and the scaling
+fits keep the raw medians; only the plotted curve is adjusted.
+
+The harsh-cubic plot shows the same five series. On this family the
+Lean-certified curve crosses below Lean native at `n = 30` and falls to `0.15×`
+Lean native at `n = 55` (per the harsh-cubic trend above); the certified curves
+carry that crossover story, so both are plotted.
 
 ![Harsh-cubic comparator runtime plot](figures/hex-lll-comparator-harsh-cubic.svg)
+
+Here too the plotted Isabelle-certified curve is adjusted down by ~18.8 ms, its
+per-request `svp_certified` floor (see
+[§Per-call comparator overhead](#per-call-comparator-overhead)); as on the
+random-bounded figure, the ratio tables and scaling fits keep the raw medians.
 
 For the asymptotic scaling of these curves — fitted exponents and constant
 factors per method, with reproduction steps — see
