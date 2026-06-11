@@ -2181,7 +2181,7 @@ setup_fixed_benchmark runCertifiedCheckerHarshCubic55Checksum where {
 
 /- One certified check per rung of both ladders; the observed value pins the
 reducedness-decision tally to "7 rungs dispatched to the interval checker
-(harsh-cubic n ≥ 35, random-bounded n ≥ 150), 10 to the exact checker by
+(harsh-cubic n ≥ 30, random-bounded n ≥ 180), 10 to the exact checker by
 the size predictor, zero indecision fallbacks". -/
 setup_fixed_benchmark runCertifiedCheckerIntervalTally where {
     repeats := 1

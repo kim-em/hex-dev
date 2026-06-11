@@ -998,10 +998,15 @@ two checkers: the exact `d`/`ν` checker performs ~`n³/3` multiplications on
 operands averaging ~`n·maxDiagBits/4` bits, while the interval pass
 performs ~`n³/6` products on fixed `(intervalPrec + maxDiagBits)`-bit
 mantissas, so enclosures win once `n·maxDiagBits` exceeds a fixed multiple
-of `intervalPrec + maxDiagBits`. The constant is calibrated on the two
-committed bench families (random-bounded crossover between n=120 and
-n=150, harsh-cubic between n=20 and n=25); boundary misclassification
-costs single-digit percent because the boundary rungs are near parity. -/
+of `intervalPrec + maxDiagBits`. On the two committed bench families this
+crosses over between n=25 and n=30 for harsh-cubic and between n=150 and
+n=180 for random-bounded (paired bench on `carica`). The boundary rungs are
+entangled: lowering the constant to pull harsh-cubic n=25 (where the
+interval pass runs ~10% faster, about 0.5 ms) onto the interval side also
+pulls random-bounded n=150 there, where the exact checker runs ~2% faster.
+On that ~360 ms rung the ~7 ms cost outweighs the harsh-cubic saving, so the
+constant stays at the value that keeps random-bounded n=150 on the exact
+side and minimizes total absolute misroute cost across both families. -/
 def dispatchFactor : Nat := 16
 
 /-- Size predictor for the reducedness dispatch: `true` when the
