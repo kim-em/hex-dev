@@ -38,7 +38,7 @@ DEFAULT_ISABELLE_BOTTOM = (
 # schedule (the Lean-certified export carries no Isabelle rows). Within
 # each series the rungs share a host and commit; the cross-series ratio
 # carries the cross-run caveat recorded in reports/hex-lll-scaling.md.
-DEFAULT_CERTIFIED = ROOT / "reports/bench-results/hex-lll-certified-443bf8fb.json"
+DEFAULT_CERTIFIED = ROOT / "reports/bench-results/hex-lll-certified-835734e7.json"
 DEFAULT_ISABELLE_CERTIFIED = (
     ROOT / "reports/bench-results/hex-lll-certified-carica.json"
 )
@@ -95,9 +95,6 @@ class FamilyConfig:
     # the densified file + the standalone Isabelle export.
     consolidated_path: Path | None = None
     bottom_consistency: bool = False
-    # On harsh-cubic the certified paths run slightly slower than their
-    # native counterparts (fpLLL's advantage is too small to offset the
-    # checker), so the certified curves are omitted from that figure.
     include_certified: bool = True
 
 
@@ -130,7 +127,6 @@ FAMILIES = {
         title="HexLLL harsh-cubic comparator runtime",
         xlabel="harsh-cubic dimension n",
         consolidated_path=DEFAULT_HARSH_CONSOLIDATED,
-        include_certified=False,
     ),
 }
 
