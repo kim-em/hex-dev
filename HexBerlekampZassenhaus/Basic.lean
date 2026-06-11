@@ -13427,6 +13427,201 @@ private theorem trialDivisionPeel_factor_irreducible
             exact square_not_dvd_of_squareFreeRat hcore_ne hcore_sq
               hq_deg_pos hqq_dvd_core
 
+/-- For `ε ∈ {1, -1}`, `p` divides its `ε`-scaling.  The identity scaling is
+trivial; the sign flip composes `dvd_scale_neg_one` with the involution
+`scale_neg_one_neg_one`. -/
+private theorem dvd_scale_unit (p : ZPoly) {ε : Int} (hε : ε = 1 ∨ ε = -1) :
+    p ∣ DensePoly.scale ε p := by
+  rcases hε with rfl | rfl
+  · rw [← ZPoly.C_mul_eq_scale (1 : Int) p]
+    exact ⟨DensePoly.C 1, DensePoly.mul_comm_poly (S := Int) (DensePoly.C 1) p⟩
+  · have h := dvd_scale_neg_one (DensePoly.scale (-1 : Int) p)
+    rwa [scale_neg_one_neg_one p] at h
+
+/-- The normalized square-free core divides the original polynomial.
+
+Chains `squareFreeCore ∣ squareFreeCore * repeatedPart` through the signed
+reassembly `scale ε (squareFreeCore * repeatedPart) = primitivePart core` (the
+`X`-free core is primitive, so its primitive part is itself), then
+`core ∣ primitivePart f` (the `X`-power extraction product) and
+`primitivePart f ∣ f` (`content_mul_primitivePart`).  Lifts a coefficient bound
+on divisors of `f` to a bound on divisors of the square-free core. -/
+theorem squareFreeCore_dvd_self (f : ZPoly) (hf : f ≠ 0) :
+    (normalizeForFactor f).squareFreeCore ∣ f := by
+  have hc_prim :
+      ZPoly.Primitive (ZPoly.extractXPower (ZPoly.primitivePart f)).core :=
+    extractXPower_core_primitive_of_ne_zero f hf
+  have hc_ne : (ZPoly.extractXPower (ZPoly.primitivePart f)).core ≠ 0 :=
+    ZPoly.ne_zero_of_primitive _ hc_prim
+  -- squareFreeCore ∣ (extractXPower (primitivePart f)).core.
+  have hsfc_dvd_c :
+      (normalizeForFactor f).squareFreeCore ∣
+        (ZPoly.extractXPower (ZPoly.primitivePart f)).core := by
+    obtain ⟨ε, hε, hscale⟩ :=
+      ZPoly.primitiveSquareFreeDecomposition_reassembly_signed
+        (ZPoly.extractXPower (ZPoly.primitivePart f)).core hc_ne
+    rw [ZPoly.primitivePart_eq_self_of_primitive _ hc_prim] at hscale
+    have hprod_dvd_scale :=
+      dvd_scale_unit
+        ((ZPoly.primitiveSquareFreeDecomposition
+            (ZPoly.extractXPower (ZPoly.primitivePart f)).core).squareFreeCore *
+          (ZPoly.primitiveSquareFreeDecomposition
+            (ZPoly.extractXPower (ZPoly.primitivePart f)).core).repeatedPart) hε
+    rw [hscale] at hprod_dvd_scale
+    have hsfc_dvd_prod :
+        (ZPoly.primitiveSquareFreeDecomposition
+            (ZPoly.extractXPower (ZPoly.primitivePart f)).core).squareFreeCore ∣
+          ((ZPoly.primitiveSquareFreeDecomposition
+              (ZPoly.extractXPower (ZPoly.primitivePart f)).core).squareFreeCore *
+            (ZPoly.primitiveSquareFreeDecomposition
+              (ZPoly.extractXPower (ZPoly.primitivePart f)).core).repeatedPart) :=
+      ⟨_, rfl⟩
+    have hchain := ZPoly_dvd_trans hsfc_dvd_prod hprod_dvd_scale
+    simpa [normalizeForFactor] using hchain
+  -- core ∣ primitivePart f.
+  have hc_dvd_pf :
+      (ZPoly.extractXPower (ZPoly.primitivePart f)).core ∣ ZPoly.primitivePart f := by
+    have hprod :
+        Array.polyProduct
+            (xPowerFactorArray (ZPoly.extractXPower (ZPoly.primitivePart f)).power ++
+              #[(ZPoly.extractXPower (ZPoly.primitivePart f)).core]) =
+          ZPoly.primitivePart f :=
+      extractXPower_product (ZPoly.primitivePart f)
+    rw [ZPoly.polyProduct_append, ZPoly.polyProduct_singleton] at hprod
+    exact ⟨Array.polyProduct
+        (xPowerFactorArray (ZPoly.extractXPower (ZPoly.primitivePart f)).power),
+      hprod.symm.trans (DensePoly.mul_comm_poly (S := Int) _ _)⟩
+  -- primitivePart f ∣ f.
+  have hpf_dvd_f : ZPoly.primitivePart f ∣ f := by
+    refine ⟨DensePoly.C (ZPoly.content f), ?_⟩
+    rw [DensePoly.mul_comm_poly (S := Int), ZPoly.C_mul_eq_scale]
+    exact (ZPoly.content_mul_primitivePart f).symm
+  exact ZPoly_dvd_trans hsfc_dvd_c (ZPoly_dvd_trans hc_dvd_pf hpf_dvd_f)
+
+/-- Every factor emitted by the standalone integer trial-division core has
+positive degree, when `core` is primitive with positive leading coefficient.
+
+The three factor families are handled separately: integer-root split factors
+are `linearFactorForRoot` images (degree one); peeled candidates carry the
+positive-degree invariant of `trialDivisionCandidatesUpTo`; and the final
+residual, when retained, cannot be a constant, because a size-one divisor of a
+primitive core is a unit, which a `≠ 1` residual with positive leading
+coefficient is not. -/
+theorem exhaustiveIntegerTrialCoreFactorsWithBound_degree_pos
+    (core : ZPoly) (B : Nat)
+    (hcore_prim : ZPoly.Primitive core)
+    (hcore_pos : 0 < DensePoly.leadingCoeff core) :
+    ∀ factor ∈ (exhaustiveIntegerTrialCoreFactorsWithBound core B).toList,
+      0 < factor.degree?.getD 0 := by
+  intro factor hmem
+  let roots := integerRootCandidates core
+  let split := splitIntegerRootFactorsAux core roots roots.length
+  let candidates := trialDivisionCandidatesUpTo B (split.2.degree?.getD 0 / 2)
+  let peel := trialDivisionPeelAux split.2 candidates
+  have hcore_ne : core ≠ 0 := by
+    intro hz; rw [hz] at hcore_pos
+    change 0 < (0 : Int) at hcore_pos; omega
+  have hsplit_prod : split.2 * Array.polyProduct split.1 = core :=
+    splitIntegerRootFactorsAux_product core roots roots.length split.1 split.2 rfl
+  have hsplit2_dvd_core : split.2 ∣ core :=
+    ⟨Array.polyProduct split.1, hsplit_prod.symm⟩
+  have hsplit_lc_pos :
+      0 < DensePoly.leadingCoeff (Array.polyProduct split.1) :=
+    splitIntegerRootFactorsAux_polyProduct_leadingCoeff_pos core roots
+      roots.length split.1 split.2 rfl
+  have hsplit1_ne : Array.polyProduct split.1 ≠ 0 := by
+    intro hz; rw [hz] at hsplit_lc_pos
+    change 0 < (0 : Int) at hsplit_lc_pos; omega
+  have hsplit2_ne : split.2 ≠ 0 := by
+    intro hz; apply hcore_ne
+    rw [← hsplit_prod, hz]; exact DensePoly.zero_mul _
+  have hsplit2_pos : 0 < DensePoly.leadingCoeff split.2 := by
+    have hlc :
+        DensePoly.leadingCoeff core =
+          DensePoly.leadingCoeff split.2 *
+            DensePoly.leadingCoeff (Array.polyProduct split.1) := by
+      rw [← hsplit_prod]
+      exact ZPoly.leadingCoeff_mul_of_nonzero split.2 (Array.polyProduct split.1)
+        hsplit2_ne hsplit1_ne
+    by_cases hp : 0 < DensePoly.leadingCoeff split.2
+    · exact hp
+    · exfalso
+      have hle : DensePoly.leadingCoeff split.2 ≤ 0 := by omega
+      have hnn : 0 ≤ DensePoly.leadingCoeff (Array.polyProduct split.1) :=
+        Int.le_of_lt hsplit_lc_pos
+      have hna : 0 ≤ -DensePoly.leadingCoeff split.2 := by omega
+      have hprod_neg :
+          0 ≤ -DensePoly.leadingCoeff split.2 *
+            DensePoly.leadingCoeff (Array.polyProduct split.1) :=
+        Int.mul_nonneg hna hnn
+      have hneg_eq :
+          -DensePoly.leadingCoeff split.2 *
+              DensePoly.leadingCoeff (Array.polyProduct split.1) =
+            -(DensePoly.leadingCoeff split.2 *
+                DensePoly.leadingCoeff (Array.polyProduct split.1)) :=
+        Int.neg_mul _ _
+      rw [hneg_eq, ← hlc] at hprod_neg
+      omega
+  -- Positive degree for the integer-root split factors.
+  have hsplit_deg : ∀ b ∈ split.1.toList, 0 < b.degree?.getD 0 := by
+    intro b hb
+    obtain ⟨rs, _hsub, hshape⟩ :=
+      splitIntegerRootFactorsAux_factors_form
+        (target := core) (roots := roots) (fuel := roots.length)
+        (factors := split.1) (residual := split.2) rfl
+    rw [hshape] at hb
+    obtain ⟨r, _hr, hb_eq⟩ := List.mem_map.mp hb
+    rw [← hb_eq]
+    exact linearFactorForRoot_degree_pos r
+  -- Positive degree for the peeled candidates.
+  have hpeel_deg : ∀ b ∈ peel.1.toList, 0 < b.degree?.getD 0 := by
+    intro b hb
+    have hb_cand : b ∈ candidates :=
+      trialDivisionPeelAux_factor_mem split.2 candidates peel.1 peel.2 rfl b hb
+    exact (mem_trialDivisionCandidatesUpTo hb_cand).1
+  have hpeel_res_pos : 0 < DensePoly.leadingCoeff peel.2 :=
+    trialDivisionPeelAux_residual_leadingCoeff_pos split.2 candidates
+      hsplit2_pos (fun c hc => (mem_trialDivisionCandidatesUpTo hc).2.1)
+      peel.1 peel.2 rfl
+  change factor ∈
+      (if peel.2 = 1 then split.1 ++ peel.1
+        else (split.1 ++ peel.1).push peel.2).toList at hmem
+  by_cases hres_one : peel.2 = 1
+  · rw [if_pos hres_one, Array.toList_append, List.mem_append] at hmem
+    rcases hmem with h1 | h2
+    · exact hsplit_deg factor h1
+    · exact hpeel_deg factor h2
+  · rw [if_neg hres_one, Array.toList_push, Array.toList_append] at hmem
+    rcases List.mem_append.mp hmem with hpref | hres
+    · rcases List.mem_append.mp hpref with h1 | h2
+      · exact hsplit_deg factor h1
+      · exact hpeel_deg factor h2
+    · have hfac_eq : factor = peel.2 := List.mem_singleton.mp hres
+      rw [hfac_eq]
+      have hres_ne : peel.2 ≠ 0 := by
+        intro hz; rw [hz] at hpeel_res_pos
+        change 0 < (0 : Int) at hpeel_res_pos; omega
+      have hres_size_pos : 0 < peel.2.size :=
+        ZPoly.size_pos_of_ne_zero peel.2 hres_ne
+      have hres_dvd_split2 : peel.2 ∣ split.2 :=
+        trialDivisionPeelAux_residual_dvd_target split.2 candidates peel.1 peel.2 rfl
+      have hres_dvd_core : peel.2 ∣ core :=
+        ZPoly_dvd_trans hres_dvd_split2 hsplit2_dvd_core
+      have hsize_ge_two : 2 ≤ peel.2.size := by
+        by_cases h : 2 ≤ peel.2.size
+        · exact h
+        · exfalso
+          have hsize1 : peel.2.size = 1 := by omega
+          rcases isUnit_of_dvd_primitive_size_one hcore_prim hres_dvd_core hsize1
+            with h1 | hneg1
+          · exact hres_one h1
+          · rw [hneg1] at hpeel_res_pos
+            simp at hpeel_res_pos
+      have hdeg_eq : peel.2.degree?.getD 0 = peel.2.size - 1 := by
+        unfold DensePoly.degree?
+        simp [Nat.ne_of_gt hres_size_pos]
+      omega
+
 /-- Every factor emitted by the standalone integer trial-division core is
 irreducible when `core` is a primitive, square-free polynomial with
 positive leading coefficient and the bound `B` covers the coefficients of
