@@ -70,7 +70,14 @@ def family_series(family: str) -> list[cmp.Series]:
             cmp.collect_series(ic, config.isabelle_certified_pattern,
                                "Isabelle certified")
         )
+        out.append(
+            cmp.collect_series(cons, config.lean_steered_pattern, "Lean steered")
+        )
         out.append(cmp.collect_series(c, config.certified_pattern, "Lean certified"))
+    else:
+        out.append(
+            cmp.collect_series(cons, config.lean_steered_pattern, "Lean steered")
+        )
     out.append(cmp.collect_series(cons, config.fpll_pattern, "fpLLL via fplll-ffi"))
     return out
 

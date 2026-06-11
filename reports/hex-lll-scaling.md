@@ -1,7 +1,7 @@
 # HexLLL Scaling Report
 
-This report fits the asymptotic scaling of the HexLLL comparators — the five
-random-bounded curves and the three harsh-cubic curves of the comparator plot
+This report fits the asymptotic scaling of the HexLLL comparators — the six
+curves of each comparator plot
 (`reports/hex-lll-performance.md`) — so that the *exponent* (which complexity
 class a method is in) and the *constant factor* (how much slower it is than the
 fastest at the same complexity) are recorded as numbers rather than read off a
@@ -48,69 +48,81 @@ Snapshot below; regenerate with the command in [§Reproduction](#reproduction)
 and replace this block when the numbers move. Each row's data provenance (host,
 commit) is printed above its table.
 
+The comparator carries six curves. **Lean native** is the exact `d`/`ν`
+reducer (`lllNative`); **Lean steered** is the default native path, the
+approximation-steered reducer that drives exact integer row operations from an
+untrusted floating-point Gram–Schmidt and certifies its output at `(δ, 11/20)`.
+
 ### random-bounded, rungs 120–180
 
 - `reports/bench-results/hex-lll-certified-835734e7.json` — host `carica`, commit `835734e7`
 - `reports/bench-results/hex-lll-certified-carica.json` — host `carica`, commit `4c708c7b`
-- `reports/bench-results/hex-lll-random-bounded-schur.json` — host `carica`, commit `56f34229`
+- `reports/bench-results/hex-lll-random-bounded-steered-ac0d2dcc.json` — host `carica`, commit `ac0d2dcc`
 
-| method | exponent p | R² | C₃ (ns·n³) | × fpLLL |
+| method | exponent p | R² | median @ n=180 | × fastest @ n=180 |
 |---|---:|---:|---:|---:|
-| Isabelle native | 3.37 | 0.9996 | 1194 | 26.5× |
-| Lean native | 3.03 | 0.9990 | 801 | 17.8× |
-| Isabelle certified | 3.07 | 0.9977 | 407 | 9.0× |
-| Lean certified | 2.98 | 0.9996 | 164 | 3.6× |
-| fpLLL via fplll-ffi | 3.09 | 1.0000 | 45 | 1.0× |
+| Isabelle native | 3.37 | 0.9996 | 7548.6 ms | 28.1× |
+| Lean native | 3.02 | 0.9991 | 4540.9 ms | 16.9× |
+| Isabelle certified | 3.07 | 0.9977 | 2362.9 ms | 8.8× |
+| Lean steered | 3.58 | 0.9997 | 1901.7 ms | 7.1× |
+| Lean certified | 2.98 | 0.9996 | 944.8 ms | 3.5× |
+| fpLLL via fplll-ffi | 3.09 | 1.0000 | 268.2 ms | 1.0× |
 
-Exponents agree to within 0.38, so the five methods share one complexity
-(empirically `~n³` on this instance family) and differ only by a constant
-factor. The headline reading:
+The six exponents span 0.59, so the methods no longer share one complexity on
+this family and the table reports the observed ratio at `n = 180`. The headline
+reading:
 
-- **Certifying buys ~4.9× over native at matched provenance.** Lean certified
-  sits at 3.6× fpLLL against Lean native's 17.8× — the same answer for a
-  ~4.9× smaller constant, because fpLLL produces the basis and Lean only
-  checks it.
-- **Lean beats Isabelle by a constant ~1.5–2.5× on both rows.** Native
-  26.5/17.8 ≈ 1.5×; certified 9.0/3.6 ≈ 2.5×.
-- **fpLLL's raw constant is ~3.6× below even Lean certified**, the gap being
-  the checker (the packed-evaluation same-lattice clause plus the
-  fixed-precision interval Gram–Schmidt with exact fallback), which
-  `reports/hex-lll-performance.md` measures as ~62–72% of the certified
-  path.
+- **The steered default runs 2.4× faster than the exact reducer** (1901.7 vs
+  4540.9 ms at `n = 180`), even though its fitted exponent (`p ≈ 3.58`) is
+  slightly *steeper* than exact native's `p ≈ 3.02`: steering at the stricter
+  `δ` it forwards to the certifier fires more swaps, and the per-swap
+  floating-point work plus the periodic exact-Gram refresh grow with `n`. The
+  win here is constant-factor (no Θ(n⁴)-bit Gram-determinant state), not a
+  complexity-class change — random-bounded was already `~n³` for the exact
+  reducer.
+- **Certifying an fpLLL candidate still beats steering** (944.8 vs 1901.7 ms):
+  the steered path reduces the basis itself, while the certified path only
+  checks fpLLL's, so it stays the fastest verified option where an external
+  provider is present.
+- **Lean steered beats the Isabelle native extraction by ~4×** (1901.7 vs
+  7548.6 ms), and Lean certified beats it by ~8×.
 
 ### harsh-cubic, rungs 40–55
 
 - `reports/bench-results/hex-lll-certified-835734e7.json` — host `carica`, commit `835734e7`
 - `reports/bench-results/hex-lll-certified-carica.json` — host `carica`, commit `4c708c7b`
-- `reports/bench-results/hex-lll-harsh-cubic-extended-schur.json` — host `carica`, commit `56f34229`
+- `reports/bench-results/hex-lll-harsh-cubic-steered-ac0d2dcc.json` — host `carica`, commit `ac0d2dcc`
 
 | method | exponent p | R² | median @ n=55 | × fastest @ n=55 |
 |---|---:|---:|---:|---:|
 | Isabelle native | 5.76 | 0.9997 | 356.0 ms | 48.4× |
-| Lean native | 5.59 | 0.9999 | 234.3 ms | 31.8× |
+| Lean native | 5.56 | 0.9998 | 235.7 ms | 32.0× |
 | Isabelle certified | 4.59 | 0.9961 | 400.4 ms | 54.4× |
+| Lean steered | 2.95 | 0.9975 | 42.2 ms | 5.7× |
 | Lean certified | 2.65 | 0.9993 | 35.0 ms | 4.8× |
 | fpLLL via fplll-ffi | 2.21 | 0.9970 | 7.4 ms | 1.0× |
 
-The Lean-certified curve scales with a near-cubic exponent (`p ≈ 2.65` over
-the top rungs) and runs ahead of Lean native by **6.7× at `n = 55`** — the
-predicted crossover, realized. The two native reducers scale far worse
-(`~n^5.6` over this window) than fpLLL (`~n^2.2`), and the Isabelle-certified
-curve still tracks native with the same `~n^4.6` slope. The constant-factor
-framing does not apply across that mixed set — the per-method gaps grow with
-`n`, and the table reports the observed ratio at `n = 55`. The harsh-cubic
-exponents are local fits over a narrow high-`n` window; treat them as the
-slope at these rungs, not a proven asymptotic.
+This is the family the steered architecture targets. **The steered default
+leaves the `~n^5.6` complexity class** of the exact reducers, fitting
+`p ≈ 2.95` over the top rungs and running **5.6× ahead of exact native at
+`n = 55`** (42.2 vs 235.7 ms). The exact `d`/`ν` reducer carries intrinsically
+Θ(n⁴)-bit Gram-determinant state on this family — the prefix Gram determinants
+have `~6.6·n·i` bits for any basis of the lattice — so its `~n^5.6` cost cannot
+be fixed inside the exact representation; the steered path never materializes
+that state. The Isabelle-certified curve still rides the `~n^4.6` slope because
+it has no interval kernel. The constant-factor framing does not apply across
+this mixed set — the per-method gaps grow with `n`, and the table reports the
+observed ratio at `n = 55`. The harsh-cubic exponents are local fits over a
+narrow high-`n` window; treat them as the slope at these rungs, not a proven
+asymptotic.
 
-The Lean-certified path's near-cubic exponent is what the fixed-precision
-interval reducedness checker bought. The previous exact-only checker paid
-~`n^5.6` on this family (driven by `O(n²)` exact-integer Gram-Schmidt
-operations whose operand bit length grows with `n`), so its cost dominated
-the certified path's runtime. The dispatched checker now routes harsh-cubic
-above `n ≈ 25` to a sound `O(n³)` enclosure pass over fixed-width mantissas
-(with mandatory exact fallback on indecision); below that threshold the
-input-size predictor keeps the exact checker. The Isabelle-certified curve
-still rides the `~n^4.6` slope because it has no interval kernel.
+The steered default and the certified path land within `~1.2×` of each other
+here (42.2 vs 35.0 ms): once the exact-GSO state is out of the loop, the
+steered native reducer is competitive with certifying an external candidate,
+and on this family both are an order of magnitude below the exact `d`/`ν`
+reducer. fpLLL's raw float reducer is still `~5×` below either, the gap being
+the work neither verified path can skip — the steered path reduces the basis
+exactly, the certified path runs the verified reducedness checker.
 
 ## Reproduction
 
@@ -135,13 +147,15 @@ tables. The exponent answers "did the change alter the complexity class"; the
 
 ## Caveats
 
-- The random-bounded curves come from three committed runs: the native
-  curves (Isabelle native, Lean native, fpLLL) from one, the Lean-certified
-  curve from another, and the Isabelle-certified curve from a third — all on
-  `carica`, slightly different commits. Within each run the ratios are
-  exact; cross-run ratios (for example certified-vs-native) carry mild
-  run-to-run noise. A single consolidated five-way sweep would remove it;
-  the exponents and the ~4.7× certify-win are well outside that noise.
+- The curves come from three committed runs: the Lean curves (Lean native,
+  Lean steered) and the external curves (Isabelle native, fpLLL) from the
+  consolidated `…-steered-ac0d2dcc` sweep, the Lean-certified curve from
+  another, and the Isabelle-certified curve from a third — all on `carica`,
+  slightly different commits. The two Lean curves and the matched-provenance
+  Lean-steered-vs-Lean-native ratio are from one run, so the steered-win
+  numbers are exact; cross-run ratios (for example certified-vs-steered) carry
+  mild run-to-run noise. A single consolidated six-way sweep would remove it;
+  the exponents and the steered-vs-native gap are well outside that noise.
 - Exponents are fits over a finite window, not proofs. They report the slope at
   the measured rungs; a wider or higher window can shift them, especially on
   harsh-cubic where the window is narrow.
