@@ -5229,4 +5229,78 @@ theorem reassemblyExpansionComplete_exhaustiveIntegerTrial_of_ne_zero
     Hex.ZPoly.size_le_of_dvd_nonzero hfp_ne_zero hrp_ne_zero hfp_dvd_rp
   omega
 
+/-- When the fast path declines (`factorFastFactorsWithBound f B = none`), the
+square-free core has positive degree.  The fast path short-circuits with
+`some _` whenever the core is degree-0, so a `none` result rules out that
+branch — and with it the degree-0 arm of the slow trial path, whose raw output
+contains the non-irreducible unit `1`. -/
+private theorem factorFast_none_squareFreeCore_degree_ne_zero
+    {f : Hex.ZPoly} {B : Nat}
+    (hfast : Hex.factorFastFactorsWithBound f B = none) :
+    (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 := by
+  intro hdeg0
+  simp [Hex.factorFastFactorsWithBound, hdeg0] at hfast
+
+/-- **Slow-trial raw-factor irreducibility (Mathlib-side), exhaustive and
+quadratic arms.**
+
+Under the dispatch hypothesis `factorFastFactorsWithBound f B = none` (which
+holds on the slow-trial disjunct of the `h_raw` case-split, where both the fast
+and slow-modular paths returned `none`), every raw factor produced by
+`factorSlowTrialFactorsWithBound f (defaultFactorCoeffBound f)` is irreducible.
+
+The fast-path `none` result forces the square-free core to have positive
+degree, so the degree-0 branch (whose raw output appends the unit `1`) is
+unreachable.  The remaining two branches dispatch through
+`reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`:
+
+* quadratic short-circuit — completeness from
+  `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`, core
+  irreducibility from `quadraticIntegerRootFactors?_factor_irreducible_of_primitive`;
+* exhaustive trial — completeness from
+  `reassemblyExpansionComplete_exhaustiveIntegerTrial_of_ne_zero`, core
+  irreducibility from
+  `exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_at_default`.
+
+This is the slow-trial component of the `h_raw` dispatch consumed by
+`factor_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible` /
+`factor_entries_irreducible` for the #6672 capstone. -/
+theorem factorSlowTrialFactorsWithBound_factor_irreducible_of_fast_none
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (hfast : Hex.factorFastFactorsWithBound f
+      (Hex.ZPoly.defaultFactorCoeffBound f) = none) :
+    ∀ raw ∈ (Hex.factorSlowTrialFactorsWithBound f
+              (Hex.ZPoly.defaultFactorCoeffBound f)).toList,
+      Hex.ZPoly.Irreducible raw := by
+  intro raw hmem
+  have hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 :=
+    factorFast_none_squareFreeCore_degree_ne_zero hfast
+  have hcore_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
+  have hcore_prim :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
+  simp only [Hex.factorSlowTrialFactorsWithBound] at hmem
+  rw [if_neg hdeg_ne] at hmem
+  cases hquad :
+      Hex.quadraticIntegerRootFactors? (Hex.normalizeForFactor f).squareFreeCore with
+  | some coreFactors =>
+      simp only [hquad] at hmem
+      refine
+        Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+          (Hex.normalizeForFactor f) coreFactors ?_ ?_ hmem
+      · exact
+          IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
+            f hf hquad
+      · intro factor hfmem
+        exact Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive
+          hcore_pos hcore_prim hquad hfmem
+  | none =>
+      simp only [hquad] at hmem
+      refine
+        Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+          (Hex.normalizeForFactor f) _ ?_ ?_ hmem
+      · exact reassemblyExpansionComplete_exhaustiveIntegerTrial_of_ne_zero f hf
+      · exact
+          exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_at_default
+            f hf
+
 end HexBerlekampZassenhausMathlib
