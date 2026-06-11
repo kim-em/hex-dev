@@ -38,7 +38,7 @@ DEFAULT_ISABELLE_BOTTOM = (
 # schedule (the Lean-certified export carries no Isabelle rows). Within
 # each series the rungs share a host and commit; the cross-series ratio
 # carries the cross-run caveat recorded in reports/hex-lll-scaling.md.
-DEFAULT_CERTIFIED = ROOT / "reports/bench-results/hex-lll-certified-835734e7.json"
+DEFAULT_CERTIFIED = ROOT / "reports/bench-results/hex-lll-certified-c3d2fecb.json"
 DEFAULT_ISABELLE_CERTIFIED = (
     ROOT / "reports/bench-results/hex-lll-certified-carica.json"
 )
