@@ -1222,6 +1222,41 @@ def runCertifiedFirstShortVectorHarshCubic55Checksum : Unit → IO Int := fun _ 
 def runCertifiedCheckerHarshCubic55Checksum : Unit → IO Int :=
   runCertifiedCheckerChecksum certifiedHarshCubic55Ref (fun _ => prepHarshCubicInput 55)
 
+/-- Observable for the reducedness-decision tally: run the certified checker
+once on every rung of both ladders, then read `Hex.checkerTally`. Fails if
+any interval pass reached indecision (`exactFallback ≠ 0`); the
+size-predictor split between interval-accepted and exact-primary is pinned
+by the expected hash. The returned value encodes the tally as
+`(interval · 65537 + exactPrimary) · 65537 + exactFallback`. -/
+def runCertifiedCheckerIntervalTally : Unit → IO Int := fun _ => do
+  Hex.resetCheckerTally
+  let targets : List (Unit → IO Int) :=
+    [runCertifiedCheckerRandomBounded30Checksum,
+     runCertifiedCheckerRandomBounded45Checksum,
+     runCertifiedCheckerRandomBounded60Checksum,
+     runCertifiedCheckerRandomBounded75Checksum,
+     runCertifiedCheckerRandomBounded90Checksum,
+     runCertifiedCheckerRandomBounded120Checksum,
+     runCertifiedCheckerRandomBounded150Checksum,
+     runCertifiedCheckerRandomBounded180Checksum,
+     runCertifiedCheckerHarshCubic15Checksum,
+     runCertifiedCheckerHarshCubic20Checksum,
+     runCertifiedCheckerHarshCubic25Checksum,
+     runCertifiedCheckerHarshCubic30Checksum,
+     runCertifiedCheckerHarshCubic35Checksum,
+     runCertifiedCheckerHarshCubic40Checksum,
+     runCertifiedCheckerHarshCubic45Checksum,
+     runCertifiedCheckerHarshCubic50Checksum,
+     runCertifiedCheckerHarshCubic55Checksum]
+  for t in targets do
+    discard <| t ()
+  let tally ← Hex.checkerTally
+  if tally.exactFallback != 0 then
+    throw <| IO.userError
+      s!"interval reducedness checker reached indecision: {repr tally}"
+  return (Int.ofNat tally.interval * 65537 + Int.ofNat tally.exactPrimary) * 65537 +
+    Int.ofNat tally.exactFallback
+
 def runFirstShortVectorBZRecombinationNormSq : Unit → IO Int := fun _ => do
   return runFirstShortVectorNormSq (← bzRecombinationInputRef.get)
 
@@ -2007,6 +2042,16 @@ setup_fixed_benchmark runCertifiedCheckerHarshCubic55Checksum where {
     repeats := 3
     maxSecondsPerCall := 20.0
     warmupFirstIter := true
+  }
+
+/- One certified check per rung of both ladders; the observed value pins the
+reducedness-decision tally to "7 rungs dispatched to the interval checker
+(harsh-cubic n ≥ 35, random-bounded n ≥ 150), 10 to the exact checker by
+the size predictor, zero indecision fallbacks". -/
+setup_fixed_benchmark runCertifiedCheckerIntervalTally where {
+    repeats := 1
+    maxSecondsPerCall := 120.0
+    expectedHash := some (Hashable.hash (((7 * 65537 + 10) * 65537 : Int)))
   }
 
 /- Complexity derivation: random-bounded inputs have square dimension `n` and
