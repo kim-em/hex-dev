@@ -527,10 +527,44 @@ the executable checker `certCheck B B' U V δ η : Bool` returns `true`, where
   falls back to the materialized comparison; the regime test is a
   short-circuiting comparison scan, and both branches decide exactly
   `M·A = C`, so acceptance is independent of the regime;
-- `B'` independent and `(δ, η)`-size-reduced and Lovász, read off the integer
-  `d`/`ν` representation (`GramSchmidt.Int.data B'`): all `d` positive,
-  `η.den·(ν[i][j]).natAbs ≤ η.num·d[j+1]` (the integer form of `|μ| ≤ η`), and
-  `δ.den·(d[i+2]·d[i] + ν[i+1][i]²) ≥ δ.num·d[i+1]²`.
+- `B'` independent and `(δ, η)`-size-reduced and Lovász. The clause is
+  decided by a sound fixed-precision enclosure Gram-Schmidt pass over the
+  exact integer Gram matrix of `B'`: a closed dyadic interval
+  representation with `Int` endpoint mantissas at a shared power-of-two
+  scale (no floating point anywhere in the trusted path), per-operation
+  containment for add / sub / mul / div-by-positive, and an `O(n³)`
+  pass that produces enclosures of every `‖b*_i‖²` and `μ[i][j]`. The
+  pass costs `O(n³)` operations on fixed-width mantissas, independent of
+  the Gram-determinant bit growth of the input family — which is the
+  whole point: the exact `d`/`ν` checker pays `O(n²)` exact-integer
+  operations whose operands grow with `n`, while the enclosure pass
+  rounds out to a fixed working precision. Acceptance requires every
+  independence enclosure (`0 < ‖b*_i‖²` lower bound), every
+  size-reduction enclosure (`|μ[i][j]| ≤ η` enclosure strictly inside
+  `[−η, η]`), and every Lovász enclosure (the upper-bound enclosure of
+  `δ·‖b*_i‖²` strictly below the lower-bound enclosure of
+  `‖b*_{i+1}‖² + μ²·‖b*_i‖²`) to be decided on the correct side.
+  Indecision (any enclosure straddling its threshold, or any
+  norm-enclosure failing strict positivity) falls back to the exact
+  integer `d`/`ν` checker (all `d` positive,
+  `η.den·(ν[i][j]).natAbs ≤ η.num·d[j+1]` — the integer form of
+  `|μ| ≤ η` — and `δ.den·(d[i+2]·d[i] + ν[i+1][i]²) ≥ δ.num·d[i+1]²`),
+  which is *mandatory*: completeness of the dispatched reducedness
+  clause is structural (the exact checker is complete on every
+  candidate) rather than numerical (no precision-tuning regime where
+  the dispatch can refuse a reduced candidate).
+
+  Dispatch between the two checkers is by a deterministic input-size
+  predictor — a function of the input alone, never of checker
+  indecision, so per-input timing stays unimodal across the input
+  family. The predictor's role is performance only; both branches are
+  sound and complete. The dispatch outcome tally distinguishes three
+  modes: *interval-accepted* (enclosure pass decided yes), *exact-primary*
+  (predictor routed straight to the exact checker), and *exact-fallback*
+  (interval pass was indecisive, exact checker decided). The
+  `exact-fallback` count is observable; tracking it lets a measurement
+  confirm the enclosure path actually decides whenever the predictor
+  said it would.
 
 The checker is generic in the size-reduction bound, matching the
 `isLLLReduced`/`short_vector_bound_of_size_bound` layer; the pin lives at the
@@ -542,6 +576,24 @@ theorem certCheck_sound (B B' U V : Matrix Int n m) (δ η : Rat) :
       (∀ v, B.memLattice v ↔ B'.memLattice v) ∧
       B'.independent ∧ isLLLReduced B' δ η
 ```
+
+The reducedness obligation factors through the shape
+
+```lean
+theorem lllReducedInterval_sound (b : Matrix Int n m) (δ η : Rat) :
+    lllReducedInterval b δ η = true →
+      isLLLReduced b δ η ∧ b.independent
+```
+
+which states that enclosure acceptance entails the exact rational
+`isLLLReduced` predicate at the requested `(δ, η)` parameters. No
+hypothesis on the working precision is needed: soundness is per-input,
+not per-precision-regime. The dispatch-side soundness theorem
+(`lllReducedCheck_sound`) covers all three modes — interval-accepted,
+exact-primary, exact-fallback — by case analysis on the predictor and
+the enclosure verdict; it depends on `lllReducedInterval_sound` for the
+enclosure branch and on the existing exact-integer soundness for both
+exact branches.
 
 No validity hypothesis on `η` is needed here (the bound's `1/2 ≤ η`, `η² < δ`
 conditions live on `short_vector_bound_of_size_bound`, not on the checker).
@@ -566,7 +618,10 @@ validated in Lean before use; a malformed candidate is a rejection.
 carries enough margin over a floating-point reducer's size-reduction
 threshold that acceptance is the common case, but correctness never depends on
 the reducer's numerical behaviour. The dispatch records an
-`absent / provider-error / rejected / accepted` tally for diagnostics.
+`absent / provider-error / rejected / accepted` tally for the provider
+outcomes and an `interval-accepted / exact-primary / exact-fallback` tally
+for the reducedness clause's decision modes; both are diagnostics only,
+and acceptance never depends on either.
 
 ## Loop invariant
 
