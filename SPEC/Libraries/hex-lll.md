@@ -272,6 +272,47 @@ constructor lives in `hex-lll` rather than as inline anonymous
 constructor itself as deferrable is incompatible with `hex-lll`
 being on the BZ critical path.
 
+### Approximation-steered default reducer
+
+The default native reducer is **steered by untrusted approximate Gram-Schmidt
+data**. It maintains a floating-point (or fixed-width dyadic) approximation of
+the Gram-Schmidt coefficients `μ[i][j]` and squared orthogonal norms
+`‖b*_i‖²`, and uses that approximation alone to choose its row operations: the
+integer size-reduction rounding coefficients and the Lovász swap decisions are
+read off the approximation. No property of the approximation enters any proof —
+a poor approximation can only produce a slow or insufficiently reduced run,
+never an incorrect lattice.
+
+Every basis mutation is one of the exact integer row operations drawn from the
+proven-lattice-preserving set (`GramSchmidt.Int.sizeReduce`, the size-reduction
+row combination, and `GramSchmidt.Int.adjacentSwap`, the adjacent row swap). The
+generated lattice of the output therefore equals that of the input **by
+construction** — no transform certificate is computed or needed — and the loop
+terminates by fuel, exactly as the exact `d`/`ν` reducer does.
+
+The steered path **materializes no exact Gram-Schmidt state**: it carries the
+exact integer basis together with the untrusted approximation, and recomputes a
+working row's coefficients from the exact integer Gram entries `⟨b_i, b_j⟩` of
+the current basis when it needs to bound floating-point drift. The exact `d`/`ν`
+Gram-determinant and scaled-coefficient data of the `LLLState` representation
+appears only on the fallback path.
+
+The steered output is **certified post hoc** at the public `(δ, 11/20)` bound by
+the reducedness checker (*Certified external dispatch*). On certification
+success the steered basis is returned; on failure the reducer falls back to the
+exact `d`/`ν` reducer `lllNative`, whose `η = 1/2` size-reduction contract is
+unchanged. A deterministic input-size dispatch may route the smallest inputs —
+those for which the exact reducer is already cheaper than the steered loop plus
+its certification — directly to `lllNative`; like every other dispatch in this
+library it is a function of the input alone and both branches satisfy the same
+post-condition.
+
+Both pinned `η` values are unchanged: `lllNative` retains `η = 1/2` and the
+public `lll` retains `η = 11/20`. The public `lll` contract — same lattice,
+`isLLLReduced (lll …) δ (11/20)`, and the `lll_short_vector` bound — holds
+verbatim whether the result comes from the steered path, its exact fallback, or
+the certified external candidate.
+
 ### Short-vector recovery for downstream consumers
 
 The reduced basis returned by `lll` is canonically ordered with
