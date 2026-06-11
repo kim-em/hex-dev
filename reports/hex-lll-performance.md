@@ -305,8 +305,8 @@ path is fpLLL candidate production plus the Lean checker. Paired
 `runCertifiedChecker*` targets cache the same candidate and re-run only
 `certCheck` after warmup, giving the checker's share of certified-path cost.
 
-Certified ladder export: `reports/bench-results/hex-lll-certified-835734e7.json`,
-SHA-256 `a45d4174e98cc4dba107612c64f3604d26b11f90db35c6022376ad8f6b565a54`.
+Certified ladder export: `reports/bench-results/hex-lll-certified-c3d2fecb.json`,
+SHA-256 `c4439a4e06c1f61ee76717ebcc8f170cb643ea095d6765230b84a55204c44e29`.
 The run used `HEX_FPLLL_FFI_LIB="$(scripts/oracle/setup_fplll_ffi.sh)"` so
 the certified-path cost is fpLLL candidate production through `fplll-ffi`
 plus Lean's checker. All certified-path and checker-only rows had
@@ -317,18 +317,18 @@ Lean-certified-vs-Lean-native random-bounded ratios:
 
 | `n` | Lean native median | Lean certified median | certified/native | checker share |
 |---:|---:|---:|---:|---:|
-| 30 | 15.14 ms | 4.22 ms | 0.2789 | 68.5 % |
-| 45 | 55.53 ms | 13.72 ms | 0.2470 | 63.8 % |
-| 60 | 142.01 ms | 32.64 ms | 0.2299 | 64.2 % |
-| 75 | 296.58 ms | 64.13 ms | 0.2162 | 64.8 % |
-| 90 | 495.68 ms | 110.80 ms | 0.2235 | 65.0 % |
-| 120 | 1.39 s | 282.13 ms | 0.2031 | 62.2 % |
-| 150 | 2.65 s | 560.99 ms | 0.2121 | 65.3 % |
-| 180 | 4.76 s | 944.81 ms | 0.1986 | 67.6 % |
+| 30 | 15.14 ms | 4.23 ms | 0.2794 | 64.4 % |
+| 45 | 55.53 ms | 14.11 ms | 0.2541 | 60.5 % |
+| 60 | 142.01 ms | 32.66 ms | 0.2300 | 63.1 % |
+| 75 | 296.58 ms | 65.59 ms | 0.2212 | 60.3 % |
+| 90 | 495.68 ms | 112.71 ms | 0.2274 | 61.3 % |
+| 120 | 1.39 s | 274.10 ms | 0.1972 | 63.0 % |
+| 150 | 2.65 s | 565.88 ms | 0.2135 | 63.5 % |
+| 180 | 4.76 s | 954.40 ms | 0.2005 | 64.4 % |
 
 Random-bounded trend: Lean certified sits at about `0.20..0.28×` Lean
 native. The checker is the dominant certified-path component, accounting for
-`62..68 %` of the measured full path. The input-size predictor routes the
+`60..64 %` of the measured full path. The input-size predictor routes the
 random-bounded checker rungs `n ≤ 120` to the exact integer checker
 (the operand bit growth on this family stays below the 128-bit interval
 working precision); rungs `n ≥ 150` dispatch to the fixed-precision
@@ -339,19 +339,19 @@ Lean-certified-vs-Lean-native harsh-cubic ratios:
 
 | `n` | Lean native median | Lean certified median | certified/native | checker share |
 |---:|---:|---:|---:|---:|
-| 15 | 515 µs | 851 µs | 1.6541 | 88.0 % |
-| 20 | 1.67 ms | 2.30 ms | 1.3763 | 85.8 % |
-| 25 | 4.15 ms | 5.32 ms | 1.2808 | 91.9 % |
-| 30 | 9.53 ms | 7.63 ms | 0.8001 | 89.3 % |
-| 35 | 19.65 ms | 11.28 ms | 0.5742 | 88.3 % |
-| 40 | 39.44 ms | 15.10 ms | 0.3829 | 88.6 % |
-| 45 | 75.83 ms | 20.18 ms | 0.2661 | 92.2 % |
-| 50 | 135.80 ms | 27.05 ms | 0.1992 | 88.5 % |
-| 55 | 234.28 ms | 34.98 ms | 0.1493 | 89.0 % |
+| 15 | 515 µs | 834 µs | 1.6187 | 87.8 % |
+| 20 | 1.67 ms | 2.23 ms | 1.3373 | 87.5 % |
+| 25 | 4.15 ms | 5.11 ms | 1.2319 | 90.4 % |
+| 30 | 9.53 ms | 7.45 ms | 0.7817 | 88.9 % |
+| 35 | 19.65 ms | 10.78 ms | 0.5487 | 89.9 % |
+| 40 | 39.44 ms | 14.73 ms | 0.3735 | 89.1 % |
+| 45 | 75.83 ms | 19.52 ms | 0.2574 | 90.6 % |
+| 50 | 135.80 ms | 26.47 ms | 0.1949 | 89.0 % |
+| 55 | 234.28 ms | 33.58 ms | 0.1433 | 91.0 % |
 
 Harsh-cubic trend: Lean certified crosses below Lean native at `n = 30` and
-drops to **`0.15×` Lean native at `n = 55`** — a 6.7× speedup over the
-native body. Checker-only cost still accounts for `85..92 %` of the full
+drops to **`0.14×` Lean native at `n = 55`** — a 7.0× speedup over the
+native body. Checker-only cost still accounts for `88..91 %` of the full
 certified path; the candidate-production component is small on this family.
 The dispatched checker routes harsh-cubic above `n ≈ 25` to the
 fixed-precision enclosure pass (which costs `O(n³)` on fixed-width
@@ -370,7 +370,7 @@ same Zenodo 2636367 archive as the native comparator:
 harsh-cubic ladders.
 
 The full certified-vs-Isabelle-certified ladder was measured in one run on
-`carica` (Apple M2 Ultra, macOS) at commit `4c708c7b`, with both engines
+`carica` (Apple M2 Ultra, macOS) at commit `c3d2fecb`, with both engines
 hosted in the same process schedule so the gating ratio shares a host and
 candidate set:
 
@@ -381,7 +381,7 @@ lake exe hexlll_bench run \
   Hex.LLLBench.runCertifiedFirstShortVectorRandomBounded{30,45,60,75,90,120,150,180}Checksum \
   Hex.LLLBench.runIsabelleCertifiedRandomBoundedNormSq{30,45,60,75,90,120,150,180} \
   Hex.LLLBench.runCertifiedFirstShortVectorHarshCubic{15,20,25,30,35,40,45,50,55}Checksum \
-  Hex.LLLBench.runIsabelleCertifiedHarshCubicNormSq{15,20,25,30,35,40,45,50,55} \
+  Hex.LLLBench.runIsabelleCertifiedHarshCubicNormSq{15,20,25,30,35,40,45,50,55,60,65} \
   --export-file reports/bench-results/hex-lll-certified-carica.json
 ```
 
@@ -391,35 +391,35 @@ Certified-vs-Isabelle-certified random-bounded ratios:
 
 | `n` | Hex certified median | Isabelle certified median | Hex/Isabelle-certified | speedup |
 |---:|---:|---:|---:|---:|
-| 30 | 4.22 ms | 31.18 ms | 0.135 | 7.38× |
-| 45 | 13.72 ms | 56.52 ms | 0.243 | 4.12× |
-| 60 | 32.64 ms | 103.65 ms | 0.315 | 3.17× |
-| 75 | 64.13 ms | 185.34 ms | 0.346 | 2.89× |
-| 90 | 110.80 ms | 302.66 ms | 0.366 | 2.73× |
-| 120 | 282.13 ms | 681.69 ms | 0.414 | 2.42× |
-| 150 | 560.99 ms | 1.42 s | 0.394 | 2.54× |
-| 180 | 944.81 ms | 2.36 s | 0.400 | 2.50× |
+| 30 | 4.23 ms | 31.54 ms | 0.134 | 7.46× |
+| 45 | 14.11 ms | 57.66 ms | 0.245 | 4.09× |
+| 60 | 32.66 ms | 105.86 ms | 0.309 | 3.24× |
+| 75 | 65.59 ms | 187.17 ms | 0.350 | 2.85× |
+| 90 | 112.71 ms | 307.73 ms | 0.366 | 2.73× |
+| 120 | 274.10 ms | 697.89 ms | 0.393 | 2.55× |
+| 150 | 565.88 ms | 1.34 s | 0.424 | 2.36× |
+| 180 | 954.40 ms | 2.36 s | 0.404 | 2.48× |
 
 Certified-vs-Isabelle-certified harsh-cubic ratios:
 
 | `n` | Hex certified median | Isabelle certified median | Hex/Isabelle-certified | speedup |
 |---:|---:|---:|---:|---:|
-| 15 | 851 µs | 20.32 ms | 0.042 | 23.87× |
-| 20 | 2.30 ms | 23.51 ms | 0.098 | 10.22× |
-| 25 | 5.32 ms | 28.59 ms | 0.186 | 5.38× |
-| 30 | 7.63 ms | 39.79 ms | 0.192 | 5.22× |
-| 35 | 11.28 ms | 56.10 ms | 0.201 | 4.97× |
-| 40 | 15.10 ms | 93.00 ms | 0.162 | 6.16× |
-| 45 | 20.18 ms | 147.86 ms | 0.136 | 7.33× |
-| 50 | 27.05 ms | 244.41 ms | 0.111 | 9.04× |
-| 55 | 34.98 ms | 400.37 ms | 0.087 | 11.45× |
+| 15 | 834 µs | 20.15 ms | 0.041 | 24.17× |
+| 20 | 2.23 ms | 24.03 ms | 0.093 | 10.76× |
+| 25 | 5.11 ms | 28.01 ms | 0.183 | 5.48× |
+| 30 | 7.45 ms | 38.24 ms | 0.195 | 5.13× |
+| 35 | 10.78 ms | 56.29 ms | 0.192 | 5.22× |
+| 40 | 14.73 ms | 90.02 ms | 0.164 | 6.11× |
+| 45 | 19.52 ms | 149.14 ms | 0.131 | 7.64× |
+| 50 | 26.47 ms | 243.26 ms | 0.109 | 9.19× |
+| 55 | 33.58 ms | 398.40 ms | 0.084 | 11.86× |
 
 Gating verdict: **met at every shared rung.** Hex's certified path is faster
-than Isabelle's certified path across both families — by `2.42..7.38×` on
-random-bounded and `4.97..23.87×` on harsh-cubic. On random-bounded the margin
+than Isabelle's certified path across both families — by `2.36..7.46×` on
+random-bounded and `5.13..24.17×` on harsh-cubic. On random-bounded the margin
 is widest at small `n` (where Isabelle's per-request `fplll` subprocess fork
 dominates), narrows through the middle of the ladder, then plateaus at
-`~2.5×` on the top rungs. On harsh-cubic the margin widens above `n = 35`
+`~2.4×` on the top rungs. On harsh-cubic the margin widens above `n = 35`
 because the Hex enclosure checker scales `~n^2.7` while Isabelle's exact
 checker rides the `~n^4.6` slope of its exact integer Gram-Schmidt.
 
@@ -455,7 +455,7 @@ The harsh-cubic plot shows the same six series, and this is the family where the
 steered curve matters most. The exact `d`/`ν` reducers ride the `~n^5.6` slope
 of their Θ(n⁴)-bit Gram-determinant state, while **Lean steered leaves that
 complexity class** (`p ≈ 2.95`, 5.6× ahead of exact native at `n = 55`) and
-lands within `~1.2×` of the Lean-certified curve. Both certified curves and the
+lands within `~1.3×` of the Lean-certified curve. Both certified curves and the
 steered curve carry the crossover story on this family, so all are plotted —
 the earlier figure omitted the certified curves on harsh-cubic; they are now
 shown alongside the steered native path they are closest to.

@@ -55,20 +55,20 @@ untrusted floating-point Gram–Schmidt and certifies its output at `(δ, 11/20)
 
 ### random-bounded, rungs 120–180
 
-- `reports/bench-results/hex-lll-certified-835734e7.json` — host `carica`, commit `835734e7`
-- `reports/bench-results/hex-lll-certified-carica.json` — host `carica`, commit `4c708c7b`
+- `reports/bench-results/hex-lll-certified-c3d2fecb.json` — host `carica`, commit `c3d2fecb`
+- `reports/bench-results/hex-lll-certified-carica.json` — host `carica`, commit `c3d2fecb`
 - `reports/bench-results/hex-lll-random-bounded-steered-ac0d2dcc.json` — host `carica`, commit `ac0d2dcc`
 
 | method | exponent p | R² | median @ n=180 | × fastest @ n=180 |
 |---|---:|---:|---:|---:|
 | Isabelle native | 3.37 | 0.9996 | 7548.6 ms | 28.1× |
 | Lean native | 3.02 | 0.9991 | 4540.9 ms | 16.9× |
-| Isabelle certified | 3.07 | 0.9977 | 2362.9 ms | 8.8× |
+| Isabelle certified | 3.01 | 0.9995 | 2364.6 ms | 8.8× |
 | Lean steered | 3.58 | 0.9997 | 1901.7 ms | 7.1× |
-| Lean certified | 2.98 | 0.9996 | 944.8 ms | 3.5× |
+| Lean certified | 3.08 | 0.9988 | 954.4 ms | 3.6× |
 | fpLLL via fplll-ffi | 3.09 | 1.0000 | 268.2 ms | 1.0× |
 
-The six exponents span 0.59, so the methods no longer share one complexity on
+The six exponents span 0.57, so the methods no longer share one complexity on
 this family and the table reports the observed ratio at `n = 180`. The headline
 reading:
 
@@ -80,7 +80,7 @@ reading:
   win here is constant-factor (no Θ(n⁴)-bit Gram-determinant state), not a
   complexity-class change — random-bounded was already `~n³` for the exact
   reducer.
-- **Certifying an fpLLL candidate still beats steering** (944.8 vs 1901.7 ms):
+- **Certifying an fpLLL candidate still beats steering** (954.4 vs 1901.7 ms):
   the steered path reduces the basis itself, while the certified path only
   checks fpLLL's, so it stays the fastest verified option where an external
   provider is present.
@@ -89,17 +89,17 @@ reading:
 
 ### harsh-cubic, rungs 40–55
 
-- `reports/bench-results/hex-lll-certified-835734e7.json` — host `carica`, commit `835734e7`
-- `reports/bench-results/hex-lll-certified-carica.json` — host `carica`, commit `4c708c7b`
+- `reports/bench-results/hex-lll-certified-c3d2fecb.json` — host `carica`, commit `c3d2fecb`
+- `reports/bench-results/hex-lll-certified-carica.json` — host `carica`, commit `c3d2fecb`
 - `reports/bench-results/hex-lll-harsh-cubic-steered-ac0d2dcc.json` — host `carica`, commit `ac0d2dcc`
 
 | method | exponent p | R² | median @ n=55 | × fastest @ n=55 |
 |---|---:|---:|---:|---:|
 | Isabelle native | 5.76 | 0.9997 | 356.0 ms | 48.4× |
 | Lean native | 5.56 | 0.9998 | 235.7 ms | 32.0× |
-| Isabelle certified | 4.59 | 0.9961 | 400.4 ms | 54.4× |
+| Isabelle certified | 4.66 | 0.9982 | 398.4 ms | 54.1× |
 | Lean steered | 2.95 | 0.9975 | 42.2 ms | 5.7× |
-| Lean certified | 2.65 | 0.9993 | 35.0 ms | 4.8× |
+| Lean certified | 2.62 | 0.9987 | 33.6 ms | 4.6× |
 | fpLLL via fplll-ffi | 2.21 | 0.9970 | 7.4 ms | 1.0× |
 
 This is the family the steered architecture targets. **The steered default
@@ -109,15 +109,15 @@ leaves the `~n^5.6` complexity class** of the exact reducers, fitting
 Θ(n⁴)-bit Gram-determinant state on this family — the prefix Gram determinants
 have `~6.6·n·i` bits for any basis of the lattice — so its `~n^5.6` cost cannot
 be fixed inside the exact representation; the steered path never materializes
-that state. The Isabelle-certified curve still rides the `~n^4.6` slope because
+that state. The Isabelle-certified curve still rides the `~n^4.7` slope because
 it has no interval kernel. The constant-factor framing does not apply across
 this mixed set — the per-method gaps grow with `n`, and the table reports the
 observed ratio at `n = 55`. The harsh-cubic exponents are local fits over a
 narrow high-`n` window; treat them as the slope at these rungs, not a proven
 asymptotic.
 
-The steered default and the certified path land within `~1.2×` of each other
-here (42.2 vs 35.0 ms): once the exact-GSO state is out of the loop, the
+The steered default and the certified path land within `~1.3×` of each other
+here (42.2 vs 33.6 ms): once the exact-GSO state is out of the loop, the
 steered native reducer is competitive with certifying an external candidate,
 and on this family both are an order of magnitude below the exact `d`/`ν`
 reducer. fpLLL's raw float reducer is still `~5×` below either, the gap being
