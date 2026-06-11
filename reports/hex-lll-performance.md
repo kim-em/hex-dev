@@ -432,9 +432,15 @@ Architectural asymmetries for this ratio:
 - Hex checks reducedness with `lllReducedInt`; Isabelle confirms reducedness by
   re-running the verified LLL reducer inside `test_certified`.
 
-The random-bounded plot shows five labelled series across the full committed
-ladder: Lean native, Isabelle native, Lean certified, Isabelle certified
-(adjusted), and fpLLL via fplll-ffi.
+The random-bounded plot shows six labelled series across the full committed
+ladder: Lean native, Lean steered, Isabelle native, Lean certified, Isabelle
+certified (adjusted), and fpLLL via fplll-ffi. **Lean native** is the exact
+`d`/`ν` reducer (`lllNative`); **Lean steered** is the default native path, the
+approximation-steered reducer that drives exact integer row operations from an
+untrusted floating-point Gram–Schmidt and certifies its own output at
+`(δ, 11/20)`. The steered curve sits below exact native across the whole ladder
+(2.4× faster at `n = 180`) and above the certified path, which only checks an
+fpLLL candidate rather than reducing the basis itself.
 
 ![Random-bounded comparator runtime plot](figures/hex-lll-comparator-random-bounded.svg)
 
@@ -445,10 +451,14 @@ the `fplll` subprocess fork, taken as the audit-host figure from
 otherwise dominates its small-`n` rungs. The ratio tables above and the scaling
 fits keep the raw medians; only the plotted curve is adjusted.
 
-The harsh-cubic plot shows the same five series. On this family the
-Lean-certified curve crosses below Lean native at `n = 30` and falls to `0.15×`
-Lean native at `n = 55` (per the harsh-cubic trend above); the certified curves
-carry that crossover story, so both are plotted.
+The harsh-cubic plot shows the same six series, and this is the family where the
+steered curve matters most. The exact `d`/`ν` reducers ride the `~n^5.6` slope
+of their Θ(n⁴)-bit Gram-determinant state, while **Lean steered leaves that
+complexity class** (`p ≈ 2.95`, 5.6× ahead of exact native at `n = 55`) and
+lands within `~1.2×` of the Lean-certified curve. Both certified curves and the
+steered curve carry the crossover story on this family, so all are plotted —
+the earlier figure omitted the certified curves on harsh-cubic; they are now
+shown alongside the steered native path they are closest to.
 
 ![Harsh-cubic comparator runtime plot](figures/hex-lll-comparator-harsh-cubic.svg)
 
@@ -459,11 +469,13 @@ random-bounded figure, the ratio tables and scaling fits keep the raw medians.
 
 For the asymptotic scaling of these curves — fitted exponents and constant
 factors per method, with reproduction steps — see
-[hex-lll-scaling.md](hex-lll-scaling.md). In brief: the five random-bounded
-methods share one empirical complexity (`~n³`) and differ only by a constant
-factor (Lean certified ~4× smaller than Lean native), while on harsh-cubic the
-native reducers (`~n^5.6`) and fpLLL (`~n^2.2`) have different exponents and
-fan out.
+[hex-lll-scaling.md](hex-lll-scaling.md). In brief: on random-bounded the
+exact-native, steered, certified, and fpLLL methods are all near-`n³` and differ
+by constant factors (Lean steered 2.4× faster than exact native, Lean certified
+faster still); on harsh-cubic the exact native reducers (`~n^5.6`) fan out from
+the steered default (`~n^2.95`), the certified path (`~n^2.65`), and fpLLL
+(`~n^2.2`) — the steered reducer is the one that moved the native curve out of
+the `~n^5.6` class.
 
 ### Per-call comparator overhead
 

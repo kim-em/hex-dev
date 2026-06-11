@@ -24,10 +24,10 @@ ROOT = Path(__file__).resolve().parents[2]
 # the fpLLL comparator under the `runFpylllFirstShortVector*` function
 # names (process-call fpylll subprocess); the regex accepts either.
 DEFAULT_RANDOM_CONSOLIDATED = (
-    ROOT / "reports/bench-results/hex-lll-random-bounded-schur.json"
+    ROOT / "reports/bench-results/hex-lll-random-bounded-steered-ac0d2dcc.json"
 )
 DEFAULT_HARSH_CONSOLIDATED = (
-    ROOT / "reports/bench-results/hex-lll-harsh-cubic-extended-schur.json"
+    ROOT / "reports/bench-results/hex-lll-harsh-cubic-steered-ac0d2dcc.json"
 )
 DEFAULT_ISABELLE_BOTTOM = (
     ROOT / "reports/bench-results/hex-lll-isabelle-bottom-e211854d1435.json"
@@ -47,7 +47,8 @@ DEFAULT_ISABELLE_CERTIFIED_HARSH = DEFAULT_ISABELLE_CERTIFIED
 DEFAULT_RANDOM_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-random-bounded.svg"
 DEFAULT_HARSH_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-harsh-cubic.svg"
 
-LEAN_RANDOM = re.compile(r"runFirstShortVectorRandomBoundedNormSq([0-9]+)$")
+LEAN_RANDOM = re.compile(r"runNativeFirstShortVectorRandomBoundedNormSq([0-9]+)$")
+LEAN_STEERED_RANDOM = re.compile(r"runFirstShortVectorRandomBoundedNormSq([0-9]+)$")
 ISABELLE_RANDOM = re.compile(r"runIsabelleRandomBoundedNormSq([0-9]+)$")
 FPLLL_RANDOM = re.compile(
     r"run(?:FpLLL|Fpylll)FirstShortVectorRandomBounded([0-9]+)Checksum$"
@@ -58,7 +59,8 @@ CERTIFIED_RANDOM = re.compile(
 ISABELLE_CERTIFIED_RANDOM = re.compile(
     r"runIsabelleCertifiedRandomBoundedNormSq([0-9]+)$"
 )
-LEAN_HARSH = re.compile(r"runFirstShortVectorHarshCubicNormSq([0-9]+)$")
+LEAN_HARSH = re.compile(r"runNativeFirstShortVectorHarshCubicNormSq([0-9]+)$")
+LEAN_STEERED_HARSH = re.compile(r"runFirstShortVectorHarshCubicNormSq([0-9]+)$")
 ISABELLE_HARSH = re.compile(r"runIsabelleHarshCubicNormSq([0-9]+)$")
 FPLLL_HARSH = re.compile(
     r"run(?:FpLLL|Fpylll)FirstShortVectorHarshCubic([0-9]+)Checksum$"
@@ -81,6 +83,7 @@ class Series:
 @dataclass(frozen=True)
 class FamilyConfig:
     lean_pattern: re.Pattern[str]
+    lean_steered_pattern: re.Pattern[str]
     isabelle_pattern: re.Pattern[str]
     fpll_pattern: re.Pattern[str]
     certified_pattern: re.Pattern[str]
@@ -101,6 +104,7 @@ class FamilyConfig:
 FAMILIES = {
     "random-bounded": FamilyConfig(
         lean_pattern=LEAN_RANDOM,
+        lean_steered_pattern=LEAN_STEERED_RANDOM,
         isabelle_pattern=ISABELLE_RANDOM,
         fpll_pattern=FPLLL_RANDOM,
         certified_pattern=CERTIFIED_RANDOM,
@@ -116,6 +120,7 @@ FAMILIES = {
     ),
     "harsh-cubic": FamilyConfig(
         lean_pattern=LEAN_HARSH,
+        lean_steered_pattern=LEAN_STEERED_HARSH,
         isabelle_pattern=ISABELLE_HARSH,
         fpll_pattern=FPLLL_HARSH,
         certified_pattern=CERTIFIED_HARSH,
@@ -146,6 +151,7 @@ ISABELLE_CERTIFIED_ADJUSTED_LABEL = "Isabelle certified (adjusted)"
 # whether or not the certified curves are present in a given figure.
 STYLE_BY_LABEL = {
     "Lean native": {"marker": "o", "linewidth": 2.0},
+    "Lean steered": {"marker": "P", "linewidth": 2.0, "markersize": 7.0},
     "Isabelle native": {"marker": "s", "linewidth": 2.0},
     "Lean certified": {"marker": "D", "linewidth": 2.0, "markersize": 6.5},
     ISABELLE_CERTIFIED_ADJUSTED_LABEL: {
@@ -303,12 +309,15 @@ def main() -> None:
 
     cons = load_results(cons_path)
     lean = collect_series(cons, config.lean_pattern, "Lean native")
+    steered = collect_series(cons, config.lean_steered_pattern, "Lean steered")
     isabelle = collect_series(cons, config.isabelle_pattern, "Isabelle native")
     fpll = collect_series(cons, config.fpll_pattern, "fpLLL via fplll-ffi")
 
     # Legend follows plot order; order the series slowest-to-fastest at large
-    # n (Isabelle native, Lean native, Isabelle certified, Lean certified,
-    # fpLLL) so the legend reads top-to-bottom like the stacked curves.
+    # n (Isabelle native, Lean native, Isabelle certified, Lean steered, Lean
+    # certified, fpLLL) so the legend reads top-to-bottom like the stacked
+    # curves. `Lean native` is the exact d/ν reducer; `Lean steered` is the
+    # approximation-steered default with post-hoc certification.
     series = [isabelle, lean]
     if config.include_certified:
         certified_results = load_results(args.certified or config.certified_path)
@@ -325,7 +334,9 @@ def main() -> None:
                 "Isabelle certified",
             )
         )
-        series += [isabelle_certified, certified]
+        series += [isabelle_certified, steered, certified]
+    else:
+        series.append(steered)
     series.append(fpll)
 
     if config.bottom_consistency:
