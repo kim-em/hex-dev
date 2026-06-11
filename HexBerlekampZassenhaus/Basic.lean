@@ -13427,6 +13427,77 @@ private theorem trialDivisionPeel_factor_irreducible
             exact square_not_dvd_of_squareFreeRat hcore_ne hcore_sq
               hq_deg_pos hqq_dvd_core
 
+/-- For `ε ∈ {1, -1}`, `p` divides its `ε`-scaling.  The identity scaling is
+trivial; the sign flip composes `dvd_scale_neg_one` with the involution
+`scale_neg_one_neg_one`. -/
+private theorem dvd_scale_unit (p : ZPoly) {ε : Int} (hε : ε = 1 ∨ ε = -1) :
+    p ∣ DensePoly.scale ε p := by
+  rcases hε with rfl | rfl
+  · rw [← ZPoly.C_mul_eq_scale (1 : Int) p]
+    exact ⟨DensePoly.C 1, DensePoly.mul_comm_poly (S := Int) (DensePoly.C 1) p⟩
+  · have h := dvd_scale_neg_one (DensePoly.scale (-1 : Int) p)
+    rwa [scale_neg_one_neg_one p] at h
+
+/-- The normalized square-free core divides the original polynomial.
+
+Chains `squareFreeCore ∣ squareFreeCore * repeatedPart` through the signed
+reassembly `scale ε (squareFreeCore * repeatedPart) = primitivePart core` (the
+`X`-free core is primitive, so its primitive part is itself), then
+`core ∣ primitivePart f` (the `X`-power extraction product) and
+`primitivePart f ∣ f` (`content_mul_primitivePart`).  Lifts a coefficient bound
+on divisors of `f` to a bound on divisors of the square-free core. -/
+theorem squareFreeCore_dvd_self (f : ZPoly) (hf : f ≠ 0) :
+    (normalizeForFactor f).squareFreeCore ∣ f := by
+  have hc_prim :
+      ZPoly.Primitive (ZPoly.extractXPower (ZPoly.primitivePart f)).core :=
+    extractXPower_core_primitive_of_ne_zero f hf
+  have hc_ne : (ZPoly.extractXPower (ZPoly.primitivePart f)).core ≠ 0 :=
+    ZPoly.ne_zero_of_primitive _ hc_prim
+  -- squareFreeCore ∣ (extractXPower (primitivePart f)).core.
+  have hsfc_dvd_c :
+      (normalizeForFactor f).squareFreeCore ∣
+        (ZPoly.extractXPower (ZPoly.primitivePart f)).core := by
+    obtain ⟨ε, hε, hscale⟩ :=
+      ZPoly.primitiveSquareFreeDecomposition_reassembly_signed
+        (ZPoly.extractXPower (ZPoly.primitivePart f)).core hc_ne
+    rw [ZPoly.primitivePart_eq_self_of_primitive _ hc_prim] at hscale
+    have hprod_dvd_scale :=
+      dvd_scale_unit
+        ((ZPoly.primitiveSquareFreeDecomposition
+            (ZPoly.extractXPower (ZPoly.primitivePart f)).core).squareFreeCore *
+          (ZPoly.primitiveSquareFreeDecomposition
+            (ZPoly.extractXPower (ZPoly.primitivePart f)).core).repeatedPart) hε
+    rw [hscale] at hprod_dvd_scale
+    have hsfc_dvd_prod :
+        (ZPoly.primitiveSquareFreeDecomposition
+            (ZPoly.extractXPower (ZPoly.primitivePart f)).core).squareFreeCore ∣
+          ((ZPoly.primitiveSquareFreeDecomposition
+              (ZPoly.extractXPower (ZPoly.primitivePart f)).core).squareFreeCore *
+            (ZPoly.primitiveSquareFreeDecomposition
+              (ZPoly.extractXPower (ZPoly.primitivePart f)).core).repeatedPart) :=
+      ⟨_, rfl⟩
+    have hchain := ZPoly_dvd_trans hsfc_dvd_prod hprod_dvd_scale
+    simpa [normalizeForFactor] using hchain
+  -- core ∣ primitivePart f.
+  have hc_dvd_pf :
+      (ZPoly.extractXPower (ZPoly.primitivePart f)).core ∣ ZPoly.primitivePart f := by
+    have hprod :
+        Array.polyProduct
+            (xPowerFactorArray (ZPoly.extractXPower (ZPoly.primitivePart f)).power ++
+              #[(ZPoly.extractXPower (ZPoly.primitivePart f)).core]) =
+          ZPoly.primitivePart f :=
+      extractXPower_product (ZPoly.primitivePart f)
+    rw [ZPoly.polyProduct_append, ZPoly.polyProduct_singleton] at hprod
+    exact ⟨Array.polyProduct
+        (xPowerFactorArray (ZPoly.extractXPower (ZPoly.primitivePart f)).power),
+      hprod.symm.trans (DensePoly.mul_comm_poly (S := Int) _ _)⟩
+  -- primitivePart f ∣ f.
+  have hpf_dvd_f : ZPoly.primitivePart f ∣ f := by
+    refine ⟨DensePoly.C (ZPoly.content f), ?_⟩
+    rw [DensePoly.mul_comm_poly (S := Int), ZPoly.C_mul_eq_scale]
+    exact (ZPoly.content_mul_primitivePart f).symm
+  exact ZPoly_dvd_trans hsfc_dvd_c (ZPoly_dvd_trans hc_dvd_pf hpf_dvd_f)
+
 /-- Every factor emitted by the standalone integer trial-division core has
 positive degree, when `core` is primitive with positive leading coefficient.
 
