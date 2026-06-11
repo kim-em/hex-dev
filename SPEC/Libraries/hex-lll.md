@@ -664,6 +664,37 @@ outcomes and an `interval-accepted / exact-primary / exact-fallback` tally
 for the reducedness clause's decision modes; both are diagnostics only,
 and acceptance never depends on either.
 
+**Requested parameters carry margin.** The dispatch does not request the
+`(δ, 11/20)` it certifies; it asks the external reducer for a strictly
+stronger `(δ', η')` with `1/2 < η' < 11/20` and, for every `δ < 1`,
+`δ < δ' < 1`. The reducedness clause is decided by the fixed-precision
+enclosure pass, which resolves each open inequality only by margin: a
+candidate whose `|μ|` or Lovász quantity sat arbitrarily close to the
+certified bound would leave the enclosure straddling its threshold and force
+the exact fallback. Requesting strictly stronger parameters removes that
+possibility — a correctly-functioning reducer lands every size-reduction
+inequality a margin `11/20 − η'` clear of the certified bound and every Lovász
+inequality a margin `(δ' − δ)·d[i+1]²` clear, so the enclosure decides each one
+in decisive territory rather than straddling it.
+
+The concrete margins are the design constants `η' = 107/200` and
+`δ' = min(δ + 1/100, (δ + 1)/2)`. The midpoint cap keeps `δ < δ' < 1` across
+the whole `δ ≤ 1` surface: for `δ ≤ 49/50` the request is `δ + 1/100`; for
+`49/50 < δ < 1` it is the midpoint `(δ + 1)/2`, with margin `(1 − δ)/2` still
+positive; only at the boundary `δ = 1` is no strictly stronger request
+possible, and there the request equals the certified `δ`. The margins are
+deliberately small: the Lovász parameter governs how many swaps the reducer
+performs, so a wide `δ` gap would cost reducer work for no soundness benefit,
+whereas a narrow gap still gives the enclosure a decisive margin.
+
+These requested parameters are entirely outside the trusted story, exactly as
+the reducer's numerical behaviour is: certification runs against the exact
+`(δ, 11/20)`, never against `(δ', η')`, so the margins may be retuned — or
+ignored by a reducer that cannot honour them — without touching
+`certCheck_sound`. The gap buys reliable enclosure decisiveness, not
+correctness; it extends the "reliability is empirical, soundness is not"
+clause rather than qualifying it.
+
 ## Loop invariant
 
 At the top of the loop with current index k, expressed in terms of
