@@ -32,12 +32,18 @@ DEFAULT_HARSH_CONSOLIDATED = (
 DEFAULT_ISABELLE_BOTTOM = (
     ROOT / "reports/bench-results/hex-lll-isabelle-bottom-e211854d1435.json"
 )
-# Full certified ladder measured in one carica run, so all four
-# certified rungs (Lean + Isabelle, random + harsh) share a host and
-# commit and the gating ratio is internally consistent.
-DEFAULT_CERTIFIED = ROOT / "reports/bench-results/hex-lll-certified-carica.json"
-DEFAULT_ISABELLE_CERTIFIED_RANDOM = DEFAULT_CERTIFIED
-DEFAULT_ISABELLE_CERTIFIED_HARSH = DEFAULT_CERTIFIED
+# The Lean-certified and Isabelle-certified series come from separate
+# committed carica runs: the Lean-certified ladder tracks the current
+# checker, while the Isabelle-certified ladder is the full Lean+Isabelle
+# schedule (the Lean-certified export carries no Isabelle rows). Within
+# each series the rungs share a host and commit; the cross-series ratio
+# carries the cross-run caveat recorded in reports/hex-lll-scaling.md.
+DEFAULT_CERTIFIED = ROOT / "reports/bench-results/hex-lll-certified-443bf8fb.json"
+DEFAULT_ISABELLE_CERTIFIED = (
+    ROOT / "reports/bench-results/hex-lll-certified-carica.json"
+)
+DEFAULT_ISABELLE_CERTIFIED_RANDOM = DEFAULT_ISABELLE_CERTIFIED
+DEFAULT_ISABELLE_CERTIFIED_HARSH = DEFAULT_ISABELLE_CERTIFIED
 DEFAULT_RANDOM_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-random-bounded.svg"
 DEFAULT_HARSH_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-harsh-cubic.svg"
 

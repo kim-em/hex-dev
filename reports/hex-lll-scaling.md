@@ -51,6 +51,7 @@ commit) is printed above its table.
 ### random-bounded, rungs 120–180
 
 - `reports/bench-results/hex-lll-certified-443bf8fb.json` — host `carica`, commit `443bf8fb`
+- `reports/bench-results/hex-lll-certified-carica.json` — host `carica`, commit `4c708c7b`
 - `reports/bench-results/hex-lll-random-bounded-schur.json` — host `carica`, commit `56f34229`
 
 | method | exponent p | R² | C₃ (ns·n³) | × fpLLL |
@@ -58,10 +59,10 @@ commit) is printed above its table.
 | Isabelle native | 3.37 | 0.9996 | 1194 | 26.5× |
 | Lean native | 3.03 | 0.9990 | 801 | 17.8× |
 | Isabelle certified | 3.07 | 0.9977 | 407 | 9.0× |
-| Lean certified | 3.20 | 0.9997 | 169 | 3.8× |
+| Lean certified | 3.20 | 0.9997 | 171 | 3.8× |
 | fpLLL via fplll-ffi | 3.09 | 1.0000 | 45 | 1.0× |
 
-Exponents agree to within 0.34, so the five methods share one complexity
+Exponents agree to within 0.33, so the five methods share one complexity
 (empirically `~n³` on this instance family) and differ only by a constant
 factor. The headline reading:
 
@@ -125,12 +126,13 @@ tables. The exponent answers "did the change alter the complexity class"; the
 
 ## Caveats
 
-- The random-bounded native curves (Isabelle native, Lean native, fpLLL) come
-  from one committed run and the two certified curves from another — both on
-  `carica`, slightly different commits. Within each run the ratios are exact;
-  cross-run ratios (for example certified-vs-native) carry mild run-to-run
-  noise. A single consolidated five-way sweep would remove it; the exponents
-  and the ~4× certify-win are well outside that noise.
+- The random-bounded curves come from three committed runs: the native
+  curves (Isabelle native, Lean native, fpLLL) from one, the Lean-certified
+  curve from another, and the Isabelle-certified curve from a third — all on
+  `carica`, slightly different commits. Within each run the ratios are
+  exact; cross-run ratios (for example certified-vs-native) carry mild
+  run-to-run noise. A single consolidated five-way sweep would remove it;
+  the exponents and the ~4.7× certify-win are well outside that noise.
 - Exponents are fits over a finite window, not proofs. They report the slope at
   the measured rungs; a wider or higher window can shift them, especially on
   harsh-cubic where the window is narrow.
