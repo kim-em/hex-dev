@@ -438,13 +438,20 @@ fpLLL via fplll-ffi.
 
 ![Random-bounded comparator runtime plot](figures/hex-lll-comparator-random-bounded.svg)
 
-The harsh-cubic plot shows only the three native/fpLLL series. On this family
-the certified paths run slightly slower than their native counterparts (Lean
-certified is `1.05..1.67×` Lean native, per the ratio table above): fpLLL's
-advantage on hard instances is too small to offset the certificate checker, so
-the certified curves add no story and are omitted to keep the figure legible.
+The Isabelle-certified series forks an `fplll` subprocess per request (~19 ms);
+this fixed cost dominates its small-`n` rungs, and the figure footnotes it
+accordingly (see [§Per-call comparator overhead](#per-call-comparator-overhead)).
+
+The harsh-cubic plot shows the same five series. On this family the
+Lean-certified curve crosses below Lean native at `n = 30` and falls to `0.15×`
+Lean native at `n = 55` (per the harsh-cubic trend above); the certified curves
+carry that crossover story, so both are plotted.
 
 ![Harsh-cubic comparator runtime plot](figures/hex-lll-comparator-harsh-cubic.svg)
+
+Here too the Isabelle-certified series forks an `fplll` subprocess per request
+(~19 ms), a fixed cost that dominates its small-`n` rungs; the figure carries the
+same footnote (see [§Per-call comparator overhead](#per-call-comparator-overhead)).
 
 For the asymptotic scaling of these curves — fitted exponents and constant
 factors per method, with reproduction steps — see

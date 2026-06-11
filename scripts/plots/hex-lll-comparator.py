@@ -204,6 +204,23 @@ def plot(series: list[Series], output: Path, title: str, xlabel: str) -> None:
     ax.grid(True, which="major", axis="x", alpha=0.15)
     ax.legend(frameon=False)
     fig.tight_layout()
+    # The Isabelle-certified pipeline forks an `fplll` subprocess per request
+    # (~19 ms, from reports/hex-lll-performance.md §Per-call comparator
+    # overhead). This fixed cost dominates its small-n rungs, so footnote it
+    # whenever that series is plotted.
+    if any(item.label == "Isabelle certified" for item in series):
+        fig.subplots_adjust(bottom=0.16)
+        fig.text(
+            0.5,
+            0.01,
+            "Isabelle certified forks an fplll subprocess per request "
+            "(~19 ms); this fixed cost dominates its small-n rungs.",
+            ha="center",
+            va="bottom",
+            fontsize=7,
+            style="italic",
+            color="0.35",
+        )
     output.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output, format="svg", metadata={"Date": None})
     svg = output.read_text(encoding="utf-8")
