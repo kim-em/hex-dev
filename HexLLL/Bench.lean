@@ -1224,9 +1224,10 @@ def runCertifiedCheckerHarshCubic55Checksum : Unit → IO Int :=
 
 /-- Observable for the reducedness-decision tally: run the certified checker
 once on every rung of both ladders, then read `Hex.checkerTally`. Fails if
-any decision fell back to the exact integer checker, so the fallback count
-on the pinned rungs is verifiable; the returned value encodes the tally as
-`interval · 65537 + exact`. -/
+any interval pass reached indecision (`exactFallback ≠ 0`); the
+size-predictor split between interval-accepted and exact-primary is pinned
+by the expected hash. The returned value encodes the tally as
+`(interval · 65537 + exactPrimary) · 65537 + exactFallback`. -/
 def runCertifiedCheckerIntervalTally : Unit → IO Int := fun _ => do
   Hex.resetCheckerTally
   let targets : List (Unit → IO Int) :=
@@ -1250,10 +1251,11 @@ def runCertifiedCheckerIntervalTally : Unit → IO Int := fun _ => do
   for t in targets do
     discard <| t ()
   let tally ← Hex.checkerTally
-  if tally.exact != 0 then
+  if tally.exactFallback != 0 then
     throw <| IO.userError
-      s!"interval reducedness checker fell back to the exact checker: {repr tally}"
-  return Int.ofNat tally.interval * 65537 + Int.ofNat tally.exact
+      s!"interval reducedness checker reached indecision: {repr tally}"
+  return (Int.ofNat tally.interval * 65537 + Int.ofNat tally.exactPrimary) * 65537 +
+    Int.ofNat tally.exactFallback
 
 def runFirstShortVectorBZRecombinationNormSq : Unit → IO Int := fun _ => do
   return runFirstShortVectorNormSq (← bzRecombinationInputRef.get)
@@ -2043,12 +2045,13 @@ setup_fixed_benchmark runCertifiedCheckerHarshCubic55Checksum where {
   }
 
 /- One certified check per rung of both ladders; the observed value pins the
-reducedness-decision tally to "all 17 rungs decided by the interval checker,
-zero exact fallbacks". -/
+reducedness-decision tally to "7 rungs dispatched to the interval checker
+(harsh-cubic n ≥ 35, random-bounded n ≥ 150), 10 to the exact checker by
+the size predictor, zero indecision fallbacks". -/
 setup_fixed_benchmark runCertifiedCheckerIntervalTally where {
     repeats := 1
     maxSecondsPerCall := 120.0
-    expectedHash := some (Hashable.hash ((17 * 65537 : Int)))
+    expectedHash := some (Hashable.hash (((7 * 65537 + 10) * 65537 : Int)))
   }
 
 /- Complexity derivation: random-bounded inputs have square dimension `n` and

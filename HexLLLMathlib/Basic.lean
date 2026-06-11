@@ -764,18 +764,25 @@ theorem lllReducedInt_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
 
 /-- Soundness of the dispatched reducedness clause `Hex.lllReducedCheck`:
 whichever side decided — the fixed-precision interval checker
-(`HexLLLMathlib.lllReducedInterval_sound`) or the exact integer fallback
-(`lllReducedInt_sound` above) — acceptance entails the rational
-`isLLLReduced` predicate and independence. -/
+(`HexLLLMathlib.lllReducedInterval_sound`), the exact integer checker
+chosen by the size predictor, or the exact fallback after interval
+indecision (both via `lllReducedInt_sound` above) — acceptance entails
+the rational `isLLLReduced` predicate and independence. The predictor
+`Hex.intervalWins` only selects between sound checkers, so no hypothesis
+about it is needed. -/
 theorem lllReducedCheck_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
     Hex.lllReducedCheck b δ η = true →
       Hex.isLLLReduced b δ η ∧ Hex.Matrix.independent b := by
   intro hcheck
   unfold Hex.lllReducedCheck at hcheck
   simp only [Hex.withRecordCheckerOutcome] at hcheck
-  by_cases hint : Hex.lllReducedInterval b δ η = true
-  · exact HexLLLMathlib.lllReducedInterval_sound b δ η hint
-  · rw [if_neg (by simpa using hint)] at hcheck
+  by_cases hwin : Hex.intervalWins b = true
+  · rw [if_pos hwin] at hcheck
+    by_cases hint : Hex.lllReducedInterval b δ η = true
+    · exact HexLLLMathlib.lllReducedInterval_sound b δ η hint
+    · rw [if_neg (by simpa using hint)] at hcheck
+      exact lllReducedInt_sound b δ η hcheck
+  · rw [if_neg (by simpa using hwin)] at hcheck
     exact lllReducedInt_sound b δ η hcheck
 
 /-- Soundness of the certified-dispatch checker `Hex.certCheck`: an accepted

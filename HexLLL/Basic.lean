@@ -608,19 +608,24 @@ def lllReducedInt (b : Matrix Int n m) (δ η : Rat) : Bool :=
   independent && sizeReduced && lovasz
 
 /-- Outcome of one certified-dispatch reducedness decision: decided by the
-interval checker, or referred to the exact integer fallback. -/
+interval checker, decided by the exact checker because the size predictor
+chose it (`exactPrimary`), or referred to the exact checker after an
+indecisive interval pass (`exactFallback`). -/
 inductive CheckerOutcome where
   | interval
-  | exact
+  | exactPrimary
+  | exactFallback
 deriving Repr, BEq
 
 /-- Tally of reducedness decisions, distinguishing enclosure-accepted from
-fallback decisions. Mirrors `LLLProvider.Diagnostics` for the dispatch
-outcomes; this tally is the observability hook that lets measurements
-verify the interval path decided every candidate. -/
+the two exact-checker modes. Mirrors `LLLProvider.Diagnostics` for the
+dispatch outcomes; this tally is the observability hook that lets
+measurements verify the dispatch predictor and confirm the interval path
+never reached indecision (`exactFallback = 0`). -/
 structure CheckerTally where
   interval : Nat := 0
-  exact : Nat := 0
+  exactPrimary : Nat := 0
+  exactFallback : Nat := 0
 deriving Repr, BEq, Inhabited
 
 initialize checkerTallyRef : IO.Ref CheckerTally ← IO.mkRef {}
@@ -633,7 +638,8 @@ def checkerTally : IO CheckerTally :=
 
 private def bumpChecker (t : CheckerTally) : CheckerOutcome → CheckerTally
   | .interval => { t with interval := t.interval + 1 }
-  | .exact => { t with exact := t.exact + 1 }
+  | .exactPrimary => { t with exactPrimary := t.exactPrimary + 1 }
+  | .exactFallback => { t with exactFallback := t.exactFallback + 1 }
 
 /-- Side-effecting tally bump callable from pure code; definitionally the
 continuation `k`, with an `@[implemented_by]` side effect in compiled code.
@@ -650,15 +656,46 @@ unsafe def withRecordCheckerOutcomeImpl {α : Type} (o : CheckerOutcome) (k : α
 @[implemented_by withRecordCheckerOutcomeImpl]
 def withRecordCheckerOutcome {α : Type} (_o : CheckerOutcome) (k : α) : α := k
 
-/-- Reducedness clause of the certified dispatch: the fixed-precision
-interval checker decides first; on indecision the exact integer checker is
-the mandatory fallback, so completeness is structural rather than
-numerical. Records each decision in the checker tally. -/
+/-- Dispatch threshold of the size predictor `intervalWins`, as a multiple
+of the working precision. Derived from the per-operation cost ratio of the
+two checkers: the exact `d`/`ν` checker performs ~`n³/3` multiplications on
+operands averaging ~`n·maxDiagBits/4` bits, while the interval pass
+performs ~`n³/6` products on fixed `(intervalPrec + maxDiagBits)`-bit
+mantissas, so enclosures win once `n·maxDiagBits` exceeds a fixed multiple
+of `intervalPrec + maxDiagBits`. The constant is calibrated on the two
+committed bench families (random-bounded crossover between n=120 and
+n=150, harsh-cubic between n=20 and n=25); boundary misclassification
+costs single-digit percent because the boundary rungs are near parity. -/
+def dispatchFactor : Nat := 16
+
+/-- Size predictor for the reducedness dispatch: `true` when the
+fixed-precision interval pass is predicted to beat the exact integer
+checker on this input. Reads only the bit length of the largest squared
+row norm (the Gram diagonal dominates all Gram entries by
+Cauchy-Schwarz), `O(n·m)` work — negligible against either checker. The
+predictor is a function of the input alone, never of checker indecision,
+so dispatch keeps per-input timing deterministic. -/
+def intervalWins (b : Matrix Int n m) : Bool :=
+  let maxDiagBits :=
+    (List.finRange n).foldl
+      (fun acc i => max acc (Vector.normSq (b.row i)).natAbs.log2)
+      0
+  decide (n * maxDiagBits ≥ dispatchFactor * (intervalPrec + maxDiagBits))
+
+/-- Reducedness clause of the certified dispatch. The size predictor
+`intervalWins` picks the checker expected to be faster on this input: the
+fixed-precision interval pass (with the exact integer checker as the
+mandatory fallback on indecision, keeping completeness structural rather
+than numerical), or the exact checker directly. Records each decision in
+the checker tally, distinguishing all three outcomes. -/
 def lllReducedCheck (b : Matrix Int n m) (δ η : Rat) : Bool :=
-  if lllReducedInterval b δ η then
-    withRecordCheckerOutcome .interval true
+  if intervalWins b then
+    if lllReducedInterval b δ η then
+      withRecordCheckerOutcome .interval true
+    else
+      withRecordCheckerOutcome .exactFallback (lllReducedInt b δ η)
   else
-    withRecordCheckerOutcome .exact (lllReducedInt b δ η)
+    withRecordCheckerOutcome .exactPrimary (lllReducedInt b δ η)
 
 /-- Executable certified-dispatch checker: verifies that `(B', U, V)` is a valid
 external candidate for reducing `B`, i.e. `B` and `B'` generate the same integer
