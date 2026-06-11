@@ -433,14 +433,17 @@ Architectural asymmetries for this ratio:
   re-running the verified LLL reducer inside `test_certified`.
 
 The random-bounded plot shows five labelled series across the full committed
-ladder: Lean native, Isabelle native, Lean certified, Isabelle certified, and
-fpLLL via fplll-ffi.
+ladder: Lean native, Isabelle native, Lean certified, Isabelle certified
+(adjusted), and fpLLL via fplll-ffi.
 
 ![Random-bounded comparator runtime plot](figures/hex-lll-comparator-random-bounded.svg)
 
-The Isabelle-certified series forks an `fplll` subprocess per request (~19 ms);
-this fixed cost dominates its small-`n` rungs, and the figure footnotes it
-accordingly (see [§Per-call comparator overhead](#per-call-comparator-overhead)).
+The plotted Isabelle-certified curve is adjusted down by ~18.8 ms, its
+per-request `svp_certified` floor: the fixed trivial-request cost dominated by
+the `fplll` subprocess fork, taken as the audit-host figure from
+[§Per-call comparator overhead](#per-call-comparator-overhead). This floor
+otherwise dominates its small-`n` rungs. The ratio tables above and the scaling
+fits keep the raw medians; only the plotted curve is adjusted.
 
 The harsh-cubic plot shows the same five series. On this family the
 Lean-certified curve crosses below Lean native at `n = 30` and falls to `0.15×`
@@ -449,9 +452,10 @@ carry that crossover story, so both are plotted.
 
 ![Harsh-cubic comparator runtime plot](figures/hex-lll-comparator-harsh-cubic.svg)
 
-Here too the Isabelle-certified series forks an `fplll` subprocess per request
-(~19 ms), a fixed cost that dominates its small-`n` rungs; the figure carries the
-same footnote (see [§Per-call comparator overhead](#per-call-comparator-overhead)).
+Here too the plotted Isabelle-certified curve is adjusted down by ~18.8 ms, its
+per-request `svp_certified` floor (see
+[§Per-call comparator overhead](#per-call-comparator-overhead)); as on the
+random-bounded figure, the ratio tables and scaling fits keep the raw medians.
 
 For the asymptotic scaling of these curves — fitted exponents and constant
 factors per method, with reproduction steps — see
