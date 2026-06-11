@@ -4968,4 +4968,87 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
       (defaultFactorCoeffBound_valid (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
       hprecision
 
+set_option maxHeartbeats 200000
+
+/-- Mathlib-side abstract-bound wrapper for the slow-trial exhaustive arm.
+
+Specialises the Mathlib-free
+`Hex.exhaustiveIntegerTrialCoreFactorsWithBound_factor_irreducible`
+(`HexBerlekampZassenhaus/Basic.lean:13443`) to the normalized square-free
+core of an `f ≠ 0` input, discharging the four core-shape hypotheses
+(`ne_zero`, `Primitive`, `0 < leadingCoeff`, `SquareFreeRat`) from `hf_ne`
+via the existing helpers:
+
+* `Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero` for `0 < leadingCoeff`
+  (and `zpoly_ne_zero_of_pos_lc` for `ne_zero`);
+* `normalizeForFactor_squareFreeCore_primitive_of_ne_zero` (Mathlib-side)
+  for `Primitive`;
+* `Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore` for
+  `SquareFreeRat`.
+
+The divisor coefficient bound `hbound` stays explicit because two natural
+specialisations live downstream: the intrinsic-core form
+(`B := Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore`,
+discharged below by `defaultFactorCoeffBound_valid` on the core) and the
+public-bound form (`B := Hex.ZPoly.defaultFactorCoeffBound f`, required
+by the slow-trial arm of the `h_raw` dispatch in
+`factor_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible`), which
+needs the `g ∣ (Hex.normalizeForFactor f).squareFreeCore → g ∣ f`
+divisibility chain through `primitiveSquareFreeDecomposition_reassembly_signed`
+and the primitive-part divisibility relation. -/
+theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_of_bound
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat)
+    (hbound : ∀ g : Hex.ZPoly,
+      g ∣ (Hex.normalizeForFactor f).squareFreeCore →
+      ∀ i, (g.coeff i).natAbs ≤ B) :
+    ∀ factor ∈ (Hex.exhaustiveIntegerTrialCoreFactorsWithBound
+                  (Hex.normalizeForFactor f).squareFreeCore B).toList,
+      Hex.ZPoly.Irreducible factor := by
+  intro factor hmem
+  have hcore_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 :=
+    zpoly_ne_zero_of_pos_lc hcore_pos
+  have hcore_prim :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
+  have hcore_sq : Hex.ZPoly.SquareFreeRat (Hex.normalizeForFactor f).squareFreeCore := by
+    have hsq :=
+      Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore
+        (Hex.ZPoly.extractXPower (Hex.ZPoly.primitivePart f)).core
+        (by simpa [Hex.normalizeForFactor] using hcore_ne)
+    simpa [Hex.normalizeForFactor] using hsq
+  exact Hex.exhaustiveIntegerTrialCoreFactorsWithBound_factor_irreducible
+    (Hex.normalizeForFactor f).squareFreeCore B
+    hcore_ne hcore_prim hcore_pos hcore_sq hbound factor hmem
+
+/-- Intrinsic-core default-bound specialisation of
+`exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_of_bound`
+at `B := Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore`.
+
+The divisor coefficient bound is discharged directly by
+`defaultFactorCoeffBound_valid` applied to the (nonzero) square-free core.
+This is the natural specialisation for callers that have already routed
+through the core's intrinsic Mignotte data; the public slow-trial dispatch
+in `Hex.factorSlowTrialFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)`
+uses the outer bound `Hex.ZPoly.defaultFactorCoeffBound f`, which requires
+an additional `(Hex.normalizeForFactor f).squareFreeCore ∣ f` divisibility
+chain (tracked separately) to discharge against this wrapper's `hbound`. -/
+theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_at_squareFreeCore_default
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0) :
+    ∀ factor ∈ (Hex.exhaustiveIntegerTrialCoreFactorsWithBound
+                  (Hex.normalizeForFactor f).squareFreeCore
+                  (Hex.ZPoly.defaultFactorCoeffBound
+                    (Hex.normalizeForFactor f).squareFreeCore)).toList,
+      Hex.ZPoly.Irreducible factor := by
+  intro factor hmem
+  have hcore_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 :=
+    zpoly_ne_zero_of_pos_lc hcore_pos
+  exact
+    exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_of_bound
+      f hf_ne
+      (Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore)
+      (defaultFactorCoeffBound_valid
+        (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
+      factor hmem
+
 end HexBerlekampZassenhausMathlib
