@@ -89,8 +89,8 @@ reading:
 
 ### harsh-cubic, rungs 40–55
 
-- `reports/bench-results/hex-lll-certified-c3d2fecb.json` — host `carica`, commit `c3d2fecb`
 - `reports/bench-results/hex-lll-certified-carica.json` — host `carica`, commit `c3d2fecb`
+- `reports/bench-results/hex-lll-certified-harsh-extended-1e6679ff.json` — host `carica`, commit `1e6679ff`
 - `reports/bench-results/hex-lll-harsh-cubic-steered-ac0d2dcc.json` — host `carica`, commit `ac0d2dcc`
 
 | method | exponent p | R² | median @ n=55 | × fastest @ n=55 |
@@ -99,7 +99,7 @@ reading:
 | Lean native | 5.56 | 0.9998 | 235.7 ms | 32.0× |
 | Isabelle certified | 4.66 | 0.9982 | 398.4 ms | 54.1× |
 | Lean steered | 2.95 | 0.9975 | 42.2 ms | 5.7× |
-| Lean certified | 2.62 | 0.9987 | 33.6 ms | 4.6× |
+| Lean certified | 2.79 | 0.9988 | 35.5 ms | 4.8× |
 | fpLLL via fplll-ffi | 2.21 | 0.9970 | 7.4 ms | 1.0× |
 
 This is the family the steered architecture targets. **The steered default
@@ -116,8 +116,8 @@ observed ratio at `n = 55`. The harsh-cubic exponents are local fits over a
 narrow high-`n` window; treat them as the slope at these rungs, not a proven
 asymptotic.
 
-The steered default and the certified path land within `~1.3×` of each other
-here (42.2 vs 33.6 ms): once the exact-GSO state is out of the loop, the
+The steered default and the certified path land within `~1.2×` of each other
+here (42.2 vs 35.5 ms): once the exact-GSO state is out of the loop, the
 steered native reducer is competitive with certifying an external candidate,
 and on this family both are an order of magnitude below the exact `d`/`ν`
 reducer. fpLLL's raw float reducer is still `~5×` below either, the gap being
