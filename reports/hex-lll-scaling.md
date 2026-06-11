@@ -50,7 +50,7 @@ commit) is printed above its table.
 
 ### random-bounded, rungs 120–180
 
-- `reports/bench-results/hex-lll-certified-443bf8fb.json` — host `carica`, commit `443bf8fb`
+- `reports/bench-results/hex-lll-certified-835734e7.json` — host `carica`, commit `835734e7`
 - `reports/bench-results/hex-lll-certified-carica.json` — host `carica`, commit `4c708c7b`
 - `reports/bench-results/hex-lll-random-bounded-schur.json` — host `carica`, commit `56f34229`
 
@@ -59,49 +59,58 @@ commit) is printed above its table.
 | Isabelle native | 3.37 | 0.9996 | 1194 | 26.5× |
 | Lean native | 3.03 | 0.9990 | 801 | 17.8× |
 | Isabelle certified | 3.07 | 0.9977 | 407 | 9.0× |
-| Lean certified | 3.20 | 0.9997 | 171 | 3.8× |
+| Lean certified | 2.98 | 0.9996 | 164 | 3.6× |
 | fpLLL via fplll-ffi | 3.09 | 1.0000 | 45 | 1.0× |
 
-Exponents agree to within 0.33, so the five methods share one complexity
+Exponents agree to within 0.38, so the five methods share one complexity
 (empirically `~n³` on this instance family) and differ only by a constant
 factor. The headline reading:
 
-- **Certifying buys ~4.7× over native at matched provenance.** Lean certified
-  sits at 3.8× fpLLL against Lean native's 17.8× — the same answer for a
-  ~4.7× smaller constant, because fpLLL produces the basis and Lean only
+- **Certifying buys ~4.9× over native at matched provenance.** Lean certified
+  sits at 3.6× fpLLL against Lean native's 17.8× — the same answer for a
+  ~4.9× smaller constant, because fpLLL produces the basis and Lean only
   checks it.
-- **Lean beats Isabelle by a constant ~1.5–2.4× on both rows.** Native
-  26.5/17.8 ≈ 1.5×; certified 9.0/3.8 ≈ 2.4×.
-- **fpLLL's raw constant is ~3.8× below even Lean certified**, the gap being
-  the checker (the packed-evaluation same-lattice clause plus a small-basis
-  integer Gram–Schmidt), which `reports/hex-lll-performance.md` measures as
-  ~62–72% of the certified path.
+- **Lean beats Isabelle by a constant ~1.5–2.5× on both rows.** Native
+  26.5/17.8 ≈ 1.5×; certified 9.0/3.6 ≈ 2.5×.
+- **fpLLL's raw constant is ~3.6× below even Lean certified**, the gap being
+  the checker (the packed-evaluation same-lattice clause plus the
+  fixed-precision interval Gram–Schmidt with exact fallback), which
+  `reports/hex-lll-performance.md` measures as ~62–72% of the certified
+  path.
 
 ### harsh-cubic, rungs 40–55
 
+- `reports/bench-results/hex-lll-certified-835734e7.json` — host `carica`, commit `835734e7`
+- `reports/bench-results/hex-lll-certified-carica.json` — host `carica`, commit `4c708c7b`
 - `reports/bench-results/hex-lll-harsh-cubic-extended-schur.json` — host `carica`, commit `56f34229`
 
 | method | exponent p | R² | median @ n=55 | × fastest @ n=55 |
 |---|---:|---:|---:|---:|
 | Isabelle native | 5.76 | 0.9997 | 356.0 ms | 48.4× |
 | Lean native | 5.59 | 0.9999 | 234.3 ms | 31.8× |
+| Isabelle certified | 4.59 | 0.9961 | 400.4 ms | 54.4× |
+| Lean certified | 2.65 | 0.9993 | 35.0 ms | 4.8× |
 | fpLLL via fplll-ffi | 2.21 | 0.9970 | 7.4 ms | 1.0× |
 
-Here the exponents span 3.55: the native reducers scale far worse (`~n^5.6`
-over this window) than fpLLL (`~n^2.2`), so the curves fan out rather than run
-parallel. The constant-factor framing does not apply — the 31.8× / 48.4× gaps
-are the observed ratios at `n=55` and grow with `n`. The harsh-cubic exponents
-are local fits over a narrow high-`n` window; treat them as the slope at these
-rungs, not a proven asymptotic.
+The Lean-certified curve scales with a near-cubic exponent (`p ≈ 2.65` over
+the top rungs) and runs ahead of Lean native by **6.7× at `n = 55`** — the
+predicted crossover, realized. The two native reducers scale far worse
+(`~n^5.6` over this window) than fpLLL (`~n^2.2`), and the Isabelle-certified
+curve still tracks native with the same `~n^4.6` slope. The constant-factor
+framing does not apply across that mixed set — the per-method gaps grow with
+`n`, and the table reports the observed ratio at `n = 55`. The harsh-cubic
+exponents are local fits over a narrow high-`n` window; treat them as the
+slope at these rungs, not a proven asymptotic.
 
-This is why the harsh-cubic comparator figure shows only the three
-native/fpLLL curves: the certified path's cost is dominated by its checker at
-the measured rungs (`n ≤ 55`), where it runs slightly slower than native (see
-the ratio tables in `reports/hex-lll-performance.md`). But the diverging
-exponents predict a crossover — because fpLLL pulls away from the natives as
-`n` grows, the certified path (fpLLL + checker) must eventually overtake native
-on harsh-cubic at some `n` beyond the current ladder. Locating that crossover
-is a candidate for a future densified run.
+The Lean-certified path's near-cubic exponent is what the fixed-precision
+interval reducedness checker bought. The previous exact-only checker paid
+~`n^5.6` on this family (driven by `O(n²)` exact-integer Gram-Schmidt
+operations whose operand bit length grows with `n`), so its cost dominated
+the certified path's runtime. The dispatched checker now routes harsh-cubic
+above `n ≈ 25` to a sound `O(n³)` enclosure pass over fixed-width mantissas
+(with mandatory exact fallback on indecision); below that threshold the
+input-size predictor keeps the exact checker. The Isabelle-certified curve
+still rides the `~n^4.6` slope because it has no interval kernel.
 
 ## Reproduction
 

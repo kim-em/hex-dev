@@ -305,8 +305,8 @@ path is fpLLL candidate production plus the Lean checker. Paired
 `runCertifiedChecker*` targets cache the same candidate and re-run only
 `certCheck` after warmup, giving the checker's share of certified-path cost.
 
-Certified ladder export: `reports/bench-results/hex-lll-certified-443bf8fb.json`,
-SHA-256 `8e8e53843d1db25a0ec8932f84558f97ec6dedf5894dda00c571d464a6973688`.
+Certified ladder export: `reports/bench-results/hex-lll-certified-835734e7.json`,
+SHA-256 `a45d4174e98cc4dba107612c64f3604d26b11f90db35c6022376ad8f6b565a54`.
 The run used `HEX_FPLLL_FFI_LIB="$(scripts/oracle/setup_fplll_ffi.sh)"` so
 the certified-path cost is fpLLL candidate production through `fplll-ffi`
 plus Lean's checker. All certified-path and checker-only rows had
@@ -317,42 +317,50 @@ Lean-certified-vs-Lean-native random-bounded ratios:
 
 | `n` | Lean native median | Lean certified median | certified/native | checker share |
 |---:|---:|---:|---:|---:|
-| 30 | 15.14 ms | 4.24 ms | 0.2803 | 72.3 % |
-| 45 | 55.53 ms | 14.14 ms | 0.2546 | 63.8 % |
-| 60 | 142.01 ms | 32.97 ms | 0.2321 | 62.5 % |
-| 75 | 296.58 ms | 68.28 ms | 0.2302 | 62.2 % |
-| 90 | 495.68 ms | 112.58 ms | 0.2271 | 65.1 % |
-| 120 | 1.39 s | 285.19 ms | 0.2052 | 62.5 % |
-| 150 | 2.65 s | 572.02 ms | 0.2159 | 65.1 % |
-| 180 | 4.76 s | 1.04 s | 0.2193 | 69.7 % |
+| 30 | 15.14 ms | 4.22 ms | 0.2789 | 68.5 % |
+| 45 | 55.53 ms | 13.72 ms | 0.2470 | 63.8 % |
+| 60 | 142.01 ms | 32.64 ms | 0.2299 | 64.2 % |
+| 75 | 296.58 ms | 64.13 ms | 0.2162 | 64.8 % |
+| 90 | 495.68 ms | 110.80 ms | 0.2235 | 65.0 % |
+| 120 | 1.39 s | 282.13 ms | 0.2031 | 62.2 % |
+| 150 | 2.65 s | 560.99 ms | 0.2121 | 65.3 % |
+| 180 | 4.76 s | 944.81 ms | 0.1986 | 67.6 % |
 
-Random-bounded trend: Lean certified sits at about `0.21..0.28×` Lean
+Random-bounded trend: Lean certified sits at about `0.20..0.28×` Lean
 native. The checker is the dominant certified-path component, accounting for
-`62..72 %` of the measured full path.
+`62..68 %` of the measured full path. The input-size predictor routes the
+random-bounded checker rungs `n ≤ 120` to the exact integer checker
+(the operand bit growth on this family stays below the 128-bit interval
+working precision); rungs `n ≥ 150` dispatch to the fixed-precision
+enclosure pass, which is where the small absolute speedup at the top of
+the ladder comes from.
 
 Lean-certified-vs-Lean-native harsh-cubic ratios:
 
 | `n` | Lean native median | Lean certified median | certified/native | checker share |
 |---:|---:|---:|---:|---:|
-| 15 | 515 µs | 870 µs | 1.6894 | 89.0 % |
-| 20 | 1.67 ms | 2.31 ms | 1.3820 | 89.5 % |
-| 25 | 4.15 ms | 5.37 ms | 1.2951 | 93.6 % |
-| 30 | 9.53 ms | 11.44 ms | 1.2009 | 92.6 % |
-| 35 | 19.65 ms | 22.35 ms | 1.1372 | 97.0 % |
-| 40 | 39.44 ms | 44.09 ms | 1.1179 | 93.7 % |
-| 45 | 75.83 ms | 80.12 ms | 1.0566 | 96.7 % |
-| 50 | 135.80 ms | 140.29 ms | 1.0331 | 100.8 % |
-| 55 | 234.28 ms | 243.49 ms | 1.0393 | 97.1 % |
+| 15 | 515 µs | 851 µs | 1.6541 | 88.0 % |
+| 20 | 1.67 ms | 2.30 ms | 1.3763 | 85.8 % |
+| 25 | 4.15 ms | 5.32 ms | 1.2808 | 91.9 % |
+| 30 | 9.53 ms | 7.63 ms | 0.8001 | 89.3 % |
+| 35 | 19.65 ms | 11.28 ms | 0.5742 | 88.3 % |
+| 40 | 39.44 ms | 15.10 ms | 0.3829 | 88.6 % |
+| 45 | 75.83 ms | 20.18 ms | 0.2661 | 92.2 % |
+| 50 | 135.80 ms | 27.05 ms | 0.1992 | 88.5 % |
+| 55 | 234.28 ms | 34.98 ms | 0.1493 | 89.0 % |
 
-Harsh-cubic trend: Lean certified is above Lean native at every reported rung,
-but the ratio narrows from `1.6894` at `n = 15` to about `1.03..1.04` on the
-upper ladder. Checker-only cost accounts for `89..101 %` of the full certified
-path (`n = 50` rounds above 100 % from independent-cache median noise: the
-cached checker payload happens to time slightly higher than the full path it
-was captured from); the candidate-production component is small on this
-family. The harsh-cubic entries are `2^(3.3n)` wide, so every rung leaves the
-word-scale regime of the packed product-equality certificate and the
-same-lattice clause runs the materialized comparison.
+Harsh-cubic trend: Lean certified crosses below Lean native at `n = 30` and
+drops to **`0.15×` Lean native at `n = 55`** — a 6.7× speedup over the
+native body. Checker-only cost still accounts for `85..92 %` of the full
+certified path; the candidate-production component is small on this family.
+The dispatched checker routes harsh-cubic above `n ≈ 25` to the
+fixed-precision enclosure pass (which costs `O(n³)` on fixed-width
+mantissas, independent of the `~2^(3.3n)` Gram-determinant bit growth
+on this family); at `n ∈ {15, 20, 25}` the predictor still picks the exact
+`d`/`ν` checker, where the small absolute cost difference is the
+checker-share figure. The harsh-cubic entries are `2^(3.3n)` wide, so
+every rung leaves the word-scale regime of the packed product-equality
+certificate and the same-lattice clause runs the materialized comparison.
 
 The external `verified Isabelle certified-LLL` executable is now wired from the
 same Zenodo 2636367 archive as the native comparator:
@@ -383,34 +391,37 @@ Certified-vs-Isabelle-certified random-bounded ratios:
 
 | `n` | Hex certified median | Isabelle certified median | Hex/Isabelle-certified | speedup |
 |---:|---:|---:|---:|---:|
-| 30 | 4.27 ms | 31.18 ms | 0.137 | 7.30× |
-| 45 | 15.28 ms | 56.52 ms | 0.270 | 3.70× |
-| 60 | 36.80 ms | 103.65 ms | 0.355 | 2.82× |
-| 75 | 73.36 ms | 185.34 ms | 0.396 | 2.53× |
-| 90 | 126.67 ms | 302.66 ms | 0.419 | 2.39× |
-| 120 | 328.73 ms | 681.69 ms | 0.482 | 2.07× |
-| 150 | 650.77 ms | 1.42 s | 0.457 | 2.19× |
-| 180 | 1.22 s | 2.36 s | 0.515 | 1.94× |
+| 30 | 4.22 ms | 31.18 ms | 0.135 | 7.38× |
+| 45 | 13.72 ms | 56.52 ms | 0.243 | 4.12× |
+| 60 | 32.64 ms | 103.65 ms | 0.315 | 3.17× |
+| 75 | 64.13 ms | 185.34 ms | 0.346 | 2.89× |
+| 90 | 110.80 ms | 302.66 ms | 0.366 | 2.73× |
+| 120 | 282.13 ms | 681.69 ms | 0.414 | 2.42× |
+| 150 | 560.99 ms | 1.42 s | 0.394 | 2.54× |
+| 180 | 944.81 ms | 2.36 s | 0.400 | 2.50× |
 
 Certified-vs-Isabelle-certified harsh-cubic ratios:
 
 | `n` | Hex certified median | Isabelle certified median | Hex/Isabelle-certified | speedup |
 |---:|---:|---:|---:|---:|
-| 15 | 882 µs | 20.32 ms | 0.043 | 22.98× |
-| 20 | 2.34 ms | 23.51 ms | 0.100 | 10.03× |
-| 25 | 5.38 ms | 28.59 ms | 0.188 | 5.31× |
-| 30 | 11.22 ms | 39.79 ms | 0.282 | 3.55× |
-| 35 | 22.59 ms | 56.10 ms | 0.403 | 2.48× |
-| 40 | 44.75 ms | 93.00 ms | 0.481 | 2.08× |
-| 45 | 79.44 ms | 147.86 ms | 0.537 | 1.86× |
-| 50 | 140.11 ms | 244.41 ms | 0.573 | 1.74× |
-| 55 | 237.28 ms | 400.37 ms | 0.593 | 1.69× |
+| 15 | 851 µs | 20.32 ms | 0.042 | 23.87× |
+| 20 | 2.30 ms | 23.51 ms | 0.098 | 10.22× |
+| 25 | 5.32 ms | 28.59 ms | 0.186 | 5.38× |
+| 30 | 7.63 ms | 39.79 ms | 0.192 | 5.22× |
+| 35 | 11.28 ms | 56.10 ms | 0.201 | 4.97× |
+| 40 | 15.10 ms | 93.00 ms | 0.162 | 6.16× |
+| 45 | 20.18 ms | 147.86 ms | 0.136 | 7.33× |
+| 50 | 27.05 ms | 244.41 ms | 0.111 | 9.04× |
+| 55 | 34.98 ms | 400.37 ms | 0.087 | 11.45× |
 
 Gating verdict: **met at every shared rung.** Hex's certified path is faster
-than Isabelle's certified path across both families — by `1.94..7.30×` on
-random-bounded and `1.69..22.98×` on harsh-cubic. The margin is widest at
-small `n` (where Isabelle's per-request `fplll` subprocess fork dominates) and
-narrows toward the largest rungs but never inverts.
+than Isabelle's certified path across both families — by `2.42..7.38×` on
+random-bounded and `4.97..23.87×` on harsh-cubic. On random-bounded the margin
+is widest at small `n` (where Isabelle's per-request `fplll` subprocess fork
+dominates), narrows through the middle of the ladder, then plateaus at
+`~2.5×` on the top rungs. On harsh-cubic the margin widens above `n = 35`
+because the Hex enclosure checker scales `~n^2.7` while Isabelle's exact
+checker rides the `~n^4.6` slope of its exact integer Gram-Schmidt.
 
 Architectural asymmetries for this ratio:
 
