@@ -1,52 +1,41 @@
-{
- "results": [
-  {
-   "points": [
-    {
-     "total_nanos": 1563209666,
+{"results":
+ [{"points":
+   [{"total_nanos": 1461600250,
      "status": "ok",
      "result_hash": "0x321c",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 2048,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1507696042,
+     "alloc_bytes": null},
+    {"total_nanos": 1469181416,
      "status": "ok",
      "result_hash": "0x321c",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 2048,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1634822458,
+     "alloc_bytes": null},
+    {"total_nanos": 1406499084,
      "status": "ok",
      "result_hash": "0x321c",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 2048,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x321c",
-   "min_nanos": 736179,
-   "median_nanos": 763285,
-   "max_nanos": 798253,
+   "min_nanos": 686767,
+   "median_nanos": 713671,
+   "max_nanos": 717373,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runIsabelleHarshCubicNormSq15",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780459463458,
-    "timestamp_iso": "2026-06-03T04:04:23Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271038746,
+    "timestamp_iso": "2026-06-12T13:30:38Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -54,69 +43,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "56f3422953ca5420fb0790231d034eca4d959c54",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 1,
     "max_seconds_per_call": 90,
-    "expected_hash": "0x321c"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1063804666,
+    "expected_hash": "0x321c"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1066364584,
      "status": "ok",
      "result_hash": "0x2fb2",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1112306500,
+     "alloc_bytes": null},
+    {"total_nanos": 1047770125,
      "status": "ok",
      "result_hash": "0x2fb2",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1147427292,
+     "alloc_bytes": null},
+    {"total_nanos": 1073386167,
      "status": "ok",
      "result_hash": "0x2fb2",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x2fb2",
-   "min_nanos": 2077743,
-   "median_nanos": 2172473,
-   "max_nanos": 2241068,
+   "min_nanos": 2046426,
+   "median_nanos": 2082743,
+   "max_nanos": 2096457,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runIsabelleHarshCubicNormSq20",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780459567450,
-    "timestamp_iso": "2026-06-03T04:06:07Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271065884,
+    "timestamp_iso": "2026-06-12T13:31:05Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -124,69 +100,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "56f3422953ca5420fb0790231d034eca4d959c54",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 1,
     "max_seconds_per_call": 90,
-    "expected_hash": "0x2fb2"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1341232833,
+    "expected_hash": "0x2fb2"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1335990833,
      "status": "ok",
      "result_hash": "0x2b46",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 256,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1339715375,
+     "alloc_bytes": null},
+    {"total_nanos": 1269433917,
      "status": "ok",
      "result_hash": "0x2b46",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 256,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1327463083,
+     "alloc_bytes": null},
+    {"total_nanos": 1271765542,
      "status": "ok",
      "result_hash": "0x2b46",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 256,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x2b46",
-   "min_nanos": 5185402,
-   "median_nanos": 5233263,
-   "max_nanos": 5239190,
+   "min_nanos": 4958726,
+   "median_nanos": 4967834,
+   "max_nanos": 5218714,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runIsabelleHarshCubicNormSq25",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780459668329,
-    "timestamp_iso": "2026-06-03T04:07:48Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271090224,
+    "timestamp_iso": "2026-06-12T13:31:30Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -194,69 +157,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "56f3422953ca5420fb0790231d034eca4d959c54",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 1,
     "max_seconds_per_call": 90,
-    "expected_hash": "0x2b46"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1596602417,
+    "expected_hash": "0x2b46"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1543513041,
      "status": "ok",
      "result_hash": "0x358a",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 128,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1587202583,
+     "alloc_bytes": null},
+    {"total_nanos": 1575839000,
      "status": "ok",
      "result_hash": "0x358a",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 128,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1573700958,
+     "alloc_bytes": null},
+    {"total_nanos": 1542121375,
      "status": "ok",
      "result_hash": "0x358a",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 128,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x358a",
-   "min_nanos": 12294538,
-   "median_nanos": 12400020,
-   "max_nanos": 12473456,
+   "min_nanos": 12047823,
+   "median_nanos": 12058695,
+   "max_nanos": 12311242,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runIsabelleHarshCubicNormSq30",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780459770967,
-    "timestamp_iso": "2026-06-03T04:09:30Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271116170,
+    "timestamp_iso": "2026-06-12T13:31:56Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -264,69 +214,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "56f3422953ca5420fb0790231d034eca4d959c54",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 1,
     "max_seconds_per_call": 40,
-    "expected_hash": "0x358a"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1729697791,
+    "expected_hash": "0x358a"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1706849958,
      "status": "ok",
      "result_hash": "0x5118",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 64,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1739161459,
+     "alloc_bytes": null},
+    {"total_nanos": 1664862917,
      "status": "ok",
      "result_hash": "0x5118",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 64,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1744290292,
+     "alloc_bytes": null},
+    {"total_nanos": 1716645500,
      "status": "ok",
      "result_hash": "0x5118",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 64,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x5118",
-   "min_nanos": 27026527,
-   "median_nanos": 27174397,
-   "max_nanos": 27254535,
+   "min_nanos": 26013483,
+   "median_nanos": 26669530,
+   "max_nanos": 26822585,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runIsabelleHarshCubicNormSq35",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780459875236,
-    "timestamp_iso": "2026-06-03T04:11:15Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271144252,
+    "timestamp_iso": "2026-06-12T13:32:24Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -334,69 +271,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "56f3422953ca5420fb0790231d034eca4d959c54",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 1,
     "max_seconds_per_call": 60,
-    "expected_hash": "0x5118"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1808079250,
+    "expected_hash": "0x5118"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1801203292,
      "status": "ok",
      "result_hash": "0x5b24",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 32,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1814153417,
+     "alloc_bytes": null},
+    {"total_nanos": 1801969750,
      "status": "ok",
      "result_hash": "0x5b24",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 32,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1808762375,
+     "alloc_bytes": null},
+    {"total_nanos": 1789211125,
      "status": "ok",
      "result_hash": "0x5b24",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 32,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x5b24",
-   "min_nanos": 56502476,
-   "median_nanos": 56523824,
-   "max_nanos": 56692294,
+   "min_nanos": 55912847,
+   "median_nanos": 56287602,
+   "max_nanos": 56311554,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runIsabelleHarshCubicNormSq40",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780459981171,
-    "timestamp_iso": "2026-06-03T04:13:01Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271173414,
+    "timestamp_iso": "2026-06-12T13:32:53Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -404,69 +328,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "56f3422953ca5420fb0790231d034eca4d959c54",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 1,
     "max_seconds_per_call": 60,
-    "expected_hash": "0x5b24"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1762001458,
+    "expected_hash": "0x5b24"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1719397750,
      "status": "ok",
      "result_hash": "0x6a96",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 16,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1759034292,
+     "alloc_bytes": null},
+    {"total_nanos": 1762437583,
      "status": "ok",
      "result_hash": "0x6a96",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 16,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1732279917,
+     "alloc_bytes": null},
+    {"total_nanos": 1751391959,
      "status": "ok",
      "result_hash": "0x6a96",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 16,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x6a96",
-   "min_nanos": 108267494,
-   "median_nanos": 109939643,
-   "max_nanos": 110125091,
+   "min_nanos": 107462359,
+   "median_nanos": 109461997,
+   "max_nanos": 110152348,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runIsabelleHarshCubicNormSq45",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780460087703,
-    "timestamp_iso": "2026-06-03T04:14:47Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271203367,
+    "timestamp_iso": "2026-06-12T13:33:23Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -474,69 +385,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "56f3422953ca5420fb0790231d034eca4d959c54",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 1,
     "max_seconds_per_call": 60,
-    "expected_hash": "0x6a96"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1592749417,
+    "expected_hash": "0x6a96"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1611499375,
      "status": "ok",
      "result_hash": "0x72c6",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 8,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1594658792,
+     "alloc_bytes": null},
+    {"total_nanos": 1559057709,
      "status": "ok",
      "result_hash": "0x72c6",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 8,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1590930500,
+     "alloc_bytes": null},
+    {"total_nanos": 1600047125,
      "status": "ok",
      "result_hash": "0x72c6",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 8,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x72c6",
-   "min_nanos": 198866312,
-   "median_nanos": 199093677,
-   "max_nanos": 199332349,
+   "min_nanos": 194882213,
+   "median_nanos": 200005890,
+   "max_nanos": 201437421,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runIsabelleHarshCubicNormSq50",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780460194090,
-    "timestamp_iso": "2026-06-03T04:16:34Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271232887,
+    "timestamp_iso": "2026-06-12T13:33:52Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -544,69 +442,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "56f3422953ca5420fb0790231d034eca4d959c54",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 1,
     "max_seconds_per_call": 60,
-    "expected_hash": "0x72c6"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1424021542,
+    "expected_hash": "0x72c6"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1446562875,
      "status": "ok",
      "result_hash": "0x7776",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 4,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1430467833,
+     "alloc_bytes": null},
+    {"total_nanos": 1434674250,
      "status": "ok",
      "result_hash": "0x7776",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 4,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1405627416,
+     "alloc_bytes": null},
+    {"total_nanos": 1424764833,
      "status": "ok",
      "result_hash": "0x7776",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 4,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x7776",
-   "min_nanos": 351406854,
-   "median_nanos": 356005385,
-   "max_nanos": 357616958,
+   "min_nanos": 356191208,
+   "median_nanos": 358668562,
+   "max_nanos": 361640718,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runIsabelleHarshCubicNormSq55",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780460299362,
-    "timestamp_iso": "2026-06-03T04:18:19Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271261131,
+    "timestamp_iso": "2026-06-12T13:34:21Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -614,69 +499,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "56f3422953ca5420fb0790231d034eca4d959c54",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 1,
     "max_seconds_per_call": 60,
-    "expected_hash": "0x7776"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 590112125,
+    "expected_hash": "0x7776"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 609509125,
      "status": "ok",
      "result_hash": "0x7aa2",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 597680333,
+     "alloc_bytes": null},
+    {"total_nanos": 590031916,
      "status": "ok",
      "result_hash": "0x7aa2",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 597835667,
+     "alloc_bytes": null},
+    {"total_nanos": 609710958,
      "status": "ok",
      "result_hash": "0x7aa2",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x7aa2",
-   "min_nanos": 590112125,
-   "median_nanos": 597680333,
-   "max_nanos": 597835667,
+   "min_nanos": 590031916,
+   "median_nanos": 609509125,
+   "max_nanos": 609710958,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runIsabelleHarshCubicNormSq60",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780460404146,
-    "timestamp_iso": "2026-06-03T04:20:04Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271288414,
+    "timestamp_iso": "2026-06-12T13:34:48Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -684,69 +556,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "56f3422953ca5420fb0790231d034eca4d959c54",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 60,
-    "expected_hash": "0x7aa2"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 947081375,
+    "expected_hash": "0x7aa2"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 938692459,
      "status": "ok",
      "result_hash": "0xaca8",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 959163417,
+     "alloc_bytes": null},
+    {"total_nanos": 929737417,
      "status": "ok",
      "result_hash": "0xaca8",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 950081833,
+     "alloc_bytes": null},
+    {"total_nanos": 958191542,
      "status": "ok",
      "result_hash": "0xaca8",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0xaca8",
-   "min_nanos": 947081375,
-   "median_nanos": 950081833,
-   "max_nanos": 959163417,
+   "min_nanos": 929737417,
+   "median_nanos": 938692459,
+   "max_nanos": 958191542,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runIsabelleHarshCubicNormSq65",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780460502860,
-    "timestamp_iso": "2026-06-03T04:21:42Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271309602,
+    "timestamp_iso": "2026-06-12T13:35:09Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -754,89 +613,72 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "56f3422953ca5420fb0790231d034eca4d959c54",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 60,
-    "expected_hash": "0xaca8"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1879426083,
+    "expected_hash": "0xaca8"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1362119000,
      "status": "ok",
      "result_hash": "0x6ccfd453f897ff98",
      "repeat_index": 0,
      "peak_rss_kb": null,
-     "inner_repeats": 4096,
+     "inner_repeats": 16384,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1755958292,
+     "alloc_bytes": null},
+    {"total_nanos": 1366937458,
      "status": "ok",
      "result_hash": "0x6ccfd453f897ff98",
      "repeat_index": 1,
      "peak_rss_kb": null,
-     "inner_repeats": 4096,
+     "inner_repeats": 16384,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1770215541,
+     "alloc_bytes": null},
+    {"total_nanos": 1341216792,
      "status": "ok",
      "result_hash": "0x6ccfd453f897ff98",
      "repeat_index": 2,
      "peak_rss_kb": null,
-     "inner_repeats": 4096,
+     "inner_repeats": 16384,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1747161209,
+     "alloc_bytes": null},
+    {"total_nanos": 1395040750,
      "status": "ok",
      "result_hash": "0x6ccfd453f897ff98",
      "repeat_index": 3,
      "peak_rss_kb": null,
-     "inner_repeats": 4096,
+     "inner_repeats": 16384,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1686979500,
+     "alloc_bytes": null},
+    {"total_nanos": 1370463583,
      "status": "ok",
      "result_hash": "0x6ccfd453f897ff98",
      "repeat_index": 4,
      "peak_rss_kb": null,
-     "inner_repeats": 4096,
+     "inner_repeats": 16384,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x6ccfd453f897ff98",
-   "min_nanos": 411860,
-   "median_nanos": 428700,
-   "max_nanos": 458844,
+   "min_nanos": 81861,
+   "median_nanos": 83431,
+   "max_nanos": 85146,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
-   "function": "Hex.LLLBench.runFpylllFirstShortVectorHarshCubic15Checksum",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780411460093,
-    "timestamp_iso": "2026-06-02T14:44:20Z",
+   "function": "Hex.LLLBench.runFpLLLFirstShortVectorHarshCubic15Checksum",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271333182,
+    "timestamp_iso": "2026-06-12T13:35:33Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -844,89 +686,72 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "af2d0a1be4eb086ad08943f03f33e17bbb0e5070",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 5,
     "min_total_seconds": 1,
     "max_seconds_per_call": 20,
-    "expected_hash": "0x6ccfd453f897ff98"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1698890083,
+    "expected_hash": "0x6ccfd453f897ff98"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 2007872625,
      "status": "ok",
      "result_hash": "0xea6bf20dfc3dff9e",
      "repeat_index": 0,
      "peak_rss_kb": null,
-     "inner_repeats": 2048,
+     "inner_repeats": 8192,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1679269333,
+     "alloc_bytes": null},
+    {"total_nanos": 2010187625,
      "status": "ok",
      "result_hash": "0xea6bf20dfc3dff9e",
      "repeat_index": 1,
      "peak_rss_kb": null,
-     "inner_repeats": 2048,
+     "inner_repeats": 8192,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1690847125,
+     "alloc_bytes": null},
+    {"total_nanos": 2003799458,
      "status": "ok",
      "result_hash": "0xea6bf20dfc3dff9e",
      "repeat_index": 2,
      "peak_rss_kb": null,
-     "inner_repeats": 2048,
+     "inner_repeats": 8192,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1698092333,
+     "alloc_bytes": null},
+    {"total_nanos": 1999626750,
      "status": "ok",
      "result_hash": "0xea6bf20dfc3dff9e",
      "repeat_index": 3,
      "peak_rss_kb": null,
-     "inner_repeats": 2048,
+     "inner_repeats": 8192,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1771961541,
+     "alloc_bytes": null},
+    {"total_nanos": 1006219458,
      "status": "ok",
      "result_hash": "0xea6bf20dfc3dff9e",
      "repeat_index": 4,
      "peak_rss_kb": null,
-     "inner_repeats": 2048,
+     "inner_repeats": 4096,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0xea6bf20dfc3dff9e",
-   "min_nanos": 819955,
-   "median_nanos": 829146,
-   "max_nanos": 865215,
+   "min_nanos": 244095,
+   "median_nanos": 245101,
+   "max_nanos": 245659,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
-   "function": "Hex.LLLBench.runFpylllFirstShortVectorHarshCubic20Checksum",
-   "expected_hash_check": {
-    "status": "unset"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780411566154,
-    "timestamp_iso": "2026-06-02T14:46:06Z",
+   "function": "Hex.LLLBench.runFpLLLFirstShortVectorHarshCubic20Checksum",
+   "expected_hash_check": {"status": "unset"},
+   "env":
+   {"timestamp_unix_ms": 1781271373354,
+    "timestamp_iso": "2026-06-12T13:36:13Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -934,89 +759,72 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "af2d0a1be4eb086ad08943f03f33e17bbb0e5070",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 5,
     "min_total_seconds": 1,
     "max_seconds_per_call": 20,
-    "expected_hash": null
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1365809000,
+    "expected_hash": null},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1793688542,
      "status": "ok",
      "result_hash": "0x9f3b9a71f4a5ff4a",
      "repeat_index": 0,
      "peak_rss_kb": null,
-     "inner_repeats": 1024,
+     "inner_repeats": 4096,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1308961667,
+     "alloc_bytes": null},
+    {"total_nanos": 1734959458,
      "status": "ok",
      "result_hash": "0x9f3b9a71f4a5ff4a",
      "repeat_index": 1,
      "peak_rss_kb": null,
-     "inner_repeats": 1024,
+     "inner_repeats": 4096,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1335679875,
+     "alloc_bytes": null},
+    {"total_nanos": 1789824250,
      "status": "ok",
      "result_hash": "0x9f3b9a71f4a5ff4a",
      "repeat_index": 2,
      "peak_rss_kb": null,
-     "inner_repeats": 1024,
+     "inner_repeats": 4096,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1371087042,
+     "alloc_bytes": null},
+    {"total_nanos": 1792347375,
      "status": "ok",
      "result_hash": "0x9f3b9a71f4a5ff4a",
      "repeat_index": 3,
      "peak_rss_kb": null,
-     "inner_repeats": 1024,
+     "inner_repeats": 4096,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1422163625,
+     "alloc_bytes": null},
+    {"total_nanos": 1805917250,
      "status": "ok",
      "result_hash": "0x9f3b9a71f4a5ff4a",
      "repeat_index": 4,
      "peak_rss_kb": null,
-     "inner_repeats": 1024,
+     "inner_repeats": 4096,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x9f3b9a71f4a5ff4a",
-   "min_nanos": 1278282,
-   "median_nanos": 1333797,
-   "max_nanos": 1388831,
+   "min_nanos": 423574,
+   "median_nanos": 437584,
+   "max_nanos": 440897,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
-   "function": "Hex.LLLBench.runFpylllFirstShortVectorHarshCubic25Checksum",
-   "expected_hash_check": {
-    "status": "unset"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780411671172,
-    "timestamp_iso": "2026-06-02T14:47:51Z",
+   "function": "Hex.LLLBench.runFpLLLFirstShortVectorHarshCubic25Checksum",
+   "expected_hash_check": {"status": "unset"},
+   "env":
+   {"timestamp_unix_ms": 1781271417744,
+    "timestamp_iso": "2026-06-12T13:36:57Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -1024,89 +832,72 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "af2d0a1be4eb086ad08943f03f33e17bbb0e5070",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 5,
     "min_total_seconds": 1,
     "max_seconds_per_call": 20,
-    "expected_hash": null
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1028200292,
+    "expected_hash": null},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1397419333,
      "status": "ok",
      "result_hash": "0x681057ce0a040122",
      "repeat_index": 0,
      "peak_rss_kb": null,
-     "inner_repeats": 512,
+     "inner_repeats": 2048,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1014723709,
+     "alloc_bytes": null},
+    {"total_nanos": 1392125875,
      "status": "ok",
      "result_hash": "0x681057ce0a040122",
      "repeat_index": 1,
      "peak_rss_kb": null,
-     "inner_repeats": 512,
+     "inner_repeats": 2048,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1018780584,
+     "alloc_bytes": null},
+    {"total_nanos": 1382980166,
      "status": "ok",
      "result_hash": "0x681057ce0a040122",
      "repeat_index": 2,
      "peak_rss_kb": null,
-     "inner_repeats": 512,
+     "inner_repeats": 2048,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1983136833,
+     "alloc_bytes": null},
+    {"total_nanos": 1373357291,
      "status": "ok",
      "result_hash": "0x681057ce0a040122",
      "repeat_index": 3,
      "peak_rss_kb": null,
-     "inner_repeats": 1024,
+     "inner_repeats": 2048,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 2051684833,
+     "alloc_bytes": null},
+    {"total_nanos": 1363328667,
      "status": "ok",
      "result_hash": "0x681057ce0a040122",
      "repeat_index": 4,
      "peak_rss_kb": null,
-     "inner_repeats": 1024,
+     "inner_repeats": 2048,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x681057ce0a040122",
-   "min_nanos": 1936657,
-   "median_nanos": 1989805,
-   "max_nanos": 2008203,
+   "min_nanos": 665687,
+   "median_nanos": 675283,
+   "max_nanos": 682333,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
-   "function": "Hex.LLLBench.runFpylllFirstShortVectorHarshCubic30Checksum",
-   "expected_hash_check": {
-    "status": "unset"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780411772164,
-    "timestamp_iso": "2026-06-02T14:49:32Z",
+   "function": "Hex.LLLBench.runFpLLLFirstShortVectorHarshCubic30Checksum",
+   "expected_hash_check": {"status": "unset"},
+   "env":
+   {"timestamp_unix_ms": 1781271463523,
+    "timestamp_iso": "2026-06-12T13:37:43Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -1114,89 +905,72 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "af2d0a1be4eb086ad08943f03f33e17bbb0e5070",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 5,
     "min_total_seconds": 1,
     "max_seconds_per_call": 20,
-    "expected_hash": null
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1335828750,
+    "expected_hash": null},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1012193375,
      "status": "ok",
      "result_hash": "0x81a9e4a828160110",
      "repeat_index": 0,
      "peak_rss_kb": null,
-     "inner_repeats": 512,
+     "inner_repeats": 1024,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1354071083,
+     "alloc_bytes": null},
+    {"total_nanos": 1023058250,
      "status": "ok",
      "result_hash": "0x81a9e4a828160110",
      "repeat_index": 1,
      "peak_rss_kb": null,
-     "inner_repeats": 512,
+     "inner_repeats": 1024,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1322293333,
+     "alloc_bytes": null},
+    {"total_nanos": 1031577667,
      "status": "ok",
      "result_hash": "0x81a9e4a828160110",
      "repeat_index": 2,
      "peak_rss_kb": null,
-     "inner_repeats": 512,
+     "inner_repeats": 1024,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1331768375,
+     "alloc_bytes": null},
+    {"total_nanos": 1025015917,
      "status": "ok",
      "result_hash": "0x81a9e4a828160110",
      "repeat_index": 3,
      "peak_rss_kb": null,
-     "inner_repeats": 512,
+     "inner_repeats": 1024,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1306601459,
+     "alloc_bytes": null},
+    {"total_nanos": 1027875375,
      "status": "ok",
      "result_hash": "0x81a9e4a828160110",
      "repeat_index": 4,
      "peak_rss_kb": null,
-     "inner_repeats": 512,
+     "inner_repeats": 1024,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x81a9e4a828160110",
-   "min_nanos": 2551955,
-   "median_nanos": 2601110,
-   "max_nanos": 2644670,
+   "min_nanos": 988470,
+   "median_nanos": 1000992,
+   "max_nanos": 1007400,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
-   "function": "Hex.LLLBench.runFpylllFirstShortVectorHarshCubic35Checksum",
-   "expected_hash_check": {
-    "status": "unset"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780411873688,
-    "timestamp_iso": "2026-06-02T14:51:13Z",
+   "function": "Hex.LLLBench.runFpLLLFirstShortVectorHarshCubic35Checksum",
+   "expected_hash_check": {"status": "unset"},
+   "env":
+   {"timestamp_unix_ms": 1781271504445,
+    "timestamp_iso": "2026-06-12T13:38:24Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -1204,89 +978,72 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "af2d0a1be4eb086ad08943f03f33e17bbb0e5070",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 5,
     "min_total_seconds": 1,
     "max_seconds_per_call": 20,
-    "expected_hash": null
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1788444416,
+    "expected_hash": null},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1314107541,
      "status": "ok",
      "result_hash": "0xd66a70f8108400e0",
      "repeat_index": 0,
      "peak_rss_kb": null,
-     "inner_repeats": 512,
+     "inner_repeats": 1024,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1941447333,
+     "alloc_bytes": null},
+    {"total_nanos": 1373608917,
      "status": "ok",
      "result_hash": "0xd66a70f8108400e0",
      "repeat_index": 1,
      "peak_rss_kb": null,
-     "inner_repeats": 512,
+     "inner_repeats": 1024,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1850175500,
+     "alloc_bytes": null},
+    {"total_nanos": 1349521791,
      "status": "ok",
      "result_hash": "0xd66a70f8108400e0",
      "repeat_index": 2,
      "peak_rss_kb": null,
-     "inner_repeats": 512,
+     "inner_repeats": 1024,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1810645666,
+     "alloc_bytes": null},
+    {"total_nanos": 1334809708,
      "status": "ok",
      "result_hash": "0xd66a70f8108400e0",
      "repeat_index": 3,
      "peak_rss_kb": null,
-     "inner_repeats": 512,
+     "inner_repeats": 1024,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1839804666,
+     "alloc_bytes": null},
+    {"total_nanos": 1339790667,
      "status": "ok",
      "result_hash": "0xd66a70f8108400e0",
      "repeat_index": 4,
      "peak_rss_kb": null,
-     "inner_repeats": 512,
+     "inner_repeats": 1024,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0xd66a70f8108400e0",
-   "min_nanos": 3493055,
-   "median_nanos": 3593368,
-   "max_nanos": 3791889,
+   "min_nanos": 1283308,
+   "median_nanos": 1308389,
+   "max_nanos": 1341414,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
-   "function": "Hex.LLLBench.runFpylllFirstShortVectorHarshCubic40Checksum",
-   "expected_hash_check": {
-    "status": "unset"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780411974116,
-    "timestamp_iso": "2026-06-02T14:52:54Z",
+   "function": "Hex.LLLBench.runFpLLLFirstShortVectorHarshCubic40Checksum",
+   "expected_hash_check": {"status": "unset"},
+   "env":
+   {"timestamp_unix_ms": 1781271540627,
+    "timestamp_iso": "2026-06-12T13:39:00Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -1294,89 +1051,72 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "af2d0a1be4eb086ad08943f03f33e17bbb0e5070",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 5,
     "min_total_seconds": 1,
     "max_seconds_per_call": 20,
-    "expected_hash": null
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1177158625,
+    "expected_hash": null},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1013718125,
      "status": "ok",
      "result_hash": "0x98a99989d679fe6a",
      "repeat_index": 0,
      "peak_rss_kb": null,
-     "inner_repeats": 256,
+     "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1238725541,
+     "alloc_bytes": null},
+    {"total_nanos": 1009153458,
      "status": "ok",
      "result_hash": "0x98a99989d679fe6a",
      "repeat_index": 1,
      "peak_rss_kb": null,
-     "inner_repeats": 256,
+     "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1235538333,
+     "alloc_bytes": null},
+    {"total_nanos": 1026804250,
      "status": "ok",
      "result_hash": "0x98a99989d679fe6a",
      "repeat_index": 2,
      "peak_rss_kb": null,
-     "inner_repeats": 256,
+     "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1206370167,
+     "alloc_bytes": null},
+    {"total_nanos": 1009776625,
      "status": "ok",
      "result_hash": "0x98a99989d679fe6a",
      "repeat_index": 3,
      "peak_rss_kb": null,
-     "inner_repeats": 256,
+     "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1201428083,
+     "alloc_bytes": null},
+    {"total_nanos": 1009765583,
      "status": "ok",
      "result_hash": "0x98a99989d679fe6a",
      "repeat_index": 4,
      "peak_rss_kb": null,
-     "inner_repeats": 256,
+     "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x98a99989d679fe6a",
-   "min_nanos": 4598275,
-   "median_nanos": 4712383,
-   "max_nanos": 4838771,
+   "min_nanos": 1971002,
+   "median_nanos": 1972219,
+   "max_nanos": 2005477,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
-   "function": "Hex.LLLBench.runFpylllFirstShortVectorHarshCubic45Checksum",
-   "expected_hash_check": {
-    "status": "unset"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780412080916,
-    "timestamp_iso": "2026-06-02T14:54:40Z",
+   "function": "Hex.LLLBench.runFpLLLFirstShortVectorHarshCubic45Checksum",
+   "expected_hash_check": {"status": "unset"},
+   "env":
+   {"timestamp_unix_ms": 1781271580778,
+    "timestamp_iso": "2026-06-12T13:39:40Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -1384,89 +1124,72 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "af2d0a1be4eb086ad08943f03f33e17bbb0e5070",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 5,
     "min_total_seconds": 1,
     "max_seconds_per_call": 20,
-    "expected_hash": null
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1474130083,
+    "expected_hash": null},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1284017334,
      "status": "ok",
      "result_hash": "0x66fc84120bf600aa",
      "repeat_index": 0,
      "peak_rss_kb": null,
-     "inner_repeats": 256,
+     "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1469849375,
+     "alloc_bytes": null},
+    {"total_nanos": 1304132750,
      "status": "ok",
      "result_hash": "0x66fc84120bf600aa",
      "repeat_index": 1,
      "peak_rss_kb": null,
-     "inner_repeats": 256,
+     "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1477168375,
+     "alloc_bytes": null},
+    {"total_nanos": 1307764542,
      "status": "ok",
      "result_hash": "0x66fc84120bf600aa",
      "repeat_index": 2,
      "peak_rss_kb": null,
-     "inner_repeats": 256,
+     "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1462690708,
+     "alloc_bytes": null},
+    {"total_nanos": 1288938375,
      "status": "ok",
      "result_hash": "0x66fc84120bf600aa",
      "repeat_index": 3,
      "peak_rss_kb": null,
-     "inner_repeats": 256,
+     "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1471476833,
+     "alloc_bytes": null},
+    {"total_nanos": 1325297167,
      "status": "ok",
      "result_hash": "0x66fc84120bf600aa",
      "repeat_index": 4,
      "peak_rss_kb": null,
-     "inner_repeats": 256,
+     "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x66fc84120bf600aa",
-   "min_nanos": 5713635,
-   "median_nanos": 5747956,
-   "max_nanos": 5770188,
+   "min_nanos": 2507846,
+   "median_nanos": 2547134,
+   "max_nanos": 2588471,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
-   "function": "Hex.LLLBench.runFpylllFirstShortVectorHarshCubic50Checksum",
-   "expected_hash_check": {
-    "status": "unset"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780412180289,
-    "timestamp_iso": "2026-06-02T14:56:20Z",
+   "function": "Hex.LLLBench.runFpLLLFirstShortVectorHarshCubic50Checksum",
+   "expected_hash_check": {"status": "unset"},
+   "env":
+   {"timestamp_unix_ms": 1781271616910,
+    "timestamp_iso": "2026-06-12T13:40:16Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -1474,89 +1197,72 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "af2d0a1be4eb086ad08943f03f33e17bbb0e5070",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 5,
     "min_total_seconds": 1,
     "max_seconds_per_call": 20,
-    "expected_hash": null
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 2043034166,
+    "expected_hash": null},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1653616625,
      "status": "ok",
      "result_hash": "0xec1a02e1f8a01d2",
      "repeat_index": 0,
      "peak_rss_kb": null,
-     "inner_repeats": 256,
+     "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1883820792,
+     "alloc_bytes": null},
+    {"total_nanos": 1652908916,
      "status": "ok",
      "result_hash": "0xec1a02e1f8a01d2",
      "repeat_index": 1,
      "peak_rss_kb": null,
-     "inner_repeats": 256,
+     "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1835518875,
+     "alloc_bytes": null},
+    {"total_nanos": 1746618709,
      "status": "ok",
      "result_hash": "0xec1a02e1f8a01d2",
      "repeat_index": 2,
      "peak_rss_kb": null,
-     "inner_repeats": 256,
+     "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1859020958,
+     "alloc_bytes": null},
+    {"total_nanos": 1665961583,
      "status": "ok",
      "result_hash": "0xec1a02e1f8a01d2",
      "repeat_index": 3,
      "peak_rss_kb": null,
-     "inner_repeats": 256,
+     "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1984637000,
+     "alloc_bytes": null},
+    {"total_nanos": 1673851458,
      "status": "ok",
      "result_hash": "0xec1a02e1f8a01d2",
      "repeat_index": 4,
      "peak_rss_kb": null,
-     "inner_repeats": 256,
+     "inner_repeats": 512,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0xec1a02e1f8a01d2",
-   "min_nanos": 7169995,
-   "median_nanos": 7358674,
-   "max_nanos": 7980602,
+   "min_nanos": 3228337,
+   "median_nanos": 3253831,
+   "max_nanos": 3411364,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
-   "function": "Hex.LLLBench.runFpylllFirstShortVectorHarshCubic55Checksum",
-   "expected_hash_check": {
-    "status": "unset"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780412282152,
-    "timestamp_iso": "2026-06-02T14:58:02Z",
+   "function": "Hex.LLLBench.runFpLLLFirstShortVectorHarshCubic55Checksum",
+   "expected_hash_check": {"status": "unset"},
+   "env":
+   {"timestamp_unix_ms": 1781271656708,
+    "timestamp_iso": "2026-06-12T13:40:56Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -1564,89 +1270,72 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "af2d0a1be4eb086ad08943f03f33e17bbb0e5070",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 5,
     "min_total_seconds": 1,
     "max_seconds_per_call": 20,
-    "expected_hash": null
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 9191667,
+    "expected_hash": null},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 4245000,
      "status": "ok",
      "result_hash": "0xd532d5e227b800ca",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 9466875,
+     "alloc_bytes": null},
+    {"total_nanos": 4166541,
      "status": "ok",
      "result_hash": "0xd532d5e227b800ca",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 8897500,
+     "alloc_bytes": null},
+    {"total_nanos": 4209791,
      "status": "ok",
      "result_hash": "0xd532d5e227b800ca",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 9429500,
+     "alloc_bytes": null},
+    {"total_nanos": 4154417,
      "status": "ok",
      "result_hash": "0xd532d5e227b800ca",
      "repeat_index": 3,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 9206209,
+     "alloc_bytes": null},
+    {"total_nanos": 4298417,
      "status": "ok",
      "result_hash": "0xd532d5e227b800ca",
      "repeat_index": 4,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0xd532d5e227b800ca",
-   "min_nanos": 8897500,
-   "median_nanos": 9206209,
-   "max_nanos": 9466875,
+   "min_nanos": 4154417,
+   "median_nanos": 4209791,
+   "max_nanos": 4298417,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
-   "function": "Hex.LLLBench.runFpylllFirstShortVectorHarshCubic60Checksum",
-   "expected_hash_check": {
-    "status": "unset"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780412390503,
-    "timestamp_iso": "2026-06-02T14:59:50Z",
+   "function": "Hex.LLLBench.runFpLLLFirstShortVectorHarshCubic60Checksum",
+   "expected_hash_check": {"status": "unset"},
+   "env":
+   {"timestamp_unix_ms": 1781271700961,
+    "timestamp_iso": "2026-06-12T13:41:40Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -1654,89 +1343,72 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "af2d0a1be4eb086ad08943f03f33e17bbb0e5070",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 5,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 20,
-    "expected_hash": null
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 10796334,
+    "expected_hash": null},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 5114458,
      "status": "ok",
      "result_hash": "0xfbd21bb1cda1fe48",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 10876167,
+     "alloc_bytes": null},
+    {"total_nanos": 4930250,
      "status": "ok",
      "result_hash": "0xfbd21bb1cda1fe48",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 10651167,
+     "alloc_bytes": null},
+    {"total_nanos": 4893292,
      "status": "ok",
      "result_hash": "0xfbd21bb1cda1fe48",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 10775625,
+     "alloc_bytes": null},
+    {"total_nanos": 4891833,
      "status": "ok",
      "result_hash": "0xfbd21bb1cda1fe48",
      "repeat_index": 3,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 10770250,
+     "alloc_bytes": null},
+    {"total_nanos": 5051042,
      "status": "ok",
      "result_hash": "0xfbd21bb1cda1fe48",
      "repeat_index": 4,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0xfbd21bb1cda1fe48",
-   "min_nanos": 10651167,
-   "median_nanos": 10775625,
-   "max_nanos": 10876167,
+   "min_nanos": 4891833,
+   "median_nanos": 4930250,
+   "max_nanos": 5114458,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
-   "function": "Hex.LLLBench.runFpylllFirstShortVectorHarshCubic65Checksum",
-   "expected_hash_check": {
-    "status": "unset"
-   },
-   "env": {
-    "timestamp_unix_ms": 1780412476379,
-    "timestamp_iso": "2026-06-02T15:01:16Z",
+   "function": "Hex.LLLBench.runFpLLLFirstShortVectorHarshCubic65Checksum",
+   "expected_hash_check": {"status": "unset"},
+   "env":
+   {"timestamp_unix_ms": 1781271725734,
+    "timestamp_iso": "2026-06-12T13:42:05Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -1744,69 +1416,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "af2d0a1be4eb086ad08943f03f33e17bbb0e5070",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": true,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": true,
     "warmup": true,
     "repeats": 5,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 20,
-    "expected_hash": null
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1039625,
+    "expected_hash": null},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1028584,
      "status": "ok",
      "result_hash": "0x321c",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 2,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1120250,
+     "alloc_bytes": null},
+    {"total_nanos": 1167959,
      "status": "ok",
      "result_hash": "0x321c",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 2,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1108708,
+     "alloc_bytes": null},
+    {"total_nanos": 1195084,
      "status": "ok",
      "result_hash": "0x321c",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 2,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x321c",
-   "min_nanos": 519812,
-   "median_nanos": 554354,
-   "max_nanos": 560125,
+   "min_nanos": 514292,
+   "median_nanos": 583979,
+   "max_nanos": 597542,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runFirstShortVectorHarshCubicNormSq15",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175736637,
-    "timestamp_iso": "2026-06-11T11:02:16Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271750142,
+    "timestamp_iso": "2026-06-12T13:42:30Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -1814,69 +1473,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 20,
-    "expected_hash": "0x321c"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1682125,
+    "expected_hash": "0x321c"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1813750,
      "status": "ok",
      "result_hash": "0x2fb2",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1802833,
+     "alloc_bytes": null},
+    {"total_nanos": 1715416,
      "status": "ok",
      "result_hash": "0x2fb2",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1713666,
+     "alloc_bytes": null},
+    {"total_nanos": 1773375,
      "status": "ok",
      "result_hash": "0x2fb2",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x2fb2",
-   "min_nanos": 1682125,
-   "median_nanos": 1713666,
-   "max_nanos": 1802833,
+   "min_nanos": 1715416,
+   "median_nanos": 1773375,
+   "max_nanos": 1813750,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runFirstShortVectorHarshCubicNormSq20",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175752801,
-    "timestamp_iso": "2026-06-11T11:02:32Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271766197,
+    "timestamp_iso": "2026-06-12T13:42:46Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -1884,69 +1530,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 20,
-    "expected_hash": "0x2fb2"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 4226917,
+    "expected_hash": "0x2fb2"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 4741750,
      "status": "ok",
      "result_hash": "0x2b46",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 4166500,
+     "alloc_bytes": null},
+    {"total_nanos": 4567666,
      "status": "ok",
      "result_hash": "0x2b46",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 4204459,
+     "alloc_bytes": null},
+    {"total_nanos": 4096042,
      "status": "ok",
      "result_hash": "0x2b46",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x2b46",
-   "min_nanos": 4166500,
-   "median_nanos": 4204459,
-   "max_nanos": 4226917,
+   "min_nanos": 4096042,
+   "median_nanos": 4567666,
+   "max_nanos": 4741750,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runFirstShortVectorHarshCubicNormSq25",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175768927,
-    "timestamp_iso": "2026-06-11T11:02:48Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271782331,
+    "timestamp_iso": "2026-06-12T13:43:02Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -1954,69 +1587,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 30,
-    "expected_hash": "0x2b46"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 9749417,
+    "expected_hash": "0x2b46"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 9287334,
      "status": "ok",
      "result_hash": "0x358a",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 9782416,
+     "alloc_bytes": null},
+    {"total_nanos": 8391583,
      "status": "ok",
      "result_hash": "0x358a",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 9798291,
+     "alloc_bytes": null},
+    {"total_nanos": 8189750,
      "status": "ok",
      "result_hash": "0x358a",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x358a",
-   "min_nanos": 9749417,
-   "median_nanos": 9782416,
-   "max_nanos": 9798291,
+   "min_nanos": 8189750,
+   "median_nanos": 8391583,
+   "max_nanos": 9287334,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runFirstShortVectorHarshCubicNormSq30",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175784944,
-    "timestamp_iso": "2026-06-11T11:03:04Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271798358,
+    "timestamp_iso": "2026-06-12T13:43:18Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -2024,69 +1644,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 40,
-    "expected_hash": "0x358a"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 20408375,
+    "expected_hash": "0x358a"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 11823666,
      "status": "ok",
      "result_hash": "0x5118",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 20709125,
+     "alloc_bytes": null},
+    {"total_nanos": 11908833,
      "status": "ok",
      "result_hash": "0x5118",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 20751416,
+     "alloc_bytes": null},
+    {"total_nanos": 13094375,
      "status": "ok",
      "result_hash": "0x5118",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x5118",
-   "min_nanos": 20408375,
-   "median_nanos": 20709125,
-   "max_nanos": 20751416,
+   "min_nanos": 11823666,
+   "median_nanos": 11908833,
+   "max_nanos": 13094375,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runFirstShortVectorHarshCubicNormSq35",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175801015,
-    "timestamp_iso": "2026-06-11T11:03:21Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271814332,
+    "timestamp_iso": "2026-06-12T13:43:34Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -2094,69 +1701,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 40,
-    "expected_hash": "0x5118"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 16331375,
+    "expected_hash": "0x5118"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 16607750,
      "status": "ok",
      "result_hash": "0x5b24",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 16491333,
+     "alloc_bytes": null},
+    {"total_nanos": 17033083,
      "status": "ok",
      "result_hash": "0x5b24",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 16062958,
+     "alloc_bytes": null},
+    {"total_nanos": 16305500,
      "status": "ok",
      "result_hash": "0x5b24",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x5b24",
-   "min_nanos": 16062958,
-   "median_nanos": 16331375,
-   "max_nanos": 16491333,
+   "min_nanos": 16305500,
+   "median_nanos": 16607750,
+   "max_nanos": 17033083,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runFirstShortVectorHarshCubicNormSq40",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175817463,
-    "timestamp_iso": "2026-06-11T11:03:37Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271830456,
+    "timestamp_iso": "2026-06-12T13:43:50Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -2164,69 +1758,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 50,
-    "expected_hash": "0x5b24"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 22831541,
+    "expected_hash": "0x5b24"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 22926709,
      "status": "ok",
      "result_hash": "0x6a96",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 22855417,
+     "alloc_bytes": null},
+    {"total_nanos": 23001958,
      "status": "ok",
      "result_hash": "0x6a96",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 22868250,
+     "alloc_bytes": null},
+    {"total_nanos": 22626416,
      "status": "ok",
      "result_hash": "0x6a96",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x6a96",
-   "min_nanos": 22831541,
-   "median_nanos": 22855417,
-   "max_nanos": 22868250,
+   "min_nanos": 22626416,
+   "median_nanos": 22926709,
+   "max_nanos": 23001958,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runFirstShortVectorHarshCubicNormSq45",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175833639,
-    "timestamp_iso": "2026-06-11T11:03:53Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271846699,
+    "timestamp_iso": "2026-06-12T13:44:06Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -2234,69 +1815,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 60,
-    "expected_hash": "0x6a96"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 30160041,
+    "expected_hash": "0x6a96"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 31349584,
      "status": "ok",
      "result_hash": "0x72c6",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 30376458,
+     "alloc_bytes": null},
+    {"total_nanos": 31170625,
      "status": "ok",
      "result_hash": "0x72c6",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 30577959,
+     "alloc_bytes": null},
+    {"total_nanos": 30396875,
      "status": "ok",
      "result_hash": "0x72c6",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x72c6",
-   "min_nanos": 30160041,
-   "median_nanos": 30376458,
-   "max_nanos": 30577959,
+   "min_nanos": 30396875,
+   "median_nanos": 31170625,
+   "max_nanos": 31349584,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runFirstShortVectorHarshCubicNormSq50",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175849911,
-    "timestamp_iso": "2026-06-11T11:04:09Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271862913,
+    "timestamp_iso": "2026-06-12T13:44:22Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -2304,69 +1872,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 60,
-    "expected_hash": "0x72c6"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 42166000,
+    "expected_hash": "0x72c6"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 40088250,
      "status": "ok",
      "result_hash": "0x7776",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 42692417,
+     "alloc_bytes": null},
+    {"total_nanos": 41406084,
      "status": "ok",
      "result_hash": "0x7776",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 40251542,
+     "alloc_bytes": null},
+    {"total_nanos": 42372041,
      "status": "ok",
      "result_hash": "0x7776",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x7776",
-   "min_nanos": 40251542,
-   "median_nanos": 42166000,
-   "max_nanos": 42692417,
+   "min_nanos": 40088250,
+   "median_nanos": 41406084,
+   "max_nanos": 42372041,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runFirstShortVectorHarshCubicNormSq55",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175866204,
-    "timestamp_iso": "2026-06-11T11:04:26Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271879554,
+    "timestamp_iso": "2026-06-12T13:44:39Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -2374,69 +1929,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 60,
-    "expected_hash": "0x7776"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 52584208,
+    "expected_hash": "0x7776"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 54447209,
      "status": "ok",
      "result_hash": "0x7aa2",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 53223500,
+     "alloc_bytes": null},
+    {"total_nanos": 54127000,
      "status": "ok",
      "result_hash": "0x7aa2",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 53366708,
+     "alloc_bytes": null},
+    {"total_nanos": 54521875,
      "status": "ok",
      "result_hash": "0x7aa2",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x7aa2",
-   "min_nanos": 52584208,
-   "median_nanos": 53223500,
-   "max_nanos": 53366708,
+   "min_nanos": 54127000,
+   "median_nanos": 54447209,
+   "max_nanos": 54521875,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runFirstShortVectorHarshCubicNormSq60",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175882446,
-    "timestamp_iso": "2026-06-11T11:04:42Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271895845,
+    "timestamp_iso": "2026-06-12T13:44:55Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -2444,69 +1986,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 60,
-    "expected_hash": "0x7aa2"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 65940666,
+    "expected_hash": "0x7aa2"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 67891791,
      "status": "ok",
      "result_hash": "0xaca8",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 65070875,
+     "alloc_bytes": null},
+    {"total_nanos": 70676458,
      "status": "ok",
      "result_hash": "0xaca8",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 68882750,
+     "alloc_bytes": null},
+    {"total_nanos": 73703417,
      "status": "ok",
      "result_hash": "0xaca8",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0xaca8",
-   "min_nanos": 65070875,
-   "median_nanos": 65940666,
-   "max_nanos": 68882750,
+   "min_nanos": 67891791,
+   "median_nanos": 70676458,
+   "max_nanos": 73703417,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runFirstShortVectorHarshCubicNormSq65",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175898774,
-    "timestamp_iso": "2026-06-11T11:04:58Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271912150,
+    "timestamp_iso": "2026-06-12T13:45:12Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -2514,69 +2043,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 60,
-    "expected_hash": "0xaca8"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1034833,
+    "expected_hash": "0xaca8"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 2100542,
      "status": "ok",
      "result_hash": "0x321c",
      "repeat_index": 0,
      "peak_rss_kb": null,
-     "inner_repeats": 2,
+     "inner_repeats": 4,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1061542,
+     "alloc_bytes": null},
+    {"total_nanos": 1266417,
      "status": "ok",
      "result_hash": "0x321c",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 2,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1068708,
+     "alloc_bytes": null},
+    {"total_nanos": 1176667,
      "status": "ok",
      "result_hash": "0x321c",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 2,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x321c",
-   "min_nanos": 517416,
-   "median_nanos": 530771,
-   "max_nanos": 534354,
+   "min_nanos": 525135,
+   "median_nanos": 588333,
+   "max_nanos": 633208,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runNativeFirstShortVectorHarshCubicNormSq15",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175914968,
-    "timestamp_iso": "2026-06-11T11:05:14Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271928476,
+    "timestamp_iso": "2026-06-12T13:45:28Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -2584,69 +2100,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 20,
-    "expected_hash": "0x321c"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 1721375,
+    "expected_hash": "0x321c"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 1689875,
      "status": "ok",
      "result_hash": "0x2fb2",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1664042,
+     "alloc_bytes": null},
+    {"total_nanos": 1847375,
      "status": "ok",
      "result_hash": "0x2fb2",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 1742167,
+     "alloc_bytes": null},
+    {"total_nanos": 1884541,
      "status": "ok",
      "result_hash": "0x2fb2",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x2fb2",
-   "min_nanos": 1664042,
-   "median_nanos": 1721375,
-   "max_nanos": 1742167,
+   "min_nanos": 1689875,
+   "median_nanos": 1847375,
+   "max_nanos": 1884541,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runNativeFirstShortVectorHarshCubicNormSq20",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175931211,
-    "timestamp_iso": "2026-06-11T11:05:31Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271944446,
+    "timestamp_iso": "2026-06-12T13:45:44Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -2654,69 +2157,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 20,
-    "expected_hash": "0x2fb2"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 4375500,
+    "expected_hash": "0x2fb2"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 4701625,
      "status": "ok",
      "result_hash": "0x2b46",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 4248958,
+     "alloc_bytes": null},
+    {"total_nanos": 5351417,
      "status": "ok",
      "result_hash": "0x2b46",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 4200416,
+     "alloc_bytes": null},
+    {"total_nanos": 4688583,
      "status": "ok",
      "result_hash": "0x2b46",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x2b46",
-   "min_nanos": 4200416,
-   "median_nanos": 4248958,
-   "max_nanos": 4375500,
+   "min_nanos": 4688583,
+   "median_nanos": 4701625,
+   "max_nanos": 5351417,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runNativeFirstShortVectorHarshCubicNormSq25",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175947348,
-    "timestamp_iso": "2026-06-11T11:05:47Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271960409,
+    "timestamp_iso": "2026-06-12T13:46:00Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -2724,69 +2214,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 30,
-    "expected_hash": "0x2b46"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 9746125,
+    "expected_hash": "0x2b46"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 10753583,
      "status": "ok",
      "result_hash": "0x358a",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 9707875,
+     "alloc_bytes": null},
+    {"total_nanos": 9589125,
      "status": "ok",
      "result_hash": "0x358a",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 9576875,
+     "alloc_bytes": null},
+    {"total_nanos": 10364417,
      "status": "ok",
      "result_hash": "0x358a",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x358a",
-   "min_nanos": 9576875,
-   "median_nanos": 9707875,
-   "max_nanos": 9746125,
+   "min_nanos": 9589125,
+   "median_nanos": 10364417,
+   "max_nanos": 10753583,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runNativeFirstShortVectorHarshCubicNormSq30",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175963632,
-    "timestamp_iso": "2026-06-11T11:06:03Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271976363,
+    "timestamp_iso": "2026-06-12T13:46:16Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -2794,69 +2271,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 40,
-    "expected_hash": "0x358a"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 20105750,
+    "expected_hash": "0x358a"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 20871292,
      "status": "ok",
      "result_hash": "0x5118",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 20270667,
+     "alloc_bytes": null},
+    {"total_nanos": 21731250,
      "status": "ok",
      "result_hash": "0x5118",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 20270167,
+     "alloc_bytes": null},
+    {"total_nanos": 21545250,
      "status": "ok",
      "result_hash": "0x5118",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x5118",
-   "min_nanos": 20105750,
-   "median_nanos": 20270167,
-   "max_nanos": 20270667,
+   "min_nanos": 20871292,
+   "median_nanos": 21545250,
+   "max_nanos": 21731250,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runNativeFirstShortVectorHarshCubicNormSq35",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175979618,
-    "timestamp_iso": "2026-06-11T11:06:19Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781271992389,
+    "timestamp_iso": "2026-06-12T13:46:32Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -2864,69 +2328,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 40,
-    "expected_hash": "0x5118"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 40499625,
+    "expected_hash": "0x5118"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 42741458,
      "status": "ok",
      "result_hash": "0x5b24",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 40685334,
+     "alloc_bytes": null},
+    {"total_nanos": 40897792,
      "status": "ok",
      "result_hash": "0x5b24",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 40371000,
+     "alloc_bytes": null},
+    {"total_nanos": 40116792,
      "status": "ok",
      "result_hash": "0x5b24",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x5b24",
-   "min_nanos": 40371000,
-   "median_nanos": 40499625,
-   "max_nanos": 40685334,
+   "min_nanos": 40116792,
+   "median_nanos": 40897792,
+   "max_nanos": 42741458,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runNativeFirstShortVectorHarshCubicNormSq40",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781175995690,
-    "timestamp_iso": "2026-06-11T11:06:35Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781272008430,
+    "timestamp_iso": "2026-06-12T13:46:48Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -2934,69 +2385,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 50,
-    "expected_hash": "0x5b24"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 76792542,
+    "expected_hash": "0x5b24"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 76111667,
      "status": "ok",
      "result_hash": "0x6a96",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 75983291,
+     "alloc_bytes": null},
+    {"total_nanos": 76669167,
      "status": "ok",
      "result_hash": "0x6a96",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 76795542,
+     "alloc_bytes": null},
+    {"total_nanos": 75686166,
      "status": "ok",
      "result_hash": "0x6a96",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x6a96",
-   "min_nanos": 75983291,
-   "median_nanos": 76792542,
-   "max_nanos": 76795542,
+   "min_nanos": 75686166,
+   "median_nanos": 76111667,
+   "max_nanos": 76669167,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runNativeFirstShortVectorHarshCubicNormSq45",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781176011859,
-    "timestamp_iso": "2026-06-11T11:06:51Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781272024627,
+    "timestamp_iso": "2026-06-12T13:47:04Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -3004,69 +2442,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 60,
-    "expected_hash": "0x6a96"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 142514292,
+    "expected_hash": "0x6a96"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 135962417,
      "status": "ok",
      "result_hash": "0x72c6",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 141428292,
+     "alloc_bytes": null},
+    {"total_nanos": 134984834,
      "status": "ok",
      "result_hash": "0x72c6",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 139785417,
+     "alloc_bytes": null},
+    {"total_nanos": 132547083,
      "status": "ok",
      "result_hash": "0x72c6",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x72c6",
-   "min_nanos": 139785417,
-   "median_nanos": 141428292,
-   "max_nanos": 142514292,
+   "min_nanos": 132547083,
+   "median_nanos": 134984834,
+   "max_nanos": 135962417,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runNativeFirstShortVectorHarshCubicNormSq50",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781176028141,
-    "timestamp_iso": "2026-06-11T11:07:08Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781272040847,
+    "timestamp_iso": "2026-06-12T13:47:20Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -3074,69 +2499,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 60,
-    "expected_hash": "0x72c6"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 232664125,
+    "expected_hash": "0x72c6"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 239569625,
      "status": "ok",
      "result_hash": "0x7776",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 235707292,
+     "alloc_bytes": null},
+    {"total_nanos": 234947708,
      "status": "ok",
      "result_hash": "0x7776",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 239728916,
+     "alloc_bytes": null},
+    {"total_nanos": 234291541,
      "status": "ok",
      "result_hash": "0x7776",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x7776",
-   "min_nanos": 232664125,
-   "median_nanos": 235707292,
-   "max_nanos": 239728916,
+   "min_nanos": 234291541,
+   "median_nanos": 234947708,
+   "max_nanos": 239569625,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runNativeFirstShortVectorHarshCubicNormSq55",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781176044797,
-    "timestamp_iso": "2026-06-11T11:07:24Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781272057197,
+    "timestamp_iso": "2026-06-12T13:47:37Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -3144,69 +2556,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 60,
-    "expected_hash": "0x7776"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 408627083,
+    "expected_hash": "0x7776"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 389322750,
      "status": "ok",
      "result_hash": "0x7aa2",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 397510291,
+     "alloc_bytes": null},
+    {"total_nanos": 403454416,
      "status": "ok",
      "result_hash": "0x7aa2",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 394529209,
+     "alloc_bytes": null},
+    {"total_nanos": 391775167,
      "status": "ok",
      "result_hash": "0x7aa2",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0x7aa2",
-   "min_nanos": 394529209,
-   "median_nanos": 397510291,
-   "max_nanos": 408627083,
+   "min_nanos": 389322750,
+   "median_nanos": 391775167,
+   "max_nanos": 403454416,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runNativeFirstShortVectorHarshCubicNormSq60",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781176061793,
-    "timestamp_iso": "2026-06-11T11:07:41Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781272074147,
+    "timestamp_iso": "2026-06-12T13:47:54Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -3214,69 +2613,56 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 60,
-    "expected_hash": "0x7aa2"
-   },
-   "budget_truncated": false
-  },
-  {
-   "points": [
-    {
-     "total_nanos": 639286209,
+    "expected_hash": "0x7aa2"},
+   "budget_truncated": false},
+  {"points":
+   [{"total_nanos": 604306125,
      "status": "ok",
      "result_hash": "0xaca8",
      "repeat_index": 0,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 636920833,
+     "alloc_bytes": null},
+    {"total_nanos": 610636959,
      "status": "ok",
      "result_hash": "0xaca8",
      "repeat_index": 1,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    },
-    {
-     "total_nanos": 627289666,
+     "alloc_bytes": null},
+    {"total_nanos": 633645709,
      "status": "ok",
      "result_hash": "0xaca8",
      "repeat_index": 2,
      "peak_rss_kb": null,
      "inner_repeats": 1,
      "error": null,
-     "alloc_bytes": null
-    }
-   ],
+     "alloc_bytes": null}],
    "observed_hash": "0xaca8",
-   "min_nanos": 627289666,
-   "median_nanos": 636920833,
-   "max_nanos": 639286209,
+   "min_nanos": 604306125,
+   "median_nanos": 610636959,
+   "max_nanos": 633645709,
    "kind": "fixed",
    "hashes_agree": true,
    "hashable": true,
    "function": "Hex.LLLBench.runNativeFirstShortVectorHarshCubicNormSq65",
-   "expected_hash_check": {
-    "status": "match"
-   },
-   "env": {
-    "timestamp_unix_ms": 1781176079341,
-    "timestamp_iso": "2026-06-11T11:07:59Z",
+   "expected_hash_check": {"status": "match"},
+   "env":
+   {"timestamp_unix_ms": 1781272092008,
+    "timestamp_iso": "2026-06-12T13:48:12Z",
     "platform_target": "arm64-apple-darwin24.6.0",
     "os": "macos",
     "lean_version": "4.30.0-rc2",
@@ -3284,39 +2670,33 @@
     "lean_bench_version": "0.1.0",
     "hostname": "carica",
     "git_dirty": true,
-    "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+    "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
     "exe_name": "hexlll_bench",
     "cpu_model": null,
     "cpu_cores": null,
-    "arch": "arm64"
-   },
-   "config": {
-    "warmup_first_iter": false,
+    "arch": "arm64"},
+   "config":
+   {"warmup_first_iter": false,
     "warmup": true,
     "repeats": 3,
     "min_total_seconds": 0.001,
     "max_seconds_per_call": 60,
-    "expected_hash": "0xaca8"
-   },
-   "budget_truncated": false
-  }
- ],
+    "expected_hash": "0xaca8"},
+   "budget_truncated": false}],
  "lean_bench_version": "0.1.0",
  "export_schema_version": 1,
- "env": {
-  "timestamp_unix_ms": 1781175428482,
-  "timestamp_iso": "2026-06-11T10:57:08Z",
+ "env":
+ {"timestamp_unix_ms": 1781271038746,
+  "timestamp_iso": "2026-06-12T13:30:38Z",
   "platform_target": "arm64-apple-darwin24.6.0",
   "os": "macos",
   "lean_version": "4.30.0-rc2",
   "lean_toolchain": "leanprover/lean4:4.30.0-rc2",
   "lean_bench_version": "0.1.0",
   "hostname": "carica",
-  "git_dirty": false,
-  "git_commit": "ac0d2dcc5aa87cbd17ffd38a898f148cd88af212",
+  "git_dirty": true,
+  "git_commit": "c5a58baf7db76accf56663f27b2129053398eb6b",
   "exe_name": "hexlll_bench",
   "cpu_model": null,
   "cpu_cores": null,
-  "arch": "arm64"
- }
-}
+  "arch": "arm64"}}
