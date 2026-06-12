@@ -1009,19 +1009,24 @@ constant stays at the value that keeps random-bounded n=150 on the exact
 side and minimizes total absolute misroute cost across both families. -/
 def dispatchFactor : Nat := 16
 
+/-- `Nat.log2` (floor of the base-2 log) of the largest squared row norm. The
+Gram diagonal dominates all Gram entries by Cauchy-Schwarz, so this single scalar
+bounds the operand size of every checker and reducer pass. `O(n·m)` work —
+negligible against either. A deterministic function of the input alone, so the
+dispatches that read it keep per-input timing deterministic. -/
+def maxDiagBits (b : Matrix Int n m) : Nat :=
+  (List.finRange n).foldl
+    (fun acc i => max acc (Vector.normSq (b.row i)).natAbs.log2)
+    0
+
 /-- Size predictor for the reducedness dispatch: `true` when the
 fixed-precision interval pass is predicted to beat the exact integer
-checker on this input. Reads only the bit length of the largest squared
-row norm (the Gram diagonal dominates all Gram entries by
-Cauchy-Schwarz), `O(n·m)` work — negligible against either checker. The
-predictor is a function of the input alone, never of checker indecision,
-so dispatch keeps per-input timing deterministic. -/
+checker on this input. Reads only `maxDiagBits`, so the predictor is a
+function of the input alone, never of checker indecision, keeping per-input
+timing deterministic. -/
 def intervalWins (b : Matrix Int n m) : Bool :=
-  let maxDiagBits :=
-    (List.finRange n).foldl
-      (fun acc i => max acc (Vector.normSq (b.row i)).natAbs.log2)
-      0
-  decide (n * maxDiagBits ≥ dispatchFactor * (intervalPrec + maxDiagBits))
+  let bits := maxDiagBits b
+  decide (n * bits ≥ dispatchFactor * (intervalPrec + bits))
 
 /-- Reducedness clause of the certified dispatch. The size predictor
 `intervalWins` picks the checker expected to be faster on this input: the
@@ -1967,33 +1972,77 @@ unsafe def withRecordSteeredOutcomeImpl {α : Type} (o : SteeredOutcome) (k : α
 @[implemented_by withRecordSteeredOutcomeImpl]
 def withRecordSteeredOutcome {α : Type} (_o : SteeredOutcome) (k : α) : α := k
 
-/-- Dimension below which the exact `lllNative` is run directly. Steering plus
-post-hoc certification carries a fixed overhead (the certifier recomputes the
-Gram-Schmidt of the candidate), so on the smallest inputs — where the exact
-reducer is already cheap — that overhead would exceed the steering savings. A
-deterministic input-size dispatch routes those to `lllNative`, which keeps the
-small-input cost identical to the exact reducer (no regression) while the larger
-inputs that dominate the asymptotics take the steered path. -/
+/-- Dimension threshold of the steering dispatch for narrow-operand inputs.
+Steering plus post-hoc certification carries a fixed overhead, so below this
+dimension the exact `lllNative` is cheaper and runs directly. Small-operand
+families (e.g. random-bounded, entries `|·| ≤ 30`) cross over here. -/
 def steerDimThreshold : Nat := 40
 
-/-- Approximation-steered native reducer with certified output. For inputs of
-dimension `< steerDimThreshold` it runs the exact `lllNative` directly; otherwise
-it runs the steered loop (exact integer row operations driven by an untrusted
-float Gram-Schmidt), certifies the candidate at the public `(δ, 11/20)` bound via
-`lllReducedCheck`, and falls back to the exact `lllNative` on certification
-failure. The output is therefore always a `(δ, 11/20)`-reduced basis of the same
-lattice as `b`; the exact `d`/`ν` state is materialized only on the small-input
-and fallback paths. -/
+/-- Lower dimension threshold of the steering dispatch for wide-operand inputs.
+The certifier recomputes the candidate's Gram-Schmidt, whose reduced operands
+stay as wide as the input's (the determinant is preserved). On wide-operand
+families that exact post-hoc pass is cheap relative to the *exact reducer's*
+repeated wide-integer Gram-Schmidt, so steering already repays its overhead at a
+lower dimension. This is the minimum steering dimension across all operand
+widths: nothing below it is ever steered, which keeps the smallest inputs —
+above all the µs-scale bz-recombination production family, whose recombination
+operands can be wide at small dimension — on the exact path with no regression. -/
+def steerWideDimThreshold : Nat := 30
+
+/-- Operand width (bits of the largest squared row norm) at or above which an
+input uses the lower `steerWideDimThreshold` rather than `steerDimThreshold`.
+Harsh-cubic (entries `~2^{3.3n}`, so `maxDiagBits ≈ 6.6·n`) clears this at n≈28;
+random-bounded (`maxDiagBits ≤ 16` across the whole ladder) never does. -/
+def steerBitThreshold : Nat := 180
+
+/-- Size predictor for the steering dispatch: `true` when the steered reducer plus
+certification is predicted to beat the exact `lllNative` on this input. The
+dimension threshold is operand-adjusted — wide operands
+(`maxDiagBits ≥ steerBitThreshold`) steer from `steerWideDimThreshold`, narrow
+operands only from the higher `steerDimThreshold`.
+
+A deterministic function of the input alone. A single dimension-only constant
+could not place both committed families: at `steerDimThreshold = 40` the steered
+curve was non-monotone on harsh-cubic (n=35 held exact at 20.7 ms while n=40
+steered ran 16.3 ms — a larger problem finishing faster). Lowering the threshold
+for wide operands pulls harsh-cubic in at n=30 (paired bench on `carica`: n=30
+steered 8.0 ms vs exact 9.7 ms, n=35 11.4 ms vs 20.4 ms) without touching
+random-bounded, whose operands never reach `steerBitThreshold`, so it keeps the
+`steerDimThreshold` routing verbatim. The `intervalWins`-shaped *product*
+`n · maxDiagBits` cannot achieve this separation (the #6757 entanglement): it
+orders harsh-cubic n=20 (product 2640) above random-bounded n=45 (630), so any
+constant that steers the latter also steers the former, a 26% regression. An
+operand-adjusted dimension threshold does separate them.
+
+Realized routing on the committed ladders: harsh-cubic exact at n ≤ 25, steered
+at n ≥ 30 (wide arm); random-bounded exact at n=30, steered at n ≥ 45 (narrow arm
+— unchanged from the dimension-only dispatch); bz-recombination (n=3) exact.
+Residual misroute: random-bounded n=30 is held exact even though steering it would
+be cheaper *if it certified* — but the steered float reduction of that
+swap-forcing fixture is not `(δ, 11/20)`-reduced, so it would fall back to the
+exact reducer (measured 19.2 ms vs the exact 14.8 ms, a regression); keeping it on
+the narrow arm correctly leaves it exact. -/
+def steerWins (b : Matrix Int n m) : Bool :=
+  decide (n ≥ if maxDiagBits b ≥ steerBitThreshold then steerWideDimThreshold
+              else steerDimThreshold)
+
+/-- Approximation-steered native reducer with certified output. When `steerWins`
+holds it runs the steered loop (exact integer row operations driven by an
+untrusted float Gram-Schmidt), certifies the candidate at the public `(δ, 11/20)`
+bound via `lllReducedCheck`, and falls back to the exact `lllNative` on
+certification failure; otherwise it runs `lllNative` directly. The output is
+therefore always a `(δ, 11/20)`-reduced basis of the same lattice as `b`; the
+exact `d`/`ν` state is materialized only on the small-input and fallback paths. -/
 def lllSteered (b : Matrix Int n m) (δ : Rat)
     (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) : Matrix Int n m :=
-  if n < steerDimThreshold then
-    lllNative b δ hδ hδ' hn
-  else
+  if steerWins b then
     let candidate := steeredReduce b δ
     if lllReducedCheck candidate δ (11 / 20) then
       withRecordSteeredOutcome .certified candidate
     else
       withRecordSteeredOutcome .fellBack (lllNative b δ hδ hδ' hn)
+  else
+    lllNative b δ hδ hδ' hn
 
 namespace LLLProvider
 

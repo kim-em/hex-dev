@@ -2409,10 +2409,10 @@ theorem lllSteered_memLattice_iff (b : Matrix Int n m) (δ : Rat)
   unfold Hex.lllSteered
   simp only [Hex.withRecordSteeredOutcome]
   split
-  · exact lllNative_memLattice_iff b δ hδ hδ' hn v
   · split
     · exact Hex.steeredReduce_memLattice_iff b δ v
     · exact lllNative_memLattice_iff b δ hδ hδ' hn v
+  · exact lllNative_memLattice_iff b δ hδ hδ' hn v
 
 /-- The steered reducer produces a `(δ, 11/20)`-reduced basis: on the small-input
 and fallback paths from `lllNative_isLLLReduced` (`η = 1/2`) lifted by
@@ -2426,11 +2426,11 @@ theorem lllSteered_isLLLReduced (b : Matrix Int n m) (δ : Rat)
   unfold Hex.lllSteered
   simp only [Hex.withRecordSteeredOutcome]
   split
-  · exact hnative
   · split
     · rename_i h
       exact (HexLLLMathlib.lllReducedCheck_sound _ δ (11 / 20) h).1
     · exact hnative
+  · exact hnative
 
 /-- Independence is preserved by the steered reducer. -/
 theorem lllSteered_independent (b : Matrix Int n m) (δ : Rat)
@@ -2439,11 +2439,11 @@ theorem lllSteered_independent (b : Matrix Int n m) (δ : Rat)
   unfold Hex.lllSteered
   simp only [Hex.withRecordSteeredOutcome]
   split
-  · exact lllNative_independent b δ hδ hδ' hn hind
   · split
     · rename_i h
       exact (HexLLLMathlib.lllReducedCheck_sound _ δ (11 / 20) h).2
     · exact lllNative_independent b δ hδ hδ' hn hind
+  · exact lllNative_independent b δ hδ hδ' hn hind
 
 /-- The public LLL `lll` produces a `(δ, 11/20)`-LLL-reduced matrix. On the
 steered fallback path this follows from `lllSteered_isLLLReduced`. On the
