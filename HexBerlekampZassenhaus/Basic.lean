@@ -6523,16 +6523,18 @@ def recombineExhaustive (f : ZPoly) (d : LiftData) : Array ZPoly :=
   | some factors => factors.toArray
   | none => #[]
 
-/-- Scaled-candidate variant of `recombinationSearchModAux`.
+/-- Dilated-candidate variant of `recombinationSearchModAux`.
 
-The per-step candidate is built from the lifted-factor product *after* scaling
-by the integer `coreLc` parameter (intended to be the leading coefficient of
-the integer core polynomial), then centre-lifted, primitivised, and
-sign-normalised.  For `coreLc = 1` the inner `DensePoly.scale 1 _ = _`
+The lifted factors here are factors of the *monic transform*
+`c^(d-1) · core(X / c)` (`c = coreLc`), so their centre-lifted product is a
+monic-transform factor `g`.  The per-step candidate is recovered as the
+primitive part of `g(c · X)` — the substitution `X ↦ c · X` realised by
+`ZPoly.dilate coreLc`, which is the genuine inverse of the `toMonic` scaling —
+and then sign-normalised.  For `coreLc = 1` the inner `ZPoly.dilate 1 _ = _`
 collapse recovers the original unscaled `recombinationSearchModAux` candidate
-shape; for primitive non-monic cores the scaled product is the integer factor
-identified by `RepresentsIntegerFactorAtLift`, so this variant is the basis of
-the primitive recursive coverage chain. -/
+shape; for primitive non-monic cores this yields the primitive integer factor of
+`core` whose `RepresentsIntegerFactorAtLift` certificate drives the recursive
+coverage chain. -/
 def scaledRecombinationSearchModAux
     (coreLc : Int) (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly) :
     Nat → Option (List ZPoly)
@@ -6545,9 +6547,8 @@ def scaledRecombinationSearchModAux
           let candidate :=
             normalizeFactorSign <|
               ZPoly.primitivePart <|
-                centeredLiftPoly
-                  (DensePoly.scale coreLc (Array.polyProduct split.1.toArray))
-                  modulus
+                ZPoly.dilate coreLc <|
+                  centeredLiftPoly (Array.polyProduct split.1.toArray) modulus
           if shouldRecordPolynomialFactor candidate then
             match exactQuotient? target candidate with
             | none => none
@@ -8468,6 +8469,64 @@ private def quadraticCubeRegression : ZPoly :=
 #guard (factor quadraticCubeRegression).factors =
   #[(linearFactorForRoot (-1), 3), (linearFactorForRoot 1, 3)]
 
+/-- Soundness regression for issue #6799: the primitive non-monic cubic
+`2X³+9X²+10X+3 = (2X+1)(X+1)(X+3)` must split into three factors, not be
+reported as a single irreducible factor.  Before the `ZPoly.dilate`
+inverse-transform fix, the slow exhaustive recombination recombined against the
+non-monic core via a scalar `DensePoly.scale`, failed to find any split, and
+fell back to `#[core]`. -/
+private def nonMonicCubicRegression : ZPoly :=
+  DensePoly.ofCoeffs #[3, 10, 9, 2]
+
+#guard (factor nonMonicCubicRegression).factors.size = 3
+#guard Factorization.product (factor nonMonicCubicRegression) = nonMonicCubicRegression
+
+-- The slow modular path recombines the cubic into three factors at the default
+-- bound; in particular it does not return the uninformative `#[core]`.
+#guard
+  (match factorSlowModularFactorsWithBound nonMonicCubicRegression
+      (ZPoly.defaultFactorCoeffBound nonMonicCubicRegression) with
+    | some fs => fs.size = 3
+    | none => false)
+
+-- The fast BHKS path does not yet recombine non-monic cores (its per-class
+-- candidate still uses the scalar shape — fixing that is the follow-up tracked
+-- separately), so it cleanly returns `none` and defers to the slow path.  The
+-- soundness requirement is only that it must never report `#[core]`.
+#guard
+  (match factorFastFactorsWithBound nonMonicCubicRegression
+      (ZPoly.defaultFactorCoeffBound nonMonicCubicRegression) with
+    | some fs => fs ≠ #[nonMonicCubicRegression]
+    | none => true)
+
+/-- Non-monic quadratic with two integer roots, `2(X-1)(X+1) = 2X²-2`:
+content `2`, primitive part `(X-1)(X+1)`, so `factor` records two factors. -/
+private def nonMonicQuadraticTwoRoots : ZPoly :=
+  DensePoly.ofCoeffs #[-2, 0, 2]
+
+#guard (factor nonMonicQuadraticTwoRoots).factors.size = 2
+#guard Factorization.product (factor nonMonicQuadraticTwoRoots) = nonMonicQuadraticTwoRoots
+
+/-- Non-monic quartic `(2X+1)(X+1)(X²+1)`, primitive with leading coefficient
+`2` and a mix of non-monic linear, monic linear, and irreducible quadratic
+factors. -/
+private def nonMonicQuarticRegression : ZPoly :=
+  DensePoly.ofCoeffs #[1, 2] * DensePoly.ofCoeffs #[1, 1] *
+    DensePoly.ofCoeffs #[1, 0, 1]
+
+#guard (factor nonMonicQuarticRegression).factors.size = 3
+#guard Factorization.product (factor nonMonicQuarticRegression) = nonMonicQuarticRegression
+
+/-- Non-monic core carrying nontrivial content, `6(X-1)(X+1) = 6X²-6`: the signed
+content scalar is `6` and the primitive factors are the two integer roots. -/
+private def nonMonicWithContentRegression : ZPoly :=
+  DensePoly.ofCoeffs #[-6, 0, 6]
+
+#guard (factor nonMonicWithContentRegression).factors.size = 2
+#guard Factorization.product (factor nonMonicWithContentRegression) =
+  nonMonicWithContentRegression
+#guard (factor nonMonicWithContentRegression).scalar = 6
+
 namespace ZPoly
 
 /--
@@ -10084,9 +10143,8 @@ private theorem scaledRecombinationSearchModAux_normalizeFactorSign
         let candidate :=
           normalizeFactorSign <|
             ZPoly.primitivePart <|
-              centeredLiftPoly
-                (DensePoly.scale coreLc (Array.polyProduct split.1.toArray))
-                modulus
+              ZPoly.dilate coreLc <|
+                centeredLiftPoly (Array.polyProduct split.1.toArray) modulus
         by_cases hrecord : shouldRecordPolynomialFactor candidate = true
         · simp [candidate, hrecord] at hsplit
           cases hquot : exactQuotient? target candidate with
@@ -10109,10 +10167,9 @@ private theorem scaledRecombinationSearchModAux_normalizeFactorSign
                       rw [hfactor]
                       exact normalizeFactorSign_idem
                         (ZPoly.primitivePart <|
-                          centeredLiftPoly
-                            (DensePoly.scale coreLc
-                              (Array.polyProduct split.1.toArray))
-                            modulus)
+                          ZPoly.dilate coreLc <|
+                            centeredLiftPoly
+                              (Array.polyProduct split.1.toArray) modulus)
                   | inr hrest =>
                       exact ih quotient split.2 rest hrec factor hrest
         · simp [candidate, hrecord] at hsplit
@@ -10138,9 +10195,8 @@ private theorem scaledRecombinationSearchModAux_shouldRecord
         let candidate :=
           normalizeFactorSign <|
             ZPoly.primitivePart <|
-              centeredLiftPoly
-                (DensePoly.scale coreLc (Array.polyProduct split.1.toArray))
-                modulus
+              ZPoly.dilate coreLc <|
+                centeredLiftPoly (Array.polyProduct split.1.toArray) modulus
         by_cases hrecord : shouldRecordPolynomialFactor candidate = true
         · simp [candidate, hrecord] at hsplit
           cases hquot : exactQuotient? target candidate with
@@ -10187,9 +10243,8 @@ private theorem scaledRecombinationSearchModAux_primitive
         let candidate :=
           normalizeFactorSign <|
             ZPoly.primitivePart <|
-              centeredLiftPoly
-                (DensePoly.scale coreLc (Array.polyProduct split.1.toArray))
-                modulus
+              ZPoly.dilate coreLc <|
+                centeredLiftPoly (Array.polyProduct split.1.toArray) modulus
         by_cases hrecord : shouldRecordPolynomialFactor candidate = true
         · simp [candidate, hrecord] at hsplit
           cases hquot : exactQuotient? target candidate with
@@ -10221,19 +10276,17 @@ private theorem scaledRecombinationSearchModAux_primitive
                       -- `Primitive (normalizeFactorSign ...)` by deliverable 1.
                       have hcand_ne :
                           normalizeFactorSign (ZPoly.primitivePart
-                              (centeredLiftPoly
-                                (DensePoly.scale coreLc
-                                  (Array.polyProduct split.1.toArray))
-                                modulus)) ≠ 0 := by
+                              (ZPoly.dilate coreLc
+                                (centeredLiftPoly
+                                  (Array.polyProduct split.1.toArray) modulus))) ≠ 0 := by
                         unfold shouldRecordPolynomialFactor at hrecord
                         simp at hrecord
                         exact hrecord.1.1
                       have hpp_ne :
                           ZPoly.primitivePart
-                              (centeredLiftPoly
-                                (DensePoly.scale coreLc
-                                  (Array.polyProduct split.1.toArray))
-                                modulus) ≠ 0 := by
+                              (ZPoly.dilate coreLc
+                                (centeredLiftPoly
+                                  (Array.polyProduct split.1.toArray) modulus)) ≠ 0 := by
                         intro hpp
                         apply hcand_ne
                         rw [hpp]
@@ -10242,10 +10295,9 @@ private theorem scaledRecombinationSearchModAux_primitive
                           (by decide : ¬ DensePoly.leadingCoeff (0 : ZPoly) < 0)]
                       have hcontent_ne :
                           ZPoly.content
-                              (centeredLiftPoly
-                                (DensePoly.scale coreLc
-                                  (Array.polyProduct split.1.toArray))
-                                modulus) ≠ 0 := by
+                              (ZPoly.dilate coreLc
+                                (centeredLiftPoly
+                                  (Array.polyProduct split.1.toArray) modulus)) ≠ 0 := by
                         intro hcontent
                         apply hpp_ne
                         show DensePoly.primitivePart _ = 0
@@ -10254,10 +10306,9 @@ private theorem scaledRecombinationSearchModAux_primitive
                       have hpp_primitive :
                           ZPoly.Primitive
                             (ZPoly.primitivePart
-                              (centeredLiftPoly
-                                (DensePoly.scale coreLc
-                                  (Array.polyProduct split.1.toArray))
-                                modulus)) :=
+                              (ZPoly.dilate coreLc
+                                (centeredLiftPoly
+                                  (Array.polyProduct split.1.toArray) modulus))) :=
                         ZPoly.primitivePart_primitive _ hcontent_ne
                       exact normalizeFactorSign_primitive _ hpp_primitive
                   | inr hrest =>
@@ -10397,9 +10448,8 @@ private theorem scaledRecombinationSearchModAux_product
         let candidate :=
           normalizeFactorSign <|
             ZPoly.primitivePart <|
-              centeredLiftPoly
-                (DensePoly.scale coreLc (Array.polyProduct split.1.toArray))
-                modulus
+              ZPoly.dilate coreLc <|
+                centeredLiftPoly (Array.polyProduct split.1.toArray) modulus
         by_cases hrecord : shouldRecordPolynomialFactor candidate = true
         · simp [candidate, hrecord] at hsplit
           cases hquot : exactQuotient? target candidate with
@@ -10460,8 +10510,8 @@ private theorem densePoly_int_scale_one (p : ZPoly) :
 
 /-- `scaledRecombinationSearchModAux` at `coreLc = 1` collapses to the unscaled
 `recombinationSearchModAux`: the only difference between the two routines is the
-inner `DensePoly.scale coreLc` applied to the lifted-factor product, which is a
-no-op when `coreLc = 1`. -/
+inner `ZPoly.dilate coreLc` applied to the centre-lifted lifted-factor product,
+which is a no-op when `coreLc = 1`. -/
 private theorem scaledRecombinationSearchModAux_eq_recombinationSearchModAux_of_one
     (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly) (fuel : Nat) :
     scaledRecombinationSearchModAux 1 target modulus localFactors fuel =
@@ -10475,7 +10525,7 @@ private theorem scaledRecombinationSearchModAux_eq_recombinationSearchModAux_of_
       · simp only [htarget, if_false]
         congr 1
         funext split
-        simp only [densePoly_int_scale_one]
+        simp only [ZPoly.dilate_one]
         by_cases hrecord :
             shouldRecordPolynomialFactor (normalizeFactorSign <|
                 ZPoly.primitivePart <|
@@ -10655,10 +10705,10 @@ Scaled-candidate counterpart of `recombinationSearchModAux_eq_some_of_step_of_pr
 
 Structurally identical to the unscaled step lemma, with the inner `let
 candidate' := ...` expression in both the prefix-none hypothesis and the goal
-applying `DensePoly.scale coreLc` to the lifted-factor product before
-centre-lifting.  This is the step driver the primitive recursive coverage
-proof in #4647 will use, where the candidate is recovered from the integer
-factor via `scaledRecombinationCandidate_eq_factor_of_recovery`.
+applying `ZPoly.dilate coreLc` (the substitution `X ↦ coreLc · X`) to the
+centre-lifted lifted-factor product.  This is the step driver the primitive
+recursive coverage proof in #4647 will use, where the candidate is recovered
+from the integer factor via `scaledRecombinationCandidate_eq_factor_of_recovery`.
 -/
 theorem scaledRecombinationSearchModAux_eq_some_of_step_of_prefix_none
     {coreLc : Int} {target candidate quotient : ZPoly} {modulus fuel : Nat}
@@ -10672,9 +10722,8 @@ theorem scaledRecombinationSearchModAux_eq_some_of_step_of_prefix_none
         (let candidate' :=
           normalizeFactorSign <|
             ZPoly.primitivePart <|
-              centeredLiftPoly
-                (DensePoly.scale coreLc (Array.polyProduct split.1.toArray))
-                modulus
+              ZPoly.dilate coreLc <|
+                centeredLiftPoly (Array.polyProduct split.1.toArray) modulus
         if shouldRecordPolynomialFactor candidate' then
           match exactQuotient? target candidate' with
           | none => none
@@ -10687,9 +10736,8 @@ theorem scaledRecombinationSearchModAux_eq_some_of_step_of_prefix_none
     (hcandidate_def :
       candidate = normalizeFactorSign
         (ZPoly.primitivePart
-          (centeredLiftPoly
-            (DensePoly.scale coreLc (Array.polyProduct selected.toArray))
-            modulus)))
+          (ZPoly.dilate coreLc
+            (centeredLiftPoly (Array.polyProduct selected.toArray) modulus))))
     (hrecord : shouldRecordPolynomialFactor candidate = true)
     (hquot : exactQuotient? target candidate = some quotient)
     (hsearch_rest :
@@ -10704,9 +10752,8 @@ theorem scaledRecombinationSearchModAux_eq_some_of_step_of_prefix_none
   show (let candidate' :=
           normalizeFactorSign <|
             ZPoly.primitivePart <|
-              centeredLiftPoly
-                (DensePoly.scale coreLc (Array.polyProduct selected.toArray))
-                modulus
+              ZPoly.dilate coreLc <|
+                centeredLiftPoly (Array.polyProduct selected.toArray) modulus
         if shouldRecordPolynomialFactor candidate' then
           match exactQuotient? target candidate' with
           | none => none
@@ -10718,9 +10765,9 @@ theorem scaledRecombinationSearchModAux_eq_some_of_step_of_prefix_none
         else none) = some (candidate :: restFactors)
   rw [show (normalizeFactorSign <|
             ZPoly.primitivePart <|
-              centeredLiftPoly
-                (DensePoly.scale coreLc (Array.polyProduct selected.toArray))
-                modulus) = candidate
+              ZPoly.dilate coreLc <|
+                centeredLiftPoly (Array.polyProduct selected.toArray) modulus)
+              = candidate
         from hcandidate_def.symm]
   rw [if_pos hrecord]
   simp only [hquot, hsearch_rest]
