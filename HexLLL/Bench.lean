@@ -1516,14 +1516,33 @@ def runFirstShortVectorHarshCubicNormSq55 : Unit → IO Int := fun _ => do
   return runFirstShortVectorNormSq
     (← getCachedInput harshCubicInput55Ref (fun _ => prepHarshCubicInput 55))
 
+def runIsabelleHarshCubicNormSq55 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "harsh-cubic-55"
+    (← getCachedInput harshCubicInput55Ref (fun _ => prepHarshCubicInput 55))
+
+def runFirstShortVectorHarshCubicNormSq60 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput60Ref (fun _ => prepHarshCubicInput 60))
+
+def runIsabelleHarshCubicNormSq60 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "harsh-cubic-60"
+    (← getCachedInput harshCubicInput60Ref (fun _ => prepHarshCubicInput 60))
+
+def runFirstShortVectorHarshCubicNormSq65 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq
+    (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
+
+def runIsabelleHarshCubicNormSq65 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "harsh-cubic-65"
+    (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
 
 /-- Fallback-rate diagnostic for the steered native reducer: run
 `firstShortVectorUnchecked` (i.e. `lllSteered`) once on every rung of both
 ladders, then read `Hex.steeredTally`. Fails if any steered candidate failed
 certification and fell back to the exact reducer (`fellBack ≠ 0`) — a fallback
-inside the ladder would make the steered medians dishonest. Only rungs with
-dimension `≥ Hex.steerDimThreshold` take the steered path and bump the tally;
-the smaller rungs run `lllNative` directly. The returned value encodes the tally
+inside the ladder would make the steered medians dishonest. Only rungs the
+operand-aware `Hex.steerWins` predictor routes to steering bump the tally; the
+smaller rungs run `lllNative` directly. The returned value encodes the tally
 as `certified · 65537 + fellBack`. -/
 def runSteeredFallbackTally : Unit → IO Int := fun _ => do
   Hex.resetSteeredTally
@@ -1544,7 +1563,9 @@ def runSteeredFallbackTally : Unit → IO Int := fun _ => do
      runFirstShortVectorHarshCubicNormSq40,
      runFirstShortVectorHarshCubicNormSq45,
      runFirstShortVectorHarshCubicNormSq50,
-     runFirstShortVectorHarshCubicNormSq55]
+     runFirstShortVectorHarshCubicNormSq55,
+     runFirstShortVectorHarshCubicNormSq60,
+     runFirstShortVectorHarshCubicNormSq65]
   for t in targets do
     discard <| t ()
   let tally ← Hex.steeredTally
@@ -1552,25 +1573,6 @@ def runSteeredFallbackTally : Unit → IO Int := fun _ => do
     throw <| IO.userError
       s!"steered reducer fell back to the exact reducer on a bench rung: {repr tally}"
   return Int.ofNat tally.certified * 65537 + Int.ofNat tally.fellBack
-def runIsabelleHarshCubicNormSq55 : Unit → IO Int := fun _ => do
-  runIsabelleShortVectorNormSq "harsh-cubic-55"
-    (← getCachedInput harshCubicInput55Ref (fun _ => prepHarshCubicInput 55))
-
-def runFirstShortVectorHarshCubicNormSq60 : Unit → IO Int := fun _ => do
-  return runFirstShortVectorNormSq
-    (← getCachedInput harshCubicInput60Ref (fun _ => prepHarshCubicInput 60))
-
-def runIsabelleHarshCubicNormSq60 : Unit → IO Int := fun _ => do
-  runIsabelleShortVectorNormSq "harsh-cubic-60"
-    (← getCachedInput harshCubicInput60Ref (fun _ => prepHarshCubicInput 60))
-
-def runFirstShortVectorHarshCubicNormSq65 : Unit → IO Int := fun _ => do
-  return runFirstShortVectorNormSq
-    (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
-
-def runIsabelleHarshCubicNormSq65 : Unit → IO Int := fun _ => do
-  runIsabelleShortVectorNormSq "harsh-cubic-65"
-    (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
 
 def runIsabelleCertifiedRandomBoundedNormSq30 : Unit → IO Int := fun _ => do
   runIsabelleCertifiedShortVectorNormSq "random-bounded-30"
@@ -2239,12 +2241,13 @@ setup_fixed_benchmark runCertifiedCheckerIntervalTally where {
 
 /- Fallback-rate diagnostic: the steered reducer certified on every steered rung
 of both ladders (`fellBack = 0`). The pinned hash records the `certified` count
-(11 = the rungs with dimension ≥ `Hex.steerDimThreshold`); a fallback would flip
-`fellBack` nonzero and throw before the hash is reached. -/
+(15 = the rungs `Hex.steerWins` routes to steering: harsh-cubic n ≥ 30 via the
+wide-operand arm and random-bounded n ≥ 45 via the narrow arm); a fallback would
+flip `fellBack` nonzero and throw before the hash is reached. -/
 setup_fixed_benchmark runSteeredFallbackTally where {
     repeats := 1
     maxSecondsPerCall := 120.0
-    expectedHash := some (Hashable.hash ((11 * 65537 : Int)))
+    expectedHash := some (Hashable.hash ((15 * 65537 : Int)))
   }
 
 /- Complexity derivation: random-bounded inputs have square dimension `n` and
