@@ -495,6 +495,12 @@ initialize certifiedHarshCubic50Ref : IO.Ref (Option (FirstShortVectorInput × A
 initialize certifiedHarshCubic55Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
   IO.mkRef none
 
+initialize certifiedHarshCubic60Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
+initialize certifiedHarshCubic65Ref : IO.Ref (Option (FirstShortVectorInput × Array Int)) ←
+  IO.mkRef none
+
 /-! ## Phase-4 `LLLState.ofBasis` input families. -/
 
 /-- Entry generator for bounded random-looking square bases. -/
@@ -1320,6 +1326,20 @@ def runCertifiedFirstShortVectorHarshCubic55Checksum : Unit → IO Int := fun _ 
 def runCertifiedCheckerHarshCubic55Checksum : Unit → IO Int :=
   runCertifiedCheckerChecksum certifiedHarshCubic55Ref (fun _ => prepHarshCubicInput 55)
 
+def runCertifiedFirstShortVectorHarshCubic60Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput60Ref (fun _ => prepHarshCubicInput 60))
+
+def runCertifiedCheckerHarshCubic60Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedHarshCubic60Ref (fun _ => prepHarshCubicInput 60)
+
+def runCertifiedFirstShortVectorHarshCubic65Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum
+    (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
+
+def runCertifiedCheckerHarshCubic65Checksum : Unit → IO Int :=
+  runCertifiedCheckerChecksum certifiedHarshCubic65Ref (fun _ => prepHarshCubicInput 65)
+
 /-- Observable for the reducedness-decision tally: run the certified checker
 once on every rung of both ladders, then read `Hex.checkerTally`. Fails if
 any interval pass reached indecision (`exactFallback ≠ 0`); the
@@ -1345,7 +1365,9 @@ def runCertifiedCheckerIntervalTally : Unit → IO Int := fun _ => do
      runCertifiedCheckerHarshCubic40Checksum,
      runCertifiedCheckerHarshCubic45Checksum,
      runCertifiedCheckerHarshCubic50Checksum,
-     runCertifiedCheckerHarshCubic55Checksum]
+     runCertifiedCheckerHarshCubic55Checksum,
+     runCertifiedCheckerHarshCubic60Checksum,
+     runCertifiedCheckerHarshCubic65Checksum]
   for t in targets do
     discard <| t ()
   let tally ← Hex.checkerTally
@@ -2179,14 +2201,40 @@ setup_fixed_benchmark runCertifiedCheckerHarshCubic55Checksum where {
     warmupFirstIter := true
   }
 
+setup_fixed_benchmark runCertifiedFirstShortVectorHarshCubic60Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerHarshCubic60Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorHarshCubic65Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedCheckerHarshCubic65Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 20.0
+    warmupFirstIter := true
+  }
+
 /- One certified check per rung of both ladders; the observed value pins the
-reducedness-decision tally to "7 rungs dispatched to the interval checker
+reducedness-decision tally to "9 rungs dispatched to the interval checker
 (harsh-cubic n ≥ 30, random-bounded n ≥ 180), 10 to the exact checker by
 the size predictor, zero indecision fallbacks". -/
 setup_fixed_benchmark runCertifiedCheckerIntervalTally where {
     repeats := 1
     maxSecondsPerCall := 120.0
-    expectedHash := some (Hashable.hash (((7 * 65537 + 10) * 65537 : Int)))
+    expectedHash := some (Hashable.hash (((9 * 65537 + 10) * 65537 : Int)))
   }
 
 /- Fallback-rate diagnostic: the steered reducer certified on every steered rung
