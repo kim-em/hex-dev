@@ -555,26 +555,23 @@ the executable checker `certCheck B B' U V δ η : Bool` returns `true`, where
 
 - `U.mul B = B'` and `V.mul B' = B`, which together give `lattice B =
   lattice B'` by row-combination composition (no determinant and no
-  matrix-inverse reasoning). In the word-scale regime (every entry of the
-  operands fits in a machine word, and the dimension is large enough to
-  amortize the scans) each product equality `M·A = C` is verified without
-  forming the matrix product: every row of `A` and of `C` is packed into a
-  single integer in balanced base `2^K`, and row `i` of the unformed
-  product is compared as the packed big-integer dot product
+  matrix-inverse reasoning). Each product equality `M·A = C` is verified
+  without forming the matrix product: every row of `A` and of `C` is packed
+  into a single integer in balanced base `2^K`, and row `i` of the
+  unformed product is compared as the packed big-integer dot product
   `Σ_l M[i][l]·packA[l]` against `packC[i]`. The digit width `K` is
   computed from an entry bound covering both sides (`n · max|M| · max|A| +
   max|C|`, or any provably sufficient bound) so that every digit `x` of
   either side satisfies `2·|x| < 2^K`; that bound makes the balanced
   base-`2^K` representation injective, which is the soundness argument.
   The packed comparison is complete as well as sound: by linearity of
-  packing it accepts exactly when the products are equal. In this regime
-  the same-lattice clause costs `O(n²)` big-by-small multiplications
-  rather than the `O(n²·m)` entry products of a materialized `Matrix.mul`.
-  Outside the regime packing buys nothing (the packed dot products cost
-  the same bit operations as the materialized product) and the checker
-  falls back to the materialized comparison; the regime test is a
-  short-circuiting comparison scan, and both branches decide exactly
-  `M·A = C`, so acceptance is independent of the regime;
+  packing it accepts exactly when the products are equal. For word-scale
+  operands and dimensions large enough to amortize packing, the
+  same-lattice clause costs `O(n²)` big-by-small multiplications rather
+  than the `O(n²·m)` entry products of a materialized `Matrix.mul`. For
+  wide entries, the packed dot products cost the same bit operations as
+  the materialized product while preserving the same acceptance predicate
+  `M·A = C`;
 - `B'` independent and `(δ, η)`-size-reduced and Lovász. The clause is
   decided by a sound fixed-precision enclosure Gram-Schmidt pass over the
   exact integer Gram matrix of `B'`: a closed dyadic interval
