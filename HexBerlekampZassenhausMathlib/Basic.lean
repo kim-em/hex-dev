@@ -2026,6 +2026,141 @@ theorem unique_modPFactorSubset_up_to_associated
   h.unique_subset hg_irr hg_dvd
     (representsIntegerFactorModP_of_associated hprime hassoc hS) hT
 
+/-- Transport executable `FpPoly` divisibility (`∃ r, b = a * r`) to Mathlib
+divisibility across `toMathlibPolynomial`. -/
+private theorem toMathlibPolynomial_dvd {p : Nat} [Hex.ZMod64.Bounds p]
+    {a b : Hex.FpPoly p} (h : a ∣ b) :
+    HexBerlekampMathlib.toMathlibPolynomial a ∣
+      HexBerlekampMathlib.toMathlibPolynomial b := by
+  obtain ⟨r, hr⟩ := h
+  exact ⟨HexBerlekampMathlib.toMathlibPolynomial r, by rw [hr, toMathlibPolynomial_mul]⟩
+
+/-- A nonzero modular polynomial divides its own monic image. -/
+private theorem self_dvd_monicModPImage {p : Nat} [Hex.ZMod64.Bounds p]
+    {h : Hex.FpPoly p} (hh : h.isZero = false) :
+    h ∣ monicModPImage h := by
+  unfold monicModPImage
+  simp only [hh, Bool.false_eq_true, ↓reduceIte]
+  refine ⟨Hex.DensePoly.C (Hex.DensePoly.leadingCoeff h)⁻¹, ?_⟩
+  calc Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff h)⁻¹ h
+      = Hex.DensePoly.C (Hex.DensePoly.leadingCoeff h)⁻¹ * h := by
+        rw [Hex.FpPoly.C_mul_eq_scale]
+    _ = h * Hex.DensePoly.C (Hex.DensePoly.leadingCoeff h)⁻¹ :=
+        Hex.DensePoly.mul_comm_poly _ _
+
+/-- **modP pairwise-disjointness.** Non-associated irreducible integer divisors of
+`core` are represented by disjoint subsets of the modular factors. The genuine
+square-freeness of the modular reduction is threaded as the explicit hypothesis
+`hsqfree`; if two representing subsets shared an index, that modular factor would
+square-divide the (square-free) modular core, an impossibility. -/
+theorem modPFactorSubset_disjoint_of_not_associated
+    {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {admissiblePrime squareFreeReduction : Prop}
+    (hprime : Hex.Nat.Prime primeData.p)
+    (hpart :
+      ModPSubsetPartitionHypotheses core primeData admissiblePrime squareFreeReduction)
+    (hcore_modP_nz :
+      (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false)
+    (hsqfree :
+      Squarefree
+        (@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
+          (@monicModPImage primeData.p primeData.bounds
+            (@Hex.ZPoly.modP primeData.p primeData.bounds core))))
+    {f g : Hex.ZPoly} {S T : ModPFactorSubset primeData}
+    (hf_irr : Irreducible (HexPolyZMathlib.toPolynomial f)) (hf_dvd : f ∣ core)
+    (hg_irr : Irreducible (HexPolyZMathlib.toPolynomial g)) (hg_dvd : g ∣ core)
+    (hS : RepresentsIntegerFactorModP primeData f S)
+    (hT : RepresentsIntegerFactorModP primeData g T)
+    (hnotassoc :
+      ¬ Associated (HexPolyZMathlib.toPolynomial f) (HexPolyZMathlib.toPolynomial g)) :
+    Disjoint S T := by
+  classical
+  letI := primeData.bounds
+  set p := primeData.p with hp_def
+  -- `modP f`, `modP g` are nonzero because they divide the nonzero `modP core`.
+  have hf_modP_nz : (Hex.ZPoly.modP p f).isZero = false :=
+    fpPoly_isZero_false_of_dvd_of_isZero_false (modP_dvd_modP_of_dvd p hf_dvd) hcore_modP_nz
+  have hg_modP_nz : (Hex.ZPoly.modP p g).isZero = false :=
+    fpPoly_isZero_false_of_dvd_of_isZero_false (modP_dvd_modP_of_dvd p hg_dvd) hcore_modP_nz
+  -- The representing products transport to the monic modular images.
+  have hSeq : modPFactorProduct primeData S =
+      @monicModPImage p primeData.bounds (Hex.ZPoly.modP p f) := hS
+  have hTeq : modPFactorProduct primeData T =
+      @monicModPImage p primeData.bounds (Hex.ZPoly.modP p g) := hT
+  have hAf :
+      (∏ j ∈ S, HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData j)) =
+        HexBerlekampMathlib.toMathlibPolynomial (monicModPImage (Hex.ZPoly.modP p f)) := by
+    rw [← toMathlibPolynomial_modPFactorProduct, hSeq]
+  have hAg :
+      (∏ j ∈ T, HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData j)) =
+        HexBerlekampMathlib.toMathlibPolynomial (monicModPImage (Hex.ZPoly.modP p g)) := by
+    rw [← toMathlibPolynomial_modPFactorProduct, hTeq]
+  -- `toPoly f * toPoly g ∣ toPoly core` (distinct primes both divide the core).
+  have hfg_zdvd :
+      HexPolyZMathlib.toPolynomial f * HexPolyZMathlib.toPolynomial g ∣
+        HexPolyZMathlib.toPolynomial core := by
+    have hf_zdvd : HexPolyZMathlib.toPolynomial f ∣ HexPolyZMathlib.toPolynomial core :=
+      HexPolyMathlib.toPolynomial_dvd hf_dvd
+    have hg_zdvd : HexPolyZMathlib.toPolynomial g ∣ HexPolyZMathlib.toPolynomial core :=
+      HexPolyMathlib.toPolynomial_dvd hg_dvd
+    obtain ⟨k, hk⟩ := hg_zdvd
+    have hf_dvd_gk :
+        HexPolyZMathlib.toPolynomial f ∣ HexPolyZMathlib.toPolynomial g * k := by
+      rw [← hk]; exact hf_zdvd
+    have hf_ndvd_g :
+        ¬ HexPolyZMathlib.toPolynomial f ∣ HexPolyZMathlib.toPolynomial g := by
+      intro hd
+      exact hnotassoc (hf_irr.associated_of_dvd hg_irr hd)
+    rcases hf_irr.prime.dvd_or_dvd hf_dvd_gk with hg' | hk'
+    · exact absurd hg' hf_ndvd_g
+    · obtain ⟨m, hm⟩ := hk'
+      exact ⟨m, by rw [hk, hm]; ring⟩
+  -- Push the divisibility through `Polynomial.map (Int.castRingHom (ZMod p))`.
+  have hfg_modP :
+      HexBerlekampMathlib.toMathlibPolynomial (Hex.ZPoly.modP p f) *
+          HexBerlekampMathlib.toMathlibPolynomial (Hex.ZPoly.modP p g) ∣
+        HexBerlekampMathlib.toMathlibPolynomial (Hex.ZPoly.modP p core) := by
+    have hmap := Polynomial.map_dvd (Int.castRingHom (ZMod p)) hfg_zdvd
+    rw [Polynomial.map_mul, ← toMathlibPolynomial_modP_eq_map_intCast_zmod,
+      ← toMathlibPolynomial_modP_eq_map_intCast_zmod,
+      ← toMathlibPolynomial_modP_eq_map_intCast_zmod] at hmap
+    exact hmap
+  -- Assemble: the product of the two monic images divides the square-free core.
+  have hMf_dvd :
+      HexBerlekampMathlib.toMathlibPolynomial (monicModPImage (Hex.ZPoly.modP p f)) ∣
+        HexBerlekampMathlib.toMathlibPolynomial (Hex.ZPoly.modP p f) :=
+    toMathlibPolynomial_dvd (monicModPImage_dvd_self_of_ne_zero hprime hf_modP_nz)
+  have hMg_dvd :
+      HexBerlekampMathlib.toMathlibPolynomial (monicModPImage (Hex.ZPoly.modP p g)) ∣
+        HexBerlekampMathlib.toMathlibPolynomial (Hex.ZPoly.modP p g) :=
+    toMathlibPolynomial_dvd (monicModPImage_dvd_self_of_ne_zero hprime hg_modP_nz)
+  have hcore_dvd_M :
+      HexBerlekampMathlib.toMathlibPolynomial (Hex.ZPoly.modP p core) ∣
+        HexBerlekampMathlib.toMathlibPolynomial (monicModPImage (Hex.ZPoly.modP p core)) :=
+    toMathlibPolynomial_dvd (self_dvd_monicModPImage hcore_modP_nz)
+  have hMfMg_dvd_M :
+      HexBerlekampMathlib.toMathlibPolynomial (monicModPImage (Hex.ZPoly.modP p f)) *
+          HexBerlekampMathlib.toMathlibPolynomial (monicModPImage (Hex.ZPoly.modP p g)) ∣
+        HexBerlekampMathlib.toMathlibPolynomial (monicModPImage (Hex.ZPoly.modP p core)) :=
+    ((mul_dvd_mul hMf_dvd hMg_dvd).trans hfg_modP).trans hcore_dvd_M
+  -- A shared index would force a square factor of the square-free core.
+  rw [Finset.disjoint_left]
+  intro i hiS hiT
+  have h1 :
+      HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i) ∣
+        HexBerlekampMathlib.toMathlibPolynomial (monicModPImage (Hex.ZPoly.modP p f)) := by
+    rw [← hAf]; exact Finset.dvd_prod_of_mem _ hiS
+  have h2 :
+      HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i) ∣
+        HexBerlekampMathlib.toMathlibPolynomial (monicModPImage (Hex.ZPoly.modP p g)) := by
+    rw [← hAg]; exact Finset.dvd_prod_of_mem _ hiT
+  have hsqM :
+      HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i) *
+          HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i) ∣
+        HexBerlekampMathlib.toMathlibPolynomial (monicModPImage (Hex.ZPoly.modP p core)) :=
+    (mul_dvd_mul h1 h2).trans hMfMg_dvd_M
+  exact (hpart.factors_irreducible i).not_isUnit (hsqfree _ hsqM)
+
 /-- Index type for the local factors stored in executable Hensel lift data. -/
 abbrev LiftedFactorIndex (d : Hex.LiftData) : Type :=
   Fin d.liftedFactors.size
