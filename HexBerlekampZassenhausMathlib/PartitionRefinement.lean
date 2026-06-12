@@ -183,6 +183,32 @@ theorem supportPartitionByMinColumn_length_eq_ncard_of_partition {r : Nat}
       Set.ncard_coe_finset, List.toFinset_card_of_nodup hLnodup]
   rw [hncard]
 
+/--
+Concrete lifted-support partition count for the true supports represented by a
+`LiftedFactorSubsetPartition core d Finset.univ core`.
+
+This composes the lifted-index cover/disjoint/nonempty facts with the generic
+support-equivalence partition spine above. The remaining arithmetic count
+identifying this `ncard` with `normalizedFactors (toPolynomial core).card` is
+kept separate.
+-/
+theorem supportPartitionByMinColumn_length_eq_liftedTrueSupports_ncard
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hpartition :
+      LiftedFactorSubsetPartition core d Finset.univ core)
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    (supportPartitionByMinColumn (liftedTrueSupports core d)).length =
+      (liftedTrueSupports core d).ncard :=
+  supportPartitionByMinColumn_length_eq_ncard_of_partition
+    (liftedTrueSupports core d)
+    (liftedTrueSupports.cover_of_partition hpartition)
+    (liftedTrueSupports.eq_of_mem_inter_of_partition hpartition)
+    (liftedTrueSupports.nonempty_of_partition
+      hcore_ne hcore_primitive hcore_lc_pos hprecision)
+
 namespace ForwardRecoveryInputs
 
 /-- Under an `ExpectedTrueFactors` package whose indicators are the

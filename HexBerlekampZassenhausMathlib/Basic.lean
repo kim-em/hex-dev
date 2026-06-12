@@ -2600,6 +2600,70 @@ structure LiftedFactorSubsetPartition
       S ⊆ T
 
 /--
+The lifted-index supports corresponding to irreducible integer divisors of
+`core`, represented at the Hensel lift by `RepresentsIntegerFactorAtLift`.
+
+This is the concrete `trueSupports` family used by the BHKS support-partition
+counting step: the executable representation is a `Finset`, while the lattice
+side consumes supports as sets of lifted-factor indices.
+
+The accompanying partition lemmas specialize to the full lifted-index universe
+`J = Finset.univ`; proper recursive rest partitions keep their remaining-index
+guard outside this support family.
+-/
+def liftedTrueSupports (core : Hex.ZPoly) (d : Hex.LiftData) :
+    Set (Set (LiftedFactorIndex d)) :=
+  fun U =>
+    ∃ (f : Hex.ZPoly) (S : LiftedFactorSubset d),
+      Irreducible (HexPolyZMathlib.toPolynomial f) ∧
+        f ∣ core ∧
+          RepresentsIntegerFactorAtLift core d f S ∧
+            (↑S : Set (LiftedFactorIndex d)) = U
+
+namespace liftedTrueSupports
+
+/-- The full lifted-subset partition covers every lifted index by some true
+support. -/
+theorem cover_of_partition
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hpartition : LiftedFactorSubsetPartition core d Finset.univ core) :
+    ∀ i : LiftedFactorIndex d,
+      ∃ S ∈ liftedTrueSupports core d, i ∈ S := by
+  intro i
+  obtain ⟨f, S, hirr, hdvd, _hSJ, hiS, hrep⟩ :=
+    hpartition.cover (J := (Finset.univ : LiftedFactorSubset d)) (by simp)
+  refine ⟨(↑S : Set (LiftedFactorIndex d)), ?_, by simpa using hiS⟩
+  exact ⟨f, S, hirr, hdvd, hrep, rfl⟩
+
+/-- Two true supports in the full lifted-subset partition that share a lifted
+index are equal. -/
+theorem eq_of_mem_inter_of_partition
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hpartition : LiftedFactorSubsetPartition core d Finset.univ core) :
+    ∀ S ∈ liftedTrueSupports core d, ∀ T ∈ liftedTrueSupports core d,
+      ∀ i : LiftedFactorIndex d, i ∈ S → i ∈ T → S = T := by
+  intro U hU V hV i hiU hiV
+  rcases hU with ⟨f, S, hirr_f, hdvd_f, hrep_f, rfl⟩
+  rcases hV with ⟨g, T, hirr_g, hdvd_g, hrep_g, rfl⟩
+  by_cases hassoc :
+      Associated (HexPolyZMathlib.toPolynomial f)
+        (HexPolyZMathlib.toPolynomial g)
+  · have hST : S = T :=
+      hpartition.unique_up_to_associated hirr_f hdvd_f
+        (Finset.subset_univ S) hrep_f hirr_g hdvd_g
+        (Finset.subset_univ T) hrep_g hassoc
+    exact congrArg (fun R : LiftedFactorSubset d =>
+      (↑R : Set (LiftedFactorIndex d))) hST
+  · exfalso
+    have hdisj : Disjoint S T :=
+      hpartition.pairwise_disjoint hirr_f hdvd_f
+        (Finset.subset_univ S) hrep_f hirr_g hdvd_g
+        (Finset.subset_univ T) hrep_g hassoc
+    exact (Finset.disjoint_left.mp hdisj) (by simpa using hiU) (by simpa using hiV)
+
+end liftedTrueSupports
+
+/--
 Specialisation of `LiftedFactorSubsetPartition.cover` to `J.min'`: the
 minimum index of a nonempty remaining set lies in the representing subset
 of some irreducible divisor of `target`. This is the exact "cover at min"
@@ -13612,6 +13676,32 @@ private theorem not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc
     (defaultFactorCoeffBound_valid core hcore_ne factor hfactor_dvd)
     hcore_ne hcore_primitive hcore_lc_pos hcore_lc_le hfactor_dvd hfactor_irr
     hprecision
+
+namespace liftedTrueSupports
+
+/-- Every true support is nonempty at a sufficiently precise primitive core
+lift. -/
+theorem nonempty_of_partition
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    ∀ S ∈ liftedTrueSupports core d, S.Nonempty := by
+  intro U hU
+  rcases hU with ⟨f, S, hirr, hdvd, hrep, rfl⟩
+  by_contra hnot
+  rw [Set.not_nonempty_iff_eq_empty] at hnot
+  have hS_empty : S = ∅ := by
+    apply Finset.ext
+    intro i
+    have hiff := Set.ext_iff.mp hnot i
+    simpa using hiff
+  subst hS_empty
+  exact not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core
+    hcore_ne hcore_primitive hcore_lc_pos hprecision hdvd hirr hrep
+
+end liftedTrueSupports
 
 /--
 Main candidate divisibility theorem for the Mathlib-side correspondence of the
