@@ -53,6 +53,34 @@ def content (f : ZPoly) : Int :=
 def primitivePart (f : ZPoly) : ZPoly :=
   DensePoly.primitivePart f
 
+/-- Substitute the variable `X ↦ c * X`: the `i`-th coefficient is multiplied by
+`c ^ i`.
+
+On a monic transform `c^(d-1) · core(X / c)` (the polynomial built by
+`toMonic`), this is the inverse of the integer-scaling substitution: it maps a
+monic factor `g` of the transform to `g(c · X)`, an integer multiple of the
+corresponding factor of `core`. Composing with `primitivePart` recovers the
+primitive integer factor of `core`. This is *not* the same as `DensePoly.scale`,
+which multiplies the whole polynomial by a constant. -/
+def dilate (c : Int) (p : ZPoly) : ZPoly :=
+  DensePoly.ofCoeffs <| ((List.range p.size).map fun i => c ^ i * p.coeff i).toArray
+
+theorem coeff_dilate (c : Int) (p : ZPoly) (n : Nat) :
+    (dilate c p).coeff n = c ^ n * p.coeff n := by
+  unfold dilate
+  rw [DensePoly.coeff_ofCoeffs_list, List.getD_eq_getElem?_getD, List.getElem?_map]
+  by_cases hn : n < p.size
+  · rw [List.getElem?_range hn]; rfl
+  · have hzero : p.coeff n = 0 :=
+      DensePoly.coeff_eq_zero_of_size_le p (Nat.le_of_not_lt hn)
+    rw [List.getElem?_eq_none (by simpa using Nat.le_of_not_lt hn), hzero, Int.mul_zero]
+    rfl
+
+@[simp] theorem dilate_one (p : ZPoly) : dilate 1 p = p := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [coeff_dilate, Int.one_pow, Int.one_mul]
+
 /-- A `ZPoly` is primitive when its content is `1`. -/
 def Primitive (f : ZPoly) : Prop :=
   content f = 1
