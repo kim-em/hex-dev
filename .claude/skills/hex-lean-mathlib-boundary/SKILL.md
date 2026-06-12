@@ -51,6 +51,36 @@ implicit `[Bounds primeData.p]` cannot be synthesized and the type silently
 becomes `sorry`. Write the instance explicitly in such signatures:
 `@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds (…)`.
 
+## The Mathlib layer *models* executable definitions
+
+The bridge does not just prove lemmas about the executable types; it carries
+**model definitions that mirror the shape of executable functions** —
+e.g. `scaledRecombinationCandidate` / `scaledLiftedFactorProduct` /
+`RepresentsIntegerFactorAtLift` (`HexBerlekampZassenhausMathlib/Basic.lean`)
+mirror the per-step candidate built inside `Hex.scaledRecombinationSearchModAux`
+/ `bhksIndicatorCandidate?`. Before changing an executable definition's *shape*
+(the candidate expression, the recombination target, the lift transform),
+grep the Mathlib layer for proofs that `unfold` it or restate its body, and
+size that surface first — it is often far larger than the executable proofs.
+
+Two directions behave very differently under such a change:
+
+- **Product / divisibility direction survives.** Proofs like `*_product` rest
+  on the `exactQuotient? target candidate` recursion, which is blind to how the
+  candidate was built, so they need only mechanical `let`-expression updates
+  (mirror the new candidate text) — never a new argument.
+- **Recovery / coverage direction does not.** Proofs that identify the emitted
+  candidate against an expected factor (the `RepresentsIntegerFactorAtLift`
+  recovery chain, the coverage proof in `Basic.lean`) *encode* the old shape;
+  changing it is a structural remodel needing new math, not a token swap. These
+  feed the still-`sorry` headline `factor_irreducible_of_nonUnit`, but they are
+  proven (not sorried) lemmas, so they must still compile.
+
+Consequence: a soundness fix to the executable recombination is **not**
+independently landable green — the executable change and the Mathlib remodel
+must land in one PR. Scope accordingly (see #6799 / #6801 for the
+`DensePoly.scale` → `ZPoly.dilate` example).
+
 ## Pre-existing sorries
 
 `HexBerlekampMathlib/Basic.lean` and `HexHenselMathlib/Correctness.lean` ship
