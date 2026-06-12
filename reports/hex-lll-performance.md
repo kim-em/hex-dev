@@ -370,9 +370,10 @@ fixed-precision enclosure pass (which costs `O(n³)` on fixed-width
 mantissas, independent of the `~2^(3.3n)` Gram-determinant bit growth
 on this family); at `n ∈ {15, 20, 25}` the predictor still picks the exact
 `d`/`ν` checker, where the small absolute cost difference is the
-checker-share figure. The harsh-cubic entries are `2^(3.3n)` wide, so
-every rung leaves the word-scale regime of the packed product-equality
-certificate and the same-lattice clause runs the materialized comparison.
+checker-share figure. The harsh-cubic entries are `2^(3.3n)` wide, so the
+same-lattice clause runs the packed product-equality certificate on wide
+entries, where the packed dot products cost the same bit operations as a
+materialized comparison.
 
 The external `verified Isabelle certified-LLL` executable is now wired from the
 same Zenodo 2636367 archive as the native comparator:
