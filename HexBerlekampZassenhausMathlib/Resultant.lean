@@ -412,6 +412,35 @@ theorem sylvesterMap_commonFactor_syzygy
   dsimp [Polynomial.sylvesterMap]
   ring_nf
 
+/--
+Scalar-shifted common-factor syzygy for the Sylvester map.
+
+When `f` and `g` share the factor `q` only after reducing modulo a scalar `c`
+— recorded by the explicit witnesses `f = q * a + C c * r` and
+`g = q * b + C c * s` — the shifted pair `(-a * X^t, b * X^t)` is no longer
+killed by the Sylvester map, but its image is the *scalar multiple*
+`C c * ((r * b - s * a) * X^t)`.
+
+This is the bridge from the exact syzygy `sylvesterMap_commonFactor_syzygy`
+(the `c = 0` case) to the divisibility used by the column-reduction proof: the
+linear combination of Sylvester columns selected by `(-a * X^t, b * X^t)` is
+entrywise divisible by `c`. Taking `t < q.natDegree` shifts gives `d`
+independent such combinations.
+-/
+theorem sylvesterMap_commonFactor_smul
+    {R : Type*} [CommRing R]
+    (q a b r s : Polynomial R) (c : R) {m n t : Nat}
+    (hleft : -a * Polynomial.X ^ t ∈ Polynomial.degreeLT R m)
+    (hright : b * Polynomial.X ^ t ∈ Polynomial.degreeLT R n)
+    (hf : (q * a + Polynomial.C c * r).natDegree ≤ m)
+    (hg : (q * b + Polynomial.C c * s).natDegree ≤ n) :
+    (Polynomial.sylvesterMap (q * a + Polynomial.C c * r) (q * b + Polynomial.C c * s) hf hg
+      (⟨-a * Polynomial.X ^ t, hleft⟩,
+       ⟨b * Polynomial.X ^ t, hright⟩) : Polynomial R)
+      = Polynomial.C c * ((r * b - s * a) * Polynomial.X ^ t) := by
+  dsimp [Polynomial.sylvesterMap]
+  ring
+
 end
 
 end HexBerlekampZassenhausMathlib
