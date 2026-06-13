@@ -441,6 +441,37 @@ theorem sylvesterMap_commonFactor_smul
   dsimp [Polynomial.sylvesterMap]
   ring
 
+/--
+Each entry of the Sylvester column combination selected by the shifted
+common-factor direction `(-a * X^t, b * X^t)` is the scalar `c` times a fixed
+coefficient.
+
+The coordinate vector of the direction in the product basis multiplies the
+Sylvester matrix to the coordinate vector of the image
+`C c * ((r * b - s * a) * X^t)` (`sylvesterMap_commonFactor_smul`), whose
+coefficients are visibly `c`-multiples. Hence the selected column combination
+is entrywise divisible by `c`: this is the per-entry input the determinant
+column-reduction needs once the `q.natDegree` shifts are assembled.
+-/
+theorem sylvester_mulVec_commonFactor_smul
+    {R : Type*} [CommRing R]
+    (q a b r s : Polynomial R) (c : R) {m n t : Nat}
+    (hleft : -a * Polynomial.X ^ t ∈ Polynomial.degreeLT R m)
+    (hright : b * Polynomial.X ^ t ∈ Polynomial.degreeLT R n)
+    (hf : (q * a + Polynomial.C c * r).natDegree ≤ m)
+    (hg : (q * b + Polynomial.C c * s).natDegree ≤ n)
+    (i : Fin (m + n)) :
+    (Polynomial.sylvester (q * a + Polynomial.C c * r) (q * b + Polynomial.C c * s) m n).mulVec
+        ((Polynomial.degreeLT.basisProd R m n).repr
+          (⟨-a * Polynomial.X ^ t, hleft⟩, ⟨b * Polynomial.X ^ t, hright⟩)) i
+      = c * ((r * b - s * a) * Polynomial.X ^ t).coeff i := by
+  have hmat := (Polynomial.toMatrix_sylvesterMap' (q * a + Polynomial.C c * r)
+    (q * b + Polynomial.C c * s) hf hg).symm
+  rw [Polynomial.degreeLT.basisProd] at *
+  rw [hmat, LinearMap.toMatrix_mulVec_repr]
+  rw [Polynomial.degreeLT.basis_repr, sylvesterMap_commonFactor_smul,
+    Polynomial.coeff_C_mul]
+
 end
 
 end HexBerlekampZassenhausMathlib
