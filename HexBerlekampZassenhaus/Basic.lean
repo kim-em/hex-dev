@@ -4634,6 +4634,55 @@ theorem centeredModNat_emod_self (z : Int) (m : Nat) :
     unfold centeredModNat
     rw [if_neg hm, if_neg hm, hmod]
 
+/-- `centeredModNat` chooses a representative congruent to the input modulo `m`. -/
+theorem self_sub_centeredModNat_dvd (z : Int) (m : Nat) :
+    (m : Int) ∣ z - centeredModNat z m := by
+  by_cases hm : m = 0
+  · subst hm
+    simp [centeredModNat]
+  · let r : Int := z % (m : Int)
+    have hr_dvd : (m : Int) ∣ z - r := by
+      have hmod : z % (m : Int) = r % (m : Int) := by
+        simp [r]
+      exact Int.dvd_of_emod_eq_zero
+        ((Int.emod_eq_emod_iff_emod_sub_eq_zero).mp hmod)
+    unfold centeredModNat
+    simp only [hm, ↓reduceIte]
+    by_cases hsmall : 2 * (z % (m : Int)).natAbs ≤ m
+    · simpa [hsmall, r] using hr_dvd
+    · by_cases hneg : z % (m : Int) < 0
+      · obtain ⟨t, ht⟩ := hr_dvd
+        refine ⟨t - 1, ?_⟩
+        grind
+      · obtain ⟨t, ht⟩ := hr_dvd
+        refine ⟨t + 1, ?_⟩
+        grind
+
+/--
+The BHKS cut decomposes the centered ambient representative into a lower
+centered residue plus `p^b` times the high-bit cut coefficient.
+-/
+theorem centeredResiduePow_add_pow_mul_psiCut
+    (p a b : Nat) (z : Int) (hmod : p ^ b ≠ 0) :
+    centeredResiduePow p a z =
+      centeredResiduePow p b (centeredResiduePow p a z) +
+        ((p ^ b : Nat) : Int) * psiCut p a b z := by
+  unfold psiCut
+  rw [if_neg hmod]
+  let xCentered := centeredResiduePow p a z
+  let lower := centeredResiduePow p b xCentered
+  have hdvd : ((p ^ b : Nat) : Int) ∣ xCentered - lower := by
+    have h := self_sub_centeredModNat_dvd xCentered (p ^ b)
+    simpa [lower, centeredResiduePow] using h
+  obtain ⟨t, ht⟩ := hdvd
+  have hdiv : (xCentered - lower) / ((p ^ b : Nat) : Int) = t := by
+    rw [ht, Int.mul_ediv_cancel_left]
+    exact_mod_cast hmod
+  change xCentered = lower +
+    ((p ^ b : Nat) : Int) * ((xCentered - lower) / ((p ^ b : Nat) : Int))
+  rw [hdiv]
+  omega
+
 /--
 If `y` is an exact integer with `|y| ≤ B`, `y ≡ z (mod p^a)`, and the ambient
 modulus `p^a` is large enough to separate the centered residue (`2*B < p^a`),
@@ -4717,6 +4766,20 @@ theorem cldCoeffs_getD_of_lt
     simp [hlen]
   rw [Array.getElem?_eq_getElem (by simpa [hsize] using h)]
   simp [List.getElem_toArray, List.getElem_map, List.getElem_range]
+
+/-- In-range CLD coefficients are the high-bit part of `cldQuotientMod`. -/
+theorem cldQuotientMod_coeff_decomp_of_lt
+    (f g : ZPoly) (p a j : Nat)
+    (hj : j < f.degree?.getD 0)
+    (hb : p ^ bhksCoeffCutThreshold p f j ≠ 0) :
+    centeredResiduePow p a ((cldQuotientMod f g p a).coeff j) =
+      centeredResiduePow p (bhksCoeffCutThreshold p f j)
+          (centeredResiduePow p a ((cldQuotientMod f g p a).coeff j)) +
+        ((p ^ bhksCoeffCutThreshold p f j : Nat) : Int) *
+          (cldCoeffs f p a g).getD j 0 := by
+  rw [cldCoeffs_getD_of_lt f p a g j hj]
+  exact centeredResiduePow_add_pow_mul_psiCut p a (bhksCoeffCutThreshold p f j)
+    ((cldQuotientMod f g p a).coeff j) hb
 
 /-- Per-coordinate BHKS cut thresholds for the all-coefficients CLD lattice. -/
 def bhksCutThresholds (f : ZPoly) (p : Nat) : Array Nat :=
