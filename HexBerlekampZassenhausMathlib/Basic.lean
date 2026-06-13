@@ -5018,6 +5018,76 @@ theorem centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
     hrep hprecision
 
+/-- Abstract-bound recovered-coordinate equality: if the variable-dilated
+centred lifted-factor product is congruent to `factor` modulo the Hensel
+modulus, then Mignotte precision recovers `factor` exactly. -/
+theorem centeredLiftPoly_dilatedCenteredLiftProduct_eq_factor_of_bound
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (B' : Nat)
+    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
+    (hcong :
+      Hex.ZPoly.reduceModPow
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+            (Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k)))
+          d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    Hex.centeredLiftPoly
+        (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+          (Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k)))
+        (d.p ^ d.k) =
+      factor := by
+  have h :=
+    Hex.centeredLiftPoly_eq_of_reduceModPow_eq
+      factor
+      (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+        (Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k)))
+      d.p d.k B' hvalid hprecision hcong
+  rwa [centeredLiftPoly_reduceModPow_eq _ _ _ d.p_pos] at h
+
+/-- Abstract-bound exact recovery for the corrected non-monic candidate
+`liftedRecoveryCandidate`.  The equality hypothesis is stated in the coordinate
+system used by the executable search: centre the selected lifted product first,
+then dilate by `lc(core)`. -/
+theorem liftedRecoveryCandidate_eq_factor_of_recovery_of_bound
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (_B' : Nat)
+    (_hvalid : ∀ i, (factor.coeff i).natAbs ≤ _B')
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hrecovered :
+      Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+          (Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k)) =
+        factor)
+    (_hprecision : 2 * _B' < d.p ^ d.k) :
+    liftedRecoveryCandidate core d S = factor := by
+  unfold liftedRecoveryCandidate
+  rw [hrecovered]
+  have hprimitive : Hex.ZPoly.primitivePart factor = factor :=
+    Hex.ZPoly.primitivePart_eq_self_of_primitive factor
+      (by simpa [Hex.ZPoly.Primitive] using hfactor_prim)
+  rw [hprimitive]
+  exact hfactor_norm
+
+/-- Default-bound wrapper for
+`liftedRecoveryCandidate_eq_factor_of_recovery_of_bound`. -/
+theorem liftedRecoveryCandidate_eq_factor_of_recovery
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hdvd : factor ∣ core)
+    (hfactor_prim : Hex.ZPoly.content factor = 1)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hrecovered :
+      Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+          (Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k)) =
+        factor)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    liftedRecoveryCandidate core d S = factor :=
+  liftedRecoveryCandidate_eq_factor_of_recovery_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
+    hfactor_prim hfactor_norm hrecovered hprecision
+
 private theorem densePoly_scale_one_int (f : Hex.ZPoly) :
     Hex.DensePoly.scale (1 : Int) f = f := by
   apply Hex.DensePoly.ext_coeff
@@ -9700,6 +9770,35 @@ private theorem size_scale_eq_of_monic_of_ne_zero
     simpa [Hex.DensePoly.size] using h
   exact le_antisymm hg_size_le hg_size_ge
 
+/-- Variable dilation by a nonzero integer preserves stored size for monic
+integer polynomials. -/
+private theorem size_dilate_eq_of_monic_of_ne_zero
+    {c : Int} (hc : c ≠ 0) {f : Hex.ZPoly} (hmonic : Hex.DensePoly.Monic f) :
+    (Hex.ZPoly.dilate c f).size = f.size := by
+  have hf_size_pos : 0 < f.size := zpoly_size_pos_of_monic hmonic
+  have hf_lead : f.coeff (f.size - 1) = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last f hf_size_pos]
+    exact hmonic
+  set g := Hex.ZPoly.dilate c f with hg_def
+  have hcoeff_top : g.coeff (f.size - 1) = c ^ (f.size - 1) := by
+    rw [hg_def, Hex.ZPoly.coeff_dilate, hf_lead, Int.mul_one]
+  have hpow_ne : c ^ (f.size - 1) ≠ 0 := pow_ne_zero _ hc
+  have hg_size_ge : f.size ≤ g.size := by
+    by_contra hlt
+    have hlt' : g.size < f.size := Nat.lt_of_not_ge hlt
+    have hle : g.size ≤ f.size - 1 := Nat.le_pred_of_lt hlt'
+    have h_zero := Hex.DensePoly.coeff_eq_zero_of_size_le g hle
+    rw [hcoeff_top] at h_zero
+    exact hpow_ne h_zero
+  have hg_size_le : g.size ≤ f.size := by
+    rw [hg_def]
+    unfold Hex.ZPoly.dilate
+    have h := Hex.DensePoly.size_ofCoeffs_le
+      ((List.range f.size).map fun i => c ^ i * f.coeff i).toArray
+    rw [List.size_toArray, List.length_map, List.length_range] at h
+    simpa [Hex.DensePoly.size] using h
+  exact le_antisymm hg_size_le hg_size_ge
+
 /-- Centred-lift preserves stored size when the leading coefficient is strictly
 positive and lies inside the Mignotte half-window. Companion to
 `leadingCoeff_centeredLiftPoly_of_pos_leadingCoeff_bound`. -/
@@ -9926,6 +10025,111 @@ theorem natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum
   exact natDegree_toPolynomial_scaledRecombinationCandidate_eq_sum_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_ne hcore_lc_pos hd_liftedFactor_monic hcore_lc_le hprecision T
+
+/-- The Mathlib-transported `natDegree` of the corrected recovered candidate
+equals the sum of the selected lifted-factor degrees.  The selected product is
+centred while monic, then variable-dilated by a nonzero leading coefficient;
+both operations preserve the stored degree before primitive/sign
+normalisation. -/
+theorem natDegree_toPolynomial_liftedRecoveryCandidate_eq_sum
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (T : LiftedFactorSubset d) :
+    (HexPolyZMathlib.toPolynomial
+        (liftedRecoveryCandidate core d T)).natDegree =
+      ∑ i ∈ T,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
+  set lp := liftedFactorProduct d T with hlp_def
+  have hlp_monic : Hex.DensePoly.Monic lp :=
+    liftedFactorProduct_monic d T (fun i _ => hd_liftedFactor_monic i)
+  set cl := Hex.centeredLiftPoly lp (d.p ^ d.k) with hcl_def
+  have hcl_monic : Hex.DensePoly.Monic cl := by
+    rw [hcl_def]
+    exact monic_centeredLiftPoly_of_monic hlp_monic hd_modulus
+  have hcl_size : cl.size = lp.size := by
+    rw [hcl_def]
+    exact size_centeredLiftPoly_eq_of_monic hlp_monic hd_modulus
+  have hcore_lc_ne : Hex.DensePoly.leadingCoeff core ≠ (0 : Int) :=
+    ne_of_gt hcore_lc_pos
+  have hdil_size :
+      (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl).size =
+        cl.size :=
+    size_dilate_eq_of_monic_of_ne_zero hcore_lc_ne hcl_monic
+  have hcl_size_pos : 0 < cl.size := zpoly_size_pos_of_monic hcl_monic
+  have hdil_ne :
+      Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl ≠ 0 := by
+    intro h
+    have h0 :
+        (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl).size = 0 := by
+      rw [h]; rfl
+    omega
+  have hpp_size :
+      (Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl)).size =
+        (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl).size :=
+    size_primitivePart_eq_of_ne_zero hdil_ne
+  have hrec_size :
+      (liftedRecoveryCandidate core d T).size = lp.size := by
+    show (Hex.normalizeFactorSign
+        (Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+            (Hex.centeredLiftPoly (liftedFactorProduct d T) (d.p ^ d.k))))).size =
+        lp.size
+    rw [← hlp_def, ← hcl_def, size_normalizeFactorSign_eq, hpp_size,
+      hdil_size, hcl_size]
+  have hrec_size_pos : 0 < (liftedRecoveryCandidate core d T).size := by
+    rw [hrec_size, ← hcl_size]
+    exact hcl_size_pos
+  have hlp_size_pos : 0 < lp.size := by
+    rw [← hcl_size]
+    exact hcl_size_pos
+  have hrec_natDeg :
+      (HexPolyZMathlib.toPolynomial
+          (liftedRecoveryCandidate core d T)).natDegree =
+        (liftedRecoveryCandidate core d T).size - 1 := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hrec_size_pos]
+  have hlp_natDeg :
+      (HexPolyZMathlib.toPolynomial lp).natDegree = lp.size - 1 := by
+    rw [HexPolyMathlib.natDegree_toPolynomial]
+    simp [Hex.DensePoly.degree?, Nat.ne_of_gt hlp_size_pos]
+  rw [hrec_natDeg, hrec_size, ← hlp_natDeg, hlp_def, toPolynomial_liftedFactorProduct]
+  apply Polynomial.natDegree_prod_of_monic
+  intro i _
+  show (HexPolyZMathlib.toPolynomial (liftedFactor d i)).leadingCoeff = 1
+  rw [HexPolyMathlib.leadingCoeff_toPolynomial]
+  exact hd_liftedFactor_monic i
+
+/-- Abstract-bound wrapper for
+`natDegree_toPolynomial_liftedRecoveryCandidate_eq_sum`.  The bound and
+precision hypotheses are used only to derive the modulus lower bound from the
+positive leading coefficient. -/
+theorem natDegree_toPolynomial_liftedRecoveryCandidate_eq_sum_of_bound
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (B' : Nat)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision : 2 * B' < d.p ^ d.k)
+    (T : LiftedFactorSubset d) :
+    (HexPolyZMathlib.toPolynomial
+        (liftedRecoveryCandidate core d T)).natDegree =
+      ∑ i ∈ T,
+        (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree := by
+  have hB_pos : 0 < B' := by
+    have hlc_nat_pos :
+        0 < (Hex.DensePoly.leadingCoeff core).natAbs :=
+      Int.natAbs_pos.mpr (ne_of_gt hcore_lc_pos)
+    omega
+  have hd_modulus : 2 ≤ d.p ^ d.k := by
+    have htwo_le : 2 ≤ 2 * B' := by omega
+    omega
+  exact natDegree_toPolynomial_liftedRecoveryCandidate_eq_sum
+    hcore_lc_pos hd_modulus hd_liftedFactor_monic T
 
 /-- Abstract-bound variant of
 `natDegree_toPolynomial_eq_sum_of_represents_of_primitive_pos_lc_core`:
@@ -12731,6 +12935,68 @@ private theorem normalizeFactorSign_scaledRecombinationCandidate_eq
       ¬ Hex.DensePoly.leadingCoeff (scaledRecombinationCandidate core d T) < 0 := by
     omega
   rw [if_neg hnot]
+
+/-- The corrected recovered candidate is primitive whenever `lc(core)` is
+positive and the selected lifted factors are monic. -/
+private theorem zpoly_primitive_liftedRecoveryCandidate
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic : ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (T : LiftedFactorSubset d) :
+    Hex.ZPoly.Primitive (liftedRecoveryCandidate core d T) := by
+  set lp := liftedFactorProduct d T with hlp_def
+  have hlp_monic : Hex.DensePoly.Monic lp :=
+    liftedFactorProduct_monic d T (fun i _ => hd_liftedFactor_monic i)
+  set cl := Hex.centeredLiftPoly lp (d.p ^ d.k) with hcl_def
+  have hcl_monic : Hex.DensePoly.Monic cl := by
+    rw [hcl_def]
+    exact monic_centeredLiftPoly_of_monic hlp_monic hd_modulus
+  have hcore_lc_ne : Hex.DensePoly.leadingCoeff core ≠ (0 : Int) :=
+    ne_of_gt hcore_lc_pos
+  have hcl_size_pos : 0 < cl.size := zpoly_size_pos_of_monic hcl_monic
+  have hdil_size :
+      (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl).size =
+        cl.size :=
+    size_dilate_eq_of_monic_of_ne_zero hcore_lc_ne hcl_monic
+  have hdil_ne :
+      Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl ≠ 0 := by
+    intro h
+    have h0 :
+        (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl).size = 0 := by
+      rw [h]; rfl
+    omega
+  have hdil_content_ne :
+      Hex.ZPoly.content
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl) ≠
+        (0 : Int) :=
+    HexPolyZMathlib.content_ne_zero _ hdil_ne
+  show Hex.ZPoly.content (liftedRecoveryCandidate core d T) = 1
+  unfold liftedRecoveryCandidate
+  rw [← hlp_def, ← hcl_def, content_normalizeFactorSign_eq]
+  exact Hex.ZPoly.primitivePart_primitive _ hdil_content_ne
+
+/-- Abstract-bound wrapper for
+`zpoly_primitive_liftedRecoveryCandidate`. -/
+private theorem zpoly_primitive_liftedRecoveryCandidate_of_bound
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (B' : Nat)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hd_liftedFactor_monic : ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision : 2 * B' < d.p ^ d.k)
+    (T : LiftedFactorSubset d) :
+    Hex.ZPoly.Primitive (liftedRecoveryCandidate core d T) := by
+  have hB_pos : 0 < B' := by
+    have hlc_nat_pos :
+        0 < (Hex.DensePoly.leadingCoeff core).natAbs :=
+      Int.natAbs_pos.mpr (ne_of_gt hcore_lc_pos)
+    omega
+  have hd_modulus : 2 ≤ d.p ^ d.k := by
+    have htwo_le : 2 ≤ 2 * B' := by omega
+    omega
+  exact zpoly_primitive_liftedRecoveryCandidate
+    hcore_lc_pos hd_modulus hd_liftedFactor_monic T
 
 /-- Abstract-bound variant of `zpoly_primitive_scaledRecombinationCandidate`:
 takes `B' : Nat`,
