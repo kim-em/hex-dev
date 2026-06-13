@@ -1,4 +1,5 @@
 import HexBerlekampZassenhaus
+import Mathlib.Data.Real.Basic
 import Mathlib.LinearAlgebra.Matrix.RowCol
 
 /-!
@@ -63,6 +64,56 @@ def indicatorVector {r : Nat} (S : Set (Fin r)) : Fin r → ℤ :=
     {i : Fin r} (hi : i ∉ S) :
     indicatorVector S i = 0 := by
   simp [indicatorVector, hi]
+
+/-- Each coordinate of an indicator vector has squared real norm at most one. -/
+theorem indicatorVector_sq_apply_le_one {r : Nat} (S : Set (Fin r)) (i : Fin r) :
+    ((((indicatorVector S i : ℤ) : ℝ) ^ 2)) ≤ 1 := by
+  classical
+  by_cases hi : i ∈ S
+  · rw [indicatorVector_apply_mem S hi]
+    norm_num
+  · rw [indicatorVector_apply_not_mem S hi]
+    norm_num
+
+/-- The squared real norm of a `0/1` indicator vector is at most the ambient
+dimension. -/
+theorem indicatorVector_sq_sum_le_factorCount {r : Nat} (S : Set (Fin r)) :
+    (∑ i : Fin r, ((((indicatorVector S i : ℤ) : ℝ) ^ 2))) ≤ (r : ℝ) := by
+  calc
+    (∑ i : Fin r, ((((indicatorVector S i : ℤ) : ℝ) ^ 2)))
+        ≤ ∑ _i : Fin r, (1 : ℝ) := by
+          exact Finset.sum_le_sum (fun i _hi => indicatorVector_sq_apply_le_one S i)
+    _ = (r : ℝ) := by
+          simp
+
+/-- The BHKS cut-radius expression dominates the squared norm of every
+true-support indicator vector. -/
+theorem indicatorVector_sq_sum_le_bhksCutRadiusSq4
+    (L : Hex.BhksLatticeBasis) (S : Set (Fin L.factorCount)) :
+    (∑ i : Fin L.factorCount, ((((indicatorVector S i : ℤ) : ℝ) ^ 2))) ≤
+      (Hex.bhksCutRadiusSq4 L : ℝ) := by
+  have hnorm := indicatorVector_sq_sum_le_factorCount S
+  have hfactor_le_cut :
+      (L.factorCount : ℝ) ≤ (Hex.bhksCutRadiusSq4 L : ℝ) := by
+    unfold Hex.bhksCutRadiusSq4
+    have hnat :
+        L.factorCount ≤ 4 * L.factorCount + L.coeffWidth * L.factorCount * L.factorCount := by
+      exact Nat.le_trans (Nat.le_mul_of_pos_left L.factorCount (by decide : 0 < 4))
+        (Nat.le_add_right _ _)
+    exact_mod_cast hnat
+  exact hnorm.trans hfactor_le_cut
+
+/-- Projected-row form of `indicatorVector_sq_sum_le_bhksCutRadiusSq4`, stated
+against the cut-radius field stored by the executable Gram-Schmidt cut output. -/
+theorem indicatorVector_sq_sum_le_projectedRows_cutRadiusSq4
+    (L : Hex.BhksLatticeBasis)
+    (hrows : 1 ≤ L.factorCount + L.coeffWidth)
+    (S : Set (Fin (Hex.bhksProjectedRows L hrows).factorCount)) :
+    (∑ i : Fin (Hex.bhksProjectedRows L hrows).factorCount,
+        ((((indicatorVector S i : ℤ) : ℝ) ^ 2))) ≤
+      ((Hex.bhksProjectedRows L hrows).cutRadiusSq4 : ℝ) := by
+  simpa [Hex.bhksProjectedRows] using
+    (indicatorVector_sq_sum_le_bhksCutRadiusSq4 L S)
 
 /-- A support of lifted local-factor indices for a BHKS lattice basis. -/
 abbrev LiftedFactorSupport (L : Hex.BhksLatticeBasis) :=
