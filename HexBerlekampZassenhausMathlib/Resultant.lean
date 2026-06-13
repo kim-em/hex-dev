@@ -110,6 +110,45 @@ theorem det_dvd_of_left_cols_dvd
       (fun j : Fin d => A (σ (j.castAdd n)) (j.castAdd n))
       (fun j => hcols j (σ (j.castAdd n))))
 
+private lemma prod_cols_dvd_prod_univ_of_injective
+    {N d : Nat} (f : Fin N → ℤ) (cols : Fin d → Fin N)
+    (hcols_inj : Function.Injective cols) :
+    (∏ j : Fin d, f (cols j)) ∣ ∏ j : Fin N, f j := by
+  classical
+  have himage :
+      (∏ x ∈ Finset.univ.image cols, f x) =
+        ∏ j : Fin d, f (cols j) := by
+    rw [Finset.prod_image]
+    intro x _ y _ hxy
+    exact hcols_inj hxy
+  rw [← himage]
+  exact Finset.prod_dvd_prod_of_subset (Finset.univ.image cols) Finset.univ f
+    (Finset.subset_univ _)
+
+/--
+If any specified `d` distinct columns of an integer matrix are entrywise
+divisible by `m`, then `m ^ d` divides the determinant.
+-/
+theorem det_dvd_of_cols_dvd
+    {N d : Nat} (m : ℤ) (A : Matrix (Fin N) (Fin N) ℤ)
+    (cols : Fin d → Fin N) (hcols_inj : Function.Injective cols)
+    (hcols : ∀ (j : Fin d) (i : Fin N), m ∣ A i (cols j)) :
+    m ^ d ∣ A.det := by
+  classical
+  rw [Matrix.det_apply']
+  apply Finset.dvd_sum
+  intro σ _
+  apply dvd_mul_of_dvd_right
+  have hselected :
+      m ^ d ∣ ∏ j : Fin d, A (σ (cols j)) (cols j) := by
+    simpa [Fintype.card_fin] using
+      (pow_card_dvd_prod_of_dvd m
+        (fun j : Fin d => A (σ (cols j)) (cols j))
+        (fun j => hcols j (σ (cols j))))
+  exact hselected.trans
+    (prod_cols_dvd_prod_univ_of_injective
+      (fun j : Fin N => A (σ j) j) cols hcols_inj)
+
 /--
 Replacing a column of a square matrix by `A.mulVec w` — the linear combination
 of all columns with coefficients `w` — multiplies the determinant by the
@@ -749,6 +788,105 @@ theorem sylvester_commonFactor_colReduce {R : Type*} [CommRing R]
       simp only [Matrix.mul_apply, Matrix.mulVec, dotProduct]]
     rw [sylvester_mulVec_commonFactor_smul q a b r s c hl hr hf hg i]
     exact Dvd.intro _ rfl
+
+/--
+Explicit-witness common-factor divisibility for integer resultants.
+
+If `f` and `g` share a monic degree-`d` factor `q` modulo `m`, recorded by
+integer witnesses `f = q*a + C m*r` and `g = q*b + C m*s`, and the cofactor
+`b` supplies the monic pivot used by the Sylvester column reduction, then
+`m ^ d` divides the integer resultant of `f` and `g`.
+-/
+theorem commonFactor_dvd_resultant
+    (f g q a b r s : Polynomial ℤ) (m : ℤ) {d : Nat}
+    (hf_wit : f = q * a + Polynomial.C m * r)
+    (hg_wit : g = q * b + Polynomial.C m * s)
+    (hq_monic : q.Monic)
+    (hq_deg : q.natDegree = d)
+    (hd : d ≤ g.natDegree)
+    (ha : a.natDegree + d ≤ f.natDegree)
+    (hb : b.natDegree + d ≤ g.natDegree)
+    (hb_pivot : b.coeff (g.natDegree - d) = 1) :
+    m ^ d ∣ Polynomial.resultant f g := by
+  classical
+  have hq_monic_used : q.Monic := hq_monic
+  have hq_deg_used : q.natDegree = d := hq_deg
+  subst f
+  subst g
+  let f0 := q * a + Polynomial.C m * r
+  let g0 := q * b + Polynomial.C m * s
+  let S := Polynomial.sylvester f0 g0 f0.natDegree g0.natDegree
+  let T := colReduceTransform a b f0.natDegree g0.natDegree d
+  let A := S * T
+  have hf_bound : (q * a + Polynomial.C m * r).natDegree ≤ f0.natDegree := by
+    rfl
+  have hg_bound : (q * b + Polynomial.C m * s).natDegree ≤ g0.natDegree := by
+    rfl
+  have hred :=
+    sylvester_commonFactor_colReduce q a b r s m hd ha hb hf_bound hg_bound
+  have hdetA :
+      A.det = (Polynomial.sylvester f0 g0 f0.natDegree g0.natDegree).det := by
+    dsimp [A, S, T]
+    have hdet := hred.1
+    rw [hb_pivot, one_pow, one_mul] at hdet
+    exact hdet
+  have hpiv_inj :
+      Function.Injective
+        (fun t : Fin d =>
+          ((⟨g0.natDegree - d + (t : ℕ),
+              by have := t.is_lt; omega⟩ : Fin g0.natDegree).natAdd f0.natDegree :
+            Fin (f0.natDegree + g0.natDegree))) := by
+    intro x y hxy
+    apply Fin.ext
+    have hnat :
+        f0.natDegree + (g0.natDegree - d + (x : ℕ)) =
+          f0.natDegree + (g0.natDegree - d + (y : ℕ)) := by
+      simpa only [Fin.ext_iff, Fin.coe_natAdd] using hxy
+    have hnat' :
+        g0.natDegree - d + (x : ℕ) = g0.natDegree - d + (y : ℕ) :=
+      Nat.add_left_cancel hnat
+    exact Nat.add_left_cancel hnat'
+  have hcols :
+      ∀ (t : Fin d) (i : Fin (f0.natDegree + g0.natDegree)),
+        m ∣ A i
+          ((⟨g0.natDegree - d + (t : ℕ),
+              by have := t.is_lt; omega⟩ : Fin g0.natDegree).natAdd f0.natDegree) := by
+    intro t i
+    dsimp [A, S, T]
+    exact hred.2 t i
+  have hA : m ^ d ∣ A.det :=
+    det_dvd_of_cols_dvd m A
+      (fun t : Fin d =>
+        ((⟨g0.natDegree - d + (t : ℕ),
+            by have := t.is_lt; omega⟩ : Fin g0.natDegree).natAdd f0.natDegree :
+          Fin (f0.natDegree + g0.natDegree)))
+      hpiv_inj hcols
+  rw [hdetA] at hA
+  simpa [Polynomial.resultant, f0, g0] using hA
+
+/--
+Monic-cofactor form of `commonFactor_dvd_resultant`: if the right cofactor `b`
+is monic and has the expected degree `g.natDegree - d`, then the pivot
+coefficient required by the column reduction is automatically `1`.
+-/
+theorem commonFactor_dvd_resultant_of_monic_cofactor
+    (f g q a b r s : Polynomial ℤ) (m : ℤ) {d : Nat}
+    (hf_wit : f = q * a + Polynomial.C m * r)
+    (hg_wit : g = q * b + Polynomial.C m * s)
+    (hq_monic : q.Monic)
+    (hq_deg : q.natDegree = d)
+    (hd : d ≤ g.natDegree)
+    (ha : a.natDegree + d ≤ f.natDegree)
+    (hb_degree : b.natDegree + d = g.natDegree)
+    (hb_monic : b.Monic) :
+    m ^ d ∣ Polynomial.resultant f g := by
+  have hb : b.natDegree + d ≤ g.natDegree := le_of_eq hb_degree
+  have hb_pivot : b.coeff (g.natDegree - d) = 1 := by
+    have hsub : g.natDegree - d = b.natDegree := by omega
+    rw [hsub]
+    exact hb_monic.leadingCoeff
+  exact commonFactor_dvd_resultant f g q a b r s m hf_wit hg_wit hq_monic hq_deg
+    hd ha hb hb_pivot
 
 end
 
