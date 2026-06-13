@@ -24,10 +24,10 @@ ROOT = Path(__file__).resolve().parents[2]
 # the fpLLL comparator under the `runFpylllFirstShortVector*` function
 # names (process-call fpylll subprocess); the regex accepts either.
 DEFAULT_RANDOM_CONSOLIDATED = (
-    ROOT / "reports/bench-results/hex-lll-random-bounded-steered-c5a58baf.json"
+    ROOT / "reports/bench-results/hex-lll-random-bounded-steered-30d02fca.json"
 )
 DEFAULT_HARSH_CONSOLIDATED = (
-    ROOT / "reports/bench-results/hex-lll-harsh-cubic-steered-c5a58baf.json"
+    ROOT / "reports/bench-results/hex-lll-harsh-cubic-steered-30d02fca.json"
 )
 DEFAULT_ISABELLE_BOTTOM = (
     ROOT / "reports/bench-results/hex-lll-isabelle-bottom-e211854d1435.json"
