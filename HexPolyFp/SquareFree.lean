@@ -8570,6 +8570,47 @@ private theorem squareFreeAuxRevContribution_correct_pow_of_nonzero
             hp f multiplicity fuel hmultiplicity hfuel hzero hdf_false hreachable hresidual
             residualInvariant hlevelState hrawTail ih
 
+private theorem squareFreeAuxRevContribution_pthRoot_normalized_tail_bridge_of_nontrivial
+    (hp : Hex.Nat.Prime p) (tail : FpPoly p) (multiplicity fuel : Nat)
+    (hmultiplicity : 0 < multiplicity)
+    (hzero : tail.isZero = false)
+    (hdf : (DensePoly.derivative tail).isZero = true)
+    (_hnontrivial : isOne (normalizeMonic tail).2 = false)
+    (hrawReachable : squareFreeContributionReachable (pthRoot tail))
+    (hrawZero : (pthRoot tail).isZero = false)
+    (hrawFuel : (pthRoot tail).size < fuel)
+    (residualInvariant :
+      ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
+        (DensePoly.derivative f).isZero = false →
+          squareFreeAuxRevResidualSatisfied f multiplicity fuel)
+    (hrawResidual :
+      squareFreeAuxRevResidualSatisfied (pthRoot tail) (multiplicity * p) fuel)
+    (hlevelState : YunDerivativeActiveLevelStateProvider hp)
+    (hrawTail : YunDerivativeActiveRawTailProvider hp)
+    (hnormalized :
+      squareFreeAuxRevContribution (pthRoot (normalizeMonic tail).2)
+          (multiplicity * p) fuel =
+        pow (pthRoot (normalizeMonic tail).2) (multiplicity * p)) :
+    squareFreeAuxRevContribution (pthRoot tail) (multiplicity * p) fuel =
+      pow (DensePoly.C (normalizeMonic tail).1) multiplicity *
+        squareFreeAuxRevContribution (pthRoot (normalizeMonic tail).2)
+          (multiplicity * p) fuel := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  have hp_pos : 0 < p := by
+    have htwo : 2 ≤ p := Hex.Nat.Prime.two_le hp
+    omega
+  have hmultiplicity_tail : 0 < multiplicity * p :=
+    Nat.mul_pos hmultiplicity hp_pos
+  have hraw :
+      squareFreeAuxRevContribution (pthRoot tail) (multiplicity * p) fuel =
+        pow (pthRoot tail) (multiplicity * p) :=
+    squareFreeAuxRevContribution_correct_pow_of_nonzero
+      hp (pthRoot tail) (multiplicity * p) fuel hmultiplicity_tail hrawFuel
+      hrawZero hrawReachable residualInvariant hrawResidual hlevelState hrawTail
+  exact
+    squareFreeAuxRevContribution_pthRoot_normalized_tail_bridge
+      hp tail multiplicity fuel hmultiplicity hzero hdf hraw hnormalized
+
 private theorem yunFactorsWithLevel_factor_mem_acc_or_dvd_current
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) (base level fuel : Nat)
