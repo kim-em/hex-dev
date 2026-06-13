@@ -250,7 +250,7 @@ theorem toPolynomial_content (f : Hex.ZPoly) :
     (toPolynomial f).content = Hex.ZPoly.content f := by
   have hnonneg : 0 ≤ Hex.ZPoly.content f := by
     unfold Hex.ZPoly.content Hex.DensePoly.content
-    exact Int.ofNat_nonneg _
+    exact Int.natCast_nonneg _
   refine dvd_antisymm_of_normalize_eq Polynomial.normalize_content
     (Int.normalize_of_nonneg hnonneg) ?_ ?_
   · rw [← Int.natAbs_dvd]
