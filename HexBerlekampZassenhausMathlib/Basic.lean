@@ -2669,18 +2669,20 @@ def henselSubsetCorrespondence_of_modPSubsetPartition
 /--
 Abstract-bound variant of
 `centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision`: takes an
-arbitrary `B' : Nat` and an explicit validity hypothesis
-`hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'` in place of the core-shape
-`defaultFactorCoeffBound core` precision constraint.  The body just
+arbitrary `B' : Nat`, an explicit validity hypothesis
+`hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and the scaled-product
+congruence in place of the public representation predicate.  The body just
 threads `B'` and `hvalid` into `centeredLiftPoly_eq_of_reduceModPow_eq`
-(which already accepts an abstract bound).  The original core-shape
-theorem is a wrapper around this variant.
+(which already accepts an abstract bound).  The original core-shape theorem is
+a wrapper around this variant.
 -/
 theorem centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision_of_bound
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
     (B' : Nat)
     (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
-    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
     (hprecision : 2 * B' < d.p ^ d.k) :
     Hex.centeredLiftPoly
         (Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k)
@@ -2688,12 +2690,12 @@ theorem centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision_of_bound
       factor :=
   Hex.centeredLiftPoly_eq_of_reduceModPow_eq
     factor (scaledLiftedFactorProduct core d S) d.p d.k
-    B' hvalid hprecision hrep
+    B' hvalid hprecision hscaled
 
 /--
 Mignotte recoverability for one represented integer factor.
 
-If a subset of the executable lifted factors represents an integer divisor of
+If the scaled selected lifted product is congruent to an integer divisor of
 `core` modulo the Hensel modulus, and that modulus is beyond twice the default
 Mignotte coefficient bound for `core`, then the executable centred-lift
 operation recovers the integer factor exactly.
@@ -2711,7 +2713,9 @@ theorem centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
     (hcore_ne : core ≠ 0)
     (hdvd : factor ∣ core)
-    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
     Hex.centeredLiftPoly
         (Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k)
@@ -2720,7 +2724,7 @@ theorem centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision
   centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
-    hrep hprecision
+    hscaled hprecision
 
 /--
 Abstract-bound variant of
@@ -5006,12 +5010,14 @@ theorem centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_boun
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
     (B' : Nat)
     (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
-    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
     (hprecision : 2 * B' < d.p ^ d.k) :
     Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k) =
       factor := by
   have h := centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision_of_bound
-    B' hvalid hrep hprecision
+    B' hvalid hscaled hprecision
   rwa [centeredLiftPoly_reduceModPow_eq _ _ _ d.p_pos] at h
 
 /-- The A2 recovery equality reformulated against the executable centred-lift
@@ -5030,14 +5036,16 @@ theorem centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
     (hcore_ne : core ≠ 0)
     (hdvd : factor ∣ core)
-    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
     Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k) =
       factor :=
   centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
-    hrep hprecision
+    hscaled hprecision
 
 /-- Abstract-bound recovered-coordinate equality: if the variable-dilated
 centred lifted-factor product is congruent to `factor` modulo the Hensel
@@ -5206,12 +5214,14 @@ theorem recombinationCandidate_eq_factor_of_recovery_of_monic_core_of_bound
     (hfactor_prim : Hex.ZPoly.content factor = 1)
     (hfactor_norm : Hex.normalizeFactorSign factor = factor)
     (_hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
-    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
     (hprecision : 2 * B' < d.p ^ d.k) :
     recombinationCandidate d S = factor := by
   have hlead : Hex.DensePoly.leadingCoeff core = (1 : Int) := by
     simpa [Hex.DensePoly.Monic] using hcore_monic
-  have hscaled :
+  have hscaled_eq :
       scaledLiftedFactorProduct core d S = liftedFactorProduct d S := by
     unfold scaledLiftedFactorProduct
     rw [hlead]
@@ -5220,8 +5230,8 @@ theorem recombinationCandidate_eq_factor_of_recovery_of_monic_core_of_bound
       Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k) = factor := by
     have h :=
       centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound
-        B' hvalid hrep hprecision
-    rwa [hscaled] at h
+        B' hvalid hscaled hprecision
+    rwa [hscaled_eq] at h
   unfold recombinationCandidate
   rw [polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct, hcenter]
   have hprimitive :
@@ -5251,13 +5261,15 @@ theorem recombinationCandidate_eq_factor_of_recovery_of_monic_core
     (hfactor_prim : Hex.ZPoly.content factor = 1)
     (hfactor_norm : Hex.normalizeFactorSign factor = factor)
     (_hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
-    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
     recombinationCandidate d S = factor :=
   recombinationCandidate_eq_factor_of_recovery_of_monic_core_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
-    hcore_ne hcore_monic hfactor_prim hfactor_norm _hirr hrep hprecision
+    hcore_ne hcore_monic hfactor_prim hfactor_norm _hirr hscaled hprecision
 
 /-- Abstract-bound variant of
 `recombinationCandidate_eq_factor_of_recovery`: takes `B' : Nat`,
@@ -5275,11 +5287,13 @@ theorem recombinationCandidate_eq_factor_of_recovery_of_bound
     (hfactor_prim : Hex.ZPoly.content factor = 1)
     (hfactor_norm : Hex.normalizeFactorSign factor = factor)
     (_hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
-    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
     (hprecision : 2 * B' < d.p ^ d.k) :
     recombinationCandidate d S = factor :=
   recombinationCandidate_eq_factor_of_recovery_of_monic_core_of_bound
-    B' hvalid hcore_ne hcore_monic hfactor_prim hfactor_norm _hirr hrep hprecision
+    B' hvalid hcore_ne hcore_monic hfactor_prim hfactor_norm _hirr hscaled hprecision
 
 /--
 Under a monic core hypothesis, the scaled recovery theorem identifies the
@@ -5300,13 +5314,15 @@ theorem recombinationCandidate_eq_factor_of_recovery
     (hfactor_prim : Hex.ZPoly.content factor = 1)
     (hfactor_norm : Hex.normalizeFactorSign factor = factor)
     (_hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
-    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
     recombinationCandidate d S = factor :=
   recombinationCandidate_eq_factor_of_recovery_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
-    hcore_ne hcore_monic _hcore_record hfactor_prim hfactor_norm _hirr hrep hprecision
+    hcore_ne hcore_monic _hcore_record hfactor_prim hfactor_norm _hirr hscaled hprecision
 
 /-- Abstract-bound variant of
 `recombinationCandidate_eq_factor_of_henselSubsetCorrespondence`: takes
@@ -5329,12 +5345,14 @@ theorem recombinationCandidate_eq_factor_of_henselSubsetCorrespondence_of_bound
     (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hfactor_prim : Hex.ZPoly.content factor = 1)
     (hfactor_norm : Hex.normalizeFactorSign factor = factor)
-    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
     (hprecision : 2 * B' < d.p ^ d.k) :
     recombinationCandidate d S = factor :=
   recombinationCandidate_eq_factor_of_recovery_of_bound
     B' hvalid hcore_ne hcore_monic hcore_record hfactor_prim hfactor_norm hirr
-    hrep hprecision
+    hscaled hprecision
 
 /--
 Hensel-correspondence wrapper for the monic-core recovery theorem.
@@ -5363,14 +5381,16 @@ theorem recombinationCandidate_eq_factor_of_henselSubsetCorrespondence
     (hdvd : factor ∣ core)
     (hfactor_prim : Hex.ZPoly.content factor = 1)
     (hfactor_norm : Hex.normalizeFactorSign factor = factor)
-    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
     recombinationCandidate d S = factor :=
   recombinationCandidate_eq_factor_of_henselSubsetCorrespondence_of_bound
     _h
     (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
-    hcore_ne hcore_monic hcore_record hirr hfactor_prim hfactor_norm hrep hprecision
+    hcore_ne hcore_monic hcore_record hirr hfactor_prim hfactor_norm hscaled hprecision
 
 /-- Abstract-bound variant of
 `scaledRecombinationCandidate_eq_factor_of_recovery`: takes `B' : Nat`,
@@ -5387,12 +5407,14 @@ theorem scaledRecombinationCandidate_eq_factor_of_recovery_of_bound
     (_hcore_ne : core ≠ 0)
     (hfactor_prim : Hex.ZPoly.content factor = 1)
     (hfactor_norm : Hex.normalizeFactorSign factor = factor)
-    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
     (hprecision : 2 * B' < d.p ^ d.k) :
     scaledRecombinationCandidate core d S = factor := by
   unfold scaledRecombinationCandidate
   rw [centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound
-        B' hvalid hrep hprecision]
+        B' hvalid hscaled hprecision]
   have hprimitive : Hex.ZPoly.primitivePart factor = factor :=
     Hex.ZPoly.primitivePart_eq_self_of_primitive factor
       (by simpa [Hex.ZPoly.Primitive] using hfactor_prim)
@@ -5430,13 +5452,15 @@ theorem scaledRecombinationCandidate_eq_factor_of_recovery
     (hdvd : factor ∣ core)
     (hfactor_prim : Hex.ZPoly.content factor = 1)
     (hfactor_norm : Hex.normalizeFactorSign factor = factor)
-    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
     scaledRecombinationCandidate core d S = factor :=
   scaledRecombinationCandidate_eq_factor_of_recovery_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
-    hcore_ne hfactor_prim hfactor_norm hrep hprecision
+    hcore_ne hfactor_prim hfactor_norm hscaled hprecision
 
 /-- Abstract-bound variant of
 `scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence`:
@@ -5457,11 +5481,13 @@ theorem scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence_of_
     (hcore_ne : core ≠ 0)
     (hfactor_prim : Hex.ZPoly.content factor = 1)
     (hfactor_norm : Hex.normalizeFactorSign factor = factor)
-    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
     (hprecision : 2 * B' < d.p ^ d.k) :
     scaledRecombinationCandidate core d S = factor :=
   scaledRecombinationCandidate_eq_factor_of_recovery_of_bound
-    B' hvalid hcore_ne hfactor_prim hfactor_norm hrep hprecision
+    B' hvalid hcore_ne hfactor_prim hfactor_norm hscaled hprecision
 
 /--
 Hensel-correspondence wrapper for the primitive-core scaled recovery theorem.
@@ -5489,13 +5515,15 @@ theorem scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence
     (hdvd : factor ∣ core)
     (hfactor_prim : Hex.ZPoly.content factor = 1)
     (hfactor_norm : Hex.normalizeFactorSign factor = factor)
-    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
     scaledRecombinationCandidate core d S = factor :=
   scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence_of_bound
     _h (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
-    hcore_ne hfactor_prim hfactor_norm hrep hprecision
+    hcore_ne hfactor_prim hfactor_norm hscaled hprecision
 
 /-- Monic integer polynomials have positive stored size. -/
 private theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
