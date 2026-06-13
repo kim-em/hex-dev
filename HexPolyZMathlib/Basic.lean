@@ -4,6 +4,8 @@ import HexModArithMathlib
 import Mathlib.Algebra.Polynomial.Degree.Units
 import Mathlib.Algebra.Ring.Int.Units
 import Mathlib.Data.ZMod.Basic
+import Mathlib.RingTheory.Polynomial.Content
+import Mathlib.Algebra.GCDMonoid.Nat
 import HexPolyZ
 
 /-!
@@ -233,6 +235,120 @@ theorem natDegree_toPolynomial_dilate (c : ℤ) (hc : c ≠ 0) (g : Hex.ZPoly) :
       (toPolynomial g).natDegree := by
   rw [toPolynomial_dilate, Polynomial.natDegree_comp,
     Polynomial.natDegree_C_mul_X c hc, mul_one]
+
+/-! ### Gauss content/primitive-part correspondence
+
+The executable `Hex.ZPoly.content`/`primitivePart` carry their own Gauss theory
+(`content_mul`, `content_mul_primitivePart`, `primitivePart_primitive`). These
+lemmas relate that theory to Mathlib's `Polynomial.content`/`primPart`, so the
+recombination recovery proof can lean on Mathlib's Gauss lemma machinery. -/
+
+/-- The Mathlib content of the embedded polynomial agrees with the executable
+integer content. Both are the normalized (nonnegative) gcd of the coefficients,
+so this is the Gauss bridge between the two content theories. -/
+theorem toPolynomial_content (f : Hex.ZPoly) :
+    (toPolynomial f).content = Hex.ZPoly.content f := by
+  have hnonneg : 0 ≤ Hex.ZPoly.content f := by
+    unfold Hex.ZPoly.content Hex.DensePoly.content
+    exact Int.natCast_nonneg _
+  refine dvd_antisymm_of_normalize_eq Polynomial.normalize_content
+    (Int.normalize_of_nonneg hnonneg) ?_ ?_
+  · rw [← Int.natAbs_dvd]
+    refine Hex.ZPoly.dvd_content_of_nat_dvd_coeff f _ (fun n => ?_)
+    rw [Int.natAbs_dvd, ← coeff_toPolynomial]
+    exact Polynomial.content_dvd_coeff n
+  · rw [Polynomial.dvd_content_iff_C_dvd, Polynomial.C_dvd_iff_dvd_coeff]
+    intro n
+    rw [coeff_toPolynomial]
+    exact Hex.ZPoly.content_dvd_coeff f n
+
+/-- Gauss content decomposition transported to Mathlib: the embedded polynomial
+is its content times the embedded primitive part. -/
+theorem toPolynomial_eq_C_content_mul_primitivePart (f : Hex.ZPoly) :
+    toPolynomial f =
+      Polynomial.C (Hex.ZPoly.content f) *
+        toPolynomial (Hex.ZPoly.primitivePart f) := by
+  conv_lhs => rw [← Hex.ZPoly.content_mul_primitivePart f]
+  rw [← Hex.ZPoly.C_mul_eq_scale, toPolynomial_mul, toPolynomial_C]
+
+/-- A primitive executable polynomial embeds to a Mathlib-primitive polynomial. -/
+theorem isPrimitive_toPolynomial_of_primitive (f : Hex.ZPoly)
+    (hf : Hex.ZPoly.Primitive f) : (toPolynomial f).IsPrimitive := by
+  rw [Polynomial.isPrimitive_iff_content_eq_one, toPolynomial_content]
+  exact hf
+
+/-- A nonzero executable polynomial has nonzero content. -/
+theorem content_ne_zero (f : Hex.ZPoly) (hf : f ≠ 0) :
+    Hex.ZPoly.content f ≠ 0 := by
+  intro hz
+  apply hf
+  have hz' : (toPolynomial f).content = 0 := by rw [toPolynomial_content]; exact hz
+  rw [Polynomial.content_eq_zero_iff] at hz'
+  rw [← ofPolynomial_toPolynomial f, hz', ofPolynomial_zero]
+
+/-- **Packaged recombination recovery.** Given the keystone product identity
+`C (lc^(d-1)) * core = dilate lc g * dilate lc h` (the executable keystone
+`dilate_transformedCore` combined with `dilate_mul`), with `lc ≠ 0` and a nonzero
+`core`, the primitive part of `dilate lc g` divides `core`, is primitive, and has
+the same degree as `g`. This is the inverse-factor correspondence the
+recombination recovery proof consumes. -/
+theorem dilate_recovery (core g h : Hex.ZPoly) (lc : ℤ) (d : ℕ)
+    (hlc0 : lc ≠ 0) (hcore0 : core ≠ 0)
+    (hkey : Hex.DensePoly.C (lc ^ (d - 1)) * core =
+              Hex.ZPoly.dilate lc g * Hex.ZPoly.dilate lc h) :
+    toPolynomial (Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc g)) ∣
+        toPolynomial core ∧
+      Hex.ZPoly.Primitive (Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc g)) ∧
+      (toPolynomial (Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc g))).natDegree =
+        (toPolynomial g).natDegree := by
+  -- Transport the keystone identity into `Polynomial ℤ`.
+  have hkeyP : Polynomial.C (lc ^ (d - 1)) * toPolynomial core =
+      toPolynomial (Hex.ZPoly.dilate lc g) *
+        toPolynomial (Hex.ZPoly.dilate lc h) := by
+    have h := congrArg toPolynomial hkey
+    rwa [toPolynomial_mul, toPolynomial_mul, toPolynomial_C] at h
+  set G := toPolynomial (Hex.ZPoly.dilate lc g) with hG
+  set K := toPolynomial core with hK
+  set pg := Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc g) with hpg
+  -- Nonvanishing facts.
+  have hk0 : lc ^ (d - 1) ≠ 0 := pow_ne_zero _ hlc0
+  have hK0 : K ≠ 0 := by
+    rw [hK]; intro hz
+    exact hcore0 (by rw [← ofPolynomial_toPolynomial core, hz, ofPolynomial_zero])
+  have hlhs0 : Polynomial.C (lc ^ (d - 1)) * K ≠ 0 :=
+    mul_ne_zero (Polynomial.C_ne_zero.mpr hk0) hK0
+  have hG0 : G ≠ 0 := left_ne_zero_of_mul (hkeyP ▸ hlhs0)
+  have hdg0 : Hex.ZPoly.dilate lc g ≠ 0 := by
+    intro hz; exact hG0 (by rw [hG, hz, toPolynomial_zero])
+  -- (b) primitivity.
+  have hb : Hex.ZPoly.Primitive pg :=
+    Hex.ZPoly.primitivePart_primitive _ (content_ne_zero _ hdg0)
+  have hPgPrim : (toPolynomial pg).IsPrimitive :=
+    isPrimitive_toPolynomial_of_primitive pg hb
+  -- Decompose `G` through its content and primitive part.
+  have hGdecomp : G = Polynomial.C (Hex.ZPoly.content (Hex.ZPoly.dilate lc g)) *
+      toPolynomial pg := by
+    rw [hG, hpg]; exact toPolynomial_eq_C_content_mul_primitivePart _
+  -- (a) divisibility.
+  have hPg_dvd_G : toPolynomial pg ∣ G := by
+    rw [hGdecomp]; exact dvd_mul_left _ _
+  have hG_dvd : G ∣ Polynomial.C (lc ^ (d - 1)) * K := by
+    rw [hkeyP]; exact dvd_mul_right _ _
+  have hPg_dvd_CkK : toPolynomial pg ∣ Polynomial.C (lc ^ (d - 1)) * K :=
+    hPg_dvd_G.trans hG_dvd
+  have ha : toPolynomial pg ∣ K := by
+    rw [← hPgPrim.dvd_primPart_iff_dvd hK0]
+    have hkpp := (hPgPrim.dvd_primPart_iff_dvd hlhs0).mpr hPg_dvd_CkK
+    rw [Polynomial.primPart_mul hlhs0] at hkpp
+    exact ((Polynomial.isUnit_primPart_C (lc ^ (d - 1))).dvd_mul_left).mp hkpp
+  -- (c) degree.
+  have hc : (toPolynomial pg).natDegree = (toPolynomial g).natDegree := by
+    have hcontent0 : Hex.ZPoly.content (Hex.ZPoly.dilate lc g) ≠ 0 :=
+      content_ne_zero _ hdg0
+    have hGdeg : G.natDegree = (toPolynomial pg).natDegree := by
+      rw [hGdecomp, Polynomial.natDegree_C_mul hcontent0]
+    rw [← hGdeg, hG, natDegree_toPolynomial_dilate lc hlc0]
+  exact ⟨ha, hb, hc⟩
 
 end
 

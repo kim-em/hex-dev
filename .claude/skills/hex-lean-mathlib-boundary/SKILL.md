@@ -43,6 +43,26 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   result with an explicit `HexPolyZMathlib.toPolynomial …` type ascription
   first, then `obtain`/`rw`.
 
+## Proving *inside* the Mathlib-free files
+
+Lemmas that live in the executable files themselves (`HexPoly/*`,
+`HexPolyZ/*`, `HexBerlekampZassenhaus/Basic.lean`) cannot use Mathlib tactics
+or `Monoid`/`CommRing` lemmas — those modules don't import Mathlib.
+
+- **`by_contra`, `ring`, `omega`-via-Mathlib are out.** `by_contra` reports
+  "unknown tactic"; replace with `rcases Nat.eq_zero_or_pos n` or
+  `rcases Nat.lt_trichotomy a b`. `omega`/`simp`/`rcases`/`conv` are core and
+  available.
+- **Integer `^` has no `pow_add`/`pow_succ`/`pow_one`/`one_pow` (Mathlib).**
+  Use `Lean.Grind.Semiring.pow_succ` (`a^(n+1) = a^n * a`) and
+  `Lean.Grind.Semiring.pow_zero`; `Int.one_pow`, `Int.mul_assoc`,
+  `Int.mul_comm`, `Int.mul_zero`, `Int.one_mul` are core and fine. For
+  `a^(m+k) = a^m * a^k`, write a one-line induction on `k` with `pow_succ`.
+- **Array/List core lemma names differ from intuition:** the lemma for
+  `(l.toArray).toList = l` is `List.toList_toArray` (not `Array.toList_toArray`).
+  For `(xs.push a).getD`, `HexBerlekampZassenhaus/Basic.lean` already has
+  `array_getD_push_lt`/`array_getD_push_size`/`array_toList_getD` — reuse them.
+
 ## Signature gotcha
 
 A hypothesis whose type mentions `toMathlibPolynomial`/`monicModPImage`/`modP`
