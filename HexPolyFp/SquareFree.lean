@@ -6758,6 +6758,30 @@ private theorem normalizeMonic_C_ne_zero_eq_one
   · rw [DensePoly.size_C_of_ne_zero hk]
     omega
 
+private theorem eq_C_of_normalizeMonic_isOne
+    (hp : Hex.Nat.Prime p) (f : FpPoly p)
+    (hzero : f.isZero = false)
+    (hone : isOne (normalizeMonic f).2 = true) :
+    ∃ k : ZMod64 p, k ≠ 0 ∧ f = DensePoly.C k := by
+  refine ⟨(normalizeMonic f).1, ?_, ?_⟩
+  · rw [normalizeMonic_nonzero f hzero]
+    exact fpPoly_leadingCoeff_ne_zero_of_isZero_false f hzero
+  · have hnorm_eq : (normalizeMonic f).2 = 1 :=
+      eq_one_of_isOne_true (normalizeMonic f).2 hone
+    have hreconstruct := normalizeMonic_reconstruct hp f
+    rw [hnorm_eq] at hreconstruct
+    simpa using hreconstruct.symm
+
+private theorem pow_eq_C_of_normalizeMonic_isOne
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (n : Nat)
+    (hzero : f.isZero = false)
+    (hone : isOne (normalizeMonic f).2 = true) :
+    ∃ k : ZMod64 p, k ≠ 0 ∧ pow f n = DensePoly.C k := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  obtain ⟨u, hu, hf⟩ := eq_C_of_normalizeMonic_isOne hp f hzero hone
+  rw [hf]
+  exact pow_C_form hp hu n
+
 private theorem yunStep_gcd_nonzero_of_left_nonzero
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p)
