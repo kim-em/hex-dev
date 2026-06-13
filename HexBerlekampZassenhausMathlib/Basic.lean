@@ -8751,6 +8751,46 @@ theorem representsIntegerFactorAtLift_mul_of_monic_core
   exact Hex.ZPoly.reduceModPow_eq_of_congr _ _ _ _ hcongr_mul
 
 /--
+Multiplicative closure of the recovered/monic-coordinate representation carrier
+`RecoveredAtLift` along a disjoint decomposition `S ∪ T`. If `S` recovers the
+integer factor `f` and `T` (disjoint from `S`) recovers `g`, then `S ∪ T`
+recovers `f * g`.
+
+Unlike `representsIntegerFactorAtLift_mul_of_monic_core` on the old scaled-product
+predicate, this holds for an *arbitrary* core: the carrier already separates the
+mod-`p^k` congruence (on the unscaled `liftedFactorProduct`) from the dilation by
+`leadingCoeff core`, so no monicity hypothesis is needed. The witness monic
+coordinate is the product of the two witnesses; the `congr` field combines
+`liftedFactorProduct_union_of_disjoint` with `Hex.ZPoly.congr_mul`, and the
+`dilate_eq` field combines `HexPolyZMathlib.dilate_mul` (dilation is
+multiplicative) with `Hex.ZPoly.primitivePart_mul` (Gauss's lemma). -/
+theorem RecoveredAtLift.mul
+    {core f g : Hex.ZPoly} {d : Hex.LiftData}
+    {S T : LiftedFactorSubset d}
+    (hdisj : Disjoint S T)
+    (hf : RecoveredAtLift core d f S)
+    (hg : RecoveredAtLift core d g T) :
+    RecoveredAtLift core d (f * g) (S ∪ T) where
+  monicFactor := hf.monicFactor * hg.monicFactor
+  congr := by
+    have hpk_pos : 0 < d.p ^ d.k := Nat.pow_pos d.p_pos
+    have hcongr_f :
+        Hex.ZPoly.congr (liftedFactorProduct d S) hf.monicFactor (d.p ^ d.k) :=
+      congr_of_reduceModPow_eq _ _ _ _ hpk_pos hf.congr
+    have hcongr_g :
+        Hex.ZPoly.congr (liftedFactorProduct d T) hg.monicFactor (d.p ^ d.k) :=
+      congr_of_reduceModPow_eq _ _ _ _ hpk_pos hg.congr
+    have hcongr_mul :
+        Hex.ZPoly.congr (liftedFactorProduct d S * liftedFactorProduct d T)
+          (hf.monicFactor * hg.monicFactor) (d.p ^ d.k) :=
+      Hex.ZPoly.congr_mul _ _ _ _ _ hcongr_f hcongr_g
+    rw [liftedFactorProduct_union_of_disjoint hdisj]
+    exact Hex.ZPoly.reduceModPow_eq_of_congr _ _ _ _ hcongr_mul
+  dilate_eq := by
+    rw [HexPolyZMathlib.dilate_mul, Hex.ZPoly.primitivePart_mul,
+      hf.dilate_eq, hg.dilate_eq]
+
+/--
 Monic-product closure for `liftedFactorProduct`: when every selected lifted
 factor is monic, the executable foldl product over the subset is monic too.
 The induction unfolds `Finset.toList` and chains `zpoly_monic_mul` through each
