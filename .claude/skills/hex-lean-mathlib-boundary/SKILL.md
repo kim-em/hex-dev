@@ -133,3 +133,25 @@ merging unverified Lean.
 from your file; building on them is the established project state. Only check
 that *your added lines* are `sorry`/`axiom`/`native_decide`-free
 (`git diff -U0 <file> | grep '^+' | grep -iE 'sorry|axiom|native_decide'`).
+
+## Heartbeat timeouts in heavy assembly proofs
+
+`maxHeartbeats` is a **per-declaration** budget, not per-tactic. In big proofs
+over large terms (full Sylvester-of-products matrices, `degreeLT` reprs), a
+`(deterministic) timeout at whnf`/`isDefEq`/`tactic execution` error names the
+line where the *shared* budget hit zero — **not** the pathological tactic. Don't
+restructure around the reported line first; it is usually a cheap `omega` or
+`exact` that simply ran last.
+
+- First remedy: `set_option maxHeartbeats 400000 in` on the declaration (the
+  common Mathlib value; raise further only if needed). Once the budget is large
+  enough, the *real* error often surfaces (e.g. an inline `by omega` whose
+  target type wasn't yet determined because it sat under `lt_of_le_of_lt _ (by
+  omega)` — fix by giving the bound an explicitly-typed `have h2 : … := by
+  omega` so its goal is fully concrete before `omega` runs).
+- Keep the capstone thin: factor heavy sub-steps (column-formula computations,
+  `repr` evaluations) into their own lemmas. Each gets a fresh budget, and the
+  capstone only pays for delegating.
+- A `let`/`set`-bound abbreviation of a huge term in the *goal or context* makes
+  `omega` and defeq checks whnf that term — avoid binding the matrix; write it
+  out or `clear_value` only when the value is genuinely unneeded downstream.
