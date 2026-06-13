@@ -662,6 +662,94 @@ theorem colReduceTransform_det {R : Type*} [CommRing R] (a b : Polynomial R)
     · simp [hpiv]
   rw [hleft, hright, one_mul, prod_threshold _ hd]
 
+/-- The pivot column `m + (n - d) + t` of `colReduceTransform` is the coordinate
+vector of the shifted common-factor direction `(-a * X^t, b * X^t)` in
+`degreeLT.basisProd`. -/
+theorem colReduceTransform_pivot_col {R : Type*} [CommRing R] (a b : Polynomial R)
+    {m n d : Nat} (t : Nat) (htd : t < d) (hdn : d ≤ n)
+    (hl : -a * Polynomial.X ^ t ∈ Polynomial.degreeLT R m)
+    (hr : b * Polynomial.X ^ t ∈ Polynomial.degreeLT R n) :
+    (fun k => colReduceTransform a b m n d k ((⟨n - d + t, by omega⟩ : Fin n).natAdd m))
+      = (Polynomial.degreeLT.basisProd R m n).repr
+          (⟨-a * Polynomial.X ^ t, hl⟩, ⟨b * Polynomial.X ^ t, hr⟩) := by
+  funext k
+  rw [colReduceTransform, Matrix.of_apply, Fin.addCases_right]
+  simp only [Fin.coe_natAdd]
+  rw [if_pos (by omega)]
+  have hexp : n - d + t - (n - d) = t := by omega
+  rw [hexp]
+  induction k using Fin.addCases with
+  | left k₁ => rw [Fin.addCases_left, basisProd_repr_castAdd]
+  | right k₂ => rw [Fin.addCases_right, basisProd_repr_natAdd]
+
+set_option maxHeartbeats 400000 in
+/--
+Assembled common-factor column reduction for the Sylvester matrix.
+
+Write `S = sylvester (q*a + C c*r) (q*b + C c*s) m n` for the Sylvester matrix of
+two polynomials sharing the factor `q` modulo the scalar `c` (recorded by the
+explicit witnesses `f = q*a + C c*r`, `g = q*b + C c*s`). Right-multiplying `S` by
+`colReduceTransform a b m n d` produces a matrix `A'` whose
+
+- determinant is `(b.coeff (n - d)) ^ d * S.det` — the cofactor leading
+  coefficient raised to the `d = q.natDegree` shifts; under a *monic* cofactor
+  `b` (so `b.coeff (n - d) = 1`) this is exactly `S.det`, and
+
+- top `d` `f`-shift columns (the pivots `m + (n - d) + t` for `t : Fin d`) are
+  entrywise divisible by `c`.
+
+This is the matrix `A'` that #6858 feeds to `det_dvd_of_left_cols_dvd` (after a
+column reindex moving the `d` divisible columns to the front) to obtain
+`c ^ d ∣ S.det = ± resultant`. The degree side conditions `a.natDegree + d ≤ m`,
+`b.natDegree + d ≤ n` are the natural cofactor-degree bounds (`deg a = m - d`,
+`deg b = n - d`); `hf`, `hg` bound the witnessed polynomials.
+-/
+theorem sylvester_commonFactor_colReduce {R : Type*} [CommRing R]
+    (q a b r s : Polynomial R) (c : R) {m n d : Nat}
+    (hd : d ≤ n)
+    (ha : a.natDegree + d ≤ m)
+    (hb : b.natDegree + d ≤ n)
+    (hf : (q * a + Polynomial.C c * r).natDegree ≤ m)
+    (hg : (q * b + Polynomial.C c * s).natDegree ≤ n) :
+    (Polynomial.sylvester (q * a + Polynomial.C c * r) (q * b + Polynomial.C c * s) m n
+        * colReduceTransform a b m n d).det
+      = (b.coeff (n - d)) ^ d
+        * (Polynomial.sylvester (q * a + Polynomial.C c * r) (q * b + Polynomial.C c * s) m n).det
+      ∧ ∀ (t : Fin d) (i : Fin (m + n)),
+        c ∣ (Polynomial.sylvester (q * a + Polynomial.C c * r) (q * b + Polynomial.C c * s) m n
+            * colReduceTransform a b m n d) i
+          ((⟨n - d + (t : ℕ), by have := t.is_lt; omega⟩ : Fin n).natAdd m) := by
+  refine ⟨?_, ?_⟩
+  · rw [Matrix.det_mul, colReduceTransform_det a b hd hb, mul_comm]
+  · intro t i
+    have ht := t.is_lt
+    -- membership witnesses for the shifted direction, from the cofactor degree bounds
+    have hl : -a * Polynomial.X ^ (t : ℕ) ∈ Polynomial.degreeLT R m := by
+      apply neg_mul_X_pow_mem_degreeLT_of_natDegree_lt
+      have h1 : (a * Polynomial.X ^ (t : ℕ)).natDegree ≤ a.natDegree + (t : ℕ) :=
+        Polynomial.natDegree_mul_le.trans
+          (Nat.add_le_add_left (Polynomial.natDegree_X_pow_le (t : ℕ)) _)
+      have h2 : a.natDegree + (t : ℕ) < m := by omega
+      exact lt_of_le_of_lt h1 h2
+    have hr : b * Polynomial.X ^ (t : ℕ) ∈ Polynomial.degreeLT R n := by
+      apply mul_X_pow_mem_degreeLT_of_natDegree_lt
+      have h1 : (b * Polynomial.X ^ (t : ℕ)).natDegree ≤ b.natDegree + (t : ℕ) :=
+        Polynomial.natDegree_mul_le.trans
+          (Nat.add_le_add_left (Polynomial.natDegree_X_pow_le (t : ℕ)) _)
+      have h2 : b.natDegree + (t : ℕ) < n := by omega
+      exact lt_of_le_of_lt h1 h2
+    -- the pivot column is the direction's coordinate vector; expand as a mulVec
+    rw [show (Polynomial.sylvester (q * a + Polynomial.C c * r) (q * b + Polynomial.C c * s) m n
+        * colReduceTransform a b m n d) i
+        ((⟨n - d + (t : ℕ), by omega⟩ : Fin n).natAdd m)
+          = (Polynomial.sylvester (q * a + Polynomial.C c * r) (q * b + Polynomial.C c * s) m n).mulVec
+              ((Polynomial.degreeLT.basisProd R m n).repr
+                (⟨-a * Polynomial.X ^ (t : ℕ), hl⟩, ⟨b * Polynomial.X ^ (t : ℕ), hr⟩)) i from by
+      rw [← colReduceTransform_pivot_col a b (t : ℕ) ht hd hl hr]
+      simp only [Matrix.mul_apply, Matrix.mulVec, dotProduct]]
+    rw [sylvester_mulVec_commonFactor_smul q a b r s c hl hr hf hg i]
+    exact Dvd.intro _ rfl
+
 end
 
 end HexBerlekampZassenhausMathlib
