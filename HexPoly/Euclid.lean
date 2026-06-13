@@ -1443,6 +1443,9 @@ private theorem diagonalSum_neg_right {S : Type _}
           (fun acc i => acc + diagonalMulCoeffTerm p q n i) 0 := by
   exact diagonalSum_neg_right_aux p q n (List.range (n + 1)) 0
 
+/-- Pull a zero-based negation out of a product and commute the factors:
+`p * (0 - q) = 0 - q * p`. A Mathlib-free `DensePoly` ring shim (the type
+carries only `Lean.Grind.CommRing`, so `neg_mul`/`mul_comm` are unavailable). -/
 theorem mul_sub_zero_comm {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) :
@@ -1456,6 +1459,9 @@ theorem mul_sub_zero_comm {S : Type _}
   rw [diagonalSum_neg_right p q n]
   rw [fold_diagonal_comm p q n]
 
+/-- Commutativity of `DensePoly` multiplication. Hand-proved because `DensePoly`
+carries only `Lean.Grind.CommRing`, not Mathlib's `CommRing`, so `mul_comm`
+is unavailable. -/
 theorem mul_comm_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) :
@@ -1467,6 +1473,8 @@ theorem mul_comm_poly {S : Type _}
   rw [diagonalSum_eq_degree_bound p q n, diagonalSum_eq_degree_bound q p n]
   rw [fold_diagonal_comm p q n]
 
+/-- Cancellation rearrangement `(x + y) - (z + x) = y + (0 - z)`, used to
+simplify mixed add/sub combinations arising in the Euclidean update steps. -/
 theorem add_sub_add_swap {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (x y z : DensePoly S) :
@@ -1481,6 +1489,7 @@ theorem add_sub_add_swap {S : Type _}
   rw [coeff_sub 0 z n hzero_sub, coeff_zero]
   grind
 
+/-- Cancellation rearrangement `(x + y) - (x + z) = y + (0 - z)`. -/
 theorem add_sub_add_left {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (x y z : DensePoly S) :
@@ -1495,6 +1504,7 @@ theorem add_sub_add_left {S : Type _}
   rw [coeff_sub 0 z n hzero_sub, coeff_zero]
   grind
 
+/-- Commutativity of `DensePoly` addition (the Mathlib-free `add_comm`). -/
 theorem add_comm_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) :
@@ -1505,6 +1515,7 @@ theorem add_comm_poly {S : Type _}
   rw [coeff_add p q n hzero_add, coeff_add q p n hzero_add]
   grind
 
+/-- Associativity of `DensePoly` addition (the Mathlib-free `add_assoc`). -/
 theorem add_assoc_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q r : DensePoly S) :
@@ -1528,6 +1539,8 @@ theorem add_assoc_poly {S : Type _}
   rw [coeff_add p 0 n hzero_add, coeff_zero]
   grind
 
+/-- Rewrite a `DensePoly` subtraction as addition of the zero-based negation:
+`p - q = p + (0 - q)`. -/
 theorem sub_eq_add_neg_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) :
@@ -1996,6 +2009,8 @@ private theorem rat_coeff_derivative_generic (p : DensePoly Rat) (n : Nat) :
       coeff_eq_zero_of_size_le p hp
     simp [hn, List.getD, hcoeff]
 
+/-- Rational-coefficient specialization of `mulCoeffSum_derivative_product_rule`:
+the `(n+1)` scaling factor is cast into `Rat`. -/
 theorem rat_mulCoeffSum_derivative_product_rule
     (p q : DensePoly Rat) (n : Nat) :
     ((n + 1 : Nat) : Rat) * mulCoeffSum p q (n + 1) =
@@ -2124,6 +2139,9 @@ private theorem weighted_diagonal_fold_commring
     have hidx : n + 1 - i = n - i + 1 := by omega
     rw [hidx])
 
+/-- Coefficient-level product rule: `(n+1)` times the order-`(n+1)` product
+coefficient sum equals the sum of the two derivative product coefficient sums.
+This is the per-coefficient identity underlying `derivative_mul`. -/
 theorem mulCoeffSum_derivative_product_rule [DecidableEq S]
     (p q : DensePoly S) (n : Nat) :
     ((n + 1 : Nat) : S) * mulCoeffSum p q (n + 1) =
@@ -2166,6 +2184,8 @@ theorem mulCoeffSum_derivative_product_rule [DecidableEq S]
     rw [hidx]
     grind
 
+/-- Leibniz product rule for the formal `DensePoly` derivative:
+`derivative (p * q) = derivative p * q + p * derivative q`. -/
 theorem derivative_mul [DecidableEq S]
     (p q : DensePoly S) :
     derivative (p * q) =
@@ -2283,6 +2303,7 @@ private theorem fold_diagonal_mul_assoc {S : Type _}
   rw [hleft, hright]
   exact triangular_fold_reindex_commring F n
 
+/-- Associativity of `DensePoly` multiplication (the Mathlib-free `mul_assoc`). -/
 theorem mul_assoc_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q r : DensePoly S) :
@@ -2294,6 +2315,7 @@ theorem mul_assoc_poly {S : Type _}
   rw [mulCoeffSum_eq_diagonal p (q * r) n]
   exact fold_diagonal_mul_assoc p q r n
 
+/-- Left distributivity for `DensePoly`: `p * (q + r) = p * q + p * r`. -/
 theorem mul_add_right_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q r : DensePoly S) :
@@ -2306,6 +2328,7 @@ theorem mul_add_right_poly {S : Type _}
   rw [mulCoeffSum_eq_diagonal p q n, mulCoeffSum_eq_diagonal p r n]
   exact fold_diagonal_add_right p q r n
 
+/-- Right distributivity for `DensePoly`: `(p + q) * r = p * r + q * r`. -/
 theorem mul_add_left_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q r : DensePoly S) :
@@ -2508,6 +2531,8 @@ theorem monomial_one_mul_poly_eq_shift {S : Type _}
     (0 - p) * q = 0 - p * q := by
   rw [mul_comm_poly (0 - p) q, mul_sub_zero_comm q p]
 
+/-- Telescoping identity for an extended-Euclid update step:
+`(p + t) * q + (r - t * q) = p * q + r`. -/
 theorem add_mul_sub_cancel_right {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p t q r : DensePoly S) :
@@ -2698,18 +2723,21 @@ private theorem degree_getD_lt_size_add_one {S : Type _} [Zero S] [DecidableEq S
       simp [degree?, hsize]
     omega
 
+/-- Reflexivity of `DensePoly` divisibility (the Mathlib-free `dvd_refl`). -/
 theorem dvd_refl_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
     p ∣ p := by
   exact ⟨1, (mul_one_right_poly p).symm⟩
 
+/-- Every `DensePoly` divides `0` (the Mathlib-free `dvd_zero`). -/
 theorem dvd_zero_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
     p ∣ 0 := by
   exact ⟨0, by rw [mul_comm_poly p 0, zero_mul]⟩
 
+/-- Divisibility is preserved by multiplication on the left: `d ∣ p → d ∣ q * p`. -/
 theorem dvd_mul_left_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     {d p : DensePoly S} (q : DensePoly S) :
@@ -2719,6 +2747,7 @@ theorem dvd_mul_left_poly {S : Type _}
   refine ⟨q * a, ?_⟩
   rw [ha, ← mul_assoc_poly q d a, mul_comm_poly q d, mul_assoc_poly d q a]
 
+/-- A common divisor of two `DensePoly`s divides their sum. -/
 theorem dvd_add_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     {d p q : DensePoly S} :
@@ -2729,6 +2758,7 @@ theorem dvd_add_poly {S : Type _}
   refine ⟨a + b, ?_⟩
   rw [ha, hb, mul_add_right_poly]
 
+/-- A common divisor of two `DensePoly`s divides their (zero-based) difference. -/
 theorem dvd_sub_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     {d p q : DensePoly S} :
