@@ -17972,6 +17972,104 @@ theorem modPSubsetPartitionHypotheses_of_choosePrimeData
       ⟨_, _, huniq⟩
     exact (huniq S hS).trans (huniq T hT).symm
 
+/-- A successful `choosePrimeData?` run forces a nonzero core: the selected
+prime is `isGoodPrime`, which keeps `(modP p core)` nonzero, whereas
+`modP p 0 = 0`. -/
+theorem core_ne_zero_of_choosePrimeData
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hchoose : Hex.choosePrimeData? core = some primeData) :
+    core ≠ 0 := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  intro hcore_zero
+  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
+    Hex.choosePrimeData?_isGoodPrime core primeData hchoose
+  have hcore_modP_iszero :
+      (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
+    Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
+  have hzero_modP : @Hex.ZPoly.modP primeData.p primeData.bounds 0 = 0 := by
+    apply Hex.DensePoly.ext_coeff
+    intro k
+    rw [Hex.ZPoly.coeff_modP, Hex.DensePoly.coeff_zero]
+    rfl
+  rw [hcore_zero, hzero_modP] at hcore_modP_iszero
+  exact Bool.noConfusion hcore_modP_iszero
+
+/-- The Mathlib images of the selected modular factors are distinct: `choosePrimeData?`
+guarantees `factorsModP.toList.Nodup`, and `toMathlibPolynomial` is injective. -/
+theorem toMathlibPolynomial_modPFactor_injective_of_choosePrimeData
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hchoose : Hex.choosePrimeData? core = some primeData) :
+    letI := primeData.bounds
+    Function.Injective (fun i : ModPFactorIndex primeData =>
+      HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)) := by
+  letI := primeData.bounds
+  have hprime : Hex.Nat.Prime primeData.p :=
+    Hex.choosePrimeData?_prime core primeData hchoose
+  obtain ⟨hzero, hfactors_eq⟩ :=
+    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hchoose
+  have hform : Hex.factorsModPBerlekampForm core primeData := ⟨hprime, hzero, hfactors_eq⟩
+  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
+    Hex.choosePrimeData?_isGoodPrime core primeData hchoose
+  have hnodup : primeData.factorsModP.toList.Nodup :=
+    factorsModP_nodup_of_factorsModPBerlekampForm core primeData hform hgood
+  have hinjPoly : Function.Injective
+      (HexBerlekampMathlib.toMathlibPolynomial : Hex.FpPoly primeData.p → _) :=
+    HexBerlekampMathlib.fpPolyEquiv.injective
+  intro i j hij
+  by_contra hne
+  exact modPFactor_ne_of_ne hnodup hne (hinjPoly hij)
+
+/-- The Mathlib images of the selected modular factors are monic: `choosePrimeData?`
+guarantees each `factorsModP` entry is monic, preserved by `toMathlibPolynomial`. -/
+theorem toMathlibPolynomial_modPFactor_monic_of_choosePrimeData
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hchoose : Hex.choosePrimeData? core = some primeData) :
+    letI := primeData.bounds
+    ∀ i : ModPFactorIndex primeData,
+      (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)).Monic := by
+  letI := primeData.bounds
+  have hprime : Hex.Nat.Prime primeData.p :=
+    Hex.choosePrimeData?_prime core primeData hchoose
+  obtain ⟨hzero, hfactors_eq⟩ :=
+    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hchoose
+  have hform : Hex.factorsModPBerlekampForm core primeData := ⟨hprime, hzero, hfactors_eq⟩
+  have hmonic := factorsModP_monic_of_factorsModPBerlekampForm core primeData hform
+  intro i
+  exact HexBerlekampMathlib.toMathlibPolynomial_monic _ (hmonic _ (Array.getElem_mem _))
+
+/-- **modP cover (#6796).** Every selected modular factor index lies in the
+representing subset of some irreducible integer divisor of `core`.
+
+Assembled from `exists_factor_of_modPIndex` (recover an irreducible divisor `g`
+whose monic mod-`p` image the indexed factor divides), the subset-partition
+existence projection (a representing subset `S` for `g`), and
+`mem_modPSubset_of_dvd` (the divisibility forces `i ∈ S`). -/
+theorem modPFactor_index_cover
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hchoose : Hex.choosePrimeData? core = some primeData)
+    (i : ModPFactorIndex primeData) :
+    ∃ (g : Hex.ZPoly) (S : ModPFactorSubset primeData),
+      Irreducible (HexPolyZMathlib.toPolynomial g) ∧
+      g ∣ core ∧
+      i ∈ S ∧
+      RepresentsIntegerFactorModP primeData g S := by
+  letI := primeData.bounds
+  have hcore_ne : core ≠ 0 := core_ne_zero_of_choosePrimeData core primeData hchoose
+  obtain ⟨g, hirr, hdvd, hfi_dvd⟩ :=
+    exists_factor_of_modPIndex core hcore_ne primeData hchoose i
+  have hpart : ModPSubsetPartitionHypotheses core primeData True True :=
+    modPSubsetPartitionHypotheses_of_choosePrimeData core primeData hchoose
+  obtain ⟨S, hS⟩ :=
+    exists_modPFactorSubset_of_modPSubsetPartition hpart hirr hdvd
+  have hprime : _root_.Nat.Prime primeData.p :=
+    natPrime_of_hexNatPrime (Hex.choosePrimeData?_prime core primeData hchoose)
+  have hf_inj :=
+    toMathlibPolynomial_modPFactor_injective_of_choosePrimeData core primeData hchoose
+  have hmonic :=
+    toMathlibPolynomial_modPFactor_monic_of_choosePrimeData core primeData hchoose
+  have hiS : i ∈ S := mem_modPSubset_of_dvd hprime hpart hf_inj hmonic hS hfi_dvd
+  exact ⟨g, S, hirr, hdvd, hiS, hS⟩
+
 /--
 Non-circular `choosePrimeData`/`Hex.ZPoly.toMonicLiftData` constructor for
 `HenselSubsetLiftHypotheses`.
