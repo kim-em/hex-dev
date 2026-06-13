@@ -6064,9 +6064,20 @@ private theorem derivative_active_raw_tail_weighted_product_bridge_via_normalize
     (hmultiplicity : 0 < multiplicity)
     (hzero : tail.isZero = false)
     (hdf : (DensePoly.derivative tail).isZero = true)
-    (hraw :
-      squareFreeAuxRevContribution (pthRoot tail) (multiplicity * p) fuel =
-        pow (pthRoot tail) (multiplicity * p))
+    (hrawReachable : squareFreeContributionReachable (pthRoot tail))
+    (hrawZero : (pthRoot tail).isZero = false)
+    (hrawFuel : (pthRoot tail).size < fuel)
+    (hrawResidual :
+      squareFreeAuxRevResidualSatisfied (pthRoot tail) (multiplicity * p) fuel)
+    (hcorrect :
+      ∀ (f : FpPoly p) (multiplicity : Nat),
+        0 < multiplicity →
+          f.size < fuel →
+            f.isZero = false →
+              squareFreeContributionReachable f →
+                squareFreeAuxRevResidualSatisfied f multiplicity fuel →
+                  squareFreeAuxRevContribution f multiplicity fuel =
+                    pow f multiplicity)
     (hnormalized :
       squareFreeAuxRevContribution (pthRoot (normalizeMonic tail).2)
           (multiplicity * p) fuel =
@@ -6075,6 +6086,16 @@ private theorem derivative_active_raw_tail_weighted_product_bridge_via_normalize
     contribution *
         squareFreeAuxRevContribution (pthRoot tail) (multiplicity * p) fuel =
       pow f multiplicity := by
+  have hp_pos : 0 < p := by
+    have htwo : 2 ≤ p := Hex.Nat.Prime.two_le hp
+    omega
+  have hmultiplicity_tail : 0 < multiplicity * p :=
+    Nat.mul_pos hmultiplicity hp_pos
+  have hraw :
+      squareFreeAuxRevContribution (pthRoot tail) (multiplicity * p) fuel =
+        pow (pthRoot tail) (multiplicity * p) :=
+    hcorrect (pthRoot tail) (multiplicity * p)
+      hmultiplicity_tail hrawFuel hrawZero hrawReachable hrawResidual
   have htail_bridge :=
     squareFreeAuxRevContribution_pthRoot_normalized_tail_bridge
       hp tail multiplicity fuel hmultiplicity hzero hdf hraw hnormalized
@@ -8487,11 +8508,6 @@ private theorem squareFreeAuxRevContribution_derivative_active_pow_obligation
         have htwo : 2 ≤ p := Hex.Nat.Prime.two_le hp
         omega
       exact Nat.mul_pos hmultiplicity hp_pos
-    have htail_correct :
-        squareFreeAuxRevContribution (pthRoot contribution.2) (multiplicity * p) fuel =
-          pow (pthRoot contribution.2) (multiplicity * p) :=
-      ih (pthRoot contribution.2) (multiplicity * p)
-        hmultiplicity_tail htail_valid.2.2 htail_valid.2.1 htail_valid.1 htail_residual
     have htail_normalized_residual :
         squareFreeAuxRevResidualSatisfied
           (pthRoot (normalizeMonic contribution.2).2) (multiplicity * p) fuel :=
@@ -8507,8 +8523,8 @@ private theorem squareFreeAuxRevContribution_derivative_active_pow_obligation
     exact
       derivative_active_raw_tail_weighted_product_bridge_via_normalized
         hp f contribution.2 contribution.1 multiplicity fuel hmultiplicity
-        htail_nonzero htail_derivative htail_correct htail_normalized_correct
-        hpow_contribution
+        htail_nonzero htail_derivative htail_valid.1 htail_valid.2.1
+        htail_valid.2.2 htail_residual ih htail_normalized_correct hpow_contribution
 
 private theorem squareFreeAuxRevContribution_correct_pow_of_nonzero
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
