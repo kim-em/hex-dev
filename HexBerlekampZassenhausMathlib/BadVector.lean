@@ -1554,6 +1554,28 @@ def bad_setup_of_projected_not_indicator
       hbridge.resultant_divisible_by_p_pow
 
 /--
+BHKS Lemma 3.2 rational coprimality clause from the van Hoeij forward
+correspondence: if the corrected auxiliary polynomial is attached to a
+projected vector outside the true-factor indicator lattice, then the input and
+auxiliary polynomial are coprime over `ℚ`.
+-/
+theorem coprime_input_aux_over_rat_of_forward
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (hforward : ForwardCorrespondence W trueSupports)
+    (v : Fin W.projectedRows.factorCount → ℤ)
+    (corrections : Array Int)
+    (hH :
+      W.H =
+        BHKS.auxiliaryPolynomialWithCorrections W.input W.liftData
+          (W.projectedVectorArray v) corrections)
+    (hnot : v ∉ BHKS.trueFactorIndicatorLattice trueSupports) :
+    IsCoprime
+      (W.inputPolynomial.map (Int.castRingHom ℚ))
+      (W.auxiliaryPolynomial.map (Int.castRingHom ℚ)) :=
+  hforward.coprime v corrections hH hnot
+
+/--
 Bad-vector setup constructor using the van Hoeij forward correspondence for
 the rational coprimality clause.
 -/
@@ -1576,7 +1598,7 @@ def isBhksBadVectorSetup_of_forward
     IsBhksBadVectorSetup W :=
   isBhksBadVectorSetup_of_projected_not_indicator
     W trueSupports v corrections hH hin hnot hd
-    (hforward.coprime v corrections hH hnot) hdiv
+    (coprime_input_aux_over_rat_of_forward hforward v corrections hH hnot) hdiv
 
 /-- BHKS Lemma 3.2: the selected local-factor degree is positive whenever the
 witness carries a bad-vector setup. -/
