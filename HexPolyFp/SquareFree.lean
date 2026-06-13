@@ -6408,6 +6408,15 @@ private abbrev YunDerivativeActiveLevelStateProvider
         c.isZero = false ∧
           w.isZero = false
 
+private abbrev YunDerivativeActiveRawStateProvider
+    (hp : Hex.Nat.Prime p) : Prop :=
+  ∀ f' c w : FpPoly p, ∀ fuel : Nat,
+    yunFactorsDerivativeActiveReachable hp f' c w fuel →
+      squareFreeContributionReachable c ∧
+        c.isZero = false ∧
+          squareFreeContributionReachable w ∧
+            w.isZero = false
+
 private abbrev YunDerivativeActiveRawTailProvider
     (hp : Hex.Nat.Prime p) : Prop :=
   ∀ f' c w : FpPoly p, ∀ base level fuel : Nat,
@@ -6421,6 +6430,14 @@ private abbrev YunDerivativeActiveRawTailProvider
                 squareFreeContributionReachable (pthRoot contribution.2) ∧
                   (pthRoot contribution.2).isZero = false ∧
                     (pthRoot contribution.2).size < fuel)
+
+private theorem YunDerivativeActiveRawStateProvider.levelState
+    (hp : Hex.Nat.Prime p)
+    (hstate : YunDerivativeActiveRawStateProvider hp) :
+    YunDerivativeActiveLevelStateProvider hp := by
+  intro f' c w fuel hreachable
+  have hcurrent := hstate f' c w fuel hreachable
+  exact ⟨hcurrent.1, hcurrent.2.1, hcurrent.2.2.2⟩
 
 private theorem pthRoot_normalized_valid_of_derivative_zero_nontrivial_of_monic
     (hp : Hex.Nat.Prime p) (f : FpPoly p) {fuel : Nat}
@@ -7185,6 +7202,29 @@ private theorem yunFactorsWithLevel_pthRoot_tail_fuel_bound
       (by simpa [loop, contribution, hloop_eq] using htail_nontrivial)
       (by simpa [loop, contribution, hloop_eq] using htail_derivative_zero)
   simpa [loop, contribution, hloop_eq] using hvalid.2.2
+
+private theorem YunDerivativeActiveRawStateProvider.rawTail
+    (hp : Hex.Nat.Prime p)
+    (hstate : YunDerivativeActiveRawStateProvider hp) :
+    YunDerivativeActiveRawTailProvider hp := by
+  intro f' c w base level fuel hreachable
+  let contribution := yunFactorsContributionWithLevel c w base level fuel
+  have htail_valid :
+      squareFreeContributionReachable contribution.2 ∧
+        contribution.2.isZero = false := by
+    simpa [contribution] using
+      yunFactorsContributionWithLevel_tail_valid_of_derivative_active_reachable
+        hp f' c w base level fuel
+        (fun c w fuel hreachable => hstate f' c w fuel hreachable)
+        hreachable
+  refine ⟨htail_valid.1, htail_valid.2, ?_⟩
+  intro htail_fuel htail_nontrivial htail_derivative_zero
+  simpa [contribution] using
+    yunFactorsContributionWithLevel_pthRoot_tail_valid
+      hp f' c w base level fuel
+      (fun c w fuel hreachable => hstate f' c w fuel hreachable)
+      hreachable htail_fuel
+      htail_nontrivial htail_derivative_zero
 
 private theorem yunFactorsPairwiseReachable_of_derivative_active_reachable
     (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (fuel : Nat)
@@ -8473,8 +8513,7 @@ private theorem squareFreeAuxRevContribution_derivative_active_pow_obligation
       ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
         (DensePoly.derivative f).isZero = false →
           squareFreeAuxRevResidualSatisfied f multiplicity fuel)
-    (hlevelState : YunDerivativeActiveLevelStateProvider hp)
-    (hrawTail : YunDerivativeActiveRawTailProvider hp)
+    (hrawState : YunDerivativeActiveRawStateProvider hp)
     (ih :
       ∀ (f : FpPoly p) (multiplicity : Nat),
         0 < multiplicity →
@@ -8489,6 +8528,10 @@ private theorem squareFreeAuxRevContribution_derivative_active_pow_obligation
   let g := DensePoly.gcd f (DensePoly.derivative f)
   let c := f / g
   let contribution := yunFactorsContributionWithLevel c g multiplicity 1 fuel
+  have hlevelState : YunDerivativeActiveLevelStateProvider hp :=
+    YunDerivativeActiveRawStateProvider.levelState hp hrawState
+  have hrawTail : YunDerivativeActiveRawTailProvider hp :=
+    YunDerivativeActiveRawStateProvider.rawTail hp hrawState
   have hpow_pair :
       contribution.1 * pow contribution.2 multiplicity = pow f multiplicity ∧
         contribution.1 *
@@ -8615,8 +8658,7 @@ private theorem squareFreeAuxRevContribution_correct_pow_of_nonzero
         (DensePoly.derivative f).isZero = false →
           squareFreeAuxRevResidualSatisfied f multiplicity fuel)
     (hresidual : squareFreeAuxRevResidualSatisfied f multiplicity fuel)
-    (hlevelState : YunDerivativeActiveLevelStateProvider hp)
-    (hrawTail : YunDerivativeActiveRawTailProvider hp) :
+    (hrawState : YunDerivativeActiveRawStateProvider hp) :
     squareFreeAuxRevContribution f multiplicity fuel = pow f multiplicity := by
   induction fuel generalizing f multiplicity with
   | zero =>
@@ -8663,7 +8705,7 @@ private theorem squareFreeAuxRevContribution_correct_pow_of_nonzero
         simpa [squareFreeAuxRevContribution, hzero, hdf_false] using
           squareFreeAuxRevContribution_derivative_active_pow_obligation
             hp f multiplicity fuel hmultiplicity hfuel hzero hdf_false hreachable hresidual
-            residualInvariant hlevelState hrawTail ih
+            residualInvariant hrawState ih
 
 private theorem squareFreeAuxRevContribution_pthRoot_normalized_tail_bridge_of_nontrivial
     (hp : Hex.Nat.Prime p) (tail : FpPoly p) (multiplicity fuel : Nat)
@@ -8680,8 +8722,7 @@ private theorem squareFreeAuxRevContribution_pthRoot_normalized_tail_bridge_of_n
           squareFreeAuxRevResidualSatisfied f multiplicity fuel)
     (hrawResidual :
       squareFreeAuxRevResidualSatisfied (pthRoot tail) (multiplicity * p) fuel)
-    (hlevelState : YunDerivativeActiveLevelStateProvider hp)
-    (hrawTail : YunDerivativeActiveRawTailProvider hp)
+    (hrawState : YunDerivativeActiveRawStateProvider hp)
     (hnormalized :
       squareFreeAuxRevContribution (pthRoot (normalizeMonic tail).2)
           (multiplicity * p) fuel =
@@ -8701,7 +8742,7 @@ private theorem squareFreeAuxRevContribution_pthRoot_normalized_tail_bridge_of_n
         pow (pthRoot tail) (multiplicity * p) :=
     squareFreeAuxRevContribution_correct_pow_of_nonzero
       hp (pthRoot tail) (multiplicity * p) fuel hmultiplicity_tail hrawFuel
-      hrawZero hrawReachable residualInvariant hrawResidual hlevelState hrawTail
+      hrawZero hrawReachable residualInvariant hrawResidual hrawState
   exact
     squareFreeAuxRevContribution_pthRoot_normalized_tail_bridge
       hp tail multiplicity fuel hmultiplicity hzero hdf hraw hnormalized
@@ -9829,11 +9870,10 @@ private theorem squareFreeAuxRevContribution_correct
         (DensePoly.derivative f).isZero = false →
           squareFreeAuxRevResidualSatisfied f multiplicity fuel)
     (hresidual : squareFreeAuxRevResidualSatisfied f 1 (f.size + 1))
-    (hlevelState : YunDerivativeActiveLevelStateProvider hp)
-    (hrawTail : YunDerivativeActiveRawTailProvider hp) :
+    (hrawState : YunDerivativeActiveRawStateProvider hp) :
     squareFreeAuxRevContribution f 1 (f.size + 1) = f := by
   rw [squareFreeAuxRevContribution_correct_pow_of_nonzero hp f 1 (f.size + 1)
-    (by omega) (by omega) hzero hreachable residualInvariant hresidual hlevelState hrawTail]
+    (by omega) (by omega) hzero hreachable residualInvariant hresidual hrawState]
   exact pow_one f
 
 private theorem squareFreeAux_zero_weightedProduct
@@ -9862,15 +9902,14 @@ private theorem squareFreeAux_weightedProduct_nonzero
         (DensePoly.derivative f).isZero = false →
           squareFreeAuxRevResidualSatisfied f multiplicity fuel)
     (hresidual : squareFreeAuxRevResidualSatisfied f 1 (f.size + 1))
-    (hlevelState : YunDerivativeActiveLevelStateProvider hp)
-    (hrawTail : YunDerivativeActiveRawTailProvider hp) :
+    (hrawState : YunDerivativeActiveRawStateProvider hp) :
     weightedProduct (squareFreeAux f 1 (f.size + 1)) = f := by
   unfold squareFreeAux
   have hinvariant := squareFreeAuxRev_reconstruction_invariant f 1 (f.size + 1) []
   rw [hinvariant]
   simp [weightedProduct_nil]
   exact squareFreeAuxRevContribution_correct
-    hp f hzero hreachable residualInvariant hresidual hlevelState hrawTail
+    hp f hzero hreachable residualInvariant hresidual hrawState
 
 /--
 Normalized gcd monicity for the Yun derivative-active transition. Whenever the
@@ -10025,8 +10064,7 @@ theorem squareFree_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p)
       ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
         (DensePoly.derivative f).isZero = false →
           squareFreeAuxRevResidualSatisfied f multiplicity fuel)
-    (hlevelState : YunDerivativeActiveLevelStateProvider hp)
-    (hrawTail : YunDerivativeActiveRawTailProvider hp) :
+    (hrawState : YunDerivativeActiveRawStateProvider hp) :
     let d := squareFreeDecomposition hp f
     DensePoly.C d.unit * weightedProduct d.factors = f := by
   dsimp [squareFreeDecomposition]
@@ -10041,7 +10079,7 @@ theorem squareFree_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p)
         (normalizeMonic f).2 1 ((normalizeMonic f).2.size + 1)
     rw [squareFreeAux_weightedProduct_nonzero hp (normalizeMonic f).2 hnonzero
       (normalizeMonic_squareFreeContributionReachable hp f)
-      residualInvariant hresidual hlevelState hrawTail]
+      residualInvariant hresidual hrawState]
     exact normalizeMonic_reconstruct hp f
 
 theorem squareFree_factors_squareFree (hp : Hex.Nat.Prime p) (f : FpPoly p) :
