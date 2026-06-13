@@ -2287,6 +2287,27 @@ def RepresentsIntegerFactorAtLift
     Hex.ZPoly.reduceModPow factor d.p d.k
 
 /--
+Corrected recovered-coordinate representation of an integer factor at a Hensel
+lift.  The selected lifted product represents a monic-coordinate factor modulo
+`p^k`; dilating that monic factor by `leadingCoeff core` and taking primitive
+part recovers the integer factor of `core`.
+
+This carrier intentionally lives next to the old scaled-product
+`RepresentsIntegerFactorAtLift` while consumers migrate.
+-/
+structure RecoveredAtLift
+    (core : Hex.ZPoly) (d : Hex.LiftData) (factor : Hex.ZPoly)
+    (S : LiftedFactorSubset d) where
+  monicFactor : Hex.ZPoly
+  congr :
+    Hex.ZPoly.reduceModPow (liftedFactorProduct d S) d.p d.k =
+      Hex.ZPoly.reduceModPow monicFactor d.p d.k
+  dilate_eq :
+    Hex.ZPoly.primitivePart
+        (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) monicFactor) =
+      factor
+
+/--
 Proof-side form of the executable recombination candidate, using the selected
 lifted-factor product directly.  The executable-list version is introduced
 later, after the list-selection identification has been developed, and is proved equal
@@ -5136,6 +5157,30 @@ theorem liftedRecoveryCandidate_eq_factor_of_congruence_of_bound
   unfold liftedRecoveryCandidate
   rw [hcl, hdilate]
   exact hfactor_norm
+
+namespace RecoveredAtLift
+
+/--
+Exact recovery of the executable recovered candidate from the corrected
+monic-coordinate representation carrier.
+
+The coefficient bound is deliberately stated on the carrier's `monicFactor`,
+because Mignotte precision recovers the centred selected product in the
+`toMonic` coordinate system before the dilation keystone transports it back to
+the integer factor.
+-/
+theorem candidate_eq_of_bound
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hrep : RecoveredAtLift core d factor S)
+    (B' : Nat)
+    (hvalid : ∀ i, (hrep.monicFactor.coeff i).natAbs ≤ B')
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    liftedRecoveryCandidate core d S = factor :=
+  liftedRecoveryCandidate_eq_factor_of_congruence_of_bound
+    B' hvalid hrep.congr hrep.dilate_eq hfactor_norm hprecision
+
+end RecoveredAtLift
 
 private theorem densePoly_scale_one_int (f : Hex.ZPoly) :
     Hex.DensePoly.scale (1 : Int) f = f := by
