@@ -75,6 +75,40 @@ theorem abs_det_le_col_l2norm_prod
   rw [Matrix.det_transpose] at h
   simpa [Matrix.transpose_apply] using h
 
+private lemma pow_card_dvd_prod_of_dvd
+    {ι : Type*} [Fintype ι] (m : ℤ) (f : ι → ℤ)
+    (h : ∀ i, m ∣ f i) :
+    m ^ Fintype.card ι ∣ ∏ i, f i := by
+  classical
+  rw [Fintype.card]
+  rw [← Finset.prod_const]
+  exact Finset.prod_dvd_prod_of_dvd
+    (s := Finset.univ) (fun _ : ι => m) f (fun i _ => h i)
+
+/--
+If the first `d` columns of an integer matrix are entrywise divisible by `m`,
+then `m ^ d` divides the determinant.
+
+The `Fin (d + n)` indexing matches the two natural Sylvester column blocks:
+`j.castAdd n` addresses the left block of `d` columns, while the remaining
+columns are unconstrained.
+-/
+theorem det_dvd_of_left_cols_dvd
+    {d n : Nat} (m : ℤ) (A : Matrix (Fin (d + n)) (Fin (d + n)) ℤ)
+    (hcols : ∀ (j : Fin d) (i : Fin (d + n)), m ∣ A i (j.castAdd n)) :
+    m ^ d ∣ A.det := by
+  classical
+  rw [Matrix.det_apply']
+  apply Finset.dvd_sum
+  intro σ _
+  apply dvd_mul_of_dvd_right
+  rw [Fin.prod_univ_add]
+  apply dvd_mul_of_dvd_left
+  simpa [Fintype.card_fin] using
+    (pow_card_dvd_prod_of_dvd m
+      (fun j : Fin d => A (σ (j.castAdd n)) (j.castAdd n))
+      (fun j => hcols j (σ (j.castAdd n))))
+
 /-- Squared `l2norm` of an integer polynomial expressed as a sum of squared
 coefficients over `Finset.range (natDegree + 1)`, padding with zeros outside
 `support`. -/
