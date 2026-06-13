@@ -1839,6 +1839,62 @@ theorem modPFactor_irreducible_of_modPSubsetPartition
         (modPFactor primeData i)) :=
   h.factors_irreducible i
 
+/--
+If a selected modular factor divides the Mathlib image of a represented
+integer-factor product, then its index belongs to the representing subset.
+-/
+theorem mem_modPSubset_of_dvd
+    {core factor : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {admissiblePrime squareFreeReduction : Prop}
+    (hprime : _root_.Nat.Prime primeData.p)
+    (hpart :
+      ModPSubsetPartitionHypotheses core primeData
+        admissiblePrime squareFreeReduction)
+    (hf_inj : Function.Injective (fun i : ModPFactorIndex primeData =>
+      @HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
+        (modPFactor primeData i)))
+    (hmonic : ∀ i : ModPFactorIndex primeData,
+      (@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
+        (modPFactor primeData i)).Monic)
+    {S : ModPFactorSubset primeData} {i : ModPFactorIndex primeData}
+    (hS : RepresentsIntegerFactorModP primeData factor S)
+    (hdvd :
+      @HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
+          (modPFactor primeData i) ∣
+        @HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
+        (@monicModPImage primeData.p primeData.bounds
+          (@Hex.ZPoly.modP primeData.p primeData.bounds factor))) :
+    i ∈ S := by
+  classical
+  letI := primeData.bounds
+  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  let F : ModPFactorIndex primeData → Polynomial (ZMod primeData.p) :=
+    fun j => @HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
+      (modPFactor primeData j)
+  have hrepresented :
+      (∏ j ∈ S, F j) =
+        @HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
+          (@monicModPImage primeData.p primeData.bounds
+            (@Hex.ZPoly.modP primeData.p primeData.bounds factor)) := by
+    rw [← toMathlibPolynomial_modPFactorProduct]
+    exact congrArg HexBerlekampMathlib.toMathlibPolynomial hS
+  have hdvd_prod : F i ∣ ∏ j ∈ S, F j := by
+    rw [hrepresented]
+    simpa [F] using hdvd
+  have hi_prime : Prime (F i) := by
+    simpa [F] using (hpart.factors_irreducible i).prime
+  rcases (Prime.dvd_finset_prod_iff hi_prime F).mp hdvd_prod with ⟨j, hjS, hdvd_ij⟩
+  have hij_poly : F i = F j := by
+    have hassoc : Associated (F i) (F j) := by
+      exact (hpart.factors_irreducible i).associated_of_dvd
+        (hpart.factors_irreducible j) (by simpa [F] using hdvd_ij)
+    exact Polynomial.eq_of_monic_of_associated
+      (by simpa [F] using hmonic i)
+      (by simpa [F] using hmonic j)
+      hassoc
+  have hij : i = j := hf_inj (by simpa [F] using hij_poly)
+  simpa [hij] using hjS
+
 /-- The project-local primality predicate implies Mathlib's `Nat.Prime`. -/
 theorem natPrime_of_hexNatPrime {p : Nat} (hp : Hex.Nat.Prime p) :
     _root_.Nat.Prime p := by
