@@ -58,6 +58,15 @@ or `Monoid`/`CommRing` lemmas — those modules don't import Mathlib.
   `Lean.Grind.Semiring.pow_zero`; `Int.one_pow`, `Int.mul_assoc`,
   `Int.mul_comm`, `Int.mul_zero`, `Int.one_mul` are core and fine. For
   `a^(m+k) = a^m * a^k`, write a one-line induction on `k` with `pow_succ`.
+- **`omega` does not see through `Int.ofNat`.** It normalizes the `↑n` /
+  `Nat.cast` coercion but treats the explicit constructor `Int.ofNat n` as an
+  opaque atom — so `0 ≤ Int.ofNat n` and `Int.ofNat n.natAbs = n` (with
+  `0 < n`) both fail with a bogus counterexample. `content`/`contentNat`
+  (`HexPoly/Euclid.lean`) are defined via `Int.ofNat`, so Gauss/content proofs
+  hit this. Either restate the goal as `(n : Int)` (Nat.cast, which `omega`
+  handles) and close by `exact` up to defeq, or use core lemmas directly:
+  `Int.natAbs_of_nonneg`, `Int.mul_pos`, `Nat.pos_of_ne_zero`. Note
+  `Int.ofNat_pos` does **not** exist.
 - **Array/List core lemma names differ from intuition:** the lemma for
   `(l.toArray).toList = l` is `List.toList_toArray` (not `Array.toList_toArray`).
   For `(xs.push a).getD`, `HexBerlekampZassenhaus/Basic.lean` already has
