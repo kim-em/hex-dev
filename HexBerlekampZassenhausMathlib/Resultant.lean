@@ -529,6 +529,28 @@ theorem sylvester_commonFactor_colReduceStep
   rw [sylvester_mulVec_commonFactor_smul q a b r s c hleft hright hf hg k]
   exact Dvd.intro _ rfl
 
+/-- Value of `degreeLT.basisProd`'s coordinate functional on a left-block index:
+the coordinate at `i₁.castAdd n` reads off the `i₁`-th coefficient of the first
+component. -/
+theorem basisProd_repr_castAdd {R : Type*} [CommRing R] {m n : Nat}
+    (p : Polynomial.degreeLT R m) (w : Polynomial.degreeLT R n) (i₁ : Fin m) :
+    (Polynomial.degreeLT.basisProd R m n).repr (p, w) (i₁.castAdd n)
+      = (p : Polynomial R).coeff i₁ := by
+  rw [Polynomial.degreeLT.basisProd, Module.Basis.repr_reindex_apply,
+    finSumFinEquiv_symm_apply_castAdd, Module.Basis.prod_repr_inl,
+    Polynomial.degreeLT.basis_repr]
+
+/-- Value of `degreeLT.basisProd`'s coordinate functional on a right-block index:
+the coordinate at `i₂.natAdd m` reads off the `i₂`-th coefficient of the second
+component. -/
+theorem basisProd_repr_natAdd {R : Type*} [CommRing R] {m n : Nat}
+    (p : Polynomial.degreeLT R m) (w : Polynomial.degreeLT R n) (i₂ : Fin n) :
+    (Polynomial.degreeLT.basisProd R m n).repr (p, w) (i₂.natAdd m)
+      = (w : Polynomial R).coeff i₂ := by
+  rw [Polynomial.degreeLT.basisProd, Module.Basis.repr_reindex_apply,
+    finSumFinEquiv_symm_apply_natAdd, Module.Basis.prod_repr_inr,
+    Polynomial.degreeLT.basis_repr]
+
 end
 
 end HexBerlekampZassenhausMathlib
