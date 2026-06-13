@@ -1541,7 +1541,7 @@ def runIsabelleHarshCubicNormSq65 : Unit → IO Int := fun _ => do
 ladders, then read `Hex.steeredTally`. Fails if any steered candidate failed
 certification and fell back to the exact reducer (`fellBack ≠ 0`) — a fallback
 inside the ladder would make the steered medians dishonest. Only rungs the
-operand-aware `Hex.steerWins` predictor routes to steering bump the tally; the
+`Hex.steerWins` predictor routes to steering (n ≥ 30) bump the tally; the
 smaller rungs run `lllNative` directly. The returned value encodes the tally
 as `certified · 65537 + fellBack`. -/
 def runSteeredFallbackTally : Unit → IO Int := fun _ => do
@@ -2241,13 +2241,14 @@ setup_fixed_benchmark runCertifiedCheckerIntervalTally where {
 
 /- Fallback-rate diagnostic: the steered reducer certified on every steered rung
 of both ladders (`fellBack = 0`). The pinned hash records the `certified` count
-(15 = the rungs `Hex.steerWins` routes to steering: harsh-cubic n ≥ 30 via the
-wide-operand arm and random-bounded n ≥ 45 via the narrow arm); a fallback would
+(16 = the rungs `Hex.steerWins` routes to steering under the unified `n ≥ 30`
+floor: harsh-cubic n ≥ 30 — 8 rungs — and random-bounded n ≥ 30 — 8 rungs,
+n=30 now included after the `(δ + 3)/4` steering-margin fix); a fallback would
 flip `fellBack` nonzero and throw before the hash is reached. -/
 setup_fixed_benchmark runSteeredFallbackTally where {
     repeats := 1
     maxSecondsPerCall := 120.0
-    expectedHash := some (Hashable.hash ((15 * 65537 : Int)))
+    expectedHash := some (Hashable.hash ((16 * 65537 : Int)))
   }
 
 /- Complexity derivation: random-bounded inputs have square dimension `n` and
