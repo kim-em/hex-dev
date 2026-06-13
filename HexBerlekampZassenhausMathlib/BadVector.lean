@@ -974,6 +974,38 @@ theorem projectedVectorArray_getD
   simpa [projectedVectorFn] using congrFun (projectedVectorFn_projectedVectorArray W v) i
 
 /--
+Pointwise squared bound on the executable projected-vector representative from a
+bound on the projected squared-norm sum.
+
+Each stored coordinate `(projectedVectorArray v).getD i 0` is one entry `v i`
+(in range) or the zero default (out of range), so its square is at most the full
+sum `∑ v i ^ 2`, hence at most any bound `B` of that sum.  The conclusion is
+stated for an arbitrary index type `Fin n` so callers can apply it directly at
+the lifted-factor count consumed by the cap-separation constructors, where the
+projected factor count and the lifted-factor count coincide.
+-/
+theorem projectedVectorArray_sq_le_of_sum_le
+    (W : ExecutableBadVectorWitness)
+    (v : Fin W.projectedRows.factorCount → ℤ)
+    (B : ℝ) (hB : 0 ≤ B)
+    (hsum :
+      (∑ i : Fin W.projectedRows.factorCount, ((v i : ℝ)) ^ 2) ≤ B)
+    {n : Nat} (i : Fin n) :
+    (((W.projectedVectorArray v).getD i.val 0 : ℝ)) ^ 2 ≤ B := by
+  by_cases h : i.val < W.projectedRows.factorCount
+  · rw [W.projectedVectorArray_getD v ⟨i.val, h⟩]
+    calc (((v ⟨i.val, h⟩ : ℤ) : ℝ)) ^ 2
+        ≤ ∑ k : Fin W.projectedRows.factorCount, ((v k : ℝ)) ^ 2 :=
+          Finset.single_le_sum (f := fun k => ((v k : ℝ)) ^ 2)
+            (fun k _ => sq_nonneg _) (Finset.mem_univ _)
+      _ ≤ B := hsum
+  · have hsize :
+        ¬ i.val < (W.projectedVectorArray v).size := by
+      rw [projectedVectorArray_size]; exact h
+    simp only [Array.getD, hsize, dif_neg, not_false_iff]
+    simpa using hB
+
+/--
 Bad-vector evidence for an executable BHKS bad-vector witness.
 
 The witness's auxiliary polynomial `H` is the canonical BHKS auxiliary
