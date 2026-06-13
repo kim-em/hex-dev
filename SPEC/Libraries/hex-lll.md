@@ -566,12 +566,12 @@ the executable checker `certCheck B B' U V δ η : Bool` returns `true`, where
   base-`2^K` representation injective, which is the soundness argument.
   The packed comparison is complete as well as sound: by linearity of
   packing it accepts exactly when the products are equal. For word-scale
-  operands and dimensions large enough to amortize packing, the
-  same-lattice clause costs `O(n²)` big-by-small multiplications rather
+  transforms and bases, the same-lattice clause costs `O(n²)`
+  big-by-small multiplications rather
   than the `O(n²·m)` entry products of a materialized `Matrix.mul`. For
-  wide entries, the packed dot products cost the same bit operations as
-  the materialized product while preserving the same acceptance predicate
-  `M·A = C`;
+  wide entries, the packed dot products have the same bit-operation scale
+  as the materialized product, plus bound-scan and repacking overhead,
+  while preserving the same acceptance predicate `M·A = C`;
 - `B'` independent and `(δ, η)`-size-reduced and Lovász. The clause is
   decided by a sound fixed-precision enclosure Gram-Schmidt pass over the
   exact integer Gram matrix of `B'`: a closed dyadic interval
