@@ -363,6 +363,55 @@ theorem exists_witnesses_of_map_dvd_zmod
   obtain ⟨r, hr⟩ := hCdvd
   exact ⟨a, r, by rw [← hr]; ring⟩
 
+/-- A shifted polynomial belongs to `degreeLT` when its natural degree is
+strictly below the bound. -/
+theorem mul_X_pow_mem_degreeLT_of_natDegree_lt
+    {R : Type*} [Semiring R] (p : Polynomial R) {m t : Nat}
+    (hdeg : (p * Polynomial.X ^ t).natDegree < m) :
+    p * Polynomial.X ^ t ∈ Polynomial.degreeLT R m := by
+  by_cases hp : p * Polynomial.X ^ t = 0
+  · rw [hp]
+    exact Submodule.zero_mem _
+  · exact Polynomial.mem_degreeLT.mpr
+      ((Polynomial.natDegree_lt_iff_degree_lt hp).mp hdeg)
+
+/-- Negated shifted-polynomial version of
+`mul_X_pow_mem_degreeLT_of_natDegree_lt`, used by the left component of the
+common-factor Sylvester syzygy. -/
+theorem neg_mul_X_pow_mem_degreeLT_of_natDegree_lt
+    {R : Type*} [CommRing R] (p : Polynomial R) {m t : Nat}
+    (hdeg : (p * Polynomial.X ^ t).natDegree < m) :
+    -p * Polynomial.X ^ t ∈ Polynomial.degreeLT R m := by
+  rw [neg_mul]
+  by_cases hp : p * Polynomial.X ^ t = 0
+  · rw [hp, neg_zero]
+    exact Submodule.zero_mem _
+  · exact Polynomial.mem_degreeLT.mpr
+      ((Polynomial.natDegree_lt_iff_degree_lt (by simp [hp])).mp
+        (by simpa [Polynomial.natDegree_neg] using hdeg))
+
+/--
+Common-factor syzygy for the Sylvester map.
+
+If `f = q * a` and `g = q * b`, then the shifted pair
+`(-a * X^t, b * X^t)` is killed by the Sylvester map for `(f, g)`.  Later
+column-reduction work uses the `q.natDegree` shifts of this identity after
+reducing explicit quotient/remainder witnesses modulo `m`.
+-/
+theorem sylvesterMap_commonFactor_syzygy
+    {R : Type*} [CommRing R]
+    (q a b : Polynomial R) {m n t : Nat}
+    (hleft : -a * Polynomial.X ^ t ∈ Polynomial.degreeLT R m)
+    (hright : b * Polynomial.X ^ t ∈ Polynomial.degreeLT R n)
+    (hf : (q * a).natDegree ≤ m)
+    (hg : (q * b).natDegree ≤ n) :
+    Polynomial.sylvesterMap (q * a) (q * b) hf hg
+      (⟨-a * Polynomial.X ^ t, hleft⟩,
+       ⟨b * Polynomial.X ^ t, hright⟩) = 0 := by
+  ext1
+  dsimp [Polynomial.sylvesterMap]
+  ring_nf
+
 end
 
 end HexBerlekampZassenhausMathlib
