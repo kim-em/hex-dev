@@ -2411,6 +2411,59 @@ private theorem squareFreeAuxRevContribution_one
       rw [pthRoot_one hp]
       exact ih (multiplicity * p)
 
+private theorem derivative_isZero_true_of_size_one
+    (f : FpPoly p) (hsize : f.size = 1) :
+    (DensePoly.derivative f).isZero = true := by
+  unfold DensePoly.derivative
+  simp [hsize, DensePoly.isZero, DensePoly.ofCoeffs, DensePoly.trimTrailingZeros]
+  rfl
+
+private theorem pthRoot_eq_self_of_size_one
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (hsize : f.size = 1) :
+    pthRoot f = f := by
+  apply DensePoly.ext_coeff
+  intro n
+  rw [pthRoot_coeff]
+  cases n with
+  | zero =>
+      simp
+  | succ n =>
+      have htwo : 2 ≤ p := Hex.Nat.Prime.two_le hp
+      have hidx : 1 ≤ (n + 1) * p := by
+        have hp_one : 1 ≤ p := by omega
+        have hmul : 1 * p ≤ (n + 1) * p :=
+          Nat.mul_le_mul_right p (by omega)
+        omega
+      have hroot_zero :
+          f.coeff ((n + 1) * p) = 0 := by
+        apply DensePoly.coeff_eq_zero_of_size_le
+        omega
+      have hf_zero : f.coeff (n + 1) = 0 := by
+        apply DensePoly.coeff_eq_zero_of_size_le
+        omega
+      rw [hroot_zero, hf_zero]
+
+private theorem squareFreeAuxRevContribution_size_one
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (hsize : f.size = 1) :
+    squareFreeAuxRevContribution f multiplicity fuel = 1 := by
+  induction fuel generalizing f multiplicity with
+  | zero =>
+      rfl
+  | succ fuel ih =>
+      simp only [squareFreeAuxRevContribution]
+      have hzero : f.isZero = false := by
+        cases hz : f.isZero
+        · rfl
+        · have hzero_size : f.size = 0 := size_eq_zero_of_isZero_true f hz
+          omega
+      have hdf : (DensePoly.derivative f).isZero = true :=
+        derivative_isZero_true_of_size_one f hsize
+      rw [if_neg (by simp [hzero]), if_pos hdf]
+      have hroot_size : (pthRoot f).size = 1 := by
+        rw [pthRoot_eq_self_of_size_one hp f hsize, hsize]
+      exact ih (pthRoot f) (multiplicity * p) hroot_size
+
 private theorem squareFreeAuxRevContribution_pthRoot_constant_correct
     (hp : Hex.Nat.Prime p) (multiplicity fuel : Nat) :
     squareFreeAuxRevContribution (pthRoot (1 : FpPoly p)) multiplicity fuel =
