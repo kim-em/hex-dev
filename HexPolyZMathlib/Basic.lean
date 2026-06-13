@@ -4,6 +4,8 @@ import HexModArithMathlib
 import Mathlib.Algebra.Polynomial.Degree.Units
 import Mathlib.Algebra.Ring.Int.Units
 import Mathlib.Data.ZMod.Basic
+import Mathlib.RingTheory.Polynomial.Content
+import Mathlib.Algebra.GCDMonoid.Nat
 import HexPolyZ
 
 /-!
@@ -233,6 +235,47 @@ theorem natDegree_toPolynomial_dilate (c : ℤ) (hc : c ≠ 0) (g : Hex.ZPoly) :
       (toPolynomial g).natDegree := by
   rw [toPolynomial_dilate, Polynomial.natDegree_comp,
     Polynomial.natDegree_C_mul_X c hc, mul_one]
+
+/-! ### Gauss content/primitive-part correspondence
+
+The executable `Hex.ZPoly.content`/`primitivePart` carry their own Gauss theory
+(`content_mul`, `content_mul_primitivePart`, `primitivePart_primitive`). These
+lemmas relate that theory to Mathlib's `Polynomial.content`/`primPart`, so the
+recombination recovery proof can lean on Mathlib's Gauss lemma machinery. -/
+
+/-- The Mathlib content of the embedded polynomial agrees with the executable
+integer content. Both are the normalized (nonnegative) gcd of the coefficients,
+so this is the Gauss bridge between the two content theories. -/
+theorem toPolynomial_content (f : Hex.ZPoly) :
+    (toPolynomial f).content = Hex.ZPoly.content f := by
+  have hnonneg : 0 ≤ Hex.ZPoly.content f := by
+    unfold Hex.ZPoly.content Hex.DensePoly.content
+    exact Int.ofNat_nonneg _
+  refine dvd_antisymm_of_normalize_eq Polynomial.normalize_content
+    (Int.normalize_of_nonneg hnonneg) ?_ ?_
+  · rw [← Int.natAbs_dvd]
+    refine Hex.ZPoly.dvd_content_of_nat_dvd_coeff f _ (fun n => ?_)
+    rw [Int.natAbs_dvd, ← coeff_toPolynomial]
+    exact Polynomial.content_dvd_coeff n
+  · rw [Polynomial.dvd_content_iff_C_dvd, Polynomial.C_dvd_iff_dvd_coeff]
+    intro n
+    rw [coeff_toPolynomial]
+    exact Hex.ZPoly.content_dvd_coeff f n
+
+/-- Gauss content decomposition transported to Mathlib: the embedded polynomial
+is its content times the embedded primitive part. -/
+theorem toPolynomial_eq_C_content_mul_primitivePart (f : Hex.ZPoly) :
+    toPolynomial f =
+      Polynomial.C (Hex.ZPoly.content f) *
+        toPolynomial (Hex.ZPoly.primitivePart f) := by
+  conv_lhs => rw [← Hex.ZPoly.content_mul_primitivePart f]
+  rw [← Hex.ZPoly.C_mul_eq_scale, toPolynomial_mul, toPolynomial_C]
+
+/-- A primitive executable polynomial embeds to a Mathlib-primitive polynomial. -/
+theorem isPrimitive_toPolynomial_of_primitive (f : Hex.ZPoly)
+    (hf : Hex.ZPoly.Primitive f) : (toPolynomial f).IsPrimitive := by
+  rw [Polynomial.isPrimitive_iff_content_eq_one, toPolynomial_content]
+  exact hf
 
 end
 
