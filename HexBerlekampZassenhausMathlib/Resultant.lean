@@ -551,6 +551,117 @@ theorem basisProd_repr_natAdd {R : Type*} [CommRing R] {m n : Nat}
     finSumFinEquiv_symm_apply_natAdd, Module.Basis.prod_repr_inr,
     Polynomial.degreeLT.basis_repr]
 
+/-- A `Fin n` product of a step function `1 ↦ … ↦ 1, C ↦ … ↦ C` that switches to
+`C` exactly on the top `d` indices evaluates to `C ^ d`. -/
+private lemma prod_threshold {R : Type*} [CommRing R] (C : R) {n d : Nat}
+    (hd : d ≤ n) :
+    ∏ i : Fin n, (if n - d ≤ (i : ℕ) then C else 1) = C ^ d := by
+  have hn : (n - d) + d = n := Nat.sub_add_cancel hd
+  rw [← Fin.prod_congr' (fun i : Fin n => if n - d ≤ (i : ℕ) then C else (1 : R)) hn,
+    Fin.prod_univ_add]
+  have h1 : (∏ i : Fin (n - d),
+      (fun x : Fin ((n - d) + d) => if n - d ≤ ((Fin.cast hn x : Fin n) : ℕ) then C else (1 : R))
+        (Fin.castAdd d i)) = 1 := by
+    apply Finset.prod_eq_one
+    intro i _
+    have := i.is_lt
+    simp only [Fin.coe_cast, Fin.coe_castAdd]
+    exact if_neg (by omega)
+  have h2 : (∏ i : Fin d,
+      (fun x : Fin ((n - d) + d) => if n - d ≤ ((Fin.cast hn x : Fin n) : ℕ) then C else (1 : R))
+        (Fin.natAdd (n - d) i)) = C ^ d := by
+    rw [Finset.prod_congr rfl (fun i _ => by
+      simp only [Fin.coe_cast, Fin.coe_natAdd]; exact if_pos (by omega))]
+    exact Fin.prod_const d C
+  rw [h1, h2, one_mul]
+
+/--
+The column-reduction transformation matrix for the common-factor Sylvester
+reduction.
+
+In the natural `Fin (m + n)` Sylvester column layout, columns `m + (n - d) ..
+m + n - 1` (the top `d` columns of the `f`-shift block) are the *pivot* columns.
+This matrix is the identity except on those `d` pivot columns, where column
+`m + (n - d) + t` carries the coordinate vector of the shifted common-factor
+direction `(-a * X^t, b * X^t)` — its left `m` entries are the coefficients of
+`-a * X^t`, its right `n` entries those of `b * X^t`.
+
+Multiplying the Sylvester matrix `S` on the right by this matrix replaces each
+pivot column by the syzygy combination `S.mulVec (direction)` while leaving the
+others fixed. The matrix is upper triangular with diagonal entry `b.coeff (n-d)`
+at each pivot (and `1` elsewhere), so `det = (b.coeff (n-d)) ^ d`; under a monic
+cofactor `b` this diagonal entry is `1` and the determinant is preserved.
+-/
+def colReduceTransform {R : Type*} [CommRing R] (a b : Polynomial R) (m n d : Nat) :
+    Matrix (Fin (m + n)) (Fin (m + n)) R :=
+  Matrix.of fun i j =>
+    j.addCases
+      (fun _j₁ => if i = j then 1 else 0)
+      (fun j₂ =>
+        if n - d ≤ (j₂ : ℕ) then
+          i.addCases
+            (fun i₁ => (-a * Polynomial.X ^ ((j₂ : ℕ) - (n - d))).coeff i₁)
+            (fun i₂ => (b * Polynomial.X ^ ((j₂ : ℕ) - (n - d))).coeff i₂)
+        else if i = j then 1 else 0)
+
+/-- `colReduceTransform` is upper triangular: below-diagonal entries vanish. The
+pivot columns are supported on rows `≤` the pivot because `-a * X^t` lives in
+`degreeLT m` (left block, all rows `< m ≤` pivot) and `b * X^t` has degree
+`≤ (n - d) + t` (right block, capped at the pivot row), using `b.natDegree ≤ n - d`. -/
+theorem colReduceTransform_blockTriangular {R : Type*} [CommRing R] (a b : Polynomial R)
+    {m n d : Nat} (hd : d ≤ n) (hb : b.natDegree + d ≤ n) :
+    (colReduceTransform a b m n d).BlockTriangular id := by
+  intro i j hlt
+  simp only [id_eq, Fin.lt_def] at hlt
+  rw [colReduceTransform, Matrix.of_apply]
+  induction j using Fin.addCases with
+  | left j₁ =>
+      simp only [Fin.addCases_left]
+      exact if_neg (fun h => by simp [h] at hlt)
+  | right j₂ =>
+      simp only [Fin.addCases_right, Fin.coe_natAdd] at hlt ⊢
+      by_cases hpiv : n - d ≤ (j₂ : ℕ)
+      · simp only [hpiv, if_true]
+        induction i using Fin.addCases with
+        | left i₁ =>
+            simp only [Fin.coe_castAdd] at hlt
+            have := i₁.is_lt
+            omega
+        | right i₂ =>
+            simp only [Fin.addCases_right, Fin.coe_natAdd] at hlt ⊢
+            rw [Polynomial.coeff_mul_X_pow']
+            have hbz : b.natDegree < (i₂ : ℕ) - ((j₂ : ℕ) - (n - d)) := by omega
+            split_ifs with h
+            · exact Polynomial.coeff_eq_zero_of_natDegree_lt hbz
+            · rfl
+      · simp only [hpiv, if_false]
+        exact if_neg (fun h => by simp [h, Fin.lt_def] at hlt)
+
+/-- The determinant of `colReduceTransform` is `(b.coeff (n - d)) ^ d`. -/
+theorem colReduceTransform_det {R : Type*} [CommRing R] (a b : Polynomial R)
+    {m n d : Nat} (hd : d ≤ n) (hb : b.natDegree + d ≤ n) :
+    (colReduceTransform a b m n d).det = (b.coeff (n - d)) ^ d := by
+  rw [Matrix.det_of_upperTriangular (colReduceTransform_blockTriangular a b hd hb),
+    Fin.prod_univ_add]
+  have hleft : (∏ i₁ : Fin m,
+      colReduceTransform a b m n d (i₁.castAdd n) (i₁.castAdd n)) = 1 := by
+    apply Finset.prod_eq_one
+    intro i₁ _
+    simp [colReduceTransform]
+  have hright : (∏ i₂ : Fin n,
+      colReduceTransform a b m n d (i₂.natAdd m) (i₂.natAdd m))
+        = ∏ i₂ : Fin n, (if n - d ≤ (i₂ : ℕ) then b.coeff (n - d) else 1) := by
+    apply Finset.prod_congr rfl
+    intro i₂ _
+    rw [colReduceTransform, Matrix.of_apply, Fin.addCases_right]
+    by_cases hpiv : n - d ≤ (i₂ : ℕ)
+    · simp only [hpiv, if_true, Fin.addCases_right]
+      rw [Polynomial.coeff_mul_X_pow', if_pos (by omega)]
+      congr 1
+      omega
+    · simp [hpiv]
+  rw [hleft, hright, one_mul, prod_threshold _ hd]
+
 end
 
 end HexBerlekampZassenhausMathlib
