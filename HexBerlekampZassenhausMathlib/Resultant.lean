@@ -1,6 +1,7 @@
 import HexPolyZMathlib.Mignotte
 import Mathlib.Algebra.Polynomial.FieldDivision
 import Mathlib.Analysis.InnerProductSpace.Orientation
+import Mathlib.Data.ZMod.Basic
 import Mathlib.RingTheory.Polynomial.Resultant.Basic
 
 /-!
@@ -295,6 +296,38 @@ theorem int_resultant_ne_zero_of_coprime_over_rat
   have h :=
     (int_resultant_eq_zero_iff_not_coprime_over_rat f g).mp hres
   exact h.2 hcoprime
+
+/--
+Integer witnesses from a `ZMod n` divisibility of mapped integer polynomials.
+If `q` divides `f` after reducing both modulo `n`, then there are honest integer
+polynomial witnesses `a, r` with `f = q * a + C n * r`. No monicity hypothesis is
+needed: surjectivity of `ℤ → ZMod n` lifts the modular quotient, and the residual
+`f - q * a` is coefficientwise divisible by `n`.
+-/
+theorem exists_witnesses_of_map_dvd_zmod
+    {f q : Polynomial ℤ} {n : ℕ}
+    (hdvd : q.map (Int.castRingHom (ZMod n)) ∣
+            f.map (Int.castRingHom (ZMod n))) :
+    ∃ a r : Polynomial ℤ, f = q * a + Polynomial.C (n : ℤ) * r := by
+  obtain ⟨b, hb⟩ := hdvd
+  -- Lift the `ZMod n` quotient `b` to an integer polynomial `a`.
+  have hsurj : Function.Surjective (Polynomial.map (Int.castRingHom (ZMod n))) :=
+    Polynomial.map_surjective _ ZMod.intCast_surjective
+  obtain ⟨a, ha⟩ := hsurj b
+  -- `f - q * a` reduces to zero mod `n`.
+  have hzero : (f - q * a).map (Int.castRingHom (ZMod n)) = 0 := by
+    rw [Polynomial.map_sub, Polynomial.map_mul, ha, ← hb, sub_self]
+  -- Hence each coefficient is divisible by `n`, so `C n` divides `f - q * a`.
+  have hCdvd : Polynomial.C (n : ℤ) ∣ (f - q * a) := by
+    rw [Polynomial.C_dvd_iff_dvd_coeff]
+    intro k
+    have hc : ((f - q * a).coeff k : ZMod n) = 0 := by
+      have h0 : ((f - q * a).map (Int.castRingHom (ZMod n))).coeff k = 0 := by
+        rw [hzero]; simp
+      rwa [Polynomial.coeff_map] at h0
+    exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ n).mp hc
+  obtain ⟨r, hr⟩ := hCdvd
+  exact ⟨a, r, by rw [← hr]; ring⟩
 
 end
 
