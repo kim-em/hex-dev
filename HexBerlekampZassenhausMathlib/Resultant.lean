@@ -110,6 +110,26 @@ theorem det_dvd_of_left_cols_dvd
       (fun j : Fin d => A (σ (j.castAdd n)) (j.castAdd n))
       (fun j => hcols j (σ (j.castAdd n))))
 
+/--
+Replacing a column of a square matrix by `A.mulVec w` — the linear combination
+of all columns with coefficients `w` — multiplies the determinant by the
+coefficient `w p` of the replaced column.
+
+This is the determinant-preserving column-operation mechanism: when the
+replaced column appears in the combination with a *unit* coefficient (`w p = 1`,
+the monic-triangular case), the determinant is preserved exactly. It is the
+column-form repackaging of `Matrix.det_updateCol_sum` against `mulVec`.
+-/
+theorem det_updateCol_mulVec
+    {R : Type*} [CommRing R] {N : Nat}
+    (A : Matrix (Fin N) (Fin N) R) (p : Fin N) (w : Fin N → R) :
+    (A.updateCol p (A.mulVec w)).det = w p • A.det := by
+  have hcol : A.mulVec w = (fun k => ∑ i, w i • A k i) := by
+    funext k
+    simp only [Matrix.mulVec, dotProduct, smul_eq_mul]
+    exact Finset.sum_congr rfl (fun i _ => mul_comm _ _)
+  rw [hcol, Matrix.det_updateCol_sum]
+
 /-- Squared `l2norm` of an integer polynomial expressed as a sum of squared
 coefficients over `Finset.range (natDegree + 1)`, padding with zeros outside
 `support`. -/
@@ -471,6 +491,43 @@ theorem sylvester_mulVec_commonFactor_smul
   rw [hmat, LinearMap.toMatrix_mulVec_repr]
   rw [Polynomial.degreeLT.basis_repr, sylvesterMap_commonFactor_smul,
     Polynomial.coeff_C_mul]
+
+/--
+The monic-triangular column-reduction step for the Sylvester matrix.
+
+Write `w` for the coordinate vector of the shifted common-factor direction
+`(-a * X^t, b * X^t)`. Replacing column `p` of the Sylvester matrix `S` by the
+combination `S.mulVec w` (the syzygy column):
+
+- multiplies the determinant by the pivot coefficient `w p`
+  (`det_updateCol_mulVec`); in the monic-triangular case `w p = 1` this is a
+  determinant-*preserving* operation, and
+- produces a column whose every entry is divisible by the scalar `c`
+  (`sylvester_mulVec_commonFactor_smul`).
+
+Assembling this step over the `d = q.natDegree` shifts `t < d`, with the pivots
+chosen so each `w p = 1`, gives the matrix `A'` of the column-reduction target:
+`A'.det = S.det` with `d` columns entrywise divisible by `c`. The remaining work
+is the bookkeeping that the chosen pivots carry unit coefficients (a leading
+coefficient of the cofactor, hence `1` under the monic hypothesis) and that the
+combinations reference only as-yet-unreplaced columns.
+-/
+theorem sylvester_commonFactor_colReduceStep
+    {R : Type*} [CommRing R]
+    (q a b r s : Polynomial R) (c : R) {m n t : Nat}
+    (hleft : -a * Polynomial.X ^ t ∈ Polynomial.degreeLT R m)
+    (hright : b * Polynomial.X ^ t ∈ Polynomial.degreeLT R n)
+    (hf : (q * a + Polynomial.C c * r).natDegree ≤ m)
+    (hg : (q * b + Polynomial.C c * s).natDegree ≤ n)
+    (p : Fin (m + n)) :
+    let S := Polynomial.sylvester (q * a + Polynomial.C c * r) (q * b + Polynomial.C c * s) m n
+    let w := (Polynomial.degreeLT.basisProd R m n).repr
+      (⟨-a * Polynomial.X ^ t, hleft⟩, ⟨b * Polynomial.X ^ t, hright⟩)
+    (S.updateCol p (S.mulVec w)).det = w p • S.det ∧
+      ∀ k, c ∣ (S.mulVec w) k := by
+  refine ⟨det_updateCol_mulVec _ p _, fun k => ?_⟩
+  rw [sylvester_mulVec_commonFactor_smul q a b r s c hleft hright hf hg k]
+  exact Dvd.intro _ rfl
 
 end
 
