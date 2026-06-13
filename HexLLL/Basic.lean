@@ -1798,11 +1798,24 @@ end SteeredState
 
 /-- Run the approximation-steered reducer: init float GSO, run the fuel-bounded
 steered loop, then the drift-free final sweep, returning the exact reduced basis.
-Steers with `δsteer = (δ + 1)/2` (stricter than the certification `δ`). -/
+Steers with `δsteer = (δ + 2)/3` (stricter than the certification `δ`), `4/3` the
+`(δ + 1)/2` margin: the wider gap absorbs more of the float `bb`/`mu` drift that
+the periodic refresh leaves between exact recomputations, widening the slack the
+final size-reduced basis has against the public-`δ` certification. This is a
+best-effort heuristic, not a guarantee — `lllSteered` still certifies the output
+and falls back to the exact reducer if it misses. Empirically (issue #6806)
+`(δ + 2)/3` certifies the committed random-bounded and harsh-cubic ladders and
+random-bounded n=30 across seeds 1..12, with one off-ladder residual at rb
+n=65/seed=9 (where `(δ + 1)/2` also fails). It is the cheapest measured margin
+that both certifies that binding set and keeps the extra-swap cost on the
+already-steered rungs within 3% (the larger `(δ + 3)/4` is equally robust but
+costs ~5% on random-bounded n=45). A stricter `δsteer` does not monotonically
+help robustness or cost, because it steers a different swap trajectory through
+different float-rounding boundaries. -/
 def steeredReduce (b : Matrix Int n m) (δ : Rat) : Matrix Int n m :=
   let s0 := SteeredState.init b
   let δf : Float := Float.ofInt δ.num / Float.ofNat δ.den
-  let δsteer : Float := (δf + 1.0) / 2.0
+  let δsteer : Float := (δf + 2.0) / 3.0
   let s := SteeredState.loop δsteer 16 s0 1 0 (SteeredState.fuel b)
   (SteeredState.finalSweep s).b
 
@@ -1954,59 +1967,42 @@ unsafe def withRecordSteeredOutcomeImpl {α : Type} (o : SteeredOutcome) (k : α
 @[implemented_by withRecordSteeredOutcomeImpl]
 def withRecordSteeredOutcome {α : Type} (_o : SteeredOutcome) (k : α) : α := k
 
-/-- Dimension threshold of the steering dispatch for narrow-operand inputs.
-Steering plus post-hoc certification carries a fixed overhead, so below this
-dimension the exact `lllNative` is cheaper and runs directly. Small-operand
-families (e.g. random-bounded, entries `|·| ≤ 30`) cross over here. -/
-def steerDimThreshold : Nat := 40
-
-/-- Lower dimension threshold of the steering dispatch for wide-operand inputs.
-The certifier recomputes the candidate's Gram-Schmidt, whose reduced operands
-stay as wide as the input's (the determinant is preserved). On wide-operand
-families that exact post-hoc pass is cheap relative to the *exact reducer's*
-repeated wide-integer Gram-Schmidt, so steering already repays its overhead at a
-lower dimension. This is the minimum steering dimension across all operand
-widths: nothing below it is ever steered, which keeps the smallest inputs —
-above all the µs-scale bz-recombination production family, whose recombination
-operands can be wide at small dimension — on the exact path with no regression. -/
-def steerWideDimThreshold : Nat := 30
-
-/-- Operand width (bits of the largest squared row norm) at or above which an
-input uses the lower `steerWideDimThreshold` rather than `steerDimThreshold`.
-Harsh-cubic (entries `~2^{3.3n}`, so `maxDiagBits ≈ 6.6·n`) clears this at n≈28;
-random-bounded (`maxDiagBits ≤ 16` across the whole ladder) never does. -/
-def steerBitThreshold : Nat := 180
+/-- Dimension floor of the steering dispatch, calibrated on the committed
+benchmark families. Steering plus post-hoc certification carries a fixed
+overhead, so below this dimension the exact `lllNative` is cheaper and runs
+directly; at or above it the steered loop's float Gram-Schmidt repays that
+overhead against the exact reducer's repeated wide-integer Gram-Schmidt. The
+lowest committed rung is 30 and bz-recombination is n=3, so this floor keeps the
+smallest inputs — including the µs-scale bz-recombination production family — on
+the exact path with no regression. Routing only affects performance, never
+output: `lllSteered` certifies every steered candidate and falls back to the
+exact reducer if it does not certify. -/
+def steerDimThreshold : Nat := 30
 
 /-- Size predictor for the steering dispatch: `true` when the steered reducer plus
-certification is predicted to beat the exact `lllNative` on this input. The
-dimension threshold is operand-adjusted — wide operands
-(`maxDiagBits ≥ steerBitThreshold`) steer from `steerWideDimThreshold`, narrow
-operands only from the higher `steerDimThreshold`.
+certification is predicted to beat the exact `lllNative` on this input. A single
+dimension floor places both committed families once the steered reducer certifies
+robustly at n=30 (issue #6806): the measured crossover for both the wide-operand
+harsh-cubic family and the narrow-operand random-bounded family sits at n=30, so
+no operand-width branch is needed. A deterministic function of the input
+dimension alone.
 
-A deterministic function of the input alone. A single dimension-only constant
-could not place both committed families: at `steerDimThreshold = 40` the steered
-curve was non-monotone on harsh-cubic (n=35 held exact at 20.7 ms while n=40
-steered ran 16.3 ms — a larger problem finishing faster). Lowering the threshold
-for wide operands pulls harsh-cubic in at n=30 (paired bench on `carica`: n=30
-steered 8.0 ms vs exact 9.7 ms, n=35 11.4 ms vs 20.4 ms) without touching
-random-bounded, whose operands never reach `steerBitThreshold`, so it keeps the
-`steerDimThreshold` routing verbatim. The `intervalWins`-shaped *product*
-`n · maxDiagBits` cannot achieve this separation (the #6757 entanglement): it
-orders harsh-cubic n=20 (product 2640) above random-bounded n=45 (630), so any
-constant that steers the latter also steers the former, a 26% regression. An
-operand-adjusted dimension threshold does separate them.
+Earlier the random-bounded crossover looked like it sat above 40 because the
+steered output at n=30 failed certification (a float-drift swap miss) and fell
+back to the exact reducer, so steering it regressed; that pushed the dispatch to
+a narrow `steerDimThreshold = 40` arm and a separate wide `= 30` arm gated on
+`maxDiagBits`. Fixing the drift (the `(δ + 3)/4` steering margin in
+`steeredReduce`) makes random-bounded n=30 certify, dropping its measured
+crossover to 30 and collapsing the two arms into one. The collapse newly steers
+narrow-operand inputs at `30 ≤ n < 40`; this is calibrated for the committed
+families, and certification with exact-reducer fallback keeps it correct on any
+other input.
 
 Realized routing on the committed ladders: harsh-cubic exact at n ≤ 25, steered
-at n ≥ 30 (wide arm); random-bounded exact at n=30, steered at n ≥ 45 (narrow arm
-— unchanged from the dimension-only dispatch); bz-recombination (n=3) exact.
-Residual misroute: random-bounded n=30 is held exact even though steering it would
-be cheaper *if it certified* — but the steered float reduction of that
-swap-forcing fixture is not `(δ, 11/20)`-reduced, so it would fall back to the
-exact reducer (measured 19.2 ms vs the exact 14.8 ms, a regression); keeping it on
-the narrow arm correctly leaves it exact. -/
-def steerWins (b : Matrix Int n m) : Bool :=
-  decide (n ≥ if maxDiagBits b ≥ steerBitThreshold then steerWideDimThreshold
-              else steerDimThreshold)
+at n ≥ 30; random-bounded steered at n ≥ 30 (n=30 included); bz-recombination
+(n=3) exact. -/
+def steerWins (_b : Matrix Int n m) : Bool :=
+  decide (n ≥ steerDimThreshold)
 
 /-- Approximation-steered native reducer with certified output. When `steerWins`
 holds it runs the steered loop (exact integer row operations driven by an
