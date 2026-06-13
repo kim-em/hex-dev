@@ -6288,6 +6288,36 @@ theorem dilate_transformedCore (core : ZPoly) (degree : Nat)
 
 end ZPoly.ToMonicData
 
+namespace ZPoly
+
+/-- Public face of the inverse-recovery keystone, stated on the `toMonic` monic
+field rather than the private `transformedCore`. For a core of degree `≥ 1`,
+dilating `(toMonic core).monic` by the leading coefficient recovers `core`
+scaled by `leadingCoeff core ^ (degree - 1)`. Holds in both the already-monic
+and the genuine transform branch. -/
+theorem dilate_monic_toMonic (core : ZPoly)
+    (hdeg : 1 ≤ (toMonic core).degree) :
+    Hex.ZPoly.dilate (DensePoly.leadingCoeff core) ((toMonic core).monic) =
+      DensePoly.C (DensePoly.leadingCoeff core ^ ((toMonic core).degree - 1)) *
+        core := by
+  by_cases hmonic : DensePoly.leadingCoeff core = 1
+  · have hmon : (toMonic core).monic = core :=
+      toMonic_monic_eq_core_of_leadingCoeff_eq_one core hmonic
+    rw [hmon, hmonic, Hex.ZPoly.dilate_one, Int.one_pow, Hex.ZPoly.C_mul_eq_scale]
+    symm
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_scale_semiring, Int.one_mul]
+  · have hmon : (toMonic core).monic =
+        ToMonicData.transformedCore core (core.degree?.getD 0) := by
+      simp [toMonic, hmonic]
+    have hdeg' : 1 ≤ core.degree?.getD 0 := by
+      rw [toMonic_degree] at hdeg; exact hdeg
+    rw [hmon, toMonic_degree]
+    exact ToMonicData.dilate_transformedCore core (core.degree?.getD 0) hdeg' rfl
+
+end ZPoly
+
 private theorem bhksIndicatorCandidatesStep_fold_preserves_prefix
     (f : ZPoly) (d : LiftData)
     (indicators : List (Array Int)) (acc candidates : Array ZPoly)
