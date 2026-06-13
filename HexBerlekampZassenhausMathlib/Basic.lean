@@ -8711,44 +8711,59 @@ private theorem congr_of_reduceModPow_eq
     (Hex.ZPoly.congr_symm _ _ _ hf) hg
 
 /--
-Multiplicative closure of `RepresentsIntegerFactorAtLift` along a disjoint
-decomposition `S ∪ T` of representing subsets under a monic core. If `S`
-represents the integer factor `f` and `T` (disjoint from `S`) represents `g`,
-then `S ∪ T` represents `f * g`.
-
-Combines `liftedFactorProduct_union_of_disjoint` with the multiplicative
-congruence `Hex.ZPoly.congr_mul`.
+Compatibility wrapper for multiplicative closure of
+`RepresentsIntegerFactorAtLift` along a disjoint decomposition `S ∪ T` of
+representing subsets under a monic core. The public predicate now packages a
+recovered monic-coordinate witness, so the proof constructs the product
+witness directly; the monic-core hypothesis is retained for existing callers.
 -/
 theorem representsIntegerFactorAtLift_mul_of_monic_core
     {core f g : Hex.ZPoly} {d : Hex.LiftData}
     {S T : LiftedFactorSubset d}
-    (hcore_monic : Hex.DensePoly.Monic core)
+    (_hcore_monic : Hex.DensePoly.Monic core)
     (hdisj : Disjoint S T)
     (hf_rep : RepresentsIntegerFactorAtLift core d f S)
     (hg_rep : RepresentsIntegerFactorAtLift core d g T) :
     RepresentsIntegerFactorAtLift core d (f * g) (S ∪ T) := by
-  unfold RepresentsIntegerFactorAtLift at hf_rep hg_rep ⊢
-  have hlead : Hex.DensePoly.leadingCoeff core = (1 : Int) := hcore_monic
+  rcases hf_rep with ⟨hf⟩
+  rcases hg_rep with ⟨hg⟩
   have hpk_pos : 0 < d.p ^ d.k := Nat.pow_pos d.p_pos
-  have hscaled :
-      ∀ (U : LiftedFactorSubset d),
-        scaledLiftedFactorProduct core d U = liftedFactorProduct d U := by
-    intro U
-    unfold scaledLiftedFactorProduct
-    rw [hlead]
-    exact densePoly_scale_one_int (liftedFactorProduct d U)
-  rw [hscaled S] at hf_rep
-  rw [hscaled T] at hg_rep
-  rw [hscaled (S ∪ T), liftedFactorProduct_union_of_disjoint hdisj]
-  have hcongr_f : Hex.ZPoly.congr (liftedFactorProduct d S) f (d.p ^ d.k) :=
-    congr_of_reduceModPow_eq _ _ _ _ hpk_pos hf_rep
-  have hcongr_g : Hex.ZPoly.congr (liftedFactorProduct d T) g (d.p ^ d.k) :=
-    congr_of_reduceModPow_eq _ _ _ _ hpk_pos hg_rep
-  have hcongr_mul :
-      Hex.ZPoly.congr (liftedFactorProduct d S * liftedFactorProduct d T)
-        (f * g) (d.p ^ d.k) :=
-    Hex.ZPoly.congr_mul _ _ _ _ _ hcongr_f hcongr_g
-  exact Hex.ZPoly.reduceModPow_eq_of_congr _ _ _ _ hcongr_mul
+  exact RepresentsIntegerFactorAtLift.ofRecovered
+    { monicFactor := hf.monicFactor * hg.monicFactor
+      congr := by
+        have hcongr_f :
+            Hex.ZPoly.congr (liftedFactorProduct d S) hf.monicFactor
+              (d.p ^ d.k) :=
+          congr_of_reduceModPow_eq _ _ _ _ hpk_pos hf.congr
+        have hcongr_g :
+            Hex.ZPoly.congr (liftedFactorProduct d T) hg.monicFactor
+              (d.p ^ d.k) :=
+          congr_of_reduceModPow_eq _ _ _ _ hpk_pos hg.congr
+        have hcongr_mul :
+            Hex.ZPoly.congr
+              (liftedFactorProduct d S * liftedFactorProduct d T)
+              (hf.monicFactor * hg.monicFactor) (d.p ^ d.k) :=
+          Hex.ZPoly.congr_mul _ _ _ _ _ hcongr_f hcongr_g
+        rw [liftedFactorProduct_union_of_disjoint hdisj]
+        exact Hex.ZPoly.reduceModPow_eq_of_congr _ _ _ _ hcongr_mul
+      dilate_eq := by
+        calc
+          Hex.ZPoly.primitivePart
+              (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+                (hf.monicFactor * hg.monicFactor))
+              =
+            Hex.ZPoly.primitivePart
+              (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) hf.monicFactor *
+                Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) hg.monicFactor) := by
+              rw [HexPolyZMathlib.dilate_mul]
+          _ =
+            Hex.ZPoly.primitivePart
+                (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) hf.monicFactor) *
+              Hex.ZPoly.primitivePart
+                (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) hg.monicFactor) := by
+              rw [Hex.ZPoly.primitivePart_mul]
+          _ = f * g := by
+              rw [hf.dilate_eq, hg.dilate_eq] }
 
 /--
 Multiplicative closure of the recovered/monic-coordinate representation carrier
@@ -8756,15 +8771,16 @@ Multiplicative closure of the recovered/monic-coordinate representation carrier
 integer factor `f` and `T` (disjoint from `S`) recovers `g`, then `S ∪ T`
 recovers `f * g`.
 
-Unlike `representsIntegerFactorAtLift_mul_of_monic_core` on the old scaled-product
-predicate, this holds for an *arbitrary* core: the carrier already separates the
-mod-`p^k` congruence (on the unscaled `liftedFactorProduct`) from the dilation by
-`leadingCoeff core`, so no monicity hypothesis is needed. The witness monic
-coordinate is the product of the two witnesses; the `congr` field combines
+Unlike the compatibility wrapper
+`representsIntegerFactorAtLift_mul_of_monic_core`, this holds for an
+*arbitrary* core: the carrier already separates the mod-`p^k` congruence (on
+the unscaled `liftedFactorProduct`) from the dilation by `leadingCoeff core`, so
+no monicity hypothesis is needed. The witness monic coordinate is the product of
+the two witnesses; the `congr` field combines
 `liftedFactorProduct_union_of_disjoint` with `Hex.ZPoly.congr_mul`, and the
 `dilate_eq` field combines `HexPolyZMathlib.dilate_mul` (dilation is
 multiplicative) with `Hex.ZPoly.primitivePart_mul` (Gauss's lemma). -/
-theorem RecoveredAtLift.mul
+def RecoveredAtLift.mul
     {core f g : Hex.ZPoly} {d : Hex.LiftData}
     {S T : LiftedFactorSubset d}
     (hdisj : Disjoint S T)
@@ -17620,11 +17636,9 @@ successful-lift / descent / classical partition evidence that proves them,
 instead of obtaining them from an unsound arbitrary-prime fallback.
 
 Note: the issue text suggested deriving `pairwise_disjoint` /
-`unique_up_to_associated` from `unique_subset` alone, but
-`RepresentsIntegerFactorAtLift` is not invariant under unit factors
-in `Polynomial ℤ` (the predicate uses signed `reduceModPow` equality
-of the scaled lifted product against the factor), so both fields remain
-part of this explicit evidence package. -/
+`unique_up_to_associated` from `unique_subset` alone, but the public predicate
+still represents a chosen integer factor, not an associate class of factors.
+Both fields therefore remain part of this explicit evidence package. -/
 structure InitialLiftedFactorSubsetPartitionEvidence
     (core : Hex.ZPoly) (d : Hex.LiftData) : Prop where
   cover :
