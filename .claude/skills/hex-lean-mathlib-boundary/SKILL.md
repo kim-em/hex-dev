@@ -113,7 +113,13 @@ open), and merges keep flowing because nothing gates it.
 Before attributing a Mathlib-layer build failure to your own change, build the
 **unmodified** target on a clean tree to get a red/green baseline
 (`lake build HexBerlekampZassenhausMathlib.<Module>`), and `git diff origin/main
--- <file>` to confirm the failing file is untouched by you. If your target's
+-- <file>` to confirm the failing file is untouched by you. A faster
+single-build attribution when your change is purely additive *within* the same
+file: Lean reports every per-declaration error and keeps elaborating past a
+failed declaration, so if the build log's only `error:` line numbers fall
+**outside** the line range of your additions (a warning emitted *after* the
+failing line but *before* your code confirms elaboration reached you), your
+declarations compiled — no clean-tree rebuild needed. If your target's
 file (or a file it imports, like `Basic.lean`) is already red, your additions
 in a downstream file (e.g. `Recovery.lean`) cannot be verified at all. Land the
 parts that *do* build in isolation, and preserve the blocked parts (source in
