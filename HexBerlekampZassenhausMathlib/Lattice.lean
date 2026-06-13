@@ -429,6 +429,42 @@ theorem projectedRow_mem_projectedRowSpanInt
     Matrix.row (projectedRowsIntMatrix L) i ∈ projectedRowSpanInt L := by
   exact Submodule.subset_span ⟨i, rfl⟩
 
+/--
+Proof-facing certificate that the executable Gram-Schmidt cut retained one row
+for each true-factor indicator.
+
+The executable `BhksProjectedRows` stores only post-cut projected rows.  This
+record is the minimal bridge from later cut-survival proofs to the existing
+`CutProjectionHypotheses` surface: a caller identifies the retained projected
+row whose first `r` coordinates are the requested true-support indicator.
+-/
+structure CutSurvival
+    (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount))) where
+  rowOfIndicator : trueSupports → Fin L.projectedRows.size
+  rowOfIndicator_eq :
+    ∀ S : trueSupports,
+      Matrix.row (projectedRowsIntMatrix L) (rowOfIndicator S) =
+        indicatorVector S.1
+
+namespace CutSurvival
+
+/-- A retained indicator row is in the projected integer row span. -/
+theorem mem_projected
+    (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount)))
+    (hcut : CutSurvival L trueSupports) (S : trueSupports) :
+    indicatorVector S.1 ∈ projectedRowSpanInt L := by
+  have hrow := projectedRow_mem_projectedRowSpanInt L (hcut.rowOfIndicator S)
+  simpa [hcut.rowOfIndicator_eq S] using hrow
+
+/-- Package retained-row evidence as the standard cut hypothesis record. -/
+def toCut
+    (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount)))
+    (hcut : CutSurvival L trueSupports) :
+    CutProjectionHypotheses L trueSupports where
+  indicator_mem_projected := mem_projected L trueSupports hcut
+
+end CutSurvival
+
 /-- Each projected rational row is one of the generators of the rational row space. -/
 theorem projectedRow_mem_projectedRowSpaceRat
     (L : Hex.BhksProjectedRows) (i : Fin L.projectedRows.size) :

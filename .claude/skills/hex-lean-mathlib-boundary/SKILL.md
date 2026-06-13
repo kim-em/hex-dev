@@ -1,0 +1,90 @@
+---
+name: hex-lean-mathlib-boundary
+description: Gotchas for the Mathlib-free/Mathlib boundary in HexBerlekampZassenhausMathlib and similar *Mathlib Lean layers (ZMod64, FpPoly, DensePoly, ZPoly). Read before proving lemmas that mix the executable types with Mathlib Polynomial / ZMod algebra.
+allowed-tools: Bash, Read, Grep, Glob
+---
+
+# Mathlib-free / Mathlib boundary in the hex Lean layers
+
+The executable types (`Hex.ZMod64 p`, `Hex.FpPoly p = Hex.DensePoly (ZMod64 p)`,
+`Hex.ZPoly = Hex.DensePoly Int`) carry **only `Lean.Grind` ring instances and a
+custom `Dvd`** — *not* Mathlib's `CommRing`/`Field`/`Monoid`/`AddGroup`
+typeclasses. Mathlib homomorphism lemmas therefore fail to synthesize instances
+on these types. Do arithmetic with `grind`, and cross to the Mathlib
+`Polynomial (ZMod p)` / `ZMod p` side through the project's bridges.
+
+## Concrete rules
+
+- **`grind`, not `ring`, for `ZMod64`/`FpPoly` arithmetic.** Ring lemmas
+  (`mul_one`, `neg_add_cancel`, `ring`) need Mathlib instances these types lack.
+  `grind` uses the `Lean.Grind.CommRing` instance; prime-inverse facts
+  (`ZMod64.inv_mul_eq_one_of_prime`, `mul_inv_eq_one_of_prime`) are `@[grind]`.
+- **No `map_neg` / `map_one` / `map_zero` / `map_dvd` on `ZMod64`/`FpPoly`.**
+  These need `ZeroHomClass`/`AddMonoidHomClass`/`Monoid` that the executable
+  types don't have. To compute e.g. `toZMod (-1) = -1`: prove `(-1)+1 = 0` in
+  `ZMod64` by `grind`, push through `toZMod_add`/`toZMod_one`/`toZMod_zero`
+  (the real bridge lemmas), and finish in `ZMod p` with
+  `eq_neg_of_add_eq_zero_left`.
+- **`FpPoly`/`DensePoly` `∣` is custom** (`a ∣ b := ∃ r, b = a * r`), so
+  `map_dvd` does not apply and `dvd_trans` is replaced by `fpPoly_dvd_trans`.
+  Transport divisibility to Mathlib by destructuring and re-multiplying:
+  `obtain ⟨r, hr⟩ := h; ⟨toMathlibPolynomial r, by rw [hr, toMathlibPolynomial_mul]⟩`.
+  (`HexBerlekampZassenhausMathlib/Basic.lean` exposes `toMathlibPolynomial_dvd`
+  and `self_dvd_monicModPImage` for exactly this.)
+- **`ZMod64` zero has two representations** (`Zero.zero` vs `OfNat 0`); a `rw`
+  on `toZMod 0` / `(0 : FpPoly).coeff n` may report "did not find pattern" or
+  leave an unclosed `0 = 0`. Close with `exact`/`show` (defeq-tolerant), not
+  `rw`/`simp`.
+- **`HexPolyMathlib.toPolynomial` vs `HexPolyZMathlib.toPolynomial`:**
+  `HexPolyZMathlib.toPolynomial` is an `abbrev` specializing the general
+  `HexPolyMathlib.toPolynomial` to `R = Int`. They are defeq but **not
+  syntactically equal**, so `rw [hk]` fails when `hk` was produced by a
+  `HexPolyMathlib`-namespace lemma against a `HexPolyZMathlib` goal. Bind the
+  result with an explicit `HexPolyZMathlib.toPolynomial …` type ascription
+  first, then `obtain`/`rw`.
+
+## Signature gotcha
+
+A hypothesis whose type mentions `toMathlibPolynomial`/`monicModPImage`/`modP`
+at `primeData.p` is elaborated **before** any `letI := primeData.bounds`, so an
+implicit `[Bounds primeData.p]` cannot be synthesized and the type silently
+becomes `sorry`. Write the instance explicitly in such signatures:
+`@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds (…)`.
+
+## The Mathlib layer *models* executable definitions
+
+The bridge does not just prove lemmas about the executable types; it carries
+**model definitions that mirror the shape of executable functions** —
+e.g. `scaledRecombinationCandidate` / `scaledLiftedFactorProduct` /
+`RepresentsIntegerFactorAtLift` (`HexBerlekampZassenhausMathlib/Basic.lean`)
+mirror the per-step candidate built inside `Hex.scaledRecombinationSearchModAux`
+/ `bhksIndicatorCandidate?`. Before changing an executable definition's *shape*
+(the candidate expression, the recombination target, the lift transform),
+grep the Mathlib layer for proofs that `unfold` it or restate its body, and
+size that surface first — it is often far larger than the executable proofs.
+
+Two directions behave very differently under such a change:
+
+- **Product / divisibility direction survives.** Proofs like `*_product` rest
+  on the `exactQuotient? target candidate` recursion, which is blind to how the
+  candidate was built, so they need only mechanical `let`-expression updates
+  (mirror the new candidate text) — never a new argument.
+- **Recovery / coverage direction does not.** Proofs that identify the emitted
+  candidate against an expected factor (the `RepresentsIntegerFactorAtLift`
+  recovery chain, the coverage proof in `Basic.lean`) *encode* the old shape;
+  changing it is a structural remodel needing new math, not a token swap. These
+  feed the still-`sorry` headline `factor_irreducible_of_nonUnit`, but they are
+  proven (not sorried) lemmas, so they must still compile.
+
+Consequence: a soundness fix to the executable recombination is **not**
+independently landable green — the executable change and the Mathlib remodel
+must land in one PR. Scope accordingly (see #6799 / #6801 for the
+`DensePoly.scale` → `ZPoly.dilate` example).
+
+## Pre-existing sorries
+
+`HexBerlekampMathlib/Basic.lean` and `HexHenselMathlib/Correctness.lean` ship
+`sorry`s (the `toMathlibPolynomial` coeff bridge etc.). Those warnings are not
+from your file; building on them is the established project state. Only check
+that *your added lines* are `sorry`/`axiom`/`native_decide`-free
+(`git diff -U0 <file> | grep '^+' | grep -iE 'sorry|axiom|native_decide'`).

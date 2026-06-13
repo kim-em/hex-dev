@@ -557,21 +557,21 @@ the executable checker `certCheck B B' U V δ η : Bool` returns `true`, where
   lattice B'` by row-combination composition (no determinant and no
   matrix-inverse reasoning). Each product equality `M·A = C` is verified
   without forming the matrix product: every row of `A` and of `C` is packed
-  into a single integer in balanced base `2^K`, and row `i` of the unformed
-  product is compared as the packed big-integer dot product
+  into a single integer in balanced base `2^K`, and row `i` of the
+  unformed product is compared as the packed big-integer dot product
   `Σ_l M[i][l]·packA[l]` against `packC[i]`. The digit width `K` is
   computed from an entry bound covering both sides (`n · max|M| · max|A| +
   max|C|`, or any provably sufficient bound) so that every digit `x` of
   either side satisfies `2·|x| < 2^K`; that bound makes the balanced
   base-`2^K` representation injective, which is the soundness argument.
   The packed comparison is complete as well as sound: by linearity of
-  packing it accepts exactly when the products are equal. On word-scale
+  packing it accepts exactly when the products are equal. For word-scale
   transforms and bases, the same-lattice clause costs `O(n²)`
-  big-by-small multiplications rather than the `O(n²·m)` entry products
-  of a materialized `Matrix.mul`; with wide entries the packed dot products
-  have the same bit-operation scale as the materialized product, plus the
-  bound-scan and repacking overhead, while still using the single packed
-  proof path;
+  big-by-small multiplications rather
+  than the `O(n²·m)` entry products of a materialized `Matrix.mul`. For
+  wide entries, the packed dot products have the same bit-operation scale
+  as the materialized product, plus bound-scan and repacking overhead,
+  while preserving the same acceptance predicate `M·A = C`;
 - `B'` independent and `(δ, η)`-size-reduced and Lovász. The clause is
   decided by a sound fixed-precision enclosure Gram-Schmidt pass over the
   exact integer Gram matrix of `B'`: a closed dyadic interval
