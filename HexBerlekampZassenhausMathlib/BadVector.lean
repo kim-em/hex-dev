@@ -1040,6 +1040,78 @@ structure IsBhksBadVectorSetup (W : ExecutableBadVectorWitness) where
       Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial
 
 /--
+Forward van Hoeij correspondence for one executable bad-vector witness.
+
+This is the factorization-facing hypothesis missing from the raw bad-vector
+setup: the declared true supports are required to be the supports of the
+actual rational factors of `W.input`, and the corrected auxiliary polynomial is
+required to be built from the same projected vector.  Under those hypotheses,
+a nonunit rational gcd of the input and auxiliary polynomial forces the
+projected vector to be a genuine true-factor indicator combination.
+-/
+structure ForwardCorrespondence
+    (W : ExecutableBadVectorWitness)
+    (trueSupports : Set (Set (Fin W.projectedRows.factorCount))) where
+  mem_of_gcd_nonunit :
+    ∀ (v : Fin W.projectedRows.factorCount → ℤ) (corrections : Array Int),
+      W.H =
+          BHKS.auxiliaryPolynomialWithCorrections W.input W.liftData
+            (W.projectedVectorArray v) corrections →
+        ¬ IsUnit
+          (EuclideanDomain.gcd
+            (W.inputPolynomial.map (Int.castRingHom ℚ))
+            (W.auxiliaryPolynomial.map (Int.castRingHom ℚ))) →
+          v ∈ BHKS.trueFactorIndicatorLattice trueSupports
+
+namespace ForwardCorrespondence
+
+/--
+Forward correspondence, direct form: a nontrivial rational common factor of
+the input and the corrected auxiliary polynomial determines a vector in the
+true-factor indicator lattice.
+-/
+theorem mem_indicator
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (hforward : ForwardCorrespondence W trueSupports)
+    (v : Fin W.projectedRows.factorCount → ℤ) (corrections : Array Int)
+    (hH :
+      W.H =
+        BHKS.auxiliaryPolynomialWithCorrections W.input W.liftData
+          (W.projectedVectorArray v) corrections)
+    (hgcd :
+      ¬ IsUnit
+        (EuclideanDomain.gcd
+          (W.inputPolynomial.map (Int.castRingHom ℚ))
+          (W.auxiliaryPolynomial.map (Int.castRingHom ℚ)))) :
+    v ∈ BHKS.trueFactorIndicatorLattice trueSupports :=
+  hforward.mem_of_gcd_nonunit v corrections hH hgcd
+
+/--
+Contrapositive form used by the bad-vector setup: if the same projected vector
+is outside the true-factor indicator lattice, the input and corrected auxiliary
+polynomial are coprime over `ℚ`.
+-/
+theorem coprime
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (hforward : ForwardCorrespondence W trueSupports)
+    (v : Fin W.projectedRows.factorCount → ℤ) (corrections : Array Int)
+    (hH :
+      W.H =
+        BHKS.auxiliaryPolynomialWithCorrections W.input W.liftData
+          (W.projectedVectorArray v) corrections)
+    (hnot : v ∉ BHKS.trueFactorIndicatorLattice trueSupports) :
+    IsCoprime
+      (W.inputPolynomial.map (Int.castRingHom ℚ))
+      (W.auxiliaryPolynomial.map (Int.castRingHom ℚ)) := by
+  rw [← EuclideanDomain.gcd_isUnit_iff]
+  by_contra hgcd
+  exact hnot (hforward.mem_of_gcd_nonunit v corrections hH hgcd)
+
+end ForwardCorrespondence
+
+/--
 Construct the BHKS bad-vector setup from the projected vector shape used by
 cap separation.  The structural `L' \ W` fields are transported through the
 canonical executable array representation; the local BHKS Lemma 3.2 algebraic
@@ -1480,6 +1552,31 @@ def bad_setup_of_projected_not_indicator
       hbridge.localFactorDegree_pos
       hbridge.coprime_input_aux_over_rat
       hbridge.resultant_divisible_by_p_pow
+
+/--
+Bad-vector setup constructor using the van Hoeij forward correspondence for
+the rational coprimality clause.
+-/
+def isBhksBadVectorSetup_of_forward
+    (W : ExecutableBadVectorWitness)
+    (trueSupports : Set (Set (Fin W.projectedRows.factorCount)))
+    (v : Fin W.projectedRows.factorCount → ℤ)
+    (corrections : Array Int)
+    (hforward : ForwardCorrespondence W trueSupports)
+    (hH :
+      W.H =
+        BHKS.auxiliaryPolynomialWithCorrections W.input W.liftData
+          (W.projectedVectorArray v) corrections)
+    (hin : v ∈ BHKS.projectedRowSpanInt W.projectedRows)
+    (hnot : v ∉ BHKS.trueFactorIndicatorLattice trueSupports)
+    (hd : 0 < W.localFactorDegree)
+    (hdiv :
+      ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
+        Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial) :
+    IsBhksBadVectorSetup W :=
+  isBhksBadVectorSetup_of_projected_not_indicator
+    W trueSupports v corrections hH hin hnot hd
+    (hforward.coprime v corrections hH hnot) hdiv
 
 /-- BHKS Lemma 3.2: the selected local-factor degree is positive whenever the
 witness carries a bad-vector setup. -/
