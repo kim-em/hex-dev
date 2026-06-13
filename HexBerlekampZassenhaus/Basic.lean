@@ -6208,6 +6208,86 @@ private theorem array_getD_push_size {α : Type}
   rw [hsize]
   simp
 
+/-- Powers of an integer add their exponents. The executable layer is
+Mathlib-free, so the generic `pow_add` is unavailable; this small induction
+stands in for it. -/
+private theorem int_pow_add (a : Int) (m k : Nat) :
+    a ^ (m + k) = a ^ m * a ^ k := by
+  induction k with
+  | zero => rw [Nat.add_zero, Lean.Grind.Semiring.pow_zero, Int.mul_one]
+  | succ k ih =>
+      rw [Nat.add_succ, Lean.Grind.Semiring.pow_succ, ih,
+        Lean.Grind.Semiring.pow_succ, Int.mul_assoc]
+
+namespace ZPoly.ToMonicData
+
+/-- General coefficient law for the monic transform `transformedCore`. Below the
+top degree the coefficient is `core.coeff n` scaled by a power of the leading
+coefficient; the top coefficient is `1`; higher coefficients vanish. -/
+theorem transformedCore_coeff (core : ZPoly) (degree n : Nat) :
+    (transformedCore core degree).coeff n =
+      if n < degree then
+        core.coeff n * DensePoly.leadingCoeff core ^ (degree - 1 - n)
+      else if n = degree then 1 else 0 := by
+  rcases Nat.lt_trichotomy n degree with h | h | h
+  · rw [if_pos h]
+    change (transformedCoeffs core degree).getD n (0 : Int) = _
+    unfold transformedCoeffs
+    rw [array_getD_push_lt ((List.range degree).map
+          (fun i => core.coeff i * DensePoly.leadingCoeff core ^ (degree - 1 - i))).toArray
+        1 0 (by simpa using h)]
+    rw [← array_toList_getD, List.toList_toArray, List.getD_eq_getElem?_getD,
+      List.getElem?_map, List.getElem?_range h]
+    simp
+  · subst h
+    rw [if_neg (Nat.lt_irrefl _), if_pos rfl]
+    exact transformedCore_coeff_top core n
+  · rw [if_neg (by omega), if_neg (by omega)]
+    exact DensePoly.coeff_eq_zero_of_size_le _ (by rw [transformedCore_size]; omega)
+
+/-- **Keystone for `toMonic` inverse recovery.** Dilating the monic transform
+`transformedCore core degree` by the leading coefficient recovers `core` scaled
+by `leadingCoeff core ^ (degree - 1)`. The `1 ≤ degree` hypothesis is essential:
+for a constant `core` the identity fails unless the leading coefficient is `1`.
+Composed with `dilate_mul`, this is the inverse-factor correspondence the
+recombination recovery proof rests on. -/
+theorem dilate_transformedCore (core : ZPoly) (degree : Nat)
+    (hdeg : 1 ≤ degree) (hcore : core.degree?.getD 0 = degree) :
+    Hex.ZPoly.dilate (DensePoly.leadingCoeff core) (transformedCore core degree) =
+      DensePoly.C (DensePoly.leadingCoeff core ^ (degree - 1)) * core := by
+  have hsize_pos : 0 < core.size := by
+    rcases Nat.eq_zero_or_pos core.size with hz | hpos
+    · rw [show core.degree?.getD 0 = 0 by simp [DensePoly.degree?, hz]] at hcore
+      omega
+    · exact hpos
+  have hsize : core.size = degree + 1 := by
+    have hne : core.size ≠ 0 := by omega
+    have hdeg' : core.degree?.getD 0 = core.size - 1 := by
+      simp [DensePoly.degree?, hne]
+    omega
+  apply DensePoly.ext_coeff
+  intro n
+  rw [Hex.ZPoly.coeff_dilate, transformedCore_coeff, Hex.ZPoly.C_mul_eq_scale,
+    DensePoly.coeff_scale_semiring]
+  rcases Nat.lt_trichotomy n degree with h | h | h
+  · rw [if_pos h]
+    have hexp : n + (degree - 1 - n) = degree - 1 := by omega
+    rw [← Int.mul_assoc,
+      Int.mul_comm (DensePoly.leadingCoeff core ^ n) (core.coeff n),
+      Int.mul_assoc, ← int_pow_add, hexp, Int.mul_comm]
+  · rw [h, if_neg (Nat.lt_irrefl _), if_pos rfl, Int.mul_one]
+    have hcoeff : core.coeff degree = DensePoly.leadingCoeff core := by
+      rw [DensePoly.leadingCoeff_eq_coeff_last core hsize_pos, hsize, Nat.add_sub_cancel]
+    rw [hcoeff, ← Lean.Grind.Semiring.pow_succ]
+    congr 1
+    omega
+  · have hz : core.coeff n = 0 :=
+      DensePoly.coeff_eq_zero_of_size_le core (by omega)
+    rw [if_neg (by omega), if_neg (by omega), hz]
+    simp
+
+end ZPoly.ToMonicData
+
 private theorem bhksIndicatorCandidatesStep_fold_preserves_prefix
     (f : ZPoly) (d : LiftData)
     (indicators : List (Array Int)) (acc candidates : Array ZPoly)
