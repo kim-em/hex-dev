@@ -17549,6 +17549,174 @@ private lemma map_filter_eq_of_le_map_val
     refine ⟨ha_mem, ?_⟩
     rw [ha_eq]; exact hxt
 
+/-- For every indexed modular factor selected by a successful
+`choosePrimeData?` run, recover an irreducible integer divisor whose monic
+mod-`p` image is divisible by that indexed factor. -/
+theorem exists_factor_of_modPIndex
+    (core : Hex.ZPoly) (hcore_ne : core ≠ 0)
+    (primeData : Hex.PrimeChoiceData)
+    (hsome : Hex.choosePrimeData? core = some primeData)
+    (i : ModPFactorIndex primeData) :
+    letI := primeData.bounds
+    ∃ g : Hex.ZPoly,
+      Irreducible (HexPolyZMathlib.toPolynomial g) ∧
+      g ∣ core ∧
+      HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i) ∣
+        HexBerlekampMathlib.toMathlibPolynomial
+          (monicModPImage (Hex.ZPoly.modP primeData.p g)) := by
+  classical
+  letI := primeData.bounds
+  have hprime : Hex.Nat.Prime primeData.p :=
+    Hex.choosePrimeData?_prime core primeData hsome
+  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
+  have hprime_root : _root_.Nat.Prime primeData.p := by
+    refine _root_.Nat.prime_def_lt.mpr ⟨hprime.two_le, ?_⟩
+    intro m hmlt hmdvd
+    rcases hprime.right m hmdvd with h | h
+    · exact h
+    · exact absurd h (Nat.ne_of_lt hmlt)
+  haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime_root⟩
+  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
+    Hex.choosePrimeData?_isGoodPrime core primeData hsome
+  have hcore_modP_iszero :
+      (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
+    Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
+  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
+    (Hex.ZMod64.primeModulusOfPrime hprime)
+  letI := hfield
+  set f : ModPFactorIndex primeData → Polynomial (ZMod primeData.p) :=
+      fun i => HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)
+      with hf_def
+  have hirr_i : Irreducible (f i) := by
+    rw [hf_def]
+    exact factors_irreducible_of_choosePrimeData_of_some core primeData hsome i
+  have hprime_i : Prime (f i) :=
+    UniqueFactorizationMonoid.irreducible_iff_prime.mp hirr_i
+  have hfi_dvd_monic_core :
+      f i ∣
+        HexBerlekampMathlib.toMathlibPolynomial
+          (Hex.monicModularImage
+            (@Hex.ZPoly.modP primeData.p primeData.bounds core)) := by
+    rw [← toMathlibPolynomial_factorsModP_product_eq_monicModularImage hsome]
+    rw [← univ_val_map_modPFactor_eq_factorsModP_map primeData]
+    exact Multiset.dvd_prod (by
+      rw [Multiset.mem_map]
+      exact ⟨i, by simp, rfl⟩)
+  have hmonic_core_dvd_core :
+      HexBerlekampMathlib.toMathlibPolynomial
+          (Hex.monicModularImage
+            (@Hex.ZPoly.modP primeData.p primeData.bounds core)) ∣
+        HexBerlekampMathlib.toMathlibPolynomial
+          (@Hex.ZPoly.modP primeData.p primeData.bounds core) :=
+    toMathlibPolynomial_dvd
+      (monicModularImage_dvd_self_of_isZero_false hprime hcore_modP_iszero)
+  have hfi_dvd_map_core :
+      f i ∣ (HexPolyZMathlib.toPolynomial core).map
+        (Int.castRingHom (ZMod primeData.p)) := by
+    rw [← toMathlibPolynomial_modP_eq_map_intCast_zmod]
+    exact hfi_dvd_monic_core.trans hmonic_core_dvd_core
+  set corePoly : Polynomial ℤ := HexPolyZMathlib.toPolynomial core with hcorePoly_def
+  have hcorePoly_ne : corePoly ≠ 0 := by
+    intro hzero
+    apply hcore_ne
+    apply HexPolyZMathlib.equiv.injective
+    simpa [hcorePoly_def] using hzero
+  have hfi_dvd_map_norm :
+      f i ∣ (normalize corePoly).map (Int.castRingHom (ZMod primeData.p)) := by
+    have hcore_dvd_norm : corePoly ∣ normalize corePoly :=
+      (associated_normalize corePoly).dvd
+    have hmap_core_dvd_norm :
+        corePoly.map (Int.castRingHom (ZMod primeData.p)) ∣
+          (normalize corePoly).map (Int.castRingHom (ZMod primeData.p)) :=
+      Polynomial.map_dvd _ hcore_dvd_norm
+    have hfi_dvd_map_core' :
+        f i ∣ corePoly.map (Int.castRingHom (ZMod primeData.p)) := by
+      simpa [hcorePoly_def] using hfi_dvd_map_core
+    exact hfi_dvd_map_core'.trans hmap_core_dvd_norm
+  set qList : List (Polynomial ℤ) :=
+    (UniqueFactorizationMonoid.normalizedFactors corePoly).toList with hqList_def
+  have hmap_list_prod (xs : List (Polynomial ℤ)) :
+      (xs.map
+          (fun q : Polynomial ℤ =>
+            q.map (Int.castRingHom (ZMod primeData.p)))).prod =
+        xs.prod.map (Int.castRingHom (ZMod primeData.p)) := by
+    induction xs with
+    | nil =>
+        simp
+    | cons q qs ih =>
+        simp [ih, Polynomial.map_mul]
+  have hmap_prod :
+      (qList.map
+          (fun q : Polynomial ℤ =>
+            q.map (Int.castRingHom (ZMod primeData.p)))).prod =
+        (normalize corePoly).map (Int.castRingHom (ZMod primeData.p)) := by
+    have hnorm_prod_list : qList.prod = normalize corePoly := by
+      rw [hqList_def]
+      simpa [Multiset.prod_coe] using
+        UniqueFactorizationMonoid.prod_normalizedFactors_eq hcorePoly_ne
+    rw [hmap_list_prod, hnorm_prod_list]
+  have hfi_dvd_normprod :
+      f i ∣
+        (qList.map
+          (fun q : Polynomial ℤ =>
+            q.map (Int.castRingHom (ZMod primeData.p)))).prod := by
+    rw [hmap_prod]
+    exact hfi_dvd_map_norm
+  obtain ⟨qMap, hqMap_mem, hfi_dvd_qMap⟩ :=
+    (Prime.dvd_prod_iff hprime_i).mp hfi_dvd_normprod
+  rcases List.mem_map.mp hqMap_mem with ⟨q, hq_mem_list, hqMap_eq⟩
+  have hq_mem : q ∈ UniqueFactorizationMonoid.normalizedFactors corePoly := by
+    rw [← Multiset.mem_toList, ← hqList_def]
+    exact hq_mem_list
+  subst qMap
+  set g : Hex.ZPoly := HexPolyZMathlib.ofPolynomial q with hg_def
+  have hg_toPoly : HexPolyZMathlib.toPolynomial g = q := by
+    simp [hg_def]
+  have hg_irr : Irreducible (HexPolyZMathlib.toPolynomial g) := by
+    rw [hg_toPoly]
+    exact UniqueFactorizationMonoid.irreducible_of_normalized_factor q hq_mem
+  have hg_dvd : g ∣ core := by
+    have hq_dvd : q ∣ corePoly :=
+      UniqueFactorizationMonoid.dvd_of_mem_normalizedFactors hq_mem
+    rcases hq_dvd with ⟨r, hr⟩
+    refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
+    apply HexPolyZMathlib.equiv.injective
+    show HexPolyZMathlib.toPolynomial core =
+      HexPolyZMathlib.toPolynomial (g * HexPolyZMathlib.ofPolynomial r)
+    rw [HexPolyZMathlib.toPolynomial_mul, hg_toPoly,
+      HexPolyZMathlib.toPolynomial_ofPolynomial, ← hcorePoly_def]
+    exact hr
+  have hfi_dvd_modP_g :
+      f i ∣
+        HexBerlekampMathlib.toMathlibPolynomial
+          (@Hex.ZPoly.modP primeData.p primeData.bounds g) := by
+    rw [toMathlibPolynomial_modP_eq_map_intCast_zmod, hg_toPoly]
+    exact hfi_dvd_qMap
+  have hfi_dvd_monic_g :
+      f i ∣
+        HexBerlekampMathlib.toMathlibPolynomial
+          (@monicModPImage primeData.p primeData.bounds
+            (@Hex.ZPoly.modP primeData.p primeData.bounds g)) := by
+    by_cases hzero :
+        (@Hex.ZPoly.modP primeData.p primeData.bounds g).isZero = true
+    · have hmonic_zero :
+          @monicModPImage primeData.p primeData.bounds
+              (@Hex.ZPoly.modP primeData.p primeData.bounds g) = 0 := by
+        unfold monicModPImage
+        simp [hzero]
+      rw [hmonic_zero]
+      exact dvd_zero _
+    · have hnz :
+          (@Hex.ZPoly.modP primeData.p primeData.bounds g).isZero = false := by
+        cases h :
+            (@Hex.ZPoly.modP primeData.p primeData.bounds g).isZero <;>
+          simp_all
+      exact hfi_dvd_modP_g.trans
+        (toMathlibPolynomial_dvd (self_dvd_monicModPImage hnz))
+  refine ⟨g, hg_irr, hg_dvd, ?_⟩
+  simpa [hf_def] using hfi_dvd_monic_g
+
 /-- Final assembly: the analyzable `choosePrimeData? core = some primeData`
 branch of the integer-irreducible → mod-`p` representing-subset existence
 and uniqueness statement. -/
