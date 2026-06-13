@@ -392,6 +392,25 @@ example :
       0 < FpPoly.degree luebeckConwayPolynomial_2_1 := by
   simp
 
+example :
+    luebeckConwayPolynomial? 2 4 =
+      some (conwayPoly 2 4 supportedEntry_2_4) := by
+  simpa using luebeckConwayPolynomial?_conwayPoly supportedEntry_2_4
+
+example :
+    luebeckConwayPolynomial? 7 3 =
+      some (conwayPoly 7 3 supportedEntry_7_3) := by
+  grind
+
+example :
+    0 < FpPoly.degree (conwayPoly 3 6 supportedEntry_3_6) ∧
+      DensePoly.Monic (conwayPoly 3 6 supportedEntry_3_6) := by
+  grind
+
+example :
+    FpPoly.Irreducible (conwayPoly 13 2 supportedEntry_13_2) := by
+  grind
+
 end ConwayConformance
 end Conway
 end Hex

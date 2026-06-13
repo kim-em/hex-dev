@@ -3346,10 +3346,14 @@ def supportedEntry_13_6 : SupportedEntry 13 6 :=
 def conwayPoly (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) : FpPoly p :=
   h.poly
 
-@[simp] theorem luebeckConwayPolynomial?_conwayPoly
+/-- A `SupportedEntry` packages the lookup hit for the committed Tier 1 Conway
+table entry selected by `conwayPoly`. -/
+@[simp, grind =>] theorem luebeckConwayPolynomial?_conwayPoly
     {p n : Nat} [ZMod64.Bounds p] (h : SupportedEntry p n) :
     luebeckConwayPolynomial? p n = some (conwayPoly p n h) :=
   h.isSupported
+
+grind_pattern luebeckConwayPolynomial?_conwayPoly => conwayPoly p n h
 
 private theorem zmod64_one_ne_zero_of_one_lt
     {p : Nat} [ZMod64.Bounds p] (hp : 1 < p) : (1 : ZMod64 p) ≠ 0 := by
@@ -3400,25 +3404,32 @@ private theorem ofCoeffs_degree_pos_of_back_ne_zero
           exact absurd hzero (zmod64_one_ne_zero_of_one_lt (by decide))))
 
 /-- Supported Conway entries produce nonconstant moduli. -/
-@[simp] theorem conwayPoly_nonconstant
+@[simp, grind =>] theorem conwayPoly_nonconstant
     (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) :
     0 < FpPoly.degree (conwayPoly p n h) := by
   exact luebeckConwayPolynomial?_degree_pos
     (f := conwayPoly p n h) (luebeckConwayPolynomial?_conwayPoly h)
 
+grind_pattern conwayPoly_nonconstant => conwayPoly p n h
+
 /-- Supported Conway entries carry the imported irreducibility witness. -/
+@[grind =>]
 theorem conwayPoly_irreducible
     (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) :
     FpPoly.Irreducible (conwayPoly p n h) := by
   exact luebeckConwayPolynomial?_irreducible
     (f := conwayPoly p n h) (luebeckConwayPolynomial?_conwayPoly h)
 
+grind_pattern conwayPoly_irreducible => conwayPoly p n h
+
 /-- Supported Conway entries carry the imported monicity witness. -/
-@[simp] theorem conwayPoly_monic
+@[simp, grind =>] theorem conwayPoly_monic
     (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) :
     DensePoly.Monic (conwayPoly p n h) := by
   exact luebeckConwayPolynomial?_monic
     (f := conwayPoly p n h) (luebeckConwayPolynomial?_conwayPoly h)
+
+grind_pattern conwayPoly_monic => conwayPoly p n h
 
 end Conway
 
