@@ -5591,6 +5591,51 @@ private theorem derivativeSplit_residual_derivative_zero_of_coprime
         exact hcoprime d (by simpa [c, g] using hdc) (by simpa [g] using hdg))
   exact derivative_isZero_true_of_dvd_self_derivative g hg_dvd_dg
 
+private theorem derivativeSplit_quotient_size_one_eq_one
+    (hp : Hex.Nat.Prime p) (f : FpPoly p)
+    (hdf : (DensePoly.derivative f).isZero ≠ true) :
+    let g := DensePoly.gcd f (DensePoly.derivative f)
+    let c := f / g
+    c.size = 1 → c = 1 := by
+  dsimp
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  let g := DensePoly.gcd f (DensePoly.derivative f)
+  let c := f / g
+  intro hc_size
+  have hdf_false : (DensePoly.derivative f).isZero = false := by
+    cases h : (DensePoly.derivative f).isZero
+    · rfl
+    · exact False.elim (hdf h)
+  have hc_der : (DensePoly.derivative c).isZero = true :=
+    derivative_isZero_true_of_size_one c hc_size
+  have hcoprime :
+      ∀ d : FpPoly p, d ∣ c → d ∣ g → d ∣ (1 : FpPoly p) := by
+    intro d hdc _hdg
+    exact derivativeSplit_quotient_common_dvd_derivative_one hp f hdf d hdc
+      (by
+        refine ⟨0, ?_⟩
+        rw [mul_zero, eq_zero_of_isZero_true (DensePoly.derivative c) hc_der])
+  have hg_der : (DensePoly.derivative g).isZero = true :=
+    derivativeSplit_residual_derivative_zero_of_coprime hp f hdf_false (by
+      intro d hdc hdg
+      exact hcoprime d (by simpa [c, g] using hdc) (by simpa [g] using hdg))
+  have hprod : c * g = f := by
+    simpa [c, g] using div_gcd_mul_reconstruct f (DensePoly.derivative f)
+  have hdf_zero : DensePoly.derivative f = 0 := by
+    rw [← hprod]
+    calc
+      DensePoly.derivative (c * g) =
+          DensePoly.derivative c * g + c * DensePoly.derivative g := by
+            exact DensePoly.derivative_mul c g
+      _ = 0 * g + c * 0 := by
+            rw [eq_zero_of_isZero_true (DensePoly.derivative c) hc_der]
+            rw [eq_zero_of_isZero_true (DensePoly.derivative g) hg_der]
+      _ = 0 := by simp
+  exfalso
+  apply hdf
+  rw [hdf_zero]
+  rfl
+
 private theorem yunFactorsPairwiseReachable_common_dvd_one_derivativeSplit
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (_fuel : Nat)
     (hdf : (DensePoly.derivative f).isZero ≠ true) :
