@@ -2242,6 +2242,34 @@ def liftedFactorProductCandidate (d : Hex.LiftData) (S : LiftedFactorSubset d) :
     Hex.ZPoly.primitivePart <|
       Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k)
 
+/--
+Proof-side candidate for recovering an integer factor of a possibly non-monic
+core from a selected lifted-factor product.  The selected product is first
+centred in the Hensel modulus, then transported back from the `toMonic`
+coordinate system by `X ↦ leadingCoeff core * X`, and finally made primitive
+with canonical sign.
+-/
+def liftedRecoveryCandidate
+    (core : Hex.ZPoly) (d : Hex.LiftData) (S : LiftedFactorSubset d) :
+    Hex.ZPoly :=
+  Hex.normalizeFactorSign <|
+    Hex.ZPoly.primitivePart <|
+      Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) <|
+        Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k)
+
+namespace liftedRecoveryCandidate
+
+/-- On monic cores, the recovered non-monic candidate collapses to the existing
+unscaled lifted-product candidate. -/
+theorem eq_productCandidate_of_lc_one
+    {core : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hlead : Hex.DensePoly.leadingCoeff core = (1 : Int)) :
+    liftedRecoveryCandidate core d S = liftedFactorProductCandidate d S := by
+  unfold liftedRecoveryCandidate liftedFactorProductCandidate
+  rw [hlead, Hex.ZPoly.dilate_one]
+
+end liftedRecoveryCandidate
+
 /-- Scaled variant of the recombination candidate: centred lift of the
 leading-coefficient-scaled selected lifted-factor product, primitivised and
 sign-normalised.  This is the primitive non-monic supporting lemma used by the scaled
@@ -4671,6 +4699,19 @@ theorem recombinationCandidate_eq_liftedFactorProductCandidate
     recombinationCandidate d S = liftedFactorProductCandidate d S := by
   unfold recombinationCandidate liftedFactorProductCandidate
   rw [polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct]
+
+namespace liftedRecoveryCandidate
+
+/-- On monic cores, the recovered non-monic candidate is the executable
+unscaled recombination candidate. -/
+theorem eq_recombinationCandidate_of_lc_one
+    {core : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hlead : Hex.DensePoly.leadingCoeff core = (1 : Int)) :
+    liftedRecoveryCandidate core d S = recombinationCandidate d S := by
+  rw [eq_productCandidate_of_lc_one hlead,
+    recombinationCandidate_eq_liftedFactorProductCandidate]
+
+end liftedRecoveryCandidate
 
 /--
 Structural support containment for a divisor of an executable recombination
