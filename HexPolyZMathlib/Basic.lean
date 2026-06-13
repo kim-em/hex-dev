@@ -208,6 +208,32 @@ theorem toZMod_ZMod64_ofNat_intModNat_eq_intCast
   change z % (p : ℤ) % (p : ℤ) = z % (p : ℤ)
   rw [Int.emod_emod]
 
+/-- The executable variable-dilation `X ↦ c · X` corresponds to Mathlib
+composition with `C c * X`. -/
+@[simp]
+theorem toPolynomial_dilate (c : ℤ) (g : Hex.ZPoly) :
+    toPolynomial (Hex.ZPoly.dilate c g) =
+      (toPolynomial g).comp (Polynomial.C c * Polynomial.X) := by
+  ext n
+  rw [coeff_toPolynomial, Hex.ZPoly.coeff_dilate, Polynomial.comp_C_mul_X_coeff,
+    coeff_toPolynomial, mul_comm]
+
+/-- Variable dilation is multiplicative: substituting `X ↦ c · X` is a ring
+homomorphism, so it distributes over products. -/
+theorem dilate_mul (c : ℤ) (g h : Hex.ZPoly) :
+    Hex.ZPoly.dilate c (g * h) =
+      Hex.ZPoly.dilate c g * Hex.ZPoly.dilate c h := by
+  apply equiv.injective
+  simp only [equiv_apply, toPolynomial_dilate, toPolynomial_mul, Polynomial.mul_comp]
+
+/-- For a nonzero dilation factor, variable dilation preserves natural degree:
+`C c * X` has degree `1` with a unit leading coefficient over the integers. -/
+theorem natDegree_toPolynomial_dilate (c : ℤ) (hc : c ≠ 0) (g : Hex.ZPoly) :
+    (toPolynomial (Hex.ZPoly.dilate c g)).natDegree =
+      (toPolynomial g).natDegree := by
+  rw [toPolynomial_dilate, Polynomial.natDegree_comp,
+    Polynomial.natDegree_C_mul_X c hc, mul_one]
+
 end
 
 end HexPolyZMathlib
