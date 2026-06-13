@@ -110,6 +110,12 @@ it does **not** build `HexBerlekampZassenhausMathlib`. So that layer can be
 dilation remodel left `Basic.lean` failing at `:15990` while #6804/#6772 were
 open), and merges keep flowing because nothing gates it.
 
+Because nothing gates it, a green CI rollup does **not** mean a Mathlib-layer
+file compiles — a reviewer of such a PR must build it locally to verify it at
+all. A fresh worktree has no built Mathlib, so run `lake exe cache get` first
+(fetches prebuilt oleans in minutes; a from-scratch Mathlib compile is hours).
+Only the project's own files then rebuild.
+
 Before attributing a Mathlib-layer build failure to your own change, build the
 **unmodified** target on a clean tree to get a red/green baseline
 (`lake build HexBerlekampZassenhausMathlib.<Module>`), and `git diff origin/main
