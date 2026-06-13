@@ -744,6 +744,13 @@ theorem content_mul (p q : ZPoly) :
     content (p * q) = content p * content q := by
   simpa [content] using DensePoly.content_mul p q
 
+/-- `ZPoly`-level wrapper for `DensePoly.primitivePart_mul` (Gauss's lemma): the
+primitive part of a product of integer polynomials is the product of their
+primitive parts. -/
+theorem primitivePart_mul (p q : ZPoly) :
+    primitivePart (p * q) = primitivePart p * primitivePart q := by
+  simpa [primitivePart] using DensePoly.primitivePart_mul p q
+
 /-- The top coefficient of a product of nonzero integer polynomials is the
 product of their top coefficients. -/
 theorem coeff_mul_top (p q : ZPoly)

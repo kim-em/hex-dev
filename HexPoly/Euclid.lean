@@ -5520,6 +5520,79 @@ theorem content_mul (p q : DensePoly Int) :
     Int.ofNat (contentNat p) * Int.ofNat (contentNat q)
   rfl
 
+/-- Left-cancellation for integer scaling: a nonzero scalar can be cancelled
+from both sides of a scaled-polynomial equality. -/
+theorem scale_left_cancel {c : Int} (hc : c ≠ 0) {a b : DensePoly Int}
+    (h : scale c a = scale c b) : a = b := by
+  apply ext_coeff
+  intro n
+  have hn : c * a.coeff n = c * b.coeff n := by
+    have hcong : (scale c a).coeff n = (scale c b).coeff n := by rw [h]
+    rwa [coeff_scale c a n (Int.mul_zero c), coeff_scale c b n (Int.mul_zero c)] at hcong
+  calc a.coeff n = c * a.coeff n / c := (Int.mul_ediv_cancel_left _ hc).symm
+    _ = c * b.coeff n / c := by rw [hn]
+    _ = b.coeff n := Int.mul_ediv_cancel_left _ hc
+
+/-- Scaling a primitive polynomial by a positive integer leaves the primitive
+part unchanged: the scalar is absorbed entirely into the content. -/
+theorem primitivePart_scale_of_primitive {c : Int} (hc : 0 < c)
+    {r : DensePoly Int} (hr : content r = 1) :
+    primitivePart (scale c r) = r := by
+  have hcontent : content (scale c r) = c := by
+    rw [content_scale_int, hr, Int.mul_one]
+    exact Int.natAbs_of_nonneg (Int.le_of_lt hc)
+  have key : scale (content (scale c r)) (primitivePart (scale c r)) = scale c r :=
+    content_mul_primitivePart (scale c r)
+  rw [hcontent] at key
+  exact scale_left_cancel (Int.ne_of_gt hc) key
+
+/-- Gauss's lemma in primitive-part form: the primitive part of a product is the
+product of the primitive parts. The content scalars factor out via `content_mul`
+and `content_mul_of_primitive`, and the positive product scalar is absorbed by
+`primitivePart_scale_of_primitive`. -/
+theorem primitivePart_mul (p q : DensePoly Int) :
+    primitivePart (p * q) = primitivePart p * primitivePart q := by
+  by_cases hcp : content p = 0
+  · have hppq : content (p * q) = 0 := by rw [content_mul, hcp, Int.zero_mul]
+    rw [primitivePart_eq_zero_of_content_eq_zero _ hppq,
+        primitivePart_eq_zero_of_content_eq_zero _ hcp, zero_mul]
+  by_cases hcq : content q = 0
+  · have hppq : content (p * q) = 0 := by rw [content_mul, hcq, Int.mul_zero]
+    rw [primitivePart_eq_zero_of_content_eq_zero _ hppq,
+        primitivePart_eq_zero_of_content_eq_zero _ hcq, mul_comm_poly, zero_mul]
+  have hp_prim : content (primitivePart p) = 1 := primitivePart_primitive p hcp
+  have hq_prim : content (primitivePart q) = 1 := primitivePart_primitive q hcq
+  have hpq_prim : content (primitivePart p * primitivePart q) = 1 :=
+    content_mul_of_primitive _ _ hp_prim hq_prim
+  have hpq_eq : p * q =
+      scale (content p * content q) (primitivePart p * primitivePart q) := by
+    apply ext_coeff
+    intro n
+    have hp_decomp : p = scale (content p) (primitivePart p) :=
+      (content_mul_primitivePart p).symm
+    have hq_decomp : q = scale (content q) (primitivePart q) :=
+      (content_mul_primitivePart q).symm
+    rw [show (p * q).coeff n = ((scale (content p) (primitivePart p)) *
+          (scale (content q) (primitivePart q))).coeff n from by
+        rw [← hp_decomp, ← hq_decomp]]
+    rw [coeff_scale_mul_scale]
+    rw [coeff_scale (content p * content q) (primitivePart p * primitivePart q) n
+      (Int.mul_zero _)]
+  have hcp_nat : contentNat p ≠ 0 := by
+    intro h; apply hcp; show Int.ofNat (contentNat p) = 0; rw [h]; rfl
+  have hcq_nat : contentNat q ≠ 0 := by
+    intro h; apply hcq; show Int.ofNat (contentNat q) = 0; rw [h]; rfl
+  have hp0 : 0 < content p := by
+    have h : (0 : Int) < (contentNat p : Int) := by
+      have := Nat.pos_of_ne_zero hcp_nat; omega
+    exact h
+  have hq0 : 0 < content q := by
+    have h : (0 : Int) < (contentNat q : Int) := by
+      have := Nat.pos_of_ne_zero hcq_nat; omega
+    exact h
+  have hcpos : 0 < content p * content q := Int.mul_pos hp0 hq0
+  rw [hpq_eq, primitivePart_scale_of_primitive hcpos hpq_prim]
+
 /-- Gauss's lemma on content (divisibility form): if a natural number `d`
 divides every coefficient of `p * q`, then it divides `contentNat p *
 contentNat q`. This is the divisibility witness needed by the McCoy row
