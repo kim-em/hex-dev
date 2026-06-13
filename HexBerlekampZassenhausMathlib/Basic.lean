@@ -9120,22 +9120,26 @@ theorem henselLiftData_represents_lifted_of_modP
   obtain ⟨hgg', _⟩ :=
     HexHenselMathlib.hensel_unique f g h g' h' primeData.p B hB
       hg_monic hg'_monic hdeg hprod hprod' hg1 hh1 hcop
-  -- Convert back to `RepresentsIntegerFactorAtLift`.
-  show Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d liftedS) d.p d.k =
-    Hex.ZPoly.reduceModPow factor d.p d.k
-  have hscaled :
-      scaledLiftedFactorProduct core d liftedS = liftedFactorProduct d liftedS := by
-    unfold scaledLiftedFactorProduct
-    rw [show Hex.DensePoly.leadingCoeff core = (1 : Int) from hcore_monic]
-    exact densePoly_scale_one_int (liftedFactorProduct d liftedS)
-  rw [hscaled]
+  -- Convert back to the recovered-coordinate `RepresentsIntegerFactorAtLift`.
   have hcongr_pk :
       Hex.ZPoly.congr (liftedFactorProduct d liftedS) factor (primeData.p ^ B) :=
     HexHenselMathlib.zpoly_congr_of_toPolynomial_map_eq _ _ _ hgg'
   have hdp : d.p = primeData.p := rfl
   have hdk : d.k = B := rfl
-  rw [hdp, hdk]
-  exact Hex.ZPoly.reduceModPow_eq_of_congr _ _ _ _ hcongr_pk
+  have hrec_congr :
+      Hex.ZPoly.reduceModPow (liftedFactorProduct d liftedS) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k := by
+    rw [hdp, hdk]
+    exact Hex.ZPoly.reduceModPow_eq_of_congr _ _ _ _ hcongr_pk
+  refine RepresentsIntegerFactorAtLift.ofRecovered ?_
+  exact
+    { monicFactor := factor
+      congr := hrec_congr
+      dilate_eq := by
+        rw [show Hex.DensePoly.leadingCoeff core = (1 : Int) from hcore_monic,
+          Hex.ZPoly.dilate_one]
+        exact Hex.ZPoly.primitivePart_eq_self_of_primitive factor
+          (zpoly_primitive_of_monic hfactor_monic) }
 
 /-- `centeredModNat 1 m = 1` when `m ≥ 2`: the value `1` lies in the centred
 half-window and is preserved by the centred-reduction operation. -/
