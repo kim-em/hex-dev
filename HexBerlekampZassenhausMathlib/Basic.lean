@@ -2699,6 +2699,68 @@ def henselSubsetCorrespondence_of_modPSubsetPartition
       ⟨U, hU, huniq⟩
     exact (huniq S hS).trans (huniq T hT).symm
 
+/-- The `Hex.centeredLiftPoly` operation is invariant under prior reduction by
+the same modulus. -/
+private theorem centeredLiftPoly_reduceModPow_eq
+    (f : Hex.ZPoly) (p k : Nat) (hp : 0 < p) :
+    Hex.centeredLiftPoly (Hex.ZPoly.reduceModPow f p k) (p ^ k) =
+      Hex.centeredLiftPoly f (p ^ k) := by
+  have hpkpos : 0 < p ^ k := Nat.pow_pos hp
+  have hpkne : p ^ k ≠ 0 := Nat.ne_of_gt hpkpos
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.coeff_centeredLiftPoly, Hex.coeff_centeredLiftPoly,
+    Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpkpos]
+  unfold Hex.centeredModNat
+  rw [if_neg hpkne, if_neg hpkne]
+  rw [Int.emod_emod_of_dvd _ (dvd_refl _)]
+
+/-- Precision-gated exact recovery for `liftedRecoveryCandidate` in the
+dilation-coordinate model. -/
+theorem liftedRecoveryCandidate_eq_factor_of_congruence_of_bound
+    {core factor monicFactor : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (B' : Nat)
+    (hvalid : ∀ i, (monicFactor.coeff i).natAbs ≤ B')
+    (hcong :
+      Hex.ZPoly.reduceModPow (liftedFactorProduct d S) d.p d.k =
+        Hex.ZPoly.reduceModPow monicFactor d.p d.k)
+    (hdilate :
+      Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) monicFactor) =
+        factor)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    liftedRecoveryCandidate core d S = factor := by
+  have hcl :
+      Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k) = monicFactor := by
+    rw [← centeredLiftPoly_reduceModPow_eq (liftedFactorProduct d S) d.p d.k d.p_pos,
+      hcong]
+    exact Hex.centeredLiftPoly_reduceModPow_eq_of_coeff_natAbs_le
+      monicFactor d.p d.k B' hvalid hprecision
+  unfold liftedRecoveryCandidate
+  rw [hcl, hdilate]
+  exact hfactor_norm
+
+namespace RecoveredAtLift
+
+/--
+Exact recovery of the executable recovered candidate from the corrected
+monic-coordinate representation carrier.
+-/
+theorem candidate_eq_of_bound
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hrep : RecoveredAtLift core d factor S)
+    (B' : Nat)
+    (hvalid : ∀ i, (hrep.monicFactor.coeff i).natAbs ≤ B')
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    liftedRecoveryCandidate core d S = factor :=
+  liftedRecoveryCandidate_eq_factor_of_congruence_of_bound
+    B' hvalid hrep.congr hrep.dilate_eq hfactor_norm hprecision
+
+end RecoveredAtLift
+
 /--
 Abstract-bound variant of
 `centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision`: takes an
@@ -2776,36 +2838,40 @@ theorem existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence_
         admissiblePrime successfulLift)
     {factor : Hex.ZPoly}
     (B' : Nat)
-    (hvalid : ∀ i, (factor.coeff i).natAbs ≤ B')
+    (hvalid :
+      ∀ {S : LiftedFactorSubset d} (hrec : RecoveredAtLift core d factor S),
+        ∀ i, (hrec.monicFactor.coeff i).natAbs ≤ B')
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
     (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ core)
     (hprecision : 2 * B' < d.p ^ d.k) :
     ∃! S : LiftedFactorSubset d,
-      RepresentsIntegerFactorAtLift core d factor S ∧
-        Hex.centeredLiftPoly
-            (Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k)
-            (d.p ^ d.k) =
-          factor := by
+      ∃ hrec : RecoveredAtLift core d factor S,
+        liftedRecoveryCandidate core d S = factor := by
   rcases h.exists_subset hirr hdvd with ⟨S, hS⟩
-  refine ⟨S, ⟨hS, ?_⟩, ?_⟩
+  rcases hS with ⟨hrecS⟩
+  refine ⟨S, ⟨hrecS, ?_⟩, ?_⟩
   · exact
-      centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision_of_bound
-        B' hvalid hS hprecision
+      RecoveredAtLift.candidate_eq_of_bound
+        hrecS B' (hvalid hrecS) hfactor_norm hprecision
   · intro T hT
+    rcases hT with ⟨hrecT, _hT_recovered⟩
     exact
       (h.unique_subset (factor := factor) (S := S) (T := T)
-        hirr hdvd hS hT.1).symm
+        hirr hdvd (RepresentsIntegerFactorAtLift.ofRecovered hrecS)
+        (RepresentsIntegerFactorAtLift.ofRecovered hrecT)).symm
 
 /--
 Group A2 packaged for downstream exhaustive-search proofs: under the Hensel
 subset-correspondence hypotheses, each irreducible integer factor has a unique
-lifted-factor subset whose scaled product both represents it modulo the Hensel
-modulus and centred-lifts back to the factor exactly at Mignotte precision.
+lifted-factor subset whose recovered-coordinate candidate equals the factor
+exactly at Mignotte precision.
 
 This is a thin wrapper over
 `existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence_of_bound`
-that instantiates `B' := defaultFactorCoeffBound core` and discharges
-`hvalid` via `defaultFactorCoeffBound_valid core hcore_ne factor hdvd`.
+that instantiates `B' := defaultFactorCoeffBound core`.  The coefficient bound
+is explicitly about the hidden monic-coordinate witness exposed by the
+`RecoveredAtLift` carrier.
 -/
 theorem existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
@@ -2814,20 +2880,21 @@ theorem existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence
       HenselSubsetCorrespondenceHypotheses core B primeData d
         admissiblePrime successfulLift)
     {factor : Hex.ZPoly}
-    (hcore_ne : core ≠ 0)
+    (hvalid :
+      ∀ {S : LiftedFactorSubset d} (hrec : RecoveredAtLift core d factor S),
+        ∀ i,
+          (hrec.monicFactor.coeff i).natAbs ≤
+            Hex.ZPoly.defaultFactorCoeffBound core)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
     (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ core)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
     ∃! S : LiftedFactorSubset d,
-      RepresentsIntegerFactorAtLift core d factor S ∧
-        Hex.centeredLiftPoly
-            (Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k)
-            (d.p ^ d.k) =
-          factor :=
+      ∃ hrec : RecoveredAtLift core d factor S,
+        liftedRecoveryCandidate core d S = factor :=
   existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence_of_bound
     h (Hex.ZPoly.defaultFactorCoeffBound core)
-    (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
-    hirr hdvd hprecision
+    hvalid hfactor_norm hirr hdvd hprecision
 
 /--
 The A2 recoverability package specialized to the slow exhaustive path's
@@ -2842,18 +2909,20 @@ theorem existsUnique_recoveringLiftedFactorSubset_at_defaultPrecision
           primeData.p)
         primeData d admissiblePrime successfulLift)
     {factor : Hex.ZPoly}
-    (hcore_ne : core ≠ 0)
+    (hvalid :
+      ∀ {S : LiftedFactorSubset d} (hrec : RecoveredAtLift core d factor S),
+        ∀ i,
+          (hrec.monicFactor.coeff i).natAbs ≤
+            Hex.ZPoly.defaultFactorCoeffBound core)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
     (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ core)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
     ∃! S : LiftedFactorSubset d,
-      RepresentsIntegerFactorAtLift core d factor S ∧
-        Hex.centeredLiftPoly
-            (Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k)
-            (d.p ^ d.k) =
-          factor :=
+      ∃ hrec : RecoveredAtLift core d factor S,
+        liftedRecoveryCandidate core d S = factor :=
   existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence
-    h hcore_ne hirr hdvd hprecision
+    h hvalid hfactor_norm hirr hdvd hprecision
 
 /--
 Induced subset-correspondence predicate for the recursive state of the
@@ -5014,26 +5083,6 @@ theorem representingSubset_subset_of_dvd_scaledRecombinationCandidate_of_primiti
   exact hpartition.support_subset_of_dvd_scaledRecombinationCandidate
     hirr hfactor_dvd_target hTJ hfactor_dvd_candidate hSJ hrep
 
-/-- The `Hex.centeredLiftPoly` operation is invariant under prior reduction by
-the same modulus, so the A2 recovery equality phrased in terms of
-`reduceModPow` of the scaled lifted product can equivalently be stated as the
-direct centered lift of the scaled lifted product. -/
-private theorem centeredLiftPoly_reduceModPow_eq
-    (f : Hex.ZPoly) (p k : Nat) (hp : 0 < p) :
-    Hex.centeredLiftPoly (Hex.ZPoly.reduceModPow f p k) (p ^ k) =
-      Hex.centeredLiftPoly f (p ^ k) := by
-  have hpkpos : 0 < p ^ k := Nat.pow_pos hp
-  have hpkne : p ^ k ≠ 0 := Nat.ne_of_gt hpkpos
-  apply Hex.DensePoly.ext_coeff
-  intro n
-  rw [Hex.coeff_centeredLiftPoly, Hex.coeff_centeredLiftPoly,
-    Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpkpos]
-  -- Goal: centeredModNat ((f.coeff n) % (p^k : Int)) (p^k) = centeredModNat (f.coeff n) (p^k)
-  unfold Hex.centeredModNat
-  rw [if_neg hpkne, if_neg hpkne]
-  -- both branches use r = z % m; the LHS computes ((f.coeff n) % m) % m which equals (f.coeff n) % m
-  rw [Int.emod_emod_of_dvd _ (dvd_refl _)]
-
 /-- Abstract-bound variant of
 `centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery`:
 takes `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
@@ -5149,79 +5198,6 @@ theorem liftedRecoveryCandidate_eq_factor_of_recovery
     (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
     hfactor_prim hfactor_norm hrecovered hprecision
-
-/-- Precision-gated exact recovery for `liftedRecoveryCandidate` in the
-dilation-coordinate model.
-
-`liftedRecoveryCandidate_eq_factor_of_recovery_of_bound` takes the already-
-recovered inner equality `dilate lc(core) (centeredLiftPoly product) = factor`
-as a hypothesis, leaving its precision and validity arguments vestigial.  That
-inner equality is not what the executable search establishes: the dilated
-centred product carries the leading-coefficient powers `lc(core) ^ i` as
-content, so the recovered integer factor is its *primitive part*, not the
-dilated polynomial itself.
-
-This theorem closes that gap.  Its inputs are exactly the pieces the
-dilation-coordinate correspondence produces:
-
-- `hcong`, the monic-recovery congruence `reduceModPow (liftedFactorProduct d S)
-  = reduceModPow monicFactor` in the `toMonic` coordinate system, together with
-  the Mignotte bound `hvalid`/`hprecision` on `monicFactor`, recovers the
-  centred lift of the selected product as `monicFactor` exactly;
-- `hdilate`, the dilation keystone `primitivePart (dilate lc(core) monicFactor)
-  = factor` (the equality refinement of `HexPolyZMathlib.dilate_recovery`),
-  transports the monic factor back to the integer factor of `core`.
-
-Here `hprecision` is load-bearing: it is what forces the unique small
-representative recovered by the centred lift to be `monicFactor`. -/
-theorem liftedRecoveryCandidate_eq_factor_of_congruence_of_bound
-    {core factor monicFactor : Hex.ZPoly} {d : Hex.LiftData}
-    {S : LiftedFactorSubset d}
-    (B' : Nat)
-    (hvalid : ∀ i, (monicFactor.coeff i).natAbs ≤ B')
-    (hcong :
-      Hex.ZPoly.reduceModPow (liftedFactorProduct d S) d.p d.k =
-        Hex.ZPoly.reduceModPow monicFactor d.p d.k)
-    (hdilate :
-      Hex.ZPoly.primitivePart
-          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) monicFactor) =
-        factor)
-    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
-    (hprecision : 2 * B' < d.p ^ d.k) :
-    liftedRecoveryCandidate core d S = factor := by
-  have hcl :
-      Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k) = monicFactor := by
-    rw [← centeredLiftPoly_reduceModPow_eq (liftedFactorProduct d S) d.p d.k d.p_pos,
-      hcong]
-    exact Hex.centeredLiftPoly_reduceModPow_eq_of_coeff_natAbs_le
-      monicFactor d.p d.k B' hvalid hprecision
-  unfold liftedRecoveryCandidate
-  rw [hcl, hdilate]
-  exact hfactor_norm
-
-namespace RecoveredAtLift
-
-/--
-Exact recovery of the executable recovered candidate from the corrected
-monic-coordinate representation carrier.
-
-The coefficient bound is deliberately stated on the carrier's `monicFactor`,
-because Mignotte precision recovers the centred selected product in the
-`toMonic` coordinate system before the dilation keystone transports it back to
-the integer factor.
--/
-theorem candidate_eq_of_bound
-    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
-    (hrep : RecoveredAtLift core d factor S)
-    (B' : Nat)
-    (hvalid : ∀ i, (hrep.monicFactor.coeff i).natAbs ≤ B')
-    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
-    (hprecision : 2 * B' < d.p ^ d.k) :
-    liftedRecoveryCandidate core d S = factor :=
-  liftedRecoveryCandidate_eq_factor_of_congruence_of_bound
-    B' hvalid hrep.congr hrep.dilate_eq hfactor_norm hprecision
-
-end RecoveredAtLift
 
 private theorem densePoly_scale_one_int (f : Hex.ZPoly) :
     Hex.DensePoly.scale (1 : Int) f = f := by
