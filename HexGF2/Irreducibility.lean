@@ -55,9 +55,12 @@ def xpow2kMod (f : GF2Poly) : Nat → GF2Poly
   | 0 => monomial 1 % f
   | k + 1 => sqMod f (xpow2kMod f k)
 
+/-- The zeroth Rabin Frobenius power is `X` reduced modulo `f`. -/
 @[simp] theorem xpow2kMod_zero (f : GF2Poly) :
     xpow2kMod f 0 = monomial 1 % f := rfl
 
+/-- The next Rabin Frobenius power is obtained by squaring the previous
+remainder modulo `f`. -/
 @[simp] theorem xpow2kMod_succ (f : GF2Poly) (k : Nat) :
     xpow2kMod f (k + 1) = sqMod f (xpow2kMod f k) := rfl
 
@@ -95,6 +98,8 @@ def rabinCoprimeTest (f : GF2Poly) (d : Nat) : Bool :=
 def rabinWitnesses (f : GF2Poly) : List (Nat × Bool) :=
   (maximalProperDivisors f.degree).map fun d => (d, rabinCoprimeTest f d)
 
+/-- Checking all stored Rabin witnesses is the same as checking the Rabin
+coprime test over every maximal proper divisor. -/
 @[simp] theorem rabinWitnesses_all (f : GF2Poly) :
     (rabinWitnesses f).all Prod.snd =
       (maximalProperDivisors f.degree).all fun d => rabinCoprimeTest f d := by
@@ -134,6 +139,7 @@ variable (cert : IrreducibilityCertificate)
 def powWitness? (k : Nat) : Option GF2Poly :=
   cert.powChain[k]?
 
+/-- Certificate pow witnesses are backed directly by the pow-chain array. -/
 @[simp] theorem powWitness?_eq_getElem? (k : Nat) :
     cert.powWitness? k = cert.powChain[k]? := rfl
 
@@ -141,6 +147,7 @@ def powWitness? (k : Nat) : Option GF2Poly :=
 def bezoutWitness? (i : Nat) : Option RabinBezoutWitness :=
   cert.bezout[i]?
 
+/-- Certificate Bezout witnesses are backed directly by the Bezout array. -/
 @[simp] theorem bezoutWitness?_eq_getElem? (i : Nat) :
     cert.bezoutWitness? i = cert.bezout[i]? := rfl
 
@@ -222,6 +229,8 @@ def checkIrreducibilityCertificateLinear (f : GF2Poly)
     (cert.powChain[cert.n]? == some (monomial 1 % f)) &&
     checkRabinBezoutWitnesses f cert
 
+/-- The executable Rabin divisibility test is definitionally the zero-remainder
+test for `X^(2^deg f) - X` modulo `f`. -/
 theorem rabinDividesTest_spec (f : GF2Poly) :
     rabinDividesTest f = (frobeniusDiffMod f f.degree).isZero := rfl
 
@@ -327,6 +336,8 @@ private theorem mem_maximalProperDivisors_le {n d : Nat}
   simp only [List.mem_filter] at hmem
   exact mem_properDivisors_le hmem.1
 
+/-- A successful quadratic pow-chain check certifies every stored
+`X^(2^k) mod f` value up to the certificate degree. -/
 theorem checkPowChain_spec
     (f : GF2Poly) (cert : IrreducibilityCertificate) :
     checkPowChain f cert = true →
@@ -435,6 +446,8 @@ theorem checkIrreducibilityCertificate_rabinTest
   · exact checkRabinBezoutWitnesses_rabinWitnesses_all
       f cert hwitnesses hpow hn
 
+/-- A successful linear pow-chain check certifies every stored
+`X^(2^k) mod f` value up to the certificate degree. -/
 theorem checkPowChainLinear_spec
     (f : GF2Poly) (cert : IrreducibilityCertificate) :
     checkPowChainLinear f cert = true →
@@ -471,6 +484,8 @@ theorem checkPowChainLinear_spec
             simpa using eq_of_beq hstep_all
           simp [hcurr, xpow2kMod_succ]
 
+/-- A successful linear irreducibility certificate checker implies the
+executable Rabin test succeeds. -/
 theorem checkIrreducibilityCertificateLinear_rabinTest
     (f : GF2Poly) (cert : IrreducibilityCertificate) :
     checkIrreducibilityCertificateLinear f cert = true → rabinTest f = true := by
