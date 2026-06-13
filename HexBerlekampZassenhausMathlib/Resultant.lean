@@ -888,6 +888,94 @@ theorem commonFactor_dvd_resultant_of_monic_cofactor
   exact commonFactor_dvd_resultant f g q a b r s m hf_wit hg_wit hq_monic hq_deg
     hd ha hb hb_pivot
 
+/--
+Degree-controlled witness from a `ZMod n` divisibility by a *monic* `q`.
+
+Unlike `exists_witnesses_of_map_dvd_zmod`, which lifts an arbitrary modular
+quotient, this uses honest monic division: the quotient is `f /ₘ q` (so its
+degree is `f.natDegree - q.natDegree`) and the remainder `f %ₘ q` is
+coefficientwise divisible by `n`, packaged as `Polynomial.C (n : ℤ) * s`. The
+degree control is what the Sylvester column reduction in
+`commonFactor_dvd_resultant` needs.
+-/
+private theorem exists_divByMonic_witness {f q : Polynomial ℤ} {n : ℕ}
+    (hq : q.Monic)
+    (hdvd : q.map (Int.castRingHom (ZMod n)) ∣
+            f.map (Int.castRingHom (ZMod n))) :
+    ∃ s : Polynomial ℤ, f = q * (f /ₘ q) + Polynomial.C (n : ℤ) * s := by
+  have hqmap : (q.map (Int.castRingHom (ZMod n))).Monic := hq.map _
+  -- The monic-division remainder vanishes modulo `n`.
+  have hrem0 : (f %ₘ q).map (Int.castRingHom (ZMod n)) = 0 := by
+    rw [Polynomial.map_modByMonic (Int.castRingHom (ZMod n)) hq]
+    exact (Polynomial.modByMonic_eq_zero_iff_dvd hqmap).mpr hdvd
+  -- Hence each coefficient is divisible by `n`, so `C n` divides `f %ₘ q`.
+  have hCdvd : Polynomial.C (n : ℤ) ∣ (f %ₘ q) := by
+    rw [Polynomial.C_dvd_iff_dvd_coeff]
+    intro k
+    have hc : (((f %ₘ q).coeff k : ℤ) : ZMod n) = 0 := by
+      have h0 : ((f %ₘ q).map (Int.castRingHom (ZMod n))).coeff k = 0 := by
+        rw [hrem0]; simp
+      rwa [Polynomial.coeff_map] at h0
+    exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ n).mp hc
+  obtain ⟨s, hs⟩ := hCdvd
+  refine ⟨s, ?_⟩
+  have hsplit := Polynomial.modByMonic_add_div f q
+  rw [hs] at hsplit
+  linear_combination -hsplit
+
+/--
+BHKS Lemma 3.2 modular-resultant divisibility, in the form downstream
+Hensel/CLD code consumes.
+
+If a monic degree-`d` polynomial `q` divides both `f` and `g` after reduction
+modulo `p ^ k`, with `f` monic and `d` not exceeding either degree, then
+`p ^ (k * d)` divides the integer resultant of `f` and `g`.
+
+The exponent is `k * d`, not merely `k`: the monic common factor `q` contributes
+`d` independent Sylvester column directions, each carrying one factor of the
+modulus `p ^ k`, so the column reduction (`commonFactor_dvd_resultant`) turns
+those `d` directions into `(p ^ k) ^ d = p ^ (k * d)` dividing the resultant.
+Monicity of `f` supplies the unit pivot the reduction needs; the result is read
+off the swapped pair via `Polynomial.resultant_comm`.
+-/
+theorem pow_dvd_resultant_of_map_dvd
+    {p k : ℕ} {f g q : Polynomial ℤ} {d : ℕ}
+    (hq_monic : q.Monic)
+    (hq_deg : q.natDegree = d)
+    (hf_monic : f.Monic)
+    (hdf : d ≤ f.natDegree)
+    (hdg : d ≤ g.natDegree)
+    (hf_dvd : q.map (Int.castRingHom (ZMod (p ^ k))) ∣
+              f.map (Int.castRingHom (ZMod (p ^ k))))
+    (hg_dvd : q.map (Int.castRingHom (ZMod (p ^ k))) ∣
+              g.map (Int.castRingHom (ZMod (p ^ k)))) :
+    ((p ^ (k * d) : ℕ) : ℤ) ∣ Polynomial.resultant f g := by
+  -- Degree-controlled monic-division witnesses for both polynomials.
+  obtain ⟨r, hr⟩ := exists_divByMonic_witness hq_monic hg_dvd
+  obtain ⟨s, hs⟩ := exists_divByMonic_witness hq_monic hf_dvd
+  -- `q.degree ≤ f.degree`, needed for the leading-coefficient transfer.
+  have hdeg_le : q.degree ≤ f.degree := by
+    rw [Polynomial.degree_eq_natDegree hq_monic.ne_zero,
+        Polynomial.degree_eq_natDegree hf_monic.ne_zero, hq_deg]
+    exact_mod_cast hdf
+  -- The pivot cofactor `f /ₘ q` is monic because `f` is.
+  have hb_monic : (f /ₘ q).Monic := by
+    have := Polynomial.leadingCoeff_divByMonic_of_monic hq_monic hdeg_le
+    exact this.trans hf_monic
+  -- Apply the column-reduction lemma to the swapped pair `(g, f)`, so the monic
+  -- cofactor `f /ₘ q` of `f` plays the pivot role.
+  have key : ((p ^ k : ℕ) : ℤ) ^ d ∣ Polynomial.resultant g f := by
+    apply commonFactor_dvd_resultant_of_monic_cofactor g f q (g /ₘ q) (f /ₘ q)
+      r s ((p ^ k : ℕ) : ℤ) (d := d) hr hs hq_monic hq_deg hdf
+    · rw [Polynomial.natDegree_divByMonic g hq_monic, hq_deg]; omega
+    · rw [Polynomial.natDegree_divByMonic f hq_monic, hq_deg]; omega
+    · exact hb_monic
+  -- Convert `(p ^ k) ^ d` to `p ^ (k * d)` and read off `resultant f g` via comm.
+  have hcast : ((p ^ (k * d) : ℕ) : ℤ) = ((p ^ k : ℕ) : ℤ) ^ d := by
+    rw [pow_mul, Nat.cast_pow]
+  rw [hcast, Polynomial.resultant_comm]
+  exact key.mul_left _
+
 end
 
 end HexBerlekampZassenhausMathlib
