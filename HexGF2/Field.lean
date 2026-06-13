@@ -62,12 +62,17 @@ enumerations for packed quotient proofs. -/
 def boolCoeffValues : List Bool :=
   [false, true]
 
+/-- The internal Boolean coefficient enumeration has exactly the two field
+coefficients. -/
 @[simp] theorem boolCoeffValues_length : boolCoeffValues.length = 2 := by
   rfl
 
+/-- Every Boolean coefficient appears in the internal coefficient enumeration. -/
 theorem mem_boolCoeffValues (b : Bool) : b ∈ boolCoeffValues := by
   cases b <;> simp [boolCoeffValues]
 
+/-- The internal Boolean coefficient enumeration contains no duplicates, so
+coefficient-list enumeration does not duplicate choices at one position. -/
 theorem boolCoeffValues_nodup : boolCoeffValues.Nodup := by
   simp [boolCoeffValues]
 
@@ -658,6 +663,8 @@ def reducePoly (p : GF2Poly) : GF2nPoly f hirr :=
   else
     ⟨0, zero_reduced (f := f)⟩
 
+/-- The value stored by canonical quotient reduction is the ordinary remainder
+modulo the irreducible modulus. -/
 @[simp] theorem reducePoly_val_eq_mod (p : GF2Poly) :
     (reducePoly (f := f) (hirr := hirr) p).val = p % f := by
   unfold reducePoly modulus
@@ -823,6 +830,8 @@ def zero : GF2nPoly f hirr :=
 instance : Zero (GF2nPoly f hirr) where
   zero := zero
 
+/-- A polynomial reduces to the zero quotient element exactly when the modulus
+divides it in `GF(2)[X]`. -/
 theorem reducePoly_eq_zero_iff_dvd {p : GF2Poly} (hf : f ≠ 0) :
     reducePoly (f := f) (hirr := hirr) p = 0 ↔ f ∣ p := by
   constructor
@@ -1148,9 +1157,12 @@ def frobeniusIter (a : GF2nPoly f hirr) : Nat → GF2nPoly f hirr
   | 0 => a
   | k + 1 => frobeniusIter a k * frobeniusIter a k
 
+/-- Zero Frobenius iterations leave the quotient element unchanged. -/
 @[simp] theorem frobeniusIter_zero (a : GF2nPoly f hirr) :
     frobeniusIter a 0 = a := rfl
 
+/-- One more Frobenius iteration squares the previous iterate in the quotient
+field. -/
 @[simp] theorem frobeniusIter_succ (a : GF2nPoly f hirr) (k : Nat) :
     frobeniusIter a (k + 1) = frobeniusIter a k * frobeniusIter a k := rfl
 
@@ -1486,15 +1498,18 @@ def dividedDifferenceCoeffs :
   | _ :: c :: cs, α =>
       evalCoeffList (c :: cs) α :: dividedDifferenceCoeffs (c :: cs) α
 
+/-- The divided-difference coefficient list of the zero polynomial is empty. -/
 @[simp] theorem dividedDifferenceCoeffs_nil (α : GF2nPoly f hirr) :
     dividedDifferenceCoeffs ([] : List (GF2nPoly f hirr)) α = [] :=
   rfl
 
+/-- A constant coefficient list has no divided-difference coefficients. -/
 @[simp] theorem dividedDifferenceCoeffs_singleton
     (c : GF2nPoly f hirr) (α : GF2nPoly f hirr) :
     dividedDifferenceCoeffs ([c] : List (GF2nPoly f hirr)) α = [] :=
   rfl
 
+/-- Divided differences peel the tail polynomial evaluated at the base point. -/
 @[simp] theorem dividedDifferenceCoeffs_cons_cons
     (c d : GF2nPoly f hirr) (cs : List (GF2nPoly f hirr))
     (α : GF2nPoly f hirr) :
@@ -1523,10 +1538,13 @@ def dividedDifference
     (cs : List (GF2nPoly f hirr)) (α β : GF2nPoly f hirr) : GF2nPoly f hirr :=
   evalCoeffList (dividedDifferenceCoeffs cs α) β
 
+/-- The divided difference of an empty coefficient list is zero. -/
 @[simp] theorem dividedDifference_nil (α β : GF2nPoly f hirr) :
     dividedDifference ([] : List (GF2nPoly f hirr)) α β = 0 :=
   rfl
 
+/-- The divided difference of a nonconstant list satisfies the synthetic
+recurrence used by the root-count induction. -/
 @[simp] theorem dividedDifference_cons
     (c d : GF2nPoly f hirr) (cs : List (GF2nPoly f hirr))
     (α β : GF2nPoly f hirr) :
@@ -1905,6 +1923,8 @@ def rootsOfCoeffList (cs : List (GF2nPoly f hirr)) : List (GF2nPoly f hirr) :=
   (elements (f := f) (hirr := hirr)).filter
     (fun β => decide (evalCoeffList cs β = 0))
 
+/-- Membership in the computed root list is exactly vanishing of the
+coefficient-list polynomial at that quotient element. -/
 @[simp] theorem mem_rootsOfCoeffList
     (cs : List (GF2nPoly f hirr)) (β : GF2nPoly f hirr) :
     β ∈ rootsOfCoeffList (f := f) (hirr := hirr) cs ↔
@@ -2490,10 +2510,13 @@ namespace Internal
 def listProd (xs : List (GF2nPoly f hirr)) : GF2nPoly f hirr :=
   xs.foldr (· * ·) 1
 
+/-- The right-folded product of the empty quotient-element list is one. -/
 @[simp] theorem listProd_nil :
     listProd ([] : List (GF2nPoly f hirr)) = 1 :=
   rfl
 
+/-- The right-folded product of a cons multiplies the head by the tail
+product. -/
 @[simp] theorem listProd_cons (x : GF2nPoly f hirr)
     (xs : List (GF2nPoly f hirr)) :
     listProd (x :: xs) = x * listProd xs :=
