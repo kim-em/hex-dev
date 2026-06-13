@@ -150,6 +150,57 @@ theorem det_dvd_of_cols_dvd
       (fun j : Fin N => A (σ j) j) cols hcols_inj)
 
 /--
+Abstract Sylvester-column valuation criterion for integer resultants.
+
+If a determinant-preserving Sylvester column transformation produces `d`
+distinct columns whose entries are all divisible by `m`, then `m ^ d` divides
+the resultant.  This is the determinant-only core needed by the CLD/logarithmic
+derivative argument: downstream code supplies the transformed matrix and column
+divisibility witnesses directly, without assuming that the selected local
+factor divides the auxiliary polynomial modulo `m`.
+-/
+theorem dvd_resultant_of_sylvester_cols
+    (f H : Polynomial ℤ) {d : Nat} (m : ℤ)
+    (A : Matrix (Fin (f.natDegree + H.natDegree)) (Fin (f.natDegree + H.natDegree)) ℤ)
+    (cols : Fin d → Fin (f.natDegree + H.natDegree))
+    (hcols_inj : Function.Injective cols)
+    (hdet : A.det = (Polynomial.sylvester f H f.natDegree H.natDegree).det)
+    (hcols : ∀ (j : Fin d) (i : Fin (f.natDegree + H.natDegree)),
+      m ∣ A i (cols j)) :
+    m ^ d ∣ Polynomial.resultant f H := by
+  have hA : m ^ d ∣ A.det := det_dvd_of_cols_dvd m A cols hcols_inj hcols
+  rw [hdet] at hA
+  simpa [Polynomial.resultant] using hA
+
+/--
+Prime-power form of `dvd_resultant_of_sylvester_cols`.
+
+The hypotheses deliberately mention only the Sylvester-column valuation data.
+For BHKS/CLD use, the selected monic local factor `q` of degree `d` explains
+where the `d` column directions come from, while the actual CLD coefficient
+congruences are packaged in `hcols`.  No divisibility hypothesis
+`q.map _ ∣ H.map _` is required.
+-/
+theorem pow_dvd_resultant_of_sylvester_cols
+    {p k d : Nat} (f H q : Polynomial ℤ)
+    (_hq_monic : q.Monic)
+    (_hq_deg : q.natDegree = d)
+    (_hf_monic : f.Monic)
+    (A : Matrix (Fin (f.natDegree + H.natDegree)) (Fin (f.natDegree + H.natDegree)) ℤ)
+    (cols : Fin d → Fin (f.natDegree + H.natDegree))
+    (hcols_inj : Function.Injective cols)
+    (hdet : A.det = (Polynomial.sylvester f H f.natDegree H.natDegree).det)
+    (hcols : ∀ (j : Fin d) (i : Fin (f.natDegree + H.natDegree)),
+      ((p ^ k : Nat) : ℤ) ∣ A i (cols j)) :
+    ((p ^ (k * d) : Nat) : ℤ) ∣ Polynomial.resultant f H := by
+  have hbase :
+      ((p ^ k : Nat) : ℤ) ^ d ∣ Polynomial.resultant f H :=
+    dvd_resultant_of_sylvester_cols f H ((p ^ k : Nat) : ℤ) A cols hcols_inj hdet hcols
+  have hcast : ((p ^ (k * d) : Nat) : ℤ) = ((p ^ k : Nat) : ℤ) ^ d := by
+    rw [pow_mul, Nat.cast_pow]
+  simpa [hcast]
+
+/--
 Replacing a column of a square matrix by `A.mulVec w` — the linear combination
 of all columns with coefficients `w` — multiplies the determinant by the
 coefficient `w p` of the replaced column.
