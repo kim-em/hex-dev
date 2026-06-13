@@ -101,6 +101,25 @@ independently landable green — the executable change and the Mathlib remodel
 must land in one PR. Scope accordingly (see #6799 / #6801 for the
 `DensePoly.scale` → `ZPoly.dilate` example).
 
+## The Mathlib layer is not CI-built — establish a baseline first
+
+CI builds only bench + conformance targets (`ci.yml`, `conformance.yml`);
+it does **not** build `HexBerlekampZassenhausMathlib`. So that layer can be
+**hard-red on main** — a real elaboration error, not just the known
+`sorry`s — whenever an executable→Mathlib split is mid-flight (e.g. the
+dilation remodel left `Basic.lean` failing at `:15990` while #6804/#6772 were
+open), and merges keep flowing because nothing gates it.
+
+Before attributing a Mathlib-layer build failure to your own change, build the
+**unmodified** target on a clean tree to get a red/green baseline
+(`lake build HexBerlekampZassenhausMathlib.<Module>`), and `git diff origin/main
+-- <file>` to confirm the failing file is untouched by you. If your target's
+file (or a file it imports, like `Basic.lean`) is already red, your additions
+in a downstream file (e.g. `Recovery.lean`) cannot be verified at all. Land the
+parts that *do* build in isolation, and preserve the blocked parts (source in
+the issue comment) for a follow-up gated on the remodel issue rather than
+merging unverified Lean.
+
 ## Pre-existing sorries
 
 `HexBerlekampMathlib/Basic.lean` and `HexHenselMathlib/Correctness.lean` ship

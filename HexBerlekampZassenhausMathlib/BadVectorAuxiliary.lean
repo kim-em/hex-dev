@@ -167,6 +167,39 @@ theorem correctionWeightedSum_le_degree_mul
       simp [mul_comm]
 
 /--
+Canonical pointwise bound for one weighted diagonal-row correction coordinate.
+
+The cut-threshold weight `p ^ (2 (k − ℓ_j))` is at most the uniform `p ^ (2k)`
+(since `k − ℓ_j ≤ k` and `p ≥ 1`), so a coordinate bound `c_j ^ 2 ≤ D` lifts to
+the uniform weighted bound `D · p ^ (2k)`, exactly the
+`correctionWeightedSum_le_degree_mul` input shape with a single canonical value.
+-/
+theorem correctionWeighted_sq_le_of_coeff_sq_le
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (corrections : Array Int) (D : ℝ) (hp : 1 ≤ liftData.p)
+    (hD :
+      ∀ j, j < input.degree?.getD 0 →
+        ((corrections.getD j 0 : ℝ)) ^ 2 ≤ D)
+    (j : Nat) (hj : j < input.degree?.getD 0) :
+    ((corrections.getD j 0 : ℝ)) ^ 2 *
+        ((liftData.p : ℝ) ^
+          (2 * (liftData.k - Hex.bhksCoeffCutThreshold liftData.p input j))) ≤
+      D * (liftData.p : ℝ) ^ (2 * liftData.k) := by
+  have hcj : ((corrections.getD j 0 : ℝ)) ^ 2 ≤ D := hD j hj
+  have hp' : (1 : ℝ) ≤ (liftData.p : ℝ) := by exact_mod_cast hp
+  have hweight :
+      (liftData.p : ℝ) ^
+          (2 * (liftData.k - Hex.bhksCoeffCutThreshold liftData.p input j)) ≤
+        (liftData.p : ℝ) ^ (2 * liftData.k) :=
+    pow_le_pow_right₀ hp' (by omega)
+  have hweight_nonneg :
+      (0 : ℝ) ≤ (liftData.p : ℝ) ^
+          (2 * (liftData.k - Hex.bhksCoeffCutThreshold liftData.p input j)) := by
+    positivity
+  have hD_nonneg : (0 : ℝ) ≤ D := le_trans (sq_nonneg _) hcj
+  exact mul_le_mul hcj hweight hweight_nonneg hD_nonneg
+
+/--
 Pointwise bound for the projected-vector squared sum: if each squared
 coordinate is bounded by a real `bound i`, the squared sum is bounded by the
 pointwise sum.
