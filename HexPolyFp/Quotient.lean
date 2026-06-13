@@ -55,11 +55,15 @@ def reduce (f : FpPoly p) : Quotient g hmonic hg_pos :=
     rw [FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
     exact DensePoly.mod_degree_lt_of_pos_degree f g hg_pos⟩
 
+/-- The stored representative of `reduce f` is the monic remainder computed by
+the executable reduction path. -/
 @[simp] theorem reduce_val (f : FpPoly p) :
     (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f).val =
       FpPoly.modByMonic g f hmonic :=
   rfl
 
+/-- The stored representative of `reduce f` is also the ordinary remainder
+`f % g`, exposing the algebraic view used by congruence lemmas. -/
 theorem reduce_val_eq_mod (f : FpPoly p) :
     (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f).val = f % g := by
   rw [reduce_val, FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
@@ -68,6 +72,7 @@ theorem reduce_val_eq_mod (f : FpPoly p) :
 def Congr (f h : FpPoly p) : Prop :=
   DensePoly.Congr f h g
 
+/-- Congruent polynomials have the same canonical quotient representative. -/
 theorem reduce_eq_reduce_of_congr {f h : FpPoly p} (hc : Congr (g := g) f h) :
     reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f =
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h := by
@@ -77,6 +82,8 @@ theorem reduce_eq_reduce_of_congr {f h : FpPoly p} (hc : Congr (g := g) f h) :
   exact @DensePoly.mod_eq_mod_of_congr (ZMod64 p) inferInstance inferInstance
     inferInstance (ZMod64.instDivModLawsZMod64Fp p) f h g hc
 
+/-- Equal canonical quotient representatives imply congruence modulo the
+defining polynomial. -/
 theorem congr_of_reduce_eq_reduce {f h : FpPoly p}
     (heq :
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f =
@@ -92,6 +99,8 @@ theorem congr_of_reduce_eq_reduce {f h : FpPoly p}
   rw [hf, hh] at hval
   exact hval
 
+/-- Equality of reduced representatives is equivalent to congruence modulo the
+quotient modulus. -/
 theorem reduce_eq_reduce_iff_congr (f h : FpPoly p) :
     reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f =
         reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) h ↔
@@ -335,43 +344,60 @@ def pow (a : Quotient g hmonic hg_pos) : Nat → Quotient g hmonic hg_pos
 instance : Pow (Quotient g hmonic hg_pos) Nat where
   pow := pow
 
+/-- The stored representative of quotient zero is the reduction of the zero
+polynomial. -/
 @[simp] theorem zero_val :
     (0 : Quotient g hmonic hg_pos).val = FpPoly.modByMonic g 0 hmonic :=
   rfl
 
+/-- The stored representative of quotient one is the reduction of the constant
+polynomial `1`. -/
 @[simp] theorem one_val :
     (1 : Quotient g hmonic hg_pos).val = FpPoly.modByMonic g 1 hmonic :=
   rfl
 
+/-- The stored representative of the quotient indeterminate is the reduced
+polynomial variable. -/
 @[simp] theorem X_val :
     (X (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).val =
       FpPoly.modByMonic g FpPoly.X hmonic :=
   rfl
 
+/-- Addition of quotient elements reduces the sum of their canonical
+representatives. -/
 @[simp] theorem add_val (a b : Quotient g hmonic hg_pos) :
     (a + b).val = FpPoly.modByMonic g (a.val + b.val) hmonic :=
   rfl
 
+/-- Negation of a quotient element reduces the negated representative. -/
 @[simp] theorem neg_val (a : Quotient g hmonic hg_pos) :
     (-a).val = FpPoly.modByMonic g (-a.val) hmonic :=
   rfl
 
+/-- Subtraction of quotient elements reduces the difference of their canonical
+representatives. -/
 @[simp] theorem sub_val (a b : Quotient g hmonic hg_pos) :
     (a - b).val = FpPoly.modByMonic g (a.val - b.val) hmonic :=
   rfl
 
+/-- Multiplication of quotient elements reduces the product of their canonical
+representatives. -/
 @[simp] theorem mul_val (a b : Quotient g hmonic hg_pos) :
     (a * b).val = FpPoly.modByMonic g (a.val * b.val) hmonic :=
   rfl
 
+/-- Zeroth quotient power is the multiplicative identity. -/
 @[simp] theorem pow_zero (a : Quotient g hmonic hg_pos) :
     a ^ (0 : Nat) = 1 := by
   rfl
 
+/-- Successor quotient powers multiply one more copy on the right. -/
 @[simp] theorem pow_succ (a : Quotient g hmonic hg_pos) (n : Nat) :
     a ^ (n + 1) = a ^ n * a := by
   rfl
 
+/-- Reducing a sum agrees with summing the separately reduced representatives
+and reducing once more. -/
 theorem reduce_add_eq (f h : FpPoly p) :
     reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) =
       reduce
@@ -384,6 +410,8 @@ theorem reduce_add_eq (f h : FpPoly p) :
   exact @DensePoly.mod_add_mod (ZMod64 p) inferInstance inferInstance inferInstance
     (ZMod64.instDivModLawsZMod64Fp p) f h g
 
+/-- Reducing a product agrees with multiplying the separately reduced
+representatives and reducing once more. -/
 theorem reduce_mul_eq (f h : FpPoly p) :
     reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f * h) =
       reduce
@@ -1141,10 +1169,12 @@ def evalCoeffList :
   | [], _ => 0
   | c :: cs, β => c + β * evalCoeffList cs β
 
+/-- Evaluating the empty quotient-coefficient list gives zero. -/
 @[simp] theorem evalCoeffList_nil (β : Quotient g hmonic hg_pos) :
     evalCoeffList ([] : List (Quotient g hmonic hg_pos)) β = 0 :=
   rfl
 
+/-- Evaluating a nonempty quotient-coefficient list unfolds one Horner step. -/
 @[simp] theorem evalCoeffList_cons
     (c : Quotient g hmonic hg_pos) (cs : List (Quotient g hmonic hg_pos))
     (β : Quotient g hmonic hg_pos) :
@@ -1167,15 +1197,19 @@ def dividedDifferenceCoeffs :
   | _ :: c :: cs, α =>
       evalCoeffList (c :: cs) α :: dividedDifferenceCoeffs (c :: cs) α
 
+/-- The divided-difference coefficient list of the empty list is empty. -/
 @[simp] theorem dividedDifferenceCoeffs_nil (α : Quotient g hmonic hg_pos) :
     dividedDifferenceCoeffs ([] : List (Quotient g hmonic hg_pos)) α = [] :=
   rfl
 
+/-- A constant polynomial has empty divided-difference coefficient list. -/
 @[simp] theorem dividedDifferenceCoeffs_singleton
     (c : Quotient g hmonic hg_pos) (α : Quotient g hmonic hg_pos) :
     dividedDifferenceCoeffs ([c] : List (Quotient g hmonic hg_pos)) α = [] :=
   rfl
 
+/-- The divided-difference coefficient recursion peels the constant term and
+evaluates the remaining tail at the base point. -/
 @[simp] theorem dividedDifferenceCoeffs_cons_cons
     (c d : Quotient g hmonic hg_pos) (cs : List (Quotient g hmonic hg_pos))
     (α : Quotient g hmonic hg_pos) :
@@ -1219,11 +1253,14 @@ def dividedDifference
     (α β : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
   evalCoeffList (dividedDifferenceCoeffs cs α) β
 
+/-- The divided difference of the empty coefficient list is zero. -/
 @[simp] theorem dividedDifference_nil
     (α β : Quotient g hmonic hg_pos) :
     dividedDifference ([] : List (Quotient g hmonic hg_pos)) α β = 0 :=
   rfl
 
+/-- A nonconstant divided difference unfolds as a Horner step over the
+synthetic coefficient tail. -/
 @[simp] theorem dividedDifference_cons
     (c d : Quotient g hmonic hg_pos) (cs : List (Quotient g hmonic hg_pos))
     (α β : Quotient g hmonic hg_pos) :
@@ -1338,6 +1375,7 @@ def evalQuotientCoeffs (f : FpPoly p) : List (Quotient g hmonic hg_pos) :=
     (fun coeff =>
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C coeff))
 
+/-- Evaluating the zero polynomial in the quotient gives zero. -/
 @[simp] theorem eval_zero (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (0 : FpPoly p) β = 0 := by
   rfl
@@ -1545,6 +1583,8 @@ def evalDividedDifferenceCoeffs (f : FpPoly p)
   dividedDifferenceCoeffs
     (evalQuotientCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f) α
 
+/-- Evaluating the executable divided difference is the quotient-coefficient
+evaluator applied to its synthetic coefficient list. -/
 @[simp] theorem evalDividedDifference_eq_evalCoeffList
     (f : FpPoly p) (α β : Quotient g hmonic hg_pos) :
     evalDividedDifference (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
@@ -1554,6 +1594,8 @@ def evalDividedDifferenceCoeffs (f : FpPoly p)
           (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f α) β := by
   rfl
 
+/-- The executable divided-difference coefficient list has one fewer entry
+than the embedded coefficient list. -/
 @[simp] theorem evalDividedDifferenceCoeffs_length
     (f : FpPoly p) (α : Quotient g hmonic hg_pos) :
     (evalDividedDifferenceCoeffs
@@ -2230,6 +2272,8 @@ def rootsOfCoeffList (cs : List (Quotient g hmonic hg_pos)) :
   (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter
     (fun β => decide (evalCoeffList cs β = 0))
 
+/-- Membership in `rootsOfCoeffList cs` is exactly vanishing of the
+quotient-coefficient evaluator. -/
 @[simp] theorem mem_rootsOfCoeffList
     (cs : List (Quotient g hmonic hg_pos)) (β : Quotient g hmonic hg_pos) :
     β ∈ rootsOfCoeffList (g := g) (hmonic := hmonic) (hg_pos := hg_pos) cs ↔
@@ -2517,6 +2561,8 @@ def rootsOfFpPoly (f : FpPoly p) : List (Quotient g hmonic hg_pos) :=
   (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter
     (fun β => decide (eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β = 0))
 
+/-- Membership in `rootsOfFpPoly f` is exactly vanishing of quotient
+evaluation of `f`. -/
 @[simp] theorem mem_rootsOfFpPoly
     (f : FpPoly p) (β : Quotient g hmonic hg_pos) :
     β ∈ rootsOfFpPoly (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f ↔
@@ -2642,15 +2688,19 @@ theorem one_ne_zero :
 def listProd (xs : List (Quotient g hmonic hg_pos)) : Quotient g hmonic hg_pos :=
   xs.foldr (· * ·) 1
 
+/-- The product of an empty quotient list is one. -/
 @[simp] theorem listProd_nil :
     listProd ([] : List (Quotient g hmonic hg_pos)) = 1 :=
   rfl
 
+/-- The product of a cons list multiplies the head by the product of the tail. -/
 @[simp] theorem listProd_cons (x : Quotient g hmonic hg_pos)
     (xs : List (Quotient g hmonic hg_pos)) :
     listProd (x :: xs) = x * listProd xs :=
   rfl
 
+/-- The product of an appended quotient list factors as the product of the two
+pieces. -/
 theorem listProd_append (xs ys : List (Quotient g hmonic hg_pos)) :
     listProd (xs ++ ys) = listProd xs * listProd ys := by
   induction xs with
