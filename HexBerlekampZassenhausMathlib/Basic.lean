@@ -5088,6 +5088,55 @@ theorem liftedRecoveryCandidate_eq_factor_of_recovery
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
     hfactor_prim hfactor_norm hrecovered hprecision
 
+/-- Precision-gated exact recovery for `liftedRecoveryCandidate` in the
+dilation-coordinate model.
+
+`liftedRecoveryCandidate_eq_factor_of_recovery_of_bound` takes the already-
+recovered inner equality `dilate lc(core) (centeredLiftPoly product) = factor`
+as a hypothesis, leaving its precision and validity arguments vestigial.  That
+inner equality is not what the executable search establishes: the dilated
+centred product carries the leading-coefficient powers `lc(core) ^ i` as
+content, so the recovered integer factor is its *primitive part*, not the
+dilated polynomial itself.
+
+This theorem closes that gap.  Its inputs are exactly the pieces the
+dilation-coordinate correspondence produces:
+
+- `hcong`, the monic-recovery congruence `reduceModPow (liftedFactorProduct d S)
+  = reduceModPow monicFactor` in the `toMonic` coordinate system, together with
+  the Mignotte bound `hvalid`/`hprecision` on `monicFactor`, recovers the
+  centred lift of the selected product as `monicFactor` exactly;
+- `hdilate`, the dilation keystone `primitivePart (dilate lc(core) monicFactor)
+  = factor` (the equality refinement of `HexPolyZMathlib.dilate_recovery`),
+  transports the monic factor back to the integer factor of `core`.
+
+Here `hprecision` is load-bearing: it is what forces the unique small
+representative recovered by the centred lift to be `monicFactor`. -/
+theorem liftedRecoveryCandidate_eq_factor_of_congruence_of_bound
+    {core factor monicFactor : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (B' : Nat)
+    (hvalid : ∀ i, (monicFactor.coeff i).natAbs ≤ B')
+    (hcong :
+      Hex.ZPoly.reduceModPow (liftedFactorProduct d S) d.p d.k =
+        Hex.ZPoly.reduceModPow monicFactor d.p d.k)
+    (hdilate :
+      Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) monicFactor) =
+        factor)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    liftedRecoveryCandidate core d S = factor := by
+  have hcl :
+      Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k) = monicFactor := by
+    rw [← centeredLiftPoly_reduceModPow_eq (liftedFactorProduct d S) d.p d.k d.p_pos,
+      hcong]
+    exact Hex.centeredLiftPoly_reduceModPow_eq_of_coeff_natAbs_le
+      monicFactor d.p d.k B' hvalid hprecision
+  unfold liftedRecoveryCandidate
+  rw [hcl, hdilate]
+  exact hfactor_norm
+
 private theorem densePoly_scale_one_int (f : Hex.ZPoly) :
     Hex.DensePoly.scale (1 : Int) f = f := by
   apply Hex.DensePoly.ext_coeff
