@@ -2276,24 +2276,13 @@ def scaledLiftedFactorProduct
   Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) (liftedFactorProduct d S)
 
 /--
-An integer factor is represented by a subset of the lifted local factors when
-the executable scaled selected product agrees with the factor modulo the Hensel
-modulus `p^k`.
--/
-def RepresentsIntegerFactorAtLift
-    (core : Hex.ZPoly) (d : Hex.LiftData) (factor : Hex.ZPoly)
-    (S : LiftedFactorSubset d) : Prop :=
-  Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
-    Hex.ZPoly.reduceModPow factor d.p d.k
-
-/--
 Corrected recovered-coordinate representation of an integer factor at a Hensel
 lift.  The selected lifted product represents a monic-coordinate factor modulo
 `p^k`; dilating that monic factor by `leadingCoeff core` and taking primitive
 part recovers the integer factor of `core`.
 
-This carrier intentionally lives next to the old scaled-product
-`RepresentsIntegerFactorAtLift` while consumers migrate.
+This is the data-bearing carrier behind the public proof-level
+`RepresentsIntegerFactorAtLift` predicate.
 -/
 structure RecoveredAtLift
     (core : Hex.ZPoly) (d : Hex.LiftData) (factor : Hex.ZPoly)
@@ -2306,6 +2295,50 @@ structure RecoveredAtLift
     Hex.ZPoly.primitivePart
         (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) monicFactor) =
       factor
+
+/--
+An integer factor is represented by a subset of the lifted local factors when
+the unscaled selected product recovers a monic-coordinate witness whose
+leading-coefficient dilation has primitive part equal to the integer factor.
+
+The public predicate is proof-only; helper lemmas can unpack the underlying
+`RecoveredAtLift` witness when they need the monic-coordinate data.
+-/
+def RepresentsIntegerFactorAtLift
+    (core : Hex.ZPoly) (d : Hex.LiftData) (factor : Hex.ZPoly)
+    (S : LiftedFactorSubset d) : Prop :=
+  Nonempty (RecoveredAtLift core d factor S)
+
+namespace RepresentsIntegerFactorAtLift
+
+/-- Pack a data-bearing recovered-coordinate witness into the public predicate. -/
+theorem ofRecovered
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (h : RecoveredAtLift core d factor S) :
+    RepresentsIntegerFactorAtLift core d factor S :=
+  ⟨h⟩
+
+/--
+Eliminator exposing the monic-coordinate witness, its modular congruence, and
+the dilation equality locally.
+-/
+theorem elim
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    {motive : Prop}
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (h :
+      ∀ monicFactor : Hex.ZPoly,
+        Hex.ZPoly.reduceModPow (liftedFactorProduct d S) d.p d.k =
+          Hex.ZPoly.reduceModPow monicFactor d.p d.k →
+        Hex.ZPoly.primitivePart
+            (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) monicFactor) =
+          factor →
+        motive) :
+    motive := by
+  rcases hrep with ⟨hrec⟩
+  exact h hrec.monicFactor hrec.congr hrec.dilate_eq
+
+end RepresentsIntegerFactorAtLift
 
 /--
 Proof-side form of the executable recombination candidate, using the selected
