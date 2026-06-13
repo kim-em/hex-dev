@@ -8323,28 +8323,16 @@ private theorem yunFactorsNormalizedLevelCompletes_of_derivative_active_initial_
         yunFactorsNormalizedLevelCompletes_of_size_bound_derivative_active
           hp f c g multiplicity 1 (fuel + 1) hstate hreachable hbound
 
-/--
-Scalar-aware derivative-active product invariant for the scaled Yun contribution
-loop. The first conjunct is the raw contribution identity needed by existing
-callers; the second conjunct is the normalized-tail form needed by the provider
-refactor, with the residual scalar retained explicitly as
-`DensePoly.C (normalizeMonic contribution.2).1`.
--/
-private theorem yunFactorsContributionWithLevel_normalized_pow_invariant
+private theorem yunFactorsContributionWithLevel_raw_pow_invariant
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 1)
     (hzero : f.isZero = false)
     (hdf : (DensePoly.derivative f).isZero = false)
-    (hlevelState : YunDerivativeActiveLevelStateProvider hp)
-    (hnormalizedState : YunDerivativeActiveNormalizedStateProvider hp) :
+    (hlevelState : YunDerivativeActiveLevelStateProvider hp) :
     let g := DensePoly.gcd f (DensePoly.derivative f)
     let c := f / g
     let contribution := yunFactorsContributionWithLevel c g multiplicity 1 fuel
-    contribution.1 * pow contribution.2 multiplicity = pow f multiplicity ∧
-      contribution.1 *
-          (pow (DensePoly.C (normalizeMonic contribution.2).1) multiplicity *
-            pow (normalizeMonic contribution.2).2 multiplicity) =
-        pow f multiplicity := by
+    contribution.1 * pow contribution.2 multiplicity = pow f multiplicity := by
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
   let g := DensePoly.gcd f (DensePoly.derivative f)
   let c := f / g
@@ -8357,41 +8345,61 @@ private theorem yunFactorsContributionWithLevel_normalized_pow_invariant
               w.isZero = false := by
     intro c w fuel hreach
     exact hlevelState f c w fuel hreach
-  have hnormalized_completes :
-      yunFactorsNormalizedLevelCompletes c g multiplicity 1 fuel := by
-    simpa [c, g] using
-      yunFactorsNormalizedLevelCompletes_of_derivative_active_initial_split
-        hp f multiplicity fuel hmultiplicity hfuel hzero hdf hnormalizedState
   have hcompletes :
       yunFactorsLevelCompletes c g multiplicity 1 fuel := by
     simpa [c, g] using
       yunFactorsLevelCompletes_of_derivative_active_initial_split
         hp f multiplicity fuel hmultiplicity hfuel hzero hdf hstate_level
-  have hpow_raw :
-      contribution.1 * pow contribution.2 multiplicity = pow f multiplicity := by
-    have hpow :=
-      yunFactorsContributionWithLevel_pow_invariant_of_completes
-        c g multiplicity 1 fuel hcompletes
-    have hcg : c * g = f := by
-      simpa [c, g] using div_gcd_mul_reconstruct f (DensePoly.derivative f)
-    calc
-      contribution.1 * pow contribution.2 multiplicity =
-          pow c (multiplicity * 1) * pow g multiplicity := by
-            simpa [contribution, Nat.mul_one] using hpow
-      _ = pow c multiplicity * pow g multiplicity := by rw [Nat.mul_one]
-      _ = pow (c * g) multiplicity := by
-            exact (pow_mul_base c g multiplicity).symm
-      _ = pow f multiplicity := by rw [hcg]
-  have hpow_normalized :
-      contribution.1 *
-          (pow (DensePoly.C (normalizeMonic contribution.2).1) multiplicity *
-            pow (normalizeMonic contribution.2).2 multiplicity) =
-        pow f multiplicity := by
-    simpa [contribution] using
-      yunFactorsContributionWithLevel_normalized_tail_product_bridge
-        hp f c g multiplicity 1 fuel multiplicity (by
-          simpa [contribution] using hpow_raw)
-  exact ⟨hpow_raw, hpow_normalized⟩
+  have hpow :=
+    yunFactorsContributionWithLevel_pow_invariant_of_completes
+      c g multiplicity 1 fuel hcompletes
+  have hcg : c * g = f := by
+    simpa [c, g] using div_gcd_mul_reconstruct f (DensePoly.derivative f)
+  calc
+    contribution.1 * pow contribution.2 multiplicity =
+        pow c (multiplicity * 1) * pow g multiplicity := by
+          simpa [contribution, Nat.mul_one] using hpow
+    _ = pow c multiplicity * pow g multiplicity := by rw [Nat.mul_one]
+    _ = pow (c * g) multiplicity := by
+          exact (pow_mul_base c g multiplicity).symm
+    _ = pow f multiplicity := by rw [hcg]
+
+/--
+Scalar-aware derivative-active product invariant for the normalized tail of the
+scaled Yun contribution loop. The exact raw product identity is supplied as an
+input; this theorem no longer requires the false raw/level provider path just
+to expose the normalized-tail product form.
+-/
+private theorem yunFactorsContributionWithLevel_normalized_pow_invariant
+    (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
+    (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 1)
+    (hzero : f.isZero = false)
+    (hdf : (DensePoly.derivative f).isZero = false)
+    (hnormalizedState : YunDerivativeActiveNormalizedStateProvider hp)
+    (hrawProduct :
+      let g := DensePoly.gcd f (DensePoly.derivative f)
+      let c := f / g
+      let contribution := yunFactorsContributionWithLevel c g multiplicity 1 fuel
+      contribution.1 * pow contribution.2 multiplicity = pow f multiplicity) :
+    let g := DensePoly.gcd f (DensePoly.derivative f)
+    let c := f / g
+    let contribution := yunFactorsContributionWithLevel c g multiplicity 1 fuel
+    contribution.1 *
+        (pow (DensePoly.C (normalizeMonic contribution.2).1) multiplicity *
+          pow (normalizeMonic contribution.2).2 multiplicity) =
+      pow f multiplicity := by
+  let g := DensePoly.gcd f (DensePoly.derivative f)
+  let c := f / g
+  let contribution := yunFactorsContributionWithLevel c g multiplicity 1 fuel
+  have _hnormalized_completes :
+      yunFactorsNormalizedLevelCompletes c g multiplicity 1 fuel := by
+    simpa [c, g] using
+      yunFactorsNormalizedLevelCompletes_of_derivative_active_initial_split
+        hp f multiplicity fuel hmultiplicity hfuel hzero hdf hnormalizedState
+  simpa [contribution] using
+    yunFactorsContributionWithLevel_normalized_tail_product_bridge
+      hp f c g multiplicity 1 fuel multiplicity (by
+        simpa [g, c, contribution] using hrawProduct)
 
 /--
 Combined provider for `yunFactorsContributionResidualComplete` driven by a
@@ -8630,19 +8638,21 @@ private theorem squareFreeAuxRevContribution_derivative_active_pow_obligation
     YunDerivativeActiveRawStateProvider.levelState hp hrawState
   have hrawTail : YunDerivativeActiveRawTailProvider hp :=
     YunDerivativeActiveRawStateProvider.rawTail hp hrawState
-  have hpow_pair :
-      contribution.1 * pow contribution.2 multiplicity = pow f multiplicity ∧
-        contribution.1 *
-            (pow (DensePoly.C (normalizeMonic contribution.2).1) multiplicity *
-              pow (normalizeMonic contribution.2).2 multiplicity) =
-          pow f multiplicity := by
+  have hpow_contribution :
+      contribution.1 * pow contribution.2 multiplicity = pow f multiplicity := by
+    simpa [c, g, contribution] using
+      yunFactorsContributionWithLevel_raw_pow_invariant
+        hp f multiplicity fuel hmultiplicity hfuel hzero hdf hlevelState
+  have _hpow_normalized :
+      contribution.1 *
+          (pow (DensePoly.C (normalizeMonic contribution.2).1) multiplicity *
+            pow (normalizeMonic contribution.2).2 multiplicity) =
+        pow f multiplicity := by
     simpa [c, g, contribution] using
       yunFactorsContributionWithLevel_normalized_pow_invariant
-        hp f multiplicity fuel hmultiplicity hfuel hzero hdf hlevelState
-        (yunFactorsDerivativeActiveReachable_normalized_stateProvider hp)
-  have hpow_contribution :
-      contribution.1 * pow contribution.2 multiplicity = pow f multiplicity :=
-    hpow_pair.1
+        hp f multiplicity fuel hmultiplicity hfuel hzero hdf
+        (yunFactorsDerivativeActiveReachable_normalized_stateProvider hp) (by
+          simpa [c, g, contribution] using hpow_contribution)
   have hresidual_unpacked :
       let loop := yunFactorsWithLevel c g multiplicity 1 fuel []
       ((isOne loop.2 = true) ∨ (DensePoly.derivative loop.2).isZero = true) ∧
