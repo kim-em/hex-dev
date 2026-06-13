@@ -22,6 +22,21 @@ theorem list_range_getElem?_map_getD_zero {α : Type*} [Zero α]
   · simp [hn]
   · simp [hn]
 
+/-- Scale and rewrite the body of a left fold whose step adds `g i`: if `c * g i`
+agrees with `h i` on every list element, the `c`-scaled fold equals the fold of
+`h` with the accumulator seed scaled by `c`. -/
+private theorem foldl_add_mul_eq (c : Int) (g h : Nat → Int) (l : List Nat) (a : Int)
+    (H : ∀ i ∈ l, c * g i = h i) :
+    c * l.foldl (fun acc i => acc + g i) a =
+      l.foldl (fun acc i => acc + h i) (c * a) := by
+  induction l generalizing a with
+  | nil => simp
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    have hx : c * g x = h x := H x List.mem_cons_self
+    have hseed : c * (a + g x) = c * a + h x := by rw [← hx]; ring
+    rw [ih (a + g x) (fun i hi => H i (List.mem_cons_of_mem x hi)), hseed]
+
 /-- Exact coefficient expansion for the corrected BHKS auxiliary polynomial. -/
 theorem coeff_auxiliaryPolynomialWithCorrections
     (input : Hex.ZPoly) (liftData : Hex.LiftData)
@@ -72,6 +87,69 @@ theorem coeff_auxiliaryPolynomial
   by_cases hj : j < input.degree?.getD 0
   · simp [hj]
   · simp [hj]
+
+/--
+High-bit decomposition of an in-range corrected BHKS auxiliary-polynomial
+coefficient.
+
+Scaling coordinate `j` by the per-coordinate cut modulus `p ^ ℓ_j` (where
+`ℓ_j = bhksCoeffCutThreshold p input j`) recovers the *uncut* CLD residue
+structure: each lifted-factor term `vec_i * cldCoeffs_i` becomes
+`vec_i` times the high part
+`centeredResiduePow p k q_{i,j} − centeredResiduePow p ℓ_j (centeredResiduePow p k q_{i,j})`
+of the quotient coefficient `q_{i,j} = (cldQuotientMod input gᵢ p k).coeff j`,
+and the diagonal correction term stays explicit (now carrying the extra
+`p ^ ℓ_j` factor).
+
+The `p ^ ℓ_j` weight is essential and must not be dropped: `cldCoeffs` is the
+high-bit quotient `psiCut`, *not* a residue representative of the quotient
+coefficient modulo `p ^ k`. -/
+theorem coeff_auxiliaryPolynomialWithCorrections_high_decomp
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (vec corrections : Array Int) (j : Nat)
+    (hj : j < input.degree?.getD 0)
+    (hb : liftData.p ^ Hex.bhksCoeffCutThreshold liftData.p input j ≠ 0) :
+    ((liftData.p ^ Hex.bhksCoeffCutThreshold liftData.p input j : Nat) : Int) *
+        (BHKS.auxiliaryPolynomialWithCorrections input liftData vec corrections).coeff j =
+      (List.range liftData.liftedFactors.size).foldl
+        (fun acc i =>
+          acc + vec.getD i 0 *
+            (Hex.centeredResiduePow liftData.p liftData.k
+                ((Hex.cldQuotientMod input (liftData.liftedFactors.getD i 0)
+                    liftData.p liftData.k).coeff j) -
+              Hex.centeredResiduePow liftData.p
+                  (Hex.bhksCoeffCutThreshold liftData.p input j)
+                  (Hex.centeredResiduePow liftData.p liftData.k
+                    ((Hex.cldQuotientMod input (liftData.liftedFactors.getD i 0)
+                        liftData.p liftData.k).coeff j)))) 0 -
+        corrections.getD j 0 *
+            Int.ofNat (liftData.p ^
+              (liftData.k - Hex.bhksCoeffCutThreshold liftData.p input j)) *
+            ((liftData.p ^ Hex.bhksCoeffCutThreshold liftData.p input j : Nat) : Int) := by
+  rw [coeff_auxiliaryPolynomialWithCorrections, if_pos hj, mul_sub]
+  congr 1
+  · have key := foldl_add_mul_eq
+      ((liftData.p ^ Hex.bhksCoeffCutThreshold liftData.p input j : Nat) : Int)
+      (fun i => vec.getD i 0 *
+        (Hex.cldCoeffs input liftData.p liftData.k
+          (liftData.liftedFactors.getD i 0)).getD j 0)
+      (fun i => vec.getD i 0 *
+        (Hex.centeredResiduePow liftData.p liftData.k
+            ((Hex.cldQuotientMod input (liftData.liftedFactors.getD i 0)
+                liftData.p liftData.k).coeff j) -
+          Hex.centeredResiduePow liftData.p
+              (Hex.bhksCoeffCutThreshold liftData.p input j)
+              (Hex.centeredResiduePow liftData.p liftData.k
+                ((Hex.cldQuotientMod input (liftData.liftedFactors.getD i 0)
+                    liftData.p liftData.k).coeff j))))
+      (List.range liftData.liftedFactors.size) 0
+      (fun i _ => by
+        have hd := Hex.cldQuotientMod_coeff_decomp_of_lt input
+          (liftData.liftedFactors.getD i 0) liftData.p liftData.k j hj hb
+        linear_combination -(vec.getD i 0) * hd)
+    rw [mul_zero] at key
+    exact key
+  · ring
 
 /--
 Sanity check for true-factor indicator rows: if the CLD block of a projected
