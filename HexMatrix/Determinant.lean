@@ -289,6 +289,8 @@ def skipIndex {n : Nat} (skip : Fin (n + 1)) (i : Fin n) : Fin (n + 1) :=
     (skipIndex skip i).val = i.val + 1 := by
   simp [skipIndex, h]
 
+/-- The index produced by `skipIndex skip` is never the deleted index `skip`.
+This is the basic side condition for minors that remove a row or column. -/
 theorem skipIndex_ne {n : Nat} (skip : Fin (n + 1)) (i : Fin n) :
     skipIndex skip i ≠ skip := by
   intro hsame
@@ -1595,6 +1597,9 @@ private theorem insertAt_peelLastVector {n : Nat}
   simpa [hget] using
     (list_insertIdx_eraseIdx_getElem (xs := perm.toList) (i := k) hklist)
 
+/-- Every duplicate-free length-`n` vector of `Fin n` appears in
+`permutationVectors n`. This gives the completeness half of the local
+permutation enumeration used by the Leibniz determinant. -/
 theorem permutationVectors_complete {n : Nat} {perm : Vector (Fin n) n}
     (hnodup : perm.toList.Nodup) :
     perm ∈ permutationVectors n := by
@@ -1629,6 +1634,8 @@ theorem permutationVectors_complete {n : Nat} {perm : Vector (Fin n) n}
       refine ⟨(⟨k, hk⟩ : Fin (n + 1)), List.mem_finRange (⟨k, hk⟩ : Fin (n + 1)), ?_⟩
       exact insertAt_peelLastVector perm k hk hidx hnodup
 
+/-- Every vector enumerated by `permutationVectors n` is duplicate-free, so
+each listed vector really represents a permutation of `Fin n`. -/
 theorem permutationVectors_nodup {n : Nat} {perm : Vector (Fin n) n}
     (hmem : perm ∈ permutationVectors n) :
     perm.toList.Nodup := by
@@ -1740,6 +1747,9 @@ private theorem permutationVectors_flatMap_nodup {n : Nat}
             exact hvs.1 (hvw ▸ hw))
           a ha _ (List.mem_map.mpr ⟨j, List.mem_finRange j, rfl⟩) hab
 
+/-- The permutation enumeration itself has no duplicate vectors. This lets
+determinant proofs compare sums over `permutationVectors` by list
+permutation rather than by quotienting repeated terms. -/
 theorem permutationVectors_nodup_list {n : Nat} :
     (permutationVectors n).Nodup := by
   induction n with
@@ -1751,6 +1761,8 @@ theorem permutationVectors_nodup_list {n : Nat} :
         (permutationVectors n) ih
         (fun v hv => permutationVectors_nodup hv)
 
+/-- Appending the new largest value in the last position does not change
+the determinant sign, because it adds no inversions. -/
 theorem detSign_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (v : Vector (Fin n) n) :
     detSign (R := R)
@@ -1807,6 +1819,7 @@ private theorem detSign_insertAt_prefix {R : Type u} [Lean.Grind.Ring R] {k : Na
       simp [Vector.length_toList]
       omega)
 
+/-- The identity permutation has positive determinant sign. -/
 theorem detSign_identity {R : Type u} [Lean.Grind.Ring R] (n : Nat) :
     detSign (R := R) (Vector.ofFn fun i : Fin n => i) = 1 := by
   induction n with
@@ -2080,6 +2093,10 @@ private theorem foldl_detTerm_last_row_insertions
   rw [hprefix]
   rw [detTerm_insertAt_last]
 
+/-- If the last row is zero before the diagonal entry, the determinant
+factors as the leading principal determinant times the bottom-right entry.
+This is the triangular-recursion step used by positivity and diagonal-product
+lemmas. -/
 theorem det_eq_det_leadingPrefix_mul_last_of_last_row_zero
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1))
@@ -2149,6 +2166,8 @@ theorem det_eq_det_leadingPrefix_mul_last_of_last_row_zero
     _ = det (leadingPrefix M n (Nat.le_succ n)) * M[Fin.last n][Fin.last n] := by
         rfl
 
+/-- An integer upper-triangular matrix with strictly positive diagonal has
+strictly positive determinant. -/
 theorem det_upperTriangular_pos_diag
     {n : Nat} (M : Matrix Int n n)
     (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0)
@@ -2774,6 +2793,8 @@ private theorem transposePermutationValues_map_permutationVectors_perm {n : Nat}
       transposePermutationValues_mem_permutationVectors i j hmem, ?_⟩
     exact transposePermutationValues_involutive perm i j
 
+/-- Swap the values `i` and `j` inside a permutation vector, leaving positions
+fixed. This models the column permutation induced by exchanging two columns. -/
 def swapPermutationValues {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n) : Vector (Fin n) n :=
   perm.map (finTranspose i j)
@@ -2783,6 +2804,8 @@ private theorem swapPermutationValues_get {n : Nat}
     (swapPermutationValues perm i j)[r] = finTranspose i j perm[r] := by
   simp [swapPermutationValues]
 
+/-- Entrywise characterization of `swapPermutationValues`: occurrences of
+`i` become `j`, occurrences of `j` become `i`, and all other values stay put. -/
 theorem swapPermutationValues_get_if {n : Nat}
     (perm : Vector (Fin n) n) (i j r : Fin n) :
     (swapPermutationValues perm i j)[r] =
@@ -3546,6 +3569,8 @@ private theorem detSign_transposeValues {R : Type u}
       omega
     simp [hp, ht]
 
+/-- Swapping two distinct values in a duplicate-free permutation vector flips
+the determinant sign. This is the sign bookkeeping for column swaps. -/
 theorem detSign_swapPermutationValues {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n)
@@ -4945,6 +4970,8 @@ def colReplace {R : Type u} {n : Nat} (M : Matrix R n n) (dst : Fin n)
     (v : Fin n → R) : Matrix R n n :=
   Matrix.ofFn fun r c => if c = dst then v r else M[r][c]
 
+/-- Entrywise characterization of `colReplace`: the destination column is
+read from the replacement function and every other column is read from `M`. -/
 theorem colReplace_get {R : Type u} {n : Nat} (M : Matrix R n n) (dst r c : Fin n)
     (v : Fin n → R) :
     (colReplace M dst v)[r][c] = if c = dst then v r else M[r][c] := by
@@ -6777,6 +6804,9 @@ decreasing_by
   simp_wf
   omega
 
+/-- Expand the determinant of a matrix whose columns are linear combinations
+of source columns as a finite sum over all ordered column tuples. This is the
+Mathlib-free multilinearity form behind Cauchy-Binet. -/
 theorem det_columnSumMatrix_eq_sum_columnTuples
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) :
@@ -7269,6 +7299,8 @@ private theorem vector_ofFn_getElem_fin {α : Type u} {n : Nat}
   rw [show ((Vector.ofFn f)[k] : α) = (Vector.ofFn f)[k.val]'(by simp [k.isLt]) from rfl]
   rw [Vector.getElem_ofFn]
 
+/-- Every length-`n` tuple of column indices appears in
+`columnTupleVectors n m`. -/
 theorem mem_columnTupleVectors {n m : Nat} (cols : Vector (Fin m) n) :
     cols ∈ columnTupleVectors n m := by
   have hcols : cols = Vector.ofFn (fun i : Fin n => cols[i]) := by
@@ -7429,6 +7461,8 @@ private theorem columnTupleMatrix_reconstructInjTuple_eq
   exact congrArg (fun col : Fin m => A[(⟨r, hr⟩ : Fin n)][col])
     (reconstructInjTuple_getElem sel perm (⟨c, hc⟩ : Fin n))
 
+/-- Reconstructing an injective tuple from a selected tuple and a permutation
+turns the coefficient product into the corresponding determinant product. -/
 theorem columnTupleCoeff_reconstructInjTuple
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (A : Matrix R n m) (sel : Vector (Fin m) n) (perm : Vector (Fin n) n) :
@@ -7944,6 +7978,7 @@ def firstColumns (k n : Nat) (hk : k ≤ n) : Vector (Fin n) k :=
     (firstColumns k n hk)[i] = (⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩ : Fin n) := by
   simp [firstColumns]
 
+/-- The first `k` columns form a strictly increasing selected column tuple. -/
 theorem firstColumns_mem_selectedColumnTuples (k n : Nat) (hk : k ≤ n) :
     firstColumns k n hk ∈ selectedColumnTuples k n := by
   rw [mem_selectedColumnTuples_iff]
@@ -7951,6 +7986,8 @@ theorem firstColumns_mem_selectedColumnTuples (k n : Nat) (hk : k ≤ n) :
   simp [firstColumns]
   exact hij
 
+/-- Selecting the first `k` columns from the leading `k` rows of a square
+matrix gives exactly its leading `k × k` prefix. -/
 theorem columnTupleMatrix_leadingRows_firstColumns_eq_leadingPrefix
     {R : Type u} {n : Nat} (M : Matrix R n n) (k : Nat) (hk : k ≤ n) :
     columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn (firstColumns k n hk)) =
@@ -7965,6 +8002,9 @@ theorem columnTupleMatrix_leadingRows_firstColumns_eq_leadingPrefix
       (leadingPrefix M k hk)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)]
   simp [columnTupleMatrix, leadingRows, leadingPrefix, columnTupleVectorFn, firstColumns, ofFn]
 
+/-- The Gram determinant of the first `k` rows of a positive-diagonal integer
+upper-triangular matrix is strictly positive. The leading-principal minor
+provides a positive square term in the Cauchy-Binet expansion. -/
 theorem det_gramMatrix_leadingRows_pos_of_upperTriangular_pos_diag
     {n : Nat} (M : Matrix Int n n)
     (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0)
@@ -8030,6 +8070,7 @@ def setRow {R : Type u} {n m : Nat}
     (setRow M dst v)[dst] = v := by
   simp [setRow]
 
+/-- Replacing row `dst` leaves every other row unchanged. -/
 theorem setRow_row_ne {R : Type u} {n m : Nat}
     (M : Matrix R n m) (dst r : Fin n) (v : Vector R m)
     (h : r ≠ dst) :
@@ -8412,6 +8453,8 @@ theorem det_mul
 
 Encoding for the universal 3-term Plucker identity substrate. -/
 
+/-- Embed `Fin n` into `Fin (n + 2)` while skipping two deleted indices
+`p < q`. This indexes minors with two removed rows. -/
 def skipIndex2 {n : Nat} (p q : Fin (n + 2)) (_hpq : p.val < q.val)
     (i : Fin n) : Fin (n + 2) :=
   if hi1 : i.val < p.val then
@@ -8438,6 +8481,7 @@ def skipIndex2 {n : Nat} (p q : Fin (n + 2)) (_hpq : p.val < q.val)
     (skipIndex2 p q hpq i).val = i.val + 2 := by
   simp [skipIndex2, h1, h2]
 
+/-- `skipIndex2 p q hpq` never lands on the first skipped index `p`. -/
 theorem skipIndex2_ne_p {n : Nat} (p q : Fin (n + 2)) (hpq : p.val < q.val)
     (i : Fin n) : skipIndex2 p q hpq i ≠ p := by
   intro hsame
@@ -8448,6 +8492,7 @@ theorem skipIndex2_ne_p {n : Nat} (p q : Fin (n + 2)) (hpq : p.val < q.val)
     · rw [skipIndex2_val_of_between p q hpq i h1 h2] at hval; omega
     · rw [skipIndex2_val_of_ge_q p q hpq i h1 h2] at hval; omega
 
+/-- `skipIndex2 p q hpq` never lands on the second skipped index `q`. -/
 theorem skipIndex2_ne_q {n : Nat} (p q : Fin (n + 2)) (hpq : p.val < q.val)
     (i : Fin n) : skipIndex2 p q hpq i ≠ q := by
   intro hsame
@@ -8471,6 +8516,8 @@ def mMatrix {R : Type u} {n : Nat}
     else
       v[skipIndex p i]
 
+/-- In a non-last column, `mMatrix` reads the corresponding entry of `B`
+through the row-deletion map. -/
 theorem mMatrix_entry_lt {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (v : Vector R (n + 2)) (p : Fin (n + 2))
     (i : Fin (n + 1)) (j : Fin (n + 1)) (h : j.val < n) :
@@ -8479,6 +8526,8 @@ theorem mMatrix_entry_lt {R : Type u} {n : Nat}
   rw [getElem_ofFn]
   exact dif_pos h
 
+/-- The last column of `mMatrix B v p` is the vector `v` with row `p`
+deleted. -/
 theorem mMatrix_entry_last {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (v : Vector R (n + 2)) (p : Fin (n + 2))
     (i : Fin (n + 1)) :
@@ -9283,6 +9332,8 @@ def twoColMatrix {R : Type u} {n : Nat}
     else
       v[i]
 
+/-- In one of the original `B` columns, `twoColMatrix` agrees entrywise with
+`B`. -/
 theorem twoColMatrix_entry_lt {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (u v : Vector R (n + 2))
     (i j : Fin (n + 2)) (h : j.val < n) :
@@ -9291,6 +9342,7 @@ theorem twoColMatrix_entry_lt {R : Type u} {n : Nat}
   rw [getElem_ofFn]
   exact dif_pos h
 
+/-- The penultimate column of `twoColMatrix B u v` is `u`. -/
 theorem twoColMatrix_entry_penultimate {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (u v : Vector R (n + 2))
     (i : Fin (n + 2)) :
@@ -9304,6 +9356,7 @@ theorem twoColMatrix_entry_penultimate {R : Type u} {n : Nat}
   rw [dif_neg hnlt]
   rw [dif_pos hneq]
 
+/-- The last column of `twoColMatrix B u v` is `v`. -/
 theorem twoColMatrix_entry_last {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (u v : Vector R (n + 2))
     (i : Fin (n + 2)) :
