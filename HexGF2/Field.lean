@@ -130,10 +130,14 @@ def coeffBoolLists : Nat → List (List Bool)
       boolCoeffValues.flatMap fun b =>
         (coeffBoolLists d).map fun coeffs => b :: coeffs
 
+/-- Base case of the coefficient-list enumeration: the only length-`0` Boolean
+list is the empty list. -/
 @[simp] theorem coeffBoolLists_zero :
     coeffBoolLists 0 = ([[]] : List (List Bool)) :=
   rfl
 
+/-- Recursion equation for the coefficient-list enumeration: every length-`d+1`
+list is obtained by prepending each Boolean head value to a length-`d` list. -/
 @[simp] theorem coeffBoolLists_succ (d : Nat) :
     coeffBoolLists (d + 1) =
       boolCoeffValues.flatMap fun b =>
@@ -569,16 +573,21 @@ def zpow (a : GF2n n irr hn hn64 hirr) : Int → GF2n n irr hn hn64 hirr
 instance : HPow (GF2n n irr hn hn64 hirr) Int (GF2n n irr hn hn64 hirr) where
   hPow := zpow
 
+/-- Division in `GF2n` unfolds to multiplication by the multiplicative inverse. -/
 @[grind =] theorem div_eq_mul_inv (a b : GF2n n irr hn hn64 hirr) :
     a / b = a * b⁻¹ :=
   rfl
 
+/-- The inverse of `0` in `GF2n` is `0` (the field convention that makes
+inversion total). -/
 @[simp] theorem inv_zero : (0 : GF2n n irr hn hn64 hirr)⁻¹ = 0 := by
   have hzeroVal : (0 : GF2n n irr hn hn64 hirr).val = 0 := by
     simp [OfNat.ofNat, natCast]
   apply eq_of_val_eq
   simp [Inv.inv, inv, hzeroVal]
 
+/-- Every nonzero element of `GF2n` cancels against its inverse, witnessing that
+`GF2n` is a field. -/
 @[grind =] theorem mul_inv_cancel (a : GF2n n irr hn hn64 hirr) (ha : a ≠ 0) :
     a * a⁻¹ = 1 := by
   have hval_ne : a.val ≠ 0 := by
@@ -677,6 +686,8 @@ modulo the irreducible modulus. -/
       | inl hrem_zero => exact False.elim (hzero hrem_zero)
       | inr hrem_degree => exact False.elim (hdegree hrem_degree)
 
+/-- Two raw polynomials pack to the same quotient representative exactly when
+they agree modulo `f`; the reduction map is injective up to `f`-residue. -/
 @[grind =] theorem reducePoly_eq_iff_mod_eq {p q : GF2Poly} :
     reducePoly (f := f) (hirr := hirr) p =
       reducePoly (f := f) (hirr := hirr) q ↔
@@ -919,6 +930,8 @@ def elements : List (GF2nPoly f hirr) :=
   (GF2Poly.Internal.coeffBoolLists f.degree).map
     (boolListExpression (f := f) (hirr := hirr))
 
+/-- The quotient field `GF2[X]/(f)` has exactly `2 ^ f.degree` elements, the
+expected cardinality of a degree-`f.degree` extension of `GF(2)`. -/
 @[simp] theorem elements_length :
     (elements (f := f) (hirr := hirr)).length = 2 ^ f.degree := by
   simp [elements]
@@ -1251,16 +1264,22 @@ def zpow (a : GF2nPoly f hirr) : Int → GF2nPoly f hirr
 instance : HPow (GF2nPoly f hirr) Int (GF2nPoly f hirr) where
   hPow := zpow
 
+/-- Division in `GF2nPoly` unfolds to multiplication by the multiplicative
+inverse. -/
 @[grind =] theorem div_eq_mul_inv (a b : GF2nPoly f hirr) :
     a / b = a * b⁻¹ :=
   rfl
 
+/-- The inverse of `0` in `GF2nPoly` is `0` (the field convention that makes
+inversion total). -/
 @[simp] theorem inv_zero : (0 : GF2nPoly f hirr)⁻¹ = 0 := by
   have hzeroVal : (0 : GF2nPoly f hirr).val = 0 := by
     simp [OfNat.ofNat, natCast, zero]
   apply eq_of_val_eq
   simp [Inv.inv, inv, hzeroVal]
 
+/-- Every nonzero element of `GF2nPoly` cancels against its inverse, witnessing
+that `GF2nPoly` is a field. -/
 @[grind =] theorem mul_inv_cancel (a : GF2nPoly f hirr) (ha : a ≠ 0) :
     a * a⁻¹ = 1 := by
   have hval_ne : a.val ≠ 0 := by
@@ -1471,10 +1490,13 @@ def evalCoeffList : List (GF2nPoly f hirr) → GF2nPoly f hirr → GF2nPoly f hi
   | [], _ => 0
   | c :: cs, β => c + β * evalCoeffList cs β
 
+/-- Evaluating the empty coefficient list yields `0`. -/
 @[simp] theorem evalCoeffList_nil (β : GF2nPoly f hirr) :
     evalCoeffList ([] : List (GF2nPoly f hirr)) β = 0 :=
   rfl
 
+/-- Horner recursion equation: evaluating `c :: cs` at `β` peels off the head
+coefficient `c` and folds the tail through one more multiplication by `β`. -/
 @[simp] theorem evalCoeffList_cons
     (c : GF2nPoly f hirr) (cs : List (GF2nPoly f hirr))
     (β : GF2nPoly f hirr) :
@@ -2186,10 +2208,13 @@ def linearPow (a : GF2nPoly f hirr) : Nat → GF2nPoly f hirr
   | 0 => 1
   | n + 1 => linearPow a n * a
 
+/-- Base case of proof-facing linear exponentiation: the zeroth power is `1`. -/
 @[simp] theorem linearPow_zero (a : GF2nPoly f hirr) :
     linearPow a 0 = 1 :=
   rfl
 
+/-- Recursion equation for proof-facing linear exponentiation: each successor
+power multiplies the previous power by one more factor of `a`. -/
 @[simp] theorem linearPow_succ (a : GF2nPoly f hirr) (n : Nat) :
     linearPow a (n + 1) = linearPow a n * a :=
   rfl
