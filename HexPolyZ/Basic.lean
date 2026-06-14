@@ -728,8 +728,8 @@ theorem congr_mul (f g f' g' : ZPoly) (m : Nat)
 /-- Scaling the primitive part by the content reconstructs the original integer
 polynomial. -/
 theorem content_mul_primitivePart (f : ZPoly) :
-    DensePoly.scale (content f) (primitivePart f) = f := by
-  simpa [content, primitivePart] using DensePoly.content_mul_primitivePart f
+    DensePoly.scale (content f) (primitivePart f) = f :=
+  DensePoly.content_mul_primitivePart f
 
 /-- The content of an integer polynomial divides every coefficient. -/
 theorem content_dvd_coeff (f : ZPoly) (n : Nat) :
@@ -2954,8 +2954,8 @@ private theorem size_le_one_of_degree_getD_zero {R : Type _} [Zero R] [Decidable
     omega
 
 private theorem content_C_int (c : Int) :
-    content (DensePoly.C c) = Int.ofNat c.natAbs := by
-  simpa [content] using DensePoly.content_C c
+    content (DensePoly.C c) = Int.ofNat c.natAbs :=
+  DensePoly.content_C c
 
 private theorem int_scale_zero (p : ZPoly) :
     DensePoly.scale (0 : Int) p = 0 := by

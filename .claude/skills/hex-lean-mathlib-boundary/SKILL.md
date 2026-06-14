@@ -110,6 +110,25 @@ independently landable green — the executable change and the Mathlib remodel
 must land in one PR. Scope accordingly (see #6799 / #6801 for the
 `DensePoly.scale` → `ZPoly.dilate` example).
 
+### "Final integration" issues: confirm the substrate *producer* exists, not just that the feeder issue closed
+
+A `feature` issue that says "instantiate `SlowPathHenselSubstrate` / `…Evidence`
+constructed by the prerequisite issues" is only a token-swap if a theorem
+*concludes* that structure. A closed feeder issue does **not** prove its
+producer landed: these substrate issues are sometimes closed COMPLETED on a
+replan-triage comment whose claim contradicts the source (e.g. #6773 was closed
+asserting `liftedFactorSubsetPartition_of_choosePrimeData` "does not assume" the
+evidence, but it takes `hinitial : InitialLiftedFactorSubsetPartitionEvidence`
+as a hypothesis and only projects fields out of it). Before claiming such an
+integration, grep for an actual producer: `grep -rn ": <StructureName>"` should
+find a `theorem … : <StructureName> …` whose body builds it (or a `{ field := … }`
+literal), not just `(h : <StructureName>)` binders and `…_fields h` projections.
+If every occurrence is a hypothesis or destructor, the substrate is unproduced —
+diagnose on the issue (per the CLAUDE.md "Directives are hypotheses" rule) and
+`coordination skip` rather than attempting the integration. The big three with
+no producer as of this writing: `HenselLiftDescentHypotheses`, the
+`toMonicLiftData` modP→lift transport, and `InitialLiftedFactorSubsetPartitionEvidence`.
+
 ## The Mathlib layer is not CI-built — establish a baseline first
 
 CI builds only bench + conformance targets (`ci.yml`, `conformance.yml`);
