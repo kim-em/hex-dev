@@ -170,3 +170,19 @@ restructure around the reported line first; it is usually a cheap `omega` or
 - A `let`/`set`-bound abbreviation of a huge term in the *goal or context* makes
   `omega` and defeq checks whnf that term — avoid binding the matrix; write it
   out or `clear_value` only when the value is genuinely unneeded downstream.
+
+## Verifying executable-layer changes: build the module, not the target
+
+`lake build HexBerlekampZassenhaus` (the whole target) drags in
+`CrossCheck` (~11 min, external oracle) and `Conformance` (~2 min) — it is a
+~15-minute build, not a fast check. For iterating on a lemma, verify the
+specific module (`lake build HexBerlekampZassenhaus.Basic`,
+`lake build HexPolyZ.Basic`); that elaborates your declarations in seconds and
+is the real correctness signal for theorem-only additions, which never affect
+the `#guard`/oracle steps. Run the full target once at the end.
+
+Do **not** launch a second `lake build` in the same worktree while one is still
+running its tail jobs — they serialize on lake's per-worktree build lock, so the
+second just blocks and looks "stuck". (This machine also runs concurrent builds
+from *other* pod worktrees; `pgrep lake` showing many processes is normal and
+not your build.)

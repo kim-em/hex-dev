@@ -1180,6 +1180,24 @@ theorem size_le_of_dvd_nonzero {d r : ZPoly}
     have hsize_eq : (d * k).size = r.size := by rw [hk]
     omega
 
+/-- Euclidean reconstruction for a monic integer divisor: the executable
+dense-polynomial division recomposes the dividend, `quot * candidate + rem =
+target`, for any dividend. This is the monic specialization over `Int` of
+`DensePoly.divMod_reconstruction`; the leading-coefficient cancellation
+invariant it requires holds because a monic divisor has leading coefficient `1`.
+Unlike `divMod_eq_of_monic_mul_eq`, no exact-multiple hypothesis is needed, so
+the remainder may be nonzero. -/
+theorem divMod_reconstruction_of_monic (target candidate : ZPoly)
+    (hmonic : DensePoly.Monic candidate) :
+    (DensePoly.divMod target candidate).1 * candidate
+      + (DensePoly.divMod target candidate).2 = target := by
+  have hcancel :
+      ∀ a : Int, a - (a / candidate.leadingCoeff) * candidate.leadingCoeff = 0 := by
+    intro a
+    rw [hmonic]
+    omega
+  simpa using DensePoly.divMod_reconstruction target candidate hcancel
+
 /-- If a monic positive-degree integer divisor has an exact product witness,
 the executable dense-polynomial division returns zero remainder. -/
 theorem divMod_remainder_eq_zero_of_monic_mul_eq
@@ -1195,7 +1213,7 @@ theorem divMod_remainder_eq_zero_of_monic_mul_eq
     rw [hmonic]
     omega
   have hrecon : qr.1 * candidate + qr.2 = target := by
-    simpa [qr] using DensePoly.divMod_reconstruction target candidate hcancel
+    simpa [qr] using divMod_reconstruction_of_monic target candidate hmonic
   rw [← hmul] at hrecon
   have hcandidate_ne : candidate ≠ 0 := by
     intro hzero
@@ -1259,13 +1277,8 @@ theorem divMod_eq_of_monic_mul_eq
   have hrem : qr.2 = 0 := by
     simpa [qr] using
       divMod_remainder_eq_zero_of_monic_mul_eq target candidate quotient hmonic hdegree hmul
-  have hcancel :
-      ∀ a : Int, a - (a / candidate.leadingCoeff) * candidate.leadingCoeff = 0 := by
-    intro a
-    rw [hmonic]
-    omega
   have hrecon : qr.1 * candidate + qr.2 = target := by
-    simpa [qr] using DensePoly.divMod_reconstruction target candidate hcancel
+    simpa [qr] using divMod_reconstruction_of_monic target candidate hmonic
   rw [hrem, DensePoly.add_zero_poly, ← hmul] at hrecon
   have hcandidate_ne : candidate ≠ 0 := by
     intro hzero
