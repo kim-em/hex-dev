@@ -1825,6 +1825,8 @@ private theorem evalCoeffPowerSumUpTo_succ_of_next_zero
         simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using hzero)]
       simp only [evalCoeffPowerSumUpTo]
 
+/-- `evalCoeffPowerSumUpTo` is unchanged by extending its bound past the point
+where the coefficients vanish, here from the offset `base`. -/
 private theorem evalCoeffPowerSumUpTo_le_extend_base
     (coeff : Nat → ZMod64 p) (β : Quotient g hmonic hg_pos)
     (hzero : ∀ i, base + bound ≤ i → coeff i = 0) :
@@ -1843,6 +1845,8 @@ private theorem evalCoeffPowerSumUpTo_le_extend_base
       exact evalCoeffPowerSumUpTo_succ_of_next_zero
         coeff β (bound + extra) base (hzero (base + (bound + extra)) (by omega))
 
+/-- `evalCoeffPowerSumUpTo` from offset `0` is unchanged by extending its bound
+past the point where the coefficients vanish. -/
 private theorem evalCoeffPowerSumUpTo_le_extend
     (coeff : Nat → ZMod64 p) (β : Quotient g hmonic hg_pos)
     (hzero : ∀ i, bound ≤ i → coeff i = 0) :
@@ -1858,6 +1862,8 @@ private theorem evalCoeffPowerSumUpTo_le_extend
     (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
     coeff β (base := 0) (bound := bound) (by simpa using hzero) extra
 
+/-- `eval f β` equals the running power-sum of `f`'s coefficients taken up to
+any `bound` at least as large as `f.size`. -/
 private theorem eval_eq_coeff_power_sum_upTo_bound (f : FpPoly p)
     (β : Quotient g hmonic hg_pos) {bound : Nat} (hbound : f.size ≤ bound) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β =
@@ -1872,6 +1878,7 @@ private theorem eval_eq_coeff_power_sum_upTo_bound (f : FpPoly p)
     (fun i hi => DensePoly.coeff_eq_zero_of_size_le f hi) extra
 
 omit [ZMod64.PrimeModulus p] in
+/-- `DensePoly.C` of a sum is the sum of the constant embeddings. -/
 private theorem C_add_eq (a b : ZMod64 p) :
     (DensePoly.C (a + b) : FpPoly p) = DensePoly.C a + DensePoly.C b := by
   apply DensePoly.ext_coeff
@@ -1885,6 +1892,8 @@ private theorem C_add_eq (a b : ZMod64 p) :
       grind
 
 omit [ZMod64.PrimeModulus p] in
+/-- `DensePoly.C` of a difference is the difference of the constant
+embeddings. -/
 private theorem C_sub_eq (a b : ZMod64 p) :
     (DensePoly.C (a - b) : FpPoly p) = DensePoly.C a - DensePoly.C b := by
   apply DensePoly.ext_coeff
@@ -1898,6 +1907,7 @@ private theorem C_sub_eq (a b : ZMod64 p) :
       grind
 
 omit [ZMod64.PrimeModulus p] in
+/-- `DensePoly.C` of a product is the product of the constant embeddings. -/
 private theorem C_mul_C_eq (a b : ZMod64 p) :
     (DensePoly.C (a * b) : FpPoly p) = DensePoly.C a * DensePoly.C b := by
   rw [FpPoly.C_mul_eq_scale]
@@ -1910,6 +1920,8 @@ private theorem C_mul_C_eq (a b : ZMod64 p) :
   | succ n =>
       exact hzero.symm
 
+/-- `reduce` of a constant polynomial keeps the constant as its representative,
+since its degree lies below that of the modulus `g`. -/
 private theorem reduce_C_val_eq (a : ZMod64 p) :
     (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
         (DensePoly.C a)).val =
@@ -1920,6 +1932,7 @@ private theorem reduce_C_val_eq (a : ZMod64 p) :
     exact hg_pos
   exact DensePoly.mod_eq_self_of_degree_lt (DensePoly.C a : FpPoly p) g hdeg
 
+/-- `reduce` of a constant sum splits as the sum of the reduced constants. -/
 private theorem reduce_C_add (a b : ZMod64 p) :
     reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
         (DensePoly.C (a + b)) =
@@ -1931,6 +1944,8 @@ private theorem reduce_C_add (a b : ZMod64 p) :
   exact reduce_add (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
     (DensePoly.C a) (DensePoly.C b)
 
+/-- `reduce` of a constant difference splits as the difference of the reduced
+constants. -/
 private theorem reduce_C_sub (a b : ZMod64 p) :
     reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
         (DensePoly.C (a - b)) =
@@ -1941,6 +1956,8 @@ private theorem reduce_C_sub (a b : ZMod64 p) :
   apply ext
   rw [C_sub_eq, reduce_val, sub_val, reduce_C_val_eq, reduce_C_val_eq]
 
+/-- `reduce` of a constant product splits as the product of the reduced
+constants. -/
 private theorem reduce_C_mul (a b : ZMod64 p) :
     reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
         (DensePoly.C (a * b)) =
@@ -1952,6 +1969,8 @@ private theorem reduce_C_mul (a b : ZMod64 p) :
   exact reduce_mul (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
     (DensePoly.C a) (DensePoly.C b)
 
+/-- `evalCoeffPowerSumUpTo` is additive in its coefficient sequence: summing the
+coefficients of `f` and `h` splits as the sum of the two power-sums. -/
 private theorem evalCoeffPowerSumUpTo_add
     (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
     ∀ n base,
