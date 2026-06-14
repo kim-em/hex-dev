@@ -1603,10 +1603,7 @@ private theorem basisMatrix_rowSwap_adjacent_curr
     have hlhs :
         (basisRows (Matrix.rowSwap b km1 k).toList)[km1.val]! =
           (basisMatrix (Matrix.rowSwap b km1 k)).row km1 := by
-      simpa [basisMatrix, Matrix.row]
-        using
-          (basisMatrix_row_eq_basisRows_get!
-              (b := Matrix.rowSwap b km1 k) (i := km1.val) km1.isLt).symm
+      simp [basisMatrix, Matrix.row]
     rw [hlhs, hraw]
   rw [hswap_row, htake_succ, hprefix, hkm1_entry]
   -- Now apply `reduceAgainstBasis_append` to split off `swappedPrev`.
