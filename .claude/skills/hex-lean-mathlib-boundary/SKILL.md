@@ -131,6 +131,27 @@ the new `RecoveredAtLift.dilate_eq` carries no `normalizeFactorSign`, so a
 `0 < leadingCoeff factor` conclusion is only valid for sign-normalised factors —
 the consumer must gain `hfactor_norm`, which callers do supply.
 
+When you reroute the broken scale-model consumers off the removed scale
+congruence, **do not target the `hdilated` exact-equality chain**
+(`candidatesOfDilatedCenteredLift` / `ofMignottePrecisionCandidateProducts`),
+even though the issue body may name it. That chain's `hdilated` wants the
+*exact* `dilate (lc f) (centeredLiftPoly …) = expectedFactor` with **no**
+`primitivePart`, but `RecoveredAtLift.dilate_eq` only ever gives the
+`primitivePart (dilate (lc core) monicFactor) = factor` form, and that
+`primitivePart` is load-bearing: `coeff_dilate` is `coeff n = c^n · p.coeff n`
+(`HexPolyZ/Basic.lean:70`), so `dilate 4 (x+2) = 4·x + 2` has `content = 2`.
+Hence `content (dilate (lc core) monicFactor) = 1` is **false** whenever
+`leadingCoeff core` is a non-unit — i.e. the generic non-monic-core regime the
+monic transform exists for. Reroute to the primitivePart-aware
+`liftedRecoveryCandidate` / `RecoveredAtLift.candidate_eq_of_monic_dvd`
+(`Basic.lean:2781`) path instead. And note the linchpin: there is **no base
+`RecoveredAtLift` producer** built from a successful `bhksIndicatorCandidate?`
+(every theorem concluding `RepresentsIntegerFactorAtLift` is a packer or
+hypothesis-consumer); constructing one — the `dilate_eq`/`monic_dvd` carrier
+from the executable candidate — is the monic-transform recovery direction owned
+by the fast-BHKS-monic-lift migration issue, so a scale→dilate consumer reroute
+is blocked on that producer landing first.
+
 ### "Final integration" issues: confirm the substrate *producer* exists, not just that the feeder issue closed
 
 A `feature` issue that says "instantiate `SlowPathHenselSubstrate` / `…Evidence`
