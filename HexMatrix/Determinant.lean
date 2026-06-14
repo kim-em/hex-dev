@@ -1139,6 +1139,8 @@ private theorem detProduct_identity_insertAt_last {R : Type u}
     exact Lean.Grind.Semiring.mul_one x
   exact hmul_one _
 
+/-- Folding the inversion count against a pivot is unchanged when both the list
+`xs` and the pivot `x` are mapped through `Fin.castSucc`. -/
 private theorem inversionFold_map_castSucc {n : Nat} (xs : List (Fin n)) (x : Fin n)
     (acc : Nat) :
     (xs.map Fin.castSucc).foldl
@@ -1155,6 +1157,8 @@ private theorem inversionFold_map_castSucc {n : Nat} (xs : List (Fin n)) (x : Fi
       rw [hhead]
       exact ih _
 
+/-- `inversionCount` is invariant under mapping the permutation list through
+`Fin.castSucc`. -/
 private theorem inversionCount_map_castSucc {n : Nat} (xs : List (Fin n)) :
     inversionCount (xs.map Fin.castSucc) = inversionCount xs := by
   induction xs with
@@ -1162,6 +1166,8 @@ private theorem inversionCount_map_castSucc {n : Nat} (xs : List (Fin n)) :
   | cons x xs ih =>
       simp [inversionCount, ih, inversionFold_map_castSucc]
 
+/-- Appending `Fin.last n` after the `castSucc`-embedded list adds no inversions,
+so the count equals `inversionCount xs`. -/
 private theorem inversionCount_insert_last_castSucc {n : Nat} (xs : List (Fin n)) :
     inversionCount ((xs.map Fin.castSucc) ++ [Fin.last n]) = inversionCount xs := by
   induction xs with
@@ -1173,6 +1179,9 @@ private theorem inversionCount_insert_last_castSucc {n : Nat} (xs : List (Fin n)
       rw [inversionFold_map_castSucc]
       simp [Fin.lt_def]
 
+/-- Inserting `Fin.last n` at any position into the `castSucc`-embedded list leaves
+the inversion fold against `x.castSucc` unchanged, since the new last element is
+never below `x.castSucc`. -/
 private theorem foldl_insertIdx_last_castSucc_not_lt {n : Nat} (xs : List (Fin n))
     (x : Fin n) (p acc : Nat) :
     ((xs.map Fin.castSucc).insertIdx p (Fin.last n)).foldl
@@ -1200,6 +1209,8 @@ private theorem foldl_insertIdx_last_castSucc_not_lt {n : Nat} (xs : List (Fin n
                 (acc + if y.castSucc < x.castSucc then 1 else 0)
           rw [ih p (acc + if y.castSucc < x.castSucc then 1 else 0)]
 
+/-- Every `castSucc`-embedded element is below `Fin.last n`, so folding the
+`< Fin.last n` count over the embedded list adds exactly its length. -/
 private theorem foldl_all_lt_last_castSucc {n : Nat} (xs : List (Fin n)) (acc : Nat) :
     (xs.map Fin.castSucc).foldl
         (fun acc y => acc + if y < Fin.last n then 1 else 0) acc =
@@ -1212,6 +1223,8 @@ private theorem foldl_all_lt_last_castSucc {n : Nat} (xs : List (Fin n)) (acc : 
       simp [Fin.lt_def]
       omega
 
+/-- Inserting `Fin.last n` at position `p ≤ xs.length` into the `castSucc`-embedded
+list raises the inversion count by the `xs.length - p` elements it jumps over. -/
 private theorem inversionCount_insertIdx_castSucc_last_eq {n : Nat}
     (xs : List (Fin n)) (p : Nat) (hp : p ≤ xs.length) :
     inversionCount ((xs.map Fin.castSucc).insertIdx p (Fin.last n)) =
@@ -1252,6 +1265,7 @@ private theorem inversionCount_insertIdx_castSucc_last_eq {n : Nat}
           rw [hlen]
           grind
 
+/-- Inserting an element at index `xs.length` is the same as appending it. -/
 private theorem list_insertIdx_length {α : Type u} (xs : List α) (x : α) :
     xs.insertIdx xs.length x = xs ++ [x] := by
   induction xs with
@@ -1259,6 +1273,7 @@ private theorem list_insertIdx_length {α : Type u} (xs : List α) (x : α) :
   | cons y ys ih =>
       simp [ih]
 
+/-- `Vector.map` commutes with `Vector.toList`. -/
 private theorem vector_toList_map {α β : Type u} {n : Nat} (v : Vector α n)
     (f : α → β) :
     (v.map f).toList = v.toList.map f := by
@@ -1267,6 +1282,7 @@ private theorem vector_toList_map {α β : Type u} {n : Nat} (v : Vector α n)
   · intro i h₁ h₂
     simp
 
+/-- `insertAt x v (Fin.last n)` appends `x` to the end of `v.toList`. -/
 private theorem insertAt_last_toList {α : Type u} {n : Nat} (x : α) (v : Vector α n) :
     (insertAt x v (Fin.last n)).toList = v.toList ++ [x] := by
   unfold insertAt
@@ -1275,12 +1291,15 @@ private theorem insertAt_last_toList {α : Type u} {n : Nat} (x : α) (v : Vecto
     simp
   simpa [hidx] using list_insertIdx_length v.toArray.toList x
 
+/-- `insertAt x v i` corresponds to `List.insertIdx` at position `i` on the
+underlying list. -/
 private theorem insertAt_toList {α : Type u} {n : Nat}
     (x : α) (v : Vector α n) (i : Fin (n + 1)) :
     (insertAt x v i).toList = v.toList.insertIdx i.val x := by
   unfold insertAt
   simp [Vector.toList]
 
+/-- Mapping a `Nodup` list through the injective `Fin.castSucc` keeps it `Nodup`. -/
 private theorem list_nodup_map_castSucc {n : Nat} (xs : List (Fin n)) :
     xs.Nodup → (xs.map Fin.castSucc).Nodup := by
   induction xs with
@@ -1300,6 +1319,7 @@ private theorem list_nodup_map_castSucc {n : Nat} (xs : List (Fin n)) :
         exact hnodup.1 (Fin.ext hval ▸ hy)
       · exact ih hnodup.2
 
+/-- `Fin.last n` never lies in the image of a list under `Fin.castSucc`. -/
 private theorem finLast_not_mem_map_castSucc {n : Nat} (xs : List (Fin n)) :
     Fin.last n ∉ xs.map Fin.castSucc := by
   intro hmem
@@ -1309,6 +1329,9 @@ private theorem finLast_not_mem_map_castSucc {n : Nat} (xs : List (Fin n)) :
     simpa using congrArg Fin.val hxlast
   exact Nat.ne_of_lt x.isLt hval
 
+/-- Inserting `Fin.last n` at any position into the `castSucc`-embedded nodup vector
+keeps the resulting list `Nodup`, since `Fin.last n` is new and the embedding
+stays injective. -/
 private theorem insertAt_last_castSucc_nodup {n : Nat}
     (v : Vector (Fin n) n) (i : Fin (n + 1))
     (hnodup : v.toList.Nodup) :
@@ -1327,6 +1350,7 @@ private theorem insertAt_last_castSucc_nodup {n : Nat}
     simpa using Nat.lt_succ_iff.mp i.isLt
   exact (List.perm_insertIdx (Fin.last n) (v.map Fin.castSucc).toList hidx).symm.nodup hcons
 
+/-- A `Nodup` list of `Fin n` has length at most `n`. -/
 private theorem finList_length_le_card {n : Nat} {xs : List (Fin n)}
     (hnodup : xs.Nodup) :
     xs.length ≤ n := by
@@ -1334,6 +1358,8 @@ private theorem finList_length_le_card {n : Nat} {xs : List (Fin n)}
     exact List.subperm_of_subset hnodup (fun x _hx => List.mem_finRange x)
   simpa [List.length_finRange] using List.Subperm.length_le hsub
 
+/-- A `Nodup` list of `Fin (n + 1)` with full length `n + 1` must contain
+`Fin.last n`. -/
 private theorem finLast_mem_of_full_nodup {n : Nat} {xs : List (Fin (n + 1))}
     (hlen : xs.length = n + 1) (hnodup : xs.Nodup) :
     Fin.last n ∈ xs := by
