@@ -128,23 +128,31 @@ theorem gramDetVecEntry_noPivot_eq_zero_of_singularStep_lt
   gramDetVecEntry_eq_zero_of_singularStep_lt
     (Matrix.bareissNoPivotData (Matrix.gramMatrix b)) s r hr hsing hs
 
+/-- Mutable loop state for the integer scaled Gram-Schmidt pass: the current
+step, the working matrix and coefficient arrays, and the previous Bareiss
+pivot. -/
 private structure ScaledCoeffArrayState where
   step : Nat
   matrix : Array (Array Int)
   coeffs : Array (Array Int)
   prevPivot : Int
 
+/-- Read entry `(row, col)` from a row-major nested array as `rows[row]![col]!`. -/
 @[inline] def getArrayEntry (rows : Array (Array Int)) (row col : Nat) : Int :=
   rows[row]![col]!
 
+/-- An `n × n` row-major nested array initialised to all zeros. -/
 private def zeroRows (n : Nat) : Array (Array Int) :=
   Array.replicate n (Array.replicate n 0)
 
+/-- The Gram matrix of `b` packaged as a row-major nested integer array. -/
 private def gramRows (b : Matrix Int n m) : Array (Array Int) :=
   Array.ofFn fun i : Fin n =>
     Array.ofFn fun j : Fin n =>
       Matrix.dot (b.row i) (b.row j)
 
+/-- Reading entry `(i, j)` of `gramRows b` recovers the Gram matrix entry
+`(gramMatrix b)[i][j]`. -/
 private theorem getArrayEntry_gramRows (b : Matrix Int n m) (i j : Fin n) :
     getArrayEntry (gramRows b) i.val j.val = (Matrix.gramMatrix b)[i][j] := by
   simp [getArrayEntry, gramRows, Matrix.gramMatrix, Matrix.dot, Matrix.ofFn]
@@ -156,6 +164,8 @@ so `rowsToMatrix (gramRows b) n = gramMatrix b`. -/
 def rowsToMatrix (rows : Array (Array Int)) (n : Nat) : Matrix Int n n :=
   Matrix.ofFn fun i j => getArrayEntry rows i.val j.val
 
+/-- `rowsToMatrix` inverts `gramRows`, recovering `gramMatrix b` from its
+nested-array packaging. -/
 private theorem rowsToMatrix_gramRows (b : Matrix Int n m) :
     rowsToMatrix (gramRows b) n = Matrix.gramMatrix b := by
   apply Vector.ext
@@ -165,16 +175,20 @@ private theorem rowsToMatrix_gramRows (b : Matrix Int n m) :
   simpa [rowsToMatrix, Matrix.ofFn] using
     getArrayEntry_gramRows b (⟨i, hi⟩ : Fin n) (⟨j, hj⟩ : Fin n)
 
+/-- Write `value` into entry `(row, col)` of a row-major nested array. -/
 private def setArrayEntry (rows : Array (Array Int)) (row col : Nat) (value : Int) :
     Array (Array Int) :=
   rows.set! row (rows[row]!.set! col value)
 
+/-- Reading back the just-written index of `Array.set!` returns the written
+value, when the index is in bounds. -/
 private theorem array_getElem!_set!_same {α : Type} [Inhabited α]
     (xs : Array α) {i : Nat} (hi : i < xs.size) (v : α) :
     (xs.set! i v)[i]! = v := by
   rw [Array.getElem!_eq_getD]
   simp [Array.getD, Array.set!_eq_setIfInBounds, hi]
 
+/-- Reading a different index after `Array.set!` returns the original element. -/
 private theorem array_getElem!_set!_ne {α : Type} [Inhabited α]
     (xs : Array α) {i j : Nat} (hij : j ≠ i) (v : α) :
     (xs.set! i v)[j]! = xs[j]! := by
@@ -187,16 +201,21 @@ private theorem array_getElem!_set!_ne {α : Type} [Inhabited α]
     simp [hij.symm]
   · simp [hi]
 
+/-- `setArrayEntry` leaves entries in any other row unchanged. -/
 private theorem getArrayEntry_setArrayEntry_of_row_ne
     (rows : Array (Array Int)) (row col r c : Nat) (value : Int) (hr : r ≠ row) :
     getArrayEntry (setArrayEntry rows row col value) r c = getArrayEntry rows r c := by
   grind [getArrayEntry, setArrayEntry]
 
+/-- `setArrayEntry` leaves entries in any other column of the written row
+unchanged. -/
 private theorem getArrayEntry_setArrayEntry_of_col_ne
     (rows : Array (Array Int)) (row col c : Nat) (value : Int) (hc : c ≠ col) :
     getArrayEntry (setArrayEntry rows row col value) row c = getArrayEntry rows row c := by
   grind [getArrayEntry, setArrayEntry]
 
+/-- Reading back the just-written entry of `setArrayEntry` returns the written
+value, when both indices are in bounds. -/
 private theorem getArrayEntry_setArrayEntry_self
     (rows : Array (Array Int)) (row col : Nat) (value : Int)
     (hrow : row < rows.size) (hcol : col < rows[row]!.size) :
@@ -228,6 +247,8 @@ private theorem setArrayEntry_rows_size
     · simp [hne]
     · simp [Array.setIfInBounds, hbound]
 
+/-- A `foldl` of column-`k` writes over rows all exceeding `k` leaves entries
+strictly above the diagonal (`i < j`) unchanged. -/
 private theorem getArrayEntry_foldl_setArrayEntry_col_above
     (xs : List Nat) (coeffs rows : Array (Array Int)) (k i j : Nat)
     (hxs : ∀ x ∈ xs, k < x) (hij : i < j) :
@@ -252,6 +273,8 @@ private theorem getArrayEntry_foldl_setArrayEntry_col_above
       · rw [getArrayEntry_setArrayEntry_of_row_ne]
         exact hrow
 
+/-- A `foldl` of column-`k` writes over rows all exceeding `k` leaves entries
+in rows at or below `k` unchanged. -/
 private theorem getArrayEntry_foldl_setArrayEntry_row_ne
     (xs : List Nat) (coeffs rows : Array (Array Int)) (k i j : Nat)
     (hxs : ∀ x ∈ xs, k < x) (hi : i ≤ k) :
@@ -464,6 +487,8 @@ private theorem size_foldl_setSelf
       rw [ih]
       simp [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds]
 
+/-- `Array.modify` equals `Array.set!` applied to the function's value at the
+current entry. -/
 private theorem modify_eq_set!
     {α : Type} [Inhabited α] (arr : Array α) (i : Nat) (f : α → α) :
     arr.modify i f = arr.set! i (f arr[i]!) := by
@@ -471,6 +496,7 @@ private theorem modify_eq_set!
   · simp [Array.modify, Array.modifyM, Array.set!, Array.setIfInBounds, h]
   · simp [Array.modify, Array.modifyM, Array.set!, Array.setIfInBounds, h]
 
+/-- `Array.modify` leaves any index other than the modified one unchanged. -/
 private theorem getElem!_modify_ne
     {α : Type} [Inhabited α] (arr : Array α) (i r : Nat) (f : α → α)
     (hr : r ≠ i) :
@@ -478,6 +504,8 @@ private theorem getElem!_modify_ne
   rw [modify_eq_set!]
   grind
 
+/-- Reading back the modified index of `Array.modify` returns `f` applied to the
+original entry, when the index is in bounds. -/
 private theorem getElem!_modify_self
     {α : Type} [Inhabited α] (arr : Array α) (i : Nat) (f : α → α)
     (hi : i < arr.size) :
@@ -485,6 +513,7 @@ private theorem getElem!_modify_self
   rw [modify_eq_set!]
   grind
 
+/-- `Array.modify` preserves the array size. -/
 private theorem modify_size
     {α : Type} [Inhabited α] (arr : Array α) (i : Nat) (f : α → α) :
     (arr.modify i f).size = arr.size := by
@@ -549,6 +578,8 @@ private theorem size_foldl_modify
       rw [ih]
       exact modify_size arr x (f x)
 
+/-- Write column `k` of the coefficient array, copying the matrix-column values
+from row `k` downward. -/
 private def writeScaledColumn (coeffs rows : Array (Array Int)) (n k : Nat) :
     Array (Array Int) :=
   Id.run do
@@ -557,6 +588,8 @@ private def writeScaledColumn (coeffs rows : Array (Array Int)) (n k : Nat) :
       next := setArrayEntry next i k (getArrayEntry rows i k)
     return next
 
+/-- `writeScaledColumn` leaves strictly-above-diagonal entries (`i < j`)
+unchanged. -/
 private theorem getArrayEntry_writeScaledColumn_above
     (coeffs rows : Array (Array Int)) (n k i j : Nat) (hij : i < j) :
     getArrayEntry (writeScaledColumn coeffs rows n k) i j = getArrayEntry coeffs i j := by
@@ -574,6 +607,8 @@ private theorem getArrayEntry_writeScaledColumn_above
     omega
   · exact hij
 
+/-- `writeScaledColumn` writes the matrix diagonal entry `(k, k)` into the
+coefficient diagonal. -/
 private theorem getArrayEntry_writeScaledColumn_diag
     (coeffs rows : Array (Array Int)) (n k : Nat)
     (hrow : k < coeffs.size) (hcol : k < coeffs[k]!.size) :
@@ -672,6 +707,7 @@ private theorem writeScaledColumn_rows_size
   rw [foldl_setArrayEntry_rows_size]
   exact setArrayEntry_rows_size _ _ _ _ _
 
+/-- Every entry of the default (empty) integer array reads back as `0`. -/
 private theorem getArrayEntry_default_row (j : Nat) :
     (default : Array Int)[j]! = 0 := by
   rfl
