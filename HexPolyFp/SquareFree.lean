@@ -3395,6 +3395,7 @@ private theorem yunFactorsContribution_step_split
   · exact div_monicGcd_mul_reconstruct hp c w
   · exact div_monicGcd_right_mul_reconstruct hp c w
 
+/-- `dvd_add_poly`: a common divisor of `a` and `b` divides their sum `a + b`. -/
 private theorem dvd_add_poly
     {d a b : FpPoly p} (hda : d ∣ a) (hdb : d ∣ b) :
     d ∣ a + b := by
@@ -3405,6 +3406,8 @@ private theorem dvd_add_poly
       = d * qa + d * qb := by rw [hqa, hqb]
     _ = d * (qa + qb) := (DensePoly.mul_add_right_poly d qa qb).symm
 
+/-- `dvd_mul_left_of_dvd`: if `d ∣ a` then `d` divides the left-multiplied
+product `b * a`. -/
 private theorem dvd_mul_left_of_dvd
     {d a b : FpPoly p} (hda : d ∣ a) :
     d ∣ b * a := by
@@ -3417,6 +3420,8 @@ private theorem dvd_mul_left_of_dvd
           exact congrArg (fun x => x * q) (DensePoly.mul_comm_poly b d)
     _ = d * (b * q) := DensePoly.mul_assoc_poly d b q
 
+/-- `dvd_mul_right_of_dvd`: if `d ∣ a` then `d` divides the right-multiplied
+product `a * b`. -/
 private theorem dvd_mul_right_of_dvd
     {d a b : FpPoly p} (hda : d ∣ a) :
     d ∣ a * b := by
@@ -3448,11 +3453,16 @@ private theorem dvd_monicGcd
       rw [hmg]
       exact dvd_mul_left_of_dvd hdg
 
+/-- `dvd_sub_poly`: a common divisor of `a` and `b` divides their difference
+`a - b`. -/
 private theorem dvd_sub_poly
     {d a b : FpPoly p} (hda : d ∣ a) (hdb : d ∣ b) :
     d ∣ a - b := by
   exact DensePoly.dvd_sub_poly hda hdb
 
+/-- `pow_succ_dvd_mul_right_of_dvd`: the extra factor of `d` in `a * d * b` bumps
+a prime-power divisor's exponent, so `pow d (n+1) ∣ a` gives
+`pow d (n+2) ∣ a * d * b`. -/
 private theorem pow_succ_dvd_mul_right_of_dvd
     {d a b : FpPoly p} {n : Nat}
     (h : pow d (n + 1) ∣ a) :
@@ -3474,6 +3484,8 @@ private theorem pow_succ_dvd_mul_right_of_dvd
           rw [← pow_succ d (n + 1)]
           exact DensePoly.mul_assoc_poly (pow d (n + 2)) q b
 
+/-- `pow_succ_dvd_mul_of_dvd_left_of_pow_dvd_right`: combining `d ∣ a` on the left
+factor with `pow d n ∣ b` on the right gives `pow d (n+1) ∣ a * b`. -/
 private theorem pow_succ_dvd_mul_of_dvd_left_of_pow_dvd_right
     {d a b : FpPoly p} {n : Nat}
     (hda : d ∣ a) (hdb : pow d n ∣ b) :
@@ -3498,6 +3510,8 @@ private theorem pow_succ_dvd_mul_of_dvd_left_of_pow_dvd_right
                   exact DensePoly.mul_assoc_poly (pow d n * d) qa qb
     _ = pow d (n + 1) * (qa * qb) := by rw [← pow_succ d n]
 
+/-- `pow_succ_dvd_mul_of_pow_dvd_left_of_dvd_right`: combining `pow d n ∣ a` on the
+left factor with `d ∣ b` on the right gives `pow d (n+1) ∣ a * b`. -/
 private theorem pow_succ_dvd_mul_of_pow_dvd_left_of_dvd_right
     {d a b : FpPoly p} {n : Nat}
     (hda : pow d n ∣ a) (hdb : d ∣ b) :
