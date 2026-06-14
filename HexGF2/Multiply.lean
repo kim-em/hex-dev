@@ -18,10 +18,12 @@ private def xorClmulAt (acc : Array UInt64) (idx : Nat) (x y : UInt64) : Array U
   let acc := acc.set! idx (acc[idx]! ^^^ lo)
   acc.set! (idx + 1) (acc[idx + 1]! ^^^ hi)
 
+/-- `xorClmulAt_size` says accumulating one carry-less product preserves the result array size. -/
 private theorem xorClmulAt_size (acc : Array UInt64) (idx : Nat) (x y : UInt64) :
     (xorClmulAt acc idx x y).size = acc.size := by
   simp [xorClmulAt]
 
+/-- `foldl_xorClmulAt_size` says folding `xorClmulAt` over word indices preserves the accumulator size. -/
 private theorem foldl_xorClmulAt_size (js : List Nat) (acc : Array UInt64)
     (idx : Nat) (x : UInt64) (ys : Array UInt64) :
     (js.foldl (fun acc j => xorClmulAt acc (idx + j) x ys[j]!) acc).size = acc.size := by
@@ -32,6 +34,7 @@ private theorem foldl_xorClmulAt_size (js : List Nat) (acc : Array UInt64)
       simp only [List.foldl_cons]
       rw [ih, xorClmulAt_size]
 
+/-- `foldl_mulWords_size` says the nested word-multiplication fold preserves the accumulator size. -/
 private theorem foldl_mulWords_size (is : List Nat) (acc : Array UInt64)
     (xs ys : Array UInt64) :
     (is.foldl
@@ -49,6 +52,7 @@ private theorem foldl_mulWords_size (is : List Nat) (acc : Array UInt64)
       have hinner := foldl_xorClmulAt_size (List.range ys.size) acc i xs[i]! ys
       rw [ih, hinner]
 
+/-- `bit_eq_one_eq_testBit` identifies the shifted low-bit test with `Nat.testBit`. -/
 private theorem bit_eq_one_eq_testBit (x i : Nat) :
     (x >>> i % 2 == 1) = x.testBit i := by
   rw [Nat.testBit_eq_decide_div_mod_eq]
@@ -56,6 +60,7 @@ private theorem bit_eq_one_eq_testBit (x i : Nat) :
   apply decide_eq_decide.mpr
   exact Iff.rfl
 
+/-- `UInt64.bit_xor_bne` rewrites a bit of a word XOR as Boolean inequality of the input bits. -/
 private theorem UInt64.bit_xor_bne (a b : UInt64) (i : Nat) :
     ((((a ^^^ b) >>> i.toUInt64) &&& 1) != 0) =
       ((((a >>> i.toUInt64) &&& 1) != 0) !=
@@ -69,6 +74,7 @@ private theorem UInt64.bit_xor_bne (a b : UInt64) (i : Nat) :
   rw [bit_eq_one_eq_testBit]
   simp [Nat.testBit_xor]
 
+/-- `clmul_xor_left_snd_bit` gives bitwise linearity in the left input for the low word of `clmul`. -/
 private theorem clmul_xor_left_snd_bit (x y z : UInt64) (i : Nat) :
     ((((clmul (x ^^^ y) z).2 >>> i.toUInt64) &&& 1) != 0) =
       (((((clmul x z).2 >>> i.toUInt64) &&& 1) != 0) !=
@@ -76,6 +82,7 @@ private theorem clmul_xor_left_snd_bit (x y z : UInt64) (i : Nat) :
   rw [clmul_xor_left]
   exact UInt64.bit_xor_bne (clmul x z).2 (clmul y z).2 i
 
+/-- `clmul_xor_left_fst_bit` gives bitwise linearity in the left input for the high word of `clmul`. -/
 private theorem clmul_xor_left_fst_bit (x y z : UInt64) (i : Nat) :
     ((((clmul (x ^^^ y) z).1 >>> i.toUInt64) &&& 1) != 0) =
       (((((clmul x z).1 >>> i.toUInt64) &&& 1) != 0) !=
@@ -83,6 +90,7 @@ private theorem clmul_xor_left_fst_bit (x y z : UInt64) (i : Nat) :
   rw [clmul_xor_left]
   exact UInt64.bit_xor_bne (clmul x z).1 (clmul y z).1 i
 
+/-- `clmul_xor_right_snd_bit` gives bitwise linearity in the right input for the low word of `clmul`. -/
 private theorem clmul_xor_right_snd_bit (x y z : UInt64) (i : Nat) :
     ((((clmul x (y ^^^ z)).2 >>> i.toUInt64) &&& 1) != 0) =
       (((((clmul x y).2 >>> i.toUInt64) &&& 1) != 0) !=
@@ -92,6 +100,7 @@ private theorem clmul_xor_right_snd_bit (x y z : UInt64) (i : Nat) :
   rw [clmul_comm y x, clmul_comm z x]
   exact UInt64.bit_xor_bne (clmul x y).2 (clmul x z).2 i
 
+/-- `clmul_xor_right_fst_bit` gives bitwise linearity in the right input for the high word of `clmul`. -/
 private theorem clmul_xor_right_fst_bit (x y z : UInt64) (i : Nat) :
     ((((clmul x (y ^^^ z)).1 >>> i.toUInt64) &&& 1) != 0) =
       (((((clmul x y).1 >>> i.toUInt64) &&& 1) != 0) !=
@@ -101,6 +110,7 @@ private theorem clmul_xor_right_fst_bit (x y z : UInt64) (i : Nat) :
   rw [clmul_comm y x, clmul_comm z x]
   exact UInt64.bit_xor_bne (clmul x y).1 (clmul x z).1 i
 
+/-- `coeffWords_xorClmulAt_low` describes the low-word contribution of one `xorClmulAt` update. -/
 private theorem coeffWords_xorClmulAt_low (acc : Array UInt64) {idx n : Nat}
     (x y : UInt64) (hidx : idx < acc.size) (hn : n / 64 = idx) :
     coeffWords (xorClmulAt acc idx x y) n =
@@ -108,6 +118,7 @@ private theorem coeffWords_xorClmulAt_low (acc : Array UInt64) {idx n : Nat}
         ((((clmul x y).2 >>> (n % 64).toUInt64) &&& 1) != 0)) := by
   simp [xorClmulAt, coeffWords, hn, hidx, UInt64.bit_xor_bne]
 
+/-- `coeffWords_xorClmulAt_high` describes the high-word contribution of one `xorClmulAt` update. -/
 private theorem coeffWords_xorClmulAt_high (acc : Array UInt64) {idx n : Nat}
     (x y : UInt64) (hidx : idx < acc.size) (hidxNext : idx + 1 < acc.size)
     (hn : n / 64 = idx + 1) :
@@ -116,6 +127,7 @@ private theorem coeffWords_xorClmulAt_high (acc : Array UInt64) {idx n : Nat}
         ((((clmul x y).1 >>> (n % 64).toUInt64) &&& 1) != 0)) := by
   simp [xorClmulAt, coeffWords, hn, hidx, hidxNext, UInt64.bit_xor_bne]
 
+/-- `coeffWords_xorClmulAt_ne` says unrelated word positions are unchanged by `xorClmulAt`. -/
 private theorem coeffWords_xorClmulAt_ne (acc : Array UInt64) {idx n : Nat}
     (x y : UInt64) (hnLow : n / 64 ≠ idx) (hnHigh : n / 64 ≠ idx + 1) :
     coeffWords (xorClmulAt acc idx x y) n = coeffWords acc n := by
@@ -123,6 +135,7 @@ private theorem coeffWords_xorClmulAt_ne (acc : Array UInt64) {idx n : Nat}
   have hHigh : idx + 1 ≠ n / 64 := Ne.symm hnHigh
   simp [xorClmulAt, coeffWords, hLow, hHigh]
 
+/-- `coeffWords_xorClmulAt_low_xor_left` isolates the extra low-word bit from XORing the left factor. -/
 private theorem coeffWords_xorClmulAt_low_xor_left (acc : Array UInt64) {idx n : Nat}
     (x y z : UInt64) (hidx : idx < acc.size) (hn : n / 64 = idx) :
     coeffWords (xorClmulAt acc idx (x ^^^ y) z) n =
@@ -136,6 +149,7 @@ private theorem coeffWords_xorClmulAt_low_xor_left (acc : Array UInt64) {idx n :
     cases ((((clmul y z).2 >>> (n % 64).toUInt64) &&& 1) != 0) <;>
     rfl
 
+/-- `coeffWords_xorClmulAt_high_xor_left` isolates the extra high-word bit from XORing the left factor. -/
 private theorem coeffWords_xorClmulAt_high_xor_left (acc : Array UInt64) {idx n : Nat}
     (x y z : UInt64) (hidx : idx < acc.size) (hidxNext : idx + 1 < acc.size)
     (hn : n / 64 = idx + 1) :
@@ -150,20 +164,24 @@ private theorem coeffWords_xorClmulAt_high_xor_left (acc : Array UInt64) {idx n 
     cases ((((clmul y z).1 >>> (n % 64).toUInt64) &&& 1) != 0) <;>
     rfl
 
+/-- `xorWords_getElem!` unfolds unchecked access to `xorWords` into wordwise XOR. -/
 private theorem xorWords_getElem! (xs ys : Array UInt64) (i : Nat) :
     (xorWords xs ys)[i]! = xs[i]! ^^^ ys[i]! := by
   simpa only [getElem!_def] using xorWords_get?_getD xs ys i
 
+/-- `normalizeWords_getElem!` shows normalization leaves unchecked word lookup unchanged. -/
 private theorem normalizeWords_getElem! (words : Array UInt64) (i : Nat) :
     (normalizeWords words)[i]! = words[i]! := by
   simpa only [getElem!_def] using normalizeWords_get?_getD words i
 
+/-- `foldl_keep` collapses a fold whose step ignores every input element. -/
 private theorem foldl_keep {α β : Type} (xs : List β) (acc : α) :
     xs.foldl (fun acc _ => acc) acc = acc := by
   induction xs generalizing acc with
   | nil => simp
   | cons _ xs ih => simp [ih]
 
+/-- `Array.setIfInBounds_getElem!` says setting an index to its current unchecked value is a no-op. -/
 private theorem Array.setIfInBounds_getElem! (xs : Array UInt64) (idx : Nat) :
     xs.setIfInBounds idx xs[idx]! = xs := by
   unfold Array.setIfInBounds
@@ -171,15 +189,18 @@ private theorem Array.setIfInBounds_getElem! (xs : Array UInt64) (idx : Nat) :
   · simp [h]
   · simp [h]
 
+/-- `xorClmulAt_zero_right` says a carry-less product by the zero word contributes nothing. -/
 private theorem xorClmulAt_zero_right (acc : Array UInt64) (idx : Nat) (x : UInt64) :
     xorClmulAt acc idx x 0 = acc := by
   simp [xorClmulAt, Array.setIfInBounds_getElem!]
 
+/-- `coeffWords_xorClmulAt_zero_right` says multiplying by the zero word preserves every coefficient bit. -/
 private theorem coeffWords_xorClmulAt_zero_right (acc : Array UInt64) (idx n : Nat)
     (x : UInt64) :
     coeffWords (xorClmulAt acc idx x 0) n = coeffWords acc n := by
   rw [xorClmulAt_zero_right]
 
+/-- `clmul_oneHot_low_bit_same_word` locates a shifted source bit in the low word of a one-hot product. -/
 private theorem clmul_oneHot_low_bit_same_word (x : UInt64) {shift old : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64) (hold : old < 64)
     (hbit : old + shift < 64) :
@@ -197,6 +218,7 @@ private theorem clmul_oneHot_low_bit_same_word (x : UInt64) {shift old : Nat}
     Nat.testBit_shiftLeft]
   simp [hbit]
 
+/-- `clmul_oneHot_low_bit_before_shift_false` shows low-word bits before the one-hot shift are zero. -/
 private theorem clmul_oneHot_low_bit_before_shift_false (x : UInt64) {shift bit : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64) (hbit : bit < shift) :
     ((((clmul x ((1 : UInt64) <<< shift.toUInt64)).2 >>>
@@ -214,6 +236,7 @@ private theorem clmul_oneHot_low_bit_before_shift_false (x : UInt64) {shift bit 
   intro _ hle
   omega
 
+/-- `clmul_oneHot_low_bit_shifted` rewrites a reachable low-word bit as the corresponding source bit. -/
 private theorem clmul_oneHot_low_bit_shifted (x : UInt64) {shift bit : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64) (hbit : bit < 64)
     (hle : shift ≤ bit) :
@@ -226,6 +249,7 @@ private theorem clmul_oneHot_low_bit_shifted (x : UInt64) {shift bit : Nat}
   simpa [hsum] using
     clmul_oneHot_low_bit_same_word x hshiftPos hshift hsource hsourceShift
 
+/-- `clmul_oneHot_high_bit_carry_word` locates a shifted source bit that carries into the high word. -/
 private theorem clmul_oneHot_high_bit_carry_word (x : UInt64) {shift old : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64) (hold : old < 64)
     (hbit : 64 ≤ old + shift) :
@@ -242,6 +266,7 @@ private theorem clmul_oneHot_high_bit_carry_word (x : UInt64) {shift old : Nat}
     Nat.mod_eq_of_lt htargetLt, bit_eq_one_eq_testBit, Nat.testBit_shiftRight,
     hold_eq]
 
+/-- `clmul_oneHot_high_bit_after_carry_false` shows high-word bits at or beyond the shift window are zero. -/
 private theorem clmul_oneHot_high_bit_after_carry_false (x : UInt64) {shift bit : Nat}
     (hshift : shift < 64) (hbit : bit < 64) (hle : shift ≤ bit) :
     ((((clmul x ((1 : UInt64) <<< shift.toUInt64)).1 >>>
