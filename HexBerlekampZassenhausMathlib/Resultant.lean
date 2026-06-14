@@ -619,6 +619,63 @@ theorem sylvester_commonFactor_colReduceStep
   rw [sylvester_mulVec_commonFactor_smul q a b r s c hleft hright hf hg k]
   exact Dvd.intro _ rfl
 
+/--
+General Sylvester column-image identity.
+
+The Sylvester matrix applied (`mulVec`) to the coordinate vector of a direction
+`(u, w)` in the product basis reads off, entry by entry, the coefficients of the
+image polynomial `f * w + g * u` under the Sylvester map.  This is the
+direction-agnostic core behind the common-factor specialisation
+`sylvester_mulVec_commonFactor_smul`: divisibility of a selected column
+combination reduces to divisibility of the coefficients of `f * w + g * u`.
+-/
+theorem sylvester_mulVec_image
+    {R : Type*} [CommRing R] (f g u w : Polynomial R) {m n : Nat}
+    (hu : u ∈ Polynomial.degreeLT R m) (hw : w ∈ Polynomial.degreeLT R n)
+    (hf : f.natDegree ≤ m) (hg : g.natDegree ≤ n) (i : Fin (m + n)) :
+    (Polynomial.sylvester f g m n).mulVec
+        ((Polynomial.degreeLT.basisProd R m n).repr (⟨u, hu⟩, ⟨w, hw⟩)) i
+      = (f * w + g * u).coeff i := by
+  have hmat := (Polynomial.toMatrix_sylvesterMap' f g hf hg).symm
+  rw [Polynomial.degreeLT.basisProd] at *
+  rw [hmat, LinearMap.toMatrix_mulVec_repr, Polynomial.degreeLT.basis_repr]
+  rfl
+
+/--
+Each entry of the Sylvester column combination selected by the CLD syzygy
+direction `(q * X^t, -q' * X^t)` is divisible by the scalar `c`.
+
+The CLD syzygy hypothesis records that the monic selected factor `q` of `f`
+satisfies `g * q - f * q' = C c * z` — for the BHKS application `c = p ^ k`, `f`
+the input polynomial, `g` the auxiliary polynomial, and the congruence supplied
+by `cldQuotientMod_congr_mul_derivative` (rearranged so the divisor `q` does not
+have to divide the auxiliary polynomial `g`).  The selected column combination is
+the coordinate image of `(q * X^t, -q' * X^t)`, whose Sylvester image is
+`(g * q - f * q') * X^t = C c * (z * X^t)` — visibly a `c`-multiple entrywise.
+This is the per-entry input the determinant column-reduction needs once the
+`d = q.natDegree` shifts `t < d` are assembled into the `d` selected columns.
+-/
+theorem sylvester_mulVec_cld_syzygy
+    {R : Type*} [CommRing R] (f g q z : Polynomial R) (c : R) {m n t : Nat}
+    (hsyz : g * q - f * Polynomial.derivative q = Polynomial.C c * z)
+    (hu : q * Polynomial.X ^ t ∈ Polynomial.degreeLT R m)
+    (hw : -Polynomial.derivative q * Polynomial.X ^ t ∈ Polynomial.degreeLT R n)
+    (hf : f.natDegree ≤ m) (hg : g.natDegree ≤ n) (i : Fin (m + n)) :
+    c ∣ (Polynomial.sylvester f g m n).mulVec
+        ((Polynomial.degreeLT.basisProd R m n).repr
+          (⟨q * Polynomial.X ^ t, hu⟩,
+           ⟨-Polynomial.derivative q * Polynomial.X ^ t, hw⟩)) i := by
+  rw [sylvester_mulVec_image f g _ _ hu hw hf hg i]
+  have himg : f * (-Polynomial.derivative q * Polynomial.X ^ t)
+      + g * (q * Polynomial.X ^ t)
+      = Polynomial.C c * (z * Polynomial.X ^ t) := by
+    have hrw : f * (-Polynomial.derivative q * Polynomial.X ^ t)
+        + g * (q * Polynomial.X ^ t)
+        = (g * q - f * Polynomial.derivative q) * Polynomial.X ^ t := by ring
+    rw [hrw, hsyz]; ring
+  rw [himg, Polynomial.coeff_C_mul]
+  exact dvd_mul_right c _
+
 /-- Value of `degreeLT.basisProd`'s coordinate functional on a left-block index:
 the coordinate at `i₁.castAdd n` reads off the `i₁`-th coefficient of the first
 component. -/
