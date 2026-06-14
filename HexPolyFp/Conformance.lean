@@ -141,14 +141,14 @@ private theorem quadModulus_monic : DensePoly.Monic quadModulus := by
 #guard coeffNats (weightedProduct ([] : List (SquareFreeFactor 5))) = [1]
 
 #guard sfSummary (squareFreeDecomposition prime_five (polyFive #[1, 1, 1])) =
-  (1, [([4, 4, 4], 1), ([2], 2)])
+  (1, [([1, 1, 1], 1)])
 
 #guard
   let f := polyFive #[1, 1, 1]
   coeffNats (sfReconstruction (squareFreeDecomposition prime_five f)) = coeffNats f
 
 #guard sfSummary (squareFreeDecomposition prime_five (polyFive #[1, 2, 1])) =
-  (1, [([4], 1), ([2, 2], 2)])
+  (1, [([1, 1], 2)])
 
 #guard
   let f := polyFive #[1, 2, 1]
@@ -253,11 +253,12 @@ private def sfBigInput : FpPoly 5 := weightedProduct sfBigFactors
 -- `sfBigInput = (x+1)^2 (x+2)^3 (x+3)^2 (x+4)^3` is degree 10 over F_5.
 #guard coeffNats sfBigInput = [3, 1, 1, 0, 4, 3, 3, 0, 3, 1, 1]
 
--- Same-multiplicity factors aggregate: mult-2 part is
--- `3·((x+1)(x+3)) = 3·(x^2 + 4x + 3)` and mult-3 part is
--- `4·((x+2)(x+4)) = 4·(x^2 + x + 3)`. Unit `3^2·4^3 = 576 ≡ 1 (mod 5)`.
+-- Same-multiplicity factors aggregate: the mult-2 part is the monic
+-- `(x+1)(x+3) = x^2 + 4x + 3` and the mult-3 part the monic
+-- `(x+2)(x+4) = x^2 + x + 3`. With every gcd routed through `monicGcd` the
+-- factors are monic and the unit is `1` (no scalar leak).
 #guard sfSummary (squareFreeDecomposition prime_five sfBigInput) =
-  (1, [([4, 2, 3], 2), ([2, 4, 4], 3)])
+  (1, [([3, 4, 1], 2), ([3, 1, 1], 3)])
 
 #guard
   coeffNats (sfReconstruction (squareFreeDecomposition prime_five sfBigInput)) =

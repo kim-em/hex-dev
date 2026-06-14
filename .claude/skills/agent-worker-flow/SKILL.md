@@ -134,6 +134,15 @@ open PR on it first (`gh pr list --head agent/<id>`). If a PR exists, create
 a new branch with a suffix (`agent/<id>-v2`). If no PR exists, reset it to
 master: `git checkout agent/<id> && git reset --hard origin/master`.
 
+**If you base on a WIP branch** (issue says "continue from `agent/<x>`" /
+"main has moved"): `git fetch origin main` first and judge freshness against
+`origin/main`, not local `main` — in reused worktrees local `main` is stale,
+so `git merge-base --is-ancestor main HEAD` gives a false "up to date". Before
+opening the PR, `git diff --name-only origin/main..HEAD` should list only the
+files you meant to touch; if unrelated files appear, the WIP base predates
+merges now in `origin/main` — `git merge origin/main` (usually conflict-free)
+to drop them from the PR diff and run CI against current main.
+
 Record any project-specific quality metrics (e.g. sorry count, test coverage)
 as described in the project's CLAUDE.md.
 
