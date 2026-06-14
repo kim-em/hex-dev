@@ -14623,33 +14623,13 @@ theorem representedFactor_dvd_recombinationCandidate_of_subset
     exfalso
     have hfactor_dvd_core : factor ∣ core :=
       zpoly_dvd_trans hfactor_dvd_target htarget_dvd_core
-    -- Derive `2 ≤ d.p^d.k` from `factor ≠ 0` and the centered-lift recovery,
-    -- matching the pattern used in `representsIntegerFactorAtLift_monic`.
+    -- `2 ≤ d.p^d.k` follows directly from the Mignotte precision: the default
+    -- coefficient bound is positive for the nonzero core, so the modulus clears
+    -- twice a positive quantity.
     have hd_modulus : 2 ≤ d.p ^ d.k := by
-      have hrec :
-          Hex.centeredLiftPoly
-              (scaledLiftedFactorProduct core d S) (d.p ^ d.k) = factor :=
-        centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
-          hcore_ne hfactor_dvd_core hrep hprecision
-      have hfactor_ne : factor ≠ 0 := by
-        intro hf
-        rcases hfactor_dvd_core with ⟨q, hq⟩
-        rw [hf, Hex.DensePoly.zero_mul (S := Int) q] at hq
-        exact hcore_ne hq
-      have hpk_pos : 0 < d.p ^ d.k := Nat.pow_pos d.p_pos
-      rcases Nat.eq_or_lt_of_le
-          (Nat.one_le_iff_ne_zero.mpr (Nat.ne_of_gt hpk_pos)) with hpk1 | hpk_gt
-      · exfalso
-        apply hfactor_ne
-        apply Hex.DensePoly.ext_coeff
-        intro i
-        rw [← hrec, Hex.coeff_centeredLiftPoly, ← hpk1,
-          Hex.DensePoly.coeff_zero]
-        unfold Hex.centeredModNat
-        have h1ne : (1 : Nat) ≠ 0 := by decide
-        simp only [if_neg h1ne]
-        simp
-      · omega
+      have hb_pos : 0 < Hex.ZPoly.defaultFactorCoeffBound core :=
+        Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hcore_ne
+      omega
     by_cases hS_empty : S = (∅ : LiftedFactorSubset d)
     · -- Subcase B2: `S = ∅` — packaged by the empty-support helper.
       apply not_represents_empty_of_irreducible_dvd_core
