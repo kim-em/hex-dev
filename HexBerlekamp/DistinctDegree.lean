@@ -35,16 +35,23 @@ structure DistinctDegreeFactorization (p : Nat) [ZMod64.Bounds p] where
 def degreeBucketFactors (buckets : List (DegreeBucket p)) : List (FpPoly p) :=
   buckets.map DegreeBucket.factor
 
+/-- `degreeBucketFactors` of the empty bucket list is the empty factor list.
+Definitional rewrite (`by rfl`) characterising `degreeBucketFactors`. -/
 @[simp] theorem degreeBucketFactors_nil :
     degreeBucketFactors ([] : List (DegreeBucket p)) = [] := by
   rfl
 
+/-- `degreeBucketFactors` distributes over `::`, pulling the head bucket's
+`.factor` to the front of the recovered factor list. Definitional rewrite
+(`by rfl`) characterising `degreeBucketFactors`. -/
 @[simp] theorem degreeBucketFactors_cons
     (bucket : DegreeBucket p) (buckets : List (DegreeBucket p)) :
     degreeBucketFactors (bucket :: buckets) =
       bucket.factor :: degreeBucketFactors buckets := by
   rfl
 
+/-- `degreeBucketFactors` distributes over `++`: the factors of a concatenated
+bucket list are the concatenation of each part's factors. -/
 @[simp] theorem degreeBucketFactors_append
     (buckets₁ buckets₂ : List (DegreeBucket p)) :
     degreeBucketFactors (buckets₁ ++ buckets₂) =
@@ -55,6 +62,8 @@ def degreeBucketFactors (buckets : List (DegreeBucket p)) : List (FpPoly p) :=
 def degreeBucketProduct (buckets : List (DegreeBucket p)) : FpPoly p :=
   factorProduct (degreeBucketFactors buckets)
 
+/-- The product over the empty bucket list is `1`. Definitional rewrite
+(`by rfl`) characterising `degreeBucketProduct`. -/
 @[simp] theorem degreeBucketProduct_nil :
     degreeBucketProduct ([] : List (DegreeBucket p)) = 1 := by
   rfl
@@ -64,6 +73,9 @@ def DistinctDegreeFactorization.product (result : DistinctDegreeFactorization p)
     FpPoly p :=
   degreeBucketProduct result.buckets * result.residual
 
+/-- Unfold `DistinctDegreeFactorization.product` to the product of the bucket
+factors times the residual. Definitional rewrite (`by rfl`) characterising
+`DistinctDegreeFactorization.product`. -/
 @[simp] theorem DistinctDegreeFactorization.product_eq
     (result : DistinctDegreeFactorization p) :
     result.product = degreeBucketProduct result.buckets * result.residual := by
@@ -175,6 +187,9 @@ def DegreeBucket.matchesFrobeniusDegree
     (bucket : DegreeBucket p) : Prop :=
   bucket.factor ∣ frobeniusDiffMod f hmonic bucket.degree
 
+/-- Restate `DegreeBucket.matchesFrobeniusDegree` as the divisibility
+`bucket.factor ∣ frobeniusDiffMod f hmonic bucket.degree`, the morally-correct
+bucket invariant. Definitional rewrite (`by rfl`). -/
 theorem DegreeBucket.matchesFrobeniusDegree_iff
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (bucket : DegreeBucket p) :
@@ -182,6 +197,9 @@ theorem DegreeBucket.matchesFrobeniusDegree_iff
       bucket.factor ∣ frobeniusDiffMod f hmonic bucket.degree := by
   rfl
 
+/-- The degree-`d` candidate unfolds to `DensePoly.gcd residual
+(frobeniusDiffMod f hmonic d)`. Definitional rewrite (`by rfl`) characterising
+`distinctDegreeCandidate`. -/
 theorem distinctDegreeCandidate_spec
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (residual : FpPoly p) (d : Nat) :
