@@ -134,15 +134,6 @@ open PR on it first (`gh pr list --head agent/<id>`). If a PR exists, create
 a new branch with a suffix (`agent/<id>-v2`). If no PR exists, reset it to
 master: `git checkout agent/<id> && git reset --hard origin/master`.
 
-**If you base on a WIP branch** (issue says "continue from `agent/<x>`" /
-"main has moved"): `git fetch origin main` first and judge freshness against
-`origin/main`, not local `main` — in reused worktrees local `main` is stale,
-so `git merge-base --is-ancestor main HEAD` gives a false "up to date". Before
-opening the PR, `git diff --name-only origin/main..HEAD` should list only the
-files you meant to touch; if unrelated files appear, the WIP base predates
-merges now in `origin/main` — `git merge origin/main` (usually conflict-free)
-to drop them from the PR diff and run CI against current main.
-
 Record any project-specific quality metrics (e.g. sorry count, test coverage)
 as described in the project's CLAUDE.md.
 
@@ -158,19 +149,24 @@ Check that the plan's assumptions still hold:
 - Quality metrics match what the issue says
 - Files mentioned in the issue still exist and haven't been restructured
 - No recently merged PR invalidates the plan
-- **If the issue was re-opened from `replan`** (prior `Skipped`/`Partial`
-  comments in its history), a previous claimant may have landed a *merged
-  partial PR* after your branch point. `git fetch origin main` and reset your
-  branch to `origin/main`, then read that PR's diff before designing — much of
-  the work may already be on `main`, and your residual scope is only the gap it
-  left (often a stand-in lemma whose key hypotheses are vestigial). Check this
-  before reasoning about the design from scratch.
 
 If stale:
 ```
 coordination skip <issue-number> "reason: <what changed>"
 ```
 Go back to Step 1 and try the next issue.
+
+**Already-done duplicates (especially doc-coverage issues)**: planner-
+generated batches are sometimes already complete on `main`. Before
+writing anything, confirm the work is genuinely absent. For "add
+docstrings to X" issues, grep each named declaration for an actual
+`/-- ... -/` block *above* it — and note the docstring can sit one line
+above an `@[simp]`/`@[grind]` attribute, so a check of only the
+immediately-preceding line gives a false "undocumented" reading. If
+every deliverable already exists, do NOT open an empty PR: post a
+comment with `git blame` evidence (commit + that it is an ancestor of
+`origin/main`) and `coordination skip <N> "already complete via #M"` to
+route it to replan for closure.
 
 **PR fix plans**: If the plan asks you to fix a broken PR, use judgement. If the
 PR is low quality or not worth salvaging:
