@@ -96,6 +96,10 @@ private theorem one_ne_zero_of_prime [ZMod64.PrimeModulus p] :
   rw [show (DensePoly.C (Zero.zero : ZMod64 p) : FpPoly p) = 0 from C_zero_eq_zero]
   rw [FpPoly.add_zero]
 
+/-- Composing the constant polynomial `1` with any `q` yields `1`: the
+multiplicative identity of `FpPoly` is fixed by substitution. This is the
+base case for composing an iterated product of linear factors (see
+`compose_primeFieldLinearProduct`). -/
 theorem compose_one [ZMod64.PrimeModulus p] (q : FpPoly p) :
     DensePoly.compose (1 : FpPoly p) q = 1 := by
   change DensePoly.compose (DensePoly.C (1 : ZMod64 p)) q = DensePoly.C 1
@@ -182,6 +186,9 @@ theorem C_add_eq (a b : ZMod64 p) :
   | succ n =>
       exact (by grind : (0 : ZMod64 p) + 0 = 0).symm
 
+/-- The constant embedding `C` turns a difference of scalars into a
+difference of constant polynomials. Used to push coefficient subtractions
+through products such as `f * (X - C c)`. -/
 theorem C_sub_eq (a b : ZMod64 p) :
     (DensePoly.C (a - b) : FpPoly p) = DensePoly.C a - DensePoly.C b := by
   apply DensePoly.ext_coeff
@@ -193,6 +200,9 @@ theorem C_sub_eq (a b : ZMod64 p) :
   | succ n =>
       exact (by grind : (0 : ZMod64 p) - 0 = 0).symm
 
+/-- The constant embedding `C` turns a product of scalars into a product
+of constant polynomials. Used to normalise constant coefficients when
+expanding products of linear factors. -/
 theorem C_mul_C_eq (a b : ZMod64 p) :
     (DensePoly.C (a * b) : FpPoly p) = DensePoly.C a * DensePoly.C b := by
   rw [FpPoly.C_mul_eq_scale]
@@ -301,6 +311,10 @@ private theorem composePower_eq_linearPow (w : FpPoly p) :
       rw [composePower_eq_linearPow w k]
       rw [linearPow_succ_left]
 
+/-- The local `FpPoly` power-sum accumulator built from `linearPow` agrees
+with the shared `DensePoly.composeCoeffPowerSumUpTo`. Callers use this to
+transfer the explicit compose-as-sum characterization onto the `DensePoly`
+API that downstream files import. -/
 theorem composeCoeffPowerSumUpTo_eq_core
     (coeff : Nat → ZMod64 p) :
     ∀ n base w,
@@ -772,6 +786,10 @@ private theorem mul_X_sub_C_eq_ofCoeffs_mulXSubCList
       simp only [Nat.succ_sub_one]
       rw [toArray_toList_getD_eq_coeff a n]
 
+/-- Composition distributes over multiplication by a linear factor:
+substituting `w` into `a * (X - C c)` gives `(compose a w) * (w - C c)`.
+This is the inductive step for composing an iterated product of linear
+factors `∏ (X - C cᵢ)` (see `compose_foldl_X_sub_C`). -/
 theorem compose_mul_X_sub_C [ZMod64.PrimeModulus p]
     (a : FpPoly p) (c : ZMod64 p) (w : FpPoly p) :
     DensePoly.compose (a * (FpPoly.X - FpPoly.C c)) w =
@@ -831,6 +849,9 @@ private theorem linearPow_linearPow_mul (a : FpPoly p) (m : Nat) :
       rw [FpPoly.linearPow_succ, linearPow_linearPow_mul a m n,
         Nat.mul_succ, FpPoly.linearPow_add]
 
+/-- A strictly positive power of the zero polynomial is zero. This
+discharges the vanishing-coefficient case when substituting into the
+compose power-sum form for the Frobenius identity. -/
 theorem linearPow_zero_of_pos (n : Nat) (hn : 0 < n) :
     FpPoly.linearPow (0 : FpPoly p) n = 0 := by
   cases n with
