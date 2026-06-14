@@ -5466,7 +5466,7 @@ A successful BHKS indicator candidate divides `f`. The executable
 `exactQuotient? f candidate` succeeds, so the candidate is a verified
 integer divisor of `f`.
 -/
-private theorem bhksIndicatorCandidate?_dvd
+theorem bhksIndicatorCandidate?_dvd
     {f : ZPoly} {d : LiftData} {indicator : Array Int}
     {candidate quotient : ZPoly}
     (h : bhksIndicatorCandidate? f d indicator = some (candidate, quotient)) :
@@ -5567,7 +5567,7 @@ private theorem bhksIndicatorCandidate?_leadingCoeff_nonneg
 /-- A successful BHKS indicator candidate is primitive: the candidate equals
 `normalizeFactorSign (normalizeCandidateFactor _)`, and `shouldRecord = true`
 forces the inner factor to be nonzero, hence primitive. -/
-private theorem bhksIndicatorCandidate?_primitive
+theorem bhksIndicatorCandidate?_primitive
     {f : ZPoly} {d : LiftData} {indicator : Array Int}
     {candidate quotient : ZPoly}
     (h : bhksIndicatorCandidate? f d indicator = some (candidate, quotient)) :

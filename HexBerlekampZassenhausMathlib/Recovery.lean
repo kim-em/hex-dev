@@ -1136,15 +1136,40 @@ theorem bhksIndicatorCandidate?_representsIntegerFactorAtLift
     (hp_two_lt : 2 < d.p ^ d.k) :
       RepresentsIntegerFactorAtLift core d candidate
         (liftedFactorSubsetOfMembers d members) := by
-  unfold RepresentsIntegerFactorAtLift scaledLiftedFactorProduct
-  rw [← selectedFactorsOfMembers_polyProduct d members]
-  exact bhksIndicatorCandidate?_reduceModPow_eq_of_monic h hselected hcore_monic
-    (by
-      intro factor hfactor
-      rw [selectedFactorsOfMembers_toList] at hfactor
-      rcases List.mem_map.mp hfactor with ⟨i, hi, rfl⟩
-      exact hliftedFactor_monic i (List.mem_range.mp (List.mem_filter.mp hi).1))
-    (Nat.le_of_lt hp_two_lt)
+  have hsel_monic :
+      ∀ p ∈ (selectedFactorsOfMembers d.liftedFactors members).toList,
+        Hex.DensePoly.Monic p := by
+    intro factor hfactor
+    rw [selectedFactorsOfMembers_toList] at hfactor
+    rcases List.mem_map.mp hfactor with ⟨i, hi, rfl⟩
+    exact hliftedFactor_monic i (List.mem_range.mp (List.mem_filter.mp hi).1)
+  have hlc : Hex.DensePoly.leadingCoeff core = (1 : Int) := hcore_monic
+  have hscale_one :
+      Hex.DensePoly.scale (1 : Int)
+          (Array.polyProduct (selectedFactorsOfMembers d.liftedFactors members)) =
+        Array.polyProduct (selectedFactorsOfMembers d.liftedFactors members) := by
+    apply Hex.DensePoly.ext_coeff
+    intro n
+    rw [Hex.DensePoly.coeff_scale_semiring]
+    ring
+  -- The monic-coordinate witness is the BHKS candidate itself: with a monic
+  -- core (`leadingCoeff core = 1`) the dilation collapses and the candidate is
+  -- already primitive, while the verified exact-division check gives `candidate
+  -- ∣ core = (toMonic core).monic`.
+  refine RepresentsIntegerFactorAtLift.ofRecovered ?_
+  exact
+    { monicFactor := candidate
+      congr := by
+        have h0 := bhksIndicatorCandidate?_reduceModPow_eq_of_monic h hselected
+          hcore_monic hsel_monic (Nat.le_of_lt hp_two_lt)
+        rwa [hlc, hscale_one, selectedFactorsOfMembers_polyProduct] at h0
+      dilate_eq := by
+        rw [hlc, Hex.ZPoly.dilate_one]
+        exact Hex.ZPoly.primitivePart_eq_self_of_primitive candidate
+          (Hex.bhksIndicatorCandidate?_primitive h)
+      monic_dvd := by
+        rw [Hex.ZPoly.toMonic_monic_eq_core_of_leadingCoeff_eq_one core hlc]
+        exact Hex.bhksIndicatorCandidate?_dvd h }
 
 /--
 The BHKS selected-factor operation succeeds on a nonempty class indicator whose
