@@ -1023,17 +1023,23 @@ theorem eval_monomial (n : Nat) (c x : ZMod64 p) :
   unfold FpPoly.X
   exact DensePoly.coeff_monomial 1 (1 : ZMod64 p) n
 
+/-- `evalCoeffPowerSumFrom coeffs base x` is the power sum `Σ coeffᵢ * x^(base+i)`
+of a coefficient list starting at exponent `base`. -/
 private def evalCoeffPowerSumFrom :
     List (ZMod64 p) → Nat → ZMod64 p → ZMod64 p
   | [], _, _ => 0
   | coeff :: coeffs, base, x =>
       coeff * x ^ base + evalCoeffPowerSumFrom coeffs (base + 1) x
 
+/-- `evalScalarCoeffList coeffs x` is the Horner-form evaluation
+`c₀ + x * (c₁ + x * (⋯))` of a coefficient list. -/
 private def evalScalarCoeffList :
     List (ZMod64 p) → ZMod64 p → ZMod64 p
   | [], _ => 0
   | coeff :: coeffs, x => coeff + x * evalScalarCoeffList coeffs x
 
+/-- Multiplying an `evalCoeffPowerSumFrom` value by `x` shifts its base exponent
+up by one. -/
 private theorem mul_evalCoeffPowerSumFrom_eq_succ
     (x : ZMod64 p) :
     ∀ coeffs base,
@@ -1053,6 +1059,8 @@ private theorem mul_evalCoeffPowerSumFrom_eq_succ
       rw [Lean.Grind.Semiring.pow_succ x base]
       rw [Lean.Grind.Semiring.mul_assoc coeff (x ^ base) x]
 
+/-- The Horner evaluation of a coefficient list equals its power sum based at
+exponent zero. -/
 private theorem evalScalarCoeffList_eq_powerSumFrom_zero
     (x : ZMod64 p) :
     ∀ coeffs,
@@ -1065,6 +1073,8 @@ private theorem evalScalarCoeffList_eq_powerSumFrom_zero
       rw [mul_evalCoeffPowerSumFrom_eq_succ x coeffs 0]
       grind
 
+/-- The Horner-step left fold over the reversed coefficient list equals
+`evalScalarCoeffList`. -/
 private theorem foldl_eval_reverse_eq_evalScalarCoeffList
     (x : ZMod64 p) :
     ∀ coeffs,
@@ -1080,12 +1090,15 @@ private theorem foldl_eval_reverse_eq_evalScalarCoeffList
       rw [Lean.Grind.Semiring.add_comm]
       rfl
 
+/-- `DensePoly.eval f x` equals the power sum of `f`'s coefficient list based at
+exponent zero. -/
 private theorem eval_eq_coeff_power_sum (f : FpPoly p) (x : ZMod64 p) :
     DensePoly.eval f x = evalCoeffPowerSumFrom f.toArray.toList 0 x := by
   unfold DensePoly.eval
   rw [foldl_eval_reverse_eq_evalScalarCoeffList x f.toArray.toList]
   exact evalScalarCoeffList_eq_powerSumFrom_zero x f.toArray.toList
 
+/-- Indexing `f`'s coefficient list with default zero recovers `f.coeff n`. -/
 private theorem eval_coeff_list_getD_eq_coeff (f : FpPoly p) (n : Nat) :
     f.toArray.toList.getD n (0 : ZMod64 p) = f.coeff n := by
   unfold DensePoly.toArray DensePoly.coeff
@@ -1095,6 +1108,8 @@ private theorem eval_coeff_list_getD_eq_coeff (f : FpPoly p) (n : Nat) :
   rw [Array.getElem?_toList]
   rfl
 
+/-- Indexing the `range`-mapped coefficient list returns `coeff n` inside the
+range and zero outside it. -/
 private theorem list_getD_map_range_zmod (bound n : Nat) (coeff : Nat → ZMod64 p) :
     ((List.range bound).map coeff).getD n (0 : ZMod64 p) =
       if n < bound then coeff n else 0 := by
@@ -1102,6 +1117,8 @@ private theorem list_getD_map_range_zmod (bound n : Nat) (coeff : Nat → ZMod64
   · simp [hn, List.getD]
   · simp [hn, List.getD]
 
+/-- Two coefficient lists of equal length that agree at every default-zero index
+are equal. -/
 private theorem list_eq_of_length_eq_of_getD_eq
     {xs ys : List (ZMod64 p)}
     (hlen : xs.length = ys.length)
@@ -1127,6 +1144,8 @@ private theorem list_eq_of_length_eq_of_getD_eq
             simpa using h
           rw [hhead, htail]
 
+/-- `f`'s coefficient array, viewed as a list, equals `range f.size` mapped
+through `f.coeff`. -/
 private theorem toArray_toList_eq_coeff_range (f : FpPoly p) :
     f.toArray.toList = (List.range f.size).map (fun i => f.coeff i) := by
   apply list_eq_of_length_eq_of_getD_eq
@@ -1138,6 +1157,9 @@ private theorem toArray_toList_eq_coeff_range (f : FpPoly p) :
     rw [list_getD_map_range_zmod]
     simp [hi_size]
 
+/-- `evalCoeffPowerSumUpTo coeff n base x` is the power sum
+`Σ coeff(base+i) * x^(base+i)` over the first `n` exponents from `base`, taking the
+coefficients from a function rather than a list. -/
 private def evalCoeffPowerSumUpTo
     (coeff : Nat → ZMod64 p) :
     Nat → Nat → ZMod64 p → ZMod64 p
@@ -1145,6 +1167,8 @@ private def evalCoeffPowerSumUpTo
   | n + 1, base, x =>
       coeff base * x ^ base + evalCoeffPowerSumUpTo coeff n (base + 1) x
 
+/-- The list-based power sum over a `range`-mapped coefficient function equals the
+function-based `evalCoeffPowerSumUpTo`. -/
 private theorem evalCoeffPowerSumFrom_range_eq_upTo
     (coeff : Nat → ZMod64 p) (x : ZMod64 p) :
     ∀ n base,
@@ -1160,6 +1184,8 @@ private theorem evalCoeffPowerSumFrom_range_eq_upTo
       simpa [Function.comp_def, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm]
         using evalCoeffPowerSumFrom_range_eq_upTo coeff x n (base + 1)
 
+/-- `DensePoly.eval f x` equals the function-based power sum over `f`'s
+coefficients up to `f.size`. -/
 private theorem eval_eq_coeff_power_sum_upTo_size (f : FpPoly p)
     (x : ZMod64 p) :
     DensePoly.eval f x = evalCoeffPowerSumUpTo (fun i => f.coeff i) f.size 0 x := by
@@ -1167,6 +1193,8 @@ private theorem eval_eq_coeff_power_sum_upTo_size (f : FpPoly p)
   rw [toArray_toList_eq_coeff_range]
   simpa using evalCoeffPowerSumFrom_range_eq_upTo (fun i => f.coeff i) x f.size 0
 
+/-- Extending the power sum by one more term leaves it unchanged when the next
+coefficient is zero. -/
 private theorem evalCoeffPowerSumUpTo_succ_of_next_zero
     (coeff : Nat → ZMod64 p) (x : ZMod64 p) :
     ∀ n base,
@@ -1185,6 +1213,8 @@ private theorem evalCoeffPowerSumUpTo_succ_of_next_zero
         simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using hzero)]
       simp only [evalCoeffPowerSumUpTo]
 
+/-- Extending the upper bound of the power sum by any amount leaves it unchanged
+when all coefficients past the bound vanish, for an arbitrary starting base. -/
 private theorem evalCoeffPowerSumUpTo_le_extend_base
     (coeff : Nat → ZMod64 p) (x : ZMod64 p)
     (hzero : ∀ i, base + bound ≤ i → coeff i = 0) :
@@ -1199,6 +1229,8 @@ private theorem evalCoeffPowerSumUpTo_le_extend_base
       exact evalCoeffPowerSumUpTo_succ_of_next_zero
         coeff x (bound + extra) base (hzero (base + (bound + extra)) (by omega))
 
+/-- Extending the upper bound of the power sum based at zero leaves it unchanged
+when all coefficients past the bound vanish. -/
 private theorem evalCoeffPowerSumUpTo_le_extend
     (coeff : Nat → ZMod64 p) (x : ZMod64 p)
     (hzero : ∀ i, bound ≤ i → coeff i = 0) :
@@ -1209,6 +1241,8 @@ private theorem evalCoeffPowerSumUpTo_le_extend
   exact evalCoeffPowerSumUpTo_le_extend_base
     coeff x (base := 0) (bound := bound) (by simpa using hzero) extra
 
+/-- `DensePoly.eval f x` equals the power sum of `f`'s coefficients up to any
+bound at least `f.size`. -/
 private theorem eval_eq_coeff_power_sum_upTo_bound (f : FpPoly p)
     (x : ZMod64 p) {bound : Nat} (hbound : f.size ≤ bound) :
     DensePoly.eval f x = evalCoeffPowerSumUpTo (fun i => f.coeff i) bound 0 x := by
@@ -1218,6 +1252,7 @@ private theorem eval_eq_coeff_power_sum_upTo_bound (f : FpPoly p)
     (fun i => f.coeff i) x
     (fun i hi => DensePoly.coeff_eq_zero_of_size_le f hi) extra
 
+/-- The power sum of a coefficientwise sum is the sum of the two power sums. -/
 private theorem evalCoeffPowerSumUpTo_add
     (f h : FpPoly p) (x : ZMod64 p) :
     ∀ n base,
@@ -1231,6 +1266,8 @@ private theorem evalCoeffPowerSumUpTo_add
       rw [evalCoeffPowerSumUpTo_add f h x n (base + 1)]
       grind
 
+/-- The power sum of a coefficientwise difference is the difference of the two
+power sums. -/
 private theorem evalCoeffPowerSumUpTo_sub
     (f h : FpPoly p) (x : ZMod64 p) :
     ∀ n base,
@@ -1245,6 +1282,8 @@ private theorem evalCoeffPowerSumUpTo_sub
       rw [evalCoeffPowerSumUpTo_sub f h x n (base + 1)]
       grind
 
+/-- Scaling every coefficient by a constant scales the power sum by that
+constant. -/
 private theorem evalCoeffPowerSumUpTo_const_mul
     (c : ZMod64 p) (coeff : Nat → ZMod64 p) (x : ZMod64 p) :
     ∀ n base,
@@ -1257,6 +1296,8 @@ private theorem evalCoeffPowerSumUpTo_const_mul
       rw [evalCoeffPowerSumUpTo_const_mul c coeff x n (base + 1)]
       grind
 
+/-- Multiplying a shifted-coefficient power sum by `x^shift` rebases it to start
+at exponent `shift + base`. -/
 private theorem evalCoeffPowerSumUpTo_rebase_mul
     (coeff : Nat → ZMod64 p) (x : ZMod64 p) (shift : Nat) :
     ∀ n base,
@@ -1282,6 +1323,7 @@ private theorem evalCoeffPowerSumUpTo_rebase_mul
       rw [hterm]
       grind
 
+/-- Prepending `shift` zero coefficients multiplies the power sum by `x^shift`. -/
 private theorem evalCoeffPowerSumUpTo_zero_prefix_shift
     (coeff : Nat → ZMod64 p) (x : ZMod64 p) :
     ∀ shift n,
@@ -1334,6 +1376,8 @@ private theorem evalCoeffPowerSumUpTo_zero_prefix_shift
       rw [Lean.Grind.Semiring.pow_succ x shift]
       grind
 
+/-- A polynomial's size is at most `bound` when all coefficients from `bound`
+onward vanish. -/
 private theorem size_le_of_coeff_eq_zero_from (f : FpPoly p) (bound : Nat)
     (hzero : ∀ i, bound ≤ i → f.coeff i = 0) :
     f.size ≤ bound := by
