@@ -2205,7 +2205,7 @@ private def yunFactorsWithLevel
       if isOne c then
         (accRev, w)
       else
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         let accRev' :=
           if isOne z then
@@ -2224,7 +2224,7 @@ private def yunFactors
       if isOne c then
         (accRev, w)
       else
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         let accRev' :=
           if isOne z then
@@ -2245,7 +2245,7 @@ private def yunFactorsContributionWithLevel
       if isOne c then
         (1, w)
       else
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         let tail := yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel
         let contribution :=
@@ -2262,7 +2262,7 @@ private def yunFactorsContribution
       if isOne c then
         (1, w)
       else
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         let tail := yunFactorsContribution y (w / y) (i + 1) fuel
         let contribution :=
@@ -2287,7 +2287,7 @@ private theorem yunFactorsWithLevel_reconstruction_invariant
       by_cases hc : isOne c
       · simp [hc]
       · simp [hc]
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         by_cases hz : isOne z
         · simpa [y, z, hz] using ih y (w / y) (level + 1) accRev
@@ -2333,7 +2333,7 @@ private theorem yunFactors_reconstruction_invariant
       by_cases hc : isOne c
       · simp [hc]
       · simp [hc]
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         by_cases hz : isOne z
         · simpa [y, z, hz] using ih y (w / y) (i + 1) accRev
@@ -2376,7 +2376,7 @@ private def squareFreeAuxRevContribution (f : FpPoly p) (multiplicity : Nat) :
         if df.isZero then
           squareFreeAuxRevContribution (pthRoot f) (multiplicity * p) fuel
         else
-          let g := DensePoly.gcd f df
+          let g := monicGcd f df
           let c := f / g
           let contribution := yunFactorsContributionWithLevel c g multiplicity 1 fuel
           if isOne contribution.2 then
@@ -3207,7 +3207,7 @@ private theorem gcd_isZero_false_of_right_isZero_false
 private theorem yunFactorsContribution_step_split
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) :
-    let y := DensePoly.gcd c w
+    let y := monicGcd c w
     let z := c / y
     z * y = c ∧ (w / y) * y = w := by
   constructor
@@ -3522,7 +3522,7 @@ private theorem yunStep_common_dvd_derivative_current
     (hdz : d ∣ c / DensePoly.gcd c w)
     (hdy : d ∣ DensePoly.gcd c w) :
     d ∣ DensePoly.derivative c := by
-  let y := DensePoly.gcd c w
+  let y := monicGcd c w
   let z := c / y
   have hprod : z * y = c := by
     simpa [z, y] using div_gcd_mul_reconstruct c w
@@ -3737,7 +3737,7 @@ private theorem yunFactorsContribution_step_of_not_isOne_of_not_isOne_z
 private theorem yunFactorsContribution_tail_repeated_descent
     (c w : FpPoly p) (multiplicity fuel : Nat)
     (hc : isOne c = false) :
-    let y := DensePoly.gcd c w
+    let y := monicGcd c w
     let tail := yunFactorsContribution y (w / y) (multiplicity + 1) fuel
     let contribution := yunFactorsContribution c w multiplicity (fuel + 1)
     contribution.2 = tail.2 ∧
@@ -3811,7 +3811,7 @@ private theorem yunFactorsContribution_step_target_combiner
           (yunFactorsContribution
             (DensePoly.gcd c w) (w / DensePoly.gcd c w)
             (multiplicity + 1) fuel).1 = target) :
-    let y := DensePoly.gcd c w
+    let y := monicGcd c w
     let tail :=
       yunFactorsContribution y (w / y) (multiplicity + 1) fuel
     let contribution := yunFactorsContribution c w multiplicity (fuel + 1)
@@ -4135,7 +4135,7 @@ private def squareFreeAuxRev (f : FpPoly p) (multiplicity : Nat) :
         if df.isZero then
           squareFreeAuxRev (pthRoot f) (multiplicity * p) fuel accRev
         else
-          let g := DensePoly.gcd f df
+          let g := monicGcd f df
           let c := f / g
           let loop := yunFactorsWithLevel c g multiplicity 1 fuel accRev
           let accRev' := loop.1
@@ -4267,7 +4267,7 @@ private theorem yunFactorsPairwiseReachable_step
 
 private def yunFactorsCurrentTailCoprime
     (c w : FpPoly p) (base level fuel : Nat) : Prop :=
-  let y := DensePoly.gcd c w
+  let y := monicGcd c w
   let z := c / y
   ∀ sf ∈ (yunFactorsWithLevel y (w / y) base (level + 1) fuel []).1.reverse,
     squareFreeFactorCoprimeRel { factor := z, multiplicity := base * level } sf
@@ -4276,7 +4276,7 @@ private def yunFactorsPairwiseReady
     (c w : FpPoly p) (base : Nat) : Nat → Nat → Prop
   | _, 0 => True
   | level, fuel + 1 =>
-      let y := DensePoly.gcd c w
+      let y := monicGcd c w
       let z := c / y
       yunFactorsPairwiseReady y (w / y) base (level + 1) fuel ∧
         (isOne c = false →
@@ -4379,7 +4379,7 @@ private theorem yunFactorsWithLevel_reverse_append
       by_cases hc : isOne c
       · simp [hc]
       · simp [hc]
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         by_cases hz : isOne z
         · simpa [y, z, hz] using ih y (w / y) (level + 1) accRev
@@ -4408,7 +4408,7 @@ private theorem yunFactorsWithLevel_repeated_eq_nil
       by_cases hc : isOne c
       · simp [hc]
       · simp [hc]
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         by_cases hz : isOne z
         · simpa [y, z, hz] using ih y (w / y) (level + 1) accRev
@@ -4442,7 +4442,7 @@ private theorem yunFactorsWithLevel_repeated_dvd_repeated_of_acc
       · simp [hc]
         exact ⟨1, by rw [mul_one]⟩
       · simp [hc]
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         have hdiv_tail : w / y ∣ w := by
           exact ⟨y, by simpa [y] using (div_gcd_right_mul_reconstruct c w).symm⟩
@@ -4480,7 +4480,7 @@ private def yunFactorsContributionResidualComplete
       if isOne c then
         isOne w = false → (DensePoly.derivative w).isZero = true
       else
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         yunFactorsContributionResidualComplete y (w / y) (multiplicity + 1) fuel
 
 private theorem yunFactorsContributionResidualDerivativeZero_of_complete
@@ -4504,7 +4504,7 @@ private theorem yunFactorsContributionResidualDerivativeZero_of_complete
           simpa [yunFactorsContribution, hc] using hrepeated
         simpa [yunFactorsContributionResidualDerivativeZero,
           yunFactorsContribution, hc] using hcomplete_here hrepeated_here
-      · let y := DensePoly.gcd c w
+      · let y := monicGcd c w
         have hc_false : isOne c = false := by
           cases h : isOne c
           · rfl
@@ -4541,7 +4541,7 @@ private theorem yunFactorsContributionResidualComplete_of_derivativeZero
             simpa [yunFactorsContribution, hc] using hone_w
           simpa [yunFactorsContribution, hc] using hresidual hres_lifted
         simpa [yunFactorsContributionResidualComplete, hc] using hres_here
-      · let y := DensePoly.gcd c w
+      · let y := monicGcd c w
         have hc_false : isOne c = false := by
           cases h : isOne c
           · rfl
@@ -5846,7 +5846,7 @@ private theorem yunFactorsPairwiseReachable_common_dvd_one
         d ∣ c → d ∣ DensePoly.derivative c → d ∣ (1 : FpPoly p) :=
     yunFactorsPairwiseReachable_current_squarefree c w (fuel + 1) hreachable
   apply hsquarefree d
-  · let y := DensePoly.gcd c w
+  · let y := monicGcd c w
     let z := c / y
     have hprod : z * y = c := by
       simpa [z, y] using div_gcd_mul_reconstruct c w
@@ -5899,7 +5899,7 @@ private theorem yunStep_quotient_tail_common_dvd_one_of_reachable
         d ∣ w / DensePoly.gcd c w →
           d ∣ (1 : FpPoly p) := by
   intro d hda hdz
-  let y := DensePoly.gcd c w
+  let y := monicGcd c w
   let a := c / y
   let z := w / y
   have hcy : a * y = c := by
@@ -5984,11 +5984,11 @@ private theorem yunStep_residual_dvd_derivative_product_of_previous
     (c w : FpPoly p) (fuel : Nat)
     (hreachable : yunFactorsPairwiseReachable c w (fuel + 1))
     (hprev : w ∣ DensePoly.derivative (c * w)) :
-    let y := DensePoly.gcd c w
+    let y := monicGcd c w
     let z := w / y
     z ∣ DensePoly.derivative (y * z) := by
   dsimp
-  let y := DensePoly.gcd c w
+  let y := monicGcd c w
   let a := c / y
   let z := w / y
   have hcy : a * y = c := by
@@ -6755,7 +6755,7 @@ private theorem yunStep_tail_derivative_isZero_of_derivative_isZero_of_common_dv
           d ∣ w / DensePoly.gcd c w →
             d ∣ (1 : FpPoly p)) :
     (DensePoly.derivative (w / DensePoly.gcd c w)).isZero = true := by
-  let y := DensePoly.gcd c w
+  let y := monicGcd c w
   let z := w / y
   have hprod : z * y = w := by
     simpa [y, z] using div_gcd_right_mul_reconstruct c w
@@ -6799,7 +6799,7 @@ private theorem yunFactorsContributionResidualComplete_of_derivative_zero_common
           cases h : isOne c
           · rfl
           · exact False.elim (hc h)
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         have htail_der :
             (DensePoly.derivative (w / y)).isZero = true := by
           simpa [y] using
@@ -7497,7 +7497,7 @@ private theorem yunFactorsDerivativeActiveReachable_nonzero
           rw [← hprod, hc_zero, zero_mul]
       simpa [c, g] using And.intro hc_nonzero hg_nonzero
   | step c w fuel _ ih =>
-      let y := DensePoly.gcd c w
+      let y := monicGcd c w
       let z := w / y
       have hy_nonzero : y.isZero = false := by
         simpa [y] using gcd_isZero_false_of_right_isZero_false c w ih.2
@@ -8563,7 +8563,7 @@ private theorem yunFactorsContributionResidualComplete_of_pairwise_reachable_lev
           cases h : isOne c
           · rfl
           · exact False.elim (hc h)
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         have htail_reachable :
             yunFactorsPairwiseReachable y (w / y) fuel := by
           simpa [y] using yunFactorsPairwiseReachable_step c w fuel hreachable
@@ -9003,7 +9003,7 @@ private theorem yunFactorsWithLevel_factor_mem_acc_or_dvd_current
         intro sf hsf
         exact Or.inl hsf
       · simp [hc]
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         have hy_dvd_c : y ∣ c := by
           simpa [y] using DensePoly.gcd_dvd_left c w
@@ -9074,7 +9074,7 @@ private theorem yunStep_quotient_right_factor_coprime_of_common_dvd_one
       { factor := c / DensePoly.gcd c w, multiplicity := multiplicity }
       { factor := factor, multiplicity := tailMultiplicity } := by
   let z := c / DensePoly.gcd c w
-  let y := DensePoly.gcd c w
+  let y := monicGcd c w
   have hz_dvd_c : z ∣ c := by
     refine ⟨y, ?_⟩
     simpa [z, y] using (div_gcd_mul_reconstruct c w).symm
@@ -9179,7 +9179,7 @@ private theorem yunFactorsWithLevel_factors_coprime_repeated_of_reachable
       by_cases hc : isOne c
       · simp [hc]
       · simp [hc]
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         let sf : SquareFreeFactor p := { factor := z, multiplicity := base * level }
         let tail := yunFactorsWithLevel y (w / y) base (level + 1) fuel []
@@ -9557,7 +9557,7 @@ private theorem yunFactorsWithLevel_pairwise_coprime_nil_of_ready
           cases h : isOne c with
           | false => rfl
           | true => exact False.elim (hc h)
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         have hready_unpack :
             yunFactorsPairwiseReady y (w / y) base (level + 1) fuel ∧
@@ -9947,7 +9947,7 @@ private def yunFactorsStepsSquareFree (c w : FpPoly p) : Nat → Prop
       if isOne c then
         True
       else
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         (if isOne z then
           True
@@ -9966,7 +9966,7 @@ private theorem yunFactorsStepsSquareFree_of_reachable
   | succ fuel ih =>
       by_cases hc : isOne c
       · simp [yunFactorsStepsSquareFree, hc]
-      · let y := DensePoly.gcd c w
+      · let y := monicGcd c w
         let z := c / y
         have hcurrent :
             ∀ d : FpPoly p,
@@ -10026,7 +10026,7 @@ private theorem yunFactorsWithLevel_factors_squareFree_of_steps
       by_cases hc : isOne c
       · simpa [hc] using hacc
       · simp [hc]
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         have hsteps_nonone :
             (if isOne z then
@@ -10224,7 +10224,7 @@ private theorem yunFactorsWithLevel_multiplicity_pos_raw
       by_cases hc : isOne c
       · simpa [hc] using hacc
       · simp [hc]
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         by_cases hz : isOne z
         · simpa [y, z, hz] using
