@@ -2302,6 +2302,9 @@ theorem luebeckConwayPolynomial_13_6_irreducible :
     (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
       luebeckConwayPolynomial_13_6 luebeckConwayPolynomial_13_6_monic cert_13_6 cert_13_6_incremental_check)
 
+/-- The coefficient-list constructor for the committed `C(2, 1)` Conway entry
+yields an irreducible `FpPoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's irreducibility proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_2_1_irreducible :
     FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 2 [1, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_2_1
@@ -2313,6 +2316,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_2_1_irreducible :
   rw [hpoly]
   exact luebeckConwayPolynomial_2_1_irreducible
 
+/-- The coefficient-list constructor for the committed `C(2, 2)` Conway entry
+yields an irreducible `FpPoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's irreducibility proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_2_2_irreducible :
     FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_2_2
@@ -2324,6 +2330,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_2_2_irreducible :
   rw [hpoly]
   exact luebeckConwayPolynomial_2_2_irreducible
 
+/-- The coefficient-list constructor for the committed `C(2, 3)` Conway entry
+yields an irreducible `FpPoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's irreducibility proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_2_3_irreducible :
     FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_2_3
@@ -2335,6 +2344,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_2_3_irreducible :
   rw [hpoly]
   exact luebeckConwayPolynomial_2_3_irreducible
 
+/-- The coefficient-list constructor for the committed `C(2, 4)` Conway entry
+yields an irreducible `FpPoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's irreducibility proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_2_4_irreducible :
     FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 0, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_2_4
@@ -2346,6 +2358,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_2_4_irreducible :
   rw [hpoly]
   exact luebeckConwayPolynomial_2_4_irreducible
 
+/-- The coefficient-list constructor for the committed `C(2, 5)` Conway entry
+yields an irreducible `FpPoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's irreducibility proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_2_5_irreducible :
     FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 2 [1, 0, 1, 0, 0, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_2_5
@@ -2357,6 +2372,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_2_5_irreducible :
   rw [hpoly]
   exact luebeckConwayPolynomial_2_5_irreducible
 
+/-- The coefficient-list constructor for the committed `C(2, 6)` Conway entry
+yields an irreducible `FpPoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's irreducibility proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_2_6_irreducible :
     FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 1, 1, 0, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_2_6
@@ -2368,6 +2386,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_2_6_irreducible :
   rw [hpoly]
   exact luebeckConwayPolynomial_2_6_irreducible
 
+/-- The coefficient-list constructor for the committed `C(3, 1)` Conway entry
+yields an irreducible `FpPoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's irreducibility proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_3_1_irreducible :
     FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 3 [1, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_3_1
@@ -2379,6 +2400,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_3_1_irreducible :
   rw [hpoly]
   exact luebeckConwayPolynomial_3_1_irreducible
 
+/-- The coefficient-list constructor for the committed `C(3, 2)` Conway entry
+yields an irreducible `FpPoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's irreducibility proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_3_2_irreducible :
     FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 3 [2, 2, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_3_2
@@ -2390,6 +2414,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_3_2_irreducible :
   rw [hpoly]
   exact luebeckConwayPolynomial_3_2_irreducible
 
+/-- The coefficient-list constructor for the committed `C(3, 3)` Conway entry
+yields an irreducible `FpPoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's irreducibility proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_3_3_irreducible :
     FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 3 [1, 2, 0, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_3_3
@@ -2401,6 +2428,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_3_3_irreducible :
   rw [hpoly]
   exact luebeckConwayPolynomial_3_3_irreducible
 
+/-- The coefficient-list constructor for the committed `C(3, 4)` Conway entry
+yields an irreducible `FpPoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's irreducibility proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_3_4_irreducible :
     FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 3 [2, 0, 0, 2, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_3_4
@@ -2412,6 +2442,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_3_4_irreducible :
   rw [hpoly]
   exact luebeckConwayPolynomial_3_4_irreducible
 
+/-- The coefficient-list constructor for the committed `C(3, 5)` Conway entry
+yields an irreducible `FpPoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's irreducibility proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_3_5_irreducible :
     FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 3 [1, 2, 0, 0, 0, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_3_5
@@ -2423,6 +2456,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_3_5_irreducible :
   rw [hpoly]
   exact luebeckConwayPolynomial_3_5_irreducible
 
+/-- The coefficient-list constructor for the committed `C(3, 6)` Conway entry
+yields an irreducible `FpPoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's irreducibility proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_3_6_irreducible :
     FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 3 [2, 2, 1, 0, 2, 0, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_3_6
