@@ -599,6 +599,13 @@ def checkPowChainLinearIncrementalQuotientWitnessStep
           ((prev * prev).coeffs == (curr + quot * f).coeffs))
   | _, _, _ => false
 
+/--
+Soundness of `checkPowChainLinearIncrementalQuotientWitnessStep` from
+explicit chain and quotient entries: given `powChain[k] = prev`,
+`powChain[k+1] = curr`, `quotients[k] = quot`, both entries reduced below
+`deg f`, and the witnessed identity `prev * prev = curr + quot * f` on
+coefficients, the checker returns `true`.
+-/
 theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entries
     (f prev curr quot : FpPoly 2)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -614,6 +621,11 @@ theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entries
   rw [hprev, hcurr, hquot]
   simp [hprevRed, hcurrRed, hmulCoeffs]
 
+/--
+`_of_entries` restated with the two degree bounds and the coefficient
+equality supplied as `decide`/`==` Booleans, matching the form the checker
+itself evaluates.
+-/
 theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_bools
     (f prev curr quot : FpPoly 2)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -634,6 +646,11 @@ theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_bools
   · exact of_decide_eq_true hcurrRed
   · exact eq_of_beq hmulCoeffs
 
+/--
+A `DensePoly` whose coefficient `size` is at most `n` (with `0 < n`) has
+`degree?.getD 0 < n`. Converts a coefficient-count bound into the degree
+bound consumed by the quotient-witness step lemmas.
+-/
 theorem degree?_getD_lt_of_size_le
     {R : Type u} [Zero R] [DecidableEq R] (g : DensePoly R) {n : Nat}
     (hnpos : 0 < n) (hsize : g.size ≤ n) :
@@ -644,6 +661,11 @@ theorem degree?_getD_lt_of_size_le
   · simp [hzero]
     omega
 
+/--
+`_of_entries` restated with the two reducedness hypotheses replaced by
+`size` bounds on the chain entries, discharged through
+`degree?_getD_lt_of_size_le`.
+-/
 theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
     (f prev curr quot : FpPoly 2)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -665,20 +687,34 @@ theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
   · exact degree?_getD_lt_of_size_le curr hfpos hcurrSize
   · exact hmulCoeffs
 
+/--
+The `i`-th coefficient in `ZMod64 2` of a packed `UInt64` bit-word: `1`
+when bit `i` of `bits` is set, `0` otherwise.
+-/
 def gf2BitCoeff (bits : UInt64) (i : Nat) : ZMod64 2 :=
   if (((bits >>> i.toUInt64) &&& 1) = 0) then
     0
   else
     1
 
+/--
+Reinterpret the low `width` bits of `bits` as an `FpPoly 2`, with
+coefficient `i` given by `gf2BitCoeff bits i`.
+-/
 def gf2WordPoly (bits : UInt64) (width : Nat) : FpPoly 2 :=
   FpPoly.ofCoeffs (((List.range width).map fun i => gf2BitCoeff bits i).toArray)
 
+/-- `gf2WordPoly bits width` has coefficient `size` at most `width`. -/
 theorem gf2WordPoly_size_le (bits : UInt64) (width : Nat) :
     (gf2WordPoly bits width).size ≤ width := by
   unfold gf2WordPoly FpPoly.ofCoeffs
   exact Nat.le_trans (DensePoly.size_ofCoeffs_le _) (by simp)
 
+/--
+If `width ≤ bound` and `0 < bound`, then
+`(gf2WordPoly bits width).degree?.getD 0 < bound`; the degree bound used
+when feeding a bit-word polynomial to the witness step.
+-/
 theorem gf2WordPoly_degree?_getD_lt
     (bits : UInt64) {width bound : Nat} (hwidth_pos : 0 < bound)
     (hwidth : width ≤ bound) :
@@ -686,6 +722,10 @@ theorem gf2WordPoly_degree?_getD_lt
   degree?_getD_lt_of_size_le (gf2WordPoly bits width) hwidth_pos
     (Nat.le_trans (gf2WordPoly_size_le bits width) hwidth)
 
+/--
+Coefficient `i` of `gf2WordPoly bits width` is `gf2BitCoeff bits i` when
+`i < width`, and `0` otherwise.
+-/
 theorem gf2WordPoly_coeff (bits : UInt64) (width i : Nat) :
     (gf2WordPoly bits width).coeff i =
       if i < width then gf2BitCoeff bits i else 0 := by
