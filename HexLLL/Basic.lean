@@ -1691,7 +1691,7 @@ def refreshRow (s : SteeredState n m) (k : Nat) : SteeredState n m :=
 /-- Single-column size reduction `b_k ← b_k − r·b_j` with `r` the rounded float
 coefficient `μ[k][j]`. The basis update is the exact integer
 `GramSchmidt.Int.sizeReduce`; `mu` row `k` is updated incrementally. -/
-def reduceColumn (s : SteeredState n m) (j k : Fin n) (hjk : j.val < k.val) :
+def reduceColumn (s : SteeredState n m) (j k : Fin n) (_hjk : j.val < k.val) :
     SteeredState n m :=
   let r := fRound ((s.mu[k.val]!)[j.val]!)
   if r = 0 then s
@@ -1776,7 +1776,7 @@ def loop (δsteer : Float) (period : Nat) (s : SteeredState n m) (k cnt : Nat) :
     Nat → SteeredState n m
   | 0 => s
   | fuel + 1 =>
-    if hk : k < n then
+    if _hk : k < n then
       let s := prep period s k cnt
       if 0 < k then
         let km1 := k - 1
