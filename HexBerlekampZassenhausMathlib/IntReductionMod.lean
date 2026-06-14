@@ -3918,8 +3918,10 @@ Correspondence package between the `toMonic` lift of `core` and the
 factorization data of the original primitive positive-leading `core`.
 
 The Hensel lift is built from `(Hex.ZPoly.toMonic core).monic`, while the
-factor correspondence, scaled recovery theorem, and exhaustive-wrapper
-membership statement remain phrased over the original `core`.
+factor correspondence, the dilate-model recovery theorem
+(`recovery_of_bound`, recovering `liftedRecoveryCandidate core d S`), and the
+exhaustive-wrapper membership statement remain phrased over the original
+`core`.
 -/
 structure MonicReductionCorrespondence
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
@@ -3950,14 +3952,14 @@ structure MonicReductionCorrespondence
     HenselSubsetCorrespondenceHypotheses core B primeData d True True
   partition :
     LiftedFactorSubsetPartition core d Finset.univ core
-  scaled_recovery_of_bound :
-    ∀ {factor : Hex.ZPoly} {S : LiftedFactorSubset d} {B' : Nat},
-      (∀ i, (factor.coeff i).natAbs ≤ B') →
-      Hex.ZPoly.content factor = 1 →
+  recovery_of_bound :
+    ∀ {factor : Hex.ZPoly} {S : LiftedFactorSubset d},
+      (Hex.ZPoly.toMonic core).monic ≠ 0 →
       Hex.normalizeFactorSign factor = factor →
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        d.p ^ d.k →
       RepresentsIntegerFactorAtLift core d factor S →
-      2 * B' < d.p ^ d.k →
-      scaledRecombinationCandidate core d S = factor
+      liftedRecoveryCandidate core d S = factor
   exhaustive_mem_of_scaled_search :
     ∀ {factor : Hex.ZPoly} {factors : List Hex.ZPoly},
       B ≠ 0 →
@@ -4062,7 +4064,7 @@ theorem monicReductionCorrespondence_of_normalizeForFactor_squareFreeCore
       liftedFactor_injective_of_monicPrimeData := ?_
       correspondence := ?_
       partition := ?_
-      scaled_recovery_of_bound := ?_
+      recovery_of_bound := ?_
       exhaustive_mem_of_scaled_search := ?_ }
   · intro hselected
     exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
@@ -4086,15 +4088,9 @@ theorem monicReductionCorrespondence_of_normalizeForFactor_squareFreeCore
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f)
         primeData hchoose hsqfree hdescent hlifted_of_modP hinitial
-  · intro factor S B' hvalid hfactor_prim hfactor_norm hrep hprecision
-    exact scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence_of_bound
-      (by
-        simpa [core, B] using
-          henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
-            (Hex.normalizeForFactor f).squareFreeCore
-            (Hex.ZPoly.defaultFactorCoeffBound f)
-            primeData hchoose hdescent hlifted_of_modP)
-      B' hvalid hcore_ne hfactor_prim hfactor_norm hrep hprecision
+  · intro factor S hmonic_ne hfactor_norm hprecision hrep
+    rcases hrep with ⟨hrec⟩
+    exact hrec.candidate_eq_of_monic_dvd hmonic_ne hfactor_norm hprecision
   · intro factor factors hB_ne hsearch hmem
     exact exhaustiveCoreFactorsWithBound_mem_of_scaledRecombinationSearchMod_some
       (core := core) (B := B) (primeData := primeData) (d := d)

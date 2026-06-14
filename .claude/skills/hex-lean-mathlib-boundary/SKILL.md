@@ -110,6 +110,18 @@ independently landable green — the executable change and the Mathlib remodel
 must land in one PR. Scope accordingly (see #6799 / #6801 for the
 `DensePoly.scale` → `ZPoly.dilate` example).
 
+**Build the target module first to get the real in-scope error set — it is
+usually a handful of errors, not the whole conceptual chain.** Before hand-
+tracing a scale→dilate (or similar) cascade through dozens of wrapper
+theorems, run `lake build HexBerlekampZassenhausMathlib.<Module>` and grep the
+log for `error:`. A conceptually huge cascade often surfaces as only 2-3 red
+declarations, because most wrappers typecheck against the *signature* of a
+broken callee and only the body fails. Separate the in-scope errors from any
+known out-of-scope group (e.g. the #7122 `factorFast_ne_none_of_forwardInputs_on_schedule`
+heartbeat/unknown-constant cluster) up front, then read only what those few
+errors touch. This right-sizes the work and avoids burning context reading
+wrappers that already compile.
+
 **Size the migration before deep-reading proofs.** When a predicate like
 `RepresentsIntegerFactorAtLift` flips from being *defeq* to a recovery equality
 (e.g. the scaled `reduceModPow` congruence) to wrapping a *structure*
