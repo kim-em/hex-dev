@@ -110,6 +110,27 @@ independently landable green — the executable change and the Mathlib remodel
 must land in one PR. Scope accordingly (see #6799 / #6801 for the
 `DensePoly.scale` → `ZPoly.dilate` example).
 
+**Size the migration before deep-reading proofs.** When a predicate like
+`RepresentsIntegerFactorAtLift` flips from being *defeq* to a recovery equality
+(e.g. the scaled `reduceModPow` congruence) to wrapping a *structure*
+(`Nonempty (RecoveredAtLift …)`), every consumer that fed `hrep` into a recovery
+lemma breaks, and the dilate bridge (`RecoveredAtLift.candidate_eq_of_monic_dvd`)
+needs a *different precision/bound model* than the consumers carry — the bound
+moves from the factor to the monic-coordinate witness (`(toMonic core).monic`),
+plus `hmonic_ne` / `hfactor_norm`. That new hypothesis cascades through every
+caller up to the top driver (where `(toMonic core).monic = core` collapses it).
+So before sinking a session into per-theorem reads: for each erroring consumer,
+`grep -n "<name>_of_bound\b"` the **caller fan-out**. If a forced signature
+change hits more than a handful of callers (each re-cascading), it is a
+multi-session remodel with no intermediate green state — land the cascade-free
+fixes (e.g. a `2 ≤ d.p^k` derivable straight from precision +
+`defaultFactorCoeffBound_pos_of_ne_zero`, not from a recovery lemma), then
+partial + scope the rest in one accurately-sized follow-up rather than
+attempting the whole cascade blind. Watch for a hidden soundness signal too:
+the new `RecoveredAtLift.dilate_eq` carries no `normalizeFactorSign`, so a
+`0 < leadingCoeff factor` conclusion is only valid for sign-normalised factors —
+the consumer must gain `hfactor_norm`, which callers do supply.
+
 ### "Final integration" issues: confirm the substrate *producer* exists, not just that the feeder issue closed
 
 A `feature` issue that says "instantiate `SlowPathHenselSubstrate` / `…Evidence`
