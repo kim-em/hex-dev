@@ -128,7 +128,11 @@ Only the project's own files then rebuild.
 Before attributing a Mathlib-layer build failure to your own change, build the
 **unmodified** target on a clean tree to get a red/green baseline
 (`lake build HexBerlekampZassenhausMathlib.<Module>`), and `git diff origin/main
--- <file>` to confirm the failing file is untouched by you. A faster
+-- <file>` to confirm the failing file is untouched by you. When you capture
+that build with `| tee <log>`, the pipeline's exit status is `tee`'s, so a
+`run_in_background` completion notification reports **exit 0 even on a failed
+build** — judge red/green by grepping the log for `error:` / `build failed`,
+never by the reported exit code. A faster
 single-build attribution when your change is purely additive *within* the same
 file: Lean reports every per-declaration error and keeps elaborating past a
 failed declaration, so if the build log's only `error:` line numbers fall
