@@ -128,11 +128,21 @@ reduced mod 2. -/
 private def polyP2 (coeffs : Array Nat) : FpPoly 2 :=
   FpPoly.ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 2 n))
 
+/-- `Berlekamp.maximalProperDivisors 4 = [2]`: the maximal proper divisors of 4
+used by the Rabin Frobenius-difference checks at degree 4. -/
 private theorem maxProperDiv_4 : Berlekamp.maximalProperDivisors 4 = [2] := by decide
+/-- `Berlekamp.maximalProperDivisors 8 = [4]`: the maximal proper divisors of 8
+used by the Rabin Frobenius-difference checks at degree 8. -/
 private theorem maxProperDiv_8 : Berlekamp.maximalProperDivisors 8 = [4] := by decide
+/-- `Berlekamp.maximalProperDivisors 16 = [8]`: the maximal proper divisors of 16
+used by the Rabin Frobenius-difference checks at degree 16. -/
 private theorem maxProperDiv_16 : Berlekamp.maximalProperDivisors 16 = [8] := by decide
+/-- `Berlekamp.maximalProperDivisors 32 = [16]`: the maximal proper divisors of 32
+used by the Rabin Frobenius-difference checks at degree 32. -/
 private theorem maxProperDiv_32 : Berlekamp.maximalProperDivisors 32 = [16] := by decide
 
+/-- Irreducibility certificate (Frobenius power chain plus Bézout witness) for the
+packed degree-4 `GF(2)` modulus. -/
 private def genericN4Cert : Berlekamp.IrreducibilityCertificate where
   p := 2
   n := 4
@@ -142,6 +152,8 @@ private def genericN4Cert : Berlekamp.IrreducibilityCertificate where
   bezout := #[{ left := polyP2 #[], right := polyP2 #[1] }]
 
 set_option maxRecDepth 4096 in
+/-- `genericN4Cert` passes the linear irreducibility-certificate check against the
+packed degree-4 `GF(2)` modulus `0x3`. -/
 private theorem genericN4Cert_check :
     Berlekamp.checkIrreducibilityCertificateLinear
         (Conway.packedGF2FpPoly 0x3 4)
@@ -163,6 +175,8 @@ private theorem genericN4Cert_check :
     · rfl
   · rfl
 
+/-- The packed degree-4 `GF(2)` modulus `0x3` is irreducible, certified via
+`genericN4Cert`. -/
 private theorem genericN4_irr :
     FpPoly.Irreducible (Conway.packedGF2FpPoly 0x3 4) :=
   Berlekamp.rabinTest_imp_irreducible (Conway.packedGF2FpPoly 0x3 4)
@@ -173,6 +187,8 @@ private theorem genericN4_irr :
       genericN4Cert
       genericN4Cert_check)
 
+/-- Irreducibility certificate (Frobenius power chain plus Bézout witness) for the
+packed degree-8 `GF(2)` modulus. -/
 private def genericN8Cert : Berlekamp.IrreducibilityCertificate where
   p := 2
   n := 8
@@ -186,6 +202,8 @@ private def genericN8Cert : Berlekamp.IrreducibilityCertificate where
         right := polyP2 #[1, 0, 0, 0, 1, 0, 1] }]
 
 set_option maxRecDepth 4096 in
+/-- `genericN8Cert` passes the incremental linear irreducibility-certificate check
+against the packed degree-8 `GF(2)` modulus `0x1B`. -/
 private theorem genericN8Cert_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         (Conway.packedGF2FpPoly 0x1B 8)
@@ -212,6 +230,8 @@ private theorem genericN8Cert_check :
     · rfl
   · rfl
 
+/-- The packed degree-8 `GF(2)` modulus `0x1B` is irreducible, certified via
+`genericN8Cert`. -/
 private theorem genericN8_irr :
     FpPoly.Irreducible (Conway.packedGF2FpPoly 0x1B 8) :=
   Berlekamp.rabinTest_imp_irreducible (Conway.packedGF2FpPoly 0x1B 8)
@@ -222,6 +242,8 @@ private theorem genericN8_irr :
       genericN8Cert
       genericN8Cert_check)
 
+/-- Irreducibility certificate (Frobenius power chain plus Bézout witness) for the
+packed degree-16 `GF(2)` modulus. -/
 private def genericN16Cert : Berlekamp.IrreducibilityCertificate where
   p := 2
   n := 16
@@ -245,33 +267,43 @@ private def genericN16Cert : Berlekamp.IrreducibilityCertificate where
     #[{ left := polyP2 #[0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1],
         right := polyP2 #[1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1] }]
 
+/-- The packed degree-16 `GF(2)` modulus `0x100B` as an `FpPoly 2`. -/
 private def genericN16Mod : FpPoly 2 :=
   Conway.packedGF2FpPoly 0x100B 16
 
+/-- The packed degree-16 `GF(2)` modulus `genericN16Mod` is monic. -/
 private theorem genericN16Mod_monic : DensePoly.Monic genericN16Mod := by
   unfold genericN16Mod Conway.packedGF2FpPoly
   rfl
 
+/-- The packed degree-16 `GF(2)` modulus `genericN16Mod` has degree 16. -/
 private theorem genericN16Mod_degree_eq : genericN16Mod.degree?.getD 0 = 16 := by
   unfold genericN16Mod Conway.packedGF2FpPoly DensePoly.degree? DensePoly.size
   rfl
 
+/-- The packed degree-16 `GF(2)` modulus `genericN16Mod` has positive degree. -/
 private theorem genericN16Mod_degree_pos : 0 < genericN16Mod.degree?.getD 0 := by
   rw [genericN16Mod_degree_eq]
   decide
 
+/-- Any `polyP2` built from at most 16 coefficients has size within the degree of
+`genericN16Mod`, the size bound the quotient-witness steps require. -/
 private theorem polyP2_size_le_16 {arr : Array Nat} (h : arr.size ≤ 16) :
     (polyP2 arr).size ≤ genericN16Mod.degree?.getD 0 := by
   rw [genericN16Mod_degree_eq]
   unfold polyP2 FpPoly.ofCoeffs
   exact Nat.le_trans (DensePoly.size_ofCoeffs_le _) (by simpa using h)
 
+/-- The same-prime view of `genericN16Cert`, reusing its power chain and Bézout
+witness as a `SamePrimeIrreducibilityCertificate 2`. -/
 private def genericN16SamePrimeCert :
     Berlekamp.SamePrimeIrreducibilityCertificate 2 where
   n := genericN16Cert.n
   powChain := genericN16Cert.powChain
   bezout := genericN16Cert.bezout
 
+/-- The per-step quotient witnesses for the degree-16 power chain, supplied to the
+quotient-witness check steps. -/
 private def genericN16Quotients : Array (FpPoly 2) :=
   #[
     polyP2 #[],
@@ -294,6 +326,8 @@ private def genericN16Quotients : Array (FpPoly 2) :=
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 0 of the degree-16 power chain passes the quotient-witness check against
+`genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step0_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericN16Mod genericN16SamePrimeCert genericN16Quotients 0 = true := by
@@ -313,6 +347,8 @@ private theorem genericN16_step0_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 1 of the degree-16 power chain passes the quotient-witness check against
+`genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step1_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericN16Mod genericN16SamePrimeCert genericN16Quotients 1 = true := by
