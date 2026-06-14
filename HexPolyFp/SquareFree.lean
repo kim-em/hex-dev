@@ -7637,6 +7637,64 @@ private theorem yunFactorsDerivativeActiveReachable_nonzero
           cases ih.2
       simpa [y, z] using And.intro hy_nonzero hz_nonzero
 
+/-- Every node reachable in the derivative-active Yun recursion has a monic
+residual `w`, and both `c` and `w` are nonzero and square-free-contribution
+reachable. The monic residual is the load-bearing invariant: `w` starts monic
+(a `monicGcd`) and each `step` keeps it monic, while `c` is either a `monicGcd`
+(monic) or the derivative-split quotient (whose `squareFreeContributionReachable`
+is the vacuous size-one case). This is what discharges the former
+`YunDerivativeActiveRawStateProvider` hypothesis. -/
+private theorem yunFactorsDerivativeActiveReachable_state
+    (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (fuel : Nat)
+    (hr : yunFactorsDerivativeActiveReachable hp f c w fuel) :
+    DensePoly.Monic w ∧
+      squareFreeContributionReachable c ∧ c.isZero = false ∧
+        squareFreeContributionReachable w ∧ w.isZero = false := by
+  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
+  induction hr with
+  | derivativeSplit fuel hdf =>
+      have hdf_false : (DensePoly.derivative f).isZero = false := by
+        cases h : (DensePoly.derivative f).isZero
+        · rfl
+        · exact False.elim (hdf h)
+      have hgcd_ne : (DensePoly.gcd f (DensePoly.derivative f)).isZero = false :=
+        gcd_isZero_false_of_right_isZero_false f (DensePoly.derivative f) hdf_false
+      have hw_monic : DensePoly.Monic (monicGcd f (DensePoly.derivative f)) :=
+        monicGcd_monic_of_gcd_nonzero f (DensePoly.derivative f) hgcd_ne
+      have hnonzero := yunFactorsDerivativeActiveReachable_nonzero hp f
+        (f / monicGcd f (DensePoly.derivative f))
+        (monicGcd f (DensePoly.derivative f)) fuel
+        (yunFactorsDerivativeActiveReachable.derivativeSplit fuel hdf)
+      refine ⟨hw_monic, ?_, hnonzero.1, ?_, hnonzero.2⟩
+      · exact derivativeSplit_quotient_size_one_eq_one hp f hdf
+      · exact squareFreeContributionReachable_of_monic _ hw_monic
+  | step c w fuel _hr_prev ih =>
+      obtain ⟨hw_monic, _, _, _, hw_zero⟩ := ih
+      have hgcd_ne : (DensePoly.gcd c w).isZero = false :=
+        gcd_isZero_false_of_right_isZero_false c w hw_zero
+      have hy_monic : DensePoly.Monic (monicGcd c w) :=
+        monicGcd_monic_of_gcd_nonzero c w hgcd_ne
+      have hw'_monic : DensePoly.Monic (w / monicGcd c w) :=
+        monic_div_monicGcd_right_of_monic hp c w hw_monic hy_monic
+      have hnonzero := yunFactorsDerivativeActiveReachable_nonzero hp f
+        (monicGcd c w) (w / monicGcd c w) fuel
+        (yunFactorsDerivativeActiveReachable.step c w fuel _hr_prev)
+      refine ⟨hw'_monic, ?_, hnonzero.1, ?_, hnonzero.2⟩
+      · exact squareFreeContributionReachable_of_monic _ hy_monic
+      · exact squareFreeContributionReachable_of_monic _ hw'_monic
+
+/-- The derivative-active raw state provider is unconditionally true: it is just
+the `c`/`w` projection of `yunFactorsDerivativeActiveReachable_state`. This
+discharges the former `hrawState` hypothesis threaded through the contribution
+correctness chain. -/
+private theorem yunDerivativeActiveRawStateProvider_holds
+    (hp : Hex.Nat.Prime p) :
+    YunDerivativeActiveRawStateProvider hp := by
+  intro f c w fuel hr
+  obtain ⟨_, hc_reach, hc_zero, hw_reach, hw_zero⟩ :=
+    yunFactorsDerivativeActiveReachable_state hp f c w fuel hr
+  exact ⟨hc_reach, hc_zero, hw_reach, hw_zero⟩
+
 private theorem yunContribution_scalarSync_raw_one
     [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
     {c w : FpPoly p} {u_c u_w : ZMod64 p}
@@ -10379,8 +10437,7 @@ theorem squareFree_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (residualInvariant :
       ∀ f : FpPoly p, ∀ multiplicity fuel : Nat,
         (DensePoly.derivative f).isZero = false →
-          squareFreeAuxRevResidualSatisfied f multiplicity fuel)
-    (hrawState : YunDerivativeActiveRawStateProvider hp) :
+          squareFreeAuxRevResidualSatisfied f multiplicity fuel) :
     let d := squareFreeDecomposition hp f
     DensePoly.C d.unit * weightedProduct d.factors = f := by
   dsimp [squareFreeDecomposition]
@@ -10395,7 +10452,7 @@ theorem squareFree_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p)
         (normalizeMonic f).2 1 ((normalizeMonic f).2.size + 1)
     rw [squareFreeAux_weightedProduct_nonzero hp (normalizeMonic f).2 hnonzero
       (normalizeMonic_squareFreeContributionReachable hp f)
-      residualInvariant hresidual hrawState]
+      residualInvariant hresidual (yunDerivativeActiveRawStateProvider_holds hp)]
     exact normalizeMonic_reconstruct hp f
 
 theorem squareFree_factors_squareFree (hp : Hex.Nat.Prime p) (f : FpPoly p) :
