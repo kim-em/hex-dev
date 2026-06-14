@@ -25,17 +25,22 @@ private def projectionCoeff (row basisRow : Vector Rat m) : Rat :=
 private def subtractProjection (row basisRow : Vector Rat m) : Vector Rat m :=
   row - projectionCoeff row basisRow • basisRow
 
+/-- If `row` and `other` are both orthogonal to `basis`, then so is `row - c • other`. -/
 private theorem dot_sub_smul_zero_of_dot_zero (row other basis : Vector Rat m) (c : Rat)
     (hrow : Matrix.dot row basis = 0) (hother : Matrix.dot other basis = 0) :
     Matrix.dot (row - c • other) basis = 0 := by
   rw [Matrix.dot_sub_smul_rat, hrow, hother]
   grind
 
+/-- `dot (subtractProjection row basisRow) target` expands as `dot row target`
+minus the projection coefficient times `dot basisRow target`. -/
 private theorem dot_subtractProjection (row basisRow target : Vector Rat m) :
     Matrix.dot (subtractProjection row basisRow) target =
       Matrix.dot row target - projectionCoeff row basisRow * Matrix.dot basisRow target := by
   simp [subtractProjection, Matrix.dot_sub_smul_rat]
 
+/-- Reconstruction identity: `row` is the sum of its residual
+`subtractProjection row basisRow` and its projection onto `basisRow`. -/
 private theorem subtractProjection_add_projection (row basisRow : Vector Rat m) :
     row = subtractProjection row basisRow + projectionCoeff row basisRow • basisRow := by
   apply Vector.ext
@@ -45,6 +50,8 @@ private theorem subtractProjection_add_projection (row basisRow : Vector Rat m) 
   rw [Vector.getElem_add, subtractProjection, Vector.getElem_sub, Vector.getElem_smul]
   grind
 
+/-- If `row` and `basisRow` are both orthogonal to `target`, then so is
+`subtractProjection row basisRow`. -/
 private theorem dot_subtractProjection_zero_of_dot_zero
     (row basisRow target : Vector Rat m)
     (hrow : Matrix.dot row target = 0) (hbasis : Matrix.dot basisRow target = 0) :
@@ -52,6 +59,8 @@ private theorem dot_subtractProjection_zero_of_dot_zero
   rw [dot_subtractProjection, hrow, hbasis]
   grind
 
+/-- The residual `subtractProjection row basisRow` is orthogonal to `basisRow`
+whenever `basisRow` has nonzero norm. -/
 private theorem dot_subtractProjection_self_zero (row basisRow : Vector Rat m)
     (hnorm : Matrix.dot basisRow basisRow ≠ 0) :
     Matrix.dot (subtractProjection row basisRow) basisRow = 0 := by
@@ -59,6 +68,8 @@ private theorem dot_subtractProjection_self_zero (row basisRow : Vector Rat m)
   simp [projectionCoeff, hnorm]
   grind
 
+/-- Subtracting `c • basisRow` from `row` decreases its projection coefficient
+onto `basisRow` by `c`, given `basisRow` has nonzero norm. -/
 private theorem projectionCoeff_sub_smul_self
     (row basisRow : Vector Rat m) (c : Rat)
     (hnorm : Matrix.dot basisRow basisRow ≠ 0) :
@@ -67,6 +78,8 @@ private theorem projectionCoeff_sub_smul_self
   simp [projectionCoeff, Matrix.dot_sub_smul_rat, hnorm]
   grind
 
+/-- The projection coefficient onto `basisRow` is linear: subtracting `c • other`
+from `row` subtracts `c` times `other`'s projection coefficient, given nonzero norm. -/
 private theorem projectionCoeff_sub_smul
     (row other basisRow : Vector Rat m) (c : Rat)
     (hnorm : Matrix.dot basisRow basisRow ≠ 0) :
@@ -75,15 +88,19 @@ private theorem projectionCoeff_sub_smul
   simp [projectionCoeff, Matrix.dot_sub_smul_rat, hnorm]
   grind
 
+/-- A rational multiplied by itself is nonnegative. -/
 private theorem rat_mul_self_nonneg (x : Rat) : 0 ≤ x * x := by
   simpa [Lean.Grind.Semiring.pow_two] using (Lean.Grind.OrderedRing.sq_nonneg (a := x))
 
+/-- A rational `x` with `x * x ≤ 0` is zero. -/
 private theorem rat_mul_self_eq_zero_of_nonpos (x : Rat) (h : x * x ≤ 0) : x = 0 := by
   have hnonneg : 0 ≤ x * x := rat_mul_self_nonneg x
   have hsquare : x * x = 0 := by
     grind
   grind
 
+/-- Folding the sum of squares `v[i] * v[i]` only increases the accumulator, so
+the starting value is a lower bound for the result. -/
 private theorem foldl_dot_self_start_le (xs : List (Fin m)) (v : Vector Rat m)
     (acc : Rat) (hacc : 0 ≤ acc) :
     acc ≤ xs.foldl (fun sum i => sum + v[i] * v[i]) acc := by
@@ -96,6 +113,8 @@ private theorem foldl_dot_self_start_le (xs : List (Fin m)) (v : Vector Rat m)
       have hnext : 0 ≤ acc + v[i] * v[i] := by grind
       exact Rat.le_trans (by grind) (ih (acc := acc + v[i] * v[i]) hnext)
 
+/-- If the folded sum of squares `v[i] * v[i]` is zero starting from a
+nonnegative accumulator, then every entry `v[i]` over the folded list is zero. -/
 private theorem foldl_dot_self_eq_zero_of_mem (xs : List (Fin m)) (v : Vector Rat m)
     (acc : Rat) (hacc : 0 ≤ acc)
     (hzero : xs.foldl (fun sum i => sum + v[i] * v[i]) acc = 0) :
@@ -130,6 +149,7 @@ private theorem foldl_dot_self_eq_zero_of_mem (xs : List (Fin m)) (v : Vector Ra
       | inr h =>
           exact ih (acc := acc + v[head] * v[head]) hnext_nonneg hzero i h
 
+/-- A vector with zero self-dot-product has every coordinate equal to zero. -/
 private theorem dot_self_eq_zero_get (v : Vector Rat m)
     (hzero : Matrix.dot v v = 0) (i : Fin m) :
     v[i] = 0 := by
@@ -156,6 +176,8 @@ theorem dot_zero_of_dot_self_zero (row v : Vector Rat m)
       change xs.foldl (fun acc i => acc + row[i] * v[i]) 0 = 0
       exact ih
 
+/-- When `basisRow` has zero norm, `subtractProjection row basisRow` is still
+orthogonal to `basisRow`. -/
 private theorem dot_subtractProjection_self_zero_of_dot_self_zero
     (row basisRow : Vector Rat m)
     (hnorm : Matrix.dot basisRow basisRow = 0) :
@@ -163,6 +185,8 @@ private theorem dot_subtractProjection_self_zero_of_dot_self_zero
   exact dot_zero_of_dot_self_zero (row := subtractProjection row basisRow)
     (v := basisRow) hnorm
 
+/-- The folded dot product is symmetric in `u` and `v` when the two
+accumulators start equal. -/
 private theorem foldl_dot_comm_rat (xs : List (Fin m)) (u v : Vector Rat m)
     (accU accV : Rat) (hacc : accU = accV) :
     xs.foldl (fun acc i => acc + u[i] * v[i]) accU =
@@ -175,12 +199,15 @@ private theorem foldl_dot_comm_rat (xs : List (Fin m)) (u v : Vector Rat m)
       apply ih
       grind
 
+/-- The rational dot product is commutative. -/
 private theorem dot_comm_rat (u v : Vector Rat m) :
     Matrix.dot u v = Matrix.dot v u := by
   simpa [Matrix.dot, Hex.Vector.dotProduct] using
     foldl_dot_comm_rat (xs := List.finRange m) (u := u) (v := v)
       (accU := 0) (accV := 0) rfl
 
+/-- Removing a component along `otherBasisRow` that is orthogonal to `basisRow`
+leaves the projection coefficient onto `basisRow` unchanged. -/
 private theorem projectionCoeff_subtractProjection_eq_of_dot_zero
     (row otherBasisRow basisRow : Vector Rat m)
     (horth : Matrix.dot otherBasisRow basisRow = 0) :
