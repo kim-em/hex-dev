@@ -907,36 +907,48 @@ private def linearPow {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     linearPow x (n + 1) = linearPow x n * x :=
   rfl
 
+/-- `linearPow_mul_assoc` supplies associativity for quotient multiplication in
+the proof-only recurrence used by the square-and-multiply correctness bridge. -/
 private theorem linearPow_mul_assoc {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (a b c : PolyQuotient f hf) :
     a * b * c = a * (b * c) := by
   apply ext
   exact repr_mul_assoc a b c
 
+/-- `linearPow_mul_assoc_raw` restates quotient associativity in executable
+`mul` form so the accumulator-loop proof can rewrite raw multiplications. -/
 private theorem linearPow_mul_assoc_raw {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (a b c : PolyQuotient f hf) :
     mul (mul a b) c = mul a (mul b c) := by
   apply ext
   exact repr_mul_assoc a b c
 
+/-- `linearPow_mul_comm` supplies commutativity for quotient multiplication when
+the odd binary-decomposition step reorders the final base factor. -/
 private theorem linearPow_mul_comm {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (a b : PolyQuotient f hf) :
     a * b = b * a := by
   apply ext
   exact repr_mul_comm a b
 
+/-- `linearPow_mul_one_raw` restates the right-identity law in executable `mul`
+form for the zero-exponent branch of `pow.go`. -/
 private theorem linearPow_mul_one_raw {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (a : PolyQuotient f hf) :
     mul a 1 = a := by
   apply ext
   exact repr_mul_one a
 
+/-- `linearPow_one_mul_raw` restates the left-identity law in executable `mul`
+form to remove the initial accumulator after `pow.go` is related to `linearPow`. -/
 private theorem linearPow_one_mul_raw {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (a : PolyQuotient f hf) :
     mul (one f hf) a = a := by
   apply ext
   exact repr_one_mul a
 
+/-- `linearPow_double` is the even binary-decomposition step for the proof-only
+recurrence, replacing exponent `2 * n` by one recursive square. -/
 private theorem linearPow_double {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) :
     linearPow x (2 * n) = linearPow (mul x x) n := by
@@ -951,12 +963,16 @@ private theorem linearPow_double {f : FpPoly p} {hf : 0 < FpPoly.degree f}
       rw [linearPow_succ, linearPow_succ, ih]
       exact linearPow_mul_assoc (linearPow (x * x) n) x x
 
+/-- `linearPow_double_add_one` is the odd binary-decomposition step, separating
+one base factor before recurring on the squared base. -/
 private theorem linearPow_double_add_one {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) :
     linearPow x (2 * n + 1) = mul x (linearPow (mul x x) n) := by
   rw [linearPow_succ, linearPow_double]
   exact linearPow_mul_comm (linearPow (x * x) n) x
 
+/-- `pow_go_eq_acc_mul_linearPow` bridges the executable accumulator loop to the
+proof-only recurrence used to prove square-and-multiply exponentiation correct. -/
 private theorem pow_go_eq_acc_mul_linearPow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (acc base : PolyQuotient f hf) (k : Nat) :
