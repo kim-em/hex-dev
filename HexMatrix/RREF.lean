@@ -748,6 +748,8 @@ private structure RrefShapeInvariant (col : Nat) (state : RrefState R n m) : Pro
   pivots_lt_col : ∀ p ∈ state.pivots, p.val < col
 
 omit [Lean.Grind.Field R] [DecidableEq R] in
+/-- `RrefShapeInvariant.mono_col` relaxes the column bound: the shape invariant
+at `col` still holds at any larger column bound `col' ≥ col`. -/
 private theorem RrefShapeInvariant.mono_col {col col' : Nat} {state : RrefState R n m}
     (hcol : col ≤ col') (h : RrefShapeInvariant (R := R) (n := n) (m := m) col state) :
     RrefShapeInvariant (R := R) (n := n) (m := m) col' state where
@@ -767,6 +769,9 @@ private structure RrefCanonicalInvariant (state : RrefState R n m) : Prop where
     r.val ≠ i → state.echelon[r][state.pivots[i]] = 0
 
 omit [Lean.Grind.Field R] [DecidableEq R] in
+/-- `list_sorted_get_concat_of_lt`: appending a column index that is strictly
+greater than every element of a strictly sorted pivot list keeps the list
+strictly sorted. -/
 private theorem list_sorted_get_concat_of_lt {ps : List (Fin m)} {col : Nat}
     (hsorted : ∀ (i j : Nat) (hi : i < ps.length) (hj : j < ps.length),
       i < j → ps[i] < ps[j])
@@ -808,6 +813,9 @@ private theorem list_sorted_get_concat_of_lt {ps : List (Fin m)} {col : Nat}
     exact hlt ps[i] (List.getElem_mem hiOld)
 
 omit [Lean.Grind.Field R] [DecidableEq R] in
+/-- `rrefShapeInvariant_concat` is the one-step extension: recording a new pivot
+at `col` (advancing the row and appending the column to `pivots`) preserves the
+shape invariant at the next column bound `col + 1`. -/
 private theorem rrefShapeInvariant_concat {col : Nat} {state : RrefState R n m}
     (h : RrefShapeInvariant (R := R) (n := n) (m := m) col state)
     (hRow : state.row < n) (hCol : col < m)
@@ -1034,6 +1042,8 @@ private theorem rrefCanonicalInvariant_pivot_step
         rw [hval, ← hshape.row_eq_length]
       exact hnew.2 r hr_ne_target
 
+/-- `rrefLoop_shape`: `rrefLoop` preserves the shape invariant, advancing the
+column bound from `col` to `col + fuel`. -/
 private theorem rrefLoop_shape :
     ∀ (fuel col : Nat) (state : RrefState R n m),
       RrefShapeInvariant (R := R) (n := n) (m := m) col state →
@@ -1082,6 +1092,8 @@ private theorem rrefLoop_shape :
         exact h.mono_col (by omega)
 
 omit [DecidableEq R] in
+/-- `rrefLoop_initial_shape`: the initial RREF state (row 0, no pivots) satisfies
+the shape invariant at column bound 0. -/
 private theorem rrefLoop_initial_shape (M : Matrix R n m) :
     RrefShapeInvariant (R := R) (n := n) (m := m) 0
       { row := 0
@@ -1098,6 +1110,8 @@ private theorem rrefLoop_initial_shape (M : Matrix R n m) :
     intro p hp
     cases hp
 
+/-- `rref_final_shape`: the matrix produced by the full `rrefLoop` run over all
+`m` columns satisfies the shape invariant at column bound `m`. -/
 private theorem rref_final_shape (M : Matrix R n m) :
     RrefShapeInvariant (R := R) (n := n) (m := m) m
       (rrefLoop 0 m
@@ -1170,6 +1184,8 @@ private theorem rrefLoop_canonical :
       · rw [dif_neg hRow]
         exact hcanon
 
+/-- `rref_final_canonical`: the matrix produced by the full `rrefLoop` run over
+all `m` columns satisfies the canonical-column invariant. -/
 private theorem rref_final_canonical (M : Matrix R n m) :
     RrefCanonicalInvariant (R := R) (n := n) (m := m)
       (rrefLoop 0 m
@@ -1276,6 +1292,8 @@ private structure RrefNoPivotZero (col : Nat) (state : RrefState R n m) : Prop w
       ∀ (r : Fin n), state.row ≤ r.val → state.echelon[r][c] = 0
 
 omit [DecidableEq R] in
+/-- `rrefNoPivotZero_initial`: the initial RREF state satisfies the
+no-pivot-zero invariant at column bound 0, vacuously. -/
 private theorem rrefNoPivotZero_initial (M : Matrix R n m) :
     RrefNoPivotZero (R := R) (n := n) (m := m) 0
       { row := 0
@@ -1308,6 +1326,8 @@ private theorem RrefNoPivotZero.widen_col_at_n {col col' : Nat}
     have hge : n ≤ r.val := Nat.le_trans hrow hr
     exact absurd r.isLt (Nat.not_lt_of_ge hge)
 
+/-- `rrefLoop_no_pivot_zero`: `rrefLoop` preserves the no-pivot-zero invariant,
+advancing the column bound from `col` to `col + fuel`. -/
 private theorem rrefLoop_no_pivot_zero :
     ∀ (fuel col : Nat) (state : RrefState R n m),
       RrefNoPivotZero col state →
@@ -1405,6 +1425,8 @@ private theorem rrefLoop_no_pivot_zero :
       · rw [dif_neg hRow]
         exact h.widen_col_at_n (by omega)
 
+/-- `rref_final_no_pivot_zero`: the matrix produced by the full `rrefLoop` run
+over all `m` columns satisfies the no-pivot-zero invariant at column bound `m`. -/
 private theorem rref_final_no_pivot_zero (M : Matrix R n m) :
     RrefNoPivotZero (R := R) (n := n) (m := m) m
       (rrefLoop 0 m
