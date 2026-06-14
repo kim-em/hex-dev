@@ -9,6 +9,8 @@ initial theorem surface describing its computational invariants.
 -/
 namespace Hex
 
+/-- Indexing a mapped `List.range size` with default zero yields `f n` when
+`n < size` and zero otherwise. -/
 private theorem list_getD_map_range {α : Type} [Zero α] (size n : Nat) (f : Nat → α) :
     ((List.range size).map f).getD n (Zero.zero : α) =
       if n < size then f n else (Zero.zero : α) := by
@@ -151,6 +153,8 @@ def linearHenselStep
       reduceModPow (h + LinearLiftResult.liftScaledIncrement p k hCorrection) p (k + 1) := by
   simp [linearHenselStep]
 
+/-- The product of two factors reduced modulo `p ^ k` is congruent modulo
+`p ^ k` to the product of the original factors. -/
 private theorem congr_mul_reduceModPow_pair
     (p k : Nat) [ZMod64.Bounds p] (g h : ZPoly) :
     ZPoly.congr
@@ -203,6 +207,8 @@ theorem congr_liftToZ_of_modP_eq
     ZPoly.congr (FpPoly.liftToZ u) z p := by
   simpa [← h] using FpPoly.congr_liftToZ_modP (p := p) z
 
+/-- The integer lift of a `ZMod64 p` sum agrees modulo `p` with the sum of the
+integer lifts of the summands. -/
 private theorem zmod_add_lift_congr
     (p : Nat) [ZMod64.Bounds p] (a b : ZMod64 p) :
     (Int.ofNat (a + b).toNat - (Int.ofNat a.toNat + Int.ofNat b.toNat)) %
@@ -226,6 +232,7 @@ private theorem zmod_add_lift_congr
         simp [Int.ofNat_eq_natCast]]
   exact Int.emod_eq_zero_of_dvd hdiv
 
+/-- The sum of the two zero residues in `ZMod64 p` is zero. -/
 private theorem zmod_add_zero_zero (p : Nat) [ZMod64.Bounds p] :
     (Zero.zero : ZMod64 p) + (Zero.zero : ZMod64 p) = (Zero.zero : ZMod64 p) := by
   apply ZMod64.ext
@@ -254,6 +261,8 @@ theorem liftToZ_add_congr
   rw [FpPoly.coeff_liftToZ, FpPoly.coeff_liftToZ]
   exact zmod_add_lift_congr p (f.coeff i) (g.coeff i)
 
+/-- The integer lift of a `ZMod64 p` product agrees modulo `p` with the product
+of the integer lifts of the factors. -/
 private theorem zmod_mul_lift_congr
     (p : Nat) [ZMod64.Bounds p] (a b : ZMod64 p) :
     (Int.ofNat (a * b).toNat - (Int.ofNat a.toNat * Int.ofNat b.toNat)) %
@@ -298,14 +307,20 @@ private theorem liftToZ_mulCoeffTerm_congr
     simp [hni, heq, FpPoly.coeff_liftToZ]
     exact zmod_mul_lift_congr p (f.coeff i) (g.coeff (n - i))
 
+/-- The `i`-th diagonal contribution `p.coeff i * q.coeff (n - i)` to the `n`-th
+coefficient of the integer product `p * q`, taken to be zero when `n < i`. -/
 private def intDiagonalMulCoeffTerm
     (p q : ZPoly) (n i : Nat) : Int :=
   if n < i then 0 else p.coeff i * q.coeff (n - i)
 
+/-- The `i`-th integer diagonal term of `p * q` at coefficient `n`, additionally
+zeroed when the partner index `n - i` reaches the bound `m`. -/
 private def intBoundedDiagonalMulCoeffTerm
     (p q : ZPoly) (n i m : Nat) : Int :=
   if n < i then 0 else if n - i < m then p.coeff i * q.coeff (n - i) else 0
 
+/-- Folding `DensePoly.mulCoeffStep` over `List.range m` from `acc` adds exactly
+`intBoundedDiagonalMulCoeffTerm p q n i m` to `acc`. -/
 private theorem fold_mulCoeffStep_eq_bounded_diagonal_int
     (p q : ZPoly) (n i m : Nat) (acc : Int) :
     (List.range m).foldl (DensePoly.mulCoeffStep p q n i) acc =
@@ -331,6 +346,8 @@ private theorem fold_mulCoeffStep_eq_bounded_diagonal_int
           · have hm' : ¬ n - i < m + 1 := by omega
             simp [hlt, hm, hm', heq]
 
+/-- Folding `DensePoly.mulCoeffStep` over `List.range q.size` from `acc` adds
+exactly the unbounded `intDiagonalMulCoeffTerm p q n i` to `acc`. -/
 private theorem fold_mulCoeffStep_eq_diagonal_int
     (p q : ZPoly) (n i : Nat) (acc : Int) :
     (List.range q.size).foldl (DensePoly.mulCoeffStep p q n i) acc =
@@ -345,6 +362,8 @@ private theorem fold_mulCoeffStep_eq_diagonal_int
         DensePoly.coeff_eq_zero_of_size_le q (Nat.le_of_not_gt hbound)
       simp [hlt, hbound, hcoeff]
 
+/-- The outer fold over indices `xs` collapses each inner `mulCoeffStep` fold to
+its flat diagonal term `intDiagonalMulCoeffTerm p q n i`. -/
 private theorem fold_mulCoeff_outer_eq_diagonal_int
     (p q : ZPoly) (n : Nat) (xs : List Nat) (acc : Int) :
     xs.foldl
@@ -370,6 +389,8 @@ private theorem mulCoeffSum_eq_diagonal_int (p q : ZPoly) (n : Nat) :
   unfold DensePoly.mulCoeffSum
   exact fold_mulCoeff_outer_eq_diagonal_int p q n (List.range p.size) 0
 
+/-- The diagonal term `intDiagonalMulCoeffTerm p q n i` vanishes once the index
+`i` reaches `p.size`, since `p.coeff i` is then zero. -/
 private theorem intDiagonalMulCoeffTerm_eq_zero_of_size_le
     (p q : ZPoly) (n i : Nat) (hi : p.size ≤ i) :
     intDiagonalMulCoeffTerm p q n i = 0 := by
@@ -379,6 +400,8 @@ private theorem intDiagonalMulCoeffTerm_eq_zero_of_size_le
   · have hcoeff : p.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le p hi
     simp [hn, hcoeff]
 
+/-- Extending the diagonal-sum fold range from `p.size` to `p.size + d` leaves
+the total unchanged, as every added term vanishes. -/
 private theorem fold_diagonal_extend_int (p q : ZPoly) (n d : Nat) :
     (List.range (p.size + d)).foldl (fun acc i => acc + intDiagonalMulCoeffTerm p q n i) 0 =
       (List.range p.size).foldl (fun acc i => acc + intDiagonalMulCoeffTerm p q n i) 0 := by
@@ -393,6 +416,8 @@ private theorem fold_diagonal_extend_int (p q : ZPoly) (n d : Nat) :
         intDiagonalMulCoeffTerm_eq_zero_of_size_le p q n (p.size + d) (by omega)
       simp [hterm]
 
+/-- The diagonal sum taken over `p.size` indices equals the diagonal sum taken
+over any larger bound `m ≥ p.size`. -/
 private theorem diagonalSum_eq_bound_int
     (p q : ZPoly) (n m : Nat) (hm : p.size ≤ m) :
     (List.range p.size).foldl (fun acc i => acc + intDiagonalMulCoeffTerm p q n i) 0 =
@@ -401,6 +426,7 @@ private theorem diagonalSum_eq_bound_int
   rw [← hm']
   exact (fold_diagonal_extend_int p q n (m - p.size)).symm
 
+/-- The integer lift `FpPoly.liftToZ f` has size at most that of `f`. -/
 private theorem liftToZ_size_le
     (p : Nat) [ZMod64.Bounds p] (f : FpPoly p) :
     (FpPoly.liftToZ f).size ≤ f.size := by
@@ -420,6 +446,8 @@ private theorem liftToZ_size_le
       rw [ZMod64.toNat_zero]
       rfl)
 
+/-- The lifted `FpPoly` diagonal term `FpPoly.mulCoeffTerm f g n i` agrees modulo
+`p` with the integer diagonal term `intDiagonalMulCoeffTerm` of the lifts. -/
 private theorem liftToZ_mulCoeffTerm_diagonal_congr
     (p : Nat) [ZMod64.Bounds p] (f g : FpPoly p) (n i : Nat) :
     (Int.ofNat (FpPoly.mulCoeffTerm f g n i).toNat -
@@ -435,6 +463,8 @@ private theorem liftToZ_mulCoeffTerm_diagonal_congr
     have heq : i + (n - i) = n := Nat.add_sub_of_le hle
     simpa [hni, DensePoly.mulCoeffStep, heq] using liftToZ_mulCoeffTerm_congr p f g n i
 
+/-- Additivity of the mod-`p` lift congruence: if `a` lifts to `x` and `b` lifts
+to `y` modulo `p`, then `a + b` lifts to `x + y` modulo `p`. -/
 private theorem zmod_add_lift_congr_of_terms
     (p : Nat) [ZMod64.Bounds p] (a b : ZMod64 p) (x y : Int)
     (ha : (Int.ofNat a.toNat - x) % (p : Int) = 0)
@@ -647,6 +677,8 @@ theorem modP_add_lift_mul
       r * ZPoly.modP p h + ZPoly.modP p g * hCorrection := by
   rw [modP_add, modP_lift_mul_left, modP_lift_mul_right]
 
+/-- Scaling two polynomials congruent modulo `p` by `p ^ k` yields polynomials
+congruent modulo `p ^ (k + 1)`. -/
 private theorem scale_congr_of_congr_mod_base
     (p k : Nat) (first e : ZPoly)
     (_hk : 1 ≤ k)
