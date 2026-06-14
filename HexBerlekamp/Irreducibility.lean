@@ -837,6 +837,13 @@ private theorem densePoly_eq_of_coeffs_eq
           subst h
           rfl
 
+/--
+Prefix-check entry point to `checkRabinBezoutWitness`: if the Bezout
+combination `left * f + right * diff` agrees with `1` on every coefficient
+up to `bound` (with both sides bounded by `bound`), the witness check
+accepts. Used when the certifier carries a `coeffsEqUpTo` prefix comparison
+rather than full polynomial equality.
+-/
 theorem checkRabinBezoutWitness_of_coeffsEqUpTo
     (f : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -868,6 +875,11 @@ theorem checkRabinBezoutWitness_of_coeffsEqUpTo
     densePoly_eq_of_coeffs_eq hcoeffsEq
   simp [hpoly]
 
+/--
+Coefficient-equality entry point to `checkRabinBezoutWitness`: if the
+Bezout combination `left * f + right * diff` has the same coefficient array
+as `1`, the witness check accepts.
+-/
 theorem checkRabinBezoutWitness_of_coeffs_eq
     (f : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -889,6 +901,12 @@ theorem checkRabinBezoutWitness_of_coeffs_eq
     densePoly_eq_of_coeffs_eq hcoeffs
   simp [hpoly]
 
+/--
+Polynomial-equality entry point to `checkRabinBezoutWitness`: if the Bezout
+combination `left * f + right * diff` equals `1` as a polynomial, the
+witness check accepts. The terminal form the two coefficient-level entry
+points reduce to.
+-/
 theorem checkRabinBezoutWitness_of_poly_eq
     (f : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -905,6 +923,12 @@ theorem checkRabinBezoutWitness_of_poly_eq
   rw [hpow, hbezout]
   simp [hpoly]
 
+/--
+Discharge the first-entry condition of
+`checkPowChainLinearIncrementalQuotientWitnesses` from coefficient equality:
+if `powChain[0]` has the same coefficient array as `X mod f`, then
+`powChain[0]? == some (X mod f)`.
+-/
 theorem checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs
     (f first : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -916,6 +940,12 @@ theorem checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs
   rw [hfirst, hpoly]
   simp
 
+/--
+`Bool`-valued variant of
+`checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs`: accepts
+the first-entry condition from a `==` coefficient comparison that evaluates
+to `true`.
+-/
 theorem checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs_beq
     (f first : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -953,6 +983,12 @@ private theorem checkPowChainLinearIncrementalQuotientWitnessStep_zero_bool_pilo
   · decide
   · rfl
 
+/--
+Quotient-witness form of the incremental pow-chain check: validates the
+chain size, that `powChain[0] = X mod f`, and every per-step witness via
+`checkPowChainLinearIncrementalQuotientWitnessStep`. Avoids recomputing the
+modular squarings by reading the quotients off the certificate.
+-/
 def checkPowChainLinearIncrementalQuotientWitnesses
     (f : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2) (quotients : Array (FpPoly 2)) :
@@ -963,6 +999,11 @@ def checkPowChainLinearIncrementalQuotientWitnesses
     (List.range cert.n).all fun k =>
       checkPowChainLinearIncrementalQuotientWitnessStep f cert quotients k
 
+/--
+Introduction rule for `checkPowChainLinearIncrementalQuotientWitnesses`:
+assemble acceptance from the two size conditions, the first-entry condition,
+and a per-step witness check for every `k < cert.n`.
+-/
 theorem checkPowChainLinearIncrementalQuotientWitnesses_of_steps
     (f : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2) (quotients : Array (FpPoly 2))
@@ -1015,6 +1056,13 @@ private theorem powModMonicLinear_two_eq_of_quotientWitness
   simp only [FpPoly.modByMonic, DensePoly.modByMonic_eq_mod, FpPoly.one_mul, hprevMod]
   exact hsquareMod
 
+/--
+Soundness of the quotient-witness chain check against the squaring-based
+one: if `checkPowChainLinearIncrementalQuotientWitnesses` accepts, then so
+does `checkPowChainLinearIncremental`. Each accepted quotient witness
+`prev * prev = curr + quot * f` (both entries reduced) pins
+`curr = powModMonicLinear prev f _ 2`, recovering the step recurrence.
+-/
 theorem checkPowChainLinearIncremental_of_quotientWitnesses
     (f : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2) (quotients : Array (FpPoly 2)) :
