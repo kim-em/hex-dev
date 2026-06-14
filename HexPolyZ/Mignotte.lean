@@ -663,12 +663,14 @@ def defaultFactorCoeffBound (f : ZPoly) : Nat :=
 @[simp] theorem binom_zero_succ (k : Nat) : binom 0 (k + 1) = 0 := by
   simp [binom]
 
+/-- The executable binomial coefficient `binom n k` vanishes when `n < k`. -/
 theorem binom_eq_zero_of_lt {n k : Nat} (h : n < k) : binom n k = 0 := by
   simp [binom, h]
 
 @[simp] theorem floorSqrt_zero : floorSqrt 0 = 0 := by
   simp [floorSqrt]
 
+/-- The square of `floorSqrt n` is at most `n`: it is a lower square root. -/
 theorem floorSqrt_sq_le (n : Nat) : floorSqrt n * floorSqrt n ≤ n := by
   by_cases hn : n = 0
   · subst n
@@ -708,10 +710,14 @@ theorem le_ceilSqrt_sq (n : Nat) : n ≤ (ceilSqrt n) ^ 2 := by
     · rw [if_neg hsq]
       exact hub
 
+/-- Restates `coeffNormSq f` as the explicit `foldl` summing `(f.coeff i).natAbs ^ 2`
+over the stored coefficient indices `i < f.size`. -/
 theorem coeffNormSq_eq_sum (f : ZPoly) :
     coeffNormSq f =
       (List.range f.size).foldl (fun acc i => acc + (f.coeff i).natAbs ^ 2) 0 := rfl
 
+/-- `coeffL2NormBound f` equals the ceiling square root of the squared coefficient
+norm `coeffNormSq f`. -/
 theorem coeffL2NormBound_eq_ceilSqrt_coeffNormSq (f : ZPoly) :
     coeffL2NormBound f = ceilSqrt (coeffNormSq f) := rfl
 
@@ -746,9 +752,14 @@ theorem coeffL2NormBound_sq_le_two_mul_coeffNormSq (f : ZPoly) :
     have hsquare : (r + 1) * (r + 1) = r * r + 2 * r + 1 := by grind
     simpa [r, hsquare] using hmain
 
+/-- `mignotteCoeffBound f k j` equals the product `binom k j * coeffL2NormBound f`
+of the binomial coefficient and the conservative coefficient-norm bound. -/
 theorem mignotteCoeffBound_eq (f : ZPoly) (k j : Nat) :
     mignotteCoeffBound f k j = binom k j * coeffL2NormBound f := rfl
 
+/-- Restates `defaultFactorCoeffBound f` as the nested `foldl` taking the maximum of
+`mignotteCoeffBound f k j` over factor degrees `k` up to `f.degree?.getD 0` and
+coefficient indices `j` up to `k`. -/
 theorem defaultFactorCoeffBound_eq (f : ZPoly) :
     defaultFactorCoeffBound f =
       let degreeBound := f.degree?.getD 0
@@ -801,6 +812,8 @@ theorem defaultFactorCoeffBound_eq (f : ZPoly) :
         simp [mignotteCoeffBound_zero, hignore]
   exact hfold (List.range (((0 : ZPoly).degree?).getD 0 + 1)) 0
 
+/-- The executable Mignotte coefficient bound `mignotteCoeffBound f k j` vanishes when
+the coefficient index `j` exceeds the factor degree `k`. -/
 theorem mignotteCoeffBound_eq_zero_of_lt (f : ZPoly) (k j : Nat) (h : k < j) :
     mignotteCoeffBound f k j = 0 := by
   simp [mignotteCoeffBound, binom_eq_zero_of_lt h]
@@ -899,6 +912,8 @@ theorem mignotteCoeffBound_le_defaultFactorCoeffBound
     (List.range (f.degree?.getD 0 + 1))
     (List.mem_range.mpr (Nat.lt_succ_of_le hk)) hj
 
+/-- The conservative coefficient-norm bound `coeffL2NormBound f` is at most the default
+uniform factor coefficient bound `defaultFactorCoeffBound f`. -/
 theorem coeffL2NormBound_le_defaultFactorCoeffBound (f : ZPoly) :
     coeffL2NormBound f ≤ defaultFactorCoeffBound f := by
   simpa [mignotteCoeffBound] using
