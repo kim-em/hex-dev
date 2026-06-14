@@ -9391,6 +9391,55 @@ private theorem polyProduct_monic_of_all_monic
     · intro p hp; exact hl p (List.mem_cons_of_mem _ hp)
 
 /--
+Derive the **dilated centered-lift** reconstruction equality from a proof-side
+lifted-subset representation.  This is the producer-side bridge consumed by the
+migrated fast-path BHKS recovery wrappers
+(`candidatesOfDilatedCenteredLift`, `ofMignottePrecisionCandidateProducts`),
+which restate the reconstruction in the executable monic-transform recovery
+coordinate `dilate (leadingCoeff core) ∘ centeredLiftPoly` rather than the
+additive `scale`-coordinate modular congruence removed by the fast-path
+migration (#7044 / #2564).
+
+The fast-path recovery chain is monic-gated (its producer
+`bhksIndicatorCandidate?_representsIntegerFactorAtLift` carries `hcore_monic`),
+so `leadingCoeff core = 1` and the dilation collapses to the identity.  The
+proof routes through `RecoveredAtLift.candidate_eq_of_monic_dvd`
+(`liftedRecoveryCandidate core d S = factor`) and then collapses the
+`primitivePart`/`normalizeFactorSign` normalizations of `liftedRecoveryCandidate`
+on the monic centred lift of the selected product.
+-/
+theorem dilatedCenteredLift_of_representsIntegerFactorAtLift
+    {core : Hex.ZPoly} {d : Hex.LiftData} {selected : Array Hex.ZPoly}
+    {expectedFactor : Hex.ZPoly} {S : LiftedFactorSubset d}
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hprod_monic : Hex.DensePoly.Monic (liftedFactorProduct d S))
+    (hp_two_le : 2 ≤ d.p ^ d.k)
+    (hmonic_ne : (Hex.ZPoly.toMonic core).monic ≠ 0)
+    (hfactor_norm : Hex.normalizeFactorSign expectedFactor = expectedFactor)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        d.p ^ d.k)
+    (hselected_product :
+      Array.polyProduct selected = liftedFactorProduct d S)
+    (hrep : RepresentsIntegerFactorAtLift core d expectedFactor S) :
+    Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+        (Hex.centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k)) =
+      expectedFactor := by
+  rcases hrep with ⟨hrec⟩
+  have hcand : liftedRecoveryCandidate core d S = expectedFactor :=
+    hrec.candidate_eq_of_monic_dvd hmonic_ne hfactor_norm hprecision
+  have hlc : Hex.DensePoly.leadingCoeff core = (1 : Int) := hcore_monic
+  have hcl_monic : Hex.DensePoly.Monic
+      (Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k)) :=
+    monic_centeredLiftPoly_of_monic hprod_monic hp_two_le
+  rw [hselected_product, hlc, Hex.ZPoly.dilate_one, ← hcand]
+  unfold liftedRecoveryCandidate
+  rw [hlc, Hex.ZPoly.dilate_one,
+    Hex.ZPoly.primitivePart_eq_self_of_primitive _
+      (zpoly_primitive_of_monic hcl_monic),
+    zpoly_normalize_factor_sign_of_monic hcl_monic]
+
+/--
 A successful `bhksIndicatorCandidate?` call yields, under monic-core and
 monic-selected-factor hypotheses, the canonical modular product equality
 `reduceModPow raw p k = reduceModPow candidate p k`.
