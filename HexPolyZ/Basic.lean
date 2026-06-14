@@ -65,6 +65,8 @@ which multiplies the whole polynomial by a constant. -/
 def dilate (c : Int) (p : ZPoly) : ZPoly :=
   DensePoly.ofCoeffs <| ((List.range p.size).map fun i => c ^ i * p.coeff i).toArray
 
+/-- The `n`-th coefficient of `dilate c p` is `c ^ n` times the `n`-th
+coefficient of `p`. -/
 theorem coeff_dilate (c : Int) (p : ZPoly) (n : Nat) :
     (dilate c p).coeff n = c ^ n * p.coeff n := by
   unfold dilate
@@ -93,6 +95,8 @@ instance instDecidableIsUnit (f : ZPoly) : Decidable (IsUnit f) := by
   unfold IsUnit
   infer_instance
 
+/-- The `IsUnit` predicate is exactly equality with the constant polynomial `1`
+or the constant polynomial `-1`. -/
 theorem isUnit_iff (f : ZPoly) :
     IsUnit f ↔ f = DensePoly.C 1 ∨ f = DensePoly.C (-1) := by
   rfl
@@ -109,6 +113,8 @@ theorem isUnit_iff (f : ZPoly) :
 def toRatPoly (f : ZPoly) : DensePoly Rat :=
   DensePoly.ofCoeffs <| f.toArray.map fun coeff : Int => (coeff : Rat)
 
+/-- Coefficients of `toRatPoly f` are the rational casts of the coefficients of
+`f`. -/
 theorem coeff_toRatPoly (f : ZPoly) (n : Nat) :
     (toRatPoly f).coeff n = (f.coeff n : Rat) := by
   unfold toRatPoly
@@ -145,6 +151,8 @@ theorem coeff_toRatPoly (f : ZPoly) (n : Nat) :
     toRatPoly (1 : ZPoly) = 1 := by
   exact toRatPoly_C 1
 
+/-- Rational conversion commutes with scaling an integer polynomial by an
+integer. -/
 theorem toRatPoly_scale_int (c : Int) (f : ZPoly) :
     toRatPoly (DensePoly.scale c f) = DensePoly.scale (c : Rat) (toRatPoly f) := by
   apply DensePoly.ext_coeff
@@ -156,6 +164,7 @@ theorem toRatPoly_scale_int (c : Int) (f : ZPoly) :
   rw [coeff_toRatPoly]
   simp
 
+/-- Rational conversion preserves the dense size of an integer polynomial. -/
 theorem size_toRatPoly (f : ZPoly) :
     (toRatPoly f).size = f.size := by
   apply Nat.le_antisymm
@@ -190,6 +199,8 @@ theorem size_toRatPoly (f : ZPoly) :
         exact hrat_zero
       exact Rat.intCast_eq_zero_iff.mp hcast_zero
 
+/-- A nonzero integer polynomial remains nonzero after coefficientwise rational
+casting. -/
 theorem toRatPoly_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     toRatPoly f ≠ 0 := by
   intro hrat
@@ -252,6 +263,7 @@ private theorem toRatPoly_mulCoeffSum (f g : ZPoly) (n : Nat) :
   rw [size_toRatPoly f]
   exact toRatPoly_mulCoeffOuter_fold f g n (List.range f.size) 0
 
+/-- Rational conversion preserves multiplication of integer polynomials. -/
 theorem toRatPoly_mul (f g : ZPoly) :
     toRatPoly (f * g) = toRatPoly f * toRatPoly g := by
   apply DensePoly.ext_coeff
@@ -513,10 +525,12 @@ def primitiveSquareFreeDecomposition (f : ZPoly) : PrimitiveSquareFreeDecomposit
 def squareFreeCore (f : ZPoly) : ZPoly :=
   (primitiveSquareFreeDecomposition f).squareFreeCore
 
+/-- Coefficientwise congruence modulo `m` is reflexive. -/
 theorem congr_refl (f : ZPoly) (m : Nat) : congr f f m := by
   intro i
   simp
 
+/-- Coefficientwise congruence modulo `m` is symmetric. -/
 theorem congr_symm (f g : ZPoly) (m : Nat) (hfg : congr f g m) : congr g f m := by
   intro i
   apply Int.emod_eq_zero_of_dvd
@@ -524,6 +538,7 @@ theorem congr_symm (f g : ZPoly) (m : Nat) (hfg : congr f g m) : congr g f m := 
   refine ⟨-c, ?_⟩
   grind
 
+/-- Coefficientwise congruence modulo `m` is transitive. -/
 theorem congr_trans (f g h : ZPoly) (m : Nat) (hfg : congr f g m) (hgh : congr g h m) :
     congr f h m := by
   intro i
@@ -533,6 +548,7 @@ theorem congr_trans (f g h : ZPoly) (m : Nat) (hfg : congr f g m) (hgh : congr g
   refine ⟨c + d, ?_⟩
   grind
 
+/-- Addition preserves coefficientwise congruence modulo `m` in both inputs. -/
 theorem congr_add (f g f' g' : ZPoly) (m : Nat)
     (hf : congr f f' m) (hg : congr g g' m) :
     congr (f + g) (f' + g') m := by
@@ -684,6 +700,8 @@ private theorem dvd_mulCoeffOuter_fold_sub (f g f' g' : ZPoly) (m : Nat)
         ((List.range g'.size).foldl (DensePoly.mulCoeffStep f' g' n i) b)
         hnext
 
+/-- Multiplication preserves coefficientwise congruence modulo `m` in both
+inputs. -/
 theorem congr_mul (f g f' g' : ZPoly) (m : Nat)
     (hf : congr f f' m) (hg : congr g g' m) :
     congr (f * g) (f' * g') m := by
@@ -707,32 +725,43 @@ theorem congr_mul (f g f' g' : ZPoly) (m : Nat)
       exact Nat.le_max_right g.size g'.size)
     (List.range outerBound) 0 0 (by simp)
 
+/-- Scaling the primitive part by the content reconstructs the original integer
+polynomial. -/
 theorem content_mul_primitivePart (f : ZPoly) :
     DensePoly.scale (content f) (primitivePart f) = f := by
   simpa [content, primitivePart] using DensePoly.content_mul_primitivePart f
 
+/-- The content of an integer polynomial divides every coefficient. -/
 theorem content_dvd_coeff (f : ZPoly) (n : Nat) :
     content f ∣ f.coeff n := by
   simpa [content] using DensePoly.content_dvd_coeff f n
 
+/-- If a natural number divides every coefficient, then its integer cast divides
+the content. -/
 theorem dvd_content_of_nat_dvd_coeff (f : ZPoly) (d : Nat)
     (h : ∀ n, (d : Int) ∣ f.coeff n) :
     (d : Int) ∣ content f := by
   simpa [content] using DensePoly.dvd_content_of_nat_dvd_coeff f d h
 
+/-- Alias for `dvd_content_of_nat_dvd_coeff` with the divisibility conclusion
+written for the natural number cast to `Int`. -/
 theorem natCast_dvd_content_of_dvd_coeff (f : ZPoly) (d : Nat)
     (h : ∀ n, (d : Int) ∣ f.coeff n) :
     (d : Int) ∣ content f := by
   exact dvd_content_of_nat_dvd_coeff f d h
 
+/-- If the content of `f` is nonzero, then the primitive part of `f` is
+primitive. -/
 theorem primitivePart_primitive (f : ZPoly) (h : content f ≠ 0) :
     Primitive (primitivePart f) := by
   simpa [Primitive, content, primitivePart] using DensePoly.primitivePart_primitive f h
 
+/-- A primitive integer polynomial is equal to its primitive part. -/
 theorem primitivePart_eq_self_of_primitive (f : ZPoly) (h : Primitive f) :
     primitivePart f = f :=
   DensePoly.primitivePart_eq_self_of_content_eq_one f (by simpa [Primitive, content] using h)
 
+/-- The product of primitive integer polynomials is primitive. -/
 theorem primitive_mul (p q : ZPoly)
     (hp : Primitive p) (hq : Primitive q) :
     Primitive (p * q) := by
@@ -883,6 +912,8 @@ theorem size_pos_of_ne_zero (p : ZPoly) (hp : p ≠ 0) :
     rw [DensePoly.coeff_zero]
     exact DensePoly.coeff_eq_zero_of_size_le p (by omega)
 
+/-- The leading coefficient of a product of nonzero integer polynomials is the
+product of their leading coefficients. -/
 theorem leadingCoeff_mul_of_nonzero (p q : ZPoly)
     (hp : p ≠ 0) (hq : q ≠ 0) :
     DensePoly.leadingCoeff (p * q) =
@@ -898,6 +929,8 @@ theorem leadingCoeff_mul_of_nonzero (p q : ZPoly)
   rw [hlast]
   exact coeff_mul_top p q hp_pos hq_pos
 
+/-- A product of integer polynomials with positive leading coefficients has
+positive leading coefficient. -/
 theorem leadingCoeff_mul_pos_of_pos (p q : ZPoly)
     (hp_pos : 0 < DensePoly.leadingCoeff p)
     (hq_pos : 0 < DensePoly.leadingCoeff q) :
@@ -1314,6 +1347,8 @@ theorem divMod_eq_of_pos_lc_pos_degree_mul_eq
     · exact hlc_ne h
   · exact hmul
 
+/-- The primitive field of `primitiveSquareFreeDecomposition f` is the primitive
+part of `f`. -/
 theorem primitiveSquareFreeDecomposition_primitive (f : ZPoly) :
     (primitiveSquareFreeDecomposition f).primitive = primitivePart f := by
   by_cases hzero : (primitivePart f).isZero = true
@@ -1329,6 +1364,7 @@ private theorem normalizePrimitiveSign_zero :
   · exact DensePoly.scale_neg_one_zero
   · rfl
 
+/-- Normalizing the primitive sign makes the leading coefficient nonnegative. -/
 theorem leadingCoeff_normalizePrimitiveSign_nonneg (p : ZPoly) :
     0 ≤ DensePoly.leadingCoeff (normalizePrimitiveSign p) := by
   unfold normalizePrimitiveSign
@@ -1339,6 +1375,7 @@ theorem leadingCoeff_normalizePrimitiveSign_nonneg (p : ZPoly) :
   · rw [if_neg hlead]
     omega
 
+/-- A nonzero integer polynomial has nonzero leading coefficient. -/
 theorem leadingCoeff_ne_zero_of_ne_zero (p : ZPoly) (hp : p ≠ 0) :
     DensePoly.leadingCoeff p ≠ 0 := by
   have hp_pos : 0 < p.size := size_pos_of_ne_zero p hp
@@ -1364,6 +1401,8 @@ private theorem normalizePrimitiveSign_ne_zero_of_ne_zero (p : ZPoly) (hp : p �
   · rw [if_neg hlead]
     exact hp
 
+/-- Normalizing the primitive sign of a nonzero polynomial makes the leading
+coefficient positive. -/
 theorem leadingCoeff_normalizePrimitiveSign_pos_of_ne_zero (p : ZPoly)
     (hp : p ≠ 0) :
     0 < DensePoly.leadingCoeff (normalizePrimitiveSign p) := by
@@ -1379,11 +1418,14 @@ private theorem normalizePrimitiveSign_eq_self_of_leadingCoeff_nonneg
   unfold normalizePrimitiveSign
   rw [if_neg (by omega)]
 
+/-- The rational primitive part has nonnegative integer leading coefficient. -/
 theorem leadingCoeff_ratPolyPrimitivePart_nonneg (p : DensePoly Rat) :
     0 ≤ DensePoly.leadingCoeff (ratPolyPrimitivePart p) := by
   unfold ratPolyPrimitivePart
   exact leadingCoeff_normalizePrimitiveSign_nonneg _
 
+/-- The rational primitive part of a nonzero rational polynomial has positive
+integer leading coefficient. -/
 theorem leadingCoeff_ratPolyPrimitivePart_pos_of_ne_zero (p : DensePoly Rat)
     (hp : p ≠ 0) :
     0 < DensePoly.leadingCoeff (ratPolyPrimitivePart p) := by
@@ -1440,12 +1482,15 @@ private theorem normalizePrimitiveSign_primitivePart_primitive (f : ZPoly)
   · rw [normalizePrimitiveSign, if_neg hlead]
     exact primitivePart_primitive f hcontent_ne
 
+/-- The rational primitive part is primitive when its content is nonzero. -/
 theorem ratPolyPrimitivePart_primitive (f : DensePoly Rat)
     (h : content (ratPolyPrimitivePart f) ≠ 0) :
     Primitive (ratPolyPrimitivePart f) := by
   unfold ratPolyPrimitivePart at h ⊢
   exact normalizePrimitiveSign_primitivePart_primitive _ h
 
+/-- A rational polynomial is a rational scalar multiple of the rationalization
+of its integer primitive part. -/
 theorem ratPolyPrimitivePart_rational_associate (f : DensePoly Rat) :
     ∃ unit : Rat, f = DensePoly.scale unit (toRatPoly (ratPolyPrimitivePart f)) := by
   exact ratPolyPrimitivePart_rational_associate_core f
@@ -2186,6 +2231,8 @@ private theorem rat_size_le_one_of_mul_dvd_self
       have hcontr : r.size ≤ (d * r).size - 1 + (k.size - 1) := by omega
       omega
 
+/-- A nonzero rational polynomial divisor has size at most the size of the
+nonzero polynomial it divides. -/
 theorem rat_size_le_of_dvd_nonzero
     {d r : DensePoly Rat} (hd : d.size ≠ 0) (hr : r.size ≠ 0) :
     d ∣ r → d.size ≤ r.size := by
@@ -2930,6 +2977,7 @@ private theorem content_ne_zero_of_ne_zero (p : ZPoly) (hp : p ≠ 0) :
   rw [hcontent, hpart_zero, int_scale_zero] at hreconstruct
   exact hreconstruct.symm
 
+/-- A primitive integer polynomial is nonzero. -/
 theorem ne_zero_of_primitive (p : ZPoly) (hp : Primitive p) :
     p ≠ 0 := by
   intro hzero
@@ -3032,6 +3080,8 @@ private theorem squareFreeRat_one :
   rw [toRatPoly_one]
   exact DensePoly.size_C_le_one (1 : Rat)
 
+/-- The primitive field reassembles over `Rat[x]` as a rational scalar multiple
+of the product of the square-free core and repeated part. -/
 theorem primitiveSquareFreeDecomposition_reassembly_over_rat (f : ZPoly) :
     let d := primitiveSquareFreeDecomposition f
     ∃ unit : Rat,
@@ -3089,6 +3139,8 @@ theorem primitiveSquareFreeDecomposition_reassembly_over_rat (f : ZPoly) :
             rw [rat_scale_mul_scale]
       simpa [ratPrimitive, derivative, repeatedRat, quotientRat] using htarget
 
+/-- A nonzero square-free core from the primitive square-free decomposition is
+square-free over `Rat[x]`. -/
 theorem primitiveSquareFreeDecomposition_squareFreeCore
     (f : ZPoly)
     (hcore : (primitiveSquareFreeDecomposition f).squareFreeCore ≠ 0) :
@@ -3221,6 +3273,8 @@ private theorem ratPolyPrimitivePart_div_gcd_mul_primitive
   exact primitive_mul (ratPolyPrimitivePart quotientRat) (ratPolyPrimitivePart repeatedRat)
     hcore_primitive hrepeated_primitive
 
+/-- For nonzero input, the product of the square-free core and repeated part is
+primitive. -/
 theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
     (f : ZPoly) (hf : f ≠ 0) :
     let d := primitiveSquareFreeDecomposition f
@@ -3260,6 +3314,8 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
     simpa [p, ratPrimitive, derivative] using
       ratPolyPrimitivePart_div_gcd_mul_primitive p hp_ne
 
+/-- A nonzero degree-zero square-free core from the primitive square-free
+decomposition is `1`. -/
 theorem primitiveSquareFreeDecomposition_squareFreeCore_eq_one_of_degree_zero
     (f : ZPoly)
     (hcore_ne : (primitiveSquareFreeDecomposition f).squareFreeCore ≠ 0)
@@ -3412,6 +3468,8 @@ theorem primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeCore_d
           rat_derivative_size_le_pred ratPrimitive
         omega
 
+/-- The square-free core produced by primitive square-free decomposition has
+nonnegative leading coefficient. -/
 theorem leadingCoeff_squareFreeCore_nonneg (f : ZPoly) :
     0 ≤ DensePoly.leadingCoeff (primitiveSquareFreeDecomposition f).squareFreeCore := by
   unfold primitiveSquareFreeDecomposition
@@ -3425,6 +3483,8 @@ theorem leadingCoeff_squareFreeCore_nonneg (f : ZPoly) :
     · simp [hderiv]
       exact leadingCoeff_ratPolyPrimitivePart_nonneg _
 
+/-- The repeated part produced by primitive square-free decomposition has
+nonnegative leading coefficient. -/
 theorem leadingCoeff_repeatedPart_nonneg (f : ZPoly) :
     0 ≤ DensePoly.leadingCoeff (primitiveSquareFreeDecomposition f).repeatedPart := by
   unfold primitiveSquareFreeDecomposition
@@ -3437,6 +3497,8 @@ theorem leadingCoeff_repeatedPart_nonneg (f : ZPoly) :
     · simp [hderiv]
       exact leadingCoeff_ratPolyPrimitivePart_nonneg _
 
+/-- For nonzero input, the product of the square-free core and repeated part has
+positive leading coefficient. -/
 theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_leadingCoeff_pos
     (f : ZPoly) (hf : f ≠ 0) :
     let d := primitiveSquareFreeDecomposition f
@@ -3515,6 +3577,8 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_leadingCoef
       exact Int.mul_pos hcore_pos hrepeated_pos
     simpa [p, ratPrimitive, derivative, repeatedRat, quotientRat] using hprod_pos
 
+/-- For nonzero input, the product of the square-free core and repeated part
+reassembles the primitive part up to sign. -/
 theorem primitiveSquareFreeDecomposition_reassembly_signed
     (f : ZPoly) (hf : f ≠ 0) :
     let d := primitiveSquareFreeDecomposition f
@@ -3562,6 +3626,8 @@ theorem primitiveSquareFreeDecomposition_reassembly_signed
     rw [← hdprimitive]
     exact htarget.symm
 
+/-- A Bezout congruence witness proves that two integer polynomials are coprime
+modulo `p`. -/
 theorem coprimeModP_of_bezout
     (f g s t : ZPoly) (p : Nat)
     (hbez : congr (s * f + t * g) 1 p) :
