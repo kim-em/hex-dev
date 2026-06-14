@@ -614,6 +614,10 @@ def leadingRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) : Matrix R k m :=
     let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
     M[ii][j]
 
+/-- Entry formula for the `k × k` leading prefix: the `(i, j)` entry resolves to
+the source entry `M[i][j]` at the same coordinates, reembedded into `Fin n`. This
+is the `simp` normalization that rewrites a prefix lookup back to a source lookup
+in determinant expansions. -/
 @[simp] theorem leadingPrefix_entry (M : Matrix R n n) (k : Nat) (hk : k ≤ n)
     (i j : Fin k) :
     (leadingPrefix M k hk)[i][j] =
@@ -622,6 +626,10 @@ def leadingRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) : Matrix R k m :=
        M[ii][jj]) := by
   simp [leadingPrefix, ofFn]
 
+/-- Entry formula for the first-`k`-rows slice: the `(i, j)` entry resolves to the
+source entry `M[i][j]` with the row index reembedded into `Fin n` and the column
+index `j` retained unchanged. This is the `simp` normalization a determinant
+expansion relies on to rewrite a row-slice lookup back to a source lookup. -/
 @[simp] theorem leadingRows_entry (M : Matrix R n m) (k : Nat) (hk : k ≤ n)
     (i : Fin k) (j : Fin m) :
     (leadingRows M k hk)[i][j] =
@@ -629,6 +637,10 @@ def leadingRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) : Matrix R k m :=
        M[ii][j]) := by
   simp [leadingRows, ofFn]
 
+/-- Entry formula for the `(k + 1)` leading submatrix: the `(i, j)` entry resolves
+to the source entry `M[i][j]` at the same coordinates, reembedded into `Fin n` via
+`k.val + 1 ≤ n`. This is the `simp` normalization that rewrites a submatrix lookup
+back to a source lookup in determinant expansions. -/
 @[simp] theorem submatrix_entry (M : Matrix R n n) (k : Fin n)
     (i j : Fin (k.val + 1)) :
     (submatrix M k)[i][j] =
@@ -666,6 +678,10 @@ def borderedMinor (M : Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
         j
     M[rr][cc]
 
+/-- Interior-block case of the bordered-minor entry formula: when both `r.val < k`
+and `c.val < k`, the `(r, c)` entry resolves to the source entry `M[r][c]` at the
+reembedded leading-block coordinates, independent of the border row `i` and column
+`j`. This is the `simp` normalization for the top-left `k × k` block. -/
 @[simp] theorem borderedMinor_entry_lt_lt (M : Matrix R n n) (k : Nat) (hk : k < n)
     (i j : Fin n) (r c : Fin (k + 1)) (hr : r.val < k) (hc : c.val < k) :
     (borderedMinor M k hk i j)[r][c] =
@@ -674,6 +690,10 @@ def borderedMinor (M : Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
        M[rr][cc]) := by
   simp [borderedMinor, ofFn, hr, hc]
 
+/-- Border-column case of the bordered-minor entry formula: at the final column
+`Fin.last k` with `r.val < k`, the `(r, last)` entry resolves to the source entry
+`M[r][j]`, taking the border column `j` and the reembedded leading-block row. This
+is the `simp` normalization for the appended border column. -/
 @[simp] theorem borderedMinor_entry_lt_last (M : Matrix R n n) (k : Nat) (hk : k < n)
     (i j : Fin n) (r : Fin (k + 1)) (hr : r.val < k) :
     (borderedMinor M k hk i j)[r][Fin.last k] =
@@ -681,6 +701,10 @@ def borderedMinor (M : Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
        M[rr][j]) := by
   simp [borderedMinor, ofFn, hr]
 
+/-- Border-row case of the bordered-minor entry formula: at the final row
+`Fin.last k` with `c.val < k`, the `(last, c)` entry resolves to the source entry
+`M[i][c]`, taking the border row `i` and the reembedded leading-block column. This
+is the `simp` normalization for the appended border row. -/
 @[simp] theorem borderedMinor_entry_last_lt (M : Matrix R n n) (k : Nat) (hk : k < n)
     (i j : Fin n) (c : Fin (k + 1)) (hc : c.val < k) :
     (borderedMinor M k hk i j)[Fin.last k][c] =
@@ -688,6 +712,10 @@ def borderedMinor (M : Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
        M[i][cc]) := by
   simp [borderedMinor, ofFn, hc]
 
+/-- Corner case of the bordered-minor entry formula: at the bottom-right corner
+`(Fin.last k, Fin.last k)`, the entry resolves to the source entry `M[i][j]` formed
+from the border row `i` and border column `j`. This is the `simp` normalization for
+the corner that a determinant expansion isolates last. -/
 @[simp] theorem borderedMinor_entry_last_last (M : Matrix R n n) (k : Nat) (hk : k < n)
     (i j : Fin n) :
     (borderedMinor M k hk i j)[Fin.last k][Fin.last k] = M[i][j] := by
