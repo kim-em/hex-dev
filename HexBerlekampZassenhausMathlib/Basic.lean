@@ -14665,13 +14665,12 @@ theorem representedFactor_dvd_recombinationCandidate_of_subset
     exfalso
     have hfactor_dvd_core : factor ∣ core :=
       zpoly_dvd_trans hfactor_dvd_target htarget_dvd_core
-    -- Derive `2 ≤ d.p^d.k` from `factor ≠ 0` and the centered-lift recovery,
-    -- matching the pattern used in `representsIntegerFactorAtLift_monic`.
+    -- `2 ≤ d.p^d.k` follows directly from the Mignotte precision: the default
+    -- coefficient bound is positive for the nonzero core, so the modulus clears
+    -- twice a positive quantity.
     have hd_modulus : 2 ≤ d.p ^ d.k := by
-      have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
-      have hlead : Hex.DensePoly.leadingCoeff core = (1 : Int) := hcore_monic
-      rw [hlead] at hcore_lc_le
-      simp only [Int.natAbs_one] at hcore_lc_le
+      have hb_pos : 0 < Hex.ZPoly.defaultFactorCoeffBound core :=
+        Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hcore_ne
       omega
     by_cases hS_empty : S = (∅ : LiftedFactorSubset d)
     · -- Subcase B2: `S = ∅` — packaged by the empty-support helper.
