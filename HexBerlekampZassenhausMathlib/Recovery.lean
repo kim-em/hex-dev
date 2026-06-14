@@ -1871,8 +1871,8 @@ noncomputable def ofMignottePrecisionCanonicalIndicatorsExpectedFactors
 
 /--
 Mignotte-precision `ForwardRecoveryInputs` constructor specialised to the
-public `factorFast` lift shape `d = henselLiftData f (precisionForCoeffBound
-(factorFastPrecisionCap f) primeData.p) primeData`.  Drops the
+public `factorFast` lift shape `d = toMonicLiftData f (factorFastPrecisionCap f)
+primeData` (the monic-core lift the executable fast path recovers against).  Drops the
 `mignotte_precision` side condition (discharged via
 `mignotte_precision_of_liftData_precisionForCoeffBound_factorFastPrecisionCap`
 under `hp : 2 ≤ d.p` and the lift-data shape equation `hk`).  Mirrors
@@ -2029,8 +2029,8 @@ noncomputable def ofCapSeparationCanonicalIndicators
 
 /--
 Cap-separation `ForwardRecoveryInputs` constructor specialised to the public
-`factorFast` lift shape `d = henselLiftData f (precisionForCoeffBound
-(factorFastPrecisionCap f) primeData.p) primeData`.  Drops both the explicit
+`factorFast` lift shape `d = toMonicLiftData f (factorFastPrecisionCap f)
+primeData` (the monic-core lift the executable fast path recovers against).  Drops both the explicit
 `expectedIndicators`/`indicators_match` plumbing (canonical support-driven
 indicator array) and the `mignotte_precision` side condition (discharged via
 `mignotte_precision_of_liftData_precisionForCoeffBound_factorFastPrecisionCap`
@@ -2219,7 +2219,7 @@ theorem factorFast_ne_none_of_forwardInputs_on_schedule
     (hinputs :
       ForwardRecoveryInputs
         (Hex.normalizeForFactor f).squareFreeCore
-        (Hex.henselLiftData
+        (Hex.ZPoly.toMonicLiftData
           (Hex.normalizeForFactor f).squareFreeCore target primeData))
     (hmem :
       let a := Hex.precisionForCoeffBound (Hex.factorFastPrecisionCap f) primeData.p
@@ -2230,12 +2230,12 @@ theorem factorFast_ne_none_of_forwardInputs_on_schedule
     Hex.factorFast f ≠ none := by
   have hrecover :
       Hex.bhksRecover? (Hex.normalizeForFactor f).squareFreeCore
-          (Hex.henselLiftData
+          (Hex.ZPoly.toMonicLiftData
             (Hex.normalizeForFactor f).squareFreeCore target primeData) =
         some hinputs.expectedFactors :=
     bhksRecover_eq_some_of_forwardInputs
       (Hex.normalizeForFactor f).squareFreeCore
-      (Hex.henselLiftData
+      (Hex.ZPoly.toMonicLiftData
         (Hex.normalizeForFactor f).squareFreeCore target primeData)
       hinputs
   exact
@@ -2261,7 +2261,7 @@ theorem factorFast_ne_none_of_forwardInputs_at_cap
     (hinputs :
       ForwardRecoveryInputs
         (Hex.normalizeForFactor f).squareFreeCore
-        (Hex.henselLiftData
+        (Hex.ZPoly.toMonicLiftData
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.precisionForCoeffBound
             (Hex.factorFastPrecisionCap f) primeData.p)
@@ -2271,14 +2271,16 @@ theorem factorFast_ne_none_of_forwardInputs_at_cap
     f primeData hB_pos hchoose hinputs
     (Hex.cap_mem_henselPrecisionSchedule _)
 
-/-- The Hensel-lift data produced by the public `factorFast` pipeline for
-`f` at the executable cap precision: a lift of the normalized square-free
-core of `f` to precision `precisionForCoeffBound (factorFastPrecisionCap f)
-primeData.p` over `primeData`. Local abbreviation used inside the HO-4 leaf
-capstones to factor out the repeated nested lift-data expression. -/
+/-- The monic-core lift data produced by the public `factorFast` pipeline for
+`f` at the executable cap precision: `toMonicLiftData` of the normalized
+square-free core of `f` at cap count `factorFastPrecisionCap f` over
+`primeData`. This matches the lift data the executable fast path actually
+recovers against (`factorFast_ne_none_of_core_recovery_on_schedule`). Local
+abbreviation used inside the HO-4 leaf capstones to factor out the repeated
+nested lift-data expression. -/
 private abbrev factorFastCapLiftData
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData) : Hex.LiftData :=
-  Hex.henselLiftData
+  Hex.ZPoly.toMonicLiftData
     (Hex.normalizeForFactor f).squareFreeCore
     (Hex.precisionForCoeffBound (Hex.factorFastPrecisionCap f) primeData.p)
     primeData
@@ -3807,6 +3809,7 @@ theorem factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsA
       hclass_nonempty hclass_bounds)
     hproduct
 
+set_option maxHeartbeats 1000000 in
 /-- Canonical-support recovery inputs at the `factorFast` cap lift.
 
 Bundles every hypothesis consumed by the canonical-support recovery wrapper
@@ -3952,6 +3955,7 @@ def ofExpectedFactors
 
 end CanonicalRecoveryInputs
 
+set_option maxHeartbeats 1000000 in
 /--
 Canonical-support recovery inputs after cap separation has supplied the
 `L' = W` lattice identification.
@@ -4192,6 +4196,7 @@ def ofForwardRecoveryInputsCanonicalRepresentations
 
 end CanonicalRecoveryTailInputs
 
+set_option maxHeartbeats 1000000 in
 /--
 Cap-separation side inputs for the actual `factorFast` cap lift.
 
