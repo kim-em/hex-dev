@@ -798,15 +798,18 @@ private theorem foldl_xorClmulAt_monomial_ne
     (hnLow := hLow) (hnHigh := hHigh)]
   rw [foldl_xorClmulAt_monomial_zero_prefix_coeff]
 
+/-- `xorClmulAt_zero_left` says accumulating the carry-less product of a zero left factor leaves the accumulator untouched. -/
 private theorem xorClmulAt_zero_left (acc : Array UInt64) (idx : Nat) (x : UInt64) :
     xorClmulAt acc idx 0 x = acc := by
   simp [xorClmulAt, Array.setIfInBounds_getElem!]
 
+/-- `coeffWords_xorClmulAt_zero_left` says a zero left factor leaves every output coefficient unchanged. -/
 private theorem coeffWords_xorClmulAt_zero_left (acc : Array UInt64) (idx n : Nat)
     (x : UInt64) :
     coeffWords (xorClmulAt acc idx 0 x) n = coeffWords acc n := by
   rw [xorClmulAt_zero_left]
 
+/-- `coeffWords_xorClmulAt_xor_left` distributes one `xorClmulAt` step over an xor of left factors, given the three accumulators already agree by xor. -/
 private theorem coeffWords_xorClmulAt_xor_left
     (accXY accX accY : Array UInt64) {idx n : Nat} (x y z : UInt64)
     (hsizeX : accX.size = accXY.size) (hsizeY : accY.size = accXY.size)
@@ -842,6 +845,7 @@ private theorem coeffWords_xorClmulAt_xor_left
       rw [coeffWords_xorClmulAt_ne accY y z hLow hHigh]
       exact hacc
 
+/-- `foldl_xorClmulAt_xor_left_coeff` lifts left-factor xor-distributivity across the inner `xorClmulAt` fold over a list of word indices. -/
 private theorem foldl_xorClmulAt_xor_left_coeff
     (js : List Nat) (accXY accX accY : Array UInt64) {idx n : Nat}
     (x y : UInt64) (zs : Array UInt64)
@@ -880,6 +884,7 @@ private theorem foldl_xorClmulAt_xor_left_coeff
         (by simp [xorClmulAt_size, hsizeY])
         htail hstep
 
+/-- `foldl_mulWords_xor_left_coeff` lifts left-factor xor-distributivity across the full `mulWords` double fold, so coefficients of `(xs ^^^ ys) * zs` split as the xor of the two separate products. -/
 private theorem foldl_mulWords_xor_left_coeff
     (is : List Nat) (accXY accX accY : Array UInt64) {n : Nat}
     (xs ys zs : Array UInt64)
@@ -952,6 +957,7 @@ private theorem foldl_mulWords_xor_left_coeff
         (by simp [foldl_xorClmulAt_size, hsizeY])
         htail hinner
 
+/-- `coeffWords_xorClmulAt_congr` says one `xorClmulAt` step preserves coefficient-level equality of two accumulators. -/
 private theorem coeffWords_xorClmulAt_congr
     (accA accB : Array UInt64) {idx n : Nat} (x y : UInt64)
     (hidxA : idx + 1 < accA.size) (hidxB : idx + 1 < accB.size)
@@ -970,6 +976,7 @@ private theorem coeffWords_xorClmulAt_congr
       rw [coeffWords_xorClmulAt_ne accB x y hLow hHigh]
       exact hacc
 
+/-- `foldl_xorClmulAt_congr_coeff` lifts coefficient-level accumulator congruence across the inner `xorClmulAt` fold. -/
 private theorem foldl_xorClmulAt_congr_coeff
     (js : List Nat) (accA accB : Array UInt64) {idx n : Nat}
     (x : UInt64) (ys : Array UInt64)
@@ -1006,6 +1013,7 @@ private theorem foldl_xorClmulAt_congr_coeff
         (coeffWords_xorClmulAt_congr accA accB x ys[j]!
           (idx := idx + j) (n := n) hjA hjB hacc)
 
+/-- `foldl_mulWords_congr_coeff` lifts coefficient-level accumulator congruence across the full `mulWords` double fold. -/
 private theorem foldl_mulWords_congr_coeff
     (is : List Nat) (accA accB : Array UInt64) {n : Nat}
     (xs ys : Array UInt64)
@@ -1072,6 +1080,7 @@ private theorem foldl_mulWords_congr_coeff
             accB)
         htailA htailB hinner
 
+/-- `foldl_xorClmulAt_zero_left` says an inner fold of `xorClmulAt` steps with a zero left factor returns the accumulator unchanged. -/
 private theorem foldl_xorClmulAt_zero_left (js : List Nat) (acc : Array UInt64)
     (idx : Nat) (ys : Array UInt64) :
     js.foldl (fun acc j => xorClmulAt acc (idx + j) 0 ys[j]!) acc = acc := by
@@ -1082,6 +1091,7 @@ private theorem foldl_xorClmulAt_zero_left (js : List Nat) (acc : Array UInt64)
       simp only [List.foldl_cons]
       rw [xorClmulAt_zero_left, ih]
 
+/-- `foldl_xorClmulAt_zero_left_coeff` says that same zero-left-factor inner fold leaves every output coefficient unchanged. -/
 private theorem foldl_xorClmulAt_zero_left_coeff (js : List Nat) (acc : Array UInt64)
     (idx n : Nat) (ys : Array UInt64) :
     coeffWords
@@ -1095,6 +1105,7 @@ private theorem foldl_xorClmulAt_zero_left_coeff (js : List Nat) (acc : Array UI
       simp only [List.foldl_cons]
       rw [ih, coeffWords_xorClmulAt_zero_left]
 
+/-- `getElem!_eq_zero_of_size_le` says an out-of-bounds `getElem!` into a `UInt64` array returns the `0` default. -/
 private theorem getElem!_eq_zero_of_size_le (xs : Array UInt64) {i : Nat}
     (hi : xs.size ≤ i) :
     xs[i]! = 0 := by
@@ -1103,6 +1114,7 @@ private theorem getElem!_eq_zero_of_size_le (xs : Array UInt64) {i : Nat}
   · rfl
   · exact hi
 
+/-- `foldl_mulWords_range_add_zero_left_coeff` says extending the outer `mulWords` fold by `k` indices past `xs.size` adds only zero left factors and so leaves coefficients unchanged. -/
 private theorem foldl_mulWords_range_add_zero_left_coeff
     (xs ys acc : Array UInt64) (n k : Nat) :
     coeffWords
@@ -1134,6 +1146,7 @@ private theorem foldl_mulWords_range_add_zero_left_coeff
       rw [foldl_xorClmulAt_zero_left_coeff]
       exact ih
 
+/-- `foldl_mulWords_range_extend_left_coeff` says running the outer `mulWords` fold over any range bound `m ≥ xs.size` gives the same coefficients as the exact `xs.size` range. -/
 private theorem foldl_mulWords_range_extend_left_coeff
     (xs ys acc : Array UInt64) (n m : Nat) (hsize : xs.size ≤ m) :
     coeffWords
@@ -1158,6 +1171,7 @@ private theorem foldl_mulWords_range_extend_left_coeff
   rw [hm]
   exact foldl_mulWords_range_add_zero_left_coeff xs ys acc n (m - xs.size)
 
+/-- `foldl_mulWords_left_monomial_zero_prefix_coeff_aux` is the list-generalized step showing outer indices below `k / 64` read zero `monomial k` words and so leave coefficients unchanged. -/
 private theorem foldl_mulWords_left_monomial_zero_prefix_coeff_aux
     (is : List Nat) (acc xs : Array UInt64) (k n : Nat)
     (hmem : ∀ i ∈ is, i < k / 64) :
@@ -1188,6 +1202,7 @@ private theorem foldl_mulWords_left_monomial_zero_prefix_coeff_aux
         htail]
       exact foldl_xorClmulAt_zero_left_coeff (List.range xs.size) acc i n xs
 
+/-- `foldl_mulWords_left_monomial_zero_prefix_coeff` specializes the prefix law to `List.range (k / 64)`: the zero low words of `monomial k` leave coefficients unchanged. -/
 private theorem foldl_mulWords_left_monomial_zero_prefix_coeff
     (acc xs : Array UInt64) (k n : Nat) :
     coeffWords
@@ -1205,6 +1220,7 @@ private theorem foldl_mulWords_left_monomial_zero_prefix_coeff
       intro i hi
       exact List.mem_range.mp hi)
 
+/-- `foldl_mulWords_left_monomial_zero_prefix_aux` is the array-level list-generalized step showing the zero low words of `monomial k` return the accumulator unchanged. -/
 private theorem foldl_mulWords_left_monomial_zero_prefix_aux
     (is : List Nat) (acc xs : Array UInt64) (k : Nat)
     (hmem : ∀ i ∈ is, i < k / 64) :
@@ -1229,6 +1245,7 @@ private theorem foldl_mulWords_left_monomial_zero_prefix_aux
         words_monomial_getElem!_zero_lt (k := k) hi
       rw [hzero, foldl_xorClmulAt_zero_left, ih (hmem := htail)]
 
+/-- `foldl_mulWords_left_monomial_zero_prefix` says the `List.range (k / 64)` prefix fold over `monomial k`'s zero low words returns the accumulator unchanged. -/
 private theorem foldl_mulWords_left_monomial_zero_prefix
     (acc xs : Array UInt64) (k : Nat) :
     (List.range (k / 64)).foldl
