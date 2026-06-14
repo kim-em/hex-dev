@@ -562,38 +562,32 @@ theorem bhksIndicatorCandidates?_eq_some_of_forwardCandidates
     f d expectedIndicators expectedFactors hsize hcandidate
 
 /--
-Single-indicator A2 reconstruction from Mignotte precision. The selected
-lifted factors are supplied explicitly by `hselected`, while
-`hindicator_product` is the B7/A2-facing modular-product fact: after scaling
-the selected lifted-factor product by `lc(f)`, it reduces modulo `p^k` to the
-expected integer factor. The coefficient bound needed for centred lifting is
-derived from `defaultFactorCoeffBound_valid`.
+Single-indicator A2 reconstruction from the monic-transform coordinate. The
+selected lifted factors are supplied explicitly by `hselected`, while
+`hdilated` is the B7/A2-facing reconstruction fact: after centered lifting in
+the monic-transform coordinate and dilating back by `lc(f)`, the result is the
+expected integer factor.
 -/
-theorem bhksIndicatorCandidate?_eq_some_of_mignottePrecision
+theorem bhksIndicatorCandidate?_eq_some_of_dilatedCenteredLift
     (f : Hex.ZPoly) (d : Hex.LiftData) (indicator : Array Int)
     (selected : Array Hex.ZPoly) (expectedFactor : Hex.ZPoly)
-    (hf_ne_zero : f ≠ 0)
     (hselected :
       Hex.bhksIndicatorSelectedFactors d.liftedFactors indicator = some selected)
     (hdvd : expectedFactor ∣ f)
     (hexpected_prim : Hex.ZPoly.Primitive expectedFactor)
     (hexpected_sign : 0 ≤ Hex.DensePoly.leadingCoeff expectedFactor)
-    (hexpected_monic : Hex.DensePoly.Monic expectedFactor)
+    (hexpected_pos_lc : 0 < Hex.DensePoly.leadingCoeff expectedFactor)
     (hexpected_degree : 0 < expectedFactor.degree?.getD 0)
-    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
-    (hindicator_product :
-      Hex.ZPoly.reduceModPow
-          (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f) (Array.polyProduct selected))
-          d.p d.k =
-        Hex.ZPoly.reduceModPow expectedFactor d.p d.k) :
+    (hdilated :
+      Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff f)
+          (Hex.centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k)) =
+        expectedFactor) :
     ∃ quotient,
       Hex.bhksIndicatorCandidate? f d indicator =
         some (expectedFactor, quotient) :=
-  Hex.bhksIndicatorCandidate?_eq_some_of_mignottePrecision
+  Hex.bhksIndicatorCandidate?_eq_some_of_dilatedCenteredLift
     f d indicator selected expectedFactor hselected hdvd
-    (defaultFactorCoeffBound_valid f hf_ne_zero expectedFactor hdvd)
-    hexpected_prim hexpected_sign hexpected_monic hexpected_degree
-    hprecision hindicator_product
+    hexpected_prim hexpected_sign hexpected_pos_lc hexpected_degree hdilated
 
 /--
 Proof-facing inputs for the SPEC Group D forward-verification clause at one
@@ -1510,15 +1504,14 @@ def ofIndicatorCandidateFacts
 Fold the single-indicator Mignotte reconstruction theorem over an expected
 indicator array. This is the A2 candidate-equality assembly for
 `ForwardRecoveryInputs`: callers supply the selected lifted-factor products,
-true-factor facts, and modular product equalities for each indicator, and the
+true-factor facts, and dilated centered-lift equalities for each indicator, and the
 executable candidate fold returns the expected factor array.
 -/
-theorem candidatesOfMignottePrecision
+theorem candidatesOfDilatedCenteredLift
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (expectedIndicators : Array (Array Int))
     (selectedFactors : Array (Array Hex.ZPoly))
     (expectedFactors : Array Hex.ZPoly)
-    (hf_ne_zero : f ≠ 0)
     (hsize : expectedFactors.size = expectedIndicators.size)
     (hselected :
       ∀ i, i < expectedIndicators.size →
@@ -1534,32 +1527,29 @@ theorem candidatesOfMignottePrecision
     (hsign :
       ∀ i, i < expectedIndicators.size →
         0 ≤ Hex.DensePoly.leadingCoeff (expectedFactors.getD i 0))
-    (hmonic :
+    (hpos_lc :
       ∀ i, i < expectedIndicators.size →
-        Hex.DensePoly.Monic (expectedFactors.getD i 0))
+        0 < Hex.DensePoly.leadingCoeff (expectedFactors.getD i 0))
     (hdegree :
       ∀ i, i < expectedIndicators.size →
         0 < (expectedFactors.getD i 0).degree?.getD 0)
-    (hprecision :
-      2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
-    (hproduct :
+    (hdilated :
       ∀ i, i < expectedIndicators.size →
-        Hex.ZPoly.reduceModPow
-            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)
-              (Array.polyProduct (selectedFactors.getD i #[])))
-            d.p d.k =
-          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k) :
+        Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff f)
+            (Hex.centeredLiftPoly
+              (Array.polyProduct (selectedFactors.getD i #[])) (d.p ^ d.k)) =
+          expectedFactors.getD i 0) :
     Hex.bhksIndicatorCandidates? f d expectedIndicators =
       some expectedFactors :=
   bhksIndicatorCandidates?_eq_some_of_forwardCandidates
     f d expectedIndicators expectedFactors hsize
     (fun i hi =>
-      bhksIndicatorCandidate?_eq_some_of_mignottePrecision
+      bhksIndicatorCandidate?_eq_some_of_dilatedCenteredLift
         f d (expectedIndicators.getD i #[])
         (selectedFactors.getD i #[]) (expectedFactors.getD i 0)
-        hf_ne_zero (hselected i hi) (hdivides i hi)
-        (hprimitive i hi) (hsign i hi) (hmonic i hi) (hdegree i hi)
-        hprecision (hproduct i hi))
+        (hselected i hi) (hdivides i hi)
+        (hprimitive i hi) (hsign i hi) (hpos_lc i hi) (hdegree i hi)
+        (hdilated i hi))
 
 /--
 Build `ForwardRecoveryInputs` from per-indicator Mignotte reconstruction
@@ -1602,19 +1592,18 @@ def ofMignottePrecisionCandidateProducts
     (hsign :
       ∀ i, i < expectedIndicators.size →
         0 ≤ Hex.DensePoly.leadingCoeff (expectedFactors.getD i 0))
-    (hmonic :
+    (hpos_lc :
       ∀ i, i < expectedIndicators.size →
-        Hex.DensePoly.Monic (expectedFactors.getD i 0))
+        0 < Hex.DensePoly.leadingCoeff (expectedFactors.getD i 0))
     (hdegree :
       ∀ i, i < expectedIndicators.size →
         0 < (expectedFactors.getD i 0).degree?.getD 0)
-    (hproduct :
+    (hdilated :
       ∀ i, i < expectedIndicators.size →
-        Hex.ZPoly.reduceModPow
-            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)
-              (Array.polyProduct (selectedFactors.getD i #[])))
-            d.p d.k =
-          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k)
+        Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff f)
+            (Hex.centeredLiftPoly
+              (Array.polyProduct (selectedFactors.getD i #[])) (d.p ^ d.k)) =
+          expectedFactors.getD i 0)
     (product_eq : Array.polyProduct expectedFactors = f) :
     ForwardRecoveryInputs f d :=
   { rows_pos := rows_pos
@@ -1626,10 +1615,9 @@ def ofMignottePrecisionCandidateProducts
     nondegenerate := nondegenerate
     expectedFactors := expectedFactors
     candidates_eq :=
-      candidatesOfMignottePrecision
-        expectedIndicators selectedFactors expectedFactors hf_ne_zero hsize
-        hselected hdivides hprimitive hsign hmonic hdegree mignotte_precision
-        hproduct
+      candidatesOfDilatedCenteredLift
+        expectedIndicators selectedFactors expectedFactors hsize
+        hselected hdivides hprimitive hsign hpos_lc hdegree hdilated
     product_eq := product_eq }
 
 /--
@@ -1664,20 +1652,23 @@ def ofMignottePrecisionExpectedFactors
         Hex.bhksIndicatorSelectedFactors d.liftedFactors
             (expectedIndicators.getD i #[]) =
           some (selectedFactors.getD i #[]))
-    (hproduct :
+    (hdilated :
       ∀ i, i < expectedIndicators.size →
-        Hex.ZPoly.reduceModPow
-            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)
-              (Array.polyProduct (selectedFactors.getD i #[])))
-            d.p d.k =
-          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k) :
+        Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff f)
+            (Hex.centeredLiftPoly
+              (Array.polyProduct (selectedFactors.getD i #[])) (d.p ^ d.k)) =
+          expectedFactors.getD i 0) :
     ForwardRecoveryInputs f d :=
   ofMignottePrecisionCandidateProducts
     rows_pos trueSupports lattice_eq_indicators mignotte_precision
     expectedIndicators indicators_match nondegenerate
     selectedFactors expectedFactors hf_ne_zero htrue.size_eq
     hselected htrue.divides htrue.primitive htrue.leadingCoeff_nonneg
-    htrue.monic htrue.positive_degree hproduct
+    (fun i hi => by
+      have hlc := htrue.monic i hi
+      rw [hlc]
+      decide)
+    htrue.positive_degree hdilated
     (productOfExpectedFactors htrue)
 
 /--
@@ -1729,19 +1720,18 @@ noncomputable def ofMignottePrecisionCanonicalIndicators
     (hsign :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
         0 ≤ Hex.DensePoly.leadingCoeff (expectedFactors.getD i 0))
-    (hmonic :
+    (hpos_lc :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-        Hex.DensePoly.Monic (expectedFactors.getD i 0))
+        0 < Hex.DensePoly.leadingCoeff (expectedFactors.getD i 0))
     (hdegree :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
         0 < (expectedFactors.getD i 0).degree?.getD 0)
-    (hproduct :
+    (hdilated :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-        Hex.ZPoly.reduceModPow
-            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)
-              (Array.polyProduct (selectedFactors.getD i #[])))
-            d.p d.k =
-          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k)
+        Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff f)
+            (Hex.centeredLiftPoly
+              (Array.polyProduct (selectedFactors.getD i #[])) (d.p ^ d.k)) =
+          expectedFactors.getD i 0)
     (product_eq : Array.polyProduct expectedFactors = f) :
     ForwardRecoveryInputs f d :=
   ofMignottePrecisionCandidateProducts
@@ -1750,7 +1740,7 @@ noncomputable def ofMignottePrecisionCanonicalIndicators
     (equivalenceClassIndicatorsOfLiftData_eq_expectedIndicatorArrayOfSupports
       rows_pos trueSupports lattice_eq_indicators)
     nondegenerate selectedFactors expectedFactors hf_ne_zero hsize
-    hselected hdivides hprimitive hsign hmonic hdegree hproduct product_eq
+    hselected hdivides hprimitive hsign hpos_lc hdegree hdilated product_eq
 
 /--
 Mignotte-precision `ForwardRecoveryInputs` constructor from the expected
@@ -1784,19 +1774,22 @@ noncomputable def ofMignottePrecisionCanonicalIndicatorsExpectedFactors
         Hex.bhksIndicatorSelectedFactors d.liftedFactors
             ((expectedIndicatorArrayOfSupports trueSupports).getD i #[]) =
           some (selectedFactors.getD i #[]))
-    (hproduct :
+    (hdilated :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-        Hex.ZPoly.reduceModPow
-            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)
-              (Array.polyProduct (selectedFactors.getD i #[])))
-            d.p d.k =
-          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k) :
+        Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff f)
+            (Hex.centeredLiftPoly
+              (Array.polyProduct (selectedFactors.getD i #[])) (d.p ^ d.k)) =
+          expectedFactors.getD i 0) :
     ForwardRecoveryInputs f d :=
   ofMignottePrecisionCanonicalIndicators
     rows_pos trueSupports lattice_eq_indicators mignotte_precision
     nondegenerate selectedFactors expectedFactors hf_ne_zero htrue.size_eq
     hselected htrue.divides htrue.primitive htrue.leadingCoeff_nonneg
-    htrue.monic htrue.positive_degree hproduct
+    (fun i hi => by
+      have hlc := htrue.monic i hi
+      rw [hlc]
+      decide)
+    htrue.positive_degree hdilated
     (productOfExpectedFactors htrue)
 
 /--
