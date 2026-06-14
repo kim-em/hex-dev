@@ -468,6 +468,35 @@ private def extendedCascade2 : ZPoly :=
   | none => false
 #guard recombinationSearch liftedTarget3 [] = none
 
+/-
+Non-monic recovered-candidate guard for `core = 2X² + 3X + 1` at `p = 3`,
+`k = 2` (`p ^ k = 9`).  This exercises the corrected recovered-candidate model
+(`liftedRecoveryCandidate` / `RecoveredAtLift` on the Mathlib side, mirrored by
+the per-step candidate of `scaledRecombinationSearchModAux` here): the centred
+lifted product is dilated by the integer leading coefficient before the
+primitive part is taken, so the model recovers genuine integer factors of a
+non-monic core rather than monic-coordinate witnesses.
+
+The monic transform `toMonic core = X² + 3X + 2` splits as `(X+1)(X+2)`; lifting
+each centred factor and dilating by `coreLc = 2` recovers the true integer
+factors `2X+1` and `X+1`, whose product is `core`.  An obvious non-factor
+(`2X+3`) is rejected by the exact-division check, distinguishing it from the
+recovered true factor.
+-/
+#guard
+  let core := zpoly #[1, 3, 2]          -- 2X² + 3X + 1
+  let coreLc := (2 : Int)
+  let modulus := 9                      -- p ^ k = 3 ^ 2
+  let liftedFactors := [zpoly #[1, 1], zpoly #[2, 1]]   -- X+1, X+2
+  let recovered := normalizeFactorSign <| ZPoly.primitivePart <|
+    ZPoly.dilate coreLc <| centeredLiftPoly (zpoly #[1, 1]) modulus
+  recovered = zpoly #[1, 2]                            -- 2X + 1, a true factor
+    && (exactQuotient? core recovered).isSome          -- ... which divides core
+    && (exactQuotient? core (zpoly #[3, 2])).isNone    -- 2X + 3 is not a factor
+    && (match scaledRecombinationSearchMod coreLc core modulus liftedFactors with
+        | some factors => Array.polyProduct factors.toArray = core
+        | none => false)
+
 #guard
   match bhksRecover? liftedTarget5 liftedData5 with
   | some factors =>
