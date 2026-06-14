@@ -5735,6 +5735,7 @@ private theorem right_factor_derivative_isZero_of_mul_derivative_isZero_of_commo
       hcommon
   exact derivative_isZero_true_of_dvd_self_derivative z hz_dvd_dz
 
+/-- `powLinear d n ≠ 0` for any exponent `n` when the base `d` is nonzero, by induction on `n`. -/
 private theorem powLinear_ne_zero
     [ZMod64.PrimeModulus p] {d : FpPoly p}
     (hd : d ≠ 0) :
@@ -5753,6 +5754,7 @@ private theorem powLinear_ne_zero
       change powLinear d n * d ≠ 0
       exact mul_ne_zero_of_ne_zero ih hd
 
+/-- `pow d n ≠ 0` for a nonzero base `d`, transported from `powLinear_ne_zero` via `pow_eq_powLinear`. -/
 private theorem pow_ne_zero
     [ZMod64.PrimeModulus p] {d : FpPoly p}
     (hd : d ≠ 0) (n : Nat) :
@@ -5760,6 +5762,7 @@ private theorem pow_ne_zero
   rw [pow_eq_powLinear]
   exact powLinear_ne_zero hd n
 
+/-- The degree of `powLinear d n` grows linearly: it equals `n * deg d` for a nonzero base `d`. -/
 private theorem powLinear_degree?_getD
     [ZMod64.PrimeModulus p] {d : FpPoly p}
     (hd : d ≠ 0) :
@@ -5777,6 +5780,7 @@ private theorem powLinear_degree?_getD
       rw [degree?_mul_eq_add_degree? (powLinear d n) d
         (powLinear_ne_zero hd n) hd, ih, Nat.succ_mul]
 
+/-- The same linear degree identity `deg (pow d n) = n * deg d`, transported from `powLinear_degree?_getD`. -/
 private theorem pow_degree?_getD
     [ZMod64.PrimeModulus p] {d : FpPoly p}
     (hd : d ≠ 0) (n : Nat) :
@@ -5784,6 +5788,7 @@ private theorem pow_degree?_getD
   rw [pow_eq_powLinear]
   exact powLinear_degree?_getD hd n
 
+/-- If every power `pow d n` divides a fixed nonzero `g`, then `d` is a unit (`d ∣ 1`): a positive-degree `d` would force `pow d n` past the degree of `g`. -/
 private theorem dvd_one_of_all_powers_dvd_nonzero
     [ZMod64.PrimeModulus p] {d g : FpPoly p}
     (hg : g.isZero = false)
