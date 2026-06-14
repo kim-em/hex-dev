@@ -64,6 +64,8 @@ def luebeckConwayPolynomialOfCoeffs
     (p : Nat) [ZMod64.Bounds p] (coeffs : List Nat) : FpPoly p :=
   FpPoly.ofCoeffs (coeffs.toArray.map (fun n => ZMod64.ofNat p n))
 
+/-- `1 ≠ 0` in `ZMod64 2`, the nondegeneracy fact that certifies the leading
+coefficient of the committed `C(2, 1)` literal is nonzero. -/
 private theorem one_ne_zero_two : (1 : ZMod64 2) ≠ 0 := by
   intro h
   have hm := (ZMod64.natCast_eq_natCast_iff (p := 2) 1 0).mp h
@@ -89,6 +91,8 @@ rather than triggering Tier 2 compatibility checks or Tier 3 search. -/
 def luebeckConwayPolynomial? (p n : Nat) [ZMod64.Bounds p] : Option (FpPoly p) :=
   (luebeckConwayCoeffs? p n).map (luebeckConwayPolynomialOfCoeffs p)
 
+/-- `luebeckConwayPolynomial? 2 1` resolves to the committed `C(2, 1)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_2_1` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_2_1 :
     luebeckConwayPolynomial? 2 1 = some luebeckConwayPolynomial_2_1 := by
   show some (luebeckConwayPolynomialOfCoeffs 2 [1, 1]) = some luebeckConwayPolynomial_2_1
@@ -105,14 +109,20 @@ def luebeckConwayPolynomial? (p n : Nat) [ZMod64.Bounds p] : Option (FpPoly p) :
   | 1 => rfl
   | _ + 2 => rfl
 
+/-- Degree `0` over `p = 2` is outside the committed table, so the lookup
+returns `none`. -/
 @[simp] theorem luebeckConwayPolynomial?_miss_two_zero :
     luebeckConwayPolynomial? 2 0 = (none : Option (FpPoly 2)) :=
   rfl
 
+/-- Degree `7` over `p = 2` is outside the committed table, so the lookup
+returns `none`. -/
 @[simp] theorem luebeckConwayPolynomial?_miss_two_seven :
     luebeckConwayPolynomial? 2 7 = (none : Option (FpPoly 2)) :=
   rfl
 
+/-- Degree `7` over `p = 3` is outside the committed table, so the lookup
+returns `none`. -/
 @[simp] theorem luebeckConwayPolynomial?_miss_three_seven :
     luebeckConwayPolynomial? 3 7 = (none : Option (FpPoly 3)) :=
   rfl
