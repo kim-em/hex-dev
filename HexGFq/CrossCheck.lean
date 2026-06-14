@@ -969,9 +969,12 @@ namespace N32
 private def lower : UInt64 := 0x8D
 private def n : Nat := 32
 
+/-- The packed degree-32 `GF(2)` modulus `x^32 + x^7 + x^3 + x^2 + 1` as a `GF2Poly`. -/
 private def packedModulus : GF2Poly :=
   GF2Poly.ofUInt64Monic lower n
 
+/-- Irreducibility certificate (Frobenius power chain plus Bézout witness) for the
+packed degree-32 `GF2Poly` modulus `packedModulus`. -/
 private def packedCert : GF2Poly.IrreducibilityCertificate :=
   { n := n
     powChain := Array.ofFn fun k : Fin (n + 1) =>
@@ -983,22 +986,28 @@ private def packedCert : GF2Poly.IrreducibilityCertificate :=
 
 set_option maxHeartbeats 5000000 in
 set_option maxRecDepth 8192 in
+/-- `packedCert` passes the `GF2Poly` irreducibility-certificate check for
+`packedModulus`. -/
 private theorem packedCert_check :
     GF2Poly.checkIrreducibilityCertificate packedModulus packedCert = true := by
   decide
 
+/-- The packed degree-32 `GF(2)` modulus is irreducible, certified via `packedCert`. -/
 private theorem packed_irr :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic lower n) := by
   exact GF2Poly.checkIrreducibilityCertificate_imp_irreducible
     packedModulus packedCert packedCert_check
 
+/-- The packed degree-32 `GF(2)` modulus `x^32 + x^7 + x^3 + x^2 + 1` as an `FpPoly 2`. -/
 private def genericMod : FpPoly 2 :=
   Conway.packedGF2FpPoly lower n
 
+/-- The packed degree-32 `GF(2)` modulus `genericMod` is monic. -/
 private theorem genericMod_monic : DensePoly.Monic genericMod := by
   unfold genericMod Conway.packedGF2FpPoly
   rfl
 
+/-- The Frobenius power chain `x^(2^k) mod genericMod` for the degree-32 certificate. -/
 private def genericN32PowChain : Array (FpPoly 2) :=
   #[
     polyP2 #[0, 1],
@@ -1036,6 +1045,8 @@ private def genericN32PowChain : Array (FpPoly 2) :=
     polyP2 #[0, 1]
   ]
 
+/-- The same-prime degree-32 certificate, packaging `genericN32PowChain` and its
+Bézout witness as a `SamePrimeIrreducibilityCertificate 2`. -/
 private def genericN32SamePrimeCert :
     Berlekamp.SamePrimeIrreducibilityCertificate 2 where
   n := 32
@@ -1044,6 +1055,8 @@ private def genericN32SamePrimeCert :
     #[{ left := polyP2 #[1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1],
         right := polyP2 #[0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1] }]
 
+/-- The per-step quotient witnesses for the degree-32 power chain, supplied to the
+quotient-witness check steps. -/
 private def genericN32Quotients : Array (FpPoly 2) :=
   #[
     polyP2 #[],
@@ -1080,6 +1093,8 @@ private def genericN32Quotients : Array (FpPoly 2) :=
     polyP2 #[0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1]
   ]
 
+/-- Irreducibility certificate (Frobenius power chain plus Bézout witness) for the
+packed degree-32 `GF(2)` modulus. -/
 private def genericN32Cert : Berlekamp.IrreducibilityCertificate where
   p := 2
   n := 32
@@ -1091,13 +1106,17 @@ private def genericN32Cert : Berlekamp.IrreducibilityCertificate where
     genericMod genericMod_monic genericN32SamePrimeCert
     genericN32Quotients = true
 
+/-- The packed degree-32 `GF(2)` modulus `genericMod` has degree 32. -/
 private theorem genericMod_degree_eq : genericMod.degree?.getD 0 = 32 := by
   unfold genericMod Conway.packedGF2FpPoly DensePoly.degree? DensePoly.size
   rfl
 
+/-- The packed degree-32 `GF(2)` modulus `genericMod` has positive degree. -/
 private theorem genericMod_degree_pos : 0 < genericMod.degree?.getD 0 := by
   rw [genericMod_degree_eq]; decide
 
+/-- Any `polyP2` built from at most 32 coefficients has size within the degree of
+`genericMod`, the size bound the quotient-witness steps require. -/
 private theorem polyP2_size_le_32 {arr : Array Nat} (h : arr.size ≤ 32) :
     (polyP2 arr).size ≤ genericMod.degree?.getD 0 := by
   rw [genericMod_degree_eq]
@@ -1780,6 +1799,8 @@ private theorem genericN32_step31_check :
       Conway.packedGF2FpPoly]
     decide
 
+/-- `FpPoly.X` reduced modulo the monic `genericMod` is `FpPoly.X` itself, its
+degree being below 32. -/
 private theorem genericMod_modByMonic_X :
     FpPoly.modByMonic genericMod FpPoly.X genericMod_monic = FpPoly.X := by
   rw [FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
@@ -1787,11 +1808,14 @@ private theorem genericMod_modByMonic_X :
   rw [genericMod_degree_eq]
   decide
 
+/-- `polyP2 #[0, 1]` is the polynomial `FpPoly.X`. -/
 private theorem polyP2_zero_one_eq_X : (polyP2 #[0, 1] : FpPoly 2) = FpPoly.X := by
   simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, FpPoly.X, DensePoly.monomial,
         DensePoly.trimTrailingZeros, DensePoly.trimTrailingZerosList]
   decide
 
+/-- `genericN32Quotients` supplies valid incremental quotient witnesses for every
+step of the degree-32 power chain against `genericMod`. -/
 private theorem genericN32QuotientWitnesses_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnesses
       genericMod genericMod_monic genericN32SamePrimeCert
@@ -1839,6 +1863,8 @@ private theorem genericN32QuotientWitnesses_check :
     | 31, _ => exact genericN32_step31_check
     | k + 32, h => exact absurd (show k + 32 < 32 from h) (by omega)
 
+/-- `genericMod` passes the incremental linear power-chain check, obtained from its
+verified quotient witnesses. -/
 private theorem genericN32PowChain_check :
     Berlekamp.checkPowChainLinearIncremental
       genericMod genericMod_monic genericN32SamePrimeCert = true :=
@@ -1851,6 +1877,8 @@ private theorem genericN32PowChain_check :
     genericMod genericMod_monic genericN32SamePrimeCert = true
 
 set_option maxRecDepth 65536 in
+/-- `genericMod` passes the Rabin-Bezout witness check at each maximal proper
+divisor degree. -/
 private theorem genericN32_bezout :
   Berlekamp.checkRabinBezoutWitnesses
     genericMod genericMod_monic genericN32SamePrimeCert = true := by
@@ -1861,13 +1889,17 @@ private theorem genericN32_bezout :
     genericMod, Conway.packedGF2FpPoly, lower, n, polyP2]
   decide
 
+/-- `genericN32SamePrimeCert.n` equals the Berlekamp basis size of `genericMod`. -/
 private theorem genericN32_basisSize :
     genericN32SamePrimeCert.n = Berlekamp.basisSize genericMod := by
   decide
 
+/-- `genericN32SamePrimeCert.n` is positive. -/
 private theorem genericN32_nPos : 0 < genericN32SamePrimeCert.n := by
   decide
 
+/-- The entry of `genericN32SamePrimeCert.powChain` at index `n` is `FpPoly.X`
+reduced modulo `genericMod`. -/
 private theorem genericN32_finalEntry :
     genericN32SamePrimeCert.powChain[genericN32SamePrimeCert.n]? =
       some (FpPoly.modByMonic genericMod FpPoly.X genericMod_monic) := by
@@ -1875,6 +1907,8 @@ private theorem genericN32_finalEntry :
   rw [← polyP2_zero_one_eq_X]
   rfl
 
+/-- `genericN32Cert` passes the linear-incremental irreducibility-certificate check
+for `genericMod`. -/
 private theorem genericN32Cert_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
       genericMod genericMod_monic genericN32Cert = true := by
