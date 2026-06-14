@@ -694,6 +694,8 @@ def luebeckConwayPolynomial_5_1 : FpPoly 5 :=
     DensePoly.Monic luebeckConwayPolynomial_5_1 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 5 1` resolves to the committed `C(5, 1)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_5_1` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_5_1 :
     luebeckConwayPolynomial? 5 1 = some luebeckConwayPolynomial_5_1 := by
   show some (luebeckConwayPolynomialOfCoeffs 5 [3, 1]) = some luebeckConwayPolynomial_5_1
@@ -722,6 +724,8 @@ def luebeckConwayPolynomial_5_2 : FpPoly 5 :=
     DensePoly.Monic luebeckConwayPolynomial_5_2 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 5 2` resolves to the committed `C(5, 2)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_5_2` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_5_2 :
     luebeckConwayPolynomial? 5 2 = some luebeckConwayPolynomial_5_2 := by
   show some (luebeckConwayPolynomialOfCoeffs 5 [2, 4, 1]) = some luebeckConwayPolynomial_5_2
@@ -751,6 +755,8 @@ def luebeckConwayPolynomial_5_3 : FpPoly 5 :=
     DensePoly.Monic luebeckConwayPolynomial_5_3 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 5 3` resolves to the committed `C(5, 3)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_5_3` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_5_3 :
     luebeckConwayPolynomial? 5 3 = some luebeckConwayPolynomial_5_3 := by
   show some (luebeckConwayPolynomialOfCoeffs 5 [3, 3, 0, 1]) = some luebeckConwayPolynomial_5_3
@@ -781,6 +787,8 @@ def luebeckConwayPolynomial_5_4 : FpPoly 5 :=
     DensePoly.Monic luebeckConwayPolynomial_5_4 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 5 4` resolves to the committed `C(5, 4)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_5_4` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_5_4 :
     luebeckConwayPolynomial? 5 4 = some luebeckConwayPolynomial_5_4 := by
   show some (luebeckConwayPolynomialOfCoeffs 5 [2, 4, 4, 0, 1]) = some luebeckConwayPolynomial_5_4
@@ -812,6 +820,8 @@ def luebeckConwayPolynomial_5_5 : FpPoly 5 :=
     DensePoly.Monic luebeckConwayPolynomial_5_5 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 5 5` resolves to the committed `C(5, 5)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_5_5` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_5_5 :
     luebeckConwayPolynomial? 5 5 = some luebeckConwayPolynomial_5_5 := by
   show some (luebeckConwayPolynomialOfCoeffs 5 [3, 4, 0, 0, 0, 1]) = some luebeckConwayPolynomial_5_5
@@ -844,6 +854,8 @@ def luebeckConwayPolynomial_5_6 : FpPoly 5 :=
     DensePoly.Monic luebeckConwayPolynomial_5_6 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 5 6` resolves to the committed `C(5, 6)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_5_6` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_5_6 :
     luebeckConwayPolynomial? 5 6 = some luebeckConwayPolynomial_5_6 := by
   show some (luebeckConwayPolynomialOfCoeffs 5 [2, 0, 1, 4, 1, 0, 1]) = some luebeckConwayPolynomial_5_6
@@ -877,6 +889,8 @@ def luebeckConwayPolynomial_7_1 : FpPoly 7 :=
     DensePoly.Monic luebeckConwayPolynomial_7_1 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 7 1` resolves to the committed `C(7, 1)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_7_1` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_7_1 :
     luebeckConwayPolynomial? 7 1 = some luebeckConwayPolynomial_7_1 := by
   show some (luebeckConwayPolynomialOfCoeffs 7 [4, 1]) = some luebeckConwayPolynomial_7_1
@@ -905,6 +919,8 @@ def luebeckConwayPolynomial_7_2 : FpPoly 7 :=
     DensePoly.Monic luebeckConwayPolynomial_7_2 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 7 2` resolves to the committed `C(7, 2)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_7_2` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_7_2 :
     luebeckConwayPolynomial? 7 2 = some luebeckConwayPolynomial_7_2 := by
   show some (luebeckConwayPolynomialOfCoeffs 7 [3, 6, 1]) = some luebeckConwayPolynomial_7_2
@@ -934,6 +950,8 @@ def luebeckConwayPolynomial_7_3 : FpPoly 7 :=
     DensePoly.Monic luebeckConwayPolynomial_7_3 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 7 3` resolves to the committed `C(7, 3)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_7_3` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_7_3 :
     luebeckConwayPolynomial? 7 3 = some luebeckConwayPolynomial_7_3 := by
   show some (luebeckConwayPolynomialOfCoeffs 7 [4, 0, 6, 1]) = some luebeckConwayPolynomial_7_3
@@ -964,6 +982,8 @@ def luebeckConwayPolynomial_7_4 : FpPoly 7 :=
     DensePoly.Monic luebeckConwayPolynomial_7_4 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 7 4` resolves to the committed `C(7, 4)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_7_4` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_7_4 :
     luebeckConwayPolynomial? 7 4 = some luebeckConwayPolynomial_7_4 := by
   show some (luebeckConwayPolynomialOfCoeffs 7 [3, 4, 5, 0, 1]) = some luebeckConwayPolynomial_7_4
@@ -995,6 +1015,8 @@ def luebeckConwayPolynomial_7_5 : FpPoly 7 :=
     DensePoly.Monic luebeckConwayPolynomial_7_5 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 7 5` resolves to the committed `C(7, 5)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_7_5` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_7_5 :
     luebeckConwayPolynomial? 7 5 = some luebeckConwayPolynomial_7_5 := by
   show some (luebeckConwayPolynomialOfCoeffs 7 [4, 1, 0, 0, 0, 1]) = some luebeckConwayPolynomial_7_5
@@ -1027,6 +1049,8 @@ def luebeckConwayPolynomial_7_6 : FpPoly 7 :=
     DensePoly.Monic luebeckConwayPolynomial_7_6 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 7 6` resolves to the committed `C(7, 6)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_7_6` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_7_6 :
     luebeckConwayPolynomial? 7 6 = some luebeckConwayPolynomial_7_6 := by
   show some (luebeckConwayPolynomialOfCoeffs 7 [3, 6, 4, 5, 1, 0, 1]) = some luebeckConwayPolynomial_7_6
