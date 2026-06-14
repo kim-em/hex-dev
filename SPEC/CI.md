@@ -67,7 +67,8 @@ also has one macOS job (the dyld cross-check). No other parallelism.
 Concretely:
 
 - `ci.yml`: one `build` ubuntu job (DAG checks, hex `lake build`,
-  per-library `bench verify` smoke gate per
+  the `HexBerlekampZassenhausMathlib` bridge build required by
+  the HO-1 correctness chain, per-library `bench verify` smoke gate per
   [SPEC/benchmarking.md §CI integration](benchmarking.md), plus the
   structural and timing lints named there) and one `build-macos`
   macOS job (hex `lake build` only — the dyld cross-check).
