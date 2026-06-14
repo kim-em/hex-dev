@@ -1465,6 +1465,8 @@ private theorem basisMatrix_rowAdd
   rw [htoList, basisRows_set_rowAdd b.toList src.val dst.val c h
     (by rw [Vector.length_toList]; exact dst.isLt)]
 
+/-- `rowSwap_toList_get!_of_lt`: reading `toList`/`get!` at an index `t` strictly
+below both swapped positions `km1 < k` returns the same row as before the swap. -/
 private theorem rowSwap_toList_get!_of_lt
     (b : Matrix Rat n m) (km1 k : Fin n) (t : Nat)
     (hkm1k : km1.val < k.val) (ht : t < km1.val) :
@@ -1500,6 +1502,8 @@ private theorem rowSwap_toList_get!_of_lt
   rw [Matrix.rowSwap_getElem]
   simp [hrk, hrkm1]
 
+/-- `rowSwap_toList_get!_left`: at the lower swapped index `km1`, the swapped matrix
+reads back the original row stored at the upper index `k`. -/
 private theorem rowSwap_toList_get!_left
     (b : Matrix Rat n m) (km1 k : Fin n) (hkm1k : km1.val ≠ k.val) :
     (Matrix.rowSwap b km1 k).toList[km1.val]! = b.toList[k.val]! := by
@@ -1520,6 +1524,8 @@ private theorem rowSwap_toList_get!_left
   rw [Matrix.rowSwap_getElem]
   simp [hne]
 
+/-- `rowSwap_toList_get!_right`: at the upper swapped index `k`, the swapped matrix
+reads back the original row stored at the lower index `km1`. -/
 private theorem rowSwap_toList_get!_right
     (b : Matrix Rat n m) (km1 k : Fin n) :
     (Matrix.rowSwap b km1 k).toList[k.val]! = b.toList[km1.val]! := by
@@ -1537,6 +1543,8 @@ private theorem rowSwap_toList_get!_right
   rw [Matrix.rowSwap_getElem]
   simp
 
+/-- `rowSwap_toList_get!_of_gt`: reading `toList`/`get!` at an index `t` strictly
+above both swapped positions `km1 < k` returns the same row as before the swap. -/
 private theorem rowSwap_toList_get!_of_gt
     (b : Matrix Rat n m) (km1 k : Fin n) (t : Nat)
     (hkm1k : km1.val < k.val) (ht_lt_n : t < n) (ht : k.val < t) :
@@ -1571,6 +1579,8 @@ private theorem rowSwap_toList_get!_of_gt
   rw [Matrix.rowSwap_getElem]
   simp [hrk, hrkm1]
 
+/-- `basisMatrix_rowSwap_of_before`: swapping rows `km1` and `k` leaves the
+`basisMatrix` row at any index `i` lying before `km1` unchanged. -/
 private theorem basisMatrix_rowSwap_of_before
     (b : Matrix Rat n m) (km1 k i : Fin n)
     (hkm1k : km1.val < k.val) (hi : i.val < km1.val) :
@@ -1582,6 +1592,9 @@ private theorem basisMatrix_rowSwap_of_before
     exact rowSwap_toList_get!_of_lt b km1 k t hkm1k (Nat.lt_of_le_of_lt ht hi)
   · simp
 
+/-- `basisMatrix_rowSwap_adjacent_prev`: after an adjacent swap (`km1 + 1 = k`),
+the new `basisMatrix` row at `km1` is the original row `k` plus its projection
+onto the original orthogonal row at `km1`. -/
 private theorem basisMatrix_rowSwap_adjacent_prev
     (b : Matrix Rat n m) (km1 k : Fin n) (hkm1 : km1.val + 1 = k.val) :
     (basisMatrix (Matrix.rowSwap b km1 k)).row km1 =
@@ -1613,6 +1626,9 @@ private theorem basisMatrix_rowSwap_adjacent_prev
       (rows := b.toList) (km1 := km1.val) (k := k.val) hkm1 (by simp [k.isLt])
   simpa [Matrix.row] using hreduce
 
+/-- `basisMatrix_rowSwap_adjacent_curr`: after an adjacent swap (`km1 + 1 = k`),
+the new `basisMatrix` row at `k` is the original orthogonal row at `km1` minus
+its projection onto the new orthogonal row produced at `km1`. -/
 private theorem basisMatrix_rowSwap_adjacent_curr
     (b : Matrix Rat n m) (km1 k : Fin n) (hkm1 : km1.val + 1 = k.val) :
     (basisMatrix (Matrix.rowSwap b km1 k)).row k =
