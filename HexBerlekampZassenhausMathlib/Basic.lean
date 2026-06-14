@@ -3131,6 +3131,13 @@ structure LiftedFactorSubsetPartition
       S ⊆ J →
       RepresentsIntegerFactorAtLift core d f S →
       S ⊆ T
+  liftedRecoveryCandidate_eq :
+    ∀ {f : Hex.ZPoly} {S : LiftedFactorSubset d},
+      Irreducible (HexPolyZMathlib.toPolynomial f) →
+      f ∣ target →
+      S ⊆ J →
+      RepresentsIntegerFactorAtLift core d f S →
+      liftedRecoveryCandidate core d S = f
   support_subset_of_dvd_scaledRecombinationCandidate :
     ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
       Irreducible (HexPolyZMathlib.toPolynomial f) →
@@ -3309,6 +3316,7 @@ theorem liftedFactorSubsetPartition_transport
       unique_up_to_associated := ?_
       support_subset_of_dvd_recombinationCandidate := ?_
       support_subset_of_dvd_liftedRecoveryCandidate := ?_
+      liftedRecoveryCandidate_eq := ?_
       support_subset_of_dvd_scaledRecombinationCandidate := ?_ }
   -- Cover for the new state at any `i ∈ J \ S`.
   · intro i hi_sdiff
@@ -3399,6 +3407,12 @@ theorem liftedFactorSubsetPartition_transport
         hfactor_dvd_candidate hUJ_orig hUrep
     intro i hiU
     exact hUT hiU
+  -- Recovered-candidate equality for represented factors in the transported state.
+  · intro f U hirr hdvd_quot hUJ hUrep
+    have hUJ_orig : U ⊆ J :=
+      fun i hi => (Finset.mem_sdiff.mp (hUJ hi)).1
+    exact h.liftedRecoveryCandidate_eq hirr
+      (dvd_target_of_dvd_quotient hdvd_quot) hUJ_orig hUrep
   -- Scaled-support containment for candidates in the transported state.
   · intro f U T hirr hdvd_quot hTJ hfactor_dvd_candidate hUJ hUrep
     have hTJ_orig : T ⊆ J :=
@@ -17743,6 +17757,12 @@ structure InitialLiftedFactorSubsetPartitionEvidence
           f ∣ liftedRecoveryCandidate core d T →
             RepresentsIntegerFactorAtLift core d f S →
               S ⊆ T
+  liftedRecoveryCandidate_eq :
+    ∀ {f : Hex.ZPoly} {S : LiftedFactorSubset d},
+      Irreducible (HexPolyZMathlib.toPolynomial f) →
+        f ∣ core →
+          RepresentsIntegerFactorAtLift core d f S →
+            liftedRecoveryCandidate core d S = f
   support_subset_of_dvd_scaledRecombinationCandidate :
     ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
       Irreducible (HexPolyZMathlib.toPolynomial f) →
@@ -17848,6 +17868,24 @@ theorem liftedFactorSubsetPartition_initial_support_subset_of_dvd_liftedRecovery
     hirr hdvd_core hdvd_candidate hrep
 
 /--
+Initial-state recovered-candidate equality for represented factors in the
+successful `choosePrimeData?` lifted-factor package.
+-/
+theorem liftedFactorSubsetPartition_initial_liftedRecoveryCandidate_eq_of_choosePrimeData
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hinitial :
+      InitialLiftedFactorSubsetPartitionEvidence core
+        (Hex.ZPoly.toMonicLiftData core B primeData)) :
+    let d := Hex.ZPoly.toMonicLiftData core B primeData
+    ∀ {f : Hex.ZPoly} {S : LiftedFactorSubset d},
+      Irreducible (HexPolyZMathlib.toPolynomial f) →
+      f ∣ core →
+      RepresentsIntegerFactorAtLift core d f S →
+      liftedRecoveryCandidate core d S = f := by
+  intro d f S hirr hdvd_core hrep
+  exact hinitial.liftedRecoveryCandidate_eq hirr hdvd_core hrep
+
+/--
 Initial-state support containment for scaled recombination candidates in the
 successful `choosePrimeData?` lifted-factor package.
 
@@ -17940,6 +17978,11 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
           exact
             liftedFactorSubsetPartition_initial_support_subset_of_dvd_liftedRecoveryCandidate_of_choosePrimeData
               core B primeData hinitial hirr hdvd_target hdvd_cand hSrep
+        liftedRecoveryCandidate_eq := by
+          intro f S hirr hdvd_target _ hSrep
+          exact
+            liftedFactorSubsetPartition_initial_liftedRecoveryCandidate_eq_of_choosePrimeData
+              core B primeData hinitial hirr hdvd_target hSrep
         support_subset_of_dvd_scaledRecombinationCandidate := by
           intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
           exact
@@ -17994,6 +18037,11 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData
           exact
             liftedFactorSubsetPartition_initial_support_subset_of_dvd_liftedRecoveryCandidate_of_choosePrimeData
               core B primeData hinitial hirr hdvd_target hdvd_cand hSrep
+        liftedRecoveryCandidate_eq := by
+          intro f S hirr hdvd_target _ hSrep
+          exact
+            liftedFactorSubsetPartition_initial_liftedRecoveryCandidate_eq_of_choosePrimeData
+              core B primeData hinitial hirr hdvd_target hSrep
         support_subset_of_dvd_scaledRecombinationCandidate := by
           intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
           exact
@@ -18962,6 +19010,11 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData_success_descent
           exact
             liftedFactorSubsetPartition_initial_support_subset_of_dvd_liftedRecoveryCandidate_of_choosePrimeData
               core B primeData hinitial hirr hdvd_target hdvd_cand hSrep
+        liftedRecoveryCandidate_eq := by
+          intro f S hirr hdvd_target _ hSrep
+          exact
+            liftedFactorSubsetPartition_initial_liftedRecoveryCandidate_eq_of_choosePrimeData
+              core B primeData hinitial hirr hdvd_target hSrep
         support_subset_of_dvd_scaledRecombinationCandidate := by
           intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
           exact
