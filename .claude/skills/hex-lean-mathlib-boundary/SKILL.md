@@ -150,6 +150,20 @@ diagnose on the issue (per the CLAUDE.md "Directives are hypotheses" rule) and
 no producer as of this writing: `HenselLiftDescentHypotheses`, the
 `toMonicLiftData` modP→lift transport, and `InitialLiftedFactorSubsetPartitionEvidence`.
 
+**But "no producer" only blocks a transport that genuinely needs a bridge
+between two concrete defs.** Before skipping a `henselLiftData → toMonicLiftData`
+(or similar) transport, check whether the consumer chain is *generic in the
+`LiftData`*: if the structure/lemma you feed (`ForwardRecoveryInputs f d`,
+`bhksRecover_eq_some_of_forwardInputs f d h`) quantifies over an arbitrary
+`d : Hex.LiftData`, no bridge is needed — you just **restate** the Mathlib-side
+theorem over whichever lift data the executable consumer already uses (grep the
+executable consumer's `hrecover`/`hd` hypothesis for the concrete def it
+expects). #7122 was exactly this: the five concrete `henselLiftData` sites in
+`Recovery.lean` swapped to `toMonicLiftData` with no bridge, because everything
+downstream routes through a `private abbrev` (`factorFastCapLiftData`) that is
+never unfolded. Confirm genericity by grepping that the feeder takes
+`(d : Hex.LiftData)` as a parameter, not a fixed `henselLiftData …`.
+
 ## The Mathlib layer is not CI-built — establish a baseline first
 
 CI builds only bench + conformance targets (`ci.yml`, `conformance.yml`);
@@ -245,7 +259,22 @@ restructure around the reported line first; it is usually a cheap `omega` or
   enough, the *real* error often surfaces (e.g. an inline `by omega` whose
   target type wasn't yet determined because it sat under `lt_of_le_of_lt _ (by
   omega)` — fix by giving the bound an explicitly-typed `have h2 : … := by
-  omega` so its goal is fully concrete before `omega` runs).
+  omega` so its goal is fully concrete before `omega` runs). **Placement: the
+  `set_option … in` line must come *before* the declaration's docstring, not
+  between the `/-- … -/` and the `structure`/`def` keyword** — a doc comment
+  must be adjacent to what it documents, so the wrong order gives a parse error
+  (`unexpected token 'set_option'; expected 'lemma'`). Order is
+  `set_option … in` → `/-- doc -/` → `structure …`.
+- Swapping a reducible `abbrev` to a def that unfolds to a *larger* term can tip
+  previously-green declarations over the budget without any logic change. #7122
+  repointed a `private abbrev` from `henselLiftData core …` to
+  `toMonicLiftData core …` (which unfolds to `henselLiftData (toMonic core).monic
+  …`); three cap input *structures* whose field types whnf that lift via
+  `projectedRowsOfLiftData … .factorCount` then needed `maxHeartbeats 1000000`
+  (400k was not enough, 1M was). The structures' *consumers* elaborated fine at
+  the default 200k — only the field-type elaboration of the structures
+  themselves was on the boundary, so bump the structure defs, not the whole
+  cascade.
 - Keep the capstone thin: factor heavy sub-steps (column-formula computations,
   `repr` evaluations) into their own lemmas. Each gets a fresh budget, and the
   capstone only pays for delegating.
