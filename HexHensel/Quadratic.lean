@@ -1540,6 +1540,8 @@ private theorem quadraticHenselStep_bezout_correction_congr_core
     quadraticHenselStep_bezout_correction_algebra
       m g' h' s t b qBezout rBezout hm0 hb hdiv
 
+/-- If `b ≡ 0 (mod m)` then `m²` divides the product `b.coeff i * b.coeff j` of
+any two of its coefficients. -/
 private theorem coeff_product_dvd_mod_square
     (m : Nat) (b : ZPoly)
     (hb : ZPoly.congr b 0 m) (i j : Nat) :
@@ -1557,6 +1559,8 @@ private theorem coeff_product_dvd_mod_square
     _ = ((m * m : Nat) : Int) * (ai * aj) := by
           grind
 
+/-- One `DensePoly.mulCoeffStep b b` accumulation stays divisible by `m²` when
+`b ≡ 0 (mod m)` and the incoming accumulator is already divisible by `m²`. -/
 private theorem mulCoeffStep_dvd_mod_square
     (m : Nat) (b : ZPoly)
     (hb : ZPoly.congr b 0 m) (n i : Nat) (acc : Int) (j : Nat)
@@ -1573,6 +1577,8 @@ private theorem mulCoeffStep_dvd_mod_square
       _ = ((m * m : Nat) : Int) * (a + c) := by grind
   · simpa [DensePoly.mulCoeffStep, hij] using hacc
 
+/-- Folding `DensePoly.mulCoeffStep b b n i` over `xs` preserves divisibility by
+`m²` when `b ≡ 0 (mod m)` and the starting accumulator is divisible by `m²`. -/
 private theorem foldl_mulCoeffStep_dvd_mod_square
     (m : Nat) (b : ZPoly)
     (hb : ZPoly.congr b 0 m) (n i : Nat) (xs : List Nat) (acc : Int)
@@ -1587,6 +1593,8 @@ private theorem foldl_mulCoeffStep_dvd_mod_square
         ih (DensePoly.mulCoeffStep b b n i acc j)
           (mulCoeffStep_dvd_mod_square m b hb n i acc j hacc)
 
+/-- The outer `mulCoeffSum` fold for `b * b` preserves divisibility by `m²` when
+`b ≡ 0 (mod m)` and the starting accumulator is divisible by `m²`. -/
 private theorem foldl_mulCoeffSum_dvd_mod_square
     (m : Nat) (b : ZPoly)
     (hb : ZPoly.congr b 0 m) (n : Nat) (xs : List Nat) (acc : Int)
@@ -1606,6 +1614,7 @@ private theorem foldl_mulCoeffSum_dvd_mod_square
       simpa using ih
         ((List.range b.size).foldl (DensePoly.mulCoeffStep b b n i) acc) hinner
 
+/-- If `b ≡ 0 (mod m)` then its square satisfies `b * b ≡ 0 (mod m²)`. -/
 private theorem square_congr_zero_mod_square
     (m : Nat) (b : ZPoly)
     (_hm : 1 < m)
@@ -1618,6 +1627,8 @@ private theorem square_congr_zero_mod_square
     exact foldl_mulCoeffSum_dvd_mod_square m b hb n (List.range b.size) 0 ⟨0, by simp⟩
   simpa using Int.emod_eq_zero_of_dvd hdvd
 
+/-- If both `a ≡ 0 (mod m)` and `b ≡ 0 (mod m)` then `m²` divides the cross
+product `a.coeff i * b.coeff j`. -/
 private theorem coeff_product_dvd_mod_square_of_congr_zero
     (m : Nat) (a b : ZPoly)
     (ha : ZPoly.congr a 0 m) (hb : ZPoly.congr b 0 m) (i j : Nat) :
@@ -1635,6 +1646,9 @@ private theorem coeff_product_dvd_mod_square_of_congr_zero
     _ = ((m * m : Nat) : Int) * (ai * bj) := by
           grind
 
+/-- Two-factor form of `mulCoeffStep_dvd_mod_square`: one `DensePoly.mulCoeffStep
+a b` accumulation stays divisible by `m²` when both `a ≡ 0 (mod m)` and
+`b ≡ 0 (mod m)` and the incoming accumulator is divisible by `m²`. -/
 private theorem mulCoeffStep_dvd_mod_square_of_congr_zero
     (m : Nat) (a b : ZPoly)
     (ha : ZPoly.congr a 0 m) (hb : ZPoly.congr b 0 m)
@@ -1652,6 +1666,10 @@ private theorem mulCoeffStep_dvd_mod_square_of_congr_zero
       _ = ((m * m : Nat) : Int) * (c + d) := by grind
   · simpa [DensePoly.mulCoeffStep, hij] using hacc
 
+/-- Two-factor form of `foldl_mulCoeffStep_dvd_mod_square`: folding
+`DensePoly.mulCoeffStep a b n i` over `xs` preserves divisibility by `m²` when
+both `a ≡ 0 (mod m)` and `b ≡ 0 (mod m)` and the starting accumulator is
+divisible by `m²`. -/
 private theorem foldl_mulCoeffStep_dvd_mod_square_of_congr_zero
     (m : Nat) (a b : ZPoly)
     (ha : ZPoly.congr a 0 m) (hb : ZPoly.congr b 0 m)
@@ -1667,6 +1685,10 @@ private theorem foldl_mulCoeffStep_dvd_mod_square_of_congr_zero
         ih (DensePoly.mulCoeffStep a b n i acc j)
           (mulCoeffStep_dvd_mod_square_of_congr_zero m a b ha hb n i acc j hacc)
 
+/-- Two-factor form of `foldl_mulCoeffSum_dvd_mod_square`: the outer
+`mulCoeffSum` fold for `a * b` preserves divisibility by `m²` when both
+`a ≡ 0 (mod m)` and `b ≡ 0 (mod m)` and the starting accumulator is divisible by
+`m²`. -/
 private theorem foldl_mulCoeffSum_dvd_mod_square_of_congr_zero
     (m : Nat) (a b : ZPoly)
     (ha : ZPoly.congr a 0 m) (hb : ZPoly.congr b 0 m)
