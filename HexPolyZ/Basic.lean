@@ -1926,6 +1926,9 @@ private theorem rat_div_mul_cancel_of_ne (a b : Rat) (hb : b ≠ 0) :
     a - (a / b) * b = 0 := by
   grind [Rat.div_def, Rat.mul_assoc, Rat.mul_comm]
 
+/-- `rat_divMod_remainder_degree_lt_core`: over `DensePoly Rat`, the
+`divMod` remainder has strictly smaller degree than a positive-degree
+divisor. -/
 private theorem rat_divMod_remainder_degree_lt_core (p q : DensePoly Rat)
     (hdegree : 0 < q.degree?.getD 0) :
     (DensePoly.divMod p q).2.degree?.getD 0 < q.degree?.getD 0 := by
@@ -1939,6 +1942,8 @@ private theorem rat_divMod_remainder_degree_lt_core (p q : DensePoly Rat)
     omega
   · exact Nat.pos_of_ne_zero hq
 
+/-- `rat_divMod_spec_core`: the `DensePoly Rat` reconstruction identity
+`qr.1 * q + qr.2 = p` for `DensePoly.divMod` (holds unconditionally). -/
 private theorem rat_divMod_spec_core (p q : DensePoly Rat) :
     let qr := DensePoly.divMod p q
     qr.1 * q + qr.2 = p := by
@@ -1969,6 +1974,9 @@ private theorem rat_divMod_spec_core (p q : DensePoly Rat) :
       exact DensePoly.divModArray_reconstruction p q
         (fun coeff : Rat => coeff / q.leadingCoeff) hcancel
 
+/-- `rat_divMod_spec_core_of_not_isZero`: the `DensePoly Rat`
+reconstruction identity `qr.1 * q + qr.2 = p` for `DensePoly.divMod`
+under a nonzero-divisor hypothesis. -/
 private theorem rat_divMod_spec_core_of_not_isZero (p q : DensePoly Rat)
     (hqzero : ¬ q.isZero) :
     let qr := DensePoly.divMod p q
@@ -1988,17 +1996,24 @@ private theorem rat_divMod_spec_core_of_not_isZero (p q : DensePoly Rat)
             simpa [DensePoly.isZero, Array.isEmpty_iff_size_eq_zero] using hcoeffs
           simpa [DensePoly.size, Nat.pos_iff_ne_zero] using hcoeffs)))
 
+/-- `rat_mod_remainder_degree_lt_core`: over `DensePoly Rat`, the `mod`
+remainder `p % q` has strictly smaller degree than a positive-degree
+divisor. -/
 private theorem rat_mod_remainder_degree_lt_core (p q : DensePoly Rat)
     (hdegree : 0 < q.degree?.getD 0) :
     (p % q).degree?.getD 0 < q.degree?.getD 0 := by
   simpa [DensePoly.mod] using rat_divMod_remainder_degree_lt_core p q hdegree
 
+/-- `rat_mod_zero_right_of_size_zero`: over `DensePoly Rat`, `p % m = p`
+when the divisor `m` has size zero. -/
 private theorem rat_mod_zero_right_of_size_zero (p m : DensePoly Rat)
     (hm : m.size = 0) :
     p % m = p := by
   simpa [DensePoly.mod] using
     DensePoly.divMod_remainder_eq_self_of_size_zero_core p m hm
 
+/-- `rat_mod_sub_self_eq_mul_neg_div_of_not_isZero`: over `DensePoly Rat`
+with a nonzero divisor, `p % m - p = m * (0 - p / m)`. -/
 private theorem rat_mod_sub_self_eq_mul_neg_div_of_not_isZero (p m : DensePoly Rat)
     (hmzero : ¬ m.isZero) :
     p % m - p = m * (0 - p / m) := by
@@ -2020,6 +2035,8 @@ private theorem rat_mod_sub_self_eq_mul_neg_div_of_not_isZero (p m : DensePoly R
     _ = m * (0 - (p / m)) := by
       exact (DensePoly.mul_sub_zero_comm m (p / m)).symm
 
+/-- `rat_congr_mod_core`: over `DensePoly Rat`, the remainder `p % m` is
+congruent to `p` modulo `m`, i.e. `DensePoly.Congr (p % m) p m`. -/
 private theorem rat_congr_mod_core (p m : DensePoly Rat) :
     DensePoly.Congr (p % m) p m := by
   by_cases hmzero : m.isZero
