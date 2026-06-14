@@ -48,12 +48,16 @@ def inversionCount : List (Fin n) → Nat
   | x :: xs =>
       xs.foldl (fun acc y => acc + if y < x then 1 else 0) 0 + inversionCount xs
 
+/-- Count the cross-inversions between two lists: pairs `(x, y)` with `x` drawn
+from the first list, `y` from the second, and `y < x`. -/
 private def crossInversionCount {n : Nat} : List (Fin n) → List (Fin n) → Nat
   | [], _ => 0
   | x :: xs, ys =>
       ys.foldl (fun acc y => acc + if y < x then 1 else 0) 0 +
         crossInversionCount xs ys
 
+/-- A predicate-counting left fold splits its starting accumulator off
+additively. -/
 private theorem foldCount_start {α : Type u} (xs : List α) (p : α → Prop)
     [DecidablePred p] (acc : Nat) :
     xs.foldl (fun acc y => acc + if p y then 1 else 0) acc =
@@ -65,6 +69,8 @@ private theorem foldCount_start {α : Type u} (xs : List α) (p : α → Prop)
       rw [ih (acc + if p y then 1 else 0), ih (0 + if p y then 1 else 0)]
       omega
 
+/-- The inversion-counting left fold splits its starting accumulator off
+additively. -/
 private theorem inversionFold_start {n : Nat} (xs : List (Fin n)) (x : Fin n)
     (acc : Nat) :
     xs.foldl (fun acc y => acc + if y < x then 1 else 0) acc =
@@ -76,12 +82,16 @@ private theorem inversionFold_start {n : Nat} (xs : List (Fin n)) (x : Fin n)
       rw [ih (acc + if y < x then 1 else 0), ih (0 + if y < x then 1 else 0)]
       omega
 
+/-- The inversion-counting fold over an appended list is the sum of the folds
+over each part. -/
 private theorem inversionFold_append {n : Nat} (xs ys : List (Fin n)) (x : Fin n) :
     (xs ++ ys).foldl (fun acc y => acc + if y < x then 1 else 0) 0 =
       xs.foldl (fun acc y => acc + if y < x then 1 else 0) 0 +
         ys.foldl (fun acc y => acc + if y < x then 1 else 0) 0 := by
   rw [List.foldl_append, inversionFold_start]
 
+/-- Inversions of a concatenation split into the inversions within each part
+plus the cross-inversions between them. -/
 private theorem inversionCount_append {n : Nat} (xs ys : List (Fin n)) :
     inversionCount (xs ++ ys) =
       inversionCount xs + inversionCount ys + crossInversionCount xs ys := by
@@ -96,6 +106,8 @@ private theorem inversionCount_append {n : Nat} (xs ys : List (Fin n)) :
       rw [inversionFold_append, ih]
       omega
 
+/-- Cross-inversion count is additive in its left argument under
+concatenation. -/
 private theorem crossInversionCount_append_left {n : Nat}
     (xs ys zs : List (Fin n)) :
     crossInversionCount (xs ++ ys) zs =
@@ -108,6 +120,8 @@ private theorem crossInversionCount_append_left {n : Nat}
       rw [ih]
       omega
 
+/-- Cross-inversion count is additive in its right argument under
+concatenation. -/
 private theorem crossInversionCount_append_right {n : Nat}
     (xs ys zs : List (Fin n)) :
     crossInversionCount xs (ys ++ zs) =
@@ -120,12 +134,16 @@ private theorem crossInversionCount_append_right {n : Nat}
       rw [inversionFold_append, ih]
       omega
 
+/-- Cross-inversions from a singleton left list count the right-list entries
+below that element. -/
 private theorem crossInversionCount_singleton_left {n : Nat}
     (x : Fin n) (ys : List (Fin n)) :
     crossInversionCount [x] ys =
       ys.foldl (fun acc y => acc + if y < x then 1 else 0) 0 := by
   simp [crossInversionCount]
 
+/-- Cross-inversions into a singleton right list count the left-list entries
+above that element. -/
 private theorem crossInversionCount_singleton_right {n : Nat}
     (xs : List (Fin n)) (y : Fin n) :
     crossInversionCount xs [y] =
@@ -138,6 +156,8 @@ private theorem crossInversionCount_singleton_right {n : Nat}
       rw [ih]
       exact (foldCount_start xs (fun x => y < x) (0 + if y < x then 1 else 0)).symm
 
+/-- Swapping the two elements of a right-hand pair leaves the cross-inversion
+count unchanged. -/
 private theorem crossInversionCount_pair_swap_right {n : Nat}
     (xs : List (Fin n)) (a b : Fin n) :
     crossInversionCount xs [a, b] =
@@ -150,6 +170,8 @@ private theorem crossInversionCount_pair_swap_right {n : Nat}
       rw [ih]
       omega
 
+/-- Swapping the two elements of a left-hand pair leaves the cross-inversion
+count unchanged. -/
 private theorem crossInversionCount_pair_swap_left {n : Nat}
     (xs : List (Fin n)) (a b : Fin n) :
     crossInversionCount [a, b] xs =
@@ -157,10 +179,14 @@ private theorem crossInversionCount_pair_swap_left {n : Nat}
   simp [crossInversionCount]
   omega
 
+/-- A two-element list has exactly one inversion precisely when its entries are
+out of order. -/
 private theorem inversionCount_pair {n : Nat} (a b : Fin n) :
     inversionCount [a, b] = if b < a then 1 else 0 := by
   simp [inversionCount]
 
+/-- Swapping two distinct adjacent entries flips the parity of the inversion
+count. -/
 private theorem inversionCount_adjacent_swap_parity {n : Nat}
     (pre post : List (Fin n)) (a b : Fin n) (h : a ≠ b) :
     inversionCount (pre ++ a :: b :: post) % 2 =
@@ -201,6 +227,8 @@ private theorem inversionCount_adjacent_swap_parity {n : Nat}
       simp [hab, hba]
       omega
 
+/-- Swapping two entries separated by an arbitrary duplicate-free middle segment
+flips the parity of the inversion count. -/
 private theorem inversionCount_swap_separated_parity {n : Nat}
     (pre mid post : List (Fin n)) (a b : Fin n)
     (hnodup : (pre ++ a :: mid ++ b :: post).Nodup) :
@@ -305,6 +333,7 @@ theorem skipIndex_ne {n : Nat} (skip : Fin (n + 1)) (i : Fin n) :
   · rw [skipIndex_val_of_not_lt skip i hlt] at hval
     omega
 
+/-- The deleted-index embedding `skipIndex skip` is injective. -/
 private theorem skipIndex_injective {n : Nat} (skip : Fin (n + 1)) :
     Function.Injective (skipIndex skip) := by
   intro i j h
@@ -468,6 +497,8 @@ private theorem foldl_det_sum_congr {R : Type u} [Add R] {β : Type v}
       intro y hy
       exact h y (List.mem_cons_of_mem x hy)
 
+/-- Two left folds agree when their step functions agree on every list
+element. -/
 private theorem foldl_acc_congr {α : Type u} {β : Type v}
     (xs : List β) (f g : α → β → α) (z : α)
     (h : ∀ acc x, x ∈ xs → f acc x = g acc x) :
@@ -479,6 +510,7 @@ private theorem foldl_acc_congr {α : Type u} {β : Type v}
       rw [h z x (by simp)]
       exact ih (g z x) (fun acc y hy => h acc y (List.mem_cons_of_mem x hy))
 
+/-- A summing left fold is invariant under permuting the list. -/
 private theorem foldl_det_sum_perm {R : Type u} [Lean.Grind.CommRing R]
     {β : Type v} (f : β → R) {xs ys : List β} (hperm : xs.Perm ys) (z : R) :
     xs.foldl (fun acc x => acc + f x) z =
@@ -495,6 +527,8 @@ private theorem foldl_det_sum_perm {R : Type u} [Lean.Grind.CommRing R]
   | trans _ _ ih₁ ih₂ =>
       exact (ih₁ z).trans (ih₂ z)
 
+/-- A product left fold is unchanged when its factor function is replaced by one
+agreeing on every list element. -/
 private theorem foldl_det_product_congr {R : Type u} [Mul R] {β : Type v}
     (xs : List β) (f g : β → R) (z : R)
     (h : ∀ x, x ∈ xs → f x = g x) :
@@ -509,6 +543,8 @@ private theorem foldl_det_product_congr {R : Type u} [Mul R] {β : Type v}
       intro y hy
       exact h y (List.mem_cons_of_mem x hy)
 
+/-- The permutation product depends only on the matrix entries, so entry-wise
+equal matrices share it. -/
 private theorem detProduct_congr_matrix {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     {M N : Matrix R n n}
     (h : ∀ (r : Fin n) (c : Fin n), M[r][c] = N[r][c])
@@ -519,6 +555,8 @@ private theorem detProduct_congr_matrix {R : Type u} [Lean.Grind.Ring R] {n : Na
   intro r _hr
   exact h r perm[r]
 
+/-- The Leibniz summand depends only on the matrix entries, so entry-wise equal
+matrices share it. -/
 private theorem detTerm_congr_matrix {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     {M N : Matrix R n n}
     (h : ∀ (r : Fin n) (c : Fin n), M[r][c] = N[r][c])
@@ -527,6 +565,7 @@ private theorem detTerm_congr_matrix {R : Type u} [Lean.Grind.Ring R] {n : Nat}
   unfold detTerm
   rw [detProduct_congr_matrix h perm]
 
+/-- A product left fold is invariant under permuting the list. -/
 private theorem foldl_det_product_perm {R : Type u} [Lean.Grind.CommRing R]
     {β : Type v} (f : β → R) {xs ys : List β} (hperm : xs.Perm ys) (z : R) :
     xs.foldl (fun acc x => acc * f x) z =
@@ -543,6 +582,8 @@ private theorem foldl_det_product_perm {R : Type u} [Lean.Grind.CommRing R]
   | trans _ _ ih₁ ih₂ =>
       exact (ih₁ z).trans (ih₂ z)
 
+/-- Mapping a duplicate-free list by an injective function preserves
+duplicate-freeness. -/
 private theorem list_nodup_map_of_injective {α : Type u} {β : Type v}
     [DecidableEq β] {f : α → β} (hinj : Function.Injective f) :
     ∀ {xs : List α}, xs.Nodup → (xs.map f).Nodup
@@ -556,6 +597,8 @@ private theorem list_nodup_map_of_injective {α : Type u} {β : Type v}
         exact hnodup.1 (hinj hfy.symm ▸ hy)
       · exact list_nodup_map_of_injective hinj hnodup.2
 
+/-- Mapping a duplicate-free list preserves duplicate-freeness when the function
+is injective on that list's elements. -/
 private theorem list_nodup_map_on {α : Type u} {β : Type v}
     [DecidableEq β] {f : α → β} :
     ∀ {xs : List α}, xs.Nodup →
@@ -595,6 +638,7 @@ private theorem foldl_det_sum_mul_left_zero {R : Type u} [Lean.Grind.CommRing R]
   have hzero : c * 0 = 0 := by grind
   simpa [hzero] using (foldl_det_sum_mul_left (R := R) xs c f 0)
 
+/-- Factor a right multiplier out of a summing left fold started from zero. -/
 private theorem foldl_det_sum_mul_right_zero {R : Type u} [Lean.Grind.CommRing R]
     {β : Type v} (xs : List β) (f : β → R) (c : R) :
     xs.foldl (fun acc x => acc + f x * c) 0 =
@@ -610,6 +654,8 @@ private theorem foldl_det_sum_mul_right_zero {R : Type u} [Lean.Grind.CommRing R
     _ = xs.foldl (fun acc x => acc + f x) 0 * c := by
           grind
 
+/-- A summing left fold of a sum of two functions splits into the two folds,
+distributing the starting accumulator. -/
 private theorem foldl_det_sum_add_start {R : Type u} [Lean.Grind.CommRing R]
     {β : Type v} (xs : List β) (f g : β → R) (a b : R) :
     xs.foldl (fun acc x => acc + (f x + g x)) (a + b) =
