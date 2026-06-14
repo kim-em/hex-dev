@@ -2415,6 +2415,10 @@ theorem coeff_mul_shift_scale_one
     rw [hzero]
     rw [if_neg hin]
 
+/-- Expands the degree-`n` coefficient of `(f * g) * h` into a left-associated
+triple fold: the outer sum over `i` pairs the `i`-th coefficient of `f * g`
+(itself an inner fold over `j`) with `h.coeff (n - i)`. First step of the
+associativity proof, putting `(f * g) * h` into a nested-fold form. -/
 private theorem fold_mulCoeff_assoc_left_expand
     (f g h : FpPoly p) (n : Nat) :
     (List.range (n + 1)).foldl
@@ -2430,6 +2434,10 @@ private theorem fold_mulCoeff_assoc_left_expand
     have hi' : i < n + 1 := List.mem_range.mp hi
     omega)
 
+/-- Expands the degree-`n` coefficient of `f * (g * h)` into a right-associated
+triple fold: the outer sum over `i` pairs `f.coeff i` with the `(n - i)`-th
+coefficient of `g * h` (itself an inner fold over `j`). Mirror of
+`fold_mulCoeff_assoc_left_expand` for the other parenthesization. -/
 private theorem fold_mulCoeff_assoc_right_expand
     (f g h : FpPoly p) (n : Nat) :
     (List.range (n + 1)).foldl
@@ -2445,6 +2453,10 @@ private theorem fold_mulCoeff_assoc_right_expand
     have hi' : i < n + 1 := List.mem_range.mp hi
     omega)
 
+/-- Rewrites the left-associated triple fold into the common coefficient-indexed
+canonical form, replacing each `mulCoeffTerm f g i j` by the explicit product
+`f.coeff j * g.coeff (i - j)`. Normalizes `(f * g) * h` so it can be compared to
+the right-associated side via reindexing. -/
 private theorem fold_mulCoeff_assoc_left_normalize
     (f g h : FpPoly p) (n : Nat) :
     (List.range (n + 1)).foldl
@@ -2466,6 +2478,10 @@ private theorem fold_mulCoeff_assoc_left_normalize
     omega
   simp [mulCoeffTerm, hji]
 
+/-- Rewrites the right-associated triple fold into the same coefficient-indexed
+canonical form, replacing each `mulCoeffTerm g h (n - i) j` by the explicit
+product `g.coeff j * h.coeff (n - i - j)`. Counterpart of
+`fold_mulCoeff_assoc_left_normalize` for `f * (g * h)`. -/
 private theorem fold_mulCoeff_assoc_right_normalize
     (f g h : FpPoly p) (n : Nat) :
     (List.range (n + 1)).foldl
@@ -2488,6 +2504,11 @@ private theorem fold_mulCoeff_assoc_right_normalize
   simp [mulCoeffTerm, hji]
   grind
 
+/-- The pivotal associativity lemma: the left- and right-associated triple folds
+are equal. It normalizes both sides into canonical form (via the two
+`*_normalize` lemmas) and identifies them as a reindexing of one another over
+the triangle of index triples `(i, j, n - i - j)` (`fold_triangular_assoc_reindex`).
+This permutation equality is what makes `FpPoly` multiplication associative. -/
 private theorem mulCoeff_assoc_reindex
     (f g h : FpPoly p) (n : Nat) :
     (List.range (n + 1)).foldl
