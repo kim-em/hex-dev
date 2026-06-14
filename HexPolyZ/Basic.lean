@@ -2076,6 +2076,9 @@ private theorem rat_congr_mod_core (p m : DensePoly Rat) :
     grind
   · exact ⟨0 - (p / m), rat_mod_sub_self_eq_mul_neg_div_of_not_isZero p m hmzero⟩
 
+/-- `rat_eq_add_mul_of_sub_eq_mul`: rearranges the remainder relation `p - q = m * r`
+into `p = q + m * r`, the additive form used when reconstructing a `DensePoly Rat`
+dividend from its remainder and recorded multiplier. -/
 private theorem rat_eq_add_mul_of_sub_eq_mul {p q m r : DensePoly Rat}
     (hsub : p - q = m * r) :
     p = q + m * r := by
@@ -2089,6 +2092,9 @@ private theorem rat_eq_add_mul_of_sub_eq_mul {p q m r : DensePoly Rat}
   rw [DensePoly.coeff_add q (m * r) n hzero_add]
   grind
 
+/-- `rat_add_sub_add_right`: the coefficientwise regrouping
+`(a + b) - (c + d) = (a - c) + (b - d)` for `DensePoly Rat`, splitting a difference of
+sums into the matching pair of differences in the remainder-delta calculations. -/
 private theorem rat_add_sub_add_right (a b c d : DensePoly Rat) :
     (a + b) - (c + d) = (a - c) + (b - d) := by
   apply DensePoly.ext_coeff
@@ -2103,6 +2109,8 @@ private theorem rat_add_sub_add_right (a b c d : DensePoly Rat) :
   rw [DensePoly.coeff_sub b d n hzero_sub]
   grind
 
+/-- `rat_sub_zero_right`: subtracting the zero polynomial leaves `p` unchanged,
+`p - 0 = p` over `DensePoly Rat`. -/
 private theorem rat_sub_zero_right (p : DensePoly Rat) :
     p - 0 = p := by
   apply DensePoly.ext_coeff
@@ -2111,10 +2119,15 @@ private theorem rat_sub_zero_right (p : DensePoly Rat) :
   rw [DensePoly.coeff_sub p 0 n hzero_sub, DensePoly.coeff_zero]
   grind
 
+/-- `rat_zero_mod_eq_zero`: the zero polynomial reduces to zero under any modulus,
+`(0 : DensePoly Rat) % m = 0`. -/
 private theorem rat_zero_mod_eq_zero (m : DensePoly Rat) :
     (0 : DensePoly Rat) % m = 0 :=
   DensePoly.zero_mod_eq_zero_core m
 
+/-- `rat_sub_self_right_add`: cancels the shared left summand, `(a + b) - a = b` over
+`DensePoly Rat`, used to discard the `p * q` term in the remainder-delta product
+expansion. -/
 private theorem rat_sub_self_right_add (a b : DensePoly Rat) :
     (a + b) - a = b := by
   apply DensePoly.ext_coeff
@@ -2125,6 +2138,10 @@ private theorem rat_sub_self_right_add (a b : DensePoly Rat) :
   rw [DensePoly.coeff_add a b n hzero_add]
   grind
 
+/-- `rat_mul_left_remainder_delta`: expresses the difference between the product of
+remainders and the product `p * q` as a multiple of `m`,
+`(p % m * (q % m)) - (p * q) = m * (rp * (q % m) + p * rq)`, given the recorded
+multipliers `rp`, `rq`; this exhibits `m` as a divisor of the product remainder gap. -/
 private theorem rat_mul_left_remainder_delta
     (p q m rp rq : DensePoly Rat)
     (hp : p % m = p + m * rp)
@@ -2167,6 +2184,9 @@ private theorem rat_mul_left_remainder_delta
       exact congrArg (fun x => m * x)
         (DensePoly.add_comm_poly (p * rq) (rp * (q % m)))
 
+/-- `rat_foldl_mulCoeffStep_select`: evaluates the `mulCoeffStep` left-fold over
+`List.range m`, showing it adds to `acc` the single surviving summand
+`f.coeff i * g.coeff (n - i)` exactly when `i ≤ n` and `n - i < m`, and zero otherwise. -/
 private theorem rat_foldl_mulCoeffStep_select
     (f g : DensePoly Rat) (n i m : Nat) (acc : Rat) :
     (List.range m).foldl (DensePoly.mulCoeffStep f g n i) acc =
@@ -2195,6 +2215,9 @@ private theorem rat_foldl_mulCoeffStep_select
           · have hm' : ¬ n - i < m + 1 := by omega
             simp [hlt, hm, hm', heq]
 
+/-- `rat_foldl_mulCoeffStep_outer`: rewrites the outer index fold over `xs` by replacing
+each inner `mulCoeffStep` fold over `List.range g.size` with its selected summand from
+`rat_foldl_mulCoeffStep_select`. -/
 private theorem rat_foldl_mulCoeffStep_outer
     (f g : DensePoly Rat) (n : Nat) (xs : List Nat) (acc : Rat) :
     xs.foldl
@@ -2213,6 +2236,8 @@ private theorem rat_foldl_mulCoeffStep_outer
       rw [rat_foldl_mulCoeffStep_select]
       exact ih _
 
+/-- `rat_foldl_select_index`: a left-fold over `List.range m` adding `x` only at the
+matching index `k` yields `acc + x` when `k < m` and `acc` otherwise. -/
 private theorem rat_foldl_select_index
     (k m : Nat) (x : Rat) (acc : Rat) :
     (List.range m).foldl
@@ -2238,6 +2263,9 @@ private theorem rat_foldl_select_index
           simp [hk, hk', hkm]
           grind
 
+/-- `rat_coeff_mul_at_top`: the top coefficient of a `DensePoly Rat` product is the
+product of the factors' top coefficients,
+`(f * g).coeff (f.size - 1 + (g.size - 1)) = f.coeff (f.size - 1) * g.coeff (g.size - 1)`. -/
 private theorem rat_coeff_mul_at_top
     (f g : DensePoly Rat) (hf : 0 < f.size) (hg : 0 < g.size) :
     (f * g).coeff (f.size - 1 + (g.size - 1)) =
