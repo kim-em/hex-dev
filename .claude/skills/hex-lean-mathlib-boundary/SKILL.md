@@ -241,11 +241,18 @@ restructure around the reported line first; it is usually a cheap `omega` or
 `exact` that simply ran last.
 
 - First remedy: `set_option maxHeartbeats 400000 in` on the declaration (the
-  common Mathlib value; raise further only if needed). Once the budget is large
-  enough, the *real* error often surfaces (e.g. an inline `by omega` whose
-  target type wasn't yet determined because it sat under `lt_of_le_of_lt _ (by
-  omega)` — fix by giving the bound an explicitly-typed `have h2 : … := by
-  omega` so its goal is fully concrete before `omega` runs).
+  common Mathlib value; raise further only if needed). Place the
+  `set_option … in` **before** the `/-- … -/` docstring, not between the
+  docstring and the `theorem` — the docstring binds to the declaration, so
+  splitting them gives `unexpected token 'set_option'; expected 'lemma'`. Once
+  the budget is large enough, the *real* error often surfaces (e.g. an inline
+  `by omega` whose target type wasn't yet determined because it sat under
+  `lt_of_le_of_lt _ (by omega)` — fix by giving the bound an explicitly-typed
+  `have h2 : … := by omega` so its goal is fully concrete before `omega` runs).
+  A timeout can also mask a genuine type mismatch the unifier is churning on
+  (e.g. `isDefEq` trying to unify two distinct `LiftData`s over large terms);
+  raising the budget lets the real `Application type mismatch` appear, so don't
+  assume a timeout means "just needs more heartbeats."
 - Keep the capstone thin: factor heavy sub-steps (column-formula computations,
   `repr` evaluations) into their own lemmas. Each gets a fresh budget, and the
   capstone only pays for delegating.
