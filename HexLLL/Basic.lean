@@ -89,6 +89,8 @@ def mulEqCert (M : Matrix Int n n) (A C : Matrix Int n m) : Bool :=
   (List.finRange n).all fun i =>
     Vector.dotProduct (row M i) packs == packRow K (row C i)
 
+/-- `foldl_max_le_init` shows that the initial accumulator is bounded by the
+running `Nat.max` scan used to compute entrywise absolute-value bounds. -/
 private theorem foldl_max_le_init {α : Type} (f : α → Nat) (l : List α) (acc : Nat) :
     acc ≤ l.foldl (fun a x => Nat.max a (f x)) acc := by
   induction l generalizing acc with
@@ -97,6 +99,8 @@ private theorem foldl_max_le_init {α : Type} (f : α → Nat) (l : List α) (ac
       simp only [List.foldl_cons]
       exact Nat.le_trans (Nat.le_max_left acc (f x)) (ih (Nat.max acc (f x)))
 
+/-- `le_foldl_max` bounds any listed value by the completed `Nat.max` scan used
+to justify `maxAbs` matrix entry bounds. -/
 private theorem le_foldl_max {α : Type} (f : α → Nat) (l : List α) (acc : Nat)
     {x : α} (hx : x ∈ l) :
     f x ≤ l.foldl (fun a x => Nat.max a (f x)) acc := by
@@ -155,18 +159,24 @@ theorem packRow_zipWith_muladd (K : Nat) (c : Int) (r s : Vector Int m) :
   rw [Vector.toList_zipWith]
   exact packDigits_zipWith_muladd _ c _ _ (by simp)
 
+/-- `packDigits_replicate_zero` says that packing an all-zero digit list gives
+zero, providing the base packed row for folded dot products. -/
 private theorem packDigits_replicate_zero (P : Int) (m : Nat) :
     packDigits P (List.replicate m 0) = 0 := by
   induction m with
   | zero => rfl
   | succ m ih => simp [List.replicate_succ, packDigits, ih]
 
+/-- `packRow_replicate_zero` lifts zero-list packing to rows, supplying the
+zero packed row used to start product row folds. -/
 private theorem packRow_replicate_zero (K m : Nat) :
     packRow K (Vector.replicate m (0 : Int)) = 0 := by
   unfold packRow
   rw [Vector.toList_replicate]
   exact packDigits_replicate_zero _ m
 
+/-- `foldl_dot_pack` commutes a folded dot product with packing the folded
+coefficient-times-row update. -/
 private theorem foldl_dot_pack (K : Nat) (c : Vector Int n) (A : Matrix Int n m)
     (ls : List (Fin n)) (w : Vector Int m) :
     ls.foldl (fun acc l => acc + c[l] * packRow K (row A l)) (packRow K w) =
@@ -180,6 +190,8 @@ private theorem foldl_dot_pack (K : Nat) (c : Vector Int n) (A : Matrix Int n m)
         packRow_zipWith_muladd]
       grind
 
+/-- `foldl_zipWith_getElem` identifies each entry of a folded `zipWith` row
+update with the matching folded scalar dot update. -/
 private theorem foldl_zipWith_getElem (c : Vector Int n) (A : Matrix Int n m)
     (ls : List (Fin n)) (w : Vector Int m) (j : Fin m) :
     (ls.foldl
@@ -278,6 +290,8 @@ theorem packDigits_inj (K : Nat) {xs ys : List Int}
               exact Nat.le_mul_of_pos_right _ (by omega)
             omega
 
+/-- `foldl_dot_natAbs_le` bounds the absolute value of a folded integer dot sum
+from per-entry bounds and the length of the folded index list. -/
 private theorem foldl_dot_natAbs_le (u v : Vector Int k) (Bu Bv : Nat)
     (hu : ∀ l : Fin k, u[l].natAbs ≤ Bu) (hv : ∀ l : Fin k, v[l].natAbs ≤ Bv)
     (ls : List (Fin k)) (acc : Int) :
@@ -307,6 +321,8 @@ theorem natAbs_dotProduct_le (u v : Vector Int k) (Bu Bv : Nat)
   have h := foldl_dot_natAbs_le u v Bu Bv hu hv (List.finRange k) 0
   simpa [Vector.dotProduct] using h
 
+/-- `two_mul_lt_width` turns a bound `x ≤ B` into the base-width inequality
+needed for balanced packing injectivity. -/
 private theorem two_mul_lt_width {x B : Nat} (hx : x ≤ B) :
     2 * x < 2 ^ (B.log2 + 2) := by
   have h1 : B < 2 ^ (B.log2 + 1) := Nat.lt_log2_self
