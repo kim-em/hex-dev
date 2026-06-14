@@ -721,12 +721,18 @@ def runGramSchmidtCoeffChecksum (input : StateInput) : Int :=
 def runPotential (input : StateInput) : Nat :=
   input.state.potential
 
+/-- `1/4 < 3/4`: the lower half of the `1/4 < δ ≤ 1` reducer precondition at the
+bench δ = 3/4. -/
 private theorem lllDeltaLower : (1 / 4 : Rat) < 3 / 4 := by
   grind
 
+/-- `3/4 ≤ 1`: the upper half of the `1/4 < δ ≤ 1` reducer precondition at the
+bench δ = 3/4. -/
 private theorem lllDeltaUpper : (3 / 4 : Rat) ≤ 1 := by
   grind
 
+/-- `121/400 < 3/4`: the lower-bound precondition for the certified δ = 121/400
+reducer variant evaluated at the bench δ = 3/4. -/
 private theorem lllCertifiedDeltaLower : (121 / 400 : Rat) < 3 / 4 := by
   grind
 
@@ -794,9 +800,13 @@ def runNativeFirstShortVectorNormSq (input : FirstShortVectorInput) : Int :=
     ((lllNative input.basis (3 / 4) lllDeltaLower lllDeltaUpper input.hn).row
       ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one input.hn⟩)
 
+/-- Render an `Int` vector as Haskell list-literal syntax (`[a,b,c]`) for the
+driver's stdin. -/
 def intRowHaskell (v : Vector Int n) : String :=
   "[" ++ String.intercalate "," ((List.finRange n).map fun j => toString v[j]) ++ "]"
 
+/-- Render an `Int` matrix as a Haskell list-of-lists literal (`[[..],[..]]`)
+for the driver's stdin. -/
 def matrixHaskell (b : Matrix Int n m) : String :=
   "[" ++
     String.intercalate "," ((List.finRange n).map fun i => intRowHaskell (b.row i)) ++
@@ -806,6 +816,7 @@ initialize isabelleBinaryRef : IO.Ref (Option String) ← IO.mkRef none
 
 initialize isabelleCertifiedBinaryRef : IO.Ref (Option String) ← IO.mkRef none
 
+/-- Run a subprocess and throw on nonzero exit, returning its trimmed stdout. -/
 def checkedProcessOutput (cmd : String) (args : Array String := #[]) : IO String := do
   let out ← IO.Process.output { cmd := cmd, args := args }
   if out.exitCode != 0 then
@@ -813,6 +824,8 @@ def checkedProcessOutput (cmd : String) (args : Array String := #[]) : IO String
       s!"process failed ({cmd}):\nstdout:\n{out.stdout}\nstderr:\n{out.stderr}"
   return out.stdout.trimAscii.toString
 
+/-- Resolve the `svp_verified` driver path from the `HEX_LLL_ISABELLE_SVP` env
+var or the setup script, caching it in the module ref. -/
 def resolveIsabelleBinary : IO String := do
   if let some cached ← isabelleBinaryRef.get then
     return cached
@@ -823,6 +836,9 @@ def resolveIsabelleBinary : IO String := do
   isabelleBinaryRef.set (some path)
   return path
 
+/-- Resolve the `svp_certified` driver path from the
+`HEX_LLL_ISABELLE_CERTIFIED_SVP` env var or the setup script, caching it in the
+module ref. -/
 def resolveIsabelleCertifiedBinary : IO String := do
   if let some cached ← isabelleCertifiedBinaryRef.get then
     return cached
@@ -833,6 +849,8 @@ def resolveIsabelleCertifiedBinary : IO String := do
   isabelleCertifiedBinaryRef.set (some path)
   return path
 
+/-- Parse the driver's numeric squared-norm reply, throwing on non-numeric
+output. -/
 def parseIsabelleNormSq (text : String) : IO Int := do
   match text.trimAscii.toString.toNat? with
   | some n => return Int.ofNat n
@@ -921,6 +939,9 @@ def requestIsabelleLineWithRetry (request : String) : Nat → IO String
       isabelleChildRef.set none
       requestIsabelleLineWithRetry request remaining
 
+/-- The certified mirror of `requestIsabelleLineWithRetry`: one request/reply
+against the persistent `svp_certified` driver, with a single respawn-and-retry
+on process death or empty reply. -/
 def requestIsabelleCertifiedLineWithRetry (request : String) : Nat → IO String
   | 0 => do
     let reply ← (← resolveIsabelleCertifiedChild).requestLine request
@@ -937,11 +958,15 @@ def requestIsabelleCertifiedLineWithRetry (request : String) : Nat → IO String
       isabelleCertifiedChildRef.set none
       requestIsabelleCertifiedLineWithRetry request remaining
 
+/-- Benchmark comparator target: send one basis to the `svp_verified` driver and
+parse its squared-norm reply. -/
 def runIsabelleShortVectorNormSq (_tag : String) (input : FirstShortVectorInput) :
     IO Int := do
   let request := matrixHaskell input.basis
   parseIsabelleNormSq (← requestIsabelleLineWithRetry request 1)
 
+/-- Benchmark comparator target: send one basis to the `svp_certified` driver and
+parse its certified squared-norm reply. -/
 def runIsabelleCertifiedShortVectorNormSq (_tag : String) (input : FirstShortVectorInput) :
     IO Int := do
   let request := matrixHaskell input.basis

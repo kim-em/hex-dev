@@ -398,38 +398,52 @@ def runFlintPrimitivePartChecksum (input : ContentInput) : IO UInt64 := do
 `runFlintFooAt n` calls the FLINT comparator on the same prepared input
 so wall-times are comparable in the same harness. -/
 
+/-- Adapter thunk: build `prepBinaryInput n` and run the Hex addition checksum target. -/
 def runAddChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
   return runAddChecksum (prepBinaryInput n)
+/-- Adapter thunk: build `prepBinaryInput n` and run the FLINT addition comparator. -/
 def runFlintAddChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
   runFlintAddChecksum (prepBinaryInput n)
 
+/-- Adapter thunk: build `prepBinaryInput n` and run the Hex subtraction checksum target. -/
 def runSubChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
   return runSubChecksum (prepBinaryInput n)
+/-- Adapter thunk: build `prepBinaryInput n` and run the FLINT subtraction comparator. -/
 def runFlintSubChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
   runFlintSubChecksum (prepBinaryInput n)
 
+/-- Adapter thunk: build `prepBinaryInput n` and run the Hex multiplication checksum target. -/
 def runMulChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
   return runMulChecksum (prepBinaryInput n)
+/-- Adapter thunk: build `prepBinaryInput n` and run the FLINT multiplication comparator. -/
 def runFlintMulChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
   runFlintMulChecksum (prepBinaryInput n)
 
+/-- Adapter thunk: build `prepUnaryInput n` and run the Hex derivative checksum target. -/
 def runDerivativeChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
   return runDerivativeChecksum (prepUnaryInput n)
+/-- Adapter thunk: build `prepUnaryInput n` and run the FLINT derivative comparator. -/
 def runFlintDerivativeChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
   runFlintDerivativeChecksum (prepUnaryInput n)
 
+/-- Adapter thunk: build `prepComposeInput n` and run the Hex composition checksum target. -/
 def runComposeChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
   return runComposeChecksum (prepComposeInput n)
+/-- Adapter thunk: build `prepComposeInput n` and run the FLINT composition comparator. -/
 def runFlintComposeChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
   runFlintComposeChecksum (prepComposeInput n)
 
+/-- Adapter thunk: build `prepContentInput n` and run the Hex content target. -/
 def runContentAt (n : Nat) : Unit → IO Int := fun _ =>
   return runContent (prepContentInput n)
+/-- Adapter thunk: build `prepContentInput n` and run the FLINT content comparator. -/
 def runFlintContentAt (n : Nat) : Unit → IO Int := fun _ =>
   runFlintContent (prepContentInput n)
 
+/-- Adapter thunk: build `prepContentInput n` and run the Hex primitive-part checksum target. -/
 def runPrimitivePartChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
   return runPrimitivePartChecksum (prepContentInput n)
+/-- Adapter thunk: build `prepContentInput n` and run the FLINT primitive-part comparator. -/
 def runFlintPrimitivePartChecksumAt (n : Nat) : Unit → IO UInt64 := fun _ =>
   runFlintPrimitivePartChecksum (prepContentInput n)
 
