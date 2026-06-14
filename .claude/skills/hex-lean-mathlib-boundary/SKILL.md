@@ -273,7 +273,10 @@ restructure around the reported line first; it is usually a cheap `omega` or
   A timeout can also mask a genuine type mismatch the unifier is churning on
   (e.g. `isDefEq` trying to unify two distinct `LiftData`s over large terms);
   raising the budget lets the real `Application type mismatch` appear, so don't
-  assume a timeout means "just needs more heartbeats."
+  assume a timeout means "just needs more heartbeats." Conversely, if even a
+  large budget (e.g. `1000000`, 5×) still times out at `whnf`/`isDefEq`, it is a
+  genuine heavy-defeq problem, not a tight budget — stop raising and factor the
+  heavy sub-step into a thin lemma instead.
 - Keep the capstone thin: factor heavy sub-steps (column-formula computations,
   `repr` evaluations) into their own lemmas. Each gets a fresh budget, and the
   capstone only pays for delegating.
