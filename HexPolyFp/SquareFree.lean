@@ -4848,8 +4848,8 @@ private theorem yunScalarStep
   · exact hrawG
   · have hg_ne : g ≠ 0 := by
       apply ne_zero_of_isZero_false
-      exact gcd_isZero_false_of_right_isZero_false
-        f (DensePoly.derivative f) hder
+      exact monicGcd_isZero_false_of_gcd_nonzero f (DensePoly.derivative f)
+        (gcd_isZero_false_of_right_isZero_false f (DensePoly.derivative f) hder)
     have hquot :=
       div_C_mul_C_mul_of_dvd hp hu hv f g
         (by
@@ -5178,10 +5178,10 @@ private theorem yunFactorsContributionWithLevel_constant_scalar_form
         · simp [yunFactorsContributionWithLevel, hc]
           change w = (1 : FpPoly p) * w
           rw [one_mul]
-      · let y : FpPoly p := DensePoly.gcd (DensePoly.C k : FpPoly p) w
+      · let y : FpPoly p := monicGcd (DensePoly.C k : FpPoly p) w
         let z : FpPoly p := (DensePoly.C k : FpPoly p) / y
         have hy_dvd : y ∣ (DensePoly.C k : FpPoly p) :=
-          DensePoly.gcd_dvd_left (DensePoly.C k : FpPoly p) w
+          monicGcd_dvd_left hp (DensePoly.C k : FpPoly p) w
         obtain ⟨v, hv, hy_eq⟩ := constant_divisor_eq_C hk hy_dvd
         have hz_const : ∃ a : ZMod64 p, a ≠ 0 ∧ z = DensePoly.C a := by
           have hquot_dvd : z ∣ (DensePoly.C k : FpPoly p) := by
@@ -5265,10 +5265,10 @@ private theorem yunFactorsContributionWithLevel_constant_scalar_sync
         · simp [yunFactorsContributionWithLevel, hc]
           change w = (1 : FpPoly p) * w
           rw [one_mul]
-      · let y : FpPoly p := DensePoly.gcd (DensePoly.C k : FpPoly p) w
+      · let y : FpPoly p := monicGcd (DensePoly.C k : FpPoly p) w
         let z : FpPoly p := (DensePoly.C k : FpPoly p) / y
         have hy_dvd : y ∣ (DensePoly.C k : FpPoly p) :=
-          DensePoly.gcd_dvd_left (DensePoly.C k : FpPoly p) w
+          monicGcd_dvd_left hp (DensePoly.C k : FpPoly p) w
         obtain ⟨v, hv, hy_eq⟩ := constant_divisor_eq_C hk hy_dvd
         have hw_div_y :
             w / y = DensePoly.C v⁻¹ * w := by
@@ -5674,7 +5674,8 @@ private theorem derivativeSplit_quotient_common_dvd_derivative_one
     · exact False.elim (hdf h)
   have hg_nonzero : g.isZero = false := by
     simpa [g] using
-      gcd_isZero_false_of_right_isZero_false f (DensePoly.derivative f) hdf_false
+      monicGcd_isZero_false_of_gcd_nonzero f (DensePoly.derivative f)
+        (gcd_isZero_false_of_right_isZero_false f (DensePoly.derivative f) hdf_false)
   have hbase : pow d 0 ∣ g := by
     rw [pow_eq_powLinear]
     change (1 : FpPoly p) ∣ g
@@ -7526,7 +7527,8 @@ private theorem yunFactorsDerivativeActiveReachable_nonzero
         rfl
       have hg_nonzero : g.isZero = false := by
         simpa [g] using
-          gcd_isZero_false_of_right_isZero_false f (DensePoly.derivative f) hdf_false
+          monicGcd_isZero_false_of_gcd_nonzero f (DensePoly.derivative f)
+            (gcd_isZero_false_of_right_isZero_false f (DensePoly.derivative f) hdf_false)
       have hc_nonzero : c.isZero = false := by
         cases hc : c.isZero
         · rfl
@@ -7541,7 +7543,9 @@ private theorem yunFactorsDerivativeActiveReachable_nonzero
       let y := monicGcd c w
       let z := w / y
       have hy_nonzero : y.isZero = false := by
-        simpa [y] using gcd_isZero_false_of_right_isZero_false c w ih.2
+        simpa [y] using
+          monicGcd_isZero_false_of_gcd_nonzero c w
+            (gcd_isZero_false_of_right_isZero_false c w ih.2)
       have hz_nonzero : z.isZero = false := by
         cases hz : z.isZero
         · rfl
@@ -10210,7 +10214,7 @@ private theorem normalizeMonic_gcd_monic_of_right_nonzero
     [ZMod64.PrimeModulus p] (c w : FpPoly p)
     (hw : w.isZero = false) :
     DensePoly.Monic (normalizeMonic (DensePoly.gcd c w)).2 :=
-  normalizeMonic_nonzero_monic (monicGcd c w)
+  normalizeMonic_nonzero_monic (DensePoly.gcd c w)
     (gcd_isZero_false_of_right_isZero_false c w hw)
 
 /--
