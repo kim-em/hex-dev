@@ -37,6 +37,7 @@ private def isOne (f : FpPoly p) : Bool :=
         false
   | _ => false
 
+/-- `isOne f` returns `true` only for the constant polynomial `1`. -/
 private theorem eq_one_of_isOne_true
     (f : FpPoly p) (h : isOne f = true) :
     f = 1 := by
@@ -83,15 +84,19 @@ private def pow (f : FpPoly p) (n : Nat) : FpPoly p :=
     exact Nat.div_lt_self (Nat.pos_of_ne_zero hk) (by decide)
   go 1 f n
 
+/-- `pow f 1` is `f`. -/
 private theorem pow_one (f : FpPoly p) :
     pow f 1 = f := by
   unfold pow
   simp [pow.go]
 
+/-- Reference exponentiation by linear recursion (`powLinear f n = f ^ n`),
+the specification the square-and-multiply `pow` is proved against. -/
 private def powLinear (f : FpPoly p) : Nat → FpPoly p
   | 0 => 1
   | n + 1 => powLinear f n * f
 
+/-- `powLinear` turns exponent addition into multiplication. -/
 private theorem powLinear_add (f : FpPoly p) (m n : Nat) :
     powLinear f (m + n) = powLinear f m * powLinear f n := by
   induction n with
@@ -101,6 +106,7 @@ private theorem powLinear_add (f : FpPoly p) (m n : Nat) :
       rw [Nat.add_succ, powLinear, ih, powLinear]
       exact DensePoly.mul_assoc_poly (powLinear f m) (powLinear f n) f
 
+/-- Doubling the exponent of `powLinear` is the same as squaring the base. -/
 private theorem powLinear_double (f : FpPoly p) (n : Nat) :
     powLinear f (2 * n) = powLinear (f * f) n := by
   induction n with
@@ -114,11 +120,14 @@ private theorem powLinear_double (f : FpPoly p) (n : Nat) :
       rw [powLinear, powLinear, ih]
       exact DensePoly.mul_assoc_poly (powLinear (f * f) n) f f
 
+/-- An odd exponent of `powLinear` peels off one base factor and squares the rest. -/
 private theorem powLinear_double_add_one (f : FpPoly p) (n : Nat) :
     powLinear f (2 * n + 1) = f * powLinear (f * f) n := by
   rw [powLinear, powLinear_double]
   exact mul_comm (powLinear (f * f) n) f
 
+/-- The square-and-multiply loop computes `acc * powLinear base k`, linking the
+executable `pow.go` to the reference `powLinear`. -/
 private theorem pow_go_eq_mul_powLinear (acc base : FpPoly p) (k : Nat) :
     pow.go acc base k = acc * powLinear base k := by
   induction k using Nat.strongRecOn generalizing acc base with
@@ -161,12 +170,14 @@ private theorem pow_go_eq_mul_powLinear (acc base : FpPoly p) (k : Nat) :
               _ = acc * powLinear base k := by
                     rw [← hk_eq]
 
+/-- The square-and-multiply `pow` agrees with the reference `powLinear`. -/
 private theorem pow_eq_powLinear (f : FpPoly p) (n : Nat) :
     pow f n = powLinear f n := by
   unfold pow
   rw [pow_go_eq_mul_powLinear]
   exact one_mul (powLinear f n)
 
+/-- Iterating `powLinear` multiplies the exponents. -/
 private theorem powLinear_powLinear_mul (f : FpPoly p) (m n : Nat) :
     powLinear (powLinear f n) m = powLinear f (m * n) := by
   induction m with
@@ -176,6 +187,7 @@ private theorem powLinear_powLinear_mul (f : FpPoly p) (m n : Nat) :
       rw [powLinear, ih]
       simpa [Nat.succ_mul] using (powLinear_add f (m * n) n).symm
 
+/-- `powLinear` distributes over a product of bases. -/
 private theorem powLinear_mul_base (f g : FpPoly p) (n : Nat) :
     powLinear (f * g) n = powLinear f n * powLinear g n := by
   induction n with
@@ -200,43 +212,52 @@ private theorem powLinear_mul_base (f g : FpPoly p) (n : Nat) :
               exact (DensePoly.mul_assoc_poly
                 (powLinear f n) f (powLinear g n * g)).symm
 
+/-- `pow` turns exponent addition into multiplication. -/
 private theorem pow_add_exp (f : FpPoly p) (m n : Nat) :
     pow f (m + n) = pow f m * pow f n := by
   rw [pow_eq_powLinear, pow_eq_powLinear, pow_eq_powLinear]
   exact powLinear_add f m n
 
+/-- `pow f (n + 1)` is `pow f n` times one more factor of `f`. -/
 private theorem pow_succ (f : FpPoly p) (n : Nat) :
     pow f (n + 1) = pow f n * f := by
   rw [pow_eq_powLinear, pow_eq_powLinear]
   rfl
 
+/-- Product-rule expansion of the derivative of `pow f (n + 1)`. -/
 private theorem derivative_pow_succ (f : FpPoly p) (n : Nat) :
     DensePoly.derivative (pow f (n + 1)) =
       DensePoly.derivative (pow f n) * f + pow f n * DensePoly.derivative f := by
   rw [pow_succ]
   exact DensePoly.derivative_mul (pow f n) f
 
+/-- `pow` distributes over a product of bases. -/
 private theorem pow_mul_base (f g : FpPoly p) (n : Nat) :
     pow (f * g) n = pow f n * pow g n := by
   rw [pow_eq_powLinear, pow_eq_powLinear, pow_eq_powLinear]
   exact powLinear_mul_base f g n
 
+/-- Iterating `pow` multiplies the exponents. -/
 private theorem pow_pow_mul' (f : FpPoly p) (m n : Nat) :
     pow (pow f n) m = pow f (m * n) := by
   rw [pow_eq_powLinear, pow_eq_powLinear, pow_eq_powLinear]
   exact powLinear_powLinear_mul f m n
 
+/-- Frobenius additivity in characteristic `p`: `(a + b) ^ p = a ^ p + b ^ p`. -/
 private theorem zmod64_add_pow_prime
     (hp : Hex.Nat.Prime p) (a b : ZMod64 p) :
     (a + b) ^ p = a ^ p + b ^ p := by
   rw [ZMod64.pow_prime hp (a + b), ZMod64.pow_prime hp a, ZMod64.pow_prime hp b]
 
+/-- Interior binomial coefficients `choose p k` (for `0 < k < p`) vanish mod `p`,
+the arithmetic fact underlying Frobenius additivity. -/
 private theorem zmod64_natCast_choose_prime_eq_zero
     (hp : Hex.Nat.Prime p) {k : Nat} (hk0 : 0 < k) (hkp : k < p) :
     ((Hex.Nat.choose p k : Nat) : ZMod64 p) = 0 := by
   exact (ZMod64.natCast_eq_zero_iff_dvd (p := p) (Hex.Nat.choose p k)).2
     (Hex.Nat.choose_prime_dvd hp hk0 hkp)
 
+/-- Scalar scaling of a polynomial is additive in the scalar. -/
 private theorem scale_add_scalar (c d : ZMod64 p) (f : FpPoly p) :
     DensePoly.scale (c + d) f = DensePoly.scale c f + DensePoly.scale d f := by
   apply DensePoly.ext_coeff
@@ -250,6 +271,7 @@ private theorem scale_add_scalar (c d : ZMod64 p) (f : FpPoly p) :
   rw [DensePoly.coeff_scale _ _ _ hzero_d]
   grind
 
+/-- Scalar scaling commutes through the right factor of a product. -/
 private theorem scale_mul_right (c : ZMod64 p) (f g : FpPoly p) :
     DensePoly.scale c (f * g) = f * DensePoly.scale c g := by
   calc
@@ -259,11 +281,13 @@ private theorem scale_mul_right (c : ZMod64 p) (f g : FpPoly p) :
     _ = f * DensePoly.scale c g := by
       exact DensePoly.mul_comm_poly (DensePoly.scale c g) f
 
+/-- `powLinear f (n + 1)` factors one `f` out on the left. -/
 private theorem powLinear_succ_left (f : FpPoly p) (n : Nat) :
     powLinear f (n + 1) = f * powLinear f n := by
   rw [powLinear]
   exact DensePoly.mul_comm_poly (powLinear f n) f
 
+/-- Scaling by a `Nat`-cast sum splits additively over the summands. -/
 private theorem powLinearBinom_scalar_add
     (a b : Nat) (h : FpPoly p) :
     DensePoly.scale (((a + b : Nat) : ZMod64 p)) h =
@@ -273,6 +297,7 @@ private theorem powLinearBinom_scalar_add
   rw [hcast]
   exact scale_add_scalar (a : ZMod64 p) (b : ZMod64 p) h
 
+/-- Scaling by `0` annihilates a polynomial. -/
 private theorem powLinearBinom_scalar_zero (h : FpPoly p) :
     DensePoly.scale (0 : ZMod64 p) h = 0 := by
   apply DensePoly.ext_coeff
@@ -282,14 +307,17 @@ private theorem powLinearBinom_scalar_zero (h : FpPoly p) :
   rw [DensePoly.coeff_zero]
   grind
 
+/-- Scaling by `1` is the identity. -/
 private theorem powLinearBinom_scalar_one (h : FpPoly p) :
     DensePoly.scale (1 : ZMod64 p) h = h :=
   scale_one_left h
 
+/-- Right-multiplication by the zero polynomial gives `0`. -/
 private theorem powLinearBinom_mul_zero (h : FpPoly p) :
     h * (0 : FpPoly p) = 0 :=
   Eq.trans (DensePoly.mul_comm_poly h 0) (DensePoly.zero_mul h)
 
+/-- Absorb a left factor into a scaled product, reassociating it onto the left. -/
 private theorem mul_powLinearBinom_scaled_left
     (c : ZMod64 p) (f a b : FpPoly p) :
     f * DensePoly.scale c (a * b) = DensePoly.scale c ((f * a) * b) := by
