@@ -10613,6 +10613,23 @@ theorem squareFreeDecomposition_multiplicity_pos (hp : Hex.Nat.Prime p) (f : FpP
       simp at hsf
   exact hraw sf (by simpa using hsf)
 
+/-- Public reconstruction wrapper: the emitted unit and weighted factor product
+recover the input. The provider instantiation is closed internally, so no
+provider arguments appear in the statement. -/
+theorem squareFreeDecomposition_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p) :
+    let d := squareFreeDecomposition hp f
+    DensePoly.C d.unit * weightedProduct d.factors = f :=
+  squareFree_weightedProduct hp f
+
+/-- Public coprimality wrapper: the emitted factors are pairwise coprime, witnessed
+by the normalized gcd reducing to `1`. The provider instantiation is closed
+internally, so no provider arguments appear in the statement. -/
+theorem squareFreeDecomposition_pairwise_coprime (hp : Hex.Nat.Prime p) (f : FpPoly p) :
+    let d := squareFreeDecomposition hp f
+    d.factors.Pairwise
+      (fun a b => (normalizeMonic (DensePoly.gcd a.factor b.factor)).2 = 1) :=
+  squareFree_pairwise_coprime hp f
+
 private instance squareFreeGuardBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 
 private theorem prime_five_squareFree_guard : Hex.Nat.Prime 5 := by
