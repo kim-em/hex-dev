@@ -1117,6 +1117,8 @@ private theorem powLinear_coeffFold_prime_coeff
   rw [powLinear_coeffFold_prime_coeff_expansion]
   exact coeffFoldPowerCoeff_prime_coeff hp g m n
 
+/-- Each coefficient of `powLinear (f + g) p` is the sum of the corresponding
+coefficients of `powLinear f p` and `powLinear g p`. -/
 private theorem powLinear_add_prime_coeff
     (hp : Hex.Nat.Prime p) (f g : FpPoly p) (n : Nat) :
     (powLinear (f + g) p).coeff n =
@@ -1177,6 +1179,7 @@ private theorem pthRoot_pow_prime_coeff
     exact ZMod64.pow_prime hp (f.coeff n)
   · simp [hn]
 
+/-- A nonzero residue `a : ZMod64 p` over a prime modulus has `a.toNat` coprime to `p`. -/
 private theorem zmod64_coprime_of_prime_ne_zero
     (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
     Nat.Coprime a.toNat p := by
@@ -1212,6 +1215,7 @@ private theorem zmod64_coprime_of_prime_ne_zero
     rw [hgcd] at hk
     exact ⟨k, hk⟩
 
+/-- `a * a⁻¹ = 1` for any nonzero `a : ZMod64 p` over a prime modulus. -/
 private theorem zmod64_mul_inv_eq_one_of_prime_ne_zero
     (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
     a * a⁻¹ = 1 := by
@@ -1224,6 +1228,7 @@ private theorem zmod64_mul_inv_eq_one_of_prime_ne_zero
   apply UInt64.toNat_inj.mp
   simpa [ZMod64.toNat_eq_val] using hinv
 
+/-- `(1 : ZMod64 p)` is nonzero over a prime modulus. -/
 private theorem zmod64_one_ne_zero_of_prime
     (hp : Hex.Nat.Prime p) :
     (1 : ZMod64 p) ≠ 0 := by
@@ -1237,6 +1242,7 @@ private theorem zmod64_one_ne_zero_of_prime
   rw [ZMod64.toNat_one, ZMod64.toNat_zero, Nat.mod_eq_of_lt hp_gt] at hnat
   omega
 
+/-- `isOne` returns `true` on the constant polynomial `1 : FpPoly p` over a prime modulus. -/
 private theorem isOne_one [ZMod64.PrimeModulus p] :
     isOne (1 : FpPoly p) = true := by
   unfold isOne
@@ -1256,6 +1262,7 @@ private theorem isOne_one [ZMod64.PrimeModulus p] :
     simp
   simp [hcoeff0]
 
+/-- The inverse `a⁻¹` of a nonzero `a : ZMod64 p` is itself nonzero over a prime modulus. -/
 private theorem zmod64_inv_ne_zero_of_prime_ne_zero
     (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
     a⁻¹ ≠ 0 := by
@@ -1266,6 +1273,7 @@ private theorem zmod64_inv_ne_zero_of_prime_ne_zero
   rw [hzero] at hone
   exact zmod64_one_ne_zero_of_prime hp hone.symm
 
+/-- `a * 0 = 0` in `ZMod64 p`. -/
 private theorem zmod64_mul_zero (a : ZMod64 p) :
     a * 0 = 0 := by
   grind
@@ -1299,11 +1307,13 @@ private def normalizeMonic (f : FpPoly p) : ZMod64 p × FpPoly p :=
     let unit := DensePoly.leadingCoeff f
     (unit, DensePoly.scale unit⁻¹ f)
 
+/-- `normalizeMonic` returns `(0, 0)` on a zero input polynomial. -/
 private theorem normalizeMonic_zero
     (f : FpPoly p) (hzero : f.isZero = true) :
     normalizeMonic f = (0, 0) := by
   simp [normalizeMonic, hzero]
 
+/-- An `FpPoly p` whose `isZero` flag is `true` equals the zero polynomial. -/
 private theorem eq_zero_of_isZero_true
     (f : FpPoly p) (hzero : f.isZero = true) :
     f = 0 := by
@@ -1314,6 +1324,7 @@ private theorem eq_zero_of_isZero_true
   rw [DensePoly.coeff_eq_zero_of_size_le f (by omega)]
   exact DensePoly.coeff_zero n
 
+/-- `DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2` reconstructs a zero `f`. -/
 private theorem normalizeMonic_zero_reconstruct
     (f : FpPoly p) (hzero : f.isZero = true) :
     DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2 = f := by
@@ -1321,12 +1332,16 @@ private theorem normalizeMonic_zero_reconstruct
   rw [eq_zero_of_isZero_true f hzero]
   exact mul_zero (DensePoly.C (0 : ZMod64 p))
 
+/-- On a nonzero `f`, `normalizeMonic f` is the pair of its leading coefficient and
+`f` scaled by that coefficient's inverse. -/
 private theorem normalizeMonic_nonzero
     (f : FpPoly p) (hzero : f.isZero = false) :
     normalizeMonic f =
       (DensePoly.leadingCoeff f, DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f) := by
   simp [normalizeMonic, hzero]
 
+/-- `DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2` reconstructs a nonzero `f`
+over a prime modulus. -/
 private theorem normalizeMonic_nonzero_reconstruct
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (hzero : f.isZero = false) :
     DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2 = f := by
@@ -1336,6 +1351,8 @@ private theorem normalizeMonic_nonzero_reconstruct
   rw [zmod64_mul_inv_eq_one_of_prime_ne_zero hp hlead_ne]
   exact scale_one_left f
 
+/-- `DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2` reconstructs `f` for every
+input over a prime modulus. -/
 private theorem normalizeMonic_reconstruct
     (hp : Hex.Nat.Prime p) (f : FpPoly p) :
     DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2 = f := by
@@ -1343,6 +1360,7 @@ private theorem normalizeMonic_reconstruct
   · exact normalizeMonic_nonzero_reconstruct hp f hzero
   · exact normalizeMonic_zero_reconstruct f hzero
 
+/-- The polynomial part `(normalizeMonic f).2` is monic whenever `f` is nonzero. -/
 private theorem normalizeMonic_nonzero_monic
     [ZMod64.PrimeModulus p] (f : FpPoly p) (hzero : f.isZero = false) :
     DensePoly.Monic (normalizeMonic f).2 := by
@@ -1366,6 +1384,7 @@ private theorem normalizeMonic_nonzero_monic
   exact ZMod64.inv_mul_eq_one_of_prime
     (ZMod64.PrimeModulus.prime (p := p)) hlead_ne
 
+/-- The polynomial part `(normalizeMonic f).2` is nonzero whenever `f` is nonzero. -/
 private theorem normalizeMonic_nonzero_isZero_false
     [ZMod64.PrimeModulus p] (f : FpPoly p) (hzero : f.isZero = false) :
     (normalizeMonic f).2.isZero = false := by
@@ -1503,6 +1522,7 @@ Foundational `FpPoly p` algebra for transporting `DensePoly.derivative`,
 theorem used by the square-free decomposition correctness chain.
 -/
 
+/-- The constant polynomial `DensePoly.C u` is nonzero whenever the scalar `u` is nonzero. -/
 private theorem C_ne_zero_of_ne_zero {u : ZMod64 p} (hu : u ≠ 0) :
     (DensePoly.C u : FpPoly p) ≠ 0 := by
   intro hzero
