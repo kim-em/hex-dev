@@ -227,8 +227,14 @@ restructure around the reported line first; it is usually a cheap `omega` or
 `exact` that simply ran last.
 
 - First remedy: `set_option maxHeartbeats 400000 in` on the declaration (the
-  common Mathlib value; raise further only if needed). Once the budget is large
-  enough, the *real* error often surfaces (e.g. an inline `by omega` whose
+  common Mathlib value; raise further only if needed). Place the `set_option …
+  in` line **before** the `/-- … -/` docstring, not between the docstring and
+  the `theorem` — the latter is a parse error (`unexpected token 'set_option';
+  expected 'lemma'`). If even a large budget (e.g. `1000000`, 5×) still times
+  out at `whnf`/`isDefEq`, it is a genuine heavy-defeq problem, not a tight
+  budget — stop raising and factor the heavy sub-step into a thin lemma instead.
+  Once the budget is large enough, the *real* error often surfaces (e.g. an
+  inline `by omega` whose
   target type wasn't yet determined because it sat under `lt_of_le_of_lt _ (by
   omega)` — fix by giving the bound an explicitly-typed `have h2 : … := by
   omega` so its goal is fully concrete before `omega` runs).
