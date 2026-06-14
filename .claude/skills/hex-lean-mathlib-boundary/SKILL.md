@@ -170,3 +170,29 @@ restructure around the reported line first; it is usually a cheap `omega` or
 - A `let`/`set`-bound abbreviation of a huge term in the *goal or context* makes
   `omega` and defeq checks whnf that term — avoid binding the matrix; write it
   out or `clear_value` only when the value is genuinely unneeded downstream.
+
+## Empirically falsifying a directive premise (kernel eval)
+
+The fastest way to check whether a claimed correctness theorem (e.g.
+`squareFreeAuxRevContribution f … = f`) is actually *true* is to evaluate the
+executable definitions on a concrete input — a machine-checked counterexample
+beats any amount of staring at the proof.
+
+- **Use `#guard`/`#eval`, not `decide` in a proof.** `@[extern]` functions like
+  `ZMod64.mul` have native implementations, so `decide`/`rfl` in the kernel may
+  not reduce them, but `#guard`/`#eval` run the compiled code.
+- **`lake env lean File.lean` fails** with `Could not find native
+  implementation of external declaration 'Hex.ZMod64.mul'`. Instead **append the
+  probes to a module that is already in the build** (e.g. the file under
+  investigation, before the closing `end … end Hex`) and run
+  `lake build Hex….<Module>`. `#guard` failures abort the build with the
+  expression that didn't hold; `#eval` prints to the build trace
+  (`lake build … 2>&1 | grep info:`). Revert with `git restore` when done.
+- **`Prop`-valued recursive predicates** (e.g. `squareFreeAuxRevResidualSatisfied`)
+  are often not `Decidable`, so `decide (…)` won't synthesize. Write a small
+  `Bool` mirror of the definition and `#eval` that instead.
+- **Pick `p > 2`.** Scalar/unit bugs over `F_p` are invisible over `F_2` (its
+  only unit is `1`), so an `F_2`-only `#guard` can pass on a theorem that is
+  false over `F_5`. When the suspected bug is a leading-coefficient/scalar
+  mismatch, probe over `F_5` and compare coefficient lists (`f.toArray.toList.map
+  ZMod64.toNat`) — a constant ratio between LHS and `f` pinpoints a scalar leak.
