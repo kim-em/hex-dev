@@ -2087,14 +2087,23 @@ private theorem mulCoeffTerm_mul_right_expand
   exact fold_mul_left (p := p) (List.range (n - i + 1))
     (fun j => mulCoeffTerm g h (n - i) j) (f.coeff i)
 
+/-- `leftAssocTriples` enumerates the left-associated triples `((j, i - j), n - i)`
+used to flatten the degree-`n` coefficient sum for `FpPoly` multiplication
+associativity. -/
 private def leftAssocTriples (n : Nat) : List ((Nat × Nat) × Nat) :=
   (List.range (n + 1)).flatMap fun i =>
     (List.range (i + 1)).map fun j => ((j, i - j), n - i)
 
+/-- `rightAssocTriples` enumerates the right-associated triples `((i, j), n - i - j)`
+used to flatten the same degree-`n` coefficient sum for `FpPoly` multiplication
+associativity. -/
 private def rightAssocTriples (n : Nat) : List ((Nat × Nat) × Nat) :=
   (List.range (n + 1)).flatMap fun i =>
     (List.range (n - i + 1)).map fun j => ((i, j), n - i - j)
 
+/-- `nodup_map_of_injective` keeps a mapped list duplicate-free when the map is
+injective on the source list, supporting duplicate-free triple enumerations for the
+associativity reindexing. -/
 private theorem nodup_map_of_injective
     {α β : Type} {xs : List α} {f : α → β}
     (hxs : xs.Nodup)
@@ -2115,6 +2124,9 @@ private theorem nodup_map_of_injective
           intro a ha b hb hab
           exact hinj a (by simp [ha]) b (by simp [hb]) hab)
 
+/-- `nodup_flatMap_of_disjoint` keeps a flattened list duplicate-free when each row is
+duplicate-free and different rows are disjoint, supporting the triangular triple
+enumerations used in associativity reindexing. -/
 private theorem nodup_flatMap_of_disjoint
     {α β : Type} {xs : List α} {f : α → List β}
     (hxs : xs.Nodup)
@@ -2141,6 +2153,9 @@ private theorem nodup_flatMap_of_disjoint
           intro hxy
           exact hxs.1 (hxy ▸ hy)) a ha (hab ▸ hby)
 
+/-- `leftAssocTriples_nodup` proves the left-associated triple enumeration has no
+duplicates, so its coefficient fold can be compared by membership during associativity
+reindexing. -/
 private theorem leftAssocTriples_nodup (n : Nat) :
     (leftAssocTriples n).Nodup := by
   unfold leftAssocTriples
@@ -2159,6 +2174,9 @@ private theorem leftAssocTriples_nodup (n : Nat) :
     have hk' : k < n + 1 := List.mem_range.mp hk
     omega
 
+/-- `rightAssocTriples_nodup` proves the right-associated triple enumeration has no
+duplicates, so its coefficient fold can be compared by membership during associativity
+reindexing. -/
 private theorem rightAssocTriples_nodup (n : Nat) :
     (rightAssocTriples n).Nodup := by
   unfold rightAssocTriples
@@ -2174,6 +2192,9 @@ private theorem rightAssocTriples_nodup (n : Nat) :
     injection hEq with hpair _
     exact hik (Prod.ext_iff.mp hpair |>.1).symm
 
+/-- `leftAssocTriples_mem_iff` characterizes membership in the left-associated triple
+list by the equation `abc.1.1 + abc.1.2 + abc.2 = n`, exposing the index condition
+used for associativity reindexing. -/
 private theorem leftAssocTriples_mem_iff (n : Nat) (abc : (Nat × Nat) × Nat) :
     abc ∈ leftAssocTriples n ↔ abc.1.1 + abc.1.2 + abc.2 = n := by
   rcases abc with ⟨⟨a, b⟩, c⟩
@@ -2184,6 +2205,9 @@ private theorem leftAssocTriples_mem_iff (n : Nat) (abc : (Nat × Nat) × Nat) :
   · intro h
     refine ⟨a + b, ?_, a, ?_, ?_⟩ <;> omega
 
+/-- `rightAssocTriples_mem_iff` characterizes membership in the right-associated triple
+list by the equation `abc.1.1 + abc.1.2 + abc.2 = n`, matching the index condition
+used for associativity reindexing. -/
 private theorem rightAssocTriples_mem_iff (n : Nat) (abc : (Nat × Nat) × Nat) :
     abc ∈ rightAssocTriples n ↔ abc.1.1 + abc.1.2 + abc.2 = n := by
   rcases abc with ⟨⟨a, b⟩, c⟩
@@ -2194,6 +2218,9 @@ private theorem rightAssocTriples_mem_iff (n : Nat) (abc : (Nat × Nat) × Nat) 
   · intro h
     refine ⟨a, ?_, b, ?_, ?_⟩ <;> omega
 
+/-- `leftAssocTriples_perm_rightAssocTriples` proves the left- and right-associated
+triple enumerations are permutations, giving the combinatorial core of the
+associativity reindexing. -/
 private theorem leftAssocTriples_perm_rightAssocTriples (n : Nat) :
     List.Perm (leftAssocTriples n) (rightAssocTriples n) := by
   rw [List.perm_iff_count]
@@ -2201,6 +2228,9 @@ private theorem leftAssocTriples_perm_rightAssocTriples (n : Nat) :
   rw [(leftAssocTriples_nodup n).count, (rightAssocTriples_nodup n).count]
   simp [leftAssocTriples_mem_iff, rightAssocTriples_mem_iff]
 
+/-- `fold_add_perm` proves additive left folds over `ZMod64 p` are invariant under list
+permutation, allowing the permuted triple enumerations to carry the same coefficient
+sum. -/
 private theorem fold_add_perm {xs ys : List (ZMod64 p)}
     (h : List.Perm xs ys) (acc : ZMod64 p) :
     xs.foldl (fun acc x => acc + x) acc =
@@ -2218,6 +2248,9 @@ private theorem fold_add_perm {xs ys : List (ZMod64 p)}
   | trans _ _ ih₁ ih₂ =>
       exact Eq.trans (ih₁ acc) (ih₂ acc)
 
+/-- `fold_add_acc` splits the starting accumulator out of an additive left fold, letting
+flattened coefficient sums be normalized to a zero accumulator for associativity
+reindexing. -/
 private theorem fold_add_acc
     (xs : List (ZMod64 p)) (acc : ZMod64 p) :
     xs.foldl (fun acc x => acc + x) acc =
@@ -2227,6 +2260,9 @@ private theorem fold_add_acc
   rw [h]
   grind
 
+/-- `fold_flatMap_map_add` rewrites an additive fold over a `flatMap` of mapped rows as
+nested row folds, connecting flattened triple sums with the triangular coefficient
+folds. -/
 private theorem fold_flatMap_map_add
     {α β : Type} (xs : List α) (row : α → List β)
     (term : α → β → ZMod64 p) (acc : ZMod64 p) :
@@ -2244,6 +2280,9 @@ private theorem fold_flatMap_map_add
       rw [ih]
       simp [List.foldl_map]
 
+/-- `fold_triangular_assoc_reindex` reindexes the triangular coefficient double-fold
+between left- and right-associated orderings, supplying the fold identity used in
+`FpPoly` multiplication associativity. -/
 private theorem fold_triangular_assoc_reindex
     (n : Nat) (term : Nat → Nat → Nat → ZMod64 p) :
     (List.range (n + 1)).foldl
