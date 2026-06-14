@@ -5000,6 +5000,8 @@ def Congr {S : Type _} [Zero S] [DecidableEq S] [Add S] [Sub S] [Mul S]
     (p q m : DensePoly S) : Prop :=
   m ∣ (p - q)
 
+/-- Expresses the gap `p % m - p` as the explicit multiple `m * (0 - p / m)`, the witness
+underlying the congruence `m ∣ (p % m - p)`. -/
 private theorem mod_sub_self_eq_mul_neg_div {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (p m : DensePoly S) :
@@ -5017,6 +5019,8 @@ private theorem mod_sub_self_eq_mul_neg_div {S : Type _}
   rw [coeff_zero]
   grind
 
+/-- Packages `mod_sub_self_eq_mul_neg_div` as the divisibility `m ∣ (p % m - p)`, the core
+fact behind the public `congr_mod`. -/
 private theorem congr_mod_core {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (p m : DensePoly S) :
@@ -5031,6 +5035,8 @@ theorem congr_mod {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
     Congr (p % m) p m := by
   exact congr_mod_core p m
 
+/-- Rearranges a difference-as-multiple `p - q = m * r` into the additive form
+`p = q + m * r`. -/
 private theorem eq_add_mul_of_sub_eq_mul {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     {p q m r : DensePoly S} :
@@ -5046,6 +5052,7 @@ private theorem eq_add_mul_of_sub_eq_mul {S : Type _}
   rw [coeff_add q (m * r) n hzero_add]
   grind
 
+/-- Right identity of polynomial addition, `p + 0 = p`. -/
 private theorem add_zero_right {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
@@ -5057,6 +5064,7 @@ private theorem add_zero_right {S : Type _}
   simp
   grind
 
+/-- Left absorption of the zero polynomial under multiplication, `0 * p = 0`. -/
 private theorem zero_mul_left {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
@@ -5065,12 +5073,14 @@ private theorem zero_mul_left {S : Type _}
   have hzero : (0 : DensePoly S).coeffs = #[] := rfl
   simp [mul, isZero, hzero]
 
+/-- A modulus reduces to `0` against itself, `m % m = 0`. -/
 private theorem mod_self_eq_zero {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (m : DensePoly S) :
     m % m = 0 := by
   exact DivModLaws.mod_self_eq_zero m
 
+/-- The zero polynomial reduces to `0` modulo any `m`, `0 % m = 0`. -/
 private theorem zero_mod_eq_zero {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (m : DensePoly S) :
@@ -5087,6 +5097,8 @@ private theorem zero_mod_eq_zero {S : Type _}
     unfold divModArray
     simp [hzero, isZero, size, toArray, divModArrayAux]
 
+/-- Divisibility of a difference `m ∣ (p - q)` forces equal canonical remainders
+`p % m = q % m`. -/
 private theorem mod_eq_mod_of_dvd_sub {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     {p q m : DensePoly S} :
@@ -5167,6 +5179,7 @@ theorem mod_mul_mod {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
     (p * q) % m = ((p % m) * (q % m)) % m := by
   exact DivModLaws.mod_mul_mod p q m
 
+/-- Any multiple of `m` reduces to `0` modulo `m`, `(m * r) % m = 0`. -/
 private theorem mod_mul_self_left {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (m r : DensePoly S) :
@@ -5176,6 +5189,8 @@ private theorem mod_mul_self_left {S : Type _}
   rw [zero_mul_left]
   rw [zero_mod_eq_zero]
 
+/-- Adding a multiple of `m` leaves the canonical remainder unchanged,
+`(q + m * r) % m = q % m`. -/
 private theorem mod_add_mul_self {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (q m r : DensePoly S) :
@@ -5191,6 +5206,9 @@ private theorem mod_add_mul_self {S : Type _}
     rw [coeff_mul]
     grind⟩
 
+/-- Under the Bezout hypothesis `s * a + t * b = 1`, exhibits `polyCRT a b u v s t - u` as
+the explicit multiple `a * (v * s + (0 - u * s))`, the witness for congruence to `u`
+modulo `a`. -/
 private theorem polyCRT_sub_left_factor {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (a b u v s t : DensePoly S) :
@@ -5215,6 +5233,9 @@ private theorem polyCRT_sub_left_factor {S : Type _}
     _ = a * (v * s + (0 - u * s)) := by
           rw [mul_comm_poly]
 
+/-- Under the Bezout hypothesis `s * a + t * b = 1`, exhibits `polyCRT a b u v s t - v` as
+the explicit multiple `b * (u * t + (0 - v * t))`, the witness for congruence to `v`
+modulo `b`. -/
 private theorem polyCRT_sub_right_factor {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (a b u v s t : DensePoly S) :
