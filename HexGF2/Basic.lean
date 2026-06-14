@@ -272,6 +272,9 @@ theorem UInt64.bne_zero_eq_toNat_bne_zero (w : UInt64) :
     subst hw
     exact (bne_iff_ne.mp hnat) rfl
 
+/-- Extracting bit `i` by shifting a natural number right and testing the low
+bit agrees with `Nat.testBit`. This is the bridge used by the word-bit
+inspection lemmas that compare packed `UInt64` bits with natural-bit facts. -/
 private theorem bit_eq_one_eq_testBit (x i : Nat) :
     (x >>> i % 2 == 1) = x.testBit i := by
   rw [Nat.testBit_eq_decide_div_mod_eq]
@@ -279,15 +282,24 @@ private theorem bit_eq_one_eq_testBit (x i : Nat) :
   apply decide_eq_decide.mpr
   exact Iff.rfl
 
+/-- A natural number below `2 ^ i` has no bit set at position `i`. The
+`highestSetBit?` nonzero proof uses this to rule out bits beyond the 64-bit
+`UInt64` range. -/
 private theorem Nat.testBit_eq_false_of_lt {n i : Nat} (h : n < 2 ^ i) :
     n.testBit i = false := by
   simp [Nat.testBit, Nat.shiftRight_eq_div_pow, Nat.div_eq_of_lt h]
 
+/-- The executable `wordBitIsSet` predicate agrees with `Nat.testBit` on the
+`toNat` image of a `UInt64` at every valid word position. This is the local
+bridge from the `highestSetBit?` scan to natural-number bit reasoning. -/
 private theorem UInt64.wordBitIsSet_eq_testBit (w : UInt64) {i : Nat} (hi : i < 64) :
     wordBitIsSet w i = w.toNat.testBit i := by
   simp [wordBitIsSet, UInt64.bne_zero_eq_toNat_bne_zero, UInt64.toNat_shiftRight,
     UInt64.toNat_and, Nat.mod_eq_of_lt hi, bit_eq_one_eq_testBit]
 
+/-- A nonzero `UInt64` has some highest set bit reported by `highestSetBit?`.
+This prevents the search from returning `none` on nonzero words by combining
+the word-bit/testBit bridge with the 64-bit bound. -/
 private theorem highestSetBit?_isSome_of_ne_zero {w : UInt64} (hw : w ≠ 0) :
     ∃ bit, highestSetBit? w = some bit := by
   cases hbit : highestSetBit? w with
@@ -312,6 +324,9 @@ private theorem highestSetBit?_isSome_of_ne_zero {w : UInt64} (hw : w ≠ 0) :
       apply hw
       exact UInt64.toNat_inj.mp (by simpa using hzeroNat)
 
+/-- Testing one bit of the xor of two words is the boolean xor of the
+corresponding tested input bits. This is the bit-level fact behind the
+`GF2Poly` xor coefficient bridge. -/
 private theorem UInt64.bit_xor_bne (a b : UInt64) (i : Nat) :
     ((((a ^^^ b) >>> i.toUInt64) &&& 1) != 0) =
       ((((a >>> i.toUInt64) &&& 1) != 0) !=
@@ -325,6 +340,9 @@ private theorem UInt64.bit_xor_bne (a b : UInt64) (i : Nat) :
   rw [bit_eq_one_eq_testBit]
   simp [Nat.testBit_xor]
 
+/-- In the high-bit branch of a shifted word with carry, where `old + shift <
+64`, the target bit comes from bit `old` of the current word `w`. This supplies
+the in-word half of the `shiftLeft`-or-carry reindexing argument. -/
 private theorem UInt64.shiftLeft_or_carry_high_bit
     (w prev : UInt64) {shift old : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64)
@@ -363,6 +381,10 @@ private theorem UInt64.shiftLeft_or_carry_high_bit
         have hsub : old + shift - shift = old := by omega
         simp [Nat.testBit_shiftLeft, htarget, hge, hsub])
 
+/-- In the low-bit branch of a shifted word with carry, where `64 ≤ old +
+shift`, the wrapped target bit comes from bit `old` of the previous carry word
+`prev`. This supplies the carried-word half of the `shiftLeft`-or-carry
+reindexing argument. -/
 private theorem UInt64.shiftLeft_or_carry_low_bit
     (w prev : UInt64) {shift old : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64)
@@ -392,6 +414,9 @@ private theorem UInt64.shiftLeft_or_carry_low_bit
     omega
   simp [hleft, hidx]
 
+/-- Reading a bit from the one-hot `UInt64` word `1 <<< hot` matches the
+corresponding natural-number bit calculation. The public one-hot lemmas use
+this to prove the selected bit is set and all other valid bits are clear. -/
 private theorem oneHotWord_bit_toNat {hot bit : Nat} (hhot : hot < 64) (hbit : bit < 64) :
     (((((1 : UInt64) <<< hot.toUInt64) >>> bit.toUInt64) &&& 1).toNat) =
       ((2 ^ hot >>> bit) &&& 1) := by
