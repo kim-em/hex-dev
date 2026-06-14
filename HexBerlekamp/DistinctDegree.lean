@@ -604,6 +604,9 @@ private theorem finishDegreePower_bucket_dvd_diff
   · cases hbucket
     exact hunit hres_unit
 
+/-- `distinctDegreePowerLoop_bucket_dvd_diff`: under an invariant `P` carried
+from the accumulator through the gcd-extraction step, every bucket the loop
+emits has a factor dividing `diff`. -/
 private theorem distinctDegreePowerLoop_bucket_dvd_diff
     (d : Nat) (diff : FpPoly p)
     (P : FpPoly p → FpPoly p → Prop)
@@ -644,6 +647,8 @@ private theorem distinctDegreePowerLoop_bucket_dvd_diff
               (acc * DensePoly.gcd residual diff)
               (hP_step residual acc hP hcand) bucket hbucket
 
+/-- `unitPolynomial_dvd_any`: a unit (degree-zero, nonzero) polynomial divides
+any polynomial. -/
 private theorem unitPolynomial_dvd_any
     [ZMod64.PrimeModulus p]
     {u target : FpPoly p} (hu : isUnitPolynomial u = true) :
@@ -728,6 +733,7 @@ private theorem unitPolynomial_dvd_any
   exact ((DensePoly.mul_comm_poly u (target / u)).trans
     ((DensePoly.add_zero_poly ((target / u) * u)).symm.trans hspec)).symm
 
+/-- `one_dvd_poly`: the constant `1` divides any polynomial. -/
 private theorem one_dvd_poly
     [ZMod64.PrimeModulus p]
     (target : FpPoly p) :
@@ -735,6 +741,8 @@ private theorem one_dvd_poly
   exact unitPolynomial_dvd_any (u := (1 : FpPoly p)) (target := target)
     isUnitPolynomial_one
 
+/-- `mul_right_unit_dvd_of_dvd`: multiplying a divisor on the right by a unit
+preserves divisibility. -/
 private theorem mul_right_unit_dvd_of_dvd
     [ZMod64.PrimeModulus p]
     {a u target : FpPoly p}
@@ -748,6 +756,7 @@ private theorem mul_right_unit_dvd_of_dvd
     _ = a * (u * k) := by rw [hk]
     _ = (a * u) * k := (DensePoly.mul_assoc_poly a u k).symm
 
+/-- `dvd_trans_poly`: divisibility of `FpPoly` is transitive. -/
 private theorem dvd_trans_poly
     {a b c : FpPoly p} (hab : a ∣ b) (hbc : b ∣ c) :
     a ∣ c := by
@@ -759,6 +768,9 @@ private theorem dvd_trans_poly
     _ = (a * x) * y := by rw [hx]
     _ = a * (x * y) := DensePoly.mul_assoc_poly a x y
 
+/-- `isUnitPolynomial_gcd_quotient_of_squareFree_divisor`: when `f` is square-free
+and `r` divides `f`, the gcd of the gcd-quotient `r / gcd r d` with `d` is a
+unit, so no factor is extracted twice. -/
 private theorem isUnitPolynomial_gcd_quotient_of_squareFree_divisor
     [ZMod64.PrimeModulus p]
     {f r d : FpPoly p}
@@ -832,6 +844,9 @@ private theorem isUnitPolynomial_gcd_quotient_of_squareFree_divisor
     (squareFree_common_of_gcd_eq_one hsf)
     (dvd_trans_poly hg2_dvd_r hrf)
 
+/-- `distinctDegreePowerLoop_bucket_dvd_diff_of_squareFree_divisor`: for a
+square-free `f` with `residual ∣ f`, every bucket the loop emits has a factor
+dividing `diff`. -/
 private theorem distinctDegreePowerLoop_bucket_dvd_diff_of_squareFree_divisor
     [ZMod64.PrimeModulus p]
     (f : FpPoly p)
@@ -877,6 +892,8 @@ private theorem distinctDegreePowerLoop_bucket_dvd_diff_of_squareFree_divisor
   · left
     exact ⟨rfl, rfl⟩
 
+/-- `distinctDegreePowerLoop_residual_dvd`: the residual returned by the loop
+divides the residual it started from. -/
 private theorem distinctDegreePowerLoop_residual_dvd
     [ZMod64.PrimeModulus p]
     (d : Nat) (diff : FpPoly p) (fuel : Nat) (residual : FpPoly p) :
