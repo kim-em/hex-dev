@@ -78,6 +78,8 @@ theorem coeff_dilate (c : Int) (p : ZPoly) (n : Nat) :
     rw [List.getElem?_eq_none (by simpa using Nat.le_of_not_lt hn), hzero, Int.mul_zero]
     rfl
 
+/-- Dilation by `1` is the identity: `dilate 1 p = p`. The simp normal form for
+the trivial dilation. -/
 @[simp] theorem dilate_one (p : ZPoly) : dilate 1 p = p := by
   apply DensePoly.ext_coeff
   intro n
@@ -91,6 +93,8 @@ def Primitive (f : ZPoly) : Prop :=
 def IsUnit (f : ZPoly) : Prop :=
   f = DensePoly.C 1 ∨ f = DensePoly.C (-1)
 
+/-- `IsUnit` is decidable: it reduces to equality with the constant polynomials
+`C 1` or `C (-1)`, both of which are decidable. -/
 instance instDecidableIsUnit (f : ZPoly) : Decidable (IsUnit f) := by
   unfold IsUnit
   infer_instance
@@ -101,10 +105,13 @@ theorem isUnit_iff (f : ZPoly) :
     IsUnit f ↔ f = DensePoly.C 1 ∨ f = DensePoly.C (-1) := by
   rfl
 
+/-- The polynomial `1` is a unit, since `(1 : ZPoly)` is the constant polynomial
+`C 1`. -/
 @[simp] theorem isUnit_one : IsUnit (1 : ZPoly) := by
   left
   rfl
 
+/-- The constant polynomial `C (-1)` is a unit. -/
 @[simp] theorem isUnit_C_neg_one : IsUnit (DensePoly.C (-1 : Int)) := by
   right
   rfl
@@ -126,6 +133,8 @@ theorem coeff_toRatPoly (f : ZPoly) (n : Nat) :
     change (0 : Rat) = ((0 : Int) : Rat)
     simp
 
+/-- Rational conversion sends the zero integer polynomial to the zero rational
+polynomial. The simp normal form for the zero case. -/
 @[simp] theorem toRatPoly_zero :
     toRatPoly (0 : ZPoly) = 0 := by
   apply DensePoly.ext_coeff
@@ -135,6 +144,9 @@ theorem coeff_toRatPoly (f : ZPoly) (n : Nat) :
   rw [DensePoly.coeff_eq_zero_of_size_le (0 : ZPoly) (by simp)]
   exact (DensePoly.coeff_eq_zero_of_size_le (0 : DensePoly Rat) (by simp)).symm
 
+/-- Rational conversion sends the constant integer polynomial `C c` to the
+constant rational polynomial `C (c : Rat)`. The simp normal form for the
+constant case. -/
 @[simp] theorem toRatPoly_C (c : Int) :
     toRatPoly (DensePoly.C c) = DensePoly.C (c : Rat) := by
   apply DensePoly.ext_coeff
@@ -147,6 +159,9 @@ theorem coeff_toRatPoly (f : ZPoly) (n : Nat) :
     change ((0 : Int) : Rat) = 0
     simp
 
+/-- Rational conversion sends the unit integer polynomial `1` to the rational
+polynomial `1`, since `(1 : ZPoly)` is the constant polynomial `C 1`. The simp
+normal form for the one case. -/
 @[simp] theorem toRatPoly_one :
     toRatPoly (1 : ZPoly) = 1 := by
   exact toRatPoly_C 1
