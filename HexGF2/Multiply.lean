@@ -288,6 +288,7 @@ private theorem clmul_oneHot_high_bit_after_carry_false (x : UInt64) {shift bit 
         (Nat.pow_le_pow_right (by decide : 0 < 2) hexp))]
     simp
 
+/-- `coeffWords_xorClmulAt_oneHot_low_same_word` says a one-hot right factor XORs the shifted source bit into the target coefficient when the shift keeps it in the low word. -/
 private theorem coeffWords_xorClmulAt_oneHot_low_same_word
     (acc : Array UInt64) {idx n shift : Nat} (x : UInt64)
     (hidx : idx < acc.size) (hshiftPos : 0 < shift) (hshift : shift < 64)
@@ -307,6 +308,7 @@ private theorem coeffWords_xorClmulAt_oneHot_low_same_word
   rw [htargetMod]
   rw [clmul_oneHot_low_bit_same_word x hshiftPos hshift hold hbit]
 
+/-- `coeffWords_xorClmulAt_oneHot_low_before_shift` says coefficients below the one-hot shift are left unchanged. -/
 private theorem coeffWords_xorClmulAt_oneHot_low_before_shift
     (acc : Array UInt64) {idx target shift : Nat} (x : UInt64)
     (hidx : idx < acc.size) (hshiftPos : 0 < shift) (hshift : shift < 64)
@@ -317,6 +319,7 @@ private theorem coeffWords_xorClmulAt_oneHot_low_before_shift
   rw [clmul_oneHot_low_bit_before_shift_false x hshiftPos hshift hbit]
   simp
 
+/-- `coeffWords_xorClmulAt_oneHot_high_carry_word` says a one-hot right factor XORs the shifted source bit into the target coefficient when the shift carries it into the high word. -/
 private theorem coeffWords_xorClmulAt_oneHot_high_carry_word
     (acc : Array UInt64) {idx n shift : Nat} (x : UInt64)
     (hidx : idx < acc.size) (hidxNext : idx + 1 < acc.size)
@@ -337,6 +340,7 @@ private theorem coeffWords_xorClmulAt_oneHot_high_carry_word
   rw [htargetMod]
   rw [clmul_oneHot_high_bit_carry_word x hshiftPos hshift hold hbit]
 
+/-- `coeffWords_xorClmulAt_oneHot_high_after_carry` says high-word coefficients at or beyond the shift window are left unchanged. -/
 private theorem coeffWords_xorClmulAt_oneHot_high_after_carry
     (acc : Array UInt64) {idx target shift : Nat} (x : UInt64)
     (hidx : idx < acc.size) (hidxNext : idx + 1 < acc.size)
@@ -350,6 +354,7 @@ private theorem coeffWords_xorClmulAt_oneHot_high_after_carry
   rw [clmul_oneHot_high_bit_after_carry_false x hshift htargetBit hbit]
   simp
 
+/-- `clmul_oneHot_left_low_bit_same_word` locates a shifted source bit in the low word of a product with the one-hot on the left. -/
 private theorem clmul_oneHot_left_low_bit_same_word (x : UInt64) {shift old : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64) (hold : old < 64)
     (hbit : old + shift < 64) :
@@ -367,6 +372,7 @@ private theorem clmul_oneHot_left_low_bit_same_word (x : UInt64) {shift old : Na
     Nat.testBit_shiftLeft]
   simp [hbit]
 
+/-- `clmul_oneHot_left_low_bit_before_shift_false` shows low-word bits before the shift are zero for a left one-hot factor. -/
 private theorem clmul_oneHot_left_low_bit_before_shift_false (x : UInt64) {shift bit : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64) (hbit : bit < shift) :
     ((((clmul ((1 : UInt64) <<< shift.toUInt64) x).2 >>>
@@ -384,6 +390,7 @@ private theorem clmul_oneHot_left_low_bit_before_shift_false (x : UInt64) {shift
   intro _ hle
   omega
 
+/-- `clmul_oneHot_left_high_bit_carry_word` locates a shifted source bit that carries into the high word of a left one-hot product. -/
 private theorem clmul_oneHot_left_high_bit_carry_word (x : UInt64) {shift old : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64) (hold : old < 64)
     (hbit : 64 ≤ old + shift) :
@@ -400,6 +407,7 @@ private theorem clmul_oneHot_left_high_bit_carry_word (x : UInt64) {shift old : 
     Nat.mod_eq_of_lt htargetLt, bit_eq_one_eq_testBit, Nat.testBit_shiftRight,
     hold_eq]
 
+/-- `clmul_oneHot_left_high_bit_after_carry_false` shows high-word bits at or beyond the shift window are zero for a left one-hot factor. -/
 private theorem clmul_oneHot_left_high_bit_after_carry_false
     (x : UInt64) {shift bit : Nat} (hshift : shift < 64) (hbit : bit < 64)
     (hle : shift ≤ bit) :
@@ -422,6 +430,7 @@ private theorem clmul_oneHot_left_high_bit_after_carry_false
         (Nat.pow_le_pow_right (by decide : 0 < 2) hexp))]
     simp
 
+/-- `coeffWords_xorClmulAt_oneHot_left_low_same_word` says a one-hot left factor XORs the shifted source bit into the target coefficient when the shift keeps it in the low word. -/
 private theorem coeffWords_xorClmulAt_oneHot_left_low_same_word
     (acc : Array UInt64) {idx n shift : Nat} (x : UInt64)
     (hidx : idx < acc.size) (hshiftPos : 0 < shift) (hshift : shift < 64)
@@ -441,6 +450,7 @@ private theorem coeffWords_xorClmulAt_oneHot_left_low_same_word
   rw [htargetMod]
   rw [clmul_oneHot_left_low_bit_same_word x hshiftPos hshift hold hbit]
 
+/-- `coeffWords_xorClmulAt_oneHot_left_low_before_shift` says coefficients below the one-hot shift are left unchanged for a left one-hot factor. -/
 private theorem coeffWords_xorClmulAt_oneHot_left_low_before_shift
     (acc : Array UInt64) {idx target shift : Nat} (x : UInt64)
     (hidx : idx < acc.size) (hshiftPos : 0 < shift) (hshift : shift < 64)
@@ -451,6 +461,7 @@ private theorem coeffWords_xorClmulAt_oneHot_left_low_before_shift
   rw [clmul_oneHot_left_low_bit_before_shift_false x hshiftPos hshift hbit]
   simp
 
+/-- `coeffWords_xorClmulAt_oneHot_left_high_carry_word` says a one-hot left factor XORs the shifted source bit into the target coefficient when the shift carries it into the high word. -/
 private theorem coeffWords_xorClmulAt_oneHot_left_high_carry_word
     (acc : Array UInt64) {idx n shift : Nat} (x : UInt64)
     (hidx : idx < acc.size) (hidxNext : idx + 1 < acc.size)
@@ -471,6 +482,7 @@ private theorem coeffWords_xorClmulAt_oneHot_left_high_carry_word
   rw [htargetMod]
   rw [clmul_oneHot_left_high_bit_carry_word x hshiftPos hshift hold hbit]
 
+/-- `coeffWords_xorClmulAt_oneHot_left_high_after_carry` says high-word coefficients at or beyond the shift window are left unchanged for a left one-hot factor. -/
 private theorem coeffWords_xorClmulAt_oneHot_left_high_after_carry
     (acc : Array UInt64) {idx target shift : Nat} (x : UInt64)
     (hidx : idx < acc.size) (hidxNext : idx + 1 < acc.size)
@@ -484,6 +496,7 @@ private theorem coeffWords_xorClmulAt_oneHot_left_high_after_carry
   rw [clmul_oneHot_left_high_bit_after_carry_false x hshift htargetBit hbit]
   simp
 
+/-- `words_monomial_getElem!_active` says the word of `monomial k` at the active index `k / 64` is the one-hot `1 <<< (k % 64)`. -/
 private theorem words_monomial_getElem!_active (k : Nat) :
     (monomial k).words[k / 64]! =
       ((1 : UInt64) <<< (k % 64).toUInt64) := by
@@ -497,6 +510,7 @@ private theorem words_monomial_getElem!_active (k : Nat) :
   rw [Array.getElem_push]
   simp
 
+/-- `words_monomial_getElem!_zero_lt` says every word of `monomial k` below the active index `k / 64` is zero. -/
 private theorem words_monomial_getElem!_zero_lt {j k : Nat} (hj : j < k / 64) :
     (monomial k).words[j]! = 0 := by
   rw [words_monomial]
@@ -507,11 +521,13 @@ private theorem words_monomial_getElem!_zero_lt {j k : Nat} (hj : j < k / 64) :
   · simp
     omega
 
+/-- `words_monomial_size` says the word array of `monomial k` has length `k / 64 + 1`. -/
 private theorem words_monomial_size (k : Nat) :
     (monomial k).words.size = k / 64 + 1 := by
   rw [words_monomial]
   simp
 
+/-- `coeffWords_xorClmulAt_monomial_active_low` specialises the low-word one-hot coefficient law to the active word of `monomial k`. -/
 private theorem coeffWords_xorClmulAt_monomial_active_low
     (acc : Array UInt64) {i k n : Nat} (x : UInt64)
     (hidx : i + k / 64 < acc.size) (hn : n / 64 = i)
@@ -541,6 +557,7 @@ private theorem coeffWords_xorClmulAt_monomial_active_low
         have hnSplit := Nat.div_add_mod n 64
         omega)
 
+/-- `coeffWords_xorClmulAt_monomial_active_zero` handles the active word of `monomial k` when `k` is word-aligned, so the one-hot shift is zero. -/
 private theorem coeffWords_xorClmulAt_monomial_active_zero
     (acc : Array UInt64) {i k n : Nat} (x : UInt64)
     (hidx : i + k / 64 < acc.size) (hn : n / 64 = i)
@@ -564,6 +581,7 @@ private theorem coeffWords_xorClmulAt_monomial_active_zero
   rw [clmul_oneHot_snd x (Nat.mod_lt k (by decide : 0 < 64))]
   simp [hbitShift, htargetMod]
 
+/-- `coeffWords_xorClmulAt_monomial_active_low_before_shift` says active-word coefficients below the monomial's shift are left unchanged. -/
 private theorem coeffWords_xorClmulAt_monomial_active_low_before_shift
     (acc : Array UInt64) {i k target : Nat} (x : UInt64)
     (hidx : i + k / 64 < acc.size) (hword : target / 64 = i + k / 64)
@@ -579,6 +597,7 @@ private theorem coeffWords_xorClmulAt_monomial_active_low_before_shift
     (acc := acc) (idx := i + k / 64) (target := target)
     (shift := k % 64) x hidx hshiftPos hshift hword hbit
 
+/-- `coeffWords_xorClmulAt_monomial_active_high` specialises the carry-into-high-word one-hot coefficient law to the active word of `monomial k`. -/
 private theorem coeffWords_xorClmulAt_monomial_active_high
     (acc : Array UInt64) {i k n : Nat} (x : UInt64)
     (hidx : i + k / 64 < acc.size) (hidxNext : i + k / 64 + 1 < acc.size)
@@ -610,6 +629,7 @@ private theorem coeffWords_xorClmulAt_monomial_active_high
         have hnSplit := Nat.div_add_mod n 64
         omega)
 
+/-- `coeffWords_xorClmulAt_monomial_active_high_after_carry` says high-word coefficients past the monomial's carry window are left unchanged. -/
 private theorem coeffWords_xorClmulAt_monomial_active_high_after_carry
     (acc : Array UInt64) {i k target : Nat} (x : UInt64)
     (hidx : i + k / 64 < acc.size) (hidxNext : i + k / 64 + 1 < acc.size)
@@ -625,6 +645,7 @@ private theorem coeffWords_xorClmulAt_monomial_active_high_after_carry
     (acc := acc) (idx := i + k / 64) (target := target)
     (shift := k % 64) x hidx hidxNext hshift hword hbit
 
+/-- `foldl_xorClmulAt_zero_right_coeff` says folding `xorClmulAt` over indices whose words are all zero preserves every coefficient. -/
 private theorem foldl_xorClmulAt_zero_right_coeff (js : List Nat) (acc : Array UInt64)
     (idx n : Nat) (x : UInt64) (ys : Array UInt64)
     (hzero : ∀ j ∈ js, ys[j]! = 0) :
@@ -644,6 +665,7 @@ private theorem foldl_xorClmulAt_zero_right_coeff (js : List Nat) (acc : Array U
       rw [hjzero, ih (acc := xorClmulAt acc (idx + j) x 0) htail,
         coeffWords_xorClmulAt_zero_right]
 
+/-- `foldl_xorClmulAt_monomial_zero_prefix_coeff` says the below-active prefix words of `monomial k` contribute nothing to any coefficient across the fold. -/
 private theorem foldl_xorClmulAt_monomial_zero_prefix_coeff
     (acc : Array UInt64) (idx n : Nat) (x : UInt64) (k : Nat) :
     coeffWords
@@ -658,6 +680,7 @@ private theorem foldl_xorClmulAt_monomial_zero_prefix_coeff
       intro j hj
       exact words_monomial_getElem!_zero_lt (List.mem_range.mp hj))
 
+/-- `foldl_xorClmulAt_monomial_active_low` lifts the active-word low-case coefficient law across the full fold over `monomial k`'s words. -/
 private theorem foldl_xorClmulAt_monomial_active_low
     (acc : Array UInt64) {i k n : Nat} (x : UInt64)
     (hidx : i + k / 64 < acc.size) (hn : n / 64 = i)
@@ -677,6 +700,7 @@ private theorem foldl_xorClmulAt_monomial_active_low
     (hn := hn) (hbitShift := hbitShift) (hbit := hbit)]
   rw [foldl_xorClmulAt_monomial_zero_prefix_coeff]
 
+/-- `foldl_xorClmulAt_monomial_active_zero` lifts the word-aligned active-word coefficient law across the full fold over `monomial k`'s words. -/
 private theorem foldl_xorClmulAt_monomial_active_zero
     (acc : Array UInt64) {i k n : Nat} (x : UInt64)
     (hidx : i + k / 64 < acc.size) (hn : n / 64 = i)
@@ -696,6 +720,7 @@ private theorem foldl_xorClmulAt_monomial_active_zero
     (hn := hn) (hbitShift := hbitShift)]
   rw [foldl_xorClmulAt_monomial_zero_prefix_coeff]
 
+/-- `foldl_xorClmulAt_monomial_active_low_before_shift` lifts the below-shift unchanged-coefficient law across the full fold over `monomial k`'s words. -/
 private theorem foldl_xorClmulAt_monomial_active_low_before_shift
     (acc : Array UInt64) {i k target : Nat} (x : UInt64)
     (hidx : i + k / 64 < acc.size) (hword : target / 64 = i + k / 64)
@@ -714,6 +739,7 @@ private theorem foldl_xorClmulAt_monomial_active_low_before_shift
     (hword := hword) (hbitShift := hbitShift) (hbit := hbit)]
   rw [foldl_xorClmulAt_monomial_zero_prefix_coeff]
 
+/-- `foldl_xorClmulAt_monomial_active_high` lifts the carry-into-high-word coefficient law across the full fold over `monomial k`'s words. -/
 private theorem foldl_xorClmulAt_monomial_active_high
     (acc : Array UInt64) {i k n : Nat} (x : UInt64)
     (hidx : i + k / 64 < acc.size) (hidxNext : i + k / 64 + 1 < acc.size)
@@ -734,6 +760,7 @@ private theorem foldl_xorClmulAt_monomial_active_high
     (hn := hn) (hbit := hbit)]
   rw [foldl_xorClmulAt_monomial_zero_prefix_coeff]
 
+/-- `foldl_xorClmulAt_monomial_active_high_after_carry` lifts the past-carry-window unchanged-coefficient law across the full fold over `monomial k`'s words. -/
 private theorem foldl_xorClmulAt_monomial_active_high_after_carry
     (acc : Array UInt64) {i k target : Nat} (x : UInt64)
     (hidx : i + k / 64 < acc.size) (hidxNext : i + k / 64 + 1 < acc.size)
@@ -753,6 +780,7 @@ private theorem foldl_xorClmulAt_monomial_active_high_after_carry
     (hword := hword) (hbit := hbit)]
   rw [foldl_xorClmulAt_monomial_zero_prefix_coeff]
 
+/-- `foldl_xorClmulAt_monomial_ne` says coefficients in words other than the monomial's active and carry words are left unchanged by the full fold. -/
 private theorem foldl_xorClmulAt_monomial_ne
     (acc : Array UInt64) {i k target : Nat} (x : UInt64)
     (hLow : target / 64 ≠ i + k / 64)
