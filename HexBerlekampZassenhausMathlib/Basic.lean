@@ -14542,6 +14542,119 @@ theorem nonempty_of_partition
   exact not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core
     hcore_ne hcore_primitive hcore_lc_pos hprecision hdvd hirr hrep
 
+/-- The lifted true-support family is in bijection with the normalized
+irreducible factors of `core`: its cardinality equals
+`(normalizedFactors (toPolynomial core)).card`.
+
+The forward map sends each support to the normalized irreducible polynomial it
+represents. Existence of a representing subset for every irreducible divisor
+comes from the partition's `HenselSubsetCorrespondenceRest` base
+(`exists_subset`); injectivity comes from `unique_up_to_associated`; squarefree
+`target = core` makes `normalizedFactors` `Nodup`, so its `toFinset.card`
+equals its `card`. -/
+theorem ncard_eq_normalizedFactors_card
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hpartition : LiftedFactorSubsetPartition core d Finset.univ core)
+    (hcore_ne : core ≠ 0) :
+    (liftedTrueSupports core d).ncard =
+      (UniqueFactorizationMonoid.normalizedFactors
+        (HexPolyZMathlib.toPolynomial core)).card := by
+  classical
+  set X := HexPolyZMathlib.toPolynomial core with hX
+  have hX_ne : X ≠ 0 := by
+    rw [hX]
+    intro h
+    exact hcore_ne (HexPolyZMathlib.equiv.injective (by simpa using h))
+  -- The forward map: a support's representing normalized irreducible factor.
+  set φ : Set (LiftedFactorIndex d) → Polynomial ℤ :=
+    fun U => normalize (HexPolyZMathlib.toPolynomial
+      (liftedRecoveryCandidate core d (Set.toFinite U).toFinset)) with hφdef
+  -- Evaluate `φ` on a coerced representing subset.
+  have hφ : ∀ {f : Hex.ZPoly} {S : LiftedFactorSubset d},
+      Irreducible (HexPolyZMathlib.toPolynomial f) → f ∣ core →
+      RepresentsIntegerFactorAtLift core d f S →
+      φ (↑S : Set (LiftedFactorIndex d)) =
+        normalize (HexPolyZMathlib.toPolynomial f) := by
+    intro f S hirr hdvd hrep
+    have htf : (Set.toFinite (↑S : Set (LiftedFactorIndex d))).toFinset = S := by
+      apply Finset.coe_injective
+      rw [Set.Finite.coe_toFinset]
+    have hrec : liftedRecoveryCandidate core d S = f :=
+      hpartition.liftedRecoveryCandidate_eq hirr hdvd (Finset.subset_univ S) hrep
+    simp only [hφdef]
+    rw [htf, hrec]
+  -- The forward map is a bijection onto the normalized irreducible factors.
+  have hbij : Set.BijOn φ (liftedTrueSupports core d)
+      (↑((UniqueFactorizationMonoid.normalizedFactors X).toFinset) :
+        Set (Polynomial ℤ)) := by
+    refine ⟨?_, ?_, ?_⟩
+    · -- maps to: each support represents a normalized irreducible factor of `X`.
+      intro U hU
+      rcases hU with ⟨f, S, hirr, hdvd, hrep, rfl⟩
+      rw [hφ hirr hdvd hrep]
+      obtain ⟨q, hq_mem, hq_assoc⟩ :=
+        UniqueFactorizationMonoid.exists_mem_normalizedFactors_of_dvd hX_ne hirr
+          (by rw [hX]; exact HexPolyMathlib.toPolynomial_dvd hdvd)
+      have hnorm_q : normalize q = q :=
+        UniqueFactorizationMonoid.normalize_normalized_factor q hq_mem
+      have heq : normalize (HexPolyZMathlib.toPolynomial f) = q := by
+        rw [normalize_eq_normalize_iff_associated.mpr hq_assoc, hnorm_q]
+      rw [heq]
+      exact Finset.mem_coe.mpr (Multiset.mem_toFinset.mpr hq_mem)
+    · -- injective on supports: equal normalized factors force associated
+      -- divisors, hence the same representing subset.
+      intro U hU V hV hUV
+      rcases hU with ⟨f, S, hirr_f, hdvd_f, hrep_f, rfl⟩
+      rcases hV with ⟨g, T, hirr_g, hdvd_g, hrep_g, rfl⟩
+      rw [hφ hirr_f hdvd_f hrep_f, hφ hirr_g hdvd_g hrep_g] at hUV
+      have hassoc : Associated (HexPolyZMathlib.toPolynomial f)
+          (HexPolyZMathlib.toPolynomial g) :=
+        normalize_eq_normalize_iff_associated.mp hUV
+      have hST : S = T :=
+        hpartition.unique_up_to_associated hirr_f hdvd_f (Finset.subset_univ S)
+          hrep_f hirr_g hdvd_g (Finset.subset_univ T) hrep_g hassoc
+      rw [hST]
+    · -- surjective onto factors: every normalized irreducible factor of `X`
+      -- pulls back to a `ZPoly` divisor with a representing subset.
+      intro p hp
+      have hp_mem : p ∈ UniqueFactorizationMonoid.normalizedFactors X :=
+        Multiset.mem_toFinset.mp (Finset.mem_coe.mp hp)
+      have hp_irr : Irreducible p :=
+        UniqueFactorizationMonoid.irreducible_of_normalized_factor p hp_mem
+      have hp_dvd : p ∣ X :=
+        UniqueFactorizationMonoid.dvd_of_mem_normalizedFactors hp_mem
+      have hp_norm : normalize p = p :=
+        UniqueFactorizationMonoid.normalize_normalized_factor p hp_mem
+      have hf_toPoly :
+          HexPolyZMathlib.toPolynomial (HexPolyZMathlib.ofPolynomial p) = p :=
+        HexPolyZMathlib.toPolynomial_ofPolynomial p
+      have hf_irr :
+          Irreducible (HexPolyZMathlib.toPolynomial
+            (HexPolyZMathlib.ofPolynomial p)) := by
+        rw [hf_toPoly]; exact hp_irr
+      have hf_dvd : HexPolyZMathlib.ofPolynomial p ∣ core := by
+        rw [hX] at hp_dvd
+        rcases hp_dvd with ⟨r, hr⟩
+        refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
+        apply HexPolyZMathlib.equiv.injective
+        show HexPolyZMathlib.toPolynomial core =
+          HexPolyZMathlib.toPolynomial
+            (HexPolyZMathlib.ofPolynomial p * HexPolyZMathlib.ofPolynomial r)
+        rw [HexPolyZMathlib.toPolynomial_mul, hf_toPoly,
+          HexPolyZMathlib.toPolynomial_ofPolynomial]
+        exact hr
+      obtain ⟨S, _hSJ, hrep⟩ :=
+        hpartition.toHenselSubsetCorrespondenceRest.exists_subset hf_irr hf_dvd
+      refine ⟨(↑S : Set (LiftedFactorIndex d)),
+        ⟨HexPolyZMathlib.ofPolynomial p, S, hf_irr, hf_dvd, hrep, rfl⟩, ?_⟩
+      rw [hφ hf_irr hf_dvd hrep, hf_toPoly, hp_norm]
+  -- Conclude: bijection cardinality, then `Nodup` from squarefreeness.
+  have hnodup : (UniqueFactorizationMonoid.normalizedFactors X).Nodup :=
+    (UniqueFactorizationMonoid.squarefree_iff_nodup_normalizedFactors hX_ne).mp
+      (by rw [hX]; exact hpartition.target_squarefree)
+  rw [hbij.ncard_eq, Set.ncard_coe_finset,
+    Multiset.toFinset_card_of_nodup hnodup]
+
 end liftedTrueSupports
 
 /--
