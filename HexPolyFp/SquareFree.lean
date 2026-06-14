@@ -3001,73 +3001,74 @@ factor into the next level.
 private theorem yunFactorsContributionWithLevel_pow_step_algebra
     [ZMod64.PrimeModulus p] (c w : FpPoly p) (base level : Nat) :
     pow c (base * level) * pow w base =
-      pow (c / DensePoly.gcd c w) (base * level) *
-        pow (DensePoly.gcd c w) (base * (level + 1)) *
-        pow (w / DensePoly.gcd c w) base := by
-  have hqg : (c / DensePoly.gcd c w) * DensePoly.gcd c w = c :=
-    div_gcd_mul_reconstruct c w
-  have hvg : (w / DensePoly.gcd c w) * DensePoly.gcd c w = w :=
-    div_gcd_right_mul_reconstruct c w
+      pow (c / monicGcd c w) (base * level) *
+        pow (monicGcd c w) (base * (level + 1)) *
+        pow (w / monicGcd c w) base := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
+  have hqg : (c / monicGcd c w) * monicGcd c w = c :=
+    div_monicGcd_mul_reconstruct hp c w
+  have hvg : (w / monicGcd c w) * monicGcd c w = w :=
+    div_monicGcd_right_mul_reconstruct hp c w
   have hexp : base * level + base = base * (level + 1) := by
     rw [Nat.mul_succ]
   calc pow c (base * level) * pow w base
-      = pow ((c / DensePoly.gcd c w) * DensePoly.gcd c w) (base * level) *
-          pow ((w / DensePoly.gcd c w) * DensePoly.gcd c w) base := by rw [hqg, hvg]
-    _ = (pow (c / DensePoly.gcd c w) (base * level) *
-            pow (DensePoly.gcd c w) (base * level)) *
-          (pow (w / DensePoly.gcd c w) base * pow (DensePoly.gcd c w) base) := by
-        rw [pow_mul_base (c / DensePoly.gcd c w) (DensePoly.gcd c w) (base * level),
-            pow_mul_base (w / DensePoly.gcd c w) (DensePoly.gcd c w) base]
-    _ = pow (c / DensePoly.gcd c w) (base * level) *
-          (pow (DensePoly.gcd c w) (base * level) *
-            (pow (w / DensePoly.gcd c w) base * pow (DensePoly.gcd c w) base)) := by
+      = pow ((c / monicGcd c w) * monicGcd c w) (base * level) *
+          pow ((w / monicGcd c w) * monicGcd c w) base := by rw [hqg, hvg]
+    _ = (pow (c / monicGcd c w) (base * level) *
+            pow (monicGcd c w) (base * level)) *
+          (pow (w / monicGcd c w) base * pow (monicGcd c w) base) := by
+        rw [pow_mul_base (c / monicGcd c w) (monicGcd c w) (base * level),
+            pow_mul_base (w / monicGcd c w) (monicGcd c w) base]
+    _ = pow (c / monicGcd c w) (base * level) *
+          (pow (monicGcd c w) (base * level) *
+            (pow (w / monicGcd c w) base * pow (monicGcd c w) base)) := by
         exact DensePoly.mul_assoc_poly _ _ _
-    _ = pow (c / DensePoly.gcd c w) (base * level) *
-          ((pow (DensePoly.gcd c w) (base * level) * pow (w / DensePoly.gcd c w) base) *
-            pow (DensePoly.gcd c w) base) := by
+    _ = pow (c / monicGcd c w) (base * level) *
+          ((pow (monicGcd c w) (base * level) * pow (w / monicGcd c w) base) *
+            pow (monicGcd c w) base) := by
         exact congrArg
-          (fun x => pow (c / DensePoly.gcd c w) (base * level) * x)
+          (fun x => pow (c / monicGcd c w) (base * level) * x)
           (DensePoly.mul_assoc_poly
-            (pow (DensePoly.gcd c w) (base * level))
-            (pow (w / DensePoly.gcd c w) base)
-            (pow (DensePoly.gcd c w) base)).symm
-    _ = pow (c / DensePoly.gcd c w) (base * level) *
-          ((pow (w / DensePoly.gcd c w) base * pow (DensePoly.gcd c w) (base * level)) *
-            pow (DensePoly.gcd c w) base) := by
+            (pow (monicGcd c w) (base * level))
+            (pow (w / monicGcd c w) base)
+            (pow (monicGcd c w) base)).symm
+    _ = pow (c / monicGcd c w) (base * level) *
+          ((pow (w / monicGcd c w) base * pow (monicGcd c w) (base * level)) *
+            pow (monicGcd c w) base) := by
         exact congrArg
-          (fun x => pow (c / DensePoly.gcd c w) (base * level) *
-            (x * pow (DensePoly.gcd c w) base))
+          (fun x => pow (c / monicGcd c w) (base * level) *
+            (x * pow (monicGcd c w) base))
           (DensePoly.mul_comm_poly
-            (pow (DensePoly.gcd c w) (base * level))
-            (pow (w / DensePoly.gcd c w) base))
-    _ = pow (c / DensePoly.gcd c w) (base * level) *
-          (pow (w / DensePoly.gcd c w) base *
-            (pow (DensePoly.gcd c w) (base * level) * pow (DensePoly.gcd c w) base)) := by
+            (pow (monicGcd c w) (base * level))
+            (pow (w / monicGcd c w) base))
+    _ = pow (c / monicGcd c w) (base * level) *
+          (pow (w / monicGcd c w) base *
+            (pow (monicGcd c w) (base * level) * pow (monicGcd c w) base)) := by
         exact congrArg
-          (fun x => pow (c / DensePoly.gcd c w) (base * level) * x)
+          (fun x => pow (c / monicGcd c w) (base * level) * x)
           (DensePoly.mul_assoc_poly
-            (pow (w / DensePoly.gcd c w) base)
-            (pow (DensePoly.gcd c w) (base * level))
-            (pow (DensePoly.gcd c w) base))
-    _ = pow (c / DensePoly.gcd c w) (base * level) *
-          (pow (w / DensePoly.gcd c w) base *
-            pow (DensePoly.gcd c w) (base * level + base)) := by
+            (pow (w / monicGcd c w) base)
+            (pow (monicGcd c w) (base * level))
+            (pow (monicGcd c w) base))
+    _ = pow (c / monicGcd c w) (base * level) *
+          (pow (w / monicGcd c w) base *
+            pow (monicGcd c w) (base * level + base)) := by
         rw [← pow_add_exp]
-    _ = pow (c / DensePoly.gcd c w) (base * level) *
-          (pow (w / DensePoly.gcd c w) base *
-            pow (DensePoly.gcd c w) (base * (level + 1))) := by
+    _ = pow (c / monicGcd c w) (base * level) *
+          (pow (w / monicGcd c w) base *
+            pow (monicGcd c w) (base * (level + 1))) := by
         rw [hexp]
-    _ = pow (c / DensePoly.gcd c w) (base * level) *
-          (pow (DensePoly.gcd c w) (base * (level + 1)) *
-            pow (w / DensePoly.gcd c w) base) := by
+    _ = pow (c / monicGcd c w) (base * level) *
+          (pow (monicGcd c w) (base * (level + 1)) *
+            pow (w / monicGcd c w) base) := by
         exact congrArg
-          (fun x => pow (c / DensePoly.gcd c w) (base * level) * x)
+          (fun x => pow (c / monicGcd c w) (base * level) * x)
           (DensePoly.mul_comm_poly
-            (pow (w / DensePoly.gcd c w) base)
-            (pow (DensePoly.gcd c w) (base * (level + 1))))
-    _ = pow (c / DensePoly.gcd c w) (base * level) *
-          pow (DensePoly.gcd c w) (base * (level + 1)) *
-          pow (w / DensePoly.gcd c w) base := by
+            (pow (w / monicGcd c w) base)
+            (pow (monicGcd c w) (base * (level + 1))))
+    _ = pow (c / monicGcd c w) (base * level) *
+          pow (monicGcd c w) (base * (level + 1)) *
+          pow (w / monicGcd c w) base := by
         exact (DensePoly.mul_assoc_poly _ _ _).symm
 
 /--
@@ -3082,7 +3083,7 @@ private def yunFactorsLevelCompletes (c w : FpPoly p) (base : Nat) :
   | level, fuel + 1 =>
       isOne c = true ∨
         yunFactorsLevelCompletes
-          (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel
+          (monicGcd c w) (w / monicGcd c w) base (level + 1) fuel
 
 /--
 Normalized termination predicate for the scaled Yun loop. This mirrors
@@ -3096,7 +3097,7 @@ private def yunFactorsNormalizedLevelCompletes (c w : FpPoly p) (base : Nat) :
   | level, fuel + 1 =>
       isOne (normalizeMonic c).2 = true ∨
         yunFactorsNormalizedLevelCompletes
-          (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel
+          (monicGcd c w) (w / monicGcd c w) base (level + 1) fuel
 
 /--
 Conditional product invariant for the scaled Yun loop: when the loop
@@ -3130,11 +3131,11 @@ private theorem yunFactorsContributionWithLevel_pow_invariant_of_completes
           · exact False.elim (hc h)
         have htail_completes :
             yunFactorsLevelCompletes
-              (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel := by
+              (monicGcd c w) (w / monicGcd c w) base (level + 1) fuel := by
           cases hcompletes with
           | inl hcone => exact False.elim (hc hcone)
           | inr htail => exact htail
-        have htail := ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+        have htail := ih (monicGcd c w) (w / monicGcd c w) (level + 1)
           htail_completes
         -- htail :
         --   (yunFactorsContributionWithLevel y v base (level+1) fuel).1 *
@@ -3142,9 +3143,9 @@ private theorem yunFactorsContributionWithLevel_pow_invariant_of_completes
         --   pow y (base * (level + 1)) * pow v base
         simp only [yunFactorsContributionWithLevel, hc_false]
         -- Goal involves let-bound y := gcd c w, z := c/y, tail := ...
-        by_cases hz : isOne (c / DensePoly.gcd c w) = true
+        by_cases hz : isOne (c / monicGcd c w) = true
         · -- z = 1 case: contribution.1 = tail.1
-          have hz_eq : c / DensePoly.gcd c w = 1 := eq_one_of_isOne_true _ hz
+          have hz_eq : c / monicGcd c w = 1 := eq_one_of_isOne_true _ hz
           simp [hz_eq, pow_one_base]
           -- pow c (b*l) = pow (z * y) (b*l) = pow z (b*l) * pow y (b*l)
           -- With z = 1: pow c (b*l) = pow y (b*l)
@@ -3157,33 +3158,33 @@ private theorem yunFactorsContributionWithLevel_pow_invariant_of_completes
           rw [hstep]
           exact htail
         · -- z ≠ 1 case: contribution.1 = pow z (b*l) * tail.1
-          have hz_false : isOne (c / DensePoly.gcd c w) = false := by
-            cases h : isOne (c / DensePoly.gcd c w)
+          have hz_false : isOne (c / monicGcd c w) = false := by
+            cases h : isOne (c / monicGcd c w)
             · rfl
             · exact False.elim (hz h)
           simp [hz_false]
           -- Goal: pow z (b*l) * tail.1 * pow tail.2 base = pow c (b*l) * pow w base
           have hstep :=
             yunFactorsContributionWithLevel_pow_step_algebra c w base level
-          calc pow (c / DensePoly.gcd c w) (base * level) *
+          calc pow (c / monicGcd c w) (base * level) *
                   (yunFactorsContributionWithLevel
-                    (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel).1 *
+                    (monicGcd c w) (w / monicGcd c w) base (level + 1) fuel).1 *
                   pow (yunFactorsContributionWithLevel
-                    (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel).2 base
-              = pow (c / DensePoly.gcd c w) (base * level) *
+                    (monicGcd c w) (w / monicGcd c w) base (level + 1) fuel).2 base
+              = pow (c / monicGcd c w) (base * level) *
                   ((yunFactorsContributionWithLevel
-                    (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel).1 *
+                    (monicGcd c w) (w / monicGcd c w) base (level + 1) fuel).1 *
                     pow (yunFactorsContributionWithLevel
-                      (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel).2 base) :=
+                      (monicGcd c w) (w / monicGcd c w) base (level + 1) fuel).2 base) :=
                 DensePoly.mul_assoc_poly _ _ _
-            _ = pow (c / DensePoly.gcd c w) (base * level) *
-                  (pow (DensePoly.gcd c w) (base * (level + 1)) *
-                    pow (w / DensePoly.gcd c w) base) :=
+            _ = pow (c / monicGcd c w) (base * level) *
+                  (pow (monicGcd c w) (base * (level + 1)) *
+                    pow (w / monicGcd c w) base) :=
                 congrArg
-                  (fun x => pow (c / DensePoly.gcd c w) (base * level) * x) htail
-            _ = pow (c / DensePoly.gcd c w) (base * level) *
-                  pow (DensePoly.gcd c w) (base * (level + 1)) *
-                  pow (w / DensePoly.gcd c w) base :=
+                  (fun x => pow (c / monicGcd c w) (base * level) * x) htail
+            _ = pow (c / monicGcd c w) (base * level) *
+                  pow (monicGcd c w) (base * (level + 1)) *
+                  pow (w / monicGcd c w) base :=
                 (DensePoly.mul_assoc_poly _ _ _).symm
             _ = pow c (base * level) * pow w base := hstep.symm
 
@@ -3210,9 +3211,10 @@ private theorem yunFactorsContribution_step_split
     let y := monicGcd c w
     let z := c / y
     z * y = c ∧ (w / y) * y = w := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   constructor
-  · exact div_gcd_mul_reconstruct c w
-  · exact div_gcd_right_mul_reconstruct c w
+  · exact div_monicGcd_mul_reconstruct hp c w
+  · exact div_monicGcd_right_mul_reconstruct hp c w
 
 private theorem dvd_add_poly
     {d a b : FpPoly p} (hda : d ∣ a) (hdb : d ∣ b) :
@@ -3519,13 +3521,14 @@ private theorem yunStep_common_dvd_derivative_product
 private theorem yunStep_common_dvd_derivative_current
     [ZMod64.PrimeModulus p]
     (c w d : FpPoly p)
-    (hdz : d ∣ c / DensePoly.gcd c w)
-    (hdy : d ∣ DensePoly.gcd c w) :
+    (hdz : d ∣ c / monicGcd c w)
+    (hdy : d ∣ monicGcd c w) :
     d ∣ DensePoly.derivative c := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   let y := monicGcd c w
   let z := c / y
   have hprod : z * y = c := by
-    simpa [z, y] using div_gcd_mul_reconstruct c w
+    simpa [z, y] using div_monicGcd_mul_reconstruct hp c w
   rw [← hprod]
   exact yunStep_common_dvd_derivative_product z y d hdz hdy
 
@@ -3716,22 +3719,22 @@ private theorem yunFactorsContribution_terminal_of_isOne
 private theorem yunFactorsContribution_step_of_not_isOne_of_isOne_z
     (c w : FpPoly p) (i fuel : Nat)
     (hc : isOne c = false)
-    (hz : isOne (c / DensePoly.gcd c w) = true) :
+    (hz : isOne (c / monicGcd c w) = true) :
     yunFactorsContribution c w i (fuel + 1) =
       yunFactorsContribution
-        (DensePoly.gcd c w) (w / DensePoly.gcd c w) (i + 1) fuel := by
+        (monicGcd c w) (w / monicGcd c w) (i + 1) fuel := by
   simp [yunFactorsContribution, hc, hz]
 
 private theorem yunFactorsContribution_step_of_not_isOne_of_not_isOne_z
     (c w : FpPoly p) (i fuel : Nat)
     (hc : isOne c = false)
-    (hz : isOne (c / DensePoly.gcd c w) = false) :
+    (hz : isOne (c / monicGcd c w) = false) :
     yunFactorsContribution c w i (fuel + 1) =
-      (pow (c / DensePoly.gcd c w) i *
+      (pow (c / monicGcd c w) i *
           (yunFactorsContribution
-            (DensePoly.gcd c w) (w / DensePoly.gcd c w) (i + 1) fuel).1,
+            (monicGcd c w) (w / monicGcd c w) (i + 1) fuel).1,
         (yunFactorsContribution
-          (DensePoly.gcd c w) (w / DensePoly.gcd c w) (i + 1) fuel).2) := by
+          (monicGcd c w) (w / monicGcd c w) (i + 1) fuel).2) := by
   simp [yunFactorsContribution, hc, hz]
 
 private theorem yunFactorsContribution_tail_repeated_descent
@@ -3743,7 +3746,7 @@ private theorem yunFactorsContribution_tail_repeated_descent
     contribution.2 = tail.2 ∧
       squareFreeAuxRevContribution (pthRoot contribution.2) (multiplicity * p) fuel =
         squareFreeAuxRevContribution (pthRoot tail.2) (multiplicity * p) fuel := by
-  by_cases hz : isOne (c / DensePoly.gcd c w)
+  by_cases hz : isOne (c / monicGcd c w)
   · simp [yunFactorsContribution, hc, hz]
   · simp [yunFactorsContribution, hc, hz]
 
@@ -3752,35 +3755,35 @@ private theorem yunFactorsContribution_step_preserves_target
     (c w : FpPoly p) (multiplicity fuel : Nat) (target : FpPoly p)
     (hc : isOne c = false)
     (htarget_one :
-      isOne (c / DensePoly.gcd c w) = true →
+      isOne (c / monicGcd c w) = true →
         (yunFactorsContribution
-          (DensePoly.gcd c w) (w / DensePoly.gcd c w)
+          (monicGcd c w) (w / monicGcd c w)
           (multiplicity + 1) fuel).1 = target)
     (htarget_factor :
-      isOne (c / DensePoly.gcd c w) = false →
-        pow (c / DensePoly.gcd c w) multiplicity *
+      isOne (c / monicGcd c w) = false →
+        pow (c / monicGcd c w) multiplicity *
           (yunFactorsContribution
-            (DensePoly.gcd c w) (w / DensePoly.gcd c w)
+            (monicGcd c w) (w / monicGcd c w)
             (multiplicity + 1) fuel).1 = target) :
     let tail :=
       yunFactorsContribution
-        (DensePoly.gcd c w) (w / DensePoly.gcd c w)
+        (monicGcd c w) (w / monicGcd c w)
         (multiplicity + 1) fuel
     let contribution := yunFactorsContribution c w multiplicity (fuel + 1)
     contribution.1 = target ∧
       contribution.2 = tail.2 ∧
-        (c / DensePoly.gcd c w) * DensePoly.gcd c w = c ∧
-          (w / DensePoly.gcd c w) * DensePoly.gcd c w = w := by
+        (c / monicGcd c w) * monicGcd c w = c ∧
+          (w / monicGcd c w) * monicGcd c w = w := by
   dsimp
   have hsplit := yunFactorsContribution_step_split c w
-  by_cases hz : isOne (c / DensePoly.gcd c w) = true
+  by_cases hz : isOne (c / monicGcd c w) = true
   · have hstep :=
       yunFactorsContribution_step_of_not_isOne_of_isOne_z
         c w multiplicity fuel hc hz
     rw [hstep]
     exact ⟨htarget_one hz, rfl, hsplit.1, hsplit.2⟩
-  · have hz_false : isOne (c / DensePoly.gcd c w) = false := by
-      cases h : isOne (c / DensePoly.gcd c w)
+  · have hz_false : isOne (c / monicGcd c w) = false := by
+      cases h : isOne (c / monicGcd c w)
       · rfl
       · exact False.elim (hz h)
     have hstep :=
@@ -3801,15 +3804,15 @@ private theorem yunFactorsContribution_step_target_combiner
     (c w : FpPoly p) (multiplicity fuel : Nat) (target : FpPoly p)
     (hc : isOne c = false)
     (htarget_one :
-      isOne (c / DensePoly.gcd c w) = true →
+      isOne (c / monicGcd c w) = true →
         (yunFactorsContribution
-          (DensePoly.gcd c w) (w / DensePoly.gcd c w)
+          (monicGcd c w) (w / monicGcd c w)
           (multiplicity + 1) fuel).1 = target)
     (htarget_factor :
-      isOne (c / DensePoly.gcd c w) = false →
-        pow (c / DensePoly.gcd c w) multiplicity *
+      isOne (c / monicGcd c w) = false →
+        pow (c / monicGcd c w) multiplicity *
           (yunFactorsContribution
-            (DensePoly.gcd c w) (w / DensePoly.gcd c w)
+            (monicGcd c w) (w / monicGcd c w)
             (multiplicity + 1) fuel).1 = target) :
     let y := monicGcd c w
     let tail :=
@@ -4093,8 +4096,8 @@ private inductive yunFactorsDerivativeActiveReachable
   | step (c w : FpPoly p) (fuel : Nat) :
       yunFactorsDerivativeActiveReachable hp f c w (fuel + 1) →
       yunFactorsDerivativeActiveReachable hp f
-        (DensePoly.gcd c w)
-        (w / DensePoly.gcd c w)
+        (monicGcd c w)
+        (w / monicGcd c w)
         fuel
 
 /--
@@ -4243,8 +4246,8 @@ private inductive yunFactorsPairwiseReachable :
   | step (c w : FpPoly p) (fuel : Nat) :
       yunFactorsPairwiseReachable c w (fuel + 1) →
       yunFactorsPairwiseReachable
-        (DensePoly.gcd c w)
-        (w / DensePoly.gcd c w)
+        (monicGcd c w)
+        (w / monicGcd c w)
         fuel
 
 private theorem yunFactorsPairwiseReachable_of_derivative_split
@@ -4260,8 +4263,8 @@ private theorem yunFactorsPairwiseReachable_step
     (c w : FpPoly p) (fuel : Nat)
     (hreachable : yunFactorsPairwiseReachable c w (fuel + 1)) :
     yunFactorsPairwiseReachable
-      (DensePoly.gcd c w)
-      (w / DensePoly.gcd c w)
+      (monicGcd c w)
+      (w / monicGcd c w)
       fuel :=
   yunFactorsPairwiseReachable.step c w fuel hreachable
 
@@ -4287,8 +4290,8 @@ private theorem yunFactorsPairwiseReady_step
     (c w : FpPoly p) (base level fuel : Nat)
     (hready : yunFactorsPairwiseReady c w base level (fuel + 1)) :
     yunFactorsPairwiseReady
-      (DensePoly.gcd c w)
-      (w / DensePoly.gcd c w)
+      (monicGcd c w)
+      (w / monicGcd c w)
       base
       (level + 1)
       fuel := by
@@ -4298,14 +4301,14 @@ private theorem yunFactorsPairwiseReady_succ_of_current_tail
     (c w : FpPoly p) (base level fuel : Nat)
     (htail :
       yunFactorsPairwiseReady
-        (DensePoly.gcd c w)
-        (w / DensePoly.gcd c w)
+        (monicGcd c w)
+        (w / monicGcd c w)
         base
         (level + 1)
         fuel)
     (hcurrent :
       isOne c = false →
-        isOne (c / DensePoly.gcd c w) = false →
+        isOne (c / monicGcd c w) = false →
           yunFactorsCurrentTailCoprime c w base level fuel) :
     yunFactorsPairwiseReady c w base level (fuel + 1) := by
   simpa [yunFactorsPairwiseReady] using And.intro htail hcurrent
@@ -4338,8 +4341,8 @@ private theorem yunFactorsPairwiseInvariant_step
     (c w : FpPoly p) (base level fuel : Nat)
     (hinv : yunFactorsPairwiseInvariant c w base level (fuel + 1)) :
     yunFactorsPairwiseInvariant
-      (DensePoly.gcd c w)
-      (w / DensePoly.gcd c w)
+      (monicGcd c w)
+      (w / monicGcd c w)
       base
       (level + 1)
       fuel where
@@ -4432,6 +4435,7 @@ private theorem yunFactorsWithLevel_repeated_dvd_repeated_of_acc
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) (base level fuel : Nat) (accRev : List (SquareFreeFactor p)) :
     (yunFactorsWithLevel c w base level fuel accRev).2 ∣ w := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   induction fuel generalizing c w level accRev with
   | zero =>
       simp [yunFactorsWithLevel]
@@ -4445,7 +4449,7 @@ private theorem yunFactorsWithLevel_repeated_dvd_repeated_of_acc
         let y := monicGcd c w
         let z := c / y
         have hdiv_tail : w / y ∣ w := by
-          exact ⟨y, by simpa [y] using (div_gcd_right_mul_reconstruct c w).symm⟩
+          exact ⟨y, by simpa [y] using (div_monicGcd_right_mul_reconstruct hp c w).symm⟩
         by_cases hz : isOne z
         · exact dvd_trans_poly
             (by simpa [y, z, hz] using ih y (w / y) (level + 1) accRev)
@@ -4688,7 +4692,7 @@ private theorem yunFactorsContributionWithLevel_residual_eq_yunFactorsContributi
       by_cases hc : isOne c
       · simp [hc]
       · simp [hc]
-        exact ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+        exact ih (monicGcd c w) (w / monicGcd c w) (level + 1)
 
 /--
 Derivative-zero of the residual carries between the scaled
@@ -4843,25 +4847,25 @@ private theorem yunFactorsContributionWithLevel_scalar_step_bridge
     [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
     (c w : FpPoly p) {u_c u_w : ZMod64 p}
     (hu_c : u_c ≠ 0) (hu_w : u_w ≠ 0)
-    (hg_ne : DensePoly.gcd c w ≠ 0) :
+    (hg_ne : monicGcd c w ≠ 0) :
     ∃ v : ZMod64 p, v ≠ 0 ∧
       DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) =
-          DensePoly.C v * DensePoly.gcd c w ∧
+          DensePoly.C v * monicGcd c w ∧
         (DensePoly.C u_c * c) /
             DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) =
-          DensePoly.C (u_c * v⁻¹) * (c / DensePoly.gcd c w) ∧
+          DensePoly.C (u_c * v⁻¹) * (c / monicGcd c w) ∧
         (DensePoly.C u_w * w) /
             DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) =
-          DensePoly.C (u_w * v⁻¹) * (w / DensePoly.gcd c w) := by
+          DensePoly.C (u_w * v⁻¹) * (w / monicGcd c w) := by
   obtain ⟨v, hv_ne, hgcd⟩ :=
     gcd_C_mul_left_C_mul_right_eq_C_mul_gcd hp u_c u_w hu_c hu_w c w
   refine ⟨v, hv_ne, hgcd, ?_, ?_⟩
   · rw [hgcd]
-    have hc_dvd : DensePoly.gcd c w ∣ c := DensePoly.gcd_dvd_left c w
-    exact div_C_mul_C_mul_of_dvd hp hu_c hv_ne c (DensePoly.gcd c w) hc_dvd hg_ne
+    have hc_dvd : monicGcd c w ∣ c := monicGcd_dvd_left hp c w
+    exact div_C_mul_C_mul_of_dvd hp hu_c hv_ne c (monicGcd c w) hc_dvd hg_ne
   · rw [hgcd]
-    have hw_dvd : DensePoly.gcd c w ∣ w := DensePoly.gcd_dvd_right c w
-    exact div_C_mul_C_mul_of_dvd hp hu_w hv_ne w (DensePoly.gcd c w) hw_dvd hg_ne
+    have hw_dvd : monicGcd c w ∣ w := monicGcd_dvd_right hp c w
+    exact div_C_mul_C_mul_of_dvd hp hu_w hv_ne w (monicGcd c w) hw_dvd hg_ne
 
 private theorem pow_C_form
     [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
@@ -5824,22 +5828,24 @@ private theorem yunFactorsPairwiseReachable_current_squarefree
     (hreachable : yunFactorsPairwiseReachable c w fuel) :
     ∀ d : FpPoly p,
       d ∣ c → d ∣ DensePoly.derivative c → d ∣ (1 : FpPoly p) := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   induction hreachable with
   | derivativeSplit hp f fuel hdf =>
       intro d hdc hddc
       exact derivativeSplit_quotient_common_dvd_derivative_one hp f hdf d hdc hddc
   | step c w fuel _ ih =>
       exact squarefree_factor_of_squarefree
-        (DensePoly.gcd_dvd_left c w) ih
+        (monicGcd_dvd_left hp c w) ih
 
 private theorem yunFactorsPairwiseReachable_common_dvd_one
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) (fuel : Nat)
     (hreachable : yunFactorsPairwiseReachable c w (fuel + 1)) :
     ∀ d : FpPoly p,
-      d ∣ c / DensePoly.gcd c w →
-        d ∣ DensePoly.gcd c w →
+      d ∣ c / monicGcd c w →
+        d ∣ monicGcd c w →
           d ∣ (1 : FpPoly p) := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   intro d hdz hdy
   have hsquarefree :
       ∀ d : FpPoly p,
@@ -5849,7 +5855,7 @@ private theorem yunFactorsPairwiseReachable_common_dvd_one
   · let y := monicGcd c w
     let z := c / y
     have hprod : z * y = c := by
-      simpa [z, y] using div_gcd_mul_reconstruct c w
+      simpa [z, y] using div_monicGcd_mul_reconstruct hp c w
     rw [← hprod]
     exact dvd_mul_right_of_dvd (a := z) (b := y) (d := d)
         (by simpa [z, y] using hdz)
@@ -5895,17 +5901,18 @@ private theorem yunStep_quotient_tail_common_dvd_one_of_reachable
     (c w : FpPoly p) (fuel : Nat)
     (hreachable : yunFactorsPairwiseReachable c w (fuel + 1)) :
     ∀ d : FpPoly p,
-      d ∣ c / DensePoly.gcd c w →
-        d ∣ w / DensePoly.gcd c w →
+      d ∣ c / monicGcd c w →
+        d ∣ w / monicGcd c w →
           d ∣ (1 : FpPoly p) := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   intro d hda hdz
   let y := monicGcd c w
   let a := c / y
   let z := w / y
   have hcy : a * y = c := by
-    simpa [a, y] using div_gcd_mul_reconstruct c w
+    simpa [a, y] using div_monicGcd_mul_reconstruct hp c w
   have hwy : z * y = w := by
-    simpa [z, y] using div_gcd_right_mul_reconstruct c w
+    simpa [z, y] using div_monicGcd_right_mul_reconstruct hp c w
   have hz_dvd_w : z ∣ w := ⟨y, by simpa [z, y] using hwy.symm⟩
   have hdy : d ∣ y := by
     apply DensePoly.dvd_gcd
@@ -5987,14 +5994,15 @@ private theorem yunStep_residual_dvd_derivative_product_of_previous
     let y := monicGcd c w
     let z := w / y
     z ∣ DensePoly.derivative (y * z) := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   dsimp
   let y := monicGcd c w
   let a := c / y
   let z := w / y
   have hcy : a * y = c := by
-    simpa [a, y] using div_gcd_mul_reconstruct c w
+    simpa [a, y] using div_monicGcd_mul_reconstruct hp c w
   have hwy : z * y = w := by
-    simpa [z, y] using div_gcd_right_mul_reconstruct c w
+    simpa [z, y] using div_monicGcd_right_mul_reconstruct hp c w
   have hcommon_az :
       ∀ d : FpPoly p, d ∣ a → d ∣ z → d ∣ (1 : FpPoly p) := by
     intro d hda hdz
@@ -6710,9 +6718,10 @@ private theorem yunLevel_measure_lt_of_reachable_gcd_nonconstant
     (hc : isOne c = false)
     (hc_zero : c.isZero = false)
     (hw_zero : w.isZero = false)
-    (_hy_nonconstant : 1 < (DensePoly.gcd c w).size) :
-    (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size <
+    (_hy_nonconstant : 1 < (monicGcd c w).size) :
+    (monicGcd c w).size + (w / monicGcd c w).size <
       c.size + w.size := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   have hc_size : 1 < c.size :=
     one_lt_size_of_isOne_false_of_reachable c hc_zero hc hreachable
   have hw_ne : w ≠ 0 := by
@@ -6721,7 +6730,7 @@ private theorem yunLevel_measure_lt_of_reachable_gcd_nonconstant
     exact (Bool.eq_not_self _).mp hw_zero.symm
   have hsize :=
     size_div_add_size_eq_size_add_one_of_dvd
-      (DensePoly.gcd_dvd_right c w) hw_ne
+      (monicGcd_dvd_right hp c w) hw_ne
   omega
 
 private theorem yunStep_tail_common_dvd_one_of_common_dvd_one
@@ -6730,18 +6739,19 @@ private theorem yunStep_tail_common_dvd_one_of_common_dvd_one
     (hcommon :
       ∀ d : FpPoly p, d ∣ c → d ∣ w → d ∣ (1 : FpPoly p)) :
     ∀ d : FpPoly p,
-      d ∣ DensePoly.gcd c w →
-        d ∣ w / DensePoly.gcd c w →
+      d ∣ monicGcd c w →
+        d ∣ w / monicGcd c w →
           d ∣ (1 : FpPoly p) := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   intro d hdy hdz
   apply hcommon d
-  · exact dvd_trans_poly hdy (DensePoly.gcd_dvd_left c w)
-  · have hprod : (w / DensePoly.gcd c w) * DensePoly.gcd c w = w := by
-      exact div_gcd_right_mul_reconstruct c w
+  · exact dvd_trans_poly hdy (monicGcd_dvd_left hp c w)
+  · have hprod : (w / monicGcd c w) * monicGcd c w = w := by
+      exact div_monicGcd_right_mul_reconstruct hp c w
     rw [← hprod]
     exact dvd_mul_right_of_dvd
-      (a := w / DensePoly.gcd c w)
-      (b := DensePoly.gcd c w)
+      (a := w / monicGcd c w)
+      (b := monicGcd c w)
       (d := d)
       hdz
 
@@ -6751,14 +6761,15 @@ private theorem yunStep_tail_derivative_isZero_of_derivative_isZero_of_common_dv
     (hder : (DensePoly.derivative w).isZero = true)
     (hcommon :
       ∀ d : FpPoly p,
-        d ∣ DensePoly.gcd c w →
-          d ∣ w / DensePoly.gcd c w →
+        d ∣ monicGcd c w →
+          d ∣ w / monicGcd c w →
             d ∣ (1 : FpPoly p)) :
-    (DensePoly.derivative (w / DensePoly.gcd c w)).isZero = true := by
+    (DensePoly.derivative (w / monicGcd c w)).isZero = true := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   let y := monicGcd c w
   let z := w / y
   have hprod : z * y = w := by
-    simpa [y, z] using div_gcd_right_mul_reconstruct c w
+    simpa [y, z] using div_monicGcd_right_mul_reconstruct hp c w
   have hder_prod : (DensePoly.derivative (z * y)).isZero = true := by
     rw [hprod]
     exact hder
@@ -6775,7 +6786,7 @@ private theorem yunStep_tail_derivative_isZero_of_source_common_dvd_one
     (hder : (DensePoly.derivative w).isZero = true)
     (hcommon :
       ∀ d : FpPoly p, d ∣ c → d ∣ w → d ∣ (1 : FpPoly p)) :
-    (DensePoly.derivative (w / DensePoly.gcd c w)).isZero = true := by
+    (DensePoly.derivative (w / monicGcd c w)).isZero = true := by
   exact
     yunStep_tail_derivative_isZero_of_derivative_isZero_of_common_dvd_one
       c w hder
@@ -6940,11 +6951,12 @@ private theorem yunStep_gcd_normalized_one_of_common_dvd_one
     (hcommon :
       ∀ d : FpPoly p, d ∣ c → d ∣ w → d ∣ (1 : FpPoly p)) :
     (normalizeMonic (DensePoly.gcd c w)).2 = 1 := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   have hgcd_dvd_one :
-      DensePoly.gcd c w ∣ (1 : FpPoly p) :=
-    hcommon (DensePoly.gcd c w)
-      (DensePoly.gcd_dvd_left c w)
-      (DensePoly.gcd_dvd_right c w)
+      monicGcd c w ∣ (1 : FpPoly p) :=
+    hcommon (monicGcd c w)
+      (monicGcd_dvd_left hp c w)
+      (monicGcd_dvd_right hp c w)
   exact normalizeMonic_eq_one_of_dvd_one hgcd_dvd_one
 
 private theorem yunStep_tail_common_dvd_one_of_gcd_normalized_one
@@ -6952,12 +6964,12 @@ private theorem yunStep_tail_common_dvd_one_of_gcd_normalized_one
     (c w : FpPoly p)
     (hnormalized : (normalizeMonic (DensePoly.gcd c w)).2 = 1) :
     ∀ d : FpPoly p,
-      d ∣ DensePoly.gcd c w →
-        d ∣ w / DensePoly.gcd c w →
+      d ∣ monicGcd c w →
+        d ∣ w / monicGcd c w →
           d ∣ (1 : FpPoly p) := by
   intro d hdy _hdv
   exact dvd_trans_poly hdy
-    (dvd_one_of_normalizeMonic_eq_one (DensePoly.gcd c w) hnormalized)
+    (dvd_one_of_normalizeMonic_eq_one (monicGcd c w) hnormalized)
 
 private theorem constant_nonzero_dvd
     [ZMod64.PrimeModulus p] {g f : FpPoly p}
@@ -7032,14 +7044,15 @@ private theorem yunStep_gcd_nonzero_of_left_nonzero
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p)
     (hc_zero : c.isZero = false) :
-    (DensePoly.gcd c w).isZero = false := by
-  cases hy_zero : (DensePoly.gcd c w).isZero with
+    (monicGcd c w).isZero = false := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
+  cases hy_zero : (monicGcd c w).isZero with
   | false => rfl
   | true =>
       exfalso
-      have hy_eq_zero : DensePoly.gcd c w = 0 :=
-        eq_zero_of_isZero_true (DensePoly.gcd c w) hy_zero
-      rcases DensePoly.gcd_dvd_left c w with ⟨q, hq⟩
+      have hy_eq_zero : monicGcd c w = 0 :=
+        eq_zero_of_isZero_true (monicGcd c w) hy_zero
+      rcases monicGcd_dvd_left hp c w with ⟨q, hq⟩
       have hc_eq_zero : c = 0 := by
         rw [hy_eq_zero, zero_mul] at hq
         exact hq
@@ -7076,28 +7089,28 @@ private theorem yunStep_gcd_dvd_one_of_constant_common_dvd_one
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p)
     (hc_zero : c.isZero = false)
-    (hy_constant : ¬ 1 < (DensePoly.gcd c w).size)
+    (hy_constant : ¬ 1 < (monicGcd c w).size)
     (hcommon :
       ∀ d : FpPoly p,
-        d ∣ c / DensePoly.gcd c w →
-          d ∣ DensePoly.gcd c w →
+        d ∣ c / monicGcd c w →
+          d ∣ monicGcd c w →
             d ∣ (1 : FpPoly p)) :
-    DensePoly.gcd c w ∣ (1 : FpPoly p) := by
-  have hy_zero : (DensePoly.gcd c w).isZero = false :=
+    monicGcd c w ∣ (1 : FpPoly p) := by
+  have hy_zero : (monicGcd c w).isZero = false :=
     yunStep_gcd_nonzero_of_left_nonzero c w hc_zero
-  apply hcommon (DensePoly.gcd c w)
+  apply hcommon (monicGcd c w)
   · exact constant_nonzero_dvd hy_zero hy_constant
-  · exact DensePoly.dvd_refl_poly (DensePoly.gcd c w)
+  · exact DensePoly.dvd_refl_poly (monicGcd c w)
 
 private theorem yunStep_gcd_normalized_one_of_constant_common_dvd_one
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p)
     (hc_zero : c.isZero = false)
-    (hy_constant : ¬ 1 < (DensePoly.gcd c w).size)
+    (hy_constant : ¬ 1 < (monicGcd c w).size)
     (hcommon :
       ∀ d : FpPoly p,
-        d ∣ c / DensePoly.gcd c w →
-          d ∣ DensePoly.gcd c w →
+        d ∣ c / monicGcd c w →
+          d ∣ monicGcd c w →
             d ∣ (1 : FpPoly p)) :
     (normalizeMonic (DensePoly.gcd c w)).2 = 1 := by
   exact normalizeMonic_eq_one_of_dvd_one
@@ -7108,15 +7121,15 @@ private theorem yunStep_tail_common_dvd_one_of_constant_common_dvd_one
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p)
     (hc_zero : c.isZero = false)
-    (hy_constant : ¬ 1 < (DensePoly.gcd c w).size)
+    (hy_constant : ¬ 1 < (monicGcd c w).size)
     (hcommon :
       ∀ d : FpPoly p,
-        d ∣ c / DensePoly.gcd c w →
-          d ∣ DensePoly.gcd c w →
+        d ∣ c / monicGcd c w →
+          d ∣ monicGcd c w →
             d ∣ (1 : FpPoly p)) :
     ∀ d : FpPoly p,
-      d ∣ DensePoly.gcd c w →
-        d ∣ w / DensePoly.gcd c w →
+      d ∣ monicGcd c w →
+        d ∣ w / monicGcd c w →
           d ∣ (1 : FpPoly p) := by
   exact yunStep_tail_common_dvd_one_of_gcd_normalized_one c w
     (yunStep_gcd_normalized_one_of_constant_common_dvd_one
@@ -7129,38 +7142,39 @@ private theorem yunLevel_measure_lt_of_reachable_gcd_constant
     (hc : isOne c = false)
     (hc_zero : c.isZero = false)
     (hw_zero : w.isZero = false)
-    (hy_constant : ¬ 1 < (DensePoly.gcd c w).size)
+    (hy_constant : ¬ 1 < (monicGcd c w).size)
     (hcommon :
       ∀ d : FpPoly p,
-        d ∣ c / DensePoly.gcd c w →
-          d ∣ DensePoly.gcd c w →
+        d ∣ c / monicGcd c w →
+          d ∣ monicGcd c w →
             d ∣ (1 : FpPoly p)) :
-    (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size <
+    (monicGcd c w).size + (w / monicGcd c w).size <
       c.size + w.size := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   have _htail_common :
       ∀ d : FpPoly p,
-        d ∣ DensePoly.gcd c w →
-          d ∣ w / DensePoly.gcd c w →
+        d ∣ monicGcd c w →
+          d ∣ w / monicGcd c w →
             d ∣ (1 : FpPoly p) :=
     yunStep_tail_common_dvd_one_of_constant_common_dvd_one
       c w hc_zero hy_constant hcommon
   have hc_size : 1 < c.size :=
     one_lt_size_of_isOne_false_of_reachable c hc_zero hc hreachable
-  have hy_zero : (DensePoly.gcd c w).isZero = false :=
+  have hy_zero : (monicGcd c w).isZero = false :=
     yunStep_gcd_nonzero_of_left_nonzero c w hc_zero
-  have hy_size : (DensePoly.gcd c w).size = 1 := by
-    have hy_pos : 0 < (DensePoly.gcd c w).size :=
-      size_pos_of_isZero_false (DensePoly.gcd c w) hy_zero
+  have hy_size : (monicGcd c w).size = 1 := by
+    have hy_pos : 0 < (monicGcd c w).size :=
+      size_pos_of_isZero_false (monicGcd c w) hy_zero
     omega
   have hw_ne : w ≠ 0 := by
     intro hw_eq
     rw [hw_eq] at hw_zero
     exact (Bool.eq_not_self _).mp hw_zero.symm
   have hsize :
-      (w / DensePoly.gcd c w).size + (DensePoly.gcd c w).size =
+      (w / monicGcd c w).size + (monicGcd c w).size =
         w.size + 1 :=
     size_div_add_size_eq_size_add_one_of_dvd
-      (DensePoly.gcd_dvd_right c w) hw_ne
+      (monicGcd_dvd_right hp c w) hw_ne
   omega
 
 private theorem yunLevel_measure_lt_of_reachable_step
@@ -7172,10 +7186,10 @@ private theorem yunLevel_measure_lt_of_reachable_step
           w.isZero = false)
     (hreachable : yunFactorsPairwiseReachable c w (fuel + 1))
     (hc : isOne c = false) :
-    (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size <
+    (monicGcd c w).size + (w / monicGcd c w).size <
       c.size + w.size := by
   rcases hstate with ⟨hcontribution_reachable, hc_zero, hw_zero⟩
-  by_cases hy_nonconstant : 1 < (DensePoly.gcd c w).size
+  by_cases hy_nonconstant : 1 < (monicGcd c w).size
   · exact
       yunLevel_measure_lt_of_reachable_gcd_nonconstant
         c w hcontribution_reachable hc hc_zero hw_zero hy_nonconstant
@@ -7191,45 +7205,46 @@ private theorem yunLevel_measure_lt_of_nonconstant_step
     (hc_zero : c.isZero = false)
     (hw_zero : w.isZero = false)
     (hreachable : yunFactorsPairwiseReachable c w (fuel + 1)) :
-    (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size <
+    (monicGcd c w).size + (w / monicGcd c w).size <
       c.size + w.size := by
-  by_cases hy_nonconstant : 1 < (DensePoly.gcd c w).size
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
+  by_cases hy_nonconstant : 1 < (monicGcd c w).size
   · have hw_ne : w ≠ 0 := by
       intro hw_eq
       rw [hw_eq] at hw_zero
       exact (Bool.eq_not_self _).mp hw_zero.symm
     have hsize :=
       size_div_add_size_eq_size_add_one_of_dvd
-        (DensePoly.gcd_dvd_right c w) hw_ne
+        (monicGcd_dvd_right hp c w) hw_ne
     omega
   · have hcommon :
         ∀ d : FpPoly p,
-          d ∣ c / DensePoly.gcd c w →
-            d ∣ DensePoly.gcd c w →
+          d ∣ c / monicGcd c w →
+            d ∣ monicGcd c w →
               d ∣ (1 : FpPoly p) :=
       yunFactorsPairwiseReachable_common_dvd_one c w fuel hreachable
     have _htail_common :
         ∀ d : FpPoly p,
-          d ∣ DensePoly.gcd c w →
-            d ∣ w / DensePoly.gcd c w →
+          d ∣ monicGcd c w →
+            d ∣ w / monicGcd c w →
               d ∣ (1 : FpPoly p) :=
       yunStep_tail_common_dvd_one_of_constant_common_dvd_one
         c w hc_zero hy_nonconstant hcommon
-    have hy_zero : (DensePoly.gcd c w).isZero = false :=
+    have hy_zero : (monicGcd c w).isZero = false :=
       yunStep_gcd_nonzero_of_left_nonzero c w hc_zero
-    have hy_size : (DensePoly.gcd c w).size = 1 := by
-      have hy_pos : 0 < (DensePoly.gcd c w).size :=
-        size_pos_of_isZero_false (DensePoly.gcd c w) hy_zero
+    have hy_size : (monicGcd c w).size = 1 := by
+      have hy_pos : 0 < (monicGcd c w).size :=
+        size_pos_of_isZero_false (monicGcd c w) hy_zero
       omega
     have hw_ne : w ≠ 0 := by
       intro hw_eq
       rw [hw_eq] at hw_zero
       exact (Bool.eq_not_self _).mp hw_zero.symm
     have hsize :
-        (w / DensePoly.gcd c w).size + (DensePoly.gcd c w).size =
+        (w / monicGcd c w).size + (monicGcd c w).size =
           w.size + 1 :=
       size_div_add_size_eq_size_add_one_of_dvd
-        (DensePoly.gcd_dvd_right c w) hw_ne
+        (monicGcd_dvd_right hp c w) hw_ne
     omega
 
 private theorem yunFactorsLevelCompletes_of_size_bound
@@ -7261,21 +7276,21 @@ private theorem yunFactorsLevelCompletes_of_size_bound
           · exact False.elim (hc h)
         have htail_reachable :
             yunFactorsPairwiseReachable
-              (DensePoly.gcd c w)
-              (w / DensePoly.gcd c w)
+              (monicGcd c w)
+              (w / monicGcd c w)
               fuel :=
           yunFactorsPairwiseReachable_step c w fuel hreachable
         have hmeasure :
-            (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size <
+            (monicGcd c w).size + (w / monicGcd c w).size <
               c.size + w.size :=
           yunLevel_measure_lt_of_reachable_step
             c w fuel (hstate c w (fuel + 1) hreachable) hreachable hc_false
         have htail_bound :
-            (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size ≤
+            (monicGcd c w).size + (w / monicGcd c w).size ≤
               fuel + 1 := by
           omega
         exact Or.inr
-          (ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+          (ih (monicGcd c w) (w / monicGcd c w) (level + 1)
             htail_reachable htail_bound)
 
 private theorem yunFactorsLevelCompletes_of_derivative_active_state
@@ -7333,8 +7348,8 @@ private theorem yunFactorsDerivativeActiveReachable_step
     (hp : Hex.Nat.Prime p) (f c w : FpPoly p) (fuel : Nat)
     (hreachable : yunFactorsDerivativeActiveReachable hp f c w (fuel + 1)) :
     yunFactorsDerivativeActiveReachable hp f
-      (DensePoly.gcd c w)
-      (w / DensePoly.gcd c w)
+      (monicGcd c w)
+      (w / monicGcd c w)
       fuel :=
   yunFactorsDerivativeActiveReachable.step c w fuel hreachable
 
@@ -7367,12 +7382,12 @@ private theorem yunFactorsContributionWithLevel_tail_valid_of_derivative_active_
           · exact False.elim (hc h)
         have htail_reachable :
             yunFactorsDerivativeActiveReachable hp f
-              (DensePoly.gcd c w)
-              (w / DensePoly.gcd c w)
+              (monicGcd c w)
+              (w / monicGcd c w)
               fuel :=
           yunFactorsDerivativeActiveReachable_step hp f c w fuel hreachable
         simpa [yunFactorsContributionWithLevel, hc_false] using
-          ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+          ih (monicGcd c w) (w / monicGcd c w) (level + 1)
             htail_reachable
 
 private theorem yunFactorsContributionWithLevel_pthRoot_tail_valid
@@ -7506,7 +7521,7 @@ private theorem yunFactorsDerivativeActiveReachable_nonzero
         · rfl
         · have hz_zero : z = 0 := eq_zero_of_isZero_true z hz
           have hprod : z * y = w := by
-            simpa [z, y] using div_gcd_right_mul_reconstruct c w
+            simpa [z, y] using div_monicGcd_right_mul_reconstruct hp c w
           have hw_zero : w = 0 := by
             rw [← hprod, hz_zero, zero_mul]
           rw [hw_zero] at ih
@@ -7666,13 +7681,13 @@ private theorem yunFactorsContributionWithLevel_scalar_sync
             cases h : isOne (DensePoly.C u_c * c : FpPoly p)
             · rfl
             · exact False.elim (hscaled_c h)
-          let y : FpPoly p := DensePoly.gcd c w
+          let y : FpPoly p := monicGcd c w
           let yScaled : FpPoly p :=
             DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w)
           let z : FpPoly p := c / y
           let zScaled : FpPoly p := (DensePoly.C u_c * c) / yScaled
           by_cases hy_zero : y = 0
-          · have hg_zero : DensePoly.gcd c w = 0 := by simpa [y] using hy_zero
+          · have hg_zero : monicGcd c w = 0 := by simpa [y] using hy_zero
             have hc_zero : c = 0 := (gcd_eq_zero_forces_zero c w hg_zero).1
             have hw_zero : w = 0 := (gcd_eq_zero_forces_zero c w hg_zero).2
             have hyScaled_zero : yScaled = 0 := by
@@ -7851,7 +7866,7 @@ private theorem yunFactorsContributionWithLevel_scalar_sync_of_derivative_active
             cases h : isOne (DensePoly.C u_c * c : FpPoly p)
             · rfl
             · exact False.elim (hscaled_c h)
-          let y : FpPoly p := DensePoly.gcd c w
+          let y : FpPoly p := monicGcd c w
           let yScaled : FpPoly p :=
             DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w)
           let z : FpPoly p := c / y
@@ -8098,12 +8113,12 @@ private theorem yunFactorsContributionWithLevel_tail_nonzero_of_derivative_activ
           · exact False.elim (hc h)
         have htail_reachable :
             yunFactorsDerivativeActiveReachable hp f
-              (DensePoly.gcd c w)
-              (w / DensePoly.gcd c w)
+              (monicGcd c w)
+              (w / monicGcd c w)
               fuel :=
           yunFactorsDerivativeActiveReachable_step hp f c w fuel hreachable
         simpa [yunFactorsContributionWithLevel, hc_false] using
-          ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+          ih (monicGcd c w) (w / monicGcd c w) (level + 1)
             htail_reachable
 
 private theorem yunFactorsContributionWithLevel_normalized_tail_valid_of_derivative_active_reachable
@@ -8129,12 +8144,12 @@ private theorem yunFactorsContributionWithLevel_normalized_tail_valid_of_derivat
           · exact False.elim (hc h)
         have htail_reachable :
             yunFactorsDerivativeActiveReachable hp f
-              (DensePoly.gcd c w)
-              (w / DensePoly.gcd c w)
+              (monicGcd c w)
+              (w / monicGcd c w)
               fuel :=
           yunFactorsDerivativeActiveReachable_step hp f c w fuel hreachable
         simpa [yunFactorsContributionWithLevel, hc_false] using
-          ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+          ih (monicGcd c w) (w / monicGcd c w) (level + 1)
             htail_reachable
 
 private theorem yunFactorsContributionWithLevel_normalized_pthRoot_tail_valid
@@ -8239,8 +8254,8 @@ private theorem yunFactorsNormalizedLevelCompletes_of_size_bound_derivative_acti
           · exact False.elim (hc_norm h)
         have htail_reachable :
             yunFactorsDerivativeActiveReachable hp f
-              (DensePoly.gcd c w)
-              (w / DensePoly.gcd c w)
+              (monicGcd c w)
+              (w / monicGcd c w)
               fuel :=
           yunFactorsDerivativeActiveReachable_step hp f c w fuel hreachable
         have hpairwise :
@@ -8257,13 +8272,13 @@ private theorem yunFactorsNormalizedLevelCompletes_of_size_bound_derivative_acti
           have hsize := normalizeMonic_nonzero_size_eq hp c hraw_nonzero.1
           omega
         have hmeasure :
-            (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size <
+            (monicGcd c w).size + (w / monicGcd c w).size <
               c.size + w.size :=
           yunLevel_measure_lt_of_nonconstant_step
             c w fuel hc_size hraw_nonzero.1 hraw_nonzero.2 hpairwise
         have htail_nonzero :=
           yunFactorsDerivativeActiveReachable_nonzero hp f
-            (DensePoly.gcd c w) (w / DensePoly.gcd c w) fuel htail_reachable
+            (monicGcd c w) (w / monicGcd c w) fuel htail_reachable
         have hcurrent_c_size :
             (normalizeMonic c).2.size = c.size :=
           normalizeMonic_nonzero_size_eq hp c hraw_nonzero.1
@@ -8272,19 +8287,19 @@ private theorem yunFactorsNormalizedLevelCompletes_of_size_bound_derivative_acti
           normalizeMonic_nonzero_size_eq hp w hraw_nonzero.2
         have htail_g_size :
             (normalizeMonic (DensePoly.gcd c w)).2.size =
-              (DensePoly.gcd c w).size :=
-          normalizeMonic_nonzero_size_eq hp (DensePoly.gcd c w) htail_nonzero.1
+              (monicGcd c w).size :=
+          normalizeMonic_nonzero_size_eq hp (monicGcd c w) htail_nonzero.1
         have htail_w_size :
-            (normalizeMonic (w / DensePoly.gcd c w)).2.size =
-              (w / DensePoly.gcd c w).size :=
+            (normalizeMonic (w / monicGcd c w)).2.size =
+              (w / monicGcd c w).size :=
           normalizeMonic_nonzero_size_eq hp
-            (w / DensePoly.gcd c w) htail_nonzero.2
+            (w / monicGcd c w) htail_nonzero.2
         have htail_bound :
             (normalizeMonic (DensePoly.gcd c w)).2.size +
-                (normalizeMonic (w / DensePoly.gcd c w)).2.size ≤ fuel + 1 := by
+                (normalizeMonic (w / monicGcd c w)).2.size ≤ fuel + 1 := by
           omega
         exact Or.inr
-          (ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+          (ih (monicGcd c w) (w / monicGcd c w) (level + 1)
             htail_reachable htail_bound)
 
 private theorem yunFactorsLevelCompletes_of_size_bound_derivative_active
@@ -8317,8 +8332,8 @@ private theorem yunFactorsLevelCompletes_of_size_bound_derivative_active
           · exact False.elim (hc h)
         have htail_reachable :
             yunFactorsDerivativeActiveReachable hp f
-              (DensePoly.gcd c w)
-              (w / DensePoly.gcd c w)
+              (monicGcd c w)
+              (w / monicGcd c w)
               fuel :=
           yunFactorsDerivativeActiveReachable_step hp f c w fuel hreachable
         have hpairwise :
@@ -8326,16 +8341,16 @@ private theorem yunFactorsLevelCompletes_of_size_bound_derivative_active
           yunFactorsPairwiseReachable_of_derivative_active_reachable
             hp f c w (fuel + 1) hreachable
         have hmeasure :
-            (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size <
+            (monicGcd c w).size + (w / monicGcd c w).size <
               c.size + w.size :=
           yunLevel_measure_lt_of_reachable_step
             c w fuel (hstate c w (fuel + 1) hreachable) hpairwise hc_false
         have htail_bound :
-            (DensePoly.gcd c w).size + (w / DensePoly.gcd c w).size ≤
+            (monicGcd c w).size + (w / monicGcd c w).size ≤
               fuel + 1 := by
           omega
         exact Or.inr
-          (ih (DensePoly.gcd c w) (w / DensePoly.gcd c w) (level + 1)
+          (ih (monicGcd c w) (w / monicGcd c w) (level + 1)
             htail_reachable htail_bound)
 
 private theorem yunFactorsLevelCompletes_of_derivative_active_reachable
@@ -8992,6 +9007,7 @@ private theorem yunFactorsWithLevel_factor_mem_acc_or_dvd_current
     (accRev : List (SquareFreeFactor p)) :
     ∀ sf ∈ (yunFactorsWithLevel c w base level fuel accRev).1,
       sf ∈ accRev ∨ sf.factor ∣ c := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   induction fuel generalizing c w level accRev with
   | zero =>
       intro sf hsf
@@ -9006,10 +9022,10 @@ private theorem yunFactorsWithLevel_factor_mem_acc_or_dvd_current
         let y := monicGcd c w
         let z := c / y
         have hy_dvd_c : y ∣ c := by
-          simpa [y] using DensePoly.gcd_dvd_left c w
+          simpa [y] using monicGcd_dvd_left hp c w
         have hz_dvd_c : z ∣ c := by
           refine ⟨y, ?_⟩
-          simpa [y, z] using (div_gcd_mul_reconstruct c w).symm
+          simpa [y, z] using (div_monicGcd_mul_reconstruct hp c w).symm
         by_cases hz : isOne z
         · intro sf hsf
           have htail :=
@@ -9067,17 +9083,18 @@ private theorem yunStep_quotient_right_factor_coprime_of_common_dvd_one
     (hfactor_dvd_w : factor ∣ w)
     (hcommon :
       ∀ d : FpPoly p,
-        d ∣ c / DensePoly.gcd c w →
-          d ∣ DensePoly.gcd c w →
+        d ∣ c / monicGcd c w →
+          d ∣ monicGcd c w →
             d ∣ (1 : FpPoly p)) :
     squareFreeFactorCoprimeRel
-      { factor := c / DensePoly.gcd c w, multiplicity := multiplicity }
+      { factor := c / monicGcd c w, multiplicity := multiplicity }
       { factor := factor, multiplicity := tailMultiplicity } := by
-  let z := c / DensePoly.gcd c w
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
+  let z := c / monicGcd c w
   let y := monicGcd c w
   have hz_dvd_c : z ∣ c := by
     refine ⟨y, ?_⟩
-    simpa [z, y] using (div_gcd_mul_reconstruct c w).symm
+    simpa [z, y] using (div_monicGcd_mul_reconstruct hp c w).symm
   have hgcd_dvd_y :
       DensePoly.gcd z factor ∣ y := by
     apply DensePoly.dvd_gcd
@@ -9096,18 +9113,18 @@ private theorem yunFactorsWithLevel_current_tail_coprime_of_common_dvd_one
     (c w : FpPoly p) (base level fuel : Nat)
     (hcommon :
       ∀ d : FpPoly p,
-        d ∣ c / DensePoly.gcd c w →
-          d ∣ DensePoly.gcd c w →
+        d ∣ c / monicGcd c w →
+          d ∣ monicGcd c w →
             d ∣ (1 : FpPoly p)) :
     yunFactorsCurrentTailCoprime c w base level fuel := by
   intro sf hsf
   have hsf_dvd_current :
-      sf.factor ∣ DensePoly.gcd c w := by
+      sf.factor ∣ monicGcd c w := by
     exact yunFactorsWithLevel_factor_dvd_current
-      (DensePoly.gcd c w) (w / DensePoly.gcd c w) base (level + 1) fuel sf hsf
+      (monicGcd c w) (w / monicGcd c w) base (level + 1) fuel sf hsf
   exact
     yunStep_quotient_factor_coprime_of_common_dvd_one
-      (c / DensePoly.gcd c w) (DensePoly.gcd c w) sf.factor (base * level) sf.multiplicity
+      (c / monicGcd c w) (monicGcd c w) sf.factor (base * level) sf.multiplicity
       hsf_dvd_current
       hcommon
 
@@ -9116,43 +9133,44 @@ private theorem yunFactorsWithLevel_current_repeated_coprime_of_common_dvd_one
     (c w : FpPoly p) (base level fuel : Nat)
     (hcommon :
       ∀ d : FpPoly p,
-        d ∣ c / DensePoly.gcd c w →
-          d ∣ DensePoly.gcd c w →
+        d ∣ c / monicGcd c w →
+          d ∣ monicGcd c w →
             d ∣ (1 : FpPoly p)) :
     let tail :=
       yunFactorsWithLevel
-        (DensePoly.gcd c w)
-        (w / DensePoly.gcd c w)
+        (monicGcd c w)
+        (w / monicGcd c w)
         base
         (level + 1)
         fuel
         []
     squareFreeFactorCoprimeRel
-      { factor := c / DensePoly.gcd c w, multiplicity := base * level }
+      { factor := c / monicGcd c w, multiplicity := base * level }
       { factor := tail.2, multiplicity := base * level * p } := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   dsimp
   have htail_dvd :
       (yunFactorsWithLevel
-        (DensePoly.gcd c w)
-        (w / DensePoly.gcd c w)
+        (monicGcd c w)
+        (w / monicGcd c w)
         base
         (level + 1)
         fuel
-        []).2 ∣ w / DensePoly.gcd c w := by
+        []).2 ∣ w / monicGcd c w := by
     exact yunFactorsWithLevel_repeated_dvd_repeated
-      (DensePoly.gcd c w)
-      (w / DensePoly.gcd c w)
+      (monicGcd c w)
+      (w / monicGcd c w)
       base
       (level + 1)
       fuel
-  have hright_dvd : w / DensePoly.gcd c w ∣ w := by
-    exact ⟨DensePoly.gcd c w, (div_gcd_right_mul_reconstruct c w).symm⟩
+  have hright_dvd : w / monicGcd c w ∣ w := by
+    exact ⟨monicGcd c w, (div_monicGcd_right_mul_reconstruct hp c w).symm⟩
   exact
     yunStep_quotient_right_factor_coprime_of_common_dvd_one
       c w
       (yunFactorsWithLevel
-        (DensePoly.gcd c w)
-        (w / DensePoly.gcd c w)
+        (monicGcd c w)
+        (w / monicGcd c w)
         base
         (level + 1)
         fuel
@@ -9227,15 +9245,15 @@ private theorem yunFactorsPairwiseReady_succ_of_common_dvd_one
     (c w : FpPoly p) (base level fuel : Nat)
     (htail :
       yunFactorsPairwiseReady
-        (DensePoly.gcd c w)
-        (w / DensePoly.gcd c w)
+        (monicGcd c w)
+        (w / monicGcd c w)
         base
         (level + 1)
         fuel)
     (hcommon :
       ∀ d : FpPoly p,
-        d ∣ c / DensePoly.gcd c w →
-          d ∣ DensePoly.gcd c w →
+        d ∣ c / monicGcd c w →
+          d ∣ monicGcd c w →
             d ∣ (1 : FpPoly p)) :
     yunFactorsPairwiseReady c w base level (fuel + 1) := by
   apply yunFactorsPairwiseReady_succ_of_current_tail c w base level fuel htail
@@ -9251,8 +9269,8 @@ private theorem yunFactorsPairwiseReady_of_reachable_common_dvd_one
       ∀ c w : FpPoly p, ∀ fuel : Nat,
         yunFactorsPairwiseReachable c w (fuel + 1) →
           ∀ d : FpPoly p,
-            d ∣ c / DensePoly.gcd c w →
-              d ∣ DensePoly.gcd c w →
+            d ∣ c / monicGcd c w →
+              d ∣ monicGcd c w →
                 d ∣ (1 : FpPoly p)) :
     yunFactorsPairwiseReady c w base level fuel := by
   induction fuel generalizing c w level with
@@ -9261,14 +9279,14 @@ private theorem yunFactorsPairwiseReady_of_reachable_common_dvd_one
   | succ fuel ih =>
       have htail :
           yunFactorsPairwiseReady
-            (DensePoly.gcd c w)
-            (w / DensePoly.gcd c w)
+            (monicGcd c w)
+            (w / monicGcd c w)
             base
             (level + 1)
             fuel := by
         exact ih
-          (DensePoly.gcd c w)
-          (w / DensePoly.gcd c w)
+          (monicGcd c w)
+          (w / monicGcd c w)
           (level + 1)
           (yunFactorsPairwiseReachable_step c w fuel hreachable)
       exact
@@ -9283,8 +9301,8 @@ private theorem yunFactorsPairwiseReady_of_derivative_split_common_dvd_one
       ∀ c w : FpPoly p, ∀ fuel : Nat,
         yunFactorsPairwiseReachable c w (fuel + 1) →
           ∀ d : FpPoly p,
-            d ∣ c / DensePoly.gcd c w →
-              d ∣ DensePoly.gcd c w →
+            d ∣ c / monicGcd c w →
+              d ∣ monicGcd c w →
                 d ∣ (1 : FpPoly p)) :
     yunFactorsPairwiseReady
       (f / DensePoly.gcd f (DensePoly.derivative f))
@@ -9308,8 +9326,8 @@ private theorem yunFactorsPairwiseInvariant_of_derivative_split_common_dvd_one
       ∀ c w : FpPoly p, ∀ fuel : Nat,
         yunFactorsPairwiseReachable c w (fuel + 1) →
           ∀ d : FpPoly p,
-            d ∣ c / DensePoly.gcd c w →
-              d ∣ DensePoly.gcd c w →
+            d ∣ c / monicGcd c w →
+              d ∣ monicGcd c w →
                 d ∣ (1 : FpPoly p)) :
     yunFactorsPairwiseInvariant
       (f / DensePoly.gcd f (DensePoly.derivative f))
@@ -9960,6 +9978,7 @@ private theorem yunFactorsStepsSquareFree_of_reachable
     (c w : FpPoly p) (fuel : Nat)
     (hreachable : yunFactorsPairwiseReachable c w fuel) :
     yunFactorsStepsSquareFree c w fuel := by
+  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   induction fuel generalizing c w with
   | zero =>
       simp [yunFactorsStepsSquareFree]
@@ -9974,7 +9993,7 @@ private theorem yunFactorsStepsSquareFree_of_reachable
           yunFactorsPairwiseReachable_current_squarefree c w (fuel + 1) hreachable
         have hz_dvd_c : z ∣ c := by
           refine ⟨y, ?_⟩
-          simpa [z, y] using (div_gcd_mul_reconstruct c w).symm
+          simpa [z, y] using (div_monicGcd_mul_reconstruct hp c w).symm
         have hz_squarefree :
             ∀ d : FpPoly p,
               d ∣ z → d ∣ DensePoly.derivative z → d ∣ (1 : FpPoly p) :=
@@ -10155,7 +10174,7 @@ Normalized gcd monicity for the Yun derivative-active transition. Whenever the
 right gcd operand is nonzero, the normalized gcd value
 `(normalizeMonic (DensePoly.gcd c w)).2` is monic.
 
-The raw executable `DensePoly.gcd c w` is not in general monic even when
+The raw executable `monicGcd c w` is not in general monic even when
 `c, w` are monic: over `F_5`, `gcd (x^2 + 1) (x + 1)` follows an Euclidean
 remainder path and returns the constant `2`, not a monic value. So the gcd
 side of the Yun derivative-active monic invariant tracked in #6155 must route
@@ -10165,7 +10184,7 @@ private theorem normalizeMonic_gcd_monic_of_right_nonzero
     [ZMod64.PrimeModulus p] (c w : FpPoly p)
     (hw : w.isZero = false) :
     DensePoly.Monic (normalizeMonic (DensePoly.gcd c w)).2 :=
-  normalizeMonic_nonzero_monic (DensePoly.gcd c w)
+  normalizeMonic_nonzero_monic (monicGcd c w)
     (gcd_isZero_false_of_right_isZero_false c w hw)
 
 /--
