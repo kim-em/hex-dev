@@ -49,7 +49,13 @@ DEFAULT_ISABELLE_CERTIFIED = (
     ROOT / "reports/bench-results/hex-lll-certified-carica.json"
 )
 DEFAULT_ISABELLE_CERTIFIED_RANDOM = DEFAULT_ISABELLE_CERTIFIED
-DEFAULT_ISABELLE_CERTIFIED_HARSH = DEFAULT_ISABELLE_CERTIFIED
+# Harsh-cubic Isabelle-certified and the per-request floor are measured in one
+# run so the floor is a true lower bound under every rung (the smallest
+# harsh-cubic rung n=15 is itself near-floor); the random-bounded curve keeps
+# its earlier run, whose smallest rung n=30 sits well above the floor.
+DEFAULT_ISABELLE_CERTIFIED_HARSH = (
+    ROOT / "reports/bench-results/hex-lll-isabelle-certified-harsh-211b9957.json"
+)
 DEFAULT_RANDOM_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-random-bounded.svg"
 DEFAULT_HARSH_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-harsh-cubic.svg"
 
@@ -149,11 +155,11 @@ FAMILIES = {
 # so its median is the floor with negligible n-dependent work) and read from
 # the export below. The plotted Isabelle-certified curve subtracts this
 # measured floor so its rungs show n-dependent work rather than the process
-# tax; the committed ratio tables keep the raw medians. A rung whose work is
-# at or below the floor (entirely process-bound) is dropped from the adjusted
-# curve rather than plotted as the noise of a near-zero difference.
+# tax; the committed ratio tables keep the raw medians. The floor is measured
+# in the same run as the harsh-cubic ladder, so it is a true lower bound under
+# every rung — every point survives the subtraction.
 DEFAULT_ISABELLE_FLOOR = (
-    ROOT / "reports/bench-results/hex-lll-isabelle-certified-floor.json"
+    ROOT / "reports/bench-results/hex-lll-isabelle-certified-harsh-211b9957.json"
 )
 ISABELLE_FLOOR_PATTERN = re.compile(r"runIsabelleCertifiedProcessFloorNormSq$")
 ISABELLE_CERTIFIED_ADJUSTED_LABEL = "Isabelle certified (adjusted)"
@@ -209,10 +215,9 @@ def load_floor_ms(path: Path) -> float:
 
 def subtract_request_floor(series: Series, floor_ms: float) -> Series:
     """Subtract the measured per-request floor from the Isabelle-certified
-    series and relabel it so the legend marks the adjustment. Rungs whose work
-    is at or below the floor are entirely process-bound — their de-floored
-    value is the noise of a near-zero difference — so they are dropped rather
-    than plotted (and a log axis cannot show a nonpositive value anyway)."""
+    series and relabel it so the legend marks the adjustment. The floor is
+    measured in the same run, so it is a true lower bound under every rung;
+    the nonpositive guard is a safety net that should never fire."""
     kept = [(x, y - floor_ms) for x, y in zip(series.xs, series.ys) if y - floor_ms > 0]
     return Series(
         label=ISABELLE_CERTIFIED_ADJUSTED_LABEL,
@@ -270,19 +275,18 @@ def plot(
     # The plotted Isabelle-certified curve has its measured per-request floor
     # subtracted. Footnote the adjustment, stating the measured value.
     if any(item.label == ISABELLE_CERTIFIED_ADJUSTED_LABEL for item in series):
-        fig.subplots_adjust(bottom=0.16)
-        floor_txt = f"~{floor_ms:.0f} ms" if floor_ms is not None else "its"
+        fig.subplots_adjust(bottom=0.13)
+        floor_txt = f"~{floor_ms:.0f} ms" if floor_ms is not None else ""
         fig.text(
             0.5,
             0.01,
-            f"Isabelle certified is adjusted down by its measured {floor_txt} "
-            "per-request floor (fplll subprocess fork), which Hex's in-process "
-            "fplll-ffi path avoids.",
+            f"Isabelle certified less its measured {floor_txt} per-request "
+            "process floor.",
             ha="center",
             va="bottom",
             fontsize=7,
             style="italic",
-            color="0.35",
+            color="0.4",
         )
     output.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output, format="svg", metadata={"Date": None})
