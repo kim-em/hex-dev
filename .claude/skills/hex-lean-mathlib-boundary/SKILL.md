@@ -144,13 +144,26 @@ Hence `content (dilate (lc core) monicFactor) = 1` is **false** whenever
 `leadingCoeff core` is a non-unit — i.e. the generic non-monic-core regime the
 monic transform exists for. Reroute to the primitivePart-aware
 `liftedRecoveryCandidate` / `RecoveredAtLift.candidate_eq_of_monic_dvd`
-(`Basic.lean:2781`) path instead. And note the linchpin: there is **no base
-`RecoveredAtLift` producer** built from a successful `bhksIndicatorCandidate?`
-(every theorem concluding `RepresentsIntegerFactorAtLift` is a packer or
-hypothesis-consumer); constructing one — the `dilate_eq`/`monic_dvd` carrier
-from the executable candidate — is the monic-transform recovery direction owned
-by the fast-BHKS-monic-lift migration issue, so a scale→dilate consumer reroute
-is blocked on that producer landing first.
+(`Basic.lean:2781`) path instead. Note the linchpin: the base `RecoveredAtLift`
+producer from a successful `bhksIndicatorCandidate?` is the carrier the whole
+reroute consumes. For the **monic-core** case it now exists and compiles —
+`bhksIndicatorCandidate?_representsIntegerFactorAtLift` (`Recovery.lean:1125`,
+landed by #7121 deliverable 1 / PR #7196): with `leadingCoeff core = 1` it sets
+`monicFactor := candidate` and closes all four fields from
+`bhksIndicatorCandidate?_reduceModPow_eq_of_monic` (`congr`, via `scale 1 = id`),
+`dilate_one` + `Hex.bhksIndicatorCandidate?_primitive` (`dilate_eq`), and
+`Hex.bhksIndicatorCandidate?_dvd` + `toMonic_monic_eq_core_of_leadingCoeff_eq_one`
+(`monic_dvd`). The two executable lemmas were `private`; #7196 drops that. So a
+scale→dilate **consumer** reroute is no longer blocked on a missing producer —
+it is blocked on the cascade work itself (rerouting
+`productCongruence_of_representsIntegerFactorAtLift` and the `productCongruences*`
+chain consumed at `Recovery.lean:4075`, the `hproduct`/`product_congr`
+scale-congruence in `ForwardRecoveryInputs.ofMignottePrecision…` /
+`CanonicalRecoveryInputs`, and IntReductionMod's `scaled_recovery_of_bound`, all
+of which force `hmonic_ne`/`hfactor_norm`/`hprecision` up to the top driver).
+The **non-monic-core** producer (where `primitivePart`/`dilate` do not collapse)
+is still the harder monic-transform recovery direction owned by the
+fast-BHKS-monic-lift migration issue.
 
 ### "Final integration" issues: confirm the substrate *producer* exists, not just that the feeder issue closed
 
