@@ -1934,6 +1934,7 @@ private theorem rowCombination_smul_rat
         exact ih (acc + M[row.val][idxFin.val] * c[row.val])
   simpa using hfold (List.finRange n) 0
 
+/-- `prefixSpan_add` says the rational prefix row-span is closed under vector addition. -/
 private theorem prefixSpan_add
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) {u v : Vector Rat m}
     (hu : prefixSpan M i hi u) (hv : prefixSpan M i hi v) :
@@ -1943,6 +1944,7 @@ private theorem prefixSpan_add
   refine ⟨cu + cv, ?_⟩
   rw [rowCombination_add_rat, hcu, hcv]
 
+/-- `prefixSpan_smul` says the rational prefix row-span is closed under scalar multiplication. -/
 private theorem prefixSpan_smul
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) (a : Rat) {u : Vector Rat m}
     (hu : prefixSpan M i hi u) :
@@ -1951,6 +1953,7 @@ private theorem prefixSpan_smul
   refine ⟨a • cu, ?_⟩
   rw [rowCombination_smul_rat, hcu]
 
+/-- `prefixSpan_sub` says the rational prefix row-span is closed under vector subtraction. -/
 private theorem prefixSpan_sub
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) {u v : Vector Rat m}
     (hu : prefixSpan M i hi u) (hv : prefixSpan M i hi v) :
@@ -1966,14 +1969,17 @@ private theorem prefixSpan_sub
     grind
   simpa [← hsub] using hadd
 
+/-- `dot_add_right` gives additivity of the rational dot product in its right argument. -/
 private theorem dot_add_right (a b c : Vector Rat m) :
     Matrix.dot a (b + c) = Matrix.dot a b + Matrix.dot a c := by
   rw [dot_comm_rat, dot_add_left, dot_comm_rat b a, dot_comm_rat c a]
 
+/-- `dot_smul_right` pulls a rational scalar out of the right argument of the dot product. -/
 private theorem dot_smul_right (s : Rat) (a b : Vector Rat m) :
     Matrix.dot a (s • b) = s * Matrix.dot a b := by
   rw [dot_comm_rat, dot_smul_left, dot_comm_rat b a]
 
+/-- `dot_sub_right` gives subtractivity of the rational dot product in its right argument. -/
 private theorem dot_sub_right (a b c : Vector Rat m) :
     Matrix.dot a (b - c) = Matrix.dot a b - Matrix.dot a c := by
   have hsub : b - c = b + (-1 : Rat) • c := by
@@ -1985,6 +1991,7 @@ private theorem dot_sub_right (a b c : Vector Rat m) :
   rw [hsub, dot_add_right, dot_smul_right]
   grind
 
+/-- `dot_zero_right` says the rational dot product with a zero right argument is zero. -/
 private theorem dot_zero_right (a : Vector Rat m) :
     Matrix.dot a 0 = 0 := by
   unfold Matrix.dot Hex.Vector.dotProduct
