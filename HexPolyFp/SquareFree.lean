@@ -2272,6 +2272,8 @@ private theorem div_C_mul_left_of_dvd
     rw [hquot_mul_scaled, hreconstruct]
   exact mul_right_cancel_of_ne_zero hg_ne hcancel
 
+/-- `gcd_eq_zero_forces_zero` shows a vanishing `gcd c w` forces both `c` and
+`w` to vanish, since the gcd divides each input. -/
 private theorem gcd_eq_zero_forces_zero [ZMod64.PrimeModulus p] (c w : FpPoly p)
     (h : DensePoly.gcd c w = 0) :
     c = 0 ∧ w = 0 := by
@@ -2285,6 +2287,8 @@ private theorem gcd_eq_zero_forces_zero [ZMod64.PrimeModulus p] (c w : FpPoly p)
     rcases hdvd with ⟨q, hq⟩
     simpa using hq
 
+/-- `scaled_gcd_eq_zero` shows scaling both inputs by constants keeps a
+vanishing `gcd c w` vanishing. -/
 private theorem scaled_gcd_eq_zero
     [ZMod64.PrimeModulus p]
     (u_c u_w : ZMod64 p) (c w : FpPoly p)
@@ -2307,12 +2311,16 @@ private theorem monicGcd_eq_zero_forces_zero
     rw [h] at hq
     simpa using hq
 
+/-- `div_zero_eq_zero` states that dividing any polynomial by the zero
+polynomial yields `0`. -/
 private theorem div_zero_eq_zero (f : FpPoly p) :
     f / (0 : FpPoly p) = 0 := by
   have hpair :=
     DensePoly.divMod_eq_zero_self_of_size_zero_core f (0 : FpPoly p) (by simp)
   simpa [DensePoly.div] using congrArg Prod.fst hpair
 
+/-- `div_zero_C_mul_left` shows constant scaling commutes with division by the
+zero polynomial on the left input `c` when `gcd c w` vanishes. -/
 private theorem div_zero_C_mul_left
     [ZMod64.PrimeModulus p]
     (u : ZMod64 p) {c w : FpPoly p} (h : DensePoly.gcd c w = 0) :
@@ -2321,6 +2329,8 @@ private theorem div_zero_C_mul_left
   have hc : c = 0 := (gcd_eq_zero_forces_zero c w h).1
   simp [hc, div_zero_eq_zero]
 
+/-- `div_zero_C_mul_right` shows constant scaling commutes with division by the
+zero polynomial on the right input `w` when `gcd c w` vanishes. -/
 private theorem div_zero_C_mul_right
     [ZMod64.PrimeModulus p]
     (u : ZMod64 p) {c w : FpPoly p} (h : DensePoly.gcd c w = 0) :
@@ -2353,6 +2363,9 @@ private def yunFactorsWithLevel
             { factor := z, multiplicity := base * level } :: accRev
         yunFactorsWithLevel y (w / y) base (level + 1) fuel accRev'
 
+/-- `yunFactors` is the multiplicity-indexed Yun inner loop, peeling factors off
+the coprime/repeated split `(c, w)` and tagging each with the running
+multiplicity `i`. -/
 private def yunFactors
     (c w : FpPoly p) (i : Nat) (fuel : Nat)
     (accRev : List (SquareFreeFactor p)) :
@@ -2394,6 +2407,9 @@ private def yunFactorsContributionWithLevel
             pow z (base * level) * tail.1
         (contribution, tail.2)
 
+/-- `yunFactorsContribution` is the specification payload for `yunFactors`: the
+product contributed by the discovered factors paired with the repeated part that
+remains. -/
 private def yunFactorsContribution
     (c w : FpPoly p) (i : Nat) : Nat → FpPoly p × FpPoly p
   | 0 => (1, w)
@@ -2411,6 +2427,10 @@ private def yunFactorsContribution
             pow z i * tail.1
         (contribution, tail.2)
 
+/-- `yunFactorsWithLevel_reconstruction_invariant` ties `yunFactorsWithLevel` to
+`yunFactorsContributionWithLevel`: the loop's residual matches the contribution's
+residual, and the reverse-order accumulator product equals the prior accumulator
+product times the contribution. -/
 private theorem yunFactorsWithLevel_reconstruction_invariant
     (c w : FpPoly p) (base level fuel : Nat) (accRev : List (SquareFreeFactor p)) :
     let loop := yunFactorsWithLevel c w base level fuel accRev
@@ -2457,6 +2477,10 @@ private theorem yunFactorsWithLevel_reconstruction_invariant
                             (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).1
             simpa [y, z, hz] using hmul
 
+/-- `yunFactors_reconstruction_invariant` ties `yunFactors` to
+`yunFactorsContribution`: the loop's residual matches the contribution's
+residual, and the reverse-order accumulator product equals the prior accumulator
+product times the contribution. -/
 private theorem yunFactors_reconstruction_invariant
     (c w : FpPoly p) (i fuel : Nat) (accRev : List (SquareFreeFactor p)) :
     let loop := yunFactors c w i fuel accRev
