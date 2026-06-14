@@ -43,26 +43,34 @@ end QuadraticLiftResult
 
 namespace ZPoly
 
+/-- The working modulus `m * m = m²` of one quadratic Hensel doubling step. -/
 private def quadraticModulus (m : Nat) : Nat :=
   m * m
 
+/-- Canonical nonnegative residue of `z` in the range `[0, modulus)`. -/
 private def canonicalMod (z : Int) (modulus : Nat) : Int :=
   Int.ofNat <| Int.toNat (z % Int.ofNat modulus)
 
+/-- Reduce a single coefficient to its canonical residue modulo `m²`. -/
 private def reduceCoeffModSquare (z : Int) (m : Nat) : Int :=
   canonicalMod z (quadraticModulus m)
 
+/-- Polynomial sum `f + g` with every coefficient reduced modulo `m²`. -/
 private def addModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
   QuadraticLiftResult.reduceModSquare (f + g) m
 
+/-- Polynomial difference `f - g` with every coefficient reduced modulo `m²`. -/
 private def subModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
   QuadraticLiftResult.reduceModSquare (f - g) m
 
+/-- Polynomial product `f * g` with every coefficient reduced modulo `m²`. -/
 private def mulModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
   QuadraticLiftResult.reduceModSquare (f * g) m
 
--- The Hensel theorem surface supplies monic divisors; this executable helper
--- uses that invariant to avoid coefficient division in the modular hot path.
+/-- Fuel-driven long-division kernel returning the quotient/remainder of the
+running `rem` by the monic divisor `q`, with all arithmetic reduced modulo `m²`.
+The Hensel theorem surface supplies monic divisors, so this exploits that
+invariant to avoid coefficient division in the modular hot path. -/
 private def divModMonicModSquareAux
     (m : Nat) (q : ZPoly) : Nat → ZPoly → ZPoly → ZPoly × ZPoly
   | 0, quot, rem => (quot, rem)
@@ -83,10 +91,13 @@ private def divModMonicModSquareAux
               divModMonicModSquareAux m q fuel quot rem
         | _, _ => (quot, rem)
 
+/-- Quotient and remainder of `p` divided by the monic divisor `q`, working
+modulo `m²`, with the dividend size supplying the recursion fuel. -/
 private def divModMonicModSquare (p q : ZPoly) (m : Nat) : ZPoly × ZPoly :=
   let p := QuadraticLiftResult.reduceModSquare p m
   divModMonicModSquareAux m q p.size 0 p
 
+/-- `reduceModSquare f m` is congruent to `f` modulo `m²`. -/
 private theorem reduceModSquare_congr
     (m : Nat) (f : ZPoly) (hm : 0 < m) :
     ZPoly.congr (QuadraticLiftResult.reduceModSquare f m) f (m * m) := by
@@ -94,24 +105,29 @@ private theorem reduceModSquare_congr
   have hpow : 0 < m ^ 2 := Nat.pow_pos hm
   simpa [Nat.pow_two] using ZPoly.congr_reduceModPow f m 2 hpow
 
+/-- `addModSquare f g m` is congruent to `f + g` modulo `m²`. -/
 private theorem addModSquare_congr
     (m : Nat) (f g : ZPoly) (hm : 0 < m) :
     ZPoly.congr (addModSquare f g m) (f + g) (m * m) := by
   unfold addModSquare
   exact reduceModSquare_congr m (f + g) hm
 
+/-- `subModSquare f g m` is congruent to `f - g` modulo `m²`. -/
 private theorem subModSquare_congr
     (m : Nat) (f g : ZPoly) (hm : 0 < m) :
     ZPoly.congr (subModSquare f g m) (f - g) (m * m) := by
   unfold subModSquare
   exact reduceModSquare_congr m (f - g) hm
 
+/-- `mulModSquare f g m` is congruent to `f * g` modulo `m²`. -/
 private theorem mulModSquare_congr
     (m : Nat) (f g : ZPoly) (hm : 0 < m) :
     ZPoly.congr (mulModSquare f g m) (f * g) (m * m) := by
   unfold mulModSquare
   exact reduceModSquare_congr m (f * g) hm
 
+/-- Congruence modulo `m` is preserved by subtraction:
+`f ≡ f'` and `g ≡ g'` give `f - g ≡ f' - g'`. -/
 private theorem congr_sub
     (f g f' g' : ZPoly) (m : Nat)
     (hf : ZPoly.congr f f' m) (hg : ZPoly.congr g g' m) :
@@ -134,12 +150,15 @@ private theorem congr_sub
     · rfl
   · rfl
 
+/-- Congruence modulo `m` is preserved by left-multiplication by a fixed `b`:
+`x ≡ y` gives `b * x ≡ b * y`. -/
 private theorem congr_mul_left
     (b x y : ZPoly) (m : Nat)
     (hxy : ZPoly.congr x y m) :
     ZPoly.congr (b * x) (b * y) m :=
   ZPoly.congr_mul b x b y m (ZPoly.congr_refl b m) hxy
 
+/-- Congruence modulo `m²` implies congruence modulo `m`, since `m ∣ m²`. -/
 private theorem congr_of_square_mod
     (m : Nat) (f g : ZPoly)
     (hfg : ZPoly.congr f g (m * m)) :
@@ -155,6 +174,7 @@ private theorem congr_of_square_mod
     exact Int.emod_eq_zero_of_dvd
       (Int.dvd_trans hdiv (Int.dvd_of_emod_eq_zero hsqi))
 
+/-- `f - f = 0` as a `ZPoly`. -/
 private theorem sub_self_eq_zero (f : ZPoly) :
     f - f = 0 := by
   apply DensePoly.ext_coeff
@@ -163,6 +183,8 @@ private theorem sub_self_eq_zero (f : ZPoly) :
   · omega
   · rfl
 
+/-- If `g ≡ 0 (mod m)` then `m` divides each coefficient product
+`f.coeff i * g.coeff j`. -/
 private theorem coeff_product_right_dvd
     (m : Nat) (f g : ZPoly)
     (hg : ZPoly.congr g 0 m) (i j : Nat) :
@@ -175,6 +197,8 @@ private theorem coeff_product_right_dvd
     f.coeff i * g.coeff j = f.coeff i * ((m : Int) * a) := by rw [ha]
     _ = (m : Int) * (f.coeff i * a) := by grind
 
+/-- One convolution step `mulCoeffStep` keeps the accumulator divisible by `m`
+when `g ≡ 0 (mod m)` and the incoming accumulator is divisible by `m`. -/
 private theorem mulCoeffStep_right_dvd
     (m : Nat) (f g : ZPoly)
     (hg : ZPoly.congr g 0 m) (n i : Nat) (acc : Int) (j : Nat)
@@ -191,6 +215,8 @@ private theorem mulCoeffStep_right_dvd
       _ = (m : Int) * (a + c) := by grind
   · simpa [DensePoly.mulCoeffStep, hij] using hacc
 
+/-- Folding the inner convolution steps over `xs` keeps the accumulator
+divisible by `m` when `g ≡ 0 (mod m)` and the initial accumulator is. -/
 private theorem foldl_mulCoeffStep_right_dvd
     (m : Nat) (f g : ZPoly)
     (hg : ZPoly.congr g 0 m) (n i : Nat) (xs : List Nat) (acc : Int)
@@ -204,6 +230,8 @@ private theorem foldl_mulCoeffStep_right_dvd
         ih (DensePoly.mulCoeffStep f g n i acc j)
           (mulCoeffStep_right_dvd m f g hg n i acc j hacc)
 
+/-- Folding the full coefficient-sum (outer range over `xs`, inner over
+`g.size`) keeps the accumulator divisible by `m` when `g ≡ 0 (mod m)`. -/
 private theorem foldl_mulCoeffSum_right_dvd
     (m : Nat) (f g : ZPoly)
     (hg : ZPoly.congr g 0 m) (n : Nat) (xs : List Nat) (acc : Int)
@@ -223,6 +251,7 @@ private theorem foldl_mulCoeffSum_right_dvd
       simpa using ih
         ((List.range g.size).foldl (DensePoly.mulCoeffStep f g n i) acc) hinner
 
+/-- If `g ≡ 0 (mod m)` then `f * g ≡ 0 (mod m)` for any `f`. -/
 private theorem mul_right_zero_mod_base
     (m : Nat) (f g : ZPoly)
     (hg : ZPoly.congr g 0 m) :
@@ -234,6 +263,8 @@ private theorem mul_right_zero_mod_base
   rw [DensePoly.coeff_zero]
   simpa using Int.emod_eq_zero_of_dvd hdvd
 
+/-- One long-division step preserves the reconstruction `quot * q + rem` modulo
+`m²`: the updated quotient/remainder pair recombines to the same value. -/
 private theorem divModMonicModSquare_step_reconstruct_congr
     (m : Nat) (quot rem term q : ZPoly) (hm : 0 < m) :
     ZPoly.congr
@@ -284,6 +315,8 @@ private theorem divModMonicModSquare_step_reconstruct_congr
     exact ZPoly.congr_refl (quot * q + rem) (m * m)
   exact ZPoly.congr_trans _ _ _ (m * m) hleft hright
 
+/-- Loop invariant of the division kernel for nonzero divisor `q`: the kernel's
+output satisfies `qOut * q + rOut ≡ quot * q + rem (mod m²)`. -/
 private theorem divModMonicModSquareAux_reconstruct_congr_of_not_zero
     (m : Nat) (q : ZPoly) (fuel : Nat) (quot rem qOut rOut : ZPoly)
     (hm : 0 < m) (hq : q.isZero = false)
@@ -344,6 +377,8 @@ private theorem divModMonicModSquareAux_reconstruct_congr_of_not_zero
                   divModMonicModSquare_step_reconstruct_congr m quot rem term q hm
                 exact ZPoly.congr_trans _ _ _ (m * m) hrec hstep
 
+/-- The division result reconstructs the dividend modulo `m²`:
+`qOut * q + rOut ≡ p (mod m²)`. -/
 private theorem divModMonicModSquare_reconstruct_congr
     (m : Nat) (p q qOut rOut : ZPoly) (hm : 0 < m)
     (hqr : (qOut, rOut) = divModMonicModSquare p q m) :
