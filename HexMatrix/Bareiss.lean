@@ -471,12 +471,16 @@ theorem rowsToMatrix_matrixToRows (M : Matrix Int n n) :
   intro j hj
   simpa [rowsToMatrix, Matrix.ofFn] using getEntry_matrixToRows M ⟨i, hi⟩ ⟨j, hj⟩
 
+/-- `set!`-ing index `i` to `v` makes `(xs.set! i v)[i]!` return `v` when `i` is
+in bounds, the base case for tracking entries through the array row swap. -/
 private theorem array_getElem!_set!_same {α : Type} [Inhabited α]
     (xs : Array α) {i : Nat} (hi : i < xs.size) (v : α) :
     (xs.set! i v)[i]! = v := by
   rw [Array.getElem!_eq_getD]
   simp [Array.getD, Array.set!_eq_setIfInBounds, hi]
 
+/-- `set!`-ing index `i` leaves every other entry untouched: `(xs.set! i v)[j]!`
+equals `xs[j]!` whenever `j ≠ i`, the non-target case of the array row swap. -/
 private theorem array_getElem!_set!_ne {α : Type} [Inhabited α]
     (xs : Array α) {i j : Nat} (hij : j ≠ i) (v : α) :
     (xs.set! i v)[j]! = xs[j]! := by
@@ -489,6 +493,8 @@ private theorem array_getElem!_set!_ne {α : Type} [Inhabited α]
     simp [hij.symm]
   · simp [hi]
 
+/-- The `setIfInBounds` analogue of `array_getElem!_set!_same`:
+`(xs.setIfInBounds i v)[i]!` returns `v` when `i` is in bounds. -/
 private theorem array_getElem!_setIfInBounds_same {α : Type} [Inhabited α]
     (xs : Array α) {i : Nat} (hi : i < xs.size) (v : α) :
     (xs.setIfInBounds i v)[i]! = v := by
@@ -496,6 +502,8 @@ private theorem array_getElem!_setIfInBounds_same {α : Type} [Inhabited α]
   unfold Array.getD
   simp [Array.setIfInBounds, hi]
 
+/-- The `setIfInBounds` analogue of `array_getElem!_set!_ne`:
+`(xs.setIfInBounds i v)[j]!` equals `xs[j]!` whenever `j ≠ i`. -/
 private theorem array_getElem!_setIfInBounds_ne {α : Type} [Inhabited α]
     (xs : Array α) {i j : Nat} (hij : j ≠ i) (v : α) :
     (xs.setIfInBounds i v)[j]! = xs[j]! := by
@@ -507,6 +515,8 @@ private theorem array_getElem!_setIfInBounds_ne {α : Type} [Inhabited α]
     simp [hij.symm]
   · simp [hi]
 
+/-- `swapRowsArray` exchanges rows `rowA` and `rowB` of an `Array (Array Int)`
+via two `set!`s, returning `rows` unchanged when the indices coincide. -/
 private def swapRowsArray (rows : Array (Array Int)) (rowA rowB : Nat) :
     Array (Array Int) :=
   if rowA = rowB then
@@ -514,6 +524,8 @@ private def swapRowsArray (rows : Array (Array Int)) (rowA rowB : Nat) :
   else
     (rows.set! rowA rows[rowB]!).set! rowB rows[rowA]!
 
+/-- Entry-wise value of the abstract `rowSwap M rowA rowB` at `[i][j]`: the
+swapped rows read from the opposite source, every other row is unchanged. -/
 private theorem rowSwap_get (M : Matrix Int n n) (rowA rowB i j : Fin n) :
     (rowSwap M rowA rowB)[i][j] =
       if i = rowB then M[rowA][j] else if i = rowA then M[rowB][j] else M[i][j] := by
@@ -547,6 +559,8 @@ private theorem rowSwap_get (M : Matrix Int n n) (rowA rowB i j : Fin n) :
       exact (congrArg (fun row => row[j]) hrow₂).trans
         (congrArg (fun row => row[j]) hrow₁)
 
+/-- `swapRowsArray` applied to `matrixToRows M` matches the abstract
+`rowSwap M rowA rowB` entry by entry. -/
 private theorem getEntry_swapRowsArray_matrixToRows (M : Matrix Int n n)
     (rowA rowB i j : Fin n) :
     getEntry (swapRowsArray (matrixToRows M) rowA.val rowB.val) i.val j.val =
@@ -621,6 +635,8 @@ private theorem getEntry_swapRowsArray_matrixToRows (M : Matrix Int n n)
                 rw [rowSwap_get]
                 simp [hiA, hiB]
 
+/-- Round-tripping `swapRowsArray (matrixToRows M)` back through `rowsToMatrix`
+reproduces the abstract `rowSwap M rowA rowB`. -/
 private theorem rowsToMatrix_swapRowsArray_matrixToRows (M : Matrix Int n n)
     (rowA rowB : Fin n) :
     rowsToMatrix (swapRowsArray (matrixToRows M) rowA.val rowB.val) n =
@@ -632,6 +648,8 @@ private theorem rowsToMatrix_swapRowsArray_matrixToRows (M : Matrix Int n n)
   simpa [rowsToMatrix, Matrix.ofFn] using
     getEntry_swapRowsArray_matrixToRows M rowA rowB ⟨i, hi⟩ ⟨j, hj⟩
 
+/-- For any `rows` that already matches `M` entry-wise, `swapRowsArray` agrees
+with the abstract `rowSwap M rowA rowB` entry by entry. -/
 private theorem getEntry_swapRowsArray_matches
     (rows : Array (Array Int)) (M : Matrix Int n n)
     (hsize : rows.size = n)
