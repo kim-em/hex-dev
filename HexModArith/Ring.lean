@@ -14,6 +14,11 @@ namespace ZMod64
 
 variable {p : Nat} [Bounds p]
 
+/-- The canonical representative of negating a nonzero element: for `a ≠ 0`
+the negation primitive `-a.val - complementWord p hpLt` has `toNat` value
+`p - a.toNat`. This identifies the witness produced by the negation surface
+with the expected modular representative, and the side condition
+`hpLt : p < UInt64.word` keeps the complement word in range. -/
 private theorem neg_nonzero_toNat (a : ZMod64 p) {hpLt : p < UInt64.word}
     (hzero : a.val ≠ 0) :
     (-a.val - complementWord p hpLt).toNat = p - a.toNat := by
@@ -48,6 +53,11 @@ private theorem neg_nonzero_toNat (a : ZMod64 p) {hpLt : p < UInt64.word}
     omega
   simpa [UInt64.word] using hfinal
 
+/-- The negation representative stays in canonical range: for `a ≠ 0` the
+`toNat` value of `-a.val - complementWord p hpLt` is `< p`. This is the
+`p - a.toNat < p` bound (using `neg_nonzero_toNat`), needed so the negated
+element is itself a valid `ZMod64 p` residue. The side condition
+`hpLt : p < UInt64.word` keeps the complement word in range. -/
 private theorem neg_nonzero_lt (a : ZMod64 p) {hpLt : p < UInt64.word}
     (hzero : a.val ≠ 0) :
     (-a.val - complementWord p hpLt).toNat < p := by
@@ -243,6 +253,10 @@ theorem toNat_inv (a : ZMod64 p) (hcop : Nat.Coprime a.val.toNat p) :
     (a.inv * a).toNat = 1 % p := by
   simpa [ZMod64.toNat_eq_val] using inv_mul_eq_one (p := p) a hcop
 
+/-- Associativity of `Nat` addition under an outer `% m`, written in the
+fully reduced form where each operand is already taken `% m`. This is the
+reduced-arithmetic identity discharging the additive-associativity ring
+law on `ZMod64 p` after the operands are normalised. -/
 private theorem nat_add_assoc_mod (x y z m : Nat) :
     (((x % m + y % m) % m + z % m) % m) =
       (x % m + (y % m + z % m) % m) % m := by
@@ -253,6 +267,9 @@ private theorem nat_add_assoc_mod (x y z m : Nat) :
     _ = (x % m + (y % m + z % m) % m) % m := by
       rw [← Nat.add_mod y z m, ← Nat.add_mod x (y + z) m]
 
+/-- Associativity of `Nat` multiplication under an outer `% m`, with each
+operand pre-reduced `% m`. This is the reduced-arithmetic identity
+discharging the multiplicative-associativity ring law on `ZMod64 p`. -/
 private theorem nat_mul_assoc_mod (x y z m : Nat) :
     (((x % m * (y % m)) % m * (z % m)) % m) =
       (x % m * ((y % m * (z % m)) % m)) % m := by
@@ -263,6 +280,10 @@ private theorem nat_mul_assoc_mod (x y z m : Nat) :
     _ = (x % m * ((y % m * (z % m)) % m)) % m := by
       rw [← Nat.mul_mod y z m, ← Nat.mul_mod x (y * z) m]
 
+/-- Left distributivity of `Nat` multiplication over addition under an
+outer `% m`, with each operand pre-reduced `% m`. This is the
+reduced-arithmetic identity discharging the left-distributivity ring law
+on `ZMod64 p`. -/
 private theorem nat_left_distrib_mod (x y z m : Nat) :
     (x % m * ((y % m + z % m) % m) % m) =
       ((x % m * (y % m)) % m + (x % m * (z % m)) % m) % m := by
@@ -274,6 +295,10 @@ private theorem nat_left_distrib_mod (x y z m : Nat) :
       rw [Nat.add_mod]
       rw [Nat.mul_mod x y m, Nat.mul_mod x z m]
 
+/-- Right distributivity of `Nat` multiplication over addition under an
+outer `% m`, with each operand pre-reduced `% m`. This is the
+reduced-arithmetic identity discharging the right-distributivity ring law
+on `ZMod64 p`. -/
 private theorem nat_right_distrib_mod (x y z m : Nat) :
     (((x % m + y % m) % m) * (z % m) % m) =
       ((x % m * (z % m)) % m + (y % m * (z % m)) % m) % m := by
@@ -285,6 +310,10 @@ private theorem nat_right_distrib_mod (x y z m : Nat) :
       rw [Nat.add_mod]
       rw [Nat.mul_mod x z m, Nat.mul_mod y z m]
 
+/-- Additive cancellation of the modular negation representative: for
+`x < m`, the reduced complement `(m - x) % m` added back to `x` is `0`
+modulo `m`. This feeds the `neg_add_cancel` ring law on `ZMod64 p`,
+where the negation primitive produces `m - x` as the representative. -/
 private theorem nat_neg_add_cancel_mod (x m : Nat) (hx : x < m) :
     ((m - x) % m + x) % m = 0 := by
   by_cases hzero : x = 0
@@ -294,6 +323,9 @@ private theorem nat_neg_add_cancel_mod (x m : Nat) (hx : x < m) :
     have hsum : m - x + x = m := Nat.sub_add_cancel (Nat.le_of_lt hx)
     rw [Nat.mod_eq_of_lt hlt, hsum, Nat.mod_self]
 
+/-- Double negation at the `Nat` level: for `x < m`, applying the modular
+complement twice, `m - (m - x) % m`, recovers `x` modulo `m`. This is the
+`Nat`-level identity backing involutivity of negation on `ZMod64 p`. -/
 private theorem nat_neg_neg_mod (x m : Nat) (hx : x < m) :
     (m - (m - x) % m) % m = x := by
   by_cases hzero : x = 0
@@ -303,10 +335,16 @@ private theorem nat_neg_neg_mod (x m : Nat) (hx : x < m) :
     have hsub : m - (m - x) = x := by omega
     rw [Nat.mod_eq_of_lt hlt, hsub, Nat.mod_eq_of_lt hx]
 
+/-- Commutativity of `Nat` multiplication under an outer `% m`. This is the
+reduced-arithmetic identity discharging the multiplicative-commutativity
+law of the `CommRing (ZMod64 p)` instance. -/
 private theorem nat_mul_comm_mod (x y m : Nat) :
     (x * y) % m = (y * x) % m := by
   rw [Nat.mul_comm]
 
+/-- Negation on `ZMod64 p` is involutive: applying `ZMod64.neg` twice is the
+identity. This is the `ZMod64`-level consequence of `nat_neg_neg_mod`,
+lifted through `toNat`. -/
 private theorem neg_neg (a : ZMod64 p) : ZMod64.neg (ZMod64.neg a) = a := by
   apply ext_toNat
   rw [toNat_neg, toNat_neg]
