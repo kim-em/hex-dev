@@ -184,9 +184,23 @@ file: Lean reports every per-declaration error and keeps elaborating past a
 failed declaration, so if the build log's only `error:` line numbers fall
 **outside** the line range of your additions (a warning emitted *after* the
 failing line but *before* your code confirms elaboration reached you), your
-declarations compiled — no clean-tree rebuild needed. If your target's
-file (or a file it imports, like `Basic.lean`) is already red, your additions
-in a downstream file (e.g. `Recovery.lean`) cannot be verified at all. Land the
+declarations compiled — no clean-tree rebuild needed. But that passive read
+gives **no signal when the failing line is the highest line in the whole log**:
+proof-only theorems emit no warning (only `sorry` does), so additions *below*
+the pre-existing breakage produce no later diagnostic to confirm elaboration
+even reached them. In that case add a temporary `#check @yourTheorem` probe
+right after each addition and rebuild: if it prints the full type (an `info` at
+that line), you have proved both that elaboration ran past the earlier errors
+*and* that the theorem typechecks; if the name failed it errors "unknown
+identifier" instead. Remove the probes before committing. This is the reliable
+way to verify additive wrappers stranded in a file that is red from a separate
+mid-flight migration (e.g. adding cap-bound wrappers to `Recovery.lean` while
+its recovery-direction proofs are red from a partial monic-lift migration): the
+full-module build never goes green, but the wrappers are still verifiably
+correct, so land them and name the owning migration issue in the PR body. If
+your target's
+file (or a file it imports, like `Basic.lean`) is already red and your additions
+*depend on* the broken declarations, they cannot be verified at all. Land the
 parts that *do* build in isolation, and preserve the blocked parts (source in
 the issue comment) for a follow-up gated on the remodel issue rather than
 merging unverified Lean.
