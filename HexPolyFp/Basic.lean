@@ -1849,6 +1849,9 @@ private theorem mulCoeffSum_eq_degree_bound
     rw [← hsize']
     exact fold_mulCoeff_truncate_degree f g n (f.size - (n + 1))
 
+/-- Left-folding addition over `xs` from `a + b` equals folding from `a` and
+adding `b` afterwards, so a summand may be pulled out past the fold; used by
+`fold_add_reverse` to peel the element exposed when the list is reversed. -/
 private theorem fold_add_right
     (xs : List (ZMod64 p)) (a b : ZMod64 p) :
     xs.foldl (fun acc x => acc + x) (a + b) =
@@ -1862,6 +1865,9 @@ private theorem fold_add_right
       rw [hacc]
       exact ih (a + x)
 
+/-- Reversing `xs` before a left-fold of addition leaves the running sum
+unchanged, since addition is commutative and associative; lets the
+commutativity proof rewrite the `mulCoeffTerm` sum into reversed index order. -/
 private theorem fold_add_reverse
     (xs : List (ZMod64 p)) (a : ZMod64 p) :
     xs.reverse.foldl (fun acc x => acc + x) a =
@@ -1875,6 +1881,9 @@ private theorem fold_add_reverse
       rw [ih]
       rw [fold_add_right xs a x]
 
+/-- `(List.range (n + 1)).reverse` equals `List.range (n + 1)` mapped by
+`fun i => n - i`, recasting the reversed summation order as the index
+substitution `i ↦ n - i` that the reindexing lemmas consume. -/
 private theorem range_succ_reverse_eq_map_sub (n : Nat) :
     (List.range (n + 1)).reverse = (List.range (n + 1)).map (fun i => n - i) := by
   apply List.ext_getElem
@@ -1884,6 +1893,9 @@ private theorem range_succ_reverse_eq_map_sub (n : Nat) :
     rw [List.getElem_reverse]
     simp [List.getElem_map, List.getElem_range]
 
+/-- The reindexed product term `mulCoeffTerm f g n (n - i)` equals
+`mulCoeffTerm g f n i`, the pointwise factor-swap identity that underlies
+commutativity of the degree-`n` coefficient. -/
 private theorem mulCoeffTerm_comm_reindex
     (f g : FpPoly p) (n i : Nat) (hi : i < n + 1) :
     mulCoeffTerm f g n (n - i) = mulCoeffTerm g f n i := by
@@ -1893,6 +1905,10 @@ private theorem mulCoeffTerm_comm_reindex
   simp [mulCoeffTerm, hleft, hright, Nat.sub_sub_self hile]
   grind
 
+/-- Over any index list whose entries stay below `n + 1`, folding the
+reindexed `f, g` terms `mulCoeffTerm f g n (n - i)` matches folding the
+swapped `g, f` terms, lifting `mulCoeffTerm_comm_reindex` from a single index
+to the whole fold. -/
 private theorem fold_mulCoeff_comm_reindex_list
     (f g : FpPoly p) (n : Nat) (xs : List Nat)
     (hxs : ∀ i, i ∈ xs → i < n + 1) (acc : ZMod64 p) :
@@ -1909,6 +1925,9 @@ private theorem fold_mulCoeff_comm_reindex_list
         intro j hj
         exact hxs j (by simp [hj])) (acc + mulCoeffTerm g f n i)
 
+/-- The full degree-`n` coefficient sum over `List.range (n + 1)` is invariant
+under swapping `f` and `g`, combining the reverse, reindex, and pointwise-swap
+lemmas into the per-coefficient identity that `mul_comm` consumes. -/
 private theorem fold_mulCoeff_comm
     (f g : FpPoly p) (n : Nat) :
     (List.range (n + 1)).foldl (fun acc i => acc + mulCoeffTerm f g n i) 0 =
