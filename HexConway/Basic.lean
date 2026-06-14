@@ -140,6 +140,8 @@ theorem prime_two : Hex.Nat.Prime 2 := by
     · exact Or.inl rfl
     · exact Or.inr rfl
 
+/-- Registers `2` as a `ZMod64.PrimeModulus`, the witness derived from
+`prime_two`. -/
 instance instPrimeModulusTwo : ZMod64.PrimeModulus 2 :=
   ZMod64.primeModulusOfPrime prime_two
 
@@ -156,6 +158,8 @@ theorem prime_three : Hex.Nat.Prime 3 := by
     · simp at hm
     · exact Or.inr rfl
 
+/-- Registers `3` as a `ZMod64.PrimeModulus`, the witness derived from
+`prime_three`. -/
 instance instPrimeModulus3 : ZMod64.PrimeModulus 3 :=
   ZMod64.primeModulusOfPrime prime_three
 
@@ -173,6 +177,8 @@ private theorem prime_five : Hex.Nat.Prime 5 := by
     · simp at hm
     · exact Or.inr rfl
 
+/-- Registers `5` as a `ZMod64.PrimeModulus`, the witness derived from
+`prime_five`. -/
 instance instPrimeModulus5 : ZMod64.PrimeModulus 5 :=
   ZMod64.primeModulusOfPrime prime_five
 
@@ -192,6 +198,8 @@ private theorem prime_seven : Hex.Nat.Prime 7 := by
     · simp at hm
     · exact Or.inr rfl
 
+/-- Registers `7` as a `ZMod64.PrimeModulus`, the witness derived from
+`prime_seven`. -/
 instance instPrimeModulus7 : ZMod64.PrimeModulus 7 :=
   ZMod64.primeModulusOfPrime prime_seven
 
@@ -215,6 +223,8 @@ private theorem prime_eleven : Hex.Nat.Prime 11 := by
     · simp at hm
     · exact Or.inr rfl
 
+/-- Registers `11` as a `ZMod64.PrimeModulus`, the witness derived from
+`prime_eleven`. -/
 instance instPrimeModulus11 : ZMod64.PrimeModulus 11 :=
   ZMod64.primeModulusOfPrime prime_eleven
 
@@ -240,6 +250,8 @@ private theorem prime_thirteen : Hex.Nat.Prime 13 := by
     · simp at hm
     · exact Or.inr rfl
 
+/-- Registers `13` as a `ZMod64.PrimeModulus`, the witness derived from
+`prime_thirteen`. -/
 instance instPrimeModulus13 : ZMod64.PrimeModulus 13 :=
   ZMod64.primeModulusOfPrime prime_thirteen
 
