@@ -23,6 +23,10 @@ def coeffwiseDiv (f : ZPoly) (m : Nat) : ZPoly :=
   DensePoly.ofCoeffs <|
     (List.range f.size).map (fun i => f.coeff i / Int.ofNat m) |>.toArray
 
+/-- The `i`-th coefficient of `coeffwiseDiv f m` is the truncating integer
+quotient of `f.coeff i` by `m`. Lets a caller rewrite coefficient queries on
+the divided polynomial straight back to a division on the original
+coefficient, with no dependence on the polynomial's size. -/
 @[simp] theorem coeff_coeffwiseDiv (f : ZPoly) (m i : Nat) :
     (coeffwiseDiv f m).coeff i = f.coeff i / Int.ofNat m := by
   unfold coeffwiseDiv
@@ -77,6 +81,11 @@ namespace LinearLiftResult
 def liftScaledIncrement (p k : Nat) [ZMod64.Bounds p] (r : FpPoly p) : ZPoly :=
   DensePoly.scale (Int.ofNat (p ^ k)) (FpPoly.liftToZ r)
 
+/-- The `i`-th coefficient of `liftScaledIncrement p k r` is `p ^ k` times the
+nonnegative lift of `r.coeff i`. Exposes the increment added during a linear
+Hensel step coefficientwise, so a caller can track exactly how much each
+coefficient moves and confirm the change is a multiple of the current modulus
+`p ^ k`. -/
 @[simp] theorem coeff_liftScaledIncrement
     (p k : Nat) [ZMod64.Bounds p] (r : FpPoly p) (i : Nat) :
     (liftScaledIncrement p k r).coeff i =
@@ -1479,6 +1488,11 @@ private theorem reduceModPow_degree?_eq_of_monic
     _ = f.degree? := by
       rw [degree?_eq_some_size_sub_one_of_monic f hmonic]
 
+/-- Reducing a monic `ZPoly` modulo `p ^ (k + 1)` keeps it monic, provided
+`1 < p`. The hypothesis guarantees the modulus exceeds the leading
+coefficient `1`, so reduction leaves it fixed and does not raise the degree;
+callers rely on this to know the lifted factors stay monic across every
+linear Hensel step. -/
 theorem reduceModPow_monic_of_monic
     (p k : Nat) (f : ZPoly)
     (hp : 1 < p)
