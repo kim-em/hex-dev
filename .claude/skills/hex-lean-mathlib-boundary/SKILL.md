@@ -191,6 +191,24 @@ parts that *do* build in isolation, and preserve the blocked parts (source in
 the issue comment) for a follow-up gated on the remodel issue rather than
 merging unverified Lean.
 
+The inverse also bites: **fixing a red dependency unmasks pre-existing breakage
+in files downstream of it.** If `Basic.lean` is red on main, every module that
+imports it (`Recovery.lean`, `IntReductionMod.lean`, `PartitionRefinement.lean`)
+is never reached by a full-target build — so a clean-`origin/main`
+`lake build HexBerlekampZassenhausMathlib` is **not** a valid baseline for those
+downstream files; it stops at `Basic.lean` and reports zero downstream errors
+purely because elaboration never got there. When your PR makes `Basic.lean`
+green, the full target proceeds and surfaces those downstream errors for the
+first time — they look like regressions but are not. Confirm by grepping that
+the failing downstream file uses none of the declarations your diff touched
+(`grep -ln <changed-lemma-names> <downstream>.lean`) and that the error shapes
+are internal to it (e.g. `unfold <unchanged-def>` failures, a kernel cascade on
+some `…_ne_none_…` constant from a separate mid-flight migration). Then verify
+your deliverable with the **module** build (`lake build
+HexBerlekampZassenhausMathlib.Basic`), note the unmasked downstream breakage in
+the PR body as pre-existing/out-of-scope (name the owning migration issue), and
+do **not** try to fix it — that is a different issue's remodel.
+
 ## Pre-existing sorries
 
 `HexBerlekampMathlib/Basic.lean` and `HexHenselMathlib/Correctness.lean` ship

@@ -487,12 +487,12 @@ per-request `svp_certified` floor — the fixed fork + startup cost of one
 request, which Hex's in-process `fplll-ffi` path avoids. The floor is the
 committed `runIsabelleCertifiedProcessFloorNormSq` benchmark (a trivial 2×2
 request, so its median is the floor with negligible `n`-dependent work),
-~20.3 ms on `carica`; the plot reads that value rather than a hardcoded
-constant. The ratio tables above and the scaling fits keep the raw medians;
-only the plotted curve is adjusted. A rung whose raw median is at or below
-the floor is entirely process-bound — its de-floored value is the noise of a
-near-zero difference — so it is dropped from the adjusted curve rather than
-plotted (harsh-cubic `n = 15`, raw 20.2 ms, is the one such rung).
+measured in the **same run** as the harsh-cubic ladder (~19.9 ms on `carica`)
+so it is a true lower bound under every rung and every point survives the
+subtraction — including harsh-cubic `n = 15`, whose certified work is only
+~2.4 ms above the floor. The plot reads that measured value rather than a
+hardcoded constant; the ratio tables above and the scaling fits keep the raw
+medians.
 
 The harsh-cubic plot shows the same six series, and this is the family where the
 steered curve matters most. The exact `d`/`ν` reducers ride the `~n^5.6` slope
@@ -511,7 +511,7 @@ across the new top rungs (`0.090×` at `n = 65`).
 
 Here too the Isabelle-certified curve is adjusted down by its measured
 per-request `svp_certified` floor (the committed
-`runIsabelleCertifiedProcessFloorNormSq` benchmark, ~20.3 ms; see
+`runIsabelleCertifiedProcessFloorNormSq` benchmark, ~19.9 ms; see
 [§Per-call comparator overhead](#per-call-comparator-overhead)); as on the
 random-bounded figure, the ratio tables and scaling fits keep the raw
 medians.
@@ -532,12 +532,14 @@ the steered reducer is the one that moved the native curve out of the
 Both gating and informational comparators are wired through the persistent-subprocess protocol described at the top of `HexLLL/Bench.lean`. The per-call protocol overhead, measured on the audit host, is:
 
 - `Isabelle` (gating): **~9 µs** per steady-state request after the one-time GHC startup.
-- `Isabelle certified-LLL`: **~20.3 ms** per trivial end-to-end request through
+- `Isabelle certified-LLL`: **~19.9 ms** per trivial end-to-end request through
   persistent `svp_certified`; this includes the per-request `fplll` subprocess
   and certificate/reducedness checks. This is now a committed, registered
   measurement — `runIsabelleCertifiedProcessFloorNormSq` (a trivial 2×2
-  request) — so the comparator plot subtracts a reproducible floor rather than
-  a hardcoded constant; the earlier audit-host figure was ~18.8 ms.
+  request), taken in the same run as the harsh-cubic Isabelle-certified ladder
+  — so the comparator plot subtracts a reproducible floor that is a true lower
+  bound under every rung, rather than a hardcoded constant; the earlier
+  audit-host figure was ~18.8 ms.
 - `fpLLL via fpylll` (informational): **~34 µs** per steady-state request after the one-time CPython + `import fpylll` startup.
 
 Both figures are below the 5 % overhead-to-measured-time floor that

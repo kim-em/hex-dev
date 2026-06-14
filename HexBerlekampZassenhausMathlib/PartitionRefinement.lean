@@ -207,7 +207,33 @@ theorem supportPartitionByMinColumn_length_eq_liftedTrueSupports_ncard
     (liftedTrueSupports.cover_of_partition hpartition)
     (liftedTrueSupports.eq_of_mem_inter_of_partition hpartition)
     (liftedTrueSupports.nonempty_of_partition
-      hcore_ne hcore_primitive hcore_lc_pos hprecision)
+      hpartition hcore_ne hcore_primitive hcore_lc_pos hprecision)
+
+/--
+B8 partition-refinement equality for the lifted true-support family: the
+support-equivalence partition length matches the number of normalized
+irreducible factors of `core`.
+
+This composes the lifted-support partition count
+(`supportPartitionByMinColumn_length_eq_liftedTrueSupports_ncard`) with the
+support-to-factor bijection (`liftedTrueSupports.ncard_eq_normalizedFactors_card`),
+exposing exactly the `hpartition` hypothesis consumed by
+`factorFastCoreWithBound_some_factor_zpolyIrreducible`.
+-/
+theorem supportPartitionByMinColumn_length_eq_normalizedFactors_card
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hpartition :
+      LiftedFactorSubsetPartition core d Finset.univ core)
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    (supportPartitionByMinColumn (liftedTrueSupports core d)).length =
+      (UniqueFactorizationMonoid.normalizedFactors
+        (HexPolyZMathlib.toPolynomial core)).card := by
+  rw [supportPartitionByMinColumn_length_eq_liftedTrueSupports_ncard
+      hpartition hcore_ne hcore_primitive hcore_lc_pos hprecision,
+    liftedTrueSupports.ncard_eq_normalizedFactors_card hpartition hcore_ne]
 
 namespace ForwardRecoveryInputs
 

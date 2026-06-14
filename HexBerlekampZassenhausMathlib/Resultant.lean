@@ -1084,6 +1084,236 @@ theorem pow_dvd_resultant_of_map_dvd
   rw [hcast, Polynomial.resultant_comm]
   exact key.mul_left _
 
+/--
+The CLD-syzygy column-reduction transform for the Sylvester matrix.
+
+In the `Fin (m + n)` layout of `sylvester f g m n`, the *left* block columns
+`d, d+1, …, 2d-1` are the pivot columns. Column `d + t` carries the coordinate
+vector of the shifted CLD-syzygy direction `(q * X^t, -q' * X^t)` in
+`degreeLT.basisProd`: its left `m` entries are the coefficients of the monic
+`q * X^t`, its right `n` entries those of `-q' * X^t`. Every other column is the
+identity column.
+
+Right-multiplying `sylvester f g m n` by this matrix replaces each pivot column
+with the syzygy combination `S.mulVec (direction)` (entrywise divisible by the
+syzygy scalar, via `sylvester_mulVec_cld_syzygy`) while leaving the others
+fixed. The matrix is block-lower-triangular for the left/right partition — its
+top-right block vanishes because the right columns stay identity — and its left
+diagonal block is upper triangular with the monic leading `1` of `q * X^t` on
+the diagonal, so `det = 1`. Unlike `colReduceTransform`, the monic pivot here is
+the *left* component `q`, so the matrix is not triangular under the natural
+order; the determinant is read off the block decomposition.
+-/
+def cldColReduceTransform {R : Type*} [CommRing R] (q : Polynomial R) (m n d : Nat) :
+    Matrix (Fin (m + n)) (Fin (m + n)) R :=
+  Matrix.of fun i j =>
+    j.addCases
+      (fun j₁ =>
+        if d ≤ (j₁ : ℕ) ∧ (j₁ : ℕ) < 2 * d then
+          i.addCases
+            (fun i₁ => (q * Polynomial.X ^ ((j₁ : ℕ) - d)).coeff i₁)
+            (fun i₂ => (-Polynomial.derivative q * Polynomial.X ^ ((j₁ : ℕ) - d)).coeff i₂)
+        else if i = j then 1 else 0)
+      (fun _j₂ => if i = j then 1 else 0)
+
+set_option maxHeartbeats 400000 in
+/-- The determinant of `cldColReduceTransform` is `1`: the left diagonal block is
+upper triangular with the monic leading coefficient of `q` on its diagonal, and
+the top-right block vanishes (the right columns are identity). -/
+theorem cldColReduceTransform_det {R : Type*} [CommRing R] (q : Polynomial R)
+    {m n d : Nat} (hq_monic : q.Monic) (hq_deg : q.natDegree = d) :
+    (cldColReduceTransform q m n d).det = 1 := by
+  classical
+  set TLL : Matrix (Fin m) (Fin m) R := Matrix.of fun i₁ j₁ =>
+    if d ≤ (j₁ : ℕ) ∧ (j₁ : ℕ) < 2 * d then (q * Polynomial.X ^ ((j₁ : ℕ) - d)).coeff i₁
+    else if i₁ = j₁ then 1 else 0 with hTLL
+  set TRL : Matrix (Fin n) (Fin m) R := Matrix.of fun i₂ j₁ =>
+    if d ≤ (j₁ : ℕ) ∧ (j₁ : ℕ) < 2 * d then
+      (-Polynomial.derivative q * Polynomial.X ^ ((j₁ : ℕ) - d)).coeff i₂
+    else 0 with hTRL
+  have hblock : cldColReduceTransform q m n d
+      = (Matrix.fromBlocks TLL 0 TRL (1 : Matrix (Fin n) (Fin n) R)).reindex
+          finSumFinEquiv finSumFinEquiv := by
+    ext i j
+    rw [Matrix.reindex_apply, Matrix.submatrix_apply]
+    induction j using Fin.addCases with
+    | left j₁ =>
+        rw [finSumFinEquiv_symm_apply_castAdd, cldColReduceTransform, Matrix.of_apply,
+          Fin.addCases_left]
+        induction i using Fin.addCases with
+        | left i₁ =>
+            rw [finSumFinEquiv_symm_apply_castAdd, Matrix.fromBlocks_apply₁₁, hTLL,
+              Matrix.of_apply]
+            by_cases hpiv : d ≤ (j₁ : ℕ) ∧ (j₁ : ℕ) < 2 * d
+            · simp only [if_pos hpiv, Fin.addCases_left]
+            · simp only [if_neg hpiv, Fin.ext_iff, Fin.val_castAdd]
+        | right i₂ =>
+            rw [finSumFinEquiv_symm_apply_natAdd, Matrix.fromBlocks_apply₂₁, hTRL,
+              Matrix.of_apply]
+            by_cases hpiv : d ≤ (j₁ : ℕ) ∧ (j₁ : ℕ) < 2 * d
+            · simp only [if_pos hpiv, Fin.addCases_right]
+            · simp only [if_neg hpiv]
+              refine if_neg (fun h => ?_)
+              have := j₁.is_lt
+              simp only [Fin.ext_iff, Fin.val_natAdd, Fin.val_castAdd] at h
+              omega
+    | right j₂ =>
+        rw [finSumFinEquiv_symm_apply_natAdd, cldColReduceTransform, Matrix.of_apply,
+          Fin.addCases_right]
+        induction i using Fin.addCases with
+        | left i₁ =>
+            rw [finSumFinEquiv_symm_apply_castAdd, Matrix.fromBlocks_apply₁₂,
+              Matrix.zero_apply]
+            refine if_neg (fun h => ?_)
+            have := i₁.is_lt
+            simp only [Fin.ext_iff, Fin.val_castAdd, Fin.val_natAdd] at h
+            omega
+        | right i₂ =>
+            rw [finSumFinEquiv_symm_apply_natAdd, Matrix.fromBlocks_apply₂₂,
+              Matrix.one_apply]
+            simp only [Fin.ext_iff, Fin.val_natAdd, add_right_inj]
+  rw [hblock, Matrix.det_reindex_self, Matrix.det_fromBlocks_zero₁₂, Matrix.det_one, mul_one]
+  -- The left diagonal block is upper triangular with unit diagonal.
+  have htri : TLL.BlockTriangular id := by
+    intro i₁ j₁ hlt
+    simp only [id_eq, Fin.lt_def] at hlt
+    rw [hTLL, Matrix.of_apply]
+    by_cases hpiv : d ≤ (j₁ : ℕ) ∧ (j₁ : ℕ) < 2 * d
+    · rw [if_pos hpiv, Polynomial.coeff_mul_X_pow']
+      split_ifs with hk
+      · apply Polynomial.coeff_eq_zero_of_natDegree_lt
+        rw [hq_deg]; omega
+      · rfl
+    · rw [if_neg hpiv]
+      exact if_neg (fun h => by rw [h] at hlt; exact lt_irrefl _ hlt)
+  rw [Matrix.det_of_upperTriangular htri]
+  apply Finset.prod_eq_one
+  intro i₁ _
+  rw [hTLL, Matrix.of_apply]
+  by_cases hpiv : d ≤ (i₁ : ℕ) ∧ (i₁ : ℕ) < 2 * d
+  · rw [if_pos hpiv, Polynomial.coeff_mul_X_pow', if_pos (Nat.sub_le _ _)]
+    have hidx : (i₁ : ℕ) - ((i₁ : ℕ) - d) = d := by omega
+    rw [hidx, ← hq_deg]
+    exact hq_monic.coeff_natDegree
+  · simp [hpiv]
+
+/-- The pivot column `d + t` (in the left block) of `cldColReduceTransform` is the
+coordinate vector of the shifted CLD-syzygy direction `(q * X^t, -q' * X^t)` in
+`degreeLT.basisProd`. -/
+theorem cldColReduceTransform_pivot_col {R : Type*} [CommRing R] (q : Polynomial R)
+    {m n d : Nat} (t : Nat) (htd : t < d) (htm : d + t < m)
+    (hl : q * Polynomial.X ^ t ∈ Polynomial.degreeLT R m)
+    (hr : -Polynomial.derivative q * Polynomial.X ^ t ∈ Polynomial.degreeLT R n) :
+    (fun k => cldColReduceTransform q m n d k ((⟨d + t, htm⟩ : Fin m).castAdd n))
+      = (Polynomial.degreeLT.basisProd R m n).repr
+          (⟨q * Polynomial.X ^ t, hl⟩,
+           ⟨-Polynomial.derivative q * Polynomial.X ^ t, hr⟩) := by
+  funext k
+  rw [cldColReduceTransform, Matrix.of_apply, Fin.addCases_left]
+  rw [if_pos ⟨Nat.le_add_right d t, show d + t < 2 * d by omega⟩]
+  have hexp : d + t - d = t := by omega
+  rw [hexp]
+  induction k using Fin.addCases with
+  | left k₁ => rw [Fin.addCases_left, basisProd_repr_castAdd]
+  | right k₂ => rw [Fin.addCases_right, basisProd_repr_natAdd]
+
+/--
+CLD-syzygy resultant divisibility (BHKS Lemma 3.2 core, scalar form).
+
+If a monic degree-`d` polynomial `q` and a witness `z` record the CLD syzygy
+`g * q - f * q' = C c * z`, then `c ^ d` divides the integer resultant of `f`
+and `g`. Crucially, no divisibility hypothesis `q ∣ g` (or its modular form) is
+assumed: the syzygy provides `d` Sylvester column directions
+`(q * X^t, -q' * X^t)` whose images are `c`-multiples, and the monic leading `1`
+of each `q * X^t` makes the column-reduction transform determinant-preserving.
+
+The degree bounds are intrinsic to the syzygy route: the `d` shifts of `q * X^t`
+must lie in `degreeLT f.natDegree` (forcing `2 * d ≤ f.natDegree`), and the `d`
+shifts of `-q' * X^t` must lie in `degreeLT g.natDegree` (forcing
+`2 * d ≤ g.natDegree + 1`). The first is the `deg input ≥ 2d` constraint flagged
+in BHKS Lemma 3.2; the second is the analogous bound on the auxiliary-polynomial
+degree, which downstream callers must also discharge (or fall back to the
+cut-based argument for small factors).
+-/
+theorem cld_syzygy_dvd_resultant
+    (f g q z : Polynomial ℤ) (c : ℤ) {d : Nat}
+    (hq_monic : q.Monic)
+    (hq_deg : q.natDegree = d)
+    (hsyz : g * q - f * Polynomial.derivative q = Polynomial.C c * z)
+    (hf_deg : 2 * d ≤ f.natDegree)
+    (hg_deg : 2 * d ≤ g.natDegree + 1) :
+    c ^ d ∣ Polynomial.resultant f g := by
+  classical
+  let A := Polynomial.sylvester f g f.natDegree g.natDegree
+      * cldColReduceTransform q f.natDegree g.natDegree d
+  let col : Fin d → Fin (f.natDegree + g.natDegree) := fun t =>
+    (⟨d + (t : ℕ), by have := t.is_lt; omega⟩ : Fin f.natDegree).castAdd g.natDegree
+  have hdetA :
+      A.det = (Polynomial.sylvester f g f.natDegree g.natDegree).det := by
+    dsimp only [A]
+    rw [Matrix.det_mul, cldColReduceTransform_det q hq_monic hq_deg, mul_one]
+  have hcol_inj : Function.Injective col := by
+    intro x y hxy
+    apply Fin.ext
+    have hnat : d + (x : ℕ) = d + (y : ℕ) := by
+      simpa only [col, Fin.ext_iff, Fin.val_castAdd] using hxy
+    omega
+  have hcols : ∀ (t : Fin d) (i : Fin (f.natDegree + g.natDegree)), c ∣ A i (col t) := by
+    intro t i
+    have htd : (t : ℕ) < d := t.is_lt
+    have htm : d + (t : ℕ) < f.natDegree := by omega
+    have hl : q * Polynomial.X ^ (t : ℕ) ∈ Polynomial.degreeLT ℤ f.natDegree := by
+      apply mul_X_pow_mem_degreeLT_of_natDegree_lt
+      have h1 : (q * Polynomial.X ^ (t : ℕ)).natDegree ≤ q.natDegree + (t : ℕ) :=
+        Polynomial.natDegree_mul_le.trans
+          (Nat.add_le_add_left (Polynomial.natDegree_X_pow_le _) _)
+      have h2 : q.natDegree + (t : ℕ) < f.natDegree := by rw [hq_deg]; omega
+      exact lt_of_le_of_lt h1 h2
+    have hr : -Polynomial.derivative q * Polynomial.X ^ (t : ℕ)
+        ∈ Polynomial.degreeLT ℤ g.natDegree := by
+      apply neg_mul_X_pow_mem_degreeLT_of_natDegree_lt
+      have h1 : (Polynomial.derivative q * Polynomial.X ^ (t : ℕ)).natDegree
+            ≤ (Polynomial.derivative q).natDegree + (t : ℕ) :=
+        Polynomial.natDegree_mul_le.trans
+          (Nat.add_le_add_left (Polynomial.natDegree_X_pow_le _) _)
+      have hqd : (Polynomial.derivative q).natDegree ≤ d - 1 := by
+        have := Polynomial.natDegree_derivative_le q; rw [hq_deg] at this; exact this
+      have h2 : (Polynomial.derivative q).natDegree + (t : ℕ) < g.natDegree := by omega
+      exact lt_of_le_of_lt h1 h2
+    have hcoleq : A i (col t)
+        = (Polynomial.sylvester f g f.natDegree g.natDegree).mulVec
+            ((Polynomial.degreeLT.basisProd ℤ f.natDegree g.natDegree).repr
+              (⟨q * Polynomial.X ^ (t : ℕ), hl⟩,
+               ⟨-Polynomial.derivative q * Polynomial.X ^ (t : ℕ), hr⟩)) i := by
+      dsimp only [A, col]
+      rw [← cldColReduceTransform_pivot_col q (t : ℕ) htd htm hl hr]
+      simp only [Matrix.mul_apply, Matrix.mulVec, dotProduct]
+    rw [hcoleq]
+    exact sylvester_mulVec_cld_syzygy f g q z c hsyz hl hr le_rfl le_rfl i
+  exact dvd_resultant_of_sylvester_cols f g c A col hcol_inj hdetA hcols
+
+/--
+Prime-power form of `cld_syzygy_dvd_resultant` (BHKS Lemma 3.2, as consumed by
+the Hensel/CLD layer). With the syzygy scalar `c = p ^ k`, the `d` column
+directions each carry one factor of `p ^ k`, so `p ^ (k * d)` divides the
+resultant. No hypothesis that the selected factor divides the auxiliary
+polynomial modulo `p ^ k` is required.
+-/
+theorem cld_syzygy_pow_dvd_resultant
+    {p k : Nat} (f g q z : Polynomial ℤ) {d : Nat}
+    (hq_monic : q.Monic)
+    (hq_deg : q.natDegree = d)
+    (hsyz : g * q - f * Polynomial.derivative q
+      = Polynomial.C ((p ^ k : Nat) : ℤ) * z)
+    (hf_deg : 2 * d ≤ f.natDegree)
+    (hg_deg : 2 * d ≤ g.natDegree + 1) :
+    ((p ^ (k * d) : Nat) : ℤ) ∣ Polynomial.resultant f g := by
+  have hbase : ((p ^ k : Nat) : ℤ) ^ d ∣ Polynomial.resultant f g :=
+    cld_syzygy_dvd_resultant f g q z _ hq_monic hq_deg hsyz hf_deg hg_deg
+  have hcast : ((p ^ (k * d) : Nat) : ℤ) = ((p ^ k : Nat) : ℤ) ^ d := by
+    rw [pow_mul, Nat.cast_pow]
+  rw [hcast]; exact hbase
+
 end
 
 end HexBerlekampZassenhausMathlib
