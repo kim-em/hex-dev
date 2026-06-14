@@ -4812,6 +4812,67 @@ private theorem ne_zero_of_isZero_false {f : FpPoly p}
   rw [hzero_isZero] at hf
   cases hf
 
+/-- The monic normalization absorbs a nonzero constant scalar: scaling the
+input by `C v` (`v ≠ 0`) leaves the monic associate unchanged. This is the
+algebraic root of `monicGcd_scalar_invariant`. -/
+private theorem normalizeMonic_C_mul_snd
+    [ZMod64.PrimeModulus p] {v : ZMod64 p} (hv : v ≠ 0) (h : FpPoly p) :
+    (normalizeMonic (DensePoly.C v * h)).2 = (normalizeMonic h).2 := by
+  cases hz : h.isZero with
+  | true =>
+      have hh0 : h = 0 := eq_zero_of_isZero_true h hz
+      subst hh0
+      rw [mul_zero]
+  | false =>
+      have hlead_ne := fpPoly_leadingCoeff_ne_zero_of_isZero_false h hz
+      have hsize : h.size ≠ 0 := by
+        simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero,
+          Bool.not_eq_true] using hz
+      have hCvh_ne : (DensePoly.C v * h).isZero = false := by
+        cases hcvh : (DensePoly.C v * h).isZero with
+        | false => rfl
+        | true =>
+            exfalso
+            have hsz0 : (DensePoly.C v * h).size = 0 :=
+              size_eq_zero_of_isZero_true _ hcvh
+            rw [C_mul_eq_scale, scale_size_eq_of_ne_zero hv h] at hsz0
+            exact hsize hsz0
+      rw [normalizeMonic_nonzero h hz,
+          normalizeMonic_nonzero (DensePoly.C v * h) hCvh_ne]
+      show DensePoly.scale (DensePoly.leadingCoeff (DensePoly.C v * h))⁻¹
+            (DensePoly.C v * h) =
+          DensePoly.scale (DensePoly.leadingCoeff h)⁻¹ h
+      rw [C_mul_eq_scale,
+          leadingCoeff_scale_of_ne_zero_of_nonzero hv h hsize,
+          scale_scale]
+      congr 1
+      have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
+      have hva_ne : v * DensePoly.leadingCoeff h ≠ 0 := by
+        intro h0
+        rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp h0 with h1 | h1
+        · exact hv h1
+        · exact hlead_ne h1
+      have hva_inv : v * DensePoly.leadingCoeff h * (v * DensePoly.leadingCoeff h)⁻¹ = 1 :=
+        zmod64_mul_inv_eq_one_of_prime_ne_zero hp hva_ne
+      have ha_inv : DensePoly.leadingCoeff h * (DensePoly.leadingCoeff h)⁻¹ = 1 :=
+        zmod64_mul_inv_eq_one_of_prime_ne_zero hp hlead_ne
+      have hv_inv : v * v⁻¹ = 1 :=
+        zmod64_mul_inv_eq_one_of_prime_ne_zero hp hv
+      grind
+
+/-- Scaling both gcd inputs by independent nonzero constants leaves the monic
+gcd unchanged. This is the load-bearing scalar-leak elimination: with monic
+normalization the unit the raw gcd would pick up is absorbed, so the recursion
+variables of the scaled and unscaled Yun loops coincide exactly. -/
+private theorem monicGcd_scalar_invariant
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    {u_c u_w : ZMod64 p} (hu_c : u_c ≠ 0) (hu_w : u_w ≠ 0) (c w : FpPoly p) :
+    monicGcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) = monicGcd c w := by
+  obtain ⟨v, hv, hgcd⟩ :=
+    gcd_C_mul_left_C_mul_right_eq_C_mul_gcd hp u_c u_w hu_c hu_w c w
+  simp only [monicGcd_def]
+  rw [hgcd, normalizeMonic_C_mul_snd hv]
+
 /--
 One derivative-active Yun step is stable under a common nonzero scalar multiple.
 
