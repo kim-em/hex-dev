@@ -9,6 +9,8 @@ initial theorem surface describing its computational invariants.
 -/
 namespace Hex
 
+/-- Indexing a mapped `List.range size` with default zero yields `f n` when
+`n < size` and zero otherwise. -/
 private theorem list_getD_map_range {α : Type} [Zero α] (size n : Nat) (f : Nat → α) :
     ((List.range size).map f).getD n (Zero.zero : α) =
       if n < size then f n else (Zero.zero : α) := by
@@ -151,6 +153,8 @@ def linearHenselStep
       reduceModPow (h + LinearLiftResult.liftScaledIncrement p k hCorrection) p (k + 1) := by
   simp [linearHenselStep]
 
+/-- The product of two factors reduced modulo `p ^ k` is congruent modulo
+`p ^ k` to the product of the original factors. -/
 private theorem congr_mul_reduceModPow_pair
     (p k : Nat) [ZMod64.Bounds p] (g h : ZPoly) :
     ZPoly.congr
@@ -203,6 +207,8 @@ theorem congr_liftToZ_of_modP_eq
     ZPoly.congr (FpPoly.liftToZ u) z p := by
   simpa [← h] using FpPoly.congr_liftToZ_modP (p := p) z
 
+/-- The integer lift of a `ZMod64 p` sum agrees modulo `p` with the sum of the
+integer lifts of the summands. -/
 private theorem zmod_add_lift_congr
     (p : Nat) [ZMod64.Bounds p] (a b : ZMod64 p) :
     (Int.ofNat (a + b).toNat - (Int.ofNat a.toNat + Int.ofNat b.toNat)) %
@@ -226,6 +232,7 @@ private theorem zmod_add_lift_congr
         simp [Int.ofNat_eq_natCast]]
   exact Int.emod_eq_zero_of_dvd hdiv
 
+/-- The sum of the two zero residues in `ZMod64 p` is zero. -/
 private theorem zmod_add_zero_zero (p : Nat) [ZMod64.Bounds p] :
     (Zero.zero : ZMod64 p) + (Zero.zero : ZMod64 p) = (Zero.zero : ZMod64 p) := by
   apply ZMod64.ext
@@ -254,6 +261,8 @@ theorem liftToZ_add_congr
   rw [FpPoly.coeff_liftToZ, FpPoly.coeff_liftToZ]
   exact zmod_add_lift_congr p (f.coeff i) (g.coeff i)
 
+/-- The integer lift of a `ZMod64 p` product agrees modulo `p` with the product
+of the integer lifts of the factors. -/
 private theorem zmod_mul_lift_congr
     (p : Nat) [ZMod64.Bounds p] (a b : ZMod64 p) :
     (Int.ofNat (a * b).toNat - (Int.ofNat a.toNat * Int.ofNat b.toNat)) %
@@ -298,14 +307,20 @@ private theorem liftToZ_mulCoeffTerm_congr
     simp [hni, heq, FpPoly.coeff_liftToZ]
     exact zmod_mul_lift_congr p (f.coeff i) (g.coeff (n - i))
 
+/-- The `i`-th diagonal contribution `p.coeff i * q.coeff (n - i)` to the `n`-th
+coefficient of the integer product `p * q`, taken to be zero when `n < i`. -/
 private def intDiagonalMulCoeffTerm
     (p q : ZPoly) (n i : Nat) : Int :=
   if n < i then 0 else p.coeff i * q.coeff (n - i)
 
+/-- The `i`-th integer diagonal term of `p * q` at coefficient `n`, additionally
+zeroed when the partner index `n - i` reaches the bound `m`. -/
 private def intBoundedDiagonalMulCoeffTerm
     (p q : ZPoly) (n i m : Nat) : Int :=
   if n < i then 0 else if n - i < m then p.coeff i * q.coeff (n - i) else 0
 
+/-- Folding `DensePoly.mulCoeffStep` over `List.range m` from `acc` adds exactly
+`intBoundedDiagonalMulCoeffTerm p q n i m` to `acc`. -/
 private theorem fold_mulCoeffStep_eq_bounded_diagonal_int
     (p q : ZPoly) (n i m : Nat) (acc : Int) :
     (List.range m).foldl (DensePoly.mulCoeffStep p q n i) acc =
@@ -331,6 +346,8 @@ private theorem fold_mulCoeffStep_eq_bounded_diagonal_int
           · have hm' : ¬ n - i < m + 1 := by omega
             simp [hlt, hm, hm', heq]
 
+/-- Folding `DensePoly.mulCoeffStep` over `List.range q.size` from `acc` adds
+exactly the unbounded `intDiagonalMulCoeffTerm p q n i` to `acc`. -/
 private theorem fold_mulCoeffStep_eq_diagonal_int
     (p q : ZPoly) (n i : Nat) (acc : Int) :
     (List.range q.size).foldl (DensePoly.mulCoeffStep p q n i) acc =
@@ -345,6 +362,8 @@ private theorem fold_mulCoeffStep_eq_diagonal_int
         DensePoly.coeff_eq_zero_of_size_le q (Nat.le_of_not_gt hbound)
       simp [hlt, hbound, hcoeff]
 
+/-- The outer fold over indices `xs` collapses each inner `mulCoeffStep` fold to
+its flat diagonal term `intDiagonalMulCoeffTerm p q n i`. -/
 private theorem fold_mulCoeff_outer_eq_diagonal_int
     (p q : ZPoly) (n : Nat) (xs : List Nat) (acc : Int) :
     xs.foldl
@@ -370,6 +389,8 @@ private theorem mulCoeffSum_eq_diagonal_int (p q : ZPoly) (n : Nat) :
   unfold DensePoly.mulCoeffSum
   exact fold_mulCoeff_outer_eq_diagonal_int p q n (List.range p.size) 0
 
+/-- The diagonal term `intDiagonalMulCoeffTerm p q n i` vanishes once the index
+`i` reaches `p.size`, since `p.coeff i` is then zero. -/
 private theorem intDiagonalMulCoeffTerm_eq_zero_of_size_le
     (p q : ZPoly) (n i : Nat) (hi : p.size ≤ i) :
     intDiagonalMulCoeffTerm p q n i = 0 := by
@@ -379,6 +400,8 @@ private theorem intDiagonalMulCoeffTerm_eq_zero_of_size_le
   · have hcoeff : p.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le p hi
     simp [hn, hcoeff]
 
+/-- Extending the diagonal-sum fold range from `p.size` to `p.size + d` leaves
+the total unchanged, as every added term vanishes. -/
 private theorem fold_diagonal_extend_int (p q : ZPoly) (n d : Nat) :
     (List.range (p.size + d)).foldl (fun acc i => acc + intDiagonalMulCoeffTerm p q n i) 0 =
       (List.range p.size).foldl (fun acc i => acc + intDiagonalMulCoeffTerm p q n i) 0 := by
@@ -393,6 +416,8 @@ private theorem fold_diagonal_extend_int (p q : ZPoly) (n d : Nat) :
         intDiagonalMulCoeffTerm_eq_zero_of_size_le p q n (p.size + d) (by omega)
       simp [hterm]
 
+/-- The diagonal sum taken over `p.size` indices equals the diagonal sum taken
+over any larger bound `m ≥ p.size`. -/
 private theorem diagonalSum_eq_bound_int
     (p q : ZPoly) (n m : Nat) (hm : p.size ≤ m) :
     (List.range p.size).foldl (fun acc i => acc + intDiagonalMulCoeffTerm p q n i) 0 =
@@ -401,6 +426,7 @@ private theorem diagonalSum_eq_bound_int
   rw [← hm']
   exact (fold_diagonal_extend_int p q n (m - p.size)).symm
 
+/-- The integer lift `FpPoly.liftToZ f` has size at most that of `f`. -/
 private theorem liftToZ_size_le
     (p : Nat) [ZMod64.Bounds p] (f : FpPoly p) :
     (FpPoly.liftToZ f).size ≤ f.size := by
@@ -420,6 +446,8 @@ private theorem liftToZ_size_le
       rw [ZMod64.toNat_zero]
       rfl)
 
+/-- The lifted `FpPoly` diagonal term `FpPoly.mulCoeffTerm f g n i` agrees modulo
+`p` with the integer diagonal term `intDiagonalMulCoeffTerm` of the lifts. -/
 private theorem liftToZ_mulCoeffTerm_diagonal_congr
     (p : Nat) [ZMod64.Bounds p] (f g : FpPoly p) (n i : Nat) :
     (Int.ofNat (FpPoly.mulCoeffTerm f g n i).toNat -
@@ -435,6 +463,8 @@ private theorem liftToZ_mulCoeffTerm_diagonal_congr
     have heq : i + (n - i) = n := Nat.add_sub_of_le hle
     simpa [hni, DensePoly.mulCoeffStep, heq] using liftToZ_mulCoeffTerm_congr p f g n i
 
+/-- Additivity of the mod-`p` lift congruence: if `a` lifts to `x` and `b` lifts
+to `y` modulo `p`, then `a + b` lifts to `x + y` modulo `p`. -/
 private theorem zmod_add_lift_congr_of_terms
     (p : Nat) [ZMod64.Bounds p] (a b : ZMod64 p) (x y : Int)
     (ha : (Int.ofNat a.toNat - x) % (p : Int) = 0)
@@ -647,6 +677,8 @@ theorem modP_add_lift_mul
       r * ZPoly.modP p h + ZPoly.modP p g * hCorrection := by
   rw [modP_add, modP_lift_mul_left, modP_lift_mul_right]
 
+/-- Scaling two polynomials congruent modulo `p` by `p ^ k` yields polynomials
+congruent modulo `p ^ (k + 1)`. -/
 private theorem scale_congr_of_congr_mod_base
     (p k : Nat) (first e : ZPoly)
     (_hk : 1 ≤ k)
@@ -671,6 +703,8 @@ private theorem scale_congr_of_congr_mod_base
   change (Int.ofNat (p ^ k) * Int.ofNat p) * w = Int.ofNat (p ^ k * p) * w
   rfl
 
+/-- Any product of a coefficient of `liftScaledIncrement p k r` with a coefficient
+of `liftScaledIncrement p k hCorrection` is divisible by `p ^ (k + 1)`. -/
 private theorem liftScaledCoeff_product_dvd_next
     (p k : Nat) [ZMod64.Bounds p]
     (r hCorrection : FpPoly p) (_hk : 1 ≤ k) (i j : Nat) :
@@ -702,6 +736,8 @@ private theorem liftScaledCoeff_product_dvd_next
             Int.ofNat (p ^ k0 * (r.coeff i).toNat * (hCorrection.coeff j).toNat) := by
           grind
 
+/-- One `DensePoly.mulCoeffStep` of the two lifted-scaled increments preserves
+divisibility of the accumulator by `p ^ (k + 1)`. -/
 private theorem mulCoeffStep_liftScaled_dvd_next
     (p k : Nat) [ZMod64.Bounds p]
     (r hCorrection : FpPoly p) (_hk : 1 ≤ k)
@@ -730,6 +766,8 @@ private theorem mulCoeffStep_liftScaled_dvd_next
       _ = ((p ^ (k + 1) : Nat) : Int) * (a + c) := by grind
   · simpa [DensePoly.mulCoeffStep, hij] using hacc
 
+/-- Folding `DensePoly.mulCoeffStep` of the two lifted-scaled increments over any
+index list preserves divisibility of the accumulator by `p ^ (k + 1)`. -/
 private theorem foldl_mulCoeffStep_liftScaled_dvd_next
     (p k : Nat) [ZMod64.Bounds p]
     (r hCorrection : FpPoly p) (_hk : 1 ≤ k)
@@ -753,6 +791,8 @@ private theorem foldl_mulCoeffStep_liftScaled_dvd_next
           n i acc j)
           (mulCoeffStep_liftScaled_dvd_next p k r hCorrection _hk n i acc j hacc)
 
+/-- Folding the full nested `mulCoeffSum` of the two lifted-scaled increments over
+any index list preserves divisibility of the accumulator by `p ^ (k + 1)`. -/
 private theorem foldl_mulCoeffSum_liftScaled_dvd_next
     (p k : Nat) [ZMod64.Bounds p]
     (r hCorrection : FpPoly p) (_hk : 1 ≤ k)
@@ -790,6 +830,8 @@ private theorem foldl_mulCoeffSum_liftScaled_dvd_next
             n i)
           acc) hinner
 
+/-- The product of the two lifted-scaled increments is coefficientwise zero
+modulo `p ^ (k + 1)`. -/
 private theorem linearHenselStep_product_expansion_cross_congr
     (p k : Nat) [ZMod64.Bounds p]
     (r hCorrection : FpPoly p)
@@ -807,6 +849,8 @@ private theorem linearHenselStep_product_expansion_cross_congr
     foldl_mulCoeffSum_liftScaled_dvd_next p k r hCorrection _hk i
       (List.range (LinearLiftResult.liftScaledIncrement p k r).size) 0 ⟨0, by simp⟩
 
+/-- Scaling the left factor by `c` factors that constant out of one
+`DensePoly.mulCoeffStep` when the accumulator is itself scaled by `c`. -/
 private theorem mulCoeffStep_scale_left_int
     (c : Int) (f g : ZPoly) (n i : Nat) (acc : Int) (j : Nat) :
     DensePoly.mulCoeffStep (DensePoly.scale c f) g n i (c * acc) j =
@@ -818,6 +862,8 @@ private theorem mulCoeffStep_scale_left_int
     grind
   · rw [if_neg hij, if_neg hij]
 
+/-- Scaling the left factor by `c` factors that constant out of a
+`DensePoly.mulCoeffStep` fold over any index list. -/
 private theorem foldl_mulCoeffStep_scale_left_int
     (c : Int) (f g : ZPoly) (n i : Nat) (xs : List Nat) (acc : Int) :
     xs.foldl (DensePoly.mulCoeffStep (DensePoly.scale c f) g n i) (c * acc) =
@@ -830,6 +876,8 @@ private theorem foldl_mulCoeffStep_scale_left_int
       rw [mulCoeffStep_scale_left_int]
       exact ih (DensePoly.mulCoeffStep f g n i acc j)
 
+/-- Scaling the left factor by `c` factors that constant out of the full nested
+`mulCoeffSum` fold over any index list. -/
 private theorem foldl_mulCoeffSum_scale_left_int
     (c : Int) (f g : ZPoly) (n : Nat) (xs : List Nat) (acc : Int) :
     xs.foldl
@@ -850,6 +898,7 @@ private theorem foldl_mulCoeffSum_scale_left_int
       exact ih
         ((List.range g.size).foldl (DensePoly.mulCoeffStep f g n i) acc)
 
+/-- Scaling a polynomial by a nonzero integer `c` leaves its `size` unchanged. -/
 private theorem dense_size_scale_int_of_ne_zero
     (c : Int) (hc : c ≠ 0) (f : ZPoly) :
     (DensePoly.scale c f).size = f.size := by
@@ -882,6 +931,8 @@ private theorem dense_size_scale_int_of_ne_zero
       rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero c)] at hscale_zero
       exact (Int.mul_ne_zero hc hf_ne) hscale_zero
 
+/-- Scaling the left factor by a nonzero integer `c` commutes with multiplication:
+`scale c f * g = scale c (f * g)`. -/
 private theorem dense_scale_mul_left_int
     (c : Int) (hc : c ≠ 0) (f g : ZPoly) :
     DensePoly.scale c f * g = DensePoly.scale c (f * g) := by
@@ -894,6 +945,8 @@ private theorem dense_scale_mul_left_int
   simpa [Zero.zero] using
     (foldl_mulCoeffSum_scale_left_int c f g n (List.range f.size) 0)
 
+/-- Scaling the right factor by a nonzero integer `c` commutes with multiplication:
+`f * scale c g = scale c (f * g)`. -/
 private theorem dense_scale_mul_right_int
     (c : Int) (hc : c ≠ 0) (f g : ZPoly) :
     f * DensePoly.scale c g = DensePoly.scale c (f * g) := by
@@ -901,6 +954,8 @@ private theorem dense_scale_mul_right_int
   rw [dense_scale_mul_left_int c hc]
   rw [DensePoly.mul_comm_poly g f]
 
+/-- Scaling by `c` distributes over addition:
+`scale c (f + g) = scale c f + scale c g`. -/
 private theorem dense_scale_add_int
     (c : Int) (f g : ZPoly) :
     DensePoly.scale c (f + g) = DensePoly.scale c f + DensePoly.scale c g := by
@@ -913,6 +968,8 @@ private theorem dense_scale_add_int
   rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero c)]
   grind
 
+/-- When the cross term is zero modulo `m`, the regrouping
+`base + a + (b + cross)` is congruent to `base + (a + b)` modulo `m`. -/
 private theorem add_cross_congr
     (m : Nat) (base a b cross : ZPoly)
     (hcross : ZPoly.congr cross 0 m) :
@@ -933,6 +990,8 @@ private theorem add_cross_congr
   rw [hdiff]
   simpa using hx
 
+/-- The product of the corrected factors is congruent modulo `p ^ (k + 1)` to
+`g * h` plus the `p ^ k`-scaled first-order term `r * h + g * hCorrection`. -/
 private theorem linearHenselStep_product_expansion_identity_congr_core
     (p k : Nat) [ZMod64.Bounds p]
     (g h : ZPoly) (r hCorrection : FpPoly p)
@@ -973,6 +1032,8 @@ private theorem linearHenselStep_product_expansion_identity_congr_core
       (DensePoly.scale (Int.ofNat (p ^ k)) (g * FpPoly.liftToZ hCorrection))
       cross hcross
 
+/-- The same product expansion as the `_core` lemma, stated for the `let`-bound
+corrected factors `g'` and `h'`. -/
 private theorem linearHenselStep_product_expansion_identity_congr
     (p k : Nat) [ZMod64.Bounds p]
     (g h : ZPoly) (r hCorrection : FpPoly p)
@@ -989,6 +1050,8 @@ private theorem linearHenselStep_product_expansion_identity_congr
   simpa [g', h'] using
     linearHenselStep_product_expansion_identity_congr_core p k g h r hCorrection _hk
 
+/-- The recombination `g * h + (f - g * h)` is congruent to `f` modulo
+`p ^ (k + 1)`. -/
 private theorem linearHenselStep_recombine_error_congr
     (p k : Nat) (f g h : ZPoly) :
     ZPoly.congr (g * h + (f - g * h)) f (p ^ (k + 1)) := by
@@ -1000,6 +1063,9 @@ private theorem linearHenselStep_recombine_error_congr
   rw [hzero]
   simp
 
+/-- Given the mod-`p` correction equation, the first-order term
+`r * h + g * hCorrection` is congruent modulo `p` to the coefficientwise quotient
+`(f - g * h) / p ^ k`. -/
 private theorem linearHenselStep_first_order_congr
     (p k : Nat) [ZMod64.Bounds p]
     (f g h : ZPoly) (r hCorrection : FpPoly p)
@@ -1042,6 +1108,8 @@ private theorem linearHenselStep_first_order_congr
     (ZPoly.congr_symm _ _ _ hlift)
     (ZPoly.congr_trans _ _ _ p hcorr' he)
 
+/-- If `first` is congruent to `e` modulo `p` and `p ^ k * e = f - g * h`, then
+`p ^ k * first` is congruent to `f - g * h` modulo `p ^ (k + 1)`. -/
 private theorem linearHenselStep_scaled_first_order_congr
     (p k : Nat) [ZMod64.Bounds p]
     (f g h first e : ZPoly)
@@ -1055,6 +1123,8 @@ private theorem linearHenselStep_scaled_first_order_congr
   rw [← hbase]
   exact scale_congr_of_congr_mod_base p k first e _hk hfirst
 
+/-- Combining the product expansion with the scaled first-order congruence, the
+corrected factors `g'` and `h'` multiply to `f` modulo `p ^ (k + 1)`. -/
 private theorem linearHenselStep_product_expansion_congr
     (p k : Nat) [ZMod64.Bounds p]
     (f g h : ZPoly) (r hCorrection : FpPoly p)
@@ -1092,6 +1162,8 @@ private theorem linearHenselStep_product_expansion_congr
     (ZPoly.congr_trans _ _ _ _
       hsum (linearHenselStep_recombine_error_congr p k f g h))
 
+/-- From a mod-`p` correction identity for `r` and `hCorrection`, the corrected
+factors `g'` and `h'` multiply to `f` modulo `p ^ (k + 1)`. -/
 private theorem linearHenselStep_raw_factor_congr_from_correction
     (p k : Nat) [ZMod64.Bounds p]
     (f g h : ZPoly) (r hCorrection _e : FpPoly p)
@@ -1120,6 +1192,9 @@ private theorem linearHenselStep_raw_factor_congr_from_correction
   simpa [g', h', first] using
     linearHenselStep_product_expansion_congr p k f g h r hCorrection hk hprod hscaled
 
+/-- With Bezout cofactors `s`, `t` and a monic `g`, the linear-step corrected
+factors `g'` and `h'` built from the `divMod`-reduced correction multiply to `f`
+modulo `p ^ (k + 1)`. -/
 private theorem linearHenselStep_raw_factor_congr
     (p k : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
     (f g h : ZPoly) (s t : FpPoly p)
@@ -1156,6 +1231,8 @@ private theorem linearHenselStep_raw_factor_congr
     linearHenselStep_raw_factor_congr_from_correction
       p k f g h r hCorrection eMod hk hprod hcorr
 
+/-- The corrected factors reduced via `reduceModPow` to precision `p ^ (k + 1)`
+still multiply to `f` modulo `p ^ (k + 1)`. -/
 private theorem linearHenselStep_reduced_factor_congr
     (p k : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
     (f g h : ZPoly) (s t : FpPoly p)
@@ -1191,6 +1268,8 @@ private theorem linearHenselStep_reduced_factor_congr
       simpa [e, gMod, hMod, eMod, qr, q, r, g', hCorrection, h'] using
         linearHenselStep_raw_factor_congr p k f g h s t hk hprod hbez hmonic)
 
+/-- Iterates `linearHenselStep` for `steps` rounds starting at precision
+`p ^ current`, returning the accumulated lifted factor pair. -/
 private def henselLiftLoop
     (p : Nat) [ZMod64.Bounds p]
     (steps current : Nat)

@@ -64,6 +64,8 @@ def luebeckConwayPolynomialOfCoeffs
     (p : Nat) [ZMod64.Bounds p] (coeffs : List Nat) : FpPoly p :=
   FpPoly.ofCoeffs (coeffs.toArray.map (fun n => ZMod64.ofNat p n))
 
+/-- `1 ≠ 0` in `ZMod64 2`, the nondegeneracy fact that certifies the leading
+coefficient of the committed `C(2, 1)` literal is nonzero. -/
 private theorem one_ne_zero_two : (1 : ZMod64 2) ≠ 0 := by
   intro h
   have hm := (ZMod64.natCast_eq_natCast_iff (p := 2) 1 0).mp h
@@ -89,6 +91,8 @@ rather than triggering Tier 2 compatibility checks or Tier 3 search. -/
 def luebeckConwayPolynomial? (p n : Nat) [ZMod64.Bounds p] : Option (FpPoly p) :=
   (luebeckConwayCoeffs? p n).map (luebeckConwayPolynomialOfCoeffs p)
 
+/-- `luebeckConwayPolynomial? 2 1` resolves to the committed `C(2, 1)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_2_1` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_2_1 :
     luebeckConwayPolynomial? 2 1 = some luebeckConwayPolynomial_2_1 := by
   show some (luebeckConwayPolynomialOfCoeffs 2 [1, 1]) = some luebeckConwayPolynomial_2_1
@@ -105,14 +109,20 @@ def luebeckConwayPolynomial? (p n : Nat) [ZMod64.Bounds p] : Option (FpPoly p) :
   | 1 => rfl
   | _ + 2 => rfl
 
+/-- Degree `0` over `p = 2` is outside the committed table, so the lookup
+returns `none`. -/
 @[simp] theorem luebeckConwayPolynomial?_miss_two_zero :
     luebeckConwayPolynomial? 2 0 = (none : Option (FpPoly 2)) :=
   rfl
 
+/-- Degree `7` over `p = 2` is outside the committed table, so the lookup
+returns `none`. -/
 @[simp] theorem luebeckConwayPolynomial?_miss_two_seven :
     luebeckConwayPolynomial? 2 7 = (none : Option (FpPoly 2)) :=
   rfl
 
+/-- Degree `7` over `p = 3` is outside the committed table, so the lookup
+returns `none`. -/
 @[simp] theorem luebeckConwayPolynomial?_miss_three_seven :
     luebeckConwayPolynomial? 3 7 = (none : Option (FpPoly 3)) :=
   rfl
@@ -163,6 +173,7 @@ theorem prime_three : Hex.Nat.Prime 3 := by
 instance instPrimeModulus3 : ZMod64.PrimeModulus 3 :=
   ZMod64.primeModulusOfPrime prime_three
 
+/-- `Hex.Nat.Prime` witness for `p = 5`, a committed odd Conway prime. -/
 private theorem prime_five : Hex.Nat.Prime 5 := by
   constructor
   · decide
@@ -182,6 +193,7 @@ private theorem prime_five : Hex.Nat.Prime 5 := by
 instance instPrimeModulus5 : ZMod64.PrimeModulus 5 :=
   ZMod64.primeModulusOfPrime prime_five
 
+/-- `Hex.Nat.Prime` witness for `p = 7`, a committed odd Conway prime. -/
 private theorem prime_seven : Hex.Nat.Prime 7 := by
   constructor
   · decide
@@ -203,6 +215,7 @@ private theorem prime_seven : Hex.Nat.Prime 7 := by
 instance instPrimeModulus7 : ZMod64.PrimeModulus 7 :=
   ZMod64.primeModulusOfPrime prime_seven
 
+/-- `Hex.Nat.Prime` witness for `p = 11`, a committed odd Conway prime. -/
 private theorem prime_eleven : Hex.Nat.Prime 11 := by
   constructor
   · decide
@@ -228,6 +241,7 @@ private theorem prime_eleven : Hex.Nat.Prime 11 := by
 instance instPrimeModulus11 : ZMod64.PrimeModulus 11 :=
   ZMod64.primeModulusOfPrime prime_eleven
 
+/-- `Hex.Nat.Prime` witness for `p = 13`, a committed odd Conway prime. -/
 private theorem prime_thirteen : Hex.Nat.Prime 13 := by
   constructor
   · decide
@@ -265,6 +279,9 @@ private def cert_2_1 : Berlekamp.IrreducibilityCertificate where
   bezout := #[]
 
 set_option maxRecDepth 4096 in
+/-- The executable linear irreducibility-certificate checker accepts `cert_2_1`
+for the committed `C(2, 1)` entry, the evidence feeding
+`luebeckConwayPolynomial_2_1_irreducible`. -/
 private theorem cert_2_1_linear_check :
     Berlekamp.checkIrreducibilityCertificateLinear
         luebeckConwayPolynomial_2_1 luebeckConwayPolynomial_2_1_monic cert_2_1 = true := by
@@ -297,6 +314,8 @@ def luebeckConwayPolynomial_2_2 : FpPoly 2 :=
     0 < FpPoly.degree luebeckConwayPolynomial_2_2 := by
   decide
 
+/-- `luebeckConwayPolynomial? 2 2` resolves to the committed `C(2, 2)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_2_2` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_2_2 :
     luebeckConwayPolynomial? 2 2 = some luebeckConwayPolynomial_2_2 := by
   show some (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 1]) = some luebeckConwayPolynomial_2_2
@@ -331,6 +350,8 @@ def luebeckConwayPolynomial_2_3 : FpPoly 2 :=
     0 < FpPoly.degree luebeckConwayPolynomial_2_3 := by
   decide
 
+/-- `luebeckConwayPolynomial? 2 3` resolves to the committed `C(2, 3)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_2_3` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_2_3 :
     luebeckConwayPolynomial? 2 3 = some luebeckConwayPolynomial_2_3 := by
   show some (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 1]) = some luebeckConwayPolynomial_2_3
@@ -366,6 +387,8 @@ def luebeckConwayPolynomial_2_4 : FpPoly 2 :=
     0 < FpPoly.degree luebeckConwayPolynomial_2_4 := by
   decide
 
+/-- `luebeckConwayPolynomial? 2 4` resolves to the committed `C(2, 4)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_2_4` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_2_4 :
     luebeckConwayPolynomial? 2 4 = some luebeckConwayPolynomial_2_4 := by
   show some (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 0, 1]) = some luebeckConwayPolynomial_2_4
@@ -402,6 +425,8 @@ def luebeckConwayPolynomial_2_5 : FpPoly 2 :=
     0 < FpPoly.degree luebeckConwayPolynomial_2_5 := by
   decide
 
+/-- `luebeckConwayPolynomial? 2 5` resolves to the committed `C(2, 5)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_2_5` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_2_5 :
     luebeckConwayPolynomial? 2 5 = some luebeckConwayPolynomial_2_5 := by
   show some (luebeckConwayPolynomialOfCoeffs 2 [1, 0, 1, 0, 0, 1]) = some luebeckConwayPolynomial_2_5
@@ -439,6 +464,8 @@ def luebeckConwayPolynomial_2_6 : FpPoly 2 :=
     0 < FpPoly.degree luebeckConwayPolynomial_2_6 := by
   decide
 
+/-- `luebeckConwayPolynomial? 2 6` resolves to the committed `C(2, 6)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_2_6` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_2_6 :
     luebeckConwayPolynomial? 2 6 = some luebeckConwayPolynomial_2_6 := by
   show some (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 1, 1, 0, 1]) = some luebeckConwayPolynomial_2_6
@@ -472,6 +499,8 @@ def luebeckConwayPolynomial_3_1 : FpPoly 3 :=
     DensePoly.Monic luebeckConwayPolynomial_3_1 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 3 1` resolves to the committed `C(3, 1)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_3_1` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_3_1 :
     luebeckConwayPolynomial? 3 1 = some luebeckConwayPolynomial_3_1 := by
   show some (luebeckConwayPolynomialOfCoeffs 3 [1, 1]) = some luebeckConwayPolynomial_3_1
@@ -500,6 +529,8 @@ def luebeckConwayPolynomial_3_2 : FpPoly 3 :=
     DensePoly.Monic luebeckConwayPolynomial_3_2 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 3 2` resolves to the committed `C(3, 2)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_3_2` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_3_2 :
     luebeckConwayPolynomial? 3 2 = some luebeckConwayPolynomial_3_2 := by
   show some (luebeckConwayPolynomialOfCoeffs 3 [2, 2, 1]) = some luebeckConwayPolynomial_3_2
@@ -529,6 +560,8 @@ def luebeckConwayPolynomial_3_3 : FpPoly 3 :=
     DensePoly.Monic luebeckConwayPolynomial_3_3 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 3 3` resolves to the committed `C(3, 3)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_3_3` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_3_3 :
     luebeckConwayPolynomial? 3 3 = some luebeckConwayPolynomial_3_3 := by
   show some (luebeckConwayPolynomialOfCoeffs 3 [1, 2, 0, 1]) = some luebeckConwayPolynomial_3_3
@@ -559,6 +592,8 @@ def luebeckConwayPolynomial_3_4 : FpPoly 3 :=
     DensePoly.Monic luebeckConwayPolynomial_3_4 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 3 4` resolves to the committed `C(3, 4)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_3_4` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_3_4 :
     luebeckConwayPolynomial? 3 4 = some luebeckConwayPolynomial_3_4 := by
   show some (luebeckConwayPolynomialOfCoeffs 3 [2, 0, 0, 2, 1]) = some luebeckConwayPolynomial_3_4
@@ -590,6 +625,8 @@ def luebeckConwayPolynomial_3_5 : FpPoly 3 :=
     DensePoly.Monic luebeckConwayPolynomial_3_5 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 3 5` resolves to the committed `C(3, 5)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_3_5` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_3_5 :
     luebeckConwayPolynomial? 3 5 = some luebeckConwayPolynomial_3_5 := by
   show some (luebeckConwayPolynomialOfCoeffs 3 [1, 2, 0, 0, 0, 1]) = some luebeckConwayPolynomial_3_5
@@ -622,6 +659,8 @@ def luebeckConwayPolynomial_3_6 : FpPoly 3 :=
     DensePoly.Monic luebeckConwayPolynomial_3_6 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 3 6` resolves to the committed `C(3, 6)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_3_6` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_3_6 :
     luebeckConwayPolynomial? 3 6 = some luebeckConwayPolynomial_3_6 := by
   show some (luebeckConwayPolynomialOfCoeffs 3 [2, 2, 1, 0, 2, 0, 1]) = some luebeckConwayPolynomial_3_6
@@ -655,6 +694,8 @@ def luebeckConwayPolynomial_5_1 : FpPoly 5 :=
     DensePoly.Monic luebeckConwayPolynomial_5_1 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 5 1` resolves to the committed `C(5, 1)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_5_1` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_5_1 :
     luebeckConwayPolynomial? 5 1 = some luebeckConwayPolynomial_5_1 := by
   show some (luebeckConwayPolynomialOfCoeffs 5 [3, 1]) = some luebeckConwayPolynomial_5_1
@@ -683,6 +724,8 @@ def luebeckConwayPolynomial_5_2 : FpPoly 5 :=
     DensePoly.Monic luebeckConwayPolynomial_5_2 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 5 2` resolves to the committed `C(5, 2)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_5_2` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_5_2 :
     luebeckConwayPolynomial? 5 2 = some luebeckConwayPolynomial_5_2 := by
   show some (luebeckConwayPolynomialOfCoeffs 5 [2, 4, 1]) = some luebeckConwayPolynomial_5_2
@@ -712,6 +755,8 @@ def luebeckConwayPolynomial_5_3 : FpPoly 5 :=
     DensePoly.Monic luebeckConwayPolynomial_5_3 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 5 3` resolves to the committed `C(5, 3)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_5_3` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_5_3 :
     luebeckConwayPolynomial? 5 3 = some luebeckConwayPolynomial_5_3 := by
   show some (luebeckConwayPolynomialOfCoeffs 5 [3, 3, 0, 1]) = some luebeckConwayPolynomial_5_3
@@ -742,6 +787,8 @@ def luebeckConwayPolynomial_5_4 : FpPoly 5 :=
     DensePoly.Monic luebeckConwayPolynomial_5_4 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 5 4` resolves to the committed `C(5, 4)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_5_4` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_5_4 :
     luebeckConwayPolynomial? 5 4 = some luebeckConwayPolynomial_5_4 := by
   show some (luebeckConwayPolynomialOfCoeffs 5 [2, 4, 4, 0, 1]) = some luebeckConwayPolynomial_5_4
@@ -773,6 +820,8 @@ def luebeckConwayPolynomial_5_5 : FpPoly 5 :=
     DensePoly.Monic luebeckConwayPolynomial_5_5 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 5 5` resolves to the committed `C(5, 5)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_5_5` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_5_5 :
     luebeckConwayPolynomial? 5 5 = some luebeckConwayPolynomial_5_5 := by
   show some (luebeckConwayPolynomialOfCoeffs 5 [3, 4, 0, 0, 0, 1]) = some luebeckConwayPolynomial_5_5
@@ -805,6 +854,8 @@ def luebeckConwayPolynomial_5_6 : FpPoly 5 :=
     DensePoly.Monic luebeckConwayPolynomial_5_6 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 5 6` resolves to the committed `C(5, 6)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_5_6` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_5_6 :
     luebeckConwayPolynomial? 5 6 = some luebeckConwayPolynomial_5_6 := by
   show some (luebeckConwayPolynomialOfCoeffs 5 [2, 0, 1, 4, 1, 0, 1]) = some luebeckConwayPolynomial_5_6
@@ -838,6 +889,8 @@ def luebeckConwayPolynomial_7_1 : FpPoly 7 :=
     DensePoly.Monic luebeckConwayPolynomial_7_1 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 7 1` resolves to the committed `C(7, 1)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_7_1` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_7_1 :
     luebeckConwayPolynomial? 7 1 = some luebeckConwayPolynomial_7_1 := by
   show some (luebeckConwayPolynomialOfCoeffs 7 [4, 1]) = some luebeckConwayPolynomial_7_1
@@ -866,6 +919,8 @@ def luebeckConwayPolynomial_7_2 : FpPoly 7 :=
     DensePoly.Monic luebeckConwayPolynomial_7_2 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 7 2` resolves to the committed `C(7, 2)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_7_2` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_7_2 :
     luebeckConwayPolynomial? 7 2 = some luebeckConwayPolynomial_7_2 := by
   show some (luebeckConwayPolynomialOfCoeffs 7 [3, 6, 1]) = some luebeckConwayPolynomial_7_2
@@ -895,6 +950,8 @@ def luebeckConwayPolynomial_7_3 : FpPoly 7 :=
     DensePoly.Monic luebeckConwayPolynomial_7_3 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 7 3` resolves to the committed `C(7, 3)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_7_3` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_7_3 :
     luebeckConwayPolynomial? 7 3 = some luebeckConwayPolynomial_7_3 := by
   show some (luebeckConwayPolynomialOfCoeffs 7 [4, 0, 6, 1]) = some luebeckConwayPolynomial_7_3
@@ -925,6 +982,8 @@ def luebeckConwayPolynomial_7_4 : FpPoly 7 :=
     DensePoly.Monic luebeckConwayPolynomial_7_4 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 7 4` resolves to the committed `C(7, 4)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_7_4` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_7_4 :
     luebeckConwayPolynomial? 7 4 = some luebeckConwayPolynomial_7_4 := by
   show some (luebeckConwayPolynomialOfCoeffs 7 [3, 4, 5, 0, 1]) = some luebeckConwayPolynomial_7_4
@@ -956,6 +1015,8 @@ def luebeckConwayPolynomial_7_5 : FpPoly 7 :=
     DensePoly.Monic luebeckConwayPolynomial_7_5 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 7 5` resolves to the committed `C(7, 5)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_7_5` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_7_5 :
     luebeckConwayPolynomial? 7 5 = some luebeckConwayPolynomial_7_5 := by
   show some (luebeckConwayPolynomialOfCoeffs 7 [4, 1, 0, 0, 0, 1]) = some luebeckConwayPolynomial_7_5
@@ -988,6 +1049,8 @@ def luebeckConwayPolynomial_7_6 : FpPoly 7 :=
     DensePoly.Monic luebeckConwayPolynomial_7_6 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 7 6` resolves to the committed `C(7, 6)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_7_6` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_7_6 :
     luebeckConwayPolynomial? 7 6 = some luebeckConwayPolynomial_7_6 := by
   show some (luebeckConwayPolynomialOfCoeffs 7 [3, 6, 4, 5, 1, 0, 1]) = some luebeckConwayPolynomial_7_6

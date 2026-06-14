@@ -37,6 +37,7 @@ private def isOne (f : FpPoly p) : Bool :=
         false
   | _ => false
 
+/-- `isOne f` returns `true` only for the constant polynomial `1`. -/
 private theorem eq_one_of_isOne_true
     (f : FpPoly p) (h : isOne f = true) :
     f = 1 := by
@@ -83,15 +84,19 @@ private def pow (f : FpPoly p) (n : Nat) : FpPoly p :=
     exact Nat.div_lt_self (Nat.pos_of_ne_zero hk) (by decide)
   go 1 f n
 
+/-- `pow f 1` is `f`. -/
 private theorem pow_one (f : FpPoly p) :
     pow f 1 = f := by
   unfold pow
   simp [pow.go]
 
+/-- Reference exponentiation by linear recursion (`powLinear f n = f ^ n`),
+the specification the square-and-multiply `pow` is proved against. -/
 private def powLinear (f : FpPoly p) : Nat → FpPoly p
   | 0 => 1
   | n + 1 => powLinear f n * f
 
+/-- `powLinear` turns exponent addition into multiplication. -/
 private theorem powLinear_add (f : FpPoly p) (m n : Nat) :
     powLinear f (m + n) = powLinear f m * powLinear f n := by
   induction n with
@@ -101,6 +106,7 @@ private theorem powLinear_add (f : FpPoly p) (m n : Nat) :
       rw [Nat.add_succ, powLinear, ih, powLinear]
       exact DensePoly.mul_assoc_poly (powLinear f m) (powLinear f n) f
 
+/-- Doubling the exponent of `powLinear` is the same as squaring the base. -/
 private theorem powLinear_double (f : FpPoly p) (n : Nat) :
     powLinear f (2 * n) = powLinear (f * f) n := by
   induction n with
@@ -114,11 +120,14 @@ private theorem powLinear_double (f : FpPoly p) (n : Nat) :
       rw [powLinear, powLinear, ih]
       exact DensePoly.mul_assoc_poly (powLinear (f * f) n) f f
 
+/-- An odd exponent of `powLinear` peels off one base factor and squares the rest. -/
 private theorem powLinear_double_add_one (f : FpPoly p) (n : Nat) :
     powLinear f (2 * n + 1) = f * powLinear (f * f) n := by
   rw [powLinear, powLinear_double]
   exact mul_comm (powLinear (f * f) n) f
 
+/-- The square-and-multiply loop computes `acc * powLinear base k`, linking the
+executable `pow.go` to the reference `powLinear`. -/
 private theorem pow_go_eq_mul_powLinear (acc base : FpPoly p) (k : Nat) :
     pow.go acc base k = acc * powLinear base k := by
   induction k using Nat.strongRecOn generalizing acc base with
@@ -161,12 +170,14 @@ private theorem pow_go_eq_mul_powLinear (acc base : FpPoly p) (k : Nat) :
               _ = acc * powLinear base k := by
                     rw [← hk_eq]
 
+/-- The square-and-multiply `pow` agrees with the reference `powLinear`. -/
 private theorem pow_eq_powLinear (f : FpPoly p) (n : Nat) :
     pow f n = powLinear f n := by
   unfold pow
   rw [pow_go_eq_mul_powLinear]
   exact one_mul (powLinear f n)
 
+/-- Iterating `powLinear` multiplies the exponents. -/
 private theorem powLinear_powLinear_mul (f : FpPoly p) (m n : Nat) :
     powLinear (powLinear f n) m = powLinear f (m * n) := by
   induction m with
@@ -176,6 +187,7 @@ private theorem powLinear_powLinear_mul (f : FpPoly p) (m n : Nat) :
       rw [powLinear, ih]
       simpa [Nat.succ_mul] using (powLinear_add f (m * n) n).symm
 
+/-- `powLinear` distributes over a product of bases. -/
 private theorem powLinear_mul_base (f g : FpPoly p) (n : Nat) :
     powLinear (f * g) n = powLinear f n * powLinear g n := by
   induction n with
@@ -200,43 +212,52 @@ private theorem powLinear_mul_base (f g : FpPoly p) (n : Nat) :
               exact (DensePoly.mul_assoc_poly
                 (powLinear f n) f (powLinear g n * g)).symm
 
+/-- `pow` turns exponent addition into multiplication. -/
 private theorem pow_add_exp (f : FpPoly p) (m n : Nat) :
     pow f (m + n) = pow f m * pow f n := by
   rw [pow_eq_powLinear, pow_eq_powLinear, pow_eq_powLinear]
   exact powLinear_add f m n
 
+/-- `pow f (n + 1)` is `pow f n` times one more factor of `f`. -/
 private theorem pow_succ (f : FpPoly p) (n : Nat) :
     pow f (n + 1) = pow f n * f := by
   rw [pow_eq_powLinear, pow_eq_powLinear]
   rfl
 
+/-- Product-rule expansion of the derivative of `pow f (n + 1)`. -/
 private theorem derivative_pow_succ (f : FpPoly p) (n : Nat) :
     DensePoly.derivative (pow f (n + 1)) =
       DensePoly.derivative (pow f n) * f + pow f n * DensePoly.derivative f := by
   rw [pow_succ]
   exact DensePoly.derivative_mul (pow f n) f
 
+/-- `pow` distributes over a product of bases. -/
 private theorem pow_mul_base (f g : FpPoly p) (n : Nat) :
     pow (f * g) n = pow f n * pow g n := by
   rw [pow_eq_powLinear, pow_eq_powLinear, pow_eq_powLinear]
   exact powLinear_mul_base f g n
 
+/-- Iterating `pow` multiplies the exponents. -/
 private theorem pow_pow_mul' (f : FpPoly p) (m n : Nat) :
     pow (pow f n) m = pow f (m * n) := by
   rw [pow_eq_powLinear, pow_eq_powLinear, pow_eq_powLinear]
   exact powLinear_powLinear_mul f m n
 
+/-- Frobenius additivity in characteristic `p`: `(a + b) ^ p = a ^ p + b ^ p`. -/
 private theorem zmod64_add_pow_prime
     (hp : Hex.Nat.Prime p) (a b : ZMod64 p) :
     (a + b) ^ p = a ^ p + b ^ p := by
   rw [ZMod64.pow_prime hp (a + b), ZMod64.pow_prime hp a, ZMod64.pow_prime hp b]
 
+/-- Interior binomial coefficients `choose p k` (for `0 < k < p`) vanish mod `p`,
+the arithmetic fact underlying Frobenius additivity. -/
 private theorem zmod64_natCast_choose_prime_eq_zero
     (hp : Hex.Nat.Prime p) {k : Nat} (hk0 : 0 < k) (hkp : k < p) :
     ((Hex.Nat.choose p k : Nat) : ZMod64 p) = 0 := by
   exact (ZMod64.natCast_eq_zero_iff_dvd (p := p) (Hex.Nat.choose p k)).2
     (Hex.Nat.choose_prime_dvd hp hk0 hkp)
 
+/-- Scalar scaling of a polynomial is additive in the scalar. -/
 private theorem scale_add_scalar (c d : ZMod64 p) (f : FpPoly p) :
     DensePoly.scale (c + d) f = DensePoly.scale c f + DensePoly.scale d f := by
   apply DensePoly.ext_coeff
@@ -250,6 +271,7 @@ private theorem scale_add_scalar (c d : ZMod64 p) (f : FpPoly p) :
   rw [DensePoly.coeff_scale _ _ _ hzero_d]
   grind
 
+/-- Scalar scaling commutes through the right factor of a product. -/
 private theorem scale_mul_right (c : ZMod64 p) (f g : FpPoly p) :
     DensePoly.scale c (f * g) = f * DensePoly.scale c g := by
   calc
@@ -259,11 +281,13 @@ private theorem scale_mul_right (c : ZMod64 p) (f g : FpPoly p) :
     _ = f * DensePoly.scale c g := by
       exact DensePoly.mul_comm_poly (DensePoly.scale c g) f
 
+/-- `powLinear f (n + 1)` factors one `f` out on the left. -/
 private theorem powLinear_succ_left (f : FpPoly p) (n : Nat) :
     powLinear f (n + 1) = f * powLinear f n := by
   rw [powLinear]
   exact DensePoly.mul_comm_poly (powLinear f n) f
 
+/-- Scaling by a `Nat`-cast sum splits additively over the summands. -/
 private theorem powLinearBinom_scalar_add
     (a b : Nat) (h : FpPoly p) :
     DensePoly.scale (((a + b : Nat) : ZMod64 p)) h =
@@ -273,6 +297,7 @@ private theorem powLinearBinom_scalar_add
   rw [hcast]
   exact scale_add_scalar (a : ZMod64 p) (b : ZMod64 p) h
 
+/-- Scaling by `0` annihilates a polynomial. -/
 private theorem powLinearBinom_scalar_zero (h : FpPoly p) :
     DensePoly.scale (0 : ZMod64 p) h = 0 := by
   apply DensePoly.ext_coeff
@@ -282,14 +307,17 @@ private theorem powLinearBinom_scalar_zero (h : FpPoly p) :
   rw [DensePoly.coeff_zero]
   grind
 
+/-- Scaling by `1` is the identity. -/
 private theorem powLinearBinom_scalar_one (h : FpPoly p) :
     DensePoly.scale (1 : ZMod64 p) h = h :=
   scale_one_left h
 
+/-- Right-multiplication by the zero polynomial gives `0`. -/
 private theorem powLinearBinom_mul_zero (h : FpPoly p) :
     h * (0 : FpPoly p) = 0 :=
   Eq.trans (DensePoly.mul_comm_poly h 0) (DensePoly.zero_mul h)
 
+/-- Absorb a left factor into a scaled product, reassociating it onto the left. -/
 private theorem mul_powLinearBinom_scaled_left
     (c : ZMod64 p) (f a b : FpPoly p) :
     f * DensePoly.scale c (a * b) = DensePoly.scale c ((f * a) * b) := by
@@ -301,6 +329,7 @@ private theorem mul_powLinearBinom_scaled_left
           exact congrArg (fun x => DensePoly.scale c x)
             (DensePoly.mul_assoc_poly f a b).symm
 
+/-- Absorb a left factor `g` into a scaled product, commuting it inside onto the right factor. -/
 private theorem mul_powLinearBinom_scaled_right
     (c : ZMod64 p) (g a b : FpPoly p) :
     g * DensePoly.scale c (a * b) = DensePoly.scale c (a * (g * b)) := by
@@ -317,14 +346,17 @@ private theorem mul_powLinearBinom_scaled_right
             _ = a * (g * b) := by
                   exact congrArg (fun x => a * x) (DensePoly.mul_comm_poly b g)
 
+/-- The `k`-th binomial term `choose n k • (f^(n-k) * g^k)` in the expansion of `(f + g)^n`. -/
 private def powLinearBinomTerm (f g : FpPoly p) (n k : Nat) : FpPoly p :=
   DensePoly.scale (Hex.Nat.choose n k : ZMod64 p)
     (powLinear f (n - k) * powLinear g k)
 
+/-- The partial sum of the first `k` binomial terms of `(f + g)^n`. -/
 private def powLinearBinomSum (f g : FpPoly p) (n : Nat) : Nat → FpPoly p
   | 0 => 0
   | k + 1 => powLinearBinomSum f g n k + powLinearBinomTerm f g n k
 
+/-- The zeroth binomial term at `n + 1` factors one `f` out of the zeroth term at `n`. -/
 private theorem powLinearBinomTerm_succ_zero (f g : FpPoly p) (n : Nat) :
     powLinearBinomTerm f g (n + 1) 0 =
       f * powLinearBinomTerm f g n 0 := by
@@ -344,6 +376,7 @@ private theorem powLinearBinomTerm_succ_zero (f g : FpPoly p) (n : Nat) :
           exact congrArg (fun x => f * x)
             (DensePoly.mul_one_right_poly (powLinear f n)).symm
 
+/-- Pascal's rule for binomial terms when `k < n`: the `(k+1)`-th term at `n+1` splits as `f * (term n (k+1)) + g * (term n k)`. -/
 private theorem powLinearBinomTerm_succ_succ_of_lt
     (f g : FpPoly p) {n k : Nat} (hk : k < n) :
     powLinearBinomTerm f g (n + 1) (k + 1) =
@@ -372,6 +405,7 @@ private theorem powLinearBinomTerm_succ_succ_of_lt
   rw [hf, hg]
   exact DensePoly.add_comm_poly _ _
 
+/-- The diagonal (`k = n`) case of Pascal's rule for binomial terms. -/
 private theorem powLinearBinomTerm_succ_succ_top
     (f g : FpPoly p) (n : Nat) :
     powLinearBinomTerm f g (n + 1) (n + 1) =
@@ -410,6 +444,7 @@ private theorem powLinearBinomTerm_succ_succ_top
     _ = g * (1 * powLinear g n) := by
           rw [one_mul]
 
+/-- Pascal's rule for binomial terms for every `k ≤ n`, combining the strict and diagonal cases. -/
 private theorem powLinearBinomTerm_succ_succ
     (f g : FpPoly p) {n k : Nat} (hk : k ≤ n) :
     powLinearBinomTerm f g (n + 1) (k + 1) =
@@ -421,6 +456,7 @@ private theorem powLinearBinomTerm_succ_succ
     subst k
     exact powLinearBinomTerm_succ_succ_top f g n
 
+/-- The row recurrence from Pascal's rule: the partial sum at row `n+1` splits as `f * (sum n (m+1)) + g * (sum n m)`. -/
 private theorem powLinearBinomSum_succ_row
     (f g : FpPoly p) (n m : Nat) (hm : m ≤ n + 1) :
     powLinearBinomSum f g (n + 1) (m + 1) =
@@ -462,6 +498,7 @@ private theorem powLinearBinomSum_succ_row
       repeat rw [DensePoly.coeff_add_semiring]
       grind
 
+/-- A binomial term with index `k` above the degree `n` vanishes. -/
 private theorem powLinearBinomTerm_above
     (f g : FpPoly p) {n k : Nat} (hk : n < k) :
     powLinearBinomTerm f g n k = 0 := by
@@ -469,6 +506,7 @@ private theorem powLinearBinomTerm_above
   rw [Hex.Nat.choose_eq_zero_of_lt hk]
   exact powLinearBinom_scalar_zero _
 
+/-- Extending the partial sum one step past the diagonal adds nothing, since that term vanishes. -/
 private theorem powLinearBinomSum_top_succ
     (f g : FpPoly p) (n : Nat) :
     powLinearBinomSum f g n (n + 1 + 1) =
@@ -477,6 +515,7 @@ private theorem powLinearBinomSum_top_succ
   rw [powLinearBinomTerm_above f g (by omega : n < n + 1)]
   exact DensePoly.add_zero_poly _
 
+/-- The binomial theorem: `(f + g)^n` equals its full binomial sum over the first `n + 1` terms. -/
 private theorem powLinear_add_binom_sum
     (f g : FpPoly p) (n : Nat) :
     powLinear (f + g) n = powLinearBinomSum f g n (n + 1) := by
@@ -490,6 +529,7 @@ private theorem powLinear_add_binom_sum
       rw [powLinearBinomSum_top_succ f g n]
       exact DensePoly.mul_add_left_poly f g (powLinearBinomSum f g n (n + 1))
 
+/-- The zeroth term of the degree-`p` binomial expansion is `f^p`. -/
 private theorem powLinearBinomTerm_prime_zero (f g : FpPoly p) :
     powLinearBinomTerm f g p 0 = powLinear f p := by
   unfold powLinearBinomTerm
@@ -499,6 +539,7 @@ private theorem powLinearBinomTerm_prime_zero (f g : FpPoly p) :
   rw [powLinearBinom_scalar_one]
   exact DensePoly.mul_one_right_poly (powLinear f p)
 
+/-- The top term of the degree-`p` binomial expansion is `g^p`. -/
 private theorem powLinearBinomTerm_prime_top (f g : FpPoly p) :
     powLinearBinomTerm f g p p = powLinear g p := by
   unfold powLinearBinomTerm
@@ -510,6 +551,7 @@ private theorem powLinearBinomTerm_prime_top (f g : FpPoly p) :
   rw [powLinearBinom_scalar_one]
   exact one_mul (powLinear g p)
 
+/-- For prime `p` and `0 < k < p`, the middle binomial terms vanish, since `p` divides the binomial coefficient. -/
 private theorem powLinearBinomTerm_prime_middle
     (hp : Hex.Nat.Prime p) (f g : FpPoly p) {k : Nat} (hk0 : 0 < k) (hkp : k < p) :
     powLinearBinomTerm f g p k = 0 := by
@@ -517,6 +559,7 @@ private theorem powLinearBinomTerm_prime_middle
   rw [zmod64_natCast_choose_prime_eq_zero hp hk0 hkp]
   exact powLinearBinom_scalar_zero _
 
+/-- For prime `p` and `m < p`, the partial sum through the vanishing middle terms collapses to `f^p`. -/
 private theorem powLinearBinomSum_prime_middle
     (hp : Hex.Nat.Prime p) (f g : FpPoly p) {m : Nat} (hm : m < p) :
     powLinearBinomSum f g p (m + 1) = powLinear f p := by
@@ -529,6 +572,7 @@ private theorem powLinearBinomSum_prime_middle
       rw [powLinearBinomTerm_prime_middle hp f g (by omega : 0 < m + 1) (by omega)]
       exact DensePoly.add_zero_poly _
 
+/-- The freshman's-dream identity `(f + g)^p = f^p + g^p` for prime `p`. -/
 private theorem powLinear_add_prime
     (hp : Hex.Nat.Prime p) (f g : FpPoly p) :
     powLinear (f + g) p = powLinear f p + powLinear g p := by
@@ -543,6 +587,7 @@ private theorem powLinear_add_prime
     simpa [Nat.sub_add_cancel hp_pos] using hmid0
   rw [hmid, powLinearBinomTerm_prime_top]
 
+/-- Right-multiplying a left-fold sum by `h` distributes `h` into each summand and the accumulator. -/
 private theorem foldl_poly_sum_mul_right
     {α : Type _} (xs : List α) (term : α → FpPoly p) (acc h : FpPoly p) :
     (xs.foldl (fun acc x => acc + term x) acc) * h =
@@ -557,6 +602,7 @@ private theorem foldl_poly_sum_mul_right
         DensePoly.mul_add_left_poly acc (term x) h
       rw [hstart]
 
+/-- Left-multiplying a left-fold sum by `h` distributes `h` into each summand and the accumulator. -/
 private theorem foldl_poly_sum_mul_left
     {α : Type _} (xs : List α) (term : α → FpPoly p) (acc h : FpPoly p) :
     h * xs.foldl (fun acc x => acc + term x) acc =
@@ -571,6 +617,7 @@ private theorem foldl_poly_sum_mul_left
         DensePoly.mul_add_right_poly h acc (term x)
       rw [hstart]
 
+/-- Scaling a left-fold sum distributes the scalar into each summand and the accumulator. -/
 private theorem scale_foldl_poly_sum
     {α : Type _} (c : ZMod64 p) (xs : List α) (term : α → FpPoly p) (acc : FpPoly p) :
     DensePoly.scale c (xs.foldl (fun acc x => acc + term x) acc) =
@@ -584,6 +631,7 @@ private theorem scale_foldl_poly_sum
       rw [ih (acc + term x)]
       rw [scale_add]
 
+/-- Raising an accumulated `ZMod64` fold-sum to the prime `p` distributes the `p`-th power over the summands and accumulator. -/
 private theorem zmod64_fold_add_pow_prime_acc
     (hp : Hex.Nat.Prime p) (xs : List (ZMod64 p)) (acc : ZMod64 p) :
     (xs.foldl (fun acc x => acc + x) acc) ^ p =
@@ -595,6 +643,7 @@ private theorem zmod64_fold_add_pow_prime_acc
       simp only [List.foldl_cons, List.map_cons]
       rw [ih (acc + x), zmod64_add_pow_prime hp acc x]
 
+/-- The `p`-th power of a `ZMod64` fold-sum (from `0`) equals the fold-sum of the per-element `p`-th powers. -/
 private theorem zmod64_fold_add_pow_prime
     (hp : Hex.Nat.Prime p) (xs : List (ZMod64 p)) :
     (xs.foldl (fun acc x => acc + x) 0) ^ p =
@@ -602,6 +651,7 @@ private theorem zmod64_fold_add_pow_prime
   simpa [ZMod64.pow_prime hp (0 : ZMod64 p)] using
     zmod64_fold_add_pow_prime_acc (p := p) hp xs (0 : ZMod64 p)
 
+/-- Index form of `zmod64_fold_add_pow_prime`: the `p`-th power of an indexed fold-sum equals the fold-sum of the per-index `p`-th powers. -/
 private theorem zmod64_index_fold_add_pow_prime
     (hp : Hex.Nat.Prime p) (xs : List Nat) (term : Nat → ZMod64 p) :
     (xs.foldl (fun acc i => acc + term i) 0) ^ p =
@@ -613,10 +663,12 @@ private theorem zmod64_index_fold_add_pow_prime
 def weightedProduct (factors : List (SquareFreeFactor p)) : FpPoly p :=
   factors.foldl (fun acc sf => acc * pow sf.factor sf.multiplicity) 1
 
+/-- `weightedProduct` of the empty factor list is the constant polynomial `1`. -/
 private theorem weightedProduct_nil :
     weightedProduct ([] : List (SquareFreeFactor p)) = 1 := by
   rfl
 
+/-- Folding the weighted product from accumulator `acc` factors as `acc * weightedProduct factors`. -/
 private theorem weightedProduct_foldl_eq_mul
     (acc : FpPoly p) (factors : List (SquareFreeFactor p)) :
     factors.foldl (fun acc sf => acc * pow sf.factor sf.multiplicity) acc =
@@ -637,6 +689,7 @@ private theorem weightedProduct_foldl_eq_mul
       rw [hone]
       exact DensePoly.mul_assoc_poly acc (pow sf.factor sf.multiplicity) (weightedProduct factors)
 
+/-- `weightedProduct` of a cons splits off the head factor raised to its multiplicity. -/
 private theorem weightedProduct_cons
     (sf : SquareFreeFactor p) (factors : List (SquareFreeFactor p)) :
     weightedProduct (sf :: factors) =
@@ -646,6 +699,7 @@ private theorem weightedProduct_cons
   rw [weightedProduct_foldl_eq_mul]
   exact congrArg (fun x => x * weightedProduct factors) (one_mul (pow sf.factor sf.multiplicity))
 
+/-- `weightedProduct` of an append is the product of the two sublist weighted products. -/
 private theorem weightedProduct_append
     (left right : List (SquareFreeFactor p)) :
     weightedProduct (left ++ right) = weightedProduct left * weightedProduct right := by
@@ -657,11 +711,13 @@ private theorem weightedProduct_append
       (left.foldl (fun acc sf => acc * pow sf.factor sf.multiplicity) 1)
       right
 
+/-- `weightedProduct` of a singleton is that factor raised to its multiplicity. -/
 private theorem weightedProduct_singleton (sf : SquareFreeFactor p) :
     weightedProduct [sf] = pow sf.factor sf.multiplicity := by
   rw [weightedProduct_cons, weightedProduct_nil]
   exact DensePoly.mul_one_right_poly (pow sf.factor sf.multiplicity)
 
+/-- `weightedProduct` of a reversed cons appends the new factor's power on the right. -/
 private theorem weightedProduct_reverse_cons
     (sf : SquareFreeFactor p) (accRev : List (SquareFreeFactor p)) :
     weightedProduct (sf :: accRev).reverse =
@@ -677,6 +733,7 @@ private def pthRoot (f : FpPoly p) : FpPoly p :=
   ofCoeffs <|
     (List.range rootSize).map (fun i => f.coeff (i * p)) |>.toArray
 
+/-- Below the root size, `pthRoot f` reads coefficient `i` from `f` at degree `i * p`. -/
 private theorem pthRoot_coeff_of_lt
     (f : FpPoly p) {i : Nat} (hi : i < (f.size + p - 1) / p) :
     (pthRoot f).coeff i = f.coeff (i * p) := by
@@ -684,6 +741,7 @@ private theorem pthRoot_coeff_of_lt
   rw [DensePoly.coeff_ofCoeffs]
   simp [Array.getD, hi]
 
+/-- Every coefficient of `pthRoot f` is the coefficient of `f` at the `p`-fold degree `i * p`. -/
 private theorem pthRoot_coeff (f : FpPoly p) (i : Nat) :
     (pthRoot f).coeff i = f.coeff (i * p) := by
   by_cases hi : i < (f.size + p - 1) / p
@@ -698,14 +756,17 @@ private theorem pthRoot_coeff (f : FpPoly p) (i : Nat) :
         (Nat.div_le_iff_le_mul hp).mp hle
       omega)).symm
 
+/-- Right additive identity for a `ZMod64 p` coefficient. -/
 private theorem zmod64_add_zero_coeff (a : ZMod64 p) :
     a + 0 = a := by
   grind
 
+/-- Left additive identity for a `ZMod64 p` coefficient. -/
 private theorem zmod64_zero_add_coeff (a : ZMod64 p) :
     0 + a = a := by
   grind
 
+/-- The sum of two zero `ZMod64 p` coefficients is zero. -/
 private theorem zmod64_add_zero_zero_coeff :
     (0 : ZMod64 p) + 0 = 0 := by
   grind
@@ -739,6 +800,7 @@ private theorem coeffTerm_coeff (g : FpPoly p) (i n : Nat) :
       simp [hni, hsub]
       exact hzero
 
+/-- Taking coefficient `n` commutes with the `coeffTerm` accumulation fold. -/
 private theorem coeff_foldl_coeffTerm_coeff
     (g : FpPoly p) (xs : List Nat) (acc : FpPoly p) (n : Nat) :
     (xs.foldl (fun acc i => acc + coeffTerm g i) acc).coeff n =
@@ -751,6 +813,7 @@ private theorem coeff_foldl_coeffTerm_coeff
       rw [ih (acc + coeffTerm g i)]
       rw [DensePoly.coeff_add_semiring]
 
+/-- Coefficient `n` of `coeffFold g m` is the index fold of the per-term coefficients over `range m`. -/
 private theorem coeffFold_coeff_index_fold (g : FpPoly p) (m n : Nat) :
     (coeffFold g m).coeff n =
       (List.range m).foldl (fun acc i => acc + (coeffTerm g i).coeff n) 0 := by
@@ -758,6 +821,7 @@ private theorem coeffFold_coeff_index_fold (g : FpPoly p) (m n : Nat) :
   simpa [DensePoly.coeff_zero] using
     coeff_foldl_coeffTerm_coeff (p := p) g (List.range m) (0 : FpPoly p) n
 
+/-- In prime characteristic, the `p`th power of `coeffFold g m`'s coefficient distributes across the index fold. -/
 private theorem coeffFold_coeff_index_fold_pow_prime
     (hp : Hex.Nat.Prime p) (g : FpPoly p) (m n : Nat) :
     ((coeffFold g m).coeff n) ^ p =
@@ -767,6 +831,7 @@ private theorem coeffFold_coeff_index_fold_pow_prime
   exact zmod64_index_fold_add_pow_prime
     (p := p) hp (List.range m) (fun i => (coeffTerm g i).coeff n)
 
+/-- The `k`th power of the single term `g_i x^i` contributes `(g_i)^k` only at degree `k * i`. -/
 private theorem powLinear_coeffTerm_coeff (g : FpPoly p) (i k n : Nat) :
     (powLinear (coeffTerm g i) k).coeff n =
       if n = k * i then (g.coeff i) ^ k else 0 := by
@@ -882,6 +947,7 @@ private def coeffFoldPowerCoeff (g : FpPoly p) (m : Nat) : Nat → Nat → ZMod6
             (if n < i then 0 else if n - i < m then g.coeff (n - i) else 0))
         0
 
+/-- Coefficient `n` of `(coeffFold g m)^k` equals the recursive expansion `coeffFoldPowerCoeff g m k n`. -/
 private theorem powLinear_coeffFold_coeff_expansion (g : FpPoly p) (m k n : Nat) :
     (powLinear (coeffFold g m) k).coeff n = coeffFoldPowerCoeff g m k n := by
   induction k generalizing n with
@@ -932,6 +998,7 @@ private theorem powLinear_coeffFold_coeff_expansion (g : FpPoly p) (m k n : Nat)
           rw [hterm]
           exact ihxs _
 
+/-- Specialises the coefficient expansion of `(coeffFold g m)^k` to the prime exponent `k = p`. -/
 private theorem powLinear_coeffFold_prime_coeff_expansion (g : FpPoly p) (m n : Nat) :
     (powLinear (coeffFold g m) p).coeff n = coeffFoldPowerCoeff g m p n :=
   powLinear_coeffFold_coeff_expansion g m p n
@@ -1024,12 +1091,14 @@ private theorem coeffFoldPowerCoeff_prime_coeff
         rw [if_neg hne]
         exact zmod64_add_zero_zero_coeff
 
+/-- Off the `p`-divisible degrees, the prime power expansion `coeffFoldPowerCoeff g m p n` vanishes. -/
 private theorem coeffFoldPowerCoeff_prime_coeff_of_mod_ne_zero
     (hp : Hex.Nat.Prime p) (g : FpPoly p) (m n : Nat) (hn : n % p ≠ 0) :
     coeffFoldPowerCoeff g m p n = 0 := by
   rw [coeffFoldPowerCoeff_prime_coeff hp g m n]
   simp [hn]
 
+/-- On `p`-divisible degrees, `coeffFoldPowerCoeff g m p n` keeps the diagonal `(g.coeff (n/p))^p` when in range. -/
 private theorem coeffFoldPowerCoeff_prime_coeff_of_mod_eq_zero
     (hp : Hex.Nat.Prime p) (g : FpPoly p) (m n : Nat) (hn : n % p = 0) :
     coeffFoldPowerCoeff g m p n =
@@ -1037,6 +1106,7 @@ private theorem coeffFoldPowerCoeff_prime_coeff_of_mod_eq_zero
   rw [coeffFoldPowerCoeff_prime_coeff hp g m n]
   simp [hn]
 
+/-- Freshman's-dream coefficient of `(coeffFold g m)^p`: nonzero only at `p`-divisible degrees, where it is `(g.coeff (n/p))^p`. -/
 private theorem powLinear_coeffFold_prime_coeff
     (hp : Hex.Nat.Prime p) (g : FpPoly p) (m n : Nat) :
     (powLinear (coeffFold g m) p).coeff n =
@@ -1047,6 +1117,8 @@ private theorem powLinear_coeffFold_prime_coeff
   rw [powLinear_coeffFold_prime_coeff_expansion]
   exact coeffFoldPowerCoeff_prime_coeff hp g m n
 
+/-- Each coefficient of `powLinear (f + g) p` is the sum of the corresponding
+coefficients of `powLinear f p` and `powLinear g p`. -/
 private theorem powLinear_add_prime_coeff
     (hp : Hex.Nat.Prime p) (f g : FpPoly p) (n : Nat) :
     (powLinear (f + g) p).coeff n =
@@ -1107,6 +1179,7 @@ private theorem pthRoot_pow_prime_coeff
     exact ZMod64.pow_prime hp (f.coeff n)
   · simp [hn]
 
+/-- A nonzero residue `a : ZMod64 p` over a prime modulus has `a.toNat` coprime to `p`. -/
 private theorem zmod64_coprime_of_prime_ne_zero
     (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
     Nat.Coprime a.toNat p := by
@@ -1142,6 +1215,7 @@ private theorem zmod64_coprime_of_prime_ne_zero
     rw [hgcd] at hk
     exact ⟨k, hk⟩
 
+/-- `a * a⁻¹ = 1` for any nonzero `a : ZMod64 p` over a prime modulus. -/
 private theorem zmod64_mul_inv_eq_one_of_prime_ne_zero
     (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
     a * a⁻¹ = 1 := by
@@ -1154,6 +1228,7 @@ private theorem zmod64_mul_inv_eq_one_of_prime_ne_zero
   apply UInt64.toNat_inj.mp
   simpa [ZMod64.toNat_eq_val] using hinv
 
+/-- `(1 : ZMod64 p)` is nonzero over a prime modulus. -/
 private theorem zmod64_one_ne_zero_of_prime
     (hp : Hex.Nat.Prime p) :
     (1 : ZMod64 p) ≠ 0 := by
@@ -1167,6 +1242,7 @@ private theorem zmod64_one_ne_zero_of_prime
   rw [ZMod64.toNat_one, ZMod64.toNat_zero, Nat.mod_eq_of_lt hp_gt] at hnat
   omega
 
+/-- `isOne` returns `true` on the constant polynomial `1 : FpPoly p` over a prime modulus. -/
 private theorem isOne_one [ZMod64.PrimeModulus p] :
     isOne (1 : FpPoly p) = true := by
   unfold isOne
@@ -1186,6 +1262,7 @@ private theorem isOne_one [ZMod64.PrimeModulus p] :
     simp
   simp [hcoeff0]
 
+/-- The inverse `a⁻¹` of a nonzero `a : ZMod64 p` is itself nonzero over a prime modulus. -/
 private theorem zmod64_inv_ne_zero_of_prime_ne_zero
     (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
     a⁻¹ ≠ 0 := by
@@ -1196,6 +1273,7 @@ private theorem zmod64_inv_ne_zero_of_prime_ne_zero
   rw [hzero] at hone
   exact zmod64_one_ne_zero_of_prime hp hone.symm
 
+/-- `a * 0 = 0` in `ZMod64 p`. -/
 private theorem zmod64_mul_zero (a : ZMod64 p) :
     a * 0 = 0 := by
   grind
@@ -1229,11 +1307,13 @@ private def normalizeMonic (f : FpPoly p) : ZMod64 p × FpPoly p :=
     let unit := DensePoly.leadingCoeff f
     (unit, DensePoly.scale unit⁻¹ f)
 
+/-- `normalizeMonic` returns `(0, 0)` on a zero input polynomial. -/
 private theorem normalizeMonic_zero
     (f : FpPoly p) (hzero : f.isZero = true) :
     normalizeMonic f = (0, 0) := by
   simp [normalizeMonic, hzero]
 
+/-- An `FpPoly p` whose `isZero` flag is `true` equals the zero polynomial. -/
 private theorem eq_zero_of_isZero_true
     (f : FpPoly p) (hzero : f.isZero = true) :
     f = 0 := by
@@ -1244,6 +1324,7 @@ private theorem eq_zero_of_isZero_true
   rw [DensePoly.coeff_eq_zero_of_size_le f (by omega)]
   exact DensePoly.coeff_zero n
 
+/-- `DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2` reconstructs a zero `f`. -/
 private theorem normalizeMonic_zero_reconstruct
     (f : FpPoly p) (hzero : f.isZero = true) :
     DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2 = f := by
@@ -1251,12 +1332,16 @@ private theorem normalizeMonic_zero_reconstruct
   rw [eq_zero_of_isZero_true f hzero]
   exact mul_zero (DensePoly.C (0 : ZMod64 p))
 
+/-- On a nonzero `f`, `normalizeMonic f` is the pair of its leading coefficient and
+`f` scaled by that coefficient's inverse. -/
 private theorem normalizeMonic_nonzero
     (f : FpPoly p) (hzero : f.isZero = false) :
     normalizeMonic f =
       (DensePoly.leadingCoeff f, DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f) := by
   simp [normalizeMonic, hzero]
 
+/-- `DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2` reconstructs a nonzero `f`
+over a prime modulus. -/
 private theorem normalizeMonic_nonzero_reconstruct
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (hzero : f.isZero = false) :
     DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2 = f := by
@@ -1266,6 +1351,8 @@ private theorem normalizeMonic_nonzero_reconstruct
   rw [zmod64_mul_inv_eq_one_of_prime_ne_zero hp hlead_ne]
   exact scale_one_left f
 
+/-- `DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2` reconstructs `f` for every
+input over a prime modulus. -/
 private theorem normalizeMonic_reconstruct
     (hp : Hex.Nat.Prime p) (f : FpPoly p) :
     DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2 = f := by
@@ -1273,6 +1360,7 @@ private theorem normalizeMonic_reconstruct
   · exact normalizeMonic_nonzero_reconstruct hp f hzero
   · exact normalizeMonic_zero_reconstruct f hzero
 
+/-- The polynomial part `(normalizeMonic f).2` is monic whenever `f` is nonzero. -/
 private theorem normalizeMonic_nonzero_monic
     [ZMod64.PrimeModulus p] (f : FpPoly p) (hzero : f.isZero = false) :
     DensePoly.Monic (normalizeMonic f).2 := by
@@ -1296,6 +1384,7 @@ private theorem normalizeMonic_nonzero_monic
   exact ZMod64.inv_mul_eq_one_of_prime
     (ZMod64.PrimeModulus.prime (p := p)) hlead_ne
 
+/-- The polynomial part `(normalizeMonic f).2` is nonzero whenever `f` is nonzero. -/
 private theorem normalizeMonic_nonzero_isZero_false
     [ZMod64.PrimeModulus p] (f : FpPoly p) (hzero : f.isZero = false) :
     (normalizeMonic f).2.isZero = false := by
@@ -1433,6 +1522,7 @@ Foundational `FpPoly p` algebra for transporting `DensePoly.derivative`,
 theorem used by the square-free decomposition correctness chain.
 -/
 
+/-- The constant polynomial `DensePoly.C u` is nonzero whenever the scalar `u` is nonzero. -/
 private theorem C_ne_zero_of_ne_zero {u : ZMod64 p} (hu : u ≠ 0) :
     (DensePoly.C u : FpPoly p) ≠ 0 := by
   intro hzero
@@ -2182,6 +2272,8 @@ private theorem div_C_mul_left_of_dvd
     rw [hquot_mul_scaled, hreconstruct]
   exact mul_right_cancel_of_ne_zero hg_ne hcancel
 
+/-- `gcd_eq_zero_forces_zero` shows a vanishing `gcd c w` forces both `c` and
+`w` to vanish, since the gcd divides each input. -/
 private theorem gcd_eq_zero_forces_zero [ZMod64.PrimeModulus p] (c w : FpPoly p)
     (h : DensePoly.gcd c w = 0) :
     c = 0 ∧ w = 0 := by
@@ -2195,6 +2287,8 @@ private theorem gcd_eq_zero_forces_zero [ZMod64.PrimeModulus p] (c w : FpPoly p)
     rcases hdvd with ⟨q, hq⟩
     simpa using hq
 
+/-- `scaled_gcd_eq_zero` shows scaling both inputs by constants keeps a
+vanishing `gcd c w` vanishing. -/
 private theorem scaled_gcd_eq_zero
     [ZMod64.PrimeModulus p]
     (u_c u_w : ZMod64 p) (c w : FpPoly p)
@@ -2217,12 +2311,16 @@ private theorem monicGcd_eq_zero_forces_zero
     rw [h] at hq
     simpa using hq
 
+/-- `div_zero_eq_zero` states that dividing any polynomial by the zero
+polynomial yields `0`. -/
 private theorem div_zero_eq_zero (f : FpPoly p) :
     f / (0 : FpPoly p) = 0 := by
   have hpair :=
     DensePoly.divMod_eq_zero_self_of_size_zero_core f (0 : FpPoly p) (by simp)
   simpa [DensePoly.div] using congrArg Prod.fst hpair
 
+/-- `div_zero_C_mul_left` shows constant scaling commutes with division by the
+zero polynomial on the left input `c` when `gcd c w` vanishes. -/
 private theorem div_zero_C_mul_left
     [ZMod64.PrimeModulus p]
     (u : ZMod64 p) {c w : FpPoly p} (h : DensePoly.gcd c w = 0) :
@@ -2231,6 +2329,8 @@ private theorem div_zero_C_mul_left
   have hc : c = 0 := (gcd_eq_zero_forces_zero c w h).1
   simp [hc, div_zero_eq_zero]
 
+/-- `div_zero_C_mul_right` shows constant scaling commutes with division by the
+zero polynomial on the right input `w` when `gcd c w` vanishes. -/
 private theorem div_zero_C_mul_right
     [ZMod64.PrimeModulus p]
     (u : ZMod64 p) {c w : FpPoly p} (h : DensePoly.gcd c w = 0) :
@@ -2263,6 +2363,9 @@ private def yunFactorsWithLevel
             { factor := z, multiplicity := base * level } :: accRev
         yunFactorsWithLevel y (w / y) base (level + 1) fuel accRev'
 
+/-- `yunFactors` is the multiplicity-indexed Yun inner loop, peeling factors off
+the coprime/repeated split `(c, w)` and tagging each with the running
+multiplicity `i`. -/
 private def yunFactors
     (c w : FpPoly p) (i : Nat) (fuel : Nat)
     (accRev : List (SquareFreeFactor p)) :
@@ -2304,6 +2407,9 @@ private def yunFactorsContributionWithLevel
             pow z (base * level) * tail.1
         (contribution, tail.2)
 
+/-- `yunFactorsContribution` is the specification payload for `yunFactors`: the
+product contributed by the discovered factors paired with the repeated part that
+remains. -/
 private def yunFactorsContribution
     (c w : FpPoly p) (i : Nat) : Nat → FpPoly p × FpPoly p
   | 0 => (1, w)
@@ -2321,6 +2427,10 @@ private def yunFactorsContribution
             pow z i * tail.1
         (contribution, tail.2)
 
+/-- `yunFactorsWithLevel_reconstruction_invariant` ties `yunFactorsWithLevel` to
+`yunFactorsContributionWithLevel`: the loop's residual matches the contribution's
+residual, and the reverse-order accumulator product equals the prior accumulator
+product times the contribution. -/
 private theorem yunFactorsWithLevel_reconstruction_invariant
     (c w : FpPoly p) (base level fuel : Nat) (accRev : List (SquareFreeFactor p)) :
     let loop := yunFactorsWithLevel c w base level fuel accRev
@@ -2367,6 +2477,10 @@ private theorem yunFactorsWithLevel_reconstruction_invariant
                             (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).1
             simpa [y, z, hz] using hmul
 
+/-- `yunFactors_reconstruction_invariant` ties `yunFactors` to
+`yunFactorsContribution`: the loop's residual matches the contribution's
+residual, and the reverse-order accumulator product equals the prior accumulator
+product times the contribution. -/
 private theorem yunFactors_reconstruction_invariant
     (c w : FpPoly p) (i fuel : Nat) (accRev : List (SquareFreeFactor p)) :
     let loop := yunFactors c w i fuel accRev
@@ -2507,6 +2621,7 @@ private theorem size_eq_zero_of_isZero_true
     f.size = 0 := by
   simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hzero
 
+/-- `pthRoot` fixes the constant polynomial `1`, the unit base case of the `pthRoot` recursion. -/
 private theorem pthRoot_one
     (hp : Hex.Nat.Prime p) :
     pthRoot (1 : FpPoly p) = 1 := by
@@ -2527,6 +2642,7 @@ private theorem pthRoot_one
       rw [DensePoly.coeff_C, DensePoly.coeff_C]
       simp [hne]
 
+/-- Every power of the constant polynomial `1` is `1`. -/
 private theorem pow_one_base (n : Nat) :
     pow (1 : FpPoly p) n = 1 := by
   rw [pow_eq_powLinear]
@@ -2537,6 +2653,7 @@ private theorem pow_one_base (n : Nat) :
       rw [powLinear, ih]
       exact mul_one (1 : FpPoly p)
 
+/-- The square-free contribution of the constant polynomial `1` is `1`, halting the recursion at the unit. -/
 private theorem squareFreeAuxRevContribution_one
     (hp : Hex.Nat.Prime p) (multiplicity fuel : Nat) :
     squareFreeAuxRevContribution (1 : FpPoly p) multiplicity fuel = 1 := by
@@ -2564,6 +2681,7 @@ private theorem squareFreeAuxRevContribution_one
       rw [pthRoot_one hp]
       exact ih (multiplicity * p)
 
+/-- A polynomial of `size` one is constant, so its derivative is zero. -/
 private theorem derivative_isZero_true_of_size_one
     (f : FpPoly p) (hsize : f.size = 1) :
     (DensePoly.derivative f).isZero = true := by
@@ -2571,6 +2689,7 @@ private theorem derivative_isZero_true_of_size_one
   simp [hsize, DensePoly.isZero, DensePoly.ofCoeffs, DensePoly.trimTrailingZeros]
   rfl
 
+/-- `pthRoot` fixes any constant (`size` one) polynomial. -/
 private theorem pthRoot_eq_self_of_size_one
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (hsize : f.size = 1) :
     pthRoot f = f := by
@@ -2596,6 +2715,7 @@ private theorem pthRoot_eq_self_of_size_one
         omega
       rw [hroot_zero, hf_zero]
 
+/-- The square-free contribution of any constant (`size` one) polynomial is `1`. -/
 private theorem squareFreeAuxRevContribution_size_one
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (hsize : f.size = 1) :
@@ -2617,12 +2737,14 @@ private theorem squareFreeAuxRevContribution_size_one
         rw [pthRoot_eq_self_of_size_one hp f hsize, hsize]
       exact ih (pthRoot f) (multiplicity * p) hroot_size
 
+/-- Square-free contribution correctness on `pthRoot 1`: it equals `pow (pthRoot 1) multiplicity`, the constant base case of the `pthRoot` branch. -/
 private theorem squareFreeAuxRevContribution_pthRoot_constant_correct
     (hp : Hex.Nat.Prime p) (multiplicity fuel : Nat) :
     squareFreeAuxRevContribution (pthRoot (1 : FpPoly p)) multiplicity fuel =
       pow (pthRoot (1 : FpPoly p)) multiplicity := by
   rw [pthRoot_one hp, squareFreeAuxRevContribution_one hp, pow_one_base]
 
+/-- When the derivative vanishes on a nonzero `f`, its top degree `f.size - 1` is a multiple of `p`. -/
 private theorem derivative_zero_top_degree_mod_eq_zero
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (hzero : f.isZero = false)
@@ -2637,6 +2759,7 @@ private theorem derivative_zero_top_degree_mod_eq_zero
     have hcoeff_ne := DensePoly.coeff_last_ne_zero_of_pos_size f hpos
     exact False.elim (hcoeff_ne hcoeff_zero)
 
+/-- When the derivative vanishes on a nonconstant `f`, `pthRoot f` is nonzero, since its top coefficient is the nonzero top coefficient of `f`. -/
 private theorem pthRoot_nonzero_of_derivative_zero_nonconstant
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (hzero : f.isZero = false)
@@ -2667,6 +2790,7 @@ private theorem pthRoot_nonzero_of_derivative_zero_nonconstant
     have hpos : 0 < f.size := by omega
     exact False.elim (DensePoly.coeff_last_ne_zero_of_pos_size f hpos hcoeff_f_zero)
 
+/-- Taking `pthRoot` of a nonconstant polynomial strictly shrinks its `size`, so the recursion's fuel still bounds it. -/
 private theorem pthRoot_fuel_decrease_of_derivative_zero_nonconstant
     (hp : Hex.Nat.Prime p) (f : FpPoly p) {fuel : Nat}
     (hfuel : f.size < fuel + 1)
@@ -2701,6 +2825,7 @@ private theorem pthRoot_fuel_decrease_of_derivative_zero_nonconstant
         omega)
     exact False.elim (hroot_coeff_ne hroot_coeff_zero)
 
+/-- When the derivative vanishes, raising `pthRoot f` to the `p`-th power recovers `f`, the Frobenius identity over `Fp`. -/
 private theorem pthRoot_frobenius_of_derivative_zero
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (_hzero : f.isZero = false)
@@ -2713,6 +2838,7 @@ private theorem pthRoot_frobenius_of_derivative_zero
   · simp [hn]
   · simp [hn, derivative_zero_coeff_non_pmultiple hp f n hdf hn]
 
+/-- The Frobenius identity `pow (pthRoot f) p = f` for derivative-zero `f`, dropping the nonzero hypothesis. -/
 private theorem pthRoot_frobenius_of_derivative_zero'
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (hdf : (DensePoly.derivative f).isZero = true) :
@@ -2724,6 +2850,7 @@ private theorem pthRoot_frobenius_of_derivative_zero'
   · simp [hn]
   · simp [hn, derivative_zero_coeff_non_pmultiple hp f n hdf hn]
 
+/-- When the derivative vanishes, `pthRoot f` divides `f`, since `f` is its `p`-th power. -/
 private theorem pthRoot_dvd_self_of_derivative_zero
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (hzero : f.isZero = false)
@@ -2744,12 +2871,14 @@ private theorem pthRoot_dvd_self_of_derivative_zero
     _ = pthRoot f * pow (pthRoot f) (p - 1) := by
       rw [pow_one]
 
+/-- Iterating `pow` multiplies the exponents. -/
 private theorem pow_pow_mul
     (f : FpPoly p) (m n : Nat) (_hm : 0 < m) :
     pow (pow f n) m = pow f (m * n) := by
   rw [pow_eq_powLinear, pow_eq_powLinear, pow_eq_powLinear]
   exact powLinear_powLinear_mul f m n
 
+/-- When the derivative vanishes, `pow (pthRoot f) (multiplicity * p)` equals `pow f multiplicity`, transporting the recursion's contribution from `pthRoot f` back to `f`. -/
 private theorem pthRoot_pow_mul_prime_of_derivative_zero
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity : Nat)
     (hmultiplicity : 0 < multiplicity)
@@ -2763,6 +2892,7 @@ private theorem pthRoot_pow_mul_prime_of_derivative_zero
     _ = pow f multiplicity := by
           rw [pthRoot_frobenius_of_derivative_zero hp f hzero hdf]
 
+/-- Square-free contribution correctness on the derivative-zero branch: the recursive contribution of `pthRoot f` at multiplicity `multiplicity * p` equals `pow f multiplicity`. -/
 private theorem squareFreeAuxRevContribution_derivative_zero_correct
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 1)

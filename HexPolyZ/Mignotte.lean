@@ -50,6 +50,8 @@ def ceilSqrt (n : Nat) : Nat :=
   else
     r + 1
 
+/-- The arithmetic-mean/geometric-mean inequality `4 * (a * b) ≤ (a + b) ^ 2`
+for natural numbers. -/
 private theorem four_mul_le_square_add (a b : Nat) :
     4 * (a * b) ≤ (a + b) ^ 2 := by
   by_cases h : a ≤ b
@@ -61,6 +63,8 @@ private theorem four_mul_le_square_add (a b : Nat) :
     simp [Nat.pow_two]
     grind
 
+/-- The midpoint square bound `x * (q + 1) ≤ ((x + q) / 2 + 1) ^ 2` that drives
+the Newton upper envelope. -/
 private theorem mul_succ_le_midpoint_succ_sq (x q : Nat) :
     x * (q + 1) ≤ ((x + q) / 2 + 1) ^ 2 := by
   let a := (x + q) / 2 + 1
@@ -81,6 +85,8 @@ private theorem mul_succ_le_midpoint_succ_sq (x q : Nat) :
   have hcancel := Nat.le_of_mul_le_mul_left h4 (by decide : 0 < 4)
   simpa [a] using hcancel
 
+/-- One Newton step preserves the upper envelope: `n ≤ (sqrtStep n x + 1) ^ 2`
+whenever `n ≤ (x + 1) ^ 2`. -/
 private theorem sqrtStep_upper_succ
     (n x : Nat) (hx : 0 < x) (_h : n ≤ (x + 1) ^ 2) :
     n ≤ (sqrtStep n x + 1) ^ 2 := by
@@ -94,6 +100,8 @@ private theorem sqrtStep_upper_succ
   exact Nat.le_trans hn_le
     (by simpa [sqrtStep, q] using mul_succ_le_midpoint_succ_sq x q)
 
+/-- Inductive core: the iterate `sqrtAux n fuel x` stays in the upper envelope
+`n ≤ (sqrtAux n fuel x + 1) ^ 2` for any starting `x` already in it. -/
 private theorem sqrtAux_upper_succ_core
     (n fuel x : Nat) (h : n ≤ (x + 1) ^ 2) :
     n ≤ (sqrtAux n fuel x + 1) ^ 2 := by
@@ -114,6 +122,8 @@ private theorem sqrtAux_upper_succ_core
         simp [sqrtAux, sqrtStep]
         exact h
 
+/-- The iterate `sqrtAux n fuel x` keeps the upper envelope
+`n ≤ (sqrtAux n fuel x + 1) ^ 2`. -/
 private theorem sqrtAux_upper_succ
     (n fuel x : Nat) (_hx : 0 < x) (h : n ≤ (x + 1) ^ 2) :
     n ≤ (sqrtAux n fuel x + 1) ^ 2 :=
@@ -140,6 +150,8 @@ private theorem sqrtStep_ge_imp_sq_le {n x : Nat} (_hx : 0 < x)
     _ = (n / x) * x := Nat.mul_comm _ _
     _ ≤ n := Nat.div_mul_le_self n x
 
+/-- In the far region `4 * n ≤ x * x`, one Newton step contracts the iterate by
+`8 * sqrtStep n x ≤ 5 * x`. -/
 private theorem sqrtStep_far_contracts
     (n x : Nat) (hx : 0 < x) (hfar : 4 * n ≤ x * x) :
     8 * sqrtStep n x ≤ 5 * x := by
@@ -163,6 +175,8 @@ private theorem sqrtStep_far_contracts
     _ ≤ 4 * x + x := Nat.add_le_add_left hq (4 * x)
     _ = 5 * x := by grind
 
+/-- In the far region `4 * n ≤ x * x`, one Newton step strictly decreases the
+iterate: `sqrtStep n x < x`. -/
 private theorem sqrtStep_far_lt_self
     (n x : Nat) (hx : 0 < x) (hfar : 4 * n ≤ x * x) :
     sqrtStep n x < x := by
@@ -177,12 +191,16 @@ state is no longer in the very-far region where `x^2` is at least `16 * n`.
 private def sqrtNearEnvelope (n x : Nat) : Prop :=
   x * x < 16 * n
 
+/-- Leaving the very-far region (`¬ 16 * n ≤ x * x`) places `x` in the near-root
+envelope `sqrtNearEnvelope n x`. -/
 private theorem sqrtNearEnvelope_of_not_very_far
     {n x : Nat} (h : ¬ 16 * n ≤ x * x) :
     sqrtNearEnvelope n x := by
   unfold sqrtNearEnvelope
   omega
 
+/-- Starting in the near envelope, the iterate `sqrtAux n fuel x` either reaches
+the lower bound `y * y ≤ n` or remains in the near envelope. -/
 private theorem sqrtAux_near_or_sq_le
     (n fuel x : Nat) (hnear : sqrtNearEnvelope n x) :
     let y := sqrtAux n fuel x
@@ -209,6 +227,8 @@ private theorem sqrtAux_near_or_sq_le
           exact Nat.lt_of_le_of_lt hsq_next hnear
         exact ih next hnear_next
 
+/-- Once the iterate undershoots with `x * x ≤ n`, the Newton step no longer
+decreases it: `x ≤ sqrtStep n x`. -/
 private theorem sqrtStep_ge_of_sq_le
     {n x : Nat} (hsq : x * x ≤ n) :
     x ≤ sqrtStep n x := by
@@ -221,6 +241,7 @@ private theorem sqrtStep_ge_of_sq_le
     subst x
     simp [sqrtStep]
 
+/-- The iteration is fixed at any `x` with `x * x ≤ n`: `sqrtAux n fuel x = x`. -/
 private theorem sqrtAux_eq_self_of_sq_le
     (n fuel x : Nat) (hsq : x * x ≤ n) :
     sqrtAux n fuel x = x := by
@@ -233,9 +254,13 @@ private theorem sqrtAux_eq_self_of_sq_le
       have hstop : next ≥ x := sqrtStep_ge_of_sq_le hsq
       simp [next, hstop]
 
+/-- The Newton iteration gap `x - n / x`, measuring how far the iterate sits
+above its quotient. -/
 private def sqrtGap (n x : Nat) : Nat :=
   x - n / x
 
+/-- The gap `sqrtGap n x` is positive while `x` overshoots the root
+(`¬ x * x ≤ n`). -/
 private theorem sqrtGap_pos_of_not_sq
     {n x : Nat} (hx : 0 < x) (hnot_sq : ¬ x * x ≤ n) :
     0 < sqrtGap n x := by
@@ -247,6 +272,8 @@ private theorem sqrtGap_pos_of_not_sq
       exact False.elim (hnot_sq ((Nat.le_div_iff_mul_le hx).mp hx_le))
   omega
 
+/-- One Newton step at least halves the gap:
+`2 * sqrtGap n (sqrtStep n x) ≤ sqrtGap n x`. -/
 private theorem sqrtStep_gap_halves
     (n x : Nat) (hx : 0 < x) (hnot_sq : ¬ x * x ≤ n) :
     2 * sqrtGap n (sqrtStep n x) ≤ sqrtGap n x := by
@@ -294,6 +321,9 @@ private theorem sqrtStep_gap_halves
     rw [hzero]
     simp
 
+/-- While the iterate has not yet undershot, `fuel` Newton steps shrink the gap
+by a factor `2 ^ fuel`: `2 ^ fuel * sqrtGap n (sqrtAux n fuel x) ≤ sqrtGap n x`.
+This geometric gap contraction drives phase-one convergence. -/
 private theorem sqrtAux_gap_contract_of_not_done
     (n fuel x : Nat) (hx : 0 < x)
     (hnot_sq :
@@ -340,6 +370,9 @@ private theorem sqrtAux_gap_contract_of_not_done
           _ ≤ 2 * sqrtGap n next := Nat.mul_le_mul_left 2 htail
           _ ≤ sqrtGap n x := hstep
 
+/-- After `n.log2 + 1` Newton steps from `x = n`, the iterate undershoots
+(`(sqrtAux n (n.log2 + 1) n) ^ 2 ≤ n`), since the gap cannot survive that many
+halvings while staying below `2 ^ (n.log2 + 1)`. -/
 private theorem sqrtAux_phase_one_sq_le
     (n : Nat) (hn : 0 < n) :
     (sqrtAux n (n.log2 + 1) n) * (sqrtAux n (n.log2 + 1) n) ≤ n := by
@@ -373,6 +406,9 @@ private theorem sqrtAux_phase_one_sq_le
       omega
     exact False.elim (Nat.not_lt_of_ge hpow_le hgap_lt)
 
+/-- The iteration composes over fuel:
+`sqrtAux n (fuel₁ + fuel₂) x = sqrtAux n fuel₂ (sqrtAux n fuel₁ x)`, letting a
+full-fuel run split into a phase-one prefix and a refinement tail. -/
 private theorem sqrtAux_append
     (n fuel₁ fuel₂ x : Nat) :
     sqrtAux n (fuel₁ + fuel₂) x =
@@ -409,6 +445,9 @@ private theorem sqrtAux_append
         rw [hleft, hfirst]
         exact ih next
 
+/-- If `x` already undershoots or sits in the near envelope, then so does
+`sqrtAux n fuel x` after any further fuel: the convergence predicate is
+preserved by continued iteration. -/
 private theorem sqrtAux_preserves_sq_or_near
     (n fuel x : Nat) (h : x * x ≤ n ∨ sqrtNearEnvelope n x) :
     let y := sqrtAux n fuel x
@@ -419,6 +458,8 @@ private theorem sqrtAux_preserves_sq_or_near
   | inr hnear =>
       exact sqrtAux_near_or_sq_le n fuel x hnear
 
+/-- In the very-far region `16 * n ≤ x * x`, one Newton step contracts the
+iterate by a fixed ratio: `32 * sqrtStep n x ≤ 17 * x`. -/
 private theorem sqrtStep_very_far_contracts
     (n x : Nat) (hx : 0 < x) (hfar : 16 * n ≤ x * x) :
     32 * sqrtStep n x ≤ 17 * x := by
@@ -442,6 +483,9 @@ private theorem sqrtStep_very_far_contracts
     _ ≤ 16 * x + x := Nat.add_le_add_left hq (16 * x)
     _ = 17 * x := by grind
 
+/-- In the very-far region `16 * n ≤ x * x`, one Newton step strictly decreases
+the iterate (`sqrtStep n x < x`), so the iteration cannot stall before reaching
+the near envelope. -/
 private theorem sqrtStep_very_far_lt_self
     (n x : Nat) (hx : 0 < x) (hfar : 16 * n ≤ x * x) :
     sqrtStep n x < x := by
@@ -449,10 +493,16 @@ private theorem sqrtStep_very_far_lt_self
   have hlt : 17 * x < 32 * x := by omega
   exact Nat.lt_of_mul_lt_mul_left (Nat.lt_of_le_of_lt hcontract hlt)
 
+/-- The arithmetic identity `(a ^ k * b) ^ 2 = (a * a) ^ k * b ^ 2`, used to
+square the geometric `32 ^ k` / `17 ^ k` contraction factors. -/
 private theorem sq_pow_mul (a k b : Nat) :
     (a ^ k * b) ^ 2 = (a * a) ^ k * b ^ 2 := by
   simp [Nat.pow_two, Nat.mul_pow, Nat.mul_assoc, Nat.mul_left_comm, Nat.mul_comm]
 
+/-- While the iterate has neither undershot nor entered the near envelope,
+`fuel` Newton steps contract it geometrically:
+`32 ^ fuel * sqrtAux n fuel x ≤ 17 ^ fuel * x`, carrying the very-far
+contraction across the whole run. -/
 private theorem sqrtAux_contract_of_not_done
     (n fuel x : Nat) (hx : 0 < x)
     (hnot_sq :
@@ -524,10 +574,15 @@ private theorem sqrtAux_contract_of_not_done
         | inl hsq => exact (hnot_sq hsq).elim
         | inr hnear' => exact (hnot_near hnear').elim
 
+/-- The standard bound `n < 2 ^ (n.log2 + 1)`, which fixes the fuel needed for
+phase one. -/
 private theorem log2_succ_pow_bound (n : Nat) :
     n < 2 ^ (n.log2 + 1) := by
   simpa using (Nat.lt_log2_self : n < 2 ^ (n.log2 + 1))
 
+/-- The numeric inequality `289 ^ (n.log2 + 1) * n < 16 * 1024 ^ (n.log2 + 1)`,
+the contradiction that rules out the iterate remaining very far after phase-one
+fuel. -/
 private theorem phase_one_power_contradiction (n : Nat) :
     289 ^ (n.log2 + 1) * n < 16 * 1024 ^ (n.log2 + 1) := by
   let k := n.log2 + 1
@@ -548,6 +603,9 @@ private theorem phase_one_power_contradiction (n : Nat) :
       have hpos : 0 < 1024 ^ k := Nat.pow_pos (by decide : 0 < 1024)
       omega
 
+/-- For `n ≠ 0`, after `n.log2 + 1` steps the iterate either undershoots or sits
+in the near envelope; proved by deriving a contradiction from the geometric
+contraction were it still very far. -/
 private theorem sqrtAux_phase_one_sharp_core (n : Nat) (hn : n ≠ 0) :
     let y := sqrtAux n (n.log2 + 1) n
     y * y ≤ n ∨ sqrtNearEnvelope n y := by
@@ -592,6 +650,8 @@ private theorem sqrtAux_phase_one_sharp_core (n : Nat) (hn : n ≠ 0) :
         simpa [k] using phase_one_power_contradiction n
       exact False.elim (Nat.not_lt_of_ge hlarge hsmall)
 
+/-- Phase-one termination including `n = 0`: `sqrtAux n (n.log2 + 1) n` either
+undershoots or lies in the near envelope. -/
 private theorem sqrtAux_phase_one_near_or_sq_le
     (n : Nat) :
     let y := sqrtAux n (n.log2 + 1) n
@@ -601,6 +661,9 @@ private theorem sqrtAux_phase_one_near_or_sq_le
     simp [sqrtAux]
   · exact sqrtAux_phase_one_sharp_core n hn
 
+/-- With full fuel `2 * n.log2 + 1`, the iterate undershoots or sits in the near
+envelope, obtained by appending a phase-one run to a preserving refinement
+tail. -/
 private theorem sqrtAux_full_fuel_near_or_sq_le
     (n : Nat) :
     let y := sqrtAux n (2 * n.log2 + 1) n
@@ -611,6 +674,9 @@ private theorem sqrtAux_full_fuel_near_or_sq_le
     (sqrtAux n (n.log2 + 1) n)
     (sqrtAux_phase_one_near_or_sq_le n)
 
+/-- With full fuel `2 * n.log2 + 1` and `0 < n`, the iterate undershoots
+(`(sqrtAux n (2 * n.log2 + 1) n) ^ 2 ≤ n`); the floor-square-root soundness fact
+`floorSqrt_sq_le` rests on this. -/
 private theorem sqrtAux_full_fuel_sq_le
     (n : Nat) (hn : 0 < n) :
     (sqrtAux n (2 * n.log2 + 1) n) *
@@ -836,6 +902,8 @@ theorem mignotteCoeffBound_eq_zero_of_lt (f : ZPoly) (k j : Nat) (h : k < j) :
     mignotteCoeffBound f k j = 0 := by
   simp [mignotteCoeffBound, binom_eq_zero_of_lt h]
 
+/-- A maximizing natural-number `foldl` only increases (or preserves) its
+accumulator, so the initial value bounds the fold result. -/
 private theorem le_foldl_max_left {α : Type} (xs : List α) (g : α → Nat) (init : Nat) :
     init ≤ xs.foldl (fun acc x => max acc (g x)) init := by
   induction xs generalizing init with
@@ -845,6 +913,8 @@ private theorem le_foldl_max_left {α : Type} (xs : List α) (g : α → Nat) (i
       simp only [List.foldl_cons]
       exact Nat.le_trans (Nat.le_max_left init (g x)) (ih (max init (g x)))
 
+/-- For a maximizing natural-number `foldl`, the value `g x` at any member index
+`x ∈ xs` is bounded by the fold result. -/
 private theorem le_foldl_max_of_mem {α : Type} (xs : List α) (g : α → Nat)
     {x : α} {init : Nat} (hx : x ∈ xs) :
     g x ≤ xs.foldl (fun acc y => max acc (g y)) init := by
@@ -862,6 +932,8 @@ private theorem le_foldl_max_of_mem {α : Type} (xs : List α) (g : α → Nat)
       | inr h =>
           exact ih h
 
+/-- The inner `max`-fold over `j ∈ range (k+1)` dominates each
+`mignotteCoeffBound f k j` at an in-range index, by `le_foldl_max_of_mem`. -/
 private theorem mignotteCoeffBound_le_degree_innerFold
     (f : ZPoly) (k : Nat) {j init : Nat} (hj : j ≤ k) :
     mignotteCoeffBound f k j ≤
@@ -872,6 +944,9 @@ private theorem mignotteCoeffBound_le_degree_innerFold
     (fun j => mignotteCoeffBound f k j)
     (List.mem_range.mpr (Nat.lt_succ_of_le hj))
 
+/-- The outer degree `max`-fold (each step running the inner `j`-fold) only
+increases (or preserves) its accumulator, so the initial value bounds the
+result. -/
 private theorem defaultFactorCoeffBound_outerFold_preserves
     (f : ZPoly) (ks : List Nat) (init : Nat) :
     init ≤
@@ -892,6 +967,9 @@ private theorem defaultFactorCoeffBound_outerFold_preserves
         (ih ((List.range (k + 1)).foldl
           (fun acc j => max acc (mignotteCoeffBound f k j)) init))
 
+/-- For any degree `k ∈ ks` and in-range index `j ≤ k`, `mignotteCoeffBound f k j`
+is bounded by the full nested degree/index `max`-fold, combining the inner-fold
+and outer-fold monotonicity lemmas. -/
 private theorem mignotteCoeffBound_le_defaultFactorCoeffBound_fold
     (f : ZPoly) (ks : List Nat) {k j init : Nat} (hk : k ∈ ks) (hj : j ≤ k) :
     mignotteCoeffBound f k j ≤

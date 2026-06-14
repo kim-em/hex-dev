@@ -599,6 +599,13 @@ def checkPowChainLinearIncrementalQuotientWitnessStep
           ((prev * prev).coeffs == (curr + quot * f).coeffs))
   | _, _, _ => false
 
+/--
+Soundness of `checkPowChainLinearIncrementalQuotientWitnessStep` from
+explicit chain and quotient entries: given `powChain[k] = prev`,
+`powChain[k+1] = curr`, `quotients[k] = quot`, both entries reduced below
+`deg f`, and the witnessed identity `prev * prev = curr + quot * f` on
+coefficients, the checker returns `true`.
+-/
 theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entries
     (f prev curr quot : FpPoly 2)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -614,6 +621,11 @@ theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entries
   rw [hprev, hcurr, hquot]
   simp [hprevRed, hcurrRed, hmulCoeffs]
 
+/--
+`_of_entries` restated with the two degree bounds and the coefficient
+equality supplied as `decide`/`==` Booleans, matching the form the checker
+itself evaluates.
+-/
 theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_bools
     (f prev curr quot : FpPoly 2)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -634,6 +646,11 @@ theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_bools
   · exact of_decide_eq_true hcurrRed
   · exact eq_of_beq hmulCoeffs
 
+/--
+A `DensePoly` whose coefficient `size` is at most `n` (with `0 < n`) has
+`degree?.getD 0 < n`. Converts a coefficient-count bound into the degree
+bound consumed by the quotient-witness step lemmas.
+-/
 theorem degree?_getD_lt_of_size_le
     {R : Type u} [Zero R] [DecidableEq R] (g : DensePoly R) {n : Nat}
     (hnpos : 0 < n) (hsize : g.size ≤ n) :
@@ -644,6 +661,11 @@ theorem degree?_getD_lt_of_size_le
   · simp [hzero]
     omega
 
+/--
+`_of_entries` restated with the two reducedness hypotheses replaced by
+`size` bounds on the chain entries, discharged through
+`degree?_getD_lt_of_size_le`.
+-/
 theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
     (f prev curr quot : FpPoly 2)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -665,20 +687,34 @@ theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
   · exact degree?_getD_lt_of_size_le curr hfpos hcurrSize
   · exact hmulCoeffs
 
+/--
+The `i`-th coefficient in `ZMod64 2` of a packed `UInt64` bit-word: `1`
+when bit `i` of `bits` is set, `0` otherwise.
+-/
 def gf2BitCoeff (bits : UInt64) (i : Nat) : ZMod64 2 :=
   if (((bits >>> i.toUInt64) &&& 1) = 0) then
     0
   else
     1
 
+/--
+Reinterpret the low `width` bits of `bits` as an `FpPoly 2`, with
+coefficient `i` given by `gf2BitCoeff bits i`.
+-/
 def gf2WordPoly (bits : UInt64) (width : Nat) : FpPoly 2 :=
   FpPoly.ofCoeffs (((List.range width).map fun i => gf2BitCoeff bits i).toArray)
 
+/-- `gf2WordPoly bits width` has coefficient `size` at most `width`. -/
 theorem gf2WordPoly_size_le (bits : UInt64) (width : Nat) :
     (gf2WordPoly bits width).size ≤ width := by
   unfold gf2WordPoly FpPoly.ofCoeffs
   exact Nat.le_trans (DensePoly.size_ofCoeffs_le _) (by simp)
 
+/--
+If `width ≤ bound` and `0 < bound`, then
+`(gf2WordPoly bits width).degree?.getD 0 < bound`; the degree bound used
+when feeding a bit-word polynomial to the witness step.
+-/
 theorem gf2WordPoly_degree?_getD_lt
     (bits : UInt64) {width bound : Nat} (hwidth_pos : 0 < bound)
     (hwidth : width ≤ bound) :
@@ -686,6 +722,10 @@ theorem gf2WordPoly_degree?_getD_lt
   degree?_getD_lt_of_size_le (gf2WordPoly bits width) hwidth_pos
     (Nat.le_trans (gf2WordPoly_size_le bits width) hwidth)
 
+/--
+Coefficient `i` of `gf2WordPoly bits width` is `gf2BitCoeff bits i` when
+`i < width`, and `0` otherwise.
+-/
 theorem gf2WordPoly_coeff (bits : UInt64) (width i : Nat) :
     (gf2WordPoly bits width).coeff i =
       if i < width then gf2BitCoeff bits i else 0 := by
@@ -696,13 +736,19 @@ theorem gf2WordPoly_coeff (bits : UInt64) (width i : Nat) :
   · simp [Array.getD, hi]
     rfl
 
+/-- `true` exactly when `a` and `b` agree on every coefficient `0 … bound-1`;
+the bounded executable prefix-equality check over `List.range bound`. -/
 def coeffsEqUpTo (bound : Nat) (a b : FpPoly 2) : Bool :=
   (List.range bound).all fun i => a.coeff i == b.coeff i
 
+/-- Bounded per-step quotient-witness test: `prev * prev` and `curr + quot * f`
+agree on coefficients below `bound`. -/
 def quotientStepCoeffCheck
     (bound : Nat) (prev curr quot f : FpPoly 2) : Bool :=
   coeffsEqUpTo bound (prev * prev) (curr + quot * f)
 
+/-- A passing `coeffsEqUpTo` yields coefficient equality on every index below
+the bound. -/
 theorem coeff_eq_of_coeffsEqUpTo
     {bound : Nat} {a b : FpPoly 2}
     (h : coeffsEqUpTo bound a b = true) :
@@ -713,6 +759,8 @@ theorem coeff_eq_of_coeffsEqUpTo
   have hbool := List.all_eq_true.mp h i hmem
   exact eq_of_beq hbool
 
+/-- If both polynomials have size at most `bound` and agree on coefficients
+below `bound`, their full coefficient arrays are equal. -/
 theorem coeffs_eq_of_size_le_of_coeff_eq
     {bound : Nat} {a b : FpPoly 2}
     (ha : a.size ≤ bound) (hb : b.size ≤ bound)
@@ -727,6 +775,8 @@ theorem coeffs_eq_of_size_le_of_coeff_eq
         DensePoly.coeff_eq_zero_of_size_le b (by omega : b.size ≤ i)]
   exact congrArg DensePoly.coeffs hpoly
 
+/-- Upgrade a passing `coeffsEqUpTo` to full coefficient-array equality, given
+that both polynomials have size at most `bound`. -/
 theorem coeffs_eq_of_size_le_of_coeffsEqUpTo
     {bound : Nat} {a b : FpPoly 2}
     (ha : a.size ≤ bound) (hb : b.size ≤ bound)
@@ -734,6 +784,8 @@ theorem coeffs_eq_of_size_le_of_coeffsEqUpTo
     a.coeffs = b.coeffs :=
   coeffs_eq_of_size_le_of_coeff_eq ha hb (coeff_eq_of_coeffsEqUpTo h)
 
+/-- A passing `quotientStepCoeffCheck`, with both sides bounded in size by
+`bound`, certifies `(prev * prev).coeffs = (curr + quot * f).coeffs`. -/
 theorem quotientStep_coeffs_eq_of_check
     {bound : Nat} {prev curr quot f : FpPoly 2}
     (hleft : (prev * prev).size ≤ bound)
@@ -743,6 +795,8 @@ theorem quotientStep_coeffs_eq_of_check
   unfold quotientStepCoeffCheck at hcheck
   exact coeffs_eq_of_size_le_of_coeffsEqUpTo hleft hright hcheck
 
+/-- `quotientStepCoeffCheck` specialised to GF(2) operands packed as `UInt64`
+bit-words, decoded through `gf2WordPoly`. -/
 def gf2WordQuotientStepCoeffCheck
     (bound width : Nat) (prevBits currBits quotBits fBits : UInt64) : Bool :=
   quotientStepCoeffCheck bound
@@ -751,6 +805,9 @@ def gf2WordQuotientStepCoeffCheck
     (gf2WordPoly quotBits width)
     (gf2WordPoly fBits width)
 
+/-- Word-packed analogue of `quotientStep_coeffs_eq_of_check`: a passing
+`gf2WordQuotientStepCoeffCheck` under the size bounds yields coefficient-array
+equality of the decoded GF(2) polynomials. -/
 theorem gf2WordQuotientStep_coeffs_eq_of_check
     {bound width : Nat} {prevBits currBits quotBits fBits : UInt64}
     (hleft :
@@ -780,6 +837,13 @@ private theorem densePoly_eq_of_coeffs_eq
           subst h
           rfl
 
+/--
+Prefix-check entry point to `checkRabinBezoutWitness`: if the Bezout
+combination `left * f + right * diff` agrees with `1` on every coefficient
+up to `bound` (with both sides bounded by `bound`), the witness check
+accepts. Used when the certifier carries a `coeffsEqUpTo` prefix comparison
+rather than full polynomial equality.
+-/
 theorem checkRabinBezoutWitness_of_coeffsEqUpTo
     (f : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -811,6 +875,11 @@ theorem checkRabinBezoutWitness_of_coeffsEqUpTo
     densePoly_eq_of_coeffs_eq hcoeffsEq
   simp [hpoly]
 
+/--
+Coefficient-equality entry point to `checkRabinBezoutWitness`: if the
+Bezout combination `left * f + right * diff` has the same coefficient array
+as `1`, the witness check accepts.
+-/
 theorem checkRabinBezoutWitness_of_coeffs_eq
     (f : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -832,6 +901,12 @@ theorem checkRabinBezoutWitness_of_coeffs_eq
     densePoly_eq_of_coeffs_eq hcoeffs
   simp [hpoly]
 
+/--
+Polynomial-equality entry point to `checkRabinBezoutWitness`: if the Bezout
+combination `left * f + right * diff` equals `1` as a polynomial, the
+witness check accepts. The terminal form the two coefficient-level entry
+points reduce to.
+-/
 theorem checkRabinBezoutWitness_of_poly_eq
     (f : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -848,6 +923,12 @@ theorem checkRabinBezoutWitness_of_poly_eq
   rw [hpow, hbezout]
   simp [hpoly]
 
+/--
+Discharge the first-entry condition of
+`checkPowChainLinearIncrementalQuotientWitnesses` from coefficient equality:
+if `powChain[0]` has the same coefficient array as `X mod f`, then
+`powChain[0]? == some (X mod f)`.
+-/
 theorem checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs
     (f first : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -859,6 +940,12 @@ theorem checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs
   rw [hfirst, hpoly]
   simp
 
+/--
+`Bool`-valued variant of
+`checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs`: accepts
+the first-entry condition from a `==` coefficient comparison that evaluates
+to `true`.
+-/
 theorem checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs_beq
     (f first : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2)
@@ -896,6 +983,12 @@ private theorem checkPowChainLinearIncrementalQuotientWitnessStep_zero_bool_pilo
   · decide
   · rfl
 
+/--
+Quotient-witness form of the incremental pow-chain check: validates the
+chain size, that `powChain[0] = X mod f`, and every per-step witness via
+`checkPowChainLinearIncrementalQuotientWitnessStep`. Avoids recomputing the
+modular squarings by reading the quotients off the certificate.
+-/
 def checkPowChainLinearIncrementalQuotientWitnesses
     (f : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2) (quotients : Array (FpPoly 2)) :
@@ -906,6 +999,11 @@ def checkPowChainLinearIncrementalQuotientWitnesses
     (List.range cert.n).all fun k =>
       checkPowChainLinearIncrementalQuotientWitnessStep f cert quotients k
 
+/--
+Introduction rule for `checkPowChainLinearIncrementalQuotientWitnesses`:
+assemble acceptance from the two size conditions, the first-entry condition,
+and a per-step witness check for every `k < cert.n`.
+-/
 theorem checkPowChainLinearIncrementalQuotientWitnesses_of_steps
     (f : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2) (quotients : Array (FpPoly 2))
@@ -958,6 +1056,13 @@ private theorem powModMonicLinear_two_eq_of_quotientWitness
   simp only [FpPoly.modByMonic, DensePoly.modByMonic_eq_mod, FpPoly.one_mul, hprevMod]
   exact hsquareMod
 
+/--
+Soundness of the quotient-witness chain check against the squaring-based
+one: if `checkPowChainLinearIncrementalQuotientWitnesses` accepts, then so
+does `checkPowChainLinearIncremental`. Each accepted quotient witness
+`prev * prev = curr + quot * f` (both entries reduced) pins
+`curr = powModMonicLinear prev f _ 2`, recovering the step recurrence.
+-/
 theorem checkPowChainLinearIncremental_of_quotientWitnesses
     (f : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2) (quotients : Array (FpPoly 2)) :

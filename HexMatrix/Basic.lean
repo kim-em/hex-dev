@@ -184,6 +184,9 @@ instance [Mul R] [Add R] [OfNat R 0] : HMul (Matrix R n m) (Matrix R m k) (Matri
   show (mul M N)[i][j] = dot (row M i) (col N j)
   rw [mul, getElem_ofFn]
 
+/-- A left fold `xs.foldl (· + f ·) acc` leaves the accumulator unchanged when `f`
+vanishes on every element of `xs`; the base case for collapsing zero summands in the
+fold-sum algebra. -/
 private theorem foldl_add_eq_acc_ring {R : Type u} [Lean.Grind.Ring R]
     {α : Type v} (xs : List α) (f : α → R) (acc : R)
     (hf : ∀ x ∈ xs, f x = 0) :
@@ -200,6 +203,8 @@ private theorem foldl_add_eq_acc_ring {R : Type u} [Lean.Grind.Ring R]
       rw [hac]
       exact ih acc hxs
 
+/-- `xs.foldl (· + f ·) acc` splits as `acc + xs.foldl (· + f ·) 0`, pulling the running
+accumulator out so a fold-sum can always be taken from a `0` start. -/
 private theorem foldl_sum_start {R : Type u} [Lean.Grind.Ring R]
     {α : Type v} (xs : List α) (f : α → R) (acc : R) :
     xs.foldl (fun acc x => acc + f x) acc =
@@ -214,6 +219,8 @@ private theorem foldl_sum_start {R : Type u} [Lean.Grind.Ring R]
       rw [ih (acc := (0 : R) + f x)]
       grind
 
+/-- Two fold-sums over `xs` agree when their summand functions `f` and `g` agree
+pointwise on `xs`; congruence for the fold-sum under the integrand. -/
 private theorem foldl_sum_congr {R : Type u} [Add R]
     {α : Type v} (xs : List α) (f g : α → R) (acc : R)
     (h : ∀ x ∈ xs, f x = g x) :
@@ -229,6 +236,8 @@ private theorem foldl_sum_congr {R : Type u} [Add R]
       rw [hx]
       exact ih (acc + g x) hxs
 
+/-- The fold-sum of a pointwise sum `f x + g x` equals the sum of the two separate
+fold-sums; additivity of the fold-sum over its summand. -/
 private theorem foldl_sum_add {R : Type u} [Lean.Grind.Ring R]
     {α : Type v} (xs : List α) (f g : α → R) :
     xs.foldl (fun acc x => acc + (f x + g x)) 0 =
@@ -246,6 +255,8 @@ private theorem foldl_sum_add {R : Type u} [Lean.Grind.Ring R]
       rw [ih]
       grind
 
+/-- A double fold-sum may exchange the order of its outer and inner index lists `xs` and
+`ys`; the Fubini swap for fold-sums used to transpose iterated matrix sums. -/
 private theorem foldl_sum_comm {R : Type u} [Lean.Grind.Ring R]
     {α : Type v} {β : Type w} (xs : List α) (ys : List β) (g : α → β → R) :
     xs.foldl (fun acc x => acc + ys.foldl (fun acc y => acc + g x y) 0) 0 =
@@ -276,6 +287,8 @@ private theorem foldl_sum_comm {R : Type u} [Lean.Grind.Ring R]
       rw [foldl_sum_add]
       grind
 
+/-- Right multiplication by `c` distributes through a fold-sum, scaling each summand `f x`
+to `f x * c`. -/
 private theorem foldl_sum_mul_right {R : Type u} [Lean.Grind.Ring R]
     {α : Type v} (xs : List α) (f : α → R) (c acc : R) :
     xs.foldl (fun acc x => acc + f x) acc * c =
@@ -289,6 +302,8 @@ private theorem foldl_sum_mul_right {R : Type u} [Lean.Grind.Ring R]
       have hdist : (acc + f x) * c = acc * c + f x * c := by grind
       rw [hdist]
 
+/-- Left multiplication by `c` distributes through a fold-sum, scaling each summand `f x`
+to `c * f x`. -/
 private theorem foldl_sum_mul_left {R : Type u} [Lean.Grind.Ring R]
     {α : Type v} (xs : List α) (f : α → R) (c acc : R) :
     c * xs.foldl (fun acc x => acc + f x) acc =
@@ -302,6 +317,8 @@ private theorem foldl_sum_mul_left {R : Type u} [Lean.Grind.Ring R]
       have hdist : c * (acc + f x) = c * acc + c * f x := by grind
       rw [hdist]
 
+/-- The fold-sum of a pointwise difference `f x - g x` equals the difference of the two
+separate fold-sums. -/
 private theorem foldl_sum_sub {R : Type u} [Lean.Grind.Ring R]
     {α : Type v} (xs : List α) (f g : α → R) (accF accG : R) :
     xs.foldl (fun acc x => acc + (f x - g x)) (accF - accG) =
@@ -319,6 +336,9 @@ private theorem foldl_sum_sub {R : Type u} [Lean.Grind.Ring R]
       rw [hstep]
       exact ih (accF := accF + f x) (accG := accG + g x)
 
+/-- Folding the indicator-weighted terms `(if i = l then 1 else 0) * f l` over a
+duplicate-free list containing `i` picks out exactly `f i`, adding it to the accumulator;
+the selection step behind reading a single matrix entry out of a sum. -/
 private theorem foldl_indicator_mul_unique {R : Type u} [Lean.Grind.Ring R]
     {n : Nat} (xs : List (Fin n)) (i : Fin n) (f : Fin n → R)
     (hi : i ∈ xs) (hnodup : xs.Nodup) (acc : R) :

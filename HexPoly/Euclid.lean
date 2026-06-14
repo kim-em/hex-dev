@@ -78,6 +78,8 @@ theorem leadingCoeff_ne_zero_of_pos_size (p : DensePoly R) (hpos : 0 < p.size) :
   rw [leadingCoeff_eq_coeff_last p hpos]
   exact coeff_last_ne_zero_of_pos_size p hpos
 
+/-- `arrayDegreeAux coeffs fuel` scans indices below `fuel` downward and returns the
+greatest index whose coefficient is nonzero, or `none` if every coefficient below `fuel` is zero. -/
 private def arrayDegreeAux (coeffs : Array R) : Nat → Option Nat
   | 0 => none
   | fuel + 1 =>
@@ -87,9 +89,12 @@ private def arrayDegreeAux (coeffs : Array R) : Nat → Option Nat
       else
         some i
 
+/-- `arrayDegree? coeffs` is the highest index of a nonzero coefficient of `coeffs`, or `none`
+when every coefficient is zero, computed by scanning from `coeffs.size` downward. -/
 private def arrayDegree? (coeffs : Array R) : Option Nat :=
   arrayDegreeAux coeffs coeffs.size
 
+/-- A degree `arrayDegreeAux` reports lies strictly below the scan ceiling `fuel`. -/
 private theorem arrayDegreeAux_some_lt {coeffs : Array R} {fuel rd : Nat}
     (h : arrayDegreeAux coeffs fuel = some rd) :
     rd < fuel := by
@@ -105,6 +110,7 @@ private theorem arrayDegreeAux_some_lt {coeffs : Array R} {fuel rd : Nat}
         subst rd
         omega
 
+/-- The coefficient at a degree `arrayDegreeAux` reports is nonzero. -/
 private theorem arrayDegreeAux_some_coeff_ne_zero {coeffs : Array R} {fuel rd : Nat}
     (h : arrayDegreeAux coeffs fuel = some rd) :
     coeffs.getD rd (Zero.zero : R) ≠ (Zero.zero : R) := by
@@ -121,6 +127,7 @@ private theorem arrayDegreeAux_some_coeff_ne_zero {coeffs : Array R} {fuel rd : 
         rw [Array.getD_eq_getD_getElem?]
         exact hcoeff
 
+/-- When `arrayDegreeAux` returns `none`, every coefficient at an index below `fuel` is zero. -/
 private theorem arrayDegreeAux_none_getD_eq_zero {coeffs : Array R} {fuel i : Nat}
     (h : arrayDegreeAux coeffs fuel = none) (hi : i < fuel) :
     coeffs.getD i (Zero.zero : R) = (Zero.zero : R) := by
@@ -138,6 +145,7 @@ private theorem arrayDegreeAux_none_getD_eq_zero {coeffs : Array R} {fuel i : Na
           exact hcoeff
       · simp [hcoeff] at h
 
+/-- Every coefficient strictly above a degree `arrayDegreeAux` reports and below `fuel` is zero. -/
 private theorem arrayDegreeAux_some_above_eq_zero {coeffs : Array R} {fuel rd i : Nat}
     (h : arrayDegreeAux coeffs fuel = some rd) (hrd : rd < i) (hi : i < fuel) :
     coeffs.getD i (Zero.zero : R) = (Zero.zero : R) := by
@@ -157,16 +165,19 @@ private theorem arrayDegreeAux_some_above_eq_zero {coeffs : Array R} {fuel rd i 
         cases h
         omega
 
+/-- A degree `arrayDegree?` reports lies strictly below `coeffs.size`. -/
 private theorem arrayDegree?_some_lt {coeffs : Array R} {rd : Nat}
     (h : arrayDegree? coeffs = some rd) :
     rd < coeffs.size := by
   exact arrayDegreeAux_some_lt h
 
+/-- The coefficient at a degree `arrayDegree?` reports is nonzero. -/
 private theorem arrayDegree?_some_coeff_ne_zero {coeffs : Array R} {rd : Nat}
     (h : arrayDegree? coeffs = some rd) :
     coeffs.getD rd (Zero.zero : R) ≠ (Zero.zero : R) := by
   exact arrayDegreeAux_some_coeff_ne_zero h
 
+/-- Every coefficient at an index above a degree `arrayDegree?` reports is zero. -/
 private theorem arrayDegree?_some_above_eq_zero {coeffs : Array R} {rd i : Nat}
     (h : arrayDegree? coeffs = some rd) (hrd : rd < i) :
     coeffs.getD i (Zero.zero : R) = (Zero.zero : R) := by
@@ -175,6 +186,7 @@ private theorem arrayDegree?_some_above_eq_zero {coeffs : Array R} {rd i : Nat}
   · unfold Array.getD
     exact dif_neg hi
 
+/-- When `arrayDegree?` returns `none`, every coefficient is zero. -/
 private theorem arrayDegree?_none_getD_eq_zero {coeffs : Array R} {i : Nat}
     (h : arrayDegree? coeffs = none) :
     coeffs.getD i (Zero.zero : R) = (Zero.zero : R) := by
@@ -183,6 +195,8 @@ private theorem arrayDegree?_none_getD_eq_zero {coeffs : Array R} {i : Nat}
   · unfold Array.getD
     exact dif_neg hi
 
+/-- If every coefficient at an index `≥ bound` is zero (with `bound` positive), the normalized
+degree of `ofCoeffs coeffs` is below `bound`. -/
 private theorem ofCoeffs_degree_getD_lt_of_forall_zero_ge {coeffs : Array R} {bound : Nat}
     (hpos : 0 < bound)
     (hzero : ∀ i, bound ≤ i → coeffs.getD i (Zero.zero : R) = (Zero.zero : R)) :
@@ -212,22 +226,34 @@ private theorem ofCoeffs_degree_getD_lt_of_forall_zero_ge {coeffs : Array R} {bo
     rw [hdeg]
     omega
 
+/-- One coefficient of a long-division elimination step: subtract `coeff * q[j]` from
+position `shift + j` of `next`, the inner action folded by `subtractScaledShift` to wipe
+out the leading term of the current remainder. -/
 private def subtractScaledShiftStep [Sub R] [Mul R]
     (q : Array R) (shift : Nat) (coeff : R) (next : Array R) (j : Nat) : Array R :=
   let idx := shift + j
   next.set! idx (next.getD idx (Zero.zero : R) - coeff * q.getD j (Zero.zero : R))
 
+/-- Subtract `coeff` times the divisor `q` shifted up by `shift` positions from the
+remainder `rem`, i.e. one full long-division step `rem - coeff * xˢʰⁱᶠᵗ * q`, realised by
+folding `subtractScaledShiftStep` over every index of `q`. -/
 private def subtractScaledShift [Sub R] [Mul R]
     (rem q : Array R) (shift : Nat) (coeff : R) : Array R :=
   (List.range q.size).foldl (subtractScaledShiftStep q shift coeff) rem
 
 omit [DecidableEq R] in
+/-- Reading back the value just written at an in-bounds index `n` of `xs.set! n v`
+returns `v`, the in-bounds half of the `set!`/`getD` interaction used throughout the
+array long-division getD characterisations. -/
 private theorem array_getD_set!_same (xs : Array R) (n : Nat) (v : R)
     (hn : n < xs.size) :
     (xs.set! n v).getD n (Zero.zero : R) = v := by
   simp [Array.getD, hn]
 
 omit [DecidableEq R] in
+/-- Writing at index `k ≠ n` leaves the value read back at `n` of `xs.set! k v`
+unchanged, the disjoint-index half of the `set!`/`getD` interaction used to show
+`subtractScaledShift` only perturbs the elimination window. -/
 private theorem array_getD_set!_ne (xs : Array R) (n k : Nat) (v : R)
     (hne : k ≠ n) :
     (xs.set! k v).getD n (Zero.zero : R) = xs.getD n (Zero.zero : R) := by
@@ -240,6 +266,9 @@ private theorem array_getD_set!_ne (xs : Array R) (n k : Nat) (v : R)
       simp [Array.set!_eq_setIfInBounds, hn]
 
 omit [DecidableEq R] in
+/-- A fold of `subtractScaledShiftStep` over index list `xs` leaves position `n`
+untouched whenever no step writes there (`shift + j ≠ n` for all `j ∈ xs`), the key
+disjointness fact underpinning the `getD` characterisations below. -/
 private theorem subtractScaledShift_fold_getD_of_forall_ne [Sub R] [Mul R]
     (rem q : Array R) (shift : Nat) (coeff : R) (n : Nat) (xs : List Nat)
     (hne : ∀ j, j ∈ xs → shift + j ≠ n) :
@@ -260,6 +289,9 @@ private theorem subtractScaledShift_fold_getD_of_forall_ne [Sub R] [Mul R]
         (hne j List.mem_cons_self)
 
 omit [DecidableEq R] in
+/-- Folding `subtractScaledShiftStep` preserves the array length, since each step is a
+`set!` that never grows the array; needed to keep elimination-window bounds valid across
+the fold. -/
 private theorem subtractScaledShift_fold_size [Sub R] [Mul R]
     (rem q : Array R) (shift : Nat) (coeff : R) (xs : List Nat) :
     (xs.foldl (subtractScaledShiftStep q shift coeff) rem).size = rem.size := by
@@ -273,6 +305,9 @@ private theorem subtractScaledShift_fold_size [Sub R] [Mul R]
       simp [Array.set!_eq_setIfInBounds]
 
 omit [DecidableEq R] in
+/-- `subtractScaledShift` leaves position `n` unchanged when it lies outside the
+elimination window (`shift + j ≠ n` for every `j < q.size`), specialising the fold
+disjointness lemma to a full subtract step. -/
 private theorem subtractScaledShift_getD_of_forall_ne [Sub R] [Mul R]
     (rem q : Array R) (shift : Nat) (coeff : R) (n : Nat)
     (hne : ∀ j, j < q.size → shift + j ≠ n) :
@@ -284,6 +319,10 @@ private theorem subtractScaledShift_getD_of_forall_ne [Sub R] [Mul R]
   exact hne j (List.mem_range.mp hj)
 
 omit [DecidableEq R] in
+/-- Closed form for position `n` after folding `subtractScaledShiftStep` over
+`List.range m`: indices inside the window `shift ≤ n < shift + m` get
+`coeff * q[n - shift]` subtracted, all others are untouched; the engine behind the full
+`subtractScaledShift_getD` characterisation. -/
 private theorem subtractScaledShift_fold_getD_range [Lean.Grind.CommRing R]
     (rem q : Array R) (shift : Nat) (coeff : R) (n m : Nat)
     (hbound : ∀ j, j < m → shift + j < rem.size) :
@@ -368,6 +407,9 @@ private theorem subtractScaledShift_fold_getD_range [Lean.Grind.CommRing R]
         · omega
 
 omit [DecidableEq R] in
+/-- Full pointwise specification of `subtractScaledShift`: each position `n` in the
+window `shift ≤ n < shift + q.size` has `coeff * q[n - shift]` subtracted and every other
+position is unchanged, the definitive `getD` law callers reason with. -/
 private theorem subtractScaledShift_getD [Lean.Grind.CommRing R]
     (rem q : Array R) (shift : Nat) (coeff : R) (n : Nat)
     (hbound : ∀ j, j < q.size → shift + j < rem.size) :
@@ -380,6 +422,9 @@ private theorem subtractScaledShift_getD [Lean.Grind.CommRing R]
   exact subtractScaledShift_fold_getD_range rem q shift coeff n q.size hbound
 
 omit [DecidableEq R] in
+/-- At the top window position `shift + qDegree`, `subtractScaledShift` subtracts
+`coeff` times the leading coefficient `q[qDegree]`; the case that, with the right
+`coeff`, zeroes the remainder's leading term and drops its degree. -/
 private theorem subtractScaledShift_getD_last [Sub R] [Mul R]
     (rem q : Array R) (shift qDegree : Nat) (coeff : R)
     (hsize : q.size = qDegree + 1) (hidx : shift + qDegree < rem.size) :
@@ -415,6 +460,9 @@ private theorem subtractScaledShift_getD_last [Sub R] [Mul R]
   · simpa [hprefix_size] using hidx
 
 omit [DecidableEq R] in
+/-- Above the top window position (`shift + qDegree < n`), `subtractScaledShift` leaves
+`rem[n]` unchanged, confirming the elimination step never touches coefficients strictly
+higher than the remainder's current degree. -/
 private theorem subtractScaledShift_getD_above_last [Sub R] [Mul R]
     (rem q : Array R) (shift qDegree : Nat) (coeff : R) (n : Nat)
     (hsize : q.size = qDegree + 1) (hn : shift + qDegree < n) :
@@ -426,6 +474,10 @@ private theorem subtractScaledShift_getD_above_last [Sub R] [Mul R]
   omega
 
 omit [DecidableEq R] in
+/-- When the chosen `coeff` makes the leading subtraction cancel exactly
+(`rem[shift+qDegree] - coeff * q[qDegree] = 0`), the top window position of
+`subtractScaledShift` becomes zero, the degree-drop guarantee each long-division step
+relies on. -/
 private theorem subtractScaledShift_getD_last_cancel [Sub R] [Mul R]
     (rem q : Array R) (shift qDegree : Nat) (coeff : R)
     (hsize : q.size = qDegree + 1) (hidx : shift + qDegree < rem.size)
@@ -437,6 +489,10 @@ private theorem subtractScaledShift_getD_last_cancel [Sub R] [Mul R]
   rw [subtractScaledShift_getD_last rem q shift qDegree coeff hsize hidx]
   exact hcancel
 
+/-- The fuel-bounded long-division loop: while the remainder's degree `rd` is at least
+the divisor degree `qDegree`, pick the quotient coefficient `scaleLead (rem[rd])`, record
+it in `quot`, eliminate the leading term via `subtractScaledShift`, and recurse, returning
+the final `(quotient, remainder)` pair. -/
 private def divModArrayAux [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R)
     (fuel : Nat) (quot rem : Array R) : Array R × Array R :=
@@ -455,6 +511,9 @@ private def divModArrayAux [Sub R] [Mul R]
             let rem := subtractScaledShift rem q shift coeff
             divModArrayAux q qDegree scaleLead fuel quot rem
 
+/-- `divModArrayAux` depends only on the pointwise values of its `scaleLead` argument:
+two scaling functions agreeing on every input produce identical quotient/remainder, so
+callers may swap in any extensionally-equal leading-coefficient scaler. -/
 private theorem divModArrayAux_scaleLead_congr [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) {scaleLead₁ scaleLead₂ : R → R}
     (hscale : ∀ a : R, scaleLead₁ a = scaleLead₂ a)
@@ -476,6 +535,10 @@ private theorem divModArrayAux_scaleLead_congr [Sub R] [Mul R]
             rw [hscale]
             exact ih _ _
 
+/-- Under a `scaleLead` that cancels each leading term (`a - scaleLead a * q[qDegree] = 0`),
+`divModArrayAux` drives every remainder coefficient at index `≥ qDegree` to zero, i.e. the
+final remainder has degree `< qDegree`; the core invariant establishing the division
+remainder-degree bound. -/
 private theorem divModArrayAux_remainder_zero_ge [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R)
     (fuel : Nat) (quot rem : Array R)
@@ -542,6 +605,9 @@ private theorem divModArrayAux_remainder_zero_ge [Sub R] [Mul R]
               i hi
             simpa [Array.getD_eq_getD_getElem?] using hrec
 
+/-- Array-backed long division of dense polynomial `p` by `q`: returns `(0, p)` when `q`
+is zero, otherwise seeds a zero quotient and runs `divModArrayAux` with `p.size` fuel,
+packaging the resulting coefficient arrays back as `DensePoly` quotient and remainder. -/
 private def divModArray [Sub R] [Mul R]
     (p q : DensePoly R) (scaleLead : R → R) : DensePoly R × DensePoly R :=
   if q.isZero then
@@ -1185,14 +1251,23 @@ end DensePoly
 
 namespace DensePoly
 
+/-- The `i`-th summand of the degree-`n` convolution diagonal of `p * q`,
+`p.coeff i * q.coeff (n - i)`, zeroed once the degree guard `n < i` fires;
+the single-index term that `mulCoeffSum` is reorganised into. -/
 private def diagonalMulCoeffTerm {S : Type _} [Zero S] [DecidableEq S] [Mul S]
     (p q : DensePoly S) (n i : Nat) : S :=
   if n < i then 0 else p.coeff i * q.coeff (n - i)
 
+/-- Like `diagonalMulCoeffTerm`, but additionally zeroed once the partner index
+`n - i` reaches the cutoff `m`; the partial value of the inner schoolbook fold
+restricted to `List.range m`. -/
 private def boundedDiagonalMulCoeffTerm {S : Type _} [Zero S] [DecidableEq S] [Mul S]
     (p q : DensePoly S) (n i m : Nat) : S :=
   if n < i then 0 else if n - i < m then p.coeff i * q.coeff (n - i) else 0
 
+/-- Folding `mulCoeffStep` over `List.range m` accumulates exactly
+`acc + boundedDiagonalMulCoeffTerm p q n i m`, identifying one truncated inner
+schoolbook fold with its bounded diagonal term. -/
 private theorem fold_mulCoeffStep_eq_bounded_diagonal {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n i m : Nat) (acc : S) :
@@ -1221,6 +1296,9 @@ private theorem fold_mulCoeffStep_eq_bounded_diagonal {S : Type _}
           · have hm' : ¬ n - i < m + 1 := by omega
             simp [hlt, hm, hm', heq]
 
+/-- Folding `mulCoeffStep` over the full `List.range q.size` yields
+`acc + diagonalMulCoeffTerm p q n i`, since coefficients past `q.size` vanish;
+the unbounded specialisation of `fold_mulCoeffStep_eq_bounded_diagonal`. -/
 private theorem fold_mulCoeffStep_eq_diagonal {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n i : Nat) (acc : S) :
@@ -1237,6 +1315,9 @@ private theorem fold_mulCoeffStep_eq_diagonal {S : Type _}
       simp [hlt, hbound, hcoeff]
       grind
 
+/-- Rewrites the outer schoolbook fold, where each index `i` runs an inner
+`mulCoeffStep` fold, into the pointwise diagonal fold adding
+`diagonalMulCoeffTerm p q n i` at each step. -/
 private theorem fold_mulCoeff_outer_eq_diagonal {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) (xs : List Nat) (acc : S) :
@@ -1250,6 +1331,9 @@ private theorem fold_mulCoeff_outer_eq_diagonal {S : Type _}
       rw [fold_mulCoeffStep_eq_diagonal]
       exact ih (acc + diagonalMulCoeffTerm p q n i)
 
+/-- The schoolbook coefficient `mulCoeffSum p q n` equals the diagonal sum
+`Σ_{i < p.size} diagonalMulCoeffTerm p q n i`; the bridge from the executable
+loop order to the convolution form used in the ring-law proofs. -/
 private theorem mulCoeffSum_eq_diagonal {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) :
@@ -1258,6 +1342,8 @@ private theorem mulCoeffSum_eq_diagonal {S : Type _}
   unfold mulCoeffSum
   exact fold_mulCoeff_outer_eq_diagonal p q n (List.range p.size) 0
 
+/-- A diagonal term vanishes once `p.size ≤ i`, because `p.coeff i = 0` past the
+support of `p`; lets diagonal sums ignore indices beyond `p`'s degree. -/
 private theorem diagonalMulCoeffTerm_eq_zero_of_size_le {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n i : Nat) (hi : p.size ≤ i) :
@@ -1269,6 +1355,9 @@ private theorem diagonalMulCoeffTerm_eq_zero_of_size_le {S : Type _}
     simp [hn, hcoeff]
     grind
 
+/-- Extending the diagonal-sum range from `p.size` to `p.size + d` adds only
+zero terms, so the sum is unchanged; the range-extension invariance backing
+`diagonalSum_eq_bound`. -/
 private theorem fold_diagonal_extend {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n d : Nat) :
@@ -1286,6 +1375,8 @@ private theorem fold_diagonal_extend {S : Type _}
       simp [hterm]
       grind
 
+/-- The diagonal sum over `List.range p.size` equals the sum over any larger
+range `m ≥ p.size`; lets callers normalise the upper bound to a common value. -/
 private theorem diagonalSum_eq_bound {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n m : Nat) (hm : p.size ≤ m) :
@@ -1295,12 +1386,17 @@ private theorem diagonalSum_eq_bound {S : Type _}
   rw [← hm']
   exact (fold_diagonal_extend p q n (m - p.size)).symm
 
+/-- A diagonal term vanishes when `n < i`, the degree guard built into
+`diagonalMulCoeffTerm`; lets diagonal sums be truncated at degree `n`. -/
 private theorem diagonalMulCoeffTerm_eq_zero_of_degree_lt {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n i : Nat) (hi : n < i) :
     diagonalMulCoeffTerm p q n i = 0 := by
   simp [diagonalMulCoeffTerm, hi]
 
+/-- Extending the diagonal-sum range past `n + 1` adds only zero terms, since
+every index `> n` contributes `0`, so the sum equals the one over
+`List.range (n + 1)`; the degree-side truncation invariance. -/
 private theorem fold_diagonal_truncate_degree {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n d : Nat) :
@@ -1318,6 +1414,9 @@ private theorem fold_diagonal_truncate_degree {S : Type _}
       simp [hterm]
       grind
 
+/-- The diagonal sum over `List.range p.size` equals the sum over
+`List.range (n + 1)`; the canonical degree-`n` truncation of the convolution,
+independent of `p.size`. -/
 private theorem diagonalSum_eq_degree_bound {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) :
@@ -1329,6 +1428,9 @@ private theorem diagonalSum_eq_degree_bound {S : Type _}
     rw [← hsize']
     exact fold_diagonal_truncate_degree p q n (p.size - (n + 1))
 
+/-- Folding `(· + ·)` from the seed `a + b` factors the right summand back out:
+`foldl (+) (a + b) = foldl (+) a + b`; a Mathlib-free associativity/commutativity
+shim over `Lean.Grind.CommRing`. -/
 private theorem fold_add_right_commring {S : Type _} [Lean.Grind.CommRing S]
     (xs : List S) (a b : S) :
     xs.foldl (fun acc x => acc + x) (a + b) =
@@ -1342,6 +1444,8 @@ private theorem fold_add_right_commring {S : Type _} [Lean.Grind.CommRing S]
       rw [hacc]
       exact ih (a + x)
 
+/-- Summing a list with `foldl (· + ·)` is invariant under `List.reverse`; lets a
+diagonal sum be reindexed by reversing the index list. -/
 private theorem fold_add_reverse_commring {S : Type _} [Lean.Grind.CommRing S]
     (xs : List S) (a : S) :
     xs.reverse.foldl (fun acc x => acc + x) a =
@@ -1355,6 +1459,8 @@ private theorem fold_add_reverse_commring {S : Type _} [Lean.Grind.CommRing S]
       rw [ih]
       rw [fold_add_right_commring xs a x]
 
+/-- `(List.range (n + 1)).reverse = (List.range (n + 1)).map (fun i => n - i)`; the
+index reflection `i ↦ n - i` underlying the convolution commutativity reindexing. -/
 private theorem range_succ_reverse_eq_map_sub (n : Nat) :
     (List.range (n + 1)).reverse = (List.range (n + 1)).map (fun i => n - i) := by
   apply List.ext_getElem
@@ -1364,6 +1470,10 @@ private theorem range_succ_reverse_eq_map_sub (n : Nat) :
     rw [List.getElem_reverse]
     simp [List.getElem_map, List.getElem_range]
 
+/-- Under the reflection `i ↦ n - i` (for `i < n + 1`), the diagonal term of
+`p, q` becomes that of `q, p`:
+`diagonalMulCoeffTerm p q n (n - i) = diagonalMulCoeffTerm q p n i`; the pointwise
+core of convolution commutativity. -/
 private theorem diagonalMulCoeffTerm_comm_reindex {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n i : Nat) (hi : i < n + 1) :
@@ -1374,6 +1484,9 @@ private theorem diagonalMulCoeffTerm_comm_reindex {S : Type _}
   simp [diagonalMulCoeffTerm, hleft, hright, Nat.sub_sub_self hile]
   grind
 
+/-- Pointwise application of `diagonalMulCoeffTerm_comm_reindex` across a fold over
+indices all `< n + 1`, swapping each reflected `p, q` term for the matching
+`q, p` term; the list-level step toward `fold_diagonal_comm`. -/
 private theorem fold_diagonal_comm_reindex_list {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) (xs : List Nat)
@@ -1391,6 +1504,9 @@ private theorem fold_diagonal_comm_reindex_list {S : Type _}
         intro j hj
         exact hxs j (by simp [hj])) (acc + diagonalMulCoeffTerm q p n i)
 
+/-- The degree-`n` diagonal sum is symmetric in its factors:
+`Σ diagonalMulCoeffTerm p q n i = Σ diagonalMulCoeffTerm q p n i`; the
+commutativity of the convolution coefficient, proved by reversal-reindexing. -/
 private theorem fold_diagonal_comm {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) :
@@ -1409,6 +1525,8 @@ private theorem fold_diagonal_comm {S : Type _}
     intro i hi
     exact List.mem_range.mp hi) 0
 
+/-- Negating the right factor negates the diagonal term:
+`diagonalMulCoeffTerm p (0 - q) n i = 0 - diagonalMulCoeffTerm p q n i`. -/
 private theorem diagonalMulCoeffTerm_neg_right {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n i : Nat) :
@@ -1422,6 +1540,9 @@ private theorem diagonalMulCoeffTerm_neg_right {S : Type _}
     simp [hlt]
     grind
 
+/-- List-level form of `diagonalSum_neg_right`: folding the negated-right diagonal
+terms over `xs` from `acc` equals `acc - (fold of the positive terms from 0)`; the
+induction backing the closed negation law. -/
 private theorem diagonalSum_neg_right_aux {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) (xs : List Nat) (acc : S) :
@@ -1442,6 +1563,9 @@ private theorem diagonalSum_neg_right_aux {S : Type _}
       rw [htail]
       grind
 
+/-- Negating the right factor negates the whole degree-`n` diagonal sum:
+`Σ diagonalMulCoeffTerm p (0 - q) n i = 0 - Σ diagonalMulCoeffTerm p q n i`; the
+coefficient-level negation law feeding `mul_sub_zero_comm`. -/
 private theorem diagonalSum_neg_right {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) :
@@ -2791,6 +2915,8 @@ theorem dvd_sub_poly {S : Type _}
   refine ⟨a + (0 - b), ?_⟩
   rw [sub_eq_add_neg_poly, ha, hb, mul_add_right_poly, mul_sub_zero_comm, mul_comm_poly b d]
 
+/-- `xgcdAux` base case: when the right input `r₁` is zero, the returned gcd
+equals the left input `r₀`. -/
 private theorem xgcdAux_gcd_eq_left_of_right_zero {S : Type _}
     [Zero S] [DecidableEq S] [One S] [Add S] [Sub S] [Mul S] [Div S]
     (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat) (hr₁ : r₁ = 0) :
@@ -2801,6 +2927,9 @@ private theorem xgcdAux_gcd_eq_left_of_right_zero {S : Type _}
   | succ fuel =>
       simp [xgcdAux, hr₁, isZero_zero]
 
+/-- `xgcd_bezout_step` is the single recursion step of the Bezout coefficients:
+pairing `(s₀ - a * s₁, t₀ - a * t₁)` with `p, q` equals
+`(s₀ * p + t₀ * q) - a * (s₁ * p + t₁ * q)`. -/
 private theorem xgcd_bezout_step {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (a s₀ t₀ s₁ t₁ p q : DensePoly S) :
@@ -2826,6 +2955,8 @@ private theorem xgcd_bezout_step {S : Type _}
   rw [coeff_add (a * (s₁ * p)) (a * (t₁ * q)) n hzero_add]
   grind
 
+/-- `xgcdAux` satisfies the Bezout identity: the returned `left * p + right * q`
+equals the returned `gcd`. -/
 private theorem xgcdAux_bezout {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (p q r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat)
@@ -2879,6 +3010,8 @@ theorem xgcd_bezout_of_divModLaws {S : Type _}
   · rw [mul_comm_poly (1 : DensePoly S) p, mul_one_right_poly, zero_mul, add_zero_poly]
   · rw [zero_mul, mul_comm_poly (1 : DensePoly S) q, mul_one_right_poly, zero_add]
 
+/-- Common-divisor direction: any `d` dividing both `r₀` and `r₁` divides the
+gcd returned by `xgcdAux`. -/
 private theorem xgcdAux_common_dvd_gcd {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (d r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat)
@@ -2913,6 +3046,8 @@ private theorem xgcdAux_common_dvd_gcd {S : Type _}
           rw [hrem]
           exact dvd_sub_poly hr₀ (dvd_mul_left_poly qr.1 hr₁)
 
+/-- gcd-divides-inputs direction: the gcd returned by `xgcdAux` divides both
+inputs `r₀` and `r₁`. -/
 private theorem xgcdAux_gcd_dvd_inputs {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (hsmall :
@@ -3975,6 +4110,7 @@ def primitivePart (p : DensePoly Int) : DensePoly Int :=
     ofCoeffs <|
       p.toArray.toList.map (fun coeff => coeff / c) |>.toArray
 
+/-- Folding `Nat.gcd` over `xs` starting from `acc` yields a divisor of the seed `acc`, the base step for showing `contentNat` divides each coefficient. -/
 private theorem foldl_gcd_dvd_acc (xs : List Nat) (acc : Nat) :
     xs.foldl (fun g x => Nat.gcd g x) acc ∣ acc := by
   induction xs generalizing acc with
@@ -3983,6 +4119,7 @@ private theorem foldl_gcd_dvd_acc (xs : List Nat) (acc : Nat) :
   | cons x xs ih =>
       exact Nat.dvd_trans (ih (Nat.gcd acc x)) (Nat.gcd_dvd_left acc x)
 
+/-- The running `Nat.gcd` fold over `xs` divides every member `x` of the list, the step giving `contentNat ∣ coeff` for coefficients actually present. -/
 private theorem foldl_gcd_dvd_of_mem {xs : List Nat} {x acc : Nat}
     (hx : x ∈ xs) :
     xs.foldl (fun g x => Nat.gcd g x) acc ∣ x := by
@@ -3999,6 +4136,7 @@ private theorem foldl_gcd_dvd_of_mem {xs : List Nat} {x acc : Nat}
       | inr hy =>
           exact ih (acc := Nat.gcd acc y) hy
 
+/-- `contentNat p`, viewed as an `Int`, divides every coefficient `p.coeff n`, the forward half of content-divides-coefficient reasoning. -/
 private theorem contentNat_dvd_coeff (p : DensePoly Int) (n : Nat) :
     (contentNat p : Int) ∣ p.coeff n := by
   by_cases hn : n < p.size
@@ -4024,6 +4162,7 @@ theorem content_dvd_coeff (p : DensePoly Int) (n : Nat) :
     content p ∣ p.coeff n := by
   simpa [content] using contentNat_dvd_coeff p n
 
+/-- Any `d` dividing the seed `acc` and every member of `xs` also divides their `Nat.gcd` fold, the converse direction characterising `contentNat` as a greatest common divisor. -/
 private theorem dvd_foldl_gcd_of_dvd_mem (xs : List Nat) (d acc : Nat)
     (hacc : d ∣ acc) (hxs : ∀ x, x ∈ xs → d ∣ x) :
     d ∣ xs.foldl (fun g x => Nat.gcd g x) acc := by
@@ -4037,6 +4176,7 @@ private theorem dvd_foldl_gcd_of_dvd_mem (xs : List Nat) (d acc : Nat)
       · intro y hy
         exact hxs y (by simp [hy])
 
+/-- Any `d` dividing every coefficient of `p` divides `contentNat p`, the universal property making `contentNat` the gcd of the coefficients. -/
 private theorem dvd_contentNat_of_dvd_coeff (p : DensePoly Int) (d : Nat)
     (h : ∀ n, (d : Int) ∣ p.coeff n) :
     d ∣ contentNat p := by
@@ -4061,12 +4201,14 @@ private theorem dvd_contentNat_of_dvd_coeff (p : DensePoly Int) (d : Nat)
     rw [hcoeff_eq] at hdiv
     rwa [Int.ofNat_dvd_left] at hdiv
 
+/-- Every integer `a` is a unit-signed multiple of its `natAbs`, supplying the `±1` factor relating a coefficient to its absolute value in content arguments. -/
 private theorem int_natAbs_signed_mul (a : Int) :
     ∃ s : Int, s * a = Int.ofNat a.natAbs := by
   rcases Int.natAbs_eq a with ha | ha
   · exact ⟨1, by rw [ha]; grind⟩
   · exact ⟨-1, by rw [ha]; grind⟩
 
+/-- `Nat.gcd a b` admits an integer Bezout combination `x * a + y * b`, the Bezout identity underlying primitive-part divisibility reasoning. -/
 private theorem nat_gcd_bezout (a b : Nat) :
     ∃ x y : Int, x * (a : Int) + y * (b : Int) = (Nat.gcd a b : Int) := by
   induction a, b using Nat.gcd.induction with
@@ -4090,6 +4232,7 @@ private theorem nat_gcd_bezout (a b : Nat) :
         _ = x * (b % a : Nat) + y * (a : Int) := by
               rw [← hmod]
 
+/-- Summing a list of integers from a seed `z` equals `z` plus the sum from `0`, the accumulator-extraction lemma for additive folds. -/
 private theorem list_foldl_add_int (xs : List Int) (z : Int) :
     xs.foldl (fun s t => s + t) z = z + xs.foldl (fun s t => s + t) 0 := by
   induction xs generalizing z with
@@ -4099,6 +4242,7 @@ private theorem list_foldl_add_int (xs : List Int) (z : Int) :
       rw [ih (z + x), ih (0 + x)]
       grind
 
+/-- If `d` divides every member of `xs` then it divides their additive fold, the divisibility-of-sum step for integer lists. -/
 private theorem dvd_list_foldl_add_int_of_forall
     (d : Int) (xs : List Int) (h : ∀ x ∈ xs, d ∣ x) :
     d ∣ xs.foldl (fun s t => s + t) 0 := by
@@ -4111,6 +4255,7 @@ private theorem dvd_list_foldl_add_int_of_forall
       simpa using Int.dvd_add (h x List.mem_cons_self)
         (ih (fun y hy => h y (List.mem_cons_of_mem x hy)))
 
+/-- If `d` divides each `term x` for `x ∈ xs` then it divides the additive fold of `term` over `xs`, the divisibility-of-sum step for indexed term families. -/
 private theorem dvd_list_foldl_add_term_of_forall
     (d : Int) (xs : List Nat) (term : Nat → Int)
     (h : ∀ x ∈ xs, d ∣ term x) :
@@ -4122,12 +4267,14 @@ private theorem dvd_list_foldl_add_term_of_forall
     exact h x hx
   simpa [List.foldl_map] using dvd_list_foldl_add_int_of_forall d (xs.map term) hmap
 
+/-- The accumulator-extraction lemma for an additive fold of `term x`, pulling the seed `z` in front of the fold from `0`. -/
 private theorem list_foldl_add_term_int
     (xs : List Nat) (term : Nat → Int) (z : Int) :
     xs.foldl (fun s x => s + term x) z =
       z + xs.foldl (fun s x => s + term x) 0 := by
   simpa [List.foldl_map] using list_foldl_add_int (xs.map term) z
 
+/-- The difference of the additive folds of `f` and `g` equals the additive fold of `fun x => f x - g x`, the linearity step combining two term-family sums. -/
 private theorem foldl_add_int_sub_terms
     (xs : List Nat) (f g : Nat → Int) :
     xs.foldl (fun s x => s + f x) 0 -
@@ -4144,6 +4291,7 @@ private theorem foldl_add_int_sub_terms
       rw [← ih]
       grind
 
+/-- If `d` divides the additive fold of `f` and divides each `f x - g x`, then it divides the additive fold of `g`, transporting divisibility across a term-wise congruence. -/
 private theorem dvd_foldl_add_term_of_dvd_congr
     (d : Int) (xs : List Nat) (f g : Nat → Int)
     (hf : d ∣ xs.foldl (fun s x => s + f x) 0)
@@ -4163,6 +4311,7 @@ private theorem dvd_foldl_add_term_of_dvd_congr
     grind
   rwa [hrewrite] at hsub
 
+/-- Over a `Nodup` index list, if `d` divides the whole additive fold and every term except the one at `idx`, then it divides the `idx` term, the single-term isolation step for convolution-coefficient divisibility. -/
 private theorem dvd_term_of_dvd_foldl_add_of_dvd_others
     (d : Int) :
     ∀ (xs : List Nat) (term : Nat → Int) (idx : Nat),
@@ -4851,6 +5000,8 @@ def Congr {S : Type _} [Zero S] [DecidableEq S] [Add S] [Sub S] [Mul S]
     (p q m : DensePoly S) : Prop :=
   m ∣ (p - q)
 
+/-- Expresses the gap `p % m - p` as the explicit multiple `m * (0 - p / m)`, the witness
+underlying the congruence `m ∣ (p % m - p)`. -/
 private theorem mod_sub_self_eq_mul_neg_div {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (p m : DensePoly S) :
@@ -4868,6 +5019,8 @@ private theorem mod_sub_self_eq_mul_neg_div {S : Type _}
   rw [coeff_zero]
   grind
 
+/-- Packages `mod_sub_self_eq_mul_neg_div` as the divisibility `m ∣ (p % m - p)`, the core
+fact behind the public `congr_mod`. -/
 private theorem congr_mod_core {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (p m : DensePoly S) :
@@ -4882,6 +5035,8 @@ theorem congr_mod {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
     Congr (p % m) p m := by
   exact congr_mod_core p m
 
+/-- Rearranges a difference-as-multiple `p - q = m * r` into the additive form
+`p = q + m * r`. -/
 private theorem eq_add_mul_of_sub_eq_mul {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     {p q m r : DensePoly S} :
@@ -4897,6 +5052,7 @@ private theorem eq_add_mul_of_sub_eq_mul {S : Type _}
   rw [coeff_add q (m * r) n hzero_add]
   grind
 
+/-- Right identity of polynomial addition, `p + 0 = p`. -/
 private theorem add_zero_right {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
@@ -4908,6 +5064,7 @@ private theorem add_zero_right {S : Type _}
   simp
   grind
 
+/-- Left absorption of the zero polynomial under multiplication, `0 * p = 0`. -/
 private theorem zero_mul_left {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
@@ -4916,12 +5073,14 @@ private theorem zero_mul_left {S : Type _}
   have hzero : (0 : DensePoly S).coeffs = #[] := rfl
   simp [mul, isZero, hzero]
 
+/-- A modulus reduces to `0` against itself, `m % m = 0`. -/
 private theorem mod_self_eq_zero {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (m : DensePoly S) :
     m % m = 0 := by
   exact DivModLaws.mod_self_eq_zero m
 
+/-- The zero polynomial reduces to `0` modulo any `m`, `0 % m = 0`. -/
 private theorem zero_mod_eq_zero {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (m : DensePoly S) :
@@ -4938,6 +5097,8 @@ private theorem zero_mod_eq_zero {S : Type _}
     unfold divModArray
     simp [hzero, isZero, size, toArray, divModArrayAux]
 
+/-- Divisibility of a difference `m ∣ (p - q)` forces equal canonical remainders
+`p % m = q % m`. -/
 private theorem mod_eq_mod_of_dvd_sub {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     {p q m : DensePoly S} :
@@ -5018,6 +5179,7 @@ theorem mod_mul_mod {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
     (p * q) % m = ((p % m) * (q % m)) % m := by
   exact DivModLaws.mod_mul_mod p q m
 
+/-- Any multiple of `m` reduces to `0` modulo `m`, `(m * r) % m = 0`. -/
 private theorem mod_mul_self_left {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (m r : DensePoly S) :
@@ -5027,6 +5189,8 @@ private theorem mod_mul_self_left {S : Type _}
   rw [zero_mul_left]
   rw [zero_mod_eq_zero]
 
+/-- Adding a multiple of `m` leaves the canonical remainder unchanged,
+`(q + m * r) % m = q % m`. -/
 private theorem mod_add_mul_self {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (q m r : DensePoly S) :
@@ -5042,6 +5206,9 @@ private theorem mod_add_mul_self {S : Type _}
     rw [coeff_mul]
     grind⟩
 
+/-- Under the Bezout hypothesis `s * a + t * b = 1`, exhibits `polyCRT a b u v s t - u` as
+the explicit multiple `a * (v * s + (0 - u * s))`, the witness for congruence to `u`
+modulo `a`. -/
 private theorem polyCRT_sub_left_factor {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (a b u v s t : DensePoly S) :
@@ -5066,6 +5233,9 @@ private theorem polyCRT_sub_left_factor {S : Type _}
     _ = a * (v * s + (0 - u * s)) := by
           rw [mul_comm_poly]
 
+/-- Under the Bezout hypothesis `s * a + t * b = 1`, exhibits `polyCRT a b u v s t - v` as
+the explicit multiple `b * (u * t + (0 - v * t))`, the witness for congruence to `v`
+modulo `b`. -/
 private theorem polyCRT_sub_right_factor {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (a b u v s t : DensePoly S) :

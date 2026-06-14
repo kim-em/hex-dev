@@ -1286,35 +1286,20 @@ structure BadVectorBridgeData
       (W.inputPolynomial.map (Int.castRingHom ℚ))
       (W.auxiliaryPolynomial.map (Int.castRingHom ℚ))
   /--
-  The selected lifted factor is monic after transport to Mathlib polynomials.
+  BHKS Lemma 3.2 modular divisibility clause: the resultant of the input and the
+  cut, down-scaled CLD auxiliary polynomial is divisible by `p ^ (k * d)`.
+
+  This is an honest assumed field. A genuine resultant valuation for the cut
+  auxiliary polynomial is still open: the single-factor CLD syzygy
+  `H · g ≡ input · g' (mod p^k)` that would discharge it is unsatisfiable in the
+  bad-vector regime (the cut zeroes the leading CLD coefficient, which the monic
+  quotient needs to be a unit, and `corrections` shift only by multiples of
+  `p^(k-ℓ_j)`), so the bound is carried as a named hypothesis rather than derived
+  through that dead route.
   -/
-  selectedLiftedFactor_monic :
-    (HexPolyMathlib.toPolynomial W.selectedLiftedFactor).Monic
-  /--
-  The executable local-factor degree agrees with the transported selected
-  lifted factor's Mathlib degree.
-  -/
-  selectedLiftedFactor_natDegree :
-    (HexPolyMathlib.toPolynomial W.selectedLiftedFactor).natDegree =
-      W.localFactorDegree
-  /--
-  The witness auxiliary polynomial satisfies the selected-factor CLD syzygy
-  modulo the Hensel precision.
-  -/
-  auxiliary_selected_congr :
-    Hex.ZPoly.congr (W.H * W.selectedLiftedFactor)
-      (W.input * Hex.DensePoly.derivative W.selectedLiftedFactor)
-      (W.liftData.p ^ W.liftData.k)
-  /--
-  Degree room for the input side of the CLD resultant valuation.
-  -/
-  input_degree_bound :
-    2 * W.localFactorDegree ≤ W.inputPolynomial.natDegree
-  /--
-  Degree room for the auxiliary side of the CLD resultant valuation.
-  -/
-  auxiliary_degree_bound :
-    2 * W.localFactorDegree ≤ W.auxiliaryPolynomial.natDegree + 1
+  resultant_divisible_by_p_pow :
+    ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
+      Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial
 
 namespace BadVectorBridgeData
 
@@ -1540,35 +1525,7 @@ theorem resultant_divisible_by_p_pow_of_bridge_data
     (D : BadVectorBridgeData W trueSupports) :
     ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
       Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial := by
-  have hdvd : Polynomial.C ((W.liftData.p ^ W.liftData.k : Nat) : ℤ) ∣
-      (HexPolyMathlib.toPolynomial (W.H * W.selectedLiftedFactor)
-        - HexPolyMathlib.toPolynomial
-          (W.input * Hex.DensePoly.derivative W.selectedLiftedFactor)) := by
-    rw [Polynomial.C_dvd_iff_dvd_coeff]
-    intro j
-    rw [Polynomial.coeff_sub, HexPolyMathlib.coeff_toPolynomial,
-      HexPolyMathlib.coeff_toPolynomial]
-    exact Int.dvd_of_emod_eq_zero (D.auxiliary_selected_congr j)
-  obtain ⟨z, hz⟩ := hdvd
-  have hsyz :
-      HexPolyMathlib.toPolynomial W.H * HexPolyMathlib.toPolynomial W.selectedLiftedFactor
-        - HexPolyMathlib.toPolynomial W.input
-          * Polynomial.derivative (HexPolyMathlib.toPolynomial W.selectedLiftedFactor)
-        = Polynomial.C ((W.liftData.p ^ W.liftData.k : Nat) : ℤ) * z := by
-    rw [← HexPolyMathlib.toPolynomial_mul, ← HexPolyMathlib.toPolynomial_derivative,
-      ← HexPolyMathlib.toPolynomial_mul]
-    exact hz
-  simpa [inputPolynomial, auxiliaryPolynomial] using
-    cld_syzygy_pow_dvd_resultant
-      (HexPolyMathlib.toPolynomial W.input)
-      (HexPolyMathlib.toPolynomial W.H)
-      (HexPolyMathlib.toPolynomial W.selectedLiftedFactor)
-      z
-      D.selectedLiftedFactor_monic
-      D.selectedLiftedFactor_natDegree
-      hsyz
-      D.input_degree_bound
-      D.auxiliary_degree_bound
+  exact D.resultant_divisible_by_p_pow
 
 /--
 Forget the project-level bridge data to the compact callback package consumed

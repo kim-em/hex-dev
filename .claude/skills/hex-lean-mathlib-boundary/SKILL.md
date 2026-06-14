@@ -110,6 +110,18 @@ independently landable green — the executable change and the Mathlib remodel
 must land in one PR. Scope accordingly (see #6799 / #6801 for the
 `DensePoly.scale` → `ZPoly.dilate` example).
 
+**Build the target module first to get the real in-scope error set — it is
+usually a handful of errors, not the whole conceptual chain.** Before hand-
+tracing a scale→dilate (or similar) cascade through dozens of wrapper
+theorems, run `lake build HexBerlekampZassenhausMathlib.<Module>` and grep the
+log for `error:`. A conceptually huge cascade often surfaces as only 2-3 red
+declarations, because most wrappers typecheck against the *signature* of a
+broken callee and only the body fails. Separate the in-scope errors from any
+known out-of-scope group (e.g. the #7122 `factorFast_ne_none_of_forwardInputs_on_schedule`
+heartbeat/unknown-constant cluster) up front, then read only what those few
+errors touch. This right-sizes the work and avoids burning context reading
+wrappers that already compile.
+
 **Size the migration before deep-reading proofs.** When a predicate like
 `RepresentsIntegerFactorAtLift` flips from being *defeq* to a recovery equality
 (e.g. the scaled `reduceModPow` congruence) to wrapping a *structure*
@@ -144,13 +156,26 @@ Hence `content (dilate (lc core) monicFactor) = 1` is **false** whenever
 `leadingCoeff core` is a non-unit — i.e. the generic non-monic-core regime the
 monic transform exists for. Reroute to the primitivePart-aware
 `liftedRecoveryCandidate` / `RecoveredAtLift.candidate_eq_of_monic_dvd`
-(`Basic.lean:2781`) path instead. And note the linchpin: there is **no base
-`RecoveredAtLift` producer** built from a successful `bhksIndicatorCandidate?`
-(every theorem concluding `RepresentsIntegerFactorAtLift` is a packer or
-hypothesis-consumer); constructing one — the `dilate_eq`/`monic_dvd` carrier
-from the executable candidate — is the monic-transform recovery direction owned
-by the fast-BHKS-monic-lift migration issue, so a scale→dilate consumer reroute
-is blocked on that producer landing first.
+(`Basic.lean:2781`) path instead. Note the linchpin: the base `RecoveredAtLift`
+producer from a successful `bhksIndicatorCandidate?` is the carrier the whole
+reroute consumes. For the **monic-core** case it now exists and compiles —
+`bhksIndicatorCandidate?_representsIntegerFactorAtLift` (`Recovery.lean:1125`,
+landed by #7121 deliverable 1 / PR #7196): with `leadingCoeff core = 1` it sets
+`monicFactor := candidate` and closes all four fields from
+`bhksIndicatorCandidate?_reduceModPow_eq_of_monic` (`congr`, via `scale 1 = id`),
+`dilate_one` + `Hex.bhksIndicatorCandidate?_primitive` (`dilate_eq`), and
+`Hex.bhksIndicatorCandidate?_dvd` + `toMonic_monic_eq_core_of_leadingCoeff_eq_one`
+(`monic_dvd`). The two executable lemmas were `private`; #7196 drops that. So a
+scale→dilate **consumer** reroute is no longer blocked on a missing producer —
+it is blocked on the cascade work itself (rerouting
+`productCongruence_of_representsIntegerFactorAtLift` and the `productCongruences*`
+chain consumed at `Recovery.lean:4075`, the `hproduct`/`product_congr`
+scale-congruence in `ForwardRecoveryInputs.ofMignottePrecision…` /
+`CanonicalRecoveryInputs`, and IntReductionMod's `scaled_recovery_of_bound`, all
+of which force `hmonic_ne`/`hfactor_norm`/`hprecision` up to the top driver).
+The **non-monic-core** producer (where `primitivePart`/`dilate` do not collapse)
+is still the harder monic-transform recovery direction owned by the
+fast-BHKS-monic-lift migration issue.
 
 ### "Final integration" issues: confirm the substrate *producer* exists, not just that the feeder issue closed
 
@@ -289,7 +314,10 @@ restructure around the reported line first; it is usually a cheap `omega` or
   mask a genuine type mismatch the unifier is churning on (e.g. `isDefEq` trying
   to unify two distinct `LiftData`s over large terms); raising the budget lets
   the real `Application type mismatch` appear, so don't assume a timeout means
-  "just needs more heartbeats."
+  "just needs more heartbeats." Conversely, if even a large budget (e.g.
+  `1000000`, 5×) still times out at `whnf`/`isDefEq`, it is a genuine
+  heavy-defeq problem, not a tight budget — stop raising and factor the heavy
+  sub-step into a thin lemma instead.
 - Swapping a reducible `abbrev` to a def that unfolds to a *larger* term can tip
   previously-green declarations over the budget without any logic change. #7122
   repointed a `private abbrev` from `henselLiftData core …` to

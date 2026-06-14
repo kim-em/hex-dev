@@ -78,6 +78,8 @@ theorem coeff_dilate (c : Int) (p : ZPoly) (n : Nat) :
     rw [List.getElem?_eq_none (by simpa using Nat.le_of_not_lt hn), hzero, Int.mul_zero]
     rfl
 
+/-- Dilation by `1` is the identity: `dilate 1 p = p`. The simp normal form for
+the trivial dilation. -/
 @[simp] theorem dilate_one (p : ZPoly) : dilate 1 p = p := by
   apply DensePoly.ext_coeff
   intro n
@@ -91,6 +93,8 @@ def Primitive (f : ZPoly) : Prop :=
 def IsUnit (f : ZPoly) : Prop :=
   f = DensePoly.C 1 ∨ f = DensePoly.C (-1)
 
+/-- `IsUnit` is decidable: it reduces to equality with the constant polynomials
+`C 1` or `C (-1)`, both of which are decidable. -/
 instance instDecidableIsUnit (f : ZPoly) : Decidable (IsUnit f) := by
   unfold IsUnit
   infer_instance
@@ -101,10 +105,13 @@ theorem isUnit_iff (f : ZPoly) :
     IsUnit f ↔ f = DensePoly.C 1 ∨ f = DensePoly.C (-1) := by
   rfl
 
+/-- The polynomial `1` is a unit, since `(1 : ZPoly)` is the constant polynomial
+`C 1`. -/
 @[simp] theorem isUnit_one : IsUnit (1 : ZPoly) := by
   left
   rfl
 
+/-- The constant polynomial `C (-1)` is a unit. -/
 @[simp] theorem isUnit_C_neg_one : IsUnit (DensePoly.C (-1 : Int)) := by
   right
   rfl
@@ -126,6 +133,8 @@ theorem coeff_toRatPoly (f : ZPoly) (n : Nat) :
     change (0 : Rat) = ((0 : Int) : Rat)
     simp
 
+/-- Rational conversion sends the zero integer polynomial to the zero rational
+polynomial. The simp normal form for the zero case. -/
 @[simp] theorem toRatPoly_zero :
     toRatPoly (0 : ZPoly) = 0 := by
   apply DensePoly.ext_coeff
@@ -135,6 +144,9 @@ theorem coeff_toRatPoly (f : ZPoly) (n : Nat) :
   rw [DensePoly.coeff_eq_zero_of_size_le (0 : ZPoly) (by simp)]
   exact (DensePoly.coeff_eq_zero_of_size_le (0 : DensePoly Rat) (by simp)).symm
 
+/-- Rational conversion sends the constant integer polynomial `C c` to the
+constant rational polynomial `C (c : Rat)`. The simp normal form for the
+constant case. -/
 @[simp] theorem toRatPoly_C (c : Int) :
     toRatPoly (DensePoly.C c) = DensePoly.C (c : Rat) := by
   apply DensePoly.ext_coeff
@@ -147,6 +159,9 @@ theorem coeff_toRatPoly (f : ZPoly) (n : Nat) :
     change ((0 : Int) : Rat) = 0
     simp
 
+/-- Rational conversion sends the unit integer polynomial `1` to the rational
+polynomial `1`, since `(1 : ZPoly)` is the constant polynomial `C 1`. The simp
+normal form for the one case. -/
 @[simp] theorem toRatPoly_one :
     toRatPoly (1 : ZPoly) = 1 := by
   exact toRatPoly_C 1
@@ -215,6 +230,8 @@ theorem toRatPoly_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     simpa [size_toRatPoly f] using hrat_size
   exact DensePoly.coeff_eq_zero_of_size_le f (by omega)
 
+/-- A single `DensePoly.mulCoeffStep` of the convolution accumulator commutes with
+`toRatPoly`: the rational step on the cast polynomials equals the cast of the integer step. -/
 private theorem toRatPoly_mulCoeffStep (f g : ZPoly) (n i : Nat) (a : Int) (j : Nat) :
     DensePoly.mulCoeffStep (toRatPoly f) (toRatPoly g) n i (a : Rat) j =
       (DensePoly.mulCoeffStep (R := Int) f g n i a j : Rat) := by
@@ -223,6 +240,8 @@ private theorem toRatPoly_mulCoeffStep (f g : ZPoly) (n i : Nat) (a : Int) (j : 
   · simp [hij, coeff_toRatPoly]
   · simp [hij]
 
+/-- Folding `DensePoly.mulCoeffStep` over a list of inner indices commutes with
+`toRatPoly`: the rational fold equals the cast of the integer fold. -/
 private theorem toRatPoly_mulCoeffStep_fold (f g : ZPoly) (n i : Nat)
     (xs : List Nat) (a : Int) :
     xs.foldl (DensePoly.mulCoeffStep (toRatPoly f) (toRatPoly g) n i) (a : Rat) =
@@ -235,6 +254,8 @@ private theorem toRatPoly_mulCoeffStep_fold (f g : ZPoly) (n i : Nat)
       rw [toRatPoly_mulCoeffStep]
       exact ih (DensePoly.mulCoeffStep (R := Int) f g n i a j)
 
+/-- The outer convolution fold over outer indices, each running the inner `mulCoeffStep`
+fold, commutes with `toRatPoly`: the rational outer fold equals the cast of the integer one. -/
 private theorem toRatPoly_mulCoeffOuter_fold (f g : ZPoly) (n : Nat)
     (xs : List Nat) (a : Int) :
     xs.foldl
@@ -256,6 +277,8 @@ private theorem toRatPoly_mulCoeffOuter_fold (f g : ZPoly) (n : Nat)
       simpa [size_toRatPoly g] using
         ih ((List.range g.size).foldl (DensePoly.mulCoeffStep (R := Int) f g n i) a)
 
+/-- The full convolution coefficient `DensePoly.mulCoeffSum` commutes with `toRatPoly`:
+the rational sum equals the cast of the integer sum, the key step for `toRatPoly_mul`. -/
 private theorem toRatPoly_mulCoeffSum (f g : ZPoly) (n : Nat) :
     DensePoly.mulCoeffSum (toRatPoly f) (toRatPoly g) n =
       (DensePoly.mulCoeffSum (R := Int) f g n : Rat) := by
@@ -271,18 +294,26 @@ theorem toRatPoly_mul (f g : ZPoly) :
   rw [coeff_toRatPoly, DensePoly.coeff_mul, DensePoly.coeff_mul]
   exact (toRatPoly_mulCoeffSum f g n).symm
 
+/-- The common denominator of a list of rationals, the `Nat.lcm` of all their
+denominators starting from `1`. -/
 private def ratCommonDen (coeffs : List Rat) : Nat :=
   coeffs.foldl (fun acc coeff => Nat.lcm acc coeff.den) 1
 
+/-- Clear a single rational `coeff` against a common denominator `den`, returning the
+integer `coeff.num * (den / coeff.den)`. -/
 private def ratCoeffToIntWithDen (den : Nat) (coeff : Rat) : Int :=
   coeff.num * Int.ofNat (den / coeff.den)
 
+/-- Negate `f` when its leading coefficient is negative, normalizing a primitive part to
+have nonnegative leading sign. -/
 private def normalizePrimitiveSign (f : ZPoly) : ZPoly :=
   if DensePoly.leadingCoeff f < 0 then
     DensePoly.scale (-1 : Int) f
   else
     f
 
+/-- If `d` divides the starting accumulator, it divides the `Nat.lcm` denominator fold over
+any list of coefficients. -/
 private theorem ratCommonDen_foldl_preserves_dvd (coeffs : List Rat) {d acc : Nat}
     (hacc : d ∣ acc) :
     d ∣ coeffs.foldl (fun acc coeff => Nat.lcm acc coeff.den) acc := by
@@ -294,6 +325,8 @@ private theorem ratCommonDen_foldl_preserves_dvd (coeffs : List Rat) {d acc : Na
       exact ih (acc := Nat.lcm acc coeff.den)
         (Nat.dvd_trans hacc (Nat.dvd_lcm_left acc coeff.den))
 
+/-- Each member coefficient's denominator `q.den` divides the `Nat.lcm` denominator fold
+over `coeffs`. -/
 private theorem ratCommonDen_foldl_dvd_of_mem (coeffs : List Rat) {q : Rat} {acc : Nat}
     (hq : q ∈ coeffs) :
     q.den ∣ coeffs.foldl (fun acc coeff => Nat.lcm acc coeff.den) acc := by
@@ -310,11 +343,14 @@ private theorem ratCommonDen_foldl_dvd_of_mem (coeffs : List Rat) {q : Rat} {acc
       | inr htail =>
           exact ih (acc := Nat.lcm acc coeff.den) htail
 
+/-- The denominator of any coefficient in `coeffs` divides `ratCommonDen coeffs`. -/
 private theorem ratCommonDen_dvd_of_mem (coeffs : List Rat) {q : Rat} (hq : q ∈ coeffs) :
     q.den ∣ ratCommonDen coeffs := by
   unfold ratCommonDen
   exact ratCommonDen_foldl_dvd_of_mem coeffs hq
 
+/-- When `coeff.den ∣ den`, casting `ratCoeffToIntWithDen den coeff` back to `Rat` recovers
+`(den : Rat) * coeff`. -/
 private theorem ratCoeffToIntWithDen_cast (den : Nat) (coeff : Rat)
     (hden : coeff.den ∣ den) :
     ((ratCoeffToIntWithDen den coeff : Int) : Rat) = (den : Rat) * coeff := by
@@ -336,6 +372,7 @@ private theorem ratCoeffToIntWithDen_cast (den : Nat) (coeff : Rat)
     _ = ((coeff.den * k : Nat) : Rat) * coeff := by
           rw [hcoeff]
 
+/-- The common denominator `ratCommonDen coeffs` is positive. -/
 private theorem ratCommonDen_pos (coeffs : List Rat) :
     0 < ratCommonDen coeffs := by
   unfold ratCommonDen
@@ -349,11 +386,14 @@ private theorem ratCommonDen_pos (coeffs : List Rat) :
       simp only [List.foldl_cons]
       exact ih (Nat.lcm acc coeff.den) (Nat.lcm_pos hpos coeff.den_pos)
 
+/-- Clearing the zero coefficient gives `0` for any denominator. -/
 private theorem ratCoeffToIntWithDen_zero (den : Nat) :
     ratCoeffToIntWithDen den 0 = 0 := by
   unfold ratCoeffToIntWithDen
   simp
 
+/-- Indexing the cleared-coefficient list commutes with clearing the indexed coefficient:
+`getD` of the mapped list (cast to `Rat`) equals the clear of `getD`. -/
 private theorem list_getD_map_ratCoeffToIntWithDen (den : Nat) (coeffs : List Rat)
     (n : Nat) :
     (((coeffs.map fun coeff => ratCoeffToIntWithDen den coeff).getD n 0 : Int) : Rat) =
@@ -368,6 +408,8 @@ private theorem list_getD_map_ratCoeffToIntWithDen (den : Nat) (coeffs : List Ra
       | succ n =>
           simpa using ih n
 
+/-- Indexing `f`'s coefficient array as a list with default `0` agrees with
+`DensePoly.coeff`. -/
 private theorem list_getD_toArray_eq_coeff (f : DensePoly Rat) (n : Nat) :
     f.toArray.toList.getD n 0 = f.coeff n := by
   unfold DensePoly.toArray DensePoly.coeff Array.getD
@@ -376,6 +418,8 @@ private theorem list_getD_toArray_eq_coeff (f : DensePoly Rat) (n : Nat) :
   · simp [hn]
     rfl
 
+/-- Every coefficient denominator of `f` divides the common denominator of `f`'s coefficient
+list, including out-of-range indices where the coefficient is `0`. -/
 private theorem ratCommonDen_dvd_coeff (f : DensePoly Rat) (n : Nat) :
     (f.coeff n).den ∣ ratCommonDen f.toArray.toList := by
   by_cases hn : n < f.size
@@ -387,11 +431,15 @@ private theorem ratCommonDen_dvd_coeff (f : DensePoly Rat) (n : Nat) :
     rw [hcoeff]
     exact Nat.one_dvd _
 
+/-- Clear every coefficient of the rational polynomial `f` against its common denominator
+`ratCommonDen`, producing the integer polynomial that is `f` scaled into `ℤ`. -/
 private def ratPolyPrimitivePartCleared (f : DensePoly Rat) : ZPoly :=
   let den := ratCommonDen f.toArray.toList
   DensePoly.ofCoeffs <|
     f.toArray.toList.map (fun coeff => ratCoeffToIntWithDen den coeff) |>.toArray
 
+/-- Casting the cleared integer polynomial back to `Rat` recovers `f` scaled by its common
+denominator, certifying `ratPolyPrimitivePartCleared` only rescales `f`. -/
 private theorem toRatPoly_ratPolyPrimitivePartCleared (f : DensePoly Rat) :
     toRatPoly (ratPolyPrimitivePartCleared f) =
       DensePoly.scale (ratCommonDen f.toArray.toList : Rat) f := by
@@ -561,6 +609,8 @@ theorem congr_add (f g f' g' : ZPoly) (m : Nat)
   refine ⟨c + d, ?_⟩
   grind
 
+/-- `m` divides the product difference `a * c - b * d` whenever it divides each
+factor difference `a - b` and `c - d`. -/
 private theorem dvd_mul_sub_mul_of_dvd_sub (m a b c d : Int)
     (hab : m ∣ a - b) (hcd : m ∣ c - d) :
     m ∣ a * c - b * d := by
@@ -569,6 +619,9 @@ private theorem dvd_mul_sub_mul_of_dvd_sub (m a b c d : Int)
   refine ⟨u * c + b * v, ?_⟩
   grind
 
+/-- `m` divides the difference between corresponding `DensePoly.mulCoeffStep`
+updates of congruent inputs, given accumulators that already differ by a
+multiple of `m`. -/
 private theorem dvd_mulCoeffStep_sub (f g f' g' : ZPoly) (m : Nat)
     (hf : congr f f' m) (hg : congr g g' m) (n i j : Nat) (a b : Int)
     (hab : (m : Int) ∣ a - b) :
@@ -588,6 +641,8 @@ private theorem dvd_mulCoeffStep_sub (f g f' g' : ZPoly) (m : Nat)
   · simp [hij]
     exact hab
 
+/-- `m` divides the difference between the `DensePoly.mulCoeffStep` inner folds
+over `xs` for congruent inputs, propagating the accumulator congruence. -/
 private theorem dvd_mulCoeffStep_fold_sub (f g f' g' : ZPoly) (m : Nat)
     (hf : congr f f' m) (hg : congr g g' m) (n i : Nat) (xs : List Nat) (a b : Int)
     (hab : (m : Int) ∣ a - b) :
@@ -603,6 +658,8 @@ private theorem dvd_mulCoeffStep_fold_sub (f g f' g' : ZPoly) (m : Nat)
         (DensePoly.mulCoeffStep f' g' n i b j)
         (dvd_mulCoeffStep_sub f g f' g' m hf hg n i j a b hab)
 
+/-- Extending the inner `DensePoly.mulCoeffStep` fold past `q.size` adds nothing,
+since the extra `q` coefficients vanish. -/
 private theorem fold_mulCoeffStep_range_add_zero_tail (p q : ZPoly)
     (n i : Nat) (a : Int) (d : Nat) :
     (List.range (q.size + d)).foldl (DensePoly.mulCoeffStep p q n i) a =
@@ -621,6 +678,8 @@ private theorem fold_mulCoeffStep_range_add_zero_tail (p q : ZPoly)
       · simp [h, hcoeff]
       · simp [h]
 
+/-- The inner `DensePoly.mulCoeffStep` fold over any range at least `q.size`
+agrees with the fold over `q.size`. -/
 private theorem fold_mulCoeffStep_range_of_size_le (p q : ZPoly)
     (n i : Nat) (a : Int) {s : Nat} (hs : q.size ≤ s) :
     (List.range s).foldl (DensePoly.mulCoeffStep p q n i) a =
@@ -629,6 +688,8 @@ private theorem fold_mulCoeffStep_range_of_size_le (p q : ZPoly)
   rw [← hs']
   exact fold_mulCoeffStep_range_add_zero_tail p q n i a (s - q.size)
 
+/-- When `p.coeff i = 0`, the inner `DensePoly.mulCoeffStep` fold over `q.size`
+leaves the accumulator unchanged. -/
 private theorem fold_mulCoeffStep_zero_left (p q : ZPoly) (n i : Nat) (a : Int)
     (hi : p.coeff i = 0) :
     (List.range q.size).foldl (DensePoly.mulCoeffStep p q n i) a = a := by
@@ -644,6 +705,8 @@ private theorem fold_mulCoeffStep_zero_left (p q : ZPoly) (n i : Nat) (a : Int)
       · simp [h, hi]
       · simp [h]
 
+/-- Extending the outer `DensePoly.mulCoeffStep` fold past `p.size` adds nothing,
+since the extra `p` coefficients vanish. -/
 private theorem fold_mulCoeffOuter_range_add_zero_tail (p q : ZPoly)
     (n d : Nat) :
     (List.range (p.size + d)).foldl
@@ -664,6 +727,8 @@ private theorem fold_mulCoeffOuter_range_add_zero_tail (p q : ZPoly)
           (fun acc i => (List.range q.size).foldl (DensePoly.mulCoeffStep p q n i) acc) 0)
         hcoeff
 
+/-- The outer `DensePoly.mulCoeffStep` fold over any range at least `p.size`
+computes `DensePoly.mulCoeffSum p q n`. -/
 private theorem mulCoeffSum_eq_outer_range_of_size_le (p q : ZPoly)
     (n : Nat) {s : Nat} (hs : p.size ≤ s) :
     (List.range s).foldl
@@ -674,6 +739,9 @@ private theorem mulCoeffSum_eq_outer_range_of_size_le (p q : ZPoly)
   rw [← hs']
   exact fold_mulCoeffOuter_range_add_zero_tail p q n (s - p.size)
 
+/-- `m` divides the difference between the outer `DensePoly.mulCoeffStep` folds
+over `xs` for congruent inputs, propagating the accumulator congruence through
+each inner fold. -/
 private theorem dvd_mulCoeffOuter_fold_sub (f g f' g' : ZPoly) (m : Nat)
     (hf : congr f f' m) (hg : congr g g' m) (n innerBound : Nat)
     (hgb : g.size ≤ innerBound) (hg'b : g'.size ≤ innerBound)
@@ -1585,6 +1653,7 @@ theorem rational_associate_primitive_unit
       rw [hden_one]
       rfl
 
+/-- Scaling a rational dense polynomial by `0` yields the zero polynomial. -/
 private theorem rat_scale_zero (p : DensePoly Rat) :
     DensePoly.scale 0 p = 0 := by
   apply DensePoly.ext_coeff
@@ -1593,6 +1662,7 @@ private theorem rat_scale_zero (p : DensePoly Rat) :
   rw [DensePoly.coeff_zero]
   exact Rat.zero_mul (p.coeff n)
 
+/-- Scaling the zero rational dense polynomial by any unit `u` yields the zero polynomial. -/
 private theorem rat_scale_zero_right (u : Rat) :
     DensePoly.scale u (0 : DensePoly Rat) = 0 := by
   apply DensePoly.ext_coeff
@@ -1601,6 +1671,7 @@ private theorem rat_scale_zero_right (u : Rat) :
   rw [DensePoly.coeff_zero]
   exact Rat.mul_zero u
 
+/-- Scaling a rational dense polynomial by `1` leaves it unchanged. -/
 private theorem rat_scale_one (p : DensePoly Rat) :
     DensePoly.scale 1 p = p := by
   apply DensePoly.ext_coeff
@@ -1608,6 +1679,7 @@ private theorem rat_scale_one (p : DensePoly Rat) :
   rw [DensePoly.coeff_scale (R := Rat) 1 p n (Rat.mul_zero 1)]
   exact Rat.one_mul (p.coeff n)
 
+/-- Reading `(List.range size).map f` at index `n` returns `f n` when `n < size` and `0` past it. -/
 private theorem rat_list_getD_map_range (size n : Nat) (f : Nat → Rat) :
     ((List.range size).map f).getD n 0 =
       if n < size then f n else 0 := by
@@ -1615,6 +1687,7 @@ private theorem rat_list_getD_map_range (size n : Nat) (f : Nat → Rat) :
   · simp [hn, List.getD]
   · simp [hn, List.getD]
 
+/-- The `n`-th coefficient of `DensePoly.derivative p` is `(n + 1) * p.coeff (n + 1)`. -/
 private theorem rat_coeff_derivative (p : DensePoly Rat) (n : Nat) :
     (DensePoly.derivative p).coeff n = ((n + 1 : Nat) : Rat) * p.coeff (n + 1) := by
   unfold DensePoly.derivative
@@ -1631,6 +1704,7 @@ private theorem rat_coeff_derivative (p : DensePoly Rat) (n : Nat) :
       DensePoly.coeff_eq_zero_of_size_le p hp
     simp [hn, hcoeff]
 
+/-- Differentiation commutes with scaling a rational dense polynomial by a unit `u`. -/
 private theorem rat_derivative_scale (u : Rat) (p : DensePoly Rat) :
     DensePoly.derivative (DensePoly.scale u p) =
       DensePoly.scale u (DensePoly.derivative p) := by
@@ -1642,6 +1716,7 @@ private theorem rat_derivative_scale (u : Rat) (p : DensePoly Rat) :
   rw [DensePoly.coeff_scale (R := Rat) u p (n + 1) (Rat.mul_zero u)]
   grind [Rat.mul_assoc, Rat.mul_comm]
 
+/-- The Leibniz product rule `derivative (p * q) = derivative p * q + p * derivative q` for rational dense polynomials. -/
 private theorem rat_derivative_mul (p q : DensePoly Rat) :
     DensePoly.derivative (p * q) =
       DensePoly.derivative p * q + p * DensePoly.derivative q := by
@@ -1655,6 +1730,7 @@ private theorem rat_derivative_mul (p q : DensePoly Rat) :
   rw [DensePoly.coeff_mul p (DensePoly.derivative q) n]
   exact DensePoly.rat_mulCoeffSum_derivative_product_rule p q n
 
+/-- If `d` divides `p`, then `d` divides the left multiple `q * p`. -/
 private theorem rat_dvd_mul_left {d p : DensePoly Rat} (q : DensePoly Rat) :
     d ∣ p → d ∣ q * p := by
   intro h
@@ -1663,12 +1739,14 @@ private theorem rat_dvd_mul_left {d p : DensePoly Rat} (q : DensePoly Rat) :
   rw [ha, ← DensePoly.mul_assoc_poly q d a, DensePoly.mul_comm_poly q d,
     DensePoly.mul_assoc_poly d q a]
 
+/-- If `d` divides `p`, then `d` divides the right multiple `p * q`. -/
 private theorem rat_dvd_mul_right {d p : DensePoly Rat} (q : DensePoly Rat) :
     d ∣ p → d ∣ p * q := by
   intro h
   rw [DensePoly.mul_comm_poly p q]
   exact rat_dvd_mul_left q h
 
+/-- Divisibility by `d` is closed under addition of rational dense polynomials. -/
 private theorem rat_dvd_add {d p q : DensePoly Rat} :
     d ∣ p → d ∣ q → d ∣ p + q := by
   intro hp hq
@@ -1677,6 +1755,7 @@ private theorem rat_dvd_add {d p q : DensePoly Rat} :
   refine ⟨a + b, ?_⟩
   rw [ha, hb, DensePoly.mul_add_right_poly]
 
+/-- Divisibility by `d` is closed under subtraction of rational dense polynomials. -/
 private theorem rat_dvd_sub {d p q : DensePoly Rat} :
     d ∣ p → d ∣ q → d ∣ p - q := by
   intro hp hq
@@ -1686,6 +1765,7 @@ private theorem rat_dvd_sub {d p q : DensePoly Rat} :
   rw [DensePoly.sub_eq_add_neg_poly, ha, hb, DensePoly.mul_add_right_poly,
     DensePoly.mul_sub_zero_comm, DensePoly.mul_comm_poly b d]
 
+/-- The rational image of `p` is a `±1` scalar multiple of the rational image of its sign-normalized primitive part. -/
 private theorem toRatPoly_normalizePrimitiveSign_rational_associate (p : ZPoly) :
     ∃ unit : Rat, toRatPoly p = DensePoly.scale unit (toRatPoly (normalizePrimitiveSign p)) := by
   by_cases hlead : DensePoly.leadingCoeff p < 0
@@ -1698,6 +1778,7 @@ private theorem toRatPoly_normalizePrimitiveSign_rational_associate (p : ZPoly) 
     rw [normalizePrimitiveSign, if_neg hlead]
     exact (rat_scale_one (toRatPoly p)).symm
 
+/-- Folding a step that discards each element leaves the initial accumulator `init` unchanged. -/
 private theorem rat_list_foldl_ignore {α : Type _} (xs : List Nat) (init : α) :
     xs.foldl (fun acc _ => acc) init = init := by
   induction xs generalizing init with
@@ -1706,6 +1787,7 @@ private theorem rat_list_foldl_ignore {α : Type _} (xs : List Nat) (init : α) 
   | cons _ xs ih =>
       simpa using ih init
 
+/-- Scaling a rational dense polynomial by a nonzero unit `u` preserves its dense size. -/
 private theorem rat_scale_size_of_ne_zero {u : Rat} (hu : u ≠ 0) (p : DensePoly Rat) :
     (DensePoly.scale u p).size = p.size := by
   apply Nat.le_antisymm
