@@ -4418,6 +4418,105 @@ def ofBridgeDataCorrectedAuxiliaryL2normSq
   precision_eq := hprecision
 
 /--
+Canonical projected-vector pointwise bound for the cap-lift bad-vector bridge.
+
+Choosing `vectorSquareBound := cutRadiusSq4`, the `hvectorSquareBound` shape
+consumed by `ofBridgeDataPointwiseAuxiliaryBounds*` follows from a bound on the
+projected squared-norm sum (the cut-radius membership condition for a bad
+vector), since each stored coordinate's square is at most the full sum.
+-/
+theorem projectedVector_sq_le_cutRadiusSq4
+    {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {rows_pos : HasPositiveDimension
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)}
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (v :
+      Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount → ℤ)
+    (hnorm_le :
+      (∑ i : Fin (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos).factorCount, ((v i : ℝ)) ^ 2) ≤
+        ((projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos).cutRadiusSq4 : ℝ)) :
+    ∀ i : Fin (factorFastCapLiftData f primeData).liftedFactors.size,
+      ((((badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).projectedVectorArray v).getD
+          i.val 0 : ℝ) ^ 2) ≤
+        ((projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos).cutRadiusSq4 : ℝ) :=
+  fun i =>
+    (badVectorWitnessOfFactorFastCapLiftData
+        f primeData rows_pos localFactorIndex localFactorDegree H).projectedVectorArray_sq_le_of_sum_le
+      v _ (Nat.cast_nonneg _) hnorm_le i
+
+/--
+Canonical weighted-correction pointwise bound for the cap-lift bad-vector
+bridge.
+
+Choosing `correctionWeightedBound := D * p ^ (2k)`, the `hcorrectionWeightedBound`
+shape consumed by `ofBridgeDataPointwiseAuxiliaryBounds*` follows from a
+coordinate square bound `D` on the diagonal-row corrections, since the
+cut-threshold weight `p ^ (2 (k − ℓ_j))` is at most `p ^ (2k)`.
+-/
+theorem correctionWeighted_le_mul_pow
+    {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {rows_pos : HasPositiveDimension
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)}
+    {trueSupports : Set (Set (Fin (projectedRowsOfLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)
+      rows_pos).factorCount))}
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (hp : 1 ≤ (factorFastCapLiftData f primeData).p)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (v :
+      Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount → ℤ)
+    (hin :
+      v ∈
+        BHKS.projectedRowSpanInt
+          (projectedRowsOfLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (factorFastCapLiftData f primeData)
+            rows_pos))
+    (hnot :
+      v ∉ BHKS.trueFactorIndicatorLattice trueSupports)
+    (D : ℝ)
+    (hD :
+      ∀ j, j < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 →
+        (((bridge.auxiliaryCorrections v hin hnot).getD j 0 : ℝ)) ^ 2 ≤ D) :
+    ∀ j, j < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 →
+      (((bridge.auxiliaryCorrections v hin hnot).getD j 0 : ℝ) ^ 2 *
+        (((factorFastCapLiftData f primeData).p : ℝ) ^
+          (2 *
+            ((factorFastCapLiftData f primeData).k -
+              Hex.bhksCoeffCutThreshold
+                (factorFastCapLiftData f primeData).p
+                (Hex.normalizeForFactor f).squareFreeCore j)))) ≤
+        D * ((factorFastCapLiftData f primeData).p : ℝ) ^
+          (2 * (factorFastCapLiftData f primeData).k) :=
+  fun j hj =>
+    BHKS.correctionWeighted_sq_le_of_coeff_sq_le
+      (Hex.normalizeForFactor f).squareFreeCore (factorFastCapLiftData f primeData)
+      (bridge.auxiliaryCorrections v hin hnot) D hp hD j hj
+
+/--
 Build the cap-separation input package from pointwise auxiliary-coordinate
 bounds.
 
