@@ -2147,6 +2147,41 @@ private theorem div_C_mul_C_mul_of_dvd
       (DensePoly.C (u * v⁻¹) * (f / g))
   exact mul_right_cancel_of_ne_zero hCvg_ne hcancel_eq
 
+/-- Scaling only the dividend by a nonzero constant commutes with exact
+division by an unscaled divisor. The `v = 1` companion of
+`div_C_mul_C_mul_of_dvd`, used once the monic gcd is known to be scale-invariant
+so the divisor never picks up a unit. -/
+private theorem div_C_mul_left_of_dvd
+    [ZMod64.PrimeModulus p]
+    (u : ZMod64 p) (f g : FpPoly p) (hdvd : g ∣ f) (hg_ne : g ≠ 0) :
+    (DensePoly.C u * f) / g = DensePoly.C u * (f / g) := by
+  have hquot_mul : (f / g) * g = f := by
+    have hmod : f % g = 0 := DensePoly.mod_eq_zero_of_dvd f g hdvd
+    have hrec : (f / g) * g + (f % g) = f := DensePoly.div_mul_add_mod f g
+    rw [hmod, add_zero] at hrec
+    exact hrec
+  have hreconstruct :
+      DensePoly.C u * f = (DensePoly.C u * (f / g)) * g := by
+    calc
+      DensePoly.C u * f = DensePoly.C u * ((f / g) * g) := by rw [hquot_mul]
+      _ = (DensePoly.C u * (f / g)) * g :=
+            (DensePoly.mul_assoc_poly (DensePoly.C u : FpPoly p) (f / g) g).symm
+  have hdvd_scaled : g ∣ DensePoly.C u * f :=
+    ⟨DensePoly.C u * (f / g), by
+      rw [hreconstruct]
+      exact DensePoly.mul_comm_poly (DensePoly.C u * (f / g)) g⟩
+  have hmod_zero : (DensePoly.C u * f) % g = 0 :=
+    DensePoly.mod_eq_zero_of_dvd (DensePoly.C u * f) g hdvd_scaled
+  have hquot_mul_scaled : ((DensePoly.C u * f) / g) * g = DensePoly.C u * f := by
+    have hrec : ((DensePoly.C u * f) / g) * g + ((DensePoly.C u * f) % g) =
+        DensePoly.C u * f := DensePoly.div_mul_add_mod (DensePoly.C u * f) g
+    rw [hmod_zero, add_zero] at hrec
+    exact hrec
+  have hcancel :
+      ((DensePoly.C u * f) / g) * g = (DensePoly.C u * (f / g)) * g := by
+    rw [hquot_mul_scaled, hreconstruct]
+  exact mul_right_cancel_of_ne_zero hg_ne hcancel
+
 private theorem gcd_eq_zero_forces_zero [ZMod64.PrimeModulus p] (c w : FpPoly p)
     (h : DensePoly.gcd c w = 0) :
     c = 0 ∧ w = 0 := by
@@ -2167,6 +2202,20 @@ private theorem scaled_gcd_eq_zero
     DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) = 0 := by
   rcases gcd_eq_zero_forces_zero c w h with ⟨hc, hw⟩
   rw [hc, hw, mul_zero, mul_zero, DensePoly.gcd_zero_zero]
+
+/-- A vanishing monic gcd forces both inputs to vanish: `monicGcd` divides each
+input, so a zero monic gcd makes each input a multiple of `0`. -/
+private theorem monicGcd_eq_zero_forces_zero
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) (c w : FpPoly p)
+    (h : monicGcd c w = 0) :
+    c = 0 ∧ w = 0 := by
+  constructor
+  · obtain ⟨q, hq⟩ := monicGcd_dvd_left hp c w
+    rw [h] at hq
+    simpa using hq
+  · obtain ⟨q, hq⟩ := monicGcd_dvd_right hp c w
+    rw [h] at hq
+    simpa using hq
 
 private theorem div_zero_eq_zero (f : FpPoly p) :
     f / (0 : FpPoly p) = 0 := by
@@ -4874,84 +4923,31 @@ private theorem monicGcd_scalar_invariant
   rw [hgcd, normalizeMonic_C_mul_snd hv]
 
 /--
-One derivative-active Yun step is stable under a common nonzero scalar multiple.
-
-The executable `DensePoly.gcd` is only canonical up to a nonzero scalar, so the
-statement exposes the scalar `v` selected by the gcd bridge. With that scalar
-made explicit, both the repeated part `g = gcd f f'` and the quotient
-`c = f / g` synchronize across the raw scaled input `C u * f`.
+Scalar-leak-free step bridge for the inner Yun recursion. With the executable
+loop now routing every gcd through `monicGcd`, scaling `c`, `w` by independent
+nonzero constants leaves the gcd itself invariant (`monicGcd_scalar_invariant`),
+so each descent quantity simply carries its own input scalar: the quotient
+`c_raw / y` rescales by `C u_c` and the tail `w_raw / y` by `C u_w`, with no
+unit `v` freed from the gcd. Replaces the old raw-gcd `..._scalar_step_bridge`.
 -/
-private theorem yunScalarStep
-    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
-    {u : ZMod64 p} (hu : u ≠ 0) (f : FpPoly p)
-    (hder : (DensePoly.derivative f).isZero = false) :
-    ∃ v : ZMod64 p, v ≠ 0 ∧
-      let g := monicGcd f (DensePoly.derivative f)
-      let raw := DensePoly.C u * f
-      let rawG := DensePoly.gcd raw (DensePoly.derivative raw)
-      rawG = DensePoly.C v * g ∧
-        raw / rawG = DensePoly.C (u * v⁻¹) * (f / g) := by
-  let g := monicGcd f (DensePoly.derivative f)
-  let raw := DensePoly.C u * f
-  have hder_raw :
-      DensePoly.derivative raw =
-        DensePoly.C u * DensePoly.derivative f := by
-    simpa [raw] using derivative_C_mul u f
-  obtain ⟨v, hv, hgcd⟩ :=
-    gcd_C_mul_C_mul_eq_C_mul_gcd hp u hu f (DensePoly.derivative f)
-  refine ⟨v, hv, ?_⟩
-  dsimp only
-  have hrawG :
-      DensePoly.gcd raw (DensePoly.derivative raw) =
-        DensePoly.C v * g := by
-    simpa [raw, g, hder_raw] using hgcd
-  constructor
-  · exact hrawG
-  · have hg_ne : g ≠ 0 := by
-      apply ne_zero_of_isZero_false
-      exact monicGcd_isZero_false_of_gcd_nonzero f (DensePoly.derivative f)
-        (gcd_isZero_false_of_right_isZero_false f (DensePoly.derivative f) hder)
-    have hquot :=
-      div_C_mul_C_mul_of_dvd hp hu hv f g
-        (by
-          simpa [g] using
-            monicGcd_dvd_left hp f (DensePoly.derivative f))
-        hg_ne
-    rw [hrawG]
-    simpa [raw, g] using hquot
-
-/--
-Asymmetric scalar step bridge for the inner Yun recursion. Threads
-independent nonzero scalars `u_c`, `u_w` on `c`, `w` through one
-`yunFactorsContributionWithLevel` step: the executable `DensePoly.gcd`
-output picks up a single asymmetric scalar `v ≠ 0`, and both the quotient
-`c_raw / y_raw` and the descent tail `w_raw / y_raw` rescale by
-unit-paired prefactors `C (u_c · v⁻¹)` and `C (u_w · v⁻¹)`. Used by the
-recursive contribution sync as the induction step.
--/
-private theorem yunFactorsContributionWithLevel_scalar_step_bridge
+private theorem yunStep_monic_scalar_sync
     [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
     (c w : FpPoly p) {u_c u_w : ZMod64 p}
     (hu_c : u_c ≠ 0) (hu_w : u_w ≠ 0)
     (hg_ne : monicGcd c w ≠ 0) :
-    ∃ v : ZMod64 p, v ≠ 0 ∧
-      DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) =
-          DensePoly.C v * monicGcd c w ∧
-        (DensePoly.C u_c * c) /
-            DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) =
-          DensePoly.C (u_c * v⁻¹) * (c / monicGcd c w) ∧
-        (DensePoly.C u_w * w) /
-            DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) =
-          DensePoly.C (u_w * v⁻¹) * (w / monicGcd c w) := by
-  obtain ⟨v, hv_ne, hgcd⟩ :=
-    gcd_C_mul_left_C_mul_right_eq_C_mul_gcd hp u_c u_w hu_c hu_w c w
-  refine ⟨v, hv_ne, hgcd, ?_, ?_⟩
-  · rw [hgcd]
-    have hc_dvd : monicGcd c w ∣ c := monicGcd_dvd_left hp c w
-    exact div_C_mul_C_mul_of_dvd hp hu_c hv_ne c (monicGcd c w) hc_dvd hg_ne
-  · rw [hgcd]
-    have hw_dvd : monicGcd c w ∣ w := monicGcd_dvd_right hp c w
-    exact div_C_mul_C_mul_of_dvd hp hu_w hv_ne w (monicGcd c w) hw_dvd hg_ne
+    monicGcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) = monicGcd c w ∧
+      (DensePoly.C u_c * c) /
+          monicGcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) =
+        DensePoly.C u_c * (c / monicGcd c w) ∧
+      (DensePoly.C u_w * w) /
+          monicGcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) =
+        DensePoly.C u_w * (w / monicGcd c w) := by
+  have hinv := monicGcd_scalar_invariant hp hu_c hu_w c w
+  refine ⟨hinv, ?_, ?_⟩
+  · rw [hinv]
+    exact div_C_mul_left_of_dvd u_c c (monicGcd c w) (monicGcd_dvd_left hp c w) hg_ne
+  · rw [hinv]
+    exact div_C_mul_left_of_dvd u_w w (monicGcd c w) (monicGcd_dvd_right hp c w) hg_ne
 
 private theorem pow_C_form
     [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
@@ -5863,7 +5859,7 @@ private theorem yunFactorsPairwiseReachable_common_dvd_one_derivativeSplit
     (hdf : (DensePoly.derivative f).isZero ≠ true) :
     let g := monicGcd f (DensePoly.derivative f)
     let c := f / g
-    let y := DensePoly.gcd c g
+    let y := monicGcd c g
     let z := c / y
     ∀ d : FpPoly p, d ∣ z → d ∣ y → d ∣ (1 : FpPoly p) := by
   dsimp
@@ -5871,11 +5867,11 @@ private theorem yunFactorsPairwiseReachable_common_dvd_one_derivativeSplit
   intro d hdz hdy
   let g := monicGcd f (DensePoly.derivative f)
   let c := f / g
-  let y := DensePoly.gcd c g
+  let y := monicGcd c g
   let z := c / y
   have hdc : d ∣ c := by
     have hprod : z * y = c := by
-      simpa [z, y, c, g] using div_gcd_mul_reconstruct c g
+      simpa [z, y, c, g] using div_monicGcd_mul_reconstruct hp c g
     rw [← hprod]
     exact dvd_mul_right_of_dvd (a := z) (b := y) (d := d)
       (by simpa [z, y, c, g] using hdz)
@@ -7055,8 +7051,9 @@ private theorem yunStep_tail_common_dvd_one_of_gcd_normalized_one
         d ∣ w / monicGcd c w →
           d ∣ (1 : FpPoly p) := by
   intro d hdy _hdv
-  exact dvd_trans_poly hdy
-    (dvd_one_of_normalizeMonic_eq_one (monicGcd c w) hnormalized)
+  have hg_one : monicGcd c w = 1 := by rw [monicGcd_def]; exact hnormalized
+  rw [hg_one] at hdy
+  exact hdy
 
 private theorem constant_nonzero_dvd
     [ZMod64.PrimeModulus p] {g f : FpPoly p}
@@ -7207,9 +7204,24 @@ private theorem yunStep_gcd_normalized_one_of_constant_common_dvd_one
           d ∣ monicGcd c w →
             d ∣ (1 : FpPoly p)) :
     (normalizeMonic (DensePoly.gcd c w)).2 = 1 := by
-  exact normalizeMonic_eq_one_of_dvd_one
-    (yunStep_gcd_dvd_one_of_constant_common_dvd_one
-      c w hc_zero hy_constant hcommon)
+  have hgcd_ne : (DensePoly.gcd c w).isZero = false := by
+    cases hg : (DensePoly.gcd c w).isZero with
+    | false => rfl
+    | true =>
+        exfalso
+        have hg_zero : DensePoly.gcd c w = 0 :=
+          eq_zero_of_isZero_true (DensePoly.gcd c w) hg
+        rcases DensePoly.gcd_dvd_left c w with ⟨q, hq⟩
+        have hc_eq_zero : c = 0 := by rw [hq, hg_zero, zero_mul]
+        rw [hc_eq_zero] at hc_zero
+        cases hc_zero
+  have hdvd : monicGcd c w ∣ (1 : FpPoly p) :=
+    yunStep_gcd_dvd_one_of_constant_common_dvd_one
+      c w hc_zero hy_constant hcommon
+  have hone : monicGcd c w = 1 :=
+    eq_one_of_monic_dvd_one (monicGcd_monic_of_gcd_nonzero c w hgcd_ne) hdvd
+  rw [← monicGcd_def]
+  exact hone
 
 private theorem yunStep_tail_common_dvd_one_of_constant_common_dvd_one
     [ZMod64.PrimeModulus p]
@@ -7780,16 +7792,16 @@ private theorem yunFactorsContributionWithLevel_scalar_sync
             · exact False.elim (hscaled_c h)
           let y : FpPoly p := monicGcd c w
           let yScaled : FpPoly p :=
-            DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w)
+            monicGcd (DensePoly.C u_c * c) (DensePoly.C u_w * w)
           let z : FpPoly p := c / y
           let zScaled : FpPoly p := (DensePoly.C u_c * c) / yScaled
           by_cases hy_zero : y = 0
           · have hg_zero : monicGcd c w = 0 := by simpa [y] using hy_zero
-            have hc_zero : c = 0 := (gcd_eq_zero_forces_zero c w hg_zero).1
-            have hw_zero : w = 0 := (gcd_eq_zero_forces_zero c w hg_zero).2
+            have hc_zero : c = 0 := (monicGcd_eq_zero_forces_zero hp c w hg_zero).1
+            have hw_zero : w = 0 := (monicGcd_eq_zero_forces_zero hp c w hg_zero).2
             have hyScaled_zero : yScaled = 0 := by
-              simpa [yScaled] using
-                scaled_gcd_eq_zero u_c u_w c w hg_zero
+              show monicGcd (DensePoly.C u_c * c) (DensePoly.C u_w * w) = 0
+              rw [monicGcd_scalar_invariant hp hu_c hu_w c w]; exact hy_zero
             obtain ⟨sTail, uTail, hsTail, huTail, htail_sync⟩ :=
               ih (c := y) (w := w / y) (u_c := (1 : ZMod64 p))
                 (u_w := u_w) (level := level + 1)
@@ -7848,61 +7860,35 @@ private theorem yunFactorsContributionWithLevel_scalar_sync
             · simpa [yunFactorsContributionWithLevel, hc_false, hscaled_c_false,
                 y, yScaled, z, zScaled] using hbranch₂
           · have hy_ne : y ≠ 0 := hy_zero
-            obtain ⟨v, hv, hyScaled_eq, hzScaled_eq, hwScaled_eq⟩ :=
-              yunFactorsContributionWithLevel_scalar_step_bridge
-                hp c w hu_c hu_w hy_ne
-            have hu_c_v : u_c * v⁻¹ ≠ 0 := by
-              intro hzero
-              rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with huc_zero | hv_zero
-              · exact hu_c huc_zero
-              · exact zmod64_inv_ne_zero_of_prime_ne_zero hp hv hv_zero
-            have hu_w_v : u_w * v⁻¹ ≠ 0 := by
-              intro hzero
-              rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with huw_zero | hv_zero
-              · exact hu_w huw_zero
-              · exact zmod64_inv_ne_zero_of_prime_ne_zero hp hv hv_zero
+            obtain ⟨hyScaled_eq, hzScaled_eq, hwScaled_eq⟩ :=
+              yunStep_monic_scalar_sync hp c w hu_c hu_w hy_ne
             obtain ⟨sTail, uTail, hsTail, huTail, htail_sync⟩ :=
-              ih (c := y) (w := w / y) (u_c := v)
-                (u_w := u_w * v⁻¹) (level := level + 1)
-                hv hu_w_v
+              ih (c := y) (w := w / y) (u_c := (1 : ZMod64 p))
+                (u_w := u_w) (level := level + 1)
+                (zmod64_one_ne_zero_of_prime hp) hu_w
+            have hC1y : (DensePoly.C (1 : ZMod64 p) * y : FpPoly p) = y := by
+              rw [show (DensePoly.C (1 : ZMod64 p) : FpPoly p) = 1 from rfl]; simp
+            rw [hC1y] at htail_sync
+            have hyScaled_eq_y : yScaled = y := by
+              simpa [y, yScaled] using hyScaled_eq
             have hwScaled_eq_y :
                 (DensePoly.C u_w * w) / yScaled =
-                  DensePoly.C (u_w * v⁻¹) * (w / y) := by
+                  DensePoly.C u_w * (w / y) := by
               simpa [y, yScaled] using hwScaled_eq
-            have hyScaled_eq_y : yScaled = DensePoly.C v * y := by
-              simpa [y, yScaled] using hyScaled_eq
-            have hwScaled_eq_v :
-                (DensePoly.C u_w * w) / (DensePoly.C v * y) =
-                  DensePoly.C (u_w * v⁻¹) * (w / y) := by
-              simpa [hyScaled_eq_y] using hwScaled_eq_y
             have htail₁ :
                 (yunFactorsContributionWithLevel yScaled
                       ((DensePoly.C u_w * w) / yScaled) base (level + 1) fuel).1 =
                   DensePoly.C sTail *
                     (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).1 := by
-              calc
-                (yunFactorsContributionWithLevel yScaled
-                      ((DensePoly.C u_w * w) / yScaled) base (level + 1) fuel).1 =
-                    (yunFactorsContributionWithLevel (DensePoly.C v * y)
-                      (DensePoly.C (u_w * v⁻¹) * (w / y)) base (level + 1) fuel).1 := by
-                      rw [hyScaled_eq_y, hwScaled_eq_v]
-                _ = DensePoly.C sTail *
-                      (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).1 := by
-                      exact congrArg Prod.fst htail_sync
+              rw [hwScaled_eq_y, hyScaled_eq_y]
+              exact congrArg Prod.fst htail_sync
             have htail₂ :
                 (yunFactorsContributionWithLevel yScaled
                       ((DensePoly.C u_w * w) / yScaled) base (level + 1) fuel).2 =
                   DensePoly.C uTail *
                     (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).2 := by
-              calc
-                (yunFactorsContributionWithLevel yScaled
-                      ((DensePoly.C u_w * w) / yScaled) base (level + 1) fuel).2 =
-                    (yunFactorsContributionWithLevel (DensePoly.C v * y)
-                      (DensePoly.C (u_w * v⁻¹) * (w / y)) base (level + 1) fuel).2 := by
-                      rw [hyScaled_eq_y, hwScaled_eq_v]
-                _ = DensePoly.C uTail *
-                      (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).2 := by
-                      exact congrArg Prod.snd htail_sync
+              rw [hwScaled_eq_y, hyScaled_eq_y]
+              exact congrArg Prod.snd htail_sync
             obtain ⟨s, uTail', hs, huTail', hbranch₁, hbranch₂⟩ :=
               yunFactorsContributionWithLevel_scalar_branch_sync hp
                 (z := z) (zScaled := zScaled)
@@ -7916,8 +7902,8 @@ private theorem yunFactorsContributionWithLevel_scalar_sync
                 (tailScaled₂ :=
                   (yunFactorsContributionWithLevel yScaled
                       ((DensePoly.C u_w * w) / yScaled) base (level + 1) fuel).2)
-                (u_z := u_c * v⁻¹) (s_tail := sTail) (u_tail := uTail)
-                hu_c_v hsTail huTail
+                (u_z := u_c) (s_tail := sTail) (u_tail := uTail)
+                hu_c hsTail huTail
                 (by simpa [z, zScaled, y, yScaled] using hzScaled_eq)
                 htail₁ htail₂ (base * level)
             refine ⟨s, uTail', hs, huTail', ?_⟩
@@ -7965,7 +7951,7 @@ private theorem yunFactorsContributionWithLevel_scalar_sync_of_derivative_active
             · exact False.elim (hscaled_c h)
           let y : FpPoly p := monicGcd c w
           let yScaled : FpPoly p :=
-            DensePoly.gcd (DensePoly.C u_c * c) (DensePoly.C u_w * w)
+            monicGcd (DensePoly.C u_c * c) (DensePoly.C u_w * w)
           let z : FpPoly p := c / y
           let zScaled : FpPoly p := (DensePoly.C u_c * c) / yScaled
           have hcurrent :=
@@ -7977,65 +7963,39 @@ private theorem yunFactorsContributionWithLevel_scalar_sync_of_derivative_active
             intro hy_eq
             rw [hy_eq] at hy_zero
             cases hy_zero
-          obtain ⟨v, hv, hyScaled_eq, hzScaled_eq, hwScaled_eq⟩ :=
-            yunFactorsContributionWithLevel_scalar_step_bridge
-              hp c w hu_c hu_w hy_ne
-          have hu_c_v : u_c * v⁻¹ ≠ 0 := by
-            intro hzero
-            rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with huc_zero | hv_zero
-            · exact hu_c huc_zero
-            · exact zmod64_inv_ne_zero_of_prime_ne_zero hp hv hv_zero
-          have hu_w_v : u_w * v⁻¹ ≠ 0 := by
-            intro hzero
-            rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hzero with huw_zero | hv_zero
-            · exact hu_w huw_zero
-            · exact zmod64_inv_ne_zero_of_prime_ne_zero hp hv hv_zero
+          obtain ⟨hyScaled_eq, hzScaled_eq, hwScaled_eq⟩ :=
+            yunStep_monic_scalar_sync hp c w hu_c hu_w hy_ne
           have htail_reachable :
               yunFactorsDerivativeActiveReachable hp f y (w / y) fuel := by
             simpa [y] using
               yunFactorsDerivativeActiveReachable_step hp f c w fuel hreachable
           obtain ⟨sTail, uTail, hsTail, huTail, htail_sync⟩ :=
-            ih (c := y) (w := w / y) (u_c := v)
-              (u_w := u_w * v⁻¹) (level := level + 1)
-              hv hu_w_v htail_reachable
+            ih (c := y) (w := w / y) (u_c := (1 : ZMod64 p))
+              (u_w := u_w) (level := level + 1)
+              (zmod64_one_ne_zero_of_prime hp) hu_w htail_reachable
+          have hC1y : (DensePoly.C (1 : ZMod64 p) * y : FpPoly p) = y := by
+            rw [show (DensePoly.C (1 : ZMod64 p) : FpPoly p) = 1 from rfl]; simp
+          rw [hC1y] at htail_sync
+          have hyScaled_eq_y : yScaled = y := by
+            simpa [y, yScaled] using hyScaled_eq
           have hwScaled_eq_y :
               (DensePoly.C u_w * w) / yScaled =
-                DensePoly.C (u_w * v⁻¹) * (w / y) := by
+                DensePoly.C u_w * (w / y) := by
             simpa [y, yScaled] using hwScaled_eq
-          have hyScaled_eq_y : yScaled = DensePoly.C v * y := by
-            simpa [y, yScaled] using hyScaled_eq
-          have hwScaled_eq_v :
-              (DensePoly.C u_w * w) / (DensePoly.C v * y) =
-                DensePoly.C (u_w * v⁻¹) * (w / y) := by
-            simpa [hyScaled_eq_y] using hwScaled_eq_y
           have htail₁ :
               (yunFactorsContributionWithLevel yScaled
                     ((DensePoly.C u_w * w) / yScaled) base (level + 1) fuel).1 =
                 DensePoly.C sTail *
                   (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).1 := by
-            calc
-              (yunFactorsContributionWithLevel yScaled
-                    ((DensePoly.C u_w * w) / yScaled) base (level + 1) fuel).1 =
-                  (yunFactorsContributionWithLevel (DensePoly.C v * y)
-                    (DensePoly.C (u_w * v⁻¹) * (w / y)) base (level + 1) fuel).1 := by
-                    rw [hyScaled_eq_y, hwScaled_eq_v]
-              _ = DensePoly.C sTail *
-                    (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).1 := by
-                    exact congrArg Prod.fst htail_sync
+            rw [hwScaled_eq_y, hyScaled_eq_y]
+            exact congrArg Prod.fst htail_sync
           have htail₂ :
               (yunFactorsContributionWithLevel yScaled
                     ((DensePoly.C u_w * w) / yScaled) base (level + 1) fuel).2 =
                 DensePoly.C uTail *
                   (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).2 := by
-            calc
-              (yunFactorsContributionWithLevel yScaled
-                    ((DensePoly.C u_w * w) / yScaled) base (level + 1) fuel).2 =
-                  (yunFactorsContributionWithLevel (DensePoly.C v * y)
-                    (DensePoly.C (u_w * v⁻¹) * (w / y)) base (level + 1) fuel).2 := by
-                    rw [hyScaled_eq_y, hwScaled_eq_v]
-              _ = DensePoly.C uTail *
-                    (yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel).2 := by
-                    exact congrArg Prod.snd htail_sync
+            rw [hwScaled_eq_y, hyScaled_eq_y]
+            exact congrArg Prod.snd htail_sync
           obtain ⟨s, uTail', hs, huTail', hbranch₁, hbranch₂⟩ :=
             yunFactorsContributionWithLevel_scalar_branch_sync hp
               (z := z) (zScaled := zScaled)
@@ -8049,8 +8009,8 @@ private theorem yunFactorsContributionWithLevel_scalar_sync_of_derivative_active
               (tailScaled₂ :=
                 (yunFactorsContributionWithLevel yScaled
                     ((DensePoly.C u_w * w) / yScaled) base (level + 1) fuel).2)
-              (u_z := u_c * v⁻¹) (s_tail := sTail) (u_tail := uTail)
-              hu_c_v hsTail huTail
+              (u_z := u_c) (s_tail := sTail) (u_tail := uTail)
+              hu_c hsTail huTail
               (by simpa [z, zScaled, y, yScaled] using hzScaled_eq)
               htail₁ htail₂ (base * level)
           refine ⟨s, uTail', hs, huTail', ?_⟩
