@@ -149,6 +149,10 @@ private theorem getArrayEntry_gramRows (b : Matrix Int n m) (i j : Fin n) :
     getArrayEntry (gramRows b) i.val j.val = (Matrix.gramMatrix b)[i][j] := by
   simp [getArrayEntry, gramRows, Matrix.gramMatrix, Matrix.dot, Matrix.ofFn]
 
+/-- Reconstruct an `n × n` integer matrix from a row-major nested array, reading
+entry `(i, j)` as `rows[i]![j]!` (`getArrayEntry`). This converts the executable
+array passes back to the `Matrix` API; for the Gram rows it inverts `gramRows`,
+so `rowsToMatrix (gramRows b) n = gramMatrix b`. -/
 def rowsToMatrix (rows : Array (Array Int)) (n : Nat) : Matrix Int n n :=
   Matrix.ofFn fun i j => getArrayEntry rows i.val j.val
 
@@ -6498,6 +6502,9 @@ private theorem scaledCoeffRows_diag_eq_gramDet_of_nonneg
   rw [← hdiag]
   exact (Int.toNat_of_nonneg hnonneg).symm
 
+/-- The empty leading Gram determinant is `1`: the determinant of the `0 × 0`
+principal Gram minor. This is the base case anchoring the `gramDetVec` diagonal
+recurrence (`gramDetVec_eq_gramDet` at `k = 0`). -/
 theorem gramDet_zero (b : Matrix Int n m) :
     gramDet b 0 (Nat.zero_le n) = 1 := by
   rfl
@@ -6513,6 +6520,9 @@ private theorem getArrayEntry_scaledCoeffRows_above
   exact getArrayEntry_scaledCoeffArrayLoop_above n n _
     (fun i' j' hij' => getArrayEntry_zeroRows n i' j') i j hij
 
+/-- The integral scaled Gram-Schmidt coefficient matrix is lower triangular:
+every strict-upper-triangle entry (`i < j`) is zero. Callers treating
+`scaledCoeffs` as a triangular factor use this to discard above-diagonal terms. -/
 theorem scaledCoeffs_upper (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i < j) :
     GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨j, hj⟩ = 0 := by
@@ -7076,6 +7086,9 @@ private theorem exists_highest_nonzero_coeff
     ⟨k, _hk_mem, hck, hmax⟩
   exact ⟨k, hck, fun j hj => hmax j (List.mem_finRange j) hj⟩
 
+/-- Casting commutes with the squared norm: the rational squared norm of an
+integer vector mapped into `ℚ` equals its integer squared norm cast to `ℚ`. This
+transfers norm facts proved over `ℤ` into the rational Gram-Schmidt setting. -/
 theorem normSq_map_intCast (v : Vector Int m) :
     Vector.normSq (Vector.map (fun x : Int => (x : Rat)) v) =
       ((Vector.normSq v : Int) : Rat) := by
@@ -7083,6 +7096,10 @@ theorem normSq_map_intCast (v : Vector Int m) :
     using (foldl_int_dot_cast (List.finRange m)
       (fun i : Fin m => v[i]) (fun i : Fin m => v[i]) 0).symm
 
+/-- Every nonzero lattice vector is at least as long as some basis row: there is
+an index `i` with `normSq ((basis b).row i) ≤ normSq v` (compared in `ℚ`). This
+lower-bounds an arbitrary lattice vector by an explicit basis quantity, the
+starting point for relating short lattice vectors to the input basis. -/
 theorem normSq_latticeVec_ge_min_basis_normSq
     (b : Matrix Int n m) (_hli : independent b)
     (v : Vector Int m) (hv : memLattice b v) (hv' : v ≠ 0) :
@@ -8566,6 +8583,10 @@ theorem getArrayEntry_scaledCoeffRowsSchur_eq
         unfold getArrayEntry
         rw [h_schur_default, h_bareiss_default]
 
+/-- The packed Gram determinant vector agrees entrywise with `gramDet`: under a
+step witness, its `k`-th component is the determinant of the leading `k × k` Gram
+minor for every `k ≤ n`. This identifies the executable `gramDetVec` array pass
+with its specification `gramDet`. -/
 theorem gramDetVec_eq_gramDet (b : Matrix Int n m) (hquot : StepWitness b)
     (k : Nat) (hk : k ≤ n) :
     (gramDetVec b).get ⟨k, Nat.lt_succ_of_le hk⟩ = gramDet b k hk := by
@@ -8632,6 +8653,11 @@ theorem scaledCoeffs_diag_eq_zero_or_eq_leadingPrefix_bareiss
     getArrayEntry_scaledCoeffRowsSchur_eq b hquot]
   exact scaledCoeffRows_diag_eq_zero_or_eq_leadingPrefix_bareiss (b := b) i hi
 
+/-- Int-valued diagonal identity for the scaled Gram-Schmidt coefficients: once
+the `(i, i)` slot is known nonnegative, it equals the Gram determinant
+`gramDet b (i + 1)`. The `toNat` form (`scaledCoeffs_diag_toNat`) is
+unconditional; the signed `Int` form needs the determinant slot to be
+nonnegative. -/
 theorem scaledCoeffs_diag_of_nonneg
     (b : Matrix Int n m) (hquot : StepWitness b)
     (i : Nat) (hi : i < n)
@@ -8753,6 +8779,11 @@ private theorem rowSwap_getRow_right_val_int {n' m' : Nat}
   rw [if_pos hjj] at hget
   simpa [Matrix.row] using hget
 
+/-- Swapping the adjacent rows `km1` and `k` of the basis transposes the
+scaled-coefficient Cramer minor for that pivot pair:
+`scaledCoeffMatrix (rowSwap b km1 k) k km1 = (scaledCoeffMatrix b k km1)ᵀ`. This
+is the matrix identity behind an LLL adjacent row swap, relating the coefficient
+minor before and after the exchange. -/
 theorem scaledCoeffMatrix_rowSwap_adjacent_pivot_transpose
     (b : Matrix Int n m) (km1 k : Fin n) (hkm1 : km1.val + 1 = k.val)
     (hkm1k : km1.val < k.val) :

@@ -21,6 +21,9 @@ variable {R : Type u} [Zero R] [DecidableEq R]
 def leadingCoeff (p : DensePoly R) : R :=
   p.coeffs.back?.getD 0
 
+/-- The zero polynomial has leading coefficient `0`. Registered as a `simp`
+normal form so callers reasoning about `leadingCoeff` discharge the zero case
+automatically. -/
 @[simp] theorem leadingCoeff_zero : (0 : DensePoly R).leadingCoeff = 0 := by
   rfl
 
@@ -28,6 +31,9 @@ def leadingCoeff (p : DensePoly R) : R :=
 instance [One R] : One (DensePoly R) where
   one := C 1
 
+/-- The leading coefficient of the constant polynomial `C c` is `c` itself,
+covering both `c = 0` (the empty backing array) and `c ≠ 0`. The `simp` form
+lets callers read the leading coefficient off any constant. -/
 @[simp] theorem leadingCoeff_C (c : R) : (C c).leadingCoeff = c := by
   by_cases hc : c = (0 : R)
   · rw [hc]
@@ -38,6 +44,9 @@ instance [One R] : One (DensePoly R) where
     rw [coeffs_C_of_ne_zero hc]
     rfl
 
+/-- The constant polynomial `1` has leading coefficient `1`, hence is monic.
+Specialises `leadingCoeff_C` and feeds the monicity facts about `1` that the
+division and gcd routines rely on. -/
 @[simp] theorem leadingCoeff_one [One R] : (1 : DensePoly R).leadingCoeff = 1 := by
   change (C (1 : R)).leadingCoeff = 1
   rw [leadingCoeff_C]
@@ -1529,6 +1538,8 @@ theorem add_assoc_poly {S : Type _}
   rw [coeff_add q r n hzero_add]
   grind
 
+/-- Right identity for polynomial addition over a commutative ring: `p + 0 = p`.
+A `grind` normalization lemma so downstream proofs cancel trailing zero summands. -/
 @[grind =] theorem add_zero_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
@@ -2336,6 +2347,9 @@ theorem mul_add_left_poly {S : Type _}
   rw [mul_comm_poly (p + q) r, mul_add_right_poly r p q,
     mul_comm_poly r p, mul_comm_poly r q]
 
+/-- Right identity for polynomial multiplication over a commutative ring:
+`p * 1 = p`. A `grind` normalization lemma; the Bézout and division routines
+cancel multiplications by the unit polynomial through it. -/
 @[grind =] theorem mul_one_right_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
@@ -2525,6 +2539,9 @@ theorem monomial_one_mul_poly_eq_shift {S : Type _}
     rw [hzero_fold]
     rfl
 
+/-- Negation passes through the left multiplicand: `(0 - p) * q = 0 - p * q`.
+A `grind` normalization lemma that lets sign manipulations in the extended-gcd
+recursion move the negation out to the product. -/
 @[grind =] theorem neg_mul_right_poly {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) :
@@ -2680,6 +2697,9 @@ private theorem ofCoeffs_subtractScaledShift_eq_sub_monomial_mul {S : Type _}
     rw [if_neg hand]
     grind
 
+/-- Left absorption for polynomial multiplication: `0 * p = 0`. A `grind`
+normalization lemma so that products with a vanished factor collapse during
+the division and gcd proofs. -/
 @[grind =] theorem zero_mul {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :
@@ -2690,6 +2710,8 @@ private theorem ofCoeffs_subtractScaledShift_eq_sub_monomial_mul {S : Type _}
   simp [mulCoeffSum]
   rfl
 
+/-- Left identity for polynomial addition over a commutative ring: `0 + p = p`.
+A `grind` normalization lemma so downstream proofs cancel leading zero summands. -/
 @[grind =] theorem zero_add {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p : DensePoly S) :

@@ -4781,6 +4781,18 @@ theorem cldQuotientMod_coeff_decomp_of_lt
   exact centeredResiduePow_add_pow_mul_psiCut p a (bhksCoeffCutThreshold p f j)
     ((cldQuotientMod f g p a).coeff j) hb
 
+/-- Euclidean reconstruction for the division underlying `cldQuotientMod`: for a
+monic divisor `g`, the raw quotient and remainder of `numerator / g` recompose
+`numerator`, where `numerator = (f * g') mod p^a` is the dividend `cldQuotientMod`
+feeds to `DensePoly.divMod` before its own mod-`p^a` reduction of the quotient.
+The downstream modular-congruence bridge reduces this exact identity mod `p^a`. -/
+theorem cldQuotientMod_divMod_reconstruction (f g : ZPoly) (p a : Nat)
+    (hg : DensePoly.Monic g) :
+    let numerator := ZPoly.reduceModPow (f * DensePoly.derivative g) p a
+    (DensePoly.divMod numerator g).1 * g + (DensePoly.divMod numerator g).2
+      = numerator :=
+  ZPoly.divMod_reconstruction_of_monic _ g hg
+
 /-- Per-coordinate BHKS cut thresholds for the all-coefficients CLD lattice. -/
 def bhksCutThresholds (f : ZPoly) (p : Nat) : Array Nat :=
   let n := f.degree?.getD 0

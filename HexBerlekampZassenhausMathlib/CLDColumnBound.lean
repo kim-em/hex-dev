@@ -1,3 +1,5 @@
+import HexBerlekampZassenhaus
+import HexHenselMathlib.Correctness
 import HexPolyZMathlib.Mignotte
 import HexPolyZMathlib.RobinsonForm
 import Mathlib.Algebra.Polynomial.FieldDivision
@@ -365,6 +367,124 @@ theorem abs_phi_coeff_le_of_monic_factor
         rw [hB_def]; ring
 
 end BHKS
+
+/-- CLD quotient congruence (BHKS logarithmic-derivative bridge).
+
+When a monic positive-degree lifted factor `g` divides `input` modulo `p ^ k`
+(witnessed by `input ≡ g * h`), multiplying the executable CLD quotient
+`cldQuotientMod input g p k` back by `g` recovers the logarithmic-derivative
+numerator `input * g'` modulo `p ^ k`:
+
+`g * cldQuotientMod input g p k ≡ input * g'  (mod p ^ k)`.
+
+This is the semantic link from the executable quotient to the exact integer CLD
+column `BHKS.phi g = input * g' / g`: composed with
+`BHKS.phi_eq_factor_mul_derivative`, it identifies `g * cldQuotientMod input g p k`
+with `g * BHKS.phi g` modulo `p ^ k`. The divisibility hypothesis is on `input`
+itself, not on the BHKS auxiliary polynomial, which need not be divisible by `g`
+modulo `p ^ k`.
+
+The proof transports the executable monic division to `Polynomial (ZMod (p ^ k))`,
+where the reconstruction identity and the remainder degree bound pin the mapped
+remainder down by uniqueness of division by a monic polynomial; divisibility of
+the mapped numerator by `g` then forces that remainder to vanish. -/
+theorem cldQuotientMod_congr_mul_derivative
+    (input g h : Hex.ZPoly) (p k : Nat)
+    (hk : 1 < p ^ k)
+    (hg_monic : Hex.DensePoly.Monic g)
+    (hg_deg : 0 < g.degree?.getD 0)
+    (hdvd : Hex.ZPoly.congr input (g * h) (p ^ k)) :
+    Hex.ZPoly.congr
+      (g * Hex.cldQuotientMod input g p k)
+      (input * Hex.DensePoly.derivative g) (p ^ k) := by
+  have hpk_pos : 0 < p ^ k := by omega
+  haveI : Fact (1 < p ^ k) := ⟨hk⟩
+  -- Executable quotient / remainder of the monic division underlying `cldQuotientMod`.
+  set num : Hex.ZPoly :=
+    Hex.ZPoly.reduceModPow (input * Hex.DensePoly.derivative g) p k with hnum
+  set q : Hex.ZPoly := (Hex.DensePoly.divMod num g).1 with hq
+  set r : Hex.ZPoly := (Hex.DensePoly.divMod num g).2 with hr
+  have hcld : Hex.cldQuotientMod input g p k = Hex.ZPoly.reduceModPow q p k := rfl
+  have hrecon : q * g + r = num :=
+    Hex.ZPoly.divMod_reconstruction_of_monic num g hg_monic
+  have hcancel :
+      ∀ a : Int, a - (a / g.leadingCoeff) * g.leadingCoeff = 0 := by
+    intro a; rw [hg_monic]; omega
+  have hrdeg : r.degree?.getD 0 < g.degree?.getD 0 :=
+    Hex.DensePoly.divMod_remainder_degree_lt_of_pos_degree_core num g hg_deg hcancel
+  -- Move the goal to Mathlib polynomials reduced modulo `p ^ k`.
+  refine HexHenselMathlib.zpoly_congr_of_toPolynomial_map_eq _ _ (p ^ k) ?_
+  intro φ
+  -- Ring-hom transport for the composite `(toPolynomial ·).map φ`.
+  have hmul : ∀ a b : Hex.ZPoly,
+      (HexPolyMathlib.toPolynomial (a * b)).map φ =
+        (HexPolyMathlib.toPolynomial a).map φ * (HexPolyMathlib.toPolynomial b).map φ := by
+    intro a b; rw [HexPolyMathlib.toPolynomial_mul, Polynomial.map_mul]
+  have hred : ∀ x : Hex.ZPoly,
+      (HexPolyMathlib.toPolynomial (Hex.ZPoly.reduceModPow x p k)).map φ =
+        (HexPolyMathlib.toPolynomial x).map φ := fun x =>
+    HexHenselMathlib.zpoly_congr_toPolynomial_map_eq _ x (p ^ k)
+      (Hex.ZPoly.congr_reduceModPow x p k hpk_pos)
+  -- The monic divisor maps to a monic Mathlib polynomial.
+  have hMg_monic : ((HexPolyMathlib.toPolynomial g).map φ).Monic :=
+    (HexHenselMathlib.toPolynomial_monic_of_dense_monic g hg_monic).map φ
+  -- The mapped numerator equals the target `input * g'`, and `g` divides it.
+  have hnum_eq :
+      (HexPolyMathlib.toPolynomial num).map φ =
+        (HexPolyMathlib.toPolynomial (input * Hex.DensePoly.derivative g)).map φ := by
+    rw [hnum]; exact hred _
+  have hMinput : (HexPolyMathlib.toPolynomial input).map φ =
+      (HexPolyMathlib.toPolynomial g).map φ * (HexPolyMathlib.toPolynomial h).map φ := by
+    have h1 : (HexPolyMathlib.toPolynomial input).map φ =
+        (HexPolyMathlib.toPolynomial (g * h)).map φ :=
+      HexHenselMathlib.zpoly_congr_toPolynomial_map_eq input (g * h) (p ^ k) hdvd
+    rw [h1, hmul]
+  have hdvd_num :
+      (HexPolyMathlib.toPolynomial g).map φ ∣ (HexPolyMathlib.toPolynomial num).map φ := by
+    rw [hnum_eq, hmul, hMinput]
+    exact ⟨(HexPolyMathlib.toPolynomial h).map φ *
+      (HexPolyMathlib.toPolynomial (Hex.DensePoly.derivative g)).map φ, by ring⟩
+  -- The mapped reconstruction identity.
+  have hrecon_map :
+      (HexPolyMathlib.toPolynomial q).map φ * (HexPolyMathlib.toPolynomial g).map φ +
+          (HexPolyMathlib.toPolynomial r).map φ =
+        (HexPolyMathlib.toPolynomial num).map φ := by
+    have hcg := congrArg (fun s : Hex.ZPoly => (HexPolyMathlib.toPolynomial s).map φ) hrecon
+    simpa [HexPolyMathlib.toPolynomial_add, HexPolyMathlib.toPolynomial_mul,
+      Polynomial.map_add, Polynomial.map_mul] using hcg
+  -- The mapped remainder has degree below the mapped divisor.
+  have hdeg_Mg : ((HexPolyMathlib.toPolynomial g).map φ).degree =
+      (g.degree?.getD 0 : WithBot ℕ) := by
+    rw [(HexHenselMathlib.toPolynomial_monic_of_dense_monic g hg_monic).degree_map φ,
+      Polynomial.degree_eq_natDegree
+        (HexHenselMathlib.toPolynomial_monic_of_dense_monic g hg_monic).ne_zero,
+      HexPolyMathlib.natDegree_toPolynomial]
+  have hdeg_Mr :
+      ((HexPolyMathlib.toPolynomial r).map φ).degree <
+        ((HexPolyMathlib.toPolynomial g).map φ).degree := by
+    rw [hdeg_Mg]
+    calc ((HexPolyMathlib.toPolynomial r).map φ).degree
+        ≤ (HexPolyMathlib.toPolynomial r).degree := Polynomial.degree_map_le
+      _ ≤ (r.degree?.getD 0 : WithBot ℕ) := by
+          rw [← HexPolyMathlib.natDegree_toPolynomial r]
+          exact Polynomial.degree_le_natDegree
+      _ < (g.degree?.getD 0 : WithBot ℕ) := by exact_mod_cast hrdeg
+  -- Uniqueness of monic division forces the mapped remainder to vanish.
+  have hsum : (HexPolyMathlib.toPolynomial r).map φ +
+      (HexPolyMathlib.toPolynomial g).map φ * (HexPolyMathlib.toPolynomial q).map φ =
+        (HexPolyMathlib.toPolynomial num).map φ := by
+    rw [← hrecon_map]; ring
+  have huniq := (Polynomial.div_modByMonic_unique
+    ((HexPolyMathlib.toPolynomial q).map φ) ((HexPolyMathlib.toPolynomial r).map φ)
+    hMg_monic ⟨hsum, hdeg_Mr⟩).2
+  have hrem_zero : (HexPolyMathlib.toPolynomial r).map φ = 0 := by
+    rw [← huniq, Polynomial.modByMonic_eq_zero_iff_dvd hMg_monic]; exact hdvd_num
+  -- Assemble: mapped `g * cldQuotientMod = g * q = num = input * g'`.
+  rw [hmul, hcld, hred q]
+  have hfin : (HexPolyMathlib.toPolynomial g).map φ * (HexPolyMathlib.toPolynomial q).map φ =
+      (HexPolyMathlib.toPolynomial num).map φ := by
+    rw [← hrecon_map, hrem_zero]; ring
+  rw [hfin]; exact hnum_eq
 
 end
 

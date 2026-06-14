@@ -128,7 +128,11 @@ Only the project's own files then rebuild.
 Before attributing a Mathlib-layer build failure to your own change, build the
 **unmodified** target on a clean tree to get a red/green baseline
 (`lake build HexBerlekampZassenhausMathlib.<Module>`), and `git diff origin/main
--- <file>` to confirm the failing file is untouched by you. A faster
+-- <file>` to confirm the failing file is untouched by you. When you capture
+that build with `| tee <log>`, the pipeline's exit status is `tee`'s, so a
+`run_in_background` completion notification reports **exit 0 even on a failed
+build** — judge red/green by grepping the log for `error:` / `build failed`,
+never by the reported exit code. A faster
 single-build attribution when your change is purely additive *within* the same
 file: Lean reports every per-declaration error and keeps elaborating past a
 failed declaration, so if the build log's only `error:` line numbers fall
@@ -170,3 +174,19 @@ restructure around the reported line first; it is usually a cheap `omega` or
 - A `let`/`set`-bound abbreviation of a huge term in the *goal or context* makes
   `omega` and defeq checks whnf that term — avoid binding the matrix; write it
   out or `clear_value` only when the value is genuinely unneeded downstream.
+
+## Verifying executable-layer changes: build the module, not the target
+
+`lake build HexBerlekampZassenhaus` (the whole target) drags in
+`CrossCheck` (~11 min, external oracle) and `Conformance` (~2 min) — it is a
+~15-minute build, not a fast check. For iterating on a lemma, verify the
+specific module (`lake build HexBerlekampZassenhaus.Basic`,
+`lake build HexPolyZ.Basic`); that elaborates your declarations in seconds and
+is the real correctness signal for theorem-only additions, which never affect
+the `#guard`/oracle steps. Run the full target once at the end.
+
+Do **not** launch a second `lake build` in the same worktree while one is still
+running its tail jobs — they serialize on lake's per-worktree build lock, so the
+second just blocks and looks "stuck". (This machine also runs concurrent builds
+from *other* pod worktrees; `pgrep lake` showing many processes is normal and
+not your build.)

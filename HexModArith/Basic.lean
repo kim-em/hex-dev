@@ -45,10 +45,16 @@ instance : CoeOut (ZMod64 p) UInt64 where
 instance : CoeOut (ZMod64 p) Nat where
   coe := toNat
 
+/-- Converting a residue to `UInt64` exposes exactly the stored word. -/
 @[simp] theorem toUInt64_eq_val (a : ZMod64 p) : a.toUInt64 = a.val := rfl
+
+/-- Converting a residue to `Nat` reads the stored word as its canonical representative. -/
 @[simp] theorem toNat_eq_val (a : ZMod64 p) : a.toNat = a.val.toNat := rfl
+
+/-- The Nat view of a residue is always the canonical representative below the modulus. -/
 @[simp] theorem toNat_lt (a : ZMod64 p) : a.toNat < p := a.isLt
 
+/-- Extensionality for residues via equality of their stored machine words. -/
 @[ext] theorem ext {a b : ZMod64 p} (h : a.val = b.val) : a = b := by
   cases a
   cases b
@@ -89,11 +95,13 @@ def ofNat (p n : Nat) [Bounds p] : ZMod64 p := by
   refine ⟨UInt64.ofNatLT reduced hword, ?_⟩
   simpa [reduced, UInt64.toNat_ofNatLT] using hred
 
+/-- The Nat representative of `ofNat p n` is `n` reduced modulo `p`. -/
 @[simp] theorem toNat_ofNat (n : Nat) : (ofNat p n).toNat = n % p := by
   have hred : n % p < p := Nat.mod_lt _ (Bounds.pPos (p := p))
   have hword : n % p < UInt64.word := Nat.lt_of_lt_of_le hred (Bounds.pLeR (p := p))
   simp [ofNat, normalize, UInt64.toNat_ofNatLT]
 
+/-- The stored word of `ofNat p n`, viewed as a Nat, is `n` reduced modulo `p`. -/
 @[simp] theorem val_toNat_ofNat (n : Nat) : (ofNat p n).val.toNat = n % p := by
   simpa using toNat_ofNat (p := p) n
 
@@ -139,6 +147,7 @@ theorem ofNat_eq_ofNat_iff_mod_eq (x y : Nat) :
 def values (p : Nat) [Bounds p] : List (ZMod64 p) :=
   (List.range p).map fun n => ofNat p n
 
+/-- The canonical list of residues modulo `p` has one entry for each representative. -/
 @[simp] theorem values_length : (values p).length = p := by
   simp [values]
 

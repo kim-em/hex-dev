@@ -948,9 +948,16 @@ deriving Repr, BEq, Inhabited
 
 initialize checkerTallyRef : IO.Ref CheckerTally ← IO.mkRef {}
 
+/-- Reset the certified-dispatch reducedness tally to zero. Bench and
+conformance harnesses call this before a measured run so the subsequent
+`checkerTally` snapshot describes only that run's interval/exact routing. -/
 def resetCheckerTally : IO Unit :=
   checkerTallyRef.set {}
 
+/-- Read the certified-dispatch reducedness tally accumulated since the last
+`resetCheckerTally`. The counts expose whether calls were accepted by the
+interval checker, sent directly to the exact checker, or needed an exact
+fallback after interval indecision. -/
 def checkerTally : IO CheckerTally :=
   checkerTallyRef.get
 
@@ -971,6 +978,9 @@ unsafe def withRecordCheckerOutcomeImpl {α : Type} (o : CheckerOutcome) (k : α
     checkerTallyRef.modify (fun t => bumpChecker t o)
     pure k
 
+/-- Pure-facing wrapper that records one reducedness-dispatch outcome in
+compiled code and otherwise returns `k`. This keeps the checker API usable from
+pure code while still giving benchmark harnesses routing diagnostics. -/
 @[implemented_by withRecordCheckerOutcomeImpl]
 def withRecordCheckerOutcome {α : Type} (_o : CheckerOutcome) (k : α) : α := k
 
@@ -1949,8 +1959,14 @@ deriving Repr, BEq, Inhabited
 
 initialize steeredTallyRef : IO.Ref SteeredTally ← IO.mkRef {}
 
+/-- Reset the steered-reducer tally to zero. Bench harnesses call this before a
+run so `steeredTally` reports only the certification/fallback behavior of that
+run. -/
 def resetSteeredTally : IO Unit := steeredTallyRef.set {}
 
+/-- Read the steered-reducer tally accumulated since the last
+`resetSteeredTally`. The two counters show how often the approximation-steered
+candidate certified immediately versus falling back to the exact reducer. -/
 def steeredTally : IO SteeredTally := steeredTallyRef.get
 
 private def bumpSteered (t : SteeredTally) : SteeredOutcome → SteeredTally
@@ -1964,6 +1980,9 @@ unsafe def withRecordSteeredOutcomeImpl {α : Type} (o : SteeredOutcome) (k : α
     steeredTallyRef.modify (fun t => bumpSteered t o)
     pure k
 
+/-- Pure-facing wrapper that records one steered-reducer outcome in compiled
+code and otherwise returns `k`. This lets `lllSteered` keep a pure type while
+benchmarks can still observe certification and fallback rates. -/
 @[implemented_by withRecordSteeredOutcomeImpl]
 def withRecordSteeredOutcome {α : Type} (_o : SteeredOutcome) (k : α) : α := k
 
@@ -2032,12 +2051,23 @@ opaque providerReduce (rows cols : USize) (entries : @& Array String)
     (delta eta : Float) (method : UInt8) (withInverse : Bool) :
     Except String (Array Int)
 
+/-- Decoded result returned by the external LLL provider.
+
+`reduced` is the row-major reduced basis, `transform` is the row-major
+unimodular transformation matrix with `transform * input = reduced`, and
+`inverse?` is the optional row-major inverse transformation when the caller
+requested it. -/
 structure Candidate where
   reduced : Array Int
   transform : Array Int
   inverse? : Option (Array Int)
 deriving Repr, BEq
 
+/-- Diagnostic counters for attempts to use the external LLL provider.
+
+`absent` counts calls made when the provider is unavailable, `providerError`
+counts provider-level failures, `rejected` counts structurally invalid provider
+responses, and `accepted` counts responses decoded into a `Candidate`. -/
 structure Diagnostics where
   absent : Nat := 0
   providerError : Nat := 0
@@ -2045,6 +2075,8 @@ structure Diagnostics where
   accepted : Nat := 0
 deriving Repr, BEq, Inhabited
 
+/-- Classification of one external-provider attempt: unavailable provider,
+provider error, rejected response, or accepted candidate. -/
 inductive Outcome where
   | absent
   | providerError
@@ -2060,12 +2092,23 @@ private def bump (d : Diagnostics) : Outcome → Diagnostics
 
 initialize diagnosticsRef : IO.Ref Diagnostics ← IO.mkRef {}
 
+/-- Reset the external-provider diagnostics counters to zero. Test and bench
+harnesses use this to isolate one run's provider availability, rejection, and
+acceptance counts. -/
 def resetDiagnostics : IO Unit :=
   diagnosticsRef.set {}
 
+/-- Read the external-provider diagnostics accumulated since the last
+`resetDiagnostics`. The snapshot is the observability hook for deciding whether
+the external reducer was absent, failed, returned malformed data, or supplied a
+candidate accepted by the decoder. -/
 def diagnostics : IO Diagnostics :=
   diagnosticsRef.get
 
+/-- Increment the external-provider diagnostic counter for `outcome`. This is
+the `IO` entry point used by provider calls; pure LLL code uses
+`withRecordOutcome` to record the same classifications without changing its
+surface type. -/
 def recordOutcome (outcome : Outcome) : IO Unit :=
   diagnosticsRef.modify (fun d => bump d outcome)
 
@@ -2078,6 +2121,11 @@ private def intNat? (x : Int) : Option Nat :=
 private def slice [Inhabited α] (xs : Array α) (start len : Nat) : Array α :=
   (List.range len).foldl (fun acc i => acc.push xs[start + i]!) #[]
 
+/-- Decode the external reducer's flat integer response into a structured
+`Candidate`. The decoder checks the status word, row/column headers, inverse
+flag, and total payload length before slicing out the reduced basis,
+transformation, and optional inverse; any mismatch returns `none`, so malformed
+provider output cannot enter the certified path. -/
 def validateFlat (rows cols : Nat) (withInverse : Bool) (flat : Array Int) :
     Option Candidate := do
   let status ← flat[0]?
@@ -2113,6 +2161,10 @@ def validateFlat (rows cols : Nat) (withInverse : Bool) (flat : Array Int) :
       none
   some { reduced, transform, inverse? }
 
+/-- Try to obtain an LLL candidate from the external provider. The call records
+why no candidate was used (`absent`, provider error, or rejected flat payload)
+and returns `some candidate` only after `validateFlat` accepts the provider's
+response shape. -/
 def tryReduce (rows cols : USize) (entries : Array String)
     (delta eta : Float) (method : UInt8) (withInverse : Bool) :
     IO (Option Candidate) := do
@@ -2155,6 +2207,9 @@ unsafe def withRecordOutcomeImpl {α : Sort u} (o : Outcome) (k : α) : α :=
   match unsafeBaseIO (diagnosticsRef.modify (fun d => bump d o)) with
   | () => k
 
+/-- Pure-facing wrapper that records one external-provider outcome in compiled
+code and otherwise returns `k`. This lets the public reducer stay pure while
+compiled runs still populate `diagnosticsRef` for provider observability. -/
 @[implemented_by withRecordOutcomeImpl]
 def withRecordOutcome {α : Sort u} (_o : Outcome) (k : α) : α := k
 

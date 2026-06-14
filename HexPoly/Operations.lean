@@ -72,6 +72,9 @@ theorem coeff_scale [Mul R] (c : R) (p : DensePoly R) (n : Nat)
   rw [coeff_ofCoeffs_list]
   simpa [coeff] using list_getD_map_mul_zero (R := R) c p.toArray.toList n hzero
 
+/-- Scaling the zero polynomial yields the zero polynomial: `scale c 0 = 0`.
+A `simp`/`grind` normal form, so callers need no `c * 0 = 0` hypothesis to
+discharge the scaled-zero case. -/
 @[simp, grind =] theorem scale_zero_right [Mul R] (c : R) :
     scale c (0 : DensePoly R) = 0 := by
   unfold scale toArray
@@ -120,11 +123,15 @@ coefficients are read from the original polynomial with the index shifted down. 
     rw [coeff_ofCoeffs_list]
     simpa [coeff] using list_getD_replicate_append_zero (R := R) n k p.toArray.toList
 
+/-- Shifting the zero polynomial by any power leaves it zero: `shift n 0 = 0`.
+A `simp`/`grind` normal form for the degenerate input to `shift`. -/
 @[simp, grind =] theorem shift_zero_right (n : Nat) :
     shift n (0 : DensePoly R) = 0 := by
   unfold shift isZero
   rfl
 
+/-- Shifting by `x^0` is the identity: `shift 0 p = p`. A `simp`/`grind` normal
+form so a trivial shift drops out of multiplication and division proofs. -/
 @[simp, grind =] theorem shift_zero_left (p : DensePoly R) :
     shift 0 p = p := by
   apply ext_coeff
