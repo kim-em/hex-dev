@@ -31,6 +31,23 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   `obtain ⟨r, hr⟩ := h; ⟨toMathlibPolynomial r, by rw [hr, toMathlibPolynomial_mul]⟩`.
   (`HexBerlekampZassenhausMathlib/Basic.lean` exposes `toMathlibPolynomial_dvd`
   and `self_dvd_monicModPImage` for exactly this.)
+- **`ZPoly = DensePoly Int` ring identities: `grind` is unreliable; use the
+  `equiv`/`toPolynomial` bridge.** `grind` is advertised for `ZMod64`/`FpPoly`
+  arithmetic, but on `ZPoly` it *fails* on basics like `factor * 0 = 0` and
+  `p * C c = C c * p` (commutativity) — the `Lean.Grind.CommRing` facts it
+  needs are not all reachable. Prove such equalities by
+  `apply HexPolyZMathlib.equiv.injective` then
+  `rw [HexPolyZMathlib.equiv_apply, …, HexPolyZMathlib.toPolynomial_mul,
+  HexPolyZMathlib.toPolynomial_C]` and finish with `ring` in `Polynomial ℤ`
+  (which *does* have the Mathlib `CommRing`). For ZPoly self-divisibility
+  `p ∣ p`, `dvd_refl` does not apply (custom `Dvd`); use
+  `Hex.DensePoly.dvd_refl_poly` (`HexPoly/Euclid.lean`). Note `primitivePart`
+  divides by the *nonnegative* content and does **not** sign-normalize
+  (`primitivePart_eq_self_of_primitive` holds for any-sign primitive), so a
+  `primitivePart (dilate (lc core) g) = factor` goal needs both
+  `0 < leadingCoeff factor` (from `normalizeFactorSign factor = factor`) *and*
+  `0 < leadingCoeff core` — the latter is a genuine extra hypothesis, not
+  derivable from sign-normalising the factor (see #7365).
 - **`ZMod64` zero has two representations** (`Zero.zero` vs `OfNat 0`); a `rw`
   on `toZMod 0` / `(0 : FpPoly).coeff n` may report "did not find pattern" or
   leave an unclosed `0 = 0`. Close with `exact`/`show` (defeq-tolerant), not

@@ -19998,6 +19998,364 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData_success_descent
   · exact hmodulus
   · exact hprec_spec
 
+/-! ### Forward monic correspondent
+
+`exists_monicCorrespondent_of_dvd` is the forward map from an integer factor of
+`core` to a monic factor of `(toMonic core).monic`, the section of the
+`primitivePart ∘ dilate` recovery map proved in `dilate_recovery`.
+
+Sign note (the caveat #7365 flagged): `Hex.ZPoly.primitivePart` divides by the
+*nonnegative* content but does **not** sign-normalize, so
+`primitivePart (dilate lc g) = sign(lc)^(deg) * sign(lf) * factor`.  The
+hypothesis `normalizeFactorSign factor = factor` only forces
+`0 < leadingCoeff factor`; recovering exactly `factor` (rather than `-factor`)
+additionally requires `0 < leadingCoeff core`, threaded here as `hlc`.  Without
+it the statement is false, e.g. `core = -X^2 + 1`, `factor = X - 1`. -/
+
+private theorem array_push_one_back?_ne_zero (xs : Array Int) :
+    (xs.push 1).back? ≠ some (0 : Int) := by
+  simp
+
+private theorem zpoly_array_getD_toList (xs : Array Int) (i : Nat) (d : Int) :
+    xs.getD i d = xs.toList.getD i d := by
+  cases xs with
+  | mk data =>
+      rw [List.getD_eq_getElem?_getD]
+      unfold Array.getD Array.size Array.getInternal
+      by_cases hlt : i < data.length
+      · rw [dif_pos hlt]
+        simp [List.getElem?_eq_getElem hlt]
+      · rw [dif_neg hlt]
+        simp [List.getElem?_eq_none_iff.mpr (Nat.le_of_not_gt hlt)]
+
+/-- For a nonzero executable polynomial the defaulted degree is `size - 1`. -/
+theorem degree?_getD_of_ne_zero (p : Hex.ZPoly) (hp : p ≠ 0) :
+    p.degree?.getD 0 = p.size - 1 := by
+  have hpos := Hex.ZPoly.size_pos_of_ne_zero p hp
+  have hne : ¬ p.size = 0 := by omega
+  simp [Hex.DensePoly.degree?, hne]
+
+/-- Variable dilation by a nonzero factor is injective: the `n`-th coefficient is
+multiplied by the unit power `c ^ n`. -/
+theorem dilate_injective {c : Int} (hc : c ≠ 0) :
+    Function.Injective (Hex.ZPoly.dilate c) := by
+  intro p q h
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  have hn : (Hex.ZPoly.dilate c p).coeff n = (Hex.ZPoly.dilate c q).coeff n := by rw [h]
+  rw [Hex.ZPoly.coeff_dilate, Hex.ZPoly.coeff_dilate] at hn
+  exact mul_left_cancel₀ (pow_ne_zero n hc) hn
+
+/-- Scalar multiplication by a nonzero integer is injective on `Hex.ZPoly`. -/
+theorem scale_injective {c : Int} (hc : c ≠ 0) (p q : Hex.ZPoly)
+    (h : Hex.DensePoly.scale c p = Hex.DensePoly.scale c q) : p = q := by
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  have hn : (Hex.DensePoly.scale c p).coeff n = (Hex.DensePoly.scale c q).coeff n := by rw [h]
+  rw [Hex.DensePoly.coeff_scale (R := Int) c p n (Int.mul_zero c),
+    Hex.DensePoly.coeff_scale (R := Int) c q n (Int.mul_zero c)] at hn
+  exact mul_left_cancel₀ hc hn
+
+/-- Scalar multiplications compose: `scale a (scale b p) = scale (a*b) p`. -/
+theorem scale_scale (a b : Int) (p : Hex.ZPoly) :
+    Hex.DensePoly.scale a (Hex.DensePoly.scale b p) = Hex.DensePoly.scale (a * b) p := by
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.DensePoly.coeff_scale (R := Int) a _ n (Int.mul_zero a),
+    Hex.DensePoly.coeff_scale (R := Int) b p n (Int.mul_zero b),
+    Hex.DensePoly.coeff_scale (R := Int) (a * b) p n (Int.mul_zero (a * b)),
+    ← Int.mul_assoc]
+
+/-- Scalar multiplications multiply through a product:
+`scale a p * scale b q = scale (a*b) (p*q)`. -/
+theorem scale_mul_scale (a b : Int) (p q : Hex.ZPoly) :
+    Hex.DensePoly.scale a p * Hex.DensePoly.scale b q =
+      Hex.DensePoly.scale (a * b) (p * q) := by
+  rw [← Hex.ZPoly.C_mul_eq_scale, ← Hex.ZPoly.C_mul_eq_scale, ← Hex.ZPoly.C_mul_eq_scale]
+  apply HexPolyZMathlib.equiv.injective
+  simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
+    HexPolyZMathlib.toPolynomial_C, Polynomial.C_mul]
+  ring
+
+/-- The monic dilation transform of `base` by `c`: coefficient `n` is
+`c ^ (deg - n) * base.coeff n / leadingCoeff base` below the degree `deg`, and `1`
+at `deg`.  When `leadingCoeff base ∣ c`, dilating this by `c` recovers a scalar
+multiple of `base` (`dilate_monicDilate`); it is the monic correspondent of a
+factor consumed by recombination recovery. -/
+def Hex.ZPoly.monicDilate (c : Int) (base : Hex.ZPoly) : Hex.ZPoly where
+  coeffs :=
+    (((List.range (base.degree?.getD 0)).map
+        (fun i => c ^ (base.degree?.getD 0 - i) * base.coeff i /
+          Hex.DensePoly.leadingCoeff base)).toArray).push 1
+  normalized := by
+    right
+    exact array_push_one_back?_ne_zero _
+
+theorem monicDilate_monic (c : Int) (base : Hex.ZPoly) :
+    Hex.DensePoly.Monic (Hex.ZPoly.monicDilate c base) := by
+  unfold Hex.DensePoly.Monic Hex.DensePoly.leadingCoeff Hex.ZPoly.monicDilate
+  simp
+
+theorem monicDilate_coeff (c : Int) (base : Hex.ZPoly) (n : Nat) :
+    (Hex.ZPoly.monicDilate c base).coeff n =
+      if n < base.degree?.getD 0 then
+        c ^ (base.degree?.getD 0 - n) * base.coeff n / Hex.DensePoly.leadingCoeff base
+      else if n = base.degree?.getD 0 then 1 else 0 := by
+  set deg := base.degree?.getD 0 with hdeg
+  set L : List Int := (List.range deg).map
+      (fun i => c ^ (deg - i) * base.coeff i / Hex.DensePoly.leadingCoeff base) with hL
+  have hLlen : L.length = deg := by rw [hL]; simp
+  have hcoeff : (Hex.ZPoly.monicDilate c base).coeff n = (L ++ [1]).getD n (0 : Int) := by
+    show (L.toArray.push 1).getD n (0 : Int) = _
+    rw [zpoly_array_getD_toList, Array.toList_push, List.toList_toArray]
+  rw [hcoeff, List.getD_eq_getElem?_getD]
+  rcases lt_trichotomy n deg with h | h | h
+  · rw [if_pos h, List.getElem?_append_left (by rw [hLlen]; exact h), hL,
+      List.getElem?_map, List.getElem?_range h]
+    rfl
+  · rw [if_neg (by omega), if_pos h,
+      List.getElem?_append_right (by rw [hLlen]; omega), hLlen, h, Nat.sub_self]
+    rfl
+  · rw [if_neg (by omega), if_neg (by omega),
+      List.getElem?_append_right (by rw [hLlen]; omega), hLlen,
+      List.getElem?_eq_none (by simp; omega)]
+    rfl
+
+/-- Dilating the monic transform recovers a scalar multiple of `base`. -/
+theorem dilate_monicDilate (c : Int) (base : Hex.ZPoly)
+    (hbase : base ≠ 0) (hdeg : 1 ≤ base.degree?.getD 0)
+    (hdvd : Hex.DensePoly.leadingCoeff base ∣ c) :
+    Hex.ZPoly.dilate c (Hex.ZPoly.monicDilate c base) =
+      Hex.DensePoly.scale (c ^ (base.degree?.getD 0) / Hex.DensePoly.leadingCoeff base) base := by
+  set deg := base.degree?.getD 0 with hdegdef
+  set lf := Hex.DensePoly.leadingCoeff base with hlfdef
+  have hszpos := Hex.ZPoly.size_pos_of_ne_zero base hbase
+  have hlf0 : lf ≠ 0 :=
+    Hex.DensePoly.leadingCoeff_ne_zero_of_pos_size base hszpos
+  have hsize : base.size = deg + 1 := by
+    have := degree?_getD_of_ne_zero base hbase
+    rw [← hdegdef] at this
+    omega
+  have hcoeff_deg : base.coeff deg = lf := by
+    rw [hlfdef, Hex.DensePoly.leadingCoeff_eq_coeff_last base hszpos, hsize,
+      Nat.add_sub_cancel]
+  have hcdeg : lf ∣ c ^ deg := dvd_pow hdvd (by omega)
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.ZPoly.coeff_dilate, monicDilate_coeff,
+    Hex.DensePoly.coeff_scale (R := Int) _ base n (Int.mul_zero _)]
+  rw [← hdegdef, ← hlfdef]
+  rcases lt_trichotomy n deg with h | h | h
+  · rw [if_pos h]
+    have hexp : lf ∣ c ^ (deg - n) := dvd_pow hdvd (by omega)
+    obtain ⟨t, ht⟩ := hexp
+    have hcn : c ^ deg = c ^ n * c ^ (deg - n) := by
+      rw [← pow_add]
+      congr 1
+      omega
+    have hdiv1 : c ^ (deg - n) * base.coeff n / lf = t * base.coeff n := by
+      rw [ht, Int.mul_assoc, Int.mul_ediv_cancel_left _ hlf0]
+    have hdiv2 : c ^ deg / lf = c ^ n * t := by
+      have hcd : c ^ deg = lf * (c ^ n * t) := by rw [hcn, ht]; ring
+      rw [hcd, Int.mul_ediv_cancel_left _ hlf0]
+    rw [hdiv1, hdiv2]
+    ring
+  · rw [if_neg (by omega), if_pos h, h, hcoeff_deg,
+      Int.ediv_mul_cancel hcdeg, Int.mul_one]
+  · rw [if_neg (by omega), if_neg (by omega), Int.mul_zero]
+    have : base.coeff n = 0 :=
+      Hex.DensePoly.coeff_eq_zero_of_size_le base (by omega)
+    rw [this, Int.mul_zero]
+
+/-- **Forward monic correspondent.** For a primitive, sign-normalized integer
+factor `factor` of a positive-leading-coefficient `core` of positive degree,
+there is a monic factor `g` of `(toMonic core).monic` whose dilation by
+`leadingCoeff core` has `factor` as its primitive part — the section of the
+`dilate_recovery` map. -/
+theorem exists_monicCorrespondent_of_dvd
+    (core factor : Hex.ZPoly)
+    (hcore0 : core ≠ 0)
+    (hlc : 0 < Hex.DensePoly.leadingCoeff core)
+    (hdeg : 1 ≤ (Hex.ZPoly.toMonic core).degree)
+    (hfdeg : 1 ≤ factor.degree?.getD 0)
+    (hdvd : factor ∣ core)
+    (hfactor_prim : Hex.ZPoly.Primitive factor)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor) :
+    ∃ g : Hex.ZPoly,
+      Hex.DensePoly.Monic g ∧
+      g ∣ (Hex.ZPoly.toMonic core).monic ∧
+      Hex.ZPoly.primitivePart
+        (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) g) = factor := by
+  classical
+  obtain ⟨cof, hcof⟩ := hdvd
+  set lc := Hex.DensePoly.leadingCoeff core with hlcdef
+  set lf := Hex.DensePoly.leadingCoeff factor with hlfdef
+  set lcof := Hex.DensePoly.leadingCoeff cof with hlcofdef
+  set a := factor.degree?.getD 0 with hadef
+  set b := cof.degree?.getD 0 with hbdef
+  set d := (Hex.ZPoly.toMonic core).degree with hddef
+  have hlc0 : lc ≠ 0 := ne_of_gt hlc
+  have hf0 : factor ≠ 0 := by
+    rintro rfl
+    simp [hadef] at hfdeg
+  have hcof0 : cof ≠ 0 := by
+    rintro rfl
+    apply hcore0
+    apply HexPolyZMathlib.equiv.injective
+    rw [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.equiv_apply, hcof,
+      HexPolyZMathlib.toPolynomial_mul]
+    simp
+  -- leading coefficient multiplicativity
+  have hlc_eq : lc = lf * lcof := by
+    rw [hlcdef, hlfdef, hlcofdef, hcof]
+    exact Hex.ZPoly.leadingCoeff_mul_of_nonzero factor cof hf0 hcof0
+  -- positivity / divisibility of leading coefficients
+  have hlf_pos : 0 < lf := by
+    rcases lt_or_ge lf 0 with hneg | hpos
+    · exfalso
+      have hh := hfactor_norm
+      unfold Hex.normalizeFactorSign at hh
+      rw [if_pos (by rw [← hlfdef]; exact hneg)] at hh
+      have hlead := congrArg Hex.DensePoly.leadingCoeff hh
+      rw [Hex.ZPoly.leadingCoeff_scale_of_nonzero (-1) factor (by decide), ← hlfdef] at hlead
+      omega
+    · rcases lt_or_eq_of_le hpos with h | h
+      · exact h
+      · exact absurd h.symm (Hex.DensePoly.leadingCoeff_ne_zero_of_pos_size factor
+          (Hex.ZPoly.size_pos_of_ne_zero factor hf0))
+  have hlf_dvd : lf ∣ lc := ⟨lcof, hlc_eq⟩
+  have hlcof_dvd : lcof ∣ lc := ⟨lf, by rw [hlc_eq]; ring⟩
+  -- degree additivity: a + b = d
+  have hF0 : HexPolyZMathlib.toPolynomial factor ≠ 0 := by
+    intro hz
+    exact hf0 (HexPolyZMathlib.equiv.injective (by
+      rw [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.equiv_apply, hz]; simp))
+  have hCof0 : HexPolyZMathlib.toPolynomial cof ≠ 0 := by
+    intro hz
+    exact hcof0 (HexPolyZMathlib.equiv.injective (by
+      rw [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.equiv_apply, hz]; simp))
+  have hd_eq : d = core.degree?.getD 0 := by rw [hddef]; exact Hex.ZPoly.toMonic_degree core
+  have hab : a + b = d := by
+    have hcoreP : HexPolyZMathlib.toPolynomial core =
+        HexPolyZMathlib.toPolynomial factor * HexPolyZMathlib.toPolynomial cof := by
+      rw [hcof, HexPolyZMathlib.toPolynomial_mul]
+    have hnd : (HexPolyZMathlib.toPolynomial core).natDegree =
+        (HexPolyZMathlib.toPolynomial factor).natDegree +
+          (HexPolyZMathlib.toPolynomial cof).natDegree := by
+      rw [hcoreP, Polynomial.natDegree_mul hF0 hCof0]
+    simp only [HexPolyMathlib.natDegree_toPolynomial] at hnd
+    rw [← hadef, ← hbdef, ← hd_eq] at hnd
+    omega
+  -- the correspondent
+  set g := Hex.ZPoly.monicDilate lc factor with hgdef
+  have hg_monic : Hex.DensePoly.Monic g := monicDilate_monic lc factor
+  have hdg : Hex.ZPoly.dilate lc g = Hex.DensePoly.scale (lc ^ a / lf) factor := by
+    rw [hgdef]
+    have := dilate_monicDilate lc factor hf0 hfdeg (by rw [← hlfdef]; exact hlf_dvd)
+    rw [← hadef, ← hlfdef] at this
+    exact this
+  -- the scalar lc ^ a / lf is positive and pairs back with lf
+  have hsg_mul : lf * (lc ^ a / lf) = lc ^ a := by
+    have : lf ∣ lc ^ a := dvd_pow hlf_dvd (by omega)
+    exact Int.mul_ediv_cancel' this
+  have hsg_pos : 0 < lc ^ a / lf := by
+    have hpa : 0 < lc ^ a := pow_pos hlc a
+    nlinarith [hsg_mul, hlf_pos, hpa]
+  -- primitive part of the dilation
+  have hprim : Hex.ZPoly.primitivePart
+      (Hex.ZPoly.dilate lc g) = factor := by
+    rw [hdg]
+    have hcontent : Hex.ZPoly.content (Hex.DensePoly.scale (lc ^ a / lf) factor) = lc ^ a / lf := by
+      show Hex.DensePoly.content (Hex.DensePoly.scale (lc ^ a / lf) factor) = lc ^ a / lf
+      rw [Hex.DensePoly.content_scale_int]
+      have hcf1 : Hex.DensePoly.content factor = 1 := hfactor_prim
+      rw [hcf1, Int.mul_one]
+      exact Int.natAbs_of_nonneg (le_of_lt hsg_pos)
+    have hmp := Hex.ZPoly.content_mul_primitivePart (Hex.DensePoly.scale (lc ^ a / lf) factor)
+    rw [hcontent] at hmp
+    have hppself : Hex.ZPoly.primitivePart factor = factor :=
+      Hex.ZPoly.primitivePart_eq_self_of_primitive factor hfactor_prim
+    -- hmp : scale (lc^a/lf) (primitivePart (scale (lc^a/lf) factor)) = scale (lc^a/lf) factor
+    exact scale_injective (ne_of_gt hsg_pos) _ _ hmp
+  -- divisibility g ∣ (toMonic core).monic
+  have hkey : Hex.ZPoly.dilate lc (Hex.ZPoly.toMonic core).monic =
+      Hex.DensePoly.scale (lc ^ (d - 1)) core := by
+    have := Hex.ZPoly.dilate_monic_toMonic core hdeg
+    rw [← hlcdef, ← hddef, Hex.ZPoly.C_mul_eq_scale] at this
+    exact this
+  have hdvdg : g ∣ (Hex.ZPoly.toMonic core).monic := by
+    rcases Nat.eq_zero_or_pos b with hb0 | hbpos
+    · -- cof is constant
+      have hcofC : cof = Hex.DensePoly.C lcof := by
+        apply Hex.DensePoly.ext_coeff
+        intro n
+        have hszcof : cof.size = 1 := by
+          have := degree?_getD_of_ne_zero cof hcof0
+          rw [← hbdef, hb0] at this
+          have hpos := Hex.ZPoly.size_pos_of_ne_zero cof hcof0
+          omega
+        have hidx : cof.size - 1 = 0 := by omega
+        have hc0 : cof.coeff 0 = lcof := by
+          rw [hlcofdef, Hex.DensePoly.leadingCoeff_eq_coeff_last cof
+            (Hex.ZPoly.size_pos_of_ne_zero cof hcof0), hidx]
+        cases n with
+        | zero =>
+            rw [Hex.DensePoly.coeff_C, if_pos rfl, hc0]
+        | succ m =>
+            rw [Hex.DensePoly.coeff_C, if_neg (Nat.succ_ne_zero m)]
+            exact Hex.DensePoly.coeff_eq_zero_of_size_le cof (by omega)
+      have ha_eq : a = d := by omega
+      have hcore_scale : core = Hex.DensePoly.scale lcof factor := by
+        apply HexPolyZMathlib.equiv.injective
+        rw [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.equiv_apply, hcof, hcofC,
+          ← Hex.ZPoly.C_mul_eq_scale, HexPolyZMathlib.toPolynomial_mul,
+          HexPolyZMathlib.toPolynomial_mul, HexPolyZMathlib.toPolynomial_C]
+        ring
+      have hsg_val : lc ^ a / lf = lc ^ (d - 1) * lcof := by
+        have hlhs : lf * (lc ^ a / lf) = lc ^ a := hsg_mul
+        have hrhs : lf * (lc ^ (d - 1) * lcof) = lc ^ a := by
+          rw [ha_eq]
+          have : lf * lcof = lc := hlc_eq.symm
+          calc lf * (lc ^ (d - 1) * lcof)
+              = (lf * lcof) * lc ^ (d - 1) := by ring
+            _ = lc * lc ^ (d - 1) := by rw [this]
+            _ = lc ^ d := by rw [← pow_succ']; congr 1; omega
+        have := hlhs.trans hrhs.symm
+        exact mul_left_cancel₀ (ne_of_gt hlf_pos) this
+      have hgM : g = (Hex.ZPoly.toMonic core).monic := by
+        apply dilate_injective hlc0
+        rw [hdg, hkey, hsg_val, hcore_scale, scale_scale]
+      rw [hgM]
+      exact Hex.DensePoly.dvd_refl_poly _
+    · -- cof has positive degree: build the cofactor correspondent
+      set h := Hex.ZPoly.monicDilate lc cof with hhdef
+      have hdh : Hex.ZPoly.dilate lc h = Hex.DensePoly.scale (lc ^ b / lcof) cof := by
+        rw [hhdef]
+        have := dilate_monicDilate lc cof hcof0 (by rw [← hbdef]; exact hbpos)
+          (by rw [← hlcofdef]; exact hlcof_dvd)
+        rw [← hbdef, ← hlcofdef] at this
+        exact this
+      have hsh_mul : lcof * (lc ^ b / lcof) = lc ^ b := by
+        have : lcof ∣ lc ^ b := dvd_pow hlcof_dvd (by omega)
+        exact Int.mul_ediv_cancel' this
+      have hprod : (lc ^ a / lf) * (lc ^ b / lcof) = lc ^ (d - 1) := by
+        have hkey2 : lc * ((lc ^ a / lf) * (lc ^ b / lcof)) = lc ^ d := by
+          calc lc * ((lc ^ a / lf) * (lc ^ b / lcof))
+              = (lf * lcof) * ((lc ^ a / lf) * (lc ^ b / lcof)) := by rw [← hlc_eq]
+            _ = (lf * (lc ^ a / lf)) * (lcof * (lc ^ b / lcof)) := by ring
+            _ = lc ^ a * lc ^ b := by rw [hsg_mul, hsh_mul]
+            _ = lc ^ (a + b) := by rw [pow_add]
+            _ = lc ^ d := by rw [hab]
+        have hdd : lc ^ d = lc * lc ^ (d - 1) := by
+          rw [← pow_succ']; congr 1; omega
+        rw [hdd] at hkey2
+        exact mul_left_cancel₀ hlc0 hkey2
+      have hgh : g * h = (Hex.ZPoly.toMonic core).monic := by
+        apply dilate_injective hlc0
+        rw [HexPolyZMathlib.dilate_mul, hdg, hdh, scale_mul_scale, hprod, hkey, ← hcof]
+      exact ⟨h, hgh.symm⟩
+  exact ⟨g, hg_monic, hdvdg, hprim⟩
+
 end
 
 end HexBerlekampZassenhausMathlib
