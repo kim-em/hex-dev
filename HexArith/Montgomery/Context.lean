@@ -644,6 +644,7 @@ private def powModNatGo (n p : Nat) : Nat → Nat → Nat → Nat → Nat
 private def powModNat (a n p : Nat) : Nat :=
   powModNatGo n p (bitLength n) 0 (1 % p) (a % p)
 
+/-- `pow_sq`: an even power `base ^ (2 * q)` equals the squared base `(base * base) ^ q`. -/
 private theorem pow_sq (base q : Nat) :
     base ^ (2 * q) = (base * base) ^ q := by
   induction q with
@@ -652,11 +653,13 @@ private theorem pow_sq (base q : Nat) :
       rw [Nat.mul_succ, Nat.pow_add, ih]
       simp [Nat.pow_succ, Nat.mul_comm, Nat.mul_assoc]
 
+/-- `pow_sq_succ`: an odd power `base ^ (2 * q + 1)` peels one factor of `base` off the squared base `(base * base) ^ q`. -/
 private theorem pow_sq_succ (base q : Nat) :
     base ^ (2 * q + 1) = base * (base * base) ^ q := by
   rw [Nat.pow_succ, pow_sq]
   simp [Nat.mul_comm]
 
+/-- `powModNatGo_eq`: the `Nat`-level square-and-multiply loop preserves the invariant `acc * base ^ (n >>> bit) ≡ a ^ n (mod p)`, so it terminates at `a ^ n % p`. -/
 private theorem powModNatGo_eq (a n p remaining bit acc base : Nat) (hp : 0 < p)
     (hbound : n >>> bit < 2 ^ remaining)
     (hacc : acc < p)
@@ -738,6 +741,7 @@ private theorem powModNatGo_eq (a n p remaining bit acc base : Nat) (hp : 0 < p)
         simpa [hbit] using ih (bit + 1) acc ((base * base) % p)
           htail_bound hacc hinv'
 
+/-- `powModNat_eq`: the `Nat`-level fallback exponentiation `powModNat a n p` computes `a ^ n % p`. -/
 private theorem powModNat_eq (a n p : Nat) (hp : 0 < p) :
     powModNat a n p = a ^ n % p := by
   unfold powModNat
@@ -751,6 +755,7 @@ private theorem powModNat_eq (a n p : Nat) (hp : 0 < p) :
       _ = a ^ n % p := by
             simp [Nat.pow_mod]
 
+/-- `UInt64.toNat_ofNat_mod_lt_word`: when `p` is below the word size, the residue `x % p` survives a round trip through `UInt64.ofNat` unchanged. -/
 private theorem UInt64.toNat_ofNat_mod_lt_word {x p : Nat}
     (hp : 0 < p)
     (hpw : p < UInt64.word) :
@@ -760,6 +765,7 @@ private theorem UInt64.toNat_ofNat_mod_lt_word {x p : Nat}
       simpa [UInt64.word] using hpw)
   simpa [UInt64.toNat_ofNat, UInt64.size] using Nat.mod_eq_of_lt hlt
 
+/-- `powMontBitsGo_eq`: the Montgomery-domain bit loop preserves the de-Montgomeryised invariant `fromMont acc * fromMont base ^ (n >>> bit) ≡ a ^ n (mod p)`, so it terminates at `a ^ n % p.toNat`. -/
 private theorem powMontBitsGo_eq (ctx : MontCtx p) (a n remaining bit : Nat)
     (acc base : UInt64)
     (hbound : n >>> bit < 2 ^ remaining)
@@ -895,6 +901,7 @@ private theorem powMontBitsGo_eq (ctx : MontCtx p) (a n remaining bit : Nat)
         simpa [hbit] using ih (bit + 1) acc (ctx.mulMont base base)
           htail_bound hacc hbase' hinv'
 
+/-- `powModWordOdd_eq`: the word-level Montgomery exponentiation `powModWordOdd a n p hp` computes `a ^ n % p.toNat` for odd `p`. -/
 private theorem powModWordOdd_eq (a n : Nat) (p : UInt64) (hp : p % 2 = 1) :
     powModWordOdd a n p hp = a ^ n % p.toNat := by
   let ctx := MontCtx.mk p hp
