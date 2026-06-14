@@ -4366,6 +4366,8 @@ private def finiteCoeffConvolution (pCoeff qCoeff : Nat → Int) (n : Nat) : Int
 private def finiteCoeffFamilyPoly (coeff : Nat → Int) (bound : Nat) : DensePoly Int :=
   ofCoeffs ((List.range (bound + 1)).map coeff).toArray
 
+/-- `finiteCoeffFamilyPoly coeff bound` reads back its defining coefficient
+`coeff i` at every index `i ≤ bound`. -/
 private theorem finiteCoeffFamilyPoly_coeff_of_le
     (coeff : Nat → Int) (bound i : Nat) (hi : i ≤ bound) :
     (finiteCoeffFamilyPoly coeff bound).coeff i = coeff i := by
@@ -4373,6 +4375,8 @@ private theorem finiteCoeffFamilyPoly_coeff_of_le
   rw [coeff_ofCoeffs_list]
   simp [hi, Nat.lt_succ_iff]
 
+/-- `finiteCoeffFamilyPoly coeff bound` has coefficient `0` at every index `i`
+past its bound (`bound < i`). -/
 private theorem finiteCoeffFamilyPoly_coeff_of_lt
     (coeff : Nat → Int) (bound i : Nat) (hi : bound < i) :
     (finiteCoeffFamilyPoly coeff bound).coeff i = 0 := by
@@ -4381,6 +4385,9 @@ private theorem finiteCoeffFamilyPoly_coeff_of_lt
   simp [hi, Nat.lt_succ_iff]
   rfl
 
+/-- `dvd_finiteCoeffConvolution_term_of_dvd_others`: if `d` divides the finite
+convolution `finiteCoeffConvolution pCoeff qCoeff n` and every other term, then
+it divides the single term `pCoeff i * qCoeff (n - i)`. -/
 private theorem dvd_finiteCoeffConvolution_term_of_dvd_others
     (pCoeff qCoeff : Nat → Int) (d n i : Nat)
     (hi : i < n + 1)
@@ -4392,6 +4399,10 @@ private theorem dvd_finiteCoeffConvolution_term_of_dvd_others
     List.nodup_range (List.mem_range.mpr hi) hprod
     (fun r hr hri => hothers r (List.mem_range.mp hr) hri)
 
+/-- `dvd_coeff_product_of_dvd_finiteCoeffConvolution_of_dvd_other_terms`: if `d`
+divides the degree-`i+j` convolution and every product `pCoeff r * qCoeff s` with
+`r + s = i + j` and `r ≠ i`, then it divides the `(i, j)` product
+`pCoeff i * qCoeff j`. -/
 private theorem dvd_coeff_product_of_dvd_finiteCoeffConvolution_of_dvd_other_terms
     (pCoeff qCoeff : Nat → Int) (d i j : Nat)
     (hprod : (d : Int) ∣ finiteCoeffConvolution pCoeff qCoeff (i + j))
@@ -4407,6 +4418,10 @@ private theorem dvd_coeff_product_of_dvd_finiteCoeffConvolution_of_dvd_other_ter
   have hsub : i + j - i = j := by omega
   simpa [hsub] using hterm
 
+/-- `dvd_coeff_product_last_of_dvd_finiteCoeffConvolution_of_dvd_larger_left_products`:
+refines the previous lemma to derive `d ∣ pCoeff i * qCoeff k` from `d` dividing
+`qCoeff` above index `k` together with every larger-left product
+`pCoeff r * qCoeff (i + k - r)` (`i < r`). -/
 private theorem dvd_coeff_product_last_of_dvd_finiteCoeffConvolution_of_dvd_larger_left_products
     (pCoeff qCoeff : Nat → Int) (d i k : Nat)
     (hprod : (d : Int) ∣ finiteCoeffConvolution pCoeff qCoeff (i + k))
@@ -4424,6 +4439,10 @@ private theorem dvd_coeff_product_last_of_dvd_finiteCoeffConvolution_of_dvd_larg
         have hs : s = i + k - r := by omega
         simpa [hs] using hlarger r hir)
 
+/-- `dvd_finiteCoeffConvolution_last_of_boundaries_and_larger_left`: derives
+`d ∣ pCoeff i * qCoeff k` from divisibility of `qCoeff` above `k`, of every
+product whose left index exceeds `bound`, and of the larger-left products with
+`i < r ≤ bound`. -/
 private theorem dvd_finiteCoeffConvolution_last_of_boundaries_and_larger_left
     (pCoeff qCoeff : Nat → Int) (d bound i k : Nat)
     (hprod : (d : Int) ∣ finiteCoeffConvolution pCoeff qCoeff (i + k))
@@ -4444,6 +4463,10 @@ private theorem dvd_finiteCoeffConvolution_last_of_boundaries_and_larger_left
           simpa [hs] using hlarger r hir hr
         · exact hleft r s (Nat.lt_of_not_ge hr))
 
+/-- `finiteToeplitzMcCoyRow_of_larger_left_products`: applies the boundary
+descent across the whole row, giving `d ∣ pCoeff i * qCoeff k` for every
+`i ≤ bound` once all convolutions up to `bound + k`, the `qCoeff`-above-`k`,
+boundary, and larger-left hypotheses hold. -/
 private theorem finiteToeplitzMcCoyRow_of_larger_left_products
     (pCoeff qCoeff : Nat → Int) (d bound k : Nat)
     (hprod : ∀ n, n ≤ bound + k → (d : Int) ∣ finiteCoeffConvolution pCoeff qCoeff n)
@@ -4458,6 +4481,10 @@ private theorem finiteToeplitzMcCoyRow_of_larger_left_products
     pCoeff qCoeff d bound i k (hprod (i + k) (by omega)) hqAbove hleft
     (hlarger i hi)
 
+/-- `dvd_diagonalMulCoeffTerm_of_dvd_mul_coeff_of_dvd_other_diagonal_terms`: if
+`d` divides `(p * q).coeff n` and every diagonal term
+`diagonalMulCoeffTerm p q n r` with `r ≠ i`, then it divides the `i`-th diagonal
+term. -/
 private theorem dvd_diagonalMulCoeffTerm_of_dvd_mul_coeff_of_dvd_other_diagonal_terms
     (p q : DensePoly Int) (d n i : Nat)
     (hprod : (d : Int) ∣ (p * q).coeff n)
@@ -4479,6 +4506,10 @@ private theorem dvd_diagonalMulCoeffTerm_of_dvd_mul_coeff_of_dvd_other_diagonal_
     rw [diagonalMulCoeffTerm_eq_zero_of_degree_lt p q n i hni]
     simp
 
+/-- `dvd_coeff_mul_of_dvd_mul_coeff_of_dvd_other_diagonal_products`: the
+`DensePoly Int` analogue — if `d` divides `(p * q).coeff (i + j)` and every
+product `p.coeff r * q.coeff s` with `r + s = i + j` and `r ≠ i`, then it divides
+`p.coeff i * q.coeff j`. -/
 private theorem dvd_coeff_mul_of_dvd_mul_coeff_of_dvd_other_diagonal_products
     (p q : DensePoly Int) (d i j : Nat)
     (hprod : (d : Int) ∣ (p * q).coeff (i + j))
@@ -4499,6 +4530,10 @@ private theorem dvd_coeff_mul_of_dvd_mul_coeff_of_dvd_other_diagonal_products
   have hnot : ¬ i + j < i := by omega
   simpa [hnot] using hterm
 
+/-- `dvd_coeff_mul_last_of_dvd_mul_coeff_of_dvd_larger_left_products`: the
+`DensePoly Int` analogue concluding `d ∣ p.coeff i * q.coeff k` from `d`
+dividing `q.coeff` above `k` and every larger-left product
+`p.coeff r * q.coeff (i + k - r)` (`i < r`). -/
 private theorem dvd_coeff_mul_last_of_dvd_mul_coeff_of_dvd_larger_left_products
     (p q : DensePoly Int) (d i k : Nat)
     (hprod : (d : Int) ∣ (p * q).coeff (i + k))
@@ -4516,6 +4551,10 @@ private theorem dvd_coeff_mul_last_of_dvd_mul_coeff_of_dvd_larger_left_products
         have hs : s = i + k - r := by omega
         simpa [hs] using hlarger r hir)
 
+/-- `mcCoy_grid_band_descent`: the strong-induction descent over the `(i, j)`
+grid — if predicate `D` holds whenever the left index exceeds `bound` and is
+preserved by the step from all larger-left cells, then `D i j` holds for every
+`i` and every `j ≤ k`. -/
 private theorem mcCoy_grid_band_descent
     (D : Nat → Nat → Prop) (bound k : Nat)
     (hRight : ∀ r s, bound < r → D r s)
@@ -4540,6 +4579,8 @@ private theorem mcCoy_grid_band_descent
   · intro j _hj
     exact hRight i j (Nat.lt_of_not_ge hi)
 
+/-- `mcCoy_top_row_descent`: the top-row corollary of `mcCoy_grid_band_descent`
+— under the same boundary and step hypotheses, `D i k` holds for every `i`. -/
 private theorem mcCoy_top_row_descent
     (D : Nat → Nat → Prop) (bound k : Nat)
     (hRight : ∀ r s, bound < r → D r s)
