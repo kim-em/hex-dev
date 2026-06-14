@@ -2531,13 +2531,17 @@ private theorem detProduct_rowScale {R : Type u} [Lean.Grind.CommRing R] {n : Na
           (List.finRange n) i c (fun r => M[r][perm[r]]) 1
           (List.mem_finRange i) (List.nodup_finRange n)
 
+/-- The transposition of `Fin n` swapping `i` and `j`, sending `r` to `j` if
+`r = i`, to `i` if `r = j`, and to itself otherwise. -/
 private def finTranspose {n : Nat} (i j : Fin n) (r : Fin n) : Fin n :=
   if r = i then j else if r = j then i else r
 
+/-- `finTranspose i j` sends `i` to `j`. -/
 private theorem finTranspose_left {n : Nat} (i j : Fin n) :
     finTranspose i j i = j := by
   simp [finTranspose]
 
+/-- `finTranspose i j` sends `j` to `i`. -/
 private theorem finTranspose_right {n : Nat} (i j : Fin n) :
     finTranspose i j j = i := by
   by_cases h : j = i
@@ -2545,11 +2549,13 @@ private theorem finTranspose_right {n : Nat} (i j : Fin n) :
     simp [finTranspose]
   · simp [finTranspose, h]
 
+/-- `finTranspose i j` fixes every `r` distinct from both `i` and `j`. -/
 private theorem finTranspose_of_ne {n : Nat} (i j r : Fin n)
     (hi : r ≠ i) (hj : r ≠ j) :
     finTranspose i j r = r := by
   simp [finTranspose, hi, hj]
 
+/-- `finTranspose i j` is an involution: applying it twice returns `r`. -/
 private theorem finTranspose_involutive {n : Nat} (i j r : Fin n) :
     finTranspose i j (finTranspose i j r) = r := by
   by_cases hi : r = i
@@ -2561,12 +2567,14 @@ private theorem finTranspose_involutive {n : Nat} (i j r : Fin n) :
     · rw [finTranspose_of_ne i j r hi hj]
       exact finTranspose_of_ne i j r hi hj
 
+/-- `finTranspose i j` is injective, since it is its own inverse. -/
 private theorem finTranspose_injective {n : Nat} (i j : Fin n) :
     Function.Injective (finTranspose i j) := by
   intro a b h
   have h' := congrArg (finTranspose i j) h
   simpa [finTranspose_involutive] using h'
 
+/-- `finTranspose i j` preserves and reflects distinctness of its arguments. -/
 private theorem finTranspose_ne_iff {n : Nat} (i j a b : Fin n) :
     finTranspose i j a ≠ finTranspose i j b ↔ a ≠ b := by
   constructor
@@ -2575,6 +2583,8 @@ private theorem finTranspose_ne_iff {n : Nat} (i j a b : Fin n) :
   · intro h hab
     exact h (finTranspose_injective i j hab)
 
+/-- Mapping `finTranspose i j` over `List.finRange n` permutes it, since the
+transposition is a bijection of `Fin n`. -/
 private theorem finRange_map_finTranspose_perm {n : Nat} (i j : Fin n) :
     ((List.finRange n).map (finTranspose i j)).Perm (List.finRange n) := by
   apply (List.perm_ext_iff_of_nodup
@@ -2589,10 +2599,14 @@ private theorem finRange_map_finTranspose_perm {n : Nat} (i j : Fin n) :
     exact ⟨finTranspose i j r, List.mem_finRange _, by
       rw [finTranspose_involutive]⟩
 
+/-- Precompose a permutation vector `perm` with the transposition swapping rows
+`i` and `j`, yielding the vector whose `r`-th entry is `perm[finTranspose i j r]`. -/
 private def transposePermutationValues {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n) : Vector (Fin n) n :=
   Vector.ofFn fun r => perm[finTranspose i j r]
 
+/-- Entrywise read of a row swap: `(rowSwap M i j)[r][k]` reads from row `i`
+when `r = j`, from row `j` when `r = i`, and from row `r` otherwise. -/
 private theorem rowSwap_get {R : Type u} {n m : Nat}
     (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
     (rowSwap M i j)[r][k] =
@@ -2622,6 +2636,9 @@ private theorem rowSwap_get {R : Type u} {n m : Nat}
         exact Vector.getElem_set_ne (xs := M.set i M[j]) (x := M[i]) j.isLt r.isLt hjr
       exact (congrArg (fun row => row[k]) hrow₂).trans (congrArg (fun row => row[k]) hrow₁)
 
+/-- For distinct `i, j`, reading row `r` of `rowSwap M i j` is the same as
+reading row `finTranspose i j r` of `M`, identifying the swap with the
+transposition. -/
 private theorem rowSwap_get_finTranspose {R : Type u} {n m : Nat}
     (M : Matrix R n m) (i j r : Fin n) (h : i ≠ j) (k : Fin m) :
     (rowSwap M i j)[r][k] = M[finTranspose i j r][k] := by
@@ -2635,11 +2652,16 @@ private theorem rowSwap_get_finTranspose {R : Type u} {n m : Nat}
     · rw [if_neg hrj, if_neg hri]
       exact congrArg (fun row => M[row][k]) (finTranspose_of_ne i j r hri hrj).symm
 
+/-- The `r`-th entry of `transposePermutationValues perm i j` is
+`perm[finTranspose i j r]`, unfolding the definition. -/
 private theorem transposePermutationValues_get {n : Nat}
     (perm : Vector (Fin n) n) (i j r : Fin n) :
     (transposePermutationValues perm i j)[r] = perm[finTranspose i j r] := by
   simp [transposePermutationValues]
 
+/-- Swapping the last row with the boundary row in the last-position insertion
+of `v` produces the boundary-position insertion of `v`, the base case relating
+the two `insertAt` placements under a single transposition. -/
 private theorem transposePermutationValues_insertAt_last_boundary {n : Nat}
     (v : Vector (Fin (n + 1)) (n + 1)) :
     transposePermutationValues
