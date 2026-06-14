@@ -378,11 +378,23 @@ form a Bezout certificate for the inputs.
     s * a + t * b = g := by
   simp [extGcd]
 
+/--
+Projection form of the integer Bezout certificate: the coefficient components,
+addressed directly as `(extGcd a b).2.1` and `(extGcd a b).2.2`, combine to the
+returned gcd component `(extGcd a b).1`. Lets callers rewrite a Bezout identity
+without first destructuring the `(g, s, t)` triple.
+-/
 @[simp] theorem extGcd_bezout_proj (a b : Int) :
     (extGcd a b).2.1 * a + (extGcd a b).2.2 * b =
       (extGcd a b).1 := by
   simpa using extGcd_bezout a b
 
+/--
+Bezout certificate stated against `Int.gcd a b` directly: the coefficient
+projections combine to the canonical gcd rather than the returned `(extGcd a b).1`
+component. Lets callers rewrite a Bezout identity straight to `Int.gcd`, skipping
+the intermediate `extGcd_fst` step.
+-/
 @[simp] theorem extGcd_bezout_gcd (a b : Int) :
     (extGcd a b).2.1 * a + (extGcd a b).2.2 * b =
       Int.gcd a b := by
