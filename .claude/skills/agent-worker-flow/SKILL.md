@@ -150,6 +150,17 @@ Check that the plan's assumptions still hold:
 - Files mentioned in the issue still exist and haven't been restructured
 - No recently merged PR invalidates the plan
 
+**Closed dependency ≠ delivered dependency.** When the issue says to
+compose a bound/lemma/API "from #N", do not trust `#N` being closed. The
+replan-triage step closes a *skipped* issue as `COMPLETED` while forwarding
+its real scope to a successor (`#N` -> `#N'` -> `#N''`), so a chain of
+`CLOSED COMPLETED` issues can all be premise-skips with the deliverable
+still unbuilt. Before deep-reading consumer code, check the named
+dependency's closing comments (`gh issue view #N --json comments`) and grep
+the codebase for the actual artifact (a *proof* concluding the bound, not a
+hypothesis of the same shape). If the artifact is absent, the premise is
+stale: comment with evidence, `add-dep` on the live successor, and skip.
+
 If stale:
 ```
 coordination skip <issue-number> "reason: <what changed>"
