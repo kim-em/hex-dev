@@ -437,7 +437,7 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_forwardInputs
     (hcore_ne : core ≠ 0)
     (hcore_monic : Hex.DensePoly.Monic core)
     (hinputs :
-      BHKS.ForwardRecoveryInputs core (Hex.henselLiftData core k primeData))
+      BHKS.ForwardRecoveryInputs core (Hex.ZPoly.toMonicLiftData core k primeData))
     (h :
       Hex.factorFastCoreWithBound core B primeData k fuel =
         some hinputs.expectedFactors)

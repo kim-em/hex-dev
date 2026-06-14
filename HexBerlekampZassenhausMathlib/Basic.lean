@@ -9462,8 +9462,11 @@ theorem bhksIndicatorCandidate?_reduceModPow_eq_of_monic
     zpoly_normalize_factor_sign_of_monic hcl_monic
   -- Step 7: candidate = cl, using the executable-layer characterization.
   have hcand_eq : candidate = cl := by
-    have hext := Hex.bhksIndicatorCandidate?_eq_normalized_centeredLift h hselected
-    rw [hext, hcl_def, hnorm_cand, hnorm_sign]
+    have hext := Hex.bhksIndicatorCandidate?_eq_normalized_dilatedCenteredLift h hselected
+    have hcl_selected :
+        Hex.centeredLiftPoly selected.polyProduct (d.p ^ d.k) = cl := by
+      rw [hcl_eq, hraw_eq]
+    rw [hext, hlc, Hex.ZPoly.dilate_one, hcl_selected, hnorm_cand, hnorm_sign]
   -- Step 8: reduceModPow raw p k = reduceModPow cl p k via the centered lift.
   rw [hcand_eq]
   -- Goal: reduceModPow raw p k = reduceModPow cl p k.
