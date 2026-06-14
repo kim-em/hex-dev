@@ -421,6 +421,7 @@ private theorem divModMonicModSquare_reconstruct_congr
         exact ZPoly.congr_trans _ _ _ (m * m)
           (reduceModSquare_congr m pRed hm) hpRed
 
+/-- `coeff_last_eq_leadingCoeff` identifies the last coefficient of a nonempty polynomial with its leading coefficient. -/
 private theorem coeff_last_eq_leadingCoeff (f : ZPoly) (hpos : 0 < f.size) :
     f.coeff (f.size - 1) = f.leadingCoeff := by
   cases f with
@@ -432,6 +433,7 @@ private theorem coeff_last_eq_leadingCoeff (f : ZPoly) (hpos : 0 < f.size) :
       rw [Array.getElem?_eq_getElem hidx]
       exact (Array.getElem_eq_getD 0).symm
 
+/-- `monic_of_coeff_eq_one_and_high_coeff_zero` builds monicity from a coefficient equal to one with all higher coefficients zero. -/
 private theorem monic_of_coeff_eq_one_and_high_coeff_zero
     (f : ZPoly) (n : Nat)
     (hone : f.coeff n = 1)
@@ -461,6 +463,7 @@ private theorem monic_of_coeff_eq_one_and_high_coeff_zero
   rw [← hlast]
   exact hone
 
+/-- `leadingCoeff_zero_mod_base` says a polynomial congruent to zero modulo `m` has leading coefficient divisible by `m`. -/
 private theorem leadingCoeff_zero_mod_base
     (m : Nat) (f : ZPoly) (hf : ZPoly.congr f 0 m) :
     f.leadingCoeff % (m : Int) = 0 := by
@@ -477,6 +480,7 @@ private theorem leadingCoeff_zero_mod_base
           simp [hsize]
     simp [hlead]
 
+/-- `canonicalMod_congr_self` says canonical reduction differs from the original integer by a multiple of the modulus. -/
 private theorem canonicalMod_congr_self
     (z : Int) (n : Nat) (hn : 0 < n) :
     (canonicalMod z n - z) % (n : Int) = 0 := by
@@ -488,6 +492,7 @@ private theorem canonicalMod_congr_self
   rw [hnat]
   exact Int.emod_eq_zero_of_dvd (Int.dvd_sub_self_of_emod_eq rfl)
 
+/-- `reduceCoeffModSquare_zero_mod_base` preserves divisibility by `m` when reducing a coefficient modulo `m²`. -/
 private theorem reduceCoeffModSquare_zero_mod_base
     (m : Nat) (z : Int)
     (hz : z % (m : Int) = 0) :
@@ -522,6 +527,7 @@ private theorem reduceCoeffModSquare_zero_mod_base
     simpa [reduceCoeffModSquare, quadraticModulus] using
       Int.emod_eq_zero_of_dvd hm_dvd_canon
 
+/-- `reduceModSquare_zero_mod_base` preserves polynomial congruence to zero modulo `m` after reduction modulo `m²`. -/
 private theorem reduceModSquare_zero_mod_base
     (m : Nat) (f : ZPoly)
     (hf : ZPoly.congr f 0 m) :
@@ -566,6 +572,7 @@ private theorem reduceModSquare_zero_mod_base
     rw [DensePoly.coeff_zero]
     simpa using Int.emod_eq_zero_of_dvd hred_dvd
 
+/-- `addModSquare_zero_mod_base` preserves congruence to zero modulo `m` for sums reduced modulo `m²`. -/
 private theorem addModSquare_zero_mod_base
     (m : Nat) (f g : ZPoly)
     (hf : ZPoly.congr f 0 m) (hg : ZPoly.congr g 0 m) :
@@ -581,6 +588,7 @@ private theorem addModSquare_zero_mod_base
         (Int.dvd_of_emod_eq_zero hfi) (Int.dvd_of_emod_eq_zero hgi))
   · rfl
 
+/-- `subModSquare_zero_mod_base` preserves congruence to zero modulo `m` for differences reduced modulo `m²`. -/
 private theorem subModSquare_zero_mod_base
     (m : Nat) (f g : ZPoly)
     (hf : ZPoly.congr f 0 m) (hg : ZPoly.congr g 0 m) :
@@ -596,6 +604,7 @@ private theorem subModSquare_zero_mod_base
         (Int.dvd_of_emod_eq_zero hfi) (Int.dvd_of_emod_eq_zero hgi))
   · rfl
 
+/-- `mulModSquare_left_zero_mod_base` preserves congruence to zero modulo `m` when the left factor is zero modulo `m`. -/
 private theorem mulModSquare_left_zero_mod_base
     (m : Nat) (f g : ZPoly)
     (hf : ZPoly.congr f 0 m) :
@@ -605,6 +614,7 @@ private theorem mulModSquare_left_zero_mod_base
   simpa [DensePoly.zero_mul] using
     ZPoly.congr_mul f g 0 g m hf (ZPoly.congr_refl g m)
 
+/-- `monomial_zero_mod_base` says a monomial is zero modulo `m` when its coefficient is divisible by `m`. -/
 private theorem monomial_zero_mod_base
     (m k : Nat) (c : Int)
     (hc : c % (m : Int) = 0) :
@@ -617,6 +627,7 @@ private theorem monomial_zero_mod_base
     change ((0 : Int) - 0) % (m : Int) = 0
     simp
 
+/-- `divModMonicModSquareAux_zero_mod_base` preserves zero modulo `m` for the quotient and remainder produced by the division loop. -/
 private theorem divModMonicModSquareAux_zero_mod_base
     (m : Nat) (q : ZPoly) (fuel : Nat) (quot rem qOut rOut : ZPoly)
     (hquot : ZPoly.congr quot 0 m)
@@ -676,6 +687,7 @@ private theorem divModMonicModSquareAux_zero_mod_base
                       (subModSquare rem (mulModSquare term q m) m)
                       qOut rOut hquot' hrem' hqr
 
+/-- `divModMonicModSquare_zero_mod_base` preserves zero modulo `m` for the quotient and remainder of monic modular division. -/
 private theorem divModMonicModSquare_zero_mod_base
     (m : Nat) (p q qOut rOut : ZPoly)
     (hp : ZPoly.congr p 0 m)
@@ -689,6 +701,7 @@ private theorem divModMonicModSquare_zero_mod_base
     (reduceModSquare_zero_mod_base m p hp)
     hqr
 
+/-- `monic_size_pos` says a monic polynomial has positive size. -/
 private theorem monic_size_pos (q : ZPoly) (hmonic : DensePoly.Monic q) :
     0 < q.size := by
   by_cases hpos : 0 < q.size
@@ -704,6 +717,7 @@ private theorem monic_size_pos (q : ZPoly) (hmonic : DensePoly.Monic q) :
     rw [hlead] at hlead_one
     exact False.elim (Int.zero_ne_one hlead_one)
 
+/-- `degree?_eq_some_size_sub_one` converts a successful optional degree into the corresponding polynomial size. -/
 private theorem degree?_eq_some_size_sub_one
     (f : ZPoly) (d : Nat) (hdeg : f.degree? = some d) :
     f.size = d + 1 := by
@@ -713,6 +727,7 @@ private theorem degree?_eq_some_size_sub_one
   · simp [hzero] at hdeg
     omega
 
+/-- `size_le_of_coeff_zero_from` bounds polynomial size when all coefficients from an index onward vanish. -/
 private theorem size_le_of_coeff_zero_from
     (f : ZPoly) (n : Nat)
     (hzero : ∀ i, n ≤ i → f.coeff i = 0) :
