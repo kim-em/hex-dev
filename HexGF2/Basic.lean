@@ -1171,6 +1171,10 @@ def shiftLeftBitsList (bitShift : Nat) (carry : UInt64) : List UInt64 → List U
       let nextCarry := w >>> (64 - bitShift).toUInt64
       out :: shiftLeftBitsList bitShift nextCarry ws
 
+/-- A bit that stays inside the same machine word after the sub-word shift
+(`old + shift < 64`) reads the same as the source bit, for any previous-word
+carry threaded into the head. The carry-parametrised core behind the public
+`coeffWords_shiftLeftBitsList_same_word` assembly theorem. -/
 private theorem shiftLeftBitsList_getD_high_bit_with_prev
     (ws : List UInt64) (prev : UInt64) {shift i old : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64)
@@ -1192,6 +1196,9 @@ private theorem shiftLeftBitsList_getD_high_bit_with_prev
           simpa [shiftLeftBitsList, List.getD] using
             ih (prev := w) hi'
 
+/-- Zero-carry specialisation of `shiftLeftBitsList_getD_high_bit_with_prev`: a
+bit that stays inside the same machine word (`old + shift < 64`) reads the same
+as the source bit. -/
 private theorem shiftLeftBitsList_getD_high_bit
     (ws : List UInt64) {shift i old : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64)
@@ -1203,6 +1210,8 @@ private theorem shiftLeftBitsList_getD_high_bit
     (shiftLeftBitsList_getD_high_bit_with_prev
       (ws := ws) (prev := 0) hshiftPos hshift hi hold htarget)
 
+/-- A bit pushed past the word boundary (`64 ≤ old + shift`) reads from the
+previous word's high bits at index `0` of the shifted list. -/
 private theorem shiftLeftBitsList_getD_carry_bit
     (ws : List UInt64) (prev : UInt64) {shift old : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64)
@@ -1226,6 +1235,8 @@ private theorem shiftLeftBitsList_getD_carry_bit
         UInt64.shiftLeft_or_carry_low_bit
           w prev hshiftPos hshift hold htarget
 
+/-- The carried-out low bits land in the next word (index `i + 1`) and match the
+source bit, for any previous-word carry threaded into the head. -/
 private theorem shiftLeftBitsList_getD_low_bit_with_prev
     (ws : List UInt64) (prev : UInt64) {shift i old : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64)
@@ -1247,6 +1258,9 @@ private theorem shiftLeftBitsList_getD_low_bit_with_prev
           simpa [shiftLeftBitsList, List.getD, Nat.add_assoc] using
             ih (prev := w) hi'
 
+/-- Zero-carry specialisation of `shiftLeftBitsList_getD_low_bit_with_prev`: a
+carried-out bit (`64 ≤ old + shift`) reads from index `i + 1` and matches the
+source bit. -/
 private theorem shiftLeftBitsList_getD_low_bit
     (ws : List UInt64) {shift i old : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64)
@@ -1403,6 +1417,7 @@ theorem coeffWords_replicate_append_add_of_mod_eq_zero
     · simp
   simp [coeffWords, hdiv, hmod, hget]
 
+/-- The shifted list grows by at most one word, the trailing carry word. -/
 private theorem shiftLeftBitsList_length_le_succ
     (shift : Nat) (carry : UInt64) (ws : List UInt64) :
     (shiftLeftBitsList shift carry ws).length ≤ ws.length + 1 := by
@@ -1413,6 +1428,8 @@ private theorem shiftLeftBitsList_length_le_succ
       simp [shiftLeftBitsList]
       exact ih (w >>> (64 - shift).toUInt64)
 
+/-- Shifting a word right by `64 - shift` clears every bit at index `≥ shift`,
+since those positions read beyond the word's high end. -/
 private theorem UInt64.shiftRight_high_bit_false
     (w : UInt64) {shift bit : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64) (hbit : bit < 64) (hle : shift ≤ bit) :
@@ -1440,6 +1457,8 @@ private theorem UInt64.shiftRight_high_bit_false
     omega
   simp [hzero]
 
+/-- At the one-past-the-end carry word (index `ws.length`), every bit at index
+`≥ shift` reads false, for any previous-word carry threaded into the head. -/
 private theorem shiftLeftBitsList_getD_length_high_bit_false_with_prev
     (ws : List UInt64) (prev : UInt64) {shift bit : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64)
@@ -1456,6 +1475,9 @@ private theorem shiftLeftBitsList_getD_length_high_bit_false_with_prev
       simpa [shiftLeftBitsList, List.getD] using
         ih w
 
+/-- Zero-carry specialisation of
+`shiftLeftBitsList_getD_length_high_bit_false_with_prev`: at the trailing carry
+word every bit at index `≥ shift` reads false. -/
 private theorem shiftLeftBitsList_getD_length_high_bit_false
     (ws : List UInt64) {shift bit : Nat}
     (hshiftPos : 0 < shift) (hshift : shift < 64)
