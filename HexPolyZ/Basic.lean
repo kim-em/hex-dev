@@ -609,6 +609,8 @@ theorem congr_add (f g f' g' : ZPoly) (m : Nat)
   refine ⟨c + d, ?_⟩
   grind
 
+/-- `m` divides the product difference `a * c - b * d` whenever it divides each
+factor difference `a - b` and `c - d`. -/
 private theorem dvd_mul_sub_mul_of_dvd_sub (m a b c d : Int)
     (hab : m ∣ a - b) (hcd : m ∣ c - d) :
     m ∣ a * c - b * d := by
@@ -617,6 +619,9 @@ private theorem dvd_mul_sub_mul_of_dvd_sub (m a b c d : Int)
   refine ⟨u * c + b * v, ?_⟩
   grind
 
+/-- `m` divides the difference between corresponding `DensePoly.mulCoeffStep`
+updates of congruent inputs, given accumulators that already differ by a
+multiple of `m`. -/
 private theorem dvd_mulCoeffStep_sub (f g f' g' : ZPoly) (m : Nat)
     (hf : congr f f' m) (hg : congr g g' m) (n i j : Nat) (a b : Int)
     (hab : (m : Int) ∣ a - b) :
@@ -636,6 +641,8 @@ private theorem dvd_mulCoeffStep_sub (f g f' g' : ZPoly) (m : Nat)
   · simp [hij]
     exact hab
 
+/-- `m` divides the difference between the `DensePoly.mulCoeffStep` inner folds
+over `xs` for congruent inputs, propagating the accumulator congruence. -/
 private theorem dvd_mulCoeffStep_fold_sub (f g f' g' : ZPoly) (m : Nat)
     (hf : congr f f' m) (hg : congr g g' m) (n i : Nat) (xs : List Nat) (a b : Int)
     (hab : (m : Int) ∣ a - b) :
@@ -651,6 +658,8 @@ private theorem dvd_mulCoeffStep_fold_sub (f g f' g' : ZPoly) (m : Nat)
         (DensePoly.mulCoeffStep f' g' n i b j)
         (dvd_mulCoeffStep_sub f g f' g' m hf hg n i j a b hab)
 
+/-- Extending the inner `DensePoly.mulCoeffStep` fold past `q.size` adds nothing,
+since the extra `q` coefficients vanish. -/
 private theorem fold_mulCoeffStep_range_add_zero_tail (p q : ZPoly)
     (n i : Nat) (a : Int) (d : Nat) :
     (List.range (q.size + d)).foldl (DensePoly.mulCoeffStep p q n i) a =
@@ -669,6 +678,8 @@ private theorem fold_mulCoeffStep_range_add_zero_tail (p q : ZPoly)
       · simp [h, hcoeff]
       · simp [h]
 
+/-- The inner `DensePoly.mulCoeffStep` fold over any range at least `q.size`
+agrees with the fold over `q.size`. -/
 private theorem fold_mulCoeffStep_range_of_size_le (p q : ZPoly)
     (n i : Nat) (a : Int) {s : Nat} (hs : q.size ≤ s) :
     (List.range s).foldl (DensePoly.mulCoeffStep p q n i) a =
@@ -677,6 +688,8 @@ private theorem fold_mulCoeffStep_range_of_size_le (p q : ZPoly)
   rw [← hs']
   exact fold_mulCoeffStep_range_add_zero_tail p q n i a (s - q.size)
 
+/-- When `p.coeff i = 0`, the inner `DensePoly.mulCoeffStep` fold over `q.size`
+leaves the accumulator unchanged. -/
 private theorem fold_mulCoeffStep_zero_left (p q : ZPoly) (n i : Nat) (a : Int)
     (hi : p.coeff i = 0) :
     (List.range q.size).foldl (DensePoly.mulCoeffStep p q n i) a = a := by
@@ -692,6 +705,8 @@ private theorem fold_mulCoeffStep_zero_left (p q : ZPoly) (n i : Nat) (a : Int)
       · simp [h, hi]
       · simp [h]
 
+/-- Extending the outer `DensePoly.mulCoeffStep` fold past `p.size` adds nothing,
+since the extra `p` coefficients vanish. -/
 private theorem fold_mulCoeffOuter_range_add_zero_tail (p q : ZPoly)
     (n d : Nat) :
     (List.range (p.size + d)).foldl
@@ -712,6 +727,8 @@ private theorem fold_mulCoeffOuter_range_add_zero_tail (p q : ZPoly)
           (fun acc i => (List.range q.size).foldl (DensePoly.mulCoeffStep p q n i) acc) 0)
         hcoeff
 
+/-- The outer `DensePoly.mulCoeffStep` fold over any range at least `p.size`
+computes `DensePoly.mulCoeffSum p q n`. -/
 private theorem mulCoeffSum_eq_outer_range_of_size_le (p q : ZPoly)
     (n : Nat) {s : Nat} (hs : p.size ≤ s) :
     (List.range s).foldl
@@ -722,6 +739,9 @@ private theorem mulCoeffSum_eq_outer_range_of_size_le (p q : ZPoly)
   rw [← hs']
   exact fold_mulCoeffOuter_range_add_zero_tail p q n (s - p.size)
 
+/-- `m` divides the difference between the outer `DensePoly.mulCoeffStep` folds
+over `xs` for congruent inputs, propagating the accumulator congruence through
+each inner fold. -/
 private theorem dvd_mulCoeffOuter_fold_sub (f g f' g' : ZPoly) (m : Nat)
     (hf : congr f f' m) (hg : congr g g' m) (n innerBound : Nat)
     (hgb : g.size ≤ innerBound) (hg'b : g'.size ≤ innerBound)
