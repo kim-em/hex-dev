@@ -721,6 +721,8 @@ private theorem getEntry_swapRowsArray_matches
                 rw [rowSwap_get]
                 simp [hiA, hiB]
 
+/-- `findPivotArrayAux` searches the array-backed column `col` from `start` for
+a nonzero Bareiss pivot, using `fuel` to bound the scan. -/
 private def findPivotArrayAux
     (rows : Array (Array Int)) (n col start fuel : Nat) : Option Nat :=
   match fuel with
@@ -734,10 +736,14 @@ private def findPivotArrayAux
       else
         none
 
+/-- `findPivotArray?` runs array-backed pivot search on the suffix at or below
+`start`, mirroring the matrix-level `findPivot?` search range. -/
 private def findPivotArray? (rows : Array (Array Int)) (n col start : Nat) :
     Option Nat :=
   findPivotArrayAux rows n col start (n - start)
 
+/-- `findPivotArrayAux_matrixToRows` identifies bounded array pivot search on
+`matrixToRows M` with the matrix-level `findPivotAux` result. -/
 private theorem findPivotArrayAux_matrixToRows (M : Matrix Int n n)
     (col : Fin n) (start fuel : Nat) :
     findPivotArrayAux (matrixToRows M) n col.val start fuel =
@@ -764,12 +770,16 @@ private theorem findPivotArrayAux_matrixToRows (M : Matrix Int n n)
           simp [hpivotNat]
       · simp [hstart]
 
+/-- `findPivotArray?_matrixToRows` identifies full array pivot search on
+`matrixToRows M` with the matrix-level `findPivot?` result. -/
 private theorem findPivotArray?_matrixToRows (M : Matrix Int n n)
     (col : Fin n) (start : Nat) :
     findPivotArray? (matrixToRows M) n col.val start =
       (findPivot? M col start).map Fin.val := by
   simp [findPivotArray?, findPivot?, findPivotArrayAux_matrixToRows]
 
+/-- `findPivotArrayAux_matches` shows bounded array pivot search agrees with
+`findPivotAux` whenever the searched array column matches the matrix column. -/
 private theorem findPivotArrayAux_matches (rows : Array (Array Int))
     (M : Matrix Int n n) (col : Fin n) (start fuel : Nat)
     (hentry : ∀ i : Fin n, getEntry rows i.val col.val = M[i][col]) :
@@ -794,6 +804,8 @@ private theorem findPivotArrayAux_matches (rows : Array (Array Int))
         · simp [hpivotNat]
       · simp [hstart]
 
+/-- `findPivotArray?_matches` shows full array pivot search agrees with
+`findPivot?` whenever the searched array column matches the matrix column. -/
 private theorem findPivotArray?_matches (rows : Array (Array Int))
     (M : Matrix Int n n) (col : Fin n) (start : Nat)
     (hentry : ∀ i : Fin n, getEntry rows i.val col.val = M[i][col]) :
