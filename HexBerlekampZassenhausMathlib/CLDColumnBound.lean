@@ -1,4 +1,5 @@
 import HexBerlekampZassenhaus
+import HexBerlekampZassenhausMathlib.BadVectorAuxiliary
 import HexHenselMathlib.Correctness
 import HexPolyZMathlib.Mignotte
 import HexPolyZMathlib.RobinsonForm
@@ -485,6 +486,70 @@ theorem cldQuotientMod_congr_mul_derivative
       (HexPolyMathlib.toPolynomial num).map φ := by
     rw [← hrecon_map, hrem_zero]; ring
   rw [hfin]; exact hnum_eq
+
+namespace BHKS
+
+/--
+Coefficient-level CLD bridge for the corrected BHKS auxiliary polynomial.
+
+The first component is the high/low cut decomposition of the scaled auxiliary
+coefficient.  The second component records the semantic content of every
+`cldQuotientMod` term appearing in that decomposition: after multiplication by
+the corresponding lifted factor, the executable quotient is congruent to the
+logarithmic-derivative numerator modulo `p ^ k`.
+
+This is the form needed by the later Sylvester-column argument.  It keeps the
+per-coordinate cut weight and the diagonal correction term explicit, and it
+does not assert the false statement that a lifted factor divides the auxiliary
+polynomial itself modulo `p ^ k`.
+-/
+theorem auxCutBridge
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (vec corrections : Array Int) (j : Nat)
+    (hj : j < input.degree?.getD 0)
+    (hb : liftData.p ^ Hex.bhksCoeffCutThreshold liftData.p input j ≠ 0)
+    (hk : 1 < liftData.p ^ liftData.k)
+    (hfac :
+      ∀ i, i ∈ List.range liftData.liftedFactors.size →
+        ∃ h : Hex.ZPoly,
+          Hex.DensePoly.Monic (liftData.liftedFactors.getD i 0) ∧
+          0 < (liftData.liftedFactors.getD i 0).degree?.getD 0 ∧
+          Hex.ZPoly.congr input ((liftData.liftedFactors.getD i 0) * h)
+            (liftData.p ^ liftData.k)) :
+    ((liftData.p ^ Hex.bhksCoeffCutThreshold liftData.p input j : Nat) : Int) *
+        (auxiliaryPolynomialWithCorrections input liftData vec corrections).coeff j =
+      (List.range liftData.liftedFactors.size).foldl
+        (fun acc i =>
+          acc + vec.getD i 0 *
+            (Hex.centeredResiduePow liftData.p liftData.k
+                ((Hex.cldQuotientMod input (liftData.liftedFactors.getD i 0)
+                    liftData.p liftData.k).coeff j) -
+              Hex.centeredResiduePow liftData.p
+                  (Hex.bhksCoeffCutThreshold liftData.p input j)
+                  (Hex.centeredResiduePow liftData.p liftData.k
+                    ((Hex.cldQuotientMod input (liftData.liftedFactors.getD i 0)
+                        liftData.p liftData.k).coeff j)))) 0 -
+        corrections.getD j 0 *
+            Int.ofNat (liftData.p ^
+              (liftData.k - Hex.bhksCoeffCutThreshold liftData.p input j)) *
+            ((liftData.p ^ Hex.bhksCoeffCutThreshold liftData.p input j : Nat) : Int) ∧
+      ∀ i, i ∈ List.range liftData.liftedFactors.size →
+        Hex.ZPoly.congr
+          ((liftData.liftedFactors.getD i 0) *
+            Hex.cldQuotientMod input (liftData.liftedFactors.getD i 0)
+              liftData.p liftData.k)
+          (input * Hex.DensePoly.derivative (liftData.liftedFactors.getD i 0))
+          (liftData.p ^ liftData.k) := by
+  constructor
+  · exact coeff_auxiliaryPolynomialWithCorrections_high_decomp
+      input liftData vec corrections j hj hb
+  · intro i hi
+    rcases hfac i hi with ⟨h, hg_monic, hg_deg, hdvd⟩
+    exact cldQuotientMod_congr_mul_derivative input
+      (liftData.liftedFactors.getD i 0) h liftData.p liftData.k
+      hk hg_monic hg_deg hdvd
+
+end BHKS
 
 end
 
