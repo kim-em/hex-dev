@@ -1243,37 +1243,65 @@ theorem selectedFactorArraysOfSupports_polyProduct
   exact selectedFactorsOfMembers_polyProduct d (classes.getD i [])
 
 /--
-Convert a proof-side lifted-subset representation into the exact modular
-product equality consumed by the Mignotte recovery wrapper, once the executable
+Convert a proof-side lifted-subset representation into the dilated centered-lift
+recovery equality consumed by the Mignotte recovery wrapper, once the executable
 selected-factor array has been identified with that lifted subset's product.
+
+This is the DILATE-model recovery step: under a monic core the
+leading-coefficient dilation of the centred selected product is exactly the
+expected integer factor.
+The SCALE-congruence form is not used; `DensePoly.scale c` and `ZPoly.dilate c`
+disagree off the monic case, so only the dilation equality is sound.
 -/
-theorem productCongruence_of_representsIntegerFactorAtLift
+theorem dilatedRecovery_of_representsIntegerFactorAtLift
     {core : Hex.ZPoly} {d : Hex.LiftData} {selected : Array Hex.ZPoly}
     {expectedFactor : Hex.ZPoly} {S : LiftedFactorSubset d}
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hprod_monic : Hex.DensePoly.Monic (liftedFactorProduct d S))
+    (hp_two_le : 2 ≤ d.p ^ d.k)
+    (hcore_ne : core ≠ 0)
+    (hfactor_norm : Hex.normalizeFactorSign expectedFactor = expectedFactor)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
     (hselected_product :
       Array.polyProduct selected = liftedFactorProduct d S)
     (hrep : RepresentsIntegerFactorAtLift core d expectedFactor S) :
-    Hex.ZPoly.reduceModPow
-        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
-          (Array.polyProduct selected)) d.p d.k =
-      Hex.ZPoly.reduceModPow expectedFactor d.p d.k := by
-  unfold RepresentsIntegerFactorAtLift scaledLiftedFactorProduct at hrep
-  rw [hselected_product]
-  exact hrep
+    Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+        (Hex.centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k)) =
+      expectedFactor := by
+  have hlc : Hex.DensePoly.leadingCoeff core = (1 : Int) := hcore_monic
+  have hmonic_ne : (Hex.ZPoly.toMonic core).monic ≠ 0 := by
+    rwa [Hex.ZPoly.toMonic_monic_eq_core_of_leadingCoeff_eq_one core hlc]
+  have hprecision' :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        d.p ^ d.k := by
+    rwa [Hex.ZPoly.toMonic_monic_eq_core_of_leadingCoeff_eq_one core hlc]
+  exact dilatedCenteredLift_of_representsIntegerFactorAtLift
+    hcore_monic hprod_monic hp_two_le hmonic_ne hfactor_norm hprecision'
+    hselected_product hrep
 
 /--
-Indexed form of `productCongruence_of_representsIntegerFactorAtLift`.
+Indexed form of `dilatedRecovery_of_representsIntegerFactorAtLift`.
 Callers provide, for each expected indicator, the proof-side lifted subset
 selected by the canonical class plus its `RepresentsIntegerFactorAtLift`
-certificate; this theorem returns the `hproduct` family expected by
-`ofMignottePrecision...`.
+certificate; this theorem returns the dilated centered-lift recovery family
+expected by `ofMignottePrecision...`.
 -/
-theorem productCongruencesOfSelectedRepresentations
+theorem dilatedRecoveriesOfSelectedRepresentations
     {core : Hex.ZPoly} {d : Hex.LiftData}
     (expectedIndicators : Array (Array Int))
     (selectedFactors : Array (Array Hex.ZPoly))
     (expectedFactors : Array Hex.ZPoly)
     (supportSubsets : Array (LiftedFactorSubset d))
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hp_two_le : 2 ≤ d.p ^ d.k)
+    (hcore_ne : core ≠ 0)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hprod_monic :
+      ∀ i, i < expectedIndicators.size →
+        Hex.DensePoly.Monic (liftedFactorProduct d (supportSubsets.getD i ∅)))
+    (hfactor_norm :
+      ∀ i, i < expectedIndicators.size →
+        Hex.normalizeFactorSign (expectedFactors.getD i 0) = expectedFactors.getD i 0)
     (hselected_product :
       ∀ i, i < expectedIndicators.size →
         Array.polyProduct (selectedFactors.getD i #[]) =
@@ -1283,26 +1311,36 @@ theorem productCongruencesOfSelectedRepresentations
         RepresentsIntegerFactorAtLift core d (expectedFactors.getD i 0)
           (supportSubsets.getD i ∅)) :
     ∀ i, i < expectedIndicators.size →
-      Hex.ZPoly.reduceModPow
-          (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
-            (Array.polyProduct (selectedFactors.getD i #[])))
-          d.p d.k =
-        Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k := by
+      Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+          (Hex.centeredLiftPoly
+            (Array.polyProduct (selectedFactors.getD i #[])) (d.p ^ d.k)) =
+        expectedFactors.getD i 0 := by
   intro i hi
-  exact productCongruence_of_representsIntegerFactorAtLift
-    (hselected_product i hi) (hrep i hi)
+  exact dilatedRecovery_of_representsIntegerFactorAtLift
+    hcore_monic (hprod_monic i hi) hp_two_le hcore_ne (hfactor_norm i hi)
+    hprecision (hselected_product i hi) (hrep i hi)
 
 /--
-Canonical-support specialisation of the per-class Mignotte product bridge.
-It targets `selectedFactorArraysOfSupports` directly, matching the hypothesis
-surface of
+Canonical-support specialisation of the per-class Mignotte dilated-recovery
+conversion.  It targets `selectedFactorArraysOfSupports` directly, matching the
+hypothesis surface of
 `factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound`.
 -/
-theorem productCongruencesOfCanonicalSupportRepresentations
+theorem dilatedRecoveriesOfCanonicalSupportRepresentations
     {core : Hex.ZPoly} {d : Hex.LiftData} {r : Nat}
     (trueSupports : Set (Set (Fin r)))
     (expectedFactors : Array Hex.ZPoly)
     (supportSubsets : Array (LiftedFactorSubset d))
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hp_two_le : 2 ≤ d.p ^ d.k)
+    (hcore_ne : core ≠ 0)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hprod_monic :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.DensePoly.Monic (liftedFactorProduct d (supportSubsets.getD i ∅)))
+    (hfactor_norm :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.normalizeFactorSign (expectedFactors.getD i 0) = expectedFactors.getD i 0)
     (hselected_product :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
         Array.polyProduct
@@ -1313,25 +1351,38 @@ theorem productCongruencesOfCanonicalSupportRepresentations
         RepresentsIntegerFactorAtLift core d (expectedFactors.getD i 0)
           (supportSubsets.getD i ∅)) :
     ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-      Hex.ZPoly.reduceModPow
-          (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+      Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+          (Hex.centeredLiftPoly
             (Array.polyProduct
-              ((selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[])))
-          d.p d.k =
-        Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k :=
-  productCongruencesOfSelectedRepresentations
+              ((selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[]))
+            (d.p ^ d.k)) =
+        expectedFactors.getD i 0 :=
+  dilatedRecoveriesOfSelectedRepresentations
     (expectedIndicatorArrayOfSupports trueSupports)
     (selectedFactorArraysOfSupports d.liftedFactors trueSupports)
-    expectedFactors supportSubsets hselected_product hrep
+    expectedFactors supportSubsets hcore_monic hp_two_le hcore_ne hprecision
+    hprod_monic hfactor_norm hselected_product hrep
 
 /--
-Canonical-support bridge using the subset array induced directly by
-`supportPartitionByMinColumn`.
+Canonical-support dilated-recovery conversion using the subset array induced
+directly by `supportPartitionByMinColumn`.
 -/
-theorem productCongruencesOfCanonicalSupportMemberRepresentations
+theorem dilatedRecoveriesOfCanonicalSupportMemberRepresentations
     {core : Hex.ZPoly} {d : Hex.LiftData} {r : Nat}
     (trueSupports : Set (Set (Fin r)))
     (expectedFactors : Array Hex.ZPoly)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hp_two_le : 2 ≤ d.p ^ d.k)
+    (hcore_ne : core ≠ 0)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hprod_monic :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.DensePoly.Monic
+          (liftedFactorProduct d
+            ((liftedFactorSubsetsOfSupports d trueSupports).getD i ∅)))
+    (hfactor_norm :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        Hex.normalizeFactorSign (expectedFactors.getD i 0) = expectedFactors.getD i 0)
     (hselected_product :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
         Array.polyProduct
@@ -1343,15 +1394,16 @@ theorem productCongruencesOfCanonicalSupportMemberRepresentations
         RepresentsIntegerFactorAtLift core d (expectedFactors.getD i 0)
           ((liftedFactorSubsetsOfSupports d trueSupports).getD i ∅)) :
     ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-      Hex.ZPoly.reduceModPow
-          (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+      Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+          (Hex.centeredLiftPoly
             (Array.polyProduct
-              ((selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[])))
-          d.p d.k =
-        Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k :=
-  productCongruencesOfCanonicalSupportRepresentations
+              ((selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[]))
+            (d.p ^ d.k)) =
+        expectedFactors.getD i 0 :=
+  dilatedRecoveriesOfCanonicalSupportRepresentations
     trueSupports expectedFactors
-    (liftedFactorSubsetsOfSupports d trueSupports) hselected_product hrep
+    (liftedFactorSubsetsOfSupports d trueSupports) hcore_monic hp_two_le hcore_ne
+    hprecision hprod_monic hfactor_norm hselected_product hrep
 
 /--
 The canonical support-driven indicators select the corresponding canonical
@@ -1853,20 +1905,19 @@ noncomputable def ofMignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisi
         Hex.bhksIndicatorSelectedFactors d.liftedFactors
             ((expectedIndicatorArrayOfSupports trueSupports).getD i #[]) =
           some (selectedFactors.getD i #[]))
-    (hproduct :
+    (hdilated :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-        Hex.ZPoly.reduceModPow
-            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)
-              (Array.polyProduct (selectedFactors.getD i #[])))
-            d.p d.k =
-          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0) d.p d.k) :
+        Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff f)
+            (Hex.centeredLiftPoly
+              (Array.polyProduct (selectedFactors.getD i #[])) (d.p ^ d.k)) =
+          expectedFactors.getD i 0) :
     ForwardRecoveryInputs f d :=
   ofMignottePrecisionCanonicalIndicatorsExpectedFactors
     rows_pos trueSupports lattice_eq_indicators
     (mignotte_precision_of_liftData_precisionForCoeffBound_factorFastPrecisionCap
       f d hp hk)
     nondegenerate selectedFactors expectedFactors hf_ne_zero htrue
-    hselected hproduct
+    hselected hdilated
 
 /--
 Build `ForwardRecoveryInputs f d` from cap-level BHKS separation plus the
@@ -3650,23 +3701,21 @@ theorem factorFast_ne_none_of_mignottePrecisionCanonicalIndicatorsExpectedFactor
             (factorFastCapLiftData f primeData).liftedFactors
             ((expectedIndicatorArrayOfSupports trueSupports).getD i #[]) =
           some (selectedFactors.getD i #[]))
-    (hproduct :
+    (hdilated :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-        Hex.ZPoly.reduceModPow
-            (Hex.DensePoly.scale
-              (Hex.DensePoly.leadingCoeff
-                (Hex.normalizeForFactor f).squareFreeCore)
-              (Array.polyProduct (selectedFactors.getD i #[])))
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k =
-          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0)
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k) :
+        Hex.ZPoly.dilate
+            (Hex.DensePoly.leadingCoeff
+              (Hex.normalizeForFactor f).squareFreeCore)
+            (Hex.centeredLiftPoly
+              (Array.polyProduct (selectedFactors.getD i #[]))
+              ((factorFastCapLiftData f primeData).p ^
+                (factorFastCapLiftData f primeData).k)) =
+          expectedFactors.getD i 0) :
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_forwardInputs_at_cap f primeData hB_pos hchoose
     (ForwardRecoveryInputs.ofMignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound
       rows_pos trueSupports lattice_eq_indicators hp hk nondegenerate
-      selectedFactors expectedFactors hf_ne_zero htrue hselected hproduct)
+      selectedFactors expectedFactors hf_ne_zero htrue hselected hdilated)
 
 /--
 Canonical-support wrapper for
@@ -3729,19 +3778,17 @@ theorem factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsA
         (expectedIndicatorArrayOfSupports trueSupports) expectedFactors)
     (hproduct :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-        Hex.ZPoly.reduceModPow
-            (Hex.DensePoly.scale
-              (Hex.DensePoly.leadingCoeff
-                (Hex.normalizeForFactor f).squareFreeCore)
+        Hex.ZPoly.dilate
+            (Hex.DensePoly.leadingCoeff
+              (Hex.normalizeForFactor f).squareFreeCore)
+            (Hex.centeredLiftPoly
               (Array.polyProduct
                 ((ForwardRecoveryInputs.selectedFactorArraysOfSupports
                   (factorFastCapLiftData f primeData).liftedFactors
-                  trueSupports).getD i #[])))
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k =
-          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0)
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k) :
+                  trueSupports).getD i #[]))
+              ((factorFastCapLiftData f primeData).p ^
+                (factorFastCapLiftData f primeData).k)) =
+          expectedFactors.getD i 0) :
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_mignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound
     f primeData rows_pos trueSupports lattice_eq_indicators hB_pos hchoose
@@ -3825,22 +3872,20 @@ structure CanonicalRecoveryInputs
     ForwardRecoveryInputs.ExpectedTrueFactors
       (Hex.normalizeForFactor f).squareFreeCore
       (expectedIndicatorArrayOfSupports trueSupports) expectedFactors
-  /-- Per-indicator Mignotte product congruence. -/
+  /-- Per-indicator Mignotte dilated centered-lift recovery equality. -/
   product_congr :
     ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-      Hex.ZPoly.reduceModPow
-          (Hex.DensePoly.scale
-            (Hex.DensePoly.leadingCoeff
-              (Hex.normalizeForFactor f).squareFreeCore)
+      Hex.ZPoly.dilate
+          (Hex.DensePoly.leadingCoeff
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (Hex.centeredLiftPoly
             (Array.polyProduct
               ((ForwardRecoveryInputs.selectedFactorArraysOfSupports
                 (factorFastCapLiftData f primeData).liftedFactors
-                trueSupports).getD i #[])))
-          (factorFastCapLiftData f primeData).p
-          (factorFastCapLiftData f primeData).k =
-        Hex.ZPoly.reduceModPow (expectedFactors.getD i 0)
-          (factorFastCapLiftData f primeData).p
-          (factorFastCapLiftData f primeData).k
+                trueSupports).getD i #[]))
+            ((factorFastCapLiftData f primeData).p ^
+              (factorFastCapLiftData f primeData).k)) =
+        expectedFactors.getD i 0
 
 namespace CanonicalRecoveryInputs
 
@@ -3879,19 +3924,17 @@ def ofExpectedFactors
         (expectedIndicatorArrayOfSupports trueSupports) expectedFactors)
     (product_congr :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-        Hex.ZPoly.reduceModPow
-            (Hex.DensePoly.scale
-              (Hex.DensePoly.leadingCoeff
-                (Hex.normalizeForFactor f).squareFreeCore)
+        Hex.ZPoly.dilate
+            (Hex.DensePoly.leadingCoeff
+              (Hex.normalizeForFactor f).squareFreeCore)
+            (Hex.centeredLiftPoly
               (Array.polyProduct
                 ((ForwardRecoveryInputs.selectedFactorArraysOfSupports
                   (factorFastCapLiftData f primeData).liftedFactors
-                  trueSupports).getD i #[])))
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k =
-          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0)
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k) :
+                  trueSupports).getD i #[]))
+              ((factorFastCapLiftData f primeData).p ^
+                (factorFastCapLiftData f primeData).k)) =
+          expectedFactors.getD i 0) :
     CanonicalRecoveryInputs f primeData where
   rows_pos := rows_pos
   trueSupports := trueSupports
@@ -3954,22 +3997,20 @@ structure CanonicalRecoveryTailInputs
     ForwardRecoveryInputs.ExpectedTrueFactors
       (Hex.normalizeForFactor f).squareFreeCore
       (expectedIndicatorArrayOfSupports trueSupports) expectedFactors
-  /-- Per-indicator Mignotte product congruence. -/
+  /-- Per-indicator Mignotte dilated centered-lift recovery equality. -/
   product_congr :
     ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-      Hex.ZPoly.reduceModPow
-          (Hex.DensePoly.scale
-            (Hex.DensePoly.leadingCoeff
-              (Hex.normalizeForFactor f).squareFreeCore)
+      Hex.ZPoly.dilate
+          (Hex.DensePoly.leadingCoeff
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (Hex.centeredLiftPoly
             (Array.polyProduct
               ((ForwardRecoveryInputs.selectedFactorArraysOfSupports
                 (factorFastCapLiftData f primeData).liftedFactors
-                trueSupports).getD i #[])))
-          (factorFastCapLiftData f primeData).p
-          (factorFastCapLiftData f primeData).k =
-        Hex.ZPoly.reduceModPow (expectedFactors.getD i 0)
-          (factorFastCapLiftData f primeData).p
-          (factorFastCapLiftData f primeData).k
+                trueSupports).getD i #[]))
+            ((factorFastCapLiftData f primeData).p ^
+              (factorFastCapLiftData f primeData).k)) =
+        expectedFactors.getD i 0
 
 namespace CanonicalRecoveryTailInputs
 
@@ -3999,19 +4040,17 @@ def ofExpectedFactors
         (expectedIndicatorArrayOfSupports trueSupports) expectedFactors)
     (product_congr :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-        Hex.ZPoly.reduceModPow
-            (Hex.DensePoly.scale
-              (Hex.DensePoly.leadingCoeff
-                (Hex.normalizeForFactor f).squareFreeCore)
+        Hex.ZPoly.dilate
+            (Hex.DensePoly.leadingCoeff
+              (Hex.normalizeForFactor f).squareFreeCore)
+            (Hex.centeredLiftPoly
               (Array.polyProduct
                 ((ForwardRecoveryInputs.selectedFactorArraysOfSupports
                   (factorFastCapLiftData f primeData).liftedFactors
-                  trueSupports).getD i #[])))
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k =
-          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0)
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k) :
+                  trueSupports).getD i #[]))
+              ((factorFastCapLiftData f primeData).p ^
+                (factorFastCapLiftData f primeData).k)) =
+          expectedFactors.getD i 0) :
     CanonicalRecoveryTailInputs f primeData rows_pos trueSupports where
   projected_nonempty := projected_nonempty
   classes_two := classes_two
@@ -4056,6 +4095,19 @@ def ofCanonicalSupportRepresentations
     (classes_two :
       2 ≤ (supportPartitionByMinColumn trueSupports).length)
     (hf_ne_zero : (Hex.normalizeForFactor f).squareFreeCore ≠ 0)
+    (hf_monic : Hex.DensePoly.Monic (Hex.normalizeForFactor f).squareFreeCore)
+    (hliftedFactor_monic :
+      ∀ i, i < (factorFastCapLiftData f primeData).liftedFactors.size →
+        Hex.DensePoly.Monic
+          ((factorFastCapLiftData f primeData).liftedFactors.getD i 0))
+    (hp_two_le :
+      2 ≤ (factorFastCapLiftData f primeData).p ^
+        (factorFastCapLiftData f primeData).k)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound
+          (Hex.normalizeForFactor f).squareFreeCore <
+        (factorFastCapLiftData f primeData).p ^
+          (factorFastCapLiftData f primeData).k)
     (expectedFactors : Array Hex.ZPoly)
     (expected_true_factors :
       ForwardRecoveryInputs.ExpectedTrueFactors
@@ -4072,8 +4124,17 @@ def ofCanonicalSupportRepresentations
     CanonicalRecoveryTailInputs f primeData rows_pos trueSupports :=
   ofExpectedFactors projected_nonempty classes_two hf_ne_zero
     expectedFactors expected_true_factors
-    (ForwardRecoveryInputs.productCongruencesOfCanonicalSupportMemberRepresentations
-      trueSupports expectedFactors
+    (ForwardRecoveryInputs.dilatedRecoveriesOfCanonicalSupportMemberRepresentations
+      trueSupports expectedFactors hf_monic hp_two_le hf_ne_zero hprecision
+      (fun _ _ =>
+        liftedFactorProduct_monic _ _ (fun j _ => by
+          have hmonic := hliftedFactor_monic j.val j.isLt
+          rwa [show liftedFactor (factorFastCapLiftData f primeData) j =
+              (factorFastCapLiftData f primeData).liftedFactors.getD j.val 0 from by
+            simp [liftedFactor, Array.getD, j.isLt]]))
+      (fun i hi =>
+        zpoly_normalize_factor_sign_of_monic
+          (expected_true_factors.monic i hi))
       (ForwardRecoveryInputs.selectedFactorArraysOfSupports_polyProduct
         (factorFastCapLiftData f primeData) trueSupports)
       hrep)
@@ -4121,6 +4182,7 @@ def ofForwardRecoveryInputsCanonicalRepresentations
         (factorFastCapLiftData f primeData).k) :
     CanonicalRecoveryTailInputs f primeData h.rows_pos trueSupports :=
   ofCanonicalSupportRepresentations projected_nonempty classes_two hf_ne_zero
+    hf_monic hliftedFactor_monic (Nat.le_of_lt hp_two_lt) h.mignotte_precision
     h.expectedFactors
     (by
       simpa [hindicators] using
@@ -6731,19 +6793,17 @@ theorem factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsA
         (expectedIndicatorArrayOfSupports trueSupports) expectedFactors)
     (hproduct :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-        Hex.ZPoly.reduceModPow
-            (Hex.DensePoly.scale
-              (Hex.DensePoly.leadingCoeff
-                (Hex.normalizeForFactor f).squareFreeCore)
+        Hex.ZPoly.dilate
+            (Hex.DensePoly.leadingCoeff
+              (Hex.normalizeForFactor f).squareFreeCore)
+            (Hex.centeredLiftPoly
               (Array.polyProduct
                 ((ForwardRecoveryInputs.selectedFactorArraysOfSupports
                   (factorFastCapLiftData f primeData).liftedFactors
-                  trueSupports).getD i #[])))
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k =
-          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0)
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k) :
+                  trueSupports).getD i #[]))
+              ((factorFastCapLiftData f primeData).p ^
+                (factorFastCapLiftData f primeData).k)) =
+          expectedFactors.getD i 0) :
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound
     f primeData rows_pos trueSupports lattice_eq_indicators
@@ -6834,19 +6894,17 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFa
         (expectedIndicatorArrayOfSupports trueSupports) expectedFactors)
     (hproduct :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-        Hex.ZPoly.reduceModPow
-            (Hex.DensePoly.scale
-              (Hex.DensePoly.leadingCoeff
-                (Hex.normalizeForFactor f).squareFreeCore)
+        Hex.ZPoly.dilate
+            (Hex.DensePoly.leadingCoeff
+              (Hex.normalizeForFactor f).squareFreeCore)
+            (Hex.centeredLiftPoly
               (Array.polyProduct
                 ((ForwardRecoveryInputs.selectedFactorArraysOfSupports
                   (factorFastCapLiftData f primeData).liftedFactors
-                  trueSupports).getD i #[])))
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k =
-          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0)
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k) :
+                  trueSupports).getD i #[]))
+              ((factorFastCapLiftData f primeData).p ^
+                (factorFastCapLiftData f primeData).k)) =
+          expectedFactors.getD i 0) :
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound
     f primeData rows_pos trueSupports
@@ -6934,19 +6992,17 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFa
         (expectedIndicatorArrayOfSupports trueSupports) expectedFactors)
     (hproduct :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-        Hex.ZPoly.reduceModPow
-            (Hex.DensePoly.scale
-              (Hex.DensePoly.leadingCoeff
-                (Hex.normalizeForFactor f).squareFreeCore)
+        Hex.ZPoly.dilate
+            (Hex.DensePoly.leadingCoeff
+              (Hex.normalizeForFactor f).squareFreeCore)
+            (Hex.centeredLiftPoly
               (Array.polyProduct
                 ((ForwardRecoveryInputs.selectedFactorArraysOfSupports
                   (factorFastCapLiftData f primeData).liftedFactors
-                  trueSupports).getD i #[])))
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k =
-          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0)
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k) :
+                  trueSupports).getD i #[]))
+              ((factorFastCapLiftData f primeData).p ^
+                (factorFastCapLiftData f primeData).k)) =
+          expectedFactors.getD i 0) :
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound
     f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
@@ -7028,19 +7084,17 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFa
         (expectedIndicatorArrayOfSupports trueSupports) expectedFactors)
     (hproduct :
       ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
-        Hex.ZPoly.reduceModPow
-            (Hex.DensePoly.scale
-              (Hex.DensePoly.leadingCoeff
-                (Hex.normalizeForFactor f).squareFreeCore)
+        Hex.ZPoly.dilate
+            (Hex.DensePoly.leadingCoeff
+              (Hex.normalizeForFactor f).squareFreeCore)
+            (Hex.centeredLiftPoly
               (Array.polyProduct
                 ((ForwardRecoveryInputs.selectedFactorArraysOfSupports
                   (factorFastCapLiftData f primeData).liftedFactors
-                  trueSupports).getD i #[])))
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k =
-          Hex.ZPoly.reduceModPow (expectedFactors.getD i 0)
-            (factorFastCapLiftData f primeData).p
-            (factorFastCapLiftData f primeData).k) :
+                  trueSupports).getD i #[]))
+              ((factorFastCapLiftData f primeData).p ^
+                (factorFastCapLiftData f primeData).k)) =
+          expectedFactors.getD i 0) :
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound_internalPrimeLowerBound
     f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
