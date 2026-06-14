@@ -329,6 +329,7 @@ private theorem mul_powLinearBinom_scaled_left
           exact congrArg (fun x => DensePoly.scale c x)
             (DensePoly.mul_assoc_poly f a b).symm
 
+/-- Absorb a left factor `g` into a scaled product, commuting it inside onto the right factor. -/
 private theorem mul_powLinearBinom_scaled_right
     (c : ZMod64 p) (g a b : FpPoly p) :
     g * DensePoly.scale c (a * b) = DensePoly.scale c (a * (g * b)) := by
@@ -345,14 +346,17 @@ private theorem mul_powLinearBinom_scaled_right
             _ = a * (g * b) := by
                   exact congrArg (fun x => a * x) (DensePoly.mul_comm_poly b g)
 
+/-- The `k`-th binomial term `choose n k • (f^(n-k) * g^k)` in the expansion of `(f + g)^n`. -/
 private def powLinearBinomTerm (f g : FpPoly p) (n k : Nat) : FpPoly p :=
   DensePoly.scale (Hex.Nat.choose n k : ZMod64 p)
     (powLinear f (n - k) * powLinear g k)
 
+/-- The partial sum of the first `k` binomial terms of `(f + g)^n`. -/
 private def powLinearBinomSum (f g : FpPoly p) (n : Nat) : Nat → FpPoly p
   | 0 => 0
   | k + 1 => powLinearBinomSum f g n k + powLinearBinomTerm f g n k
 
+/-- The zeroth binomial term at `n + 1` factors one `f` out of the zeroth term at `n`. -/
 private theorem powLinearBinomTerm_succ_zero (f g : FpPoly p) (n : Nat) :
     powLinearBinomTerm f g (n + 1) 0 =
       f * powLinearBinomTerm f g n 0 := by
@@ -372,6 +376,7 @@ private theorem powLinearBinomTerm_succ_zero (f g : FpPoly p) (n : Nat) :
           exact congrArg (fun x => f * x)
             (DensePoly.mul_one_right_poly (powLinear f n)).symm
 
+/-- Pascal's rule for binomial terms when `k < n`: the `(k+1)`-th term at `n+1` splits as `f * (term n (k+1)) + g * (term n k)`. -/
 private theorem powLinearBinomTerm_succ_succ_of_lt
     (f g : FpPoly p) {n k : Nat} (hk : k < n) :
     powLinearBinomTerm f g (n + 1) (k + 1) =
@@ -400,6 +405,7 @@ private theorem powLinearBinomTerm_succ_succ_of_lt
   rw [hf, hg]
   exact DensePoly.add_comm_poly _ _
 
+/-- The diagonal (`k = n`) case of Pascal's rule for binomial terms. -/
 private theorem powLinearBinomTerm_succ_succ_top
     (f g : FpPoly p) (n : Nat) :
     powLinearBinomTerm f g (n + 1) (n + 1) =
@@ -438,6 +444,7 @@ private theorem powLinearBinomTerm_succ_succ_top
     _ = g * (1 * powLinear g n) := by
           rw [one_mul]
 
+/-- Pascal's rule for binomial terms for every `k ≤ n`, combining the strict and diagonal cases. -/
 private theorem powLinearBinomTerm_succ_succ
     (f g : FpPoly p) {n k : Nat} (hk : k ≤ n) :
     powLinearBinomTerm f g (n + 1) (k + 1) =
@@ -449,6 +456,7 @@ private theorem powLinearBinomTerm_succ_succ
     subst k
     exact powLinearBinomTerm_succ_succ_top f g n
 
+/-- The row recurrence from Pascal's rule: the partial sum at row `n+1` splits as `f * (sum n (m+1)) + g * (sum n m)`. -/
 private theorem powLinearBinomSum_succ_row
     (f g : FpPoly p) (n m : Nat) (hm : m ≤ n + 1) :
     powLinearBinomSum f g (n + 1) (m + 1) =
@@ -490,6 +498,7 @@ private theorem powLinearBinomSum_succ_row
       repeat rw [DensePoly.coeff_add_semiring]
       grind
 
+/-- A binomial term with index `k` above the degree `n` vanishes. -/
 private theorem powLinearBinomTerm_above
     (f g : FpPoly p) {n k : Nat} (hk : n < k) :
     powLinearBinomTerm f g n k = 0 := by
@@ -497,6 +506,7 @@ private theorem powLinearBinomTerm_above
   rw [Hex.Nat.choose_eq_zero_of_lt hk]
   exact powLinearBinom_scalar_zero _
 
+/-- Extending the partial sum one step past the diagonal adds nothing, since that term vanishes. -/
 private theorem powLinearBinomSum_top_succ
     (f g : FpPoly p) (n : Nat) :
     powLinearBinomSum f g n (n + 1 + 1) =
@@ -505,6 +515,7 @@ private theorem powLinearBinomSum_top_succ
   rw [powLinearBinomTerm_above f g (by omega : n < n + 1)]
   exact DensePoly.add_zero_poly _
 
+/-- The binomial theorem: `(f + g)^n` equals its full binomial sum over the first `n + 1` terms. -/
 private theorem powLinear_add_binom_sum
     (f g : FpPoly p) (n : Nat) :
     powLinear (f + g) n = powLinearBinomSum f g n (n + 1) := by
@@ -518,6 +529,7 @@ private theorem powLinear_add_binom_sum
       rw [powLinearBinomSum_top_succ f g n]
       exact DensePoly.mul_add_left_poly f g (powLinearBinomSum f g n (n + 1))
 
+/-- The zeroth term of the degree-`p` binomial expansion is `f^p`. -/
 private theorem powLinearBinomTerm_prime_zero (f g : FpPoly p) :
     powLinearBinomTerm f g p 0 = powLinear f p := by
   unfold powLinearBinomTerm
@@ -527,6 +539,7 @@ private theorem powLinearBinomTerm_prime_zero (f g : FpPoly p) :
   rw [powLinearBinom_scalar_one]
   exact DensePoly.mul_one_right_poly (powLinear f p)
 
+/-- The top term of the degree-`p` binomial expansion is `g^p`. -/
 private theorem powLinearBinomTerm_prime_top (f g : FpPoly p) :
     powLinearBinomTerm f g p p = powLinear g p := by
   unfold powLinearBinomTerm
@@ -538,6 +551,7 @@ private theorem powLinearBinomTerm_prime_top (f g : FpPoly p) :
   rw [powLinearBinom_scalar_one]
   exact one_mul (powLinear g p)
 
+/-- For prime `p` and `0 < k < p`, the middle binomial terms vanish, since `p` divides the binomial coefficient. -/
 private theorem powLinearBinomTerm_prime_middle
     (hp : Hex.Nat.Prime p) (f g : FpPoly p) {k : Nat} (hk0 : 0 < k) (hkp : k < p) :
     powLinearBinomTerm f g p k = 0 := by
@@ -545,6 +559,7 @@ private theorem powLinearBinomTerm_prime_middle
   rw [zmod64_natCast_choose_prime_eq_zero hp hk0 hkp]
   exact powLinearBinom_scalar_zero _
 
+/-- For prime `p` and `m < p`, the partial sum through the vanishing middle terms collapses to `f^p`. -/
 private theorem powLinearBinomSum_prime_middle
     (hp : Hex.Nat.Prime p) (f g : FpPoly p) {m : Nat} (hm : m < p) :
     powLinearBinomSum f g p (m + 1) = powLinear f p := by
@@ -557,6 +572,7 @@ private theorem powLinearBinomSum_prime_middle
       rw [powLinearBinomTerm_prime_middle hp f g (by omega : 0 < m + 1) (by omega)]
       exact DensePoly.add_zero_poly _
 
+/-- The freshman's-dream identity `(f + g)^p = f^p + g^p` for prime `p`. -/
 private theorem powLinear_add_prime
     (hp : Hex.Nat.Prime p) (f g : FpPoly p) :
     powLinear (f + g) p = powLinear f p + powLinear g p := by
@@ -571,6 +587,7 @@ private theorem powLinear_add_prime
     simpa [Nat.sub_add_cancel hp_pos] using hmid0
   rw [hmid, powLinearBinomTerm_prime_top]
 
+/-- Right-multiplying a left-fold sum by `h` distributes `h` into each summand and the accumulator. -/
 private theorem foldl_poly_sum_mul_right
     {α : Type _} (xs : List α) (term : α → FpPoly p) (acc h : FpPoly p) :
     (xs.foldl (fun acc x => acc + term x) acc) * h =
@@ -585,6 +602,7 @@ private theorem foldl_poly_sum_mul_right
         DensePoly.mul_add_left_poly acc (term x) h
       rw [hstart]
 
+/-- Left-multiplying a left-fold sum by `h` distributes `h` into each summand and the accumulator. -/
 private theorem foldl_poly_sum_mul_left
     {α : Type _} (xs : List α) (term : α → FpPoly p) (acc h : FpPoly p) :
     h * xs.foldl (fun acc x => acc + term x) acc =
@@ -599,6 +617,7 @@ private theorem foldl_poly_sum_mul_left
         DensePoly.mul_add_right_poly h acc (term x)
       rw [hstart]
 
+/-- Scaling a left-fold sum distributes the scalar into each summand and the accumulator. -/
 private theorem scale_foldl_poly_sum
     {α : Type _} (c : ZMod64 p) (xs : List α) (term : α → FpPoly p) (acc : FpPoly p) :
     DensePoly.scale c (xs.foldl (fun acc x => acc + term x) acc) =
@@ -612,6 +631,7 @@ private theorem scale_foldl_poly_sum
       rw [ih (acc + term x)]
       rw [scale_add]
 
+/-- Raising an accumulated `ZMod64` fold-sum to the prime `p` distributes the `p`-th power over the summands and accumulator. -/
 private theorem zmod64_fold_add_pow_prime_acc
     (hp : Hex.Nat.Prime p) (xs : List (ZMod64 p)) (acc : ZMod64 p) :
     (xs.foldl (fun acc x => acc + x) acc) ^ p =
@@ -623,6 +643,7 @@ private theorem zmod64_fold_add_pow_prime_acc
       simp only [List.foldl_cons, List.map_cons]
       rw [ih (acc + x), zmod64_add_pow_prime hp acc x]
 
+/-- The `p`-th power of a `ZMod64` fold-sum (from `0`) equals the fold-sum of the per-element `p`-th powers. -/
 private theorem zmod64_fold_add_pow_prime
     (hp : Hex.Nat.Prime p) (xs : List (ZMod64 p)) :
     (xs.foldl (fun acc x => acc + x) 0) ^ p =
@@ -630,6 +651,7 @@ private theorem zmod64_fold_add_pow_prime
   simpa [ZMod64.pow_prime hp (0 : ZMod64 p)] using
     zmod64_fold_add_pow_prime_acc (p := p) hp xs (0 : ZMod64 p)
 
+/-- Index form of `zmod64_fold_add_pow_prime`: the `p`-th power of an indexed fold-sum equals the fold-sum of the per-index `p`-th powers. -/
 private theorem zmod64_index_fold_add_pow_prime
     (hp : Hex.Nat.Prime p) (xs : List Nat) (term : Nat → ZMod64 p) :
     (xs.foldl (fun acc i => acc + term i) 0) ^ p =
