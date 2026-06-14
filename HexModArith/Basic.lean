@@ -656,6 +656,11 @@ theorem inv_op_eq_ofNat (a : ZMod64 p) :
             % Int.ofNat p)) := by
   simpa using inv_eq_ofNat a
 
+/-- A Bézout cofactor for `gcd a p = 1` reduces to a modular inverse of `a`:
+given `s * a + t * p = 1`, the centered representative `s % p` satisfies
+`(s % p) * a ≡ 1 (mod p)`. This is the step turning the extended-GCD output
+(`HexArith.Int.extGcd`, consumed by `inv`) into the modular-inverse
+correctness spec. -/
 private theorem invBezout_mul_mod_eq_one {a p : Nat} (hp : 0 < p)
     {s t : Int} (hbez : s * Int.ofNat a + t * Int.ofNat p = 1) :
     (Int.toNat (s % Int.ofNat p) * a) % p = 1 % p := by
@@ -719,6 +724,10 @@ private theorem invBezout_mul_mod_eq_one {a p : Nat} (hp : 0 < p)
     exact Int.emod_eq_emod_iff_emod_sub_eq_zero.mpr htarget
   simpa using hleft
 
+/-- Even case of one square-and-multiply step: when `k` is even, replacing
+`base ^ k` by `(base * base) ^ (k / 2)` under modular reduction leaves the
+accumulator unchanged mod `p`. Used by `pow_go_toNat` to discharge the even
+branch of the `pow.go` recursion. -/
 private theorem nat_mod_mul_pow_square_even (acc base k p : Nat) (heven : k % 2 = 0) :
     (acc * ((base * base) % p) ^ (k / 2)) % p = (acc * base ^ k) % p := by
   have hk : 2 * (k / 2) = k := by
@@ -738,6 +747,10 @@ private theorem nat_mod_mul_pow_square_even (acc base k p : Nat) (heven : k % 2 
     _ = (acc * base ^ (2 * (k / 2))) % p := by rw [hsquare]
     _ = (acc * base ^ k) % p := by rw [hk]
 
+/-- Odd case of one square-and-multiply step: when `k` is odd, folding one
+factor of `base` into the accumulator and replacing `base ^ k` by
+`(base * base) ^ (k / 2)` under modular reduction reproduces `acc * base ^ k`
+mod `p`. Used by `pow_go_toNat` for the odd branch of the `pow.go` recursion. -/
 private theorem nat_mod_mul_pow_square_odd (acc base k p : Nat) (hodd : k % 2 ≠ 0) :
     ((acc * base) % p * ((base * base) % p) ^ (k / 2)) % p =
       (acc * base ^ k) % p := by
@@ -766,6 +779,10 @@ private theorem nat_mod_mul_pow_square_odd (acc base k p : Nat) (hodd : k % 2 �
       simp [Nat.pow_add]
     _ = (acc * base ^ k) % p := by rw [hk]
 
+/-- Loop invariant of the `pow.go` tail recursion: the canonical representative
+of `pow.go base acc k` is `(acc.toNat * base.toNat ^ k) % p`, linking the
+tail-recursive accumulator to `base ^ k` mod `p`. This is the workhorse behind
+`toNat_pow`. -/
 private theorem pow_go_toNat (base acc : ZMod64 p) (k : Nat) :
     (pow.go base acc k).toNat = (acc.toNat * base.toNat ^ k) % p := by
   revert base acc
