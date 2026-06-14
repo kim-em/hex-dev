@@ -25,6 +25,9 @@ variable {R : Type u}
 
 noncomputable section
 
+/-- Reading a mapped `List.range` with default zero returns the mapped index inside
+the range and zero outside it. This is the coefficient-array lookup fact used by
+`coeff_ofPolynomial` when rebuilding dense polynomials from Mathlib coefficients. -/
 private theorem list_getD_map_range_zero [Zero R] (size n : Nat) (f : Nat → R) :
     (List.map f (List.range size)).getD n (Zero.zero : R) =
       if n < size then f n else (Zero.zero : R) := by
@@ -54,14 +57,25 @@ theorem coeff_ofPolynomial [Semiring R] [DecidableEq R] (p : Polynomial R) (n : 
     simp [hn, Polynomial.coeff_eq_zero_of_natDegree_lt hlt]
     rfl
 
+/-- The `i`th diagonal contribution to the coefficient of degree `n` in the
+product of two dense polynomials. It is zero past the diagonal and otherwise
+denotes `p.coeff i * q.coeff (n - i)`, the term later summed in
+`mulCoeffSum_eq_diagonal`. -/
 private def denseDiagonalMulCoeffTerm [Zero R] [DecidableEq R] [Mul R]
     (p q : Hex.DensePoly R) (n i : Nat) : R :=
   if n < i then 0 else p.coeff i * q.coeff (n - i)
 
+/-- The bounded version of `denseDiagonalMulCoeffTerm` seen by an inner
+`List.range m` fold. It keeps only diagonal terms whose second index is within
+the current bound, forming the bridge from `mulCoeffStep` to the unbounded
+diagonal term. -/
 private def denseBoundedDiagonalMulCoeffTerm [Zero R] [DecidableEq R] [Mul R]
     (p q : Hex.DensePoly R) (n i m : Nat) : R :=
   if n < i then 0 else if n - i < m then p.coeff i * q.coeff (n - i) else 0
 
+/-- Folding `mulCoeffStep` over a bounded range adds exactly the bounded
+diagonal contribution for the fixed outer index `i`. This is the inner-fold
+normal form used before replacing the bound by `q.size`. -/
 private theorem fold_mulCoeffStep_eq_bounded_diagonal [Semiring R] [DecidableEq R]
     (p q : Hex.DensePoly R) (n i m : Nat) (acc : R) :
     (List.range m).foldl (Hex.DensePoly.mulCoeffStep p q n i) acc =
@@ -87,6 +101,9 @@ private theorem fold_mulCoeffStep_eq_bounded_diagonal [Semiring R] [DecidableEq 
           · have hm' : ¬ n - i < m + 1 := by omega
             simp [hlt, hm, hm', heq]
 
+/-- Folding `mulCoeffStep` over all coefficients of `q` adds the full diagonal
+term for the fixed outer index `i`. Coefficients outside `q.size` vanish, so this
+removes the bounded inner-fold artifact. -/
 private theorem fold_mulCoeffStep_eq_diagonal [Semiring R] [DecidableEq R]
     (p q : Hex.DensePoly R) (n i : Nat) (acc : R) :
     (List.range q.size).foldl (Hex.DensePoly.mulCoeffStep p q n i) acc =
@@ -101,6 +118,9 @@ private theorem fold_mulCoeffStep_eq_diagonal [Semiring R] [DecidableEq R]
         Hex.DensePoly.coeff_eq_zero_of_size_le q (Nat.le_of_not_gt hbound)
       simp [hlt, hbound, hcoeff]
 
+/-- Replacing every inner multiplication fold by its diagonal contribution gives
+the same outer fold over any list of outer indices. This lifts the fixed-index
+inner-fold normal form to the nested fold used by `mulCoeffSum`. -/
 private theorem fold_mulCoeff_outer_eq_diagonal [Semiring R] [DecidableEq R]
     (p q : Hex.DensePoly R) (n : Nat) (xs : List Nat) (acc : R) :
     xs.foldl (fun coeff i => (List.range q.size).foldl
@@ -114,6 +134,9 @@ private theorem fold_mulCoeff_outer_eq_diagonal [Semiring R] [DecidableEq R]
       rw [fold_mulCoeffStep_eq_diagonal]
       exact ih (acc + denseDiagonalMulCoeffTerm p q n i)
 
+/-- The executable multiplication coefficient sum is the fold over diagonal
+contributions indexed by the size of the left factor. This is the main normal
+form used by `toPolynomial_mul` before converting the range fold to a Finset sum. -/
 private theorem mulCoeffSum_eq_diagonal [Semiring R] [DecidableEq R]
     (p q : Hex.DensePoly R) (n : Nat) :
     Hex.DensePoly.mulCoeffSum p q n =
@@ -121,6 +144,9 @@ private theorem mulCoeffSum_eq_diagonal [Semiring R] [DecidableEq R]
   unfold Hex.DensePoly.mulCoeffSum
   exact fold_mulCoeff_outer_eq_diagonal p q n (List.range p.size) 0
 
+/-- A diagonal contribution is zero once its left index is outside the stored
+coefficient range of `p`. This permits extending the diagonal fold beyond
+`p.size` without changing its value. -/
 private theorem denseDiagonalMulCoeffTerm_eq_zero_of_size_le [Semiring R] [DecidableEq R]
     (p q : Hex.DensePoly R) (n i : Nat) (hi : p.size ≤ i) :
     denseDiagonalMulCoeffTerm p q n i = 0 := by
@@ -130,6 +156,9 @@ private theorem denseDiagonalMulCoeffTerm_eq_zero_of_size_le [Semiring R] [Decid
   · have hcoeff : p.coeff i = 0 := Hex.DensePoly.coeff_eq_zero_of_size_le p hi
     simp [hn, hcoeff]
 
+/-- Extending the diagonal fold by any number of indices past `p.size` does not
+change the sum. The added terms vanish by
+`denseDiagonalMulCoeffTerm_eq_zero_of_size_le`. -/
 private theorem fold_diagonal_extend [Semiring R] [DecidableEq R]
     (p q : Hex.DensePoly R) (n d : Nat) :
     (List.range (p.size + d)).foldl (fun acc i => acc + denseDiagonalMulCoeffTerm p q n i) 0 =
@@ -145,6 +174,9 @@ private theorem fold_diagonal_extend [Semiring R] [DecidableEq R]
         denseDiagonalMulCoeffTerm_eq_zero_of_size_le p q n (p.size + d) (by omega)
       simp [hterm]
 
+/-- The diagonal fold can be evaluated over any range whose size is at least
+`p.size`. This packages `fold_diagonal_extend` for later comparison with the
+degree-indexed range used by Mathlib's coefficient formula. -/
 private theorem diagonalSum_eq_bound [Semiring R] [DecidableEq R]
     (p q : Hex.DensePoly R) (n m : Nat) (hm : p.size ≤ m) :
     (List.range p.size).foldl (fun acc i => acc + denseDiagonalMulCoeffTerm p q n i) 0 =
@@ -153,11 +185,17 @@ private theorem diagonalSum_eq_bound [Semiring R] [DecidableEq R]
   rw [← hm']
   exact (fold_diagonal_extend p q n (m - p.size)).symm
 
+/-- A diagonal contribution is zero when the left index is larger than the target
+degree `n`. This is the degree-side vanishing fact used to truncate diagonal
+folds to `n + 1` terms. -/
 private theorem denseDiagonalMulCoeffTerm_eq_zero_of_degree_lt [Semiring R] [DecidableEq R]
     (p q : Hex.DensePoly R) (n i : Nat) (hi : n < i) :
     denseDiagonalMulCoeffTerm p q n i = 0 := by
   simp [denseDiagonalMulCoeffTerm, hi]
 
+/-- Extending the degree-indexed diagonal fold past `n + 1` leaves the sum
+unchanged. The extra indices cannot lie on the degree-`n` multiplication
+diagonal, so their contributions are zero. -/
 private theorem fold_diagonal_truncate_degree [Semiring R] [DecidableEq R]
     (p q : Hex.DensePoly R) (n d : Nat) :
     (List.range (n + 1 + d)).foldl (fun acc i => acc + denseDiagonalMulCoeffTerm p q n i) 0 =
@@ -173,6 +211,9 @@ private theorem fold_diagonal_truncate_degree [Semiring R] [DecidableEq R]
         denseDiagonalMulCoeffTerm_eq_zero_of_degree_lt p q n (n + 1 + d) (by omega)
       simp [hterm]
 
+/-- The diagonal fold over `p.size` agrees with the canonical degree bound
+`n + 1`. This aligns `mulCoeffSum_eq_diagonal` with the range used by Mathlib's
+antidiagonal coefficient formula in `toPolynomial_mul`. -/
 private theorem diagonalSum_eq_degree_bound [Semiring R] [DecidableEq R]
     (p q : Hex.DensePoly R) (n : Nat) :
     (List.range p.size).foldl (fun acc i => acc + denseDiagonalMulCoeffTerm p q n i) 0 =
@@ -183,6 +224,9 @@ private theorem diagonalSum_eq_degree_bound [Semiring R] [DecidableEq R]
     rw [← hsize']
     exact fold_diagonal_truncate_degree p q n (p.size - (n + 1))
 
+/-- A left fold that repeatedly adds `f i` over `List.range m` is the same as
+the corresponding `Finset.range` sum. This is the final fold-to-sum bridge used
+before comparing executable multiplication with Mathlib polynomial multiplication. -/
 private theorem range_foldl_add_eq_finset_sum [AddCommMonoid R] (f : Nat → R) (m : Nat) :
     (List.range m).foldl (fun acc i => acc + f i) 0 = ∑ i ∈ Finset.range m, f i := by
   induction m with
