@@ -1285,9 +1285,36 @@ structure BadVectorBridgeData
     IsCoprime
       (W.inputPolynomial.map (Int.castRingHom ℚ))
       (W.auxiliaryPolynomial.map (Int.castRingHom ℚ))
-  resultant_divisible_by_p_pow :
-    ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
-      Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial
+  /--
+  The selected lifted factor is monic after transport to Mathlib polynomials.
+  -/
+  selectedLiftedFactor_monic :
+    (HexPolyMathlib.toPolynomial W.selectedLiftedFactor).Monic
+  /--
+  The executable local-factor degree agrees with the transported selected
+  lifted factor's Mathlib degree.
+  -/
+  selectedLiftedFactor_natDegree :
+    (HexPolyMathlib.toPolynomial W.selectedLiftedFactor).natDegree =
+      W.localFactorDegree
+  /--
+  The witness auxiliary polynomial satisfies the selected-factor CLD syzygy
+  modulo the Hensel precision.
+  -/
+  auxiliary_selected_congr :
+    Hex.ZPoly.congr (W.H * W.selectedLiftedFactor)
+      (W.input * Hex.DensePoly.derivative W.selectedLiftedFactor)
+      (W.liftData.p ^ W.liftData.k)
+  /--
+  Degree room for the input side of the CLD resultant valuation.
+  -/
+  input_degree_bound :
+    2 * W.localFactorDegree ≤ W.inputPolynomial.natDegree
+  /--
+  Degree room for the auxiliary side of the CLD resultant valuation.
+  -/
+  auxiliary_degree_bound :
+    2 * W.localFactorDegree ≤ W.auxiliaryPolynomial.natDegree + 1
 
 namespace BadVectorBridgeData
 
@@ -1474,21 +1501,6 @@ structure ProjectedBadVectorSetupBridge
       Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial
 
 /--
-Forget the project-level bridge data to the compact callback package consumed
-by cap separation.
--/
-def BadVectorBridgeData.toProjectedBadVectorSetupBridge
-    {W : ExecutableBadVectorWitness}
-    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
-    (D : BadVectorBridgeData W trueSupports) :
-    ProjectedBadVectorSetupBridge W trueSupports where
-  auxiliaryCorrections := D.auxiliaryCorrections
-  auxiliary_eq := D.auxiliary_eq'
-  localFactorDegree_pos := D.localFactorDegree_pos
-  coprime_input_aux_over_rat := D.coprime_input_aux_over_rat
-  resultant_divisible_by_p_pow := D.resultant_divisible_by_p_pow
-
-/--
 BHKS Lemma 3.2 (selected local-factor degree positivity), exposed from the
 project-level bridge package.  Companion accessor to
 `coprime_input_aux_over_rat_of_bridge_data` and
@@ -1528,7 +1540,50 @@ theorem resultant_divisible_by_p_pow_of_bridge_data
     (D : BadVectorBridgeData W trueSupports) :
     ((W.liftData.p ^ (W.liftData.k * W.localFactorDegree) : Nat) : ℤ) ∣
       Polynomial.resultant W.inputPolynomial W.auxiliaryPolynomial := by
-  exact D.resultant_divisible_by_p_pow
+  have hdvd : Polynomial.C ((W.liftData.p ^ W.liftData.k : Nat) : ℤ) ∣
+      (HexPolyMathlib.toPolynomial (W.H * W.selectedLiftedFactor)
+        - HexPolyMathlib.toPolynomial
+          (W.input * Hex.DensePoly.derivative W.selectedLiftedFactor)) := by
+    rw [Polynomial.C_dvd_iff_dvd_coeff]
+    intro j
+    rw [Polynomial.coeff_sub, HexPolyMathlib.coeff_toPolynomial,
+      HexPolyMathlib.coeff_toPolynomial]
+    exact Int.dvd_of_emod_eq_zero (D.auxiliary_selected_congr j)
+  obtain ⟨z, hz⟩ := hdvd
+  have hsyz :
+      HexPolyMathlib.toPolynomial W.H * HexPolyMathlib.toPolynomial W.selectedLiftedFactor
+        - HexPolyMathlib.toPolynomial W.input
+          * Polynomial.derivative (HexPolyMathlib.toPolynomial W.selectedLiftedFactor)
+        = Polynomial.C ((W.liftData.p ^ W.liftData.k : Nat) : ℤ) * z := by
+    rw [← HexPolyMathlib.toPolynomial_mul, ← HexPolyMathlib.toPolynomial_derivative,
+      ← HexPolyMathlib.toPolynomial_mul]
+    exact hz
+  simpa [inputPolynomial, auxiliaryPolynomial] using
+    cld_syzygy_pow_dvd_resultant
+      (HexPolyMathlib.toPolynomial W.input)
+      (HexPolyMathlib.toPolynomial W.H)
+      (HexPolyMathlib.toPolynomial W.selectedLiftedFactor)
+      z
+      D.selectedLiftedFactor_monic
+      D.selectedLiftedFactor_natDegree
+      hsyz
+      D.input_degree_bound
+      D.auxiliary_degree_bound
+
+/--
+Forget the project-level bridge data to the compact callback package consumed
+by cap separation.
+-/
+def BadVectorBridgeData.toProjectedBadVectorSetupBridge
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (D : BadVectorBridgeData W trueSupports) :
+    ProjectedBadVectorSetupBridge W trueSupports where
+  auxiliaryCorrections := D.auxiliaryCorrections
+  auxiliary_eq := D.auxiliary_eq'
+  localFactorDegree_pos := D.localFactorDegree_pos
+  coprime_input_aux_over_rat := D.coprime_input_aux_over_rat
+  resultant_divisible_by_p_pow := resultant_divisible_by_p_pow_of_bridge_data D
 
 /--
 Convert the packaged `ProjectedBadVectorSetupBridge` into the callback shape
