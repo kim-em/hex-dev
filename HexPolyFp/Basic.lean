@@ -101,6 +101,7 @@ private theorem coeff_neg_ring_simp_smoke (a : ZMod64 p) (n : Nat) :
       -((DensePoly.C a).coeff n) := by
   simp
 
+/-- `DensePoly.divMod f g` returns a quotient-remainder pair `(q, r)` with `q * g + r = f`. -/
 private theorem divMod_spec_core [PrimeModulus p] (f g : DensePoly (ZMod64 p)) :
     let qr := DensePoly.divMod f g
     qr.1 * g + qr.2 = f := by
@@ -156,6 +157,7 @@ private theorem divMod_spec_core [PrimeModulus p] (f g : DensePoly (ZMod64 p)) :
     rw [hsum, Nat.mod_self]
     exact ZMod64.toNat_zero.symm
 
+/-- `f % m - f` equals `m * (0 - f / m)`, so the remainder differs from `f` by a multiple of `m`. -/
 private theorem mod_sub_self_eq_mul_neg_div [PrimeModulus p] (f m : DensePoly (ZMod64 p)) :
     f % m - f = m * (0 - (f / m)) := by
   have hdiv : (f / m) * m + (f % m) = f := by
@@ -174,10 +176,12 @@ private theorem mod_sub_self_eq_mul_neg_div [PrimeModulus p] (f m : DensePoly (Z
     _ = m * (0 - (f / m)) := by
       exact (DensePoly.mul_sub_zero_comm m (f / m)).symm
 
+/-- `f % m` is congruent to `f` modulo `m`. -/
 private theorem congr_mod_core [PrimeModulus p] (f m : DensePoly (ZMod64 p)) :
     DensePoly.Congr (f % m) f m := by
   exact ⟨0 - (f / m), mod_sub_self_eq_mul_neg_div f m⟩
 
+/-- `f - g = m * r` rearranges to `f = g + m * r`. -/
 private theorem eq_add_mul_of_sub_eq_mul {f g m r : DensePoly (ZMod64 p)}
     (hsub : f - g = m * r) :
     f = g + m * r := by
@@ -189,6 +193,7 @@ private theorem eq_add_mul_of_sub_eq_mul {f g m r : DensePoly (ZMod64 p)}
   rw [DensePoly.coeff_add_semiring]
   grind
 
+/-- `(a + b) - (c + d)` equals `(a - c) + (b - d)` for `DensePoly` values. -/
 private theorem add_sub_add_right (a b c d : DensePoly (ZMod64 p)) :
     (a + b) - (c + d) = (a - c) + (b - d) := by
   apply DensePoly.ext_coeff
@@ -199,6 +204,7 @@ private theorem add_sub_add_right (a b c d : DensePoly (ZMod64 p)) :
   rw [DensePoly.coeff_sub_ring, DensePoly.coeff_sub_ring]
   grind
 
+/-- `(DensePoly.divMod f m).2` has degree strictly below `m` when `m` has positive degree. -/
 private theorem divMod_remainder_degree_lt_core
     [PrimeModulus p] (f m : DensePoly (ZMod64 p))
     (hdegree : 0 < m.degree?.getD 0) :
@@ -248,6 +254,7 @@ private theorem divMod_remainder_degree_lt_core
   rw [hsum, Nat.mod_self]
   exact ZMod64.toNat_zero.symm
 
+/-- `a - (a / lead) * lead` is zero in `ZMod64 p` whenever `lead` is nonzero. -/
 private theorem zmod_div_mul_cancel_of_ne [PrimeModulus p]
     (a lead : ZMod64 p) (hlead : lead ≠ (Zero.zero : ZMod64 p)) :
     a - (a / lead) * lead = (Zero.zero : ZMod64 p) := by
@@ -273,12 +280,15 @@ private theorem zmod_div_mul_cancel_of_ne [PrimeModulus p]
   rw [hsum, Nat.mod_self]
   exact ZMod64.toNat_zero.symm
 
+/-- `f % m` has degree strictly below `m` when `m` has positive degree. -/
 private theorem mod_remainder_degree_lt_core
     [PrimeModulus p] (f m : DensePoly (ZMod64 p))
     (hdegree : 0 < m.degree?.getD 0) :
     (f % m).degree?.getD 0 < m.degree?.getD 0 := by
   simpa [DensePoly.mod] using divMod_remainder_degree_lt_core f m hdegree
 
+/-- Folding `DensePoly.mulCoeffStep f g n i` over `List.range m` adds `f.coeff i * g.coeff (n - i)`
+exactly when `i ≤ n` and `n - i < m`, and `0` otherwise. -/
 private theorem foldl_mulCoeffStep_select
     (f g : DensePoly (ZMod64 p)) (n i m : Nat) (acc : ZMod64 p) :
     (List.range m).foldl (DensePoly.mulCoeffStep f g n i) acc =
@@ -305,6 +315,8 @@ private theorem foldl_mulCoeffStep_select
           · have hm' : ¬ n - i < m + 1 := by omega
             simp [hlt, hm, hm', heq]
 
+/-- Folding the inner `mulCoeffStep` accumulation over `xs` equals folding the directly-selected
+coefficient-product terms over `xs`. -/
 private theorem foldl_mulCoeffStep_outer
     (f g : DensePoly (ZMod64 p)) (n : Nat) (xs : List Nat) (acc : ZMod64 p) :
     xs.foldl
@@ -323,6 +335,7 @@ private theorem foldl_mulCoeffStep_outer
       rw [foldl_mulCoeffStep_select]
       exact ih _
 
+/-- Folding `acc + (if i = k then x else 0)` over `List.range m` adds `x` exactly when `k < m`. -/
 private theorem foldl_select_index
     (k m : Nat) (x : ZMod64 p) (acc : ZMod64 p) :
     (List.range m).foldl
@@ -394,6 +407,8 @@ theorem coeff_mul_at_top
   show (0 : ZMod64 p) + _ = _
   grind
 
+/-- Two polynomials of degree below `m` that are congruent modulo `m` are equal, when `m` has
+positive degree. -/
 private theorem canonical_remainder_unique_of_pos_degree
     [PrimeModulus p] (r s m : DensePoly (ZMod64 p))
     (hr : r.degree?.getD 0 < m.degree?.getD 0)
