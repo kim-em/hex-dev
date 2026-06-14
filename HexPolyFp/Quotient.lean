@@ -651,6 +651,9 @@ theorem reduce_monomial_eq_const_mul_X_pow (n : Nat) (c : ZMod64 p) :
           rw [FpPoly.zero_add]
     _ = a := reduce_val_self a
 
+/-- Quotient addition is associative.  Together with `add_zero`, `zero_add`,
+`add_comm` and `add_left_neg` this supplies the additive-group axioms behind the
+`Field (Quotient g hmonic hg_pos)` instance. -/
 theorem add_assoc (a b c : Quotient g hmonic hg_pos) :
     (a + b) + c = a + (b + c) := by
   calc
@@ -967,6 +970,9 @@ def inv (a : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
 instance : Inv (Quotient g hmonic hg_pos) where
   inv := inv
 
+/-- The inverse of `0` is `0`, the conventional junk value fixed by `inv`.  This
+is the `inv_zero` field axiom required by `Field`; it holds unconditionally and,
+unlike `mul_inv_cancel`, needs no irreducibility hypothesis. -/
 theorem inv_zero :
     (0 : Quotient g hmonic hg_pos)⁻¹ = 0 := by
   have hzero_val : (0 : Quotient g hmonic hg_pos).val = 0 := by
@@ -978,6 +984,11 @@ theorem inv_zero :
   rw [hzero_val]
   simp
 
+/-- Multiplicative cancellation: when `g` is irreducible, every nonzero quotient
+element `a` satisfies `a * a⁻¹ = 1`.  This is the field-inverse axiom that
+promotes `Quotient g hmonic hg_pos` from a commutative ring to a `Field`; the
+`FpPoly.Irreducible g` hypothesis is essential, since for reducible `g` a nonzero
+zero-divisor has no inverse. -/
 theorem mul_inv_cancel (hg_irr : FpPoly.Irreducible g)
     {a : Quotient g hmonic hg_pos} (ha : a ≠ 0) :
     a * a⁻¹ = 1 := by
