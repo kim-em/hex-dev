@@ -1084,6 +1084,8 @@ def luebeckConwayPolynomial_11_1 : FpPoly 11 :=
     DensePoly.Monic luebeckConwayPolynomial_11_1 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 11 1` resolves to the committed `C(11, 1)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_11_1` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_11_1 :
     luebeckConwayPolynomial? 11 1 = some luebeckConwayPolynomial_11_1 := by
   show some (luebeckConwayPolynomialOfCoeffs 11 [9, 1]) = some luebeckConwayPolynomial_11_1
@@ -1112,6 +1114,8 @@ def luebeckConwayPolynomial_11_2 : FpPoly 11 :=
     DensePoly.Monic luebeckConwayPolynomial_11_2 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 11 2` resolves to the committed `C(11, 2)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_11_2` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_11_2 :
     luebeckConwayPolynomial? 11 2 = some luebeckConwayPolynomial_11_2 := by
   show some (luebeckConwayPolynomialOfCoeffs 11 [2, 7, 1]) = some luebeckConwayPolynomial_11_2
@@ -1141,6 +1145,8 @@ def luebeckConwayPolynomial_11_3 : FpPoly 11 :=
     DensePoly.Monic luebeckConwayPolynomial_11_3 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 11 3` resolves to the committed `C(11, 3)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_11_3` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_11_3 :
     luebeckConwayPolynomial? 11 3 = some luebeckConwayPolynomial_11_3 := by
   show some (luebeckConwayPolynomialOfCoeffs 11 [9, 2, 0, 1]) = some luebeckConwayPolynomial_11_3
@@ -1171,6 +1177,8 @@ def luebeckConwayPolynomial_11_4 : FpPoly 11 :=
     DensePoly.Monic luebeckConwayPolynomial_11_4 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 11 4` resolves to the committed `C(11, 4)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_11_4` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_11_4 :
     luebeckConwayPolynomial? 11 4 = some luebeckConwayPolynomial_11_4 := by
   show some (luebeckConwayPolynomialOfCoeffs 11 [2, 10, 8, 0, 1]) = some luebeckConwayPolynomial_11_4
@@ -1202,6 +1210,8 @@ def luebeckConwayPolynomial_11_5 : FpPoly 11 :=
     DensePoly.Monic luebeckConwayPolynomial_11_5 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 11 5` resolves to the committed `C(11, 5)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_11_5` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_11_5 :
     luebeckConwayPolynomial? 11 5 = some luebeckConwayPolynomial_11_5 := by
   show some (luebeckConwayPolynomialOfCoeffs 11 [9, 0, 10, 0, 0, 1]) = some luebeckConwayPolynomial_11_5
@@ -1234,6 +1244,8 @@ def luebeckConwayPolynomial_11_6 : FpPoly 11 :=
     DensePoly.Monic luebeckConwayPolynomial_11_6 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 11 6` resolves to the committed `C(11, 6)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_11_6` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_11_6 :
     luebeckConwayPolynomial? 11 6 = some luebeckConwayPolynomial_11_6 := by
   show some (luebeckConwayPolynomialOfCoeffs 11 [2, 7, 6, 4, 3, 0, 1]) = some luebeckConwayPolynomial_11_6
@@ -1267,6 +1279,8 @@ def luebeckConwayPolynomial_13_1 : FpPoly 13 :=
     DensePoly.Monic luebeckConwayPolynomial_13_1 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 13 1` resolves to the committed `C(13, 1)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_13_1` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_13_1 :
     luebeckConwayPolynomial? 13 1 = some luebeckConwayPolynomial_13_1 := by
   show some (luebeckConwayPolynomialOfCoeffs 13 [11, 1]) = some luebeckConwayPolynomial_13_1
@@ -1295,6 +1309,8 @@ def luebeckConwayPolynomial_13_2 : FpPoly 13 :=
     DensePoly.Monic luebeckConwayPolynomial_13_2 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 13 2` resolves to the committed `C(13, 2)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_13_2` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_13_2 :
     luebeckConwayPolynomial? 13 2 = some luebeckConwayPolynomial_13_2 := by
   show some (luebeckConwayPolynomialOfCoeffs 13 [2, 12, 1]) = some luebeckConwayPolynomial_13_2
@@ -1324,6 +1340,8 @@ def luebeckConwayPolynomial_13_3 : FpPoly 13 :=
     DensePoly.Monic luebeckConwayPolynomial_13_3 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 13 3` resolves to the committed `C(13, 3)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_13_3` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_13_3 :
     luebeckConwayPolynomial? 13 3 = some luebeckConwayPolynomial_13_3 := by
   show some (luebeckConwayPolynomialOfCoeffs 13 [11, 2, 0, 1]) = some luebeckConwayPolynomial_13_3
@@ -1354,6 +1372,8 @@ def luebeckConwayPolynomial_13_4 : FpPoly 13 :=
     DensePoly.Monic luebeckConwayPolynomial_13_4 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 13 4` resolves to the committed `C(13, 4)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_13_4` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_13_4 :
     luebeckConwayPolynomial? 13 4 = some luebeckConwayPolynomial_13_4 := by
   show some (luebeckConwayPolynomialOfCoeffs 13 [2, 12, 3, 0, 1]) = some luebeckConwayPolynomial_13_4
@@ -1385,6 +1405,8 @@ def luebeckConwayPolynomial_13_5 : FpPoly 13 :=
     DensePoly.Monic luebeckConwayPolynomial_13_5 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 13 5` resolves to the committed `C(13, 5)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_13_5` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_13_5 :
     luebeckConwayPolynomial? 13 5 = some luebeckConwayPolynomial_13_5 := by
   show some (luebeckConwayPolynomialOfCoeffs 13 [11, 4, 0, 0, 0, 1]) = some luebeckConwayPolynomial_13_5
@@ -1417,6 +1439,8 @@ def luebeckConwayPolynomial_13_6 : FpPoly 13 :=
     DensePoly.Monic luebeckConwayPolynomial_13_6 := by
   rfl
 
+/-- `luebeckConwayPolynomial? 13 6` resolves to the committed `C(13, 6)` literal,
+rewriting the table lookup to the direct `luebeckConwayPolynomial_13_6` form. -/
 @[simp] theorem luebeckConwayPolynomial?_hit_13_6 :
     luebeckConwayPolynomial? 13 6 = some luebeckConwayPolynomial_13_6 := by
   show some (luebeckConwayPolynomialOfCoeffs 13 [2, 11, 11, 10, 0, 0, 1]) = some luebeckConwayPolynomial_13_6
