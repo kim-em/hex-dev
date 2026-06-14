@@ -4110,6 +4110,7 @@ def primitivePart (p : DensePoly Int) : DensePoly Int :=
     ofCoeffs <|
       p.toArray.toList.map (fun coeff => coeff / c) |>.toArray
 
+/-- Folding `Nat.gcd` over `xs` starting from `acc` yields a divisor of the seed `acc`, the base step for showing `contentNat` divides each coefficient. -/
 private theorem foldl_gcd_dvd_acc (xs : List Nat) (acc : Nat) :
     xs.foldl (fun g x => Nat.gcd g x) acc ∣ acc := by
   induction xs generalizing acc with
@@ -4118,6 +4119,7 @@ private theorem foldl_gcd_dvd_acc (xs : List Nat) (acc : Nat) :
   | cons x xs ih =>
       exact Nat.dvd_trans (ih (Nat.gcd acc x)) (Nat.gcd_dvd_left acc x)
 
+/-- The running `Nat.gcd` fold over `xs` divides every member `x` of the list, the step giving `contentNat ∣ coeff` for coefficients actually present. -/
 private theorem foldl_gcd_dvd_of_mem {xs : List Nat} {x acc : Nat}
     (hx : x ∈ xs) :
     xs.foldl (fun g x => Nat.gcd g x) acc ∣ x := by
@@ -4134,6 +4136,7 @@ private theorem foldl_gcd_dvd_of_mem {xs : List Nat} {x acc : Nat}
       | inr hy =>
           exact ih (acc := Nat.gcd acc y) hy
 
+/-- `contentNat p`, viewed as an `Int`, divides every coefficient `p.coeff n`, the forward half of content-divides-coefficient reasoning. -/
 private theorem contentNat_dvd_coeff (p : DensePoly Int) (n : Nat) :
     (contentNat p : Int) ∣ p.coeff n := by
   by_cases hn : n < p.size
@@ -4159,6 +4162,7 @@ theorem content_dvd_coeff (p : DensePoly Int) (n : Nat) :
     content p ∣ p.coeff n := by
   simpa [content] using contentNat_dvd_coeff p n
 
+/-- Any `d` dividing the seed `acc` and every member of `xs` also divides their `Nat.gcd` fold, the converse direction characterising `contentNat` as a greatest common divisor. -/
 private theorem dvd_foldl_gcd_of_dvd_mem (xs : List Nat) (d acc : Nat)
     (hacc : d ∣ acc) (hxs : ∀ x, x ∈ xs → d ∣ x) :
     d ∣ xs.foldl (fun g x => Nat.gcd g x) acc := by
@@ -4172,6 +4176,7 @@ private theorem dvd_foldl_gcd_of_dvd_mem (xs : List Nat) (d acc : Nat)
       · intro y hy
         exact hxs y (by simp [hy])
 
+/-- Any `d` dividing every coefficient of `p` divides `contentNat p`, the universal property making `contentNat` the gcd of the coefficients. -/
 private theorem dvd_contentNat_of_dvd_coeff (p : DensePoly Int) (d : Nat)
     (h : ∀ n, (d : Int) ∣ p.coeff n) :
     d ∣ contentNat p := by
@@ -4196,12 +4201,14 @@ private theorem dvd_contentNat_of_dvd_coeff (p : DensePoly Int) (d : Nat)
     rw [hcoeff_eq] at hdiv
     rwa [Int.ofNat_dvd_left] at hdiv
 
+/-- Every integer `a` is a unit-signed multiple of its `natAbs`, supplying the `±1` factor relating a coefficient to its absolute value in content arguments. -/
 private theorem int_natAbs_signed_mul (a : Int) :
     ∃ s : Int, s * a = Int.ofNat a.natAbs := by
   rcases Int.natAbs_eq a with ha | ha
   · exact ⟨1, by rw [ha]; grind⟩
   · exact ⟨-1, by rw [ha]; grind⟩
 
+/-- `Nat.gcd a b` admits an integer Bezout combination `x * a + y * b`, the Bezout identity underlying primitive-part divisibility reasoning. -/
 private theorem nat_gcd_bezout (a b : Nat) :
     ∃ x y : Int, x * (a : Int) + y * (b : Int) = (Nat.gcd a b : Int) := by
   induction a, b using Nat.gcd.induction with
@@ -4225,6 +4232,7 @@ private theorem nat_gcd_bezout (a b : Nat) :
         _ = x * (b % a : Nat) + y * (a : Int) := by
               rw [← hmod]
 
+/-- Summing a list of integers from a seed `z` equals `z` plus the sum from `0`, the accumulator-extraction lemma for additive folds. -/
 private theorem list_foldl_add_int (xs : List Int) (z : Int) :
     xs.foldl (fun s t => s + t) z = z + xs.foldl (fun s t => s + t) 0 := by
   induction xs generalizing z with
@@ -4234,6 +4242,7 @@ private theorem list_foldl_add_int (xs : List Int) (z : Int) :
       rw [ih (z + x), ih (0 + x)]
       grind
 
+/-- If `d` divides every member of `xs` then it divides their additive fold, the divisibility-of-sum step for integer lists. -/
 private theorem dvd_list_foldl_add_int_of_forall
     (d : Int) (xs : List Int) (h : ∀ x ∈ xs, d ∣ x) :
     d ∣ xs.foldl (fun s t => s + t) 0 := by
@@ -4246,6 +4255,7 @@ private theorem dvd_list_foldl_add_int_of_forall
       simpa using Int.dvd_add (h x List.mem_cons_self)
         (ih (fun y hy => h y (List.mem_cons_of_mem x hy)))
 
+/-- If `d` divides each `term x` for `x ∈ xs` then it divides the additive fold of `term` over `xs`, the divisibility-of-sum step for indexed term families. -/
 private theorem dvd_list_foldl_add_term_of_forall
     (d : Int) (xs : List Nat) (term : Nat → Int)
     (h : ∀ x ∈ xs, d ∣ term x) :
@@ -4257,12 +4267,14 @@ private theorem dvd_list_foldl_add_term_of_forall
     exact h x hx
   simpa [List.foldl_map] using dvd_list_foldl_add_int_of_forall d (xs.map term) hmap
 
+/-- The accumulator-extraction lemma for an additive fold of `term x`, pulling the seed `z` in front of the fold from `0`. -/
 private theorem list_foldl_add_term_int
     (xs : List Nat) (term : Nat → Int) (z : Int) :
     xs.foldl (fun s x => s + term x) z =
       z + xs.foldl (fun s x => s + term x) 0 := by
   simpa [List.foldl_map] using list_foldl_add_int (xs.map term) z
 
+/-- The difference of the additive folds of `f` and `g` equals the additive fold of `fun x => f x - g x`, the linearity step combining two term-family sums. -/
 private theorem foldl_add_int_sub_terms
     (xs : List Nat) (f g : Nat → Int) :
     xs.foldl (fun s x => s + f x) 0 -
@@ -4279,6 +4291,7 @@ private theorem foldl_add_int_sub_terms
       rw [← ih]
       grind
 
+/-- If `d` divides the additive fold of `f` and divides each `f x - g x`, then it divides the additive fold of `g`, transporting divisibility across a term-wise congruence. -/
 private theorem dvd_foldl_add_term_of_dvd_congr
     (d : Int) (xs : List Nat) (f g : Nat → Int)
     (hf : d ∣ xs.foldl (fun s x => s + f x) 0)
@@ -4298,6 +4311,7 @@ private theorem dvd_foldl_add_term_of_dvd_congr
     grind
   rwa [hrewrite] at hsub
 
+/-- Over a `Nodup` index list, if `d` divides the whole additive fold and every term except the one at `idx`, then it divides the `idx` term, the single-term isolation step for convolution-coefficient divisibility. -/
 private theorem dvd_term_of_dvd_foldl_add_of_dvd_others
     (d : Int) :
     ∀ (xs : List Nat) (term : Nat → Int) (idx : Nat),
