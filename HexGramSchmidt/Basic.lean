@@ -223,6 +223,8 @@ private def reduceAgainstBasis (basisRev : List (Vector Rat m)) (row : Vector Ra
     Vector Rat m :=
   basisRev.foldl subtractProjection row
 
+/-- `reduceAgainstBasis basisRev row` has the same dot product with `target` as `row`
+does, whenever `target` is orthogonal to every row in `basisRev`. -/
 private theorem dot_reduceAgainstBasis_zero_of_forall_dot_zero
     (basisRev : List (Vector Rat m)) (row target : Vector Rat m)
     (horth : ∀ basisRow ∈ basisRev, Matrix.dot basisRow target = 0) :
@@ -241,6 +243,8 @@ private theorem dot_reduceAgainstBasis_zero_of_forall_dot_zero
       · intro laterBasisRow hlater
         exact horth laterBasisRow (by simp [hlater])
 
+/-- The residual `reduceAgainstBasis basisRev row` stays orthogonal to `target` when both
+`row` and every row in `basisRev` are orthogonal to `target`. -/
 private theorem dot_reduceAgainstBasis_zero_of_dot_zero
     (basisRev : List (Vector Rat m)) (row target : Vector Rat m)
     (hrow : Matrix.dot row target = 0)
@@ -248,6 +252,8 @@ private theorem dot_reduceAgainstBasis_zero_of_dot_zero
     Matrix.dot (reduceAgainstBasis basisRev row) target = 0 := by
   rw [dot_reduceAgainstBasis_zero_of_forall_dot_zero basisRev row target horth, hrow]
 
+/-- `reduceAgainstBasis basisRev row` is orthogonal to every member of a pairwise-orthogonal
+`basisRev`. -/
 private theorem dot_reduceAgainstBasis_of_mem
     (basisRev : List (Vector Rat m)) (row basisRow : Vector Rat m)
     (hmem : basisRow ∈ basisRev)
@@ -277,6 +283,8 @@ private theorem dot_reduceAgainstBasis_of_mem
         · exact htail
         · exact List.Pairwise.of_cons horth
 
+/-- `reduceAgainstBasis basisRev row` has the same projection coefficient onto `basisRow`
+as `row`, when every row in `basisRev` is orthogonal to `basisRow`. -/
 private theorem projectionCoeff_reduceAgainstBasis_eq_of_forall_dot_zero
     (basisRev : List (Vector Rat m)) (row basisRow : Vector Rat m)
     (horth : ∀ otherBasisRow ∈ basisRev, Matrix.dot otherBasisRow basisRow = 0) :
@@ -298,10 +306,14 @@ private theorem projectionCoeff_reduceAgainstBasis_eq_of_forall_dot_zero
       · intro laterBasisRow hlater
         exact horth laterBasisRow (by simp [hlater])
 
+/-- `projectionCombination row basisRev acc` accumulates onto `acc` the sum of `row`'s
+projections onto each row of `basisRev`. -/
 private def projectionCombination (row : Vector Rat m) (basisRev : List (Vector Rat m))
     (acc : Vector Rat m) : Vector Rat m :=
   basisRev.foldl (fun acc basisRow => acc + projectionCoeff row basisRow • basisRow) acc
 
+/-- `projectionCombination` is unchanged when `row` is replaced by `row'` sharing the same
+projection coefficient on every row of `basisRev`. -/
 private theorem projectionCombination_congr
     (basisRev : List (Vector Rat m)) (row row' acc : Vector Rat m)
     (hcoeff :
@@ -319,6 +331,8 @@ private theorem projectionCombination_congr
           intro laterBasisRow hlater
           exact hcoeff laterBasisRow (by simp [hlater]))
 
+/-- `subtractProjection row basisRow` plus the projection term and `acc` reassembles to
+`row + acc`. -/
 private theorem subtractProjection_add_projection_with_acc
     (row basisRow acc : Vector Rat m) :
     subtractProjection row basisRow +
@@ -331,6 +345,8 @@ private theorem subtractProjection_add_projection_with_acc
   simp only [Vector.getElem_add, Vector.getElem_smul] at hrowk ⊢
   grind
 
+/-- For a pairwise-orthogonal `basisRev`, the residual plus the accumulated projection
+combination reconstructs `row + acc`. -/
 private theorem reduceAgainstBasis_reconstruction_acc
     (basisRev : List (Vector Rat m)) (row acc : Vector Rat m)
     (horth : basisRev.Pairwise (fun x y => Matrix.dot x y = 0 ∧ Matrix.dot y x = 0)) :
@@ -360,6 +376,8 @@ private theorem reduceAgainstBasis_reconstruction_acc
           (row := row) (otherBasisRow := basisRow) (basisRow := laterBasisRow)
           (List.rel_of_pairwise_cons horth hlater).1
 
+/-- For a pairwise-orthogonal `basisRev`, `row` equals its residual plus the sum of its
+projections onto the basis rows. -/
 private theorem reduceAgainstBasis_reconstruction
     (basisRev : List (Vector Rat m)) (row : Vector Rat m)
     (horth : basisRev.Pairwise (fun x y => Matrix.dot x y = 0 ∧ Matrix.dot y x = 0)) :
@@ -394,6 +412,7 @@ private def basisMatrix (b : Matrix Rat n m) : Matrix Rat n m :=
   let rows := basisRows b.toList
   Vector.ofFn fun i => rows[i.val]!
 
+/-- `basisRowsAux basisRev pending` begins with `basisRev.reverse` as a prefix. -/
 private theorem basisRowsAux_reverse_prefix (basisRev pending : List (Vector Rat m)) :
     ∃ suffix, basisRowsAux basisRev pending = basisRev.reverse ++ suffix := by
   induction pending generalizing basisRev with
@@ -405,11 +424,13 @@ private theorem basisRowsAux_reverse_prefix (basisRev pending : List (Vector Rat
       refine ⟨GramSchmidt.reduceAgainstBasis basisRev row :: suffix, ?_⟩
       simp [basisRowsAux, hsuffix, List.reverse_cons, List.append_assoc]
 
+/-- The first row produced by `basisRowsAux [row] rows` is `row` itself. -/
 private theorem basisRowsAux_singleton_head (row : Vector Rat m) (rows : List (Vector Rat m)) :
     (basisRowsAux [row] rows)[0]! = row := by
   obtain ⟨suffix, hsuffix⟩ := basisRowsAux_reverse_prefix [row] rows
   simp [hsuffix]
 
+/-- `basisRowsAux basisRev pending` has length `basisRev.length + pending.length`. -/
 private theorem basisRowsAux_length (basisRev pending : List (Vector Rat m)) :
     (basisRowsAux basisRev pending).length = basisRev.length + pending.length := by
   induction pending generalizing basisRev with
@@ -419,10 +440,12 @@ private theorem basisRowsAux_length (basisRev pending : List (Vector Rat m)) :
       simpa [basisRowsAux, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using
         ih (GramSchmidt.reduceAgainstBasis basisRev row :: basisRev)
 
+/-- `basisRows rows` has the same length as `rows`. -/
 private theorem basisRows_length (rows : List (Vector Rat m)) :
     (basisRows rows).length = rows.length := by
   simpa [basisRows] using basisRowsAux_length ([] : List (Vector Rat m)) rows
 
+/-- `rows.reverse` is pairwise orthogonal whenever `rows` is. -/
 private theorem orthPairwise_reverse (rows : List (Vector Rat m))
     (horth : rows.Pairwise (fun x y => Matrix.dot x y = 0 ∧ Matrix.dot y x = 0)) :
     rows.reverse.Pairwise (fun x y => Matrix.dot x y = 0 ∧ Matrix.dot y x = 0) := by
@@ -436,6 +459,8 @@ private theorem orthPairwise_reverse (rows : List (Vector Rat m))
   rw [List.getElem_reverse, List.getElem_reverse]
   exact ⟨hrel.2, hrel.1⟩
 
+/-- `basisRowsAux basisRev pending` is pairwise orthogonal whenever the accumulated basis
+`basisRev` is. -/
 private theorem basisRowsAux_pairwise
     (basisRev pending : List (Vector Rat m))
     (horth : basisRev.Pairwise (fun x y => Matrix.dot x y = 0 ∧ Matrix.dot y x = 0)) :
@@ -454,16 +479,19 @@ private theorem basisRowsAux_pairwise
           exact dot_reduceAgainstBasis_of_mem basisRev row basisRow hmem horth
       · exact horth
 
+/-- `basisRows rows` is a pairwise-orthogonal list of rows. -/
 private theorem basisRows_pairwise (rows : List (Vector Rat m)) :
     (basisRows rows).Pairwise (fun x y => Matrix.dot x y = 0 ∧ Matrix.dot y x = 0) := by
   simpa [basisRows] using
     basisRowsAux_pairwise ([] : List (Vector Rat m)) rows (by simp)
 
+/-- Row `i` of `basisMatrix b` is the `i`-th entry of `basisRows b.toList`. -/
 private theorem basisMatrix_row_eq_basisRows_get!
     (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
     (basisMatrix b).row ⟨i, hi⟩ = (basisRows b.toList)[i]! := by
   simp [basisMatrix, Matrix.row]
 
+/-- Distinct rows of `basisRows b.toList` have dot product zero. -/
 private theorem basisRows_get!_dot_eq_zero
     (b : Matrix Rat n m) (i j : Nat) (hi : i < n) (hj : j < n) (hij : i ≠ j) :
     Matrix.dot (basisRows b.toList)[i]! (basisRows b.toList)[j]! = 0 := by
