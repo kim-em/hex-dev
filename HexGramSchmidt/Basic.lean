@@ -138,6 +138,9 @@ private theorem dot_self_eq_zero_get (v : Vector Rat m)
   exact foldl_dot_self_eq_zero_of_mem (xs := List.finRange m) (v := v)
     (acc := 0) (by decide) (by simpa [Matrix.dot, Hex.Vector.dotProduct] using hzero) i hmem
 
+/-- Over `Rat`, a vector whose self-dot-product is zero is the zero vector, so
+its dot product with any other row also vanishes. Used to discharge the
+degenerate zero-norm basis row case when reasoning about orthogonality. -/
 theorem dot_zero_of_dot_self_zero (row v : Vector Rat m)
     (hzero : Matrix.dot v v = 0) :
     Matrix.dot row v = 0 := by
@@ -2854,11 +2857,15 @@ noncomputable def basis (b : Matrix Rat n m) : Matrix Rat n m :=
 noncomputable def coeffs (b : Matrix Rat n m) : Matrix Rat n n :=
   GramSchmidt.coeffMatrix b (basis b)
 
+/-- Gram-Schmidt leaves the first row untouched: the leading basis row of a
+rational matrix is its leading input row. -/
 theorem basis_zero (b : Matrix Rat n m) (hn : 0 < n) :
     (basis b).row ⟨0, hn⟩ = b.row ⟨0, hn⟩ := by
   simpa [basis, GramSchmidt.basisMatrix, Matrix.row] using
     GramSchmidt.basisRows_head (b := b) hn
 
+/-- The defining guarantee of the construction: distinct rational Gram-Schmidt
+basis rows are mutually orthogonal (their dot product is zero). -/
 theorem basis_orthogonal (b : Matrix Rat n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i ≠ j) :
     Matrix.dot ((basis b).row ⟨i, hi⟩) ((basis b).row ⟨j, hj⟩) = 0 := by
@@ -2866,6 +2873,9 @@ theorem basis_orthogonal (b : Matrix Rat n m)
     GramSchmidt.basisMatrix_row_eq_basisRows_get!]
   exact GramSchmidt.basisRows_get!_dot_eq_zero b i j hi hj hij
 
+/-- The triangular factorization `b = coeffs · basis`, stated row by row: each
+rational input row equals its orthogonalized basis row plus the
+coefficient-weighted combination of the earlier basis rows. -/
 theorem basis_decomposition (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
     b.row ⟨i, hi⟩ =
       (basis b).row ⟨i, hi⟩ +
@@ -2873,10 +2883,14 @@ theorem basis_decomposition (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
   simpa [basis, coeffs] using
     GramSchmidt.basisMatrix_reconstruction_invariant (b := b) i hi
 
+/-- The rational coefficient matrix has unit diagonal: each input row enters its
+own decomposition with weight `1`. -/
 theorem coeffs_diag (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
     GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨i, hi⟩ = 1 := by
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn]
 
+/-- The rational coefficient matrix is lower triangular: entries strictly above
+the diagonal vanish, since a row only combines basis rows with smaller index. -/
 theorem coeffs_upper (b : Matrix Rat n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i < j) :
     GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hj⟩ = 0 := by
@@ -2921,6 +2935,9 @@ theorem basis_rowAdd (b : Matrix Rat n m) (src dst : Fin n) (c : Rat)
   simpa [basis] using
     GramSchmidt.basisMatrix_rowAdd (b := b) (src := src) (dst := dst) (c := c) hsrcdst
 
+/-- Swapping rows `km1` and `k` leaves every basis row before the pair
+unchanged, since each Gram-Schmidt output row depends only on the input prefix
+up to its own index. -/
 theorem basis_rowSwap_of_before (b : Matrix Rat n m) (km1 k i : Fin n)
     (hkm1k : km1.val < k.val) (hi : i.val < km1.val) :
     (basis (Matrix.rowSwap b km1 k)).row i = (basis b).row i := by
@@ -2928,6 +2945,10 @@ theorem basis_rowSwap_of_before (b : Matrix Rat n m) (km1 k i : Fin n)
     GramSchmidt.basisMatrix_rowSwap_of_before (b := b) (km1 := km1) (k := k)
       (i := i) hkm1k hi
 
+/-- After swapping the adjacent rows `km1, k`, the basis row at the lower index
+`km1` becomes the old basis row `k` plus its projection coefficient times the
+old basis row `km1`. The explicit re-orthogonalization formula for the first
+vector of the swapped pair. -/
 theorem basis_rowSwap_adjacent_prev (b : Matrix Rat n m) (km1 k : Fin n)
     (hkm1 : km1.val + 1 = k.val) :
     (basis (Matrix.rowSwap b km1 k)).row km1 =
@@ -3067,6 +3088,10 @@ private theorem projectionCoeff_row_basis_self_eq_one
     simp [GramSchmidt.projectionCoeff, hnorm, hdiv]
   simpa [hself] using hproj.symm
 
+/-- After swapping the adjacent rows `km1, k` (assuming the swapped pivot is
+nonzero), the basis row at index `k` is the explicit two-term combination of the
+old basis rows `km1, k`. The companion of `basis_rowSwap_adjacent_prev` tracking
+how a swap rewrites the second vector of the pair. -/
 theorem basis_rowSwap_adjacent_curr (b : Matrix Rat n m) (km1 k : Fin n)
     (hkm1 : km1.val + 1 = k.val)
     (hnorm :
@@ -3210,6 +3235,9 @@ private theorem rowSwap_row_eq_of_ne (b : Matrix Rat n m) (i j r : Fin n)
   rw [Matrix.rowSwap_getElem (M := b) (i := i) (j := j) (r := r) (k := c)]
   simp [hri, hrj]
 
+/-- After an adjacent swap, the coefficient at the lower row `km1` against an
+earlier column `j` equals the old coefficient at row `k` against `j`: the
+swapped rows carry their lower coefficients with them. -/
 theorem coeffs_rowSwap_adjacent_lower_prev (b : Matrix Rat n m) (km1 k j : Fin n)
     (hkm1 : km1.val + 1 = k.val) (hj : j.val < km1.val) :
     GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) km1 j =
@@ -3224,6 +3252,9 @@ theorem coeffs_rowSwap_adjacent_lower_prev (b : Matrix Rat n m) (km1 k j : Fin n
   rw [coeffs_lower_projection (b := b) (i := k) (j := j) (Nat.lt_trans hj hkm1k)]
   rw [hrow, hbasis]
 
+/-- Dual of `coeffs_rowSwap_adjacent_lower_prev`: after an adjacent swap, the
+coefficient at row `k` against an earlier column `j` equals the old coefficient
+at row `km1` against `j`. -/
 theorem coeffs_rowSwap_adjacent_lower_curr (b : Matrix Rat n m) (km1 k j : Fin n)
     (hkm1 : km1.val + 1 = k.val) (hj : j.val < km1.val) :
     GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) k j =
@@ -3239,6 +3270,9 @@ theorem coeffs_rowSwap_adjacent_lower_curr (b : Matrix Rat n m) (km1 k j : Fin n
   rw [coeffs_lower_projection (b := b) (i := km1) (j := j) hj]
   rw [hrow, hbasis]
 
+/-- The explicit value of the new pivot coefficient (row `k`, column `km1`)
+after an adjacent swap, in terms of the old projection coefficient and basis-row
+norms. -/
 theorem coeffs_rowSwap_adjacent_pivot (b : Matrix Rat n m) (km1 k : Fin n)
     (hkm1 : km1.val + 1 = k.val)
     (hnorm :
@@ -3431,6 +3465,9 @@ theorem coeffs_rowAdd_other_row (b : Matrix Rat n m) (src dst : Fin n) (c : Rat)
     rw [Vector.getElem_set_ne dst.isLt row.isLt hval]
   · simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn, hlt]
 
+/-- Orthogonalization preserves the row space of each prefix: the first `i + 1`
+rational basis rows span exactly the vectors spanned by the first `i + 1` input
+rows. -/
 theorem basis_span (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
     ∀ v : Vector Rat m,
       GramSchmidt.prefixSpan (basis b) i hi v ↔
@@ -3718,11 +3755,16 @@ private theorem basis_rowSwap_of_after_private (b : Matrix Rat n m) (km1 k i : F
       horig_span hswap_span hswap_to_orig horig_rows_to_swap horig_orth hswap_orth
   exact hres.symm
 
+/-- Swapping the adjacent rows `km1, k` leaves every basis row after the pair
+unchanged: the orthogonalized prefix beyond index `k` is recomputed from the
+same set of input rows. -/
 theorem basis_rowSwap_of_after (b : Matrix Rat n m) (km1 k i : Fin n)
     (hkm1 : km1.val + 1 = k.val) (hi : k.val < i.val) :
     (basis (Matrix.rowSwap b km1 k)).row i = (basis b).row i :=
   basis_rowSwap_of_after_private b km1 k i hkm1 hi
 
+/-- Coefficient entries for a row and column both lying before the swapped pair
+are unaffected by an adjacent swap. -/
 theorem coeffs_rowSwap_adjacent_before (b : Matrix Rat n m) (km1 k i j : Fin n)
     (hkm1 : km1.val + 1 = k.val) (hi : i.val < km1.val) (hji : j.val < i.val) :
     GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) i j =
@@ -3744,6 +3786,8 @@ theorem coeffs_rowSwap_adjacent_before (b : Matrix Rat n m) (km1 k i j : Fin n)
   rw [coeffs_lower_projection (b := b) (i := i) (j := j) hji]
   rw [hrow, hbasis]
 
+/-- Coefficient entries for a row after the swapped pair against a column before
+it are unaffected by an adjacent swap. -/
 theorem coeffs_rowSwap_adjacent_after_low (b : Matrix Rat n m) (km1 k i j : Fin n)
     (hkm1 : km1.val + 1 = k.val) (hi : k.val < i.val) (hj : j.val < km1.val) :
     GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) i j =
@@ -3765,6 +3809,8 @@ theorem coeffs_rowSwap_adjacent_after_low (b : Matrix Rat n m) (km1 k i j : Fin 
   rw [coeffs_lower_projection (b := b) (i := i) (j := j) hji]
   rw [hrow, hbasis]
 
+/-- Coefficient entries for a row and column both lying after the swapped pair
+are unaffected by an adjacent swap. -/
 theorem coeffs_rowSwap_adjacent_after_high (b : Matrix Rat n m) (km1 k i j : Fin n)
     (hkm1 : km1.val + 1 = k.val) (hi : k.val < i.val) (hj : k.val < j.val)
     (hji : j.val < i.val) :
@@ -3798,18 +3844,25 @@ noncomputable def basis (b : Matrix Int n m) : Matrix Rat n m :=
 noncomputable def coeffs (b : Matrix Int n m) : Matrix Rat n n :=
   GramSchmidt.coeffMatrix (GramSchmidt.castIntMatrix b) (basis b)
 
+/-- Gram-Schmidt leaves the first row untouched: the leading basis row of an
+integer matrix is its leading input row cast into `Rat`. -/
 theorem basis_zero (b : Matrix Int n m) (hn : 0 < n) :
     (basis b).row ⟨0, hn⟩ =
       Vector.map (fun x : Int => (x : Rat)) (b.row ⟨0, hn⟩) := by
   simpa [basis, GramSchmidt.basisMatrix, GramSchmidt.castIntMatrix, Matrix.row] using
     GramSchmidt.basisRows_head (b := GramSchmidt.castIntMatrix b) hn
 
+/-- Distinct Gram-Schmidt basis rows of an integer matrix (taken in `Rat`) are
+mutually orthogonal. -/
 theorem basis_orthogonal (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i ≠ j) :
     Matrix.dot ((basis b).row ⟨i, hi⟩) ((basis b).row ⟨j, hj⟩) = 0 := by
   simpa [basis, GramSchmidt.Rat.basis] using
     GramSchmidt.Rat.basis_orthogonal (b := GramSchmidt.castIntMatrix b) i j hi hj hij
 
+/-- The triangular factorization for an integer matrix: each input row, cast
+into `Rat`, equals its orthogonalized basis row plus the coefficient-weighted
+combination of the earlier basis rows. -/
 theorem basis_decomposition (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     Vector.map (fun x : Int => (x : Rat)) (b.row ⟨i, hi⟩) =
       (basis b).row ⟨i, hi⟩ +
@@ -3818,10 +3871,14 @@ theorem basis_decomposition (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     GramSchmidt.Rat.coeffs, Matrix.row] using
       GramSchmidt.Rat.basis_decomposition (b := GramSchmidt.castIntMatrix b) i hi
 
+/-- The coefficient matrix of an integer input has unit diagonal: each row
+enters its own decomposition with weight `1`. -/
 theorem coeffs_diag (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨i, hi⟩ = 1 := by
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn]
 
+/-- The coefficient matrix of an integer input is lower triangular: entries
+strictly above the diagonal vanish. -/
 theorem coeffs_upper (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i < j) :
     GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hj⟩ = 0 := by
@@ -3881,6 +3938,8 @@ theorem basis_rowAdd (b : Matrix Int n m) (src dst : Fin n) (c : Int)
       (b := GramSchmidt.castIntMatrix b) (src := src) (dst := dst) (c := (c : Rat))
       hsrcdst
 
+/-- Swapping rows `km1` and `k` of an integer matrix leaves every basis row
+before the pair unchanged. -/
 theorem basis_rowSwap_of_before (b : Matrix Int n m) (km1 k i : Fin n)
     (hkm1k : km1.val < k.val) (hi : i.val < km1.val) :
     (basis (Matrix.rowSwap b km1 k)).row i = (basis b).row i := by
@@ -3888,6 +3947,9 @@ theorem basis_rowSwap_of_before (b : Matrix Int n m) (km1 k i : Fin n)
     GramSchmidt.Rat.basis_rowSwap_of_before
       (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) (i := i) hkm1k hi
 
+/-- After swapping adjacent rows `km1, k` of an integer matrix, the basis row at
+the lower index `km1` becomes the old basis row `k` plus its projection
+coefficient times the old basis row `km1`. -/
 theorem basis_rowSwap_adjacent_prev (b : Matrix Int n m) (km1 k : Fin n)
     (hkm1 : km1.val + 1 = k.val) :
     (basis (Matrix.rowSwap b km1 k)).row km1 =
@@ -3898,6 +3960,8 @@ theorem basis_rowSwap_adjacent_prev (b : Matrix Int n m) (km1 k : Fin n)
     GramSchmidt.Rat.basis_rowSwap_adjacent_prev
       (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) hkm1
 
+/-- Swapping the adjacent rows `km1, k` of an integer matrix leaves every basis
+row after the pair unchanged. -/
 theorem basis_rowSwap_of_after (b : Matrix Int n m) (km1 k i : Fin n)
     (hkm1 : km1.val + 1 = k.val) (hi : k.val < i.val) :
     (basis (Matrix.rowSwap b km1 k)).row i = (basis b).row i := by
@@ -3905,6 +3969,9 @@ theorem basis_rowSwap_of_after (b : Matrix Int n m) (km1 k i : Fin n)
     GramSchmidt.Rat.basis_rowSwap_of_after
       (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) (i := i) hkm1 hi
 
+/-- After swapping adjacent rows `km1, k` of an integer matrix (assuming the
+swapped pivot is nonzero), the basis row at index `k` is the explicit two-term
+combination of the old basis rows `km1, k`. -/
 theorem basis_rowSwap_adjacent_curr (b : Matrix Int n m) (km1 k : Fin n)
     (hkm1 : km1.val + 1 = k.val)
     (hnorm :
@@ -3932,6 +3999,9 @@ theorem basis_rowSwap_adjacent_curr (b : Matrix Int n m) (km1 k : Fin n)
     GramSchmidt.Rat.basis_rowSwap_adjacent_curr
       (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) hkm1 hnormRat
 
+/-- After an adjacent swap of an integer matrix, the coefficient at the lower
+row `km1` against an earlier column `j` equals the old coefficient at row `k`
+against `j`. -/
 theorem coeffs_rowSwap_adjacent_lower_prev (b : Matrix Int n m) (km1 k j : Fin n)
     (hkm1 : km1.val + 1 = k.val) (hj : j.val < km1.val) :
     GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) km1 j =
@@ -3941,6 +4011,9 @@ theorem coeffs_rowSwap_adjacent_lower_prev (b : Matrix Int n m) (km1 k j : Fin n
     GramSchmidt.Rat.coeffs_rowSwap_adjacent_lower_prev
       (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) (j := j) hkm1 hj
 
+/-- Dual of `coeffs_rowSwap_adjacent_lower_prev` for an integer matrix: after an
+adjacent swap, the coefficient at row `k` against an earlier column `j` equals
+the old coefficient at row `km1` against `j`. -/
 theorem coeffs_rowSwap_adjacent_lower_curr (b : Matrix Int n m) (km1 k j : Fin n)
     (hkm1 : km1.val + 1 = k.val) (hj : j.val < km1.val) :
     GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) k j =
@@ -3950,6 +4023,8 @@ theorem coeffs_rowSwap_adjacent_lower_curr (b : Matrix Int n m) (km1 k j : Fin n
     GramSchmidt.Rat.coeffs_rowSwap_adjacent_lower_curr
       (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) (j := j) hkm1 hj
 
+/-- The explicit value of the new pivot coefficient (row `k`, column `km1`)
+after an adjacent swap of an integer matrix. -/
 theorem coeffs_rowSwap_adjacent_pivot (b : Matrix Int n m) (km1 k : Fin n)
     (hkm1 : km1.val + 1 = k.val)
     (hnorm :
@@ -3976,6 +4051,8 @@ theorem coeffs_rowSwap_adjacent_pivot (b : Matrix Int n m) (km1 k : Fin n)
     GramSchmidt.Rat.coeffs_rowSwap_adjacent_pivot
       (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) hkm1 hnormRat
 
+/-- Coefficient entries for a row and column both lying before the swapped pair
+are unaffected by an adjacent swap of an integer matrix. -/
 theorem coeffs_rowSwap_adjacent_before (b : Matrix Int n m) (km1 k i j : Fin n)
     (hkm1 : km1.val + 1 = k.val) (hi : i.val < km1.val) (hji : j.val < i.val) :
     GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) i j =
@@ -3986,6 +4063,8 @@ theorem coeffs_rowSwap_adjacent_before (b : Matrix Int n m) (km1 k i j : Fin n)
       (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) (i := i) (j := j)
       hkm1 hi hji
 
+/-- Coefficient entries for a row after the swapped pair against a column before
+it are unaffected by an adjacent swap of an integer matrix. -/
 theorem coeffs_rowSwap_adjacent_after_low (b : Matrix Int n m) (km1 k i j : Fin n)
     (hkm1 : km1.val + 1 = k.val) (hi : k.val < i.val) (hj : j.val < km1.val) :
     GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) i j =
@@ -3996,6 +4075,8 @@ theorem coeffs_rowSwap_adjacent_after_low (b : Matrix Int n m) (km1 k i j : Fin 
       (b := GramSchmidt.castIntMatrix b) (km1 := km1) (k := k) (i := i) (j := j)
       hkm1 hi hj
 
+/-- Coefficient entries for a row and column both lying after the swapped pair
+are unaffected by an adjacent swap of an integer matrix. -/
 theorem coeffs_rowSwap_adjacent_after_high (b : Matrix Int n m) (km1 k i j : Fin n)
     (hkm1 : km1.val + 1 = k.val) (hi : k.val < i.val) (hj : k.val < j.val)
     (hji : j.val < i.val) :
@@ -4060,6 +4141,9 @@ theorem coeffs_rowAdd_other_row (b : Matrix Int n m) (src dst : Fin n) (c : Int)
       (b := GramSchmidt.castIntMatrix b) (src := src) (dst := dst) (c := (c : Rat))
       hsrcdst row hrow
 
+/-- Orthogonalization preserves the row space of each prefix for an integer
+matrix: the first `i + 1` basis rows span exactly the vectors spanned by the
+first `i + 1` input rows cast into `Rat`. -/
 theorem basis_span (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     ∀ v : Vector Rat m,
       GramSchmidt.prefixSpan (basis b) i hi v ↔
