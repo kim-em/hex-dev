@@ -1330,15 +1330,17 @@ emitting `c / gcd c w` then leaks that scalar into the square-free factor,
 breaking the exact reconstruction `weightedProduct = f`. The monic associate
 divides `c` and `w` exactly as the raw gcd does, so every reconstruction
 identity carries over, but the emitted quotient stays monic. -/
-@[irreducible] private def monicGcd (c w : FpPoly p) : FpPoly p :=
+private def monicGcd (c w : FpPoly p) : FpPoly p :=
   (normalizeMonic (DensePoly.gcd c w)).2
 
-/-- Definitional unfolding lemma for `monicGcd` (the def itself is
-`@[irreducible]` to keep `normalizeMonic` from being unfolded by `simp`/`decide`
-during defeq, which otherwise causes kernel-reduction timeouts). -/
+/-- Definitional unfolding lemma for `monicGcd`. The def itself is sealed
+`@[irreducible]` (below) to keep `normalizeMonic` from being unfolded by
+`simp`/`decide` during defeq, which otherwise causes kernel-reduction timeouts;
+this lemma is the controlled re-entry point. -/
 private theorem monicGcd_def (c w : FpPoly p) :
-    monicGcd c w = (normalizeMonic (DensePoly.gcd c w)).2 := by
-  unfold monicGcd
+    monicGcd c w = (normalizeMonic (DensePoly.gcd c w)).2 := rfl
+
+attribute [irreducible] monicGcd
 
 /-- The raw gcd is a constant multiple of `monicGcd`, recovered from
 `normalizeMonic_reconstruct`. -/
@@ -1357,15 +1359,25 @@ private theorem monicGcd_dvd_gcd
 
 /-- `monicGcd c w` divides `c`. -/
 private theorem monicGcd_dvd_left
-    (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
-    monicGcd c w ∣ c :=
-  dvd_trans (monicGcd_dvd_gcd hp c w) (DensePoly.gcd_dvd_left c w)
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
+    monicGcd c w ∣ c := by
+  obtain ⟨q1, h1⟩ := monicGcd_dvd_gcd hp c w
+  obtain ⟨q2, h2⟩ := DensePoly.gcd_dvd_left c w
+  refine ⟨q1 * q2, ?_⟩
+  calc c = DensePoly.gcd c w * q2 := h2
+    _ = monicGcd c w * q1 * q2 := by rw [h1]
+    _ = monicGcd c w * (q1 * q2) := DensePoly.mul_assoc_poly (monicGcd c w) q1 q2
 
 /-- `monicGcd c w` divides `w`. -/
 private theorem monicGcd_dvd_right
-    (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
-    monicGcd c w ∣ w :=
-  dvd_trans (monicGcd_dvd_gcd hp c w) (DensePoly.gcd_dvd_right c w)
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
+    monicGcd c w ∣ w := by
+  obtain ⟨q1, h1⟩ := monicGcd_dvd_gcd hp c w
+  obtain ⟨q2, h2⟩ := DensePoly.gcd_dvd_right c w
+  refine ⟨q1 * q2, ?_⟩
+  calc w = DensePoly.gcd c w * q2 := h2
+    _ = monicGcd c w * q1 * q2 := by rw [h1]
+    _ = monicGcd c w * (q1 * q2) := DensePoly.mul_assoc_poly (monicGcd c w) q1 q2
 
 /-- Left exact-division reconstruction across `monicGcd`. -/
 private theorem div_monicGcd_mul_reconstruct
@@ -2193,7 +2205,7 @@ private def yunFactorsWithLevel
       if isOne c then
         (accRev, w)
       else
-        let y := monicGcd c w
+        let y := DensePoly.gcd c w
         let z := c / y
         let accRev' :=
           if isOne z then
@@ -2212,7 +2224,7 @@ private def yunFactors
       if isOne c then
         (accRev, w)
       else
-        let y := monicGcd c w
+        let y := DensePoly.gcd c w
         let z := c / y
         let accRev' :=
           if isOne z then
@@ -2233,7 +2245,7 @@ private def yunFactorsContributionWithLevel
       if isOne c then
         (1, w)
       else
-        let y := monicGcd c w
+        let y := DensePoly.gcd c w
         let z := c / y
         let tail := yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel
         let contribution :=
@@ -2250,7 +2262,7 @@ private def yunFactorsContribution
       if isOne c then
         (1, w)
       else
-        let y := monicGcd c w
+        let y := DensePoly.gcd c w
         let z := c / y
         let tail := yunFactorsContribution y (w / y) (i + 1) fuel
         let contribution :=
@@ -2364,7 +2376,7 @@ private def squareFreeAuxRevContribution (f : FpPoly p) (multiplicity : Nat) :
         if df.isZero then
           squareFreeAuxRevContribution (pthRoot f) (multiplicity * p) fuel
         else
-          let g := monicGcd f df
+          let g := DensePoly.gcd f df
           let c := f / g
           let contribution := yunFactorsContributionWithLevel c g multiplicity 1 fuel
           if isOne contribution.2 then
@@ -4123,7 +4135,7 @@ private def squareFreeAuxRev (f : FpPoly p) (multiplicity : Nat) :
         if df.isZero then
           squareFreeAuxRev (pthRoot f) (multiplicity * p) fuel accRev
         else
-          let g := monicGcd f df
+          let g := DensePoly.gcd f df
           let c := f / g
           let loop := yunFactorsWithLevel c g multiplicity 1 fuel accRev
           let accRev' := loop.1
