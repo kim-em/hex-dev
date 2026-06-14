@@ -833,6 +833,8 @@ def stepArray (rows : Array (Array Int)) (n k : Nat) (pivot prevPivot : Int) :
     else
       rows[i]!
 
+/-- `getEntry_rangeMap₂` proves that reading entry `(i, j)` from the matrix
+materialised by the doubly-ranged `Array.range` map of `f` recovers `f i j`. -/
 private theorem getEntry_rangeMap₂ (f : Nat → Nat → Int) (i j : Fin n) :
     getEntry ((Array.range n).map fun row => (Array.range n).map fun col => f row col)
       i.val j.val = f i.val j.val := by
@@ -912,6 +914,9 @@ theorem rowsToMatrix_stepArray {n : Nat} (rows : Array (Array Int)) (k : Nat)
     getEntry_stepArray_matches rows (rowsToMatrix rows n) hentry k pivot prevPivot
       ⟨i, hi⟩ ⟨j, hj⟩
 
+/-- `pivotArrayLoop` runs the fuelled main elimination loop over the
+array-backed state, pivoting at each step, recording a singular column when no
+nonzero pivot exists, and otherwise applying `stepArray` before recursing. -/
 private def pivotArrayLoop (n fuel : Nat) (state : BareissArrayState) :
     BareissArrayState :=
   match fuel with
@@ -1044,6 +1049,9 @@ theorem pivotLoop_regular_branch_swap (fuel : Nat) (state : BareissState n)
           singularStep := none } := by
   simp [pivotLoop, hDone, hp0, hfind, hp]
 
+/-- `bareissArrayState` runs the matrix-level Bareiss elimination via `pivotLoop`
+and repackages the reduced result as a `BareissArrayState`, storing the matrix
+row-by-row via `matrixToRows`. -/
 private def bareissArrayState (M : Matrix Int n n) : BareissArrayState :=
   let state := pivotLoop n
     { step := 0
@@ -1057,14 +1065,21 @@ private def bareissArrayState (M : Matrix Int n n) : BareissArrayState :=
     rowSwaps := state.rowSwaps
     singularStep := state.singularStep }
 
+/-- `arraySign` is the determinant sign contributed by `rowSwaps` recorded row
+swaps, `1` for an even count and `-1` for an odd count. -/
 private def arraySign (rowSwaps : Nat) : Int :=
   if rowSwaps % 2 = 0 then 1 else -1
 
+/-- `arrayLastDiag?` reads the last diagonal entry `(n-1, n-1)` of the reduced
+rows, returning `none` when `n = 0`. -/
 private def arrayLastDiag? (rows : Array (Array Int)) (n : Nat) : Option Int :=
   match n with
   | 0 => none
   | k + 1 => some (getEntry rows k k)
 
+/-- `bareissArrayDet` assembles the determinant value from the final array
+state, returning `0` when elimination recorded a singular column and the signed
+last diagonal entry otherwise. -/
 private def bareissArrayDet (state : BareissArrayState) (n : Nat) : Int :=
   match state.singularStep with
   | some _ => 0
