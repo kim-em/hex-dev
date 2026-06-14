@@ -566,6 +566,8 @@ theorem dvd_gcd (d p q : GF2Poly) :
   rw [hbezout] at hsum
   simpa [r] using hsum
 
+/-- A nonzero packed polynomial of degree `0` equals `1`, the only degree-`0`
+GF(2) polynomial. -/
 private theorem nonzero_degree_zero_eq_one {p : GF2Poly}
     (hp : p ≠ 0) (hdegree : p.degree = 0) :
     p = 1 := by
@@ -618,6 +620,8 @@ theorem degree_le_of_dvd_nonzero {p q : GF2Poly}
     degree_eq_of_degree?_eq_some hq_degree?]
   omega
 
+/-- A polynomial reduced below `bound` (either zero, or of degree `< bound`)
+has `coeff n = false` at every index `n ≥ bound`. -/
 private theorem coeff_eq_false_of_reduced_le {p : GF2Poly} {bound n : Nat}
     (hred : p.isZero = true ∨ p.degree < bound) (hbound : bound ≤ n) :
     p.coeff n = false := by
@@ -636,6 +640,7 @@ private theorem coeff_eq_false_of_reduced_le {p : GF2Poly} {bound n : Nat}
           omega
         exact coeff_eq_false_of_degree?_lt hd hdn
 
+/-- The `n`-bit low mask has numeric value `2 ^ n - 1` when `n < 64`. -/
 private theorem lowerMask_toNat_of_lt_64 {n : Nat} (hn64 : n < 64) :
     (lowerMask n).toNat = 2 ^ n - 1 := by
   unfold lowerMask
@@ -652,6 +657,8 @@ private theorem lowerMask_toNat_of_lt_64 {n : Nat} (hn64 : n < 64) :
   rw [UInt64.toNat_sub_of_le _ _ hle, hshift]
   simp
 
+/-- Masking a word whose value is already `< 2 ^ n` with `lowerMask n` returns
+it unchanged. -/
 private theorem UInt64.and_lowerMask_eq_self_of_lt {n : Nat} (hn64 : n < 64)
     {w : UInt64} (hw : w.toNat < 2 ^ n) :
     w &&& lowerMask n = w := by
@@ -659,6 +666,8 @@ private theorem UInt64.and_lowerMask_eq_self_of_lt {n : Nat} (hn64 : n < 64)
   rw [UInt64.toNat_and, lowerMask_toNat_of_lt_64 hn64]
   exact Nat.and_two_pow_sub_one_of_lt_two_pow hw
 
+/-- Masking any word with `lowerMask n` bounds the result below `2 ^ n`
+(for `n < 64`), giving the canonical reduced representative. -/
 private theorem UInt64.and_lowerMask_toNat_lt {n : Nat} (hn64 : n < 64)
     (w : UInt64) :
     (w &&& lowerMask n).toNat < 2 ^ n := by
@@ -673,12 +682,15 @@ private theorem UInt64.and_lowerMask_toNat_lt {n : Nat} (hn64 : n < 64)
   rw [hand]
   exact Nat.mod_lt _ hpow
 
+/-- `canonicalWordLT` fixes a word that is already reduced below `2 ^ n`. -/
 private theorem canonicalWordLT_eq_self_of_lt {n : Nat} (hn64 : n < 64)
     {w : UInt64} (hw : w.toNat < 2 ^ n) :
     canonicalWordLT n hn64 w = w := by
   apply UInt64.toNat_inj.mp
   simp [canonicalWordLT, Nat.mod_eq_of_lt hw]
 
+/-- A natural number `< 2 ^ k` has `testBit i = false` at every index
+`i ≥ k`. -/
 private theorem nat_testBit_eq_false_of_lt_two_pow {x k i : Nat}
     (hx : x < 2 ^ k) (hki : k ≤ i) :
     x.testBit i = false := by
@@ -689,6 +701,8 @@ private theorem nat_testBit_eq_false_of_lt_two_pow {x k i : Nat}
   simp [hnot] at hbit
   exact hbit
 
+/-- Coefficient `i` of the polynomial packed from `w &&& lowerMask n`: the
+original bit when `i < n`, and `false` otherwise. -/
 private theorem coeff_ofUInt64_and_lowerMask (w : UInt64) {n i : Nat} (hn64 : n < 64) :
     (ofUInt64 (w &&& lowerMask n)).coeff i =
       if i < n then (ofUInt64 w).coeff i else false := by
@@ -723,6 +737,7 @@ private theorem coeff_ofUInt64_and_lowerMask (w : UInt64) {n i : Nat} (hn64 : n 
     (ofUInt64Monic lower n).degree = n := by
   exact degree_eq_of_degree?_eq_some (degree?_ofUInt64Monic_of_lt_64 lower hn64)
 
+/-- A nonzero `UInt64` word unpacks to a nonzero packed polynomial. -/
 private theorem ofUInt64_ne_zero_of_ne_zero {w : UInt64} (hw : w ≠ 0) :
     ofUInt64 w ≠ 0 := by
   intro h
@@ -730,6 +745,8 @@ private theorem ofUInt64_ne_zero_of_ne_zero {w : UInt64} (hw : w ≠ 0) :
   apply ofUInt64_injective
   simpa [ofUInt64] using h
 
+/-- A word with value `< 2 ^ n` unpacks to a polynomial that is either zero or
+of degree `< n`, i.e. reduced below `n`. -/
 private theorem ofUInt64_reduced_of_toNat_lt {n : Nat} {w : UInt64}
     (hwlt : w.toNat < 2 ^ n) :
     (ofUInt64 w).IsZero ∨ (ofUInt64 w).degree < n := by
@@ -788,6 +805,8 @@ theorem ofUInt64_packedReduceWord_eq_of_degree_lt
   · rw [if_neg hin]
     exact (coeff_eq_false_of_reduced_le (p := r) hred' (Nat.le_of_not_gt hin)).symm
 
+/-- Reducedness below `bound` (zero, or degree `< bound`) is preserved by
+addition of two reduced polynomials. -/
 private theorem add_reduced_of_reduced {p q : GF2Poly} {bound : Nat}
     (hp : p.isZero = true ∨ p.degree < bound)
     (hq : q.isZero = true ∨ q.degree < bound) :
@@ -809,6 +828,8 @@ private theorem add_reduced_of_reduced {p q : GF2Poly} {bound : Nat}
     change (p + q).degree < bound
     simpa [degree, hd] using hdbound
 
+/-- A residue reduced below `f.degree` that is divisible by nonzero `f` must
+be `0` (a proper-degree multiple of `f` cannot exist). -/
 private theorem reduced_dvd_eq_zero {f r : GF2Poly}
     (hf : f ≠ 0) (hred : r.isZero = true ∨ r.degree < f.degree)
     (hdvd : f ∣ r) :
@@ -822,6 +843,8 @@ private theorem reduced_dvd_eq_zero {f r : GF2Poly}
         have hle : f.degree ≤ r.degree := degree_le_of_dvd_nonzero hf hr hdvd
         omega
 
+/-- Any common divisor of an irreducible `f` and a nonzero residue `a` reduced
+below `f.degree` is `1`; the backbone of the gcd-coprimality result. -/
 private theorem irreducible_common_divisor_eq_one_of_reduced
     {a f d : GF2Poly} (hf : Irreducible f) (ha : a ≠ 0)
     (hred : a.IsZero ∨ a.degree < f.degree)
@@ -854,6 +877,8 @@ private theorem irreducible_common_divisor_eq_one_of_reduced
         have hle : f.degree ≤ a.degree := degree_le_of_dvd_nonzero hf.1 ha hf_dvd_a
         omega
 
+/-- Adding a right multiple `c * f` leaves the remainder modulo `f` unchanged;
+the engine behind the quotient-congruence `simp` lemmas below. -/
 private theorem mod_eq_of_add_right_multiple (a c f : GF2Poly) :
     (a + c * f) % f = a % f := by
   by_cases hf : f = 0
@@ -963,6 +988,8 @@ theorem mod_eq_of_eq_add_mul_right {a r c f : GF2Poly}
   rw [h, mod_add_mul_right_eq_mod]
   exact mod_eq_self_of_reduced r f hred
 
+/-- `1 % f = 1` whenever `f` has positive degree, since `1` is already reduced
+modulo `f`. -/
 private theorem one_mod_eq_one_of_degree_pos {f : GF2Poly} (hfdegree : 0 < f.degree) :
     (1 : GF2Poly) % f = 1 := by
   have hfzeroFalse : f.isZero = false := by
