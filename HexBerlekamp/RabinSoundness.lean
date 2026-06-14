@@ -1234,6 +1234,9 @@ private theorem xPowSubX_factor (k : Nat) :
         change (0 : ZMod64 p) - (0 : ZMod64 p) = (0 : ZMod64 p) - (0 : ZMod64 p)
         rfl
 
+/-- `xPowSubX d ∣ xPowSubX m` whenever `d ∣ m`, lifting the geometric
+divisibility `X^(p^d-1) - 1 ∣ X^(p^m-1) - 1` (from `p^d - 1 ∣ p^m - 1`)
+through the `xPowSubX` factorization. -/
 theorem xPowSubX_dvd_of_dvd
     {d m : Nat} (_hdvd : d ∣ m) :
     xPowSubX (p := p) d ∣ xPowSubX (p := p) m := by
@@ -2205,6 +2208,8 @@ factorization assembly: if `r` is square-free (i.e. `gcd r r' = 1`) and
 "strong square-free" characterization that any squared divisor of `r` is a
 unit. -/
 
+/-- The constant polynomial `1 : FpPoly p` is recognised as a unit by
+`isUnitPolynomial`. -/
 theorem isUnitPolynomial_one_FpPoly : isUnitPolynomial (1 : FpPoly p) = true := by
   unfold isUnitPolynomial
   change (match DensePoly.degree? (DensePoly.C (1 : ZMod64 p)) with
@@ -2223,6 +2228,8 @@ theorem isUnitPolynomial_one_FpPoly : isUnitPolynomial (1 : FpPoly p) = true := 
     DensePoly.coeffs_C_of_ne_zero hone_ne_zero
   simp [DensePoly.degree?, DensePoly.size, hcoeffs]
 
+/-- A polynomial accepted by `isUnitPolynomial` (degree-zero, hence a
+nonzero constant) divides `1 : FpPoly p`. -/
 theorem dvd_one_of_isUnitPolynomial
     {u : FpPoly p} (hu : isUnitPolynomial u = true) :
     u ∣ (1 : FpPoly p) := by
@@ -2344,6 +2351,9 @@ theorem squareFree_common_of_gcd_eq_one
   exact isUnitPolynomial_of_dvd_isUnitPolynomial hd_dvd_gcd isUnitPolynomial_one_FpPoly
 
 omit [ZMod64.PrimeModulus p] in
+/-- Strong square-free characterization: if every common divisor of `r` and
+its derivative is a unit, then any `g` with `g * g ∣ r` is itself a unit
+(via `isUnitPolynomial`). -/
 theorem isUnitPolynomial_of_squareFree_of_squared_dvd
     {r g : FpPoly p}
     (hsf : ∀ d, d ∣ r → d ∣ DensePoly.derivative r → isUnitPolynomial d = true)
@@ -2394,6 +2404,9 @@ private theorem fp_swap_left_mul (c g a : FpPoly p) :
         congrArg (· * a) (DensePoly.mul_comm_poly c g)
     _ = g * (c * a) := DensePoly.mul_assoc_poly g c a
 
+/-- If the product `a * b` is square-free, then any common divisor `d` of the
+two factors `a` and `b` divides `1`, since `d * d ∣ a * b` forces `d` to be a
+unit. -/
 theorem common_dvd_one_of_squareFree_mul
     {a b d : FpPoly p}
     (hsquareFree : ∀ e, e ∣ (a * b) → e ∣ DensePoly.derivative (a * b) →
@@ -2434,6 +2447,9 @@ theorem exists_reduced_crtZeroOne_kernelWitness_of_squareFree_split
   exact exists_reduced_crtZeroOne_kernelWitness_of_coprime_split
     a b ha hb ha_pos hb_pos hgcd
 
+/-- For square-free `r` (`gcd r r' = 1`), the gcd of `d` with the cofactor
+`r / gcd r d` is a unit, the gcd-quotient unit recognition used by the
+square-free distinct-degree check. -/
 theorem isUnitPolynomial_gcd_quotient_of_squareFree
     (r d : FpPoly p)
     (hsf : DensePoly.gcd r (DensePoly.derivative r) = 1) :
