@@ -78,6 +78,8 @@ theorem leadingCoeff_ne_zero_of_pos_size (p : DensePoly R) (hpos : 0 < p.size) :
   rw [leadingCoeff_eq_coeff_last p hpos]
   exact coeff_last_ne_zero_of_pos_size p hpos
 
+/-- `arrayDegreeAux coeffs fuel` scans indices below `fuel` downward and returns the
+greatest index whose coefficient is nonzero, or `none` if every coefficient below `fuel` is zero. -/
 private def arrayDegreeAux (coeffs : Array R) : Nat → Option Nat
   | 0 => none
   | fuel + 1 =>
@@ -87,9 +89,12 @@ private def arrayDegreeAux (coeffs : Array R) : Nat → Option Nat
       else
         some i
 
+/-- `arrayDegree? coeffs` is the highest index of a nonzero coefficient of `coeffs`, or `none`
+when every coefficient is zero, computed by scanning from `coeffs.size` downward. -/
 private def arrayDegree? (coeffs : Array R) : Option Nat :=
   arrayDegreeAux coeffs coeffs.size
 
+/-- A degree `arrayDegreeAux` reports lies strictly below the scan ceiling `fuel`. -/
 private theorem arrayDegreeAux_some_lt {coeffs : Array R} {fuel rd : Nat}
     (h : arrayDegreeAux coeffs fuel = some rd) :
     rd < fuel := by
@@ -105,6 +110,7 @@ private theorem arrayDegreeAux_some_lt {coeffs : Array R} {fuel rd : Nat}
         subst rd
         omega
 
+/-- The coefficient at a degree `arrayDegreeAux` reports is nonzero. -/
 private theorem arrayDegreeAux_some_coeff_ne_zero {coeffs : Array R} {fuel rd : Nat}
     (h : arrayDegreeAux coeffs fuel = some rd) :
     coeffs.getD rd (Zero.zero : R) ≠ (Zero.zero : R) := by
@@ -121,6 +127,7 @@ private theorem arrayDegreeAux_some_coeff_ne_zero {coeffs : Array R} {fuel rd : 
         rw [Array.getD_eq_getD_getElem?]
         exact hcoeff
 
+/-- When `arrayDegreeAux` returns `none`, every coefficient at an index below `fuel` is zero. -/
 private theorem arrayDegreeAux_none_getD_eq_zero {coeffs : Array R} {fuel i : Nat}
     (h : arrayDegreeAux coeffs fuel = none) (hi : i < fuel) :
     coeffs.getD i (Zero.zero : R) = (Zero.zero : R) := by
@@ -138,6 +145,7 @@ private theorem arrayDegreeAux_none_getD_eq_zero {coeffs : Array R} {fuel i : Na
           exact hcoeff
       · simp [hcoeff] at h
 
+/-- Every coefficient strictly above a degree `arrayDegreeAux` reports and below `fuel` is zero. -/
 private theorem arrayDegreeAux_some_above_eq_zero {coeffs : Array R} {fuel rd i : Nat}
     (h : arrayDegreeAux coeffs fuel = some rd) (hrd : rd < i) (hi : i < fuel) :
     coeffs.getD i (Zero.zero : R) = (Zero.zero : R) := by
@@ -157,16 +165,19 @@ private theorem arrayDegreeAux_some_above_eq_zero {coeffs : Array R} {fuel rd i 
         cases h
         omega
 
+/-- A degree `arrayDegree?` reports lies strictly below `coeffs.size`. -/
 private theorem arrayDegree?_some_lt {coeffs : Array R} {rd : Nat}
     (h : arrayDegree? coeffs = some rd) :
     rd < coeffs.size := by
   exact arrayDegreeAux_some_lt h
 
+/-- The coefficient at a degree `arrayDegree?` reports is nonzero. -/
 private theorem arrayDegree?_some_coeff_ne_zero {coeffs : Array R} {rd : Nat}
     (h : arrayDegree? coeffs = some rd) :
     coeffs.getD rd (Zero.zero : R) ≠ (Zero.zero : R) := by
   exact arrayDegreeAux_some_coeff_ne_zero h
 
+/-- Every coefficient at an index above a degree `arrayDegree?` reports is zero. -/
 private theorem arrayDegree?_some_above_eq_zero {coeffs : Array R} {rd i : Nat}
     (h : arrayDegree? coeffs = some rd) (hrd : rd < i) :
     coeffs.getD i (Zero.zero : R) = (Zero.zero : R) := by
@@ -175,6 +186,7 @@ private theorem arrayDegree?_some_above_eq_zero {coeffs : Array R} {rd i : Nat}
   · unfold Array.getD
     exact dif_neg hi
 
+/-- When `arrayDegree?` returns `none`, every coefficient is zero. -/
 private theorem arrayDegree?_none_getD_eq_zero {coeffs : Array R} {i : Nat}
     (h : arrayDegree? coeffs = none) :
     coeffs.getD i (Zero.zero : R) = (Zero.zero : R) := by
@@ -183,6 +195,8 @@ private theorem arrayDegree?_none_getD_eq_zero {coeffs : Array R} {i : Nat}
   · unfold Array.getD
     exact dif_neg hi
 
+/-- If every coefficient at an index `≥ bound` is zero (with `bound` positive), the normalized
+degree of `ofCoeffs coeffs` is below `bound`. -/
 private theorem ofCoeffs_degree_getD_lt_of_forall_zero_ge {coeffs : Array R} {bound : Nat}
     (hpos : 0 < bound)
     (hzero : ∀ i, bound ≤ i → coeffs.getD i (Zero.zero : R) = (Zero.zero : R)) :
