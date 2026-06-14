@@ -663,10 +663,12 @@ private theorem zmod64_index_fold_add_pow_prime
 def weightedProduct (factors : List (SquareFreeFactor p)) : FpPoly p :=
   factors.foldl (fun acc sf => acc * pow sf.factor sf.multiplicity) 1
 
+/-- `weightedProduct` of the empty factor list is the constant polynomial `1`. -/
 private theorem weightedProduct_nil :
     weightedProduct ([] : List (SquareFreeFactor p)) = 1 := by
   rfl
 
+/-- Folding the weighted product from accumulator `acc` factors as `acc * weightedProduct factors`. -/
 private theorem weightedProduct_foldl_eq_mul
     (acc : FpPoly p) (factors : List (SquareFreeFactor p)) :
     factors.foldl (fun acc sf => acc * pow sf.factor sf.multiplicity) acc =
@@ -687,6 +689,7 @@ private theorem weightedProduct_foldl_eq_mul
       rw [hone]
       exact DensePoly.mul_assoc_poly acc (pow sf.factor sf.multiplicity) (weightedProduct factors)
 
+/-- `weightedProduct` of a cons splits off the head factor raised to its multiplicity. -/
 private theorem weightedProduct_cons
     (sf : SquareFreeFactor p) (factors : List (SquareFreeFactor p)) :
     weightedProduct (sf :: factors) =
@@ -696,6 +699,7 @@ private theorem weightedProduct_cons
   rw [weightedProduct_foldl_eq_mul]
   exact congrArg (fun x => x * weightedProduct factors) (one_mul (pow sf.factor sf.multiplicity))
 
+/-- `weightedProduct` of an append is the product of the two sublist weighted products. -/
 private theorem weightedProduct_append
     (left right : List (SquareFreeFactor p)) :
     weightedProduct (left ++ right) = weightedProduct left * weightedProduct right := by
@@ -707,11 +711,13 @@ private theorem weightedProduct_append
       (left.foldl (fun acc sf => acc * pow sf.factor sf.multiplicity) 1)
       right
 
+/-- `weightedProduct` of a singleton is that factor raised to its multiplicity. -/
 private theorem weightedProduct_singleton (sf : SquareFreeFactor p) :
     weightedProduct [sf] = pow sf.factor sf.multiplicity := by
   rw [weightedProduct_cons, weightedProduct_nil]
   exact DensePoly.mul_one_right_poly (pow sf.factor sf.multiplicity)
 
+/-- `weightedProduct` of a reversed cons appends the new factor's power on the right. -/
 private theorem weightedProduct_reverse_cons
     (sf : SquareFreeFactor p) (accRev : List (SquareFreeFactor p)) :
     weightedProduct (sf :: accRev).reverse =
@@ -727,6 +733,7 @@ private def pthRoot (f : FpPoly p) : FpPoly p :=
   ofCoeffs <|
     (List.range rootSize).map (fun i => f.coeff (i * p)) |>.toArray
 
+/-- Below the root size, `pthRoot f` reads coefficient `i` from `f` at degree `i * p`. -/
 private theorem pthRoot_coeff_of_lt
     (f : FpPoly p) {i : Nat} (hi : i < (f.size + p - 1) / p) :
     (pthRoot f).coeff i = f.coeff (i * p) := by
@@ -734,6 +741,7 @@ private theorem pthRoot_coeff_of_lt
   rw [DensePoly.coeff_ofCoeffs]
   simp [Array.getD, hi]
 
+/-- Every coefficient of `pthRoot f` is the coefficient of `f` at the `p`-fold degree `i * p`. -/
 private theorem pthRoot_coeff (f : FpPoly p) (i : Nat) :
     (pthRoot f).coeff i = f.coeff (i * p) := by
   by_cases hi : i < (f.size + p - 1) / p
@@ -748,14 +756,17 @@ private theorem pthRoot_coeff (f : FpPoly p) (i : Nat) :
         (Nat.div_le_iff_le_mul hp).mp hle
       omega)).symm
 
+/-- Right additive identity for a `ZMod64 p` coefficient. -/
 private theorem zmod64_add_zero_coeff (a : ZMod64 p) :
     a + 0 = a := by
   grind
 
+/-- Left additive identity for a `ZMod64 p` coefficient. -/
 private theorem zmod64_zero_add_coeff (a : ZMod64 p) :
     0 + a = a := by
   grind
 
+/-- The sum of two zero `ZMod64 p` coefficients is zero. -/
 private theorem zmod64_add_zero_zero_coeff :
     (0 : ZMod64 p) + 0 = 0 := by
   grind
@@ -789,6 +800,7 @@ private theorem coeffTerm_coeff (g : FpPoly p) (i n : Nat) :
       simp [hni, hsub]
       exact hzero
 
+/-- Taking coefficient `n` commutes with the `coeffTerm` accumulation fold. -/
 private theorem coeff_foldl_coeffTerm_coeff
     (g : FpPoly p) (xs : List Nat) (acc : FpPoly p) (n : Nat) :
     (xs.foldl (fun acc i => acc + coeffTerm g i) acc).coeff n =
@@ -801,6 +813,7 @@ private theorem coeff_foldl_coeffTerm_coeff
       rw [ih (acc + coeffTerm g i)]
       rw [DensePoly.coeff_add_semiring]
 
+/-- Coefficient `n` of `coeffFold g m` is the index fold of the per-term coefficients over `range m`. -/
 private theorem coeffFold_coeff_index_fold (g : FpPoly p) (m n : Nat) :
     (coeffFold g m).coeff n =
       (List.range m).foldl (fun acc i => acc + (coeffTerm g i).coeff n) 0 := by
@@ -808,6 +821,7 @@ private theorem coeffFold_coeff_index_fold (g : FpPoly p) (m n : Nat) :
   simpa [DensePoly.coeff_zero] using
     coeff_foldl_coeffTerm_coeff (p := p) g (List.range m) (0 : FpPoly p) n
 
+/-- In prime characteristic, the `p`th power of `coeffFold g m`'s coefficient distributes across the index fold. -/
 private theorem coeffFold_coeff_index_fold_pow_prime
     (hp : Hex.Nat.Prime p) (g : FpPoly p) (m n : Nat) :
     ((coeffFold g m).coeff n) ^ p =
@@ -817,6 +831,7 @@ private theorem coeffFold_coeff_index_fold_pow_prime
   exact zmod64_index_fold_add_pow_prime
     (p := p) hp (List.range m) (fun i => (coeffTerm g i).coeff n)
 
+/-- The `k`th power of the single term `g_i x^i` contributes `(g_i)^k` only at degree `k * i`. -/
 private theorem powLinear_coeffTerm_coeff (g : FpPoly p) (i k n : Nat) :
     (powLinear (coeffTerm g i) k).coeff n =
       if n = k * i then (g.coeff i) ^ k else 0 := by
@@ -932,6 +947,7 @@ private def coeffFoldPowerCoeff (g : FpPoly p) (m : Nat) : Nat → Nat → ZMod6
             (if n < i then 0 else if n - i < m then g.coeff (n - i) else 0))
         0
 
+/-- Coefficient `n` of `(coeffFold g m)^k` equals the recursive expansion `coeffFoldPowerCoeff g m k n`. -/
 private theorem powLinear_coeffFold_coeff_expansion (g : FpPoly p) (m k n : Nat) :
     (powLinear (coeffFold g m) k).coeff n = coeffFoldPowerCoeff g m k n := by
   induction k generalizing n with
@@ -982,6 +998,7 @@ private theorem powLinear_coeffFold_coeff_expansion (g : FpPoly p) (m k n : Nat)
           rw [hterm]
           exact ihxs _
 
+/-- Specialises the coefficient expansion of `(coeffFold g m)^k` to the prime exponent `k = p`. -/
 private theorem powLinear_coeffFold_prime_coeff_expansion (g : FpPoly p) (m n : Nat) :
     (powLinear (coeffFold g m) p).coeff n = coeffFoldPowerCoeff g m p n :=
   powLinear_coeffFold_coeff_expansion g m p n
@@ -1074,12 +1091,14 @@ private theorem coeffFoldPowerCoeff_prime_coeff
         rw [if_neg hne]
         exact zmod64_add_zero_zero_coeff
 
+/-- Off the `p`-divisible degrees, the prime power expansion `coeffFoldPowerCoeff g m p n` vanishes. -/
 private theorem coeffFoldPowerCoeff_prime_coeff_of_mod_ne_zero
     (hp : Hex.Nat.Prime p) (g : FpPoly p) (m n : Nat) (hn : n % p ≠ 0) :
     coeffFoldPowerCoeff g m p n = 0 := by
   rw [coeffFoldPowerCoeff_prime_coeff hp g m n]
   simp [hn]
 
+/-- On `p`-divisible degrees, `coeffFoldPowerCoeff g m p n` keeps the diagonal `(g.coeff (n/p))^p` when in range. -/
 private theorem coeffFoldPowerCoeff_prime_coeff_of_mod_eq_zero
     (hp : Hex.Nat.Prime p) (g : FpPoly p) (m n : Nat) (hn : n % p = 0) :
     coeffFoldPowerCoeff g m p n =
@@ -1087,6 +1106,7 @@ private theorem coeffFoldPowerCoeff_prime_coeff_of_mod_eq_zero
   rw [coeffFoldPowerCoeff_prime_coeff hp g m n]
   simp [hn]
 
+/-- Freshman's-dream coefficient of `(coeffFold g m)^p`: nonzero only at `p`-divisible degrees, where it is `(g.coeff (n/p))^p`. -/
 private theorem powLinear_coeffFold_prime_coeff
     (hp : Hex.Nat.Prime p) (g : FpPoly p) (m n : Nat) :
     (powLinear (coeffFold g m) p).coeff n =
