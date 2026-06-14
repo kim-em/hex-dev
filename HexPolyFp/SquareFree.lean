@@ -1321,6 +1321,91 @@ private theorem normalizeMonic_nonzero_isZero_false
   simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero,
     Nat.pos_iff_ne_zero] using hpos
 
+/-- Monic-normalized gcd: the canonical monic associate of `DensePoly.gcd c w`.
+
+Routing the Yun square-free loop's gcd through this keeps every intermediate
+polynomial monic. A raw `DensePoly.gcd` of a coprime pair can be a non-trivial
+constant unit over `F_p` for `p > 2` (e.g. `gcd (x^2+1) (x+1) = 2` over `F_5`);
+emitting `c / gcd c w` then leaks that scalar into the square-free factor,
+breaking the exact reconstruction `weightedProduct = f`. The monic associate
+divides `c` and `w` exactly as the raw gcd does, so every reconstruction
+identity carries over, but the emitted quotient stays monic. -/
+private def monicGcd (c w : FpPoly p) : FpPoly p :=
+  (normalizeMonic (DensePoly.gcd c w)).2
+
+/-- The raw gcd is a constant multiple of `monicGcd`, recovered from
+`normalizeMonic_reconstruct`. -/
+private theorem gcd_eq_C_mul_monicGcd
+    (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
+    DensePoly.C (normalizeMonic (DensePoly.gcd c w)).1 * monicGcd c w =
+      DensePoly.gcd c w :=
+  normalizeMonic_reconstruct hp (DensePoly.gcd c w)
+
+/-- `monicGcd c w` divides the raw gcd (they are associates). -/
+private theorem monicGcd_dvd_gcd
+    (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
+    monicGcd c w ∣ DensePoly.gcd c w :=
+  ⟨DensePoly.C (normalizeMonic (DensePoly.gcd c w)).1, by
+    rw [mul_comm]; exact (gcd_eq_C_mul_monicGcd hp c w).symm⟩
+
+/-- `monicGcd c w` divides `c`. -/
+private theorem monicGcd_dvd_left
+    (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
+    monicGcd c w ∣ c :=
+  dvd_trans (monicGcd_dvd_gcd hp c w) (DensePoly.gcd_dvd_left c w)
+
+/-- `monicGcd c w` divides `w`. -/
+private theorem monicGcd_dvd_right
+    (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
+    monicGcd c w ∣ w :=
+  dvd_trans (monicGcd_dvd_gcd hp c w) (DensePoly.gcd_dvd_right c w)
+
+/-- Left exact-division reconstruction across `monicGcd`. -/
+private theorem div_monicGcd_mul_reconstruct
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
+    (c / monicGcd c w) * monicGcd c w = c := by
+  have hspec := DensePoly.div_mul_add_mod c (monicGcd c w)
+  have hmod : c % monicGcd c w = 0 :=
+    DensePoly.mod_eq_zero_of_dvd c (monicGcd c w) (monicGcd_dvd_left hp c w)
+  rw [hmod, add_zero] at hspec
+  exact hspec
+
+/-- `monicGcd` times the left exact quotient reconstructs `c`. -/
+private theorem monicGcd_mul_div_reconstruct
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
+    monicGcd c w * (c / monicGcd c w) = c := by
+  rw [mul_comm]; exact div_monicGcd_mul_reconstruct hp c w
+
+/-- Right exact-division reconstruction across `monicGcd`. -/
+private theorem div_monicGcd_right_mul_reconstruct
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
+    (w / monicGcd c w) * monicGcd c w = w := by
+  have hspec := DensePoly.div_mul_add_mod w (monicGcd c w)
+  have hmod : w % monicGcd c w = 0 :=
+    DensePoly.mod_eq_zero_of_dvd w (monicGcd c w) (monicGcd_dvd_right hp c w)
+  rw [hmod, add_zero] at hspec
+  exact hspec
+
+/-- `monicGcd` times the right exact quotient reconstructs `w`. -/
+private theorem monicGcd_mul_div_right_reconstruct
+    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
+    monicGcd c w * (w / monicGcd c w) = w := by
+  rw [mul_comm]; exact div_monicGcd_right_mul_reconstruct hp c w
+
+/-- `monicGcd c w` is monic whenever the raw gcd is nonzero. -/
+private theorem monicGcd_monic_of_gcd_nonzero
+    [ZMod64.PrimeModulus p] (c w : FpPoly p)
+    (hgcd : (DensePoly.gcd c w).isZero = false) :
+    DensePoly.Monic (monicGcd c w) :=
+  normalizeMonic_nonzero_monic (DensePoly.gcd c w) hgcd
+
+/-- `monicGcd c w` is nonzero whenever the raw gcd is nonzero. -/
+private theorem monicGcd_isZero_false_of_gcd_nonzero
+    [ZMod64.PrimeModulus p] (c w : FpPoly p)
+    (hgcd : (DensePoly.gcd c w).isZero = false) :
+    (monicGcd c w).isZero = false :=
+  normalizeMonic_nonzero_isZero_false (DensePoly.gcd c w) hgcd
+
 /-! ### Scalar-multiple algebra foundations
 
 Foundational `FpPoly p` algebra for transporting `DensePoly.derivative`,
@@ -2101,7 +2186,7 @@ private def yunFactorsWithLevel
       if isOne c then
         (accRev, w)
       else
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         let accRev' :=
           if isOne z then
@@ -2120,7 +2205,7 @@ private def yunFactors
       if isOne c then
         (accRev, w)
       else
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         let accRev' :=
           if isOne z then
@@ -2141,7 +2226,7 @@ private def yunFactorsContributionWithLevel
       if isOne c then
         (1, w)
       else
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         let tail := yunFactorsContributionWithLevel y (w / y) base (level + 1) fuel
         let contribution :=
@@ -2158,7 +2243,7 @@ private def yunFactorsContribution
       if isOne c then
         (1, w)
       else
-        let y := DensePoly.gcd c w
+        let y := monicGcd c w
         let z := c / y
         let tail := yunFactorsContribution y (w / y) (i + 1) fuel
         let contribution :=
@@ -2272,7 +2357,7 @@ private def squareFreeAuxRevContribution (f : FpPoly p) (multiplicity : Nat) :
         if df.isZero then
           squareFreeAuxRevContribution (pthRoot f) (multiplicity * p) fuel
         else
-          let g := DensePoly.gcd f df
+          let g := monicGcd f df
           let c := f / g
           let contribution := yunFactorsContributionWithLevel c g multiplicity 1 fuel
           if isOne contribution.2 then
@@ -2858,6 +2943,33 @@ private theorem monic_div_gcd_right_of_monic
     DensePoly.Monic (w / DensePoly.gcd c w) :=
   monic_of_mul_eq_monic_of_monic hp hw_monic hgcd_monic
     (div_gcd_right_mul_reconstruct c w)
+
+/-- Exact-quotient monicity for the left Yun residual through `monicGcd`: from
+monic `c` and a monic `monicGcd c w` divisor, the left exact quotient
+`c / monicGcd c w` is monic. -/
+private theorem monic_div_monicGcd_left_of_monic
+    [ZMod64.PrimeModulus p]
+    (hp : Hex.Nat.Prime p)
+    (c w : FpPoly p)
+    (hc_monic : DensePoly.Monic c)
+    (hgcd_monic : DensePoly.Monic (monicGcd c w)) :
+    DensePoly.Monic (c / monicGcd c w) :=
+  monic_of_mul_eq_monic_of_monic hp hc_monic hgcd_monic
+    (div_monicGcd_mul_reconstruct hp c w)
+
+/-- Exact-quotient monicity for the right Yun residual through `monicGcd`: from
+monic `w` and a monic `monicGcd c w` divisor, the right exact quotient
+`w / monicGcd c w` is monic. This is the residual threaded into the next Yun
+state, so it carries the monic invariant forward. -/
+private theorem monic_div_monicGcd_right_of_monic
+    [ZMod64.PrimeModulus p]
+    (hp : Hex.Nat.Prime p)
+    (c w : FpPoly p)
+    (hw_monic : DensePoly.Monic w)
+    (hgcd_monic : DensePoly.Monic (monicGcd c w)) :
+    DensePoly.Monic (w / monicGcd c w) :=
+  monic_of_mul_eq_monic_of_monic hp hw_monic hgcd_monic
+    (div_monicGcd_right_mul_reconstruct hp c w)
 
 /--
 Algebraic step identity used to thread the scaled Yun product invariant through
@@ -4004,7 +4116,7 @@ private def squareFreeAuxRev (f : FpPoly p) (multiplicity : Nat) :
         if df.isZero then
           squareFreeAuxRev (pthRoot f) (multiplicity * p) fuel accRev
         else
-          let g := DensePoly.gcd f df
+          let g := monicGcd f df
           let c := f / g
           let loop := yunFactorsWithLevel c g multiplicity 1 fuel accRev
           let accRev' := loop.1
