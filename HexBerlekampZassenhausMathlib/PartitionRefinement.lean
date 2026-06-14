@@ -207,7 +207,7 @@ theorem supportPartitionByMinColumn_length_eq_liftedTrueSupports_ncard
     (liftedTrueSupports.cover_of_partition hpartition)
     (liftedTrueSupports.eq_of_mem_inter_of_partition hpartition)
     (liftedTrueSupports.nonempty_of_partition
-      hcore_ne hcore_primitive hcore_lc_pos hprecision)
+      hpartition hcore_ne hcore_primitive hcore_lc_pos hprecision)
 
 namespace ForwardRecoveryInputs
 
