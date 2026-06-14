@@ -1251,14 +1251,23 @@ end DensePoly
 
 namespace DensePoly
 
+/-- The `i`-th summand of the degree-`n` convolution diagonal of `p * q`,
+`p.coeff i * q.coeff (n - i)`, zeroed once the degree guard `n < i` fires;
+the single-index term that `mulCoeffSum` is reorganised into. -/
 private def diagonalMulCoeffTerm {S : Type _} [Zero S] [DecidableEq S] [Mul S]
     (p q : DensePoly S) (n i : Nat) : S :=
   if n < i then 0 else p.coeff i * q.coeff (n - i)
 
+/-- Like `diagonalMulCoeffTerm`, but additionally zeroed once the partner index
+`n - i` reaches the cutoff `m`; the partial value of the inner schoolbook fold
+restricted to `List.range m`. -/
 private def boundedDiagonalMulCoeffTerm {S : Type _} [Zero S] [DecidableEq S] [Mul S]
     (p q : DensePoly S) (n i m : Nat) : S :=
   if n < i then 0 else if n - i < m then p.coeff i * q.coeff (n - i) else 0
 
+/-- Folding `mulCoeffStep` over `List.range m` accumulates exactly
+`acc + boundedDiagonalMulCoeffTerm p q n i m`, identifying one truncated inner
+schoolbook fold with its bounded diagonal term. -/
 private theorem fold_mulCoeffStep_eq_bounded_diagonal {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n i m : Nat) (acc : S) :
@@ -1287,6 +1296,9 @@ private theorem fold_mulCoeffStep_eq_bounded_diagonal {S : Type _}
           · have hm' : ¬ n - i < m + 1 := by omega
             simp [hlt, hm, hm', heq]
 
+/-- Folding `mulCoeffStep` over the full `List.range q.size` yields
+`acc + diagonalMulCoeffTerm p q n i`, since coefficients past `q.size` vanish;
+the unbounded specialisation of `fold_mulCoeffStep_eq_bounded_diagonal`. -/
 private theorem fold_mulCoeffStep_eq_diagonal {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n i : Nat) (acc : S) :
@@ -1303,6 +1315,9 @@ private theorem fold_mulCoeffStep_eq_diagonal {S : Type _}
       simp [hlt, hbound, hcoeff]
       grind
 
+/-- Rewrites the outer schoolbook fold, where each index `i` runs an inner
+`mulCoeffStep` fold, into the pointwise diagonal fold adding
+`diagonalMulCoeffTerm p q n i` at each step. -/
 private theorem fold_mulCoeff_outer_eq_diagonal {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) (xs : List Nat) (acc : S) :
@@ -1316,6 +1331,9 @@ private theorem fold_mulCoeff_outer_eq_diagonal {S : Type _}
       rw [fold_mulCoeffStep_eq_diagonal]
       exact ih (acc + diagonalMulCoeffTerm p q n i)
 
+/-- The schoolbook coefficient `mulCoeffSum p q n` equals the diagonal sum
+`Σ_{i < p.size} diagonalMulCoeffTerm p q n i`; the bridge from the executable
+loop order to the convolution form used in the ring-law proofs. -/
 private theorem mulCoeffSum_eq_diagonal {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) :
@@ -1324,6 +1342,8 @@ private theorem mulCoeffSum_eq_diagonal {S : Type _}
   unfold mulCoeffSum
   exact fold_mulCoeff_outer_eq_diagonal p q n (List.range p.size) 0
 
+/-- A diagonal term vanishes once `p.size ≤ i`, because `p.coeff i = 0` past the
+support of `p`; lets diagonal sums ignore indices beyond `p`'s degree. -/
 private theorem diagonalMulCoeffTerm_eq_zero_of_size_le {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n i : Nat) (hi : p.size ≤ i) :
@@ -1335,6 +1355,9 @@ private theorem diagonalMulCoeffTerm_eq_zero_of_size_le {S : Type _}
     simp [hn, hcoeff]
     grind
 
+/-- Extending the diagonal-sum range from `p.size` to `p.size + d` adds only
+zero terms, so the sum is unchanged; the range-extension invariance backing
+`diagonalSum_eq_bound`. -/
 private theorem fold_diagonal_extend {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n d : Nat) :
@@ -1352,6 +1375,8 @@ private theorem fold_diagonal_extend {S : Type _}
       simp [hterm]
       grind
 
+/-- The diagonal sum over `List.range p.size` equals the sum over any larger
+range `m ≥ p.size`; lets callers normalise the upper bound to a common value. -/
 private theorem diagonalSum_eq_bound {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n m : Nat) (hm : p.size ≤ m) :
@@ -1361,12 +1386,17 @@ private theorem diagonalSum_eq_bound {S : Type _}
   rw [← hm']
   exact (fold_diagonal_extend p q n (m - p.size)).symm
 
+/-- A diagonal term vanishes when `n < i`, the degree guard built into
+`diagonalMulCoeffTerm`; lets diagonal sums be truncated at degree `n`. -/
 private theorem diagonalMulCoeffTerm_eq_zero_of_degree_lt {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n i : Nat) (hi : n < i) :
     diagonalMulCoeffTerm p q n i = 0 := by
   simp [diagonalMulCoeffTerm, hi]
 
+/-- Extending the diagonal-sum range past `n + 1` adds only zero terms, since
+every index `> n` contributes `0`, so the sum equals the one over
+`List.range (n + 1)`; the degree-side truncation invariance. -/
 private theorem fold_diagonal_truncate_degree {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n d : Nat) :
@@ -1384,6 +1414,9 @@ private theorem fold_diagonal_truncate_degree {S : Type _}
       simp [hterm]
       grind
 
+/-- The diagonal sum over `List.range p.size` equals the sum over
+`List.range (n + 1)`; the canonical degree-`n` truncation of the convolution,
+independent of `p.size`. -/
 private theorem diagonalSum_eq_degree_bound {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) :
@@ -1395,6 +1428,9 @@ private theorem diagonalSum_eq_degree_bound {S : Type _}
     rw [← hsize']
     exact fold_diagonal_truncate_degree p q n (p.size - (n + 1))
 
+/-- Folding `(· + ·)` from the seed `a + b` factors the right summand back out:
+`foldl (+) (a + b) = foldl (+) a + b`; a Mathlib-free associativity/commutativity
+shim over `Lean.Grind.CommRing`. -/
 private theorem fold_add_right_commring {S : Type _} [Lean.Grind.CommRing S]
     (xs : List S) (a b : S) :
     xs.foldl (fun acc x => acc + x) (a + b) =
@@ -1408,6 +1444,8 @@ private theorem fold_add_right_commring {S : Type _} [Lean.Grind.CommRing S]
       rw [hacc]
       exact ih (a + x)
 
+/-- Summing a list with `foldl (· + ·)` is invariant under `List.reverse`; lets a
+diagonal sum be reindexed by reversing the index list. -/
 private theorem fold_add_reverse_commring {S : Type _} [Lean.Grind.CommRing S]
     (xs : List S) (a : S) :
     xs.reverse.foldl (fun acc x => acc + x) a =
@@ -1421,6 +1459,8 @@ private theorem fold_add_reverse_commring {S : Type _} [Lean.Grind.CommRing S]
       rw [ih]
       rw [fold_add_right_commring xs a x]
 
+/-- `(List.range (n + 1)).reverse = (List.range (n + 1)).map (fun i => n - i)`; the
+index reflection `i ↦ n - i` underlying the convolution commutativity reindexing. -/
 private theorem range_succ_reverse_eq_map_sub (n : Nat) :
     (List.range (n + 1)).reverse = (List.range (n + 1)).map (fun i => n - i) := by
   apply List.ext_getElem
@@ -1430,6 +1470,10 @@ private theorem range_succ_reverse_eq_map_sub (n : Nat) :
     rw [List.getElem_reverse]
     simp [List.getElem_map, List.getElem_range]
 
+/-- Under the reflection `i ↦ n - i` (for `i < n + 1`), the diagonal term of
+`p, q` becomes that of `q, p`:
+`diagonalMulCoeffTerm p q n (n - i) = diagonalMulCoeffTerm q p n i`; the pointwise
+core of convolution commutativity. -/
 private theorem diagonalMulCoeffTerm_comm_reindex {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n i : Nat) (hi : i < n + 1) :
@@ -1440,6 +1484,9 @@ private theorem diagonalMulCoeffTerm_comm_reindex {S : Type _}
   simp [diagonalMulCoeffTerm, hleft, hright, Nat.sub_sub_self hile]
   grind
 
+/-- Pointwise application of `diagonalMulCoeffTerm_comm_reindex` across a fold over
+indices all `< n + 1`, swapping each reflected `p, q` term for the matching
+`q, p` term; the list-level step toward `fold_diagonal_comm`. -/
 private theorem fold_diagonal_comm_reindex_list {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) (xs : List Nat)
@@ -1457,6 +1504,9 @@ private theorem fold_diagonal_comm_reindex_list {S : Type _}
         intro j hj
         exact hxs j (by simp [hj])) (acc + diagonalMulCoeffTerm q p n i)
 
+/-- The degree-`n` diagonal sum is symmetric in its factors:
+`Σ diagonalMulCoeffTerm p q n i = Σ diagonalMulCoeffTerm q p n i`; the
+commutativity of the convolution coefficient, proved by reversal-reindexing. -/
 private theorem fold_diagonal_comm {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) :
@@ -1475,6 +1525,8 @@ private theorem fold_diagonal_comm {S : Type _}
     intro i hi
     exact List.mem_range.mp hi) 0
 
+/-- Negating the right factor negates the diagonal term:
+`diagonalMulCoeffTerm p (0 - q) n i = 0 - diagonalMulCoeffTerm p q n i`. -/
 private theorem diagonalMulCoeffTerm_neg_right {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n i : Nat) :
@@ -1488,6 +1540,9 @@ private theorem diagonalMulCoeffTerm_neg_right {S : Type _}
     simp [hlt]
     grind
 
+/-- List-level form of `diagonalSum_neg_right`: folding the negated-right diagonal
+terms over `xs` from `acc` equals `acc - (fold of the positive terms from 0)`; the
+induction backing the closed negation law. -/
 private theorem diagonalSum_neg_right_aux {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) (xs : List Nat) (acc : S) :
@@ -1508,6 +1563,9 @@ private theorem diagonalSum_neg_right_aux {S : Type _}
       rw [htail]
       grind
 
+/-- Negating the right factor negates the whole degree-`n` diagonal sum:
+`Σ diagonalMulCoeffTerm p (0 - q) n i = 0 - Σ diagonalMulCoeffTerm p q n i`; the
+coefficient-level negation law feeding `mul_sub_zero_comm`. -/
 private theorem diagonalSum_neg_right {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) :
