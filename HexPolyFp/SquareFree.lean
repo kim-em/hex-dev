@@ -1330,16 +1330,23 @@ emitting `c / gcd c w` then leaks that scalar into the square-free factor,
 breaking the exact reconstruction `weightedProduct = f`. The monic associate
 divides `c` and `w` exactly as the raw gcd does, so every reconstruction
 identity carries over, but the emitted quotient stays monic. -/
-private def monicGcd (c w : FpPoly p) : FpPoly p :=
+@[irreducible] private def monicGcd (c w : FpPoly p) : FpPoly p :=
   (normalizeMonic (DensePoly.gcd c w)).2
+
+/-- Definitional unfolding lemma for `monicGcd` (the def itself is
+`@[irreducible]` to keep `normalizeMonic` from being unfolded by `simp`/`decide`
+during defeq, which otherwise causes kernel-reduction timeouts). -/
+private theorem monicGcd_def (c w : FpPoly p) :
+    monicGcd c w = (normalizeMonic (DensePoly.gcd c w)).2 := by
+  unfold monicGcd
 
 /-- The raw gcd is a constant multiple of `monicGcd`, recovered from
 `normalizeMonic_reconstruct`. -/
 private theorem gcd_eq_C_mul_monicGcd
     (hp : Hex.Nat.Prime p) (c w : FpPoly p) :
     DensePoly.C (normalizeMonic (DensePoly.gcd c w)).1 * monicGcd c w =
-      DensePoly.gcd c w :=
-  normalizeMonic_reconstruct hp (DensePoly.gcd c w)
+      DensePoly.gcd c w := by
+  rw [monicGcd_def]; exact normalizeMonic_reconstruct hp (DensePoly.gcd c w)
 
 /-- `monicGcd c w` divides the raw gcd (they are associates). -/
 private theorem monicGcd_dvd_gcd
@@ -1396,15 +1403,15 @@ private theorem monicGcd_mul_div_right_reconstruct
 private theorem monicGcd_monic_of_gcd_nonzero
     [ZMod64.PrimeModulus p] (c w : FpPoly p)
     (hgcd : (DensePoly.gcd c w).isZero = false) :
-    DensePoly.Monic (monicGcd c w) :=
-  normalizeMonic_nonzero_monic (DensePoly.gcd c w) hgcd
+    DensePoly.Monic (monicGcd c w) := by
+  rw [monicGcd_def]; exact normalizeMonic_nonzero_monic (DensePoly.gcd c w) hgcd
 
 /-- `monicGcd c w` is nonzero whenever the raw gcd is nonzero. -/
 private theorem monicGcd_isZero_false_of_gcd_nonzero
     [ZMod64.PrimeModulus p] (c w : FpPoly p)
     (hgcd : (DensePoly.gcd c w).isZero = false) :
-    (monicGcd c w).isZero = false :=
-  normalizeMonic_nonzero_isZero_false (DensePoly.gcd c w) hgcd
+    (monicGcd c w).isZero = false := by
+  rw [monicGcd_def]; exact normalizeMonic_nonzero_isZero_false (DensePoly.gcd c w) hgcd
 
 /-! ### Scalar-multiple algebra foundations
 
