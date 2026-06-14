@@ -1653,6 +1653,7 @@ theorem rational_associate_primitive_unit
       rw [hden_one]
       rfl
 
+/-- Scaling a rational dense polynomial by `0` yields the zero polynomial. -/
 private theorem rat_scale_zero (p : DensePoly Rat) :
     DensePoly.scale 0 p = 0 := by
   apply DensePoly.ext_coeff
@@ -1661,6 +1662,7 @@ private theorem rat_scale_zero (p : DensePoly Rat) :
   rw [DensePoly.coeff_zero]
   exact Rat.zero_mul (p.coeff n)
 
+/-- Scaling the zero rational dense polynomial by any unit `u` yields the zero polynomial. -/
 private theorem rat_scale_zero_right (u : Rat) :
     DensePoly.scale u (0 : DensePoly Rat) = 0 := by
   apply DensePoly.ext_coeff
@@ -1669,6 +1671,7 @@ private theorem rat_scale_zero_right (u : Rat) :
   rw [DensePoly.coeff_zero]
   exact Rat.mul_zero u
 
+/-- Scaling a rational dense polynomial by `1` leaves it unchanged. -/
 private theorem rat_scale_one (p : DensePoly Rat) :
     DensePoly.scale 1 p = p := by
   apply DensePoly.ext_coeff
@@ -1676,6 +1679,7 @@ private theorem rat_scale_one (p : DensePoly Rat) :
   rw [DensePoly.coeff_scale (R := Rat) 1 p n (Rat.mul_zero 1)]
   exact Rat.one_mul (p.coeff n)
 
+/-- Reading `(List.range size).map f` at index `n` returns `f n` when `n < size` and `0` past it. -/
 private theorem rat_list_getD_map_range (size n : Nat) (f : Nat → Rat) :
     ((List.range size).map f).getD n 0 =
       if n < size then f n else 0 := by
@@ -1683,6 +1687,7 @@ private theorem rat_list_getD_map_range (size n : Nat) (f : Nat → Rat) :
   · simp [hn, List.getD]
   · simp [hn, List.getD]
 
+/-- The `n`-th coefficient of `DensePoly.derivative p` is `(n + 1) * p.coeff (n + 1)`. -/
 private theorem rat_coeff_derivative (p : DensePoly Rat) (n : Nat) :
     (DensePoly.derivative p).coeff n = ((n + 1 : Nat) : Rat) * p.coeff (n + 1) := by
   unfold DensePoly.derivative
@@ -1699,6 +1704,7 @@ private theorem rat_coeff_derivative (p : DensePoly Rat) (n : Nat) :
       DensePoly.coeff_eq_zero_of_size_le p hp
     simp [hn, hcoeff]
 
+/-- Differentiation commutes with scaling a rational dense polynomial by a unit `u`. -/
 private theorem rat_derivative_scale (u : Rat) (p : DensePoly Rat) :
     DensePoly.derivative (DensePoly.scale u p) =
       DensePoly.scale u (DensePoly.derivative p) := by
@@ -1710,6 +1716,7 @@ private theorem rat_derivative_scale (u : Rat) (p : DensePoly Rat) :
   rw [DensePoly.coeff_scale (R := Rat) u p (n + 1) (Rat.mul_zero u)]
   grind [Rat.mul_assoc, Rat.mul_comm]
 
+/-- The Leibniz product rule `derivative (p * q) = derivative p * q + p * derivative q` for rational dense polynomials. -/
 private theorem rat_derivative_mul (p q : DensePoly Rat) :
     DensePoly.derivative (p * q) =
       DensePoly.derivative p * q + p * DensePoly.derivative q := by
@@ -1723,6 +1730,7 @@ private theorem rat_derivative_mul (p q : DensePoly Rat) :
   rw [DensePoly.coeff_mul p (DensePoly.derivative q) n]
   exact DensePoly.rat_mulCoeffSum_derivative_product_rule p q n
 
+/-- If `d` divides `p`, then `d` divides the left multiple `q * p`. -/
 private theorem rat_dvd_mul_left {d p : DensePoly Rat} (q : DensePoly Rat) :
     d ∣ p → d ∣ q * p := by
   intro h
@@ -1731,12 +1739,14 @@ private theorem rat_dvd_mul_left {d p : DensePoly Rat} (q : DensePoly Rat) :
   rw [ha, ← DensePoly.mul_assoc_poly q d a, DensePoly.mul_comm_poly q d,
     DensePoly.mul_assoc_poly d q a]
 
+/-- If `d` divides `p`, then `d` divides the right multiple `p * q`. -/
 private theorem rat_dvd_mul_right {d p : DensePoly Rat} (q : DensePoly Rat) :
     d ∣ p → d ∣ p * q := by
   intro h
   rw [DensePoly.mul_comm_poly p q]
   exact rat_dvd_mul_left q h
 
+/-- Divisibility by `d` is closed under addition of rational dense polynomials. -/
 private theorem rat_dvd_add {d p q : DensePoly Rat} :
     d ∣ p → d ∣ q → d ∣ p + q := by
   intro hp hq
@@ -1745,6 +1755,7 @@ private theorem rat_dvd_add {d p q : DensePoly Rat} :
   refine ⟨a + b, ?_⟩
   rw [ha, hb, DensePoly.mul_add_right_poly]
 
+/-- Divisibility by `d` is closed under subtraction of rational dense polynomials. -/
 private theorem rat_dvd_sub {d p q : DensePoly Rat} :
     d ∣ p → d ∣ q → d ∣ p - q := by
   intro hp hq
@@ -1754,6 +1765,7 @@ private theorem rat_dvd_sub {d p q : DensePoly Rat} :
   rw [DensePoly.sub_eq_add_neg_poly, ha, hb, DensePoly.mul_add_right_poly,
     DensePoly.mul_sub_zero_comm, DensePoly.mul_comm_poly b d]
 
+/-- The rational image of `p` is a `±1` scalar multiple of the rational image of its sign-normalized primitive part. -/
 private theorem toRatPoly_normalizePrimitiveSign_rational_associate (p : ZPoly) :
     ∃ unit : Rat, toRatPoly p = DensePoly.scale unit (toRatPoly (normalizePrimitiveSign p)) := by
   by_cases hlead : DensePoly.leadingCoeff p < 0
@@ -1766,6 +1778,7 @@ private theorem toRatPoly_normalizePrimitiveSign_rational_associate (p : ZPoly) 
     rw [normalizePrimitiveSign, if_neg hlead]
     exact (rat_scale_one (toRatPoly p)).symm
 
+/-- Folding a step that discards each element leaves the initial accumulator `init` unchanged. -/
 private theorem rat_list_foldl_ignore {α : Type _} (xs : List Nat) (init : α) :
     xs.foldl (fun acc _ => acc) init = init := by
   induction xs generalizing init with
@@ -1774,6 +1787,7 @@ private theorem rat_list_foldl_ignore {α : Type _} (xs : List Nat) (init : α) 
   | cons _ xs ih =>
       simpa using ih init
 
+/-- Scaling a rational dense polynomial by a nonzero unit `u` preserves its dense size. -/
 private theorem rat_scale_size_of_ne_zero {u : Rat} (hu : u ≠ 0) (p : DensePoly Rat) :
     (DensePoly.scale u p).size = p.size := by
   apply Nat.le_antisymm
