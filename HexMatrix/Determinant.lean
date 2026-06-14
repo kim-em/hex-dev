@@ -1380,6 +1380,8 @@ private theorem finLast_mem_of_full_nodup {n : Nat} {xs : List (Fin (n + 1))}
       simp [List.mem_finRange, List.length_finRange]
     omega
 
+/-- `lowerFinLast x h` reinterprets an `x : Fin (n + 1)` that is not `Fin.last n`
+as an element of `Fin n` carrying the same underlying value. -/
 private def lowerFinLast {n : Nat} (x : Fin (n + 1)) (h : x ≠ Fin.last n) :
     Fin n :=
   ⟨x.val, by
@@ -1389,6 +1391,9 @@ private def lowerFinLast {n : Nat} (x : Fin (n + 1)) (h : x ≠ Fin.last n) :
       exact h (Fin.ext hx)
     omega⟩
 
+/-- `raiseFinAbove i r` embeds `r : Fin n` into `Fin (n + 1)` while skipping the
+position `i`: values below `i` are kept, values at or above `i` are shifted up by
+one. -/
 private def raiseFinAbove {n : Nat} (i : Fin (n + 1)) (r : Fin n) :
     Fin (n + 1) :=
   if h : r.val < i.val then
@@ -1396,6 +1401,8 @@ private def raiseFinAbove {n : Nat} (i : Fin (n + 1)) (r : Fin n) :
   else
     ⟨r.val + 1, by omega⟩
 
+/-- Indexing `insertAt x v i` at the raised position `raiseFinAbove i r` recovers
+the original entry `v[r]`. -/
 private theorem insertAt_get_raiseFinAbove {α : Type u} {n : Nat}
     (x : α) (v : Vector α n) (i : Fin (n + 1)) (r : Fin n) :
     (insertAt x v i)[raiseFinAbove i r] = v[r] := by
@@ -1412,6 +1419,8 @@ private theorem insertAt_get_raiseFinAbove {α : Type u} {n : Nat}
       list_getElem_insertIdx_succ_of_le v.toList x (Nat.le_of_not_gt ‹¬r.val < i.val›)
         (by simp [Vector.length_toList])
 
+/-- `raiseFinAbove i` is strictly monotone: `raiseFinAbove i a < raiseFinAbove i b`
+holds exactly when `a < b`. -/
 private theorem raiseFinAbove_lt_iff {n : Nat} (i : Fin (n + 1)) (a b : Fin n) :
     raiseFinAbove i a < raiseFinAbove i b ↔ a < b := by
   by_cases hai : a.val < i.val
@@ -1424,6 +1433,8 @@ private theorem raiseFinAbove_lt_iff {n : Nat} (i : Fin (n + 1)) (a b : Fin n) :
       omega
     · simp [raiseFinAbove, hai, hbi, Fin.lt_def]
 
+/-- The inversion fold against a pivot `x` is unchanged when both the list `xs` and
+the pivot are mapped through `raiseFinAbove i`. -/
 private theorem inversionFold_map_raiseFinAbove {n : Nat} (i : Fin (n + 1))
     (xs : List (Fin n)) (x : Fin n) (acc : Nat) :
     (xs.map (raiseFinAbove i)).foldl
@@ -1447,6 +1458,8 @@ private theorem inversionFold_map_raiseFinAbove {n : Nat} (i : Fin (n + 1))
       rw [hhead]
       exact ih _
 
+/-- `inversionCount` is invariant under mapping the permutation list through
+`raiseFinAbove i`. -/
 private theorem inversionCount_map_raiseFinAbove {n : Nat}
     (i : Fin (n + 1)) (xs : List (Fin n)) :
     inversionCount (xs.map (raiseFinAbove i)) = inversionCount xs := by
@@ -1455,6 +1468,8 @@ private theorem inversionCount_map_raiseFinAbove {n : Nat}
   | cons x xs ih =>
       simp [inversionCount, ih, inversionFold_map_raiseFinAbove]
 
+/-- Folding `i < y` over the `raiseFinAbove i`-mapped list counts the original
+entries `x` satisfying `i ≤ x`, added onto the starting accumulator. -/
 private theorem inversionFold_map_raiseFinAbove_self {n : Nat} (i : Fin (n + 1))
     (xs : List (Fin n)) (acc : Nat) :
     (xs.map (raiseFinAbove i)).foldl
@@ -1486,6 +1501,8 @@ private theorem inversionFold_map_raiseFinAbove_self {n : Nat} (i : Fin (n + 1))
         (0 + if i.val ≤ x.val then 1 else 0)]
       omega
 
+/-- Appending `i` after the `raiseFinAbove i`-mapped list yields `inversionCount xs`
+plus the number of entries at or above `i`. -/
 private theorem inversionCount_map_raiseFinAbove_append_self {n : Nat}
     (i : Fin (n + 1)) (xs : List (Fin n)) :
     inversionCount ((xs.map (raiseFinAbove i)) ++ [i]) =
@@ -1500,6 +1517,8 @@ private theorem inversionCount_map_raiseFinAbove_append_self {n : Nat}
   rw [inversionFold_map_raiseFinAbove_self i xs 0]
   omega
 
+/-- The `i ≤ y` count fold is unchanged when the list is mapped through
+`Fin.castSucc`. -/
 private theorem foldCount_map_castSucc_ge {n : Nat} (i : Fin (n + 1))
     (xs : List (Fin n)) (acc : Nat) :
     (xs.map Fin.castSucc).foldl
@@ -1511,6 +1530,8 @@ private theorem foldCount_map_castSucc_ge {n : Nat} (i : Fin (n + 1))
       simp only [List.map_cons, List.foldl_cons]
       exact ih _
 
+/-- Folding a step that discards each element and returns the accumulator leaves
+the accumulator unchanged. -/
 private theorem foldl_ignore {α : Type u} (xs : List α) (acc : Nat) :
     xs.foldl (fun acc _x => acc) acc = acc := by
   induction xs generalizing acc with
@@ -1519,6 +1540,7 @@ private theorem foldl_ignore {α : Type u} (xs : List α) (acc : Nat) :
       simp only [List.foldl_cons]
       exact ih acc
 
+/-- Counting the entries `y` of `List.finRange n` with `i ≤ y` gives `n - i`. -/
 private theorem foldCount_finRange_ge {n : Nat} (i : Fin (n + 1)) :
     (List.finRange n).foldl
         (fun acc y => acc + if i.val ≤ y.val then 1 else 0) 0 =
@@ -1557,6 +1579,8 @@ private theorem foldCount_finRange_ge {n : Nat} (i : Fin (n + 1)) :
         simp [i', hleLast]
         omega
 
+/-- The `foldl` count of elements satisfying `p` is invariant under permutation of
+the list. -/
 private theorem foldCount_perm {α : Type u} (p : α → Prop) [DecidablePred p]
     {xs ys : List α} (hperm : xs.Perm ys) :
     xs.foldl (fun acc y => acc + if p y then 1 else 0) 0 =
@@ -1583,6 +1607,7 @@ private theorem foldCount_perm {α : Type u} (p : α → Prop) [DecidablePred p]
   | trans _ _ ih₁ ih₂ =>
       exact ih₁.trans ih₂
 
+/-- Every `x : Fin n` is a member of a nodup list of `Fin n` whose length is `n`. -/
 private theorem fin_mem_of_full_nodup_for_count {n : Nat} {xs : List (Fin n)}
     (x : Fin n) (hlen : xs.length = n) (hnodup : xs.Nodup) :
     x ∈ xs := by
@@ -1605,6 +1630,7 @@ private theorem fin_mem_of_full_nodup_for_count {n : Nat} {xs : List (Fin n)}
     | zero => exact Fin.elim0 x
     | succ n => omega
 
+/-- A nodup list of `Fin n` of length `n` is a permutation of `List.finRange n`. -/
 private theorem list_perm_finRange_of_full_nodup {n : Nat} {xs : List (Fin n)}
     (hlen : xs.length = n) (hnodup : xs.Nodup) :
     xs.Perm (List.finRange n) := by
@@ -1616,6 +1642,8 @@ private theorem list_perm_finRange_of_full_nodup {n : Nat} {xs : List (Fin n)}
   · intro _hx
     exact fin_mem_of_full_nodup_for_count x hlen hnodup
 
+/-- Counting the entries `y` with `i ≤ y` in a length-`n` nodup list of `Fin n`
+gives `n - i`. -/
 private theorem foldCount_full_nodup_ge {n : Nat} (i : Fin (n + 1))
     {xs : List (Fin n)} (hlen : xs.length = n) (hnodup : xs.Nodup) :
     xs.foldl (fun acc y => acc + if i.val ≤ y.val then 1 else 0) 0 =
@@ -1624,16 +1652,21 @@ private theorem foldCount_full_nodup_ge {n : Nat} (i : Fin (n + 1))
     (list_perm_finRange_of_full_nodup hlen hnodup)]
   exact foldCount_finRange_ge i
 
+/-- `Fin.castSucc` undoes `lowerFinLast`: `(lowerFinLast x h).castSucc = x`. -/
 private theorem lowerFinLast_castSucc {n : Nat} (x : Fin (n + 1))
     (h : x ≠ Fin.last n) :
     (lowerFinLast x h).castSucc = x := by
   exact Fin.ext rfl
 
+/-- In a length-`(n + 1)` nodup list the index of `Fin.last n` is within bounds. -/
 private theorem finLast_idxOf_lt_of_full_nodup {n : Nat} {xs : List (Fin (n + 1))}
     (hlen : xs.length = n + 1) (hnodup : xs.Nodup) :
     xs.idxOf (Fin.last n) < xs.length := by
   exact List.idxOf_lt_length_of_mem (finLast_mem_of_full_nodup hlen hnodup)
 
+/-- `peelLastVector perm k …` removes the entry `Fin.last n` (located at position
+`k`) from a nodup permutation vector, lowering each remaining entry back to
+`Fin n`. -/
 private def peelLastVector {n : Nat} (perm : Vector (Fin (n + 1)) (n + 1))
     (k : Nat) (_hk : k < n + 1)
     (hidx : perm.toList.idxOf (Fin.last n) = k)
@@ -1663,6 +1696,8 @@ private def peelLastVector {n : Nat} (perm : Vector (Fin (n + 1)) (n + 1))
       · omega
       · omega)
 
+/-- Re-embedding `peelLastVector` through `Fin.castSucc` yields the original
+permutation list with position `k` erased. -/
 private theorem peelLastVector_castSucc_toList {n : Nat}
     (perm : Vector (Fin (n + 1)) (n + 1))
     (k : Nat) (hk : k < n + 1)
@@ -1688,6 +1723,7 @@ private theorem peelLastVector_castSucc_toList {n : Nat}
         simpa [heraseLen] using hi₂
       simp [peelLastVector, hik, lowerFinLast_castSucc, List.getElem_eraseIdx]
 
+/-- If `xs.map f` is nodup and `f` is injective, then `xs` is nodup. -/
 private theorem list_nodup_of_map_injective {α β : Type u} {f : α → β}
     (hinj : Function.Injective f) :
     ∀ {xs : List α}, (xs.map f).Nodup → xs.Nodup
@@ -1699,6 +1735,7 @@ private theorem list_nodup_of_map_injective {α β : Type u} {f : α → β}
         exact hnodup.1 (List.mem_map.mpr ⟨x, hxmem, rfl⟩)
       · exact list_nodup_of_map_injective hinj hnodup.2
 
+/-- `peelLastVector` produces a nodup vector. -/
 private theorem peelLastVector_nodup {n : Nat}
     (perm : Vector (Fin (n + 1)) (n + 1))
     (k : Nat) (hk : k < n + 1)
@@ -1712,6 +1749,8 @@ private theorem peelLastVector_nodup {n : Nat}
     rw [peelLastVector_castSucc_toList perm k hk hidx hnodup]
     exact hnodup.eraseIdx k
 
+/-- Inserting the erased element `xs[i]` back at position `i` of `xs.eraseIdx i`
+reconstructs the original list `xs`. -/
 private theorem list_insertIdx_eraseIdx_getElem {α : Type u} {xs : List α} {i : Nat}
     (hi : i < xs.length) :
     (xs.eraseIdx i).insertIdx i (xs[i]'hi) = xs := by
@@ -1726,6 +1765,8 @@ private theorem list_insertIdx_eraseIdx_getElem {α : Type u} {xs : List α} {i 
           simp only [List.length_cons, Nat.succ_lt_succ_iff] at hi
           simp [ih hi]
 
+/-- Inserting `Fin.last n` at position `k` into the `castSucc`-embedded
+`peelLastVector` reconstructs the original permutation vector `perm`. -/
 private theorem insertAt_peelLastVector {n : Nat}
     (perm : Vector (Fin (n + 1)) (n + 1))
     (k : Nat) (hk : k < n + 1)
