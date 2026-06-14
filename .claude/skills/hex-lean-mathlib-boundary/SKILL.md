@@ -132,7 +132,13 @@ Before attributing a Mathlib-layer build failure to your own change, build the
 that build with `| tee <log>`, the pipeline's exit status is `tee`'s, so a
 `run_in_background` completion notification reports **exit 0 even on a failed
 build** — judge red/green by grepping the log for `error:` / `build failed`,
-never by the reported exit code. A faster
+never by the reported exit code. Grep only *after* the build has finished: a
+still-running background build's log shows zero `error:` lines simply because
+elaboration has not yet reached the broken file, so a premature grep reads
+false-green. Wait for the `Built <target>` / process-exit signal (or an
+`error: build failed` line) before concluding, and do not launch overlapping
+`lake build`s to "confirm" — they serialize on the worktree lock and muddy
+attribution. A faster
 single-build attribution when your change is purely additive *within* the same
 file: Lean reports every per-declaration error and keeps elaborating past a
 failed declaration, so if the build log's only `error:` line numbers fall
