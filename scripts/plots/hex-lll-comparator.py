@@ -142,14 +142,20 @@ FAMILIES = {
 }
 
 
-# Fixed per-request floor of the Isabelle-certified pipeline, taken from
-# reports/hex-lll-performance.md §Per-call comparator overhead (~18.8 ms
-# for a trivial end-to-end `svp_certified` request, dominated by the
-# per-request `fplll` subprocess fork). The plotted Isabelle-certified
-# curve subtracts this constant so its small-n rungs show n-dependent
-# work rather than the fixed floor; the committed ratio tables keep the
-# raw medians.
-ISABELLE_CERTIFIED_FLOOR_MS = 18.8
+# Per-request floor of the Isabelle-certified pipeline: the fixed fork +
+# startup cost of one `svp_certified` request, which Hex's in-process
+# fplll-ffi path avoids. It is measured — not hardcoded — by the committed
+# `runIsabelleCertifiedProcessFloorNormSq` benchmark (a trivial 2x2 request,
+# so its median is the floor with negligible n-dependent work) and read from
+# the export below. The plotted Isabelle-certified curve subtracts this
+# measured floor so its rungs show n-dependent work rather than the process
+# tax; the committed ratio tables keep the raw medians. A rung whose work is
+# at or below the floor (entirely process-bound) is dropped from the adjusted
+# curve rather than plotted as the noise of a near-zero difference.
+DEFAULT_ISABELLE_FLOOR = (
+    ROOT / "reports/bench-results/hex-lll-isabelle-certified-floor.json"
+)
+ISABELLE_FLOOR_PATTERN = re.compile(r"runIsabelleCertifiedProcessFloorNormSq$")
 ISABELLE_CERTIFIED_ADJUSTED_LABEL = "Isabelle certified (adjusted)"
 
 
@@ -165,6 +171,7 @@ STYLE_BY_LABEL = {
         "linewidth": 2.0,
         "markersize": 7.0,
     },
+    "Isabelle certified": {"marker": "^", "linewidth": 2.0, "markersize": 7.0},
     "fpLLL via fplll-ffi": {"marker": "v", "linewidth": 2.0, "markersize": 7.0},
 }
 
@@ -191,22 +198,26 @@ def collect_series(results: list[dict], pattern: re.Pattern[str], label: str) ->
     return Series(label=label, xs=xs, ys=[values[x] for x in xs])
 
 
-def subtract_request_floor(series: Series) -> Series:
-    """Subtract the fixed per-request floor from the Isabelle-certified series
-    and relabel it so the legend marks the adjustment. Raise if any rung sits
-    at or below the floor, which would push the log-scale curve nonpositive."""
-    too_low = [
-        x for x, y in zip(series.xs, series.ys) if y <= ISABELLE_CERTIFIED_FLOOR_MS
-    ]
-    if too_low:
-        raise ValueError(
-            f"Isabelle-certified rungs {too_low} are at or below the "
-            f"{ISABELLE_CERTIFIED_FLOOR_MS} ms request floor; cannot adjust"
-        )
+def load_floor_ms(path: Path) -> float:
+    """Read the measured Isabelle-certified per-request floor (median ms) from
+    the committed `runIsabelleCertifiedProcessFloorNormSq` benchmark export."""
+    for result in load_results(path):
+        if ISABELLE_FLOOR_PATTERN.search(result["function"]):
+            return median_ms(result)
+    raise ValueError(f"no floor benchmark row found in {path}")
+
+
+def subtract_request_floor(series: Series, floor_ms: float) -> Series:
+    """Subtract the measured per-request floor from the Isabelle-certified
+    series and relabel it so the legend marks the adjustment. Rungs whose work
+    is at or below the floor are entirely process-bound — their de-floored
+    value is the noise of a near-zero difference — so they are dropped rather
+    than plotted (and a log axis cannot show a nonpositive value anyway)."""
+    kept = [(x, y - floor_ms) for x, y in zip(series.xs, series.ys) if y - floor_ms > 0]
     return Series(
         label=ISABELLE_CERTIFIED_ADJUSTED_LABEL,
-        xs=series.xs,
-        ys=[y - ISABELLE_CERTIFIED_FLOOR_MS for y in series.ys],
+        xs=[x for x, _ in kept],
+        ys=[y for _, y in kept],
     )
 
 
@@ -230,7 +241,13 @@ def seconds_formatter(value: float, _position: int) -> str:
     return f"{value:g} s"
 
 
-def plot(series: list[Series], output: Path, title: str, xlabel: str) -> None:
+def plot(
+    series: list[Series],
+    output: Path,
+    title: str,
+    xlabel: str,
+    floor_ms: float | None = None,
+) -> None:
     fig, ax = plt.subplots(figsize=(7.2, 4.8))
     for item in series:
         ax.plot(
@@ -250,17 +267,17 @@ def plot(series: list[Series], output: Path, title: str, xlabel: str) -> None:
     ax.grid(True, which="major", axis="x", alpha=0.15)
     ax.legend(frameon=False)
     fig.tight_layout()
-    # The plotted Isabelle-certified curve has its fixed per-request floor
-    # subtracted (see ISABELLE_CERTIFIED_FLOOR_MS). Footnote the adjustment,
-    # stating how much, whenever that series is plotted.
+    # The plotted Isabelle-certified curve has its measured per-request floor
+    # subtracted. Footnote the adjustment, stating the measured value.
     if any(item.label == ISABELLE_CERTIFIED_ADJUSTED_LABEL for item in series):
         fig.subplots_adjust(bottom=0.16)
+        floor_txt = f"~{floor_ms:.0f} ms" if floor_ms is not None else "its"
         fig.text(
             0.5,
             0.01,
-            "Isabelle certified is adjusted down by its "
-            f"~{ISABELLE_CERTIFIED_FLOOR_MS:g} ms per-request floor, a fixed "
-            "trivial-request cost dominated by the fplll subprocess fork.",
+            f"Isabelle certified is adjusted down by its measured {floor_txt} "
+            "per-request floor (fplll subprocess fork), which Hex's in-process "
+            "fplll-ffi path avoids.",
             ha="center",
             va="bottom",
             fontsize=7,
@@ -296,6 +313,12 @@ def main() -> None:
         "--isabelle-bottom", type=Path, default=DEFAULT_ISABELLE_BOTTOM
     )
     parser.add_argument(
+        "--isabelle-floor",
+        type=Path,
+        default=DEFAULT_ISABELLE_FLOOR,
+        help="Measured Isabelle-certified per-request floor export.",
+    )
+    parser.add_argument(
         "--certified",
         type=Path,
         default=None,
@@ -325,6 +348,7 @@ def main() -> None:
     # curves. `Lean native` is the exact d/ν reducer; `Lean steered` is the
     # approximation-steered default with post-hoc certification.
     series = [isabelle, lean]
+    floor_ms = None
     if config.include_certified:
         certified_results = load_results(args.certified or config.certified_path)
         certified = collect_series(
@@ -333,12 +357,14 @@ def main() -> None:
         isabelle_certified_results = load_results(
             args.isabelle_certified or config.isabelle_certified_path
         )
+        floor_ms = load_floor_ms(args.isabelle_floor)
         isabelle_certified = subtract_request_floor(
             collect_series(
                 isabelle_certified_results,
                 config.isabelle_certified_pattern,
                 "Isabelle certified",
-            )
+            ),
+            floor_ms,
         )
         series += [isabelle_certified, steered, certified]
     else:
@@ -349,7 +375,7 @@ def main() -> None:
         isabelle_bottom_results = load_results(args.isabelle_bottom)
         assert_bottom_consistent(isabelle_bottom_results, isabelle)
 
-    plot(series, output, config.title, config.xlabel)
+    plot(series, output, config.title, config.xlabel, floor_ms)
 
 
 if __name__ == "__main__":

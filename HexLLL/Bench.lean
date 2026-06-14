@@ -287,6 +287,18 @@ instance : Nonempty FirstShortVectorInput :=
 initialize bzRecombinationInputRef : IO.Ref FirstShortVectorInput ←
   IO.mkRef bzRecombinationInput
 
+/-- Trivial 2×2 identity input. Reducing it is instant, so an end-to-end
+`svp_certified` request on it measures the comparator's fixed per-request
+floor — process fork plus startup — with negligible n-dependent work. This
+is the same trivial request the §Per-call comparator overhead note uses to
+quote the Isabelle-certified floor; registering it makes that floor a
+committed, reproducible measurement the comparator plot can subtract. -/
+def processFloorInput : FirstShortVectorInput :=
+  { rows := 2
+    cols := 2
+    basis := Matrix.ofFn fun i j => if i = j then 1 else 0
+    hn := by decide }
+
 /-- POSIX-style LCG used to make committed random-bounded fixtures
 reproducible from a seed. -/
 def lcgStep (x : Nat) : Nat :=
@@ -1574,6 +1586,13 @@ def runSteeredFallbackTally : Unit → IO Int := fun _ => do
       s!"steered reducer fell back to the exact reducer on a bench rung: {repr tally}"
   return Int.ofNat tally.certified * 65537 + Int.ofNat tally.fellBack
 
+/-- Isabelle-certified per-request process floor: time a trivial 2×2 request
+through `svp_certified`. The median is the fixed fork+startup overhead the
+comparator plot subtracts from the Isabelle-certified curve, so the
+adjustment uses a committed measurement rather than a hardcoded constant. -/
+def runIsabelleCertifiedProcessFloorNormSq : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "process-floor" processFloorInput
+
 def runIsabelleCertifiedRandomBoundedNormSq30 : Unit → IO Int := fun _ => do
   runIsabelleCertifiedShortVectorNormSq "random-bounded-30"
     (← getCachedInput randomBoundedInput30Ref (fun _ => prepRandomBoundedInput 30))
@@ -2689,6 +2708,14 @@ setup_fixed_benchmark runIsabelleHarshCubicNormSq65 where {
 /- Verified-Isabelle certified-LLL registrations. These use the Zenodo
 `svp_certified` driver, which invokes the `fplll` binary per request and then
 checks the two-transform certificate before returning the squared norm. -/
+setup_fixed_benchmark runIsabelleCertifiedProcessFloorNormSq where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    expectedHash := none
+    warmupFirstIter := true
+  }
+
 setup_fixed_benchmark runIsabelleCertifiedRandomBoundedNormSq30 where {
     repeats := 3
     minTotalSeconds := 1.0
