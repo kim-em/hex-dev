@@ -2518,6 +2518,7 @@ private theorem residual_eq_of_equiv_prefixSpan
   exact dot_eq_zero_of_prefixSpan B i hi s ((prefixRows A i hi).row j)
     (hA_rows_to_B j) hsorth
 
+/-- `prefixSpan_zero` states that the zero vector is contained in every prefix span, providing the base case for prefix-span closure arguments. -/
 private theorem prefixSpan_zero
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) :
     prefixSpan M i hi 0 := by
@@ -2531,6 +2532,7 @@ private theorem prefixSpan_zero
     grind
   simpa [hzero] using hz
 
+/-- `prefixSpan_rowCombination_of_rows` states that any row combination of prefix rows already in another prefix span remains in that prefix span. -/
 private theorem prefixSpan_rowCombination_of_rows
     (A B : Matrix Rat n m) (i : Nat) (hi : i < n) (c : Vector Rat (i + 1))
     (hrows : ∀ j : Fin (i + 1), prefixSpan B i hi ((prefixRows A i hi).row j)) :
@@ -2555,6 +2557,7 @@ private theorem prefixSpan_rowCombination_of_rows
           (prefixSpan_smul B i hi c[j] (hrows j))
   exact hfold (List.finRange (i + 1)) 0 (prefixSpan_zero B i hi)
 
+/-- `strictPrefixRows_succ_eq_prefixRows` identifies the strict prefix of length `i + 1` with the inclusive prefix through row `i`. -/
 private theorem strictPrefixRows_succ_eq_prefixRows
     (M : Matrix Rat n m) (i : Nat) (hi : i + 1 < n) :
     strictPrefixRows M (i + 1) (Nat.le_of_lt hi) =
@@ -2565,6 +2568,7 @@ private theorem strictPrefixRows_succ_eq_prefixRows
   intro col hcol
   rfl
 
+/-- `prefixSpan_mono_succ` lifts prefix-span membership across one successor step in the prefix length. -/
 private theorem prefixSpan_mono_succ
     (M : Matrix Rat n m) (i : Nat) (hi : i + 1 < n) {v : Vector Rat m}
     (hv : prefixSpan M i (Nat.lt_of_succ_lt hi) v) :
@@ -2575,6 +2579,7 @@ private theorem prefixSpan_mono_succ
   rw [strictPrefixRows_succ_eq_prefixRows (hi := hi)]
   exact hc
 
+/-- `prefixSpan_mono_le` lifts prefix-span membership along any ordered pair of prefix indices. -/
 private theorem prefixSpan_mono_le
     (M : Matrix Rat n m) {j i : Nat} (hj : j < n) (hi : i < n) (hji : j ≤ i)
     {v : Vector Rat m} (hv : prefixSpan M j hj v) :
@@ -2585,6 +2590,7 @@ private theorem prefixSpan_mono_le
   | step hji ih =>
       exact prefixSpan_mono_succ M _ hi (ih (Nat.lt_of_succ_lt hi))
 
+/-- `prefixSpan_matrix_row` records that each matrix row belongs to the prefix span ending at that row. -/
 private theorem prefixSpan_matrix_row
     (M : Matrix Rat n m) (j : Fin n) :
     prefixSpan M j.val j.isLt (M.row j) := by
