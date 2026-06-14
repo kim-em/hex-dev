@@ -2621,6 +2621,7 @@ private theorem size_eq_zero_of_isZero_true
     f.size = 0 := by
   simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hzero
 
+/-- `pthRoot` fixes the constant polynomial `1`, the unit base case of the `pthRoot` recursion. -/
 private theorem pthRoot_one
     (hp : Hex.Nat.Prime p) :
     pthRoot (1 : FpPoly p) = 1 := by
@@ -2641,6 +2642,7 @@ private theorem pthRoot_one
       rw [DensePoly.coeff_C, DensePoly.coeff_C]
       simp [hne]
 
+/-- Every power of the constant polynomial `1` is `1`. -/
 private theorem pow_one_base (n : Nat) :
     pow (1 : FpPoly p) n = 1 := by
   rw [pow_eq_powLinear]
@@ -2651,6 +2653,7 @@ private theorem pow_one_base (n : Nat) :
       rw [powLinear, ih]
       exact mul_one (1 : FpPoly p)
 
+/-- The square-free contribution of the constant polynomial `1` is `1`, halting the recursion at the unit. -/
 private theorem squareFreeAuxRevContribution_one
     (hp : Hex.Nat.Prime p) (multiplicity fuel : Nat) :
     squareFreeAuxRevContribution (1 : FpPoly p) multiplicity fuel = 1 := by
@@ -2678,6 +2681,7 @@ private theorem squareFreeAuxRevContribution_one
       rw [pthRoot_one hp]
       exact ih (multiplicity * p)
 
+/-- A polynomial of `size` one is constant, so its derivative is zero. -/
 private theorem derivative_isZero_true_of_size_one
     (f : FpPoly p) (hsize : f.size = 1) :
     (DensePoly.derivative f).isZero = true := by
@@ -2685,6 +2689,7 @@ private theorem derivative_isZero_true_of_size_one
   simp [hsize, DensePoly.isZero, DensePoly.ofCoeffs, DensePoly.trimTrailingZeros]
   rfl
 
+/-- `pthRoot` fixes any constant (`size` one) polynomial. -/
 private theorem pthRoot_eq_self_of_size_one
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (hsize : f.size = 1) :
     pthRoot f = f := by
@@ -2710,6 +2715,7 @@ private theorem pthRoot_eq_self_of_size_one
         omega
       rw [hroot_zero, hf_zero]
 
+/-- The square-free contribution of any constant (`size` one) polynomial is `1`. -/
 private theorem squareFreeAuxRevContribution_size_one
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (hsize : f.size = 1) :
@@ -2731,12 +2737,14 @@ private theorem squareFreeAuxRevContribution_size_one
         rw [pthRoot_eq_self_of_size_one hp f hsize, hsize]
       exact ih (pthRoot f) (multiplicity * p) hroot_size
 
+/-- Square-free contribution correctness on `pthRoot 1`: it equals `pow (pthRoot 1) multiplicity`, the constant base case of the `pthRoot` branch. -/
 private theorem squareFreeAuxRevContribution_pthRoot_constant_correct
     (hp : Hex.Nat.Prime p) (multiplicity fuel : Nat) :
     squareFreeAuxRevContribution (pthRoot (1 : FpPoly p)) multiplicity fuel =
       pow (pthRoot (1 : FpPoly p)) multiplicity := by
   rw [pthRoot_one hp, squareFreeAuxRevContribution_one hp, pow_one_base]
 
+/-- When the derivative vanishes on a nonzero `f`, its top degree `f.size - 1` is a multiple of `p`. -/
 private theorem derivative_zero_top_degree_mod_eq_zero
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (hzero : f.isZero = false)
@@ -2751,6 +2759,7 @@ private theorem derivative_zero_top_degree_mod_eq_zero
     have hcoeff_ne := DensePoly.coeff_last_ne_zero_of_pos_size f hpos
     exact False.elim (hcoeff_ne hcoeff_zero)
 
+/-- When the derivative vanishes on a nonconstant `f`, `pthRoot f` is nonzero, since its top coefficient is the nonzero top coefficient of `f`. -/
 private theorem pthRoot_nonzero_of_derivative_zero_nonconstant
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (hzero : f.isZero = false)
@@ -2781,6 +2790,7 @@ private theorem pthRoot_nonzero_of_derivative_zero_nonconstant
     have hpos : 0 < f.size := by omega
     exact False.elim (DensePoly.coeff_last_ne_zero_of_pos_size f hpos hcoeff_f_zero)
 
+/-- Taking `pthRoot` of a nonconstant polynomial strictly shrinks its `size`, so the recursion's fuel still bounds it. -/
 private theorem pthRoot_fuel_decrease_of_derivative_zero_nonconstant
     (hp : Hex.Nat.Prime p) (f : FpPoly p) {fuel : Nat}
     (hfuel : f.size < fuel + 1)
@@ -2815,6 +2825,7 @@ private theorem pthRoot_fuel_decrease_of_derivative_zero_nonconstant
         omega)
     exact False.elim (hroot_coeff_ne hroot_coeff_zero)
 
+/-- When the derivative vanishes, raising `pthRoot f` to the `p`-th power recovers `f`, the Frobenius identity over `Fp`. -/
 private theorem pthRoot_frobenius_of_derivative_zero
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (_hzero : f.isZero = false)
@@ -2827,6 +2838,7 @@ private theorem pthRoot_frobenius_of_derivative_zero
   · simp [hn]
   · simp [hn, derivative_zero_coeff_non_pmultiple hp f n hdf hn]
 
+/-- The Frobenius identity `pow (pthRoot f) p = f` for derivative-zero `f`, dropping the nonzero hypothesis. -/
 private theorem pthRoot_frobenius_of_derivative_zero'
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (hdf : (DensePoly.derivative f).isZero = true) :
@@ -2838,6 +2850,7 @@ private theorem pthRoot_frobenius_of_derivative_zero'
   · simp [hn]
   · simp [hn, derivative_zero_coeff_non_pmultiple hp f n hdf hn]
 
+/-- When the derivative vanishes, `pthRoot f` divides `f`, since `f` is its `p`-th power. -/
 private theorem pthRoot_dvd_self_of_derivative_zero
     (hp : Hex.Nat.Prime p) (f : FpPoly p)
     (hzero : f.isZero = false)
@@ -2858,12 +2871,14 @@ private theorem pthRoot_dvd_self_of_derivative_zero
     _ = pthRoot f * pow (pthRoot f) (p - 1) := by
       rw [pow_one]
 
+/-- Iterating `pow` multiplies the exponents. -/
 private theorem pow_pow_mul
     (f : FpPoly p) (m n : Nat) (_hm : 0 < m) :
     pow (pow f n) m = pow f (m * n) := by
   rw [pow_eq_powLinear, pow_eq_powLinear, pow_eq_powLinear]
   exact powLinear_powLinear_mul f m n
 
+/-- When the derivative vanishes, `pow (pthRoot f) (multiplicity * p)` equals `pow f multiplicity`, transporting the recursion's contribution from `pthRoot f` back to `f`. -/
 private theorem pthRoot_pow_mul_prime_of_derivative_zero
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity : Nat)
     (hmultiplicity : 0 < multiplicity)
@@ -2877,6 +2892,7 @@ private theorem pthRoot_pow_mul_prime_of_derivative_zero
     _ = pow f multiplicity := by
           rw [pthRoot_frobenius_of_derivative_zero hp f hzero hdf]
 
+/-- Square-free contribution correctness on the derivative-zero branch: the recursive contribution of `pthRoot f` at multiplicity `multiplicity * p` equals `pow f multiplicity`. -/
 private theorem squareFreeAuxRevContribution_derivative_zero_correct
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 1)
