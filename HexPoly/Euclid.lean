@@ -226,22 +226,34 @@ private theorem ofCoeffs_degree_getD_lt_of_forall_zero_ge {coeffs : Array R} {bo
     rw [hdeg]
     omega
 
+/-- One coefficient of a long-division elimination step: subtract `coeff * q[j]` from
+position `shift + j` of `next`, the inner action folded by `subtractScaledShift` to wipe
+out the leading term of the current remainder. -/
 private def subtractScaledShiftStep [Sub R] [Mul R]
     (q : Array R) (shift : Nat) (coeff : R) (next : Array R) (j : Nat) : Array R :=
   let idx := shift + j
   next.set! idx (next.getD idx (Zero.zero : R) - coeff * q.getD j (Zero.zero : R))
 
+/-- Subtract `coeff` times the divisor `q` shifted up by `shift` positions from the
+remainder `rem`, i.e. one full long-division step `rem - coeff * xˢʰⁱᶠᵗ * q`, realised by
+folding `subtractScaledShiftStep` over every index of `q`. -/
 private def subtractScaledShift [Sub R] [Mul R]
     (rem q : Array R) (shift : Nat) (coeff : R) : Array R :=
   (List.range q.size).foldl (subtractScaledShiftStep q shift coeff) rem
 
 omit [DecidableEq R] in
+/-- Reading back the value just written at an in-bounds index `n` of `xs.set! n v`
+returns `v`, the in-bounds half of the `set!`/`getD` interaction used throughout the
+array long-division getD characterisations. -/
 private theorem array_getD_set!_same (xs : Array R) (n : Nat) (v : R)
     (hn : n < xs.size) :
     (xs.set! n v).getD n (Zero.zero : R) = v := by
   simp [Array.getD, hn]
 
 omit [DecidableEq R] in
+/-- Writing at index `k ≠ n` leaves the value read back at `n` of `xs.set! k v`
+unchanged, the disjoint-index half of the `set!`/`getD` interaction used to show
+`subtractScaledShift` only perturbs the elimination window. -/
 private theorem array_getD_set!_ne (xs : Array R) (n k : Nat) (v : R)
     (hne : k ≠ n) :
     (xs.set! k v).getD n (Zero.zero : R) = xs.getD n (Zero.zero : R) := by
@@ -254,6 +266,9 @@ private theorem array_getD_set!_ne (xs : Array R) (n k : Nat) (v : R)
       simp [Array.set!_eq_setIfInBounds, hn]
 
 omit [DecidableEq R] in
+/-- A fold of `subtractScaledShiftStep` over index list `xs` leaves position `n`
+untouched whenever no step writes there (`shift + j ≠ n` for all `j ∈ xs`), the key
+disjointness fact underpinning the `getD` characterisations below. -/
 private theorem subtractScaledShift_fold_getD_of_forall_ne [Sub R] [Mul R]
     (rem q : Array R) (shift : Nat) (coeff : R) (n : Nat) (xs : List Nat)
     (hne : ∀ j, j ∈ xs → shift + j ≠ n) :
@@ -274,6 +289,9 @@ private theorem subtractScaledShift_fold_getD_of_forall_ne [Sub R] [Mul R]
         (hne j List.mem_cons_self)
 
 omit [DecidableEq R] in
+/-- Folding `subtractScaledShiftStep` preserves the array length, since each step is a
+`set!` that never grows the array; needed to keep elimination-window bounds valid across
+the fold. -/
 private theorem subtractScaledShift_fold_size [Sub R] [Mul R]
     (rem q : Array R) (shift : Nat) (coeff : R) (xs : List Nat) :
     (xs.foldl (subtractScaledShiftStep q shift coeff) rem).size = rem.size := by
@@ -287,6 +305,9 @@ private theorem subtractScaledShift_fold_size [Sub R] [Mul R]
       simp [Array.set!_eq_setIfInBounds]
 
 omit [DecidableEq R] in
+/-- `subtractScaledShift` leaves position `n` unchanged when it lies outside the
+elimination window (`shift + j ≠ n` for every `j < q.size`), specialising the fold
+disjointness lemma to a full subtract step. -/
 private theorem subtractScaledShift_getD_of_forall_ne [Sub R] [Mul R]
     (rem q : Array R) (shift : Nat) (coeff : R) (n : Nat)
     (hne : ∀ j, j < q.size → shift + j ≠ n) :
@@ -298,6 +319,10 @@ private theorem subtractScaledShift_getD_of_forall_ne [Sub R] [Mul R]
   exact hne j (List.mem_range.mp hj)
 
 omit [DecidableEq R] in
+/-- Closed form for position `n` after folding `subtractScaledShiftStep` over
+`List.range m`: indices inside the window `shift ≤ n < shift + m` get
+`coeff * q[n - shift]` subtracted, all others are untouched; the engine behind the full
+`subtractScaledShift_getD` characterisation. -/
 private theorem subtractScaledShift_fold_getD_range [Lean.Grind.CommRing R]
     (rem q : Array R) (shift : Nat) (coeff : R) (n m : Nat)
     (hbound : ∀ j, j < m → shift + j < rem.size) :
@@ -382,6 +407,9 @@ private theorem subtractScaledShift_fold_getD_range [Lean.Grind.CommRing R]
         · omega
 
 omit [DecidableEq R] in
+/-- Full pointwise specification of `subtractScaledShift`: each position `n` in the
+window `shift ≤ n < shift + q.size` has `coeff * q[n - shift]` subtracted and every other
+position is unchanged, the definitive `getD` law callers reason with. -/
 private theorem subtractScaledShift_getD [Lean.Grind.CommRing R]
     (rem q : Array R) (shift : Nat) (coeff : R) (n : Nat)
     (hbound : ∀ j, j < q.size → shift + j < rem.size) :
@@ -394,6 +422,9 @@ private theorem subtractScaledShift_getD [Lean.Grind.CommRing R]
   exact subtractScaledShift_fold_getD_range rem q shift coeff n q.size hbound
 
 omit [DecidableEq R] in
+/-- At the top window position `shift + qDegree`, `subtractScaledShift` subtracts
+`coeff` times the leading coefficient `q[qDegree]`; the case that, with the right
+`coeff`, zeroes the remainder's leading term and drops its degree. -/
 private theorem subtractScaledShift_getD_last [Sub R] [Mul R]
     (rem q : Array R) (shift qDegree : Nat) (coeff : R)
     (hsize : q.size = qDegree + 1) (hidx : shift + qDegree < rem.size) :
@@ -429,6 +460,9 @@ private theorem subtractScaledShift_getD_last [Sub R] [Mul R]
   · simpa [hprefix_size] using hidx
 
 omit [DecidableEq R] in
+/-- Above the top window position (`shift + qDegree < n`), `subtractScaledShift` leaves
+`rem[n]` unchanged, confirming the elimination step never touches coefficients strictly
+higher than the remainder's current degree. -/
 private theorem subtractScaledShift_getD_above_last [Sub R] [Mul R]
     (rem q : Array R) (shift qDegree : Nat) (coeff : R) (n : Nat)
     (hsize : q.size = qDegree + 1) (hn : shift + qDegree < n) :
@@ -440,6 +474,10 @@ private theorem subtractScaledShift_getD_above_last [Sub R] [Mul R]
   omega
 
 omit [DecidableEq R] in
+/-- When the chosen `coeff` makes the leading subtraction cancel exactly
+(`rem[shift+qDegree] - coeff * q[qDegree] = 0`), the top window position of
+`subtractScaledShift` becomes zero, the degree-drop guarantee each long-division step
+relies on. -/
 private theorem subtractScaledShift_getD_last_cancel [Sub R] [Mul R]
     (rem q : Array R) (shift qDegree : Nat) (coeff : R)
     (hsize : q.size = qDegree + 1) (hidx : shift + qDegree < rem.size)
@@ -451,6 +489,10 @@ private theorem subtractScaledShift_getD_last_cancel [Sub R] [Mul R]
   rw [subtractScaledShift_getD_last rem q shift qDegree coeff hsize hidx]
   exact hcancel
 
+/-- The fuel-bounded long-division loop: while the remainder's degree `rd` is at least
+the divisor degree `qDegree`, pick the quotient coefficient `scaleLead (rem[rd])`, record
+it in `quot`, eliminate the leading term via `subtractScaledShift`, and recurse, returning
+the final `(quotient, remainder)` pair. -/
 private def divModArrayAux [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R)
     (fuel : Nat) (quot rem : Array R) : Array R × Array R :=
@@ -469,6 +511,9 @@ private def divModArrayAux [Sub R] [Mul R]
             let rem := subtractScaledShift rem q shift coeff
             divModArrayAux q qDegree scaleLead fuel quot rem
 
+/-- `divModArrayAux` depends only on the pointwise values of its `scaleLead` argument:
+two scaling functions agreeing on every input produce identical quotient/remainder, so
+callers may swap in any extensionally-equal leading-coefficient scaler. -/
 private theorem divModArrayAux_scaleLead_congr [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) {scaleLead₁ scaleLead₂ : R → R}
     (hscale : ∀ a : R, scaleLead₁ a = scaleLead₂ a)
@@ -490,6 +535,10 @@ private theorem divModArrayAux_scaleLead_congr [Sub R] [Mul R]
             rw [hscale]
             exact ih _ _
 
+/-- Under a `scaleLead` that cancels each leading term (`a - scaleLead a * q[qDegree] = 0`),
+`divModArrayAux` drives every remainder coefficient at index `≥ qDegree` to zero, i.e. the
+final remainder has degree `< qDegree`; the core invariant establishing the division
+remainder-degree bound. -/
 private theorem divModArrayAux_remainder_zero_ge [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R)
     (fuel : Nat) (quot rem : Array R)
@@ -556,6 +605,9 @@ private theorem divModArrayAux_remainder_zero_ge [Sub R] [Mul R]
               i hi
             simpa [Array.getD_eq_getD_getElem?] using hrec
 
+/-- Array-backed long division of dense polynomial `p` by `q`: returns `(0, p)` when `q`
+is zero, otherwise seeds a zero quotient and runs `divModArrayAux` with `p.size` fuel,
+packaging the resulting coefficient arrays back as `DensePoly` quotient and remainder. -/
 private def divModArray [Sub R] [Mul R]
     (p q : DensePoly R) (scaleLead : R → R) : DensePoly R × DensePoly R :=
   if q.isZero then
