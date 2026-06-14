@@ -1471,6 +1471,7 @@ private def cert_2_2 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_2_2_incremental_check` confirms the incremental Rabin certificate `cert_2_2` validates for the committed `C(2, 2)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_2_2_irreducible`. -/
 private theorem cert_2_2_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_2_2 luebeckConwayPolynomial_2_2_monic cert_2_2 = true := by
@@ -1494,6 +1495,7 @@ private def cert_2_3 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_2_3_incremental_check` confirms the incremental Rabin certificate `cert_2_3` validates for the committed `C(2, 3)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_2_3_irreducible`. -/
 private theorem cert_2_3_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_2_3 luebeckConwayPolynomial_2_3_monic cert_2_3 = true := by
@@ -1517,6 +1519,7 @@ private def cert_2_4 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_2_4_incremental_check` confirms the incremental Rabin certificate `cert_2_4` validates for the committed `C(2, 4)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_2_4_irreducible`. -/
 private theorem cert_2_4_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_2_4 luebeckConwayPolynomial_2_4_monic cert_2_4 = true := by
@@ -1540,6 +1543,7 @@ private def cert_2_5 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_2_5_incremental_check` confirms the incremental Rabin certificate `cert_2_5` validates for the committed `C(2, 5)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_2_5_irreducible`. -/
 private theorem cert_2_5_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_2_5 luebeckConwayPolynomial_2_5_monic cert_2_5 = true := by
@@ -1563,6 +1567,7 @@ private def cert_2_6 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_2_6_incremental_check` confirms the incremental Rabin certificate `cert_2_6` validates for the committed `C(2, 6)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_2_6_irreducible`. -/
 private theorem cert_2_6_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_2_6 luebeckConwayPolynomial_2_6_monic cert_2_6 = true := by
@@ -1586,6 +1591,7 @@ private def cert_3_1 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_3_1_incremental_check` confirms the incremental Rabin certificate `cert_3_1` validates for the committed `C(3, 1)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_3_1_irreducible`. -/
 private theorem cert_3_1_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_3_1 luebeckConwayPolynomial_3_1_monic cert_3_1 = true := by
@@ -1609,6 +1615,7 @@ private def cert_3_2 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_3_2_incremental_check` confirms the incremental Rabin certificate `cert_3_2` validates for the committed `C(3, 2)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_3_2_irreducible`. -/
 private theorem cert_3_2_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_3_2 luebeckConwayPolynomial_3_2_monic cert_3_2 = true := by
@@ -1632,6 +1639,7 @@ private def cert_3_3 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_3_3_incremental_check` confirms the incremental Rabin certificate `cert_3_3` validates for the committed `C(3, 3)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_3_3_irreducible`. -/
 private theorem cert_3_3_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_3_3 luebeckConwayPolynomial_3_3_monic cert_3_3 = true := by
@@ -1655,6 +1663,7 @@ private def cert_3_4 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_3_4_incremental_check` confirms the incremental Rabin certificate `cert_3_4` validates for the committed `C(3, 4)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_3_4_irreducible`. -/
 private theorem cert_3_4_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_3_4 luebeckConwayPolynomial_3_4_monic cert_3_4 = true := by
@@ -1678,6 +1687,7 @@ private def cert_3_5 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_3_5_incremental_check` confirms the incremental Rabin certificate `cert_3_5` validates for the committed `C(3, 5)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_3_5_irreducible`. -/
 private theorem cert_3_5_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_3_5 luebeckConwayPolynomial_3_5_monic cert_3_5 = true := by
@@ -1701,6 +1711,7 @@ private def cert_3_6 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_3_6_incremental_check` confirms the incremental Rabin certificate `cert_3_6` validates for the committed `C(3, 6)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_3_6_irreducible`. -/
 private theorem cert_3_6_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_3_6 luebeckConwayPolynomial_3_6_monic cert_3_6 = true := by
@@ -1724,6 +1735,7 @@ private def cert_5_1 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_5_1_incremental_check` confirms the incremental Rabin certificate `cert_5_1` validates for the committed `C(5, 1)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_5_1_irreducible`. -/
 private theorem cert_5_1_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_5_1 luebeckConwayPolynomial_5_1_monic cert_5_1 = true := by
@@ -1747,6 +1759,7 @@ private def cert_5_2 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_5_2_incremental_check` confirms the incremental Rabin certificate `cert_5_2` validates for the committed `C(5, 2)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_5_2_irreducible`. -/
 private theorem cert_5_2_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_5_2 luebeckConwayPolynomial_5_2_monic cert_5_2 = true := by
@@ -1770,6 +1783,7 @@ private def cert_5_3 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_5_3_incremental_check` confirms the incremental Rabin certificate `cert_5_3` validates for the committed `C(5, 3)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_5_3_irreducible`. -/
 private theorem cert_5_3_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_5_3 luebeckConwayPolynomial_5_3_monic cert_5_3 = true := by
@@ -1793,6 +1807,7 @@ private def cert_5_4 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_5_4_incremental_check` confirms the incremental Rabin certificate `cert_5_4` validates for the committed `C(5, 4)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_5_4_irreducible`. -/
 private theorem cert_5_4_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_5_4 luebeckConwayPolynomial_5_4_monic cert_5_4 = true := by
@@ -1816,6 +1831,7 @@ private def cert_5_5 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_5_5_incremental_check` confirms the incremental Rabin certificate `cert_5_5` validates for the committed `C(5, 5)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_5_5_irreducible`. -/
 private theorem cert_5_5_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_5_5 luebeckConwayPolynomial_5_5_monic cert_5_5 = true := by
@@ -1839,6 +1855,7 @@ private def cert_5_6 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_5_6_incremental_check` confirms the incremental Rabin certificate `cert_5_6` validates for the committed `C(5, 6)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_5_6_irreducible`. -/
 private theorem cert_5_6_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_5_6 luebeckConwayPolynomial_5_6_monic cert_5_6 = true := by
@@ -1862,6 +1879,7 @@ private def cert_7_1 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_7_1_incremental_check` confirms the incremental Rabin certificate `cert_7_1` validates for the committed `C(7, 1)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_7_1_irreducible`. -/
 private theorem cert_7_1_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_7_1 luebeckConwayPolynomial_7_1_monic cert_7_1 = true := by
@@ -1885,6 +1903,7 @@ private def cert_7_2 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_7_2_incremental_check` confirms the incremental Rabin certificate `cert_7_2` validates for the committed `C(7, 2)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_7_2_irreducible`. -/
 private theorem cert_7_2_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_7_2 luebeckConwayPolynomial_7_2_monic cert_7_2 = true := by
@@ -1908,6 +1927,7 @@ private def cert_7_3 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_7_3_incremental_check` confirms the incremental Rabin certificate `cert_7_3` validates for the committed `C(7, 3)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_7_3_irreducible`. -/
 private theorem cert_7_3_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_7_3 luebeckConwayPolynomial_7_3_monic cert_7_3 = true := by
@@ -1931,6 +1951,7 @@ private def cert_7_4 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_7_4_incremental_check` confirms the incremental Rabin certificate `cert_7_4` validates for the committed `C(7, 4)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_7_4_irreducible`. -/
 private theorem cert_7_4_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_7_4 luebeckConwayPolynomial_7_4_monic cert_7_4 = true := by
@@ -1954,6 +1975,7 @@ private def cert_7_5 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_7_5_incremental_check` confirms the incremental Rabin certificate `cert_7_5` validates for the committed `C(7, 5)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_7_5_irreducible`. -/
 private theorem cert_7_5_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_7_5 luebeckConwayPolynomial_7_5_monic cert_7_5 = true := by
@@ -1977,6 +1999,7 @@ private def cert_7_6 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_7_6_incremental_check` confirms the incremental Rabin certificate `cert_7_6` validates for the committed `C(7, 6)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_7_6_irreducible`. -/
 private theorem cert_7_6_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_7_6 luebeckConwayPolynomial_7_6_monic cert_7_6 = true := by
@@ -2000,6 +2023,7 @@ private def cert_11_1 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_11_1_incremental_check` confirms the incremental Rabin certificate `cert_11_1` validates for the committed `C(11, 1)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_11_1_irreducible`. -/
 private theorem cert_11_1_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_11_1 luebeckConwayPolynomial_11_1_monic cert_11_1 = true := by
@@ -2023,6 +2047,7 @@ private def cert_11_2 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_11_2_incremental_check` confirms the incremental Rabin certificate `cert_11_2` validates for the committed `C(11, 2)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_11_2_irreducible`. -/
 private theorem cert_11_2_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_11_2 luebeckConwayPolynomial_11_2_monic cert_11_2 = true := by
@@ -2046,6 +2071,7 @@ private def cert_11_3 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_11_3_incremental_check` confirms the incremental Rabin certificate `cert_11_3` validates for the committed `C(11, 3)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_11_3_irreducible`. -/
 private theorem cert_11_3_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_11_3 luebeckConwayPolynomial_11_3_monic cert_11_3 = true := by
@@ -2069,6 +2095,7 @@ private def cert_11_4 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_11_4_incremental_check` confirms the incremental Rabin certificate `cert_11_4` validates for the committed `C(11, 4)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_11_4_irreducible`. -/
 private theorem cert_11_4_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_11_4 luebeckConwayPolynomial_11_4_monic cert_11_4 = true := by
@@ -2092,6 +2119,7 @@ private def cert_11_5 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 20000000 in
+/-- `cert_11_5_incremental_check` confirms the incremental Rabin certificate `cert_11_5` validates for the committed `C(11, 5)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_11_5_irreducible`. -/
 private theorem cert_11_5_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_11_5 luebeckConwayPolynomial_11_5_monic cert_11_5 = true := by
@@ -2115,6 +2143,7 @@ private def cert_11_6 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 20000000 in
+/-- `cert_11_6_incremental_check` confirms the incremental Rabin certificate `cert_11_6` validates for the committed `C(11, 6)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_11_6_irreducible`. -/
 private theorem cert_11_6_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_11_6 luebeckConwayPolynomial_11_6_monic cert_11_6 = true := by
@@ -2138,6 +2167,7 @@ private def cert_13_1 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_13_1_incremental_check` confirms the incremental Rabin certificate `cert_13_1` validates for the committed `C(13, 1)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_13_1_irreducible`. -/
 private theorem cert_13_1_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_13_1 luebeckConwayPolynomial_13_1_monic cert_13_1 = true := by
@@ -2161,6 +2191,7 @@ private def cert_13_2 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_13_2_incremental_check` confirms the incremental Rabin certificate `cert_13_2` validates for the committed `C(13, 2)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_13_2_irreducible`. -/
 private theorem cert_13_2_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_13_2 luebeckConwayPolynomial_13_2_monic cert_13_2 = true := by
@@ -2184,6 +2215,7 @@ private def cert_13_3 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_13_3_incremental_check` confirms the incremental Rabin certificate `cert_13_3` validates for the committed `C(13, 3)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_13_3_irreducible`. -/
 private theorem cert_13_3_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_13_3 luebeckConwayPolynomial_13_3_monic cert_13_3 = true := by
@@ -2207,6 +2239,7 @@ private def cert_13_4 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 8000000 in
+/-- `cert_13_4_incremental_check` confirms the incremental Rabin certificate `cert_13_4` validates for the committed `C(13, 4)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_13_4_irreducible`. -/
 private theorem cert_13_4_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_13_4 luebeckConwayPolynomial_13_4_monic cert_13_4 = true := by
@@ -2230,6 +2263,7 @@ private def cert_13_5 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 20000000 in
+/-- `cert_13_5_incremental_check` confirms the incremental Rabin certificate `cert_13_5` validates for the committed `C(13, 5)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_13_5_irreducible`. -/
 private theorem cert_13_5_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_13_5 luebeckConwayPolynomial_13_5_monic cert_13_5 = true := by
@@ -2253,6 +2287,7 @@ private def cert_13_6 : Berlekamp.IrreducibilityCertificate where
 
 set_option maxRecDepth 4096 in
 set_option maxHeartbeats 20000000 in
+/-- `cert_13_6_incremental_check` confirms the incremental Rabin certificate `cert_13_6` validates for the committed `C(13, 6)` entry: `checkIrreducibilityCertificateLinearIncremental` evaluates to `true`, supplying the irreducibility witness for `luebeckConwayPolynomial_13_6_irreducible`. -/
 private theorem cert_13_6_incremental_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
         luebeckConwayPolynomial_13_6 luebeckConwayPolynomial_13_6_monic cert_13_6 = true := by
