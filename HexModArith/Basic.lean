@@ -225,6 +225,10 @@ def complementWord (p : Nat) [Bounds p] (_hp : p < UInt64.word) : UInt64 :=
   UInt64.ofNatLT (UInt64.word - p) <| by
     exact Nat.sub_lt (by decide : 0 < 2 ^ 64) (Bounds.pPos (p := p))
 
+/-- Carry branch of `add`: when the unreduced sum `a.toNat + b.toNat`
+reaches the word size `2^64` (`hcarry`), the wrapped machine sum plus
+the complement word `2^64 - p` has representative `a.toNat + b.toNat - p`.
+Requires `p < 2^64` (`hpLt`) for the complement word to exist. -/
 private theorem add_carry_toNat (a b : ZMod64 p) {hpLt : p < UInt64.word}
     (hcarry : UInt64.word ≤ a.toNat + b.toNat) :
     ((a.val + b.val) + complementWord p hpLt).toNat = a.toNat + b.toNat - p := by
@@ -248,6 +252,8 @@ private theorem add_carry_toNat (a b : ZMod64 p) {hpLt : p < UInt64.word}
     omega
   simpa [toNat_eq_val] using hfinal
 
+/-- Carry branch of `add`: the corrected representative `a.toNat + b.toNat - p`
+stays in canonical range `< p`, so the result is a valid `ZMod64 p`. -/
 private theorem add_carry_lt (a b : ZMod64 p) {hpLt : p < UInt64.word}
     (hcarry : UInt64.word ≤ a.toNat + b.toNat) :
     ((a.val + b.val) + complementWord p hpLt).toNat < p := by
@@ -256,6 +262,10 @@ private theorem add_carry_lt (a b : ZMod64 p) {hpLt : p < UInt64.word}
   have hb : b.toNat < p := b.isLt
   omega
 
+/-- No-carry-with-reduce branch of `add`: the unreduced sum fits in a
+word (`hcarry`) but is at least the modulus (`hreduce`), so subtracting
+the modulus word `p` gives the representative `a.toNat + b.toNat - p`.
+Requires `p < 2^64` (`hpLt`) for the modulus word to exist. -/
 private theorem add_noCarry_reduce_toNat (a b : ZMod64 p) {hpLt : p < UInt64.word}
     (hcarry : ¬ UInt64.word ≤ a.toNat + b.toNat)
     (hreduce : modulusWord p hpLt ≤ a.val + b.val) :
@@ -282,6 +292,8 @@ private theorem add_noCarry_reduce_toNat (a b : ZMod64 p) {hpLt : p < UInt64.wor
     omega
   simpa [toNat_eq_val] using hfinal
 
+/-- No-carry-with-reduce branch of `add`: the reduced representative
+`a.toNat + b.toNat - p` stays in canonical range `< p`. -/
 private theorem add_noCarry_reduce_lt (a b : ZMod64 p) {hpLt : p < UInt64.word}
     (hcarry : ¬ UInt64.word ≤ a.toNat + b.toNat)
     (hreduce : modulusWord p hpLt ≤ a.val + b.val) :
@@ -291,6 +303,9 @@ private theorem add_noCarry_reduce_lt (a b : ZMod64 p) {hpLt : p < UInt64.word}
   have hb : b.toNat < p := b.isLt
   omega
 
+/-- No-carry, no-reduce branch of `add`: the unreduced sum fits in a word
+(`hcarry`) and is already below the modulus (`_hreduce`), so its `toNat`
+is exactly `a.toNat + b.toNat` with no correction applied. -/
 private theorem add_noCarry_noReduce_toNat (a b : ZMod64 p) {hpLt : p < UInt64.word}
     (hcarry : ¬ UInt64.word ≤ a.toNat + b.toNat)
     (_hreduce : ¬ modulusWord p hpLt ≤ a.val + b.val) :
@@ -301,6 +316,8 @@ private theorem add_noCarry_noReduce_toNat (a b : ZMod64 p) {hpLt : p < UInt64.w
     (by rw [Nat.mod_eq_of_lt hsum_lt] :
       (a.toNat + b.toNat) % UInt64.word = a.toNat + b.toNat)
 
+/-- No-carry, no-reduce branch of `add`: the uncorrected sum is already
+in canonical range `< p`. -/
 private theorem add_noCarry_noReduce_lt (a b : ZMod64 p) {hpLt : p < UInt64.word}
     (hcarry : ¬ UInt64.word ≤ a.toNat + b.toNat)
     (hreduce : ¬ modulusWord p hpLt ≤ a.val + b.val) :
@@ -313,6 +330,9 @@ private theorem add_noCarry_noReduce_lt (a b : ZMod64 p) {hpLt : p < UInt64.word
     simpa [hsum_toNat, modulusWord, UInt64.toNat_ofNatLT] using hpSum
   omega
 
+/-- No-borrow branch of `sub`: when `b.val ≤ a.val` (`hba`) the
+machine-word difference does not wrap, so its `toNat` is exactly
+`a.toNat - b.toNat`. -/
 private theorem sub_noBorrow_toNat (a b : ZMod64 p)
     (hba : b.val ≤ a.val) :
     (a.val - b.val).toNat = a.toNat - b.toNat := by
@@ -337,6 +357,8 @@ private theorem sub_noBorrow_toNat (a b : ZMod64 p)
     rw [hsum, Nat.add_sub_cancel_left]
   simpa [toNat_eq_val] using hfinal
 
+/-- No-borrow branch of `sub`: the difference `a.toNat - b.toNat` is
+bounded by `a.toNat < p`, so it stays in canonical range `< p`. -/
 private theorem sub_noBorrow_lt (a b : ZMod64 p)
     (hba : b.val ≤ a.val) :
     (a.val - b.val).toNat < p := by
@@ -344,6 +366,10 @@ private theorem sub_noBorrow_lt (a b : ZMod64 p)
   have ha : a.toNat < p := a.isLt
   omega
 
+/-- Borrow branch of `sub`: when `b.val > a.val` (`hba`) the machine-word
+difference wraps; subtracting the complement word `2^64 - p` and wrapping
+again recovers the representative `p - b.toNat + a.toNat`. Requires
+`p < 2^64` (`hpLt`) for the complement word to exist. -/
 private theorem sub_borrow_toNat (a b : ZMod64 p) {hpLt : p < UInt64.word}
     (hba : ¬ b.val ≤ a.val) :
     ((a.val - b.val) - complementWord p hpLt).toNat = p - b.toNat + a.toNat := by
@@ -381,6 +407,9 @@ private theorem sub_borrow_toNat (a b : ZMod64 p) {hpLt : p < UInt64.word}
     omega
   simpa [toNat_eq_val] using hfinal
 
+/-- Borrow branch of `sub`: the corrected representative
+`p - b.toNat + a.toNat` stays in canonical range `< p`, since the borrow
+hypothesis forces `a.toNat < b.toNat`. -/
 private theorem sub_borrow_lt (a b : ZMod64 p) {hpLt : p < UInt64.word}
     (hba : ¬ b.val ≤ a.val) :
     ((a.val - b.val) - complementWord p hpLt).toNat < p := by
