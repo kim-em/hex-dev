@@ -698,6 +698,9 @@ private theorem zmod_one_ne_zero [PrimeModulus p] :
       Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
   exact absurd htoNat (by omega)
 
+/-- Division by `1` is the identity on `ZMod64 p`. Callers normalizing a
+value against a unit denominator (for example a leading coefficient already
+equal to `1`) can discharge the division outright. -/
 theorem zmod_div_one [PrimeModulus p] (a : ZMod64 p) :
     a / (1 : ZMod64 p) = a := by
   have h1ne : (1 : ZMod64 p) ≠ 0 := zmod_one_ne_zero
@@ -930,11 +933,15 @@ private theorem coeff_one (n : Nat) :
   change (DensePoly.C (1 : ZMod64 p)).coeff n = if n = 0 then (1 : ZMod64 p) else 0
   exact DensePoly.coeff_C (1 : ZMod64 p) n
 
+/-- A constant polynomial evaluates to its constant at every point. This is
+the base case from which the evaluation map's homomorphism laws are built. -/
 theorem eval_C (c x : ZMod64 p) :
     DensePoly.eval (FpPoly.C c) x = c := by
   unfold FpPoly.C
   exact DensePoly.eval_C c x (zmod_zero_mul x) (zmod_zero_add c)
 
+/-- The variable `X` evaluates to the evaluation point. The companion base
+case to `eval_C` for reasoning about the evaluation map. -/
 theorem eval_X [ZMod64.PrimeModulus p] (x : ZMod64 p) :
     DensePoly.eval (FpPoly.X : FpPoly p) x = x := by
   unfold FpPoly.X DensePoly.eval DensePoly.toArray DensePoly.monomial
@@ -1337,6 +1344,9 @@ private theorem size_le_of_coeff_eq_zero_from (f : FpPoly p) (bound : Nat)
     have htop_zero : f.coeff (f.size - 1) = 0 := hzero (f.size - 1) (by omega)
     exact False.elim (DensePoly.coeff_last_ne_zero_of_pos_size f hpos htop_zero)
 
+/-- Evaluating the monomial row `c · Xⁱ · f` at `x` multiplies the value of
+`f` by `c * xⁱ`. This isolates one term of a product so that `eval_mul` and
+related multiplicative laws can be assembled row by row. -/
 theorem eval_shift_scale_row (i : Nat) (c : ZMod64 p) (f : FpPoly p)
     (x : ZMod64 p) :
     DensePoly.eval (DensePoly.shift i (DensePoly.scale c f)) x =
@@ -1367,6 +1377,8 @@ theorem eval_shift_scale_row (i : Nat) (c : ZMod64 p) (f : FpPoly p)
       simp [hki, DensePoly.coeff_eq_zero_of_size_le f hf]
       exact hzero
 
+/-- Evaluation is additive: the value of a sum is the sum of the values.
+One half of the statement that evaluation at a point is a ring homomorphism. -/
 theorem eval_add (f h : FpPoly p) (x : ZMod64 p) :
     DensePoly.eval (f + h) x = DensePoly.eval f x + DensePoly.eval h x := by
   let bound := max f.size h.size
@@ -1392,6 +1404,9 @@ theorem eval_add (f h : FpPoly p) (x : ZMod64 p) :
         (Nat.le_trans (Nat.le_max_right f.size h.size) hi)]
     exact zmod_add_zero_zero
 
+/-- Evaluation respects subtraction. Lets callers push an evaluation through
+a difference of polynomials, for example when checking that two polynomials
+agree at a point. -/
 theorem eval_sub (f h : FpPoly p) (x : ZMod64 p) :
     DensePoly.eval (f - h) x = DensePoly.eval f x - DensePoly.eval h x := by
   let bound := max f.size h.size
@@ -1433,6 +1448,8 @@ theorem eval_sub (f h : FpPoly p) (x : ZMod64 p) :
   rw [DensePoly.coeff_zero]
   grind
 
+/-- Polynomial addition is commutative. Part of the commutative-ring
+structure on `FpPoly p` that downstream algebra relies on. -/
 theorem add_comm (f g : FpPoly p) :
     f + g = g + f := by
   apply DensePoly.ext_coeff
@@ -1441,6 +1458,8 @@ theorem add_comm (f g : FpPoly p) :
   rw [DensePoly.coeff_add_semiring]
   grind
 
+/-- Polynomial addition is associative, letting callers regroup sums freely.
+Part of the commutative-ring structure on `FpPoly p`. -/
 theorem add_assoc (f g h : FpPoly p) :
     f + g + h = f + (g + h) := by
   apply DensePoly.ext_coeff
@@ -1497,6 +1516,8 @@ theorem add_assoc (f g h : FpPoly p) :
   rw [DensePoly.coeff_zero]
   grind
 
+/-- Subtraction unfolds to adding the negation. Rewrites subtraction in terms
+of the additive operations, so results proved for `+` transfer to `-`. -/
 theorem sub_eq_add_neg (f g : FpPoly p) :
     f - g = f + -g := by
   apply DensePoly.ext_coeff
@@ -1664,6 +1685,9 @@ private theorem foldl_mulCoeffStep_outer_eq_mulCoeffTerm
             DensePoly.coeff_eq_zero_of_size_le g (Nat.le_of_not_gt hbound)
           simp [hlt, hbound, hcoeff]
 
+/-- The `n`-th coefficient of a product is the convolution sum `mulCoeffSum`.
+This is the coefficient-level specification of the executable multiplication,
+the entry point for proving every higher multiplicative law. -/
 theorem coeff_mul (f g : FpPoly p) (n : Nat) :
     (f * g).coeff n = mulCoeffSum f g n := by
   rw [DensePoly.coeff_mul]
@@ -1816,6 +1840,9 @@ private theorem fold_mulCoeff_comm
     intro i hi
     exact List.mem_range.mp hi) 0
 
+/-- Polynomial multiplication is commutative. Part of the commutative-ring
+structure on `FpPoly p`, and lets callers swap factors to match a lemma's
+expected orientation. -/
 theorem mul_comm (f g : FpPoly p) :
     f * g = g * f := by
   apply DensePoly.ext_coeff
@@ -2206,6 +2233,9 @@ private theorem fold_add_single_range_zero
   have hit : i ≠ t := by omega
   simp [hit]
 
+/-- Multiplying `f` by the scaled monomial `c · Xⁱ` shifts each coefficient up
+by `i` and scales it by `c`. Gives a closed form for the coefficients produced
+when a polynomial is multiplied by a single monomial term. -/
 theorem coeff_mul_shift_scale_one
     (f : FpPoly p) (c : ZMod64 p) (i n : Nat) :
     (f * DensePoly.shift i (DensePoly.scale c (1 : FpPoly p))).coeff n =
@@ -2413,6 +2443,8 @@ private theorem fold_right_distrib (xs : List Nat) (f g h : FpPoly p) (n : Nat) 
       (fun i => mulCoeffTerm g h n i)
       (mulCoeffTerm_right_distrib f g h n)
 
+/-- Multiplication distributes over addition on the left. Part of the
+commutative-ring structure on `FpPoly p`. -/
 theorem left_distrib (f g h : FpPoly p) :
     f * (g + h) = f * g + f * h := by
   apply DensePoly.ext_coeff
@@ -2420,6 +2452,8 @@ theorem left_distrib (f g h : FpPoly p) :
   rw [DensePoly.coeff_add_semiring]
   simp [coeff_mul, mulCoeffSum, fold_left_distrib]
 
+/-- Multiplication distributes over addition on the right. Part of the
+commutative-ring structure on `FpPoly p`. -/
 theorem right_distrib (f g h : FpPoly p) :
     (f + g) * h = f * h + g * h := by
   apply DensePoly.ext_coeff
@@ -2431,6 +2465,8 @@ theorem right_distrib (f g h : FpPoly p) :
   rw [coeff_mul_of_size_le g h n m (by dsimp [m]; omega)]
   exact fold_right_distrib (List.range m) f g h n
 
+/-- Polynomial multiplication is associative, letting callers regroup products
+freely. Part of the commutative-ring structure on `FpPoly p`. -/
 theorem mul_assoc (f g h : FpPoly p) :
     (f * g) * h = f * (g * h) := by
   apply DensePoly.ext_coeff
@@ -2457,6 +2493,8 @@ theorem mul_assoc (f g h : FpPoly p) :
         (fun acc i => acc + mulCoeffTerm f (g * h) n i) 0 := by
             exact (fold_mulCoeff_assoc_right_expand f g h n).symm
 
+/-- Scalar scaling distributes over polynomial addition. Lets callers move a
+scalar across a sum, for example when normalizing a linear combination. -/
 theorem scale_add (c : ZMod64 p) (f g : FpPoly p) :
     DensePoly.scale c (f + g) =
       DensePoly.scale c f + DensePoly.scale c g := by
@@ -2470,6 +2508,8 @@ theorem scale_add (c : ZMod64 p) (f g : FpPoly p) :
   rw [DensePoly.coeff_scale _ _ _ hzero]
   grind
 
+/-- Scaling a product equals scaling its left factor. With `mul_comm` this lets
+a scalar be absorbed into either factor of a product. -/
 theorem scale_mul_left (c : ZMod64 p) (f g : FpPoly p) :
     DensePoly.scale c (f * g) =
       DensePoly.scale c f * g := by
@@ -2490,6 +2530,8 @@ theorem scale_mul_left (c : ZMod64 p) (f g : FpPoly p) :
     rw [DensePoly.coeff_scale _ _ _ hzero]
     grind
 
+/-- Scaling the unit polynomial by `c` yields the constant polynomial `C c`.
+Identifies the scalar action on `1` with the constant embedding. -/
 theorem scale_one_poly (c : ZMod64 p) :
     DensePoly.scale c (1 : FpPoly p) = DensePoly.C c := by
   apply DensePoly.ext_coeff
@@ -2502,12 +2544,17 @@ theorem scale_one_poly (c : ZMod64 p) :
   | zero => grind
   | succ n => exact hzero
 
+/-- Multiplying by a constant polynomial coincides with scalar scaling. Lets
+callers convert between the `C c * f` and `scale c f` representations so the
+scale-specific lemmas apply to constant multiplications. -/
 theorem C_mul_eq_scale (c : ZMod64 p) (f : FpPoly p) :
     DensePoly.C c * f = DensePoly.scale c f := by
   have hscale := scale_mul_left c (1 : FpPoly p) f
   rw [one_mul, scale_one_poly] at hscale
   exact hscale.symm
 
+/-- Evaluating `C c * f` at `x` multiplies the value of `f` by the scalar `c`.
+The constant-multiplication special case of `eval_mul`. -/
 theorem eval_C_mul (c : ZMod64 p) (f : FpPoly p) (x : ZMod64 p) :
     DensePoly.eval (DensePoly.C c * f) x = c * DensePoly.eval f x := by
   rw [C_mul_eq_scale]
@@ -2577,6 +2624,9 @@ private theorem mul_eq_fold_shift_scale_rows (f h : FpPoly p) :
   rw [DensePoly.coeff_zero]
   rfl
 
+/-- Evaluation is multiplicative: the value of a product is the product of the
+values. Together with `eval_add` this is the ring-homomorphism property of
+evaluation, used wherever a root or factorization is checked pointwise. -/
 theorem eval_mul (f h : FpPoly p) (x : ZMod64 p) :
     DensePoly.eval (f * h) x = DensePoly.eval f x * DensePoly.eval h x := by
   rw [mul_eq_fold_shift_scale_rows]
@@ -2614,6 +2664,8 @@ theorem eval_mul (f h : FpPoly p) (x : ZMod64 p) :
         DensePoly.eval h x := by
         rw [hone]
 
+/-- Two successive scalings compose into a single scaling by the product of the
+scalars. Lets callers collapse a chain of scalar adjustments into one. -/
 theorem scale_scale (c d : ZMod64 p) (f : FpPoly p) :
     DensePoly.scale c (DensePoly.scale d f) = DensePoly.scale (c * d) f := by
   apply DensePoly.ext_coeff
@@ -2626,6 +2678,8 @@ theorem scale_scale (c d : ZMod64 p) (f : FpPoly p) :
   rw [DensePoly.coeff_scale _ _ _ hzero_cd]
   grind
 
+/-- Scaling by `1` leaves the polynomial unchanged. The identity law of the
+scalar action, needed to recognize a trivial scaling as a no-op. -/
 theorem scale_one_left (f : FpPoly p) :
     DensePoly.scale (1 : ZMod64 p) f = f := by
   apply DensePoly.ext_coeff
@@ -2645,6 +2699,8 @@ private theorem zmod64_one_ne_zero [ZMod64.PrimeModulus p] :
       Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
   exact absurd htoNat (by omega)
 
+/-- Scaling never increases the coefficient-array size. The unconditional size
+bound, valid even when `c = 0` collapses leading coefficients to zero. -/
 theorem scale_size_le (c : ZMod64 p) (f : FpPoly p) :
     (DensePoly.scale c f).size ≤ f.size := by
   by_cases hle : (DensePoly.scale c f).size ≤ f.size
@@ -2663,6 +2719,9 @@ theorem scale_size_le (c : ZMod64 p) (f : FpPoly p) :
     rw [DensePoly.coeff_eq_zero_of_size_le f hfi] at htop_ne
     exact htop_ne hzero_c
 
+/-- Scaling by a nonzero scalar preserves the coefficient-array size: over a
+field the top coefficient cannot be cancelled. Callers use this to know that
+a unit scaling preserves degree. -/
 theorem scale_size_eq_of_ne_zero [ZMod64.PrimeModulus p]
     {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p) :
     (DensePoly.scale c f).size = f.size := by
@@ -2693,6 +2752,9 @@ theorem scale_size_eq_of_ne_zero [ZMod64.PrimeModulus p]
           omega
         exact hcoeff (DensePoly.coeff_eq_zero_of_size_le (DensePoly.scale c f) hle')
 
+/-- Scaling by a nonzero scalar preserves the optional degree. The degree-level
+counterpart of `scale_size_eq_of_ne_zero`, used when reasoning in terms of
+`degree?` rather than `size`. -/
 theorem scale_degree?_eq_of_ne_zero [ZMod64.PrimeModulus p]
     {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p) :
     (DensePoly.scale c f).degree? = f.degree? := by
@@ -2700,11 +2762,16 @@ theorem scale_degree?_eq_of_ne_zero [ZMod64.PrimeModulus p]
   unfold DensePoly.degree?
   rw [hsize]
 
+/-- Nonzero scaling preserves the degree in the `degree?.getD 0` form callers
+commonly carry, sparing them an `Option` unfolding at each use site. -/
 theorem scale_degree?_getD_eq_of_ne_zero [ZMod64.PrimeModulus p]
     {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p) :
     (DensePoly.scale c f).degree?.getD 0 = f.degree?.getD 0 := by
   rw [scale_degree?_eq_of_ne_zero (p := p) hc f]
 
+/-- For a nonempty polynomial the leading coefficient is the coefficient at the
+top index `size - 1`. Gives callers a concrete index for the leading
+coefficient when they need to compute or rewrite it. -/
 theorem leadingCoeff_eq_coeff_pred
     (f : FpPoly p) (hpos : 0 < f.size) :
     DensePoly.leadingCoeff f = f.coeff (f.size - 1) := by
@@ -2714,6 +2781,9 @@ theorem leadingCoeff_eq_coeff_pred
     simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
   simp [Array.getD, DensePoly.size, hidx]
 
+/-- A polynomial of positive degree has a nonzero leading coefficient. The
+nondegeneracy fact that justifies inverting the leading coefficient during
+monic normalization. -/
 theorem leadingCoeff_ne_zero_of_pos_degree
     (f : FpPoly p) (hpos : 0 < f.degree?.getD 0) :
     DensePoly.leadingCoeff f ≠ 0 := by
@@ -2726,6 +2796,9 @@ theorem leadingCoeff_ne_zero_of_pos_degree
   rw [leadingCoeff_eq_coeff_pred f hfsize]
   exact DensePoly.coeff_last_ne_zero_of_pos_size f hfsize
 
+/-- For a nonzero scalar and a positive-degree polynomial the leading
+coefficient scales by `c`. Lets callers track how the leading coefficient moves
+under a unit scaling, the key step in computing a monic-normalizing scalar. -/
 theorem leadingCoeff_scale_of_ne_zero_of_pos_degree [ZMod64.PrimeModulus p]
     {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p)
     (hpos : 0 < f.degree?.getD 0) :
@@ -2746,6 +2819,10 @@ theorem leadingCoeff_scale_of_ne_zero_of_pos_degree [ZMod64.PrimeModulus p]
   rw [show (DensePoly.scale c f).size - 1 = f.size - 1 by omega]
   rw [DensePoly.coeff_scale _ _ _ hscale_zero]
 
+/-- The same leading-coefficient scaling law as
+`leadingCoeff_scale_of_ne_zero_of_pos_degree`, stated from the weaker nonempty
+hypothesis `f.size ≠ 0` so it applies to constants as well as higher-degree
+polynomials. -/
 theorem leadingCoeff_scale_of_ne_zero_of_nonzero [ZMod64.PrimeModulus p]
     {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p)
     (hfsize : f.size ≠ 0) :
@@ -2761,6 +2838,9 @@ theorem leadingCoeff_scale_of_ne_zero_of_nonzero [ZMod64.PrimeModulus p]
   rw [show (DensePoly.scale c f).size - 1 = f.size - 1 by omega]
   rw [DensePoly.coeff_scale _ _ _ hscale_zero]
 
+/-- Scaling a positive-degree polynomial by the inverse of its leading
+coefficient produces a monic polynomial. This is the monic-normalization step
+that puts a polynomial into the canonical leading-`1` form. -/
 theorem scale_inv_leadingCoeff_monic [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hpos : 0 < f.degree?.getD 0) :
     DensePoly.Monic (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f) := by
@@ -2779,6 +2859,9 @@ theorem scale_inv_leadingCoeff_monic [ZMod64.PrimeModulus p]
   exact ZMod64.inv_mul_eq_one_of_prime
     (ZMod64.PrimeModulus.prime (p := p)) hlead_ne
 
+/-- Scaling by a nonzero (hence unit) scalar preserves irreducibility in both
+directions. Lets callers normalize a polynomial to monic form without changing
+whether it is irreducible. -/
 theorem irreducible_scale_iff_of_ne_zero [ZMod64.PrimeModulus p]
     {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p) :
     FpPoly.Irreducible (DensePoly.scale c f) ↔ FpPoly.Irreducible f := by
@@ -2861,23 +2944,35 @@ theorem irreducible_scale_iff_of_ne_zero [ZMod64.PrimeModulus p]
       · right
         exact hb
 
+/-- Forward direction of `irreducible_scale_iff_of_ne_zero`: a nonzero scaling
+of an irreducible polynomial is irreducible. The convenient form when the
+hypothesis is irreducibility of the unscaled polynomial. -/
 theorem irreducible_scale_of_ne_zero [ZMod64.PrimeModulus p]
     {c : ZMod64 p} (hc : c ≠ 0) {f : FpPoly p}
     (hf : FpPoly.Irreducible f) :
     FpPoly.Irreducible (DensePoly.scale c f) :=
   (irreducible_scale_iff_of_ne_zero (p := p) hc f).2 hf
 
+/-- Reverse direction of `irreducible_scale_iff_of_ne_zero`: if a nonzero
+scaling is irreducible then so is the unscaled polynomial. Lets callers
+transfer irreducibility back from a normalized representative. -/
 theorem irreducible_of_scale_of_ne_zero [ZMod64.PrimeModulus p]
     {c : ZMod64 p} (hc : c ≠ 0) {f : FpPoly p}
     (hf : FpPoly.Irreducible (DensePoly.scale c f)) :
     FpPoly.Irreducible f :=
   (irreducible_scale_iff_of_ne_zero (p := p) hc f).1 hf
 
+/-- Divisibility is preserved when both sides are scaled by the same scalar.
+Holds for any `c`, so callers can scale a divisibility relation without a
+nonzero hypothesis. -/
 theorem dvd_scale_of_dvd {c : ZMod64 p} {f g : FpPoly p}
     (hfg : f ∣ g) : DensePoly.scale c f ∣ DensePoly.scale c g := by
   rcases hfg with ⟨q, hq⟩
   exact ⟨q, by rw [← scale_mul_left, hq]⟩
 
+/-- Converse of `dvd_scale_of_dvd` for a nonzero scalar: a divisibility between
+equally scaled polynomials reflects back to the originals. Lets callers strip a
+common unit scaling from both sides of a divisibility. -/
 theorem dvd_of_scale_dvd [ZMod64.PrimeModulus p]
     {c : ZMod64 p} (hc : c ≠ 0) {f g : FpPoly p}
     (hfg : DensePoly.scale c f ∣ DensePoly.scale c g) : f ∣ g := by
@@ -2893,6 +2988,9 @@ theorem dvd_of_scale_dvd [ZMod64.PrimeModulus p]
   rw [hmul, scale_one_left, scale_one_left] at hscaled
   exact hscaled
 
+/-- A nonzero scaling of `f` divides `f` itself: scaling by a unit produces an
+associate. Lets callers treat a unit-scaled polynomial and the original as
+mutually divisible. -/
 theorem dvd_scale_self_of_ne_zero [ZMod64.PrimeModulus p]
     {c : ZMod64 p} (hc : c ≠ 0) (f : FpPoly p) :
     DensePoly.scale c f ∣ f := by
