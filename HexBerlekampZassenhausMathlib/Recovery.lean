@@ -7470,6 +7470,161 @@ theorem factorFast_terminates_ofBridgeDataPointwiseAuxiliaryBoundsAndPaperThresh
     recoveryInputs
 
 /--
+SPEC D1 final composition: derive `Hex.factorFast f ≠ none` from a single
+`ForwardRecoveryInputs` recovery witness at the actual cap together with the
+canonical cap-side bad-vector bridge data and BHKS Theorem 5.2 paper-threshold
+bound.
+
+This is the `ForwardRecoveryInputs`-driven sibling of
+`factorFast_terminates_ofBridgeDataPointwiseAuxiliaryBoundsAndPaperThreshold`.
+Instead of taking the recovery tail as a pre-built
+`CanonicalRecoveryTailInputs` package, it consumes the executable
+`ForwardRecoveryInputs` package `h` at
+`(Hex.normalizeForFactor f).squareFreeCore` / `factorFastCapLiftData f primeData`
+and builds the recovery tail with
+`CanonicalRecoveryTailInputs.ofForwardRecoveryInputsCanonicalRepresentations`,
+which composes the `ExpectedTrueFactors` producer
+(`ForwardRecoveryInputs.expectedTrueFactors_of_monic`) and the per-canonical-
+class `RepresentsIntegerFactorAtLift` producer
+(`ForwardRecoveryInputs.bhksIndicatorCandidates?_canonicalRepresentations`)
+through `CanonicalRecoveryTailInputs.ofCanonicalSupportRepresentations`.  The
+cap side is the same pointwise vector/correction bounds plus paper-threshold
+shape estimate consumed by
+`FactorFastCapSeparationInputs.ofBridgeDataPointwiseAuxiliaryBoundsAndPaperThreshold`,
+and the final `factorFast_terminates` application is routed through the cap-side
+sibling wrapper.
+-/
+theorem factorFast_terminates_ofForwardRecoveryInputsBridgeDataPointwiseAuxiliaryBoundsAndPaperThreshold
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (h :
+      ForwardRecoveryInputs
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        h.rows_pos).factorCount)))
+    (hindicators :
+      h.expectedIndicators = expectedIndicatorArrayOfSupports trueSupports)
+    (projected_nonempty :
+      (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        h.rows_pos).projectedRows.isEmpty = false)
+    (classes_two :
+      2 ≤ (supportPartitionByMinColumn trueSupports).length)
+    (hf_ne_zero : (Hex.normalizeForFactor f).squareFreeCore ≠ 0)
+    (hf_monic : Hex.DensePoly.Monic (Hex.normalizeForFactor f).squareFreeCore)
+    (hliftedFactor_monic :
+      ∀ i, i < (factorFastCapLiftData f primeData).liftedFactors.size →
+        Hex.DensePoly.Monic
+          ((factorFastCapLiftData f primeData).liftedFactors.getD i 0))
+    (hp_two_lt :
+      2 < (factorFastCapLiftData f primeData).p ^
+        (factorFastCapLiftData f primeData).k)
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (hlocalFactorDegree_pos : 0 < localFactorDegree)
+    (hcap_le :
+      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+        (factorFastCapLiftData f primeData).k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcut :
+      CutProjectionHypotheses
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          h.rows_pos)
+        trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData h.rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (v :
+      Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        h.rows_pos).factorCount → ℤ)
+    (hin :
+      v ∈
+        BHKS.projectedRowSpanInt
+          (projectedRowsOfLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (factorFastCapLiftData f primeData)
+            h.rows_pos))
+    (hnot :
+      v ∉ BHKS.trueFactorIndicatorLattice trueSupports)
+    (hcld :
+      ∀ (i : Nat),
+        i < (factorFastCapLiftData f primeData).liftedFactors.size →
+          ∀ (j : Nat),
+            ((Hex.cldCoeffs (Hex.normalizeForFactor f).squareFreeCore
+                (factorFastCapLiftData f primeData).p
+                (factorFastCapLiftData f primeData).k
+                ((factorFastCapLiftData f primeData).liftedFactors.getD i 0)).getD j 0).natAbs ≤
+              Hex.bhksCoeffBound (Hex.normalizeForFactor f).squareFreeCore j)
+    (vectorSquareBound : ℝ)
+    (hvectorSquareBound :
+      ∀ i : Fin (factorFastCapLiftData f primeData).liftedFactors.size,
+        ((((badVectorWitnessOfFactorFastCapLiftData
+              f primeData h.rows_pos localFactorIndex localFactorDegree H).projectedVectorArray v).getD
+            i.val 0 : ℝ) ^ 2) ≤ vectorSquareBound)
+    (correctionWeightedBound : ℝ)
+    (hcorrectionWeightedBound :
+      ∀ j, j < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 →
+        (((bridge.auxiliaryCorrections v hin hnot).getD j 0 : ℝ) ^ 2 *
+          (((factorFastCapLiftData f primeData).p : ℝ) ^
+            (2 *
+              ((factorFastCapLiftData f primeData).k -
+                Hex.bhksCoeffCutThreshold
+                  (factorFastCapLiftData f primeData).p
+                  (Hex.normalizeForFactor f).squareFreeCore j)))) ≤
+          correctionWeightedBound)
+    {auxiliaryBound : ℝ}
+    (hauxiliaryBound_nonneg : 0 ≤ auxiliaryBound)
+    (hauxiliaryBound_sq :
+      2 *
+            (((factorFastCapLiftData f primeData).liftedFactors.size : ℝ) *
+              vectorSquareBound) *
+          (((factorFastCapLiftData f primeData).liftedFactors.size : ℝ) *
+            (BHKS.cldColumnNormBound
+              (Hex.normalizeForFactor f).squareFreeCore
+              (factorFastCapLiftData f primeData).p : ℝ)) +
+        2 *
+          (((Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 : ℝ) *
+            correctionWeightedBound) ≤
+        auxiliaryBound ^ 2)
+    (hpaper :
+      (Hex.ZPoly.coeffL2NormBound
+            (Hex.normalizeForFactor f).squareFreeCore : ℝ) ^
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData h.rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial.natDegree *
+        auxiliaryBound ^
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData h.rows_pos localFactorIndex localFactorDegree H).inputPolynomial.natDegree ≤
+        bhksPaperThresholdReal (Hex.normalizeForFactor f).squareFreeCore C)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
+    (hprecision :
+      (factorFastCapLiftData f primeData).k =
+        Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (factorFastCapLiftData f primeData).p) :
+    Hex.factorFast f ≠ none :=
+  factorFast_terminates_ofBridgeDataPointwiseAuxiliaryBoundsAndPaperThreshold
+    f primeData h.rows_pos trueSupports
+    localFactorIndex localFactorDegree H hlocalFactorDegree_pos hcap_le
+    C hC_nonneg hC hcut bridge v hin hnot hcld
+    vectorSquareBound hvectorSquareBound correctionWeightedBound
+    hcorrectionWeightedBound hauxiliaryBound_nonneg hauxiliaryBound_sq
+    hpaper hchoose hprecision
+    (CanonicalRecoveryTailInputs.ofForwardRecoveryInputsCanonicalRepresentations
+      h trueSupports hindicators projected_nonempty classes_two hf_ne_zero
+      hf_monic hliftedFactor_monic hp_two_lt)
+
+/--
 Final HO-4 wrapper threading pointwise vector/correction estimates plus the
 two factored BHKS Theorem 5.2 LHS sub-bounds straight to
 `Hex.factorFast f ≠ none`.
