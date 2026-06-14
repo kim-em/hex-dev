@@ -1598,6 +1598,9 @@ example (f : FpPoly p) :
     f * 0 = 0 := by
   exact (DensePoly.mul_comm_poly f 0).trans (DensePoly.zero_mul f)
 
+/-- Coefficient `k` of the partial fold rebuilding `f` from its first `n`
+monomials via `shift`/`scale` of `1`: it is `f.coeff k` below the cutoff `n`
+and `0` at or above it. -/
 private theorem coeff_mul_one_fold (f : FpPoly p) (n k : Nat) :
     ((List.range n).foldl
         (fun acc i => acc + DensePoly.shift i (DensePoly.scale (f.coeff i) (1 : FpPoly p)))
@@ -1659,6 +1662,8 @@ multiplication callers should use `coeff_mul`, not this definition. -/
 def mulCoeffSum (f g : FpPoly p) (n : Nat) : ZMod64 p :=
   (List.range f.size).foldl (fun acc i => acc + mulCoeffTerm f g n i) 0
 
+/-- The `n`-th coefficient of the `shift`/`scale` product fold equals the
+`mulCoeffTerm` fold over the same indices, started from `acc.coeff n`. -/
 private theorem coeff_mul_fold (xs : List Nat) (acc f g : FpPoly p) (n : Nat) :
     (xs.foldl
         (fun acc i => acc + DensePoly.shift i (DensePoly.scale (f.coeff i) g))
@@ -1676,6 +1681,9 @@ private theorem coeff_mul_fold (xs : List Nat) (acc f g : FpPoly p) (n : Nat) :
         DensePoly.coeff_shift_scale i (f.coeff i) g n hzero]
       rfl
 
+/-- The inner `mulCoeffStep` fold over `range m` adds exactly the diagonal term
+`f.coeff i * g.coeff (n - i)` when `i ≤ n` and `n - i < m`, and otherwise leaves
+the accumulator unchanged. -/
 private theorem foldl_mulCoeffStep_select_fp
     (f g : FpPoly p) (n i m : Nat) (acc : ZMod64 p) :
     (List.range m).foldl (DensePoly.mulCoeffStep f g n i) acc =
@@ -1702,6 +1710,8 @@ private theorem foldl_mulCoeffStep_select_fp
           · have hm' : ¬ n - i < m + 1 := by omega
             simp [hlt, hm, hm', heq]
 
+/-- Rewrites the outer fold of inner `mulCoeffStep` folds (each over
+`range g.size`) into the fold that adds the selected diagonal term directly. -/
 private theorem foldl_mulCoeffStep_outer_fp
     (f g : FpPoly p) (n : Nat) (xs : List Nat) (acc : ZMod64 p) :
     xs.foldl
@@ -1720,6 +1730,9 @@ private theorem foldl_mulCoeffStep_outer_fp
       rw [foldl_mulCoeffStep_select_fp]
       exact ih _
 
+/-- The nested `mulCoeffStep` fold equals the fold accumulating
+`mulCoeffTerm f g n i`, identifying the executable convolution with the
+schoolbook term. -/
 private theorem foldl_mulCoeffStep_outer_eq_mulCoeffTerm
     (f g : FpPoly p) (n : Nat) (xs : List Nat) (acc : ZMod64 p) :
     xs.foldl
@@ -1753,6 +1766,8 @@ theorem coeff_mul (f g : FpPoly p) (n : Nat) :
   unfold DensePoly.mulCoeffSum mulCoeffSum
   exact foldl_mulCoeffStep_outer_eq_mulCoeffTerm f g n (List.range f.size) 0
 
+/-- `mulCoeffTerm f g n i` vanishes once the index `i` reaches `f.size`, since
+`f.coeff i` is then `0`. -/
 private theorem mulCoeffTerm_eq_zero_of_size_le
     (f g : FpPoly p) (n i : Nat) (hi : f.size ≤ i) :
     mulCoeffTerm f g n i = 0 := by
@@ -1762,6 +1777,8 @@ private theorem mulCoeffTerm_eq_zero_of_size_le
   · have hcoeff : f.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le f hi
     simp [hn, hcoeff]
 
+/-- Extending the `mulCoeffTerm` fold by `d` indices past `f.size` leaves the
+sum unchanged, as the extra terms vanish. -/
 private theorem fold_mulCoeff_extend (f g : FpPoly p) (n d : Nat) :
     (List.range (f.size + d)).foldl (fun acc i => acc + mulCoeffTerm f g n i) 0 =
       (List.range f.size).foldl (fun acc i => acc + mulCoeffTerm f g n i) 0 := by
@@ -1776,6 +1793,8 @@ private theorem fold_mulCoeff_extend (f g : FpPoly p) (n d : Nat) :
         mulCoeffTerm_eq_zero_of_size_le f g n (f.size + d) (by omega)
       simp [hterm]
 
+/-- `mulCoeffSum f g n` equals the `mulCoeffTerm` fold over `range m` for any
+bound `m` at least `f.size`. -/
 private theorem mulCoeffSum_eq_bound
     (f g : FpPoly p) (n m : Nat) (hm : f.size ≤ m) :
     mulCoeffSum f g n =
@@ -1784,17 +1803,23 @@ private theorem mulCoeffSum_eq_bound
   have hm' : f.size + (m - f.size) = m := by omega
   rw [← hm', fold_mulCoeff_extend]
 
+/-- `(f * g).coeff n` equals the `mulCoeffTerm` fold over `range m` for any
+bound `m` at least `f.size`. -/
 private theorem coeff_mul_of_size_le
     (f g : FpPoly p) (n m : Nat) (hm : f.size ≤ m) :
     (f * g).coeff n =
       (List.range m).foldl (fun acc i => acc + mulCoeffTerm f g n i) 0 := by
   rw [coeff_mul, mulCoeffSum_eq_bound f g n m hm]
 
+/-- `mulCoeffTerm f g n i` vanishes when the target degree `n` is below the
+index `i`. -/
 private theorem mulCoeffTerm_eq_zero_of_degree_lt
     (f g : FpPoly p) (n i : Nat) (hi : n < i) :
     mulCoeffTerm f g n i = 0 := by
   simp [mulCoeffTerm, hi]
 
+/-- Extending the `mulCoeffTerm` fold by `d` indices past `n + 1` leaves the sum
+unchanged, since terms with index above `n` vanish. -/
 private theorem fold_mulCoeff_truncate_degree
     (f g : FpPoly p) (n d : Nat) :
     (List.range (n + 1 + d)).foldl (fun acc i => acc + mulCoeffTerm f g n i) 0 =
@@ -1810,6 +1835,8 @@ private theorem fold_mulCoeff_truncate_degree
         mulCoeffTerm_eq_zero_of_degree_lt f g n (n + 1 + d) (by omega)
       simp [hterm]
 
+/-- `mulCoeffSum f g n` equals the `mulCoeffTerm` fold truncated to
+`range (n + 1)`, since terms beyond degree `n` vanish. -/
 private theorem mulCoeffSum_eq_degree_bound
     (f g : FpPoly p) (n : Nat) :
     mulCoeffSum f g n =
