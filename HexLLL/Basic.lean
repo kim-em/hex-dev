@@ -420,9 +420,14 @@ def isLLLReduced (b : Matrix Int n m) (δ η : Rat) : Prop :=
 
 namespace LLLCore
 
+/-- `ratMulSelfNonneg` states that a rational square `x * x` is nonnegative, the
+per-entry fact underlying every sum-of-squares norm bound in this file. -/
 private theorem ratMulSelfNonneg (x : Rat) : 0 ≤ x * x := by
   simpa [Lean.Grind.Semiring.pow_two] using (Lean.Grind.OrderedRing.sq_nonneg (a := x))
 
+/-- `foldlNonneg` states that a left fold accumulating nonnegative summands
+`f x` onto a nonnegative accumulator stays nonnegative, the inductive step
+behind `basisNormSq_nonneg`. -/
 private theorem foldlNonneg {α : Type} (xs : List α) (f : α → Rat)
     (acc : Rat) (hacc : 0 ≤ acc) (hf : ∀ x, 0 ≤ f x) :
     0 ≤ xs.foldl (fun sum x => sum + f x) acc := by
@@ -441,6 +446,9 @@ theorem basisNormSq_nonneg (basis : Matrix Rat n m) (i : Fin n) :
   exact foldlNonneg (List.finRange m) (fun j => (basis.row i)[j] * (basis.row i)[j]) 0
     (by grind) (fun j => ratMulSelfNonneg ((basis.row i)[j]))
 
+/-- `stepBound_arith` rearranges the Lovasz condition `δ * N ≤ Np + μ² * N`
+together with the size-reduced bound `μ² ≤ η²` into the adjacent norm bound
+`(δ - η²) * N ≤ Np`. -/
 private theorem stepBound_arith (δ η μ N Np : Rat)
     (hN : 0 ≤ N) (hsize : μ * μ ≤ η * η)
     (hlov : δ * N ≤ Np + μ * μ * N) :
@@ -457,6 +465,8 @@ private theorem stepBound_arith (δ η μ N Np : Rat)
       _ = Np := by grind
   exact Rat.le_trans hleft hlov'
 
+/-- `divStep_arith` divides the step bound `d * N ≤ Np` (with `0 < d`) through
+by `d` to yield the reciprocal form `N ≤ (1 / d) * Np`. -/
 private theorem divStep_arith (d N Np : Rat) (hd : 0 < d)
     (h : d * N ≤ Np) :
     N ≤ (1 / d) * Np := by
@@ -473,6 +483,9 @@ private theorem divStep_arith (d N Np : Rat) (hd : 0 < d)
     grind
   simpa [hleft] using hmul
 
+/-- `ratPow_nonneg` states that a nonnegative rational `a` raised to a natural
+power `k` stays nonnegative, used when bounding the geometric `α ^ i` factors of
+the step bounds. -/
 private theorem ratPow_nonneg (a : Rat) (ha : 0 ≤ a) (k : Nat) :
     0 ≤ a ^ k := by
   induction k with
@@ -581,6 +594,9 @@ theorem basisNormSq_zero (b : Matrix Int n m) (hn : 0 < n) :
   rw [GramSchmidt.Int.basis_zero b hn]
   exact GramSchmidt.Int.normSq_map_intCast (b.row ⟨0, hn⟩)
 
+/-- `ratPow_le_pow_of_one_le` states that for `1 ≤ α` the power `α ^ i` is
+monotone in the exponent, so a larger index gives a larger geometric step
+factor. -/
 private theorem ratPow_le_pow_of_one_le {α : Rat} (hα : 1 ≤ α) :
     ∀ {i j : Nat}, i ≤ j → α ^ i ≤ α ^ j := by
   intro i j hij
