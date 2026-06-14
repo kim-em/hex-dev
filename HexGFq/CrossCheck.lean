@@ -1110,6 +1110,8 @@ private theorem polyP2_size_le_32 {arr : Array Nat} (h : arr.size ≤ 32) :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 0 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step0_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 0 = true := by
@@ -1129,6 +1131,8 @@ private theorem genericN32_step0_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 1 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step1_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 1 = true := by
@@ -1148,6 +1152,8 @@ private theorem genericN32_step1_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 2 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step2_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 2 = true := by
@@ -1167,6 +1173,8 @@ private theorem genericN32_step2_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 3 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step3_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 3 = true := by
@@ -1186,6 +1194,8 @@ private theorem genericN32_step3_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 4 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step4_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 4 = true := by
@@ -1205,6 +1215,8 @@ private theorem genericN32_step4_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 5 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step5_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 5 = true := by
@@ -1224,6 +1236,8 @@ private theorem genericN32_step5_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 6 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step6_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 6 = true := by
@@ -1243,6 +1257,8 @@ private theorem genericN32_step6_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 7 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step7_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 7 = true := by
@@ -1262,6 +1278,8 @@ private theorem genericN32_step7_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 8 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step8_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 8 = true := by
@@ -1281,6 +1299,8 @@ private theorem genericN32_step8_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 9 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step9_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 9 = true := by
@@ -1300,6 +1320,8 @@ private theorem genericN32_step9_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 10 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step10_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 10 = true := by
@@ -1319,6 +1341,8 @@ private theorem genericN32_step10_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 11 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step11_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 11 = true := by
@@ -1338,6 +1362,8 @@ private theorem genericN32_step11_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 12 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step12_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 12 = true := by
@@ -1357,6 +1383,8 @@ private theorem genericN32_step12_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 13 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step13_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 13 = true := by
@@ -1376,6 +1404,8 @@ private theorem genericN32_step13_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 14 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step14_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 14 = true := by
@@ -1395,6 +1425,8 @@ private theorem genericN32_step14_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 15 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step15_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 15 = true := by
@@ -1414,6 +1446,8 @@ private theorem genericN32_step15_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 16 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step16_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 16 = true := by
@@ -1433,6 +1467,8 @@ private theorem genericN32_step16_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 17 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step17_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 17 = true := by
@@ -1452,6 +1488,8 @@ private theorem genericN32_step17_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 18 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step18_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 18 = true := by
@@ -1471,6 +1509,8 @@ private theorem genericN32_step18_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 19 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step19_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 19 = true := by
@@ -1490,6 +1530,8 @@ private theorem genericN32_step19_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 20 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step20_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 20 = true := by
@@ -1509,6 +1551,8 @@ private theorem genericN32_step20_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 21 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step21_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 21 = true := by
@@ -1528,6 +1572,8 @@ private theorem genericN32_step21_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 22 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step22_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 22 = true := by
@@ -1547,6 +1593,8 @@ private theorem genericN32_step22_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 23 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step23_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 23 = true := by
@@ -1566,6 +1614,8 @@ private theorem genericN32_step23_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 24 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step24_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 24 = true := by
@@ -1585,6 +1635,8 @@ private theorem genericN32_step24_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 25 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step25_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 25 = true := by
@@ -1604,6 +1656,8 @@ private theorem genericN32_step25_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 26 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step26_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 26 = true := by
@@ -1623,6 +1677,8 @@ private theorem genericN32_step26_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 27 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step27_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 27 = true := by
@@ -1642,6 +1698,8 @@ private theorem genericN32_step27_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 28 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step28_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 28 = true := by
@@ -1661,6 +1719,8 @@ private theorem genericN32_step28_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 29 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step29_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 29 = true := by
@@ -1680,6 +1740,8 @@ private theorem genericN32_step29_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 30 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step30_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 30 = true := by
@@ -1699,6 +1761,8 @@ private theorem genericN32_step30_check :
 
 set_option maxRecDepth 65536 in
 set_option maxHeartbeats 10000000 in
+/-- Step 31 of the degree-32 power chain passes the quotient-witness check against
+`genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step31_check :
     Berlekamp.checkPowChainLinearIncrementalQuotientWitnessStep
       genericMod genericN32SamePrimeCert genericN32Quotients 31 = true := by
