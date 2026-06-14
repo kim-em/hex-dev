@@ -106,11 +106,25 @@ form a Bezout certificate for the inputs.
         exact extGcd_bezout_step a b (a / b) (a % b) s t g
           (int_ofNat_mod_add_div a b) hrec
 
+/--
+Bezout certificate for the pure `Nat` `extGcd`, stated on the returned
+triple's projections: the cofactors `s = (extGcd a b).2.1` and
+`t = (extGcd a b).2.2` satisfy `s * a + t * b = (extGcd a b).1` after
+coercing `a` and `b` to `Int`. The `_proj` form keeps the right-hand side
+as the routine's own returned gcd component; see `extGcd_bezout_gcd` for
+the variant phrased against `Nat.gcd a b`.
+-/
 @[simp] theorem extGcd_bezout_proj (a b : Nat) :
     (extGcd a b).2.1 * (a : Int) + (extGcd a b).2.2 * (b : Int) =
       (extGcd a b).1 := by
   simpa using extGcd_bezout a b
 
+/--
+Bezout certificate for the pure `Nat` `extGcd` with the gcd resolved to
+`Nat.gcd a b`: the returned cofactors satisfy `s * a + t * b = Nat.gcd a b`
+over `Int`. Same identity as `extGcd_bezout_proj`, with the right-hand side
+rewritten through `extGcd_fst`.
+-/
 @[simp] theorem extGcd_bezout_gcd (a b : Nat) :
     (extGcd a b).2.1 * (a : Int) + (extGcd a b).2.2 * (b : Int) =
       Nat.gcd a b := by
@@ -325,6 +339,12 @@ implementation form a Bezout certificate for the inputs.
   have hspec := pureIntExtGcd_go_spec a b 1 0 0 1 a b (by omega) (by omega)
   simpa [pureIntExtGcd] using hspec.2
 
+/--
+Bezout certificate for the pure integer reference `pureIntExtGcd`, stated on
+the returned triple's projections: the cofactors `(pureIntExtGcd a b).2.1`
+and `(pureIntExtGcd a b).2.2` satisfy `s * a + t * b = (pureIntExtGcd a b).1`.
+Inputs are already `Int`, so no coercion is involved.
+-/
 @[simp] theorem pureIntExtGcd_bezout_proj (a b : Int) :
     (pureIntExtGcd a b).2.1 * a + (pureIntExtGcd a b).2.2 * b =
       (pureIntExtGcd a b).1 := by
@@ -502,12 +522,27 @@ Bezout certificate for the natural values of the input words.
     · exact Nat.lt_of_le_of_lt (Nat.gcd_le_left b.toNat (Nat.pos_of_ne_zero ha)) (UInt64.toNat_lt a)
   simpa [hfst, UInt64.toNat_ofNat, Nat.mod_eq_of_lt hbound] using hbez
 
+/--
+Bezout certificate for the `UInt64` `extGcd`, stated on the returned triple's
+projections: the cofactors satisfy
+`s * a.toNat + t * b.toNat = (extGcd a b).1.toNat`, with each word coerced to
+`Int` via `Int.ofNat ·.toNat`. The `_proj` form keeps the right-hand side as
+the routine's own returned gcd word; see `extGcd_bezout_gcd` for the variant
+phrased against `Nat.gcd a.toNat b.toNat`.
+-/
 @[simp] theorem extGcd_bezout_proj (a b : UInt64) :
     (extGcd a b).2.1 * Int.ofNat a.toNat +
         (extGcd a b).2.2 * Int.ofNat b.toNat =
       Int.ofNat (extGcd a b).1.toNat := by
   simpa using extGcd_bezout a b
 
+/--
+Bezout certificate for the `UInt64` `extGcd` with the gcd resolved to
+`Nat.gcd a.toNat b.toNat`: the returned cofactors satisfy
+`s * a.toNat + t * b.toNat = Nat.gcd a.toNat b.toNat`, coerced to `Int` via
+`Int.ofNat ·.toNat`. Same identity as `extGcd_bezout_proj`, with the
+right-hand side rewritten through `extGcd_fst`.
+-/
 @[simp] theorem extGcd_bezout_gcd (a b : UInt64) :
     (extGcd a b).2.1 * Int.ofNat a.toNat +
         (extGcd a b).2.2 * Int.ofNat b.toNat =
