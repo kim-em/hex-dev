@@ -675,6 +675,8 @@ private theorem foldl_det_sum_add_start {R : Type u} [Lean.Grind.CommRing R]
             xs.foldl (fun acc x => acc + g x) (b + g x) := by
             exact ih (a + f x) (b + g x)
 
+/-- A summing left fold of the pointwise sum `f x + g x` from `0` splits into the
+sum of the separate folds of `f` and of `g`, each from `0`. -/
 private theorem foldl_det_sum_add_zero {R : Type u} [Lean.Grind.CommRing R]
     {β : Type v} (xs : List β) (f g : β → R) :
     xs.foldl (fun acc x => acc + (f x + g x)) 0 =
@@ -690,6 +692,8 @@ private theorem foldl_det_sum_add_zero {R : Type u} [Lean.Grind.CommRing R]
         xs.foldl (fun acc x => acc + g x) 0 := by
         exact foldl_det_sum_add_start xs f g 0 0
 
+/-- A summing left fold from a starting accumulator `z` equals `z` plus the same
+fold from `0`. -/
 private theorem foldl_det_sum_start {R : Type u} [Lean.Grind.CommRing R]
     {β : Type v} (xs : List β) (f : β → R) (z : R) :
     xs.foldl (fun acc x => acc + f x) z =
@@ -703,6 +707,8 @@ private theorem foldl_det_sum_start {R : Type u} [Lean.Grind.CommRing R]
       rw [ih (z + f x), ih (0 + f x)]
       grind
 
+/-- A summing left fold over `xs.flatMap f` equals the fold over `xs` whose body
+folds each sublist `f x` into the accumulator. -/
 private theorem foldl_det_sum_flatMap {R : Type u} [Add R] {β γ : Type v}
     (xs : List β) (f : β → List γ) (g : γ → R) (z : R) :
     (xs.flatMap f).foldl (fun acc x => acc + g x) z =
@@ -713,6 +719,8 @@ private theorem foldl_det_sum_flatMap {R : Type u} [Add R] {β γ : Type v}
       simp only [List.flatMap_cons, List.foldl_append, List.foldl_cons]
       exact ih ((f x).foldl (fun acc y => acc + g y) z)
 
+/-- A summing left fold whose body adds `0` returns the starting accumulator `z`
+unchanged. -/
 private theorem foldl_det_sum_zero {R : Type u} [Lean.Grind.CommRing R]
     {β : Type v} (xs : List β) (z : R) :
     xs.foldl (fun acc _ => acc + 0) z = z := by
@@ -723,6 +731,8 @@ private theorem foldl_det_sum_zero {R : Type u} [Lean.Grind.CommRing R]
       have hzero : z + (0 : R) = z := by grind
       simpa [hzero] using ih z
 
+/-- If `a - b + c = 0` and `f x - g x + h x = 0` for every `x ∈ xs`, then the same
+combination of the three summing folds from `a`, `b`, `c` is `0`. -/
 private theorem foldl_det_sum_sub_add_zero_of_body_zero
     {R : Type u} [Lean.Grind.CommRing R] {β : Type v}
     (xs : List β) (f g h : β → R) (a b c : R)
@@ -741,6 +751,8 @@ private theorem foldl_det_sum_sub_add_zero_of_body_zero
       · intro y hy
         exact hall y (List.mem_cons_of_mem x hy)
 
+/-- A multiplying left fold from `c * z` equals `c` times the same fold from `z`,
+factoring the scalar out to the left. -/
 private theorem foldl_det_product_mul_left {R : Type u} [Lean.Grind.CommRing R]
     {β : Type v} (xs : List β) (c : R) (f : β → R) (z : R) :
     xs.foldl (fun acc x => acc * f x) (c * z) =
@@ -752,6 +764,8 @@ private theorem foldl_det_product_mul_left {R : Type u} [Lean.Grind.CommRing R]
       rw [← show c * (z * f x) = (c * z) * f x by grind]
       exact ih (z * f x)
 
+/-- When `i ∉ xs`, scaling the factor at index `i` by `c` leaves the multiplying
+fold unchanged, since no element of `xs` equals `i`. -/
 private theorem foldl_det_product_no_scale_of_not_mem {R : Type u}
     [Lean.Grind.CommRing R] {β : Type v} [DecidableEq β]
     (xs : List β) (i : β) (c : R) (f : β → R) (z : R) (hnot : i ∉ xs) :
@@ -768,6 +782,8 @@ private theorem foldl_det_product_no_scale_of_not_mem {R : Type u}
       rw [if_neg hx]
       exact ih (z * f x) hnot.2
 
+/-- For a `Nodup` list `xs` containing `i`, scaling only the factor at `i` by `c`
+multiplies the entire multiplying fold by `c`. -/
 private theorem foldl_det_product_single_scale {R : Type u}
     [Lean.Grind.CommRing R] {β : Type v} [DecidableEq β]
     (xs : List β) (i : β) (c : R) (f : β → R) (z : R)
@@ -800,6 +816,8 @@ private theorem foldl_det_product_single_scale {R : Type u}
           | inr htail => exact htail
         exact ih (z * f x) hmemTail hnodup.2
 
+/-- A multiplying left fold from a sum `a + b` of starting accumulators equals the
+sum of the folds from `a` and from `b`. -/
 private theorem foldl_det_product_add_start {R : Type u} [Lean.Grind.CommRing R]
     {β : Type v} (xs : List β) (f : β → R) (a b : R) :
     xs.foldl (fun acc x => acc * f x) (a + b) =
@@ -819,6 +837,9 @@ private theorem foldl_det_product_add_start {R : Type u} [Lean.Grind.CommRing R]
             xs.foldl (fun acc x => acc * f x) (b * f x) := by
             exact ih (a * f x) (b * f x)
 
+/-- For a `Nodup` list containing `i` with `g` agreeing with `f` away from `i`,
+replacing the factor at `i` by `f i + c * g i` splits the fold into the `f`-product
+plus `c` times the `g`-product. -/
 private theorem foldl_det_product_single_add {R : Type u}
     [Lean.Grind.CommRing R] {β : Type v} [DecidableEq β]
     (xs : List β) (i : β) (c : R) (f g : β → R) (z : R)
@@ -889,6 +910,7 @@ private theorem foldl_det_product_single_add {R : Type u}
               c * xs.foldl (fun acc x => acc * g x) (z * g x) := by
               rw [hgx]
 
+/-- A multiplying left fold from starting accumulator `0` is `0`. -/
 private theorem foldl_det_product_zero_start {R : Type u}
     [Lean.Grind.CommRing R] {β : Type v} (xs : List β) (f : β → R) :
     xs.foldl (fun acc x => acc * f x) 0 = 0 := by
@@ -899,6 +921,8 @@ private theorem foldl_det_product_zero_start {R : Type u}
       have hzero : (0 : R) * f x = 0 := by grind
       simpa [hzero] using ih
 
+/-- A multiplying left fold is `0` whenever some factor vanishes, that is `i ∈ xs`
+and `f i = 0`. -/
 private theorem foldl_det_product_zero_of_mem {R : Type u}
     [Lean.Grind.CommRing R] {β : Type v} [DecidableEq β]
     (xs : List β) (i : β) (f : β → R) (z : R)
@@ -921,12 +945,16 @@ private theorem foldl_det_product_zero_of_mem {R : Type u}
           | inr htail => exact htail
         exact ih (z * f x) htail
 
+/-- Entry `(i, j)` of the identity matrix `(1 : Matrix R n n)` is `1` when `i = j`
+and `0` otherwise. -/
 private theorem identity_get {R : Type u} [OfNat R 0] [OfNat R 1] {n : Nat}
     (i j : Fin n) :
     (1 : Matrix R n n)[i][j] = if i = j then 1 else 0 := by
   change Matrix.identity[i][j] = if i = j then 1 else 0
   simp [Matrix.identity, Matrix.ofFn]
 
+/-- `detProduct` of the identity matrix along `perm` is `0` whenever `perm` moves
+some index, that is `perm[i] ≠ i`. -/
 private theorem detProduct_identity_zero_of_mismatch {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (perm : Vector (Fin n) n)
     (i : Fin n) (h : perm[i] ≠ i) :
@@ -942,30 +970,40 @@ private theorem detProduct_identity_zero_of_mismatch {R : Type u}
       rw [identity_get]
       rw [if_neg hsymm])
 
+/-- Reading `insertAt x v i` at the insertion position `i` returns the inserted
+element `x`. -/
 private theorem insertAt_get_self {α : Type u} {n : Nat}
     (x : α) (v : Vector α n) (i : Fin (n + 1)) :
     (insertAt x v i)[i] = x := by
   unfold insertAt
   simp [List.getElem_insertIdx_self]
 
+/-- After inserting `x` at `Fin.last n`, reading the result at `i.castSucc` returns
+the original entry `v[i]`. -/
 private theorem insertAt_last_get_castSucc {α : Type u} {n : Nat}
     (x : α) (v : Vector α n) (i : Fin n) :
     (insertAt x v (Fin.last n))[i.castSucc] = v[i] := by
   unfold insertAt
   simp [List.getElem_insertIdx_of_lt]
 
+/-- For an index `r` strictly below the insertion point `i`, reading
+`insertAt x v i.castSucc` at `r.castSucc.castSucc` returns the original `v[r]`. -/
 private theorem insertAt_get_castSucc_of_lt {α : Type u} {n : Nat}
     (x : α) (v : Vector α (n + 1)) (i r : Fin (n + 1)) (h : r.val < i.val) :
     (insertAt x v i.castSucc)[r.castSucc.castSucc] = v[r] := by
   unfold insertAt
   simp [List.getElem_insertIdx_of_lt, h]
 
+/-- After inserting at `(Fin.last n).castSucc`, reading the result at
+`Fin.last (n + 1)` returns the original final entry `v[Fin.last n]`. -/
 private theorem insertAt_get_last_of_castSucc_last {α : Type u} {n : Nat}
     (x : α) (v : Vector α (n + 1)) :
     (insertAt x v (Fin.last n).castSucc)[Fin.last (n + 1)] = v[Fin.last n] := by
   unfold insertAt
   simp [List.getElem_insertIdx_of_gt]
 
+/-- For `i ≤ r < xs.length`, element `r + 1` of `xs.insertIdx i x` is the original
+`xs[r]`, since the insertion shifts later entries up by one. -/
 private theorem list_getElem_insertIdx_succ_of_le {α : Type u}
     (xs : List α) (x : α) {i r : Nat} (h : i ≤ r) (hr : r < xs.length) :
     (xs.insertIdx i x)[r + 1]'(by
@@ -991,16 +1029,22 @@ private theorem list_getElem_insertIdx_succ_of_le {α : Type u}
               simp only [List.insertIdx, List.getElem_cons_succ]
               exact ih (Nat.succ_le_succ_iff.mp h) (Nat.succ_lt_succ_iff.mp hr)
 
+/-- Reading `insertAt x v i.castSucc.castSucc` at its own insertion index
+`i.castSucc.castSucc` returns the inserted element `x`. -/
 private theorem insertAt_prefix_get_self {α : Type u} {n : Nat}
     (x : α) (v : Vector α (n + 1)) (i : Fin n) :
     (insertAt x v i.castSucc.castSucc)[i.castSucc.castSucc] = x := by
   exact insertAt_get_self x v i.castSucc.castSucc
 
+/-- For `r.val < i.val`, reading `insertAt x v i.castSucc.castSucc` at
+`r.castSucc.castSucc` returns the original `v[r.castSucc]`. -/
 private theorem insertAt_prefix_get_before {α : Type u} {n : Nat}
     (x : α) (v : Vector α (n + 1)) (i r : Fin n) (h : r.val < i.val) :
     (insertAt x v i.castSucc.castSucc)[r.castSucc.castSucc] = v[r.castSucc] := by
   exact insertAt_get_castSucc_of_lt x v i.castSucc r.castSucc (by simpa using h)
 
+/-- For `i.val ≤ r.val`, reading `insertAt x v i.castSucc.castSucc` at index
+`r.val + 1` returns the original `v[r]`. -/
 private theorem insertAt_prefix_get_shifted {α : Type u} {n : Nat}
     (x : α) (v : Vector α (n + 1)) (i : Fin n) (r : Fin (n + 1))
     (h : i.val ≤ r.val) :
@@ -1010,6 +1054,8 @@ private theorem insertAt_prefix_get_shifted {α : Type u} {n : Nat}
   simpa [Vector.toList] using
     list_getElem_insertIdx_succ_of_le v.toList x h (by simp [Vector.length_toList])
 
+/-- Reading `insertAt x v i.castSucc.castSucc` at `Fin.last (n + 1)` returns the
+original final entry `v[Fin.last n]`. -/
 private theorem insertAt_prefix_get_last {α : Type u} {n : Nat}
     (x : α) (v : Vector α (n + 1)) (i : Fin n) :
     (insertAt x v i.castSucc.castSucc)[Fin.last (n + 1)] = v[Fin.last n] := by
@@ -1017,21 +1063,30 @@ private theorem insertAt_prefix_get_last {α : Type u} {n : Nat}
     simp [Nat.le_of_lt i.isLt]
   simpa using insertAt_prefix_get_shifted x v i (Fin.last n) hle
 
+/-- Reading `insertAt x v (Fin.last n).castSucc` at the insertion index
+`(Fin.last n).castSucc` returns the inserted element `x`. -/
 private theorem insertAt_castSucc_last_get_boundary {α : Type u} {n : Nat}
     (x : α) (v : Vector α (n + 1)) :
     (insertAt x v (Fin.last n).castSucc)[(Fin.last n).castSucc] = x := by
   exact insertAt_get_self x v (Fin.last n).castSucc
 
+/-- Reading `insertAt x v (Fin.last n).castSucc` at `Fin.last (n + 1)` returns the
+original final entry `v[Fin.last n]`. -/
 private theorem insertAt_castSucc_last_get_last {α : Type u} {n : Nat}
     (x : α) (v : Vector α (n + 1)) :
     (insertAt x v (Fin.last n).castSucc)[Fin.last (n + 1)] = v[Fin.last n] := by
   exact insertAt_get_last_of_castSucc_last x v
 
+/-- For a prefix index `i`, reading `insertAt x v (Fin.last n).castSucc` at
+`i.castSucc.castSucc` returns the original `v[i.castSucc]`. -/
 private theorem insertAt_castSucc_last_get_prefix {α : Type u} {n : Nat}
     (x : α) (v : Vector α (n + 1)) (i : Fin n) :
     (insertAt x v (Fin.last n).castSucc)[i.castSucc.castSucc] = v[i.castSucc] := by
   exact insertAt_get_castSucc_of_lt x v (Fin.last n) i.castSucc (by simp)
 
+/-- `detProduct` of the identity matrix along `insertAt (Fin.last n) (v.map
+Fin.castSucc) i` is `0` when `i ≠ Fin.last n`, since the inserted index is then
+moved. -/
 private theorem detProduct_identity_insertAt_not_last_zero {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (v : Vector (Fin n) n)
     (i : Fin (n + 1)) (h : i ≠ Fin.last n) :
@@ -1042,6 +1097,9 @@ private theorem detProduct_identity_insertAt_not_last_zero {R : Type u}
     rw [insertAt_get_self]
     exact h.symm
 
+/-- Inserting `Fin.last n` at the last position equates `detProduct` of the
+`(n + 1)`-identity along the extended permutation with `detProduct` of the
+`n`-identity along `v`. -/
 private theorem detProduct_identity_insertAt_last {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (v : Vector (Fin n) n) :
     detProduct (1 : Matrix R (n + 1) (n + 1))
