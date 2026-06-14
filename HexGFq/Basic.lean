@@ -256,6 +256,9 @@ representatives agree. -/
   apply GFqRing.ext
   simpa [repr, GFqField.repr] using hxy
 
+/-- The canonical representative of an injected `FpPoly` is that polynomial
+reduced modulo the selected Conway polynomial. Lets a caller normalise a
+`repr (ofPoly h g)` round-trip to a plain `reduceMod`. -/
 @[simp] theorem repr_ofPoly (h : Conway.SupportedEntry p n) (g : FpPoly p) :
     repr (ofPoly h g) = GFqRing.reduceMod (modulus h) g :=
   rfl
@@ -409,6 +412,9 @@ theorem ofPoly_eq_ofPoly_iff_reduceMod_eq
     apply ext
     simpa using hred
 
+/-- Injecting an `FpPoly` into `GFq` is invariant under pre-reduction modulo
+the selected Conway polynomial: a caller may drop a `reduceMod` already
+sitting under `ofPoly`. -/
 @[simp] theorem ofPoly_reduceMod
     (h : Conway.SupportedEntry p n) (f : FpPoly p) :
     ofPoly h (GFqRing.reduceMod (modulus h) f) = ofPoly h f := by
@@ -576,6 +582,9 @@ agree. -/
   subst hxy
   rfl
 
+/-- The packed representative of a word injected into `GF2q` is that word
+reduced into the field by `GF2n.reduce`, relating the raw `UInt64` word to the
+canonical packed `GF2q` representation. -/
 @[simp] theorem repr_ofWord (w : UInt64) :
     repr (ofWord (n := n) w) =
       (GF2n.reduce
