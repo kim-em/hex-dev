@@ -2141,12 +2141,16 @@ private theorem dot_eq_zero_of_prefixSpan
         grind
   exact hfold (List.finRange (i + 1)) 0 (dot_zero_right u)
 
+/-- `Vector.normSq v` is nonnegative for a rational vector, since it is the
+self-dot-product, a sum of squares (via `foldl_dot_self_start_le`). -/
 private theorem rat_normSq_nonneg (v : Vector Rat m) :
     0 ≤ Vector.normSq v := by
   simpa [Vector.normSq, Matrix.dot, Hex.Vector.dotProduct] using
     foldl_dot_self_start_le (xs := List.finRange m) (v := v)
       (acc := 0) (by decide)
 
+/-- Pythagorean split: when `acc` is orthogonal to `row`, the squared norm of
+`acc + c • row` expands to `Vector.normSq acc + c * c * Vector.normSq row`. -/
 private theorem normSq_add_smul_of_orthogonal
     (acc row : Vector Rat m) (c : Rat)
     (horth : Matrix.dot acc row = 0) :
@@ -2167,6 +2171,8 @@ private theorem normSq_add_smul_of_orthogonal
   rw [horth']
   grind
 
+/-- A left fold summing `f` over `xs` factors its starting accumulator out:
+`xs.foldl (· + f ·) acc = acc + xs.foldl (· + f ·) 0`. -/
 private theorem foldl_rat_sum_start {α : Type v}
     (xs : List α) (f : α → Rat) (acc : Rat) :
     xs.foldl (fun total x => total + f x) acc =
@@ -2184,6 +2190,10 @@ private theorem foldl_rat_sum_start {α : Type v}
       _ = acc + xs.foldl (fun total x => total + f x) (0 + f x) := by
           rw [ih (0 + f x)]
 
+/-- Orthogonal-expansion of a folded row combination: when the listed rows are
+pairwise orthogonal and `acc` is orthogonal to each, the squared norm of the
+fold splits as `Vector.normSq acc` plus the fold of weighted squared norms
+`coeffs[i] * coeffs[i] * Vector.normSq (rows.row i)`. -/
 private theorem foldl_orthogonal_expansion_normSq
     (xs : List (Fin n)) (rows : Matrix Rat n m) (coeffs : Vector Rat n)
     (acc : Vector Rat m)
@@ -2227,6 +2237,9 @@ private theorem foldl_orthogonal_expansion_normSq
       (0 + coeffs[i] * coeffs[i] * Vector.normSq (rows.row i))]
     grind
 
+/-- The `acc = 0` case of `foldl_orthogonal_expansion_normSq`: for pairwise
+orthogonal rows the squared norm of the full row combination equals the fold of
+`coeffs[i] * coeffs[i] * Vector.normSq (rows.row i)` over `List.finRange n`. -/
 private theorem foldl_orthogonal_expansion_normSq_zero
     (rows : Matrix Rat n m) (coeffs : Vector Rat n)
     (horth : ∀ i j : Fin n, i ≠ j →
@@ -2275,6 +2288,9 @@ private theorem foldl_orthogonal_expansion_normSq_zero
   rw [hzero_add] at h
   exact h
 
+/-- The weighted-squared-norm fold `xs.foldl (· + coeffs[i] * coeffs[i] *
+Vector.normSq (rows.row i)) 0` is nonnegative, being a sum of nonnegative
+terms. -/
 private theorem foldl_orthogonal_weighted_nonneg
     (xs : List (Fin n)) (rows : Matrix Rat n m) (coeffs : Vector Rat n) :
     0 ≤ xs.foldl
@@ -2291,6 +2307,9 @@ private theorem foldl_orthogonal_weighted_nonneg
         Rat.mul_nonneg (rat_mul_self_nonneg coeffs[i]) (rat_normSq_nonneg (rows.row i))
       exact Rat.add_nonneg (by grind) ih
 
+/-- If `k ∈ xs` and its coefficient square is at least `1`, the
+weighted-squared-norm fold over `xs` is at least `Vector.normSq (rows.row k)`,
+the single term contributed by `k`. -/
 private theorem foldl_orthogonal_weighted_normSq_ge
     (xs : List (Fin n)) (rows : Matrix Rat n m) (coeffs : Vector Rat n)
     (k : Fin n) (hk : k ∈ xs)
