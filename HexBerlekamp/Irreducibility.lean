@@ -696,13 +696,19 @@ theorem gf2WordPoly_coeff (bits : UInt64) (width i : Nat) :
   · simp [Array.getD, hi]
     rfl
 
+/-- `true` exactly when `a` and `b` agree on every coefficient `0 … bound-1`;
+the bounded executable prefix-equality check over `List.range bound`. -/
 def coeffsEqUpTo (bound : Nat) (a b : FpPoly 2) : Bool :=
   (List.range bound).all fun i => a.coeff i == b.coeff i
 
+/-- Bounded per-step quotient-witness test: `prev * prev` and `curr + quot * f`
+agree on coefficients below `bound`. -/
 def quotientStepCoeffCheck
     (bound : Nat) (prev curr quot f : FpPoly 2) : Bool :=
   coeffsEqUpTo bound (prev * prev) (curr + quot * f)
 
+/-- A passing `coeffsEqUpTo` yields coefficient equality on every index below
+the bound. -/
 theorem coeff_eq_of_coeffsEqUpTo
     {bound : Nat} {a b : FpPoly 2}
     (h : coeffsEqUpTo bound a b = true) :
@@ -713,6 +719,8 @@ theorem coeff_eq_of_coeffsEqUpTo
   have hbool := List.all_eq_true.mp h i hmem
   exact eq_of_beq hbool
 
+/-- If both polynomials have size at most `bound` and agree on coefficients
+below `bound`, their full coefficient arrays are equal. -/
 theorem coeffs_eq_of_size_le_of_coeff_eq
     {bound : Nat} {a b : FpPoly 2}
     (ha : a.size ≤ bound) (hb : b.size ≤ bound)
@@ -727,6 +735,8 @@ theorem coeffs_eq_of_size_le_of_coeff_eq
         DensePoly.coeff_eq_zero_of_size_le b (by omega : b.size ≤ i)]
   exact congrArg DensePoly.coeffs hpoly
 
+/-- Upgrade a passing `coeffsEqUpTo` to full coefficient-array equality, given
+that both polynomials have size at most `bound`. -/
 theorem coeffs_eq_of_size_le_of_coeffsEqUpTo
     {bound : Nat} {a b : FpPoly 2}
     (ha : a.size ≤ bound) (hb : b.size ≤ bound)
@@ -734,6 +744,8 @@ theorem coeffs_eq_of_size_le_of_coeffsEqUpTo
     a.coeffs = b.coeffs :=
   coeffs_eq_of_size_le_of_coeff_eq ha hb (coeff_eq_of_coeffsEqUpTo h)
 
+/-- A passing `quotientStepCoeffCheck`, with both sides bounded in size by
+`bound`, certifies `(prev * prev).coeffs = (curr + quot * f).coeffs`. -/
 theorem quotientStep_coeffs_eq_of_check
     {bound : Nat} {prev curr quot f : FpPoly 2}
     (hleft : (prev * prev).size ≤ bound)
@@ -743,6 +755,8 @@ theorem quotientStep_coeffs_eq_of_check
   unfold quotientStepCoeffCheck at hcheck
   exact coeffs_eq_of_size_le_of_coeffsEqUpTo hleft hright hcheck
 
+/-- `quotientStepCoeffCheck` specialised to GF(2) operands packed as `UInt64`
+bit-words, decoded through `gf2WordPoly`. -/
 def gf2WordQuotientStepCoeffCheck
     (bound width : Nat) (prevBits currBits quotBits fBits : UInt64) : Bool :=
   quotientStepCoeffCheck bound
@@ -751,6 +765,9 @@ def gf2WordQuotientStepCoeffCheck
     (gf2WordPoly quotBits width)
     (gf2WordPoly fBits width)
 
+/-- Word-packed analogue of `quotientStep_coeffs_eq_of_check`: a passing
+`gf2WordQuotientStepCoeffCheck` under the size bounds yields coefficient-array
+equality of the decoded GF(2) polynomials. -/
 theorem gf2WordQuotientStep_coeffs_eq_of_check
     {bound width : Nat} {prevBits currBits quotBits fBits : UInt64}
     (hleft :
