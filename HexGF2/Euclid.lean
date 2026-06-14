@@ -137,6 +137,7 @@ private theorem ofUInt64_mod_lowWord_eq_of_degree_lt {n : Nat} {irr : UInt64}
   | inr hdegree =>
       exact Or.inr (Nat.lt_trans hdegree hn64)
 
+/-- `(a + b) + (c + b)` cancels the shared summand to `a + c` over `GF(2)`. -/
 private theorem add_cancel_middle (a b c : GF2Poly) :
     (a + b) + (c + b) = a + c := by
   apply ext_coeff
@@ -144,6 +145,7 @@ private theorem add_cancel_middle (a b c : GF2Poly) :
   rw [coeff_add_eq_bne, coeff_add_eq_bne, coeff_add_eq_bne, coeff_add_eq_bne]
   cases a.coeff n <;> cases b.coeff n <;> cases c.coeff n <;> rfl
 
+/-- `(a + b) + (c + d)` regroups to `(a + c) + (b + d)` by commutativity of `GF(2)` addition. -/
 private theorem add_pair_swap (a b c d : GF2Poly) :
     (a + b) + (c + d) = (a + c) + (b + d) := by
   apply ext_coeff
@@ -162,6 +164,7 @@ theorem quotient_step_reconstruct (quot rem q : GF2Poly) (k : Nat) :
   rw [add_monomial_mul]
   exact add_cancel_middle (quot * q) (q.mulXk k) rem
 
+/-- Each `divModAux` step preserves the reconstruction invariant `quot * q + rem`. -/
 private theorem divModAux_reconstruct
     (q : GF2Poly) (fuel : Nat) (quot rem : GF2Poly) :
     let qr := divModAux q fuel quot rem
@@ -191,6 +194,7 @@ private theorem divModAux_reconstruct
                   rw [ih]
                   exact quotient_step_reconstruct quot rem q (rd - qd)
 
+/-- A polynomial whose `degree?` is `none` is the zero polynomial. -/
 private theorem isZero_eq_true_of_degree?_eq_none {p : GF2Poly}
     (h : p.degree? = none) :
     p.isZero = true := by
@@ -202,6 +206,7 @@ private theorem isZero_eq_true_of_degree?_eq_none {p : GF2Poly}
     rw [hd] at h
     contradiction
 
+/-- Given enough fuel, the `divModAux` remainder is zero or has degree below the divisor `q`. -/
 private theorem divModAux_remainder_degree_lt
     {q : GF2Poly} {qd : Nat} (hq : q.degree? = some qd)
     (fuel : Nat) (quot rem : GF2Poly)
@@ -349,14 +354,17 @@ theorem div_mul_add_mod (p q : GF2Poly) :
     (p / q) * q + p % q = p := by
   simpa using divMod_spec p q
 
+/-- Every packed `GF(2)` polynomial divides itself. -/
 private theorem dvd_refl (p : GF2Poly) :
     p ∣ p := by
   exact ⟨1, by rw [mul_one]⟩
 
+/-- Every packed `GF(2)` polynomial divides zero. -/
 private theorem dvd_zero (p : GF2Poly) :
     p ∣ 0 := by
   exact ⟨0, by rw [mul_zero]⟩
 
+/-- A divisor of both `a` and `b` divides their sum `a + b`. -/
 private theorem dvd_add {d a b : GF2Poly} :
     d ∣ a → d ∣ b → d ∣ a + b := by
   intro hda hdb
@@ -364,6 +372,7 @@ private theorem dvd_add {d a b : GF2Poly} :
   rcases hdb with ⟨rb, hrb⟩
   exact ⟨ra + rb, by rw [hra, hrb, right_distrib]⟩
 
+/-- A divisor of `a` divides any left multiple `c * a`. -/
 private theorem dvd_mul_left {d a : GF2Poly} (c : GF2Poly) :
     d ∣ a → d ∣ c * a := by
   intro hda
@@ -375,6 +384,7 @@ private theorem dvd_mul_left {d a : GF2Poly} (c : GF2Poly) :
     _ = (d * c) * r := by rw [mul_comm c d]
     _ = d * (c * r) := by rw [mul_assoc]
 
+/-- A common divisor of `r₁` and the remainder divides the dividend `r₀` rebuilt by one division step. -/
 private theorem dvd_of_division_step {d r₀ r₁ div rem : GF2Poly}
     (hr₁ : d ∣ r₁) (hrem : d ∣ rem)
     (hdiv : div * r₁ + rem = r₀) :
@@ -382,6 +392,7 @@ private theorem dvd_of_division_step {d r₀ r₁ div rem : GF2Poly}
   rw [← hdiv]
   exact dvd_add (dvd_mul_left div hr₁) hrem
 
+/-- One extended-Euclid step carries the Bezout identity from `r₀` to the updated coefficients for the remainder. -/
 private theorem xgcd_step_bezout
     (p q r₀ s₀ t₀ r₁ s₁ t₁ div rem : GF2Poly)
     (h₀ : s₀ * p + t₀ * q = r₀)
@@ -404,6 +415,7 @@ private theorem xgcd_step_bezout
           rw [← hdiv, add_comm (div * r₁) rem]
           simp
 
+/-- `xgcdAux` preserves the Bezout identity `left * p + right * q = gcd` across the fuel recursion. -/
 private theorem xgcdAux_bezout
     (p q r₀ s₀ t₀ r₁ s₁ t₁ : GF2Poly) (fuel : Nat)
     (h₀ : s₀ * p + t₀ * q = r₀)
@@ -446,6 +458,7 @@ theorem mod_degree_lt (p q : GF2Poly) :
   · exact Or.inr (Nat.lt_succ_self p.degree)
 
 set_option maxHeartbeats 800000 in
+/-- Given enough fuel, the `xgcdAux` result divides both current remainders `r₀` and `r₁`. -/
 private theorem xgcdAux_dvd_current_of_fuel
     (r₀ s₀ t₀ r₁ s₁ t₁ : GF2Poly) (fuel : Nat)
     (hfuel : r₁.isZero = true ∨ r₁.degree < fuel) :
