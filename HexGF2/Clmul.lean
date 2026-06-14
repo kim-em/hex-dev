@@ -627,19 +627,26 @@ theorem clmul_oneHot_left_snd (a : UInt64) {bit : Nat} (hbit : bit < 64) :
   rw [clmul_oneHot_left a hbit]
   by_cases h : bit = 0 <;> simp [h]
 
+/-- Componentwise bitwise XOR of two `(hi, lo)` word pairs. This is the
+addition law on 128-bit carry-less products, used to combine partial
+products in the bit-fold reformulations of `clmul`. -/
 private def xorPair (x y : UInt64 × UInt64) : UInt64 × UInt64 :=
   (x.1 ^^^ y.1, x.2 ^^^ y.2)
 
+/-- `(0, 0)` is a left identity for `xorPair`. -/
 private theorem xorPair_zero_left (x : UInt64 × UInt64) :
     xorPair (0, 0) x = x := by
   cases x
   simp [xorPair]
 
+/-- `(0, 0)` is a right identity for `xorPair`. -/
 private theorem xorPair_zero_right (x : UInt64 × UInt64) :
     xorPair x (0, 0) = x := by
   cases x
   simp [xorPair]
 
+/-- `xorPair` is associative, so partial products may be accumulated in any
+grouping. -/
 private theorem xorPair_assoc (x y z : UInt64 × UInt64) :
     xorPair (xorPair x y) z = xorPair x (xorPair y z) := by
   cases x
@@ -648,20 +655,29 @@ private theorem xorPair_assoc (x y z : UInt64 × UInt64) :
   simp [xorPair]
   constructor <;> bv_decide
 
+/-- Fold step that XORs the monomial `x^bit` into the accumulator exactly when
+bit `bit` of `w` is set, leaving it unchanged otherwise. Folding this over all
+bit positions reassembles `w` from its set bits. -/
 private def wordBitXorStep (w acc : UInt64) (bit : Nat) : UInt64 :=
   if (((w >>> bit.toUInt64) &&& 1) != 0) then
     acc ^^^ ((1 : UInt64) <<< bit.toUInt64)
   else
     acc
 
+/-- Reconstruct `w` by folding `wordBitXorStep` over all 64 bit positions,
+re-expressing the word as the XOR of its one-hot monomials. -/
 private def wordBitFold (w : UInt64) : UInt64 :=
   (List.range 64).foldl (wordBitXorStep w) 0
 
+/-- The bit-by-bit reconstruction recovers the original word: `wordBitFold w = w`. -/
 private theorem wordBitFold_eq (w : UInt64) : wordBitFold w = w := by
   unfold wordBitFold wordBitXorStep
   simp [List.range, List.range.loop, List.foldl]
   bv_decide
 
+/-- Fold step accumulating the partial product `clmul (x^bit) y` (one-hot on the
+left factor) into `acc` when bit `bit` of `w` is set. Folded over all bits this
+computes `clmul w y`. -/
 private def clmulLeftBitFoldStep (w y : UInt64) (acc : UInt64 × UInt64) (bit : Nat) :
     UInt64 × UInt64 :=
   if (((w >>> bit.toUInt64) &&& 1) != 0) then
@@ -669,6 +685,9 @@ private def clmulLeftBitFoldStep (w y : UInt64) (acc : UInt64 × UInt64) (bit : 
   else
     acc
 
+/-- Fold step accumulating the partial product `clmul y (x^bit)` (one-hot on the
+right factor) into `acc` when bit `bit` of `w` is set. The right-factor twin of
+`clmulLeftBitFoldStep`, used to commute the two arguments. -/
 private def clmulRightBitFoldStep (w y : UInt64) (acc : UInt64 × UInt64) (bit : Nat) :
     UInt64 × UInt64 :=
   if (((w >>> bit.toUInt64) &&& 1) != 0) then
@@ -676,6 +695,8 @@ private def clmulRightBitFoldStep (w y : UInt64) (acc : UInt64 × UInt64) (bit :
   else
     acc
 
+/-- For `bit < 64` the left and right one-hot fold steps agree, since
+`clmul (x^bit) y = clmul y (x^bit)` on a one-hot factor. -/
 private theorem clmulLeftBitFoldStep_eq_right (w y : UInt64) {bit : Nat}
     (hbit : bit < 64) (acc : UInt64 × UInt64) :
     clmulLeftBitFoldStep w y acc bit = clmulRightBitFoldStep w y acc bit := by
@@ -684,6 +705,9 @@ private theorem clmulLeftBitFoldStep_eq_right (w y : UInt64) {bit : Nat}
     rw [clmul_oneHot_left (a := y) hbit, clmul_oneHot (a := y) hbit]
   · simp [clmulLeftBitFoldStep, clmulRightBitFoldStep, hset]
 
+/-- Folding the left and right one-hot steps over a bit list whose entries are
+all `< 64` yields the same accumulator. Lifts `clmulLeftBitFoldStep_eq_right`
+pointwise across the fold. -/
 private theorem foldl_clmulLeftBitFoldStep_eq_right (bits : List Nat) (w y : UInt64)
     (hlt : ∀ bit ∈ bits, bit < 64) (acc : UInt64 × UInt64) :
     bits.foldl (clmulLeftBitFoldStep w y) acc =
@@ -700,6 +724,9 @@ private theorem foldl_clmulLeftBitFoldStep_eq_right (bits : List Nat) (w y : UIn
       rw [clmulLeftBitFoldStep_eq_right w y hbit acc]
       exact ih htail _
 
+/-- The left one-hot fold pulls its starting accumulator out as a leading XOR:
+folding from `acc` equals `xorPair acc` with the fold from `(0, 0)`. This makes
+the accumulator a free parameter for the equivalence proofs. -/
 private theorem foldl_clmulLeftBitFoldStep_acc (bits : List Nat) (w y : UInt64)
     (acc : UInt64 × UInt64) :
     bits.foldl (clmulLeftBitFoldStep w y) acc =
@@ -717,6 +744,10 @@ private theorem foldl_clmulLeftBitFoldStep_acc (bits : List Nat) (w y : UInt64)
       · simp [clmulLeftBitFoldStep, hbit]
         exact ih acc
 
+/-- Seed-general form of the left bit-fold equivalence: multiplying the
+bit-reconstructed word `bits.foldl (wordBitXorStep w) seed` by `y` equals
+`xorPair (clmul seed y)` with the one-hot fold from `(0, 0)`. The induction
+carries the seed so the `seed = 0` corollary drops out cleanly. -/
 private theorem clmul_wordBitFold_left_eq_bits_acc (bits : List Nat) (w y seed : UInt64)
     (hlt : ∀ bit ∈ bits, bit < 64) :
     clmul (bits.foldl (wordBitXorStep w) seed) y =
@@ -743,12 +774,19 @@ private theorem clmul_wordBitFold_left_eq_bits_acc (bits : List Nat) (w y seed :
       · simp [wordBitXorStep, clmulLeftBitFoldStep, hset]
         exact ih seed htail
 
+/-- Zero-seed specialization of `clmul_wordBitFold_left_eq_bits_acc`: `clmul`
+of the bit-reconstructed word with `y` equals the left one-hot fold from
+`(0, 0)`. -/
 private theorem clmul_wordBitFold_left_eq_bits (bits : List Nat) (w y : UInt64)
     (hlt : ∀ bit ∈ bits, bit < 64) :
     clmul (bits.foldl (wordBitXorStep w) 0) y =
       bits.foldl (clmulLeftBitFoldStep w y) (0, 0) := by
   rw [clmul_wordBitFold_left_eq_bits_acc bits w y 0 hlt, clmul_zero_left, xorPair_zero_left]
 
+/-- The executable accumulate step rewritten as XOR addition: for `bit < 64`,
+`clmulAccumulateBit acc y bit` equals `xorPair acc` with the right one-hot
+product `clmul y (x^bit)`. This identifies the `pureClmul` step with the
+`clmulRightBitFoldStep` reference. -/
 private theorem clmulAccumulateBit_eq_xorPair_oneHot (acc : UInt64 × UInt64)
     (y : UInt64) {bit : Nat} (hbit : bit < 64) :
     clmulAccumulateBit acc y bit =
@@ -756,6 +794,9 @@ private theorem clmulAccumulateBit_eq_xorPair_oneHot (acc : UInt64 × UInt64)
   rw [clmul_oneHot (a := y) hbit]
   by_cases hzero : bit = 0 <;> simp [clmulAccumulateBit, xorPair, hzero]
 
+/-- Fold step driving `clmul y w` the way `pureClmul` does: apply the executable
+`clmulAccumulateBit acc y bit` when bit `bit` of `w` is set, else keep `acc`.
+Links the executable fold to `clmulRightBitFoldStep`. -/
 private def clmulPureRightStep (w y : UInt64) (acc : UInt64 × UInt64) (bit : Nat) :
     UInt64 × UInt64 :=
   if (((w >>> bit.toUInt64) &&& 1) != 0) then
@@ -763,6 +804,9 @@ private def clmulPureRightStep (w y : UInt64) (acc : UInt64 × UInt64) (bit : Na
   else
     acc
 
+/-- Over a bit list with entries `< 64` the executable `clmulPureRightStep` fold
+agrees with the `clmulRightBitFoldStep` reference fold, lifting
+`clmulAccumulateBit_eq_xorPair_oneHot` pointwise. -/
 private theorem foldl_pureClmul_eq_right_bits (bits : List Nat) (w y : UInt64)
     (hlt : ∀ bit ∈ bits, bit < 64) (acc : UInt64 × UInt64) :
     bits.foldl (clmulPureRightStep w y) acc =
@@ -783,6 +827,10 @@ private theorem foldl_pureClmul_eq_right_bits (bits : List Nat) (w y : UInt64)
       · simp [clmulPureRightStep, clmulRightBitFoldStep, hset]
         exact ih htail acc
 
+/-- Headline equivalence of the executable multiplier with the bit-indexed
+specification: `clmul y w` equals the right one-hot fold of `clmulRightBitFoldStep`
+over all 64 bit positions. This is the form `clmul_comm` consumes to swap the
+two word arguments. -/
 private theorem clmul_eq_right_bits (w y : UInt64) :
     clmul y w =
       (List.range 64).foldl (clmulRightBitFoldStep w y) (0, 0) := by
