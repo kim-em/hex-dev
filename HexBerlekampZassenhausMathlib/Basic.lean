@@ -2281,6 +2281,13 @@ lift.  The selected lifted product represents a monic-coordinate factor modulo
 `p^k`; dilating that monic factor by `leadingCoeff core` and taking primitive
 part recovers the integer factor of `core`.
 
+The `monic_dvd` field pins the monic coordinate down to the canonical bounded
+representative: it must divide `(toMonic core).monic`, the monic polynomial the
+Hensel lift is actually built on.  This forces a Mignotte coefficient bound on
+`monicFactor` (via `defaultFactorCoeffBound_valid`), which is what makes the
+exact-recovery lemma `candidate_eq_of_bound` applicable; without it the residue
+link alone admits non-canonical witnesses.
+
 This is the data-bearing carrier behind the public proof-level
 `RepresentsIntegerFactorAtLift` predicate.
 -/
@@ -2295,6 +2302,8 @@ structure RecoveredAtLift
     Hex.ZPoly.primitivePart
         (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) monicFactor) =
       factor
+  monic_dvd :
+    monicFactor ∣ (Hex.ZPoly.toMonic core).monic
 
 /--
 An integer factor is represented by a subset of the lifted local factors when
@@ -2758,6 +2767,32 @@ theorem candidate_eq_of_bound
     liftedRecoveryCandidate core d S = factor :=
   liftedRecoveryCandidate_eq_factor_of_congruence_of_bound
     B' hvalid hrep.congr hrep.dilate_eq hfactor_norm hprecision
+
+/--
+Exact recovery driven directly by the carrier's `monic_dvd` field.
+
+This is the producer half of the recovery contract: the `monic_dvd` field
+forces `monicFactor ∣ (toMonic core).monic`, so `defaultFactorCoeffBound_valid`
+discharges the Mignotte coefficient bound at
+`B' := defaultFactorCoeffBound (toMonic core).monic` with no separate validity
+obligation on the caller.  The only remaining precision hypothesis is that the
+Hensel modulus clears twice that bound.
+-/
+theorem candidate_eq_of_monic_dvd
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hrep : RecoveredAtLift core d factor S)
+    (hmonic_ne : (Hex.ZPoly.toMonic core).monic ≠ 0)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        d.p ^ d.k) :
+    liftedRecoveryCandidate core d S = factor :=
+  hrep.candidate_eq_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic)
+    (fun i =>
+      defaultFactorCoeffBound_valid (Hex.ZPoly.toMonic core).monic hmonic_ne
+        hrep.monicFactor hrep.monic_dvd i)
+    hfactor_norm hprecision
 
 end RecoveredAtLift
 
@@ -8779,61 +8814,6 @@ private theorem congr_of_reduceModPow_eq
     (Hex.ZPoly.congr_symm _ _ _ hf) hg
 
 /--
-Compatibility wrapper for multiplicative closure of
-`RepresentsIntegerFactorAtLift` along a disjoint decomposition `S ∪ T` of
-representing subsets under a monic core. The public predicate now packages a
-recovered monic-coordinate witness, so the proof constructs the product
-witness directly; the monic-core hypothesis is retained for existing callers.
--/
-theorem representsIntegerFactorAtLift_mul_of_monic_core
-    {core f g : Hex.ZPoly} {d : Hex.LiftData}
-    {S T : LiftedFactorSubset d}
-    (_hcore_monic : Hex.DensePoly.Monic core)
-    (hdisj : Disjoint S T)
-    (hf_rep : RepresentsIntegerFactorAtLift core d f S)
-    (hg_rep : RepresentsIntegerFactorAtLift core d g T) :
-    RepresentsIntegerFactorAtLift core d (f * g) (S ∪ T) := by
-  rcases hf_rep with ⟨hf⟩
-  rcases hg_rep with ⟨hg⟩
-  have hpk_pos : 0 < d.p ^ d.k := Nat.pow_pos d.p_pos
-  exact RepresentsIntegerFactorAtLift.ofRecovered
-    { monicFactor := hf.monicFactor * hg.monicFactor
-      congr := by
-        have hcongr_f :
-            Hex.ZPoly.congr (liftedFactorProduct d S) hf.monicFactor
-              (d.p ^ d.k) :=
-          congr_of_reduceModPow_eq _ _ _ _ hpk_pos hf.congr
-        have hcongr_g :
-            Hex.ZPoly.congr (liftedFactorProduct d T) hg.monicFactor
-              (d.p ^ d.k) :=
-          congr_of_reduceModPow_eq _ _ _ _ hpk_pos hg.congr
-        have hcongr_mul :
-            Hex.ZPoly.congr
-              (liftedFactorProduct d S * liftedFactorProduct d T)
-              (hf.monicFactor * hg.monicFactor) (d.p ^ d.k) :=
-          Hex.ZPoly.congr_mul _ _ _ _ _ hcongr_f hcongr_g
-        rw [liftedFactorProduct_union_of_disjoint hdisj]
-        exact Hex.ZPoly.reduceModPow_eq_of_congr _ _ _ _ hcongr_mul
-      dilate_eq := by
-        calc
-          Hex.ZPoly.primitivePart
-              (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
-                (hf.monicFactor * hg.monicFactor))
-              =
-            Hex.ZPoly.primitivePart
-              (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) hf.monicFactor *
-                Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) hg.monicFactor) := by
-              rw [HexPolyZMathlib.dilate_mul]
-          _ =
-            Hex.ZPoly.primitivePart
-                (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) hf.monicFactor) *
-              Hex.ZPoly.primitivePart
-                (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) hg.monicFactor) := by
-              rw [Hex.ZPoly.primitivePart_mul]
-          _ = f * g := by
-              rw [hf.dilate_eq, hg.dilate_eq] }
-
-/--
 Multiplicative closure of the recovered/monic-coordinate representation carrier
 `RecoveredAtLift` along a disjoint decomposition `S ∪ T`. If `S` recovers the
 integer factor `f` and `T` (disjoint from `S`) recovers `g`, then `S ∪ T`
@@ -8847,13 +8827,23 @@ no monicity hypothesis is needed. The witness monic coordinate is the product of
 the two witnesses; the `congr` field combines
 `liftedFactorProduct_union_of_disjoint` with `Hex.ZPoly.congr_mul`, and the
 `dilate_eq` field combines `HexPolyZMathlib.dilate_mul` (dilation is
-multiplicative) with `Hex.ZPoly.primitivePart_mul` (Gauss's lemma). -/
+multiplicative) with `Hex.ZPoly.primitivePart_mul` (Gauss's lemma).
+
+The `monic_dvd` field is **not** closed under the helper unconditionally: the
+two component divisibilities `hf.monicFactor ∣ (toMonic core).monic` and
+`hg.monicFactor ∣ (toMonic core).monic` do not give
+`hf.monicFactor * hg.monicFactor ∣ (toMonic core).monic` without coprimality of
+the two coordinates.  The product divisibility is therefore taken as an explicit
+premise `hmul_dvd`, supplied by the squarefree-lift context where it genuinely
+holds. -/
 def RecoveredAtLift.mul
     {core f g : Hex.ZPoly} {d : Hex.LiftData}
     {S T : LiftedFactorSubset d}
     (hdisj : Disjoint S T)
     (hf : RecoveredAtLift core d f S)
-    (hg : RecoveredAtLift core d g T) :
+    (hg : RecoveredAtLift core d g T)
+    (hmul_dvd :
+      hf.monicFactor * hg.monicFactor ∣ (Hex.ZPoly.toMonic core).monic) :
     RecoveredAtLift core d (f * g) (S ∪ T) where
   monicFactor := hf.monicFactor * hg.monicFactor
   congr := by
@@ -8873,6 +8863,31 @@ def RecoveredAtLift.mul
   dilate_eq := by
     rw [HexPolyZMathlib.dilate_mul, Hex.ZPoly.primitivePart_mul,
       hf.dilate_eq, hg.dilate_eq]
+  monic_dvd := hmul_dvd
+
+/--
+Multiplicative closure of `RepresentsIntegerFactorAtLift` along a disjoint
+decomposition `S ∪ T`, packaged from the recovered carriers.  Thin wrapper over
+`RecoveredAtLift.mul` returning the public predicate.
+
+Inputs are the data-bearing `RecoveredAtLift` carriers (not the
+`Nonempty`-erased predicate) because the product-divisibility premise `hmul_dvd`
+the carrier's `monic_dvd` field now demands must reference the component monic
+coordinates, which are not nameable through the erased predicate.  The
+monic-core hypothesis is retained for signature compatibility with the prior
+wrapper.
+-/
+theorem representsIntegerFactorAtLift_mul_of_monic_core
+    {core f g : Hex.ZPoly} {d : Hex.LiftData}
+    {S T : LiftedFactorSubset d}
+    (_hcore_monic : Hex.DensePoly.Monic core)
+    (hdisj : Disjoint S T)
+    (hf : RecoveredAtLift core d f S)
+    (hg : RecoveredAtLift core d g T)
+    (hmul_dvd :
+      hf.monicFactor * hg.monicFactor ∣ (Hex.ZPoly.toMonic core).monic) :
+    RepresentsIntegerFactorAtLift core d (f * g) (S ∪ T) :=
+  RepresentsIntegerFactorAtLift.ofRecovered (RecoveredAtLift.mul hdisj hf hg hmul_dvd)
 
 /--
 Monic-product closure for `liftedFactorProduct`: when every selected lifted
@@ -9231,7 +9246,11 @@ theorem henselLiftData_represents_lifted_of_modP
         rw [show Hex.DensePoly.leadingCoeff core = (1 : Int) from hcore_monic,
           Hex.ZPoly.dilate_one]
         exact Hex.ZPoly.primitivePart_eq_self_of_primitive factor
-          (zpoly_primitive_of_monic hfactor_monic) }
+          (zpoly_primitive_of_monic hfactor_monic)
+      monic_dvd := by
+        rw [Hex.ZPoly.toMonic_monic_eq_core_of_leadingCoeff_eq_one core
+          (show Hex.DensePoly.leadingCoeff core = (1 : Int) from hcore_monic)]
+        exact ⟨q, hcoreq⟩ }
 
 /-- `centeredModNat 1 m = 1` when `m ≥ 2`: the value `1` lies in the centred
 half-window and is preserved by the centred-reduction operation. -/
