@@ -739,9 +739,11 @@ private theorem size_le_of_coeff_zero_from
       DensePoly.coeff_last_ne_zero_of_pos_size f (by omega)
     exact False.elim (hlast_ne hlast_zero)
 
+/-- `diagonalCoeffTerm` is the index-`i` contribution `p.coeff i * q.coeff (n - i)` to the degree-`n` coefficient of `p * q`, zero when `n < i`. -/
 private def diagonalCoeffTerm (p q : ZPoly) (n i : Nat) : Int :=
   if n < i then 0 else p.coeff i * q.coeff (n - i)
 
+/-- `fold_mulCoeffStep_eq_bounded_diagonal_int` evaluates the inner `mulCoeffStep` fold over `range m` to the accumulator plus the diagonal term when `i ≤ n` and `n - i < m`, and the accumulator alone otherwise. -/
 private theorem fold_mulCoeffStep_eq_bounded_diagonal_int
     (p q : ZPoly) (n i m : Nat) (acc : Int) :
     (List.range m).foldl (DensePoly.mulCoeffStep p q n i) acc =
@@ -768,6 +770,7 @@ private theorem fold_mulCoeffStep_eq_bounded_diagonal_int
           · have hm' : ¬ n - i < m + 1 := by omega
             simp [hlt, hm, hm', heq]
 
+/-- `fold_mulCoeffStep_eq_diagonal_int` collapses the inner `mulCoeffStep` fold over the full `range q.size` to the accumulator plus `diagonalCoeffTerm p q n i`. -/
 private theorem fold_mulCoeffStep_eq_diagonal_int
     (p q : ZPoly) (n i : Nat) (acc : Int) :
     (List.range q.size).foldl (DensePoly.mulCoeffStep p q n i) acc =
@@ -782,6 +785,7 @@ private theorem fold_mulCoeffStep_eq_diagonal_int
         DensePoly.coeff_eq_zero_of_size_le q (Nat.le_of_not_gt hbound)
       simp [hlt, hbound, hcoeff]
 
+/-- `fold_mulCoeff_outer_eq_diagonal_int` rewrites the outer coefficient fold so each inner `mulCoeffStep` loop becomes a single `diagonalCoeffTerm` accumulation. -/
 private theorem fold_mulCoeff_outer_eq_diagonal_int
     (p q : ZPoly) (n : Nat) (xs : List Nat) (acc : Int) :
     xs.foldl (fun coeff i => (List.range q.size).foldl (DensePoly.mulCoeffStep p q n i) coeff) acc =
@@ -794,12 +798,14 @@ private theorem fold_mulCoeff_outer_eq_diagonal_int
       rw [fold_mulCoeffStep_eq_diagonal_int]
       exact ih (acc + diagonalCoeffTerm p q n i)
 
+/-- `mulCoeffSum_eq_diagonal_int` expresses the degree-`n` product coefficient as the fold of `diagonalCoeffTerm` over `range p.size`. -/
 private theorem mulCoeffSum_eq_diagonal_int (p q : ZPoly) (n : Nat) :
     DensePoly.mulCoeffSum p q n =
       (List.range p.size).foldl (fun acc i => acc + diagonalCoeffTerm p q n i) 0 := by
   unfold DensePoly.mulCoeffSum
   exact fold_mulCoeff_outer_eq_diagonal_int p q n (List.range p.size) 0
 
+/-- `fold_diagonal_monomial_left` collapses the diagonal fold for a degree-`k` monomial left factor to the single `k`-th term when `k < m`. -/
 private theorem fold_diagonal_monomial_left
     (k : Nat) (c : Int) (q : ZPoly) (n m : Nat) :
     (List.range m).foldl
@@ -841,6 +847,7 @@ private theorem fold_diagonal_monomial_left
               rw [Int.zero_mul]
           simp [hk, hks, hterm]
 
+/-- `coeff_monomial_mul` gives the degree-`n` coefficient of `monomial k c * q` as `c * q.coeff (n - k)`, zero when `n < k`. -/
 private theorem coeff_monomial_mul
     (k : Nat) (c : Int) (q : ZPoly) (n : Nat) :
     ((DensePoly.monomial k c : ZPoly) * q).coeff n =
