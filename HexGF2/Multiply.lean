@@ -1797,6 +1797,9 @@ private theorem foldl_xorClmulAt_monomial_left_prefix_after_source
               (xs := xs) (k := k) (i := m) (target := source + k) hLow hHigh]
             simpa [words_monomial_size] using ih hm_tail (by omega)
 
+/-- `k % 64 = 0` case: a monomial shifted by a whole number of words lands
+exactly at word `n / 64 + k / 64`, so coefficient `n + k` toggles by the
+source bit at position `n`. -/
 private theorem foldl_mulWords_monomial_active_zero
     (acc xs : Array UInt64) {k n : Nat}
     (hidx : n / 64 + k / 64 < acc.size) (hbitShift : k % 64 = 0) :
@@ -1839,6 +1842,9 @@ private theorem foldl_mulWords_monomial_active_zero
       simpa [hsize] using hidx)
     (hn := rfl) (hbitShift := hbitShift)
 
+/-- `n % 64 + k % 64 < 64` case (nonzero bit shift): the shifted bit stays
+within the low target word `n / 64 + k / 64`, so coefficient `n + k` toggles
+by the source bit at position `n` with no carry into the next word. -/
 private theorem foldl_mulWords_monomial_active_low
     (acc xs : Array UInt64) {k n : Nat}
     (hidx : n / 64 + k / 64 < acc.size)
@@ -1882,6 +1888,9 @@ private theorem foldl_mulWords_monomial_active_low
       simpa [hsize] using hidx)
     (hn := rfl) (hbitShift := hbitShift) (hbit := hbit)
 
+/-- `64 ≤ n % 64 + k % 64` case: the shifted bit carries into word
+`n / 64 + k / 64 + 1`, so coefficient `n + k` toggles by the source bit at
+position `n`. -/
 private theorem foldl_mulWords_monomial_active_high
     (acc xs : Array UInt64) {k n : Nat}
     (hidx : n / 64 + k / 64 < acc.size)
@@ -1930,6 +1939,8 @@ private theorem foldl_mulWords_monomial_active_high
       simpa [hsize] using hidxNext)
     (hn := rfl) (hbit := hbit)
 
+/-- Target word equals the active word `i + k / 64` but its bit index lies
+below the shift `k % 64`, so source `i` leaves `target` unchanged. -/
 private theorem foldl_mulWords_monomial_active_low_before_shift
     (acc xs : Array UInt64) {i k target : Nat}
     (hidx : i + k / 64 < acc.size) (hword : target / 64 = i + k / 64)
@@ -1972,6 +1983,8 @@ private theorem foldl_mulWords_monomial_active_low_before_shift
       simpa [hsize] using hidx)
     (hword := hword) (hbitShift := hbitShift) (hbit := hbit)
 
+/-- Target word equals the carry word `i + k / 64 + 1` but its bit index is at
+or above the shift `k % 64`, so source `i` leaves `target` unchanged. -/
 private theorem foldl_mulWords_monomial_active_high_after_carry
     (acc xs : Array UInt64) {i k target : Nat}
     (hidx : i + k / 64 < acc.size) (hidxNext : i + k / 64 + 1 < acc.size)
@@ -2018,6 +2031,8 @@ private theorem foldl_mulWords_monomial_active_high_after_carry
       simpa [hsize] using hidxNext)
     (hword := hword) (hbit := hbit)
 
+/-- Target word is neither the active word `i + k / 64` nor its carry word
+`i + k / 64 + 1`, so source `i`'s monomial contributes nothing at `target`. -/
 private theorem foldl_mulWords_monomial_ne
     (acc xs : Array UInt64) {i k target : Nat}
     (hLow : target / 64 ≠ i + k / 64)
@@ -2055,6 +2070,9 @@ private theorem foldl_mulWords_monomial_ne
         acc)
     (x := xs[i]!) (hLow := hLow) (hHigh := hHigh)
 
+/-- Folding the monomial product over a list of in-range sources leaves every
+target bit below the shift `k` unchanged (each source contributes only at or
+above `k`). -/
 private theorem foldl_mulWords_monomial_target_lt
     (is : List Nat) (acc xs : Array UInt64) {k target : Nat}
     (hmem : ∀ i ∈ is, i < xs.size)
@@ -2113,6 +2131,9 @@ private theorem foldl_mulWords_monomial_target_lt
             hLow hHigh
       · simpa [foldl_xorClmulAt_size] using hacc
 
+/-- A target offset `source` whose word index `source / 64` lies beyond
+`xs.size` receives nothing from the monomial fold, so coefficient `source + k`
+keeps its starting value. -/
 private theorem foldl_mulWords_monomial_source_oob
     (is : List Nat) (acc xs : Array UInt64) {k source : Nat}
     (hmem : ∀ i ∈ is, i < xs.size)
