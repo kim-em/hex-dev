@@ -20,6 +20,7 @@ namespace ZPoly
 def X : ZPoly :=
   DensePoly.monomial 1 1
 
+/-- Count the leading zero coefficients of a list, returning that count paired with the remaining tail. -/
 private def splitInitialZeros : List Int → Nat × List Int
   | [] => (0, [])
   | coeff :: coeffs =>
@@ -82,39 +83,51 @@ def isGoodPrime (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Bool :=
     ZPoly.leadingCoeffModP f p != 0 &&
     gcdIsUnit (DensePoly.gcd fModP (DensePoly.derivative fModP))
 
+/-- The `ZMod64.Bounds` instance witness for `p = 2`. -/
 private theorem bounds_two : ZMod64.Bounds 2 := by
   constructor <;> decide
 
+/-- The `ZMod64.Bounds` instance witness for `p = 3`. -/
 private theorem bounds_three : ZMod64.Bounds 3 := by
   constructor <;> decide
 
+/-- The `ZMod64.Bounds` instance witness for `p = 5`. -/
 private theorem bounds_five : ZMod64.Bounds 5 := by
   constructor <;> decide
 
+/-- The `ZMod64.Bounds` instance witness for `p = 7`. -/
 private theorem bounds_seven : ZMod64.Bounds 7 := by
   constructor <;> decide
 
+/-- The `ZMod64.Bounds` instance witness for `p = 11`. -/
 private theorem bounds_eleven : ZMod64.Bounds 11 := by
   constructor <;> decide
 
+/-- The `ZMod64.Bounds` instance witness for `p = 13`. -/
 private theorem bounds_thirteen : ZMod64.Bounds 13 := by
   constructor <;> decide
 
+/-- The `ZMod64.Bounds` instance witness for `p = 17`. -/
 private theorem bounds_seventeen : ZMod64.Bounds 17 := by
   constructor <;> decide
 
+/-- The `ZMod64.Bounds` instance witness for `p = 19`. -/
 private theorem bounds_nineteen : ZMod64.Bounds 19 := by
   constructor <;> decide
 
+/-- The `ZMod64.Bounds` instance witness for `p = 23`. -/
 private theorem bounds_twenty_three : ZMod64.Bounds 23 := by
   constructor <;> decide
 
+/-- The `ZMod64.Bounds` instance witness for `p = 31`. -/
 private theorem bounds_thirty_one : ZMod64.Bounds 31 := by
   constructor <;> decide
 
+/-- The `ZMod64.Bounds` instance witness for `p = 71`. -/
 private theorem bounds_seventy_one : ZMod64.Bounds 71 := by
   constructor <;> decide
 
+/-- The primality certificate for `p = 2`. -/
 private theorem prime_two : Nat.Prime 2 := by
   refine ⟨?_, ?_⟩
   · decide
@@ -127,6 +140,7 @@ private theorem prime_two : Nat.Prime 2 := by
     | 2 => exact Or.inr rfl
     | _ + 3 => omega
 
+/-- The primality certificate for `p = 3`. -/
 private theorem prime_three : Nat.Prime 3 := by
   refine ⟨?_, ?_⟩
   · decide
@@ -140,6 +154,7 @@ private theorem prime_three : Nat.Prime 3 := by
     | 3 => exact Or.inr rfl
     | _ + 4 => omega
 
+/-- The primality certificate for `p = 5`. -/
 private theorem prime_five : Nat.Prime 5 := by
   refine ⟨?_, ?_⟩
   · decide
@@ -155,6 +170,7 @@ private theorem prime_five : Nat.Prime 5 := by
     | 5 => exact Or.inr rfl
     | _ + 6 => omega
 
+/-- The primality certificate for `p = 7`. -/
 private theorem prime_seven : Nat.Prime 7 := by
   refine ⟨?_, ?_⟩
   · decide
@@ -172,6 +188,7 @@ private theorem prime_seven : Nat.Prime 7 := by
     | 7 => exact Or.inr rfl
     | _ + 8 => omega
 
+/-- The primality certificate for `p = 11`. -/
 private theorem prime_eleven : Nat.Prime 11 := by
   refine ⟨?_, ?_⟩
   · decide
@@ -193,6 +210,7 @@ private theorem prime_eleven : Nat.Prime 11 := by
     | 11 => exact Or.inr rfl
     | _ + 12 => omega
 
+/-- The primality certificate for `p = 13`. -/
 private theorem prime_thirteen : Nat.Prime 13 := by
   refine ⟨?_, ?_⟩
   · decide
@@ -216,6 +234,7 @@ private theorem prime_thirteen : Nat.Prime 13 := by
     | 13 => exact Or.inr rfl
     | _ + 14 => omega
 
+/-- The primality certificate for `p = 17`. -/
 private theorem prime_seventeen : Nat.Prime 17 := by
   refine ⟨?_, ?_⟩
   · decide
@@ -243,6 +262,7 @@ private theorem prime_seventeen : Nat.Prime 17 := by
     | 17 => exact Or.inr rfl
     | _ + 18 => omega
 
+/-- The primality certificate for `p = 19`. -/
 private theorem prime_nineteen : Nat.Prime 19 := by
   refine ⟨?_, ?_⟩
   · decide
@@ -272,6 +292,7 @@ private theorem prime_nineteen : Nat.Prime 19 := by
     | 19 => exact Or.inr rfl
     | _ + 20 => omega
 
+/-- The primality certificate for `p = 23`. -/
 private theorem prime_twenty_three : Nat.Prime 23 := by
   refine ⟨?_, ?_⟩
   · decide
@@ -305,6 +326,7 @@ private theorem prime_twenty_three : Nat.Prime 23 := by
     | 23 => exact Or.inr rfl
     | _ + 24 => omega
 
+/-- The primality certificate for `p = 31`. -/
 private theorem prime_thirty_one : Nat.Prime 31 := by
   refine ⟨?_, ?_⟩
   · decide
@@ -346,6 +368,7 @@ private theorem prime_thirty_one : Nat.Prime 31 := by
     | 31 => exact Or.inr rfl
     | _ + 32 => omega
 
+/-- The primality certificate for `p = 71`. -/
 private theorem prime_seventy_one : Nat.Prime 71 := by
   refine ⟨?_, ?_⟩
   · decide
@@ -451,6 +474,7 @@ structure SmallPrimeCandidate where
   [bounds : ZMod64.Bounds p]
   prime : Nat.Prime p
 
+/-- Build a `SmallPrimeCandidate` from a trial-division primality witness and a word-size bound on `p`. -/
 private def smallPrimeCandidateOfTrial (p : Nat)
     (hprime : Hex.Nat.isPrimeTrial p = true) (hbound : p ≤ UInt64.word) :
     SmallPrimeCandidate :=
@@ -464,6 +488,7 @@ structure PrimeCandidateScore where
   /-- Smaller scores are preferred; equal scores retain the earlier smaller prime. -/
   factorCount : Nat
 
+/-- The default list of small primes (`3` through `71`) used for Berlekamp-Zassenhaus trial division. -/
 private def smallPrimeCandidates : List SmallPrimeCandidate :=
   [ smallPrimeCandidateOfTrial 3 (by decide) (by decide),
     smallPrimeCandidateOfTrial 5 (by decide) (by decide),
@@ -486,6 +511,7 @@ private def smallPrimeCandidates : List SmallPrimeCandidate :=
     smallPrimeCandidateOfTrial 71 (by decide) (by decide) ]
 
 set_option maxRecDepth 10000 in
+/-- The extended list of larger small-prime candidates, tried when `smallPrimeCandidates` is exhausted. -/
 private def extendedSmallPrimeCandidates : List SmallPrimeCandidate :=
   [ smallPrimeCandidateOfTrial 73 (by decide) (by decide),
     smallPrimeCandidateOfTrial 79 (by decide) (by decide),
