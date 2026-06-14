@@ -50,6 +50,8 @@ def ceilSqrt (n : Nat) : Nat :=
   else
     r + 1
 
+/-- The arithmetic-mean/geometric-mean inequality `4 * (a * b) ≤ (a + b) ^ 2`
+for natural numbers. -/
 private theorem four_mul_le_square_add (a b : Nat) :
     4 * (a * b) ≤ (a + b) ^ 2 := by
   by_cases h : a ≤ b
@@ -61,6 +63,8 @@ private theorem four_mul_le_square_add (a b : Nat) :
     simp [Nat.pow_two]
     grind
 
+/-- The midpoint square bound `x * (q + 1) ≤ ((x + q) / 2 + 1) ^ 2` that drives
+the Newton upper envelope. -/
 private theorem mul_succ_le_midpoint_succ_sq (x q : Nat) :
     x * (q + 1) ≤ ((x + q) / 2 + 1) ^ 2 := by
   let a := (x + q) / 2 + 1
@@ -81,6 +85,8 @@ private theorem mul_succ_le_midpoint_succ_sq (x q : Nat) :
   have hcancel := Nat.le_of_mul_le_mul_left h4 (by decide : 0 < 4)
   simpa [a] using hcancel
 
+/-- One Newton step preserves the upper envelope: `n ≤ (sqrtStep n x + 1) ^ 2`
+whenever `n ≤ (x + 1) ^ 2`. -/
 private theorem sqrtStep_upper_succ
     (n x : Nat) (hx : 0 < x) (_h : n ≤ (x + 1) ^ 2) :
     n ≤ (sqrtStep n x + 1) ^ 2 := by
@@ -94,6 +100,8 @@ private theorem sqrtStep_upper_succ
   exact Nat.le_trans hn_le
     (by simpa [sqrtStep, q] using mul_succ_le_midpoint_succ_sq x q)
 
+/-- Inductive core: the iterate `sqrtAux n fuel x` stays in the upper envelope
+`n ≤ (sqrtAux n fuel x + 1) ^ 2` for any starting `x` already in it. -/
 private theorem sqrtAux_upper_succ_core
     (n fuel x : Nat) (h : n ≤ (x + 1) ^ 2) :
     n ≤ (sqrtAux n fuel x + 1) ^ 2 := by
@@ -114,6 +122,8 @@ private theorem sqrtAux_upper_succ_core
         simp [sqrtAux, sqrtStep]
         exact h
 
+/-- The iterate `sqrtAux n fuel x` keeps the upper envelope
+`n ≤ (sqrtAux n fuel x + 1) ^ 2`. -/
 private theorem sqrtAux_upper_succ
     (n fuel x : Nat) (_hx : 0 < x) (h : n ≤ (x + 1) ^ 2) :
     n ≤ (sqrtAux n fuel x + 1) ^ 2 :=
@@ -140,6 +150,8 @@ private theorem sqrtStep_ge_imp_sq_le {n x : Nat} (_hx : 0 < x)
     _ = (n / x) * x := Nat.mul_comm _ _
     _ ≤ n := Nat.div_mul_le_self n x
 
+/-- In the far region `4 * n ≤ x * x`, one Newton step contracts the iterate by
+`8 * sqrtStep n x ≤ 5 * x`. -/
 private theorem sqrtStep_far_contracts
     (n x : Nat) (hx : 0 < x) (hfar : 4 * n ≤ x * x) :
     8 * sqrtStep n x ≤ 5 * x := by
@@ -163,6 +175,8 @@ private theorem sqrtStep_far_contracts
     _ ≤ 4 * x + x := Nat.add_le_add_left hq (4 * x)
     _ = 5 * x := by grind
 
+/-- In the far region `4 * n ≤ x * x`, one Newton step strictly decreases the
+iterate: `sqrtStep n x < x`. -/
 private theorem sqrtStep_far_lt_self
     (n x : Nat) (hx : 0 < x) (hfar : 4 * n ≤ x * x) :
     sqrtStep n x < x := by
@@ -177,12 +191,16 @@ state is no longer in the very-far region where `x^2` is at least `16 * n`.
 private def sqrtNearEnvelope (n x : Nat) : Prop :=
   x * x < 16 * n
 
+/-- Leaving the very-far region (`¬ 16 * n ≤ x * x`) places `x` in the near-root
+envelope `sqrtNearEnvelope n x`. -/
 private theorem sqrtNearEnvelope_of_not_very_far
     {n x : Nat} (h : ¬ 16 * n ≤ x * x) :
     sqrtNearEnvelope n x := by
   unfold sqrtNearEnvelope
   omega
 
+/-- Starting in the near envelope, the iterate `sqrtAux n fuel x` either reaches
+the lower bound `y * y ≤ n` or remains in the near envelope. -/
 private theorem sqrtAux_near_or_sq_le
     (n fuel x : Nat) (hnear : sqrtNearEnvelope n x) :
     let y := sqrtAux n fuel x
@@ -209,6 +227,8 @@ private theorem sqrtAux_near_or_sq_le
           exact Nat.lt_of_le_of_lt hsq_next hnear
         exact ih next hnear_next
 
+/-- Once the iterate undershoots with `x * x ≤ n`, the Newton step no longer
+decreases it: `x ≤ sqrtStep n x`. -/
 private theorem sqrtStep_ge_of_sq_le
     {n x : Nat} (hsq : x * x ≤ n) :
     x ≤ sqrtStep n x := by
@@ -221,6 +241,7 @@ private theorem sqrtStep_ge_of_sq_le
     subst x
     simp [sqrtStep]
 
+/-- The iteration is fixed at any `x` with `x * x ≤ n`: `sqrtAux n fuel x = x`. -/
 private theorem sqrtAux_eq_self_of_sq_le
     (n fuel x : Nat) (hsq : x * x ≤ n) :
     sqrtAux n fuel x = x := by
@@ -233,9 +254,13 @@ private theorem sqrtAux_eq_self_of_sq_le
       have hstop : next ≥ x := sqrtStep_ge_of_sq_le hsq
       simp [next, hstop]
 
+/-- The Newton iteration gap `x - n / x`, measuring how far the iterate sits
+above its quotient. -/
 private def sqrtGap (n x : Nat) : Nat :=
   x - n / x
 
+/-- The gap `sqrtGap n x` is positive while `x` overshoots the root
+(`¬ x * x ≤ n`). -/
 private theorem sqrtGap_pos_of_not_sq
     {n x : Nat} (hx : 0 < x) (hnot_sq : ¬ x * x ≤ n) :
     0 < sqrtGap n x := by
@@ -247,6 +272,8 @@ private theorem sqrtGap_pos_of_not_sq
       exact False.elim (hnot_sq ((Nat.le_div_iff_mul_le hx).mp hx_le))
   omega
 
+/-- One Newton step at least halves the gap:
+`2 * sqrtGap n (sqrtStep n x) ≤ sqrtGap n x`. -/
 private theorem sqrtStep_gap_halves
     (n x : Nat) (hx : 0 < x) (hnot_sq : ¬ x * x ≤ n) :
     2 * sqrtGap n (sqrtStep n x) ≤ sqrtGap n x := by
