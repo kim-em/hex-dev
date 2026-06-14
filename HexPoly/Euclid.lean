@@ -4590,6 +4590,10 @@ private theorem mcCoy_top_row_descent
   intro i
   exact mcCoy_grid_band_descent D bound k hRight hstep i k (Nat.le_refl k)
 
+/-- `list_natAbs_gcd_bezout_aux`: starting from an accumulator `acc`, produces a
+scalar `a` and integer weights expressing the running natAbs-gcd of the
+coefficient list as `a * acc` plus the weighted `zipWith` fold-sum of the
+coefficients. -/
 private theorem list_natAbs_gcd_bezout_aux (xs : List Int) (acc : Nat) :
     ∃ a : Int, ∃ weights : List Int,
       weights.length = xs.length ∧
@@ -4615,6 +4619,9 @@ private theorem list_natAbs_gcd_bezout_aux (xs : List Int) (acc : Nat) :
         rw [hterm]
         grind
 
+/-- `list_natAbs_gcd_bezout`: the `acc = 0` specialisation of
+`list_natAbs_gcd_bezout_aux`, giving integer weights whose weighted `zipWith`
+fold-sum of a coefficient list equals that list's natAbs-gcd. -/
 private theorem list_natAbs_gcd_bezout (xs : List Int) :
     ∃ weights : List Int,
       weights.length = xs.length ∧
@@ -4624,6 +4631,9 @@ private theorem list_natAbs_gcd_bezout (xs : List Int) :
   refine ⟨weights, hlen, ?_⟩
   simpa using hsum
 
+/-- `exists_linear_combination_coeffs_eq_one_of_content_eq_one`: from
+`content p = 1`, produces integer weights whose weighted `zipWith` fold-sum
+against `p`'s coefficients equals `1`. -/
 private theorem exists_linear_combination_coeffs_eq_one_of_content_eq_one
     (p : DensePoly Int) (hp : content p = 1) :
     ∃ weights : List Int,
@@ -4661,6 +4671,9 @@ theorem nat_eq_one_of_content_eq_one_of_nat_dvd_coeff (p : DensePoly Int) (d : N
   rw [Int.ofNat_dvd_left] at hdvd
   exact Nat.dvd_one.mp hdvd
 
+/-- `foldl_zipWith_mul_scale_int`: pulls a scalar `a` through a `zipWith (· * ·)`
+fold-sum, rewriting `a *` the weighted sum as the weighted sum of the `a`-scaled
+values. -/
 private theorem foldl_zipWith_mul_scale_int
     (a : Int) (weights values : List Int) :
     a * (List.zipWith (fun w c : Int => w * c) weights values).foldl
@@ -4681,6 +4694,8 @@ private theorem foldl_zipWith_mul_scale_int
           rw [← ih cs]
           grind
 
+/-- `dvd_foldl_zipWith_scale_mul`: a divisor `d` of every product `a * c` also
+divides the `zipWith` fold-sum of the weights against the `a`-scaled values. -/
 private theorem dvd_foldl_zipWith_scale_mul
     (d : Int) (a : Int) (weights values : List Int)
     (h : ∀ c ∈ values, d ∣ a * c) :
@@ -4732,6 +4747,8 @@ theorem nat_dvd_of_scalar_mul_primitive_coeff_dvd
   rw [hexp]
   exact dvd_foldl_zipWith_scale_mul (d : Int) a weights p.toArray.toList hval_dvd
 
+/-- `exists_max_prop_below`: extracts the greatest index below `N` satisfying a
+decidable predicate, given that some index below `N` satisfies it. -/
 private theorem exists_max_prop_below
     (P : Nat → Prop) [DecidablePred P] :
     ∀ N, (∃ n, n < N ∧ P n) →
@@ -4758,6 +4775,9 @@ private theorem exists_max_prop_below
             exact hN
           · exact hmax j hkj (by omega)⟩
 
+/-- `exists_last_not_natCast_dvd_coeff`: given some coefficient of `q` is not
+divisible by `(d : Int)`, returns the last such index, with every later
+coefficient divisible by `d`. -/
 private theorem exists_last_not_natCast_dvd_coeff
     (q : DensePoly Int) (d : Nat)
     (hq : ∃ n, ¬ (d : Int) ∣ q.coeff n) :
@@ -4782,6 +4802,8 @@ private theorem exists_last_not_natCast_dvd_coeff
       rw [hcoeff]
       exact ⟨0, by simp⟩⟩
 
+/-- `list_getD_map_ediv_zero`: `getD` commutes with mapping integer division by
+`c` over a coefficient list, using default `0`. -/
 private theorem list_getD_map_ediv_zero (c : Int) (coeffs : List Int) (n : Nat) :
     (coeffs.map fun coeff => coeff / c).getD n (Zero.zero : Int) =
       coeffs.getD n (Zero.zero : Int) / c := by
