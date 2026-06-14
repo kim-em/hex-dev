@@ -279,11 +279,15 @@ def skipIndex {n : Nat} (skip : Fin (n + 1)) (i : Fin n) : Fin (n + 1) :=
   else
     ⟨i.val + 1, by omega⟩
 
+/-- The skipped-index embedding leaves entries below the deleted index unchanged.
+This is the low-side `simp` branch for row and column deletion. -/
 @[simp] theorem skipIndex_val_of_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
     (h : i.val < skip.val) :
     (skipIndex skip i).val = i.val := by
   simp [skipIndex, h]
 
+/-- The skipped-index embedding shifts entries at or above the deleted index by
+one. This is the high-side `simp` branch for row and column deletion. -/
 @[simp] theorem skipIndex_val_of_not_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
     (h : ¬ i.val < skip.val) :
     (skipIndex skip i).val = i.val + 1 := by
@@ -320,6 +324,8 @@ private theorem skipIndex_injective {n : Nat} (skip : Fin (n + 1)) :
     · rw [skipIndex_val_of_not_lt skip j hj] at hval
       omega
 
+/-- Skipping the final index embeds `Fin n` by `castSucc`.
+This normalizes bottom-right minors to leading prefixes. -/
 @[simp] theorem skipIndex_last {n : Nat} (i : Fin n) :
     skipIndex (Fin.last n) i = i.castSucc := by
   apply Fin.ext
@@ -330,11 +336,15 @@ def deleteRowCol {R : Type u} {n : Nat} (M : Matrix R (n + 1) (n + 1))
     (row col : Fin (n + 1)) : Matrix R n n :=
   ofFn fun i j => M[skipIndex row i][skipIndex col j]
 
+/-- Entries of a deleted-row/deleted-column minor are the corresponding source
+entries at the skipped row and column indices. -/
 @[simp] theorem deleteRowCol_entry {R : Type u} {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) (i j : Fin n) :
     (deleteRowCol M row col)[i][j] = M[skipIndex row i][skipIndex col j] := by
   simp [deleteRowCol, ofFn]
 
+/-- Deleting the final row and final column gives the leading prefix.
+This is the minor normalization used by bottom-right cofactor expansion. -/
 @[simp] theorem deleteRowCol_last_last {R : Type u} {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
     deleteRowCol M (Fin.last n) (Fin.last n) =
@@ -370,11 +380,15 @@ def cofactorSign {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
     (row col : Fin (n + 1)) : R :=
   if (row.val + col.val) % 2 = 0 then 1 else -1
 
+/-- An even row-plus-column parity gives cofactor sign `1`.
+This is the positive `simp` branch for signed cofactors. -/
 @[simp] theorem cofactorSign_of_even {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
     (row col : Fin (n + 1)) (h : (row.val + col.val) % 2 = 0) :
     cofactorSign (R := R) row col = 1 := by
   simp [cofactorSign, h]
 
+/-- An odd row-plus-column parity gives cofactor sign `-1`.
+This is the negative `simp` branch for signed cofactors. -/
 @[simp] theorem cofactorSign_of_odd {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
     (row col : Fin (n + 1)) (h : (row.val + col.val) % 2 ≠ 0) :
     cofactorSign (R := R) row col = -1 := by
@@ -385,6 +399,8 @@ def cofactor {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) : R :=
   cofactorSign row col * det (deleteRowCol M row col)
 
+/-- At even parity, a signed cofactor is just the determinant of its minor.
+This removes the sign in cofactor-expansion normalization. -/
 @[simp] theorem cofactor_of_even {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1))
     (h : (row.val + col.val) % 2 = 0) :
@@ -392,6 +408,8 @@ def cofactor {R : Type u} [Lean.Grind.Ring R] {n : Nat}
   simp [cofactor, h]
   grind
 
+/-- At odd parity, a signed cofactor is the negated determinant of its minor.
+This supplies the alternating sign in cofactor-expansion normalization. -/
 @[simp] theorem cofactor_of_odd {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1))
     (h : (row.val + col.val) % 2 ≠ 0) :
@@ -399,6 +417,8 @@ def cofactor {R : Type u} [Lean.Grind.Ring R] {n : Nat}
   simp [cofactor, h]
   grind
 
+/-- The bottom-right cofactor reduces to the determinant of the leading prefix.
+This combines the final-index minor with its even sign. -/
 @[simp] theorem cofactor_last_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
     cofactor M (Fin.last n) (Fin.last n) =
@@ -415,6 +435,8 @@ convention `1`. -/
   simp [det, detTerm, detSign, detProduct, permutationVectors, emptyVec, inversionCount]
   grind
 
+/-- The determinant of a `1 × 1` matrix is its only entry.
+This is the smallest non-empty determinant base case. -/
 @[simp] theorem det_one_by_one {R : Type u} [Lean.Grind.Ring R]
     (M : Matrix R 1 1) :
     det M = M[0][0] := by
@@ -422,6 +444,8 @@ convention `1`. -/
     inversionCount, List.finRange]
   grind
 
+/-- The determinant of a `2 × 2` matrix has the usual diagonal-minus-off-diagonal
+closed form used by small cofactor expansions. -/
 @[simp] theorem det_two_by_two {R : Type u} [Lean.Grind.CommRing R]
     (M : Matrix R 2 2) :
     det M = M[0][0] * M[1][1] - M[1][0] * M[0][1] := by
