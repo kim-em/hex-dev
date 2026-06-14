@@ -1261,6 +1261,7 @@ private theorem foldl_mulWords_left_monomial_zero_prefix
       intro i hi
       exact List.mem_range.mp hi)
 
+/-- `coeffWords_xorClmulAt_monomial_left_active_low` says that for the active source word, a shifted bit staying within the same output word toggles output bit `n + k` by the `n`-th bit of `x`. -/
 private theorem coeffWords_xorClmulAt_monomial_left_active_low
     (acc : Array UInt64) {i k n : Nat} (x : UInt64)
     (hidx : k / 64 + i < acc.size) (hn : n / 64 = i)
@@ -1290,6 +1291,7 @@ private theorem coeffWords_xorClmulAt_monomial_left_active_low
         have hnSplit := Nat.div_add_mod n 64
         omega)
 
+/-- `coeffWords_xorClmulAt_monomial_left_active_zero` says that when the monomial shift is word-aligned (`k % 64 = 0`), output bit `n + k` toggles by the `n`-th bit of `x` with no carry into the next word. -/
 private theorem coeffWords_xorClmulAt_monomial_left_active_zero
     (acc : Array UInt64) {i k n : Nat} (x : UInt64)
     (hidx : k / 64 + i < acc.size) (hn : n / 64 = i)
@@ -1313,6 +1315,7 @@ private theorem coeffWords_xorClmulAt_monomial_left_active_zero
   rw [clmul_oneHot_left_snd x (Nat.mod_lt k (by decide : 0 < 64))]
   simp [hbitShift, htargetMod]
 
+/-- `coeffWords_xorClmulAt_monomial_left_active_low_before_shift` says that target positions in the active word below the shift amount (`target % 64 < k % 64`) receive no contribution, so `coeffWords` is unchanged there. -/
 private theorem coeffWords_xorClmulAt_monomial_left_active_low_before_shift
     (acc : Array UInt64) {i k target : Nat} (x : UInt64)
     (hidx : k / 64 + i < acc.size) (hword : target / 64 = k / 64 + i)
@@ -1328,6 +1331,7 @@ private theorem coeffWords_xorClmulAt_monomial_left_active_low_before_shift
     (acc := acc) (idx := k / 64 + i) (target := target)
     (shift := k % 64) x hidx hshiftPos hshift hword hbit
 
+/-- `coeffWords_xorClmulAt_monomial_left_active_high` says that for the active source word, a shifted bit carrying into the next word (`64 ≤ n % 64 + k % 64`) toggles the carry-word output bit `n + k` by the `n`-th bit of `x`. -/
 private theorem coeffWords_xorClmulAt_monomial_left_active_high
     (acc : Array UInt64) {i k n : Nat} (x : UInt64)
     (hidx : k / 64 + i < acc.size) (hidxNext : k / 64 + i + 1 < acc.size)
@@ -1359,6 +1363,7 @@ private theorem coeffWords_xorClmulAt_monomial_left_active_high
         have hnSplit := Nat.div_add_mod n 64
         omega)
 
+/-- `coeffWords_xorClmulAt_monomial_left_active_high_after_carry` says that target positions in the carry word at or above the shift amount (`k % 64 ≤ target % 64`) lie beyond the carried bits, so `coeffWords` is unchanged there. -/
 private theorem coeffWords_xorClmulAt_monomial_left_active_high_after_carry
     (acc : Array UInt64) {i k target : Nat} (x : UInt64)
     (hidx : k / 64 + i < acc.size) (hidxNext : k / 64 + i + 1 < acc.size)
@@ -1373,6 +1378,7 @@ private theorem coeffWords_xorClmulAt_monomial_left_active_high_after_carry
     (acc := acc) (idx := k / 64 + i) (target := target)
     (shift := k % 64) x hidx hidxNext hshift hword hbit
 
+/-- `foldl_xorClmulAt_monomial_left_ne` says that a single monomial-left `xorClmulAt` step leaves `coeffWords` at `target` unchanged when `target` lies in neither the source-aligned word nor its carry word. -/
 private theorem foldl_xorClmulAt_monomial_left_ne
     (acc xs : Array UInt64) {k i target : Nat}
     (hLow : target / 64 ≠ k / 64 + i)
@@ -1385,6 +1391,7 @@ private theorem foldl_xorClmulAt_monomial_left_ne
     (acc := acc) (idx := k / 64 + i) (n := target)
     ((monomial k).words[k / 64]!) xs[i]! hLow hHigh
 
+/-- `foldl_xorClmulAt_monomial_left_target_lt` says that folding the monomial-left `xorClmulAt` steps over `js` leaves `coeffWords` unchanged at any `target < k`, since output positions below the monomial degree receive no contribution. -/
 private theorem foldl_xorClmulAt_monomial_left_target_lt
     (js : List Nat) (acc xs : Array UInt64) {k target : Nat}
     (hmem : ∀ j ∈ js, j < xs.size) (hacc : k / 64 + xs.size + 1 ≤ acc.size)
@@ -1435,6 +1442,7 @@ private theorem foldl_xorClmulAt_monomial_left_target_lt
             hLow hHigh
       · simpa [xorClmulAt_size] using hacc
 
+/-- `foldl_xorClmulAt_monomial_left_source_oob` says that folding the monomial-left `xorClmulAt` steps over `js` leaves `coeffWords` at `source + k` unchanged when the source word index is at or beyond `xs.size`, since out-of-range source words contribute nothing. -/
 private theorem foldl_xorClmulAt_monomial_left_source_oob
     (js : List Nat) (acc xs : Array UInt64) {k source : Nat}
     (hmem : ∀ j ∈ js, j < xs.size) (hacc : k / 64 + xs.size + 1 ≤ acc.size)
@@ -1492,6 +1500,7 @@ private theorem foldl_xorClmulAt_monomial_left_source_oob
               hLow hHigh
       · simpa [xorClmulAt_size] using hacc
 
+/-- `foldl_xorClmulAt_monomial_left_prefix_before_source` says that folding the first `m` words (`m ≤ source / 64`) into the zero accumulator leaves output bit `source + k` `false`, since words before the source word contribute nothing there. -/
 private theorem foldl_xorClmulAt_monomial_left_prefix_before_source
     (xs : Array UInt64) {k source m : Nat} (hm : m ≤ source / 64)
     (hsource : source / 64 < xs.size) :
@@ -1601,6 +1610,7 @@ private theorem foldl_xorClmulAt_monomial_left_prefix_before_source
             (xs := xs) (k := k) (i := m) (target := source + k) hLow hHigh]
           simpa [words_monomial_size] using ih hm_le
 
+/-- `foldl_xorClmulAt_monomial_left_prefix_after_source` says that once the fold has passed the source word (`source / 64 + 1 ≤ m`), output bit `source + k` equals `coeffWords xs source`, the `source`-th bit of the input. -/
 private theorem foldl_xorClmulAt_monomial_left_prefix_after_source
     (xs : Array UInt64) {k source m : Nat} (hm : source / 64 + 1 ≤ m)
     (hmSize : m ≤ xs.size) (hsource : source / 64 < xs.size) :
