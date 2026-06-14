@@ -34,9 +34,13 @@ instance instDecidableEq : DecidableEq GF2Poly := fun p q =>
   | isFalse hw =>
       isFalse (fun h => hw (by cases h; rfl))
 
+/-- Boolean equality on packed `GF(2)` polynomials, computed by `decide`
+on the decidable propositional equality. -/
 instance instBEq : BEq GF2Poly where
   beq p q := decide (p = q)
 
+/-- `instBEq` is lawful: its boolean equality agrees with propositional
+equality in both directions, via `of_decide_eq_true` and `decide_eq_true`. -/
 instance instLawfulBEq : LawfulBEq GF2Poly where
   eq_of_beq := by
     intro a b h

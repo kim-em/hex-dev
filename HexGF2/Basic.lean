@@ -255,6 +255,8 @@ theorem highestSetBit?_oneHot {bit : Nat} (hbit : bit < 64) :
     rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;>
     rfl
 
+/-- A machine word is `!= 0` exactly when its `Nat` value is `!= 0`,
+transporting the word-level boolean inequality to the `toNat` image. -/
 theorem UInt64.bne_zero_eq_toNat_bne_zero (w : UInt64) :
     (w != 0) = (w.toNat != 0) := by
   apply Bool.eq_iff_iff.mpr

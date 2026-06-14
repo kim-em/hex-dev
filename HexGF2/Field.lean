@@ -637,6 +637,9 @@ theorem eq_of_val_eq {a b : GF2nPoly f hirr}
   subst h
   rfl
 
+/-- Decidable equality on the quotient field `GF2nPoly f hirr`, decided on
+the underlying reduced representative `.val`; representatives with equal
+`.val` are promoted to equal field elements via `eq_of_val_eq`. -/
 instance instDecidableEq : DecidableEq (GF2nPoly f hirr) := fun a b =>
   match decEq a.val b.val with
   | isTrue h => isTrue (eq_of_val_eq h)
