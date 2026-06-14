@@ -37,9 +37,13 @@ constants.  Each fixture seeds its own stream so the failure modes are
 distinguishable.
 -/
 
+/-- `lcgStep s` advances the 64-bit LCG state one step using Knuth's MMIX
+multiplier and increment. -/
 private def lcgStep (s : UInt64) : UInt64 :=
   s * 6364136223846793005 + 1442695040888963407
 
+/-- `lcgWords seed count` runs the LCG from `seed` and returns its first
+`count` output words. -/
 private def lcgWords (seed : UInt64) (count : Nat) : Array UInt64 := Id.run do
   let mut s := seed
   let mut acc : Array UInt64 := Array.empty
@@ -48,6 +52,8 @@ private def lcgWords (seed : UInt64) (count : Nat) : Array UInt64 := Id.run do
     acc := acc.push s
   pure acc
 
+/-- `streamPairs seed count` draws `2 * count` LCG words and pairs them into
+`count` input pairs fed through both representations. -/
 private def streamPairs (seed : UInt64) (count : Nat) : Array (UInt64 × UInt64) :=
   let raw := lcgWords seed (2 * count)
   Id.run do
@@ -64,6 +70,7 @@ the packed `GF2n` and generic `GFqField.FiniteField (FpPoly 2)` views
 explicit and decidable.
 -/
 
+/-- `maskBits w n` keeps the low `n` bits of `w` and clears the rest. -/
 private def maskBits (w : UInt64) (n : Nat) : UInt64 :=
   if n = 0 then
     0
@@ -72,18 +79,26 @@ private def maskBits (w : UInt64) (n : Nat) : UInt64 :=
   else
     w &&& (((1 : UInt64) <<< n.toUInt64) - 1)
 
+/-- `wordToPoly2 w n` reads the low `n` bits of `w` as the binary coefficients
+of an `FpPoly 2` representative. -/
 private def wordToPoly2 (w : UInt64) (n : Nat) : FpPoly 2 :=
   Berlekamp.gf2WordPoly w n
 
+/-- `wordToPoly2_size_le` bounds the converted polynomial's coefficient array
+by the requested bit width `n`. -/
 private theorem wordToPoly2_size_le (w : UInt64) (n : Nat) :
     (wordToPoly2 w n).size ≤ n :=
   Berlekamp.gf2WordPoly_size_le w n
 
+/-- `wordToPoly2_coeff` gives the `i`-th coefficient of the converted
+polynomial: bit `i` of `w` when `i < n`, else zero. -/
 private theorem wordToPoly2_coeff (w : UInt64) (n i : Nat) :
     (wordToPoly2 w n).coeff i =
       if i < n then Berlekamp.gf2BitCoeff w i else 0 :=
   Berlekamp.gf2WordPoly_coeff w n i
 
+/-- `poly2ToWord f n` packs the low `n` coefficients of `f` back into a
+`UInt64`, setting bit `i` when coefficient `i` is nonzero. -/
 private def poly2ToWord (f : FpPoly 2) (n : Nat) : UInt64 :=
   (List.range n).foldl (init := (0 : UInt64)) fun acc i =>
     if (f.coeff i).val = 0 then
@@ -93,6 +108,8 @@ private def poly2ToWord (f : FpPoly 2) (n : Nat) : UInt64 :=
 
 /-! ## `Hex.Nat.Prime 2` and `ZMod64.PrimeModulus 2` -/
 
+/-- `primeTwo` is the primality witness for 2, used to build the prime-modulus
+instance for the binary base field. -/
 private def primeTwo : Hex.Nat.Prime 2 := by
   refine ⟨by decide, ?_⟩
   intro m hm
@@ -106,6 +123,8 @@ private def primeTwo : Hex.Nat.Prime 2 := by
 local instance instPrimeModulusTwo : ZMod64.PrimeModulus 2 :=
   ZMod64.primeModulusOfPrime primeTwo
 
+/-- `polyP2 coeffs` builds an `FpPoly 2` from a coefficient array of naturals
+reduced mod 2. -/
 private def polyP2 (coeffs : Array Nat) : FpPoly 2 :=
   FpPoly.ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 2 n))
 
