@@ -34,10 +34,15 @@ def pureClmul (a b : UInt64) : UInt64 × UInt64 :=
         acc)
     (0, 0)
 
+/-- Accumulating the partial product of a zero left word leaves the
+`(hi, lo)` accumulator unchanged. -/
 private theorem clmulAccumulateBit_zero_left (acc : UInt64 × UInt64) (bitIdx : Nat) :
     clmulAccumulateBit acc 0 bitIdx = acc := by
   by_cases h : bitIdx = 0 <;> simp [clmulAccumulateBit, h]
 
+/-- `clmulAccumulateBit` is linear over bitwise XOR in the accumulator and
+left word jointly: accumulating `x ^^^ y` into componentwise-XORed accumulators
+equals the XOR of the two separate accumulations. -/
 private theorem clmulAccumulateBit_xor_left
     (accX accY : UInt64 × UInt64) (x y : UInt64) (bitIdx : Nat) :
     clmulAccumulateBit (accX.1 ^^^ accY.1, accX.2 ^^^ accY.2) (x ^^^ y) bitIdx =
@@ -45,6 +50,9 @@ private theorem clmulAccumulateBit_xor_left
         (clmulAccumulateBit accX x bitIdx).2 ^^^ (clmulAccumulateBit accY y bitIdx).2) := by
   by_cases h : bitIdx = 0 <;> simp [clmulAccumulateBit, h] <;> bv_decide
 
+/-- The partial-product fold is linear over bitwise XOR in the left word:
+folding `x ^^^ y` from componentwise-XORed seed accumulators equals the XOR of
+the two separate folds of `x` and `y`. -/
 private theorem foldl_clmul_xor_left (bits : List Nat)
     (accX accY : UInt64 × UInt64) (x y z : UInt64) :
     bits.foldl
@@ -90,6 +98,8 @@ theorem pureClmul_xor_left (x y z : UInt64) :
   unfold pureClmul
   simpa using foldl_clmul_xor_left (List.range 64) (0, 0) (0, 0) x y z
 
+/-- Folding with a step that discards the list element and returns the
+accumulator unchanged yields the initial accumulator. -/
 private theorem foldl_keep {α β : Type} (xs : List β) (acc : α) :
     xs.foldl (fun acc _ => acc) acc = acc := by
   induction xs generalizing acc with
@@ -106,6 +116,7 @@ theorem pureClmul_zero_left (x : UInt64) : pureClmul 0 x = (0, 0) := by
 theorem pureClmul_zero_right (x : UInt64) : pureClmul x 0 = (0, 0) := by
   simp [pureClmul, foldl_keep]
 
+/-- Bit `bit` of the one-hot word `1 <<< hot` is set exactly when `hot = bit`. -/
 private theorem oneHotWord_bit {hot bit : Nat} (hhot : hot < 64) (hbit : bit < 64) :
     (((((1 : UInt64) <<< hot.toUInt64) >>> bit.toUInt64) &&& 1) != 0) = (hot == bit) := by
   by_cases h : hot = bit
@@ -114,11 +125,15 @@ private theorem oneHotWord_bit {hot bit : Nat} (hhot : hot < 64) (hbit : bit < 6
   · rw [GF2Poly.oneHotWord_bit_ne hhot hbit h]
     simp [h]
 
+/-- Accumulating the partial product `a * x^bit` into the zero accumulator gives
+`(0, a)` at `bit = 0` and otherwise the shifted split `(a >>> (64 - bit), a <<< bit)`. -/
 private theorem clmulAccumulateBit_zero (a : UInt64) (bit : Nat) :
     clmulAccumulateBit (0, 0) a bit =
       if bit = 0 then (0, a) else (a >>> (64 - bit).toUInt64, a <<< bit.toUInt64) := by
   by_cases h : bit = 0 <;> simp [clmulAccumulateBit, h]
 
+/-- Left-shifting the one-hot word `1 <<< hot` by `bitIdx`, when `hot + bitIdx < 64`,
+yields the one-hot word `1 <<< (hot + bitIdx)`. -/
 private theorem oneHot_shiftLeft_of_sum_lt {hot bitIdx : Nat}
     (hhot : hot < 64) (hbitIdx : bitIdx < 64) (hsum : hot + bitIdx < 64) :
     (((1 : UInt64) <<< hot.toUInt64) <<< bitIdx.toUInt64) =
@@ -133,6 +148,8 @@ private theorem oneHot_shiftLeft_of_sum_lt {hot bitIdx : Nat}
   rw [← Nat.pow_add]
   exact Nat.mod_eq_of_lt hpowSum
 
+/-- Left-shifting the one-hot word `1 <<< hot` by `bitIdx`, when `64 ≤ hot + bitIdx`,
+overflows out of the word to `0`. -/
 private theorem oneHot_shiftLeft_of_sum_ge {hot bitIdx : Nat}
     (hhot : hot < 64) (hbitIdx : bitIdx < 64) (hsum : 64 ≤ hot + bitIdx) :
     (((1 : UInt64) <<< hot.toUInt64) <<< bitIdx.toUInt64) = 0 := by
@@ -145,6 +162,8 @@ private theorem oneHot_shiftLeft_of_sum_ge {hot bitIdx : Nat}
     exact Nat.pow_dvd_pow 2 hsum
   exact Nat.mod_eq_zero_of_dvd hdiv
 
+/-- Right-shifting the one-hot word `1 <<< hot` by `64 - bitIdx`, when
+`hot + bitIdx < 64`, yields `0` (the partial product produces no high carry-out). -/
 private theorem oneHot_shiftRight_of_sum_lt {hot bitIdx : Nat}
     (hhot : hot < 64) (hbitIdx : bitIdx < 64) (hbitIdxPos : 0 < bitIdx)
     (hsum : hot + bitIdx < 64) :
@@ -159,6 +178,8 @@ private theorem oneHot_shiftRight_of_sum_lt {hot bitIdx : Nat}
   exact Nat.div_eq_of_lt
     (Nat.pow_lt_pow_of_lt (by decide : 1 < 2) (by omega))
 
+/-- Right-shifting the one-hot word `1 <<< hot` by `64 - bitIdx`, when
+`64 ≤ hot + bitIdx`, yields the carried-out one-hot word `1 <<< (hot + bitIdx - 64)`. -/
 private theorem oneHot_shiftRight_of_sum_ge {hot bitIdx : Nat}
     (hhot : hot < 64) (hbitIdx : bitIdx < 64) (hsum : 64 ≤ hot + bitIdx) :
     (((1 : UInt64) <<< hot.toUInt64) >>> (64 - bitIdx).toUInt64) =
@@ -182,6 +203,9 @@ private theorem oneHot_shiftRight_of_sum_ge {hot bitIdx : Nat}
   have hpos : 0 < 2 ^ (64 - bitIdx) := Nat.pow_pos (by decide : 0 < 2)
   exact Nat.mul_div_right _ hpos
 
+/-- Accumulating the one-hot left word `1 <<< hot` at shift `bitIdx`, when
+`hot + bitIdx < 64`, XORs `1 <<< (hot + bitIdx)` into the low word and leaves the
+high word unchanged. -/
 private theorem clmulAccumulateBit_oneHot_low {hot bitIdx : Nat}
     (acc : UInt64 × UInt64) (hhot : hot < 64) (hbitIdx : bitIdx < 64)
     (hsum : hot + bitIdx < 64) :
@@ -195,6 +219,9 @@ private theorem clmulAccumulateBit_oneHot_low {hot bitIdx : Nat}
       oneHot_shiftLeft_of_sum_lt hhot hbitIdx hsum,
       oneHot_shiftRight_of_sum_lt hhot hbitIdx hbitIdxPos hsum]
 
+/-- Accumulating the one-hot left word `1 <<< hot` at shift `bitIdx`, when
+`64 ≤ hot + bitIdx`, XORs `1 <<< (hot + bitIdx - 64)` into the high word and leaves
+the low word unchanged. -/
 private theorem clmulAccumulateBit_oneHot_high {hot bitIdx : Nat}
     (acc : UInt64 × UInt64) (hhot : hot < 64) (hbitIdx : bitIdx < 64)
     (hsum : 64 ≤ hot + bitIdx) :
@@ -204,6 +231,8 @@ private theorem clmulAccumulateBit_oneHot_high {hot bitIdx : Nat}
   simp [clmulAccumulateBit, hzero, oneHot_shiftLeft_of_sum_ge hhot hbitIdx hsum,
     oneHot_shiftRight_of_sum_ge hhot hbitIdx hsum]
 
+/-- One fold step for multiplying by the one-hot right word `1 <<< hot`:
+accumulate `a`'s partial product at `bitIdx` only when `bitIdx` is the hot bit. -/
 private def clmulOneHotStep (a : UInt64) (hot : Nat) (acc : UInt64 × UInt64)
     (bitIdx : Nat) : UInt64 × UInt64 :=
   if (((((1 : UInt64) <<< hot.toUInt64) >>> bitIdx.toUInt64) &&& 1) != 0) then
@@ -211,6 +240,8 @@ private def clmulOneHotStep (a : UInt64) (hot : Nat) (acc : UInt64 × UInt64)
   else
     acc
 
+/-- A one-hot fold step at a non-hot index `bitIdx ≠ hot` leaves the accumulator
+unchanged. -/
 private theorem clmulOneHotStep_of_ne (a : UInt64) {hot bitIdx : Nat}
     (hhot : hot < 64) (hbitIdx : bitIdx < 64) (hne : hot ≠ bitIdx)
     (acc : UInt64 × UInt64) :
@@ -221,11 +252,15 @@ private theorem clmulOneHotStep_of_ne (a : UInt64) {hot bitIdx : Nat}
     simp [hne]
   simp [clmulOneHotStep, hclear]
 
+/-- A one-hot fold step at the hot index reduces to the plain
+`clmulAccumulateBit` of `a` at `hot`. -/
 private theorem clmulOneHotStep_self (a : UInt64) {hot : Nat} (hhot : hot < 64)
     (acc : UInt64 × UInt64) :
     clmulOneHotStep a hot acc hot = clmulAccumulateBit acc a hot := by
   simp [clmulOneHotStep, GF2Poly.oneHotWord_bit_self hhot]
 
+/-- Folding the one-hot step over a bit list that does not contain `hot` leaves
+the accumulator unchanged. -/
 private theorem foldl_oneHot_absent (a : UInt64) {hot : Nat} (hhot : hot < 64)
     (acc : UInt64 × UInt64) :
     ∀ (xs : List Nat),
@@ -252,6 +287,8 @@ private theorem foldl_oneHot_absent (a : UInt64) {hot : Nat} (hhot : hot < 64)
       rw [List.foldl_cons, clmulOneHotStep_of_ne a hhot hbitIdx hne acc]
       exact ih acc hnotTail hltTail
 
+/-- Folding the one-hot step over a duplicate-free bit list from `(0, 0)` yields a
+single `clmulAccumulateBit` at `hot` when `hot` is present, and `(0, 0)` otherwise. -/
 private theorem foldl_oneHot_list (a : UInt64) {hot : Nat} (hhot : hot < 64) :
     ∀ (xs : List Nat),
       xs.Nodup →
@@ -285,6 +322,8 @@ private theorem foldl_oneHot_list (a : UInt64) {hot : Nat} (hhot : hot < 64) :
         have hhot_ne : hot ≠ bitIdx := Ne.symm hhit
         simp [hhot_ne]
 
+/-- The full 64-bit `pureClmul` fold against the one-hot right word `1 <<< hot`
+collapses to a single `clmulAccumulateBit (0, 0) a hot`. -/
 private theorem foldl_oneHot (a : UInt64) {hot : Nat} (hhot : hot < 64) :
     (List.range 64).foldl
         (fun acc bitIdx =>
@@ -310,6 +349,9 @@ theorem pureClmul_oneHot (a : UInt64) {bit : Nat} (hbit : bit < 64) :
       if bit = 0 then (0, a) else (a >>> (64 - bit).toUInt64, a <<< bit.toUInt64) := by
   rw [pureClmul, foldl_oneHot a hbit, clmulAccumulateBit_zero]
 
+/-- Low-word fold step for the one-hot left word `1 <<< hot`: XOR
+`1 <<< (hot + bitIdx)` into the low word when bit `bitIdx` of `a` is set and
+`hot + bitIdx < 64`, otherwise leave it unchanged. -/
 private def clmulOneHotLeftLowStep (hot : Nat) (a lo : UInt64) (bitIdx : Nat) : UInt64 :=
   if (((a >>> bitIdx.toUInt64) &&& 1) != 0) then
     if hot + bitIdx < 64 then
@@ -319,6 +361,8 @@ private def clmulOneHotLeftLowStep (hot : Nat) (a lo : UInt64) (bitIdx : Nat) : 
   else
     lo
 
+/-- The low word (`.2`) of the one-hot-left accumulation fold equals folding
+`clmulOneHotLeftLowStep` over the low word alone. -/
 private theorem foldl_oneHot_left_snd_eq_lowStep (a : UInt64) {hot : Nat}
     (hhot : hot < 64) :
     ∀ (xs : List Nat) (acc : UInt64 × UInt64),
@@ -397,6 +441,9 @@ theorem pureClmul_oneHot_left_snd (a : UInt64) {bit : Nat} (hbit : bit < 64) :
     simp [List.range, List.range.loop, List.foldl, clmulOneHotLeftLowStep] <;>
     bv_decide
 
+/-- High-word fold step for the one-hot left word `1 <<< hot`: XOR
+`1 <<< (hot + bitIdx - 64)` into the high word when bit `bitIdx` of `a` is set and
+`64 ≤ hot + bitIdx`, otherwise leave it unchanged. -/
 private def clmulOneHotLeftHighStep (hot : Nat) (a hi : UInt64) (bitIdx : Nat) : UInt64 :=
   if (((a >>> bitIdx.toUInt64) &&& 1) != 0) then
     if hot + bitIdx < 64 then
@@ -406,6 +453,8 @@ private def clmulOneHotLeftHighStep (hot : Nat) (a hi : UInt64) (bitIdx : Nat) :
   else
     hi
 
+/-- The high word (`.1`) of the one-hot-left accumulation fold equals folding
+`clmulOneHotLeftHighStep` over the high word alone. -/
 private theorem foldl_oneHot_left_fst_eq_highStep (a : UInt64) {hot : Nat}
     (hhot : hot < 64) :
     ∀ (xs : List Nat) (acc : UInt64 × UInt64),
