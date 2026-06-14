@@ -2915,6 +2915,8 @@ theorem dvd_sub_poly {S : Type _}
   refine ⟨a + (0 - b), ?_⟩
   rw [sub_eq_add_neg_poly, ha, hb, mul_add_right_poly, mul_sub_zero_comm, mul_comm_poly b d]
 
+/-- `xgcdAux` base case: when the right input `r₁` is zero, the returned gcd
+equals the left input `r₀`. -/
 private theorem xgcdAux_gcd_eq_left_of_right_zero {S : Type _}
     [Zero S] [DecidableEq S] [One S] [Add S] [Sub S] [Mul S] [Div S]
     (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat) (hr₁ : r₁ = 0) :
@@ -2925,6 +2927,9 @@ private theorem xgcdAux_gcd_eq_left_of_right_zero {S : Type _}
   | succ fuel =>
       simp [xgcdAux, hr₁, isZero_zero]
 
+/-- `xgcd_bezout_step` is the single recursion step of the Bezout coefficients:
+pairing `(s₀ - a * s₁, t₀ - a * t₁)` with `p, q` equals
+`(s₀ * p + t₀ * q) - a * (s₁ * p + t₁ * q)`. -/
 private theorem xgcd_bezout_step {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (a s₀ t₀ s₁ t₁ p q : DensePoly S) :
@@ -2950,6 +2955,8 @@ private theorem xgcd_bezout_step {S : Type _}
   rw [coeff_add (a * (s₁ * p)) (a * (t₁ * q)) n hzero_add]
   grind
 
+/-- `xgcdAux` satisfies the Bezout identity: the returned `left * p + right * q`
+equals the returned `gcd`. -/
 private theorem xgcdAux_bezout {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (p q r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat)
@@ -3003,6 +3010,8 @@ theorem xgcd_bezout_of_divModLaws {S : Type _}
   · rw [mul_comm_poly (1 : DensePoly S) p, mul_one_right_poly, zero_mul, add_zero_poly]
   · rw [zero_mul, mul_comm_poly (1 : DensePoly S) q, mul_one_right_poly, zero_add]
 
+/-- Common-divisor direction: any `d` dividing both `r₀` and `r₁` divides the
+gcd returned by `xgcdAux`. -/
 private theorem xgcdAux_common_dvd_gcd {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (d r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly S) (fuel : Nat)
@@ -3037,6 +3046,8 @@ private theorem xgcdAux_common_dvd_gcd {S : Type _}
           rw [hrem]
           exact dvd_sub_poly hr₀ (dvd_mul_left_poly qr.1 hr₁)
 
+/-- gcd-divides-inputs direction: the gcd returned by `xgcdAux` divides both
+inputs `r₀` and `r₁`. -/
 private theorem xgcdAux_gcd_dvd_inputs {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (hsmall :
