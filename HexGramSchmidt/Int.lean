@@ -4940,7 +4940,7 @@ private theorem pivotLoop_singularStep_some_of_partial_no_replacement
     {n : Nat} :
     ∀ (a : Nat) (fuel : Nat) (state : Matrix.BareissState n)
       (result : Matrix.BareissState n)
-      (h_partial : Matrix.noPivotLoop a state = result),
+      (_h_partial : Matrix.noPivotLoop a state = result),
       state.singularStep = none →
       a + 1 ≤ fuel →
       result.singularStep = none →
