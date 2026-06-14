@@ -369,12 +369,16 @@ theorem toPolynomial_derivative [CommSemiring R] [DecidableEq R] (p : Hex.DenseP
     Polynomial.coeff_derivative, coeff_toPolynomial]
   rw [Nat.cast_add, Nat.cast_one, mul_comm]
 
+/-- Converting a Mathlib polynomial into the executable representation and back
+recovers the original: `toPolynomial` is a left inverse of `ofPolynomial`. -/
 @[simp]
 theorem toPolynomial_ofPolynomial [CommRing R] [DecidableEq R] (p : Polynomial R) :
     toPolynomial (ofPolynomial p) = p := by
   ext n
   simp [coeff_toPolynomial, coeff_ofPolynomial]
 
+/-- Converting an executable polynomial into a Mathlib polynomial and back
+recovers the original: `ofPolynomial` is a left inverse of `toPolynomial`. -/
 @[simp]
 theorem ofPolynomial_toPolynomial [CommRing R] [DecidableEq R] (p : Hex.DensePoly R) :
     ofPolynomial (toPolynomial p) = p := by
@@ -391,11 +395,14 @@ def equiv [CommRing R] [DecidableEq R] : Hex.DensePoly R ≃+* Polynomial R wher
   map_mul' := toPolynomial_mul
   map_add' := toPolynomial_add
 
+/-- The ring isomorphism `equiv` is computed by `toPolynomial` in the forward
+direction. -/
 @[simp]
 theorem equiv_apply [CommRing R] [DecidableEq R] (p : Hex.DensePoly R) :
     equiv p = toPolynomial p := by
   rfl
 
+/-- The inverse of the ring isomorphism `equiv` is computed by `ofPolynomial`. -/
 @[simp]
 theorem equiv_symm_apply [CommRing R] [DecidableEq R] (p : Polynomial R) :
     equiv.symm p = ofPolynomial p := by
@@ -407,6 +414,8 @@ theorem ofPolynomial_mul [CommRing R] [DecidableEq R] (p q : Polynomial R) :
     ofPolynomial (p * q) = ofPolynomial p * ofPolynomial q :=
   map_mul (equiv (R := R)).symm p q
 
+/-- `toPolynomial` transports the executable degree to Mathlib's `natDegree`,
+with the zero polynomial mapping to `0`. -/
 @[simp]
 theorem natDegree_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) :
     (toPolynomial p).natDegree = p.degree?.getD 0 := by
@@ -431,6 +440,8 @@ theorem natDegree_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R
       rw [coeff_toPolynomial]
       exact Hex.DensePoly.coeff_last_ne_zero_of_pos_size p hpos
 
+/-- `toPolynomial` transports the executable leading coefficient to Mathlib's
+`leadingCoeff`. -/
 @[simp]
 theorem leadingCoeff_toPolynomial [Semiring R] [DecidableEq R]
     (p : Hex.DensePoly R) :
@@ -457,6 +468,8 @@ theorem leadingCoeff_toPolynomial [Semiring R] [DecidableEq R]
     rw [show p.size = p.coeffs.size from rfl]
     exact (Array.getElem_eq_getD (Zero.zero : R)).symm
 
+/-- `toPolynomial` preserves divisibility: a divisibility in the executable
+representation transfers to the corresponding Mathlib polynomials. -/
 theorem toPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Hex.DensePoly R}
     (hdvd : p ∣ q) :
     toPolynomial p ∣ toPolynomial q := by
@@ -464,6 +477,8 @@ theorem toPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Hex.DensePoly R}
   refine ⟨toPolynomial r, ?_⟩
   rw [← toPolynomial_mul, hr]
 
+/-- `ofPolynomial` preserves divisibility: a divisibility of Mathlib polynomials
+transfers to the corresponding executable representations. -/
 theorem ofPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Polynomial R}
     (hdvd : p ∣ q) :
     ofPolynomial p ∣ ofPolynomial q := by
@@ -471,6 +486,8 @@ theorem ofPolynomial_dvd [CommRing R] [DecidableEq R] {p q : Polynomial R}
   refine ⟨ofPolynomial r, ?_⟩
   rw [← ofPolynomial_mul, hr]
 
+/-- `toPolynomial` both preserves and reflects divisibility: executable
+polynomials divide one another exactly when their Mathlib images do. -/
 theorem toPolynomial_dvd_iff [CommRing R] [DecidableEq R]
     {p q : Hex.DensePoly R} :
     toPolynomial p ∣ toPolynomial q ↔ p ∣ q := by
