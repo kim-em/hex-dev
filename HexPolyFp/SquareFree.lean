@@ -10555,6 +10555,12 @@ private theorem squareFreeAuxRev_multiplicity_pos_raw
               ih (pthRoot loop.2) (multiplicity * p) loop.1
                 (Nat.mul_pos hmultiplicity hp_pos) hloop
 
+/-- The factors emitted by `squareFreeDecomposition` are pairwise coprime,
+witnessed by the normalized gcd of any two distinct factors reducing to `1`.
+This is the underlying coprimality result that the public
+`squareFreeDecomposition_pairwise_coprime` wrapper delegates to; callers reason
+about distinct square-free parts in isolation, relying on this to know no common
+factor links them. -/
 theorem squareFree_pairwise_coprime (hp : Hex.Nat.Prime p)
     (f : FpPoly p) :
     let d := squareFreeDecomposition hp f
@@ -10566,6 +10572,12 @@ theorem squareFree_pairwise_coprime (hp : Hex.Nat.Prime p)
     (Nat.lt_succ_self _)
     (normalizeMonic_squareFreeContributionReachable hp f)
 
+/-- The decomposition reconstructs its input: multiplying the emitted unit by the
+weighted product of the factors (each raised to its recorded multiplicity)
+recovers `f`. This is the underlying reconstruction identity that the public
+`squareFreeDecomposition_weightedProduct` wrapper delegates to; it certifies the
+decomposition loses no information, so a caller can substitute the factored form
+for `f` anywhere. -/
 theorem squareFree_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p) :
     let d := squareFreeDecomposition hp f
     DensePoly.C d.unit * weightedProduct d.factors = f := by
@@ -10584,6 +10596,12 @@ theorem squareFree_weightedProduct (hp : Hex.Nat.Prime p) (f : FpPoly p) :
       hresidual (yunDerivativeActiveRawStateProvider_holds hp)]
     exact normalizeMonic_reconstruct hp f
 
+/-- Each factor emitted by `squareFreeDecomposition` is itself square-free,
+witnessed by the normalized gcd of the factor with its derivative reducing to
+`1`. This is the underlying square-freeness result that the public
+`squareFreeDecomposition_factors_squareFree` wrapper delegates to; it is the
+defining guarantee of the decomposition, letting a caller treat every emitted
+factor as having no repeated irreducible part. -/
 theorem squareFree_factors_squareFree (hp : Hex.Nat.Prime p) (f : FpPoly p) :
     let d := squareFreeDecomposition hp f
     ∀ sf ∈ d.factors,
@@ -10593,12 +10611,20 @@ theorem squareFree_factors_squareFree (hp : Hex.Nat.Prime p) (f : FpPoly p) :
   intro sf hsf
   simp at hsf
 
+/-- Public square-freeness wrapper: every factor emitted by
+`squareFreeDecomposition` is square-free, witnessed by the normalized gcd with
+its derivative reducing to `1`. The provider instantiation is closed internally,
+so no provider arguments appear in the statement. -/
 theorem squareFreeDecomposition_factors_squareFree (hp : Hex.Nat.Prime p) (f : FpPoly p) :
     let d := squareFreeDecomposition hp f
     ∀ sf ∈ d.factors,
       (normalizeMonic (DensePoly.gcd sf.factor (DensePoly.derivative sf.factor))).2 = 1 :=
   squareFree_factors_squareFree hp f
 
+/-- Every factor emitted by `squareFreeDecomposition` carries a strictly positive
+multiplicity, so no factor is recorded at multiplicity `0`. A caller iterating
+the factor list can therefore treat each recorded exponent as a genuine power and
+need not special-case a zero exponent. -/
 theorem squareFreeDecomposition_multiplicity_pos (hp : Hex.Nat.Prime p) (f : FpPoly p) :
     let d := squareFreeDecomposition hp f
     ∀ sf ∈ d.factors, 0 < sf.multiplicity := by
