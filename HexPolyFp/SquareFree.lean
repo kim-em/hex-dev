@@ -10456,6 +10456,17 @@ private def coeffNatsSquareFreeGuard (f : FpPoly 5) : List Nat :=
     coeffNatsSquareFreeGuard
       (normalizeMonic (DensePoly.gcd sf.factor (DensePoly.derivative sf.factor))).2 == [1])
 
+-- Scalar-leak regression (issue #7005): over `F_5` (p > 2) the raw gcd in the
+-- Yun loop can free a non-trivial unit constant that was never folded back into
+-- the reconstruction unit. For `f = (x+1)^5 (x+2)^5 (x+3)` (monic, degree 11)
+-- the pre-fix reconstruction evaluated to `3·f`; routing every gcd through the
+-- monic `monicGcd` restores `weightedProduct d.factors = f` exactly.
+#guard
+  let f := polyFiveSquareFreeGuard #[1, 2, 0, 0, 0, 4, 3, 0, 0, 0, 3, 1]
+  let d := squareFreeDecomposition prime_five_squareFree_guard f
+  coeffNatsSquareFreeGuard (weightedProduct d.factors) ==
+    coeffNatsSquareFreeGuard f
+
 private instance squareFreeGuardBoundsTwo : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 
 private theorem prime_two_squareFree_guard : Hex.Nat.Prime 2 := by
