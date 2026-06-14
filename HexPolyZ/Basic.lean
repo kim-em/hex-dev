@@ -1820,6 +1820,9 @@ private theorem rat_scale_size_of_ne_zero {u : Rat} (hu : u ≠ 0) (p : DensePol
         exact hscaled_zero
       exact (Rat.mul_eq_zero.mp hmul_zero).resolve_left hu
 
+/-- `rat_scale_mulCoeffStep`: scaling the factors by `u` and `v` pulls the
+`u * v` factor out through one `mulCoeffStep` term of the coefficient
+convolution. -/
 private theorem rat_scale_mulCoeffStep (u v : Rat) (p q : DensePoly Rat)
     (n i : Nat) (a : Rat) (j : Nat) :
     DensePoly.mulCoeffStep (DensePoly.scale u p) (DensePoly.scale v q) n i
@@ -1833,6 +1836,8 @@ private theorem rat_scale_mulCoeffStep (u v : Rat) (p q : DensePoly Rat)
     grind
   · rw [if_neg hij, if_neg hij]
 
+/-- `rat_scale_mulCoeffStep_fold`: the `u * v` factor pulls out through the
+inner `mulCoeffStep` fold that accumulates one output coefficient. -/
 private theorem rat_scale_mulCoeffStep_fold (u v : Rat) (p q : DensePoly Rat)
     (n i : Nat) (xs : List Nat) (a : Rat) :
     xs.foldl
@@ -1847,6 +1852,8 @@ private theorem rat_scale_mulCoeffStep_fold (u v : Rat) (p q : DensePoly Rat)
       rw [rat_scale_mulCoeffStep]
       exact ih (DensePoly.mulCoeffStep p q n i a j)
 
+/-- `rat_scale_mulCoeffOuter_fold`: the `u * v` factor pulls out through the
+outer coefficient fold over the rows of the convolution. -/
 private theorem rat_scale_mulCoeffOuter_fold (u v : Rat) (p q : DensePoly Rat)
     (n : Nat) (xs : List Nat) (a : Rat) :
     xs.foldl
@@ -1866,6 +1873,9 @@ private theorem rat_scale_mulCoeffOuter_fold (u v : Rat) (p q : DensePoly Rat)
       rw [rat_scale_mulCoeffStep_fold]
       exact ih ((List.range q.size).foldl (DensePoly.mulCoeffStep p q n i) a)
 
+/-- `rat_scale_mulCoeffSum_of_ne_zero`: for nonzero scalars the convolution
+sum of the scaled factors equals `u * v` times the unscaled sum, using that
+nonzero scaling preserves the operand sizes. -/
 private theorem rat_scale_mulCoeffSum_of_ne_zero {u v : Rat} (hu : u ≠ 0) (hv : v ≠ 0)
     (p q : DensePoly Rat) (n : Nat) :
     DensePoly.mulCoeffSum (DensePoly.scale u p) (DensePoly.scale v q) n =
@@ -1875,6 +1885,8 @@ private theorem rat_scale_mulCoeffSum_of_ne_zero {u v : Rat} (hu : u ≠ 0) (hv 
   rw [rat_scale_size_of_ne_zero hv q]
   simpa using rat_scale_mulCoeffOuter_fold u v p q n (List.range p.size) 0
 
+/-- `rat_scale_mul_scale`: scaling distributes over the product, so
+`scale u p * scale v q = scale (u * v) (p * q)`. -/
 private theorem rat_scale_mul_scale (u v : Rat) (p q : DensePoly Rat) :
     DensePoly.scale u p * DensePoly.scale v q =
       DensePoly.scale (u * v) (p * q) := by
@@ -1897,6 +1909,8 @@ private theorem rat_scale_mul_scale (u v : Rat) (p q : DensePoly Rat) :
       rw [DensePoly.coeff_scale (R := Rat) (u * v) (p * q) n (Rat.mul_zero (u * v))]
       rw [DensePoly.coeff_mul]
 
+/-- `rat_dvd_scale_of_dvd`: a divisor of `p` also divides any scalar multiple
+`scale u p`, since the witness scales along with the dividend. -/
 private theorem rat_dvd_scale_of_dvd (u : Rat) {d p : DensePoly Rat} :
     d ∣ p → d ∣ DensePoly.scale u p := by
   intro hdp
@@ -1907,6 +1921,8 @@ private theorem rat_dvd_scale_of_dvd (u : Rat) {d p : DensePoly Rat} :
   rw [rat_scale_one, Rat.one_mul] at hscale
   exact hscale.symm
 
+/-- `rat_leadingCoeff_ne_zero_of_pos_size`: a polynomial of positive size has a
+nonzero leading coefficient, identifying it with the last stored coefficient. -/
 private theorem rat_leadingCoeff_ne_zero_of_pos_size (p : DensePoly Rat) (hpos : 0 < p.size) :
     p.leadingCoeff ≠ 0 := by
   have hidx : p.coeffs.size - 1 < p.coeffs.size := by
@@ -1922,6 +1938,8 @@ private theorem rat_leadingCoeff_ne_zero_of_pos_size (p : DensePoly Rat) (hpos :
   rw [hlead_eq]
   exact DensePoly.coeff_last_ne_zero_of_pos_size p hpos
 
+/-- `rat_div_mul_cancel_of_ne`: for a nonzero `Rat` divisor, `a / b * b = a`,
+stated as `a - (a / b) * b = 0` for the remainder-degree argument below. -/
 private theorem rat_div_mul_cancel_of_ne (a b : Rat) (hb : b ≠ 0) :
     a - (a / b) * b = 0 := by
   grind [Rat.div_def, Rat.mul_assoc, Rat.mul_comm]
