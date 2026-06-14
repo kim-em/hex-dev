@@ -6147,16 +6147,25 @@ private def moveColumnToLastValues {n : Nat} (col : Fin (n + 1)) :
     Vector (Fin (n + 1)) (n + 1) :=
   insertAt col (Vector.ofFn fun i : Fin n => skipIndex col i) (Fin.last n)
 
+/-- `moveColumnToLastValues_last` states that the moved column `col` lands in the
+final position of the permutation, the defining property that sends the cofactor
+column to the last column. -/
 private theorem moveColumnToLastValues_last {n : Nat} (col : Fin (n + 1)) :
     (moveColumnToLastValues col)[Fin.last n] = col := by
   exact insertAt_get_self col (Vector.ofFn fun i : Fin n => skipIndex col i) (Fin.last n)
 
+/-- `moveColumnToLastValues_castSucc` states that every non-final position
+`i.castSucc` of the permutation holds the original columns with `col` skipped over,
+preserving the relative order of the surviving columns. -/
 private theorem moveColumnToLastValues_castSucc {n : Nat} (col : Fin (n + 1)) (i : Fin n) :
     (moveColumnToLastValues col)[i.castSucc] = skipIndex col i := by
   rw [moveColumnToLastValues]
   simpa using
     insertAt_last_get_castSucc col (Vector.ofFn fun i : Fin n => skipIndex col i) i
 
+/-- `moveColumnToLastValues_nodup` states that the permutation's values are
+pairwise distinct, the no-repeat condition needed to certify it as a genuine
+permutation of the columns. -/
 private theorem moveColumnToLastValues_nodup {n : Nat} (col : Fin (n + 1)) :
     (moveColumnToLastValues col).toList.Nodup := by
   rw [moveColumnToLastValues, insertAt_last_toList]
@@ -6174,16 +6183,25 @@ private theorem moveColumnToLastValues_nodup {n : Nat} (col : Fin (n + 1)) :
     rcases List.mem_map.mp hx with ⟨i, _hi, rfl⟩
     exact skipIndex_ne col i (by simpa using hxcol)
 
+/-- `moveColumnToLastValues_mem_permutationVectors` states that the column move is
+a member of `permutationVectors (n + 1)`, packaging the nodup proof so the move can
+be fed to the determinant column-permutation machinery. -/
 private theorem moveColumnToLastValues_mem_permutationVectors {n : Nat}
     (col : Fin (n + 1)) :
     moveColumnToLastValues col ∈ permutationVectors (n + 1) :=
   permutationVectors_complete (moveColumnToLastValues_nodup col)
 
+/-- `skipIndex_eq_raiseFinAbove` states that the two index-shifting functions agree,
+letting the column-move list be rewritten in the `raiseFinAbove` form used by the
+inversion-count sign computation. -/
 private theorem skipIndex_eq_raiseFinAbove {n : Nat} (col : Fin (n + 1)) (i : Fin n) :
     skipIndex col i = raiseFinAbove col i := by
   unfold skipIndex raiseFinAbove
   split <;> rfl
 
+/-- `moveColumnToLastValues_toList` gives the explicit list form of the column move:
+the `n` surviving columns in order (via `raiseFinAbove col`) followed by `col`, the
+shape consumed by the inversion-count sign lemma. -/
 private theorem moveColumnToLastValues_toList {n : Nat} (col : Fin (n + 1)) :
     (moveColumnToLastValues col).toList =
       ((List.finRange n).map (raiseFinAbove col)) ++ [col] := by
@@ -6194,6 +6212,9 @@ private theorem moveColumnToLastValues_toList {n : Nat} (col : Fin (n + 1)) :
   intro i _hi
   simpa using skipIndex_eq_raiseFinAbove col i
 
+/-- `detSign_moveColumnToLastValues` evaluates the sign of the column move to
+`(-1) ^ (n - col.val)`, the parity contributed by sliding `col` past the `n - col.val`
+columns to its right. -/
 private theorem detSign_moveColumnToLastValues
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (col : Fin (n + 1)) :
     detSign (R := R) (moveColumnToLastValues col) =
@@ -6214,6 +6235,9 @@ private theorem detSign_moveColumnToLastValues
       rw [detSign_identity]
       grind
 
+/-- `neg_one_pow_mul_self` states that a sign `(-1) ^ k` squares to one, the
+cancellation used to undo the column-move sign factor when transporting the Laplace
+expansion back to the original column. -/
 private theorem neg_one_pow_mul_self {R : Type u} [Lean.Grind.CommRing R] (k : Nat) :
     (-1 : R) ^ k * (-1 : R) ^ k = 1 := by
   induction k with
@@ -6222,6 +6246,9 @@ private theorem neg_one_pow_mul_self {R : Type u} [Lean.Grind.CommRing R] (k : N
   | succ k ih =>
       grind
 
+/-- `cofactorSign_col_eq_move_mul_last` relates the cofactor sign at column `col` to
+the sign at the last column through the `(-1) ^ (n - col.val)` column-move factor, the
+parity bookkeeping that turns last-column Laplace expansion into expansion along `col`. -/
 private theorem cofactorSign_col_eq_move_mul_last
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (row col : Fin (n + 1)) :
