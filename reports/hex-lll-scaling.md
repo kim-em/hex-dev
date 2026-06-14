@@ -93,13 +93,14 @@ reading:
 
 - `reports/bench-results/hex-lll-certified-carica.json` — host `carica`, commit `c3d2fecb`
 - `reports/bench-results/hex-lll-certified-harsh-extended-1e6679ff.json` — host `carica`, commit `1e6679ff`
+- `reports/bench-results/hex-lll-isabelle-certified-harsh-211b9957.json` — host `carica`, commit `211b9957`
 - `reports/bench-results/hex-lll-harsh-cubic-steered-30d02fca.json` — host `carica`, commit `30d02fca`
 
 | method | exponent p | R² | median @ n=55 | × fastest @ n=55 |
 |---|---:|---:|---:|---:|
 | Isabelle native | 5.65 | 0.9998 | 358.4 ms | 109.0× |
 | Lean native | 5.60 | 0.9998 | 238.2 ms | 72.4× |
-| Isabelle certified | 4.66 | 0.9982 | 398.4 ms | 121.1× |
+| Isabelle certified | 4.62 | 0.9969 | 425.6 ms | 129.4× |
 | Lean steered | 2.73 | 0.9990 | 39.7 ms | 12.1× |
 | Lean certified | 2.79 | 0.9988 | 35.5 ms | 10.8× |
 | fpLLL via fplll-ffi | 2.84 | 0.9924 | 3.3 ms | 1.0× |
@@ -111,7 +112,7 @@ leaves the `~n^5.6` complexity class** of the exact reducers, fitting
 Θ(n⁴)-bit Gram-determinant state on this family — the prefix Gram determinants
 have `~6.6·n·i` bits for any basis of the lattice — so its `~n^5.6` cost cannot
 be fixed inside the exact representation; the steered path never materializes
-that state. The Isabelle-certified curve still rides the `~n^4.7` slope because
+that state. The Isabelle-certified curve still rides the `~n^4.6` slope because
 it has no interval kernel. The constant-factor framing does not apply across
 this mixed set — the per-method gaps grow with `n`, and the table reports the
 observed ratio at `n = 55`. The harsh-cubic exponents are local fits over a
