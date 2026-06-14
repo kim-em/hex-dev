@@ -1930,6 +1930,9 @@ private theorem foldl_indicator_mul_unique {R : Type u} [Lean.Grind.Ring R]
         rw [hacc]
         rw [ih hitail (List.nodup_cons.mp hnodup).2 acc]
 
+/-- A row-combination vector with a single coefficient `1` at row `i`
+and zero elsewhere selects exactly row `i` of the matrix. This packages
+the singleton-row case used by span and RREF arguments. -/
 theorem rowCombination_single {R : Type u} [Lean.Grind.CommRing R]
     {n m : Nat} (M : Matrix R n m) (i : Fin n) :
     rowCombination M (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0) =
