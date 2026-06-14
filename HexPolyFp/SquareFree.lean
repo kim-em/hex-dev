@@ -7039,12 +7039,11 @@ private theorem yunStep_gcd_normalized_one_of_common_dvd_one
     (hcommon :
       ∀ d : FpPoly p, d ∣ c → d ∣ w → d ∣ (1 : FpPoly p)) :
     (normalizeMonic (DensePoly.gcd c w)).2 = 1 := by
-  have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
   have hgcd_dvd_one :
-      monicGcd c w ∣ (1 : FpPoly p) :=
-    hcommon (monicGcd c w)
-      (monicGcd_dvd_left hp c w)
-      (monicGcd_dvd_right hp c w)
+      DensePoly.gcd c w ∣ (1 : FpPoly p) :=
+    hcommon (DensePoly.gcd c w)
+      (DensePoly.gcd_dvd_left c w)
+      (DensePoly.gcd_dvd_right c w)
   exact normalizeMonic_eq_one_of_dvd_one hgcd_dvd_one
 
 private theorem yunStep_tail_common_dvd_one_of_gcd_normalized_one
@@ -7157,8 +7156,15 @@ private theorem gcd_C_ne_zero_dvd_one
   have hC_ne : (DensePoly.C k : FpPoly p) ≠ 0 :=
     ne_zero_of_isZero_false hC_zero
   have hg_zero :
-      (DensePoly.gcd (DensePoly.C k : FpPoly p) w).isZero = false :=
-    yunStep_gcd_nonzero_of_left_nonzero (DensePoly.C k : FpPoly p) w hC_zero
+      (DensePoly.gcd (DensePoly.C k : FpPoly p) w).isZero = false := by
+    cases hgz : (DensePoly.gcd (DensePoly.C k : FpPoly p) w).isZero
+    · rfl
+    · exfalso
+      have hg0 : DensePoly.gcd (DensePoly.C k : FpPoly p) w = 0 :=
+        eq_zero_of_isZero_true _ hgz
+      rcases DensePoly.gcd_dvd_left (DensePoly.C k : FpPoly p) w with ⟨q, hq⟩
+      rw [hg0, zero_mul] at hq
+      exact hC_ne hq
   apply constant_nonzero_dvd hg_zero
   have hsize_le :
       (DensePoly.gcd (DensePoly.C k : FpPoly p) w).size ≤
