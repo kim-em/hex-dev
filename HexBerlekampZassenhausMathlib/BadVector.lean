@@ -513,6 +513,95 @@ private theorem auxiliaryPolynomialWithCorrections_coeff_eq
     rfl
 
 /--
+Shortness certificate for the scaled lattice row behind a corrected BHKS
+auxiliary polynomial, stated in the scaled-row coordinates.
+
+The field `scaledCoeff_eq` identifies each scaled row coefficient with the
+diagonal correction contribution minus the CLD column sum. The `short` field is
+the upstream shortness obligation for that row, exposed explicitly rather than
+hidden inside the auxiliary-polynomial bound. A successor can combine this
+package with `auxiliaryPolynomialWithCorrections_coeff_eq` to recover the
+summed corrected-auxiliary bound while keeping the CLD/correction cancellation
+intact.
+-/
+structure ScaledShortnessCertificate
+    (input : Hex.ZPoly) (liftData : Hex.LiftData)
+    (vec corrections : Array Int) where
+  /-- The scaled coefficient block of the full lattice row. -/
+  scaledCoeff : Nat → Int
+  /--
+  Each scaled coefficient is the diagonal correction contribution minus the
+  CLD column sum for the same coefficient index.
+  -/
+  scaledCoeff_eq :
+    ∀ j, j < input.degree?.getD 0 →
+      scaledCoeff j =
+        corrections.getD j 0 *
+            Int.ofNat (liftData.p ^
+              (liftData.k - Hex.bhksCoeffCutThreshold liftData.p input j)) -
+          (∑ i ∈ Finset.range liftData.liftedFactors.size,
+            vec.getD i 0 *
+              (Hex.cldCoeffs input liftData.p liftData.k
+                (liftData.liftedFactors.getD i 0)).getD j 0)
+  /--
+  The scaled coefficient block is short with respect to the CLD column norm
+  bound. The tail outside `input.degree?.getD 0` is intentionally unconstrained.
+  -/
+  short :
+    (∑ j ∈ Finset.range (input.degree?.getD 0),
+      (((scaledCoeff j : ℤ) : ℝ) ^ 2)) ≤
+        (BHKS.cldColumnNormBound input liftData.p : ℝ)
+
+namespace ScaledShortnessCertificate
+
+/--
+The scaled shortness certificate bounds the squared coefficient sum of the
+corrected auxiliary polynomial.
+
+This is only the summed form: it rewrites the corrected auxiliary coefficients
+as the negatives of the certified scaled-row coefficients and applies the
+shortness field. Pointwise BHKS coefficient bounds and paper-threshold
+comparisons remain downstream obligations.
+-/
+theorem coeffSqSum_le
+    {input : Hex.ZPoly} {liftData : Hex.LiftData}
+    {vec corrections : Array Int}
+    (C : ScaledShortnessCertificate input liftData vec corrections) :
+    (∑ j ∈ Finset.range (input.degree?.getD 0),
+      ((((BHKS.auxiliaryPolynomialWithCorrections input liftData vec corrections).coeff j :
+        ℤ) : ℝ) ^ 2)) ≤
+        (BHKS.cldColumnNormBound input liftData.p : ℝ) := by
+  calc
+    (∑ j ∈ Finset.range (input.degree?.getD 0),
+      ((((BHKS.auxiliaryPolynomialWithCorrections input liftData vec corrections).coeff j :
+        ℤ) : ℝ) ^ 2))
+        = ∑ j ∈ Finset.range (input.degree?.getD 0),
+            (((C.scaledCoeff j : ℤ) : ℝ) ^ 2) := by
+          apply Finset.sum_congr rfl
+          intro j hj
+          have hjlt : j < input.degree?.getD 0 := Finset.mem_range.mp hj
+          rw [auxiliaryPolynomialWithCorrections_coeff_eq, if_pos hjlt]
+          have hscaled := C.scaledCoeff_eq j hjlt
+          have hneg :
+              (((∑ i ∈ Finset.range liftData.liftedFactors.size,
+                    vec.getD i 0 *
+                      (Hex.cldCoeffs input liftData.p liftData.k
+                        (liftData.liftedFactors.getD i 0)).getD j 0) -
+                  corrections.getD j 0 *
+                    Int.ofNat (liftData.p ^
+                      (liftData.k - Hex.bhksCoeffCutThreshold liftData.p input j)) :
+                    ℤ) : ℝ) =
+                -(((C.scaledCoeff j : ℤ) : ℝ)) := by
+            rw [hscaled]
+            push_cast
+            ring
+          rw [hneg]
+          ring
+    _ ≤ (BHKS.cldColumnNormBound input liftData.p : ℝ) := C.short
+
+end ScaledShortnessCertificate
+
+/--
 Per-coefficient bound for the BHKS auxiliary polynomial with diagonal-row
 corrections.
 
@@ -1280,6 +1369,23 @@ structure BadVectorBridgeData
           BHKS.auxiliaryPolynomialWithCorrections W.input W.liftData
             (W.projectedVectorArray v)
             (projectedCorrections v hin hnot)
+  /--
+  Scaled-lattice shortness certificate for the full row whose projected block
+  is `v` and whose diagonal correction block is `projectedCorrections v hin
+  hnot`.
+
+  This is the upstream certificate needed for tight corrected-auxiliary bounds:
+  it records the scaled row coefficients and their shortness in lattice-row
+  coordinates, leaving pointwise coefficient bounds and paper-threshold
+  comparisons to downstream proofs.
+  -/
+  scaledShortness :
+    ∀ (v : Fin W.projectedRows.factorCount → ℤ)
+      (hin : v ∈ BHKS.projectedRowSpanInt W.projectedRows)
+      (hnot : v ∉ BHKS.trueFactorIndicatorLattice trueSupports),
+        BHKS.ScaledShortnessCertificate W.input W.liftData
+          (W.projectedVectorArray v)
+          (projectedCorrections v hin hnot)
   localFactorDegree_pos : 0 < W.localFactorDegree
   coprime_input_aux_over_rat :
     IsCoprime
@@ -1330,6 +1436,45 @@ theorem auxiliary_eq'
         (W.projectedVectorArray v)
         (D.auxiliaryCorrections v hin hnot) := by
   exact D.auxiliary_eq v hin hnot
+
+/--
+Scaled-lattice shortness certificate supplied by `BadVectorBridgeData`, stated
+using the public correction accessor.
+-/
+def shortness
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (D : BadVectorBridgeData W trueSupports)
+    (v : Fin W.projectedRows.factorCount → ℤ)
+    (hin : v ∈ BHKS.projectedRowSpanInt W.projectedRows)
+    (hnot : v ∉ BHKS.trueFactorIndicatorLattice trueSupports) :
+    BHKS.ScaledShortnessCertificate W.input W.liftData
+      (W.projectedVectorArray v)
+      (D.auxiliaryCorrections v hin hnot) := by
+  exact D.scaledShortness v hin hnot
+
+/--
+Summed corrected-auxiliary coefficient bound obtained from the scaled-lattice
+shortness certificate packaged in `BadVectorBridgeData`.
+
+This keeps the cancellation between the CLD column sum and the diagonal
+correction coordinates intact. It is intentionally only the summed shortness
+form; pointwise coefficient bounds and paper-threshold comparisons remain
+separate downstream work.
+-/
+theorem coeffSqSum_le
+    {W : ExecutableBadVectorWitness}
+    {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
+    (D : BadVectorBridgeData W trueSupports)
+    (v : Fin W.projectedRows.factorCount → ℤ)
+    (hin : v ∈ BHKS.projectedRowSpanInt W.projectedRows)
+    (hnot : v ∉ BHKS.trueFactorIndicatorLattice trueSupports) :
+    (∑ j ∈ Finset.range (W.input.degree?.getD 0),
+      ((((W.H).coeff j : ℤ) : ℝ) ^ 2)) ≤
+        (BHKS.cldColumnNormBound W.input W.liftData.p : ℝ) := by
+  rw [D.auxiliary_eq' v hin hnot]
+  exact
+    (D.shortness v hin hnot).coeffSqSum_le
 
 /--
 Coefficientwise Hensel-lift congruence between every packaged true factor and
