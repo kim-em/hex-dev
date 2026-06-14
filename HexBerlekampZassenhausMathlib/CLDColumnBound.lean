@@ -1,5 +1,6 @@
 import HexBerlekampZassenhaus
 import HexBerlekampZassenhausMathlib.BadVectorAuxiliary
+import HexBerlekampZassenhausMathlib.Resultant
 import HexHenselMathlib.Correctness
 import HexPolyZMathlib.Mignotte
 import HexPolyZMathlib.RobinsonForm
@@ -486,6 +487,59 @@ theorem cldQuotientMod_congr_mul_derivative
       (HexPolyMathlib.toPolynomial num).map φ := by
     rw [← hrecon_map, hrem_zero]; ring
   rw [hfin]; exact hnum_eq
+
+/--
+ZPoly → `Polynomial ℤ` bridge for the CLD-syzygy resultant valuation.
+
+Given the executable coefficientwise congruence
+`g * q ≡ input * q'  (mod p ^ k)` — exactly the shape produced by
+`cldQuotientMod_congr_mul_derivative`, with `g = cldQuotientMod input q p k`
+the CLD-column quotient of the selected monic factor `q` — the transported
+polynomials satisfy the syzygy `(toPolynomial g) * (toPolynomial q)
+- (toPolynomial input) * (toPolynomial q)' = C (p ^ k) * z`. Feeding it to
+`cld_syzygy_pow_dvd_resultant` yields `p ^ (k * d)` dividing the integer
+resultant of `toPolynomial input` and `toPolynomial g`, with no hypothesis that
+`q` divides `g` modulo `p ^ k`.
+
+The conclusion is about `resultant input g` where `g` is the CLD-column
+quotient. Identifying `g` with the BHKS bad-vector auxiliary polynomial
+`auxiliaryPolynomialWithCorrections` — a *combination*
+`Σᵢ vec i • cldCoeffs i` of the per-factor CLD columns, not a single
+`cldQuotientMod` — is a separate modular-reduction step the downstream
+bad-vector wiring (#6949) must supply; this lemma only transports the
+per-factor syzygy of one selected factor.
+-/
+theorem cld_syzygy_pow_dvd_resultant_of_congr
+    (input g q : Hex.ZPoly) {p k d : Nat}
+    (hq_monic : (HexPolyMathlib.toPolynomial q).Monic)
+    (hq_deg : (HexPolyMathlib.toPolynomial q).natDegree = d)
+    (hcongr : Hex.ZPoly.congr (g * q) (input * Hex.DensePoly.derivative q) (p ^ k))
+    (hf_deg : 2 * d ≤ (HexPolyMathlib.toPolynomial input).natDegree)
+    (hg_deg : 2 * d ≤ (HexPolyMathlib.toPolynomial g).natDegree + 1) :
+    ((p ^ (k * d) : Nat) : ℤ) ∣
+      Polynomial.resultant (HexPolyMathlib.toPolynomial input)
+        (HexPolyMathlib.toPolynomial g) := by
+  -- The transported difference is `C (p ^ k)`-divisible, coefficient by coefficient.
+  have hdvd : Polynomial.C ((p ^ k : Nat) : ℤ) ∣
+      (HexPolyMathlib.toPolynomial (g * q)
+        - HexPolyMathlib.toPolynomial (input * Hex.DensePoly.derivative q)) := by
+    rw [Polynomial.C_dvd_iff_dvd_coeff]
+    intro j
+    rw [Polynomial.coeff_sub, HexPolyMathlib.coeff_toPolynomial,
+      HexPolyMathlib.coeff_toPolynomial]
+    exact Int.dvd_of_emod_eq_zero (hcongr j)
+  obtain ⟨z, hz⟩ := hdvd
+  -- Repackage as the `Polynomial ℤ` CLD syzygy and apply the resultant valuation.
+  have hsyz : HexPolyMathlib.toPolynomial g * HexPolyMathlib.toPolynomial q
+      - HexPolyMathlib.toPolynomial input
+          * Polynomial.derivative (HexPolyMathlib.toPolynomial q)
+      = Polynomial.C ((p ^ k : Nat) : ℤ) * z := by
+    rw [← HexPolyMathlib.toPolynomial_mul, ← HexPolyMathlib.toPolynomial_derivative,
+      ← HexPolyMathlib.toPolynomial_mul]
+    exact hz
+  exact cld_syzygy_pow_dvd_resultant (HexPolyMathlib.toPolynomial input)
+    (HexPolyMathlib.toPolynomial g) (HexPolyMathlib.toPolynomial q) z
+    hq_monic hq_deg hsyz hf_deg hg_deg
 
 namespace BHKS
 
