@@ -878,6 +878,7 @@ private theorem foldl_dot_add_left
       rw [hstart]
       exact ih (accA := accA + a[i] * c[i]) (accB := accB + b[i] * c[i])
 
+/-- `dot_add_left` states left-additivity of the dot product. -/
 private theorem dot_add_left (a b c : Vector Rat m) :
     Matrix.dot (a + b) c = Matrix.dot a c + Matrix.dot b c := by
   unfold Matrix.dot Hex.Vector.dotProduct
@@ -886,6 +887,7 @@ private theorem dot_add_left (a b c : Vector Rat m) :
     foldl_dot_add_left (xs := List.finRange m) (a := a) (b := b) (c := c)
       (accA := 0) (accB := 0)
 
+/-- `foldl_dot_smul_left` states left-homogeneity of the dot-product fold. -/
 private theorem foldl_dot_smul_left
     (xs : List (Fin m)) (s : Rat) (a c : Vector Rat m) (acc : Rat) :
     xs.foldl (fun acc i => acc + (s • a)[i] * c[i]) (s * acc) =
@@ -904,6 +906,7 @@ private theorem foldl_dot_smul_left
       rw [hstart]
       exact ih (acc := acc + a[i] * c[i])
 
+/-- `dot_smul_left` states left-homogeneity of the dot product. -/
 private theorem dot_smul_left (s : Rat) (a c : Vector Rat m) :
     Matrix.dot (s • a) c = s * Matrix.dot a c := by
   unfold Matrix.dot Hex.Vector.dotProduct
@@ -911,6 +914,7 @@ private theorem dot_smul_left (s : Rat) (a c : Vector Rat m) :
   simpa [hzero] using
     foldl_dot_smul_left (xs := List.finRange m) (s := s) (a := a) (c := c) (acc := 0)
 
+/-- `projectionCoeff_add_left` states left-additivity of the projection coefficient. -/
 private theorem projectionCoeff_add_left (a b c : Vector Rat m) :
     projectionCoeff (a + b) c = projectionCoeff a c + projectionCoeff b c := by
   unfold projectionCoeff
@@ -921,6 +925,7 @@ private theorem projectionCoeff_add_left (a b c : Vector Rat m) :
     rw [dot_add_left]
     grind
 
+/-- `projectionCoeff_smul_left` states left-homogeneity of the projection coefficient. -/
 private theorem projectionCoeff_smul_left (s : Rat) (a c : Vector Rat m) :
     projectionCoeff (s • a) c = s * projectionCoeff a c := by
   unfold projectionCoeff
@@ -930,6 +935,7 @@ private theorem projectionCoeff_smul_left (s : Rat) (a c : Vector Rat m) :
     rw [dot_smul_left]
     grind
 
+/-- `subtractProjection_add_left` states left-additivity of projection subtraction. -/
 private theorem subtractProjection_add_left (a b c : Vector Rat m) :
     subtractProjection (a + b) c =
       subtractProjection a c + subtractProjection b c := by
@@ -952,6 +958,7 @@ private theorem subtractProjection_add_left (a b c : Vector Rat m) :
   rw [hentry_lhs, hentry_rhs, hcoeff]
   grind
 
+/-- `subtractProjection_smul_left` states left-homogeneity of projection subtraction. -/
 private theorem subtractProjection_smul_left (s : Rat) (a c : Vector Rat m) :
     subtractProjection (s • a) c = s • subtractProjection a c := by
   apply Vector.ext
@@ -971,6 +978,7 @@ private theorem subtractProjection_smul_left (s : Rat) (a c : Vector Rat m) :
   rw [hentry_lhs, hentry_rhs, hcoeff]
   grind
 
+/-- `reduceAgainstBasis_add_left` states left-additivity of basis reduction. -/
 private theorem reduceAgainstBasis_add_left
     (basisRev : List (Vector Rat m)) (a b : Vector Rat m) :
     reduceAgainstBasis basisRev (a + b) =
@@ -987,6 +995,7 @@ private theorem reduceAgainstBasis_add_left
           reduceAgainstBasis rest (subtractProjection b basisRow)
       exact ih (a := subtractProjection a basisRow) (b := subtractProjection b basisRow)
 
+/-- `reduceAgainstBasis_smul_left` states left-homogeneity of basis reduction. -/
 private theorem reduceAgainstBasis_smul_left
     (basisRev : List (Vector Rat m)) (s : Rat) (a : Vector Rat m) :
     reduceAgainstBasis basisRev (s • a) = s • reduceAgainstBasis basisRev a := by
@@ -1000,6 +1009,7 @@ private theorem reduceAgainstBasis_smul_left
         s • reduceAgainstBasis rest (subtractProjection a basisRow)
       exact ih (a := subtractProjection a basisRow)
 
+/-- `reduceAgainstBasis_append` states the append-decomposition of basis reduction. -/
 private theorem reduceAgainstBasis_append
     (l₁ l₂ : List (Vector Rat m)) (row : Vector Rat m) :
     reduceAgainstBasis (l₁ ++ l₂) row =
