@@ -902,6 +902,8 @@ theorem mignotteCoeffBound_eq_zero_of_lt (f : ZPoly) (k j : Nat) (h : k < j) :
     mignotteCoeffBound f k j = 0 := by
   simp [mignotteCoeffBound, binom_eq_zero_of_lt h]
 
+/-- A maximizing natural-number `foldl` only increases (or preserves) its
+accumulator, so the initial value bounds the fold result. -/
 private theorem le_foldl_max_left {α : Type} (xs : List α) (g : α → Nat) (init : Nat) :
     init ≤ xs.foldl (fun acc x => max acc (g x)) init := by
   induction xs generalizing init with
@@ -911,6 +913,8 @@ private theorem le_foldl_max_left {α : Type} (xs : List α) (g : α → Nat) (i
       simp only [List.foldl_cons]
       exact Nat.le_trans (Nat.le_max_left init (g x)) (ih (max init (g x)))
 
+/-- For a maximizing natural-number `foldl`, the value `g x` at any member index
+`x ∈ xs` is bounded by the fold result. -/
 private theorem le_foldl_max_of_mem {α : Type} (xs : List α) (g : α → Nat)
     {x : α} {init : Nat} (hx : x ∈ xs) :
     g x ≤ xs.foldl (fun acc y => max acc (g y)) init := by
@@ -928,6 +932,8 @@ private theorem le_foldl_max_of_mem {α : Type} (xs : List α) (g : α → Nat)
       | inr h =>
           exact ih h
 
+/-- The inner `max`-fold over `j ∈ range (k+1)` dominates each
+`mignotteCoeffBound f k j` at an in-range index, by `le_foldl_max_of_mem`. -/
 private theorem mignotteCoeffBound_le_degree_innerFold
     (f : ZPoly) (k : Nat) {j init : Nat} (hj : j ≤ k) :
     mignotteCoeffBound f k j ≤
@@ -938,6 +944,9 @@ private theorem mignotteCoeffBound_le_degree_innerFold
     (fun j => mignotteCoeffBound f k j)
     (List.mem_range.mpr (Nat.lt_succ_of_le hj))
 
+/-- The outer degree `max`-fold (each step running the inner `j`-fold) only
+increases (or preserves) its accumulator, so the initial value bounds the
+result. -/
 private theorem defaultFactorCoeffBound_outerFold_preserves
     (f : ZPoly) (ks : List Nat) (init : Nat) :
     init ≤
@@ -958,6 +967,9 @@ private theorem defaultFactorCoeffBound_outerFold_preserves
         (ih ((List.range (k + 1)).foldl
           (fun acc j => max acc (mignotteCoeffBound f k j)) init))
 
+/-- For any degree `k ∈ ks` and in-range index `j ≤ k`, `mignotteCoeffBound f k j`
+is bounded by the full nested degree/index `max`-fold, combining the inner-fold
+and outer-fold monotonicity lemmas. -/
 private theorem mignotteCoeffBound_le_defaultFactorCoeffBound_fold
     (f : ZPoly) (ks : List Nat) {k j init : Nat} (hk : k ∈ ks) (hj : j ≤ k) :
     mignotteCoeffBound f k j ≤
