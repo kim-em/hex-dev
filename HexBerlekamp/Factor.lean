@@ -121,6 +121,8 @@ def berlekampFactor (f : FpPoly p) (hmonic : DensePoly.Monic f)
 theorem splitFactorAt_spec (f witness : FpPoly p) (c : ZMod64 p) :
     splitFactorAt f witness c = DensePoly.gcd f (witness - FpPoly.C c) := rfl
 
+/-- `splitFactorAt_mul_div_eq`: the chosen split factor times its cofactor
+`f / splitFactorAt f witness c` recovers `f`, since the factor divides `f`. -/
 private theorem splitFactorAt_mul_div_eq
     [ZMod64.PrimeModulus p]
     (f witness : FpPoly p) (c : ZMod64 p) :
@@ -137,6 +139,8 @@ private theorem splitFactorAt_mul_div_eq
     ((DensePoly.add_zero_poly
       ((f / splitFactorAt f witness c) * splitFactorAt f witness c)).symm.trans hspec)
 
+/-- `kernelWitnessSplitAux_product_spec`: the factor and cofactor of the
+`SplitResult` returned by the fueled split loop multiply back to `f`. -/
 private theorem kernelWitnessSplitAux_product_spec
     [ZMod64.PrimeModulus p]
     (f witness : FpPoly p) (fuel c : Nat) (r : SplitResult p)
@@ -156,12 +160,16 @@ private theorem kernelWitnessSplitAux_product_spec
       · simp [splitConstant, factor, hnon] at hsplit
         exact ih (c + 1) hsplit
 
+/-- `isNontrivialSplitFactor_not_zero`: a witnessed nontrivial split factor is
+nonzero. -/
 private theorem isNontrivialSplitFactor_not_zero
     (f g : FpPoly p) (h : isNontrivialSplitFactor f g = true) :
     !g.isZero := by
   unfold isNontrivialSplitFactor at h
   cases hz : g.isZero <;> simp [hz] at h ⊢
 
+/-- `isNontrivialSplitFactor_degree_ne_zero`: a witnessed nontrivial split
+factor has nonzero degree (`degree? ≠ some 0`). -/
 private theorem isNontrivialSplitFactor_degree_ne_zero
     (f g : FpPoly p) (h : isNontrivialSplitFactor f g = true) :
     g.degree? ≠ some 0 := by
@@ -169,6 +177,8 @@ private theorem isNontrivialSplitFactor_degree_ne_zero
   cases hz : g.isZero <;> simp [hz] at h
   exact h.1
 
+/-- `isNontrivialSplitFactor_size_lt`: a witnessed nontrivial split factor has
+strictly smaller `size` than the input `f`. -/
 private theorem isNontrivialSplitFactor_size_lt
     (f g : FpPoly p) (h : isNontrivialSplitFactor f g = true) :
     g.size < f.size := by
@@ -176,6 +186,8 @@ private theorem isNontrivialSplitFactor_size_lt
   cases hz : g.isZero <;> simp [hz] at h
   exact h.2
 
+/-- `isNontrivialSplitFactor_ne_input`: a witnessed nontrivial split factor is
+distinct from the input `f`, as it is strictly smaller. -/
 private theorem isNontrivialSplitFactor_ne_input
     (f g : FpPoly p) (h : isNontrivialSplitFactor f g = true) :
     g ≠ f := by
@@ -184,6 +196,8 @@ private theorem isNontrivialSplitFactor_ne_input
   rw [hg] at hsize
   exact Nat.lt_irrefl _ hsize
 
+/-- `isNontrivialSplitFactor_ne_one`: a witnessed nontrivial split factor is
+distinct from `1`, since it is nonzero with nonzero degree. -/
 private theorem isNontrivialSplitFactor_ne_one
     (f g : FpPoly p) (h : isNontrivialSplitFactor f g = true) :
     g ≠ 1 := by
@@ -209,6 +223,8 @@ private theorem isNontrivialSplitFactor_ne_one
       simp [DensePoly.degree?, DensePoly.size, hcoeffs]
     exact hdegree honeDegree
 
+/-- `kernelWitnessSplitAux_nontrivial`: the factor of the `SplitResult` returned
+by the fueled split loop is nonzero, not `1`, and not equal to `f`. -/
 private theorem kernelWitnessSplitAux_nontrivial
     (f witness : FpPoly p) (fuel c : Nat) (r : SplitResult p)
     (hsplit : kernelWitnessSplitAux f witness fuel c = some r) :
