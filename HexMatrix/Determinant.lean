@@ -2759,6 +2759,7 @@ private theorem transposePermutationValues_insertAt_last_boundary {n : Nat}
         _ = boundaryPerm[row] := by
           exact (congrArg (fun c => boundaryPerm[c]) hrow).symm
 
+/-- `vector_toList_eq_finRange_map_get` rewrites a vector's list view as the finite range of indices mapped through its getter. -/
 private theorem vector_toList_eq_finRange_map_get {α : Type u} {n : Nat}
     (v : Vector α n) :
     v.toList = (List.finRange n).map fun i => v[i] := by
@@ -2767,6 +2768,7 @@ private theorem vector_toList_eq_finRange_map_get {α : Type u} {n : Nat}
   · intro k hk₁ hk₂
     simp
 
+/-- `transposePermutationValues_toList_perm` shows that transposing two positions in a permutation vector only permutes its list of values. -/
 private theorem transposePermutationValues_toList_perm {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n) :
     (transposePermutationValues perm i j).toList.Perm perm.toList := by
@@ -2782,6 +2784,7 @@ private theorem transposePermutationValues_toList_perm {n : Nat}
   simpa [List.map_map] using
     (finRange_map_finTranspose_perm i j).map fun r => perm[r]
 
+/-- `transposePermutationValues_mem_permutationVectors` preserves membership in `permutationVectors n` after transposing two positions. -/
 private theorem transposePermutationValues_mem_permutationVectors {n : Nat}
     {perm : Vector (Fin n) n} (i j : Fin n)
     (hmem : perm ∈ permutationVectors n) :
@@ -2790,11 +2793,13 @@ private theorem transposePermutationValues_mem_permutationVectors {n : Nat}
   exact (transposePermutationValues_toList_perm perm i j).symm.nodup
     (permutationVectors_nodup hmem)
 
+/-- `vector_get_fin_congr` transports a vector lookup across an equality of finite indices. -/
 private theorem vector_get_fin_congr {α : Type u} {n : Nat} (v : Vector α n)
     {a b : Fin n} (h : a = b) : v[a] = v[b] := by
   subst b
   rfl
 
+/-- `vector_toList_split_two` splits a vector's list view around two strictly ordered finite indices. -/
 private theorem vector_toList_split_two {α : Type u} {n : Nat}
     (v : Vector α n) {i j : Fin n} (hij : i.val < j.val) :
     v.toList =
@@ -2832,6 +2837,7 @@ private theorem vector_toList_split_two {α : Type u} {n : Nat}
       rw [List.drop_eq_getElem_cons hjdrop]
       simp [List.drop_drop, Vector.getElem_toList, List.getElem_drop, hmid, hdrop]
 
+/-- `transposePermutationValues_take_of_lt` identifies the unchanged prefix before the first transposed index. -/
 private theorem transposePermutationValues_take_of_lt {n : Nat}
     (perm : Vector (Fin n) n) {i j : Fin n} (hij : i.val < j.val) :
     (transposePermutationValues perm i j).toList.take i.val =
@@ -2861,6 +2867,7 @@ private theorem transposePermutationValues_take_of_lt {n : Nat}
       _ = (List.take i.val perm.toList)[k] := by
         simp [Vector.getElem_toList]
 
+/-- `transposePermutationValues_middle_of_lt` identifies the unchanged middle segment between two transposed indices. -/
 private theorem transposePermutationValues_middle_of_lt {n : Nat}
     (perm : Vector (Fin n) n) {i j : Fin n} (hij : i.val < j.val) :
     ((transposePermutationValues perm i j).toList.drop (i.val + 1)).take
@@ -2895,6 +2902,7 @@ private theorem transposePermutationValues_middle_of_lt {n : Nat}
           (List.take (j.val - i.val - 1) (List.drop (i.val + 1) perm.toList))[k] := by
         simp [Vector.getElem_toList]
 
+/-- `transposePermutationValues_drop_of_lt` identifies the unchanged suffix after the second transposed index. -/
 private theorem transposePermutationValues_drop_of_lt {n : Nat}
     (perm : Vector (Fin n) n) {i j : Fin n} (hij : i.val < j.val) :
     (transposePermutationValues perm i j).toList.drop (j.val + 1) =
@@ -2926,6 +2934,7 @@ private theorem transposePermutationValues_drop_of_lt {n : Nat}
       _ = (List.drop (j.val + 1) perm.toList)[k] := by
         simp [Vector.getElem_toList]
 
+/-- `transposePermutationValues_toList_of_lt` expands the list view when the left transposed index is strictly before the right one. -/
 private theorem transposePermutationValues_toList_of_lt {n : Nat}
     (perm : Vector (Fin n) n) {i j : Fin n} (hij : i.val < j.val) :
     (transposePermutationValues perm i j).toList =
@@ -2944,6 +2953,7 @@ private theorem transposePermutationValues_toList_of_lt {n : Nat}
     exact vector_get_fin_congr perm (finTranspose_right i j)
   rw [hi, hj]
 
+/-- `transposePermutationValues_toList_of_gt` expands the list view when the right transposed index is strictly before the left one. -/
 private theorem transposePermutationValues_toList_of_gt {n : Nat}
     (perm : Vector (Fin n) n) {i j : Fin n} (hji : j.val < i.val) :
     (transposePermutationValues perm i j).toList =
@@ -2973,6 +2983,7 @@ private theorem transposePermutationValues_toList_of_gt {n : Nat}
   exact
     (transposePermutationValues_toList_of_lt perm (i := j) (j := i) hji)
 
+/-- `transposePermutationValues_involutive` states that transposing the same two vector positions twice returns the original vector. -/
 private theorem transposePermutationValues_involutive {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n) :
     transposePermutationValues (transposePermutationValues perm i j) i j = perm := by
@@ -2980,6 +2991,7 @@ private theorem transposePermutationValues_involutive {n : Nat}
   intro r hr
   simp [transposePermutationValues, finTranspose_involutive]
 
+/-- `transposePermutationValues_map_permutationVectors_perm` shows that mapping a fixed value transpose permutes `permutationVectors n`. -/
 private theorem transposePermutationValues_map_permutationVectors_perm {n : Nat}
     (i j : Fin n) :
     ((permutationVectors n).map fun perm => transposePermutationValues perm i j).Perm
