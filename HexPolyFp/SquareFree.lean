@@ -3300,7 +3300,7 @@ private theorem dvd_mul_right_of_dvd
 `w` divides their monic gcd. The monic gcd is a constant-scalar associate of the
 raw gcd, so it has the same divisors. -/
 private theorem dvd_monicGcd
-    [ZMod64.PrimeModulus p] (hp : Hex.Nat.Prime p)
+    [ZMod64.PrimeModulus p] (_hp : Hex.Nat.Prime p)
     {d : FpPoly p} (c w : FpPoly p) (hdc : d ∣ c) (hdw : d ∣ w) :
     d ∣ monicGcd c w := by
   have hdg : d ∣ DensePoly.gcd c w := DensePoly.dvd_gcd d c w hdc hdw
@@ -4188,7 +4188,7 @@ private def squareFreeAuxRevResidualSatisfied
       else if (DensePoly.derivative g).isZero then
         squareFreeAuxRevResidualSatisfied (pthRoot g) (m * p) fuel
       else
-        let g_inner := DensePoly.gcd g (DensePoly.derivative g)
+        let g_inner := monicGcd g (DensePoly.derivative g)
         let c_inner := g / g_inner
         let loop := yunFactorsWithLevel c_inner g_inner m 1 fuel []
         ((isOne loop.2 = true) ∨ (DensePoly.derivative loop.2).isZero = true) ∧
@@ -8343,7 +8343,7 @@ private theorem yunFactorsNormalizedLevelCompletes_of_size_bound_derivative_acti
             (normalizeMonic w).2.size = w.size :=
           normalizeMonic_nonzero_size_eq hp w hraw_nonzero.2
         have htail_g_size :
-            (normalizeMonic (DensePoly.gcd c w)).2.size =
+            (normalizeMonic (monicGcd c w)).2.size =
               (monicGcd c w).size :=
           normalizeMonic_nonzero_size_eq hp (monicGcd c w) htail_nonzero.1
         have htail_w_size :
@@ -8352,7 +8352,7 @@ private theorem yunFactorsNormalizedLevelCompletes_of_size_bound_derivative_acti
           normalizeMonic_nonzero_size_eq hp
             (w / monicGcd c w) htail_nonzero.2
         have htail_bound :
-            (normalizeMonic (DensePoly.gcd c w)).2.size +
+            (normalizeMonic (monicGcd c w)).2.size +
                 (normalizeMonic (w / monicGcd c w)).2.size ≤ fuel + 1 := by
           omega
         exact Or.inr
@@ -9526,7 +9526,7 @@ private theorem squareFreeAuxRev_factor_dvd_input
             · rfl
             · exact False.elim (hdf h)
           rw [if_neg (by simp [hdf_false])] at hb
-          let g_inner := DensePoly.gcd g (DensePoly.derivative g)
+          let g_inner := monicGcd g (DensePoly.derivative g)
           let c_inner := g / g_inner
           let loop := yunFactorsWithLevel c_inner g_inner m 1 fuel []
           have hres_unpack :
@@ -9539,7 +9539,7 @@ private theorem squareFreeAuxRev_factor_dvd_input
             rw [if_neg (by simp [hzero_false]), if_neg (by simp [hdf_false])] at h
             exact h
           have hg_inner_dvd_g : g_inner ∣ g :=
-            DensePoly.gcd_dvd_left g (DensePoly.derivative g)
+            monicGcd_dvd_left hp g (DensePoly.derivative g)
           have hloop_dvd_g_inner : loop.2 ∣ g_inner := by
             simpa [loop] using
               yunFactorsWithLevel_repeated_dvd_repeated c_inner g_inner m 1 fuel
@@ -9548,10 +9548,11 @@ private theorem squareFreeAuxRev_factor_dvd_input
           have hc_inner_dvd_g : c_inner ∣ g := by
             refine ⟨g_inner, ?_⟩
             simpa [c_inner, g_inner] using
-              (div_gcd_mul_reconstruct g (DensePoly.derivative g)).symm
+              (div_monicGcd_mul_reconstruct hp g (DensePoly.derivative g)).symm
           have hg_inner_ne : g_inner.isZero = false :=
-            gcd_isZero_false_of_right_isZero_false g
-              (DensePoly.derivative g) hdf_false
+            monicGcd_isZero_false_of_gcd_nonzero g (DensePoly.derivative g)
+              (gcd_isZero_false_of_right_isZero_false g
+                (DensePoly.derivative g) hdf_false)
           have hloop_ne : loop.2.isZero = false := by
             cases hl : loop.2.isZero
             · rfl
