@@ -3189,6 +3189,7 @@ private def bareissGramRowInvariant_initial (b : Matrix Int n m) :
     rw [hsingle]
     simp [Matrix.noPivotInitialState, Matrix.gramMatrix, Matrix.ofFn, Matrix.dot]
 
+/-- `foldl_sum_bareiss_row_update` pulls a Bareiss left row-update through a folded sum for later dot-product identities. -/
 private theorem foldl_sum_bareiss_row_update
     {α : Type u} (xs : List α) (x y : Int) (u v w : α → Int)
     (accU accV : Int) :
@@ -3209,6 +3210,7 @@ private theorem foldl_sum_bareiss_row_update
       rw [hstep]
       exact ih (accU + u a * w a) (accV + v a * w a)
 
+/-- `dot_bareiss_row_update_left` expands the dot product of a Bareiss-updated left vector as the corresponding linear combination of dots. -/
 private theorem dot_bareiss_row_update_left
     (x y : Int) (u v w : Vector Int m) :
     Matrix.dot (Vector.ofFn fun a : Fin m => x * u[a] - y * v[a]) w =
@@ -3222,6 +3224,7 @@ private theorem dot_bareiss_row_update_left
       (fun a : Fin m => w[a])
       0 0
 
+/-- `foldl_sum_bareiss_row_update_right` pulls a Bareiss right row-update through a folded sum for the symmetric dot-product identity. -/
 private theorem foldl_sum_bareiss_row_update_right
     {α : Type u} (xs : List α) (x y : Int) (u v w : α → Int)
     (accU accV : Int) :
@@ -3242,6 +3245,7 @@ private theorem foldl_sum_bareiss_row_update_right
       rw [hstep]
       exact ih (accU + w a * u a) (accV + w a * v a)
 
+/-- `dot_bareiss_row_update_right` expands the dot product with a Bareiss-updated right vector as the corresponding linear combination of dots. -/
 private theorem dot_bareiss_row_update_right
     (x y : Int) (w u v : Vector Int m) :
     Matrix.dot w (Vector.ofFn fun a : Fin m => x * u[a] - y * v[a]) =
@@ -3255,6 +3259,7 @@ private theorem dot_bareiss_row_update_right
       (fun a : Fin m => w[a])
       0 0
 
+/-- `rowCombination_bareiss_coeff_update` shows that row combinations respect the Bareiss coefficient update used by the Gram-row invariant. -/
 private theorem rowCombination_bareiss_coeff_update
     (M : Matrix Int n m) (x y : Int) (c d : Vector Int n) :
     Matrix.rowCombination M (Vector.ofFn fun a : Fin n => x * c[a] - y * d[a]) =
@@ -3279,6 +3284,7 @@ private theorem rowCombination_bareiss_coeff_update
   repeat rw [Matrix.mulVec_getElem]
   exact dot_bareiss_row_update_right x y ((Matrix.transpose M).row jf) c d
 
+/-- `exactDiv_eq_of_eq_mul_right` recovers the right quotient when the exact-division numerator is a quotient times the nonzero denominator. -/
 private theorem exactDiv_eq_of_eq_mul_right
     {num denom q : Int} (hdenom : denom ≠ 0) (hnum : num = q * denom) :
   Matrix.exactDiv num denom = q := by
@@ -3290,6 +3296,7 @@ private theorem exactDiv_eq_of_eq_mul_right
   rw [Matrix.exactDiv_eq_divExact hdvd, Int.divExact_eq_ediv hdvd]
   exact Int.ediv_eq_of_eq_mul_left hdenom hnum
 
+/-- `vector_exactDiv_eq_of_eq_mul_right` applies exact-division quotient recovery pointwise to coefficient vectors. -/
 private theorem vector_exactDiv_eq_of_eq_mul_right
     {denom : Int} (hdenom : denom ≠ 0) (num q : Fin n → Int)
     (hnum : ∀ a : Fin n, num a = q a * denom) :
@@ -3300,6 +3307,7 @@ private theorem vector_exactDiv_eq_of_eq_mul_right
   let af : Fin n := ⟨a, ha⟩
   simp [exactDiv_eq_of_eq_mul_right hdenom (hnum af), af]
 
+/-- `rowCombination_exactDiv_eq_of_eq_mul_right` replaces exact-divided coefficients by their quotient vector inside a row combination. -/
 private theorem rowCombination_exactDiv_eq_of_eq_mul_right
     (M : Matrix Int n m) {denom : Int} (hdenom : denom ≠ 0)
     (num q : Fin n → Int) (hnum : ∀ a : Fin n, num a = q a * denom) :
@@ -3307,6 +3315,7 @@ private theorem rowCombination_exactDiv_eq_of_eq_mul_right
       Matrix.rowCombination M (Vector.ofFn q) := by
   rw [vector_exactDiv_eq_of_eq_mul_right hdenom num q hnum]
 
+/-- `dot_rowCombination_exactDiv_eq_of_eq_mul_right` carries exact-division quotient recovery through a row combination and final dot product. -/
 private theorem dot_rowCombination_exactDiv_eq_of_eq_mul_right
     (M : Matrix Int n m) {denom : Int} (hdenom : denom ≠ 0)
     (num q : Fin n → Int) (hnum : ∀ a : Fin n, num a = q a * denom)
@@ -3324,6 +3333,7 @@ private def bareissGramRowInvariantCoeff
     (hinv : BareissGramRowInvariant b state) (i : Fin n) : Vector Int n :=
   hinv.coeff i
 
+/-- `bareissGramRowInvariantCoeff_support` exposes the support vanishing condition for the projected Gram-row coefficient witness. -/
 private theorem bareissGramRowInvariantCoeff_support
     {b : Matrix Int n m} {state : Matrix.BareissState n}
     (hinv : BareissGramRowInvariant b state) (i : Fin n)
@@ -3332,6 +3342,7 @@ private theorem bareissGramRowInvariantCoeff_support
       (bareissGramRowInvariantCoeff hinv i)[k] = 0 :=
   fun k hik => hinv.coeff_supp i k hi hik
 
+/-- `bareissGramRowInvariantCoeff_row` identifies the projected Gram-row coefficient witness with the invariant's stored coefficient row. -/
 private theorem bareissGramRowInvariantCoeff_row
     {b : Matrix Int n m} {state : Matrix.BareissState n}
     (hinv : BareissGramRowInvariant b state) (i : Fin n) :
