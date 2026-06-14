@@ -433,6 +433,8 @@ private theorem foldlNonneg {α : Type} (xs : List α) (f : α → Rat)
       simp only [List.foldl_cons]
       exact ih (acc + f x) (Rat.add_nonneg hacc (hf x))
 
+/-- The squared norm of any basis row is nonnegative, being a sum of squares of
+its rational entries. -/
 theorem basisNormSq_nonneg (basis : Matrix Rat n m) (i : Fin n) :
     0 ≤ basisNormSq basis i := by
   simp only [basisNormSq, Vector.normSq, Hex.Vector.dotProduct]
@@ -1116,6 +1118,11 @@ private theorem foldl_set_outerSubMul_get_eq
         change (base.set x.val (outerK.get x - r * outerJ.get x) x.isLt)[l.val] = base[l.val]
         exact Vector.getElem_set_ne x.isLt l.isLt h_xl
 
+/-- Closed form for the entry-wise size-reduction sweep: folding the update
+`row ← row.set l' (outerK l' − r · outerJ l')` over the first `jVal` indices
+replaces exactly the entries below `jVal` by `outerK − r · outerJ` and leaves the
+rest of `base` untouched. Reading position `l` afterwards gives the reduced value
+when `l.val < jVal` and the original `base.get l` otherwise. -/
 theorem foldl_finRange_set_outerSubMul_get_eq
     {n : Nat} (jVal : Nat) (hjn : jVal ≤ n)
     (base outerK outerJ : Vector Int n) (r : Int) (l : Fin n) :
@@ -1662,6 +1669,8 @@ def init (b : Matrix Int n m) : SteeredState n m :=
     return (mu, bb)
   { b := b, mu := mu, bb := bb }
 
+/-- Building the initial steered state preserves the basis: `init` only populates
+the float `mu`/`bb` approximation and copies `b` through unchanged. -/
 @[simp] theorem init_b (b : Matrix Int n m) : (init b).b = b := rfl
 
 /-- Recompute `mu` row `k` and `bb[k]` from the exact Gram entries `⟨b_k, b_j⟩`
@@ -1685,6 +1694,8 @@ def refreshRow (s : SteeredState n m) (k : Nat) : SteeredState n m :=
     return (muk, c[k]!)
   { b := s.b, mu := s.mu.set! k muk, bb := s.bb.set! k bk }
 
+/-- Refreshing row `k` recomputes only the float `mu`/`bb` approximation from the
+exact Gram entries, so the integer basis `.b` is left unchanged. -/
 @[simp] theorem refreshRow_b (s : SteeredState n m) (k : Nat) :
     (s.refreshRow k).b = s.b := rfl
 
@@ -1838,6 +1849,10 @@ approximation. These proofs mirror the corresponding `LLLState` lemmas. -/
 
 namespace SteeredState
 
+/-- The single-column size reduction `reduceColumn` preserves the lattice: since
+it adds an integer multiple of row `j` to row `k`, the resulting basis spans the
+same integer lattice, so `v` is a member of the new basis exactly when it was a
+member of the old one. -/
 theorem reduceColumn_memLattice_iff
     (s : SteeredState n m) (j k : Fin n) (hjk : j.val < k.val) (v : Vector Int m) :
     Matrix.memLattice (s.reduceColumn j k hjk).b v ↔ Matrix.memLattice s.b v := by
@@ -1862,6 +1877,9 @@ private theorem sizeReduce_foldl_memLattice_iff (s : SteeredState n m) (k : Nat)
     rw [ih]
     exact reduceColumn_memLattice_iff s _ _ j.isLt v
 
+/-- Size-reducing row `k` against every earlier row preserves the lattice: it is a
+fold of lattice-preserving `reduceColumn` steps, so the spanned lattice (and hence
+membership of `v`) is unchanged. -/
 theorem sizeReduce_memLattice_iff (s : SteeredState n m) (k : Nat) (v : Vector Int m) :
     Matrix.memLattice (s.sizeReduce k).b v ↔ Matrix.memLattice s.b v := by
   unfold sizeReduce
@@ -1870,6 +1888,9 @@ theorem sizeReduce_memLattice_iff (s : SteeredState n m) (k : Nat) (v : Vector I
     exact sizeReduce_foldl_memLattice_iff s k hk (List.finRange k).reverse v
   · rw [dif_neg hk]
 
+/-- The adjacent-row swap step preserves the lattice: exchanging rows `k − 1` and
+`k` only reorders the basis, so it spans the same integer lattice and membership of
+`v` is unchanged. -/
 theorem swap_memLattice_iff (s : SteeredState n m) (k : Nat) (v : Vector Int m) :
     Matrix.memLattice (s.swap k).b v ↔ Matrix.memLattice s.b v := by
   unfold swap
@@ -1882,6 +1903,9 @@ theorem swap_memLattice_iff (s : SteeredState n m) (k : Nat) (v : Vector Int m) 
     · rw [dif_neg hk0]
   · rw [dif_neg hk]
 
+/-- The per-visit `prep` step preserves the lattice: an optional `refreshRow`
+(which leaves `.b` fixed) followed by a `sizeReduce` of row `k`, both
+lattice-preserving, so membership of `v` is unchanged. -/
 theorem prep_memLattice_iff (period : Nat) (s : SteeredState n m) (k cnt : Nat)
     (v : Vector Int m) :
     Matrix.memLattice (prep period s k cnt).b v ↔ Matrix.memLattice s.b v := by
@@ -1894,6 +1918,10 @@ theorem prep_memLattice_iff (period : Nat) (s : SteeredState n m) (k cnt : Nat)
 -- proof never needs to reduce the approximate Gram-Schmidt arithmetic.
 attribute [irreducible] refreshRow reduceColumn sizeReduce swap prep
 
+/-- The fuel-bounded steered loop preserves the lattice: every iteration applies
+only `prep` and `swap`, each lattice-preserving, so however the float steering
+chooses to advance or swap, the spanned lattice (and membership of `v`) is
+unchanged across the whole run. -/
 theorem loop_memLattice_iff (δsteer : Float) (period : Nat) (s : SteeredState n m)
     (k cnt : Nat) (fuel : Nat) (v : Vector Int m) :
     Matrix.memLattice (loop δsteer period s k cnt fuel).b v ↔
@@ -1917,6 +1945,9 @@ theorem loop_memLattice_iff (δsteer : Float) (period : Nat) (s : SteeredState n
         exact (ih p (k + 1) (cnt + 1)).trans hp_lat
     · simp only [loop, dif_neg hk]
 
+/-- The drift-free final sweep preserves the lattice: it folds a `refreshRow`
+(no change to `.b`) and a `sizeReduce` over every row, both lattice-preserving, so
+membership of `v` is unchanged. -/
 theorem finalSweep_memLattice_iff (s : SteeredState n m) (v : Vector Int m) :
     Matrix.memLattice (finalSweep s).b v ↔ Matrix.memLattice s.b v := by
   unfold finalSweep
@@ -1936,6 +1967,11 @@ theorem finalSweep_memLattice_iff (s : SteeredState n m) (v : Vector Int m) :
 
 end SteeredState
 
+/-- The complete steered reducer preserves the lattice: `init`, `loop`, and
+`finalSweep` are each lattice-preserving, so the steered output basis spans the
+same integer lattice as the input `b` and membership of `v` is unchanged. This is
+the soundness guarantee that holds by construction, with no dependence on the float
+approximation. -/
 theorem steeredReduce_memLattice_iff (b : Matrix Int n m) (δ : Rat) (v : Vector Int m) :
     Matrix.memLattice (steeredReduce b δ) v ↔ Matrix.memLattice b v := by
   unfold steeredReduce
