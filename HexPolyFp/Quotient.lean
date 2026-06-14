@@ -1444,6 +1444,8 @@ private theorem reduce_C_zero :
   rw [hC0_poly]
   rfl
 
+/-- Horner-folding the evaluation step over `n` zero coefficients scales the
+accumulator by `β ^ n`. -/
 private theorem foldl_eval_replicate_zero (β : Quotient g hmonic hg_pos) :
     ∀ n (acc : Quotient g hmonic hg_pos),
       (List.replicate n (0 : ZMod64 p)).foldl
@@ -1483,6 +1485,8 @@ private def evalScalarCoeffList :
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C coeff) +
         β * evalScalarCoeffList coeffs β
 
+/-- `β * evalCoeffPowerSumFrom coeffs base β` equals the same power sum with its
+starting exponent shifted from `base` to `base + 1`. -/
 private theorem mul_evalCoeffPowerSumFrom_eq_succ
     (β : Quotient g hmonic hg_pos) :
     ∀ coeffs base,
@@ -1515,6 +1519,8 @@ private theorem mul_evalCoeffPowerSumFrom_eq_succ
                 (DensePoly.C coeff) *
               β ^ (base + 1) := by rfl
 
+/-- `evalScalarCoeffList coeffs β` equals `evalCoeffPowerSumFrom coeffs 0 β`,
+the power sum started at exponent zero. -/
 private theorem evalScalarCoeffList_eq_powerSumFrom_zero
     (β : Quotient g hmonic hg_pos) :
     ∀ coeffs,
@@ -1530,6 +1536,8 @@ private theorem evalScalarCoeffList_eq_powerSumFrom_zero
         (g := g) (hmonic := hmonic) (hg_pos := hg_pos) β coeffs 0]
       rw [pow_zero, mul_one]
 
+/-- The Horner left-fold over the reversed coefficient list, started at zero,
+equals `evalScalarCoeffList coeffs β` on the original order. -/
 private theorem foldl_eval_reverse_eq_evalScalarCoeffList
     (β : Quotient g hmonic hg_pos) :
     ∀ coeffs,
@@ -1551,6 +1559,8 @@ private theorem foldl_eval_reverse_eq_evalScalarCoeffList
         (g := g) (hmonic := hmonic) (hg_pos := hg_pos) coeffs β) β]
       rw [add_comm]
 
+/-- `evalCoeffList` of the per-coefficient `reduce (DensePoly.C ·)` list equals
+`evalScalarCoeffList coeffs β` on the raw scalar coefficients. -/
 private theorem evalCoeffList_map_reduce_C_eq_evalScalarCoeffList
     (β : Quotient g hmonic hg_pos) :
     ∀ coeffs,
@@ -1660,6 +1670,8 @@ theorem eval_eq_sub_mul_evalDividedDifference_of_eval_eq_zero
   rw [hα, sub_zero] at h
   exact h
 
+/-- `eval f β` equals `evalCoeffPowerSumFrom` over `f`'s stored coefficient list
+started at exponent zero. -/
 private theorem eval_eq_coeff_power_sum (f : FpPoly p)
     (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β =
@@ -1673,6 +1685,8 @@ private theorem eval_eq_coeff_power_sum (f : FpPoly p)
     (g := g) (hmonic := hmonic) (hg_pos := hg_pos) β f.toArray.toList
 
 omit [ZMod64.PrimeModulus p] in
+/-- Default-indexing `f`'s stored coefficient list returns the coefficient
+`f.coeff n`. -/
 private theorem eval_coeff_list_getD_eq_coeff (f : FpPoly p) (n : Nat) :
     f.toArray.toList.getD n (0 : ZMod64 p) = f.coeff n := by
   unfold DensePoly.toArray DensePoly.coeff
@@ -1683,6 +1697,8 @@ private theorem eval_coeff_list_getD_eq_coeff (f : FpPoly p) (n : Nat) :
   rfl
 
 omit [ZMod64.PrimeModulus p] in
+/-- Default-indexing `(List.range bound).map coeff` at `n` returns `coeff n` when
+`n < bound` and `0` otherwise. -/
 private theorem list_getD_map_range_zmod (bound n : Nat) (coeff : Nat → ZMod64 p) :
     ((List.range bound).map coeff).getD n (0 : ZMod64 p) =
       if n < bound then coeff n else 0 := by
@@ -1691,6 +1707,8 @@ private theorem list_getD_map_range_zmod (bound n : Nat) (coeff : Nat → ZMod64
   · simp [hn, List.getD]
 
 omit [ZMod64.PrimeModulus p] in
+/-- Two `ZMod64 p` lists of equal length that agree at every default-indexed
+position are equal. -/
 private theorem list_eq_of_length_eq_of_getD_eq
     {xs ys : List (ZMod64 p)}
     (hlen : xs.length = ys.length)
@@ -1717,6 +1735,7 @@ private theorem list_eq_of_length_eq_of_getD_eq
           rw [hhead, htail]
 
 omit [ZMod64.PrimeModulus p] in
+/-- `f`'s stored coefficient list equals `(List.range f.size).map f.coeff`. -/
 private theorem toArray_toList_eq_coeff_range (f : FpPoly p) :
     f.toArray.toList = (List.range f.size).map (fun i => f.coeff i) := by
   apply list_eq_of_length_eq_of_getD_eq
