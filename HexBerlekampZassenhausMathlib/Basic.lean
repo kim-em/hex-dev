@@ -9379,6 +9379,118 @@ theorem henselLiftData_represents_lifted_of_modP
           (show Hex.DensePoly.leadingCoeff core = (1 : Int) from hcore_monic)]
         exact ⟨q, hcoreq⟩ }
 
+/-- **#7453.**
+
+Monic-coordinate forward Hensel-lift transport for `toMonicLiftData`
+correspondents.
+
+For `M := (Hex.ZPoly.toMonic core).monic`, this instantiates
+`henselLiftData_represents_lifted_of_modP` at Hensel precision
+`Hex.precisionForCoeffBound B primeData.p`, discharging the analytic inputs
+from the `toMonicPrimeData?` / `factorsModPBerlekampForm` extractors and the
+`Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` path, then
+records the conclusion against `Hex.ZPoly.toMonicLiftData core B primeData`,
+which is definitionally
+`Hex.henselLiftData M (Hex.precisionForCoeffBound B primeData.p) primeData`.
+
+The result is the monic-coordinate lifted representation only: a monic factor
+`g ∣ M` represented modulo `primeData.p` by `S` is represented at the lift on
+the monic coordinate `M`.  Recovering the original non-monic `factor` from this
+(via `primitivePart ∘ dilate`) is the separate transfer of #7452; this lemma
+deliberately stops at the monic coordinate.
+
+`hcore_lc_pos` and `hcore_pos` make `M` monic
+(`Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree`).  `hB_ne_zero` is required
+for `1 ≤ Hex.precisionForCoeffBound B primeData.p`: with `B = 0` the
+coefficient target `2 * B + 1 = 1` admits precision `0`, and
+`precisionForCoeffBound_spec` only forces `2 * B < primeData.p ^ precision`. -/
+theorem toMonicLiftData_represents_lifted_monicCorrespondent
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hB_ne_zero : B ≠ 0)
+    {g : Hex.ZPoly} {S : ModPFactorSubset primeData}
+    (hg_monic : Hex.DensePoly.Monic g)
+    (hg_irr : Irreducible (HexPolyZMathlib.toPolynomial g))
+    (hg_dvd : g ∣ (Hex.ZPoly.toMonic core).monic)
+    (hrepP : RepresentsIntegerFactorModP primeData g S) :
+    RepresentsIntegerFactorAtLift (Hex.ZPoly.toMonic core).monic
+      (Hex.ZPoly.toMonicLiftData core B primeData) g
+      (liftedSubsetOfModPSubset primeData
+        (Hex.ZPoly.toMonicLiftData core B primeData)
+        (Hex.ZPoly.toMonicLiftData_liftedFactors_size_eq core B primeData) S) := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  have hmonicCore_monic :
+      Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
+    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+  have hform :
+      Hex.factorsModPBerlekampForm (Hex.ZPoly.toMonic core).monic primeData :=
+    Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form core primeData hselected
+  have hgood :
+      Hex.isGoodPrime (Hex.ZPoly.toMonic core).monic primeData.p = true :=
+    Hex.ZPoly.toMonicPrimeData?_isGoodPrime core primeData hselected
+  have hp_prime : Hex.Nat.Prime primeData.p :=
+    Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+  have hp : 1 < primeData.p := hp_prime.two_le
+  have hp2 : 2 ≤ primeData.p := hp_prime.two_le
+  -- Precision positivity: needs `B ≠ 0`, since `precisionForCoeffBound_spec`
+  -- only bounds `2 * B < p ^ precision`.
+  have hprec_spec :
+      2 * B < primeData.p ^ Hex.precisionForCoeffBound B primeData.p :=
+    Hex.precisionForCoeffBound_spec hp2 B
+  have hB1 : 1 ≤ B := Nat.one_le_iff_ne_zero.mpr hB_ne_zero
+  have hprec_pos : 1 ≤ Hex.precisionForCoeffBound B primeData.p := by
+    by_contra hlt
+    have hzero : Hex.precisionForCoeffBound B primeData.p = 0 := by omega
+    rw [hzero, pow_zero] at hprec_spec
+    omega
+  -- Analytic inputs from the Berlekamp-form extractors.
+  have hfactors_monic :
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g :=
+    factorsModP_monic_of_factorsModPBerlekampForm
+      (Hex.ZPoly.toMonic core).monic primeData hform
+  have hproduct_mod_p :
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        (Hex.ZPoly.toMonic core).monic primeData.p :=
+    factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
+      (Hex.ZPoly.toMonic core).monic primeData hmonicCore_monic hform hgood
+  have hcoprime :
+      Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
+        primeData.factorsModP.toList :=
+    factorsModP_coprime_of_factorsModPBerlekampForm
+      (Hex.ZPoly.toMonic core).monic primeData hform hgood
+  have hnonempty : primeData.factorsModP.toList ≠ [] :=
+    factorsModP_ne_nil_of_factorsModPBerlekampForm
+      (Hex.ZPoly.toMonic core).monic primeData hform
+  have hinv :
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p (Hex.precisionForCoeffBound B primeData.p)
+        (Hex.ZPoly.toMonic core).monic
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList :=
+    Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData
+      (Hex.ZPoly.toMonic core).monic
+      (Hex.precisionForCoeffBound B primeData.p) primeData
+      hp_prime hp hprec_pos hmonicCore_monic hfactors_monic
+      hproduct_mod_p hcoprime hnonempty
+  have hfactors_nodup : primeData.factorsModP.toList.Nodup :=
+    factorsModP_nodup_of_factorsModPBerlekampForm
+      (Hex.ZPoly.toMonic core).monic primeData hform hgood
+  have hfactors_irr :
+      ∀ i : ModPFactorIndex primeData,
+        Irreducible
+          (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)) :=
+    factors_irreducible_of_factorsModPBerlekampForm
+      (Hex.ZPoly.toMonic core).monic primeData hform hgood
+  have hprime_root : _root_.Nat.Prime primeData.p :=
+    natPrime_of_hexNatPrime hp_prime
+  exact henselLiftData_represents_lifted_of_modP
+    (Hex.ZPoly.toMonic core).monic
+    (Hex.precisionForCoeffBound B primeData.p) primeData
+    hmonicCore_monic hprime_root hinv hprec_pos hfactors_monic hproduct_mod_p
+    hfactors_irr hfactors_nodup hg_monic hg_irr hg_dvd hrepP
+
 /-- `centeredModNat 1 m = 1` when `m ≥ 2`: the value `1` lies in the centred
 half-window and is preserved by the centred-reduction operation. -/
 private theorem centeredModNat_one_of_two_le {m : Nat} (hm : 2 ≤ m) :
