@@ -207,6 +207,9 @@ theorem row_rowAdd_of_ne [Mul R] [Add R]
     row (rowAdd M src dst c) src = row M src := by
   exact row_rowAdd_of_ne M src c hsrcdst
 
+/-- Two fold-sums over `xs` agree when their summand functions `f` and `g` agree
+pointwise on `xs`; congruence for the fold-sum under the integrand, used to rewrite
+the summand in the row-echelon sum manipulations. -/
 private theorem foldl_sum_congr_aux {R : Type u} [Add R] {α : Type v}
     (xs : List α) (f g : α → R) (acc : R)
     (h : ∀ x ∈ xs, f x = g x) :
@@ -221,6 +224,9 @@ private theorem foldl_sum_congr_aux {R : Type u} [Add R] {α : Type v}
     rw [hx]
     exact ih (acc + g x) hxs
 
+/-- Left multiplication by `c` distributes through a fold-sum, scaling each summand
+`f x` to `c * f x` and the initial accumulator to `c * acc`; pulls a left scalar
+factor through the accumulating sum in the row-echelon rewrites. -/
 private theorem foldl_sum_mul_left_aux {R : Type u} [Lean.Grind.Ring R]
     {α : Type v} (xs : List α) (f : α → R) (c acc : R) :
     c * xs.foldl (fun acc x => acc + f x) acc =
@@ -233,6 +239,9 @@ private theorem foldl_sum_mul_left_aux {R : Type u} [Lean.Grind.Ring R]
     have hdist : c * (acc + f x) = c * acc + c * f x := by grind
     rw [hdist]
 
+/-- Right multiplication by `c` distributes through a fold-sum, scaling each summand
+`f x` to `f x * c` and the initial accumulator to `acc * c`; pulls a right scalar
+factor through the accumulating sum in the row-echelon rewrites. -/
 private theorem foldl_sum_mul_right_aux {R : Type u} [Lean.Grind.Ring R]
     {α : Type v} (xs : List α) (f : α → R) (c acc : R) :
     xs.foldl (fun acc x => acc + f x) acc * c =
@@ -245,6 +254,9 @@ private theorem foldl_sum_mul_right_aux {R : Type u} [Lean.Grind.Ring R]
     have hdist : (acc + f x) * c = acc * c + f x * c := by grind
     rw [hdist]
 
+/-- The fold-sum of a pointwise sum `f x + g x` splits into the two separate
+fold-sums, provided the starting accumulator splits as `acc = accF + accG`;
+additivity of the fold-sum over its summand in the row-echelon rewrites. -/
 private theorem foldl_sum_add_aux {R : Type u} [Lean.Grind.Ring R]
     {α : Type v} (xs : List α) (f g : α → R) (acc accF accG : R)
     (h : acc = accF + accG) :
