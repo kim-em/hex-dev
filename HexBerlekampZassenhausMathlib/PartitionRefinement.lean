@@ -412,6 +412,86 @@ theorem factorFastCoreWithBound_some_factor_count_ge_of_cut
     BHKS.supportPartitionByMinColumn_length_le_bhksEquivalenceClassIndicators_size
       L trueSupports hcut
 
+/-- Forward-cut cardinality equality for a successful BHKS fast-core branch.
+
+Pairs the executable upper bound `factorFastCoreWithBound_some_factor_count_le`
+with the forward-inclusion lower bound
+`factorFastCoreWithBound_some_factor_count_ge_of_cut`, so the count equality is
+established from the forward inclusion `W ⊆ L'`
+(`BHKS.CutProjectionHypotheses`) alone.  Unlike
+`factorFastCoreWithBound_some_factor_count_eq`, it routes through no
+`ExpectedTrueFactors` package, and hence through no reverse `L' = W` separation
+or bad-vector resultant valuation.  The two executable-success facts `hsize`
+and `hpartition` isolate the remaining plumbing. -/
+theorem factorFastCoreWithBound_some_factor_count_eq_of_cut
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    {L : Hex.BhksProjectedRows}
+    (trueSupports : Set (Set (Fin L.factorCount)))
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (hcut : BHKS.CutProjectionHypotheses L trueSupports)
+    (hsize : coreFactors.size = (Hex.bhksEquivalenceClassIndicators L).size)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length =
+      (UniqueFactorizationMonoid.normalizedFactors
+        (HexPolyZMathlib.toPolynomial core)).card := by
+  apply le_antisymm
+  · exact factorFastCoreWithBound_some_factor_count_le hcore_ne h
+  · exact factorFastCoreWithBound_some_factor_count_ge_of_cut trueSupports h hcut
+      hsize hpartition
+
+/-- Irreducibility of every emitted factor from the forward-cut count equality.
+
+This is the forward-inclusion analogue of
+`factorFastCoreWithBound_some_factor_irreducible`: it feeds the forward count
+equality `factorFastCoreWithBound_some_factor_count_eq_of_cut` into the UFD
+partition scaffold `factorFastCoreWithBound_some_factor_irreducible_of_count`,
+with no dependency on the reverse `L' = W` separation. -/
+theorem factorFastCoreWithBound_some_factor_irreducible_of_cut
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    {L : Hex.BhksProjectedRows}
+    (trueSupports : Set (Set (Fin L.factorCount)))
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (hcut : BHKS.CutProjectionHypotheses L trueSupports)
+    (hsize : coreFactors.size = (Hex.bhksEquivalenceClassIndicators L).size)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    ∀ factor ∈ coreFactors.toList,
+      Irreducible (HexPolyZMathlib.toPolynomial factor) :=
+  factorFastCoreWithBound_some_factor_irreducible_of_count hcore_ne h
+    (factorFastCoreWithBound_some_factor_count_eq_of_cut trueSupports hcore_ne h
+      hcut hsize hpartition)
+
+/-- `Hex.ZPoly`-predicate form of
+`factorFastCoreWithBound_some_factor_irreducible_of_cut`: the forward-inclusion
+irreducibility wrapper used by fast-core callers that already carry a forward
+cut certificate. -/
+theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    {L : Hex.BhksProjectedRows}
+    (trueSupports : Set (Set (Fin L.factorCount)))
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (hcut : BHKS.CutProjectionHypotheses L trueSupports)
+    (hsize : coreFactors.size = (Hex.bhksEquivalenceClassIndicators L).size)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    ∀ factor ∈ coreFactors.toList, Hex.ZPoly.Irreducible factor :=
+  factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count hcore_ne h
+    (factorFastCoreWithBound_some_factor_count_eq_of_cut trueSupports hcore_ne h
+      hcut hsize hpartition)
+
 /-- Cardinality equality for a successful BHKS fast-core branch under the B8
 partition-refinement package.  Pairs `factorFastCoreWithBound_some_factor_count_le`
 with `factorFastCoreWithBound_some_factor_count_ge`, exposing the count
@@ -483,41 +563,48 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible
     (factorFastCoreWithBound_some_factor_count_eq trueSupports hcore_ne h
       htrue hpartition)
 
-/-- Forward-recovery-input form of the fast-core irreducibility wrapper.
+/-- Forward-recovery-input form of the fast-core irreducibility wrapper, routed
+through the forward inclusion `W ⊆ L'`.
 
-This is the proof-facing API for fast-branch callers that already carry the
-BHKS recovery package at the successful lift.  The executable success equation
-is still required to identify the returned factors, but the BHKS data are
-explicit hypotheses; in particular this theorem does not try to reconstruct
-`ExpectedTrueFactors` or the support-partition count from a bare
-`factorFastCoreWithBound = some _` premise. -/
+This is the proof-facing API for fast-branch callers that carry the BHKS
+recovery package at the successful lift together with a forward cut certificate.
+It obtains the lower count bound through
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut`, so it depends only
+on the forward `BHKS.CutProjectionHypotheses` (certified by the cut-survival
+argument) — not on the `ForwardRecoveryInputs.lattice_eq_indicators` field, the
+reverse `L' = W` separation that requires the bad-vector resultant valuation.
+The recovery package supplies only the executable identification: the
+`hsize` plumbing fact is discharged from its `candidates_eq` / `indicators_match`
+fields, with no appeal to the lattice separation. -/
 theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_forwardInputs
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {k fuel : Nat}
     (hcore_ne : core ≠ 0)
-    (hcore_monic : Hex.DensePoly.Monic core)
     (hinputs :
       BHKS.ForwardRecoveryInputs core (Hex.ZPoly.toMonicLiftData core k primeData))
     (h :
       Hex.factorFastCoreWithBound core B primeData k fuel =
         some hinputs.expectedFactors)
-    (hindicators :
-      hinputs.expectedIndicators =
-        BHKS.expectedIndicatorArrayOfSupports hinputs.trueSupports)
+    (hcut :
+      BHKS.CutProjectionHypotheses
+        (BHKS.projectedRowsOfLiftData core
+          (Hex.ZPoly.toMonicLiftData core k primeData) hinputs.rows_pos)
+        hinputs.trueSupports)
     (hpartition :
       (BHKS.supportPartitionByMinColumn hinputs.trueSupports).length =
         (UniqueFactorizationMonoid.normalizedFactors
           (HexPolyZMathlib.toPolynomial core)).card) :
     ∀ factor ∈ hinputs.expectedFactors.toList,
       Hex.ZPoly.Irreducible factor := by
-  have htrue :
-      BHKS.ForwardRecoveryInputs.ExpectedTrueFactors core
-        (BHKS.expectedIndicatorArrayOfSupports hinputs.trueSupports)
-        hinputs.expectedFactors := by
-    rw [← hindicators]
-    exact BHKS.ForwardRecoveryInputs.expectedTrueFactors_of_monic hcore_monic hinputs
+  have hsize :
+      hinputs.expectedFactors.size =
+        (Hex.bhksEquivalenceClassIndicators
+          (BHKS.projectedRowsOfLiftData core
+            (Hex.ZPoly.toMonicLiftData core k primeData) hinputs.rows_pos)).size := by
+    rw [Hex.bhksIndicatorCandidates?_size_eq hinputs.candidates_eq]
+    exact congrArg Array.size hinputs.indicators_match.symm
   exact
-    factorFastCoreWithBound_some_factor_zpolyIrreducible hinputs.trueSupports
-      hcore_ne h htrue hpartition
+    factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut
+      hinputs.trueSupports hcore_ne h hcut hsize hpartition
 
 end HexBerlekampZassenhausMathlib
