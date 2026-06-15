@@ -1425,6 +1425,8 @@ theorem primitiveSquareFreeDecomposition_primitive (f : ZPoly) :
     · simp [primitiveSquareFreeDecomposition, hzero, hderivative]
     · simp [primitiveSquareFreeDecomposition, hzero, hderivative]
 
+/-- Sign-normalization fixes the zero polynomial: `normalizePrimitiveSign 0 = 0`,
+the base case characterising the transform on a degenerate input. -/
 private theorem normalizePrimitiveSign_zero :
     normalizePrimitiveSign (0 : ZPoly) = 0 := by
   unfold normalizePrimitiveSign
@@ -1450,6 +1452,8 @@ theorem leadingCoeff_ne_zero_of_ne_zero (p : ZPoly) (hp : p ≠ 0) :
   rw [DensePoly.leadingCoeff_eq_coeff_last p hp_pos]
   exact DensePoly.coeff_last_ne_zero_of_pos_size p hp_pos
 
+/-- Sign-normalization preserves nonzeroness: scaling by `-1` cannot collapse a
+nonzero polynomial, so `normalizePrimitiveSign p ≠ 0` whenever `p ≠ 0`. -/
 private theorem normalizePrimitiveSign_ne_zero_of_ne_zero (p : ZPoly) (hp : p ≠ 0) :
     normalizePrimitiveSign p ≠ 0 := by
   unfold normalizePrimitiveSign
@@ -1480,6 +1484,8 @@ theorem leadingCoeff_normalizePrimitiveSign_pos_of_ne_zero (p : ZPoly)
       (normalizePrimitiveSign_ne_zero_of_ne_zero p hp)
   omega
 
+/-- Sign-normalization is the identity on a polynomial whose leading coefficient
+is already nonnegative, since the negating branch is not taken. -/
 private theorem normalizePrimitiveSign_eq_self_of_leadingCoeff_nonneg
     (p : ZPoly) (h : 0 ≤ DensePoly.leadingCoeff p) :
     normalizePrimitiveSign p = p := by
@@ -1532,6 +1538,9 @@ theorem leadingCoeff_ratPolyPrimitivePart_pos_of_ne_zero (p : DensePoly Rat)
   · exact False.elim (hden_ne hden_zero)
   · exact hp_zero
 
+/-- Sign-normalization preserves primitivity: negating by `-1` leaves the content
+unchanged, so the sign-normalized primitive part of `f` is still primitive whenever
+its content is nonzero. -/
 private theorem normalizePrimitiveSign_primitivePart_primitive (f : ZPoly)
     (h : content (normalizePrimitiveSign (primitivePart f)) ≠ 0) :
     Primitive (normalizePrimitiveSign (primitivePart f)) := by
@@ -3199,6 +3208,8 @@ private theorem int_eq_one_or_neg_one_of_natAbs_eq_one {c : Int}
       subst n
       rfl
 
+/-- Sign-normalization fixes the constant `1`: its leading coefficient is already
+positive, so `normalizePrimitiveSign (C 1) = 1`. -/
 private theorem normalizePrimitiveSign_C_one :
     normalizePrimitiveSign (DensePoly.C (1 : Int)) = 1 := by
   unfold normalizePrimitiveSign
@@ -3207,6 +3218,8 @@ private theorem normalizePrimitiveSign_C_one :
   rw [if_neg hlead]
   rfl
 
+/-- Sign-normalization sends the constant `-1` to `1`: its negative leading
+coefficient triggers the negating branch, recovering the positive unit. -/
 private theorem normalizePrimitiveSign_C_neg_one :
     normalizePrimitiveSign (DensePoly.C (-1 : Int)) = 1 := by
   unfold normalizePrimitiveSign
@@ -3225,6 +3238,9 @@ private theorem normalizePrimitiveSign_C_neg_one :
     change - (0 : Int) = (0 : Int)
     rfl
 
+/-- A primitive polynomial of size at most one is a unit constant `±1`, which
+sign-normalization collapses to `1`; the characterising case on primitive
+constants. -/
 private theorem normalizePrimitiveSign_eq_one_of_primitive_size_le_one
     (p : ZPoly) (hprimitive : Primitive p) (hsize : p.size ≤ 1) :
     normalizePrimitiveSign p = 1 := by
