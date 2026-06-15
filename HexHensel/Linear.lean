@@ -1369,6 +1369,9 @@ theorem linearHenselStep_spec
   simpa using
     linearHenselStep_reduced_factor_congr p k f g h s t hk hprod hbez hmonic
 
+/-- The top stored coefficient `f.coeff (f.size - 1)` is the leading coefficient,
+whenever `f` has positive size. This identifies the array `back?` slot with
+`leadingCoeff`, the workhorse for reading monicity off the top entry. -/
 private theorem coeff_last_eq_leadingCoeff (f : ZPoly) (hpos : 0 < f.size) :
     f.coeff (f.size - 1) = f.leadingCoeff := by
   cases f with
@@ -1380,6 +1383,9 @@ private theorem coeff_last_eq_leadingCoeff (f : ZPoly) (hpos : 0 < f.size) :
       rw [Array.getElem?_eq_getElem hidx]
       exact (Array.getElem_eq_getD 0).symm
 
+/-- A monic polynomial is nonempty: its `size` is positive. A zero-size `f` would
+have leading coefficient `0`, contradicting `leadingCoeff = 1`. This rules out the
+degenerate case so the size-arithmetic lemmas below may freely subtract one. -/
 private theorem monic_size_pos (f : ZPoly) (hmonic : DensePoly.Monic f) :
     0 < f.size := by
   by_cases hpos : 0 < f.size
@@ -1395,6 +1401,9 @@ private theorem monic_size_pos (f : ZPoly) (hmonic : DensePoly.Monic f) :
     rw [hlead] at hlead_one
     exact False.elim (Int.zero_ne_one hlead_one)
 
+/-- Pin the degree from a witness: if `f.coeff n = 1` and every coefficient above
+`n` vanishes, then `f.degree? = some n`. The unit coefficient forces `n < size` and
+the vanishing tail forces `size ≤ n + 1`, so `size = n + 1` and the degree is `n`. -/
 private theorem degree?_eq_some_of_coeff_eq_one_and_high_coeff_zero
     (f : ZPoly) (n : Nat)
     (hone : f.coeff n = 1)
@@ -1419,6 +1428,9 @@ private theorem degree?_eq_some_of_coeff_eq_one_and_high_coeff_zero
   unfold DensePoly.degree?
   simp [hsize]
 
+/-- The monicity counterpart of the previous lemma: a unit coefficient at `n` with
+a vanishing tail above `n` makes `f` monic. Having fixed `size = n + 1` via the
+degree witness, the top coefficient is `f.coeff n = 1`, which is `Monic`. -/
 private theorem monic_of_coeff_eq_one_and_high_coeff_zero
     (f : ZPoly) (n : Nat)
     (hone : f.coeff n = 1)
@@ -1439,6 +1451,8 @@ private theorem monic_of_coeff_eq_one_and_high_coeff_zero
   rw [← hlast]
   exact hone
 
+/-- Read the degree off a monic polynomial: `f.degree? = some (f.size - 1)`. Since
+monicity gives positive size, `degree?` returns the top index rather than `none`. -/
 private theorem degree?_eq_some_size_sub_one_of_monic
     (f : ZPoly) (hmonic : DensePoly.Monic f) :
     f.degree? = some (f.size - 1) := by
@@ -1446,12 +1460,19 @@ private theorem degree?_eq_some_size_sub_one_of_monic
   have hpos := monic_size_pos f hmonic
   simp [Nat.ne_of_gt hpos]
 
+/-- The `getD 0`-unwrapped form of `degree?_eq_some_size_sub_one_of_monic`:
+for monic `f`, `f.degree?.getD 0 = f.size - 1`. Convenient where callers consume the
+raw `Nat` degree instead of the `Option`. -/
 private theorem degree?_getD_eq_size_sub_one_of_monic
     (f : ZPoly) (hmonic : DensePoly.Monic f) :
     f.degree?.getD 0 = f.size - 1 := by
   rw [degree?_eq_some_size_sub_one_of_monic f hmonic]
   rfl
 
+/-- For monic `f`, the top stored coefficient is exactly `1`. Combining
+`coeff_last_eq_leadingCoeff` with `leadingCoeff = 1`, this is the concrete top-entry
+fact the `linearHenselStep` monic-preservation proofs feed back into the witnesses
+above. -/
 private theorem coeff_last_eq_one_of_monic
     (f : ZPoly) (hmonic : DensePoly.Monic f) :
     f.coeff (f.size - 1) = 1 := by
