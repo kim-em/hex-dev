@@ -8354,13 +8354,20 @@ theorem factor_pairwise_first
     factorWithBound_pairwise_first f (ZPoly.defaultFactorCoeffBound f)
 
 /-- In the slow exhaustive modular fallback branch, every recorded
-`factorWithBound` entry comes from the public raw exhaustive slow-factor
-array, up to sign normalization by `collectFactorMultiplicities`. -/
+`factorWithBound` entry comes from the explicit raw exhaustive slow-factor
+array selected by the threaded `choosePrimeData?` witness, up to sign
+normalization by `collectFactorMultiplicities`. -/
 theorem factorWithBound_entry_mem_exhaustive_branch_raw
     (f : ZPoly) (B : Nat) (entry : ZPoly × Nat)
+    (primeData : PrimeChoiceData)
+    (hchoose :
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
     (hbranch : factorWithBoundUsesExhaustiveBranch f B)
     (hmem : entry ∈ (factorWithBound f B).factors.toList) :
-    ∃ raw ∈ (exhaustiveSlowRawFactorsWithBound f B).toList,
+    ∃ raw ∈
+        (reassemblePolynomialFactors (normalizeForFactor f)
+          (exhaustiveCoreFactorsWithBound
+            (normalizeForFactor f).squareFreeCore B primeData)).toList,
       entry.1 = normalizeFactorSign raw := by
   obtain ⟨hfast, hdeg, hquad, hprime⟩ := hbranch
   obtain ⟨rawFactors, hsource, raw, hraw_mem, hraw_norm⟩ :=
@@ -8373,13 +8380,10 @@ theorem factorWithBound_entry_mem_exhaustive_branch_raw
   · exfalso
     rw [hfast] at hfast_some
     cases hfast_some
-  · obtain ⟨primeData, hchoose⟩ := Option.isSome_iff_exists.mp hprime
-    unfold factorSlowModularFactorsWithBound at hrawFactors
+  · unfold factorSlowModularFactorsWithBound at hrawFactors
     rw [if_neg hdeg, hquad, hchoose] at hrawFactors
     have hraw_eq := Option.some.inj hrawFactors
     refine ⟨raw, ?_, hraw_norm⟩
-    unfold exhaustiveSlowRawFactorsWithBound
-    rw [choosePrimeData_eq_of_choosePrimeData?_some hchoose]
     have hraw_eq' :
         reassemblePolynomialFactors (normalizeForFactor f)
             (exhaustiveCoreFactorsWithBound
@@ -8391,20 +8395,27 @@ theorem factorWithBound_entry_mem_exhaustive_branch_raw
     rw [hmod_none] at hmod_some
     cases hmod_some
 
-/-- Membership in the public exhaustive slow raw array splits into
+/-- Membership in an explicit-witness exhaustive slow raw array splits into
 normalization-prefix factors and exhaustive square-free-core factors. -/
 theorem exhaustiveSlowRawFactorsWithBound_mem_normalization_or_core
-    (f factor : ZPoly) (B : Nat)
-    (hmem : factor ∈ (exhaustiveSlowRawFactorsWithBound f B).toList) :
+    (f factor : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    {rawFactors : Array ZPoly}
+    (hchoose :
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
+    (hraw : exhaustiveSlowRawFactorsWithBound? f B = some rawFactors)
+    (hmem : factor ∈ rawFactors.toList) :
     factor ∈ (polynomialNormalizationPrefixFactors (normalizeForFactor f)).toList ∨
       factor ∈
         (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-          (choosePrimeData (normalizeForFactor f).squareFreeCore)).toList := by
-  rw [exhaustiveSlowRawFactorsWithBound] at hmem
+          primeData).toList := by
+  unfold exhaustiveSlowRawFactorsWithBound? at hraw
+  rw [hchoose] at hraw
+  have hraw_eq := Option.some.inj hraw
+  rw [← hraw_eq] at hmem
   exact reassemblePolynomialFactors_mem_normalization_or_core
     (normalizeForFactor f)
     (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-      (choosePrimeData (normalizeForFactor f).squareFreeCore))
+      primeData)
     factor hmem
 
 /--
@@ -8431,14 +8442,10 @@ theorem factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassembly
           (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
             primeData).toList) ∧
         entry.1 = normalizeFactorSign raw := by
-  have hwf :
-      choosePrimeData (normalizeForFactor f).squareFreeCore = primeData :=
-    choosePrimeData_eq_of_choosePrimeData?_some hchoose
-  rcases factorWithBound_entry_mem_exhaustive_branch_raw f B entry hbranch hmem with
+  rcases factorWithBound_entry_mem_exhaustive_branch_raw
+      f B entry primeData hchoose hbranch hmem with
     ⟨raw, hraw_mem, hraw_norm⟩
   refine ⟨raw, ?_, hraw_norm⟩
-  rw [exhaustiveSlowRawFactorsWithBound] at hraw_mem
-  rw [hwf] at hraw_mem
   exact
     reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
       (normalizeForFactor f)
