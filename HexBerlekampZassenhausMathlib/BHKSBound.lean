@@ -270,6 +270,40 @@ theorem one_le_l2norm_toPolynomial_of_ne_zero
   have h_abs : |(1 : ℝ)| ≤ |x| := (sq_le_sq).mp (by simpa using hx_sq_ge_one)
   simpa [abs_of_nonneg hx_nonneg] using h_abs
 
+/--
+An integer polynomial with at least two nonzero coefficients has Euclidean
+norm strictly above one: each support coordinate is a nonzero integer, so its
+square contributes `≥ 1`, and two such terms give `‖P‖₂² ≥ 2`, hence
+`‖P‖₂ ≥ √2 > 1`.
+
+This is the C-independent analytic core of the BHKS §5 "‖core‖₂ lower bound"
+sub-piece: combined with the reachability fact that a normalized square-free
+core has both a nonzero constant term and a nonzero leading term (x-power
+stripping happens before `squareFreeCore`), it yields `1 < ‖core‖₂` for every
+reachable core, strengthening `one_le_l2norm_toPolynomial_of_ne_zero` from `≤`
+to strict and feeding `Real.log_pos` in the auxiliary-factor positivity below.
+-/
+theorem one_lt_l2norm_toPolynomial_of_two_le_support
+    {f : Hex.ZPoly}
+    (hcard : 2 ≤ (HexPolyZMathlib.toPolynomial f).support.card) :
+    1 < HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f) := by
+  let P := HexPolyZMathlib.toPolynomial f
+  have hterm : ∀ i ∈ P.support, (1 : ℝ) ≤ (P.coeff i : ℝ) ^ 2 := by
+    intro i hi
+    have hne : P.coeff i ≠ 0 := (Polynomial.mem_support_iff).mp hi
+    have hnat_pos : 0 < (P.coeff i).natAbs := Int.natAbs_pos.mpr hne
+    have hnat_one : (1 : ℝ) ≤ ((P.coeff i).natAbs : ℝ) := by exact_mod_cast hnat_pos
+    rw [← int_natAbs_sq_cast_eq_sq]
+    nlinarith [hnat_one]
+  have hsum_ge : (2 : ℝ) ≤ ∑ i ∈ P.support, (P.coeff i : ℝ) ^ 2 :=
+    calc (2 : ℝ) ≤ (P.support.card : ℝ) := by exact_mod_cast hcard
+      _ = ∑ _i ∈ P.support, (1 : ℝ) := by rw [Finset.sum_const, nsmul_eq_mul, mul_one]
+      _ ≤ ∑ i ∈ P.support, (P.coeff i : ℝ) ^ 2 := Finset.sum_le_sum hterm
+  have hlt : Real.sqrt 1 <
+      Real.sqrt (∑ i ∈ P.support, (P.coeff i : ℝ) ^ 2) :=
+    Real.sqrt_lt_sqrt (by norm_num) (by linarith)
+  simpa [HexPolyZMathlib.l2norm, P, Real.sqrt_one] using hlt
+
 private theorem l2norm_log_nonneg (f : Hex.ZPoly) :
     0 ≤ Real.log (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) := by
   let x := HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)
@@ -706,6 +740,35 @@ theorem bhksPaperAuxiliaryFactorReal_nonneg
       (bhksPaperDegreeFactorReal_nonneg f)
       (bhksPaperConstantFactorReal_nonneg f hC_nonneg))
     (bhksPaperLogFactorReal_nonneg f)
+
+/--
+The auxiliary-side product `n · (2C)^(n²) · (log ‖f‖₂)^n` is strictly positive
+once the threshold degeneracies are excluded: `0 < C` makes the `(2C)^(n²)`
+factor positive, `1 ≤ n` makes the degree factor positive, and `1 < ‖f‖₂`
+makes `log ‖f‖₂ > 0` (via `Real.log_pos`) so its `n`-th power is positive.
+
+This is the BHKS §5 "log-factor positivity" sub-piece. On the cap-lift surface
+the three hypotheses are discharged from reachability: `1 ≤ bhksDegree f` from
+`HasPositiveDimension` and the good-prime choice, and `1 < ‖f‖₂` from
+`one_lt_l2norm_toPolynomial_of_two_le_support` applied to the x-stripped core.
+It certifies that the auxiliary RHS the domination must clear never vanishes,
+which is what makes fixing `C := 2` sound rather than degenerate.
+-/
+theorem bhksPaperAuxiliaryFactorReal_pos
+    (f : Hex.ZPoly) {C : ℝ} (hC : 0 < C)
+    (hdeg : 1 ≤ bhksDegree f)
+    (hnorm : 1 < HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) :
+    0 < bhksPaperAuxiliaryFactorReal f C := by
+  unfold bhksPaperAuxiliaryFactorReal bhksPaperDegreeFactorReal
+    bhksPaperConstantFactorReal bhksPaperLogFactorReal
+  have hdeg_pos : 0 < (bhksDegree f : ℝ) := by exact_mod_cast hdeg
+  have hconst_pos : 0 < (2 * C) ^ (bhksDegree f * bhksDegree f) :=
+    pow_pos (by linarith) _
+  have hlog_pos :
+      0 < (Real.log (HexPolyZMathlib.l2norm
+        (HexPolyZMathlib.toPolynomial f))) ^ bhksDegree f :=
+    pow_pos (Real.log_pos hnorm) _
+  exact mul_pos (mul_pos hdeg_pos hconst_pos) hlog_pos
 
 /--
 The auxiliary-side paper product is bounded by the packaged integer
