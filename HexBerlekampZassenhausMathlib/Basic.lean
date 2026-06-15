@@ -16225,13 +16225,10 @@ private theorem coverAtMin_representingSubset_subset_of_liftedRecoveryCandidate_
       hSJ hf_rep
   exact ⟨f, S, hf_irr, hf_dvd_target, hSJ, hiS, hf_rep, hST⟩
 
-/-- Recovered-candidate (dilate-shape) analogue of
-`liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_scaled_of_bound`.
-The inline candidate matches the executable `scaledRecombinationSearchModAux`
-shape (`dilate (lc core) ∘ centeredLiftPoly`), so this discharges the prefix
-obligation `hprefix` consumed by
-`Hex.scaledRecombinationSearchModAux_eq_some_of_step_of_prefix_none`. -/
-private theorem liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_recovered_of_bound
+/-- Executable scaled-search prefix-none surface in the recovered/dilate
+coordinate.  The inline candidate matches `liftedRecoveryCandidate`, the
+candidate shape used by `Hex.scaledRecombinationSearchModAux`. -/
+theorem RecoveredScaledSearch.prefixNone_of_bound
     {core target factor : Hex.ZPoly} {d : Hex.LiftData}
     {J S : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
     {fuel : Nat}
@@ -17472,23 +17469,12 @@ the concrete `2 * defaultFactorCoeffBound core < d.p ^ d.k` Mignotte
 precision is replaced by `2 * B' < d.p ^ d.k` against an abstract bound
 `B'`, paired with the leading-coefficient bound on `core` and the
 universal divisor coefficient bound `∀ g ∣ core, ∀ i, (g.coeff i).natAbs
-≤ B'`. The proof body otherwise mirrors the (now-wrapper) original
-verbatim: at each of the five `_of_bound` supporting lemma call sites
-(`not_represents_empty_..._of_primitive_pos_lc_core_of_bound` in the
-empty-`J` step, `representsIntegerFactorAtLift_primitive_of_bound` and
-`scaledRecombinationCandidate_eq_factor_of_recovery_of_bound` at the
-cover-at-min recovery, `natDegree_toPolynomial_eq_sum_of_represents_..._of_bound`
-for the natDegree positivity, and
-`liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_scaled_of_bound`
-for the prefix-none discharge), the per-factor `hvalid` is specialised
-to the local divisor (`g` in the empty-`J` step, `f_cov` for the other
-three per-factor callers) by `hvalid g hg_dvd_core` /
-`hvalid f_cov hf_cov_dvd_core`, while the prefix-none caller receives
-the universal `hvalid`, `hcore_lc_le`, `B'`, and `hprecision`
-unchanged. In the recursive IH call, the outer abstract-bound
-hypotheses are captured by closure.
+≤ B'`.  This is the reusable coverage theorem for the executable scaled
+search in the recovered/dilate coordinate; the recursive step records
+`liftedRecoveryCandidate` and discharges its prefix obligation via
+`RecoveredScaledSearch.prefixNone_of_bound`.
 -/
-private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition_of_bound
+theorem RecoveredScaledSearch.covers_of_bound
     {core : Hex.ZPoly} {d : Hex.LiftData}
     (B' : Nat)
     (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
@@ -17670,7 +17656,7 @@ private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorS
       have hlocal_nodup : localFactors.Nodup :=
         hmatches.nodup_of_injOn hd_liftedFactor_inj.injOn
       have hprefix :=
-        liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_recovered_of_bound
+        RecoveredScaledSearch.prefixNone_of_bound
           B' hcore_lc_le hvalid hcore_ne hcore_primitive hcore_lc_pos
           hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
           hprecision htarget_dvd_core hpartition hmatches hlocal_nodup
@@ -17751,19 +17737,19 @@ private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorS
 Primitive + positive-leading analogue of
 `recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition`.
 
-This is the scaled recursive coverage auxiliary for primitive non-monic cores:
+This is the recovered/dilate coverage auxiliary for primitive non-monic cores:
 the executable step is `Hex.scaledRecombinationSearchModAux`, candidates are
-identified by `scaledRecombinationCandidate_eq_factor_of_recovery`, and the
-recursive target invariant is `Hex.ZPoly.Primitive target` plus positive
-leading coefficient instead of monicity.
+identified as `liftedRecoveryCandidate`, and the recursive target invariant is
+`Hex.ZPoly.Primitive target` plus positive leading coefficient instead of
+monicity.
 
 Thin wrapper over
-`scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition_of_bound`
+`RecoveredScaledSearch.covers_of_bound`
 that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound core` and
 discharges the abstract bound hypotheses via `defaultFactorCoeffBound_valid`
 paired with `leadingCoeff_eq_coeff_last`.
 -/
-private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition
+theorem RecoveredScaledSearch.covers
     {core : Hex.ZPoly} {d : Hex.LiftData}
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
@@ -17796,7 +17782,7 @@ private theorem scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorS
   intro target J localFactors fuel htarget_primitive htarget_lc_pos
     htarget_dvd_core hpartition hmatches hfuel
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
-  exact scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition_of_bound
+  exact RecoveredScaledSearch.covers_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le
     (defaultFactorCoeffBound_valid core hcore_ne)
@@ -17907,7 +17893,7 @@ precision is replaced by `2 * B' < d.p ^ d.k` against an abstract bound
 `B'`, paired with the leading-coefficient bound on `core` and the
 universal divisor coefficient bound `∀ g ∣ core, ∀ i, (g.coeff i).natAbs
 ≤ B'`. Thin wrapper over
-`scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition_of_bound`
+`RecoveredScaledSearch.covers_of_bound`
 that extracts the per-factor coverage at the supplied `factor`.
 -/
 theorem scaledRecombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition_of_bound
@@ -17942,7 +17928,7 @@ theorem scaledRecombinationSearchModAux_some_factor_associated_of_liftedFactorSu
         Associated (HexPolyZMathlib.toPolynomial emitted)
           (HexPolyZMathlib.toPolynomial factor) := by
   obtain ⟨result, hresult, hcovers⟩ :=
-    scaledRecombinationSearchModAux_some_and_covers_of_liftedFactorSubsetPartition_of_bound
+    RecoveredScaledSearch.covers_of_bound
       B' hcore_lc_le hvalid hcore_ne hcore_primitive hcore_lc_pos hd_modulus
       hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hd_liftedFactor_inj
       hprecision htarget_primitive htarget_lc_pos htarget_dvd_core hpartition
