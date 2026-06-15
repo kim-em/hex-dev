@@ -379,6 +379,76 @@ theorem natDegree_toPolynomial_auxiliaryPolynomial_le_two_mul_sub_one
   (natDegree_toPolynomial_auxiliaryPolynomial_le
     input liftData vec).trans (by omega)
 
+/--
+The squared `l2norm` of the corrected BHKS auxiliary polynomial is bounded by
+the CLD column-norm bound.
+
+The genuine `l2norm` sums squared coefficients over all indices, whereas the
+shortness certificate's `coeffSqSum_le` only controls the truncated sum over
+`Finset.range n` (`n := input.degree?.getD 0`). The two agree because every
+coefficient at index `≥ n` vanishes
+(`coeff_auxiliaryPolynomialWithCorrections`), so the support is contained in
+`Finset.range n` and the tail contributes nothing.
+-/
+theorem l2norm_sq_toPolynomial_auxiliaryPolynomialWithCorrections_le
+    {input : Hex.ZPoly} {liftData : Hex.LiftData}
+    {vec corrections : Array Int}
+    (C : ScaledShortnessCertificate input liftData vec corrections) :
+    (HexPolyZMathlib.l2norm
+        (HexPolyZMathlib.toPolynomial
+          (auxiliaryPolynomialWithCorrections input liftData vec corrections))) ^ 2
+      ≤ (cldColumnNormBound input liftData.p : ℝ) := by
+  set n := input.degree?.getD 0 with hn
+  set p := HexPolyZMathlib.toPolynomial
+      (auxiliaryPolynomialWithCorrections input liftData vec corrections) with hp
+  have hsupp : p.support ⊆ Finset.range n := by
+    intro i hi
+    rw [Finset.mem_range]
+    by_contra hge
+    have hzero : p.coeff i = 0 := by
+      rw [hp, HexPolyZMathlib.coeff_toPolynomial,
+        coeff_auxiliaryPolynomialWithCorrections, if_neg (by omega : ¬ i < n)]
+    exact (Polynomial.mem_support_iff.mp hi) hzero
+  have hsq : (HexPolyZMathlib.l2norm p) ^ 2 =
+      ∑ i ∈ p.support, (p.coeff i : ℝ) ^ 2 := by
+    unfold HexPolyZMathlib.l2norm
+    rw [Real.sq_sqrt]
+    exact Finset.sum_nonneg fun i _ => sq_nonneg _
+  have hsum_le : ∑ i ∈ p.support, (p.coeff i : ℝ) ^ 2 ≤
+      ∑ i ∈ Finset.range n, (p.coeff i : ℝ) ^ 2 :=
+    Finset.sum_le_sum_of_subset_of_nonneg hsupp (fun i _ _ => sq_nonneg _)
+  have heq : ∑ i ∈ Finset.range n, (p.coeff i : ℝ) ^ 2 =
+      ∑ j ∈ Finset.range n,
+        ((((auxiliaryPolynomialWithCorrections input liftData vec corrections).coeff j :
+          ℤ) : ℝ) ^ 2) := by
+    apply Finset.sum_congr rfl
+    intro j _
+    rw [hp, HexPolyZMathlib.coeff_toPolynomial]
+  calc
+    (HexPolyZMathlib.l2norm p) ^ 2
+        = ∑ i ∈ p.support, (p.coeff i : ℝ) ^ 2 := hsq
+    _ ≤ ∑ i ∈ Finset.range n, (p.coeff i : ℝ) ^ 2 := hsum_le
+    _ = ∑ j ∈ Finset.range n,
+          ((((auxiliaryPolynomialWithCorrections input liftData vec corrections).coeff j :
+            ℤ) : ℝ) ^ 2) := heq
+    _ ≤ (cldColumnNormBound input liftData.p : ℝ) := C.coeffSqSum_le
+
+/--
+Zero-correction specialisation of
+`l2norm_sq_toPolynomial_auxiliaryPolynomialWithCorrections_le`: the form
+consumed downstream where the auxiliary polynomial carries no diagonal-row
+corrections.
+-/
+theorem l2norm_sq_toPolynomial_auxiliaryPolynomial_le
+    {input : Hex.ZPoly} {liftData : Hex.LiftData} {vec : Array Int}
+    (C : ScaledShortnessCertificate input liftData vec #[]) :
+    (HexPolyZMathlib.l2norm
+        (HexPolyZMathlib.toPolynomial
+          (auxiliaryPolynomial input liftData vec))) ^ 2
+      ≤ (cldColumnNormBound input liftData.p : ℝ) := by
+  unfold auxiliaryPolynomial
+  exact l2norm_sq_toPolynomial_auxiliaryPolynomialWithCorrections_le C
+
 end BHKS
 
 end HexBerlekampZassenhausMathlib
