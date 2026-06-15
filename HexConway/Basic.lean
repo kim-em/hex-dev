@@ -3705,6 +3705,8 @@ table entry selected by `conwayPoly`. -/
 
 grind_pattern luebeckConwayPolynomial?_conwayPoly => conwayPoly p n h
 
+/-- In `ZMod64 p`, `1` is nonzero when the modulus is greater than one; this
+feeds the committed Conway-table leading-coefficient checks. -/
 private theorem zmod64_one_ne_zero_of_one_lt
     {p : Nat} [ZMod64.Bounds p] (hp : 1 < p) : (1 : ZMod64 p) ≠ 0 := by
   intro h
@@ -3712,6 +3714,9 @@ private theorem zmod64_one_ne_zero_of_one_lt
   rw [Nat.zero_mod, Nat.mod_eq_of_lt hp] at hm
   exact Nat.one_ne_zero hm
 
+/-- A coefficient array of size at least two with nonzero last entry gives a
+positive degree for `DensePoly.ofCoeffs`, as used by
+`luebeckConwayPolynomial?_degree_pos`. -/
 private theorem ofCoeffs_degree_pos_of_back_ne_zero
     {R : Type u} [Zero R] [DecidableEq R]
     (arr : Array R) (hsize : 2 ≤ arr.size)
