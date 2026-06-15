@@ -1160,34 +1160,58 @@ def runFpLLLFirstShortVectorHarshCubic65Checksum : Unit → IO Int := fun _ => d
 
 -- Exact `lllNative` ladder targets for the comparator's exact-native curve
 -- (the steered default lives on the `runFirstShortVector*NormSq` targets).
+/-- Exact native `runNativeFirstShortVectorNormSq` on the `random-bounded`
+fixture at the rung `n = 30`, returning the first short vector's squared norm
+for the exact-native ladder curve. -/
 def runNativeFirstShortVectorRandomBoundedNormSq30 : Unit → IO Int := fun _ => do
   return runNativeFirstShortVectorNormSq
     (← getCachedInput randomBoundedInput30Ref (fun _ => prepRandomBoundedInput 30))
 
+/-- Exact native `runNativeFirstShortVectorNormSq` on the `random-bounded`
+fixture at the rung `n = 45`, returning the first short vector's squared norm
+for the exact-native ladder curve. -/
 def runNativeFirstShortVectorRandomBoundedNormSq45 : Unit → IO Int := fun _ => do
   return runNativeFirstShortVectorNormSq
     (← getCachedInput randomBoundedInput45Ref (fun _ => prepRandomBoundedInput 45))
 
+/-- Exact native `runNativeFirstShortVectorNormSq` on the `random-bounded`
+fixture at the rung `n = 60`, returning the first short vector's squared norm
+for the exact-native ladder curve. -/
 def runNativeFirstShortVectorRandomBoundedNormSq60 : Unit → IO Int := fun _ => do
   return runNativeFirstShortVectorNormSq
     (← getCachedInput randomBoundedInput60Ref (fun _ => prepRandomBoundedInput 60))
 
+/-- Exact native `runNativeFirstShortVectorNormSq` on the `random-bounded`
+fixture at the rung `n = 75`, returning the first short vector's squared norm
+for the exact-native ladder curve. -/
 def runNativeFirstShortVectorRandomBoundedNormSq75 : Unit → IO Int := fun _ => do
   return runNativeFirstShortVectorNormSq
     (← getCachedInput randomBoundedInput75Ref (fun _ => prepRandomBoundedInput 75))
 
+/-- Exact native `runNativeFirstShortVectorNormSq` on the `random-bounded`
+fixture at the rung `n = 90`, returning the first short vector's squared norm
+for the exact-native ladder curve. -/
 def runNativeFirstShortVectorRandomBoundedNormSq90 : Unit → IO Int := fun _ => do
   return runNativeFirstShortVectorNormSq
     (← getCachedInput randomBoundedInput90Ref (fun _ => prepRandomBoundedInput 90))
 
+/-- Exact native `runNativeFirstShortVectorNormSq` on the `random-bounded`
+fixture at the rung `n = 120`, returning the first short vector's squared norm
+for the exact-native ladder curve. -/
 def runNativeFirstShortVectorRandomBoundedNormSq120 : Unit → IO Int := fun _ => do
   return runNativeFirstShortVectorNormSq
     (← getCachedInput randomBoundedInput120Ref (fun _ => prepRandomBoundedInput 120))
 
+/-- Exact native `runNativeFirstShortVectorNormSq` on the `random-bounded`
+fixture at the rung `n = 150`, returning the first short vector's squared norm
+for the exact-native ladder curve. -/
 def runNativeFirstShortVectorRandomBoundedNormSq150 : Unit → IO Int := fun _ => do
   return runNativeFirstShortVectorNormSq
     (← getCachedInput randomBoundedInput150Ref (fun _ => prepRandomBoundedInput 150))
 
+/-- Exact native `runNativeFirstShortVectorNormSq` on the `random-bounded`
+fixture at the rung `n = 180`, returning the first short vector's squared norm
+for the exact-native ladder curve. -/
 def runNativeFirstShortVectorRandomBoundedNormSq180 : Unit → IO Int := fun _ => do
   return runNativeFirstShortVectorNormSq
     (← getCachedInput randomBoundedInput180Ref (fun _ => prepRandomBoundedInput 180))
