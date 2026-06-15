@@ -227,6 +227,30 @@ downstream routes through a `private abbrev` (`factorFastCapLiftData`) that is
 never unfolded. Confirm genericity by grepping that the feeder takes
 `(d : Hex.LiftData)` as a parameter, not a fixed `henselLiftData …`.
 
+### The BHKS auxiliary domination is a C-*independent* gap, not a "C-side premise"
+
+An obligation phrased as "establish a positive C-side premise / lower bound
+on `C` so the auxiliary domination `√(correctedRHS)^d ≤
+bhksPaperAuxiliaryFactorReal core C` can be discharged" is **mis-scoped** —
+three sessions burned on it (#7369, #7375, and the two skip reports cited
+there). Do not attempt to thread `0 < C`: it is necessary but provably
+insufficient. The LHS is a *fixed* positive constant independent of `C`
+(`correctedRHS` is built from `BHKS.cldColumnNormBound core p`, which takes
+only `(input, _p)` — `BadVector.lean:337`; the landed certificate bound
+`auxiliaryPolynomial_l2norm_le_sqrt_of_bridge_data`, `BadVector.lean:1565`,
+is C-independent). The RHS `n·(2C)^(n²)·(log‖core‖₂)^n → 0` as `C → 0⁺`, so
+the domination is false for small positive `C`; no lower bound on
+`bhksPaperConstantFactorReal _ C` keyed on `0 < C` exists (only `_nonneg`
+and the *upper* bounds `_le_fourPowFactor`/`_le_natCast`), because none is
+true. `C` also has no executable provenance — it is threaded abstractly with
+only `0 ≤ C`/`C ≤ 2` through every cap-lift surface, never instantiated. The
+genuine missing content is the C-independent BHKS §5 quantitative bound at a
+fixed positive `C` (e.g. `C := 2`): `√(correctedRHS)^d ≤
+bhksPaperAuxiliaryFactorReal core 2`, a multi-lemma analytic development over
+`cldColumnNormBound`, the precision schedule, and `‖core‖₂`. If a claimed
+issue still frames this as a C-premise, diagnose and skip rather than
+attempt — see issue #7375 comment 4703593391 for the full argument.
+
 ## The Mathlib layer is not CI-built — establish a baseline first
 
 CI builds only bench + conformance targets (`ci.yml`, `conformance.yml`);
