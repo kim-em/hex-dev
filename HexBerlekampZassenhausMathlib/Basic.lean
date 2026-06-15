@@ -2266,6 +2266,72 @@ def liftedSubsetOfModPSubset
     (S : ModPFactorSubset primeData) : LiftedFactorSubset d :=
   S.map (modPIndexToLiftedEmbedding primeData d hsize)
 
+/-- Membership in a lifted canonical subset, tested at the lifted image of a
+mod-`p` factor index, is exactly membership in the original mod-`p` subset. -/
+theorem liftedIndex_mem_liftedSubset_iff
+    (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
+    (hsize : d.liftedFactors.size = primeData.factorsModP.size)
+    (S : ModPFactorSubset primeData) (i : ModPFactorIndex primeData) :
+    liftedIndexOfModPIndex primeData d hsize i ∈
+        liftedSubsetOfModPSubset primeData d hsize S ↔
+      i ∈ S := by
+  unfold liftedSubsetOfModPSubset
+  simp [modPIndexToLiftedEmbedding]
+
+/-- The canonical lift from mod-`p` factor subsets to lifted-factor subsets is
+injective. -/
+theorem liftedSubsetOfModPSubset_injective
+    (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
+    (hsize : d.liftedFactors.size = primeData.factorsModP.size) :
+    Function.Injective (liftedSubsetOfModPSubset primeData d hsize) := by
+  intro S T hST
+  ext i
+  rw [← liftedIndex_mem_liftedSubset_iff primeData d hsize S i,
+    hST, liftedIndex_mem_liftedSubset_iff primeData d hsize T i]
+
+/-- Canonical lifting reflects and preserves subset containment. -/
+theorem liftedSubsetOfModPSubset_subset_iff
+    (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
+    (hsize : d.liftedFactors.size = primeData.factorsModP.size)
+    (S T : ModPFactorSubset primeData) :
+    liftedSubsetOfModPSubset primeData d hsize S ⊆
+        liftedSubsetOfModPSubset primeData d hsize T ↔
+      S ⊆ T := by
+  constructor
+  · intro hST i hi
+    rw [← liftedIndex_mem_liftedSubset_iff primeData d hsize T i]
+    exact hST ((liftedIndex_mem_liftedSubset_iff primeData d hsize S i).mpr hi)
+  · intro hST
+    unfold liftedSubsetOfModPSubset
+    exact (Finset.map_subset_map).mpr hST
+
+/-- Canonical lifting reflects and preserves disjointness. -/
+theorem liftedSubsetOfModPSubset_disjoint_iff
+    (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
+    (hsize : d.liftedFactors.size = primeData.factorsModP.size)
+    (S T : ModPFactorSubset primeData) :
+    Disjoint (liftedSubsetOfModPSubset primeData d hsize S)
+        (liftedSubsetOfModPSubset primeData d hsize T) ↔
+      Disjoint S T := by
+  constructor
+  · intro hST
+    rw [Finset.disjoint_left] at hST ⊢
+    intro i hiS hiT
+    exact hST
+      ((liftedIndex_mem_liftedSubset_iff primeData d hsize S i).mpr hiS)
+      ((liftedIndex_mem_liftedSubset_iff primeData d hsize T i).mpr hiT)
+  · intro hST
+    rw [Finset.disjoint_left] at hST ⊢
+    intro j hjS hjT
+    unfold liftedSubsetOfModPSubset at hjS hjT
+    rw [Finset.mem_map] at hjS hjT
+    rcases hjS with ⟨i, hiS, rfl⟩
+    rcases hjT with ⟨k, hiT, hik⟩
+    have hki : k = i :=
+      (modPIndexToLiftedEmbedding primeData d hsize).injective hik
+    subst k
+    exact hST hiS hiT
+
 /--
 Selected lifted-factor product scaled by the leading coefficient of the integer
 core, matching the product formed by the executable recombination candidate
