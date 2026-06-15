@@ -4182,6 +4182,11 @@ private theorem yunFactorsContribution_derivative_active_initial_state_invariant
       yunFactorsContribution_initial_state_tail
         f multiplicity fuel
 
+/--
+Derivative-active split algebra at successor fuel: for `g = gcd f f'` and
+`c = f / g`, the split reconstructs `f` and transports both residual branches
+of the initial contribution product invariant one fuel level down.
+-/
 private theorem yunFactorsContribution_derivative_active_split_algebra_succ
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (_hmultiplicity : 0 < multiplicity) (_hfuel : f.size < fuel + 2)
@@ -4207,6 +4212,11 @@ private theorem yunFactorsContribution_derivative_active_split_algebra_succ
     (yunFactorsContribution_derivative_active_initial_state_invariant
       f multiplicity fuel)
 
+/--
+Derivative-active split algebra for arbitrary fuel: after ruling out impossible
+zero fuel, the initial split `c * g = f` carries the two-branch contribution
+product invariant for the Yun reconstruction.
+-/
 private theorem yunFactorsContribution_derivative_active_split_algebra
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 1)
@@ -4231,6 +4241,11 @@ private theorem yunFactorsContribution_derivative_active_split_algebra
         yunFactorsContribution_derivative_active_split_algebra_succ
           hp f multiplicity fuel hmultiplicity hfuel hzero hdf
 
+/--
+Initial-state product invariant extracted from the derivative-active split
+algebra, retaining only the two `isOne` branches needed for reconstructing the
+initial Yun contribution.
+-/
 private theorem yunFactorsContribution_initial_state_product_invariant
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 1)
@@ -4249,6 +4264,11 @@ private theorem yunFactorsContribution_initial_state_product_invariant
     (yunFactorsContribution_derivative_active_split_algebra
       hp f multiplicity fuel hmultiplicity hfuel hzero hdf).2
 
+/--
+Core reconstruction invariant after simplification: the initial
+`yunFactorsContribution` product equals the reversed `yunFactors`
+`weightedProduct` in either residual branch.
+-/
 private theorem yunFactorsContribution_reconstruct_core
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (hmultiplicity : 0 < multiplicity) (_hfuel : f.size < fuel + 1)
@@ -4268,6 +4288,10 @@ private theorem yunFactorsContribution_reconstruct_core
     yunFactorsContribution_initial_state_product_invariant
       hp f multiplicity fuel hmultiplicity _hfuel _hzero _hdf
 
+/--
+Repeated-terminal reconstruction branch: when the initial contribution residual
+is one, its product is exactly the reversed `yunFactors` weighted product.
+-/
 private theorem yunFactorsContribution_reconstruct_done
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 1)
@@ -4287,6 +4311,11 @@ private theorem yunFactorsContribution_reconstruct_done
   exact (yunFactorsContribution_reconstruct_core
     hp f multiplicity fuel hmultiplicity hfuel hzero hdf).1 hrepeated
 
+/--
+Recursive-tail reconstruction branch: when the initial contribution residual is
+not one, the contribution product and recursive residual contribution match the
+corresponding reversed `yunFactors` weighted product with the same tail factor.
+-/
 private theorem yunFactorsContribution_reconstruct_tail
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 1)
@@ -4316,6 +4345,11 @@ private theorem yunFactorsContribution_reconstruct_tail
   rw [(yunFactorsContribution_reconstruct_core
     hp f multiplicity fuel hmultiplicity hfuel hzero hdf).2 hrepeated]
 
+/--
+Capstone reconstruction identity for the derivative-active initial split,
+assembling the terminal and recursive-tail branches according to whether the
+initial contribution residual is one.
+-/
 private theorem yunFactorsContribution_reconstruct
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (multiplicity fuel : Nat)
     (hmultiplicity : 0 < multiplicity) (hfuel : f.size < fuel + 1)
