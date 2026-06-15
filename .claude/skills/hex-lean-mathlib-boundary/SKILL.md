@@ -97,6 +97,31 @@ implicit `[Bounds primeData.p]` cannot be synthesized and the type silently
 becomes `sorry`. Write the instance explicitly in such signatures:
 `@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds (…)`.
 
+## `Nat.choose` / `Nat.Prime` resolve to the executable shadows inside `Hex`
+
+The Mathlib-free arithmetic layer defines its own `Hex.Nat.choose` (Pascal
+recursion, `HexArith/Nat/Prime.lean`) and `Hex.Nat.Prime`. So a `def` written
+inside `namespace Hex` (e.g. `bhksCoeffBound = Nat.choose (n-1) j * …` in
+`HexBerlekampZassenhaus/Basic.lean`) elaborates `Nat.choose` to
+**`Hex.Nat.choose`**, NOT Mathlib's `Nat.choose` — even though they are the
+same recursion. Symptom in the Mathlib layer: `rfl`/`simp [theDef]` against a
+RHS you wrote with dot-notation `(n-1).choose j` (= Mathlib `Nat.choose`) fails
+with a "type mismatch" or "unsolved goal" whose two sides look identical except
+one reads `Hex.Nat.choose`. The fix is a one-line bridge proved by induction on
+the shared recurrence, e.g.
+
+```lean
+theorem hex_choose_eq (n k : Nat) : Hex.Nat.choose n k = Nat.choose n k := by
+  induction n generalizing k with
+  | zero => cases k <;> simp
+  | succ n ih => cases k with
+    | zero => simp
+    | succ k => rw [Hex.Nat.choose_succ_succ, Nat.choose_succ_succ, ih, ih]
+```
+
+then `simp_rw [hex_choose_eq]` before reaching for any Mathlib `Nat.choose`
+lemma (`Nat.sum_range_choose`, etc.). Same pattern for `Hex.Nat.Prime`.
+
 ## The Mathlib layer *models* executable definitions
 
 The bridge does not just prove lemmas about the executable types; it carries

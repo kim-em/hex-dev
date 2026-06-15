@@ -357,6 +357,88 @@ private theorem range_foldl_add_nat_pow_eq_sum (m : Nat) (g : Nat → Nat) :
       simp only [List.foldl_cons, List.foldl_nil]
       rw [ih, Finset.sum_range_succ]
 
+/-- The Mathlib-free executable binomial `Hex.Nat.choose` agrees with Mathlib's
+`Nat.choose`: both are the Pascal recursion. -/
+private theorem hex_choose_eq (n k : Nat) : Hex.Nat.choose n k = Nat.choose n k := by
+  induction n generalizing k with
+  | zero => cases k <;> simp
+  | succ n ih =>
+      cases k with
+      | zero => simp
+      | succ k => rw [Hex.Nat.choose_succ_succ, Nat.choose_succ_succ, ih, ih]
+
+private theorem nat_sum_sq_le_sq_sum {ι : Type*} (s : Finset ι) (g : ι → Nat) :
+    ∑ i ∈ s, g i ^ 2 ≤ (∑ i ∈ s, g i) ^ 2 := by
+  simp only [sq, Finset.sum_mul_sum]
+  refine Finset.sum_le_sum fun i hi => ?_
+  rw [← Finset.mul_sum]
+  gcongr
+  exact Finset.single_le_sum (fun j _ => Nat.zero_le _) hi
+
+/-- The row of squared binomial coefficients sums to at most `4^m`: a slack
+form of the Vandermonde identity `∑ⱼ C(m,j)² = C(2m,m)`, obtained from
+`∑ⱼ aⱼ² ≤ (∑ⱼ aⱼ)²` and `∑ⱼ C(m,j) = 2^m`. -/
+theorem sum_range_choose_sq_le (m : Nat) :
+    ∑ j ∈ Finset.range (m + 1), (m.choose j) ^ 2 ≤ 4 ^ m :=
+  calc
+    ∑ j ∈ Finset.range (m + 1), (m.choose j) ^ 2
+        ≤ (∑ j ∈ Finset.range (m + 1), m.choose j) ^ 2 :=
+          nat_sum_sq_le_sq_sum _ _
+    _ = (2 ^ m) ^ 2 := by rw [Nat.sum_range_choose]
+    _ = 4 ^ m := by rw [← pow_mul, Nat.mul_comm, pow_mul]; norm_num
+
+/-- `sum_range_choose_sq_le` for the executable `Hex.Nat.choose`, with the row
+offset `m - 1` packaging used by `cldColumnNormBound`. -/
+private theorem sum_range_hexChoose_sq_le (m : Nat) :
+    ∑ j ∈ Finset.range m, (Hex.Nat.choose (m - 1) j) ^ 2 ≤ 4 ^ (m - 1) := by
+  simp_rw [hex_choose_eq]
+  cases m with
+  | zero => simp
+  | succ k => simpa using sum_range_choose_sq_le k
+
+/--
+Conservative magnitude bound for the BHKS CLD column-norm packaging.
+
+With `n := input.degree?.getD 0` the auxiliary squared-coefficient budget
+`cldColumnNormBound` is `n² · L² · ∑ⱼ C(n-1,j)²`, where `L` is the
+conservative coefficient l2-norm bound `coeffL2NormBound input` carried by
+every Mignotte column bound `bhksCoeffBound`.  The squared-binomial row sums
+to at most `4^(n-1)` (`sum_range_choose_sq_le`), giving the closed bound used
+by the BHKS §5 auxiliary domination: `cldColumnNormBound input p ≤
+n² · L² · 4^(n-1)`.
+
+The `L²` factor (not `coeffNormSq input`) is the honest height carrier:
+`L = coeffL2NormBound input = ceilSqrt (coeffNormSq input) ≥ ‖input‖₂`, so
+`L² ≥ coeffNormSq input`; the bound is stated against `L²` because that is
+exactly what `bhksCoeffBound` squares.
+-/
+theorem cldColumnNormBound_le (input : Hex.ZPoly) (p : Nat) :
+    BHKS.cldColumnNormBound input p ≤
+      (input.degree?.getD 0) ^ 2 * (Hex.ZPoly.coeffL2NormBound input) ^ 2 *
+        4 ^ (input.degree?.getD 0 - 1) := by
+  have hcoeff : ∀ j, Hex.bhksCoeffBound input j
+      = Hex.Nat.choose (input.degree?.getD 0 - 1) j * input.degree?.getD 0 *
+          Hex.ZPoly.coeffL2NormBound input := by
+    intro j; simp only [Hex.bhksCoeffBound]
+  set n := input.degree?.getD 0 with hn
+  set L := Hex.ZPoly.coeffL2NormBound input with hL
+  have hsum : BHKS.cldColumnNormBound input p
+      = ∑ j ∈ Finset.range n, (Hex.bhksCoeffBound input j) ^ 2 := by
+    unfold BHKS.cldColumnNormBound
+    exact range_foldl_add_nat_pow_eq_sum n (fun j => Hex.bhksCoeffBound input j)
+  have hchoose := sum_range_hexChoose_sq_le n
+  calc
+    BHKS.cldColumnNormBound input p
+        = ∑ j ∈ Finset.range n, (Hex.bhksCoeffBound input j) ^ 2 := hsum
+    _ = ∑ j ∈ Finset.range n, (Hex.Nat.choose (n - 1) j) ^ 2 * (n ^ 2 * L ^ 2) := by
+          apply Finset.sum_congr rfl
+          intro j _
+          rw [hcoeff j]; ring
+    _ = (∑ j ∈ Finset.range n, (Hex.Nat.choose (n - 1) j) ^ 2) * (n ^ 2 * L ^ 2) := by
+          rw [← Finset.sum_mul]
+    _ ≤ 4 ^ (n - 1) * (n ^ 2 * L ^ 2) := Nat.mul_le_mul hchoose (le_refl _)
+    _ = n ^ 2 * L ^ 2 * 4 ^ (n - 1) := by ring
+
 private theorem auxiliaryPolynomial_coeff_eq
     (input : Hex.ZPoly) (liftData : Hex.LiftData) (vec : Array Int) (j : Nat) :
     (BHKS.auxiliaryPolynomial input liftData vec).coeff j =
