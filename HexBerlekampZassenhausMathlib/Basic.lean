@@ -2753,6 +2753,54 @@ structure HenselLiftDescentHypotheses
         T = liftedSubsetOfModPSubset primeData d factor_count_eq S ∧
           RepresentsIntegerFactorModP primeData factor S
 
+/-- **Lift-stage pairwise-disjointness.** Non-associated irreducible integer
+divisors of `core` are represented by disjoint subsets of the lifted local
+factors.  This is the lift-stage sibling of
+`modPFactorSubset_disjoint_of_not_associated`: descend each lifted
+representation to its unique mod-`p` subset via the descent package, apply the
+mod-`p` disjointness theorem, and reflect disjointness back through
+`liftedSubsetOfModPSubset`.  No `LiftedFactorSubsetPartition` /
+`InitialLiftedFactorSubsetPartitionEvidence` is assumed; this lemma is what a
+non-circular producer of the `pairwise_disjoint` field calls. -/
+theorem representsIntegerFactorAtLift_disjoint_of_not_associated
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData}
+    {admissiblePrime squareFreeReduction successfulLift coprimeLift : Prop}
+    (hprime : Hex.Nat.Prime primeData.p)
+    (hmod :
+      ModPSubsetPartitionHypotheses core primeData admissiblePrime squareFreeReduction)
+    (hcore_modP_nz :
+      (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false)
+    (hsqfree :
+      Squarefree
+        (@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
+          (@monicModPImage primeData.p primeData.bounds
+            (@Hex.ZPoly.modP primeData.p primeData.bounds core))))
+    (hdescent :
+      HenselLiftDescentHypotheses core B primeData d successfulLift coprimeLift)
+    {f g : Hex.ZPoly} {S T : LiftedFactorSubset d}
+    (hf_irr : Irreducible (HexPolyZMathlib.toPolynomial f)) (hf_dvd : f ∣ core)
+    (hg_irr : Irreducible (HexPolyZMathlib.toPolynomial g)) (hg_dvd : g ∣ core)
+    (hS : RepresentsIntegerFactorAtLift core d f S)
+    (hT : RepresentsIntegerFactorAtLift core d g T)
+    (hnotassoc :
+      ¬ Associated (HexPolyZMathlib.toPolynomial f) (HexPolyZMathlib.toPolynomial g)) :
+    Disjoint S T := by
+  -- Descend each lifted representation to its unique mod-`p` subset.
+  obtain ⟨S₀, hS_eq, hS_mod⟩ :=
+    hdescent.represents_modP_of_lifted hf_irr hf_dvd hS
+  obtain ⟨T₀, hT_eq, hT_mod⟩ :=
+    hdescent.represents_modP_of_lifted hg_irr hg_dvd hT
+  -- Disjointness holds at the mod-`p` level for the descended subsets.
+  have hdisj0 : Disjoint S₀ T₀ :=
+    modPFactorSubset_disjoint_of_not_associated hprime hmod hcore_modP_nz hsqfree
+      hf_irr hf_dvd hg_irr hg_dvd hS_mod hT_mod hnotassoc
+  -- Reflect disjointness back through the canonical lift.
+  rw [hS_eq, hT_eq]
+  exact
+    (liftedSubsetOfModPSubset_disjoint_iff primeData d hdescent.factor_count_eq S₀ T₀).mpr
+      hdisj0
+
 /--
 Non-circular assembly of `HenselSubsetLiftHypotheses` from explicit forward
 Hensel transport and lifted-side descent.
