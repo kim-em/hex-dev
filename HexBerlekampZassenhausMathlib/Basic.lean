@@ -21167,4 +21167,16 @@ theorem toMonicLiftData_subset_of_liftedFactorProduct_map_dvd
   exact (toMonicLiftData_liftedFactor_map_irreducible core B primeData
     hcore_lc_pos hcore_pos hselected hprecision i).not_isUnit hunit
 
+/-- A centred lift is congruent to its input modulo the centring modulus.
+
+A reusable transport fact for the remaining candidate-divisibility half of the
+core: `centeredLiftPoly q m ≡ q (mod m)`, hence (descending the modulus)
+`≡ q (mod p)` for the Hensel prime. -/
+private theorem congr_centeredLiftPoly (q : Hex.ZPoly) (m : Nat) :
+    Hex.ZPoly.congr (Hex.centeredLiftPoly q m) q m := by
+  intro i
+  rw [Hex.coeff_centeredLiftPoly]
+  exact Int.emod_eq_zero_of_dvd
+    (dvd_sub_comm.mp (Hex.self_sub_centeredModNat_dvd (q.coeff i) m))
+
 end HexBerlekampZassenhausMathlib
