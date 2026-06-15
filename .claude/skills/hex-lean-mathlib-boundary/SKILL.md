@@ -227,6 +227,43 @@ downstream routes through a `private abbrev` (`factorFastCapLiftData`) that is
 never unfolded. Confirm genericity by grepping that the feeder takes
 `(d : Hex.LiftData)` as a parameter, not a fixed `henselLiftData …`.
 
+### Applying a `henselLiftData`-form lemma to a `toMonicLiftData` goal
+
+`Hex.ZPoly.toMonicLiftData core B primeData` is **definitionally**
+`Hex.henselLiftData (toMonic core).monic (precisionForCoeffBound B primeData.p)
+primeData`, but **not syntactically equal** — `toMonicLiftData` is a plain
+(non-reducible) `def`. So the cluster of `henselLiftData_*` lemmas
+(`_liftedSubset_complement_isCoprime_mod_p`, `_liftedFactor_modP_eq_modPFactor`,
+`_liftedFactors_size_eq`, …) does not match a `toMonicLiftData` goal under `rw`,
+`subst`, or `simp` keyed matching, even though `exact`/`convert` will eventually
+unify via `isDefEq`. Recipe that works:
+
+- **Restate the goal in `henselLiftData` form with `show`** (set
+  `monicCore := (toMonic core).monic`, `precision := precisionForCoeffBound B
+  primeData.p` first), then every `henselLiftData_*` lemma and every
+  `liftedSubsetOfModPSubset`/`hsize` rewrite applies syntactically. `set d :=
+  toMonicLiftData …` does **not** help — it does not fold the goal's
+  `toMonicLiftData` occurrences, and a later `rw [← hS]`/`subst hS` then fails
+  with "did not find pattern" / leaves the goal untouched.
+- **Defeq `liftedFactor` rewrite:** `liftedFactor (toMonicLiftData …) i =
+  liftedFactor (henselLiftData monicCore precision …) (liftedIndexOfModPIndex …
+  ⟨i.val, _⟩)` holds by `rfl`. Use a `calc` with explicit terms rather than
+  `rw [← toMathlibPolynomial_modP_eq_map_intCast_zmod]` — the backward rewrite
+  builds a `toMathlibPolynomial`-at-inferred-`p` motive that is not type
+  correct.
+- **Transport a `Fin` bound across the size eq at the `Nat` level**, never by
+  rewriting the size inside the `<`: `i.isLt.trans_eq
+  (henselLiftData_liftedFactors_size_eq monicCore precision primeData) :
+  i.val < primeData.factorsModP.size`. Rewriting the size in `i.isLt` directly
+  fails with "motive is not type correct" because `↑i`'s type depends on it.
+- The invariant inputs (`QuadraticMultifactorLiftInvariant`, `factorsModP`
+  monic/irreducible/nodup/product-congr) discharge from `toMonicPrimeData? core =
+  some primeData` by the block in
+  `Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData` — copy it
+  (`toMonicPrimeData?_factorsModP_berlekamp_form` /`_isGoodPrime` /`_prime`,
+  then `factorsModP_*_of_factorsModPBerlekampForm` and
+  `QuadraticMultifactorLiftInvariant_of_choosePrimeData`).
+
 ## The Mathlib layer is not CI-built — establish a baseline first
 
 CI builds only bench + conformance targets (`ci.yml`, `conformance.yml`);
