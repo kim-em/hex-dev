@@ -2809,6 +2809,10 @@ private def clmulCoeffAt (idx : Nat) (x y : UInt64) (n : Nat) : Bool :=
   else
     false
 
+/-- XOR-fold a list of bits: `xorBoolList bits` is the parity of `bits`,
+folding `!=` from `false`, so it is `true` exactly when an odd number of
+entries are `true`. The carryless-multiplication proofs reduce each output
+coefficient to such an XOR fold over a list of partial-product bits. -/
 private def xorBoolList (bits : List Bool) : Bool :=
   bits.foldl (fun acc bit => acc != bit) false
 
@@ -2829,6 +2833,8 @@ private theorem foldl_bne_start (bits : List Bool) (acc : Bool) :
       generalize htail : List.foldl (fun acc bit => acc != bit) false bits = tail
       cases acc <;> cases bit <;> cases tail <;> rfl
 
+/-- `xorBoolList` on a cons: the parity of `bit :: bits` is `bit` XORed with
+the parity of the tail. -/
 private theorem xorBoolList_cons (bit : Bool) (bits : List Bool) :
     xorBoolList (bit :: bits) = (bit != xorBoolList bits) := by
   unfold xorBoolList
@@ -2836,6 +2842,8 @@ private theorem xorBoolList_cons (bit : Bool) (bits : List Bool) :
   rw [foldl_bne_start]
   cases bit <;> rfl
 
+/-- `xorBoolList` distributes over list append: the parity of `xs ++ ys` is
+the XOR of the two parities. -/
 private theorem xorBoolList_append (xs ys : List Bool) :
     xorBoolList (xs ++ ys) = (xorBoolList xs != xorBoolList ys) := by
   unfold xorBoolList
@@ -2875,6 +2883,8 @@ private theorem List.flatMap_congr_left {α β : Type} {xs : List α} {f g : α 
       intro y hy
       exact h y (by simp [hy])
 
+/-- Split a `flatMap` whose body is a pointwise append `left x ++ right x`:
+its parity is the XOR of the parities of the two component `flatMap`s. -/
 private theorem xorBoolList_flatMap_append {α : Type}
     (xs : List α) (left right : α → List Bool) :
     xorBoolList (xs.flatMap fun x => left x ++ right x) =
@@ -2892,6 +2902,10 @@ private theorem xorBoolList_flatMap_append {α : Type}
       generalize xorBoolList (List.flatMap right xs) = d
       cases a <;> cases b <;> cases c <;> cases d <;> rfl
 
+/-- Swap the two summation indices of a rectangular `range m × range n` XOR
+fold of scalar `term i j`: folding row-by-row equals folding column-by-column.
+This is the parity analogue of swapping a double sum, used to reorder the
+word-pair contributions in the clmul proof. -/
 private theorem xorBoolList_wordPairs_swap
     (m n : Nat) (term : Nat → Nat → Bool) :
     xorBoolList
@@ -2926,6 +2940,9 @@ private theorem xorBoolList_wordPairs_swap
         rw [List.flatMap_singleton]
       rw [hcols]
 
+/-- Congruence for `flatMap` under `xorBoolList`: if `left x` and `right x`
+have the same parity for every `x ∈ xs`, the two flat-mapped lists have the
+same overall parity. -/
 private theorem xorBoolList_flatMap_congr_xor {α : Type}
     {xs : List α} {left right : α → List Bool}
     (h : ∀ x, x ∈ xs → xorBoolList (left x) = xorBoolList (right x)) :
@@ -2940,6 +2957,9 @@ private theorem xorBoolList_flatMap_congr_xor {α : Type}
       intro y hy
       exact h y (by simp [hy])
 
+/-- Flatten a nested XOR fold: XOR-folding the per-element parities
+`xorBoolList (terms x)` equals the parity of the single flattened list
+`xs.flatMap terms`. -/
 private theorem xorBoolList_map_xorBoolList {α : Type}
     (xs : List α) (terms : α → List Bool) :
     xorBoolList (xs.map (fun x => xorBoolList (terms x))) =
@@ -2951,6 +2971,9 @@ private theorem xorBoolList_map_xorBoolList {α : Type}
       simp only [List.map_cons, List.flatMap_cons]
       rw [xorBoolList_cons, xorBoolList_append, ih]
 
+/-- Merge two maps combined by `!=` into one: if `left x != right x = both x`
+pointwise on `xs`, then the XOR of the two mapped parities equals the parity
+of the single `both`-mapped list. -/
 private theorem xorBoolList_map_bne_congr {α : Type}
     {xs : List α} {left right both : α → Bool}
     (h : ∀ x, x ∈ xs → (left x != right x) = both x) :
@@ -2966,6 +2989,9 @@ private theorem xorBoolList_map_bne_congr {α : Type}
       intro y hy
       exact h y (by simp [hy])
 
+/-- List-valued version of `xorBoolList_map_bne_congr`: if the parities of
+`left x` and `right x` XOR to that of `both x` pointwise on `xs`, the XOR of
+the two flat-mapped parities equals the parity of the `both` flatMap. -/
 private theorem xorBoolList_flatMap_bne_congr {α : Type}
     {xs : List α} {left right both : α → List Bool}
     (h : ∀ x, x ∈ xs →
@@ -2982,6 +3008,9 @@ private theorem xorBoolList_flatMap_bne_congr {α : Type}
       intro y hy
       exact h y (by simp [hy])
 
+/-- List-valued analogue of `xorBoolList_wordPairs_swap`: for a
+`term : Nat → Nat → List Bool`, the parity of the nested `range m × range n`
+flatMap is independent of which index is iterated outermost. -/
 private theorem xorBoolList_flatMap_ranges_swap_list
     (m n : Nat) (term : Nat → Nat → List Bool) :
     xorBoolList
