@@ -20356,6 +20356,37 @@ theorem exists_monicCorrespondent_of_dvd
       exact ⟨h, hgh.symm⟩
   exact ⟨g, hg_monic, hdvdg, hprim⟩
 
+/-- **Mod-`p` representation of the monic correspondent (#7381, prereq of #7364).**
+
+For prime data selected by `toMonicPrimeData? core` — that is, `choosePrimeData?`
+applied to `M := (toMonic core).monic` — any irreducible integer divisor `g`
+of `M` has a representing subset of `M`'s recorded mod-`p` factors. This
+discharges the `hrepP` input of `henselLiftData_represents_lifted_of_modP`
+(instantiated at `core := M`, `factor := g`) for the monic-correspondent arm
+of the `toMonicLiftData` forward transport.
+
+The representation is read off **directly** from the `toMonicPrimeData?`
+partition, which already ranges over `M`'s mod-`p` factors via
+`modPSubsetPartitionHypotheses_of_choosePrimeData`; it is *not* transported from
+a representation of the original-core divisor. The correspondent `g` and its
+non-monic preimage differ by a dilation `X ↦ (leadingCoeff core)·X`, and
+`monicModPImage` is not dilation-invariant (the transport equality
+`monicModPImage (modP p factor) = monicModPImage (modP p g)` was refuted in
+\#7366). Consequently `g`'s representing subset is its own, so the sound
+conclusion is existential — there is no representation at a subset prescribed
+by the preimage. -/
+theorem representsModP_correspondent
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    {g : Hex.ZPoly}
+    (hg_irr : Irreducible (HexPolyZMathlib.toPolynomial g))
+    (hg_dvd : g ∣ (Hex.ZPoly.toMonic core).monic) :
+    ∃ S : ModPFactorSubset primeData, RepresentsIntegerFactorModP primeData g S := by
+  have hchoose :
+      Hex.choosePrimeData? (Hex.ZPoly.toMonic core).monic = some primeData := hselected
+  exact (modPSubsetPartitionHypotheses_of_choosePrimeData
+    (Hex.ZPoly.toMonic core).monic primeData hchoose).exists_subset hg_irr hg_dvd
+
 end
 
 end HexBerlekampZassenhausMathlib
