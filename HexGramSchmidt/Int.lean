@@ -4463,15 +4463,22 @@ private theorem noPivotLoop_initial_gram_exists_rowVec
   · intro j
     exact hinv.entry_eq_dot i j hi
 
+/-- `int_mul_self_nonneg`: the square `x * x` of an integer is nonnegative,
+the base nonnegativity fact for the integer-vector self-dot bounds below. -/
 private theorem int_mul_self_nonneg (x : Int) : 0 ≤ x * x := by
   simpa [Lean.Grind.Semiring.pow_two] using
     (Lean.Grind.OrderedRing.sq_nonneg (a := x))
 
+/-- `int_mul_self_eq_zero_of_nonpos`: an integer whose square is nonpositive is
+zero, the per-component step turning a vanishing self-dot into a zero entry. -/
 private theorem int_mul_self_eq_zero_of_nonpos (x : Int) (h : x * x ≤ 0) : x = 0 := by
   have hnonneg : 0 ≤ x * x := int_mul_self_nonneg x
   have hsquare : x * x = 0 := Int.le_antisymm h hnonneg
   rcases Int.mul_eq_zero.mp hsquare with h0 | h0 <;> exact h0
 
+/-- `foldl_int_dot_self_start_le`: the running self-dot fold over `xs` never
+drops below its nonnegative starting accumulator, since each added square is
+nonnegative; the monotonicity used to pin the accumulator at zero. -/
 private theorem foldl_int_dot_self_start_le (xs : List (Fin m)) (v : Vector Int m)
     (acc : Int) (hacc : 0 ≤ acc) :
     acc ≤ xs.foldl (fun sum i => sum + v[i] * v[i]) acc := by
@@ -4484,6 +4491,9 @@ private theorem foldl_int_dot_self_start_le (xs : List (Fin m)) (v : Vector Int 
       have hnext : 0 ≤ acc + v[i] * v[i] := by grind
       exact Int.le_trans (by grind) (ih (acc := acc + v[i] * v[i]) hnext)
 
+/-- `foldl_int_dot_self_eq_zero_of_mem`: if the self-dot fold over `xs` from a
+nonnegative accumulator vanishes, then every entry indexed by `xs` is zero,
+the per-index extraction behind finite-dimensional positive-definiteness. -/
 private theorem foldl_int_dot_self_eq_zero_of_mem (xs : List (Fin m))
     (v : Vector Int m) (acc : Int) (hacc : 0 ≤ acc)
     (hzero : xs.foldl (fun sum i => sum + v[i] * v[i]) acc = 0) :
@@ -4517,6 +4527,9 @@ private theorem foldl_int_dot_self_eq_zero_of_mem (xs : List (Fin m))
       | inr h =>
           exact ih (acc := acc + v[head] * v[head]) hnext_nonneg hzero i h
 
+/-- `int_dot_self_eq_zero_get`: from a vanishing self-dot `Matrix.dot v v = 0`
+each component `v[i]` is zero, specialising the fold lemma to the full index
+list and the running form of `Matrix.dot`. -/
 private theorem int_dot_self_eq_zero_get (v : Vector Int m)
     (hzero : Matrix.dot v v = 0) (i : Fin m) :
     v[i] = 0 := by
@@ -4571,6 +4584,9 @@ private theorem int_dot_eq_zero_of_dot_self_zero_left (u v : Vector Int m)
       rw [hadd_zero]
       exact ih
 
+/-- `foldl_dot_comm_int_local`: folding `u[i] * v[i]` over `xs` equals folding
+`v[i] * u[i]` from an equal starting accumulator, the fold-level symmetry
+underlying commutativity of the integer dot product. -/
 private theorem foldl_dot_comm_int_local {n' : Nat} (xs : List (Fin n'))
     (u v : Vector Int n') (accU accV : Int) (hacc : accU = accV) :
     xs.foldl (fun acc i => acc + u[i] * v[i]) accU =
