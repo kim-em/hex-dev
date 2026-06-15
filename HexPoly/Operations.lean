@@ -27,6 +27,9 @@ def shift (n : Nat) (p : DensePoly R) : DensePoly R :=
     ofCoeffs <| ((List.replicate n (Zero.zero : R)) ++ p.toArray.toList).toArray
 
 omit [DecidableEq R] in
+/-- Scaling a list by `c` commutes with default-indexed reads: the `n`-th `getD` of
+`coeffs.map (c * ·)` is `c` times the `n`-th `getD` of `coeffs`. Used by `coeff_scale`
+to derive the scalar-multiplication coefficient law. -/
 private theorem list_getD_map_mul_zero [Mul R] (c : R) (coeffs : List R) (n : Nat)
     (hzero : c * (Zero.zero : R) = (Zero.zero : R)) :
     (coeffs.map fun a => c * a).getD n (Zero.zero : R) =
@@ -42,6 +45,9 @@ private theorem list_getD_map_mul_zero [Mul R] (c : R) (coeffs : List R) (n : Na
           simpa using ih n
 
 omit [DecidableEq R] in
+/-- Default-indexed read of a list prefixed by `n` zeros: indices below `n` read the
+default `0`, and index `k ≥ n` reads `coeffs` at the shifted position `k - n`. Used by the
+`shift` coefficient law to relate `shift n p` back to `p`. -/
 private theorem list_getD_replicate_append_zero (n k : Nat) (coeffs : List R) :
     (List.replicate n (Zero.zero : R) ++ coeffs).getD k (Zero.zero : R) =
       if k < n then (Zero.zero : R) else coeffs.getD (k - n) (Zero.zero : R) := by
@@ -56,6 +62,9 @@ private theorem list_getD_replicate_append_zero (n k : Nat) (coeffs : List R) :
           simpa [Nat.succ_sub_succ_eq_sub] using ih k
 
 omit [DecidableEq R] in
+/-- Default-indexed read of `(List.range size).map f`: index `n` reads `f n` when
+`n < size` and the default `0` otherwise. The workhorse indexing fact for the coefficient-
+list extensionality proofs (e.g. `toArray_toList_eq_coeff_range`). -/
 private theorem list_getD_map_range (size n : Nat) (f : Nat → R) :
     ((List.range size).map f).getD n (Zero.zero : R) =
       if n < size then f n else (Zero.zero : R) := by
@@ -238,6 +247,9 @@ def mulCoeffSum [Add R] [Mul R] (p q : DensePoly R) (n : Nat) : R :=
     (Zero.zero : R)
 
 omit [DecidableEq R] in
+/-- Default-indexed read after one schoolbook accumulation step: `set!`-adding `term` at
+in-bounds index `k` changes only the `k`-th coefficient, leaving every other `getD` read
+unchanged. Used by `mul_inner_array_coeff_fold` to unfold the inner multiplication fold. -/
 private theorem array_getD_set!_schoolbook [Add R] [Mul R]
     (acc : Array R) (n k : Nat) (term : R) (hk : k < acc.size) :
     (acc.set! k (acc[k]?.getD (Zero.zero : R) + term)).getD n (Zero.zero : R) =
@@ -330,6 +342,9 @@ private theorem mul_array_coeff_fold [Add R] [Mul R]
         exact hbound i' (by simp [hi']) j hj
 
 omit [Zero R] [DecidableEq R] in
+/-- Folding with a step that discards each element returns the initial value unchanged.
+Used in the zero-polynomial branch of `coeff_mul`, where the inner multiplication step
+contributes nothing. -/
 private theorem list_foldl_ignore (xs : List Nat) (init : R) :
     xs.foldl (fun acc _ => acc) init = init := by
   induction xs generalizing init with
@@ -504,6 +519,9 @@ theorem toArray_toList_getD_eq_coeff (p : DensePoly R) (n : Nat) :
   rw [Array.getElem?_toList]
 
 omit [DecidableEq R] in
+/-- List extensionality through default-indexed reads: two lists of equal length that agree
+under `getD` at every in-bounds index are equal. Used by `toArray_toList_eq_coeff_range` to
+identify the stored coefficient list with the range of coefficient reads. -/
 private theorem list_eq_of_length_eq_of_getD_eq
     {xs ys : List R}
     (hlen : xs.length = ys.length)
