@@ -20602,6 +20602,123 @@ theorem representsModP_correspondent
   exact (modPSubsetPartitionHypotheses_of_choosePrimeData
     (Hex.ZPoly.toMonic core).monic primeData hchoose).exists_subset hg_irr hg_dvd
 
+/-- **Irreducibility of the monic correspondent.**
+
+The monic correspondent `g` of an irreducible primitive integer factor `factor`
+is itself irreducible.  The two differ by the variable dilation `X ↦ lc · X`
+(with `lc := leadingCoeff core ≠ 0`) followed by taking the primitive part:
+`primitivePart (dilate lc g) = factor`.
+
+Over `ℚ`, composition with `C lc * X` is the algebra automorphism
+`algEquivCMulXAddC lc 0`, so it preserves irreducibility; the residual content
+scalar is a unit; and Gauss's lemma (`IsPrimitive.Int.irreducible_iff_irreducible_map_cast`)
+moves both `g` (monic, hence primitive) and `factor` between `ℤ[X]` and `ℚ[X]`. -/
+theorem irreducible_toPolynomial_monicCorrespondent
+    {factor g : Hex.ZPoly} {lc : Int}
+    (hlc : lc ≠ 0)
+    (hg_monic : Hex.DensePoly.Monic g)
+    (hfactor_prim : Hex.ZPoly.Primitive factor)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hrecover :
+      Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc g) = factor) :
+    Irreducible (HexPolyZMathlib.toPolynomial g) := by
+  classical
+  set G := HexPolyZMathlib.toPolynomial g with hGdef
+  set F := HexPolyZMathlib.toPolynomial factor with hFdef
+  have hG_monic : G.Monic :=
+    HexHenselMathlib.toPolynomial_monic_of_dense_monic g hg_monic
+  have hG_prim : G.IsPrimitive := hG_monic.isPrimitive
+  have hF_prim : F.IsPrimitive :=
+    HexPolyZMathlib.isPrimitive_toPolynomial_of_primitive factor hfactor_prim
+  -- The variable dilation `X ↦ lc · X` embeds to composition with `C lc * X`.
+  have hcomp :
+      HexPolyZMathlib.toPolynomial (Hex.ZPoly.dilate lc g)
+        = G.comp (Polynomial.C lc * Polynomial.X) := by
+    rw [hGdef]; exact HexPolyZMathlib.toPolynomial_dilate lc g
+  -- The dilation is nonzero, so its content is nonzero.
+  have hG0 : G ≠ 0 := hG_monic.ne_zero
+  have hDpoly0 : G.comp (Polynomial.C lc * Polynomial.X) ≠ 0 := by
+    rw [Ne, Polynomial.comp_C_mul_X_eq_zero_iff (mem_nonZeroDivisors_of_ne_zero hlc)]
+    exact hG0
+  have hD0 : Hex.ZPoly.dilate lc g ≠ 0 := fun hz =>
+    hDpoly0 (by rw [← hcomp, hz, HexPolyZMathlib.toPolynomial_zero])
+  set c := Hex.ZPoly.content (Hex.ZPoly.dilate lc g) with hcdef
+  have hc0 : c ≠ 0 := HexPolyZMathlib.content_ne_zero _ hD0
+  -- Content/primitive-part decomposition with `primitivePart (dilate lc g) = factor`.
+  have hCF :
+      HexPolyZMathlib.toPolynomial (Hex.ZPoly.dilate lc g)
+        = Polynomial.C c * F := by
+    rw [HexPolyZMathlib.toPolynomial_eq_C_content_mul_primitivePart, hrecover, ← hFdef, ← hcdef]
+  have hkey : G.comp (Polynomial.C lc * Polynomial.X) = Polynomial.C c * F :=
+    hcomp.symm.trans hCF
+  -- Move to `ℚ[X]` via Gauss's lemma.
+  rw [Polynomial.IsPrimitive.Int.irreducible_iff_irreducible_map_cast hG_prim]
+  rw [Polynomial.IsPrimitive.Int.irreducible_iff_irreducible_map_cast hF_prim] at hfactor_irr
+  set cast := Int.castRingHom ℚ with hcast
+  have hkeyQ :
+      (G.map cast).comp (Polynomial.C (cast lc) * Polynomial.X)
+        = Polynomial.C (cast c) * (F.map cast) := by
+    have h := congrArg (Polynomial.map cast) hkey
+    rwa [Polynomial.map_comp, Polynomial.map_mul, Polynomial.map_C, Polynomial.map_X,
+      Polynomial.map_mul, Polynomial.map_C] at h
+  have hca : cast lc ≠ 0 := by rw [eq_intCast cast lc]; exact_mod_cast hlc
+  have hcc : cast c ≠ 0 := by rw [eq_intCast cast c]; exact_mod_cast hc0
+  letI : Invertible (cast lc) := invertibleOfNonzero hca
+  -- Over `ℚ`, composition with `C lc * X` is an algebra automorphism.
+  have he : (algEquivCMulXAddC (cast lc) (0 : ℚ)) (G.map cast)
+      = (G.map cast).comp (Polynomial.C (cast lc) * Polynomial.X) := by
+    rw [algEquivCMulXAddC_apply, ← Polynomial.comp_eq_aeval]; simp
+  have hiff := MulEquiv.irreducible_iff (algEquivCMulXAddC (cast lc) (0 : ℚ)) (x := G.map cast)
+  rw [he, hkeyQ,
+    irreducible_isUnit_mul (Polynomial.isUnit_C.mpr (isUnit_iff_ne_zero.mpr hcc))] at hiff
+  exact hiff.mp hfactor_irr
+
+/-- **Existential lifted representation producer for `toMonicLiftData`.**
+
+From a `toMonicPrimeData?` selection witness and core/factor side conditions,
+produce a lifted subset of `Hex.ZPoly.toMonicLiftData core B primeData` whose
+`RepresentsIntegerFactorAtLift` records the original non-monic `factor` — with
+no caller-supplied fixed mod-`p` subset.
+
+The route is: build the monic correspondent `g` of `factor`
+(`exists_monicCorrespondent_of_dvd`), transport its irreducibility
+(`irreducible_toPolynomial_monicCorrespondent`), read off `g`'s mod-`p`
+representation (`representsModP_correspondent`), lift it to the monic coordinate
+(`toMonicLiftData_represents_lifted_monicCorrespondent`, #7453), then transfer
+back to `factor` over the original `core`
+(`representsIntegerFactorAtLift_of_monicCorrespondent`, #7452). -/
+theorem toMonicLiftData_represents_lifted_of_modP
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore0 : core ≠ 0)
+    (hlc : 0 < Hex.DensePoly.leadingCoeff core)
+    (hdeg : 1 ≤ (Hex.ZPoly.toMonic core).degree)
+    (hB_ne_zero : B ≠ 0)
+    {factor : Hex.ZPoly}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hprim : Hex.ZPoly.Primitive factor)
+    (hsign : Hex.normalizeFactorSign factor = factor)
+    (hfdeg : 1 ≤ factor.degree?.getD 0)
+    (hdvd : factor ∣ core) :
+    ∃ S_lifted,
+      RepresentsIntegerFactorAtLift core
+        (Hex.ZPoly.toMonicLiftData core B primeData) factor S_lifted := by
+  classical
+  obtain ⟨g, hg_monic, hg_dvd, hrecover⟩ :=
+    exists_monicCorrespondent_of_dvd core factor hcore0 hlc hdeg hfdeg hdvd hprim hsign
+  have hg_irr : Irreducible (HexPolyZMathlib.toPolynomial g) :=
+    irreducible_toPolynomial_monicCorrespondent (ne_of_gt hlc) hg_monic hprim hirr hrecover
+  obtain ⟨S_modP, hS_modP⟩ :=
+    representsModP_correspondent core primeData hselected hg_irr hg_dvd
+  have hcore_deg_pos : 0 < core.degree?.getD 0 := by
+    have hd := Hex.ZPoly.toMonic_degree core
+    omega
+  have hlift :=
+    toMonicLiftData_represents_lifted_monicCorrespondent core B primeData hlc
+      hcore_deg_pos hselected hB_ne_zero hg_monic hg_irr hg_dvd hS_modP
+  exact ⟨_, representsIntegerFactorAtLift_of_monicCorrespondent rfl
+    (Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hlc hcore_deg_pos) hlift hrecover⟩
+
 end
 
 end HexBerlekampZassenhausMathlib
