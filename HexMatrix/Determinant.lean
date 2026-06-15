@@ -3094,6 +3094,9 @@ private theorem swapPermutationValues_map_permutationVectors_perm {n : Nat}
       swapPermutationValues_mem_permutationVectors i j hmem, ?_⟩
     exact swapPermutationValues_involutive perm i j
 
+/-- `fin_mem_of_full_nodup` shows that a length-`n` nodup list of `Fin n`
+values contains every `x : Fin n`, the pigeonhole fact that makes the
+`inversePermutationValues` index lookup total. -/
 private theorem fin_mem_of_full_nodup {n : Nat} {xs : List (Fin n)}
     (x : Fin n) (hlen : xs.length = n) (hnodup : xs.Nodup) :
     x ∈ xs := by
@@ -3116,6 +3119,9 @@ private theorem fin_mem_of_full_nodup {n : Nat} {xs : List (Fin n)}
     | zero => exact Fin.elim0 x
     | succ n => omega
 
+/-- `fin_idxOf_lt_of_full_nodup` bounds `xs.idxOf x` below `xs.length` for a
+full nodup list, supplying the `Fin n` index proof obligation for the
+`inversePermutationValues` entries. -/
 private theorem fin_idxOf_lt_of_full_nodup {n : Nat} {xs : List (Fin n)}
     (x : Fin n) (hlen : xs.length = n) (hnodup : xs.Nodup) :
     xs.idxOf x < xs.length := by
@@ -3132,6 +3138,9 @@ private def inversePermutationValues {n : Nat}
         simpa [Vector.length_toList] using
           fin_idxOf_lt_of_full_nodup c (by simp [Vector.length_toList]) hnodup⟩
 
+/-- `inversePermutationValues_get_value` is the right-inverse law
+`perm[inv[c]] = c`, recovering the value `c` by reading `perm` at the position
+the inverse records for it. -/
 private theorem inversePermutationValues_get_value {n : Nat}
     (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) (c : Fin n) :
     perm[(inversePermutationValues perm hnodup)[c]] = c := by
@@ -3140,6 +3149,9 @@ private theorem inversePermutationValues_get_value {n : Nat}
       simp [Vector.length_toList]) = c
   simp [inversePermutationValues]
 
+/-- `inversePermutationValues_get_index` is the left-inverse law
+`inv[perm[i]] = i`, recovering the position `i` from the value `perm` places
+there. -/
 private theorem inversePermutationValues_get_index {n : Nat}
     (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) (i : Fin n) :
     (inversePermutationValues perm hnodup)[perm[i]] = i := by
@@ -3147,6 +3159,9 @@ private theorem inversePermutationValues_get_index {n : Nat}
   simp [inversePermutationValues]
   exact hnodup.idxOf_getElem i.val (by simp [Vector.length_toList])
 
+/-- `inversePermutationValues_nodup` shows the inverse permutation vector is
+itself nodup, so it is again a valid permutation usable in the determinant
+sign-tracking expansion. -/
 private theorem inversePermutationValues_nodup {n : Nat}
     (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
     (inversePermutationValues perm hnodup).toList.Nodup := by
@@ -3162,6 +3177,10 @@ private theorem inversePermutationValues_nodup {n : Nat}
     exact hval
   · exact List.nodup_finRange n
 
+/-- `inversePermutationValues_insertAt_last_castSucc` says inversion commutes
+with inserting `Fin.last n`: the inverse of the extended permutation inserts the
+original inverse (raised above `i`) at position `i` with value `Fin.last n`, the
+recurrence step underlying the inversion-count tracking. -/
 private theorem inversePermutationValues_insertAt_last_castSucc {n : Nat}
     (v : Vector (Fin n) n) (i : Fin (n + 1)) (hnodup : v.toList.Nodup) :
     inversePermutationValues
@@ -3230,6 +3249,10 @@ private theorem inversePermutationValues_insertAt_last_castSucc {n : Nat}
           ((inversePermutationValues v hnodup).map (raiseFinAbove i)) old
     simpa [c, hc] using hleft.trans hright.symm
 
+/-- `inversionCount_inversePermutationValues_insertAt_last_castSucc` gives the
+inversion-count recurrence for the inverse permutation under the `Fin.last n`
+insertion, adding `n - i` to the original count and so supplying the sign change
+for the determinant's column-insertion step. -/
 private theorem inversionCount_inversePermutationValues_insertAt_last_castSucc {n : Nat}
     (v : Vector (Fin n) n) (i : Fin (n + 1)) (hnodup : v.toList.Nodup) :
     inversionCount
