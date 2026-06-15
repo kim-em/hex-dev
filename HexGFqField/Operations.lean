@@ -478,6 +478,9 @@ def inv {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
   else
     ofPoly f hf hp hirr (invPoly x.toQuotient)
 
+/-- For nonzero `x`, the quotient representative of `inv x` is `invPoly` of `x`'s
+representative; rewrites `inv` through `toQuotient` so inverse cancellation can be
+discharged at the quotient-ring level. -/
 private theorem toQuotient_inv_of_ne_zero
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     {x : FiniteField f hf hp hirr} (hx : x ≠ zero f hf hp hirr) :
@@ -998,6 +1001,9 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
   apply GFqField.ext
   simpa using Lean.Grind.CommSemiring.mul_comm a.toQuotient b.toQuotient
 
+/-- A right inverse is the inverse: `a * b = 1` forces `a = b⁻¹`; the uniqueness
+fact that lets the `FiniteField` field-structure proofs identify computed inverses
+with the canonical `⁻¹`. -/
 private theorem eq_inv_of_mul_eq_one
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     {a b : FiniteField f hf hp hirr} (h : a * b = 1) :
@@ -1019,11 +1025,15 @@ private theorem eq_inv_of_mul_eq_one
       _ = 1 * b⁻¹ := h
       _ = b⁻¹ := Lean.Grind.Semiring.one_mul b⁻¹
 
+/-- The inverse of `1` is `1`, since `1 * 1 = 1`; a normalization step in the
+field-structure proofs. -/
 private theorem inv_one
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     (1 : FiniteField f hf hp hirr)⁻¹ = 1 :=
   (eq_inv_of_mul_eq_one (Lean.Grind.Semiring.mul_one (1 : FiniteField f hf hp hirr))).symm
 
+/-- Double inverse is the identity: `x⁻¹⁻¹ = x`; obtained from inverse uniqueness
+via the cancellation `x⁻¹ * x = 1`, with the zero case handled separately. -/
 private theorem inv_inv
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) :
@@ -1035,12 +1045,17 @@ private theorem inv_inv
     apply eq_inv_of_mul_eq_one
     exact mul_inv_cancel (x := x) hx
 
+/-- Double inverse stated through the `inv`-named function: `(inv x)⁻¹ = x`; the
+form consumed where the explicit `inv` definition appears rather than the `⁻¹`
+notation. -/
 private theorem inv_inv_def
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) :
     (inv x)⁻¹ = x :=
   inv_inv x
 
+/-- The empty product `pow x 0 = 1`; the base case anchoring the exponentiation
+recursion in the `FiniteField` power API. -/
 private theorem pow_zero_eq_one
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) :
