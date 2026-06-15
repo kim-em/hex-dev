@@ -8769,6 +8769,9 @@ theorem scaledCoeffs_lower_eq_noPivotLoop_scaledCoeffMatrix
   exact scaledCoeffRows_lower_eq_noPivotLoop_scaledCoeffMatrix b i j hji h_nonsing
 
 
+/-- For a `Matrix Int`, a row swap leaves any `Fin`-indexed row other than the
+two swapped row indices unchanged. This is the row-access companion to
+`Matrix.rowSwap` for the unchanged-row case. -/
 private theorem rowSwap_row_eq_of_ne_int {n' m' : Nat}
     (M : Matrix Int n' m') (i j r : Fin n')
     (hri : r.val ≠ i.val) (hrj : r.val ≠ j.val) :
@@ -8781,6 +8784,9 @@ private theorem rowSwap_row_eq_of_ne_int {n' m' : Nat}
   rw [if_neg hr_ne_j, if_neg hr_ne_i] at hget
   simpa [Matrix.row] using hget
 
+/-- For a `Matrix Int`, the `Fin`-indexed left swap row `i` becomes the old row
+`j`. This is the direct row-access form of `Matrix.rowSwap` for the first
+swapped row. -/
 private theorem rowSwap_row_left_int {n' m' : Nat}
     (M : Matrix Int n' m') (i j : Fin n') :
     (Matrix.rowSwap M i j)[i] = M[j] := by
@@ -8795,6 +8801,9 @@ private theorem rowSwap_row_left_int {n' m' : Nat}
     rw [if_neg hij, if_pos rfl] at hget
     simpa [Matrix.row] using hget
 
+/-- For a `Matrix Int`, the `Fin`-indexed right swap row `j` becomes the old row
+`i`. This is the companion row-access form of `Matrix.rowSwap` for the second
+swapped row. -/
 private theorem rowSwap_row_right_int {n' m' : Nat}
     (M : Matrix Int n' m') (i j : Fin n') :
     (Matrix.rowSwap M i j)[j] = M[i] := by
@@ -8804,6 +8813,9 @@ private theorem rowSwap_row_right_int {n' m' : Nat}
   rw [if_pos rfl] at hget
   simpa [Matrix.row] using hget
 
+/-- Raw-`Nat` row-access version of `rowSwap_row_eq_of_ne_int`: with a bound
+proof for row `r`, a `Matrix Int` row swap leaves that row unchanged when its
+value is distinct from both swapped indices. -/
 private theorem rowSwap_getRow_eq_of_ne_val_int {n' m' : Nat}
     (M : Matrix Int n' m') (i j : Fin n') (r : Nat) (hr : r < n')
     (hri : r ≠ i.val) (hrj : r ≠ j.val) :
@@ -8812,6 +8824,9 @@ private theorem rowSwap_getRow_eq_of_ne_val_int {n' m' : Nat}
   change (Matrix.rowSwap M i j)[rf] = M[rf]
   exact rowSwap_row_eq_of_ne_int M i j rf hri hrj
 
+/-- Raw-`Nat` row-access version of `rowSwap_row_left_int`: after swapping rows
+`i` and `j` in a `Matrix Int`, reading row `i.val` with an explicit bound proof
+returns the old row `j`. -/
 private theorem rowSwap_getRow_left_val_int {n' m' : Nat}
     (M : Matrix Int n' m') (i j : Fin n') (hr : i.val < n') :
     (Matrix.rowSwap M i j)[i.val]'hr = M[j] := by
@@ -8830,6 +8845,9 @@ private theorem rowSwap_getRow_left_val_int {n' m' : Nat}
     rw [if_neg hij, if_pos hii] at hget
     simpa [Matrix.row] using hget
 
+/-- Raw-`Nat` row-access version of `rowSwap_row_right_int`: after swapping rows
+`i` and `j` in a `Matrix Int`, reading row `j.val` with an explicit bound proof
+returns the old row `i`. -/
 private theorem rowSwap_getRow_right_val_int {n' m' : Nat}
     (M : Matrix Int n' m') (i j : Fin n') (hr : j.val < n') :
     (Matrix.rowSwap M i j)[j.val]'hr = M[i] := by
