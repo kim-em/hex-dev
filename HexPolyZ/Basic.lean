@@ -2399,6 +2399,10 @@ theorem rat_size_le_of_dvd_nonzero
     rw [hsize_eq] at htop
     omega
 
+/-- Uniqueness of the canonical remainder representative: if `r` and `s` both
+have degree strictly below `m`'s degree and are congruent modulo `m`, they are
+equal. Their difference `r - s` is a multiple of `m` yet has degree below `m`,
+forcing the multiplier (hence `r - s`) to be zero. -/
 private theorem rat_canonical_remainder_unique_of_pos_degree
     (r s m : DensePoly Rat)
     (hr : r.degree?.getD 0 < m.degree?.getD 0)
@@ -2490,6 +2494,9 @@ private theorem rat_canonical_remainder_unique_of_pos_degree
     have hmk_eq_rs : (m * k).size = (r - s).size := by rw [← hk]
     omega
 
+/-- Congruence descends to remainders: if `p ≡ q (mod m)` then the remainders
+`p % m` and `q % m` are themselves congruent modulo `m`. The witnessing
+multiplier is assembled from those of `p ≡ p % m`, `q ≡ q % m`, and `p ≡ q`. -/
 private theorem rat_mod_remainders_congr_of_congr (p q m : DensePoly Rat)
     (hcongr : DensePoly.Congr p q m) :
     DensePoly.Congr (p % m) (q % m) m := by
@@ -2529,6 +2536,10 @@ private theorem rat_mod_remainders_congr_of_congr (p q m : DensePoly Rat)
       exact (DensePoly.mul_add_right_poly m (k + rp)
         ((0 : DensePoly Rat) - rq)).symm
 
+/-- When `m` has positive degree, congruent polynomials have equal remainders
+modulo `m`. Both remainders have degree below `m` and are congruent (by
+`rat_mod_remainders_congr_of_congr`), so uniqueness of the canonical remainder
+makes them equal. -/
 private theorem rat_mod_eq_mod_of_congr_pos_degree (p q m : DensePoly Rat)
     (hdegree : 0 < m.degree?.getD 0)
     (hcongr : DensePoly.Congr p q m) :
@@ -2538,6 +2549,7 @@ private theorem rat_mod_eq_mod_of_congr_pos_degree (p q m : DensePoly Rat)
   · exact rat_mod_remainder_degree_lt_core q m hdegree
   · exact rat_mod_remainders_congr_of_congr p q m hcongr
 
+/-- Coefficientwise cancellation: if `p - q = 0` then `p = q`. -/
 private theorem rat_eq_of_sub_eq_zero (p q : DensePoly Rat)
     (hsub : p - q = 0) :
     p = q := by
@@ -2549,6 +2561,10 @@ private theorem rat_eq_of_sub_eq_zero (p q : DensePoly Rat)
   rw [DensePoly.coeff_sub p q i hzero_sub, DensePoly.coeff_zero] at hcoeff
   grind
 
+/-- When `m` has non-positive degree, congruent polynomials still have equal
+remainders modulo `m`. If `m = 0` both remainders are the inputs themselves,
+which the congruence forces equal; if `m` is a nonzero constant both remainders
+are zero. -/
 private theorem rat_mod_eq_mod_of_congr_not_pos_degree (p q m : DensePoly Rat)
     (hdegree : ¬ 0 < m.degree?.getD 0)
     (hcongr : DensePoly.Congr p q m) :
@@ -2587,6 +2603,9 @@ private theorem rat_mod_eq_mod_of_congr_not_pos_degree (p q m : DensePoly Rat)
           (fun a => rat_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
     rw [hpmod, hqmod]
 
+/-- Congruent polynomials always have equal remainders modulo `m`, obtained by
+case-splitting on whether `m` has positive degree and dispatching to the two
+preceding lemmas. This is the workhorse behind the `mod_eq_mod_of_congr` law. -/
 private theorem rat_mod_eq_mod_of_congr_core (p q m : DensePoly Rat)
     (hcongr : DensePoly.Congr p q m) :
     p % m = q % m := by
@@ -2594,6 +2613,9 @@ private theorem rat_mod_eq_mod_of_congr_core (p q m : DensePoly Rat)
   · exact rat_mod_eq_mod_of_congr_pos_degree p q m hdegree hcongr
   · exact rat_mod_eq_mod_of_congr_not_pos_degree p q m hdegree hcongr
 
+/-- Divisibility makes the remainder vanish: if `q ∣ p` then `p % q = 0`. Since
+`q ∣ p` gives `p ≡ 0 (mod q)`, the remainders of `p` and `0` agree, and `0 % q`
+is `0`. -/
 private theorem rat_mod_eq_zero_of_dvd_core (p q : DensePoly Rat)
     (hdiv : q ∣ p) :
     p % q = 0 := by
@@ -2603,6 +2625,9 @@ private theorem rat_mod_eq_zero_of_dvd_core (p q : DensePoly Rat)
   exact ⟨r, by
     rw [rat_sub_zero_right, hr]⟩
 
+/-- Dividing by a nonzero constant leaves no remainder: when `q` is nonzero but
+has non-positive degree (so `q` is a nonzero constant), the remainder component
+of `divMod p q` is zero, because the leading coefficient is invertible. -/
 private theorem rat_divMod_remainder_eq_zero_of_not_pos_degree (p q : DensePoly Rat)
     (hqfalse : q.isZero = false)
     (hdegree : ¬ 0 < q.degree?.getD 0) :
