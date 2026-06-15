@@ -4876,6 +4876,10 @@ theorem content_scale_neg_one (p : DensePoly Int) :
     rw [hk]
     grind
 
+/-- Scaling every coefficient by `c` pulls `c.natAbs` out of the
+`Nat.gcd`-over-`natAbs` fold: folding the scaled list from `c.natAbs * acc`
+yields `c.natAbs` times the fold of the unscaled list from `acc`. This is the
+fold-level identity behind `content (scale c p) = |c| * content p`. -/
 private theorem foldl_gcd_natAbs_mul_const_int (c : Int) (xs : List Int) (acc : Nat) :
     xs.foldl (fun g x => Nat.gcd g (c * x).natAbs) (c.natAbs * acc) =
       c.natAbs * xs.foldl (fun g x => Nat.gcd g x.natAbs) acc := by
@@ -4886,6 +4890,9 @@ private theorem foldl_gcd_natAbs_mul_const_int (c : Int) (xs : List Int) (acc : 
       rw [Int.natAbs_mul, Nat.gcd_mul_left]
       exact ih (Nat.gcd acc x.natAbs)
 
+/-- A `Nat.gcd`-over-`natAbs` fold across an all-zero coefficient list returns
+the accumulator unchanged, since `gcd g 0 = g` at every step. Used to discharge
+the trailing-zeros branch when trimming empties the tail. -/
 private theorem foldl_gcd_natAbs_of_all_zero (xs : List Int) (acc : Nat)
     (hzero : ∀ y ∈ xs, y = (0 : Int)) :
     xs.foldl (fun g x => Nat.gcd g x.natAbs) acc = acc := by
@@ -4898,11 +4905,17 @@ private theorem foldl_gcd_natAbs_of_all_zero (xs : List Int) (acc : Nat)
       simp only [List.foldl_cons, hx, Int.natAbs_zero, Nat.gcd_zero_right]
       exact ih acc hxs'
 
+/-- The defining `cons` unfolding of `trimTrailingZerosList` on `Int` lists:
+the head is dropped only when the trimmed tail is empty and the head itself is
+zero, otherwise it is kept in front of the trimmed tail. -/
 private theorem trimTrailingZerosList_cons_int (x : Int) (xs : List Int) :
     trimTrailingZerosList (x :: xs) =
       if trimTrailingZerosList xs = [] ∧ x = (0 : Int) then ([] : List Int)
       else x :: trimTrailingZerosList xs := rfl
 
+/-- If trimming trailing zeros empties a list entirely, then every entry of the
+original list was zero. The converse direction needed to push the gcd fold
+through `trimTrailingZerosList`. -/
 private theorem all_zero_of_trimTrailingZerosList_nil (xs : List Int)
     (htrim : trimTrailingZerosList xs = []) :
     ∀ y ∈ xs, y = (0 : Int) := by
@@ -4919,6 +4932,9 @@ private theorem all_zero_of_trimTrailingZerosList_nil (xs : List Int)
       · rw [if_neg hinner] at htrim
         exact absurd htrim (List.cons_ne_nil _ _)
 
+/-- Trimming trailing zeros before the `Nat.gcd`-over-`natAbs` fold gives the
+same result as folding the untrimmed list, because the dropped trailing zeros
+contribute nothing to the gcd. Lets `contentNat` ignore the trimming step. -/
 private theorem foldl_gcd_natAbs_trim_eq (xs : List Int) (acc : Nat) :
     (trimTrailingZerosList xs).foldl (fun g x => Nat.gcd g x.natAbs) acc =
       xs.foldl (fun g x => Nat.gcd g x.natAbs) acc := by
