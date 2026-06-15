@@ -25,10 +25,20 @@ immediately with `ABORT: no issue number provided`.
    `coordination claim <N> --label <type>`. Do **NOT** use
    `coordination list-unclaimed` — you are not picking from the
    queue.
+   **Exception — `replan` worker type.** `replan` issues are
+   deliberately *unclaimable*: `coordination claim <N> --label replan`
+   returns `CLAIM FAILED: Issue #<N> needs replan`. Do **not** treat
+   this as an abort. Replan triages issues directly (edit body/labels,
+   close with forward links) via the `replan` skill — there is no
+   claim and no PR. Skip the claim, read the `replan` skill, and triage
+   `#<N>` per its disposition rules. If `#<N>` no longer carries the
+   `replan` label (already triaged by a concurrent session), confirm
+   the disposition is correct and exit without further edits.
 4. **If the claim fails** (issue already claimed by another agent,
-   issue closed, issue not labelled with the worker type, etc.),
-   exit immediately. Print `ABORT: claim failed for #<N>` and do
-   nothing else. No worktree commits, no branches, no PR.
+   issue closed, issue not labelled with the worker type, etc.) — and
+   the worker type is **not** `replan` — exit immediately. Print
+   `ABORT: claim failed for #<N>` and do nothing else. No worktree
+   commits, no branches, no PR.
 5. Once the claim succeeds, **execute the issue end-to-end**
    following the standard worker flow for the matched type
    (implementation, build, tests, commit, push, open PR).
