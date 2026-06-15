@@ -21572,4 +21572,47 @@ theorem toMonicLiftData_subset_of_dvd_liftedRecoveryCandidate
   exact toMonicLiftData_subset_of_liftedFactorProduct_map_dvd core B primeData
     hcore_lc_pos hcore_pos hselected hprecision hclST_map
 
+/-- **Non-circular recovered-candidate equality.** For
+`d := toMonicLiftData core B primeData` on a non-monic `core` with positive
+leading coefficient and a prime selected by the monic transform, a sign-
+normalised integer factor `f` represented by the lifted subset `S` is exactly
+the recovered recombination candidate over `S`.
+
+This is the recovery half of
+`toMonicLiftData_subset_of_dvd_liftedRecoveryCandidate`, exposed as a standalone
+identity through `RecoveredAtLift.candidate_eq_of_monic_dvd`.  Non-circular: it
+assumes no `LiftedFactorSubsetPartition`. -/
+theorem toMonicLiftData_liftedRecoveryCandidate_eq
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
+    {f : Hex.ZPoly}
+    {S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData)}
+    (hfsign : Hex.normalizeFactorSign f = f)
+    (hrep :
+      RepresentsIntegerFactorAtLift core (Hex.ZPoly.toMonicLiftData core B primeData) f S) :
+    liftedRecoveryCandidate core (Hex.ZPoly.toMonicLiftData core B primeData) S = f := by
+  have hp_eq : (Hex.ZPoly.toMonicLiftData core B primeData).p = primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_p _ _ _
+  have hk_eq : (Hex.ZPoly.toMonicLiftData core B primeData).k =
+      Hex.precisionForCoeffBound B primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_k _ _ _
+  have hmonic_ne : (Hex.ZPoly.toMonic core).monic ≠ 0 := by
+    intro h
+    have hlcm : Hex.DensePoly.leadingCoeff (Hex.ZPoly.toMonic core).monic = 1 :=
+      Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+    rw [h, Hex.DensePoly.leadingCoeff_zero] at hlcm
+    exact one_ne_zero hlcm.symm
+  have hprec_dk :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k := by
+    rw [hp_eq, hk_eq]; exact hbound
+  rcases hrep with ⟨hrec⟩
+  exact hrec.candidate_eq_of_monic_dvd hmonic_ne hfsign hprec_dk
+
 end HexBerlekampZassenhausMathlib

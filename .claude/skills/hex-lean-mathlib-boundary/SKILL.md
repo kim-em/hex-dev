@@ -213,6 +213,26 @@ diagnose on the issue (per the CLAUDE.md "Directives are hypotheses" rule) and
 no producer as of this writing: `HenselLiftDescentHypotheses`, the
 `toMonicLiftData` modP→lift transport, and `InitialLiftedFactorSubsetPartitionEvidence`.
 
+The same check applies one level down to a "reduce X via the existing
+`*_of_recovery` lemmas" directive: the named recovery lemma existing is not
+enough — verify its *hypotheses* are obtainable from the representation predicate
+in scope. The scaled chain is the trap. `scaledRecombinationCandidate` is
+**scale-based** (`scale lc q = lc·q`) while `RepresentsIntegerFactorAtLift` /
+`RecoveredAtLift` carry only the **dilate** recovery (`dilate lc q` has
+`coeff n = lc^n·q.coeff n` — deliberately *not* `scale`, `HexPolyZ/Basic.lean:63`).
+Every `scaledRecombinationCandidate_eq_factor_of_recovery` lemma needs
+`hscaled : reduceModPow (scaledLiftedFactorProduct …) = reduceModPow factor` as a
+hypothesis, and **nothing produces it** (`grep` finds `scaledLiftedFactorProduct
+… reduceModPow` only in hypothesis position). So a non-circular scaled support
+field (`support_subset_of_dvd_scaledRecombinationCandidate`) cannot be built as a
+thin wrapper over the lifted-product support theorem — the dilate carrier feeds
+the dilate reflection (`toPolynomial_dvd_of_primitivePart_dilate_dvd`, monic-only)
+but not the scaled candidate. Mod p the obstruction is the dilation automorphism
+`σ : q(x) ↦ q(lc·x)`: `f ~ σ(lfp S)` but the scaled candidate `~ lfp T`, and the
+clean half needs the undilated `lfp S ∣ lfp T`. This was #7479 deliverable 2;
+the dilate equality/support wrappers (deliverables 1/3, #7491 / `toMonicLiftData_
+liftedRecoveryCandidate_eq`) are the unblocked ones.
+
 **But "no producer" only blocks a transport that genuinely needs a bridge
 between two concrete defs.** Before skipping a `henselLiftData → toMonicLiftData`
 (or similar) transport, check whether the consumer chain is *generic in the
