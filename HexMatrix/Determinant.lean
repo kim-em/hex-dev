@@ -1863,6 +1863,10 @@ private theorem insertAt_last_castSucc_idxOf {n : Nat}
     exact insertAt_get_self (Fin.last n) (v.map Fin.castSucc) i
   simpa [hget] using hins.idxOf_getElem i.val hlen
 
+/-- `insertAt_last_castSucc_injective` states that inserting `Fin.last n` into the
+`castSucc`-lifted nodup vectors `v` and `w` at positions `i` and `j` yields equal
+results only when `i = j` and `v = w`, the injectivity that keeps the inserted
+permutation vectors distinct in the recursive enumeration. -/
 private theorem insertAt_last_castSucc_injective {n : Nat}
     {v w : Vector (Fin n) n} {i j : Fin (n + 1)}
     (hv : v.toList.Nodup) (hw : w.toList.Nodup)
@@ -1894,6 +1898,9 @@ private theorem insertAt_last_castSucc_injective {n : Nat}
   apply Array.toList_inj.mp
   simpa [Vector.toList] using hvwList
 
+/-- `permutationVectorInsertions_nodup` states that, for a fixed nodup vector `v`,
+the list of insertions of `Fin.last n` at each position has no duplicates, so the
+size-`n+1` vectors built from a single size-`n` permutation stay distinct. -/
 private theorem permutationVectorInsertions_nodup {n : Nat}
     (v : Vector (Fin n) n) (hnodup : v.toList.Nodup) :
     ((List.finRange (n + 1)).map fun i =>
@@ -1902,6 +1909,9 @@ private theorem permutationVectorInsertions_nodup {n : Nat}
     (fun i j h => (insertAt_last_castSucc_injective hnodup hnodup h).1)
     (List.nodup_finRange (n + 1))
 
+/-- `permutationVectorInsertions_disjoint` states that distinct nodup vectors `v`
+and `w` produce insertion lists sharing no element, the cross-vector disjointness
+that prevents collisions when the per-vector insertions are concatenated. -/
 private theorem permutationVectorInsertions_disjoint {n : Nat}
     {v w : Vector (Fin n) n}
     (hv : v.toList.Nodup) (hw : w.toList.Nodup) (hvw : v ≠ w) :
@@ -1916,6 +1926,10 @@ private theorem permutationVectorInsertions_disjoint {n : Nat}
   rcases hb with ⟨j, _hj, hb⟩
   exact hvw (insertAt_last_castSucc_injective hv hw (hab.trans hb.symm)).2
 
+/-- `permutationVectors_flatMap_nodup` states that flat-mapping the per-vector
+insertion lists over a nodup list `vs` of nodup vectors yields a nodup list,
+combining the per-vector and cross-vector facts into the no-duplicates property of
+the size-`n+1` permutation enumeration. -/
 private theorem permutationVectors_flatMap_nodup {n : Nat}
     (vs : List (Vector (Fin n) n))
     (hvs : vs.Nodup) (hperm : ∀ v, v ∈ vs → v.toList.Nodup) :
