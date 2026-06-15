@@ -2349,6 +2349,109 @@ theorem elim
 
 end RepresentsIntegerFactorAtLift
 
+/-- Dilation commutes with integer coefficient scaling. -/
+private theorem dilate_scale (c a : Int) (p : Hex.ZPoly) :
+    Hex.ZPoly.dilate c (Hex.DensePoly.scale a p) =
+      Hex.DensePoly.scale a (Hex.ZPoly.dilate c p) := by
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.ZPoly.coeff_dilate, Hex.DensePoly.coeff_scale (R := Int) a p n (Int.mul_zero a),
+    Hex.DensePoly.coeff_scale (R := Int) a (Hex.ZPoly.dilate c p) n (Int.mul_zero a),
+    Hex.ZPoly.coeff_dilate]
+  ring
+
+/-- A positive scalar multiple has the same primitive part. -/
+private theorem primitivePart_scale_of_pos {a : Int} (ha : 0 < a) (p : Hex.ZPoly) :
+    Hex.ZPoly.primitivePart (Hex.DensePoly.scale a p) =
+      Hex.ZPoly.primitivePart p := by
+  have hC :
+      Hex.ZPoly.primitivePart (Hex.DensePoly.C a : Hex.ZPoly) =
+        (1 : Hex.ZPoly) := by
+    have hscale :
+        Hex.DensePoly.scale a (1 : Hex.ZPoly) =
+          (Hex.DensePoly.C a : Hex.ZPoly) := by
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      rw [Hex.DensePoly.coeff_scale (R := Int) a (1 : Hex.ZPoly) n (Int.mul_zero a)]
+      change a * (Hex.DensePoly.C (1 : Int)).coeff n =
+        (Hex.DensePoly.C a : Hex.ZPoly).coeff n
+      by_cases hn : n = 0
+      · simp [hn]
+      · simp [hn]
+        ring
+    rw [← hscale]
+    simpa [Hex.ZPoly.primitivePart] using
+      Hex.DensePoly.primitivePart_scale_of_primitive ha
+        (by
+          change Hex.DensePoly.content (Hex.DensePoly.C (1 : Int)) = 1
+          simp)
+  rw [← Hex.ZPoly.C_mul_eq_scale, Hex.ZPoly.primitivePart_mul, hC]
+  simp
+
+/--
+Primitive-part recovery is unchanged if the monic-coordinate witness is first
+replaced by its primitive part before a variable dilation.
+-/
+private theorem primitivePart_dilate_primitivePart
+    (lc : Int) (m : Hex.ZPoly) :
+    Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc m) =
+      Hex.ZPoly.primitivePart
+        (Hex.ZPoly.dilate lc (Hex.ZPoly.primitivePart m)) := by
+  by_cases hcontent : Hex.ZPoly.content m = 0
+  · have hprim_zero : Hex.ZPoly.primitivePart m = 0 := by
+      simpa [Hex.ZPoly.primitivePart, Hex.ZPoly.content] using
+        Hex.DensePoly.primitivePart_eq_zero_of_content_eq_zero m hcontent
+    have hm_zero : m = 0 := by
+      have hrec := Hex.ZPoly.content_mul_primitivePart m
+      rw [hcontent, hprim_zero] at hrec
+      simpa using hrec.symm
+    subst m
+    rw [hprim_zero]
+  · have hcontent_pos : 0 < Hex.ZPoly.content m := by
+      have hnonneg : 0 ≤ Hex.ZPoly.content m := by
+        unfold Hex.ZPoly.content Hex.DensePoly.content
+        exact Int.natCast_nonneg _
+      omega
+    have hrec : m = Hex.DensePoly.scale (Hex.ZPoly.content m) (Hex.ZPoly.primitivePart m) :=
+      (Hex.ZPoly.content_mul_primitivePart m).symm
+    have hprim_idem :
+        Hex.ZPoly.primitivePart (Hex.ZPoly.primitivePart m) =
+          Hex.ZPoly.primitivePart m :=
+      Hex.ZPoly.primitivePart_eq_self_of_primitive
+        (Hex.ZPoly.primitivePart m)
+        (Hex.ZPoly.primitivePart_primitive m hcontent)
+    rw [hrec, dilate_scale, primitivePart_scale_of_pos hcontent_pos,
+      primitivePart_scale_of_pos hcontent_pos, hprim_idem]
+
+/--
+Transfer a lifted representation of a monic correspondent for
+`(toMonic core).monic` back to a representation of the original integer factor.
+-/
+theorem representsIntegerFactorAtLift_of_monicCorrespondent
+    {core M factor g : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hM : M = (Hex.ZPoly.toMonic core).monic)
+    (hM_monic : Hex.DensePoly.Monic M)
+    (hrep : RepresentsIntegerFactorAtLift M d g S)
+    (hrecover :
+      Hex.ZPoly.primitivePart
+        (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) g) = factor) :
+    RepresentsIntegerFactorAtLift core d factor S := by
+  rcases hrep with ⟨hrec⟩
+  refine RepresentsIntegerFactorAtLift.ofRecovered
+    { monicFactor := hrec.monicFactor
+      congr := hrec.congr
+      dilate_eq := ?_
+      monic_dvd := ?_ }
+  · have hM_lc : Hex.DensePoly.leadingCoeff M = (1 : Int) := hM_monic
+    have hg :
+        Hex.ZPoly.primitivePart hrec.monicFactor = g := by
+      simpa [hM_lc] using hrec.dilate_eq
+    rw [primitivePart_dilate_primitivePart, hg, hrecover]
+  · rw [← hM]
+    have htoM : (Hex.ZPoly.toMonic M).monic = M :=
+      Hex.ZPoly.toMonic_monic_eq_core_of_leadingCoeff_eq_one M hM_monic
+    simpa [htoM] using hrec.monic_dvd
+
 /--
 Proof-side form of the executable recombination candidate, using the selected
 lifted-factor product directly.  The executable-list version is introduced
