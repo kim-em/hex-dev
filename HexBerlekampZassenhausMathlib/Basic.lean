@@ -21245,4 +21245,283 @@ private theorem congr_centeredLiftPoly (q : Hex.ZPoly) (m : Nat) :
   exact Int.emod_eq_zero_of_dvd
     (dvd_sub_comm.mp (Hex.self_sub_centeredModNat_dvd (q.coeff i) m))
 
+/-- Sign normalisation is an associate over `Polynomial ℤ`: `normalizeFactorSign`
+either fixes its argument or negates it (scaling by `-1`), and `-1` is a unit. -/
+private theorem toPolynomial_normalizeFactorSign_associated (q : Hex.ZPoly) :
+    Associated (HexPolyZMathlib.toPolynomial (Hex.normalizeFactorSign q))
+      (HexPolyZMathlib.toPolynomial q) := by
+  unfold Hex.normalizeFactorSign
+  split
+  · rw [← Hex.ZPoly.C_mul_eq_scale, HexPolyZMathlib.toPolynomial_mul,
+      HexPolyZMathlib.toPolynomial_C]
+    have huneg : IsUnit (Polynomial.C (-1 : ℤ)) :=
+      Polynomial.isUnit_C.mpr (isUnit_one.neg)
+    refine ⟨huneg.unit, ?_⟩
+    rw [huneg.unit_spec, mul_comm, ← mul_assoc, ← Polynomial.C_mul]
+    norm_num
+  · exact Associated.refl _
+
+/-- **Recovery dilation reflection.** If the primitive parts of the
+`lc`-dilations of two monic integer polynomials divide one another over
+`Polynomial ℤ`, then the polynomials themselves do.
+
+Over `ℚ` the variable dilation `X ↦ lc · X` is the algebra automorphism
+`algEquivCMulXAddC lc 0` (`lc ≠ 0`), so it reflects divisibility; the residual
+content scalars are units there; and Gauss's lemma moves the conclusion back to
+`ℤ[X]`, using that both monic inputs are primitive. -/
+private theorem toPolynomial_dvd_of_primitivePart_dilate_dvd
+    {a b : Hex.ZPoly} {lc : Int}
+    (hlc : lc ≠ 0)
+    (ha_monic : Hex.DensePoly.Monic a)
+    (hb_monic : Hex.DensePoly.Monic b)
+    (hdvd :
+      HexPolyZMathlib.toPolynomial
+          (Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc a)) ∣
+        HexPolyZMathlib.toPolynomial
+          (Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc b))) :
+    HexPolyZMathlib.toPolynomial a ∣ HexPolyZMathlib.toPolynomial b := by
+  classical
+  set cast := Int.castRingHom ℚ with hcast
+  have hA_monic : (HexPolyZMathlib.toPolynomial a).Monic :=
+    HexHenselMathlib.toPolynomial_monic_of_dense_monic a ha_monic
+  have hB_monic : (HexPolyZMathlib.toPolynomial b).Monic :=
+    HexHenselMathlib.toPolynomial_monic_of_dense_monic b hb_monic
+  have hA_prim : (HexPolyZMathlib.toPolynomial a).IsPrimitive := hA_monic.isPrimitive
+  have hB_prim : (HexPolyZMathlib.toPolynomial b).IsPrimitive := hB_monic.isPrimitive
+  have hca : cast lc ≠ 0 := by rw [eq_intCast cast lc]; exact_mod_cast hlc
+  letI : Invertible (cast lc) := invertibleOfNonzero hca
+  -- Per-side bridge: the primitive-part image over `ℚ` is associated to the
+  -- automorphism applied to the polynomial's image.
+  have key : ∀ U : Hex.ZPoly, Hex.DensePoly.Monic U →
+      Associated
+        ((HexPolyZMathlib.toPolynomial
+            (Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc U))).map cast)
+        ((Polynomial.algEquivCMulXAddC (cast lc) (0 : ℚ))
+          ((HexPolyZMathlib.toPolynomial U).map cast)) := by
+    intro U hU
+    have hU_monic : (HexPolyZMathlib.toPolynomial U).Monic :=
+      HexHenselMathlib.toPolynomial_monic_of_dense_monic U hU
+    have hcomp :
+        HexPolyZMathlib.toPolynomial (Hex.ZPoly.dilate lc U)
+          = (HexPolyZMathlib.toPolynomial U).comp (Polynomial.C lc * Polynomial.X) :=
+      HexPolyZMathlib.toPolynomial_dilate lc U
+    have hD0 : Hex.ZPoly.dilate lc U ≠ 0 := by
+      intro hz
+      have : HexPolyZMathlib.toPolynomial U ≠ 0 := hU_monic.ne_zero
+      apply this
+      have hcomp0 :
+          (HexPolyZMathlib.toPolynomial U).comp (Polynomial.C lc * Polynomial.X) = 0 := by
+        rw [← hcomp, hz, HexPolyZMathlib.toPolynomial_zero]
+      rwa [Polynomial.comp_C_mul_X_eq_zero_iff (mem_nonZeroDivisors_of_ne_zero hlc)] at hcomp0
+    have hc0 : Hex.ZPoly.content (Hex.ZPoly.dilate lc U) ≠ 0 :=
+      HexPolyZMathlib.content_ne_zero _ hD0
+    have hcc : cast (Hex.ZPoly.content (Hex.ZPoly.dilate lc U)) ≠ 0 := by
+      rw [eq_intCast cast _]; exact_mod_cast hc0
+    -- Content decomposition over `ℤ`, mapped to `ℚ`.
+    have hmapCF :
+        (HexPolyZMathlib.toPolynomial (Hex.ZPoly.dilate lc U)).map cast
+          = Polynomial.C (cast (Hex.ZPoly.content (Hex.ZPoly.dilate lc U))) *
+              (HexPolyZMathlib.toPolynomial
+                (Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc U))).map cast := by
+      rw [HexPolyZMathlib.toPolynomial_eq_C_content_mul_primitivePart, Polynomial.map_mul,
+        Polynomial.map_C]
+    -- Dilation image over `ℚ` is the automorphism applied to the base image.
+    have hmapComp :
+        (HexPolyZMathlib.toPolynomial (Hex.ZPoly.dilate lc U)).map cast
+          = (Polynomial.algEquivCMulXAddC (cast lc) (0 : ℚ))
+              ((HexPolyZMathlib.toPolynomial U).map cast) := by
+      rw [hcomp, Polynomial.map_comp, Polynomial.map_mul, Polynomial.map_C, Polynomial.map_X,
+        Polynomial.algEquivCMulXAddC_apply, ← Polynomial.comp_eq_aeval]
+      simp
+    have huC : IsUnit (Polynomial.C (cast (Hex.ZPoly.content (Hex.ZPoly.dilate lc U)))) :=
+      Polynomial.isUnit_C.mpr (isUnit_iff_ne_zero.mpr hcc)
+    refine ⟨huC.unit, ?_⟩
+    rw [← hmapComp, hmapCF, huC.unit_spec]
+    exact mul_comm _ _
+  -- Push the integer-side divisibility into `ℚ[X]`.
+  have hdvdQ :
+      (HexPolyZMathlib.toPolynomial
+          (Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc a))).map cast ∣
+        (HexPolyZMathlib.toPolynomial
+          (Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc b))).map cast := by
+    have h := map_dvd (Polynomial.mapRingHom cast) hdvd
+    simpa using h
+  have hassocA := key a ha_monic
+  have hassocB := key b hb_monic
+  have heAB :
+      (Polynomial.algEquivCMulXAddC (cast lc) (0 : ℚ))
+          ((HexPolyZMathlib.toPolynomial a).map cast) ∣
+        (Polynomial.algEquivCMulXAddC (cast lc) (0 : ℚ))
+          ((HexPolyZMathlib.toPolynomial b).map cast) :=
+    (hassocA.symm.dvd).trans (hdvdQ.trans hassocB.dvd)
+  -- Reflect through the inverse automorphism.
+  have hrefl :
+      (HexPolyZMathlib.toPolynomial a).map cast ∣ (HexPolyZMathlib.toPolynomial b).map cast := by
+    have h := map_dvd (Polynomial.algEquivCMulXAddC (cast lc) (0 : ℚ)).symm heAB
+    simp only [AlgEquiv.symm_apply_apply] at h
+    exact h
+  exact (Polynomial.IsPrimitive.Int.dvd_iff_map_cast_dvd_map_cast
+    (HexPolyZMathlib.toPolynomial a) (HexPolyZMathlib.toPolynomial b)
+    hA_prim hB_prim).mpr hrefl
+
+set_option maxHeartbeats 400000 in
+/-- **Non-circular lifted recovery-candidate support containment.** For
+`d := toMonicLiftData core B primeData` on a non-monic `core` with positive
+leading coefficient and a prime selected by the monic transform, if an integer
+factor `f` represented by the lifted subset `S` divides the recovered
+recombination candidate over `T`, then `S ⊆ T`.
+
+The route: exact recovery (`candidate_eq_of_monic_dvd`) identifies `f` with the
+recovery candidate over `S`, so the candidate over `S` divides that over `T`;
+the recovery-dilation reflection (`toPolynomial_dvd_of_primitivePart_dilate_dvd`)
+and the centred-lift congruence move this to a mod-`p` divisibility of the
+selected lifted-factor products; and the clean half
+(`toMonicLiftData_subset_of_liftedFactorProduct_map_dvd`) concludes `S ⊆ T`.
+Non-circular: it assumes no `LiftedFactorSubsetPartition`. -/
+theorem toMonicLiftData_subset_of_dvd_liftedRecoveryCandidate
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
+    {f : Hex.ZPoly}
+    {S T : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData)}
+    (hfsign : Hex.normalizeFactorSign f = f)
+    (hrep :
+      RepresentsIntegerFactorAtLift core (Hex.ZPoly.toMonicLiftData core B primeData) f S)
+    (hdvd :
+      f ∣ liftedRecoveryCandidate core (Hex.ZPoly.toMonicLiftData core B primeData) T) :
+    S ⊆ T := by
+  classical
+  set lc := Hex.DensePoly.leadingCoeff core with hlc_def
+  set pk := (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+      (Hex.ZPoly.toMonicLiftData core B primeData).k with hpk
+  have hlc_ne : lc ≠ 0 := ne_of_gt hcore_lc_pos
+  -- Modulus facts (proved through the structure projections, not by whnf).
+  have hp_eq : (Hex.ZPoly.toMonicLiftData core B primeData).p = primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_p _ _ _
+  have hk_eq : (Hex.ZPoly.toMonicLiftData core B primeData).k =
+      Hex.precisionForCoeffBound B primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_k _ _ _
+  have hp2 : 2 ≤ primeData.p := (Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected).two_le
+  have hprec_ne : Hex.precisionForCoeffBound B primeData.p ≠ 0 := by omega
+  have hpk_eq : pk = primeData.p ^ Hex.precisionForCoeffBound B primeData.p := by
+    rw [hpk, hp_eq, hk_eq]
+  have hmod2 : 2 ≤ pk := by
+    rw [hpk_eq]
+    calc 2 ≤ primeData.p := hp2
+      _ ≤ primeData.p ^ Hex.precisionForCoeffBound B primeData.p :=
+          le_self_pow (by omega) hprec_ne
+  have hp_dvd : primeData.p ∣ pk := by
+    rw [hpk_eq]; exact dvd_pow_self primeData.p hprec_ne
+  -- Exact recovery: the recovery candidate over `S` is `f`.
+  have hmonic_ne : (Hex.ZPoly.toMonic core).monic ≠ 0 := by
+    intro h
+    have hlcm : Hex.DensePoly.leadingCoeff (Hex.ZPoly.toMonic core).monic = 1 :=
+      Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+    rw [h, Hex.DensePoly.leadingCoeff_zero] at hlcm
+    exact one_ne_zero hlcm.symm
+  have hprec_dk :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k := by
+    rw [hp_eq, hk_eq]; exact hbound
+  rcases hrep with ⟨hrec⟩
+  have hrecS :
+      liftedRecoveryCandidate core (Hex.ZPoly.toMonicLiftData core B primeData) S = f :=
+    hrec.candidate_eq_of_monic_dvd hmonic_ne hfsign hprec_dk
+  have hcand_dvd :
+      liftedRecoveryCandidate core (Hex.ZPoly.toMonicLiftData core B primeData) S ∣
+        liftedRecoveryCandidate core (Hex.ZPoly.toMonicLiftData core B primeData) T := by
+    rw [hrecS]; exact hdvd
+  -- Lifted-factor products and their centred lifts are monic.
+  have hlf_monic :
+      ∀ i : Fin (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors.size,
+        Hex.DensePoly.Monic (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) i) :=
+    Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData core B primeData
+      hcore_lc_pos hcore_pos hselected hprecision
+  have hP_monic :
+      ∀ U : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData),
+        Hex.DensePoly.Monic (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) U) :=
+    fun U => liftedFactorProduct_monic _ U (fun i _ => hlf_monic i)
+  have hcl_monic :
+      ∀ U : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData),
+        Hex.DensePoly.Monic
+          (Hex.centeredLiftPoly
+            (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) U) pk) :=
+    fun U => monic_centeredLiftPoly_of_monic (hP_monic U) hmod2
+  -- Strip sign normalisation to a divisibility of the dilated primitive parts.
+  have hcand_dvdP :
+      HexPolyZMathlib.toPolynomial
+          (liftedRecoveryCandidate core (Hex.ZPoly.toMonicLiftData core B primeData) S) ∣
+        HexPolyZMathlib.toPolynomial
+          (liftedRecoveryCandidate core (Hex.ZPoly.toMonicLiftData core B primeData) T) :=
+    HexPolyMathlib.toPolynomial_dvd hcand_dvd
+  have hppST :
+      HexPolyZMathlib.toPolynomial
+          (Hex.ZPoly.primitivePart
+            (Hex.ZPoly.dilate lc
+              (Hex.centeredLiftPoly
+                (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) S) pk))) ∣
+        HexPolyZMathlib.toPolynomial
+          (Hex.ZPoly.primitivePart
+            (Hex.ZPoly.dilate lc
+              (Hex.centeredLiftPoly
+                (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) T) pk))) := by
+    have hassS :=
+      toPolynomial_normalizeFactorSign_associated
+        (Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate lc
+            (Hex.centeredLiftPoly
+              (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) S) pk)))
+    have hassT :=
+      toPolynomial_normalizeFactorSign_associated
+        (Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate lc
+            (Hex.centeredLiftPoly
+              (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) T) pk)))
+    exact (hassS.symm.dvd).trans (hcand_dvdP.trans hassT.dvd)
+  -- Reflect through the dilation: the centred lifts divide over `ℤ`.
+  have hclST :
+      HexPolyZMathlib.toPolynomial
+          (Hex.centeredLiftPoly
+            (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) S) pk) ∣
+        HexPolyZMathlib.toPolynomial
+          (Hex.centeredLiftPoly
+            (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) T) pk) :=
+    toPolynomial_dvd_of_primitivePart_dilate_dvd hlc_ne (hcl_monic S) (hcl_monic T) hppST
+  -- Map to `ZMod primeData.p` and rewrite centred lifts to the lifted-factor products.
+  have hclST_map :
+      (HexPolyZMathlib.toPolynomial
+          (Hex.centeredLiftPoly
+            (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) S) pk)).map
+          (Int.castRingHom (ZMod primeData.p)) ∣
+        (HexPolyZMathlib.toPolynomial
+          (Hex.centeredLiftPoly
+            (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) T) pk)).map
+          (Int.castRingHom (ZMod primeData.p)) := by
+    have h := map_dvd (Polynomial.mapRingHom (Int.castRingHom (ZMod primeData.p))) hclST
+    simpa using h
+  have hmapcl :
+      ∀ U : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData),
+        (HexPolyZMathlib.toPolynomial
+            (Hex.centeredLiftPoly
+              (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) U) pk)).map
+            (Int.castRingHom (ZMod primeData.p)) =
+          (HexPolyZMathlib.toPolynomial
+            (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) U)).map
+            (Int.castRingHom (ZMod primeData.p)) := by
+    intro U
+    exact HexHenselMathlib.zpoly_congr_toPolynomial_map_eq _ _ _
+      (Hex.ZPoly.congr_of_dvd_modulus _ _ hp_dvd
+        (congr_centeredLiftPoly
+          (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) U) pk))
+  rw [hmapcl S, hmapcl T] at hclST_map
+  -- Clean half.
+  exact toMonicLiftData_subset_of_liftedFactorProduct_map_dvd core B primeData
+    hcore_lc_pos hcore_pos hselected hprecision hclST_map
+
 end HexBerlekampZassenhausMathlib
