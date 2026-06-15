@@ -236,6 +236,45 @@ theorem natDegree_toPolynomial_dilate (c : ℤ) (hc : c ≠ 0) (g : Hex.ZPoly) :
   rw [toPolynomial_dilate, Polynomial.natDegree_comp,
     Polynomial.natDegree_C_mul_X c hc, mul_one]
 
+/-- Substitution `X ↦ u · X` by a unit `u` reflects divisibility: if the dilated
+polynomials divide, so do the originals. The substitution is a ring automorphism
+of `R[X]` with inverse `X ↦ u⁻¹ · X`, so applying that inverse hom to the
+hypothesis (via `map_dvd`) recovers `a ∣ b`. This is the substitution engine the
+lift-stage recovery chain uses to descend a divisibility through `X ↦ lc · X`,
+where `lc` is a unit because the prime does not divide the leading coefficient. -/
+theorem dvd_of_comp_unit_mul_X {R : Type*} [CommRing R] {u : R} (hu : IsUnit u)
+    {a b : Polynomial R}
+    (h : a.comp (Polynomial.C u * Polynomial.X) ∣
+          b.comp (Polynomial.C u * Polynomial.X)) :
+    a ∣ b := by
+  obtain ⟨w, hw⟩ := hu
+  set v : R := ↑w⁻¹ with hv
+  have huv : u * v = 1 := by rw [hv, ← hw]; exact w.mul_inv
+  have hcomp : (Polynomial.C u * Polynomial.X).comp (Polynomial.C v * Polynomial.X)
+      = Polynomial.X := by
+    rw [Polynomial.mul_comp, Polynomial.C_comp, Polynomial.X_comp, ← mul_assoc,
+      ← Polynomial.C_mul, huv, Polynomial.C_1, one_mul]
+  have key : ∀ p : Polynomial R,
+      (p.comp (Polynomial.C u * Polynomial.X)).comp (Polynomial.C v * Polynomial.X)
+        = p := by
+    intro p
+    rw [Polynomial.comp_assoc, hcomp, Polynomial.comp_X]
+  have hdvd := map_dvd (Polynomial.compRingHom (Polynomial.C v * Polynomial.X)) h
+  rwa [Polynomial.coe_compRingHom_apply, Polynomial.coe_compRingHom_apply, key, key]
+    at hdvd
+
+/-- Divisibility is invariant under substitution `X ↦ u · X` by a unit: the
+dilated polynomials divide iff the originals do. The forward direction is
+`map_dvd` of the composition ring hom (no unit needed); the reverse is
+`dvd_of_comp_unit_mul_X`. -/
+theorem comp_unit_mul_X_dvd_iff {R : Type*} [CommRing R] {u : R} (hu : IsUnit u)
+    {a b : Polynomial R} :
+    a.comp (Polynomial.C u * Polynomial.X) ∣
+        b.comp (Polynomial.C u * Polynomial.X) ↔ a ∣ b :=
+  ⟨dvd_of_comp_unit_mul_X hu, fun h => by
+    have hdvd := map_dvd (Polynomial.compRingHom (Polynomial.C u * Polynomial.X)) h
+    rwa [Polynomial.coe_compRingHom_apply, Polynomial.coe_compRingHom_apply] at hdvd⟩
+
 /-! ### Gauss content/primitive-part correspondence
 
 The executable `Hex.ZPoly.content`/`primitivePart` carry their own Gauss theory
