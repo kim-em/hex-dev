@@ -492,6 +492,32 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut
     (factorFastCoreWithBound_some_factor_count_eq_of_cut trueSupports hcore_ne h
       hcut hsize hpartition)
 
+/--
+Irreducibility wrapper that discharges the forward cut hypothesis from the
+B5 true-indicator norm bound plus a Gram-Schmidt cut-retention certificate.
+-/
+theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_retention
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    {L : Hex.BhksLatticeBasis} {hrows : 1 ≤ L.factorCount + L.coeffWidth}
+    (trueSupports :
+      Set (Set (Fin (Hex.bhksProjectedRows L hrows).factorCount)))
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (hret : BHKS.CutRetention (Hex.bhksProjectedRows L hrows))
+    (hsize :
+      coreFactors.size =
+        (Hex.bhksEquivalenceClassIndicators (Hex.bhksProjectedRows L hrows)).size)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    ∀ factor ∈ coreFactors.toList, Hex.ZPoly.Irreducible factor :=
+  factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut trueSupports
+    hcore_ne h
+    (BHKS.cutProjectionHypotheses_of_retention L hrows trueSupports hret)
+    hsize hpartition
+
 /-- Cardinality equality for a successful BHKS fast-core branch under the B8
 partition-refinement package.  Pairs `factorFastCoreWithBound_some_factor_count_le`
 with `factorFastCoreWithBound_some_factor_count_ge`, exposing the count

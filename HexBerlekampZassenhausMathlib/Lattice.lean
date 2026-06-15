@@ -398,6 +398,53 @@ structure CutProjectionHypotheses
   indicator_mem_projected :
     ∀ S : trueSupports, indicatorVector S.1 ∈ projectedRowSpanInt L
 
+/--
+Gram-Schmidt cut-retention certificate for projected BHKS rows.
+
+This is the proof-facing form of the BHKS Lemma 5.7 forward cut fact: every
+integer vector whose projected squared norm is within the stored cut radius
+lies in the span of the rows retained by the executable Gram-Schmidt cut.
+-/
+structure CutRetention (L : Hex.BhksProjectedRows) where
+  mem_projected_of_norm_le :
+    ∀ v : Fin L.factorCount → ℤ,
+      (∑ i : Fin L.factorCount, ((v i : ℝ)) ^ 2) ≤ (L.cutRadiusSq4 : ℝ) →
+        v ∈ projectedRowSpanInt L
+
+namespace CutProjectionHypotheses
+
+/--
+Build the forward cut hypotheses from a Gram-Schmidt retention certificate and
+a squared-norm bound for each true-support indicator.
+-/
+def ofRetention
+    (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount)))
+    (hret : CutRetention L)
+    (hnorm :
+      ∀ S : trueSupports,
+        (∑ i : Fin L.factorCount, ((((indicatorVector S.1 i : ℤ) : ℝ) ^ 2))) ≤
+          (L.cutRadiusSq4 : ℝ)) :
+    CutProjectionHypotheses L trueSupports where
+  indicator_mem_projected S := hret.mem_projected_of_norm_le (indicatorVector S.1)
+    (by simpa using hnorm S)
+
+end CutProjectionHypotheses
+
+/--
+Projected-row producer for `CutProjectionHypotheses` from the landed B5
+indicator norm bound plus a Gram-Schmidt cut-retention certificate.
+-/
+def cutProjectionHypotheses_of_retention
+    (L : Hex.BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth)
+    (trueSupports :
+      Set (Set (Fin (Hex.bhksProjectedRows L hrows).factorCount)))
+    (hret : CutRetention (Hex.bhksProjectedRows L hrows)) :
+    CutProjectionHypotheses (Hex.bhksProjectedRows L hrows) trueSupports :=
+  CutProjectionHypotheses.ofRetention (Hex.bhksProjectedRows L hrows)
+    trueSupports hret
+    (fun S =>
+      indicatorVector_sq_sum_le_projectedRows_cutRadiusSq4 L hrows S.1)
+
 /-- Direct caller-facing form of the cut hypothesis for one true support. -/
 theorem indicatorVector_mem_projectedRowSpan_of_cut
     (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount)))
