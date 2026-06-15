@@ -304,6 +304,61 @@ theorem one_lt_l2norm_toPolynomial_of_two_le_support
     Real.sqrt_lt_sqrt (by norm_num) (by linarith)
   simpa [HexPolyZMathlib.l2norm, P, Real.sqrt_one] using hlt
 
+/-- A nonzero constant coefficient and positive executable degree give at
+least two support entries after transport to `Polynomial ℤ`. -/
+theorem two_le_support_card_of_const_degree
+    {f : Hex.ZPoly}
+    (hconst : f.coeff 0 ≠ 0)
+    (hdeg : 1 ≤ bhksDegree f) :
+    2 ≤ (HexPolyZMathlib.toPolynomial f).support.card := by
+  let d := bhksDegree f
+  let P := HexPolyZMathlib.toPolynomial f
+  have hf_ne : f ≠ 0 := by
+    intro hf
+    apply hconst
+    rw [hf]
+    rfl
+  have hd_pos : 0 < d := hdeg
+  have hsize_pos : 0 < f.size := Hex.ZPoly.size_pos_of_ne_zero f hf_ne
+  have hd_eq : d = f.size - 1 := by
+    simpa [d, bhksDegree] using (degree?_getD_of_ne_zero f hf_ne)
+  have htop_ne : f.coeff d ≠ 0 := by
+    have hlead_ne := Hex.ZPoly.leadingCoeff_ne_zero_of_ne_zero f hf_ne
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last f hsize_pos] at hlead_ne
+    rwa [hd_eq]
+  have hzero_mem : 0 ∈ P.support := by
+    rw [Polynomial.mem_support_iff]
+    change (HexPolyZMathlib.toPolynomial f).coeff 0 ≠ 0
+    rw [HexPolyZMathlib.coeff_toPolynomial]
+    exact hconst
+  have htop_mem : d ∈ P.support := by
+    rw [Polynomial.mem_support_iff]
+    change (HexPolyZMathlib.toPolynomial f).coeff d ≠ 0
+    rw [HexPolyZMathlib.coeff_toPolynomial]
+    exact htop_ne
+  have hpair_subset : ({0, d} : Finset Nat) ⊆ P.support := by
+    intro i hi
+    rw [Finset.mem_insert, Finset.mem_singleton] at hi
+    rcases hi with rfl | rfl
+    · exact hzero_mem
+    · exact htop_mem
+  have hpair_card : ({0, d} : Finset Nat).card = 2 := by
+    have hne : 0 ≠ d := Nat.ne_of_lt hd_pos
+    simp [hne]
+  calc
+    2 = ({0, d} : Finset Nat).card := hpair_card.symm
+    _ ≤ P.support.card := Finset.card_le_card hpair_subset
+
+/-- Constant-term and degree reachability facts imply the strict `‖f‖₂`
+lower bound used by the BHKS auxiliary-factor positivity argument. -/
+theorem one_lt_l2norm_toPolynomial_of_const_degree
+    {f : Hex.ZPoly}
+    (hconst : f.coeff 0 ≠ 0)
+    (hdeg : 1 ≤ bhksDegree f) :
+    1 < HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f) :=
+  one_lt_l2norm_toPolynomial_of_two_le_support
+    (two_le_support_card_of_const_degree hconst hdeg)
+
 private theorem l2norm_log_nonneg (f : Hex.ZPoly) :
     0 ≤ Real.log (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) := by
   let x := HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)
