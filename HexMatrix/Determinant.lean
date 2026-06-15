@@ -5243,6 +5243,8 @@ theorem colReplace_get {R : Type u} {n : Nat} (M : Matrix R n n) (dst r c : Fin 
     (colReplace M dst v)[r][c] = if c = dst then v r else M[r][c] := by
   simp [colReplace, Matrix.ofFn]
 
+/-- The per-permutation product `detProduct` is additive in the replaced
+column: splitting that column's entries as `v + w` splits the product as a sum. -/
 private theorem detProduct_colReplace_add {R : Type u} [Lean.Grind.CommRing R]
     {n : Nat} (M : Matrix R n n) (dst : Fin n) (v w : Fin n → R)
     (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
@@ -5337,6 +5339,8 @@ private theorem detProduct_colReplace_add {R : Type u} [Lean.Grind.CommRing R]
           (fun acc x => acc * (colReplace M dst w)[x][perm[x]]) 1 := by
         grind
 
+/-- The per-permutation product `detProduct` is homogeneous in the replaced
+column: scaling that column's entries by `c` scales the product by `c`. -/
 private theorem detProduct_colReplace_smul {R : Type u} [Lean.Grind.CommRing R]
     {n : Nat} (M : Matrix R n n) (dst : Fin n) (c : R) (v : Fin n → R)
     (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
@@ -5391,6 +5395,8 @@ private theorem detProduct_colReplace_smul {R : Type u} [Lean.Grind.CommRing R]
             (fun x => (colReplace M dst v)[x][perm[x]])
             1 (List.mem_finRange pivot) (List.nodup_finRange n)
 
+/-- The signed Leibniz term `detTerm` is additive in the replaced column:
+splitting that column's entries as `v + w` splits the term as a sum. -/
 private theorem detTerm_colReplace_add {R : Type u} [Lean.Grind.CommRing R]
     {n : Nat} (M : Matrix R n n) (dst : Fin n) (v w : Fin n → R)
     (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
@@ -5400,6 +5406,8 @@ private theorem detTerm_colReplace_add {R : Type u} [Lean.Grind.CommRing R]
   rw [detProduct_colReplace_add M dst v w perm hnodup]
   grind
 
+/-- The signed Leibniz term `detTerm` is homogeneous in the replaced column:
+scaling that column's entries by `c` scales the term by `c`. -/
 private theorem detTerm_colReplace_smul {R : Type u} [Lean.Grind.CommRing R]
     {n : Nat} (M : Matrix R n n) (dst : Fin n) (c : R) (v : Fin n → R)
     (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
@@ -5455,6 +5463,7 @@ theorem det_colReplace_smul {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         exact foldl_det_sum_mul_left_zero
           (permutationVectors n) c (detTerm (colReplace M dst v))
 
+/-- The assembled determinant `det` vanishes when the replaced column is zero. -/
 private theorem det_colReplace_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (dst : Fin n) :
     det (colReplace M dst (fun _ => (0 : R))) = 0 := by
