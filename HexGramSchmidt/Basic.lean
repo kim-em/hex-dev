@@ -721,6 +721,10 @@ private theorem basisRows_get!_eq_reduceAgainstBasis_forward
   rw [projectionCombination_reverse] at hrec
   exact hrec
 
+/-- Projecting the zero row out against any basis row leaves zero: the
+projection coefficient of `0` vanishes, so `subtractProjection 0 b = 0`.
+Base case for the vanishing facts the later `prefixSpan`/`projectionCoeff`
+proofs invoke when a reduced row has already collapsed to zero. -/
 private theorem subtractProjection_zero_left (basisRow : Vector Rat m) :
     subtractProjection 0 basisRow = 0 := by
   have hdot : Matrix.dot (0 : Vector Rat m) basisRow = 0 := by
@@ -754,6 +758,10 @@ private theorem subtractProjection_zero_left (basisRow : Vector Rat m) :
     change (0 : Rat) - 0 * basisRow[idx] = 0
     grind
 
+/-- Reducing the zero row against an entire basis stays zero: each
+`subtractProjection` step preserves `0` (by `subtractProjection_zero_left`),
+so the whole fold leaves `reduceAgainstBasis basisRev 0 = 0`. Used to close
+the tail of a reduction once a row has been driven to zero. -/
 private theorem reduceAgainstBasis_zero_left (basisRev : List (Vector Rat m)) :
     reduceAgainstBasis basisRev 0 = 0 := by
   induction basisRev with
@@ -766,6 +774,10 @@ private theorem reduceAgainstBasis_zero_left (basisRev : List (Vector Rat m)) :
       change reduceAgainstBasis rest 0 = 0
       exact ih
 
+/-- A row already orthogonal to a basis row is unchanged by projecting that
+basis row out: when `Matrix.dot row basisRow = 0` the projection coefficient
+is `0`, so `subtractProjection row basisRow = row`. The single-step
+orthogonality-invariance fact underpinning the list version below. -/
 private theorem subtractProjection_eq_self_of_dot_zero
     (row basisRow : Vector Rat m) (h : Matrix.dot row basisRow = 0) :
     subtractProjection row basisRow = row := by
@@ -785,6 +797,10 @@ private theorem subtractProjection_eq_self_of_dot_zero
     change row[idx] - 0 * basisRow[idx] = row[idx]
     grind
 
+/-- A row orthogonal to *every* basis vector survives the whole reduction
+unchanged: iterating `subtractProjection_eq_self_of_dot_zero` down the list
+gives `reduceAgainstBasis basisRev row = row`. Lets later proofs conclude a
+row lies outside the prefix span without recomputing the fold. -/
 private theorem reduceAgainstBasis_eq_self_of_forall_dot_zero
     (basisRev : List (Vector Rat m)) (row : Vector Rat m)
     (h : ∀ basisRow ∈ basisRev, Matrix.dot row basisRow = 0) :
@@ -802,6 +818,10 @@ private theorem reduceAgainstBasis_eq_self_of_forall_dot_zero
         intro later hlater
         exact h later (by simp [hlater]))
 
+/-- Projecting a basis row out against itself annihilates it: the projection
+coefficient is `1` (or the row is already zero), so
+`subtractProjection basisRow basisRow = 0`. The self-cancellation fact that
+makes a basis row vanish once it appears in its own reduction prefix. -/
 private theorem subtractProjection_self_eq_zero (basisRow : Vector Rat m) :
     subtractProjection basisRow basisRow = 0 := by
   by_cases hnorm : Matrix.dot basisRow basisRow = 0
@@ -826,6 +846,10 @@ private theorem subtractProjection_self_eq_zero (basisRow : Vector Rat m) :
     change basisRow[idx] - 1 * basisRow[idx] = 0
     grind
 
+/-- Reducing a basis row against a prefix that begins with it yields zero:
+the head step cancels the row to `0` (by `subtractProjection_self_eq_zero`)
+and the remaining steps preserve zero (by `reduceAgainstBasis_zero_left`).
+The building block for `reduceAgainstBasis_basisRows_get!_succ_eq_zero`. -/
 private theorem reduceAgainstBasis_cons_self_eq_zero
     (basisRow : Vector Rat m) (rest : List (Vector Rat m)) :
     reduceAgainstBasis (basisRow :: rest) basisRow = 0 := by
