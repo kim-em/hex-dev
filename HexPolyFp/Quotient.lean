@@ -2059,6 +2059,9 @@ private theorem size_le_of_coeff_eq_zero_from_local (f : FpPoly p) (bound : Nat)
     have htop_zero : f.coeff (f.size - 1) = 0 := hzero (f.size - 1) (by omega)
     exact False.elim (DensePoly.coeff_last_ne_zero_of_pos_size f hpos htop_zero)
 
+/-- Evaluation of a sum equals the sum of evaluations, proved by expanding both
+sides as coefficient-power sums up to a common bound (`max f.size h.size`) and
+applying additivity of the bounded power-sum evaluator. -/
 private theorem eval_add_core_by_coeff_power_sum
     (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) β =
@@ -2093,6 +2096,10 @@ private theorem eval_add_core_by_coeff_power_sum
     show (0 : ZMod64 p) + 0 = 0
     grind
 
+/-- Evaluation of a difference equals the difference of evaluations, proved by
+expanding both sides as coefficient-power sums up to a common bound
+(`max f.size h.size`) and applying subtractivity of the bounded power-sum
+evaluator. -/
 private theorem eval_sub_core_by_coeff_power_sum
     (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f - h) β =
@@ -2127,6 +2134,9 @@ private theorem eval_sub_core_by_coeff_power_sum
     show (0 : ZMod64 p) - 0 = 0
     grind
 
+/-- Evaluation of a constant-scaled polynomial factors as the reduced constant
+times the evaluation, proved by rewriting `C c * f` as a coefficient scaling and
+applying the constant-multiple law of the bounded power-sum evaluator. -/
 private theorem eval_C_mul_core_by_coeff_power_sum
     (c : ZMod64 p) (f : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
@@ -2156,6 +2166,8 @@ private theorem eval_C_mul_core_by_coeff_power_sum
     rw [DensePoly.coeff_eq_zero_of_size_le f hi]
     exact hzero
 
+/-- Additivity of quotient evaluation, the private core re-exported as the public
+`eval_add`; delegates to `eval_add_core_by_coeff_power_sum`. -/
 private theorem eval_add_core (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f + h) β =
       eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β +
@@ -2163,6 +2175,8 @@ private theorem eval_add_core (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
   exact eval_add_core_by_coeff_power_sum
     (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f h β
 
+/-- Subtractivity of quotient evaluation, the private core re-exported as the
+public `eval_sub`; delegates to `eval_sub_core_by_coeff_power_sum`. -/
 private theorem eval_sub_core (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (f - h) β =
       eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β -
@@ -2170,6 +2184,8 @@ private theorem eval_sub_core (f h : FpPoly p) (β : Quotient g hmonic hg_pos) :
   exact eval_sub_core_by_coeff_power_sum
     (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f h β
 
+/-- Constant-factor law of quotient evaluation, the private core re-exported as
+the public `eval_C_mul`; delegates to `eval_C_mul_core_by_coeff_power_sum`. -/
 private theorem eval_C_mul_core (c : ZMod64 p) (f : FpPoly p)
     (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
@@ -2179,6 +2195,10 @@ private theorem eval_C_mul_core (c : ZMod64 p) (f : FpPoly p)
   exact eval_C_mul_core_by_coeff_power_sum
     (g := g) (hmonic := hmonic) (hg_pos := hg_pos) c f β
 
+/-- Evaluating a monomial `monomial n c` yields the reduced constant `C c` times
+the `n`-th power of the evaluation point; the zero-coefficient case collapses to
+`0` and the nonzero case unfolds the dense representation and folds over the
+trailing zeros. -/
 private theorem eval_monomial_core (n : Nat) (c : ZMod64 p)
     (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
