@@ -16187,6 +16187,167 @@ theorem squareFreeCore_leadingCoeff_pos_of_ne_zero
     ZPoly.leadingCoeff_ne_zero_of_ne_zero _ hne
   omega
 
+/-- The schoolbook step for the constant coefficient leaves the accumulator
+unchanged across any run of strictly positive inner indices: `i + j = 0` is
+impossible once `0 < j`. -/
+private theorem foldl_step_const_inner_pos (p q : ZPoly) (xs : List Nat) :
+    (∀ j ∈ xs, 0 < j) → ∀ acc : Int,
+      xs.foldl (DensePoly.mulCoeffStep p q 0 0) acc = acc := by
+  induction xs with
+  | nil => intro _ acc; rfl
+  | cons j xs ih =>
+      intro hpos acc
+      rw [List.foldl_cons]
+      have hj : 0 < j := hpos j List.mem_cons_self
+      have hstep : DensePoly.mulCoeffStep p q 0 0 acc j = acc := by
+        unfold DensePoly.mulCoeffStep
+        rw [if_neg (by omega)]
+      rw [hstep]
+      exact ih (fun j' hj' => hpos j' (List.mem_cons_of_mem j hj')) acc
+
+/-- The schoolbook step for the constant coefficient at a strictly positive
+outer index `i` leaves the accumulator unchanged: `i + j = 0` is impossible once
+`0 < i`. -/
+private theorem foldl_step_const_pos_i (p q : ZPoly) (i : Nat) (hi : 0 < i)
+    (xs : List Nat) (acc : Int) :
+    xs.foldl (DensePoly.mulCoeffStep p q 0 i) acc = acc := by
+  induction xs generalizing acc with
+  | nil => rfl
+  | cons j xs ih =>
+      rw [List.foldl_cons]
+      have hstep : DensePoly.mulCoeffStep p q 0 i acc j = acc := by
+        unfold DensePoly.mulCoeffStep
+        rw [if_neg (by omega)]
+      rw [hstep]; exact ih acc
+
+/-- The inner schoolbook fold for the constant coefficient at outer index `0`
+contributes exactly `p.coeff 0 * q.coeff 0` once, when the inner index range is
+nonempty: only `j = 0` satisfies `0 + j = 0`. -/
+private theorem foldl_step_const_inner (p q : ZPoly) (m : Nat) (acc : Int) :
+    (List.range m).foldl (DensePoly.mulCoeffStep p q 0 0) acc
+      = if 0 < m then acc + p.coeff 0 * q.coeff 0 else acc := by
+  cases m with
+  | zero => simp
+  | succ n =>
+      rw [List.range_succ_eq_map, List.foldl_cons]
+      have h0 : DensePoly.mulCoeffStep p q 0 0 acc 0 = acc + p.coeff 0 * q.coeff 0 := by
+        unfold DensePoly.mulCoeffStep
+        simp
+      rw [h0]
+      have hpos : ∀ j ∈ (List.range n).map Nat.succ, 0 < j := by
+        intro j hj
+        rw [List.mem_map] at hj
+        obtain ⟨k, _, rfl⟩ := hj
+        exact Nat.succ_pos k
+      rw [foldl_step_const_inner_pos p q _ hpos]
+      simp
+
+/-- The outer schoolbook fold for the constant coefficient leaves the
+accumulator unchanged across any run of strictly positive outer indices. -/
+private theorem foldl_outer_const_pos (p q : ZPoly) (xs : List Nat) :
+    (∀ i ∈ xs, 0 < i) → ∀ acc : Int,
+      xs.foldl
+          (fun acc i => (List.range q.size).foldl (DensePoly.mulCoeffStep p q 0 i) acc) acc
+        = acc := by
+  induction xs with
+  | nil => intro _ acc; rfl
+  | cons i xs ih =>
+      intro hpos acc
+      rw [List.foldl_cons]
+      have hi : 0 < i := hpos i List.mem_cons_self
+      rw [foldl_step_const_pos_i p q i hi]
+      exact ih (fun i' hi' => hpos i' (List.mem_cons_of_mem i hi')) acc
+
+/-- The schoolbook coefficient fold at degree `0` evaluates to the product of the
+two constant terms: only the `(0, 0)` index pair contributes to `i + j = 0`. -/
+private theorem mulCoeffSum_const (p q : ZPoly) :
+    DensePoly.mulCoeffSum p q 0 = p.coeff 0 * q.coeff 0 := by
+  unfold DensePoly.mulCoeffSum
+  cases hp : p.size with
+  | zero =>
+      simp only [List.range_zero, List.foldl_nil]
+      have hp0 : p.coeff 0 = 0 := DensePoly.coeff_eq_zero_of_size_le p (by omega)
+      show (0 : Int) = p.coeff 0 * q.coeff 0
+      rw [hp0, Int.zero_mul]
+  | succ n =>
+      have hpos : ∀ i ∈ (List.range n).map Nat.succ, 0 < i := by
+        intro i hi
+        rw [List.mem_map] at hi
+        obtain ⟨k, _, rfl⟩ := hi
+        exact Nat.succ_pos k
+      rw [List.range_succ_eq_map, List.foldl_cons]
+      rw [foldl_outer_const_pos p q _ hpos]
+      rw [foldl_step_const_inner p q q.size]
+      by_cases hq : 0 < q.size
+      · rw [if_pos hq]
+        show (0 : Int) + p.coeff 0 * q.coeff 0 = p.coeff 0 * q.coeff 0
+        rw [Int.zero_add]
+      · rw [if_neg hq]
+        have hq0 : q.coeff 0 = 0 := DensePoly.coeff_eq_zero_of_size_le q (by omega)
+        show (0 : Int) = p.coeff 0 * q.coeff 0
+        rw [hq0, Int.mul_zero]
+
+/-- The constant term of a product of integer polynomials is the product of the
+constant terms. -/
+private theorem coeff_mul_const (p q : ZPoly) :
+    (p * q).coeff 0 = p.coeff 0 * q.coeff 0 := by
+  rw [DensePoly.coeff_mul]
+  exact mulCoeffSum_const p q
+
+/-- Either the zero-stripped tail of a coefficient list is empty, or its head is
+nonzero: `splitInitialZeros` removes exactly the leading zero run. -/
+private theorem splitInitialZeros_tail_getD_ne_zero (coeffs : List Int) :
+    (ZPoly.splitInitialZeros coeffs).2 = [] ∨
+      (ZPoly.splitInitialZeros coeffs).2.getD 0 0 ≠ 0 := by
+  induction coeffs with
+  | nil => exact Or.inl rfl
+  | cons c cs ih =>
+      unfold ZPoly.splitInitialZeros
+      by_cases hc : c = 0
+      · rw [if_pos hc]; simpa using ih
+      · rw [if_neg hc]; exact Or.inr (by simpa using hc)
+
+/-- The `X`-power-free core extracted from a nonzero primitive part has a nonzero
+constant term: `extractXPower` strips the leading zero run, so the lowest stored
+coefficient is nonzero. -/
+private theorem extractXPower_core_coeff_zero_ne_zero (f : ZPoly) (hf : f ≠ 0) :
+    (ZPoly.extractXPower (ZPoly.primitivePart f)).core.coeff 0 ≠ 0 := by
+  have hcore_ne := extractXPower_core_ne_zero_of_ne_zero f hf
+  rcases splitInitialZeros_tail_getD_ne_zero (ZPoly.primitivePart f).toArray.toList with
+    hempty | hne
+  · exfalso
+    apply hcore_ne
+    simp only [ZPoly.extractXPower]
+    rw [hempty]
+    simp [DensePoly.ofCoeffs_empty]
+  · simp only [ZPoly.extractXPower]
+    rw [DensePoly.coeff_ofCoeffs_list]
+    exact hne
+
+/-- The reachable square-free core has a nonzero constant term.
+`normalizeForFactor` strips the visible power of `X` (via `extractXPower`) before
+`primitiveSquareFreeDecomposition`, so the core fed to the prime/lift pipeline is
+not divisible by `X`. Over `ℚ` the primitive part reassembles as a unit scalar
+times `squareFreeCore * repeatedPart`; reading the constant term forces
+`squareFreeCore.coeff 0 ≠ 0`. -/
+theorem squareFreeCore_coeff_zero_ne_zero (f : ZPoly) (hf : f ≠ 0) :
+    (normalizeForFactor f).squareFreeCore.coeff 0 ≠ 0 := by
+  have hcore0 : (ZPoly.extractXPower (ZPoly.primitivePart f)).core.coeff 0 ≠ 0 :=
+    extractXPower_core_coeff_zero_ne_zero f hf
+  obtain ⟨unit, hunit⟩ :=
+    primitiveSquareFreeDecomposition_reassembles_xfree_over_rat
+      (ZPoly.extractXPower (ZPoly.primitivePart f)).core
+  show (ZPoly.primitiveSquareFreeDecomposition
+      (ZPoly.extractXPower (ZPoly.primitivePart f)).core).squareFreeCore.coeff 0 ≠ 0
+  intro hsfc0
+  have hc := congrArg (fun p : DensePoly Rat => p.coeff 0) hunit
+  simp only at hc
+  rw [ZPoly.coeff_toRatPoly] at hc
+  rw [DensePoly.coeff_scale (R := Rat) unit _ 0 (Rat.mul_zero unit)] at hc
+  rw [ZPoly.coeff_toRatPoly, coeff_mul_const, hsfc0] at hc
+  simp at hc
+  exact hcore0 (by exact_mod_cast hc)
+
 /-- A left factor of a primitive `ZPoly` product is itself primitive. Integer
 content is non-negative, so `content p * content q = 1` forces `content p = 1`.
 Local helper for `squareFreeCore_primitive_of_ne_zero`. -/
