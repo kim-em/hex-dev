@@ -713,6 +713,9 @@ theorem reducePoly_mod_eq (p : GF2Poly) :
   exact GF2Poly.mod_eq_self_of_reduced (p % f) f
     (GF2Poly.mod_degree_lt p f hirr.1)
 
+/-- Reduction `% f` commutes with addition: reducing the sum of two remainders
+gives the same result as reducing the sum directly. This makes addition on the
+quotient `GF2nPoly f hirr` well-defined on reduced representatives. -/
 private theorem mod_add_mod_eq_mod_add (p q f : GF2Poly) :
     ((p % f) + (q % f)) % f = (p + q) % f := by
   let qp := (GF2Poly.divMod p f).1
@@ -737,6 +740,10 @@ private theorem mod_add_mod_eq_mod_add (p q f : GF2Poly) :
           exact (GF2Poly.mod_add_mul_right_eq_mod (rp + rq) (qp + qq) f).symm
     _ = (p + q) % f := by rw [hsum]
 
+/-- Reduction `% f` commutes with multiplication: reducing the product of two
+remainders gives the same result as reducing the product directly. This makes
+multiplication on the quotient `GF2nPoly f hirr` well-defined on reduced
+representatives. -/
 private theorem mod_mul_mod_eq_mod_mul (p q f : GF2Poly) :
     ((p % f) * (q % f)) % f = (p * q) % f := by
   let qp := (GF2Poly.divMod p f).1
@@ -797,6 +804,9 @@ private theorem mod_mul_mod_eq_mod_mul (p q f : GF2Poly) :
           exact (GF2Poly.mod_add_mul_right_eq_mod (rp * rq) c f).symm
     _ = (p * q) % f := by rw [hmul]
 
+/-- If `f` divides `p` then `p` reduces to `0` mod `f`: the forward direction of
+`p % f = 0 ↔ f ∣ p`, used to show a divisible polynomial collapses to the zero
+quotient class. -/
 private theorem mod_eq_zero_of_dvd {p f : GF2Poly} (hf : f ≠ 0) (h : f ∣ p) :
     p % f = 0 := by
   rcases h with ⟨c, hc⟩
@@ -827,6 +837,8 @@ private theorem mod_eq_zero_of_dvd {p f : GF2Poly} (hf : f ≠ 0) (h : f ∣ p) 
           GF2Poly.degree_le_of_dvd_nonzero hf hzero hfdvd_rem
         omega
 
+/-- If `p` reduces to `0` mod `f` then `f` divides `p`: the reverse direction of
+`p % f = 0 ↔ f ∣ p`, recovering divisibility from a vanishing remainder. -/
 private theorem dvd_of_mod_eq_zero {p f : GF2Poly} (h : p % f = 0) :
     f ∣ p := by
   let q := (GF2Poly.divMod p f).1
