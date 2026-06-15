@@ -2002,6 +2002,8 @@ theorem rowCombination_single {R : Type u} [Lean.Grind.CommRing R]
   have hzero : (0 : R) + M[i][jf] = M[i][jf] := by grind
   exact hpick.trans hzero
 
+/-- In an RREF, a pivot column is a standard basis vector: its entry in row `i`
+is `1` when `i` is the pivot row of `p` and `0` otherwise. -/
 private theorem pivot_column_entry [Lean.Grind.Field R] (E : IsRREF M D)
     (p : Fin D.rank) (i : Fin n) :
     D.echelon[i][D.pivotCols.get p] =
@@ -2041,6 +2043,9 @@ private theorem pivot_column_entry [Lean.Grind.Field R] (E : IsRREF M D)
     have hzero := E.toIsEchelonForm.zero_row i (by omega)
     simpa using congrArg (fun row => row[D.pivotCols.get p]) hzero
 
+/-- Reading a row combination of the echelon rows off at pivot column `p` recovers
+exactly the coefficient applied to the pivot row of `p`, since that column is a
+standard basis vector. -/
 private theorem rowCombination_pivotCoeff [Lean.Grind.Field R] (E : IsRREF M D)
     (c : Vector R n) (p : Fin D.rank) :
     (rowCombination D.echelon c)[D.pivotCols.get p] =
@@ -2069,6 +2074,9 @@ private theorem rowCombination_pivotCoeff [Lean.Grind.Field R] (E : IsRREF M D)
             grind
           exact h.trans hzero
 
+/-- Two coefficient vectors that agree on every pivot row yield the same row
+combination of the echelon rows, because the non-pivot rows are zero rows and
+contribute nothing. -/
 private theorem rowCombination_eq_of_coeffs_eq_on_rank [Lean.Grind.Field R]
     (E : IsRREF M D) {c d : Vector R n}
     (hcoeff : ∀ i : Fin D.rank,
@@ -2102,6 +2110,9 @@ private theorem rowCombination_eq_of_coeffs_eq_on_rank [Lean.Grind.Field R]
     have hright : (0 : R) * d[i] = 0 := by grind
     rw [hleft, hright]
 
+/-- For any vector in the row span of the echelon matrix, the coefficients recovered
+by `echelonCoeffs` reproduce it, so `echelonCoeffs` is a right inverse to row
+combination on the span. -/
 private theorem rowCombination_echelonCoeffs_of_rowCombination [Lean.Grind.Field R]
     (E : IsRREF M D) {v : Vector R m}
     (h : ∃ c : Vector R n, rowCombination D.echelon c = v) :
