@@ -378,6 +378,40 @@ theorem factorFastCoreWithBound_some_factor_count_ge
     (BHKS.ForwardRecoveryInputs.ExpectedTrueFactors.irreducible_of_partition_count
       trueSupports htrue hcore_ne hpartition)
 
+/-- Forward-inclusion lower count bound for a successful fast-core branch.
+
+This derives the `count_ge` half from the *forward* inclusion `W ⊆ L'`
+(`CutProjectionHypotheses`) through the partition-refinement argument
+(`supportPartitionByMinColumn_length_le_bhksEquivalenceClassIndicators_size`),
+with no reverse `L' = W` separation and hence no bad-vector resultant valuation.
+Unlike `factorFastCoreWithBound_some_factor_count_ge`, it does not route through
+an `ExpectedTrueFactors` package (whose construction needs the full `L' = W`).
+
+The two executable-success facts it consumes isolate the remaining plumbing: the
+emitted factor count equals the equivalence-class count (`hsize`) and the
+support-partition length equals the integer-factor count (`hpartition`).  The
+successful-branch premise `_h` is retained to mark the eventual source of those
+facts once the executable recovery wiring discharges them. -/
+theorem factorFastCoreWithBound_some_factor_count_ge_of_cut
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    {L : Hex.BhksProjectedRows}
+    (trueSupports : Set (Set (Fin L.factorCount)))
+    (_h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (hcut : BHKS.CutProjectionHypotheses L trueSupports)
+    (hsize : coreFactors.size = (Hex.bhksEquivalenceClassIndicators L).size)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    (UniqueFactorizationMonoid.normalizedFactors
+      (HexPolyZMathlib.toPolynomial core)).card ≤
+        (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length := by
+  rw [List.length_map, Array.length_toList, hsize, ← hpartition]
+  exact
+    BHKS.supportPartitionByMinColumn_length_le_bhksEquivalenceClassIndicators_size
+      L trueSupports hcut
+
 /-- Cardinality equality for a successful BHKS fast-core branch under the B8
 partition-refinement package.  Pairs `factorFastCoreWithBound_some_factor_count_le`
 with `factorFastCoreWithBound_some_factor_count_ge`, exposing the count
