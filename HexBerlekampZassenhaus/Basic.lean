@@ -971,14 +971,17 @@ private theorem berlekampFactorsModP_eq_of_isZero_false
   unfold berlekampFactorsModP
   rw [dif_pos hzero]
 
+/-- Reduce an integer coefficient to its canonical natural-number residue modulo `p` for the modular Horner evaluator. -/
 private def intCoeffModNat (z : Int) (p : Nat) : Nat :=
   Int.toNat (z % Int.ofNat p)
 
+/-- Evaluate a `ZPoly` at `x` modulo `p` by Horner-folding its coefficients through `intCoeffModNat`. -/
 private def evalZPolyModNat (f : ZPoly) (p x : Nat) : Nat :=
   f.toArray.toList.reverse.foldl
     (fun acc coeff => (intCoeffModNat coeff p + x * acc) % p)
     0
 
+/-- Detect the cheap case where `f mod p` splits completely into linear factors by counting roots modulo `p`. -/
 private def completeLinearDegreeSplit? (f : ZPoly) (p : Nat) [ZMod64.Bounds p] :
     Option (Array Nat) :=
   let degree := (ZPoly.modP p f).degree?.getD 0
@@ -1022,11 +1025,13 @@ def modularFactorDegreesAt? (f : ZPoly) (p : Nat) : Option (Array Nat) :=
             none)
     none
 
+/-- Witness polynomial used by the nearby guard that pins the modular factor-degree query at the prime `29`. -/
 private def prefixTwentyNineGuard : ZPoly :=
   DensePoly.ofCoeffs #[1, 1, 111546435]
 
 #guard (modularFactorDegreesAt? prefixTwentyNineGuard 29).isSome
 
+/-- Score one small-prime candidate by its Berlekamp factor count when it is admissible for `f`. -/
 private def scoreCandidate (f : ZPoly) (c : SmallPrimeCandidate) : Option PrimeCandidateScore :=
   letI := c.bounds
   if isGoodPrime f c.p then
@@ -1035,12 +1040,14 @@ private def scoreCandidate (f : ZPoly) (c : SmallPrimeCandidate) : Option PrimeC
   else
     none
 
+/-- Choose the lower factor-count score, keeping the incumbent score on ties for deterministic prime selection. -/
 private def betterScore (old new : PrimeCandidateScore) : PrimeCandidateScore :=
   if new.factorCount < old.factorCount then
     new
   else
     old
 
+/-- Fold one small-prime candidate into the running best score used by `choosePrimeScore?`. -/
 private def choosePrimeScoreStep
     (f : ZPoly) (best : Option PrimeCandidateScore) (c : SmallPrimeCandidate) :
     Option PrimeCandidateScore :=
