@@ -2753,6 +2753,133 @@ structure HenselLiftDescentHypotheses
         T = liftedSubsetOfModPSubset primeData d factor_count_eq S ∧
           RepresentsIntegerFactorModP primeData factor S
 
+/--
+Data-bearing reverse-descent witness for `toMonicPrimeData?` surfaces.
+
+The lifted representation still recovers the original integer `factor`, but the
+descended mod-`p` subset represents the monic correspondent stored inside the
+`RecoveredAtLift` witness.  This is the sound replacement for asking the same
+subset to represent the non-monic original factor modulo prime data selected for
+`(toMonic core).monic`.
+-/
+structure MonicDescent
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
+    (factor : Hex.ZPoly) (T : LiftedFactorSubset d)
+    (hsize : d.liftedFactors.size = primeData.factorsModP.size) where
+  modPSubset : ModPFactorSubset primeData
+  subset_eq : T = liftedSubsetOfModPSubset primeData d hsize modPSubset
+  recovered : RecoveredAtLift core d factor T
+  represents_monic :
+    RepresentsIntegerFactorModP primeData recovered.monicFactor modPSubset
+
+namespace MonicDescent
+
+/-- Pack the explicit monic-correspondent reverse-descent fields. -/
+def ofRecovered
+    {core factor : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {T : LiftedFactorSubset d}
+    {hsize : d.liftedFactors.size = primeData.factorsModP.size}
+    (S : ModPFactorSubset primeData)
+    (hT :
+      T = liftedSubsetOfModPSubset primeData d hsize S)
+    (hrec : RecoveredAtLift core d factor T)
+    (hmod : RepresentsIntegerFactorModP primeData hrec.monicFactor S) :
+    MonicDescent core primeData d factor T hsize where
+  modPSubset := S
+  subset_eq := hT
+  recovered := hrec
+  represents_monic := hmod
+
+/-- The monic descent witness still carries the original lifted representation. -/
+theorem representsAtLift
+    {core factor : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {T : LiftedFactorSubset d}
+    {hsize : d.liftedFactors.size = primeData.factorsModP.size}
+    (h : MonicDescent core primeData d factor T hsize) :
+    RepresentsIntegerFactorAtLift core d factor T :=
+  RepresentsIntegerFactorAtLift.ofRecovered h.recovered
+
+/-- Projection of the original-factor recovery equality. -/
+theorem dilate_eq
+    {core factor : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {T : LiftedFactorSubset d}
+    {hsize : d.liftedFactors.size = primeData.factorsModP.size}
+    (h : MonicDescent core primeData d factor T hsize) :
+    Hex.ZPoly.primitivePart
+        (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) h.recovered.monicFactor) =
+      factor :=
+  h.recovered.dilate_eq
+
+/-- Projection that the monic correspondent divides the monic transform. -/
+theorem monic_dvd
+    {core factor : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {T : LiftedFactorSubset d}
+    {hsize : d.liftedFactors.size = primeData.factorsModP.size}
+    (h : MonicDescent core primeData d factor T hsize) :
+    h.recovered.monicFactor ∣ (Hex.ZPoly.toMonic core).monic :=
+  h.recovered.monic_dvd
+
+end MonicDescent
+
+/--
+Descent-only package for the to-monic reverse direction.
+
+Unlike `HenselLiftDescentHypotheses`, this package does not claim that a lifted
+representation of the original non-monic factor descends to a mod-`p`
+representation of that same factor.  It descends to the monic correspondent
+recorded by `RecoveredAtLift`, while retaining the dilation equality back to the
+original factor.
+-/
+structure MonicDescentHypotheses
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (d : Hex.LiftData) (successfulLift coprimeLift : Prop) : Prop where
+  lift_eq : d = Hex.ZPoly.toMonicLiftData core B primeData
+  factor_count_eq : d.liftedFactors.size = primeData.factorsModP.size
+  successful_lift : successfulLift
+  coprime_lift : coprimeLift
+  descends :
+    ∀ {factor : Hex.ZPoly} {T : LiftedFactorSubset d},
+      Irreducible (HexPolyZMathlib.toPolynomial factor) →
+      factor ∣ core →
+      RepresentsIntegerFactorAtLift core d factor T →
+      ∃ (S : ModPFactorSubset primeData) (hrec : RecoveredAtLift core d factor T),
+        T = liftedSubsetOfModPSubset primeData d factor_count_eq S ∧
+          RepresentsIntegerFactorModP primeData hrec.monicFactor S
+
+namespace MonicDescentHypotheses
+
+/--
+Existential form for consumers that want the subset, recovered witness, and
+monic mod-`p` representation without depending on the carrier's field names.
+-/
+theorem exists_descent
+    {core factor : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {successfulLift coprimeLift : Prop}
+    (h : MonicDescentHypotheses core B primeData d successfulLift coprimeLift)
+    {T : LiftedFactorSubset d}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core)
+    (hrep : RepresentsIntegerFactorAtLift core d factor T) :
+    ∃ (S : ModPFactorSubset primeData) (hrec : RecoveredAtLift core d factor T),
+      T = liftedSubsetOfModPSubset primeData d h.factor_count_eq S ∧
+        RepresentsIntegerFactorModP primeData hrec.monicFactor S :=
+  h.descends hirr hdvd hrep
+
+/-- Carrier form of `exists_descent`, for consumers that prefer named fields. -/
+theorem exists_carrier
+    {core factor : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {d : Hex.LiftData} {successfulLift coprimeLift : Prop}
+    (h : MonicDescentHypotheses core B primeData d successfulLift coprimeLift)
+    {T : LiftedFactorSubset d}
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core)
+    (hrep : RepresentsIntegerFactorAtLift core d factor T) :
+    ∃ _ : MonicDescent core primeData d factor T h.factor_count_eq, True := by
+  rcases h.exists_descent hirr hdvd hrep with ⟨S, hrec, hT, hmod⟩
+  exact ⟨MonicDescent.ofRecovered S hT hrec hmod, trivial⟩
+
+end MonicDescentHypotheses
+
 /-- **Lift-stage pairwise-disjointness.** Non-associated irreducible integer
 divisors of `core` are represented by disjoint subsets of the lifted local
 factors.  This is the lift-stage sibling of
