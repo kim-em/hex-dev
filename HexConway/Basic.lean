@@ -2974,6 +2974,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_3_6_monic :
   rw [hpoly]
   exact luebeckConwayPolynomial_3_6_monic
 
+/-- The coefficient-list constructor for the committed `C(5, 1)` Conway entry
+yields a monic `DensePoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's monicity proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_5_1_monic :
     DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 5 [3, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_5_1
@@ -2985,6 +2988,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_5_1_monic :
   rw [hpoly]
   exact luebeckConwayPolynomial_5_1_monic
 
+/-- The coefficient-list constructor for the committed `C(5, 2)` Conway entry
+yields a monic `DensePoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's monicity proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_5_2_monic :
     DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 5 [2, 4, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_5_2
@@ -2996,6 +3002,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_5_2_monic :
   rw [hpoly]
   exact luebeckConwayPolynomial_5_2_monic
 
+/-- The coefficient-list constructor for the committed `C(5, 3)` Conway entry
+yields a monic `DensePoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's monicity proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_5_3_monic :
     DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 5 [3, 3, 0, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_5_3
@@ -3007,6 +3016,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_5_3_monic :
   rw [hpoly]
   exact luebeckConwayPolynomial_5_3_monic
 
+/-- The coefficient-list constructor for the committed `C(5, 4)` Conway entry
+yields a monic `DensePoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's monicity proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_5_4_monic :
     DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 5 [2, 4, 4, 0, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_5_4
@@ -3018,6 +3030,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_5_4_monic :
   rw [hpoly]
   exact luebeckConwayPolynomial_5_4_monic
 
+/-- The coefficient-list constructor for the committed `C(5, 5)` Conway entry
+yields a monic `DensePoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's monicity proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_5_5_monic :
     DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 5 [3, 4, 0, 0, 0, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_5_5
@@ -3029,6 +3044,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_5_5_monic :
   rw [hpoly]
   exact luebeckConwayPolynomial_5_5_monic
 
+/-- The coefficient-list constructor for the committed `C(5, 6)` Conway entry
+yields a monic `DensePoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's monicity proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_5_6_monic :
     DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 5 [2, 0, 1, 4, 1, 0, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_5_6
@@ -3040,6 +3058,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_5_6_monic :
   rw [hpoly]
   exact luebeckConwayPolynomial_5_6_monic
 
+/-- The coefficient-list constructor for the committed `C(7, 1)` Conway entry
+yields a monic `DensePoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's monicity proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_7_1_monic :
     DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 7 [4, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_7_1
@@ -3051,6 +3072,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_7_1_monic :
   rw [hpoly]
   exact luebeckConwayPolynomial_7_1_monic
 
+/-- The coefficient-list constructor for the committed `C(7, 2)` Conway entry
+yields a monic `DensePoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's monicity proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_7_2_monic :
     DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 7 [3, 6, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_7_2
@@ -3062,6 +3086,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_7_2_monic :
   rw [hpoly]
   exact luebeckConwayPolynomial_7_2_monic
 
+/-- The coefficient-list constructor for the committed `C(7, 3)` Conway entry
+yields a monic `DensePoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's monicity proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_7_3_monic :
     DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 7 [4, 0, 6, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_7_3
@@ -3073,6 +3100,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_7_3_monic :
   rw [hpoly]
   exact luebeckConwayPolynomial_7_3_monic
 
+/-- The coefficient-list constructor for the committed `C(7, 4)` Conway entry
+yields a monic `DensePoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's monicity proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_7_4_monic :
     DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 7 [3, 4, 5, 0, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_7_4
@@ -3084,6 +3114,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_7_4_monic :
   rw [hpoly]
   exact luebeckConwayPolynomial_7_4_monic
 
+/-- The coefficient-list constructor for the committed `C(7, 5)` Conway entry
+yields a monic `DensePoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's monicity proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_7_5_monic :
     DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 7 [4, 1, 0, 0, 0, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_7_5
@@ -3095,6 +3128,9 @@ private theorem luebeckConwayPolynomialOfCoeffs_7_5_monic :
   rw [hpoly]
   exact luebeckConwayPolynomial_7_5_monic
 
+/-- The coefficient-list constructor for the committed `C(7, 6)` Conway entry
+yields a monic `DensePoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's monicity proof. -/
 private theorem luebeckConwayPolynomialOfCoeffs_7_6_monic :
     DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 7 [3, 6, 4, 5, 1, 0, 1]) := by
   have hhit := luebeckConwayPolynomial?_hit_7_6
