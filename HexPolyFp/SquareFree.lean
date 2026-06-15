@@ -3916,12 +3916,24 @@ private theorem derivativeSplit_quotient_pow_succ_dvd_gcd
       exact dvd_monicGcd hp f (DensePoly.derivative f)
         hsucc_dvd_f hsucc_dvd_derivative
 
+/--
+Terminal step of the contribution recursion: once the running cofactor `c`
+is one, `yunFactorsContribution` returns immediately with trivial factor
+product `1` and the residual `w` passed through unchanged.  This is the base
+case that ends the descent.
+-/
 private theorem yunFactorsContribution_stop_of_isOne
     (c w : FpPoly p) (i fuel : Nat)
     (hc : isOne c = true) :
     yunFactorsContribution c w i (fuel + 1) = (1, w) := by
   simp [yunFactorsContribution, hc]
 
+/--
+Packaged terminal characterization for the `isOne c` base case: the
+contribution's factor product is `1`, its residual is `w`, and the cofactor
+`c` is literally `1`.  Bundles `yunFactorsContribution_stop_of_isOne` with the
+`isOne`-to-equality fact for downstream callers.
+-/
 private theorem yunFactorsContribution_terminal_of_isOne
     (c w : FpPoly p) (i fuel : Nat)
     (hc : isOne c = true) :
@@ -3933,6 +3945,12 @@ private theorem yunFactorsContribution_terminal_of_isOne
   rw [hstop]
   exact ⟨rfl, rfl, hc_one⟩
 
+/--
+Nonterminal step with empty multiplicity slot: when `c` is not one but the
+stripped factor `z = c / gcd c w` is one, no factor power is emitted and the
+recursion descends verbatim into the gcd state `(gcd c w, w / gcd c w)` at
+index `i + 1`.
+-/
 private theorem yunFactorsContribution_step_of_not_isOne_of_isOne_z
     (c w : FpPoly p) (i fuel : Nat)
     (hc : isOne c = false)
@@ -3942,6 +3960,13 @@ private theorem yunFactorsContribution_step_of_not_isOne_of_isOne_z
         (monicGcd c w) (w / monicGcd c w) (i + 1) fuel := by
   simp [yunFactorsContribution, hc, hz]
 
+/--
+Nonterminal step that emits a factor: when neither `c` nor the stripped
+factor `z = c / gcd c w` is one, the current contribution multiplies `pow z i`
+onto the tail's factor product while passing the tail's residual through
+unchanged.  This is the branch that records a multiplicity-`i` square-free
+factor.
+-/
 private theorem yunFactorsContribution_step_of_not_isOne_of_not_isOne_z
     (c w : FpPoly p) (i fuel : Nat)
     (hc : isOne c = false)
@@ -3954,6 +3979,13 @@ private theorem yunFactorsContribution_step_of_not_isOne_of_not_isOne_z
           (monicGcd c w) (w / monicGcd c w) (i + 1) fuel).2) := by
   simp [yunFactorsContribution, hc, hz]
 
+/--
+Both nonterminal branches descend identically on the residual: when `c` is not
+one, the current contribution's residual equals the tail's residual, and the
+repeated-part reconstruction `squareFreeAuxRevContribution (pthRoot ·) ·` agrees
+between the current and tail states.  The factor-emit choice (`isOne z`) does
+not perturb the residual carried into the next round.
+-/
 private theorem yunFactorsContribution_tail_repeated_descent
     (c w : FpPoly p) (multiplicity fuel : Nat)
     (hc : isOne c = false) :
@@ -3967,6 +3999,14 @@ private theorem yunFactorsContribution_tail_repeated_descent
   · simp [yunFactorsContribution, hc, hz]
   · simp [yunFactorsContribution, hc, hz]
 
+/--
+Single nonterminal step transports a target equation from the recursive tail
+to the current state.  Given branch-wise hypotheses that the tail's factor
+product (optionally scaled by `pow z multiplicity`) equals `target`, the step
+yields `contribution.1 = target`, `contribution.2 = tail.2`, and the two
+gcd/division reconstruction equalities `(c / g) * g = c` and `(w / g) * g = w`.
+This is the target-preservation half feeding `yunFactorsContribution_step_target_combiner`.
+-/
 private theorem yunFactorsContribution_step_preserves_target
     [ZMod64.PrimeModulus p]
     (c w : FpPoly p) (multiplicity fuel : Nat) (target : FpPoly p)
@@ -4053,6 +4093,11 @@ private theorem yunFactorsContribution_step_target_combiner
     ⟨htarget.1, htarget.2.1, hdescent.2,
       htarget.2.2.1, htarget.2.2.2⟩
 
+/--
+Reconstruction equality for the initial Yun split: with `g = gcd f f'` and
+`c = f / g`, the cofactor and gcd recombine to the input, `c * g = f`.  This
+seeds the recursion's invariant from the starting state.
+-/
 private theorem yunFactorsContribution_initial_state_split
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) :
@@ -4063,6 +4108,13 @@ private theorem yunFactorsContribution_initial_state_split
   dsimp
   exact div_monicGcd_mul_reconstruct hp f (DensePoly.derivative f)
 
+/--
+Initial-state contribution identity, residual-exhausted branch: starting from
+`g = gcd f f'`, `c = f / g`, when the contribution's residual is one the factor
+product equals `weightedProduct` of the reversed `yunFactors` accumulator.
+Ties the contribution recursion to the list-based `yunFactors` output via the
+reconstruction invariant.
+-/
 private theorem yunFactorsContribution_initial_state_done
     (f : FpPoly p) (multiplicity fuel : Nat) :
     let g := monicGcd f (DensePoly.derivative f)
@@ -4080,6 +4132,13 @@ private theorem yunFactorsContribution_initial_state_done
   have hproduct := hloop.2
   simpa [weightedProduct_nil] using hproduct.symm
 
+/--
+Initial-state contribution identity, residual-active branch: the companion of
+`yunFactorsContribution_initial_state_done` for when the contribution's residual
+is not one.  The same `weightedProduct` of the reversed `yunFactors` accumulator
+is recovered, so both `isOne` outcomes of the residual agree with the list-based
+`yunFactors` output.
+-/
 private theorem yunFactorsContribution_initial_state_tail
     (f : FpPoly p) (multiplicity fuel : Nat) :
     let g := monicGcd f (DensePoly.derivative f)
