@@ -406,6 +406,84 @@ theorem one_lt_l2norm_squareFreeCore_of_toMonic_degree
   one_lt_l2norm_squareFreeCore f hf
     (one_le_bhksDegree_squareFreeCore_of_toMonic_degree f hdeg)
 
+/-!
+### BHKS §5 small-degree side condition
+
+The joint BHKS §5 auxiliary-domination path (`bhksPaperThresholdReal_chain_*`,
+parent #7506) is *not* valid from `HasPositiveDimension` alone: at `n = 1` the
+reduced obligation `L ≤ 4·N·log N` fails (the `core = x+1` instance has
+`N = √2`, `L = 2`, `RHS ≈ 1.96`).  The gating fact the path actually needs is
+`2 ≤ bhksDegree core`.
+
+This is a genuine reachability fact, not a free hypothesis: the recombination /
+cap-lift surface is only entered with at least two lifted local factors (the
+executable guard `2 ≤ primeData.factorsModP.size`, mirrored by
+`d.liftedFactors.size = primeData.factorsModP.size`).  Each lifted factor has
+positive transported degree, and the full recovered candidate over *all* lifted
+factors reconstructs `core`, so its degree is the sum of at least two positive
+local-factor degrees.  A linear core has a single local factor and never reaches
+recombination — so the `n = 1` failure case is unreachable, exactly as the
+parent issue's boundary caveat predicted. -/
+
+/-- The full recovered candidate over *all* lifted local factors has degree at
+least two whenever there are at least two factors, each of positive transported
+degree.  This is the combinatorial core of the BHKS §5 small-degree side
+condition: its degree is the sum over `Finset.univ` of the per-factor degrees
+(`natDegree_toPolynomial_liftedRecoveryCandidate_eq_sum`), a sum of at least two
+strictly positive terms. -/
+theorem two_le_natDegree_liftedRecoveryCandidate_univ
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic : ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hpos : ∀ i : LiftedFactorIndex d,
+        0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hsize : 2 ≤ d.liftedFactors.size) :
+    2 ≤ (HexPolyZMathlib.toPolynomial
+          (liftedRecoveryCandidate core d
+            (Finset.univ : LiftedFactorSubset d))).natDegree := by
+  rw [natDegree_toPolynomial_liftedRecoveryCandidate_eq_sum
+        hcore_lc_pos hd_modulus hd_liftedFactor_monic Finset.univ]
+  have hcard : 2 ≤ (Finset.univ : LiftedFactorSubset d).card := by
+    rw [Finset.card_univ, Fintype.card_fin]; exact hsize
+  calc
+    2 ≤ (Finset.univ : LiftedFactorSubset d).card := hcard
+    _ = ∑ _i ∈ (Finset.univ : LiftedFactorSubset d), 1 := Finset.card_eq_sum_ones _
+    _ ≤ ∑ i ∈ (Finset.univ : LiftedFactorSubset d),
+          (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree :=
+        Finset.sum_le_sum (fun i _ => hpos i)
+
+/-- **BHKS §5 small-degree side condition.**  Given the degree-preserving full
+recovery `hrecover` (the recombination of all lifted factors reconstructs the
+core's degree) together with the recombination reachability data — at least two
+lifted local factors, each monic of positive transported degree — the core has
+`2 ≤ bhksDegree core`.
+
+`hrecover`, `hsize`, `hpos` and the monicity premise are the reachable facts the
+cap-lift wrapper threads (the executable recombination guard supplies `hsize`;
+`toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData` and
+`toMonicLiftData_liftedFactor_monic` supply `hpos`/monicity; the precision-gated
+full recovery supplies `hrecover`).  This is the fact the joint
+`bhksPaperThresholdReal_chain_*_joint` path consumes in place of the unsound
+`HasPositiveDimension` premise. -/
+theorem two_le_bhksDegree_of_liftedRecoveryCandidate_univ
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (hrecover :
+      (HexPolyZMathlib.toPolynomial
+          (liftedRecoveryCandidate core d
+            (Finset.univ : LiftedFactorSubset d))).natDegree =
+        bhksDegree core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic : ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hpos : ∀ i : LiftedFactorIndex d,
+        0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hsize : 2 ≤ d.liftedFactors.size) :
+    2 ≤ bhksDegree core := by
+  rw [← hrecover]
+  exact two_le_natDegree_liftedRecoveryCandidate_univ
+    hcore_lc_pos hd_modulus hd_liftedFactor_monic hpos hsize
+
 private theorem l2norm_log_nonneg (f : Hex.ZPoly) :
     0 ≤ Real.log (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) := by
   let x := HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)
