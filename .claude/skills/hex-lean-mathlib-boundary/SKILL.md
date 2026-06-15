@@ -245,6 +245,26 @@ unify via `isDefEq`. Recipe that works:
   toMonicLiftData …` does **not** help — it does not fold the goal's
   `toMonicLiftData` occurrences, and a later `rw [← hS]`/`subst hS` then fails
   with "did not find pattern" / leaves the goal untouched.
+- **Never `set d := toMonicLiftData …` when `d` appears in a hypothesis/goal
+  TYPE** (`S T : LiftedFactorSubset d`, `hrep : RepresentsIntegerFactorAtLift
+  core d f S`). `set` reverts and reintroduces those, renaming `S`/`T` to
+  inaccessible `S✝`/`T✝`, so your later `S`/`T` references mismatch
+  (`… core (toMonicLiftData …) S✝ … but expected … core d S`). Worse, the
+  let-bound `d` makes every later `LiftData`-projection defeq unfold `d` and
+  evaluate the expensive `liftedFactors` field, blowing the `whnf` heartbeat
+  limit (the error surfaces as a "(deterministic) timeout at `whnf`" pinned to
+  the declaration's first line, *masking* the real type mismatches until you
+  raise `maxHeartbeats`). Write the `toMonicLiftData core B primeData` term out
+  explicitly so all defeqs stay syntactic. A value-level `set lc :=
+  leadingCoeff core` / `set pk := (toMonicLiftData …).p ^ (toMonicLiftData …).k`
+  is fine (no dependent types, no `liftedFactors` eval).
+- **Prove `.p`/`.k` projections of `toMonicLiftData` via `unfold`, not `rfl`
+  or `simp`.** `have hp : (toMonicLiftData core B primeData).p = primeData.p :=
+  by unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_p _ _ _`
+  (likewise `henselLiftData_k`). Bare `rfl` forces a `whnf` of the whole
+  structure (heartbeat blowup); `simp [Hex.ZPoly.toMonicLiftData]` unfolds the
+  `liftedFactors`/`multifactorLiftQuadratic` field and tries to normalise it
+  (same blowup).
 - **Defeq `liftedFactor` rewrite:** `liftedFactor (toMonicLiftData …) i =
   liftedFactor (henselLiftData monicCore precision …) (liftedIndexOfModPIndex …
   ⟨i.val, _⟩)` holds by `rfl`. Use a `calc` with explicit terms rather than
