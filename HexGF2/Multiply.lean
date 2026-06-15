@@ -3257,6 +3257,8 @@ private theorem foldl_mulWords_getElem!_contrib
       rw [hinner]
       rw [xorWordList_append, UInt64.xor_assoc]
 
+/-- Bit `n` of the carry-less word-pair product vanishes when the left
+factor word is zero; the left base case of the bilinearity ladder. -/
 private theorem clmulCoeffAt_zero_left (idx : Nat) (y : UInt64) (n : Nat) :
     clmulCoeffAt idx 0 y n = false := by
   unfold clmulCoeffAt
@@ -3265,6 +3267,8 @@ private theorem clmulCoeffAt_zero_left (idx : Nat) (y : UInt64) (n : Nat) :
   · simp [hLow]
   · by_cases hHigh : n / 64 = idx + 1 <;> simp [hLow, hHigh]
 
+/-- `clmulCoeffAt` is bilinear (XOR-additive) in its left factor: bit `n` of
+the product against `x ^^^ y` is the `bne` of the two single-factor bits. -/
 private theorem clmulCoeffAt_xor_left
     (idx : Nat) (x y z : UInt64) (n : Nat) :
     clmulCoeffAt idx (x ^^^ y) z n =
@@ -3278,6 +3282,8 @@ private theorem clmulCoeffAt_xor_left
       rw [clmul_xor_left_fst_bit]
     · simp [hLow, hHigh]
 
+/-- Bit `n` of the carry-less word-pair product vanishes when the right
+factor word is zero; the right base case of the bilinearity ladder. -/
 private theorem clmulCoeffAt_zero_right (idx : Nat) (x : UInt64) (n : Nat) :
     clmulCoeffAt idx x 0 n = false := by
   unfold clmulCoeffAt
@@ -3286,6 +3292,8 @@ private theorem clmulCoeffAt_zero_right (idx : Nat) (x : UInt64) (n : Nat) :
   · simp [hLow]
   · by_cases hHigh : n / 64 = idx + 1 <;> simp [hLow, hHigh]
 
+/-- `clmulCoeffAt` is bilinear (XOR-additive) in its right factor: bit `n` of
+the product against `y ^^^ z` is the `bne` of the two single-factor bits. -/
 private theorem clmulCoeffAt_xor_right
     (idx : Nat) (x y z : UInt64) (n : Nat) :
     clmulCoeffAt idx x (y ^^^ z) n =
@@ -3299,6 +3307,8 @@ private theorem clmulCoeffAt_xor_right
       rw [clmul_xor_right_fst_bit]
     · simp [hLow, hHigh]
 
+/-- Iterating left bilinearity over a word list: bit `n` of the product of a
+folded `xorWordList` against `z` is the XOR-sum of the per-word bits. -/
 private theorem clmulCoeffAt_xorWordList_left
     (words : List UInt64) (idx : Nat) (z : UInt64) (n : Nat) :
     clmulCoeffAt idx (xorWordList words) z n =
@@ -3314,6 +3324,8 @@ private theorem clmulCoeffAt_xorWordList_left
           words.map (fun word => clmulCoeffAt idx word z n))
       rw [xorBoolList_cons, ih]
 
+/-- Iterating right bilinearity over a word list: bit `n` of the product of
+`x` against a folded `xorWordList` is the XOR-sum of the per-word bits. -/
 private theorem clmulCoeffAt_xorWordList_right
     (words : List UInt64) (idx : Nat) (x : UInt64) (n : Nat) :
     clmulCoeffAt idx x (xorWordList words) n =
@@ -3329,6 +3341,8 @@ private theorem clmulCoeffAt_xorWordList_right
           words.map (fun word => clmulCoeffAt idx x word n))
       rw [xorBoolList_cons, ih]
 
+/-- Accumulating one `xorClmulAt acc idx x y` step flips bit `n` of the
+running `coeffWords` by exactly that pair's `clmulCoeffAt idx x y` bit. -/
 private theorem coeffWords_xorClmulAt_contrib
     (acc : Array UInt64) {idx n : Nat} (x y : UInt64)
     (hidx : idx < acc.size) (hidxNext : idx + 1 < acc.size) :
@@ -3344,6 +3358,8 @@ private theorem coeffWords_xorClmulAt_contrib
     · rw [coeffWords_xorClmulAt_ne acc x y hLow hHigh]
       simp [hLow, hHigh]
 
+/-- Folding `xorClmulAt` over the inner `j`-list flips bit `n` of `coeffWords`
+by the XOR-sum of the per-`j` `clmulCoeffAt (idx + j) x ys[j]!` contributions. -/
 private theorem foldl_xorClmulAt_coeff_contrib
     (js : List Nat) (acc : Array UInt64) (idx : Nat) (x : UInt64)
     (ys : Array UInt64) (n : Nat)
@@ -3369,6 +3385,8 @@ private theorem foldl_xorClmulAt_coeff_contrib
         have h := hbound j' (by simp [hj'])
         simpa [xorClmulAt_size] using h
 
+/-- Folding the full nested `i`/`j` accumulation flips bit `n` of `coeffWords`
+by the flat XOR-sum over every `(i, j)` word-pair `clmulCoeffAt` contribution. -/
 private theorem foldl_mulWords_coeff_contrib
     (is : List Nat) (acc : Array UInt64) (xs ys : Array UInt64) (n : Nat)
     (hbound : ∀ i ∈ is, ∀ j ∈ List.range ys.size, i + j + 1 < acc.size) :
@@ -3405,6 +3423,9 @@ private theorem foldl_mulWords_coeff_contrib
         have h := hbound i' (by simp [hi']) j hj
         simpa [foldl_xorClmulAt_size] using h
 
+/-- Capstone: bit `n` of `mulWords xs ys` is the flat XOR over all `(i, j)`
+word-pair `clmulCoeffAt (i + j) xs[i]! ys[j]!` contributions, starting from the
+all-zero accumulator. -/
 private theorem coeffWords_mulWords_contrib (xs ys : Array UInt64) (n : Nat) :
     coeffWords (mulWords xs ys) n =
       xorBoolList
