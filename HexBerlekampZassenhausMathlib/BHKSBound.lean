@@ -359,6 +359,53 @@ theorem one_lt_l2norm_toPolynomial_of_const_degree
   one_lt_l2norm_toPolynomial_of_two_le_support
     (two_le_support_card_of_const_degree hconst hdeg)
 
+/-- The BHKS degree parameter agrees with the canonical lift degree
+`(Hex.ZPoly.toMonic core).degree`.  Both unfold to `core.degree?.getD 0`, so the
+positive-degree premise threaded by the Hensel-lift pipeline (`toMonicLiftData`,
+`toMonic_monic_isMonic_of_pos_degree`) is the same `Nat` as `1 ≤ bhksDegree core`. -/
+theorem bhksDegree_eq_toMonic_degree (core : Hex.ZPoly) :
+    bhksDegree core = (Hex.ZPoly.toMonic core).degree :=
+  (Hex.ZPoly.toMonic_degree core).symm
+
+/-- Positive `bhksDegree` for the reachable square-free core, sourced from the
+lift pipeline's own positive-degree premise on `core := (normalizeForFactor f).squareFreeCore`.
+
+The minimal sound hypothesis is `0 < (Hex.ZPoly.toMonic core).degree` — exactly the
+`hdeg` premise already threaded by `toMonicLiftData_represents_lifted_of_modP` and the
+cap-lift surfaces.  It is **not** derivable from `HasPositiveDimension`
+(`1 ≤ liftedFactors.size + f.degree?.getD 0`): for `f = X^5` the visible `X`-power is
+stripped by `extractXPower`, so `squareFreeCore = 1` and `bhksDegree squareFreeCore = 0`,
+yet `HasPositiveDimension` holds via `f.degree?.getD 0 = 5`.  Consumers must therefore
+thread the reachable-core degree premise, not the lattice-dimension surface. -/
+theorem one_le_bhksDegree_squareFreeCore_of_toMonic_degree
+    (f : Hex.ZPoly)
+    (hdeg : 0 < (Hex.ZPoly.toMonic (Hex.normalizeForFactor f).squareFreeCore).degree) :
+    1 ≤ bhksDegree (Hex.normalizeForFactor f).squareFreeCore := by
+  rw [bhksDegree_eq_toMonic_degree]
+  exact hdeg
+
+/-- Reachable-core strict `l2norm` lower bound: the normalized square-free core has a
+nonzero constant term (`squareFreeCore_coeff_zero_ne_zero`), so a positive `bhksDegree`
+gives at least two support entries and hence `1 < ‖core‖₂`.  This is the reachability
+discharge feeding `bhksPaperAuxiliaryFactorReal_pos`. -/
+theorem one_lt_l2norm_squareFreeCore
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (hdeg : 1 ≤ bhksDegree (Hex.normalizeForFactor f).squareFreeCore) :
+    1 < HexPolyZMathlib.l2norm
+      (HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore) :=
+  one_lt_l2norm_toPolynomial_of_const_degree
+    (Hex.squareFreeCore_coeff_zero_ne_zero f hf) hdeg
+
+/-- The reachable-core strict `l2norm` lower bound, stated directly from the lift
+pipeline's positive-degree premise on the reachable core. -/
+theorem one_lt_l2norm_squareFreeCore_of_toMonic_degree
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (hdeg : 0 < (Hex.ZPoly.toMonic (Hex.normalizeForFactor f).squareFreeCore).degree) :
+    1 < HexPolyZMathlib.l2norm
+      (HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore) :=
+  one_lt_l2norm_squareFreeCore f hf
+    (one_le_bhksDegree_squareFreeCore_of_toMonic_degree f hdeg)
+
 private theorem l2norm_log_nonneg (f : Hex.ZPoly) :
     0 ≤ Real.log (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) := by
   let x := HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)
