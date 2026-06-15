@@ -13320,6 +13320,141 @@ private theorem leadingCoeff_liftedRecoveryCandidate_pos
     exact leadingCoeff_normalizeFactorSign_nonneg _
   omega
 
+/-- The leading coefficient of a leading-coefficient dilation of a monic
+polynomial is the dilation scalar raised to the polynomial's degree.  Dilation
+preserves the size of a monic polynomial (`size_dilate_eq_of_monic_of_ne_zero`),
+so the top coefficient is `c ^ (size - 1)` times the monic top coefficient `1`. -/
+private theorem leadingCoeff_dilate_of_monic
+    {c : Int} (hc : c ≠ 0) {m : Hex.ZPoly} (hm : Hex.DensePoly.Monic m) :
+    Hex.DensePoly.leadingCoeff (Hex.ZPoly.dilate c m) = c ^ (m.size - 1) := by
+  have hm_size_pos : 0 < m.size := zpoly_size_pos_of_monic hm
+  have hsize : (Hex.ZPoly.dilate c m).size = m.size :=
+    size_dilate_eq_of_monic_of_ne_zero hc hm
+  have hdil_size_pos : 0 < (Hex.ZPoly.dilate c m).size := by
+    rw [hsize]; exact hm_size_pos
+  have hm_lead : m.coeff (m.size - 1) = (1 : Int) := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last m hm_size_pos]
+    exact Hex.DensePoly.leadingCoeff_eq_one_of_monic hm
+  rw [Hex.DensePoly.leadingCoeff_eq_coeff_last _ hdil_size_pos, hsize,
+    Hex.ZPoly.coeff_dilate, hm_lead, Int.mul_one]
+
+/-- A nonzero integer polynomial with positive leading coefficient has a
+primitive part with positive leading coefficient: dividing out the nonnegative
+content scales the leading coefficient by a positive factor. -/
+private theorem leadingCoeff_primitivePart_pos
+    {q : Hex.ZPoly} (hq : q ≠ 0)
+    (hlc : 0 < Hex.DensePoly.leadingCoeff q) :
+    0 < Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart q) := by
+  have hcontent_ne : Hex.ZPoly.content q ≠ 0 := HexPolyZMathlib.content_ne_zero q hq
+  have hcontent_nonneg : 0 ≤ Hex.ZPoly.content q := by
+    unfold Hex.ZPoly.content Hex.DensePoly.content
+    exact Int.natCast_nonneg _
+  have hrec :
+      Hex.ZPoly.content q *
+          Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart q) =
+        Hex.DensePoly.leadingCoeff q := by
+    have h := Hex.ZPoly.content_mul_primitivePart q
+    calc
+      Hex.ZPoly.content q *
+            Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart q)
+          = Hex.DensePoly.leadingCoeff
+              (Hex.DensePoly.scale (Hex.ZPoly.content q)
+                (Hex.ZPoly.primitivePart q)) := by
+            rw [Hex.ZPoly.leadingCoeff_scale_of_nonzero
+              (Hex.ZPoly.content q) (Hex.ZPoly.primitivePart q) hcontent_ne]
+      _ = Hex.DensePoly.leadingCoeff q := by rw [h]
+  by_contra hle
+  push_neg at hle
+  have hnonpos :
+      Hex.ZPoly.content q *
+          Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart q) ≤ 0 :=
+    mul_nonpos_iff.mpr (Or.inl ⟨hcontent_nonneg, hle⟩)
+  rw [hrec] at hnonpos
+  exact absurd hlc (not_lt.mpr hnonpos)
+
+/-- **Recovery sign-normalisation bridge.**
+
+A recovered integer factor at a Hensel lift over a positive-leading-coefficient
+core, with monic lifted local factors and Mignotte-sufficient precision, is
+already sign-normalised: `Hex.normalizeFactorSign factor = factor`.
+
+The `dilate_eq` field pins `factor = primitivePart (dilate (lc core) monicFactor)`.
+Under the precision bound the monic coordinate `monicFactor` is the centred lift
+of the monic selected product (`hcl`), hence monic, so the dilation by
+`lc core > 0` has leading coefficient `(lc core) ^ deg > 0`, and primitivisation
+preserves that positive sign.
+
+The `0 < lc core`, monic-lifted-factor and precision hypotheses are genuinely
+required: the carrier alone fixes `factor` as `primitivePart (dilate (lc core)
+monicFactor)`, whose leading-coefficient sign is `sign (lc core ^ deg ·
+lc monicFactor)`, and `lc core < 0` (or a non-monic coordinate) admits a
+negative-leading-coefficient `factor` for which `normalizeFactorSign factor ≠
+factor`.  The bare `Irreducible`/`∣ core` hypotheses suggested by the directive
+do not constrain that sign. -/
+theorem RecoveredAtLift.normalizeFactorSign_eq
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hrep : RecoveredAtLift core d factor S)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hmonic_ne : (Hex.ZPoly.toMonic core).monic ≠ 0)
+    (hd_liftedFactor_monic : ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        d.p ^ d.k) :
+    Hex.normalizeFactorSign factor = factor := by
+  set B' := Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic
+    with hB'
+  have hvalid : ∀ i, (hrep.monicFactor.coeff i).natAbs ≤ B' :=
+    defaultFactorCoeffBound_valid (Hex.ZPoly.toMonic core).monic hmonic_ne
+      hrep.monicFactor hrep.monic_dvd
+  have hB'_pos : 0 < B' :=
+    Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hmonic_ne
+  have hmod : 2 ≤ d.p ^ d.k := by omega
+  have hlp_monic : Hex.DensePoly.Monic (liftedFactorProduct d S) :=
+    liftedFactorProduct_monic d S (fun i _ => hd_liftedFactor_monic i)
+  have hcl :
+      Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k) =
+        hrep.monicFactor := by
+    rw [← centeredLiftPoly_reduceModPow_eq (liftedFactorProduct d S) d.p d.k
+      d.p_pos, hrep.congr]
+    exact Hex.centeredLiftPoly_reduceModPow_eq_of_coeff_natAbs_le
+      hrep.monicFactor d.p d.k B' hvalid hprecision
+  have hmf_monic : Hex.DensePoly.Monic hrep.monicFactor := by
+    rw [← hcl]; exact monic_centeredLiftPoly_of_monic hlp_monic hmod
+  have hc_ne : Hex.DensePoly.leadingCoeff core ≠ 0 := ne_of_gt hcore_lc_pos
+  have hdil_lc_pos :
+      0 < Hex.DensePoly.leadingCoeff
+        (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) hrep.monicFactor) := by
+    rw [leadingCoeff_dilate_of_monic hc_ne hmf_monic]
+    exact pow_pos hcore_lc_pos _
+  have hdil_ne :
+      Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) hrep.monicFactor ≠ 0 := by
+    intro h
+    rw [h, Hex.DensePoly.leadingCoeff_zero] at hdil_lc_pos
+    exact lt_irrefl 0 hdil_lc_pos
+  have hfactor_lc_pos : 0 < Hex.DensePoly.leadingCoeff factor := by
+    rw [← hrep.dilate_eq]
+    exact leadingCoeff_primitivePart_pos hdil_ne hdil_lc_pos
+  unfold Hex.normalizeFactorSign
+  rw [if_neg (by omega : ¬ Hex.DensePoly.leadingCoeff factor < 0)]
+
+/-- `RepresentsIntegerFactorAtLift` form of the recovery sign-normalisation
+bridge `RecoveredAtLift.normalizeFactorSign_eq`: a represented integer factor
+over a positive-leading-coefficient core with monic lifted factors and
+Mignotte-sufficient precision is sign-normalised. -/
+theorem normalizeFactorSign_eq_of_representsAtLift
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hmonic_ne : (Hex.ZPoly.toMonic core).monic ≠ 0)
+    (hd_liftedFactor_monic : ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        d.p ^ d.k) :
+    Hex.normalizeFactorSign factor = factor := by
+  rcases hrep with ⟨hrec⟩
+  exact hrec.normalizeFactorSign_eq hcore_lc_pos hmonic_ne hd_liftedFactor_monic
+    hprecision
+
 /-- One-step `shouldRecord` discharge for the corrected recovered candidate:
 when `liftedRecoveryCandidate core d S` equals an irreducible integer factor,
 the executable record check passes. -/
