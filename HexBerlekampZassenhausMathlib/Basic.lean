@@ -20986,4 +20986,185 @@ theorem toMonicLiftData_isCoprime_liftedFactorProduct_complement
     monicCore precision primeData hmonicCore_monic hprime_root hinv hp hprecision
     hfactors_monic hproduct_mod_p hfactors_irr hfactors_nodup S
 
+/-- Each lifted factor of `toMonicLiftData core B primeData` reduces modulo
+`primeData.p` to an irreducible polynomial (the corresponding `modPFactor`). -/
+private theorem toMonicLiftData_liftedFactor_map_irreducible
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p)
+    (i : LiftedFactorIndex (Hex.ZPoly.toMonicLiftData core B primeData)) :
+    Irreducible
+      ((HexPolyZMathlib.toPolynomial
+          (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) i)).map
+        (Int.castRingHom (ZMod primeData.p))) := by
+  classical
+  letI := primeData.bounds
+  set monicCore := (Hex.ZPoly.toMonic core).monic with hmonicCore_def
+  set precision := Hex.precisionForCoeffBound B primeData.p with hprec_def
+  have hmonicCore_monic : Hex.DensePoly.Monic monicCore :=
+    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+  have hform : Hex.factorsModPBerlekampForm monicCore primeData :=
+    Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form core primeData hselected
+  have hgood :
+      letI := primeData.bounds
+      Hex.isGoodPrime monicCore primeData.p = true :=
+    Hex.ZPoly.toMonicPrimeData?_isGoodPrime core primeData hselected
+  have hp_prime : Hex.Nat.Prime primeData.p :=
+    Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+  have hp : 1 < primeData.p := by have := hp_prime.two_le; omega
+  have hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g :=
+    factorsModP_monic_of_factorsModPBerlekampForm monicCore primeData hform
+  have hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        monicCore primeData.p :=
+    factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
+      monicCore primeData hmonicCore_monic hform hgood
+  have hcoprime :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
+        primeData.factorsModP.toList :=
+    factorsModP_coprime_of_factorsModPBerlekampForm monicCore primeData hform hgood
+  have hnonempty : primeData.factorsModP.toList ≠ [] :=
+    factorsModP_ne_nil_of_factorsModPBerlekampForm monicCore primeData hform
+  have hinv :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p precision monicCore
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList := by
+    letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+    exact Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData
+      monicCore precision primeData
+      hp_prime hp hprecision hmonicCore_monic hfactors_monic
+      hproduct_mod_p hcoprime hnonempty
+  have hfactors_irr :
+      letI := primeData.bounds
+      ∀ i : ModPFactorIndex primeData,
+        Irreducible
+          (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)) :=
+    factors_irreducible_of_factorsModPBerlekampForm monicCore primeData hform hgood
+  -- `i` as a modular-factor index (same `val`; the sizes agree definitionally).
+  have hival : i.val < primeData.factorsModP.size :=
+    i.isLt.trans_eq
+      (henselLiftData_liftedFactors_size_eq monicCore precision primeData)
+  have hmodP :=
+    henselLiftData_liftedFactor_modP_eq_modPFactor monicCore precision primeData
+      hmonicCore_monic hinv hp hprecision hfactors_monic hproduct_mod_p
+      (⟨i.val, hival⟩ : ModPFactorIndex primeData)
+  have hLF :
+      liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) i =
+        liftedFactor (Hex.henselLiftData monicCore precision primeData)
+          (liftedIndexOfModPIndex primeData
+            (Hex.henselLiftData monicCore precision primeData)
+            (henselLiftData_liftedFactors_size_eq monicCore precision primeData)
+            (⟨i.val, hival⟩ : ModPFactorIndex primeData)) := rfl
+  have hbridge :
+      (HexPolyZMathlib.toPolynomial
+          (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) i)).map
+          (Int.castRingHom (ZMod primeData.p))
+        = HexBerlekampMathlib.toMathlibPolynomial
+            (modPFactor primeData (⟨i.val, hival⟩ : ModPFactorIndex primeData)) :=
+    calc
+      (HexPolyZMathlib.toPolynomial
+            (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) i)).map
+            (Int.castRingHom (ZMod primeData.p))
+          = (HexPolyZMathlib.toPolynomial
+              (liftedFactor (Hex.henselLiftData monicCore precision primeData)
+                (liftedIndexOfModPIndex primeData
+                  (Hex.henselLiftData monicCore precision primeData)
+                  (henselLiftData_liftedFactors_size_eq monicCore precision primeData)
+                  (⟨i.val, hival⟩ : ModPFactorIndex primeData)))).map
+              (Int.castRingHom (ZMod primeData.p)) := by rw [hLF]
+      _ = HexBerlekampMathlib.toMathlibPolynomial
+            (Hex.ZPoly.modP primeData.p
+              (liftedFactor (Hex.henselLiftData monicCore precision primeData)
+                (liftedIndexOfModPIndex primeData
+                  (Hex.henselLiftData monicCore precision primeData)
+                  (henselLiftData_liftedFactors_size_eq monicCore precision primeData)
+                  (⟨i.val, hival⟩ : ModPFactorIndex primeData)))) :=
+          (toMathlibPolynomial_modP_eq_map_intCast_zmod (p := primeData.p) _).symm
+      _ = HexBerlekampMathlib.toMathlibPolynomial
+            (modPFactor primeData (⟨i.val, hival⟩ : ModPFactorIndex primeData)) := by
+          rw [hmodP]
+  rw [hbridge]
+  exact hfactors_irr (⟨i.val, hival⟩ : ModPFactorIndex primeData)
+
+/-- **Clean half of the lift-stage subset core.** If the mod-`p` reduction of the
+selected lifted-factor product over `S` divides that over `T`, then `S ⊆ T`.
+
+A shared index `i ∈ S \ T` would make the irreducible mod-`p` reduction of
+`liftedFactor d i` divide both the product over `T` and the product over its
+complement, contradicting their coprimality. Non-circular: it assumes no
+`LiftedFactorSubsetPartition`. -/
+theorem toMonicLiftData_subset_of_liftedFactorProduct_map_dvd
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p)
+    {S T : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData)}
+    (hdvd :
+      (HexPolyZMathlib.toPolynomial
+          (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) S)).map
+          (Int.castRingHom (ZMod primeData.p)) ∣
+        (HexPolyZMathlib.toPolynomial
+            (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) T)).map
+          (Int.castRingHom (ZMod primeData.p))) :
+    S ⊆ T := by
+  classical
+  intro i hiS
+  by_contra hiT
+  have hi_compl :
+      i ∈ ((Finset.univ : LiftedFactorSubset
+          (Hex.ZPoly.toMonicLiftData core B primeData)) \ T) :=
+    Finset.mem_sdiff.mpr ⟨Finset.mem_univ i, hiT⟩
+  -- The mod-`p` product over any subset is the product of the per-factor
+  -- reductions.
+  have hprod : ∀ U : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData),
+      (HexPolyZMathlib.toPolynomial
+          (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) U)).map
+          (Int.castRingHom (ZMod primeData.p)) =
+        ∏ j ∈ U, (HexPolyZMathlib.toPolynomial
+          (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) j)).map
+          (Int.castRingHom (ZMod primeData.p)) := by
+    intro U
+    rw [toPolynomial_liftedFactorProduct, Polynomial.map_prod]
+  have hφS :
+      (HexPolyZMathlib.toPolynomial
+          (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) i)).map
+          (Int.castRingHom (ZMod primeData.p)) ∣
+        (HexPolyZMathlib.toPolynomial
+            (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) S)).map
+          (Int.castRingHom (ZMod primeData.p)) := by
+    rw [hprod S]; exact Finset.dvd_prod_of_mem _ hiS
+  have hφcompl :
+      (HexPolyZMathlib.toPolynomial
+          (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) i)).map
+          (Int.castRingHom (ZMod primeData.p)) ∣
+        (HexPolyZMathlib.toPolynomial
+            (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData)
+              ((Finset.univ : LiftedFactorSubset
+                  (Hex.ZPoly.toMonicLiftData core B primeData)) \ T))).map
+          (Int.castRingHom (ZMod primeData.p)) := by
+    rw [hprod _]; exact Finset.dvd_prod_of_mem _ hi_compl
+  have hφT :
+      (HexPolyZMathlib.toPolynomial
+          (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) i)).map
+          (Int.castRingHom (ZMod primeData.p)) ∣
+        (HexPolyZMathlib.toPolynomial
+            (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) T)).map
+          (Int.castRingHom (ZMod primeData.p)) :=
+    dvd_trans hφS hdvd
+  have hcop :=
+    toMonicLiftData_isCoprime_liftedFactorProduct_complement core B primeData
+      hcore_lc_pos hcore_pos hselected hprecision T
+  have hunit := hcop.isUnit_of_dvd' hφT hφcompl
+  exact (toMonicLiftData_liftedFactor_map_irreducible core B primeData
+    hcore_lc_pos hcore_pos hselected hprecision i).not_isUnit hunit
+
 end HexBerlekampZassenhausMathlib
