@@ -326,6 +326,11 @@ theorem composeCoeffPowerSumUpTo_eq_core
       rw [composePower_eq_linearPow]
       rw [composeCoeffPowerSumUpTo_eq_core coeff n (base + 1) w]
 
+/-- The list-fed accumulator `composeCoeffPowerSumFrom` over the coefficient
+slice `[coeff base, …, coeff (base + n - 1)]` agrees with the index-fed
+`composeCoeffPowerSumUpTo coeff n base w`. This bridges the two power-sum
+representations so the explicit list form can be rewritten into the bounded
+indexed form used by the extension and subtraction lemmas. -/
 private theorem composeCoeffPowerSumFrom_range_eq_upTo
     (coeff : Nat → ZMod64 p) (w : FpPoly p) :
     ∀ n base,
@@ -341,6 +346,10 @@ private theorem composeCoeffPowerSumFrom_range_eq_upTo
       simpa [Function.comp_def, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm]
         using composeCoeffPowerSumFrom_range_eq_upTo coeff w n (base + 1)
 
+/-- `compose f w` equals the bounded accumulator `composeCoeffPowerSumUpTo`
+run up to exactly `f.size` with `f`'s coefficients. This is the base
+characterization of composition as a power sum, from which the
+extend-past-the-bound variant `compose_eq_coeff_power_sum_upTo_bound` follows. -/
 private theorem compose_eq_coeff_power_sum_upTo_size (f w : FpPoly p) :
     DensePoly.compose f w =
       composeCoeffPowerSumUpTo (fun i => f.coeff i) f.size 0 w := by
@@ -348,6 +357,10 @@ private theorem compose_eq_coeff_power_sum_upTo_size (f w : FpPoly p) :
   rw [DensePoly.toArray_toList_eq_coeff_range]
   simpa using composeCoeffPowerSumFrom_range_eq_upTo (fun i => f.coeff i) w f.size 0
 
+/-- Single-step extension invariance: when the next coefficient
+`coeff (base + n)` is zero, growing the accumulator's bound from `n` to `n + 1`
+leaves its value unchanged, since the appended term contributes `C 0 * wⁱ = 0`.
+This is the inductive step behind the multi-step `_le_extend_base` lemma. -/
 private theorem composeCoeffPowerSumUpTo_succ_of_next_zero
     (coeff : Nat → ZMod64 p) (w : FpPoly p) :
     ∀ n base,
@@ -371,6 +384,10 @@ private theorem composeCoeffPowerSumUpTo_succ_of_next_zero
         simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using hzero)]
       simp only [composeCoeffPowerSumUpTo]
 
+/-- Multi-step extension invariance (general base): if every coefficient from
+index `base + bound` onward vanishes, then running the accumulator up to
+`bound + extra` gives the same value as running it up to `bound`, for any
+`extra`. Proved by iterating `_succ_of_next_zero`. -/
 private theorem composeCoeffPowerSumUpTo_le_extend_base
     (coeff : Nat → ZMod64 p) (w : FpPoly p) {base bound : Nat}
     (hzero : ∀ i, base + bound ≤ i → coeff i = 0) :
@@ -385,6 +402,10 @@ private theorem composeCoeffPowerSumUpTo_le_extend_base
       exact composeCoeffPowerSumUpTo_succ_of_next_zero
         coeff w (bound + extra) base (hzero (base + (bound + extra)) (by omega))
 
+/-- The `base = 0` specialization of `_le_extend_base`: when all coefficients
+at indices `≥ bound` vanish, the accumulator's value is unchanged by extending
+its bound to `bound + extra`. This is the form consumed by
+`compose_eq_coeff_power_sum_upTo_bound`. -/
 private theorem composeCoeffPowerSumUpTo_le_extend
     (coeff : Nat → ZMod64 p) (w : FpPoly p) {bound : Nat}
     (hzero : ∀ i, bound ≤ i → coeff i = 0) :
@@ -441,6 +462,10 @@ private theorem fp_add_sub_add_sub
   rw [DensePoly.coeff_add_semiring]
   grind
 
+/-- The accumulator is additive under coefficient subtraction: running
+`composeCoeffPowerSumUpTo` with the pointwise difference `f.coeff i - h.coeff i`
+equals the difference of the two separate accumulators. This linearity step
+feeds the `compose_sub` distributivity theorem. -/
 private theorem composeCoeffPowerSumUpTo_sub
     (f h w : FpPoly p) :
     ∀ n base,
