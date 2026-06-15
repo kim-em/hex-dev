@@ -26,6 +26,7 @@ private theorem montPosInvStep_mod_6_to_12 (p x : UInt64)
   unfold montPosInvStep
   bv_decide (config := { timeout := 120 })
 
+/-- Every power of two up to `2^64` divides the `UInt64` modulus `2^64`. -/
 private theorem two_pow_dvd_uint64_word {t : Nat} (ht : t ≤ 64) :
     2 ^ t ∣ UInt64.word := by
   refine ⟨2 ^ (64 - t), ?_⟩
@@ -34,6 +35,8 @@ private theorem two_pow_dvd_uint64_word {t : Nat} (ht : t ≤ 64) :
     _ = 2 ^ (t + (64 - t)) := by rw [Nat.add_sub_of_le ht]
     _ = 2 ^ t * 2 ^ (64 - t) := by rw [Nat.pow_add]
 
+/-- Reducing modulo the `UInt64` word size first is invisible under a later
+`% 2 ^ t` for `t ≤ 64`, since `2 ^ t` divides `2^64`. -/
 private theorem mod_uint64_word_mod_two_pow (n t : Nat) (ht : t ≤ 64) :
     n % UInt64.word % 2 ^ t = n % 2 ^ t := by
   exact Nat.mod_mod_of_dvd n (two_pow_dvd_uint64_word ht)
@@ -53,6 +56,8 @@ private theorem UInt64.toNat_sub_mod_two_pow (a b : UInt64) {t : Nat}
   simpa [UInt64.toNat_sub] using
     mod_uint64_word_mod_two_pow (2 ^ 64 - b.toNat + a.toNat) t ht
 
+/-- One integer Newton/Hensel step doubles 2-adic precision: if `m ∣ y - 1`
+then `m * m ∣ y * (2 - y) - 1`. -/
 private theorem int_newton_refine_dvd (m y : Int) (hm : m ∣ y - 1) :
     m * m ∣ y * (2 - y) - 1 := by
   rcases hm with ⟨q, hq⟩
@@ -61,6 +66,8 @@ private theorem int_newton_refine_dvd (m y : Int) (hm : m ∣ y - 1) :
   refine ⟨-(q * q), ?_⟩
   grind
 
+/-- The Newton/Hensel doubling step specialised to a `2 ^ k` inverse: a `k`-bit
+inverse `y` refines to a `2k`-bit one, phrased on the `Nat`-cast-to-`Int` input. -/
 private theorem nat_newton_refine_dvd (y k : Nat) (h : y % 2 ^ k = 1) :
     ((2 ^ k : Nat) : Int) * ((2 ^ k : Nat) : Int) ∣
       (y : Int) * (2 - (y : Int)) - 1 := by
@@ -74,6 +81,7 @@ private theorem nat_newton_refine_dvd (y k : Nat) (h : y % 2 ^ k = 1) :
   simp only [Int.natCast_add, Int.ofNat_one, Int.natCast_mul] at hyInt
   omega
 
+/-- Transport a `Nat` divisibility to the corresponding `Int` divisibility. -/
 private theorem int_dvd_of_nat_dvd {a b : Nat} (h : a ∣ b) :
     (a : Int) ∣ (b : Int) := by
   rcases h with ⟨q, hq⟩
@@ -148,6 +156,8 @@ private theorem nat_newton_refine_wrapped_dvd (y z k t : Nat)
   rw [← hq]
   grind
 
+/-- Reading a 2-adic divisibility back as a residue: for `1 < T`, `T ∣ n - 1`
+over `Int` forces `n % T = 1`. -/
 private theorem nat_mod_eq_one_of_int_dvd_sub_one {T n : Nat} (hT : 1 < T)
     (h : (T : Int) ∣ (n : Int) - 1) :
     n % T = 1 := by
@@ -170,6 +180,7 @@ private theorem nat_mod_eq_one_of_int_dvd_sub_one {T n : Nat} (hT : 1 < T)
   rw [hn_eq]
   simp [Nat.mod_eq_of_lt hT]
 
+/-- The converse direction: a residue `n % T = 1` yields `T ∣ n - 1` over `Int`. -/
 private theorem int_dvd_sub_one_of_nat_mod_eq_one {T n : Nat} (h : n % T = 1) :
     (T : Int) ∣ (n : Int) - 1 := by
   have hdecomp := Nat.mod_add_div n T
@@ -179,6 +190,8 @@ private theorem int_dvd_sub_one_of_nat_mod_eq_one {T n : Nat} (h : n % T = 1) :
   simp only [Int.natCast_add, Int.natCast_mul, Int.natCast_one] at hdecompInt
   omega
 
+/-- The negated-inverse analogue: for `1 < T`, `T ∣ n + 1` over `Int` forces
+`n % T = T - 1`, the residue behind `montInv_spec`. -/
 private theorem nat_mod_eq_pred_of_int_dvd_add_one {T n : Nat} (hT : 1 < T)
     (h : (T : Int) ∣ (n : Int) + 1) :
     n % T = T - 1 := by
@@ -203,6 +216,7 @@ private theorem nat_mod_eq_pred_of_int_dvd_add_one {T n : Nat} (hT : 1 < T)
   rw [Nat.add_mod]
   simp [Nat.mod_eq_of_lt (by omega : T - 1 < T)]
 
+/-- The 3-bit Newton seed fact: the square of any odd number is `1 mod 8`. -/
 private theorem odd_square_mod_eight (n : Nat) (hodd : n % 2 = 1) :
     n * n % 8 = 1 := by
   obtain ⟨q, hq⟩ : ∃ q, n = 2 * q + 1 := by
@@ -238,6 +252,8 @@ private theorem odd_square_mod_eight (n : Nat) (hodd : n % 2 = 1) :
     rw [hsq]
     simp
 
+/-- The generic wrapping Newton step: a `k`-bit inverse refines to a `t`-bit
+inverse for any `0 < t ≤ min (2 * k) 64`, the engine behind `montPosInv_spec`. -/
 private theorem montPosInvStep_mod_refine (p x : UInt64) {k t : Nat}
     (hx : p.toNat * x.toNat % 2 ^ k = 1)
     (htpos : 0 < t) (ht : t ≤ 2 * k) (ht64 : t ≤ 64) :
