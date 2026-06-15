@@ -592,6 +592,9 @@ def runFlintOfPolyReprChecksum (input : OfPolyInput) : IO UInt64 := do
       ("a", fpPolySevenToFlintJson input.poly)]
   checksumFlintCoeffReply result
 
+/-- Drive FLINT `fq_default` `add` on a `BinaryInput` (shared modulus plus the
+two operands `lhs`, `rhs`) and return a checksum of the FLINT reply, for
+comparison against the native `runAddChecksum` target at the same rung. -/
 def runFlintAddChecksum (input : BinaryInput) : IO UInt64 := do
   let result ← Hex.BenchOracle.Flint.runOp "fq_default" "add"
     #[("p", (7 : Lean.Json)),
@@ -600,6 +603,9 @@ def runFlintAddChecksum (input : BinaryInput) : IO UInt64 := do
       ("b", fpPolySevenToFlintJson (repr input.rhs))]
   checksumFlintCoeffReply result
 
+/-- Drive FLINT `fq_default` `mul` on a `BinaryInput` (shared modulus plus the
+two operands `lhs`, `rhs`) and return a checksum of the FLINT reply, for
+comparison against the native `runMulChecksum` target at the same rung. -/
 def runFlintMulChecksum (input : BinaryInput) : IO UInt64 := do
   let result ← Hex.BenchOracle.Flint.runOp "fq_default" "mul"
     #[("p", (7 : Lean.Json)),
@@ -608,6 +614,10 @@ def runFlintMulChecksum (input : BinaryInput) : IO UInt64 := do
       ("b", fpPolySevenToFlintJson (repr input.rhs))]
   checksumFlintCoeffReply result
 
+/-- Drive two FLINT `fq_default` operations on a `BinaryInput` — `neg` on `lhs`
+and `sub` on `lhs - rhs` over the shared modulus — and return the `mixHash` of
+their two reply checksums, for comparison against the native target at the same
+rung. -/
 def runFlintNegSubChecksum (input : BinaryInput) : IO UInt64 := do
   let negResult ← Hex.BenchOracle.Flint.runOp "fq_default" "neg"
     #[("p", (7 : Lean.Json)),
@@ -620,6 +630,9 @@ def runFlintNegSubChecksum (input : BinaryInput) : IO UInt64 := do
       ("b", fpPolySevenToFlintJson (repr input.rhs))]
   return mixHash (← checksumFlintCoeffReply negResult) (← checksumFlintCoeffReply subResult)
 
+/-- Drive FLINT `fq_default` `pow` on a `PowInput` (modulus, base `value`, and a
+natural-number `exponent`) and return a checksum of the FLINT reply, for
+comparison against the native `runPowChecksum` target at the same rung. -/
 def runFlintPowChecksum (input : PowInput) : IO UInt64 := do
   let result ← Hex.BenchOracle.Flint.runOp "fq_default" "pow"
     #[("p", (7 : Lean.Json)),
@@ -628,6 +641,10 @@ def runFlintPowChecksum (input : PowInput) : IO UInt64 := do
       ("exponent", Lean.Json.num (Lean.JsonNumber.fromNat input.exponent))]
   checksumFlintCoeffReply result
 
+/-- Drive two FLINT `fq_default` operations on a `BinaryInput` — `inv` on `lhs`
+and `div` on `lhs / rhs` over the shared modulus — and return the `mixHash` of
+their two reply checksums, for comparison against the native target at the same
+rung. -/
 def runFlintInvDivChecksum (input : BinaryInput) : IO UInt64 := do
   let invResult ← Hex.BenchOracle.Flint.runOp "fq_default" "inv"
     #[("p", (7 : Lean.Json)),
@@ -640,6 +657,9 @@ def runFlintInvDivChecksum (input : BinaryInput) : IO UInt64 := do
       ("b", fpPolySevenToFlintJson (repr input.rhs))]
   return mixHash (← checksumFlintCoeffReply invResult) (← checksumFlintCoeffReply divResult)
 
+/-- Drive FLINT `fq_default` `pow` on a `ZPowInput` (modulus, base `value`, and a
+signed integer `exponent`) and return a checksum of the FLINT reply, for
+comparison against the native `runZPowChecksum` target at the same rung. -/
 def runFlintZPowChecksum (input : ZPowInput) : IO UInt64 := do
   let result ← Hex.BenchOracle.Flint.runOp "fq_default" "pow"
     #[("p", (7 : Lean.Json)),
@@ -648,6 +668,10 @@ def runFlintZPowChecksum (input : ZPowInput) : IO UInt64 := do
       ("exponent", Lean.Json.num (Lean.JsonNumber.fromInt input.exponent))]
   checksumFlintCoeffReply result
 
+/-- Drive the Frobenius map as FLINT `fq_default` `pow` with the fixed exponent
+`p = 7` on a `UnaryInput` (modulus and base `value`) and return a checksum of the
+FLINT reply, for comparison against the native `runFrobChecksum` target at the
+same rung. -/
 def runFlintFrobChecksum (input : UnaryInput) : IO UInt64 := do
   let result ← Hex.BenchOracle.Flint.runOp "fq_default" "pow"
     #[("p", (7 : Lean.Json)),
