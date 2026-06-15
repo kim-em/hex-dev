@@ -4337,6 +4337,8 @@ private theorem permutation_idxOf_ne_of_ne {n : Nat}
   have hgeteq := congrArg (fun k : Fin perm.toList.length => perm.toList[k]) hfin
   exact hiGet.symm.trans (hgeteq.trans hjGet)
 
+/-- When columns `src` and `dst` of `M` are equal, swapping those two values
+in a permutation leaves the product term `detProduct M perm` unchanged. -/
 private theorem detProduct_colDuplicate_swapValues {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n)
@@ -4369,6 +4371,8 @@ private theorem detProduct_colDuplicate_swapValues {R : Type u}
         exact finTranspose_of_ne src dst perm[r] hsrc hdst
       exact (congrArg (fun c => M[r][c]) hswap).symm
 
+/-- For a nodup permutation with `src ≠ dst` and equal columns `src`, `dst`,
+swapping those two values negates the signed determinant term `detTerm M perm`. -/
 private theorem detTerm_colDuplicate_swapValues {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (h : src ≠ dst)
@@ -4380,21 +4384,28 @@ private theorem detTerm_colDuplicate_swapValues {R : Type u}
   rw [detSign_swapPermutationValues (R := R) perm src dst hnodup h]
   grind
 
+/-- `M` with column `dst` overwritten by a copy of column `src`. -/
 private def colAddDuplicate {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) : Matrix R n n :=
   Matrix.ofFn fun r c => if c = dst then M[r][src] else M[r][c]
 
+/-- Entrywise value of `colAddDuplicate M src dst`: column `dst` reads from
+column `src`, every other column is left unchanged. -/
 private theorem colAddDuplicate_get {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst r c : Fin n) :
     (colAddDuplicate M src dst)[r][c] = if c = dst then M[r][src] else M[r][c] := by
   simp [colAddDuplicate, Matrix.ofFn]
 
+/-- Entrywise value of `colAdd M src dst c`: column `dst` becomes
+`M[r][dst] + c · M[r][src]`, every other column is left unchanged. -/
 private theorem colAdd_get {R : Type u} [Mul R] [Add R] {n : Nat}
     (M : Matrix R n n) (src dst r cidx : Fin n) (c : R) :
     (colAdd M src dst c)[r][cidx] =
       if cidx = dst then M[r][cidx] + c * M[r][src] else M[r][cidx] := by
   simp [colAdd, Matrix.ofFn]
 
+/-- For a nodup permutation, the product term of `colAdd M src dst c` splits as
+`detProduct M perm + c · detProduct (colAddDuplicate M src dst) perm`. -/
 private theorem detProduct_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (c : R)
     (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
@@ -4463,6 +4474,8 @@ private theorem detProduct_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
               exact hxp (Fin.ext hval)
             rw [if_neg hperm_ne])
 
+/-- For a nodup permutation, the signed term of `colAdd M src dst c` splits as
+`detTerm M perm + c · detTerm (colAddDuplicate M src dst) perm`. -/
 private theorem detTerm_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (c : R)
     (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
@@ -4555,10 +4568,14 @@ private theorem detTerm_rowScale {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
   rw [detProduct_rowScale]
   grind
 
+/-- `M` with row `dst` overwritten by a copy of row `src` (row analogue of
+`colAddDuplicate`). -/
 private def rowAddDuplicate {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) : Matrix R n n :=
   M.set dst M[src]
 
+/-- Entrywise value of `rowAdd M src dst c`: row `dst` becomes
+`M[dst][k] + c · M[src][k]`, every other row is left unchanged. -/
 private theorem rowAdd_get {R : Type u} [Mul R] [Add R] {n : Nat}
     (M : Matrix R n n) (src dst r : Fin n) (c : R) (k : Fin n) :
     (rowAdd M src dst c)[r][k] =
@@ -4578,6 +4595,8 @@ private theorem rowAdd_get {R : Type u} [Mul R] [Add R] {n : Nat}
           dst.isLt r.isLt hval)
     simpa [rowAdd] using congrArg (fun row => row[k]) hrow
 
+/-- Entrywise value of `rowAddDuplicate M src dst`: row `dst` reads from row
+`src`, every other row is left unchanged. -/
 private theorem rowAddDuplicate_get {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst r : Fin n) (k : Fin n) :
     (rowAddDuplicate M src dst)[r][k] =
@@ -4593,6 +4612,8 @@ private theorem rowAddDuplicate_get {R : Type u} {n : Nat}
       exact (Vector.getElem_set_ne (xs := M) (x := M[src]) dst.isLt r.isLt hval)
     simpa [rowAddDuplicate] using congrArg (fun row => row[k]) hrow
 
+/-- The product term of `rowAdd M src dst c` splits as
+`detProduct M perm + c · detProduct (rowAddDuplicate M src dst) perm`. -/
 private theorem detProduct_rowAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (c : R) (perm : Vector (Fin n) n) :
     detProduct (rowAdd M src dst c) perm =
@@ -4630,6 +4651,8 @@ private theorem detProduct_rowAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
             rw [rowAddDuplicate_get]
             simp [hne])
 
+/-- The signed term of `rowAdd M src dst c` splits as
+`detTerm M perm + c · detTerm (rowAddDuplicate M src dst) perm`. -/
 private theorem detTerm_rowAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (c : R) (perm : Vector (Fin n) n) :
     detTerm (rowAdd M src dst c) perm =
