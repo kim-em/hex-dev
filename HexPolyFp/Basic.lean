@@ -3676,6 +3676,10 @@ theorem coeff_monomial_mul (k : Nat) (c : ZMod64 p) (g : FpPoly p) (n : Nat) :
   · have hkn : k < n + 1 := by omega
     simp [hnk, hkn]
 
+/-- Synthetic-division quotient coefficients: for a coefficient list `cs`
+(constant term first) and scalar `α`, entry `n` is the Horner value
+`evalScalarCoeffList (cs.drop (n+1)) α`, so the list holds the coefficients of
+the divided difference `(f - f(α)) / (X - α)`. -/
 private def scalarDividedDifferenceCoeffs :
     List (ZMod64 p) → ZMod64 p → List (ZMod64 p)
   | [], _ => []
@@ -3683,12 +3687,16 @@ private def scalarDividedDifferenceCoeffs :
   | _ :: c :: cs, α =>
       evalScalarCoeffList (c :: cs) α :: scalarDividedDifferenceCoeffs (c :: cs) α
 
+/-- Routine bridge: the `Zero.zero` literal coincides with `0` in `ZMod64 p`. -/
 private theorem zmod_Zero_zero_eq_zero :
     (Zero.zero : ZMod64 p) = (0 : ZMod64 p) := by
   apply zmod_eq_of_toNat_eq
   change (Zero.zero : ZMod64 p).toNat = 0
   exact ZMod64.toNat_zero
 
+/-- Entry `n` of the divided-difference quotient list (default `0`) is the
+Horner value `evalScalarCoeffList (cs.drop (n+1)) α`; characterises
+`scalarDividedDifferenceCoeffs` entrywise. -/
 private theorem scalarDividedDifferenceCoeffs_getD
     (cs : List (ZMod64 p)) (α : ZMod64 p) (n : Nat) :
     (scalarDividedDifferenceCoeffs cs α).getD n (0 : ZMod64 p) =
@@ -3708,6 +3716,8 @@ private theorem scalarDividedDifferenceCoeffs_getD
               simpa [scalarDividedDifferenceCoeffs, Nat.succ_eq_add_one, Nat.add_assoc]
                 using ih (n := n)
 
+/-- One Horner step on a suffix: evaluating `cs.drop n` peels off the leading
+coefficient `cs[n]` plus `α` times the evaluation of `cs.drop (n+1)`. -/
 private theorem evalScalarCoeffList_drop_eq_getD_add
     (cs : List (ZMod64 p)) (α : ZMod64 p) (n : Nat) :
     evalScalarCoeffList (cs.drop n) α =
@@ -3723,6 +3733,8 @@ private theorem evalScalarCoeffList_drop_eq_getD_add
       | succ n =>
           simpa [Nat.succ_eq_add_one, Nat.add_assoc] using ih (n := n)
 
+/-- Routine round-trip: rebuilding a polynomial from its own coefficient array
+recovers it. -/
 private theorem ofCoeffs_toArray_fp (f : FpPoly p) :
     (DensePoly.ofCoeffs f.toArray : FpPoly p) = f := by
   apply DensePoly.ext_coeff
@@ -3730,12 +3742,15 @@ private theorem ofCoeffs_toArray_fp (f : FpPoly p) :
   rw [DensePoly.coeff_ofCoeffs]
   rfl
 
+/-- `getElem?`/`getD` restatement of `scalarDividedDifferenceCoeffs_getD`, the
+form used when reading quotient coefficients out of `ofCoeffs` arrays. -/
 private theorem scalarDividedDifferenceCoeffs_getElem?_getD
     (cs : List (ZMod64 p)) (α : ZMod64 p) (n : Nat) :
     (scalarDividedDifferenceCoeffs cs α)[n]?.getD (0 : ZMod64 p) =
       evalScalarCoeffList (cs.drop (n + 1)) α := by
   simpa [List.getD] using scalarDividedDifferenceCoeffs_getD cs α n
 
+/-- Routine: the constant polynomial `C 0` is the zero polynomial in `FpPoly p`. -/
 private theorem C_zero_fp :
     FpPoly.C (0 : ZMod64 p) = (0 : FpPoly p) := by
   apply DensePoly.ext_coeff
@@ -3744,6 +3759,10 @@ private theorem C_zero_fp :
   rw [DensePoly.coeff_C, DensePoly.coeff_zero]
   cases n <;> rfl
 
+/-- Coefficient `n` of the linear factor times the quotient,
+`((X - C α) · q).coeff n`, expanded via Horner suffixes: it equals
+`(evalScalarCoeffList (cs.drop n) α for n ≠ 0, else 0) - α · evalScalarCoeffList (cs.drop (n+1)) α`.
+The product-coefficient half of the factorization identity. -/
 private theorem scalar_linear_factor_mul_dividedDifference_coeff
     (cs : List (ZMod64 p)) (α : ZMod64 p) (n : Nat) :
     let q : FpPoly p :=
@@ -3779,6 +3798,11 @@ private theorem scalar_linear_factor_mul_dividedDifference_coeff
       rw [scalarDividedDifferenceCoeffs_getElem?_getD cs α (n + 1)]
       grind
 
+/-- Capstone factorization (Ruffini / Horner remainder identity): the polynomial
+built from coefficients `cs` splits as `C (eval cs α) + (X - C α) · q`, where `q`
+is the divided-difference quotient `scalarDividedDifferenceCoeffs cs α`. Combines
+the constant-term Horner unfolding with
+`scalar_linear_factor_mul_dividedDifference_coeff` coefficientwise. -/
 private theorem ofCoeffs_eq_C_eval_add_linear_mul_dividedDifference
     (cs : List (ZMod64 p)) (α : ZMod64 p) :
     (DensePoly.ofCoeffs cs.toArray : FpPoly p) =
