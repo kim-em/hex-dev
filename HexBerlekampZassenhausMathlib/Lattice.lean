@@ -509,6 +509,137 @@ theorem normBound_of_colBound
     (cldTailSq_le_of_colBound S hcol)
 
 /--
+Tight package for the BHKS cut-radius bound on a true-factor CLD vector.
+
+Where `TrueFactorCLDNormBound` only certifies `‖v‖² ≤ bhksCutRadiusSq4`, this
+certificate is four times stronger: `4·‖v‖² ≤ bhksCutRadiusSq4`, equivalently
+`‖v‖² ≤ bhksCutRadiusSq4 / 4 = factorCount + coeffWidth·factorCount²/4`.
+
+This is the design-radius bound the prefix cut consumes.  The prefix cut retains
+rows at the design radius `r`, where `bhksCutRadiusSq4 = 4·r²` (the field stores
+*four times* the squared radius).  The survivor-span lemma therefore needs the
+tight hypothesis `4·‖v‖² ≤ bhksCutRadiusSq4`, not the loose
+`‖v‖² ≤ bhksCutRadiusSq4` — the latter is `4×` too weak for the prefix cut.
+-/
+structure TrueFactorCLDTightNormBound
+    (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) where
+  four_mul_sq_norm_le :
+    4 * (∑ i : Fin (L.factorCount + L.coeffWidth),
+      ((((trueFactorCLDVector L S)[i] : ℤ) : ℝ) ^ 2)) ≤
+        (Hex.bhksCutRadiusSq4 L : ℝ)
+
+namespace TrueFactorCLDTightNormBound
+
+/-- The tight certificate implies the loose one: `4·‖v‖² ≤ R` with `‖v‖² ≥ 0`
+forces `‖v‖² ≤ R`. -/
+theorem toNormBound
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorCLDTightNormBound L S) :
+    TrueFactorCLDNormBound L S := by
+  refine ⟨?_⟩
+  have hnonneg : (0 : ℝ) ≤
+      ∑ i : Fin (L.factorCount + L.coeffWidth),
+        ((((trueFactorCLDVector L S)[i] : ℤ) : ℝ) ^ 2) :=
+    Finset.sum_nonneg (fun i _ => sq_nonneg _)
+  linarith [D.four_mul_sq_norm_le]
+
+end TrueFactorCLDTightNormBound
+
+/--
+Tight CLD-tail squared-sum bound from the genuinely tighter per-column high-bit
+estimate `2·|Σ i ∈ S, cldRows[i][j]| ≤ factorCount` (i.e. `|col j| ≤ factorCount/2`).
+
+This halves the loose per-column bound `|col j| ≤ factorCount` used by
+`cldTailSq_le_of_colBound`.  Since `4·z² = (2·z)²` and `(2·z).natAbs = 2·z.natAbs`,
+each column contributes `4·col² ≤ factorCount²`, so the tail satisfies
+`4·tail ≤ coeffWidth·factorCount²`.
+-/
+theorem cldTailSq4_le_of_tightColBound
+    {L : Hex.BhksLatticeBasis} (S : LiftedFactorSupport L)
+    (hcol :
+      ∀ j : Fin L.coeffWidth,
+        2 * ((trueFactorCLDVector L S)[Fin.natAdd L.factorCount j] : ℤ).natAbs ≤
+          L.factorCount) :
+    4 * (∑ j : Fin L.coeffWidth,
+        (((trueFactorCLDVector L S)[Fin.natAdd L.factorCount j] : ℤ) : ℝ) ^ 2)
+      ≤ (L.coeffWidth * L.factorCount * L.factorCount : ℝ) := by
+  rw [Finset.mul_sum]
+  calc
+    (∑ j : Fin L.coeffWidth,
+        4 * (((trueFactorCLDVector L S)[Fin.natAdd L.factorCount j] : ℤ) : ℝ) ^ 2)
+        ≤ ∑ _j : Fin L.coeffWidth, ((L.factorCount : ℝ) ^ 2) := by
+          refine Finset.sum_le_sum (fun j _ => ?_)
+          set z : ℤ := (trueFactorCLDVector L S)[Fin.natAdd L.factorCount j] with hz
+          have hnat : (2 * z).natAbs ≤ L.factorCount := by
+            rw [Int.natAbs_mul]; simpa using hcol j
+          have hsq := intSq_le_of_natAbs_le (2 * z) L.factorCount hnat
+          have hexpand : (((2 * z : ℤ)) : ℝ) ^ 2 = 4 * ((z : ℤ) : ℝ) ^ 2 := by
+            push_cast; ring
+          rw [hexpand] at hsq
+          exact hsq
+    _ = (L.coeffWidth * L.factorCount * L.factorCount : ℝ) := by
+          simp [pow_two, mul_assoc]
+
+/--
+Reduction of the tight BHKS cut-radius norm bound to a tight bound on the CLD
+tail alone (`4·tail ≤ coeffWidth·factorCount²`).
+
+The projected first block is the `0/1` support indicator, whose squared norm is
+at most `factorCount` (structural, via `project_eq`), so `4·first ≤ 4·factorCount`.
+Adding the tight tail gives `4·‖v‖² ≤ 4·factorCount + coeffWidth·factorCount² =
+bhksCutRadiusSq4`.
+-/
+theorem trueFactorCLDTightNormBound_of_cldTail_four_mul_sq_sum_le
+    {L : Hex.BhksLatticeBasis} (S : LiftedFactorSupport L)
+    (hL : BhksBlockForm L)
+    (htail : 4 * (∑ j : Fin L.coeffWidth,
+        (((trueFactorCLDVector L S)[Fin.natAdd L.factorCount j] : ℤ) : ℝ) ^ 2)
+      ≤ (L.coeffWidth * L.factorCount * L.factorCount : ℝ)) :
+    TrueFactorCLDTightNormBound L S := by
+  refine ⟨?_⟩
+  rw [Fin.sum_univ_add, mul_add]
+  have hfirst_eq : ∀ i : Fin L.factorCount,
+      ((trueFactorCLDVector L S)[Fin.castAdd L.coeffWidth i] : ℤ) = indicatorVector S i :=
+    fun i => trueFactorCLDVector_project_of_blockForm S hL i
+  have hfirst : (∑ i : Fin L.factorCount,
+      (((trueFactorCLDVector L S)[Fin.castAdd L.coeffWidth i] : ℤ) : ℝ) ^ 2)
+      ≤ (L.factorCount : ℝ) := by
+    have heq : (∑ i : Fin L.factorCount,
+        (((trueFactorCLDVector L S)[Fin.castAdd L.coeffWidth i] : ℤ) : ℝ) ^ 2)
+        = ∑ i : Fin L.factorCount, (((indicatorVector S i : ℤ) : ℝ) ^ 2) :=
+      Finset.sum_congr rfl (fun i _ => by rw [hfirst_eq i])
+    rw [heq]
+    exact indicatorVector_sq_sum_le_factorCount S
+  have hfirst4 : 4 * (∑ i : Fin L.factorCount,
+      (((trueFactorCLDVector L S)[Fin.castAdd L.coeffWidth i] : ℤ) : ℝ) ^ 2)
+      ≤ 4 * (L.factorCount : ℝ) := by linarith
+  refine (add_le_add hfirst4 htail).trans (le_of_eq ?_)
+  unfold Hex.bhksCutRadiusSq4
+  push_cast
+  ring
+
+/--
+Produce the tight BHKS true-factor CLD norm certificate
+(`4·‖v‖² ≤ bhksCutRadiusSq4`) from the tight per-column bound
+`2·|col j| ≤ factorCount`.
+
+This is the strengthened analog of `normBound_of_colBound`: the residual
+analytic obligation is the tighter high-bit estimate on each true-factor CLD
+column sum, isolated here exactly as the loose bound isolates its per-column
+hypothesis.
+-/
+theorem tightNormBound_of_colBound
+    {L : Hex.BhksLatticeBasis} (S : LiftedFactorSupport L)
+    (hL : BhksBlockForm L)
+    (hcol :
+      ∀ j : Fin L.coeffWidth,
+        2 * ((trueFactorCLDVector L S)[Fin.natAdd L.factorCount j] : ℤ).natAbs ≤
+          L.factorCount) :
+    TrueFactorCLDTightNormBound L S :=
+  trueFactorCLDTightNormBound_of_cldTail_four_mul_sq_sum_le S hL
+    (cldTailSq4_le_of_tightColBound S hcol)
+
+/--
 The true-factor indicator lattice `W`, generated by the indicator vectors of
 the true integer factors' lifted-factor supports.
 -/
