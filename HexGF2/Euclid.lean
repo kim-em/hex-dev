@@ -566,6 +566,29 @@ theorem dvd_gcd (d p q : GF2Poly) :
   rw [hbezout] at hsum
   simpa [r] using hsum
 
+/-- The gcd with a zero right input is the left input. -/
+@[simp] theorem gcd_zero_right (p : GF2Poly) :
+    gcd p 0 = p := by
+  unfold gcd xgcd
+  obtain ⟨n, hn⟩ : ∃ n, p.degree + (0 : GF2Poly).degree + 2 = n + 1 :=
+    ⟨p.degree + (0 : GF2Poly).degree + 1, rfl⟩
+  rw [hn]
+  simp [xgcdAux]
+
+/-- The gcd with a zero left input is the right input. -/
+@[simp] theorem gcd_zero_left (q : GF2Poly) :
+    gcd 0 q = q := by
+  unfold gcd xgcd
+  obtain ⟨n, hn⟩ : ∃ n, (0 : GF2Poly).degree + q.degree + 2 = n + 1 :=
+    ⟨(0 : GF2Poly).degree + q.degree + 1, rfl⟩
+  rw [hn]
+  by_cases hq : q.isZero = true
+  · obtain rfl := (isZero_iff_eq_zero q).mp hq
+    simp [xgcdAux]
+  · obtain ⟨m, hm⟩ : ∃ m, n = m + 1 := ⟨n - 1, by omega⟩
+    subst hm
+    simp [xgcdAux, hq, divMod_zero_left]
+
 /-- A nonzero packed polynomial of degree `0` equals `1`, the only degree-`0`
 GF(2) polynomial. -/
 private theorem nonzero_degree_zero_eq_one {p : GF2Poly}
