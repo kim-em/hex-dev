@@ -32,6 +32,16 @@ theorem factor_polynomialIrreducible_of_nonUnit (f : Hex.ZPoly) :
       (factor_irreducible_of_nonUnit f entry hentry)
 
 /--
+Every polynomial factor emitted by the default executable factorization has
+positive leading coefficient.
+-/
+theorem factor_entries_leadingCoeff_pos (f : Hex.ZPoly) :
+    ∀ entry ∈ (Hex.factor f).factors,
+      0 < Hex.DensePoly.leadingCoeff entry.1 := by
+  intro entry hentry
+  exact Hex.factor_entry_leadingCoeff_pos f entry (Array.mem_toList_iff.mpr hentry)
+
+/--
 Bundled public contract currently available for the default executable
 factorization surface.
 
@@ -61,6 +71,35 @@ theorem factor_headline_contract_core (f : Hex.ZPoly) :
     exact factor_polynomialIrreducible_of_nonUnit f entry hentry
   · intro entry hentry
     exact Hex.factor_entry_multiplicity_pos f entry (Array.mem_toList_iff.mpr hentry)
+
+/--
+Positive-leading-coefficient sibling of `factor_headline_contract_core`.
+
+This keeps the existing default public factorization clauses and additionally
+packages the canonical positive-leading convention for every recorded
+polynomial factor.
+-/
+theorem factor_headline_contract_core_with_posLeading (f : Hex.ZPoly) :
+    Hex.Factorization.product (Hex.factor f) = f ∧
+      (∀ entry ∈ (Hex.factor f).factors,
+        Irreducible (HexPolyZMathlib.toPolynomial entry.1)) ∧
+      (∀ entry ∈ (Hex.factor f).factors,
+        0 < Hex.DensePoly.leadingCoeff entry.1) ∧
+      (∀ entry ∈ (Hex.factor f).factors, 0 < entry.2) ∧
+      List.Pairwise (fun a b : Hex.ZPoly × Nat => a.1 ≠ b.1)
+        (Hex.factor f).factors.toList ∧
+      (Hex.factor f).scalar =
+        if f = 0 then
+          0
+        else if Hex.DensePoly.leadingCoeff f < 0 then
+          -Hex.ZPoly.content f
+        else
+          Hex.ZPoly.content f := by
+  rcases factor_headline_contract_core f with
+    ⟨hproduct, hirreducible, hmultiplicity, hpairwise, hscalar⟩
+  exact
+    ⟨hproduct, hirreducible, factor_entries_leadingCoeff_pos f, hmultiplicity,
+      hpairwise, hscalar⟩
 
 /--
 Primitive-strengthened sibling of `factor_headline_contract_core`.
