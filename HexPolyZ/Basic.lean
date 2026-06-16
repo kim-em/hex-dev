@@ -111,10 +111,39 @@ theorem isUnit_iff (f : ZPoly) :
   left
   rfl
 
+/-- The constant polynomial `C 1` is a unit. -/
+@[simp] theorem isUnit_C_one : IsUnit (DensePoly.C (1 : Int)) := by
+  left
+  rfl
+
 /-- The constant polynomial `C (-1)` is a unit. -/
 @[simp] theorem isUnit_C_neg_one : IsUnit (DensePoly.C (-1 : Int)) := by
   right
   rfl
+
+/-- Equality to `1` is the common constructor form for `IsUnit`. -/
+theorem isUnit_of_eq_one {f : ZPoly} (h : f = 1) : IsUnit f := by
+  rw [h]
+  exact isUnit_one
+
+/-- Equality to `-1` is the common constructor form for `IsUnit`. -/
+theorem isUnit_of_eq_neg_one {f : ZPoly} (h : f = -1) : IsUnit f := by
+  rw [h]
+  right
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_neg_ring]
+  change -((DensePoly.C (1 : Int)).coeff n) = (DensePoly.C (-1 : Int)).coeff n
+  rw [DensePoly.coeff_C, DensePoly.coeff_C]
+  by_cases hn : n = 0
+  · simp [hn]
+  · simp [hn]
+    change -(0 : Int) = 0
+    exact Int.neg_zero
+
+/-- The polynomial `-1` is a unit. -/
+@[simp] theorem isUnit_neg_one : IsUnit (-1 : ZPoly) :=
+  isUnit_of_eq_neg_one rfl
 
 /-- View an integer polynomial as a rational polynomial. -/
 def toRatPoly (f : ZPoly) : DensePoly Rat :=
@@ -122,6 +151,7 @@ def toRatPoly (f : ZPoly) : DensePoly Rat :=
 
 /-- Coefficients of `toRatPoly f` are the rational casts of the coefficients of
 `f`. -/
+@[simp]
 theorem coeff_toRatPoly (f : ZPoly) (n : Nat) :
     (toRatPoly f).coeff n = (f.coeff n : Rat) := by
   unfold toRatPoly
