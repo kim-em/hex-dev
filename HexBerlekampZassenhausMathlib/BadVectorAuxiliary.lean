@@ -610,6 +610,34 @@ theorem jointAux_le_paperThreshold
             rw [show (2 : ℝ) * 2 = 4 by norm_num, hconst]
   exact hjoint_bound.trans hbudget
 
+/--
+Concrete zero-correction BHKS auxiliary-polynomial domination at `C = 2`.
+
+This specializes `jointAux_le_paperThreshold` to the executable auxiliary
+polynomial `BHKS.auxiliaryPolynomial`.  The degree and squared-l2 hypotheses
+are discharged by the concrete auxiliary-polynomial support and CLD-column
+facts, so downstream recovery code can consume the joint product directly.
+-/
+theorem auxiliary_le_paperThreshold
+    (core : Hex.ZPoly) (liftData : Hex.LiftData) (vec : Array Int)
+    (C : ScaledShortnessCertificate core liftData vec #[])
+    (hdeg : 2 ≤ bhksDegree core)
+    (hcoreNorm :
+      1 < HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial core)) :
+    (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial core)) ^
+          (HexPolyZMathlib.toPolynomial
+            (BHKS.auxiliaryPolynomial core liftData vec)).natDegree *
+        (HexPolyZMathlib.l2norm
+          (HexPolyZMathlib.toPolynomial
+            (BHKS.auxiliaryPolynomial core liftData vec))) ^
+          bhksDegree core ≤
+      bhksPaperThresholdReal core 2 := by
+  exact
+    jointAux_le_paperThreshold core liftData.p hdeg hcoreNorm
+      (l2norm_sq_toPolynomial_auxiliaryPolynomial_le C)
+      (natDegree_toPolynomial_auxiliaryPolynomial_le core liftData vec)
+      (by unfold HexPolyZMathlib.l2norm; exact Real.sqrt_nonneg _)
+
 end BHKS
 
 end HexBerlekampZassenhausMathlib

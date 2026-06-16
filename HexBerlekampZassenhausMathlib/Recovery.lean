@@ -6500,6 +6500,102 @@ def ofBridgeDataAuxiliaryL2normAndPaperThreshold
     choose_eq precision_eq
 
 /--
+Joint-product sibling of `ofBridgeDataAuxiliaryL2normAndPaperThreshold`.
+
+The caller supplies a direct auxiliary-l2 estimate and one BHKS §5 domination
+inequality for
+`‖core‖₂^aux.natDegree * auxiliaryBound^input.natDegree`, preserving the
+product through the cap arithmetic instead of splitting it into coefficient
+and auxiliary sub-bounds.
+-/
+def ofBridgeDataAuxiliaryL2normAndJointPaperThreshold
+    {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {rows_pos : HasPositiveDimension
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)}
+    {trueSupports : Set (Set (Fin (projectedRowsOfLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)
+      rows_pos).factorCount))}
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (hlocalFactorDegree_pos : 0 < localFactorDegree)
+    (cap_le :
+      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+        (factorFastCapLiftData f primeData).k)
+    (C : ℝ) (C_nonneg : 0 ≤ C) (C_le_two : C ≤ 2)
+    (cut :
+      CutProjectionHypotheses
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos)
+        trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    {auxiliaryBound : ℝ}
+    (hauxiliary :
+      HexPolyZMathlib.l2norm
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial ≤
+        auxiliaryBound)
+    (hjoint :
+      (HexPolyZMathlib.l2norm
+            (HexPolyZMathlib.toPolynomial
+              (Hex.normalizeForFactor f).squareFreeCore)) ^
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).auxiliaryPolynomial.natDegree *
+        auxiliaryBound ^
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial.natDegree ≤
+        bhksPaperThresholdReal (Hex.normalizeForFactor f).squareFreeCore C)
+    (choose_eq :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
+    (precision_eq :
+      (factorFastCapLiftData f primeData).k =
+        Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (factorFastCapLiftData f primeData).p) :
+    FactorFastCapSeparationInputs f primeData rows_pos trueSupports := by
+  have hinput :
+      HexPolyZMathlib.l2norm
+          (badVectorWitnessOfFactorFastCapLiftData
+            f primeData rows_pos localFactorIndex localFactorDegree H).inputPolynomial ≤
+        HexPolyZMathlib.l2norm
+          (HexPolyZMathlib.toPolynomial
+            (Hex.normalizeForFactor f).squareFreeCore) := by
+    change
+      HexPolyZMathlib.l2norm
+          (HexPolyZMathlib.toPolynomial
+            (Hex.normalizeForFactor f).squareFreeCore) ≤
+        HexPolyZMathlib.l2norm
+          (HexPolyZMathlib.toPolynomial
+            (Hex.normalizeForFactor f).squareFreeCore)
+    exact le_rfl
+  exact
+    { localFactorIndex := localFactorIndex
+      localFactorDegree := localFactorDegree
+      H := H
+      cap_le := cap_le
+      C := C
+      C_nonneg := C_nonneg
+      C_le_two := C_le_two
+      cut := cut
+      bridge := bridge
+      comparison :=
+        FactorFastCapLiftAnalyticComparison.ofL2normBounds
+          f primeData rows_pos localFactorIndex localFactorDegree H
+          hinput hauxiliary
+          (bhksPaperThresholdReal_chain_lt_p_pow_kLocalFactorDegree_l2norm_joint
+            f primeData rows_pos localFactorIndex localFactorDegree H
+            hlocalFactorDegree_pos C C_nonneg C_le_two hjoint choose_eq precision_eq)
+      choose_eq := choose_eq
+      precision_eq := precision_eq }
+
+/--
 Factored sibling of `ofBridgeDataAuxiliaryL2normAndPaperThreshold`: the caller
 supplies the two independent sub-bounds on the BHKS Theorem 5.2 LHS factors
 (`coeffL2NormBound ^ aux.natDegree ≤ bhksPaperCoeffNormFactorReal core` and
