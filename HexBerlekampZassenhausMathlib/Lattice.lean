@@ -1,4 +1,5 @@
 import HexBerlekampZassenhaus
+import HexLLLMathlib.Independent
 import Mathlib.Data.Real.Basic
 import Mathlib.LinearAlgebra.Matrix.RowCol
 
@@ -16,6 +17,21 @@ namespace HexBerlekampZassenhausMathlib
 noncomputable section
 
 namespace BHKS
+
+/--
+The reduced matrix stored in the BHKS projected-row trace generates the same
+integer row lattice as the original BHKS basis.  This is the proof-facing
+bridge from `lll.shortVectorsUnchecked`'s `.toArray` output back to the
+certified steered LLL lattice-preservation theorem.
+-/
+theorem traceReducedMatrix_memLattice_iff
+    (L : Hex.BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth)
+    (v : Vector Int (L.factorCount + L.coeffWidth)) :
+    Hex.Matrix.memLattice (Hex.bhksProjectedRowsTrace L hrows).reducedMatrix v ↔
+      Hex.Matrix.memLattice L.basis v := by
+  rw [Hex.bhksProjectedRowsTrace_reducedMatrix_eq]
+  exact Hex.lllSteered_memLattice_iff L.basis (3 / 4)
+    Hex.lll_delta_lower Hex.lll_delta_upper hrows v
 
 /-- The projected integer rows of the executable BHKS cut as a Mathlib matrix. -/
 def projectedRowsIntMatrix (L : Hex.BhksProjectedRows) :
