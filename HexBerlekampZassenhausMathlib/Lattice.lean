@@ -903,6 +903,157 @@ theorem liftedFactorIndicator_mem_liftedFactorIndicatorLattice
     liftedFactorIndicator L S.1 ∈ liftedFactorIndicatorLattice L trueSupports := by
   exact indicatorVector_mem_trueFactorIndicatorLattice trueSupports S
 
+/-! ### BHKS prefix survivor-span
+
+The executable Gram-Schmidt cut (`Hex.bhksCutPrefixCount`) retains the
+contiguous prefix `b_0 … b_{t-1}` of the reduced basis, where `t` is one past
+the largest Gram-Schmidt index whose squared length passes the cut test
+`4·‖b*_i‖² ≤ bhksCutRadiusSq4`.  We show that any lattice vector short enough to
+pass the cut test at its own top nonzero index lands in that retained prefix. -/
+
+/-- A lower bound on the cut fold is preserved while folding a tail whose
+indices all satisfy the bound. -/
+private theorem foldl_cut_ge_of_bound {N : Nat} (g : Fin N → Bool) (bound : Nat) :
+    ∀ (l : List (Fin N)) (init : Nat),
+      bound ≤ init → (∀ i ∈ l, bound ≤ i.val + 1) →
+      bound ≤ l.foldl (fun acc i => if g i then i.val + 1 else acc) init := by
+  intro l
+  induction l with
+  | nil => intro init hinit _; simpa using hinit
+  | cons a tl ih =>
+      intro init hinit hbnd
+      apply ih
+      · by_cases hga : g a
+        · simp only [hga, if_true]; exact hbnd a (by simp)
+        · simp only [hga, Bool.false_eq_true, if_false]; exact hinit
+      · intro i hi; exact hbnd i (List.mem_cons_of_mem a hi)
+
+/-- The cut fold over a strictly increasing index list reaches at least
+`k.val + 1` once a passing index `k` has been processed. -/
+private theorem foldl_cut_ge {N : Nat} (g : Fin N → Bool) (k : Fin N) :
+    ∀ (l : List (Fin N)) (init : Nat),
+      l.Pairwise (· < ·) → k ∈ l → g k = true →
+      k.val + 1 ≤ l.foldl (fun acc i => if g i then i.val + 1 else acc) init := by
+  intro l
+  induction l with
+  | nil => intro init _ hk _; simp at hk
+  | cons a tl ih =>
+      intro init hpw hk hgk
+      rw [List.pairwise_cons] at hpw
+      obtain ⟨hahead, htl⟩ := hpw
+      rw [List.foldl_cons]
+      rcases List.mem_cons.mp hk with rfl | hktl
+      · have hstep : (if g k then k.val + 1 else init) = k.val + 1 := by simp [hgk]
+        rw [hstep]
+        refine foldl_cut_ge_of_bound g (k.val + 1) tl (k.val + 1) (le_refl _) ?_
+        intro i hi
+        have hlt : k.val < i.val := hahead i hi
+        omega
+      · exact ih _ htl hktl hgk
+
+/-- A Gram-Schmidt index that passes the executable cut test lies strictly below
+the retained prefix length `bhksCutPrefixCount`, so its row is kept. -/
+theorem bhksWithinGramSchmidtCut_lt_prefixCount
+    (L : Hex.BhksLatticeBasis)
+    (reduced : Hex.Matrix Int (L.factorCount + L.coeffWidth)
+        (L.factorCount + L.coeffWidth))
+    (k : Fin (L.factorCount + L.coeffWidth))
+    (hk : Hex.bhksWithinGramSchmidtCut L
+        (Hex.GramSchmidt.Int.gramDetVec reduced) k = true) :
+    k.val < Hex.bhksCutPrefixCount L reduced := by
+  unfold Hex.bhksCutPrefixCount
+  exact foldl_cut_ge
+    (fun i => Hex.bhksWithinGramSchmidtCut L (Hex.GramSchmidt.Int.gramDetVec reduced) i)
+    k (List.finRange _) 0 (List.pairwise_lt_finRange _) (List.mem_finRange k) hk
+
+/-- The executable cut test passes at index `i` once the stored leading
+Gram determinant at `i` is nonzero and the radius inequality on the consecutive
+determinant ratio holds. -/
+theorem bhksWithinGramSchmidtCut_eq_true_of_le
+    (L : Hex.BhksLatticeBasis)
+    (dets : Vector Nat (L.factorCount + L.coeffWidth + 1))
+    (i : Fin (L.factorCount + L.coeffWidth))
+    (hne : dets.get ⟨i.val, by omega⟩ ≠ 0)
+    (hle : 4 * ((dets.get ⟨i.val + 1, by omega⟩ : ℚ) /
+        (dets.get ⟨i.val, by omega⟩ : ℚ)) ≤ (Hex.bhksCutRadiusSq4 L : ℚ)) :
+    Hex.bhksWithinGramSchmidtCut L dets i = true := by
+  unfold Hex.bhksWithinGramSchmidtCut
+  rw [if_neg hne]
+  exact decide_eq_true hle
+
+/--
+**BHKS prefix survivor-span (Lemma 5.7, forward).**
+
+Any lattice vector `v` of the reduced BHKS basis whose squared length passes the
+cut test (`4·‖v‖² ≤ bhksCutRadiusSq4`) lies in the integer span of the retained
+prefix rows `b_0 … b_{t-1}`, where `t = bhksCutPrefixCount`.
+
+The cut keeps a row `i` iff `4·‖b*_i‖² ≤ bhksCutRadiusSq4`, i.e.
+`‖b*_i‖² ≤ bhksCutRadiusSq4 / 4`; the hypothesis is the matching tight bound on
+`v` (four times its squared norm within the radius), *not* the loose
+`‖v‖² ≤ bhksCutRadiusSq4`.
+-/
+theorem mem_prefixSubmodule_of_normSq_le
+    (L : Hex.BhksLatticeBasis)
+    (reduced : Hex.Matrix Int (L.factorCount + L.coeffWidth)
+        (L.factorCount + L.coeffWidth))
+    (hind : Hex.GramSchmidt.Int.independent reduced)
+    (v : Vector Int (L.factorCount + L.coeffWidth))
+    (hv : Hex.Matrix.memLattice reduced v)
+    (hnorm : 4 * ((Hex.Vector.normSq v : Int) : ℚ) ≤ (Hex.bhksCutRadiusSq4 L : ℚ)) :
+    HexMatrixMathlib.vectorEquiv v ∈
+      HexLLLMathlib.prefixSubmodule reduced (Hex.bhksCutPrefixCount L reduced) := by
+  by_cases hv0 : v = 0
+  · subst hv0
+    have hz : HexMatrixMathlib.vectorEquiv (0 : Vector Int (L.factorCount + L.coeffWidth))
+        = (0 : Fin (L.factorCount + L.coeffWidth) → ℤ) := by
+      funext i
+      simp [HexMatrixMathlib.vectorEquiv]
+    rw [hz]
+    exact Submodule.zero_mem _
+  · obtain ⟨k, c, hcv, hck, hzero_above, hbasis_norm⟩ :=
+      Hex.GramSchmidt.Int.exists_top_index_normSq_le_of_memLattice reduced hind v hv hv0
+    -- The top index `k` passes the cut test.
+    set dets := Hex.GramSchmidt.Int.gramDetVec reduced with hdets
+    have sw := Hex.GramSchmidt.Int.StepWitness.ofGram reduced
+    have hd0 : dets.get ⟨k.val, by omega⟩
+        = Hex.GramSchmidt.Int.gramDet reduced k.val (Nat.le_of_lt k.isLt) :=
+      Hex.GramSchmidt.Int.gramDetVec_eq_gramDet reduced sw k.val (Nat.le_of_lt k.isLt)
+    have hd1 : dets.get ⟨k.val + 1, by omega⟩
+        = Hex.GramSchmidt.Int.gramDet reduced (k.val + 1) k.isLt :=
+      Hex.GramSchmidt.Int.gramDetVec_eq_gramDet reduced sw (k.val + 1) k.isLt
+    have hd0pos : 0 < Hex.GramSchmidt.Int.gramDet reduced k.val (Nat.le_of_lt k.isLt) := by
+      rcases Nat.eq_zero_or_pos k.val with hk0 | hkpos
+      · simp only [hk0]
+        rw [Hex.GramSchmidt.Int.gramDet_zero]
+        exact Nat.one_pos
+      · exact Hex.GramSchmidt.Int.gramDet_pos reduced hind k.val (Nat.le_of_lt k.isLt) hkpos
+    have hne : dets.get ⟨k.val, by omega⟩ ≠ 0 := by
+      rw [hd0]; omega
+    -- `‖b*_k‖² = gramDet(k+1)/gramDet(k)`.
+    have hbnsq := Hex.GramSchmidt.Int.basis_normSq reduced hind k.val k.isLt
+    have hpass : Hex.bhksWithinGramSchmidtCut L dets k = true := by
+      refine bhksWithinGramSchmidtCut_eq_true_of_le L dets k hne ?_
+      rw [hd0, hd1]
+      -- goal: 4 * (gramDet(k+1)/gramDet(k)) ≤ radius
+      rw [← hbnsq]
+      -- goal: 4 * ‖b*_k‖² ≤ radius, with ‖b*_k‖² ≤ ‖v‖²
+      calc 4 * Hex.Vector.normSq ((Hex.GramSchmidt.Int.basis reduced).row ⟨k.val, k.isLt⟩)
+          ≤ 4 * ((Hex.Vector.normSq v : Int) : ℚ) := by
+            have := hbasis_norm
+            nlinarith [hbasis_norm]
+        _ ≤ (Hex.bhksCutRadiusSq4 L : ℚ) := hnorm
+    have hklt : k.val < Hex.bhksCutPrefixCount L reduced :=
+      bhksWithinGramSchmidtCut_lt_prefixCount L reduced k (by rw [← hdets]; exact hpass)
+    -- `c` vanishes at and above the retained prefix length.
+    have hc : ∀ i : Fin (L.factorCount + L.coeffWidth),
+        Hex.bhksCutPrefixCount L reduced ≤ i.val → c[i] = 0 := by
+      intro i hi
+      exact hzero_above i (by omega)
+    have := HexLLLMathlib.rowCombination_mem_prefixSubmodule_of_vector
+      reduced c (Hex.bhksCutPrefixCount L reduced) hc
+    rwa [hcv] at this
+
 /--
 Cut hypotheses needed to connect the executable projected rows to the abstract
 true-factor supports.  Later B4/B5 work discharges `indicator_mem_projected`

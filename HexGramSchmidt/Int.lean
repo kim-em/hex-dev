@@ -7218,6 +7218,71 @@ theorem normSq_latticeVec_ge_min_basis_normSq
   rw [← hnorm]
   exact hle
 
+/-- Strengthening of `normSq_latticeVec_ge_min_basis_normSq` that exposes the
+highest nonzero coefficient index `k` of a nonzero lattice vector together with
+the integer coefficients that witness it, the fact that those coefficients
+vanish above `k`, and the matching basis-row length bound `‖b*_k‖² ≤ ‖v‖²`.
+
+This is the survivor-span entry point: the vanishing-above-`k` data localizes
+`v` to the prefix `b_0 … b_k`, and the length bound feeds a Gram-Schmidt cut
+test on the top index `k`. -/
+theorem exists_top_index_normSq_le_of_memLattice
+    (b : Matrix Int n m) (_hli : independent b)
+    (v : Vector Int m) (hv : memLattice b v) (hv' : v ≠ 0) :
+    ∃ (k : Fin n) (c : Vector Int n),
+      Matrix.rowCombination b c = v ∧
+      c[k] ≠ 0 ∧
+      (∀ j : Fin n, k.val < j.val → c[j] = 0) ∧
+      Vector.normSq ((basis b).row k) ≤ ((Vector.normSq v : Int) : Rat) := by
+  rcases hv with ⟨c, hcv⟩
+  have hc_nonzero : ∃ i : Fin n, c[i] ≠ 0 := by
+    by_cases h : ∃ i : Fin n, c[i] ≠ 0
+    · exact h
+    · have hc_zero : c = 0 := by
+        apply Vector.ext
+        intro i hi
+        let ii : Fin n := ⟨i, hi⟩
+        by_cases hci : c[ii] = 0
+        · simpa [ii] using hci
+        · exact False.elim (h ⟨ii, hci⟩)
+      have hv_zero : v = 0 := by
+        rw [← hcv, hc_zero]
+        simp [Matrix.rowCombination]
+      exact False.elim (hv' hv_zero)
+  rcases exists_highest_nonzero_coeff c hc_nonzero with ⟨k, hck, hzero_above⟩
+  refine ⟨k, c, hcv, hck, hzero_above, ?_⟩
+  let d : Vector Rat n :=
+    Matrix.rowCombination (coeffs b) (Vector.map (fun x : Int => (x : Rat)) c)
+  have hcoeff_sq : (1 : Rat) ≤ d[k] * d[k] := by
+    have htop : d[k] = (c[k] : Rat) := by
+      dsimp [d]
+      exact rowCombination_coeffs_apply_eq_of_zero_above b c k hzero_above
+    rw [htop]
+    exact GramSchmidt.one_le_intCast_mul_self_of_ne_zero c[k] hck
+  have horth : ∀ i j : Fin n, i ≠ j →
+      Matrix.dot ((basis b).row i) ((basis b).row j) = 0 := by
+    intro i j hij
+    exact basis_orthogonal b i.val j.val i.isLt j.isLt (by
+      intro hval
+      exact hij (Fin.ext hval))
+  have hle :
+      Vector.normSq ((basis b).row k) ≤
+        Vector.normSq (Matrix.rowCombination (basis b) d) :=
+    GramSchmidt.rowCombination_normSq_ge_of_orthogonal_coeff_sq_ge_one
+      (rows := basis b) (coeffs := d) (k := k) horth hcoeff_sq
+  have hrec :
+      Vector.map (fun x : Int => (x : Rat)) v =
+        Matrix.rowCombination (basis b) d := by
+    rw [← hcv]
+    dsimp [d]
+    exact rowCombination_basis_coeffs_reconstruction b c
+  have hnorm :
+      Vector.normSq (Matrix.rowCombination (basis b) d) =
+        ((Vector.normSq v : Int) : Rat) := by
+    rw [← hrec, normSq_map_intCast]
+  rw [← hnorm]
+  exact hle
+
 /-! ### Dot-product symmetry support -/
 
 private theorem foldl_dot_comm_int {n' : Nat} (xs : List (Fin n'))
