@@ -141,6 +141,43 @@ def liftedFactorIndicator (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
     Fin L.factorCount → ℤ :=
   indicatorVector S
 
+/--
+Product of the lifted factors selected by a support, using the factor order
+stored in the BHKS lattice basis.  The definition indexes by `factorCount`
+rather than the raw array size so it remains well-typed for abstract
+`BhksLatticeBasis` values; `TrueFactorLift.basis_eq` ties these together for
+the executable basis.
+-/
+def supportProduct (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) :
+    Hex.ZPoly :=
+  by
+    classical
+    exact Array.polyProduct <|
+      (((List.finRange L.factorCount).filter fun i => decide (i ∈ S)).map
+        fun i => L.liftedFactors.getD i.val 1).toArray
+
+/--
+Proof-facing package saying that a BHKS lattice basis and lifted-factor support
+come from concrete lift data for an integer polynomial.
+
+The field `basis_eq` is the structural bridge: it pins `L` to the executable
+`Hex.bhksLatticeBasis f p a liftedFactors`, so `cldRows` and cut thresholds are
+the rows produced by `Hex.cldCoeffs`/`Hex.psiCut`, not arbitrary arrays.  The
+fields `factor`, `cofactor`, `factor_mul`, and `support_product_eq` identify
+the selected lifted factors with a genuine factor of `f`.
+-/
+structure TrueFactorLift
+    (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) where
+  f : Hex.ZPoly
+  p : Nat
+  a : Nat
+  liftedFactors : Array Hex.ZPoly
+  basis_eq : L = Hex.bhksLatticeBasis f p a liftedFactors
+  factor : Hex.ZPoly
+  cofactor : Hex.ZPoly
+  factor_mul : factor * cofactor = f
+  support_product_eq : supportProduct L S = factor
+
 /-- A left fold accumulating `g` over a list equals the running accumulator plus
 the sum of the mapped list; the start-from-`acc` form used to read a fold-sum off
 at `acc = 0`. -/
@@ -274,6 +311,54 @@ def BhksBlockForm (L : Hex.BhksLatticeBasis) : Prop :=
 theorem bhksLatticeBasis_blockForm
     (f : Hex.ZPoly) (p a : Nat) (liftedFactors : Array Hex.ZPoly) :
     BhksBlockForm (Hex.bhksLatticeBasis f p a liftedFactors) := rfl
+
+namespace TrueFactorLift
+
+/-- A true-factor lift package supplies the BHKS block form used by coordinate
+and norm-bound reducers. -/
+theorem blockForm
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S) :
+    BhksBlockForm L := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    support_product_eq⟩
+  cases basis_eq
+  exact bhksLatticeBasis_blockForm f p a liftedFactors
+
+/-- The packaged basis carries exactly the lifted-factor array used to build
+the executable BHKS lattice. -/
+theorem liftedFactors_eq
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S) :
+    L.liftedFactors = D.liftedFactors := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    support_product_eq⟩
+  cases basis_eq
+  rfl
+
+/-- The packaged basis carries exactly the cut thresholds computed from the
+input polynomial and prime. -/
+theorem cutThresholds_eq
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S) :
+    L.cutThresholds = Hex.bhksCutThresholds D.f D.p := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    support_product_eq⟩
+  cases basis_eq
+  rfl
+
+/-- The packaged basis carries exactly the CLD rows computed from the concrete
+lifted factors. -/
+theorem cldRows_eq
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S) :
+    L.cldRows = D.liftedFactors.map (fun g => Hex.cldCoeffs D.f D.p D.a g) := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    support_product_eq⟩
+  cases basis_eq
+  rfl
+
+end TrueFactorLift
 
 /--
 Canonical projected-block identity: under block form, the first `factorCount`
@@ -619,6 +704,22 @@ theorem trueFactorCLDTightNormBound_of_cldTail_four_mul_sq_sum_le
   ring
 
 /--
+Tight per-column CLD estimate for a support that has been tied to concrete
+lift data by `TrueFactorLift`.
+
+This is intentionally a certificate surface, not the BHKS Lemma 5.7 analytic
+proof.  Downstream analytic work must construct this package from the
+`TrueFactorLift` data rather than from arbitrary `cldRows`.
+-/
+structure TightColumnBound
+    (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
+    (_D : TrueFactorLift L S) where
+  bound :
+    ∀ j : Fin L.coeffWidth,
+      2 * ((trueFactorCLDVector L S)[Fin.natAdd L.factorCount j] : ℤ).natAbs ≤
+        L.factorCount
+
+/--
 Produce the tight BHKS true-factor CLD norm certificate
 (`4·‖v‖² ≤ bhksCutRadiusSq4`) from the tight per-column bound
 `2·|col j| ≤ factorCount`.
@@ -638,6 +739,18 @@ theorem tightNormBound_of_colBound
     TrueFactorCLDTightNormBound L S :=
   trueFactorCLDTightNormBound_of_cldTail_four_mul_sq_sum_le S hL
     (cldTailSq4_le_of_tightColBound S hcol)
+
+/--
+Restated tight norm-bound reducer for genuine true-factor lift data.  The
+analytic input is now `TightColumnBound L S D`, which can only be stated after
+supplying the concrete lift/support package `D : TrueFactorLift L S`.
+-/
+theorem tightNormBound_of_lift
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S)
+    (hcol : TightColumnBound L S D) :
+    TrueFactorCLDTightNormBound L S :=
+  tightNormBound_of_colBound S D.blockForm hcol.bound
 
 /--
 The true-factor indicator lattice `W`, generated by the indicator vectors of
