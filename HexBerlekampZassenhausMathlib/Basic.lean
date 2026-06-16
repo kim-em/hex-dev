@@ -19548,6 +19548,110 @@ theorem irreducible_toPolynomial_monicCorrespondent
     irreducible_isUnit_mul (Polynomial.isUnit_C.mpr (isUnit_iff_ne_zero.mpr hcc))] at hiff
   exact hiff.mp hfactor_irr
 
+/-- **Association reflection through the primitive content factor.**
+
+Two primitive integer polynomials whose constant multiples `C a * F`, `C b * G`
+(`a, b ≠ 0`) are associated are themselves associated. Each primitive factor
+divides its own multiple, hence the other multiple; the spurious content scalar
+survives only inside `primPart (C · * ·)`, where `isUnit_primPart_C` strips it
+(via `IsPrimitive.dvd_primPart_iff_dvd`), leaving divisibility both ways. -/
+private theorem associated_of_C_mul_associated
+    {F G : Polynomial ℤ} {a b : ℤ}
+    (hF : F.IsPrimitive) (hG : G.IsPrimitive) (ha : a ≠ 0) (hb : b ≠ 0)
+    (h : Associated (Polynomial.C a * F) (Polynomial.C b * G)) :
+    Associated F G := by
+  have hF0 : F ≠ 0 := hF.ne_zero
+  have hG0 : G ≠ 0 := hG.ne_zero
+  have hCaF0 : Polynomial.C a * F ≠ 0 := mul_ne_zero (Polynomial.C_ne_zero.mpr ha) hF0
+  have hCbG0 : Polynomial.C b * G ≠ 0 := mul_ne_zero (Polynomial.C_ne_zero.mpr hb) hG0
+  have hFG : F ∣ G := by
+    have hFdvd : F ∣ Polynomial.C b * G :=
+      (dvd_mul_left F (Polynomial.C a)).trans h.dvd
+    rw [← hF.dvd_primPart_iff_dvd hG0]
+    have hpp := (hF.dvd_primPart_iff_dvd hCbG0).mpr hFdvd
+    rw [Polynomial.primPart_mul hCbG0] at hpp
+    exact ((Polynomial.isUnit_primPart_C b).dvd_mul_left).mp hpp
+  have hGF : G ∣ F := by
+    have hGdvd : G ∣ Polynomial.C a * F :=
+      (dvd_mul_left G (Polynomial.C b)).trans h.symm.dvd
+    rw [← hG.dvd_primPart_iff_dvd hF0]
+    have hpp := (hG.dvd_primPart_iff_dvd hCaF0).mpr hGdvd
+    rw [Polynomial.primPart_mul hCaF0] at hpp
+    exact ((Polynomial.isUnit_primPart_C a).dvd_mul_left).mp hpp
+  exact associated_of_dvd_dvd hFG hGF
+
+/-- **Correspondent association reflection.**
+
+If the monic correspondents `gf`, `gg` of two factors have associated integer
+images, then so do the factors `f`, `g` recovered from them by the variable
+dilation `X ↦ (leadingCoeff core)·X` followed by taking the primitive part.
+
+Used contrapositively for #7362's `pairwise_disjoint`: distinct deterministic
+recoveries `¬Associated f g` force the monic correspondents apart
+(`¬Associated gf gg`). The dilation embeds (`toPolynomial_dilate`) to
+composition with `C lc * X`, a monoid endomorphism that transports the
+association; the residual content scalars are stripped by
+`associated_of_C_mul_associated`, since each recovered `f`, `g` is the primitive
+part of a nonzero dilation, hence primitive. -/
+theorem associated_of_associated_monicCorrespondent
+    {core f g gf gg : Hex.ZPoly}
+    (hlc : Hex.DensePoly.leadingCoeff core ≠ 0)
+    (hgf : gf ≠ 0) (hgg : gg ≠ 0)
+    (hf : Hex.ZPoly.primitivePart
+            (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) gf) = f)
+    (hg : Hex.ZPoly.primitivePart
+            (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) gg) = g)
+    (hassoc : Associated (HexPolyZMathlib.toPolynomial gf)
+                (HexPolyZMathlib.toPolynomial gg)) :
+    Associated (HexPolyZMathlib.toPolynomial f)
+      (HexPolyZMathlib.toPolynomial g) := by
+  classical
+  set lc := Hex.DensePoly.leadingCoeff core with hlcdef
+  -- The dilation `X ↦ lc·X` reflects nonvanishing through its nonzero-divisor
+  -- leading factor, so both dilations are nonzero.
+  have hdilate0 : ∀ {p : Hex.ZPoly}, p ≠ 0 → Hex.ZPoly.dilate lc p ≠ 0 := by
+    intro p hp hz
+    apply hp
+    have h1 : (HexPolyZMathlib.toPolynomial p).comp
+                (Polynomial.C lc * Polynomial.X) = 0 := by
+      rw [← HexPolyZMathlib.toPolynomial_dilate, hz, HexPolyZMathlib.toPolynomial_zero]
+    rw [Polynomial.comp_C_mul_X_eq_zero_iff (mem_nonZeroDivisors_of_ne_zero hlc)] at h1
+    rw [← HexPolyZMathlib.ofPolynomial_toPolynomial p, h1, HexPolyZMathlib.ofPolynomial_zero]
+  have hdf0 : Hex.ZPoly.dilate lc gf ≠ 0 := hdilate0 hgf
+  have hdg0 : Hex.ZPoly.dilate lc gg ≠ 0 := hdilate0 hgg
+  -- `f`, `g` are primitive parts of nonzero dilations, hence primitive.
+  have hFprim : (HexPolyZMathlib.toPolynomial f).IsPrimitive := by
+    rw [← hf]
+    exact HexPolyZMathlib.isPrimitive_toPolynomial_of_primitive _
+      (Hex.ZPoly.primitivePart_primitive _ (HexPolyZMathlib.content_ne_zero _ hdf0))
+  have hGprim : (HexPolyZMathlib.toPolynomial g).IsPrimitive := by
+    rw [← hg]
+    exact HexPolyZMathlib.isPrimitive_toPolynomial_of_primitive _
+      (Hex.ZPoly.primitivePart_primitive _ (HexPolyZMathlib.content_ne_zero _ hdg0))
+  -- Content/primitive-part decomposition of each dilation.
+  have hCF : HexPolyZMathlib.toPolynomial (Hex.ZPoly.dilate lc gf)
+      = Polynomial.C (Hex.ZPoly.content (Hex.ZPoly.dilate lc gf)) *
+          HexPolyZMathlib.toPolynomial f := by
+    rw [HexPolyZMathlib.toPolynomial_eq_C_content_mul_primitivePart, hf]
+  have hCG : HexPolyZMathlib.toPolynomial (Hex.ZPoly.dilate lc gg)
+      = Polynomial.C (Hex.ZPoly.content (Hex.ZPoly.dilate lc gg)) *
+          HexPolyZMathlib.toPolynomial g := by
+    rw [HexPolyZMathlib.toPolynomial_eq_C_content_mul_primitivePart, hg]
+  -- The dilation transports the association (composition is a monoid hom).
+  have hassocComp :
+      Associated ((HexPolyZMathlib.toPolynomial gf).comp (Polynomial.C lc * Polynomial.X))
+        ((HexPolyZMathlib.toPolynomial gg).comp (Polynomial.C lc * Polynomial.X)) := by
+    have hm := hassoc.map (Polynomial.compRingHom (Polynomial.C lc * Polynomial.X))
+    rwa [Polynomial.coe_compRingHom_apply, Polynomial.coe_compRingHom_apply] at hm
+  have hassocD :
+      Associated (HexPolyZMathlib.toPolynomial (Hex.ZPoly.dilate lc gf))
+        (HexPolyZMathlib.toPolynomial (Hex.ZPoly.dilate lc gg)) := by
+    rw [HexPolyZMathlib.toPolynomial_dilate, HexPolyZMathlib.toPolynomial_dilate]
+    exact hassocComp
+  rw [hCF, hCG] at hassocD
+  exact associated_of_C_mul_associated hFprim hGprim
+    (HexPolyZMathlib.content_ne_zero _ hdf0) (HexPolyZMathlib.content_ne_zero _ hdg0) hassocD
+
 /-- **Existential lifted representation producer for `toMonicLiftData`.**
 
 From a `toMonicPrimeData?` selection witness and core/factor side conditions,
