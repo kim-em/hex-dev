@@ -6596,6 +6596,111 @@ def ofBridgeDataAuxiliaryL2normAndJointPaperThreshold
       precision_eq := precision_eq }
 
 /--
+Actual-cap `C = 2` zero-correction auxiliary surface.
+
+This is the capstone-facing specialization of
+`ofBridgeDataAuxiliaryL2normAndJointPaperThreshold`: the caller identifies the
+witness auxiliary `H` with the executable zero-correction auxiliary polynomial
+and supplies the corresponding shortness certificate.  The BHKS paper-threshold
+obligation is discharged by `BHKS.auxiliary_le_paperThreshold`, so no split
+`h_coeff` / `h_aux` premises appear at the call site.
+-/
+noncomputable def ofBridgeDataC2Auxiliary
+    {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
+    {rows_pos : HasPositiveDimension
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)}
+    {trueSupports : Set (Set (Fin (projectedRowsOfLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)
+      rows_pos).factorCount))}
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (hlocalFactorDegree_pos : 0 < localFactorDegree)
+    (cap_le :
+      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+        (factorFastCapLiftData f primeData).k)
+    (cut :
+      CutProjectionHypotheses
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos)
+        trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (v :
+      Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount → ℤ)
+    (hshort :
+      BHKS.ScaledShortnessCertificate
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        (List.ofFn v).toArray
+        #[])
+    (haux_eq :
+      H =
+        BHKS.auxiliaryPolynomial
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          (List.ofFn v).toArray)
+    (hdeg : 2 ≤ bhksDegree (Hex.normalizeForFactor f).squareFreeCore)
+    (hcoreNorm :
+      1 <
+        HexPolyZMathlib.l2norm
+          (HexPolyZMathlib.toPolynomial
+            (Hex.normalizeForFactor f).squareFreeCore))
+    (choose_eq :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
+    (precision_eq :
+      (factorFastCapLiftData f primeData).k =
+        Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (factorFastCapLiftData f primeData).p) :
+    FactorFastCapSeparationInputs f primeData rows_pos trueSupports := by
+  let W :=
+    badVectorWitnessOfFactorFastCapLiftData
+      f primeData rows_pos localFactorIndex localFactorDegree H
+  let auxiliary :=
+    BHKS.auxiliaryPolynomial
+      (Hex.normalizeForFactor f).squareFreeCore
+      (factorFastCapLiftData f primeData)
+      (List.ofFn v).toArray
+  have hauxiliary :
+      HexPolyZMathlib.l2norm W.auxiliaryPolynomial ≤
+        HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial auxiliary) := by
+    simp [W, auxiliary, badVectorWitnessOfFactorFastCapLiftData,
+      badVectorWitnessOfLiftData, ExecutableBadVectorWitness.auxiliaryPolynomial,
+      haux_eq]
+  have hjoint :
+      (HexPolyZMathlib.l2norm
+            (HexPolyZMathlib.toPolynomial
+              (Hex.normalizeForFactor f).squareFreeCore)) ^
+          W.auxiliaryPolynomial.natDegree *
+        (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial auxiliary)) ^
+          W.inputPolynomial.natDegree ≤
+        bhksPaperThresholdReal (Hex.normalizeForFactor f).squareFreeCore 2 := by
+    simpa [W, auxiliary, badVectorWitnessOfFactorFastCapLiftData,
+      badVectorWitnessOfLiftData, ExecutableBadVectorWitness.auxiliaryPolynomial,
+      haux_eq, ExecutableBadVectorWitness.inputPolynomial,
+      HexPolyMathlib.natDegree_toPolynomial, bhksDegree] using
+      BHKS.auxiliary_le_paperThreshold
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        (List.ofFn v).toArray
+        hshort hdeg hcoreNorm
+  exact
+    ofBridgeDataAuxiliaryL2normAndJointPaperThreshold
+      localFactorIndex localFactorDegree H hlocalFactorDegree_pos cap_le
+      2 (by norm_num) (by norm_num) cut bridge
+      hauxiliary hjoint choose_eq precision_eq
+
+/--
 Factored sibling of `ofBridgeDataAuxiliaryL2normAndPaperThreshold`: the caller
 supplies the two independent sub-bounds on the BHKS Theorem 5.2 LHS factors
 (`coeffL2NormBound ^ aux.natDegree ≤ bhksPaperCoeffNormFactorReal core` and
@@ -8877,6 +8982,81 @@ theorem factorFast_terminates_ofBridgeDataAuxiliaryL2normAndPaperThreshold
     (FactorFastCapSeparationInputs.ofBridgeDataAuxiliaryL2normAndPaperThreshold
       localFactorIndex localFactorDegree H hlocalFactorDegree_pos hcap_le
       C hC_nonneg hC hcut bridge hauxiliary hpaper hchoose hprecision)
+    recoveryInputs
+
+/--
+Final `C = 2` zero-correction auxiliary wrapper.
+
+This composes `FactorFastCapSeparationInputs.ofBridgeDataC2Auxiliary` with
+`factorFast_terminates`, preserving the joint BHKS paper-threshold product all
+the way to `Hex.factorFast f ≠ none`.
+-/
+theorem factorFast_terminates_ofBridgeDataC2Auxiliary
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData))
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (hlocalFactorDegree_pos : 0 < localFactorDegree)
+    (hcap_le :
+      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+        (factorFastCapLiftData f primeData).k)
+    (hcut :
+      CutProjectionHypotheses
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          rows_pos)
+        trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (v :
+      Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        rows_pos).factorCount → ℤ)
+    (hshort :
+      BHKS.ScaledShortnessCertificate
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCapLiftData f primeData)
+        (List.ofFn v).toArray
+        #[])
+    (haux_eq :
+      H =
+        BHKS.auxiliaryPolynomial
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCapLiftData f primeData)
+          (List.ofFn v).toArray)
+    (hdeg : 2 ≤ bhksDegree (Hex.normalizeForFactor f).squareFreeCore)
+    (hcoreNorm :
+      1 <
+        HexPolyZMathlib.l2norm
+          (HexPolyZMathlib.toPolynomial
+            (Hex.normalizeForFactor f).squareFreeCore))
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
+    (hprecision :
+      (factorFastCapLiftData f primeData).k =
+        Hex.precisionForCoeffBound
+          (Hex.factorFastPrecisionCap
+            (Hex.normalizeForFactor f).squareFreeCore)
+          (factorFastCapLiftData f primeData).p)
+    (recoveryInputs :
+      CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
+    Hex.factorFast f ≠ none :=
+  factorFast_terminates f primeData rows_pos trueSupports
+    (FactorFastCapSeparationInputs.ofBridgeDataC2Auxiliary
+      localFactorIndex localFactorDegree H hlocalFactorDegree_pos hcap_le hcut
+      bridge v hshort haux_eq hdeg hcoreNorm hchoose hprecision)
     recoveryInputs
 
 /--
