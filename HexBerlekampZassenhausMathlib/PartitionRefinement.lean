@@ -493,10 +493,12 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut
       hcut hsize hpartition)
 
 /--
-Irreducibility wrapper that discharges the forward cut hypothesis from the
-B5 true-indicator norm bound plus a Gram-Schmidt cut-retention certificate.
+Irreducibility wrapper that discharges the forward cut hypothesis directly from
+the true-factor CLD-vector certificates and their tight norm bounds, via the
+BHKS prefix survivor-span lemma.  This replaces the retired `CutRetention`
+route.
 -/
-theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_retention
+theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_trueFactors
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
     {L : Hex.BhksLatticeBasis} {hrows : 1 ≤ L.factorCount + L.coeffWidth}
@@ -504,7 +506,9 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_retention
       Set (Set (Fin (Hex.bhksProjectedRows L hrows).factorCount)))
     (hcore_ne : core ≠ 0)
     (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
-    (hret : BHKS.CutRetention (Hex.bhksProjectedRows L hrows))
+    (hbasis : L.basis.independent)
+    (data : ∀ S : trueSupports, BHKS.TrueFactorCLDVectorData L S.1)
+    (tight : ∀ S : trueSupports, BHKS.TrueFactorCLDTightNormBound L S.1)
     (hsize :
       coreFactors.size =
         (Hex.bhksEquivalenceClassIndicators (Hex.bhksProjectedRows L hrows)).size)
@@ -515,7 +519,7 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_retention
     ∀ factor ∈ coreFactors.toList, Hex.ZPoly.Irreducible factor :=
   factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut trueSupports
     hcore_ne h
-    (BHKS.cutProjectionHypotheses_of_retention L hrows trueSupports hret)
+    (BHKS.cutProjectionHypotheses_of_trueFactors L hrows hbasis trueSupports data tight)
     hsize hpartition
 
 /-- Cardinality equality for a successful BHKS fast-core branch under the B8
