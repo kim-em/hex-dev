@@ -246,6 +246,169 @@ theorem memLattice
 
 end TrueFactorCLDVectorData
 
+/-- Entry of the top-row selection coefficient vector: the support indicator on
+the first `factorCount` coordinates, zero on the diagonal-correction tail. -/
+private theorem trueFactorRowCoeffs_getElem
+    (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
+    (x : Fin (L.factorCount + L.coeffWidth)) :
+    (trueFactorRowCoeffs L S)[x]
+      = if hi : x.val < L.factorCount then indicatorVector S ⟨x.val, hi⟩ else 0 := by
+  show (trueFactorRowCoeffs L S).get x = _
+  unfold trueFactorRowCoeffs
+  rw [Vector.get_ofFn]
+
+/--
+The BHKS block-form predicate: `L.basis` is the all-coefficients CLD row basis
+`[ I | A_tilde ; 0 | diag ]` built by `bhksLatticeEntry` from `L`'s own data.
+This holds definitionally for `Hex.bhksLatticeBasis` (see
+`bhksLatticeBasis_blockForm`) and is the only fact the canonical coordinate
+producers need about the basis.
+-/
+def BhksBlockForm (L : Hex.BhksLatticeBasis) : Prop :=
+  L.basis =
+    Hex.Matrix.ofFn
+      (Hex.bhksLatticeEntry L.factorCount L.coeffWidth L.p L.precision
+        L.cutThresholds L.cldRows)
+
+/-- The executable `bhksLatticeBasis` has block form by construction. -/
+theorem bhksLatticeBasis_blockForm
+    (f : Hex.ZPoly) (p a : Nat) (liftedFactors : Array Hex.ZPoly) :
+    BhksBlockForm (Hex.bhksLatticeBasis f p a liftedFactors) := rfl
+
+/--
+Canonical projected-block identity: under block form, the first `factorCount`
+coordinates of `trueFactorCLDVector` are exactly the support indicator.  This is
+the #7593 deliverable-3 projection identity.
+-/
+theorem trueFactorCLDVector_project_of_blockForm
+    {L : Hex.BhksLatticeBasis} (S : LiftedFactorSupport L)
+    (hL : BhksBlockForm L) (i : Fin L.factorCount) :
+    (trueFactorCLDVector L S)[
+        (⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
+          Fin (L.factorCount + L.coeffWidth))] =
+      indicatorVector S i := by
+  unfold trueFactorCLDVector
+  rw [rowCombination_getElem_eq_sum, Fin.sum_univ_add]
+  have hentry : ∀ x : Fin (L.factorCount + L.coeffWidth),
+      L.basis[x][(⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
+          Fin (L.factorCount + L.coeffWidth))]
+        = Hex.bhksLatticeEntry L.factorCount L.coeffWidth L.p L.precision
+            L.cutThresholds L.cldRows x
+            ⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ := by
+    intro x
+    rw [hL, Hex.Matrix.getElem_ofFn]
+  have hsnd : (∑ j : Fin L.coeffWidth,
+      L.basis[Fin.natAdd L.factorCount j][(⟨i.val,
+          Nat.lt_add_right L.coeffWidth i.isLt⟩ :
+          Fin (L.factorCount + L.coeffWidth))] *
+        (trueFactorRowCoeffs L S)[Fin.natAdd L.factorCount j]) = 0 := by
+    apply Finset.sum_eq_zero
+    intro j _
+    rw [trueFactorRowCoeffs_getElem,
+      dif_neg (by simp only [Fin.val_natAdd]; omega), mul_zero]
+  rw [hsnd, add_zero]
+  have hfst : ∀ i' : Fin L.factorCount,
+      L.basis[Fin.castAdd L.coeffWidth i'][(⟨i.val,
+          Nat.lt_add_right L.coeffWidth i.isLt⟩ :
+          Fin (L.factorCount + L.coeffWidth))] *
+        (trueFactorRowCoeffs L S)[Fin.castAdd L.coeffWidth i']
+        = (if i' = i then (1 : ℤ) else 0) * indicatorVector S i' := by
+    intro i'
+    rw [hentry, trueFactorRowCoeffs_getElem,
+      dif_pos (show (Fin.castAdd L.coeffWidth i').val < L.factorCount from i'.isLt)]
+    unfold Hex.bhksLatticeEntry
+    rw [dif_pos (show (Fin.castAdd L.coeffWidth i').val < L.factorCount from i'.isLt),
+      dif_pos (show (⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
+          Fin (L.factorCount + L.coeffWidth)).val < L.factorCount from i.isLt)]
+    by_cases h : i' = i
+    · subst h; simp
+    · rw [if_neg h,
+        if_neg (by simp only [Fin.val_castAdd]; exact fun hv => h (Fin.ext hv))]
+      simp
+  rw [Finset.sum_congr rfl (fun i' _ => hfst i'), Finset.sum_eq_single i]
+  · rw [if_pos rfl, one_mul]
+  · intro i' _ hne
+    rw [if_neg hne, zero_mul]
+  · intro h
+    exact absurd (Finset.mem_univ i) h
+
+/--
+Canonical CLD-block identity: under block form, the trailing `coeffWidth`
+coordinates of `trueFactorCLDVector` are the corresponding sums of executable
+CLD columns over the support (with zero diagonal-correction coefficients).  This
+is the #7593 deliverable-3 coefficient identity.
+-/
+theorem trueFactorCLDVector_coeff_of_blockForm
+    {L : Hex.BhksLatticeBasis} (S : LiftedFactorSupport L)
+    (hL : BhksBlockForm L) (j : Fin L.coeffWidth) :
+    (trueFactorCLDVector L S)[
+        (⟨L.factorCount + j.val, Nat.add_lt_add_left j.isLt L.factorCount⟩ :
+          Fin (L.factorCount + L.coeffWidth))] =
+      ∑ i : Fin L.factorCount,
+        indicatorVector S i * (L.cldRows.getD i.val #[]).getD j.val 0 := by
+  unfold trueFactorCLDVector
+  rw [rowCombination_getElem_eq_sum, Fin.sum_univ_add]
+  have hentry : ∀ x : Fin (L.factorCount + L.coeffWidth),
+      L.basis[x][(⟨L.factorCount + j.val,
+          Nat.add_lt_add_left j.isLt L.factorCount⟩ :
+          Fin (L.factorCount + L.coeffWidth))]
+        = Hex.bhksLatticeEntry L.factorCount L.coeffWidth L.p L.precision
+            L.cutThresholds L.cldRows x
+            ⟨L.factorCount + j.val, Nat.add_lt_add_left j.isLt L.factorCount⟩ := by
+    intro x
+    rw [hL, Hex.Matrix.getElem_ofFn]
+  have hsnd : (∑ j' : Fin L.coeffWidth,
+      L.basis[Fin.natAdd L.factorCount j'][(⟨L.factorCount + j.val,
+          Nat.add_lt_add_left j.isLt L.factorCount⟩ :
+          Fin (L.factorCount + L.coeffWidth))] *
+        (trueFactorRowCoeffs L S)[Fin.natAdd L.factorCount j']) = 0 := by
+    apply Finset.sum_eq_zero
+    intro j' _
+    rw [trueFactorRowCoeffs_getElem,
+      dif_neg (by simp only [Fin.val_natAdd]; omega), mul_zero]
+  rw [hsnd, add_zero]
+  refine Finset.sum_congr rfl ?_
+  intro i' _
+  rw [hentry, trueFactorRowCoeffs_getElem,
+    dif_pos (show (Fin.castAdd L.coeffWidth i').val < L.factorCount from i'.isLt)]
+  have hcld : Hex.bhksLatticeEntry L.factorCount L.coeffWidth L.p L.precision
+      L.cutThresholds L.cldRows (Fin.castAdd L.coeffWidth i')
+      ⟨L.factorCount + j.val, Nat.add_lt_add_left j.isLt L.factorCount⟩
+      = (L.cldRows.getD i'.val #[]).getD j.val 0 := by
+    unfold Hex.bhksLatticeEntry
+    rw [dif_pos (show (Fin.castAdd L.coeffWidth i').val < L.factorCount from i'.isLt),
+      dif_neg (by
+        show ¬ (⟨L.factorCount + j.val,
+          Nat.add_lt_add_left j.isLt L.factorCount⟩ :
+          Fin (L.factorCount + L.coeffWidth)).val < L.factorCount
+        simp only []; omega)]
+    simp [Fin.val_castAdd]
+  rw [hcld, mul_comm]
+  congr 2
+
+/--
+Canonical producer for `TrueFactorCLDVectorData` at the executable
+`Hex.bhksLatticeBasis`.
+
+The two coordinate identities (#7593 deliverable 3) are discharged structurally
+from the block form of `bhksLatticeEntry`.  The cut-radius norm bound (#7593
+deliverable 4) is supplied as `hnorm`: it is a genuinely separate analytic
+obligation, isolated by `TrueFactorCLDNormBound` and reduced to a per-coordinate
+CLD magnitude bound by `trueFactorCLDNormBound_of_cldTail_sq_sum_le` below.
+-/
+def trueFactorCLDVectorData
+    (f : Hex.ZPoly) (p a : Nat) (liftedFactors : Array Hex.ZPoly)
+    (S : LiftedFactorSupport (Hex.bhksLatticeBasis f p a liftedFactors))
+    (hnorm : TrueFactorCLDNormBound (Hex.bhksLatticeBasis f p a liftedFactors) S) :
+    TrueFactorCLDVectorData (Hex.bhksLatticeBasis f p a liftedFactors) S where
+  project_eq i :=
+    trueFactorCLDVector_project_of_blockForm S
+      (bhksLatticeBasis_blockForm f p a liftedFactors) i
+  coeff_eq j :=
+    trueFactorCLDVector_coeff_of_blockForm S
+      (bhksLatticeBasis_blockForm f p a liftedFactors) j
+  norm_bound := hnorm
+
 /--
 The true-factor indicator lattice `W`, generated by the indicator vectors of
 the true integer factors' lifted-factor supports.
