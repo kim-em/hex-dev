@@ -249,6 +249,34 @@ de-privatising any `private` `Basic.lean` helpers it calls (visibility-only, saf
 Wiring it back up into the upstream slow-path substrate is a separate follow-up
 (the substrate cannot import downstream modules).
 
+A distinct, sharper failure mode than "no producer": the hypothesis the
+directive asks you to *produce* is not merely unproduced but **provably false**,
+so no producer can ever exist. The recurring instance is the bare lift-coverage
+quantifier `hexists_lifted` / `HenselSubsetCorrespondenceRest.exists_subset`
+(`Basic.lean:3325`, inherited by `LiftedFactorSubsetPartition` at
+`Basic.lean:3460`): `∀ {factor}, Irreducible (toPolynomial factor) → factor ∣
+core → ∃ S, RepresentsIntegerFactorAtLift core d factor S`. This universal is
+**unsatisfiable** under the standard core side conditions, because
+`normalizeFactorSign_eq_of_representsAtLift` (`Basic.lean:13646`) proves every
+*represented* factor is sign-normalized (`normalizeFactorSign factor = factor`,
+i.e. `0 ≤ leadingCoeff factor`) given `hcore_lc_pos`, monic lifted factors, and
+the precision bound — all of which are the substrate's own hypotheses
+(`hbound`/`hcore_lc_pos`, + `toMonicLiftData_liftedFactor_monic_*`). So any
+negative-leading-coefficient irreducible divisor (e.g. `1−x ∣ x²−1`, with
+`toPolynomial` `1−X` irreducible) has **no** representing subset, and the bare
+`∀`-factor existence is false for every positive-degree core. The landed
+recovery producer `toMonicLiftData_represents_lifted_of_modP` (`Basic.lean:19885`)
+matches this exactly — it only covers factors carrying
+`hsign : normalizeFactorSign factor = factor`. **Before attempting any
+"produce the coverage hypothesis from core facts" issue, sanity-check the factor
+quantifier: if it ranges over all irreducible factors with no sign guard, it is
+unsatisfiable — diagnose (counterexample + the `normalizeFactorSign_eq_of_*`
+cite) and skip.** The sound fix is a structural narrowing of the `exists_subset`
+quantifier to `normalizeFactorSign factor = factor` across the
+`HenselSubsetCorrespondence*` / `LiftedFactorSubsetPartition` structures, which
+is a shared-`Prop` refactor, not a core-facts assembly. (#7550 was skipped on
+exactly this.)
+
 The same check applies one level down to a "reduce X via the existing
 `*_of_recovery` lemmas" directive: the named recovery lemma existing is not
 enough — verify its *hypotheses* are obtainable from the representation predicate
