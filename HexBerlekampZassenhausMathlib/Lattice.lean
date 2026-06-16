@@ -1177,53 +1177,6 @@ structure CutProjectionHypotheses
   indicator_mem_projected :
     ∀ S : trueSupports, indicatorVector S.1 ∈ projectedRowSpanInt L
 
-/--
-Gram-Schmidt cut-retention certificate for projected BHKS rows.
-
-This is the proof-facing form of the BHKS Lemma 5.7 forward cut fact: every
-integer vector whose projected squared norm is within the stored cut radius
-lies in the span of the rows retained by the executable Gram-Schmidt cut.
--/
-structure CutRetention (L : Hex.BhksProjectedRows) where
-  mem_projected_of_norm_le :
-    ∀ v : Fin L.factorCount → ℤ,
-      (∑ i : Fin L.factorCount, ((v i : ℝ)) ^ 2) ≤ (L.cutRadiusSq4 : ℝ) →
-        v ∈ projectedRowSpanInt L
-
-namespace CutProjectionHypotheses
-
-/--
-Build the forward cut hypotheses from a Gram-Schmidt retention certificate and
-a squared-norm bound for each true-support indicator.
--/
-def ofRetention
-    (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount)))
-    (hret : CutRetention L)
-    (hnorm :
-      ∀ S : trueSupports,
-        (∑ i : Fin L.factorCount, ((((indicatorVector S.1 i : ℤ) : ℝ) ^ 2))) ≤
-          (L.cutRadiusSq4 : ℝ)) :
-    CutProjectionHypotheses L trueSupports where
-  indicator_mem_projected S := hret.mem_projected_of_norm_le (indicatorVector S.1)
-    (by simpa using hnorm S)
-
-end CutProjectionHypotheses
-
-/--
-Projected-row producer for `CutProjectionHypotheses` from the landed B5
-indicator norm bound plus a Gram-Schmidt cut-retention certificate.
--/
-def cutProjectionHypotheses_of_retention
-    (L : Hex.BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth)
-    (trueSupports :
-      Set (Set (Fin (Hex.bhksProjectedRows L hrows).factorCount)))
-    (hret : CutRetention (Hex.bhksProjectedRows L hrows)) :
-    CutProjectionHypotheses (Hex.bhksProjectedRows L hrows) trueSupports :=
-  CutProjectionHypotheses.ofRetention (Hex.bhksProjectedRows L hrows)
-    trueSupports hret
-    (fun S =>
-      indicatorVector_sq_sum_le_projectedRows_cutRadiusSq4 L hrows S.1)
-
 /-- Direct caller-facing form of the cut hypothesis for one true support. -/
 theorem indicatorVector_mem_projectedRowSpan_of_cut
     (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount)))
@@ -1341,6 +1294,191 @@ def toCut
   indicator_mem_projected := mem_projected L trueSupports hcut
 
 end CutSurvival
+
+/-!
+### True-factor cut-projection producer
+
+The following bridges the BHKS prefix survivor-span lemma
+(`mem_prefixSubmodule_of_normSq_le`) to `CutProjectionHypotheses` *without*
+routing through `CutRetention`.  A true factor's CLD vector is a genuine short
+lattice vector; the survivor-span lemma places it in the integer span of the
+retained prefix rows, and projecting that span to the first `factorCount`
+coordinates lands in `projectedRowSpanInt`, exactly where the executable cut
+stores the projected rows.
+-/
+
+/-- Projection onto the first `r` coordinates as a `ℤ`-linear map. -/
+def projFirst (r n : Nat) : (Fin (r + n) → ℤ) →ₗ[ℤ] (Fin r → ℤ) where
+  toFun w := fun i => w (Fin.castAdd n i)
+  map_add' a b := by funext i; simp
+  map_smul' c a := by funext i; simp
+
+@[simp] theorem projFirst_apply (r n : Nat) (w : Fin (r + n) → ℤ) (i : Fin r) :
+    projFirst r n w i = w (Fin.castAdd n i) := rfl
+
+/-- The squared Euclidean norm is the explicit sum of squared coordinates. -/
+private theorem normSq_eq_sum {n : Nat} (v : Vector Int n) :
+    Hex.Vector.normSq v = ∑ i : Fin n, v[i] ^ 2 := by
+  unfold Hex.Vector.normSq Hex.Vector.dotProduct
+  rw [finRange_foldl_add_eq_sum (g := fun i => v[i] * v[i])]
+  exact Finset.sum_congr rfl (fun i _ => by ring)
+
+/-- An array `getD` at an in-bounds index is the indexed element. -/
+private theorem array_getD_of_lt {α : Type*} (a : Array α) (k : Nat)
+    (hk : k < a.size) (d : α) :
+    a.getD k d = a[k]'hk := by
+  simp [Array.getD, hk]
+
+/-- `init`'s elements persist through the conditional-push fold. -/
+private theorem mem_foldl_push_if_of_mem_init {α β : Type*}
+    (p : α → Prop) [DecidablePred p] (g : α → β) (x : β) :
+    ∀ (l : List α) (init : Array β), x ∈ init →
+      x ∈ l.foldl (fun acc i => if p i then acc.push (g i) else acc) init := by
+  intro l
+  induction l with
+  | nil => intro init hx; simpa using hx
+  | cons a as ih =>
+      intro init hx
+      simp only [List.foldl_cons]
+      by_cases hp : p a
+      · rw [if_pos hp]; exact ih _ (Array.mem_push.mpr (Or.inl hx))
+      · rw [if_neg hp]; exact ih _ hx
+
+/-- A passing element `g i₀` of the conditional-push fold appears in the result. -/
+private theorem mem_foldl_push_if {α β : Type*}
+    (p : α → Prop) [DecidablePred p] (g : α → β) (i₀ : α) (hp₀ : p i₀) :
+    ∀ (l : List α) (init : Array β), i₀ ∈ l →
+      g i₀ ∈ l.foldl (fun acc i => if p i then acc.push (g i) else acc) init := by
+  intro l
+  induction l with
+  | nil => intro init h; exact absurd h List.not_mem_nil
+  | cons a as ih =>
+      intro init h
+      simp only [List.foldl_cons]
+      rcases List.mem_cons.mp h with rfl | hmem
+      · rw [if_pos hp₀]
+        exact mem_foldl_push_if_of_mem_init p g (g i₀) as _
+          (Array.mem_push.mpr (Or.inr rfl))
+      · by_cases hp : p a
+        · rw [if_pos hp]; exact ih _ hmem
+        · rw [if_neg hp]; exact ih _ hmem
+
+/-- The projected-indicator array reads off the first-`r`-block coordinate. -/
+private theorem bhksProjectIndicator_getD {r n : Nat}
+    (v : Vector Int (r + n)) (j : Fin r) :
+    (Hex.bhksProjectIndicator r n v).getD j.val 0 = v[Fin.castAdd n j] := by
+  have hsize : (Hex.bhksProjectIndicator r n v).size = r := by
+    simp [Hex.bhksProjectIndicator]
+  have hjlt : j.val < (Hex.bhksProjectIndicator r n v).size := by
+    rw [hsize]; exact j.isLt
+  have hjrn : j.val < r + n := Nat.lt_of_lt_of_le j.isLt (Nat.le_add_right r n)
+  rw [array_getD_of_lt _ _ hjlt]
+  simp only [Hex.bhksProjectIndicator, List.getElem_toArray, List.getElem_map,
+    List.getElem_range, dif_pos hjrn]
+  rfl
+
+/-- A retained prefix row, projected to its first block, is a generator of the
+executable projected integer row span. -/
+theorem projFirst_vectorEquiv_row_mem
+    (L : Hex.BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth)
+    (i : Fin (L.factorCount + L.coeffWidth))
+    (hi : i.val <
+        Hex.bhksCutPrefixCount L (Hex.bhksProjectedRowsTrace L hrows).reducedMatrix) :
+    projFirst L.factorCount L.coeffWidth
+        (HexMatrixMathlib.vectorEquiv
+          (Hex.Matrix.row (Hex.bhksProjectedRowsTrace L hrows).reducedMatrix i))
+      ∈ projectedRowSpanInt (Hex.bhksProjectedRows L hrows) := by
+  set reduced := (Hex.bhksProjectedRowsTrace L hrows).reducedMatrix with hred
+  set P := Hex.bhksProjectedRows L hrows with hP
+  set el := Hex.bhksProjectIndicator L.factorCount L.coeffWidth (Hex.Matrix.row reduced i)
+    with hel
+  have hmemArr : el ∈ P.projectedRows := by
+    show el ∈ Hex.bhksCutProjectReducedRows L reduced
+    exact mem_foldl_push_if (fun k => k.val < Hex.bhksCutPrefixCount L reduced)
+      (fun k => Hex.bhksProjectIndicator L.factorCount L.coeffWidth
+        (Hex.Matrix.row reduced k)) i hi (List.finRange _) #[] (List.mem_finRange i)
+  obtain ⟨k, hk, hkeq⟩ := Array.mem_iff_getElem.mp hmemArr
+  have heq : projFirst L.factorCount L.coeffWidth
+      (HexMatrixMathlib.vectorEquiv (Hex.Matrix.row reduced i))
+        = Matrix.row (projectedRowsIntMatrix P) ⟨k, hk⟩ := by
+    funext j
+    rw [projFirst_apply, HexMatrixMathlib.vectorEquiv_apply, Hex.Matrix.row_getElem]
+    simp only [Matrix.row, projectedRowsIntMatrix]
+    rw [array_getD_of_lt _ _ hk, hkeq, hel, bhksProjectIndicator_getD,
+      Hex.Matrix.row_getElem]
+  rw [heq]
+  exact projectedRow_mem_projectedRowSpanInt P ⟨k, hk⟩
+
+/-- Projecting a vector of the retained prefix submodule to its first block lands
+in the executable projected integer row span. -/
+theorem projFirst_mem_projectedRowSpanInt_of_mem_prefixSubmodule
+    (L : Hex.BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth)
+    (w : Fin (L.factorCount + L.coeffWidth) → ℤ)
+    (hw : w ∈ HexLLLMathlib.prefixSubmodule
+        (Hex.bhksProjectedRowsTrace L hrows).reducedMatrix
+        (Hex.bhksCutPrefixCount L (Hex.bhksProjectedRowsTrace L hrows).reducedMatrix)) :
+    projFirst L.factorCount L.coeffWidth w ∈
+      projectedRowSpanInt (Hex.bhksProjectedRows L hrows) := by
+  unfold HexLLLMathlib.prefixSubmodule at hw
+  induction hw using Submodule.span_induction with
+  | mem x hx =>
+      obtain ⟨i, rfl⟩ := hx
+      exact projFirst_vectorEquiv_row_mem L hrows i.1 i.2
+  | zero => rw [map_zero]; exact Submodule.zero_mem _
+  | add a b _ _ ha hb => rw [map_add]; exact Submodule.add_mem _ ha hb
+  | smul c a _ ha => rw [map_smul]; exact Submodule.smul_mem _ _ ha
+
+/--
+**True-factor cut-projection producer.**
+
+Build `CutProjectionHypotheses` for a family of true-factor supports directly
+from their CLD-vector certificates (`TrueFactorCLDVectorData`), their tight
+norm bounds (`TrueFactorCLDTightNormBound`), and independence of the BHKS basis.
+Each true support's indicator vector is the first block of a genuine short
+lattice vector, which the prefix survivor-span lemma places in the retained
+prefix span; projecting to the first `factorCount` coordinates lands the
+indicator in `projectedRowSpanInt`.  This route does **not** pass through
+`CutRetention`.
+-/
+def cutProjectionHypotheses_of_trueFactors
+    (L : Hex.BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth)
+    (hbasis : L.basis.independent)
+    (trueSupports : Set (Set (Fin (Hex.bhksProjectedRows L hrows).factorCount)))
+    (data : ∀ S : trueSupports, TrueFactorCLDVectorData L S.1)
+    (tight : ∀ S : trueSupports, TrueFactorCLDTightNormBound L S.1) :
+    CutProjectionHypotheses (Hex.bhksProjectedRows L hrows) trueSupports where
+  indicator_mem_projected S := by
+    set v := trueFactorCLDVector L S.1 with hv
+    have hind : (Hex.bhksProjectedRowsTrace L hrows).reducedMatrix.independent := by
+      rw [Hex.bhksProjectedRowsTrace_reducedMatrix_eq]
+      exact Hex.lllSteered_independent L.basis (3 / 4) Hex.lll_delta_lower
+        Hex.lll_delta_upper hrows hbasis
+    have hmemRed :
+        Hex.Matrix.memLattice (Hex.bhksProjectedRowsTrace L hrows).reducedMatrix v :=
+      (traceReducedMatrix_memLattice_iff L hrows v).mpr (trueFactorCLDVector_memLattice L S.1)
+    have hnorm :
+        4 * ((Hex.Vector.normSq v : Int) : ℚ) ≤ (Hex.bhksCutRadiusSq4 L : ℚ) := by
+      have ht := (tight S).four_mul_sq_norm_le
+      have hsum :
+          (∑ i : Fin (L.factorCount + L.coeffWidth), (((v[i] : Int) : ℝ) ^ 2))
+            = ((Hex.Vector.normSq v : Int) : ℝ) := by
+        rw [normSq_eq_sum]; push_cast; ring
+      rw [hsum] at ht
+      have hZ : 4 * (Hex.Vector.normSq v : Int) ≤ (Hex.bhksCutRadiusSq4 L : Int) := by
+        have hr : ((4 * Hex.Vector.normSq v : Int) : ℝ)
+            ≤ ((Hex.bhksCutRadiusSq4 L : Int) : ℝ) := by push_cast at ht ⊢; linarith
+        exact_mod_cast hr
+      exact_mod_cast hZ
+    have hpref := mem_prefixSubmodule_of_normSq_le L
+      (Hex.bhksProjectedRowsTrace L hrows).reducedMatrix hind v hmemRed hnorm
+    have hmem := projFirst_mem_projectedRowSpanInt_of_mem_prefixSubmodule L hrows
+      (HexMatrixMathlib.vectorEquiv v) hpref
+    have hproj : projFirst L.factorCount L.coeffWidth (HexMatrixMathlib.vectorEquiv v)
+        = indicatorVector S.1 := by
+      funext i
+      rw [projFirst_apply, HexMatrixMathlib.vectorEquiv_apply, hv]
+      exact (data S).project_eq i
+    rwa [hproj] at hmem
 
 /-- Each projected rational row is one of the generators of the rational row space. -/
 theorem projectedRow_mem_projectedRowSpaceRat
