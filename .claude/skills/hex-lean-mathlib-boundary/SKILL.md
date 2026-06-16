@@ -296,6 +296,28 @@ quantifier to `normalizeFactorSign factor = factor` across the
 is a shared-`Prop` refactor, not a core-facts assembly. (#7550 was skipped on
 exactly this.)
 
+A second calibration trap on the `Lattice.lean` BHKS cut surface: the cut radius
+carries a hidden factor of 4. `bhksCutRadiusSq4 = 4·radiusSq` (def docstring,
+`Basic.lean:4971`: "Four times the squared BHKS cut radius, `4·(r + n·(r/2)²)`"),
+and `bhksWithinGramSchmidtCut` (`Basic.lean:4975`) retains row `i` iff
+`4·(d_{i+1}/d_i) ≤ bhksCutRadiusSq4`, i.e. `‖b*_i‖² ≤ bhksCutRadiusSq4/4`
+(via `basis_normSq`: `‖b*_k‖² = gramDet(k+1)/gramDet(k) = dets[k+1]/dets[k]`).
+So any "prefix survivor-span" theorem (`‖v‖²-bounded lattice vector ⟹ v ∈ span of
+retained prefix`) needs hypothesis `4·‖v‖² ≤ bhksCutRadiusSq4` (= `‖v‖² ≤
+bhksCutRadiusSq4/4`), **not** `‖v‖² ≤ bhksCutRadiusSq4` — the top-index bound
+`‖v‖² ≥ ‖b*_m‖²` only certifies survival when `‖b*_m‖² ≤ bhksCutRadiusSq4/4`.
+The loose form is false: `factorCount=1, coeffWidth=0, reduced=[[2]]` gives
+`bhksCutRadiusSq4=4`, `‖b*_0‖²=4` fails the cut, `projectedRowSpanInt=⊥`, yet
+`v=![2]` has `‖v‖²=4 ≤ 4`. Consequently #7616's `TrueFactorCLDNormBound`
+(`‖trueFactorCLDVector‖² ≤ bhksCutRadiusSq4`, `Lattice.lean:207`) is **4× too
+loose** to feed such a lemma: routing the full CLD vector needs the tight
+`≤ bhksCutRadiusSq4/4` design bound (CLD per-column estimate `factorCount/2`, not
+the `factorCount` of `trueFactorCLDNormBound_of_cldTail_sq_sum_le`). #7620 was
+skipped on exactly this calibration gap. (`CutRetention`, `Lattice.lean:735`, is
+separately `IsEmpty`/unsound per #7575/#7592 — a different defect on the same
+surface; the sound route is the prefix survivor-span at the corrected radius,
+not `cutProjectionHypotheses_of_retention`.)
+
 The same check applies one level down to a "reduce X via the existing
 `*_of_recovery` lemmas" directive: the named recovery lemma existing is not
 enough — verify its *hypotheses* are obtainable from the representation predicate
