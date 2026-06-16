@@ -2587,6 +2587,7 @@ structure HenselSubsetCorrespondenceHypotheses
   successful_lift : successfulLift
   exists_subset :
     ∀ {factor : Hex.ZPoly},
+      Hex.normalizeFactorSign factor = factor →
       Irreducible (HexPolyZMathlib.toPolynomial factor) →
       factor ∣ core →
       ∃ S : LiftedFactorSubset d, RepresentsIntegerFactorAtLift core d factor S
@@ -2610,10 +2611,11 @@ theorem existsUnique_liftedFactorSubset_of_henselSubsetCorrespondence
       HenselSubsetCorrespondenceHypotheses core B primeData d
         admissiblePrime successfulLift)
     {factor : Hex.ZPoly}
+    (hsign : Hex.normalizeFactorSign factor = factor)
     (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ core) :
     ∃! S : LiftedFactorSubset d, RepresentsIntegerFactorAtLift core d factor S := by
-  rcases h.exists_subset hirr hdvd with ⟨S, hS⟩
+  rcases h.exists_subset hsign hirr hdvd with ⟨S, hS⟩
   refine ⟨S, hS, ?_⟩
   intro T hT
   exact (h.unique_subset (factor := factor) (S := S) (T := T) hirr hdvd hS hT).symm
@@ -2626,10 +2628,11 @@ theorem exists_liftedFactorSubset_of_henselSubsetCorrespondence
       HenselSubsetCorrespondenceHypotheses core B primeData d
         admissiblePrime successfulLift)
     {factor : Hex.ZPoly}
+    (hsign : Hex.normalizeFactorSign factor = factor)
     (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ core) :
     ∃ S : LiftedFactorSubset d, RepresentsIntegerFactorAtLift core d factor S :=
-  h.exists_subset hirr hdvd
+  h.exists_subset hsign hirr hdvd
 
 /-- Uniqueness projection from the executable Hensel subset-correspondence API. -/
 theorem unique_liftedFactorSubset_of_henselSubsetCorrespondence
@@ -3040,7 +3043,7 @@ def henselSubsetCorrespondence_of_modPSubsetPartition
   admissible_prime := hlift.admissible_prime
   successful_lift := hlift.successful_lift
   exists_subset := by
-    intro factor hirr hdvd
+    intro factor _hsign hirr hdvd
     exact
       (existsUnique_liftedFactorSubset_of_modPSubsetPartition_henselLift
         hmod hlift hirr hdvd).exists
@@ -3227,7 +3230,7 @@ theorem existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence_
     ∃! S : LiftedFactorSubset d,
       ∃ hrec : RecoveredAtLift core d factor S,
         liftedRecoveryCandidate core d S = factor := by
-  rcases h.exists_subset hirr hdvd with ⟨S, hS⟩
+  rcases h.exists_subset hfactor_norm hirr hdvd with ⟨S, hS⟩
   rcases hS with ⟨hrecS⟩
   refine ⟨S, ⟨hrecS, ?_⟩, ?_⟩
   · exact
@@ -3324,6 +3327,7 @@ structure HenselSubsetCorrespondenceRest
     (J : LiftedFactorSubset d) (target : Hex.ZPoly) : Prop where
   exists_subset :
     ∀ {factor : Hex.ZPoly},
+      Hex.normalizeFactorSign factor = factor →
       Irreducible (HexPolyZMathlib.toPolynomial factor) →
       factor ∣ target →
       ∃ S : LiftedFactorSubset d,
@@ -3351,8 +3355,8 @@ theorem henselSubsetCorrespondenceRest_initial
         admissiblePrime successfulLift) :
     HenselSubsetCorrespondenceRest core d Finset.univ core where
   exists_subset := by
-    intro factor hirr hdvd
-    rcases h.exists_subset hirr hdvd with ⟨S, hS⟩
+    intro factor hsign hirr hdvd
+    rcases h.exists_subset hsign hirr hdvd with ⟨S, hS⟩
     exact ⟨S, Finset.subset_univ S, hS⟩
   unique_subset := by
     intro factor S T hirr hdvd _hS_in _hT_in hS hT
@@ -3368,11 +3372,12 @@ theorem existsUnique_liftedFactorSubset_of_henselSubsetCorrespondenceRest
     {J : LiftedFactorSubset d}
     (h : HenselSubsetCorrespondenceRest core d J target)
     {factor : Hex.ZPoly}
+    (hsign : Hex.normalizeFactorSign factor = factor)
     (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ target) :
     ∃! S : LiftedFactorSubset d,
       S ⊆ J ∧ RepresentsIntegerFactorAtLift core d factor S := by
-  rcases h.exists_subset hirr hdvd with ⟨S, hSJ, hS⟩
+  rcases h.exists_subset hsign hirr hdvd with ⟨S, hSJ, hS⟩
   refine ⟨S, ⟨hSJ, hS⟩, ?_⟩
   intro T hT
   exact h.unique_subset hirr hdvd hT.1 hSJ hT.2 hS
@@ -3388,6 +3393,53 @@ private theorem zpoly_dvd_trans
   refine ⟨q * v, ?_⟩
   rw [hv, hq]
   exact Hex.DensePoly.mul_assoc_poly (S := Int) _ _ _
+
+/-- A polynomial factor with nonnegative leading coefficient is a fixed point of
+`Hex.normalizeFactorSign`. -/
+theorem normalizeFactorSign_eq_self_of_leadingCoeff_nonneg (g : Hex.ZPoly)
+    (h : 0 ≤ Hex.DensePoly.leadingCoeff g) :
+    Hex.normalizeFactorSign g = g := by
+  unfold Hex.normalizeFactorSign
+  rw [if_neg (by omega : ¬ Hex.DensePoly.leadingCoeff g < 0)]
+
+/-- Extract a sign-normalized irreducible divisor of a nonzero non-unit
+polynomial.  Normalizing an arbitrary irreducible factor over `Polynomial ℤ`
+picks the positive-leading-coefficient associate, which transports to a
+`Hex.normalizeFactorSign`-fixed `Hex.ZPoly` divisor.  This is the entry point
+the recursive-coverage proofs use to feed the narrowed `exists_subset` field,
+whose existence promise is restricted to sign-normalized representatives. -/
+theorem exists_signNormalized_irreducible_factor
+    {x : Hex.ZPoly}
+    (hnonunit : ¬ IsUnit (HexPolyZMathlib.toPolynomial x))
+    (hne : HexPolyZMathlib.toPolynomial x ≠ 0) :
+    ∃ g : Hex.ZPoly,
+      Irreducible (HexPolyZMathlib.toPolynomial g) ∧
+      g ∣ x ∧
+      Hex.normalizeFactorSign g = g := by
+  classical
+  obtain ⟨gPoly, hg_irr, hg_dvd⟩ :=
+    WfDvdMonoid.exists_irreducible_factor hnonunit hne
+  refine ⟨HexPolyZMathlib.ofPolynomial (normalize gPoly), ?_, ?_, ?_⟩
+  · rw [HexPolyZMathlib.toPolynomial_ofPolynomial]
+    exact (normalize_associated gPoly).symm.irreducible hg_irr
+  · have hnorm_dvd : normalize gPoly ∣ HexPolyZMathlib.toPolynomial x :=
+      (normalize_associated gPoly).dvd.trans hg_dvd
+    rcases hnorm_dvd with ⟨r, hr⟩
+    refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
+    apply HexPolyZMathlib.equiv.injective
+    simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
+      HexPolyZMathlib.toPolynomial_ofPolynomial]
+    exact hr
+  · apply normalizeFactorSign_eq_self_of_leadingCoeff_nonneg
+    have hlc :
+        (HexPolyZMathlib.toPolynomial
+            (HexPolyZMathlib.ofPolynomial (normalize gPoly))).leadingCoeff =
+          Hex.DensePoly.leadingCoeff
+            (HexPolyZMathlib.ofPolynomial (normalize gPoly)) :=
+      HexPolyMathlib.leadingCoeff_toPolynomial _
+    rw [← hlc, HexPolyZMathlib.toPolynomial_ofPolynomial,
+      Polynomial.leadingCoeff_normalize]
+    exact Int.nonneg_of_normalize_eq_self (normalize_idem gPoly.leadingCoeff)
 
 /--
 Transport an induced Hensel subset correspondence through one emitted
@@ -3414,10 +3466,10 @@ theorem henselSubsetCorrespondenceRest_transport_of_disjoint
         Disjoint T S) :
     HenselSubsetCorrespondenceRest core d (J \ S) quotient where
   exists_subset := by
-    intro factor hirr hdvd_quot
+    intro factor hsign hirr hdvd_quot
     have hdvd_target : factor ∣ target :=
       zpoly_dvd_trans hdvd_quot ⟨emitted, hquot.symm⟩
-    rcases h.exists_subset hirr hdvd_target with ⟨T, hTJ, hTrep⟩
+    rcases h.exists_subset hsign hirr hdvd_target with ⟨T, hTJ, hTrep⟩
     have hTS : Disjoint T S := hdisjoint hirr hdvd_quot hTJ hTrep
     refine ⟨T, ?_, hTrep⟩
     intro i hi
@@ -11406,28 +11458,16 @@ theorem exists_representingSubset_dvd_recombinationCandidate_of_exactQuotient
     toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord hrecord
   -- UFD existence: extract an irreducible factor of the candidate in
   -- `Polynomial ℤ`.
-  obtain ⟨gPoly, hg_irr, hg_dvd_cand_poly⟩ :=
-    WfDvdMonoid.exists_irreducible_factor hcand_poly_nonunit hcand_poly_ne_zero
-  -- Carry the irreducible factor back to a `Hex.ZPoly` divisor of the
-  -- candidate.
-  let g : Hex.ZPoly := HexPolyZMathlib.ofPolynomial gPoly
-  have hg_toPolynomial : HexPolyZMathlib.toPolynomial g = gPoly :=
-    HexPolyZMathlib.toPolynomial_ofPolynomial gPoly
-  have hg_dvd_cand : g ∣ recombinationCandidate d T := by
-    rcases hg_dvd_cand_poly with ⟨r, hr⟩
-    refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
-    apply HexPolyZMathlib.equiv.injective
-    simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
-      HexPolyZMathlib.toPolynomial_ofPolynomial]
-    rw [hg_toPolynomial]
-    exact hr
+  -- Extract a sign-normalized irreducible factor of the candidate, so the
+  -- narrowed `exists_subset` (restricted to sign-normalized representatives)
+  -- applies.
+  obtain ⟨g, hg_irr_toPoly, hg_dvd_cand, hg_norm_sign⟩ :=
+    exists_signNormalized_irreducible_factor hcand_poly_nonunit hcand_poly_ne_zero
   have hg_dvd_target : g ∣ target := zpoly_dvd_trans hg_dvd_cand hcand_dvd_target
-  have hg_irr_toPoly : Irreducible (HexPolyZMathlib.toPolynomial g) := by
-    rw [hg_toPolynomial]; exact hg_irr
   -- Apply the partition's inherited `exists_subset` to obtain the representing
   -- subset for `g`.
   obtain ⟨S, hSJ, hSrep⟩ :=
-    hpartition.exists_subset hg_irr_toPoly hg_dvd_target
+    hpartition.exists_subset hg_norm_sign hg_irr_toPoly hg_dvd_target
   exact ⟨hmul, hcand_dvd_target, g, S, hg_irr_toPoly, hg_dvd_target, hg_dvd_cand,
     hSJ, hSrep⟩
 
@@ -11955,8 +11995,20 @@ theorem exists_representingSubset_of_mem_normalizedFactors_recombinationCandidat
     rw [Hex.DensePoly.mul_comm_poly (S := Int)]
     exact hmul.symm
   have hg_dvd_target : g ∣ target := zpoly_dvd_trans hg_dvd_cand hcand_dvd_target
+  have hg_norm_sign : Hex.normalizeFactorSign g = g := by
+    apply normalizeFactorSign_eq_self_of_leadingCoeff_nonneg
+    have hlead_normalized :
+        normalize gPoly.leadingCoeff = gPoly.leadingCoeff := by
+      have hlead := congrArg Polynomial.leadingCoeff hg_normalized
+      rwa [Polynomial.leadingCoeff_normalize] at hlead
+    have hlc :
+        (HexPolyZMathlib.toPolynomial g).leadingCoeff =
+          Hex.DensePoly.leadingCoeff g :=
+      HexPolyMathlib.leadingCoeff_toPolynomial g
+    rw [← hlc, hg_toPolynomial]
+    exact Int.nonneg_of_normalize_eq_self hlead_normalized
   obtain ⟨S_g, hSJ, hSrep⟩ :=
-    hpartition.exists_subset hg_irr_toPoly hg_dvd_target
+    hpartition.exists_subset hg_norm_sign hg_irr_toPoly hg_dvd_target
   have hST : S_g ⊆ T :=
     representingSubset_subset_of_dvd_recombinationCandidate_of_bound
       B' (hvalid g (by rw [hg_toPolynomial]; exact hg_mem))
@@ -12160,8 +12212,20 @@ theorem exists_representingSubset_of_mem_normalizedFactors_recombinationCandidat
     rcases hcand_dvd_target with ⟨r₂, hr₂⟩
     refine ⟨r₁ * r₂, ?_⟩
     rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
+  have hg_norm_sign : Hex.normalizeFactorSign g = g := by
+    apply normalizeFactorSign_eq_self_of_leadingCoeff_nonneg
+    have hlead_normalized :
+        normalize gPoly.leadingCoeff = gPoly.leadingCoeff := by
+      have hlead := congrArg Polynomial.leadingCoeff hg_normalized
+      rwa [Polynomial.leadingCoeff_normalize] at hlead
+    have hlc :
+        (HexPolyZMathlib.toPolynomial g).leadingCoeff =
+          Hex.DensePoly.leadingCoeff g :=
+      HexPolyMathlib.leadingCoeff_toPolynomial g
+    rw [← hlc, hg_toPolynomial]
+    exact Int.nonneg_of_normalize_eq_self hlead_normalized
   obtain ⟨S_g, hSJ, hSrep⟩ :=
-    hpartition.exists_subset hg_irr_toPoly hg_dvd_target
+    hpartition.exists_subset hg_norm_sign hg_irr_toPoly hg_dvd_target
   have hST : S_g ⊆ T :=
     representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos_lc_core_of_bound
       B' (hvalid g (by rw [hg_toPolynomial]; exact hg_mem))
@@ -14188,8 +14252,23 @@ theorem ncard_eq_normalizedFactors_card
         rw [HexPolyZMathlib.toPolynomial_mul, hf_toPoly,
           HexPolyZMathlib.toPolynomial_ofPolynomial]
         exact hr
+      have hf_norm_sign :
+          Hex.normalizeFactorSign (HexPolyZMathlib.ofPolynomial p) =
+            HexPolyZMathlib.ofPolynomial p := by
+        apply normalizeFactorSign_eq_self_of_leadingCoeff_nonneg
+        have hlead_normalized : normalize p.leadingCoeff = p.leadingCoeff := by
+          have hlead := congrArg Polynomial.leadingCoeff hp_norm
+          rwa [Polynomial.leadingCoeff_normalize] at hlead
+        have hlc :
+            (HexPolyZMathlib.toPolynomial
+                (HexPolyZMathlib.ofPolynomial p)).leadingCoeff =
+              Hex.DensePoly.leadingCoeff (HexPolyZMathlib.ofPolynomial p) :=
+          HexPolyMathlib.leadingCoeff_toPolynomial _
+        rw [← hlc, hf_toPoly]
+        exact Int.nonneg_of_normalize_eq_self hlead_normalized
       obtain ⟨S, _hSJ, hrep⟩ :=
-        hpartition.toHenselSubsetCorrespondenceRest.exists_subset hf_irr hf_dvd
+        hpartition.toHenselSubsetCorrespondenceRest.exists_subset
+          hf_norm_sign hf_irr hf_dvd
       refine ⟨(↑S : Set (LiftedFactorIndex d)),
         ⟨HexPolyZMathlib.ofPolynomial p, S, hf_irr, hf_dvd, hrep, rfl⟩, ?_⟩
       rw [hφ hf_irr hf_dvd hrep, hf_toPoly, hp_norm]
@@ -14917,7 +14996,7 @@ private theorem exists_representingSubset_of_mem_normalizedFactors_liftedRecover
     have hnot : ¬ Hex.DensePoly.leadingCoeff g < 0 := by omega
     rw [if_neg hnot]
   obtain ⟨S_g, hSJ, hSrep⟩ :=
-    hpartition.exists_subset hg_irr_toPoly hg_dvd_target
+    hpartition.exists_subset hg_norm_sign hg_irr_toPoly hg_dvd_target
   have hST : S_g ⊆ T :=
     representingSubset_subset_of_dvd_liftedRecoveryCandidate_of_primitive_pos_lc_core_of_bound
       B' (hvalid g (by rw [hg_toPolynomial]; exact hg_mem))
@@ -16059,26 +16138,11 @@ private theorem recombinationSearchModAux_some_and_covers_of_liftedFactorSubsetP
         have htarget_poly_ne :
             HexPolyZMathlib.toPolynomial target ≠ 0 :=
           htarget_poly_monic.ne_zero
-        obtain ⟨gPoly, hg_irr, hg_dvd_target_poly⟩ :=
-          WfDvdMonoid.exists_irreducible_factor htarget_poly_nonunit
+        obtain ⟨g, hg_irr_toPoly, hg_dvd_target, hg_norm_sign⟩ :=
+          exists_signNormalized_irreducible_factor htarget_poly_nonunit
             htarget_poly_ne
-        let g : Hex.ZPoly := HexPolyZMathlib.ofPolynomial gPoly
-        have hg_toPolynomial : HexPolyZMathlib.toPolynomial g = gPoly :=
-          HexPolyZMathlib.toPolynomial_ofPolynomial gPoly
-        have hg_dvd_target : g ∣ target := by
-          rcases hg_dvd_target_poly with ⟨r, hr⟩
-          refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
-          apply HexPolyZMathlib.equiv.injective
-          simp only [HexPolyZMathlib.equiv_apply,
-            HexPolyZMathlib.toPolynomial_mul,
-            HexPolyZMathlib.toPolynomial_ofPolynomial]
-          rw [hg_toPolynomial]
-          exact hr
-        have hg_irr_toPoly :
-            Irreducible (HexPolyZMathlib.toPolynomial g) := by
-          rw [hg_toPolynomial]; exact hg_irr
         obtain ⟨S, hSJ, hSrep⟩ :=
-          hpartition.exists_subset hg_irr_toPoly hg_dvd_target
+          hpartition.exists_subset hg_norm_sign hg_irr_toPoly hg_dvd_target
         have hS_empty : S = ∅ := by
           rw [hJ_empty] at hSJ
           exact Finset.subset_empty.mp hSJ
@@ -16423,26 +16487,11 @@ theorem RecoveredScaledSearch.covers_of_bound
       have hJ_ne : J.Nonempty := by
         by_contra hJ_empty
         rw [Finset.not_nonempty_iff_eq_empty] at hJ_empty
-        obtain ⟨gPoly, hg_irr, hg_dvd_target_poly⟩ :=
-          WfDvdMonoid.exists_irreducible_factor htarget_poly_nonunit
+        obtain ⟨g, hg_irr_toPoly, hg_dvd_target, hg_norm_sign⟩ :=
+          exists_signNormalized_irreducible_factor htarget_poly_nonunit
             htarget_poly_ne
-        let g : Hex.ZPoly := HexPolyZMathlib.ofPolynomial gPoly
-        have hg_toPolynomial : HexPolyZMathlib.toPolynomial g = gPoly :=
-          HexPolyZMathlib.toPolynomial_ofPolynomial gPoly
-        have hg_dvd_target : g ∣ target := by
-          rcases hg_dvd_target_poly with ⟨r, hr⟩
-          refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
-          apply HexPolyZMathlib.equiv.injective
-          simp only [HexPolyZMathlib.equiv_apply,
-            HexPolyZMathlib.toPolynomial_mul,
-            HexPolyZMathlib.toPolynomial_ofPolynomial]
-          rw [hg_toPolynomial]
-          exact hr
-        have hg_irr_toPoly :
-            Irreducible (HexPolyZMathlib.toPolynomial g) := by
-          rw [hg_toPolynomial]; exact hg_irr
         obtain ⟨S, hSJ, hSrep⟩ :=
-          hpartition.exists_subset hg_irr_toPoly hg_dvd_target
+          hpartition.exists_subset hg_norm_sign hg_irr_toPoly hg_dvd_target
         have hS_empty : S = ∅ := by
           rw [hJ_empty] at hSJ
           exact Finset.subset_empty.mp hSJ
@@ -20674,6 +20723,7 @@ theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
         primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
     (hexists_lifted :
       ∀ {factor : Hex.ZPoly},
+        Hex.normalizeFactorSign factor = factor →
         Irreducible (HexPolyZMathlib.toPolynomial factor) →
         factor ∣ core →
         ∃ S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData),
@@ -20688,8 +20738,8 @@ theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
       successful_lift := hdescent.successful_lift
       exists_subset := ?_
       unique_subset := ?_ }
-  · intro factor hirr hdvd
-    exact hexists_lifted hirr hdvd
+  · intro factor hsign hirr hdvd
+    exact hexists_lifted hsign hirr hdvd
   · intro factor S T hirr hdvd hS hT
     exact toMonicLiftData_unique_subset core B primeData
       hcore_lc_pos hcore_pos hselected hprecision hbound hirr hdvd hS hT
@@ -20720,6 +20770,7 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData_success_descent
         primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
     (hexists_lifted :
       ∀ {factor : Hex.ZPoly},
+        Hex.normalizeFactorSign factor = factor →
         Irreducible (HexPolyZMathlib.toPolynomial factor) →
         factor ∣ core →
         ∃ S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData),
