@@ -394,6 +394,117 @@ theorem coeff_mul [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
 def eval [Add R] [Mul R] (p : DensePoly R) (x : R) : R :=
   p.toArray.toList.reverse.foldl (fun acc coeff => acc * x + coeff) (Zero.zero : R)
 
+omit [DecidableEq R] in
+/-- List-level Horner evaluation, reading coefficients from low to high degree. -/
+private def evalCoeffList [Add R] [Mul R] :
+    List R → R → R
+  | [], _ => Zero.zero
+  | c :: cs, x => evalCoeffList cs x * x + c
+
+omit [DecidableEq R] in
+private theorem reverse_foldl_evalCoeffList [Add R] [Mul R] (coeffs : List R) (x : R) :
+    coeffs.reverse.foldl (fun acc coeff => acc * x + coeff) (Zero.zero : R) =
+      evalCoeffList coeffs x := by
+  induction coeffs with
+  | nil =>
+      rfl
+  | cons c cs ih =>
+      rw [List.reverse_cons, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil, evalCoeffList]
+      rw [ih]
+
+/-- Horner evaluation agrees with the list-level Horner form over stored coefficients. -/
+private theorem eval_eq_evalCoeffList [Add R] [Mul R] (p : DensePoly R) (x : R) :
+    eval p x = evalCoeffList p.toArray.toList x := by
+  unfold eval
+  exact reverse_foldl_evalCoeffList p.toArray.toList x
+
+private theorem evalCoeffList_trimTrailingZerosList [Add R] [Mul R] (coeffs : List R) (x : R)
+    (hzero : (Zero.zero : R) * x + (Zero.zero : R) = (Zero.zero : R)) :
+    evalCoeffList (trimTrailingZerosList coeffs) x = evalCoeffList coeffs x := by
+  induction coeffs with
+  | nil =>
+      rfl
+  | cons c cs ih =>
+      by_cases htrim : trimTrailingZerosList cs = [] ∧ c = (Zero.zero : R)
+      · have htail : evalCoeffList cs x = (Zero.zero : R) := by
+          rw [← ih, htrim.1]
+          rfl
+        rw [show trimTrailingZerosList (c :: cs) = [] by
+          simp [trimTrailingZerosList, htrim.1, htrim.2]]
+        change (Zero.zero : R) = evalCoeffList cs x * x + c
+        rw [htail, htrim.2]
+        exact hzero.symm
+      · rw [show trimTrailingZerosList (c :: cs) = c :: trimTrailingZerosList cs by
+          simp [trimTrailingZerosList, htrim]]
+        change evalCoeffList (trimTrailingZerosList cs) x * x + c = evalCoeffList cs x * x + c
+        rw [ih]
+
+private theorem eval_ofList_eq_evalCoeffList [Add R] [Mul R] (coeffs : List R) (x : R)
+    (hzero : (Zero.zero : R) * x + (Zero.zero : R) = (Zero.zero : R)) :
+    eval (ofList coeffs : DensePoly R) x = evalCoeffList coeffs x := by
+  rw [eval_eq_evalCoeffList]
+  unfold ofList toArray ofCoeffs trimTrailingZeros
+  simpa using evalCoeffList_trimTrailingZerosList (R := R) coeffs x hzero
+
+private theorem ofList_coeff_range_eq (p : DensePoly R) {n : Nat} (hn : p.size ≤ n) :
+    (ofList ((List.range n).map (fun i => p.coeff i)) : DensePoly R) = p := by
+  apply ext_coeff
+  intro i
+  rw [coeff_ofList, list_getD_map_range]
+  by_cases hi : i < n
+  · simp [hi]
+  · have hp : p.size ≤ i := Nat.le_trans hn (Nat.le_of_not_gt hi)
+    simp [hi, coeff_eq_zero_of_size_le p hp]
+
+omit [DecidableEq R] in
+private theorem evalCoeffList_zipWith_add [Add R] [Mul R] (xs ys : List R) (x : R)
+    (hlen : xs.length = ys.length)
+    (hzero : (Zero.zero : R) + (Zero.zero : R) = (Zero.zero : R))
+    (hstep : ∀ a b c d : R, (a + b) * x + (c + d) = (a * x + c) + (b * x + d)) :
+    evalCoeffList (List.zipWith (fun a b => a + b) xs ys) x =
+      evalCoeffList xs x + evalCoeffList ys x := by
+  induction xs generalizing ys with
+  | nil =>
+      cases ys with
+      | nil =>
+          simpa [evalCoeffList] using hzero.symm
+      | cons _ _ =>
+          simp at hlen
+  | cons c cs ih =>
+      cases ys with
+      | nil =>
+          simp at hlen
+      | cons d ds =>
+          have htail : cs.length = ds.length := Nat.succ.inj hlen
+          simp only [List.zipWith, evalCoeffList]
+          rw [ih ds htail]
+          exact hstep (evalCoeffList cs x) (evalCoeffList ds x) c d
+
+omit [DecidableEq R] in
+private theorem evalCoeffList_zipWith_sub [Sub R] [Mul R] [Add R] (xs ys : List R) (x : R)
+    (hlen : xs.length = ys.length)
+    (hzero : (Zero.zero : R) - (Zero.zero : R) = (Zero.zero : R))
+    (hstep : ∀ a b c d : R, (a - b) * x + (c - d) = (a * x + c) - (b * x + d)) :
+    evalCoeffList (List.zipWith (fun a b => a - b) xs ys) x =
+      evalCoeffList xs x - evalCoeffList ys x := by
+  induction xs generalizing ys with
+  | nil =>
+      cases ys with
+      | nil =>
+          simpa [evalCoeffList] using hzero.symm
+      | cons _ _ =>
+          simp at hlen
+  | cons c cs ih =>
+      cases ys with
+      | nil =>
+          simp at hlen
+      | cons d ds =>
+          have htail : cs.length = ds.length := Nat.succ.inj hlen
+          simp only [List.zipWith, evalCoeffList]
+          rw [ih ds htail]
+          exact hstep (evalCoeffList cs x) (evalCoeffList ds x) c d
+
 /-- Compose polynomials using Horner's method. -/
 def compose [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
   p.toArray.toList.reverse.foldl (fun acc coeff => acc * q + C coeff) (0 : DensePoly R)
@@ -689,6 +800,139 @@ theorem coeff_neg [Sub R] (p : DensePoly R) (n : Nat)
 @[simp, grind =] theorem eval_zero [Add R] [Mul R] (x : R) :
     eval (0 : DensePoly R) x = 0 := by
   rfl
+
+/-- Evaluation law for addition. The explicit laws package the zero-preservation and
+one-step Horner distributivity needed by the generic `Add`/`Mul` interface. -/
+theorem eval_add [Add R] [Mul R] (p q : DensePoly R) (x : R)
+    (hzero_add : (Zero.zero : R) + (Zero.zero : R) = (Zero.zero : R))
+    (hzero_horner : (Zero.zero : R) * x + (Zero.zero : R) = (Zero.zero : R))
+    (hstep : ∀ a b c d : R, (a + b) * x + (c + d) = (a * x + c) + (b * x + d)) :
+    eval (p + q) x = eval p x + eval q x := by
+  let n := max p.size q.size
+  have hzip :
+      List.zipWith (fun a b : R => a + b)
+          ((List.range n).map (fun i => p.coeff i))
+          ((List.range n).map (fun i => q.coeff i)) =
+        (List.range n).map (fun i => p.coeff i + q.coeff i) := by
+    generalize List.range n = xs
+    induction xs with
+    | nil =>
+        rfl
+    | cons i is ih =>
+        simp [ih]
+  rw [show eval (p + q) x =
+      evalCoeffList ((List.range n).map (fun i => p.coeff i + q.coeff i)) x by
+    change eval (add p q) x =
+      evalCoeffList ((List.range n).map (fun i => p.coeff i + q.coeff i)) x
+    unfold add n
+    exact eval_ofList_eq_evalCoeffList ((List.range (max p.size q.size)).map
+      (fun i => p.coeff i + q.coeff i)) x hzero_horner]
+  rw [show eval p x = evalCoeffList ((List.range n).map (fun i => p.coeff i)) x by
+    rw [← eval_ofList_eq_evalCoeffList ((List.range n).map (fun i => p.coeff i)) x
+      hzero_horner]
+    rw [ofList_coeff_range_eq p (Nat.le_max_left p.size q.size)]
+  ]
+  rw [show eval q x = evalCoeffList ((List.range n).map (fun i => q.coeff i)) x by
+    rw [← eval_ofList_eq_evalCoeffList ((List.range n).map (fun i => q.coeff i)) x
+      hzero_horner]
+    rw [ofList_coeff_range_eq q (Nat.le_max_right p.size q.size)]
+  ]
+  rw [← evalCoeffList_zipWith_add
+    ((List.range n).map (fun i => p.coeff i))
+    ((List.range n).map (fun i => q.coeff i)) x (by simp)
+    hzero_add hstep]
+  rw [hzip]
+
+/-- Semiring-specialized evaluation law for addition. -/
+@[simp, grind =] theorem eval_add_semiring {S : Type u}
+    [Lean.Grind.Semiring S] [DecidableEq S]
+    (p q : DensePoly S) (x : S) :
+    eval (p + q) x = eval p x + eval q x :=
+  eval_add p q x (by grind)
+    (by
+      change (0 : S) * x + (0 : S) = (0 : S)
+      rw [Lean.Grind.Semiring.zero_mul]
+      exact Lean.Grind.Semiring.add_zero 0)
+    (by grind)
+
+/-- Evaluation law for subtraction. The explicit laws package the zero-preservation and
+one-step Horner distributivity needed by the generic `Sub`/`Mul` interface. -/
+theorem eval_sub [Sub R] [Add R] [Mul R] (p q : DensePoly R) (x : R)
+    (hzero_sub : (Zero.zero : R) - (Zero.zero : R) = (Zero.zero : R))
+    (hzero_horner : (Zero.zero : R) * x + (Zero.zero : R) = (Zero.zero : R))
+    (hstep : ∀ a b c d : R, (a - b) * x + (c - d) = (a * x + c) - (b * x + d)) :
+    eval (p - q) x = eval p x - eval q x := by
+  let n := max p.size q.size
+  have hzip :
+      List.zipWith (fun a b : R => a - b)
+          ((List.range n).map (fun i => p.coeff i))
+          ((List.range n).map (fun i => q.coeff i)) =
+        (List.range n).map (fun i => p.coeff i - q.coeff i) := by
+    generalize List.range n = xs
+    induction xs with
+    | nil =>
+        rfl
+    | cons i is ih =>
+        simp [ih]
+  rw [show eval (p - q) x =
+      evalCoeffList ((List.range n).map (fun i => p.coeff i - q.coeff i)) x by
+    change eval (sub p q) x =
+      evalCoeffList ((List.range n).map (fun i => p.coeff i - q.coeff i)) x
+    unfold sub n
+    exact eval_ofList_eq_evalCoeffList ((List.range (max p.size q.size)).map
+      (fun i => p.coeff i - q.coeff i)) x hzero_horner]
+  rw [show eval p x = evalCoeffList ((List.range n).map (fun i => p.coeff i)) x by
+    rw [← eval_ofList_eq_evalCoeffList ((List.range n).map (fun i => p.coeff i)) x
+      hzero_horner]
+    rw [ofList_coeff_range_eq p (Nat.le_max_left p.size q.size)]
+  ]
+  rw [show eval q x = evalCoeffList ((List.range n).map (fun i => q.coeff i)) x by
+    rw [← eval_ofList_eq_evalCoeffList ((List.range n).map (fun i => q.coeff i)) x
+      hzero_horner]
+    rw [ofList_coeff_range_eq q (Nat.le_max_right p.size q.size)]
+  ]
+  rw [← evalCoeffList_zipWith_sub
+    ((List.range n).map (fun i => p.coeff i))
+    ((List.range n).map (fun i => q.coeff i)) x (by simp)
+    hzero_sub hstep]
+  rw [hzip]
+
+/-- Ring-specialized evaluation law for subtraction. -/
+@[simp, grind =] theorem eval_sub_ring {S : Type u}
+    [Lean.Grind.Ring S] [DecidableEq S]
+    (p q : DensePoly S) (x : S) :
+    eval (p - q) x = eval p x - eval q x :=
+  eval_sub p q x (by grind)
+    (by
+      change (0 : S) * x + (0 : S) = (0 : S)
+      rw [Lean.Grind.Semiring.zero_mul]
+      exact Lean.Grind.Semiring.add_zero 0)
+    (by grind)
+
+/-- Evaluation law for negation, expressed through subtraction from zero. -/
+theorem eval_neg [Sub R] [Add R] [Mul R] (p : DensePoly R) (x : R)
+    (hzero_sub : (Zero.zero : R) - (Zero.zero : R) = (Zero.zero : R))
+    (hzero_horner : (Zero.zero : R) * x + (Zero.zero : R) = (Zero.zero : R))
+    (hstep : ∀ a b c d : R, (a - b) * x + (c - d) = (a * x + c) - (b * x + d)) :
+    eval (-p) x = (Zero.zero : R) - eval p x := by
+  change eval (sub (0 : DensePoly R) p) x = (Zero.zero : R) - eval p x
+  have h := eval_sub (0 : DensePoly R) p x hzero_sub hzero_horner hstep
+  simpa using h
+
+/-- Ring-specialized evaluation law for negation. -/
+@[simp, grind =] theorem eval_neg_ring {S : Type u}
+    [Lean.Grind.Ring S] [DecidableEq S]
+    (p : DensePoly S) (x : S)
+    (hneg : ZeroSubNegLaw S := by infer_instance) :
+    eval (-p) x = -(eval p x) := by
+  have h := eval_neg p x (by grind)
+    (by
+      change (0 : S) * x + (0 : S) = (0 : S)
+      rw [Lean.Grind.Semiring.zero_mul]
+      exact Lean.Grind.Semiring.add_zero 0)
+    (by grind)
+  rw [h]
+  exact hneg.zero_sub_eq_neg (eval p x)
 
 /-- Evaluation of a constant polynomial. The explicit zero laws are needed because the
 generic `Add`/`Mul`/`Zero` interfaces do not provide algebraic simplification rules. -/
