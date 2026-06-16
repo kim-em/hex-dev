@@ -408,6 +408,17 @@ all. A fresh worktree has no built Mathlib, so run `lake exe cache get` first
 (fetches prebuilt oleans in minutes; a from-scratch Mathlib compile is hours).
 Only the project's own files then rebuild.
 
+When you verify against a Mathlib-layer module with a throwaway scratch file
+(`lake env lean Scratch.lean` importing e.g. `HexBerlekampZassenhausMathlib.Lattice`),
+`lake env lean` loads that import's **prebuilt olean**, not its source. A
+reused worktree's olean can predate decls added in later commits, so a
+genuinely-present definition shows as `unknown identifier` (and autoImplicit
+then treats it as a free variable, cascading confusing errors) even though the
+source clearly declares it — fully-qualifying the name does not help. Before
+blaming a namespace, `ls -la` the module's `.olean` under `.lake/build/lib/` and
+check its mtime against the source: if stale, `lake build <Module>` to refresh
+it, then re-run the scratch verifier. Delete the scratch file before finishing.
+
 Before attributing a Mathlib-layer build failure to your own change, build the
 **unmodified** target on a clean tree to get a red/green baseline
 (`lake build HexBerlekampZassenhausMathlib.<Module>`), and `git diff origin/main
