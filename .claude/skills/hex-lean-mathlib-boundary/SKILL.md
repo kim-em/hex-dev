@@ -234,9 +234,20 @@ find a `theorem … : <StructureName> …` whose body builds it (or a `{ field :
 literal), not just `(h : <StructureName>)` binders and `…_fields h` projections.
 If every occurrence is a hypothesis or destructor, the substrate is unproduced —
 diagnose on the issue (per the CLAUDE.md "Directives are hypotheses" rule) and
-`coordination skip` rather than attempting the integration. The big three with
-no producer as of this writing: `HenselLiftDescentHypotheses`, the
-`toMonicLiftData` modP→lift transport, and `InitialLiftedFactorSubsetPartitionEvidence`.
+`coordination skip` rather than attempting the integration. Substrate producers
+still missing as of this writing: `HenselLiftDescentHypotheses` and the
+`toMonicLiftData` modP→lift transport. `InitialLiftedFactorSubsetPartitionEvidence`
+now *has* one — `initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData`
+(`IntReductionMod.lean`, #7362). Note where it landed: not next to its natural
+consumer (`slowPathHenselSubstrate_*` in `Basic.lean`) but downstream in
+`IntReductionMod.lean`, because its `pairwise_disjoint` field needs the mod-`p`
+squarefreeness datum (`modPFactorSubset_disjoint_of_choosePrimeData` /
+`squarefree_toMathlibPolynomial_monicModPImage_of_choosePrimeData`) that lives
+there, below `Basic.lean`. Building a producer whose fields straddle this boundary
+forces it into the lowest file that sees every datum, which in turn forces
+de-privatising any `private` `Basic.lean` helpers it calls (visibility-only, safe).
+Wiring it back up into the upstream slow-path substrate is a separate follow-up
+(the substrate cannot import downstream modules).
 
 The same check applies one level down to a "reduce X via the existing
 `*_of_recovery` lemmas" directive: the named recovery lemma existing is not
