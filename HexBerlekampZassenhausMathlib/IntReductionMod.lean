@@ -3806,7 +3806,7 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
   -- an exhaustive-core-factor image (under `hcomplete`).
   obtain ⟨raw, hraw_or, hentry_eq⟩ :=
     Hex.factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
-      f (Hex.ZPoly.defaultFactorCoeffBound f) entry primeData hchoose
+      f (Hex.ZPoly.defaultFactorCoeffBound f) entry primeData hselected
       hbranch hcomplete hentry_mem
   rcases hraw_or with hx | hcore_mem
   · -- X-power case: raw is an X-power factor, directly irreducible.
