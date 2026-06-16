@@ -4972,7 +4972,7 @@ private theorem bhksLatticeEntry_bottomRight_diag_pos
 def bhksCutRadiusSq4 (L : BhksLatticeBasis) : Nat :=
   4 * L.factorCount + L.coeffWidth * L.factorCount * L.factorCount
 
-private def bhksWithinGramSchmidtCut (L : BhksLatticeBasis)
+def bhksWithinGramSchmidtCut (L : BhksLatticeBasis)
     (dets : Vector Nat (L.factorCount + L.coeffWidth + 1))
     (i : Fin (L.factorCount + L.coeffWidth)) : Bool :=
   let d0 := dets.get ⟨i.val,
@@ -4983,7 +4983,7 @@ private def bhksWithinGramSchmidtCut (L : BhksLatticeBasis)
   else
     4 * ((d1 : Rat) / (d0 : Rat)) ≤ (bhksCutRadiusSq4 L : Rat)
 
-private def bhksProjectIndicator (r n : Nat) (v : Vector Int (r + n)) : Array Int :=
+def bhksProjectIndicator (r n : Nat) (v : Vector Int (r + n)) : Array Int :=
   (List.range r).map
     (fun j =>
       if h : j < r + n then
@@ -4992,17 +4992,43 @@ private def bhksProjectIndicator (r n : Nat) (v : Vector Int (r + n)) : Array In
         0)
     |>.toArray
 
-private def bhksRowsArrayToMatrix {m : Nat} (n : Nat) (rows : Array (Vector Int m)) :
+def bhksRowsArrayToMatrix {m : Nat} (n : Nat) (rows : Array (Vector Int m)) :
     Matrix Int n m :=
   Matrix.ofFn fun i j => (rows.getD i.val (Vector.ofFn fun _ => 0))[j]
 
-private theorem lll_delta_lower : (1 / 4 : Rat) < 3 / 4 := by
+set_option linter.unnecessarySimpa false in
+set_option linter.unreachableTactic false in
+theorem bhksRowsArrayToMatrix_row {m n : Nat} (rows : Array (Vector Int m))
+    (i : Fin n) :
+    Matrix.row (bhksRowsArrayToMatrix n rows) i =
+      rows.getD i.val (Vector.ofFn fun _ => 0) := by
+  apply Vector.ext
+  intro j hj
+  simpa [bhksRowsArrayToMatrix, Matrix.row, Matrix.ofFn] using
+    (show (Matrix.ofFn fun i j => (rows.getD i.val (Vector.ofFn fun _ => 0))[j])
+        [i][⟨j, hj⟩] = (rows.getD i.val (Vector.ofFn fun _ => 0))[⟨j, hj⟩] by
+      rfl)
+
+set_option linter.unnecessarySimpa false in
+set_option linter.unreachableTactic false in
+theorem bhksRowsArrayToMatrix_toArray {m n : Nat} (B : Matrix Int n m) :
+    bhksRowsArrayToMatrix n B.toArray = B := by
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  simpa [bhksRowsArrayToMatrix, Matrix.ofFn, Vector.get] using
+    (show (Matrix.ofFn fun i j => B[i][j])[⟨i, hi⟩][⟨j, hj⟩] =
+        B[⟨i, hi⟩][⟨j, hj⟩] by
+      rfl)
+
+theorem lll_delta_lower : (1 / 4 : Rat) < 3 / 4 := by
   grind
 
-private theorem lll_delta_upper : (3 / 4 : Rat) ≤ 1 := by
+theorem lll_delta_upper : (3 / 4 : Rat) ≤ 1 := by
   grind
 
-private def bhksCutProjectReducedRows
+def bhksCutProjectReducedRows
     (L : BhksLatticeBasis)
     (reduced : Matrix Int (L.factorCount + L.coeffWidth)
         (L.factorCount + L.coeffWidth)) :
@@ -5015,6 +5041,63 @@ private def bhksCutProjectReducedRows
       else
         acc)
     #[]
+
+def bhksRetainedRowIndices
+    (L : BhksLatticeBasis)
+    (reduced : Matrix Int (L.factorCount + L.coeffWidth)
+        (L.factorCount + L.coeffWidth)) :
+    Array (Fin (L.factorCount + L.coeffWidth)) :=
+  let dets := GramSchmidt.Int.gramDetVec reduced
+  (List.finRange (L.factorCount + L.coeffWidth)).foldl
+    (fun acc i =>
+      if bhksWithinGramSchmidtCut L dets i then
+        acc.push i
+      else
+        acc)
+    #[]
+
+def bhksProjectRetainedRows
+    (L : BhksLatticeBasis)
+    (reduced : Matrix Int (L.factorCount + L.coeffWidth)
+        (L.factorCount + L.coeffWidth))
+    (indices : Array (Fin (L.factorCount + L.coeffWidth))) :
+    Array (Array Int) :=
+  indices.map fun i => bhksProjectIndicator L.factorCount L.coeffWidth (reduced.row i)
+
+/--
+Proof-facing trace for the executable BHKS projected-row construction.  It
+records the unchecked LLL rows, their matrix view, the Gram determinant vector
+used by the cut, the retained source row indices, and the projected retained
+rows.  `bhksProjectedRows` below is the old compact projection of this trace.
+-/
+structure BhksProjectedRowsTrace (L : BhksLatticeBasis) where
+  reducedRows : Array (Vector Int (L.factorCount + L.coeffWidth))
+  reducedMatrix : Matrix Int (L.factorCount + L.coeffWidth)
+      (L.factorCount + L.coeffWidth)
+  gramDets : Vector Nat (L.factorCount + L.coeffWidth + 1)
+  retainedIndices : Array (Fin (L.factorCount + L.coeffWidth))
+  projectedRetainedRows : Array (Array Int)
+  projectedRows : Array (Array Int)
+
+def bhksProjectedRowsTrace (L : BhksLatticeBasis)
+    (hrows : 1 ≤ L.factorCount + L.coeffWidth) : BhksProjectedRowsTrace L :=
+  let reducedRows :=
+    lll.shortVectorsUnchecked L.basis (3 / 4) lll_delta_lower lll_delta_upper hrows
+  let reducedMatrix :=
+    bhksRowsArrayToMatrix (L.factorCount + L.coeffWidth) reducedRows
+  let retainedIndices := bhksRetainedRowIndices L reducedMatrix
+  { reducedRows
+    reducedMatrix
+    gramDets := GramSchmidt.Int.gramDetVec reducedMatrix
+    retainedIndices
+    projectedRetainedRows := bhksProjectRetainedRows L reducedMatrix retainedIndices
+    projectedRows := bhksCutProjectReducedRows L reducedMatrix }
+
+theorem bhksProjectedRowsTrace_reducedMatrix_eq
+    (L : BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth) :
+    (bhksProjectedRowsTrace L hrows).reducedMatrix =
+      lllSteered L.basis (3 / 4) lll_delta_lower lll_delta_upper hrows := by
+  simp [bhksProjectedRowsTrace, lll.shortVectorsUnchecked, bhksRowsArrayToMatrix_toArray]
 
 /--
 Run LLL on a BHKS row-basis lattice, discard rows whose Gram-Schmidt squared
@@ -5036,6 +5119,16 @@ def bhksProjectedRows (L : BhksLatticeBasis)
     cutRadiusSq4 := bhksCutRadiusSq4 L
     reducedRowCount := reducedRows.size
     projectedRows := bhksCutProjectReducedRows L reducedBasis }
+
+theorem bhksProjectedRows_eq_trace
+    (L : BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth) :
+    bhksProjectedRows L hrows =
+      { factorCount := L.factorCount
+        coeffWidth := L.coeffWidth
+        cutRadiusSq4 := bhksCutRadiusSq4 L
+        reducedRowCount := (bhksProjectedRowsTrace L hrows).reducedRows.size
+        projectedRows := (bhksProjectedRowsTrace L hrows).projectedRows } := by
+  simp [bhksProjectedRows, bhksProjectedRowsTrace]
 
 #guard psiCut 5 4 1 3 = 1
 #guard psiCut 5 4 1 3 ≠ 3 / (5 : Int)
