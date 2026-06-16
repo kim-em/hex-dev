@@ -11701,32 +11701,16 @@ theorem exhaustiveCoreFactorsWithBound_degree_pos
     unfold shouldRecordPolynomialFactor at hq_record
     simp [hq_one] at hq_record
 
-/-- Weakened-conclusion sibling of `exhaustiveCoreFactorsWithBound_degree_pos`:
-every emitted factor of the exhaustive recombination wrapper has positive
-`degree?` when the input core is primitive with positive leading coefficient
-and `shouldRecord = true`. A size-`1` emitted factor combines
-`Primitive q` (forcing `|q.coeff 0| = 1`) with `normalizeFactorSign q = q`
-(forcing `q.coeff 0 ≥ 0`) to conclude `q = 1`, which is excluded by
-`shouldRecord`. -/
-theorem exhaustiveCoreFactorsWithBound_degree_pos_of_primitive_pos_lc_core
-    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
-    (hcore_primitive : ZPoly.Primitive core)
-    (hcore_lc_pos : 0 < DensePoly.leadingCoeff core)
-    (hcore_record : shouldRecordPolynomialFactor core = true) :
-    ∀ factor ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
-      0 < factor.degree?.getD 0 := by
-  intro q hq
-  have hcore_norm : normalizeFactorSign core = core :=
-    normalizeFactorSign_eq_self_of_leadingCoeff_nonneg core (by omega)
-  have hemit_norm :=
-    exhaustiveCoreFactorsWithBound_normalizeFactorSign core B primeData hcore_norm
-  have hemit_record :=
-    exhaustiveCoreFactorsWithBound_shouldRecord core B primeData hcore_record
-  have hemit_primitive :=
-    exhaustiveCoreFactorsWithBound_primitive core B primeData hcore_primitive
-  have hq_norm : normalizeFactorSign q = q := hemit_norm q hq
-  have hq_record : shouldRecordPolynomialFactor q = true := hemit_record q hq
-  have hq_primitive : ZPoly.Primitive q := hemit_primitive q hq
+/-- A primitive, sign-normalized `ZPoly` that passes `shouldRecordPolynomialFactor`
+has positive `degree?`. A size-`1` such polynomial combines `Primitive q`
+(forcing `|q.coeff 0| = 1`) with `normalizeFactorSign q = q` (forcing
+`0 ≤ q.coeff 0`) to conclude `q = 1`, which `shouldRecord` excludes. -/
+theorem degree_pos_of_primitive_norm_record
+    (q : ZPoly)
+    (hq_primitive : ZPoly.Primitive q)
+    (hq_norm : normalizeFactorSign q = q)
+    (hq_record : shouldRecordPolynomialFactor q = true) :
+    0 < q.degree?.getD 0 := by
   rcases Nat.eq_zero_or_pos (q.degree?.getD 0) with hdeg_eq | hpos
   case inr => exact hpos
   case inl =>
@@ -11771,6 +11755,28 @@ theorem exhaustiveCoreFactorsWithBound_degree_pos_of_primitive_pos_lc_core
       rfl
     unfold shouldRecordPolynomialFactor at hq_record
     simp [hq_one] at hq_record
+
+/-- Weakened-conclusion sibling of `exhaustiveCoreFactorsWithBound_degree_pos`:
+every emitted factor of the exhaustive recombination wrapper has positive
+`degree?` when the input core is primitive with positive leading coefficient
+and `shouldRecord = true`. A size-`1` emitted factor combines
+`Primitive q` (forcing `|q.coeff 0| = 1`) with `normalizeFactorSign q = q`
+(forcing `q.coeff 0 ≥ 0`) to conclude `q = 1`, which is excluded by
+`shouldRecord`. -/
+theorem exhaustiveCoreFactorsWithBound_degree_pos_of_primitive_pos_lc_core
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    (hcore_primitive : ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < DensePoly.leadingCoeff core)
+    (hcore_record : shouldRecordPolynomialFactor core = true) :
+    ∀ factor ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
+      0 < factor.degree?.getD 0 := by
+  intro q hq
+  have hcore_norm : normalizeFactorSign core = core :=
+    normalizeFactorSign_eq_self_of_leadingCoeff_nonneg core (by omega)
+  exact degree_pos_of_primitive_norm_record q
+    (exhaustiveCoreFactorsWithBound_primitive core B primeData hcore_primitive q hq)
+    (exhaustiveCoreFactorsWithBound_normalizeFactorSign core B primeData hcore_norm q hq)
+    (exhaustiveCoreFactorsWithBound_shouldRecord core B primeData hcore_record q hq)
 
 private theorem polyProduct_push (factors : Array ZPoly) (factor : ZPoly) :
     Array.polyProduct (factors.push factor) =
