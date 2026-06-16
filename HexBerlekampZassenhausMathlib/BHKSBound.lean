@@ -870,6 +870,212 @@ theorem coeffL2NormBound_absorb_log
                     rw [← pow_add]
   simpa [n, L, N] using hmain.trans hbudget
 
+private theorem nat_le_two_pow_pred {n : Nat} (hn : 1 ≤ n) :
+    n ≤ 2 ^ (n - 1) := by
+  induction n with
+  | zero => omega
+  | succ n ih =>
+      cases n with
+      | zero => simp
+      | succ k =>
+          have hrec : k + 1 ≤ 2 ^ k := ih (by omega)
+          calc
+            k + 2 ≤ 2 * (k + 1) := by omega
+            _ ≤ 2 * 2 ^ k := Nat.mul_le_mul_left 2 hrec
+            _ = 2 ^ (k + 1) := by rw [pow_succ]; ring
+
+private theorem coeff_absorb_budget_nat {n : Nat} (hn : 2 ≤ n) :
+    n ^ (2 * (n - 1)) * 32 ^ n ≤ 2 ^ (2 * (n * n + n)) := by
+  have hn_base : n ≤ 2 ^ (n - 1) := nat_le_two_pow_pred (by omega)
+  have hn_pow :
+      n ^ (2 * (n - 1)) ≤ (2 ^ (n - 1)) ^ (2 * (n - 1)) :=
+    Nat.pow_le_pow_left hn_base _
+  have h32_pow : 32 ^ n ≤ (2 ^ 5) ^ n := by norm_num
+  have hmain :
+      n ^ (2 * (n - 1)) * 32 ^ n ≤
+        (2 ^ (n - 1)) ^ (2 * (n - 1)) * (2 ^ 5) ^ n :=
+    Nat.mul_le_mul hn_pow h32_pow
+  have hexp :
+      (2 ^ (n - 1)) ^ (2 * (n - 1)) * (2 ^ 5) ^ n =
+        2 ^ ((n - 1) * (2 * (n - 1)) + 5 * n) := by
+    rw [← pow_mul, ← pow_mul, ← pow_add]
+  have hexp_le :
+      (n - 1) * (2 * (n - 1)) + 5 * n ≤ 2 * (n * n + n) := by
+    obtain ⟨m, rfl⟩ := Nat.exists_eq_add_of_le hn
+    simp
+    nlinarith
+  calc
+    n ^ (2 * (n - 1)) * 32 ^ n
+        ≤ (2 ^ (n - 1)) ^ (2 * (n - 1)) * (2 ^ 5) ^ n := hmain
+    _ = 2 ^ ((n - 1) * (2 * (n - 1)) + 5 * n) := hexp
+    _ ≤ 2 ^ (2 * (n * n + n)) :=
+        Nat.pow_le_pow_right (by decide : 0 < 2) hexp_le
+
+private theorem one_fourth_le_log_sqrt_two :
+    (1 / 4 : ℝ) ≤ Real.log (Real.sqrt 2) := by
+  have hsqrt_ge : (4 / 3 : ℝ) ≤ Real.sqrt 2 := by
+    have hsq : (4 / 3 : ℝ) ^ 2 ≤ (Real.sqrt 2) ^ 2 := by
+      rw [Real.sq_sqrt (by norm_num)]
+      norm_num
+    exact le_of_sq_le_sq hsq (Real.sqrt_nonneg _)
+  have hinv_le : (Real.sqrt 2)⁻¹ ≤ (3 / 4 : ℝ) := by
+    have h :=
+      one_div_le_one_div_of_le (by norm_num : (0 : ℝ) < 4 / 3) hsqrt_ge
+    simpa using h
+  have hlog := Real.one_sub_inv_le_log_of_pos
+    (by exact Real.sqrt_pos.mpr (by norm_num : (0 : ℝ) < 2))
+  nlinarith
+
+private theorem one_fourth_le_log_l2norm_toPolynomial
+    {f : Hex.ZPoly}
+    (hN :
+      1 < HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) :
+    (1 / 4 : ℝ) ≤
+      Real.log (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) := by
+  let N := HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)
+  let M := Hex.ZPoly.coeffNormSq f
+  have hN_nonneg : 0 ≤ N := by
+    unfold N HexPolyZMathlib.l2norm
+    exact Real.sqrt_nonneg _
+  have hN_sq : N ^ 2 = (M : ℝ) := by
+    simpa [N, M] using HexPolyZMathlib.l2norm_toPolynomial_sq_eq_coeffNormSq f
+  have hN_sq_gt_one : (1 : ℝ) < N ^ 2 := by nlinarith [hN]
+  have hM_gt_one_real : (1 : ℝ) < (M : ℝ) := by
+    simpa [hN_sq] using hN_sq_gt_one
+  have hM_gt_one : 1 < M := by exact_mod_cast hM_gt_one_real
+  have hM_ge_two : 2 ≤ M := by omega
+  have hsqrt_two_le : Real.sqrt 2 ≤ N := by
+    have hsq : (Real.sqrt 2) ^ 2 ≤ N ^ 2 := by
+      rw [Real.sq_sqrt (by norm_num), hN_sq]
+      exact_mod_cast hM_ge_two
+    exact le_of_sq_le_sq hsq hN_nonneg
+  exact one_fourth_le_log_sqrt_two.trans
+    (Real.log_le_log (Real.sqrt_pos.mpr (by norm_num : (0 : ℝ) < 2)) hsqrt_two_le)
+
+/--
+Coefficient-ceiling/log absorption from the downstream BHKS side conditions.
+
+Writing `n = bhksDegree f`, `L = coeffL2NormBound f`, and
+`N = ‖toPolynomial f‖₂`, the reachable hypotheses `2 ≤ n` and `1 < N` imply
+
+`n^(n-1) * L^n ≤ 2^(n*n+n) * N^n * (log N)^n`.
+
+Unlike `coeffL2NormBound_absorb_log`, this lemma derives the needed logarithmic
+budget from the strict integer-polynomial norm lower bound: `1 < N` forces
+`√2 ≤ N` because `N^2` is an integer coefficient-square sum.  This gives only
+`1 / 4 ≤ log N`, not the older lemma's stronger `1 ≤ 2 * log N`, so the proof
+uses a squared comparison and the `n ≥ 2` power budget instead of delegating to
+`coeffL2NormBound_absorb_log`.
+-/
+theorem coeffL2NormBound_absorb_log_of_one_lt
+    (f : Hex.ZPoly)
+    (hdeg : 2 ≤ bhksDegree f)
+    (hN :
+      1 < HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) :
+    (bhksDegree f : ℝ) ^ (bhksDegree f - 1) *
+        (Hex.ZPoly.coeffL2NormBound f : ℝ) ^ bhksDegree f ≤
+      (2 : ℝ) ^ (bhksDegree f * bhksDegree f + bhksDegree f) *
+        (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) ^
+          bhksDegree f *
+        (Real.log (HexPolyZMathlib.l2norm
+          (HexPolyZMathlib.toPolynomial f))) ^ bhksDegree f := by
+  let n := bhksDegree f
+  let L : ℝ := Hex.ZPoly.coeffL2NormBound f
+  let N := HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)
+  let logN := Real.log N
+  have hn : 2 ≤ n := by simpa [n] using hdeg
+  have hN_nonneg : 0 ≤ N := by
+    unfold N HexPolyZMathlib.l2norm
+    exact Real.sqrt_nonneg _
+  have hL_nonneg : 0 ≤ L := by
+    unfold L
+    exact_mod_cast Nat.zero_le (Hex.ZPoly.coeffL2NormBound f)
+  have hlog_floor : (1 / 4 : ℝ) ≤ logN := by
+    simpa [N, logN] using one_fourth_le_log_l2norm_toPolynomial (f := f) hN
+  have hlog_nonneg : 0 ≤ logN := by nlinarith
+  have hL_sq : L ^ 2 ≤ 2 * N ^ 2 := by
+    have hceil := Hex.ZPoly.coeffL2NormBound_sq_le_two_mul_coeffNormSq f
+    have hnorm := HexPolyZMathlib.l2norm_toPolynomial_sq_eq_coeffNormSq f
+    unfold L N at *
+    rw [hnorm]
+    exact_mod_cast hceil
+  have hL_pow_sq : (L ^ n) ^ 2 ≤ (2 * N ^ 2) ^ n := by
+    have hpow := pow_le_pow_left₀ (sq_nonneg L) hL_sq n
+    rw [show (L ^ n) ^ 2 = (L ^ 2) ^ n by
+      rw [← pow_mul, ← pow_mul, Nat.mul_comm]]
+    exact hpow
+  have hA_sq :
+      (((n : ℝ) ^ (n - 1) * L ^ n) ^ 2) ≤
+        (n : ℝ) ^ (2 * (n - 1)) * ((2 : ℝ) * N ^ 2) ^ n := by
+    calc
+      ((n : ℝ) ^ (n - 1) * L ^ n) ^ 2
+          = ((n : ℝ) ^ (n - 1)) ^ 2 * (L ^ n) ^ 2 := by ring
+      _ = (n : ℝ) ^ (2 * (n - 1)) * (L ^ n) ^ 2 := by
+          rw [← pow_mul]
+          congr 1
+          ring
+      _ ≤ (n : ℝ) ^ (2 * (n - 1)) * ((2 : ℝ) * N ^ 2) ^ n :=
+          mul_le_mul_of_nonneg_left hL_pow_sq (pow_nonneg (by positivity) _)
+  have hlog_pow_floor :
+      (1 / 4 : ℝ) ^ (2 * n) ≤ logN ^ (2 * n) :=
+    pow_le_pow_left₀ (by norm_num : (0 : ℝ) ≤ 1 / 4) hlog_floor (2 * n)
+  have htwo_pow_le :
+      (2 : ℝ) ^ n ≤ (32 : ℝ) ^ n * logN ^ (2 * n) := by
+    calc
+      (2 : ℝ) ^ n = ((32 : ℝ) * (1 / 4 : ℝ) ^ 2) ^ n := by
+        norm_num
+      _ = (32 : ℝ) ^ n * (1 / 4 : ℝ) ^ (2 * n) := by
+        rw [mul_pow, pow_mul]
+      _ ≤ (32 : ℝ) ^ n * logN ^ (2 * n) :=
+          mul_le_mul_of_nonneg_left hlog_pow_floor (by positivity)
+  have hbudget_nat := coeff_absorb_budget_nat (n := n) hn
+  have hbudget :
+      (n : ℝ) ^ (2 * (n - 1)) * (32 : ℝ) ^ n ≤
+        (2 : ℝ) ^ (2 * (n * n + n)) := by
+    exact_mod_cast hbudget_nat
+  have hcoef_budget :
+      (n : ℝ) ^ (2 * (n - 1)) * (2 : ℝ) ^ n ≤
+        (2 : ℝ) ^ (2 * (n * n + n)) * logN ^ (2 * n) := by
+    calc
+      (n : ℝ) ^ (2 * (n - 1)) * (2 : ℝ) ^ n
+          ≤ (n : ℝ) ^ (2 * (n - 1)) * ((32 : ℝ) ^ n * logN ^ (2 * n)) :=
+            mul_le_mul_of_nonneg_left htwo_pow_le (pow_nonneg (by positivity) _)
+      _ = ((n : ℝ) ^ (2 * (n - 1)) * (32 : ℝ) ^ n) * logN ^ (2 * n) := by
+            ring
+      _ ≤ (2 : ℝ) ^ (2 * (n * n + n)) * logN ^ (2 * n) :=
+            mul_le_mul_of_nonneg_right hbudget (pow_nonneg hlog_nonneg _)
+  have hA_sq' :
+      (((n : ℝ) ^ (n - 1) * L ^ n) ^ 2) ≤
+        ((n : ℝ) ^ (2 * (n - 1)) * (2 : ℝ) ^ n) * N ^ (2 * n) := by
+    calc
+      ((n : ℝ) ^ (n - 1) * L ^ n) ^ 2
+          ≤ (n : ℝ) ^ (2 * (n - 1)) * ((2 : ℝ) * N ^ 2) ^ n := hA_sq
+      _ = ((n : ℝ) ^ (2 * (n - 1)) * (2 : ℝ) ^ n) * N ^ (2 * n) := by
+          rw [mul_pow, pow_mul]
+          ring
+  have hsq :
+      (((n : ℝ) ^ (n - 1) * L ^ n) ^ 2) ≤
+        (((2 : ℝ) ^ (n * n + n) * N ^ n * logN ^ n) ^ 2) := by
+    calc
+      ((n : ℝ) ^ (n - 1) * L ^ n) ^ 2
+          ≤ ((n : ℝ) ^ (2 * (n - 1)) * (2 : ℝ) ^ n) * N ^ (2 * n) := hA_sq'
+      _ ≤ ((2 : ℝ) ^ (2 * (n * n + n)) * logN ^ (2 * n)) * N ^ (2 * n) :=
+          mul_le_mul_of_nonneg_right hcoef_budget (pow_nonneg hN_nonneg _)
+      _ = ((2 : ℝ) ^ (n * n + n) * N ^ n * logN ^ n) ^ 2 := by
+          calc
+            (2 : ℝ) ^ (2 * (n * n + n)) * logN ^ (2 * n) * N ^ (2 * n)
+                = ((2 : ℝ) ^ (n * n + n)) ^ 2 * (N ^ n) ^ 2 * (logN ^ n) ^ 2 := by
+                  rw [← pow_mul, ← pow_mul, ← pow_mul]
+                  ring
+            _ = ((2 : ℝ) ^ (n * n + n) * N ^ n * logN ^ n) ^ 2 := by
+                  ring
+  have hright_nonneg :
+      0 ≤ (2 : ℝ) ^ (n * n + n) * N ^ n * logN ^ n :=
+    mul_nonneg
+      (mul_nonneg (by positivity) (pow_nonneg hN_nonneg _))
+      (pow_nonneg hlog_nonneg _)
+  simpa [n, L, N, logN] using le_of_sq_le_sq hsq hright_nonneg
+
 /--
 Named analytic target for bounding the BHKS logarithmic factor by the packaged
 `Nat.log2` factor.
