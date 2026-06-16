@@ -17625,13 +17625,6 @@ structure InitialLiftedFactorSubsetPartitionEvidence
                   Associated (HexPolyZMathlib.toPolynomial f)
                       (HexPolyZMathlib.toPolynomial g) →
                     S = T
-  support_subset_of_dvd_recombinationCandidate :
-    ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
-      Irreducible (HexPolyZMathlib.toPolynomial f) →
-        f ∣ core →
-          f ∣ liftedFactorProductCandidate d T →
-            RepresentsIntegerFactorAtLift core d f S →
-              S ⊆ T
   support_subset_of_dvd_liftedRecoveryCandidate :
     ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
       Irreducible (HexPolyZMathlib.toPolynomial f) →
@@ -17679,51 +17672,22 @@ private theorem liftedFactorSubsetPartition_initial_fields
           (∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
               Irreducible (HexPolyZMathlib.toPolynomial f) →
                 f ∣ core →
-                  f ∣ liftedFactorProductCandidate d T →
+                  f ∣ liftedRecoveryCandidate core d T →
                     RepresentsIntegerFactorAtLift core d f S →
-                      S ⊆ T) ∧
-            (∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
-                Irreducible (HexPolyZMathlib.toPolynomial f) →
-                  f ∣ core →
-                    f ∣ liftedRecoveryCandidate core d T →
-                      RepresentsIntegerFactorAtLift core d f S →
-                        S ⊆ T) := by
+                      S ⊆ T) := by
   exact ⟨h.cover, h.pairwise_disjoint, h.unique_up_to_associated,
-    h.support_subset_of_dvd_recombinationCandidate,
     h.support_subset_of_dvd_liftedRecoveryCandidate⟩
-
-/--
-Initial-state support containment for unscaled recombination candidates in the
-successful `choosePrimeData?` lifted-factor package.
-
-This is a named projection of the localized lifted-partition analytic
-obligation.  The constructor below consumes this theorem directly so downstream
-proof packages can refer to the unscaled support field independently of the
-cover and pairwise/uniqueness fields.
--/
-theorem liftedFactorSubsetPartition_initial_support_subset_of_dvd_recombinationCandidate_of_choosePrimeData
-    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
-    (hinitial :
-      InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData)) :
-    let d := Hex.ZPoly.toMonicLiftData core B primeData
-    ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
-      Irreducible (HexPolyZMathlib.toPolynomial f) →
-      f ∣ core →
-      f ∣ liftedFactorProductCandidate d T →
-      RepresentsIntegerFactorAtLift core d f S →
-      S ⊆ T := by
-  intro d f S T hirr hdvd_core hdvd_candidate hrep
-  obtain ⟨_, _, _, hsupport, _⟩ :=
-    liftedFactorSubsetPartition_initial_fields hinitial
-  exact hsupport hirr hdvd_core hdvd_candidate hrep
 
 /--
 Initial-state support containment for recovered recombination candidates in the
 successful `choosePrimeData?` lifted-factor package.
 
-This is the recovered-coordinate analogue of
-`liftedFactorSubsetPartition_initial_support_subset_of_dvd_recombinationCandidate_of_choosePrimeData`.
+This is the recovered-coordinate (dilate) support projection of the localized
+lifted-partition analytic obligation.  The unscaled `liftedFactorProductCandidate`
+sibling is not a field of `InitialLiftedFactorSubsetPartitionEvidence`: on
+non-monic cores it is the wrong coordinate and has no non-circular producer, so
+constructors that still need the unscaled `LiftedFactorSubsetPartition` field
+take it as a separate `hunscaled` hypothesis.
 -/
 theorem liftedFactorSubsetPartition_initial_support_subset_of_dvd_liftedRecoveryCandidate_of_choosePrimeData
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
@@ -17782,9 +17746,12 @@ Composes:
 * `hcore_sqfree` for `target_squarefree`;
 * `hinitial` for the recovered-coordinate analytic
   fields (`cover`, `pairwise_disjoint`, `unique_up_to_associated`,
-  `support_subset_of_dvd_recombinationCandidate`,
   `support_subset_of_dvd_liftedRecoveryCandidate`,
-  `liftedRecoveryCandidate_eq`).
+  `liftedRecoveryCandidate_eq`);
+* `hunscaled` for the still-live unscaled-candidate support field
+  (`liftedFactorProductCandidate`), which is no longer carried by `hinitial`:
+  on non-monic cores it is the wrong coordinate and has no non-circular
+  producer, so it is supplied separately by the caller.
 
 The constructor body does not manufacture correspondence or partition fields
 from arbitrary `PrimeChoiceData`; callers must supply the successful-lift
@@ -17799,10 +17766,18 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData)) :
+        (Hex.ZPoly.toMonicLiftData core B primeData))
+    (hunscaled :
+      let d := Hex.ZPoly.toMonicLiftData core B primeData
+      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
+        Irreducible (HexPolyZMathlib.toPolynomial f) →
+        f ∣ core →
+        f ∣ liftedFactorProductCandidate d T →
+        RepresentsIntegerFactorAtLift core d f S →
+        S ⊆ T) :
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     LiftedFactorSubsetPartition core d Finset.univ core := by
-    obtain ⟨hcover, hdisj, huniq, _, _⟩ :=
+    obtain ⟨hcover, hdisj, huniq, _⟩ :=
       liftedFactorSubsetPartition_initial_fields hinitial
     exact
       { toHenselSubsetCorrespondenceRest :=
@@ -17821,9 +17796,8 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
             hirr_f hdvd_f hSrep hirr_g hdvd_g hTrep hassoc
         support_subset_of_dvd_recombinationCandidate := by
           intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
-          exact
-            liftedFactorSubsetPartition_initial_support_subset_of_dvd_recombinationCandidate_of_choosePrimeData
-              core B primeData hinitial hirr hdvd_target hdvd_cand hSrep
+          exact hunscaled (f := f) (S := S) (T := T)
+            hirr hdvd_target hdvd_cand hSrep
         support_subset_of_dvd_liftedRecoveryCandidate := by
           intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
           exact
@@ -17853,10 +17827,18 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData)) :
+        (Hex.ZPoly.toMonicLiftData core B primeData))
+    (hunscaled :
+      let d := Hex.ZPoly.toMonicLiftData core B primeData
+      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
+        Irreducible (HexPolyZMathlib.toPolynomial f) →
+        f ∣ core →
+        f ∣ liftedFactorProductCandidate d T →
+        RepresentsIntegerFactorAtLift core d f S →
+        S ⊆ T) :
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     LiftedFactorSubsetPartition core d Finset.univ core := by
-    obtain ⟨hcover, hdisj, huniq, _, _⟩ :=
+    obtain ⟨hcover, hdisj, huniq, _⟩ :=
       liftedFactorSubsetPartition_initial_fields hinitial
     exact
       { toHenselSubsetCorrespondenceRest :=
@@ -17875,9 +17857,8 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData
             hirr_f hdvd_f hSrep hirr_g hdvd_g hTrep hassoc
         support_subset_of_dvd_recombinationCandidate := by
           intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
-          exact
-            liftedFactorSubsetPartition_initial_support_subset_of_dvd_recombinationCandidate_of_choosePrimeData
-              core B primeData hinitial hirr hdvd_target hdvd_cand hSrep
+          exact hunscaled (f := f) (S := S) (T := T)
+            hirr hdvd_target hdvd_cand hSrep
         support_subset_of_dvd_liftedRecoveryCandidate := by
           intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
           exact
@@ -18747,10 +18728,18 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData_success_descent
             hdescent.factor_count_eq S))
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData)) :
+        (Hex.ZPoly.toMonicLiftData core B primeData))
+    (hunscaled :
+      let d := Hex.ZPoly.toMonicLiftData core B primeData
+      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
+        Irreducible (HexPolyZMathlib.toPolynomial f) →
+        f ∣ core →
+        f ∣ liftedFactorProductCandidate d T →
+        RepresentsIntegerFactorAtLift core d f S →
+        S ⊆ T) :
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     LiftedFactorSubsetPartition core d Finset.univ core := by
-    obtain ⟨hcover, hdisj, huniq, _, _⟩ :=
+    obtain ⟨hcover, hdisj, huniq, _⟩ :=
       liftedFactorSubsetPartition_initial_fields hinitial
     exact
       { toHenselSubsetCorrespondenceRest :=
@@ -18771,9 +18760,8 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData_success_descent
             hirr_f hdvd_f hSrep hirr_g hdvd_g hTrep hassoc
         support_subset_of_dvd_recombinationCandidate := by
           intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
-          exact
-            liftedFactorSubsetPartition_initial_support_subset_of_dvd_recombinationCandidate_of_choosePrimeData
-              core B primeData hinitial hirr hdvd_target hdvd_cand hSrep
+          exact hunscaled (f := f) (S := S) (T := T)
+            hirr hdvd_target hdvd_cand hSrep
         support_subset_of_dvd_liftedRecoveryCandidate := by
           intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
           exact
@@ -18875,7 +18863,15 @@ theorem slowPathHenselSubstrate_of_choosePrimeData
         (Hex.ZPoly.toMonicLiftData core B primeData) True True)
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData)) :
+        (Hex.ZPoly.toMonicLiftData core B primeData))
+    (hunscaled :
+      let d := Hex.ZPoly.toMonicLiftData core B primeData
+      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
+        Irreducible (HexPolyZMathlib.toPolynomial f) →
+        f ∣ core →
+        f ∣ liftedFactorProductCandidate d T →
+        RepresentsIntegerFactorAtLift core d f S →
+        S ⊆ T) :
     SlowPathHenselSubstrate core B primeData := by
   have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
     zpoly_lc_pos_of_monic hcore_monic
@@ -18910,7 +18906,7 @@ theorem slowPathHenselSubstrate_of_choosePrimeData
       precision := ?_ }
   · exact hcorr
   · exact liftedFactorSubsetPartition_of_choosePrimeData
-      core B primeData hchoose hcorr hcore_sqfree hinitial
+      core B primeData hchoose hcorr hcore_sqfree hinitial hunscaled
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
@@ -18953,7 +18949,15 @@ theorem slowPathHenselSubstrate_of_choosePrimeData_success_descent
             hdescent.factor_count_eq S))
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData)) :
+        (Hex.ZPoly.toMonicLiftData core B primeData))
+    (hunscaled :
+      let d := Hex.ZPoly.toMonicLiftData core B primeData
+      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
+        Irreducible (HexPolyZMathlib.toPolynomial f) →
+        f ∣ core →
+        f ∣ liftedFactorProductCandidate d T →
+        RepresentsIntegerFactorAtLift core d f S →
+        S ⊆ T) :
     SlowPathHenselSubstrate core B primeData := by
   have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
     zpoly_lc_pos_of_monic hcore_monic
@@ -18990,6 +18994,7 @@ theorem slowPathHenselSubstrate_of_choosePrimeData_success_descent
       core B primeData hchoose hdescent hlifted_of_modP
   · exact liftedFactorSubsetPartition_of_choosePrimeData_success_descent
       core B primeData hchoose hcore_sqfree hdescent hlifted_of_modP hinitial
+      hunscaled
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
@@ -19038,7 +19043,15 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData
         (Hex.ZPoly.toMonicLiftData core B primeData) True True)
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData)) :
+        (Hex.ZPoly.toMonicLiftData core B primeData))
+    (hunscaled :
+      let d := Hex.ZPoly.toMonicLiftData core B primeData
+      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
+        Irreducible (HexPolyZMathlib.toPolynomial f) →
+        f ∣ core →
+        f ∣ liftedFactorProductCandidate d T →
+        RepresentsIntegerFactorAtLift core d f S →
+        S ⊆ T) :
     SlowPathHenselSubstrate core B primeData := by
   have hp_prime : Hex.Nat.Prime primeData.p :=
     Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
@@ -19065,7 +19078,7 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData
       precision := ?_ }
   · exact hcorr
   · exact liftedFactorSubsetPartition_of_toMonicPrimeData
-      core B primeData hselected hcorr hcore_sqfree hinitial
+      core B primeData hselected hcorr hcore_sqfree hinitial hunscaled
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
@@ -20394,7 +20407,15 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData_success_descent
             (Hex.ZPoly.toMonicLiftData core B primeData) factor S)
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData)) :
+        (Hex.ZPoly.toMonicLiftData core B primeData))
+    (hunscaled :
+      let d := Hex.ZPoly.toMonicLiftData core B primeData
+      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
+        Irreducible (HexPolyZMathlib.toPolynomial f) →
+        f ∣ core →
+        f ∣ liftedFactorProductCandidate d T →
+        RepresentsIntegerFactorAtLift core d f S →
+        S ⊆ T) :
     SlowPathHenselSubstrate core B primeData := by
   have hp_prime : Hex.Nat.Prime primeData.p :=
     Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
@@ -20427,7 +20448,7 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData_success_descent
       (henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
         core B primeData hselected hdescent hcore_lc_pos hcore_pos hprec_pos hbound
         hexists_lifted)
-      hcore_sqfree hinitial
+      hcore_sqfree hinitial hunscaled
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
