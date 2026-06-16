@@ -158,6 +158,36 @@ Relevant executable definitions:
 - `Hex.cldQuotientMod` in `HexBerlekampZassenhaus/Basic.lean`
 - `Hex.cldCoeffs` in `HexBerlekampZassenhaus/Basic.lean`
 
+### Cut Semantics for True-Factor Projection
+
+Decision: keep the current per-row executable Gram-Schmidt cut in
+`Hex.bhksProjectedRows`, and add a proof-facing separation certificate for the
+forward correctness path.
+
+Reason: the executable currently retains each reduced row whose Gram-Schmidt
+determinant-ratio norm is within the BHKS radius. Those survivors are not
+structurally prefix-closed: an LLL-reduced basis can have an early row above the
+radius and a later row below it, while a short lattice vector still uses the
+early row. A first-fail prefix cut would not fix that witness, and sorting rows
+by norm would need a new proof that the reordered rows still support the
+Gram-Schmidt coordinate argument. The narrow sound route is therefore to keep
+the runtime data unchanged and make the prefix behavior an explicit
+`CutSeparation`/van-Hoeij gap hypothesis in the types.
+
+Successor work:
+
+- `#7591`: expose the BHKS projected-row trace and prove the
+  `lll.shortVectorsUnchecked` through `.toArray` lattice/span bridge.
+- `#7592`: add the gap-conditioned cut-separation certificate and prove that,
+  under it, the current per-row survivor list is the retained prefix needed for
+  BHKS Lemma 5.7.
+- `#7593`: place the true-factor vector
+  `(indicatorVector S | cldSum_S)` in the BHKS lattice with the required
+  projection and norm facts.
+- `#7594`: compose the separation and true-factor vector bridges into the
+  concrete `CutProjectionHypotheses` producer consumed by the forward-count
+  route.
+
 ### Gap 3: Projected Bad-Vector Setup Bridge
 
 Status: covered by open issue `#5512`.
