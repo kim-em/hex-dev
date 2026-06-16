@@ -11256,7 +11256,7 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some
     (hB : B ≠ 0)
     (hcore_monic : Hex.DensePoly.Monic core)
     (hd :
-      d = Hex.ZPoly.toMonicLiftData core B primeData)
+      d = Hex.ZPoly.toMonicLiftData core (Hex.ZPoly.exhaustiveLiftBound core B) primeData)
     (hsearch :
       Hex.recombinationSearchMod core (d.p ^ d.k)
         d.liftedFactors.toList = some factors)
@@ -11266,12 +11266,13 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some
   have hlc : Hex.DensePoly.leadingCoeff core = 1 := hcore_monic
   have hrecombine :
       Hex.recombineExhaustive core
-          (Hex.ZPoly.toMonicLiftData core B primeData) =
+          (Hex.ZPoly.toMonicLiftData core (Hex.ZPoly.exhaustiveLiftBound core B) primeData) =
         factors.toArray :=
     Hex.recombineExhaustive_eq_of_recombinationSearchMod_some hsearch
   have hscaled :
       Hex.recombineScaledExhaustive (Hex.DensePoly.leadingCoeff core) core
-          (Hex.ZPoly.toMonicLiftData core B primeData) =
+          (Hex.ZPoly.toMonicLiftData core
+            (Hex.ZPoly.exhaustiveLiftBound core B) primeData) =
         factors.toArray := by
     rw [hlc, Hex.recombineScaledExhaustive_eq_recombineExhaustive_of_one]
     exact hrecombine
@@ -11296,7 +11297,8 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_scaledRecombinationSearchMod_some
     {core factor : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {d : Hex.LiftData} {factors : List Hex.ZPoly}
     (hB : B ≠ 0)
-    (hd : d = Hex.ZPoly.toMonicLiftData core B primeData)
+    (hd : d = Hex.ZPoly.toMonicLiftData core
+      (Hex.ZPoly.exhaustiveLiftBound core B) primeData)
     (hsearch :
       Hex.scaledRecombinationSearchMod (Hex.DensePoly.leadingCoeff core)
           core (d.p ^ d.k) d.liftedFactors.toList =
@@ -11306,7 +11308,8 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_scaledRecombinationSearchMod_some
   subst d
   have hrecombine :
       Hex.recombineScaledExhaustive (Hex.DensePoly.leadingCoeff core) core
-          (Hex.ZPoly.toMonicLiftData core B primeData) =
+          (Hex.ZPoly.toMonicLiftData core
+            (Hex.ZPoly.exhaustiveLiftBound core B) primeData) =
         factors.toArray :=
     Hex.recombineScaledExhaustive_eq_of_scaledRecombinationSearchMod_some hsearch
   have hnot_empty : factors.toArray.isEmpty = false := by
@@ -11330,7 +11333,8 @@ theorem exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_first_succe
     {pre suffix : List (List Hex.ZPoly × List Hex.ZPoly)}
     (hB : B ≠ 0)
     (hcore_monic : Hex.DensePoly.Monic core)
-    (hd : d = Hex.ZPoly.toMonicLiftData core B primeData)
+    (hd : d = Hex.ZPoly.toMonicLiftData core
+      (Hex.ZPoly.exhaustiveLiftBound core B) primeData)
     (hcore_ne_one : core ≠ 1)
     (hsplits :
       Hex.subsetSplitsWithFirst d.liftedFactors.toList =
@@ -17040,11 +17044,13 @@ becomes its `_of_bound` sibling, threading `B'`, `hcore_lc_le`,
 `hvalid`, `hprecision`.
 -/
 theorem exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence_of_bound
-    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {core : Hex.ZPoly} {B L : Nat} {primeData : Hex.PrimeChoiceData}
     {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
     (h :
-      HenselSubsetCorrespondenceHypotheses core B primeData d
+      HenselSubsetCorrespondenceHypotheses core L primeData d
         admissiblePrime successfulLift)
+    (hwrap : d = Hex.ZPoly.toMonicLiftData core
+      (Hex.ZPoly.exhaustiveLiftBound core B) primeData)
     (hpartition :
       LiftedFactorSubsetPartition core d Finset.univ core)
     (hcore_ne : core ≠ 0)
@@ -17093,7 +17099,7 @@ theorem exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence_of
   refine ⟨emitted, ?_, hassoc⟩
   exact
     exhaustiveCoreFactorsWithBound_mem_of_scaledRecombinationSearchMod_some
-      (B := B) hB_ne_zero h.lift_eq hsearchMod hemitted_mem
+      (B := B) hB_ne_zero hwrap hsearchMod hemitted_mem
 
 /--
 Final public coverage theorem (#4274 capstone): every irreducible integer
@@ -17134,11 +17140,13 @@ discharges the abstract bound hypotheses via `defaultFactorCoeffBound_valid`
 paired with `leadingCoeff_eq_coeff_last`.
 -/
 theorem exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence
-    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {core : Hex.ZPoly} {B L : Nat} {primeData : Hex.PrimeChoiceData}
     {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
     (h :
-      HenselSubsetCorrespondenceHypotheses core B primeData d
+      HenselSubsetCorrespondenceHypotheses core L primeData d
         admissiblePrime successfulLift)
+    (hwrap : d = Hex.ZPoly.toMonicLiftData core
+      (Hex.ZPoly.exhaustiveLiftBound core B) primeData)
     (hpartition :
       LiftedFactorSubsetPartition core d Finset.univ core)
     (hcore_ne : core ≠ 0)
@@ -17162,7 +17170,7 @@ theorem exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence
         (HexPolyZMathlib.toPolynomial factor) := by
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence_of_bound
-    h hpartition hcore_ne hcore_primitive hcore_lc_pos hB_ne_zero hd_modulus
+    h hwrap hpartition hcore_ne hcore_primitive hcore_lc_pos hB_ne_zero hd_modulus
     hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hd_liftedFactor_inj
     hirr hdvd (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le (defaultFactorCoeffBound_valid core hcore_ne) hprecision
@@ -17181,11 +17189,13 @@ becomes its `_of_bound` sibling, threading `B'`, `hcore_lc_le`,
 `hvalid`, `hprecision`.
 -/
 theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
-    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {core : Hex.ZPoly} {B L : Nat} {primeData : Hex.PrimeChoiceData}
     {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
     (h :
-      HenselSubsetCorrespondenceHypotheses core B primeData d
+      HenselSubsetCorrespondenceHypotheses core L primeData d
         admissiblePrime successfulLift)
+    (hwrap : d = Hex.ZPoly.toMonicLiftData core
+      (Hex.ZPoly.exhaustiveLiftBound core B) primeData)
     (hpartition :
       LiftedFactorSubsetPartition core d Finset.univ core)
     (hcore_ne : core ≠ 0)
@@ -17241,7 +17251,7 @@ theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCo
       exact hr
     obtain ⟨emitted, hemitted_mem, hassoc⟩ :=
       exhaustiveCoreFactorsWithBound_coverage_of_henselSubsetCorrespondence_of_bound
-        h hpartition hcore_ne hcore_primitive hcore_lc_pos hB_ne_zero hd_modulus
+        h hwrap hpartition hcore_ne hcore_primitive hcore_lc_pos hB_ne_zero hd_modulus
         hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hd_liftedFactor_inj
         hfactor_irr hfactor_dvd B' hcore_lc_le hvalid hprecision
     refine ⟨HexPolyZMathlib.toPolynomial emitted, ?_, ?_⟩
@@ -17309,11 +17319,13 @@ that instantiates `B' := Hex.ZPoly.defaultFactorCoeffBound core` and
 discharges the abstract bound hypotheses via `defaultFactorCoeffBound_valid`
 paired with `leadingCoeff_eq_coeff_last`. -/
 theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence
-    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {core : Hex.ZPoly} {B L : Nat} {primeData : Hex.PrimeChoiceData}
     {d : Hex.LiftData} {admissiblePrime successfulLift : Prop}
     (h :
-      HenselSubsetCorrespondenceHypotheses core B primeData d
+      HenselSubsetCorrespondenceHypotheses core L primeData d
         admissiblePrime successfulLift)
+    (hwrap : d = Hex.ZPoly.toMonicLiftData core
+      (Hex.ZPoly.exhaustiveLiftBound core B) primeData)
     (hpartition :
       LiftedFactorSubsetPartition core d Finset.univ core)
     (hcore_ne : core ≠ 0)
@@ -17334,12 +17346,12 @@ theorem exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCo
       Hex.ZPoly.Irreducible factor := by
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
-    h hpartition hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
+    h hwrap hpartition hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
     hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
     hd_liftedFactor_inj (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le (defaultFactorCoeffBound_valid core hcore_ne) hprecision
 
-set_option maxHeartbeats 2000000
+set_option maxHeartbeats 4000000
 /--
 Abstract-bound variant of
 `factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence`:
@@ -17371,10 +17383,19 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
     (h :
       HenselSubsetCorrespondenceHypotheses
         (Hex.normalizeForFactor f).squareFreeCore
-        (Hex.ZPoly.defaultFactorCoeffBound
-          (Hex.normalizeForFactor f).squareFreeCore)
+        (Hex.ZPoly.exhaustiveLiftBound
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound
+            (Hex.normalizeForFactor f).squareFreeCore))
         primeData
         d admissiblePrime successfulLift)
+    (hwrap : d = Hex.ZPoly.toMonicLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.exhaustiveLiftBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound
+          (Hex.normalizeForFactor f).squareFreeCore))
+      primeData)
     (hpartition :
       LiftedFactorSubsetPartition
         (Hex.normalizeForFactor f).squareFreeCore d Finset.univ
@@ -17415,7 +17436,7 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
   have hcore_lc_pos := zpoly_lc_pos_of_monic hcore_monic
   have hirr_raw : Hex.ZPoly.Irreducible raw :=
     exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
-      h hpartition hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
+      h hwrap hpartition hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
       hd_liftedFactor_inj B' hcore_lc_le hvalid hprecision raw hraw_mem
   rw [hentry_eq]
@@ -17468,10 +17489,19 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
     (h :
       HenselSubsetCorrespondenceHypotheses
         (Hex.normalizeForFactor f).squareFreeCore
-        (Hex.ZPoly.defaultFactorCoeffBound
-          (Hex.normalizeForFactor f).squareFreeCore)
+        (Hex.ZPoly.exhaustiveLiftBound
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound
+            (Hex.normalizeForFactor f).squareFreeCore))
         primeData
         d admissiblePrime successfulLift)
+    (hwrap : d = Hex.ZPoly.toMonicLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.exhaustiveLiftBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound
+          (Hex.normalizeForFactor f).squareFreeCore))
+      primeData)
     (hpartition :
       LiftedFactorSubsetPartition
         (Hex.normalizeForFactor f).squareFreeCore d Finset.univ
@@ -17506,7 +17536,7 @@ theorem factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselS
   have hcore_lc_pos := zpoly_lc_pos_of_monic hcore_monic
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact factorWithBound_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
-    primeData _hbranch _hentry_mem hchoose h hpartition hcore_ne hcore_monic
+    primeData _hbranch _hentry_mem hchoose h hwrap hpartition hcore_ne hcore_monic
     hcore_record hB_ne_zero
     hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
     hd_liftedFactor_inj (Hex.ZPoly.defaultFactorCoeffBound core)
@@ -17544,9 +17574,17 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
     (h :
       HenselSubsetCorrespondenceHypotheses
         (Hex.normalizeForFactor f).squareFreeCore
-        (Hex.ZPoly.defaultFactorCoeffBound f)
+        (Hex.ZPoly.exhaustiveLiftBound
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f))
         primeData
         d admissiblePrime successfulLift)
+    (hwrap : d = Hex.ZPoly.toMonicLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.exhaustiveLiftBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f))
+      primeData)
     (hpartition :
       LiftedFactorSubsetPartition
         (Hex.normalizeForFactor f).squareFreeCore d Finset.univ
@@ -17584,7 +17622,7 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
   obtain ⟨raw, hraw_mem, hentry_eq⟩ := hcore_entry
   have hirr_raw : Hex.ZPoly.Irreducible raw :=
     exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
-      h hpartition hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
+      h hwrap hpartition hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
       hd_liftedFactor_inj B' hcore_lc_le hvalid hprecision raw hraw_mem
   rw [hentry_eq]
@@ -17655,9 +17693,17 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
     (h :
       HenselSubsetCorrespondenceHypotheses
         (Hex.normalizeForFactor f).squareFreeCore
-        (Hex.ZPoly.defaultFactorCoeffBound f)
+        (Hex.ZPoly.exhaustiveLiftBound
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f))
         primeData
         d admissiblePrime successfulLift)
+    (hwrap : d = Hex.ZPoly.toMonicLiftData
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.exhaustiveLiftBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f))
+      primeData)
     (hpartition :
       LiftedFactorSubsetPartition
         (Hex.normalizeForFactor f).squareFreeCore d Finset.univ
@@ -17690,7 +17736,7 @@ theorem factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorr
   set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact factor_exhaustive_branch_entry_core_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
-    primeData _hbranch _hentry_mem hchoose h hpartition hcore_ne hcore_primitive
+    primeData _hbranch _hentry_mem hchoose h hwrap hpartition hcore_ne hcore_primitive
     hcore_lc_pos hcore_record hB_ne_zero hd_modulus hd_liftedFactor_monic
     hd_liftedFactor_natDegree_pos hd_liftedFactor_inj
     (Hex.ZPoly.defaultFactorCoeffBound core)
@@ -18794,9 +18840,11 @@ theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hdescent :
       HenselLiftDescentHypotheses (Hex.normalizeForFactor f).squareFreeCore
-        (Hex.ZPoly.defaultFactorCoeffBound f) primeData
+        (Hex.ZPoly.exhaustiveLiftBound (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f)) primeData
         (Hex.ZPoly.toMonicLiftData (Hex.normalizeForFactor f).squareFreeCore
-          (Hex.ZPoly.defaultFactorCoeffBound f) primeData) True True)
+          (Hex.ZPoly.exhaustiveLiftBound (Hex.normalizeForFactor f).squareFreeCore
+            (Hex.ZPoly.defaultFactorCoeffBound f)) primeData) True True)
     (hlifted_of_modP :
       ∀ {factor : Hex.ZPoly} {S : ModPFactorSubset primeData},
         Irreducible (HexPolyZMathlib.toPolynomial factor) →
@@ -18804,15 +18852,19 @@ theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
         RepresentsIntegerFactorModP primeData factor S →
         RepresentsIntegerFactorAtLift (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.toMonicLiftData (Hex.normalizeForFactor f).squareFreeCore
-            (Hex.ZPoly.defaultFactorCoeffBound f) primeData) factor
+            (Hex.ZPoly.exhaustiveLiftBound (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.defaultFactorCoeffBound f)) primeData) factor
           (liftedSubsetOfModPSubset primeData
             (Hex.ZPoly.toMonicLiftData (Hex.normalizeForFactor f).squareFreeCore
-              (Hex.ZPoly.defaultFactorCoeffBound f) primeData)
+              (Hex.ZPoly.exhaustiveLiftBound (Hex.normalizeForFactor f).squareFreeCore
+                (Hex.ZPoly.defaultFactorCoeffBound f)) primeData)
             hdescent.factor_count_eq S)) :
     let core := (Hex.normalizeForFactor f).squareFreeCore
     let B := Hex.ZPoly.defaultFactorCoeffBound f
-    let d := Hex.ZPoly.toMonicLiftData core B primeData
-    HenselSubsetCorrespondenceHypotheses core B primeData d True True :=
+    let d := Hex.ZPoly.toMonicLiftData core (Hex.ZPoly.exhaustiveLiftBound core B)
+      primeData
+    HenselSubsetCorrespondenceHypotheses core (Hex.ZPoly.exhaustiveLiftBound core B)
+      primeData d True True :=
   henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
     _ _ primeData hchoose hdescent hlifted_of_modP
 

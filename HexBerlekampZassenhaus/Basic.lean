@@ -7279,7 +7279,7 @@ def exhaustiveCoreFactorsWithBound
   if B = 0 then
     #[core]
   else
-    let liftData := ZPoly.toMonicLiftData core B primeData
+    let liftData := ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData
     let factors :=
       recombineScaledExhaustive (DensePoly.leadingCoeff core) core liftData
     if factors.isEmpty then
@@ -7301,7 +7301,9 @@ private def exhaustiveMonicCoreGuardPrimeData? : Option PrimeChoiceData :=
   | some primeData =>
       exhaustiveCoreFactorsWithBound cldGuardF 4 primeData =
         let liftData :=
-          henselLiftData cldGuardF (precisionForCoeffBound 4 primeData.p) primeData
+          henselLiftData cldGuardF
+            (precisionForCoeffBound (ZPoly.exhaustiveLiftBound cldGuardF 4) primeData.p)
+            primeData
         let factors := recombineScaledExhaustive (DensePoly.leadingCoeff cldGuardF)
           cldGuardF liftData
         if factors.isEmpty then #[cldGuardF] else factors
@@ -11189,11 +11191,11 @@ theorem exhaustiveCoreFactorsWithBound_normalizeFactorSign
   · simp only [hB, if_false]
     by_cases hempty :
         (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (ZPoly.toMonicLiftData core B primeData)).isEmpty
+            (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)).isEmpty
     · simp [hempty, hcore]
     · simp only [hempty]
       exact recombineScaledExhaustive_normalizeFactorSign (DensePoly.leadingCoeff core) core
-        (ZPoly.toMonicLiftData core B primeData)
+        (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)
 
 theorem exhaustiveCoreFactorsWithBound_shouldRecord
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
@@ -11206,11 +11208,11 @@ theorem exhaustiveCoreFactorsWithBound_shouldRecord
   · simp only [hB, if_false]
     by_cases hempty :
         (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (ZPoly.toMonicLiftData core B primeData)).isEmpty
+            (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)).isEmpty
     · simp [hempty, hcore]
     · simp only [hempty]
       exact recombineScaledExhaustive_shouldRecord (DensePoly.leadingCoeff core) core
-        (ZPoly.toMonicLiftData core B primeData)
+        (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)
 
 /-- Every emitted factor of the exhaustive recombination wrapper is
 primitive when the input core is primitive. The two `#[core]` short-circuit
@@ -11227,11 +11229,11 @@ theorem exhaustiveCoreFactorsWithBound_primitive
   · simp only [hB, if_false]
     by_cases hempty :
         (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (ZPoly.toMonicLiftData core B primeData)).isEmpty
+            (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)).isEmpty
     · simp [hempty, hcore_primitive]
     · simp only [hempty]
       exact recombineScaledExhaustive_primitive (DensePoly.leadingCoeff core) core
-        (ZPoly.toMonicLiftData core B primeData)
+        (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)
 
 private theorem bhksRecoverClassified_success_product
     {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
@@ -11511,24 +11513,26 @@ theorem exhaustiveCoreFactorsWithBound_product
   · simp only [hB, if_false]
     by_cases hempty :
         (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (ZPoly.toMonicLiftData core B primeData)).isEmpty
+            (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)).isEmpty
     · simp [hempty, Array.polyProduct]
     · simp only [hempty]
       cases hsearch : scaledRecombinationSearchMod (DensePoly.leadingCoeff core) core
           (liftModulus
-            (ZPoly.toMonicLiftData core B primeData))
-          (ZPoly.toMonicLiftData core B primeData).liftedFactors.toList with
+            (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData))
+          (ZPoly.toMonicLiftData core
+            (ZPoly.exhaustiveLiftBound core B) primeData).liftedFactors.toList with
       | none =>
           have hnil :
               recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-                (ZPoly.toMonicLiftData core B primeData) = #[] := by
+                (ZPoly.toMonicLiftData core
+                  (ZPoly.exhaustiveLiftBound core B) primeData) = #[] := by
             rw [recombineScaledExhaustive]
             simp [hsearch]
           rw [hnil] at hempty
           simp at hempty
       | some xs =>
           exact recombineScaledExhaustive_product (DensePoly.leadingCoeff core) core
-            (ZPoly.toMonicLiftData core B primeData)
+            (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)
             xs hsearch
 
 /-- The leading coefficient of an `Array.polyProduct` over a list of polynomials
