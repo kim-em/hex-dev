@@ -127,6 +127,19 @@ theorem hex_choose_eq (n k : Nat) : Hex.Nat.choose n k = Nat.choose n k := by
 then `simp_rw [hex_choose_eq]` before reaching for any Mathlib `Nat.choose`
 lemma (`Nat.sum_range_choose`, etc.). Same pattern for `Hex.Nat.Prime`.
 
+## `Matrix` / `Vector` resolve to Mathlib's inside the Mathlib layer
+
+The mirror of the shadow above. In a Mathlib-layer file (namespace
+`HexBerlekampZassenhausMathlib.*`, importing Mathlib), bare `Matrix`/`Vector`
+resolve to **Mathlib's** `Matrix` (index *types*) / `Vector`, NOT the
+executable `Hex.Matrix Int n m` (Nat-indexed dense rows) / `Hex.Vector`. When a
+lemma signature must name an executable matrix — e.g. the reduced BHKS basis
+fed to `Hex.bhksCutPrefixCount` — write `Hex.Matrix Int n m` and
+`Hex.Vector.normSq` explicitly. Symptom of getting it wrong: a type-mismatch on
+the dimension argument, `L.factorCount + L.coeffWidth` "has type ℕ … of sort
+outParam Type but is expected to have type Type", because Mathlib's `Matrix`
+wants its first two arguments to be index types, not `Nat`.
+
 ## The Mathlib layer *models* executable definitions
 
 The bridge does not just prove lemmas about the executable types; it carries
