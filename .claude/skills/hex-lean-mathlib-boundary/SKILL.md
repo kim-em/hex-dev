@@ -302,6 +302,26 @@ clean half needs the undilated `lfp S ∣ lfp T`. This was #7479 deliverable 2;
 the dilate equality/support wrappers (deliverables 1/3, #7491 / `toMonicLiftData_
 liftedRecoveryCandidate_eq`) are the unblocked ones.
 
+The same #7479 gap is what currently blocks the **whole slow-modular toMonic
+capstone** (#7561 / `factorSlowModularFactorsWithBound_factor_irreducible_of_fast_none`):
+its irreducibility producer needs a `LiftedFactorSubsetPartition core d Finset.univ
+core`, whose required field `support_subset_of_dvd_recombinationCandidate`
+(`Basic.lean:3547`) is the **unscaled** support `S ⊆ T` over
+`liftedFactorProductCandidate` (`Basic.lean:2527`). *Every* partition producer
+(`Basic.lean:17918/19131/20790`, `IntReductionMod.lean:3102`) takes it as the
+open `hunscaled` hypothesis; the only landed `S ⊆ T` lemma
+(`toMonicLiftData_subset_of_dvd_liftedRecoveryCandidate`) is over the **scaled**
+`liftedRecoveryCandidate` (`Basic.lean:2540`), which coincides with the unscaled
+one **only at `leadingCoeff core = 1`** (`liftedRecoveryCandidate.eq_productCandidate_of_lc_one`)
+— and the re-key runs on non-monic cores. Disambiguation for #7561's Notes: the
+`MonicDescentHypotheses` / `hexists_lifted` adapter is **not** the blocker — `hcorr`
+and `hinitial` are producible from core facts now
+(`henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent`,
+`initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData`), and the
+heavy `descends` field is not consumed when building the correspondence (only
+`lift_eq = rfl` / `successful_lift = trivial`). Land the unscaled-support
+producer first, then #7561 is the thin composition.
+
 **But "no producer" only blocks a transport that genuinely needs a bridge
 between two concrete defs.** Before skipping a `henselLiftData → toMonicLiftData`
 (or similar) transport, check whether the consumer chain is *generic in the
