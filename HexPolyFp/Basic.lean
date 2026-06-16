@@ -956,8 +956,14 @@ private theorem coeff_one (n : Nat) :
   change (DensePoly.C (1 : ZMod64 p)).coeff n = if n = 0 then (1 : ZMod64 p) else 0
   exact DensePoly.coeff_C (1 : ZMod64 p) n
 
+/-- The zero polynomial evaluates to zero at every point. -/
+@[simp] theorem eval_zero (x : ZMod64 p) :
+    DensePoly.eval (0 : FpPoly p) x = 0 := by
+  exact DensePoly.eval_zero x
+
 /-- A constant polynomial evaluates to its constant at every point. This is
 the base case from which the evaluation map's homomorphism laws are built. -/
+@[simp]
 theorem eval_C (c x : ZMod64 p) :
     DensePoly.eval (FpPoly.C c) x = c := by
   unfold FpPoly.C
@@ -965,6 +971,7 @@ theorem eval_C (c x : ZMod64 p) :
 
 /-- The variable `X` evaluates to the evaluation point. The companion base
 case to `eval_C` for reasoning about the evaluation map. -/
+@[simp]
 theorem eval_X [ZMod64.PrimeModulus p] (x : ZMod64 p) :
     DensePoly.eval (FpPoly.X : FpPoly p) x = x := by
   unfold FpPoly.X DensePoly.eval DensePoly.toArray DensePoly.monomial
@@ -1003,6 +1010,7 @@ private theorem foldl_eval_replicate_zero (x : ZMod64 p) :
       rw [Lean.Grind.CommSemiring.mul_comm x (x ^ n)]
 
 /-- Evaluating a monomial gives the coefficient times the corresponding power. -/
+@[simp]
 theorem eval_monomial (n : Nat) (c x : ZMod64 p) :
     DensePoly.eval (DensePoly.monomial n c : FpPoly p) x = c * x ^ n := by
   by_cases hc : c = 0
@@ -1446,6 +1454,7 @@ theorem eval_shift_scale_row (i : Nat) (c : ZMod64 p) (f : FpPoly p)
 
 /-- Evaluation is additive: the value of a sum is the sum of the values.
 One half of the statement that evaluation at a point is a ring homomorphism. -/
+@[simp]
 theorem eval_add (f h : FpPoly p) (x : ZMod64 p) :
     DensePoly.eval (f + h) x = DensePoly.eval f x + DensePoly.eval h x := by
   let bound := max f.size h.size
@@ -1474,6 +1483,7 @@ theorem eval_add (f h : FpPoly p) (x : ZMod64 p) :
 /-- Evaluation respects subtraction. Lets callers push an evaluation through
 a difference of polynomials, for example when checking that two polynomials
 agree at a point. -/
+@[simp]
 theorem eval_sub (f h : FpPoly p) (x : ZMod64 p) :
     DensePoly.eval (f - h) x = DensePoly.eval f x - DensePoly.eval h x := by
   let bound := max f.size h.size
@@ -1498,6 +1508,14 @@ theorem eval_sub (f h : FpPoly p) (x : ZMod64 p) :
       DensePoly.coeff_eq_zero_of_size_le h
         (Nat.le_trans (Nat.le_max_right f.size h.size) hi)]
     grind
+
+/-- Evaluation respects additive inverses. -/
+@[simp] theorem eval_neg (f : FpPoly p) (x : ZMod64 p) :
+    DensePoly.eval (-f) x = -(DensePoly.eval f x) := by
+  change DensePoly.eval (DensePoly.neg f) x = -(DensePoly.eval f x)
+  unfold DensePoly.neg
+  rw [eval_sub, eval_zero]
+  exact DensePoly.ZeroSubNegLaw.zero_sub_eq_neg (DensePoly.eval f x)
 
 @[simp] theorem add_zero (f : FpPoly p) :
     f + 0 = f := by
@@ -2728,6 +2746,7 @@ theorem C_mul_eq_scale (c : ZMod64 p) (f : FpPoly p) :
 
 /-- Evaluating `C c * f` at `x` multiplies the value of `f` by the scalar `c`.
 The constant-multiplication special case of `eval_mul`. -/
+@[simp]
 theorem eval_C_mul (c : ZMod64 p) (f : FpPoly p) (x : ZMod64 p) :
     DensePoly.eval (DensePoly.C c * f) x = c * DensePoly.eval f x := by
   rw [C_mul_eq_scale]
@@ -2748,7 +2767,7 @@ theorem eval_C_mul (c : ZMod64 p) (f : FpPoly p) (x : ZMod64 p) :
     rw [DensePoly.coeff_eq_zero_of_size_le f hi]
     exact hzero
 
-private theorem eval_one (x : ZMod64 p) :
+@[simp] theorem eval_one (x : ZMod64 p) :
     DensePoly.eval (1 : FpPoly p) x = 1 := by
   change DensePoly.eval (FpPoly.C (1 : ZMod64 p)) x = 1
   exact eval_C 1 x
@@ -2800,6 +2819,7 @@ private theorem mul_eq_fold_shift_scale_rows (f h : FpPoly p) :
 /-- Evaluation is multiplicative: the value of a product is the product of the
 values. Together with `eval_add` this is the ring-homomorphism property of
 evaluation, used wherever a root or factorization is checked pointwise. -/
+@[simp]
 theorem eval_mul (f h : FpPoly p) (x : ZMod64 p) :
     DensePoly.eval (f * h) x = DensePoly.eval f x * DensePoly.eval h x := by
   rw [mul_eq_fold_shift_scale_rows]
