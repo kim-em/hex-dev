@@ -3080,6 +3080,114 @@ theorem initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData
 
 end IntReductionMod
 
+/-- **#7584 core-facts producer (lifted-subset partition).**
+
+`LiftedFactorSubsetPartition core (toMonicLiftData core B primeData) Finset.univ
+core` from the executable `toMonicPrimeData?` selection witness and the standard
+core side conditions alone.  The embedded Hensel correspondence comes from the
+carrier-free `henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData` (no
+`MonicDescentHypotheses` input), and the recovered-coordinate partition evidence
+from
+`IntReductionMod.initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData`,
+so the caller supplies neither the descent carrier nor a separate
+`InitialLiftedFactorSubsetPartitionEvidence`.  The monic-only unscaled support
+field stays guarded by `leadingCoeff core = 1`; the non-monic path routes through
+the recovered `liftedRecoveryCandidate` coordinate. -/
+theorem liftedFactorSubsetPartition_of_toMonicPrimeData_complete
+    (core : Hex.ZPoly) (B : Nat)
+    (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
+    (hB_ne_zero : B ≠ 0)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p) :
+    let d := Hex.ZPoly.toMonicLiftData core B primeData
+    LiftedFactorSubsetPartition core d Finset.univ core := by
+  intro d
+  have hp_prime : Hex.Nat.Prime primeData.p :=
+    Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+  have hp2 : 2 ≤ primeData.p := hp_prime.two_le
+  have hprec_spec :
+      2 * B < primeData.p ^ Hex.precisionForCoeffBound B primeData.p :=
+    Hex.precisionForCoeffBound_spec hp2 B
+  have hB1 : 1 ≤ B := Nat.one_le_iff_ne_zero.mpr hB_ne_zero
+  have hmodulus :
+      2 ≤ primeData.p ^ Hex.precisionForCoeffBound B primeData.p := by omega
+  have hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p := by
+    by_contra hlt
+    have hzero : Hex.precisionForCoeffBound B primeData.p = 0 := by omega
+    rw [hzero, pow_zero] at hmodulus
+    omega
+  exact liftedFactorSubsetPartition_of_toMonicPrimeData core B primeData hselected
+    (henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData core B primeData
+      hselected hcore_lc_pos hcore_pos hcore_prim hprecision hbound hB_ne_zero)
+    hcore_sqfree
+    (IntReductionMod.initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData
+      core B primeData hselected hcore_lc_pos hcore_pos hcore_prim hB_ne_zero hbound)
+
+/-- **#7584 core-facts producer (slow-path Hensel substrate).**
+
+`SlowPathHenselSubstrate core B primeData` from the `toMonicPrimeData?` selection
+witness and standard core side conditions alone -- the slow-modular / fast-BHKS
+substrate package with no `MonicDescentHypotheses` carrier and no
+`InitialLiftedFactorSubsetPartitionEvidence` input.  The `corr` and `partition`
+fields are the carrier-free / complete `toMonicPrimeData?` producers above; the
+remaining lifted-factor monic / positive-degree / injectivity and modulus /
+precision facts discharge directly from the selection witness. -/
+theorem slowPathHenselSubstrate_of_toMonicPrimeData
+    (core : Hex.ZPoly) (B : Nat)
+    (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
+    (hB_ne_zero : B ≠ 0)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p) :
+    SlowPathHenselSubstrate core B primeData := by
+  have hp_prime : Hex.Nat.Prime primeData.p :=
+    Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+  have hp2 : 2 ≤ primeData.p := hp_prime.two_le
+  have hprec_spec :
+      2 * B < primeData.p ^ Hex.precisionForCoeffBound B primeData.p :=
+    Hex.precisionForCoeffBound_spec hp2 B
+  have hB1 : 1 ≤ B := Nat.one_le_iff_ne_zero.mpr hB_ne_zero
+  have hmodulus :
+      2 ≤ primeData.p ^ Hex.precisionForCoeffBound B primeData.p := by omega
+  have hprec_pos : 1 ≤ Hex.precisionForCoeffBound B primeData.p := by
+    by_contra hlt
+    have hzero : Hex.precisionForCoeffBound B primeData.p = 0 := by omega
+    rw [hzero, pow_zero] at hmodulus
+    omega
+  refine
+    { corr := ?_
+      partition := ?_
+      liftedFactor_monic := ?_
+      liftedFactor_natDegree_pos := ?_
+      liftedFactor_inj := ?_
+      modulus := ?_
+      precision := ?_ }
+  · exact henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData
+      core B primeData hselected hcore_lc_pos hcore_pos hcore_prim
+      hprec_pos hbound hB_ne_zero
+  · exact liftedFactorSubsetPartition_of_toMonicPrimeData_complete
+      core B primeData hselected hcore_lc_pos hcore_pos hcore_prim
+      hcore_sqfree hB_ne_zero hbound
+  · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
+      core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+  · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
+      core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+  · exact Hex.ZPoly.toMonicLiftData_liftedFactor_injective_of_monicPrimeData
+      core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+  · exact hmodulus
+  · exact hprec_spec
+
 /-- **#4549 base task (HO-1), outer-bound specialisation, rewired for #4553.**
 
 Specialisation of `liftedFactorSubsetPartition_of_choosePrimeData`
