@@ -56,9 +56,14 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   `HexPolyZMathlib.toPolynomial` is an `abbrev` specializing the general
   `HexPolyMathlib.toPolynomial` to `R = Int`. They are defeq but **not
   syntactically equal**, so `rw [hk]` fails when `hk` was produced by a
-  `HexPolyMathlib`-namespace lemma against a `HexPolyZMathlib` goal. Bind the
-  result with an explicit `HexPolyZMathlib.toPolynomial …` type ascription
-  first, then `obtain`/`rw`.
+  `HexPolyMathlib`-namespace lemma against a `HexPolyZMathlib` goal. This also
+  bites when you `rw` the lemma *directly* (e.g.
+  `rw [← HexPolyMathlib.leadingCoeff_toPolynomial]`): the chained rewrite
+  leaves a `HexPolyMathlib.toPolynomial` term that a later
+  `rw [hg_toPolynomial : HexPolyZMathlib.toPolynomial g = …]` then cannot
+  match. Bind the result with an explicit `HexPolyZMathlib.toPolynomial …`
+  type ascription first (`have hlc : (HexPolyZMathlib.toPolynomial g).leadingCoeff
+  = … := HexPolyMathlib.leadingCoeff_toPolynomial g`), then `rw [← hlc, …]`.
 
 ## Proving *inside* the Mathlib-free files
 
