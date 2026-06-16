@@ -31,6 +31,25 @@ open Polynomial
 
 variable {p : ℕ}
 
+private theorem precision_of_le
+    {B L p : Nat} (hp : 2 ≤ p) (hBL : B ≤ L) :
+    2 * B < p ^ Hex.precisionForCoeffBound L p := by
+  have hspec : 2 * L < p ^ Hex.precisionForCoeffBound L p :=
+    Hex.precisionForCoeffBound_spec hp L
+  omega
+
+theorem exhaustiveLiftBound_precision
+    (core : Hex.ZPoly) (B p : Nat) (hp : 2 ≤ p) :
+    2 * B <
+      p ^ Hex.precisionForCoeffBound (Hex.ZPoly.exhaustiveLiftBound core B) p :=
+  precision_of_le hp (Hex.ZPoly.le_exhaustiveLiftBound core B)
+
+theorem exhaustiveLiftBound_monic_precision
+    (core : Hex.ZPoly) (B p : Nat) (hp : 2 ≤ p) :
+    2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+      p ^ Hex.precisionForCoeffBound (Hex.ZPoly.exhaustiveLiftBound core B) p :=
+  precision_of_le hp (Hex.ZPoly.monicBound_le_exhaustiveLiftBound core B)
+
 /--
 The executable coefficientwise reduction `Hex.ZPoly.modP` agrees with
 Mathlib's coefficient map from `ℤ[X]` to `(ZMod p)[X]` after transporting the

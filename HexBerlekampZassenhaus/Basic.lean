@@ -7236,6 +7236,21 @@ passes to `henselLiftData`.
 def toMonicPrimeData? (core : ZPoly) : Option PrimeChoiceData :=
   choosePrimeData? (toMonic core).monic
 
+/-- Internal Hensel precision bound for the slow exhaustive branch.
+
+It preserves the public caller's coefficient bound while also covering the
+monic transform used by `toMonicLiftData`. -/
+def exhaustiveLiftBound (core : ZPoly) (B : Nat) : Nat :=
+  max B (defaultFactorCoeffBound (toMonic core).monic)
+
+theorem le_exhaustiveLiftBound (core : ZPoly) (B : Nat) :
+    B ≤ exhaustiveLiftBound core B := by
+  exact Nat.le_max_left B (defaultFactorCoeffBound (toMonic core).monic)
+
+theorem monicBound_le_exhaustiveLiftBound (core : ZPoly) (B : Nat) :
+    defaultFactorCoeffBound (toMonic core).monic ≤ exhaustiveLiftBound core B := by
+  exact Nat.le_max_right B (defaultFactorCoeffBound (toMonic core).monic)
+
 theorem toMonicPrimeData?_prime
     (core : ZPoly) (data : PrimeChoiceData)
     (hdata : toMonicPrimeData? core = some data) :
