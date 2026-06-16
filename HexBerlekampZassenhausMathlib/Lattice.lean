@@ -2,6 +2,7 @@ import HexBerlekampZassenhaus.Basic
 import HexLLLMathlib.Independent
 import Mathlib.Data.Real.Basic
 import Mathlib.LinearAlgebra.Matrix.RowCol
+import Mathlib.Algebra.BigOperators.Fin
 
 /-!
 Mathlib-facing row-span interface for the executable BHKS projected lattice.
@@ -139,6 +140,38 @@ abbrev LiftedFactorSupport (L : Hex.BhksLatticeBasis) :=
 def liftedFactorIndicator (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) :
     Fin L.factorCount → ℤ :=
   indicatorVector S
+
+/-- A left fold accumulating `g` over a list equals the running accumulator plus
+the sum of the mapped list; the start-from-`acc` form used to read a fold-sum off
+at `acc = 0`. -/
+private theorem foldl_add_eq_acc_add_listSum {M : Type*} [AddCommMonoid M]
+    {α : Type*} (l : List α) (g : α → M) (acc : M) :
+    l.foldl (fun acc i => acc + g i) acc = acc + (l.map g).sum := by
+  induction l generalizing acc with
+  | nil => simp
+  | cons x xs ih =>
+      simp only [List.foldl_cons, List.map_cons, List.sum_cons]
+      rw [ih, add_assoc]
+
+/-- A fold-sum over `List.finRange n` equals the finite sum over `Fin n`. -/
+private theorem finRange_foldl_add_eq_sum {M : Type*} [AddCommMonoid M] {n : Nat}
+    (g : Fin n → M) :
+    (List.finRange n).foldl (fun acc i => acc + g i) 0 = ∑ i, g i := by
+  rw [foldl_add_eq_acc_add_listSum, zero_add, Fin.sum_univ_def]
+
+/-- The entry of a row combination at column `k` is the explicit finite sum, over
+the row index, of the column-`k` matrix entries weighted by the coefficients. -/
+theorem rowCombination_getElem_eq_sum {n m : Nat}
+    (M : Hex.Matrix ℤ n m) (c : Vector ℤ n) (k : Fin m) :
+    (Hex.Matrix.rowCombination M c)[k] = ∑ i : Fin n, M[i][k] * c[i] := by
+  show (Hex.Matrix.transpose M * c)[k] = _
+  rw [Hex.Matrix.mulVec_getElem]
+  unfold Hex.Matrix.dot Hex.Vector.dotProduct
+  rw [finRange_foldl_add_eq_sum
+    (g := fun i : Fin n => (Hex.Matrix.row (Hex.Matrix.transpose M) k)[i] * c[i])]
+  refine Finset.sum_congr rfl ?_
+  intro i _
+  rw [Hex.Matrix.row_getElem, Hex.Matrix.transpose_getElem]
 
 /--
 Coefficient vector selecting the top BHKS lattice rows attached to a
