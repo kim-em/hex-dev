@@ -558,3 +558,22 @@ running its tail jobs — they serialize on lake's per-worktree build lock, so t
 second just blocks and looks "stuck". (This machine also runs concurrent builds
 from *other* pod worktrees; `pgrep lake` showing many processes is normal and
 not your build.)
+
+**Numerically checking executable behavior in a scratch file: `#eval`/`#guard`
+inside a lake-built module, not `lake env lean Scratch.lean`.** To sanity-check a
+premise by *running* the executable functions (e.g. comparing
+`defaultFactorCoeffBound f` against `defaultFactorCoeffBound (toMonic core).monic`
+to test a precision claim), be aware that any code path touching the `@[extern]`
+arithmetic (`Hex.ZMod64.mul`, anything pulling in `choosePrimeData?` /
+`factorSlowModularFactorsWithBound` / mod-`p` work) fails under the interpreter
+with `Could not find native implementation of external declaration
+'Hex.ZMod64.mul'`. The `--load-dynlib=.lake/build/lib/*.dylib` workaround then
+dies on flat-namespace symbol errors (`symbol not found '_lp_Hex_Hex_ZMod64_mul'`)
+— do not sink time into it. Two reliable routes: (1) restrict the scratch to the
+*pure-integer* `ZPoly`/`Nat` ops (`defaultFactorCoeffBound`, `toMonic`,
+`precisionForCoeffBound`, `coeffNormSq`), which need no extern and run fine under
+`lake env lean Scratch.lean` — for a primitive squarefree `f`, `squareFreeCore f`
+is `f`, so you can take `core := f` and avoid the modular `normalizeForFactor`
+path entirely; (2) if you genuinely need the ZMod64 path, put the `#eval`/`#guard`
+in a module the package builds (`precompileModules := true` is set, so build-time
+`#eval` resolves the native symbols) rather than running a standalone file.
