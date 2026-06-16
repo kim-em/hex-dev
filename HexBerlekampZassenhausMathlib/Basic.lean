@@ -5375,6 +5375,55 @@ theorem representingSubset_subset_of_dvd_recombinationCandidate_of_bound
   · exact hSJ
   · exact hrep
 
+/-- Structural support containment for a divisor of a recovered recombination
+candidate under a lifted-factor subset partition.
+
+This is the recovered-coordinate sibling of
+`representingSubset_subset_of_dvd_recombinationCandidate`: it projects the
+partition's sound recovered support field directly, without routing through the
+unscaled product-candidate surface. -/
+theorem representingSubset_subset_of_dvd_liftedRecoveryCandidate
+    {core target f : Hex.ZPoly} {d : Hex.LiftData}
+    {J T S : LiftedFactorSubset d}
+    (_hcore_ne : core ≠ 0)
+    (_hcore_monic : Hex.DensePoly.Monic core)
+    (_hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hTJ : T ⊆ J)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial f))
+    (hfactor_dvd_target : f ∣ target)
+    (hfactor_dvd_candidate : f ∣ liftedRecoveryCandidate core d T)
+    (hSJ : S ⊆ J)
+    (hrep : RepresentsIntegerFactorAtLift core d f S) :
+    S ⊆ T := by
+  exact hpartition.support_subset_of_dvd_liftedRecoveryCandidate
+    hirr hfactor_dvd_target hTJ hfactor_dvd_candidate hSJ hrep
+
+/-- Abstract-bound variant of
+`representingSubset_subset_of_dvd_liftedRecoveryCandidate`: takes
+`_B' : Nat`, `_hvalid : ∀ i, (f.coeff i).natAbs ≤ _B'`, and
+`_hprecision : 2 * _B' < d.p ^ d.k` in place of the core-shape
+`defaultFactorCoeffBound core` precision constraint.  The proof body delegates
+directly to the recovered support field of `LiftedFactorSubsetPartition`. -/
+theorem representingSubset_subset_of_dvd_liftedRecoveryCandidate_of_bound
+    {core target f : Hex.ZPoly} {d : Hex.LiftData}
+    {J T S : LiftedFactorSubset d}
+    (_B' : Nat)
+    (_hvalid : ∀ i, (f.coeff i).natAbs ≤ _B')
+    (_hcore_ne : core ≠ 0)
+    (_hcore_monic : Hex.DensePoly.Monic core)
+    (_hprecision : 2 * _B' < d.p ^ d.k)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hTJ : T ⊆ J)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial f))
+    (hfactor_dvd_target : f ∣ target)
+    (hfactor_dvd_candidate : f ∣ liftedRecoveryCandidate core d T)
+    (hSJ : S ⊆ J)
+    (hrep : RepresentsIntegerFactorAtLift core d f S) :
+    S ⊆ T := by
+  exact hpartition.support_subset_of_dvd_liftedRecoveryCandidate
+    hirr hfactor_dvd_target hTJ hfactor_dvd_candidate hSJ hrep
+
 /-- Primitive + positive-leading-core variant of
 `representingSubset_subset_of_dvd_recombinationCandidate` (#4646 chain).
 
