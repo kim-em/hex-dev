@@ -68,6 +68,12 @@ theorem toZMod_one :
   simpa using (Hex.ZMod64.toNat_one (p := p))
 
 @[simp]
+theorem ofZMod_one :
+    ofZMod (1 : ZMod p) = 1 := by
+  rw [← toZMod_one]
+  exact ofZMod_toZMod 1
+
+@[simp]
 theorem toZMod_add (a b : Hex.ZMod64 p) :
     toZMod (a + b) = toZMod a + toZMod b := by
   apply ZMod.val_injective p
@@ -75,11 +81,91 @@ theorem toZMod_add (a b : Hex.ZMod64 p) :
   exact Hex.ZMod64.toNat_add a b
 
 @[simp]
+theorem toZMod_neg (a : Hex.ZMod64 p) :
+    toZMod (-a) = -toZMod a := by
+  change (((Hex.ZMod64.neg a).toNat : Nat) : ZMod p) = -((a.toNat : Nat) : ZMod p)
+  rw [Hex.ZMod64.toNat_neg]
+  have ha : a.toNat ≤ p := Nat.le_of_lt a.toNat_lt
+  calc
+    (((p - a.toNat) % p : Nat) : ZMod p) = ((p - a.toNat : Nat) : ZMod p) := by
+      simp
+    _ = ((p : Nat) : ZMod p) - ((a.toNat : Nat) : ZMod p) := by
+      rw [Nat.cast_sub ha]
+    _ = -((a.toNat : Nat) : ZMod p) := by
+      simp
+
+@[simp]
+theorem toZMod_sub (a b : Hex.ZMod64 p) :
+    toZMod (a - b) = toZMod a - toZMod b := by
+  change (((Hex.ZMod64.sub a b).toNat : Nat) : ZMod p) =
+    ((a.toNat : Nat) : ZMod p) - ((b.toNat : Nat) : ZMod p)
+  rw [Hex.ZMod64.toNat_sub]
+  have hb : b.toNat ≤ p := Nat.le_of_lt b.toNat_lt
+  calc
+    (((a.toNat + (p - b.toNat)) % p : Nat) : ZMod p) =
+        ((a.toNat + (p - b.toNat) : Nat) : ZMod p) := by
+      simp
+    _ = ((a.toNat : Nat) : ZMod p) + ((p - b.toNat : Nat) : ZMod p) := by
+      rw [Nat.cast_add]
+    _ = ((a.toNat : Nat) : ZMod p) + (((p : Nat) : ZMod p) - ((b.toNat : Nat) : ZMod p)) := by
+      rw [Nat.cast_sub hb]
+    _ = ((a.toNat : Nat) : ZMod p) + -((b.toNat : Nat) : ZMod p) := by
+      simp
+    _ = ((a.toNat : Nat) : ZMod p) - ((b.toNat : Nat) : ZMod p) := by
+      exact
+        (sub_eq_add_neg (((a.toNat : Nat) : ZMod p))
+          (((b.toNat : Nat) : ZMod p))).symm
+
+@[simp]
 theorem toZMod_mul (a b : Hex.ZMod64 p) :
     toZMod (a * b) = toZMod a * toZMod b := by
   apply ZMod.val_injective p
   rw [ZMod.val_mul, val_toZMod, val_toZMod, val_toZMod]
   exact Hex.ZMod64.toNat_mul a b
+
+@[simp]
+theorem toZMod_natCast (n : Nat) :
+    toZMod ((n : Hex.ZMod64 p)) = (n : ZMod p) := by
+  change (((Hex.ZMod64.natCast p n).toNat : Nat) : ZMod p) = (n : ZMod p)
+  rw [Hex.ZMod64.toNat_natCast]
+  simp
+
+@[simp]
+theorem toZMod_intCast (z : Int) :
+    toZMod ((z : Hex.ZMod64 p)) = (z : ZMod p) := by
+  cases z with
+  | ofNat n =>
+      change toZMod (Hex.ZMod64.intCast p (Int.ofNat n)) = ((Int.ofNat n : Int) : ZMod p)
+      rw [Hex.ZMod64.intCast_ofNat]
+      calc
+        toZMod (Hex.ZMod64.natCast p n) = (n : ZMod p) := toZMod_natCast (p := p) n
+        _ = ((Int.ofNat n : Int) : ZMod p) := by simp
+  | negSucc n =>
+      change toZMod (Hex.ZMod64.intCast p (Int.negSucc n)) =
+        ((Int.negSucc n : Int) : ZMod p)
+      rw [Hex.ZMod64.intCast_negSucc]
+      change toZMod (-(Hex.ZMod64.natCast p (n + 1))) =
+        ((Int.negSucc n : Int) : ZMod p)
+      rw [toZMod_neg]
+      have hcast :
+          toZMod (Hex.ZMod64.natCast p (n + 1)) = (((n + 1 : Nat) : ZMod p)) :=
+        toZMod_natCast (p := p) (n + 1)
+      calc
+        -toZMod (Hex.ZMod64.natCast p (n + 1)) = -(((n + 1 : Nat) : ZMod p)) := by
+          exact congrArg Neg.neg hcast
+        _ = ((Int.negSucc n : Int) : ZMod p) := by
+          exact (Int.cast_negSucc n).symm
+
+@[simp]
+theorem toZMod_pow (a : Hex.ZMod64 p) (n : Nat) :
+    toZMod (a ^ n) = toZMod a ^ n := by
+  change (((Hex.ZMod64.pow a n).toNat : Nat) : ZMod p) = ((a.toNat : Nat) : ZMod p) ^ n
+  rw [Hex.ZMod64.toNat_pow]
+  calc
+    (((a.toNat ^ n % p : Nat) : ZMod p)) = ((a.toNat ^ n : Nat) : ZMod p) := by
+      simp
+    _ = ((a.toNat : Nat) : ZMod p) ^ n := by
+      rw [Nat.cast_pow]
 
 /-- The executable `ZMod64` representation is ring-equivalent to Mathlib's `ZMod`. -/
 def equiv : Hex.ZMod64 p ≃+* ZMod p where
