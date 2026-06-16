@@ -20697,16 +20697,51 @@ theorem toMonicLiftData_unique_subset
       (RepresentsIntegerFactorAtLift.ofRecovered hrecT) hdvdS
   exact Finset.Subset.antisymm hST hTS
 
+/-- An irreducible integer divisor of a primitive polynomial has positive
+executable degree. A degree-zero divisor is a constant, and primitivity of the
+target forces that constant to be a unit, contradicting irreducibility. -/
+private theorem one_le_degree_getD_of_irreducible_dvd_primitive
+    {core factor : Hex.ZPoly}
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hdvd : factor ∣ core) :
+    1 ≤ factor.degree?.getD 0 := by
+  have hnd :
+      (HexPolyZMathlib.toPolynomial factor).natDegree =
+        factor.degree?.getD 0 :=
+    HexPolyMathlib.natDegree_toPolynomial factor
+  rw [← hnd]
+  rcases Nat.eq_zero_or_pos
+      (HexPolyZMathlib.toPolynomial factor).natDegree with hzero | hpos
+  · exfalso
+    obtain ⟨a, ha⟩ := Polynomial.natDegree_eq_zero.mp hzero
+    have hdvd_poly :
+        HexPolyZMathlib.toPolynomial factor ∣
+          HexPolyZMathlib.toPolynomial core :=
+      HexPolyMathlib.toPolynomial_dvd hdvd
+    have hcore_poly_prim :
+        (HexPolyZMathlib.toPolynomial core).IsPrimitive :=
+      toPolynomial_isPrimitive_of_zpoly_primitive_basic hcore_prim
+    have hCa_dvd : Polynomial.C a ∣ HexPolyZMathlib.toPolynomial core := by
+      rw [ha]
+      exact hdvd_poly
+    have ha_unit : IsUnit a := hcore_poly_prim a hCa_dvd
+    exact hirr.not_isUnit (by
+      rw [← ha]
+      exact Polynomial.isUnit_C.mpr ha_unit)
+  · exact hpos
+
 /--
 Successful-descent sibling of the `toMonicPrimeData?` Hensel subset
 correspondence surface.
 
 The reverse descent input is the monic-correspondent carrier:
-`primeData` was selected for `(Hex.ZPoly.toMonic core).monic`, so a lifted
-representation of an original factor descends to a mod-`p` representation of
-the recovered monic correspondent, not of the original factor itself.  Existence
-of lifted representatives is therefore supplied directly, while uniqueness is
-discharged by the non-circular `toMonicLiftData_unique_subset` theorem.
+`primeData` was selected for `(Hex.ZPoly.toMonic core).monic`, so existence
+of lifted representatives is produced by transporting each sign-normalized
+irreducible divisor through its monic correspondent. The primitive and
+positive-degree side conditions required by that producer come from the
+primitive positive-degree core and Gauss. Uniqueness is discharged by the
+non-circular `toMonicLiftData_unique_subset` theorem.
 -/
 theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
     (core : Hex.ZPoly) (B : Nat)
@@ -20717,21 +20752,17 @@ theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
         (Hex.ZPoly.toMonicLiftData core B primeData) True True)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p)
     (hbound :
       2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
         primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
-    (hexists_lifted :
-      ∀ {factor : Hex.ZPoly},
-        Hex.normalizeFactorSign factor = factor →
-        Irreducible (HexPolyZMathlib.toPolynomial factor) →
-        factor ∣ core →
-        ∃ S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData),
-          RepresentsIntegerFactorAtLift core
-            (Hex.ZPoly.toMonicLiftData core B primeData) factor S) :
+    (hB_ne_zero : B ≠ 0) :
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     HenselSubsetCorrespondenceHypotheses core B primeData d True True := by
   intro d
+  have hcore0 : core ≠ 0 := zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  have hdeg : 1 ≤ (Hex.ZPoly.toMonic core).degree := hcore_pos
   refine
     { lift_eq := hdescent.lift_eq
       admissible_prime := trivial
@@ -20739,10 +20770,59 @@ theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
       exists_subset := ?_
       unique_subset := ?_ }
   · intro factor hsign hirr hdvd
-    exact hexists_lifted hsign hirr hdvd
+    have hprim : Hex.ZPoly.Primitive factor :=
+      zpoly_primitive_of_dvd_primitive_basic hcore_prim hdvd
+    have hfdeg : 1 ≤ factor.degree?.getD 0 :=
+      one_le_degree_getD_of_irreducible_dvd_primitive hcore_prim hirr hdvd
+    exact toMonicLiftData_represents_lifted_of_modP core B primeData
+      hselected hcore0 hcore_lc_pos hdeg hB_ne_zero hirr hprim hsign hfdeg hdvd
   · intro factor S T hirr hdvd hS hT
     exact toMonicLiftData_unique_subset core B primeData
       hcore_lc_pos hcore_pos hselected hprecision hbound hirr hdvd hS hT
+
+/-- Initial lifted subset partition for `toMonicPrimeData?` success.
+
+This composes the core-fact correspondence producer
+`henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent` with
+the existing partition constructor. The recovered-coordinate partition fields
+come from `InitialLiftedFactorSubsetPartitionEvidence`; the still-live
+unscaled support field remains an explicit `hunscaled` hypothesis. -/
+theorem liftedFactorSubsetPartition_of_toMonicPrimeData_success_descent
+    (core : Hex.ZPoly) (B : Nat)
+    (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hdescent :
+      MonicDescentHypotheses core B primeData
+        (Hex.ZPoly.toMonicLiftData core B primeData) True True)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
+    (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
+    (hB_ne_zero : B ≠ 0)
+    (hinitial :
+      InitialLiftedFactorSubsetPartitionEvidence core
+        (Hex.ZPoly.toMonicLiftData core B primeData))
+    (hunscaled :
+      let d := Hex.ZPoly.toMonicLiftData core B primeData
+      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
+        Irreducible (HexPolyZMathlib.toPolynomial f) →
+        f ∣ core →
+        f ∣ liftedFactorProductCandidate d T →
+        RepresentsIntegerFactorAtLift core d f S →
+        S ⊆ T) :
+    let d := Hex.ZPoly.toMonicLiftData core B primeData
+    LiftedFactorSubsetPartition core d Finset.univ core := by
+  intro d
+  exact liftedFactorSubsetPartition_of_toMonicPrimeData
+    core B primeData hselected
+    (henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
+      core B primeData hselected hdescent hcore_lc_pos hcore_pos hcore_prim
+      hprecision hbound hB_ne_zero)
+    hcore_sqfree hinitial hunscaled
 
 /-- **#6682 supporting lemma (HO-1 slow-path substrate constructor).**
 
@@ -20760,6 +20840,7 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData_success_descent
     (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hB_ne_zero : B ≠ 0)
     (hdescent :
@@ -20768,14 +20849,6 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData_success_descent
     (hbound :
       2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
         primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
-    (hexists_lifted :
-      ∀ {factor : Hex.ZPoly},
-        Hex.normalizeFactorSign factor = factor →
-        Irreducible (HexPolyZMathlib.toPolynomial factor) →
-        factor ∣ core →
-        ∃ S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData),
-          RepresentsIntegerFactorAtLift core
-            (Hex.ZPoly.toMonicLiftData core B primeData) factor S)
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
         (Hex.ZPoly.toMonicLiftData core B primeData))
@@ -20812,14 +20885,11 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData_success_descent
       modulus := ?_
       precision := ?_ }
   · exact henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
-      core B primeData hselected hdescent hcore_lc_pos hcore_pos hprec_pos hbound
-      hexists_lifted
-  · exact liftedFactorSubsetPartition_of_toMonicPrimeData
-      core B primeData hselected
-      (henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
-        core B primeData hselected hdescent hcore_lc_pos hcore_pos hprec_pos hbound
-        hexists_lifted)
-      hcore_sqfree hinitial hunscaled
+      core B primeData hselected hdescent hcore_lc_pos hcore_pos hcore_prim
+      hprec_pos hbound hB_ne_zero
+  · exact liftedFactorSubsetPartition_of_toMonicPrimeData_success_descent
+      core B primeData hselected hdescent hcore_lc_pos hcore_pos hcore_prim
+      hcore_sqfree hprec_pos hbound hB_ne_zero hinitial hunscaled
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
