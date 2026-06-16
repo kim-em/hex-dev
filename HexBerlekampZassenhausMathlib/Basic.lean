@@ -13310,7 +13310,7 @@ private theorem content_normalizeFactorSign_eq (f : Hex.ZPoly) :
 the `if_neg` branch keeps the input (whose leading coefficient is already
 `≥ 0`), and the `if_pos` branch negates a strictly negative leading coefficient
 to a nonnegative one. -/
-private theorem leadingCoeff_normalizeFactorSign_nonneg (f : Hex.ZPoly) :
+theorem leadingCoeff_normalizeFactorSign_nonneg (f : Hex.ZPoly) :
     0 ≤ Hex.DensePoly.leadingCoeff (Hex.normalizeFactorSign f) := by
   unfold Hex.normalizeFactorSign
   by_cases h : Hex.DensePoly.leadingCoeff f < 0
@@ -13340,7 +13340,7 @@ private theorem normalizeFactorSign_scaledRecombinationCandidate_eq
 
 /-- The corrected recovered candidate is primitive whenever `lc(core)` is
 positive and the selected lifted factors are monic. -/
-private theorem zpoly_primitive_liftedRecoveryCandidate
+theorem zpoly_primitive_liftedRecoveryCandidate
     {core : Hex.ZPoly} {d : Hex.LiftData}
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hd_modulus : 2 ≤ d.p ^ d.k)
@@ -13453,7 +13453,7 @@ whenever `lc(core)` is positive and the selected lifted factors are monic.
 `liftedRecoveryCandidate` is headed by `Hex.normalizeFactorSign`, so its leading
 coefficient is nonnegative; primitivity makes it nonzero, hence the leading
 coefficient is nonzero, so strictly positive. -/
-private theorem leadingCoeff_liftedRecoveryCandidate_pos
+theorem leadingCoeff_liftedRecoveryCandidate_pos
     {core : Hex.ZPoly} {d : Hex.LiftData}
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hd_modulus : 2 ≤ d.p ^ d.k)
@@ -20192,7 +20192,7 @@ private theorem congr_centeredLiftPoly (q : Hex.ZPoly) (m : Nat) :
 
 /-- Sign normalisation is an associate over `Polynomial ℤ`: `normalizeFactorSign`
 either fixes its argument or negates it (scaling by `-1`), and `-1` is a unit. -/
-private theorem toPolynomial_normalizeFactorSign_associated (q : Hex.ZPoly) :
+theorem toPolynomial_normalizeFactorSign_associated (q : Hex.ZPoly) :
     Associated (HexPolyZMathlib.toPolynomial (Hex.normalizeFactorSign q))
       (HexPolyZMathlib.toPolynomial q) := by
   unfold Hex.normalizeFactorSign
