@@ -7194,16 +7194,6 @@ private def exhaustiveNonMonicQuadraticGuard : ZPoly :=
       (exhaustiveCoreFactorsWithBound exhaustiveNonMonicQuadraticGuard 4
             primeData).toList.all fun factor => normalizeFactorSign factor == factor
 
-/-- The raw slow-path factor array used by the exhaustive recombination branch.
-
-The body dispatches via the compatibility `choosePrimeData` wrapper. Callers
-that need explicit failure on no admissible prime should use
-`exhaustiveSlowRawFactorsWithBound?`. -/
-def exhaustiveSlowRawFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
-  reassemblePolynomialFactors (normalizeForFactor f)
-    (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-      (choosePrimeData (normalizeForFactor f).squareFreeCore))
-
 /-- Option-returning slow-path raw factor array. Returns `some` exactly
 when `choosePrimeData?` succeeds on the normalized square-free core,
 mirroring `factorFastFactorsWithBound`'s `none`-on-no-good-prime
@@ -7214,16 +7204,18 @@ def exhaustiveSlowRawFactorsWithBound? (f : ZPoly) (B : Nat) : Option (Array ZPo
     reassemblePolynomialFactors (normalizeForFactor f)
       (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B primeData)
 
-/-- When `choosePrimeData?` succeeds, the `?` variant agrees with the
-total `exhaustiveSlowRawFactorsWithBound`. -/
-theorem exhaustiveSlowRawFactorsWithBound?_eq_some_of_isSome
-    (f : ZPoly) (B : Nat)
-    (h : (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome) :
+/-- Characterize the raw exhaustive slow factor array from an explicit
+`choosePrimeData?` success witness. -/
+theorem exhaustiveSlowRawFactorsWithBound?_eq_some
+    (f : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    (hchoose :
+      choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData) :
     exhaustiveSlowRawFactorsWithBound? f B =
-      some (exhaustiveSlowRawFactorsWithBound f B) := by
-  obtain ⟨primeData, hchoose⟩ := Option.isSome_iff_exists.mp h
-  unfold exhaustiveSlowRawFactorsWithBound? exhaustiveSlowRawFactorsWithBound
-  rw [choosePrimeData_eq_of_choosePrimeData?_some hchoose, hchoose]
+      some (reassemblePolynomialFactors (normalizeForFactor f)
+        (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
+          primeData)) := by
+  unfold exhaustiveSlowRawFactorsWithBound?
+  rw [hchoose]
   rfl
 
 /-- Raw factor array produced by the modular slow recombination branch.
