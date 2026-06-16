@@ -3549,6 +3549,7 @@ structure LiftedFactorSubsetPartition
       Irreducible (HexPolyZMathlib.toPolynomial f) →
       f ∣ target →
       T ⊆ J →
+      Hex.DensePoly.leadingCoeff core = 1 →
       f ∣ liftedFactorProductCandidate d T →
       S ⊆ J →
       RepresentsIntegerFactorAtLift core d f S →
@@ -3803,7 +3804,7 @@ theorem liftedFactorSubsetPartition_transport
       hTJ_orig hTrep hirr_g (dvd_target_of_dvd_quotient hdvd_g)
       hUJ_orig hUrep h_assoc
   -- Support containment for candidates in the transported state.
-  · intro f U T hirr hdvd_quot hTJ hfactor_dvd_candidate hUJ hUrep
+  · intro f U T hirr hdvd_quot hTJ hcore_lc_one hfactor_dvd_candidate hUJ hUrep
     have hTJ_orig : T ⊆ J :=
       fun i hi => (Finset.mem_sdiff.mp (hTJ hi)).1
     have hUJ_orig : U ⊆ J :=
@@ -3812,7 +3813,7 @@ theorem liftedFactorSubsetPartition_transport
         U ⊆ T :=
       h.support_subset_of_dvd_recombinationCandidate hirr
         (dvd_target_of_dvd_quotient hdvd_quot) hTJ_orig
-        hfactor_dvd_candidate hUJ_orig hUrep
+        hcore_lc_one hfactor_dvd_candidate hUJ_orig hUrep
     intro i hiU
     exact hUT hiU
   -- Recovered-support containment for candidates in the transported state.
@@ -5377,7 +5378,7 @@ theorem representingSubset_subset_of_dvd_recombinationCandidate
     {core target f : Hex.ZPoly} {d : Hex.LiftData}
     {J T S : LiftedFactorSubset d}
     (_hcore_ne : core ≠ 0)
-    (_hcore_monic : Hex.DensePoly.Monic core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (_hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
     (hpartition : LiftedFactorSubsetPartition core d J target)
     (hTJ : T ⊆ J)
@@ -5389,6 +5390,7 @@ theorem representingSubset_subset_of_dvd_recombinationCandidate
     S ⊆ T := by
   apply hpartition.support_subset_of_dvd_recombinationCandidate
     hirr hfactor_dvd_target hTJ
+  · exact hcore_monic
   · rw [← recombinationCandidate_eq_liftedFactorProductCandidate]
     exact hfactor_dvd_candidate
   · exact hSJ
@@ -5410,7 +5412,7 @@ theorem representingSubset_subset_of_dvd_recombinationCandidate_of_bound
     (_B' : Nat)
     (_hvalid : ∀ i, (f.coeff i).natAbs ≤ _B')
     (_hcore_ne : core ≠ 0)
-    (_hcore_monic : Hex.DensePoly.Monic core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (_hprecision : 2 * _B' < d.p ^ d.k)
     (hpartition : LiftedFactorSubsetPartition core d J target)
     (hTJ : T ⊆ J)
@@ -5422,6 +5424,7 @@ theorem representingSubset_subset_of_dvd_recombinationCandidate_of_bound
     S ⊆ T := by
   apply hpartition.support_subset_of_dvd_recombinationCandidate
     hirr hfactor_dvd_target hTJ
+  · exact hcore_monic
   · rw [← recombinationCandidate_eq_liftedFactorProductCandidate]
     exact hfactor_dvd_candidate
   · exact hSJ
@@ -5489,6 +5492,7 @@ theorem representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos
     (_hcore_ne : core ≠ 0)
     (_hcore_primitive : Hex.ZPoly.Primitive core)
     (_hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (_hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
     (hpartition : LiftedFactorSubsetPartition core d J target)
     (hTJ : T ⊆ J)
@@ -5500,6 +5504,7 @@ theorem representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos
     S ⊆ T := by
   apply hpartition.support_subset_of_dvd_recombinationCandidate
     hirr hfactor_dvd_target hTJ
+  · exact hcore_monic
   · rw [← recombinationCandidate_eq_liftedFactorProductCandidate]
     exact hfactor_dvd_candidate
   · exact hSJ
@@ -5521,6 +5526,7 @@ theorem representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos
     (_hcore_ne : core ≠ 0)
     (_hcore_primitive : Hex.ZPoly.Primitive core)
     (_hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (_hprecision : 2 * _B' < d.p ^ d.k)
     (hpartition : LiftedFactorSubsetPartition core d J target)
     (hTJ : T ⊆ J)
@@ -5532,6 +5538,7 @@ theorem representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos
     S ⊆ T := by
   apply hpartition.support_subset_of_dvd_recombinationCandidate
     hirr hfactor_dvd_target hTJ
+  · exact hcore_monic
   · rw [← recombinationCandidate_eq_liftedFactorProductCandidate]
     exact hfactor_dvd_candidate
   · exact hSJ
@@ -12157,6 +12164,7 @@ theorem exists_representingSubset_of_mem_normalizedFactors_recombinationCandidat
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (hd_modulus : 2 ≤ d.p ^ d.k)
     (hd_liftedFactor_monic : ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
     (hprecision : 2 * B' < d.p ^ d.k)
@@ -12229,7 +12237,7 @@ theorem exists_representingSubset_of_mem_normalizedFactors_recombinationCandidat
   have hST : S_g ⊆ T :=
     representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos_lc_core_of_bound
       B' (hvalid g (by rw [hg_toPolynomial]; exact hg_mem))
-      hcore_ne hcore_primitive hcore_lc_pos hprecision hpartition hTJ
+      hcore_ne hcore_primitive hcore_lc_pos hcore_monic hprecision hpartition hTJ
       hg_irr_toPoly hg_dvd_target hg_dvd_cand hSJ hSrep
   have hcand_monic_poly :
       (HexPolyZMathlib.toPolynomial (recombinationCandidate d T)).Monic :=
@@ -12286,6 +12294,7 @@ theorem exists_representingSubset_of_mem_normalizedFactors_recombinationCandidat
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (hd_modulus : 2 ≤ d.p ^ d.k)
     (hd_liftedFactor_monic : ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
@@ -12323,7 +12332,7 @@ theorem exists_representingSubset_of_mem_normalizedFactors_recombinationCandidat
   refine exists_representingSubset_of_mem_normalizedFactors_recombinationCandidate_of_primitive_pos_lc_core_of_bound
     (Hex.ZPoly.defaultFactorCoeffBound core)
     (fun g hg_mem' => ?_)
-    hcore_ne hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+    hcore_ne hcore_primitive hcore_lc_pos hcore_monic hd_modulus hd_liftedFactor_monic
     hprecision hpartition htarget_dvd_core hTJ hrecord hquot hg_mem
   -- Discharge `hvalid` for arbitrary normalised factor `g` of the candidate
   -- by chaining `g ∣ candidate ∣ target ∣ core` and invoking
@@ -12654,6 +12663,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_primitive_pos_l
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
     (hd_modulus : 2 ≤ d.p ^ d.k)
     (hd_liftedFactor_monic :
@@ -12736,7 +12746,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_primitive_pos_l
     obtain ⟨g', S_g, h_eq, h_irr, h_dvd_t, h_dvd_c, h_rep, h_SJ, h_ST,
         h_cont, h_norm⟩ :=
       exists_representingSubset_of_mem_normalizedFactors_recombinationCandidate_of_primitive_pos_lc_core_of_bound
-        B' hvalid hcore_ne hcore_primitive hcore_lc_pos hd_modulus
+        B' hvalid hcore_ne hcore_primitive hcore_lc_pos hcore_monic hd_modulus
         hd_liftedFactor_monic hprecision hpartition htarget_dvd_core hTJ
         hrecord hquot hgPoly
     have hg_eq : g' = g := by
@@ -12852,6 +12862,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_primitive_pos_l
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (hd_modulus : 2 ≤ d.p ^ d.k)
     (hd_liftedFactor_monic :
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
@@ -12901,7 +12912,7 @@ theorem mem_T_iff_exists_irreducibleFactor_representingSubset_of_primitive_pos_l
         refine ⟨r₁ * r₂, ?_⟩
         rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
       exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core i)
-    hcore_ne hcore_primitive hcore_lc_pos
+    hcore_ne hcore_primitive hcore_lc_pos hcore_monic
     (defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne)
     hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
     hprecision hpartition htarget_dvd_core hTJ hrecord hquot hi
@@ -13066,6 +13077,7 @@ theorem coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd_of_bo
   have hST : S ⊆ T :=
     hpartition.support_subset_of_dvd_recombinationCandidate
       hf_irr hf_dvd_target hTJ
+      hcore_monic
       (by
         rw [← recombinationCandidate_eq_liftedFactorProductCandidate]
         exact hf_dvd_cand)
@@ -13145,6 +13157,7 @@ theorem exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd_of_prim
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
     (hd_modulus : 2 ≤ d.p ^ d.k)
     (hd_liftedFactor_monic :
@@ -13169,7 +13182,7 @@ theorem exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd_of_prim
       RepresentsIntegerFactorAtLift core d f S := by
   obtain ⟨f, S, hf_irr, hf_dvd_candidate, hrep, hSJ, hiS⟩ :=
     mem_T_iff_exists_irreducibleFactor_representingSubset_of_primitive_pos_lc_core_of_bound
-      B' hvalid hcore_ne hcore_primitive hcore_lc_pos hcore_lc_le
+      B' hvalid hcore_ne hcore_primitive hcore_lc_pos hcore_monic hcore_lc_le
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
       hprecision hpartition htarget_dvd_core hTJ hrecord hquot hi
   have hcand_dvd_target : recombinationCandidate d T ∣ target := by
@@ -13193,6 +13206,7 @@ theorem exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd_of_prim
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (hd_modulus : 2 ≤ d.p ^ d.k)
     (hd_liftedFactor_monic :
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
@@ -13246,6 +13260,7 @@ theorem exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd_of_prim
           rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
         exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core i)
       hcore_ne hcore_primitive hcore_lc_pos
+      hcore_monic
       (defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne)
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
       hprecision hpartition htarget_dvd_core hTJ hrecord hquot hi
@@ -13269,6 +13284,7 @@ theorem coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd_of_pr
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
     (hd_modulus : 2 ≤ d.p ^ d.k)
     (hd_liftedFactor_monic :
@@ -13293,7 +13309,7 @@ theorem coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd_of_pr
       S ⊆ T := by
   obtain ⟨f, S, hf_irr, hf_dvd_target, hf_dvd_cand, hSJ, hmin_in_S, hrep⟩ :=
     exists_representingSubset_of_mem_T_of_recombinationCandidate_dvd_of_primitive_pos_lc_core_of_bound
-      B' hvalid hcore_ne hcore_primitive hcore_lc_pos hcore_lc_le
+      B' hvalid hcore_ne hcore_primitive hcore_lc_pos hcore_monic hcore_lc_le
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
       hprecision hpartition htarget_dvd_core hTJ hrecord hquot hmin_in_T
   have hvalid_f : ∀ i, (f.coeff i).natAbs ≤ B' := by
@@ -13333,7 +13349,7 @@ theorem coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd_of_pr
     exact hbound
   have hST : S ⊆ T :=
     representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos_lc_core_of_bound
-      B' hvalid_f hcore_ne hcore_primitive hcore_lc_pos hprecision
+      B' hvalid_f hcore_ne hcore_primitive hcore_lc_pos hcore_monic hprecision
       hpartition hTJ hf_irr hf_dvd_target hf_dvd_cand hSJ hrep
   exact ⟨f, S, hf_irr, hf_dvd_target, hSJ, hmin_in_S, hrep, hST⟩
 
@@ -13349,6 +13365,7 @@ theorem coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd_of_pr
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (hd_modulus : 2 ≤ d.p ^ d.k)
     (hd_liftedFactor_monic :
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
@@ -13401,7 +13418,7 @@ theorem coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd_of_pr
           refine ⟨r₁ * r₂, ?_⟩
           rw [hr₂, hr₁, Hex.DensePoly.mul_assoc_poly (S := Int)]
         exact defaultFactorCoeffBound_valid core hcore_ne g hg_dvd_core i)
-      hcore_ne hcore_primitive hcore_lc_pos
+      hcore_ne hcore_primitive hcore_lc_pos hcore_monic
       (defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne)
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
       hprecision hpartition htarget_dvd_core hTJ hne hmin_in_T hrecord hquot
@@ -14678,6 +14695,7 @@ theorem liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_of_boun
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (hd_modulus : 2 ≤ d.p ^ d.k)
     (hd_liftedFactor_monic :
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
@@ -14772,7 +14790,7 @@ theorem liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core_of_boun
       obtain ⟨f_cov, S_cov, hf_cov_irr, hf_cov_dvd_target, hS_cov_J,
               hmin_in_S_cov, hS_cov_rep, hS_cov_T⟩ :=
         coverAtMin_representingSubset_subset_of_recombinationCandidate_dvd_of_primitive_pos_lc_core_of_bound
-          B' hvalid'_T hcore_ne hcore_primitive hcore_lc_pos hcore_lc_le
+          B' hvalid'_T hcore_ne hcore_primitive hcore_lc_pos hcore_monic hcore_lc_le
           hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
           hprecision hpartition htarget_dvd_core hTJ hne hmin_in_T hrec hquot
       have hnot_disjoint : ¬ Disjoint S S_cov := fun hdisj =>
@@ -14814,6 +14832,7 @@ theorem liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core
     (hcore_ne : core ≠ 0)
     (hcore_primitive : Hex.ZPoly.Primitive core)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_monic : Hex.DensePoly.Monic core)
     (hd_modulus : 2 ≤ d.p ^ d.k)
     (hd_liftedFactor_monic :
       ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
@@ -14854,7 +14873,7 @@ theorem liftedFactorSubsetPartition_prefix_none_of_primitive_pos_lc_core
     (Hex.ZPoly.defaultFactorCoeffBound core)
     hcore_lc_le
     (defaultFactorCoeffBound_valid core hcore_ne)
-    hcore_ne hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+    hcore_ne hcore_primitive hcore_lc_pos hcore_monic hd_modulus hd_liftedFactor_monic
     hd_liftedFactor_natDegree_pos hprecision htarget_dvd_core hpartition
     hmatches hlocal_nodup hfactor_irr hfactor_dvd_target hSrep hSJ hne hmin
     hsplits
@@ -17783,9 +17802,10 @@ successful `choosePrimeData?` lifted-factor package.
 This is the recovered-coordinate (dilate) support projection of the localized
 lifted-partition analytic obligation.  The unscaled `liftedFactorProductCandidate`
 sibling is not a field of `InitialLiftedFactorSubsetPartitionEvidence`: on
-non-monic cores it is the wrong coordinate and has no non-circular producer, so
-constructors that still need the unscaled `LiftedFactorSubsetPartition` field
-take it as a separate `hunscaled` hypothesis.
+non-monic cores it is the wrong coordinate and has no non-circular producer.
+The full `LiftedFactorSubsetPartition` exposes unscaled support only under a
+leading-coefficient-one side condition and derives that field from this
+recovered-coordinate projection.
 -/
 theorem liftedFactorSubsetPartition_initial_support_subset_of_dvd_liftedRecoveryCandidate_of_choosePrimeData
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
@@ -17842,14 +17862,12 @@ Composes:
 * `henselSubsetCorrespondenceRest_initial` applied to the explicit `hcorr`
   witness for `toHenselSubsetCorrespondenceRest`;
 * `hcore_sqfree` for `target_squarefree`;
-* `hinitial` for the recovered-coordinate analytic
-  fields (`cover`, `pairwise_disjoint`, `unique_up_to_associated`,
-  `support_subset_of_dvd_liftedRecoveryCandidate`,
-  `liftedRecoveryCandidate_eq`);
-* `hunscaled` for the still-live unscaled-candidate support field
-  (`liftedFactorProductCandidate`), which is no longer carried by `hinitial`:
-  on non-monic cores it is the wrong coordinate and has no non-circular
-  producer, so it is supplied separately by the caller.
+* `hinitial` for the recovered-coordinate analytic fields (`cover`,
+  `pairwise_disjoint`, `unique_up_to_associated`,
+  `support_subset_of_dvd_liftedRecoveryCandidate`, `liftedRecoveryCandidate_eq`).
+  The monic-only unscaled support field is derived by rewriting the unscaled
+  product candidate to `liftedRecoveryCandidate` under its leading-coefficient
+  side condition.
 
 The constructor body does not manufacture correspondence or partition fields
 from arbitrary `PrimeChoiceData`; callers must supply the successful-lift
@@ -17864,15 +17882,7 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData))
-    (hunscaled :
-      let d := Hex.ZPoly.toMonicLiftData core B primeData
-      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
-        Irreducible (HexPolyZMathlib.toPolynomial f) →
-        f ∣ core →
-        f ∣ liftedFactorProductCandidate d T →
-        RepresentsIntegerFactorAtLift core d f S →
-        S ⊆ T) :
+        (Hex.ZPoly.toMonicLiftData core B primeData)) :
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     LiftedFactorSubsetPartition core d Finset.univ core := by
     obtain ⟨hcover, hdisj, huniq, _⟩ :=
@@ -17893,9 +17903,16 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData
           exact huniq (f := f) (g := g) (S := S) (T := T)
             hirr_f hdvd_f hSrep hirr_g hdvd_g hTrep hassoc
         support_subset_of_dvd_recombinationCandidate := by
-          intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
-          exact hunscaled (f := f) (S := S) (T := T)
-            hirr hdvd_target hdvd_cand hSrep
+          intro f S T hirr hdvd_target _ hcore_lc_one hdvd_cand _ hSrep
+          have hdvd_rec :
+              f ∣ liftedRecoveryCandidate core
+                (Hex.ZPoly.toMonicLiftData core B primeData) T := by
+            rw [liftedRecoveryCandidate.eq_recombinationCandidate_of_lc_one
+              hcore_lc_one, recombinationCandidate_eq_liftedFactorProductCandidate]
+            exact hdvd_cand
+          exact
+            liftedFactorSubsetPartition_initial_support_subset_of_dvd_liftedRecoveryCandidate_of_choosePrimeData
+              core B primeData hinitial hirr hdvd_target hdvd_rec hSrep
         support_subset_of_dvd_liftedRecoveryCandidate := by
           intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
           exact
@@ -17925,15 +17942,7 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData))
-    (hunscaled :
-      let d := Hex.ZPoly.toMonicLiftData core B primeData
-      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
-        Irreducible (HexPolyZMathlib.toPolynomial f) →
-        f ∣ core →
-        f ∣ liftedFactorProductCandidate d T →
-        RepresentsIntegerFactorAtLift core d f S →
-        S ⊆ T) :
+        (Hex.ZPoly.toMonicLiftData core B primeData)) :
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     LiftedFactorSubsetPartition core d Finset.univ core := by
     obtain ⟨hcover, hdisj, huniq, _⟩ :=
@@ -17954,9 +17963,16 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData
           exact huniq (f := f) (g := g) (S := S) (T := T)
             hirr_f hdvd_f hSrep hirr_g hdvd_g hTrep hassoc
         support_subset_of_dvd_recombinationCandidate := by
-          intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
-          exact hunscaled (f := f) (S := S) (T := T)
-            hirr hdvd_target hdvd_cand hSrep
+          intro f S T hirr hdvd_target _ hcore_lc_one hdvd_cand _ hSrep
+          have hdvd_rec :
+              f ∣ liftedRecoveryCandidate core
+                (Hex.ZPoly.toMonicLiftData core B primeData) T := by
+            rw [liftedRecoveryCandidate.eq_recombinationCandidate_of_lc_one
+              hcore_lc_one, recombinationCandidate_eq_liftedFactorProductCandidate]
+            exact hdvd_cand
+          exact
+            liftedFactorSubsetPartition_initial_support_subset_of_dvd_liftedRecoveryCandidate_of_choosePrimeData
+              core B primeData hinitial hirr hdvd_target hdvd_rec hSrep
         support_subset_of_dvd_liftedRecoveryCandidate := by
           intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
           exact
@@ -18826,15 +18842,7 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData_success_descent
             hdescent.factor_count_eq S))
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData))
-    (hunscaled :
-      let d := Hex.ZPoly.toMonicLiftData core B primeData
-      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
-        Irreducible (HexPolyZMathlib.toPolynomial f) →
-        f ∣ core →
-        f ∣ liftedFactorProductCandidate d T →
-        RepresentsIntegerFactorAtLift core d f S →
-        S ⊆ T) :
+        (Hex.ZPoly.toMonicLiftData core B primeData)) :
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     LiftedFactorSubsetPartition core d Finset.univ core := by
     obtain ⟨hcover, hdisj, huniq, _⟩ :=
@@ -18857,9 +18865,16 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData_success_descent
           exact huniq (f := f) (g := g) (S := S) (T := T)
             hirr_f hdvd_f hSrep hirr_g hdvd_g hTrep hassoc
         support_subset_of_dvd_recombinationCandidate := by
-          intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
-          exact hunscaled (f := f) (S := S) (T := T)
-            hirr hdvd_target hdvd_cand hSrep
+          intro f S T hirr hdvd_target _ hcore_lc_one hdvd_cand _ hSrep
+          have hdvd_rec :
+              f ∣ liftedRecoveryCandidate core
+                (Hex.ZPoly.toMonicLiftData core B primeData) T := by
+            rw [liftedRecoveryCandidate.eq_recombinationCandidate_of_lc_one
+              hcore_lc_one, recombinationCandidate_eq_liftedFactorProductCandidate]
+            exact hdvd_cand
+          exact
+            liftedFactorSubsetPartition_initial_support_subset_of_dvd_liftedRecoveryCandidate_of_choosePrimeData
+              core B primeData hinitial hirr hdvd_target hdvd_rec hSrep
         support_subset_of_dvd_liftedRecoveryCandidate := by
           intro f S T hirr hdvd_target _ hdvd_cand _ hSrep
           exact
@@ -18961,15 +18976,7 @@ theorem slowPathHenselSubstrate_of_choosePrimeData
         (Hex.ZPoly.toMonicLiftData core B primeData) True True)
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData))
-    (hunscaled :
-      let d := Hex.ZPoly.toMonicLiftData core B primeData
-      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
-        Irreducible (HexPolyZMathlib.toPolynomial f) →
-        f ∣ core →
-        f ∣ liftedFactorProductCandidate d T →
-        RepresentsIntegerFactorAtLift core d f S →
-        S ⊆ T) :
+        (Hex.ZPoly.toMonicLiftData core B primeData)) :
     SlowPathHenselSubstrate core B primeData := by
   have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
     zpoly_lc_pos_of_monic hcore_monic
@@ -19004,7 +19011,7 @@ theorem slowPathHenselSubstrate_of_choosePrimeData
       precision := ?_ }
   · exact hcorr
   · exact liftedFactorSubsetPartition_of_choosePrimeData
-      core B primeData hchoose hcorr hcore_sqfree hinitial hunscaled
+      core B primeData hchoose hcorr hcore_sqfree hinitial
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
@@ -19047,15 +19054,7 @@ theorem slowPathHenselSubstrate_of_choosePrimeData_success_descent
             hdescent.factor_count_eq S))
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData))
-    (hunscaled :
-      let d := Hex.ZPoly.toMonicLiftData core B primeData
-      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
-        Irreducible (HexPolyZMathlib.toPolynomial f) →
-        f ∣ core →
-        f ∣ liftedFactorProductCandidate d T →
-        RepresentsIntegerFactorAtLift core d f S →
-        S ⊆ T) :
+        (Hex.ZPoly.toMonicLiftData core B primeData)) :
     SlowPathHenselSubstrate core B primeData := by
   have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
     zpoly_lc_pos_of_monic hcore_monic
@@ -19092,7 +19091,6 @@ theorem slowPathHenselSubstrate_of_choosePrimeData_success_descent
       core B primeData hchoose hdescent hlifted_of_modP
   · exact liftedFactorSubsetPartition_of_choosePrimeData_success_descent
       core B primeData hchoose hcore_sqfree hdescent hlifted_of_modP hinitial
-      hunscaled
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
@@ -19141,15 +19139,7 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData
         (Hex.ZPoly.toMonicLiftData core B primeData) True True)
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData))
-    (hunscaled :
-      let d := Hex.ZPoly.toMonicLiftData core B primeData
-      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
-        Irreducible (HexPolyZMathlib.toPolynomial f) →
-        f ∣ core →
-        f ∣ liftedFactorProductCandidate d T →
-        RepresentsIntegerFactorAtLift core d f S →
-        S ⊆ T) :
+        (Hex.ZPoly.toMonicLiftData core B primeData)) :
     SlowPathHenselSubstrate core B primeData := by
   have hp_prime : Hex.Nat.Prime primeData.p :=
     Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
@@ -19176,7 +19166,7 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData
       precision := ?_ }
   · exact hcorr
   · exact liftedFactorSubsetPartition_of_toMonicPrimeData
-      core B primeData hselected hcorr hcore_sqfree hinitial hunscaled
+      core B primeData hselected hcorr hcore_sqfree hinitial
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
@@ -20785,8 +20775,8 @@ theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
 This composes the core-fact correspondence producer
 `henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent` with
 the existing partition constructor. The recovered-coordinate partition fields
-come from `InitialLiftedFactorSubsetPartitionEvidence`; the still-live
-unscaled support field remains an explicit `hunscaled` hypothesis. -/
+come from `InitialLiftedFactorSubsetPartitionEvidence`; the monic-only unscaled
+field is derived from recovered support under its side condition. -/
 theorem liftedFactorSubsetPartition_of_toMonicPrimeData_success_descent
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
@@ -20805,15 +20795,7 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData_success_descent
     (hB_ne_zero : B ≠ 0)
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData))
-    (hunscaled :
-      let d := Hex.ZPoly.toMonicLiftData core B primeData
-      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
-        Irreducible (HexPolyZMathlib.toPolynomial f) →
-        f ∣ core →
-        f ∣ liftedFactorProductCandidate d T →
-        RepresentsIntegerFactorAtLift core d f S →
-        S ⊆ T) :
+        (Hex.ZPoly.toMonicLiftData core B primeData)) :
     let d := Hex.ZPoly.toMonicLiftData core B primeData
     LiftedFactorSubsetPartition core d Finset.univ core := by
   intro d
@@ -20822,7 +20804,7 @@ theorem liftedFactorSubsetPartition_of_toMonicPrimeData_success_descent
     (henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
       core B primeData hselected hdescent hcore_lc_pos hcore_pos hcore_prim
       hprecision hbound hB_ne_zero)
-    hcore_sqfree hinitial hunscaled
+    hcore_sqfree hinitial
 
 /-- **#6682 supporting lemma (HO-1 slow-path substrate constructor).**
 
@@ -20851,15 +20833,7 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData_success_descent
         primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
     (hinitial :
       InitialLiftedFactorSubsetPartitionEvidence core
-        (Hex.ZPoly.toMonicLiftData core B primeData))
-    (hunscaled :
-      let d := Hex.ZPoly.toMonicLiftData core B primeData
-      ∀ {f : Hex.ZPoly} {S T : LiftedFactorSubset d},
-        Irreducible (HexPolyZMathlib.toPolynomial f) →
-        f ∣ core →
-        f ∣ liftedFactorProductCandidate d T →
-        RepresentsIntegerFactorAtLift core d f S →
-        S ⊆ T) :
+        (Hex.ZPoly.toMonicLiftData core B primeData)) :
     SlowPathHenselSubstrate core B primeData := by
   have hp_prime : Hex.Nat.Prime primeData.p :=
     Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
@@ -20889,7 +20863,7 @@ theorem slowPathHenselSubstrate_of_toMonicChoosePrimeData_success_descent
       hprec_pos hbound hB_ne_zero
   · exact liftedFactorSubsetPartition_of_toMonicPrimeData_success_descent
       core B primeData hselected hdescent hcore_lc_pos hcore_pos hcore_prim
-      hcore_sqfree hprec_pos hbound hB_ne_zero hinitial hunscaled
+      hcore_sqfree hprec_pos hbound hB_ne_zero hinitial
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData

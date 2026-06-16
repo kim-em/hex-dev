@@ -3134,17 +3134,7 @@ theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
         (Hex.ZPoly.toMonicLiftData
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.defaultFactorCoeffBound f)
-          primeData))
-    (hunscaled :
-      let core := (Hex.normalizeForFactor f).squareFreeCore
-      let B := Hex.ZPoly.defaultFactorCoeffBound f
-      let d := Hex.ZPoly.toMonicLiftData core B primeData
-      ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
-        Irreducible (HexPolyZMathlib.toPolynomial factor) →
-        factor ∣ core →
-        factor ∣ liftedFactorProductCandidate d T →
-        RepresentsIntegerFactorAtLift core d factor S →
-        S ⊆ T) :
+          primeData)) :
     let core := (Hex.normalizeForFactor f).squareFreeCore
     let B := Hex.ZPoly.defaultFactorCoeffBound f
     let d := Hex.ZPoly.toMonicLiftData core B primeData
@@ -3154,7 +3144,7 @@ theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
       (Hex.ZPoly.defaultFactorCoeffBound f)
       primeData hchoose
       (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf)
-      hdescent hlifted_of_modP hinitial hunscaled
+      hdescent hlifted_of_modP hinitial
 
 /--
 Branch-local substrate for the small-mod singleton arm, specialised to the
@@ -3682,16 +3672,6 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
             (Hex.normalizeForFactor f).squareFreeCore
             (Hex.ZPoly.defaultFactorCoeffBound f)
           primeData))
-      (hunscaled :
-        let core := (Hex.normalizeForFactor f).squareFreeCore
-        let B := Hex.ZPoly.defaultFactorCoeffBound f
-        let d := Hex.ZPoly.toMonicLiftData core B primeData
-        ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
-          Irreducible (HexPolyZMathlib.toPolynomial factor) →
-          factor ∣ core →
-          factor ∣ liftedFactorProductCandidate d T →
-          RepresentsIntegerFactorAtLift core d factor S →
-          S ⊆ T)
       (hcomplete : Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
       (Hex.exhaustiveCoreFactorsWithBound
         (Hex.normalizeForFactor f).squareFreeCore
@@ -3821,7 +3801,7 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
         (henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData f
           primeData hchoose hdescent hlifted_of_modP)
         (liftedFactorSubsetPartition_outerBound_of_choosePrimeData f hf_ne
-          primeData hchoose hdescent hlifted_of_modP hinitial hunscaled)
+          primeData hchoose hdescent hlifted_of_modP hinitial)
       hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
       hd_liftedFactor_inj B' hcore_lc_le hvalid hprecision
@@ -3967,16 +3947,6 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
             (Hex.normalizeForFactor f).squareFreeCore
             (Hex.ZPoly.defaultFactorCoeffBound f)
             primeData))
-      (hunscaled :
-        let core := (Hex.normalizeForFactor f).squareFreeCore
-        let B := Hex.ZPoly.defaultFactorCoeffBound f
-        let d := Hex.ZPoly.toMonicLiftData core B primeData
-        ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
-          Irreducible (HexPolyZMathlib.toPolynomial factor) →
-          factor ∣ core →
-          factor ∣ liftedFactorProductCandidate d T →
-          RepresentsIntegerFactorAtLift core d factor S →
-          S ⊆ T)
       (hcomplete : Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
       (Hex.exhaustiveCoreFactorsWithBound
         (Hex.normalizeForFactor f).squareFreeCore
@@ -3996,7 +3966,7 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux_of_bound
     f hf_ne entry hbranch hentry_mem primeData hselected hchoose
-    hdescent hlifted_of_modP hinitial hunscaled hcomplete
+    hdescent hlifted_of_modP hinitial hcomplete
     (Hex.ZPoly.defaultFactorCoeffBound
       (Hex.normalizeForFactor f).squareFreeCore)
     hcore_lc_le
@@ -4066,16 +4036,6 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
             (Hex.normalizeForFactor f).squareFreeCore
             (Hex.ZPoly.defaultFactorCoeffBound f)
           primeData))
-      (hunscaled :
-        let core := (Hex.normalizeForFactor f).squareFreeCore
-        let B := Hex.ZPoly.defaultFactorCoeffBound f
-        let d := Hex.ZPoly.toMonicLiftData core B primeData
-        ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
-          Irreducible (HexPolyZMathlib.toPolynomial factor) →
-          factor ∣ core →
-          factor ∣ liftedFactorProductCandidate d T →
-          RepresentsIntegerFactorAtLift core d factor S →
-          S ⊆ T)
       (B' : Nat)
     (hcore_lc_le : (Hex.DensePoly.leadingCoeff
         (Hex.normalizeForFactor f).squareFreeCore).natAbs ≤ B')
@@ -4210,7 +4170,7 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
         (henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData f
           primeData hchoose hdescent hlifted_of_modP)
         (liftedFactorSubsetPartition_outerBound_of_choosePrimeData f hf_ne
-          primeData hchoose hdescent hlifted_of_modP hinitial hunscaled)
+          primeData hchoose hdescent hlifted_of_modP hinitial)
       hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
       hd_liftedFactor_inj B' hcore_lc_le hvalid hprecision
@@ -4317,16 +4277,6 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
             (Hex.normalizeForFactor f).squareFreeCore
             (Hex.ZPoly.defaultFactorCoeffBound f)
             primeData))
-      (hunscaled :
-        let core := (Hex.normalizeForFactor f).squareFreeCore
-        let B := Hex.ZPoly.defaultFactorCoeffBound f
-        let d := Hex.ZPoly.toMonicLiftData core B primeData
-        ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
-          Irreducible (HexPolyZMathlib.toPolynomial factor) →
-          factor ∣ core →
-          factor ∣ liftedFactorProductCandidate d T →
-          RepresentsIntegerFactorAtLift core d factor S →
-          S ⊆ T)
       (hprecision :
       2 * Hex.ZPoly.defaultFactorCoeffBound
         (Hex.normalizeForFactor f).squareFreeCore <
@@ -4355,7 +4305,7 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData_of_bound
     f hf_ne hbranch primeData hselected hchoose
-    hdescent hlifted_of_modP hinitial hunscaled
+    hdescent hlifted_of_modP hinitial
     (Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore)
     hcore_lc_le
     (defaultFactorCoeffBound_valid (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
@@ -4456,17 +4406,7 @@ theorem monicReductionCorrespondence_of_normalizeForFactor_squareFreeCore
         (Hex.ZPoly.toMonicLiftData
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.defaultFactorCoeffBound f)
-          primeData))
-      (hunscaled :
-        let core := (Hex.normalizeForFactor f).squareFreeCore
-        let B := Hex.ZPoly.defaultFactorCoeffBound f
-        let d := Hex.ZPoly.toMonicLiftData core B primeData
-        ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
-          Irreducible (HexPolyZMathlib.toPolynomial factor) →
-          factor ∣ core →
-          factor ∣ liftedFactorProductCandidate d T →
-          RepresentsIntegerFactorAtLift core d factor S →
-          S ⊆ T) :
+          primeData)) :
     let core := (Hex.normalizeForFactor f).squareFreeCore
     let B := Hex.ZPoly.defaultFactorCoeffBound f
     let d := Hex.ZPoly.toMonicLiftData core B primeData
@@ -4545,7 +4485,7 @@ theorem monicReductionCorrespondence_of_normalizeForFactor_squareFreeCore
       liftedFactorSubsetPartition_of_choosePrimeData_success_descent
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f)
-        primeData hchoose hsqfree hdescent hlifted_of_modP hinitial hunscaled
+        primeData hchoose hsqfree hdescent hlifted_of_modP hinitial
   · intro factor S hmonic_ne hfactor_norm hprecision hrep
     rcases hrep with ⟨hrec⟩
     exact hrec.candidate_eq_of_monic_dvd hmonic_ne hfactor_norm hprecision
@@ -4600,17 +4540,7 @@ theorem monicReductionCorrespondence_liftedFactor_facts_of_normalizeForFactor_sq
           (Hex.ZPoly.toMonicLiftData
             (Hex.normalizeForFactor f).squareFreeCore
             (Hex.ZPoly.defaultFactorCoeffBound f)
-            primeData))
-      (hunscaled :
-        let core := (Hex.normalizeForFactor f).squareFreeCore
-        let B := Hex.ZPoly.defaultFactorCoeffBound f
-        let d := Hex.ZPoly.toMonicLiftData core B primeData
-        ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
-          Irreducible (HexPolyZMathlib.toPolynomial factor) →
-          factor ∣ core →
-          factor ∣ liftedFactorProductCandidate d T →
-          RepresentsIntegerFactorAtLift core d factor S →
-          S ⊆ T) :
+            primeData)) :
     let core := (Hex.normalizeForFactor f).squareFreeCore
     let B := Hex.ZPoly.defaultFactorCoeffBound f
     let d := Hex.ZPoly.toMonicLiftData core B primeData
@@ -4622,7 +4552,7 @@ theorem monicReductionCorrespondence_liftedFactor_facts_of_normalizeForFactor_sq
   intro core B d
   have pkg :=
     monicReductionCorrespondence_of_normalizeForFactor_squareFreeCore
-      f hf_ne hdegree primeData hchoose hdescent hlifted_of_modP hinitial hunscaled
+      f hf_ne hdegree primeData hchoose hdescent hlifted_of_modP hinitial
   exact
     ⟨pkg.liftedFactor_monic_of_monicPrimeData hselected,
       pkg.liftedFactor_natDegree_pos_of_monicPrimeData hselected,
@@ -4744,16 +4674,6 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
             (Hex.normalizeForFactor f).squareFreeCore
             (Hex.ZPoly.defaultFactorCoeffBound f)
             primeData))
-      (hunscaled :
-        let core := (Hex.normalizeForFactor f).squareFreeCore
-        let B := Hex.ZPoly.defaultFactorCoeffBound f
-        let d := Hex.ZPoly.toMonicLiftData core B primeData
-        ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
-          Irreducible (HexPolyZMathlib.toPolynomial factor) →
-          factor ∣ core →
-          factor ∣ liftedFactorProductCandidate d T →
-          RepresentsIntegerFactorAtLift core d factor S →
-          S ⊆ T)
       (hcore_monic : Hex.DensePoly.Monic
       (Hex.normalizeForFactor f).squareFreeCore)
     (B' : Nat)
@@ -4799,7 +4719,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
       exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData_of_bound
         f hf_ne hbranch
         primeData
-        hselected hchoose hdescent hlifted_of_modP hinitial hunscaled
+        hselected hchoose hdescent hlifted_of_modP hinitial
         B' hcore_lc_le hvalid hprecision
   -- New base lemma: monicness and positive-degree of every emitted factor.
   have hmonic :=
@@ -4942,16 +4862,6 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.defaultFactorCoeffBound f)
           primeData))
-    (hunscaled :
-      let core := (Hex.normalizeForFactor f).squareFreeCore
-      let B := Hex.ZPoly.defaultFactorCoeffBound f
-      let d := Hex.ZPoly.toMonicLiftData core B primeData
-      ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
-        Irreducible (HexPolyZMathlib.toPolynomial factor) →
-        factor ∣ core →
-        factor ∣ liftedFactorProductCandidate d T →
-        RepresentsIntegerFactorAtLift core d factor S →
-        S ⊆ T)
     (hcore_monic : Hex.DensePoly.Monic
       (Hex.normalizeForFactor f).squareFreeCore)
     (hprecision :
@@ -4970,7 +4880,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact reassemblyExpansionComplete_exhaustive_of_ne_zero_of_bound
     f hf_ne hbranch primeData hselected hchoose
-    hdescent hlifted_of_modP hinitial hunscaled hcore_monic
+    hdescent hlifted_of_modP hinitial hcore_monic
     (Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore)
     hcore_lc_le
     (defaultFactorCoeffBound_valid (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
@@ -5029,16 +4939,6 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
             (Hex.normalizeForFactor f).squareFreeCore
             (Hex.ZPoly.defaultFactorCoeffBound f)
             primeData))
-      (hunscaled :
-        let core := (Hex.normalizeForFactor f).squareFreeCore
-        let B := Hex.ZPoly.defaultFactorCoeffBound f
-        let d := Hex.ZPoly.toMonicLiftData core B primeData
-        ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
-          Irreducible (HexPolyZMathlib.toPolynomial factor) →
-          factor ∣ core →
-          factor ∣ liftedFactorProductCandidate d T →
-          RepresentsIntegerFactorAtLift core d factor S →
-          S ⊆ T)
       (hcore_primitive : Hex.ZPoly.Primitive
       (Hex.normalizeForFactor f).squareFreeCore)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff
@@ -5086,7 +4986,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
       exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeData_of_bound
         f hf_ne hbranch
         primeData
-        hselected hchoose hdescent hlifted_of_modP hinitial hunscaled
+        hselected hchoose hdescent hlifted_of_modP hinitial
         B' hcore_lc_le hvalid hprecision
   -- Weakened-input base lemmas: positive-degree from #4946 deliv 6, primitivity
   -- from #4946 deliv 5.
@@ -5256,16 +5156,6 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.defaultFactorCoeffBound f)
           primeData))
-    (hunscaled :
-      let core := (Hex.normalizeForFactor f).squareFreeCore
-      let B := Hex.ZPoly.defaultFactorCoeffBound f
-      let d := Hex.ZPoly.toMonicLiftData core B primeData
-      ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
-        Irreducible (HexPolyZMathlib.toPolynomial factor) →
-        factor ∣ core →
-        factor ∣ liftedFactorProductCandidate d T →
-        RepresentsIntegerFactorAtLift core d factor S →
-        S ⊆ T)
     (hcore_primitive : Hex.ZPoly.Primitive
       (Hex.normalizeForFactor f).squareFreeCore)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff
@@ -5286,7 +5176,7 @@ theorem reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_co
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_core_of_bound
     f hf_ne hbranch primeData hselected hchoose
-    hdescent hlifted_of_modP hinitial hunscaled hcore_primitive hcore_lc_pos
+    hdescent hlifted_of_modP hinitial hcore_primitive hcore_lc_pos
     (Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore)
     hcore_lc_le
     (defaultFactorCoeffBound_valid (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
@@ -5351,16 +5241,6 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound
             (Hex.normalizeForFactor f).squareFreeCore
             (Hex.ZPoly.defaultFactorCoeffBound f)
             primeData))
-      (hunscaled :
-        let core := (Hex.normalizeForFactor f).squareFreeCore
-        let B := Hex.ZPoly.defaultFactorCoeffBound f
-        let d := Hex.ZPoly.toMonicLiftData core B primeData
-        ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
-          Irreducible (HexPolyZMathlib.toPolynomial factor) →
-          factor ∣ core →
-          factor ∣ liftedFactorProductCandidate d T →
-          RepresentsIntegerFactorAtLift core d factor S →
-          S ⊆ T)
       (B' : Nat)
     (hcore_lc_le : (Hex.DensePoly.leadingCoeff
         (Hex.normalizeForFactor f).squareFreeCore).natAbs ≤ B')
@@ -5379,10 +5259,10 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound
       IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
     exact factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_aux_of_bound
       f hf_ne entry hbranch hentry_mem primeData hselected hchoose
-      hdescent hlifted_of_modP hinitial hunscaled
+      hdescent hlifted_of_modP hinitial
       (reassemblyExpansionComplete_exhaustive_of_ne_zero_of_primitive_pos_lc_core_of_bound
         f hf_ne hbranch primeData hselected hchoose
-        hdescent hlifted_of_modP hinitial hunscaled hcore_primitive hcore_lc_pos
+        hdescent hlifted_of_modP hinitial hcore_primitive hcore_lc_pos
           B' hcore_lc_le hvalid hprecision)
         B' hcore_lc_le hvalid hprecision
 
@@ -5457,16 +5337,6 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
             (Hex.normalizeForFactor f).squareFreeCore
             (Hex.ZPoly.defaultFactorCoeffBound f)
             primeData))
-      (hunscaled :
-        let core := (Hex.normalizeForFactor f).squareFreeCore
-        let B := Hex.ZPoly.defaultFactorCoeffBound f
-        let d := Hex.ZPoly.toMonicLiftData core B primeData
-        ∀ {factor : Hex.ZPoly} {S T : LiftedFactorSubset d},
-          Irreducible (HexPolyZMathlib.toPolynomial factor) →
-          factor ∣ core →
-          factor ∣ liftedFactorProductCandidate d T →
-          RepresentsIntegerFactorAtLift core d factor S →
-          S ⊆ T)
     -- Gap 3 (base task): explicit on this wrapper; downstream callers
     -- wanting an outer-shape bound should route through the `_of_bound`
     -- sibling
@@ -5486,7 +5356,7 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
   have hcore_lc_le := defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne
   exact factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_of_bound
     f hf_ne entry hbranch hentry_mem primeData hselected hchoose
-    hdescent hlifted_of_modP hinitial hunscaled
+    hdescent hlifted_of_modP hinitial
     (Hex.ZPoly.defaultFactorCoeffBound (Hex.normalizeForFactor f).squareFreeCore)
     hcore_lc_le
       (defaultFactorCoeffBound_valid (Hex.normalizeForFactor f).squareFreeCore hcore_ne)
