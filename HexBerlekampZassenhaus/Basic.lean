@@ -5028,15 +5028,34 @@ theorem lll_delta_lower : (1 / 4 : Rat) < 3 / 4 := by
 theorem lll_delta_upper : (3 / 4 : Rat) ≤ 1 := by
   grind
 
+/--
+Length of the BHKS Lemma 5.7 *prefix* cut: one past the last Gram-Schmidt
+index whose squared length is within the radius (`0` if none passes).  Because
+the fold runs in increasing index order, the accumulator ends at
+`(max { i : ‖b*_i‖² ≤ radius }) + 1`, so retaining indices `< t` keeps the
+contiguous prefix `b_0 … b_t` in original order — including earlier rows whose
+own Gram-Schmidt norm exceeds the radius.
+-/
+def bhksCutPrefixCount
+    (L : BhksLatticeBasis)
+    (reduced : Matrix Int (L.factorCount + L.coeffWidth)
+        (L.factorCount + L.coeffWidth)) :
+    Nat :=
+  let dets := GramSchmidt.Int.gramDetVec reduced
+  (List.finRange (L.factorCount + L.coeffWidth)).foldl
+    (fun acc i =>
+      if bhksWithinGramSchmidtCut L dets i then i.val + 1 else acc)
+    0
+
 def bhksCutProjectReducedRows
     (L : BhksLatticeBasis)
     (reduced : Matrix Int (L.factorCount + L.coeffWidth)
         (L.factorCount + L.coeffWidth)) :
     Array (Array Int) :=
-  let dets := GramSchmidt.Int.gramDetVec reduced
+  let t := bhksCutPrefixCount L reduced
   (List.finRange (L.factorCount + L.coeffWidth)).foldl
     (fun acc i =>
-      if bhksWithinGramSchmidtCut L dets i then
+      if i.val < t then
         acc.push (bhksProjectIndicator L.factorCount L.coeffWidth (reduced.row i))
       else
         acc)
@@ -5047,10 +5066,10 @@ def bhksRetainedRowIndices
     (reduced : Matrix Int (L.factorCount + L.coeffWidth)
         (L.factorCount + L.coeffWidth)) :
     Array (Fin (L.factorCount + L.coeffWidth)) :=
-  let dets := GramSchmidt.Int.gramDetVec reduced
+  let t := bhksCutPrefixCount L reduced
   (List.finRange (L.factorCount + L.coeffWidth)).foldl
     (fun acc i =>
-      if bhksWithinGramSchmidtCut L dets i then
+      if i.val < t then
         acc.push i
       else
         acc)
