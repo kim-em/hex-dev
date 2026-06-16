@@ -20770,6 +20770,51 @@ theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent
     exact toMonicLiftData_unique_subset core B primeData
       hcore_lc_pos hcore_pos hselected hprecision hbound hirr hdvd hS hT
 
+/--
+Carrier-free `toMonicPrimeData?` Hensel subset correspondence surface.
+
+Same conclusion as
+`henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData_success_descent`, but
+without the `MonicDescentHypotheses` carrier: at the `True True` instantiation the
+only descent fields that constructor consumed (`lift_eq`, `successful_lift`) are
+`rfl`/`trivial`, and the existence/uniqueness fields come directly from the core
+facts via `toMonicLiftData_represents_lifted_of_modP` and
+`toMonicLiftData_unique_subset`.  This is the core-facts producer that the
+partition and slow-path substrate packages route through. -/
+theorem henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData
+    (core : Hex.ZPoly) (B : Nat)
+    (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
+    (hB_ne_zero : B ≠ 0) :
+    let d := Hex.ZPoly.toMonicLiftData core B primeData
+    HenselSubsetCorrespondenceHypotheses core B primeData d True True := by
+  intro d
+  have hcore0 : core ≠ 0 := zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  have hdeg : 1 ≤ (Hex.ZPoly.toMonic core).degree := hcore_pos
+  refine
+    { lift_eq := rfl
+      admissible_prime := trivial
+      successful_lift := trivial
+      exists_subset := ?_
+      unique_subset := ?_ }
+  · intro factor hsign hirr hdvd
+    have hprim : Hex.ZPoly.Primitive factor :=
+      zpoly_primitive_of_dvd_primitive_basic hcore_prim hdvd
+    have hfdeg : 1 ≤ factor.degree?.getD 0 :=
+      one_le_degree_getD_of_irreducible_dvd_primitive hcore_prim hirr hdvd
+    exact toMonicLiftData_represents_lifted_of_modP core B primeData
+      hselected hcore0 hcore_lc_pos hdeg hB_ne_zero hirr hprim hsign hfdeg hdvd
+  · intro factor S T hirr hdvd hS hT
+    exact toMonicLiftData_unique_subset core B primeData
+      hcore_lc_pos hcore_pos hselected hprecision hbound hirr hdvd hS hT
+
 /-- Initial lifted subset partition for `toMonicPrimeData?` success.
 
 This composes the core-fact correspondence producer
