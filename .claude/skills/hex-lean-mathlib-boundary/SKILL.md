@@ -252,7 +252,21 @@ there, below `Basic.lean`. Building a producer whose fields straddle this bounda
 forces it into the lowest file that sees every datum, which in turn forces
 de-privatising any `private` `Basic.lean` helpers it calls (visibility-only, safe).
 Wiring it back up into the upstream slow-path substrate is a separate follow-up
-(the substrate cannot import downstream modules).
+(the substrate cannot import downstream modules). That follow-up landed (#7584):
+`IntReductionMod.lean` now carries carrier-free toMonic producers that need only a
+`toMonicPrimeData?` selection witness plus core facts (lc>0, deg>0, primitive,
+squarefree, B≠0, the monic-correspondent bound) — `liftedFactorSubsetPartition_of_toMonicPrimeData_complete`
+and `slowPathHenselSubstrate_of_toMonicPrimeData`, both discharging `hinitial` via
+the #7362 producer above and `hcorr` via the new Basic.lean
+`henselSubsetCorrespondenceHypotheses_of_toMonicPrimeData` (the carrier-free
+correspondence: at `True True`, `MonicDescentHypotheses`' only consumed fields
+`lift_eq`/`successful_lift` are `rfl`/`trivial`, so no descent carrier is needed —
+there is still no `MonicDescentHypotheses` *producer*, but the partition/substrate
+chain no longer needs one). So when wiring #6771/#7561, **do not re-derive these** —
+consume `slowPathHenselSubstrate_of_toMonicPrimeData` / `…_complete` directly. They
+have no in-tree consumer yet; the slow-exhaustive branch
+(`liftedFactorSubsetPartition_outerBound_of_choosePrimeData`) is keyed on the
+different `choosePrimeData? squareFreeCore` selection, not `toMonicPrimeData?`.
 
 A distinct, sharper failure mode than "no producer": the hypothesis the
 directive asks you to *produce* is not merely unproduced but **provably false**,
