@@ -321,7 +321,7 @@ theorem two_le_support_card_of_const_degree
   have hd_pos : 0 < d := hdeg
   have hsize_pos : 0 < f.size := Hex.ZPoly.size_pos_of_ne_zero f hf_ne
   have hd_eq : d = f.size - 1 := by
-    simpa [d, bhksDegree] using (degree?_getD_of_ne_zero f hf_ne)
+    simp [d, bhksDegree, Hex.DensePoly.degree?, Nat.ne_of_gt hsize_pos]
   have htop_ne : f.coeff d ≠ 0 := by
     have hlead_ne := Hex.ZPoly.leadingCoeff_ne_zero_of_ne_zero f hf_ne
     rw [Hex.DensePoly.leadingCoeff_eq_coeff_last f hsize_pos] at hlead_ne
@@ -754,6 +754,121 @@ theorem coeffL2NormBound_pow_le_bhksPaperCoeffNormFactorReal
     have hk_exp : 2 * k ≤ 2 * bhksDegree f - 1 := by omega
     exact hc_pow_le_x_pow.trans
       (l2norm_pow_le_bhksPaperCoeffNormFactorReal (f := f) hf hk_exp)
+
+/--
+Coefficient-ceiling/log absorption for the joint BHKS auxiliary estimate.
+
+Writing `n = bhksDegree f`, `L = coeffL2NormBound f`, and
+`N = ‖toPolynomial f‖₂`, this proves the reusable arithmetic component
+
+`n^(n-1) * L^n ≤ 2^(n*n+n) * N^n * (log N)^n`.
+
+The explicit `1 ≤ 2 * log N` hypothesis is the quantitative log floor needed by
+this deliberately coarse `L ≤ 2N` absorption.  It is stronger than `1 < N`;
+callers that only have strict log positivity should use a sharper absorption
+lemma rather than applying this one.
+-/
+theorem coeffL2NormBound_absorb_log
+    (f : Hex.ZPoly)
+    (hlog :
+      1 ≤ 2 * Real.log
+        (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f))) :
+    (bhksDegree f : ℝ) ^ (bhksDegree f - 1) *
+        (Hex.ZPoly.coeffL2NormBound f : ℝ) ^ bhksDegree f ≤
+      (2 : ℝ) ^ (bhksDegree f * bhksDegree f + bhksDegree f) *
+        (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) ^
+          bhksDegree f *
+        (Real.log (HexPolyZMathlib.l2norm
+          (HexPolyZMathlib.toPolynomial f))) ^ bhksDegree f := by
+  let n := bhksDegree f
+  let L : ℝ := Hex.ZPoly.coeffL2NormBound f
+  let N := HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)
+  have hN_nonneg : 0 ≤ N := by
+    unfold N HexPolyZMathlib.l2norm
+    exact Real.sqrt_nonneg _
+  have hL_nonneg : 0 ≤ L := by
+    unfold L
+    exact_mod_cast Nat.zero_le (Hex.ZPoly.coeffL2NormBound f)
+  have hL_sq : L ^ 2 ≤ 2 * N ^ 2 := by
+    have hceil := Hex.ZPoly.coeffL2NormBound_sq_le_two_mul_coeffNormSq f
+    have hnorm := HexPolyZMathlib.l2norm_toPolynomial_sq_eq_coeffNormSq f
+    unfold L N at *
+    rw [hnorm]
+    exact_mod_cast hceil
+  have hL_le : L ≤ 2 * N := by
+    have hsq : L ^ 2 ≤ (2 * N) ^ 2 := by
+      nlinarith [hL_sq, sq_nonneg N]
+    have h_abs := (sq_le_sq).mp hsq
+    have h2N_nonneg : 0 ≤ 2 * N := mul_nonneg (by norm_num) hN_nonneg
+    simpa [abs_of_nonneg hL_nonneg, abs_of_nonneg h2N_nonneg] using h_abs
+  have hL_pow : L ^ n ≤ (2 * N) ^ n :=
+    pow_le_pow_left₀ hL_nonneg hL_le n
+  have hn_le_two_pow : (n : ℝ) ≤ (2 : ℝ) ^ n := by
+    exact_mod_cast (Nat.lt_two_pow_self (n := n)).le
+  have hn_pow :
+      (n : ℝ) ^ (n - 1) ≤ ((2 : ℝ) ^ n) ^ (n - 1) :=
+    pow_le_pow_left₀ (by exact_mod_cast Nat.zero_le n) hn_le_two_pow (n - 1)
+  have hmain :
+      (n : ℝ) ^ (n - 1) * L ^ n ≤ (2 : ℝ) ^ (n * n) * N ^ n := by
+    have hright_nonneg : 0 ≤ L ^ n := pow_nonneg hL_nonneg _
+    have hleft_bound_nonneg : 0 ≤ ((2 : ℝ) ^ n) ^ (n - 1) :=
+      pow_nonneg (pow_nonneg (by norm_num : (0 : ℝ) ≤ (2 : ℝ)) _) _
+    calc
+      (n : ℝ) ^ (n - 1) * L ^ n
+          ≤ ((2 : ℝ) ^ n) ^ (n - 1) * (2 * N) ^ n :=
+            mul_le_mul hn_pow hL_pow hright_nonneg hleft_bound_nonneg
+      _ = ((2 : ℝ) ^ n) ^ (n - 1) * ((2 : ℝ) ^ n * N ^ n) := by
+            rw [mul_pow]
+      _ = (((2 : ℝ) ^ n) ^ (n - 1) * (2 : ℝ) ^ n) * N ^ n := by
+            ring
+      _ = ((2 : ℝ) ^ n) ^ n * N ^ n := by
+            by_cases hn0 : n = 0
+            · simp [hn0]
+            · have hn_pos : 1 ≤ n := Nat.succ_le_iff.mpr (Nat.pos_of_ne_zero hn0)
+              rw [← pow_succ, Nat.sub_add_cancel hn_pos]
+      _ = (2 : ℝ) ^ (n * n) * N ^ n := by
+            rw [pow_mul]
+  have hlog_nonneg :
+      0 ≤ Real.log (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) := by
+    nlinarith
+  have hlog_pow :
+      1 ≤
+        ((2 : ℝ) * Real.log
+          (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f))) ^ n :=
+    by
+      simpa using pow_le_pow_left₀ (by norm_num : (0 : ℝ) ≤ 1) hlog n
+  have hbudget :
+      (2 : ℝ) ^ (n * n) * N ^ n ≤
+        (2 : ℝ) ^ (n * n + n) * N ^ n *
+          (Real.log (HexPolyZMathlib.l2norm
+            (HexPolyZMathlib.toPolynomial f))) ^ n := by
+    calc
+      (2 : ℝ) ^ (n * n) * N ^ n
+          ≤ (2 : ℝ) ^ (n * n) * N ^ n *
+              (((2 : ℝ) * Real.log
+                (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f))) ^ n) := by
+            have hnonneg : 0 ≤ (2 : ℝ) ^ (n * n) * N ^ n :=
+              mul_nonneg (by positivity) (pow_nonneg hN_nonneg _)
+            nlinarith [mul_le_mul_of_nonneg_left hlog_pow hnonneg]
+      _ = (2 : ℝ) ^ (n * n + n) * N ^ n *
+            (Real.log (HexPolyZMathlib.l2norm
+              (HexPolyZMathlib.toPolynomial f))) ^ n := by
+            rw [mul_pow]
+            calc
+              (2 : ℝ) ^ (n * n) * N ^ n *
+                  ((2 : ℝ) ^ n *
+                    Real.log (HexPolyZMathlib.l2norm
+                      (HexPolyZMathlib.toPolynomial f)) ^ n)
+                  =
+                  ((2 : ℝ) ^ (n * n) * (2 : ℝ) ^ n) * N ^ n *
+                    Real.log (HexPolyZMathlib.l2norm
+                      (HexPolyZMathlib.toPolynomial f)) ^ n := by
+                    ring
+              _ = (2 : ℝ) ^ (n * n + n) * N ^ n *
+                    Real.log (HexPolyZMathlib.l2norm
+                      (HexPolyZMathlib.toPolynomial f)) ^ n := by
+                    rw [← pow_add]
+  simpa [n, L, N] using hmain.trans hbudget
 
 /--
 Named analytic target for bounding the BHKS logarithmic factor by the packaged
