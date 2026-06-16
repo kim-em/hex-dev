@@ -1,4 +1,5 @@
 import HexBerlekampZassenhausMathlib.BadVector
+import HexBerlekampZassenhausMathlib.BHKSBound
 
 /-!
 Coefficient-facing helper lemmas for the BHKS auxiliary polynomial.
@@ -448,6 +449,166 @@ theorem l2norm_sq_toPolynomial_auxiliaryPolynomial_le
       ≤ (cldColumnNormBound input liftData.p : ℝ) := by
   unfold auxiliaryPolynomial
   exact l2norm_sq_toPolynomial_auxiliaryPolynomialWithCorrections_le C
+
+/--
+Joint BHKS auxiliary domination from the executable CLD square bound.
+
+This is the reusable paper-threshold bridge for BHKS §5: a generic auxiliary
+norm whose square is bounded by `cldColumnNormBound`, and whose degree is at
+most `n - 1`, satisfies the joint product bound
+`‖core‖₂^auxDegree * auxNorm^n ≤ bhksPaperThresholdReal core 2`.
+-/
+theorem jointAux_le_paperThreshold
+    (core : Hex.ZPoly) (p : Nat) {auxNorm : ℝ} {auxDegree : Nat}
+    (hdeg : 2 ≤ bhksDegree core)
+    (hcoreNorm :
+      1 < HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial core))
+    (haux_sq : auxNorm ^ 2 ≤ (cldColumnNormBound core p : ℝ))
+    (hauxDegree : auxDegree ≤ bhksDegree core - 1)
+    (haux_nonneg : 0 ≤ auxNorm) :
+    (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial core)) ^ auxDegree *
+        auxNorm ^ bhksDegree core ≤ bhksPaperThresholdReal core 2 := by
+  let n := bhksDegree core
+  let N := HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial core)
+  let L : ℝ := Hex.ZPoly.coeffL2NormBound core
+  have hn : 2 ≤ n := by simpa [n] using hdeg
+  have hN_nonneg : 0 ≤ N := by
+    unfold N HexPolyZMathlib.l2norm
+    exact Real.sqrt_nonneg _
+  have hN_one : 1 ≤ N := le_of_lt hcoreNorm
+  have hL_nonneg : 0 ≤ L := by
+    unfold L
+    exact_mod_cast Nat.zero_le (Hex.ZPoly.coeffL2NormBound core)
+  have hcld_real :
+      (cldColumnNormBound core p : ℝ) ≤
+        (n : ℝ) ^ 2 * L ^ 2 * (4 : ℝ) ^ (n - 1) := by
+    have hcld := cldColumnNormBound_le core p
+    have hcld' :
+        (cldColumnNormBound core p : ℝ) ≤
+          ((n ^ 2 * (Hex.ZPoly.coeffL2NormBound core) ^ 2 *
+            4 ^ (n - 1) : Nat) : ℝ) := by
+      simpa [n, bhksDegree] using (by exact_mod_cast hcld)
+    simpa [L, Nat.cast_mul, Nat.cast_pow] using hcld'
+  have haux_sq_bound :
+      auxNorm ^ 2 ≤ (n : ℝ) ^ 2 * L ^ 2 * (4 : ℝ) ^ (n - 1) :=
+    haux_sq.trans hcld_real
+  have htwo_pow_nonneg : 0 ≤ (2 : ℝ) ^ (n - 1) := by positivity
+  have haux_bound_sq :
+      auxNorm ^ 2 ≤ ((n : ℝ) * L * (2 : ℝ) ^ (n - 1)) ^ 2 := by
+    calc
+      auxNorm ^ 2 ≤ (n : ℝ) ^ 2 * L ^ 2 * (4 : ℝ) ^ (n - 1) := haux_sq_bound
+      _ = ((n : ℝ) * L * (2 : ℝ) ^ (n - 1)) ^ 2 := by
+          rw [show (4 : ℝ) ^ (n - 1) = ((2 : ℝ) ^ (n - 1)) ^ 2 by
+            calc
+              (4 : ℝ) ^ (n - 1) = ((2 : ℝ) ^ 2) ^ (n - 1) := by norm_num
+              _ = (2 : ℝ) ^ (2 * (n - 1)) := by rw [pow_mul]
+              _ = (2 : ℝ) ^ ((n - 1) * 2) := by rw [Nat.mul_comm]
+              _ = ((2 : ℝ) ^ (n - 1)) ^ 2 := by rw [pow_mul]]
+          ring
+  have haux_bound_nonneg : 0 ≤ (n : ℝ) * L * (2 : ℝ) ^ (n - 1) :=
+    mul_nonneg
+      (mul_nonneg (by exact_mod_cast Nat.zero_le n) hL_nonneg)
+      htwo_pow_nonneg
+  have haux_bound : auxNorm ≤ (n : ℝ) * L * (2 : ℝ) ^ (n - 1) :=
+    le_of_sq_le_sq haux_bound_sq haux_bound_nonneg
+  have haux_pow :
+      auxNorm ^ n ≤ ((n : ℝ) * L * (2 : ℝ) ^ (n - 1)) ^ n :=
+    pow_le_pow_left₀ haux_nonneg haux_bound n
+  have hN_pow :
+      N ^ auxDegree ≤ N ^ (n - 1) :=
+    pow_le_pow_right₀ hN_one hauxDegree
+  have hjoint_bound :
+      N ^ auxDegree * auxNorm ^ n ≤
+        N ^ (n - 1) * ((n : ℝ) * L * (2 : ℝ) ^ (n - 1)) ^ n := by
+    exact mul_le_mul hN_pow haux_pow (pow_nonneg haux_nonneg _) (pow_nonneg hN_nonneg _)
+  have habsorb :
+      (n : ℝ) ^ (n - 1) * L ^ n ≤
+        (2 : ℝ) ^ (n * n + n) * N ^ n *
+          (Real.log N) ^ n := by
+    simpa [n, N, L] using
+      coeffL2NormBound_absorb_log_of_one_lt core hdeg hcoreNorm
+  have hbudget :
+      N ^ (n - 1) * ((n : ℝ) * L * (2 : ℝ) ^ (n - 1)) ^ n ≤
+        bhksPaperThresholdReal core 2 := by
+    have hn_pos : 1 ≤ n := by omega
+    have hn_pow :
+        (n : ℝ) ^ n = (n : ℝ) * (n : ℝ) ^ (n - 1) := by
+      calc
+        (n : ℝ) ^ n = (n : ℝ) ^ ((n - 1) + 1) := by congr 1; omega
+        _ = (n : ℝ) ^ (n - 1) * (n : ℝ) := by rw [pow_succ]
+        _ = (n : ℝ) * (n : ℝ) ^ (n - 1) := by ring
+    have htwo_pow :
+        ((2 : ℝ) ^ (n - 1)) ^ n = (2 : ℝ) ^ (n * (n - 1)) := by
+      calc
+        ((2 : ℝ) ^ (n - 1)) ^ n = (2 : ℝ) ^ ((n - 1) * n) := by
+          rw [pow_mul]
+        _ = (2 : ℝ) ^ (n * (n - 1)) := by rw [Nat.mul_comm]
+    calc
+      N ^ (n - 1) * ((n : ℝ) * L * (2 : ℝ) ^ (n - 1)) ^ n
+          = (n : ℝ) *
+              ((n : ℝ) ^ (n - 1) * L ^ n) *
+              (2 : ℝ) ^ (n * (n - 1)) *
+              N ^ (n - 1) := by
+            rw [mul_pow, mul_pow]
+            rw [hn_pow, htwo_pow]
+            ring
+      _ ≤ (n : ℝ) *
+              ((2 : ℝ) ^ (n * n + n) * N ^ n * (Real.log N) ^ n) *
+              (2 : ℝ) ^ (n * (n - 1)) *
+              N ^ (n - 1) := by
+            have hn_nonneg_real : 0 ≤ (n : ℝ) := by
+              exact_mod_cast Nat.zero_le n
+            have hstep₁ :
+                (n : ℝ) * ((n : ℝ) ^ (n - 1) * L ^ n) ≤
+                  (n : ℝ) *
+                    ((2 : ℝ) ^ (n * n + n) * N ^ n * (Real.log N) ^ n) :=
+              mul_le_mul_of_nonneg_left habsorb hn_nonneg_real
+            have hstep₂ :
+                (n : ℝ) * ((n : ℝ) ^ (n - 1) * L ^ n) *
+                    (2 : ℝ) ^ (n * (n - 1)) ≤
+                  (n : ℝ) *
+                    ((2 : ℝ) ^ (n * n + n) * N ^ n * (Real.log N) ^ n) *
+                    (2 : ℝ) ^ (n * (n - 1)) :=
+              mul_le_mul_of_nonneg_right hstep₁ (by positivity)
+            exact mul_le_mul_of_nonneg_right hstep₂
+              (pow_nonneg hN_nonneg (n - 1))
+      _ = (n : ℝ) * (2 : ℝ) ^ (2 * (n * n)) *
+              N ^ (2 * n - 1) * (Real.log N) ^ n := by
+            have hexp : n * n + n + n * (n - 1) = 2 * (n * n) := by
+              cases n with
+              | zero => omega
+              | succ k =>
+                  simp
+                  ring
+            have hNexp : n + (n - 1) = 2 * n - 1 := by
+              cases n with
+              | zero => omega
+              | succ k =>
+                  simp
+                  omega
+            calc
+              (n : ℝ) *
+                    ((2 : ℝ) ^ (n * n + n) * N ^ n * (Real.log N) ^ n) *
+                    (2 : ℝ) ^ (n * (n - 1)) * N ^ (n - 1)
+                  =
+                  (n : ℝ) *
+                    ((2 : ℝ) ^ (n * n + n) * (2 : ℝ) ^ (n * (n - 1))) *
+                    (N ^ n * N ^ (n - 1)) * (Real.log N) ^ n := by
+                    ring
+              _ =
+                  (n : ℝ) * (2 : ℝ) ^ (2 * (n * n)) *
+                    N ^ (2 * n - 1) * (Real.log N) ^ n := by
+                    rw [← pow_add, hexp, ← pow_add, hNexp]
+      _ = bhksPaperThresholdReal core 2 := by
+            have hconst :
+                (4 : ℝ) ^ (n * n) = (2 : ℝ) ^ (2 * (n * n)) := by
+              rw [show (4 : ℝ) = (2 : ℝ) ^ 2 by norm_num]
+              exact (pow_mul (2 : ℝ) 2 (n * n)).symm
+            unfold bhksPaperThresholdReal bhksPaperDegreeFactorReal
+              bhksPaperConstantFactorReal bhksPaperCoeffNormFactorReal
+              bhksPaperLogFactorReal
+            rw [show (2 : ℝ) * 2 = 4 by norm_num, hconst]
+  exact hjoint_bound.trans hbudget
 
 end BHKS
 
