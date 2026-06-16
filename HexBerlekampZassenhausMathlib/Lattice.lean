@@ -772,6 +772,69 @@ theorem liftedFactorIndicator_mem_liftedFactorIndicatorLattice
     liftedFactorIndicator L S.1 ∈ liftedFactorIndicatorLattice L trueSupports := by
   exact indicatorVector_mem_trueFactorIndicatorLattice trueSupports S
 
+/-! ### BHKS prefix survivor-span
+
+The executable Gram-Schmidt cut (`Hex.bhksCutPrefixCount`) retains the
+contiguous prefix `b_0 … b_{t-1}` of the reduced basis, where `t` is one past
+the largest Gram-Schmidt index whose squared length passes the cut test
+`4·‖b*_i‖² ≤ bhksCutRadiusSq4`.  We show that any lattice vector short enough to
+pass the cut test at its own top nonzero index lands in that retained prefix. -/
+
+/-- A lower bound on the cut fold is preserved while folding a tail whose
+indices all satisfy the bound. -/
+private theorem foldl_cut_ge_of_bound {N : Nat} (g : Fin N → Bool) (bound : Nat) :
+    ∀ (l : List (Fin N)) (init : Nat),
+      bound ≤ init → (∀ i ∈ l, bound ≤ i.val + 1) →
+      bound ≤ l.foldl (fun acc i => if g i then i.val + 1 else acc) init := by
+  intro l
+  induction l with
+  | nil => intro init hinit _; simpa using hinit
+  | cons a tl ih =>
+      intro init hinit hbnd
+      apply ih
+      · by_cases hga : g a
+        · simp only [hga, if_true]; exact hbnd a (by simp)
+        · simp only [hga, Bool.false_eq_true, if_false]; exact hinit
+      · intro i hi; exact hbnd i (List.mem_cons_of_mem a hi)
+
+/-- The cut fold over a strictly increasing index list reaches at least
+`k.val + 1` once a passing index `k` has been processed. -/
+private theorem foldl_cut_ge {N : Nat} (g : Fin N → Bool) (k : Fin N) :
+    ∀ (l : List (Fin N)) (init : Nat),
+      l.Pairwise (· < ·) → k ∈ l → g k = true →
+      k.val + 1 ≤ l.foldl (fun acc i => if g i then i.val + 1 else acc) init := by
+  intro l
+  induction l with
+  | nil => intro init _ hk _; simp at hk
+  | cons a tl ih =>
+      intro init hpw hk hgk
+      rw [List.pairwise_cons] at hpw
+      obtain ⟨hahead, htl⟩ := hpw
+      rw [List.foldl_cons]
+      rcases List.mem_cons.mp hk with rfl | hktl
+      · have hstep : (if g k then k.val + 1 else init) = k.val + 1 := by simp [hgk]
+        rw [hstep]
+        refine foldl_cut_ge_of_bound g (k.val + 1) tl (k.val + 1) (le_refl _) ?_
+        intro i hi
+        have hlt : k.val < i.val := hahead i hi
+        omega
+      · exact ih _ htl hktl hgk
+
+/-- A Gram-Schmidt index that passes the executable cut test lies strictly below
+the retained prefix length `bhksCutPrefixCount`, so its row is kept. -/
+theorem bhksWithinGramSchmidtCut_lt_prefixCount
+    (L : Hex.BhksLatticeBasis)
+    (reduced : Hex.Matrix Int (L.factorCount + L.coeffWidth)
+        (L.factorCount + L.coeffWidth))
+    (k : Fin (L.factorCount + L.coeffWidth))
+    (hk : Hex.bhksWithinGramSchmidtCut L
+        (Hex.GramSchmidt.Int.gramDetVec reduced) k = true) :
+    k.val < Hex.bhksCutPrefixCount L reduced := by
+  unfold Hex.bhksCutPrefixCount
+  exact foldl_cut_ge
+    (fun i => Hex.bhksWithinGramSchmidtCut L (Hex.GramSchmidt.Int.gramDetVec reduced) i)
+    k (List.finRange _) 0 (List.pairwise_lt_finRange _) (List.mem_finRange k) hk
+
 /--
 Cut hypotheses needed to connect the executable projected rows to the abstract
 true-factor supports.  Later B4/B5 work discharges `indicator_mem_projected`
