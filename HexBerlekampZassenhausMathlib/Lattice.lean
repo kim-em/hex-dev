@@ -835,6 +835,94 @@ theorem bhksWithinGramSchmidtCut_lt_prefixCount
     (fun i => Hex.bhksWithinGramSchmidtCut L (Hex.GramSchmidt.Int.gramDetVec reduced) i)
     k (List.finRange _) 0 (List.pairwise_lt_finRange _) (List.mem_finRange k) hk
 
+/-- The executable cut test passes at index `i` once the stored leading
+Gram determinant at `i` is nonzero and the radius inequality on the consecutive
+determinant ratio holds. -/
+theorem bhksWithinGramSchmidtCut_eq_true_of_le
+    (L : Hex.BhksLatticeBasis)
+    (dets : Vector Nat (L.factorCount + L.coeffWidth + 1))
+    (i : Fin (L.factorCount + L.coeffWidth))
+    (hne : dets.get ⟨i.val, by omega⟩ ≠ 0)
+    (hle : 4 * ((dets.get ⟨i.val + 1, by omega⟩ : ℚ) /
+        (dets.get ⟨i.val, by omega⟩ : ℚ)) ≤ (Hex.bhksCutRadiusSq4 L : ℚ)) :
+    Hex.bhksWithinGramSchmidtCut L dets i = true := by
+  unfold Hex.bhksWithinGramSchmidtCut
+  rw [if_neg hne]
+  exact decide_eq_true hle
+
+/--
+**BHKS prefix survivor-span (Lemma 5.7, forward).**
+
+Any lattice vector `v` of the reduced BHKS basis whose squared length passes the
+cut test (`4·‖v‖² ≤ bhksCutRadiusSq4`) lies in the integer span of the retained
+prefix rows `b_0 … b_{t-1}`, where `t = bhksCutPrefixCount`.
+
+The cut keeps a row `i` iff `4·‖b*_i‖² ≤ bhksCutRadiusSq4`, i.e.
+`‖b*_i‖² ≤ bhksCutRadiusSq4 / 4`; the hypothesis is the matching tight bound on
+`v` (four times its squared norm within the radius), *not* the loose
+`‖v‖² ≤ bhksCutRadiusSq4`.
+-/
+theorem mem_prefixSubmodule_of_normSq_le
+    (L : Hex.BhksLatticeBasis)
+    (reduced : Hex.Matrix Int (L.factorCount + L.coeffWidth)
+        (L.factorCount + L.coeffWidth))
+    (hind : Hex.GramSchmidt.Int.independent reduced)
+    (v : Vector Int (L.factorCount + L.coeffWidth))
+    (hv : Hex.Matrix.memLattice reduced v)
+    (hnorm : 4 * ((Hex.Vector.normSq v : Int) : ℚ) ≤ (Hex.bhksCutRadiusSq4 L : ℚ)) :
+    HexMatrixMathlib.vectorEquiv v ∈
+      HexLLLMathlib.prefixSubmodule reduced (Hex.bhksCutPrefixCount L reduced) := by
+  by_cases hv0 : v = 0
+  · subst hv0
+    have hz : HexMatrixMathlib.vectorEquiv (0 : Vector Int (L.factorCount + L.coeffWidth))
+        = (0 : Fin (L.factorCount + L.coeffWidth) → ℤ) := by
+      funext i
+      simp [HexMatrixMathlib.vectorEquiv]
+    rw [hz]
+    exact Submodule.zero_mem _
+  · obtain ⟨k, c, hcv, hck, hzero_above, hbasis_norm⟩ :=
+      Hex.GramSchmidt.Int.exists_top_index_normSq_le_of_memLattice reduced hind v hv hv0
+    -- The top index `k` passes the cut test.
+    set dets := Hex.GramSchmidt.Int.gramDetVec reduced with hdets
+    have sw := Hex.GramSchmidt.Int.StepWitness.ofGram reduced
+    have hd0 : dets.get ⟨k.val, by omega⟩
+        = Hex.GramSchmidt.Int.gramDet reduced k.val (Nat.le_of_lt k.isLt) :=
+      Hex.GramSchmidt.Int.gramDetVec_eq_gramDet reduced sw k.val (Nat.le_of_lt k.isLt)
+    have hd1 : dets.get ⟨k.val + 1, by omega⟩
+        = Hex.GramSchmidt.Int.gramDet reduced (k.val + 1) k.isLt :=
+      Hex.GramSchmidt.Int.gramDetVec_eq_gramDet reduced sw (k.val + 1) k.isLt
+    have hd0pos : 0 < Hex.GramSchmidt.Int.gramDet reduced k.val (Nat.le_of_lt k.isLt) := by
+      rcases Nat.eq_zero_or_pos k.val with hk0 | hkpos
+      · simp only [hk0]
+        rw [Hex.GramSchmidt.Int.gramDet_zero]
+        exact Nat.one_pos
+      · exact Hex.GramSchmidt.Int.gramDet_pos reduced hind k.val (Nat.le_of_lt k.isLt) hkpos
+    have hne : dets.get ⟨k.val, by omega⟩ ≠ 0 := by
+      rw [hd0]; omega
+    -- `‖b*_k‖² = gramDet(k+1)/gramDet(k)`.
+    have hbnsq := Hex.GramSchmidt.Int.basis_normSq reduced hind k.val k.isLt
+    have hpass : Hex.bhksWithinGramSchmidtCut L dets k = true := by
+      refine bhksWithinGramSchmidtCut_eq_true_of_le L dets k hne ?_
+      rw [hd0, hd1]
+      -- goal: 4 * (gramDet(k+1)/gramDet(k)) ≤ radius
+      rw [← hbnsq]
+      -- goal: 4 * ‖b*_k‖² ≤ radius, with ‖b*_k‖² ≤ ‖v‖²
+      calc 4 * Hex.Vector.normSq ((Hex.GramSchmidt.Int.basis reduced).row ⟨k.val, k.isLt⟩)
+          ≤ 4 * ((Hex.Vector.normSq v : Int) : ℚ) := by
+            have := hbasis_norm
+            nlinarith [hbasis_norm]
+        _ ≤ (Hex.bhksCutRadiusSq4 L : ℚ) := hnorm
+    have hklt : k.val < Hex.bhksCutPrefixCount L reduced :=
+      bhksWithinGramSchmidtCut_lt_prefixCount L reduced k (by rw [← hdets]; exact hpass)
+    -- `c` vanishes at and above the retained prefix length.
+    have hc : ∀ i : Fin (L.factorCount + L.coeffWidth),
+        Hex.bhksCutPrefixCount L reduced ≤ i.val → c[i] = 0 := by
+      intro i hi
+      exact hzero_above i (by omega)
+    have := HexLLLMathlib.rowCombination_mem_prefixSubmodule_of_vector
+      reduced c (Hex.bhksCutPrefixCount L reduced) hc
+    rwa [hcv] at this
+
 /--
 Cut hypotheses needed to connect the executable projected rows to the abstract
 true-factor supports.  Later B4/B5 work discharges `indicator_mem_projected`
