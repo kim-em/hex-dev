@@ -19477,26 +19477,26 @@ theorem representsModP_correspondent
   exact (modPSubsetPartitionHypotheses_of_choosePrimeData
     (Hex.ZPoly.toMonic core).monic primeData hchoose).exists_subset hg_irr hg_dvd
 
-/-- **Irreducibility of the monic correspondent.**
+/-- **Irreducibility iff across the recovery dilation.**
 
-The monic correspondent `g` of an irreducible primitive integer factor `factor`
-is itself irreducible.  The two differ by the variable dilation `X ↦ lc · X`
-(with `lc := leadingCoeff core ≠ 0`) followed by taking the primitive part:
-`primitivePart (dilate lc g) = factor`.
+An integer factor `factor` recovered from a monic `g` by
+`primitivePart (dilate lc g) = factor` (with `lc ≠ 0`) is irreducible over `ℤ[X]`
+exactly when `g` is.  The two differ by the variable dilation `X ↦ lc · X`
+followed by taking the primitive part.
 
 Over `ℚ`, composition with `C lc * X` is the algebra automorphism
 `algEquivCMulXAddC lc 0`, so it preserves irreducibility; the residual content
 scalar is a unit; and Gauss's lemma (`IsPrimitive.Int.irreducible_iff_irreducible_map_cast`)
 moves both `g` (monic, hence primitive) and `factor` between `ℤ[X]` and `ℚ[X]`. -/
-theorem irreducible_toPolynomial_monicCorrespondent
+theorem irreducible_toPolynomial_dilate_iff
     {factor g : Hex.ZPoly} {lc : Int}
     (hlc : lc ≠ 0)
     (hg_monic : Hex.DensePoly.Monic g)
     (hfactor_prim : Hex.ZPoly.Primitive factor)
-    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hrecover :
       Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc g) = factor) :
-    Irreducible (HexPolyZMathlib.toPolynomial g) := by
+    Irreducible (HexPolyZMathlib.toPolynomial factor) ↔
+      Irreducible (HexPolyZMathlib.toPolynomial g) := by
   classical
   set G := HexPolyZMathlib.toPolynomial g with hGdef
   set F := HexPolyZMathlib.toPolynomial factor with hFdef
@@ -19527,8 +19527,8 @@ theorem irreducible_toPolynomial_monicCorrespondent
   have hkey : G.comp (Polynomial.C lc * Polynomial.X) = Polynomial.C c * F :=
     hcomp.symm.trans hCF
   -- Move to `ℚ[X]` via Gauss's lemma.
-  rw [Polynomial.IsPrimitive.Int.irreducible_iff_irreducible_map_cast hG_prim]
-  rw [Polynomial.IsPrimitive.Int.irreducible_iff_irreducible_map_cast hF_prim] at hfactor_irr
+  rw [Polynomial.IsPrimitive.Int.irreducible_iff_irreducible_map_cast hF_prim,
+    Polynomial.IsPrimitive.Int.irreducible_iff_irreducible_map_cast hG_prim]
   set cast := Int.castRingHom ℚ with hcast
   have hkeyQ :
       (G.map cast).comp (Polynomial.C (cast lc) * Polynomial.X)
@@ -19546,7 +19546,174 @@ theorem irreducible_toPolynomial_monicCorrespondent
   have hiff := MulEquiv.irreducible_iff (algEquivCMulXAddC (cast lc) (0 : ℚ)) (x := G.map cast)
   rw [he, hkeyQ,
     irreducible_isUnit_mul (Polynomial.isUnit_C.mpr (isUnit_iff_ne_zero.mpr hcc))] at hiff
-  exact hiff.mp hfactor_irr
+  exact hiff
+
+/-- **Irreducibility of the monic correspondent.**
+
+The monic correspondent `g` of an irreducible primitive integer factor `factor`
+is itself irreducible.  The two differ by the variable dilation `X ↦ lc · X`
+(with `lc := leadingCoeff core ≠ 0`) followed by taking the primitive part:
+`primitivePart (dilate lc g) = factor`. -/
+theorem irreducible_toPolynomial_monicCorrespondent
+    {factor g : Hex.ZPoly} {lc : Int}
+    (hlc : lc ≠ 0)
+    (hg_monic : Hex.DensePoly.Monic g)
+    (hfactor_prim : Hex.ZPoly.Primitive factor)
+    (hfactor_irr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (hrecover :
+      Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc g) = factor) :
+    Irreducible (HexPolyZMathlib.toPolynomial g) :=
+  (irreducible_toPolynomial_dilate_iff hlc hg_monic hfactor_prim hrecover).mp hfactor_irr
+
+/-- **Inverse monic correspondent.** For a primitive `core` with positive leading
+coefficient and positive degree, every monic irreducible factor `g` of
+`(toMonic core).monic` descends to an irreducible, sign-normalized integer factor
+`f := primitivePart (dilate (leadingCoeff core) g)` of `core`.  This is the
+inverse of `exists_monicCorrespondent_of_dvd`, gating the `cover` field of #7362.
+
+`f ∣ core` is read off the keystone `dilate lc M = scale (lc^(d-1)) core`
+(`dilate_monic_toMonic`): writing `g ∣ M` as `M = g * cof` with `cof` monic and
+dilating, `scale (lc^(d-1)) core` factors as `scale (cg * ccof) (f * f₂)` over the
+primitive parts `f`, `f₂` of the two dilations; stripping the (positive) content
+scalars from both sides via Gauss gives `core = f * f₂`.  Irreducibility transfers
+through `irreducible_toPolynomial_dilate_iff`; `normalizeFactorSign f = f` from the
+positive leading coefficient of the dilation. -/
+theorem exists_dvd_core_of_dvd_toMonic
+    (core g : Hex.ZPoly)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core) (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hg_monic : Hex.DensePoly.Monic g)
+    (hg_irr : Irreducible (HexPolyZMathlib.toPolynomial g))
+    (hg_dvd : g ∣ (Hex.ZPoly.toMonic core).monic) :
+    ∃ f : Hex.ZPoly,
+      Irreducible (HexPolyZMathlib.toPolynomial f) ∧ f ∣ core ∧
+      Hex.normalizeFactorSign f = f ∧
+      Hex.ZPoly.primitivePart (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) g) = f := by
+  classical
+  set lc := Hex.DensePoly.leadingCoeff core with hlc_def
+  have hlc_ne : lc ≠ 0 := ne_of_gt hcore_lc_pos
+  set M := (Hex.ZPoly.toMonic core).monic with hMdef
+  set d := (Hex.ZPoly.toMonic core).degree with hddef
+  have hd_eq : d = core.degree?.getD 0 := by rw [hddef]; exact Hex.ZPoly.toMonic_degree core
+  have hdeg : 1 ≤ d := by rw [hd_eq]; omega
+  -- content is nonnegative
+  have hcontent_nonneg : ∀ x : Hex.ZPoly, 0 ≤ Hex.ZPoly.content x := by
+    intro x; unfold Hex.ZPoly.content Hex.DensePoly.content; exact Int.natCast_nonneg _
+  -- `primitivePart` strips a positive content scalar from a primitive polynomial
+  have hpp_scale : ∀ (s : Int) (p : Hex.ZPoly), 0 < s → Hex.ZPoly.Primitive p →
+      Hex.ZPoly.primitivePart (Hex.DensePoly.scale s p) = p := by
+    intro s p hs hp
+    have hcontent : Hex.ZPoly.content (Hex.DensePoly.scale s p) = s := by
+      show Hex.DensePoly.content (Hex.DensePoly.scale s p) = s
+      rw [Hex.DensePoly.content_scale_int]
+      have hp1 : Hex.DensePoly.content p = 1 := hp
+      rw [hp1, Int.mul_one]
+      exact Int.natAbs_of_nonneg (le_of_lt hs)
+    have hmp := Hex.ZPoly.content_mul_primitivePart (Hex.DensePoly.scale s p)
+    rw [hcontent] at hmp
+    exact scale_injective (ne_of_gt hs) _ _ hmp
+  -- the inverse correspondent `f` and the leading coefficient of its dilation
+  have hgsize_pos : 0 < g.size := zpoly_size_pos_of_monic hg_monic
+  have hg0 : g ≠ 0 := by
+    intro h; rw [h, Hex.DensePoly.size_zero] at hgsize_pos; exact lt_irrefl 0 hgsize_pos
+  have hg_lead : g.coeff (g.size - 1) = 1 := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last g hgsize_pos]; exact hg_monic
+  have hsize_dil : (Hex.ZPoly.dilate lc g).size = g.size :=
+    size_dilate_eq_of_monic_of_ne_zero hlc_ne hg_monic
+  have hdil_lead : Hex.DensePoly.leadingCoeff (Hex.ZPoly.dilate lc g) = lc ^ (g.size - 1) := by
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last (Hex.ZPoly.dilate lc g)
+        (by rw [hsize_dil]; exact hgsize_pos),
+      hsize_dil, Hex.ZPoly.coeff_dilate, hg_lead, Int.mul_one]
+  have hdil_lead_pos : 0 < Hex.DensePoly.leadingCoeff (Hex.ZPoly.dilate lc g) := by
+    rw [hdil_lead]; exact pow_pos hcore_lc_pos _
+  have hdil0 : Hex.ZPoly.dilate lc g ≠ 0 := by
+    intro h
+    rw [h, Hex.DensePoly.leadingCoeff_zero] at hdil_lead_pos
+    exact lt_irrefl 0 hdil_lead_pos
+  set cg := Hex.ZPoly.content (Hex.ZPoly.dilate lc g) with hcg_def
+  have hcg_ne : cg ≠ 0 := by rw [hcg_def]; exact HexPolyZMathlib.content_ne_zero _ hdil0
+  have hcg_pos : 0 < cg := lt_of_le_of_ne (hcontent_nonneg _) (Ne.symm hcg_ne)
+  set f := Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc g) with hf
+  have hf_prim : Hex.ZPoly.Primitive f := by
+    rw [hf]; exact Hex.ZPoly.primitivePart_primitive _ (hcg_def ▸ hcg_ne)
+  have hcmpp_g : Hex.DensePoly.scale cg f = Hex.ZPoly.dilate lc g := by
+    rw [hcg_def, hf]; exact Hex.ZPoly.content_mul_primitivePart (Hex.ZPoly.dilate lc g)
+  have hlc_f :
+      Hex.DensePoly.leadingCoeff (Hex.ZPoly.dilate lc g) = cg * Hex.DensePoly.leadingCoeff f := by
+    have h := Hex.ZPoly.leadingCoeff_scale_of_nonzero cg f hcg_ne
+    rw [hcmpp_g] at h; exact h
+  have hprod_pos : 0 < cg * Hex.DensePoly.leadingCoeff f := by rw [← hlc_f]; exact hdil_lead_pos
+  have hlcf_pos : 0 < Hex.DensePoly.leadingCoeff f := by
+    rcases lt_trichotomy (Hex.DensePoly.leadingCoeff f) 0 with h | h | h
+    · exact absurd hprod_pos (by have := mul_neg_of_pos_of_neg hcg_pos h; linarith)
+    · rw [h, Int.mul_zero] at hprod_pos; exact absurd hprod_pos (lt_irrefl 0)
+    · exact h
+  have hsign : Hex.normalizeFactorSign f = f := by
+    unfold Hex.normalizeFactorSign
+    rw [if_neg (not_lt.mpr (le_of_lt hlcf_pos))]
+  have hf_irr : Irreducible (HexPolyZMathlib.toPolynomial f) :=
+    (irreducible_toPolynomial_dilate_iff hlc_ne hg_monic hf_prim hf.symm).mpr hg_irr
+  refine ⟨f, hf_irr, ?_, hsign, rfl⟩
+  -- divisibility `f ∣ core`, via the keystone and the cofactor's dilation
+  obtain ⟨cof, hcof⟩ := hg_dvd
+  have hM_lead : Hex.DensePoly.leadingCoeff M = 1 := by
+    rw [hMdef]; exact Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+  have hM0 : M ≠ 0 := by
+    intro h; rw [h, Hex.DensePoly.leadingCoeff_zero] at hM_lead; exact one_ne_zero hM_lead.symm
+  have hcof0 : cof ≠ 0 := by
+    rintro rfl
+    apply hM0
+    apply HexPolyZMathlib.equiv.injective
+    rw [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.equiv_apply, hcof,
+      HexPolyZMathlib.toPolynomial_mul]
+    simp
+  have hcof_lead : Hex.DensePoly.leadingCoeff cof = 1 := by
+    have h := Hex.ZPoly.leadingCoeff_mul_of_nonzero g cof hg0 hcof0
+    rw [← hcof, hM_lead] at h
+    have hg1 : Hex.DensePoly.leadingCoeff g = 1 := hg_monic
+    rw [hg1, Int.one_mul] at h
+    exact h.symm
+  have hcof_monic : Hex.DensePoly.Monic cof := hcof_lead
+  have hcofsize_pos : 0 < cof.size := zpoly_size_pos_of_monic hcof_monic
+  have hcof_top : cof.coeff (cof.size - 1) = 1 := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last cof hcofsize_pos]; exact hcof_monic
+  have hsize_dilc : (Hex.ZPoly.dilate lc cof).size = cof.size :=
+    size_dilate_eq_of_monic_of_ne_zero hlc_ne hcof_monic
+  have hdilc_lead :
+      Hex.DensePoly.leadingCoeff (Hex.ZPoly.dilate lc cof) = lc ^ (cof.size - 1) := by
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last (Hex.ZPoly.dilate lc cof)
+        (by rw [hsize_dilc]; exact hcofsize_pos),
+      hsize_dilc, Hex.ZPoly.coeff_dilate, hcof_top, Int.mul_one]
+  have hdilc0 : Hex.ZPoly.dilate lc cof ≠ 0 := by
+    intro h
+    have hz : Hex.DensePoly.leadingCoeff (Hex.ZPoly.dilate lc cof) = 0 := by
+      rw [h, Hex.DensePoly.leadingCoeff_zero]
+    rw [hdilc_lead] at hz
+    exact (pow_ne_zero _ hlc_ne) hz
+  set ccof := Hex.ZPoly.content (Hex.ZPoly.dilate lc cof) with hccof_def
+  have hccof_ne : ccof ≠ 0 := by rw [hccof_def]; exact HexPolyZMathlib.content_ne_zero _ hdilc0
+  have hccof_pos : 0 < ccof := lt_of_le_of_ne (hcontent_nonneg _) (Ne.symm hccof_ne)
+  set pcof := Hex.ZPoly.primitivePart (Hex.ZPoly.dilate lc cof) with hpcof
+  have hpcof_prim : Hex.ZPoly.Primitive pcof := by
+    rw [hpcof]; exact Hex.ZPoly.primitivePart_primitive _ (hccof_def ▸ hccof_ne)
+  have hcmpp_c : Hex.DensePoly.scale ccof pcof = Hex.ZPoly.dilate lc cof := by
+    rw [hccof_def, hpcof]; exact Hex.ZPoly.content_mul_primitivePart (Hex.ZPoly.dilate lc cof)
+  have hkey : Hex.ZPoly.dilate lc M = Hex.DensePoly.scale (lc ^ (d - 1)) core := by
+    have h := Hex.ZPoly.dilate_monic_toMonic core hdeg
+    rw [← hlc_def, ← hMdef, ← hddef, Hex.ZPoly.C_mul_eq_scale] at h
+    exact h
+  have hdil_M :
+      Hex.ZPoly.dilate lc M = Hex.ZPoly.dilate lc g * Hex.ZPoly.dilate lc cof := by
+    rw [hcof, HexPolyZMathlib.dilate_mul]
+  have heq1 :
+      Hex.DensePoly.scale (lc ^ (d - 1)) core = Hex.DensePoly.scale (cg * ccof) (f * pcof) := by
+    rw [← hkey, hdil_M, ← hcmpp_g, ← hcmpp_c, scale_mul_scale]
+  have hff_prim : Hex.ZPoly.Primitive (f * pcof) :=
+    Hex.ZPoly.primitive_mul f pcof hf_prim hpcof_prim
+  have hcore_eq : core = f * pcof := by
+    rw [← hpp_scale (lc ^ (d - 1)) core (pow_pos hcore_lc_pos _) hcore_prim, heq1,
+      hpp_scale (cg * ccof) (f * pcof) (mul_pos hcg_pos hccof_pos) hff_prim]
+  exact ⟨pcof, hcore_eq⟩
 
 /-- **Association reflection through the primitive content factor.**
 
