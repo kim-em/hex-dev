@@ -358,6 +358,28 @@ theorem cldRows_eq
   cases basis_eq
   rfl
 
+/-- The packaged basis factor count is exactly the concrete lifted-factor
+array size. -/
+theorem factorCount_eq
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S) :
+    L.factorCount = D.liftedFactors.size := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    support_product_eq⟩
+  cases basis_eq
+  rfl
+
+/-- The packaged basis coefficient width is exactly the input polynomial degree
+used by the executable CLD rows. -/
+theorem coeffWidth_eq
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S) :
+    L.coeffWidth = D.f.degree?.getD 0 := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    support_product_eq⟩
+  cases basis_eq
+  rfl
+
 end TrueFactorLift
 
 /--
@@ -470,6 +492,36 @@ theorem trueFactorCLDVector_coeff_of_blockForm
     simp [Fin.val_castAdd]
   rw [hcld, mul_comm]
   congr 2
+
+namespace TrueFactorLift
+
+/--
+Concrete CLD-row form of a true-factor CLD vector coordinate.
+
+`trueFactorCLDVector_coeff_of_blockForm` exposes the tail coordinate as a sum
+over `L.cldRows`; this rewrite uses `TrueFactorLift` to replace those rows by
+the executable `Hex.cldCoeffs` rows for the concrete lifted factors.
+-/
+theorem coeff_eq_cldCoeffs
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S) (j : Fin L.coeffWidth) :
+    ((trueFactorCLDVector L S)[Fin.natAdd L.factorCount j] : ℤ) =
+      ∑ i : Fin L.factorCount,
+        indicatorVector S i *
+          (Hex.cldCoeffs D.f D.p D.a (D.liftedFactors.getD i.val 1)).getD j.val 0 := by
+  have hcoord := trueFactorCLDVector_coeff_of_blockForm S D.blockForm j
+  simp only [Fin.natAdd] at hcoord ⊢
+  rw [hcoord]
+  refine Finset.sum_congr rfl ?_
+  intro i _
+  congr 1
+  rw [D.cldRows_eq]
+  have hi : i.val < D.liftedFactors.size := by
+    rw [← D.factorCount_eq]
+    exact i.isLt
+  simp [Array.getD, hi]
+
+end TrueFactorLift
 
 /--
 Canonical producer for `TrueFactorCLDVectorData` at the executable
