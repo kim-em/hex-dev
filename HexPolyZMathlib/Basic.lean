@@ -59,6 +59,21 @@ theorem toPolynomial_mul (p q : Hex.ZPoly) :
   HexPolyMathlib.toPolynomial_mul p q
 
 @[simp]
+theorem toPolynomial_one :
+    toPolynomial (1 : Hex.ZPoly) = 1 :=
+  HexPolyMathlib.toPolynomial_one
+
+@[simp]
+theorem toPolynomial_neg (p : Hex.ZPoly) :
+    toPolynomial (-p) = -toPolynomial p :=
+  HexPolyMathlib.toPolynomial_neg p
+
+@[simp]
+theorem toPolynomial_sub (p q : Hex.ZPoly) :
+    toPolynomial (p - q) = toPolynomial p - toPolynomial q :=
+  HexPolyMathlib.toPolynomial_sub p q
+
+@[simp]
 theorem toPolynomial_ofPolynomial (p : Polynomial ℤ) :
     toPolynomial (ofPolynomial p) = p :=
   HexPolyMathlib.toPolynomial_ofPolynomial p
