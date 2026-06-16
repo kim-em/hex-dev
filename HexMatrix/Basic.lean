@@ -781,7 +781,7 @@ theorem leadingPrefix_borderedMinor_succ_eq_borderedMinor (M : Matrix R n n)
   simp [show (1 : Matrix R n n) = Matrix.identity from rfl, Matrix.identity, ofFn]
 
 /-- The identity matrix is its own transpose. -/
-theorem transpose_one [OfNat R 0] [OfNat R 1] {n : Nat} :
+@[simp] theorem transpose_one [OfNat R 0] [OfNat R 1] {n : Nat} :
     Matrix.transpose (1 : Matrix R n n) = (1 : Matrix R n n) := by
   apply Vector.ext
   intro i hi
@@ -888,7 +888,7 @@ private theorem foldl_dotProduct_basis_body {R : Type u} [Lean.Grind.CommRing R]
       exact ih (acc + (if i = x then 1 else 0) * (if j = x then 1 else 0))
 
 /-- Dot product of the `i`-th and `j`-th identity rows. -/
-theorem dotProduct_basis_basis {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+@[simp] theorem dotProduct_basis_basis {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (i j : Fin n) :
     Hex.Vector.dotProduct
         (Vector.ofFn fun b : Fin n => (if i = b then (1 : R) else 0))
@@ -913,7 +913,7 @@ theorem dotProduct_basis_basis {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     rw [if_neg hij]
 
 /-- The Gram matrix of the identity is the identity. -/
-theorem gramMatrix_one {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
+@[simp] theorem gramMatrix_one {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
     gramMatrix (1 : Matrix R n n) = (1 : Matrix R n n) := by
   apply Vector.ext
   intro i hi
@@ -949,7 +949,7 @@ theorem gramMatrix_one {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
 
 /-- The leading principal `(k + 1) × (k + 1)` submatrix of the identity is the
 identity. -/
-theorem submatrix_one {R : Type u} [OfNat R 0] [OfNat R 1] {n : Nat} (k : Fin n) :
+@[simp] theorem submatrix_one {R : Type u} [OfNat R 0] [OfNat R 1] {n : Nat} (k : Fin n) :
     submatrix (1 : Matrix R n n) k = (1 : Matrix R (k.val + 1) (k.val + 1)) := by
   apply Vector.ext
   intro i hi
