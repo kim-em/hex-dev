@@ -1327,7 +1327,14 @@ private def henselLiftLoop
       let next := linearHenselStep p current f acc.g acc.h s t
       henselLiftLoop p steps (current + 1) f s t next
 
-/-- The proof state carried by the linear Hensel loop at precision `p^current`. -/
+/-- The proof state carried by the linear Hensel loop at precision `p^current`.
+
+The final `0 < acc.g.degree?.getD 0` component records that the lifted leading
+factor is nonconstant. It propagates trivially through the loop (the linear step
+preserves `acc.g`'s degree) and is exactly what makes the per-step degree
+obligation `LinearLiftStepDegreeInvariant` provable from the invariant alone:
+without it the admissible constant case `acc.g = 1` satisfies every other
+component yet has degree `0`, so no strict degree drop is available. -/
 def LinearLiftLoopInvariant
     (p current : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (s t : FpPoly p) (acc : LinearLiftResult) : Prop :=
@@ -1335,7 +1342,8 @@ def LinearLiftLoopInvariant
     ZPoly.congr
       (FpPoly.liftToZ (s * ZPoly.modP p acc.g + t * ZPoly.modP p acc.h))
       1 p ∧
-    DensePoly.Monic acc.g
+    DensePoly.Monic acc.g ∧
+    0 < acc.g.degree?.getD 0
 
 namespace LinearLiftLoopInvariant
 
@@ -1366,7 +1374,16 @@ theorem monic_g
     {f : ZPoly} {s t : FpPoly p} {acc : LinearLiftResult}
     (hinv : LinearLiftLoopInvariant p current f s t acc) :
     DensePoly.Monic acc.g :=
-  hinv.2.2
+  hinv.2.2.1
+
+/-- The positive-degree (nonconstant) component of a linear-lift loop invariant. -/
+@[simp, grind =>]
+theorem pos_degree
+    {p current : Nat} [ZMod64.Bounds p]
+    {f : ZPoly} {s t : FpPoly p} {acc : LinearLiftResult}
+    (hinv : LinearLiftLoopInvariant p current f s t acc) :
+    0 < acc.g.degree?.getD 0 :=
+  hinv.2.2.2
 
 end LinearLiftLoopInvariant
 
@@ -1664,6 +1681,69 @@ theorem reduceModPow_monic_of_monic
   exact monic_of_coeff_eq_one_and_high_coeff_zero
     (ZPoly.reduceModPow f p (k + 1)) n hone hhigh
 
+/-- High coefficients vanishing bounds the stored size of any dense polynomial:
+if every coefficient at index `≥ N` is zero, the stored size is at most `N`. -/
+private theorem size_le_of_coeff_zero_above {R : Type _} [Zero R] [DecidableEq R]
+    {q : DensePoly R} {N : Nat}
+    (h : ∀ i, N ≤ i → q.coeff i = (Zero.zero : R)) :
+    q.size ≤ N := by
+  by_cases hle : q.size ≤ N
+  · exact hle
+  · exact absurd (h (q.size - 1) (by omega))
+      (DensePoly.coeff_last_ne_zero_of_pos_size q (by omega))
+
+/-- The `getD 0`-unwrapped degree of any dense polynomial is `size - 1` (with the
+zero polynomial collapsing to `0 - 1 = 0` in `Nat`). -/
+private theorem degree?_getD_eq_size_sub_one {R : Type _} [Zero R] [DecidableEq R]
+    (q : DensePoly R) :
+    q.degree?.getD 0 = q.size - 1 := by
+  unfold DensePoly.degree?
+  by_cases hz : q.size = 0
+  · simp [hz]
+  · simp [hz]
+
+/-- Reducing a monic `ZPoly` modulo the base prime `p` preserves the stored size:
+the leading coefficient `1` survives reduction (since `1 < p`) and the tail stays
+zero, so `modP` neither raises nor collapses the degree. -/
+private theorem modP_size_eq_of_monic
+    (p : Nat) [ZMod64.Bounds p] (g : ZPoly)
+    (hp : 1 < p) (hmonic : DensePoly.Monic g) :
+    (ZPoly.modP p g).size = g.size := by
+  have hpos : 0 < g.size := monic_size_pos g hmonic
+  have hz0 : (Zero.zero : ZMod64 p).toNat = 0 := ZMod64.toNat_zero
+  refine Nat.le_antisymm ?_ ?_
+  · apply size_le_of_coeff_zero_above
+    intro i hi
+    have hg : g.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le g hi
+    rw [ZPoly.coeff_modP, hg]
+    have hz : intModNat (0 : Int) p = 0 := by simp [intModNat]
+    rw [hz, ZMod64.eq_iff_toNat_eq, ZMod64.toNat_ofNat, hz0]
+    exact Nat.zero_mod p
+  · have hone : g.coeff (g.size - 1) = 1 := coeff_last_eq_one_of_monic g hmonic
+    have hval : intModNat (1 : Int) p = 1 := by
+      have h1 : (1 : Int) % Int.ofNat p = 1 :=
+        Int.emod_eq_of_lt (by decide) (Int.ofNat_lt.mpr hp)
+      unfold intModNat
+      rw [h1]
+      rfl
+    have hne : (ZPoly.modP p g).coeff (g.size - 1) ≠ (Zero.zero : ZMod64 p) := by
+      rw [ZPoly.coeff_modP, hone, hval]
+      intro hcontra
+      have h2 := congrArg ZMod64.toNat hcontra
+      rw [ZMod64.toNat_ofNat, hz0, Nat.mod_eq_of_lt hp] at h2
+      exact Nat.one_ne_zero h2
+    have hnotle : ¬ ((ZPoly.modP p g).size ≤ g.size - 1) :=
+      fun hle => hne (DensePoly.coeff_eq_zero_of_size_le _ hle)
+    omega
+
+/-- Reducing a monic `ZPoly` modulo the base prime `p` preserves the degree. -/
+private theorem modP_degree?_eq_of_monic
+    (p : Nat) [ZMod64.Bounds p] (g : ZPoly)
+    (hp : 1 < p) (hmonic : DensePoly.Monic g) :
+    (ZPoly.modP p g).degree? = g.degree? := by
+  unfold DensePoly.degree?
+  rw [modP_size_eq_of_monic p g hp hmonic]
+
 /-- The linear step preserves monicity of the lifted `g` factor. -/
 theorem linearHenselStep_monic
     (p k : Nat) [ZMod64.Bounds p]
@@ -1757,6 +1837,58 @@ theorem linearHenselStep_h_degree?_eq
     _ = h.degree? := by
       simpa [e, gMod, hMod, eMod, qr, hCorrection, h'] using hhRawDegree
 
+/-- Lifting and scaling a mod-`p` polynomial of degree below `D` keeps the degree
+below `D`. The lift is injective on degree (the nonzero top survives the
+nonnegative `Nat` lift) and scaling by `p ^ current` is a nonzero multiplier, so
+the only coefficients of the scaled lift that can be nonzero sit below `D`. -/
+private theorem liftScaledIncrement_degree_lt
+    (p current : Nat) [ZMod64.Bounds p] (r : FpPoly p) {D : Nat}
+    (hr : r.degree?.getD 0 < D) :
+    (LinearLiftResult.liftScaledIncrement p current r).degree?.getD 0 < D := by
+  have hrsize : r.size ≤ D := by
+    rw [degree?_getD_eq_size_sub_one] at hr; omega
+  have hcoeff : ∀ i, D ≤ i →
+      (LinearLiftResult.liftScaledIncrement p current r).coeff i = (Zero.zero : Int) := by
+    intro i hi
+    rw [LinearLiftResult.coeff_liftScaledIncrement]
+    have hrz : r.coeff i = (Zero.zero : ZMod64 p) :=
+      DensePoly.coeff_eq_zero_of_size_le r (Nat.le_trans hrsize hi)
+    have hz0 : (Zero.zero : ZMod64 p).toNat = 0 := ZMod64.toNat_zero
+    rw [hrz, hz0]
+    show Int.ofNat (p ^ current) * Int.ofNat 0 = (0 : Int)
+    simp
+  have hsize : (LinearLiftResult.liftScaledIncrement p current r).size ≤ D :=
+    size_le_of_coeff_zero_above hcoeff
+  rw [degree?_getD_eq_size_sub_one]; omega
+
+/-- The per-step degree obligation `LinearLiftStepDegreeInvariant` follows from
+monicity together with positive degree of `acc.g`. The correction is the `divMod`
+remainder of `t * eMod` by `modP p acc.g`; for monic `acc.g` the reduction
+preserves the (positive) degree, the remainder degree is strictly below it, and
+`liftScaledIncrement_degree_lt` transports that strict bound through the lift and
+scale. This is what lets the loop discharge `hstepDegree` internally instead of
+demanding a caller-supplied bound. -/
+private theorem stepDegree_of_monic_pos
+    (p current : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (f : ZPoly) (s t : FpPoly p) (acc : LinearLiftResult)
+    (hp : 1 < p)
+    (hmonic : DensePoly.Monic acc.g)
+    (hposdeg : 0 < acc.g.degree?.getD 0) :
+    LinearLiftStepDegreeInvariant p current f s t acc := by
+  have hgMod :
+      (ZPoly.modP p acc.g).degree?.getD 0 = acc.g.degree?.getD 0 := by
+    rw [modP_degree?_eq_of_monic p acc.g hp hmonic]
+  unfold LinearLiftStepDegreeInvariant
+  refine liftScaledIncrement_degree_lt p current _ ?_
+  have hpos' : 0 < (ZPoly.modP p acc.g).degree?.getD 0 := by
+    rw [hgMod]; exact hposdeg
+  have hlt :=
+    DensePoly.divMod_remainder_degree_lt_of_pos_degree
+      (t * ZPoly.modP p (ZPoly.coeffwiseDiv (f - acc.g * acc.h) (p ^ current)))
+      (ZPoly.modP p acc.g) hpos'
+  rw [hgMod] at hlt
+  exact hlt
+
 private theorem henselLiftLoop_invariant
     (p steps current : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
     (f : ZPoly) (s t : FpPoly p) (acc : LinearLiftResult)
@@ -1785,16 +1917,24 @@ private theorem henselLiftLoop_invariant
       let next := linearHenselStep p current f acc.g acc.h s t
       have hnext :
           LinearLiftLoopInvariant p (current + 1) f s t next := by
-        rcases hinv with ⟨hprod, hbez, hmonic⟩
-        refine ⟨?_, ?_, ?_⟩
+        rcases hinv with ⟨hprod, hbez, hmonic, hposdeg⟩
+        have hstepDeg :
+            LinearLiftStepDegreeInvariant p current f s t acc :=
+          hstepDegree current acc (by omega) ⟨hprod, hbez, hmonic, hposdeg⟩
+        refine ⟨?_, ?_, ?_, ?_⟩
         · simpa [next] using
             linearHenselStep_spec p current f acc.g acc.h s t hcurrent hprod hbez hmonic
-        · simpa [next] using hstepBezout current acc (by omega) ⟨hprod, hbez, hmonic⟩
+        · simpa [next] using hstepBezout current acc (by omega) ⟨hprod, hbez, hmonic, hposdeg⟩
         · exact
             linearHenselStep_monic p current f acc.g acc.h s t hp hmonic
-              (by
-                simpa [LinearLiftStepDegreeInvariant] using
-                  hstepDegree current acc (by omega) ⟨hprod, hbez, hmonic⟩)
+              (by simpa [LinearLiftStepDegreeInvariant] using hstepDeg)
+        · have hdeg :
+              (linearHenselStep p current f acc.g acc.h s t).g.degree? = acc.g.degree? :=
+            linearHenselStep_g_degree?_eq p current f acc.g acc.h s t hp hmonic
+              (by simpa [LinearLiftStepDegreeInvariant] using hstepDeg)
+          have hnextdeg : next.g.degree? = acc.g.degree? := hdeg
+          rw [hnextdeg]
+          exact hposdeg
       have htail :
           LinearLiftLoopInvariant p ((current + 1) + steps) f s t
             (henselLiftLoop p steps (current + 1) f s t next) := by
@@ -1884,7 +2024,114 @@ theorem henselLift_monic
         simpa [start] using
           henselLiftLoop_invariant p k' 1 f s t start hp (by omega) (by simpa [start] using hstart)
             hstepDegree hstepBezout
-      simpa [henselLift, start] using hloop.2.2
+      simpa [henselLift, start] using hloop.2.2.1
+
+/-- The per-step Bezout obligation is invariant under a linear Hensel step: the
+step changes both factors only by multiples of the base prime, so their `modP p`
+reductions are unchanged and the Bezout congruence carried by the invariant
+transfers verbatim to the stepped factors. -/
+private theorem stepBezout_of_invariant
+    (p n : Nat) [ZMod64.Bounds p]
+    (f : ZPoly) (s t : FpPoly p) (state : LinearLiftResult)
+    (hn : 1 ≤ n)
+    (hbez :
+      ZPoly.congr
+        (FpPoly.liftToZ (s * ZPoly.modP p state.g + t * ZPoly.modP p state.h)) 1 p) :
+    let next := linearHenselStep p n f state.g state.h s t
+    ZPoly.congr
+      (FpPoly.liftToZ (s * ZPoly.modP p next.g + t * ZPoly.modP p next.h)) 1 p := by
+  have hgmod :
+      ZPoly.modP p (linearHenselStep p n f state.g state.h s t).g = ZPoly.modP p state.g :=
+    ZPoly.modP_eq_of_congr p _ _
+      (linearHenselStep_g_congr_mod_base p n f state.g state.h s t hn)
+  have hhmod :
+      ZPoly.modP p (linearHenselStep p n f state.g state.h s t).h = ZPoly.modP p state.h :=
+    ZPoly.modP_eq_of_congr p _ _
+      (linearHenselStep_h_congr_mod_base p n f state.g state.h s t hn)
+  simp only [hgmod, hhmod]
+  exact hbez
+
+/-- Assemble the level-`1` linear-lift loop invariant from the base mod-`p`
+factorization data: a product congruence, a Bezout congruence, monicity of the
+leading factor, and the nonconstant (positive-degree) condition on `g`. The
+reduced starting factors inherit each component since reduction mod `p` fixes the
+mod-`p` data, preserves monicity (`1 < p`), and preserves the degree of a monic
+polynomial. -/
+private theorem loopInvariant_one_of_base
+    (p : Nat) [ZMod64.Bounds p]
+    (f g h : ZPoly) (s t : FpPoly p)
+    (hp : 1 < p)
+    (hprod : ZPoly.congr (g * h) f p)
+    (hbez :
+      ZPoly.congr (FpPoly.liftToZ (s * ZPoly.modP p g + t * ZPoly.modP p h)) 1 p)
+    (hmonic : DensePoly.Monic g)
+    (hgdeg : 0 < g.degree?.getD 0) :
+    LinearLiftLoopInvariant p 1 f s t
+      { g := ZPoly.reduceModPow g p 1, h := ZPoly.reduceModPow h p 1 } := by
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · show ZPoly.congr
+        (ZPoly.reduceModPow g p 1 * ZPoly.reduceModPow h p 1) f (p ^ 1)
+    have hp1 : ZPoly.congr (g * h) f (p ^ 1) := by rw [Nat.pow_one]; exact hprod
+    exact ZPoly.congr_trans _ _ _ (p ^ 1)
+      (congr_mul_reduceModPow_pair p 1 g h) hp1
+  · show ZPoly.congr
+        (FpPoly.liftToZ
+          (s * ZPoly.modP p (ZPoly.reduceModPow g p 1) +
+            t * ZPoly.modP p (ZPoly.reduceModPow h p 1))) 1 p
+    rw [ZPoly.modP_reduceModPow_of_pos p 1 g (by omega),
+      ZPoly.modP_reduceModPow_of_pos p 1 h (by omega)]
+    exact hbez
+  · show DensePoly.Monic (ZPoly.reduceModPow g p 1)
+    exact reduceModPow_monic_of_monic p 0 g hp hmonic
+  · show 0 < (ZPoly.reduceModPow g p 1).degree?.getD 0
+    rw [reduceModPow_degree?_eq_of_monic p 0 g hp hmonic]
+    exact hgdeg
+
+/-- Convenience corollary of `henselLift_spec`: the lifted factorization is
+congruent to `f` modulo `p^k`, discharging the loop preconditions internally
+from the base mod-`p` factorization data plus a nonconstant hypothesis on `g`.
+The nonconstant condition `0 < g.degree?.getD 0` is genuine — it is what makes
+the per-step degree drop available; the admissible constant case `g = 1` has no
+such drop. -/
+theorem henselLift_congr_of_base
+    (p k : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (f g h : ZPoly) (s t : FpPoly p)
+    (hk : 1 ≤ k)
+    (hp : 1 < p)
+    (hprod : ZPoly.congr (g * h) f p)
+    (hbez :
+      ZPoly.congr (FpPoly.liftToZ (s * ZPoly.modP p g + t * ZPoly.modP p h)) 1 p)
+    (hmonic : DensePoly.Monic g)
+    (hgdeg : 0 < g.degree?.getD 0) :
+    let r := henselLift p k f g h s t
+    ZPoly.congr (r.g * r.h) f (p ^ k) :=
+  henselLift_spec p k f g h s t hk hp
+    (loopInvariant_one_of_base p f g h s t hp hprod hbez hmonic hgdeg)
+    (fun n state _ hinv =>
+      stepDegree_of_monic_pos p n f s t state hp hinv.monic_g hinv.pos_degree)
+    (fun n state hn hinv =>
+      stepBezout_of_invariant p n f s t state hn hinv.bezout_congr)
+
+/-- Convenience corollary of `henselLift_monic`: the lifted leading factor stays
+monic, discharging the loop preconditions internally from the base mod-`p`
+factorization data plus the nonconstant hypothesis on `g`. -/
+theorem henselLift_monic_of_base
+    (p k : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (f g h : ZPoly) (s t : FpPoly p)
+    (hk : 1 ≤ k)
+    (hp : 1 < p)
+    (hprod : ZPoly.congr (g * h) f p)
+    (hbez :
+      ZPoly.congr (FpPoly.liftToZ (s * ZPoly.modP p g + t * ZPoly.modP p h)) 1 p)
+    (hmonic : DensePoly.Monic g)
+    (hgdeg : 0 < g.degree?.getD 0) :
+    DensePoly.Monic (henselLift p k f g h s t).g :=
+  henselLift_monic p k f g h s t hk hp
+    (loopInvariant_one_of_base p f g h s t hp hprod hbez hmonic hgdeg)
+    (fun n state _ hinv =>
+      stepDegree_of_monic_pos p n f s t state hp hinv.monic_g hinv.pos_degree)
+    (fun n state hn hinv =>
+      stepBezout_of_invariant p n f s t state hn hinv.bezout_congr)
 
 /-- The linear Hensel loop changes the leading factor only by multiples of the
 current modulus, so the looped factor stays congruent to the starting factor
