@@ -488,6 +488,31 @@ theorem cldQuotientMod_congr_mul_derivative
     rw [← hrecon_map, hrem_zero]; ring
   rw [hfin]; exact hnum_eq
 
+namespace BHKS
+
+/--
+Semantic `TrueFactorLift` packages supply exactly the hypotheses needed to
+interpret a selected executable CLD quotient as a logarithmic-derivative column
+modulo the Hensel precision.
+-/
+theorem TrueFactorLiftSemantics.selected_cldQuotientMod_congr_mul_derivative
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S) (H : TrueFactorLiftSemantics D)
+    (hk : 1 < D.p ^ D.a)
+    (i : Fin L.factorCount) (hi : i ∈ S) :
+    Hex.ZPoly.congr
+      ((D.liftedFactors.getD i.val 1) *
+        Hex.cldQuotientMod D.f (D.liftedFactors.getD i.val 1) D.p D.a)
+      (D.f * Hex.DensePoly.derivative (D.liftedFactors.getD i.val 1))
+      (D.p ^ D.a) :=
+  cldQuotientMod_congr_mul_derivative D.f (D.liftedFactors.getD i.val 1)
+    (H.selectedCofactor i hi) D.p D.a hk
+    (H.selected_monic i hi)
+    (H.selected_pos_degree i hi)
+    (H.selected_congr i hi)
+
+end BHKS
+
 /--
 ZPoly → `Polynomial ℤ` bridge for the CLD-syzygy resultant valuation.
 
