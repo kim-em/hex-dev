@@ -338,11 +338,148 @@ theorem toMathlibPolynomial_derivative (f : Hex.FpPoly p) :
   push_cast
   ring
 
+/-- Multiplication commutes with the finite-field polynomial transport. -/
+theorem toMathlibPolynomial_mul (f g : Hex.FpPoly p) :
+    toMathlibPolynomial (f * g) = toMathlibPolynomial f * toMathlibPolynomial g :=
+  map_mul fpPolyEquiv f g
+
+/-- Addition commutes with the finite-field polynomial transport. -/
+theorem toMathlibPolynomial_add (f g : Hex.FpPoly p) :
+    toMathlibPolynomial (f + g) = toMathlibPolynomial f + toMathlibPolynomial g :=
+  map_add fpPolyEquiv f g
+
+/-- Subtraction commutes with the finite-field polynomial transport. -/
+theorem toMathlibPolynomial_sub (f g : Hex.FpPoly p) :
+    toMathlibPolynomial (f - g) = toMathlibPolynomial f - toMathlibPolynomial g := by
+  apply Polynomial.ext
+  intro n
+  rw [Polynomial.coeff_sub, coeff_toMathlibPolynomial, coeff_toMathlibPolynomial,
+    coeff_toMathlibPolynomial, Hex.DensePoly.coeff_sub_ring,
+    HexModArithMathlib.ZMod64.toZMod_sub]
+
+/-- The constant executable polynomial transports to the Mathlib constant. -/
+theorem toMathlibPolynomial_C (c : Hex.ZMod64 p) :
+    toMathlibPolynomial (Hex.DensePoly.C c) =
+      Polynomial.C (HexModArithMathlib.ZMod64.toZMod c) := by
+  apply Polynomial.ext
+  intro n
+  rw [coeff_toMathlibPolynomial, Hex.DensePoly.coeff_C, Polynomial.coeff_C]
+  by_cases hn : n = 0
+  · subst hn; rw [if_pos rfl, if_pos rfl]
+  · rw [if_neg hn, if_neg hn]; exact HexModArithMathlib.ZMod64.toZMod_zero
+
+/-- The monic monomial `X^m` transports to `X^m` over `ZMod p`. -/
+theorem toMathlibPolynomial_monomial_one (m : Nat) :
+    toMathlibPolynomial (Hex.DensePoly.monomial m (1 : Hex.ZMod64 p)) =
+      (Polynomial.X : Polynomial (ZMod p)) ^ m := by
+  apply Polynomial.ext
+  intro n
+  rw [coeff_toMathlibPolynomial, Hex.DensePoly.coeff_monomial, Polynomial.coeff_X_pow]
+  by_cases hn : n = m
+  · rw [if_pos hn, if_pos hn]; exact HexModArithMathlib.ZMod64.toZMod_one
+  · rw [if_neg hn, if_neg hn]; exact HexModArithMathlib.ZMod64.toZMod_zero
+
+/-- The executable indeterminate transports to Mathlib's `X`. -/
+theorem toMathlibPolynomial_X :
+    toMathlibPolynomial (Hex.FpPoly.X (p := p)) = (Polynomial.X : Polynomial (ZMod p)) := by
+  apply Polynomial.ext
+  intro n
+  rw [coeff_toMathlibPolynomial, Hex.FpPoly.coeff_X, Polynomial.coeff_X]
+  by_cases hn : n = 1
+  · subst hn; rw [if_pos rfl, if_pos rfl, HexModArithMathlib.ZMod64.toZMod_one]
+  · rw [if_neg hn, if_neg (show ¬ (1 = n) by omega), HexModArithMathlib.ZMod64.toZMod_zero]
+
+/-- Divisibility transports along the finite-field polynomial map. -/
+theorem toMathlibPolynomial_dvd {f g : Hex.FpPoly p} (h : f ∣ g) :
+    toMathlibPolynomial f ∣ toMathlibPolynomial g := by
+  obtain ⟨r, hr⟩ := h
+  exact ⟨toMathlibPolynomial r, by rw [hr, toMathlibPolynomial_mul]⟩
+
+/-- An executable unit polynomial (a nonzero constant) transports to a Mathlib
+unit. -/
+theorem isUnit_toMathlibPolynomial_of_isUnitPolynomial
+    [Fact (Nat.Prime p)] {g : Hex.FpPoly p}
+    (h : Hex.Berlekamp.isUnitPolynomial g = true) :
+    IsUnit (toMathlibPolynomial g) := by
+  -- `isUnitPolynomial g = true` means `g` has degree `0`, hence size `1`.
+  have hdeg : g.degree? = some 0 := by
+    unfold Hex.Berlekamp.isUnitPolynomial at h
+    split at h <;> first | assumption | simp_all
+  have hsize : g.size = 1 := by
+    rcases Nat.eq_zero_or_pos g.size with hz | hpos
+    · rw [(Hex.DensePoly.degree?_eq_none_iff g).mpr hz] at hdeg
+      exact absurd hdeg (by simp)
+    · rw [Hex.DensePoly.degree?_eq_some_of_pos_size g hpos] at hdeg
+      have hsub : g.size - 1 = 0 := Option.some.inj hdeg
+      omega
+  -- So `g = C (g.coeff 0)` with `g.coeff 0 ≠ 0`.
+  have hgC : g = Hex.DensePoly.C (g.coeff 0) := by
+    apply Hex.DensePoly.ext_coeff
+    intro i
+    rw [Hex.DensePoly.coeff_C]
+    by_cases hi : i = 0
+    · subst hi; rw [if_pos rfl]
+    · rw [if_neg hi,
+        Hex.DensePoly.coeff_eq_zero_of_size_le g (by omega : g.size ≤ i)]
+  have hne : g.coeff 0 ≠ 0 := by
+    have hlast := Hex.DensePoly.coeff_last_ne_zero_of_pos_size g (by omega : 0 < g.size)
+    simpa [hsize] using hlast
+  have htoZ_ne : HexModArithMathlib.ZMod64.toZMod (g.coeff 0) ≠ 0 := by
+    intro hzero
+    apply hne
+    apply HexModArithMathlib.ZMod64.equiv.injective
+    rw [HexModArithMathlib.ZMod64.equiv_apply, HexModArithMathlib.ZMod64.equiv_apply,
+      HexModArithMathlib.ZMod64.toZMod_zero, hzero]
+  have hC_eq : toMathlibPolynomial g =
+      Polynomial.C (HexModArithMathlib.ZMod64.toZMod (g.coeff 0)) := by
+    conv_lhs => rw [hgC]
+    exact toMathlibPolynomial_C (g.coeff 0)
+  rw [hC_eq]
+  exact Polynomial.isUnit_C.mpr (isUnit_iff_ne_zero.mpr htoZ_ne)
+
+/-- The Mathlib primality fact yields the executable prime-modulus witness, so
+executable field-dependent lemmas (gcd/Bezout, modular division) become
+available in the Mathlib transport layer. -/
+theorem primeModulus_of_fact (p : Nat) [Fact (Nat.Prime p)] :
+    Hex.ZMod64.PrimeModulus p :=
+  Hex.ZMod64.primeModulusOfPrime
+    ⟨(Fact.out : Nat.Prime p).two_le,
+      fun m hm => (Fact.out : Nat.Prime p).eq_one_or_self_of_dvd m hm⟩
+
+/-- A passing executable gcd-unit check transports to Mathlib coprimality of the
+transported polynomials, via the executable Bezout identity. -/
+theorem isCoprime_toMathlibPolynomial_of_isUnitPolynomial_gcd
+    [Fact (Nat.Prime p)] {a b : Hex.FpPoly p}
+    (h : Hex.Berlekamp.isUnitPolynomial (Hex.DensePoly.gcd a b) = true) :
+    IsCoprime (toMathlibPolynomial a) (toMathlibPolynomial b) := by
+  haveI : Hex.ZMod64.PrimeModulus p := primeModulus_of_fact p
+  obtain ⟨u, hu⟩ := isUnit_toMathlibPolynomial_of_isUnitPolynomial h
+  -- Executable Bezout: `left * a + right * b = gcd a b`.
+  have hbez : (Hex.DensePoly.xgcd a b).left * a + (Hex.DensePoly.xgcd a b).right * b
+      = Hex.DensePoly.gcd a b :=
+    Hex.DensePoly.xgcd_bezout a b
+  have hbezM :
+      toMathlibPolynomial (Hex.DensePoly.xgcd a b).left * toMathlibPolynomial a +
+        toMathlibPolynomial (Hex.DensePoly.xgcd a b).right * toMathlibPolynomial b =
+        toMathlibPolynomial (Hex.DensePoly.gcd a b) := by
+    rw [← toMathlibPolynomial_mul, ← toMathlibPolynomial_mul, ← toMathlibPolynomial_add, hbez]
+  refine ⟨↑u⁻¹ * toMathlibPolynomial (Hex.DensePoly.xgcd a b).left,
+    ↑u⁻¹ * toMathlibPolynomial (Hex.DensePoly.xgcd a b).right, ?_⟩
+  rw [mul_assoc, mul_assoc, ← mul_add, hbezM, ← hu]
+  exact u.inv_mul
+
 namespace Rabin
 
 /-- The Mathlib polynomial `X^(p^n) - X` used by Rabin's divisibility leg. -/
 abbrev frobeniusPolynomial (p n : Nat) : Polynomial (ZMod p) :=
   X ^ (p ^ n) - X
+
+/-- The executable absolute polynomial `X^(p^k) - X` transports to
+`frobeniusPolynomial p k`. -/
+theorem toMathlibPolynomial_xPowSubX (k : Nat) :
+    toMathlibPolynomial (Hex.Berlekamp.xPowSubX (p := p) k) = frobeniusPolynomial p k := by
+  unfold Hex.Berlekamp.xPowSubX frobeniusPolynomial
+  rw [toMathlibPolynomial_sub, toMathlibPolynomial_monomial_one, toMathlibPolynomial_X]
 
 /-
 Divisibility by the modulus is exactly vanishing in the corresponding
@@ -513,7 +650,40 @@ theorem rabinTest_true_to_mathlib_checks
       toMathlibPolynomial f ∣ frobeniusPolynomial p n ∧
       ∀ d ∈ Hex.Berlekamp.maximalProperDivisors n,
         IsCoprime (toMathlibPolynomial f) (frobeniusPolynomial p d) := by
-  sorry
+  haveI : Hex.ZMod64.PrimeModulus p := primeModulus_of_fact p
+  subst hdegree
+  simp only [Hex.Berlekamp.rabinTest, Bool.and_eq_true] at htest
+  obtain ⟨⟨hpos, hdiv⟩, hwit⟩ := htest
+  refine ⟨of_decide_eq_true hpos, ?_, ?_⟩
+  · -- Divisibility leg: transport `f ∣ X^(p^n) - X` from the executable side.
+    have hisZero : (Hex.Berlekamp.frobeniusDiffMod f hmonic
+        (Hex.Berlekamp.basisSize f)).isZero = true := by
+      rw [← Hex.Berlekamp.rabinDividesTest_spec]; exact hdiv
+    have hdvd := (Hex.Berlekamp.dvd_xPowSubX_iff_frobeniusDiffMod_isZero f hmonic _).mpr hisZero
+    rw [← toMathlibPolynomial_xPowSubX]
+    exact toMathlibPolynomial_dvd hdvd
+  · -- Coprimality leg: transport the gcd-unit witnesses, then reduce
+    -- `frobeniusDiffMod` to the absolute `X^(p^d) - X`.
+    intro d hd
+    have hcop := Hex.Berlekamp.rabinCoprimeTest_of_mem_maximalProperDivisors f hmonic hwit hd
+    rw [Hex.Berlekamp.rabinCoprimeTest] at hcop
+    have hcopM :
+        IsCoprime (toMathlibPolynomial f)
+          (toMathlibPolynomial (Hex.Berlekamp.frobeniusDiffMod f hmonic d)) :=
+      isCoprime_toMathlibPolynomial_of_isUnitPolynomial_gcd hcop
+    have hredM : toMathlibPolynomial f ∣
+        (frobeniusPolynomial p d -
+          toMathlibPolynomial (Hex.Berlekamp.frobeniusDiffMod f hmonic d)) := by
+      have hred := toMathlibPolynomial_dvd
+        (Hex.Berlekamp.dvd_xPowSubX_sub_frobeniusDiffMod f hmonic d)
+      rwa [toMathlibPolynomial_sub, toMathlibPolynomial_xPowSubX] at hred
+    obtain ⟨t, ht⟩ := hredM
+    have hfrob_eq : frobeniusPolynomial p d =
+        toMathlibPolynomial (Hex.Berlekamp.frobeniusDiffMod f hmonic d) +
+          toMathlibPolynomial f * t := by
+      rw [← ht]; ring
+    rw [hfrob_eq]
+    exact hcopM.add_mul_left_right t
 
 /--
 The Mathlib Rabin checks imply the executable test surface once the transport
