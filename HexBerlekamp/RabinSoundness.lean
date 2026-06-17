@@ -3699,6 +3699,163 @@ private theorem exists_basis_nonconst_mod_g
     obtain ⟨k, hk⟩ := Classical.not_forall.mp hall
     exact ⟨k, fun c hc => hk ⟨c, hc⟩⟩
 
+set_option maxHeartbeats 800000 in
+/--
+**Divisor-generalized Berlekamp completeness.** For a monic square-free `f` and
+a monic divisor `g ∣ f`, if no fixed-space kernel witness of `f` admits a
+Berlekamp split of `g`, then `g` is irreducible. This is the per-factor
+soundness obligation of `berlekampFactor`, which splits every returned factor
+with `f`'s single shared kernel. The case `f = g` recovers
+`irreducible_of_no_kernelWitnessSplit_squareFree`.
+
+The proof assumes a nontrivial factorization `g = a₀ * b₀`, extracts a monic
+irreducible factor `g₁ ∣ a₀` with monic cofactor `c₀ = g / g₁`, builds a
+`g`-kernel CRT witness `hh` nonconstant mod `g`, lifts it to an `f`-kernel
+witness `H` nonconstant mod `g` (`exists_fKernel_witness_nonconst_mod_g`), moves
+the nonconstancy to an `f`-basis polynomial `w` (`exists_basis_nonconst_mod_g`),
+and feeds `w` to the executable split surface to contradict `hno_split`.
+-/
+theorem irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd
+    (f g : FpPoly p) (hmonic : DensePoly.Monic f) (hg_monic : DensePoly.Monic g)
+    (hg_dvd_f : g ∣ f)
+    (hsquareFree : ∀ d, d ∣ f → d ∣ DensePoly.derivative f →
+      isUnitPolynomial d = true)
+    (hno_split : ∀ w ∈ (fixedSpaceKernel f hmonic).toList,
+      kernelWitnessSplit? g w = none) :
+    FpPoly.Irreducible g := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  have hf_ne_zero : f ≠ 0 := by
+    intro hzero
+    have hlead : f.leadingCoeff = 1 := hmonic
+    rw [hzero] at hlead
+    have hlead_zero : (0 : FpPoly p).leadingCoeff = 0 := by
+      change (0 : FpPoly p).coeffs.back?.getD 0 = 0
+      have hcoeffs : (0 : FpPoly p).coeffs = #[] := rfl
+      rw [hcoeffs]; rfl
+    rw [hlead_zero] at hlead
+    exact zmod64_one_ne_zero_local hlead.symm
+  have hg_ne_zero : g ≠ 0 := by
+    intro hzero
+    have hlead : g.leadingCoeff = 1 := hg_monic
+    rw [hzero] at hlead
+    have hlead_zero : (0 : FpPoly p).leadingCoeff = 0 := by
+      change (0 : FpPoly p).coeffs.back?.getD 0 = 0
+      have hcoeffs : (0 : FpPoly p).coeffs = #[] := rfl
+      rw [hcoeffs]; rfl
+    rw [hlead_zero] at hlead
+    exact zmod64_one_ne_zero_local hlead.symm
+  refine ⟨hg_ne_zero, ?_⟩
+  intro a₀ b₀ hab
+  by_cases ha₀_unit : a₀.degree? = some 0
+  · exact Or.inl ha₀_unit
+  refine Or.inr ?_
+  by_cases hb₀_unit : b₀.degree? = some 0
+  · exact hb₀_unit
+  exfalso
+  -- Both factors of `g` are nonconstant.
+  have ha₀_ne_zero : a₀ ≠ 0 := factor_ne_zero_of_ne_zero hab hg_ne_zero
+  have hb₀_ne_zero : b₀ ≠ 0 := by
+    have hba : b₀ * a₀ = g := by rw [FpPoly.mul_comm]; exact hab
+    exact factor_ne_zero_of_ne_zero hba hg_ne_zero
+  have ha₀_pos : 0 < a₀.degree?.getD 0 :=
+    pos_degree_of_ne_zero_of_not_isUnit ha₀_ne_zero ha₀_unit
+  have hb₀_pos : 0 < b₀.degree?.getD 0 :=
+    pos_degree_of_ne_zero_of_not_isUnit hb₀_ne_zero hb₀_unit
+  have ha₀_lt_g : a₀.degree?.getD 0 < basisSize g :=
+    factor_degree_lt_basisSize hab ha₀_ne_zero hb₀_pos
+  -- `g` is square-free (descent from `f`).
+  obtain ⟨cofg, hcofg⟩ := hg_dvd_f
+  have hsf_g : ∀ d, d ∣ g → d ∣ DensePoly.derivative g → isUnitPolynomial d = true :=
+    squareFree_predicate_of_mul f g cofg hcofg.symm hsquareFree
+  -- `g` has positive degree.
+  have hg_pos : 0 < g.degree?.getD 0 := by
+    have hdeg := FpPoly.degree?_mul_eq_add_degree? a₀ b₀ ha₀_ne_zero hb₀_ne_zero
+    rw [hab] at hdeg
+    omega
+  -- Extract a monic irreducible factor `g₁` of `a₀`, with cofactor `c₀ = g / g₁`.
+  obtain ⟨g₁, _hg₁_irr, hg₁_monic, hg₁_dvd_a₀, hg₁_deg_pos, hg₁_deg_le_a₀⟩ :=
+    exists_monic_irreducible_factor_of_factor hg_monic hab ha₀_pos
+  have hg₁_dvd_g : g₁ ∣ g := by
+    rcases hg₁_dvd_a₀ with ⟨r, hr⟩
+    refine ⟨r * b₀, ?_⟩
+    calc g = a₀ * b₀ := hab.symm
+      _ = (g₁ * r) * b₀ := by rw [hr]
+      _ = g₁ * (r * b₀) := FpPoly.mul_assoc g₁ r b₀
+  have hg₁_ne_zero : g₁ ≠ 0 := ne_zero_of_pos_degree hg₁_deg_pos
+  let c₀ : FpPoly p := g / g₁
+  have hc_eq : g₁ * c₀ = g := (fp_eq_mul_div_of_dvd hg₁_dvd_g).symm
+  have hc₀_ne_zero : c₀ ≠ 0 := by
+    intro hzero
+    rw [hzero, FpPoly.mul_zero] at hc_eq
+    exact hg_ne_zero hc_eq.symm
+  have hc₀_monic : DensePoly.Monic c₀ := by
+    have hlead : DensePoly.leadingCoeff g =
+        DensePoly.leadingCoeff g₁ * DensePoly.leadingCoeff c₀ := by
+      rw [← hc_eq]
+      exact FpPoly.leadingCoeff_mul g₁ c₀ hg₁_ne_zero hc₀_ne_zero
+    have hg_one : DensePoly.leadingCoeff g = 1 := hg_monic
+    have hg₁_one : DensePoly.leadingCoeff g₁ = 1 := hg₁_monic
+    unfold DensePoly.Monic
+    rw [hg₁_one, hg_one] at hlead
+    have hone_mul : (1 : ZMod64 p) * DensePoly.leadingCoeff c₀ =
+        DensePoly.leadingCoeff c₀ := by grind
+    rw [hone_mul] at hlead
+    exact hlead.symm
+  have hg₁_lt_g : g₁.degree?.getD 0 < basisSize g :=
+    Nat.lt_of_le_of_lt hg₁_deg_le_a₀ ha₀_lt_g
+  have hc₀_pos : 0 < c₀.degree?.getD 0 := by
+    have hdeg_eq : (g₁ * c₀).degree?.getD 0 =
+        g₁.degree?.getD 0 + c₀.degree?.getD 0 :=
+      FpPoly.degree?_mul_eq_add_degree? g₁ c₀ hg₁_ne_zero hc₀_ne_zero
+    rw [hc_eq] at hdeg_eq
+    unfold basisSize at hg₁_lt_g
+    omega
+  -- `g`-kernel CRT witness `hh`, nonconstant mod `g`.
+  obtain ⟨hh, hh_dvd, hh_nonconst, hh_size⟩ :=
+    exists_reduced_crtZeroOne_kernelWitness_of_squareFree_monic_split
+      g₁ c₀ hg₁_monic hc₀_monic hg₁_deg_pos hc₀_pos
+      (fun d hd hd' => hsf_g d (hc_eq ▸ hd) (hc_eq ▸ hd'))
+  rw [hc_eq] at hh_dvd hh_nonconst
+  -- Lift `hh` to an `f`-kernel witness `H`, still nonconstant mod `g`.
+  obtain ⟨H, hH_fdvd, hH_size, hH_nonconst⟩ :=
+    exists_fKernel_witness_nonconst_mod_g f g cofg hcofg.symm hf_ne_zero
+      hg_pos hsquareFree hh hh_dvd hh_nonconst
+  have hH_kernel : IsFixedSpaceKernelPolynomial f hmonic H := by
+    rw [isFixedSpaceKernelPolynomial_iff_dvd_linearPow_sub_self f hmonic H hH_size]
+    exact hH_fdvd
+  -- Move nonconstancy to an `f`-basis polynomial `w`.
+  obtain ⟨k, hk_nonconst⟩ :=
+    exists_basis_nonconst_mod_g f hmonic g H hH_kernel hH_size hH_nonconst
+  let w : FpPoly p := (fixedSpaceKernel f hmonic).get k
+  have hw_mem : w ∈ (fixedSpaceKernel f hmonic).toList := by
+    have hk_lt : k.val < (fixedSpaceKernel f hmonic).toList.length := by
+      rw [Vector.length_toList]; exact k.isLt
+    have hget : (fixedSpaceKernel f hmonic).toList[k.val]'hk_lt = w := by
+      rw [Vector.getElem_toList]; rfl
+    rw [← hget]; exact List.getElem_mem hk_lt
+  have hw_kernel : IsFixedSpaceKernelPolynomial f hmonic w :=
+    fixedSpaceKernel_sound f hmonic k
+  have hw_size_le : w.size ≤ basisSize f := fixedSpaceKernel_get_size_le f hmonic k
+  have hw_fdvd : f ∣ (FpPoly.linearPow w p - w) := by
+    rw [isFixedSpaceKernelPolynomial_iff_dvd_linearPow_sub_self f hmonic w hw_size_le]
+      at hw_kernel
+    exact hw_kernel
+  -- `g ∣ Π_c (w - C c)` (via `g ∣ f`) and `w` nonconstant mod `g`.
+  have hw_gdvd : g ∣ (FpPoly.linearPow w p - w) :=
+    fp_dvd_trans (⟨cofg, hcofg⟩ : g ∣ f) hw_fdvd
+  have hw_prod : g ∣ (ZMod64.values p).foldl
+      (fun acc c => acc * (w - FpPoly.C c)) 1 :=
+    dvd_primeFieldProduct_witness_of_dvd_linearPow_sub_self hw_gdvd
+  have hw_nonconst : ∀ c : ZMod64 p, ¬ (g ∣ (w - FpPoly.C c)) :=
+    fun c hc => hk_nonconst c hc
+  -- The executable split surface produces a split of `g`, contradicting `hno_split`.
+  obtain ⟨r, hsplit⟩ :=
+    exists_kernelWitnessSplit?_some_of_witnessProduct_dvd_of_pos_degree
+      hg_pos hw_prod hw_nonconst
+  have hno_w : kernelWitnessSplit? g w = none := hno_split w hw_mem
+  rw [hno_w] at hsplit
+  nomatch hsplit
+
 /--
 For a monic square-free `f` whose executable Berlekamp factorization returns
 at most one factor, `f` is irreducible. Composes the structural loop lemma
