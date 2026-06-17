@@ -400,56 +400,71 @@ setup_benchmark runDistinctDegreeChecksum n => n * n * n
     slopeTolerance := 0.35
   }
 
+/-- Timing shape for the gating FLINT comparators. `warmupFirstIter` runs one
+discarded call so the persistent python-flint driver is spawned out of the timed
+region, and the raised `minTotalSeconds` floor forces the child auto-tuner to
+amortise steady-state FLINT work across enough inner repeats that the per-call
+median reflects the algorithm rather than the one-time process startup. -/
+def flintCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 6.0, warmupFirstIter := true,
+    minTotalSeconds := 0.2 }
+
+/-- Matching timing shape for the paired in-process Lean targets: the same
+inner-repeat amortisation floor so each per-rung ratio compares steady-state
+medians measured on the same basis on both sides. -/
+def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.2 }
+
 /- Fixed per-rung process-call comparator registrations for
 `nmod_poly.is_irreducible`. The paired Lean and FLINT targets return the same
 boolean checksum, so `compare` can detect semantic drift while recording the
 wall-time ratio at each rung. -/
-setup_fixed_benchmark runRabinTestChecksum8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintRabinTestChecksum8 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runRabinTestChecksum10 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintRabinTestChecksum10 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runRabinTestChecksum12 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintRabinTestChecksum12 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runRabinTestChecksum16 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintRabinTestChecksum16 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runRabinTestChecksum20 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintRabinTestChecksum20 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runRabinTestChecksum24 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintRabinTestChecksum24 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runRabinTestChecksum32 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintRabinTestChecksum32 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runRabinTestChecksum40 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintRabinTestChecksum40 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runRabinTestChecksum48 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintRabinTestChecksum48 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runRabinTestChecksum56 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintRabinTestChecksum56 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runRabinTestChecksum64 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintRabinTestChecksum64 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runRabinTestChecksum8 where leanCompareConfig
+setup_fixed_benchmark runFlintRabinTestChecksum8 where flintCompareConfig
+setup_fixed_benchmark runRabinTestChecksum10 where leanCompareConfig
+setup_fixed_benchmark runFlintRabinTestChecksum10 where flintCompareConfig
+setup_fixed_benchmark runRabinTestChecksum12 where leanCompareConfig
+setup_fixed_benchmark runFlintRabinTestChecksum12 where flintCompareConfig
+setup_fixed_benchmark runRabinTestChecksum16 where leanCompareConfig
+setup_fixed_benchmark runFlintRabinTestChecksum16 where flintCompareConfig
+setup_fixed_benchmark runRabinTestChecksum20 where leanCompareConfig
+setup_fixed_benchmark runFlintRabinTestChecksum20 where flintCompareConfig
+setup_fixed_benchmark runRabinTestChecksum24 where leanCompareConfig
+setup_fixed_benchmark runFlintRabinTestChecksum24 where flintCompareConfig
+setup_fixed_benchmark runRabinTestChecksum32 where leanCompareConfig
+setup_fixed_benchmark runFlintRabinTestChecksum32 where flintCompareConfig
+setup_fixed_benchmark runRabinTestChecksum40 where leanCompareConfig
+setup_fixed_benchmark runFlintRabinTestChecksum40 where flintCompareConfig
+setup_fixed_benchmark runRabinTestChecksum48 where leanCompareConfig
+setup_fixed_benchmark runFlintRabinTestChecksum48 where flintCompareConfig
+setup_fixed_benchmark runRabinTestChecksum56 where leanCompareConfig
+setup_fixed_benchmark runFlintRabinTestChecksum56 where flintCompareConfig
+setup_fixed_benchmark runRabinTestChecksum64 where leanCompareConfig
+setup_fixed_benchmark runFlintRabinTestChecksum64 where flintCompareConfig
 
 /- Fixed per-rung process-call comparator registrations for
 `nmod_poly.factor_distinct_deg`. The fixed targets return an opaque timing
 token; the separate conformance oracle owns bucket-shape equality. -/
-setup_fixed_benchmark runDistinctDegreeChecksum12 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDistinctDegreeChecksum12 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runDistinctDegreeChecksum16 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDistinctDegreeChecksum16 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runDistinctDegreeChecksum20 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDistinctDegreeChecksum20 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runDistinctDegreeChecksum24 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDistinctDegreeChecksum24 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runDistinctDegreeChecksum32 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDistinctDegreeChecksum32 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runDistinctDegreeChecksum40 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDistinctDegreeChecksum40 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runDistinctDegreeChecksum48 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDistinctDegreeChecksum48 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runDistinctDegreeChecksum64 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDistinctDegreeChecksum64 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runDistinctDegreeChecksum80 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDistinctDegreeChecksum80 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runDistinctDegreeChecksum96 where { repeats := 5, maxSecondsPerCall := 6.0 }
-setup_fixed_benchmark runFlintDistinctDegreeChecksum96 where { repeats := 5, maxSecondsPerCall := 6.0 }
+setup_fixed_benchmark runDistinctDegreeChecksum12 where leanCompareConfig
+setup_fixed_benchmark runFlintDistinctDegreeChecksum12 where flintCompareConfig
+setup_fixed_benchmark runDistinctDegreeChecksum16 where leanCompareConfig
+setup_fixed_benchmark runFlintDistinctDegreeChecksum16 where flintCompareConfig
+setup_fixed_benchmark runDistinctDegreeChecksum20 where leanCompareConfig
+setup_fixed_benchmark runFlintDistinctDegreeChecksum20 where flintCompareConfig
+setup_fixed_benchmark runDistinctDegreeChecksum24 where leanCompareConfig
+setup_fixed_benchmark runFlintDistinctDegreeChecksum24 where flintCompareConfig
+setup_fixed_benchmark runDistinctDegreeChecksum32 where leanCompareConfig
+setup_fixed_benchmark runFlintDistinctDegreeChecksum32 where flintCompareConfig
+setup_fixed_benchmark runDistinctDegreeChecksum40 where leanCompareConfig
+setup_fixed_benchmark runFlintDistinctDegreeChecksum40 where flintCompareConfig
+setup_fixed_benchmark runDistinctDegreeChecksum48 where leanCompareConfig
+setup_fixed_benchmark runFlintDistinctDegreeChecksum48 where flintCompareConfig
+setup_fixed_benchmark runDistinctDegreeChecksum64 where leanCompareConfig
+setup_fixed_benchmark runFlintDistinctDegreeChecksum64 where flintCompareConfig
+setup_fixed_benchmark runDistinctDegreeChecksum80 where leanCompareConfig
+setup_fixed_benchmark runFlintDistinctDegreeChecksum80 where flintCompareConfig
+setup_fixed_benchmark runDistinctDegreeChecksum96 where leanCompareConfig
+setup_fixed_benchmark runFlintDistinctDegreeChecksum96 where flintCompareConfig
 
 end BerlekampBench
 end Hex
