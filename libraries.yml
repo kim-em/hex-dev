@@ -387,7 +387,7 @@ libraries:
   HexGF2Mathlib:
     deps: [HexGF2, HexPolyFp, HexGFqField]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
   HexGFqMathlib:
     deps: [HexGFq, HexGF2Mathlib]
