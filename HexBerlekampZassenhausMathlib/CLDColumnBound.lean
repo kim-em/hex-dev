@@ -628,6 +628,131 @@ theorem auxCutBridge
       (liftData.liftedFactors.getD i 0) h liftData.p liftData.k
       hk hg_monic hg_deg hdvd
 
+/-- A coefficientwise congruence `a ≡ b (mod m)` transports to a
+`Polynomial.C (m : ℤ)`-divisibility of the difference of the mapped Mathlib
+polynomials. -/
+private theorem C_dvd_toPolynomial_sub_of_congr
+    (a b : Hex.ZPoly) (m : Nat) (h : Hex.ZPoly.congr a b m) :
+    Polynomial.C (m : ℤ) ∣
+      (HexPolyMathlib.toPolynomial a - HexPolyMathlib.toPolynomial b) := by
+  rw [Polynomial.C_dvd_iff_dvd_coeff]
+  intro j
+  rw [Polynomial.coeff_sub, HexPolyMathlib.coeff_toPolynomial,
+    HexPolyMathlib.coeff_toPolynomial]
+  exact Int.dvd_of_emod_eq_zero (h j)
+
+/-- The converse of `C_dvd_toPolynomial_sub_of_congr`. -/
+private theorem congr_of_C_dvd_toPolynomial_sub
+    (a b : Hex.ZPoly) (m : Nat)
+    (h : Polynomial.C (m : ℤ) ∣
+      (HexPolyMathlib.toPolynomial a - HexPolyMathlib.toPolynomial b)) :
+    Hex.ZPoly.congr a b m := by
+  rw [Polynomial.C_dvd_iff_dvd_coeff] at h
+  intro j
+  have hj := h j
+  rw [Polynomial.coeff_sub, HexPolyMathlib.coeff_toPolynomial,
+    HexPolyMathlib.coeff_toPolynomial] at hj
+  exact Int.emod_eq_zero_of_dvd hj
+
+/-- **Product-side CLD aggregation.**  If every factor `q` in a list satisfies
+the per-factor logarithmic-derivative congruence `q * cld q ≡ f * q'  (mod m)` —
+the shape produced by `cldQuotientMod_congr_mul_derivative` with
+`cld q = cldQuotientMod f q p k` — then the ordered product `∏ qs` satisfies the
+aggregated congruence `(∏ qs) * Σ (cld qs) ≡ f * (∏ qs)'  (mod m)`.
+
+This is the polynomial-level core of the BHKS product CLD column identity: the
+logarithmic derivative of a product is the sum of the per-factor logarithmic
+derivatives.  The proof maps to `Polynomial ℤ`, where `Polynomial.C (m : ℤ) ∣ ·`
+is an ideal and `Polynomial.derivative_mul` supplies the Leibniz rule. -/
+theorem polyProduct_cld_aggregation
+    (f : Hex.ZPoly) (m : Nat) (cld : Hex.ZPoly → Hex.ZPoly) :
+    ∀ qs : List Hex.ZPoly,
+      (∀ q ∈ qs, Hex.ZPoly.congr (q * cld q)
+        (f * Hex.DensePoly.derivative q) m) →
+      Hex.ZPoly.congr
+        (Array.polyProduct qs.toArray * (qs.map cld).foldr (· + ·) 0)
+        (f * Hex.DensePoly.derivative (Array.polyProduct qs.toArray)) m := by
+  intro qs
+  induction qs with
+  | nil =>
+    intro _
+    apply congr_of_C_dvd_toPolynomial_sub
+    have hp : Array.polyProduct ([] : List Hex.ZPoly).toArray = 1 := rfl
+    rw [hp]
+    simp only [List.map_nil, List.foldr_nil, HexPolyMathlib.toPolynomial_mul,
+      HexPolyMathlib.toPolynomial_derivative, HexPolyMathlib.toPolynomial_one,
+      HexPolyMathlib.toPolynomial_zero, Polynomial.derivative_one, mul_zero,
+      sub_zero]
+    exact dvd_zero _
+  | cons q rest ih =>
+    intro hper
+    have hq : Hex.ZPoly.congr (q * cld q) (f * Hex.DensePoly.derivative q) m :=
+      hper q (by simp)
+    have hrest : ∀ q' ∈ rest, Hex.ZPoly.congr (q' * cld q')
+        (f * Hex.DensePoly.derivative q') m :=
+      fun q' hq' => hper q' (List.mem_cons_of_mem q hq')
+    have IHc := ih hrest
+    have Dq := C_dvd_toPolynomial_sub_of_congr _ _ m hq
+    have Dr := C_dvd_toPolynomial_sub_of_congr _ _ m IHc
+    rw [Hex.ZPoly.polyProduct_cons_toArray]
+    simp only [List.map_cons, List.foldr_cons]
+    apply congr_of_C_dvd_toPolynomial_sub
+    have key :
+        HexPolyMathlib.toPolynomial
+            (q * Array.polyProduct rest.toArray *
+              (cld q + (rest.map cld).foldr (· + ·) 0))
+          - HexPolyMathlib.toPolynomial
+              (f * Hex.DensePoly.derivative (q * Array.polyProduct rest.toArray))
+          = HexPolyMathlib.toPolynomial (Array.polyProduct rest.toArray) *
+              (HexPolyMathlib.toPolynomial (q * cld q)
+                - HexPolyMathlib.toPolynomial (f * Hex.DensePoly.derivative q))
+            + HexPolyMathlib.toPolynomial q *
+              (HexPolyMathlib.toPolynomial
+                  (Array.polyProduct rest.toArray * (rest.map cld).foldr (· + ·) 0)
+                - HexPolyMathlib.toPolynomial
+                    (f * Hex.DensePoly.derivative (Array.polyProduct rest.toArray))) := by
+      simp only [HexPolyMathlib.toPolynomial_mul, HexPolyMathlib.toPolynomial_add,
+        HexPolyMathlib.toPolynomial_derivative, Polynomial.derivative_mul]
+      ring
+    rw [key]
+    exact dvd_add (Dq.mul_left _) (Dr.mul_left _)
+
+open Classical in
+/-- Product-side CLD aggregation specialised to the selected support of a
+`TrueFactorLift`.  The selected support product satisfies the aggregated
+logarithmic-derivative congruence against the sum of the per-selected-factor CLD
+quotients, with all per-factor hypotheses discharged from the semantic package.
+
+This is the interface form consumed by the tight `psiCut` / `TightColumnBound`
+column estimate: it identifies the executable column sum
+`Σᵢ cldQuotientMod f gᵢ` (before centring) with `f · (∏ gᵢ)' / (∏ gᵢ)` modulo
+the Hensel precision. -/
+theorem TrueFactorLiftSemantics.supportProduct_cld_aggregation
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S) (H : TrueFactorLiftSemantics D)
+    (hk : 1 < D.p ^ D.a) :
+    Hex.ZPoly.congr
+      (supportProduct L S *
+        ((((List.finRange L.factorCount).filter fun i => decide (i ∈ S)).map
+            fun i => L.liftedFactors.getD i.val 1).map
+          (fun q => Hex.cldQuotientMod D.f q D.p D.a)).foldr (· + ·) 0)
+      (D.f * Hex.DensePoly.derivative (supportProduct L S))
+      (D.p ^ D.a) := by
+  have hsp : supportProduct L S =
+      Array.polyProduct
+        (((List.finRange L.factorCount).filter fun i => decide (i ∈ S)).map
+          fun i => L.liftedFactors.getD i.val 1).toArray := rfl
+  rw [hsp]
+  apply polyProduct_cld_aggregation D.f (D.p ^ D.a)
+    (fun q => Hex.cldQuotientMod D.f q D.p D.a)
+  intro q hq
+  rw [List.mem_map] at hq
+  obtain ⟨i, hi_mem, rfl⟩ := hq
+  rw [List.mem_filter] at hi_mem
+  have hiS : i ∈ S := by simpa using hi_mem.2
+  rw [D.liftedFactors_eq]
+  exact TrueFactorLiftSemantics.selected_cldQuotientMod_congr_mul_derivative D H hk i hiS
+
 end BHKS
 
 end
