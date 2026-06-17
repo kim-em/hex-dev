@@ -67,12 +67,21 @@ theorem fpPolyEquiv_symm_apply (f : Polynomial (ZMod p)) :
 @[simp]
 theorem coeff_toMathlibPolynomial (f : Hex.FpPoly p) (n : Nat) :
     (toMathlibPolynomial f).coeff n = HexModArithMathlib.ZMod64.toZMod (f.coeff n) := by
-  sorry
+  show (fpPolyToPolynomial f).coeff n = HexModArithMathlib.ZMod64.toZMod (f.coeff n)
+  rw [fpPolyToPolynomial, Polynomial.finset_sum_coeff]
+  simp only [Polynomial.coeff_monomial]
+  rw [Finset.sum_ite_eq' (Finset.range f.size) n
+    (fun i => HexModArithMathlib.ZMod64.toZMod (f.coeff i))]
+  by_cases hn : n ∈ Finset.range f.size
+  · rw [if_pos hn]
+  · rw [if_neg hn, Hex.DensePoly.coeff_eq_zero_of_size_le f
+      (Nat.le_of_not_lt (Finset.mem_range.not.mp hn))]
+    exact HexModArithMathlib.ZMod64.toZMod_zero.symm
 
 @[simp]
 theorem coeff_toMathlibPolynomial_equiv (f : Hex.FpPoly p) (n : Nat) :
     (toMathlibPolynomial f).coeff n = HexModArithMathlib.ZMod64.equiv (f.coeff n) := by
-  sorry
+  rw [coeff_toMathlibPolynomial, HexModArithMathlib.ZMod64.equiv_apply]
 
 /-- Coefficient view supplied by `HexPolyMathlib.toPolynomial`. -/
 theorem hexPolyMathlib_coeff_bridge
@@ -104,7 +113,13 @@ theorem natDegree_toMathlibPolynomial_eq_basisSize
 theorem toMathlibPolynomial_derivative (f : Hex.FpPoly p) :
     toMathlibPolynomial (Hex.DensePoly.derivative f) =
       Polynomial.derivative (toMathlibPolynomial f) := by
-  sorry
+  ext n
+  rw [coeff_toMathlibPolynomial,
+    Hex.DensePoly.coeff_derivative f n (Lean.Grind.Semiring.mul_zero _),
+    HexModArithMathlib.ZMod64.toZMod_mul, HexModArithMathlib.ZMod64.toZMod_natCast,
+    Polynomial.coeff_derivative, coeff_toMathlibPolynomial]
+  push_cast
+  ring
 
 namespace Rabin
 
