@@ -17,6 +17,23 @@ open Polynomial
 
 noncomputable section
 
+/--
+Coefficientwise executable congruence modulo `m` transfers to equality after
+mapping the corresponding Mathlib polynomials to `ZMod m`.
+-/
+theorem zpoly_congr_toPolynomial_map_eq
+    (f g : Hex.ZPoly) (m : Nat)
+    (hcongr : Hex.ZPoly.congr f g m) :
+    let φ := Int.castRingHom (ZMod m)
+    (HexPolyMathlib.toPolynomial f).map φ =
+      (HexPolyMathlib.toPolynomial g).map φ := by
+  apply Polynomial.ext
+  intro n
+  rw [coeff_map_intCastRingHom_eq_iff_dvd_sub,
+      HexPolyMathlib.coeff_toPolynomial,
+      HexPolyMathlib.coeff_toPolynomial]
+  exact Int.dvd_of_emod_eq_zero (hcongr n)
+
 /-- The iterative executable lift gives a factorization of `f` over Mathlib polynomials modulo `p^k`. -/
 theorem hensel_correct
     (f g h : Hex.ZPoly) (p k : Nat) [Hex.ZMod64.Bounds p]
@@ -52,7 +69,13 @@ theorem hensel_extends
         (HexPolyMathlib.toPolynomial g).map φ ∧
       (HexPolyMathlib.toPolynomial r.h).map φ =
         (HexPolyMathlib.toPolynomial h).map φ := by
-  sorry
+  refine ⟨?_, ?_⟩
+  · exact zpoly_congr_toPolynomial_map_eq
+      (Hex.ZPoly.henselLift p k f g h s t).g g p
+      (Hex.ZPoly.henselLift_g_congr_mod_base p k f g h s t hk)
+  · exact zpoly_congr_toPolynomial_map_eq
+      (Hex.ZPoly.henselLift p k f g h s t).h h p
+      (Hex.ZPoly.henselLift_h_congr_mod_base p k f g h s t hk)
 
 /-- The iterative executable lift preserves the Mathlib degree of the monic lifted factor. -/
 theorem hensel_degree
@@ -69,23 +92,6 @@ theorem hensel_degree
     (HexPolyMathlib.toPolynomial r.g).natDegree =
       (HexPolyMathlib.toPolynomial g).natDegree := by
   sorry
-
-/--
-Coefficientwise executable congruence modulo `m` transfers to equality after
-mapping the corresponding Mathlib polynomials to `ZMod m`.
--/
-theorem zpoly_congr_toPolynomial_map_eq
-    (f g : Hex.ZPoly) (m : Nat)
-    (hcongr : Hex.ZPoly.congr f g m) :
-    let φ := Int.castRingHom (ZMod m)
-    (HexPolyMathlib.toPolynomial f).map φ =
-      (HexPolyMathlib.toPolynomial g).map φ := by
-  apply Polynomial.ext
-  intro n
-  rw [coeff_map_intCastRingHom_eq_iff_dvd_sub,
-      HexPolyMathlib.coeff_toPolynomial,
-      HexPolyMathlib.coeff_toPolynomial]
-  exact Int.dvd_of_emod_eq_zero (hcongr n)
 
 /--
 Equality of Mathlib polynomial reductions modulo `m` gives the executable
