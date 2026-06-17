@@ -44,6 +44,9 @@ Covered edge cases:
 - exhaustive slow-backstop and BHKS recovery branch inputs
 - four-way modular split inputs whose integer factors are quadratic subset
   products
+- eight-way modular split inputs (`swinnertonDyerSD3`, `phi15`) that are
+  irreducible over `ℤ`, where every `2^8` subset product is rejected and the
+  modular backstop and public `factor` fall back to the single input
 - valid, wrong-prime, missing-obstruction, malformed-degree, and composite
   integer irreducibility certificates
 -/
@@ -585,6 +588,38 @@ recovered true factor.
   factorPreservesProduct x4Plus1 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[x4Plus1] |>.map fun coeffs => (coeffs, 1))
+
+-- Heavy (8-way split) adversarial backstop cases: `swinnertonDyerSD3` and
+-- `phi15` each split into eight linear factors over their small admissible
+-- prime yet are irreducible over `ℤ`.  The exhaustive *modular* recombination
+-- must reject every one of the `2^8` proper subset products and fall back to
+-- the single irreducible input. This is the genuine worst case for "no
+-- spurious recombination," dual to the `quadSqrt2Sqrt3` / `x4Plus1` guards
+-- above.
+#guard
+  match factorSlowModular swinnertonDyerSD3 with
+  | some φ =>
+      Factorization.product φ = swinnertonDyerSD3 &&
+        sameFactorCoeffSet (factorizationCoeffSummary φ)
+          (factorCoeffSummary #[swinnertonDyerSD3] |>.map fun coeffs => (coeffs, 1))
+  | none => false
+#guard
+  let factors := factor swinnertonDyerSD3
+  factorPreservesProduct swinnertonDyerSD3 &&
+    sameFactorCoeffSet (factorizationCoeffSummary factors)
+      (factorCoeffSummary #[swinnertonDyerSD3] |>.map fun coeffs => (coeffs, 1))
+#guard
+  match factorSlowModular phi15 with
+  | some φ =>
+      Factorization.product φ = phi15 &&
+        sameFactorCoeffSet (factorizationCoeffSummary φ)
+          (factorCoeffSummary #[phi15] |>.map fun coeffs => (coeffs, 1))
+  | none => false
+#guard
+  let factors := factor phi15
+  factorPreservesProduct phi15 &&
+    sameFactorCoeffSet (factorizationCoeffSummary factors)
+      (factorCoeffSummary #[phi15] |>.map fun coeffs => (coeffs, 1))
 
 #guard PrimeFactorData.degreeSum primeDataValidQuad = 2
 #guard coeffNats (PrimeFactorData.factorProduct primeDataValidQuad) = [2, 0, 1]
