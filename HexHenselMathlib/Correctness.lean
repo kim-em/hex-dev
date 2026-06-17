@@ -448,6 +448,154 @@ theorem quadraticHenselStep_unique_mod_pow_two_mul
     g' h' p (2 * k) (by omega) hg_monic hg' hdeg hprod_2k hprod' hg1 hh1 hcop
 
 /--
+The recursive linear multifactor invariant supplies enough mod-`p` split data
+to initialise the quadratic multifactor invariant, provided the raw input heads
+are monic.
+
+The helper is stated for a target `f'` congruent to the linear target `f` modulo
+`p`: recursively, the linear and quadratic lifted cofactors are not equal, but
+both remain congruent modulo the base prime to the same raw complementary
+product.
+-/
+private theorem quadraticMultifactorLiftInvariant_of_multifactorLiftInvariant_congr
+    (p k : Nat) [Fact (Nat.Prime p)] [Hex.ZMod64.Bounds p]
+    [Hex.ZMod64.PrimeModulus p]
+    (f f' : Hex.ZPoly) (factors : List Hex.ZPoly)
+    (hk : 1 ≤ k)
+    (hmonic : ∀ g ∈ factors, Hex.DensePoly.Monic g)
+    (htarget : Hex.ZPoly.congr f f' p)
+    (hnonempty : factors ≠ [])
+    (hinv : Hex.ZPoly.MultifactorLiftInvariant p k f factors) :
+    Hex.ZPoly.QuadraticMultifactorLiftInvariant p k f' factors := by
+  induction factors generalizing f f' with
+  | nil =>
+      exact (hnonempty rfl).elim
+  | cons g rest ih =>
+      cases rest with
+      | nil =>
+          simp [Hex.ZPoly.QuadraticMultifactorLiftInvariant]
+      | cons h tail =>
+          let restFactors : Array Hex.ZPoly := (h :: tail).toArray
+          let splitProduct : Hex.ZPoly := Array.polyProduct restFactors
+          let xgcd := Hex.ZPoly.normalizedXGCD p g splitProduct
+          let s : Hex.ZPoly := Hex.FpPoly.liftToZ xgcd.left
+          let t : Hex.ZPoly := Hex.FpPoly.liftToZ xgcd.right
+          let linearLifted :=
+            Hex.ZPoly.henselLift p k f g splitProduct xgcd.left xgcd.right
+          let quadraticLifted :=
+            Hex.ZPoly.henselLiftQuadratic p k f' g splitProduct s t
+          rcases hinv with ⟨hstart, _hstepDegree, _hstepBezout, htail⟩
+          have hstart' :
+              Hex.ZPoly.LinearLiftLoopInvariant p 1 f xgcd.left xgcd.right
+                { g := Hex.ZPoly.reduceModPow g p 1
+                  h := Hex.ZPoly.reduceModPow splitProduct p 1 } := by
+            simpa [restFactors, splitProduct, xgcd] using hstart
+          have hprod_reduced :
+              Hex.ZPoly.congr
+                (Hex.ZPoly.reduceModPow g p 1 *
+                  Hex.ZPoly.reduceModPow splitProduct p 1) f p := by
+            simpa [Nat.pow_one] using hstart'.1
+          have hreduce_prod :
+              Hex.ZPoly.congr
+                (Hex.ZPoly.reduceModPow g p 1 *
+                  Hex.ZPoly.reduceModPow splitProduct p 1)
+                (g * splitProduct) p := by
+            apply Hex.ZPoly.congr_mul
+            · have hg :=
+                Hex.ZPoly.congr_reduceModPow g p 1
+                  (Nat.pow_pos (Hex.ZMod64.Bounds.pPos (p := p)))
+              simpa [Nat.pow_one] using hg
+            · have hh :=
+                Hex.ZPoly.congr_reduceModPow splitProduct p 1
+                  (Nat.pow_pos (Hex.ZMod64.Bounds.pPos (p := p)))
+              simpa [Nat.pow_one] using hh
+          have hprod_raw_f :
+              Hex.ZPoly.congr (g * splitProduct) f p :=
+            Hex.ZPoly.congr_trans _ _ _ p
+              (Hex.ZPoly.congr_symm _ _ _ hreduce_prod) hprod_reduced
+          have hprod_raw :
+              Hex.ZPoly.congr (g * splitProduct) f' p :=
+            Hex.ZPoly.congr_trans _ _ _ p hprod_raw_f htarget
+          have hbez_reduced :
+              Hex.ZPoly.congr
+                (Hex.FpPoly.liftToZ
+                  (xgcd.left * Hex.ZPoly.modP p g +
+                    xgcd.right * Hex.ZPoly.modP p splitProduct)) 1 p := by
+            simpa [Hex.ZPoly.modP_reduceModPow_of_pos p 1 g (by omega),
+              Hex.ZPoly.modP_reduceModPow_of_pos p 1 splitProduct (by omega)]
+              using hstart'.2.1
+          have hbez_lift :
+              Hex.ZPoly.congr
+                (Hex.FpPoly.liftToZ
+                  (xgcd.left * Hex.ZPoly.modP p g +
+                    xgcd.right * Hex.ZPoly.modP p splitProduct))
+                (s * g + t * splitProduct) p := by
+            apply Hex.ZPoly.congr_liftToZ_of_modP_eq
+            simp [s, t]
+          have hbez :
+              Hex.ZPoly.congr (s * g + t * splitProduct) 1 p :=
+            Hex.ZPoly.congr_trans _ _ _ p
+              (Hex.ZPoly.congr_symm _ _ _ hbez_lift) hbez_reduced
+          have hg_monic : Hex.DensePoly.Monic g := by
+            exact hmonic g (by simp)
+          have hquad_start :
+              Hex.ZPoly.QuadraticLiftLoopInvariant p f'
+                { g := g, h := splitProduct, s := s, t := t } :=
+            Hex.ZPoly.QuadraticLiftLoopInvariant.of_product_bezout_monic
+              hprod_raw hbez hg_monic
+          have hlinear_h :
+              Hex.ZPoly.congr linearLifted.h splitProduct p := by
+            simpa [linearLifted, splitProduct, xgcd] using
+              Hex.ZPoly.henselLift_h_congr_mod_base
+                p k f g splitProduct xgcd.left xgcd.right hk
+          have hquadratic_h :
+              Hex.ZPoly.congr quadraticLifted.h splitProduct p := by
+            simpa [quadraticLifted, splitProduct, xgcd, s, t] using
+              Hex.ZPoly.henselLiftQuadratic_h_congr_mod_base
+                p k f' g splitProduct s t hk (Fact.out (p := Nat.Prime p)).one_lt
+                hquad_start
+          have htail_target :
+              Hex.ZPoly.congr linearLifted.h quadraticLifted.h p :=
+            Hex.ZPoly.congr_trans _ _ _ p hlinear_h
+              (Hex.ZPoly.congr_symm _ _ _ hquadratic_h)
+          have htail_monic :
+              ∀ q ∈ (h :: tail), Hex.DensePoly.Monic q := by
+            intro q hq
+            exact hmonic q (by simp [hq])
+          have htail' :
+              Hex.ZPoly.MultifactorLiftInvariant p k linearLifted.h (h :: tail) := by
+            simpa [linearLifted, restFactors, splitProduct, xgcd] using htail
+          have hquad_tail :
+              Hex.ZPoly.QuadraticMultifactorLiftInvariant p k
+                quadraticLifted.h (h :: tail) :=
+            ih linearLifted.h quadraticLifted.h htail_monic htail_target
+              (by simp) htail'
+          exact ⟨by simpa [restFactors, splitProduct, xgcd, s, t] using hquad_start,
+            by simpa [quadraticLifted, restFactors, splitProduct, xgcd, s, t]
+              using hquad_tail⟩
+
+/--
+The linear multifactor invariant can initialise the quadratic multifactor
+invariant when every raw input head is monic.
+-/
+theorem quadraticMultifactorLiftInvariant_of_multifactorLiftInvariant
+    (p k : Nat) [Fact (Nat.Prime p)] [Hex.ZMod64.Bounds p]
+    [Hex.ZMod64.PrimeModulus p]
+    (f : Hex.ZPoly) (factors : List Hex.ZPoly)
+    (hk : 1 ≤ k)
+    (hmonic : ∀ g ∈ factors, Hex.DensePoly.Monic g)
+    (hinv : Hex.ZPoly.MultifactorLiftInvariant p k f factors) :
+    Hex.ZPoly.QuadraticMultifactorLiftInvariant p k f factors := by
+  cases factors with
+  | nil =>
+      simpa [Hex.ZPoly.QuadraticMultifactorLiftInvariant] using hinv
+  | cons g rest =>
+      exact
+        quadraticMultifactorLiftInvariant_of_multifactorLiftInvariant_congr
+          p k f f (g :: rest) hk hmonic (Hex.ZPoly.congr_refl f p)
+          (by simp) hinv
+
+/--
 The linear and quadratic multifactor lifters agree modulo `p ^ k` after
 canonical reduction, when both are applied to the same input under the
 recursive `MultifactorLiftInvariant` precondition consumed by both
