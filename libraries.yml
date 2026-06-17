@@ -362,7 +362,7 @@ libraries:
   HexGramSchmidtMathlib:
     deps: [HexGramSchmidt, HexMatrixMathlib]
     mathlib: true
-    done_through: 4
+    done_through: 5
     status: active
   HexPolyZMathlib:
     deps: [HexPolyZ, HexHensel, HexPolyMathlib, HexModArithMathlib]
