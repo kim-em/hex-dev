@@ -2026,6 +2026,113 @@ theorem henselLift_monic
             hstepDegree hstepBezout
       simpa [henselLift, start] using hloop.2.2.1
 
+/-- The per-step Bezout obligation is invariant under a linear Hensel step: the
+step changes both factors only by multiples of the base prime, so their `modP p`
+reductions are unchanged and the Bezout congruence carried by the invariant
+transfers verbatim to the stepped factors. -/
+private theorem stepBezout_of_invariant
+    (p n : Nat) [ZMod64.Bounds p]
+    (f : ZPoly) (s t : FpPoly p) (state : LinearLiftResult)
+    (hn : 1 ≤ n)
+    (hbez :
+      ZPoly.congr
+        (FpPoly.liftToZ (s * ZPoly.modP p state.g + t * ZPoly.modP p state.h)) 1 p) :
+    let next := linearHenselStep p n f state.g state.h s t
+    ZPoly.congr
+      (FpPoly.liftToZ (s * ZPoly.modP p next.g + t * ZPoly.modP p next.h)) 1 p := by
+  have hgmod :
+      ZPoly.modP p (linearHenselStep p n f state.g state.h s t).g = ZPoly.modP p state.g :=
+    ZPoly.modP_eq_of_congr p _ _
+      (linearHenselStep_g_congr_mod_base p n f state.g state.h s t hn)
+  have hhmod :
+      ZPoly.modP p (linearHenselStep p n f state.g state.h s t).h = ZPoly.modP p state.h :=
+    ZPoly.modP_eq_of_congr p _ _
+      (linearHenselStep_h_congr_mod_base p n f state.g state.h s t hn)
+  simp only [hgmod, hhmod]
+  exact hbez
+
+/-- Assemble the level-`1` linear-lift loop invariant from the base mod-`p`
+factorization data: a product congruence, a Bezout congruence, monicity of the
+leading factor, and the nonconstant (positive-degree) condition on `g`. The
+reduced starting factors inherit each component since reduction mod `p` fixes the
+mod-`p` data, preserves monicity (`1 < p`), and preserves the degree of a monic
+polynomial. -/
+private theorem loopInvariant_one_of_base
+    (p : Nat) [ZMod64.Bounds p]
+    (f g h : ZPoly) (s t : FpPoly p)
+    (hp : 1 < p)
+    (hprod : ZPoly.congr (g * h) f p)
+    (hbez :
+      ZPoly.congr (FpPoly.liftToZ (s * ZPoly.modP p g + t * ZPoly.modP p h)) 1 p)
+    (hmonic : DensePoly.Monic g)
+    (hgdeg : 0 < g.degree?.getD 0) :
+    LinearLiftLoopInvariant p 1 f s t
+      { g := ZPoly.reduceModPow g p 1, h := ZPoly.reduceModPow h p 1 } := by
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · show ZPoly.congr
+        (ZPoly.reduceModPow g p 1 * ZPoly.reduceModPow h p 1) f (p ^ 1)
+    have hp1 : ZPoly.congr (g * h) f (p ^ 1) := by rw [Nat.pow_one]; exact hprod
+    exact ZPoly.congr_trans _ _ _ (p ^ 1)
+      (congr_mul_reduceModPow_pair p 1 g h) hp1
+  · show ZPoly.congr
+        (FpPoly.liftToZ
+          (s * ZPoly.modP p (ZPoly.reduceModPow g p 1) +
+            t * ZPoly.modP p (ZPoly.reduceModPow h p 1))) 1 p
+    rw [ZPoly.modP_reduceModPow_of_pos p 1 g (by omega),
+      ZPoly.modP_reduceModPow_of_pos p 1 h (by omega)]
+    exact hbez
+  · show DensePoly.Monic (ZPoly.reduceModPow g p 1)
+    exact reduceModPow_monic_of_monic p 0 g hp hmonic
+  · show 0 < (ZPoly.reduceModPow g p 1).degree?.getD 0
+    rw [reduceModPow_degree?_eq_of_monic p 0 g hp hmonic]
+    exact hgdeg
+
+/-- Convenience corollary of `henselLift_spec`: the lifted factorization is
+congruent to `f` modulo `p^k`, discharging the loop preconditions internally
+from the base mod-`p` factorization data plus a nonconstant hypothesis on `g`.
+The nonconstant condition `0 < g.degree?.getD 0` is genuine — it is what makes
+the per-step degree drop available; the admissible constant case `g = 1` has no
+such drop. -/
+theorem henselLift_congr_of_base
+    (p k : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (f g h : ZPoly) (s t : FpPoly p)
+    (hk : 1 ≤ k)
+    (hp : 1 < p)
+    (hprod : ZPoly.congr (g * h) f p)
+    (hbez :
+      ZPoly.congr (FpPoly.liftToZ (s * ZPoly.modP p g + t * ZPoly.modP p h)) 1 p)
+    (hmonic : DensePoly.Monic g)
+    (hgdeg : 0 < g.degree?.getD 0) :
+    let r := henselLift p k f g h s t
+    ZPoly.congr (r.g * r.h) f (p ^ k) :=
+  henselLift_spec p k f g h s t hk hp
+    (loopInvariant_one_of_base p f g h s t hp hprod hbez hmonic hgdeg)
+    (fun n state _ hinv =>
+      stepDegree_of_monic_pos p n f s t state hp hinv.monic_g hinv.pos_degree)
+    (fun n state hn hinv =>
+      stepBezout_of_invariant p n f s t state hn hinv.bezout_congr)
+
+/-- Convenience corollary of `henselLift_monic`: the lifted leading factor stays
+monic, discharging the loop preconditions internally from the base mod-`p`
+factorization data plus the nonconstant hypothesis on `g`. -/
+theorem henselLift_monic_of_base
+    (p k : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (f g h : ZPoly) (s t : FpPoly p)
+    (hk : 1 ≤ k)
+    (hp : 1 < p)
+    (hprod : ZPoly.congr (g * h) f p)
+    (hbez :
+      ZPoly.congr (FpPoly.liftToZ (s * ZPoly.modP p g + t * ZPoly.modP p h)) 1 p)
+    (hmonic : DensePoly.Monic g)
+    (hgdeg : 0 < g.degree?.getD 0) :
+    DensePoly.Monic (henselLift p k f g h s t).g :=
+  henselLift_monic p k f g h s t hk hp
+    (loopInvariant_one_of_base p f g h s t hp hprod hbez hmonic hgdeg)
+    (fun n state _ hinv =>
+      stepDegree_of_monic_pos p n f s t state hp hinv.monic_g hinv.pos_degree)
+    (fun n state hn hinv =>
+      stepBezout_of_invariant p n f s t state hn hinv.bezout_congr)
+
 /-- The linear Hensel loop changes the leading factor only by multiples of the
 current modulus, so the looped factor stays congruent to the starting factor
 modulo the base prime `p` (for `1 ≤ current`). -/
