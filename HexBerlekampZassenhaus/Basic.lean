@@ -7666,8 +7666,12 @@ input is not zero-degree (`hdeg`), the recombination budget is at least one
 The `hnotsingleton` premise is the post-#4605 form: the small-mod singleton
 branch fires when `(choosePrimeData? sf).isSome ∧ size ≤ 1` is true; its
 negation routes the dispatcher to the BHKS core call, which is what this
-lemma's `hcore` invariant uses. -/
-private theorem factorFastFactorsWithBound_eq_some_of_core_success
+lemma's `hcore` invariant uses.
+
+Exposed publicly so the Mathlib-side fast `h_raw` disjunct producer can
+identify the raw fast-factor array as the normalization reassembly of the
+successful core output. -/
+theorem factorFastFactorsWithBound_eq_some_of_core_success
     (f : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     (coreFactors : Array ZPoly)
     (hB_pos : 1 ≤ B)
