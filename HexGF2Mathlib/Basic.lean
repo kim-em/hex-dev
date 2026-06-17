@@ -116,6 +116,44 @@ def ofFpPoly (p : Hex.FpPoly 2) : Hex.GF2Poly :=
   let words := Array.ofFn fun i : Fin wordCount => packWord p i.1
   Hex.GF2Poly.ofWords words
 
+/-- The `i`-th coefficient of `toFpPoly p` is the `ZMod64 2` lift of the packed
+bit `p.coeff i`. -/
+theorem coeff_toFpPoly (p : Hex.GF2Poly) (i : Nat) :
+    (toFpPoly p).coeff i = if p.coeff i then (1 : Hex.ZMod64 2) else 0 := by
+  have hcoeffToFp : ∀ b : Bool, coeffToFp b = if b then (1 : Hex.ZMod64 2) else 0 := by
+    intro b; cases b <;> rfl
+  by_cases hz : p.isZero = true
+  · have hbody : toFpPoly p = Hex.FpPoly.ofCoeffs (#[] : Array (Hex.ZMod64 2)) := by
+      unfold toFpPoly; rw [if_pos hz]
+    rw [hbody, Hex.FpPoly.ofCoeffs, Hex.DensePoly.coeff_ofCoeffs,
+      Hex.GF2Poly.eq_zero_of_isZero hz, Hex.GF2Poly.coeff_zero]
+    rfl
+  · have hbody : toFpPoly p =
+        Hex.FpPoly.ofCoeffs
+          ((List.range (p.degree + 1)).map (fun j => coeffToFp (p.coeff j))).toArray := by
+      unfold toFpPoly; rw [if_neg hz]
+    rw [hbody, Hex.FpPoly.ofCoeffs, Hex.DensePoly.coeff_ofCoeffs_list]
+    have hrange :
+        ((List.range (p.degree + 1)).map (fun j => coeffToFp (p.coeff j))).getD i
+          (Zero.zero : Hex.ZMod64 2) =
+          if i < p.degree + 1 then coeffToFp (p.coeff i)
+          else (Zero.zero : Hex.ZMod64 2) := by
+      by_cases hi : i < p.degree + 1 <;> simp [hi, List.getD]
+    rw [hrange]
+    by_cases hi : i < p.degree + 1
+    · rw [if_pos hi, hcoeffToFp]
+    · rw [if_neg hi]
+      have hzf : p.isZero = false := by
+        cases hb : p.isZero with
+        | false => rfl
+        | true => exact absurd hb hz
+      obtain ⟨d, hd⟩ := Hex.GF2Poly.degree?_isSome_of_isZero_false hzf
+      have hdd : p.degree = d := Hex.GF2Poly.degree_eq_of_degree?_eq_some hd
+      have hcoeff : p.coeff i = false :=
+        Hex.GF2Poly.coeff_eq_false_of_degree?_lt hd (by omega)
+      rw [hcoeff]
+      rfl
+
 @[simp]
 theorem toFpPoly_zero :
     toFpPoly (0 : Hex.GF2Poly) = 0 := by
