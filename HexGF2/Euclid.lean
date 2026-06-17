@@ -760,6 +760,21 @@ private theorem coeff_ofUInt64_and_lowerMask (w : UInt64) {n i : Nat} (hn64 : n 
     (ofUInt64Monic lower n).degree = n := by
   exact degree_eq_of_degree?_eq_some (degree?_ofUInt64Monic_of_lt_64 lower hn64)
 
+/-- The coefficients of the packed single-word monic modulus: the implicit
+leading `x^n` term sets degree `n`, and the lower degrees read the bits of
+`lower`. -/
+theorem coeff_ofUInt64Monic (lower : UInt64) {n : Nat} (hn64 : n < 64) (i : Nat) :
+    (ofUInt64Monic lower n).coeff i =
+      (decide (i = n) != (if i < n then (ofUInt64 lower).coeff i else false)) := by
+  unfold ofUInt64Monic
+  rw [coeff_add_eq_bne, coeff_ofUInt64_and_lowerMask lower hn64]
+  by_cases hi : i = n
+  · subst hi
+    rw [coeff_monomial_self]
+    simp [Nat.lt_irrefl]
+  · rw [coeff_monomial_ne hi]
+    simp [hi]
+
 /-- A nonzero `UInt64` word unpacks to a nonzero packed polynomial. -/
 private theorem ofUInt64_ne_zero_of_ne_zero {w : UInt64} (hw : w ≠ 0) :
     ofUInt64 w ≠ 0 := by

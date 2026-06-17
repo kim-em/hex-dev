@@ -271,6 +271,36 @@ the dimension argument, `L.factorCount + L.coeffWidth` "has type ℕ … of sort
 outParam Type but is expected to have type Type", because Mathlib's `Matrix`
 wants its first two arguments to be index types, not `Nat`.
 
+## `HexGF2Mathlib` defines a project-local `RingEquiv`/`TypeEquiv` shadowing Mathlib's
+
+`HexGF2Mathlib/Basic.lean` declares its own minimal `structure RingEquiv`
+(fields `toFun`/`invFun`/`left_inv`/`right_inv`/`map_mul'`/`map_add'`, a CoeFun
+to `toFun`, and `symm`) **with the same `≃+*` notation** (`infixl:25 " ≃+* "`)
+and a `TypeEquiv` shadowing `Equiv`. So `HexGF2Mathlib.GF2n.equiv :
+GF2n … ≃+* GenericFiniteField` is **`HexGF2Mathlib.RingEquiv`, not Mathlib's**.
+
+Symptom when you forget: composing it with a Mathlib `RingEquiv` (e.g. a `cast`-
+based equiv on the generic Conway field) fails with `RingEquiv.trans`/`.trans`
+resolving to `HexGF2Mathlib.RingEquiv.trans` (which doesn't exist), or an
+"Application type mismatch" / "type mismatch" between two `≃+*` types that
+**print identically** (one is the custom struct, one is Mathlib's). `e.symm`,
+`e.map_mul'`, `e.symm_apply_apply` dot-notation resolves into the custom
+namespace too. Confirm early with `set_option pp.all true in #check e` — Mathlib's
+prints `@RingEquiv.{…}`, the custom one prints `@HexGF2Mathlib.RingEquiv.{…}`.
+
+Recipe to compose a custom `e : A ≃+*[Hex] B` with a Mathlib `g : B ≃+* C` into
+a Mathlib `A ≃+* C`: build the Mathlib structure literal directly,
+`{ toFun := fun x => g (e x), invFun := fun x => e.invFun (g.symm x), … }`, and
+discharge its fields from **`e`'s struct projections** (`e.left_inv`,
+`e.right_inv`, `e.map_mul'`, `e.map_add'` — `e` is a bare structure, no
+`MulHomClass`) and **`g`'s Mathlib lemmas** (`RingEquiv.symm_apply_apply`,
+`apply_symm_apply`, `map_mul`, `map_add`). Do **not** `RingEquiv.trans` across
+the boundary — the two `RingEquiv`s are different types. Inline `e`/`g`
+(no `let`): a `let`-bound equiv whose type mentions the heavy
+`GFqField.FiniteField`/`GenericFiniteField` carrier blows the `whnf` heartbeat
+budget (same trap as the `set d := toMonicLiftData` warning above); name a thin
+`private def` for the repackaged `e` if you must, but reference it inline.
+
 ## The Mathlib layer *models* executable definitions
 
 The bridge does not just prove lemmas about the executable types; it carries
