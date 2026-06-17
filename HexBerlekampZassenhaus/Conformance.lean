@@ -12,7 +12,8 @@ Covered operations:
 - `normalizeForFactor`, `normalizationPrefixFactors`, and
   `reassembleNormalizedFactors`
 - `henselLiftData`
-- `bhksRecover?`, `recombinationSearch`, `factorSlowTrial`, and `factorFast`
+- `bhksRecover?`, `recombinationSearch`, `factorSlowTrial`,
+  `factorSlowModular`, and `factorFast`
 - `factorWithBound` and `factor`
 - `PrimeFactorData.degreeSum`, `PrimeFactorData.factorProduct`,
   `PrimeFactorData.containsDegree`, `PrimeFactorData.hasSubsetDegree`,
@@ -522,6 +523,17 @@ recovered true factor.
     sameFactorCoeffSet (factorizationCoeffSummary φ)
       (factorCoeffSummary quadSqrt2Sqrt3ExpectedFactors |>.map fun coeffs =>
         (coeffs, 1))
+-- The exhaustive *modular* recombination backstop (subset-product search, as
+-- opposed to `factorSlowTrial`'s integer trial division) recovers the same
+-- quadratic buckets `X^2 - 2`, `X^2 - 3` on the adversarial subset-product case.
+#guard
+  match factorSlowModular quadSqrt2Sqrt3 with
+  | some φ =>
+      Factorization.product φ = quadSqrt2Sqrt3 &&
+        sameFactorCoeffSet (factorizationCoeffSummary φ)
+          (factorCoeffSummary quadSqrt2Sqrt3ExpectedFactors |>.map fun coeffs =>
+            (coeffs, 1))
+  | none => false
 #guard
   match factorFast (linear 3) with
   | some φ => Factorization.product φ = linear 3
@@ -565,6 +577,14 @@ recovered true factor.
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[zpoly #[-3, 0, 1], zpoly #[-2, 0, 1]] |>.map fun coeffs =>
         (coeffs, 1))
+-- `X^4 + 1` splits into two quadratics mod every admissible prime yet is
+-- irreducible over `ℤ`, so the fast recombination "misses" and the public
+-- `factor` falls back to returning the single irreducible input.
+#guard
+  let factors := factor x4Plus1
+  factorPreservesProduct x4Plus1 &&
+    sameFactorCoeffSet (factorizationCoeffSummary factors)
+      (factorCoeffSummary #[x4Plus1] |>.map fun coeffs => (coeffs, 1))
 
 #guard PrimeFactorData.degreeSum primeDataValidQuad = 2
 #guard coeffNats (PrimeFactorData.factorProduct primeDataValidQuad) = [2, 0, 1]
