@@ -517,6 +517,12 @@ recovered true factor.
 #guard
   Factorization.product (factorSlowTrial liftedTarget3) = liftedTarget3
 #guard
+  let φ := factorSlowTrial quadSqrt2Sqrt3
+  Factorization.product φ = quadSqrt2Sqrt3 &&
+    sameFactorCoeffSet (factorizationCoeffSummary φ)
+      (factorCoeffSummary quadSqrt2Sqrt3ExpectedFactors |>.map fun coeffs =>
+        (coeffs, 1))
+#guard
   match factorFast (linear 3) with
   | some φ => Factorization.product φ = linear 3
   | none => false
