@@ -5717,6 +5717,233 @@ theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData
 
 set_option maxHeartbeats 200000
 
+theorem reassemblyComplete_of_slowSubstrate_bound
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (hdeg_ne :
+      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (primeData : Hex.PrimeChoiceData)
+    (hsubstrate :
+      SlowPathHenselSubstrate (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.exhaustiveLiftBound
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f))
+        primeData)
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly,
+        g ∣ (Hex.normalizeForFactor f).squareFreeCore →
+        ∀ i, (g.coeff i).natAbs ≤ B')
+    (hprecision :
+      2 * B' <
+        primeData.p ^
+          Hex.precisionForCoeffBound
+            (Hex.ZPoly.exhaustiveLiftBound
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.defaultFactorCoeffBound f))
+            primeData.p) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+      (Hex.exhaustiveCoreFactorsWithBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+        primeData) := by
+  have hcore_lc_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 :=
+    zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  have hcore_primitive :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
+  have hB_ne_zero : Hex.ZPoly.defaultFactorCoeffBound f ≠ 0 :=
+    (Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hf_ne).ne'
+  have hcore_record : Hex.shouldRecordPolynomialFactor
+      (Hex.normalizeForFactor f).squareFreeCore = true := by
+    have hne_one : (Hex.normalizeForFactor f).squareFreeCore ≠ 1 := by
+      intro hone
+      apply hdeg_ne
+      rw [hone]
+      exact Hex.DensePoly.degree?_C_getD 1
+    have hne_neg_one :
+        (Hex.normalizeForFactor f).squareFreeCore ≠ Hex.DensePoly.C (-1 : Int) := by
+      intro hneg
+      apply hdeg_ne
+      rw [hneg]
+      exact Hex.DensePoly.degree?_C_getD (-1)
+    unfold Hex.shouldRecordPolynomialFactor
+    simp [hcore_ne, hne_one, hne_neg_one]
+  set coreFactors := Hex.exhaustiveCoreFactorsWithBound
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.defaultFactorCoeffBound f)
+      primeData
+    with hcoreFactors_def
+  have hirr : ∀ q ∈ coreFactors.toList, Hex.ZPoly.Irreducible q := by
+    intro q hq
+    have hq' :
+        q ∈ (Hex.exhaustiveCoreFactorsWithBound
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f)
+          primeData).toList := by
+      simpa [hcoreFactors_def] using hq
+    exact
+      exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
+        (core := (Hex.normalizeForFactor f).squareFreeCore)
+        (B := Hex.ZPoly.defaultFactorCoeffBound f)
+        (L := Hex.ZPoly.exhaustiveLiftBound
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f))
+        (primeData := primeData)
+        hsubstrate.corr rfl hsubstrate.partition hcore_ne hcore_primitive
+        hcore_lc_pos hcore_record hB_ne_zero hsubstrate.modulus
+        hsubstrate.liftedFactor_monic hsubstrate.liftedFactor_natDegree_pos
+        hsubstrate.liftedFactor_inj B' hcore_lc_le hvalid hprecision q hq'
+  have hnorm : ∀ q ∈ coreFactors.toList, Hex.normalizeFactorSign q = q := by
+    intro q hq
+    exact Hex.exhaustiveCoreFactorsWithBound_normalizeFactorSign
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.defaultFactorCoeffBound f)
+      primeData
+      (Hex.squareFreeCore_normalizeFactorSign_of_ne_zero f hf_ne)
+      q (by simpa [hcoreFactors_def] using hq)
+  have hdegree : ∀ q ∈ coreFactors.toList, 0 < q.degree?.getD 0 := by
+    intro q hq
+    exact Hex.exhaustiveCoreFactorsWithBound_degree_pos_of_primitive_pos_lc_core
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.defaultFactorCoeffBound f)
+      primeData hcore_primitive hcore_lc_pos hcore_record
+      q (by simpa [hcoreFactors_def] using hq)
+  have hprod :
+      Array.polyProduct coreFactors = (Hex.normalizeForFactor f).squareFreeCore := by
+    simpa [hcoreFactors_def] using
+      Hex.exhaustiveCoreFactorsWithBound_product
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+        primeData
+  have hpos_lc : ∀ q ∈ coreFactors.toList, 0 < Hex.DensePoly.leadingCoeff q := by
+    intro q hq
+    have hq_ne : q ≠ 0 := (hirr q hq).not_zero
+    have hq_norm : Hex.normalizeFactorSign q = q := hnorm q hq
+    have hq_nonneg : 0 ≤ Hex.DensePoly.leadingCoeff q := by
+      by_contra hlt
+      have hlt' : Hex.DensePoly.leadingCoeff q < 0 := lt_of_not_ge hlt
+      unfold Hex.normalizeFactorSign at hq_norm
+      rw [if_pos hlt'] at hq_norm
+      apply hq_ne
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      have hcoeff :
+          (Hex.DensePoly.scale (-1 : Int) q).coeff n = q.coeff n := by
+        rw [hq_norm]
+      rw [Hex.DensePoly.coeff_scale (R := Int) (-1) q n
+        (by decide : (-1 : Int) * 0 = 0)] at hcoeff
+      rw [Hex.DensePoly.coeff_zero]
+      omega
+    have hq_lc_ne : Hex.DensePoly.leadingCoeff q ≠ 0 :=
+      Hex.ZPoly.leadingCoeff_ne_zero_of_ne_zero q hq_ne
+    omega
+  have hrp_ne :
+      (Hex.normalizeForFactor f).repeatedPart ≠ 0 :=
+    Hex.repeatedPart_ne_zero_of_ne_zero f hf_ne
+  have hfuel :
+      ∀ exponents : List Nat,
+        exponents.length = coreFactors.size →
+        (Hex.normalizeForFactor f).repeatedPart =
+          ((coreFactors.toList.zip exponents).map
+            (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 →
+        ∀ (qe : Hex.ZPoly × Nat),
+          qe ∈ coreFactors.toList.zip exponents →
+            qe.2 + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1 := by
+    intro exponents _ hdecomp qe hqe
+    have hq_mem : qe.1 ∈ coreFactors.toList := by
+      have := List.of_mem_zip hqe
+      exact this.1
+    have hq_deg : 0 < qe.1.degree?.getD 0 := hdegree qe.1 hq_mem
+    have hfp_size_lb : qe.2 + 1 ≤ (Hex.Factorization.factorPower qe.1 qe.2).size :=
+      factorPower_size_lower_bound hq_deg qe.2
+    have hfp_ne : Hex.Factorization.factorPower qe.1 qe.2 ≠ 0 := by
+      intro h0
+      have : (Hex.Factorization.factorPower qe.1 qe.2).size = 0 := by
+        rw [h0]; rfl
+      omega
+    have hfp_in_map :
+        Hex.Factorization.factorPower qe.1 qe.2 ∈
+          (coreFactors.toList.zip exponents).map
+            (fun qe => Hex.Factorization.factorPower qe.1 qe.2) := by
+      rw [List.mem_map]
+      exact ⟨qe, hqe, rfl⟩
+    have hfp_dvd :
+        Hex.Factorization.factorPower qe.1 qe.2 ∣
+          ((coreFactors.toList.zip exponents).map
+            (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 :=
+      mem_dvd_foldl_mul_zpoly _ 1 _ hfp_in_map
+    have hfp_dvd_rp :
+        Hex.Factorization.factorPower qe.1 qe.2 ∣
+          (Hex.normalizeForFactor f).repeatedPart := by
+      rw [hdecomp]; exact hfp_dvd
+    have hsize_le : (Hex.Factorization.factorPower qe.1 qe.2).size ≤
+        (Hex.normalizeForFactor f).repeatedPart.size :=
+      Hex.ZPoly.size_le_of_dvd_nonzero hfp_ne hrp_ne hfp_dvd_rp
+    omega
+  exact IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_pos_lc
+    f hf_ne coreFactors hirr hprod hnorm hpos_lc hdegree hfuel
+
+theorem reassemblyComplete_of_slowSubstrate
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (hdeg_ne :
+      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (primeData : Hex.PrimeChoiceData)
+    (hsubstrate :
+      SlowPathHenselSubstrate (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.exhaustiveLiftBound
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f))
+        primeData) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+      (Hex.exhaustiveCoreFactorsWithBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+        primeData) := by
+  exact reassemblyComplete_of_slowSubstrate_bound
+    f hf_ne hdeg_ne primeData hsubstrate
+    (Hex.ZPoly.defaultFactorCoeffBound f)
+    (by
+      have hcore_lc_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+      have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 :=
+        zpoly_ne_zero_of_pos_lc hcore_lc_pos
+      have hsize_pos : 0 < (Hex.normalizeForFactor f).squareFreeCore.size :=
+        Hex.ZPoly.size_pos_of_ne_zero (Hex.normalizeForFactor f).squareFreeCore hcore_ne
+      rw [Hex.DensePoly.leadingCoeff_eq_coeff_last _ hsize_pos]
+      exact defaultFactorCoeffBound_valid f hf_ne (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.squareFreeCore_dvd_self f hf_ne)
+        ((Hex.normalizeForFactor f).squareFreeCore.size - 1))
+    (by
+      intro g hg i
+      exact defaultFactorCoeffBound_valid f hf_ne g
+        (by
+          obtain ⟨a, ha⟩ := hg
+          obtain ⟨b, hb⟩ := Hex.squareFreeCore_dvd_self f hf_ne
+          refine ⟨a * b, ?_⟩
+          rw [hb, ha, Hex.DensePoly.mul_assoc_poly (S := Int)]) i)
+    (by
+      have hle := Hex.ZPoly.le_exhaustiveLiftBound
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.defaultFactorCoeffBound f)
+      have hprec :
+          2 * Hex.ZPoly.exhaustiveLiftBound
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.defaultFactorCoeffBound f) <
+            primeData.p ^
+              Hex.precisionForCoeffBound
+                (Hex.ZPoly.exhaustiveLiftBound
+                  (Hex.normalizeForFactor f).squareFreeCore
+                  (Hex.ZPoly.defaultFactorCoeffBound f))
+                primeData.p := by
+        simpa [Hex.ZPoly.toMonicLiftData] using hsubstrate.precision
+      have hmul_le :
+          2 * Hex.ZPoly.defaultFactorCoeffBound f ≤
+            2 * Hex.ZPoly.exhaustiveLiftBound
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.defaultFactorCoeffBound f) :=
+        Nat.mul_le_mul_left 2 hle
+      omega)
+
 /-- Mathlib-side abstract-bound wrapper for the slow-trial exhaustive arm.
 
 Specialises the Mathlib-free
@@ -5987,6 +6214,186 @@ private theorem factorFast_none_squareFreeCore_degree_ne_zero
     (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 := by
   intro hdeg0
   simp [Hex.factorFastFactorsWithBound, hdeg0] at hfast
+
+/-- Default-bound slow modular raw-factor irreducibility.
+
+If the fast path fails and the modular slow path returns a raw array at the
+public coefficient bound, every raw factor in that array is irreducible. The
+constant slow branch is unreachable because `factorFastFactorsWithBound = none`
+forces positive square-free-core degree; the remaining quadratic and exhaustive
+branches route through their branch-local reassembly certificates. -/
+theorem slowModularRaw_irreducible_of_fast_none
+    (f : Hex.ZPoly)
+    (hfast : Hex.factorFastFactorsWithBound f
+      (Hex.ZPoly.defaultFactorCoeffBound f) = none)
+    {rawFactors : Array Hex.ZPoly}
+    (hraw : Hex.factorSlowModularFactorsWithBound f
+      (Hex.ZPoly.defaultFactorCoeffBound f) = some rawFactors) :
+    ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw := by
+  intro raw hmem
+  have hf_ne : f ≠ 0 := by
+    intro hf
+    subst f
+    have hdeg0 :
+        (Hex.normalizeForFactor (0 : Hex.ZPoly)).squareFreeCore.degree?.getD 0 = 0 := by
+      rfl
+    exact factorFast_none_squareFreeCore_degree_ne_zero hfast hdeg0
+  have hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 :=
+    factorFast_none_squareFreeCore_degree_ne_zero hfast
+  have hcore_lc_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 :=
+    zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  have hcore_primitive :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
+  unfold Hex.factorSlowModularFactorsWithBound at hraw
+  rw [if_neg hdeg_ne] at hraw
+  cases hquad :
+      Hex.quadraticIntegerRootFactors? (Hex.normalizeForFactor f).squareFreeCore with
+  | some coreFactors =>
+      rw [hquad] at hraw
+      have hraw_eq := Option.some.inj hraw
+      rw [← hraw_eq] at hmem
+      refine
+        Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+          (Hex.normalizeForFactor f) coreFactors ?_ ?_ hmem
+      · exact
+          IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
+            f hf_ne hquad
+      · intro factor hfmem
+        exact Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive
+          hcore_lc_pos hcore_primitive hquad hfmem
+  | none =>
+      rw [hquad] at hraw
+      cases hselected :
+          Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore with
+      | none =>
+          rw [hselected] at hraw
+          contradiction
+      | some primeData =>
+          rw [hselected] at hraw
+          have hraw_eq := Option.some.inj hraw
+          rw [← hraw_eq] at hmem
+          have hp_prime : Hex.Nat.Prime primeData.p :=
+            Hex.ZPoly.toMonicPrimeData?_prime
+              (Hex.normalizeForFactor f).squareFreeCore primeData hselected
+          have hcore_sqfree :
+              Squarefree (HexPolyZMathlib.toPolynomial
+                (Hex.normalizeForFactor f).squareFreeCore) :=
+            IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf_ne
+          have hbound_monic :
+              2 * Hex.ZPoly.defaultFactorCoeffBound
+                (Hex.ZPoly.toMonic (Hex.normalizeForFactor f).squareFreeCore).monic <
+                primeData.p ^
+                  Hex.precisionForCoeffBound
+                    (Hex.ZPoly.exhaustiveLiftBound
+                      (Hex.normalizeForFactor f).squareFreeCore
+                      (Hex.ZPoly.defaultFactorCoeffBound f))
+                    primeData.p :=
+            IntReductionMod.exhaustiveLiftBound_monic_precision
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.defaultFactorCoeffBound f) primeData.p hp_prime.two_le
+          have hLift_ne_zero :
+              Hex.ZPoly.exhaustiveLiftBound
+                (Hex.normalizeForFactor f).squareFreeCore
+                (Hex.ZPoly.defaultFactorCoeffBound f) ≠ 0 := by
+            have hB_pos : 0 < Hex.ZPoly.defaultFactorCoeffBound f :=
+              Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hf_ne
+            have hle := Hex.ZPoly.le_exhaustiveLiftBound
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.defaultFactorCoeffBound f)
+            omega
+          have hsubstrate :
+              SlowPathHenselSubstrate (Hex.normalizeForFactor f).squareFreeCore
+                (Hex.ZPoly.exhaustiveLiftBound
+                  (Hex.normalizeForFactor f).squareFreeCore
+                  (Hex.ZPoly.defaultFactorCoeffBound f))
+                primeData :=
+            slowPathHenselSubstrate_of_toMonicPrimeData
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.exhaustiveLiftBound
+                (Hex.normalizeForFactor f).squareFreeCore
+                (Hex.ZPoly.defaultFactorCoeffBound f))
+              primeData hselected hcore_lc_pos (Nat.pos_of_ne_zero hdeg_ne)
+              hcore_primitive hcore_sqfree hLift_ne_zero hbound_monic
+          have hcomplete :
+              Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+                (Hex.exhaustiveCoreFactorsWithBound
+                  (Hex.normalizeForFactor f).squareFreeCore
+                  (Hex.ZPoly.defaultFactorCoeffBound f)
+                  primeData) :=
+            reassemblyComplete_of_slowSubstrate
+              f hf_ne hdeg_ne primeData hsubstrate
+          have hcore_lc_le :
+              (Hex.DensePoly.leadingCoeff
+                (Hex.normalizeForFactor f).squareFreeCore).natAbs ≤
+                Hex.ZPoly.defaultFactorCoeffBound f := by
+            have hsize_pos : 0 < (Hex.normalizeForFactor f).squareFreeCore.size :=
+              Hex.ZPoly.size_pos_of_ne_zero
+                (Hex.normalizeForFactor f).squareFreeCore hcore_ne
+            rw [Hex.DensePoly.leadingCoeff_eq_coeff_last _ hsize_pos]
+            exact defaultFactorCoeffBound_valid f hf_ne
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.squareFreeCore_dvd_self f hf_ne)
+              ((Hex.normalizeForFactor f).squareFreeCore.size - 1)
+          have hprecision :
+              2 * Hex.ZPoly.defaultFactorCoeffBound f <
+                primeData.p ^
+                  Hex.precisionForCoeffBound
+                    (Hex.ZPoly.exhaustiveLiftBound
+                      (Hex.normalizeForFactor f).squareFreeCore
+                      (Hex.ZPoly.defaultFactorCoeffBound f))
+                    primeData.p :=
+            IntReductionMod.exhaustiveLiftBound_precision
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.defaultFactorCoeffBound f) primeData.p hp_prime.two_le
+          have hcore_factors_irr :
+              ∀ factor ∈
+                (Hex.exhaustiveCoreFactorsWithBound
+                  (Hex.normalizeForFactor f).squareFreeCore
+                  (Hex.ZPoly.defaultFactorCoeffBound f)
+                  primeData).toList,
+                Hex.ZPoly.Irreducible factor :=
+            exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
+              (core := (Hex.normalizeForFactor f).squareFreeCore)
+              (B := Hex.ZPoly.defaultFactorCoeffBound f)
+              (L := Hex.ZPoly.exhaustiveLiftBound
+                (Hex.normalizeForFactor f).squareFreeCore
+                (Hex.ZPoly.defaultFactorCoeffBound f))
+              (primeData := primeData)
+              hsubstrate.corr rfl hsubstrate.partition hcore_ne hcore_primitive
+              hcore_lc_pos
+              (by
+                have hne_one : (Hex.normalizeForFactor f).squareFreeCore ≠ 1 := by
+                  intro hone
+                  apply hdeg_ne
+                  rw [hone]
+                  exact Hex.DensePoly.degree?_C_getD 1
+                have hne_neg_one :
+                    (Hex.normalizeForFactor f).squareFreeCore ≠
+                      Hex.DensePoly.C (-1 : Int) := by
+                  intro hneg
+                  apply hdeg_ne
+                  rw [hneg]
+                  exact Hex.DensePoly.degree?_C_getD (-1)
+                unfold Hex.shouldRecordPolynomialFactor
+                simp [hcore_ne, hne_one, hne_neg_one])
+              (Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hf_ne).ne'
+              hsubstrate.modulus hsubstrate.liftedFactor_monic
+              hsubstrate.liftedFactor_natDegree_pos hsubstrate.liftedFactor_inj
+              (Hex.ZPoly.defaultFactorCoeffBound f) hcore_lc_le
+              (by
+                intro g hg i
+                exact defaultFactorCoeffBound_valid f hf_ne g
+                  (zpoly_dvd_trans hg (Hex.squareFreeCore_dvd_self f hf_ne)) i)
+              hprecision
+          exact
+            Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+              (Hex.normalizeForFactor f)
+              (Hex.exhaustiveCoreFactorsWithBound
+                (Hex.normalizeForFactor f).squareFreeCore
+                (Hex.ZPoly.defaultFactorCoeffBound f)
+                primeData)
+              hcomplete hcore_factors_irr hmem
 
 /-- **Slow-trial raw-factor irreducibility (Mathlib-side), exhaustive and
 quadratic arms.**
