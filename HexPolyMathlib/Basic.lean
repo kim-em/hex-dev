@@ -28,7 +28,7 @@ noncomputable section
 /-- Reading a mapped `List.range` with default zero returns the mapped index inside
 the range and zero outside it. This is the coefficient-array lookup fact used by
 `coeff_ofPolynomial` when rebuilding dense polynomials from Mathlib coefficients. -/
-private theorem list_getD_map_range_zero [Zero R] (size n : Nat) (f : Nat → R) :
+theorem list_getD_map_range_zero [Zero R] (size n : Nat) (f : Nat → R) :
     (List.map f (List.range size)).getD n (Zero.zero : R) =
       if n < size then f n else (Zero.zero : R) := by
   by_cases hn : n < size
