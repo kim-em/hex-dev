@@ -178,6 +178,34 @@ structure TrueFactorLift
   factor_mul : factor * cofactor = f
   support_product_eq : supportProduct L S = factor
 
+/--
+Semantic lift facts needed to interpret the executable CLD rows as genuine
+logarithmic-derivative columns.
+
+`TrueFactorLift` itself only ties the BHKS row basis to concrete lifted factors
+and identifies the selected product with an integer factor.  The CLD quotient
+lemmas also need monicity, positive degree, and a modular cofactor witness for
+each selected lifted factor.  This package keeps those hypotheses explicit so
+downstream aggregation lemmas cannot silently recover them from the weaker
+structural bridge.
+-/
+structure TrueFactorLiftSemantics
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S) where
+  factor_monic : Hex.DensePoly.Monic D.factor
+  selected_monic :
+    ∀ i : Fin L.factorCount, i ∈ S →
+      Hex.DensePoly.Monic (D.liftedFactors.getD i.val 1)
+  selected_pos_degree :
+    ∀ i : Fin L.factorCount, i ∈ S →
+      0 < (D.liftedFactors.getD i.val 1).degree?.getD 0
+  selectedCofactor : ∀ i : Fin L.factorCount, i ∈ S → Hex.ZPoly
+  selected_congr :
+    ∀ (i : Fin L.factorCount) (hi : i ∈ S),
+      Hex.ZPoly.congr D.f
+        ((D.liftedFactors.getD i.val 1) * selectedCofactor i hi)
+        (D.p ^ D.a)
+
 /-- A left fold accumulating `g` over a list equals the running accumulator plus
 the sum of the mapped list; the start-from-`acc` form used to read a fold-sum off
 at `acc = 0`. -/
@@ -313,6 +341,15 @@ theorem bhksLatticeBasis_blockForm
     BhksBlockForm (Hex.bhksLatticeBasis f p a liftedFactors) := rfl
 
 namespace TrueFactorLift
+
+/-- The support product is monic whenever the semantic package proves the
+represented factor is monic. -/
+theorem supportProduct_monic
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S) (H : TrueFactorLiftSemantics D) :
+    Hex.DensePoly.Monic (supportProduct L S) := by
+  rw [D.support_product_eq]
+  exact H.factor_monic
 
 /-- A true-factor lift package supplies the BHKS block form used by coordinate
 and norm-bound reducers. -/
