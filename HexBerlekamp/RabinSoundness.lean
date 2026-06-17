@@ -3608,6 +3608,97 @@ private theorem exists_fKernel_witness_nonconst_mod_g
         (ZMod64.instDivModLawsZMod64Fp p) _ _ _ e_modf
     exact hmg.symm.trans (e_modf'.symm.trans e_hc)
 
+set_option maxHeartbeats 800000 in
+/--
+**Span-mod-`g`.** If an `f`-kernel polynomial `H` (reduced mod `f`) is
+nonconstant modulo `g`, then some `f`-kernel basis polynomial is nonconstant
+modulo `g`. Contrapositive: were every basis polynomial constant mod `g`, then
+`H`, being their `F_p`-linear combination
+(`fixedSpaceKernelPolynomial_coeffVector_complete`), would be constant mod `g`.
+-/
+private theorem exists_basis_nonconst_mod_g
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (g : FpPoly p)
+    (H : FpPoly p) (hH_kernel : IsFixedSpaceKernelPolynomial f hmonic H)
+    (hH_size : H.size ≤ basisSize f)
+    (hH_nonconst : ∀ c : ZMod64 p, ¬ DensePoly.Congr H (DensePoly.C c) g) :
+    ∃ k : Fin (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic)),
+      ∀ c : ZMod64 p,
+        ¬ DensePoly.Congr ((fixedSpaceKernel f hmonic).get k) (DensePoly.C c) g := by
+  by_cases hall : ∀ k : Fin (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic)),
+      ∃ c : ZMod64 p,
+        DensePoly.Congr ((fixedSpaceKernel f hmonic).get k) (DensePoly.C c) g
+  · -- Every basis polynomial is constant mod `g`; derive that `H` is too.
+    exfalso
+    obtain ⟨c_coeff, hc_eq⟩ :=
+      fixedSpaceKernelPolynomial_coeffVector_complete f hmonic H hH_kernel
+    let ndim := basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic)
+    let term : Fin ndim → FpPoly p := fun k =>
+      (fixedSpaceKernel f hmonic).get k * DensePoly.C (c_coeff[k.val]'k.isLt)
+    -- The span polynomial `P = Σ_k basis_k · c_coeff[k]` is constant mod `g`.
+    have hP_const : ∃ a, DensePoly.Congr
+        ((List.finRange ndim).foldl (fun acc k => acc + term k) 0)
+        (DensePoly.C a) g := by
+      refine foldl_congr_const g term (List.finRange ndim) ?_ 0 ?_
+      · intro k _hk
+        obtain ⟨a, ha⟩ := hall k
+        refine ⟨a * (c_coeff[k.val]'k.isLt), ?_⟩
+        have h1 := congr_mul_right_of_congr (DensePoly.C (c_coeff[k.val]'k.isLt)) ha
+        rwa [C_mul_C] at h1
+      · refine ⟨0, 0, ?_⟩
+        have hC0 : (DensePoly.C (0 : ZMod64 p) : FpPoly p) = 0 := by
+          apply DensePoly.ext_coeff; intro i
+          rw [DensePoly.coeff_C, DensePoly.coeff_zero]; split <;> rfl
+        rw [hC0, FpPoly.mul_zero]
+        exact FpPoly.sub_self 0
+    -- And `H` equals that span polynomial.
+    have hHP : H = (List.finRange ndim).foldl (fun acc k => acc + term k) 0 := by
+      apply DensePoly.ext_coeff
+      intro i
+      rw [coeff_foldl_add (List.finRange ndim) term i]
+      by_cases hi : i < basisSize f
+      · have hget :
+            (Matrix.mulVec (Matrix.nullspaceBasisMatrix (fixedSpaceMatrix f hmonic))
+                c_coeff)[i]'hi = (coeffVector f H)[i]'hi :=
+          congrArg (fun v : Vector (ZMod64 p) (basisSize f) => v[i]'hi) hc_eq
+        have hrhs : (coeffVector f H)[i]'hi = H.coeff i := by
+          unfold coeffVector; rw [Vector.getElem_ofFn]
+        have hlhs :
+            (Matrix.mulVec (Matrix.nullspaceBasisMatrix (fixedSpaceMatrix f hmonic))
+                c_coeff)[i]'hi =
+              (List.finRange ndim).foldl
+                (fun acc k => acc +
+                  ((Matrix.nullspaceBasisMatrix (fixedSpaceMatrix f hmonic))[i]'hi)[k.val]'k.isLt *
+                    c_coeff[k.val]'k.isLt) 0 := by
+          unfold Matrix.mulVec Matrix.dot Hex.Vector.dotProduct Matrix.row
+          rw [Vector.getElem_ofFn hi]; rfl
+        rw [hlhs, hrhs] at hget
+        rw [← hget]
+        apply foldl_add_congr_terms
+        intro k _hk
+        rw [nullspaceBasisMatrix_entry_eq_basis_coeff f hmonic k i hi]
+        show ((fixedSpaceKernel f hmonic).get k).coeff i * (c_coeff[k.val]'k.isLt)
+          = ((fixedSpaceKernel f hmonic).get k *
+              DensePoly.C (c_coeff[k.val]'k.isLt)).coeff i
+        rw [coeff_mul_C]
+      · have hi' : basisSize f ≤ i := Nat.le_of_not_lt hi
+        rw [DensePoly.coeff_eq_zero_of_size_le H (Nat.le_trans hH_size hi')]
+        symm
+        apply foldl_add_eq_zero_of_terms_zero
+        intro k _hk
+        have hbz : ((fixedSpaceKernel f hmonic).get k).coeff i = 0 :=
+          DensePoly.coeff_eq_zero_of_size_le _
+            (Nat.le_trans (fixedSpaceKernel_get_size_le f hmonic k) hi')
+        show ((fixedSpaceKernel f hmonic).get k *
+            DensePoly.C (c_coeff[k.val]'k.isLt)).coeff i = 0
+        rw [coeff_mul_C, hbz]
+        simp
+    rw [hHP] at hH_nonconst
+    obtain ⟨a, ha⟩ := hP_const
+    exact hH_nonconst a ha
+  · -- Some basis polynomial is nonconstant mod `g`.
+    obtain ⟨k, hk⟩ := Classical.not_forall.mp hall
+    exact ⟨k, fun c hc => hk ⟨c, hc⟩⟩
+
 /--
 For a monic square-free `f` whose executable Berlekamp factorization returns
 at most one factor, `f` is irreducible. Composes the structural loop lemma
