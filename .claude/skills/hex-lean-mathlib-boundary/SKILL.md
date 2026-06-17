@@ -74,6 +74,20 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   `obtain ⟨r, hr⟩ := h; ⟨toMathlibPolynomial r, by rw [hr, toMathlibPolynomial_mul]⟩`.
   (`HexBerlekampZassenhausMathlib/Basic.lean` exposes `toMathlibPolynomial_dvd`
   and `self_dvd_monicModPImage` for exactly this.)
+- **Through `fpPolyEquiv : FpPoly p ≃+* Polynomial (ZMod p)`, `map_mul` and
+  `map_add` work but `map_one`/`map_zero`/`map_sub` do NOT.** `toMathlibPolynomial
+  f` is defeq `fpPolyEquiv f`, and `map_mul`/`map_add` need only `MulHomClass`/
+  `AddHomClass` (i.e. `[Mul]`/`[Add]`, which `FpPoly` has), so
+  `map_mul fpPolyEquiv a b` / `map_add fpPolyEquiv a b` close
+  `toMathlibPolynomial (a * b) = …` / `(a + b) = …` directly. But `map_one`/
+  `map_zero`/`map_sub` resolve `OneHomClass`/`ZeroHomClass`/`AddGroup`-class
+  instances that need Mathlib `MulOneClass`/`AddGroup` on `FpPoly` — which it
+  lacks — so they fail with "failed to synthesize `OneHomClass (FpPoly p ≃+* …)`".
+  Prove `toMathlibPolynomial (1 : FpPoly p) = 1` inline by `Polynomial.ext` +
+  `coeff_toMathlibPolynomial` + `(1 : FpPoly p) = DensePoly.C 1` (rfl) +
+  `coeff_C`/`Polynomial.coeff_one` (mirror `toZMod_zero` for the `Zero.zero`
+  else-branch via `exact`, not `simp`); for subtraction use
+  `toMathlibPolynomial_sub` (the named coeffwise lemma), not `map_sub`.
 - **`ZPoly = DensePoly Int` ring identities: `grind` is unreliable; use the
   `equiv`/`toPolynomial` bridge.** `grind` is advertised for `ZMod64`/`FpPoly`
   arithmetic, but on `ZPoly` it *fails* on basics like `factor * 0 = 0` and
