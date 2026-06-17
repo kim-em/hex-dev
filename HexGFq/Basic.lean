@@ -177,6 +177,94 @@ instance packedGF2Entry_2_1 : PackedGF2Entry 1 where
   degree_lt_word := by decide
   packed_irreducible := packedGF2Entry_2_1_irreducible
 
+private def packedGF2IrreducibilityCertificate (lower : UInt64) (n : Nat) :
+    GF2Poly.IrreducibilityCertificate :=
+  let f := GF2Poly.ofUInt64Monic lower n
+  { n := n
+    powChain := ((List.range (n + 1)).map fun k => GF2Poly.xpow2kMod f k).toArray
+    bezout :=
+      ((GF2Poly.maximalProperDivisors n).map fun d =>
+        let diff := GF2Poly.frobeniusDiffMod f d
+        let xg := GF2Poly.xgcd f diff
+        { left := xg.left, right := xg.right }).toArray }
+
+set_option maxRecDepth 4096 in
+private theorem packedGF2Entry_2_2_irreducible :
+    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x3 2) :=
+  GF2Poly.checkIrreducibilityCertificate_imp_irreducible
+    (GF2Poly.ofUInt64Monic 0x3 2)
+    (packedGF2IrreducibilityCertificate 0x3 2)
+    (by decide)
+
+set_option maxRecDepth 4096 in
+private theorem packedGF2Entry_2_3_irreducible :
+    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x3 3) :=
+  GF2Poly.checkIrreducibilityCertificate_imp_irreducible
+    (GF2Poly.ofUInt64Monic 0x3 3)
+    (packedGF2IrreducibilityCertificate 0x3 3)
+    (by decide)
+
+set_option maxRecDepth 4096 in
+private theorem packedGF2Entry_2_5_irreducible :
+    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x5 5) :=
+  GF2Poly.checkIrreducibilityCertificate_imp_irreducible
+    (GF2Poly.ofUInt64Monic 0x5 5)
+    (packedGF2IrreducibilityCertificate 0x5 5)
+    (by decide)
+
+set_option maxRecDepth 4096 in
+private theorem packedGF2Entry_2_6_irreducible :
+    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 6) :=
+  GF2Poly.checkIrreducibilityCertificate_imp_irreducible
+    (GF2Poly.ofUInt64Monic 0x1B 6)
+    (packedGF2IrreducibilityCertificate 0x1B 6)
+    (by decide)
+
+/-- The committed table supports a packed `GF2n` view of `C(2, 2)`. -/
+instance packedGF2Entry_2_2 : PackedGF2Entry 2 where
+  entry := supportedEntry_2_2
+  lower := 0x3
+  conway_eq_packed := rfl
+  degree_pos := by decide
+  degree_lt_word := by decide
+  packed_irreducible := packedGF2Entry_2_2_irreducible
+
+/-- The committed table supports a packed `GF2n` view of `C(2, 3)`. -/
+instance packedGF2Entry_2_3 : PackedGF2Entry 3 where
+  entry := supportedEntry_2_3
+  lower := 0x3
+  conway_eq_packed := rfl
+  degree_pos := by decide
+  degree_lt_word := by decide
+  packed_irreducible := packedGF2Entry_2_3_irreducible
+
+/-- The committed table supports a packed `GF2n` view of `C(2, 4)`. -/
+instance packedGF2Entry_2_4 : PackedGF2Entry 4 where
+  entry := supportedEntry_2_4
+  lower := 0x3
+  conway_eq_packed := rfl
+  degree_pos := by decide
+  degree_lt_word := by decide
+  packed_irreducible := GF2Poly.gf16_modulus_irreducible
+
+/-- The committed table supports a packed `GF2n` view of `C(2, 5)`. -/
+instance packedGF2Entry_2_5 : PackedGF2Entry 5 where
+  entry := supportedEntry_2_5
+  lower := 0x5
+  conway_eq_packed := rfl
+  degree_pos := by decide
+  degree_lt_word := by decide
+  packed_irreducible := packedGF2Entry_2_5_irreducible
+
+/-- The committed table supports a packed `GF2n` view of `C(2, 6)`. -/
+instance packedGF2Entry_2_6 : PackedGF2Entry 6 where
+  entry := supportedEntry_2_6
+  lower := 0x1B
+  conway_eq_packed := rfl
+  degree_pos := by decide
+  degree_lt_word := by decide
+  packed_irreducible := packedGF2Entry_2_6_irreducible
+
 end Conway
 
 /-- Canonical finite field with `p^n` elements for a committed Conway-table
