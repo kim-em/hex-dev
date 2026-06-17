@@ -122,6 +122,17 @@ on that issue — pick a different one. Only proceed if the output says
 coordination read-issue <N> --json body --jq .body
 ```
 
+**Freshly-unblocked issues: verify deps *completed*, not just *closed*.**
+`check-blocked` unblocks an issue when its `depends-on` deps are closed,
+regardless of *how* they closed. A dep closed `NOT_PLANNED` (e.g. premise
+killed and forwarded to another issue) is **not** completed — the thing it
+was supposed to produce does not exist. Claiming such an issue burns a
+session on work whose substrate is missing. Before claiming a recently
+unblocked issue whose body cites a now-closed prerequisite, check
+`gh issue view <dep> --json stateReason`; if it's `NOT_PLANNED`/forwarded,
+re-block instead (`coordination add-dep <N> <real-blocker>` with a comment)
+and pick something else.
+
 ## Step 2: Set Up
 
 ```bash
