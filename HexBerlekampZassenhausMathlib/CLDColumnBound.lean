@@ -545,7 +545,7 @@ theorem congr_polyProduct_mul_listSum_derivative
   | cons g rest ih =>
       intro hall
       have hg : Hex.ZPoly.congr (g * q g) (f * Hex.DensePoly.derivative g) m :=
-        hall g (List.mem_cons_self g rest)
+        hall g (List.mem_cons_self ..)
       have hrest : ∀ g' ∈ rest,
           Hex.ZPoly.congr (g' * q g') (f * Hex.DensePoly.derivative g') m :=
         fun g' hg' => hall g' (List.mem_cons_of_mem g hg')
@@ -564,7 +564,7 @@ theorem congr_polyProduct_mul_listSum_derivative
         have hcong :
             Hex.ZPoly.congr ((g * q g) * Prest)
               ((f * Hex.DensePoly.derivative g) * Prest) m :=
-          Hex.ZPoly.congr_mul (g * q g) (f * Hex.DensePoly.derivative g) Prest Prest m
+          Hex.ZPoly.congr_mul (g * q g) Prest (f * Hex.DensePoly.derivative g) Prest m
             hg (Hex.ZPoly.congr_refl Prest m)
         rw [lhs_eq,
           ← Hex.DensePoly.mul_assoc_poly f (Hex.DensePoly.derivative g) Prest]
@@ -574,7 +574,7 @@ theorem congr_polyProduct_mul_listSum_derivative
           Hex.DensePoly.mul_assoc_poly g Prest Srest
         have hcong :
             Hex.ZPoly.congr (g * (Prest * Srest)) (g * (f * dPrest)) m :=
-          Hex.ZPoly.congr_mul g g (Prest * Srest) (f * dPrest) m
+          Hex.ZPoly.congr_mul g (Prest * Srest) g (f * dPrest) m
             (Hex.ZPoly.congr_refl g m) IHrest
         have rhs_eq : g * (f * dPrest) = f * (g * dPrest) := by
           rw [← Hex.DensePoly.mul_assoc_poly g f dPrest,
