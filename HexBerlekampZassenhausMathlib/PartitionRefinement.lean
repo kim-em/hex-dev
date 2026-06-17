@@ -637,4 +637,51 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_forwardInputs
     factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut
       hinputs.trueSupports hcore_ne h hcut hsize hpartition
 
+set_option maxHeartbeats 800000 in
+/--
+Default-bound fast-BHKS direct-core specialization via the forward-count route.
+
+The BHKS core is the normalized square-free core and the coefficient bound is
+`Hex.ZPoly.defaultFactorCoeffBound f`; callers still choose the concrete lift
+precision `k` and fuel for the core loop.  The proof is the general
+forward-input wrapper specialized to the public default-bound core.
+-/
+theorem factorFastCoreDefault_factor_zpolyIrreducible_of_forwardInputs
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (primeData : Hex.PrimeChoiceData) {k fuel : Nat}
+    (hinputs :
+      BHKS.ForwardRecoveryInputs
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.toMonicLiftData
+          (Hex.normalizeForFactor f).squareFreeCore k primeData))
+    (h :
+      Hex.factorFastCoreWithBound
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f) primeData k fuel =
+        some hinputs.expectedFactors)
+    (hcut :
+      BHKS.CutProjectionHypotheses
+        (BHKS.projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.toMonicLiftData
+            (Hex.normalizeForFactor f).squareFreeCore k primeData)
+          hinputs.rows_pos)
+        hinputs.trueSupports)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn hinputs.trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial
+            (Hex.normalizeForFactor f).squareFreeCore)).card) :
+    ∀ factor ∈ hinputs.expectedFactors.toList,
+      Hex.ZPoly.Irreducible factor := by
+  have hcore_lc_pos :
+      0 < Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore :=
+    Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 :=
+    zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  exact
+    factorFastCoreWithBound_some_factor_zpolyIrreducible_of_forwardInputs
+      hcore_ne hinputs h hcut hpartition
+
 end HexBerlekampZassenhausMathlib
