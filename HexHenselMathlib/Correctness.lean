@@ -120,6 +120,56 @@ theorem toPolynomial_monic_of_dense_monic
   exact hmonic
 
 /--
+An executable Bezout congruence gives coprimality of the corresponding Mathlib
+polynomials after reduction modulo `p`.
+-/
+private theorem isCoprime_of_zpoly_bezout
+    (p : Nat) [Hex.ZMod64.Bounds p]
+    (g h s t : Hex.ZPoly)
+    (hbez : Hex.ZPoly.congr (s * g + t * h) 1 p) :
+    let φ := Int.castRingHom (ZMod p)
+    IsCoprime
+      ((HexPolyMathlib.toPolynomial g).map φ)
+      ((HexPolyMathlib.toPolynomial h).map φ) := by
+  intro φ
+  refine ⟨(HexPolyMathlib.toPolynomial s).map φ,
+    (HexPolyMathlib.toPolynomial t).map φ, ?_⟩
+  have hmap := zpoly_congr_toPolynomial_map_eq (s * g + t * h) 1 p hbez
+  have hone : HexPolyMathlib.toPolynomial (1 : Hex.ZPoly) = 1 := by
+    change HexPolyMathlib.toPolynomial (Hex.DensePoly.C (1 : Int)) = 1
+    simp
+  simpa [HexPolyMathlib.toPolynomial_add, HexPolyMathlib.toPolynomial_mul,
+    Polynomial.map_add, Polynomial.map_mul, Polynomial.map_one, hone] using hmap
+
+/--
+Monic integer polynomials with the same prime-field reduction have the same
+degree.
+-/
+private theorem natDegree_eq_of_monic_map_eq
+    (p : Nat) [Fact (Nat.Prime p)]
+    {g h : Polynomial ℤ}
+    (hg : g.Monic) (hh : h.Monic)
+    (hmap :
+      g.map (Int.castRingHom (ZMod p)) =
+        h.map (Int.castRingHom (ZMod p))) :
+    g.natDegree = h.natDegree := by
+  have hne : (1 : ZMod p) ≠ 0 := by
+    exact one_ne_zero
+  apply le_antisymm
+  · by_contra hle
+    have hlt : h.natDegree < g.natDegree := Nat.lt_of_not_ge hle
+    have hcoeff := Polynomial.ext_iff.mp hmap g.natDegree
+    rw [Polynomial.coeff_map, Polynomial.coeff_map, hg.coeff_natDegree,
+      Polynomial.coeff_eq_zero_of_natDegree_lt hlt] at hcoeff
+    simp at hcoeff
+  · by_contra hle
+    have hlt : g.natDegree < h.natDegree := Nat.lt_of_not_ge hle
+    have hcoeff := Polynomial.ext_iff.mp hmap h.natDegree
+    rw [Polynomial.coeff_map, Polynomial.coeff_map, hh.coeff_natDegree,
+      Polynomial.coeff_eq_zero_of_natDegree_lt hlt] at hcoeff
+    simp at hcoeff
+
+/--
 The quadratic executable step gives a Mathlib factorization modulo `m*m`.
 This is the Mathlib-facing form of `Hex.ZPoly.quadraticHenselStep_factor_spec`.
 -/
