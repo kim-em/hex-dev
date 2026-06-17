@@ -172,6 +172,43 @@ def supportCldSum (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
         fun i => Hex.cldQuotientMod f (L.liftedFactors.getD i.val 1) p a).sum
 
 /--
+Selected lifted factors as an executable array, in the same support order used
+by `supportProduct` and `supportCldSum`.
+-/
+def selectedFactors (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) :
+    Array Hex.ZPoly :=
+  by
+    classical
+    exact
+      (((List.finRange L.factorCount).filter fun i => decide (i ∈ S)).map
+        fun i => L.liftedFactors.getD i.val 1).toArray
+
+/--
+Definitional bridge for the aggregate CLD tail helper: it cuts once after
+folding the selected `cldQuotientMod` polynomials into one quotient sum.
+-/
+theorem aggregateCldTail_eq_foldl
+    (f : Hex.ZPoly) (p a j : Nat) (selected : Array Hex.ZPoly) :
+    Hex.aggregateCldTail f p a j selected =
+      Hex.psiCut p a (Hex.bhksCoeffCutThreshold p f j)
+        ((selected.foldl
+          (fun acc g => acc + Hex.cldQuotientMod f g p a) (0 : Hex.ZPoly)).coeff j) := by
+  rfl
+
+/--
+Support-specialised form of `aggregateCldTail_eq_foldl`, using the canonical
+selected-factor array attached to a proof support.
+-/
+theorem aggregateCldTail_selectedFactors_eq
+    (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
+    (f : Hex.ZPoly) (p a j : Nat) :
+    Hex.aggregateCldTail f p a j (selectedFactors L S) =
+      Hex.psiCut p a (Hex.bhksCoeffCutThreshold p f j)
+        (((selectedFactors L S).foldl
+          (fun acc g => acc + Hex.cldQuotientMod f g p a) (0 : Hex.ZPoly)).coeff j) := by
+  rfl
+
+/--
 Proof-facing package saying that a BHKS lattice basis and lifted-factor support
 come from concrete lift data for an integer polynomial.
 

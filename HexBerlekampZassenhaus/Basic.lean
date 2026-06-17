@@ -4654,6 +4654,20 @@ def cldCoeffs (f : ZPoly) (p a : Nat) (g : ZPoly) : Array Int :=
     (fun j => psiCut p a (bhksCoeffCutThreshold p f j) (quotient.coeff j))
     |>.toArray
 
+/--
+Aggregate BHKS CLD tail entry for a selected family of lifted local factors.
+
+Unlike `cldCoeffs`, this cuts once after summing the selected
+`cldQuotientMod` coefficients.  This is the shape needed by the BHKS true-factor
+support column: wraparound is controlled on the aggregate residue, not on the
+sum of separately cut per-factor residues.
+-/
+def aggregateCldTail (f : ZPoly) (p a j : Nat) (selectedFactors : Array ZPoly) : Int :=
+  let quotientSum :=
+    selectedFactors.foldl
+      (fun acc g => acc + cldQuotientMod f g p a) (0 : ZPoly)
+  psiCut p a (bhksCoeffCutThreshold p f j) (quotientSum.coeff j)
+
 /-- `centeredModNat` depends only on its argument modulo `m`. -/
 theorem centeredModNat_emod_self (z : Int) (m : Nat) :
     centeredModNat (z % (m : Int)) m = centeredModNat z m := by
@@ -5175,6 +5189,15 @@ Regression guard for #6217. The exact integer CLD coefficient of
 -/
 #guard (cldCoeffs cldGuardF 5 6 cldGuardG).getD 0 0 = 0
 #guard (cldCoeffs cldGuardF 5 6 cldGuardG).getD 1 0 = 0
+
+/-
+Regression guard for #7817.  At `p = 5`, `a = 4`, `b = 1`, the aggregate
+residue `311 + 311` wraps to `-3` before the lower cut, so the aggregate cut is
+small even though the sum of separately cut residues is large.
+-/
+#guard psiCut 5 4 1 (311 + 311) = -1
+#guard psiCut 5 4 1 311 + psiCut 5 4 1 311 = 124
+#guard psiCut 5 4 1 (311 + 311) ≠ psiCut 5 4 1 311 + psiCut 5 4 1 311
 
 namespace BHKS
 
