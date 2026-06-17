@@ -940,24 +940,52 @@ theorem toMathlibPolynomial_squareFree_coprime
       hg_poly_unit
   exact (gcd_isUnit_iff_isRelPrime.mp hmath_gcd_unit).isCoprime
 
+/-- A factor with positive executable degree transports to a Mathlib polynomial
+of positive `natDegree`: its leading coefficient is nonzero and the (injective)
+coefficient transport preserves that, so the top coefficient survives. -/
+theorem natDegree_toMathlibPolynomial_pos_of_degree?_pos
+    {g : Hex.FpPoly p} (hg : 0 < g.degree?.getD 0) :
+    0 < (toMathlibPolynomial g).natDegree := by
+  have hsize_pos : 0 < g.size := by
+    rcases Nat.eq_zero_or_pos g.size with hz | hpos
+    · rw [Hex.DensePoly.degree?] at hg; simp [hz] at hg
+    · exact hpos
+  rw [Hex.DensePoly.degree?_eq_some_of_pos_size g hsize_pos, Option.getD_some] at hg
+  have hcoeff_ne : g.coeff (g.size - 1) ≠ 0 :=
+    Hex.DensePoly.coeff_last_ne_zero_of_pos_size g hsize_pos
+  have hcoeff_zmod_ne : (toMathlibPolynomial g).coeff (g.size - 1) ≠ 0 := by
+    rw [coeff_toMathlibPolynomial]
+    intro hzero
+    apply hcoeff_ne
+    have hinj := (HexModArithMathlib.ZMod64.equiv (p := p)).injective
+    apply hinj
+    simpa using hzero.trans HexModArithMathlib.ZMod64.toZMod_zero.symm
+  have hlb : g.size - 1 ≤ (toMathlibPolynomial g).natDegree :=
+    Polynomial.le_natDegree_of_ne_zero hcoeff_zmod_ne
+  omega
+
 /--
-Every factor emitted by executable Berlekamp factorization is irreducible after
-transport to Mathlib's polynomial model, assuming the square-free input in the
-common-divisor form used by the executable soundness chain.
+Every factor emitted by executable Berlekamp factorization on a positive-degree
+input is irreducible after transport to Mathlib's polynomial model, assuming the
+square-free input in the common-divisor form used by the executable soundness
+chain.  The positive-degree input hypothesis is essential: emitted factors of a
+constant input are themselves constant, transporting to Mathlib *units* rather
+than irreducibles.
 -/
 theorem irreducible_of_mem_berlekampFactor
     (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
-    [Lean.Grind.Field (Hex.ZMod64 p)]
-    (_hsquareFree : ∀ d, d ∣ f → d ∣ Hex.DensePoly.derivative f →
+    [Hex.ZMod64.PrimeModulus p] [Fact (Nat.Prime p)]
+    (hf_pos : 0 < f.degree?.getD 0)
+    (hsquareFree : ∀ d, d ∣ f → d ∣ Hex.DensePoly.derivative f →
       Hex.Berlekamp.isUnitPolynomial d = true) :
     ∀ g ∈ (Hex.Berlekamp.berlekampFactor f hmonic).factors,
       Irreducible (toMathlibPolynomial g) := by
-  -- The Mathlib leg is `irreducible_toMathlibPolynomial_of_fpPolyIrreducible`
-  -- (above): each nonconstant factor with `FpPoly.Irreducible g` transports.
-  -- The remaining gap is purely executable: there is no theorem yet that every
-  -- `g ∈ (berlekampFactor f hmonic).factors` is `FpPoly.Irreducible` (only the
-  -- singleton case `berlekampFactor_singleton_irreducible` exists).
-  sorry
+  intro g hg
+  have hg_pos :=
+    Hex.Berlekamp.berlekampFactor_factors_pos_degree f hmonic hf_pos g hg
+  exact irreducible_toMathlibPolynomial_of_fpPolyIrreducible
+    (natDegree_toMathlibPolynomial_pos_of_degree?_pos hg_pos)
+    (Hex.Berlekamp.berlekampFactor_factors_irreducible f hmonic hsquareFree g hg)
 
 /--
 Every factor emitted by executable Berlekamp factorization is irreducible after
@@ -965,11 +993,12 @@ transport to Mathlib's polynomial model.
 -/
 theorem irreducible_of_mem_berlekampFactor_of_gcd_eq_one
     (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
-    [Lean.Grind.Field (Hex.ZMod64 p)] [Hex.ZMod64.PrimeModulus p]
+    [Hex.ZMod64.PrimeModulus p] [Fact (Nat.Prime p)]
+    (hf_pos : 0 < f.degree?.getD 0)
     (hsquareFree : Hex.DensePoly.gcd f (Hex.DensePoly.derivative f) = 1) :
     ∀ g ∈ (Hex.Berlekamp.berlekampFactor f hmonic).factors,
       Irreducible (toMathlibPolynomial g) :=
-  irreducible_of_mem_berlekampFactor f hmonic
+  irreducible_of_mem_berlekampFactor f hmonic hf_pos
     (Hex.Berlekamp.squareFree_common_of_gcd_eq_one hsquareFree)
 
 /--
@@ -1016,7 +1045,8 @@ irreducibility theorem applies directly.
 -/
 theorem irreducible_of_berlekampFactor_factors_length_le_one
     (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
-    [Lean.Grind.Field (Hex.ZMod64 p)] [Hex.ZMod64.PrimeModulus p]
+    [Hex.ZMod64.PrimeModulus p] [Fact (Nat.Prime p)]
+    (hf_pos : 0 < f.degree?.getD 0)
     (hsquareFree :
       Hex.Berlekamp.isUnitPolynomial
         (Hex.DensePoly.gcd f (Hex.DensePoly.derivative f)) = true)
@@ -1041,7 +1071,7 @@ theorem irreducible_of_berlekampFactor_factors_length_le_one
           have hirr_g :
               Irreducible (toMathlibPolynomial g) :=
             irreducible_of_mem_berlekampFactor
-              f hmonic hsquareFree_common g (by simp [hfactors])
+              f hmonic hf_pos hsquareFree_common g (by simp [hfactors])
           simpa [hg_eq] using hirr_g
       | cons h rest =>
           simp [hfactors] at hsmall
