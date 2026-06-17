@@ -60,40 +60,87 @@ are wired through `Hex.BenchOracle.Flint.runOp` and registered as fixed
 per-rung benchmark pairs over the same input families as the Lean
 targets.
 
-Measured fixed-comparator process-call overhead is about `52 ms` per
-call on this host. The current fixed registrations spawn one benchmark
-child per repeat, so even though the FLINT driver is persistent inside
-that child, the Python/driver startup dominates the FLINT medians at
-every rung below. Raw ratios are `FLINT median / Lean median`; adjusted
-ratios subtract `52 ms` from the FLINT median when positive. Because the
-overhead is more than 50% of measured FLINT wall time at every rung, no
-rung is eligible for a final gating-goal verdict under
-`SPEC/benchmarking.md §"Headline reports" §"Comparator ratios"`.
+Measurement shape. The fixed FLINT registrations now use
+`flintCompareConfig` (`HexBerlekamp/Bench.lean`): `warmupFirstIter :=
+true` runs one discarded call so the persistent python-flint driver is
+spawned out of the timed region, and `minTotalSeconds := 0.2` forces the
+child auto-tuner to amortise steady-state FLINT work across enough inner
+repeats that the per-call median reflects the algorithm, not the one-time
+process startup. The paired Lean targets use `leanCompareConfig` (the
+same `minTotalSeconds` floor) so each per-rung ratio compares steady-state
+medians on both sides. This replaces the earlier fixed shape whose every
+FLINT median pinned at the `~52 ms` driver-startup floor, leaving no
+eligible rung.
+
+Per-call overhead is now the steady-state persistent-driver round-trip
+(stdin/stdout JSON request plus reply), measured per
+`SPEC/benchmarking.md §"External comparators" §"Process call"` as the
+warm-driver median on the smallest registered input, whose FLINT
+algorithm work is sub-microsecond: `19.428 µs` for Rabin (rung `n = 8`)
+and `33.879 µs` for DDF (rung `n = 12`). This is a per-call floor; the
+JSON-marshalling component grows mildly with polynomial degree, so the
+constant-overhead model slightly understates overhead at the top rungs.
+Raw ratios are `FLINT median / Lean median` (lower means FLINT is
+faster); on every rung where overhead exceeds 5% of the FLINT median the
+overhead-adjusted ratio `(FLINT median − overhead) / Lean median` is also
+recorded. A rung is eligible for the gating-goal verdict when overhead is
+≤ 50% of the FLINT median and per-call wall time is within the
+`≤ 1 s` soft / `≤ 10 s` hard ceiling.
+
+Measurement commands at commit `3ad7817b` on `carica` (Apple M2 Ultra,
+macOS 14.6.1), `HEX_FLINT_BENCH_PYTHON=python3`, python-flint `0.8.0`:
+
+```sh
+lake exe hexberlekamp_bench compare \
+    Hex.BerlekampBench.runRabinTestChecksum{8,10,12,16,20,24,32,40,48,56,64} \
+    Hex.BerlekampBench.runFlintRabinTestChecksum{8,10,12,16,20,24,32,40,48,56,64} \
+    --export-file reports/bench-results/hex-berlekamp-rabin-compare.json
+lake exe hexberlekamp_bench compare \
+    Hex.BerlekampBench.runDistinctDegreeChecksum{12,16,20,24,32,40,48,64,80,96} \
+    Hex.BerlekampBench.runFlintDistinctDegreeChecksum{12,16,20,24,32,40,48,64,80,96} \
+    --export-file reports/bench-results/hex-berlekamp-ddf-compare.json
+```
+
+(the Lean and FLINT targets are interleaved rung-by-rung on the actual
+command line). Export artefacts:
+`reports/bench-results/hex-berlekamp-rabin-compare.json`, SHA-256
+`9d85f268956099a4df99ded885dbeda2c25cb4a96e6f795a0b9bc4f922f41942`;
+`reports/bench-results/hex-berlekamp-ddf-compare.json`, SHA-256
+`225e85f1483a513701ffa5f0b01a85e01635b42a9db290c058fef37715f9cc57`.
 
 ### FLINT `nmod_poly.is_irreducible` vs Rabin
 
+Per-call overhead `19.428 µs` (warm-driver round-trip, rung `n = 8`).
+
 | n | Lean median | FLINT median | raw ratio | adjusted ratio | eligible |
 |---:|---:|---:|---:|---:|:---:|
-| 8 | 0.777 ms | 53.229 ms | 68.532x | 1.582x | no |
-| 10 | 1.486 ms | 54.783 ms | 36.871x | 1.873x | no |
-| 12 | 2.114 ms | 52.346 ms | 24.767x | 0.164x | no |
-| 16 | 5.312 ms | 55.379 ms | 10.426x | 0.636x | no |
-| 20 | 10.554 ms | 51.723 ms | 4.901x | 0.000x | no |
-| 24 | 16.019 ms | 57.258 ms | 3.574x | 0.328x | no |
-| 32 | 36.021 ms | 69.158 ms | 1.920x | 0.476x | no |
-| 40 | 81.167 ms | 55.964 ms | 0.689x | 0.049x | no |
-| 48 | 127.045 ms | 55.526 ms | 0.437x | 0.028x | no |
-| 56 | 217.878 ms | 53.264 ms | 0.244x | 0.006x | no |
-| 64 | 329.806 ms | 53.284 ms | 0.162x | 0.004x | no |
+| 8 | 0.775 ms | 19.428 µs | 0.0251x | — | no |
+| 10 | 1.587 ms | 23.246 µs | 0.0146x | 0.00240x | no |
+| 12 | 2.276 ms | 25.082 µs | 0.0110x | 0.00248x | no |
+| 16 | 5.623 ms | 34.988 µs | 0.00622x | 0.00277x | no |
+| 20 | 11.036 ms | 37.278 µs | 0.00338x | 0.00162x | no |
+| 24 | 16.621 ms | 47.494 µs | 0.00286x | 0.00169x | yes |
+| 32 | 36.726 ms | 67.924 µs | 0.00185x | 0.00132x | yes |
+| 40 | 79.722 ms | 75.643 µs | 0.000949x | 0.000705x | yes |
+| 48 | 126.661 ms | 105.176 µs | 0.000830x | 0.000677x | yes |
+| 56 | 222.325 ms | 151.275 µs | 0.000680x | 0.000593x | yes |
+| 64 | 328.185 ms | 193.108 µs | 0.000588x | 0.000529x | yes |
 
-Trend: raw ratios fall monotonically after the small-startup regime;
-FLINT is raw-faster by `n = 40` and the gap widens through `n = 64`.
-The adjusted ratios are not a valid verdict curve because the overhead
-floor dominates every FLINT measurement. Gating-goal verdict:
-**blocked/no eligible rung** for this process-call shape.
+Eligible range `n = 24 … 64` (six rungs): below `n = 24` the round-trip
+overhead is more than half the FLINT median, and the `n = 8` row is the
+overhead measurement itself. Across the eligible range the FLINT median
+grows with degree while staying three to four orders of magnitude below
+the Lean median, so the raw ratio falls monotonically from `0.00286x`
+(`n = 24`) to `0.000588x` (`n = 64`) — a diverging trend with FLINT
+pulling steadily further ahead. Overhead-adjustment moves the ratio in
+the same direction (FLINT looks faster still), so it does not change the
+verdict. Gating-goal verdict at the largest eligible rung (`n = 64`):
+**fails** — Lean's `runRabinTestChecksum` is `~1700x` slower than FLINT's
+`is_irreducible`, not at least as fast.
 
 ### FLINT `nmod_poly.factor_distinct_deg` vs DDF
 
+Per-call overhead `33.879 µs` (warm-driver round-trip, rung `n = 12`).
 The DDF fixed targets use an opaque timing token for the fixed compare:
 the conformance oracle compares monic-normalised degree buckets, while
 the raw Lean and FLINT representative checksums are not a stable shared
@@ -101,22 +148,28 @@ observable.
 
 | n | Lean median | FLINT median | raw ratio | adjusted ratio | eligible |
 |---:|---:|---:|---:|---:|:---:|
-| 12 | 5.872 ms | 56.241 ms | 9.578x | 0.722x | no |
-| 16 | 11.453 ms | 52.724 ms | 4.604x | 0.063x | no |
-| 20 | 18.630 ms | 52.191 ms | 2.801x | 0.010x | no |
-| 24 | 38.281 ms | 55.162 ms | 1.441x | 0.083x | no |
-| 32 | 69.851 ms | 57.250 ms | 0.820x | 0.075x | no |
-| 40 | 117.502 ms | 57.305 ms | 0.488x | 0.045x | no |
-| 48 | 214.047 ms | 55.294 ms | 0.258x | 0.015x | no |
-| 64 | 509.125 ms | 55.684 ms | 0.109x | 0.007x | no |
-| 80 | 882.482 ms | 56.784 ms | 0.064x | 0.005x | no |
-| 96 | 1.470 s | 56.130 ms | 0.038x | 0.003x | no |
+| 12 | 6.916 ms | 33.879 µs | 0.00490x | — | no |
+| 16 | 13.141 ms | 44.882 µs | 0.00342x | 0.000837x | no |
+| 20 | 21.250 ms | 57.017 µs | 0.00268x | 0.00109x | no |
+| 24 | 45.354 ms | 88.100 µs | 0.00194x | 0.00120x | yes |
+| 32 | 77.882 ms | 81.074 µs | 0.00104x | 0.000606x | yes |
+| 40 | 123.663 ms | 105.013 µs | 0.000849x | 0.000575x | yes |
+| 48 | 225.748 ms | 162.508 µs | 0.000720x | 0.000570x | yes |
+| 64 | 516.348 ms | 390.753 µs | 0.000757x | 0.000691x | yes |
+| 80 | 886.891 ms | 407.712 µs | 0.000460x | 0.000422x | yes |
+| 96 | 1.473 s | 503.831 µs | 0.000342x | 0.000319x | yes* |
 
-Trend: raw ratios cross in FLINT's favour by `n = 32` and continue
-falling through `n = 96`. As with Rabin, the process-call overhead
-dominates every FLINT row, so the adjusted curve is informational only.
-Gating-goal verdict: **blocked/no eligible rung** for this process-call
-shape.
+`*` the `n = 96` Lean median (`1.473 s`) sits above the `1 s` soft cap
+but within the `10 s` hard ceiling; it is kept to extend the trend.
+Eligible range `n = 24 … 96`: below `n = 24` the round-trip overhead is
+more than half the FLINT median. As with Rabin, the FLINT median grows
+with degree but stays three orders of magnitude below the Lean median;
+the raw ratio falls from `0.00194x` (`n = 24`) to `0.000342x` (`n = 96`),
+again a diverging trend in FLINT's favour. Gating-goal verdict at the
+largest eligible rung (`n = 96`): **fails** — Lean's
+`runDistinctDegreeChecksum` is `~2900x` slower than FLINT's
+`factor_distinct_deg`. The verdict is the same at the largest rung under
+the `1 s` soft cap (`n = 80`, `~2200x` slower).
 
 ## Profile
 
@@ -233,14 +286,22 @@ declared cubic model.
 
 ## Concerns
 
-- The two required FLINT gating comparators are wired, but the current
-  fixed process-call measurement shape has no eligible rung: driver
-  startup is more than 50% of the measured FLINT wall time for both
-  surfaces across the full ladder. HexBerlekamp should not re-claim
-  Phase 4 until either the comparator harness amortises the persistent
-  driver across measured inner repeats or an FFI comparator replaces the
-  process-call path.
-- The raw FLINT trend is adverse for both gating surfaces: after startup
-  stops dominating the Lean side, FLINT is substantially faster by the
-  largest measured rung (`0.162x` raw for Rabin at `n = 64`, `0.038x`
-  raw for DDF at `n = 96`, where lower is faster for FLINT/Lean ratios).
+- Both gating goals fail at the largest eligible rung. The comparator
+  measurement shape is now valid — `warmupFirstIter` plus the raised
+  `minTotalSeconds` floor amortise the persistent driver out of the
+  per-call median, so the eligible range is `n = 24 … 64` for Rabin and
+  `n = 24 … 96` for DDF rather than empty. But on those eligible rungs
+  FLINT is three to four orders of magnitude faster than Lean
+  (`runRabinTestChecksum` is `~1700x` slower than `is_irreducible` at
+  `n = 64`; `runDistinctDegreeChecksum` is `~2900x` slower than
+  `factor_distinct_deg` at `n = 96`). The SPEC goal is that Lean be at
+  least as fast as FLINT at the largest eligible rung; it is not.
+  HexBerlekamp should not re-claim Phase 4 until the Rabin and
+  distinct-degree kernels close that gap — this is an algorithm/constant-
+  factor gap in the executable Lean implementations, not a
+  measurement-harness artefact.
+- The raw FLINT ratio diverges (lower is faster for FLINT/Lean) across
+  both eligible ranges: Rabin falls from `0.00286x` (`n = 24`) to
+  `0.000588x` (`n = 64`), DDF from `0.00194x` (`n = 24`) to `0.000342x`
+  (`n = 96`). FLINT pulls steadily further ahead as the degree grows, so
+  the gap is widening, not a fixed offset.
