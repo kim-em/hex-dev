@@ -3451,6 +3451,163 @@ private theorem foldl_congr_const {α : Type _} (g : FpPoly p)
       have hsum := congr_add_of_congr ha0 hb0
       rwa [C_add_C] at hsum
 
+omit [ZMod64.PrimeModulus p] in
+/-- `d ∣ a → d ∣ a * z`, the right companion of `DensePoly.dvd_mul_left_poly`. -/
+private theorem dvd_mul_right_poly {d a : FpPoly p} (z : FpPoly p) (h : d ∣ a) :
+    d ∣ a * z := by
+  rcases h with ⟨e, he⟩
+  exact ⟨e * z, by rw [he, FpPoly.mul_assoc]⟩
+
+omit [ZMod64.PrimeModulus p] in
+/-- Two `(· + ·)`-`folds` with pointwise-equal step functions are equal. -/
+private theorem foldl_add_congr_terms {α : Type _} (F G : α → ZMod64 p) :
+    ∀ (xs : List α), (∀ k ∈ xs, F k = G k) →
+      ∀ init, xs.foldl (fun acc k => acc + F k) init =
+        xs.foldl (fun acc k => acc + G k) init := by
+  intro xs
+  induction xs with
+  | nil => intro _ init; rfl
+  | cons x xs ih =>
+      intro h init
+      simp only [List.foldl_cons]
+      rw [h x (by simp)]
+      exact ih (fun k hk => h k (List.mem_cons_of_mem _ hk)) (init + G x)
+
+/-- Each fixed-space kernel basis polynomial is reduced modulo `f`. -/
+private theorem fixedSpaceKernel_get_size_le
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (k : Fin (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic))) :
+    ((fixedSpaceKernel f hmonic).get k).size ≤ basisSize f := by
+  have hker_eq :
+      (fixedSpaceKernel f hmonic).get k =
+        vectorToPoly ((fixedSpaceKernelVectors f hmonic).get k) := by
+    unfold fixedSpaceKernel
+    rw [Vector.get_ofFn]
+  rw [hker_eq]
+  unfold vectorToPoly
+  have hle :
+      (FpPoly.ofCoeffs ((fixedSpaceKernelVectors f hmonic).get k).toArray).size ≤
+        ((fixedSpaceKernelVectors f hmonic).get k).toArray.size :=
+    DensePoly.size_ofCoeffs_le _
+  have hsz :
+      ((fixedSpaceKernelVectors f hmonic).get k).toArray.size = basisSize f :=
+    ((fixedSpaceKernelVectors f hmonic).get k).size_toArray
+  omega
+
+omit [ZMod64.PrimeModulus p] in
+/-- Square-freeness (as the `∀ d` divisor predicate) descends to a factor: if
+`g * cof = f` is square-free then so is `g`. -/
+private theorem squareFree_predicate_of_mul
+    (f g cof : FpPoly p) (hf_eq : g * cof = f)
+    (hsquareFree : ∀ d, d ∣ f → d ∣ DensePoly.derivative f →
+      isUnitPolynomial d = true) :
+    ∀ d, d ∣ g → d ∣ DensePoly.derivative g → isUnitPolynomial d = true := by
+  intro d hdg hdg'
+  apply hsquareFree d
+  · rcases hdg with ⟨e, he⟩
+    exact ⟨e * cof, by rw [← hf_eq, he, FpPoly.mul_assoc]⟩
+  · have hderiv : DensePoly.derivative f =
+        DensePoly.derivative g * cof + g * DensePoly.derivative cof := by
+      rw [← hf_eq]; exact DensePoly.derivative_mul g cof
+    rw [hderiv]
+    exact DensePoly.dvd_add_poly (dvd_mul_right_poly cof hdg')
+      (dvd_mul_right_poly (DensePoly.derivative cof) hdg)
+
+set_option maxHeartbeats 800000 in
+/--
+**CRT lift of a kernel witness.** Given `g * cof = f` with `f` square-free and
+`g` of positive degree, a `g`-kernel polynomial `hh` nonconstant modulo `g`
+lifts to an `f`-kernel polynomial `H` (reduced modulo `f`, hence
+`size ≤ basisSize f`) that is still nonconstant modulo `g`. The lift is the CRT
+combination `H ≡ hh (mod g)`, `H ≡ 0 (mod cof)`; coprimality of `g` and `cof`
+comes from square-freeness.
+-/
+private theorem exists_fKernel_witness_nonconst_mod_g
+    (f g cof : FpPoly p) (hf_eq : g * cof = f) (hf_ne : f ≠ 0)
+    (hg_pos : 0 < g.degree?.getD 0)
+    (hsquareFree : ∀ d, d ∣ f → d ∣ DensePoly.derivative f →
+      isUnitPolynomial d = true)
+    (hh : FpPoly p)
+    (hh_dvd : g ∣ (FpPoly.linearPow hh p - hh))
+    (hh_nonconst : ∀ c : ZMod64 p, ¬ DensePoly.Congr hh (DensePoly.C c) g) :
+    ∃ H : FpPoly p,
+      f ∣ (FpPoly.linearPow H p - H) ∧
+      H.size ≤ basisSize f ∧
+      ∀ c : ZMod64 p, ¬ DensePoly.Congr H (DensePoly.C c) g := by
+  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
+  have hg_ne : g ≠ 0 := ne_zero_of_pos_degree hg_pos
+  have hcof_ne : cof ≠ 0 := by
+    intro h; rw [h, FpPoly.mul_zero] at hf_eq; exact hf_ne hf_eq.symm
+  have hf_pos : 0 < f.degree?.getD 0 := by
+    rw [← hf_eq, FpPoly.degree?_mul_eq_add_degree? g cof hg_ne hcof_ne]; omega
+  -- Bezout from square-freeness: `gcd g cof ∣ 1`.
+  have hgcd_dvd_one : DensePoly.gcd g cof ∣ (1 : FpPoly p) :=
+    common_dvd_one_of_squareFree_mul
+      (fun e he hde => hsquareFree e (hf_eq ▸ he) (hf_eq ▸ hde))
+      (DensePoly.gcd_dvd_left g cof) (DensePoly.gcd_dvd_right g cof)
+  obtain ⟨s, t, hbez⟩ := exists_bezout_eq_one_of_gcd_dvd_one g cof hgcd_dvd_one
+  -- CRT combination `H0 ≡ hh (mod g)`, `H0 ≡ 0 (mod cof)`. Generalize the large
+  -- `polyCRT` term to an opaque `H0` to avoid `whnf` heartbeat blowups.
+  have hH0_g : DensePoly.Congr (DensePoly.polyCRT g cof hh 0 s t) hh g :=
+    DensePoly.polyCRT_congr_fst g cof hh 0 s t hbez
+  have hH0_cof : DensePoly.Congr (DensePoly.polyCRT g cof hh 0 s t) 0 cof :=
+    DensePoly.polyCRT_congr_snd g cof hh 0 s t hbez
+  generalize DensePoly.polyCRT g cof hh 0 s t = H0 at hH0_g hH0_cof
+  have hmg : H0 % g = hh % g :=
+    @DensePoly.mod_eq_mod_of_congr (ZMod64 p) inferInstance inferInstance inferInstance
+      (ZMod64.instDivModLawsZMod64Fp p) _ _ _ hH0_g
+  -- `g ∣ linearPow H0 p - H0`.
+  have hg_dvd_H0 : g ∣ (FpPoly.linearPow H0 p - H0) := by
+    have c1 : DensePoly.Congr (FpPoly.linearPow H0 p) (FpPoly.linearPow hh p) g :=
+      linearPow_congr_of_congr g H0 hh p hH0_g
+    have m1 : (FpPoly.linearPow H0 p) % g = (FpPoly.linearPow hh p) % g :=
+      @DensePoly.mod_eq_mod_of_congr (ZMod64 p) inferInstance inferInstance inferInstance
+        (ZMod64.instDivModLawsZMod64Fp p) _ _ _ c1
+    have m2 : (FpPoly.linearPow hh p) % g = hh % g :=
+      @DensePoly.mod_eq_mod_of_congr (ZMod64 p) inferInstance inferInstance inferInstance
+        (ZMod64.instDivModLawsZMod64Fp p) _ _ _ hh_dvd
+    have hmod : (FpPoly.linearPow H0 p) % g = H0 % g := by rw [m1, m2, ← hmg]
+    exact @DensePoly.congr_of_mod_eq_mod (ZMod64 p) inferInstance inferInstance inferInstance
+      (ZMod64.instDivModLawsZMod64Fp p) _ _ _ hmod
+  -- `cof ∣ linearPow H0 p - H0`.
+  have hcof_dvd_H0 : cof ∣ (FpPoly.linearPow H0 p - H0) :=
+    dvd_linearPow_sub_self_of_congr_zero cof H0 hH0_cof
+  -- `f ∣ linearPow H0 p - H0`.
+  have hf_dvd_H0 : f ∣ (FpPoly.linearPow H0 p - H0) := by
+    rw [← hf_eq]
+    exact mul_dvd_of_dvd_dvd_common hg_dvd_H0 hcof_dvd_H0
+      (fun d hdg hdc => common_dvd_one_of_bezout hbez d hdg hdc)
+  refine ⟨H0 % f, ?_, ?_, ?_⟩
+  · -- `f ∣ linearPow (H0 % f) p - (H0 % f)`.
+    have := (dvd_linearPow_sub_self_mod_iff f H0 1).mp (by simpa using hf_dvd_H0)
+    simpa using this
+  · -- `(H0 % f).size ≤ basisSize f`.
+    rw [basisSize]
+    have hlt := DensePoly.mod_degree_lt_of_pos_degree H0 f hf_pos
+    by_cases hsize : (H0 % f).size = 0
+    · omega
+    · have hpos : 0 < (H0 % f).size := Nat.pos_of_ne_zero hsize
+      have hdeg_eq : (H0 % f).degree?.getD 0 = (H0 % f).size - 1 := by
+        unfold DensePoly.degree?; simp [Nat.ne_of_gt hpos]
+      omega
+  · -- `H0 % f` is nonconstant modulo `g`.
+    intro c hc
+    apply hh_nonconst c
+    apply @DensePoly.congr_of_mod_eq_mod (ZMod64 p) inferInstance inferInstance inferInstance
+      (ZMod64.instDivModLawsZMod64Fp p) _ _ _
+    have e_hc : (H0 % f) % g = (DensePoly.C c) % g :=
+      @DensePoly.mod_eq_mod_of_congr (ZMod64 p) inferInstance inferInstance inferInstance
+        (ZMod64.instDivModLawsZMod64Fp p) _ _ _ hc
+    have e_modf : DensePoly.Congr (H0 % f) H0 g := by
+      have hcongr_f : DensePoly.Congr (H0 % f) H0 f :=
+        @DensePoly.congr_mod (ZMod64 p) inferInstance inferInstance inferInstance
+          (ZMod64.instDivModLawsZMod64Fp p) H0 f
+      exact fp_dvd_trans (⟨cof, hf_eq.symm⟩ : g ∣ f) hcongr_f
+    have e_modf' : (H0 % f) % g = H0 % g :=
+      @DensePoly.mod_eq_mod_of_congr (ZMod64 p) inferInstance inferInstance inferInstance
+        (ZMod64.instDivModLawsZMod64Fp p) _ _ _ e_modf
+    exact hmg.symm.trans (e_modf'.symm.trans e_hc)
+
 /--
 For a monic square-free `f` whose executable Berlekamp factorization returns
 at most one factor, `f` is irreducible. Composes the structural loop lemma
