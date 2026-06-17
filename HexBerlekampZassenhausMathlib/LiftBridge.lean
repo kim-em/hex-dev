@@ -94,6 +94,59 @@ def trueFactorLiftOfSubset
     rw [supportProduct_supportOfSubset, hproduct]
 
 /--
+Build a recovered BHKS true-factor package from concrete lift data plus the
+centered/dilated recovery equality produced by the executable recovery path.
+
+Unlike `trueFactorLiftOfSubset`, this constructor does not require the raw
+integer equality `liftedFactorProduct d T = factor`; it records exactly the
+recovered product shape exposed by the BHKS candidate/recovery lemmas.
+-/
+def recoveredLiftOfSubset
+    (f : Hex.ZPoly) (d : Hex.LiftData) (T : LiftedFactorSubset d)
+    (factor cofactor : Hex.ZPoly)
+    (hfactor : factor * cofactor = f)
+    (hrecovered :
+      Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff f)
+          (Hex.centeredLiftPoly (liftedFactorProduct d T) (d.p ^ d.k)) =
+        factor) :
+    RecoveredLift (Hex.bhksLatticeBasis f d.p d.k d.liftedFactors)
+      (supportOfSubset f d T) where
+  f := f
+  p := d.p
+  a := d.k
+  liftedFactors := d.liftedFactors
+  basis_eq := rfl
+  factor := factor
+  cofactor := cofactor
+  factor_mul := hfactor
+  recovered_eq := by
+    rw [supportProduct_supportOfSubset, hrecovered]
+
+/--
+Every raw true-factor lift also gives a recovered-lift certificate when the
+caller supplies the corresponding centered/dilated recovery equality.  This is a
+thin adapter for proof paths that already carry `TrueFactorLift` data but need
+to enter the recovered-product API.
+-/
+def recoveredLiftOfTrueFactorLift
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S)
+    (hrecovered :
+      Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff D.f)
+          (Hex.centeredLiftPoly (supportProduct L S) (D.p ^ D.a)) =
+        D.factor) :
+    RecoveredLift L S where
+  f := D.f
+  p := D.p
+  a := D.a
+  liftedFactors := D.liftedFactors
+  basis_eq := D.basis_eq
+  factor := D.factor
+  cofactor := D.cofactor
+  factor_mul := D.factor_mul
+  recovered_eq := hrecovered
+
+/--
 Derive the semantic BHKS true-factor package for a support drawn from monic
 `toMonicLiftData` evidence.
 

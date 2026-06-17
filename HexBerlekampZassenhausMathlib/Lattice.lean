@@ -194,6 +194,33 @@ structure TrueFactorLift
   support_product_eq : supportProduct L S = factor
 
 /--
+Proof-facing package for a true factor recovered from the selected lifted-factor
+product by the executable centered/dilated recovery path.
+
+This is parallel to `TrueFactorLift`, but it deliberately does not assert the
+raw integer equality `supportProduct L S = factor`.  The recovery algorithm
+only exposes the centered representative modulo `p ^ a`, dilated by the
+leading coefficient of `f`, as the recovered integer factor.  Downstream lemmas
+that only need the BHKS support, factor/cofactor identity, and recovered product
+shape should consume this package instead of strengthening their hypotheses back
+to raw selected-product equality.
+-/
+structure RecoveredLift
+    (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) where
+  f : Hex.ZPoly
+  p : Nat
+  a : Nat
+  liftedFactors : Array Hex.ZPoly
+  basis_eq : L = Hex.bhksLatticeBasis f p a liftedFactors
+  factor : Hex.ZPoly
+  cofactor : Hex.ZPoly
+  factor_mul : factor * cofactor = f
+  recovered_eq :
+    Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff f)
+        (Hex.centeredLiftPoly (supportProduct L S) (p ^ a)) =
+      factor
+
+/--
 Semantic lift facts needed to interpret the executable CLD rows as genuine
 logarithmic-derivative columns.
 
@@ -433,6 +460,76 @@ theorem coeffWidth_eq
   rfl
 
 end TrueFactorLift
+
+namespace RecoveredLift
+
+/-- A recovered lift package supplies the BHKS block form used by coordinate
+and norm-bound reducers. -/
+theorem blockForm
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) :
+    BhksBlockForm L := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    recovered_eq⟩
+  cases basis_eq
+  exact bhksLatticeBasis_blockForm f p a liftedFactors
+
+/-- The packaged basis carries exactly the lifted-factor array used to build
+the executable BHKS lattice. -/
+theorem liftedFactors_eq
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) :
+    L.liftedFactors = D.liftedFactors := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    recovered_eq⟩
+  cases basis_eq
+  rfl
+
+/-- The packaged basis carries exactly the cut thresholds computed from the
+input polynomial and prime. -/
+theorem cutThresholds_eq
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) :
+    L.cutThresholds = Hex.bhksCutThresholds D.f D.p := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    recovered_eq⟩
+  cases basis_eq
+  rfl
+
+/-- The packaged basis carries exactly the CLD rows computed from the concrete
+lifted factors. -/
+theorem cldRows_eq
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) :
+    L.cldRows = D.liftedFactors.map (fun g => Hex.cldCoeffs D.f D.p D.a g) := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    recovered_eq⟩
+  cases basis_eq
+  rfl
+
+/-- The packaged basis factor count is exactly the concrete lifted-factor
+array size. -/
+theorem factorCount_eq
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) :
+    L.factorCount = D.liftedFactors.size := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    recovered_eq⟩
+  cases basis_eq
+  rfl
+
+/-- The packaged basis coefficient width is exactly the input polynomial degree
+used by the executable CLD rows. -/
+theorem coeffWidth_eq
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) :
+    L.coeffWidth = D.f.degree?.getD 0 := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    recovered_eq⟩
+  cases basis_eq
+  rfl
+
+end RecoveredLift
 
 /--
 Canonical projected-block identity: under block form, the first `factorCount`
