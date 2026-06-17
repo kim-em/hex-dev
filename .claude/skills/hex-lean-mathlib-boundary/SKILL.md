@@ -1,6 +1,6 @@
 ---
 name: hex-lean-mathlib-boundary
-description: Gotchas for the Mathlib-free/Mathlib boundary in HexBerlekampZassenhausMathlib and similar *Mathlib Lean layers (ZMod64, FpPoly, DensePoly, ZPoly). Read before proving lemmas that mix the executable types with Mathlib Polynomial / ZMod algebra, OR before verifying any change to a *Mathlib bridge file — CI does not build those libraries, so a whole-library `lake build` failure may be pre-existing on main (see "The Mathlib layer is not CI-built").
+description: Gotchas for the Mathlib-free/Mathlib boundary in HexBerlekampZassenhausMathlib and similar *Mathlib Lean layers (ZMod64, FpPoly, DensePoly, ZPoly). Read before proving lemmas that mix the executable types with Mathlib Polynomial / ZMod algebra, OR before verifying any change to a *Mathlib bridge file — `ci.yml` builds the whole `HexBerlekampZassenhausMathlib` library (and transitively `HexBerlekampMathlib`), so those layers are merge-gating and must stay green (see "The Mathlib layer IS CI-gated").
 allowed-tools: Bash, Read, Grep, Glob
 ---
 
@@ -501,20 +501,28 @@ unify via `isDefEq`. Recipe that works:
   then `factorsModP_*_of_factorsModPBerlekampForm` and
   `QuadraticMultifactorLiftInvariant_of_choosePrimeData`).
 
-## The Mathlib layer is not CI-built — establish a baseline first
+## The Mathlib layer IS CI-gated — keep it green; establish a baseline first
 
-CI builds only bench + conformance targets (`ci.yml`, `conformance.yml`);
-it does **not** build `HexBerlekampZassenhausMathlib`. So that layer can be
-**hard-red on main** — a real elaboration error, not just the known
-`sorry`s — whenever an executable→Mathlib split is mid-flight (e.g. the
-dilation remodel left `Basic.lean` failing at `:15990` while #6804/#6772 were
-open), and merges keep flowing because nothing gates it.
+`ci.yml` has a `Build HO-1 Mathlib bridge` step (`lake build
+HexBerlekampZassenhausMathlib`, currently `ci.yml:67`) that builds the whole
+`HexBerlekampZassenhausMathlib` library — and transitively `HexBerlekampMathlib`,
+which it imports. So **both** Mathlib layers are merge-gating: an
+`unknown identifier` / elaboration error there turns CI red and blocks merge,
+and a green CI rollup **does** mean those layers compile (the shipped `sorry`s
+are warnings, not errors). Do not assume the layer can be "hard-red on main" —
+it cannot, CI gates it. (Earlier versions of this skill claimed CI did not build
+this layer; that was true before the bridge step was added and is now wrong.)
 
-Because nothing gates it, a green CI rollup does **not** mean a Mathlib-layer
-file compiles — a reviewer of such a PR must build it locally to verify it at
-all. A fresh worktree has no built Mathlib, so run `lake exe cache get` first
-(fetches prebuilt oleans in minutes; a from-scratch Mathlib compile is hours).
-Only the project's own files then rebuild.
+Practical consequence for a boundary change: building only
+`HexBerlekampMathlib.<Module>` is **not** enough to know your PR is green — run
+`lake build HexBerlekampZassenhausMathlib` and confirm it finishes
+(`Build completed successfully`, zero `error:`) before opening the PR, because
+that whole library is what CI runs. If your change to an upstream lemma (e.g.
+removing or renaming a `HexBerlekampMathlib` declaration) breaks a downstream
+consumer, CI will catch it — find the consumers with `grep -rn <name>
+HexBerlekampZassenhausMathlib/` first. A fresh worktree has no built Mathlib, so
+run `lake exe cache get` first (prebuilt oleans in minutes; a from-scratch
+Mathlib compile is hours). Only the project's own files then rebuild.
 
 When you verify against a Mathlib-layer module with a throwaway scratch file
 (`lake env lean Scratch.lean` importing e.g. `HexBerlekampZassenhausMathlib.Lattice`),
