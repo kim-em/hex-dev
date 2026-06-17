@@ -1327,7 +1327,14 @@ private def henselLiftLoop
       let next := linearHenselStep p current f acc.g acc.h s t
       henselLiftLoop p steps (current + 1) f s t next
 
-/-- The proof state carried by the linear Hensel loop at precision `p^current`. -/
+/-- The proof state carried by the linear Hensel loop at precision `p^current`.
+
+The final `0 < acc.g.degree?.getD 0` component records that the lifted leading
+factor is nonconstant. It propagates trivially through the loop (the linear step
+preserves `acc.g`'s degree) and is exactly what makes the per-step degree
+obligation `LinearLiftStepDegreeInvariant` provable from the invariant alone:
+without it the admissible constant case `acc.g = 1` satisfies every other
+component yet has degree `0`, so no strict degree drop is available. -/
 def LinearLiftLoopInvariant
     (p current : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (s t : FpPoly p) (acc : LinearLiftResult) : Prop :=
@@ -1335,7 +1342,8 @@ def LinearLiftLoopInvariant
     ZPoly.congr
       (FpPoly.liftToZ (s * ZPoly.modP p acc.g + t * ZPoly.modP p acc.h))
       1 p ∧
-    DensePoly.Monic acc.g
+    DensePoly.Monic acc.g ∧
+    0 < acc.g.degree?.getD 0
 
 namespace LinearLiftLoopInvariant
 
@@ -1366,7 +1374,16 @@ theorem monic_g
     {f : ZPoly} {s t : FpPoly p} {acc : LinearLiftResult}
     (hinv : LinearLiftLoopInvariant p current f s t acc) :
     DensePoly.Monic acc.g :=
-  hinv.2.2
+  hinv.2.2.1
+
+/-- The positive-degree (nonconstant) component of a linear-lift loop invariant. -/
+@[simp, grind =>]
+theorem pos_degree
+    {p current : Nat} [ZMod64.Bounds p]
+    {f : ZPoly} {s t : FpPoly p} {acc : LinearLiftResult}
+    (hinv : LinearLiftLoopInvariant p current f s t acc) :
+    0 < acc.g.degree?.getD 0 :=
+  hinv.2.2.2
 
 end LinearLiftLoopInvariant
 
@@ -1900,16 +1917,24 @@ private theorem henselLiftLoop_invariant
       let next := linearHenselStep p current f acc.g acc.h s t
       have hnext :
           LinearLiftLoopInvariant p (current + 1) f s t next := by
-        rcases hinv with ⟨hprod, hbez, hmonic⟩
-        refine ⟨?_, ?_, ?_⟩
+        rcases hinv with ⟨hprod, hbez, hmonic, hposdeg⟩
+        have hstepDeg :
+            LinearLiftStepDegreeInvariant p current f s t acc :=
+          hstepDegree current acc (by omega) ⟨hprod, hbez, hmonic, hposdeg⟩
+        refine ⟨?_, ?_, ?_, ?_⟩
         · simpa [next] using
             linearHenselStep_spec p current f acc.g acc.h s t hcurrent hprod hbez hmonic
-        · simpa [next] using hstepBezout current acc (by omega) ⟨hprod, hbez, hmonic⟩
+        · simpa [next] using hstepBezout current acc (by omega) ⟨hprod, hbez, hmonic, hposdeg⟩
         · exact
             linearHenselStep_monic p current f acc.g acc.h s t hp hmonic
-              (by
-                simpa [LinearLiftStepDegreeInvariant] using
-                  hstepDegree current acc (by omega) ⟨hprod, hbez, hmonic⟩)
+              (by simpa [LinearLiftStepDegreeInvariant] using hstepDeg)
+        · have hdeg :
+              (linearHenselStep p current f acc.g acc.h s t).g.degree? = acc.g.degree? :=
+            linearHenselStep_g_degree?_eq p current f acc.g acc.h s t hp hmonic
+              (by simpa [LinearLiftStepDegreeInvariant] using hstepDeg)
+          have hnextdeg : next.g.degree? = acc.g.degree? := hdeg
+          rw [hnextdeg]
+          exact hposdeg
       have htail :
           LinearLiftLoopInvariant p ((current + 1) + steps) f s t
             (henselLiftLoop p steps (current + 1) f s t next) := by
@@ -1999,7 +2024,7 @@ theorem henselLift_monic
         simpa [start] using
           henselLiftLoop_invariant p k' 1 f s t start hp (by omega) (by simpa [start] using hstart)
             hstepDegree hstepBezout
-      simpa [henselLift, start] using hloop.2.2
+      simpa [henselLift, start] using hloop.2.2.1
 
 /-- The linear Hensel loop changes the leading factor only by multiples of the
 current modulus, so the looped factor stays congruent to the starting factor
