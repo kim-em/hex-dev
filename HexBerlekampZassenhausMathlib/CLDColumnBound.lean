@@ -1191,6 +1191,52 @@ theorem tightColumnBound_of_lift
   · -- hy: the factor's `Phi`-column is Mignotte-bounded.
     exact abs_phi_coeff_le_bhksCoeffBound D.f D.factor j.val hfac_monic hfac_dvd
 
+/--
+**Single-support tight CLD norm certificate.**  A genuine true-factor lift
+package directly yields `TrueFactorCLDTightNormBound` (the
+`4·‖v‖² ≤ bhksCutRadiusSq4` cut-radius bound the prefix cut consumes), by
+composing the tight per-column estimate `tightColumnBound_of_lift` with the
+column-to-norm reducer `tightNormBound_of_lift`.
+
+This lives in `CLDColumnBound` rather than `Lattice` because
+`tightColumnBound_of_lift` is downstream of `Lattice` in the import graph
+(`CLDColumnBound → BadVectorAuxiliary → BadVector → Lattice`); placing the
+composition in `Lattice` would be circular.
+-/
+theorem trueFactorCLDTightNormBound_of_lift
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S) (H : TrueFactorLiftSemantics D)
+    (hp : 2 ≤ D.p) (hk : 1 < D.p ^ D.a)
+    (hsep : ∀ j, 2 * Hex.bhksCoeffBound D.f j < D.p ^ D.a) :
+    TrueFactorCLDTightNormBound L S :=
+  tightNormBound_of_lift D (tightColumnBound_of_lift D H hp hk hsep)
+
+/--
+**Per-support tight CLD norm-bound family.**  Assemble the `∀ S` certificate
+family that `cutProjectionHypotheses_of_trueFactors` (`Lattice.lean`) consumes
+as its `tight` argument, from a per-support family of genuine lift packages plus
+the per-support separation facts.
+
+The binder shape mirrors `cutProjectionHypotheses_of_trueFactors` exactly (same
+`L`, same `trueSupports`), so the result drops straight into its `tight` slot
+with no reshaping.  The separation facts `hp`/`hk`/`hsep` are taken per-support,
+since they reference `(Dfam S).p`, `(Dfam S).a`, `(Dfam S).f`, which vary per
+package and are not fields of `TrueFactorLift`/`TrueFactorLiftSemantics`.
+-/
+theorem trueFactorCLDTightNormBoundFamily_of_lift
+    (L : Hex.BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth)
+    (trueSupports :
+      Set (Set (Fin (Hex.bhksProjectedRows L hrows).factorCount)))
+    (Dfam : ∀ S : trueSupports, TrueFactorLift L S.1)
+    (Hfam : ∀ S : trueSupports, TrueFactorLiftSemantics (Dfam S))
+    (hp : ∀ S : trueSupports, 2 ≤ (Dfam S).p)
+    (hk : ∀ S : trueSupports, 1 < (Dfam S).p ^ (Dfam S).a)
+    (hsep : ∀ S : trueSupports,
+      ∀ j, 2 * Hex.bhksCoeffBound (Dfam S).f j < (Dfam S).p ^ (Dfam S).a) :
+    ∀ S : trueSupports, TrueFactorCLDTightNormBound L S.1 :=
+  fun S =>
+    trueFactorCLDTightNormBound_of_lift (Dfam S) (Hfam S) (hp S) (hk S) (hsep S)
+
 end BHKS
 
 end
