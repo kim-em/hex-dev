@@ -15,6 +15,19 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
 
 ## Concrete rules
 
+- **The `*_semiring`/`*_ring`-specialized `DensePoly` coeff `@[simp]` lemmas
+  do not match a goal term built with the canonical instances.**
+  `DensePoly.coeff_derivative_semiring` / `coeff_add_semiring` / `coeff_sub_ring`
+  restate `derivative`/`add`/`sub` through the `Lean.Grind.Semiring`-derived
+  `NatCast`/`Mul` (the `attribute [local instance 1100] Semiring.natCast`), a
+  *different instance path* than the canonical `NatCast (ZMod64 p)` /
+  `Mul (ZMod64 p)` that a `DensePoly.derivative f` term in a Mathlib-layer goal
+  carries. So `rw`/`simp only [coeff_derivative_semiring]` silently fails to fire
+  (reported "unused" / "did not find pattern") even though the statement looks
+  right. Use the **general** lemma with the explicit zero hypothesis instead —
+  `rw [Hex.DensePoly.coeff_derivative f n (Lean.Grind.Semiring.mul_zero _)]` — it
+  matches the goal's operation exactly, then `toZMod_mul`/`toZMod_natCast` +
+  `push_cast; ring` finish the transport against `Polynomial.coeff_derivative`.
 - **`grind`, not `ring`, for `ZMod64`/`FpPoly` arithmetic.** Ring lemmas
   (`mul_one`, `neg_add_cancel`, `ring`) need Mathlib instances these types lack.
   `grind` uses the `Lean.Grind.CommRing` instance; prime-inverse facts
