@@ -2133,6 +2133,114 @@ theorem henselLift_monic_of_base
     (fun n state hn hinv =>
       stepBezout_of_invariant p n f s t state hn hinv.bezout_congr)
 
+/-- The linear Hensel loop preserves the executable degree of the leading
+factor under the same invariants used by `henselLift_spec`. -/
+private theorem henselLiftLoop_g_degree?_eq
+    (p steps current : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (f : ZPoly) (s t : FpPoly p) (acc : LinearLiftResult)
+    (hp : 1 < p)
+    (hcurrent : 1 ≤ current)
+    (hinv : LinearLiftLoopInvariant p current f s t acc)
+    (hstepDegree :
+      ∀ (n : Nat) (state : LinearLiftResult),
+        current ≤ n →
+        LinearLiftLoopInvariant p n f s t state →
+        LinearLiftStepDegreeInvariant p n f s t state)
+    (hstepBezout :
+      ∀ (n : Nat) (state : LinearLiftResult),
+        current ≤ n →
+        LinearLiftLoopInvariant p n f s t state →
+        let next := linearHenselStep p n f state.g state.h s t
+        ZPoly.congr
+          (FpPoly.liftToZ (s * ZPoly.modP p next.g + t * ZPoly.modP p next.h))
+          1 p) :
+    (henselLiftLoop p steps current f s t acc).g.degree? = acc.g.degree? := by
+  induction steps generalizing current acc with
+  | zero =>
+      simp [henselLiftLoop]
+  | succ steps ih =>
+      let next := linearHenselStep p current f acc.g acc.h s t
+      rcases hinv with ⟨hprod, hbez, hmonic, hposdeg⟩
+      have hstepDeg :
+          LinearLiftStepDegreeInvariant p current f s t acc :=
+        hstepDegree current acc (by omega) ⟨hprod, hbez, hmonic, hposdeg⟩
+      have hnextInv :
+          LinearLiftLoopInvariant p (current + 1) f s t next := by
+        refine ⟨?_, ?_, ?_, ?_⟩
+        · simpa [next] using
+            linearHenselStep_spec p current f acc.g acc.h s t hcurrent hprod hbez hmonic
+        · simpa [next] using
+            hstepBezout current acc (by omega) ⟨hprod, hbez, hmonic, hposdeg⟩
+        · exact
+            linearHenselStep_monic p current f acc.g acc.h s t hp hmonic
+              (by simpa [LinearLiftStepDegreeInvariant] using hstepDeg)
+        · have hdeg :
+              (linearHenselStep p current f acc.g acc.h s t).g.degree? = acc.g.degree? :=
+            linearHenselStep_g_degree?_eq p current f acc.g acc.h s t hp hmonic
+              (by simpa [LinearLiftStepDegreeInvariant] using hstepDeg)
+          have hnextdeg : next.g.degree? = acc.g.degree? := hdeg
+          rw [hnextdeg]
+          exact hposdeg
+      have htail :
+          (henselLiftLoop p steps (current + 1) f s t next).g.degree? = next.g.degree? := by
+        apply ih (current := current + 1) (acc := next)
+        · omega
+        · exact hnextInv
+        · intro n state hn hstate
+          exact hstepDegree n state (by omega) hstate
+        · intro n state hn hstate
+          exact hstepBezout n state (by omega) hstate
+      have hstep :
+          next.g.degree? = acc.g.degree? := by
+        exact linearHenselStep_g_degree?_eq p current f acc.g acc.h s t hp hmonic
+          (by simpa [LinearLiftStepDegreeInvariant] using hstepDeg)
+      calc
+        (henselLiftLoop p (steps + 1) current f s t acc).g.degree?
+            = (henselLiftLoop p steps (current + 1) f s t next).g.degree? := by
+              simp [henselLiftLoop, next]
+        _ = next.g.degree? := htail
+        _ = acc.g.degree? := hstep
+
+/-- Convenience corollary of the linear Hensel loop invariants: the lifted
+leading factor has the same executable degree as the base `g`. -/
+theorem henselLift_degree?_of_base
+    (p k : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (f g h : ZPoly) (s t : FpPoly p)
+    (hk : 1 ≤ k)
+    (hp : 1 < p)
+    (hprod : ZPoly.congr (g * h) f p)
+    (hbez :
+      ZPoly.congr (FpPoly.liftToZ (s * ZPoly.modP p g + t * ZPoly.modP p h)) 1 p)
+    (hmonic : DensePoly.Monic g)
+    (hgdeg : 0 < g.degree?.getD 0) :
+    (henselLift p k f g h s t).g.degree? = g.degree? := by
+  cases k with
+  | zero =>
+      omega
+  | succ k' =>
+      let start : LinearLiftResult :=
+        { g := ZPoly.reduceModPow g p 1
+          h := ZPoly.reduceModPow h p 1 }
+      have hstartInv :
+          LinearLiftLoopInvariant p 1 f s t start := by
+        simpa [start] using
+          loopInvariant_one_of_base p f g h s t hp hprod hbez hmonic hgdeg
+      have hloop :
+          (henselLiftLoop p k' 1 f s t start).g.degree? = start.g.degree? := by
+        exact henselLiftLoop_g_degree?_eq p k' 1 f s t start hp (by omega) hstartInv
+          (fun n state _ hinv =>
+            stepDegree_of_monic_pos p n f s t state hp hinv.monic_g hinv.pos_degree)
+          (fun n state hn hinv =>
+            stepBezout_of_invariant p n f s t state hn hinv.bezout_congr)
+      have hstartDegree : start.g.degree? = g.degree? := by
+        simpa [start] using reduceModPow_degree?_eq_of_monic p 0 g hp hmonic
+      calc
+        (henselLift p (k' + 1) f g h s t).g.degree?
+            = (henselLiftLoop p k' 1 f s t start).g.degree? := by
+              simp [henselLift, start]
+        _ = start.g.degree? := hloop
+        _ = g.degree? := hstartDegree
+
 /-- The linear Hensel loop changes the leading factor only by multiples of the
 current modulus, so the looped factor stays congruent to the starting factor
 modulo the base prime `p` (for `1 ≤ current`). -/
