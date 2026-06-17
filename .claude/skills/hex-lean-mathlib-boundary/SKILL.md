@@ -666,7 +666,11 @@ restructure around the reported line first; it is usually a cheap `omega` or
   between the `/-- … -/` and the `structure`/`def`/`theorem` keyword** — a doc
   comment binds to the declaration it is adjacent to, so the wrong order gives a
   parse error (`unexpected token 'set_option'; expected 'lemma'`). Order is
-  `set_option … in` → `/-- doc -/` → `structure …`. Once the budget is large
+  `set_option … in` → `/-- doc -/` → `structure …`. The same applies to any
+  `… in` declaration modifier — e.g. `omit [Inst] in` to silence the
+  unused-section-variable linter on a pure-`Nat` helper in an instance-carrying
+  `variable` block — must come *before* the docstring (`omit … in` → `/-- doc -/`
+  → `theorem …`), else the same `unexpected token 'omit'` parse error. Once the budget is large
   enough, the *real* error often surfaces (e.g. an inline `by omega` whose
   target type wasn't yet determined because it sat under `lt_of_le_of_lt _ (by
   omega)` — fix by giving the bound an explicitly-typed `have h2 : … := by
