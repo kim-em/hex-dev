@@ -157,6 +157,21 @@ def supportProduct (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) :
         fun i => L.liftedFactors.getD i.val 1).toArray
 
 /--
+Sum of the per-selected-factor executable CLD quotients, taken over the same
+factor order as `supportProduct`.  Its `j`-th coefficient is the pre-`psiCut`,
+pre-indicator column-`j` entry of the true-factor CLD vector; the centering
+(`psiCut`) and indicator weighting are layered on top by the tight-column work
+(`#7651`).
+-/
+def supportCldSum (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
+    (f : Hex.ZPoly) (p a : Nat) : Hex.ZPoly :=
+  by
+    classical
+    exact
+      (((List.finRange L.factorCount).filter fun i => decide (i ∈ S)).map
+        fun i => Hex.cldQuotientMod f (L.liftedFactors.getD i.val 1) p a).sum
+
+/--
 Proof-facing package saying that a BHKS lattice basis and lifted-factor support
 come from concrete lift data for an integer polynomial.
 

@@ -511,6 +511,120 @@ theorem TrueFactorLiftSemantics.selected_cldQuotientMod_congr_mul_derivative
     (H.selected_pos_degree i hi)
     (H.selected_congr i hi)
 
+/--
+Product logarithmic-derivative congruence over a list of factors.
+
+If every factor `g` in `gs` satisfies the per-factor CLD congruence
+`g * q g ≡ f * g'  (mod m)`, then the product of `gs` times the sum of the
+`q`-images is congruent modulo `m` to `f` times the derivative of the product.
+This is the executable list form of the logarithmic-derivative identity
+`(∏ gᵢ) · Σ (f · gᵢ' / gᵢ) ≡ f · (∏ gᵢ)'`, proved by structural induction on the
+list using the Leibniz product rule, with no leave-one-out indexing.
+-/
+theorem congr_polyProduct_mul_listSum_derivative
+    (f : Hex.ZPoly) (q : Hex.ZPoly → Hex.ZPoly) (m : Nat) :
+    ∀ gs : List Hex.ZPoly,
+      (∀ g ∈ gs, Hex.ZPoly.congr (g * q g) (f * Hex.DensePoly.derivative g) m) →
+      Hex.ZPoly.congr
+        (Array.polyProduct gs.toArray * (gs.map q).sum)
+        (f * Hex.DensePoly.derivative (Array.polyProduct gs.toArray)) m := by
+  intro gs
+  induction gs with
+  | nil =>
+      intro _
+      have h1 : Array.polyProduct ([] : List Hex.ZPoly).toArray = 1 := by simp
+      have hd : Hex.DensePoly.derivative (1 : Hex.ZPoly) = 0 :=
+        Hex.DensePoly.derivative_C_semiring (1 : Int)
+      rw [h1, hd, List.map_nil, List.sum_nil]
+      have e1 : (1 : Hex.ZPoly) * 0 = 0 := by
+        rw [Hex.DensePoly.mul_comm_poly, Hex.DensePoly.zero_mul]
+      have e2 : f * (0 : Hex.ZPoly) = 0 := by
+        rw [Hex.DensePoly.mul_comm_poly, Hex.DensePoly.zero_mul]
+      rw [e1, e2]
+      exact Hex.ZPoly.congr_refl 0 m
+  | cons g rest ih =>
+      intro hall
+      have hg : Hex.ZPoly.congr (g * q g) (f * Hex.DensePoly.derivative g) m :=
+        hall g (List.mem_cons_self ..)
+      have hrest : ∀ g' ∈ rest,
+          Hex.ZPoly.congr (g' * q g') (f * Hex.DensePoly.derivative g') m :=
+        fun g' hg' => hall g' (List.mem_cons_of_mem g hg')
+      have IHrest := ih hrest
+      rw [Hex.ZPoly.polyProduct_cons_toArray, List.map_cons, List.sum_cons,
+        Hex.DensePoly.derivative_mul, Hex.DensePoly.mul_add_right_poly,
+        Hex.DensePoly.mul_add_right_poly]
+      set Prest := Array.polyProduct rest.toArray with hPrest
+      set Srest := (rest.map q).sum with hSrest
+      set dPrest := Hex.DensePoly.derivative Prest with hdPrest
+      refine Hex.ZPoly.congr_add _ _ _ _ m ?_ ?_
+      · -- `(g * Prest) * q g ≡ f * (g' * Prest)`
+        have lhs_eq : (g * Prest) * q g = (g * q g) * Prest := by
+          rw [Hex.DensePoly.mul_assoc_poly, Hex.DensePoly.mul_comm_poly Prest (q g),
+            ← Hex.DensePoly.mul_assoc_poly]
+        have hcong :
+            Hex.ZPoly.congr ((g * q g) * Prest)
+              ((f * Hex.DensePoly.derivative g) * Prest) m :=
+          Hex.ZPoly.congr_mul (g * q g) Prest (f * Hex.DensePoly.derivative g) Prest m
+            hg (Hex.ZPoly.congr_refl Prest m)
+        rw [lhs_eq,
+          ← Hex.DensePoly.mul_assoc_poly f (Hex.DensePoly.derivative g) Prest]
+        exact hcong
+      · -- `(g * Prest) * Srest ≡ f * (g * Prest')`
+        have lhs_eq : (g * Prest) * Srest = g * (Prest * Srest) :=
+          Hex.DensePoly.mul_assoc_poly g Prest Srest
+        have hcong :
+            Hex.ZPoly.congr (g * (Prest * Srest)) (g * (f * dPrest)) m :=
+          Hex.ZPoly.congr_mul g (Prest * Srest) g (f * dPrest) m
+            (Hex.ZPoly.congr_refl g m) IHrest
+        have rhs_eq : g * (f * dPrest) = f * (g * dPrest) := by
+          rw [← Hex.DensePoly.mul_assoc_poly g f dPrest,
+            Hex.DensePoly.mul_comm_poly g f, Hex.DensePoly.mul_assoc_poly f g dPrest]
+        rw [lhs_eq, ← rhs_eq]
+        exact hcong
+
+/--
+Product logarithmic-derivative sum identity over a selected support.
+
+`supportProduct L S` is `∏_{i ∈ S} gᵢ` and `supportCldSum L S f p a` is
+`Σ_{i ∈ S} (f · gᵢ' / gᵢ mod pᵃ)`; this says their product is congruent modulo
+`pᵃ` to `f · (∏_{i ∈ S} gᵢ)'`.  It feeds the executable per-factor CLD
+congruence (`selected_cldQuotientMod_congr_mul_derivative`) through the generic
+list aggregation, and is the column-wise statement the tight-column work
+(`#7651`) consumes: reading off coefficient `j` gives the pre-`psiCut`
+true-factor CLD column entry, tied to the genuine product factor rather than to
+an arbitrary lattice vector.
+-/
+theorem TrueFactorLiftSemantics.supportProduct_cldSum_congr
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S) (H : TrueFactorLiftSemantics D)
+    (hk : 1 < D.p ^ D.a) :
+    Hex.ZPoly.congr
+      (supportProduct L S * supportCldSum L S D.f D.p D.a)
+      (D.f * Hex.DensePoly.derivative (supportProduct L S))
+      (D.p ^ D.a) := by
+  classical
+  have hfilter_mem : ∀ i ∈ (List.finRange L.factorCount).filter
+        (fun i => decide (i ∈ S)), i ∈ S := by
+    intro i hi
+    rw [List.mem_filter] at hi
+    exact of_decide_eq_true hi.2
+  have hyps : ∀ g ∈ ((List.finRange L.factorCount).filter
+        (fun i => decide (i ∈ S))).map (fun i => L.liftedFactors.getD i.val 1),
+      Hex.ZPoly.congr (g * Hex.cldQuotientMod D.f g D.p D.a)
+        (D.f * Hex.DensePoly.derivative g) (D.p ^ D.a) := by
+    intro g hg
+    rw [List.mem_map] at hg
+    obtain ⟨i, hi_mem, rfl⟩ := hg
+    have hi : i ∈ S := hfilter_mem i hi_mem
+    rw [TrueFactorLift.liftedFactors_eq D]
+    exact TrueFactorLiftSemantics.selected_cldQuotientMod_congr_mul_derivative D H hk i hi
+  have key := congr_polyProduct_mul_listSum_derivative D.f
+    (fun g => Hex.cldQuotientMod D.f g D.p D.a) (D.p ^ D.a)
+    (((List.finRange L.factorCount).filter (fun i => decide (i ∈ S))).map
+      (fun i => L.liftedFactors.getD i.val 1)) hyps
+  rw [List.map_map] at key
+  exact key
+
 end BHKS
 
 /--
