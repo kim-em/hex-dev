@@ -357,12 +357,12 @@ libraries:
   HexModArithMathlib:
     deps: [HexModArith]
     mathlib: true
-    done_through: 4
+    done_through: 5
     status: active
   HexGramSchmidtMathlib:
     deps: [HexGramSchmidt, HexMatrixMathlib]
     mathlib: true
-    done_through: 4
+    done_through: 5
     status: active
   HexPolyZMathlib:
     deps: [HexPolyZ, HexHensel, HexPolyMathlib, HexModArithMathlib]
@@ -392,7 +392,7 @@ libraries:
   HexGFqMathlib:
     deps: [HexGFq, HexGF2Mathlib]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexHenselMathlib, HexPolyZMathlib, HexMatrixMathlib, HexLLLMathlib]

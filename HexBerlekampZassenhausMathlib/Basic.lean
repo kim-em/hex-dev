@@ -6804,29 +6804,12 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
   rw [heq]
   simpa using List.Nodup.map_on hinj_on hNodup
 
-/-- Discharge of the per-modular-factor natural-degree positivity premise on
-`henselLiftData_liftedFactor_natDegree_pos`: given the `factorsModPBerlekampForm`
-invariant (which records that `primeData.factorsModP` is the Berlekamp factor
-array of the monic modular image of the input) together with a successful
-`isGoodPrime` check and a positive-degree input polynomial, every modular factor
-lifts back to a positive-natural-degree Mathlib polynomial over `ℤ`.
-
-Proof: extract the existential witnesses from `factorsModPBerlekampForm` to view
-`data.factorsModP` as the Berlekamp factor list of `monicModularImage (modP data.p f)`,
-then apply the polymorphic abstract `Hex.Berlekamp.berlekampFactor_factors_pos_degree`.
-The required positivity of the monic modular image follows from `isGoodPrime`'s
-leading-coefficient admissibility (which preserves degree through `modP`) together
-with the input's positive degree.  The route from `0 < g.degree?.getD 0` on each
-`FpPoly p` factor to `0 < (toPolynomial (liftToZ g)).natDegree` on the integer
-side is `HexPolyMathlib.natDegree_toPolynomial` plus the (inline) observation
-that `liftToZ` preserves size on any nonzero `FpPoly p`.
-
-This is the sibling of `factorsModP_nodup_of_factorsModPBerlekampForm`: it lets a
-Mathlib-side caller of `henselLiftData_liftedFactor_natDegree_pos_of_choosePrimeData`
-discharge the `hfactors_natDegree_pos` premise from the `choosePrimeData?` facts
-alone, without constructing the per-modular-factor natural-degree witnesses by
-hand. -/
-theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
+/-- Under the `factorsModPBerlekampForm` invariant and a good prime, a positive-
+degree input polynomial has a positive-degree monic modular image.  `isGoodPrime`'s
+leading-coefficient admissibility preserves the degree through `modP`, and the
+monic rescale is by a nonzero unit, so it preserves size.  This is the positivity
+guard consumed by the per-modular-factor Mathlib irreducibility bridge. -/
+theorem monicModularImage_modP_degree?_pos_of_factorsModPBerlekampForm
     (f : Hex.ZPoly) (data : Hex.PrimeChoiceData)
     (hform : Hex.factorsModPBerlekampForm f data)
     (hgood :
@@ -6834,14 +6817,10 @@ theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
       Hex.isGoodPrime f data.p = true)
     (hf_pos : 0 < f.degree?.getD 0) :
     letI := data.bounds
-    ∀ g ∈ data.factorsModP,
-      0 < (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ g)).natDegree := by
+    0 < (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).degree?.getD 0 := by
   letI : Hex.ZMod64.Bounds data.p := data.bounds
   obtain ⟨hprime, hzero, heq⟩ := hform
-  let hfield := @Hex.zmod64FieldOfPrime data.p data.bounds
-    (Hex.ZMod64.primeModulusOfPrime hprime)
   letI : Hex.ZMod64.PrimeModulus data.p := Hex.ZMod64.primeModulusOfPrime hprime
-  -- Step A: 0 < (monicModularImage (modP data.p f)).degree?.getD 0
   have hfsize_ge_two : 2 ≤ f.size := by
     unfold Hex.DensePoly.degree? at hf_pos
     by_cases hfs0 : f.size = 0
@@ -6890,11 +6869,51 @@ theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
   have hmonicImage_size_ge_two :
       2 ≤ (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).size := by
     rw [hmonicImage_size]; exact hmodP_size_ge_two
+  unfold Hex.DensePoly.degree?
+  have hne : (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).size ≠ 0 := by omega
+  simp [hne]; omega
+
+/-- Discharge of the per-modular-factor natural-degree positivity premise on
+`henselLiftData_liftedFactor_natDegree_pos`: given the `factorsModPBerlekampForm`
+invariant (which records that `primeData.factorsModP` is the Berlekamp factor
+array of the monic modular image of the input) together with a successful
+`isGoodPrime` check and a positive-degree input polynomial, every modular factor
+lifts back to a positive-natural-degree Mathlib polynomial over `ℤ`.
+
+Proof: extract the existential witnesses from `factorsModPBerlekampForm` to view
+`data.factorsModP` as the Berlekamp factor list of `monicModularImage (modP data.p f)`,
+then apply the polymorphic abstract `Hex.Berlekamp.berlekampFactor_factors_pos_degree`.
+The required positivity of the monic modular image follows from `isGoodPrime`'s
+leading-coefficient admissibility (which preserves degree through `modP`) together
+with the input's positive degree.  The route from `0 < g.degree?.getD 0` on each
+`FpPoly p` factor to `0 < (toPolynomial (liftToZ g)).natDegree` on the integer
+side is `HexPolyMathlib.natDegree_toPolynomial` plus the (inline) observation
+that `liftToZ` preserves size on any nonzero `FpPoly p`.
+
+This is the sibling of `factorsModP_nodup_of_factorsModPBerlekampForm`: it lets a
+Mathlib-side caller of `henselLiftData_liftedFactor_natDegree_pos_of_choosePrimeData`
+discharge the `hfactors_natDegree_pos` premise from the `choosePrimeData?` facts
+alone, without constructing the per-modular-factor natural-degree witnesses by
+hand. -/
+theorem factorsModP_natDegree_pos_of_factorsModPBerlekampForm
+    (f : Hex.ZPoly) (data : Hex.PrimeChoiceData)
+    (hform : Hex.factorsModPBerlekampForm f data)
+    (hgood :
+      letI := data.bounds
+      Hex.isGoodPrime f data.p = true)
+    (hf_pos : 0 < f.degree?.getD 0) :
+    letI := data.bounds
+    ∀ g ∈ data.factorsModP,
+      0 < (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ g)).natDegree := by
+  letI : Hex.ZMod64.Bounds data.p := data.bounds
+  -- Step A: 0 < (monicModularImage (modP data.p f)).degree?.getD 0
   have hmonicImage_pos :
-      0 < (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).degree?.getD 0 := by
-    unfold Hex.DensePoly.degree?
-    have hne : (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).size ≠ 0 := by omega
-    simp [hne]; omega
+      0 < (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).degree?.getD 0 :=
+    monicModularImage_modP_degree?_pos_of_factorsModPBerlekampForm f data hform hgood hf_pos
+  obtain ⟨hprime, hzero, heq⟩ := hform
+  let hfield := @Hex.zmod64FieldOfPrime data.p data.bounds
+    (Hex.ZMod64.primeModulusOfPrime hprime)
+  letI : Hex.ZMod64.PrimeModulus data.p := Hex.ZMod64.primeModulusOfPrime hprime
   -- Step B: positivity for every entry in the Berlekamp factor list.
   have hFactorsPos :
       ∀ h ∈ (@Hex.Berlekamp.berlekampFactor data.p data.bounds
@@ -7835,12 +7854,17 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
     (hform : Hex.factorsModPBerlekampForm core primeData)
     (hgood :
       letI := primeData.bounds
-      Hex.isGoodPrime core primeData.p = true) :
+      Hex.isGoodPrime core primeData.p = true)
+    (hcore_pos : 0 < core.degree?.getD 0) :
     ∀ i : ModPFactorIndex primeData,
       Irreducible
         (@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
           (modPFactor primeData i)) := by
   letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  have hmonicImage_pos :
+      0 < (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)).degree?.getD 0 :=
+    monicModularImage_modP_degree?_pos_of_factorsModPBerlekampForm
+      core primeData hform hgood hcore_pos
   obtain ⟨hprime, hzero, heq⟩ := hform
   let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
     (Hex.ZMod64.primeModulusOfPrime hprime)
@@ -7907,7 +7931,7 @@ theorem factors_irreducible_of_factorsModPBerlekampForm
         Irreducible (HexBerlekampMathlib.toMathlibPolynomial g) :=
     HexBerlekampMathlib.irreducible_of_mem_berlekampFactor
       (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-      hmonicImage_monic hsf_common_monic
+      hmonicImage_monic hmonicImage_pos hsf_common_monic
   have hraw_ne :
       ∀ g ∈ (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
           (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
@@ -7993,7 +8017,8 @@ wrapper #4688 will compose this with the sibling
 trivial `fModP_eq` / `admissible_prime` / `square_free_reduction` fields. -/
 theorem factors_irreducible_of_choosePrimeData_of_some
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
-    (hselected : Hex.choosePrimeData? core = some primeData) :
+    (hselected : Hex.choosePrimeData? core = some primeData)
+    (hcore_pos : 0 < core.degree?.getD 0) :
     ∀ i : ModPFactorIndex primeData,
       Irreducible
         (@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds
@@ -8005,7 +8030,7 @@ theorem factors_irreducible_of_choosePrimeData_of_some
     exact ⟨Hex.choosePrimeData?_prime core primeData hselected, hzero, hfactors_eq⟩
   have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
     Hex.choosePrimeData?_isGoodPrime core primeData hselected
-  exact factors_irreducible_of_factorsModPBerlekampForm core primeData hform hgood
+  exact factors_irreducible_of_factorsModPBerlekampForm core primeData hform hgood hcore_pos
 
 /-- Composed convenience wrapper: combines
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData` with
@@ -9775,12 +9800,16 @@ theorem toMonicLiftData_represents_lifted_monicCorrespondent
   have hfactors_nodup : primeData.factorsModP.toList.Nodup :=
     factorsModP_nodup_of_factorsModPBerlekampForm
       (Hex.ZPoly.toMonic core).monic primeData hform hgood
+  have hmonicCore_pos :
+      0 < (Hex.ZPoly.toMonic core).monic.degree?.getD 0 := by
+    rw [Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree core hcore_lc_pos hcore_pos]
+    exact hcore_pos
   have hfactors_irr :
       ∀ i : ModPFactorIndex primeData,
         Irreducible
           (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)) :=
     factors_irreducible_of_factorsModPBerlekampForm
-      (Hex.ZPoly.toMonic core).monic primeData hform hgood
+      (Hex.ZPoly.toMonic core).monic primeData hform hgood hmonicCore_pos
   have hprime_root : _root_.Nat.Prime primeData.p :=
     natPrime_of_hexNatPrime hp_prime
   exact henselLiftData_represents_lifted_of_modP
@@ -18194,6 +18223,7 @@ private lemma map_filter_eq_of_le_map_val
 mod-`p` image is divisible by that indexed factor. -/
 theorem exists_factor_of_modPIndex
     (core : Hex.ZPoly) (hcore_ne : core ≠ 0)
+    (hcore_pos : 0 < core.degree?.getD 0)
     (primeData : Hex.PrimeChoiceData)
     (hsome : Hex.choosePrimeData? core = some primeData)
     (i : ModPFactorIndex primeData) :
@@ -18230,7 +18260,7 @@ theorem exists_factor_of_modPIndex
       with hf_def
   have hirr_i : Irreducible (f i) := by
     rw [hf_def]
-    exact factors_irreducible_of_choosePrimeData_of_some core primeData hsome i
+    exact factors_irreducible_of_choosePrimeData_of_some core primeData hsome hcore_pos i
   have hprime_i : Prime (f i) :=
     UniqueFactorizationMonoid.irreducible_iff_prime.mp hirr_i
   have hfi_dvd_monic_core :
@@ -18365,6 +18395,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
     (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ core)
     (hcore_ne : core ≠ 0)
+    (hcore_pos : 0 < core.degree?.getD 0)
     (primeData : Hex.PrimeChoiceData)
     (hsome : Hex.choosePrimeData? core = some primeData) :
     ∃! S : ModPFactorSubset primeData,
@@ -18452,7 +18483,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
       have hget : primeData.factorsModP.toList.get i = g := hi
       simpa [List.get_eq_getElem] using hget
     rw [← hg_eq, ← hi_eq]
-    exact factors_irreducible_of_choosePrimeData_of_some core primeData hsome _
+    exact factors_irreducible_of_choosePrimeData_of_some core primeData hsome hcore_pos _
   -- Each q in factorsM is monic, hence normalize-fixed.
   have hmonic_each : ∀ q ∈ factorsM, q.Monic := by
     intro q hq
@@ -18551,6 +18582,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData
     (primeData : Hex.PrimeChoiceData)
     (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ core)
+    (hcore_pos : 0 < core.degree?.getD 0)
     (hchoose : Hex.choosePrimeData? core = some primeData) :
     ∃! S : ModPFactorSubset primeData,
       RepresentsIntegerFactorModP primeData factor S := by
@@ -18571,7 +18603,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData
     rw [hcore_zero, hzero_modP] at hcore_modP_iszero
     exact Bool.noConfusion hcore_modP_iszero
   exact existsUnique_modPFactorSubset_of_choosePrimeData_of_some core
-    hirr hdvd hcore_ne primeData hchoose
+    hirr hdvd hcore_ne hcore_pos primeData hchoose
 
 /-- **HO-1 supporting lemma (#4688).**
 
@@ -18594,6 +18626,7 @@ unavailable) is excluded; downstream callers discharge it from the same
 theorem modPSubsetPartitionHypotheses_of_choosePrimeData
     (core : Hex.ZPoly)
     (primeData : Hex.PrimeChoiceData)
+    (hcore_pos : 0 < core.degree?.getD 0)
     (hchoose : Hex.choosePrimeData? core = some primeData) :
     ModPSubsetPartitionHypotheses core primeData True True := by
   refine
@@ -18604,11 +18637,11 @@ theorem modPSubsetPartitionHypotheses_of_choosePrimeData
       exists_subset := ?_
       unique_subset := ?_ }
   · exact Hex.choosePrimeData?_fModP_eq core primeData hchoose
-  · exact factors_irreducible_of_choosePrimeData_of_some core primeData hchoose
+  · exact factors_irreducible_of_choosePrimeData_of_some core primeData hchoose hcore_pos
   · intro factor hirr hdvd
-    exact (existsUnique_modPFactorSubset_of_choosePrimeData core primeData hirr hdvd hchoose).exists
+    exact (existsUnique_modPFactorSubset_of_choosePrimeData core primeData hirr hdvd hcore_pos hchoose).exists
   · intro factor S T hirr hdvd hS hT
-    rcases existsUnique_modPFactorSubset_of_choosePrimeData core primeData hirr hdvd hchoose with
+    rcases existsUnique_modPFactorSubset_of_choosePrimeData core primeData hirr hdvd hcore_pos hchoose with
       ⟨_, _, huniq⟩
     exact (huniq S hS).trans (huniq T hT).symm
 
@@ -18686,6 +18719,7 @@ existence projection (a representing subset `S` for `g`), and
 `mem_modPSubset_of_dvd` (the divisibility forces `i ∈ S`). -/
 theorem modPFactor_index_cover
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hcore_pos : 0 < core.degree?.getD 0)
     (hchoose : Hex.choosePrimeData? core = some primeData)
     (i : ModPFactorIndex primeData) :
     ∃ (g : Hex.ZPoly) (S : ModPFactorSubset primeData),
@@ -18696,9 +18730,9 @@ theorem modPFactor_index_cover
   letI := primeData.bounds
   have hcore_ne : core ≠ 0 := core_ne_zero_of_choosePrimeData core primeData hchoose
   obtain ⟨g, hirr, hdvd, hfi_dvd⟩ :=
-    exists_factor_of_modPIndex core hcore_ne primeData hchoose i
+    exists_factor_of_modPIndex core hcore_ne hcore_pos primeData hchoose i
   have hpart : ModPSubsetPartitionHypotheses core primeData True True :=
-    modPSubsetPartitionHypotheses_of_choosePrimeData core primeData hchoose
+    modPSubsetPartitionHypotheses_of_choosePrimeData core primeData hcore_pos hchoose
   obtain ⟨S, hS⟩ :=
     exists_modPFactorSubset_of_modPSubsetPartition hpart hirr hdvd
   have hprime : _root_.Nat.Prime primeData.p :=
@@ -18821,6 +18855,7 @@ an arbitrary-prime correspondence assumption. -/
 theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
+    (hcore_pos : 0 < core.degree?.getD 0)
     (hchoose : Hex.choosePrimeData? core = some primeData)
     (hlift :
       HenselSubsetLiftHypotheses core B primeData
@@ -18831,7 +18866,7 @@ theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success
   intro d
   exact
     henselSubsetCorrespondence_of_modPSubsetPartition
-      (modPSubsetPartitionHypotheses_of_choosePrimeData core primeData hchoose)
+      (modPSubsetPartitionHypotheses_of_choosePrimeData core primeData hcore_pos hchoose)
       hlift
 
 /-- **#5689 supporting lemma (HO-1 successful branch).**
@@ -18843,6 +18878,7 @@ descent package and explicit forward Hensel transport to obtain the standard
 theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
+    (hcore_pos : 0 < core.degree?.getD 0)
     (hchoose : Hex.choosePrimeData? core = some primeData)
     (hdescent :
       HenselLiftDescentHypotheses core B primeData
@@ -18861,7 +18897,8 @@ theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
     HenselSubsetCorrespondenceHypotheses core B primeData d True True := by
   intro d
   exact
-    henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success core B primeData hchoose
+    henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success core B primeData
+      hcore_pos hchoose
       (henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData_descent
         core B primeData hchoose hdescent hlifted_of_modP)
 
@@ -18873,6 +18910,8 @@ precision count consumed by the slow exhaustive branch of `Hex.factor f`. -/
 theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
     (f : Hex.ZPoly)
     (primeData : Hex.PrimeChoiceData)
+    (hcore_pos :
+      0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hdescent :
@@ -18903,7 +18942,7 @@ theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
     HenselSubsetCorrespondenceHypotheses core (Hex.ZPoly.exhaustiveLiftBound core B)
       primeData d True True :=
   henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
-    _ _ primeData hchoose hdescent hlifted_of_modP
+    _ _ primeData hcore_pos hchoose hdescent hlifted_of_modP
 
 /-- **#6354 supporting lemma (HO-1 successful branch).**
 
@@ -18914,6 +18953,7 @@ non-circular descent/forward-transport path. -/
 theorem liftedFactorSubsetPartition_of_choosePrimeData_success_descent
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
+    (hcore_pos : 0 < core.degree?.getD 0)
     (hchoose : Hex.choosePrimeData? core = some primeData)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hdescent :
@@ -18940,7 +18980,7 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData_success_descent
       { toHenselSubsetCorrespondenceRest :=
           henselSubsetCorrespondenceRest_initial
             (henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
-              core B primeData hchoose hdescent hlifted_of_modP)
+              core B primeData hcore_pos hchoose hdescent hlifted_of_modP)
         target_squarefree := hcore_sqfree
         cover := by
           intro i hi
@@ -19177,9 +19217,9 @@ theorem slowPathHenselSubstrate_of_choosePrimeData_success_descent
       modulus := ?_
       precision := ?_ }
   · exact henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
-      core B primeData hchoose hdescent hlifted_of_modP
+      core B primeData hcore_pos hchoose hdescent hlifted_of_modP
   · exact liftedFactorSubsetPartition_of_choosePrimeData_success_descent
-      core B primeData hchoose hcore_sqfree hdescent hlifted_of_modP hinitial
+      core B primeData hcore_pos hchoose hcore_sqfree hdescent hlifted_of_modP hinitial
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
@@ -19644,6 +19684,8 @@ conclusion is existential — there is no representation at a subset prescribed
 by the preimage. -/
 theorem representsModP_correspondent
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
     (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
     {g : Hex.ZPoly}
     (hg_irr : Irreducible (HexPolyZMathlib.toPolynomial g))
@@ -19651,8 +19693,11 @@ theorem representsModP_correspondent
     ∃ S : ModPFactorSubset primeData, RepresentsIntegerFactorModP primeData g S := by
   have hchoose :
       Hex.choosePrimeData? (Hex.ZPoly.toMonic core).monic = some primeData := hselected
+  have hmonic_pos : 0 < (Hex.ZPoly.toMonic core).monic.degree?.getD 0 := by
+    rw [Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree core hcore_lc_pos hcore_pos]
+    exact hcore_pos
   exact (modPSubsetPartitionHypotheses_of_choosePrimeData
-    (Hex.ZPoly.toMonic core).monic primeData hchoose).exists_subset hg_irr hg_dvd
+    (Hex.ZPoly.toMonic core).monic primeData hmonic_pos hchoose).exists_subset hg_irr hg_dvd
 
 /-- **Irreducibility iff across the recovery dilation.**
 
@@ -20032,7 +20077,7 @@ theorem toMonicLiftData_represents_lifted_of_modP
   have hg_irr : Irreducible (HexPolyZMathlib.toPolynomial g) :=
     irreducible_toPolynomial_monicCorrespondent (ne_of_gt hlc) hg_monic hprim hirr hrecover
   obtain ⟨S_modP, hS_modP⟩ :=
-    representsModP_correspondent core primeData hselected hg_irr hg_dvd
+    representsModP_correspondent core primeData hlc hdeg hselected hg_irr hg_dvd
   have hcore_deg_pos : 0 < core.degree?.getD 0 := by
     have hd := Hex.ZPoly.toMonic_degree core
     omega
@@ -20101,6 +20146,10 @@ theorem toMonicLiftData_isCoprime_liftedFactorProduct_complement
   set precision := Hex.precisionForCoeffBound B primeData.p with hprec_def
   have hmonicCore_monic : Hex.DensePoly.Monic monicCore :=
     Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+  have hmonicCore_pos : 0 < monicCore.degree?.getD 0 := by
+    rw [hmonicCore_def,
+      Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree core hcore_lc_pos hcore_pos]
+    exact hcore_pos
   have hform : Hex.factorsModPBerlekampForm monicCore primeData :=
     Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form core primeData hselected
   have hgood :
@@ -20150,6 +20199,7 @@ theorem toMonicLiftData_isCoprime_liftedFactorProduct_complement
         Irreducible
           (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)) :=
     factors_irreducible_of_factorsModPBerlekampForm monicCore primeData hform hgood
+      hmonicCore_pos
   have hfactors_nodup : primeData.factorsModP.toList.Nodup :=
     factorsModP_nodup_of_factorsModPBerlekampForm monicCore primeData hform hgood
   -- `d := toMonicLiftData core B primeData` is definitionally
@@ -20193,6 +20243,10 @@ private theorem toMonicLiftData_liftedFactor_map_irreducible
   set precision := Hex.precisionForCoeffBound B primeData.p with hprec_def
   have hmonicCore_monic : Hex.DensePoly.Monic monicCore :=
     Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+  have hmonicCore_pos : 0 < monicCore.degree?.getD 0 := by
+    rw [hmonicCore_def,
+      Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree core hcore_lc_pos hcore_pos]
+    exact hcore_pos
   have hform : Hex.factorsModPBerlekampForm monicCore primeData :=
     Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form core primeData hselected
   have hgood :
@@ -20236,6 +20290,7 @@ private theorem toMonicLiftData_liftedFactor_map_irreducible
         Irreducible
           (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)) :=
     factors_irreducible_of_factorsModPBerlekampForm monicCore primeData hform hgood
+      hmonicCore_pos
   -- `i` as a modular-factor index (same `val`; the sizes agree definitionally).
   have hival : i.val < primeData.factorsModP.size :=
     i.isLt.trans_eq
