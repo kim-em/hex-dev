@@ -753,6 +753,98 @@ theorem TrueFactorLiftSemantics.supportProduct_cld_aggregation
   rw [D.liftedFactors_eq]
   exact TrueFactorLiftSemantics.selected_cldQuotientMod_congr_mul_derivative D H hk i hiS
 
+/-- A centred residue modulo `m` has magnitude at most `m / 2`: `2·|x mod^± m| ≤ m`. -/
+theorem two_mul_natAbs_centeredModNat_le (z : Int) (m : Nat) (hm : 0 < m) :
+    2 * (Hex.centeredModNat z m).natAbs ≤ m := by
+  unfold Hex.centeredModNat
+  rw [if_neg hm.ne']
+  have h1 : 0 ≤ z % (m : Int) := Int.emod_nonneg z (by exact_mod_cast hm.ne')
+  have h2 : z % (m : Int) < (m : Int) := Int.emod_lt_of_pos z (by exact_mod_cast hm)
+  simp only [Int.ofNat_eq_natCast]
+  by_cases hc : 2 * (z % (m : Int)).natAbs ≤ m
+  · rw [if_pos hc]; exact hc
+  · rw [if_neg hc, if_neg (by omega : ¬ z % (m : Int) < 0)]
+    omega
+
+/-- The high-bit cut residue `Psi^a_b` lands in the centred range modulo `p^b`. -/
+theorem two_mul_natAbs_centeredResiduePow_le (p b : Nat) (z : Int) (hpb : 0 < p ^ b) :
+    2 * (Hex.centeredResiduePow p b z).natAbs ≤ p ^ b := by
+  unfold Hex.centeredResiduePow
+  exact two_mul_natAbs_centeredModNat_le z (p ^ b) hpb
+
+/--
+**BHKS Lemma 5.7 high-bit estimate (carry core).**  The sum over a finite index
+set of the high-bit cuts `Psi^a_b(z i)` is bounded in magnitude by half the
+cardinality: `2·|Σ Psi^a_b(z i)| ≤ |T|`.
+
+The hypotheses pin the per-element ambient centred residue to an exact integer
+`w i` (`hw`), whose support sum is a small integer `y` with `|y| ≤ B` and
+`2·B < p^b` (`hsum`/`hy`/`hsep`).  This is exactly the cancellation that makes
+the *aggregated* column small even though individual high-bit cuts `Psi^a_b(z i)`
+need not be: the per-element loose bound `|Psi^a_b(z i)| ≤ B` is *not* used and
+would not give the tight `|T|/2` shape.
+-/
+theorem two_mul_natAbs_sum_psiCut_le
+    {ι : Type*} (T : Finset ι) (p a b : Nat) (hpb : 0 < p ^ b)
+    (z w : ι → Int) (y : Int) (B : Nat)
+    (hw : ∀ i ∈ T, Hex.centeredResiduePow p a (z i) = w i)
+    (hsum : ∑ i ∈ T, w i = y)
+    (hy : y.natAbs ≤ B)
+    (hsep : 2 * B < p ^ b) :
+    2 * (∑ i ∈ T, Hex.psiCut p a b (z i)).natAbs ≤ T.card := by
+  classical
+  have hm0 : (p ^ b : Nat) ≠ 0 := hpb.ne'
+  set col : Int := ∑ i ∈ T, Hex.psiCut p a b (z i) with hcol
+  set lo : ι → Int := fun i => Hex.centeredResiduePow p b (w i) with hlodef
+  -- Per element: `p^b · Psi(z i) = w i - lo i`.
+  have hkey : ∀ i ∈ T, ((p ^ b : Nat) : Int) * Hex.psiCut p a b (z i) = w i - lo i := by
+    intro i hi
+    have hdec := Hex.centeredResiduePow_add_pow_mul_psiCut p a b (z i) hm0
+    rw [hw i hi] at hdec
+    simp only [hlodef]
+    linarith [hdec]
+  -- Aggregate: `p^b · col = y - Σ lo`.
+  have hagg : ((p ^ b : Nat) : Int) * col = y - ∑ i ∈ T, lo i := by
+    rw [hcol, Finset.mul_sum, Finset.sum_congr rfl hkey, Finset.sum_sub_distrib, hsum]
+  -- Bound on the lower-residue sum: `2 · |Σ lo| ≤ |T| · p^b`.
+  have hlo_le : 2 * |∑ i ∈ T, lo i| ≤ (T.card : Int) * (p ^ b : Nat) := by
+    have htri : |∑ i ∈ T, lo i| ≤ ∑ i ∈ T, |lo i| := Finset.abs_sum_le_sum_abs _ _
+    have hpt : ∑ i ∈ T, (2 * |lo i|) ≤ ∑ i ∈ T, ((p ^ b : Nat) : Int) := by
+      refine Finset.sum_le_sum (fun i _ => ?_)
+      have := two_mul_natAbs_centeredResiduePow_le p b (w i) hpb
+      have hcast : 2 * |lo i| = ((2 * (Hex.centeredResiduePow p b (w i)).natAbs : Nat) : Int) := by
+        simp only [hlodef, Nat.cast_mul, Nat.cast_ofNat, Int.abs_eq_natAbs]
+      rw [hcast]; exact_mod_cast this
+    calc 2 * |∑ i ∈ T, lo i| ≤ 2 * ∑ i ∈ T, |lo i| := by linarith
+      _ = ∑ i ∈ T, (2 * |lo i|) := by rw [Finset.mul_sum]
+      _ ≤ ∑ i ∈ T, ((p ^ b : Nat) : Int) := hpt
+      _ = (T.card : Int) * (p ^ b : Nat) := by rw [Finset.sum_const, nsmul_eq_mul]
+  -- Combine into `2 · p^b · |col| < (|T| + 1) · p^b`, then cancel `p^b`.
+  have hyZ : 2 * |y| ≤ 2 * (B : Int) := by
+    have : |y| ≤ (B : Int) := by rw [Int.abs_eq_natAbs]; exact_mod_cast hy
+    linarith
+  have habs : ((p ^ b : Nat) : Int) * |col| = |y - ∑ i ∈ T, lo i| := by
+    rw [← hagg, abs_mul]; congr 1
+    rw [Int.abs_eq_natAbs]; simp
+  have hstep : 2 * (((p ^ b : Nat) : Int) * |col|) ≤ 2 * (B : Int) + (T.card : Int) * (p ^ b : Nat) := by
+    rw [habs]
+    calc 2 * |y - ∑ i ∈ T, lo i| ≤ 2 * (|y| + |∑ i ∈ T, lo i|) := by
+            linarith [abs_sub y (∑ i ∈ T, lo i)]
+      _ = 2 * |y| + 2 * |∑ i ∈ T, lo i| := by ring
+      _ ≤ 2 * (B : Int) + (T.card : Int) * (p ^ b : Nat) := by linarith
+  -- `2·B < p^b` upgrades the bound to a strict one and cancels the factor `p^b`.
+  have hsepZ : 2 * (B : Int) < ((p ^ b : Nat) : Int) := by exact_mod_cast hsep
+  have hpbZ : (0 : Int) < ((p ^ b : Nat) : Int) := by exact_mod_cast hpb
+  have hcolNat : 2 * |col| ≤ (T.card : Int) := by
+    have hlt2 : ((p ^ b : Nat) : Int) * (2 * |col|) <
+        ((p ^ b : Nat) : Int) * ((T.card : Int) + 1) := by
+      nlinarith [hstep, hsepZ, hpbZ]
+    have h2N : 2 * |col| < (T.card : Int) + 1 := lt_of_mul_lt_mul_left hlt2 (le_of_lt hpbZ)
+    omega
+  have : (2 * col.natAbs : Int) ≤ (T.card : Int) := by
+    rw [Int.abs_eq_natAbs] at hcolNat; push_cast at hcolNat ⊢; linarith
+  exact_mod_cast this
+
 end BHKS
 
 end
