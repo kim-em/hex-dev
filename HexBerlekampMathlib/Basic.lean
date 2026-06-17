@@ -3,6 +3,7 @@ import HexBerlekamp.Irreducibility
 import HexBerlekamp.RabinSoundness
 import HexModArithMathlib
 import HexPolyMathlib
+import Mathlib.FieldTheory.Finite.Extension
 import Mathlib.FieldTheory.Finite.GaloisField
 
 /-!
@@ -147,16 +148,32 @@ theorem exists_algHom_adjoinRoot_to_galoisField
     (hg_irreducible : Irreducible g)
     (hg_dvd : g ∣ frobeniusPolynomial p n) :
     Nonempty (AdjoinRoot g →ₐ[ZMod p] GaloisField p n) := by
-  sorry
+  haveI : Fact (Irreducible g) := ⟨hg_irreducible⟩
+  have hg_ne_zero : g ≠ 0 := hg_irreducible.ne_zero
+  have hg_dvd' : g ∣ X ^ Nat.card (ZMod p) ^ n - X := by
+    simpa [frobeniusPolynomial, Nat.card_zmod] using hg_dvd
+  have hdegree_dvd : g.natDegree ∣ n := by
+    exact
+      (Irreducible.natDegree_dvd_of_dvd_X_pow_card_pow_sub_X
+        (K := ZMod p) (n := n) (f := g) hg_irreducible hg_dvd')
+  have hfinrank_dvd :
+      Module.finrank (ZMod p) (AdjoinRoot g) ∣
+        Module.finrank (ZMod p) (GaloisField p n) := by
+    rw [PowerBasis.finrank (AdjoinRoot.powerBasis hg_ne_zero),
+      AdjoinRoot.powerBasis_dim hg_ne_zero, GaloisField.finrank p hn]
+    exact hdegree_dvd
+  exact FiniteField.nonempty_algHom_of_finrank_dvd hfinrank_dvd
 
-/--
+/-
 The finite-dimensional rank of an `AdjoinRoot` quotient by a nonzero
 polynomial is its natural degree.
 -/
+omit [Hex.ZMod64.Bounds p] in
 theorem finrank_adjoinRoot_eq_natDegree
     [Fact (Nat.Prime p)] {g : Polynomial (ZMod p)} (hg : g ≠ 0) :
     Module.finrank (ZMod p) (AdjoinRoot g) = g.natDegree := by
-  sorry
+  rw [PowerBasis.finrank (AdjoinRoot.powerBasis hg),
+    AdjoinRoot.powerBasis_dim hg]
 
 /--
 The Rabin finite-field degree lemma in the local `ZMod p` form used by the
@@ -167,18 +184,24 @@ theorem natDegree_dvd_of_irreducible_dvd_frobeniusPolynomial
     (hg_irreducible : Irreducible g)
     (hg_dvd : g ∣ frobeniusPolynomial p n) :
     g.natDegree ∣ n := by
-  sorry
+  have hg_dvd' : g ∣ X ^ Nat.card (ZMod p) ^ n - X := by
+    simpa [frobeniusPolynomial, Nat.card_zmod] using hg_dvd
+  exact
+    (Irreducible.natDegree_dvd_of_dvd_X_pow_card_pow_sub_X
+      (K := ZMod p) (n := n) (f := g) hg_irreducible hg_dvd')
 
-/--
+/-
 For an irreducible polynomial, any nontrivial gcd/coprimality failure with
 `P` forces divisibility by `P`.
 -/
+omit [Hex.ZMod64.Bounds p] in
 theorem irreducible_dvd_of_not_isCoprime
     [Fact (Nat.Prime p)] {g P : Polynomial (ZMod p)}
     (hg_irreducible : Irreducible g)
     (hnot_coprime : ¬ IsCoprime g P) :
     g ∣ P := by
-  sorry
+  by_contra hnot_dvd
+  exact hnot_coprime ((hg_irreducible.coprime_iff_not_dvd).2 hnot_dvd)
 
 /--
 The Rabin backward direction in the local `ZMod p` form: every irreducible
