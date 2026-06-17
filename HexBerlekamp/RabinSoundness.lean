@@ -3981,6 +3981,27 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd_nonmonic
     rw [ha0]
 
 /--
+**Executable Berlekamp factor irreducibility.** Every factor returned by
+`berlekampFactor` on a monic square-free input is irreducible.  Assembles the
+per-factor postconditions of the splitting loop — each factor is nonzero
+(`berlekampFactor_factors_ne_zero`), divides `f`
+(`berlekampFactor_factors_dvd`), and admits no kernel-witness split
+(`kernelWitnessSplit?_none_of_berlekampFactor_factors`) — and feeds them to the
+non-monic divisor completeness theorem.
+-/
+theorem berlekampFactor_factors_irreducible
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (hsquareFree : ∀ d, d ∣ f → d ∣ DensePoly.derivative f →
+      isUnitPolynomial d = true) :
+    ∀ g ∈ (berlekampFactor f hmonic).factors, FpPoly.Irreducible g := by
+  intro g hg
+  exact irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd_nonmonic f g hmonic
+    (berlekampFactor_factors_ne_zero f hmonic g hg)
+    (berlekampFactor_factors_dvd f hmonic g hg)
+    hsquareFree
+    (kernelWitnessSplit?_none_of_berlekampFactor_factors f hmonic g hg)
+
+/--
 For a monic square-free `f` whose executable Berlekamp factorization returns
 at most one factor, `f` is irreducible. Composes the structural loop lemma
 `kernelWitnessSplit?_none_of_berlekampFactor_factors_length_le_one` with the
