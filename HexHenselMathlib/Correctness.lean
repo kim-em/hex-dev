@@ -36,21 +36,30 @@ theorem zpoly_congr_toPolynomial_map_eq
 
 /-- The iterative executable lift gives a factorization of `f` over Mathlib polynomials modulo `p^k`. -/
 theorem hensel_correct
-    (f g h : Hex.ZPoly) (p k : Nat) [Hex.ZMod64.Bounds p]
+    (f g h : Hex.ZPoly) (p k : Nat) [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
     (s t : Hex.FpPoly p)
     (hk : 1 ≤ k)
+    (hp : 1 < p)
     (hprod : Hex.ZPoly.congr (g * h) f p)
     (hbez :
       Hex.ZPoly.congr
         (Hex.FpPoly.liftToZ (s * Hex.ZPoly.modP p g + t * Hex.ZPoly.modP p h))
         1 p)
-    (hmonic : Hex.DensePoly.Monic g) :
+    (hmonic : Hex.DensePoly.Monic g)
+    (hgdeg : 0 < g.degree?.getD 0) :
     let r := Hex.ZPoly.henselLift p k f g h s t
     let φ := Int.castRingHom (ZMod (p ^ k))
     (HexPolyMathlib.toPolynomial r.g).map φ *
         (HexPolyMathlib.toPolynomial r.h).map φ =
       (HexPolyMathlib.toPolynomial f).map φ := by
-  sorry
+  let r := Hex.ZPoly.henselLift p k f g h s t
+  let φ := Int.castRingHom (ZMod (p ^ k))
+  have hcongr :
+      Hex.ZPoly.congr (r.g * r.h) f (p ^ k) := by
+    simpa [r] using
+      Hex.ZPoly.henselLift_congr_of_base p k f g h s t hk hp hprod hbez hmonic hgdeg
+  have hmap := zpoly_congr_toPolynomial_map_eq (r.g * r.h) f (p ^ k) hcongr
+  simpa [r, φ, HexPolyMathlib.toPolynomial_mul, Polynomial.map_mul] using hmap
 
 /-- The iterative executable lift extends the input factorization modulo `p`. -/
 theorem hensel_extends
@@ -79,19 +88,26 @@ theorem hensel_extends
 
 /-- The iterative executable lift preserves the Mathlib degree of the monic lifted factor. -/
 theorem hensel_degree
-    (f g h : Hex.ZPoly) (p k : Nat) [Hex.ZMod64.Bounds p]
+    (f g h : Hex.ZPoly) (p k : Nat) [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
     (s t : Hex.FpPoly p)
     (hk : 1 ≤ k)
+    (hp : 1 < p)
     (hprod : Hex.ZPoly.congr (g * h) f p)
     (hbez :
       Hex.ZPoly.congr
         (Hex.FpPoly.liftToZ (s * Hex.ZPoly.modP p g + t * Hex.ZPoly.modP p h))
         1 p)
-    (hmonic : Hex.DensePoly.Monic g) :
+    (hmonic : Hex.DensePoly.Monic g)
+    (hgdeg : 0 < g.degree?.getD 0) :
     let r := Hex.ZPoly.henselLift p k f g h s t
     (HexPolyMathlib.toPolynomial r.g).natDegree =
       (HexPolyMathlib.toPolynomial g).natDegree := by
-  sorry
+  let r := Hex.ZPoly.henselLift p k f g h s t
+  have hdegree :
+      r.g.degree? = g.degree? := by
+    simpa [r] using
+      Hex.ZPoly.henselLift_degree?_of_base p k f g h s t hk hp hprod hbez hmonic hgdeg
+  simp [r, HexPolyMathlib.natDegree_toPolynomial, hdegree]
 
 /--
 Equality of Mathlib polynomial reductions modulo `m` gives the executable
