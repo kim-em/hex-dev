@@ -72,6 +72,15 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   `map_dvd` does not apply and `dvd_trans` is replaced by `fpPoly_dvd_trans`.
   Transport divisibility to Mathlib by destructuring and re-multiplying:
   `obtain ⟨r, hr⟩ := h; ⟨toMathlibPolynomial r, by rw [hr, toMathlibPolynomial_mul]⟩`.
+- **Executable gcd/Bezout/modular-division lemmas silently need
+  `[Hex.ZMod64.PrimeModulus p]`** (via `GcdLaws`/`DivModLaws`/field), but
+  Mathlib-layer transport theorems usually carry only `[Fact (Nat.Prime p)]`.
+  The mismatch surfaces as a confusing "failed to synthesize `PrimeModulus p`"
+  deep inside a transport proof (e.g. when calling
+  `DensePoly.xgcd_bezout` or `dvd_xPowSubX_iff_frobeniusDiffMod_isZero`).
+  Bridge it with `haveI : Hex.ZMod64.PrimeModulus p :=
+  HexBerlekampMathlib.primeModulus_of_fact p` (landed by #7774;
+  builds the witness from `Nat.Prime.two_le` + `eq_one_or_self_of_dvd`).
   (`HexBerlekampZassenhausMathlib/Basic.lean` exposes `toMathlibPolynomial_dvd`
   and `self_dvd_monicModPImage` for exactly this.)
 - **`ZPoly = DensePoly Int` ring identities: `grind` is unreliable; use the

@@ -673,6 +673,42 @@ theorem frobeniusDiffMod_mod_self_of_degree_zero
     rw [hfrob_zero, hX_zero, FpPoly.sub_self]
   rw [hdiff_zero, hmod_zero]
 
+/-- `f` divides the difference between the absolute polynomial `X^(p^k) - X`
+and its modular form `frobeniusDiffMod f hmonic k`. This is the reduction fact
+that makes the executable modular test equivalent to the absolute divisibility
+leg, and it is reused by the Mathlib transport of Rabin's criterion. -/
+theorem dvd_xPowSubX_sub_frobeniusDiffMod
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat) :
+    f ∣ (xPowSubX (p := p) k - frobeniusDiffMod f hmonic k) := by
+  have inst_dvd : DensePoly.DivModLaws (ZMod64 p) := inferInstance
+  have hp1 : f ∣ ((DensePoly.monomial (p^k) (1 : ZMod64 p)) -
+                  FpPoly.frobeniusXPowMod f hmonic k) :=
+    @DensePoly.dvd_of_mod_eq_mod (ZMod64 p) _ _ _ inst_dvd _ _ _
+      (FpPoly.frobeniusXPowMod_mod_eq_monomial_mod f hmonic k).symm
+  have hp2 : f ∣ (FpPoly.X - FpPoly.modByMonic f FpPoly.X hmonic) := by
+    rw [show FpPoly.modByMonic f FpPoly.X hmonic = FpPoly.X % f from
+          DensePoly.modByMonic_eq_mod _ _ hmonic]
+    have hmm : (FpPoly.X (p := p)) % f = (FpPoly.X (p := p) % f) % f :=
+      (DensePoly.mod_mod FpPoly.X f).symm
+    exact @DensePoly.dvd_of_mod_eq_mod (ZMod64 p) _ _ _ inst_dvd _ _ _ hmm
+  have heq :
+      xPowSubX (p := p) k - frobeniusDiffMod f hmonic k =
+        ((DensePoly.monomial (p^k) (1 : ZMod64 p)) -
+            FpPoly.frobeniusXPowMod f hmonic k) -
+          (FpPoly.X - FpPoly.modByMonic f FpPoly.X hmonic) := by
+    unfold xPowSubX frobeniusDiffMod
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_sub_ring,
+        DensePoly.coeff_sub_ring,
+        DensePoly.coeff_sub_ring,
+        DensePoly.coeff_sub_ring,
+        DensePoly.coeff_sub_ring,
+        DensePoly.coeff_sub_ring]
+    grind
+  rw [heq]
+  exact DensePoly.dvd_sub_poly hp1 hp2
+
 /--
 `f` divides `X^(p^k) - X` (in the absolute sense) exactly when the
 Berlekamp Frobenius remainder `frobeniusDiffMod f hmonic k` vanishes.
@@ -708,34 +744,8 @@ theorem dvd_xPowSubX_iff_frobeniusDiffMod_isZero
       subst h
       rfl
   -- Step 1: f ∣ ((xPowSubX k) - frobeniusDiffMod).
-  have hdvd_diff : f ∣ (xPowSubX (p := p) k - frobeniusDiffMod f hmonic k) := by
-    have hp1 : f ∣ ((DensePoly.monomial (p^k) (1 : ZMod64 p)) -
-                    FpPoly.frobeniusXPowMod f hmonic k) :=
-      @DensePoly.dvd_of_mod_eq_mod (ZMod64 p) _ _ _ inst_dvd _ _ _
-        (FpPoly.frobeniusXPowMod_mod_eq_monomial_mod f hmonic k).symm
-    have hp2 : f ∣ (FpPoly.X - FpPoly.modByMonic f FpPoly.X hmonic) := by
-      rw [show FpPoly.modByMonic f FpPoly.X hmonic = FpPoly.X % f from
-            DensePoly.modByMonic_eq_mod _ _ hmonic]
-      have hmm : (FpPoly.X (p := p)) % f = (FpPoly.X (p := p) % f) % f :=
-        (DensePoly.mod_mod FpPoly.X f).symm
-      exact @DensePoly.dvd_of_mod_eq_mod (ZMod64 p) _ _ _ inst_dvd _ _ _ hmm
-    have heq :
-        xPowSubX (p := p) k - frobeniusDiffMod f hmonic k =
-          ((DensePoly.monomial (p^k) (1 : ZMod64 p)) -
-              FpPoly.frobeniusXPowMod f hmonic k) -
-            (FpPoly.X - FpPoly.modByMonic f FpPoly.X hmonic) := by
-      unfold xPowSubX frobeniusDiffMod
-      apply DensePoly.ext_coeff
-      intro n
-      rw [DensePoly.coeff_sub_ring,
-          DensePoly.coeff_sub_ring,
-          DensePoly.coeff_sub_ring,
-          DensePoly.coeff_sub_ring,
-          DensePoly.coeff_sub_ring,
-          DensePoly.coeff_sub_ring]
-      grind
-    rw [heq]
-    exact DensePoly.dvd_sub_poly hp1 hp2
+  have hdvd_diff : f ∣ (xPowSubX (p := p) k - frobeniusDiffMod f hmonic k) :=
+    dvd_xPowSubX_sub_frobeniusDiffMod f hmonic k
   -- Step 2: (xPowSubX k) % f = (frobeniusDiffMod) % f.
   have hmodeq : (xPowSubX (p := p) k) % f = (frobeniusDiffMod f hmonic k) % f :=
     @DensePoly.mod_eq_mod_of_congr (ZMod64 p) _ _ _ inst_dvd _ _ _ hdvd_diff
