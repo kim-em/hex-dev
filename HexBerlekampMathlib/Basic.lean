@@ -534,31 +534,6 @@ theorem rabinTest_true_of_mathlib_checks
 end Rabin
 
 /--
-**Unsound up-to-unit overstatement — use `toMathlibPolynomial_gcd_normalize`.**
-
-This exact equality is false in general: `Hex.DensePoly.gcd` is the last nonzero
-`xgcdAux` remainder with no monic rescale (`HexPoly/Euclid.lean:913`), while
-Mathlib's `gcd` is `normalize`-canonical. Counterexample over `F₅`:
-`gcd(X²−1, 2X−2) = 2X−2` (leadCoeff `2`) executable, but `X−1` in Mathlib. The
-two sides are only associated; see `toMathlibPolynomial_gcd_associated` and
-`toMathlibPolynomial_gcd_normalize` for the sound primitives.
-
-Retained as an unproved placeholder only because the CI-gated
-`HexBerlekampZassenhausMathlib` consumers (`gcd_monicModularImage_derivative_eq_one`,
-`toMathlibPolynomial_coprime_of_gcdIsUnit`, the `HotPathDiscriminant`
-non-coprimality lemma) still rewrite with it. Removing it requires
-re-specifying the `gcd f f' = 1` square-free precondition of
-`toMathlibPolynomial_squareFree_coprime` / `irreducible_of_berlekampFactor_factors_length_le_one`
-to a `gcdIsUnit`/`IsUnit` hypothesis, then migrating those consumers onto the
-sound transport. See the diagnosis on issue #7763.
--/
-theorem toMathlibPolynomial_gcd
-    [Fact (Nat.Prime p)] (f g : Hex.FpPoly p) :
-    toMathlibPolynomial (Hex.DensePoly.gcd f g) =
-      gcd (toMathlibPolynomial f) (toMathlibPolynomial g) := by
-  sorry
-
-/--
 Executable gcd is associated to Mathlib's gcd after coefficient transport.
 
 `toMathlibPolynomial = fpPolyEquiv` is a ring iso, so executable divisibility
@@ -628,9 +603,68 @@ formal derivative.
 -/
 theorem toMathlibPolynomial_squareFree_coprime
     [Fact (Nat.Prime p)] (f : Hex.FpPoly p)
-    (hsquareFree : Hex.DensePoly.gcd f (Hex.DensePoly.derivative f) = 1) :
+    (hsquareFree :
+      Hex.Berlekamp.isUnitPolynomial
+        (Hex.DensePoly.gcd f (Hex.DensePoly.derivative f)) = true) :
     IsCoprime (toMathlibPolynomial f) (Polynomial.derivative (toMathlibPolynomial f)) := by
-  sorry
+  let g : Hex.FpPoly p := Hex.DensePoly.gcd f (Hex.DensePoly.derivative f)
+  have hg_size : g.size = 1 := by
+    have hdeg : g.degree? = some 0 := by
+      unfold Hex.Berlekamp.isUnitPolynomial at hsquareFree
+      cases h : g.degree? with
+      | none =>
+          rw [h] at hsquareFree
+          simp at hsquareFree
+      | some n =>
+          rw [h] at hsquareFree
+          cases n with
+          | zero => simp
+          | succ n => simp at hsquareFree
+    have hpos : 0 < g.size := by
+      by_contra hnot
+      have hzero : g.size = 0 := by omega
+      have hnone : g.degree? = none :=
+        (Hex.DensePoly.degree?_eq_none_iff g).mpr hzero
+      rw [hdeg] at hnone
+      contradiction
+    have hdeg_size : g.degree? = some (g.size - 1) :=
+      Hex.DensePoly.degree?_eq_some_of_pos_size g hpos
+    rw [hdeg] at hdeg_size
+    injection hdeg_size with hsub
+    omega
+  have hg_pos : 0 < g.size := by omega
+  have hg_coeff_ne : g.coeff 0 ≠ 0 := by
+    have hlast := Hex.DensePoly.coeff_last_ne_zero_of_pos_size g hg_pos
+    simpa [hg_size] using hlast
+  have hg_coeff_zmod_ne :
+      HexModArithMathlib.ZMod64.toZMod (g.coeff 0) ≠ 0 := by
+    intro hzero
+    apply hg_coeff_ne
+    have hinj := (HexModArithMathlib.ZMod64.equiv (p := p)).injective
+    apply hinj
+    simpa using hzero.trans HexModArithMathlib.ZMod64.toZMod_zero.symm
+  have hg_poly_unit : IsUnit (toMathlibPolynomial g) := by
+    have hg_poly_eq :
+        toMathlibPolynomial g =
+          Polynomial.C (HexModArithMathlib.ZMod64.toZMod (g.coeff 0)) := by
+      ext n
+      cases n with
+      | zero =>
+          simp [coeff_toMathlibPolynomial]
+      | succ n =>
+          rw [coeff_toMathlibPolynomial,
+            Hex.DensePoly.coeff_eq_zero_of_size_le g (by omega)]
+          rw [Polynomial.coeff_C]
+          exact HexModArithMathlib.ZMod64.toZMod_zero (p := p)
+    rw [hg_poly_eq]
+    exact Polynomial.isUnit_C.mpr (isUnit_iff_ne_zero.mpr hg_coeff_zmod_ne)
+  have hmath_gcd_unit :
+      IsUnit (gcd (toMathlibPolynomial f)
+        (Polynomial.derivative (toMathlibPolynomial f))) := by
+    rw [← toMathlibPolynomial_derivative f]
+    exact (toMathlibPolynomial_gcd_associated f (Hex.DensePoly.derivative f)).isUnit
+      hg_poly_unit
+  exact (gcd_isUnit_iff_isRelPrime.mp hmath_gcd_unit).isCoprime
 
 /--
 Every factor emitted by executable Berlekamp factorization is irreducible after
@@ -704,9 +738,16 @@ irreducibility theorem applies directly.
 theorem irreducible_of_berlekampFactor_factors_length_le_one
     (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
     [Lean.Grind.Field (Hex.ZMod64 p)] [Hex.ZMod64.PrimeModulus p]
-    (hsquareFree : Hex.DensePoly.gcd f (Hex.DensePoly.derivative f) = 1)
+    (hsquareFree :
+      Hex.Berlekamp.isUnitPolynomial
+        (Hex.DensePoly.gcd f (Hex.DensePoly.derivative f)) = true)
     (hsmall : (Hex.Berlekamp.berlekampFactor f hmonic).factors.length ≤ 1) :
     Irreducible (toMathlibPolynomial f) := by
+  have hsquareFree_common :
+      ∀ d, d ∣ f → d ∣ Hex.DensePoly.derivative f →
+        Hex.Berlekamp.isUnitPolynomial d = true := by
+    intro d hdf hdd
+    exact Hex.Berlekamp.isUnitPolynomial_of_dvd_gcd_isUnit hdf hdd hsquareFree
   cases hfactors : (Hex.Berlekamp.berlekampFactor f hmonic).factors with
   | nil =>
       exact False.elim
@@ -720,8 +761,8 @@ theorem irreducible_of_berlekampFactor_factors_length_le_one
             exact hprod
           have hirr_g :
               Irreducible (toMathlibPolynomial g) :=
-            irreducible_of_mem_berlekampFactor_of_gcd_eq_one
-              f hmonic hsquareFree g (by simp [hfactors])
+            irreducible_of_mem_berlekampFactor
+              f hmonic hsquareFree_common g (by simp [hfactors])
           simpa [hg_eq] using hirr_g
       | cons h rest =>
           simp [hfactors] at hsmall
