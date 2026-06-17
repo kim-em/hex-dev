@@ -628,3 +628,30 @@ is `f`, so you can take `core := f` and avoid the modular `normalizeForFactor`
 path entirely; (2) if you genuinely need the ZMod64 path, put the `#eval`/`#guard`
 in a module the package builds (`precompileModules := true` is set, so build-time
 `#eval` resolves the native symbols) rather than running a standalone file.
+
+## The BHKS tight CLD column bound is an *aggregation* phenomenon, not per-factor
+
+The tight `2·|col j| ≤ factorCount` estimate (BHKS Lemma 5.7, packaged as
+`TightColumnBound` in `Lattice.lean`, consumed by `tightNormBound_of_lift`) is
+**not** provable per-factor through `Hex.abs_cldCoeffs_le_bhksCoeffBound`. That
+lemma is the *loose* bound `|cldCoeffs f p a gᵢ .getD j| ≤ bhksCoeffBound f j`;
+the individual high-bit cuts `psiCut p a b ((cldQuotientMod f gᵢ p a).coeff j)`
+are genuinely large (verified: `±7` for `f=(x-1)(x²+1)`, `p=5`, `a=4` with
+`factorCount=3`, so `2·7=14 > 3`) and only become small after **cancellation
+over the support sum**. Do not try to bound the column term-by-term.
+
+Why the cancellation is exact: `TrueFactorLift.support_product_eq :
+supportProduct L S = factor` uses the **raw** `Array.polyProduct` (no mod-`p^a`
+reduction), so it forces `∏_{i∈S} gᵢ = factor` **exactly over ℤ**. The selected
+lifted factors are therefore exact monic integer *divisors* of `f` (cofactor
+`f/gᵢ` is a genuine integer polynomial), so the log-derivative identity
+`Σ_{i∈S} phi(f, gᵢ) = phi(f, factor)` holds exactly (`phi f g = f·g'/g`), and the
+per-factor coefficient bound routes through the **unconditional**
+`BHKS.abs_phi_coeff_le_of_monic_factor` (`CLDColumnBound.lean`) — it discharges
+its own Mahler hypothesis, unlike the conditional `abs_phi_coeff_le`. The carry
+cancellation itself is `BHKS.two_mul_natAbs_sum_psiCut_le` (the BHKS 5.7 high-bit
+estimate, landed by #7651's carry-core PR): feed it per-element exact ambient
+residues (`centeredResiduePow p a (z i) = w i`) whose support sum is a small
+integer (`|y| ≤ B`, `2B < p^b`). Sanity-check any "tight CLD column" directive
+that points at `abs_cldCoeffs`: that is the loose route and will not close the
+`factorCount` shape.
