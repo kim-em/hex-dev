@@ -685,34 +685,6 @@ theorem rabinTest_true_to_mathlib_checks
     rw [hfrob_eq]
     exact hcopM.add_mul_left_right t
 
-/-- The executable absolute polynomial `xPowSubX d = X^(p^d) - X` transports to
-the Mathlib Frobenius polynomial `frobeniusPolynomial p d`. The reverse-leg
-counterpart of the remainder transport: it identifies the executable divisibility
-target with its `Polynomial (ZMod p)` form. -/
-theorem toMathlibPolynomial_xPowSubX (d : Nat) :
-    toMathlibPolynomial (Hex.Berlekamp.xPowSubX (p := p) d) = frobeniusPolynomial p d := by
-  apply Polynomial.ext
-  intro n
-  have hz : HexModArithMathlib.ZMod64.toZMod (Zero.zero : Hex.ZMod64 p) = 0 :=
-    HexModArithMathlib.ZMod64.toZMod_zero
-  rw [coeff_toMathlibPolynomial]
-  unfold Hex.Berlekamp.xPowSubX
-  rw [Hex.DensePoly.coeff_sub_ring,
-    show (Hex.FpPoly.X : Hex.FpPoly p) = Hex.DensePoly.monomial 1 (1 : Hex.ZMod64 p) from rfl,
-    Hex.DensePoly.coeff_monomial, Hex.DensePoly.coeff_monomial,
-    frobeniusPolynomial, Polynomial.coeff_sub, Polynomial.coeff_X_pow, Polynomial.coeff_X]
-  by_cases h1 : n = p ^ d
-  · by_cases h2 : n = 1
-    · simp only [if_pos h1, if_pos h2, if_pos h2.symm]
-      simp [HexModArithMathlib.ZMod64.toZMod_sub]
-    · simp only [if_pos h1, if_neg h2, if_neg (fun h : (1 : Nat) = n => h2 h.symm)]
-      simp [HexModArithMathlib.ZMod64.toZMod_sub, hz]
-  · by_cases h2 : n = 1
-    · simp only [if_neg h1, if_pos h2, if_pos h2.symm]
-      simp [HexModArithMathlib.ZMod64.toZMod_sub, hz]
-    · simp only [if_neg h1, if_neg h2, if_neg (fun h : (1 : Nat) = n => h2 h.symm)]
-      simp [HexModArithMathlib.ZMod64.toZMod_sub, hz]
-
 /--
 The Mathlib Rabin checks imply the executable test surface once the transport
 lemmas connect executable remainders and gcds to `Polynomial (ZMod p)`.

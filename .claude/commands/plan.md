@@ -110,12 +110,6 @@ Each issue body MUST be **self-contained**:
 **Sizing**: max 3 deliverables, ~2 files, ~200 lines. Over 300 lines → split.
 When in doubt, split. Each issue must have a single logical concern.
 
-**Lean doc-batch issues**: for a declaration carrying an `omit … in`
-modifier, the `/-- … -/` docstring goes *between* the `omit … in` line
-and the `theorem`/`def` keyword, never above the `omit` line (a docstring
-above `omit` is a parse error). Do not instruct workers to place it above
-the `omit` line.
-
 **Stage granularity**: If the project roadmap has "stages" or "phases", **never
 create an issue that spans multiple stages**. Each issue belongs to exactly one
 stage.

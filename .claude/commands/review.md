@@ -39,14 +39,6 @@ Rotate through these areas across sessions:
 **Security**:
 - Check for new issues in recent code, verify past fixes
 
-## Posting Your Review
-
-`gh pr review <N> --approve` fails on agent-authored PRs ("Can not approve
-your own pull request") — every agent commits under the same GitHub
-account, so all PRs are self-authored. Skip `gh pr review` entirely and
-post findings as a plain `gh pr comment <N> --body-file ...`. State your
-verdict (approve / changes-requested) in the comment text.
-
 ## Updating Skills
 
 When you discover a recurring pattern or encounter a situation not covered by
