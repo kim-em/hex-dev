@@ -409,7 +409,27 @@ Divisor arithmetic used by Rabin's reducible contrapositive: a proper divisor
 theorem exists_prime_divisor_with_divisor_quotient
     {d n : Nat} (hd_pos : 0 < d) (hd_dvd : d ∣ n) (hd_lt : d < n) :
     ∃ q : Nat, Nat.Prime q ∧ q ∣ n / d ∧ q ∣ n ∧ d ∣ n / q := by
-  sorry
+  obtain ⟨c, hc⟩ := hd_dvd
+  -- `c = n / d ≥ 2`, since `d < n = d * c` with `d > 0` forces `c > 1`.
+  have hc_ge : 2 ≤ c := by
+    rcases Nat.lt_or_ge c 2 with h | h
+    · interval_cases c <;> omega
+    · exact h
+  have hnd : n / d = c := by rw [hc]; exact Nat.mul_div_cancel_left c hd_pos
+  have hc_ne : n / d ≠ 1 := by rw [hnd]; omega
+  obtain ⟨q, hq_prime, hq_dvd⟩ := Nat.exists_prime_and_dvd hc_ne
+  have hq_pos : 0 < q := hq_prime.pos
+  -- `c ∣ n` because `n = d * c = c * d`.
+  have hc_dvd_n : c ∣ n := ⟨d, by rw [hc, Nat.mul_comm]⟩
+  have hq_dvd_c : q ∣ c := by rwa [hnd] at hq_dvd
+  have hq_dvd_n : q ∣ n := dvd_trans hq_dvd_c hc_dvd_n
+  -- write `c = q * m`, so `n = q * (d * m)` and `n / q = d * m`.
+  obtain ⟨m, hm⟩ := hq_dvd_c
+  have hnq : n / q = d * m := by
+    rw [hc, hm, show d * (q * m) = q * (d * m) from by ring]
+    exact Nat.mul_div_cancel_left (d * m) hq_pos
+  have hd_dvd_nq : d ∣ n / q := by rw [hnq]; exact ⟨m, rfl⟩
+  exact ⟨q, hq_prime, hq_dvd, hq_dvd_n, hd_dvd_nq⟩
 
 /--
 The executable Rabin test passing entails the exact Mathlib divisibility and
