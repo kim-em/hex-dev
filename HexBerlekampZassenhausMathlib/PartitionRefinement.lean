@@ -1076,4 +1076,113 @@ theorem factorFastFactorsWithBound_raw_zpolyIrreducible_of_forwardInputs
       (Hex.normalizeForFactor f) hinputs.expectedFactors hcomplete hcore_irr
       hraw_mem
 
+/--
+Forward `factorFastFactorsWithBound`-level raw irreducibility that takes the
+forward cut certificates **directly**, with no `BHKS.ForwardRecoveryInputs`
+parameter.
+
+Sibling of `factorFastFactorsWithBound_raw_zpolyIrreducible_of_forwardInputs`,
+but routed through `factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut`
+rather than reconstructing a `ForwardRecoveryInputs` value.  This deliberately
+avoids the structure's `lattice_eq_indicators` field — the dead reverse
+`L' = W` separation (route-blocked behind #6779 / #2564) that nothing
+downstream reads — so a forward-only producer never has to inhabit it.  The
+`expectedFactors`, `trueSupports`, dimension positivity (`rows_pos`),
+indicator-size, and partition-count certificates are supplied directly; the
+forward cut hypothesis `hcut` (over `projectedRowsOfLiftData`) is the only
+lattice obligation, and the first-success loop pin `hcore` is threaded at the
+actual executable `start = initialHenselPrecision a` (not at a cap precision),
+exactly as in the `_of_forwardInputs` sibling.
+
+This closes deliverable 1 of #7786.  Deliverable 2 — a producer that discharges
+the per-support `BHKS.TrueFactorLift` / `TrueFactorLiftSemantics` /
+Lemma-5.7 separation family (and hence `hcut`) for the actual first-success
+recovery — remains open on a missing coverage substrate (see the issue
+comment). -/
+theorem factorFastFactorsWithBound_raw_zpolyIrreducible_of_cut
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat)
+    (primeData : Hex.PrimeChoiceData)
+    (hB_pos : 1 ≤ B)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some primeData)
+    (hdeg :
+      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hmulti : 1 < primeData.factorsModP.size)
+    (hquadratic :
+      B = 1 ∨
+        Hex.quadraticIntegerRootFactors?
+          (Hex.normalizeForFactor f).squareFreeCore = none)
+    (rows_pos :
+      BHKS.HasPositiveDimension (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.toMonicLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.precisionForCoeffBound B primeData.p) primeData))
+    (trueSupports :
+      Set (Set (Fin
+        (BHKS.projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.toMonicLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (Hex.precisionForCoeffBound B primeData.p) primeData)
+          rows_pos).factorCount)))
+    {expectedFactors : Array Hex.ZPoly}
+    (hcore :
+      let a := Hex.precisionForCoeffBound B primeData.p
+      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore a
+        primeData (Hex.initialHenselPrecision a)
+        (Hex.ZPoly.quadraticDoublingSteps a + 2) =
+          some expectedFactors)
+    (hcut :
+      BHKS.CutProjectionHypotheses
+        (BHKS.projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.toMonicLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (Hex.precisionForCoeffBound B primeData.p) primeData)
+          rows_pos)
+        trueSupports)
+    (hsize :
+      expectedFactors.size =
+        (Hex.bhksEquivalenceClassIndicators
+          (BHKS.projectedRowsOfLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (Hex.ZPoly.toMonicLiftData
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.precisionForCoeffBound B primeData.p) primeData)
+            rows_pos)).size)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial
+            (Hex.normalizeForFactor f).squareFreeCore)).card)
+    (hcomplete :
+      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+        expectedFactors)
+    {rawFactors : Array Hex.ZPoly}
+    (hfast : Hex.factorFastFactorsWithBound f B = some rawFactors) :
+    ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw := by
+  have hcore_lc_pos :
+      0 < Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore :=
+    Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 :=
+    zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  have hcore_irr :
+      ∀ factor ∈ expectedFactors.toList,
+        Hex.ZPoly.Irreducible factor :=
+    factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut
+      trueSupports hcore_ne hcore hcut hsize hpartition
+  have hfast_eq :=
+    Hex.factorFastFactorsWithBound_eq_some_of_core_success f B primeData
+      expectedFactors hB_pos hchoose hdeg (by omega) hquadratic hcore
+  rw [hfast] at hfast_eq
+  have hraw_eq := (Option.some.inj hfast_eq)
+  intro raw hraw_mem
+  rw [hraw_eq] at hraw_mem
+  exact
+    Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+      (Hex.normalizeForFactor f) expectedFactors hcomplete hcore_irr
+      hraw_mem
+
 end HexBerlekampZassenhausMathlib
