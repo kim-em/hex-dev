@@ -533,12 +533,93 @@ theorem rabinTest_true_of_mathlib_checks
 
 end Rabin
 
-/-- Executable gcd transfers to Mathlib's gcd after coefficient transport. -/
+/--
+**Unsound up-to-unit overstatement — use `toMathlibPolynomial_gcd_normalize`.**
+
+This exact equality is false in general: `Hex.DensePoly.gcd` is the last nonzero
+`xgcdAux` remainder with no monic rescale (`HexPoly/Euclid.lean:913`), while
+Mathlib's `gcd` is `normalize`-canonical. Counterexample over `F₅`:
+`gcd(X²−1, 2X−2) = 2X−2` (leadCoeff `2`) executable, but `X−1` in Mathlib. The
+two sides are only associated; see `toMathlibPolynomial_gcd_associated` and
+`toMathlibPolynomial_gcd_normalize` for the sound primitives.
+
+Retained as an unproved placeholder only because the CI-gated
+`HexBerlekampZassenhausMathlib` consumers (`gcd_monicModularImage_derivative_eq_one`,
+`toMathlibPolynomial_coprime_of_gcdIsUnit`, the `HotPathDiscriminant`
+non-coprimality lemma) still rewrite with it. Removing it requires
+re-specifying the `gcd f f' = 1` square-free precondition of
+`toMathlibPolynomial_squareFree_coprime` / `irreducible_of_berlekampFactor_factors_length_le_one`
+to a `gcdIsUnit`/`IsUnit` hypothesis, then migrating those consumers onto the
+sound transport. See the diagnosis on issue #7763.
+-/
 theorem toMathlibPolynomial_gcd
     [Fact (Nat.Prime p)] (f g : Hex.FpPoly p) :
     toMathlibPolynomial (Hex.DensePoly.gcd f g) =
       gcd (toMathlibPolynomial f) (toMathlibPolynomial g) := by
   sorry
+
+/--
+Executable gcd is associated to Mathlib's gcd after coefficient transport.
+
+`toMathlibPolynomial = fpPolyEquiv` is a ring iso, so executable divisibility
+transports both ways; feeding the executable `GcdLaws` through it shows the
+transported gcd satisfies Mathlib's gcd universal property. The two are only
+*associated*, not equal, because the executable gcd is the last nonzero xgcd
+remainder with no monic rescale while Mathlib's gcd is `normalize`-canonical.
+-/
+theorem toMathlibPolynomial_gcd_associated
+    [Fact (Nat.Prime p)] (f g : Hex.FpPoly p) :
+    Associated (toMathlibPolynomial (Hex.DensePoly.gcd f g))
+      (gcd (toMathlibPolynomial f) (toMathlibPolynomial g)) := by
+  have hp_hex : Hex.Nat.Prime p := by
+    refine ⟨(Fact.out : Nat.Prime p).two_le, ?_⟩
+    intro m hmdvd
+    rcases (Fact.out : Nat.Prime p).eq_one_or_self_of_dvd m hmdvd with h | h
+    · exact Or.inl h
+    · exact Or.inr h
+  haveI : Hex.ZMod64.PrimeModulus p := Hex.ZMod64.primeModulusOfPrime hp_hex
+  -- The executable `∣` is custom (`∃ r, b = a * r`), so transport it through the
+  -- iso by destructuring and re-multiplying rather than via `map_dvd`.
+  have transport : ∀ {a b : Hex.FpPoly p}, a ∣ b →
+      toMathlibPolynomial a ∣ toMathlibPolynomial b := by
+    rintro a b ⟨r, hr⟩
+    exact ⟨toMathlibPolynomial r, by rw [hr]; exact map_mul fpPolyEquiv a r⟩
+  have untransport : ∀ {a b : Hex.FpPoly p},
+      toMathlibPolynomial a ∣ toMathlibPolynomial b → a ∣ b := by
+    rintro a b ⟨R, hR⟩
+    refine ⟨fpPolyEquiv.symm R, ?_⟩
+    apply fpPolyEquiv.injective
+    rw [map_mul, fpPolyEquiv.apply_symm_apply]
+    exact hR
+  apply associated_of_dvd_dvd
+  · exact dvd_gcd (transport (Hex.DensePoly.gcd_dvd_left f g))
+      (transport (Hex.DensePoly.gcd_dvd_right f g))
+  · set d : Hex.FpPoly p :=
+      fpPolyEquiv.symm (gcd (toMathlibPolynomial f) (toMathlibPolynomial g)) with hd
+    have hsymm :
+        toMathlibPolynomial d = gcd (toMathlibPolynomial f) (toMathlibPolynomial g) := by
+      rw [hd]; exact fpPolyEquiv.apply_symm_apply _
+    have hdf : d ∣ f := by
+      apply untransport; rw [hsymm]; exact gcd_dvd_left _ _
+    have hdg : d ∣ g := by
+      apply untransport; rw [hsymm]; exact gcd_dvd_right _ _
+    rw [← hsymm]
+    exact transport (Hex.DensePoly.dvd_gcd d f g hdf hdg)
+
+/--
+Executable gcd transfers to Mathlib's gcd after coefficient transport, up to
+normalization. The executable `Hex.DensePoly.gcd` is the last nonzero xgcd
+remainder and is not monic, while Mathlib's `gcd` applies `normalize`; the two
+coincide only after normalizing the transport. Coprimality is a unit-gcd
+statement, so this up-to-unit shape is the correct primitive for downstream
+square-free reasoning.
+-/
+theorem toMathlibPolynomial_gcd_normalize
+    [Fact (Nat.Prime p)] (f g : Hex.FpPoly p) :
+    normalize (toMathlibPolynomial (Hex.DensePoly.gcd f g)) =
+      gcd (toMathlibPolynomial f) (toMathlibPolynomial g) := by
+  rw [normalize_eq_normalize_iff_associated.mpr (toMathlibPolynomial_gcd_associated f g),
+    normalize_gcd]
 
 /--
 The executable square-free hypothesis used by Berlekamp is the corresponding
