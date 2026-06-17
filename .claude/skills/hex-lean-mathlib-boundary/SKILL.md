@@ -62,6 +62,27 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   `DensePoly` lemma applied to an `FpPoly` goal. `exact` (defeq-tolerant) needs
   no such wrapper, so per-term closers like `exact toZMod_diagonalMulCoeffTerm …`
   match through the instance gap directly.
+- **`FpPoly` *products* need `FpPoly.*` rw lemmas, NOT `DensePoly.*_poly`.**
+  Same instance-path divergence: a product `a * z` you write for `FpPoly` terms
+  carries the canonical `Mul (ZMod64 p)`, but the general `DensePoly`
+  product lemmas (`mul_comm_poly`, `mul_assoc_poly`, `mul_add_right_poly`,
+  `mul_add_left_poly`, `neg_mul_right_poly`, `mul_sub_zero_comm`,
+  `sub_eq_add_neg_poly` *inside a product*) carry the `Lean.Grind.CommRing`-
+  derived `Mul`, so `rw [DensePoly.mul_comm_poly …]` reports "did not find
+  pattern" on a goal that visibly contains `a * z`. Use `FpPoly.mul_comm`,
+  `FpPoly.mul_assoc`, `FpPoly.left_distrib`, `FpPoly.right_distrib`,
+  `FpPoly.sub_eq_add_neg`, `FpPoly.add_assoc`, `FpPoly.add_left_neg`,
+  `FpPoly.add_right_neg`, `FpPoly.add_zero`, `FpPoly.mul_zero` for `rw`. There
+  is no `FpPoly.mul_sub`/`sub_mul`/`neg_mul`; derive them once from
+  `right_distrib`/`left_distrib` + additive cancellation (`a - b + b = a` via
+  `sub_eq_add_neg`+`add_assoc`+`add_left_neg`+`add_zero`). A `DensePoly` product
+  lemma still applies to an `FpPoly` goal via **`exact`/`:=`/`.trans`** (defeq-
+  tolerant) or by binding a `have` whose stated type uses the `FpPoly` ops
+  (then `rw [thatHave]`). `+`/`-`/coeff/`∣`/`Congr` lemmas (`DensePoly.coeff_add`
+  — needs an explicit `(0+0=0)` arg —, `coeff_sub_ring`, `dvd_add_poly`,
+  `dvd_mul_left_poly`, `congr_mod`, `mod_eq_mod_of_congr`) DO match `FpPoly`
+  under their `DensePoly` names. `grind` does *not* prove `FpPoly` product/ring
+  identities (only the `ZMod64` coefficient ring), so do not reach for it there.
 - **No `map_neg` / `map_one` / `map_zero` / `map_dvd` on `ZMod64`/`FpPoly`.**
   These need `ZeroHomClass`/`AddMonoidHomClass`/`Monoid` that the executable
   types don't have. To compute e.g. `toZMod (-1) = -1`: prove `(-1)+1 = 0` in
@@ -134,13 +155,19 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
 ## Proving *inside* the Mathlib-free files
 
 Lemmas that live in the executable files themselves (`HexPoly/*`,
-`HexPolyZ/*`, `HexBerlekampZassenhaus/Basic.lean`) cannot use Mathlib tactics
+`HexPolyZ/*`, `HexBerlekamp/*` including `RabinSoundness.lean`,
+`HexBerlekampZassenhaus/Basic.lean`) cannot use Mathlib tactics
 or `Monoid`/`CommRing` lemmas — those modules don't import Mathlib.
 
-- **`by_contra`, `ring`, `omega`-via-Mathlib are out.** `by_contra` reports
-  "unknown tactic"; replace with `rcases Nat.eq_zero_or_pos n` or
-  `rcases Nat.lt_trichotomy a b`. `omega`/`simp`/`rcases`/`conv` are core and
-  available.
+- **`by_contra`, `ring`, `omega`-via-Mathlib, `set`, `conv_lhs`/`conv_rhs`,
+  `push_neg` are out.** They report "unknown tactic". Replacements: `by_contra`
+  → `rcases Nat.eq_zero_or_pos n` / `rcases Nat.lt_trichotomy a b` /
+  `by_cases` + `Classical.byContradiction`; `set x := e` → `let x := e` (but a
+  `let` of a *huge* term blows the `whnf` heartbeat budget — `generalize e = x`
+  to an opaque var instead, after extracting the facts you need about `e`);
+  `push_neg` → `Classical.not_forall.mp` / `Classical.not_exists.mp`; `conv_lhs
+  => rw [h]` → `rw [h] at <aux-have>` then `exact`. `omega`/`simp`/`rcases` are
+  core and available.
 - **Integer `^` has no `pow_add`/`pow_succ`/`pow_one`/`one_pow` (Mathlib).**
   Use `Lean.Grind.Semiring.pow_succ` (`a^(n+1) = a^n * a`) and
   `Lean.Grind.Semiring.pow_zero`; `Int.one_pow`, `Int.mul_assoc`,
