@@ -662,6 +662,235 @@ theorem quadraticMultifactorLiftInvariant_of_multifactorLiftInvariant
           (by simp) hinv
 
 /--
+List-level agreement of the linear and quadratic multifactor lifters over
+congruent targets, after canonical reduction modulo `p ^ k`.
+
+The targets `f` (linear) and `f'` (quadratic) are taken congruent modulo
+`p ^ k` rather than only modulo `p`: at each non-singleton split,
+`hensel_unique` equates the two lifted heads *and* the two lifted complements
+modulo `p ^ k`, and the complement equality is exactly the recursive target
+congruence consumed by the inductive call. Mod-`p` target congruence is enough
+to transport the *invariant* (see
+`quadraticMultifactorLiftInvariant_of_multifactorLiftInvariant_congr`), but it
+is not enough to pin the *lifted factors* modulo `p ^ k`, since Hensel lifting
+is target-dependent above the base prime. The public theorem instantiates this
+helper at `f' = f` via `Hex.ZPoly.congr_refl`.
+-/
+private theorem multifactorLiftList_map_eq_quadratic
+    (p k : Nat) [Fact (Nat.Prime p)] [Hex.ZMod64.Bounds p]
+    [Hex.ZMod64.PrimeModulus p]
+    (f f' : Hex.ZPoly) (factors : List Hex.ZPoly)
+    (hk : 1 ≤ k) (hp : 1 < p)
+    (hmonic : ∀ g ∈ factors, Hex.DensePoly.Monic g)
+    (htarget : Hex.ZPoly.congr f f' (p ^ k))
+    (hinv : Hex.ZPoly.MultifactorLiftInvariant p k f factors) :
+    (Hex.ZPoly.multifactorLiftList p k f factors).toList.map
+        (fun g => (HexPolyMathlib.toPolynomial g).map (Int.castRingHom (ZMod (p ^ k)))) =
+      (Hex.ZPoly.multifactorLiftQuadraticList p k f' factors).toList.map
+        (fun g => (HexPolyMathlib.toPolynomial g).map (Int.castRingHom (ZMod (p ^ k)))) := by
+  induction factors generalizing f f' with
+  | nil =>
+      simp [Hex.ZPoly.multifactorLiftList, Hex.ZPoly.multifactorLiftQuadraticList]
+  | cons g rest ih =>
+      cases rest with
+      | nil =>
+          have hcongr :
+              Hex.ZPoly.congr (Hex.ZPoly.reduceModPow f p k)
+                (Hex.ZPoly.reduceModPow f' p k) (p ^ k) := by
+            have hf := Hex.ZPoly.congr_reduceModPow f p k
+              (Nat.pow_pos (Hex.ZMod64.Bounds.pPos (p := p)))
+            have hf' := Hex.ZPoly.congr_reduceModPow f' p k
+              (Nat.pow_pos (Hex.ZMod64.Bounds.pPos (p := p)))
+            exact Hex.ZPoly.congr_trans _ _ _ (p ^ k) hf
+              (Hex.ZPoly.congr_trans _ _ _ (p ^ k) htarget
+                (Hex.ZPoly.congr_symm _ _ _ hf'))
+          have hmap := zpoly_congr_toPolynomial_map_eq
+            (Hex.ZPoly.reduceModPow f p k) (Hex.ZPoly.reduceModPow f' p k) (p ^ k) hcongr
+          simpa [Hex.ZPoly.multifactorLiftList, Hex.ZPoly.multifactorLiftQuadraticList]
+            using hmap
+      | cons h tail =>
+          rcases hinv with ⟨hstart, hstepDeg, hstepBez, htail⟩
+          let restFactors : Array Hex.ZPoly := (h :: tail).toArray
+          let splitProduct : Hex.ZPoly := Array.polyProduct restFactors
+          let xgcd := Hex.ZPoly.normalizedXGCD p g splitProduct
+          let s : Hex.ZPoly := Hex.FpPoly.liftToZ xgcd.left
+          let t : Hex.ZPoly := Hex.FpPoly.liftToZ xgcd.right
+          let linearLifted := Hex.ZPoly.henselLift p k f g splitProduct xgcd.left xgcd.right
+          let quadraticLifted := Hex.ZPoly.henselLiftQuadratic p k f' g splitProduct s t
+          -- Align the destructured invariant pieces with the local abbreviations.
+          have hstart' :
+              Hex.ZPoly.LinearLiftLoopInvariant p 1 f xgcd.left xgcd.right
+                { g := Hex.ZPoly.reduceModPow g p 1
+                  h := Hex.ZPoly.reduceModPow splitProduct p 1 } := hstart
+          -- Linear product spec modulo `p ^ k`.
+          have hlin_prod :
+              Hex.ZPoly.congr (linearLifted.g * linearLifted.h) f (p ^ k) :=
+            Hex.ZPoly.henselLift_spec p k f g splitProduct xgcd.left xgcd.right hk hp
+              hstart' hstepDeg hstepBez
+          have hlin_g_monic : Hex.DensePoly.Monic linearLifted.g :=
+            Hex.ZPoly.henselLift_monic p k f g splitProduct xgcd.left xgcd.right hk hp
+              hstart' hstepDeg hstepBez
+          -- Rebuild the quadratic loop-start from the linear loop-start, the
+          -- raw-product/Bezout congruences mod `p`, and raw head monicity.
+          have htarget_p : Hex.ZPoly.congr f f' p := by
+            have h := Hex.ZPoly.congr_pow_of_le p 1 k f f' hk htarget
+            simpa [Nat.pow_one] using h
+          have hprod_reduced :
+              Hex.ZPoly.congr
+                (Hex.ZPoly.reduceModPow g p 1 *
+                  Hex.ZPoly.reduceModPow splitProduct p 1) f p := by
+            simpa [Nat.pow_one] using hstart'.1
+          have hreduce_prod :
+              Hex.ZPoly.congr
+                (Hex.ZPoly.reduceModPow g p 1 *
+                  Hex.ZPoly.reduceModPow splitProduct p 1)
+                (g * splitProduct) p := by
+            apply Hex.ZPoly.congr_mul
+            · have hg :=
+                Hex.ZPoly.congr_reduceModPow g p 1
+                  (Nat.pow_pos (Hex.ZMod64.Bounds.pPos (p := p)))
+              simpa [Nat.pow_one] using hg
+            · have hh :=
+                Hex.ZPoly.congr_reduceModPow splitProduct p 1
+                  (Nat.pow_pos (Hex.ZMod64.Bounds.pPos (p := p)))
+              simpa [Nat.pow_one] using hh
+          have hprod_raw_f :
+              Hex.ZPoly.congr (g * splitProduct) f p :=
+            Hex.ZPoly.congr_trans _ _ _ p
+              (Hex.ZPoly.congr_symm _ _ _ hreduce_prod) hprod_reduced
+          have hprod_raw :
+              Hex.ZPoly.congr (g * splitProduct) f' p :=
+            Hex.ZPoly.congr_trans _ _ _ p hprod_raw_f htarget_p
+          have hbez_reduced :
+              Hex.ZPoly.congr
+                (Hex.FpPoly.liftToZ
+                  (xgcd.left * Hex.ZPoly.modP p g +
+                    xgcd.right * Hex.ZPoly.modP p splitProduct)) 1 p := by
+            simpa [Hex.ZPoly.modP_reduceModPow_of_pos p 1 g (by omega),
+              Hex.ZPoly.modP_reduceModPow_of_pos p 1 splitProduct (by omega)]
+              using hstart'.2.1
+          have hbez_lift :
+              Hex.ZPoly.congr
+                (Hex.FpPoly.liftToZ
+                  (xgcd.left * Hex.ZPoly.modP p g +
+                    xgcd.right * Hex.ZPoly.modP p splitProduct))
+                (s * g + t * splitProduct) p := by
+            apply Hex.ZPoly.congr_liftToZ_of_modP_eq
+            simp [s, t]
+          have hbez :
+              Hex.ZPoly.congr (s * g + t * splitProduct) 1 p :=
+            Hex.ZPoly.congr_trans _ _ _ p
+              (Hex.ZPoly.congr_symm _ _ _ hbez_lift) hbez_reduced
+          have hg_monic : Hex.DensePoly.Monic g := hmonic g (by simp)
+          have hquad_start :
+              Hex.ZPoly.QuadraticLiftLoopInvariant p f'
+                { g := g, h := splitProduct, s := s, t := t } :=
+            Hex.ZPoly.QuadraticLiftLoopInvariant.of_product_bezout_monic
+              hprod_raw hbez hg_monic
+          -- Quadratic product spec modulo `p ^ k`.
+          have hquad_prod :
+              Hex.ZPoly.congr (quadraticLifted.g * quadraticLifted.h) f' (p ^ k) :=
+            Hex.ZPoly.henselLiftQuadratic_spec p k f' g splitProduct s t hk hp hquad_start
+          have hquad_g_monic : Hex.DensePoly.Monic quadraticLifted.g :=
+            Hex.ZPoly.henselLiftQuadratic_g_monic p k f' g splitProduct s t hk hp hquad_start
+          -- Base-prime agreement of the lifted heads and complements.
+          have hlin_g_base : Hex.ZPoly.congr linearLifted.g g p :=
+            Hex.ZPoly.henselLift_g_congr_mod_base p k f g splitProduct
+              xgcd.left xgcd.right hk
+          have hlin_h_base : Hex.ZPoly.congr linearLifted.h splitProduct p :=
+            Hex.ZPoly.henselLift_h_congr_mod_base p k f g splitProduct
+              xgcd.left xgcd.right hk
+          have hquad_g_base : Hex.ZPoly.congr quadraticLifted.g g p :=
+            Hex.ZPoly.henselLiftQuadratic_g_congr_mod_base p k f' g splitProduct s t hk hp
+              hquad_start
+          have hquad_h_base : Hex.ZPoly.congr quadraticLifted.h splitProduct p :=
+            Hex.ZPoly.henselLiftQuadratic_h_congr_mod_base p k f' g splitProduct s t hk hp
+              hquad_start
+          -- Mathlib-side hypotheses for `hensel_unique`.
+          have hg : (HexPolyMathlib.toPolynomial linearLifted.g).Monic :=
+            toPolynomial_monic_of_dense_monic _ hlin_g_monic
+          have hg' : (HexPolyMathlib.toPolynomial quadraticLifted.g).Monic :=
+            toPolynomial_monic_of_dense_monic _ hquad_g_monic
+          have hg1 :
+              (HexPolyMathlib.toPolynomial linearLifted.g).map (Int.castRingHom (ZMod p)) =
+                (HexPolyMathlib.toPolynomial quadraticLifted.g).map (Int.castRingHom (ZMod p)) :=
+            zpoly_congr_toPolynomial_map_eq _ _ p
+              (Hex.ZPoly.congr_trans _ _ _ p hlin_g_base
+                (Hex.ZPoly.congr_symm _ _ _ hquad_g_base))
+          have hh1 :
+              (HexPolyMathlib.toPolynomial linearLifted.h).map (Int.castRingHom (ZMod p)) =
+                (HexPolyMathlib.toPolynomial quadraticLifted.h).map (Int.castRingHom (ZMod p)) :=
+            zpoly_congr_toPolynomial_map_eq _ _ p
+              (Hex.ZPoly.congr_trans _ _ _ p hlin_h_base
+                (Hex.ZPoly.congr_symm _ _ _ hquad_h_base))
+          have hdeg :
+              (HexPolyMathlib.toPolynomial linearLifted.g).natDegree =
+                (HexPolyMathlib.toPolynomial quadraticLifted.g).natDegree :=
+            natDegree_eq_of_monic_map_eq p hg hg' hg1
+          have hprod :
+              (HexPolyMathlib.toPolynomial linearLifted.g).map (Int.castRingHom (ZMod (p ^ k))) *
+                  (HexPolyMathlib.toPolynomial linearLifted.h).map
+                    (Int.castRingHom (ZMod (p ^ k))) =
+                (HexPolyMathlib.toPolynomial f).map (Int.castRingHom (ZMod (p ^ k))) := by
+            have hmap := zpoly_congr_toPolynomial_map_eq
+              (linearLifted.g * linearLifted.h) f (p ^ k) hlin_prod
+            simpa [HexPolyMathlib.toPolynomial_mul, Polynomial.map_mul] using hmap
+          have hprod' :
+              (HexPolyMathlib.toPolynomial quadraticLifted.g).map (Int.castRingHom (ZMod (p ^ k))) *
+                  (HexPolyMathlib.toPolynomial quadraticLifted.h).map
+                    (Int.castRingHom (ZMod (p ^ k))) =
+                (HexPolyMathlib.toPolynomial f).map (Int.castRingHom (ZMod (p ^ k))) := by
+            have hmap := zpoly_congr_toPolynomial_map_eq
+              (quadraticLifted.g * quadraticLifted.h) f' (p ^ k) hquad_prod
+            have htgt := zpoly_congr_toPolynomial_map_eq f f' (p ^ k) htarget
+            simp only [HexPolyMathlib.toPolynomial_mul, Polynomial.map_mul] at hmap
+            simp only at htgt
+            rw [hmap]; exact htgt.symm
+          have hcop :
+              IsCoprime
+                ((HexPolyMathlib.toPolynomial linearLifted.g).map (Int.castRingHom (ZMod p)))
+                ((HexPolyMathlib.toPolynomial linearLifted.h).map (Int.castRingHom (ZMod p))) := by
+            have hbase := isCoprime_of_zpoly_bezout p g splitProduct s t hbez
+            have hgp : (HexPolyMathlib.toPolynomial linearLifted.g).map
+                (Int.castRingHom (ZMod p)) =
+                (HexPolyMathlib.toPolynomial g).map (Int.castRingHom (ZMod p)) :=
+              zpoly_congr_toPolynomial_map_eq _ _ p hlin_g_base
+            have hhp : (HexPolyMathlib.toPolynomial linearLifted.h).map
+                (Int.castRingHom (ZMod p)) =
+                (HexPolyMathlib.toPolynomial splitProduct).map (Int.castRingHom (ZMod p)) :=
+              zpoly_congr_toPolynomial_map_eq _ _ p hlin_h_base
+            rw [hgp, hhp]; exact hbase
+          obtain ⟨hgeq, hheq⟩ := hensel_unique
+            (HexPolyMathlib.toPolynomial f)
+            (HexPolyMathlib.toPolynomial linearLifted.g)
+            (HexPolyMathlib.toPolynomial linearLifted.h)
+            (HexPolyMathlib.toPolynomial quadraticLifted.g)
+            (HexPolyMathlib.toPolynomial quadraticLifted.h)
+            p k (by omega) hg hg' hdeg hprod hprod' hg1 hh1 hcop
+          -- Recurse on the lifted complements, congruent modulo `p ^ k`.
+          have htarget' : Hex.ZPoly.congr linearLifted.h quadraticLifted.h (p ^ k) :=
+            zpoly_congr_of_toPolynomial_map_eq linearLifted.h quadraticLifted.h (p ^ k) hheq
+          have hmonic' : ∀ q ∈ (h :: tail), Hex.DensePoly.Monic q :=
+            fun q hq => hmonic q (by simp [hq])
+          have hinv' :
+              Hex.ZPoly.MultifactorLiftInvariant p k linearLifted.h (h :: tail) := htail
+          have hexpandL :
+              (Hex.ZPoly.multifactorLiftList p k f (g :: h :: tail)).toList =
+                linearLifted.g ::
+                  (Hex.ZPoly.multifactorLiftList p k linearLifted.h (h :: tail)).toList := by
+            simp [Hex.ZPoly.multifactorLiftList, restFactors, splitProduct, xgcd, linearLifted]
+          have hexpandQ :
+              (Hex.ZPoly.multifactorLiftQuadraticList p k f' (g :: h :: tail)).toList =
+                quadraticLifted.g ::
+                  (Hex.ZPoly.multifactorLiftQuadraticList p k quadraticLifted.h
+                    (h :: tail)).toList := by
+            simp [Hex.ZPoly.multifactorLiftQuadraticList, restFactors, splitProduct, xgcd, s, t,
+              quadraticLifted]
+          rw [hexpandL, hexpandQ, List.map_cons, List.map_cons]
+          refine List.cons_eq_cons.mpr ⟨hgeq, ?_⟩
+          exact ih linearLifted.h quadraticLifted.h hmonic' htarget' hinv'
+
+/--
 The linear and quadratic multifactor lifters agree modulo `p ^ k` after
 canonical reduction, when both are applied to the same input under the
 recursive `MultifactorLiftInvariant` precondition consumed by both
@@ -675,6 +904,11 @@ form via `Polynomial.map (Int.castRingHom (ZMod (p ^ k)))`. Through
 this is equivalent to per-factor canonicalisation by
 `Hex.ZPoly.reduceModPow _ p k`.
 
+The raw-head monicity hypothesis `hmonic` is required: it pins each split
+head's Mathlib degree so `hensel_unique` can identify the linear and
+quadratic lifts. See `multifactorLiftList_map_eq_quadratic` for the
+congruent-target induction behind the proof.
+
 This is the lift-uniqueness obligation that `hex-hensel` defers to
 `hex-hensel-mathlib`; see `SPEC/Libraries/hex-hensel.md` and the
 companion-statement note at the top of `HexHensel/QuadraticMultifactor.lean`.
@@ -685,13 +919,16 @@ theorem multifactorLift_eq_multifactorLiftQuadratic
     (f : Hex.ZPoly) (factors : Array Hex.ZPoly)
     (hk : 1 ≤ k)
     (hp : 1 < p)
+    (hmonic : ∀ g ∈ factors.toList, Hex.DensePoly.Monic g)
     (hinv : Hex.ZPoly.MultifactorLiftInvariant p k f factors.toList) :
     let φ := Int.castRingHom (ZMod (p ^ k))
     (Hex.ZPoly.multifactorLift p k f factors).toList.map
         (fun g => (HexPolyMathlib.toPolynomial g).map φ) =
       (Hex.ZPoly.multifactorLiftQuadratic p k f factors).toList.map
         (fun g => (HexPolyMathlib.toPolynomial g).map φ) := by
-  sorry
+  intro _φ
+  exact multifactorLiftList_map_eq_quadratic p k f f factors.toList hk hp hmonic
+    (Hex.ZPoly.congr_refl f (p ^ k)) hinv
 
 end
 

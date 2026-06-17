@@ -90,7 +90,7 @@ complementary product `Array.polyProduct rest.toArray` via `henselLift`, and
 recurses with `lifted.h` as the new target on `rest`. The singleton case
 returns the input reduced modulo `p^k`; the empty case returns the empty
 array. -/
-private def multifactorLiftList
+def multifactorLiftList
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) : List ZPoly → Array ZPoly
   | [] => #[]
