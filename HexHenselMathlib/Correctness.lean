@@ -195,49 +195,6 @@ theorem quadraticHenselStep_monic
     (Hex.ZPoly.quadraticHenselStep_monic m f g h s t hm hmonic)
 
 /--
-Quadratic lifting is compatible with the Mathlib uniqueness theorem at the
-doubled prime-power precision.
--/
-theorem quadraticHenselStep_unique_mod_pow_two_mul
-    (f g h s t : Hex.ZPoly) (g' h' : Polynomial ℤ)
-    (p k : Nat) [Fact (Nat.Prime p)] [Hex.ZMod64.Bounds p]
-    (hk : 0 < k)
-    (hprod : Hex.ZPoly.congr (g * h) f (p ^ k))
-    (hbez : Hex.ZPoly.congr (s * g + t * h) 1 (p ^ k))
-    (hmonic : Hex.DensePoly.Monic g)
-    (hg' : g'.Monic)
-    (hdeg :
-      (HexPolyMathlib.toPolynomial
-        (Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t).g).natDegree =
-        g'.natDegree)
-    (hprod' :
-      let φ := Int.castRingHom (ZMod (p ^ (2 * k)))
-      (g'.map φ) * (h'.map φ) =
-        (HexPolyMathlib.toPolynomial f).map φ)
-    (hg1 :
-      let φ := Int.castRingHom (ZMod p)
-      (HexPolyMathlib.toPolynomial
-        (Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t).g).map φ =
-        g'.map φ)
-    (hh1 :
-      let φ := Int.castRingHom (ZMod p)
-      (HexPolyMathlib.toPolynomial
-        (Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t).h).map φ =
-        h'.map φ)
-    (hcop :
-      let φ := Int.castRingHom (ZMod p)
-      IsCoprime
-        ((HexPolyMathlib.toPolynomial
-          (Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t).g).map φ)
-        ((HexPolyMathlib.toPolynomial
-          (Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t).h).map φ)) :
-    let r := Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t
-    let φ := Int.castRingHom (ZMod (p ^ (2 * k)))
-    (HexPolyMathlib.toPolynomial r.g).map φ = g'.map φ ∧
-      (HexPolyMathlib.toPolynomial r.h).map φ = h'.map φ := by
-  sorry
-
-/--
 If two integer polynomials reduce to the same element of `Polynomial (ZMod (p^k))`,
 their difference factors as `C ((p^k : ℕ) : ℤ)` times some integer polynomial.
 -/
@@ -418,6 +375,77 @@ theorem hensel_unique (f g h g' h' : Polynomial ℤ) (p : ℕ) (k : ℕ)
       · have h1 := map_C_pow_mul_eq_zero_of_map_modP_eq_zero (k := k) B hB_zero
         rw [← hB, Polynomial.map_sub, sub_eq_zero] at h1
         exact h1
+
+/--
+Quadratic lifting is compatible with the Mathlib uniqueness theorem at the
+doubled prime-power precision.
+-/
+theorem quadraticHenselStep_unique_mod_pow_two_mul
+    (f g h s t : Hex.ZPoly) (g' h' : Polynomial ℤ)
+    (p k : Nat) [Fact (Nat.Prime p)] [Hex.ZMod64.Bounds p]
+    (hk : 0 < k)
+    (hprod : Hex.ZPoly.congr (g * h) f (p ^ k))
+    (hbez : Hex.ZPoly.congr (s * g + t * h) 1 (p ^ k))
+    (hmonic : Hex.DensePoly.Monic g)
+    (hg' : g'.Monic)
+    (hdeg :
+      (HexPolyMathlib.toPolynomial
+        (Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t).g).natDegree =
+        g'.natDegree)
+    (hprod' :
+      let φ := Int.castRingHom (ZMod (p ^ (2 * k)))
+      (g'.map φ) * (h'.map φ) =
+        (HexPolyMathlib.toPolynomial f).map φ)
+    (hg1 :
+      let φ := Int.castRingHom (ZMod p)
+      (HexPolyMathlib.toPolynomial
+        (Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t).g).map φ =
+        g'.map φ)
+    (hh1 :
+      let φ := Int.castRingHom (ZMod p)
+      (HexPolyMathlib.toPolynomial
+        (Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t).h).map φ =
+        h'.map φ)
+    (hcop :
+      let φ := Int.castRingHom (ZMod p)
+      IsCoprime
+        ((HexPolyMathlib.toPolynomial
+          (Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t).g).map φ)
+        ((HexPolyMathlib.toPolynomial
+          (Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t).h).map φ)) :
+    let r := Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t
+    let φ := Int.castRingHom (ZMod (p ^ (2 * k)))
+    (HexPolyMathlib.toPolynomial r.g).map φ = g'.map φ ∧
+      (HexPolyMathlib.toPolynomial r.h).map φ = h'.map φ := by
+  -- The quadratic step doubles precision from its modulus `m = p^k` to
+  -- `m * m = p^(2*k)`, so this is a specialisation of `hensel_unique` at level
+  -- `2 * k`. The substrate hypotheses pass through directly; monicity comes from
+  -- `quadraticHenselStep_monic` and the product equality from
+  -- `quadraticHenselStep_factor_correct`, after bridging `p^k * p^k = p^(2*k)`.
+  have hprime : Nat.Prime p := Fact.out
+  have hm_pos : 0 < p ^ k := pow_pos hprime.pos k
+  have hpk_gt1 : 1 < p ^ k := Nat.one_lt_pow hk.ne' hprime.one_lt
+  have hg_monic :
+      (HexPolyMathlib.toPolynomial
+        (Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t).g).Monic :=
+    quadraticHenselStep_monic (p ^ k) f g h s t hpk_gt1 hmonic
+  have hmm : p ^ k * p ^ k = p ^ (2 * k) := by rw [two_mul, pow_add]
+  have hprod_2k :
+      let φ := Int.castRingHom (ZMod (p ^ (2 * k)))
+      (HexPolyMathlib.toPolynomial
+            (Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t).g).map φ *
+          (HexPolyMathlib.toPolynomial
+            (Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t).h).map φ =
+        (HexPolyMathlib.toPolynomial f).map φ := by
+    have hfc :=
+      quadraticHenselStep_factor_correct (p ^ k) f g h s t hm_pos hprod hbez hmonic
+    simp only at hfc ⊢
+    exact hmm ▸ hfc
+  exact hensel_unique
+    (HexPolyMathlib.toPolynomial f)
+    (HexPolyMathlib.toPolynomial (Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t).g)
+    (HexPolyMathlib.toPolynomial (Hex.ZPoly.quadraticHenselStep (p ^ k) f g h s t).h)
+    g' h' p (2 * k) (by omega) hg_monic hg' hdeg hprod_2k hprod' hg1 hh1 hcop
 
 /--
 The linear and quadratic multifactor lifters agree modulo `p ^ k` after
