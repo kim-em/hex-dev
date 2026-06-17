@@ -582,6 +582,49 @@ theorem congr_polyProduct_mul_listSum_derivative
         rw [lhs_eq, ← rhs_eq]
         exact hcong
 
+/--
+Product logarithmic-derivative sum identity over a selected support.
+
+`supportProduct L S` is `∏_{i ∈ S} gᵢ` and `supportCldSum L S f p a` is
+`Σ_{i ∈ S} (f · gᵢ' / gᵢ mod pᵃ)`; this says their product is congruent modulo
+`pᵃ` to `f · (∏_{i ∈ S} gᵢ)'`.  It feeds the executable per-factor CLD
+congruence (`selected_cldQuotientMod_congr_mul_derivative`) through the generic
+list aggregation, and is the column-wise statement the tight-column work
+(`#7651`) consumes: reading off coefficient `j` gives the pre-`psiCut`
+true-factor CLD column entry, tied to the genuine product factor rather than to
+an arbitrary lattice vector.
+-/
+theorem TrueFactorLiftSemantics.supportProduct_cldSum_congr
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S) (H : TrueFactorLiftSemantics D)
+    (hk : 1 < D.p ^ D.a) :
+    Hex.ZPoly.congr
+      (supportProduct L S * supportCldSum L S D.f D.p D.a)
+      (D.f * Hex.DensePoly.derivative (supportProduct L S))
+      (D.p ^ D.a) := by
+  classical
+  have hfilter_mem : ∀ i ∈ (List.finRange L.factorCount).filter
+        (fun i => decide (i ∈ S)), i ∈ S := by
+    intro i hi
+    rw [List.mem_filter] at hi
+    exact of_decide_eq_true hi.2
+  have hyps : ∀ g ∈ ((List.finRange L.factorCount).filter
+        (fun i => decide (i ∈ S))).map (fun i => L.liftedFactors.getD i.val 1),
+      Hex.ZPoly.congr (g * Hex.cldQuotientMod D.f g D.p D.a)
+        (D.f * Hex.DensePoly.derivative g) (D.p ^ D.a) := by
+    intro g hg
+    rw [List.mem_map] at hg
+    obtain ⟨i, hi_mem, rfl⟩ := hg
+    have hi : i ∈ S := hfilter_mem i hi_mem
+    rw [TrueFactorLift.liftedFactors_eq D]
+    exact TrueFactorLiftSemantics.selected_cldQuotientMod_congr_mul_derivative D H hk i hi
+  have key := congr_polyProduct_mul_listSum_derivative D.f
+    (fun g => Hex.cldQuotientMod D.f g D.p D.a) (D.p ^ D.a)
+    (((List.finRange L.factorCount).filter (fun i => decide (i ∈ S))).map
+      (fun i => L.liftedFactors.getD i.val 1)) hyps
+  rw [List.map_map] at key
+  exact key
+
 end BHKS
 
 /--
