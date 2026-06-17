@@ -1086,7 +1086,7 @@ degree. Uses the executable `degree?` slot, the recorded monicity, and the
 Mathlib basisSize identification.
 -/
 private theorem natDegree_toMathlibPolynomial_factorPolys_eq
-    (primeData : Hex.PrimeFactorData)
+    (primeData : Hex.PrimeFactorData) [Nontrivial (ZMod primeData.p)]
     (hcheck : primeData.checkFactorCerts = true)
     (i : Nat) (hi_polys : i < primeData.factorPolys.size)
     (hi_deg : i < primeData.factorDegrees.size)
