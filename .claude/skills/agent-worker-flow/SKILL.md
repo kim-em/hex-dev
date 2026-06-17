@@ -150,34 +150,11 @@ Check that the plan's assumptions still hold:
 - Files mentioned in the issue still exist and haven't been restructured
 - No recently merged PR invalidates the plan
 
-**Closed dependency ≠ delivered dependency.** When the issue says to
-compose a bound/lemma/API "from #N", do not trust `#N` being closed. The
-replan-triage step closes a *skipped* issue as `COMPLETED` while forwarding
-its real scope to a successor (`#N` -> `#N'` -> `#N''`), so a chain of
-`CLOSED COMPLETED` issues can all be premise-skips with the deliverable
-still unbuilt. Before deep-reading consumer code, check the named
-dependency's closing comments (`gh issue view #N --json comments`) and grep
-the codebase for the actual artifact (a *proof* concluding the bound, not a
-hypothesis of the same shape). If the artifact is absent, the premise is
-stale: comment with evidence, `add-dep` on the live successor, and skip.
-
 If stale:
 ```
 coordination skip <issue-number> "reason: <what changed>"
 ```
 Go back to Step 1 and try the next issue.
-
-**Already-done duplicates (especially doc-coverage issues)**: planner-
-generated batches are sometimes already complete on `main`. Before
-writing anything, confirm the work is genuinely absent. For "add
-docstrings to X" issues, grep each named declaration for an actual
-`/-- ... -/` block *above* it — and note the docstring can sit one line
-above an `@[simp]`/`@[grind]` attribute, so a check of only the
-immediately-preceding line gives a false "undocumented" reading. If
-every deliverable already exists, do NOT open an empty PR: post a
-comment with `git blame` evidence (commit + that it is an ancestor of
-`origin/main`) and `coordination skip <N> "already complete via #M"` to
-route it to replan for closure.
 
 **PR fix plans**: If the plan asks you to fix a broken PR, use judgement. If the
 PR is low quality or not worth salvaging:

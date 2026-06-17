@@ -20,19 +20,6 @@ cycle described in the project's CLAUDE.md.
 After each coherent chunk of changes, build, test, and commit following the
 project's conventions. Each commit must compile and pass tests.
 
-### Phase 6 doc-batch gotcha: docstrings on `omit ... in` lemmas
-
-A `/-- ... -/` docstring must sit *between* the `omit [...] in` modifier
-and the `private theorem`/`def`, not before `omit`. Placing it before the
-`omit` line is a parse error (`unexpected token 'omit'`). Put it directly
-on the declaration:
-
-```
-omit [DecidableEq R] in
-/-- ... -/
-private theorem foo ...
-```
-
 ## Reflect
 
 Run `/reflect` before finishing.

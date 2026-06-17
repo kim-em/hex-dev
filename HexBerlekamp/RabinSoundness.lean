@@ -1404,6 +1404,68 @@ theorem dvd_frobeniusDiffMod_of_dvd_dvd
   exact DensePoly.dvd_sub_poly hg_dvd_pow hg_dvd_diff
 
 /--
+A `g` that divides both `f` and the modular Frobenius remainder
+`frobeniusDiffMod f hmonic k` also divides the absolute polynomial
+`xPowSubX k`.
+
+The converse companion to `dvd_frobeniusDiffMod_of_dvd_dvd`. Used by the
+Mathlib reverse Rabin transport to lift an executable common divisor of `f`
+and `frobeniusDiffMod` up to `X^(p^k) - X`, where it transports to a divisor
+of `frobeniusPolynomial p k`.
+-/
+theorem dvd_xPowSubX_of_dvd_frobeniusDiffMod
+    {f g : FpPoly p} (hmonic : DensePoly.Monic f)
+    (hg_dvd_f : g ∣ f) {k : Nat}
+    (hg_dvd_diff : g ∣ frobeniusDiffMod f hmonic k) :
+    g ∣ xPowSubX (p := p) k := by
+  have inst_dvd : DensePoly.DivModLaws (ZMod64 p) := inferInstance
+  -- Step 1: f ∣ ((xPowSubX k) - frobeniusDiffMod), reusing the algebra from the iff proof.
+  have hdvd_diff : f ∣ (xPowSubX (p := p) k - frobeniusDiffMod f hmonic k) := by
+    have hp1 : f ∣ ((DensePoly.monomial (p^k) (1 : ZMod64 p)) -
+                    FpPoly.frobeniusXPowMod f hmonic k) :=
+      @DensePoly.dvd_of_mod_eq_mod (ZMod64 p) _ _ _ inst_dvd _ _ _
+        (FpPoly.frobeniusXPowMod_mod_eq_monomial_mod f hmonic k).symm
+    have hp2 : f ∣ (FpPoly.X - FpPoly.modByMonic f FpPoly.X hmonic) := by
+      rw [show FpPoly.modByMonic f FpPoly.X hmonic = FpPoly.X % f from
+            DensePoly.modByMonic_eq_mod _ _ hmonic]
+      have hmm : (FpPoly.X (p := p)) % f = (FpPoly.X (p := p) % f) % f :=
+        (DensePoly.mod_mod FpPoly.X f).symm
+      exact @DensePoly.dvd_of_mod_eq_mod (ZMod64 p) _ _ _ inst_dvd _ _ _ hmm
+    have heq :
+        xPowSubX (p := p) k - frobeniusDiffMod f hmonic k =
+          ((DensePoly.monomial (p^k) (1 : ZMod64 p)) -
+              FpPoly.frobeniusXPowMod f hmonic k) -
+            (FpPoly.X - FpPoly.modByMonic f FpPoly.X hmonic) := by
+      unfold xPowSubX frobeniusDiffMod
+      apply DensePoly.ext_coeff
+      intro n
+      rw [DensePoly.coeff_sub_ring, DensePoly.coeff_sub_ring,
+          DensePoly.coeff_sub_ring, DensePoly.coeff_sub_ring,
+          DensePoly.coeff_sub_ring, DensePoly.coeff_sub_ring]
+      grind
+    rw [heq]
+    exact DensePoly.dvd_sub_poly hp1 hp2
+  -- Step 2: g ∣ (xPowSubX k - frobeniusDiffMod) since g ∣ f and f ∣ ...
+  have hg_dvd_diff' : g ∣ (xPowSubX (p := p) k - frobeniusDiffMod f hmonic k) := by
+    rcases hdvd_diff with ⟨c, hc⟩
+    rcases hg_dvd_f with ⟨e, he⟩
+    refine ⟨e * c, ?_⟩
+    rw [hc, he, FpPoly.mul_assoc]
+  -- Step 3: xPowSubX k = frobeniusDiffMod + (xPowSubX k - frobeniusDiffMod), so g divides it.
+  have hgoal :
+      xPowSubX (p := p) k =
+        frobeniusDiffMod f hmonic k +
+          (xPowSubX (p := p) k - frobeniusDiffMod f hmonic k) := by
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_add _ _ _
+          (inferInstance : DensePoly.AddZeroLaw (ZMod64 p)).add_zero_zero,
+        DensePoly.coeff_sub_ring]
+    grind
+  rw [hgoal]
+  exact DensePoly.dvd_add_poly hg_dvd_diff hg_dvd_diff'
+
+/--
 A divisor of a unit polynomial is itself a unit polynomial.
 
 Routine consequence of degree arithmetic: if `g ∣ h` and `h` has degree 0

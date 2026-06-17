@@ -64,17 +64,6 @@ the following:
 - **Still valid, body stale**: update the issue body with current
   state, then remove the `replan` label.
 
-**Concurrency: check for a concurrent disposition before reverting.**
-Many sessions share one token, so a candidate can be triaged out from
-under you mid-session. Before reopening or reverting any candidate whose
-state changed unexpectedly (especially a close you did not make), run
-`gh issue list --search "<N> in:body,comments" --state all` to find a
-replacement issue that references it. If a concurrent planner already
-closed it forward to a successor, **adopt that disposition** (re-close
-forward, rewire dependents like `depends-on: #<N>` to the successor) —
-do not reopen and create a competing issue. Reopening a
-forward-closed issue causes a worker to claim and immediately skip it.
-
 Process **every** candidate from `list-replan` before exiting.
 
 ## Step 4: Exit
