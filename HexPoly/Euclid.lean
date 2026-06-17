@@ -1254,7 +1254,7 @@ namespace DensePoly
 /-- The `i`-th summand of the degree-`n` convolution diagonal of `p * q`,
 `p.coeff i * q.coeff (n - i)`, zeroed once the degree guard `n < i` fires;
 the single-index term that `mulCoeffSum` is reorganised into. -/
-private def diagonalMulCoeffTerm {S : Type _} [Zero S] [DecidableEq S] [Mul S]
+def diagonalMulCoeffTerm {S : Type _} [Zero S] [DecidableEq S] [Mul S]
     (p q : DensePoly S) (n i : Nat) : S :=
   if n < i then 0 else p.coeff i * q.coeff (n - i)
 
@@ -1334,7 +1334,7 @@ private theorem fold_mulCoeff_outer_eq_diagonal {S : Type _}
 /-- The schoolbook coefficient `mulCoeffSum p q n` equals the diagonal sum
 `Σ_{i < p.size} diagonalMulCoeffTerm p q n i`; the bridge from the executable
 loop order to the convolution form used in the ring-law proofs. -/
-private theorem mulCoeffSum_eq_diagonal {S : Type _}
+theorem mulCoeffSum_eq_diagonal {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]
     (p q : DensePoly S) (n : Nat) :
     mulCoeffSum p q n =

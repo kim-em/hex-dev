@@ -32,6 +32,36 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   (`mul_one`, `neg_add_cancel`, `ring`) need Mathlib instances these types lack.
   `grind` uses the `Lean.Grind.CommRing` instance; prime-inverse facts
   (`ZMod64.inv_mul_eq_one_of_prime`, `mul_inv_eq_one_of_prime`) are `@[grind]`.
+- **Transporting `FpPoly` multiplication to `Polynomial (ZMod p)`
+  (`map_mul'`-shaped goals): push `toZMod` through the executable List-fold,
+  *then* convert to a Finset sum on the `ZMod p` side — you cannot meet in the
+  middle.** `ZMod64 p` has no Mathlib `AddCommMonoid`, so a `Finset.antidiagonal`
+  sum (and `HexPolyMathlib.toPolynomial`, which needs Mathlib `Semiring`) does
+  **not** typecheck over `ZMod64`; the furthest multiplication form expressible
+  over `ZMod64` is the diagonal *List.foldl* of `Hex.DensePoly.mulCoeffSum_eq_diagonal`
+  (`HexPoly/Euclid.lean`, over `Lean.Grind.CommRing`). Recipe for
+  `toZMod (mulCoeffSum f g n) = ∑ x ∈ Finset.antidiagonal n, …`: (1) rewrite to
+  the diagonal fold; (2) a small induction `toZMod ((range m).foldl (·+·) 0) =
+  ∑ i ∈ range m, toZMod (term i)` via `toZMod_add` + `Finset.sum_range_succ`
+  (state it abstractly over `term : Nat → ZMod64 p`, see next bullet); (3)
+  `toZMod` the per-term `if`-guard via `toZMod_zero`/`toZMod_mul`; (4) match the
+  `f.size` range against `range (n+1)` through a `max`-bridge `Finset.sum_subset`
+  (terms vanish by support / degree guard) and finish with
+  `Finset.Nat.sum_antidiagonal_eq_sum_range_succ`, mirroring
+  `HexPolyMathlib.toPolynomial_mul`. (Landed: `HexBerlekampMathlib.fpPolyEquiv`,
+  #7729.)
+- **The `coeff_*_semiring` instance-path mismatch also bites `mulCoeffSum` and
+  `mulCoeffSum_eq_diagonal`.** A `mulCoeffSum f g n` you write in an
+  `FpPoly`-context goal carries ZMod64-direct `Add`/`Mul`; the
+  `[Lean.Grind.CommRing]` lemma `mulCoeffSum_eq_diagonal` carries the
+  CommRing-derived ones, so `rw [mulCoeffSum_eq_diagonal …]` reports "did not
+  find pattern" on a goal that visibly contains the term. Fix: bind the equation
+  through a `have hdiag : <state with the goal's instances> :=
+  mulCoeffSum_eq_diagonal f g n` (the proof unifies the instances by defeq during
+  elaboration), then `rw [hdiag]`. Same trick for any `[Grind.CommRing]`-stated
+  `DensePoly` lemma applied to an `FpPoly` goal. `exact` (defeq-tolerant) needs
+  no such wrapper, so per-term closers like `exact toZMod_diagonalMulCoeffTerm …`
+  match through the instance gap directly.
 - **No `map_neg` / `map_one` / `map_zero` / `map_dvd` on `ZMod64`/`FpPoly`.**
   These need `ZeroHomClass`/`AddMonoidHomClass`/`Monoid` that the executable
   types don't have. To compute e.g. `toZMod (-1) = -1`: prove `(-1)+1 = 0` in
