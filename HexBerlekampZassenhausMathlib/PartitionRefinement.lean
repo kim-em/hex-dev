@@ -684,4 +684,109 @@ theorem factorFastCoreDefault_factor_zpolyIrreducible_of_forwardInputs
     factorFastCoreWithBound_some_factor_zpolyIrreducible_of_forwardInputs
       hcore_ne hinputs h hcut hpartition
 
+/-- Scheduled-loop form of
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_forwardInputs`.
+
+The executable fast dispatcher does not start the core loop at the recovery
+precision: it starts at `Hex.initialHenselPrecision a` and walks the Hensel
+schedule, so the loop's `start` argument differs from the precision `target` at
+which the caller carries the `BHKS.ForwardRecoveryInputs` package.  This wrapper
+decouples the two: the loop-success hypothesis `h` is stated at an arbitrary
+`start`/`fuel`, while the forward package, cut certificate, and partition count
+all sit at the scheduled `target`.
+
+The decoupling is sound because the count argument routes through
+`factorFastCoreWithBound_some_factor_count_eq_of_cut`, whose loop-result
+parameters (`k`, `fuel`) and cut-precision parameters (`L`) are already
+independent — they meet only at the size identity `hsize`, which is derived
+purely from the package fields (`candidates_eq` / `indicators_match`) at
+`target`.  The hypothesis `h` pins the loop output to the package's
+`expectedFactors`; supplying that equality for the actual executable start
+`Hex.initialHenselPrecision a` is the scheduled-loop determinism obligation left
+to the caller (it is *not* implied by the package at `target` alone, since the
+loop returns the first schedule success and an earlier precision could exit with
+a different array). -/
+theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_forwardInputs_on_schedule
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {start fuel target : Nat}
+    (hcore_ne : core ≠ 0)
+    (hinputs :
+      BHKS.ForwardRecoveryInputs core
+        (Hex.ZPoly.toMonicLiftData core target primeData))
+    (h :
+      Hex.factorFastCoreWithBound core B primeData start fuel =
+        some hinputs.expectedFactors)
+    (hcut :
+      BHKS.CutProjectionHypotheses
+        (BHKS.projectedRowsOfLiftData core
+          (Hex.ZPoly.toMonicLiftData core target primeData) hinputs.rows_pos)
+        hinputs.trueSupports)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn hinputs.trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    ∀ factor ∈ hinputs.expectedFactors.toList,
+      Hex.ZPoly.Irreducible factor := by
+  have hsize :
+      hinputs.expectedFactors.size =
+        (Hex.bhksEquivalenceClassIndicators
+          (BHKS.projectedRowsOfLiftData core
+            (Hex.ZPoly.toMonicLiftData core target primeData)
+            hinputs.rows_pos)).size := by
+    rw [Hex.bhksIndicatorCandidates?_size_eq hinputs.candidates_eq]
+    exact congrArg Array.size hinputs.indicators_match.symm
+  exact
+    factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut
+      hinputs.trueSupports hcore_ne h hcut hsize hpartition
+
+set_option maxHeartbeats 800000 in
+/--
+Default-bound scheduled-loop fast-BHKS direct-core specialization.
+
+Same as `factorFastCoreDefault_factor_zpolyIrreducible_of_forwardInputs`, but
+with the loop-success hypothesis `h` decoupled from the recovery precision
+`target` so that it matches the executable schedule walk (which starts the core
+loop at `Hex.initialHenselPrecision a`, not at `target`).  The forward package,
+cut certificate, and partition count are all carried at the scheduled `target`;
+`h` is the loop-output equality at the actual `start`/`fuel`, supplied by the
+scheduled-loop determinism obligation.
+-/
+theorem factorFastCoreDefault_factor_zpolyIrreducible_of_forwardInputs_on_schedule
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
+    (primeData : Hex.PrimeChoiceData) {start fuel target : Nat}
+    (hinputs :
+      BHKS.ForwardRecoveryInputs
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.toMonicLiftData
+          (Hex.normalizeForFactor f).squareFreeCore target primeData))
+    (h :
+      Hex.factorFastCoreWithBound
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.defaultFactorCoeffBound f) primeData start fuel =
+        some hinputs.expectedFactors)
+    (hcut :
+      BHKS.CutProjectionHypotheses
+        (BHKS.projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.toMonicLiftData
+            (Hex.normalizeForFactor f).squareFreeCore target primeData)
+          hinputs.rows_pos)
+        hinputs.trueSupports)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn hinputs.trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial
+            (Hex.normalizeForFactor f).squareFreeCore)).card) :
+    ∀ factor ∈ hinputs.expectedFactors.toList,
+      Hex.ZPoly.Irreducible factor := by
+  have hcore_lc_pos :
+      0 < Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore :=
+    Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 :=
+    zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  exact
+    factorFastCoreWithBound_some_factor_zpolyIrreducible_of_forwardInputs_on_schedule
+      hcore_ne hinputs h hcut hpartition
+
 end HexBerlekampZassenhausMathlib

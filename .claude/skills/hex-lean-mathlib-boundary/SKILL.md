@@ -127,6 +127,44 @@ theorem hex_choose_eq (n k : Nat) : Hex.Nat.choose n k = Nat.choose n k := by
 then `simp_rw [hex_choose_eq]` before reaching for any Mathlib `Nat.choose`
 lemma (`Nat.sum_range_choose`, etc.). Same pattern for `Hex.Nat.Prime`.
 
+## Fast-BHKS raw irreducibility ≠ slow-path raw irreducibility (scheduled-loop determinism)
+
+The slow-path raw irreducibility (`slowModularRaw_irreducible_of_fast_none`,
+#7665) is *unconditional* because the slow path runs a single fixed-precision
+`exhaustiveCoreFactorsWithBound` at `exhaustiveLiftBound` — one deterministic
+array, so `hraw : … = some rawFactors` pins it directly and the irreducibility
+producer applies at that one precision. **Do not assume the fast path is the same
+shape.** `factorFastCoreWithBound` is a *schedule loop* (`Basic.lean:6935`): it
+starts at `Hex.initialHenselPrecision a`, walks `henselPrecisionSchedule`, and
+returns the array of the **first** precision where `bhksRecoverClassified`
+returns `.success`. A `ForwardRecoveryInputs` package sits at the cap `target`
+(the *last* schedule element), so the loop's actual output need not equal the
+package's `expectedFactors` — an earlier schedule precision could exit `.success`
+with a different array.
+
+Consequences for any fast-BHKS irreducibility / `h_raw` work:
+
+- The existing `factorFastCore*_of_forwardInputs` wrappers force loop-start =
+  package precision = cut precision (the same `k`). They **cannot** apply to the
+  executable run, where `start = initialHenselPrecision a ≠ target = cap`. Use
+  the decoupled `…_of_forwardInputs_on_schedule` wrappers
+  (`PartitionRefinement.lean`, #7666): the count argument routes through
+  `factorFastCoreWithBound_some_factor_count_eq_of_cut`, whose loop-result params
+  (`k`,`fuel`) and cut-precision param (`L`) are already independent.
+- Those decoupled wrappers still take `h : factorFastCoreWithBound core B
+  primeData start fuel = some hinputs.expectedFactors` as a hypothesis. Producing
+  that `h` for the real `start = initialHenselPrecision a` is the **scheduled-loop
+  determinism obligation** (loop's first success returns the cap recovery). It is
+  *not* derivable from the cap package: `factorFastCoreWithBound_isSome_of_
+  recovery_on_schedule` (`Basic.lean:7105`) proves existence, not factor
+  identity, and `bhksRecoverClassified_success_*` (`Basic.lean:11238-11322`) give
+  product/dvd/sign for any success but neither irreducibility nor equality to the
+  cap recovery. Closing it needs "recovery fails below the Mignotte precision" (a
+  BHKS precision-soundness theorem) or a universal "recovery success ⟹ irreducible
+  at arbitrary precision" — neither is in the tree. Before claiming a fast-BHKS
+  "expose the loop array" / unconditional `h_raw` issue, confirm a determinism
+  producer exists, else land the decoupled bridges + diagnose (#7664).
+
 ## `Matrix` / `Vector` resolve to Mathlib's inside the Mathlib layer
 
 The mirror of the shadow above. In a Mathlib-layer file (namespace
