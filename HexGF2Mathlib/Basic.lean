@@ -69,10 +69,14 @@ def symm (e : R ≃+* S) : S ≃+* R where
   right_inv := e.left_inv
   map_mul' := by
     intro a b
-    sorry
+    have h := e.map_mul' (e.invFun a) (e.invFun b)
+    rw [e.right_inv a, e.right_inv b] at h
+    rw [← h, e.left_inv]
   map_add' := by
     intro a b
-    sorry
+    have h := e.map_add' (e.invFun a) (e.invFun b)
+    rw [e.right_inv a, e.right_inv b] at h
+    rw [← h, e.left_inv]
 
 end RingEquiv
 
