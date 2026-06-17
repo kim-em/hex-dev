@@ -3313,6 +3313,144 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
     rw [hno_w] at hsplit
     nomatch hsplit
 
+/-! ### Divisor-generalized Berlekamp completeness
+
+The single-polynomial theorem above ranges `hno_split` over `f`'s own kernel.
+The executable `berlekampFactor` (`HexBerlekamp/Factor.lean`) computes the
+witness set once as `f`'s kernel and splits *every* returned factor `g` with it,
+so the per-factor soundness obligation is the divisor-generalized form: `g ∣ f`,
+square-free `f`, no `f`-kernel witness splits `g`, conclude `g` irreducible. The
+new content is a CRT lift of a `g`-kernel witness to an `f`-kernel witness that
+stays nonconstant mod `g`, plus a span-mod-`g` argument moving the nonconstancy
+to an `f`-basis element. -/
+
+omit [ZMod64.PrimeModulus p] in
+/-- `C a * C b = C (a * b)` for `FpPoly`. -/
+private theorem C_mul_C (a b : ZMod64 p) :
+    (DensePoly.C a : FpPoly p) * DensePoly.C b = DensePoly.C (a * b) := by
+  rw [FpPoly.C_mul_eq_scale]
+  rw [show (DensePoly.C b : FpPoly p) = DensePoly.scale b (1 : FpPoly p) from
+        (FpPoly.scale_one_poly b).symm]
+  rw [FpPoly.scale_scale, FpPoly.scale_one_poly]
+
+omit [ZMod64.PrimeModulus p] in
+/-- `C a + C b = C (a + b)` for `FpPoly`. -/
+private theorem C_add_C (a b : ZMod64 p) :
+    (DensePoly.C a : FpPoly p) + DensePoly.C b = DensePoly.C (a + b) := by
+  apply DensePoly.ext_coeff
+  intro i
+  have h0 : (0 : ZMod64 p) + (0 : ZMod64 p) = 0 := by grind
+  rw [DensePoly.coeff_add (DensePoly.C a) (DensePoly.C b) i h0,
+      DensePoly.coeff_C, DensePoly.coeff_C, DensePoly.coeff_C]
+  by_cases hi : i = 0
+  · rw [if_pos hi, if_pos hi, if_pos hi]
+  · rw [if_neg hi, if_neg hi, if_neg hi]; exact h0
+
+omit [ZMod64.PrimeModulus p] in
+/-- The `i`-th coefficient of `q * C c` is `q.coeff i * c`. -/
+private theorem coeff_mul_C (q : FpPoly p) (c : ZMod64 p) (i : Nat) :
+    (q * DensePoly.C c).coeff i = q.coeff i * c := by
+  rw [FpPoly.mul_comm, FpPoly.C_mul_eq_scale]
+  have h_zero : c * (0 : ZMod64 p) = 0 := by grind
+  rw [DensePoly.coeff_scale _ _ _ h_zero]
+  grind
+
+omit [ZMod64.PrimeModulus p] in
+/-- `(a - b) + b = a` for `FpPoly`. -/
+private theorem sub_add_cancel_poly (a b : FpPoly p) : a - b + b = a := by
+  rw [FpPoly.sub_eq_add_neg, FpPoly.add_assoc, FpPoly.add_left_neg, FpPoly.add_zero]
+
+omit [ZMod64.PrimeModulus p] in
+/-- `(x + y) - y = x` for `FpPoly`. -/
+private theorem add_sub_cancel_poly (x y : FpPoly p) : x + y - y = x := by
+  rw [FpPoly.sub_eq_add_neg, FpPoly.add_assoc, FpPoly.add_right_neg, FpPoly.add_zero]
+
+omit [ZMod64.PrimeModulus p] in
+/-- Left distributivity over subtraction for `FpPoly`. -/
+private theorem mul_sub_poly (z a b : FpPoly p) :
+    z * (a - b) = z * a - z * b := by
+  have key : z * a = z * (a - b) + z * b := by
+    have h := FpPoly.left_distrib z (a - b) b
+    rw [sub_add_cancel_poly a b] at h
+    exact h
+  rw [key, add_sub_cancel_poly]
+
+omit [ZMod64.PrimeModulus p] in
+/-- Right distributivity over subtraction for `FpPoly`. -/
+private theorem sub_mul_poly (a b z : FpPoly p) :
+    (a - b) * z = a * z - b * z := by
+  rw [FpPoly.mul_comm (a - b) z, mul_sub_poly z a b, FpPoly.mul_comm z a,
+      FpPoly.mul_comm z b]
+
+omit [ZMod64.PrimeModulus p] in
+/-- Polynomial congruence modulo `m` is preserved by addition. -/
+private theorem congr_add_of_congr {m a b c d : FpPoly p}
+    (hab : DensePoly.Congr a b m) (hcd : DensePoly.Congr c d m) :
+    DensePoly.Congr (a + c) (b + d) m := by
+  have h0 : (0 : ZMod64 p) + (0 : ZMod64 p) = 0 := by grind
+  have heq : (a + c) - (b + d) = (a - b) + (c - d) := by
+    apply DensePoly.ext_coeff
+    intro i
+    rw [DensePoly.coeff_sub_ring,
+        DensePoly.coeff_add a c i h0, DensePoly.coeff_add b d i h0,
+        DensePoly.coeff_add (a - b) (c - d) i h0,
+        DensePoly.coeff_sub_ring, DensePoly.coeff_sub_ring]
+    grind
+  rw [DensePoly.Congr, heq]
+  exact DensePoly.dvd_add_poly hab hcd
+
+omit [ZMod64.PrimeModulus p] in
+/-- Polynomial congruence modulo `m` is preserved by right multiplication. -/
+private theorem congr_mul_right_of_congr {m a b : FpPoly p} (z : FpPoly p)
+    (hab : DensePoly.Congr a b m) :
+    DensePoly.Congr (a * z) (b * z) m := by
+  rcases hab with ⟨r, hr⟩
+  refine ⟨r * z, ?_⟩
+  rw [← sub_mul_poly a b z]
+  rw [show a - b = m * r from hr, FpPoly.mul_assoc]
+
+omit [ZMod64.PrimeModulus p] in
+/-- The `i`-th coefficient commutes with a `(· + ·)`-`foldl` of polynomials. -/
+private theorem coeff_foldl_add {α : Type _} (xs : List α)
+    (term : α → FpPoly p) (i : Nat) :
+    (xs.foldl (fun acc k => acc + term k) 0).coeff i =
+      xs.foldl (fun acc k => acc + (term k).coeff i) 0 := by
+  have h0 : (0 : ZMod64 p) + (0 : ZMod64 p) = 0 := by grind
+  suffices h : ∀ init : FpPoly p,
+      (xs.foldl (fun acc k => acc + term k) init).coeff i =
+        xs.foldl (fun acc k => acc + (term k).coeff i) (init.coeff i) by
+    have hh := h 0
+    rwa [DensePoly.coeff_zero] at hh
+  intro init
+  induction xs generalizing init with
+  | nil => rfl
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      rw [ih (init + term x), DensePoly.coeff_add init (term x) i h0]
+
+omit [ZMod64.PrimeModulus p] in
+/-- If every term of a `(· + ·)`-`foldl` is constant modulo `g` (and the
+accumulator starts constant), the whole fold is constant modulo `g`. -/
+private theorem foldl_congr_const {α : Type _} (g : FpPoly p)
+    (term : α → FpPoly p) :
+    ∀ (xs : List α),
+      (∀ k ∈ xs, ∃ a : ZMod64 p, DensePoly.Congr (term k) (DensePoly.C a) g) →
+      ∀ init : FpPoly p, (∃ a, DensePoly.Congr init (DensePoly.C a) g) →
+        ∃ a, DensePoly.Congr (xs.foldl (fun acc k => acc + term k) init)
+          (DensePoly.C a) g := by
+  intro xs
+  induction xs with
+  | nil => intro _ init hinit; exact hinit
+  | cons x xs ih =>
+      intro hterms init hinit
+      obtain ⟨a0, ha0⟩ := hinit
+      simp only [List.foldl_cons]
+      apply ih (fun k hk => hterms k (List.mem_cons_of_mem _ hk)) (init + term x)
+      obtain ⟨b0, hb0⟩ := hterms x (by simp)
+      refine ⟨a0 + b0, ?_⟩
+      have hsum := congr_add_of_congr ha0 hb0
+      rwa [C_add_C] at hsum
+
 /--
 For a monic square-free `f` whose executable Berlekamp factorization returns
 at most one factor, `f` is irreducible. Composes the structural loop lemma
