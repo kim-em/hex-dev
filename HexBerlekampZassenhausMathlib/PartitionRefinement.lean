@@ -902,4 +902,82 @@ theorem factorFastCoreDefault_factor_zpolyIrreducible_of_forwardInputs_on_schedu
     factorFastCoreWithBound_some_factor_zpolyIrreducible_of_forwardInputs_on_schedule
       hcore_ne hinputs h hcut hpartition
 
+/--
+Recorded-entry irreducibility for the BHKS fast-core success arm.
+
+The executable reassembly array is intentionally private to
+`HexBerlekampZassenhaus.Basic`, so this public theorem works through the
+existing branch-shape lemma: each recorded `factorWithBound` entry is the
+sign-normalisation of some raw factor in the fast-core reassembly.  The
+forward-input/cut certificates prove each successful core output irreducible,
+and the supplied reassembly-completeness certificate lifts that proof across the
+normalization reassembly.
+-/
+theorem factorWithBound_fastCore_entry_irreducible_of_forwardInputs
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat)
+    (primeData : Hex.PrimeChoiceData)
+    (hB_pos : 1 ≤ B)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some primeData)
+    (hdeg :
+      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hmulti : 1 < primeData.factorsModP.size)
+    (hquadratic :
+      B = 1 ∨
+        Hex.quadraticIntegerRootFactors?
+          (Hex.normalizeForFactor f).squareFreeCore = none)
+    (hinputs :
+      BHKS.ForwardRecoveryInputs
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.toMonicLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.precisionForCoeffBound B primeData.p) primeData))
+    (hcore :
+      let a := Hex.precisionForCoeffBound B primeData.p
+      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore a
+        primeData (Hex.initialHenselPrecision a)
+        (Hex.ZPoly.quadraticDoublingSteps a + 2) =
+          some hinputs.expectedFactors)
+    (hcut :
+      BHKS.CutProjectionHypotheses
+        (BHKS.projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.toMonicLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (Hex.precisionForCoeffBound B primeData.p) primeData)
+          hinputs.rows_pos)
+        hinputs.trueSupports)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn hinputs.trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial
+            (Hex.normalizeForFactor f).squareFreeCore)).card)
+    (hcomplete :
+      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+        hinputs.expectedFactors) :
+    ∀ entry ∈ (Hex.factorWithBound f B).factors.toList,
+      Hex.ZPoly.Irreducible entry.1 := by
+  have hcore_lc_pos :
+      0 < Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore :=
+    Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+  have hcore_ne : (Hex.normalizeForFactor f).squareFreeCore ≠ 0 :=
+    zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  have hcore_irr :
+      ∀ factor ∈ hinputs.expectedFactors.toList,
+        Hex.ZPoly.Irreducible factor :=
+    factorFastCoreWithBound_some_factor_zpolyIrreducible_of_forwardInputs_on_schedule
+      hcore_ne hinputs hcore hcut hpartition
+  intro entry hentry
+  obtain ⟨raw, hraw_mem, hentry_eq⟩ :=
+    Hex.factorWithBound_entry_mem_fast_core_success_raw f B entry
+      primeData hB_pos hdeg hchoose hmulti hquadratic hcore hentry
+  have hraw_irr : Hex.ZPoly.Irreducible raw :=
+    Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+      (Hex.normalizeForFactor f) hinputs.expectedFactors
+      hcomplete hcore_irr hraw_mem
+  rw [hentry_eq]
+  exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hraw_irr
+
 end HexBerlekampZassenhausMathlib
