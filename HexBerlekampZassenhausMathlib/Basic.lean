@@ -7466,7 +7466,7 @@ squarefreeness from `isGoodPrime` through `monicModularImage`; apply the
 generalized `quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared`
 helper with `X := monicModularImage (modP p core)` to walk the list.  The
 no-squared invariant on the modular image is the local Mathlib-side form
-of `gcd_monicModularImage_derivative_eq_one`, instantiated through
+of `gcd_monicModularImage_derivative_isUnit_local`, instantiated through
 `Hex.Berlekamp.isUnitPolynomial_of_squareFree_of_squared_dvd`.
 
 This is the third in the chain of `factorsModP`-side dischargers
@@ -7636,7 +7636,7 @@ theorem factorsModP_monic_of_factorsModPBerlekampForm
   rw [← hg'_eq]
   exact Hex.monicModularImage_monic hprime g' (Hex.isZero_false_of_ne_zero hg'_ne)
 
-/-- Square-freeness of a nonzero `FpPoly` transfers to its monic representative.
+/- Square-freeness of a nonzero `FpPoly` transfers to its monic representative.
 
 Local copy of the IntReductionMod helper of the same name (the canonical
 version lives at `HexBerlekampZassenhausMathlib/IntReductionMod.lean:307`).
@@ -7644,12 +7644,66 @@ Duplicated here because `IntReductionMod` imports `Basic`; the proof routes
 through `IsCoprime` in `Polynomial (ZMod p)` using
 `toMathlibPolynomial_squareFree_coprime` and the `toMathlibPolynomial_scale`
 identification for the unit scalar `(leadingCoeff f)⁻¹`. -/
-private theorem gcd_monicModularImage_derivative_eq_one_local
+/-- A bridged executable polynomial that transports to a unit has executable
+size one, hence passes the `gcdIsUnit` size check when used as a gcd. -/
+private theorem size_eq_one_of_toMathlibPolynomial_isUnit_local
+    {p : Nat} [Hex.ZMod64.Bounds p] [Fact (Nat.Prime p)]
+    {g : Hex.FpPoly p}
+    (h : IsUnit (HexBerlekampMathlib.toMathlibPolynomial g)) :
+    g.size = 1 := by
+  rcases Nat.lt_or_ge g.size 1 with hlt | hge
+  · exfalso
+    have hsize_zero : g.size = 0 := by omega
+    have hzero : HexBerlekampMathlib.toMathlibPolynomial g = 0 := by
+      apply Polynomial.ext
+      intro n
+      rw [Polynomial.coeff_zero, HexBerlekampMathlib.coeff_toMathlibPolynomial,
+        Hex.DensePoly.coeff_eq_zero_of_size_le _ (show g.size ≤ n by omega)]
+      exact HexModArithMathlib.ZMod64.toZMod_zero
+    exact not_isUnit_zero (hzero ▸ h)
+  · by_contra hne
+    have hpos : 0 < g.size := by omega
+    have hge2 : 2 ≤ g.size := by omega
+    have hcoeff_ne : g.coeff (g.size - 1) ≠ 0 :=
+      Hex.DensePoly.coeff_last_ne_zero_of_pos_size g hpos
+    have hcoeff_zmod_ne :
+        HexModArithMathlib.ZMod64.toZMod (g.coeff (g.size - 1)) ≠ 0 := by
+      intro hzero
+      apply hcoeff_ne
+      have hinj := (HexModArithMathlib.ZMod64.equiv (p := p)).injective
+      apply hinj
+      simpa using hzero.trans HexModArithMathlib.ZMod64.toZMod_zero.symm
+    have hcoeff_poly_ne :
+        (HexBerlekampMathlib.toMathlibPolynomial g).coeff (g.size - 1) ≠ 0 := by
+      rw [HexBerlekampMathlib.coeff_toMathlibPolynomial]
+      exact hcoeff_zmod_ne
+    have hpos_natDeg :
+        0 < (HexBerlekampMathlib.toMathlibPolynomial g).natDegree := by
+      have hle := Polynomial.le_natDegree_of_ne_zero hcoeff_poly_ne
+      omega
+    exact Polynomial.not_isUnit_of_natDegree_pos _ hpos_natDeg h
+
+/-- The Zassenhaus `gcdIsUnit` size check implies Berlekamp's nonzero-constant
+unit-polynomial predicate. -/
+private theorem isUnitPolynomial_of_gcdIsUnit_local
+    {p : Nat} [Hex.ZMod64.Bounds p] {g : Hex.FpPoly p}
+    (h : Hex.gcdIsUnit g = true) :
+    Hex.Berlekamp.isUnitPolynomial g = true := by
+  unfold Hex.gcdIsUnit at h
+  change (g.size == 1) = true at h
+  have hsize : g.size = 1 := beq_iff_eq.mp h
+  unfold Hex.Berlekamp.isUnitPolynomial
+  have hpos : 0 < g.size := by omega
+  rw [Hex.DensePoly.degree?_eq_some_of_pos_size g hpos, hsize]
+
+private theorem gcd_monicModularImage_derivative_isUnit_local
     {p : Nat} [Hex.ZMod64.Bounds p] [Fact (Nat.Prime p)]
     (f : Hex.FpPoly p) (hzero : f.isZero = false)
-    (hsquareFree : Hex.DensePoly.gcd f (Hex.DensePoly.derivative f) = 1) :
-    Hex.DensePoly.gcd (Hex.monicModularImage f)
-        (Hex.DensePoly.derivative (Hex.monicModularImage f)) = 1 := by
+    (hsquareFree :
+      Hex.gcdIsUnit (Hex.DensePoly.gcd f (Hex.DensePoly.derivative f)) = true) :
+    Hex.gcdIsUnit
+      (Hex.DensePoly.gcd (Hex.monicModularImage f)
+        (Hex.DensePoly.derivative (Hex.monicModularImage f))) = true := by
   let u : Hex.ZMod64 p := (Hex.DensePoly.leadingCoeff f)⁻¹
   have hmonic_eq : Hex.monicModularImage f = Hex.DensePoly.scale u f := by
     simpa [u] using
@@ -7663,7 +7717,8 @@ private theorem gcd_monicModularImage_derivative_eq_one_local
         IsCoprime
           (HexBerlekampMathlib.toMathlibPolynomial f)
           (Polynomial.derivative (HexBerlekampMathlib.toMathlibPolynomial f)) :=
-      HexBerlekampMathlib.toMathlibPolynomial_squareFree_coprime f hsquareFree
+      HexBerlekampMathlib.toMathlibPolynomial_squareFree_coprime f
+        (isUnitPolynomial_of_gcdIsUnit_local hsquareFree)
     have hu_ne : HexModArithMathlib.ZMod64.toZMod u ≠ 0 := by
       have hp_hex : Hex.Nat.Prime p := by
         constructor
@@ -7694,47 +7749,29 @@ private theorem gcd_monicModularImage_derivative_eq_one_local
     exact (isCoprime_mul_unit_left hC_unit
       (HexBerlekampMathlib.toMathlibPolynomial f)
       (Polynomial.derivative (HexBerlekampMathlib.toMathlibPolynomial f))).mpr hcop_f
-  have hmath_gcd :
-      gcd
-        (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))
-        (Polynomial.derivative
-          (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))) = 1 := by
-    have hunit :
-        IsUnit
-          (gcd
-            (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))
-            (Polynomial.derivative
-              (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f)))) :=
-      gcd_isUnit_iff_isRelPrime.mpr hcop.isRelPrime
-    have hnorm :
-        normalize
-          (gcd
-            (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))
-            (Polynomial.derivative
-              (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f)))) =
-        gcd
+  let g : Hex.FpPoly p :=
+    Hex.DensePoly.gcd (Hex.monicModularImage f)
+      (Hex.DensePoly.derivative (Hex.monicModularImage f))
+  have hunit_math :
+      IsUnit
+        (gcd
           (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))
           (Polynomial.derivative
-            (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))) :=
-      normalize_gcd _ _
-    have hone :
-        normalize
-          (gcd
-            (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f))
-            (Polynomial.derivative
-              (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f)))) = 1 :=
-      normalize_eq_one.mpr hunit
-    simpa [hnorm] using hone
-  apply HexBerlekampMathlib.fpPolyEquiv.injective
-  change
-    HexBerlekampMathlib.toMathlibPolynomial
-        (Hex.DensePoly.gcd (Hex.monicModularImage f)
-          (Hex.DensePoly.derivative (Hex.monicModularImage f))) =
-      HexBerlekampMathlib.toMathlibPolynomial (1 : Hex.FpPoly p)
-  rw [HexBerlekampMathlib.toMathlibPolynomial_gcd,
-      HexBerlekampMathlib.toMathlibPolynomial_derivative,
-      toMathlibPolynomial_one]
-  exact hmath_gcd
+            (HexBerlekampMathlib.toMathlibPolynomial (Hex.monicModularImage f)))) :=
+    gcd_isUnit_iff_isRelPrime.mpr hcop.isRelPrime
+  have hunit_transport :
+      IsUnit (HexBerlekampMathlib.toMathlibPolynomial g) := by
+    rw [← HexBerlekampMathlib.toMathlibPolynomial_derivative] at hunit_math
+    exact
+      (HexBerlekampMathlib.toMathlibPolynomial_gcd_associated
+        (Hex.monicModularImage f)
+        (Hex.DensePoly.derivative (Hex.monicModularImage f))).symm.isUnit
+        hunit_math
+  have hg_size : g.size = 1 :=
+    size_eq_one_of_toMathlibPolynomial_isUnit_local hunit_transport
+  unfold Hex.gcdIsUnit
+  change (g.size == 1) = true
+  exact beq_iff_eq.mpr hg_size
 
 private theorem derivative_scale_local
     {p : Nat} [Hex.ZMod64.Bounds p]
@@ -7785,7 +7822,7 @@ some raw Berlekamp factor `g`.  `irreducible_of_mem_berlekampFactor` gives
 original, and `Associated.irreducible` transfers the irreducibility.
 
 The square-freeness premise of `irreducible_of_mem_berlekampFactor` is
-discharged via `gcd_monicModularImage_derivative_eq_one_local` applied to
+discharged via `gcd_monicModularImage_derivative_isUnit_local` applied to
 the modular square-freeness from `Hex.isGoodPrime_squareFreeModP`.
 
 This is the per-index irreducibility component consumed by the
