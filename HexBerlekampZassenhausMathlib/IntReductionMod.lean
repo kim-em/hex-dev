@@ -494,6 +494,7 @@ when the selected prime's executable `squareFreeModP` check should provide it.
 theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.choosePrimeData? core = some primeData)
+    (hcore_pos : 0 < core.degree?.getD 0)
     (hsmall : primeData.factorsModP.size ≤ 1)
     (hprim :
       (HexPolyZMathlib.toPolynomial core).IsPrimitive)
@@ -540,6 +541,15 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
       rw [hfactors_eq]
       simp [List.length_map]
     omega
+  -- Positivity of the monic modular image from the positive-degree input.
+  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
+    Hex.choosePrimeData?_isGoodPrime core primeData hselected
+  have hform : Hex.factorsModPBerlekampForm core primeData :=
+    ⟨hprime_hex, hzero, hfactors_eq⟩
+  have hmonicImg_pos :
+      0 < (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)).degree?.getD 0 :=
+    monicModularImage_modP_degree?_pos_of_factorsModPBerlekampForm
+      core primeData hform hgood hcore_pos
   -- Apply the no-split lemma to obtain Mathlib irreducibility of the monic image.
   have hirr_monic :
       Irreducible
@@ -548,6 +558,7 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
     HexBerlekampMathlib.irreducible_of_berlekampFactor_factors_length_le_one
       (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
       (Hex.monicModularImage_monic hprime_hex (Hex.ZPoly.modP primeData.p core) hzero)
+      hmonicImg_pos
       (isUnitPolynomial_of_gcdIsUnit hsquareFree_monic) hfactors_len_le
   -- Express monicModularImage fModP as scale (leadingCoeff fModP)⁻¹ fModP.
   have hmonicImg_eq :
@@ -632,6 +643,7 @@ selected prime's executable `squareFreeModP` check.
 theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.choosePrimeData? core = some primeData)
+    (hcore_pos : 0 < core.degree?.getD 0)
     (hsmall : primeData.factorsModP.size ≤ 1)
     (hprim :
       (HexPolyZMathlib.toPolynomial core).IsPrimitive)
@@ -672,7 +684,7 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squ
     gcd_monicModularImage_derivative_isUnit
       (p := primeData.p) (Hex.ZPoly.modP primeData.p core) hzero hsquareFree_modP
   exact squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
-    core primeData hselected hsmall hprim hlc_map_ne hsquareFree_monic
+    core primeData hselected hcore_pos hsmall hprim hlc_map_ne hsquareFree_monic
 
 /-- The Mathlib image over `ZMod p` of the monic modular reduction selected by a
 successful `choosePrimeData?` run is squarefree.
@@ -751,6 +763,7 @@ that the bare `ModPSubsetPartitionHypotheses … True True` package fills with
 theorem modPFactorSubset_disjoint_of_choosePrimeData
     {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     (hselected : Hex.choosePrimeData? core = some primeData)
+    (hcore_pos : 0 < core.degree?.getD 0)
     {f g : Hex.ZPoly} {S T : ModPFactorSubset primeData}
     (hf_irr : Irreducible (HexPolyZMathlib.toPolynomial f)) (hf_dvd : f ∣ core)
     (hg_irr : Irreducible (HexPolyZMathlib.toPolynomial g)) (hg_dvd : g ∣ core)
@@ -769,7 +782,7 @@ theorem modPFactorSubset_disjoint_of_choosePrimeData
       (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
     Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
   exact modPFactorSubset_disjoint_of_not_associated hprime_hex
-    (modPSubsetPartitionHypotheses_of_choosePrimeData core primeData hselected)
+    (modPSubsetPartitionHypotheses_of_choosePrimeData core primeData hcore_pos hselected)
     hcore_modP_nz
     (squarefree_toMathlibPolynomial_monicModPImage_of_choosePrimeData core primeData
       hselected)
@@ -2877,6 +2890,9 @@ theorem initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData
   have hM_ne : (Hex.ZPoly.toMonic core).monic ≠ 0 := zpoly_ne_zero_of_monic hM_monic
   have hchooseM : Hex.choosePrimeData? (Hex.ZPoly.toMonic core).monic = some primeData :=
     hselected
+  have hmonicM_pos : 0 < (Hex.ZPoly.toMonic core).monic.degree?.getD 0 := by
+    rw [Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree core hcore_lc_pos hcore_pos]
+    exact hcore_pos
   have hsize : (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors.size =
       primeData.factorsModP.size :=
     Hex.ZPoly.toMonicLiftData_liftedFactors_size_eq core B primeData
@@ -2945,7 +2961,7 @@ theorem initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData
       irreducible_toPolynomial_monicCorrespondent (ne_of_gt hcore_lc_pos) hgf_monic hf_prim
         hf_irr hrecover
     obtain ⟨S₀, hS₀⟩ :=
-      representsModP_correspondent core primeData hselected hgf_irr hgf_dvd
+      representsModP_correspondent core primeData hcore_lc_pos hcore_pos hselected hgf_irr hgf_dvd
     have hliftM :
         RepresentsIntegerFactorAtLift (Hex.ZPoly.toMonic core).monic
           (Hex.ZPoly.toMonicLiftData core B primeData) gf
@@ -2976,7 +2992,7 @@ theorem initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData
         (Hex.ZPoly.toMonicLiftData core B primeData) hsize j = i := by
       apply Fin.ext; rfl
     obtain ⟨g, S₀, hg_irr, hg_dvd, hjS₀, hgrep⟩ :=
-      modPFactor_index_cover (Hex.ZPoly.toMonic core).monic primeData hchooseM j
+      modPFactor_index_cover (Hex.ZPoly.toMonic core).monic primeData hmonicM_pos hchooseM j
     set gm := Hex.normalizeFactorSign g with hgm_def
     have hassoc_gm : Associated (HexPolyZMathlib.toPolynomial gm)
         (HexPolyZMathlib.toPolynomial g) := toPolynomial_normalizeFactorSign_associated g
@@ -3047,7 +3063,7 @@ theorem initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData
       exact hnotassoc (associated_of_associated_monicCorrespondent (ne_of_gt hcore_lc_pos)
         hgf_ne hgg_ne hrecf hrecg h)
     have hdisj0 : Disjoint S₀ T₀ :=
-      modPFactorSubset_disjoint_of_choosePrimeData hchooseM hgf_irr hgf_dvd hgg_irr hgg_dvd
+      modPFactorSubset_disjoint_of_choosePrimeData hchooseM hmonicM_pos hgf_irr hgf_dvd hgg_irr hgg_dvd
         hS₀ hT₀ hnotassoc'
     rw [hSeq, hTeq]
     exact (liftedSubsetOfModPSubset_disjoint_iff primeData
@@ -3228,6 +3244,7 @@ Downstream HO-1 assemblies only need to supply the much weaker non-zero
 premise on `f`. -/
 theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
     (f : Hex.ZPoly) (hf : f ≠ 0)
+    (hcore_pos : 0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0)
     (primeData : Hex.PrimeChoiceData)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
@@ -3282,7 +3299,7 @@ theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
       (Hex.ZPoly.exhaustiveLiftBound
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f))
-      primeData hchoose
+      primeData hcore_pos hchoose
       (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf)
       hdescent hlifted_of_modP hinitial
 
@@ -3331,6 +3348,7 @@ umbrella below and by the `factor_irreducible_of_nonUnit` capstone path.
 theorem squareFreeCore_irreducible_of_smallModSingletonBranch
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (primeData : Hex.PrimeChoiceData)
+    (hcore_pos : 0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
         some primeData)
@@ -3341,7 +3359,7 @@ theorem squareFreeCore_irreducible_of_smallModSingletonBranch
     ⟨hprim, hlc_map_ne, hchoose', hsmall'⟩
   exact
     IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP
-      (Hex.normalizeForFactor f).squareFreeCore primeData hchoose' hsmall'
+      (Hex.normalizeForFactor f).squareFreeCore primeData hchoose' hcore_pos hsmall'
       hprim hlc_map_ne
 
 /-- **#4562 HO-1 base task — small-mod singleton arm umbrella.**
@@ -3413,7 +3431,7 @@ theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
   have hcore_irr :
       Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore :=
     squareFreeCore_irreducible_of_smallModSingletonBranch
-      f hf_ne primeData hchoose hsmall
+      f hf_ne primeData (Nat.pos_of_ne_zero hdeg) hchoose hsmall
   -- Discharge the reassembly expansion-complete side condition internally
   -- using the non-monic primitive singleton-arm discharger
   -- (#4956 / PR #4961).
@@ -3976,10 +3994,10 @@ private theorem factor_exhaustive_branch_entry_irreducible_of_choosePrimeData_au
       primeData
       hbranch hentry_mem hchoose
         (henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData f
-          primeData hchoose hdescent hlifted_of_modP)
+          primeData hcore_deg_pos hchoose hdescent hlifted_of_modP)
         rfl
         (liftedFactorSubsetPartition_outerBound_of_choosePrimeData f hf_ne
-          primeData hchoose hdescent hlifted_of_modP hinitial)
+          hcore_deg_pos primeData hchoose hdescent hlifted_of_modP hinitial)
       hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
       hd_liftedFactor_inj B' hcore_lc_le hvalid hprecision
@@ -4395,10 +4413,10 @@ theorem exhaustiveCoreFactorsWithBound_expansion_preconditions_of_choosePrimeDat
       (Hex.squareFreeCore_normalizeFactorSign_of_ne_zero f hf_ne)
   · exact exhaustiveCoreFactorsWithBound_factor_zpolyIrreducible_of_henselSubsetCorrespondence_of_bound
         (henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData f
-          primeData hchoose hdescent hlifted_of_modP)
+          primeData hcore_deg_pos hchoose hdescent hlifted_of_modP)
         rfl
         (liftedFactorSubsetPartition_outerBound_of_choosePrimeData f hf_ne
-          primeData hchoose hdescent hlifted_of_modP hinitial)
+          hcore_deg_pos primeData hchoose hdescent hlifted_of_modP hinitial)
       hcore_ne hcore_primitive hcore_lc_pos hcore_record hB_ne_zero
       hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
       hd_liftedFactor_inj B' hcore_lc_le hvalid hprecision
@@ -4748,14 +4766,14 @@ theorem monicReductionCorrespondence_of_normalizeForFactor_squareFreeCore
         (Hex.ZPoly.exhaustiveLiftBound
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.defaultFactorCoeffBound f))
-        primeData hchoose hdescent hlifted_of_modP
+        primeData hdegree hchoose hdescent hlifted_of_modP
   · simpa [core, B] using
       liftedFactorSubsetPartition_of_choosePrimeData_success_descent
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.exhaustiveLiftBound
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.defaultFactorCoeffBound f))
-        primeData hchoose hsqfree hdescent hlifted_of_modP hinitial
+        primeData hdegree hchoose hsqfree hdescent hlifted_of_modP hinitial
   · intro factor S hmonic_ne hfactor_norm hprecision hrep
     rcases hrep with ⟨hrec⟩
     exact hrec.candidate_eq_of_monic_dvd hmonic_ne hfactor_norm hprecision
