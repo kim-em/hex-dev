@@ -353,6 +353,58 @@ end ForwardRecoveryInputs
 
 end BHKS
 
+/--
+Forward-recovery loop-identification wrapper.
+
+If the target precision is on the executable fast-core schedule, the supplied
+`ForwardRecoveryInputs` package proves recovery at that target, and every other
+scheduled precision before the target has no `bhksRecover?` result, then the
+first-success loop returns exactly the package's expected factors.
+-/
+theorem factorFastCoreWithBound_eq_expected_of_forwardInputs_on_schedule_of_no_prior_recovery
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {start fuel target : Nat}
+    (hinputs :
+      BHKS.ForwardRecoveryInputs core
+        (Hex.ZPoly.toMonicLiftData core target primeData))
+    (hmem : target ∈ Hex.henselPrecisionSchedule B start fuel)
+    (hno :
+      ∀ k, k ∈ Hex.henselPrecisionSchedule B start fuel → k ≠ target →
+        Hex.bhksRecover? core (Hex.ZPoly.toMonicLiftData core k primeData) = none) :
+    Hex.factorFastCoreWithBound core B primeData start fuel =
+      some hinputs.expectedFactors :=
+  Hex.factorFastCoreWithBound_eq_some_of_recovery_on_schedule_of_no_prior_recovery
+    core B primeData hmem hno
+    (BHKS.bhksRecover_eq_some_of_forwardInputs core
+      (Hex.ZPoly.toMonicLiftData core target primeData) hinputs)
+
+/--
+Canonical-cap specialization of
+`factorFastCoreWithBound_eq_expected_of_forwardInputs_on_schedule_of_no_prior_recovery`.
+
+The only remaining non-executable hypothesis is `hno`: no scheduled precision
+other than the cap recovers before the loop reaches the cap.  The intended BHKS
+precision-soundness theorem should discharge `hno` by proving success implies
+Mignotte/cap precision.
+-/
+theorem factorFastCoreWithBound_eq_expected_of_forwardInputs_at_cap_of_no_prior_recovery
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    (hinputs :
+      BHKS.ForwardRecoveryInputs core
+        (Hex.ZPoly.toMonicLiftData core B primeData))
+    (hno :
+      ∀ k,
+        k ∈ Hex.henselPrecisionSchedule B (Hex.initialHenselPrecision B)
+          (Hex.ZPoly.quadraticDoublingSteps B + 2) →
+        k ≠ B →
+        Hex.bhksRecover? core (Hex.ZPoly.toMonicLiftData core k primeData) = none) :
+    Hex.factorFastCoreWithBound core B primeData
+        (Hex.initialHenselPrecision B)
+        (Hex.ZPoly.quadraticDoublingSteps B + 2) =
+      some hinputs.expectedFactors :=
+  factorFastCoreWithBound_eq_expected_of_forwardInputs_on_schedule_of_no_prior_recovery
+    hinputs (Hex.cap_mem_henselPrecisionSchedule B) hno
+
 /-- Lower cardinality bound for a successful BHKS fast-core branch whose
 emitted candidates have been certified through the B8 partition-refinement
 package: the recovery side data provides an `ExpectedTrueFactors` witness

@@ -7193,6 +7193,134 @@ private theorem factorFastCoreWithBound_isSome_of_recovery_on_schedule
                   exact htail
             exact ih hmem'
 
+/--
+If a target precision is on the fast-core schedule, recovery succeeds there,
+and no other scheduled precision before the target succeeds, then the
+first-success loop returns exactly the target recovery.
+
+This is the executable-loop determinism skeleton.  The BHKS precision theorem
+supplies the `hno` premise by ruling out successful recovery below the
+Mignotte/cap precision.
+-/
+theorem factorFastCoreWithBound_eq_some_of_recovery_on_schedule_of_no_prior_recovery
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    {start fuel target : Nat} {factors : Array ZPoly}
+    (hmem : target ∈ henselPrecisionSchedule B start fuel)
+    (hno :
+      ∀ k, k ∈ henselPrecisionSchedule B start fuel → k ≠ target →
+        bhksRecover? core (ZPoly.toMonicLiftData core k primeData) = none)
+    (hrecover :
+      bhksRecover? core (ZPoly.toMonicLiftData core target primeData) = some factors) :
+    factorFastCoreWithBound core B primeData start fuel = some factors := by
+  induction fuel generalizing start with
+  | zero =>
+      simp [henselPrecisionSchedule] at hmem
+  | succ fuel ih =>
+      rw [factorFastCoreWithBound]
+      cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core start primeData) with
+      | success xs =>
+          by_cases htarget : start = target
+          · subst target
+            rw [bhksRecover?] at hrecover
+            simp [hclass, BhksRecoveryResult.toOption] at hrecover
+            exact congrArg some hrecover
+          · have hstart_mem :
+                start ∈ henselPrecisionSchedule B start (fuel + 1) := by
+              simp [henselPrecisionSchedule]
+            have hnone := hno start hstart_mem htarget
+            rw [bhksRecover?] at hnone
+            simp [hclass, BhksRecoveryResult.toOption] at hnone
+      | degenerate =>
+          by_cases hk : start ≥ B
+          · simp [hk]
+            have htarget : target = start := by
+              simpa [henselPrecisionSchedule, hk] using hmem
+            subst target
+            rw [bhksRecover?] at hrecover
+            simp [hclass, BhksRecoveryResult.toOption] at hrecover
+          · simp [hk]
+            have hmem_tail :
+                target ∈
+                  henselPrecisionSchedule B (nextHenselPrecision start B) fuel := by
+              have hmem_cases :
+                  target = start ∨
+                    target ∈
+                      henselPrecisionSchedule B (nextHenselPrecision start B) fuel := by
+                simpa [henselPrecisionSchedule, hk] using hmem
+              cases hmem_cases with
+              | inl htarget =>
+                  subst target
+                  rw [bhksRecover?] at hrecover
+                  simp [hclass, BhksRecoveryResult.toOption] at hrecover
+              | inr htail =>
+                  exact htail
+            refine ih hmem_tail ?_
+            intro k hk_mem hk_ne
+            have hk_schedule :
+                k ∈ henselPrecisionSchedule B start (fuel + 1) := by
+              simp [henselPrecisionSchedule, hk, hk_mem]
+            exact hno k hk_schedule hk_ne
+      | candidateFailure =>
+          by_cases hk : start ≥ B
+          · simp [hk]
+            have htarget : target = start := by
+              simpa [henselPrecisionSchedule, hk] using hmem
+            subst target
+            rw [bhksRecover?] at hrecover
+            simp [hclass, BhksRecoveryResult.toOption] at hrecover
+          · simp [hk]
+            have hmem_tail :
+                target ∈
+                  henselPrecisionSchedule B (nextHenselPrecision start B) fuel := by
+              have hmem_cases :
+                  target = start ∨
+                    target ∈
+                      henselPrecisionSchedule B (nextHenselPrecision start B) fuel := by
+                simpa [henselPrecisionSchedule, hk] using hmem
+              cases hmem_cases with
+              | inl htarget =>
+                  subst target
+                  rw [bhksRecover?] at hrecover
+                  simp [hclass, BhksRecoveryResult.toOption] at hrecover
+              | inr htail =>
+                  exact htail
+            refine ih hmem_tail ?_
+            intro k hk_mem hk_ne
+            have hk_schedule :
+                k ∈ henselPrecisionSchedule B start (fuel + 1) := by
+              simp [henselPrecisionSchedule, hk, hk_mem]
+            exact hno k hk_schedule hk_ne
+      | productMismatch cands =>
+          by_cases hk : start ≥ B
+          · simp [hk]
+            have htarget : target = start := by
+              simpa [henselPrecisionSchedule, hk] using hmem
+            subst target
+            rw [bhksRecover?] at hrecover
+            simp [hclass, BhksRecoveryResult.toOption] at hrecover
+          · simp [hk]
+            have hmem_tail :
+                target ∈
+                  henselPrecisionSchedule B (nextHenselPrecision start B) fuel := by
+              have hmem_cases :
+                  target = start ∨
+                    target ∈
+                      henselPrecisionSchedule B (nextHenselPrecision start B) fuel := by
+                simpa [henselPrecisionSchedule, hk] using hmem
+              cases hmem_cases with
+              | inl htarget =>
+                  subst target
+                  rw [bhksRecover?] at hrecover
+                  simp [hclass, BhksRecoveryResult.toOption] at hrecover
+              | inr htail =>
+                  exact htail
+            refine ih hmem_tail ?_
+            intro k hk_mem hk_ne
+            have hk_schedule :
+                k ∈ henselPrecisionSchedule B start (fuel + 1) := by
+              simp [henselPrecisionSchedule, hk, hk_mem]
+            exact hno k hk_schedule hk_ne
+
 private theorem factorFastCoreWithBound_ne_none_of_recovery_on_schedule
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {start fuel target : Nat} {factors : Array ZPoly}
