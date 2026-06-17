@@ -153,6 +153,52 @@ def linearHenselStep
       reduceModPow (h + LinearLiftResult.liftScaledIncrement p k hCorrection) p (k + 1) := by
   simp [linearHenselStep]
 
+/-- A linear Hensel correction adds only a multiple of the current modulus
+`p ^ k` to the input factor, so reducing the corrected factor to precision
+`p ^ (k + 1)` leaves it congruent to the input modulo the base prime `p`
+(for `1 ≤ k`). Shared by the `g` and `h` single-step congruences below. -/
+private theorem congr_reduceModPow_add_increment_mod_base
+    (p k : Nat) [ZMod64.Bounds p] (g : ZPoly) (r : FpPoly p) (hk : 1 ≤ k) :
+    ZPoly.congr
+      (reduceModPow (g + LinearLiftResult.liftScaledIncrement p k r) p (k + 1)) g p := by
+  have hpos : 0 < p ^ (k + 1) := Nat.pow_pos (ZMod64.Bounds.pPos (p := p))
+  have hreduce :
+      ZPoly.congr
+        (reduceModPow (g + LinearLiftResult.liftScaledIncrement p k r) p (k + 1))
+        (g + LinearLiftResult.liftScaledIncrement p k r) p := by
+    have h := congr_reduceModPow (g + LinearLiftResult.liftScaledIncrement p k r) p (k + 1) hpos
+    have h' := congr_pow_of_le p 1 (k + 1) _ _ (by omega) h
+    rwa [Nat.pow_one] at h'
+  have hincr : ZPoly.congr (LinearLiftResult.liftScaledIncrement p k r) 0 p := by
+    have h := LinearLiftResult.congr_liftScaledIncrement_zero p k r
+    have h' := congr_pow_of_le p 1 k _ _ hk h
+    rwa [Nat.pow_one] at h'
+  have hadd :
+      ZPoly.congr (g + LinearLiftResult.liftScaledIncrement p k r) (g + 0) p :=
+    congr_add g (LinearLiftResult.liftScaledIncrement p k r) g 0 p (congr_refl g p) hincr
+  rw [DensePoly.add_zero_poly] at hadd
+  exact congr_trans _ _ _ p hreduce hadd
+
+/-- One linear Hensel step changes the leading factor `g` only by a multiple of
+the current modulus, so the stepped factor is congruent to `g` modulo the base
+prime `p` (for `1 ≤ k`). -/
+theorem linearHenselStep_g_congr_mod_base
+    (p k : Nat) [ZMod64.Bounds p]
+    (f g h : ZPoly) (s t : FpPoly p) (hk : 1 ≤ k) :
+    ZPoly.congr (linearHenselStep p k f g h s t).g g p := by
+  rw [linearHenselStep_g]
+  exact congr_reduceModPow_add_increment_mod_base p k g _ hk
+
+/-- One linear Hensel step changes the cofactor `h` only by a multiple of the
+current modulus, so the stepped cofactor is congruent to `h` modulo the base
+prime `p` (for `1 ≤ k`). -/
+theorem linearHenselStep_h_congr_mod_base
+    (p k : Nat) [ZMod64.Bounds p]
+    (f g h : ZPoly) (s t : FpPoly p) (hk : 1 ≤ k) :
+    ZPoly.congr (linearHenselStep p k f g h s t).h h p := by
+  rw [linearHenselStep_h]
+  exact congr_reduceModPow_add_increment_mod_base p k h _ hk
+
 /-- The product of two factors reduced modulo `p ^ k` is congruent modulo
 `p ^ k` to the product of the original factors. -/
 private theorem congr_mul_reduceModPow_pair
@@ -1839,6 +1885,106 @@ theorem henselLift_monic
           henselLiftLoop_invariant p k' 1 f s t start hp (by omega) (by simpa [start] using hstart)
             hstepDegree hstepBezout
       simpa [henselLift, start] using hloop.2.2
+
+/-- The linear Hensel loop changes the leading factor only by multiples of the
+current modulus, so the looped factor stays congruent to the starting factor
+modulo the base prime `p` (for `1 ≤ current`). -/
+private theorem henselLiftLoop_g_congr_mod_base
+    (p : Nat) [ZMod64.Bounds p]
+    (steps current : Nat) (f : ZPoly) (s t : FpPoly p) (acc : LinearLiftResult)
+    (hcurrent : 1 ≤ current) :
+    ZPoly.congr (henselLiftLoop p steps current f s t acc).g acc.g p := by
+  induction steps generalizing current acc with
+  | zero => simpa [henselLiftLoop] using congr_refl acc.g p
+  | succ steps ih =>
+      let next := linearHenselStep p current f acc.g acc.h s t
+      have hstep : ZPoly.congr next.g acc.g p :=
+        linearHenselStep_g_congr_mod_base p current f acc.g acc.h s t hcurrent
+      have htail :
+          ZPoly.congr (henselLiftLoop p steps (current + 1) f s t next).g next.g p :=
+        ih (current := current + 1) (acc := next) (by omega)
+      have hresult :
+          henselLiftLoop p (steps + 1) current f s t acc =
+            henselLiftLoop p steps (current + 1) f s t next := by
+        simp [henselLiftLoop, next]
+      rw [hresult]
+      exact congr_trans _ _ _ p htail hstep
+
+/-- The linear Hensel loop changes the cofactor only by multiples of the current
+modulus, so the looped cofactor stays congruent to the starting cofactor modulo
+the base prime `p` (for `1 ≤ current`). -/
+private theorem henselLiftLoop_h_congr_mod_base
+    (p : Nat) [ZMod64.Bounds p]
+    (steps current : Nat) (f : ZPoly) (s t : FpPoly p) (acc : LinearLiftResult)
+    (hcurrent : 1 ≤ current) :
+    ZPoly.congr (henselLiftLoop p steps current f s t acc).h acc.h p := by
+  induction steps generalizing current acc with
+  | zero => simpa [henselLiftLoop] using congr_refl acc.h p
+  | succ steps ih =>
+      let next := linearHenselStep p current f acc.g acc.h s t
+      have hstep : ZPoly.congr next.h acc.h p :=
+        linearHenselStep_h_congr_mod_base p current f acc.g acc.h s t hcurrent
+      have htail :
+          ZPoly.congr (henselLiftLoop p steps (current + 1) f s t next).h next.h p :=
+        ih (current := current + 1) (acc := next) (by omega)
+      have hresult :
+          henselLiftLoop p (steps + 1) current f s t acc =
+            henselLiftLoop p steps (current + 1) f s t next := by
+        simp [henselLiftLoop, next]
+      rw [hresult]
+      exact congr_trans _ _ _ p htail hstep
+
+/-- The iterative linear wrapper changes the leading factor only by multiples of
+the modulus, so the lifted factor is congruent to the input `g` modulo the base
+prime `p`. Companion to `henselLift_spec`; the linear-loop analogue of
+`henselLiftQuadratic_g_congr_mod_base`. -/
+theorem henselLift_g_congr_mod_base
+    (p k : Nat) [ZMod64.Bounds p]
+    (f g h : ZPoly) (s t : FpPoly p) (hk : 1 ≤ k) :
+    ZPoly.congr (henselLift p k f g h s t).g g p := by
+  cases k with
+  | zero => omega
+  | succ k' =>
+      let start : LinearLiftResult :=
+        { g := ZPoly.reduceModPow g p 1
+          h := ZPoly.reduceModPow h p 1 }
+      have hloop :
+          ZPoly.congr (henselLiftLoop p k' 1 f s t start).g start.g p :=
+        henselLiftLoop_g_congr_mod_base p k' 1 f s t start (by omega)
+      have hstart : ZPoly.congr start.g g p := by
+        have h := congr_reduceModPow g p 1 (Nat.pow_pos (ZMod64.Bounds.pPos (p := p)))
+        rwa [Nat.pow_one] at h
+      have heq : (henselLift p (k' + 1) f g h s t).g
+          = (henselLiftLoop p k' 1 f s t start).g := by
+        simp [henselLift, start]
+      rw [heq]
+      exact congr_trans _ _ _ p hloop hstart
+
+/-- The iterative linear wrapper changes the cofactor only by multiples of the
+modulus, so the lifted cofactor is congruent to the input `h` modulo the base
+prime `p`. Companion to `henselLift_spec`; the linear-loop analogue of
+`henselLiftQuadratic_h_congr_mod_base`. -/
+theorem henselLift_h_congr_mod_base
+    (p k : Nat) [ZMod64.Bounds p]
+    (f g h : ZPoly) (s t : FpPoly p) (hk : 1 ≤ k) :
+    ZPoly.congr (henselLift p k f g h s t).h h p := by
+  cases k with
+  | zero => omega
+  | succ k' =>
+      let start : LinearLiftResult :=
+        { g := ZPoly.reduceModPow g p 1
+          h := ZPoly.reduceModPow h p 1 }
+      have hloop :
+          ZPoly.congr (henselLiftLoop p k' 1 f s t start).h start.h p :=
+        henselLiftLoop_h_congr_mod_base p k' 1 f s t start (by omega)
+      have hstart : ZPoly.congr start.h h p := by
+        have h := congr_reduceModPow h p 1 (Nat.pow_pos (ZMod64.Bounds.pPos (p := p)))
+        rwa [Nat.pow_one] at h
+      have heq : (henselLift p (k' + 1) f g h s t).h
+          = (henselLiftLoop p k' 1 f s t start).h := by
+        simp [henselLift, start]
+      rw [heq]
+      exact congr_trans _ _ _ p hloop hstart
 
 end ZPoly
 end Hex
