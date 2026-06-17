@@ -246,16 +246,85 @@ theorem toMathlibPolynomial_coeff_bridge (f : Hex.FpPoly p) (n : Nat) :
     (toMathlibPolynomial f).coeff n = HexModArithMathlib.ZMod64.equiv (f.coeff n) :=
   coeff_toMathlibPolynomial_equiv f n
 
-/-- Monicity of executable finite-field polynomials transfers to Mathlib. -/
+/-- Monicity of executable finite-field polynomials transfers to Mathlib.
+
+No nontriviality hypothesis is required: when `ZMod p` is trivial every
+polynomial is monic, and otherwise the executable leading coefficient `1`
+transports to the Mathlib leading coefficient `1`. -/
 theorem toMathlibPolynomial_monic (f : Hex.FpPoly p) :
     Hex.DensePoly.Monic f → (toMathlibPolynomial f).Monic := by
-  sorry
+  intro hmonic
+  -- `f.coeff (size - 1)` is the leading coefficient, also in the degenerate
+  -- `size = 0` case where both sides are `0`.
+  have hlc : f.coeff (f.size - 1) = f.leadingCoeff := by
+    rcases Nat.eq_zero_or_pos f.size with h0 | hpos
+    · have hf0 : f = 0 := by
+        apply Hex.DensePoly.ext_coeff
+        intro n
+        rw [Hex.DensePoly.coeff_zero]
+        exact Hex.DensePoly.coeff_eq_zero_of_size_le f (by omega)
+      rw [hf0, Hex.DensePoly.size_zero, Hex.DensePoly.leadingCoeff_zero]
+      exact Hex.DensePoly.coeff_eq_zero_of_size_le (0 : Hex.FpPoly p) (by simp)
+    · exact (Hex.DensePoly.leadingCoeff_eq_coeff_last f hpos).symm
+  refine Polynomial.monic_of_natDegree_le_of_coeff_eq_one (f.size - 1) ?_ ?_
+  · refine Polynomial.natDegree_le_iff_coeff_eq_zero.mpr ?_
+    intro N hN
+    rw [coeff_toMathlibPolynomial,
+      Hex.DensePoly.coeff_eq_zero_of_size_le f (by omega)]
+    exact HexModArithMathlib.ZMod64.toZMod_zero
+  · rw [coeff_toMathlibPolynomial, hlc,
+      Hex.DensePoly.leadingCoeff_eq_one_of_monic hmonic]
+    exact HexModArithMathlib.ZMod64.toZMod_one
 
-/-- The executable Berlekamp basis size is the Mathlib natural degree after transport. -/
+/-- The executable Berlekamp basis size is the Mathlib natural degree after
+transport. Requires `Nontrivial (ZMod p)`: over a trivial `ZMod p` the
+transport collapses to `0` while `basisSize` can be positive (e.g. `p = 1`,
+`f = X`). -/
 theorem natDegree_toMathlibPolynomial_eq_basisSize
+    [Nontrivial (ZMod p)]
     (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f) :
     (toMathlibPolynomial f).natDegree = Hex.Berlekamp.basisSize f := by
-  sorry
+  -- Monicity plus nontriviality forces the leading coefficient `1 ≠ 0`, so the
+  -- polynomial is nonzero and `f.size > 0`.
+  have hsize_pos : 0 < f.size := by
+    rcases Nat.eq_zero_or_pos f.size with h0 | hpos
+    · exfalso
+      have hf0 : f = 0 := by
+        apply Hex.DensePoly.ext_coeff
+        intro n
+        rw [Hex.DensePoly.coeff_zero]
+        exact Hex.DensePoly.coeff_eq_zero_of_size_le f (by omega)
+      have h1 : f.leadingCoeff = 1 :=
+        Hex.DensePoly.leadingCoeff_eq_one_of_monic hmonic
+      rw [hf0, Hex.DensePoly.leadingCoeff_zero] at h1
+      -- `h1 : (0 : ZMod64 p) = 1`; transport to `ZMod p` to contradict
+      -- `Nontrivial`.
+      have hz : (0 : ZMod p) = (1 : ZMod p) := by
+        calc (0 : ZMod p)
+            = HexModArithMathlib.ZMod64.toZMod (0 : Hex.ZMod64 p) :=
+              HexModArithMathlib.ZMod64.toZMod_zero.symm
+          _ = HexModArithMathlib.ZMod64.toZMod (1 : Hex.ZMod64 p) :=
+              congrArg _ h1
+          _ = (1 : ZMod p) := HexModArithMathlib.ZMod64.toZMod_one
+      exact one_ne_zero hz.symm
+    · exact hpos
+  have hlc : f.coeff (f.size - 1) = 1 := by
+    rw [← Hex.DensePoly.leadingCoeff_eq_coeff_last f hsize_pos]
+    exact hmonic
+  have hcoeff_one : (toMathlibPolynomial f).coeff (f.size - 1) = 1 := by
+    rw [coeff_toMathlibPolynomial, hlc]
+    exact HexModArithMathlib.ZMod64.toZMod_one
+  have hub : (toMathlibPolynomial f).natDegree ≤ f.size - 1 := by
+    refine Polynomial.natDegree_le_iff_coeff_eq_zero.mpr ?_
+    intro N hN
+    rw [coeff_toMathlibPolynomial,
+      Hex.DensePoly.coeff_eq_zero_of_size_le f (by omega)]
+    exact HexModArithMathlib.ZMod64.toZMod_zero
+  have hlb : f.size - 1 ≤ (toMathlibPolynomial f).natDegree :=
+    Polynomial.le_natDegree_of_ne_zero (by rw [hcoeff_one]; exact one_ne_zero)
+  rw [le_antisymm hub hlb]
+  unfold Hex.Berlekamp.basisSize Hex.DensePoly.degree?
+  simp [Nat.ne_of_gt hsize_pos]
 
 /-- Formal derivatives commute with the finite-field polynomial transport. -/
 theorem toMathlibPolynomial_derivative (f : Hex.FpPoly p) :
