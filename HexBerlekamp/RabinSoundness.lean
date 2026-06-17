@@ -3919,6 +3919,68 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd
   nomatch hsplit
 
 /--
+**Non-monic divisor-generalized Berlekamp completeness.** Drops the monicity
+requirement on the divisor `g` of `irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd`
+to bare nonzeroness. The factors returned by `berlekampFactor` are raw `gcd`
+outputs and so are only monic up to a unit; this is the form the executable
+capstone consumes. Positive-degree divisors are normalized to their monic
+associate `scale (leadingCoeff g)⁻¹ g`, to which the monic theorem applies after
+transporting the no-split fact via `kernelWitnessSplit?_none_scale`; a nonzero
+constant divisor is irreducible directly.
+-/
+theorem irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd_nonmonic
+    (f g : FpPoly p) (hmonic : DensePoly.Monic f)
+    (hg_ne_zero : g ≠ 0)
+    (hg_dvd_f : g ∣ f)
+    (hsquareFree : ∀ d, d ∣ f → d ∣ DensePoly.derivative f →
+      isUnitPolynomial d = true)
+    (hno_split : ∀ w ∈ (fixedSpaceKernel f hmonic).toList,
+      kernelWitnessSplit? g w = none) :
+    FpPoly.Irreducible g := by
+  by_cases hpos : 0 < g.degree?.getD 0
+  · -- Positive degree: reduce to the monic associate.
+    have hcinv_ne : (DensePoly.leadingCoeff g)⁻¹ ≠ (0 : ZMod64 p) :=
+      inv_leadingCoeff_ne_zero_of_pos_degree g hpos
+    have hg'_monic :
+        DensePoly.Monic (DensePoly.scale (DensePoly.leadingCoeff g)⁻¹ g) :=
+      FpPoly.scale_inv_leadingCoeff_monic g hpos
+    have hg'_dvd_f : DensePoly.scale (DensePoly.leadingCoeff g)⁻¹ g ∣ f :=
+      fp_dvd_trans (FpPoly.dvd_scale_self_of_ne_zero hcinv_ne g) hg_dvd_f
+    have hno_split' : ∀ w ∈ (fixedSpaceKernel f hmonic).toList,
+        kernelWitnessSplit? (DensePoly.scale (DensePoly.leadingCoeff g)⁻¹ g) w = none :=
+      fun w hw => kernelWitnessSplit?_none_scale hcinv_ne g w (hno_split w hw)
+    have hirr' : FpPoly.Irreducible (DensePoly.scale (DensePoly.leadingCoeff g)⁻¹ g) :=
+      irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd f
+        (DensePoly.scale (DensePoly.leadingCoeff g)⁻¹ g) hmonic hg'_monic hg'_dvd_f
+        hsquareFree hno_split'
+    exact FpPoly.irreducible_of_scale_of_ne_zero hcinv_ne hirr'
+  · -- Degree 0: `g` is a nonzero constant, irreducible by definition.
+    refine ⟨hg_ne_zero, ?_⟩
+    intro a b hab
+    have hg_deg0 : g.degree?.getD 0 = 0 := by omega
+    have ha_ne : a ≠ 0 := factor_ne_zero_of_ne_zero hab hg_ne_zero
+    have hb_ne : b ≠ 0 := by
+      have hba : b * a = g := by rw [FpPoly.mul_comm]; exact hab
+      exact factor_ne_zero_of_ne_zero hba hg_ne_zero
+    have hdeg := FpPoly.degree?_mul_eq_add_degree? a b ha_ne hb_ne
+    rw [hab, hg_deg0] at hdeg
+    have ha0 : a.degree?.getD 0 = 0 := by omega
+    left
+    have ha_size_ne : a.size ≠ 0 := by
+      intro hs
+      apply ha_ne
+      apply DensePoly.ext_coeff
+      intro i
+      rw [DensePoly.coeff_zero]
+      exact DensePoly.coeff_eq_zero_of_size_le a (by omega)
+    have hdeg_some : a.degree? = some (a.size - 1) := by
+      unfold DensePoly.degree?
+      simp [ha_size_ne]
+    rw [hdeg_some] at ha0 ⊢
+    simp at ha0
+    rw [ha0]
+
+/--
 For a monic square-free `f` whose executable Berlekamp factorization returns
 at most one factor, `f` is irreducible. Composes the structural loop lemma
 `kernelWitnessSplit?_none_of_berlekampFactor_factors_length_le_one` with the
