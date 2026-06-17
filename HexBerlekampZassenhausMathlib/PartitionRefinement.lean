@@ -1,5 +1,6 @@
 import HexBerlekampZassenhausMathlib.Recovery
 import HexBerlekampZassenhausMathlib.Basic
+import HexBerlekampZassenhausMathlib.CLDColumnBound
 
 /-!
 BHKS B8 partition-refinement step.
@@ -573,6 +574,66 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_trueFactors
     hcore_ne h
     (BHKS.cutProjectionHypotheses_of_trueFactors L hrows hbasis trueSupports data tight)
     hsize hpartition
+
+/--
+Capstone composition for the fast `h_raw` disjunct: per-candidate irreducibility
+of the first successful BHKS fast-core recovery, with the forward cut
+certificates discharged from genuine true-factor lift data rather than taken as
+opaque hypotheses.
+
+For each true support `S`, the per-support lift package `lift S`
+(`BHKS.TrueFactorLift`) and its semantic facts `sem S`
+(`BHKS.TrueFactorLiftSemantics`), together with the prime, Hensel-precision, and
+per-column CLD separation hypotheses, produce the tight per-column bound via
+`BHKS.tightColumnBound_of_lift`.  That feeds `BHKS.tightNormBound_of_lift` to the
+tight cut-radius certificate `TrueFactorCLDTightNormBound`; its loose companion
+(`toNormBound`) and the structural block-form coordinate identities assemble the
+`TrueFactorCLDVectorData` arm.  Both arms drive
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_trueFactors`.
+
+This is the first consumer to wire the analytic stack (#7650 product CLD
+identity, #7674 semantic lift facts, #7712 tight column bound producer) through
+to the irreducibility endpoint.  The remaining residual is supplying the
+per-support `TrueFactorLift`/semantics/separation family for the first
+successful recovery; the separation hypotheses `hp`, `hk`, `hsep` are the BHKS
+Lemma 5.7 inputs at the first-success lift precision, threaded here verbatim
+rather than re-derived from the global Mignotte recovery bound. -/
+theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_lift
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    {L : Hex.BhksLatticeBasis} {hrows : 1 ≤ L.factorCount + L.coeffWidth}
+    (trueSupports :
+      Set (Set (Fin (Hex.bhksProjectedRows L hrows).factorCount)))
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (hbasis : L.basis.independent)
+    (lift : ∀ S : trueSupports, BHKS.TrueFactorLift L S.1)
+    (sem : ∀ S : trueSupports, BHKS.TrueFactorLiftSemantics (lift S))
+    (hp : ∀ S : trueSupports, 2 ≤ (lift S).p)
+    (hk : ∀ S : trueSupports, 1 < (lift S).p ^ (lift S).a)
+    (hsep : ∀ S : trueSupports,
+      ∀ j, 2 * Hex.bhksCoeffBound (lift S).f j < (lift S).p ^ (lift S).a)
+    (hsize :
+      coreFactors.size =
+        (Hex.bhksEquivalenceClassIndicators (Hex.bhksProjectedRows L hrows)).size)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    ∀ factor ∈ coreFactors.toList, Hex.ZPoly.Irreducible factor := by
+  have tight : ∀ S : trueSupports, BHKS.TrueFactorCLDTightNormBound L S.1 :=
+    fun S =>
+      BHKS.tightNormBound_of_lift (lift S)
+        (BHKS.tightColumnBound_of_lift (lift S) (sem S) (hp S) (hk S) (hsep S))
+  have data : ∀ S : trueSupports, BHKS.TrueFactorCLDVectorData L S.1 :=
+    fun S =>
+      { project_eq := fun i =>
+          BHKS.trueFactorCLDVector_project_of_blockForm S.1 (lift S).blockForm i
+        coeff_eq := fun j =>
+          BHKS.trueFactorCLDVector_coeff_of_blockForm S.1 (lift S).blockForm j
+        norm_bound := (tight S).toNormBound }
+  exact factorFastCoreWithBound_some_factor_zpolyIrreducible_of_trueFactors
+    trueSupports hcore_ne h hbasis data tight hsize hpartition
 
 /-- Cardinality equality for a successful BHKS fast-core branch under the B8
 partition-refinement package.  Pairs `factorFastCoreWithBound_some_factor_count_le`
