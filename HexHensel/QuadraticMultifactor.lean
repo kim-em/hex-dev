@@ -88,7 +88,7 @@ complementary product `Array.polyProduct rest.toArray` via
 `rest`. The singleton case returns the input reduced modulo `p^k`; the
 empty case returns the empty array. Mirrors `multifactorLiftList` in
 `HexHensel.Multifactor` but uses the quadratic doubling primitive. -/
-private def multifactorLiftQuadraticList
+def multifactorLiftQuadraticList
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) : List ZPoly → Array ZPoly
   | [] => #[]
