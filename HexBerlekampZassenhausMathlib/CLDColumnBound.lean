@@ -959,6 +959,238 @@ theorem two_mul_natAbs_sum_psiCut_le
     rw [Int.abs_eq_natAbs] at hcolNat; push_cast at hcolNat ⊢; linarith
   exact_mod_cast this
 
+/-- The executable Pascal-recursion `Hex.Nat.choose` agrees with Mathlib's
+`Nat.choose`; needed because `Hex.bhksCoeffBound` elaborates `Nat.choose` to the
+executable shadow inside `namespace Hex`. -/
+private theorem hex_choose_eq (n k : Nat) : Hex.Nat.choose n k = Nat.choose n k := by
+  induction n generalizing k with
+  | zero => cases k <;> simp
+  | succ n ih => cases k with
+    | zero => simp
+    | succ k => rw [Hex.Nat.choose_succ_succ, Nat.choose_succ_succ, ih, ih]
+
+/-- **Monic cancellation modulo `m`.**  Over `Polynomial ℤ`, if `C m` divides a
+product `g * z` and `g` is monic, then `C m` divides `z`.  The proof maps to
+`Polynomial (ZMod m)`, where `g.map` is monic hence a non-zero-divisor. -/
+theorem C_dvd_of_monic_mul {m : Nat} {Pg Z : Polynomial ℤ} (hPg : Pg.Monic)
+    (h : Polynomial.C ((m : Nat) : ℤ) ∣ Pg * Z) :
+    Polynomial.C ((m : Nat) : ℤ) ∣ Z := by
+  classical
+  have hmap : (Pg * Z).map (Int.castRingHom (ZMod m)) = 0 := by
+    obtain ⟨W, hW⟩ := h
+    rw [hW, Polynomial.map_mul, Polynomial.map_C]
+    have hz : (Int.castRingHom (ZMod m)) ((m : Nat) : ℤ) = 0 := by simp
+    rw [hz, Polynomial.C_0, zero_mul]
+  rw [Polynomial.map_mul] at hmap
+  have hZ0 : Z.map (Int.castRingHom (ZMod m)) = 0 :=
+    (hPg.map (Int.castRingHom (ZMod m))).mul_right_eq_zero_iff.mp hmap
+  rw [Polynomial.C_dvd_iff_dvd_coeff]
+  intro k
+  have hck : (Z.map (Int.castRingHom (ZMod m))).coeff k = 0 := by rw [hZ0]; simp
+  rw [Polynomial.coeff_map] at hck
+  have hcast : ((Z.coeff k : ℤ) : ZMod m) = 0 := by simpa using hck
+  rwa [ZMod.intCast_zmod_eq_zero_iff_dvd] at hcast
+
+/-- **BHKS Lemma 5.1, executable bound form.**  For a monic divisor `g` of `f`
+over `Polynomial ℤ`, every `Phi`-column coefficient is bounded by the executable
+Mignotte column bound `Hex.bhksCoeffBound f j`. -/
+theorem abs_phi_coeff_le_bhksCoeffBound (f g : Hex.ZPoly) (j : Nat)
+    (hg_monic : (HexPolyMathlib.toPolynomial g).Monic)
+    (hgf : HexPolyMathlib.toPolynomial g ∣ HexPolyMathlib.toPolynomial f) :
+    ((phi (HexPolyMathlib.toPolynomial f) (HexPolyMathlib.toPolynomial g)).coeff j).natAbs
+      ≤ Hex.bhksCoeffBound f j := by
+  classical
+  obtain ⟨hpoly, hfac⟩ := hgf
+  have hreal := abs_phi_coeff_le_of_monic_factor
+    (HexPolyMathlib.toPolynomial f) (HexPolyMathlib.toPolynomial g) hpoly hg_monic hfac j
+  have hnd : (HexPolyMathlib.toPolynomial f).natDegree = f.degree?.getD 0 :=
+    HexPolyMathlib.natDegree_toPolynomial f
+  have hZeq : HexPolyZMathlib.toPolynomial f = HexPolyMathlib.toPolynomial f := rfl
+  have hl2 : HexPolyZMathlib.l2norm (HexPolyMathlib.toPolynomial f)
+      ≤ (Hex.ZPoly.coeffL2NormBound f : ℝ) := by
+    rw [← hZeq]; exact l2norm_toPolynomial_le_coeffL2NormBound f
+  have hbb_nat : Hex.bhksCoeffBound f j
+      = Nat.choose (f.degree?.getD 0 - 1) j * (f.degree?.getD 0)
+          * Hex.ZPoly.coeffL2NormBound f := by
+    simp only [Hex.bhksCoeffBound, hex_choose_eq]
+  have hbb : (Hex.bhksCoeffBound f j : ℝ)
+      = (Nat.choose (f.degree?.getD 0 - 1) j : ℝ) * (f.degree?.getD 0 : ℝ)
+          * (Hex.ZPoly.coeffL2NormBound f : ℝ) := by
+    rw [hbb_nat]; push_cast; ring
+  have hkey :
+      (((phi (HexPolyMathlib.toPolynomial f) (HexPolyMathlib.toPolynomial g)).coeff j).natAbs : ℝ)
+        ≤ (Hex.bhksCoeffBound f j : ℝ) := by
+    refine hreal.trans ?_
+    rw [hnd, hbb]
+    have hnn : (0 : ℝ) ≤ (Nat.choose (f.degree?.getD 0 - 1) j : ℝ) * (f.degree?.getD 0 : ℝ) := by
+      positivity
+    exact mul_le_mul_of_nonneg_left hl2 hnn
+  exact_mod_cast hkey
+
+/-- **Per-factor CLD residue bridge (issue deliverable 1).**  For a monic divisor
+`g` of `f` whose precision `p^a` separates the Mignotte column bound, the centred
+ambient residue of the executable CLD quotient coefficient is exactly the integer
+`Phi`-column coefficient. -/
+theorem residue_cldQuotientMod_eq_phi_coeff
+    (f g : Hex.ZPoly) (p a j : Nat)
+    (hg_monic : (HexPolyMathlib.toPolynomial g).Monic)
+    (hgf : HexPolyMathlib.toPolynomial g ∣ HexPolyMathlib.toPolynomial f)
+    (hsep : 2 * Hex.bhksCoeffBound f j < p ^ a)
+    (hcongr : Hex.ZPoly.congr (g * Hex.cldQuotientMod f g p a)
+        (f * Hex.DensePoly.derivative g) (p ^ a)) :
+    Hex.centeredResiduePow p a ((Hex.cldQuotientMod f g p a).coeff j)
+      = (phi (HexPolyMathlib.toPolynomial f) (HexPolyMathlib.toPolynomial g)).coeff j := by
+  obtain ⟨hpoly, hHpoly⟩ := hgf
+  have hphi : phi (HexPolyMathlib.toPolynomial f) (HexPolyMathlib.toPolynomial g)
+      = hpoly * (HexPolyMathlib.toPolynomial g).derivative :=
+    phi_eq_factor_mul_derivative _ _ hpoly hg_monic hHpoly
+  have hC := C_dvd_toPolynomial_sub_of_congr (g * Hex.cldQuotientMod f g p a)
+      (f * Hex.DensePoly.derivative g) (p ^ a) hcongr
+  rw [HexPolyMathlib.toPolynomial_mul, HexPolyMathlib.toPolynomial_mul,
+      HexPolyMathlib.toPolynomial_derivative] at hC
+  have hfeq :
+      (HexPolyMathlib.toPolynomial g * HexPolyMathlib.toPolynomial (Hex.cldQuotientMod f g p a)
+        - HexPolyMathlib.toPolynomial f * (HexPolyMathlib.toPolynomial g).derivative)
+      = HexPolyMathlib.toPolynomial g *
+          (HexPolyMathlib.toPolynomial (Hex.cldQuotientMod f g p a)
+            - phi (HexPolyMathlib.toPolynomial f) (HexPolyMathlib.toPolynomial g)) := by
+    rw [hphi, hHpoly]; ring
+  rw [hfeq] at hC
+  have hZ := C_dvd_of_monic_mul hg_monic hC
+  rw [Polynomial.C_dvd_iff_dvd_coeff] at hZ
+  have hj := hZ j
+  rw [Polynomial.coeff_sub, HexPolyMathlib.coeff_toPolynomial] at hj
+  have hcongr_emod :
+      (phi (HexPolyMathlib.toPolynomial f) (HexPolyMathlib.toPolynomial g)).coeff j
+          % ((p ^ a : Nat) : Int)
+        = (Hex.cldQuotientMod f g p a).coeff j % ((p ^ a : Nat) : Int) :=
+    Int.modEq_iff_dvd.mpr hj
+  exact Hex.centeredResiduePow_eq_of_natAbs_le p a _ _ (Hex.bhksCoeffBound f j)
+    (abs_phi_coeff_le_bhksCoeffBound f g j hg_monic ⟨hpoly, hHpoly⟩) hsep hcongr_emod
+
+/-- **Exact log-derivative support sum (issue deliverable 2).**  Over
+`Polynomial ℤ`, the sum of the per-factor `Phi`-columns equals the `Phi`-column of
+their product, for monic factors whose product divides `F`.  This is the Leibniz
+product rule for `Phi`, with the leave-one-out cofactors supplied by
+`Polynomial.derivative_prod_finset`. -/
+theorem phi_sum_eq_phi_prod {ι : Type*} [DecidableEq ι]
+    (F : Polynomial ℤ) (T : Finset ι) (P : ι → Polynomial ℤ)
+    (hmonic : ∀ i ∈ T, (P i).Monic)
+    (hdvd : (∏ i ∈ T, P i) ∣ F) :
+    ∑ i ∈ T, phi F (P i) = phi F (∏ i ∈ T, P i) := by
+  obtain ⟨C, hC⟩ := hdvd
+  have hQ_monic : (∏ i ∈ T, P i).Monic := Polynomial.monic_prod_of_monic T P hmonic
+  have hphiQ : phi F (∏ i ∈ T, P i) = C * (∏ i ∈ T, P i).derivative :=
+    phi_eq_factor_mul_derivative F (∏ i ∈ T, P i) C hQ_monic hC
+  have heach : ∀ i ∈ T, phi F (P i) = (C * ∏ k ∈ T.erase i, P k) * (P i).derivative := by
+    intro i hi
+    have hF : F = (P i) * (C * ∏ k ∈ T.erase i, P k) := by
+      rw [hC, ← Finset.mul_prod_erase T P hi]; ring
+    exact phi_eq_factor_mul_derivative F (P i) (C * ∏ k ∈ T.erase i, P k) (hmonic i hi) hF
+  rw [Finset.sum_congr rfl heach, hphiQ, Polynomial.derivative_prod_finset, Finset.mul_sum]
+  exact Finset.sum_congr rfl (fun i _ => by ring)
+
+open Classical in
+/-- **Tight BHKS CLD column bound (issue capstone).**  A genuine true-factor lift
+package yields the tight per-column estimate `2·|col j| ≤ factorCount`.  The bound
+is an aggregation phenomenon: each high-bit cut can be large, but the support sum
+of the exact `Phi`-columns is a single Mignotte-bounded integer
+(`phi_sum_eq_phi_prod`), so the carry-cancellation core
+`two_mul_natAbs_sum_psiCut_le` collapses the column to half the support size. -/
+theorem tightColumnBound_of_lift
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : TrueFactorLift L S)
+    (H : TrueFactorLiftSemantics D)
+    (hp : 2 ≤ D.p)
+    (hk : 1 < D.p ^ D.a)
+    (hsep : ∀ j, 2 * Hex.bhksCoeffBound D.f j < D.p ^ D.a) :
+    TightColumnBound L S D := by
+  classical
+  refine ⟨fun j => ?_⟩
+  set T : Finset (Fin L.factorCount) :=
+    Finset.univ.filter (fun i => i ∈ S) with hT
+  have hjlt : j.val < D.f.degree?.getD 0 := j.isLt.trans_eq D.coeffWidth_eq
+  -- Rewrite the tail column as the support-restricted sum of high-bit cuts.
+  have hcol : ((trueFactorCLDVector L S)[Fin.natAdd L.factorCount j] : ℤ)
+      = ∑ i ∈ T, Hex.psiCut D.p D.a (Hex.bhksCoeffCutThreshold D.p D.f j.val)
+          ((Hex.cldQuotientMod D.f (D.liftedFactors.getD i.val 1) D.p D.a).coeff j.val) := by
+    rw [D.coeff_eq_cldCoeffs j, hT, Finset.sum_filter]
+    refine Finset.sum_congr rfl (fun i _ => ?_)
+    by_cases hi : i ∈ S
+    · rw [indicatorVector_apply_mem S hi, one_mul, if_pos hi,
+        Hex.cldCoeffs_getD_of_lt D.f D.p D.a (D.liftedFactors.getD i.val 1) j.val hjlt]
+    · rw [indicatorVector_apply_not_mem S hi, zero_mul, if_neg hi]
+  -- Separation facts for the cut modulus `p^b`.
+  have hcut := Hex.le_pow_ceilLogP hp (2 * Hex.bhksCoeffBound D.f j.val + 1)
+  have hpb : 0 < D.p ^ Hex.bhksCoeffCutThreshold D.p D.f j.val := by
+    have : 2 * Hex.bhksCoeffBound D.f j.val + 1
+        ≤ D.p ^ Hex.bhksCoeffCutThreshold D.p D.f j.val := hcut
+    omega
+  have hsep_b : 2 * Hex.bhksCoeffBound D.f j.val
+      < D.p ^ Hex.bhksCoeffCutThreshold D.p D.f j.val := by
+    have : 2 * Hex.bhksCoeffBound D.f j.val + 1
+        ≤ D.p ^ Hex.bhksCoeffCutThreshold D.p D.f j.val := hcut
+    omega
+  -- Monic / divisibility data for the represented factor and its lifted factors.
+  have hfac_monic : (HexPolyMathlib.toPolynomial D.factor).Monic :=
+    HexHenselMathlib.toPolynomial_monic_of_dense_monic D.factor H.factor_monic
+  have hfac_dvd : HexPolyMathlib.toPolynomial D.factor ∣ HexPolyMathlib.toPolynomial D.f :=
+    ⟨HexPolyMathlib.toPolynomial D.cofactor, by
+      rw [← HexPolyMathlib.toPolynomial_mul, D.factor_mul]⟩
+  have hLD : L.liftedFactors = D.liftedFactors := D.liftedFactors_eq
+  -- The represented factor is the `T`-indexed product of lifted factors.
+  have hprod : HexPolyMathlib.toPolynomial D.factor
+      = ∏ i ∈ T, HexPolyMathlib.toPolynomial (D.liftedFactors.getD i.val 1) := by
+    have heq : HexPolyZMathlib.toPolynomial (supportProduct L S)
+        = ∏ i ∈ T, HexPolyZMathlib.toPolynomial (D.liftedFactors.getD i.val 1) := by
+      unfold supportProduct
+      rw [polyProduct_toPolynomial, List.toList_toArray, List.map_map]
+      simp only [Function.comp_def, hLD]
+      rw [← List.prod_toFinset
+        (fun i => HexPolyZMathlib.toPolynomial (D.liftedFactors.getD i.val 1))
+        ((List.nodup_finRange L.factorCount).filter _)]
+      refine Finset.prod_congr ?_ (fun _ _ => rfl)
+      ext i
+      simp only [List.mem_toFinset, List.mem_filter, List.mem_finRange, true_and,
+        decide_eq_true_eq, hT, Finset.mem_filter, Finset.mem_univ]
+    rw [← D.support_product_eq]
+    exact heq
+  have hgmonic : ∀ i ∈ T, (HexPolyMathlib.toPolynomial (D.liftedFactors.getD i.val 1)).Monic := by
+    intro i hi
+    have hiS : i ∈ S := by simpa [hT] using hi
+    exact HexHenselMathlib.toPolynomial_monic_of_dense_monic _ (H.selected_monic i hiS)
+  -- Apply the carry-cancellation core with the exact `Phi`-columns as `w`.
+  have hcard : T.card ≤ L.factorCount := by
+    calc T.card ≤ (Finset.univ : Finset (Fin L.factorCount)).card := Finset.card_filter_le _ _
+      _ = L.factorCount := by simp
+  rw [hcol]
+  refine le_trans (two_mul_natAbs_sum_psiCut_le T D.p D.a
+    (Hex.bhksCoeffCutThreshold D.p D.f j.val) hpb
+    (fun i => (Hex.cldQuotientMod D.f (D.liftedFactors.getD i.val 1) D.p D.a).coeff j.val)
+    (fun i => (phi (HexPolyMathlib.toPolynomial D.f)
+      (HexPolyMathlib.toPolynomial (D.liftedFactors.getD i.val 1))).coeff j.val)
+    ((phi (HexPolyMathlib.toPolynomial D.f) (HexPolyMathlib.toPolynomial D.factor)).coeff j.val)
+    (Hex.bhksCoeffBound D.f j.val) ?_ ?_ ?_ hsep_b) hcard
+  · -- hw: each centred ambient residue equals the integer `Phi`-column coefficient.
+    intro i hi
+    have hiS : i ∈ S := by simpa [hT] using hi
+    have hgi_dvd : HexPolyMathlib.toPolynomial (D.liftedFactors.getD i.val 1)
+        ∣ HexPolyMathlib.toPolynomial D.f := by
+      refine (?_ : HexPolyMathlib.toPolynomial (D.liftedFactors.getD i.val 1)
+        ∣ HexPolyMathlib.toPolynomial D.factor).trans hfac_dvd
+      rw [hprod]; exact Finset.dvd_prod_of_mem _ hi
+    have hcongr_i :=
+      TrueFactorLiftSemantics.selected_cldQuotientMod_congr_mul_derivative D H hk i hiS
+    exact residue_cldQuotientMod_eq_phi_coeff D.f (D.liftedFactors.getD i.val 1) D.p D.a j.val
+      (hgmonic i hi) hgi_dvd (hsep j.val) hcongr_i
+  · -- hsum: the support sum of exact `Phi`-columns is the factor's `Phi`-column.
+    have hps := phi_sum_eq_phi_prod (HexPolyMathlib.toPolynomial D.f) T
+      (fun i => HexPolyMathlib.toPolynomial (D.liftedFactors.getD i.val 1)) hgmonic
+      (by rw [← hprod]; exact hfac_dvd)
+    rw [← Polynomial.finset_sum_coeff, hps, ← hprod]
+  · -- hy: the factor's `Phi`-column is Mignotte-bounded.
+    exact abs_phi_coeff_le_bhksCoeffBound D.f D.factor j.val hfac_monic hfac_dvd
+
 end BHKS
 
 end
