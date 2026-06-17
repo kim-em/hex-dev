@@ -437,6 +437,35 @@ theorem isUnit_toMathlibPolynomial_of_isUnitPolynomial
   rw [hC_eq]
   exact Polynomial.isUnit_C.mpr (isUnit_iff_ne_zero.mpr htoZ_ne)
 
+/-- Transport executable `FpPoly.Irreducible` to Mathlib `Irreducible` over
+`ZMod p`.
+
+The positive Mathlib-degree hypothesis is essential: `FpPoly.Irreducible` holds
+vacuously for any nonzero constant (every factorization has a degree-0 factor),
+whereas such a constant transports to a Mathlib *unit*, not an irreducible.  At
+the Berlekamp use site the emitted factors are nonconstant, so the hypothesis is
+available. -/
+theorem irreducible_toMathlibPolynomial_of_fpPolyIrreducible
+    [Fact (Nat.Prime p)] {f : Hex.FpPoly p}
+    (hpos : 0 < (toMathlibPolynomial f).natDegree)
+    (hirr : Hex.FpPoly.Irreducible f) :
+    Irreducible (toMathlibPolynomial f) := by
+  refine ⟨fun h => Polynomial.not_isUnit_of_natDegree_pos _ hpos h, ?_⟩
+  intro a b hab
+  -- Pull `a`, `b` back through `fpPolyEquiv.symm` to executable factors of `f`.
+  have ha : toMathlibPolynomial (fpPolyEquiv.symm a) = a := by
+    rw [← fpPolyEquiv_apply, fpPolyEquiv.apply_symm_apply]
+  have hb : toMathlibPolynomial (fpPolyEquiv.symm b) = b := by
+    rw [← fpPolyEquiv_apply, fpPolyEquiv.apply_symm_apply]
+  have hprod : fpPolyEquiv.symm a * fpPolyEquiv.symm b = f := by
+    rw [← map_mul, ← hab, ← fpPolyEquiv_apply, fpPolyEquiv.symm_apply_apply]
+  -- `FpPoly.Irreducible` forces one pulled-back factor to be a nonzero constant.
+  rcases hirr.2 _ _ hprod with hdeg | hdeg
+  · exact Or.inl (ha ▸ isUnit_toMathlibPolynomial_of_isUnitPolynomial
+      (by unfold Hex.Berlekamp.isUnitPolynomial; rw [hdeg]))
+  · exact Or.inr (hb ▸ isUnit_toMathlibPolynomial_of_isUnitPolynomial
+      (by unfold Hex.Berlekamp.isUnitPolynomial; rw [hdeg]))
+
 /-- The Mathlib primality fact yields the executable prime-modulus witness, so
 executable field-dependent lemmas (gcd/Bezout, modular division) become
 available in the Mathlib transport layer. -/
@@ -848,6 +877,11 @@ theorem irreducible_of_mem_berlekampFactor
       Hex.Berlekamp.isUnitPolynomial d = true) :
     ∀ g ∈ (Hex.Berlekamp.berlekampFactor f hmonic).factors,
       Irreducible (toMathlibPolynomial g) := by
+  -- The Mathlib leg is `irreducible_toMathlibPolynomial_of_fpPolyIrreducible`
+  -- (above): each nonconstant factor with `FpPoly.Irreducible g` transports.
+  -- The remaining gap is purely executable: there is no theorem yet that every
+  -- `g ∈ (berlekampFactor f hmonic).factors` is `FpPoly.Irreducible` (only the
+  -- singleton case `berlekampFactor_singleton_irreducible` exists).
   sorry
 
 /--
