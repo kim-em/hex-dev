@@ -76,16 +76,17 @@ private theorem toMathlibPolynomial_not_coprime_of_gcdIsUnit_false
         (Polynomial.derivative (HexBerlekampMathlib.toMathlibPolynomial f)) := by
   intro hcop
   let g : Hex.FpPoly p := Hex.DensePoly.gcd f (Hex.DensePoly.derivative f)
-  have hmath_gcd :
-      gcd
-        (HexBerlekampMathlib.toMathlibPolynomial f)
-        (Polynomial.derivative (HexBerlekampMathlib.toMathlibPolynomial f)) =
-          HexBerlekampMathlib.toMathlibPolynomial g := by
-    rw [← HexBerlekampMathlib.toMathlibPolynomial_derivative f]
-    rw [← HexBerlekampMathlib.toMathlibPolynomial_gcd f (Hex.DensePoly.derivative f)]
+  have hmath_gcd_unit :
+      IsUnit
+        (gcd
+          (HexBerlekampMathlib.toMathlibPolynomial f)
+          (Polynomial.derivative (HexBerlekampMathlib.toMathlibPolynomial f))) :=
+    gcd_isUnit_iff_isRelPrime.mpr hcop.isRelPrime
   have hg_unit : IsUnit (HexBerlekampMathlib.toMathlibPolynomial g) := by
-    rw [← hmath_gcd]
-    exact gcd_isUnit_iff_isRelPrime.mpr hcop.isRelPrime
+    rw [← HexBerlekampMathlib.toMathlibPolynomial_derivative] at hmath_gcd_unit
+    exact
+      (HexBerlekampMathlib.toMathlibPolynomial_gcd_associated
+        f (Hex.DensePoly.derivative f)).symm.isUnit hmath_gcd_unit
   have hg_size : g.size = 1 :=
     size_eq_one_of_toMathlibPolynomial_isUnit hg_unit
   have hsqf' : Hex.gcdIsUnit g = true := by
