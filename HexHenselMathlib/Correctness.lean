@@ -174,14 +174,19 @@ theorem quadraticHenselStep_bezout_correct
     intro n
     exact Subsingleton.elim _ _
 
-/-- The quadratic step preserves monicity on the lifted `g` factor in Mathlib form. -/
+/-- The quadratic step preserves monicity on the lifted `g` factor in Mathlib form.
+
+The executable substrate (`Hex.ZPoly.quadraticHenselStep_monic`) requires `1 < m`:
+at `m = 1` every `*ModSquare` operation reduces modulo `1`, collapsing the lifted
+factor to the zero polynomial, which is not monic. So the hypothesis is `1 < m`. -/
 theorem quadraticHenselStep_monic
     (m : Nat) (f g h s t : Hex.ZPoly)
-    (hm : 0 < m)
+    (hm : 1 < m)
     (hmonic : Hex.DensePoly.Monic g) :
     let r := Hex.ZPoly.quadraticHenselStep m f g h s t
-    (HexPolyMathlib.toPolynomial r.g).Monic := by
-  sorry
+    (HexPolyMathlib.toPolynomial r.g).Monic :=
+  toPolynomial_monic_of_dense_monic _
+    (Hex.ZPoly.quadraticHenselStep_monic m f g h s t hm hmonic)
 
 /--
 Quadratic lifting is compatible with the Mathlib uniqueness theorem at the
