@@ -424,6 +424,7 @@ first-success loop returns exactly the package's expected factors.
 theorem factorFastCoreWithBound_eq_expected_of_forwardInputs_on_schedule_of_no_prior_recovery
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {start fuel target : Nat}
+    (hfloor : Hex.cldCoeffFloor core ≤ target)
     (hinputs :
       BHKS.ForwardRecoveryInputs core
         (Hex.ZPoly.toMonicLiftData core target primeData))
@@ -434,7 +435,7 @@ theorem factorFastCoreWithBound_eq_expected_of_forwardInputs_on_schedule_of_no_p
     Hex.factorFastCoreWithBound core B primeData start fuel =
       some hinputs.expectedFactors :=
   Hex.factorFastCoreWithBound_eq_some_of_recovery_on_schedule_of_no_prior_recovery
-    core B primeData hmem hno
+    core B primeData hfloor hmem hno
     (BHKS.bhksRecover_eq_some_of_forwardInputs core
       (Hex.ZPoly.toMonicLiftData core target primeData) hinputs)
 
@@ -449,6 +450,7 @@ Mignotte/cap precision.
 -/
 theorem factorFastCoreWithBound_eq_expected_of_forwardInputs_at_cap_of_no_prior_recovery
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    (hfloor : Hex.cldCoeffFloor core ≤ B)
     (hinputs :
       BHKS.ForwardRecoveryInputs core
         (Hex.ZPoly.toMonicLiftData core B primeData))
@@ -463,7 +465,7 @@ theorem factorFastCoreWithBound_eq_expected_of_forwardInputs_at_cap_of_no_prior_
         (Hex.ZPoly.quadraticDoublingSteps B + 2) =
       some hinputs.expectedFactors :=
   factorFastCoreWithBound_eq_expected_of_forwardInputs_on_schedule_of_no_prior_recovery
-    hinputs (Hex.cap_mem_henselPrecisionSchedule B) hno
+    hfloor hinputs (Hex.cap_mem_henselPrecisionSchedule B) hno
 
 /-- Lower cardinality bound for a successful BHKS fast-core branch whose
 emitted candidates have been certified through the B8 partition-refinement
