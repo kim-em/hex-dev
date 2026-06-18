@@ -45,12 +45,12 @@ def quadraticDoublingSteps (k : Nat) : Nat :=
   if k ≤ 1 then 0 else (k - 1).log2 + 1
 
 /-- Zero requested precision needs no quadratic doubling steps. -/
-@[simp] theorem quadraticDoublingSteps_zero :
+@[simp, grind =] theorem quadraticDoublingSteps_zero :
     quadraticDoublingSteps 0 = 0 := by
   simp [quadraticDoublingSteps]
 
 /-- Precision `p^1` is the input precision, so it needs no doubling steps. -/
-@[simp] theorem quadraticDoublingSteps_one :
+@[simp, grind =] theorem quadraticDoublingSteps_one :
     quadraticDoublingSteps 1 = 0 := by
   simp [quadraticDoublingSteps]
 
@@ -1105,7 +1105,7 @@ private theorem multifactorLiftQuadraticList_toList_length
 /-- The `multifactorLiftQuadratic` output has one entry per input factor.
 Used by the Mathlib-side injectivity wrapper to relate output array
 indices to original modular-factor indices. -/
-@[simp] theorem multifactorLiftQuadratic_size_eq_input
+@[simp, grind =] theorem multifactorLiftQuadratic_size_eq_input
     (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) (factors : Array ZPoly) :
     (multifactorLiftQuadratic p k f factors).size = factors.size := by
   unfold multifactorLiftQuadratic
@@ -1114,7 +1114,7 @@ indices to original modular-factor indices. -/
 
 /-- The empty-input boundary of `multifactorLiftQuadratic`: no factors in,
 no factors out. -/
-@[simp] theorem multifactorLiftQuadratic_empty
+@[simp, grind =] theorem multifactorLiftQuadratic_empty
     (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) :
     multifactorLiftQuadratic p k f #[] = #[] := by
   simp [multifactorLiftQuadratic, multifactorLiftQuadraticList]
@@ -1123,7 +1123,7 @@ no factors out. -/
 factor input collapses to the target polynomial reduced modulo `p^k`. The
 input factor is discarded because the only remaining lift target is `f` itself
 under the trivial split `f = f * 1`. -/
-@[simp] theorem multifactorLiftQuadratic_singleton
+@[simp, grind =] theorem multifactorLiftQuadratic_singleton
     (p k : Nat) [ZMod64.Bounds p] (f g : ZPoly) :
     multifactorLiftQuadratic p k f #[g] = #[ZPoly.reduceModPow f p k] := by
   simp [multifactorLiftQuadratic, multifactorLiftQuadraticList]
