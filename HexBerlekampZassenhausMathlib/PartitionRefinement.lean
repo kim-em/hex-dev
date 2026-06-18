@@ -750,6 +750,140 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift
   exact factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut trueSupports
     hcore_ne h hcut hsize hpartition
 
+/--
+Fast-core irreducibility wrapper from a monic recovered-lift family produced by
+`recoveredLift_subtypeFamily_of_indicatorCandidates`.
+
+The theorem keeps the deep BHKS residuals explicit (`hindicators`, monic-lattice
+`hsize`, `hpartition`, and the CLD separation/threshold hypotheses), but derives
+`hp`, `hk`, and the per-index Hensel congruence side condition from the
+`toMonicPrimeData?` witness and the success precision `k'`.
+-/
+theorem factorFastCore_irreducible_of_monicRecoveredLift
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    (hcore_ne : core ≠ 0)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hvalid : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (k' : Nat)
+    (rows_pos :
+      BHKS.HasPositiveDimension core (Hex.ZPoly.toMonicLiftData core k' primeData))
+    (hprecision : 1 ≤ Hex.precisionForCoeffBound k' primeData.p)
+    (monicRows :
+      1 ≤
+        (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+          (Hex.ZPoly.toMonicLiftData core k' primeData).p
+          (Hex.ZPoly.toMonicLiftData core k' primeData).k
+          (Hex.ZPoly.toMonicLiftData core k' primeData).liftedFactors).factorCount +
+        (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+          (Hex.ZPoly.toMonicLiftData core k' primeData).p
+          (Hex.ZPoly.toMonicLiftData core k' primeData).k
+          (Hex.ZPoly.toMonicLiftData core k' primeData).liftedFactors).coeffWidth)
+    (hbasis :
+      (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core k' primeData).p
+        (Hex.ZPoly.toMonicLiftData core k' primeData).k
+        (Hex.ZPoly.toMonicLiftData core k' primeData).liftedFactors).basis.independent)
+    (trueSupports :
+      Set (Set (Fin
+        (BHKS.projectedRowsOfLiftData core
+          (Hex.ZPoly.toMonicLiftData core k' primeData) rows_pos).factorCount)))
+    (hindicators :
+      BHKS.equivalenceClassIndicatorsOfLiftData core
+          (Hex.ZPoly.toMonicLiftData core k' primeData) rows_pos =
+        BHKS.expectedIndicatorArrayOfSupports trueSupports)
+    (hcandidates :
+      Hex.bhksIndicatorCandidates? core (Hex.ZPoly.toMonicLiftData core k' primeData)
+          (BHKS.equivalenceClassIndicatorsOfLiftData core
+            (Hex.ZPoly.toMonicLiftData core k' primeData) rows_pos) =
+        some coreFactors)
+    (lift :
+      ∀ S : BHKS.ForwardRecoveryInputs.emittedSupports (Hex.ZPoly.toMonic core).monic
+          (Hex.ZPoly.toMonicLiftData core k' primeData) trueSupports,
+        BHKS.RecoveredLift
+          (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+            (Hex.ZPoly.toMonicLiftData core k' primeData).p
+            (Hex.ZPoly.toMonicLiftData core k' primeData).k
+            (Hex.ZPoly.toMonicLiftData core k' primeData).liftedFactors) S.1)
+    (hlift :
+      lift =
+        BHKS.ForwardRecoveryInputs.recoveredLift_subtypeFamily_of_indicatorCandidates
+          rows_pos trueSupports hindicators hcandidates hcore_lc_pos hcore_pos
+          (fun i =>
+            Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
+              core k' primeData hcore_lc_pos hcore_pos hvalid hprecision i)
+          (Nat.le_of_lt
+            (toMonicLiftData_one_lt_modulus core k' primeData hvalid hprecision)))
+    (hf_lc : ∀ S, Hex.DensePoly.leadingCoeff (lift S).f = 1)
+    (hfactor_monic : ∀ S, (HexPolyMathlib.toPolynomial (lift S).factor).Monic)
+    (hsep : ∀ S, ∀ j, 2 * Hex.bhksCoeffBound (lift S).f j < (lift S).p ^ (lift S).a)
+    (hthr : ∀ S, ∀ j, Hex.bhksCoeffCutThreshold (lift S).p (lift S).f j ≤ (lift S).a)
+    (hfac : ∀ S, ∀ i : Fin
+        (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+          (Hex.ZPoly.toMonicLiftData core k' primeData).p
+          (Hex.ZPoly.toMonicLiftData core k' primeData).k
+          (Hex.ZPoly.toMonicLiftData core k' primeData).liftedFactors).factorCount,
+        i ∈ S.1 →
+          ∃ g : Hex.ZPoly,
+            Hex.DensePoly.Monic
+              ((Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+                (Hex.ZPoly.toMonicLiftData core k' primeData).p
+                (Hex.ZPoly.toMonicLiftData core k' primeData).k
+                (Hex.ZPoly.toMonicLiftData core k' primeData).liftedFactors).liftedFactors.getD
+                  i.val 1) ∧
+            0 < ((Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+                (Hex.ZPoly.toMonicLiftData core k' primeData).p
+                (Hex.ZPoly.toMonicLiftData core k' primeData).k
+                (Hex.ZPoly.toMonicLiftData core k' primeData).liftedFactors).liftedFactors.getD
+                  i.val 1).degree?.getD 0 ∧
+            Hex.ZPoly.congr (lift S).f
+              (((Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+                (Hex.ZPoly.toMonicLiftData core k' primeData).p
+                (Hex.ZPoly.toMonicLiftData core k' primeData).k
+                (Hex.ZPoly.toMonicLiftData core k' primeData).liftedFactors).liftedFactors.getD
+                  i.val 1) * g)
+              ((lift S).p ^ (lift S).a))
+    (hsize :
+      coreFactors.size =
+        (Hex.bhksEquivalenceClassIndicators
+          (Hex.bhksProjectedRows
+            (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+              (Hex.ZPoly.toMonicLiftData core k' primeData).p
+              (Hex.ZPoly.toMonicLiftData core k' primeData).k
+              (Hex.ZPoly.toMonicLiftData core k' primeData).liftedFactors)
+            monicRows)).size)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn
+        (BHKS.ForwardRecoveryInputs.emittedSupports (Hex.ZPoly.toMonic core).monic
+          (Hex.ZPoly.toMonicLiftData core k' primeData) trueSupports)).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    ∀ factor ∈ coreFactors.toList, Hex.ZPoly.Irreducible factor := by
+  classical
+  let d := Hex.ZPoly.toMonicLiftData core k' primeData
+  let L := Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic d.p d.k d.liftedFactors
+  let emitted :=
+    BHKS.ForwardRecoveryInputs.emittedSupports (Hex.ZPoly.toMonic core).monic d trueSupports
+  subst lift
+  exact
+    factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift
+      (core := core) (B := B) (primeData := primeData) (k := k) (fuel := fuel)
+      (coreFactors := coreFactors) (L := L) (hrows := monicRows) emitted
+      hcore_ne h hbasis
+      (BHKS.ForwardRecoveryInputs.recoveredLift_subtypeFamily_of_indicatorCandidates
+        rows_pos trueSupports hindicators hcandidates hcore_lc_pos hcore_pos
+        (fun i =>
+          Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
+            core k' primeData hcore_lc_pos hcore_pos hvalid hprecision i)
+        (Nat.le_of_lt
+          (toMonicLiftData_one_lt_modulus core k' primeData hvalid hprecision)))
+      hf_lc hfactor_monic
+      (fun _ => toMonicLiftData_two_le_p core k' primeData hvalid)
+      (fun _ => toMonicLiftData_one_lt_modulus core k' primeData hvalid hprecision)
+      hsep hthr hfac hsize hpartition
+
 /-- Cardinality equality for a successful BHKS fast-core branch under the B8
 partition-refinement package.  Pairs `factorFastCoreWithBound_some_factor_count_le`
 with `factorFastCoreWithBound_some_factor_count_ge`, exposing the count
