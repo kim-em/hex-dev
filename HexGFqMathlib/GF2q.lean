@@ -146,9 +146,7 @@ private theorem genericField_eq_conway :
       Conway.conwayPoly 2 n h.entry := modulusFpPoly_eq_conway
   show GFqField.FiniteField (HexGF2Mathlib.GF2n.modulusFpPoly (n := n) (irr := h.lower)) _ _ _ =
       GFqField.FiniteField (Conway.conwayPoly 2 n h.entry) _ _ _
-  congr 1 <;> first
-    | exact hmod
-    | exact proof_irrel_heq _ _
+  congr 1
 
 /-- Reindex the generic finite-field target of the packed `GF2n` correspondence
 to the canonical Conway-field target used by `GFq 2 n`. -/

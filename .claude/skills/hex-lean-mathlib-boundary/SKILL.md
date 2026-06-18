@@ -289,6 +289,36 @@ Consequences for any fast-BHKS irreducibility / `h_raw` work:
   "expose the loop array" / unconditional `h_raw` issue, confirm a determinism
   producer exists, else land the decoupled bridges + diagnose (#7664).
 
+### The fast-path lift exponent `liftData.k` is double-log small — hsep/hthr are *false*, not just underivable (#7928)
+
+`precisionForCoeffBound` is applied **twice** on the public fast path, so the
+CLD lattice runs at a precision far below the BHKS column-adequacy threshold.
+The public caller computes `a := precisionForCoeffBound B primeData.p`
+(`Basic.lean:7699/7714`, `B = factorFastPrecisionCap core`) and passes `a` as
+`factorFastCoreWithBound`'s coefficient-bound parameter; the loop then feeds the
+schedule variable `k` into `toMonicLiftData core k primeData`, which applies
+`precisionForCoeffBound` **again** (`:7001`, `(henselLiftData _ B _).k = B`).
+Net: the lattice's actual exponent is
+`liftData.k = precisionForCoeffBound k p = ceilLogP p (2k+1)`, collapsing
+double-logarithmically. Concretely for `cldGuardF = x²−5x+6`, `p=5`: every
+scheduled `k ∈ [4,8,12]` (cap included) gives `liftData.k = 2` (modulus 25), but
+the CLD floor `precisionForCoeffBound (bhksCoeffBound (toMonic core).monic 0 =
+16) 5 = 3` is not met. So **hsep** (`2·bhksCoeffBound (lift S).f j <
+(lift S).p ^ (lift S).a`, with `(lift S).a = d.k = liftData.k = 2`) is literally
+`32 < 25` — **false**, not merely "not derivable from success." The final
+product check (`Array.polyProduct candidates == f`) rescues *correctness*
+empirically (true factor coefficients are tiny) but certifies nothing about
+column-adequacy. **Consequence:** no acceptance gate against the current
+`liftData.k` (the #7928 plan) can supply hsep/hthr — it would only flip fixtures
+`some → none`. Verify with a pure-integer `#eval` scratch (`bhksCoeffBound`,
+`precisionForCoeffBound`, `henselPrecisionSchedule`, `factorFastPrecisionCap` all
+run under `lake env lean`, no extern). The real fix is a precision-*schedule*
+correction (drop the double `precisionForCoeffBound`), which is soundness-
+sensitive and touches the CI-gated determinism cluster — not a cheap gate.
+Before claiming any "discharge hsep/hthr" / "CLD precision floor" fast-path
+issue, `#eval` `liftData.k` at the scheduled precisions and confirm it actually
+clears the CLD floor; as of #7928 it does not.
+
 ## `Matrix` / `Vector` resolve to Mathlib's inside the Mathlib layer
 
 The mirror of the shadow above. In a Mathlib-layer file (namespace
@@ -353,6 +383,59 @@ coefficients = XOR parity). The `*_one`/`*_add`/inverse directions of the same
 bridge *are* in-file (coeff-level: `coeff_toFpPoly` + `coeff_ofFpPoly` via the
 `packWord` bit-extraction helpers); only `mul` carries this gap. (#7900 landed
 4/5; the `mul` bridge is #7901.)
+
+### Bridging `GF2n`/`GF2nPoly` `≃+*` obligations to the `GFqField` quotient
+
+The four `≃+*` obligations for `GF2n.equiv` / `GF2nPoly.equiv` in
+`HexGF2Mathlib/Field.lean` (`ofGeneric_toGeneric`, `toGeneric_ofGeneric`,
+`toGeneric_add`, `toGeneric_mul`) compose the `GF2Poly ≃+* FpPoly 2` bridge with
+the `GFqField` quotient layer. The whole proof factors through **one** crux
+helper plus mechanical glue (#7936 landed the `GF2n` single-word side; `GF2nPoly`
+is #7937):
+
+- **The crux is `toFpPoly (p % q) = GFqRing.reduceMod (toFpPoly q) (toFpPoly p)`**
+  — `toFpPoly` commutes with the polynomial remainder. Prove it from
+  `Hex.GF2Poly.div_mul_add_mod p q` (`(p/q)*q + p%q = p`), push `toFpPoly`
+  through (`toFpPoly_add`/`toFpPoly_mul`), then `GFqRing.reduceMod_add_mul_self_right`
+  (kills the `(p/q)*q` term) and `GFqRing.reduceMod_eq_self_of_degree_lt` (the
+  remainder is already reduced). Degree transports via a one-liner
+  `FpPoly.degree (toFpPoly p) = p.degree` from `degree?_toFpPoly` (both `degree`s
+  are `degree?.getD 0`).
+- **`Hex.GFqRing.reduceMod` and its algebraic lemmas need a
+  `ZMod64.PrimeModulus 2` instance** (the FpPoly division law). Add
+  `instance : Hex.ZMod64.PrimeModulus 2 := Hex.ZMod64.primeModulusOfPrime prime_two`
+  in the namespace once; without it you get a bare "failed to synthesize
+  `ZMod64.PrimeModulus 2`" deep inside a `reduceMod`-lemma application.
+- **Reach the executable `reduce`/`reduceWide` value without naming private
+  defs.** `(Hex.GF2n.reduce w).val` is **defeq** to the fully-public term
+  `Hex.GF2Poly.canonicalWordLT n hn64 (Hex.GF2Poly.packedReduceWord n irr
+  (Hex.GF2Poly.ofUInt64 w))` (it unfolds through the `private` `canonicalWord`,
+  `reducePoly`, `toPolyWord`), so a helper stated over that public term applies
+  by `exact`/defeq — no need to de-privatize `HexGF2/Field.lean` or
+  `HexGF2/Euclid.lean`. The masking is idempotent: `canonicalWordLT n hn64 v = v`
+  for `v.toNat < 2^n` (re-prove the private `canonicalWordLT_eq_self_of_lt`
+  inline via `UInt64.toNat_inj` + `Nat.mod_eq_of_lt`, fed
+  `packedReduceWord_toNat_lt`), then `ofUInt64_packedReduceWord_eq_of_degree_lt`
+  (public) + `mod_degree_lt` close it. The low-word round-trip
+  `ofUInt64 (p.toWords.getD 0 0) = p` for reduced `p` (#7936 replicated the
+  private `ofUInt64_lowWord_eq_of_degree_lt_64`; its proof uses only public
+  `coeff_ofWords`/`ext_coeff`/`coeff_eq_false_of_degree?_lt`). All of this lives
+  in the Mathlib layer — **no executable-layer edits**, matching the issue's
+  "add helpers privately / to Basic.lean" guidance.
+- **`rw [helper]` leaves trivial side goals (`0 < n`, `n < 64`) when the helper
+  carries `include`d section hypotheses not fixed by the rewrite pattern** (e.g.
+  a helper whose statement mentions `n`/`irr` but uses `hn`/`hn64` only in its
+  proof). The fix is named args in the `rw`: `rw [helper (hn := hn) (hn64 :=
+  hn64)]`. Also note `rw`'s closing `rfl` runs at *reducible* transparency, so a
+  residual goal that is true only by unfolding a plain `def` (e.g.
+  `modulusFpPoly = toFpPoly (ofUInt64Monic irr n)`) is **not** auto-closed —
+  append an explicit `rfl` (default transparency) or pre-unfold the def.
+
+With those, `toGeneric_add`/`_mul` are
+`apply GFqField.ext; apply GFqRing.ext; simp only [toGeneric, toQuotient_*,
+repr_*_ofPoly]; rw [ofUInt64_{add,mul}_val, toFpPoly_mod_modulus, toFpPoly_{add,mul},
+reduceMod_idem]`, and the round-trips chain the same helpers with
+`ofFpPoly_toFpPoly`/`toFpPoly_ofFpPoly` + the low-word round-trip.
 
 ## The Mathlib layer *models* executable definitions
 
