@@ -319,6 +319,25 @@ Before claiming any "discharge hsep/hthr" / "CLD precision floor" fast-path
 issue, `#eval` `liftData.k` at the scheduled precisions and confirm it actually
 clears the CLD floor; as of #7928 it does not.
 
+**#7938 fixed only the *cap*, not the success precision — the trap persists
+(#7945).** #7938 removed the *caller-side* double `precisionForCoeffBound` (the
+public path now passes the raw cap `B = factorFastPrecisionCap core`), so the
+*cap* schedule entry is now adequate (cldGuardF: `liftData.k = 12` at `k = cap =
+50803201`). But the per-iteration lift still applies `precisionForCoeffBound` to
+the **schedule variable** `k` (`toMonicLiftData core k primeData` ⟹ `liftData.k
+= precisionForCoeffBound k p`, `Basic.lean:7001-7017`), and the loop returns at
+the **first** `k` that recovers — not the cap. For cldGuardF the first schedule
+entry `k = 4` already recovers (the `polyProduct == f` product check passes on
+the tiny true coefficients), so `liftData.k = precisionForCoeffBound 4 5 = 2`,
+and hsep is `2·bhksCoeffBound … = 2·16 = 32 < 5² = 25` → **false** (floor needs
+`precisionForCoeffBound 16 5 = 3`). So "the schedule fix makes hsep/hthr
+provable" is still a false premise: success is certified by the empirical
+product check, not by column-adequacy, so `success ⟹ hsep at liftData.k` remains
+refutable. The genuine residual is an **executable** acceptance gate (reject a
+success whose `liftData.k < bhksCoeffCutThreshold`, forcing cldGuardF from
+`k=4 → liftData.k=2` to `k=16 → liftData.k=3`) plus its Mathlib determinism
+remodel — not a proofs-only deliverable. (#7945 skipped on exactly this.)
+
 ## `Matrix` / `Vector` resolve to Mathlib's inside the Mathlib layer
 
 The mirror of the shadow above. In a Mathlib-layer file (namespace
