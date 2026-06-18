@@ -169,10 +169,33 @@ theorem ofFpPoly_zero :
     ofFpPoly (0 : Hex.FpPoly 2) = 0 := by
   rfl
 
+/-- The coefficients of the packed unit polynomial are `1` at degree `0` and
+`0` elsewhere. -/
+private theorem coeff_one_eq (i : Nat) :
+    (1 : Hex.GF2Poly).coeff i = decide (i = 0) := by
+  rw [← Hex.GF2Poly.ofUInt64_one]
+  by_cases hi : i < 64
+  · rw [Hex.GF2Poly.coeff_ofUInt64_eq_testBit 1 hi]
+    have h1 : (1 : UInt64).toNat = 1 := by decide
+    rw [h1]
+    cases i with
+    | zero => rfl
+    | succ j => simp [Nat.testBit_succ]
+  · rw [Hex.GF2Poly.coeff_ofUInt64_eq_false_of_ge_64 1 (Nat.le_of_not_gt hi)]
+    have : i ≠ 0 := by omega
+    simp [this]
+
 @[simp]
 theorem toFpPoly_one :
     toFpPoly (1 : Hex.GF2Poly) = 1 := by
-  sorry
+  apply Hex.DensePoly.ext_coeff
+  intro i
+  rw [coeff_toFpPoly, coeff_one_eq]
+  show _ = (Hex.DensePoly.C (1 : Hex.ZMod64 2)).coeff i
+  rw [Hex.DensePoly.coeff_C]
+  by_cases hi : i = 0
+  · subst hi; rfl
+  · simp only [decide_eq_true_eq, if_neg hi]; rfl
 
 @[simp]
 theorem ofFpPoly_toFpPoly (p : Hex.GF2Poly) :
@@ -187,7 +210,11 @@ theorem toFpPoly_ofFpPoly (p : Hex.FpPoly 2) :
 @[simp]
 theorem toFpPoly_add (p q : Hex.GF2Poly) :
     toFpPoly (p + q) = toFpPoly p + toFpPoly q := by
-  sorry
+  apply Hex.DensePoly.ext_coeff
+  intro i
+  rw [Hex.DensePoly.coeff_add_semiring (toFpPoly p) (toFpPoly q) i,
+    coeff_toFpPoly, coeff_toFpPoly, coeff_toFpPoly, Hex.GF2Poly.coeff_add_eq_bne]
+  cases p.coeff i <;> cases q.coeff i <;> (try simp) <;> grind
 
 @[simp]
 theorem toFpPoly_mul (p q : Hex.GF2Poly) :
