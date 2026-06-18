@@ -6543,6 +6543,47 @@ private theorem xorBoolList_map_range_reduce (f : Nat → Bool) (m : Nat)
       simp only [List.map_cons, List.map_nil, hf, xorBoolList_singleton]
       cases xorBoolList ((List.range m).map f) <;> rfl
 
+/-- Two mapped ranges with the same `false`-from-`m` tail have equal parity. -/
+private theorem xorBoolList_map_range_eq_of_ge (f : Nat → Bool) (A B m : Nat)
+    (hzero : ∀ s, m ≤ s → f s = false) (hA : m ≤ A) (hB : m ≤ B) :
+    xorBoolList ((List.range A).map f) = xorBoolList ((List.range B).map f) := by
+  obtain ⟨a, rfl⟩ : ∃ a, A = m + a := ⟨A - m, by omega⟩
+  obtain ⟨b, rfl⟩ : ∃ b, B = m + b := ⟨B - m, by omega⟩
+  rw [xorBoolList_map_range_reduce f m hzero a, xorBoolList_map_range_reduce f m hzero b]
+
+/-- Factor a constant left `AND` out of a mapped parity. -/
+private theorem xorBoolList_map_and_left' (value : Bool) (l : List Nat) (X : Nat → Bool) :
+    xorBoolList (l.map (fun t => value && X t)) = (value && xorBoolList (l.map X)) := by
+  have h := xorBoolList_map_and_left value (l.map X)
+  rw [List.map_map] at h
+  exact h
+
+/-- Selecting the diagonal index `t = n - s` collapses the parity to that entry,
+or `false` outside the range. -/
+private theorem xorBoolList_map_decide_add (M s n : Nat) (g : Nat → Bool) :
+    xorBoolList ((List.range M).map (fun t => g t && decide (s + t = n))) =
+      if s ≤ n then (if n - s < M then g (n - s) else false) else false := by
+  by_cases hsn : s ≤ n
+  · rw [if_pos hsn]
+    have hmap : (List.range M).map (fun t => g t && decide (s + t = n)) =
+        (List.range M).map (fun t => g t && decide (t = n - s)) := by
+      apply List.map_congr_left
+      intro t _ht
+      by_cases h : t = n - s
+      · subst h
+        simp [show s + (n - s) = n from by omega]
+      · have hne : ¬ (s + t = n) := by omega
+        simp [h, hne]
+    rw [hmap, xorBoolList_map_decide_eq M (n - s) g]
+  · rw [if_neg hsn]
+    have hmap : (List.range M).map (fun t => g t && decide (s + t = n)) =
+        (List.range M).map (fun _ => false) := by
+      apply List.map_congr_left
+      intro t _ht
+      have hne : ¬ (s + t = n) := by omega
+      simp [hne]
+    rw [hmap, xorBoolList_range_false]
+
 /-- Per-word-pair source decomposition with a unified guard: bit `n` of the
 carryless product of two words at combined slot `c` is the XOR-parity over all
 source bit pairs `(a, b)` whose product `64 * c + a + b` lands at `n`. -/
