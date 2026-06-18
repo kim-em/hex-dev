@@ -790,3 +790,29 @@ residues (`centeredResiduePow p a (z i) = w i`) whose support sum is a small
 integer (`|y| ≤ B`, `2B < p^b`). Sanity-check any "tight CLD column" directive
 that points at `abs_cldCoeffs`: that is the loose route and will not close the
 `factorCount` shape.
+
+### "Package the recovery witnesses into `TrueFactorLift`" is the centered/raw trap
+
+A directive asking you to derive a `TrueFactorLift` family (the hypothesis of
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_lift`,
+`PartitionRefinement.lean`) from `RepresentsIntegerFactorAtLift` recovery
+witnesses is **not** a packaging step — it asks for a witness recovery cannot
+provide. `TrueFactorLift.support_product_eq` needs the **raw** integer product
+`supportProduct L S = factor` (`Lattice.lean`, `supportProduct` is
+`Array.polyProduct` with no mod reduction) plus `factor * cofactor = f` over ℤ.
+`RepresentsIntegerFactorAtLift` / `RecoveredAtLift` give only a mod-`p^k`
+congruence + the **centered** equality `centeredLiftPoly (liftedFactorProduct d
+S) (p^k) = monicFactor` (already discharged by
+`RecoveredAtLift.candidate_eq_of_monic_dvd`, `Basic.lean`) — i.e. the
+`RecoveredLift.recovered_eq` shape, **not** `TrueFactorLift`. For a support of
+size ≥ 2 over mod-`p^k` Hensel lifts the raw product overflows `p^k/2`, so the
+raw equality (and `factor_mul`) is false; the `RecoveredLift` docstring
+(`Lattice.lean`, "deliberately does not assert the raw integer equality") says
+this outright. So: recovery → `RecoveredLift` is landable; recovery →
+`TrueFactorLift` is the #7479-class exact-product / unscaled-support migration,
+a separate structural remodel. Diagnose and skip the latter rather than
+attempting it as a thin composition. (#7854 was skipped on exactly this, with
+the added wrinkle that its executable extractor lived in an unmerged PR — for
+any "residual after PR #N" issue, `grep` the named substrate symbols on `main`
+first; if absent, the residual depends on the unmerged PR and cannot build
+yet.)
