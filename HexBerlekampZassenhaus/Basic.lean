@@ -11558,6 +11558,151 @@ theorem factorFastCoreWithBound_product
           · simp [hclass, hk] at hfast
             exact ih _ coreFactors hfast
 
+/-- A successful classified recovery exposes the underlying indicator-candidate
+reconstruction: there is a positive-dimension witness `hrows` for which the
+equivalence-class indicator candidates reconstruct exactly to `candidates`, and
+the chosen indicator partition is non-degenerate. Private because the conclusion
+names `bhksRecoverClassified`; the public extractor
+`factorFastCoreWithBound_some_indicatorCandidates` re-exposes this in
+`bhksRecoverClassified`-free form. -/
+private theorem bhksRecoverClassified_success_indicatorCandidates
+    {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
+    (hrecover : bhksRecoverClassified f d = .success candidates) :
+    ∃ hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+        (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth,
+      bhksIndicatorCandidates? f d
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) =
+        some candidates ∧
+      bhksDegenerateIndicatorPartition
+          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) =
+        false := by
+  rw [bhksRecoverClassified] at hrecover
+  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
+  · rw [dif_pos hrows] at hrecover
+    by_cases hdeg :
+        bhksDegenerateIndicatorPartition
+          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
+              hrows)) = true
+    · simp [hdeg] at hrecover
+    · simp only [hdeg, Bool.false_eq_true, if_false] at hrecover
+      cases hcand : bhksIndicatorCandidates? f d
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
+              hrows)) with
+      | none => simp [hcand] at hrecover
+      | some cands =>
+          simp only [hcand] at hrecover
+          by_cases hprod : Array.polyProduct cands == f
+          · simp only [hprod, if_true] at hrecover
+            cases hrecover
+            exact ⟨hrows, hcand, by simpa using hdeg⟩
+          · simp [hprod] at hrecover
+  · rw [dif_neg hrows] at hrecover
+    simp at hrecover
+
+/-- A successful fast-recombination loop is witnessed by a concrete precision
+schedule index `k'` at which the classified BHKS recovery succeeds. This retains
+the successful `toMonicLiftData` precision that the per-factor success lemmas
+(`factorFastCoreWithBound_some_dvd`, `_shouldRecord`, …) discard, so proof-facing
+callers can reconstruct the underlying recovery data and indicator candidates.
+Private because the conclusion names `bhksRecoverClassified`; the public extractor
+`factorFastCoreWithBound_some_indicatorCandidates` re-exposes the recovery data in
+`bhksRecoverClassified`-free form. -/
+private theorem factorFastCoreWithBound_some_classifiedSuccess
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
+    ∀ k fuel coreFactors,
+      factorFastCoreWithBound core B primeData k fuel = some coreFactors →
+        ∃ k', bhksRecoverClassified core (ZPoly.toMonicLiftData core k' primeData) =
+          .success coreFactors := by
+  intro k fuel
+  induction fuel generalizing k with
+  | zero =>
+      intro coreFactors hfast
+      simp [factorFastCoreWithBound] at hfast
+  | succ fuel ih =>
+      intro coreFactors hfast
+      rw [factorFastCoreWithBound] at hfast
+      cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
+      | success xs =>
+          simp [hclass] at hfast
+          cases hfast
+          exact ⟨k, hclass⟩
+      | degenerate =>
+          by_cases hk : k ≥ B
+          · simp [hclass, hk] at hfast
+          · simp [hclass, hk] at hfast
+            exact ih _ coreFactors hfast
+      | candidateFailure =>
+          by_cases hk : k ≥ B
+          · simp [hclass, hk] at hfast
+          · simp [hclass, hk] at hfast
+            exact ih _ coreFactors hfast
+      | productMismatch cands =>
+          by_cases hk : k ≥ B
+          · simp [hclass, hk] at hfast
+          · simp [hclass, hk] at hfast
+            exact ih _ coreFactors hfast
+
+/-- Proof-facing recovery-data extractor for the fast-recombination loop, stated
+without reference to the private `bhksRecoverClassified`. A successful
+`factorFastCoreWithBound` call is witnessed by a concrete precision-schedule index
+`k'`: at the `toMonicLiftData` for that precision there is a positive-dimension
+witness `hrows` whose equivalence-class indicator candidates reconstruct exactly
+to `coreFactors`, the indicator partition is non-degenerate, and the candidates
+multiply back to `core`. This is the bridge-side entry point used to rebuild the
+forward-recovery package (and hence the selected support/subset witnesses) that
+the per-factor success lemmas discard. -/
+theorem factorFastCoreWithBound_some_indicatorCandidates
+    {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array ZPoly}
+    (h : factorFastCoreWithBound core B primeData k fuel = some coreFactors) :
+    ∃ k',
+      ∃ hrows :
+        1 ≤ (bhksLatticeBasis core
+              (ZPoly.toMonicLiftData core k' primeData).p
+              (ZPoly.toMonicLiftData core k' primeData).k
+              (ZPoly.toMonicLiftData core k' primeData).liftedFactors).factorCount +
+            (bhksLatticeBasis core
+              (ZPoly.toMonicLiftData core k' primeData).p
+              (ZPoly.toMonicLiftData core k' primeData).k
+              (ZPoly.toMonicLiftData core k' primeData).liftedFactors).coeffWidth,
+      bhksIndicatorCandidates? core (ZPoly.toMonicLiftData core k' primeData)
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows
+              (bhksLatticeBasis core
+                (ZPoly.toMonicLiftData core k' primeData).p
+                (ZPoly.toMonicLiftData core k' primeData).k
+                (ZPoly.toMonicLiftData core k' primeData).liftedFactors)
+              hrows)) =
+        some coreFactors ∧
+      bhksDegenerateIndicatorPartition
+          (bhksProjectedRows
+            (bhksLatticeBasis core
+              (ZPoly.toMonicLiftData core k' primeData).p
+              (ZPoly.toMonicLiftData core k' primeData).k
+              (ZPoly.toMonicLiftData core k' primeData).liftedFactors)
+            hrows)
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows
+              (bhksLatticeBasis core
+                (ZPoly.toMonicLiftData core k' primeData).p
+                (ZPoly.toMonicLiftData core k' primeData).k
+                (ZPoly.toMonicLiftData core k' primeData).liftedFactors)
+              hrows)) =
+        false ∧
+      Array.polyProduct coreFactors = core := by
+  obtain ⟨k', hsuccess⟩ :=
+    factorFastCoreWithBound_some_classifiedSuccess core B primeData k fuel coreFactors h
+  obtain ⟨hrows, hcand, hdeg⟩ :=
+    bhksRecoverClassified_success_indicatorCandidates hsuccess
+  exact ⟨k', hrows, hcand, hdeg, bhksRecoverClassified_success_product hsuccess⟩
+
 private theorem factorFastCoreWithBound_some_all_of_recovery
     (P : ZPoly → Prop)
     (hrecover :

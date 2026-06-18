@@ -248,6 +248,14 @@ After each coherent chunk of changes:
 
 Each commit must compile. One logical change per commit.
 
+**One `lake build` at a time.** Lake serializes on a single build lock, so
+concurrent `lake build` invocations do not parallelize — they queue, and each
+may redo the same expensive targets (a full `HexBerlekampZassenhaus*` build is
+minutes per file). Never launch a new build while one is still running. Run a
+build with `run_in_background: true`, then wait for its completion
+notification (or one `until grep -q "Built <target>" log; do sleep N; done`
+waiter) before starting another. Do not stack build + waiter loops.
+
 **Commit early, create PRs early.** Sessions can terminate at any time.
 Pushed-but-not-PR'd work is effectively lost — nobody will find it.
 
