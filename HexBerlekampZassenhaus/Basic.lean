@@ -2950,6 +2950,48 @@ theorem le_pow_ceilLogP {p : Nat} (hp : 2 ≤ p) (target : Nat) :
   have h_spec := ceilLogPAux_pow_bound p (target + 1) target 0 1 h_init
   simpa [Nat.sub_zero, Nat.one_mul] using h_spec
 
+private theorem ceilLogPAux_le (p : Nat) (hp : 2 ≤ p) (target a : Nat)
+    (hta : target ≤ p ^ a) :
+    ∀ (fuel ell : Nat), ell ≤ a →
+      ceilLogPAux p target fuel ell (p ^ ell) ≤ a := by
+  intro fuel
+  induction fuel with
+  | zero =>
+    intro ell hell
+    simpa [ceilLogPAux] using hell
+  | succ fuel ih =>
+    intro ell hell
+    unfold ceilLogPAux
+    split
+    · exact hell
+    · rename_i hgt
+      have hella : ell < a := by
+        rcases Nat.lt_or_ge ell a with h | h
+        · exact h
+        · have hpow_le : p ^ a ≤ p ^ ell := Nat.pow_le_pow_right (by omega) h
+          omega
+      have hpow : p ^ ell * p = p ^ (ell + 1) := by rw [Nat.pow_succ]
+      rw [hpow]
+      exact ih (ell + 1) (by omega)
+
+/--
+Minimality of `ceilLogP`: when `2 ≤ p` and `target ≤ p ^ a`, the least exponent
+returned by `ceilLogP` is at most `a`.
+
+This is the upper-bound companion to `le_pow_ceilLogP`.  Together they pin
+`ceilLogP p target` between the least admissible exponent and any witness `a`,
+which the BHKS period rows need to know the cut threshold `ℓ_j` does not exceed
+the ambient Hensel precision `a` (`ℓ_j ≤ a`, so the diagonal exponent `a − ℓ_j`
+is a genuine subtraction).
+-/
+theorem ceilLogP_le_of_le_pow {p : Nat} (hp : 2 ≤ p) (target a : Nat)
+    (h : target ≤ p ^ a) :
+    ceilLogP p target ≤ a := by
+  unfold ceilLogP
+  rw [if_neg (by omega : ¬ p ≤ 1)]
+  have := ceilLogPAux_le p hp target a h (target + 1) 0 (Nat.zero_le a)
+  simpa using this
+
 /--
 The executable Mignotte precision exponent satisfies the Mignotte side
 condition `2 * B < p ^ precisionForCoeffBound B p` whenever the modulus is at
@@ -4845,6 +4887,19 @@ def bhksCutThresholds (f : ZPoly) (p : Nat) : Array Nat :=
   let n := f.degree?.getD 0
   (List.range n).map (fun j => bhksCoeffCutThreshold p f j) |>.toArray
 
+/-- In-range BHKS cut thresholds are the per-coordinate `bhksCoeffCutThreshold`. -/
+theorem bhksCutThresholds_getD_of_lt (f : ZPoly) (p j : Nat)
+    (h : j < f.degree?.getD 0) :
+    (bhksCutThresholds f p).getD j 0 = bhksCoeffCutThreshold p f j := by
+  unfold bhksCutThresholds
+  rw [Array.getD_eq_getD_getElem?]
+  have hsize :
+      ((List.range (f.degree?.getD 0)).map
+        (fun j => bhksCoeffCutThreshold p f j)).toArray.size = f.degree?.getD 0 := by
+    simp
+  rw [Array.getElem?_eq_getElem (by simpa [hsize] using h)]
+  simp [List.getElem_toArray, List.getElem_map, List.getElem_range]
+
 /--
 Executable row-basis data for the BHKS all-coefficients CLD lattice.
 
@@ -4926,14 +4981,14 @@ private theorem bhksLatticeBasis_coeffWidth_eq
     (bhksLatticeBasis f p a liftedFactors).coeffWidth = f.degree?.getD 0 := by
   rfl
 
-private theorem bhksLatticeEntry_topLeft
+theorem bhksLatticeEntry_topLeft
     (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
     (i j : Fin (r + n)) (hi : i.val < r) (hj : j.val < r) :
     bhksLatticeEntry r n p a thresholds cldRows i j =
       if i.val = j.val then 1 else 0 := by
   simp [bhksLatticeEntry, hi, hj]
 
-private theorem bhksLatticeEntry_bottomLeft
+theorem bhksLatticeEntry_bottomLeft
     (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
     (i j : Fin (r + n)) (hi : r ≤ i.val) (hj : j.val < r) :
     bhksLatticeEntry r n p a thresholds cldRows i j = 0 := by
@@ -4941,7 +4996,7 @@ private theorem bhksLatticeEntry_bottomLeft
     omega
   simp [bhksLatticeEntry, hnot, hj]
 
-private theorem bhksLatticeEntry_bottomRight
+theorem bhksLatticeEntry_bottomRight
     (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
     (i j : Fin (r + n)) (hi : r ≤ i.val) (hj : r ≤ j.val) :
     bhksLatticeEntry r n p a thresholds cldRows i j =
@@ -4956,7 +5011,7 @@ private theorem bhksLatticeEntry_bottomRight
     omega
   simp [bhksLatticeEntry, hnot_i, hnot_j]
 
-private theorem bhksLatticeEntry_bottomRight_offDiag
+theorem bhksLatticeEntry_bottomRight_offDiag
     (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
     (i j : Fin (r + n)) (hi : r ≤ i.val) (hj : r ≤ j.val)
     (hneq : j.val - r ≠ i.val - r) :
@@ -4964,7 +5019,7 @@ private theorem bhksLatticeEntry_bottomRight_offDiag
   rw [bhksLatticeEntry_bottomRight r n p a thresholds cldRows i j hi hj]
   simp [hneq]
 
-private theorem bhksLatticeEntry_bottomRight_diag
+theorem bhksLatticeEntry_bottomRight_diag
     (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
     (i : Fin (r + n)) (hi : r ≤ i.val) :
     bhksLatticeEntry r n p a thresholds cldRows i i =
@@ -4972,7 +5027,7 @@ private theorem bhksLatticeEntry_bottomRight_diag
   rw [bhksLatticeEntry_bottomRight r n p a thresholds cldRows i i hi hi]
   simp
 
-private theorem bhksLatticeEntry_bottomRight_diag_pos
+theorem bhksLatticeEntry_bottomRight_diag_pos
     (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
     (hp : 0 < p) (i : Fin (r + n)) (hi : r ≤ i.val)
     (_hthreshold : thresholds.getD (i.val - r) 0 ≤ a) :
