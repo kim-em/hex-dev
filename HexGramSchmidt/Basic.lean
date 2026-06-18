@@ -2996,6 +2996,7 @@ noncomputable def coeffs (b : Matrix Rat n m) : Matrix Rat n n :=
 
 /-- Gram-Schmidt leaves the first row untouched: the leading basis row of a
 rational matrix is its leading input row. -/
+@[simp]
 theorem basis_zero (b : Matrix Rat n m) (hn : 0 < n) :
     (basis b).row ⟨0, hn⟩ = b.row ⟨0, hn⟩ := by
   simpa [basis, GramSchmidt.basisMatrix, Matrix.row] using
@@ -3003,6 +3004,7 @@ theorem basis_zero (b : Matrix Rat n m) (hn : 0 < n) :
 
 /-- The defining guarantee of the construction: distinct rational Gram-Schmidt
 basis rows are mutually orthogonal (their dot product is zero). -/
+@[grind =]
 theorem basis_orthogonal (b : Matrix Rat n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i ≠ j) :
     Matrix.dot ((basis b).row ⟨i, hi⟩) ((basis b).row ⟨j, hj⟩) = 0 := by
@@ -3022,12 +3024,14 @@ theorem basis_decomposition (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
 
 /-- The rational coefficient matrix has unit diagonal: each input row enters its
 own decomposition with weight `1`. -/
+@[simp]
 theorem coeffs_diag (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
     GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨i, hi⟩ = 1 := by
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn]
 
 /-- The rational coefficient matrix is lower triangular: entries strictly above
 the diagonal vanish, since a row only combines basis rows with smaller index. -/
+@[grind =]
 theorem coeffs_upper (b : Matrix Rat n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i < j) :
     GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hj⟩ = 0 := by
@@ -3983,6 +3987,7 @@ noncomputable def coeffs (b : Matrix Int n m) : Matrix Rat n n :=
 
 /-- Gram-Schmidt leaves the first row untouched: the leading basis row of an
 integer matrix is its leading input row cast into `Rat`. -/
+@[simp]
 theorem basis_zero (b : Matrix Int n m) (hn : 0 < n) :
     (basis b).row ⟨0, hn⟩ =
       Vector.map (fun x : Int => (x : Rat)) (b.row ⟨0, hn⟩) := by
@@ -3991,6 +3996,7 @@ theorem basis_zero (b : Matrix Int n m) (hn : 0 < n) :
 
 /-- Distinct Gram-Schmidt basis rows of an integer matrix (taken in `Rat`) are
 mutually orthogonal. -/
+@[grind =]
 theorem basis_orthogonal (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i ≠ j) :
     Matrix.dot ((basis b).row ⟨i, hi⟩) ((basis b).row ⟨j, hj⟩) = 0 := by
@@ -4010,12 +4016,14 @@ theorem basis_decomposition (b : Matrix Int n m) (i : Nat) (hi : i < n) :
 
 /-- The coefficient matrix of an integer input has unit diagonal: each row
 enters its own decomposition with weight `1`. -/
+@[simp]
 theorem coeffs_diag (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨i, hi⟩ = 1 := by
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn]
 
 /-- The coefficient matrix of an integer input is lower triangular: entries
 strictly above the diagonal vanish. -/
+@[grind =]
 theorem coeffs_upper (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i < j) :
     GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hj⟩ = 0 := by
