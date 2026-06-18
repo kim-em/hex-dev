@@ -363,6 +363,152 @@ def trueFactorLiftSemanticsOfToMonicSubset
     simp [d]
     exact Hex.ZPoly.congr_symm _ _ _ hcongr'
 
+/-- The prime selected by `toMonicPrimeData?` is at least two, so the lift
+modulus base `(toMonicLiftData core B primeData).p` is at least two.  This is the
+`hp` side condition of
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift`. -/
+theorem toMonicLiftData_two_le_p
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData) :
+    2 ≤ (Hex.ZPoly.toMonicLiftData core B primeData).p := by
+  have hp_eq : (Hex.ZPoly.toMonicLiftData core B primeData).p = primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_p _ _ _
+  rw [hp_eq]
+  exact (Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected).two_le
+
+/-- The lift modulus `(toMonicLiftData core B primeData).p ^ k` exceeds one
+whenever the precision is positive.  This is the `hk` side condition of
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift`. -/
+theorem toMonicLiftData_one_lt_modulus
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p) :
+    1 < (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+        (Hex.ZPoly.toMonicLiftData core B primeData).k := by
+  have hp_eq : (Hex.ZPoly.toMonicLiftData core B primeData).p = primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_p _ _ _
+  have hk_eq : (Hex.ZPoly.toMonicLiftData core B primeData).k =
+      Hex.precisionForCoeffBound B primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_k _ _ _
+  rw [hp_eq, hk_eq]
+  have hp : 2 ≤ primeData.p :=
+    (Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected).two_le
+  calc 1 < primeData.p ^ 1 := by simpa using hp
+    _ ≤ primeData.p ^ Hex.precisionForCoeffBound B primeData.p :=
+        Nat.pow_le_pow_right (by omega) hprecision
+
+/--
+**Per-index Hensel semantics for the monic `toMonicLiftData` coordinate**
+(deliverable of #7924, capstone #6672).
+
+For every lifted-factor index `i` of `toMonicLiftData core B primeData`, the
+lifted factor is monic, has positive degree, and divides the monic transform
+`(toMonic core).monic` modulo `p ^ k` with an explicit complement (the product
+of the other lifted factors).  These are exactly the per-index `hfac` side
+conditions of
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift`, derived
+from the `toMonicPrimeData?` selection witness rather than re-bundled as caller
+hypotheses.
+
+This factors out the `selected_*` fields of
+`trueFactorLiftSemanticsOfToMonicSubset` without requiring the raw
+`TrueFactorLift` support-product equality: the congruence is the per-index
+specialisation of `henselLiftData_liftedFactorProduct_subset_complement_congr_core`,
+with the complement taken over `Finset.univ \ {i}`.
+-/
+theorem toMonicLiftData_liftedFactor_hensel_semantics
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p)
+    (i : Fin (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors.size) :
+    ∃ g : Hex.ZPoly,
+      Hex.DensePoly.Monic
+          (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) i) ∧
+        0 < (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) i).degree?.getD 0 ∧
+        Hex.ZPoly.congr (Hex.ZPoly.toMonic core).monic
+          (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) i * g)
+          ((Hex.ZPoly.toMonicLiftData core B primeData).p ^
+            (Hex.ZPoly.toMonicLiftData core B primeData).k) := by
+  classical
+  let d := Hex.ZPoly.toMonicLiftData core B primeData
+  -- Monicity and positive degree from the existing per-index producers.
+  have hmonic := Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
+    core B primeData hcore_lc_pos hcore_pos hselected hprecision i
+  have hnat := Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
+    core B primeData hcore_lc_pos hcore_pos hselected hprecision i
+  rw [show HexPolyZMathlib.toPolynomial (liftedFactor d i) =
+      HexPolyMathlib.toPolynomial (liftedFactor d i) from rfl,
+    HexPolyMathlib.natDegree_toPolynomial] at hnat
+  refine ⟨liftedFactorProduct d (Finset.univ \ ({i} : LiftedFactorSubset d)),
+    hmonic, hnat, ?_⟩
+  -- Rebuild the Hensel lift invariant for the monic transform from the
+  -- `toMonicPrimeData?` selection witness.
+  have hp_prime : Hex.Nat.Prime primeData.p :=
+    Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+  have hp : 1 < primeData.p := by have := hp_prime.two_le; omega
+  have hmonicCore_monic :
+      Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
+    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+  have hform : Hex.factorsModPBerlekampForm (Hex.ZPoly.toMonic core).monic primeData :=
+    Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form core primeData hselected
+  have hgood :
+      letI := primeData.bounds
+      Hex.isGoodPrime (Hex.ZPoly.toMonic core).monic primeData.p = true :=
+    Hex.ZPoly.toMonicPrimeData?_isGoodPrime core primeData hselected
+  have hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g :=
+    factorsModP_monic_of_factorsModPBerlekampForm
+      (Hex.ZPoly.toMonic core).monic primeData hform
+  have hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        (Hex.ZPoly.toMonic core).monic primeData.p :=
+    factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
+      (Hex.ZPoly.toMonic core).monic primeData hmonicCore_monic hform hgood
+  have hcoprime :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
+        primeData.factorsModP.toList :=
+    factorsModP_coprime_of_factorsModPBerlekampForm
+      (Hex.ZPoly.toMonic core).monic primeData hform hgood
+  have hnonempty : primeData.factorsModP.toList ≠ [] :=
+    factorsModP_ne_nil_of_factorsModPBerlekampForm
+      (Hex.ZPoly.toMonic core).monic primeData hform
+  have hinv :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p (Hex.precisionForCoeffBound B primeData.p)
+        (Hex.ZPoly.toMonic core).monic
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList := by
+    letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+    exact Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData
+      (Hex.ZPoly.toMonic core).monic
+      (Hex.precisionForCoeffBound B primeData.p) primeData
+      hp_prime hp hprecision hmonicCore_monic hfactors_monic
+      hproduct_mod_p hcoprime hnonempty
+  -- The subset/complement congruence at the singleton `{i}`.
+  have hcongr :
+      Hex.ZPoly.congr
+        (liftedFactorProduct d ({i} : LiftedFactorSubset d) *
+          liftedFactorProduct d (Finset.univ \ ({i} : LiftedFactorSubset d)))
+        (Hex.ZPoly.toMonic core).monic
+        (primeData.p ^ Hex.precisionForCoeffBound B primeData.p) := by
+    simpa [d, Hex.ZPoly.toMonicLiftData] using
+      henselLiftData_liftedFactorProduct_subset_complement_congr_core
+        (Hex.ZPoly.toMonic core).monic (Hex.precisionForCoeffBound B primeData.p)
+        primeData hinv hp hprecision ({i} :
+          LiftedFactorSubset
+            (Hex.henselLiftData (Hex.ZPoly.toMonic core).monic
+              (Hex.precisionForCoeffBound B primeData.p) primeData))
+  -- Replace the singleton product by the lifted factor itself.
+  rw [show liftedFactorProduct d ({i} : LiftedFactorSubset d) = liftedFactor d i from
+    liftedFactorProduct_singleton d i] at hcongr
+  exact Hex.ZPoly.congr_symm _ _ _ hcongr
+
 namespace ForwardRecoveryInputs
 
 /--
