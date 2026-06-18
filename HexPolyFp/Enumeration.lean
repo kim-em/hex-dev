@@ -69,11 +69,11 @@ def coeffLists (p : Nat) [ZMod64.Bounds p] : Nat → List (List (ZMod64 p))
       (ZMod64.values p).flatMap fun c =>
         (coeffLists p d).map fun coeffs => c :: coeffs
 
-@[simp] theorem coeffLists_zero :
+@[simp, grind =] theorem coeffLists_zero :
     coeffLists p 0 = ([[]] : List (List (ZMod64 p))) :=
   rfl
 
-@[simp] theorem coeffLists_succ (d : Nat) :
+@[simp, grind =] theorem coeffLists_succ (d : Nat) :
     coeffLists p (d + 1) =
       (ZMod64.values p).flatMap fun c =>
         (coeffLists p d).map fun coeffs => c :: coeffs :=
@@ -94,7 +94,7 @@ theorem length_of_mem_coeffLists {d : Nat} {coeffs : List (ZMod64 p)}
       simp [ih htail_mem]
 
 /-- Membership in `coeffLists` is exactly fixed length plus residue membership. -/
-theorem mem_coeffLists_iff {d : Nat} {coeffs : List (ZMod64 p)} :
+@[grind =] theorem mem_coeffLists_iff {d : Nat} {coeffs : List (ZMod64 p)} :
     coeffs ∈ coeffLists p d ↔
       coeffs.length = d ∧ ∀ c ∈ coeffs, c ∈ ZMod64.values p := by
   induction d generalizing coeffs with
@@ -141,7 +141,7 @@ theorem mem_coeffLists_iff {d : Nat} {coeffs : List (ZMod64 p)} :
               exact h.2 x (by simp [hx])
 
 /-- The coefficient-list enumeration has exactly `p ^ d` entries. -/
-@[simp] theorem coeffLists_length (d : Nat) :
+@[simp, grind =] theorem coeffLists_length (d : Nat) :
     (coeffLists p d).length = p ^ d := by
   induction d with
   | zero =>
@@ -296,7 +296,7 @@ theorem degree_getD_lt_of_mem_polysBelowDegree {f : FpPoly p} {d : Nat}
 
 /-- Membership in the bounded-degree enumeration is exactly degree below the
 positive bound. -/
-theorem mem_polysBelowDegree_iff_degree_getD_lt {f : FpPoly p} {d : Nat}
+@[grind =] theorem mem_polysBelowDegree_iff_degree_getD_lt {f : FpPoly p} {d : Nat}
     (hd : 0 < d) :
     f ∈ polysBelowDegree p d ↔ f.degree?.getD 0 < d := by
   constructor
@@ -304,10 +304,10 @@ theorem mem_polysBelowDegree_iff_degree_getD_lt {f : FpPoly p} {d : Nat}
   · exact mem_polysBelowDegree_of_degree_getD_lt
 
 /-- Successor-bound membership in the bounded-degree enumeration. -/
-@[simp] theorem mem_polysBelowDegree_succ_iff_degree_getD_lt {f : FpPoly p}
+@[simp, grind =] theorem mem_polysBelowDegree_succ_iff_degree_getD_lt {f : FpPoly p}
     {d : Nat} :
     f ∈ polysBelowDegree p (d + 1) ↔ f.degree?.getD 0 < d + 1 := by
-  exact mem_polysBelowDegree_iff_degree_getD_lt (Nat.succ_pos d)
+  grind
 
 private theorem list_eq_of_length_eq_of_getD_eq
     {α : Type} [Zero α] {xs ys : List α}
@@ -364,7 +364,7 @@ theorem polysBelowDegree_nodup (d : Nat) :
 
 /-- There are exactly `p ^ d` entries in the bounded-degree polynomial
 enumeration. -/
-@[simp] theorem polysBelowDegree_length (d : Nat) :
+@[simp, grind =] theorem polysBelowDegree_length (d : Nat) :
     (polysBelowDegree p d).length = p ^ d := by
   simp [polysBelowDegree]
 
