@@ -3496,8 +3496,10 @@ def bareissGramCanonicalCoeff (b : Matrix Int n m) :
     bareissGramCanonicalCoeff b 0 i =
       Vector.ofFn fun k : Fin n => if i = k then (1 : Int) else 0 := rfl
 
-/-- Recursion equation: regular-branch active-row case. -/
-theorem bareissGramCanonicalCoeff_succ_regular
+/-- Recursion equation: regular-branch active-row case. With the branch
+hypotheses in context, `simp [*]`/`simp_all` rewrites `bareissGramCanonicalCoeff`
+at `fuel + 1` to its explicit Bareiss exact-division update. -/
+@[simp] theorem bareissGramCanonicalCoeff_succ_regular
     (b : Matrix Int n m) (fuel : Nat) (i : Fin n)
     (hnext :
       (Matrix.noPivotLoop fuel
@@ -3524,8 +3526,10 @@ theorem bareissGramCanonicalCoeff_succ_regular
            state.prevPivot) := by
   simp only [bareissGramCanonicalCoeff, dif_pos hnext, if_neg hp, if_pos hi]
 
-/-- Recursion equation: regular-branch processed-row case. -/
-theorem bareissGramCanonicalCoeff_succ_processed
+/-- Recursion equation: regular-branch processed-row case. An already-processed
+row (`i ≤ step`) keeps its previous coefficient vector, so the canonical
+coefficient at `fuel + 1` collapses to the one at `fuel`. -/
+@[simp] theorem bareissGramCanonicalCoeff_succ_processed
     (b : Matrix Int n m) (fuel : Nat) (i : Fin n)
     (hnext :
       (Matrix.noPivotLoop fuel
@@ -3543,8 +3547,10 @@ theorem bareissGramCanonicalCoeff_succ_processed
       bareissGramCanonicalCoeff b fuel i := by
   simp only [bareissGramCanonicalCoeff, dif_pos hnext, if_neg hp, if_neg hi]
 
-/-- Recursion equation: singular branch (zero diagonal). -/
-theorem bareissGramCanonicalCoeff_succ_singular
+/-- Recursion equation: singular branch (zero diagonal). A zero pivot skips the
+update, so the canonical coefficient at `fuel + 1` collapses to the one at
+`fuel`. -/
+@[simp] theorem bareissGramCanonicalCoeff_succ_singular
     (b : Matrix Int n m) (fuel : Nat) (i : Fin n)
     (hnext :
       (Matrix.noPivotLoop fuel
@@ -3560,8 +3566,10 @@ theorem bareissGramCanonicalCoeff_succ_singular
       bareissGramCanonicalCoeff b fuel i := by
   simp only [bareissGramCanonicalCoeff, dif_pos hnext, if_pos hp]
 
-/-- Recursion equation: done branch (no further work possible). -/
-theorem bareissGramCanonicalCoeff_succ_done
+/-- Recursion equation: done branch (no further work possible). Once the loop can
+take no further step (`¬ step + 1 < n`), the canonical coefficient at `fuel + 1`
+collapses to the one at `fuel`. -/
+@[simp] theorem bareissGramCanonicalCoeff_succ_done
     (b : Matrix Int n m) (fuel : Nat) (i : Fin n)
     (hDone : ¬ (Matrix.noPivotLoop fuel
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n) :
@@ -6568,7 +6576,7 @@ private theorem scaledCoeffRows_diag_eq_gramDet_of_nonneg
 /-- The empty leading Gram determinant is `1`: the determinant of the `0 × 0`
 principal Gram minor. This is the base case anchoring the `gramDetVec` diagonal
 recurrence (`gramDetVec_eq_gramDet` at `k = 0`). -/
-theorem gramDet_zero (b : Matrix Int n m) :
+@[simp] theorem gramDet_zero (b : Matrix Int n m) :
     gramDet b 0 (Nat.zero_le n) = 1 := by
   rfl
 
@@ -6585,8 +6593,11 @@ private theorem getArrayEntry_scaledCoeffRows_above
 
 /-- The integral scaled Gram-Schmidt coefficient matrix is lower triangular:
 every strict-upper-triangle entry (`i < j`) is zero. Callers treating
-`scaledCoeffs` as a triangular factor use this to discard above-diagonal terms. -/
-theorem scaledCoeffs_upper (b : Matrix Int n m)
+`scaledCoeffs` as a triangular factor use this to discard above-diagonal terms.
+Tagged `@[grind =]` (keyed on the `entry (scaledCoeffs b) i j` term) so the
+strict-upper hypothesis `i < j` is discharged by `grind`'s arithmetic when the
+vanishing fact is needed. -/
+@[grind =] theorem scaledCoeffs_upper (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i < j) :
     GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨j, hj⟩ = 0 := by
   rw [scaledCoeffs_entry_eq_getArrayEntry]
@@ -6943,8 +6954,9 @@ theorem prefixSpan_basis_and_coeffs_apply_ne_zero_of_rowCombination
   exact_mod_cast hck
 
 /-- The coefficient matrix reconstructs the cast integer input rows from the
-Gram-Schmidt basis rows. -/
-theorem coeffs_mul_basis_eq_castIntMatrix (b : Matrix Int n m) :
+Gram-Schmidt basis rows: `coeffs b * basis b` collapses to the cast input
+`castIntMatrix b`. -/
+@[simp] theorem coeffs_mul_basis_eq_castIntMatrix (b : Matrix Int n m) :
     coeffs b * basis b = castIntMatrix b := by
   apply Vector.ext
   intro i hi
@@ -7151,8 +7163,10 @@ private theorem exists_highest_nonzero_coeff
 
 /-- Casting commutes with the squared norm: the rational squared norm of an
 integer vector mapped into `ℚ` equals its integer squared norm cast to `ℚ`. This
-transfers norm facts proved over `ℤ` into the rational Gram-Schmidt setting. -/
-theorem normSq_map_intCast (v : Vector Int m) :
+transfers norm facts proved over `ℤ` into the rational Gram-Schmidt setting. As
+a `simp` rule it pushes the cast outward, putting the rational squared norm in
+the normal form `((normSq v : Int) : Rat)`. -/
+@[simp] theorem normSq_map_intCast (v : Vector Int m) :
     Vector.normSq (Vector.map (fun x : Int => (x : Rat)) v) =
       ((Vector.normSq v : Int) : Rat) := by
   simpa [Vector.normSq, Hex.Vector.normSq, Matrix.dot, Hex.Vector.dotProduct]
