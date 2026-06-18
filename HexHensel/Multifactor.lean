@@ -182,13 +182,13 @@ def MultifactorLiftInvariant
 /-- Left identity for `ZPoly` multiplication, used to reason about
 `Array.polyProduct` as a left fold from `1`. Shared by the linear and
 quadratic multifactor proofs. -/
-@[simp]
+@[simp, grind =]
 theorem one_mul_zpoly (g : ZPoly) :
     (1 : ZPoly) * g = g := by
   rw [DensePoly.mul_comm_poly (S := Int), DensePoly.mul_one_right_poly]
 
 /-- `Array.polyProduct` of a singleton array is just the element. -/
-@[simp]
+@[simp, grind =]
 theorem polyProduct_singleton (g : ZPoly) :
     Array.polyProduct #[g] = g := by
   simp [Array.polyProduct]
@@ -227,13 +227,13 @@ theorem polyProduct_singleton_append (g : ZPoly) (rest : Array ZPoly) :
         list_foldl_mul_eq_mul_foldl_one g xs
 
 /-- `Array.polyProduct` of the empty array is the multiplicative unit. -/
-@[simp]
+@[simp, grind =]
 theorem polyProduct_empty :
     Array.polyProduct (#[] : Array ZPoly) = 1 :=
   rfl
 
 /-- `Array.polyProduct` splits as a product across array concatenation. -/
-@[simp]
+@[simp, grind =]
 theorem polyProduct_append (xs ys : Array ZPoly) :
     Array.polyProduct (xs ++ ys) =
       Array.polyProduct xs * Array.polyProduct ys := by
@@ -256,14 +256,14 @@ theorem polyProduct_cons_toArray (g : ZPoly) (rest : List ZPoly) :
 
 /-- `Array.polyProduct` of a two-element array is the product of the two
 entries. -/
-@[simp]
+@[simp, grind =]
 theorem polyProduct_pair (g h : ZPoly) :
     Array.polyProduct #[g, h] = g * h := by
   simp [Array.polyProduct]
 
 /-- `Array.polyProduct` over a zero-length replicated list is the
 multiplicative unit. -/
-@[simp]
+@[simp, grind =]
 theorem polyProduct_replicate_zero_toArray (g : ZPoly) :
     Array.polyProduct (List.replicate 0 g).toArray = 1 := by
   rfl
