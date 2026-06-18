@@ -373,6 +373,42 @@ Two traps when touching the gate:
   `simp [hclass, hfloor] at hfast` when reducing it inside a *hypothesis*, which
   is robust to the instance gap).
 
+### The floor gate discharges `cut` (hsep/hthr) but NOT the bad-vector exclusion — `L'=W` is still cap-only (#7985)
+
+A "success ⟹ recovery package / `EquivalenceClassRecoveryHypotheses` /
+`ForwardRecoveryInputs` producer" directive (the #7917 prerequisite) looks like
+a thin assembly after #7980 landed hsep/hthr, but is **not** constructible.
+`factorFastCoreWithBound_some_indicatorCandidates` (`Basic.lean:11785`) already
+gives `k'`, `hrows`, `hcandidates`, non-degeneracy, and product=core from loop
+success with no extra hypotheses — so `hcandidates`/`hsize` are free. The whole
+deliverable collapses to the single field `hindicators`
+(`equivalenceClassIndicatorsOfLiftData … = expectedIndicatorArrayOfSupports
+trueSupports`), whose only route
+(`equivalenceClassIndicatorsOfLiftData_eq_expectedIndicatorArrayOfSupports`,
+`Recovery.lean:572`) demands `lattice_eq_indicators` = the BHKS Lemma 3.3
+equality `L'=W`. That needs `SeparationHypotheses.no_projected_not_indicator`
+(bad-vector exclusion), whose **only** producer
+(`no_projected_not_indicator_of_factorFastPrecisionCap_le`,
+`TerminationBound.lean:508`) requires precision `≥ factorFastPrecisionCap` **and**
+the still-open `BadVectorBridgeData` (BHKS Lemma 3.2 resultant divisibility).
+Crucially: the #7951 gate forces only `k' ≥ cldCoeffFloor core`, which feeds
+**only** the CLD column adequacy (`cut`/hsep/hthr, in `CLDColumnBound.lean`) —
+`cldCoeffFloor` appears in **zero** lines of `BadVector.lean`/`Lattice.lean`/
+`TerminationBound.lean`, all of which key the exclusion on
+`factorFastPrecisionCap … ≤ a`. And floor ≪ cap by orders of magnitude
+(`cldGuardF`: floor=32, cap=50803201, both pure-integer `#eval`-checkable), so
+the cap producer cannot fire at the first-success precision. The `on_schedule`
+`hno` route is *worse than hard — it is false*: the gated loop returns at the
+first success `k'=floor ≪ cap`, so a non-cap scheduled precision recovers,
+contradicting `hno` (which fixes target=cap). There is also no function
+producing a genuine `trueSupports` from `core`/success; inverting the indicator
+array gives junk that the downstream #7917 `hpartition`/`hfac`/`lift` (all over
+the *same* `trueSupports`) cannot consume. So **diagnose and skip** any such
+producer issue: the genuine prerequisite is either a floor-keyed bad-vector
+exclusion (push the `TerminationBound.lean` cap argument down to the CLD floor)
+or a `BadVectorBridgeData` producer from core facts — soundness substrate, not a
+thin producer. (#7985 skipped on exactly this.)
+
 **#7938 fixed only the *cap*, not the success precision — the trap persists
 (#7945).** #7938 removed the *caller-side* double `precisionForCoeffBound` (the
 public path now passes the raw cap `B = factorFastPrecisionCap core`), so the
