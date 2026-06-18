@@ -80,7 +80,7 @@ theorem coeff_dilate (c : Int) (p : ZPoly) (n : Nat) :
 
 /-- Dilation by `1` is the identity: `dilate 1 p = p`. The simp normal form for
 the trivial dilation. -/
-@[simp] theorem dilate_one (p : ZPoly) : dilate 1 p = p := by
+@[simp, grind =] theorem dilate_one (p : ZPoly) : dilate 1 p = p := by
   apply DensePoly.ext_coeff
   intro n
   rw [coeff_dilate, Int.one_pow, Int.one_mul]
@@ -107,24 +107,23 @@ theorem isUnit_iff (f : ZPoly) :
 
 /-- The polynomial `1` is a unit, since `(1 : ZPoly)` is the constant polynomial
 `C 1`. -/
-@[simp] theorem isUnit_one : IsUnit (1 : ZPoly) := by
+@[simp, grind .] theorem isUnit_one : IsUnit (1 : ZPoly) := by
   left
   rfl
 
 /-- The constant polynomial `C 1` is a unit. -/
-@[simp] theorem isUnit_C_one : IsUnit (DensePoly.C (1 : Int)) := by
+@[simp, grind .] theorem isUnit_C_one : IsUnit (DensePoly.C (1 : Int)) := by
   left
   rfl
 
 /-- The constant polynomial `C (-1)` is a unit. -/
-@[simp] theorem isUnit_C_neg_one : IsUnit (DensePoly.C (-1 : Int)) := by
+@[simp, grind .] theorem isUnit_C_neg_one : IsUnit (DensePoly.C (-1 : Int)) := by
   right
   rfl
 
 /-- Equality to `1` is the common constructor form for `IsUnit`. -/
 theorem isUnit_of_eq_one {f : ZPoly} (h : f = 1) : IsUnit f := by
-  rw [h]
-  exact isUnit_one
+  grind
 
 /-- Equality to `-1` is the common constructor form for `IsUnit`. -/
 theorem isUnit_of_eq_neg_one {f : ZPoly} (h : f = -1) : IsUnit f := by
@@ -142,7 +141,7 @@ theorem isUnit_of_eq_neg_one {f : ZPoly} (h : f = -1) : IsUnit f := by
     exact Int.neg_zero
 
 /-- The polynomial `-1` is a unit. -/
-@[simp] theorem isUnit_neg_one : IsUnit (-1 : ZPoly) :=
+@[simp, grind .] theorem isUnit_neg_one : IsUnit (-1 : ZPoly) :=
   isUnit_of_eq_neg_one rfl
 
 /-- View an integer polynomial as a rational polynomial. -/
@@ -151,7 +150,7 @@ def toRatPoly (f : ZPoly) : DensePoly Rat :=
 
 /-- Coefficients of `toRatPoly f` are the rational casts of the coefficients of
 `f`. -/
-@[simp]
+@[simp, grind =]
 theorem coeff_toRatPoly (f : ZPoly) (n : Nat) :
     (toRatPoly f).coeff n = (f.coeff n : Rat) := by
   unfold toRatPoly
@@ -165,7 +164,7 @@ theorem coeff_toRatPoly (f : ZPoly) (n : Nat) :
 
 /-- Rational conversion sends the zero integer polynomial to the zero rational
 polynomial. The simp normal form for the zero case. -/
-@[simp] theorem toRatPoly_zero :
+@[simp, grind =] theorem toRatPoly_zero :
     toRatPoly (0 : ZPoly) = 0 := by
   apply DensePoly.ext_coeff
   intro n
@@ -177,7 +176,7 @@ polynomial. The simp normal form for the zero case. -/
 /-- Rational conversion sends the constant integer polynomial `C c` to the
 constant rational polynomial `C (c : Rat)`. The simp normal form for the
 constant case. -/
-@[simp] theorem toRatPoly_C (c : Int) :
+@[simp, grind =] theorem toRatPoly_C (c : Int) :
     toRatPoly (DensePoly.C c) = DensePoly.C (c : Rat) := by
   apply DensePoly.ext_coeff
   intro n
@@ -192,12 +191,13 @@ constant case. -/
 /-- Rational conversion sends the unit integer polynomial `1` to the rational
 polynomial `1`, since `(1 : ZPoly)` is the constant polynomial `C 1`. The simp
 normal form for the one case. -/
-@[simp] theorem toRatPoly_one :
+@[simp, grind =] theorem toRatPoly_one :
     toRatPoly (1 : ZPoly) = 1 := by
   exact toRatPoly_C 1
 
 /-- Rational conversion commutes with scaling an integer polynomial by an
 integer. -/
+@[grind =]
 theorem toRatPoly_scale_int (c : Int) (f : ZPoly) :
     toRatPoly (DensePoly.scale c f) = DensePoly.scale (c : Rat) (toRatPoly f) := by
   apply DensePoly.ext_coeff
@@ -210,6 +210,7 @@ theorem toRatPoly_scale_int (c : Int) (f : ZPoly) :
   simp
 
 /-- Rational conversion preserves the dense size of an integer polynomial. -/
+@[grind =]
 theorem size_toRatPoly (f : ZPoly) :
     (toRatPoly f).size = f.size := by
   apply Nat.le_antisymm
@@ -317,6 +318,7 @@ private theorem toRatPoly_mulCoeffSum (f g : ZPoly) (n : Nat) :
   exact toRatPoly_mulCoeffOuter_fold f g n (List.range f.size) 0
 
 /-- Rational conversion preserves multiplication of integer polynomials. -/
+@[grind =]
 theorem toRatPoly_mul (f g : ZPoly) :
     toRatPoly (f * g) = toRatPoly f * toRatPoly g := by
   apply DensePoly.ext_coeff
@@ -825,6 +827,7 @@ theorem congr_mul (f g f' g' : ZPoly) (m : Nat)
 
 /-- Scaling the primitive part by the content reconstructs the original integer
 polynomial. -/
+@[grind =]
 theorem content_mul_primitivePart (f : ZPoly) :
     DensePoly.scale (content f) (primitivePart f) = f :=
   DensePoly.content_mul_primitivePart f
@@ -867,6 +870,7 @@ theorem primitive_mul (p q : ZPoly)
 
 /-- `ZPoly`-level wrapper for `DensePoly.content_mul`: the content of a
 product of integer polynomials is the product of their contents. -/
+@[grind =]
 theorem content_mul (p q : ZPoly) :
     content (p * q) = content p * content q := by
   simpa [content] using DensePoly.content_mul p q
@@ -874,6 +878,7 @@ theorem content_mul (p q : ZPoly) :
 /-- `ZPoly`-level wrapper for `DensePoly.primitivePart_mul` (Gauss's lemma): the
 primitive part of a product of integer polynomials is the product of their
 primitive parts. -/
+@[grind =]
 theorem primitivePart_mul (p q : ZPoly) :
     primitivePart (p * q) = primitivePart p * primitivePart q := by
   simpa [primitivePart] using DensePoly.primitivePart_mul p q
@@ -1077,6 +1082,7 @@ private theorem fold_mulCoeffStep_C_left_range
         simp [hnot_m, hnot_succ, hne]
 
 /-- Multiplication by an integer constant agrees with coefficient scaling. -/
+@[grind =]
 theorem C_mul_eq_scale (c : Int) (p : ZPoly) :
     DensePoly.C c * p = DensePoly.scale c p := by
   apply DensePoly.ext_coeff
