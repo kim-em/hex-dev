@@ -289,6 +289,36 @@ Consequences for any fast-BHKS irreducibility / `h_raw` work:
   "expose the loop array" / unconditional `h_raw` issue, confirm a determinism
   producer exists, else land the decoupled bridges + diagnose (#7664).
 
+### The fast-path lift exponent `liftData.k` is double-log small — hsep/hthr are *false*, not just underivable (#7928)
+
+`precisionForCoeffBound` is applied **twice** on the public fast path, so the
+CLD lattice runs at a precision far below the BHKS column-adequacy threshold.
+The public caller computes `a := precisionForCoeffBound B primeData.p`
+(`Basic.lean:7699/7714`, `B = factorFastPrecisionCap core`) and passes `a` as
+`factorFastCoreWithBound`'s coefficient-bound parameter; the loop then feeds the
+schedule variable `k` into `toMonicLiftData core k primeData`, which applies
+`precisionForCoeffBound` **again** (`:7001`, `(henselLiftData _ B _).k = B`).
+Net: the lattice's actual exponent is
+`liftData.k = precisionForCoeffBound k p = ceilLogP p (2k+1)`, collapsing
+double-logarithmically. Concretely for `cldGuardF = x²−5x+6`, `p=5`: every
+scheduled `k ∈ [4,8,12]` (cap included) gives `liftData.k = 2` (modulus 25), but
+the CLD floor `precisionForCoeffBound (bhksCoeffBound (toMonic core).monic 0 =
+16) 5 = 3` is not met. So **hsep** (`2·bhksCoeffBound (lift S).f j <
+(lift S).p ^ (lift S).a`, with `(lift S).a = d.k = liftData.k = 2`) is literally
+`32 < 25` — **false**, not merely "not derivable from success." The final
+product check (`Array.polyProduct candidates == f`) rescues *correctness*
+empirically (true factor coefficients are tiny) but certifies nothing about
+column-adequacy. **Consequence:** no acceptance gate against the current
+`liftData.k` (the #7928 plan) can supply hsep/hthr — it would only flip fixtures
+`some → none`. Verify with a pure-integer `#eval` scratch (`bhksCoeffBound`,
+`precisionForCoeffBound`, `henselPrecisionSchedule`, `factorFastPrecisionCap` all
+run under `lake env lean`, no extern). The real fix is a precision-*schedule*
+correction (drop the double `precisionForCoeffBound`), which is soundness-
+sensitive and touches the CI-gated determinism cluster — not a cheap gate.
+Before claiming any "discharge hsep/hthr" / "CLD precision floor" fast-path
+issue, `#eval` `liftData.k` at the scheduled precisions and confirm it actually
+clears the CLD floor; as of #7928 it does not.
+
 ## `Matrix` / `Vector` resolve to Mathlib's inside the Mathlib layer
 
 The mirror of the shadow above. In a Mathlib-layer file (namespace
