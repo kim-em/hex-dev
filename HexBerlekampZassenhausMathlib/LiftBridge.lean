@@ -682,6 +682,66 @@ def recoveredLift_subtypeFamily_of_indicatorCandidates
       hindicators hcandidates hcore_lc_pos hcore_pos hliftedFactor_monic hp_two_le
       hmem.choose hmem.choose_spec.1
 
+/-- Transport along a support equality leaves the `RecoveredLift.p` field
+unchanged: the field does not depend on the support index. -/
+private theorem RecoveredLift.p_eqRec {L : Hex.BhksLatticeBasis}
+    {a b : LiftedFactorSupport L} (h : a = b) (x : RecoveredLift L a) :
+    (h ▸ x).p = x.p := by subst h; rfl
+
+/-- Transport along a support equality leaves the `RecoveredLift.a` field
+unchanged: the field does not depend on the support index. -/
+private theorem RecoveredLift.a_eqRec {L : Hex.BhksLatticeBasis}
+    {a b : LiftedFactorSupport L} (h : a = b) (x : RecoveredLift L a) :
+    (h ▸ x).a = x.a := by subst h; rfl
+
+/-- The lift modulus base `p` of every member of the subtype-indexed
+recovered-lift family is the underlying lift data's prime base `d.p`. -/
+theorem recoveredLift_subtypeFamily_of_indicatorCandidates_p
+    {core : Hex.ZPoly} {d : Hex.LiftData} {coreFactors : Array Hex.ZPoly}
+    (rows_pos : HasPositiveDimension core d)
+    (trueSupports :
+       Set (Set (Fin (projectedRowsOfLiftData core d rows_pos).factorCount)))
+    (hindicators :
+       equivalenceClassIndicatorsOfLiftData core d rows_pos =
+         expectedIndicatorArrayOfSupports trueSupports)
+    (hcandidates :
+       Hex.bhksIndicatorCandidates? core d
+           (equivalenceClassIndicatorsOfLiftData core d rows_pos) = some coreFactors)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hliftedFactor_monic : ∀ i : LiftedFactorIndex d, Hex.DensePoly.Monic (liftedFactor d i))
+    (hp_two_le : 2 ≤ d.p ^ d.k)
+    (S : emittedSupports (Hex.ZPoly.toMonic core).monic d trueSupports) :
+    (recoveredLift_subtypeFamily_of_indicatorCandidates rows_pos trueSupports hindicators
+      hcandidates hcore_lc_pos hcore_pos hliftedFactor_monic hp_two_le S).p = d.p := by
+  unfold recoveredLift_subtypeFamily_of_indicatorCandidates
+  rw [RecoveredLift.p_eqRec]
+  rfl
+
+/-- The lift precision `a` of every member of the subtype-indexed
+recovered-lift family is the underlying lift data's precision `d.k`. -/
+theorem recoveredLift_subtypeFamily_of_indicatorCandidates_a
+    {core : Hex.ZPoly} {d : Hex.LiftData} {coreFactors : Array Hex.ZPoly}
+    (rows_pos : HasPositiveDimension core d)
+    (trueSupports :
+       Set (Set (Fin (projectedRowsOfLiftData core d rows_pos).factorCount)))
+    (hindicators :
+       equivalenceClassIndicatorsOfLiftData core d rows_pos =
+         expectedIndicatorArrayOfSupports trueSupports)
+    (hcandidates :
+       Hex.bhksIndicatorCandidates? core d
+           (equivalenceClassIndicatorsOfLiftData core d rows_pos) = some coreFactors)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hliftedFactor_monic : ∀ i : LiftedFactorIndex d, Hex.DensePoly.Monic (liftedFactor d i))
+    (hp_two_le : 2 ≤ d.p ^ d.k)
+    (S : emittedSupports (Hex.ZPoly.toMonic core).monic d trueSupports) :
+    (recoveredLift_subtypeFamily_of_indicatorCandidates rows_pos trueSupports hindicators
+      hcandidates hcore_lc_pos hcore_pos hliftedFactor_monic hp_two_le S).a = d.k := by
+  unfold recoveredLift_subtypeFamily_of_indicatorCandidates
+  rw [RecoveredLift.a_eqRec]
+  rfl
+
 end ForwardRecoveryInputs
 
 end BHKS

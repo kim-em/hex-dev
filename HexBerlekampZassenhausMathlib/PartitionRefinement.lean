@@ -814,8 +814,7 @@ theorem factorFastCore_irreducible_of_monicRecoveredLift
           (fun i =>
             Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
               core k' primeData hcore_lc_pos hcore_pos hvalid hprecision i)
-          (Nat.le_of_lt
-            (toMonicLiftData_one_lt_modulus core k' primeData hvalid hprecision)))
+          (BHKS.toMonicLiftData_one_lt_modulus core k' primeData hvalid hprecision))
     (hf_lc : ∀ S, Hex.DensePoly.leadingCoeff (lift S).f = 1)
     (hfactor_monic : ∀ S, (HexPolyMathlib.toPolynomial (lift S).factor).Monic)
     (hsep : ∀ S, ∀ j, 2 * Hex.bhksCoeffBound (lift S).f j < (lift S).p ^ (lift S).a)
@@ -867,7 +866,10 @@ theorem factorFastCore_irreducible_of_monicRecoveredLift
   let emitted :=
     BHKS.ForwardRecoveryInputs.emittedSupports (Hex.ZPoly.toMonic core).monic d trueSupports
   subst lift
-  exact
+  -- The `hp`/`hk` side conditions are stated about the recovered-lift family's
+  -- own `.p`/`.a` fields; rewrite those to the underlying lift data's `d.p`/`d.k`
+  -- (the family preserves them, #7923) before discharging from `toMonicPrimeData`.
+  refine
     factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift
       (core := core) (B := B) (primeData := primeData) (k := k) (fuel := fuel)
       (coreFactors := coreFactors) (L := L) (hrows := monicRows) emitted
@@ -877,12 +879,15 @@ theorem factorFastCore_irreducible_of_monicRecoveredLift
         (fun i =>
           Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
             core k' primeData hcore_lc_pos hcore_pos hvalid hprecision i)
-        (Nat.le_of_lt
-          (toMonicLiftData_one_lt_modulus core k' primeData hvalid hprecision)))
-      hf_lc hfactor_monic
-      (fun _ => toMonicLiftData_two_le_p core k' primeData hvalid)
-      (fun _ => toMonicLiftData_one_lt_modulus core k' primeData hvalid hprecision)
-      hsep hthr hfac hsize hpartition
+        (BHKS.toMonicLiftData_one_lt_modulus core k' primeData hvalid hprecision))
+      hf_lc hfactor_monic ?_ ?_ hsep hthr hfac hsize hpartition
+  · intro S
+    rw [BHKS.ForwardRecoveryInputs.recoveredLift_subtypeFamily_of_indicatorCandidates_p]
+    exact BHKS.toMonicLiftData_two_le_p core k' primeData hvalid
+  · intro S
+    rw [BHKS.ForwardRecoveryInputs.recoveredLift_subtypeFamily_of_indicatorCandidates_p,
+        BHKS.ForwardRecoveryInputs.recoveredLift_subtypeFamily_of_indicatorCandidates_a]
+    exact BHKS.toMonicLiftData_one_lt_modulus core k' primeData hvalid hprecision
 
 /-- Cardinality equality for a successful BHKS fast-core branch under the B8
 partition-refinement package.  Pairs `factorFastCoreWithBound_some_factor_count_le`
