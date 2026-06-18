@@ -390,6 +390,27 @@ theorem memLattice
 
 end TrueFactorCLDVectorData
 
+/--
+Certificate for an arbitrary short BHKS lattice vector whose first block is the
+indicator of a true lifted-factor support.
+
+This is the projection surface needed by period-adjusted BHKS arguments: the
+short vector need not be the zero-period-row `trueFactorCLDVector`; it only has
+to lie in the BHKS row lattice, project to the support indicator, and satisfy
+the tight cut radius bound.
+-/
+structure SupportShortVectorData
+    (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) where
+  vector : Vector ℤ (L.factorCount + L.coeffWidth)
+  memLattice : Hex.Matrix.memLattice L.basis vector
+  project_eq :
+    ∀ i : Fin L.factorCount,
+      vector[(⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
+        Fin (L.factorCount + L.coeffWidth))] = indicatorVector S i
+  four_mul_sq_norm_le :
+    4 * (∑ i : Fin (L.factorCount + L.coeffWidth),
+      ((((vector[i] : ℤ) : ℝ) ^ 2))) ≤ (Hex.bhksCutRadiusSq4 L : ℝ)
+
 /-- Entry of the top-row selection coefficient vector: the support indicator on
 the first `factorCount` coordinates, zero on the diagonal-correction tail. -/
 private theorem trueFactorRowCoeffs_getElem
@@ -1667,36 +1688,34 @@ theorem projFirst_mem_projectedRowSpanInt_of_mem_prefixSubmodule
   | smul c a _ ha => rw [map_smul]; exact Submodule.smul_mem _ _ ha
 
 /--
-**True-factor cut-projection producer.**
+Build `CutProjectionHypotheses` from any per-support short vector in the BHKS
+row lattice.
 
-Build `CutProjectionHypotheses` for a family of true-factor supports directly
-from their CLD-vector certificates (`TrueFactorCLDVectorData`), their tight
-norm bounds (`TrueFactorCLDTightNormBound`), and independence of the BHKS basis.
-Each true support's indicator vector is the first block of a genuine short
-lattice vector, which the prefix survivor-span lemma places in the retained
-prefix span; projecting to the first `factorCount` coordinates lands the
-indicator in `projectedRowSpanInt`.  This route does **not** pass through
-`CutRetention`.
+The vector may include nonzero diagonal-period row coefficients.  The prefix
+survivor-span lemma only needs lattice membership plus the tight cut-radius
+bound, and the final projection only needs the first block to be the support
+indicator.
 -/
-def cutProjectionHypotheses_of_trueFactors
+def cutProjectionHypotheses_of_shortVectors
     (L : Hex.BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth)
     (hbasis : L.basis.independent)
     (trueSupports : Set (Set (Fin (Hex.bhksProjectedRows L hrows).factorCount)))
-    (data : ∀ S : trueSupports, TrueFactorCLDVectorData L S.1)
-    (tight : ∀ S : trueSupports, TrueFactorCLDTightNormBound L S.1) :
+    (data : ∀ S : trueSupports, SupportShortVectorData L S.1) :
     CutProjectionHypotheses (Hex.bhksProjectedRows L hrows) trueSupports where
   indicator_mem_projected S := by
-    set v := trueFactorCLDVector L S.1 with hv
+    set v := (data S).vector with hv
     have hind : (Hex.bhksProjectedRowsTrace L hrows).reducedMatrix.independent := by
       rw [Hex.bhksProjectedRowsTrace_reducedMatrix_eq]
       exact Hex.lllSteered_independent L.basis (3 / 4) Hex.lll_delta_lower
         Hex.lll_delta_upper hrows hbasis
     have hmemRed :
         Hex.Matrix.memLattice (Hex.bhksProjectedRowsTrace L hrows).reducedMatrix v :=
-      (traceReducedMatrix_memLattice_iff L hrows v).mpr (trueFactorCLDVector_memLattice L S.1)
+      (traceReducedMatrix_memLattice_iff L hrows v).mpr (by
+        simpa [hv] using (data S).memLattice)
     have hnorm :
         4 * ((Hex.Vector.normSq v : Int) : ℚ) ≤ (Hex.bhksCutRadiusSq4 L : ℚ) := by
-      have ht := (tight S).four_mul_sq_norm_le
+      have ht := (data S).four_mul_sq_norm_le
+      rw [← hv] at ht
       have hsum :
           (∑ i : Fin (L.factorCount + L.coeffWidth), (((v[i] : Int) : ℝ) ^ 2))
             = ((Hex.Vector.normSq v : Int) : ℝ) := by
@@ -1714,9 +1733,35 @@ def cutProjectionHypotheses_of_trueFactors
     have hproj : projFirst L.factorCount L.coeffWidth (HexMatrixMathlib.vectorEquiv v)
         = indicatorVector S.1 := by
       funext i
-      rw [projFirst_apply, HexMatrixMathlib.vectorEquiv_apply, hv]
+      rw [projFirst_apply, HexMatrixMathlib.vectorEquiv_apply]
       exact (data S).project_eq i
     rwa [hproj] at hmem
+
+/--
+**True-factor cut-projection producer.**
+
+Build `CutProjectionHypotheses` for a family of true-factor supports directly
+from their CLD-vector certificates (`TrueFactorCLDVectorData`), their tight
+norm bounds (`TrueFactorCLDTightNormBound`), and independence of the BHKS basis.
+Each true support's indicator vector is the first block of a genuine short
+lattice vector, which the prefix survivor-span lemma places in the retained
+prefix span; projecting to the first `factorCount` coordinates lands the
+indicator in `projectedRowSpanInt`.  This route does **not** pass through
+`CutRetention`.
+-/
+def cutProjectionHypotheses_of_trueFactors
+    (L : Hex.BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth)
+    (hbasis : L.basis.independent)
+    (trueSupports : Set (Set (Fin (Hex.bhksProjectedRows L hrows).factorCount)))
+    (data : ∀ S : trueSupports, TrueFactorCLDVectorData L S.1)
+    (tight : ∀ S : trueSupports, TrueFactorCLDTightNormBound L S.1) :
+    CutProjectionHypotheses (Hex.bhksProjectedRows L hrows) trueSupports :=
+  cutProjectionHypotheses_of_shortVectors L hrows hbasis trueSupports
+    (fun S =>
+      { vector := trueFactorCLDVector L S.1
+        memLattice := trueFactorCLDVector_memLattice L S.1
+        project_eq := (data S).project_eq
+        four_mul_sq_norm_le := (tight S).four_mul_sq_norm_le })
 
 /-- Each projected rational row is one of the generators of the rational row space. -/
 theorem projectedRow_mem_projectedRowSpaceRat
