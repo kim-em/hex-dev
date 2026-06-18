@@ -209,6 +209,18 @@ traps cost a build cycle each:
   the explicit marker it suggests — `@[grind =]` selects the conclusion
   pattern and elaborates silently. Plain `@[grind]` is only safe on lemmas
   with an obvious head.
+- **Match the marker to the lemma shape; ground Prop facts need `@[grind .]`,
+  not bare `@[grind]`.** Even a hypothesis-free fact with an obvious head
+  (`DensePoly.Monic c`, `FpPoly.Irreducible c`, `0 < FpPoly.degree c` for a
+  *concrete* `c`) makes plain `@[grind]` print `info: Try this … [grind .]`
+  on every build — noise the Phase 6 "no new warnings" criterion rejects.
+  Use the explicit `@[grind .]` it suggests (the fact/apply form, keyed on
+  the constant; no loop, builds silently). Reserve the file's
+  `@[grind =>]` + `grind_pattern` convention for *parametric* Prop wrappers
+  that carry a free variable (e.g. `conwayPoly_irreducible (h : SupportedEntry p n)`).
+  For a projection that fires from a hypothesis — `(h : lookup p n = some f) :
+  P f` — use `@[grind →]` (forward). Quick rule: equation → `=`, ground Prop
+  → `.`, hypothesis-driven Prop → `→`, parametric Prop → `=>` + `grind_pattern`.
 - **`@[simp]` on a "push through" transport equality can break a downstream
   proof in the same file.** A lemma like `basis (rowAdd b …) = basis b`
   looks like a clean normal form, but as `@[simp]` it fires inside dependent
