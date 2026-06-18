@@ -238,6 +238,25 @@ implicit `[Bounds primeData.p]` cannot be synthesized and the type silently
 becomes `sorry`. Write the instance explicitly in such signatures:
 `@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds (…)`.
 
+## Reducing `DensePoly.degree?.getD 0` (the `dite` idiom)
+
+`DensePoly.degree? p = if _h : p.size = 0 then none else some (p.size - 1)` is a
+**`dite`**, so `simp [DensePoly.degree?, h]` with a bare `h : p.size ≠ 0` often
+fails to discharge the discriminant and leaves `(if … then none else …).getD 0`
+unreduced. Two reliable reductions:
+
+- nonzero size → degree: `obtain ⟨m, hm⟩ := Nat.exists_eq_succ_of_ne_zero hne;
+  simp [DensePoly.degree?, hm]` (substituting `size = m+1` makes the
+  discriminant syntactically nonzero, which `simp` kills via `Nat.succ_ne_zero`).
+  Then `p.degree?.getD 0 = p.size - 1`.
+- zero size → degree: `simp [DensePoly.degree?, h0]` with `h0 : p.size = 0`
+  reduces fine (the `0 = 0` branch is decidable).
+
+Also: `0 < p.size` is `Nat.le`, so `hsize_pos.ne'` does **not** typecheck
+(`Nat.le.ne'` doesn't exist). Use `Nat.pos_iff_ne_zero.mp hsize_pos` for
+`p.size ≠ 0`, and `Hex.ZPoly.size_pos_of_ne_zero p hp` to get `0 < p.size` from
+`p ≠ 0`.
+
 ## `Nat.choose` / `Nat.Prime` resolve to the executable shadows inside `Hex`
 
 The Mathlib-free arithmetic layer defines its own `Hex.Nat.choose` (Pascal
