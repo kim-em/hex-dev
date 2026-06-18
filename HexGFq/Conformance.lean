@@ -10,14 +10,17 @@ Covered operations:
 - `Conway.packedGF2FpPoly`
 - `Conway.PackedGF2Entry`
 - `GFq.modulus`, `GFq.ofPoly`, and `GFq.repr`
+- `GFqC.modulus`, `GFqC.ofPoly`, `GFqC.repr`, and `GFqC.frob`
 - `GF2q.supportedEntry`, `GF2q.lower`, `GF2q.modulus`,
   `GF2q.ofWord`, and `GF2q.repr`
 Covered properties:
 - the committed packed binary entries are backed by `supportedEntry_2_1`
   through `supportedEntry_2_6`
+- the ergonomic generic `GFqC 2 1` surface selects `supportedEntry_2_1`
+  through instance synthesis
 - the generic and packed modulus views agree on the committed `C(2, 1)`
   entry
-- generic `GFq 2 1` representatives reduce modulo the Conway polynomial
+- generic `GFqC 2 1` representatives reduce modulo the Conway polynomial
 - packed `GF2q 1` representatives reduce words modulo the packed Conway
   polynomial
 Covered edge cases:
@@ -40,17 +43,14 @@ private def wordArray (f : GF2Poly) : Array UInt64 :=
 private def polyTwo (coeffs : Array Nat) : FpPoly 2 :=
   FpPoly.ofCoeffs (coeffs.map (fun n => ZMod64.ofNat 2 n))
 
-private abbrev Entry21 : Conway.SupportedEntry 2 1 :=
-  Conway.supportedEntry_2_1
-
 private abbrev Generic21 : Type :=
-  GFq 2 1 Entry21
+  GFqC 2 1
 
 private def generic (coeffs : Array Nat) : Generic21 :=
-  GFq.ofPoly Entry21 (polyTwo coeffs)
+  GFqC.ofPoly (p := 2) (n := 1) (polyTwo coeffs)
 
 private def genericReprNats (x : Generic21) : List Nat :=
-  coeffNats (GFq.repr x)
+  coeffNats (GFqC.repr x)
 
 private abbrev Packed21 : Type :=
   GF2q 1
@@ -100,16 +100,22 @@ example : 1 < 64 :=
 #guard (inferInstance : Conway.PackedGF2Entry 5).lower = 0x5
 #guard (inferInstance : Conway.PackedGF2Entry 6).lower = 0x1B
 
-#guard coeffNats (GFq.modulus Entry21) = [1, 1]
-#guard GFq.modulus Entry21 = Conway.conwayPoly 2 1 Conway.supportedEntry_2_1
-#guard 0 < FpPoly.degree (GFq.modulus Entry21)
-example : 0 < FpPoly.degree (GFq.modulus Entry21) := by
+example :
+    (Conway.CommittedEntry.entry (p := 2) (n := 1)) = Conway.supportedEntry_2_1 :=
+  rfl
+#guard coeffNats (GFqC.modulus (p := 2) (n := 1)) = [1, 1]
+#guard GFqC.modulus (p := 2) (n := 1) =
+  GFq.modulus Conway.supportedEntry_2_1
+#guard GFqC.modulus (p := 2) (n := 1) =
+  Conway.conwayPoly 2 1 Conway.supportedEntry_2_1
+#guard 0 < FpPoly.degree (GFqC.modulus (p := 2) (n := 1))
+example : 0 < FpPoly.degree (GFqC.modulus (p := 2) (n := 1)) := by
   simp
 
 example : 0 < (1 : Nat) ∧ 1 < 64 := by
   simp
 
-example : FpPoly.Irreducible (GFq.modulus Entry21) := by
+example : FpPoly.Irreducible (GFqC.modulus (p := 2) (n := 1)) := by
   grind
 
 example (h : Conway.SupportedEntry 2 1) : Hex.Nat.Prime 2 := by
@@ -129,30 +135,33 @@ example : GF2Poly.Irreducible (GF2q.modulus (n := 1)) := by
 #guard genericReprNats (generic #[0, 1]) = [1]
 #guard genericReprNats (generic #[1, 1]) = []
 #guard genericReprNats (generic #[0, 0, 0, 1]) = [1]
-#guard GFq.repr (generic #[0, 1]) =
-  GFqRing.reduceMod (GFq.modulus Entry21) (polyTwo #[0, 1])
-#guard GFq.repr (generic #[1, 1]) =
-  GFqRing.reduceMod (GFq.modulus Entry21) (polyTwo #[1, 1])
+#guard GFqC.repr (generic #[0, 1]) =
+  GFqRing.reduceMod (GFqC.modulus (p := 2) (n := 1)) (polyTwo #[0, 1])
+#guard GFqC.repr (generic #[1, 1]) =
+  GFqRing.reduceMod (GFqC.modulus (p := 2) (n := 1)) (polyTwo #[1, 1])
+#guard GFqC.repr (GFqC.ofPoly (p := 2) (n := 1) (polyTwo #[0, 1])) =
+  GFq.repr (GFq.ofPoly Conway.supportedEntry_2_1 (polyTwo #[0, 1]))
 
 example (x y z : Generic21) :
-    GFq.repr ((x + y) * z) =
-      GFqRing.reduceMod (GFq.modulus Entry21)
-        (GFqRing.reduceMod (GFq.modulus Entry21) (GFq.repr x + GFq.repr y) *
-          GFq.repr z) := by
+    GFqC.repr ((x + y) * z) =
+      GFqRing.reduceMod (GFqC.modulus (p := 2) (n := 1))
+        (GFqRing.reduceMod (GFqC.modulus (p := 2) (n := 1))
+          (GFqC.repr x + GFqC.repr y) * GFqC.repr z) := by
   simp
 
 -- The Frobenius wrapper matches the inherited `p`-th power on the
--- committed `GFq 2 1` entry and produces the expected representative.
-#guard genericReprNats (GFq.frob (generic #[1])) = [1]
-#guard genericReprNats (GFq.frob (generic #[0, 1])) = [1]
-#guard GFq.frob (generic #[0, 1]) = (generic #[0, 1]) ^ (2 : Nat)
+-- committed `GFqC 2 1` entry and produces the expected representative.
+#guard genericReprNats (GFqC.frob (generic #[1])) = [1]
+#guard genericReprNats (GFqC.frob (generic #[0, 1])) = [1]
+#guard GFqC.frob (generic #[0, 1]) = GFq.frob (generic #[0, 1])
+#guard GFqC.frob (generic #[0, 1]) = (generic #[0, 1]) ^ (2 : Nat)
 
 #guard coeffNats (GF2q.supportedEntry (n := 1)).poly = [1, 1]
 #guard Conway.luebeckConwayPolynomial? 2 1 =
   some (GF2q.supportedEntry (n := 1)).poly
 #guard GF2q.lower (n := 1) = 1
 #guard wordArray (GF2q.modulus (n := 1)) = #[3]
-#guard coeffNats (GFq.modulus Entry21) =
+#guard coeffNats (GFqC.modulus (p := 2) (n := 1)) =
   coeffNats (Conway.packedGF2FpPoly (GF2q.lower (n := 1)) 1)
 #guard wordArray (GF2q.modulus (n := 1)) =
   wordArray (GF2Poly.ofUInt64Monic (GF2q.lower (n := 1)) 1)
