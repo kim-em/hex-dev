@@ -317,7 +317,49 @@ correction (drop the double `precisionForCoeffBound`), which is soundness-
 sensitive and touches the CI-gated determinism cluster — not a cheap gate.
 Before claiming any "discharge hsep/hthr" / "CLD precision floor" fast-path
 issue, `#eval` `liftData.k` at the scheduled precisions and confirm it actually
-clears the CLD floor; as of #7928 it does not.
+clears the CLD floor; as of #7928 it did not.
+
+### Resolved by #7938 (schedule) + #7951 (gate); the gate cascade is large
+
+#7938 dropped the double `precisionForCoeffBound` so the schedule now iterates
+*coefficient bounds* `k` up to the cap `factorFastPrecisionCap f` (single
+conversion inside `toMonicLiftData`). #7951 then added the acceptance gate:
+`factorFastCoreWithBound`'s `.success` branch accepts only when
+`k ≥ cldCoeffFloor core = 2·max_j bhksCoeffBound (toMonic core).monic j`, else
+continues the schedule. Post-#7951, `success → k ≥ cldCoeffFloor core` (hence
+`hsep` via `precisionForCoeffBound_spec`) *is* derivable — that is the premise
+#7945's hsep/hthr proofs consume. Verify the floor numerically with a
+pure-integer `#eval` (`cldCoeffFloor`, `factorFastPrecisionCap`, the schedule)
+under `lake env lean` — for `cldGuardF` floor`=32`, cap`=50803201`, first gated
+success at `k=32`/`liftData.k=3` (`2·bhksCoeffBound=32 < 5^3=125`).
+
+Two traps when touching the gate:
+
+- **Adding an acceptance condition to `factorFastCoreWithBound` cascades through
+  the entire CI-gated capstone chain, not just the obvious determinism lemmas.**
+  Every wrapper whose conclusion asserts `factorFast … ≠ none` / `= some …`
+  needs the new side condition threaded as an *open hypothesis* (like `hno`):
+  the `*_of_recovery_on_schedule` / `*_of_forwardInputs_*` lemmas in
+  `Basic.lean` + `PartitionRefinement.lean`, **and** the whole festooned
+  `Recovery.lean` chain — the `_internalCapPositive*` variants and all ~18
+  `factorFast_terminates*` capstones (which route through `factorFast_terminates`
+  → `…_internalCapPositiveAndPrimeLowerBound`). Size it up front by grepping the
+  `hB_pos`/`one_le_factorFastPrecisionCap f`/`hchoose` arg chain (~30 lemmas);
+  do **not** regex-replace on `f primeData` (it appears pervasively in
+  hypothesis *types* like `CanonicalRecoveryTailInputs f primeData …`, so a blind
+  sed corrupts signatures — target exact call lines). The success→*property*
+  lemmas (`_product`, `_dvd`, `_some_all_of_recovery`, `_some_classifiedSuccess`)
+  stay signature-stable; they only need a `by_cases hfloor` in the `.success`
+  case. Discharging the floor side condition needs
+  `cldCoeffFloor core ≤ factorFastPrecisionCap f` (a `toMonic` coefficient-norm
+  vs `bhksBound`-slack analysis with no existing infra) — thread it, don't try
+  to prove it inline.
+- **Reducing the gate `ite` on a `k ≥ cldCoeffFloor core` condition in a
+  *goal*.** `rw [if_pos hge]` fails ("did not find pattern" — the `GE.ge`
+  Decidable instance the `rw` infers differs from the goal's) and `split` may
+  silently not fire. Use `simp only [ge_iff_le, hfloor, if_true]` (or
+  `simp [hclass, hfloor] at hfast` when reducing it inside a *hypothesis*, which
+  is robust to the instance gap).
 
 ## `Matrix` / `Vector` resolve to Mathlib's inside the Mathlib layer
 
