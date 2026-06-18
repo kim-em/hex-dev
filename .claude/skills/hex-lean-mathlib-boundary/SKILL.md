@@ -322,6 +322,28 @@ the boundary — the two `RingEquiv`s are different types. Inline `e`/`g`
 budget (same trap as the `set d := toMonicLiftData` warning above); name a thin
 `private def` for the repackaged `e` if you must, but reference it inline.
 
+### `GF2Poly` multiplication is carryless with no exported coeff-convolution
+
+Bridging `GF2Poly`'s product to `FpPoly 2` / Mathlib multiplication
+(`toFpPoly_mul`-shaped goals: `toFpPoly (p * q) = toFpPoly p * toFpPoly q`) is
+**not** a token swap, even though the issue body may say "coeff infrastructure
+is in-file". `GF2Poly` multiplies via carryless `clmul`, and the only public
+product-coefficient lemma is `Hex.GF2Poly.coeff_mul : (p * q).coeff n =
+coeffWords (mulWords p.words q.words) n` — the *word-level* carryless product,
+**not** a coefficient convolution. There is **no** exported lemma of the shape
+`(p * q).coeff n = ⊕_{i+j=n} (p.coeff i && q.coeff j)`; the convolution
+internals (`clmulCoeffAt`, `clmulSourcePairCoeff`, `coeffWords_mulWords_contrib`)
+are all `private` to `HexGF2/Multiply.lean`, so they are unreachable from the
+Mathlib bridge. Closing such a goal needs *new infrastructure*: (1) a public
+carryless-convolution coeff lemma in `HexGF2/Multiply.lean`, proved from the
+private internals by reindexing the (word, bit) double decomposition
+`64*I + A` / `64*J + B` into flat indices `s + t = n`; plus (2) a `ZMod64 2`
+parity-sum bridge (the diagonal `mulCoeffSum` over `ZMod64 2` of indicator
+coefficients = XOR parity). The `*_one`/`*_add`/inverse directions of the same
+bridge *are* in-file (coeff-level: `coeff_toFpPoly` + `coeff_ofFpPoly` via the
+`packWord` bit-extraction helpers); only `mul` carries this gap. (#7900 landed
+4/5; the `mul` bridge is #7901.)
+
 ## The Mathlib layer *models* executable definitions
 
 The bridge does not just prove lemmas about the executable types; it carries
