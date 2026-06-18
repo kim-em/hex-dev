@@ -1,6 +1,6 @@
 ---
 name: hex-lean-mathlib-boundary
-description: Gotchas for the Mathlib-free/Mathlib boundary in HexBerlekampZassenhausMathlib and similar *Mathlib Lean layers (ZMod64, FpPoly, DensePoly, ZPoly). Read before proving lemmas that mix the executable types with Mathlib Polynomial / ZMod algebra, OR before verifying any change to a *Mathlib bridge file — `ci.yml` builds the whole `HexBerlekampZassenhausMathlib` library (and transitively `HexBerlekampMathlib`), so those layers are merge-gating and must stay green (see "The Mathlib layer IS CI-gated").
+description: Gotchas for the Mathlib-free/Mathlib boundary in HexBerlekampZassenhausMathlib and similar *Mathlib Lean layers (ZMod64, FpPoly, DensePoly, ZPoly). Read before proving lemmas that mix the executable types with Mathlib Polynomial / ZMod algebra, OR before adding/proving ANY lemma in the Mathlib-free executable layer (`HexBerlekampZassenhaus/`, `HexLLL/`, etc. — NOT the `*Mathlib` libs), where Mathlib tactics like `by_contra`/`push_neg`/`ring`/`set` and lemmas like `lt_of_lt_of_le` are unavailable (see "Proving inside the Mathlib-free files"), OR before verifying any change to a *Mathlib bridge file — `ci.yml` builds the whole `HexBerlekampZassenhausMathlib` library (and transitively `HexBerlekampMathlib`), so those layers are merge-gating and must stay green (see "The Mathlib layer IS CI-gated").
 allowed-tools: Bash, Read, Grep, Glob
 ---
 
