@@ -6442,6 +6442,335 @@ example (p q : GF2Poly) (n : Nat) :
     (p * q).coeff n = coeffWords (mulWords p.words q.words) n := by
   simp
 
+/-! ### Public carryless-convolution coefficient lemma
+
+`coeff_mul_diagonal` (below) expresses bit `n` of a packed product as the
+XOR-parity of the diagonal `p.coeff i && q.coeff (n - i)` over `i ∈ range (n+1)`.
+This is the public coefficient-level convolution the Mathlib bridge
+`HexGF2Mathlib` needs to relate the carryless `clmul` product to the schoolbook
+`mulCoeffSum` over `ZMod64 2`. The proof reindexes the `(word, bit)` double
+decomposition `64 * I + A` / `64 * J + B` of the internal source-pair sum into
+the flat coefficient indices `s + t = n`. -/
+
+/-- Split `range (m + k)` into a low block and a shifted high block. -/
+private theorem range_eq_append_map_add (m k : Nat) :
+    List.range (m + k) = List.range m ++ (List.range k).map (· + m) := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+      rw [Nat.add_succ, List.range_succ, ih, List.range_succ, List.map_append,
+        List.map_cons, List.map_nil, List.append_assoc, Nat.add_comm m k]
+
+/-- Flattening a shifted index map commutes with `flatMap`. -/
+private theorem flatMap_map_add_shift (l : List Nat) (c : Nat) (G : Nat → List Bool) :
+    (l.map (· + c)).flatMap G = l.flatMap (fun a => G (a + c)) := by
+  induction l with
+  | nil => rfl
+  | cons x xs ih => simp [List.flatMap_cons, ih]
+
+/-- Range-product reindexing for `map`: iterating `i < W` then `a < d` over the
+combined index `d * i + a` enumerates `range (d * W)` exactly. -/
+private theorem flatMap_range_map_range (d W : Nat) (g : Nat → Bool) :
+    (List.range W).flatMap (fun i => (List.range d).map (fun a => g (d * i + a))) =
+      (List.range (d * W)).map g := by
+  induction W with
+  | zero => simp
+  | succ W ih =>
+      rw [List.range_succ, List.flatMap_append, List.flatMap_cons, List.flatMap_nil,
+        List.append_nil, ih, Nat.mul_succ, range_eq_append_map_add (d * W) d,
+        List.map_append, List.map_map]
+      congr 1
+      apply List.map_congr_left
+      intro a _ha
+      simp [Function.comp, Nat.add_comm (d * W) a]
+
+/-- Range-product reindexing for `flatMap`: iterating `i < W` then `a < d` over
+the combined index `d * i + a` enumerates `range (d * W)` exactly. -/
+private theorem flatMap_range_flatMap_range (d W : Nat) (G : Nat → List Bool) :
+    (List.range W).flatMap (fun i => (List.range d).flatMap (fun a => G (d * i + a))) =
+      (List.range (d * W)).flatMap G := by
+  induction W with
+  | zero => simp
+  | succ W ih =>
+      rw [List.range_succ, List.flatMap_append, List.flatMap_cons, List.flatMap_nil,
+        List.append_nil, ih, Nat.mul_succ, range_eq_append_map_add (d * W) d,
+        List.flatMap_append, flatMap_map_add_shift]
+      congr 1
+      apply List.flatMap_congr_left
+      intro a _ha
+      rw [Nat.add_comm (d * W) a]
+
+/-- Singleton parity. -/
+private theorem xorBoolList_singleton (x : Bool) : xorBoolList [x] = x := by
+  cases x <;> rfl
+
+/-- Selecting a single index by decidable equality collapses the parity to that
+entry, or `false` when the index is out of range. -/
+private theorem xorBoolList_map_decide_eq (M T : Nat) (g : Nat → Bool) :
+    xorBoolList ((List.range M).map (fun t => g t && decide (t = T))) =
+      if T < M then g T else false := by
+  by_cases hT : T < M
+  · rw [if_pos hT]
+    have hmap : (List.range M).map (fun t => g t && decide (t = T)) =
+        (List.range M).map (fun t => g T && decide (t = T)) := by
+      apply List.map_congr_left
+      intro t _ht
+      by_cases htT : t = T
+      · subst htT; rfl
+      · simp [htT]
+    rw [hmap, xorBoolList_range_single_decide (g T) hT]
+  · rw [if_neg hT]
+    have hmap : (List.range M).map (fun t => g t && decide (t = T)) =
+        (List.range M).map (fun _ => false) := by
+      apply List.map_congr_left
+      intro t ht
+      have htlt : t < M := List.mem_range.mp ht
+      have htne : t ≠ T := by omega
+      simp [htne]
+    rw [hmap, xorBoolList_range_false]
+
+/-- Extending the mapped range past a point where `f` is identically `false`
+does not change the parity. -/
+private theorem xorBoolList_map_range_reduce (f : Nat → Bool) (m : Nat)
+    (hzero : ∀ s, m ≤ s → f s = false) :
+    ∀ d, xorBoolList ((List.range (m + d)).map f) =
+      xorBoolList ((List.range m).map f)
+  | 0 => by simp
+  | d + 1 => by
+      rw [Nat.add_succ, List.range_succ, List.map_append, xorBoolList_append,
+        xorBoolList_map_range_reduce f m hzero d]
+      have hf : f (m + d) = false := hzero (m + d) (by omega)
+      simp only [List.map_cons, List.map_nil, hf, xorBoolList_singleton]
+      cases xorBoolList ((List.range m).map f) <;> rfl
+
+/-- Two mapped ranges with the same `false`-from-`m` tail have equal parity. -/
+private theorem xorBoolList_map_range_eq_of_ge (f : Nat → Bool) (A B m : Nat)
+    (hzero : ∀ s, m ≤ s → f s = false) (hA : m ≤ A) (hB : m ≤ B) :
+    xorBoolList ((List.range A).map f) = xorBoolList ((List.range B).map f) := by
+  obtain ⟨a, rfl⟩ : ∃ a, A = m + a := ⟨A - m, by omega⟩
+  obtain ⟨b, rfl⟩ : ∃ b, B = m + b := ⟨B - m, by omega⟩
+  rw [xorBoolList_map_range_reduce f m hzero a, xorBoolList_map_range_reduce f m hzero b]
+
+/-- Factor a constant left `AND` out of a mapped parity. -/
+private theorem xorBoolList_map_and_left' (value : Bool) (l : List Nat) (X : Nat → Bool) :
+    xorBoolList (l.map (fun t => value && X t)) = (value && xorBoolList (l.map X)) := by
+  have h := xorBoolList_map_and_left value (l.map X)
+  rw [List.map_map] at h
+  exact h
+
+/-- Selecting the diagonal index `t = n - s` collapses the parity to that entry,
+or `false` outside the range. -/
+private theorem xorBoolList_map_decide_add (M s n : Nat) (g : Nat → Bool) :
+    xorBoolList ((List.range M).map (fun t => g t && decide (s + t = n))) =
+      if s ≤ n then (if n - s < M then g (n - s) else false) else false := by
+  by_cases hsn : s ≤ n
+  · rw [if_pos hsn]
+    have hmap : (List.range M).map (fun t => g t && decide (s + t = n)) =
+        (List.range M).map (fun t => g t && decide (t = n - s)) := by
+      apply List.map_congr_left
+      intro t _ht
+      by_cases h : t = n - s
+      · subst h
+        simp [show s + (n - s) = n from by omega]
+      · have hne : ¬ (s + t = n) := by omega
+        simp [h, hne]
+    rw [hmap, xorBoolList_map_decide_eq M (n - s) g]
+  · rw [if_neg hsn]
+    have hmap : (List.range M).map (fun t => g t && decide (s + t = n)) =
+        (List.range M).map (fun _ => false) := by
+      apply List.map_congr_left
+      intro t _ht
+      have hne : ¬ (s + t = n) := by omega
+      simp [hne]
+    rw [hmap, xorBoolList_range_false]
+
+/-- Per-word-pair source decomposition with a unified guard: bit `n` of the
+carryless product of two words at combined slot `c` is the XOR-parity over all
+source bit pairs `(a, b)` whose product `64 * c + a + b` lands at `n`. -/
+private theorem clmulCoeffAt_diag (c : Nat) (x y : UInt64) (n : Nat) :
+    clmulCoeffAt c x y n =
+      xorBoolList ((List.range 64).flatMap (fun a =>
+        (List.range 64).map (fun b =>
+          (wordBitAt x a && wordBitAt y b) && decide (64 * c + a + b = n)))) := by
+  have hswap :
+      xorBoolList ((List.range 64).flatMap (fun a =>
+        (List.range 64).map (fun b =>
+          (wordBitAt x a && wordBitAt y b) && decide (64 * c + a + b = n)))) =
+      xorBoolList ((List.range 64).flatMap (fun b =>
+        (List.range 64).map (fun a =>
+          (wordBitAt x a && wordBitAt y b) && decide (64 * c + a + b = n)))) :=
+    xorBoolList_wordPairs_swap 64 64
+      (fun a b => (wordBitAt x a && wordBitAt y b) && decide (64 * c + a + b = n))
+  rw [hswap, clmulCoeffAt_sourcePairCoeff]
+  by_cases hlow : n / 64 = c
+  · rw [if_pos hlow]
+    unfold clmulSourcePairCoeff
+    apply congrArg xorBoolList
+    apply List.flatMap_congr_left
+    intro b hb
+    apply List.map_congr_left
+    intro a ha
+    have ha' : a < 64 := List.mem_range.mp ha
+    have hb' : b < 64 := List.mem_range.mp hb
+    by_cases h : 64 * c + a + b = n
+    · have h2 : a + b = n % 64 := by omega
+      simp [h, h2]
+    · have h2 : ¬ (a + b = n % 64) := by omega
+      simp [h, h2]
+  · by_cases hhigh : n / 64 = c + 1
+    · rw [if_neg hlow, if_pos hhigh]
+      unfold clmulSourcePairCoeff
+      apply congrArg xorBoolList
+      apply List.flatMap_congr_left
+      intro b hb
+      apply List.map_congr_left
+      intro a ha
+      have ha' : a < 64 := List.mem_range.mp ha
+      have hb' : b < 64 := List.mem_range.mp hb
+      by_cases h : 64 * c + a + b = n
+      · have h2 : a + b = n % 64 + 64 := by omega
+        simp [h, h2]
+      · have h2 : ¬ (a + b = n % 64 + 64) := by omega
+        simp [h, h2]
+    · rw [if_neg hlow, if_neg hhigh]
+      have hguard :
+          (List.range 64).flatMap (fun b =>
+            (List.range 64).map (fun a =>
+              (wordBitAt x a && wordBitAt y b) && decide (64 * c + a + b = n))) =
+          (List.range 64).flatMap (fun b =>
+            (List.range 64).map (fun _ : Nat => (false : Bool))) := by
+        apply List.flatMap_congr_left
+        intro b hb
+        apply List.map_congr_left
+        intro a ha
+        have ha' : a < 64 := List.mem_range.mp ha
+        have hb' : b < 64 := List.mem_range.mp hb
+        have hne : 64 * c + a + b ≠ n := by omega
+        simp [hne]
+      rw [hguard, ← xorBoolList_map_xorBoolList]
+      simp [xorBoolList_range_false]
+
+/-- Carryless-convolution coefficient law: bit `n` of a packed `GF(2)` product
+is the XOR-parity of the diagonal `p.coeff i && q.coeff (n - i)` for
+`i ∈ range (n + 1)`. This is the public coefficient-level convolution that the
+`HexGF2Mathlib` bridge uses to relate the carryless `clmul` product to the
+schoolbook `mulCoeffSum` over `ZMod64 2`. -/
+theorem coeff_mul_diagonal (p q : GF2Poly) (n : Nat) :
+    (p * q).coeff n =
+      xorBoolList ((List.range (n + 1)).map (fun s => p.coeff s && q.coeff (n - s))) := by
+  rw [coeff_mul, coeffWords_mulWords_contrib]
+  calc
+    xorBoolList ((List.range p.words.size).flatMap (fun i =>
+        (List.range q.words.size).map (fun j =>
+          clmulCoeffAt (i + j) p.words[i]! q.words[j]! n)))
+      = xorBoolList ((List.range p.words.size).flatMap (fun i =>
+          (List.range q.words.size).flatMap (fun j =>
+            (List.range 64).flatMap (fun a => (List.range 64).map (fun b =>
+              (wordBitAt p.words[i]! a && wordBitAt q.words[j]! b) &&
+                decide (64 * (i + j) + a + b = n)))))) := by
+        apply xorBoolList_flatMap_congr_xor
+        intro i _hi
+        have hmap : (List.range q.words.size).map (fun j =>
+              clmulCoeffAt (i + j) p.words[i]! q.words[j]! n)
+            = (List.range q.words.size).map (fun j =>
+              xorBoolList ((List.range 64).flatMap (fun a => (List.range 64).map (fun b =>
+                (wordBitAt p.words[i]! a && wordBitAt q.words[j]! b) &&
+                  decide (64 * (i + j) + a + b = n))))) := by
+          apply List.map_congr_left
+          intro j _hj
+          exact clmulCoeffAt_diag (i + j) p.words[i]! q.words[j]! n
+        rw [hmap, xorBoolList_map_xorBoolList]
+    _ = xorBoolList ((List.range p.words.size).flatMap (fun i =>
+          (List.range q.words.size).flatMap (fun j =>
+            (List.range 64).flatMap (fun a => (List.range 64).map (fun b =>
+              (p.coeff (64 * i + a) && q.coeff (64 * j + b)) &&
+                decide (64 * i + a + (64 * j + b) = n)))))) := by
+        apply congrArg xorBoolList
+        apply List.flatMap_congr_left; intro i _hi
+        apply List.flatMap_congr_left; intro j _hj
+        apply List.flatMap_congr_left; intro a ha
+        apply List.map_congr_left; intro b hb
+        have ha' : a < 64 := List.mem_range.mp ha
+        have hb' : b < 64 := List.mem_range.mp hb
+        rw [wordBitAt_getElem!_eq_coeff p ha', wordBitAt_getElem!_eq_coeff q hb',
+          show 64 * (i + j) + a + b = 64 * i + a + (64 * j + b) from by omega]
+    _ = xorBoolList ((List.range p.words.size).flatMap (fun i =>
+          (List.range 64).flatMap (fun a => (List.range q.words.size).flatMap (fun j =>
+            (List.range 64).map (fun b =>
+              (p.coeff (64 * i + a) && q.coeff (64 * j + b)) &&
+                decide (64 * i + a + (64 * j + b) = n)))))) := by
+        apply xorBoolList_flatMap_congr_xor
+        intro i _hi
+        exact xorBoolList_flatMap_ranges_swap_list q.words.size 64
+          (fun j a => (List.range 64).map (fun b =>
+            (p.coeff (64 * i + a) && q.coeff (64 * j + b)) &&
+              decide (64 * i + a + (64 * j + b) = n)))
+    _ = xorBoolList ((List.range (64 * p.words.size)).flatMap (fun s =>
+          (List.range q.words.size).flatMap (fun j => (List.range 64).map (fun b =>
+            (p.coeff s && q.coeff (64 * j + b)) && decide (s + (64 * j + b) = n))))) := by
+        apply congrArg xorBoolList
+        exact flatMap_range_flatMap_range 64 p.words.size (fun s =>
+          (List.range q.words.size).flatMap (fun j => (List.range 64).map (fun b =>
+            (p.coeff s && q.coeff (64 * j + b)) && decide (s + (64 * j + b) = n))))
+    _ = xorBoolList ((List.range (64 * p.words.size)).flatMap (fun s =>
+          (List.range (64 * q.words.size)).map (fun t =>
+            (p.coeff s && q.coeff t) && decide (s + t = n)))) := by
+        apply congrArg xorBoolList
+        apply List.flatMap_congr_left
+        intro s _hs
+        exact flatMap_range_map_range 64 q.words.size (fun t =>
+          (p.coeff s && q.coeff t) && decide (s + t = n))
+    _ = xorBoolList ((List.range (64 * p.words.size)).map (fun s =>
+          xorBoolList ((List.range (64 * q.words.size)).map (fun t =>
+            (p.coeff s && q.coeff t) && decide (s + t = n))))) := by
+        rw [← xorBoolList_map_xorBoolList]
+    _ = xorBoolList ((List.range (64 * p.words.size)).map (fun s =>
+          p.coeff s && (if s ≤ n then q.coeff (n - s) else false))) := by
+        apply congrArg xorBoolList
+        apply List.map_congr_left
+        intro s _hs
+        have hbody : (List.range (64 * q.words.size)).map (fun t =>
+              (p.coeff s && q.coeff t) && decide (s + t = n))
+            = (List.range (64 * q.words.size)).map (fun t =>
+              p.coeff s && (q.coeff t && decide (s + t = n))) := by
+          apply List.map_congr_left; intro t _ht; rw [Bool.and_assoc]
+        rw [hbody, xorBoolList_map_and_left' (p.coeff s) (List.range (64 * q.words.size))
+              (fun t => q.coeff t && decide (s + t = n)),
+          xorBoolList_map_decide_add (64 * q.words.size) s n (fun t => q.coeff t)]
+        congr 1
+        by_cases hsn : s ≤ n
+        · rw [if_pos hsn, if_pos hsn]
+          by_cases hlt : n - s < 64 * q.words.size
+          · rw [if_pos hlt]
+          · rw [if_neg hlt]
+            symm
+            apply coeff_eq_false_of_wordCount_le
+            simp only [wordCount]
+            omega
+        · rw [if_neg hsn, if_neg hsn]
+    _ = xorBoolList ((List.range (n + 1)).map (fun s => p.coeff s && q.coeff (n - s))) := by
+        have hzero : ∀ s, min (64 * p.words.size) (n + 1) ≤ s →
+            (p.coeff s && (if s ≤ n then q.coeff (n - s) else false)) = false := by
+          intro s hs
+          have hcase : 64 * p.words.size ≤ s ∨ n + 1 ≤ s := by omega
+          rcases hcase with h | h
+          · have hp : p.coeff s = false := by
+              apply coeff_eq_false_of_wordCount_le
+              simp only [wordCount]
+              omega
+            simp [hp]
+          · have hsn : ¬ (s ≤ n) := by omega
+            simp [hsn]
+        rw [xorBoolList_map_range_eq_of_ge
+              (fun s => p.coeff s && (if s ≤ n then q.coeff (n - s) else false))
+              (64 * p.words.size) (n + 1) (min (64 * p.words.size) (n + 1))
+              hzero (Nat.min_le_left _ _) (Nat.min_le_right _ _)]
+        apply congrArg xorBoolList
+        apply List.map_congr_left
+        intro s hs
+        have hsn : s ≤ n := by have := List.mem_range.mp hs; omega
+        simp [hsn]
+
 /-- The unit polynomial is the degree-zero monomial. -/
 theorem one_eq_monomial_zero : (1 : GF2Poly) = monomial 0 := by
   change one = monomial 0
