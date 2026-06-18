@@ -1946,6 +1946,97 @@ def supportShortVectorData_of_recoveredLift
   rw [hcoord_eq j]
   exact le_trans (ht j) hcard
 
+/-- The accumulator of a `max`-fold never decreases below its seed. -/
+private theorem foldl_max_ge_init (l : List Nat) (f : Nat → Nat) :
+    ∀ init : Nat, init ≤ l.foldl (fun acc x => max acc (f x)) init := by
+  induction l with
+  | nil => intro init; simp
+  | cons x xs ih =>
+    intro init
+    simp only [List.foldl_cons]
+    exact le_trans (le_max_left init (f x)) (ih (max init (f x)))
+
+/-- Every member of a list is bounded by the running `max`-fold of `f`. -/
+private theorem foldl_max_ge_mem (l : List Nat) (f : Nat → Nat) :
+    ∀ (init j : Nat), j ∈ l → f j ≤ l.foldl (fun acc x => max acc (f x)) init := by
+  induction l with
+  | nil => intro init j hj; simp at hj
+  | cons x xs ih =>
+    intro init j hj
+    simp only [List.foldl_cons]
+    rcases List.mem_cons.mp hj with heq | hj'
+    · rw [heq]
+      exact le_trans (le_max_right init (f x)) (foldl_max_ge_init xs f (max init (f x)))
+    · exact ih (max init (f x)) j hj'
+
+/-- Each per-coordinate BHKS coefficient bound of the monic transform is
+dominated by the CLD column-adequacy floor.  For coordinates past the degree the
+bound is zero (the binomial factor vanishes); for coordinates in range it is one
+of the terms of the `max`-fold that defines `cldCoeffFloor`. -/
+theorem two_mul_bhksCoeffBound_le_cldCoeffFloor (core : Hex.ZPoly) (j : Nat) :
+    2 * Hex.bhksCoeffBound (Hex.ZPoly.toMonic core).monic j ≤ Hex.cldCoeffFloor core := by
+  have key :
+      Hex.bhksCoeffBound (Hex.ZPoly.toMonic core).monic j ≤
+        (List.range ((Hex.ZPoly.toMonic core).monic.degree?.getD 0 + 1)).foldl
+          (fun acc j => max acc (Hex.bhksCoeffBound (Hex.ZPoly.toMonic core).monic j)) 0 := by
+    by_cases hj : j ≤ (Hex.ZPoly.toMonic core).monic.degree?.getD 0
+    · exact foldl_max_ge_mem _
+        (fun j => Hex.bhksCoeffBound (Hex.ZPoly.toMonic core).monic j) 0 j
+        (List.mem_range.mpr (by omega))
+    · have hlt : (Hex.ZPoly.toMonic core).monic.degree?.getD 0 - 1 < j := by omega
+      have hz : Hex.bhksCoeffBound (Hex.ZPoly.toMonic core).monic j = 0 := by
+        simp only [Hex.bhksCoeffBound, Hex.Nat.choose_eq_zero_of_lt hlt, Nat.zero_mul]
+      rw [hz]; exact Nat.zero_le _
+  simp only [Hex.cldCoeffFloor]
+  omega
+
+/-- The BHKS separation `hsep` follows from the CLD-adequacy gate
+`cldCoeffFloor core ≤ k`: at the lift precision `precisionForCoeffBound k p`
+the modulus `p ^ a` clears `2 · bhksCoeffBound (toMonic core).monic j` for every
+coordinate `j`.  This is the input the `_of_toMonicRepresents` recovery lemma
+previously had to assume; post-gate it is derivable. -/
+theorem two_mul_bhksCoeffBound_lt_pow_of_cldCoeffFloor_le
+    (core : Hex.ZPoly) (k : Nat) (primeData : Hex.PrimeChoiceData)
+    (hp : 2 ≤ primeData.p) (hfloor : Hex.cldCoeffFloor core ≤ k) :
+    ∀ j, 2 * Hex.bhksCoeffBound (Hex.ZPoly.toMonic core).monic j <
+        (Hex.ZPoly.toMonicLiftData core k primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core k primeData).k := by
+  intro j
+  have hpk : (Hex.ZPoly.toMonicLiftData core k primeData).p = primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_p _ _ _
+  have hkk : (Hex.ZPoly.toMonicLiftData core k primeData).k
+      = Hex.precisionForCoeffBound k primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_k _ _ _
+  rw [hpk, hkk]
+  have hspec : 2 * k < primeData.p ^ Hex.precisionForCoeffBound k primeData.p :=
+    Hex.precisionForCoeffBound_spec hp k
+  have hfold := two_mul_bhksCoeffBound_le_cldCoeffFloor core j
+  omega
+
+/-- The BHKS cut threshold `hthr` follows from the CLD-adequacy gate
+`cldCoeffFloor core ≤ k`: every per-coordinate Hensel cut threshold stays below
+the lift precision `precisionForCoeffBound k p`.  Companion of
+`two_mul_bhksCoeffBound_lt_pow_of_cldCoeffFloor_le`. -/
+theorem bhksCoeffCutThreshold_le_of_cldCoeffFloor_le
+    (core : Hex.ZPoly) (k : Nat) (primeData : Hex.PrimeChoiceData)
+    (hp : 2 ≤ primeData.p) (hfloor : Hex.cldCoeffFloor core ≤ k) :
+    ∀ j, Hex.bhksCoeffCutThreshold (Hex.ZPoly.toMonicLiftData core k primeData).p
+          (Hex.ZPoly.toMonic core).monic j ≤
+        (Hex.ZPoly.toMonicLiftData core k primeData).k := by
+  intro j
+  have hpk : (Hex.ZPoly.toMonicLiftData core k primeData).p = primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_p _ _ _
+  have hkk : (Hex.ZPoly.toMonicLiftData core k primeData).k
+      = Hex.precisionForCoeffBound k primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_k _ _ _
+  rw [hpk, hkk]
+  unfold Hex.bhksCoeffCutThreshold
+  apply Hex.ceilLogP_le_of_le_pow hp
+  have hspec : 2 * k < primeData.p ^ Hex.precisionForCoeffBound k primeData.p :=
+    Hex.precisionForCoeffBound_spec hp k
+  have hfold := two_mul_bhksCoeffBound_le_cldCoeffFloor core j
+  omega
+
 /--
 Package the non-monic fast path's monic-coordinate recovery witness as BHKS
 short-vector data for the corresponding support.
