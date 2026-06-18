@@ -3935,7 +3935,7 @@ theorem linearPow_succ_left (f : FpPoly p) (n : Nat) :
 /-- The first `linearPow` of a polynomial is the polynomial itself. -/
 @[simp, grind =] theorem linearPow_one (f : FpPoly p) :
     linearPow f 1 = f := by
-  rw [linearPow_succ, linearPow_zero, one_mul]
+  grind
 
 /-- `linearPow` turns exponent addition into polynomial multiplication. -/
 theorem linearPow_add (f : FpPoly p) (m n : Nat) :
