@@ -7005,18 +7005,49 @@ def toMonicLiftData
 
 end ZPoly
 
+/--
+CLD column-adequacy floor for the fast-core acceptance gate.
+
+A successful BHKS recovery at schedule coefficient bound `k` only certifies
+column adequacy (the BHKS Lemma 5.7 separation `hsep`) once the lift precision
+`precisionForCoeffBound k primeData.p` clears the per-coordinate CLD threshold.
+Equivalently, the schedule bound `k` must reach twice the largest per-coordinate
+BHKS coefficient bound of the monic transform `(toMonic core).monic`: then
+`p ^ (precisionForCoeffBound k p) > 2·k ≥ 2·cldCoeffFloor core`, so
+`2·bhksCoeffBound (toMonic core).monic j < p ^ (precisionForCoeffBound k p)`
+holds for every coordinate `j`.  The floor is independent of the prime.
+-/
+def cldCoeffFloor (core : ZPoly) : Nat :=
+  let monicCore := (ZPoly.toMonic core).monic
+  let n := monicCore.degree?.getD 0
+  2 * (List.range (n + 1)).foldl (fun acc j => max acc (bhksCoeffBound monicCore j)) 0
+
 /-- BHKS fast-core recombination loop, exposed publicly so that Mathlib-side
 lemmas can quantify over its success state.  Internally driven by the
 classified BHKS recovery `bhksRecoverClassified`; `none` indicates the
 loop exhausted its precision bound without producing a verified factor
-list. -/
+list.
+
+The successful classified recovery is only *accepted* once the schedule
+coefficient bound `k` reaches `cldCoeffFloor core` — the CLD column-adequacy
+floor that makes the lift precision satisfy the BHKS separation `hsep`.  A
+success below the floor is treated like the non-success classes: the loop
+continues to the next scheduled precision (and reports `none` only if the cap
+`B` is reached first).  The schedule reaches the cap `B`, and the cap clears
+the floor, so acceptance is only deferred, never lost. -/
 def factorFastCoreWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Nat → Nat → Option (Array ZPoly)
   | _k, 0 => none
   | k, fuel + 1 =>
       let liftData := ZPoly.toMonicLiftData core k primeData
       match bhksRecoverClassified core liftData with
-      | .success factors => some factors
+      | .success factors =>
+        if k ≥ cldCoeffFloor core then
+          some factors
+        else if k ≥ B then
+          none
+        else
+          factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel
       | .candidateFailure =>
         if k ≥ B then
           none
@@ -7183,6 +7214,7 @@ theorem cap_mem_henselPrecisionSchedule (B : Nat) :
 private theorem factorFastCoreWithBound_isSome_of_recovery_on_schedule
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {start fuel target : Nat} {factors : Array ZPoly}
+    (hfloor : cldCoeffFloor core ≤ target)
     (hmem : target ∈ henselPrecisionSchedule B start fuel)
     (hrecover :
       bhksRecover? core (ZPoly.toMonicLiftData core target primeData) = some factors) :
@@ -7194,7 +7226,26 @@ private theorem factorFastCoreWithBound_isSome_of_recovery_on_schedule
       rw [factorFastCoreWithBound]
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core start primeData) with
       | success xs =>
-          simp
+          by_cases hstart : start ≥ cldCoeffFloor core
+          · simp [hstart]
+          · by_cases hk : start ≥ B
+            · exfalso
+              have htarget : target = start := by
+                simpa [henselPrecisionSchedule, hk] using hmem
+              omega
+            · simp [hstart, hk]
+              have hmem' :
+                  target ∈
+                    henselPrecisionSchedule B (nextHenselPrecision start B) fuel := by
+                have hmem_tail :
+                    target = start ∨
+                      target ∈
+                        henselPrecisionSchedule B (nextHenselPrecision start B) fuel := by
+                  simpa [henselPrecisionSchedule, hk] using hmem
+                cases hmem_tail with
+                | inl htarget => omega
+                | inr htail => exact htail
+              exact ih hmem'
       | degenerate =>
           by_cases hk : start ≥ B
           · simp [hk]
@@ -7283,6 +7334,7 @@ Mignotte/cap precision.
 theorem factorFastCoreWithBound_eq_some_of_recovery_on_schedule_of_no_prior_recovery
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {start fuel target : Nat} {factors : Array ZPoly}
+    (hfloor : cldCoeffFloor core ≤ target)
     (hmem : target ∈ henselPrecisionSchedule B start fuel)
     (hno :
       ∀ k, k ∈ henselPrecisionSchedule B start fuel → k ≠ target →
@@ -7301,6 +7353,7 @@ theorem factorFastCoreWithBound_eq_some_of_recovery_on_schedule_of_no_prior_reco
           · subst target
             rw [bhksRecover?] at hrecover
             simp [hclass, BhksRecoveryResult.toOption] at hrecover
+            simp only [ge_iff_le, hfloor, if_true]
             exact congrArg some hrecover
           · have hstart_mem :
                 start ∈ henselPrecisionSchedule B start (fuel + 1) := by
@@ -7402,6 +7455,7 @@ theorem factorFastCoreWithBound_eq_some_of_recovery_on_schedule_of_no_prior_reco
 private theorem factorFastCoreWithBound_ne_none_of_recovery_on_schedule
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {start fuel target : Nat} {factors : Array ZPoly}
+    (hfloor : cldCoeffFloor core ≤ target)
     (hmem : target ∈ henselPrecisionSchedule B start fuel)
     (hrecover :
       bhksRecover? core (ZPoly.toMonicLiftData core target primeData) = some factors) :
@@ -7409,7 +7463,7 @@ private theorem factorFastCoreWithBound_ne_none_of_recovery_on_schedule
   intro hnone
   have hsome :=
     factorFastCoreWithBound_isSome_of_recovery_on_schedule
-      core B primeData hmem hrecover
+      core B primeData hfloor hmem hrecover
   rw [hnone] at hsome
   simp at hsome
 
@@ -7425,8 +7479,19 @@ private def factorFastCoreGuardPrimeData : PrimeChoiceData :=
     (initialHenselPrecision 1) (ZPoly.quadraticDoublingSteps 1 + 2) =
   none
 
+-- With the CLD-adequacy acceptance gate, a coefficient bound below
+-- `cldCoeffFloor cldGuardF = 32` cannot be accepted: the schedule reaches the
+-- cap `B` while every success is still below the floor, so the loop reports
+-- `none`.
 #guard factorFastCoreWithBound cldGuardF 4 factorFastCoreGuardPrimeData
     (initialHenselPrecision 4) (ZPoly.quadraticDoublingSteps 4 + 2) =
+  none
+
+-- At a bound that reaches the floor the first gated success is accepted: for
+-- `cldGuardF` this is schedule index `k = 32` (lift precision `liftData.k = 3`,
+-- modulus `5 ^ 3 = 125`), recovering the same factors.
+#guard factorFastCoreWithBound cldGuardF 32 factorFastCoreGuardPrimeData
+    (initialHenselPrecision 32) (ZPoly.quadraticDoublingSteps 32 + 2) =
   some bhksGuardFactors
 
 namespace ZPoly
@@ -8065,6 +8130,7 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
     (f : ZPoly) (primeData : PrimeChoiceData)
     {target : Nat} {coreFactors : Array ZPoly}
     (hB_pos : 1 ≤ factorFastPrecisionCap f)
+    (hfloor : cldCoeffFloor (normalizeForFactor f).squareFreeCore ≤ target)
     (hchoose :
       choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
     (hmem :
@@ -8086,7 +8152,7 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
     exact
       factorFastCoreWithBound_ne_none_of_recovery_on_schedule
         (normalizeForFactor f).squareFreeCore B primeData
-        (by simpa [B] using hmem) hrecover
+        hfloor (by simpa [B] using hmem) hrecover
   have hfactors_ne :
       factorFastFactorsWithBound f B ≠ none := by
     unfold factorFastFactorsWithBound
@@ -9031,10 +9097,15 @@ private def nonMonicCubicRegression : ZPoly :=
 
 -- The fast BHKS path lifts the monic transform and dilates recovered
 -- candidates back to the original non-monic coordinate, so it recombines this
--- cubic directly instead of deferring to the slow path.
+-- cubic directly instead of deferring to the slow path.  The CLD-adequacy
+-- acceptance gate only certifies a recovery once the coefficient bound reaches
+-- `cldCoeffFloor nonMonicCubicRegression = 312`; the public path runs at the
+-- cap `factorFastPrecisionCap`, which clears the floor, so the cubic is still
+-- recombined directly (the default Mignotte bound `42` is below the floor and
+-- would now defer to the slow path).
 #guard
   (match factorFastFactorsWithBound nonMonicCubicRegression
-      (ZPoly.defaultFactorCoeffBound nonMonicCubicRegression) with
+      (factorFastPrecisionCap nonMonicCubicRegression) with
     | some fs => fs.size = 3
     | none => false)
 
@@ -11582,9 +11653,14 @@ theorem factorFastCoreWithBound_product
       rw [factorFastCoreWithBound] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
-          simp [hclass] at hfast
-          cases hfast
-          exact bhksRecoverClassified_success_product hclass
+          by_cases hfloor : k ≥ cldCoeffFloor core
+          · simp [hclass, hfloor] at hfast
+            cases hfast
+            exact bhksRecoverClassified_success_product hclass
+          · by_cases hk : k ≥ B
+            · simp [hclass, hfloor, hk] at hfast
+            · simp [hclass, hfloor, hk] at hfast
+              exact ih _ coreFactors hfast
       | degenerate =>
           by_cases hk : k ≥ B
           · simp [hclass, hk] at hfast
@@ -11673,9 +11749,14 @@ private theorem factorFastCoreWithBound_some_classifiedSuccess
       rw [factorFastCoreWithBound] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
-          simp [hclass] at hfast
-          cases hfast
-          exact ⟨k, hclass⟩
+          by_cases hfloor : k ≥ cldCoeffFloor core
+          · simp [hclass, hfloor] at hfast
+            cases hfast
+            exact ⟨k, hclass⟩
+          · by_cases hk : k ≥ B
+            · simp [hclass, hfloor, hk] at hfast
+            · simp [hclass, hfloor, hk] at hfast
+              exact ih _ coreFactors hfast
       | degenerate =>
           by_cases hk : k ≥ B
           · simp [hclass, hk] at hfast
@@ -11766,9 +11847,14 @@ private theorem factorFastCoreWithBound_some_all_of_recovery
       rw [factorFastCoreWithBound] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
-          simp [hclass] at hfast
-          cases hfast
-          exact hrecover hclass
+          by_cases hfloor : k ≥ cldCoeffFloor core
+          · simp [hclass, hfloor] at hfast
+            cases hfast
+            exact hrecover hclass
+          · by_cases hk : k ≥ B
+            · simp [hclass, hfloor, hk] at hfast
+            · simp [hclass, hfloor, hk] at hfast
+              exact ih _ coreFactors hfast
       | degenerate =>
           by_cases hk : k ≥ B
           · simp [hclass, hk] at hfast
@@ -11837,9 +11923,14 @@ theorem factorFastCoreWithBound_some_dvd
       rw [factorFastCoreWithBound] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
-          simp [hclass] at hfast
-          cases hfast
-          exact bhksRecoverClassified_success_dvd hclass
+          by_cases hfloor : k ≥ cldCoeffFloor core
+          · simp [hclass, hfloor] at hfast
+            cases hfast
+            exact bhksRecoverClassified_success_dvd hclass
+          · by_cases hk : k ≥ B
+            · simp [hclass, hfloor, hk] at hfast
+            · simp [hclass, hfloor, hk] at hfast
+              exact ih _ coreFactors hfast
       | degenerate =>
           by_cases hk : k ≥ B
           · simp [hclass, hk] at hfast

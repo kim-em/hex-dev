@@ -2432,6 +2432,8 @@ theorem factorFast_ne_none_of_forwardInputs_on_schedule
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     {target : Nat}
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤ target)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hinputs :
@@ -2457,7 +2459,7 @@ theorem factorFast_ne_none_of_forwardInputs_on_schedule
       hinputs
   exact
     Hex.factorFast_ne_none_of_core_recovery_on_schedule
-      f primeData hB_pos hchoose hmem hrecover
+      f primeData hB_pos hfloor hchoose hmem hrecover
 
 /--
 Canonical scheduled-precision specialisation of
@@ -2473,6 +2475,9 @@ semantic hypotheses.
 theorem factorFast_ne_none_of_forwardInputs_at_cap
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hinputs :
@@ -2483,7 +2488,7 @@ theorem factorFast_ne_none_of_forwardInputs_at_cap
           (Hex.factorFastPrecisionCap f) primeData)) :
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_forwardInputs_on_schedule
-    f primeData hB_pos hchoose hinputs
+    f primeData hB_pos hfloor hchoose hinputs
     (Hex.cap_mem_henselPrecisionSchedule _)
 
 /-- The monic-core lift data produced by the public `factorFast` pipeline for
@@ -3386,6 +3391,9 @@ theorem factorFast_ne_none_of_capSeparationCanonicalIndicatorsAtPrecisionForCoef
           rows_pos localFactorIndex localFactorDegree H)
         trueSupports)
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hp : 2 ≤ (factorFastCapLiftData f primeData).p)
@@ -3417,7 +3425,7 @@ theorem factorFast_ne_none_of_capSeparationCanonicalIndicatorsAtPrecisionForCoef
       Array.polyProduct expectedFactors =
         (Hex.normalizeForFactor f).squareFreeCore) :
     Hex.factorFast f ≠ none :=
-  factorFast_ne_none_of_forwardInputs_at_cap f primeData hB_pos hchoose
+  factorFast_ne_none_of_forwardInputs_at_cap f primeData hB_pos hfloor hchoose
     (ForwardRecoveryInputs.ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound
       rows_pos trueSupports localFactorIndex localFactorDegree H
       hcap_le C hC_nonneg hC hcap hp hk nondegenerate
@@ -3485,6 +3493,9 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecis
       ((factorFastCapLiftData f primeData).p ^
         ((factorFastCapLiftData f primeData).k * localFactorDegree) : ℝ))
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hp : 2 ≤ (factorFastCapLiftData f primeData).p)
@@ -3521,7 +3532,7 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecis
     hcap_le C hC_nonneg hC
     (capSeparationOfBridgeData rows_pos localFactorIndex localFactorDegree H
       trueSupports hcut bridge (by omega) hlt)
-    hB_pos hchoose hp hk nondegenerate expectedFactors hsize hcandidate
+    hB_pos hfloor hchoose hp hk nondegenerate expectedFactors hsize hcandidate
     product_eq
 
 /--
@@ -3564,6 +3575,9 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecis
     (hcomparison :
       FactorFastCapLiftAnalyticComparison
         f primeData rows_pos localFactorIndex localFactorDegree H)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hp : 2 ≤ (factorFastCapLiftData f primeData).p)
@@ -3600,6 +3614,7 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecis
     hcap_le C hC_nonneg hC hcut bridge
     hcomparison.hadamard_l2norm_lt_divisor
     (one_le_factorFastPrecisionCap f)
+    hfloor
     hchoose hp hk nondegenerate expectedFactors hsize hcandidate product_eq
 
 /--
@@ -3653,6 +3668,9 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecis
       FactorFastCapLiftAnalyticComparison
         f primeData rows_pos localFactorIndex localFactorDegree H)
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hk :
@@ -3686,7 +3704,7 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecis
   factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecisionForCoeffBound
     f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
     hcap_le C hC_nonneg hC hcut bridge
-    hcomparison.hadamard_l2norm_lt_divisor hB_pos hchoose
+    hcomparison.hadamard_l2norm_lt_divisor hB_pos hfloor hchoose
     (Hex.choosePrimeData?_prime _ _ hchoose).two_le
     hk nondegenerate expectedFactors hsize hcandidate product_eq
 
@@ -3735,6 +3753,9 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecis
     (hcomparison :
       FactorFastCapLiftAnalyticComparison
         f primeData rows_pos localFactorIndex localFactorDegree H)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hk :
@@ -3768,7 +3789,7 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecis
   factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecisionForCoeffBound_internalPrimeLowerBound
     f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
     hcap_le C hC_nonneg hC hcut bridge hcomparison
-    (one_le_factorFastPrecisionCap f) hchoose hk nondegenerate expectedFactors
+    (one_le_factorFastPrecisionCap f) hfloor hchoose hk nondegenerate expectedFactors
     hsize hcandidate product_eq
 
 /--
@@ -3814,6 +3835,9 @@ theorem factorFast_ne_none_of_factorFastCapLiftBridgeDataCanonicalIndicatorsAtPr
     (hcomparison :
       FactorFastCapLiftAnalyticComparison
         f primeData rows_pos localFactorIndex localFactorDegree H)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hk :
@@ -3846,7 +3870,7 @@ theorem factorFast_ne_none_of_factorFastCapLiftBridgeDataCanonicalIndicatorsAtPr
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_capSeparationBridgeDataCanonicalIndicatorsAtPrecisionForCoeffBound_internalCapPositiveAndPrimeLowerBound
     f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
-    hcap_le C hC_nonneg hC hcut bridge hcomparison hchoose hk
+    hcap_le C hC_nonneg hC hcut bridge hcomparison hfloor hchoose hk
     nondegenerate expectedFactors hsize hcandidate product_eq
 
 /--
@@ -3888,6 +3912,9 @@ theorem factorFast_ne_none_of_mignottePrecisionCanonicalIndicatorsExpectedFactor
             rows_pos) =
         BHKS.trueFactorIndicatorLattice trueSupports)
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hp : 2 ≤ (factorFastCapLiftData f primeData).p)
@@ -3928,7 +3955,7 @@ theorem factorFast_ne_none_of_mignottePrecisionCanonicalIndicatorsExpectedFactor
                 (factorFastCapLiftData f primeData).k)) =
           expectedFactors.getD i 0) :
     Hex.factorFast f ≠ none :=
-  factorFast_ne_none_of_forwardInputs_at_cap f primeData hB_pos hchoose
+  factorFast_ne_none_of_forwardInputs_at_cap f primeData hB_pos hfloor hchoose
     (ForwardRecoveryInputs.ofMignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound
       rows_pos trueSupports lattice_eq_indicators hp hk nondegenerate
       selectedFactors expectedFactors hf_ne_zero htrue hselected hdilated)
@@ -3963,6 +3990,9 @@ theorem factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsA
             rows_pos) =
         BHKS.trueFactorIndicatorLattice trueSupports)
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hp : 2 ≤ (factorFastCapLiftData f primeData).p)
@@ -4007,7 +4037,7 @@ theorem factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsA
           expectedFactors.getD i 0) :
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_mignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound
-    f primeData rows_pos trueSupports lattice_eq_indicators hB_pos hchoose
+    f primeData rows_pos trueSupports lattice_eq_indicators hB_pos hfloor hchoose
     hp hk
     (ForwardRecoveryInputs.canonicalSupportIndicators_nondegenerate
       (projectedRowsOfLiftData
@@ -7315,6 +7345,9 @@ input plumbing behind a single bundle. -/
 theorem factorFast_ne_none_of_canonicalRecoveryInputs
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hp : 2 ≤ (factorFastCapLiftData f primeData).p)
@@ -7328,7 +7361,7 @@ theorem factorFast_ne_none_of_canonicalRecoveryInputs
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound
     f primeData inputs.rows_pos inputs.trueSupports inputs.lattice_eq_indicators
-    hB_pos hchoose hp hk inputs.projected_nonempty inputs.classes_two
+    hB_pos hfloor hchoose hp hk inputs.projected_nonempty inputs.classes_two
     inputs.class_nonempty inputs.class_bounds inputs.expectedFactors
     inputs.hf_ne_zero inputs.expected_true_factors inputs.product_congr
 
@@ -7342,6 +7375,9 @@ equation, the executable precision equation, and the mathematical
 -/
 theorem factorFast_ne_none_of_canonicalRecoveryInputs_internalCapPositiveAndPrimeLowerBound
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hk :
@@ -7355,6 +7391,7 @@ theorem factorFast_ne_none_of_canonicalRecoveryInputs_internalCapPositiveAndPrim
   factorFast_ne_none_of_canonicalRecoveryInputs
     f primeData
     (one_le_factorFastPrecisionCap f)
+    hfloor
     hchoose
     (Hex.choosePrimeData?_prime _ _ hchoose).two_le
     hk inputs
@@ -7385,6 +7422,9 @@ theorem factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsA
             (factorFastCapLiftData f primeData)
             rows_pos) =
         BHKS.trueFactorIndicatorLattice trueSupports)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hp : 2 ≤ (factorFastCapLiftData f primeData).p)
@@ -7431,6 +7471,7 @@ theorem factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsA
   factorFast_ne_none_of_mignottePrecisionCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound
     f primeData rows_pos trueSupports lattice_eq_indicators
     (one_le_factorFastPrecisionCap f)
+    hfloor
     hchoose hp hk hprojected_nonempty hclasses_two
     hclass_nonempty hclass_bounds expectedFactors hf_ne_zero htrue hproduct
 
@@ -7486,6 +7527,9 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFa
       FactorFastCapLiftAnalyticComparison
         f primeData rows_pos localFactorIndex localFactorDegree H)
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hp : 2 ≤ (factorFastCapLiftData f primeData).p)
@@ -7534,7 +7578,7 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFa
     (projectedRowSpan_eq_trueFactorIndicatorLattice_of_factorFastCapLift_bridge
       f primeData rows_pos localFactorIndex localFactorDegree H trueSupports
       hcap_le C hC_nonneg hC hcut bridge (by omega) hcomparison)
-    hB_pos hchoose hp hk hprojected_nonempty hclasses_two hclass_nonempty
+    hB_pos hfloor hchoose hp hk hprojected_nonempty hclasses_two hclass_nonempty
     hclass_bounds expectedFactors hf_ne_zero htrue hproduct
 
 /--
@@ -7585,6 +7629,9 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFa
       FactorFastCapLiftAnalyticComparison
         f primeData rows_pos localFactorIndex localFactorDegree H)
     (hB_pos : 1 ≤ Hex.factorFastPrecisionCap f)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hk :
@@ -7629,7 +7676,7 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFa
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound
     f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
-    hcap_le C hC_nonneg hC hcut bridge hcomparison hB_pos hchoose
+    hcap_le C hC_nonneg hC hcut bridge hcomparison hB_pos hfloor hchoose
     (Hex.choosePrimeData?_prime _ _ hchoose).two_le
     hk hprojected_nonempty hclasses_two hclass_nonempty hclass_bounds
     expectedFactors hf_ne_zero htrue hproduct
@@ -7677,6 +7724,9 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFa
     (hcomparison :
       FactorFastCapLiftAnalyticComparison
         f primeData rows_pos localFactorIndex localFactorDegree H)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hk :
@@ -7722,7 +7772,7 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFa
   factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound_internalPrimeLowerBound
     f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
     hcap_le C hC_nonneg hC hcut bridge hcomparison
-    (one_le_factorFastPrecisionCap f) hchoose hk hprojected_nonempty
+    (one_le_factorFastPrecisionCap f) hfloor hchoose hk hprojected_nonempty
     hclasses_two hclass_nonempty hclass_bounds expectedFactors hf_ne_zero
     htrue hproduct
 
@@ -7767,6 +7817,9 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalRecoveryTailInputs
     (hcomparison :
       FactorFastCapLiftAnalyticComparison
         f primeData rows_pos localFactorIndex localFactorDegree H)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore = some primeData)
     (hk :
@@ -7780,7 +7833,7 @@ theorem factorFast_ne_none_of_capSeparationBridgeDataCanonicalRecoveryTailInputs
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_capSeparationBridgeDataCanonicalSupportsExpectedFactorsAtPrecisionForCoeffBound_internalCapPositiveAndPrimeLowerBound
     f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
-    hcap_le C hC_nonneg hC hcut bridge hcomparison hchoose hk
+    hcap_le C hC_nonneg hC hcut bridge hcomparison hfloor hchoose hk
     inputs.projected_nonempty inputs.classes_two inputs.class_nonempty
     inputs.class_bounds inputs.expectedFactors inputs.hf_ne_zero
     inputs.expected_true_factors inputs.product_congr
@@ -7796,6 +7849,9 @@ public success theorem under the packaged `choosePrimeData?` witness.
 -/
 theorem factorFast_ne_none_of_factorFastCapSeparationInputsCanonicalRecoveryTailInputs
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -7814,7 +7870,7 @@ theorem factorFast_ne_none_of_factorFastCapSeparationInputsCanonicalRecoveryTail
     f primeData rows_pos trueSupports capInputs.localFactorIndex
     capInputs.localFactorDegree capInputs.H capInputs.cap_le capInputs.C
     capInputs.C_nonneg capInputs.C_le_two capInputs.cut capInputs.bridge
-    capInputs.comparison capInputs.choose_eq capInputs.precision_eq
+    capInputs.comparison hfloor capInputs.choose_eq capInputs.precision_eq
     recoveryInputs
 
 /--
@@ -7836,6 +7892,9 @@ have the same conclusion and consume the same two packaged input records.
 -/
 theorem factorFast_ne_none_of_factorFastCapSeparationInputsAndCanonicalRecoveryInputs_internalCapPositiveAndPrimeLowerBound
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -7851,7 +7910,7 @@ theorem factorFast_ne_none_of_factorFastCapSeparationInputsAndCanonicalRecoveryI
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_canonicalRecoveryInputs_internalCapPositiveAndPrimeLowerBound
-    f primeData capInputs.choose_eq capInputs.precision_eq
+    f primeData hfloor capInputs.choose_eq capInputs.precision_eq
     (CanonicalRecoveryInputs.ofFactorFastCapSeparationInputsAndCanonicalRecoveryTailInputs
       capInputs recoveryInputs)
 
@@ -7885,6 +7944,9 @@ extracted from the closed packages.
 -/
 theorem factorFast_terminates
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -7900,7 +7962,7 @@ theorem factorFast_terminates
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_factorFastCapSeparationInputsAndCanonicalRecoveryInputs_internalCapPositiveAndPrimeLowerBound
-    f primeData rows_pos trueSupports capInputs recoveryInputs
+    f primeData hfloor rows_pos trueSupports capInputs recoveryInputs
 
 /--
 SPEC D1 named wrapper: once the executable prime search succeeds, select its
@@ -7914,6 +7976,9 @@ prime. They are exactly the mathematical packages consumed by
 -/
 theorem factorFast_terminates_of_choosePrimeData
     (f : Hex.ZPoly)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (hchoose :
       Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore ≠ none)
     (rows_pos :
@@ -7955,7 +8020,7 @@ theorem factorFast_terminates_of_choosePrimeData
       exact False.elim (hchoose hselected)
   | some primeData =>
       exact
-        factorFast_terminates f primeData
+        factorFast_terminates f primeData hfloor
           (rows_pos primeData hselected)
           (trueSupports primeData hselected)
           (capInputs primeData hselected)
@@ -7977,6 +8042,9 @@ precision/prime-choice equations, and the canonical-recovery tail package.
 -/
 theorem factorFast_terminates_ofBridgeDataPointwiseAuxiliaryBoundsAndPaperThreshold
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -8078,7 +8146,7 @@ theorem factorFast_terminates_ofBridgeDataPointwiseAuxiliaryBoundsAndPaperThresh
     (recoveryInputs :
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
-  factorFast_terminates f primeData rows_pos trueSupports
+  factorFast_terminates f primeData hfloor rows_pos trueSupports
     (FactorFastCapSeparationInputs.ofBridgeDataPointwiseAuxiliaryBoundsAndPaperThreshold
       localFactorIndex localFactorDegree H hlocalFactorDegree_pos hcap_le
       C hC_nonneg hC hcut bridge v hin hnot hcld
@@ -8114,6 +8182,9 @@ sibling wrapper.
 -/
 theorem factorFast_terminates_ofForwardRecoveryInputsBridgeDataPointwiseAuxiliaryBoundsAndPaperThreshold
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (h :
       ForwardRecoveryInputs
         (Hex.normalizeForFactor f).squareFreeCore
@@ -8232,7 +8303,7 @@ theorem factorFast_terminates_ofForwardRecoveryInputsBridgeDataPointwiseAuxiliar
           (factorFastCapLiftData f primeData).p) :
     Hex.factorFast f ≠ none :=
   factorFast_terminates_ofBridgeDataPointwiseAuxiliaryBoundsAndPaperThreshold
-    f primeData h.rows_pos trueSupports
+    f primeData hfloor h.rows_pos trueSupports
     localFactorIndex localFactorDegree H hlocalFactorDegree_pos hcap_le
     C hC_nonneg hC hcut bridge v hin hnot hcld
     vectorSquareBound hvectorSquareBound correctionWeightedBound
@@ -8263,6 +8334,9 @@ the combined product inequality.
 -/
 theorem factorFast_terminates_ofBridgeDataPointwiseAuxiliaryBoundsAndFactoredPaperThreshold
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -8368,7 +8442,7 @@ theorem factorFast_terminates_ofBridgeDataPointwiseAuxiliaryBoundsAndFactoredPap
     (recoveryInputs :
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
-  factorFast_terminates f primeData rows_pos trueSupports
+  factorFast_terminates f primeData hfloor rows_pos trueSupports
     (FactorFastCapSeparationInputs.ofBridgeDataPointwiseAuxiliaryBoundsAndFactoredPaperThreshold
       localFactorIndex localFactorDegree H hlocalFactorDegree_pos hcap_le
       C hC_nonneg hC hcut bridge v hin hnot hcld
@@ -8387,6 +8461,9 @@ unprimed variant.
 -/
 theorem factorFast_terminates_ofBridgeDataPointwiseAuxiliaryBoundsAndFactoredPaperThreshold'
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -8491,7 +8568,7 @@ theorem factorFast_terminates_ofBridgeDataPointwiseAuxiliaryBoundsAndFactoredPap
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
   factorFast_terminates_ofBridgeDataPointwiseAuxiliaryBoundsAndFactoredPaperThreshold
-    f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
+    f primeData hfloor rows_pos trueSupports localFactorIndex localFactorDegree H
     hlocalFactorDegree_pos hcap_le C hC_nonneg hC hcut bridge v hin hnot hcld
     vectorSquareBound hvectorSquareBound correctionWeightedBound
     hcorrectionWeightedBound hauxiliaryBound_nonneg hauxiliaryBound_sq
@@ -8518,6 +8595,9 @@ collapsing to a direct `‖aux‖ ≤ auxiliaryBound` bound.
 -/
 theorem factorFast_terminates_ofBridgeDataCorrectedAuxiliaryL2normSqAndPaperThreshold
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -8610,7 +8690,7 @@ theorem factorFast_terminates_ofBridgeDataCorrectedAuxiliaryL2normSqAndPaperThre
     (recoveryInputs :
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
-  factorFast_terminates f primeData rows_pos trueSupports
+  factorFast_terminates f primeData hfloor rows_pos trueSupports
     (FactorFastCapSeparationInputs.ofBridgeDataCorrectedAuxiliaryL2normSqAndPaperThreshold
       localFactorIndex localFactorDegree H hlocalFactorDegree_pos hcap_le
       C hC_nonneg hC hcut bridge v hin hnot hcld
@@ -8635,6 +8715,9 @@ than the combined product inequality.
 -/
 theorem factorFast_terminates_ofBridgeDataCorrectedAuxiliaryL2normSqAndFactoredPaperThreshold
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -8731,7 +8814,7 @@ theorem factorFast_terminates_ofBridgeDataCorrectedAuxiliaryL2normSqAndFactoredP
     (recoveryInputs :
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
-  factorFast_terminates f primeData rows_pos trueSupports
+  factorFast_terminates f primeData hfloor rows_pos trueSupports
     (FactorFastCapSeparationInputs.ofBridgeDataCorrectedAuxiliaryL2normSqAndFactoredPaperThreshold
       localFactorIndex localFactorDegree H hlocalFactorDegree_pos hcap_le
       C hC_nonneg hC hcut bridge v hin hnot hcld
@@ -8749,6 +8832,9 @@ obligations.
 -/
 theorem factorFast_terminates_ofBridgeDataCorrectedAuxiliaryL2normSqAndJointPaperThreshold
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -8842,7 +8928,7 @@ theorem factorFast_terminates_ofBridgeDataCorrectedAuxiliaryL2normSqAndJointPape
     (recoveryInputs :
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
-  factorFast_terminates f primeData rows_pos trueSupports
+  factorFast_terminates f primeData hfloor rows_pos trueSupports
     (FactorFastCapSeparationInputs.ofBridgeDataCorrectedAuxiliaryL2normSqAndJointPaperThreshold
       localFactorIndex localFactorDegree H hlocalFactorDegree_pos hcap_le
       C hC_nonneg hC hcut bridge v hin hnot hcld
@@ -8859,6 +8945,9 @@ unprimed variant.
 -/
 theorem factorFast_terminates_ofBridgeDataCorrectedAuxiliaryL2normSqAndFactoredPaperThreshold'
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -8954,7 +9043,7 @@ theorem factorFast_terminates_ofBridgeDataCorrectedAuxiliaryL2normSqAndFactoredP
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
   factorFast_terminates_ofBridgeDataCorrectedAuxiliaryL2normSqAndFactoredPaperThreshold
-    f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
+    f primeData hfloor rows_pos trueSupports localFactorIndex localFactorDegree H
     hlocalFactorDegree_pos hcap_le C hC_nonneg hC hcut bridge v hin hnot hcld
     hauxiliaryBound_nonneg hauxiliary_sq_bound
     h_coeff (by simpa [bhksPaperAuxiliaryFactorReal] using h_aux)
@@ -8978,6 +9067,9 @@ hypotheses required by the pointwise wrapper.
 -/
 theorem factorFast_terminates_ofBridgeDataAuxiliaryL2normAndPaperThreshold
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -9031,7 +9123,7 @@ theorem factorFast_terminates_ofBridgeDataAuxiliaryL2normAndPaperThreshold
     (recoveryInputs :
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
-  factorFast_terminates f primeData rows_pos trueSupports
+  factorFast_terminates f primeData hfloor rows_pos trueSupports
     (FactorFastCapSeparationInputs.ofBridgeDataAuxiliaryL2normAndPaperThreshold
       localFactorIndex localFactorDegree H hlocalFactorDegree_pos hcap_le
       C hC_nonneg hC hcut bridge hauxiliary hpaper hchoose hprecision)
@@ -9046,6 +9138,9 @@ the way to `Hex.factorFast f ≠ none`.
 -/
 theorem factorFast_terminates_ofBridgeDataC2Auxiliary
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -9106,7 +9201,7 @@ theorem factorFast_terminates_ofBridgeDataC2Auxiliary
     (recoveryInputs :
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
-  factorFast_terminates f primeData rows_pos trueSupports
+  factorFast_terminates f primeData hfloor rows_pos trueSupports
     (FactorFastCapSeparationInputs.ofBridgeDataC2Auxiliary
       localFactorIndex localFactorDegree H hlocalFactorDegree_pos hcap_le hcut
       bridge v hshort haux_eq hdeg hcoreNorm hchoose hprecision)
@@ -9132,6 +9227,9 @@ the combined product inequality.
 -/
 theorem factorFast_terminates_ofBridgeDataAuxiliaryL2normAndFactoredPaperThreshold
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -9189,7 +9287,7 @@ theorem factorFast_terminates_ofBridgeDataAuxiliaryL2normAndFactoredPaperThresho
     (recoveryInputs :
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
-  factorFast_terminates f primeData rows_pos trueSupports
+  factorFast_terminates f primeData hfloor rows_pos trueSupports
     (FactorFastCapSeparationInputs.ofBridgeDataAuxiliaryL2normAndFactoredPaperThreshold
       localFactorIndex localFactorDegree H hlocalFactorDegree_pos hcap_le
       C hC_nonneg hC hcut bridge hauxiliary h_coeff h_aux hchoose hprecision)
@@ -9205,6 +9303,9 @@ unprimed variant.
 -/
 theorem factorFast_terminates_ofBridgeDataAuxiliaryL2normAndFactoredPaperThreshold'
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -9261,7 +9362,7 @@ theorem factorFast_terminates_ofBridgeDataAuxiliaryL2normAndFactoredPaperThresho
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
   factorFast_terminates_ofBridgeDataAuxiliaryL2normAndFactoredPaperThreshold
-    f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
+    f primeData hfloor rows_pos trueSupports localFactorIndex localFactorDegree H
     hlocalFactorDegree_pos hcap_le C hC_nonneg hC hcut bridge hauxiliary
     h_coeff (by simpa [bhksPaperAuxiliaryFactorReal] using h_aux)
     hchoose hprecision recoveryInputs
@@ -9281,6 +9382,9 @@ auxiliary-l2 upper bound: both are derived internally from the bridge.
 -/
 theorem factorFast_terminates_ofBridgeDataAndPaperThreshold
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -9369,7 +9473,7 @@ theorem factorFast_terminates_ofBridgeDataAndPaperThreshold
     (recoveryInputs :
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
-  factorFast_terminates f primeData rows_pos trueSupports
+  factorFast_terminates f primeData hfloor rows_pos trueSupports
     (FactorFastCapSeparationInputs.ofBridgeDataAndPaperThreshold
       localFactorIndex localFactorDegree H hlocalFactorDegree_pos hcap_le
       C hC_nonneg hC hcut bridge v hin hnot hcld hpaper hchoose hprecision)
@@ -9392,6 +9496,9 @@ inequality.
 -/
 theorem factorFast_terminates_ofBridgeDataAndFactoredPaperThreshold
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -9484,7 +9591,7 @@ theorem factorFast_terminates_ofBridgeDataAndFactoredPaperThreshold
     (recoveryInputs :
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
-  factorFast_terminates f primeData rows_pos trueSupports
+  factorFast_terminates f primeData hfloor rows_pos trueSupports
     (FactorFastCapSeparationInputs.ofBridgeDataAndFactoredPaperThreshold
       localFactorIndex localFactorDegree H hlocalFactorDegree_pos hcap_le
       C hC_nonneg hC hcut bridge v hin hnot hcld h_coeff h_aux hchoose hprecision)
@@ -9500,6 +9607,9 @@ unprimed variant.
 -/
 theorem factorFast_terminates_ofBridgeDataAndFactoredPaperThreshold'
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hfloor :
+      Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+        Hex.factorFastPrecisionCap f)
     (rows_pos :
       HasPositiveDimension
         (Hex.normalizeForFactor f).squareFreeCore
@@ -9591,7 +9701,7 @@ theorem factorFast_terminates_ofBridgeDataAndFactoredPaperThreshold'
       CanonicalRecoveryTailInputs f primeData rows_pos trueSupports) :
     Hex.factorFast f ≠ none :=
   factorFast_terminates_ofBridgeDataAndFactoredPaperThreshold
-    f primeData rows_pos trueSupports localFactorIndex localFactorDegree H
+    f primeData hfloor rows_pos trueSupports localFactorIndex localFactorDegree H
     hlocalFactorDegree_pos hcap_le C hC_nonneg hC hcut bridge v hin hnot hcld
     h_coeff
     (bhksPaperAuxiliaryFactorReal_eq_product
