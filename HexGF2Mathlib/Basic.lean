@@ -1,5 +1,6 @@
 import HexGF2
 import HexPolyFp
+import Mathlib.Data.Nat.Bitwise
 
 /-!
 Correspondence definitions between packed `Hex.GF2Poly` values and the generic
@@ -232,6 +233,87 @@ def ofNatBelowDegree (degree : Nat) (n : Nat) : Hex.GF2Poly :=
   Hex.GF2Poly.ofWords <|
     Array.ofFn fun i : Fin wordCount =>
       UInt64.ofNat (n / 2 ^ (64 * i.1))
+
+private theorem bit_eq_one_eq_testBit (x i : Nat) :
+    (x >>> i % 2 == 1) = x.testBit i := by
+  rw [Nat.testBit_eq_decide_div_mod_eq]
+  rw [Nat.shiftRight_eq_div_pow]
+  apply decide_eq_decide.mpr
+  exact Iff.rfl
+
+private theorem div_word_mod_testBit (n wordIdx bitIdx : Nat) (hbit : bitIdx < 64) :
+    ((n / 2 ^ (64 * wordIdx)) % 2 ^ 64).testBit bitIdx =
+      n.testBit (64 * wordIdx + bitIdx) := by
+  rw [Nat.testBit_mod_two_pow]
+  simp [hbit, Nat.testBit, Nat.shiftRight_eq_div_pow, Nat.div_div_eq_div_mul,
+    Nat.pow_add]
+
+private theorem div_word_testBit (n wordIdx bitIdx : Nat) (hbit : bitIdx < 64) :
+    (UInt64.ofNat (n / 2 ^ (64 * wordIdx))).toNat.testBit bitIdx =
+      n.testBit (64 * wordIdx + bitIdx) := by
+  rw [UInt64.toNat_ofNat']
+  exact div_word_mod_testBit n wordIdx bitIdx hbit
+
+private theorem div_lt_wordCount_of_lt_degree {degree j : Nat} (hj : j < degree) :
+    j / 64 < (degree + 63) / 64 := by
+  rw [Nat.div_lt_iff_lt_mul (by decide : 0 < 64)]
+  have hceil : degree ≤ ((degree + 63) / 64) * 64 := by
+    have hmod := Nat.mod_lt degree (by decide : 0 < 64)
+    rw [← Nat.div_add_mod degree 64]
+    omega
+  omega
+
+theorem coeff_ofNatBelowDegree_of_lt (degree n j : Nat) (hj : j < degree) :
+    (ofNatBelowDegree degree n).coeff j = n.testBit j := by
+  unfold ofNatBelowDegree
+  rw [Hex.GF2Poly.coeff_ofWords]
+  have hword : j / 64 < (degree + 63) / 64 := div_lt_wordCount_of_lt_degree hj
+  have hget :
+      (Array.ofFn
+          (fun i : Fin ((degree + 63) / 64) =>
+            UInt64.ofNat (n / 2 ^ (64 * i.1))))[j / 64]? =
+        some (UInt64.ofNat (n / 2 ^ (64 * (j / 64)))) := by
+    simp [hword]
+  have hbit : j % 64 < 64 := Nat.mod_lt j (by decide : 0 < 64)
+  have hdecomp : 64 * (j / 64) + j % 64 = j := by
+    exact Nat.div_add_mod j 64
+  simp [Hex.GF2Poly.coeffWords, hget, Hex.GF2Poly.UInt64.bne_zero_eq_toNat_bne_zero,
+    UInt64.toNat_shiftRight, UInt64.toNat_and, Nat.mod_eq_of_lt hbit,
+    bit_eq_one_eq_testBit]
+  change ((n / 2 ^ (64 * (j / 64))) % 2 ^ 64).testBit (j % 64) = n.testBit j
+  rw [div_word_mod_testBit n (j / 64) (j % 64) hbit, hdecomp]
+
+theorem coeff_ofNatBelowDegree_eq_false_of_bound
+    {degree n j : Nat} (hn : n < 2 ^ degree) (hj : degree ≤ j) :
+    (ofNatBelowDegree degree n).coeff j = false := by
+  by_cases hword : j / 64 < (degree + 63) / 64
+  · unfold ofNatBelowDegree
+    rw [Hex.GF2Poly.coeff_ofWords]
+    have hget :
+        (Array.ofFn
+            (fun i : Fin ((degree + 63) / 64) =>
+              UInt64.ofNat (n / 2 ^ (64 * i.1))))[j / 64]? =
+          some (UInt64.ofNat (n / 2 ^ (64 * (j / 64)))) := by
+      simp [hword]
+    have hbit : j % 64 < 64 := Nat.mod_lt j (by decide : 0 < 64)
+    have hdecomp : 64 * (j / 64) + j % 64 = j := by
+      exact Nat.div_add_mod j 64
+    simp [Hex.GF2Poly.coeffWords, hget, Hex.GF2Poly.UInt64.bne_zero_eq_toNat_bne_zero,
+      UInt64.toNat_shiftRight, UInt64.toNat_and, Nat.mod_eq_of_lt hbit,
+      bit_eq_one_eq_testBit]
+    change ((n / 2 ^ (64 * (j / 64))) % 2 ^ 64).testBit (j % 64) = false
+    rw [div_word_mod_testBit n (j / 64) (j % 64) hbit, hdecomp]
+    exact Nat.testBit_eq_false_of_lt (Nat.lt_of_lt_of_le hn
+      (Nat.pow_le_pow_right (by decide : 0 < 2) hj))
+  · unfold ofNatBelowDegree
+    rw [Hex.GF2Poly.coeff_ofWords]
+    have hget :
+        (Array.ofFn
+            (fun i : Fin ((degree + 63) / 64) =>
+              UInt64.ofNat (n / 2 ^ (64 * i.1))))[j / 64]? = none := by
+      rw [Array.getElem?_eq_none_iff]
+      simpa [Array.size_ofFn] using Nat.le_of_not_gt hword
+    simp [Hex.GF2Poly.coeffWords, hget]
 
 /-- A polynomial known to have degree `< degree` has an index below
 `2 ^ degree` under the packed binary interpretation. -/
