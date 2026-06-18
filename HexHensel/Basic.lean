@@ -68,7 +68,7 @@ def reduceModPow (f : ZPoly) (p k : Nat) : ZPoly :=
 
 /-- Coefficientwise characterisation of `modP`: the `i`-th coefficient of the reduction
 is the `ZMod64` image of the canonical representative of the original coefficient. -/
-@[simp] theorem coeff_modP (p : Nat) [ZMod64.Bounds p] (f : ZPoly) (i : Nat) :
+@[simp, grind =] theorem coeff_modP (p : Nat) [ZMod64.Bounds p] (f : ZPoly) (i : Nat) :
     (modP p f).coeff i = ZMod64.ofNat p (intModNat (f.coeff i) p) := by
   unfold modP FpPoly.ofCoeffs
   rw [DensePoly.coeff_ofCoeffs_list]
@@ -81,7 +81,7 @@ is the `ZMod64` image of the canonical representative of the original coefficien
     rfl
 
 /-- Reducing the zero polynomial modulo `p` preserves zero. -/
-@[simp] theorem modP_zero (p : Nat) [ZMod64.Bounds p] :
+@[simp, grind =] theorem modP_zero (p : Nat) [ZMod64.Bounds p] :
     modP p 0 = 0 := by
   apply DensePoly.ext_coeff
   intro i
@@ -94,7 +94,7 @@ is the `ZMod64` image of the canonical representative of the original coefficien
 
 /-- Coefficientwise characterisation of `reduceModPow`: each coefficient is replaced
 by its canonical nonnegative representative in `[0, p^k)`. -/
-@[simp] theorem coeff_reduceModPow (f : ZPoly) (p k i : Nat) :
+@[simp, grind =] theorem coeff_reduceModPow (f : ZPoly) (p k i : Nat) :
     (reduceModPow f p k).coeff i = Int.ofNat (intModNat (f.coeff i) (p ^ k)) := by
   unfold reduceModPow
   rw [DensePoly.coeff_ofCoeffs_list]
@@ -106,7 +106,7 @@ by its canonical nonnegative representative in `[0, p^k)`. -/
     rfl
 
 /-- Reducing the zero polynomial modulo `p^k` preserves zero. -/
-@[simp] theorem reduceModPow_zero (p k : Nat) :
+@[simp, grind =] theorem reduceModPow_zero (p k : Nat) :
     reduceModPow 0 p k = 0 := by
   apply DensePoly.ext_coeff
   intro i
@@ -116,7 +116,7 @@ by its canonical nonnegative representative in `[0, p^k)`. -/
   simp [hcoeff, intModNat]
 
 /-- Reducing the integer one polynomial modulo a nontrivial power preserves one. -/
-@[simp] theorem reduceModPow_one_of_nontrivial
+@[simp, grind =] theorem reduceModPow_one_of_nontrivial
     (p k : Nat) (hpk : 1 < p ^ k) :
     reduceModPow (1 : ZPoly) p k = 1 := by
   apply DensePoly.ext_coeff
@@ -205,7 +205,7 @@ theorem reduceModPow_idempotent (f : ZPoly) (p k : Nat) (hpk : 0 < p ^ k) :
     (congr_reduceModPow f p k hpk)
 
 /-- Canonical reduction modulo a positive power is idempotent. -/
-@[simp] theorem reduceModPow_reduceModPow
+@[simp, grind =] theorem reduceModPow_reduceModPow
     (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) :
     reduceModPow (reduceModPow f p k) p k = reduceModPow f p k :=
   reduceModPow_idempotent f p k (Nat.pow_pos (ZMod64.Bounds.pPos (p := p)))
@@ -242,7 +242,7 @@ theorem modP_eq_of_congr (p : Nat) [ZMod64.Bounds p] (f g : ZPoly)
   simpa using hred₁
 
 /-- Reducing modulo any positive power of `p` does not change the reduction modulo `p`. -/
-@[simp] theorem modP_reduceModPow_of_pos
+@[simp, grind =] theorem modP_reduceModPow_of_pos
     (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) (hk : 0 < k) :
     modP p (reduceModPow f p k) = modP p f := by
   cases k with
@@ -263,7 +263,7 @@ def liftToZ (f : FpPoly p) : ZPoly :=
 
 /-- Coefficientwise characterisation of `liftToZ`: each coefficient is the standard
 nonnegative `Nat` representative of the corresponding `ZMod64` element. -/
-@[simp] theorem coeff_liftToZ (f : FpPoly p) (i : Nat) :
+@[simp, grind =] theorem coeff_liftToZ (f : FpPoly p) (i : Nat) :
     (liftToZ f).coeff i = Int.ofNat (f.coeff i).toNat := by
   unfold liftToZ
   rw [DensePoly.coeff_ofCoeffs_list]
@@ -277,7 +277,7 @@ nonnegative `Nat` representative of the corresponding `ZMod64` element. -/
     rfl
 
 /-- The canonical integer lift of the zero polynomial is zero. -/
-@[simp] theorem liftToZ_zero :
+@[simp, grind =] theorem liftToZ_zero :
     liftToZ (0 : FpPoly p) = 0 := by
   apply DensePoly.ext_coeff
   intro i
@@ -307,7 +307,7 @@ theorem modP_liftToZ_coeff (f : FpPoly p) (i : Nat) :
   rw [ZMod64.toNat_ofNat, hmod, Nat.mod_eq_of_lt (f.coeff i).toNat_lt]
 
 /-- Reducing a canonical lift back modulo `p` recovers the original polynomial. -/
-@[simp] theorem modP_liftToZ (f : FpPoly p) :
+@[simp, grind =] theorem modP_liftToZ (f : FpPoly p) :
     ZPoly.modP p (liftToZ f) = f := by
   apply DensePoly.ext_coeff
   intro i
@@ -463,7 +463,7 @@ namespace ZPoly
 /-- Reducing the integer `1` polynomial modulo `p` yields the `FpPoly p`
 identity. Bottom-of-recursion case for the `modP p` rewrites used
 by Hensel lifting modules. -/
-@[simp] theorem modP_one (p : Nat) [ZMod64.Bounds p] :
+@[simp, grind =] theorem modP_one (p : Nat) [ZMod64.Bounds p] :
     ZPoly.modP p (1 : ZPoly) = (1 : FpPoly p) := by
   have hcong : ZPoly.congr (FpPoly.liftToZ (1 : FpPoly p)) (1 : ZPoly) p := by
     intro i
