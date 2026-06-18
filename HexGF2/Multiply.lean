@@ -6650,6 +6650,127 @@ private theorem clmulCoeffAt_diag (c : Nat) (x y : UInt64) (n : Nat) :
       rw [hguard, ← xorBoolList_map_xorBoolList]
       simp [xorBoolList_range_false]
 
+/-- Carryless-convolution coefficient law: bit `n` of a packed `GF(2)` product
+is the XOR-parity of the diagonal `p.coeff i && q.coeff (n - i)` for
+`i ∈ range (n + 1)`. This is the public coefficient-level convolution that the
+`HexGF2Mathlib` bridge uses to relate the carryless `clmul` product to the
+schoolbook `mulCoeffSum` over `ZMod64 2`. -/
+theorem coeff_mul_diagonal (p q : GF2Poly) (n : Nat) :
+    (p * q).coeff n =
+      xorBoolList ((List.range (n + 1)).map (fun s => p.coeff s && q.coeff (n - s))) := by
+  rw [coeff_mul, coeffWords_mulWords_contrib]
+  calc
+    xorBoolList ((List.range p.words.size).flatMap (fun i =>
+        (List.range q.words.size).map (fun j =>
+          clmulCoeffAt (i + j) p.words[i]! q.words[j]! n)))
+      = xorBoolList ((List.range p.words.size).flatMap (fun i =>
+          (List.range q.words.size).flatMap (fun j =>
+            (List.range 64).flatMap (fun a => (List.range 64).map (fun b =>
+              (wordBitAt p.words[i]! a && wordBitAt q.words[j]! b) &&
+                decide (64 * (i + j) + a + b = n)))))) := by
+        apply xorBoolList_flatMap_congr_xor
+        intro i _hi
+        have hmap : (List.range q.words.size).map (fun j =>
+              clmulCoeffAt (i + j) p.words[i]! q.words[j]! n)
+            = (List.range q.words.size).map (fun j =>
+              xorBoolList ((List.range 64).flatMap (fun a => (List.range 64).map (fun b =>
+                (wordBitAt p.words[i]! a && wordBitAt q.words[j]! b) &&
+                  decide (64 * (i + j) + a + b = n))))) := by
+          apply List.map_congr_left
+          intro j _hj
+          exact clmulCoeffAt_diag (i + j) p.words[i]! q.words[j]! n
+        rw [hmap, xorBoolList_map_xorBoolList]
+    _ = xorBoolList ((List.range p.words.size).flatMap (fun i =>
+          (List.range q.words.size).flatMap (fun j =>
+            (List.range 64).flatMap (fun a => (List.range 64).map (fun b =>
+              (p.coeff (64 * i + a) && q.coeff (64 * j + b)) &&
+                decide (64 * i + a + (64 * j + b) = n)))))) := by
+        apply congrArg xorBoolList
+        apply List.flatMap_congr_left; intro i _hi
+        apply List.flatMap_congr_left; intro j _hj
+        apply List.flatMap_congr_left; intro a ha
+        apply List.map_congr_left; intro b hb
+        have ha' : a < 64 := List.mem_range.mp ha
+        have hb' : b < 64 := List.mem_range.mp hb
+        rw [wordBitAt_getElem!_eq_coeff p ha', wordBitAt_getElem!_eq_coeff q hb',
+          show 64 * (i + j) + a + b = 64 * i + a + (64 * j + b) from by omega]
+    _ = xorBoolList ((List.range p.words.size).flatMap (fun i =>
+          (List.range 64).flatMap (fun a => (List.range q.words.size).flatMap (fun j =>
+            (List.range 64).map (fun b =>
+              (p.coeff (64 * i + a) && q.coeff (64 * j + b)) &&
+                decide (64 * i + a + (64 * j + b) = n)))))) := by
+        apply xorBoolList_flatMap_congr_xor
+        intro i _hi
+        exact xorBoolList_flatMap_ranges_swap_list q.words.size 64
+          (fun j a => (List.range 64).map (fun b =>
+            (p.coeff (64 * i + a) && q.coeff (64 * j + b)) &&
+              decide (64 * i + a + (64 * j + b) = n)))
+    _ = xorBoolList ((List.range (64 * p.words.size)).flatMap (fun s =>
+          (List.range q.words.size).flatMap (fun j => (List.range 64).map (fun b =>
+            (p.coeff s && q.coeff (64 * j + b)) && decide (s + (64 * j + b) = n))))) := by
+        apply congrArg xorBoolList
+        exact flatMap_range_flatMap_range 64 p.words.size (fun s =>
+          (List.range q.words.size).flatMap (fun j => (List.range 64).map (fun b =>
+            (p.coeff s && q.coeff (64 * j + b)) && decide (s + (64 * j + b) = n))))
+    _ = xorBoolList ((List.range (64 * p.words.size)).flatMap (fun s =>
+          (List.range (64 * q.words.size)).map (fun t =>
+            (p.coeff s && q.coeff t) && decide (s + t = n)))) := by
+        apply congrArg xorBoolList
+        apply List.flatMap_congr_left
+        intro s _hs
+        exact flatMap_range_map_range 64 q.words.size (fun t =>
+          (p.coeff s && q.coeff t) && decide (s + t = n))
+    _ = xorBoolList ((List.range (64 * p.words.size)).map (fun s =>
+          xorBoolList ((List.range (64 * q.words.size)).map (fun t =>
+            (p.coeff s && q.coeff t) && decide (s + t = n))))) := by
+        rw [← xorBoolList_map_xorBoolList]
+    _ = xorBoolList ((List.range (64 * p.words.size)).map (fun s =>
+          p.coeff s && (if s ≤ n then q.coeff (n - s) else false))) := by
+        apply congrArg xorBoolList
+        apply List.map_congr_left
+        intro s _hs
+        have hbody : (List.range (64 * q.words.size)).map (fun t =>
+              (p.coeff s && q.coeff t) && decide (s + t = n))
+            = (List.range (64 * q.words.size)).map (fun t =>
+              p.coeff s && (q.coeff t && decide (s + t = n))) := by
+          apply List.map_congr_left; intro t _ht; rw [Bool.and_assoc]
+        rw [hbody, xorBoolList_map_and_left' (p.coeff s) (List.range (64 * q.words.size))
+              (fun t => q.coeff t && decide (s + t = n)),
+          xorBoolList_map_decide_add (64 * q.words.size) s n (fun t => q.coeff t)]
+        congr 1
+        by_cases hsn : s ≤ n
+        · rw [if_pos hsn, if_pos hsn]
+          by_cases hlt : n - s < 64 * q.words.size
+          · rw [if_pos hlt]
+          · rw [if_neg hlt]
+            symm
+            apply coeff_eq_false_of_wordCount_le
+            simp only [wordCount]
+            omega
+        · rw [if_neg hsn, if_neg hsn]
+    _ = xorBoolList ((List.range (n + 1)).map (fun s => p.coeff s && q.coeff (n - s))) := by
+        have hzero : ∀ s, min (64 * p.words.size) (n + 1) ≤ s →
+            (p.coeff s && (if s ≤ n then q.coeff (n - s) else false)) = false := by
+          intro s hs
+          have hcase : 64 * p.words.size ≤ s ∨ n + 1 ≤ s := by omega
+          rcases hcase with h | h
+          · have hp : p.coeff s = false := by
+              apply coeff_eq_false_of_wordCount_le
+              simp only [wordCount]
+              omega
+            simp [hp]
+          · have hsn : ¬ (s ≤ n) := by omega
+            simp [hsn]
+        rw [xorBoolList_map_range_eq_of_ge
+              (fun s => p.coeff s && (if s ≤ n then q.coeff (n - s) else false))
+              (64 * p.words.size) (n + 1) (min (64 * p.words.size) (n + 1))
+              hzero (Nat.min_le_left _ _) (Nat.min_le_right _ _)]
+        apply congrArg xorBoolList
+        apply List.map_congr_left
+        intro s hs
+        have hsn : s ≤ n := by have := List.mem_range.mp hs; omega
+        simp [hsn]
+
 /-- The unit polynomial is the degree-zero monomial. -/
 theorem one_eq_monomial_zero : (1 : GF2Poly) = monomial 0 := by
   change one = monomial 0
