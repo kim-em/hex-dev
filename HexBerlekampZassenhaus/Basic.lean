@@ -11597,7 +11597,7 @@ private theorem factorFastCoreWithBound_some_all_of_recovery
           · simp [hclass, hk] at hfast
             exact ih _ coreFactors hfast
 
-private theorem factorFastCoreWithBound_some_normalizeFactorSign
+theorem factorFastCoreWithBound_some_normalizeFactorSign
     {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array ZPoly}
     (h : factorFastCoreWithBound core B primeData k fuel = some coreFactors) :
@@ -11615,6 +11615,19 @@ theorem factorFastCoreWithBound_some_shouldRecord
   factorFastCoreWithBound_some_all_of_recovery
     (fun factor => shouldRecordPolynomialFactor factor = true)
     (fun hrecover => bhksRecoverClassified_success_shouldRecord hrecover)
+    core B primeData k fuel coreFactors h
+
+theorem factorFastCoreWithBound_some_degree_pos
+    {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array ZPoly}
+    (h : factorFastCoreWithBound core B primeData k fuel = some coreFactors) :
+    ∀ factor ∈ coreFactors.toList, 0 < factor.degree?.getD 0 :=
+  factorFastCoreWithBound_some_all_of_recovery
+    (fun factor => 0 < factor.degree?.getD 0)
+    (fun hrecover =>
+      bhksRecoverClassified_success_all_of_candidates
+        (fun factor => 0 < factor.degree?.getD 0)
+        (fun hcand => bhksIndicatorCandidates?_positive_degree hcand) hrecover)
     core B primeData k fuel coreFactors h
 
 /-- Every factor emitted by the BHKS fast-recombination loop divides the
