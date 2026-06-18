@@ -40,7 +40,7 @@ def powModMonic (base f : FpPoly p) (hmonic : DensePoly.Monic f) (n : Nat) :
   powModMonicAux f hmonic n (modByMonic f base hmonic) 1
 
 /-- The zeroth modular power is `1`. -/
-@[simp] theorem powModMonic_zero
+@[simp, grind =] theorem powModMonic_zero
     (base f : FpPoly p) (hmonic : DensePoly.Monic f) :
     powModMonic base f hmonic 0 = 1 := by
   simp [powModMonic, powModMonicAux]
@@ -74,7 +74,7 @@ def frobeniusXPowModLinear (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat)
   powModMonicLinear X f hmonic (p ^ k)
 
 /-- The zeroth Frobenius power is the canonical representative of `X` modulo `f`. -/
-@[simp] theorem frobeniusXPowMod_zero
+@[simp, grind =] theorem frobeniusXPowMod_zero
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     frobeniusXPowMod f hmonic 0 = modByMonic f X hmonic := by
@@ -371,7 +371,7 @@ theorem powModMonic_pos_self_mod
 The `modByMonic` spelling of `powModMonic_pos_self_mod`, useful for callers
 working entirely with the executable monic-reduction API.
 -/
-@[simp] theorem modByMonic_powModMonic_pos_eq_self
+@[simp, grind =] theorem modByMonic_powModMonic_pos_eq_self
     [ZMod64.PrimeModulus p]
     (base f : FpPoly p) (hmonic : DensePoly.Monic f) (n : Nat) (hn : 0 < n) :
     modByMonic f (powModMonic base f hmonic n) hmonic =
@@ -457,7 +457,7 @@ theorem frobeniusXMod_eq_frobeniusXPowMod_one
   rw [Nat.pow_one]
 
 /-- `frobeniusXMod` outputs an already-reduced polynomial. -/
-@[simp] theorem frobeniusXMod_mod_self
+@[simp, grind =] theorem frobeniusXMod_mod_self
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     (frobeniusXMod f hmonic) % f = frobeniusXMod f hmonic := by
@@ -468,7 +468,7 @@ theorem frobeniusXMod_eq_frobeniusXPowMod_one
   exact powModMonic_pos_self_mod X f hmonic p hp_pos
 
 /-- The `modByMonic` spelling of `frobeniusXMod_mod_self`. -/
-@[simp] theorem modByMonic_frobeniusXMod_eq_self
+@[simp, grind =] theorem modByMonic_frobeniusXMod_eq_self
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     modByMonic f (frobeniusXMod f hmonic) hmonic = frobeniusXMod f hmonic := by
@@ -550,7 +550,7 @@ theorem frobeniusXPowMod_mod_eq_monomial_mod
   rw [powModMonic_mod_eq, powLinear_X_eq_monomial]
 
 /-- `frobeniusXPowMod` outputs an already-reduced polynomial. -/
-@[simp] theorem frobeniusXPowMod_mod_self
+@[simp, grind =] theorem frobeniusXPowMod_mod_self
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat) :
     (frobeniusXPowMod f hmonic k) % f = frobeniusXPowMod f hmonic k := by
@@ -561,7 +561,7 @@ theorem frobeniusXPowMod_mod_eq_monomial_mod
   exact powModMonic_pos_self_mod _ _ hmonic _ (Nat.pow_pos hp_pos)
 
 /-- The `modByMonic` spelling of `frobeniusXPowMod_mod_self`. -/
-@[simp] theorem modByMonic_frobeniusXPowMod_eq_self
+@[simp, grind =] theorem modByMonic_frobeniusXPowMod_eq_self
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat) :
     modByMonic f (frobeniusXPowMod f hmonic k) hmonic =
