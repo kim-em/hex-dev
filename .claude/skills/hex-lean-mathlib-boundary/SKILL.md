@@ -833,8 +833,46 @@ residue `centeredResiduePow p a (∑ zᵢ) = c` — which controls `aggregateCld
 `∑ psiCut = 8`, `2·8 = 16 ≫ |T| = 2`. The **monic coordinate** only fixes the
 `dilate (lc f)` transport in `recovered_eq` (`dilate` collapses at `lc=1`); it is
 orthogonal to this period, so it does not rescue a per-factor-column producer.
-Any "bound the tight column from `RecoveredLift` in the monic coordinate"
-directive is unsound for this reason — the genuine fix is migrating
-`bhksLatticeBasis`/`cldRows`/`trueFactorCLDVector` to emit the `aggregateCldTail`
-aggregate column (a lattice-basis redesign, not a binder-preserving consumer
-swap); diagnose and skip rather than reaching for the per-factor route.
+Any "bound the **zero-period** tight column (`trueFactorCLDVector`) from
+`RecoveredLift`" directive is unsound for this reason — do not reach for the
+per-factor `tightColumnBound_of_lift` route from a `RecoveredLift`.
+
+**The sound fix landed (#7876) and is NOT a basis redesign.** The executable
+`bhksLatticeBasis` already carries the diagonal *period rows* `diag(p^(a−ℓⱼ))`, so
+the *period-adjusted* tail `∑ psiCut(zᵢ) − tⱼ·p^(a−ℓⱼ)` is a genuine lattice
+vector (`periodAdjustedVector`, `CLDColumnBound.lean`) — packaged as a
+`SupportShortVectorData` (the period-adjusted certificate carrying its own
+`vector`), **not** the zero-period `trueFactorCLDVector`.
+`supportShortVectorData_of_recoveredLift` bounds each period-adjusted column by
+`factorCount/2` from the aggregate residue (`recoveredLift_aggregate_residue`,
+#7872) plus `two_mul_natAbs_sum_psiCut_period_le` (#7869), and
+`cutProjectionHypotheses_of_shortVectors` (the existing `SupportShortVectorData`
+consumer) carries it to the fast-disjunct endpoint
+(`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift`). Two
+load-bearing facts the earlier "skip" advice missed: (a) the period lemma's
+*proof* gives `2|d| < T.card+1`, i.e. `≤ T.card` over ℤ — the tight column bound,
+fitting the exact radius `4r+n·r²` (its stated `≤ T.card+1` was weaker than
+proved; #7876 strengthened it in place); (b) the period reduction lives in the
+lattice's *period rows*, applied to the ordinary per-factor cut sum — no
+executable basis change (and no `aggregateCldTail` emission) is needed.
+
+### Producers of data-carrying certificate structures must be `def`, not `theorem`
+
+This layer has many certificate *structures* that carry data, not Props:
+`SupportShortVectorData` (a `vector` field), `TrueFactorCLDVectorData`,
+`CutProjectionHypotheses`, `RecoveredLift`. A producer concluding
+`: <SuchStruct>` is a `def`, not a `theorem` — `theorem foo :
+SupportShortVectorData L S` errors with "type of theorem `foo` is not a
+proposition". Match the existing producers (`cutProjectionHypotheses_of_shortVectors`
+is a `def`).
+
+### Projection equalities from a `*Lift` package: destructure, don't `rw [D.basis_eq]`
+
+To prove `L.p = D.p` / `L.precision = D.a` for `D : RecoveredLift L S` (or
+`TrueFactorLift`), do **not** `rw [D.basis_eq]` in the goal: `D`'s own type
+mentions `L`, so abstracting `L` gives "motive is not type correct". Add a helper
+lemma proved by the destructure pattern the namespace already uses
+(`rcases D with ⟨…, basis_eq, …⟩; cases basis_eq; rfl`) — e.g.
+`RecoveredLift.p_eq`/`precision_eq`/`cutThresholds_eq` — then consume it with
+`:=` or `simp only [hLp]` (simp rewrites the *projection term* fine; only the
+`rw [D.basis_eq]` whole-`L` abstraction fails).

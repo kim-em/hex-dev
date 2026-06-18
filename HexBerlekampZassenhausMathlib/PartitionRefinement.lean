@@ -636,6 +636,62 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_lift
   exact factorFastCoreWithBound_some_factor_zpolyIrreducible_of_trueFactors
     trueSupports hcore_ne h hbasis data tight hsize hpartition
 
+/--
+Capstone composition for the fast `h_raw` disjunct via the **aggregate-tail CLD
+lattice path** (issue #7876).  Where
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_lift` needs a
+`TrueFactorLift` (raw per-factor integer divisibility), this consumes the weaker
+`RecoveredLift` that the executable fast-core recovery actually exposes: each
+support's `RecoveredLift` produces a period-adjusted `SupportShortVectorData`
+(`BHKS.supportShortVectorData_of_recoveredLift`, in the monic coordinate), which
+`BHKS.cutProjectionHypotheses_of_shortVectors` turns into the forward cut
+certificate.  This is the route that survives the CLD period trap
+(#7866/#7867): the per-factor column bound is unavailable, but the
+period-reduced aggregate column is bounded by the aggregate residue alone.
+
+The monic-coordinate hypothesis `hf_lc` (`leadingCoeff f = 1`) and the
+precision/threshold separations `hk`/`hsep`/`hthr` are the BHKS Lemma 5.7 inputs
+at the first-success lift precision, threaded here verbatim; `hfac` is the
+Hensel-factorisation datum `∏ gᵢ ≡ f (mod pᵃ)` per selected factor. -/
+theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    {L : Hex.BhksLatticeBasis} {hrows : 1 ≤ L.factorCount + L.coeffWidth}
+    (trueSupports :
+      Set (Set (Fin (Hex.bhksProjectedRows L hrows).factorCount)))
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (hbasis : L.basis.independent)
+    (lift : ∀ S : trueSupports, BHKS.RecoveredLift L S.1)
+    (hf_lc : ∀ S : trueSupports, Hex.DensePoly.leadingCoeff (lift S).f = 1)
+    (hfactor_monic : ∀ S : trueSupports,
+      (HexPolyMathlib.toPolynomial (lift S).factor).Monic)
+    (hp : ∀ S : trueSupports, 2 ≤ (lift S).p)
+    (hk : ∀ S : trueSupports, 1 < (lift S).p ^ (lift S).a)
+    (hsep : ∀ S : trueSupports,
+      ∀ j, 2 * Hex.bhksCoeffBound (lift S).f j < (lift S).p ^ (lift S).a)
+    (hthr : ∀ S : trueSupports,
+      ∀ j, Hex.bhksCoeffCutThreshold (lift S).p (lift S).f j ≤ (lift S).a)
+    (hfac : ∀ S : trueSupports, ∀ i : Fin L.factorCount, i ∈ S.1 →
+        ∃ g : Hex.ZPoly,
+          Hex.DensePoly.Monic (L.liftedFactors.getD i.val 1) ∧
+          0 < (L.liftedFactors.getD i.val 1).degree?.getD 0 ∧
+          Hex.ZPoly.congr (lift S).f ((L.liftedFactors.getD i.val 1) * g)
+            ((lift S).p ^ (lift S).a))
+    (hsize :
+      coreFactors.size =
+        (Hex.bhksEquivalenceClassIndicators (Hex.bhksProjectedRows L hrows)).size)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    ∀ factor ∈ coreFactors.toList, Hex.ZPoly.Irreducible factor := by
+  have hcut := BHKS.cutProjectionHypotheses_of_shortVectors L hrows hbasis trueSupports
+    (fun S => BHKS.supportShortVectorData_of_recoveredLift (lift S) (hf_lc S)
+      (hfactor_monic S) (hp S) (hk S) (hsep S) (hthr S) (hfac S))
+  exact factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut trueSupports
+    hcore_ne h hcut hsize hpartition
+
 /-- Cardinality equality for a successful BHKS fast-core branch under the B8
 partition-refinement package.  Pairs `factorFastCoreWithBound_some_factor_count_le`
 with `factorFastCoreWithBound_some_factor_count_ge`, exposing the count
