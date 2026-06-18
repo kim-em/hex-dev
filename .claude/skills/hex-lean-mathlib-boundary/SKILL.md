@@ -909,6 +909,34 @@ SupportShortVectorData L S` errors with "type of theorem `foo` is not a
 proposition". Match the existing producers (`cutProjectionHypotheses_of_shortVectors`
 is a `def`).
 
+Inside such a `def` you **cannot `obtain`/`rcases` an `Exists`** to extract a
+witness — the tactic fails with "recursor `Exists.casesOn` can only eliminate
+into `Prop`" because the goal is data-valued (`Type`). This bites two common
+shapes: the custom `∣` (`a ∣ b := ∃ r, b = a * r`, so `obtain ⟨cof, hcof⟩ :=
+hdvd` fails) and any `…_getD_candidate`-style `∃ quotient, …` success witness.
+Extract with `.choose` / `.choose_spec` instead (e.g. `have hcof :
+M = cl * hdvd.choose := hdvd.choose_spec`; pass `hdvd.choose` as the cofactor
+field). These layers run under `noncomputable section`, so `Classical.choice`
+is free. If you must rewrite the *type* a `.choose` was taken over (e.g.
+`rw [hindicators] at hSpec` where `hSpec := hex.choose_spec`), the motive breaks
+("motive is not type correct"); `rw` the equation into the `Exists` *before*
+taking `.choose_spec`.
+
+Reusing `Recovery.lean` helpers (`liftedFactorSubsetsOfSupports`,
+`selectedFactorArraysOfSupports_polyProduct`,
+`bhksIndicatorSelectedFactors_expectedIndicatorArrayOfSupports`,
+`supportPartitionByMinColumn_class_*`) from another file: they live in
+`BHKS.ForwardRecoveryInputs`, *not* `BHKS` — reference them from inside a
+`namespace ForwardRecoveryInputs` block (else autoImplicit silently turns the
+unresolved name into a `Sort u_1` binder and you get a misleading "Function
+expected"). Several recovery helpers are `private` (`selectedFactorsOfMembers_toList`,
+the Mathlib-`Basic` `polyProduct_monic_of_all_monic`, the executable
+`bhksIndicatorCandidate?_normalizeFactorSign`/`_leadingCoeff_nonneg`): prefer the
+public `liftedFactorProduct_monic` for product monicity, and derive a
+sign-normalization (`normalizeFactorSign c = c`) from positive leading
+coefficient (`leadingCoeff_primitivePart_dilate_pos`) rather than de-privatizing
+the executable layer (which forces a ~15-min `CrossCheck` rebuild).
+
 ### Projection equalities from a `*Lift` package: destructure, don't `rw [D.basis_eq]`
 
 To prove `L.p = D.p` / `L.precision = D.a` for `D : RecoveredLift L S` (or
