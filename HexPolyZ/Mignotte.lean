@@ -725,12 +725,12 @@ def defaultFactorCoeffBound (f : ZPoly) : Nat :=
 
 /-- Base case of `binom`: choosing `0` elements always gives `1`, so the empty
 `foldl` over `List.range 0` normalizes `binom n 0` to `1`. -/
-@[simp] theorem binom_zero_right (n : Nat) : binom n 0 = 1 := by
+@[simp, grind =] theorem binom_zero_right (n : Nat) : binom n 0 = 1 := by
   simp [binom]
 
 /-- Base case of `binom`: choosing `k + 1` elements from `0` is impossible, so
 the `n < k` guard fires and normalizes `binom 0 (k + 1)` to `0`. -/
-@[simp] theorem binom_zero_succ (k : Nat) : binom 0 (k + 1) = 0 := by
+@[simp, grind =] theorem binom_zero_succ (k : Nat) : binom 0 (k + 1) = 0 := by
   simp [binom]
 
 /-- The executable binomial coefficient `binom n k` vanishes when `n < k`. -/
@@ -739,7 +739,7 @@ theorem binom_eq_zero_of_lt {n k : Nat} (h : n < k) : binom n k = 0 := by
 
 /-- Base case of `floorSqrt`: the `n = 0` guard fires before the Newton
 iteration, so `floorSqrt 0` normalizes to `0`. -/
-@[simp] theorem floorSqrt_zero : floorSqrt 0 = 0 := by
+@[simp, grind =] theorem floorSqrt_zero : floorSqrt 0 = 0 := by
   simp [floorSqrt]
 
 /-- The square of `floorSqrt n` is at most `n`: it is a lower square root. -/
@@ -754,7 +754,7 @@ theorem floorSqrt_sq_le (n : Nat) : floorSqrt n * floorSqrt n ≤ n := by
 
 /-- Base case of `ceilSqrt`: since `floorSqrt 0 = 0` is a perfect square,
 `ceilSqrt` returns its floor branch, normalizing `ceilSqrt 0` to `0`. -/
-@[simp] theorem ceilSqrt_zero : ceilSqrt 0 = 0 := by
+@[simp, grind =] theorem ceilSqrt_zero : ceilSqrt 0 = 0 := by
   simp [ceilSqrt]
 
 /--
@@ -846,25 +846,25 @@ theorem defaultFactorCoeffBound_eq (f : ZPoly) :
 
 /-- The zero polynomial has no stored coefficients, so the empty `foldl`
 defining `coeffNormSq` normalizes `coeffNormSq 0` to `0`. -/
-@[simp] theorem coeffNormSq_zero : coeffNormSq (0 : ZPoly) = 0 := by
+@[simp, grind =] theorem coeffNormSq_zero : coeffNormSq (0 : ZPoly) = 0 := by
   rfl
 
 /-- Base case of the coefficient-norm bound: `coeffNormSq 0 = 0` and
 `ceilSqrt 0 = 0`, so `coeffL2NormBound 0` normalizes to `0`. -/
-@[simp] theorem coeffL2NormBound_zero : coeffL2NormBound (0 : ZPoly) = 0 := by
+@[simp, grind =] theorem coeffL2NormBound_zero : coeffL2NormBound (0 : ZPoly) = 0 := by
   simp [coeffL2NormBound]
 
 /-- Base case of the Mignotte coefficient bound: the conservative norm factor
 `coeffL2NormBound 0 = 0` annihilates the product, so `mignotteCoeffBound 0 k j`
 normalizes to `0` for every degree `k` and index `j`. -/
-@[simp] theorem mignotteCoeffBound_zero (k j : Nat) :
+@[simp, grind =] theorem mignotteCoeffBound_zero (k j : Nat) :
     mignotteCoeffBound (0 : ZPoly) k j = 0 := by
   simp [mignotteCoeffBound]
 
 /-- Base case of the default factor coefficient bound: every entry of the nested
 maximum is `mignotteCoeffBound 0 k j = 0`, so `defaultFactorCoeffBound 0`
 normalizes to `0`. -/
-@[simp] theorem defaultFactorCoeffBound_zero :
+@[simp, grind =] theorem defaultFactorCoeffBound_zero :
     defaultFactorCoeffBound (0 : ZPoly) = 0 := by
   unfold defaultFactorCoeffBound
   have hignore :
