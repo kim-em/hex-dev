@@ -1,5 +1,6 @@
 import HexBerlekampZassenhaus
 import HexBerlekampZassenhausMathlib.BadVectorAuxiliary
+import HexBerlekampZassenhausMathlib.LiftBridge
 import HexBerlekampZassenhausMathlib.Resultant
 import HexHenselMathlib.Correctness
 import HexPolyZMathlib.Mignotte
@@ -1944,6 +1945,90 @@ def supportShortVectorData_of_recoveredLift
     (fun j => ?_)
   rw [hcoord_eq j]
   exact le_trans (ht j) hcard
+
+/--
+Package the non-monic fast path's monic-coordinate recovery witness as BHKS
+short-vector data for the corresponding support.
+
+This is deliberately only the recovered-lift/short-vector side of the BHKS cut
+package: coverage, partition equality, and fast-vs-slow output equivalence are
+separate obligations.
+-/
+def supportShortVectorData_of_toMonicRepresents
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData))
+    (factor cofactor : Hex.ZPoly)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hfactor : factor * cofactor = (Hex.ZPoly.toMonic core).monic)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k)
+    (hrep :
+      RepresentsIntegerFactorAtLift (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData) factor S)
+    (hfactor_monic : (HexPolyMathlib.toPolynomial factor).Monic)
+    (hp : 2 ≤ (Hex.ZPoly.toMonicLiftData core B primeData).p)
+    (hk :
+      1 <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k)
+    (hsep : ∀ j,
+      2 * Hex.bhksCoeffBound (Hex.ZPoly.toMonic core).monic j <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k)
+    (hthr : ∀ j,
+      Hex.bhksCoeffCutThreshold
+          (Hex.ZPoly.toMonicLiftData core B primeData).p
+          (Hex.ZPoly.toMonic core).monic j ≤
+        (Hex.ZPoly.toMonicLiftData core B primeData).k)
+    (hfac :
+      ∀ i : Fin
+          (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+            (Hex.ZPoly.toMonicLiftData core B primeData).p
+            (Hex.ZPoly.toMonicLiftData core B primeData).k
+            (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors).factorCount,
+        i ∈ supportOfSubset (Hex.ZPoly.toMonic core).monic
+          (Hex.ZPoly.toMonicLiftData core B primeData) S →
+        ∃ h : Hex.ZPoly,
+          Hex.DensePoly.Monic
+            ((Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+              (Hex.ZPoly.toMonicLiftData core B primeData).p
+              (Hex.ZPoly.toMonicLiftData core B primeData).k
+              (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors).liftedFactors.getD
+                i.val 1) ∧
+          0 <
+            ((Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+              (Hex.ZPoly.toMonicLiftData core B primeData).p
+              (Hex.ZPoly.toMonicLiftData core B primeData).k
+              (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors).liftedFactors.getD
+                i.val 1).degree?.getD 0 ∧
+          Hex.ZPoly.congr (Hex.ZPoly.toMonic core).monic
+            (((Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+              (Hex.ZPoly.toMonicLiftData core B primeData).p
+              (Hex.ZPoly.toMonicLiftData core B primeData).k
+              (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors).liftedFactors.getD
+                i.val 1) * h)
+            ((Hex.ZPoly.toMonicLiftData core B primeData).p ^
+              (Hex.ZPoly.toMonicLiftData core B primeData).k)) :
+    SupportShortVectorData
+      (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData).p
+        (Hex.ZPoly.toMonicLiftData core B primeData).k
+        (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors)
+      (supportOfSubset (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData) S) := by
+  let D :=
+    recoveredLiftOfToMonicRepresents core B primeData S factor cofactor
+      hcore_lc_pos hcore_pos hfactor hprecision hrep
+  have hf_lc : Hex.DensePoly.leadingCoeff D.f = 1 := by
+    simpa [D, recoveredLiftOfToMonicRepresents, recoveredLiftOfRepresents,
+      recoveredLiftOfSubset] using
+      Hex.DensePoly.leadingCoeff_eq_one_of_monic
+        (Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos)
+  exact
+    supportShortVectorData_of_recoveredLift D hf_lc hfactor_monic hp hk hsep hthr hfac
 
 open Classical in
 /--
