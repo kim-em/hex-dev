@@ -113,7 +113,7 @@ def transpose (M : Matrix R n m) : Matrix R m n :=
   simp [transpose, col]
 
 /-- Transposing a dense matrix twice returns the original matrix. -/
-@[simp] theorem transpose_transpose (M : Matrix R n m) :
+@[simp, grind =] theorem transpose_transpose (M : Matrix R n m) :
     transpose (transpose M) = M := by
   apply Vector.ext
   intro i hi
@@ -608,7 +608,7 @@ def gramMatrix [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) : Matrix R n n :=
   ofFn fun i j => Hex.Vector.dotProduct (row M i) (row M j)
 
 /-- Entry characterization for the Gram matrix of the rows of a dense matrix. -/
-@[simp] theorem gramMatrix_getElem [Mul R] [Add R] [OfNat R 0]
+@[simp, grind =] theorem gramMatrix_getElem [Mul R] [Add R] [OfNat R 0]
     (M : Matrix R n m) (i j : Fin n) :
     (gramMatrix M)[i][j] = Hex.Vector.dotProduct (row M i) (row M j) := by
   rw [gramMatrix, getElem_ofFn]
@@ -638,7 +638,7 @@ def leadingRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) : Matrix R k m :=
 the source entry `M[i][j]` at the same coordinates, reembedded into `Fin n`. This
 is the `simp` normalization that rewrites a prefix lookup back to a source lookup
 in determinant expansions. -/
-@[simp] theorem leadingPrefix_entry (M : Matrix R n n) (k : Nat) (hk : k ≤ n)
+@[simp, grind =] theorem leadingPrefix_entry (M : Matrix R n n) (k : Nat) (hk : k ≤ n)
     (i j : Fin k) :
     (leadingPrefix M k hk)[i][j] =
       (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
@@ -650,7 +650,7 @@ in determinant expansions. -/
 source entry `M[i][j]` with the row index reembedded into `Fin n` and the column
 index `j` retained unchanged. This is the `simp` normalization a determinant
 expansion relies on to rewrite a row-slice lookup back to a source lookup. -/
-@[simp] theorem leadingRows_entry (M : Matrix R n m) (k : Nat) (hk : k ≤ n)
+@[simp, grind =] theorem leadingRows_entry (M : Matrix R n m) (k : Nat) (hk : k ≤ n)
     (i : Fin k) (j : Fin m) :
     (leadingRows M k hk)[i][j] =
       (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
@@ -661,7 +661,7 @@ expansion relies on to rewrite a row-slice lookup back to a source lookup. -/
 to the source entry `M[i][j]` at the same coordinates, reembedded into `Fin n` via
 `k.val + 1 ≤ n`. This is the `simp` normalization that rewrites a submatrix lookup
 back to a source lookup in determinant expansions. -/
-@[simp] theorem submatrix_entry (M : Matrix R n n) (k : Fin n)
+@[simp, grind =] theorem submatrix_entry (M : Matrix R n n) (k : Fin n)
     (i j : Fin (k.val + 1)) :
     (submatrix M k)[i][j] =
       (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt (Nat.succ_le_of_lt k.isLt)⟩
@@ -702,7 +702,7 @@ def borderedMinor (M : Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
 and `c.val < k`, the `(r, c)` entry resolves to the source entry `M[r][c]` at the
 reembedded leading-block coordinates, independent of the border row `i` and column
 `j`. This is the `simp` normalization for the top-left `k × k` block. -/
-@[simp] theorem borderedMinor_entry_lt_lt (M : Matrix R n n) (k : Nat) (hk : k < n)
+@[simp, grind =] theorem borderedMinor_entry_lt_lt (M : Matrix R n n) (k : Nat) (hk : k < n)
     (i j : Fin n) (r c : Fin (k + 1)) (hr : r.val < k) (hc : c.val < k) :
     (borderedMinor M k hk i j)[r][c] =
       (let rr : Fin n := ⟨r.val, Nat.lt_trans hr hk⟩
@@ -714,7 +714,7 @@ reembedded leading-block coordinates, independent of the border row `i` and colu
 `Fin.last k` with `r.val < k`, the `(r, last)` entry resolves to the source entry
 `M[r][j]`, taking the border column `j` and the reembedded leading-block row. This
 is the `simp` normalization for the appended border column. -/
-@[simp] theorem borderedMinor_entry_lt_last (M : Matrix R n n) (k : Nat) (hk : k < n)
+@[simp, grind =] theorem borderedMinor_entry_lt_last (M : Matrix R n n) (k : Nat) (hk : k < n)
     (i j : Fin n) (r : Fin (k + 1)) (hr : r.val < k) :
     (borderedMinor M k hk i j)[r][Fin.last k] =
       (let rr : Fin n := ⟨r.val, Nat.lt_trans hr hk⟩
@@ -725,7 +725,7 @@ is the `simp` normalization for the appended border column. -/
 `Fin.last k` with `c.val < k`, the `(last, c)` entry resolves to the source entry
 `M[i][c]`, taking the border row `i` and the reembedded leading-block column. This
 is the `simp` normalization for the appended border row. -/
-@[simp] theorem borderedMinor_entry_last_lt (M : Matrix R n n) (k : Nat) (hk : k < n)
+@[simp, grind =] theorem borderedMinor_entry_last_lt (M : Matrix R n n) (k : Nat) (hk : k < n)
     (i j : Fin n) (c : Fin (k + 1)) (hc : c.val < k) :
     (borderedMinor M k hk i j)[Fin.last k][c] =
       (let cc : Fin n := ⟨c.val, Nat.lt_trans hc hk⟩
@@ -736,7 +736,7 @@ is the `simp` normalization for the appended border row. -/
 `(Fin.last k, Fin.last k)`, the entry resolves to the source entry `M[i][j]` formed
 from the border row `i` and border column `j`. This is the `simp` normalization for
 the corner that a determinant expansion isolates last. -/
-@[simp] theorem borderedMinor_entry_last_last (M : Matrix R n n) (k : Nat) (hk : k < n)
+@[simp, grind =] theorem borderedMinor_entry_last_last (M : Matrix R n n) (k : Nat) (hk : k < n)
     (i j : Fin n) :
     (borderedMinor M k hk i j)[Fin.last k][Fin.last k] = M[i][j] := by
   simp [borderedMinor, ofFn]
@@ -781,7 +781,7 @@ theorem leadingPrefix_borderedMinor_succ_eq_borderedMinor (M : Matrix R n n)
   simp [show (1 : Matrix R n n) = Matrix.identity from rfl, Matrix.identity, ofFn]
 
 /-- The identity matrix is its own transpose. -/
-@[simp] theorem transpose_one [OfNat R 0] [OfNat R 1] {n : Nat} :
+@[simp, grind =] theorem transpose_one [OfNat R 0] [OfNat R 1] {n : Nat} :
     Matrix.transpose (1 : Matrix R n n) = (1 : Matrix R n n) := by
   apply Vector.ext
   intro i hi
@@ -913,7 +913,7 @@ private theorem foldl_dotProduct_basis_body {R : Type u} [Lean.Grind.CommRing R]
     rw [if_neg hij]
 
 /-- The Gram matrix of the identity is the identity. -/
-@[simp] theorem gramMatrix_one {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
+@[simp, grind =] theorem gramMatrix_one {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
     gramMatrix (1 : Matrix R n n) = (1 : Matrix R n n) := by
   apply Vector.ext
   intro i hi
@@ -949,7 +949,7 @@ private theorem foldl_dotProduct_basis_body {R : Type u} [Lean.Grind.CommRing R]
 
 /-- The leading principal `(k + 1) × (k + 1)` submatrix of the identity is the
 identity. -/
-@[simp] theorem submatrix_one {R : Type u} [OfNat R 0] [OfNat R 1] {n : Nat} (k : Fin n) :
+@[simp, grind =] theorem submatrix_one {R : Type u} [OfNat R 0] [OfNat R 1] {n : Nat} (k : Fin n) :
     submatrix (1 : Matrix R n n) k = (1 : Matrix R (k.val + 1) (k.val + 1)) := by
   apply Vector.ext
   intro i hi
