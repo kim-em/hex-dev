@@ -189,10 +189,126 @@ theorem toFpPoly_add (p q : Hex.GF2Poly) :
     toFpPoly (p + q) = toFpPoly p + toFpPoly q := by
   sorry
 
+/-- The `ZMod64 2` indicator of a bit, as a canonical residue. -/
+private theorem chi_eq_ofNat (b : Bool) :
+    (if b then (1 : Hex.ZMod64 2) else 0) = Hex.ZMod64.ofNat 2 (if b then 1 else 0) := by
+  cases b <;> rfl
+
+/-- Indicators multiply by the `AND` of the bits (`ZMod64 2` multiplication is
+`AND` on `0/1` residues). -/
+private theorem chi_mul (b c : Bool) :
+    (if b && c then (1 : Hex.ZMod64 2) else 0) =
+      (if b then (1 : Hex.ZMod64 2) else 0) * (if c then 1 else 0) := by
+  rw [chi_eq_ofNat b, chi_eq_ofNat c, chi_eq_ofNat (b && c)]
+  apply Hex.ZMod64.ext_toNat
+  simp only [Hex.ZMod64.toNat_mul, Hex.ZMod64.toNat_ofNat]
+  cases b <;> cases c <;> decide
+
+/-- Indicators add by the `XOR` of the bits (`ZMod64 2` addition is `XOR` on
+`0/1` residues: `1 + 1 = 0`). -/
+private theorem chi_xor (b c : Bool) :
+    (if (b != c) then (1 : Hex.ZMod64 2) else 0) =
+      (if b then (1 : Hex.ZMod64 2) else 0) + (if c then 1 else 0) := by
+  rw [chi_eq_ofNat b, chi_eq_ofNat c, chi_eq_ofNat (b != c)]
+  apply Hex.ZMod64.ext_toNat
+  simp only [Hex.ZMod64.toNat_add, Hex.ZMod64.toNat_ofNat]
+  cases b <;> cases c <;> decide
+
+/-- `ZMod64 2` is an additive monoid with `0` on the right. -/
+private theorem zmod2_add_zero (x : Hex.ZMod64 2) : x + 0 = x := by grind
+
+/-- Left absorption in `ZMod64 2`. -/
+private theorem zmod2_zero_mul (x : Hex.ZMod64 2) : (0 : Hex.ZMod64 2) * x = 0 := by grind
+
+/-- The `ZMod64 2` indicator of an XOR-fold equals the running sum of the
+per-bit indicators: addition realizes the parity fold. -/
+private theorem chi_foldl_aux (l : List Bool) (init : Bool) :
+    (if (l.foldl (fun a b => a != b) init) then (1 : Hex.ZMod64 2) else 0) =
+      l.foldl (fun acc b => acc + (if b then (1 : Hex.ZMod64 2) else 0))
+        (if init then 1 else 0) := by
+  induction l generalizing init with
+  | nil => rfl
+  | cons b bs ih =>
+      show (if (bs.foldl (fun a b => a != b) (init != b)) then (1 : Hex.ZMod64 2) else 0) =
+        bs.foldl (fun acc b => acc + (if b then (1 : Hex.ZMod64 2) else 0))
+          ((if init then (1 : Hex.ZMod64 2) else 0) + (if b then 1 else 0))
+      rw [ih (init != b), chi_xor init b]
+
+private theorem chi_foldl (l : List Bool) :
+    (if (l.foldl (fun a b => a != b) false) then (1 : Hex.ZMod64 2) else 0) =
+      l.foldl (fun acc b => acc + (if b then (1 : Hex.ZMod64 2) else 0)) 0 := by
+  have h := chi_foldl_aux l false
+  simpa using h
+
+/-- Congruence for an additive fold: step functions that agree on the list
+elements produce equal folds. -/
+private theorem foldl_add_congr (l : List Nat) (f g : Nat → Hex.ZMod64 2)
+    (h : ∀ s ∈ l, f s = g s) (init : Hex.ZMod64 2) :
+    l.foldl (fun acc s => acc + f s) init = l.foldl (fun acc s => acc + g s) init := by
+  induction l generalizing init with
+  | nil => rfl
+  | cons s ss ih =>
+      simp only [List.foldl_cons]
+      rw [h s (by simp)]
+      exact ih (fun x hx => h x (by simp [hx])) _
+
+/-- Extending an additive fold past a point where every term vanishes leaves the
+sum unchanged. -/
+private theorem foldl_add_range_reduce (term : Nat → Hex.ZMod64 2) (m : Nat)
+    (hzero : ∀ i, m ≤ i → term i = 0) :
+    ∀ d, (List.range (m + d)).foldl (fun acc i => acc + term i) 0 =
+      (List.range m).foldl (fun acc i => acc + term i) 0
+  | 0 => by simp
+  | d + 1 => by
+      rw [Nat.add_succ, List.range_succ, List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [hzero (m + d) (by omega), zmod2_add_zero,
+        foldl_add_range_reduce term m hzero d]
+
+private theorem foldl_add_range_eq_of_ge (term : Nat → Hex.ZMod64 2) (A B m : Nat)
+    (hzero : ∀ i, m ≤ i → term i = 0) (hA : m ≤ A) (hB : m ≤ B) :
+    (List.range A).foldl (fun acc i => acc + term i) 0 =
+      (List.range B).foldl (fun acc i => acc + term i) 0 := by
+  obtain ⟨a, rfl⟩ : ∃ a, A = m + a := ⟨A - m, by omega⟩
+  obtain ⟨b, rfl⟩ : ∃ b, B = m + b := ⟨B - m, by omega⟩
+  rw [foldl_add_range_reduce term m hzero a, foldl_add_range_reduce term m hzero b]
+
 @[simp]
 theorem toFpPoly_mul (p q : Hex.GF2Poly) :
     toFpPoly (p * q) = toFpPoly p * toFpPoly q := by
-  sorry
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [coeff_toFpPoly, Hex.GF2Poly.coeff_mul_diagonal, Hex.FpPoly.coeff_mul, chi_foldl]
+  simp only [List.foldl_map]
+  have hterm : ∀ s ∈ List.range (n + 1),
+      (if (p.coeff s && q.coeff (n - s)) then (1 : Hex.ZMod64 2) else 0) =
+        Hex.FpPoly.mulCoeffTerm (toFpPoly p) (toFpPoly q) n s := by
+    intro s hs
+    have hsn : s ≤ n := by have := List.mem_range.mp hs; omega
+    rw [chi_mul, ← coeff_toFpPoly, ← coeff_toFpPoly]
+    unfold Hex.FpPoly.mulCoeffTerm
+    rw [if_neg (by omega : ¬ n < s)]
+  rw [foldl_add_congr (List.range (n + 1)) _ _ hterm 0]
+  have hzero : ∀ i, min ((toFpPoly p).size) (n + 1) ≤ i →
+      Hex.FpPoly.mulCoeffTerm (toFpPoly p) (toFpPoly q) n i = 0 := by
+    intro i hi
+    unfold Hex.FpPoly.mulCoeffTerm
+    by_cases hni : n < i
+    · rw [if_pos hni]
+    · rw [if_neg hni]
+      have hcase : (toFpPoly p).size ≤ i ∨ n + 1 ≤ i := by
+        rcases Nat.le_total ((toFpPoly p).size) (n + 1) with hle | hle
+        · left; rw [Nat.min_eq_left hle] at hi; exact hi
+        · right; rw [Nat.min_eq_right hle] at hi; exact hi
+      rcases hcase with h | h
+      · rw [Hex.DensePoly.coeff_eq_zero_of_size_le (toFpPoly p) h]
+        exact zmod2_zero_mul _
+      · exact absurd (by omega : n < i) hni
+  unfold Hex.FpPoly.mulCoeffSum
+  exact foldl_add_range_eq_of_ge
+    (fun i => Hex.FpPoly.mulCoeffTerm (toFpPoly p) (toFpPoly q) n i)
+    (n + 1) ((toFpPoly p).size) (min ((toFpPoly p).size) (n + 1))
+    hzero (Nat.min_le_right _ _) (Nat.min_le_left _ _)
 
 /-- The packed `GF2Poly` representation is ring-equivalent to the generic
 degree-normalized `FpPoly 2` representation. -/
