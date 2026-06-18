@@ -237,6 +237,64 @@ theorem supportPartitionByMinColumn_length_eq_normalizedFactors_card
       hpartition hcore_ne hcore_primitive hcore_lc_pos hprecision,
     liftedTrueSupports.ncard_eq_normalizedFactors_card hpartition hcore_ne]
 
+/--
+Fast-path B8 partition-refinement count from core facts alone.
+
+Composes the carrier-free `toMonicPrimeData?` partition producer
+`liftedFactorSubsetPartition_of_toMonicPrimeData_complete` -- which derives the
+full `LiftedFactorSubsetPartition core (toMonicLiftData core B primeData)
+Finset.univ core` from the executable selection witness and the standard core
+side conditions, without routing through slow exhaustive enumeration -- with the
+generic count theorem
+`supportPartitionByMinColumn_length_eq_normalizedFactors_card`.
+
+The result discharges the exact `hpartition` length-equality shape threaded
+through the fast-BHKS irreducibility wrappers, for the lifted true-support family
+`liftedTrueSupports core (toMonicLiftData core B primeData)`, with no free
+partition hypothesis.  `hbound` is the monic-coordinate Mignotte precision the
+producer consumes; `hcore_bound` is the corresponding core-coordinate precision
+that the count theorem needs (the two refer to distinct default coefficient
+bounds, so both are supplied by the caller).
+-/
+theorem supportPartitionByMinColumn_length_eq_normalizedFactors_card_of_toMonicPrimeData
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
+    (hB_ne_zero : B ≠ 0)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
+    (hcore_bound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p) :
+    (supportPartitionByMinColumn
+        (liftedTrueSupports core
+          (Hex.ZPoly.toMonicLiftData core B primeData))).length =
+      (UniqueFactorizationMonoid.normalizedFactors
+        (HexPolyZMathlib.toPolynomial core)).card := by
+  have hcore_ne : core ≠ 0 := by
+    intro h
+    rw [h, Hex.DensePoly.leadingCoeff_zero] at hcore_lc_pos
+    exact lt_irrefl 0 hcore_lc_pos
+  have hp_eq : (Hex.ZPoly.toMonicLiftData core B primeData).p = primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_p _ _ _
+  have hk_eq : (Hex.ZPoly.toMonicLiftData core B primeData).k =
+      Hex.precisionForCoeffBound B primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_k _ _ _
+  have hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k := by
+    rw [hp_eq, hk_eq]; exact hcore_bound
+  exact supportPartitionByMinColumn_length_eq_normalizedFactors_card
+    (liftedFactorSubsetPartition_of_toMonicPrimeData_complete
+      core B primeData hselected hcore_lc_pos hcore_pos hcore_prim hcore_sqfree
+      hB_ne_zero hbound)
+    hcore_ne hcore_prim hcore_lc_pos hprecision
+
 namespace ForwardRecoveryInputs
 
 /-- Under an `ExpectedTrueFactors` package whose indicators are the
