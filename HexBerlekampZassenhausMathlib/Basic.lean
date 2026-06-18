@@ -19736,6 +19736,164 @@ theorem exists_monicCorrespondent_of_dvd
       exact ⟨h, hgh.symm⟩
   exact ⟨g, hg_monic, hdvdg, hprim⟩
 
+/-- **Recovery-map injectivity on monics.** The map `m ↦ primitivePart (dilate c m)`
+is injective on monic polynomials for a nonzero scalar `c`.  This is the
+uniqueness counterpart of `exists_monicCorrespondent_of_dvd`'s existence: it
+pins a centred-lift monic factor against the monic correspondent of a
+recombination candidate, both of which recover the same primitive integer
+factor under `primitivePart ∘ dilate (leadingCoeff core)`. -/
+theorem monic_eq_of_primitivePart_dilate_eq
+    {c : Int} (hc : c ≠ 0) {m₁ m₂ : Hex.ZPoly}
+    (hm₁ : Hex.DensePoly.Monic m₁) (hm₂ : Hex.DensePoly.Monic m₂)
+    (h : Hex.ZPoly.primitivePart (Hex.ZPoly.dilate c m₁) =
+         Hex.ZPoly.primitivePart (Hex.ZPoly.dilate c m₂)) :
+    m₁ = m₂ := by
+  -- The dilations of monic polynomials are nonzero (size preserved).
+  have hdil_ne : ∀ m : Hex.ZPoly, Hex.DensePoly.Monic m →
+      Hex.ZPoly.dilate c m ≠ 0 := by
+    intro m hm hz
+    have hsize : (Hex.ZPoly.dilate c m).size = m.size :=
+      size_dilate_eq_of_monic_of_ne_zero hc hm
+    rw [hz, Hex.DensePoly.size_zero] at hsize
+    have := zpoly_size_pos_of_monic hm
+    omega
+  set pp := Hex.ZPoly.primitivePart (Hex.ZPoly.dilate c m₁) with hpp
+  set K₁ := Hex.ZPoly.content (Hex.ZPoly.dilate c m₁) with hK₁
+  set K₂ := Hex.ZPoly.content (Hex.ZPoly.dilate c m₂) with hK₂
+  have hrec₁ : Hex.DensePoly.scale K₁ pp = Hex.ZPoly.dilate c m₁ :=
+    Hex.ZPoly.content_mul_primitivePart _
+  have hrec₂ : Hex.DensePoly.scale K₂ pp = Hex.ZPoly.dilate c m₂ := by
+    rw [h]; exact Hex.ZPoly.content_mul_primitivePart _
+  have hK₁_ne : K₁ ≠ 0 := HexPolyZMathlib.content_ne_zero _ (hdil_ne m₁ hm₁)
+  have hK₂_ne : K₂ ≠ 0 := HexPolyZMathlib.content_ne_zero _ (hdil_ne m₂ hm₂)
+  -- `pp` is nonzero with positive size, so its leading coefficient is nonzero.
+  have hpp_size : pp.size = m₁.size := by
+    have : (Hex.DensePoly.scale K₁ pp).size = m₁.size := by
+      rw [hrec₁]; exact size_dilate_eq_of_monic_of_ne_zero hc hm₁
+    rwa [Hex.ZPoly.scale_size_of_nonzero K₁ pp hK₁_ne] at this
+  have hpp_lead_ne : Hex.DensePoly.leadingCoeff pp ≠ 0 :=
+    Hex.DensePoly.leadingCoeff_ne_zero_of_pos_size pp
+      (by rw [hpp_size]; exact zpoly_size_pos_of_monic hm₁)
+  -- Sizes of `m₁`, `m₂` both equal `pp.size`, so the `c`-powers match.
+  have hpp_size₂ : pp.size = m₂.size := by
+    have : (Hex.DensePoly.scale K₂ pp).size = m₂.size := by
+      rw [hrec₂]; exact size_dilate_eq_of_monic_of_ne_zero hc hm₂
+    rwa [Hex.ZPoly.scale_size_of_nonzero K₂ pp hK₂_ne] at this
+  have hsize_eq : m₁.size = m₂.size := hpp_size ▸ hpp_size₂
+  -- Match leading coefficients to deduce `K₁ = K₂`.
+  have hlc₁ : c ^ (m₁.size - 1) = K₁ * Hex.DensePoly.leadingCoeff pp := by
+    rw [← leadingCoeff_dilate_of_monic hc hm₁, ← hrec₁,
+      Hex.ZPoly.leadingCoeff_scale_of_nonzero K₁ pp hK₁_ne]
+  have hlc₂ : c ^ (m₂.size - 1) = K₂ * Hex.DensePoly.leadingCoeff pp := by
+    rw [← leadingCoeff_dilate_of_monic hc hm₂, ← hrec₂,
+      Hex.ZPoly.leadingCoeff_scale_of_nonzero K₂ pp hK₂_ne]
+  have hKeq : K₁ = K₂ := by
+    have hpow : c ^ (m₁.size - 1) = c ^ (m₂.size - 1) := by rw [hsize_eq]
+    rw [hlc₁, hlc₂] at hpow
+    exact mul_right_cancel₀ hpp_lead_ne hpow
+  -- Equal contents give equal dilations; injectivity of `dilate c` finishes.
+  have hdil_eq : Hex.ZPoly.dilate c m₁ = Hex.ZPoly.dilate c m₂ := by
+    rw [← hrec₁, ← hrec₂, hKeq]
+  exact dilate_injective hc hdil_eq
+
+/-- **Centred-lift divisibility from a recombination candidate.** If a monic
+`cl` dilates (by `leadingCoeff core`) to a polynomial whose primitive part is a
+primitive, sign-normalized integer factor `candidate` of `core` of positive
+degree, then `cl` divides the monic transform `(toMonic core).monic`.
+
+This is the soundness step behind the monic-lattice `RecoveredLift` family: the
+selected lifted product's centred lift is exactly the monic correspondent of the
+recombination candidate (`monic_eq_of_primitivePart_dilate_eq` pins it against
+`exists_monicCorrespondent_of_dvd`'s witness), so the executable exact-division
+witness `candidate ∣ core` transports to `cl ∣ (toMonic core).monic`. -/
+theorem centeredLift_dvd_toMonic
+    {core cl candidate : Hex.ZPoly}
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcl_monic : Hex.DensePoly.Monic cl)
+    (hcand_deg : 1 ≤ candidate.degree?.getD 0)
+    (hrecover :
+       Hex.ZPoly.primitivePart
+         (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl) = candidate)
+    (hcand_dvd : candidate ∣ core)
+    (hcand_prim : Hex.ZPoly.Primitive candidate)
+    (hcand_sign : Hex.normalizeFactorSign candidate = candidate) :
+    cl ∣ (Hex.ZPoly.toMonic core).monic := by
+  have hcore0 : core ≠ 0 := by
+    intro h
+    rw [h, Hex.DensePoly.leadingCoeff_zero] at hcore_lc_pos
+    exact lt_irrefl 0 hcore_lc_pos
+  have hdeg : 1 ≤ (Hex.ZPoly.toMonic core).degree := by
+    rw [Hex.ZPoly.toMonic_degree core]; omega
+  obtain ⟨g, hg_monic, hg_dvd, hg_recover⟩ :=
+    exists_monicCorrespondent_of_dvd core candidate hcore0 hcore_lc_pos hdeg
+      hcand_deg hcand_dvd hcand_prim hcand_sign
+  have hcl_eq_g : cl = g :=
+    monic_eq_of_primitivePart_dilate_eq (ne_of_gt hcore_lc_pos) hcl_monic hg_monic
+      (hrecover.trans hg_recover.symm)
+  rw [hcl_eq_g]; exact hg_dvd
+
+/-- The recombination candidate emitted by `bhksIndicatorCandidate?` over a
+positive-leading-coefficient `core` is exactly the primitive part of the
+leading-coefficient dilation of the centred selected product: the
+`normalizeCandidateFactor`/`normalizeFactorSign` wrappers collapse because that
+dilation already has positive leading coefficient. -/
+theorem primitivePart_dilate_centeredLift_eq_candidate
+    {core : Hex.ZPoly} {d : Hex.LiftData} {indicator : Array Int}
+    {candidate quotient : Hex.ZPoly} {selected : Array Hex.ZPoly}
+    (h : Hex.bhksIndicatorCandidate? core d indicator = some (candidate, quotient))
+    (hselected :
+       Hex.bhksIndicatorSelectedFactors d.liftedFactors indicator = some selected)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcl_monic :
+       Hex.DensePoly.Monic
+         (Hex.centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k))) :
+    Hex.ZPoly.primitivePart
+        (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+          (Hex.centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k))) = candidate := by
+  set cl := Hex.centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k) with hcl
+  set lc := Hex.DensePoly.leadingCoeff core with hlc
+  set x := Hex.ZPoly.dilate lc cl with hx
+  have hlc_ne : lc ≠ 0 := ne_of_gt hcore_lc_pos
+  have hx_lead : Hex.DensePoly.leadingCoeff x = lc ^ (cl.size - 1) :=
+    leadingCoeff_dilate_of_monic hlc_ne hcl_monic
+  have hx_lead_pos : 0 < Hex.DensePoly.leadingCoeff x := by
+    rw [hx_lead]; exact pow_pos hcore_lc_pos _
+  have hx0 : x ≠ 0 := by
+    intro hz
+    rw [hz, Hex.DensePoly.leadingCoeff_zero] at hx_lead_pos
+    exact lt_irrefl 0 hx_lead_pos
+  set K := Hex.ZPoly.content x with hK
+  have hK_ne : K ≠ 0 := HexPolyZMathlib.content_ne_zero _ hx0
+  have hK_nonneg : 0 ≤ K := by
+    rw [hK]; unfold Hex.ZPoly.content Hex.DensePoly.content; exact Int.natCast_nonneg _
+  have hK_pos : 0 < K := lt_of_le_of_ne hK_nonneg (Ne.symm hK_ne)
+  have hcmpp : Hex.DensePoly.scale K (Hex.ZPoly.primitivePart x) = x :=
+    Hex.ZPoly.content_mul_primitivePart x
+  have hlead_eq :
+      Hex.DensePoly.leadingCoeff x =
+        K * Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart x) := by
+    have := Hex.ZPoly.leadingCoeff_scale_of_nonzero K (Hex.ZPoly.primitivePart x) hK_ne
+    rw [hcmpp] at this; exact this
+  have hpp_lead_pos :
+      0 < Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart x) := by
+    rcases lt_trichotomy (Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart x)) 0 with
+      hneg | hzero | hpos
+    · exact absurd hx_lead_pos
+        (by rw [hlead_eq]; have := mul_neg_of_pos_of_neg hK_pos hneg; linarith)
+    · rw [hzero, Int.mul_zero] at hlead_eq
+      rw [hlead_eq] at hx_lead_pos; exact absurd hx_lead_pos (lt_irrefl 0)
+    · exact hpos
+  have hchar := Hex.bhksIndicatorCandidate?_eq_normalized_dilatedCenteredLift h hselected
+  have hcond : ¬ Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart x) < 0 :=
+    not_lt.mpr (le_of_lt hpp_lead_pos)
+  have hnc : Hex.normalizeCandidateFactor x = Hex.ZPoly.primitivePart x := by
+    unfold Hex.normalizeCandidateFactor; simp [hcond]
+  have hns :
+      Hex.normalizeFactorSign (Hex.ZPoly.primitivePart x) = Hex.ZPoly.primitivePart x := by
+    unfold Hex.normalizeFactorSign; simp [hcond]
+  rw [hchar, hnc, hns]
+
 /-- **Mod-`p` representation of the monic correspondent (#7381, prereq of #7364).**
 
 For prime data selected by `toMonicPrimeData? core` — that is, `choosePrimeData?`
