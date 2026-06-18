@@ -149,6 +149,49 @@ def recoveredLiftOfRepresents
     (dilate_centeredLift_eq_factor_of_represents_monic hcore_monic hrep hprecision)
 
 /--
+Build a recovered BHKS true-factor package for the monic coordinate used by
+`toMonicLiftData`.
+
+The executable non-monic fast path selects prime and lift data from the original
+`core`, but the Hensel factors live over `(toMonic core).monic`.  This adapter
+packages a representation witness for that monic coordinate as a `RecoveredLift`
+over the `bhksLatticeBasis` built from the same `toMonicLiftData`.
+-/
+def recoveredLiftOfToMonicRepresents
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData))
+    (factor cofactor : Hex.ZPoly)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hfactor : factor * cofactor = (Hex.ZPoly.toMonic core).monic)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k)
+    (hrep :
+      RepresentsIntegerFactorAtLift (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData) factor S) :
+    RecoveredLift
+      (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData).p
+        (Hex.ZPoly.toMonicLiftData core B primeData).k
+        (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors)
+      (supportOfSubset (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData) S) := by
+  let M := (Hex.ZPoly.toMonic core).monic
+  let d := Hex.ZPoly.toMonicLiftData core B primeData
+  have hM_monic : Hex.DensePoly.Monic M :=
+    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+  have hM_toMonic : (Hex.ZPoly.toMonic M).monic = M :=
+    Hex.ZPoly.toMonic_monic_eq_core_of_leadingCoeff_eq_one M hM_monic
+  have hprecisionM :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic M).monic <
+        d.p ^ d.k := by
+    simpa [M, d, hM_toMonic] using hprecision
+  exact recoveredLiftOfRepresents M d S factor cofactor hM_monic hfactor
+    hprecisionM hrep
+
+/--
 Every raw true-factor lift also gives a recovered-lift certificate when the
 caller supplies the corresponding centered/dilated recovery equality.  This is a
 thin adapter for proof paths that already carry `TrueFactorLift` data but need
