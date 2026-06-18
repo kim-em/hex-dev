@@ -472,6 +472,70 @@ def recoveredLift_family_of_indicatorCandidates
   exact recoveredLiftOfSubset (Hex.ZPoly.toMonic core).monic d T cl hcl_dvd.choose
     hcof.symm hrecovered
 
+/--
+**Emitted/canonical support set** for the indicator partition of `trueSupports`.
+
+These are exactly the lifted-factor supports reached by the array indices of
+`recoveredLift_family_of_indicatorCandidates`: the image, over the canonical
+indicator partition, of `supportOfSubset M d` applied to the partition's
+lifted-factor subsets.  Defining the support set as this image is what makes the
+index/surjectivity fact (#7923) hold *by construction* — every member is,
+definitionally, reached by one of the array indices — rather than requiring a
+disjointness or partition hypothesis on a free `trueSupports` (which is unsound:
+overlapping supports collapse under `supportPartitionByMinColumn`). -/
+noncomputable def emittedSupports
+    (M : Hex.ZPoly) (d : Hex.LiftData)
+    {r : Nat} (trueSupports : Set (Set (Fin r))) :
+    Set (LiftedFactorSupport (Hex.bhksLatticeBasis M d.p d.k d.liftedFactors)) :=
+  {S | ∃ i, i < (expectedIndicatorArrayOfSupports trueSupports).size ∧
+    supportOfSubset M d ((liftedFactorSubsetsOfSupports d trueSupports).getD i ∅) = S}
+
+/--
+**Subtype-indexed recovered-lift family** (#7923).
+
+Repackage the array-indexed family `recoveredLift_family_of_indicatorCandidates`
+as a family indexed by the canonical emitted-support subtype `emittedSupports`.
+The index/surjectivity fact is discharged from the definition of
+`emittedSupports`: each `S : emittedSupports …` carries a witnessing array index
+`i`, at which the array-indexed family already produces the certificate, and
+transporting along the support equality lands it at `S.1`.
+
+This is the shape consumed by the line-714 endpoint
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift` as its
+`lift : ∀ S : trueSupports, RecoveredLift L S.1` argument, with `trueSupports`
+instantiated to `emittedSupports (toMonic core).monic d …`.
+
+This is a `def` because `RecoveredLift` is a data-carrying certificate. -/
+def recoveredLift_subtypeFamily_of_indicatorCandidates
+    {core : Hex.ZPoly} {d : Hex.LiftData} {coreFactors : Array Hex.ZPoly}
+    (rows_pos : HasPositiveDimension core d)
+    (trueSupports :
+       Set (Set (Fin (projectedRowsOfLiftData core d rows_pos).factorCount)))
+    (hindicators :
+       equivalenceClassIndicatorsOfLiftData core d rows_pos =
+         expectedIndicatorArrayOfSupports trueSupports)
+    (hcandidates :
+       Hex.bhksIndicatorCandidates? core d
+           (equivalenceClassIndicatorsOfLiftData core d rows_pos) = some coreFactors)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hliftedFactor_monic : ∀ i : LiftedFactorIndex d, Hex.DensePoly.Monic (liftedFactor d i))
+    (hp_two_le : 2 ≤ d.p ^ d.k) :
+    ∀ S : emittedSupports (Hex.ZPoly.toMonic core).monic d trueSupports,
+      RecoveredLift
+        (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic d.p d.k d.liftedFactors)
+        S.1 := by
+  classical
+  intro S
+  -- `S.2 : ∃ i, i < size ∧ supportOfSubset … = S.1` is a `Prop`, so it cannot be
+  -- pattern-matched into the data-valued `RecoveredLift` goal; extract the
+  -- witnessing index with `choose` and transport along the support equality.
+  have hmem := S.2
+  exact hmem.choose_spec.2 ▸
+    recoveredLift_family_of_indicatorCandidates rows_pos trueSupports
+      hindicators hcandidates hcore_lc_pos hcore_pos hliftedFactor_monic hp_two_le
+      hmem.choose hmem.choose_spec.1
+
 end ForwardRecoveryInputs
 
 end BHKS
