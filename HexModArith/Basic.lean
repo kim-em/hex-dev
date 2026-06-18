@@ -46,10 +46,10 @@ instance : CoeOut (ZMod64 p) Nat where
   coe := toNat
 
 /-- Converting a residue to `UInt64` exposes exactly the stored word. -/
-@[simp] theorem toUInt64_eq_val (a : ZMod64 p) : a.toUInt64 = a.val := rfl
+@[simp, grind =] theorem toUInt64_eq_val (a : ZMod64 p) : a.toUInt64 = a.val := rfl
 
 /-- Converting a residue to `Nat` reads the stored word as its canonical representative. -/
-@[simp] theorem toNat_eq_val (a : ZMod64 p) : a.toNat = a.val.toNat := rfl
+@[simp, grind =] theorem toNat_eq_val (a : ZMod64 p) : a.toNat = a.val.toNat := rfl
 
 /-- The Nat view of a residue is always the canonical representative below the modulus. -/
 @[simp] theorem toNat_lt (a : ZMod64 p) : a.toNat < p := a.isLt
@@ -75,11 +75,11 @@ theorem normalize_lt (p n : Nat) [Bounds p] : normalize p n < p :=
   Nat.mod_lt _ (Bounds.pPos (p := p))
 
 /-- Normalizing an already canonical representative leaves it unchanged. -/
-@[simp] theorem normalize_of_lt {q n : Nat} (hn : n < q) : normalize q n = n := by
+@[simp, grind =] theorem normalize_of_lt {q n : Nat} (hn : n < q) : normalize q n = n := by
   rw [normalize, Nat.mod_eq_of_lt hn]
 
 /-- Normalizing a residue's canonical representative leaves it unchanged. -/
-@[simp] theorem normalize_toNat (a : ZMod64 p) : normalize p a.toNat = a.toNat :=
+@[simp, grind =] theorem normalize_toNat (a : ZMod64 p) : normalize p a.toNat = a.toNat :=
   normalize_of_lt a.toNat_lt
 
 /--
@@ -96,17 +96,17 @@ def ofNat (p n : Nat) [Bounds p] : ZMod64 p := by
   simpa [reduced, UInt64.toNat_ofNatLT] using hred
 
 /-- The Nat representative of `ofNat p n` is `n` reduced modulo `p`. -/
-@[simp] theorem toNat_ofNat (n : Nat) : (ofNat p n).toNat = n % p := by
+@[simp, grind =] theorem toNat_ofNat (n : Nat) : (ofNat p n).toNat = n % p := by
   have hred : n % p < p := Nat.mod_lt _ (Bounds.pPos (p := p))
   have hword : n % p < UInt64.word := Nat.lt_of_lt_of_le hred (Bounds.pLeR (p := p))
   simp [ofNat, normalize, UInt64.toNat_ofNatLT]
 
 /-- The stored word of `ofNat p n`, viewed as a Nat, is `n` reduced modulo `p`. -/
-@[simp] theorem val_toNat_ofNat (n : Nat) : (ofNat p n).val.toNat = n % p := by
+@[simp, grind =] theorem val_toNat_ofNat (n : Nat) : (ofNat p n).val.toNat = n % p := by
   simpa using toNat_ofNat (p := p) n
 
 /-- Constructing a residue from its canonical representative is the identity. -/
-@[simp] theorem ofNat_toNat (a : ZMod64 p) : ofNat p a.toNat = a := by
+@[simp, grind =] theorem ofNat_toNat (a : ZMod64 p) : ofNat p a.toNat = a := by
   apply ext
   apply UInt64.toNat_inj.mp
   rw [val_toNat_ofNat]
@@ -118,11 +118,11 @@ theorem eq_iff_toNat_eq (a b : ZMod64 p) : a = b ↔ a.toNat = b.toNat :=
   ⟨fun h => h ▸ rfl, ext_toNat⟩
 
 /-- A reduced representative constructs the same residue as the original representative. -/
-@[simp] theorem ofNat_mod (n : Nat) : ofNat p (n % p) = ofNat p n := by
+@[simp, grind =] theorem ofNat_mod (n : Nat) : ofNat p (n % p) = ofNat p n := by
   rw [eq_iff_toNat_eq, toNat_ofNat, toNat_ofNat, Nat.mod_mod]
 
 /-- Normalizing before constructing a residue does not change the residue. -/
-@[simp] theorem ofNat_normalize (n : Nat) : ofNat p (normalize p n) = ofNat p n := by
+@[simp, grind =] theorem ofNat_normalize (n : Nat) : ofNat p (normalize p n) = ofNat p n := by
   simp [normalize]
 
 /-- Characterise when an arbitrary representative builds a given residue. -/
