@@ -126,7 +126,7 @@ example (a b : UInt64) :
     (let (g, s, t) := HexArith.UInt64.extGcd a b;
       g.toNat = Nat.gcd a.toNat b.toNat ∧
         s * Int.ofNat a.toNat + t * Int.ofNat b.toNat = Int.ofNat g.toNat) := by
-  grind [HexArith.UInt64.extGcd_spec]
+  grind
 
 example (a n : Nat) :
     HexArith.powMod a n 0 = 0 := by

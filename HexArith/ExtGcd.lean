@@ -70,7 +70,7 @@ private theorem extGcd_bezout_step
 The gcd component returned by the pure `Nat` extended-GCD algorithm is
 Lean's `Nat.gcd`.
 -/
-@[simp] theorem extGcd_fst (a b : Nat) : (extGcd a b).1 = Nat.gcd a b := by
+@[simp, grind =] theorem extGcd_fst (a b : Nat) : (extGcd a b).1 = Nat.gcd a b := by
   induction b using Nat.strongRecOn generalizing a with
   | ind b ih =>
       rw [extGcd]
@@ -114,7 +114,7 @@ coercing `a` and `b` to `Int`. The `_proj` form keeps the right-hand side
 as the routine's own returned gcd component; see `extGcd_bezout_gcd` for
 the variant phrased against `Nat.gcd a b`.
 -/
-@[simp] theorem extGcd_bezout_proj (a b : Nat) :
+@[simp, grind =] theorem extGcd_bezout_proj (a b : Nat) :
     (extGcd a b).2.1 * (a : Int) + (extGcd a b).2.2 * (b : Int) =
       (extGcd a b).1 := by
   simpa using extGcd_bezout a b
@@ -125,7 +125,7 @@ Bezout certificate for the pure `Nat` `extGcd` with the gcd resolved to
 over `Int`. Same identity as `extGcd_bezout_proj`, with the right-hand side
 rewritten through `extGcd_fst`.
 -/
-@[simp] theorem extGcd_bezout_gcd (a b : Nat) :
+@[simp, grind =] theorem extGcd_bezout_gcd (a b : Nat) :
     (extGcd a b).2.1 * (a : Int) + (extGcd a b).2.2 * (b : Int) =
       Nat.gcd a b := by
   rw [extGcd_bezout_proj, extGcd_fst]
@@ -324,7 +324,7 @@ private theorem pureIntExtGcd_go_spec
 The gcd component returned by the pure integer reference implementation is
 Lean's `Int.gcd`.
 -/
-@[simp] theorem pureIntExtGcd_fst (a b : Int) :
+@[simp, grind =] theorem pureIntExtGcd_fst (a b : Int) :
     (pureIntExtGcd a b).1 = Int.gcd a b := by
   have hspec := pureIntExtGcd_go_spec a b 1 0 0 1 a b (by omega) (by omega)
   simpa [pureIntExtGcd] using hspec.1
@@ -345,7 +345,7 @@ the returned triple's projections: the cofactors `(pureIntExtGcd a b).2.1`
 and `(pureIntExtGcd a b).2.2` satisfy `s * a + t * b = (pureIntExtGcd a b).1`.
 Inputs are already `Int`, so no coercion is involved.
 -/
-@[simp] theorem pureIntExtGcd_bezout_proj (a b : Int) :
+@[simp, grind =] theorem pureIntExtGcd_bezout_proj (a b : Int) :
     (pureIntExtGcd a b).2.1 * a + (pureIntExtGcd a b).2.2 * b =
       (pureIntExtGcd a b).1 := by
   simpa using pureIntExtGcd_bezout a b
@@ -386,7 +386,7 @@ def extGcd (a b : @& Int) : Nat × Int × Int :=
 The gcd component returned by the public integer extended-GCD API is Lean's
 `Int.gcd`.
 -/
-@[simp] theorem extGcd_fst (a b : Int) : (extGcd a b).1 = Int.gcd a b := by
+@[simp, grind =] theorem extGcd_fst (a b : Int) : (extGcd a b).1 = Int.gcd a b := by
   simp [extGcd]
 
 /--
@@ -404,7 +404,7 @@ addressed directly as `(extGcd a b).2.1` and `(extGcd a b).2.2`, combine to the
 returned gcd component `(extGcd a b).1`. Lets callers rewrite a Bezout identity
 without first destructuring the `(g, s, t)` triple.
 -/
-@[simp] theorem extGcd_bezout_proj (a b : Int) :
+@[simp, grind =] theorem extGcd_bezout_proj (a b : Int) :
     (extGcd a b).2.1 * a + (extGcd a b).2.2 * b =
       (extGcd a b).1 := by
   simpa using extGcd_bezout a b
@@ -415,7 +415,7 @@ projections combine to the canonical gcd rather than the returned `(extGcd a b).
 component. Lets callers rewrite a Bezout identity straight to `Int.gcd`, skipping
 the intermediate `extGcd_fst` step.
 -/
-@[simp] theorem extGcd_bezout_gcd (a b : Int) :
+@[simp, grind =] theorem extGcd_bezout_gcd (a b : Int) :
     (extGcd a b).2.1 * a + (extGcd a b).2.2 * b =
       Int.gcd a b := by
   rw [extGcd_bezout_proj, extGcd_fst]
@@ -438,7 +438,7 @@ characterises the same public triple used by proofs.
 /--
 The integer extended-GCD API agrees with `Nat.gcd` on nonnegative inputs.
 -/
-@[simp] theorem extGcd_fst_ofNat (a b : Nat) :
+@[simp, grind =] theorem extGcd_fst_ofNat (a b : Nat) :
     (extGcd (Int.ofNat a) (Int.ofNat b)).1 = Nat.gcd a b := by
   simp [Int.gcd]
 
@@ -490,7 +490,7 @@ def extGcd (a b : UInt64) : UInt64 × Int × Int :=
 The gcd component returned by the `UInt64` extended-GCD API represents the
 gcd of the natural values of the input words.
 -/
-@[simp] theorem extGcd_fst (a b : UInt64) :
+@[simp, grind =] theorem extGcd_fst (a b : UInt64) :
     (extGcd a b).1.toNat = Nat.gcd a.toNat b.toNat := by
   rw [extGcd]
   have hfst := HexArith.Int.extGcd_fst (Int.ofNat a.toNat) (Int.ofNat b.toNat)
@@ -530,7 +530,7 @@ projections: the cofactors satisfy
 the routine's own returned gcd word; see `extGcd_bezout_gcd` for the variant
 phrased against `Nat.gcd a.toNat b.toNat`.
 -/
-@[simp] theorem extGcd_bezout_proj (a b : UInt64) :
+@[simp, grind =] theorem extGcd_bezout_proj (a b : UInt64) :
     (extGcd a b).2.1 * Int.ofNat a.toNat +
         (extGcd a b).2.2 * Int.ofNat b.toNat =
       Int.ofNat (extGcd a b).1.toNat := by
@@ -543,7 +543,7 @@ Bezout certificate for the `UInt64` `extGcd` with the gcd resolved to
 `Int.ofNat ·.toNat`. Same identity as `extGcd_bezout_proj`, with the
 right-hand side rewritten through `extGcd_fst`.
 -/
-@[simp] theorem extGcd_bezout_gcd (a b : UInt64) :
+@[simp, grind =] theorem extGcd_bezout_gcd (a b : UInt64) :
     (extGcd a b).2.1 * Int.ofNat a.toNat +
         (extGcd a b).2.2 * Int.ofNat b.toNat =
       Int.ofNat (Nat.gcd a.toNat b.toNat) := by
