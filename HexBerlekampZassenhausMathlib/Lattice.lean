@@ -587,6 +587,27 @@ theorem coeffWidth_eq
   cases basis_eq
   rfl
 
+/-- The packaged basis modulus base is exactly the recovered lift's prime. -/
+theorem p_eq
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) :
+    L.p = D.p := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    recovered_eq⟩
+  cases basis_eq
+  rfl
+
+/-- The packaged basis precision is exactly the recovered lift's Hensel
+precision. -/
+theorem precision_eq
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) :
+    L.precision = D.a := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    recovered_eq⟩
+  cases basis_eq
+  rfl
+
 end RecoveredLift
 
 /--
@@ -699,6 +720,120 @@ theorem trueFactorCLDVector_coeff_of_blockForm
     simp [Fin.val_castAdd]
   rw [hcld, mul_comm]
   congr 2
+
+/--
+Generic projected-block identity for any row-coefficient vector under block
+form: the first `factorCount` coordinates of `rowCombination L.basis c` are read
+off directly from `c`'s first block, because the bottom rows have a zero
+bottom-left block (`bhksLatticeEntry` `0` block) regardless of `c`'s tail.
+-/
+theorem rowCombination_proj_eq
+    {L : Hex.BhksLatticeBasis} (hL : BhksBlockForm L)
+    (c : Vector ℤ (L.factorCount + L.coeffWidth)) (i : Fin L.factorCount) :
+    (Hex.Matrix.rowCombination L.basis c)[
+        (⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
+          Fin (L.factorCount + L.coeffWidth))]
+      = c[Fin.castAdd L.coeffWidth i] := by
+  rw [rowCombination_getElem_eq_sum, Fin.sum_univ_add]
+  have hentry : ∀ x : Fin (L.factorCount + L.coeffWidth),
+      L.basis[x][(⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
+          Fin (L.factorCount + L.coeffWidth))]
+        = Hex.bhksLatticeEntry L.factorCount L.coeffWidth L.p L.precision
+            L.cutThresholds L.cldRows x
+            ⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ := by
+    intro x
+    rw [hL, Hex.Matrix.getElem_ofFn]
+  have hsnd : (∑ j : Fin L.coeffWidth,
+      L.basis[Fin.natAdd L.factorCount j][(⟨i.val,
+          Nat.lt_add_right L.coeffWidth i.isLt⟩ :
+          Fin (L.factorCount + L.coeffWidth))] *
+        c[Fin.natAdd L.factorCount j]) = 0 := by
+    apply Finset.sum_eq_zero
+    intro j _
+    rw [hentry, Hex.bhksLatticeEntry_bottomLeft L.factorCount L.coeffWidth L.p
+      L.precision L.cutThresholds L.cldRows (Fin.natAdd L.factorCount j)
+      ⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩
+      (by simp only [Fin.val_natAdd]; omega) i.isLt, zero_mul]
+  rw [hsnd, add_zero]
+  have hfst : ∀ i' : Fin L.factorCount,
+      L.basis[Fin.castAdd L.coeffWidth i'][(⟨i.val,
+          Nat.lt_add_right L.coeffWidth i.isLt⟩ :
+          Fin (L.factorCount + L.coeffWidth))] *
+        c[Fin.castAdd L.coeffWidth i']
+        = (if i' = i then (1 : ℤ) else 0) * c[Fin.castAdd L.coeffWidth i'] := by
+    intro i'
+    rw [hentry, Hex.bhksLatticeEntry_topLeft L.factorCount L.coeffWidth L.p
+      L.precision L.cutThresholds L.cldRows (Fin.castAdd L.coeffWidth i')
+      ⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ i'.isLt i.isLt]
+    by_cases h : i' = i
+    · subst h; simp [Fin.val_castAdd]
+    · rw [if_neg h,
+        if_neg (by simp only [Fin.val_castAdd]; exact fun hv => h (Fin.ext hv))]
+  rw [Finset.sum_congr rfl (fun i' _ => hfst i'), Finset.sum_eq_single i]
+  · rw [if_pos rfl, one_mul]
+  · intro i' _ hne
+    rw [if_neg hne, zero_mul]
+  · intro h
+    exact absurd (Finset.mem_univ i) h
+
+/--
+Generic CLD-block identity for any row-coefficient vector under block form: the
+trailing `coeffWidth` coordinates of `rowCombination L.basis c` are the
+top-block CLD sum plus the single diagonal-correction contribution
+`p^(a−ℓ_j)·c_{r+j}` (the period row `r+j`).  With a zero tail this recovers
+`trueFactorCLDVector_coeff_of_blockForm`; with the period-correction tail it
+exposes the diagonal absorption used by the recovered CLD vector.
+-/
+theorem rowCombination_tail_coord
+    {L : Hex.BhksLatticeBasis} (hL : BhksBlockForm L)
+    (c : Vector ℤ (L.factorCount + L.coeffWidth)) (j : Fin L.coeffWidth) :
+    (Hex.Matrix.rowCombination L.basis c)[Fin.natAdd L.factorCount j]
+      = (∑ i : Fin L.factorCount,
+          c[Fin.castAdd L.coeffWidth i] * (L.cldRows.getD i.val #[]).getD j.val 0)
+        + Int.ofNat (L.p ^ (L.precision - L.cutThresholds.getD j.val 0))
+            * c[Fin.natAdd L.factorCount j] := by
+  rw [rowCombination_getElem_eq_sum, Fin.sum_univ_add]
+  have hentry : ∀ x : Fin (L.factorCount + L.coeffWidth),
+      L.basis[x][Fin.natAdd L.factorCount j]
+        = Hex.bhksLatticeEntry L.factorCount L.coeffWidth L.p L.precision
+            L.cutThresholds L.cldRows x (Fin.natAdd L.factorCount j) := by
+    intro x
+    rw [hL, Hex.Matrix.getElem_ofFn]
+  have htop : (∑ i' : Fin L.factorCount,
+      L.basis[Fin.castAdd L.coeffWidth i'][Fin.natAdd L.factorCount j] *
+        c[Fin.castAdd L.coeffWidth i'])
+      = ∑ i' : Fin L.factorCount,
+          c[Fin.castAdd L.coeffWidth i'] * (L.cldRows.getD i'.val #[]).getD j.val 0 := by
+    refine Finset.sum_congr rfl ?_
+    intro i' _
+    rw [hentry]
+    unfold Hex.bhksLatticeEntry
+    rw [dif_pos (show (Fin.castAdd L.coeffWidth i').val < L.factorCount from i'.isLt),
+      dif_neg (by simp only [Fin.val_natAdd]; omega)]
+    simp only [Fin.val_castAdd, Fin.val_natAdd, Nat.add_sub_cancel_left]
+    rw [mul_comm]
+  have hbot : (∑ j' : Fin L.coeffWidth,
+      L.basis[Fin.natAdd L.factorCount j'][Fin.natAdd L.factorCount j] *
+        c[Fin.natAdd L.factorCount j'])
+      = Int.ofNat (L.p ^ (L.precision - L.cutThresholds.getD j.val 0))
+          * c[Fin.natAdd L.factorCount j] := by
+    rw [Finset.sum_eq_single j]
+    · rw [hentry, Hex.bhksLatticeEntry_bottomRight_diag L.factorCount L.coeffWidth L.p
+        L.precision L.cutThresholds L.cldRows (Fin.natAdd L.factorCount j)
+        (by simp only [Fin.val_natAdd]; omega)]
+      simp only [Fin.val_natAdd, Nat.add_sub_cancel_left]
+    · intro j' _ hne
+      rw [hentry, Hex.bhksLatticeEntry_bottomRight_offDiag L.factorCount L.coeffWidth
+        L.p L.precision L.cutThresholds L.cldRows (Fin.natAdd L.factorCount j')
+        (Fin.natAdd L.factorCount j)
+        (by simp only [Fin.val_natAdd]; omega) (by simp only [Fin.val_natAdd]; omega)
+        (by
+          simp only [Fin.val_natAdd, Nat.add_sub_cancel_left]
+          intro hcontra
+          exact hne (Fin.ext hcontra.symm)), zero_mul]
+    · intro h
+      exact absurd (Finset.mem_univ j) h
+  rw [htop, hbot]
 
 namespace TrueFactorLift
 
@@ -1010,6 +1145,251 @@ theorem tightNormBound_of_lift
     (hcol : TightColumnBound L S D) :
     TrueFactorCLDTightNormBound L S :=
   tightNormBound_of_colBound S D.blockForm hcol.bound
+
+/--
+Generic tight cut-radius bound `4·‖v‖² ≤ bhksCutRadiusSq4` for any
+`(factorCount + coeffWidth)`-vector `v` whose first block is the support
+indicator and whose tail satisfies the tight per-column estimate
+`2·|v_{r+j}| ≤ factorCount`.
+
+This is the vector-agnostic core extracted from `tightNormBound_of_colBound`:
+the first block contributes `4·factorCount`, each tail column contributes
+`4·v_{r+j}² ≤ factorCount²`, and `bhksCutRadiusSq4 = 4·factorCount +
+coeffWidth·factorCount²` matches exactly.  The recovered (period-corrected) CLD
+vector instantiates it.
+-/
+theorem fourMulNormSq_le_of_proj_col
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (v : Vector ℤ (L.factorCount + L.coeffWidth))
+    (hproj : ∀ i : Fin L.factorCount,
+      (v[Fin.castAdd L.coeffWidth i] : ℤ) = indicatorVector S i)
+    (hcol : ∀ j : Fin L.coeffWidth,
+      2 * (v[Fin.natAdd L.factorCount j] : ℤ).natAbs ≤ L.factorCount) :
+    4 * (∑ i : Fin (L.factorCount + L.coeffWidth), (((v[i] : ℤ) : ℝ) ^ 2))
+      ≤ (Hex.bhksCutRadiusSq4 L : ℝ) := by
+  rw [Fin.sum_univ_add, mul_add]
+  have hfirst : (∑ i : Fin L.factorCount,
+      (((v[Fin.castAdd L.coeffWidth i] : ℤ) : ℝ) ^ 2)) ≤ (L.factorCount : ℝ) := by
+    have heq : (∑ i : Fin L.factorCount,
+        (((v[Fin.castAdd L.coeffWidth i] : ℤ) : ℝ) ^ 2))
+        = ∑ i : Fin L.factorCount, (((indicatorVector S i : ℤ) : ℝ) ^ 2) :=
+      Finset.sum_congr rfl (fun i _ => by rw [hproj i])
+    rw [heq]
+    exact indicatorVector_sq_sum_le_factorCount S
+  have hfirst4 : 4 * (∑ i : Fin L.factorCount,
+      (((v[Fin.castAdd L.coeffWidth i] : ℤ) : ℝ) ^ 2)) ≤ 4 * (L.factorCount : ℝ) := by
+    linarith
+  have htail : 4 * (∑ j : Fin L.coeffWidth,
+      (((v[Fin.natAdd L.factorCount j] : ℤ) : ℝ) ^ 2))
+      ≤ (L.coeffWidth * L.factorCount * L.factorCount : ℝ) := by
+    rw [Finset.mul_sum]
+    calc
+      (∑ j : Fin L.coeffWidth,
+          4 * (((v[Fin.natAdd L.factorCount j] : ℤ) : ℝ) ^ 2))
+          ≤ ∑ _j : Fin L.coeffWidth, ((L.factorCount : ℝ) ^ 2) := by
+            refine Finset.sum_le_sum (fun j _ => ?_)
+            set z : ℤ := v[Fin.natAdd L.factorCount j] with hz
+            have hnat : (2 * z).natAbs ≤ L.factorCount := by
+              rw [Int.natAbs_mul]; simpa using hcol j
+            have hsq := intSq_le_of_natAbs_le (2 * z) L.factorCount hnat
+            have hexpand : (((2 * z : ℤ)) : ℝ) ^ 2 = 4 * ((z : ℤ) : ℝ) ^ 2 := by
+              push_cast; ring
+            rw [hexpand] at hsq
+            exact hsq
+      _ = (L.coeffWidth * L.factorCount * L.factorCount : ℝ) := by
+            simp [pow_two, mul_assoc]
+  refine (add_le_add hfirst4 htail).trans (le_of_eq ?_)
+  unfold Hex.bhksCutRadiusSq4
+  push_cast
+  ring
+
+open Classical in
+/--
+Raw cut-sum CLD column for the recovered support at tail index `j`: the support
+sum of per-factor high-bit cuts.  This is exactly the trailing
+`trueFactorCLDVector` coordinate (`trueFactorCoord_eq_recoveredColumnSum`), and
+the quantity the #7869 carry lemma reduces modulo the period.
+-/
+def recoveredColumnSum
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) (j : Nat) : ℤ :=
+  ∑ i ∈ Finset.univ.filter (fun i : Fin L.factorCount => i ∈ S),
+    Hex.psiCut D.p D.a (Hex.bhksCoeffCutThreshold D.p D.f j)
+      ((Hex.cldQuotientMod D.f (L.liftedFactors.getD i.val 1) D.p D.a).coeff j)
+
+open Classical in
+/--
+Existence of an integer period multiple reducing `recoveredColumnSum` to a short
+value `2·|col − t·p^(a−ℓ_j)| ≤ |S|`.  This is the conclusion of the #7869
+aggregate carry lemma; the recovered norm-bound producer discharges it from a
+`RecoveredLift` plus Hensel-factorisation data.
+-/
+def recoveredPeriodReducible
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) (j : Nat) : Prop :=
+  ∃ t : ℤ,
+    2 * (recoveredColumnSum D j
+      - t * ((D.p : ℤ) ^ (D.a - Hex.bhksCoeffCutThreshold D.p D.f j))).natAbs
+      ≤ (Finset.univ.filter (fun i : Fin L.factorCount => i ∈ S)).card
+
+open Classical in
+/--
+Period-correction coefficient for the recovered CLD vector at tail column `j`.
+
+It is the (negated) integer multiple `t_j` of the period `p^(a−ℓ_j)` that the
+#7869 aggregate carry lemma provides: the reduction making the cut-sum column
+short.  Defined hypothesis-free via `Classical.choose` of
+`recoveredPeriodReducible`, defaulting to `0` when no such witness exists; the
+recovered norm-bound producer discharges the existential from a `RecoveredLift`
+plus the Hensel-factorisation data, landing in the true branch.  The sign is
+negated so that adding the diagonal contribution `p^(a−ℓ_j)·(−t_j)` reduces the
+column to `col_j − t_j·p^(a−ℓ_j)`.
+-/
+noncomputable def recoveredPeriodCoeff
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) (j : Nat) : ℤ :=
+  if h : recoveredPeriodReducible D j then -(Classical.choose h) else 0
+
+/--
+Row-coefficient vector for the period-corrected recovered CLD vector: the `0/1`
+support indicator on the first `factorCount` rows, and the period multiple
+`recoveredPeriodCoeff` on each diagonal (period) row `factorCount + j`.
+-/
+noncomputable def recoveredRowCoeffs
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) : Vector ℤ (L.factorCount + L.coeffWidth) :=
+  Vector.ofFn fun i =>
+    if hi : i.val < L.factorCount then indicatorVector S ⟨i.val, hi⟩
+    else recoveredPeriodCoeff D (i.val - L.factorCount)
+
+/--
+Period-corrected recovered CLD vector: the integer row-lattice combination of
+the BHKS basis with the period-correction coefficients.  Unlike
+`trueFactorCLDVector` (zero diagonal coefficients), the diagonal period rows
+`diag(p^(a−ℓ_j))` absorb the large part of the raw cut-sum, leaving a short
+column while preserving the support projection.
+-/
+noncomputable def recoveredCLDVector
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) : Vector ℤ (L.factorCount + L.coeffWidth) :=
+  Hex.Matrix.rowCombination L.basis (recoveredRowCoeffs D)
+
+/-- Entry of the recovered row-coefficient vector. -/
+theorem recoveredRowCoeffs_getElem
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) (x : Fin (L.factorCount + L.coeffWidth)) :
+    (recoveredRowCoeffs D)[x]
+      = if hi : x.val < L.factorCount then indicatorVector S ⟨x.val, hi⟩
+        else recoveredPeriodCoeff D (x.val - L.factorCount) := by
+  show (recoveredRowCoeffs D).get x = _
+  unfold recoveredRowCoeffs
+  rw [Vector.get_ofFn]
+
+/-- The recovered CLD vector is, by construction, in the integer row lattice of
+the all-coefficients BHKS basis. -/
+theorem recoveredCLDVector_memLattice
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) :
+    Hex.Matrix.memLattice L.basis (recoveredCLDVector D) :=
+  ⟨recoveredRowCoeffs D, rfl⟩
+
+/--
+**Projection preserved (deliverable 1).**  The first `factorCount` coordinates
+of `recoveredCLDVector` are the support indicator — identical to
+`trueFactorCLDVector` — because the period rows are zero on the first block
+(`bhksLatticeEntry` bottom-left).  Downstream `indicator_mem_projected` is
+unaffected by the period correction.
+-/
+theorem recoveredCLDVector_project
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) (i : Fin L.factorCount) :
+    (recoveredCLDVector D)[
+        (⟨i.val, Nat.lt_add_right L.coeffWidth i.isLt⟩ :
+          Fin (L.factorCount + L.coeffWidth))]
+      = indicatorVector S i := by
+  unfold recoveredCLDVector
+  rw [rowCombination_proj_eq D.blockForm (recoveredRowCoeffs D) i,
+    recoveredRowCoeffs_getElem,
+    dif_pos (show (Fin.castAdd L.coeffWidth i).val < L.factorCount from i.isLt)]
+  congr 1
+
+/--
+CLD-block identity for the recovered vector: each tail coordinate is the
+corresponding `trueFactorCLDVector` coordinate plus the diagonal period
+contribution `p^(a−ℓ_j)·recoveredPeriodCoeff`.
+-/
+theorem recoveredCLDVector_coeff
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) (j : Fin L.coeffWidth) :
+    (recoveredCLDVector D)[Fin.natAdd L.factorCount j]
+      = (trueFactorCLDVector L S)[
+          (⟨L.factorCount + j.val, Nat.add_lt_add_left j.isLt L.factorCount⟩ :
+            Fin (L.factorCount + L.coeffWidth))]
+        + Int.ofNat (L.p ^ (L.precision - L.cutThresholds.getD j.val 0))
+            * recoveredPeriodCoeff D j.val := by
+  unfold recoveredCLDVector
+  rw [rowCombination_tail_coord D.blockForm (recoveredRowCoeffs D) j]
+  rw [show (trueFactorCLDVector L S)[
+        (⟨L.factorCount + j.val, Nat.add_lt_add_left j.isLt L.factorCount⟩ :
+          Fin (L.factorCount + L.coeffWidth))]
+      = ∑ i : Fin L.factorCount,
+          indicatorVector S i * (L.cldRows.getD i.val #[]).getD j.val 0 from
+    trueFactorCLDVector_coeff_of_blockForm S D.blockForm j]
+  congr 1
+  · refine Finset.sum_congr rfl ?_
+    intro i _
+    rw [recoveredRowCoeffs_getElem,
+      dif_pos (show (Fin.castAdd L.coeffWidth i).val < L.factorCount from i.isLt)]
+    congr 2
+  · congr 1
+    rw [recoveredRowCoeffs_getElem, dif_neg (by simp only [Fin.val_natAdd]; omega)]
+    congr 1
+    simp only [Fin.val_natAdd, Nat.add_sub_cancel_left]
+
+/--
+The trailing `trueFactorCLDVector` coordinate equals the raw recovered cut-sum
+column `recoveredColumnSum`: the support indicator collapses the block-form CLD
+sum to a support-restricted sum of executable high-bit cuts.
+-/
+theorem trueFactorCoord_eq_recoveredColumnSum
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) (j : Fin L.coeffWidth) :
+    ((trueFactorCLDVector L S)[
+        (⟨L.factorCount + j.val, Nat.add_lt_add_left j.isLt L.factorCount⟩ :
+          Fin (L.factorCount + L.coeffWidth))] : ℤ)
+      = recoveredColumnSum D j.val := by
+  rw [trueFactorCLDVector_coeff_of_blockForm S D.blockForm j]
+  unfold recoveredColumnSum
+  rw [Finset.sum_filter]
+  refine Finset.sum_congr rfl (fun i _ => ?_)
+  by_cases hi : i ∈ S
+  · rw [indicatorVector_apply_mem S hi, one_mul, if_pos hi]
+    have hjlt : j.val < D.f.degree?.getD 0 := j.isLt.trans_eq D.coeffWidth_eq
+    have hisz : i.val < D.liftedFactors.size := by
+      rw [← D.factorCount_eq]; exact i.isLt
+    rw [D.cldRows_eq,
+      show (D.liftedFactors.map (fun g => Hex.cldCoeffs D.f D.p D.a g)).getD i.val #[]
+          = Hex.cldCoeffs D.f D.p D.a (D.liftedFactors.getD i.val 1) from by
+        simp [Array.getD, hisz],
+      Hex.cldCoeffs_getD_of_lt D.f D.p D.a (D.liftedFactors.getD i.val 1) j.val hjlt,
+      ← D.liftedFactors_eq]
+  · rw [indicatorVector_apply_not_mem S hi, zero_mul, if_neg hi]
+
+/--
+**Tight cut-radius certificate for the period-corrected recovered CLD vector
+(deliverable 2).**  The `TrueFactorCLDTightNormBound`-shaped statement
+`4·‖recoveredCLDVector D‖² ≤ bhksCutRadiusSq4`, derived from a `RecoveredLift`
+(monic coordinate) via the #7869/#7872 aggregate carry route, never the raw
+`support_product_eq`/`TrueFactorLift` route.  The producer lives in
+`CLDColumnBound` (downstream of `Lattice`), like
+`trueFactorCLDTightNormBound_of_lift`.
+-/
+structure RecoveredCLDTightNormBound
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) where
+  four_mul_sq_norm_le :
+    4 * (∑ i : Fin (L.factorCount + L.coeffWidth),
+      ((((recoveredCLDVector D)[i] : ℤ) : ℝ) ^ 2)) ≤ (Hex.bhksCutRadiusSq4 L : ℝ)
 
 /--
 The true-factor indicator lattice `W`, generated by the indicator vectors of
