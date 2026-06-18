@@ -428,31 +428,79 @@ theorem coeff_ofNatBelowDegree_eq_false_of_bound
       simpa [Array.size_ofFn] using Nat.le_of_not_gt hword
     simp [Hex.GF2Poly.coeffWords, hget]
 
+/-- A natural number all of whose bits at index `≥ k` are clear is below
+`2 ^ k`. -/
+private theorem lt_two_pow_of_testBit_false {n k : Nat}
+    (h : ∀ j, k ≤ j → n.testBit j = false) :
+    n < 2 ^ k := by
+  refine Nat.lt_of_testBit k (h k le_rfl) Nat.testBit_two_pow_self ?_
+  intro j hj
+  rw [h j (Nat.le_of_lt hj), Nat.testBit_two_pow_of_ne (by omega : k ≠ j)]
+
+/-- A packed polynomial whose coefficients all vanish from `bound` upward is
+either zero or has degree below `bound`. Converse of
+`coeff_eq_false_of_reduced_bound_le`. -/
+private theorem reduced_of_coeff_eq_false_above {p : Hex.GF2Poly} {bound : Nat}
+    (h : ∀ j, bound ≤ j → p.coeff j = false) :
+    p.IsZero ∨ p.degree < bound := by
+  by_cases hz : p.isZero = true
+  · exact Or.inl hz
+  · have hzf : p.isZero = false := by cases hh : p.isZero <;> simp_all
+    obtain ⟨d, hd⟩ := Hex.GF2Poly.degree?_isSome_of_isZero_false hzf
+    have hdset := Hex.GF2Poly.coeff_eq_true_of_degree?_eq_some hd
+    refine Or.inr ?_
+    rw [Hex.GF2Poly.degree_eq_of_degree?_eq_some hd]
+    by_contra hcon
+    have hf := h d (Nat.le_of_not_gt hcon)
+    rw [hdset] at hf
+    exact absurd hf (by simp)
+
 /-- A polynomial known to have degree `< degree` has an index below
 `2 ^ degree` under the packed binary interpretation. -/
 theorem toNat_lt_of_degree_lt {p : Hex.GF2Poly} {degree : Nat}
     (h : p.IsZero ∨ p.degree < degree) :
     toNat p < 2 ^ degree := by
-  sorry
+  apply lt_two_pow_of_testBit_false
+  intro j hj
+  rw [toNat_testBit_eq_coeff]
+  exact Hex.GF2Poly.coeff_eq_false_of_reduced_bound_le h hj
 
 /-- Decoding a bounded index as low binary bits produces a reduced packed
 representative for that degree bound. -/
 theorem ofNatBelowDegree_reduced (degree : Nat) (i : Fin (2 ^ degree)) :
     (ofNatBelowDegree degree i.1).IsZero ∨
       (ofNatBelowDegree degree i.1).degree < degree := by
-  sorry
+  apply reduced_of_coeff_eq_false_above
+  intro j hj
+  exact coeff_ofNatBelowDegree_eq_false_of_bound i.isLt hj
 
 /-- Encoding after decoding a bounded packed index preserves the index. -/
 theorem toNat_ofNatBelowDegree (degree : Nat) (i : Fin (2 ^ degree)) :
     toNat (ofNatBelowDegree degree i.1) = i.1 := by
-  sorry
+  apply Nat.eq_of_testBit_eq
+  intro j
+  rw [toNat_testBit_eq_coeff]
+  by_cases hj : j < degree
+  · rw [coeff_ofNatBelowDegree_of_lt degree i.1 j hj]
+  · have hjge : degree ≤ j := Nat.le_of_not_gt hj
+    rw [coeff_ofNatBelowDegree_eq_false_of_bound i.isLt hjge]
+    exact (Nat.testBit_eq_false_of_lt
+      (Nat.lt_of_lt_of_le i.isLt
+        (Nat.pow_le_pow_right (by decide : 0 < 2) hjge))).symm
 
 /-- Decoding after encoding a reduced packed representative preserves the
 polynomial. -/
 theorem ofNatBelowDegree_toNat {p : Hex.GF2Poly} {degree : Nat}
     (h : p.IsZero ∨ p.degree < degree) :
     ofNatBelowDegree degree (toNat p) = p := by
-  sorry
+  apply Hex.GF2Poly.ext_coeff
+  intro n
+  by_cases hn : n < degree
+  · rw [coeff_ofNatBelowDegree_of_lt degree (toNat p) n hn, toNat_testBit_eq_coeff]
+  · have hnge : degree ≤ n := Nat.le_of_not_gt hn
+    have hbound : toNat p < 2 ^ degree := toNat_lt_of_degree_lt h
+    rw [coeff_ofNatBelowDegree_eq_false_of_bound hbound hnge,
+      Hex.GF2Poly.coeff_eq_false_of_reduced_bound_le h hnge]
 
 end GF2Poly
 
