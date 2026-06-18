@@ -435,7 +435,7 @@ abbrev modulus (h : Conway.SupportedEntry p n) : FpPoly p :=
   Conway.conwayPoly p n h
 
 /-- `GFq.modulus` is the Conway polynomial selected by the committed entry. -/
-@[simp] theorem modulus_eq_conway (h : Conway.SupportedEntry p n) :
+@[simp, grind =] theorem modulus_eq_conway (h : Conway.SupportedEntry p n) :
     modulus h = Conway.conwayPoly p n h :=
   rfl
 
@@ -468,7 +468,7 @@ def ofPoly (h : Conway.SupportedEntry p n) (g : FpPoly p) : GFq p n h :=
 
 /-- `GFq.ofPoly` delegates to the generic quotient-field constructor with the
 selected Conway modulus. -/
-@[simp] theorem ofPoly_eq_field_ofPoly (h : Conway.SupportedEntry p n)
+@[simp, grind =] theorem ofPoly_eq_field_ofPoly (h : Conway.SupportedEntry p n)
     (g : FpPoly p) :
     ofPoly h g =
       GFqField.ofPoly (modulus h) (modulus_nonconstant h)
@@ -480,7 +480,7 @@ def repr {h : Conway.SupportedEntry p n} (x : GFq p n h) : FpPoly p :=
   GFqField.repr x
 
 /-- `GFq.repr` is the generic quotient-field representative projection. -/
-@[simp] theorem repr_eq_field_repr {h : Conway.SupportedEntry p n}
+@[simp, grind =] theorem repr_eq_field_repr {h : Conway.SupportedEntry p n}
     (x : GFq p n h) :
     repr x = GFqField.repr x :=
   rfl
@@ -498,51 +498,51 @@ representatives agree. -/
 /-- The canonical representative of an injected `FpPoly` is that polynomial
 reduced modulo the selected Conway polynomial. Lets a caller normalise a
 `repr (ofPoly h g)` round-trip to a plain `reduceMod`. -/
-@[simp] theorem repr_ofPoly (h : Conway.SupportedEntry p n) (g : FpPoly p) :
+@[simp, grind =] theorem repr_ofPoly (h : Conway.SupportedEntry p n) (g : FpPoly p) :
     repr (ofPoly h g) = GFqRing.reduceMod (modulus h) g :=
   rfl
 
 /-- The canonical representative of `0` in `GFq` is reduction of `0` modulo
 the selected Conway polynomial. -/
-@[simp] theorem repr_zero (h : Conway.SupportedEntry p n) :
+@[simp, grind =] theorem repr_zero (h : Conway.SupportedEntry p n) :
     repr (0 : GFq p n h) = GFqRing.reduceMod (modulus h) 0 :=
   rfl
 
 /-- The canonical representative of `1` in `GFq` is reduction of `1` modulo
 the selected Conway polynomial. -/
-@[simp] theorem repr_one (h : Conway.SupportedEntry p n) :
+@[simp, grind =] theorem repr_one (h : Conway.SupportedEntry p n) :
     repr (1 : GFq p n h) = GFqRing.reduceMod (modulus h) 1 :=
   rfl
 
 /-- The canonical representative of a sum in `GFq` reduces from the sum of
 representatives modulo the selected Conway polynomial. -/
-@[simp] theorem repr_add {h : Conway.SupportedEntry p n}
+@[simp, grind =] theorem repr_add {h : Conway.SupportedEntry p n}
     (x y : GFq p n h) :
     repr (x + y) = GFqRing.reduceMod (modulus h) (repr x + repr y) :=
   rfl
 
 /-- The canonical representative of a product in `GFq` reduces from the product
 of representatives modulo the selected Conway polynomial. -/
-@[simp] theorem repr_mul {h : Conway.SupportedEntry p n}
+@[simp, grind =] theorem repr_mul {h : Conway.SupportedEntry p n}
     (x y : GFq p n h) :
     repr (x * y) = GFqRing.reduceMod (modulus h) (repr x * repr y) :=
   rfl
 
 /-- The representative of a negation reduces from the negated representative. -/
-@[simp] theorem repr_neg {h : Conway.SupportedEntry p n} (x : GFq p n h) :
+@[simp, grind =] theorem repr_neg {h : Conway.SupportedEntry p n} (x : GFq p n h) :
     repr (-x) = GFqRing.reduceMod (modulus h) (-(repr x)) :=
   rfl
 
 /-- The representative of a subtraction reduces from the difference of
 representatives. -/
-@[simp] theorem repr_sub {h : Conway.SupportedEntry p n} (x y : GFq p n h) :
+@[simp, grind =] theorem repr_sub {h : Conway.SupportedEntry p n} (x y : GFq p n h) :
     repr (x - y) = GFqRing.reduceMod (modulus h) (repr x - repr y) :=
   rfl
 
 /-- The canonical representative of a natural literal in `GFq` is the
 reduction modulo the selected Conway polynomial of the constant
 polynomial carrying the literal as a `ZMod64` coefficient. -/
-@[simp] theorem repr_natCast (h : Conway.SupportedEntry p n) (k : Nat) :
+@[simp, grind =] theorem repr_natCast (h : Conway.SupportedEntry p n) (k : Nat) :
     repr ((k : GFq p n h)) =
       GFqRing.reduceMod (modulus h) (FpPoly.C (k : ZMod64 p)) :=
   rfl
@@ -550,7 +550,7 @@ polynomial carrying the literal as a `ZMod64` coefficient. -/
 /-- The canonical representative of a quotient in `GFq` lifts the
 quotient-ring product of the dividend's representative with the inverse of
 the divisor. -/
-@[simp] theorem repr_div {h : Conway.SupportedEntry p n}
+@[simp, grind =] theorem repr_div {h : Conway.SupportedEntry p n}
     (x y : GFq p n h) :
     repr (x / y) =
       GFqRing.repr (x.toQuotient * (GFqField.inv y).toQuotient) :=
@@ -558,14 +558,14 @@ the divisor. -/
 
 /-- The canonical representative of a natural power in `GFq` lifts the
 quotient-ring power of the underlying quotient representative. -/
-@[simp] theorem repr_pow {h : Conway.SupportedEntry p n}
+@[simp, grind =] theorem repr_pow {h : Conway.SupportedEntry p n}
     (x : GFq p n h) (k : Nat) :
     repr (x ^ k) = GFqRing.repr (x.toQuotient ^ k) :=
   rfl
 
 /-- The canonical representative of a nonnegative integer power in `GFq` lifts
 the quotient-ring power of the underlying quotient representative. -/
-@[simp] theorem repr_zpow_ofNat {h : Conway.SupportedEntry p n}
+@[simp, grind =] theorem repr_zpow_ofNat {h : Conway.SupportedEntry p n}
     (x : GFq p n h) (k : Nat) :
     repr (x ^ (Int.ofNat k) : GFq p n h) =
       GFqRing.repr (x.toQuotient ^ k) :=
@@ -573,7 +573,7 @@ the quotient-ring power of the underlying quotient representative. -/
 
 /-- The canonical representative of a negative integer power in `GFq` lifts
 the inverse of the corresponding quotient-ring positive power. -/
-@[simp] theorem repr_zpow_negSucc {h : Conway.SupportedEntry p n}
+@[simp, grind =] theorem repr_zpow_negSucc {h : Conway.SupportedEntry p n}
     (x : GFq p n h) (k : Nat) :
     repr (x ^ (Int.negSucc k) : GFq p n h) =
       GFqRing.repr ((GFqField.inv (GFqField.pow x (k + 1))).toQuotient) :=
@@ -581,7 +581,7 @@ the inverse of the corresponding quotient-ring positive power. -/
 
 /-- The canonical representative of an integer literal in `GFq` lifts the
 quotient-ring integer-cast representative. -/
-@[simp] theorem repr_intCast (h : Conway.SupportedEntry p n) (i : Int) :
+@[simp, grind =] theorem repr_intCast (h : Conway.SupportedEntry p n) (i : Int) :
     repr ((i : GFq p n h)) =
       GFqRing.repr
         ((i : GFqRing.PolyQuotient (modulus h) (modulus_nonconstant h))) :=
@@ -589,21 +589,21 @@ quotient-ring integer-cast representative. -/
 
 /-- The representative of a natural scalar action lifts the quotient-ring
 action. -/
-@[simp] theorem repr_nsmul {h : Conway.SupportedEntry p n}
+@[simp, grind =] theorem repr_nsmul {h : Conway.SupportedEntry p n}
     (k : Nat) (x : GFq p n h) :
     repr (k • x : GFq p n h) = GFqRing.repr (k • x.toQuotient) :=
   rfl
 
 /-- The representative of an integer scalar action lifts the quotient-ring
 action. -/
-@[simp] theorem repr_zsmul {h : Conway.SupportedEntry p n}
+@[simp, grind =] theorem repr_zsmul {h : Conway.SupportedEntry p n}
     (k : Int) (x : GFq p n h) :
     repr (k • x : GFq p n h) = GFqRing.repr (k • x.toQuotient) :=
   rfl
 
 /-- The zero inverse in `GFq` follows the field wrapper's junk-value
 convention and has zero representative. -/
-@[simp] theorem repr_inv_zero (h : Conway.SupportedEntry p n) :
+@[simp, grind =] theorem repr_inv_zero (h : Conway.SupportedEntry p n) :
     repr ((0 : GFq p n h)⁻¹) = GFqRing.reduceMod (modulus h) 0 := by
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime h.prime
   simp [repr]
@@ -654,7 +654,7 @@ theorem ofPoly_eq_ofPoly_iff_reduceMod_eq
 /-- Injecting an `FpPoly` into `GFq` is invariant under pre-reduction modulo
 the selected Conway polynomial: a caller may drop a `reduceMod` already
 sitting under `ofPoly`. -/
-@[simp] theorem ofPoly_reduceMod
+@[simp, grind =] theorem ofPoly_reduceMod
     (h : Conway.SupportedEntry p n) (f : FpPoly p) :
     ofPoly h (GFqRing.reduceMod (modulus h) f) = ofPoly h f := by
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime h.prime
@@ -673,7 +673,7 @@ theorem frob_eq_pow {h : Conway.SupportedEntry p n} (x : GFq p n h) :
 
 /-- The representative of `GFq.frob` is the quotient-ring `p`-th power
 representative. -/
-@[simp] theorem repr_frob {h : Conway.SupportedEntry p n} (x : GFq p n h) :
+@[simp, grind =] theorem repr_frob {h : Conway.SupportedEntry p n} (x : GFq p n h) :
     repr (frob x) = GFqRing.repr (x.toQuotient ^ p) :=
   rfl
 
@@ -725,21 +725,21 @@ theorem repr_eq_gfq (x : GFqC p n) :
 
 /-- The representative of an injected polynomial is reduction modulo the
 selected committed Conway polynomial. -/
-@[simp] theorem repr_ofPoly (g : FpPoly p) :
+@[simp, grind =] theorem repr_ofPoly (g : FpPoly p) :
     repr (ofPoly (p := p) (n := n) g) =
       GFqRing.reduceMod (modulus (p := p) (n := n)) g :=
   rfl
 
 /-- The canonical representative of a sum in `GFqC` reduces from the sum of
 representatives modulo the selected committed Conway polynomial. -/
-@[simp] theorem repr_add (x y : GFqC p n) :
+@[simp, grind =] theorem repr_add (x y : GFqC p n) :
     repr (x + y) =
       GFqRing.reduceMod (modulus (p := p) (n := n)) (repr x + repr y) :=
   rfl
 
 /-- The canonical representative of a product in `GFqC` reduces from the
 product of representatives modulo the selected committed Conway polynomial. -/
-@[simp] theorem repr_mul (x y : GFqC p n) :
+@[simp, grind =] theorem repr_mul (x y : GFqC p n) :
     repr (x * y) =
       GFqRing.reduceMod (modulus (p := p) (n := n)) (repr x * repr y) :=
   rfl
@@ -760,7 +760,7 @@ theorem frob_eq_pow (x : GFqC p n) :
 
 /-- The representative of `GFqC.frob` is the quotient-ring `p`-th power
 representative. -/
-@[simp] theorem repr_frob (x : GFqC p n) :
+@[simp, grind =] theorem repr_frob (x : GFqC p n) :
     repr (frob x) = GFqRing.repr (x.toQuotient ^ p) :=
   rfl
 
@@ -780,7 +780,7 @@ def supportedEntry : Conway.SupportedEntry 2 n :=
   h.entry
 
 /-- `GF2q.supportedEntry` is the committed packed Conway entry. -/
-@[simp] theorem supportedEntry_eq :
+@[simp, grind =] theorem supportedEntry_eq :
     supportedEntry (n := n) = h.entry :=
   rfl
 
@@ -790,7 +790,7 @@ def lower : UInt64 :=
   h.lower
 
 /-- `GF2q.lower` is the lower-word modulus stored in the packed entry. -/
-@[simp] theorem lower_eq :
+@[simp, grind =] theorem lower_eq :
     lower (n := n) = h.lower :=
   rfl
 
@@ -800,7 +800,7 @@ def modulus : GF2Poly :=
   GF2Poly.ofUInt64Monic h.lower n
 
 /-- `GF2q.modulus` is the packed monic polynomial selected by the entry. -/
-@[simp] theorem modulus_eq_ofUInt64Monic :
+@[simp, grind =] theorem modulus_eq_ofUInt64Monic :
     modulus (n := n) = GF2Poly.ofUInt64Monic h.lower n :=
   rfl
 
@@ -838,7 +838,7 @@ def ofWord (w : UInt64) : GF2q n :=
 
 /-- `GF2q.ofWord` delegates to the packed `GF2n` reducer for the selected
 Conway modulus. -/
-@[simp] theorem ofWord_eq_reduce (w : UInt64) :
+@[simp, grind =] theorem ofWord_eq_reduce (w : UInt64) :
     ofWord (n := n) w = GF2n.reduce (n := n) (irr := h.lower) w :=
   rfl
 
@@ -848,7 +848,7 @@ def repr (x : GF2q n) : UInt64 :=
   x.val
 
 /-- `GF2q.repr` is the packed-word value stored by `GF2n`. -/
-@[simp] theorem repr_eq_val (x : GF2q n) :
+@[simp, grind =] theorem repr_eq_val (x : GF2q n) :
     repr x = x.val :=
   rfl
 
@@ -874,18 +874,18 @@ def toGFq (x : GF2q n) : GFq 2 n (supportedEntry (n := n)) :=
 
 /-- `GF2q.reprFpPoly` is the low-bit `FpPoly 2` view of the packed
 representative. -/
-@[simp] theorem reprFpPoly_eq_wordFpPoly (x : GF2q n) :
+@[simp, grind =] theorem reprFpPoly_eq_wordFpPoly (x : GF2q n) :
     reprFpPoly x = wordFpPoly (n := n) (repr x) :=
   rfl
 
 /-- `GF2q.toGFq` injects the packed representative through `GFq.ofPoly`. -/
-@[simp] theorem toGFq_eq_ofPoly (x : GF2q n) :
+@[simp, grind =] theorem toGFq_eq_ofPoly (x : GF2q n) :
     toGFq x = GFq.ofPoly (supportedEntry (n := n)) (reprFpPoly x) :=
   rfl
 
 /-- Bridging a packed word into `GFq 2 n` injects the reduced packed
 representative as an `FpPoly 2`. -/
-@[simp] theorem toGFq_ofWord (w : UInt64) :
+@[simp, grind =] theorem toGFq_ofWord (w : UInt64) :
     toGFq (ofWord (n := n) w) =
       GFq.ofPoly (supportedEntry (n := n))
         (wordFpPoly (n := n) (repr (ofWord (n := n) w))) :=
@@ -893,7 +893,7 @@ representative as an `FpPoly 2`. -/
 
 /-- The generic representative of `GF2q.toGFq` is the selected Conway-modulus
 reduction of the packed representative viewed as an `FpPoly 2`. -/
-@[simp] theorem toGFq_repr (x : GF2q n) :
+@[simp, grind =] theorem toGFq_repr (x : GF2q n) :
     GFq.repr (toGFq x) =
       GFqRing.reduceMod (GFq.modulus (supportedEntry (n := n))) (reprFpPoly x) :=
   rfl
@@ -911,7 +911,7 @@ agree. -/
 /-- The packed representative of a word injected into `GF2q` is that word
 reduced into the field by `GF2n.reduce`, relating the raw `UInt64` word to the
 canonical packed `GF2q` representation. -/
-@[simp] theorem repr_ofWord (w : UInt64) :
+@[simp, grind =] theorem repr_ofWord (w : UInt64) :
     repr (ofWord (n := n) w) =
       (GF2n.reduce
         (n := n) (irr := h.lower)
@@ -920,12 +920,12 @@ canonical packed `GF2q` representation. -/
   rfl
 
 /-- The packed representative of `0` in `GF2q` is the zero word. -/
-@[simp] theorem repr_zero :
+@[simp, grind =] theorem repr_zero :
     repr (0 : GF2q n) = 0 :=
   rfl
 
 /-- The packed representative of `1` in `GF2q` is the one word. -/
-@[simp] theorem repr_one :
+@[simp, grind =] theorem repr_one :
     repr (1 : GF2q n) = 1 := by
   show GF2Poly.canonicalWordLT n h.degree_lt_word
       (GF2Poly.packedReduceWord n h.lower (GF2Poly.ofUInt64 1)) = 1
@@ -975,7 +975,7 @@ canonical packed `GF2q` representation. -/
 
 /-- The packed representative of a natural-number literal is stored by the
 packed backend's characteristic-two natural cast. -/
-@[simp] theorem repr_natCast (k : Nat) :
+@[simp, grind =] theorem repr_natCast (k : Nat) :
     repr (Nat.cast k : GF2q n) =
       (GF2n.natCast
         (n := n) (irr := h.lower)
@@ -985,7 +985,7 @@ packed backend's characteristic-two natural cast. -/
 
 /-- The packed representative of an integer literal is stored by the packed
 backend's characteristic-two integer cast. -/
-@[simp] theorem repr_intCast (k : Int) :
+@[simp, grind =] theorem repr_intCast (k : Int) :
     repr (Int.cast k : GF2q n) =
       (GF2n.intCast
         (n := n) (irr := h.lower)
@@ -994,13 +994,13 @@ backend's characteristic-two integer cast. -/
   rfl
 
 /-- In characteristic two, negation preserves the packed representative. -/
-@[simp] theorem repr_neg (x : GF2q n) :
+@[simp, grind =] theorem repr_neg (x : GF2q n) :
     repr (-x) = repr x :=
   rfl
 
 /-- The packed representative of a subtraction is the reduced XOR of
 representatives. -/
-@[simp] theorem repr_sub (x y : GF2q n) :
+@[simp, grind =] theorem repr_sub (x y : GF2q n) :
     repr (x - y) =
       (GF2n.reduce
         (n := n) (irr := h.lower)
@@ -1011,7 +1011,7 @@ representatives. -/
 
 /-- Natural scalar multiplication in optimized binary fields depends only on
 the scalar parity. -/
-@[simp] theorem repr_nsmul (k : Nat) (x : GF2q n) :
+@[simp, grind =] theorem repr_nsmul (k : Nat) (x : GF2q n) :
     repr (k • x : GF2q n) =
       if k % 2 = 0 then 0 else repr x := by
   change
@@ -1028,7 +1028,7 @@ the scalar parity. -/
 
 /-- Integer scalar multiplication in optimized binary fields depends only on
 the absolute-value parity. -/
-@[simp] theorem repr_zsmul (k : Int) (x : GF2q n) :
+@[simp, grind =] theorem repr_zsmul (k : Int) (x : GF2q n) :
     repr (k • x : GF2q n) =
       if k.natAbs % 2 = 0 then 0 else repr x := by
   change
@@ -1044,7 +1044,7 @@ the absolute-value parity. -/
   · simp [GF2n.zsmul, hk]
 
 /-- The packed representative of a sum is the reduced XOR of representatives. -/
-@[simp] theorem repr_add (x y : GF2q n) :
+@[simp, grind =] theorem repr_add (x y : GF2q n) :
     repr (x + y) =
       (GF2n.reduce
         (n := n) (irr := h.lower)
@@ -1055,7 +1055,7 @@ the absolute-value parity. -/
 
 /-- The packed representative of a product is the reduced carry-less product
 of representatives. -/
-@[simp] theorem repr_mul (x y : GF2q n) :
+@[simp, grind =] theorem repr_mul (x y : GF2q n) :
     repr (x * y) =
       (let product := Hex.clmul (repr x) (repr y)
        GF2n.reduceWide
@@ -1067,7 +1067,7 @@ of representatives. -/
 
 /-- The packed representative of an inverse is the representative stored by
 the packed `GF2n` inversion path. -/
-@[simp] theorem repr_inv (x : GF2q n) :
+@[simp, grind =] theorem repr_inv (x : GF2q n) :
     repr x⁻¹ =
       (GF2n.inv
         (n := n) (irr := h.lower)
@@ -1078,7 +1078,7 @@ the packed `GF2n` inversion path. -/
 
 /-- The packed representative of a quotient is the representative stored by
 the packed `GF2n` division path. -/
-@[simp] theorem repr_div (x y : GF2q n) :
+@[simp, grind =] theorem repr_div (x y : GF2q n) :
     repr (x / y) =
       (GF2n.div
         (n := n) (irr := h.lower)
@@ -1089,7 +1089,7 @@ the packed `GF2n` division path. -/
 
 /-- The packed representative of a natural power is stored by the packed
 `GF2n` square-and-multiply power. -/
-@[simp] theorem repr_pow (x : GF2q n) (k : Nat) :
+@[simp, grind =] theorem repr_pow (x : GF2q n) (k : Nat) :
     repr (x ^ k) =
       (GF2n.pow
         (n := n) (irr := h.lower)
@@ -1100,7 +1100,7 @@ the packed `GF2n` division path. -/
 
 /-- The packed representative of a nonnegative integer power is stored by the
 packed `GF2n` integer-power operation. -/
-@[simp] theorem repr_zpow_ofNat (x : GF2q n) (k : Nat) :
+@[simp, grind =] theorem repr_zpow_ofNat (x : GF2q n) (k : Nat) :
     repr (x ^ (Int.ofNat k) : GF2q n) =
       (GF2n.zpow
         (n := n) (irr := h.lower)
@@ -1111,7 +1111,7 @@ packed `GF2n` integer-power operation. -/
 
 /-- The packed representative of a negative integer power is stored by the
 packed `GF2n` integer-power operation. -/
-@[simp] theorem repr_zpow_negSucc (x : GF2q n) (k : Nat) :
+@[simp, grind =] theorem repr_zpow_negSucc (x : GF2q n) (k : Nat) :
     repr (x ^ (Int.negSucc k) : GF2q n) =
       (GF2n.zpow
         (n := n) (irr := h.lower)
