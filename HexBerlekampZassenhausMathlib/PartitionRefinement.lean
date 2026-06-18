@@ -1047,12 +1047,11 @@ theorem factorWithBound_fastCore_entry_irreducible_of_forwardInputs
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.toMonicLiftData
           (Hex.normalizeForFactor f).squareFreeCore
-          (Hex.precisionForCoeffBound B primeData.p) primeData))
+          B primeData))
     (hcore :
-      let a := Hex.precisionForCoeffBound B primeData.p
-      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore a
-        primeData (Hex.initialHenselPrecision a)
-        (Hex.ZPoly.quadraticDoublingSteps a + 2) =
+      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B
+        primeData (Hex.initialHenselPrecision B)
+        (Hex.ZPoly.quadraticDoublingSteps B + 2) =
           some hinputs.expectedFactors)
     (hcut :
       BHKS.CutProjectionHypotheses
@@ -1060,7 +1059,7 @@ theorem factorWithBound_fastCore_entry_irreducible_of_forwardInputs
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.toMonicLiftData
             (Hex.normalizeForFactor f).squareFreeCore
-            (Hex.precisionForCoeffBound B primeData.p) primeData)
+            B primeData)
           hinputs.rows_pos)
         hinputs.trueSupports)
     (hpartition :
@@ -1170,12 +1169,11 @@ theorem fastCoreComplete_of_forwardInputs
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.toMonicLiftData
           (Hex.normalizeForFactor f).squareFreeCore
-          (Hex.precisionForCoeffBound B primeData.p) primeData))
+          B primeData))
     (hcore :
-      let a := Hex.precisionForCoeffBound B primeData.p
-      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore a
-        primeData (Hex.initialHenselPrecision a)
-        (Hex.ZPoly.quadraticDoublingSteps a + 2) =
+      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B
+        primeData (Hex.initialHenselPrecision B)
+        (Hex.ZPoly.quadraticDoublingSteps B + 2) =
           some hinputs.expectedFactors)
     (hcut :
       BHKS.CutProjectionHypotheses
@@ -1183,7 +1181,7 @@ theorem fastCoreComplete_of_forwardInputs
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.toMonicLiftData
             (Hex.normalizeForFactor f).squareFreeCore
-            (Hex.precisionForCoeffBound B primeData.p) primeData)
+            B primeData)
           hinputs.rows_pos)
         hinputs.trueSupports)
     (hpartition :
@@ -1193,7 +1191,6 @@ theorem fastCoreComplete_of_forwardInputs
             (Hex.normalizeForFactor f).squareFreeCore)).card) :
     Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
       hinputs.expectedFactors := by
-  let a := Hex.precisionForCoeffBound B primeData.p
   have hcore_lc_pos :
       0 < Hex.DensePoly.leadingCoeff
         (Hex.normalizeForFactor f).squareFreeCore :=
@@ -1206,10 +1203,10 @@ theorem fastCoreComplete_of_forwardInputs
   have hprod :
       Array.polyProduct hinputs.expectedFactors =
         (Hex.normalizeForFactor f).squareFreeCore := by
-    simpa [a] using
+    simpa using
       Hex.factorFastCoreWithBound_product
-        (Hex.normalizeForFactor f).squareFreeCore a primeData
-        (Hex.initialHenselPrecision a) (Hex.ZPoly.quadraticDoublingSteps a + 2)
+        (Hex.normalizeForFactor f).squareFreeCore B primeData
+        (Hex.initialHenselPrecision B) (Hex.ZPoly.quadraticDoublingSteps B + 2)
         hinputs.expectedFactors hcore
   have hnorm :
       ∀ q ∈ hinputs.expectedFactors.toList, Hex.normalizeFactorSign q = q := by
@@ -1325,12 +1322,11 @@ theorem factorFastFactorsWithBound_raw_zpolyIrreducible_of_forwardInputs
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.toMonicLiftData
           (Hex.normalizeForFactor f).squareFreeCore
-          (Hex.precisionForCoeffBound B primeData.p) primeData))
+          B primeData))
     (hcore :
-      let a := Hex.precisionForCoeffBound B primeData.p
-      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore a
-        primeData (Hex.initialHenselPrecision a)
-        (Hex.ZPoly.quadraticDoublingSteps a + 2) =
+      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B
+        primeData (Hex.initialHenselPrecision B)
+        (Hex.ZPoly.quadraticDoublingSteps B + 2) =
           some hinputs.expectedFactors)
     (hcut :
       BHKS.CutProjectionHypotheses
@@ -1338,7 +1334,7 @@ theorem factorFastFactorsWithBound_raw_zpolyIrreducible_of_forwardInputs
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.toMonicLiftData
             (Hex.normalizeForFactor f).squareFreeCore
-            (Hex.precisionForCoeffBound B primeData.p) primeData)
+            B primeData)
           hinputs.rows_pos)
         hinputs.trueSupports)
     (hpartition :
@@ -1404,12 +1400,11 @@ theorem rawIrreducible_of_forwardInputs
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.toMonicLiftData
           (Hex.normalizeForFactor f).squareFreeCore
-          (Hex.precisionForCoeffBound B primeData.p) primeData))
+          B primeData))
     (hcore :
-      let a := Hex.precisionForCoeffBound B primeData.p
-      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore a
-        primeData (Hex.initialHenselPrecision a)
-        (Hex.ZPoly.quadraticDoublingSteps a + 2) =
+      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B
+        primeData (Hex.initialHenselPrecision B)
+        (Hex.ZPoly.quadraticDoublingSteps B + 2) =
           some hinputs.expectedFactors)
     (hcut :
       BHKS.CutProjectionHypotheses
@@ -1417,7 +1412,7 @@ theorem rawIrreducible_of_forwardInputs
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.toMonicLiftData
             (Hex.normalizeForFactor f).squareFreeCore
-            (Hex.precisionForCoeffBound B primeData.p) primeData)
+            B primeData)
           hinputs.rows_pos)
         hinputs.trueSupports)
     (hpartition :
@@ -1448,21 +1443,20 @@ theorem fastCoreComplete_of_cut
       BHKS.HasPositiveDimension (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.toMonicLiftData
           (Hex.normalizeForFactor f).squareFreeCore
-          (Hex.precisionForCoeffBound B primeData.p) primeData))
+          B primeData))
     (trueSupports :
       Set (Set (Fin
         (BHKS.projectedRowsOfLiftData
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.toMonicLiftData
             (Hex.normalizeForFactor f).squareFreeCore
-            (Hex.precisionForCoeffBound B primeData.p) primeData)
+            B primeData)
           rows_pos).factorCount)))
     {expectedFactors : Array Hex.ZPoly}
     (hcore :
-      let a := Hex.precisionForCoeffBound B primeData.p
-      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore a
-        primeData (Hex.initialHenselPrecision a)
-        (Hex.ZPoly.quadraticDoublingSteps a + 2) =
+      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B
+        primeData (Hex.initialHenselPrecision B)
+        (Hex.ZPoly.quadraticDoublingSteps B + 2) =
           some expectedFactors)
     (hcut :
       BHKS.CutProjectionHypotheses
@@ -1470,7 +1464,7 @@ theorem fastCoreComplete_of_cut
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.toMonicLiftData
             (Hex.normalizeForFactor f).squareFreeCore
-            (Hex.precisionForCoeffBound B primeData.p) primeData)
+            B primeData)
           rows_pos)
         trueSupports)
     (hsize :
@@ -1480,7 +1474,7 @@ theorem fastCoreComplete_of_cut
             (Hex.normalizeForFactor f).squareFreeCore
             (Hex.ZPoly.toMonicLiftData
               (Hex.normalizeForFactor f).squareFreeCore
-              (Hex.precisionForCoeffBound B primeData.p) primeData)
+              B primeData)
             rows_pos)).size)
     (hpartition :
       (BHKS.supportPartitionByMinColumn trueSupports).length =
@@ -1489,7 +1483,6 @@ theorem fastCoreComplete_of_cut
             (Hex.normalizeForFactor f).squareFreeCore)).card) :
     Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
       expectedFactors := by
-  let a := Hex.precisionForCoeffBound B primeData.p
   have hcore_lc_pos :
       0 < Hex.DensePoly.leadingCoeff
         (Hex.normalizeForFactor f).squareFreeCore :=
@@ -1502,10 +1495,10 @@ theorem fastCoreComplete_of_cut
   have hprod :
       Array.polyProduct expectedFactors =
         (Hex.normalizeForFactor f).squareFreeCore := by
-    simpa [a] using
+    simpa using
       Hex.factorFastCoreWithBound_product
-        (Hex.normalizeForFactor f).squareFreeCore a primeData
-        (Hex.initialHenselPrecision a) (Hex.ZPoly.quadraticDoublingSteps a + 2)
+        (Hex.normalizeForFactor f).squareFreeCore B primeData
+        (Hex.initialHenselPrecision B) (Hex.ZPoly.quadraticDoublingSteps B + 2)
         expectedFactors hcore
   have hnorm :
       ∀ q ∈ expectedFactors.toList, Hex.normalizeFactorSign q = q := by
@@ -1615,21 +1608,20 @@ theorem factorFastFactorsWithBound_raw_zpolyIrreducible_of_cut
       BHKS.HasPositiveDimension (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.toMonicLiftData
           (Hex.normalizeForFactor f).squareFreeCore
-          (Hex.precisionForCoeffBound B primeData.p) primeData))
+          B primeData))
     (trueSupports :
       Set (Set (Fin
         (BHKS.projectedRowsOfLiftData
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.toMonicLiftData
             (Hex.normalizeForFactor f).squareFreeCore
-            (Hex.precisionForCoeffBound B primeData.p) primeData)
+            B primeData)
           rows_pos).factorCount)))
     {expectedFactors : Array Hex.ZPoly}
     (hcore :
-      let a := Hex.precisionForCoeffBound B primeData.p
-      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore a
-        primeData (Hex.initialHenselPrecision a)
-        (Hex.ZPoly.quadraticDoublingSteps a + 2) =
+      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B
+        primeData (Hex.initialHenselPrecision B)
+        (Hex.ZPoly.quadraticDoublingSteps B + 2) =
           some expectedFactors)
     (hcut :
       BHKS.CutProjectionHypotheses
@@ -1637,7 +1629,7 @@ theorem factorFastFactorsWithBound_raw_zpolyIrreducible_of_cut
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.toMonicLiftData
             (Hex.normalizeForFactor f).squareFreeCore
-            (Hex.precisionForCoeffBound B primeData.p) primeData)
+            B primeData)
           rows_pos)
         trueSupports)
     (hsize :
@@ -1647,7 +1639,7 @@ theorem factorFastFactorsWithBound_raw_zpolyIrreducible_of_cut
             (Hex.normalizeForFactor f).squareFreeCore
             (Hex.ZPoly.toMonicLiftData
               (Hex.normalizeForFactor f).squareFreeCore
-              (Hex.precisionForCoeffBound B primeData.p) primeData)
+              B primeData)
             rows_pos)).size)
     (hpartition :
       (BHKS.supportPartitionByMinColumn trueSupports).length =
@@ -1706,21 +1698,20 @@ theorem rawIrreducible_of_cut
       BHKS.HasPositiveDimension (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.toMonicLiftData
           (Hex.normalizeForFactor f).squareFreeCore
-          (Hex.precisionForCoeffBound B primeData.p) primeData))
+          B primeData))
     (trueSupports :
       Set (Set (Fin
         (BHKS.projectedRowsOfLiftData
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.toMonicLiftData
             (Hex.normalizeForFactor f).squareFreeCore
-            (Hex.precisionForCoeffBound B primeData.p) primeData)
+            B primeData)
           rows_pos).factorCount)))
     {expectedFactors : Array Hex.ZPoly}
     (hcore :
-      let a := Hex.precisionForCoeffBound B primeData.p
-      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore a
-        primeData (Hex.initialHenselPrecision a)
-        (Hex.ZPoly.quadraticDoublingSteps a + 2) =
+      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B
+        primeData (Hex.initialHenselPrecision B)
+        (Hex.ZPoly.quadraticDoublingSteps B + 2) =
           some expectedFactors)
     (hcut :
       BHKS.CutProjectionHypotheses
@@ -1728,7 +1719,7 @@ theorem rawIrreducible_of_cut
           (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.toMonicLiftData
             (Hex.normalizeForFactor f).squareFreeCore
-            (Hex.precisionForCoeffBound B primeData.p) primeData)
+            B primeData)
           rows_pos)
         trueSupports)
     (hsize :
@@ -1738,7 +1729,7 @@ theorem rawIrreducible_of_cut
             (Hex.normalizeForFactor f).squareFreeCore
             (Hex.ZPoly.toMonicLiftData
               (Hex.normalizeForFactor f).squareFreeCore
-              (Hex.precisionForCoeffBound B primeData.p) primeData)
+              B primeData)
             rows_pos)).size)
     (hpartition :
       (BHKS.supportPartitionByMinColumn trueSupports).length =

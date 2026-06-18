@@ -2440,11 +2440,10 @@ theorem factorFast_ne_none_of_forwardInputs_on_schedule
         (Hex.ZPoly.toMonicLiftData
           (Hex.normalizeForFactor f).squareFreeCore target primeData))
     (hmem :
-      let a := Hex.precisionForCoeffBound (Hex.factorFastPrecisionCap f) primeData.p
       target ∈
-        Hex.henselPrecisionSchedule a
-          (Hex.initialHenselPrecision a)
-          (Hex.ZPoly.quadraticDoublingSteps a + 2)) :
+        Hex.henselPrecisionSchedule (Hex.factorFastPrecisionCap f)
+          (Hex.initialHenselPrecision (Hex.factorFastPrecisionCap f))
+          (Hex.ZPoly.quadraticDoublingSteps (Hex.factorFastPrecisionCap f) + 2)) :
     Hex.factorFast f ≠ none := by
   have hrecover :
       Hex.bhksRecover? (Hex.normalizeForFactor f).squareFreeCore
@@ -2463,8 +2462,8 @@ theorem factorFast_ne_none_of_forwardInputs_on_schedule
 /--
 Canonical scheduled-precision specialisation of
 `factorFast_ne_none_of_forwardInputs_on_schedule`: if the SPEC Group D
-forward-recovery inputs hold at the executable terminal precision
-`a = precisionForCoeffBound (factorFastPrecisionCap f) primeData.p`, the
+forward-recovery inputs hold at the executable terminal coefficient bound
+`factorFastPrecisionCap f`, the
 public `Hex.factorFast` entry point succeeds.  The doubling-schedule
 membership obligation is discharged here using
 `Hex.cap_mem_henselPrecisionSchedule`, so later HO-4 work only needs to
@@ -2481,9 +2480,7 @@ theorem factorFast_ne_none_of_forwardInputs_at_cap
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.toMonicLiftData
           (Hex.normalizeForFactor f).squareFreeCore
-          (Hex.precisionForCoeffBound
-            (Hex.factorFastPrecisionCap f) primeData.p)
-          primeData)) :
+          (Hex.factorFastPrecisionCap f) primeData)) :
     Hex.factorFast f ≠ none :=
   factorFast_ne_none_of_forwardInputs_on_schedule
     f primeData hB_pos hchoose hinputs
@@ -2500,13 +2497,12 @@ private abbrev factorFastCapLiftData
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData) : Hex.LiftData :=
   Hex.ZPoly.toMonicLiftData
     (Hex.normalizeForFactor f).squareFreeCore
-    (Hex.precisionForCoeffBound (Hex.factorFastPrecisionCap f) primeData.p)
-    primeData
+    (Hex.factorFastPrecisionCap f) primeData
 
 /--
 The bad-vector witness attached to the actual Hensel lift used by
-`Hex.factorFast`: the normalized square-free core lifted to
-`precisionForCoeffBound (factorFastPrecisionCap f) primeData.p`.
+`Hex.factorFast`: the normalized square-free core lifted from coefficient bound
+`factorFastPrecisionCap f`.
 
 This is a named cap-lift specialization of `badVectorWitnessOfLiftData`, so
 callers no longer have to rebuild the nested executable lift expression before
