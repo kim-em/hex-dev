@@ -102,20 +102,20 @@ def zsmul (i : Int) (a : ZMod64 p) : ZMod64 p :=
   | .negSucc n => neg (nsmul (n + 1) a)
 
 /-- Integer casts of nonnegative representatives agree with natural casts. -/
-@[simp] theorem intCast_ofNat (n : Nat) : intCast p (.ofNat n) = natCast p n :=
+@[simp, grind =] theorem intCast_ofNat (n : Nat) : intCast p (.ofNat n) = natCast p n :=
   rfl
 
 /-- Integer casts of negative representatives use the complementary natural cast. -/
-@[simp] theorem intCast_negSucc (n : Nat) :
+@[simp, grind =] theorem intCast_negSucc (n : Nat) :
     intCast p (.negSucc n) = neg (natCast p (n + 1)) :=
   rfl
 
 /-- Integer scalar multiplication by a nonnegative integer is natural scalar multiplication. -/
-@[simp] theorem zsmul_ofNat (n : Nat) (a : ZMod64 p) : zsmul (.ofNat n) a = nsmul n a :=
+@[simp, grind =] theorem zsmul_ofNat (n : Nat) (a : ZMod64 p) : zsmul (.ofNat n) a = nsmul n a :=
   rfl
 
 /-- Integer scalar multiplication by a negative integer negates the positive natural multiple. -/
-@[simp] theorem zsmul_negSucc (n : Nat) (a : ZMod64 p) :
+@[simp, grind =] theorem zsmul_negSucc (n : Nat) (a : ZMod64 p) :
     zsmul (.negSucc n) a = neg (nsmul (n + 1) a) :=
   rfl
 
@@ -245,7 +245,7 @@ theorem natCast_eq_zero_iff_dvd (n : Nat) : ((n : ZMod64 p) = 0) ↔ p ∣ n := 
     exact (natCast_eq_natCast_iff (p := p) n 0).2 (Nat.mod_eq_zero_of_dvd h)
 
 /-- The modulus itself casts to zero in `ZMod64 p`. -/
-@[simp] theorem natCast_self : ((p : Nat) : ZMod64 p) = 0 := by
+@[simp, grind =] theorem natCast_self : ((p : Nat) : ZMod64 p) = 0 := by
   exact (natCast_eq_natCast_iff (p := p) p 0).2 (by simp)
 
 /-- The spec-level inverse law on canonical representatives. -/
@@ -508,7 +508,7 @@ instance : Lean.Grind.Semiring (ZMod64 p) := by
   simp [Nat.pow_succ, Nat.mul_mod]
 
 /-- Any positive power of zero is zero. -/
-@[simp] theorem zero_pow {n : Nat} (hn : n ≠ 0) : (0 : ZMod64 p) ^ n = 0 := by
+@[simp, grind =] theorem zero_pow {n : Nat} (hn : n ≠ 0) : (0 : ZMod64 p) ^ n = 0 := by
   apply ext_toNat
   change (ZMod64.pow ZMod64.zero n).toNat = (ZMod64.zero : ZMod64 p).toNat
   rw [toNat_pow, toNat_zero]
@@ -517,7 +517,7 @@ instance : Lean.Grind.Semiring (ZMod64 p) := by
   | succ n => simp
 
 /-- Every power of one is one. -/
-@[simp] theorem one_pow (n : Nat) : (1 : ZMod64 p) ^ n = 1 := by
+@[simp, grind =] theorem one_pow (n : Nat) : (1 : ZMod64 p) ^ n = 1 := by
   apply ext_toNat
   change (ZMod64.pow ZMod64.one n).toNat = (ZMod64.one : ZMod64 p).toNat
   rw [toNat_pow, toNat_one]
