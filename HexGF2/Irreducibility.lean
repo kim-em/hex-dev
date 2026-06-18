@@ -60,12 +60,12 @@ def xpow2kMod (f : GF2Poly) : Nat → GF2Poly
   | k + 1 => sqMod f (xpow2kMod f k)
 
 /-- The zeroth Rabin Frobenius power is `X` reduced modulo `f`. -/
-@[simp] theorem xpow2kMod_zero (f : GF2Poly) :
+@[simp, grind =] theorem xpow2kMod_zero (f : GF2Poly) :
     xpow2kMod f 0 = monomial 1 % f := rfl
 
 /-- The next Rabin Frobenius power is obtained by squaring the previous
 remainder modulo `f`. -/
-@[simp] theorem xpow2kMod_succ (f : GF2Poly) (k : Nat) :
+@[simp, grind =] theorem xpow2kMod_succ (f : GF2Poly) (k : Nat) :
     xpow2kMod f (k + 1) = sqMod f (xpow2kMod f k) := rfl
 
 /-- The polynomial `X^(2^k) - X` reduced modulo `f`. Since the packed
@@ -104,7 +104,7 @@ def rabinWitnesses (f : GF2Poly) : List (Nat × Bool) :=
 
 /-- Checking all stored Rabin witnesses is the same as checking the Rabin
 coprime test over every maximal proper divisor. -/
-@[simp] theorem rabinWitnesses_all (f : GF2Poly) :
+@[simp, grind =] theorem rabinWitnesses_all (f : GF2Poly) :
     (rabinWitnesses f).all Prod.snd =
       (maximalProperDivisors f.degree).all fun d => rabinCoprimeTest f d := by
   unfold rabinWitnesses
