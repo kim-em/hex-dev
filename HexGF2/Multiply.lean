@@ -6442,6 +6442,173 @@ example (p q : GF2Poly) (n : Nat) :
     (p * q).coeff n = coeffWords (mulWords p.words q.words) n := by
   simp
 
+/-! ### Public carryless-convolution coefficient lemma
+
+`coeff_mul_diagonal` (below) expresses bit `n` of a packed product as the
+XOR-parity of the diagonal `p.coeff i && q.coeff (n - i)` over `i ∈ range (n+1)`.
+This is the public coefficient-level convolution the Mathlib bridge
+`HexGF2Mathlib` needs to relate the carryless `clmul` product to the schoolbook
+`mulCoeffSum` over `ZMod64 2`. The proof reindexes the `(word, bit)` double
+decomposition `64 * I + A` / `64 * J + B` of the internal source-pair sum into
+the flat coefficient indices `s + t = n`. -/
+
+/-- Split `range (m + k)` into a low block and a shifted high block. -/
+private theorem range_eq_append_map_add (m k : Nat) :
+    List.range (m + k) = List.range m ++ (List.range k).map (· + m) := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+      rw [Nat.add_succ, List.range_succ, ih, List.range_succ, List.map_append,
+        List.map_cons, List.map_nil, List.append_assoc, Nat.add_comm m k]
+
+/-- Flattening a shifted index map commutes with `flatMap`. -/
+private theorem flatMap_map_add_shift (l : List Nat) (c : Nat) (G : Nat → List Bool) :
+    (l.map (· + c)).flatMap G = l.flatMap (fun a => G (a + c)) := by
+  induction l with
+  | nil => rfl
+  | cons x xs ih => simp [List.flatMap_cons, ih]
+
+/-- Range-product reindexing for `map`: iterating `i < W` then `a < d` over the
+combined index `d * i + a` enumerates `range (d * W)` exactly. -/
+private theorem flatMap_range_map_range (d W : Nat) (g : Nat → Bool) :
+    (List.range W).flatMap (fun i => (List.range d).map (fun a => g (d * i + a))) =
+      (List.range (d * W)).map g := by
+  induction W with
+  | zero => simp
+  | succ W ih =>
+      rw [List.range_succ, List.flatMap_append, List.flatMap_cons, List.flatMap_nil,
+        List.append_nil, ih, Nat.mul_succ, range_eq_append_map_add (d * W) d,
+        List.map_append, List.map_map]
+      congr 1
+      apply List.map_congr_left
+      intro a _ha
+      simp [Function.comp, Nat.add_comm (d * W) a]
+
+/-- Range-product reindexing for `flatMap`: iterating `i < W` then `a < d` over
+the combined index `d * i + a` enumerates `range (d * W)` exactly. -/
+private theorem flatMap_range_flatMap_range (d W : Nat) (G : Nat → List Bool) :
+    (List.range W).flatMap (fun i => (List.range d).flatMap (fun a => G (d * i + a))) =
+      (List.range (d * W)).flatMap G := by
+  induction W with
+  | zero => simp
+  | succ W ih =>
+      rw [List.range_succ, List.flatMap_append, List.flatMap_cons, List.flatMap_nil,
+        List.append_nil, ih, Nat.mul_succ, range_eq_append_map_add (d * W) d,
+        List.flatMap_append, flatMap_map_add_shift]
+      congr 1
+      apply List.flatMap_congr_left
+      intro a _ha
+      rw [Nat.add_comm (d * W) a]
+
+/-- Singleton parity. -/
+private theorem xorBoolList_singleton (x : Bool) : xorBoolList [x] = x := by
+  cases x <;> rfl
+
+/-- Selecting a single index by decidable equality collapses the parity to that
+entry, or `false` when the index is out of range. -/
+private theorem xorBoolList_map_decide_eq (M T : Nat) (g : Nat → Bool) :
+    xorBoolList ((List.range M).map (fun t => g t && decide (t = T))) =
+      if T < M then g T else false := by
+  by_cases hT : T < M
+  · rw [if_pos hT]
+    have hmap : (List.range M).map (fun t => g t && decide (t = T)) =
+        (List.range M).map (fun t => g T && decide (t = T)) := by
+      apply List.map_congr_left
+      intro t _ht
+      by_cases htT : t = T
+      · subst htT; rfl
+      · simp [htT]
+    rw [hmap, xorBoolList_range_single_decide (g T) hT]
+  · rw [if_neg hT]
+    have hmap : (List.range M).map (fun t => g t && decide (t = T)) =
+        (List.range M).map (fun _ => false) := by
+      apply List.map_congr_left
+      intro t ht
+      have htlt : t < M := List.mem_range.mp ht
+      have htne : t ≠ T := by omega
+      simp [htne]
+    rw [hmap, xorBoolList_range_false]
+
+/-- Extending the mapped range past a point where `f` is identically `false`
+does not change the parity. -/
+private theorem xorBoolList_map_range_reduce (f : Nat → Bool) (m : Nat)
+    (hzero : ∀ s, m ≤ s → f s = false) :
+    ∀ d, xorBoolList ((List.range (m + d)).map f) =
+      xorBoolList ((List.range m).map f)
+  | 0 => by simp
+  | d + 1 => by
+      rw [Nat.add_succ, List.range_succ, List.map_append, xorBoolList_append,
+        xorBoolList_map_range_reduce f m hzero d]
+      have hf : f (m + d) = false := hzero (m + d) (by omega)
+      simp only [List.map_cons, List.map_nil, hf, xorBoolList_singleton]
+      cases xorBoolList ((List.range m).map f) <;> rfl
+
+/-- Per-word-pair source decomposition with a unified guard: bit `n` of the
+carryless product of two words at combined slot `c` is the XOR-parity over all
+source bit pairs `(a, b)` whose product `64 * c + a + b` lands at `n`. -/
+private theorem clmulCoeffAt_diag (c : Nat) (x y : UInt64) (n : Nat) :
+    clmulCoeffAt c x y n =
+      xorBoolList ((List.range 64).flatMap (fun a =>
+        (List.range 64).map (fun b =>
+          (wordBitAt x a && wordBitAt y b) && decide (64 * c + a + b = n)))) := by
+  have hswap :
+      xorBoolList ((List.range 64).flatMap (fun a =>
+        (List.range 64).map (fun b =>
+          (wordBitAt x a && wordBitAt y b) && decide (64 * c + a + b = n)))) =
+      xorBoolList ((List.range 64).flatMap (fun b =>
+        (List.range 64).map (fun a =>
+          (wordBitAt x a && wordBitAt y b) && decide (64 * c + a + b = n)))) :=
+    xorBoolList_wordPairs_swap 64 64
+      (fun a b => (wordBitAt x a && wordBitAt y b) && decide (64 * c + a + b = n))
+  rw [hswap, clmulCoeffAt_sourcePairCoeff]
+  by_cases hlow : n / 64 = c
+  · rw [if_pos hlow]
+    unfold clmulSourcePairCoeff
+    apply congrArg xorBoolList
+    apply List.flatMap_congr_left
+    intro b hb
+    apply List.map_congr_left
+    intro a ha
+    have ha' : a < 64 := List.mem_range.mp ha
+    have hb' : b < 64 := List.mem_range.mp hb
+    by_cases h : 64 * c + a + b = n
+    · have h2 : a + b = n % 64 := by omega
+      simp [h, h2]
+    · have h2 : ¬ (a + b = n % 64) := by omega
+      simp [h, h2]
+  · by_cases hhigh : n / 64 = c + 1
+    · rw [if_neg hlow, if_pos hhigh]
+      unfold clmulSourcePairCoeff
+      apply congrArg xorBoolList
+      apply List.flatMap_congr_left
+      intro b hb
+      apply List.map_congr_left
+      intro a ha
+      have ha' : a < 64 := List.mem_range.mp ha
+      have hb' : b < 64 := List.mem_range.mp hb
+      by_cases h : 64 * c + a + b = n
+      · have h2 : a + b = n % 64 + 64 := by omega
+        simp [h, h2]
+      · have h2 : ¬ (a + b = n % 64 + 64) := by omega
+        simp [h, h2]
+    · rw [if_neg hlow, if_neg hhigh]
+      have hguard :
+          (List.range 64).flatMap (fun b =>
+            (List.range 64).map (fun a =>
+              (wordBitAt x a && wordBitAt y b) && decide (64 * c + a + b = n))) =
+          (List.range 64).flatMap (fun b =>
+            (List.range 64).map (fun _ : Nat => (false : Bool))) := by
+        apply List.flatMap_congr_left
+        intro b hb
+        apply List.map_congr_left
+        intro a ha
+        have ha' : a < 64 := List.mem_range.mp ha
+        have hb' : b < 64 := List.mem_range.mp hb
+        have hne : 64 * c + a + b ≠ n := by omega
+        simp [hne]
+      rw [hguard, ← xorBoolList_map_xorBoolList]
+      simp [xorBoolList_range_false]
+
 /-- The unit polynomial is the degree-zero monomial. -/
 theorem one_eq_monomial_zero : (1 : GF2Poly) = monomial 0 := by
   change one = monomial 0
