@@ -384,6 +384,59 @@ bridge *are* in-file (coeff-level: `coeff_toFpPoly` + `coeff_ofFpPoly` via the
 `packWord` bit-extraction helpers); only `mul` carries this gap. (#7900 landed
 4/5; the `mul` bridge is #7901.)
 
+### Bridging `GF2n`/`GF2nPoly` `≃+*` obligations to the `GFqField` quotient
+
+The four `≃+*` obligations for `GF2n.equiv` / `GF2nPoly.equiv` in
+`HexGF2Mathlib/Field.lean` (`ofGeneric_toGeneric`, `toGeneric_ofGeneric`,
+`toGeneric_add`, `toGeneric_mul`) compose the `GF2Poly ≃+* FpPoly 2` bridge with
+the `GFqField` quotient layer. The whole proof factors through **one** crux
+helper plus mechanical glue (#7936 landed the `GF2n` single-word side; `GF2nPoly`
+is #7937):
+
+- **The crux is `toFpPoly (p % q) = GFqRing.reduceMod (toFpPoly q) (toFpPoly p)`**
+  — `toFpPoly` commutes with the polynomial remainder. Prove it from
+  `Hex.GF2Poly.div_mul_add_mod p q` (`(p/q)*q + p%q = p`), push `toFpPoly`
+  through (`toFpPoly_add`/`toFpPoly_mul`), then `GFqRing.reduceMod_add_mul_self_right`
+  (kills the `(p/q)*q` term) and `GFqRing.reduceMod_eq_self_of_degree_lt` (the
+  remainder is already reduced). Degree transports via a one-liner
+  `FpPoly.degree (toFpPoly p) = p.degree` from `degree?_toFpPoly` (both `degree`s
+  are `degree?.getD 0`).
+- **`Hex.GFqRing.reduceMod` and its algebraic lemmas need a
+  `ZMod64.PrimeModulus 2` instance** (the FpPoly division law). Add
+  `instance : Hex.ZMod64.PrimeModulus 2 := Hex.ZMod64.primeModulusOfPrime prime_two`
+  in the namespace once; without it you get a bare "failed to synthesize
+  `ZMod64.PrimeModulus 2`" deep inside a `reduceMod`-lemma application.
+- **Reach the executable `reduce`/`reduceWide` value without naming private
+  defs.** `(Hex.GF2n.reduce w).val` is **defeq** to the fully-public term
+  `Hex.GF2Poly.canonicalWordLT n hn64 (Hex.GF2Poly.packedReduceWord n irr
+  (Hex.GF2Poly.ofUInt64 w))` (it unfolds through the `private` `canonicalWord`,
+  `reducePoly`, `toPolyWord`), so a helper stated over that public term applies
+  by `exact`/defeq — no need to de-privatize `HexGF2/Field.lean` or
+  `HexGF2/Euclid.lean`. The masking is idempotent: `canonicalWordLT n hn64 v = v`
+  for `v.toNat < 2^n` (re-prove the private `canonicalWordLT_eq_self_of_lt`
+  inline via `UInt64.toNat_inj` + `Nat.mod_eq_of_lt`, fed
+  `packedReduceWord_toNat_lt`), then `ofUInt64_packedReduceWord_eq_of_degree_lt`
+  (public) + `mod_degree_lt` close it. The low-word round-trip
+  `ofUInt64 (p.toWords.getD 0 0) = p` for reduced `p` (#7936 replicated the
+  private `ofUInt64_lowWord_eq_of_degree_lt_64`; its proof uses only public
+  `coeff_ofWords`/`ext_coeff`/`coeff_eq_false_of_degree?_lt`). All of this lives
+  in the Mathlib layer — **no executable-layer edits**, matching the issue's
+  "add helpers privately / to Basic.lean" guidance.
+- **`rw [helper]` leaves trivial side goals (`0 < n`, `n < 64`) when the helper
+  carries `include`d section hypotheses not fixed by the rewrite pattern** (e.g.
+  a helper whose statement mentions `n`/`irr` but uses `hn`/`hn64` only in its
+  proof). The fix is named args in the `rw`: `rw [helper (hn := hn) (hn64 :=
+  hn64)]`. Also note `rw`'s closing `rfl` runs at *reducible* transparency, so a
+  residual goal that is true only by unfolding a plain `def` (e.g.
+  `modulusFpPoly = toFpPoly (ofUInt64Monic irr n)`) is **not** auto-closed —
+  append an explicit `rfl` (default transparency) or pre-unfold the def.
+
+With those, `toGeneric_add`/`_mul` are
+`apply GFqField.ext; apply GFqRing.ext; simp only [toGeneric, toQuotient_*,
+repr_*_ofPoly]; rw [ofUInt64_{add,mul}_val, toFpPoly_mod_modulus, toFpPoly_{add,mul},
+reduceMod_idem]`, and the round-trips chain the same helpers with
+`ofFpPoly_toFpPoly`/`toFpPoly_ofFpPoly` + the low-word round-trip.
+
 ## The Mathlib layer *models* executable definitions
 
 The bridge does not just prove lemmas about the executable types; it carries
