@@ -6599,6 +6599,56 @@ theorem dilate_monic_toMonic (core : ZPoly)
     rw [hmon, toMonic_degree]
     exact ToMonicData.dilate_transformedCore core (core.degree?.getD 0) hdeg' rfl
 
+/-- Coefficient law for the monic transform `(toMonic core).monic` in the
+genuine-transform branch (leading coefficient `≠ 1`).  Public face of the
+private `ToMonicData.transformedCore_coeff`: below the top degree the
+coefficient is `core.coeff i` scaled by a power of the leading coefficient, the
+top coefficient is `1`, and higher coefficients vanish. -/
+theorem toMonic_monic_coeff_of_leadingCoeff_ne_one (core : ZPoly)
+    (hmonic : DensePoly.leadingCoeff core ≠ 1) (i : Nat) :
+    (toMonic core).monic.coeff i =
+      if i < core.degree?.getD 0 then
+        core.coeff i * DensePoly.leadingCoeff core ^ (core.degree?.getD 0 - 1 - i)
+      else if i = core.degree?.getD 0 then 1 else 0 := by
+  rw [show (toMonic core).monic
+        = ToMonicData.transformedCore core (core.degree?.getD 0) from by
+      simp [toMonic, hmonic]]
+  exact ToMonicData.transformedCore_coeff core (core.degree?.getD 0) i
+
+/-- The monic transform preserves the recorded degree in all cases (sign-free,
+unconditional companion to `toMonic_monic_degree_eq_of_pos_degree`). -/
+theorem toMonic_monic_degree_getD (core : ZPoly) :
+    (toMonic core).monic.degree?.getD 0 = core.degree?.getD 0 := by
+  by_cases hmonic : DensePoly.leadingCoeff core = 1
+  · rw [toMonic_monic_eq_core_of_leadingCoeff_eq_one core hmonic]
+  · rw [show (toMonic core).monic
+          = ToMonicData.transformedCore core (core.degree?.getD 0) from by
+        simp [toMonic, hmonic]]
+    exact ToMonicData.transformedCore_degree_getD core (core.degree?.getD 0)
+
+/-- Stored size of the monic transform of a positive-degree core: one more than
+the core degree, in both the already-monic and genuine-transform branches. -/
+theorem toMonic_monic_size_of_pos_degree (core : ZPoly)
+    (hdeg : 0 < core.degree?.getD 0) :
+    (toMonic core).monic.size = core.degree?.getD 0 + 1 := by
+  by_cases hmonic : DensePoly.leadingCoeff core = 1
+  · rw [toMonic_monic_eq_core_of_leadingCoeff_eq_one core hmonic]
+    have hsize_pos : 0 < core.size := by
+      rcases Nat.eq_zero_or_pos core.size with h0 | h
+      · exfalso
+        rw [show core.degree?.getD 0 = 0 from by
+          simp [DensePoly.degree?, h0]] at hdeg
+        omega
+      · exact h
+    obtain ⟨m, hm⟩ := Nat.exists_eq_succ_of_ne_zero (Nat.pos_iff_ne_zero.mp hsize_pos)
+    rw [show core.degree?.getD 0 = core.size - 1 from by
+      simp [DensePoly.degree?, hm]]
+    omega
+  · rw [show (toMonic core).monic
+          = ToMonicData.transformedCore core (core.degree?.getD 0) from by
+        simp [toMonic, hmonic]]
+    exact ToMonicData.transformedCore_size core (core.degree?.getD 0)
+
 end ZPoly
 
 private theorem bhksIndicatorCandidatesStep_fold_preserves_prefix
