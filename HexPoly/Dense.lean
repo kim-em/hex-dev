@@ -170,14 +170,14 @@ def coeff (p : DensePoly R) (n : Nat) : R :=
 
 /-- Coefficient of `ofCoeffs arr` agrees with `arr.getD _ 0`: trimming trailing zeros does not
 change the value at any index. -/
-@[simp] theorem coeff_ofCoeffs (coeffs : Array R) (n : Nat) :
+@[simp, grind =] theorem coeff_ofCoeffs (coeffs : Array R) (n : Nat) :
     (ofCoeffs coeffs).coeff n = coeffs.getD n (Zero.zero : R) := by
   unfold ofCoeffs coeff trimTrailingZeros
   simpa using trimTrailingZerosList_getD (R := R) coeffs.toList n
 
 /-- Characterising lemma for the constant polynomial: its coefficient is `c` at degree `0`,
 zero elsewhere. -/
-@[simp] theorem coeff_C (c : R) (n : Nat) :
+@[simp, grind =] theorem coeff_C (c : R) (n : Nat) :
     (C c).coeff n = if n = 0 then c else (Zero.zero : R) := by
   rw [C, coeff_ofCoeffs]
   cases n with
@@ -188,7 +188,7 @@ zero elsewhere. -/
 
 /-- Characterising lemma for monomials: `monomial n c` has coefficient `c` at degree `n` and zero
 elsewhere, even when `c = 0` (in which case the polynomial is zero and every coefficient is `0`). -/
-@[simp] theorem coeff_monomial (n : Nat) (c : R) (i : Nat) :
+@[simp, grind =] theorem coeff_monomial (n : Nat) (c : R) (i : Nat) :
     (monomial n c).coeff i = if i = n then c else (Zero.zero : R) := by
   unfold monomial
   by_cases hc : c = (Zero.zero : R)
@@ -224,14 +224,14 @@ elsewhere, even when `c = 0` (in which case the polynomial is zero and every coe
 
 /-- Coefficient of `ofList coeffs` agrees with `coeffs.getD _ 0`: normalization does not change
 the value at any index. -/
-@[simp] theorem coeff_ofList (coeffs : List R) (n : Nat) :
+@[simp, grind =] theorem coeff_ofList (coeffs : List R) (n : Nat) :
     (ofList coeffs).coeff n = coeffs.getD n (Zero.zero : R) := by
   simp [ofList, coeff_ofCoeffs]
 
 /-- List-level companion to `coeff_ofCoeffs`, retained as a compatibility alias for callers that
 construct lists explicitly before converting them to arrays. Prefer `coeff_ofList` when the
 caller-facing constructor is `ofList`. -/
-@[simp] theorem coeff_ofCoeffs_list (coeffs : List R) (n : Nat) :
+@[simp, grind =] theorem coeff_ofCoeffs_list (coeffs : List R) (n : Nat) :
     (ofCoeffs coeffs.toArray).coeff n = coeffs.getD n (Zero.zero : R) := by
   simp
 
@@ -324,16 +324,16 @@ def degree? (p : DensePoly R) : Option Nat :=
   if _h : p.size = 0 then none else some (p.size - 1)
 
 /-- The zero polynomial has no stored coefficients. -/
-@[simp] theorem size_zero : (0 : DensePoly R).size = 0 := by
+@[simp, grind =] theorem size_zero : (0 : DensePoly R).size = 0 := by
   rfl
 
 /-- The zero polynomial has no degree. -/
-@[simp] theorem degree?_zero : (0 : DensePoly R).degree? = none := by
+@[simp, grind =] theorem degree?_zero : (0 : DensePoly R).degree? = none := by
   unfold degree?
   simp
 
 /-- Defaulting the degree of the zero polynomial returns the supplied default. -/
-@[simp] theorem degree?_zero_getD (d : Nat) : ((0 : DensePoly R).degree?).getD d = d := by
+@[simp, grind =] theorem degree?_zero_getD (d : Nat) : ((0 : DensePoly R).degree?).getD d = d := by
   simp
 
 /-- `isZero` is the Boolean test for having no stored coefficients. -/
@@ -349,7 +349,7 @@ theorem isZero_eq_false_iff (p : DensePoly R) :
 
 /-- The constant polynomial `C 0` collapses to the zero polynomial, so its coefficient array is
 empty. -/
-@[simp] theorem coeffs_C_zero : (C (0 : R)).coeffs = #[] := by
+@[simp, grind =] theorem coeffs_C_zero : (C (0 : R)).coeffs = #[] := by
   change (C (Zero.zero : R)).coeffs = #[]
   simp [C, ofCoeffs, trimTrailingZeros, trimTrailingZerosList]
 
@@ -370,7 +370,7 @@ theorem size_C_le_one (c : R) : (C c).size ≤ 1 := by
     simp [C, ofCoeffs, trimTrailingZeros, trimTrailingZerosList, hc, size]
 
 /-- The zero constant polynomial stores no coefficients. -/
-@[simp] theorem size_C_zero : (C (0 : R)).size = 0 := by
+@[simp, grind =] theorem size_C_zero : (C (0 : R)).size = 0 := by
   change (C (0 : R)).coeffs.size = 0
   simp
 
@@ -396,7 +396,7 @@ theorem isZero_C_eq_true_iff (c : R) : (C c).isZero = true ↔ c = (0 : R) := by
     exact size_C_zero
 
 /-- The monomial with zero coefficient is the zero polynomial. -/
-@[simp] theorem monomial_zero (n : Nat) : monomial n (0 : R) = 0 := by
+@[simp, grind =] theorem monomial_zero (n : Nat) : monomial n (0 : R) = 0 := by
   change monomial n (Zero.zero : R) = 0
   rw [monomial, dif_pos rfl]
 
@@ -434,7 +434,7 @@ theorem isZero_monomial_eq_false_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R
 
 /-- The `degree?` of a constant polynomial, defaulted to `0`, is `0` regardless of the scalar:
 either `degree? = none` (when `c = 0`) and `getD 0 = 0`, or `degree? = some 0` (otherwise). -/
-@[simp] theorem degree?_C_getD (c : R) : (C c).degree?.getD 0 = 0 := by
+@[simp, grind =] theorem degree?_C_getD (c : R) : (C c).degree?.getD 0 = 0 := by
   by_cases hc : c = (0 : R)
   · rw [hc]
     change (C (Zero.zero : R)).degree?.getD 0 = 0
@@ -485,11 +485,11 @@ def support (p : DensePoly R) : List Nat :=
   simp [support]
 
 /-- The zero polynomial has empty support. -/
-@[simp] theorem support_zero : (0 : DensePoly R).support = [] := by
+@[simp, grind =] theorem support_zero : (0 : DensePoly R).support = [] := by
   simp [support]
 
 /-- A constant polynomial has support `{0}` exactly when its scalar is nonzero. -/
-@[simp] theorem support_C (c : R) :
+@[simp, grind =] theorem support_C (c : R) :
     (C c).support = if c = (0 : R) then [] else [0] := by
   by_cases hc : c = (0 : R)
   · simp [hc, support]
@@ -516,7 +516,7 @@ private theorem filter_range_succ_eq_singleton (n : Nat) :
   simp [hleft]
 
 /-- A monomial has support `{n}` exactly when its coefficient is nonzero. -/
-@[simp] theorem support_monomial (n : Nat) (c : R) :
+@[simp, grind =] theorem support_monomial (n : Nat) (c : R) :
     (monomial n c).support = if c = (0 : R) then [] else [n] := by
   by_cases hc : c = (0 : R)
   · simp [hc]
@@ -536,7 +536,7 @@ def toArray (p : DensePoly R) : Array R :=
   p.coeffs
 
 /-- The exposed normalized coefficient array has the same size as the polynomial. -/
-@[simp] theorem toArray_size (p : DensePoly R) :
+@[simp, grind =] theorem toArray_size (p : DensePoly R) :
     p.toArray.size = p.size := by
   rfl
 
@@ -547,7 +547,7 @@ coefficient function. -/
   rfl
 
 /-- Normalizing the already-normalized coefficient array reconstructs the same polynomial. -/
-@[simp] theorem ofCoeffs_toArray (p : DensePoly R) :
+@[simp, grind =] theorem ofCoeffs_toArray (p : DensePoly R) :
     ofCoeffs p.toArray = p := by
   apply ext_coeff
   intro i
@@ -555,22 +555,22 @@ coefficient function. -/
   rfl
 
 /-- Building from the exposed normalized coefficient list reconstructs the same polynomial. -/
-@[simp] theorem ofList_toArray_toList (p : DensePoly R) :
+@[simp, grind =] theorem ofList_toArray_toList (p : DensePoly R) :
     ofList p.toArray.toList = p := by
   simp [ofList]
 
 /-- Normalizing an empty coefficient array gives the zero polynomial. -/
-@[simp] theorem ofCoeffs_empty :
+@[simp, grind =] theorem ofCoeffs_empty :
     (ofCoeffs (#[] : Array R) : DensePoly R) = 0 := by
   rfl
 
 /-- Normalizing an empty coefficient list gives the zero polynomial. -/
-@[simp] theorem ofList_nil :
+@[simp, grind =] theorem ofList_nil :
     (ofList ([] : List R) : DensePoly R) = 0 := by
   rfl
 
 /-- An array consisting only of zeros normalizes to the zero polynomial. -/
-@[simp] theorem ofCoeffs_replicate_zero (n : Nat) :
+@[simp, grind =] theorem ofCoeffs_replicate_zero (n : Nat) :
     (ofCoeffs (Array.replicate n (Zero.zero : R)) : DensePoly R) = 0 := by
   apply ext_coeff
   intro i
