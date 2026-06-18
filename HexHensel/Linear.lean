@@ -29,7 +29,7 @@ def coeffwiseDiv (f : ZPoly) (m : Nat) : ZPoly :=
 quotient of `f.coeff i` by `m`. Lets a caller rewrite coefficient queries on
 the divided polynomial straight back to a division on the original
 coefficient, with no dependence on the polynomial's size. -/
-@[simp] theorem coeff_coeffwiseDiv (f : ZPoly) (m i : Nat) :
+@[simp, grind =] theorem coeff_coeffwiseDiv (f : ZPoly) (m i : Nat) :
     (coeffwiseDiv f m).coeff i = f.coeff i / Int.ofNat m := by
   unfold coeffwiseDiv
   rw [DensePoly.coeff_ofCoeffs_list]
@@ -88,7 +88,7 @@ nonnegative lift of `r.coeff i`. Exposes the increment added during a linear
 Hensel step coefficientwise, so a caller can track exactly how much each
 coefficient moves and confirm the change is a multiple of the current modulus
 `p ^ k`. -/
-@[simp] theorem coeff_liftScaledIncrement
+@[simp, grind =] theorem coeff_liftScaledIncrement
     (p k : Nat) [ZMod64.Bounds p] (r : FpPoly p) (i : Nat) :
     (liftScaledIncrement p k r).coeff i =
       Int.ofNat (p ^ k) * Int.ofNat (r.coeff i).toNat := by
@@ -603,7 +603,7 @@ theorem liftToZ_mul_congr
 of a sum is the sum of residues. Standard ring-homomorphism rewrite for
 `modP p` used by the linear Hensel step proof to split `modP p (g·h + ...)`
 into manageable pieces. -/
-@[simp] theorem modP_add
+@[simp, grind =] theorem modP_add
     (p : Nat) [ZMod64.Bounds p] (f g : ZPoly) :
     ZPoly.modP p (f + g) = ZPoly.modP p f + ZPoly.modP p g := by
   have hliftAdd :
@@ -633,7 +633,7 @@ into manageable pieces. -/
 residue of a product is the product of residues. Multiplicative companion
 of `modP_add`; the Mathlib-free Gauss-transfer chain consumes this to
 expose `modP p (f * g)` in its factored form. -/
-@[simp] theorem modP_mul
+@[simp, grind =] theorem modP_mul
     (p : Nat) [ZMod64.Bounds p] (f g : ZPoly) :
     ZPoly.modP p (f * g) = ZPoly.modP p f * ZPoly.modP p g := by
   have hliftMul :
