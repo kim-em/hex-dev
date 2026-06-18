@@ -32,6 +32,16 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   (`mul_one`, `neg_add_cancel`, `ring`) need Mathlib instances these types lack.
   `grind` uses the `Lean.Grind.CommRing` instance; prime-inverse facts
   (`ZMod64.inv_mul_eq_one_of_prime`, `mul_inv_eq_one_of_prime`) are `@[grind]`.
+  **But `grind` only knows the ring *axioms*, not the *characteristic*:** it
+  proves `x + 0 = x` and `0 * x = 0`, yet **fails** on char-`p` facts like
+  `(1 : ZMod64 2) + 1 = 0`. For those, route through the canonical residue:
+  `(1 : ZMod64 2) = ZMod64.ofNat 2 1` and `(0 : ZMod64 2) = ZMod64.ofNat 2 0`
+  hold by `rfl`, so `apply ZMod64.ext_toNat; simp only [toNat_mul, toNat_add,
+  toNat_ofNat]; decide` discharges any concrete `ZMod64 p` arithmetic
+  (`toNat_mul`/`toNat_add`/`toNat_ofNat` are `@[simp, grind =]`, reducing the
+  goal to a `Nat`-mod identity `decide`/`omega` closes). This is how the
+  GF(2)-indicator facts `if b then 1 else 0` ↦ `*`=AND / `+`=XOR get proved
+  (`HexGF2Mathlib.toFpPoly_mul`).
 - **Transporting `FpPoly` multiplication to `Polynomial (ZMod p)`
   (`map_mul'`-shaped goals): push `toZMod` through the executable List-fold,
   *then* convert to a Finset sum on the `ZMod p` side — you cannot meet in the
