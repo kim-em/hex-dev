@@ -490,11 +490,11 @@ def ofUInt64 (w : UInt64) : GF2Poly :=
   ofWords #[w]
 
 /-- A single zero word normalizes to the empty packed representation. -/
-@[simp] theorem words_ofWords_single_zero : (ofWords #[(0 : UInt64)]).words = #[] := by
+@[simp, grind =] theorem words_ofWords_single_zero : (ofWords #[(0 : UInt64)]).words = #[] := by
   rfl
 
 /-- A pair of zero words normalizes to the empty packed representation. -/
-@[simp] theorem words_ofWords_pair_zero :
+@[simp, grind =] theorem words_ofWords_pair_zero :
     (ofWords #[(0 : UInt64), (0 : UInt64)]).words = #[] := by
   rfl
 
@@ -947,7 +947,7 @@ def xorWords (xs ys : Array UInt64) : Array UInt64 :=
 
 /-- Raw XOR output has one word for every word position present in either
 input. -/
-@[simp] theorem xorWords_size (xs ys : Array UInt64) :
+@[simp, grind =] theorem xorWords_size (xs ys : Array UInt64) :
     (xorWords xs ys).size = max xs.size ys.size := by
   simp [xorWords]
 
@@ -1079,7 +1079,7 @@ theorem coeff_add_self (p : GF2Poly) (n : Nat) :
   rw [coeff_add, coeffWords_xorWords_self]
 
 /-- Simp-facing coefficient form of characteristic-two self-cancellation. -/
-@[simp] theorem coeff_add_self_false (p : GF2Poly) (n : Nat) :
+@[simp, grind =] theorem coeff_add_self_false (p : GF2Poly) (n : Nat) :
     (p + p).coeff n = false :=
   coeff_add_self p n
 
@@ -1139,12 +1139,12 @@ theorem xorWords_self (xs : Array UInt64) :
   simp
 
 /-- Adding zero on the left leaves packed `GF(2)` coefficients unchanged. -/
-@[simp] theorem coeff_add_zero_left_bool (p : GF2Poly) (n : Nat) :
+@[simp, grind =] theorem coeff_add_zero_left_bool (p : GF2Poly) (n : Nat) :
     (0 + p).coeff n = p.coeff n := by
   simp
 
 /-- Adding zero on the right leaves packed `GF(2)` coefficients unchanged. -/
-@[simp] theorem coeff_add_zero_right_bool (p : GF2Poly) (n : Nat) :
+@[simp, grind =] theorem coeff_add_zero_right_bool (p : GF2Poly) (n : Nat) :
     (p + 0).coeff n = p.coeff n := by
   simp
 
