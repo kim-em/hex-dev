@@ -225,6 +225,126 @@ private def wordsToNatAux : List UInt64 → Nat → Nat
 def toNat (p : Hex.GF2Poly) : Nat :=
   wordsToNatAux p.toWords.toList 0
 
+private theorem bit_eq_one_eq_testBit (x i : Nat) :
+    (x >>> i % 2 == 1) = x.testBit i := by
+  rw [Nat.testBit_eq_decide_div_mod_eq]
+  rw [Nat.shiftRight_eq_div_pow]
+  apply decide_eq_decide.mpr
+  exact Iff.rfl
+
+private theorem testBit_add_of_dvd_high {x y j : Nat}
+    (hy : 2 ^ (j + 1) ∣ y) :
+    (x + y).testBit j = x.testBit j := by
+  have hmod : (x + y) % 2 ^ (j + 1) = x % 2 ^ (j + 1) := by
+    rw [Nat.add_mod, Nat.mod_eq_zero_of_dvd hy, Nat.add_zero, Nat.mod_mod]
+  calc
+    (x + y).testBit j = ((x + y) % 2 ^ (j + 1)).testBit j := by
+      rw [Nat.testBit_mod_two_pow]
+      simp
+    _ = (x % 2 ^ (j + 1)).testBit j := by rw [hmod]
+    _ = x.testBit j := by
+      rw [Nat.testBit_mod_two_pow]
+      simp
+
+private theorem add_shift_testBit (x k s t : Nat) (hx : x < 2 ^ s) :
+    (x + k * 2 ^ s).testBit (s + t) = k.testBit t := by
+  rw [Nat.testBit_eq_decide_div_mod_eq, Nat.testBit_eq_decide_div_mod_eq]
+  rw [Nat.pow_add, ← Nat.div_div_eq_div_mul]
+  rw [Nat.mul_comm k (2 ^ s)]
+  rw [Nat.add_mul_div_left _ _ (Nat.two_pow_pos s), Nat.div_eq_of_lt hx, Nat.zero_add]
+
+private theorem shift_testBit (k s t : Nat) :
+    (k * 2 ^ s).testBit (s + t) = k.testBit t := by
+  simpa using add_shift_testBit 0 k s t (Nat.two_pow_pos s)
+
+private theorem testBit_add_of_lt_low {x y s t : Nat}
+    (hx : x < 2 ^ s) (hy : 2 ^ s ∣ y) :
+    (x + y).testBit (s + t) = y.testBit (s + t) := by
+  rcases hy with ⟨k, hk⟩
+  rw [hk, Nat.mul_comm]
+  rw [add_shift_testBit x k s t hx, shift_testBit k s t]
+
+private theorem wordsToNatAux_dvd_shift :
+    ∀ (ws : List UInt64) (i : Nat), 2 ^ (64 * i) ∣ wordsToNatAux ws i
+  | [], i => by simp [wordsToNatAux]
+  | w :: ws, i => by
+      unfold wordsToNatAux
+      have htail' : 2 ^ (64 * i) ∣ wordsToNatAux ws (i + 1) :=
+        dvd_trans (Nat.pow_dvd_pow 2 (by omega : 64 * i ≤ 64 * (i + 1)))
+          (wordsToNatAux_dvd_shift ws (i + 1))
+      rcases htail' with ⟨tail, htail⟩
+      exact ⟨w.toNat + tail, by
+        rw [htail, Nat.mul_add, Nat.mul_comm (2 ^ (64 * i)) w.toNat]⟩
+
+private theorem word_shift_testBit (w : UInt64) (i bitIdx : Nat) :
+    (w.toNat * 2 ^ (64 * i)).testBit (64 * i + bitIdx) =
+      w.toNat.testBit bitIdx := by
+  simpa using shift_testBit w.toNat (64 * i) bitIdx
+
+private theorem word_shift_lt_next (w : UInt64) (i : Nat) :
+    w.toNat * 2 ^ (64 * i) < 2 ^ (64 * (i + 1)) := by
+  have hw : w.toNat < 2 ^ 64 := by
+    simpa [UInt64.size] using UInt64.toNat_lt_size w
+  have h := Nat.shiftLeft_lt (x := w.toNat) (n := 64) (m := 64 * i) hw
+  simpa [Nat.shiftLeft_eq, show 64 + 64 * i = 64 * (i + 1) by omega] using h
+
+private theorem word_shift_testBit_eq_false_of_next_le
+    (w : UInt64) {i j : Nat} (hj : 64 * (i + 1) ≤ j) :
+    (w.toNat * 2 ^ (64 * i)).testBit j = false := by
+  exact Nat.testBit_eq_false_of_lt
+    (Nat.lt_of_lt_of_le (word_shift_lt_next w i)
+      (Nat.pow_le_pow_right (by decide : 0 < 2) hj))
+
+private theorem wordsToNatAux_testBit_getD :
+    ∀ (ws : List UInt64) (i wordIdx bitIdx : Nat), bitIdx < 64 →
+      (wordsToNatAux ws i).testBit (64 * (i + wordIdx) + bitIdx) =
+        (ws.getD wordIdx 0).toNat.testBit bitIdx
+  | [], i, wordIdx, bitIdx, hbit => by
+      simp [wordsToNatAux]
+  | w :: ws, i, 0, bitIdx, hbit => by
+      simp only [wordsToNatAux]
+      have htarget :
+          64 * (i + 0) + bitIdx + 1 ≤ 64 * (i + 1) := by omega
+      have htail :
+          2 ^ (64 * (i + 0) + bitIdx + 1) ∣ wordsToNatAux ws (i + 1) :=
+        dvd_trans (Nat.pow_dvd_pow 2 htarget) (wordsToNatAux_dvd_shift ws (i + 1))
+      rw [testBit_add_of_dvd_high htail]
+      simpa using word_shift_testBit w i bitIdx
+  | w :: ws, i, wordIdx + 1, bitIdx, hbit => by
+      simp only [wordsToNatAux]
+      have htarget :
+          64 * (i + (wordIdx + 1)) + bitIdx =
+            64 * ((i + 1) + wordIdx) + bitIdx := by omega
+      have hlowBound :
+          w.toNat * 2 ^ (64 * i) <
+            2 ^ (64 * (i + (wordIdx + 1)) + bitIdx) := by
+        exact Nat.lt_of_lt_of_le (word_shift_lt_next w i)
+          (Nat.pow_le_pow_right (by decide : 0 < 2) (by omega))
+      have htargetLow :
+          64 * (i + (wordIdx + 1)) + bitIdx =
+            64 * (i + 1) + (64 * wordIdx + bitIdx) := by omega
+      rw [htargetLow]
+      rw [testBit_add_of_lt_low (s := 64 * (i + 1)) (t := 64 * wordIdx + bitIdx)]
+      · rw [← htargetLow, htarget]
+        exact wordsToNatAux_testBit_getD ws (i + 1) wordIdx bitIdx hbit
+      · exact Nat.lt_of_lt_of_le (word_shift_lt_next w i) (le_rfl)
+      · exact wordsToNatAux_dvd_shift ws (i + 1)
+
+theorem toNat_testBit_eq_coeff (p : Hex.GF2Poly) (j : Nat) :
+    (toNat p).testBit j = p.coeff j := by
+  unfold toNat
+  rw [Hex.GF2Poly.coeff]
+  have hbit : j % 64 < 64 := Nat.mod_lt j (by decide : 0 < 64)
+  have hdecomp : 64 * (0 + j / 64) + j % 64 = j := by
+    simpa using Nat.div_add_mod j 64
+  rw [← hdecomp]
+  rw [wordsToNatAux_testBit_getD p.toWords.toList 0 (j / 64) (j % 64) hbit]
+  have hdiv : (64 * (j / 64) + j % 64) / 64 = j / 64 := by
+    rw [Nat.mul_add_div (by decide : 64 > 0), Nat.div_eq_of_lt hbit, Nat.add_zero]
+  simp [Hex.GF2Poly.coeffWords, Hex.GF2Poly.UInt64.bne_zero_eq_toNat_bne_zero,
+    UInt64.toNat_shiftRight, UInt64.toNat_and, Nat.mod_eq_of_lt hbit,
+    bit_eq_one_eq_testBit, Hex.GF2Poly.toWords, hdiv]
+
 /-- Rebuild the low `degree` bits of a natural number as a packed polynomial.
 The input is expected to be bounded by `2 ^ degree` by callers that need a
 canonical finite representative. -/
@@ -233,13 +353,6 @@ def ofNatBelowDegree (degree : Nat) (n : Nat) : Hex.GF2Poly :=
   Hex.GF2Poly.ofWords <|
     Array.ofFn fun i : Fin wordCount =>
       UInt64.ofNat (n / 2 ^ (64 * i.1))
-
-private theorem bit_eq_one_eq_testBit (x i : Nat) :
-    (x >>> i % 2 == 1) = x.testBit i := by
-  rw [Nat.testBit_eq_decide_div_mod_eq]
-  rw [Nat.shiftRight_eq_div_pow]
-  apply decide_eq_decide.mpr
-  exact Iff.rfl
 
 private theorem div_word_mod_testBit (n wordIdx bitIdx : Nat) (hbit : bitIdx < 64) :
     ((n / 2 ^ (64 * wordIdx)) % 2 ^ 64).testBit bitIdx =
