@@ -1,5 +1,6 @@
 import HexBerlekampZassenhausMathlib.Basic
 import HexBerlekampZassenhausMathlib.Lattice
+import HexBerlekampZassenhausMathlib.Recovery
 
 /-!
 Bridge from recovery-side lifted-factor subsets to BHKS true-factor packages.
@@ -361,6 +362,117 @@ def trueFactorLiftSemanticsOfToMonicSubset
     rw [Array.getElem?_eq_getElem i.isLt]
     simp [d]
     exact Hex.ZPoly.congr_symm _ _ _ hcongr'
+
+namespace ForwardRecoveryInputs
+
+/--
+**Monic-lattice `RecoveredLift` family from fast-core indicator-candidate
+success** (prerequisite (A) of #7894, capstone #6672).
+
+From a successful indicator-candidate fold over the *non-monic* fast-path core
+(`bhksIndicatorCandidates? core d … = some coreFactors`), build, for every
+emitted support, a `RecoveredLift` over the **monic** lattice
+`bhksLatticeBasis (toMonic core).monic …`.  The recovered factor of each support
+is the centred lift of the selected lifted product, which is exactly the monic
+correspondent of the emitted recombination candidate
+(`centeredLift_dvd_toMonic`): the executable exact-division witness
+`candidate ∣ core` transports to `cl ∣ (toMonic core).monic`, and the
+leading-coefficient dilation in `recovered_eq` collapses because the monic
+transform has leading coefficient `1`.
+
+This is the monic-core regime where `recoveredLiftOfSubset` applies; a
+non-monic-core `RecoveredLift` is provably impossible (its `recovered_eq` would
+need `content (dilate (lc core) monicFactor) = 1`, false for non-unit
+`leadingCoeff core`).  The family feeds the period-adjusted column bound
+`supportShortVectorData_of_recoveredLift` (`CLDColumnBound.lean`).
+
+This is a `def` because `RecoveredLift` is a data-carrying certificate, not a
+`Prop`. -/
+def recoveredLift_family_of_indicatorCandidates
+    {core : Hex.ZPoly} {d : Hex.LiftData} {coreFactors : Array Hex.ZPoly}
+    (rows_pos : HasPositiveDimension core d)
+    (trueSupports :
+       Set (Set (Fin (projectedRowsOfLiftData core d rows_pos).factorCount)))
+    (hindicators :
+       equivalenceClassIndicatorsOfLiftData core d rows_pos =
+         expectedIndicatorArrayOfSupports trueSupports)
+    (hcandidates :
+       Hex.bhksIndicatorCandidates? core d
+           (equivalenceClassIndicatorsOfLiftData core d rows_pos) = some coreFactors)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hliftedFactor_monic : ∀ i : LiftedFactorIndex d, Hex.DensePoly.Monic (liftedFactor d i))
+    (hp_two_le : 2 ≤ d.p ^ d.k) :
+    ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+      RecoveredLift
+        (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic d.p d.k d.liftedFactors)
+        (supportOfSubset (Hex.ZPoly.toMonic core).monic d
+          ((liftedFactorSubsetsOfSupports d trueSupports).getD i ∅)) := by
+  classical
+  intro i hi
+  have hi_expected : i < (equivalenceClassIndicatorsOfLiftData core d rows_pos).size := by
+    rw [hindicators]; exact hi
+  -- the emitted candidate and its selected lifted-factor product (extract the
+  -- quotient witness via `choose`, as the goal is data-valued)
+  have hcand_ex := Hex.bhksIndicatorCandidates?_getD_candidate hcandidates i hi_expected
+  rw [hindicators] at hcand_ex
+  have hcandidate0 := hcand_ex.choose_spec
+  have hselected :=
+    bhksIndicatorSelectedFactors_expectedIndicatorArrayOfSupports d trueSupports
+      (supportPartitionByMinColumn_class_nonempty trueSupports)
+      (supportPartitionByMinColumn_class_lt trueSupports) i hi
+  set selected := (selectedFactorArraysOfSupports d.liftedFactors trueSupports).getD i #[]
+    with hsel_def
+  set candidate := coreFactors.getD i 0 with hcand_def
+  set T := (liftedFactorSubsetsOfSupports d trueSupports).getD i ∅ with hT_def
+  set cl := Hex.centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k) with hcl_def
+  -- the selected product equals the lifted-factor product over `T`, which is
+  -- monic (product of monic lifted factors), so its centred lift `cl` is monic
+  have hpp_eq : Array.polyProduct selected = liftedFactorProduct d T :=
+    selectedFactorArraysOfSupports_polyProduct d trueSupports i hi
+  have hprod_monic : Hex.DensePoly.Monic (Array.polyProduct selected) := by
+    rw [hpp_eq]; exact liftedFactorProduct_monic d T (fun j _ => hliftedFactor_monic j)
+  have hcl_monic : Hex.DensePoly.Monic cl :=
+    monic_centeredLiftPoly_of_monic hprod_monic hp_two_le
+  -- the candidate is the primitive part of the leading-coefficient dilation of `cl`
+  have hcand_recover :
+      Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl) = candidate :=
+    primitivePart_dilate_centeredLift_eq_candidate hcandidate0 hselected hcore_lc_pos hcl_monic
+  have hcand_dvd : candidate ∣ core := Hex.bhksIndicatorCandidate?_dvd hcandidate0
+  have hcand_prim : Hex.ZPoly.Primitive candidate := Hex.bhksIndicatorCandidate?_primitive hcandidate0
+  -- the candidate has positive leading coefficient, so it is sign-normalized
+  have hcand_sign : Hex.normalizeFactorSign candidate = candidate := by
+    have hpos : 0 < Hex.DensePoly.leadingCoeff candidate := by
+      rw [← hcand_recover]; exact leadingCoeff_primitivePart_dilate_pos hcore_lc_pos hcl_monic
+    unfold Hex.normalizeFactorSign
+    rw [if_neg (not_lt.mpr (le_of_lt hpos))]
+  have hcand_deg : 1 ≤ candidate.degree?.getD 0 := by
+    have hsize_eq : coreFactors.size = (equivalenceClassIndicatorsOfLiftData core d rows_pos).size :=
+      Hex.bhksIndicatorCandidates?_size_eq hcandidates
+    have hi_cf : i < coreFactors.size := by rw [hsize_eq]; exact hi_expected
+    have hmem : candidate ∈ coreFactors.toList := by
+      have h1 : coreFactors.getD i 0 = coreFactors[i] := by
+        simp [Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hi_cf]
+      rw [hcand_def, h1]
+      exact Array.getElem_mem_toList hi_cf
+    exact Hex.bhksIndicatorCandidates?_positive_degree hcandidates candidate hmem
+  -- the centred lift divides the monic transform
+  have hcl_dvd : cl ∣ (Hex.ZPoly.toMonic core).monic :=
+    centeredLift_dvd_toMonic hcore_lc_pos hcore_pos hcl_monic hcand_deg hcand_recover
+      hcand_dvd hcand_prim hcand_sign
+  have hcof : (Hex.ZPoly.toMonic core).monic = cl * hcl_dvd.choose := hcl_dvd.choose_spec
+  have hM_monic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
+    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+  have hrecovered :
+      Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff (Hex.ZPoly.toMonic core).monic)
+          (Hex.centeredLiftPoly (liftedFactorProduct d T) (d.p ^ d.k)) = cl := by
+    rw [← hpp_eq, show Hex.DensePoly.leadingCoeff (Hex.ZPoly.toMonic core).monic = 1 from hM_monic,
+      Hex.ZPoly.dilate_one]
+  exact recoveredLiftOfSubset (Hex.ZPoly.toMonic core).monic d T cl hcl_dvd.choose
+    hcof.symm hrecovered
+
+end ForwardRecoveryInputs
 
 end BHKS
 
