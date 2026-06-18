@@ -587,6 +587,26 @@ theorem coeffWidth_eq
   cases basis_eq
   rfl
 
+/-- The packaged basis carries exactly the input prime. -/
+theorem p_eq
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) :
+    L.p = D.p := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    recovered_eq⟩
+  cases basis_eq
+  rfl
+
+/-- The packaged basis carries exactly the Hensel precision exponent. -/
+theorem precision_eq
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S) :
+    L.precision = D.a := by
+  rcases D with ⟨f, p, a, liftedFactors, basis_eq, factor, cofactor, factor_mul,
+    recovered_eq⟩
+  cases basis_eq
+  rfl
+
 end RecoveredLift
 
 /--

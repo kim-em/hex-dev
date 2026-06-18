@@ -1837,6 +1837,114 @@ theorem four_mul_sq_norm_le_of_colBound
   push_cast
   ring
 
+/-- **Period-adjusted true-factor short vector from a `RecoveredLift` (issue
+#7876).**  In the monic regime, the aggregate residue bridge
+(`recoveredLift_aggregate_residue`) and the period-aware carry lemma
+(`two_mul_natAbs_sum_psiCut_period_le`) bound each tail column of the
+period-adjusted vector by `factorCount/2`.  Together with the structural project
+and lattice-membership facts, this yields a `SupportShortVectorData` for the
+recovered support — the genuine aggregate-tail lattice path the period trap
+(#7866/#7867) forces, feeding the fast-disjunct consumer through
+`cutProjectionHypotheses_of_shortVectors`. -/
+def supportShortVectorData_of_recoveredLift
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S)
+    (hf_lc : Hex.DensePoly.leadingCoeff D.f = 1)
+    (hfactor_monic : (HexPolyMathlib.toPolynomial D.factor).Monic)
+    (hp : 2 ≤ D.p)
+    (hk : 1 < D.p ^ D.a)
+    (hsep : ∀ j, 2 * Hex.bhksCoeffBound D.f j < D.p ^ D.a)
+    (hthr : ∀ j, Hex.bhksCoeffCutThreshold D.p D.f j ≤ D.a)
+    (hfac : ∀ i : Fin L.factorCount, i ∈ S →
+        ∃ h : Hex.ZPoly,
+          Hex.DensePoly.Monic (L.liftedFactors.getD i.val 1) ∧
+          0 < (L.liftedFactors.getD i.val 1).degree?.getD 0 ∧
+          Hex.ZPoly.congr D.f ((L.liftedFactors.getD i.val 1) * h) (D.p ^ D.a)) :
+    SupportShortVectorData L S := by
+  classical
+  -- Per-column cut-modulus separation `2·B < p^ℓⱼ`.
+  have hsep_b : ∀ j : Fin L.coeffWidth,
+      2 * Hex.bhksCoeffBound D.f j.val < D.p ^ Hex.bhksCoeffCutThreshold D.p D.f j.val := by
+    intro j
+    have hcut := Hex.le_pow_ceilLogP hp (2 * Hex.bhksCoeffBound D.f j.val + 1)
+    have hcut2 : 2 * Hex.bhksCoeffBound D.f j.val + 1
+        ≤ D.p ^ Hex.bhksCoeffCutThreshold D.p D.f j.val := hcut
+    omega
+  -- Per-column period existential from the aggregate residue and carry lemma.
+  have hperiod : ∀ j : Fin L.coeffWidth, ∃ tj : ℤ,
+      2 * (((∑ i ∈ Finset.univ.filter (fun i => i ∈ S),
+          Hex.psiCut D.p D.a (Hex.bhksCoeffCutThreshold D.p D.f j.val)
+            ((Hex.cldQuotientMod D.f (L.liftedFactors.getD i.val 1) D.p D.a).coeff j.val))
+        - tj * (D.p ^ (D.a - Hex.bhksCoeffCutThreshold D.p D.f j.val) : Int))).natAbs
+        ≤ (Finset.univ.filter (fun i => i ∈ S)).card := by
+    intro j
+    obtain ⟨hres, hbnd⟩ :=
+      recoveredLift_aggregate_residue D hf_lc hfactor_monic hk hsep hfac j.val
+    exact two_mul_natAbs_sum_psiCut_period_le
+      (Finset.univ.filter (fun i => i ∈ S)) D.p D.a
+      (Hex.bhksCoeffCutThreshold D.p D.f j.val) (hthr j.val) (by omega)
+      (fun i => (Hex.cldQuotientMod D.f (L.liftedFactors.getD i.val 1) D.p D.a).coeff j.val)
+      ((phi (HexPolyMathlib.toPolynomial D.f)
+        (HexPolyMathlib.toPolynomial D.factor)).coeff j.val)
+      (Hex.bhksCoeffBound D.f j.val) hres hbnd (hsep_b j)
+  set t : Fin L.coeffWidth → ℤ := fun j => Classical.choose (hperiod j) with ht_def
+  have ht : ∀ j : Fin L.coeffWidth,
+      2 * (((∑ i ∈ Finset.univ.filter (fun i => i ∈ S),
+          Hex.psiCut D.p D.a (Hex.bhksCoeffCutThreshold D.p D.f j.val)
+            ((Hex.cldQuotientMod D.f (L.liftedFactors.getD i.val 1) D.p D.a).coeff j.val))
+        - t j * (D.p ^ (D.a - Hex.bhksCoeffCutThreshold D.p D.f j.val) : Int))).natAbs
+        ≤ (Finset.univ.filter (fun i => i ∈ S)).card :=
+    fun j => Classical.choose_spec (hperiod j)
+  have hcard : (Finset.univ.filter (fun i => i ∈ S)).card ≤ L.factorCount := by
+    calc (Finset.univ.filter (fun i => i ∈ S)).card
+          ≤ (Finset.univ : Finset (Fin L.factorCount)).card := Finset.card_filter_le _ _
+      _ = L.factorCount := by simp
+  -- Each tail coordinate of the period-adjusted vector is the period-reduced cut.
+  have hcoord_eq : ∀ j : Fin L.coeffWidth,
+      ((periodAdjustedVector L S t)[Fin.natAdd L.factorCount j] : ℤ)
+        = (∑ i ∈ Finset.univ.filter (fun i => i ∈ S),
+            Hex.psiCut D.p D.a (Hex.bhksCoeffCutThreshold D.p D.f j.val)
+              ((Hex.cldQuotientMod D.f (L.liftedFactors.getD i.val 1) D.p D.a).coeff j.val))
+          - t j * (D.p ^ (D.a - Hex.bhksCoeffCutThreshold D.p D.f j.val) : Int) := by
+    intro j
+    have hjlt : j.val < D.f.degree?.getD 0 := j.isLt.trans_eq D.coeffWidth_eq
+    have hcoord := periodAdjustedVector_coeff_of_blockForm S D.blockForm t j
+    rw [show ((periodAdjustedVector L S t)[Fin.natAdd L.factorCount j] : ℤ)
+        = (periodAdjustedVector L S t)[(⟨L.factorCount + j.val,
+            Nat.add_lt_add_left j.isLt L.factorCount⟩ :
+            Fin (L.factorCount + L.coeffWidth))] from rfl, hcoord]
+    have hLp : L.p = D.p := D.p_eq
+    have hLprec : L.precision = D.a := D.precision_eq
+    have hLthr : L.cutThresholds.getD j.val 0 = Hex.bhksCoeffCutThreshold D.p D.f j.val := by
+      rw [D.cutThresholds_eq, bhksCutThresholds_getD_of_lt D.f D.p j.val hjlt]
+    simp only [hLp, hLprec, hLthr]
+    congr 1
+    · rw [Finset.sum_filter]
+      refine Finset.sum_congr rfl (fun i _ => ?_)
+      by_cases hi : i ∈ S
+      · rw [indicatorVector_apply_mem S hi, one_mul, if_pos hi]
+        have hLcld : (L.cldRows.getD i.val #[]).getD j.val 0
+            = (Hex.cldCoeffs D.f D.p D.a (L.liftedFactors.getD i.val 1)).getD j.val 0 := by
+          congr 1
+          rw [D.cldRows_eq, D.liftedFactors_eq]
+          have hsz : i.val < D.liftedFactors.size := i.isLt.trans_eq D.factorCount_eq
+          simp [Array.getD, hsz]
+        rw [hLcld,
+          Hex.cldCoeffs_getD_of_lt D.f D.p D.a (L.liftedFactors.getD i.val 1) j.val hjlt]
+      · rw [indicatorVector_apply_not_mem S hi, zero_mul, if_neg hi]
+    · rw [Int.ofNat_eq_natCast, Nat.cast_pow]
+      ring
+  refine
+    { vector := periodAdjustedVector L S t
+      memLattice := periodAdjustedVector_memLattice L S t
+      project_eq := fun i => periodAdjustedVector_project_of_blockForm S D.blockForm t i
+      four_mul_sq_norm_le := ?_ }
+  refine four_mul_sq_norm_le_of_colBound S (periodAdjustedVector L S t)
+    (fun i => periodAdjustedVector_project_of_blockForm S D.blockForm t i)
+    (fun j => ?_)
+  rw [hcoord_eq j]
+  exact le_trans (ht j) hcard
+
 end BHKS
 
 end
