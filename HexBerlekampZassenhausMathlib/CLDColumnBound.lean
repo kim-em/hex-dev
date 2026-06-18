@@ -959,6 +959,99 @@ theorem two_mul_natAbs_sum_psiCut_le
     rw [Int.abs_eq_natAbs] at hcolNat; push_cast at hcolNat ⊢; linarith
   exact_mod_cast this
 
+/--
+**BHKS Lemma 5.7, period-aware aggregate form.**  Where
+`two_mul_natAbs_sum_psiCut_le` bounds the *raw* high-bit cut-sum and needs
+per-element ambient residues pinned to a small integer (forcing per-factor
+smallness), this version bounds the cut-sum *modulo the period* `q = p^(a−b)` and
+needs only the *aggregate* residue `centeredResiduePow p a (Σ w_i)` to be small.
+
+This is the analytic core of the recombination case: for split irreducible
+factors the per-local CLD residues are not individually small — only their
+aggregate `Φ(factor)` is — and the lattice's period rows `diag(p^(a−l_j))` absorb
+the large per-local parts.  The raw-sum bound is *false* here (no per-factor
+hypothesis is available); the `∃ t` period reduction by an integer multiple of `q`
+is exactly what makes the aggregate-only bound true.
+-/
+theorem two_mul_natAbs_sum_psiCut_period_le
+    {ι : Type*} (T : Finset ι) (p a b : Nat) (hba : b ≤ a) (hp : 1 < p)
+    (z : ι → Int) (y : Int) (B : Nat)
+    (hagg : Hex.centeredResiduePow p a (∑ i ∈ T, Hex.centeredResiduePow p a (z i)) = y)
+    (hy : y.natAbs ≤ B) (hsep : 2 * B < p ^ b) :
+    ∃ t : Int,
+      2 * (((∑ i ∈ T, Hex.psiCut p a b (z i)) - t * (p ^ (a - b) : Int))).natAbs
+        ≤ T.card + 1 := by
+  classical
+  have hp0 : 0 < p := lt_trans zero_lt_one hp
+  have hpb : 0 < p ^ b := pow_pos hp0 b
+  have hm0 : (p ^ b : Nat) ≠ 0 := hpb.ne'
+  set w : ι → Int := fun i => Hex.centeredResiduePow p a (z i) with hwdef
+  set col : Int := ∑ i ∈ T, Hex.psiCut p a b (z i) with hcol
+  set lo : ι → Int := fun i => Hex.centeredResiduePow p b (w i) with hlodef
+  -- Per element: `p^b · Psi(z i) = w i - lo i`.
+  have hkey : ∀ i ∈ T, ((p ^ b : Nat) : Int) * Hex.psiCut p a b (z i) = w i - lo i := by
+    intro i hi
+    have hdec := Hex.centeredResiduePow_add_pow_mul_psiCut p a b (z i) hm0
+    simp only [hwdef, hlodef]
+    linarith [hdec]
+  -- Aggregate: `p^b · col = (Σ w) − (Σ lo)`.
+  have hsumw : ((p ^ b : Nat) : Int) * col = (∑ i ∈ T, w i) - ∑ i ∈ T, lo i := by
+    rw [hcol, Finset.mul_sum, Finset.sum_congr rfl hkey, Finset.sum_sub_distrib]
+  -- Aggregate residue smallness gives the period divisibility `p^a ∣ (Σ w) − y`.
+  have hdvd_a : ((p ^ a : Nat) : Int) ∣ (∑ i ∈ T, w i) - y := by
+    have hcm : Hex.centeredModNat (∑ i ∈ T, w i) (p ^ a) = y := by
+      simpa [Hex.centeredResiduePow] using hagg
+    have h := Hex.self_sub_centeredModNat_dvd (∑ i ∈ T, w i) (p ^ a)
+    rwa [hcm] at h
+  obtain ⟨k, hk⟩ := hdvd_a
+  -- `p^a = p^b · q` with `q = p^(a−b)` (in `ℤ`), using `b ≤ a`.
+  have hab : b + (a - b) = a := by omega
+  have hpa_split : ((p ^ a : Nat) : Int) = ((p ^ b : Nat) : Int) * ((p : Int) ^ (a - b)) := by
+    push_cast
+    rw [← pow_add, hab]
+  -- Bound on the lower-residue sum: `2 · |Σ lo| ≤ |T| · p^b`.
+  have hlo_le : 2 * |∑ i ∈ T, lo i| ≤ (T.card : Int) * (p ^ b : Nat) := by
+    have htri : |∑ i ∈ T, lo i| ≤ ∑ i ∈ T, |lo i| := Finset.abs_sum_le_sum_abs _ _
+    have hpt : ∑ i ∈ T, (2 * |lo i|) ≤ ∑ i ∈ T, ((p ^ b : Nat) : Int) := by
+      refine Finset.sum_le_sum (fun i _ => ?_)
+      have := two_mul_natAbs_centeredResiduePow_le p b (w i) hpb
+      have hcast : 2 * |lo i| = ((2 * (Hex.centeredResiduePow p b (w i)).natAbs : Nat) : Int) := by
+        simp only [hlodef, Nat.cast_mul, Nat.cast_ofNat, Int.abs_eq_natAbs]
+      rw [hcast]; exact_mod_cast this
+    calc 2 * |∑ i ∈ T, lo i| ≤ 2 * ∑ i ∈ T, |lo i| := by linarith
+      _ = ∑ i ∈ T, (2 * |lo i|) := by rw [Finset.mul_sum]
+      _ ≤ ∑ i ∈ T, ((p ^ b : Nat) : Int) := hpt
+      _ = (T.card : Int) * (p ^ b : Nat) := by rw [Finset.sum_const, nsmul_eq_mul]
+  -- The period-reduced value `d := col − k·q` satisfies `p^b · d = y − Σ lo`.
+  refine ⟨k, ?_⟩
+  set d : Int := col - k * ((p : Int) ^ (a - b)) with hddef
+  have hpd : ((p ^ b : Nat) : Int) * d = y - ∑ i ∈ T, lo i := by
+    have hk' : (∑ i ∈ T, w i) = y + ((p ^ a : Nat) : Int) * k := by linarith [hk]
+    rw [hddef, mul_sub, hsumw, hk', hpa_split]
+    ring
+  -- Tail: identical to the raw lemma with `col` replaced by the reduced `d`.
+  have hyZ : |y| ≤ (B : Int) := by rw [Int.abs_eq_natAbs]; exact_mod_cast hy
+  have habs : ((p ^ b : Nat) : Int) * |d| = |y - ∑ i ∈ T, lo i| := by
+    rw [← hpd, abs_mul]; congr 1
+    rw [Int.abs_eq_natAbs]; simp
+  have hstep : 2 * (((p ^ b : Nat) : Int) * |d|) ≤ 2 * (B : Int) + (T.card : Int) * (p ^ b : Nat) := by
+    rw [habs]
+    calc 2 * |y - ∑ i ∈ T, lo i| ≤ 2 * (|y| + |∑ i ∈ T, lo i|) := by
+            linarith [abs_sub y (∑ i ∈ T, lo i)]
+      _ = 2 * |y| + 2 * |∑ i ∈ T, lo i| := by ring
+      _ ≤ 2 * (B : Int) + (T.card : Int) * (p ^ b : Nat) := by linarith [hlo_le, hyZ]
+  have hsepZ : 2 * (B : Int) < ((p ^ b : Nat) : Int) := by exact_mod_cast hsep
+  have hpbZ : (0 : Int) < ((p ^ b : Nat) : Int) := by exact_mod_cast hpb
+  have hdNat : 2 * |d| ≤ (T.card : Int) + 1 := by
+    have hlt2 : ((p ^ b : Nat) : Int) * (2 * |d|) <
+        ((p ^ b : Nat) : Int) * ((T.card : Int) + 1) := by
+      nlinarith [hstep, hsepZ, hpbZ]
+    have h2N : 2 * |d| < (T.card : Int) + 1 := lt_of_mul_lt_mul_left hlt2 (le_of_lt hpbZ)
+    omega
+  have hfin : (2 * d.natAbs : Int) ≤ (T.card : Int) + 1 := by
+    rw [Int.abs_eq_natAbs] at hdNat; push_cast at hdNat ⊢; linarith
+  exact_mod_cast hfin
+
 /-- The executable Pascal-recursion `Hex.Nat.choose` agrees with Mathlib's
 `Nat.choose`; needed because `Hex.bhksCoeffBound` elaborates `Nat.choose` to the
 executable shadow inside `namespace Hex`. -/
