@@ -1945,6 +1945,103 @@ def supportShortVectorData_of_recoveredLift
   rw [hcoord_eq j]
   exact le_trans (ht j) hcard
 
+open Classical in
+/--
+**Tight per-column estimate for the period-corrected recovered CLD vector
+(issue #7874).**  Each tail coordinate of `recoveredCLDVector` satisfies
+`2·|coord_j| ≤ factorCount`.
+
+Unlike `tightColumnBound_of_lift` (which needs a `TrueFactorLift` and the raw
+`two_mul_natAbs_sum_psiCut_le`), this works from a `RecoveredLift` (monic
+coordinate): the diagonal period row `diag(p^(a−ℓ_j))` absorbs the large part of
+the raw cut-sum, and the residual `col_j − t_j·p^(a−ℓ_j)` is short by the
+period-aware carry lemma `two_mul_natAbs_sum_psiCut_period_le` (#7869) fed with
+the aggregate residue `recoveredLift_aggregate_residue` (#7872).
+-/
+theorem recoveredColumnBound
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S)
+    (hp : 2 ≤ D.p) (hk : 1 < D.p ^ D.a)
+    (hf_lc : Hex.DensePoly.leadingCoeff D.f = 1)
+    (hfactor_monic : (HexPolyMathlib.toPolynomial D.factor).Monic)
+    (hsep : ∀ j, 2 * Hex.bhksCoeffBound D.f j < D.p ^ D.a)
+    (hfac : ∀ i : Fin L.factorCount, i ∈ S →
+        ∃ h : Hex.ZPoly,
+          Hex.DensePoly.Monic (L.liftedFactors.getD i.val 1) ∧
+          0 < (L.liftedFactors.getD i.val 1).degree?.getD 0 ∧
+          Hex.ZPoly.congr D.f ((L.liftedFactors.getD i.val 1) * h) (D.p ^ D.a))
+    (j : Fin L.coeffWidth) :
+    2 * ((recoveredCLDVector D)[Fin.natAdd L.factorCount j] : ℤ).natAbs
+      ≤ L.factorCount := by
+  classical
+  have hjlt : j.val < D.f.degree?.getD 0 := j.isLt.trans_eq D.coeffWidth_eq
+  have hba : Hex.bhksCoeffCutThreshold D.p D.f j.val ≤ D.a := by
+    unfold Hex.bhksCoeffCutThreshold
+    exact Hex.ceilLogP_le_of_le_pow hp _ D.a (by have := hsep j.val; omega)
+  have hsep_b : 2 * Hex.bhksCoeffBound D.f j.val
+      < D.p ^ Hex.bhksCoeffCutThreshold D.p D.f j.val := by
+    have hcut := Hex.le_pow_ceilLogP hp (2 * Hex.bhksCoeffBound D.f j.val + 1)
+    unfold Hex.bhksCoeffCutThreshold
+    omega
+  obtain ⟨hagg, hy⟩ :=
+    recoveredLift_aggregate_residue D hf_lc hfactor_monic hk hsep hfac j.val
+  have hred : recoveredPeriodReducible D j.val := by
+    unfold recoveredPeriodReducible recoveredColumnSum
+    exact two_mul_natAbs_sum_psiCut_period_le
+      (Finset.univ.filter (fun i : Fin L.factorCount => i ∈ S))
+      D.p D.a (Hex.bhksCoeffCutThreshold D.p D.f j.val) hba (by omega)
+      (fun i => (Hex.cldQuotientMod D.f (L.liftedFactors.getD i.val 1) D.p D.a).coeff j.val)
+      ((phi (HexPolyMathlib.toPolynomial D.f)
+        (HexPolyMathlib.toPolynomial D.factor)).coeff j.val)
+      (Hex.bhksCoeffBound D.f j.val) hagg hy hsep_b
+  rw [recoveredCLDVector_coeff D j, trueFactorCoord_eq_recoveredColumnSum D j]
+  unfold recoveredPeriodCoeff
+  rw [dif_pos hred]
+  have hperiod : Int.ofNat (L.p ^ (L.precision - L.cutThresholds.getD j.val 0))
+      = (D.p : ℤ) ^ (D.a - Hex.bhksCoeffCutThreshold D.p D.f j.val) := by
+    rw [D.p_eq, D.precision_eq, D.cutThresholds_eq,
+      Hex.bhksCutThresholds_getD_of_lt D.f D.p j.val hjlt]
+    simp only [Int.ofNat_eq_natCast, Nat.cast_pow]
+  rw [hperiod]
+  have hspec := Classical.choose_spec hred
+  have harg : recoveredColumnSum D j.val
+        + (D.p : ℤ) ^ (D.a - Hex.bhksCoeffCutThreshold D.p D.f j.val)
+            * (-(Classical.choose hred))
+      = recoveredColumnSum D j.val
+        - (Classical.choose hred)
+            * (D.p : ℤ) ^ (D.a - Hex.bhksCoeffCutThreshold D.p D.f j.val) := by ring
+  rw [harg]
+  refine le_trans hspec ?_
+  calc (Finset.univ.filter (fun i : Fin L.factorCount => i ∈ S)).card
+      ≤ (Finset.univ : Finset (Fin L.factorCount)).card := Finset.card_filter_le _ _
+    _ = L.factorCount := by simp
+
+/--
+**Tight cut-radius certificate for the period-corrected recovered CLD vector
+from a `RecoveredLift` (issue #7874).**  Assembles `RecoveredCLDTightNormBound`
+(`4·‖recoveredCLDVector D‖² ≤ bhksCutRadiusSq4`) from the projection identity
+(`recoveredCLDVector_project`) and the tight per-column estimate
+(`recoveredColumnBound`).  This is the period-corrected analog of
+`trueFactorCLDTightNormBound_of_lift`, derived from `RecoveredLift` (monic
+coordinate) rather than `TrueFactorLift`.
+-/
+theorem recoveredCLDTightNormBound_of_recoveredLift
+    {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
+    (D : RecoveredLift L S)
+    (hp : 2 ≤ D.p) (hk : 1 < D.p ^ D.a)
+    (hf_lc : Hex.DensePoly.leadingCoeff D.f = 1)
+    (hfactor_monic : (HexPolyMathlib.toPolynomial D.factor).Monic)
+    (hsep : ∀ j, 2 * Hex.bhksCoeffBound D.f j < D.p ^ D.a)
+    (hfac : ∀ i : Fin L.factorCount, i ∈ S →
+        ∃ h : Hex.ZPoly,
+          Hex.DensePoly.Monic (L.liftedFactors.getD i.val 1) ∧
+          0 < (L.liftedFactors.getD i.val 1).degree?.getD 0 ∧
+          Hex.ZPoly.congr D.f ((L.liftedFactors.getD i.val 1) * h) (D.p ^ D.a)) :
+    RecoveredCLDTightNormBound D :=
+  ⟨fourMulNormSq_le_of_proj_col (recoveredCLDVector D)
+    (fun i => recoveredCLDVector_project D i)
+    (fun j => recoveredColumnBound D hp hk hf_lc hfactor_monic hsep hfac j)⟩
+
 end BHKS
 
 end
