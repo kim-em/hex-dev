@@ -443,7 +443,14 @@ theorem toFpPoly_mul (p q : Hex.GF2Poly) :
     toFpPoly (p * q) = toFpPoly p * toFpPoly q := by
   apply Hex.DensePoly.ext_coeff
   intro n
-  rw [coeff_toFpPoly, Hex.GF2Poly.coeff_mul_diagonal, Hex.FpPoly.coeff_mul, chi_foldl]
+  rw [coeff_toFpPoly, Hex.GF2Poly.coeff_mul_diagonal, Hex.FpPoly.coeff_mul]
+  -- `coeff_mul_diagonal` reports its parity through the private `xorBoolList`
+  -- wrapper, definitionally the raw XOR fold that `chi_foldl` rewrites; the
+  -- `show` exposes that fold so the rewrite fires.
+  show (if (List.map (fun s => p.coeff s && q.coeff (n - s)) (List.range (n + 1))).foldl
+          (fun a b => a != b) false then (1 : Hex.ZMod64 2) else 0) =
+      (toFpPoly p).mulCoeffSum (toFpPoly q) n
+  rw [chi_foldl]
   simp only [List.foldl_map]
   have hterm : ∀ s ∈ List.range (n + 1),
       (if (p.coeff s && q.coeff (n - s)) then (1 : Hex.ZMod64 2) else 0) =
@@ -494,6 +501,81 @@ theorem equiv_apply (p : Hex.GF2Poly) :
 theorem equiv_symm_apply (p : Hex.FpPoly 2) :
     RingEquiv.symm equiv p = ofFpPoly p := by
   rfl
+
+/-- `toFpPoly` is injective: `ofFpPoly` is a left inverse. -/
+theorem toFpPoly_injective : Function.Injective toFpPoly :=
+  Function.LeftInverse.injective ofFpPoly_toFpPoly
+
+/-- A dense polynomial over `ZMod64 2` whose coefficient at `d` is nonzero and
+which vanishes strictly above `d` has degree exactly `d`. -/
+private theorem fpPoly_degree?_eq_some_of_coeff (q : Hex.FpPoly 2) {d : Nat}
+    (hd : q.coeff d ≠ 0) (hgt : ∀ n, d < n → q.coeff n = 0) :
+    q.degree? = some d := by
+  have hdlt : d < q.size := by
+    by_contra h
+    exact hd (Hex.DensePoly.coeff_eq_zero_of_size_le q (Nat.le_of_not_lt h))
+  have hpos : 0 < q.size := Nat.lt_of_le_of_lt (Nat.zero_le d) hdlt
+  have hlast := Hex.DensePoly.coeff_last_ne_zero_of_pos_size q hpos
+  have hle : q.size - 1 ≤ d := by
+    by_contra h
+    exact hlast (hgt (q.size - 1) (Nat.lt_of_not_le h))
+  have hsize : q.size - 1 = d := by omega
+  rw [Hex.DensePoly.degree?_eq_some_of_pos_size q hpos, hsize]
+
+/-- `toFpPoly` preserves `degree?`: the high bit of a packed polynomial becomes
+the leading `ZMod64 2` coefficient, and everything above it vanishes. -/
+theorem degree?_toFpPoly (p : Hex.GF2Poly) :
+    (toFpPoly p).degree? = p.degree? := by
+  by_cases hz : p.isZero = true
+  · rw [Hex.GF2Poly.eq_zero_of_isZero hz, toFpPoly_zero,
+      Hex.DensePoly.degree?_zero, Hex.GF2Poly.degree?_zero]
+  · have hzf : p.isZero = false := by
+      cases hb : p.isZero with
+      | false => rfl
+      | true => exact absurd hb hz
+    obtain ⟨d, hd⟩ := Hex.GF2Poly.degree?_isSome_of_isZero_false hzf
+    rw [hd]
+    apply fpPoly_degree?_eq_some_of_coeff
+    · rw [coeff_toFpPoly, Hex.GF2Poly.coeff_eq_true_of_degree?_eq_some hd]
+      simpa using zmod2_one_ne_zero
+    · intro n hn
+      rw [coeff_toFpPoly, Hex.GF2Poly.coeff_eq_false_of_degree?_lt hd hn]
+      rfl
+
+/-- Packed `GF(2)` irreducibility transports to `FpPoly 2` irreducibility across
+`toFpPoly`. Both predicates are the project-local executable `def`s, so the
+transport runs through the conversion layer directly. -/
+theorem irreducible_toFpPoly {p : Hex.GF2Poly} (h : Hex.GF2Poly.Irreducible p) :
+    Hex.FpPoly.Irreducible (toFpPoly p) := by
+  obtain ⟨hp_ne, hp_factor⟩ := h
+  refine ⟨?_, ?_⟩
+  · intro hzero
+    exact hp_ne (toFpPoly_injective (by rw [hzero, toFpPoly_zero]))
+  · intro a b hab
+    have hmul : ofFpPoly a * ofFpPoly b = p := by
+      apply toFpPoly_injective
+      rw [toFpPoly_mul, toFpPoly_ofFpPoly, toFpPoly_ofFpPoly, hab]
+    have ha_ne : ofFpPoly a ≠ 0 := fun h0 => hp_ne (by
+      rw [← hmul, h0, Hex.GF2Poly.zero_mul])
+    have hb_ne : ofFpPoly b ≠ 0 := fun h0 => hp_ne (by
+      rw [← hmul, h0, Hex.GF2Poly.mul_zero])
+    have hupgrade : ∀ q : Hex.FpPoly 2, ofFpPoly q ≠ 0 →
+        (ofFpPoly q).degree = 0 → q.degree? = some 0 := by
+      intro q hq hdeg
+      have hzf : (ofFpPoly q).isZero = false := by
+        cases hb : (ofFpPoly q).isZero with
+        | false => rfl
+        | true => exact absurd (Hex.GF2Poly.eq_zero_of_isZero hb) hq
+      obtain ⟨d, hd⟩ := Hex.GF2Poly.degree?_isSome_of_isZero_false hzf
+      have hdd : (ofFpPoly q).degree = d := Hex.GF2Poly.degree_eq_of_degree?_eq_some hd
+      rw [hdd] at hdeg
+      subst hdeg
+      calc q.degree? = (toFpPoly (ofFpPoly q)).degree? := by rw [toFpPoly_ofFpPoly]
+        _ = (ofFpPoly q).degree? := degree?_toFpPoly _
+        _ = some 0 := hd
+    rcases hp_factor (ofFpPoly a) (ofFpPoly b) hmul with hda | hdb
+    · exact Or.inl (hupgrade a ha_ne hda)
+    · exact Or.inr (hupgrade b hb_ne hdb)
 
 /-- Interpret a packed polynomial as the natural number with the same binary
 coefficient bits. This gives correspondence modules a finite index for

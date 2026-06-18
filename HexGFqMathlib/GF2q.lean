@@ -139,7 +139,8 @@ definitionally the same field type as `GFq 2 n` after identifying the
 transported packed modulus with the Conway modulus. -/
 private theorem genericField_eq_conway :
     HexGF2Mathlib.GF2n.GenericFiniteField
-      (n := n) (irr := h.lower) =
+      (n := n) (irr := h.lower)
+      (hn := h.degree_pos) (hn64 := h.degree_lt_word) (hirr := h.packed_irreducible) =
       GFq 2 n h.entry := by
   have hmod : HexGF2Mathlib.GF2n.modulusFpPoly (n := n) (irr := h.lower) =
       Conway.conwayPoly 2 n h.entry := modulusFpPoly_eq_conway
@@ -154,7 +155,8 @@ to the canonical Conway-field target used by `GFq 2 n`. -/
 private def genericEquivGFq :
     RingEquiv
       (HexGF2Mathlib.GF2n.GenericFiniteField
-        (n := n) (irr := h.lower))
+        (n := n) (irr := h.lower)
+        (hn := h.degree_pos) (hn64 := h.degree_lt_word) (hirr := h.packed_irreducible))
       (GFq 2 n h.entry) where
   toFun x := cast (genericField_eq_conway (n := n)) x
   invFun x := cast (genericField_eq_conway (n := n)).symm x
@@ -179,7 +181,8 @@ naming it avoids re-elaborating its `whnf`-heavy type inline. -/
 private def packedRingEquiv :
     HexGF2Mathlib.RingEquiv
       (GF2n n h.lower h.degree_pos h.degree_lt_word h.packed_irreducible)
-      (HexGF2Mathlib.GF2n.GenericFiniteField (n := n) (irr := h.lower)) :=
+      (HexGF2Mathlib.GF2n.GenericFiniteField (n := n) (irr := h.lower)
+        (hn := h.degree_pos) (hn64 := h.degree_lt_word) (hirr := h.packed_irreducible)) :=
   HexGF2Mathlib.GF2n.equiv
     (n := n) (irr := h.lower)
     (hn := h.degree_pos) (hn64 := h.degree_lt_word)

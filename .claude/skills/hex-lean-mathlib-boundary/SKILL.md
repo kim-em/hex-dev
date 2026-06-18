@@ -646,6 +646,19 @@ are warnings, not errors). Do not assume the layer can be "hard-red on main" —
 it cannot, CI gates it. (Earlier versions of this skill claimed CI did not build
 this layer; that was true before the bridge step was added and is now wrong.)
 
+**But the GF(2)/GF(q) Mathlib layers are NOT in that build graph.**
+`HexBerlekampZassenhausMathlib` does not import `HexGF2Mathlib` /
+`HexGFqMathlib`, and `ci.yml` builds no other Mathlib library, so those two CAN
+be hard-red on `main` indefinitely — a break merges unnoticed (e.g. #7907's
+`toFpPoly_mul` stopped matching `coeff_mul_diagonal`'s private `xorBoolList`
+wrapper and left the whole layer red). So when you touch `HexGF2Mathlib` /
+`HexGFqMathlib`, do **not** assume a red baseline is your fault: build the
+unmodified target first (`lake build HexGF2Mathlib`), and expect to repair
+pre-existing breakage in the file you are editing and in downstream consumers
+your fix unmasks (`HexGFqMathlib/GF2q.lean` consumes
+`GF2n.GenericFiniteField`). A stale-olean rebuild (`touch` the dep source +
+`lake build <DepModule>`) confirms genuine vs cache breakage.
+
 Practical consequence for a boundary change: building only
 `HexBerlekampMathlib.<Module>` is **not** enough to know your PR is green — run
 `lake build HexBerlekampZassenhausMathlib` and confirm it finishes
