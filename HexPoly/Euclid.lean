@@ -60,6 +60,10 @@ do not need to unfold `Monic`. -/
 theorem leadingCoeff_eq_one_of_monic [One R] {p : DensePoly R} (hp : p.Monic) :
     p.leadingCoeff = 1 := hp
 
+/-- Characterization of `Monic` by the leading coefficient equation. -/
+theorem monic_iff_leadingCoeff_eq_one [One R] {p : DensePoly R} :
+    p.Monic ↔ p.leadingCoeff = 1 := Iff.rfl
+
 /-- For a nonzero normalized dense polynomial, `leadingCoeff` is the coefficient
 at the last stored index. -/
 theorem leadingCoeff_eq_coeff_last (p : DensePoly R) (hpos : 0 < p.size) :
