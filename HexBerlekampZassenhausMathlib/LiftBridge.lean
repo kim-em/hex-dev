@@ -123,6 +123,32 @@ def recoveredLiftOfSubset
     rw [supportProduct_supportOfSubset, hrecovered]
 
 /--
+Build a recovered BHKS true-factor package directly from a monic-core
+`RepresentsIntegerFactorAtLift` witness emitted by the fast-core extractor.
+
+This is the producer half of the recovery contract: the centered/dilated
+recovery equality that `recoveredLiftOfSubset` consumes is discharged from the
+witness by `dilate_centeredLift_eq_factor_of_represents_monic`, so the caller
+only supplies the cofactor identity and the Mignotte precision bound.  The monic
+hypothesis is the regime the fast-core extractor operates in (`Monic core`),
+where the leading-coefficient dilation collapses and the represented
+monic-coordinate witness is itself primitive.
+-/
+def recoveredLiftOfRepresents
+    (core : Hex.ZPoly) (d : Hex.LiftData) (S : LiftedFactorSubset d)
+    (factor cofactor : Hex.ZPoly)
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hfactor : factor * cofactor = core)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        d.p ^ d.k)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S) :
+    RecoveredLift (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors)
+      (supportOfSubset core d S) :=
+  recoveredLiftOfSubset core d S factor cofactor hfactor
+    (dilate_centeredLift_eq_factor_of_represents_monic hcore_monic hrep hprecision)
+
+/--
 Every raw true-factor lift also gives a recovered-lift certificate when the
 caller supplies the corresponding centered/dilated recovery equality.  This is a
 thin adapter for proof paths that already carry `TrueFactorLift` data but need

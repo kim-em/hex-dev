@@ -1696,6 +1696,63 @@ theorem bhksIndicatorCandidates?_canonicalRepresentations
   simpa [liftedFactorSubsetsOfSupports, classes, hi_classes] using hrep
 
 /--
+Per-candidate canonical representation certificates extracted directly from a
+fixed-precision recovery success, for callers that arrive via the executable
+`Hex.factorFastCoreWithBound_some_indicatorCandidates` extractor rather than via a
+pre-assembled `ForwardRecoveryInputs`.
+
+This packages the `ForwardRecoveryInputs` constructor and
+`bhksIndicatorCandidates?_canonicalRepresentations` into a single step keyed on the
+public success data (`bhksIndicatorCandidates? ... = some coreFactors`,
+non-degeneracy, product preservation) plus the standard B7/Mignotte side
+conditions.  The result is the selected lifted-factor subset witness
+`RepresentsIntegerFactorAtLift` for each emitted candidate.
+-/
+theorem representsIntegerFactorAtLift_of_indicatorCandidates
+    {core : Hex.ZPoly} {d : Hex.LiftData} {coreFactors : Array Hex.ZPoly}
+    (rows_pos : HasPositiveDimension core d)
+    (trueSupports :
+       Set (Set (Fin (projectedRowsOfLiftData core d rows_pos).factorCount)))
+    (lattice_eq_indicators :
+       BHKS.projectedRowSpanInt (projectedRowsOfLiftData core d rows_pos) =
+         BHKS.trueFactorIndicatorLattice trueSupports)
+    (mignotte_precision :
+       2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hindicators :
+       equivalenceClassIndicatorsOfLiftData core d rows_pos =
+         expectedIndicatorArrayOfSupports trueSupports)
+    (hcandidates :
+       Hex.bhksIndicatorCandidates? core d
+           (equivalenceClassIndicatorsOfLiftData core d rows_pos) =
+         some coreFactors)
+    (nondegenerate :
+       Hex.bhksDegenerateIndicatorPartition
+           (projectedRowsOfLiftData core d rows_pos)
+           (equivalenceClassIndicatorsOfLiftData core d rows_pos) = false)
+    (product_eq : Array.polyProduct coreFactors = core)
+    (hf_monic : Hex.DensePoly.Monic core)
+    (hliftedFactor_monic :
+      ∀ i, i < d.liftedFactors.size →
+        Hex.DensePoly.Monic (d.liftedFactors.getD i 0))
+    (hp_two_lt : 2 < d.p ^ d.k) :
+      ∀ i, i < (expectedIndicatorArrayOfSupports trueSupports).size →
+        RepresentsIntegerFactorAtLift core d (coreFactors.getD i 0)
+          ((liftedFactorSubsetsOfSupports d trueSupports).getD i ∅) := by
+  let h : ForwardRecoveryInputs core d :=
+    { rows_pos := rows_pos
+      trueSupports := trueSupports
+      lattice_eq_indicators := lattice_eq_indicators
+      mignotte_precision := mignotte_precision
+      expectedIndicators := equivalenceClassIndicatorsOfLiftData core d rows_pos
+      indicators_match := rfl
+      nondegenerate := nondegenerate
+      expectedFactors := coreFactors
+      candidates_eq := hcandidates
+      product_eq := product_eq }
+  exact bhksIndicatorCandidates?_canonicalRepresentations h trueSupports hindicators
+    hf_monic hliftedFactor_monic hp_two_lt
+
+/--
 Build `ForwardRecoveryInputs` when the A2/exact-division obligation is
 available as per-indicator reconstruction witnesses rather than as the folded
 candidate equality.

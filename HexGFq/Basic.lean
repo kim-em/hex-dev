@@ -14,6 +14,157 @@ namespace Hex
 
 namespace Conway
 
+/-- A committed Conway-table entry available through instance synthesis.
+
+This keeps the proof-oriented explicit `SupportedEntry` API available while
+supporting a short user-facing field spelling for committed entries. -/
+class CommittedEntry (p n : Nat) [ZMod64.Bounds p] where
+  entry : SupportedEntry p n
+
+/-- The committed table supports generic `GFq` construction for `C(2, 1)`. -/
+instance committedEntry_2_1 : CommittedEntry 2 1 where
+  entry := supportedEntry_2_1
+
+/-- The committed table supports generic `GFq` construction for `C(2, 2)`. -/
+instance committedEntry_2_2 : CommittedEntry 2 2 where
+  entry := supportedEntry_2_2
+
+/-- The committed table supports generic `GFq` construction for `C(2, 3)`. -/
+instance committedEntry_2_3 : CommittedEntry 2 3 where
+  entry := supportedEntry_2_3
+
+/-- The committed table supports generic `GFq` construction for `C(2, 4)`. -/
+instance committedEntry_2_4 : CommittedEntry 2 4 where
+  entry := supportedEntry_2_4
+
+/-- The committed table supports generic `GFq` construction for `C(2, 5)`. -/
+instance committedEntry_2_5 : CommittedEntry 2 5 where
+  entry := supportedEntry_2_5
+
+/-- The committed table supports generic `GFq` construction for `C(2, 6)`. -/
+instance committedEntry_2_6 : CommittedEntry 2 6 where
+  entry := supportedEntry_2_6
+
+/-- The committed table supports generic `GFq` construction for `C(3, 1)`. -/
+instance committedEntry_3_1 : CommittedEntry 3 1 where
+  entry := supportedEntry_3_1
+
+/-- The committed table supports generic `GFq` construction for `C(3, 2)`. -/
+instance committedEntry_3_2 : CommittedEntry 3 2 where
+  entry := supportedEntry_3_2
+
+/-- The committed table supports generic `GFq` construction for `C(3, 3)`. -/
+instance committedEntry_3_3 : CommittedEntry 3 3 where
+  entry := supportedEntry_3_3
+
+/-- The committed table supports generic `GFq` construction for `C(3, 4)`. -/
+instance committedEntry_3_4 : CommittedEntry 3 4 where
+  entry := supportedEntry_3_4
+
+/-- The committed table supports generic `GFq` construction for `C(3, 5)`. -/
+instance committedEntry_3_5 : CommittedEntry 3 5 where
+  entry := supportedEntry_3_5
+
+/-- The committed table supports generic `GFq` construction for `C(3, 6)`. -/
+instance committedEntry_3_6 : CommittedEntry 3 6 where
+  entry := supportedEntry_3_6
+
+/-- The committed table supports generic `GFq` construction for `C(5, 1)`. -/
+instance committedEntry_5_1 : CommittedEntry 5 1 where
+  entry := supportedEntry_5_1
+
+/-- The committed table supports generic `GFq` construction for `C(5, 2)`. -/
+instance committedEntry_5_2 : CommittedEntry 5 2 where
+  entry := supportedEntry_5_2
+
+/-- The committed table supports generic `GFq` construction for `C(5, 3)`. -/
+instance committedEntry_5_3 : CommittedEntry 5 3 where
+  entry := supportedEntry_5_3
+
+/-- The committed table supports generic `GFq` construction for `C(5, 4)`. -/
+instance committedEntry_5_4 : CommittedEntry 5 4 where
+  entry := supportedEntry_5_4
+
+/-- The committed table supports generic `GFq` construction for `C(5, 5)`. -/
+instance committedEntry_5_5 : CommittedEntry 5 5 where
+  entry := supportedEntry_5_5
+
+/-- The committed table supports generic `GFq` construction for `C(5, 6)`. -/
+instance committedEntry_5_6 : CommittedEntry 5 6 where
+  entry := supportedEntry_5_6
+
+/-- The committed table supports generic `GFq` construction for `C(7, 1)`. -/
+instance committedEntry_7_1 : CommittedEntry 7 1 where
+  entry := supportedEntry_7_1
+
+/-- The committed table supports generic `GFq` construction for `C(7, 2)`. -/
+instance committedEntry_7_2 : CommittedEntry 7 2 where
+  entry := supportedEntry_7_2
+
+/-- The committed table supports generic `GFq` construction for `C(7, 3)`. -/
+instance committedEntry_7_3 : CommittedEntry 7 3 where
+  entry := supportedEntry_7_3
+
+/-- The committed table supports generic `GFq` construction for `C(7, 4)`. -/
+instance committedEntry_7_4 : CommittedEntry 7 4 where
+  entry := supportedEntry_7_4
+
+/-- The committed table supports generic `GFq` construction for `C(7, 5)`. -/
+instance committedEntry_7_5 : CommittedEntry 7 5 where
+  entry := supportedEntry_7_5
+
+/-- The committed table supports generic `GFq` construction for `C(7, 6)`. -/
+instance committedEntry_7_6 : CommittedEntry 7 6 where
+  entry := supportedEntry_7_6
+
+/-- The committed table supports generic `GFq` construction for `C(11, 1)`. -/
+instance committedEntry_11_1 : CommittedEntry 11 1 where
+  entry := supportedEntry_11_1
+
+/-- The committed table supports generic `GFq` construction for `C(11, 2)`. -/
+instance committedEntry_11_2 : CommittedEntry 11 2 where
+  entry := supportedEntry_11_2
+
+/-- The committed table supports generic `GFq` construction for `C(11, 3)`. -/
+instance committedEntry_11_3 : CommittedEntry 11 3 where
+  entry := supportedEntry_11_3
+
+/-- The committed table supports generic `GFq` construction for `C(11, 4)`. -/
+instance committedEntry_11_4 : CommittedEntry 11 4 where
+  entry := supportedEntry_11_4
+
+/-- The committed table supports generic `GFq` construction for `C(11, 5)`. -/
+instance committedEntry_11_5 : CommittedEntry 11 5 where
+  entry := supportedEntry_11_5
+
+/-- The committed table supports generic `GFq` construction for `C(11, 6)`. -/
+instance committedEntry_11_6 : CommittedEntry 11 6 where
+  entry := supportedEntry_11_6
+
+/-- The committed table supports generic `GFq` construction for `C(13, 1)`. -/
+instance committedEntry_13_1 : CommittedEntry 13 1 where
+  entry := supportedEntry_13_1
+
+/-- The committed table supports generic `GFq` construction for `C(13, 2)`. -/
+instance committedEntry_13_2 : CommittedEntry 13 2 where
+  entry := supportedEntry_13_2
+
+/-- The committed table supports generic `GFq` construction for `C(13, 3)`. -/
+instance committedEntry_13_3 : CommittedEntry 13 3 where
+  entry := supportedEntry_13_3
+
+/-- The committed table supports generic `GFq` construction for `C(13, 4)`. -/
+instance committedEntry_13_4 : CommittedEntry 13 4 where
+  entry := supportedEntry_13_4
+
+/-- The committed table supports generic `GFq` construction for `C(13, 5)`. -/
+instance committedEntry_13_5 : CommittedEntry 13 5 where
+  entry := supportedEntry_13_5
+
+/-- The committed table supports generic `GFq` construction for `C(13, 6)`. -/
+instance committedEntry_13_6 : CommittedEntry 13 6 where
+  entry := supportedEntry_13_6
+
 /-- Interpret a packed single-word binary modulus as the corresponding generic
 `FpPoly 2` polynomial.  `lower` supplies the coefficients of degrees `< n`;
 the leading degree-`n` coefficient is inserted explicitly. -/
@@ -527,6 +678,93 @@ representative. -/
   rfl
 
 end GFq
+
+/-- Ergonomic generic finite field for a committed Conway-table entry.
+
+Use `GFqC p n` when the committed entry should be inferred from the current
+Conway table. Use explicit `GFq p n h` when a proof needs to name the witness. -/
+abbrev GFqC (p n : Nat) [ZMod64.Bounds p] [h : Conway.CommittedEntry p n] : Type :=
+  GFq p n h.entry
+
+namespace GFqC
+
+variable {p n : Nat} [ZMod64.Bounds p] [h : Conway.CommittedEntry p n]
+
+/-- The committed Conway-table entry selected for `GFqC p n`. -/
+abbrev entry : Conway.SupportedEntry p n :=
+  h.entry
+
+/-- The Conway modulus selected for the committed `GFqC p n` field. -/
+abbrev modulus : FpPoly p :=
+  GFq.modulus (entry (p := p) (n := n))
+
+/-- `GFqC.modulus` delegates to the explicit-entry `GFq.modulus`. -/
+theorem modulus_eq_gfq :
+    modulus (p := p) (n := n) =
+      GFq.modulus (entry (p := p) (n := n)) :=
+  rfl
+
+/-- Reduce a polynomial into the committed `GFqC p n` field. -/
+def ofPoly (g : FpPoly p) : GFqC p n :=
+  GFq.ofPoly (entry (p := p) (n := n)) g
+
+/-- `GFqC.ofPoly` delegates to the explicit-entry `GFq.ofPoly`. -/
+theorem ofPoly_eq_gfq (g : FpPoly p) :
+    ofPoly (p := p) (n := n) g =
+      GFq.ofPoly (entry (p := p) (n := n)) g :=
+  rfl
+
+/-- Project a committed `GFqC` element to its reduced polynomial representative. -/
+def repr (x : GFqC p n) : FpPoly p :=
+  GFq.repr x
+
+/-- `GFqC.repr` delegates to the explicit-entry `GFq.repr`. -/
+theorem repr_eq_gfq (x : GFqC p n) :
+    repr x = GFq.repr x :=
+  rfl
+
+/-- The representative of an injected polynomial is reduction modulo the
+selected committed Conway polynomial. -/
+@[simp] theorem repr_ofPoly (g : FpPoly p) :
+    repr (ofPoly (p := p) (n := n) g) =
+      GFqRing.reduceMod (modulus (p := p) (n := n)) g :=
+  rfl
+
+/-- The canonical representative of a sum in `GFqC` reduces from the sum of
+representatives modulo the selected committed Conway polynomial. -/
+@[simp] theorem repr_add (x y : GFqC p n) :
+    repr (x + y) =
+      GFqRing.reduceMod (modulus (p := p) (n := n)) (repr x + repr y) :=
+  rfl
+
+/-- The canonical representative of a product in `GFqC` reduces from the
+product of representatives modulo the selected committed Conway polynomial. -/
+@[simp] theorem repr_mul (x y : GFqC p n) :
+    repr (x * y) =
+      GFqRing.reduceMod (modulus (p := p) (n := n)) (repr x * repr y) :=
+  rfl
+
+/-- The Frobenius endomorphism on the committed `GFqC p n` field. -/
+def frob (x : GFqC p n) : GFqC p n :=
+  GFq.frob x
+
+/-- `GFqC.frob` delegates to the explicit-entry `GFq.frob`. -/
+theorem frob_eq_gfq (x : GFqC p n) :
+    frob x = GFq.frob x :=
+  rfl
+
+/-- `GFqC.frob` is the `p`-th power map. -/
+theorem frob_eq_pow (x : GFqC p n) :
+    frob x = x ^ p :=
+  rfl
+
+/-- The representative of `GFqC.frob` is the quotient-ring `p`-th power
+representative. -/
+@[simp] theorem repr_frob (x : GFqC p n) :
+    repr (frob x) = GFqRing.repr (x.toQuotient ^ p) :=
+  rfl
+
+end GFqC
 
 /-- Optimized canonical binary field for committed Conway entries that have a
 single-word packed modulus. -/

@@ -6119,6 +6119,79 @@ theorem monic_primitive_sign_normalized_of_monic
     zpoly_normalize_factor_sign_of_monic hfactor_monic⟩
 
 /--
+In the monic-core regime the centered/dilated recovered product equals the
+represented integer factor with no primitive-part correction.
+
+The carrier's `dilate_eq` field only exposes
+`primitivePart (dilate (lc core) monicFactor) = factor`, but when `core` is
+monic the dilation collapses (`leadingCoeff core = 1`) and `monicFactor` is a
+divisor of the monic core, hence primitive, so the `primitivePart` is the
+identity.  The congruence field plus the Mignotte bound then identify the
+centered selected product with `monicFactor`.  This is exactly the
+recovered-equality input consumed by `BHKS.recoveredLiftOfSubset`, and unlike
+`RecoveredAtLift.candidate_eq_of_monic_dvd` it is stated without the
+`primitivePart`/`normalizeFactorSign` corrections that the `RecoveredLift`
+package omits.
+-/
+theorem dilate_centeredLift_eq_factor_of_represents_monic
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hcore_monic : Hex.DensePoly.Monic core)
+    (hrep : RepresentsIntegerFactorAtLift core d factor S)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        d.p ^ d.k) :
+    Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+        (Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k)) =
+      factor := by
+  classical
+  obtain ⟨R⟩ := hrep
+  have hlc : Hex.DensePoly.leadingCoeff core = (1 : Int) := hcore_monic
+  have htoMonic : (Hex.ZPoly.toMonic core).monic = core :=
+    Hex.ZPoly.toMonic_monic_eq_core_of_leadingCoeff_eq_one core hlc
+  have hcore_prim : Hex.ZPoly.Primitive core := zpoly_primitive_of_monic hcore_monic
+  have hcore_ne : core ≠ 0 := by
+    intro h
+    have hc : Hex.ZPoly.content core = 1 := hcore_prim
+    rw [h] at hc
+    simp [Hex.ZPoly.content] at hc
+  -- `monicFactor` divides the monic core, hence is primitive.
+  have hdvd : R.monicFactor ∣ core := by
+    have h := R.monic_dvd
+    rw [htoMonic] at h
+    exact h
+  have hcore_poly_prim : (HexPolyZMathlib.toPolynomial core).IsPrimitive :=
+    HexPolyZMathlib.isPrimitive_toPolynomial_of_primitive core hcore_prim
+  have hmf_dvd_poly :
+      HexPolyZMathlib.toPolynomial R.monicFactor ∣
+        HexPolyZMathlib.toPolynomial core :=
+    HexPolyMathlib.toPolynomial_dvd hdvd
+  have hmf_prim_poly : (HexPolyZMathlib.toPolynomial R.monicFactor).IsPrimitive :=
+    isPrimitive_of_dvd hcore_poly_prim hmf_dvd_poly
+  have hmf_prim : Hex.ZPoly.Primitive R.monicFactor := by
+    have := Polynomial.isPrimitive_iff_content_eq_one.mp hmf_prim_poly
+    rwa [HexPolyZMathlib.toPolynomial_content] at this
+  have hprim_self : Hex.ZPoly.primitivePart R.monicFactor = R.monicFactor :=
+    Hex.ZPoly.primitivePart_eq_self_of_primitive R.monicFactor hmf_prim
+  -- `dilate_eq` collapses to `monicFactor = factor`.
+  have hmf_eq : R.monicFactor = factor := by
+    have h := R.dilate_eq
+    rw [hlc, Hex.ZPoly.dilate_one, hprim_self] at h
+    exact h
+  -- The Mignotte bound and the congruence field recover `monicFactor`.
+  have hmonic_ne : (Hex.ZPoly.toMonic core).monic ≠ 0 := by rw [htoMonic]; exact hcore_ne
+  have hbound : ∀ i, (R.monicFactor.coeff i).natAbs ≤
+      Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic := fun i =>
+    defaultFactorCoeffBound_valid (Hex.ZPoly.toMonic core).monic hmonic_ne
+      R.monicFactor R.monic_dvd i
+  have hcl :
+      Hex.centeredLiftPoly (liftedFactorProduct d S) (d.p ^ d.k) = R.monicFactor := by
+    rw [← centeredLiftPoly_reduceModPow_eq (liftedFactorProduct d S) d.p d.k d.p_pos,
+      R.congr]
+    exact Hex.centeredLiftPoly_reduceModPow_eq_of_coeff_natAbs_le
+      R.monicFactor d.p d.k _ hbound hprecision
+  rw [hlc, Hex.ZPoly.dilate_one, hcl, hmf_eq]
+
+/--
 Size of the lifted-factor array equals the size of the modular-factor array.
 
 This is the `factor_count_eq` field that `HenselSubsetLiftHypotheses` (line

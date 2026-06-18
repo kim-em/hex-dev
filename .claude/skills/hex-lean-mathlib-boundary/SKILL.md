@@ -816,3 +816,25 @@ the added wrinkle that its executable extractor lived in an unmerged PR — for
 any "residual after PR #N" issue, `grep` the named substrate symbols on `main`
 first; if absent, the residual depends on the unmerged PR and cannot build
 yet.)
+
+**`RecoveredLift` cannot feed this column — the period trap (#7866, #7867).**
+The lattice column `(trueFactorCLDVector L S)[natAdd factorCount j]` is
+`∑_{i∈S} psiCut(zᵢ)` (sum of **per-factor** cuts; `cldRows = map (cldCoeffs …)`),
+and `two_mul_natAbs_sum_psiCut_le` needs the **strong** input
+`∑ᵢ centeredResiduePow p a (zᵢ) = y`, `|y| ≤ B` — the *integer* sum of per-factor
+centered residues is small, forcing the wraparound `k = 0`. Only per-factor
+`gᵢ ∣ f over ℤ` (raw `support_product_eq`, via
+`residue_cldQuotientMod_eq_phi_coeff`) gives that. `RecoveredLift` carries only
+`factor ∣ f` (`factor_mul`), so the best it yields is the **weak** aggregate
+residue `centeredResiduePow p a (∑ zᵢ) = c` — which controls `aggregateCldTail`
+(`Basic.lean:4665`, `psiCut` applied *once after summing*), **not**
+`∑ psiCut(zᵢ)`. They differ by an unbounded period `p^{a-b}·k`. Concrete:
+`p=2,a=4,b=1,z₁=z₂=8` gives `centeredResiduePow 2 4 16 = 0` (weak holds) yet
+`∑ psiCut = 8`, `2·8 = 16 ≫ |T| = 2`. The **monic coordinate** only fixes the
+`dilate (lc f)` transport in `recovered_eq` (`dilate` collapses at `lc=1`); it is
+orthogonal to this period, so it does not rescue a per-factor-column producer.
+Any "bound the tight column from `RecoveredLift` in the monic coordinate"
+directive is unsound for this reason — the genuine fix is migrating
+`bhksLatticeBasis`/`cldRows`/`trueFactorCLDVector` to emit the `aggregateCldTail`
+aggregate column (a lattice-basis redesign, not a binder-preserving consumer
+swap); diagnose and skip rather than reaching for the per-factor route.
