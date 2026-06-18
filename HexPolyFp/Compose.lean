@@ -37,11 +37,11 @@ private theorem C_zero_eq_zero :
   rw [DensePoly.coeff_C, DensePoly.coeff_zero]
   cases n <;> rfl
 
-@[simp] theorem compose_zero (q : FpPoly p) :
+@[simp, grind =] theorem compose_zero (q : FpPoly p) :
     DensePoly.compose (0 : FpPoly p) q = 0 := by
   rfl
 
-@[simp] theorem compose_C (c : ZMod64 p) (q : FpPoly p) :
+@[simp, grind =] theorem compose_C (c : ZMod64 p) (q : FpPoly p) :
     DensePoly.compose (FpPoly.C c) q = FpPoly.C c := by
   by_cases hc : c = (0 : ZMod64 p)
   · subst hc
@@ -72,7 +72,7 @@ private theorem one_ne_zero_of_prime [ZMod64.PrimeModulus p] :
       Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
   exact absurd htoNat (by omega)
 
-@[simp] theorem compose_X [ZMod64.PrimeModulus p] (q : FpPoly p) :
+@[simp, grind =] theorem compose_X [ZMod64.PrimeModulus p] (q : FpPoly p) :
     DensePoly.compose (FpPoly.X : FpPoly p) q = q := by
   unfold DensePoly.compose DensePoly.toArray FpPoly.X DensePoly.monomial
   have h1 : (1 : ZMod64 p) ≠ (Zero.zero : ZMod64 p) := one_ne_zero_of_prime
