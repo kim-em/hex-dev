@@ -85,6 +85,13 @@ namespace GF2Poly
 
 instance : Hex.ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 
+private theorem bit_eq_one_eq_testBit (x i : Nat) :
+    (x >>> i % 2 == 1) = x.testBit i := by
+  rw [Nat.testBit_eq_decide_div_mod_eq]
+  rw [Nat.shiftRight_eq_div_pow]
+  apply decide_eq_decide.mpr
+  exact Iff.rfl
+
 /-- Interpret a packed `GF2Poly` coefficient as the corresponding `ZMod64 2`
 residue. -/
 private def coeffToFp (b : Bool) : Hex.ZMod64 2 :=
@@ -169,25 +176,183 @@ theorem ofFpPoly_zero :
     ofFpPoly (0 : Hex.FpPoly 2) = 0 := by
   rfl
 
+/-- The coefficients of the packed unit polynomial are `1` at degree `0` and
+`0` elsewhere. -/
+private theorem coeff_one_eq (i : Nat) :
+    (1 : Hex.GF2Poly).coeff i = decide (i = 0) := by
+  rw [← Hex.GF2Poly.ofUInt64_one]
+  by_cases hi : i < 64
+  · rw [Hex.GF2Poly.coeff_ofUInt64_eq_testBit 1 hi]
+    have h1 : (1 : UInt64).toNat = 1 := by decide
+    rw [h1]
+    cases i with
+    | zero => rfl
+    | succ j => simp [Nat.testBit_succ]
+  · rw [Hex.GF2Poly.coeff_ofUInt64_eq_false_of_ge_64 1 (Nat.le_of_not_gt hi)]
+    have : i ≠ 0 := by omega
+    simp [this]
+
 @[simp]
 theorem toFpPoly_one :
     toFpPoly (1 : Hex.GF2Poly) = 1 := by
-  sorry
+  apply Hex.DensePoly.ext_coeff
+  intro i
+  rw [coeff_toFpPoly, coeff_one_eq]
+  show _ = (Hex.DensePoly.C (1 : Hex.ZMod64 2)).coeff i
+  rw [Hex.DensePoly.coeff_C]
+  by_cases hi : i = 0
+  · subst hi; rfl
+  · simp only [decide_eq_true_eq, if_neg hi]; rfl
+
+/-- A packed coefficient bit `coeffOfFp a` holds at most one set bit. -/
+private theorem coeffOfFp_toNat_lt (a : Hex.ZMod64 2) : (coeffOfFp a).toNat < 2 := by
+  unfold coeffOfFp
+  by_cases h : a = Hex.ZMod64.zero <;> simp [h] <;> decide
+
+/-- The low bit of a packed coefficient records whether the source coefficient
+is nonzero. -/
+private theorem coeffOfFp_testBit_zero (a : Hex.ZMod64 2) :
+    (coeffOfFp a).toNat.testBit 0 = decide (a ≠ 0) := by
+  unfold coeffOfFp
+  by_cases h : a = Hex.ZMod64.zero
+  · have ha0 : a = 0 := h
+    rw [if_pos h, ha0]; decide
+  · have ha0 : a ≠ 0 := h
+    rw [if_neg h]; simp [ha0]
+
+private theorem zmod2_toNat_zero : (0 : Hex.ZMod64 2).toNat = 0 :=
+  Hex.ZMod64.toNat_zero
+
+private theorem zmod2_toNat_one : (1 : Hex.ZMod64 2).toNat = 1 := by
+  show (Hex.ZMod64.one : Hex.ZMod64 2).toNat = 1
+  rw [Hex.ZMod64.toNat_one]
+
+private theorem zmod2_one_ne_zero : (1 : Hex.ZMod64 2) ≠ 0 := by
+  intro h
+  have := congrArg Hex.ZMod64.toNat h
+  rw [zmod2_toNat_one, zmod2_toNat_zero] at this
+  exact absurd this (by decide)
+
+/-- Every `ZMod64 2` residue is either `0` or `1`. -/
+private theorem zmod2_cases (a : Hex.ZMod64 2) : a = 0 ∨ a = 1 := by
+  have hcases : a.toNat = 0 ∨ a.toNat = 1 := by have := a.toNat_lt; omega
+  rcases hcases with h | h
+  · left; exact Hex.ZMod64.ext_toNat (by rw [h, zmod2_toNat_zero])
+  · right; exact Hex.ZMod64.ext_toNat (by rw [h, zmod2_toNat_one])
+
+/-- The `b`-th bit of the partial OR-fold building `packWord` for the first `n`
+bit positions is set exactly when `b < n` and the source coefficient at that
+position is nonzero. -/
+private theorem packWord_foldl_testBit (p : Hex.FpPoly 2) (wordIdx : Nat) :
+    ∀ n, n ≤ 64 → ∀ b, b < 64 →
+      ((List.range n).foldl
+        (fun acc bitIdx =>
+          acc ||| (coeffOfFp (p.coeff (64 * wordIdx + bitIdx)) <<< bitIdx.toUInt64)) 0).toNat.testBit b
+        = (decide (b < n) && decide (p.coeff (64 * wordIdx + b) ≠ 0)) := by
+  intro n
+  induction n with
+  | zero => intro _ b _; simp [List.range_zero]
+  | succ n ih =>
+    intro hn b hb
+    have hnlt : n < 64 := by omega
+    rw [List.range_succ, List.foldl_append]
+    simp only [List.foldl_cons, List.foldl_nil]
+    rw [UInt64.toNat_or, Nat.testBit_or, ih (by omega) b hb]
+    have hc2 : (coeffOfFp (p.coeff (64 * wordIdx + n))).toNat < 2 := coeffOfFp_toNat_lt _
+    have hshift :
+        ((coeffOfFp (p.coeff (64 * wordIdx + n)) <<< n.toUInt64).toNat).testBit b
+          = (decide (n ≤ b) &&
+              (coeffOfFp (p.coeff (64 * wordIdx + n))).toNat.testBit (b - n)) := by
+      rw [UInt64.toNat_shiftLeft, Nat.testBit_mod_two_pow, Nat.testBit_shiftLeft]
+      have hnu : (n.toUInt64).toNat % 64 = n := by simp; omega
+      rw [hnu]
+      simp [hb]
+    rw [hshift]
+    rcases Nat.lt_trichotomy b n with hbn | hbn | hbn
+    · have h1 : ¬ (n ≤ b) := by omega
+      simp [hbn, Nat.lt_succ_of_lt hbn, h1]
+    · subst hbn
+      rw [Nat.sub_self, coeffOfFp_testBit_zero]
+      simp [Nat.lt_succ_self]
+    · have h1 : ¬ (b < n) := by omega
+      have h2 : ¬ (b < n + 1) := by omega
+      have h4 : (coeffOfFp (p.coeff (64 * wordIdx + n))).toNat.testBit (b - n) = false := by
+        apply Nat.testBit_eq_false_of_lt
+        have h2le : (2 : Nat) ≤ 2 ^ (b - n) := by
+          calc (2 : Nat) = 2 ^ 1 := rfl
+            _ ≤ 2 ^ (b - n) := Nat.pow_le_pow_right (by decide) (by omega)
+        omega
+      simp [h1, h2, h4]
+
+/-- Bit `b` of a single packed word records whether the source coefficient at
+that position is nonzero. -/
+private theorem packWord_testBit (p : Hex.FpPoly 2) (wordIdx b : Nat) (hb : b < 64) :
+    (packWord p wordIdx).toNat.testBit b = decide (p.coeff (64 * wordIdx + b) ≠ 0) := by
+  unfold packWord
+  rw [packWord_foldl_testBit p wordIdx 64 (le_refl 64) b hb]
+  simp [hb]
+
+/-- The `j`-th coefficient of the repacked polynomial records whether the
+generic coefficient `p.coeff j` is nonzero. -/
+theorem coeff_ofFpPoly (p : Hex.FpPoly 2) (j : Nat) :
+    (ofFpPoly p).coeff j = decide (p.coeff j ≠ 0) := by
+  unfold ofFpPoly
+  rw [Hex.GF2Poly.coeff_ofWords]
+  have hbit : j % 64 < 64 := Nat.mod_lt j (by decide : 0 < 64)
+  have hdecomp : 64 * (j / 64) + j % 64 = j := Nat.div_add_mod j 64
+  by_cases hword : j / 64 < (p.size + 63) / 64
+  · have hget :
+        (Array.ofFn (fun i : Fin ((p.size + 63) / 64) => packWord p i.1))[j / 64]? =
+          some (packWord p (j / 64)) := by
+      simp [hword]
+    simp [Hex.GF2Poly.coeffWords, hget, Hex.GF2Poly.UInt64.bne_zero_eq_toNat_bne_zero,
+      UInt64.toNat_shiftRight, UInt64.toNat_and, Nat.mod_eq_of_lt hbit,
+      bit_eq_one_eq_testBit]
+    rw [packWord_testBit p (j / 64) (j % 64) hbit, hdecomp]
+    simp
+  · have hget :
+        (Array.ofFn (fun i : Fin ((p.size + 63) / 64) => packWord p i.1))[j / 64]? = none := by
+      rw [Array.getElem?_eq_none_iff]
+      simpa [Array.size_ofFn] using Nat.le_of_not_gt hword
+    have hsize : p.size ≤ j := by
+      have hm : (p.size + 63) % 64 < 64 := Nat.mod_lt _ (by decide)
+      have hceil := Nat.div_add_mod (p.size + 63) 64
+      have hge : (p.size + 63) / 64 ≤ j / 64 := Nat.le_of_not_gt hword
+      have hjd := Nat.div_add_mod j 64
+      omega
+    have hpc : p.coeff j = (Zero.zero : Hex.ZMod64 2) :=
+      Hex.DensePoly.coeff_eq_zero_of_size_le p hsize
+    have hz : p.coeff j = 0 := hpc
+    simp [Hex.GF2Poly.coeffWords, hget, hz]
 
 @[simp]
 theorem ofFpPoly_toFpPoly (p : Hex.GF2Poly) :
     ofFpPoly (toFpPoly p) = p := by
-  sorry
+  apply Hex.GF2Poly.ext_coeff
+  intro j
+  rw [coeff_ofFpPoly, coeff_toFpPoly]
+  cases p.coeff j with
+  | false => simp
+  | true => simp [zmod2_one_ne_zero]
 
 @[simp]
 theorem toFpPoly_ofFpPoly (p : Hex.FpPoly 2) :
     toFpPoly (ofFpPoly p) = p := by
-  sorry
+  apply Hex.DensePoly.ext_coeff
+  intro j
+  rw [coeff_toFpPoly, coeff_ofFpPoly]
+  rcases zmod2_cases (p.coeff j) with hz | ho
+  · simp [hz]
+  · simp [ho, zmod2_one_ne_zero]
 
 @[simp]
 theorem toFpPoly_add (p q : Hex.GF2Poly) :
     toFpPoly (p + q) = toFpPoly p + toFpPoly q := by
-  sorry
+  apply Hex.DensePoly.ext_coeff
+  intro i
+  rw [Hex.DensePoly.coeff_add_semiring (toFpPoly p) (toFpPoly q) i,
+    coeff_toFpPoly, coeff_toFpPoly, coeff_toFpPoly, Hex.GF2Poly.coeff_add_eq_bne]
+  cases p.coeff i <;> cases q.coeff i <;> (try simp) <;> grind
 
 @[simp]
 theorem toFpPoly_mul (p q : Hex.GF2Poly) :
@@ -224,13 +389,6 @@ private def wordsToNatAux : List UInt64 → Nat → Nat
 
 def toNat (p : Hex.GF2Poly) : Nat :=
   wordsToNatAux p.toWords.toList 0
-
-private theorem bit_eq_one_eq_testBit (x i : Nat) :
-    (x >>> i % 2 == 1) = x.testBit i := by
-  rw [Nat.testBit_eq_decide_div_mod_eq]
-  rw [Nat.shiftRight_eq_div_pow]
-  apply decide_eq_decide.mpr
-  exact Iff.rfl
 
 private theorem testBit_add_of_dvd_high {x y j : Nat}
     (hy : 2 ^ (j + 1) ∣ y) :
