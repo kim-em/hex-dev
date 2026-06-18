@@ -256,10 +256,13 @@ def reducedRepEquiv :
   invFun x := Hex.GFqField.ofPoly f hf hp hirr x.1
   left_inv := by
     intro x
-    sorry
+    apply Hex.GFqField.ext
+    apply Hex.GFqRing.ext
+    simp [Hex.GFqField.ofPoly, Hex.GFqField.repr]
   right_inv := by
     intro x
-    sorry
+    apply Subtype.ext
+    exact Hex.GFqRing.reduceMod_eq_self_of_degree_lt f x.1 x.2
 
 /-- Reduced representatives are indexed by `Fin (p ^ degree f)`. The
 positive-degree hypothesis is needed for the decoder's degree bound (see
@@ -296,7 +299,6 @@ noncomputable instance fintype :
     Fintype (Hex.GFqField.FiniteField f hf hp hirr) :=
   Fintype.ofEquiv (Fin (p ^ Hex.FpPoly.degree f)) finEquiv.symm
 
-omit [Hex.ZMod64.PrimeModulus p] in
 /-- The generic executable finite-field wrapper has the expected cardinality. -/
 theorem fintype_card :
     Fintype.card (Hex.GFqField.FiniteField f hf hp hirr) =
@@ -316,7 +318,6 @@ noncomputable instance fintype (h : Hex.Conway.SupportedEntry p n) :
     Fintype (Hex.GFq p n h) :=
   FiniteField.fintype
 
-omit [Hex.ZMod64.PrimeModulus p] in
 /-- Cardinality of the canonical Conway-backed `GFq` in terms of its selected
 modulus degree. -/
 theorem fintype_card (h : Hex.Conway.SupportedEntry p n) :
@@ -329,10 +330,12 @@ theorem fintype_card (h : Hex.Conway.SupportedEntry p n) :
       (hp := Hex.GFq.modulus_prime h)
       (hirr := Hex.GFq.modulus_irreducible h))
 
+omit [Hex.ZMod64.PrimeModulus p] in
 /-- The committed Conway modulus has the requested extension degree. -/
 theorem modulus_degree (h : Hex.Conway.SupportedEntry p n) :
     Hex.FpPoly.degree (Hex.GFq.modulus h) = n := by
-  sorry
+  exact Hex.Conway.luebeckConwayPolynomial?_degree_eq
+    (f := Hex.GFq.modulus h) (Hex.Conway.luebeckConwayPolynomial?_conwayPoly h)
 
 /-- Cardinality of canonical `GFq p n` as `p ^ n`. -/
 theorem fintype_card_eq_pow (h : Hex.Conway.SupportedEntry p n) :

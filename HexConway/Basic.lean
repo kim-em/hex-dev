@@ -3758,6 +3758,41 @@ private theorem ofCoeffs_degree_pos_of_back_ne_zero
           simp at hzero
           exact absurd hzero (zmod64_one_ne_zero_of_one_lt (by decide))))
 
+/-- A polynomial with a nonzero coefficient at `n` and no storage beyond `n`
+has degree exactly `n`. -/
+private theorem degree_eq_of_coeff_ne_zero_of_size_le
+    {p n : Nat} [ZMod64.Bounds p] {f : FpPoly p}
+    (hcoeff : f.coeff n ≠ 0) (hsize : f.size ≤ n + 1) :
+    FpPoly.degree f = n := by
+  have hnlt : n < f.size := by
+    by_cases hlt : n < f.size
+    · exact hlt
+    · exact False.elim
+        (hcoeff (DensePoly.coeff_eq_zero_of_size_le f (Nat.le_of_not_gt hlt)))
+  change f.degree?.getD 0 = n
+  rw [DensePoly.degree?_eq_some_of_pos_size f (by omega)]
+  simp only [Option.getD_some]
+  omega
+
+/-- Every committed Tier 1 Conway entry has the degree requested by its lookup key. -/
+@[simp] theorem luebeckConwayPolynomial?_degree_eq
+    {p n : Nat} [ZMod64.Bounds p] {f : FpPoly p}
+    (h : luebeckConwayPolynomial? p n = some f) :
+    FpPoly.degree f = n := by
+  unfold luebeckConwayPolynomial? at h
+  rw [Option.map_eq_some_iff] at h
+  obtain ⟨coeffs, hcoeffs, hf⟩ := h
+  subst hf
+  unfold luebeckConwayCoeffs? at hcoeffs
+  split at hcoeffs
+  all_goals
+    cases hcoeffs <;>
+      (apply degree_eq_of_coeff_ne_zero_of_size_le
+       · simp [luebeckConwayPolynomialOfCoeffs]
+         exact zmod64_one_ne_zero_of_one_lt (by decide)
+       · unfold luebeckConwayPolynomialOfCoeffs
+         simpa using (DensePoly.size_ofCoeffs_le _))
+
 /-- Supported Conway entries produce nonconstant moduli. -/
 @[simp, grind =>] theorem conwayPoly_nonconstant
     (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) :
