@@ -187,6 +187,27 @@ or `Monoid`/`CommRing` lemmas — those modules don't import Mathlib.
   For `(xs.push a).getD`, `HexBerlekampZassenhaus/Basic.lean` already has
   `array_getD_push_lt`/`array_getD_push_size`/`array_toList_getD` — reuse them.
 
+### Phase 6 `@[simp]`/`@[grind]` annotation pitfalls
+
+Adding automation annotations to a characterising lemma is not free; two
+traps cost a build cycle each:
+
+- **Bare `@[grind]` on a conditional/equational lemma errors with "Try
+  these".** When grind cannot uniquely pick an E-matching pattern (typical
+  for `dot … = 0` / `entry … = 0` lemmas with `i ≠ j` / `i < j` side
+  conditions) it refuses and prints `[apply] [grind =] for pattern: …`. Use
+  the explicit marker it suggests — `@[grind =]` selects the conclusion
+  pattern and elaborates silently. Plain `@[grind]` is only safe on lemmas
+  with an obvious head.
+- **`@[simp]` on a "push through" transport equality can break a downstream
+  proof in the same file.** A lemma like `basis (rowAdd b …) = basis b`
+  looks like a clean normal form, but as `@[simp]` it fires inside dependent
+  terms (e.g. a `coeffMatrix` proof obligation) and triggers `rewrite …
+  motive is not type correct`. Transport/invariance equalities are exactly
+  the class the Phase 6 issues warn against blanket-annotating — leave them
+  un-annotated unless you confirm the whole library still builds. Stick to
+  genuine value normal forms (`coeffs_diag = 1`, `basis_zero`) for `@[simp]`.
+
 ## Signature gotcha
 
 A hypothesis whose type mentions `toMathlibPolynomial`/`monicModPImage`/`modP`
