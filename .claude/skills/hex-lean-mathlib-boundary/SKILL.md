@@ -42,6 +42,16 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   goal to a `Nat`-mod identity `decide`/`omega` closes). This is how the
   GF(2)-indicator facts `if b then 1 else 0` ↦ `*`=AND / `+`=XOR get proved
   (`HexGF2Mathlib.toFpPoly_mul`).
+- **Promoting `@[simp]` → `@[simp, grind =]` (Phase 6 sweep): being a
+  literal `lhs = rhs` is necessary but not sufficient.** `grind =` also
+  needs the LHS *head* to be a valid pattern. A lemma whose LHS head
+  unfolds to a `dite` is rejected with `invalid pattern, (non-forbidden)
+  application expected` followed by a whnf PANIC — a hard build crash, not
+  a soft failure. The canonical offender is `Array.getD` (e.g.
+  `p.toArray.getD n 0 = …` in `HexPoly/Dense.lean`): `getD` reduces to a
+  `dite` over `Array.getInternal`. Leave such lemmas as plain `@[simp]`.
+  Plain *def*-headed LHSs (`coeff`, `size`, `support`) and `Option.getD`
+  LHSs are fine.
 - **Transporting `FpPoly` multiplication to `Polynomial (ZMod p)`
   (`map_mul'`-shaped goals): push `toZMod` through the executable List-fold,
   *then* convert to a Finset sum on the `ZMod p` side — you cannot meet in the
