@@ -19833,6 +19833,41 @@ theorem centeredLift_dvd_toMonic
       (hrecover.trans hg_recover.symm)
   rw [hcl_eq_g]; exact hg_dvd
 
+/-- For a monic `cl` and positive scalar `c`, the leading-coefficient dilation
+`dilate c cl` has positive leading coefficient `c ^ (cl.size - 1)`, and so does
+its primitive part (the content is positive). -/
+theorem leadingCoeff_primitivePart_dilate_pos {c : Int} (hc : 0 < c)
+    {cl : Hex.ZPoly} (hcl : Hex.DensePoly.Monic cl) :
+    0 < Hex.DensePoly.leadingCoeff
+      (Hex.ZPoly.primitivePart (Hex.ZPoly.dilate c cl)) := by
+  set x := Hex.ZPoly.dilate c cl with hx
+  have hc_ne : c ≠ 0 := ne_of_gt hc
+  have hx_lead_pos : 0 < Hex.DensePoly.leadingCoeff x := by
+    rw [hx, leadingCoeff_dilate_of_monic hc_ne hcl]; exact pow_pos hc _
+  have hx0 : x ≠ 0 := by
+    intro hz
+    rw [hz, Hex.DensePoly.leadingCoeff_zero] at hx_lead_pos
+    exact lt_irrefl 0 hx_lead_pos
+  set K := Hex.ZPoly.content x with hK
+  have hK_ne : K ≠ 0 := HexPolyZMathlib.content_ne_zero _ hx0
+  have hK_nonneg : 0 ≤ K := by
+    rw [hK]; unfold Hex.ZPoly.content Hex.DensePoly.content; exact Int.natCast_nonneg _
+  have hK_pos : 0 < K := lt_of_le_of_ne hK_nonneg (Ne.symm hK_ne)
+  have hcmpp : Hex.DensePoly.scale K (Hex.ZPoly.primitivePart x) = x :=
+    Hex.ZPoly.content_mul_primitivePart x
+  have hlead_eq :
+      Hex.DensePoly.leadingCoeff x =
+        K * Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart x) := by
+    have := Hex.ZPoly.leadingCoeff_scale_of_nonzero K (Hex.ZPoly.primitivePart x) hK_ne
+    rw [hcmpp] at this; exact this
+  rcases lt_trichotomy (Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart x)) 0 with
+    hneg | hzero | hpos
+  · exact absurd hx_lead_pos
+      (by rw [hlead_eq]; have := mul_neg_of_pos_of_neg hK_pos hneg; linarith)
+  · rw [hzero, Int.mul_zero] at hlead_eq
+    rw [hlead_eq] at hx_lead_pos; exact absurd hx_lead_pos (lt_irrefl 0)
+  · exact hpos
+
 /-- The recombination candidate emitted by `bhksIndicatorCandidate?` over a
 positive-leading-coefficient `core` is exactly the primitive part of the
 leading-coefficient dilation of the centred selected product: the
@@ -19852,38 +19887,10 @@ theorem primitivePart_dilate_centeredLift_eq_candidate
         (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
           (Hex.centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k))) = candidate := by
   set cl := Hex.centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k) with hcl
-  set lc := Hex.DensePoly.leadingCoeff core with hlc
-  set x := Hex.ZPoly.dilate lc cl with hx
-  have hlc_ne : lc ≠ 0 := ne_of_gt hcore_lc_pos
-  have hx_lead : Hex.DensePoly.leadingCoeff x = lc ^ (cl.size - 1) :=
-    leadingCoeff_dilate_of_monic hlc_ne hcl_monic
-  have hx_lead_pos : 0 < Hex.DensePoly.leadingCoeff x := by
-    rw [hx_lead]; exact pow_pos hcore_lc_pos _
-  have hx0 : x ≠ 0 := by
-    intro hz
-    rw [hz, Hex.DensePoly.leadingCoeff_zero] at hx_lead_pos
-    exact lt_irrefl 0 hx_lead_pos
-  set K := Hex.ZPoly.content x with hK
-  have hK_ne : K ≠ 0 := HexPolyZMathlib.content_ne_zero _ hx0
-  have hK_nonneg : 0 ≤ K := by
-    rw [hK]; unfold Hex.ZPoly.content Hex.DensePoly.content; exact Int.natCast_nonneg _
-  have hK_pos : 0 < K := lt_of_le_of_ne hK_nonneg (Ne.symm hK_ne)
-  have hcmpp : Hex.DensePoly.scale K (Hex.ZPoly.primitivePart x) = x :=
-    Hex.ZPoly.content_mul_primitivePart x
-  have hlead_eq :
-      Hex.DensePoly.leadingCoeff x =
-        K * Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart x) := by
-    have := Hex.ZPoly.leadingCoeff_scale_of_nonzero K (Hex.ZPoly.primitivePart x) hK_ne
-    rw [hcmpp] at this; exact this
+  set x := Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) cl with hx
   have hpp_lead_pos :
-      0 < Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart x) := by
-    rcases lt_trichotomy (Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart x)) 0 with
-      hneg | hzero | hpos
-    · exact absurd hx_lead_pos
-        (by rw [hlead_eq]; have := mul_neg_of_pos_of_neg hK_pos hneg; linarith)
-    · rw [hzero, Int.mul_zero] at hlead_eq
-      rw [hlead_eq] at hx_lead_pos; exact absurd hx_lead_pos (lt_irrefl 0)
-    · exact hpos
+      0 < Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart x) :=
+    leadingCoeff_primitivePart_dilate_pos hcore_lc_pos hcl_monic
   have hchar := Hex.bhksIndicatorCandidate?_eq_normalized_dilatedCenteredLift h hselected
   have hcond : ¬ Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart x) < 0 :=
     not_lt.mpr (le_of_lt hpp_lead_pos)
