@@ -463,7 +463,7 @@ def ofWords (words : Array UInt64) : GF2Poly :=
         trimTrailingZeroWordsList_getLast?_ne_zero words.toList }
 
 /-- Wrapping the empty word array gives the empty packed representation. -/
-@[simp] theorem words_ofWords_empty : (ofWords #[]).words = #[] := by
+@[simp, grind =] theorem words_ofWords_empty : (ofWords #[]).words = #[] := by
   rfl
 
 /-- The zero polynomial. -/
@@ -474,7 +474,7 @@ instance : Zero GF2Poly where
   zero := zero
 
 /-- The empty word array represents the zero polynomial. -/
-@[simp] theorem ofWords_empty : ofWords #[] = 0 := by
+@[simp, grind =] theorem ofWords_empty : ofWords #[] = 0 := by
   apply ext_words
   rfl
 
@@ -531,7 +531,7 @@ def coeff (p : GF2Poly) (n : Nat) : Bool :=
   coeffWords p.words n
 
 /-- Coefficients of a raw word array are unchanged by `ofWords` normalization. -/
-@[simp] theorem coeff_ofWords (words : Array UInt64) (n : Nat) :
+@[simp, grind =] theorem coeff_ofWords (words : Array UInt64) (n : Nat) :
     (ofWords words).coeff n = coeffWords words n := by
   simp [ofWords, coeff, coeffWords_normalizeWords]
 
@@ -558,13 +558,13 @@ theorem coeff_ofUInt64_eq_false_of_ge_64 (w : UInt64) {i : Nat} (hi : 64 ≤ i) 
       simp [coeffWords, hidx]
 
 /-- Input `0` to `ofUInt64` is the zero polynomial. -/
-@[simp] theorem ofUInt64_zero : ofUInt64 0 = (0 : GF2Poly) := by
+@[simp, grind =] theorem ofUInt64_zero : ofUInt64 0 = (0 : GF2Poly) := by
   change ofWords #[(0 : UInt64)] = ofWords #[]
   apply ext_words
   exact words_ofWords_single_zero
 
 /-- Input `1` to `ofUInt64` is the unit polynomial. -/
-@[simp] theorem ofUInt64_one : ofUInt64 1 = (1 : GF2Poly) := by
+@[simp, grind =] theorem ofUInt64_one : ofUInt64 1 = (1 : GF2Poly) := by
   rfl
 
 /-- The packed single-word constructor preserves the underlying machine word. -/
@@ -614,7 +614,7 @@ def degree (p : GF2Poly) : Nat :=
   simp [isZero]
 
 /-- `isZero` agrees with propositional equality to the zero polynomial. -/
-@[simp] theorem isZero_iff_eq_zero (p : GF2Poly) :
+@[simp, grind =] theorem isZero_iff_eq_zero (p : GF2Poly) :
     p.isZero = true ↔ p = 0 := by
   constructor
   · intro h
@@ -918,27 +918,27 @@ theorem ext_coeff {p q : GF2Poly}
   exact hcoeff
 
 /-- The zero polynomial is canonically represented by the empty word array. -/
-@[simp] theorem words_zero : (0 : GF2Poly).words = #[] := by
+@[simp, grind =] theorem words_zero : (0 : GF2Poly).words = #[] := by
   rfl
 
 /-- The zero polynomial stores no machine words. -/
-@[simp] theorem wordCount_zero : (0 : GF2Poly).wordCount = 0 := by
+@[simp, grind =] theorem wordCount_zero : (0 : GF2Poly).wordCount = 0 := by
   rfl
 
 /-- The zero polynomial passes the `isZero` Boolean check. -/
-@[simp] theorem isZero_zero : (0 : GF2Poly).isZero = true := by
+@[simp, grind =] theorem isZero_zero : (0 : GF2Poly).isZero = true := by
   rfl
 
 /-- Every coefficient of the zero polynomial is clear. -/
-@[simp] theorem coeff_zero (n : Nat) : (0 : GF2Poly).coeff n = false := by
+@[simp, grind =] theorem coeff_zero (n : Nat) : (0 : GF2Poly).coeff n = false := by
   simp [coeff, coeffWords]
 
 /-- The zero polynomial has no degree witness. -/
-@[simp] theorem degree?_zero : (0 : GF2Poly).degree? = none := by
+@[simp, grind =] theorem degree?_zero : (0 : GF2Poly).degree? = none := by
   rfl
 
 /-- The default-`0` degree of the zero polynomial is `0`. -/
-@[simp] theorem degree_zero : (0 : GF2Poly).degree = 0 := by
+@[simp, grind =] theorem degree_zero : (0 : GF2Poly).degree = 0 := by
   rfl
 
 /-- Word-wise XOR of packed coefficient arrays. -/
@@ -1022,12 +1022,12 @@ theorem ofUInt64_xor (a b : UInt64) :
     rfl
 
 /-- Simp-facing packed addition law for single-word constructors. -/
-@[simp] theorem ofUInt64_add (a b : UInt64) :
+@[simp, grind =] theorem ofUInt64_add (a b : UInt64) :
     ofUInt64 a + ofUInt64 b = ofUInt64 (a ^^^ b) :=
   (ofUInt64_xor a b).symm
 
 /-- Simp-facing form of coefficientwise addition over packed `GF(2)` polynomials. -/
-@[simp] theorem coeff_add_bne (p q : GF2Poly) (n : Nat) :
+@[simp, grind =] theorem coeff_add_bne (p q : GF2Poly) (n : Nat) :
     (p + q).coeff n = (p.coeff n != q.coeff n) :=
   coeff_add_eq_bne p q n
 
@@ -1120,7 +1120,7 @@ theorem xorWords_self (xs : Array UInt64) :
     simp [xorWords]
 
 /-- Every element of `F_2[x]` is its own additive inverse: `p + p = 0`. -/
-@[simp] theorem add_self (p : GF2Poly) :
+@[simp, grind =] theorem add_self (p : GF2Poly) :
     p + p = 0 := by
   apply ext_words
   change (ofWords (xorWords p.words p.words)).words = #[]
@@ -1132,7 +1132,7 @@ theorem xorWords_self (xs : Array UInt64) :
           simp [ofWords, normalizeWords_replicate_zero]
 
 /-- Zero is the left identity for `F_2[x]` addition. -/
-@[simp] theorem zero_add (p : GF2Poly) :
+@[simp, grind =] theorem zero_add (p : GF2Poly) :
     0 + p = p := by
   apply ext_coeff
   intro n
@@ -1149,7 +1149,7 @@ theorem xorWords_self (xs : Array UInt64) :
   simp
 
 /-- Zero is the right identity for `F_2[x]` addition. -/
-@[simp] theorem add_zero (p : GF2Poly) :
+@[simp, grind =] theorem add_zero (p : GF2Poly) :
     p + 0 = p := by
   apply ext_coeff
   intro n
@@ -1172,7 +1172,7 @@ theorem add_assoc (p q r : GF2Poly) :
   cases p.coeff n <;> cases q.coeff n <;> cases r.coeff n <;> rfl
 
 /-- Adding `p` twice on the left cancels: `p + (p + q) = q`. -/
-@[simp] theorem add_add_cancel_left (p q : GF2Poly) :
+@[simp, grind =] theorem add_add_cancel_left (p q : GF2Poly) :
     p + (p + q) = q := by
   apply ext_coeff
   intro n
@@ -1180,7 +1180,7 @@ theorem add_assoc (p q r : GF2Poly) :
   cases p.coeff n <;> cases q.coeff n <;> rfl
 
 /-- Adding `q` twice on the right cancels: `(p + q) + q = p`. -/
-@[simp] theorem add_add_cancel_right (p q : GF2Poly) :
+@[simp, grind =] theorem add_add_cancel_right (p q : GF2Poly) :
     (p + q) + q = p := by
   apply ext_coeff
   intro n
@@ -1706,7 +1706,7 @@ theorem coeff_monomial (n m : Nat) :
   simp [monomial]
 
 /-- The coefficient of the defining degree of a monomial is set. -/
-@[simp] theorem coeff_monomial_self (n : Nat) :
+@[simp, grind =] theorem coeff_monomial_self (n : Nat) :
     (monomial n).coeff n = true := by
   rw [coeff_monomial]
   have hbit : n % 64 < 64 := Nat.mod_lt n (by decide : 0 < 64)
@@ -1778,7 +1778,7 @@ theorem coeff_monomial_ne {n m : Nat} (h : m ≠ n) :
     simp
 
 /-- The packed degree search recovers the degree of a monomial. -/
-@[simp] theorem degree?_monomial (n : Nat) :
+@[simp, grind =] theorem degree?_monomial (n : Nat) :
     (monomial n).degree? = some n := by
   have hbit : n % 64 < 64 := Nat.mod_lt n (by decide : 0 < 64)
   have hne : ((1 : UInt64) <<< (n % 64).toUInt64) ≠ 0 :=
@@ -1790,11 +1790,11 @@ theorem coeff_monomial_ne {n m : Nat} (h : m ≠ n) :
   omega
 
 /-- The default-`0` degree of the monomial `x^n` is `n`. -/
-@[simp] theorem degree_monomial (n : Nat) : (monomial n).degree = n :=
+@[simp, grind =] theorem degree_monomial (n : Nat) : (monomial n).degree = n :=
   degree_eq_of_degree?_eq_some (degree?_monomial n)
 
 /-- The monomial `x^n` is never the zero polynomial. -/
-@[simp] theorem isZero_monomial_eq_false (n : Nat) :
+@[simp, grind =] theorem isZero_monomial_eq_false (n : Nat) :
     (monomial n).isZero = false :=
   isZero_false_of_degree?_eq_some (degree?_monomial n)
 
@@ -1803,7 +1803,7 @@ theorem coeff_monomial_ne {n m : Nat} (h : m ≠ n) :
   ne_zero_of_degree?_eq_some (degree?_monomial n)
 
 /-- Shift-left coefficients reduce to the coefficient lookup on the shifted packed words. -/
-@[simp]
+@[simp, grind =]
 theorem coeff_shiftLeft (p : GF2Poly) (k n : Nat) :
     (p.shiftLeft k).coeff n =
       coeffWords
@@ -1827,7 +1827,7 @@ theorem coeff_shiftLeft_add_of_word_lt (p : GF2Poly) {k n : Nat}
       coeffWords_replicate_append_shiftLeftBitsList_add p.words hbitShift hword]
 
 /-- `mulXk` is coefficientwise the same as `shiftLeft`. -/
-@[simp]
+@[simp, grind =]
 theorem coeff_mulXk (p : GF2Poly) (k n : Nat) :
     (p.mulXk k).coeff n = (p.shiftLeft k).coeff n := by
   rfl
