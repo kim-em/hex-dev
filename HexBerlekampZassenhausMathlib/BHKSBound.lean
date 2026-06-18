@@ -1643,4 +1643,202 @@ theorem cldCoeffFloor_le_explicit
     (foldl_max_le _ _ (List.range (n + 1)) 0 (Nat.zero_le _)
       (fun j _ => bhksCoeffBound_toMonic_monic_le hf hdvd hn j))
 
+/-- `2 * Nat.choose (k+1) j ≤ 2 ^ (k+1)`. -/
+theorem two_mul_choose_succ_le (k j : Nat) : 2 * Nat.choose (k + 1) j ≤ 2 ^ (k + 1) := by
+  induction k generalizing j with
+  | zero =>
+    match j with
+    | 0 => simp
+    | 1 => simp
+    | (m + 2) => rw [Nat.choose_eq_zero_of_lt (by omega)]; simp
+  | succ k ih =>
+    cases j with
+    | zero =>
+      simp only [Nat.choose_zero_right, Nat.mul_one]
+      calc 2 = 2 ^ 1 := rfl
+        _ ≤ 2 ^ (k + 1 + 1) := Nat.pow_le_pow_right (by norm_num) (by omega)
+    | succ i =>
+      rw [Nat.choose_succ_succ, Nat.mul_add]
+      calc 2 * Nat.choose (k + 1) i + 2 * Nat.choose (k + 1) (i + 1)
+            ≤ 2 ^ (k + 1) + 2 ^ (k + 1) := Nat.add_le_add (ih i) (ih (i + 1))
+        _ = 2 ^ (k + 1 + 1) := by ring
+
+/-- `Nat.choose k j ≤ 2 ^ (k - 1)`. -/
+theorem choose_le_two_pow_pred (k j : Nat) : Nat.choose k j ≤ 2 ^ (k - 1) := by
+  cases k with
+  | zero =>
+    match j with
+    | 0 => simp
+    | (m + 1) => rw [Nat.choose_eq_zero_of_lt (by omega)]; simp
+  | succ k =>
+    have h := two_mul_choose_succ_le k j
+    have h2 : 2 * Nat.choose (k + 1) j ≤ 2 * 2 ^ k := by
+      rw [← pow_succ']; exact h
+    simpa using Nat.le_of_mul_le_mul_left h2 (by norm_num)
+
+/-- `Hex.ZPoly.binom k j ≤ 2 ^ (k - 1)`. -/
+theorem binom_le_two_pow_pred (k j : Nat) : Hex.ZPoly.binom k j ≤ 2 ^ (k - 1) := by
+  rw [HexPolyZMathlib.binom_eq_choose]
+  exact choose_le_two_pow_pred k j
+
+/-- A `foldl` whose step preserves the invariant `≤ B` (for list elements) stays
+`≤ B`. -/
+theorem foldl_preserve_le {α : Type _} (step : Nat → α → Nat) (B : Nat) :
+    ∀ (l : List α) (a : Nat), a ≤ B →
+      (∀ (a' : Nat) (x : α), x ∈ l → a' ≤ B → step a' x ≤ B) →
+      l.foldl step a ≤ B := by
+  intro l
+  induction l with
+  | nil => intro a ha _; exact ha
+  | cons x xs ih =>
+    intro a ha h
+    exact ih (step a x) (h a x List.mem_cons_self ha)
+      (fun a' y hy => h a' y (List.mem_cons_of_mem _ hy))
+
+/-- The default factorization coefficient bound is at most
+`2 ^ (N - 1) * coeffL2NormBound f`, where `N = deg f`. -/
+theorem defaultFactorCoeffBound_le
+    (f : Hex.ZPoly) :
+    Hex.ZPoly.defaultFactorCoeffBound f ≤
+      2 ^ (f.degree?.getD 0 - 1) * Hex.ZPoly.coeffL2NormBound f := by
+  show List.foldl
+      (fun acc k =>
+        List.foldl (fun acc j => max acc (Hex.ZPoly.mignotteCoeffBound f k j)) acc
+          (List.range (k + 1)))
+      0 (List.range (f.degree?.getD 0 + 1)) ≤
+    2 ^ (f.degree?.getD 0 - 1) * Hex.ZPoly.coeffL2NormBound f
+  refine foldl_preserve_le _ _ (List.range (f.degree?.getD 0 + 1)) 0 (Nat.zero_le _)
+    (fun a k hk ha => ?_)
+  have hkN : k ≤ f.degree?.getD 0 := by
+    rw [List.mem_range] at hk; omega
+  refine foldl_max_le _ _ (List.range (k + 1)) a ha (fun j _ => ?_)
+  rw [Hex.ZPoly.mignotteCoeffBound]
+  calc Hex.ZPoly.binom k j * Hex.ZPoly.coeffL2NormBound f
+        ≤ 2 ^ (k - 1) * Hex.ZPoly.coeffL2NormBound f :=
+          Nat.mul_le_mul (binom_le_two_pow_pred k j) (le_refl _)
+      _ ≤ 2 ^ (f.degree?.getD 0 - 1) * Hex.ZPoly.coeffL2NormBound f :=
+          Nat.mul_le_mul (Nat.pow_le_pow_right (by norm_num) (by omega)) (le_refl _)
+
+/-- `1 ≤ Nat.log2 (M + 1)` for `M ≥ 1`. -/
+theorem one_le_log2_succ {M : Nat} (h : 1 ≤ M) : 1 ≤ Nat.log2 (M + 1) := by
+  rw [Nat.log2_eq_log_two]
+  exact Nat.log_pos (by norm_num) (by omega)
+
+/-- Core power inequality driving the floor-versus-cap absorption:
+`2^(Nn) · n(n+1) ≤ N · 2^(2N²)` for `1 ≤ n ≤ N`. -/
+theorem key_pow_ineq {n N : Nat} (hn : 1 ≤ n) (hnN : n ≤ N) :
+    2 ^ (N * n) * (n * (n + 1)) ≤ N * 2 ^ (2 * N * N) := by
+  have hN : 1 ≤ N := le_trans hn hnN
+  have hpow1 : 2 ^ (N * n) ≤ 2 ^ (N * N) :=
+    Nat.pow_le_pow_right (by norm_num) (Nat.mul_le_mul (le_refl N) hnN)
+  have hnp1 : n + 1 ≤ 2 ^ (N * N) := by
+    have h1 : N + 1 ≤ 2 ^ N := Nat.lt_two_pow_self
+    have hNN : N ≤ N * N := by
+      calc N = N * 1 := (Nat.mul_one N).symm
+        _ ≤ N * N := Nat.mul_le_mul (le_refl N) hN
+    have h2 : (2:Nat) ^ N ≤ 2 ^ (N * N) := Nat.pow_le_pow_right (by norm_num) hNN
+    omega
+  have hpoly : n * (n + 1) ≤ N * 2 ^ (N * N) := Nat.mul_le_mul hnN hnp1
+  calc 2 ^ (N * n) * (n * (n + 1))
+        ≤ 2 ^ (N * N) * (N * 2 ^ (N * N)) := Nat.mul_le_mul hpow1 hpoly
+      _ = N * 2 ^ (2 * N * N) := by
+          rw [show 2 * N * N = N * N + N * N from by ring, pow_add]; ring
+
+/-- The CLD coefficient floor of a degree-zero core is `0`. -/
+theorem cldCoeffFloor_eq_zero_of_degree_zero {core : Hex.ZPoly}
+    (h : core.degree?.getD 0 = 0) : Hex.cldCoeffFloor core = 0 := by
+  simp [Hex.cldCoeffFloor, Hex.bhksCoeffBound, Hex.ZPoly.toMonic_monic_degree_getD, h]
+
+/-- **CLD coefficient floor is bounded by the fast-path precision cap.**
+Discharges the `hfloor` hypothesis
+`cldCoeffFloor (normalizeForFactor f).squareFreeCore ≤ factorFastPrecisionCap f`
+threaded through the `factorFast ≠ none` determinism chain in `Recovery.lean`. -/
+theorem cldCoeffFloor_le_factorFastPrecisionCap (f : Hex.ZPoly) :
+    Hex.cldCoeffFloor (Hex.normalizeForFactor f).squareFreeCore ≤
+      Hex.factorFastPrecisionCap f := by
+  set core := (Hex.normalizeForFactor f).squareFreeCore with hcore
+  rcases Nat.eq_zero_or_pos (core.degree?.getD 0) with hn0 | hn
+  · rw [cldCoeffFloor_eq_zero_of_degree_zero hn0]; exact Nat.zero_le _
+  · have hf : f ≠ 0 := by
+      rintro rfl
+      rw [hcore] at hn
+      revert hn
+      decide
+    have hdvd : core ∣ f := Hex.squareFreeCore_dvd_self f hf
+    have hcore_ne : core ≠ 0 := by
+      intro h0; rw [h0] at hn; simp [Hex.DensePoly.degree?] at hn
+    have hcs : 0 < core.size := Hex.ZPoly.size_pos_of_ne_zero core hcore_ne
+    have hfs : 0 < f.size := Hex.ZPoly.size_pos_of_ne_zero f hf
+    have hsize : core.size ≤ f.size := Hex.ZPoly.size_le_of_dvd_nonzero hcore_ne hf hdvd
+    obtain ⟨mc, hmc⟩ := Nat.exists_eq_succ_of_ne_zero (Nat.pos_iff_ne_zero.mp hcs)
+    obtain ⟨mf, hmf⟩ := Nat.exists_eq_succ_of_ne_zero (Nat.pos_iff_ne_zero.mp hfs)
+    have hcd : core.degree?.getD 0 = core.size - 1 := by simp [Hex.DensePoly.degree?, hmc]
+    have hfd : f.degree?.getD 0 = f.size - 1 := by simp [Hex.DensePoly.degree?, hmf]
+    have hnN : core.degree?.getD 0 ≤ f.degree?.getD 0 := by rw [hcd, hfd]; omega
+    have hM1 : 1 ≤ Hex.ZPoly.coeffNormSq f := Hex.ZPoly.coeffNormSq_pos_of_ne_zero hf
+    have hDle : Hex.ZPoly.defaultFactorCoeffBound f ≤
+        2 ^ (f.degree?.getD 0 - 1) * Hex.ZPoly.coeffL2NormBound f :=
+      defaultFactorCoeffBound_le f
+    have hLle : Hex.ZPoly.coeffL2NormBound f ≤ Hex.ZPoly.coeffNormSq f + 1 := by
+      rw [Hex.ZPoly.coeffL2NormBound_eq_ceilSqrt_coeffNormSq]
+      apply ceilSqrt_le_of_le_sq
+      calc Hex.ZPoly.coeffNormSq f ≤ Hex.ZPoly.coeffNormSq f + 1 := by omega
+        _ ≤ (Hex.ZPoly.coeffNormSq f + 1) ^ 2 := Nat.le_self_pow (by norm_num) _
+    have hlog : 1 ≤ Nat.log2 (Hex.ZPoly.coeffNormSq f + 1) := one_le_log2_succ hM1
+    have hbhks_lb : f.degree?.getD 0 * 4 ^ (f.degree?.getD 0 * f.degree?.getD 0) *
+        (Hex.ZPoly.coeffNormSq f + 1) ^ f.degree?.getD 0 ≤ Hex.bhksBound f := by
+      show f.degree?.getD 0 * 4 ^ (f.degree?.getD 0 * f.degree?.getD 0) *
+          (Hex.ZPoly.coeffNormSq f + 1) ^ f.degree?.getD 0 ≤
+        1 + f.degree?.getD 0 * 4 ^ (f.degree?.getD 0 * f.degree?.getD 0) *
+          (Hex.ZPoly.coeffNormSq f + 1) ^ f.degree?.getD 0 *
+          (Nat.log2 (Hex.ZPoly.coeffNormSq f + 1)) ^ f.degree?.getD 0
+      have hlogpow : 1 ≤ (Nat.log2 (Hex.ZPoly.coeffNormSq f + 1)) ^ f.degree?.getD 0 :=
+        Nat.one_le_pow _ _ (by omega)
+      calc f.degree?.getD 0 * 4 ^ (f.degree?.getD 0 * f.degree?.getD 0) *
+              (Hex.ZPoly.coeffNormSq f + 1) ^ f.degree?.getD 0
+            = f.degree?.getD 0 * 4 ^ (f.degree?.getD 0 * f.degree?.getD 0) *
+              (Hex.ZPoly.coeffNormSq f + 1) ^ f.degree?.getD 0 * 1 := by ring
+          _ ≤ f.degree?.getD 0 * 4 ^ (f.degree?.getD 0 * f.degree?.getD 0) *
+              (Hex.ZPoly.coeffNormSq f + 1) ^ f.degree?.getD 0 *
+              (Nat.log2 (Hex.ZPoly.coeffNormSq f + 1)) ^ f.degree?.getD 0 :=
+              Nat.mul_le_mul (le_refl _) hlogpow
+          _ ≤ 1 + _ := by omega
+    refine le_trans (cldCoeffFloor_le_explicit hf hdvd hn)
+      (le_trans ?_ (le_trans hbhks_lb (bhksBound_le_factorFastPrecisionCap f)))
+    set N := f.degree?.getD 0 with hN_def
+    set n := core.degree?.getD 0 with hn_def
+    set D := Hex.ZPoly.defaultFactorCoeffBound f with hD_def
+    set L := Hex.ZPoly.coeffL2NormBound f with hL_def
+    set M := Hex.ZPoly.coeffNormSq f with hM_def
+    clear_value n N D L M
+    have he1 : 2 * (2 ^ (n - 1) * n * ((n + 1) * D ^ n))
+        = (2 * 2 ^ (n - 1)) * (n * (n + 1)) * D ^ n := by ring
+    have he2 : 2 * 2 ^ (n - 1) = 2 ^ n := by rw [← pow_succ']; congr 1; omega
+    rw [he1, he2]
+    have hNexp : n + (N - 1) * n = N * n := by
+      cases N with
+      | zero => omega
+      | succ m =>
+        have hm : (m + 1) - 1 = m := rfl
+        rw [hm]; ring
+    calc 2 ^ n * (n * (n + 1)) * D ^ n
+          ≤ 2 ^ n * (n * (n + 1)) * (2 ^ (N - 1) * L) ^ n :=
+            Nat.mul_le_mul (le_refl _) (Nat.pow_le_pow_left hDle n)
+        _ = 2 ^ (N * n) * (n * (n + 1)) * L ^ n := by
+            rw [mul_pow, ← pow_mul,
+              show 2 ^ n * (n * (n + 1)) * (2 ^ ((N - 1) * n) * L ^ n)
+                = (2 ^ n * 2 ^ ((N - 1) * n)) * ((n * (n + 1)) * L ^ n) from by ring,
+              ← pow_add, hNexp]
+            ring
+        _ ≤ 2 ^ (N * n) * (n * (n + 1)) * (M + 1) ^ N := by
+            apply Nat.mul_le_mul (le_refl _)
+            calc L ^ n ≤ (M + 1) ^ n := Nat.pow_le_pow_left hLle n
+              _ ≤ (M + 1) ^ N := Nat.pow_le_pow_right (by omega) hnN
+        _ = (2 ^ (N * n) * (n * (n + 1))) * (M + 1) ^ N := by ring
+        _ ≤ (N * 2 ^ (2 * N * N)) * (M + 1) ^ N :=
+            Nat.mul_le_mul (key_pow_ineq hn hnN) (le_refl _)
+        _ = N * 4 ^ (N * N) * (M + 1) ^ N := by
+            rw [show (4 : Nat) = 2 ^ 2 from rfl, ← pow_mul,
+              show 2 * (N * N) = 2 * N * N from by ring]
+
 end HexBerlekampZassenhausMathlib
