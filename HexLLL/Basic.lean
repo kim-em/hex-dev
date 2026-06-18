@@ -1359,7 +1359,7 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
     s
 
 /-- Size reduction leaves the stored Gram determinants unchanged. -/
-theorem sizeReduce_d (s : LLLState n m) (k : Nat) :
+@[grind =] theorem sizeReduce_d (s : LLLState n m) (k : Nat) :
     (s.sizeReduce k).d = s.d := by
   unfold sizeReduce
   by_cases hk : k < n
@@ -1368,7 +1368,7 @@ theorem sizeReduce_d (s : LLLState n m) (k : Nat) :
   · simp [hk]
 
 /-- Size reduction preserves the Gram-Schmidt basis of the state basis matrix. -/
-theorem sizeReduce_basis (s : LLLState n m) (k : Nat) :
+@[grind =] theorem sizeReduce_basis (s : LLLState n m) (k : Nat) :
     GramSchmidt.Int.basis (s.sizeReduce k).b = GramSchmidt.Int.basis s.b := by
   unfold sizeReduce
   by_cases hk : k < n
@@ -1448,7 +1448,7 @@ private theorem rowAdd_memLattice_iff
     exact memLattice_of_rowAdd_memLattice (Matrix.rowAdd b src dst c) src dst (-c) v hv'
 
 /-- Adjacent swaps preserve the generated lattice. -/
-theorem swapStep_memLattice_iff (s : LLLState n m) (k : Nat) (v : Vector Int m) :
+@[grind =] theorem swapStep_memLattice_iff (s : LLLState n m) (k : Nat) (v : Vector Int m) :
     Matrix.memLattice (s.swapStep k).b v ↔ Matrix.memLattice s.b v := by
   unfold swapStep
   by_cases hk : k < n
@@ -1461,7 +1461,7 @@ theorem swapStep_memLattice_iff (s : LLLState n m) (k : Nat) (v : Vector Int m) 
   · rw [dif_neg hk]
 
 /-- A single-column size reduction preserves the generated lattice. -/
-theorem sizeReduceColumn_memLattice_iff
+@[grind =] theorem sizeReduceColumn_memLattice_iff
     (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) (v : Vector Int m) :
     Matrix.memLattice (s.sizeReduceColumn j k hjk).b v ↔ Matrix.memLattice s.b v := by
   unfold sizeReduceColumn
@@ -1491,7 +1491,7 @@ private theorem sizeReduce_foldl_memLattice_iff (s : LLLState n m) (k : Nat) (hk
     exact sizeReduceColumn_memLattice_iff s _ _ j.isLt v
 
 /-- Size reduction preserves the generated lattice. -/
-theorem sizeReduce_memLattice_iff (s : LLLState n m) (k : Nat) (v : Vector Int m) :
+@[grind =] theorem sizeReduce_memLattice_iff (s : LLLState n m) (k : Nat) (v : Vector Int m) :
     Matrix.memLattice (s.sizeReduce k).b v ↔ Matrix.memLattice s.b v := by
   unfold sizeReduce
   by_cases hk : k < n
@@ -1610,7 +1610,7 @@ def lllLoop (s : LLLState n m) (k : Nat) (δ : Rat)
 /-- `lllLoop` preserves the generated lattice: every iteration is either a
 `sizeReduce` (preserved by `sizeReduce_memLattice_iff`) or an adjacent swap
 (preserved by `swapStep_memLattice_iff`). -/
-theorem lllLoop_memLattice_iff (s : LLLState n m) (k : Nat) (δ : Rat)
+@[grind =] theorem lllLoop_memLattice_iff (s : LLLState n m) (k : Nat) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hk : 1 ≤ k) (hkn : k ≤ n) (fuel : Nat)
     (v : Vector Int m) :
     Matrix.memLattice (lllLoop s k δ hδ hδ' hk hkn fuel) v ↔
@@ -1725,7 +1725,7 @@ def init (b : Matrix Int n m) : SteeredState n m :=
 
 /-- Building the initial steered state preserves the basis: `init` only populates
 the float `mu`/`bb` approximation and copies `b` through unchanged. -/
-@[simp] theorem init_b (b : Matrix Int n m) : (init b).b = b := rfl
+@[simp, grind =] theorem init_b (b : Matrix Int n m) : (init b).b = b := rfl
 
 /-- Recompute `mu` row `k` and `bb[k]` from the exact Gram entries `⟨b_k, b_j⟩`
 and the stored approximation of rows `< k`. The basis is unchanged. This is the
@@ -1750,7 +1750,7 @@ def refreshRow (s : SteeredState n m) (k : Nat) : SteeredState n m :=
 
 /-- Refreshing row `k` recomputes only the float `mu`/`bb` approximation from the
 exact Gram entries, so the integer basis `.b` is left unchanged. -/
-@[simp] theorem refreshRow_b (s : SteeredState n m) (k : Nat) :
+@[simp, grind =] theorem refreshRow_b (s : SteeredState n m) (k : Nat) :
     (s.refreshRow k).b = s.b := rfl
 
 /-- Single-column size reduction `b_k ← b_k − r·b_j` with `r` the rounded float
@@ -1907,7 +1907,7 @@ namespace SteeredState
 it adds an integer multiple of row `j` to row `k`, the resulting basis spans the
 same integer lattice, so `v` is a member of the new basis exactly when it was a
 member of the old one. -/
-theorem reduceColumn_memLattice_iff
+@[grind =] theorem reduceColumn_memLattice_iff
     (s : SteeredState n m) (j k : Fin n) (hjk : j.val < k.val) (v : Vector Int m) :
     Matrix.memLattice (s.reduceColumn j k hjk).b v ↔ Matrix.memLattice s.b v := by
   unfold reduceColumn
@@ -1934,7 +1934,7 @@ private theorem sizeReduce_foldl_memLattice_iff (s : SteeredState n m) (k : Nat)
 /-- Size-reducing row `k` against every earlier row preserves the lattice: it is a
 fold of lattice-preserving `reduceColumn` steps, so the spanned lattice (and hence
 membership of `v`) is unchanged. -/
-theorem sizeReduce_memLattice_iff (s : SteeredState n m) (k : Nat) (v : Vector Int m) :
+@[grind =] theorem sizeReduce_memLattice_iff (s : SteeredState n m) (k : Nat) (v : Vector Int m) :
     Matrix.memLattice (s.sizeReduce k).b v ↔ Matrix.memLattice s.b v := by
   unfold sizeReduce
   by_cases hk : k < n
@@ -1945,7 +1945,7 @@ theorem sizeReduce_memLattice_iff (s : SteeredState n m) (k : Nat) (v : Vector I
 /-- The adjacent-row swap step preserves the lattice: exchanging rows `k − 1` and
 `k` only reorders the basis, so it spans the same integer lattice and membership of
 `v` is unchanged. -/
-theorem swap_memLattice_iff (s : SteeredState n m) (k : Nat) (v : Vector Int m) :
+@[grind =] theorem swap_memLattice_iff (s : SteeredState n m) (k : Nat) (v : Vector Int m) :
     Matrix.memLattice (s.swap k).b v ↔ Matrix.memLattice s.b v := by
   unfold swap
   by_cases hk : k < n
@@ -1960,12 +1960,10 @@ theorem swap_memLattice_iff (s : SteeredState n m) (k : Nat) (v : Vector Int m) 
 /-- The per-visit `prep` step preserves the lattice: an optional `refreshRow`
 (which leaves `.b` fixed) followed by a `sizeReduce` of row `k`, both
 lattice-preserving, so membership of `v` is unchanged. -/
-theorem prep_memLattice_iff (period : Nat) (s : SteeredState n m) (k cnt : Nat)
+@[grind =] theorem prep_memLattice_iff (period : Nat) (s : SteeredState n m) (k cnt : Nat)
     (v : Vector Int m) :
     Matrix.memLattice (prep period s k cnt).b v ↔ Matrix.memLattice s.b v := by
-  unfold prep
-  rw [sizeReduce_memLattice_iff]
-  split <;> simp [refreshRow_b]
+  unfold prep; grind
 
 -- Keep the heavy `Float` computations opaque to the loop proof; the `.b`
 -- projection is fully characterized by the `_memLattice_iff` lemmas above, so the
@@ -1976,7 +1974,7 @@ attribute [irreducible] refreshRow reduceColumn sizeReduce swap prep
 only `prep` and `swap`, each lattice-preserving, so however the float steering
 chooses to advance or swap, the spanned lattice (and membership of `v`) is
 unchanged across the whole run. -/
-theorem loop_memLattice_iff (δsteer : Float) (period : Nat) (s : SteeredState n m)
+@[grind =] theorem loop_memLattice_iff (δsteer : Float) (period : Nat) (s : SteeredState n m)
     (k cnt : Nat) (fuel : Nat) (v : Vector Int m) :
     Matrix.memLattice (loop δsteer period s k cnt fuel).b v ↔
       Matrix.memLattice s.b v := by
@@ -2002,7 +2000,7 @@ theorem loop_memLattice_iff (δsteer : Float) (period : Nat) (s : SteeredState n
 /-- The drift-free final sweep preserves the lattice: it folds a `refreshRow`
 (no change to `.b`) and a `sizeReduce` over every row, both lattice-preserving, so
 membership of `v` is unchanged. -/
-theorem finalSweep_memLattice_iff (s : SteeredState n m) (v : Vector Int m) :
+@[grind =] theorem finalSweep_memLattice_iff (s : SteeredState n m) (v : Vector Int m) :
     Matrix.memLattice (finalSweep s).b v ↔ Matrix.memLattice s.b v := by
   unfold finalSweep
   suffices h : ∀ (xs : List (Fin n)) (t : SteeredState n m),
@@ -2026,11 +2024,10 @@ end SteeredState
 same integer lattice as the input `b` and membership of `v` is unchanged. This is
 the soundness guarantee that holds by construction, with no dependence on the float
 approximation. -/
-theorem steeredReduce_memLattice_iff (b : Matrix Int n m) (δ : Rat) (v : Vector Int m) :
+@[grind =] theorem steeredReduce_memLattice_iff
+    (b : Matrix Int n m) (δ : Rat) (v : Vector Int m) :
     Matrix.memLattice (steeredReduce b δ) v ↔ Matrix.memLattice b v := by
-  unfold steeredReduce
-  rw [SteeredState.finalSweep_memLattice_iff, SteeredState.loop_memLattice_iff,
-    SteeredState.init_b]
+  unfold steeredReduce; grind
 
 /-- Outcome of one steered reduction: the steered candidate certified at
 `(δ, 11/20)`, or the run fell back to the exact `lllNative`. -/
