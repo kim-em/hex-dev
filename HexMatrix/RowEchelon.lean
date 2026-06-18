@@ -56,7 +56,7 @@ theorem rowSwap_getElem (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
         (congrArg (fun row => row[k]) hrow₁)
 
 /-- Row `i` of `rowSwap M i j` is the original row `j`. -/
-@[simp] theorem row_rowSwap_left (M : Matrix R n m) (i j : Fin n) :
+@[simp, grind =] theorem row_rowSwap_left (M : Matrix R n m) (i j : Fin n) :
     row (rowSwap M i j) i = row M j := by
   apply Vector.ext
   intro k hk
@@ -68,7 +68,7 @@ theorem rowSwap_getElem (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
   · simp [hij]
 
 /-- Row `j` of `rowSwap M i j` is the original row `i`. -/
-@[simp] theorem row_rowSwap_right (M : Matrix R n m) (i j : Fin n) :
+@[simp, grind =] theorem row_rowSwap_right (M : Matrix R n m) (i j : Fin n) :
     row (rowSwap M i j) j = row M i := by
   apply Vector.ext
   intro k hk
@@ -124,7 +124,7 @@ theorem rowScale_getElem [Mul R] (M : Matrix R n m) (i r : Fin n) (c : R) (k : F
     simpa [rowScale] using congrArg (fun row => row[k]) hrow
 
 /-- Row `i` of `rowScale M i c` is the pointwise scalar multiple of row `i`. -/
-@[simp] theorem row_rowScale_self [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) :
+@[simp, grind =] theorem row_rowScale_self [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) :
     row (rowScale M i c) i = Vector.ofFn (fun k => c * M[i][k]) := by
   apply Vector.ext
   intro k hk
@@ -177,7 +177,7 @@ theorem rowAdd_getElem_src_of_ne [Mul R] [Add R]
   simp [hsrcdst]
 
 /-- Row `dst` of `rowAdd M src dst c` is the pointwise row combination. -/
-@[simp] theorem row_rowAdd_dst [Mul R] [Add R]
+@[simp, grind =] theorem row_rowAdd_dst [Mul R] [Add R]
     (M : Matrix R n m) (src dst : Fin n) (c : R) :
     row (rowAdd M src dst c) dst =
       Vector.ofFn (fun k => M[dst][k] + c * M[src][k]) := by
@@ -202,7 +202,7 @@ theorem row_rowAdd_of_ne [Mul R] [Add R]
   simp [hrdst]
 
 /-- The source row is unchanged by `rowAdd M src dst c` when `src ≠ dst`. -/
-@[simp] theorem row_rowAdd_src_of_ne [Mul R] [Add R]
+@[simp, grind =] theorem row_rowAdd_src_of_ne [Mul R] [Add R]
     (M : Matrix R n m) {src dst : Fin n} (c : R) (hsrcdst : src ≠ dst) :
     row (rowAdd M src dst c) src = row M src := by
   exact row_rowAdd_of_ne M src c hsrcdst
@@ -590,7 +590,7 @@ theorem rowSwap_rowSwap (M : Matrix R n m) (i j : Fin n) :
       rw [if_neg hrj, if_neg hri]
 
 /-- Swapping a row with itself leaves the matrix unchanged. -/
-@[simp] theorem rowSwap_self (M : Matrix R n m) (i : Fin n) :
+@[simp, grind =] theorem rowSwap_self (M : Matrix R n m) (i : Fin n) :
     rowSwap M i i = M := by
   apply Vector.ext
   intro r hr
@@ -605,7 +605,7 @@ theorem rowSwap_rowSwap (M : Matrix R n m) (i j : Fin n) :
   · simp [hri]
 
 /-- Scaling a row by one leaves the matrix unchanged. -/
-@[simp] theorem rowScale_one [Lean.Grind.Semiring R]
+@[simp, grind =] theorem rowScale_one [Lean.Grind.Semiring R]
     (M : Matrix R n m) (i : Fin n) :
     rowScale M i 1 = M := by
   apply Vector.ext
@@ -622,7 +622,7 @@ theorem rowSwap_rowSwap (M : Matrix R n m) (i j : Fin n) :
   · rw [if_neg hri]
 
 /-- Adding zero times one row to another leaves the matrix unchanged. -/
-@[simp] theorem rowAdd_zero [Lean.Grind.Semiring R]
+@[simp, grind =] theorem rowAdd_zero [Lean.Grind.Semiring R]
     (M : Matrix R n m) (src dst : Fin n) :
     rowAdd M src dst 0 = M := by
   apply Vector.ext
@@ -878,7 +878,7 @@ theorem colAddRight_getElem [Mul R] [Add R]
   rw [colAddRight, getElem_ofFn]
 
 /-- Column `dst` of `colAdd M src dst c` is the pointwise column combination. -/
-@[simp] theorem col_colAdd_dst [Mul R] [Add R]
+@[simp, grind =] theorem col_colAdd_dst [Mul R] [Add R]
     (M : Matrix R n m) (src dst : Fin m) (c : R) :
     col (colAdd M src dst c) dst =
       Vector.ofFn (fun i => M[i][dst] + c * M[i][src]) := by
@@ -892,7 +892,7 @@ theorem colAddRight_getElem [Mul R] [Add R]
 
 /-- Column `dst` of `colAddRight M src dst c` is the pointwise column
 combination with right scalar multiplication. -/
-@[simp] theorem col_colAddRight_dst [Mul R] [Add R]
+@[simp, grind =] theorem col_colAddRight_dst [Mul R] [Add R]
     (M : Matrix R n m) (src dst : Fin m) (c : R) :
     col (colAddRight M src dst c) dst =
       Vector.ofFn (fun i => M[i][dst] + M[i][src] * c) := by
@@ -974,14 +974,14 @@ theorem colAddRight_getElem_src_of_ne [Mul R] [Add R]
   simp [hsrcdst]
 
 /-- The source column is unchanged by `colAdd M src dst c` when `src ≠ dst`. -/
-@[simp] theorem col_colAdd_src_of_ne [Mul R] [Add R]
+@[simp, grind =] theorem col_colAdd_src_of_ne [Mul R] [Add R]
     (M : Matrix R n m) {src dst : Fin m} (c : R) (hsrcdst : src ≠ dst) :
     col (colAdd M src dst c) src = col M src :=
   col_colAdd_of_ne M src c hsrcdst
 
 /-- The source column is unchanged by `colAddRight M src dst c` when
 `src ≠ dst`. -/
-@[simp] theorem col_colAddRight_src_of_ne [Mul R] [Add R]
+@[simp, grind =] theorem col_colAddRight_src_of_ne [Mul R] [Add R]
     (M : Matrix R n m) {src dst : Fin m} (c : R) (hsrcdst : src ≠ dst) :
     col (colAddRight M src dst c) src = col M src :=
   col_colAddRight_of_ne M src c hsrcdst
@@ -1017,7 +1017,7 @@ theorem mul_colAddRight [Lean.Grind.Ring R]
       exact col_colAddRight_of_ne B src s hld]
 
 /-- Adding zero times one column to another leaves the matrix unchanged. -/
-@[simp] theorem colAdd_zero [Lean.Grind.Semiring R]
+@[simp, grind =] theorem colAdd_zero [Lean.Grind.Semiring R]
     (M : Matrix R n m) (src dst : Fin m) :
     colAdd M src dst 0 = M := by
   apply Vector.ext
@@ -1034,7 +1034,7 @@ theorem mul_colAddRight [Lean.Grind.Ring R]
   · rw [if_neg hjd]
 
 /-- Adding one column times zero to another leaves the matrix unchanged. -/
-@[simp] theorem colAddRight_zero [Lean.Grind.Semiring R]
+@[simp, grind =] theorem colAddRight_zero [Lean.Grind.Semiring R]
     (M : Matrix R n m) (src dst : Fin m) :
     colAddRight M src dst 0 = M := by
   apply Vector.ext
