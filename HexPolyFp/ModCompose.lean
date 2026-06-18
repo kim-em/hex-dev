@@ -60,12 +60,12 @@ def composeModMonic (f g modulus : FpPoly p)
     (fun acc coeff => modByMonic modulus (acc * g + C coeff) hmonic)
     0
 
-@[simp] theorem composeModMonic_zero
+@[simp, grind =] theorem composeModMonic_zero
     (g modulus : FpPoly p) (hmonic : DensePoly.Monic modulus) :
     composeModMonic 0 g modulus hmonic = 0 := by
   rfl
 
-@[simp] theorem composeModMonic_C
+@[simp, grind =] theorem composeModMonic_C
     (c : ZMod64 p) (g modulus : FpPoly p) (hmonic : DensePoly.Monic modulus) :
     composeModMonic (C c) g modulus hmonic = modByMonic modulus (C c) hmonic := by
   by_cases hc : c = 0
@@ -123,7 +123,7 @@ theorem composeModMonic_eq_mod
   exact DensePoly.modByMonic_eq_mod (DensePoly.compose f g) modulus hmonic
 
 /-- The result of `composeModMonic` is already reduced modulo the monic modulus. -/
-@[simp] theorem composeModMonic_mod_eq_self
+@[simp, grind =] theorem composeModMonic_mod_eq_self
     [ZMod64.PrimeModulus p]
     (f g modulus : FpPoly p) (hmonic : DensePoly.Monic modulus) :
     composeModMonic f g modulus hmonic % modulus =
@@ -134,7 +134,7 @@ theorem composeModMonic_eq_mod
 The `modByMonic` spelling of `composeModMonic_mod_eq_self`, useful for
 callers that state reduction via `modByMonic` rather than `%`.
 -/
-@[simp] theorem modByMonic_composeModMonic_eq_self
+@[simp, grind =] theorem modByMonic_composeModMonic_eq_self
     [ZMod64.PrimeModulus p]
     (f g modulus : FpPoly p) (hmonic : DensePoly.Monic modulus) :
     modByMonic modulus (composeModMonic f g modulus hmonic) hmonic =
