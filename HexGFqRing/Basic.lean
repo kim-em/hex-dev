@@ -18,7 +18,7 @@ def degree (f : FpPoly p) : Nat :=
   f.degree?.getD 0
 
 /-- Constant polynomials have `FpPoly.degree` equal to `0`. -/
-@[simp] theorem degree_C (c : ZMod64 p) : degree (C c) = 0 := by
+@[simp, grind =] theorem degree_C (c : ZMod64 p) : degree (C c) = 0 := by
   simp [degree, C]
 
 end FpPoly
@@ -42,12 +42,12 @@ theorem reduceMod_eq_self_of_degree_lt (f g : FpPoly p) :
   simpa [reduceMod] using congrArg Prod.snd hdiv
 
 /-- The zero polynomial is already canonical modulo any nonconstant modulus. -/
-@[simp] theorem reduceMod_zero (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
+@[simp, grind =] theorem reduceMod_zero (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
     reduceMod f 0 = 0 := by
   exact reduceMod_eq_self_of_degree_lt f 0 (by simpa using hf)
 
 /-- The one polynomial is already canonical modulo any nonconstant modulus. -/
-@[simp] theorem reduceMod_one (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
+@[simp, grind =] theorem reduceMod_one (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
     reduceMod f 1 = 1 := by
   have hone : FpPoly.degree (1 : FpPoly p) = 0 := by
     change (DensePoly.C (1 : ZMod64 p)).degree?.getD 0 = 0
@@ -79,7 +79,7 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} : DecidableEq (PolyQuotient f
   | isFalse h => exact isFalse (fun hxy => h (congrArg Subtype.val hxy))
 
 /-- The canonical representative of `ofPoly f hf g` is `reduceMod f g`. -/
-@[simp] theorem repr_ofPoly (f : FpPoly p) (hf : 0 < FpPoly.degree f) (g : FpPoly p) :
+@[simp, grind =] theorem repr_ofPoly (f : FpPoly p) (hf : 0 < FpPoly.degree f) (g : FpPoly p) :
     repr (ofPoly f hf g) = reduceMod f g :=
   rfl
 
@@ -122,12 +122,12 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} : DecidableEq (PolyQuotient f
     using DensePoly.mod_degree_lt_of_pos_degree g f hf
 
 /-- Reducing a representative a second time is a no-op: `reduceMod` is idempotent. -/
-@[simp] theorem reduceMod_idem (f : FpPoly p) (g : FpPoly p) :
+@[simp, grind =] theorem reduceMod_idem (f : FpPoly p) (g : FpPoly p) :
     reduceMod f (reduceMod f g) = reduceMod f g := by
   simpa [reduceMod, DensePoly.mod_eq_divMod] using (DensePoly.mod_mod g f)
 
 /-- The modulus itself reduces to the zero representative modulo itself. -/
-@[simp] theorem reduceMod_self (f : FpPoly p) :
+@[simp, grind =] theorem reduceMod_self (f : FpPoly p) :
     reduceMod f f = 0 := by
   change (DensePoly.divMod f f).2 = 0
   simpa [DensePoly.mod_eq_divMod] using
@@ -140,7 +140,7 @@ theorem reduceMod_add_reduceMod_congr (f : FpPoly p) (a b : FpPoly p) :
     (DensePoly.DivModLaws.mod_add_mod a b f)
 
 /-- Reducing the left summand before quotient reduction preserves the representative. -/
-@[simp] theorem reduceMod_add_left_reduceMod (f : FpPoly p) (a b : FpPoly p) :
+@[simp, grind =] theorem reduceMod_add_left_reduceMod (f : FpPoly p) (a b : FpPoly p) :
     reduceMod f (reduceMod f a + b) = reduceMod f (a + b) := by
   calc
     reduceMod f (reduceMod f a + b)
@@ -152,7 +152,7 @@ theorem reduceMod_add_reduceMod_congr (f : FpPoly p) (a b : FpPoly p) :
           exact (reduceMod_add_reduceMod_congr f a b).symm
 
 /-- Reducing the right summand before quotient reduction preserves the representative. -/
-@[simp] theorem reduceMod_add_right_reduceMod (f : FpPoly p) (a b : FpPoly p) :
+@[simp, grind =] theorem reduceMod_add_right_reduceMod (f : FpPoly p) (a b : FpPoly p) :
     reduceMod f (a + reduceMod f b) = reduceMod f (a + b) := by
   calc
     reduceMod f (a + reduceMod f b)
@@ -170,7 +170,7 @@ theorem reduceMod_mul_reduceMod_congr (f : FpPoly p) (a b : FpPoly p) :
     (DensePoly.DivModLaws.mod_mul_mod a b f)
 
 /-- Reducing the left factor before quotient reduction preserves the representative. -/
-@[simp] theorem reduceMod_mul_left_reduceMod (f : FpPoly p) (a b : FpPoly p) :
+@[simp, grind =] theorem reduceMod_mul_left_reduceMod (f : FpPoly p) (a b : FpPoly p) :
     reduceMod f (reduceMod f a * b) = reduceMod f (a * b) := by
   calc
     reduceMod f (reduceMod f a * b)
@@ -182,7 +182,7 @@ theorem reduceMod_mul_reduceMod_congr (f : FpPoly p) (a b : FpPoly p) :
           exact (reduceMod_mul_reduceMod_congr f a b).symm
 
 /-- Reducing the right factor before quotient reduction preserves the representative. -/
-@[simp] theorem reduceMod_mul_right_reduceMod (f : FpPoly p) (a b : FpPoly p) :
+@[simp, grind =] theorem reduceMod_mul_right_reduceMod (f : FpPoly p) (a b : FpPoly p) :
     reduceMod f (a * reduceMod f b) = reduceMod f (a * b) := by
   calc
     reduceMod f (a * reduceMod f b)
@@ -214,7 +214,7 @@ theorem reduceMod_add_mul_self_right (f : FpPoly p) (hf : 0 < FpPoly.degree f)
 
 /-- Reducing the argument before applying `ofPoly` does not change the resulting quotient
 element. -/
-@[simp] theorem ofPoly_reduceMod (f : FpPoly p) (hf : 0 < FpPoly.degree f) (g : FpPoly p) :
+@[simp, grind =] theorem ofPoly_reduceMod (f : FpPoly p) (hf : 0 < FpPoly.degree f) (g : FpPoly p) :
     ofPoly f hf (reduceMod f g) = ofPoly f hf g := by
   apply Subtype.ext
   simp [ofPoly, reduceMod_idem]
