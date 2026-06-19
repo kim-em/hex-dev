@@ -51,7 +51,13 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   `p.toArray.getD n 0 = …` in `HexPoly/Dense.lean`): `getD` reduces to a
   `dite` over `Array.getInternal`. Leave such lemmas as plain `@[simp]`.
   Plain *def*-headed LHSs (`coeff`, `size`, `support`) and `Option.getD`
-  LHSs are fine.
+  LHSs are fine. A second, softer rejection: a lemma whose **conclusion is
+  wrapped in a `let`** (e.g. `redc_m_spec` in `HexArith/Montgomery/Redc.lean`:
+  `let m := Tlo * ctx.p'; m.toNat = …`) is not a bare `Eq`, so `grind =`
+  refuses it with `invalid E-matching equality theorem, conclusion must be an
+  equality` even though it "looks like a literal equation." Leave such lemmas
+  `@[simp]`-only; it is a permanent property of the statement shape, not a
+  fixable regression, so no follow-up issue is warranted.
 - **Transporting `FpPoly` multiplication to `Polynomial (ZMod p)`
   (`map_mul'`-shaped goals): push `toZMod` through the executable List-fold,
   *then* convert to a Finset sum on the `ZMod p` side — you cannot meet in the

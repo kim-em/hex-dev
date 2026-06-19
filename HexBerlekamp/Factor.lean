@@ -34,10 +34,10 @@ def Factorization.product (result : Factorization p) : FpPoly p :=
   factorProduct result.factors
 
 /-- Empty-list base case for `factorProduct`. -/
-@[simp] theorem factorProduct_nil : factorProduct ([] : List (FpPoly p)) = 1 := rfl
+@[simp, grind =] theorem factorProduct_nil : factorProduct ([] : List (FpPoly p)) = 1 := rfl
 
 /-- Unfold a `Factorization`'s product to the `factorProduct` of its stored factors. -/
-@[simp] theorem Factorization.product_def (result : Factorization p) :
+@[simp, grind =] theorem Factorization.product_def (result : Factorization p) :
     result.product = factorProduct result.factors :=
   rfl
 
