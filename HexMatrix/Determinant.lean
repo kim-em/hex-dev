@@ -309,14 +309,14 @@ def skipIndex {n : Nat} (skip : Fin (n + 1)) (i : Fin n) : Fin (n + 1) :=
 
 /-- The skipped-index embedding leaves entries below the deleted index unchanged.
 This is the low-side `simp` branch for row and column deletion. -/
-@[simp] theorem skipIndex_val_of_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
+@[simp, grind =] theorem skipIndex_val_of_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
     (h : i.val < skip.val) :
     (skipIndex skip i).val = i.val := by
   simp [skipIndex, h]
 
 /-- The skipped-index embedding shifts entries at or above the deleted index by
 one. This is the high-side `simp` branch for row and column deletion. -/
-@[simp] theorem skipIndex_val_of_not_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
+@[simp, grind =] theorem skipIndex_val_of_not_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
     (h : ¬ i.val < skip.val) :
     (skipIndex skip i).val = i.val + 1 := by
   simp [skipIndex, h]
@@ -355,7 +355,7 @@ private theorem skipIndex_injective {n : Nat} (skip : Fin (n + 1)) :
 
 /-- Skipping the final index embeds `Fin n` by `castSucc`.
 This normalizes bottom-right minors to leading prefixes. -/
-@[simp] theorem skipIndex_last {n : Nat} (i : Fin n) :
+@[simp, grind =] theorem skipIndex_last {n : Nat} (i : Fin n) :
     skipIndex (Fin.last n) i = i.castSucc := by
   apply Fin.ext
   simp [skipIndex, Fin.last, i.isLt]
@@ -367,14 +367,14 @@ def deleteRowCol {R : Type u} {n : Nat} (M : Matrix R (n + 1) (n + 1))
 
 /-- Entries of a deleted-row/deleted-column minor are the corresponding source
 entries at the skipped row and column indices. -/
-@[simp] theorem deleteRowCol_entry {R : Type u} {n : Nat}
+@[simp, grind =] theorem deleteRowCol_entry {R : Type u} {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) (i j : Fin n) :
     (deleteRowCol M row col)[i][j] = M[skipIndex row i][skipIndex col j] := by
   simp [deleteRowCol, ofFn]
 
 /-- Deleting the final row and final column gives the leading prefix.
 This is the minor normalization used by bottom-right cofactor expansion. -/
-@[simp] theorem deleteRowCol_last_last {R : Type u} {n : Nat}
+@[simp, grind =] theorem deleteRowCol_last_last {R : Type u} {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
     deleteRowCol M (Fin.last n) (Fin.last n) =
       leadingPrefix M n (Nat.le_succ n) := by
@@ -411,14 +411,14 @@ def cofactorSign {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
 
 /-- An even row-plus-column parity gives cofactor sign `1`.
 This is the positive `simp` branch for signed cofactors. -/
-@[simp] theorem cofactorSign_of_even {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
+@[simp, grind =] theorem cofactorSign_of_even {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
     (row col : Fin (n + 1)) (h : (row.val + col.val) % 2 = 0) :
     cofactorSign (R := R) row col = 1 := by
   simp [cofactorSign, h]
 
 /-- An odd row-plus-column parity gives cofactor sign `-1`.
 This is the negative `simp` branch for signed cofactors. -/
-@[simp] theorem cofactorSign_of_odd {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
+@[simp, grind =] theorem cofactorSign_of_odd {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
     (row col : Fin (n + 1)) (h : (row.val + col.val) % 2 ≠ 0) :
     cofactorSign (R := R) row col = -1 := by
   simp [cofactorSign, h]
@@ -430,7 +430,7 @@ def cofactor {R : Type u} [Lean.Grind.Ring R] {n : Nat}
 
 /-- At even parity, a signed cofactor is just the determinant of its minor.
 This removes the sign in cofactor-expansion normalization. -/
-@[simp] theorem cofactor_of_even {R : Type u} [Lean.Grind.Ring R] {n : Nat}
+@[simp, grind =] theorem cofactor_of_even {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1))
     (h : (row.val + col.val) % 2 = 0) :
     cofactor M row col = det (deleteRowCol M row col) := by
@@ -439,7 +439,7 @@ This removes the sign in cofactor-expansion normalization. -/
 
 /-- At odd parity, a signed cofactor is the negated determinant of its minor.
 This supplies the alternating sign in cofactor-expansion normalization. -/
-@[simp] theorem cofactor_of_odd {R : Type u} [Lean.Grind.Ring R] {n : Nat}
+@[simp, grind =] theorem cofactor_of_odd {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1))
     (h : (row.val + col.val) % 2 ≠ 0) :
     cofactor M row col = -det (deleteRowCol M row col) := by
@@ -448,7 +448,7 @@ This supplies the alternating sign in cofactor-expansion normalization. -/
 
 /-- The bottom-right cofactor reduces to the determinant of the leading prefix.
 This combines the final-index minor with its even sign. -/
-@[simp] theorem cofactor_last_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
+@[simp, grind =] theorem cofactor_last_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
     cofactor M (Fin.last n) (Fin.last n) =
       det (leadingPrefix M n (Nat.le_succ n)) := by
@@ -458,7 +458,7 @@ This combines the final-index minor with its even sign. -/
 
 /-- The determinant of the empty leading prefix is the Bareiss previous-pivot
 convention `1`. -/
-@[simp] theorem det_leadingPrefix_zero {R : Type u} [Lean.Grind.Ring R]
+@[simp, grind =] theorem det_leadingPrefix_zero {R : Type u} [Lean.Grind.Ring R]
     (M : Matrix R n n) :
     det (leadingPrefix M 0 (Nat.zero_le n)) = (1 : R) := by
   simp [det, detTerm, detSign, detProduct, permutationVectors, emptyVec, inversionCount]
@@ -466,7 +466,7 @@ convention `1`. -/
 
 /-- The determinant of a `1 × 1` matrix is its only entry.
 This is the smallest non-empty determinant base case. -/
-@[simp] theorem det_one_by_one {R : Type u} [Lean.Grind.Ring R]
+@[simp, grind =] theorem det_one_by_one {R : Type u} [Lean.Grind.Ring R]
     (M : Matrix R 1 1) :
     det M = M[0][0] := by
   simp [det, detTerm, detSign, detProduct, permutationVectors, emptyVec, insertAt,
@@ -475,7 +475,7 @@ This is the smallest non-empty determinant base case. -/
 
 /-- The determinant of a `2 × 2` matrix has the usual diagonal-minus-off-diagonal
 closed form used by small cofactor expansions. -/
-@[simp] theorem det_two_by_two {R : Type u} [Lean.Grind.CommRing R]
+@[simp, grind =] theorem det_two_by_two {R : Type u} [Lean.Grind.CommRing R]
     (M : Matrix R 2 2) :
     det M = M[0][0] * M[1][1] - M[1][0] * M[0][1] := by
   simp [det, detTerm, detSign, detProduct, permutationVectors, emptyVec, insertAt,
@@ -5591,7 +5591,7 @@ private def columnSumMatrix {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
   ofFn fun r j =>
     (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
 
-@[simp] private theorem columnSumMatrix_entry
+@[simp, grind =] private theorem columnSumMatrix_entry
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (r j : Fin n) :
     (columnSumMatrix source coeff)[r][j] =
@@ -5847,7 +5847,7 @@ def columnTupleMatrix {R : Type u} {n m : Nat}
     (A : Matrix R n m) (cols : Fin n → Fin m) : Matrix R n n :=
   ofFn fun r c => A[r][cols c]
 
-@[simp] theorem columnTupleMatrix_entry {R : Type u} {n m : Nat}
+@[simp, grind =] theorem columnTupleMatrix_entry {R : Type u} {n m : Nat}
     (A : Matrix R n m) (cols : Fin n → Fin m) (r c : Fin n) :
     (columnTupleMatrix A cols)[r][c] = A[r][cols c] := by
   simp [columnTupleMatrix, ofFn]
@@ -5870,7 +5870,7 @@ private theorem columnChoiceMatrix_some
 def columnTupleVectorFn {n m : Nat} (cols : Vector (Fin m) n) : Fin n → Fin m :=
   fun i => cols[i]
 
-@[simp] theorem columnTupleVectorFn_apply {n m : Nat}
+@[simp, grind =] theorem columnTupleVectorFn_apply {n m : Nat}
     (cols : Vector (Fin m) n) (i : Fin n) :
     columnTupleVectorFn cols i = cols[i] := rfl
 
@@ -7491,7 +7491,7 @@ is still well-defined but may have repeated values. -/
 def sortInjPerm {m n : Nat} (cols : Vector (Fin m) n) : Vector (Fin n) n :=
   Vector.ofFn fun i => ⟨columnRankNat cols i, columnRankNat_lt cols i⟩
 
-@[simp] theorem sortInjPerm_getElem_val {m n : Nat}
+@[simp, grind =] theorem sortInjPerm_getElem_val {m n : Nat}
     (cols : Vector (Fin m) n) (i : Fin n) :
     (sortInjPerm cols)[i].val = columnRankNat cols i := by
   simp [sortInjPerm]
@@ -7754,12 +7754,12 @@ def reconstructInjTuple {m n : Nat}
     (sel : Vector (Fin m) n) (perm : Vector (Fin n) n) : Vector (Fin m) n :=
   Vector.ofFn fun i => sel[perm[i]]
 
-@[simp] theorem reconstructInjTuple_getElem {m n : Nat}
+@[simp, grind =] theorem reconstructInjTuple_getElem {m n : Nat}
     (sel : Vector (Fin m) n) (perm : Vector (Fin n) n) (i : Fin n) :
     (reconstructInjTuple sel perm)[i] = sel[perm[i]] := by
   rw [reconstructInjTuple, vector_ofFn_getElem_fin]
 
-@[simp] theorem columnTupleMatrix_reconstructInjTuple_entry
+@[simp, grind =] theorem columnTupleMatrix_reconstructInjTuple_entry
     {R : Type u} {n m : Nat} (A : Matrix R n m)
     (sel : Vector (Fin m) n) (perm : Vector (Fin n) n)
     (r c : Fin n) :
@@ -8299,7 +8299,7 @@ theorem det_gramMatrix_nonneg {n m : Nat} (A : Matrix Int n m) :
 def firstColumns (k n : Nat) (hk : k ≤ n) : Vector (Fin n) k :=
   Vector.ofFn fun i => ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
 
-@[simp] theorem firstColumns_entry (k n : Nat) (hk : k ≤ n) (i : Fin k) :
+@[simp, grind =] theorem firstColumns_entry (k n : Nat) (hk : k ≤ n) (i : Fin k) :
     (firstColumns k n hk)[i] = (⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩ : Fin n) := by
   simp [firstColumns]
 
@@ -8390,7 +8390,7 @@ def setRow {R : Type u} {n m : Nat}
     (M : Matrix R n m) (dst : Fin n) (v : Vector R m) : Matrix R n m :=
   M.set dst v
 
-@[simp] theorem setRow_get_self {R : Type u} {n m : Nat}
+@[simp, grind =] theorem setRow_get_self {R : Type u} {n m : Nat}
     (M : Matrix R n m) (dst : Fin n) (v : Vector R m) :
     (setRow M dst v)[dst] = v := by
   simp [setRow]
@@ -8503,7 +8503,7 @@ def adjugate {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) : Matrix R (n + 1) (n + 1) :=
   ofFn fun i j => cofactor M j i
 
-@[simp] theorem adjugate_get {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+@[simp, grind =] theorem adjugate_get {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) :
     (adjugate M)[i][j] = cofactor M j i := by
   simp [adjugate, ofFn]
@@ -8622,7 +8622,7 @@ theorem adjugate_eq_cofactorSign_mul_deleteRowCol
 
 /-- The `(0, 0)` adjugate entry equals the determinant of the minor
 obtained by deleting row `0` and column `0`. -/
-@[simp] theorem adjugate_zero_zero
+@[simp, grind =] theorem adjugate_zero_zero
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
     (adjugate M)[(0 : Fin (n + 1))][(0 : Fin (n + 1))] =
@@ -8632,7 +8632,7 @@ obtained by deleting row `0` and column `0`. -/
 
 /-- The `(Fin.last, Fin.last)` adjugate entry equals the determinant of
 the leading prefix minor obtained by deleting the last row and column. -/
-@[simp] theorem adjugate_last_last
+@[simp, grind =] theorem adjugate_last_last
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
     (adjugate M)[Fin.last n][Fin.last n] =
@@ -8789,18 +8789,18 @@ def skipIndex2 {n : Nat} (p q : Fin (n + 2)) (_hpq : p.val < q.val)
   else
     ⟨i.val + 2, by have hi := i.isLt; omega⟩
 
-@[simp] theorem skipIndex2_val_of_lt_p {n : Nat} (p q : Fin (n + 2))
+@[simp, grind =] theorem skipIndex2_val_of_lt_p {n : Nat} (p q : Fin (n + 2))
     (hpq : p.val < q.val) (i : Fin n) (h : i.val < p.val) :
     (skipIndex2 p q hpq i).val = i.val := by
   simp [skipIndex2, h]
 
-@[simp] theorem skipIndex2_val_of_between {n : Nat} (p q : Fin (n + 2))
+@[simp, grind =] theorem skipIndex2_val_of_between {n : Nat} (p q : Fin (n + 2))
     (hpq : p.val < q.val) (i : Fin n) (h1 : ¬ i.val < p.val)
     (h2 : i.val + 1 < q.val) :
     (skipIndex2 p q hpq i).val = i.val + 1 := by
   simp [skipIndex2, h1, h2]
 
-@[simp] theorem skipIndex2_val_of_ge_q {n : Nat} (p q : Fin (n + 2))
+@[simp, grind =] theorem skipIndex2_val_of_ge_q {n : Nat} (p q : Fin (n + 2))
     (hpq : p.val < q.val) (i : Fin n) (h1 : ¬ i.val < p.val)
     (h2 : ¬ i.val + 1 < q.val) :
     (skipIndex2 p q hpq i).val = i.val + 2 := by
@@ -8876,7 +8876,7 @@ def nMatrix {R : Type u} {n : Nat}
     Matrix R n n :=
   ofFn fun i j => B[skipIndex2 p q hpq i][j]
 
-@[simp] theorem nMatrix_entry {R : Type u} {n : Nat}
+@[simp, grind =] theorem nMatrix_entry {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val)
     (i : Fin n) (j : Fin n) :
     (nMatrix B p q hpq)[i][j] = B[skipIndex2 p q hpq i][j] := by
@@ -9842,7 +9842,7 @@ def basisVec {R : Type u} [Zero R] [One R] {n : Nat} (q : Fin (n + 2)) :
     Vector R (n + 2) :=
   Vector.ofFn fun i => if i = q then (1 : R) else (0 : R)
 
-@[simp] theorem basisVec_getElem {R : Type u} [Zero R] [One R] {n : Nat}
+@[simp, grind =] theorem basisVec_getElem {R : Type u} [Zero R] [One R] {n : Nat}
     (q : Fin (n + 2)) (i : Fin (n + 2)) :
     (basisVec (R := R) q)[i] = if i = q then (1 : R) else (0 : R) := by
   simp [basisVec]
