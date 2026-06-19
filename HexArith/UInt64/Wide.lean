@@ -250,25 +250,25 @@ theorem mulFull_eq_mulHi_mul (a b : UInt64) :
         simpa [UInt64.toNat_mul, word] using hfull.2
 
 /-- The high component of `mulFull` is the same value returned by `mulHi`. -/
-@[simp]
+@[simp, grind =]
 theorem mulFull_fst_eq_mulHi (a b : UInt64) :
     (mulFull a b).1 = mulHi a b := by
   simpa using congrArg Prod.fst (mulFull_eq_mulHi_mul a b)
 
 /-- The low component of `mulFull` is ordinary wrapped `UInt64` multiplication. -/
-@[simp]
+@[simp, grind =]
 theorem mulFull_snd_eq_mul (a b : UInt64) :
     (mulFull a b).2 = a * b := by
   simpa using congrArg Prod.snd (mulFull_eq_mulHi_mul a b)
 
 /-- Nat-level view of the high component returned by `mulFull`. -/
-@[simp]
+@[simp, grind =]
 theorem toNat_mulFull_fst (a b : UInt64) :
     (mulFull a b).1.toNat = a.toNat * b.toNat / word := by
   rw [mulFull_fst_eq_mulHi, toNat_mulHi]
 
 /-- Nat-level view of the low component returned by `mulFull`. -/
-@[simp]
+@[simp, grind =]
 theorem toNat_mulFull_snd (a b : UInt64) :
     (mulFull a b).2.toNat = a.toNat * b.toNat % word := by
   simp [mulFull_snd_eq_mul, UInt64.toNat_mul, word]
