@@ -179,23 +179,23 @@ theorem mk_p_odd (p : UInt64) (hp : p % 2 = 1) :
     (mk p hp).p_odd = hp := rfl
 
 /-- The Montgomery inverse word stored by `MontCtx.mk`. -/
-@[simp]
+@[simp, grind =]
 theorem mk_p' (p : UInt64) (hp : p % 2 = 1) :
     (mk p hp).p' = montInv p := rfl
 
 /-- The inverse-word correctness fact specialized to `MontCtx.mk`. -/
-@[simp]
+@[simp, grind =]
 theorem mk_p'_eq (p : UInt64) (hp : p % 2 = 1) :
     ((mk p hp).p'.toNat * p.toNat) % UInt64.word = UInt64.word - 1 :=
   (mk p hp).p'_eq
 
 /-- The `R^2 mod p` word stored by `MontCtx.mk`. -/
-@[simp]
+@[simp, grind =]
 theorem mk_r2 (p : UInt64) (hp : p % 2 = 1) :
     (mk p hp).r2 = r2OfModulus p := rfl
 
 /-- The `R^2 mod p` correctness fact specialized to `MontCtx.mk`. -/
-@[simp]
+@[simp, grind =]
 theorem mk_r2_eq (p : UInt64) (hp : p % 2 = 1) :
     (mk p hp).r2.toNat = (UInt64.word * UInt64.word) % p.toNat :=
   (mk p hp).r2_eq
@@ -568,7 +568,7 @@ theorem mulMont_eq (ctx : MontCtx p) (a b : UInt64)
   simp [Nat.mod_eq_of_lt hmod_lt_word]
 
 /-- Multiplying by zero on the left in Montgomery form converts back to zero. -/
-@[simp]
+@[simp, grind =]
 theorem fromMont_mulMont_toMont_zero_left
     (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
     ctx.fromMont (ctx.mulMont (ctx.toMont 0) (ctx.toMont a)) = 0 := by
@@ -579,7 +579,7 @@ theorem fromMont_mulMont_toMont_zero_left
   simp
 
 /-- Multiplying by zero on the right in Montgomery form converts back to zero. -/
-@[simp]
+@[simp, grind =]
 theorem fromMont_mulMont_toMont_zero_right
     (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
     ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont 0)) = 0 := by
@@ -985,31 +985,31 @@ theorem powMod_eq (a n p : Nat) (hp : p > 0) :
       simp [hfit_lt, powModNat_eq a n p hp]
 
 /-- Modular exponentiation modulo zero returns zero. -/
-@[simp]
+@[simp, grind =]
 theorem powMod_modulus_zero (a n : Nat) :
     powMod a n 0 = 0 := by
   rfl
 
 /-- Modular exponentiation with exponent zero returns the residue of `1`. -/
-@[simp]
+@[simp, grind =]
 theorem powMod_zero_exp (a p : Nat) (hp : p > 0) :
     powMod a 0 p = 1 % p := by
   simpa using powMod_eq a 0 p hp
 
 /-- Modular exponentiation with exponent one returns the reduced base. -/
-@[simp]
+@[simp, grind =]
 theorem powMod_one_exp (a p : Nat) (hp : p > 0) :
     powMod a 1 p = a % p := by
   simpa using powMod_eq a 1 p hp
 
 /-- Modular exponentiation with base zero returns the residue of `0 ^ n`. -/
-@[simp]
+@[simp, grind =]
 theorem powMod_zero_base (n p : Nat) (hp : p > 0) :
     powMod 0 n p = 0 ^ n % p := by
   simpa using powMod_eq 0 n p hp
 
 /-- A positive power of zero is zero modulo any positive modulus. -/
-@[simp]
+@[simp, grind =]
 theorem powMod_zero_base_of_pos_exp (n p : Nat) (hn : n > 0) (hp : p > 0) :
     powMod 0 n p = 0 := by
   cases n with
@@ -1017,13 +1017,13 @@ theorem powMod_zero_base_of_pos_exp (n p : Nat) (hn : n > 0) (hp : p > 0) :
   | succ n => simp [powMod_eq 0 (n + 1) p hp]
 
 /-- Modular exponentiation with base one returns the residue of `1`. -/
-@[simp]
+@[simp, grind =]
 theorem powMod_one_base (n p : Nat) (hp : p > 0) :
     powMod 1 n p = 1 % p := by
   simpa using powMod_eq 1 n p hp
 
 /-- Modular exponentiation modulo one returns zero. -/
-@[simp]
+@[simp, grind =]
 theorem powMod_modulus_one (a n : Nat) :
     powMod a n 1 = 0 := by
   rw [powMod_eq a n 1 (by decide)]
@@ -1038,7 +1038,7 @@ theorem powMod_succ (a n p : Nat) (hp : p > 0) :
   rw [Nat.mul_comm (a ^ n) a, Nat.mul_mod_mod]
 
 /-- Reducing the base before modular exponentiation does not change `powMod`. -/
-@[simp]
+@[simp, grind =]
 theorem powMod_mod_base (a n p : Nat) (hp : p > 0) :
     powMod (a % p) n p = powMod a n p := by
   rw [powMod_eq (a % p) n p hp, powMod_eq a n p hp]
