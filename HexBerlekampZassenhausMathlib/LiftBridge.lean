@@ -193,6 +193,86 @@ def recoveredLiftOfToMonicRepresents
     hprecisionM hrep
 
 /--
+Transport a represented monic-coordinate factor through `toMonic` and recover
+the original non-monic factor as the primitive-part carrier.
+
+This is the sound non-monic replacement for asking for a raw
+`RecoveredLift (bhksLatticeBasis core ...)`: the selected lifted product lives
+over `(toMonic core).monic`, and returning to `core` requires
+`primitivePart (dilate (leadingCoeff core) ·)`.
+-/
+noncomputable def recoveredAtLiftOfToMonic
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData))
+    (monicFactor factor : Hex.ZPoly)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hrep :
+      RepresentsIntegerFactorAtLift (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData) monicFactor S)
+    (hrecover :
+      Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) monicFactor) =
+        factor) :
+    RecoveredAtLift core (Hex.ZPoly.toMonicLiftData core B primeData) factor S := by
+  let M := (Hex.ZPoly.toMonic core).monic
+  have hM_monic : Hex.DensePoly.Monic M :=
+    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+  exact Classical.choice
+    (representsIntegerFactorAtLift_of_monicCorrespondent
+      (core := core) (M := M) (factor := factor) (g := monicFactor)
+      (d := Hex.ZPoly.toMonicLiftData core B primeData) (S := S)
+      rfl hM_monic hrep hrecover)
+
+/-- Predicate form of `recoveredAtLiftOfToMonic`. -/
+theorem representsOfToMonic
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData))
+    (monicFactor factor : Hex.ZPoly)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hrep :
+      RepresentsIntegerFactorAtLift (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData) monicFactor S)
+    (hrecover :
+      Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) monicFactor) =
+        factor) :
+    RepresentsIntegerFactorAtLift core
+      (Hex.ZPoly.toMonicLiftData core B primeData) factor S :=
+  RepresentsIntegerFactorAtLift.ofRecovered
+    (recoveredAtLiftOfToMonic core B primeData S monicFactor factor
+      hcore_lc_pos hcore_pos hrep hrecover)
+
+/--
+Recovered-candidate equality for the original non-monic core, after transporting
+a monic-coordinate representation through `toMonic`.
+-/
+theorem recoveryCandidate_eq_of_toMonic
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData))
+    (monicFactor factor : Hex.ZPoly)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
+    (hfactor_sign : Hex.normalizeFactorSign factor = factor)
+    (hrep :
+      RepresentsIntegerFactorAtLift (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData) monicFactor S)
+    (hrecover :
+      Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) monicFactor) =
+        factor) :
+    liftedRecoveryCandidate core (Hex.ZPoly.toMonicLiftData core B primeData) S = factor :=
+  toMonicLiftData_liftedRecoveryCandidate_eq core B primeData
+    hcore_lc_pos hcore_pos hselected hbound hfactor_sign
+    (representsOfToMonic core B primeData S monicFactor factor
+      hcore_lc_pos hcore_pos hrep hrecover)
+
+/--
 Every raw true-factor lift also gives a recovered-lift certificate when the
 caller supplies the corresponding centered/dilated recovery equality.  This is a
 thin adapter for proof paths that already carry `TrueFactorLift` data but need
