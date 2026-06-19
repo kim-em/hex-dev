@@ -7951,6 +7951,28 @@ theorem factorFastFactorsWithBound_eq_some_of_core_success
     rw [hq]
     simp [hchoose, hnotsingleton, hcore]
 
+/-- Identify the fast-path raw factor array on the quadratic integer-root
+short-circuit. When the square-free core has positive degree (`hdeg`), the
+recombination budget exceeds one (`hB`), and the quadratic-root detector
+succeeds (`hquad`), `factorFastFactorsWithBound` returns the normalization
+reassembly of the quadratic core factors before any prime is chosen.
+
+Exposed publicly so the Mathlib-side fast `h_raw` disjunct producer for the
+quadratic branch (#8096) can name the raw array as the reassembly term — the
+underlying `reassemblePolynomialFactors` def is `private`, so the Mathlib layer
+cannot construct this equation itself. -/
+theorem factorFastFactorsWithBound_eq_some_of_quadratic
+    (f : ZPoly) (B : Nat) (hB : 1 < B)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    {coreFactors : Array ZPoly}
+    (hquad :
+      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore =
+        some coreFactors) :
+    factorFastFactorsWithBound f B =
+      some (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) := by
+  unfold factorFastFactorsWithBound
+  rw [if_neg hdeg, if_neg (by omega : B ≠ 0), if_neg (by omega : B ≠ 1), hquad]
+
 /-- Classify the raw fast-path factor array by the dispatch branch that
 emitted it. Mirrors `factorSlowModularFactorsWithBound_branch` for the
 fast path, which has more sub-cases due to the BHKS / quadratic-root /

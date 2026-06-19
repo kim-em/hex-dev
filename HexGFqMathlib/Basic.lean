@@ -122,7 +122,7 @@ theorem ofDigits_range_map_div_pow_mod (hp : 0 < p) :
     exact Nat.mod_add_div n p
 
 /-- Coefficients below the width read back the encoded base-`p` digit. -/
-@[simp]
+@[simp, grind =]
 theorem coeff_ofIndexBelowDegree_of_lt (degree index i : Nat) (hi : i < degree) :
     (ofIndexBelowDegree (p := p) degree index).coeff i
       = Hex.ZMod64.ofNat p (index / p ^ i) := by
@@ -131,7 +131,7 @@ theorem coeff_ofIndexBelowDegree_of_lt (degree index i : Nat) (hi : i < degree) 
   simp [Array.getD_eq_getD_getElem?, List.getElem?_range hi]
 
 /-- Coefficients at or beyond the width vanish. -/
-@[simp]
+@[simp, grind =]
 theorem coeff_ofIndexBelowDegree_of_ge (degree index i : Nat) (hi : degree ≤ i) :
     (ofIndexBelowDegree (p := p) degree index).coeff i = 0 := by
   apply Hex.DensePoly.coeff_eq_zero_of_size_le
@@ -186,7 +186,7 @@ theorem ofIndexBelowDegree_degree_lt (degree index : Nat) (hd : 0 < degree) :
     _ = degree := by simp
 
 /-- Encoding after decoding recovers the bounded index. -/
-@[simp]
+@[simp, grind =]
 theorem coeffIndex_ofIndexBelowDegree (degree : Nat) (index : Fin (p ^ degree)) :
     coeffIndex degree (ofIndexBelowDegree (p := p) degree index.1) = index.1 := by
   rw [coeffIndex_eq_ofDigits]
@@ -202,7 +202,7 @@ theorem coeffIndex_ofIndexBelowDegree (degree : Nat) (index : Fin (p ^ degree)) 
 
 /-- Decoding after encoding recovers a polynomial already below the degree
 bound. -/
-@[simp]
+@[simp, grind =]
 theorem ofIndexBelowDegree_coeffIndex {degree : Nat} {f : Hex.FpPoly p}
     (hdeg : Hex.FpPoly.degree f < degree) :
     ofIndexBelowDegree (p := p) degree (coeffIndex degree f) = f := by
@@ -314,7 +314,7 @@ noncomputable instance fintype :
   Fintype.ofEquiv (Fin (p ^ Hex.FpPoly.degree f)) finEquiv.symm
 
 /-- The generic executable finite-field wrapper has the expected cardinality. -/
-@[simp]
+@[simp, grind =]
 theorem fintype_card :
     Fintype.card (Hex.GFqField.FiniteField f hf hp hirr) =
       p ^ Hex.FpPoly.degree f := by
@@ -353,7 +353,7 @@ the `Conway.conwayPoly`-phrased twin of `modulus_degree`: it is the form `simp`
 needs once the `@[simp]` lemma `modulus_eq_conway` has normalised
 `GFq.modulus h` to `Conway.conwayPoly p n h`, and together with
 `FiniteField.fintype_card` it drives `Fintype.card (GFq p n h)` to `p ^ n`. -/
-@[simp]
+@[simp, grind =]
 theorem conwayPoly_degree (h : Hex.Conway.SupportedEntry p n) :
     Hex.FpPoly.degree (Hex.Conway.conwayPoly p n h) = n :=
   modulus_degree h

@@ -3772,6 +3772,80 @@ theorem factor_quadratic_branch_entry_irreducible_of_quadraticRoots
   rw [hentry_eq]
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hraw_irr
 
+/-- **Fast-path quadratic raw guarded irreducibility producer (#8096).**
+
+Companion to the constant early-return producer
+`Hex.factorFastFactorsWithBound_raw_irreducible_of_constant` and the BHKS
+core-success producer
+`factorFastFactorsWithBound_raw_guardedIrreducible_of_recoveredLift`: this
+discharges the corrected guarded `h_raw` disjunct (#8068) for the fast-path
+**quadratic integer-root** short-circuit. Given the branch markers (`f ≠ 0`,
+`1 < B`, nonzero square-free-core degree, and
+`quadraticIntegerRootFactors? … = some coreFactors`), the raw factor array
+returned by `Hex.factorFastFactorsWithBound f B` is the normalization
+reassembly of `coreFactors`, every member of which is unconditionally
+irreducible — so the
+`shouldRecordPolynomialFactor (normalizeFactorSign raw) = true` guard is simply
+dropped.
+
+Composes the same substrate as the fast-path entry umbrella
+`factor_quadratic_branch_entry_irreducible_of_quadraticRoots`, minus the
+`factorWithBound_entry_mem_quadratic_branch_raw` branch-shape and
+sign-normalisation steps (this concludes about raw factors directly, not
+recorded entries):
+* the branch dispatch identifies `rawFactors` with
+  `Hex.reassemblePolynomialFactors (Hex.normalizeForFactor f) coreFactors`;
+* `IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
+  discharges the expansion-complete side condition;
+* `Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive` gives
+  per-core-factor irreducibility under primitivity
+  (`IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero`,
+  `Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero`);
+* `Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`
+  lifts to raw factor irreducibility. -/
+theorem factorFastFactorsWithBound_raw_irreducible_of_quadratic
+    (f : Hex.ZPoly) (hf : f ≠ 0) (B : Nat) (hB : 1 < B)
+    (hdeg :
+      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    {coreFactors : Array Hex.ZPoly}
+    (hquad :
+      Hex.quadraticIntegerRootFactors?
+        (Hex.normalizeForFactor f).squareFreeCore = some coreFactors)
+    {rawFactors : Array Hex.ZPoly}
+    (hfast : Hex.factorFastFactorsWithBound f B = some rawFactors) :
+    ∀ raw ∈ rawFactors.toList,
+      Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true →
+        Hex.ZPoly.Irreducible raw := by
+  -- Branch dispatch: in the quadratic short-circuit the raw array is the
+  -- normalization reassembly of `coreFactors` (the `reassemblePolynomialFactors`
+  -- def is `private`, so this equation is supplied by a Basic.lean lemma).
+  have hval :=
+    Hex.factorFastFactorsWithBound_eq_some_of_quadratic f B hB hdeg hquad
+  rw [hval] at hfast
+  have hraw_eq := Option.some.inj hfast
+  subst hraw_eq
+  intro raw hmem _hrecord
+  -- Expansion-completeness of the quadratic reassembly.
+  have hcomplete :
+      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) coreFactors :=
+    IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
+      f hf hquad
+  -- Primitivity and positive leading coefficient of the square-free core.
+  have hcore_primitive :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
+  have hcore_pos :
+      0 < Hex.DensePoly.leadingCoeff
+        (Hex.normalizeForFactor f).squareFreeCore :=
+    Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
+  -- Every coreFactor is irreducible.
+  have hcore_factors_irr :
+      ∀ cf ∈ coreFactors.toList, Hex.ZPoly.Irreducible cf := fun cf hcf_mem =>
+    Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive
+      hcore_pos hcore_primitive hquad hcf_mem
+  -- Reassembly lift: every raw factor is irreducible.
+  exact Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+    (Hex.normalizeForFactor f) coreFactors hcomplete hcore_factors_irr hmem
+
 /-- **#4575 HO-1 base task — slow-path quadratic integer-root arm umbrella.**
 
 Per-branch HO-1 component for the slow-path **quadratic integer-root** arm of

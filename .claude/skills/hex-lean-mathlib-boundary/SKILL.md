@@ -326,40 +326,56 @@ core-success, routing through the #8058 capstone). Slow producers
 core — and imply the guarded form by `fun raw hmem _ => producer raw hmem`. Note
 this guarded contract is the fast-path counterpart to the `normalizeFactorSign`
 sign-guard trap below: both are sound *narrowings* of an over-quantified raw
-obligation, not core-facts assembly. The small-mod-singleton
-(`factorsModP.size ≤ 1`) producer landed (#8097,
-`factorFastFactorsWithBound_raw_guardedIrreducible_of_smallModSingleton` in
-`IntReductionMod.lean`); the quadratic short-circuit sub-branch is the last
-unwritten fast guarded producer.
+obligation, not core-facts assembly. Both fast guarded sub-branch producers
+have now landed in `IntReductionMod.lean`: the small-mod-singleton
+(`factorsModP.size ≤ 1`) producer
+`factorFastFactorsWithBound_raw_guardedIrreducible_of_smallModSingleton` (#8097)
+and the quadratic short-circuit producer
+`factorFastFactorsWithBound_raw_irreducible_of_quadratic` (#8101). They were
+written two different ways, and both routes are worth knowing: the private
+`Hex.reassemblePolynomialFactors` (private to `HexBerlekampZassenhaus/Basic.lean`)
+cannot be named from the Mathlib layer to state the dispatcher's value equation
+`factorFastFactorsWithBound f B = some (reassemblePolynomialFactors …)`, and
+there are two ways around that obstacle.
 
-**Writing a fast guarded producer from the Mathlib layer: the reassembly
-value is named through the public branch theorem, never directly.**
-`Hex.reassemblePolynomialFactors` is `private` to
-`HexBerlekampZassenhaus/Basic.lean`, so the Mathlib layer cannot write
-`some (reassemblePolynomialFactors …)` to state the dispatcher's value
-equation (you get `Unknown identifier Hex.reassemblePolynomialFactors`).
-Do **not** reach for `unfold Hex.factorFastFactorsWithBound` in the
-Mathlib-layer proof either — unfolding that def forces a `whnf` of the
-schedule loop and times out the per-declaration heartbeat (the error pins to
-the declaration's first line, masking the real goals). Instead `rcases` the
-public `Hex.factorFastFactorsWithBound_branch_of_choosePrimeData?_some f B
-primeData hchoose` (9-way disjunction (a)–(i)): its singleton disjuncts (c)
-`B=1` and (g) `1<B` already carry `factorFastFactorsWithBound f B = some
-(reassemblePolynomialFactors (normalizeForFactor f) #[squareFreeCore])` as
-their first conjunct, so the private term enters your context through that
-theorem's type without being written. Eliminate the other seven disjuncts
-from the branch markers (`hdeg`, `hB_pos`, `hsmall`, and the `B = 1 ∨ quad =
-none` dispatch guard — the fast-core ones carry `¬ size ≤ 1` contradicting
-`hsmall`; (f)'s `quad = some` contradicts the guard at `1<B`). Then combine
-the disjunct's `hv` with `hfast` via `Option.some.inj (hfast.symm.trans hv)`,
-`rw` the resulting `rawFactors = reassemble…` into the membership, and feed it
-to the public `Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`.
+**Route A — name the reassembly value through the public branch theorem (the
+singleton route).** Do **not** reach for `unfold Hex.factorFastFactorsWithBound`
+in the Mathlib-layer proof — unfolding that def forces a `whnf` of the schedule
+loop and times out the per-declaration heartbeat (the error pins to the
+declaration's first line, masking the real goals). Instead `rcases` the public
+`Hex.factorFastFactorsWithBound_branch_of_choosePrimeData?_some f B primeData
+hchoose` (9-way disjunction (a)–(i)): its singleton disjuncts (c) `B=1` and (g)
+`1<B` already carry `factorFastFactorsWithBound f B = some
+(reassemblePolynomialFactors (normalizeForFactor f) #[squareFreeCore])` as their
+first conjunct, so the private term enters your context through that theorem's
+type without being written. Eliminate the other seven disjuncts from the branch
+markers (`hdeg`, `hB_pos`, `hsmall`, and the `B = 1 ∨ quad = none` dispatch
+guard — the fast-core ones carry `¬ size ≤ 1` contradicting `hsmall`; (f)'s
+`quad = some` contradicts the guard at `1<B`). Then combine the disjunct's `hv`
+with `hfast` via `Option.some.inj (hfast.symm.trans hv)`, `rw` the resulting
+`rawFactors = reassemble…` into the membership, and feed it to the public
+`Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`.
 For the singleton arm the irreducibility substrate is
 `squareFreeCore_irreducible_of_smallModSingletonBranch` →
 `reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc` (both
 `IntReductionMod.lean`); since `hdeg` forces positive core degree the core is
 genuinely irreducible, so the recorded-factor guard is discharged for free and
 is not consumed.
+
+**Route B — name it through a public equation lemma in Basic.lean (the quadratic
+route).** `unfold Hex.factorFastFactorsWithBound` in the Mathlib layer fails with
+`Unknown identifier Hex.reassemblePolynomialFactors`. The constant producer
+(`_raw_irreducible_of_constant`) gets away with `unfold` only because it lives
+*in* Basic.lean where the private def is in scope. The entry umbrellas dodge it
+via `factorWithBound_entry_mem_*_branch_raw` (membership lemmas whose *types*
+carry the private term, which flows through without you naming it). For a new
+raw producer along this route, add a one-line public equation lemma in Basic.lean
+(`factorFastFactorsWithBound_eq_some_of_<branch>`, proved by `unfold` +
+`if_neg`/`rw [hquad]`) and consume it from the Mathlib side; the private term
+then arrives inside the equation's type, and the
+`_factor_irreducible_of_complete_and_core_irreducible` lift accepts the resulting
+`hmem` directly. The quadratic producer uses this route via
+`factorFastFactorsWithBound_eq_some_of_quadratic`.
 
 The slow-path raw irreducibility (`slowModularRaw_irreducible_of_fast_none`,
 #7665) is *unconditional* because the slow path runs a single fixed-precision
