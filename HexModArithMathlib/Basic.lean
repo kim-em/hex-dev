@@ -39,7 +39,7 @@ theorem val_toZMod (a : Hex.ZMod64 p) :
 /-- Round-trip `ZMod64 → ZMod → ZMod64` is the identity. This is the left-inverse
 law making `toZMod` injective; a caller that transfers a residue to Mathlib and back
 recovers it unchanged. -/
-@[simp]
+@[simp, grind =]
 theorem ofZMod_toZMod (a : Hex.ZMod64 p) :
     ofZMod (toZMod a) = a := by
   cases a with
@@ -50,7 +50,7 @@ theorem ofZMod_toZMod (a : Hex.ZMod64 p) :
 /-- Round-trip `ZMod → ZMod64 → ZMod` is the identity. Together with `ofZMod_toZMod`
 this shows the two conversions are mutually inverse, so `equiv` below is a genuine
 ring equivalence. -/
-@[simp]
+@[simp, grind =]
 theorem toZMod_ofZMod (a : ZMod p) :
     toZMod (ofZMod a) = a := by
   apply ZMod.val_injective p
@@ -58,7 +58,7 @@ theorem toZMod_ofZMod (a : ZMod p) :
 
 /-- `ofZMod` carries Mathlib's `0` to the executable `0`, so transferring the additive
 identity in from `ZMod` lands on `ZMod64`'s identity. -/
-@[simp]
+@[simp, grind =]
 theorem ofZMod_zero :
     ofZMod (0 : ZMod p) = 0 := by
   rw [ofZMod, ZMod.val_zero]
@@ -66,7 +66,7 @@ theorem ofZMod_zero :
 
 /-- `toZMod` carries the executable `0` to Mathlib's `0`, so the additive identity
 transfers out to `ZMod`'s identity. -/
-@[simp]
+@[simp, grind =]
 theorem toZMod_zero :
     toZMod (0 : Hex.ZMod64 p) = 0 := by
   apply ZMod.val_injective p
@@ -75,7 +75,7 @@ theorem toZMod_zero :
 
 /-- `toZMod` carries the executable `1` to Mathlib's `1`, so the multiplicative
 identity transfers out to `ZMod`'s identity. -/
-@[simp]
+@[simp, grind =]
 theorem toZMod_one :
     toZMod (1 : Hex.ZMod64 p) = 1 := by
   apply ZMod.val_injective p
@@ -84,7 +84,7 @@ theorem toZMod_one :
 
 /-- `ofZMod` carries Mathlib's `1` to the executable `1`, so the multiplicative
 identity transfers in from `ZMod` to `ZMod64`. -/
-@[simp]
+@[simp, grind =]
 theorem ofZMod_one :
     ofZMod (1 : ZMod p) = 1 := by
   rw [← toZMod_one]
@@ -93,7 +93,7 @@ theorem ofZMod_one :
 /-- `toZMod` is additive. This is the additive-homomorphism law underlying `equiv`;
 it lets a caller push `toZMod` through a sum and so transfer any additive `ZMod`
 identity back to `ZMod64`. -/
-@[simp]
+@[simp, grind =]
 theorem toZMod_add (a b : Hex.ZMod64 p) :
     toZMod (a + b) = toZMod a + toZMod b := by
   apply ZMod.val_injective p
@@ -101,7 +101,7 @@ theorem toZMod_add (a b : Hex.ZMod64 p) :
   exact Hex.ZMod64.toNat_add a b
 
 /-- `toZMod` commutes with negation, so additive inverses transfer out to `ZMod`. -/
-@[simp]
+@[simp, grind =]
 theorem toZMod_neg (a : Hex.ZMod64 p) :
     toZMod (-a) = -toZMod a := by
   change (((Hex.ZMod64.neg a).toNat : Nat) : ZMod p) = -((a.toNat : Nat) : ZMod p)
@@ -116,7 +116,7 @@ theorem toZMod_neg (a : Hex.ZMod64 p) :
       simp
 
 /-- `toZMod` commutes with subtraction, so differences transfer out to `ZMod`. -/
-@[simp]
+@[simp, grind =]
 theorem toZMod_sub (a b : Hex.ZMod64 p) :
     toZMod (a - b) = toZMod a - toZMod b := by
   change (((Hex.ZMod64.sub a b).toNat : Nat) : ZMod p) =
@@ -141,7 +141,7 @@ theorem toZMod_sub (a b : Hex.ZMod64 p) :
 /-- `toZMod` is multiplicative. This is the multiplicative-homomorphism law underlying
 `equiv`; it lets a caller push `toZMod` through a product and so transfer any
 multiplicative `ZMod` identity back to `ZMod64`. -/
-@[simp]
+@[simp, grind =]
 theorem toZMod_mul (a b : Hex.ZMod64 p) :
     toZMod (a * b) = toZMod a * toZMod b := by
   apply ZMod.val_injective p
@@ -150,7 +150,7 @@ theorem toZMod_mul (a b : Hex.ZMod64 p) :
 
 /-- `toZMod` commutes with the `Nat` cast: a numeral built in `ZMod64` transfers to the
 same numeral in `ZMod`. Lets callers move `Nat`-literal coefficients across the bridge. -/
-@[simp]
+@[simp, grind =]
 theorem toZMod_natCast (n : Nat) :
     toZMod ((n : Hex.ZMod64 p)) = (n : ZMod p) := by
   change (((Hex.ZMod64.natCast p n).toNat : Nat) : ZMod p) = (n : ZMod p)
@@ -159,7 +159,7 @@ theorem toZMod_natCast (n : Nat) :
 
 /-- `toZMod` commutes with the `Int` cast: an integer built in `ZMod64` transfers to the
 same integer in `ZMod`. Lets callers move signed integer coefficients across the bridge. -/
-@[simp]
+@[simp, grind =]
 theorem toZMod_intCast (z : Int) :
     toZMod ((z : Hex.ZMod64 p)) = (z : ZMod p) := by
   cases z with
@@ -186,7 +186,7 @@ theorem toZMod_intCast (z : Int) :
           exact (Int.cast_negSucc n).symm
 
 /-- `toZMod` commutes with `Nat` powers, so exponentiation transfers out to `ZMod`. -/
-@[simp]
+@[simp, grind =]
 theorem toZMod_pow (a : Hex.ZMod64 p) (n : Nat) :
     toZMod (a ^ n) = toZMod a ^ n := by
   change (((Hex.ZMod64.pow a n).toNat : Nat) : ZMod p) = ((a.toNat : Nat) : ZMod p) ^ n
@@ -208,7 +208,7 @@ def equiv : Hex.ZMod64 p ≃+* ZMod p where
 
 /-- `equiv` acts as `toZMod` on elements. Rewrites the bundled ring equivalence to the
 bare conversion, so the transport `@[simp]` lemmas above fire on `equiv` applications. -/
-@[simp]
+@[simp, grind =]
 theorem equiv_apply (a : Hex.ZMod64 p) :
     equiv a = toZMod a := by
   rfl
@@ -216,7 +216,7 @@ theorem equiv_apply (a : Hex.ZMod64 p) :
 /-- `equiv.symm` acts as `ofZMod` on elements. Rewrites the inverse ring equivalence to
 the bare conversion, so the transport `@[simp]` lemmas above fire on `equiv.symm`
 applications. -/
-@[simp]
+@[simp, grind =]
 theorem equiv_symm_apply (a : ZMod p) :
     equiv.symm a = ofZMod a := by
   rfl
