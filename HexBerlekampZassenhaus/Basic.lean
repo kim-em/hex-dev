@@ -17669,6 +17669,101 @@ theorem factorSlowTrialFactorsWithBound_polyProduct
           (exhaustiveIntegerTrialCoreFactorsWithBound_polyProduct
             (normalizeForFactor f).squareFreeCore B)
 
+/-- Every member of a primitive ordered array product is itself primitive: each
+member divides the product (`dvd_polyProduct_toArray_of_mem`), and a left
+divisor of a primitive `ZPoly` is primitive (`ZPoly_primitive_left_of_mul`). -/
+private theorem polyProduct_mem_primitive_of_primitive
+    (factors : Array ZPoly)
+    (h : ZPoly.Primitive (Array.polyProduct factors)) :
+    ∀ g ∈ factors.toList, ZPoly.Primitive g := by
+  intro g hg
+  obtain ⟨c, hc⟩ := dvd_polyProduct_toArray_of_mem factors.toList hg
+  rw [show factors.toList.toArray = factors from by simp] at hc
+  rw [hc] at h
+  exact ZPoly_primitive_left_of_mul g c h
+
+/-- A product reconstructing a nonzero `f` from its signed content scalar is
+primitive. Content is multiplicative, so `content f = content f * content P`
+(the scalar constant has content `content f`); `content f ≠ 0` then forces
+`content P = 1`. -/
+private theorem primitive_of_signedContentScalar_mul_eq
+    (f P : ZPoly) (hf : f ≠ 0)
+    (h : DensePoly.C (signedContentScalar f) * P = f) :
+    ZPoly.Primitive P := by
+  have hnonneg : (0 : Int) ≤ ZPoly.content f := by
+    show 0 ≤ DensePoly.content f
+    rw [DensePoly.content]
+    exact Int.natCast_nonneg _
+  have hcontent_ne : ZPoly.content f ≠ 0 := by
+    intro hc
+    apply hf
+    have hr := ZPoly.content_mul_primitivePart f
+    rw [hc, DensePoly.scale_zero_left_semiring] at hr
+    exact hr.symm
+  have hCc : ZPoly.content (DensePoly.C (signedContentScalar f)) = ZPoly.content f := by
+    have h1 : ZPoly.content (DensePoly.C (signedContentScalar f))
+        = Int.ofNat (signedContentScalar f).natAbs := DensePoly.content_C _
+    rw [h1]
+    have hnat : (signedContentScalar f).natAbs = (ZPoly.content f).natAbs := by
+      unfold signedContentScalar
+      rw [if_neg hf]
+      by_cases hl : DensePoly.leadingCoeff f < 0
+      · rw [if_pos hl, Int.natAbs_neg]
+      · rw [if_neg hl]
+    rw [hnat]
+    exact Int.natAbs_of_nonneg hnonneg
+  have key : ZPoly.content f = ZPoly.content f * ZPoly.content P := by
+    have step : ZPoly.content (DensePoly.C (signedContentScalar f) * P)
+        = ZPoly.content f * ZPoly.content P := by
+      rw [ZPoly.content_mul, hCc]
+    rw [h] at step
+    exact step
+  have hzero : ZPoly.content f * (ZPoly.content P - 1) = 0 := by
+    rw [Int.mul_sub, Int.mul_one, ← key, Int.sub_self]
+  rcases Int.mul_eq_zero.mp hzero with hc | hc
+  · exact absurd hc hcontent_ne
+  · show ZPoly.content P = 1
+    omega
+
+/-- The default-precision raw factor array selected by the dispatch is primitive
+entrywise, for nonzero `f`. This is the closed discharge of the raw-source
+primitivity hypothesis threaded through `factor_entries_primitive`: the array
+product reconstructs `f` from its signed content scalar
+(`factor*FactorsWithBound_polyProduct*` per branch), so the product is primitive
+and hence so is every member. -/
+theorem factor_chosen_raw_primitive_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0) :
+    ∀ rawFactors : Array ZPoly,
+      (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
+          some rawFactors ∨
+        (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) = none ∧
+          factorSlowModularFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
+            some rawFactors) ∨
+        (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) = none ∧
+          factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f) = none ∧
+          rawFactors =
+            factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f))) →
+      ∀ raw ∈ rawFactors.toList, ZPoly.Primitive raw := by
+  intro rawFactors hsource
+  have hprod : DensePoly.C (signedContentScalar f) *
+      Array.polyProduct rawFactors = f := by
+    rcases hsource with hfast | ⟨_, hmod⟩ | ⟨_, _, htrial⟩
+    · exact factorFastFactorsWithBound_polyProduct_of_some hfast
+    · exact factorSlowModularFactorsWithBound_polyProduct_of_some hmod
+    · subst htrial
+      exact factorSlowTrialFactorsWithBound_polyProduct f _
+  have hprim : ZPoly.Primitive (Array.polyProduct rawFactors) :=
+    primitive_of_signedContentScalar_mul_eq f (Array.polyProduct rawFactors) hf hprod
+  exact polyProduct_mem_primitive_of_primitive rawFactors hprim
+
+/-- Every recorded entry of the default factorization of a nonzero `f` is
+primitive, with no raw-source hypothesis: it is discharged internally by
+`factor_chosen_raw_primitive_of_ne_zero`. -/
+theorem factor_entries_primitive_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0) :
+    ∀ entry ∈ (factor f).factors, ZPoly.Primitive entry.1 :=
+  factor_entries_primitive f (factor_chosen_raw_primitive_of_ne_zero f hf)
+
 private theorem factorSlowTrialWithBound_product_of_all_recorded_normalized
     (f : ZPoly) (B : Nat)
     (hnormalized :

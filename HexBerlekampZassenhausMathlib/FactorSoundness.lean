@@ -149,6 +149,40 @@ theorem factor_headline_contract_core_with_primitive
     exact Hex.factor_entry_multiplicity_pos f entry (Array.mem_toList_iff.mpr hentry)
 
 /--
+Closed primitive-strengthened headline for the default executable factorization
+of a nonzero input.
+
+This is the same bundle as `factor_headline_contract_core_with_primitive` but
+with the raw-source primitivity hypothesis `h_raw` discharged internally via
+`Hex.factor_chosen_raw_primitive_of_ne_zero`, so callers no longer supply it:
+product preservation, primitive plus Mathlib irreducibility per recorded factor,
+positive multiplicities, the syntactic distinct-key clause, and the
+signed-content scalar convention.
+
+The `f ≠ 0` side condition is essential rather than incidental. For `f = 0` the
+square-free core is `0` (content `0`, hence not primitive), so the raw-source
+primitivity statement quantified over the dispatch is literally false; the
+factorization of `0` is itself degenerate (`scalar = 0`, product `0`).
+-/
+theorem factor_headline_primitive (f : Hex.ZPoly) (hf : f ≠ 0) :
+    Hex.Factorization.product (Hex.factor f) = f ∧
+      (∀ entry ∈ (Hex.factor f).factors,
+        Hex.ZPoly.Primitive entry.1 ∧
+          Irreducible (HexPolyZMathlib.toPolynomial entry.1)) ∧
+      (∀ entry ∈ (Hex.factor f).factors, 0 < entry.2) ∧
+      List.Pairwise (fun a b : Hex.ZPoly × Nat => a.1 ≠ b.1)
+        (Hex.factor f).factors.toList ∧
+      (Hex.factor f).scalar =
+        if f = 0 then
+          0
+        else if Hex.DensePoly.leadingCoeff f < 0 then
+          -Hex.ZPoly.content f
+        else
+          Hex.ZPoly.content f :=
+  factor_headline_contract_core_with_primitive f
+    (Hex.factor_chosen_raw_primitive_of_ne_zero f hf)
+
+/--
 The sign-normalization side condition for the default executable factorization:
 every recorded polynomial factor is fixed by `normalizeFactorSign`. This is the
 `hψ_norm` clause that uniqueness/checker callers would otherwise reconstruct from
