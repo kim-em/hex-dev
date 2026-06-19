@@ -196,7 +196,7 @@ private theorem xgcd_repr_gcd_dvd_repr
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : GFqRing.PolyQuotient f hf) :
     (DensePoly.xgcd (GFqRing.repr x) f).gcd ∣ GFqRing.repr x := by
-  simpa [DensePoly.gcd]
+  simpa [← DensePoly.gcd_eq_xgcd_gcd]
     using DensePoly.gcd_dvd_left (GFqRing.repr x) f
 
 /-- The xgcd gcd witness divides the irreducible modulus. -/
@@ -204,7 +204,7 @@ private theorem xgcd_repr_gcd_dvd_modulus
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : GFqRing.PolyQuotient f hf) :
     (DensePoly.xgcd (GFqRing.repr x) f).gcd ∣ f := by
-  simpa [DensePoly.gcd]
+  simpa [← DensePoly.gcd_eq_xgcd_gcd]
     using DensePoly.gcd_dvd_right (GFqRing.repr x) f
 
 /-- A nonzero `ZMod64 p` scalar is coprime to prime `p`, supplying the unit
