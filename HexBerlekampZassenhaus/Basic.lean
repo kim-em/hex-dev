@@ -7781,8 +7781,39 @@ def factorSlowTrialFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
 #guard factorSlowTrialFactorsWithBound exhaustiveNonMonicQuadraticGuard 4 =
   #[exhaustiveNonMonicQuadraticGuard]
 
-private def factorSlowTrialWithBound (f : ZPoly) (B : Nat) : Factorization :=
+def factorSlowTrialWithBound (f : ZPoly) (B : Nat) : Factorization :=
   factorizationOfFactors f (factorSlowTrialFactorsWithBound f B)
+
+/-- Characterise the bounded integer trial-division slow wrapper as the raw
+factor array packed into the public `Factorization` representation. -/
+theorem factorSlowTrialWithBound_eq_factorizationOfFactors
+    (f : ZPoly) (B : Nat) :
+    factorSlowTrialWithBound f B =
+      factorizationOfFactors f (factorSlowTrialFactorsWithBound f B) := rfl
+
+/--
+Raw factor array produced by the bounded slow backstop. The modular slow path
+is tried first; when no admissible modular prime is available, the integer
+trial-division tier supplies the factors.
+-/
+def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
+  match factorSlowModularFactorsWithBound f B with
+  | some rawFactors => rawFactors
+  | none => factorSlowTrialFactorsWithBound f B
+
+/--
+Bounded slow backstop for the public factorization combinator, packaged as a
+`Factorization` for proof-facing callers.
+-/
+def factorSlowWithBound (f : ZPoly) (B : Nat) : Factorization :=
+  factorizationOfFactors f (factorSlowFactorsWithBound f B)
+
+/-- Characterise the bounded slow wrapper as the slow raw factor array packed
+into the public `Factorization` representation. -/
+theorem factorSlowWithBound_eq_factorizationOfFactors
+    (f : ZPoly) (B : Nat) :
+    factorSlowWithBound f B =
+      factorizationOfFactors f (factorSlowFactorsWithBound f B) := rfl
 
 /--
 Factor using the integer trial-division path at the default Mignotte
@@ -8088,8 +8119,15 @@ theorem defaultFactorCoeffBound_le_factorFastPrecisionCap (f : ZPoly) :
   unfold factorFastPrecisionCap
   exact Nat.le_max_right _ _
 
-private def factorFastWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
+def factorFastWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
   (factorFastFactorsWithBound f B).map (factorizationOfFactors f)
+
+/-- Characterise the bounded fast wrapper as the raw fast array path mapped
+into the public `Factorization` representation. -/
+theorem factorFastWithBound_eq_map_factorizationOfFactors
+    (f : ZPoly) (B : Nat) :
+    factorFastWithBound f B =
+      (factorFastFactorsWithBound f B).map (factorizationOfFactors f) := rfl
 
 /--
 Public van Hoeij CLD fast path with a combined BHKS/Mignotte precision cap.
@@ -8136,7 +8174,7 @@ private def finitePrimeSearchNoneQuadratic : ZPoly :=
 
 /-- Lift a `factorFastFactorsWithBound` success through the `.map` layer that
 defines `factorFastWithBound`. -/
-private theorem factorFastWithBound_eq_some_of_factors_some
+theorem factorFastWithBound_eq_some_of_factors_some
     (f : ZPoly) (B : Nat) {factors : Array ZPoly}
     (h : factorFastFactorsWithBound f B = some factors) :
     factorFastWithBound f B = some (factorizationOfFactors f factors) := by
@@ -8146,7 +8184,7 @@ private theorem factorFastWithBound_eq_some_of_factors_some
 
 /-- Forward a `factorFastFactorsWithBound ≠ none` through the `.map` layer that
 defines `factorFastWithBound`. -/
-private theorem factorFastWithBound_ne_none_of_factors_ne_none
+theorem factorFastWithBound_ne_none_of_factors_ne_none
     (f : ZPoly) (B : Nat)
     (h : factorFastFactorsWithBound f B ≠ none) :
     factorFastWithBound f B ≠ none := by
@@ -8266,6 +8304,21 @@ def factorWithBound (f : ZPoly) (B : Nat) : Factorization :=
     match factorSlowModularWithBound f B with
     | some r => r
     | none => factorSlowTrialWithBound f B
+
+/-- SPEC-shaped view of the bounded public factorization combinator: use the
+fast bounded wrapper when it succeeds, otherwise the combined slow backstop. -/
+theorem factorWithBound_eq_factorFastWithBound_getD_factorSlowWithBound
+    (f : ZPoly) (B : Nat) :
+    factorWithBound f B =
+      (factorFastWithBound f B).getD (factorSlowWithBound f B) := by
+  unfold factorWithBound factorSlowWithBound factorSlowFactorsWithBound
+    factorSlowModularWithBound
+  cases hfast : factorFastWithBound f B with
+  | some result => simp
+  | none =>
+      cases hraw : factorSlowModularFactorsWithBound f B with
+      | some rawFactors => simp
+      | none => simp [factorSlowTrialWithBound]
 
 #guard Factorization.product (factorWithBound cldGuardF 1) = cldGuardF
 
