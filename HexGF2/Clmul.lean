@@ -107,12 +107,12 @@ private theorem foldl_keep {α β : Type} (xs : List β) (acc : α) :
   | cons _ xs ih => simp [ih]
 
 /-- The pure carry-less multiplier returns zero when the left word is zero. -/
-@[simp]
+@[simp, grind =]
 theorem pureClmul_zero_left (x : UInt64) : pureClmul 0 x = (0, 0) := by
   simp [pureClmul, clmulAccumulateBit_zero_left, foldl_keep]
 
 /-- The pure carry-less multiplier returns zero when the right word is zero. -/
-@[simp]
+@[simp, grind =]
 theorem pureClmul_zero_right (x : UInt64) : pureClmul x 0 = (0, 0) := by
   simp [pureClmul, foldl_keep]
 
@@ -568,12 +568,12 @@ theorem clmul_eq_pureClmul_snd (a b : UInt64) : (clmul a b).2 = (pureClmul a b).
   rw [clmul_eq_pureClmul]
 
 /-- Carry-less multiplication by zero on the left returns the zero product. -/
-@[simp]
+@[simp, grind =]
 theorem clmul_zero_left (x : UInt64) : clmul 0 x = (0, 0) := by
   rw [clmul_eq_pureClmul, pureClmul_zero_left]
 
 /-- Carry-less multiplication by zero on the right returns the zero product. -/
-@[simp]
+@[simp, grind =]
 theorem clmul_zero_right (x : UInt64) : clmul x 0 = (0, 0) := by
   rw [clmul_eq_pureClmul, pureClmul_zero_right]
 

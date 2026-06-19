@@ -91,7 +91,7 @@ theorem primeFieldLinearFactor_dvd_primeFieldLinearProduct (c : ZMod64 p) :
     (ZMod64.mem_values c)
 
 /-- The canonical product has one listed linear factor for each residue. -/
-@[simp] theorem primeFieldLinearProduct_factor_count :
+@[simp, grind =] theorem primeFieldLinearProduct_factor_count :
     (ZMod64.values p).length = p :=
   ZMod64.values_length (p := p)
 
