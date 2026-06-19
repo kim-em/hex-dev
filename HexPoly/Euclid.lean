@@ -932,20 +932,60 @@ def xgcd [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : XGCDResult R :=
   xgcdAux p 1 0 q 0 1 (p.size + q.size + 1)
 
-/-- Polynomial gcd over a field. -/
+/-- Tail-recursive Euclidean gcd tracking only the remainder sequence, **without**
+the Bezout coefficients. `xgcd`/`xgcdAux` carry the Bezout accumulators `s`, `t`
+and update them with a polynomial multiplication (`q * s₁`, `q * t₁`) at every
+step on polynomials whose degree grows through the run — that is `O(deg³)` work
+and pure waste when only the gcd value is wanted (the common case: the square-free
+/ separability test `gcd(f, f') = 1`). `gcdAux` keeps only the remainders and is
+`O(deg²)`. -/
+private def gcdAux [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (r₀ r₁ : DensePoly R) (fuel : Nat) : DensePoly R :=
+  match fuel with
+  | 0 => r₀
+  | fuel + 1 =>
+      if _hr : r₁.isZero then
+        r₀
+      else
+        gcdAux r₁ (divMod r₀ r₁).2 fuel
+
+/-- The plain remainder gcd agrees with the `gcd` component of the extended
+algorithm: `XGCDResult.gcd` never depends on the Bezout accumulators. -/
+theorem gcdAux_eq_xgcdAux_gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly R) (fuel : Nat) :
+    gcdAux r₀ r₁ fuel = (xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel).gcd := by
+  induction fuel generalizing r₀ s₀ t₀ r₁ s₁ t₁ with
+  | zero => rfl
+  | succ fuel ih =>
+      unfold gcdAux xgcdAux
+      split
+      · rfl
+      · exact ih _ _ _ _ _ _
+
+/-- Polynomial gcd over a field. Computed by the plain remainder sequence
+(`gcdAux`), **not** the extended algorithm: the gcd value is independent of the
+Bezout coefficients, and computing them costs an extra polynomial multiplication
+per step (`O(deg³)` vs `O(deg²)`). `xgcd` stays available for callers that
+genuinely need Bezout coefficients. -/
 def gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : DensePoly R :=
-  (xgcd p q).gcd
+  gcdAux p q (p.size + q.size + 1)
+
+/-- `gcd` equals the gcd component of `xgcd`; lets lemmas proved against the
+extended algorithm transfer to the plain `gcd`. -/
+theorem gcd_eq_xgcd_gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (p q : DensePoly R) : gcd p q = (xgcd p q).gcd :=
+  gcdAux_eq_xgcdAux_gcd p 1 0 q 0 1 (p.size + q.size + 1)
 
 /-- The gcd component returned by `xgcd` is the executable gcd. -/
 theorem xgcd_gcd_eq_gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) :
-    (xgcd p q).gcd = gcd p q := rfl
+    (xgcd p q).gcd = gcd p q := (gcd_eq_xgcd_gcd p q).symm
 
 /-- The executable gcd of two zero dense polynomials is zero. -/
 @[simp, grind =] theorem gcd_zero_zero [One R] [Add R] [Sub R] [Mul R] [Div R] :
     gcd (0 : DensePoly R) (0 : DensePoly R) = 0 := by
-  rfl
+  rw [gcd_eq_xgcd_gcd]; rfl
 
 /-- Law package for the executable dense-polynomial division operations.
 
@@ -3120,7 +3160,8 @@ theorem gcd_dvd_left_of_divModLaws {S : Type _}
         q.isZero = false → ¬ 0 < q.degree?.getD 0 → (divMod p q).2 = 0)
     (p q : DensePoly S) :
     gcd p q ∣ p := by
-  unfold gcd xgcd
+  rw [gcd_eq_xgcd_gcd]
+  unfold xgcd
   exact (xgcdAux_gcd_dvd_inputs hsmall p 1 0 q 0 1 (p.size + q.size + 1)
     (by
       have hq := degree_getD_lt_size_add_one q
@@ -3136,7 +3177,8 @@ theorem gcd_dvd_right_of_divModLaws {S : Type _}
         q.isZero = false → ¬ 0 < q.degree?.getD 0 → (divMod p q).2 = 0)
     (p q : DensePoly S) :
     gcd p q ∣ q := by
-  unfold gcd xgcd
+  rw [gcd_eq_xgcd_gcd]
+  unfold xgcd
   exact (xgcdAux_gcd_dvd_inputs hsmall p 1 0 q 0 1 (p.size + q.size + 1)
     (by
       have hq := degree_getD_lt_size_add_one q
@@ -3149,7 +3191,8 @@ theorem dvd_gcd_of_divModLaws {S : Type _}
     (d p q : DensePoly S) :
     d ∣ p → d ∣ q → d ∣ gcd p q := by
   intro hdp hdq
-  unfold gcd xgcd
+  rw [gcd_eq_xgcd_gcd]
+  unfold xgcd
   exact xgcdAux_common_dvd_gcd d p 1 0 q 0 1 (p.size + q.size + 1) hdp hdq
 
 /-- Recursive reconstruction invariant for the array-backed long-division loop.
