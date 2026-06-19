@@ -101,11 +101,11 @@ theorem mahlerMeasure_rootDeletionDerivativeSummand_le (p : ℂ[X]) (α : ℂ) :
     · rw [Multiset.erase_of_notMem hα]
   · exact norm_nonneg _
 
-@[simp]
+@[simp, grind =]
 theorem schurRootPath_zero (α : ℂ) : schurRootPath α 0 = α := by
   simp [schurRootPath]
 
-@[simp]
+@[simp, grind =]
 theorem schurRootPath_one (α : ℂ) : schurRootPath α 1 = schurReflectedRoot α := by
   simp [schurRootPath]
 
@@ -219,17 +219,17 @@ theorem mahlerMeasure_derivative_le_schurReflectedAtRootForm_derivative_of_monot
     _ = (schurReflectedAtRootForm p α).derivative.mahlerMeasure := by
       rw [hreflect]
 
-@[simp]
+@[simp, grind =]
 theorem robinsonFactor_of_norm_le {α : ℂ} (hα : ‖α‖ ≤ 1) :
     robinsonFactor α = X - C α := by
   simp [robinsonFactor, hα]
 
-@[simp]
+@[simp, grind =]
 theorem robinsonFactor_of_one_lt_norm {α : ℂ} (hα : 1 < ‖α‖) :
     robinsonFactor α = 1 - C (conj α) * X := by
   simp [robinsonFactor, not_le.mpr hα]
 
-@[simp]
+@[simp, grind =]
 theorem robinsonForm_zero : robinsonForm (0 : ℂ[X]) = 0 := by
   simp [robinsonForm]
 

@@ -31,26 +31,26 @@ private theorem range_foldl_add_eq_finset_sum_nat (g : Nat → Nat) (m : Nat) :
 def l2norm (f : Polynomial ℤ) : ℝ :=
   Real.sqrt (∑ i ∈ f.support, (f.coeff i : ℝ) ^ 2)
 
-@[simp]
+@[simp, grind =]
 theorem coeff_map_intCast (f : Polynomial ℤ) (n : Nat) :
     (f.map (Int.castRingHom ℂ)).coeff n = (f.coeff n : ℂ) := by
   simp
 
-@[simp]
+@[simp, grind =]
 theorem natDegree_map_intCast (f : Polynomial ℤ) :
     (f.map (Int.castRingHom ℂ)).natDegree = f.natDegree := by
   simpa using
     (Polynomial.natDegree_map_eq_of_injective (f := Int.castRingHom ℂ)
       (hf := RingHom.injective_int (Int.castRingHom ℂ)) f)
 
-@[simp]
+@[simp, grind =]
 theorem support_map_intCast (f : Polynomial ℤ) :
     (f.map (Int.castRingHom ℂ)).support = f.support := by
   simpa using
     (Polynomial.support_map_of_injective (f := Int.castRingHom ℂ) f
       (RingHom.injective_int (Int.castRingHom ℂ)))
 
-@[simp]
+@[simp, grind =]
 theorem norm_coeff_map_intCast (f : Polynomial ℤ) (n : Nat) :
     ‖(f.map (Int.castRingHom ℂ)).coeff n‖ = (Int.natAbs (f.coeff n) : ℝ) := by
   simp [Complex.norm_intCast]
