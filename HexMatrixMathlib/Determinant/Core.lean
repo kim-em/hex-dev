@@ -42,7 +42,7 @@ noncomputable def toPerm (perm : Vector (Fin n) n)
     ⟨get_injective_of_nodup hnodup,
       Finite.surjective_of_injective (get_injective_of_nodup hnodup)⟩
 
-@[simp]
+@[simp, grind =]
 theorem toPerm_apply (perm : Vector (Fin n) n)
     (hnodup : perm.toList.Nodup) (i : Fin n) :
     toPerm perm hnodup i = perm[i] := by
@@ -156,14 +156,14 @@ theorem detSign_eq_permSign [CommRing R]
 
 end PermutationVector
 
-@[simp]
+@[simp, grind =]
 theorem detProduct_eq_matrixEquiv
     [Lean.Grind.Ring R] (M : Hex.Matrix R n n) (perm : Vector (Fin n) n) :
     Hex.Matrix.detProduct M perm =
       (List.finRange n).foldl (fun acc i => acc * matrixEquiv M i (perm[i])) 1 := by
   rfl
 
-@[simp]
+@[simp, grind =]
 theorem detTerm_eq_matrixEquiv
     [Lean.Grind.Ring R] (M : Hex.Matrix R n n) (perm : Vector (Fin n) n) :
     Hex.Matrix.detTerm M perm =
@@ -2356,12 +2356,12 @@ def bareissDesnanotIndex (k : Nat) : Fin (k + 2) ≃ Fin (k + 2) where
       · have hlast : r.val = k + 1 := by omega
         simp [hlast]
 
-@[simp]
+@[simp, grind =]
 theorem bareissDesnanotIndex_zero (k : Nat) :
     bareissDesnanotIndex k 0 = (⟨k, by omega⟩ : Fin (k + 2)) := by
   rfl
 
-@[simp]
+@[simp, grind =]
 theorem bareissDesnanotIndex_last (k : Nat) :
     bareissDesnanotIndex k (Fin.last (k + 1)) = Fin.last (k + 1) := by
   simp [bareissDesnanotIndex]
