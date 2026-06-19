@@ -608,7 +608,7 @@ theorem zero_ne_one
   rfl
 
 /-- The representative of a natural literal is the reduced constant polynomial. -/
-@[simp] theorem repr_natCast
+@[simp, grind =] theorem repr_natCast
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) (n : Nat) :
     repr (n : FiniteField f hf hp hirr) =
       GFqRing.reduceMod f (FpPoly.C (n : ZMod64 p)) :=
@@ -747,7 +747,7 @@ theorem natCast_eq_natCast_iff_mod_eq
   rfl
 
 /-- The field inverse uses the standard junk value at zero. -/
-@[simp] theorem inv_zero
+@[simp, grind =] theorem inv_zero
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) :
     ((0 : FiniteField f hf hp hirr) : FiniteField f hf hp hirr)⁻¹ = 0 := by
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
@@ -824,33 +824,33 @@ theorem inv_mul_cancel
     _ = (x * x⁻¹ : FiniteField f hf hp hirr).toQuotient := rfl
     _ = (1 : FiniteField f hf hp hirr).toQuotient := congrArg FiniteField.toQuotient hleft
 
-@[simp] theorem repr_zero
+@[simp, grind =] theorem repr_zero
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) :
     repr (0 : FiniteField f hf hp hirr) = GFqRing.reduceMod f 0 :=
   rfl
 
 /-- The multiplicative-identity representative is the reduced form of `1`. -/
-@[simp] theorem repr_one
+@[simp, grind =] theorem repr_one
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) :
     repr (1 : FiniteField f hf hp hirr) = GFqRing.reduceMod f 1 :=
   rfl
 
 /-- The representative of a sum is the reduced sum of representatives. -/
-@[simp] theorem repr_add
+@[simp, grind =] theorem repr_add
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) :
     repr (x + y) = GFqRing.reduceMod f (repr x + repr y) :=
   rfl
 
 /-- The representative of a product is the reduced product of representatives. -/
-@[simp] theorem repr_mul
+@[simp, grind =] theorem repr_mul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) :
     repr (x * y) = GFqRing.reduceMod f (repr x * repr y) :=
   rfl
 
 /-- The representative of a negation reduces from the negated representative. -/
-@[simp] theorem repr_neg
+@[simp, grind =] theorem repr_neg
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) :
     repr (-x) = GFqRing.reduceMod f (-(repr x)) :=
@@ -858,21 +858,21 @@ theorem inv_mul_cancel
 
 /-- The representative of a subtraction reduces from the difference of
 representatives. -/
-@[simp] theorem repr_sub
+@[simp, grind =] theorem repr_sub
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) :
     repr (x - y) = GFqRing.reduceMod f (repr x - repr y) :=
   rfl
 
 /-- The representative of a natural power is the quotient-ring power representative. -/
-@[simp] theorem repr_pow
+@[simp, grind =] theorem repr_pow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) (n : Nat) :
     repr (x ^ n) = GFqRing.repr (x.toQuotient ^ n) :=
   rfl
 
 /-- The representative of a quotient is the quotient-ring product with the projected inverse. -/
-@[simp] theorem repr_div
+@[simp, grind =] theorem repr_div
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) :
     repr (x / y : FiniteField f hf hp hirr) =
@@ -880,7 +880,7 @@ representatives. -/
   rfl
 
 /-- Nonnegative integer powers share the natural-power representative. -/
-@[simp] theorem repr_zpow_ofNat
+@[simp, grind =] theorem repr_zpow_ofNat
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) (n : Nat) :
     repr (x ^ (Int.ofNat n) : FiniteField f hf hp hirr) =
@@ -888,7 +888,7 @@ representatives. -/
   rfl
 
 /-- Negative integer powers represent the inverse of the corresponding positive power. -/
-@[simp] theorem repr_zpow_negSucc
+@[simp, grind =] theorem repr_zpow_negSucc
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) (n : Nat) :
     repr (x ^ (Int.negSucc n) : FiniteField f hf hp hirr) =
@@ -896,21 +896,21 @@ representatives. -/
   rfl
 
 /-- The representative of an integer cast lifts the quotient-ring cast. -/
-@[simp] theorem repr_intCast
+@[simp, grind =] theorem repr_intCast
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) (i : Int) :
     repr (i : FiniteField f hf hp hirr) =
       GFqRing.repr ((i : GFqRing.PolyQuotient f hf)) :=
   rfl
 
 /-- The representative of a natural scalar action lifts the quotient-ring action. -/
-@[simp] theorem repr_nsmul
+@[simp, grind =] theorem repr_nsmul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (n : Nat) (x : FiniteField f hf hp hirr) :
     repr (n • x : FiniteField f hf hp hirr) = GFqRing.repr (n • x.toQuotient) :=
   rfl
 
 /-- The representative of an integer scalar action lifts the quotient-ring action. -/
-@[simp] theorem repr_zsmul
+@[simp, grind =] theorem repr_zsmul
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (i : Int) (x : FiniteField f hf hp hirr) :
     repr (i • x : FiniteField f hf hp hirr) = GFqRing.repr (i • x.toQuotient) :=
@@ -1117,7 +1117,7 @@ theorem frob_eq_pow
   rfl
 
 /-- The representative of Frobenius is the quotient-ring `p`-th power representative. -/
-@[simp] theorem repr_frob
+@[simp, grind =] theorem repr_frob
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) :
     repr (frob x) = GFqRing.repr (x.toQuotient ^ p) :=
