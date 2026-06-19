@@ -20,12 +20,12 @@ theorem mk_p_lt (p : UInt64) (hp : p.toNat > 1) (hlt : p.toNat < 2 ^ 32) :
     (mk p hp hlt).p_lt = hlt := rfl
 
 /-- The reciprocal word stored by `BarrettCtx.mk`. -/
-@[simp]
+@[simp, grind =]
 theorem mk_pinv (p : UInt64) (hp : p.toNat > 1) (hlt : p.toNat < 2 ^ 32) :
     (mk p hp hlt).pinv = UInt64.ofNat (barrettRadix / p.toNat) := rfl
 
 /-- The Nat value of the reciprocal word stored by `BarrettCtx.mk`. -/
-@[simp]
+@[simp, grind =]
 theorem mk_pinv_toNat (p : UInt64) (hp : p.toNat > 1) (hlt : p.toNat < 2 ^ 32) :
     (mk p hp hlt).pinv.toNat = barrettRadix / p.toNat := by
   simpa using (toNat_pinv (mk p hp hlt))
@@ -113,7 +113,7 @@ theorem mulMod_eq (ctx : BarrettCtx p) (a b : UInt64)
 Barrett modular multiplication fixes products that are already canonical
 residues.
 -/
-@[simp]
+@[simp, grind =]
 theorem mulMod_eq_mul_of_mul_lt (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) (hmul : a.toNat * b.toNat < p.toNat) :
     ctx.mulMod a b = a * b := by
@@ -123,7 +123,7 @@ theorem mulMod_eq_mul_of_mul_lt (ctx : BarrettCtx p) (a b : UInt64)
   simpa [mulMod] using barrettReduce_eq_self_of_lt ctx (a * b) hprod_lt
 
 /-- Zero is a left absorbing element for Barrett modular multiplication. -/
-@[simp]
+@[simp, grind =]
 theorem mulMod_zero_left (ctx : BarrettCtx p) (b : UInt64) (hb : b < p) :
     ctx.mulMod 0 b = 0 := by
   have hzero : (0 : UInt64) < p := by
@@ -132,7 +132,7 @@ theorem mulMod_zero_left (ctx : BarrettCtx p) (b : UInt64) (hb : b < p) :
   simpa using mulMod_eq ctx 0 b hzero hb
 
 /-- Zero is a right absorbing element for Barrett modular multiplication. -/
-@[simp]
+@[simp, grind =]
 theorem mulMod_zero_right (ctx : BarrettCtx p) (a : UInt64) (ha : a < p) :
     ctx.mulMod a 0 = 0 := by
   have hzero : (0 : UInt64) < p := by
@@ -141,7 +141,7 @@ theorem mulMod_zero_right (ctx : BarrettCtx p) (a : UInt64) (ha : a < p) :
   simpa using mulMod_eq ctx a 0 ha hzero
 
 /-- One is a left identity for Barrett modular multiplication on reduced residues. -/
-@[simp]
+@[simp, grind =]
 theorem mulMod_one_left (ctx : BarrettCtx p) (a : UInt64) (ha : a < p) :
     ctx.mulMod 1 a = a := by
   have hone : (1 : UInt64) < p := by
@@ -154,7 +154,7 @@ theorem mulMod_one_left (ctx : BarrettCtx p) (a : UInt64) (ha : a < p) :
   simp [Nat.mod_eq_of_lt ha']
 
 /-- One is a right identity for Barrett modular multiplication on reduced residues. -/
-@[simp]
+@[simp, grind =]
 theorem mulMod_one_right (ctx : BarrettCtx p) (a : UInt64) (ha : a < p) :
     ctx.mulMod a 1 = a := by
   have hone : (1 : UInt64) < p := by
