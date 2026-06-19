@@ -202,17 +202,17 @@ def fpPolyEquiv : Hex.FpPoly p ≃+* Polynomial (ZMod p) where
 def toMathlibPolynomial (f : Hex.FpPoly p) : Polynomial (ZMod p) :=
   fpPolyEquiv f
 
-@[simp]
+@[simp, grind =]
 theorem fpPolyEquiv_apply (f : Hex.FpPoly p) :
     fpPolyEquiv f = toMathlibPolynomial f := by
   rfl
 
-@[simp]
+@[simp, grind =]
 theorem fpPolyEquiv_symm_apply (f : Polynomial (ZMod p)) :
     fpPolyEquiv.symm f = polynomialToFpPoly f := by
   rfl
 
-@[simp]
+@[simp, grind =]
 theorem coeff_toMathlibPolynomial (f : Hex.FpPoly p) (n : Nat) :
     (toMathlibPolynomial f).coeff n = HexModArithMathlib.ZMod64.toZMod (f.coeff n) := by
   show (fpPolyToPolynomial f).coeff n = HexModArithMathlib.ZMod64.toZMod (f.coeff n)
@@ -226,7 +226,7 @@ theorem coeff_toMathlibPolynomial (f : Hex.FpPoly p) (n : Nat) :
       (Nat.le_of_not_lt (Finset.mem_range.not.mp hn))]
     exact HexModArithMathlib.ZMod64.toZMod_zero.symm
 
-@[simp]
+@[simp, grind =]
 theorem coeff_toMathlibPolynomial_equiv (f : Hex.FpPoly p) (n : Nat) :
     (toMathlibPolynomial f).coeff n = HexModArithMathlib.ZMod64.equiv (f.coeff n) := by
   rw [coeff_toMathlibPolynomial, HexModArithMathlib.ZMod64.equiv_apply]
