@@ -3502,6 +3502,112 @@ theorem factor_small_mod_singleton_branch_entry_irreducible
     f hf_ne B hB_pos entry hdeg primeData hsmall hquadratic hentry_mem
     hchoose
 
+/-- **Fast-path small-mod singleton arm — raw guarded irreducibility.**
+
+Raw-factor counterpart of the recorded-entry umbrella
+`factor_small_mod_singleton_branch_entry_irreducible`: every raw factor
+returned by `Hex.factorFastFactorsWithBound f B` in the small-mod singleton
+branch (`primeData.factorsModP.size ≤ 1`) is `Hex.ZPoly.Irreducible`, in the
+guarded shape consumed by the default factor irreducibility capstone (#8068).
+
+Under the branch markers — `f ≠ 0`, `1 ≤ B`, positive square-free-core degree
+(`hdeg`), the chosen prime `hchoose`, the singleton count `hsmall`, and the
+quadratic-dispatch guard `hquadratic` — the dispatcher returns
+`Hex.reassemblePolynomialFactors (Hex.normalizeForFactor f)
+#[(Hex.normalizeForFactor f).squareFreeCore]`. The square-free core is
+irreducible by `squareFreeCore_irreducible_of_smallModSingletonBranch`, so both
+the extracted `X`-power factors and the core entry of the reassembly are
+irreducible; the recorded-factor guard is therefore discharged for free (it is
+present only to compose with the constant arm, where the core is the unit `1`).
+
+Mirrors `Hex.factorFastFactorsWithBound_raw_irreducible_of_constant`
+(constant arm) and
+`factorFastFactorsWithBound_raw_guardedIrreducible_of_recoveredLift`
+(BHKS core-success arm); together they cover the default raw-factor sources
+whose guarded producers #8068 consumes. -/
+theorem factorFastFactorsWithBound_raw_guardedIrreducible_of_smallModSingleton
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (hB_pos : 1 ≤ B)
+    (primeData : Hex.PrimeChoiceData)
+    (hdeg :
+      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some primeData)
+    (hsmall : primeData.factorsModP.size ≤ 1)
+    (hquadratic :
+      B = 1 ∨
+        Hex.quadraticIntegerRootFactors?
+          (Hex.normalizeForFactor f).squareFreeCore = none)
+    {rawFactors : Array Hex.ZPoly}
+    (hfast : Hex.factorFastFactorsWithBound f B = some rawFactors) :
+    ∀ raw ∈ rawFactors.toList,
+      Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true →
+        Hex.ZPoly.Irreducible raw := by
+  intro raw hmem _hrecord
+  -- Singleton-core irreducibility from the chosen prime's Berlekamp form.
+  have hcore_irr :
+      Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore :=
+    squareFreeCore_irreducible_of_smallModSingletonBranch
+      f hf_ne primeData (Nat.pos_of_ne_zero hdeg) hchoose hsmall
+  -- Discharge the reassembly expansion-complete side condition internally.
+  have hcomplete :
+      Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
+        #[(Hex.normalizeForFactor f).squareFreeCore] :=
+    IntReductionMod.reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc
+      f hf_ne hcore_irr
+      (Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne)
+      (Nat.pos_of_ne_zero hdeg)
+  -- Every core factor of the singleton array is the irreducible square-free core.
+  have h_core_array :
+      ∀ factor ∈
+        (#[(Hex.normalizeForFactor f).squareFreeCore] : Array Hex.ZPoly).toList,
+        Hex.ZPoly.Irreducible factor := by
+    intro factor hmem'
+    have hfactor : factor = (Hex.normalizeForFactor f).squareFreeCore := by
+      simpa using hmem'
+    exact hfactor ▸ hcore_irr
+  -- The quadratic-dispatch guard forbids a quadratic short-circuit when B > 1.
+  have hquad_none :
+      1 < B →
+        Hex.quadraticIntegerRootFactors?
+          (Hex.normalizeForFactor f).squareFreeCore = none := by
+    intro hBgt
+    rcases hquadratic with hB1 | hnone
+    · exact absurd hB1 (by omega)
+    · exact hnone
+  -- The dispatcher's branch classification pins the raw factor array to the
+  -- singleton-core reassembly (the surviving disjuncts (c)/(g)); the other
+  -- branches contradict the markers. The private reassembly value is named
+  -- only through the public branch theorem's conclusion, never directly.
+  rcases Hex.factorFastFactorsWithBound_branch_of_choosePrimeData?_some f B primeData
+      hchoose with
+    ⟨_, hd0⟩ | ⟨_, _, hB0⟩ | ⟨hv, _⟩ | ⟨_, _, _, _, hns, _⟩ |
+      ⟨_, _, _, hns, _⟩ | ⟨_, _, _, hBgt, hqs⟩ | ⟨hv, _⟩ |
+      ⟨_, _, _, _, _, hns, _⟩ | ⟨_, _, _, _, hns, _⟩
+  · exact absurd hd0 hdeg
+  · exact absurd hB0 (by omega)
+  · -- (c) B = 1 singleton.
+    have he := Option.some.inj (hfast.symm.trans hv)
+    rw [he] at hmem
+    exact
+      Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+        (Hex.normalizeForFactor f) #[(Hex.normalizeForFactor f).squareFreeCore]
+        hcomplete h_core_array hmem
+  · exact absurd hsmall hns
+  · exact absurd hsmall hns
+  · -- (f) B > 1 quadratic short-circuit: excluded by the dispatch guard.
+    rw [hquad_none hBgt] at hqs
+    exact absurd hqs.symm (Option.some_ne_none _)
+  · -- (g) B > 1 singleton.
+    have he := Option.some.inj (hfast.symm.trans hv)
+    rw [he] at hmem
+    exact
+      Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+        (Hex.normalizeForFactor f) #[(Hex.normalizeForFactor f).squareFreeCore]
+        hcomplete h_core_array hmem
+  · exact absurd hsmall hns
+  · exact absurd hsmall hns
+
 /-- **#4565 HO-1 base task — fast-path constant arm umbrella.**
 
 Per-branch HO-1 component for the fast-path **constant square-free core** arm
