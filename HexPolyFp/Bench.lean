@@ -415,10 +415,10 @@ setup_benchmark runSquareFreeDecompositionSummary n => n * n
 
 /-
 Field long division of a degree-`2n` dividend by a degree-`n` divisor runs
-`Θ(n)` elimination steps, each subtracting a shifted scalar multiple of the
-divisor across `Θ(n)` coefficients, for `Θ(n²)` total work. The schedule covers
-the BHKS-relevant low degrees `8/16/32/64` plus higher rungs so the `n²` slope
-is visible above the per-call constant.
+`Theta(n)` elimination steps, each subtracting a shifted scalar multiple of the
+divisor across `Theta(n)` coefficients, so the work is quadratic, `O(n^2)`
+total. The schedule covers the BHKS-relevant low degrees `8/16/32/64` plus
+higher rungs so the quadratic slope is visible above the per-call constant.
 -/
 setup_benchmark runDivModChecksum n => n * n
   with prep := prepDivModInput
@@ -433,9 +433,10 @@ setup_benchmark runDivModChecksum n => n * n
 
 /-
 The Euclidean gcd of two independent degree-`n` polynomials over `F_p` is a
-remainder sequence of `Θ(n)` `divMod` steps whose degrees shrink by one each
-step, summing to `Θ(n²)` coefficient operations. This is the substrate under
-the BHKS separability test `gcd(f, f')`; the schedule matches the divMod rungs.
+remainder sequence of `Theta(n)` `divMod` steps whose degrees shrink by one each
+step, so the cost is quadratic, `O(n^2)` coefficient operations. This is the
+substrate under the BHKS separability test `gcd(f, f')`; the schedule matches
+the divMod rungs.
 -/
 setup_benchmark runGcdChecksum n => n * n
   with prep := prepGcdInput
