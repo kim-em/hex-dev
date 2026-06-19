@@ -166,12 +166,12 @@ theorem coeff_toFpPoly (p : Hex.GF2Poly) (i : Nat) :
       rw [hcoeff]
       rfl
 
-@[simp]
+@[simp, grind =]
 theorem toFpPoly_zero :
     toFpPoly (0 : Hex.GF2Poly) = 0 := by
   rfl
 
-@[simp]
+@[simp, grind =]
 theorem ofFpPoly_zero :
     ofFpPoly (0 : Hex.FpPoly 2) = 0 := by
   rfl
@@ -192,7 +192,7 @@ private theorem coeff_one_eq (i : Nat) :
     have : i ≠ 0 := by omega
     simp [this]
 
-@[simp]
+@[simp, grind =]
 theorem toFpPoly_one :
     toFpPoly (1 : Hex.GF2Poly) = 1 := by
   apply Hex.DensePoly.ext_coeff
@@ -325,7 +325,7 @@ theorem coeff_ofFpPoly (p : Hex.FpPoly 2) (j : Nat) :
     have hz : p.coeff j = 0 := hpc
     simp [Hex.GF2Poly.coeffWords, hget, hz]
 
-@[simp]
+@[simp, grind =]
 theorem ofFpPoly_toFpPoly (p : Hex.GF2Poly) :
     ofFpPoly (toFpPoly p) = p := by
   apply Hex.GF2Poly.ext_coeff
@@ -335,7 +335,7 @@ theorem ofFpPoly_toFpPoly (p : Hex.GF2Poly) :
   | false => simp
   | true => simp [zmod2_one_ne_zero]
 
-@[simp]
+@[simp, grind =]
 theorem toFpPoly_ofFpPoly (p : Hex.FpPoly 2) :
     toFpPoly (ofFpPoly p) = p := by
   apply Hex.DensePoly.ext_coeff
@@ -345,7 +345,7 @@ theorem toFpPoly_ofFpPoly (p : Hex.FpPoly 2) :
   · simp [hz]
   · simp [ho, zmod2_one_ne_zero]
 
-@[simp]
+@[simp, grind =]
 theorem toFpPoly_add (p q : Hex.GF2Poly) :
     toFpPoly (p + q) = toFpPoly p + toFpPoly q := by
   apply Hex.DensePoly.ext_coeff
@@ -438,7 +438,7 @@ private theorem foldl_add_range_eq_of_ge (term : Nat → Hex.ZMod64 2) (A B m : 
   obtain ⟨b, rfl⟩ : ∃ b, B = m + b := ⟨B - m, by omega⟩
   rw [foldl_add_range_reduce term m hzero a, foldl_add_range_reduce term m hzero b]
 
-@[simp]
+@[simp, grind =]
 theorem toFpPoly_mul (p q : Hex.GF2Poly) :
     toFpPoly (p * q) = toFpPoly p * toFpPoly q := by
   apply Hex.DensePoly.ext_coeff
@@ -492,12 +492,12 @@ def equiv : Hex.GF2Poly ≃+* Hex.FpPoly 2 where
   map_mul' := toFpPoly_mul
   map_add' := toFpPoly_add
 
-@[simp]
+@[simp, grind =]
 theorem equiv_apply (p : Hex.GF2Poly) :
     equiv p = toFpPoly p := by
   rfl
 
-@[simp]
+@[simp, grind =]
 theorem equiv_symm_apply (p : Hex.FpPoly 2) :
     RingEquiv.symm equiv p = ofFpPoly p := by
   rfl
