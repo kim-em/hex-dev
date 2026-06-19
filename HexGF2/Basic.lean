@@ -500,7 +500,7 @@ def ofUInt64 (w : UInt64) : GF2Poly :=
 
 /-- A single nonzero word is already normalized and is its own packed
 representation. -/
-@[simp] theorem words_ofWords_single_nonzero {w : UInt64} (hw : w ≠ 0) :
+@[simp, grind =] theorem words_ofWords_single_nonzero {w : UInt64} (hw : w ≠ 0) :
     (ofWords #[w]).words = #[w] := by
   simp [ofWords, normalizeWords, trimTrailingZeroWordsList, hw]
 
