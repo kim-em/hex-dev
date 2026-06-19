@@ -1287,7 +1287,7 @@ inverse. -/
 
 /-- The inverse of `0` in `GF2nPoly` is `0` (the field convention that makes
 inversion total). -/
-@[simp] theorem inv_zero : (0 : GF2nPoly f hirr)⁻¹ = 0 := by
+@[simp, grind =] theorem inv_zero : (0 : GF2nPoly f hirr)⁻¹ = 0 := by
   have hzeroVal : (0 : GF2nPoly f hirr).val = 0 := by
     simp [OfNat.ofNat, natCast, zero]
   apply eq_of_val_eq
@@ -1328,14 +1328,14 @@ private theorem GF2Poly_one_mul (p : GF2Poly) : (1 : GF2Poly) * p = p := by
 
 /-- The value of a quotient product is the polynomial product reduced modulo
 the defining irreducible. -/
-@[simp] theorem mul_val (a b : GF2nPoly f hirr) :
+@[simp, grind =] theorem mul_val (a b : GF2nPoly f hirr) :
     (a * b).val = (a.val * b.val) % f := by
   show (mul a b).val = _
   unfold mul
   rw [reducePoly_val_eq_mod]
 
 /-- The value of the multiplicative identity is `(1 : GF2Poly) % f`. -/
-@[simp] theorem one_val :
+@[simp, grind =] theorem one_val :
     (1 : GF2nPoly f hirr).val = (1 : GF2Poly) % f := by
   show (one (f := f) (hirr := hirr)).val = _
   unfold one
@@ -1343,24 +1343,24 @@ the defining irreducible. -/
 
 /-- The value of a quotient sum is the polynomial sum reduced modulo the
 defining irreducible. -/
-@[simp] theorem add_val (a b : GF2nPoly f hirr) :
+@[simp, grind =] theorem add_val (a b : GF2nPoly f hirr) :
     (a + b).val = (a.val + b.val) % f := by
   show (add a b).val = _
   unfold add
   rw [reducePoly_val_eq_mod]
 
 /-- Negation is the identity on the packed quotient. -/
-@[simp] theorem neg_val (a : GF2nPoly f hirr) : (-a).val = a.val := rfl
+@[simp, grind =] theorem neg_val (a : GF2nPoly f hirr) : (-a).val = a.val := rfl
 
 /-- Subtraction coincides with addition on the packed quotient. -/
-@[simp] theorem sub_val (a b : GF2nPoly f hirr) :
+@[simp, grind =] theorem sub_val (a b : GF2nPoly f hirr) :
     (a - b).val = (a.val + b.val) % f := by
   show (sub a b).val = _
   unfold sub
   exact add_val a b
 
 /-- The value of the additive identity is the zero polynomial. -/
-@[simp] theorem zero_val :
+@[simp, grind =] theorem zero_val :
     (0 : GF2nPoly f hirr).val = (0 : GF2Poly) := rfl
 
 example (a b : GF2nPoly f hirr) :
@@ -1403,32 +1403,32 @@ private theorem add_pair_swap_quot
   rw [← add_assoc a c (b + d)]
 
 /-- The additive identity is a left identity. -/
-@[simp] theorem zero_add (a : GF2nPoly f hirr) :
+@[simp, grind =] theorem zero_add (a : GF2nPoly f hirr) :
     (0 : GF2nPoly f hirr) + a = a := by
   apply eq_of_val_eq
   rw [add_val, zero_val, GF2Poly.zero_add, val_mod_eq]
 
 /-- The additive identity is a right identity. -/
-@[simp] theorem add_zero (a : GF2nPoly f hirr) :
+@[simp, grind =] theorem add_zero (a : GF2nPoly f hirr) :
     a + (0 : GF2nPoly f hirr) = a := by
   rw [add_comm, zero_add]
 
 /-- Every packed quotient element is its own additive inverse in
 characteristic two. -/
-@[simp] theorem add_self (a : GF2nPoly f hirr) : a + a = 0 := by
+@[simp, grind =] theorem add_self (a : GF2nPoly f hirr) : a + a = 0 := by
   apply eq_of_val_eq
   rw [add_val, GF2Poly.add_self]
   exact GF2Poly.mod_eq_self_of_reduced 0 f (Or.inl rfl)
 
 /-- Multiplication by zero on the right is zero. -/
-@[simp] theorem mul_zero (a : GF2nPoly f hirr) :
+@[simp, grind =] theorem mul_zero (a : GF2nPoly f hirr) :
     a * (0 : GF2nPoly f hirr) = 0 := by
   apply eq_of_val_eq
   rw [mul_val, zero_val, GF2Poly.mul_zero]
   exact GF2Poly.mod_eq_self_of_reduced 0 f (Or.inl rfl)
 
 /-- Multiplication by zero on the left is zero. -/
-@[simp] theorem zero_mul (a : GF2nPoly f hirr) :
+@[simp, grind =] theorem zero_mul (a : GF2nPoly f hirr) :
     (0 : GF2nPoly f hirr) * a = 0 := by
   apply eq_of_val_eq
   rw [mul_val, zero_val, GF2Poly.zero_mul]
@@ -1702,7 +1702,7 @@ Frobenius iterate. -/
   rw [frobeniusIter_mul, ha, hb]
 
 /-- The multiplicative identity is a left identity. -/
-@[simp] theorem one_mul (a : GF2nPoly f hirr) :
+@[simp, grind =] theorem one_mul (a : GF2nPoly f hirr) :
     (1 : GF2nPoly f hirr) * a = a := by
   apply eq_of_val_eq
   rw [mul_val, one_val]
@@ -1713,7 +1713,7 @@ Frobenius iterate. -/
   rw [h, GF2Poly_one_mul, val_mod_eq]
 
 /-- The multiplicative identity is a right identity. -/
-@[simp] theorem mul_one (a : GF2nPoly f hirr) :
+@[simp, grind =] theorem mul_one (a : GF2nPoly f hirr) :
     a * (1 : GF2nPoly f hirr) = a := by
   rw [mul_comm, one_mul]
 
@@ -1727,14 +1727,14 @@ Frobenius iterate. -/
       rw [frobeniusIter_succ, ih, one_mul]
 
 /-- Reducing the zero polynomial gives the quotient zero. -/
-@[simp] theorem reducePoly_zero :
+@[simp, grind =] theorem reducePoly_zero :
     reducePoly (f := f) (hirr := hirr) 0 = 0 := by
   apply eq_of_val_eq
   rw [reducePoly_val_eq_mod, zero_val]
   exact GF2Poly.mod_eq_self_of_reduced 0 f (Or.inl rfl)
 
 /-- Reducing the constant-one monomial gives the quotient one. -/
-@[simp] theorem reducePoly_monomial_zero :
+@[simp, grind =] theorem reducePoly_monomial_zero :
     reducePoly (f := f) (hirr := hirr) (GF2Poly.monomial 0) = 1 := by
   rfl
 
