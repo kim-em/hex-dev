@@ -28,57 +28,57 @@ abbrev toPolynomial (p : Hex.ZPoly) : Polynomial ℤ :=
 abbrev ofPolynomial (p : Polynomial ℤ) : Hex.ZPoly :=
   HexPolyMathlib.ofPolynomial p
 
-@[simp]
+@[simp, grind =]
 theorem coeff_toPolynomial (p : Hex.ZPoly) (n : Nat) :
     (toPolynomial p).coeff n = p.coeff n :=
   HexPolyMathlib.coeff_toPolynomial p n
 
-@[simp]
+@[simp, grind =]
 theorem ofPolynomial_zero :
     ofPolynomial (0 : Polynomial ℤ) = 0 :=
   HexPolyMathlib.ofPolynomial_zero
 
-@[simp]
+@[simp, grind =]
 theorem toPolynomial_zero :
     toPolynomial (0 : Hex.ZPoly) = 0 :=
   HexPolyMathlib.toPolynomial_zero
 
-@[simp]
+@[simp, grind =]
 theorem toPolynomial_C (c : ℤ) :
     toPolynomial (Hex.DensePoly.C c) = Polynomial.C c :=
   HexPolyMathlib.toPolynomial_C c
 
-@[simp]
+@[simp, grind =]
 theorem toPolynomial_add (p q : Hex.ZPoly) :
     toPolynomial (p + q) = toPolynomial p + toPolynomial q :=
   HexPolyMathlib.toPolynomial_add p q
 
-@[simp]
+@[simp, grind =]
 theorem toPolynomial_mul (p q : Hex.ZPoly) :
     toPolynomial (p * q) = toPolynomial p * toPolynomial q :=
   HexPolyMathlib.toPolynomial_mul p q
 
-@[simp]
+@[simp, grind =]
 theorem toPolynomial_one :
     toPolynomial (1 : Hex.ZPoly) = 1 :=
   HexPolyMathlib.toPolynomial_one
 
-@[simp]
+@[simp, grind =]
 theorem toPolynomial_neg (p : Hex.ZPoly) :
     toPolynomial (-p) = -toPolynomial p :=
   HexPolyMathlib.toPolynomial_neg p
 
-@[simp]
+@[simp, grind =]
 theorem toPolynomial_sub (p q : Hex.ZPoly) :
     toPolynomial (p - q) = toPolynomial p - toPolynomial q :=
   HexPolyMathlib.toPolynomial_sub p q
 
-@[simp]
+@[simp, grind =]
 theorem toPolynomial_ofPolynomial (p : Polynomial ℤ) :
     toPolynomial (ofPolynomial p) = p :=
   HexPolyMathlib.toPolynomial_ofPolynomial p
 
-@[simp]
+@[simp, grind =]
 theorem ofPolynomial_toPolynomial (p : Hex.ZPoly) :
     ofPolynomial (toPolynomial p) = p :=
   HexPolyMathlib.ofPolynomial_toPolynomial p
@@ -88,12 +88,12 @@ polynomials over `ℤ`. -/
 abbrev equiv : Hex.ZPoly ≃+* Polynomial ℤ :=
   HexPolyMathlib.equiv
 
-@[simp]
+@[simp, grind =]
 theorem equiv_apply (p : Hex.ZPoly) :
     equiv p = toPolynomial p := by
   rfl
 
-@[simp]
+@[simp, grind =]
 theorem equiv_symm_apply (p : Polynomial ℤ) :
     equiv.symm p = ofPolynomial p := by
   rfl
@@ -227,7 +227,7 @@ theorem toZMod_ZMod64_ofNat_intModNat_eq_intCast
 
 /-- The executable variable-dilation `X ↦ c · X` corresponds to Mathlib
 composition with `C c * X`. -/
-@[simp]
+@[simp, grind =]
 theorem toPolynomial_dilate (c : ℤ) (g : Hex.ZPoly) :
     toPolynomial (Hex.ZPoly.dilate c g) =
       (toPolynomial g).comp (Polynomial.C c * Polynomial.X) := by
