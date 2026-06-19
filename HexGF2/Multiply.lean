@@ -6397,13 +6397,13 @@ instance : Mul GF2Poly where
   mul := mul
 
 /-- Zero is a left annihilator for packed `GF(2)` polynomial multiplication. -/
-@[simp] theorem zero_mul (p : GF2Poly) : (0 : GF2Poly) * p = 0 := by
+@[simp, grind =] theorem zero_mul (p : GF2Poly) : (0 : GF2Poly) * p = 0 := by
   apply ext_words
   change (mul 0 p).words = #[]
   simp [mul, mulWords]
 
 /-- Zero is a right annihilator for packed `GF(2)` polynomial multiplication. -/
-@[simp] theorem mul_zero (p : GF2Poly) : p * (0 : GF2Poly) = 0 := by
+@[simp, grind =] theorem mul_zero (p : GF2Poly) : p * (0 : GF2Poly) = 0 := by
   apply ext_words
   change (mul p 0).words = #[]
   simp [mul, mulWords]
@@ -6431,7 +6431,7 @@ theorem wordCount_mul_monomial_le (p : GF2Poly) (k : Nat) :
     (Nat.add_le_add_left (wordCount_monomial_le k) p.wordCount)
 
 /-- Multiplication coefficients reduce to the raw carry-less word product. -/
-@[simp]
+@[simp, grind =]
 theorem coeff_mul (p q : GF2Poly) (n : Nat) :
     (p * q).coeff n = coeffWords (mulWords p.words q.words) n := by
   change (ofWords (mulWords p.words q.words)).coeff n =
@@ -7218,7 +7218,7 @@ private theorem coeff_shiftLeft_add_source_oob
 
 /-- Right multiplication by the monomial `x^k` shifts packed GF(2)
 polynomials left by `k` coefficients. -/
-@[simp]
+@[simp, grind =]
 theorem mul_monomial (q : GF2Poly) (k : Nat) :
     q * monomial k = q.mulXk k := by
   apply ext_coeff
@@ -7241,7 +7241,7 @@ theorem mul_monomial (q : GF2Poly) (k : Nat) :
 
 /-- Left multiplication by the monomial `x^k` shifts packed GF(2)
 polynomials left by `k` coefficients. -/
-@[simp]
+@[simp, grind =]
 theorem monomial_mul (k : Nat) (q : GF2Poly) :
     monomial k * q = q.mulXk k := by
   apply ext_coeff
@@ -7267,7 +7267,7 @@ example (q : GF2Poly) (k : Nat) :
   simp
 
 /-- Multiplication by `x^0` leaves a packed `GF(2)` polynomial unchanged. -/
-@[simp] theorem mulXk_zero (p : GF2Poly) :
+@[simp, grind =] theorem mulXk_zero (p : GF2Poly) :
     p.mulXk 0 = p := by
   apply ext_coeff
   intro n
@@ -7275,12 +7275,12 @@ example (q : GF2Poly) (k : Nat) :
   simp [coeff]
 
 /-- One is a left identity for packed `GF(2)` polynomial multiplication. -/
-@[simp] theorem one_mul (p : GF2Poly) :
+@[simp, grind =] theorem one_mul (p : GF2Poly) :
     (1 : GF2Poly) * p = p := by
   rw [one_eq_monomial_zero, monomial_mul, mulXk_zero]
 
 /-- One is a right identity for packed `GF(2)` polynomial multiplication. -/
-@[simp] theorem mul_one (p : GF2Poly) :
+@[simp, grind =] theorem mul_one (p : GF2Poly) :
     p * (1 : GF2Poly) = p := by
   rw [one_eq_monomial_zero, mul_monomial, mulXk_zero]
 
