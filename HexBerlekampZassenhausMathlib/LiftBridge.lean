@@ -22,7 +22,7 @@ def supportOfSubset (f : Hex.ZPoly) (d : Hex.LiftData) (T : LiftedFactorSubset d
     LiftedFactorSupport (Hex.bhksLatticeBasis f d.p d.k d.liftedFactors) :=
   (T : Set (LiftedFactorIndex d))
 
-@[simp] theorem mem_supportOfSubset
+@[simp, grind =] theorem mem_supportOfSubset
     (f : Hex.ZPoly) (d : Hex.LiftData) (T : LiftedFactorSubset d)
     (i : Fin (Hex.bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount) :
     i ∈ supportOfSubset f d T ↔ i ∈ T := by
