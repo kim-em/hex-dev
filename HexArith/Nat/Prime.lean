@@ -21,7 +21,7 @@ def choose : Nat -> Nat -> Nat
   | n + 1, k + 1 => choose n k + choose n (k + 1)
 
 /-- `choose n 0 = 1`: the zeroth column of Pascal's triangle. -/
-@[simp] theorem choose_zero_right (n : Nat) : choose n 0 = 1 := by
+@[simp, grind =] theorem choose_zero_right (n : Nat) : choose n 0 = 1 := by
   induction n with
   | zero => rfl
   | succ n ih => simp [choose]
@@ -30,11 +30,11 @@ def choose : Nat -> Nat -> Nat
 `choose 0 (k + 1) = 0`: nontrivial entries vanish in the top row of Pascal's
 triangle.
 -/
-@[simp] theorem choose_zero_succ (k : Nat) : choose 0 (k + 1) = 0 := by
+@[simp, grind =] theorem choose_zero_succ (k : Nat) : choose 0 (k + 1) = 0 := by
   rfl
 
 /-- Pascal's recurrence: `choose (n + 1) (k + 1) = choose n k + choose n (k + 1)`. -/
-@[simp] theorem choose_succ_succ (n k : Nat) :
+@[simp, grind =] theorem choose_succ_succ (n k : Nat) :
     choose (n + 1) (k + 1) = choose n k + choose n (k + 1) := by
   rfl
 
@@ -60,7 +60,7 @@ theorem choose_eq_zero_of_lt {n k : Nat} (h : n < k) : choose n k = 0 := by
             omega
 
 /-- The diagonal of Pascal's triangle is constantly one: `choose n n = 1`. -/
-@[simp] theorem choose_self (n : Nat) : choose n n = 1 := by
+@[simp, grind =] theorem choose_self (n : Nat) : choose n n = 1 := by
   induction n with
   | zero => rfl
   | succ n ih =>
