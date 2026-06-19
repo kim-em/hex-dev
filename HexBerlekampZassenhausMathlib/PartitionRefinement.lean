@@ -413,6 +413,57 @@ end ForwardRecoveryInputs
 
 end BHKS
 
+namespace BHKS
+
+/--
+Candidate-size producer for the forward-cut `hsize` hypothesis.
+
+This is the fixed-lift core fact behind fast-branch forward-cut callers: a
+successful `bhksIndicatorCandidates?` run over the canonical
+`equivalenceClassIndicatorsOfLiftData` emits exactly one candidate per
+equivalence-class indicator row.
+-/
+theorem size_eq_indicators_of_candidates
+    {core : Hex.ZPoly} {d : Hex.LiftData} {coreFactors : Array Hex.ZPoly}
+    {rows_pos : HasPositiveDimension core d}
+    (hcandidates :
+      Hex.bhksIndicatorCandidates? core d
+          (equivalenceClassIndicatorsOfLiftData core d rows_pos) =
+        some coreFactors) :
+    coreFactors.size =
+      (Hex.bhksEquivalenceClassIndicators
+        (projectedRowsOfLiftData core d rows_pos)).size := by
+  simpa [equivalenceClassIndicatorsOfLiftData] using
+    Hex.bhksIndicatorCandidates?_size_eq hcandidates
+
+end BHKS
+
+/--
+Fast-core loop `hsize` producer for forward-cut irreducibility endpoints.
+
+Given a successful `factorFastCoreWithBound` call and the candidate equality
+exposed by `Hex.factorFastCoreWithBound_some_indicatorCandidates`, this returns
+the exact size equality consumed by
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut`.
+-/
+theorem factorFastCoreWithBound_some_size_eq_indicators
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel target : Nat} {coreFactors : Array Hex.ZPoly}
+    {rows_pos : BHKS.HasPositiveDimension core
+      (Hex.ZPoly.toMonicLiftData core target primeData)}
+    (_h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (hcandidates :
+      Hex.bhksIndicatorCandidates? core
+          (Hex.ZPoly.toMonicLiftData core target primeData)
+          (BHKS.equivalenceClassIndicatorsOfLiftData core
+            (Hex.ZPoly.toMonicLiftData core target primeData) rows_pos) =
+        some coreFactors) :
+    coreFactors.size =
+      (Hex.bhksEquivalenceClassIndicators
+        (BHKS.projectedRowsOfLiftData core
+          (Hex.ZPoly.toMonicLiftData core target primeData) rows_pos)).size :=
+  BHKS.size_eq_indicators_of_candidates hcandidates
+
 /--
 Forward-recovery loop-identification wrapper.
 
@@ -999,8 +1050,14 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_forwardInputs
         (Hex.bhksEquivalenceClassIndicators
           (BHKS.projectedRowsOfLiftData core
             (Hex.ZPoly.toMonicLiftData core k primeData) hinputs.rows_pos)).size := by
-    rw [Hex.bhksIndicatorCandidates?_size_eq hinputs.candidates_eq]
-    exact congrArg Array.size hinputs.indicators_match.symm
+    have hcandidates :
+        Hex.bhksIndicatorCandidates? core
+            (Hex.ZPoly.toMonicLiftData core k primeData)
+            (BHKS.equivalenceClassIndicatorsOfLiftData core
+              (Hex.ZPoly.toMonicLiftData core k primeData) hinputs.rows_pos) =
+          some hinputs.expectedFactors := by
+      simpa [hinputs.indicators_match] using hinputs.candidates_eq
+    exact BHKS.size_eq_indicators_of_candidates hcandidates
   exact
     factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut
       hinputs.trueSupports hcore_ne h hcut hsize hpartition
@@ -1101,8 +1158,14 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_forwardInputs_on
           (BHKS.projectedRowsOfLiftData core
             (Hex.ZPoly.toMonicLiftData core target primeData)
             hinputs.rows_pos)).size := by
-    rw [Hex.bhksIndicatorCandidates?_size_eq hinputs.candidates_eq]
-    exact congrArg Array.size hinputs.indicators_match.symm
+    have hcandidates :
+        Hex.bhksIndicatorCandidates? core
+            (Hex.ZPoly.toMonicLiftData core target primeData)
+            (BHKS.equivalenceClassIndicatorsOfLiftData core
+              (Hex.ZPoly.toMonicLiftData core target primeData) hinputs.rows_pos) =
+          some hinputs.expectedFactors := by
+      simpa [hinputs.indicators_match] using hinputs.candidates_eq
+    exact BHKS.size_eq_indicators_of_candidates hcandidates
   exact
     factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut
       hinputs.trueSupports hcore_ne h hcut hsize hpartition
