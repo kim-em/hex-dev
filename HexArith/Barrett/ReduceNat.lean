@@ -143,7 +143,7 @@ private theorem barrett_remainder_eq_mod_add_p_of_quotient_succ (p T q : Nat)
 With `pinv = floor(R / p)` and `T < R`, Nat-level Barrett reduction returns the
 same value as `% p`.
 -/
-@[simp]
+@[simp, grind =]
 theorem barrettReduceNat_eq_mod (hp : 1 < p) (hpinv : pinv = barrettRadix / p)
     (hT : T < barrettRadix) :
     barrettReduceNat p pinv T = T % p := by
@@ -177,7 +177,7 @@ theorem barrettReduceNat_lt (hp : 1 < p) (hpinv : pinv = barrettRadix / p)
 Nat-level Barrett reduction fixes inputs that are already canonical residues
 for a modulus fitting in one radix word.
 -/
-@[simp]
+@[simp, grind =]
 theorem barrettReduceNat_eq_self_of_lt (hp : 1 < p)
     (hpinv : pinv = barrettRadix / p) (hpRadix : p ≤ barrettRadix)
     (hT : T < p) :
