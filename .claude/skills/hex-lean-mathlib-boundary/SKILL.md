@@ -294,6 +294,36 @@ lemma (`Nat.sum_range_choose`, etc.). Same pattern for `Hex.Nat.Prime`.
 
 ## Fast-BHKS raw irreducibility ≠ slow-path raw irreducibility (scheduled-loop determinism)
 
+### Raw-irreducibility contracts on the fast path must be guarded by `shouldRecordPolynomialFactor`
+
+The unguarded shape `factorFastFactorsWithBound f B = some rawFactors →
+∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw` is **false**, not just
+underivable: the constant early-return (`squareFreeCore.degree?.getD 0 = 0`)
+emits `reassemblePolynomialFactors normalized #[squareFreeCore]` with
+`squareFreeCore = 1` (for `f = 1`), and `Irreducible 1` is impossible (`1` is a
+unit). #8067 was skipped on exactly this; #8079 fixed it. The satisfiable
+contract guards each raw obligation with the recorded-factor filter:
+`Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true →
+Hex.ZPoly.Irreducible raw`. The guard excludes the unit/constant raw outputs
+that never become recorded `(Hex.factor f).factors` entries; it is discharged
+for free at the consumer from `Hex.factorWithBound_entry_shouldRecord` (every
+recorded entry passes the filter), so the guarded form composes exactly where
+the unguarded one was needed. The fast producers of the guarded contract:
+`Hex.factorFastFactorsWithBound_raw_irreducible_of_constant` (degree-0
+early-return; reassembly is a power of `X`, the unit core fails the guard via
+`shouldRecordPolynomialFactor_one`) and
+`factorFastFactorsWithBound_raw_guardedIrreducible_of_recoveredLift` (BHKS
+core-success, routing through the #8058 capstone). Slow producers
+(`slowModularRaw_irreducible_of_fast_none`,
+`factorSlowTrialFactorsWithBound_factor_irreducible_of_fast_none`) keep their
+*unguarded* statements — `fast = none` forces `degree ≠ 0`, so there is no unit
+core — and imply the guarded form by `fun raw hmem _ => producer raw hmem`. Note
+this guarded contract is the fast-path counterpart to the `normalizeFactorSign`
+sign-guard trap below: both are sound *narrowings* of an over-quantified raw
+obligation, not core-facts assembly. Still missing as of #8079: guarded
+producers for the fast small-mod-singleton (`factorsModP.size ≤ 1`) and
+quadratic short-circuit sub-branches.
+
 The slow-path raw irreducibility (`slowModularRaw_irreducible_of_fast_none`,
 #7665) is *unconditional* because the slow path runs a single fixed-precision
 `exhaustiveCoreFactorsWithBound` at `exhaustiveLiftBound` — one deterministic
