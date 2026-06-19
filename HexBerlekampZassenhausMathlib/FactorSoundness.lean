@@ -183,6 +183,52 @@ theorem factor_headline_primitive (f : Hex.ZPoly) (hf : f ≠ 0) :
     (Hex.factor_chosen_raw_primitive_of_ne_zero f hf)
 
 /--
+The HO-1 headline contract for the default executable factorization of a nonzero
+input.
+
+This is the strengthened public surface required by directive #2564: it is the
+same bundle as `factor_headline_primitive` but replaces the syntactic
+distinct-key clause `a.1 ≠ b.1` with genuine pairwise non-association after
+transport to `Polynomial ℤ`. The clauses are product preservation, primitive
+plus Mathlib irreducibility per recorded factor, positive multiplicities,
+pairwise non-association of the recorded polynomial factors, and the
+signed-content scalar convention.
+
+Non-association is the headline strengthening: distinct `ZPoly` keys could in
+principle be associated in `Polynomial ℤ` (differ by a unit); this rules that
+out, so the recorded factors are genuinely distinct irreducibles up to
+association. The clause is discharged via `factor_entries_not_associated` with
+the raw-source primitivity hypothesis supplied internally by
+`Hex.factor_chosen_raw_primitive_of_ne_zero`, which is why `f ≠ 0` is required
+(see `factor_headline_primitive` for why the `f = 0` case is degenerate).
+-/
+theorem factor_headline (f : Hex.ZPoly) (hf : f ≠ 0) :
+    Hex.Factorization.product (Hex.factor f) = f ∧
+      (∀ entry ∈ (Hex.factor f).factors,
+        Hex.ZPoly.Primitive entry.1 ∧
+          Irreducible (HexPolyZMathlib.toPolynomial entry.1)) ∧
+      (∀ entry ∈ (Hex.factor f).factors, 0 < entry.2) ∧
+      List.Pairwise
+        (fun a b : Hex.ZPoly × Nat =>
+          ¬ Associated (HexPolyZMathlib.toPolynomial a.1)
+            (HexPolyZMathlib.toPolynomial b.1))
+        (Hex.factor f).factors.toList ∧
+      (Hex.factor f).scalar =
+        if f = 0 then
+          0
+        else if Hex.DensePoly.leadingCoeff f < 0 then
+          -Hex.ZPoly.content f
+        else
+          Hex.ZPoly.content f := by
+  rcases factor_headline_primitive f hf with
+    ⟨hproduct, hentries, hmultiplicity, _, hscalar⟩
+  exact
+    ⟨hproduct, hentries, hmultiplicity,
+      factor_entries_not_associated f
+        (Hex.factor_chosen_raw_primitive_of_ne_zero f hf),
+      hscalar⟩
+
+/--
 The sign-normalization side condition for the default executable factorization:
 every recorded polynomial factor is fixed by `normalizeFactorSign`. This is the
 `hψ_norm` clause that uniqueness/checker callers would otherwise reconstruct from
