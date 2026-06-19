@@ -302,18 +302,18 @@ theorem divMod_spec (p q : GF2Poly) :
   simpa using divModAux_reconstruct q (p.degree + 1) 0 p
 
 /-- The first component of `divMod` is the public quotient operation. -/
-@[simp] theorem divMod_fst (p q : GF2Poly) :
+@[simp, grind =] theorem divMod_fst (p q : GF2Poly) :
     (divMod p q).1 = p / q :=
   rfl
 
 /-- The second component of `divMod` is the public remainder operation. -/
-@[simp] theorem divMod_snd (p q : GF2Poly) :
+@[simp, grind =] theorem divMod_snd (p q : GF2Poly) :
     (divMod p q).2 = p % q :=
   rfl
 
 /-- Dividing by zero returns zero quotient and leaves the dividend as the
 remainder. -/
-@[simp] theorem divMod_zero_right (p : GF2Poly) :
+@[simp, grind =] theorem divMod_zero_right (p : GF2Poly) :
     divMod p 0 = (0, p) := by
   unfold divMod
   cases hfuel : p.degree + 1 with
@@ -322,28 +322,28 @@ remainder. -/
       simp [divModAux]
 
 /-- Zero has zero quotient and zero remainder against any divisor. -/
-@[simp] theorem divMod_zero_left (q : GF2Poly) :
+@[simp, grind =] theorem divMod_zero_left (q : GF2Poly) :
     divMod 0 q = (0, 0) := by
   unfold divMod
   simp [divModAux]
 
 /-- Division by zero has quotient zero for packed `GF(2)` polynomials. -/
-@[simp] theorem div_zero_right (p : GF2Poly) :
+@[simp, grind =] theorem div_zero_right (p : GF2Poly) :
     p / 0 = 0 := by
   rw [← divMod_fst, divMod_zero_right]
 
 /-- Remainder modulo zero is the dividend for packed `GF(2)` polynomials. -/
-@[simp] theorem mod_zero_right (p : GF2Poly) :
+@[simp, grind =] theorem mod_zero_right (p : GF2Poly) :
     p % 0 = p := by
   rw [← divMod_snd, divMod_zero_right]
 
 /-- Zero divided by any packed `GF(2)` polynomial has quotient zero. -/
-@[simp] theorem zero_div (q : GF2Poly) :
+@[simp, grind =] theorem zero_div (q : GF2Poly) :
     (0 : GF2Poly) / q = 0 := by
   rw [← divMod_fst, divMod_zero_left]
 
 /-- Zero has zero remainder modulo any packed `GF(2)` polynomial. -/
-@[simp] theorem zero_mod (q : GF2Poly) :
+@[simp, grind =] theorem zero_mod (q : GF2Poly) :
     (0 : GF2Poly) % q = 0 := by
   rw [← divMod_snd, divMod_zero_left]
 
@@ -567,7 +567,7 @@ theorem dvd_gcd (d p q : GF2Poly) :
   simpa [r] using hsum
 
 /-- The gcd with a zero right input is the left input. -/
-@[simp] theorem gcd_zero_right (p : GF2Poly) :
+@[simp, grind =] theorem gcd_zero_right (p : GF2Poly) :
     gcd p 0 = p := by
   unfold gcd xgcd
   obtain ⟨n, hn⟩ : ∃ n, p.degree + (0 : GF2Poly).degree + 2 = n + 1 :=
@@ -576,7 +576,7 @@ theorem dvd_gcd (d p q : GF2Poly) :
   simp [xgcdAux]
 
 /-- The gcd with a zero left input is the right input. -/
-@[simp] theorem gcd_zero_left (q : GF2Poly) :
+@[simp, grind =] theorem gcd_zero_left (q : GF2Poly) :
     gcd 0 q = q := by
   unfold gcd xgcd
   obtain ⟨n, hn⟩ : ∃ n, (0 : GF2Poly).degree + q.degree + 2 = n + 1 :=
@@ -740,7 +740,7 @@ private theorem coeff_ofUInt64_and_lowerMask (w : UInt64) {n i : Nat} (hn64 : n 
 
 /-- The packed single-word monic modulus has the advertised degree when
 `n < 64`. -/
-@[simp] theorem degree?_ofUInt64Monic_of_lt_64 (lower : UInt64) {n : Nat}
+@[simp, grind =] theorem degree?_ofUInt64Monic_of_lt_64 (lower : UInt64) {n : Nat}
     (hn64 : n < 64) :
     (ofUInt64Monic lower n).degree? = some n := by
   apply degree?_eq_some_of_coeff_eq_true_of_forall_gt_false
@@ -755,7 +755,7 @@ private theorem coeff_ofUInt64_and_lowerMask (w : UInt64) {n i : Nat} (hn64 : n 
     simp [Nat.not_lt_of_ge (by omega : n ≤ m)]
 
 /-- The degree of `ofUInt64Monic lower n` is exactly `n` when `n < 64`. -/
-@[simp] theorem degree_ofUInt64Monic_of_lt_64 (lower : UInt64) {n : Nat}
+@[simp, grind =] theorem degree_ofUInt64Monic_of_lt_64 (lower : UInt64) {n : Nat}
     (hn64 : n < 64) :
     (ofUInt64Monic lower n).degree = n := by
   exact degree_eq_of_degree?_eq_some (degree?_ofUInt64Monic_of_lt_64 lower hn64)
@@ -980,7 +980,7 @@ theorem gcd_eq_one_of_irreducible_of_nonzero_reduced {a f : GF2Poly}
 
 /-- Adding a right multiple of the modulus does not change the computed
 remainder. This is the quotient-congruence form used with Bezout witnesses. -/
-@[simp]
+@[simp, grind =]
 theorem mod_add_mul_right_eq_mod (a c f : GF2Poly) :
     (a + c * f) % f = a % f := by
   exact mod_eq_of_add_right_multiple a c f
@@ -989,7 +989,7 @@ example (a c f : GF2Poly) : (a + c * f) % f = a % f := by
   simp
 
 /-- A reduced packed polynomial is its own remainder modulo `f`. -/
-@[simp]
+@[simp, grind =]
 theorem mod_eq_self_of_reduced (p f : GF2Poly)
     (hred : p.isZero = true ∨ p.degree < f.degree) :
     p % f = p := by
