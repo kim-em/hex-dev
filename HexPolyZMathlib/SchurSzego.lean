@@ -28,7 +28,7 @@ def schmeisserComposition (n : ℕ) (f g : ℂ[X]) : ℂ[X] :=
   ∑ k ∈ Finset.range (n + 1),
     monomial k (f.coeff k * (g.coeff k / (Nat.choose n k : ℂ)))
 
-@[simp]
+@[simp, grind =]
 theorem coeff_schmeisserComposition_of_le
     (n : ℕ) (f g : ℂ[X]) {k : ℕ} (hk : k ≤ n) :
     (schmeisserComposition n f g).coeff k =
@@ -39,7 +39,7 @@ theorem coeff_schmeisserComposition_of_le
   · intro j hj hne
     simp [coeff_monomial, hne]
 
-@[simp]
+@[simp, grind =]
 theorem coeff_schmeisserComposition_of_lt
     (n : ℕ) (f g : ℂ[X]) {k : ℕ} (hk : n < k) :
     (schmeisserComposition n f g).coeff k = 0 := by
@@ -88,7 +88,7 @@ theorem eq_schmeisserComposition_of_natDegree_le_of_coeff
     rw [coeff_eq_zero_of_natDegree_lt (lt_of_le_of_lt hdeg hk_gt),
       coeff_schmeisserComposition_of_lt n f g hk_gt]
 
-@[simp]
+@[simp, grind =]
 theorem schmeisserComposition_zero_left (n : ℕ) (g : ℂ[X]) :
     schmeisserComposition n 0 g = 0 := by
   ext k
@@ -97,7 +97,7 @@ theorem schmeisserComposition_zero_left (n : ℕ) (g : ℂ[X]) :
   · have hk' : n < k := by omega
     simp [coeff_schmeisserComposition_of_lt n 0 g hk']
 
-@[simp]
+@[simp, grind =]
 theorem schmeisserComposition_zero_right (n : ℕ) (f : ℂ[X]) :
     schmeisserComposition n f 0 = 0 := by
   ext k
@@ -106,7 +106,7 @@ theorem schmeisserComposition_zero_right (n : ℕ) (f : ℂ[X]) :
   · have hk' : n < k := by omega
     simp [coeff_schmeisserComposition_of_lt n f 0 hk']
 
-@[simp]
+@[simp, grind =]
 theorem schmeisserComposition_zero (f g : ℂ[X]) :
     schmeisserComposition 0 f g = C (f.coeff 0 * g.coeff 0) := by
   ext k
@@ -114,7 +114,7 @@ theorem schmeisserComposition_zero (f g : ℂ[X]) :
   · simp [coeff_schmeisserComposition_of_le 0 f g (Nat.le_refl 0)]
   · simp [coeff_schmeisserComposition_of_lt 0 f g (Nat.succ_pos k)]
 
-@[simp]
+@[simp, grind =]
 theorem schmeisserComposition_C_C (n : ℕ) (a b : ℂ) :
     schmeisserComposition n (C a) (C b) = C (a * b) := by
   ext k
@@ -213,11 +213,11 @@ The binomial-normalized Schmeisser kernel for the derivative specialization:
 def schmeisserDerivativeKernel (n : ℕ) : ℂ[X] :=
   C (n : ℂ) * X * (X + 1) ^ (n - 1)
 
-@[simp]
+@[simp, grind =]
 theorem schmeisserDerivativeKernel_zero : schmeisserDerivativeKernel 0 = 0 := by
   simp [schmeisserDerivativeKernel]
 
-@[simp]
+@[simp, grind =]
 theorem schmeisserDerivativeKernel_one : schmeisserDerivativeKernel 1 = X := by
   simp [schmeisserDerivativeKernel]
 
@@ -597,18 +597,18 @@ theorem schur_two_interior_roots_norm_le {r : ℝ} {a b c d ζ₁ ζ₂ : ℂ}
 def rootsRadiusProduct (r : ℝ) (s : Multiset ℂ) : ℝ :=
   ((s.filter fun z => r ≤ ‖z‖).map fun z => ‖z‖ / r).prod
 
-@[simp]
+@[simp, grind =]
 theorem rootsRadiusProduct_zero (r : ℝ) :
     rootsRadiusProduct r (0 : Multiset ℂ) = 1 := by
   simp [rootsRadiusProduct]
 
-@[simp]
+@[simp, grind =]
 theorem rootsRadiusProduct_one (s : Multiset ℂ) :
     rootsRadiusProduct 1 s =
       ((s.filter fun z => 1 ≤ ‖z‖).map fun z => ‖z‖).prod := by
   simp [rootsRadiusProduct]
 
-@[simp]
+@[simp, grind =]
 theorem filtered_norm_div_one (s : Multiset ℂ) :
     ((s.filter fun z => 1 ≤ ‖z‖).map fun z => ‖z‖ / (1 : ℝ)).prod =
       ((s.filter fun z => 1 ≤ ‖z‖).map fun z => ‖z‖).prod := by
@@ -654,7 +654,7 @@ form of the zero-control predicate in `SPEC/Libraries/hex-poly-z-mathlib.md`.
 def rootsOutsideRadiusCount (r : ℝ) (s : Multiset ℂ) : ℕ :=
   (s.filter fun z => r ≤ ‖z‖).card
 
-@[simp]
+@[simp, grind =]
 theorem rootsOutsideRadiusCount_zero (r : ℝ) :
     rootsOutsideRadiusCount r (0 : Multiset ℂ) = 0 := by
   simp [rootsOutsideRadiusCount]
@@ -669,7 +669,7 @@ multiplicity through the `Polynomial.roots` multiset.
 def rootsStrictlyOutsideRadiusCount (r : ℝ) (s : Multiset ℂ) : ℕ :=
   (s.filter fun z => r < ‖z‖).card
 
-@[simp]
+@[simp, grind =]
 theorem rootsStrictlyOutsideRadiusCount_zero (r : ℝ) :
     rootsStrictlyOutsideRadiusCount r (0 : Multiset ℂ) = 0 := by
   simp [rootsStrictlyOutsideRadiusCount]
