@@ -83,7 +83,7 @@ Bezout combination to the named raw gcd; the matching pattern only fires when
 the goal mentions `Hex.DensePoly.xgcd p q` literally with both coefficient
 projections, so the rule is narrow.
 -/
-@[simp]
+@[simp, grind =]
 theorem toPolynomial_xgcd_bezout_raw [Field R] [DecidableEq R] [Hex.DensePoly.GcdLaws R]
     (p q : Hex.DensePoly R) :
     toPolynomial (Hex.DensePoly.xgcd p q).left * toPolynomial p +
