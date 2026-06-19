@@ -746,9 +746,8 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift
         (UniqueFactorizationMonoid.normalizedFactors
           (HexPolyZMathlib.toPolynomial core)).card) :
     ∀ factor ∈ coreFactors.toList, Hex.ZPoly.Irreducible factor := by
-  have hcut := BHKS.cutProjectionHypotheses_of_shortVectors L hrows hbasis trueSupports
-    (fun S => BHKS.supportShortVectorData_of_recoveredLift (lift S) (hf_lc S)
-      (hfactor_monic S) (hp S) (hk S) (hsep S) (hthr S) (hfac S))
+  have hcut := BHKS.cutProjectionHypotheses_of_recoveredLift L hrows hbasis trueSupports
+    lift hf_lc hfactor_monic hp hk hsep hthr hfac
   exact factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut trueSupports
     hcore_ne h hcut hsize hpartition
 
