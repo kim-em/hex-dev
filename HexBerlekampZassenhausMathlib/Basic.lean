@@ -320,10 +320,17 @@ hypothesis `h_raw` is dispatched by the public fast/slow case-split exposed
 through `Hex.factorWithBound_entry_mem_raw_source`: it asks the caller to
 prove that every raw factor produced by the chosen branch (the fast BHKS
 output when `factorFastFactorsWithBound = some _`, or the slow exhaustive
-output when `factorFastFactorsWithBound = none`) is `Hex.ZPoly.Irreducible`.
-The recorded entry's first component is the `Hex.normalizeFactorSign`-image
-of one such raw factor, so `zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible`
-discharges the sign-normalisation step.
+output when `factorFastFactorsWithBound = none`) is `Hex.ZPoly.Irreducible`,
+**guarded by** `Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw)
+= true`.  The guard excludes unit/constant raw outputs that never produce a
+recorded entry — without it the contract is unsatisfiable on the fast path,
+whose constant early-return emits the unit `1` (e.g. `f = 1`), and
+`Hex.ZPoly.Irreducible 1` is false.  The recorded entry's first component is the
+`Hex.normalizeFactorSign`-image of one such raw factor and passes the
+recorded-factor filter (`Hex.factorWithBound_entry_shouldRecord`), so the guard
+is discharged automatically and
+`zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible` then lifts the
+sign-normalisation step.
 
 Combined with the Mathlib-free reassembly lift
 `Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`,
@@ -348,13 +355,18 @@ theorem factorWithBound_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
           (Hex.factorFastFactorsWithBound f B = none ∧
             Hex.factorSlowModularWithBound f B = none ∧
             rawFactors = Hex.factorSlowTrialFactorsWithBound f B)) →
-        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw) :
+        ∀ raw ∈ rawFactors.toList,
+          Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true →
+            Hex.ZPoly.Irreducible raw) :
     Hex.ZPoly.Irreducible entry.1 := by
   obtain ⟨rawFactors, hsource, raw, hraw_mem, hentry_eq⟩ :=
     Hex.factorWithBound_entry_mem_raw_source f B entry hmem
+  have hrecord : Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true := by
+    have := Hex.factorWithBound_entry_shouldRecord f B entry hmem
+    rwa [hentry_eq] at this
   rw [hentry_eq]
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
-    (h_raw rawFactors hsource raw hraw_mem)
+    (h_raw rawFactors hsource raw hraw_mem hrecord)
 
 /-- Default-precision specialisation of
 `factorWithBound_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible` for
@@ -378,7 +390,9 @@ theorem factor_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
             rawFactors =
               Hex.factorSlowTrialFactorsWithBound f
                 (Hex.ZPoly.defaultFactorCoeffBound f))) →
-        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw) :
+        ∀ raw ∈ rawFactors.toList,
+          Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true →
+            Hex.ZPoly.Irreducible raw) :
     Hex.ZPoly.Irreducible entry.1 :=
   factorWithBound_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
     (B := Hex.ZPoly.defaultFactorCoeffBound f)
@@ -414,7 +428,9 @@ theorem factorWithBound_entries_irreducible
           (Hex.factorFastFactorsWithBound f B = none ∧
             Hex.factorSlowModularWithBound f B = none ∧
             rawFactors = Hex.factorSlowTrialFactorsWithBound f B)) →
-        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw) :
+        ∀ raw ∈ rawFactors.toList,
+          Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true →
+            Hex.ZPoly.Irreducible raw) :
     ∀ entry ∈ (Hex.factorWithBound f B).factors, Hex.ZPoly.Irreducible entry.1 := by
   intro entry hentry
   exact factorWithBound_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
@@ -441,7 +457,9 @@ theorem factor_entries_irreducible
             rawFactors =
               Hex.factorSlowTrialFactorsWithBound f
                 (Hex.ZPoly.defaultFactorCoeffBound f))) →
-        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw) :
+        ∀ raw ∈ rawFactors.toList,
+          Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true →
+            Hex.ZPoly.Irreducible raw) :
     ∀ entry ∈ (Hex.factor f).factors, Hex.ZPoly.Irreducible entry.1 := by
   intro entry hentry
   exact factor_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible

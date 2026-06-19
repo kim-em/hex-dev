@@ -17186,6 +17186,53 @@ theorem reassemblyExpansionComplete_constant_of_ne_zero
   rw [hcore_one, expandRepeatedPartFactorArray_singleton_one]
   exact hrep_one
 
+/-- Guarded constant-branch raw irreducibility for the fast path.
+
+When the square-free core has degree zero, `factorFastFactorsWithBound`
+short-circuits to `reassemblePolynomialFactors (normalizeForFactor f)
+#[(normalizeForFactor f).squareFreeCore]`, whose core collapses to the unit `1`
+(`squareFreeCore_eq_one_of_constant_of_ne_zero`).  The reassembly is then a pure
+power of `X`, so every raw factor that *passes the recorded-factor filter* is
+irreducible: the extracted `X`-powers are irreducible
+(`xPowerFactorArray_irreducible`), and the unit core fails the
+`shouldRecordPolynomialFactor` guard (`shouldRecordPolynomialFactor_one`) and so
+never incurs an `ZPoly.Irreducible 1` obligation.
+
+The `shouldRecordPolynomialFactor (normalizeFactorSign raw) = true` guard is what
+makes the contract satisfiable: the over-strong "every raw element is
+irreducible" form is false here precisely because the singleton core is the unit
+`1`.  This discharges the constant/unit early-return disjunct of the corrected
+fast-branch recorded-entry irreducibility contract. -/
+theorem factorFastFactorsWithBound_raw_irreducible_of_constant
+    (f : ZPoly) (hf : f ≠ 0) (B : Nat)
+    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0)
+    {rawFactors : Array ZPoly}
+    (hfast : factorFastFactorsWithBound f B = some rawFactors) :
+    ∀ raw ∈ rawFactors.toList,
+      shouldRecordPolynomialFactor (normalizeFactorSign raw) = true →
+        ZPoly.Irreducible raw := by
+  have hval :
+      factorFastFactorsWithBound f B =
+        some (reassemblePolynomialFactors (normalizeForFactor f)
+          #[(normalizeForFactor f).squareFreeCore]) := by
+    unfold factorFastFactorsWithBound
+    rw [if_pos hdeg]
+  rw [hval] at hfast
+  have hraw_eq := Option.some.inj hfast
+  subst hraw_eq
+  intro raw hmem hrecord
+  have hcomplete := reassemblyExpansionComplete_constant_of_ne_zero f hf hdeg
+  rcases reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
+      (normalizeForFactor f) #[(normalizeForFactor f).squareFreeCore] raw hcomplete hmem with
+    hx | hcore
+  · exact xPowerFactorArray_irreducible (normalizeForFactor f).xPower raw hx
+  · have hraw_one : raw = 1 := by
+      have hraw_core : raw = (normalizeForFactor f).squareFreeCore := by
+        simpa using hcore
+      rw [hraw_core, squareFreeCore_eq_one_of_constant_of_ne_zero f hf hdeg]
+    rw [hraw_one, normalizeFactorSign_one, shouldRecordPolynomialFactor_one] at hrecord
+    exact absurd hrecord (by decide)
+
 /-- The normalized square-free core has positive leading coefficient
 (`squareFreeCore_leadingCoeff_pos_of_ne_zero`), so its sign-normalisation
 is the identity. Exposed publicly for HO-1 support-lemma callers in the
