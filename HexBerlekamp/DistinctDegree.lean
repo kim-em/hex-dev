@@ -37,14 +37,14 @@ def degreeBucketFactors (buckets : List (DegreeBucket p)) : List (FpPoly p) :=
 
 /-- `degreeBucketFactors` of the empty bucket list is the empty factor list.
 Definitional rewrite (`by rfl`) characterising `degreeBucketFactors`. -/
-@[simp] theorem degreeBucketFactors_nil :
+@[simp, grind =] theorem degreeBucketFactors_nil :
     degreeBucketFactors ([] : List (DegreeBucket p)) = [] := by
   rfl
 
 /-- `degreeBucketFactors` distributes over `::`, pulling the head bucket's
 `.factor` to the front of the recovered factor list. Definitional rewrite
 (`by rfl`) characterising `degreeBucketFactors`. -/
-@[simp] theorem degreeBucketFactors_cons
+@[simp, grind =] theorem degreeBucketFactors_cons
     (bucket : DegreeBucket p) (buckets : List (DegreeBucket p)) :
     degreeBucketFactors (bucket :: buckets) =
       bucket.factor :: degreeBucketFactors buckets := by
@@ -52,7 +52,7 @@ Definitional rewrite (`by rfl`) characterising `degreeBucketFactors`. -/
 
 /-- `degreeBucketFactors` distributes over `++`: the factors of a concatenated
 bucket list are the concatenation of each part's factors. -/
-@[simp] theorem degreeBucketFactors_append
+@[simp, grind =] theorem degreeBucketFactors_append
     (buckets₁ buckets₂ : List (DegreeBucket p)) :
     degreeBucketFactors (buckets₁ ++ buckets₂) =
       degreeBucketFactors buckets₁ ++ degreeBucketFactors buckets₂ := by
@@ -64,7 +64,7 @@ def degreeBucketProduct (buckets : List (DegreeBucket p)) : FpPoly p :=
 
 /-- The product over the empty bucket list is `1`. Definitional rewrite
 (`by rfl`) characterising `degreeBucketProduct`. -/
-@[simp] theorem degreeBucketProduct_nil :
+@[simp, grind =] theorem degreeBucketProduct_nil :
     degreeBucketProduct ([] : List (DegreeBucket p)) = 1 := by
   rfl
 
@@ -76,7 +76,7 @@ def DistinctDegreeFactorization.product (result : DistinctDegreeFactorization p)
 /-- Unfold `DistinctDegreeFactorization.product` to the product of the bucket
 factors times the residual. Definitional rewrite (`by rfl`) characterising
 `DistinctDegreeFactorization.product`. -/
-@[simp] theorem DistinctDegreeFactorization.product_eq
+@[simp, grind =] theorem DistinctDegreeFactorization.product_eq
     (result : DistinctDegreeFactorization p) :
     result.product = degreeBucketProduct result.buckets * result.residual := by
   rfl
@@ -280,14 +280,14 @@ theorem degreeBucketProduct_append
   simp [degreeBucketProduct, degreeBucketFactors_append, factorProduct_append]
 
 /-- The product of a singleton bucket list is its recorded factor. -/
-@[simp] theorem degreeBucketProduct_singleton
+@[simp, grind =] theorem degreeBucketProduct_singleton
     [ZMod64.PrimeModulus p]
     (bucket : DegreeBucket p) :
     degreeBucketProduct [bucket] = bucket.factor := by
   simp [degreeBucketProduct, degreeBucketFactors, factorProduct]
 
 /-- Pull the first bucket factor out of a bucket product. -/
-@[simp] theorem degreeBucketProduct_cons
+@[simp, grind =] theorem degreeBucketProduct_cons
     [ZMod64.PrimeModulus p]
     (bucket : DegreeBucket p) (buckets : List (DegreeBucket p)) :
     degreeBucketProduct (bucket :: buckets) =
