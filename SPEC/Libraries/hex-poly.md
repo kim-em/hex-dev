@@ -20,8 +20,18 @@ The normalization invariant (no trailing zeros) ensures structural equality
 **Operations:**
 - Addition, subtraction, multiplication (schoolbook, Karatsuba for large degree)
 - Division with remainder (for monic divisors; general division over fields)
-- Polynomial GCD (Euclidean algorithm)
-- Extended GCD (Bezout coefficients: `a*f + b*g = gcd(f,g)`)
+- Polynomial GCD (plain Euclidean remainder sequence — **not** the extended
+  algorithm). `gcd` tracks only the remainders, so it is `O(deg²)`. The extended
+  algorithm additionally multiplies the divisor against the growing Bezout
+  accumulators `s`, `t` at every step (`q*s₁`, `q*t₁`), which is `O(deg³)` and
+  pure waste when only the gcd *value* is needed — the common case being the
+  square-free / separability test `gcd(f, f') = 1`. Computing Bezout coefficients
+  inside `gcd` is a correctness-neutral but ~10⁴× performance defect on the BHKS
+  prime-selection hot path, so `gcd` must be the plain remainder sequence.
+- Extended GCD (`xgcd`, Bezout coefficients: `a*f + b*g = gcd(f,g)`) — a
+  *separate* function for the genuine Bezout use-sites (CRT, Hensel, Berlekamp
+  correctness). `gcd` agrees with `xgcd`'s gcd component (`gcd_eq_xgcd_gcd`), so
+  the gcd-value lemmas transfer.
 - Evaluation (Horner's method)
 - Composition, derivative
 - Content and primitive part (for `DensePoly Int`)

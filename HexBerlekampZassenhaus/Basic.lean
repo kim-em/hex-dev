@@ -1968,10 +1968,16 @@ private def betterPrimeChoiceDataScore
 private def choosePrimeDataScoreStep
     (f : ZPoly) (best : Option PrimeChoiceDataScore) (c : SmallPrimeCandidate) :
     Option PrimeChoiceDataScore :=
-  match best, primeChoiceDataScore f c with
-  | none, score => score
-  | some old, none => some old
-  | some old, some new => some (betterPrimeChoiceDataScore old new)
+  -- First-suitable selection (matching the verified Isabelle/AFP
+  -- `Berlekamp_Zassenhaus` `find_prime`): once a suitable prime has been found,
+  -- keep it and stop — crucially, do **not** evaluate `primeChoiceDataScore f c`
+  -- (which factors `f mod c.p`) for any later candidate. The old "fewest modular
+  -- factors" rule factored at every good prime, costing ~95 modular
+  -- factorizations per call; van Hoeij's recombination is polynomial in the
+  -- factor count, so the optimisation bought almost nothing.
+  match best with
+  | some old => some old
+  | none => primeChoiceDataScore f c
 
 private theorem primeChoiceDataScore_prime
     (f : ZPoly) (c : SmallPrimeCandidate) (score : PrimeChoiceDataScore)
@@ -2037,26 +2043,14 @@ private theorem choosePrimeDataScoreStep_prime
     Nat.Prime score.data.p := by
   unfold choosePrimeDataScoreStep at hscore
   cases hbest_eq : best with
-  | none =>
-      cases hc_eq : primeChoiceDataScore f c with
-      | none =>
-          simp [hbest_eq, hc_eq] at hscore
-      | some new =>
-          simp [hbest_eq, hc_eq] at hscore
-          have hnew := primeChoiceDataScore_prime f c new hc_eq
-          simpa [hscore] using hnew
   | some old =>
-      cases hc_eq : primeChoiceDataScore f c with
-      | none =>
-          simp [hbest_eq, hc_eq] at hscore
-          have hold := hbest old hbest_eq
-          simpa [hscore] using hold
-      | some new =>
-          simp [hbest_eq, hc_eq] at hscore
-          exact betterPrimeChoiceDataScore_prime old new score
-            (hbest old hbest_eq)
-            (primeChoiceDataScore_prime f c new hc_eq)
-            hscore
+      rw [hbest_eq] at hscore
+      simp only [Option.some.injEq] at hscore
+      rw [← hscore]
+      exact hbest old hbest_eq
+  | none =>
+      rw [hbest_eq] at hscore
+      exact primeChoiceDataScore_prime f c score hscore
 
 private theorem choosePrimeDataScoreStep_fModP_eq
     (f : ZPoly) (best : Option PrimeChoiceDataScore) (c : SmallPrimeCandidate)
@@ -2069,28 +2063,14 @@ private theorem choosePrimeDataScoreStep_fModP_eq
       @ZPoly.modP score.data.p score.data.bounds f := by
   unfold choosePrimeDataScoreStep at hscore
   cases hbest_eq : best with
-  | none =>
-      cases hc_eq : primeChoiceDataScore f c with
-      | none =>
-          simp [hbest_eq, hc_eq] at hscore
-      | some new =>
-          simp [hbest_eq, hc_eq] at hscore
-          have hnew := primeChoiceDataScore_fModP_eq f c new hc_eq
-          subst score
-          exact hnew
   | some old =>
-      cases hc_eq : primeChoiceDataScore f c with
-      | none =>
-          simp [hbest_eq, hc_eq] at hscore
-          have hold := hbest old hbest_eq
-          subst score
-          exact hold
-      | some new =>
-          simp [hbest_eq, hc_eq] at hscore
-          exact betterPrimeChoiceDataScore_fModP_eq f old new score
-            (hbest old hbest_eq)
-            (primeChoiceDataScore_fModP_eq f c new hc_eq)
-            hscore
+      rw [hbest_eq] at hscore
+      simp only [Option.some.injEq] at hscore
+      rw [← hscore]
+      exact hbest old hbest_eq
+  | none =>
+      rw [hbest_eq] at hscore
+      exact primeChoiceDataScore_fModP_eq f c score hscore
 
 private theorem choosePrimeDataScore_fold_prime
     (f : ZPoly) (candidates : List SmallPrimeCandidate)
@@ -2161,26 +2141,14 @@ private theorem choosePrimeDataScoreStep_isGoodPrime
     @isGoodPrime f score.data.p score.data.bounds = true := by
   unfold choosePrimeDataScoreStep at hscore
   cases hbest_eq : best with
-  | none =>
-      cases hc_eq : primeChoiceDataScore f c with
-      | none =>
-          simp [hbest_eq, hc_eq] at hscore
-      | some new =>
-          simp [hbest_eq, hc_eq] at hscore
-          have hnew := primeChoiceDataScore_isGoodPrime f c new hc_eq
-          simpa [hscore] using hnew
   | some old =>
-      cases hc_eq : primeChoiceDataScore f c with
-      | none =>
-          simp [hbest_eq, hc_eq] at hscore
-          have hold := hbest old hbest_eq
-          simpa [hscore] using hold
-      | some new =>
-          simp [hbest_eq, hc_eq] at hscore
-          exact betterPrimeChoiceDataScore_isGoodPrime f old new score
-            (hbest old hbest_eq)
-            (primeChoiceDataScore_isGoodPrime f c new hc_eq)
-            hscore
+      rw [hbest_eq] at hscore
+      simp only [Option.some.injEq] at hscore
+      rw [← hscore]
+      exact hbest old hbest_eq
+  | none =>
+      rw [hbest_eq] at hscore
+      exact primeChoiceDataScore_isGoodPrime f c score hscore
 
 private theorem choosePrimeDataScore_fold_isGoodPrime
     (f : ZPoly) (candidates : List SmallPrimeCandidate)
@@ -2580,28 +2548,14 @@ private theorem choosePrimeDataScoreStep_factorsModPBerlekampForm
     factorsModPBerlekampForm f score.data := by
   unfold choosePrimeDataScoreStep at hscore
   cases hbest_eq : best with
-  | none =>
-      cases hc_eq : primeChoiceDataScore f c with
-      | none =>
-          simp [hbest_eq, hc_eq] at hscore
-      | some new =>
-          simp [hbest_eq, hc_eq] at hscore
-          have hnew := primeChoiceDataScore_factorsModPBerlekampForm f c new hc_eq
-          subst score
-          exact hnew
   | some old =>
-      cases hc_eq : primeChoiceDataScore f c with
-      | none =>
-          simp [hbest_eq, hc_eq] at hscore
-          have hold := hbest old hbest_eq
-          subst score
-          exact hold
-      | some new =>
-          simp [hbest_eq, hc_eq] at hscore
-          exact betterPrimeChoiceDataScore_factorsModPBerlekampForm f old new score
-            (hbest old hbest_eq)
-            (primeChoiceDataScore_factorsModPBerlekampForm f c new hc_eq)
-            hscore
+      rw [hbest_eq] at hscore
+      simp only [Option.some.injEq] at hscore
+      rw [← hscore]
+      exact hbest old hbest_eq
+  | none =>
+      rw [hbest_eq] at hscore
+      exact primeChoiceDataScore_factorsModPBerlekampForm f c score hscore
 
 private theorem choosePrimeDataScore_fold_factorsModPBerlekampForm
     (f : ZPoly) (candidates : List SmallPrimeCandidate)

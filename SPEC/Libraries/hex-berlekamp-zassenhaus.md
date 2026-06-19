@@ -219,11 +219,22 @@ def choosePrime (f : ZPoly) : Nat
 
 `isGoodPrime` expresses the mathematical admissibility condition for
 the modular reduction prime: at minimum `p ∤ lc(f)`, `p ≥ 3` (avoid
-`p = 2`; see Pitfall 6), and `f mod p` is square-free. `choosePrime`
-is the default total heuristic chooser. It searches through a small
-fixed number of admissible small primes (≥ 3), factors `f mod p` for
-each, and chooses the prime with the fewest modular factors, breaking
-ties toward the smallest prime.
+`p = 2`; see Pitfall 6), and `f mod p` is square-free. The square-free
+test is a single modular **GCD** — `gcd(f mod p, f' mod p)` is a unit —
+**not** a factorisation, so `isGoodPrime` is cheap.
+
+`choosePrime` selects the **first suitable prime**: it walks the
+candidate primes in increasing order and returns the first `p` with
+`isGoodPrime f p`, then factors `f mod p` only for that prime. This
+matches the verified Isabelle/AFP `Berlekamp_Zassenhaus` reference
+(`Suitable_Prime.thy` `find_prime` selects the first separable prime;
+`berlekamp_zassenhaus_main` then runs `finite_field_factorization_int p f`
+once). It deliberately does **not** factor `f mod p` at multiple primes
+to minimise the modular-factor count: that classical Zassenhaus heuristic
+costs one modular factorisation per candidate prime (≈95 per call here),
+and van Hoeij's recombination is polynomial in the factor count `r`, so
+the optimisation buys almost nothing. First-suitable factors `f mod p`
+exactly once.
 
 **Explicit pipeline records:**
 ```lean
@@ -268,21 +279,29 @@ excluded by `isGoodPrime`). This set has 95 elements; their
 primorial `∏ HotPathCandidates ≈ 10^203`, which is the lower
 bound D2 below uses to characterise `factorSlowTrial` inputs.
 
-The cap of 500 is a SPEC choice balancing three constraints: the
-walk must visit *every* element of `HotPathCandidates` on every
-input (so the implementation can be a constant-size fixed walk,
-not input-dependent); the primorial must be large enough that no
-realistic polynomial reaches the lower bound; the cap must be
-small enough that the trial-division kernel uses `ZMod64`
-throughout. 95 primes is fast, the primorial `10^203` exceeds any
-realistic `|lc(f)·disc(f)|` by tens of orders of magnitude, and
-`p ≤ 500` is far inside `ZMod64`'s `UInt64.word` domain.
+The cap of 500 balances two constraints: the primorial must be large
+enough that no realistic polynomial reaches the lower bound (so the
+`none` case is unreachable in practice, per D2); and the cap must be
+small enough that the modular kernel uses `ZMod64` throughout. The
+primorial `10^203` exceeds any realistic `|lc(f)·disc(f)|` by tens of
+orders of magnitude, and `p ≤ 500` is far inside `ZMod64`'s
+`UInt64.word` domain.
 
-The executable MUST walk exactly `HotPathCandidates` before
-returning `none`: a curated `smallPrimeCandidates`-style subset
-(skipping primes like `29, 37, 41, 43, 47, 53, 59, 61, 67`) is a
-SPEC violation, as is an input-dependent fuel cap. The
-implementation is a constant-size walk over a SPEC-fixed list.
+`choosePrimeData?` walks `HotPathCandidates` in increasing order and
+returns the **first** prime with `isGoodPrime f p`, factoring `f mod p`
+only for that prime (first-suitable selection; see `choosePrime`
+above). On realistic input a suitable prime appears among the first few
+candidates, so the walk stops almost immediately. Only when **no**
+candidate is suitable does the walk visit all 95 — and because
+suitability is the cheap separability GCD (not a factorisation), even
+that exhaustive `none`-case walk is fast.
+
+The candidate set is SPEC-fixed: the `none` case MUST check every
+element of `HotPathCandidates` before concluding `none` (this is what
+D2's characterisation rests on), so a curated subset that skips primes
+like `29, 37, 41, 43, 47, 53, 59, 61, 67`, or an input-dependent fuel
+cap, is a SPEC violation. First-suitable changes *when the walk stops on
+success*, not *which primes are eligible*.
 
 `choosePrimeData? f = none` when no element of
 `HotPathCandidates` satisfies `isGoodPrime f p`. This is by
@@ -604,7 +623,7 @@ D2. **Tight characterisation of trial-backstop inputs.** Statement shape:
 
     The bridge file gets one new theorem (`choosePrimeData?_none_implies_huge`) and a small helper unfolding `isGoodPrime`. No new mathematical content; the bound is a clean divisibility argument.
 
-    **Executable precondition.** D2 presumes the executable `choosePrimeData?` walks the entire `HotPathCandidates` set (the 95 primes in `[3, 500]`) before returning `none`. The implementation MUST visit every one — a curated `smallPrimeCandidates`-style subset that skips primes is a SPEC violation, as is an input-dependent fuel cap. Any worker noticing the walk can short-circuit before exhausting `HotPathCandidates` should file the fix as a prerequisite issue, not weaken D2's statement.
+    **Executable precondition.** D2 is about the `none` case only: `choosePrimeData? f = none` must mean *no* element of `HotPathCandidates` is suitable, so the `none` path MUST test every one of the 95 primes in `[3, 500]` before concluding `none`. First-suitable selection short-circuits on *success* (returning at the first suitable prime, which is correct and required for performance), but it must **not** short-circuit the `none` conclusion: a curated subset that skips primes, or an input-dependent fuel cap on the `none`-case walk, is a SPEC violation that would weaken D2.
 
 ## Headline correctness theorem
 

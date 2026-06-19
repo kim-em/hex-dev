@@ -1720,7 +1720,8 @@ private theorem gcd_C_mul_C_mul_eq_C_mul_gcd
           α * (DensePoly.C u * f) + β * (DensePoly.C u * g) = d :=
       ⟨(DensePoly.xgcd (DensePoly.C u * f) (DensePoly.C u * g)).left,
         (DensePoly.xgcd (DensePoly.C u * f) (DensePoly.C u * g)).right,
-        DensePoly.xgcd_bezout (DensePoly.C u * f) (DensePoly.C u * g)⟩
+        (DensePoly.xgcd_bezout (DensePoly.C u * f) (DensePoly.C u * g)).trans
+          (DensePoly.xgcd_gcd_eq_gcd (DensePoly.C u * f) (DensePoly.C u * g))⟩
     -- Rewrite the Bezout sum as `C u * (α * f + β * g)`.
     let P : FpPoly p := α * f + β * g
     have hd_eq : d = DensePoly.C u * P := by

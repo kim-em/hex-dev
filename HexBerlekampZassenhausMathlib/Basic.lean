@@ -7448,8 +7448,7 @@ private theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
                         (((h :: tail).map Hex.FpPoly.liftToZ).toArray)))).gcd =
                 Hex.DensePoly.scale
                   (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ rawGcd
-              rw [hmodP_g, hmodP_tail, hrawGcd_def]
-              rfl
+              rw [hmodP_g, hmodP_tail, hrawGcd_def, Hex.DensePoly.gcd_eq_xgcd_gcd]
             rw [hnorm_def]
             -- The rest: show `scale (lc rawGcd)⁻¹ rawGcd = 1`.  This needs
             -- `rawGcd` to be a nonzero constant in `FpPoly p`.

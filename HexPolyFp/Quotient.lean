@@ -854,7 +854,7 @@ theorem mul_mod_inverseCandidate_eq_one_of_irreducible
   let d : FpPoly p := DensePoly.gcd a g
   have hbezout : xres.left * a + xres.right * g = d := by
     have hb := DensePoly.xgcd_bezout a g
-    simpa [xres, d, DensePoly.gcd] using hb
+    simpa [xres, d, DensePoly.gcd_eq_xgcd_gcd] using hb
   -- The gcd divides both inputs.
   have hda : d ∣ a := DensePoly.gcd_dvd_left a g
   have hdg : d ∣ g := DensePoly.gcd_dvd_right a g

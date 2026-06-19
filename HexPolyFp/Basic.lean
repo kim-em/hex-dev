@@ -3577,7 +3577,7 @@ theorem dvd_of_dvd_mul_of_common_dvd_one
   obtain ⟨s, t, hbez⟩ :
       ∃ s t : FpPoly p, s * c + t * g = DensePoly.gcd c g :=
     ⟨(DensePoly.xgcd c g).left, (DensePoly.xgcd c g).right,
-     DensePoly.xgcd_bezout c g⟩
+     DensePoly.xgcd_gcd_eq_gcd c g ▸ DensePoly.xgcd_bezout c g⟩
   -- `g` divides each summand of `(s * c + t * g) * h`.
   have hg_left : g ∣ s * c * h := by
     have h_assoc : s * c * h = s * (c * h) := DensePoly.mul_assoc_poly s c h
