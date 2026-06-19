@@ -72,12 +72,12 @@ def indicatorVector {r : Nat} (S : Set (Fin r)) : Fin r → ℤ :=
     classical
     exact fun i => if i ∈ S then 1 else 0
 
-@[simp] theorem indicatorVector_apply_mem {r : Nat} (S : Set (Fin r))
+@[simp, grind =] theorem indicatorVector_apply_mem {r : Nat} (S : Set (Fin r))
     {i : Fin r} (hi : i ∈ S) :
     indicatorVector S i = 1 := by
   simp [indicatorVector, hi]
 
-@[simp] theorem indicatorVector_apply_not_mem {r : Nat} (S : Set (Fin r))
+@[simp, grind =] theorem indicatorVector_apply_not_mem {r : Nat} (S : Set (Fin r))
     {i : Fin r} (hi : i ∉ S) :
     indicatorVector S i = 0 := by
   simp [indicatorVector, hi]
@@ -1475,7 +1475,7 @@ def supportPartitionByMinColumn {r : Nat}
 def classIndicatorArray (r : Nat) (members : List Nat) : Array Int :=
   ((List.range r).map (fun i => if i ∈ members then (1 : Int) else 0)).toArray
 
-@[simp] theorem classIndicatorArray_size (r : Nat) (members : List Nat) :
+@[simp, grind =] theorem classIndicatorArray_size (r : Nat) (members : List Nat) :
     (classIndicatorArray r members).size = r := by
   unfold classIndicatorArray
   simp
@@ -1952,7 +1952,7 @@ def projFirst (r n : Nat) : (Fin (r + n) → ℤ) →ₗ[ℤ] (Fin r → ℤ) wh
   map_add' a b := by funext i; simp
   map_smul' c a := by funext i; simp
 
-@[simp] theorem projFirst_apply (r n : Nat) (w : Fin (r + n) → ℤ) (i : Fin r) :
+@[simp, grind =] theorem projFirst_apply (r n : Nat) (w : Fin (r + n) → ℤ) (i : Fin r) :
     projFirst r n w i = w (Fin.castAdd n i) := rfl
 
 /-- The squared Euclidean norm is the explicit sum of squared coordinates. -/
@@ -2150,20 +2150,20 @@ theorem projectedRow_mem_projectedRowSpaceRat
   exact Submodule.subset_span ⟨i, rfl⟩
 
 /-- `intVectorToRat` of the zero vector is the zero rational vector. -/
-@[simp] theorem intVectorToRat_zero {r : Nat} :
+@[simp, grind =] theorem intVectorToRat_zero {r : Nat} :
     intVectorToRat (0 : Fin r → ℤ) = 0 := by
   funext i
   simp [intVectorToRat]
 
 /-- `intVectorToRat` commutes with pointwise addition. -/
-@[simp] theorem intVectorToRat_add {r : Nat} (u v : Fin r → ℤ) :
+@[simp, grind =] theorem intVectorToRat_add {r : Nat} (u v : Fin r → ℤ) :
     intVectorToRat (u + v) = intVectorToRat u + intVectorToRat v := by
   funext i
   simp [intVectorToRat, Pi.add_apply]
 
 /-- `intVectorToRat` of an integer-scalar multiple is the rational-cast scalar
 times the rational vector. -/
-@[simp] theorem intVectorToRat_intSmul {r : Nat} (n : ℤ) (v : Fin r → ℤ) :
+@[simp, grind =] theorem intVectorToRat_intSmul {r : Nat} (n : ℤ) (v : Fin r → ℤ) :
     intVectorToRat (n • v) = (n : ℚ) • intVectorToRat v := by
   funext i
   simp only [intVectorToRat, Pi.smul_apply, smul_eq_mul, Int.cast_mul]
