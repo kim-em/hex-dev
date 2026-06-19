@@ -43,7 +43,7 @@ def barrettReduce (ctx : BarrettCtx p) (T : UInt64) : UInt64 :=
 The reciprocal stored in a Barrett context is the Nat-level
 `floor(barrettRadix / p)`, not just propositionally equal as a `UInt64`.
 -/
-@[simp]
+@[simp, grind =]
 theorem BarrettCtx.toNat_pinv (ctx : BarrettCtx p) :
     ctx.pinv.toNat = barrettRadix / p.toNat := by
   rw [ctx.pinv_eq]
@@ -137,7 +137,7 @@ theorem toNat_barrettReduce (ctx : BarrettCtx p) (T : UInt64)
 The executable Barrett reducer returns the ordinary Nat remainder for every
 input in the small-product range guaranteed by the context.
 -/
-@[simp]
+@[simp, grind =]
 theorem toNat_barrettReduce_eq_mod (ctx : BarrettCtx p) (T : UInt64)
     (hT : T.toNat < p.toNat * p.toNat) :
     (barrettReduce ctx T).toNat = T.toNat % p.toNat := by
@@ -160,7 +160,7 @@ theorem barrettReduce_lt (ctx : BarrettCtx p) (T : UInt64)
   exact Nat.mod_lt _ (Nat.lt_trans (by decide : 0 < 1) ctx.p_gt)
 
 /-- Barrett reduction fixes inputs that are already canonical residues. -/
-@[simp]
+@[simp, grind =]
 theorem barrettReduce_eq_self_of_lt (ctx : BarrettCtx p) (T : UInt64)
     (hT : T < p) :
     barrettReduce ctx T = T := by
