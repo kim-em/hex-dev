@@ -58,6 +58,21 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   equality` even though it "looks like a literal equation." Leave such lemmas
   `@[simp]`-only; it is a permanent property of the statement shape, not a
   fixable regression, so no follow-up issue is warranted.
+- **`grind =` ACCEPTS `↔` (Iff) — it is NOT an ineligible shape.** `grind =`
+  registers `a ↔ b` as a rewrite rule exactly like `a = b`, so a public
+  characterising `↔` lemma (`p.isZero = true ↔ p = 0`,
+  `memLattice (s.swapStep k).b v ↔ memLattice s.b v`) is a valid, sound,
+  *terminating* `grind =` annotation when the LHS strictly reduces — and
+  `↔ + grind =` is an established, deliberate pattern in this codebase
+  (the LLL `*_memLattice_iff` capstone rewrites #6594, the HexArith
+  carry/borrow wrappers, etc.). The Phase 6 sweep PRs scope themselves to
+  `Eq` conclusions and their planning bodies call `↔` "left as `@[simp]`-only",
+  but that is a conservative *scope choice for the mechanical sweep*, NOT a
+  prohibition: do not "revert" a sound `↔ + grind =` lemma in an audit, and
+  do not mis-read the `let`-binder rejection above as covering `↔`. The
+  genuinely-rejected conclusion shapes (hard build error) are `<`, `≤`,
+  `Ne`, `∧`, `Associated`, and `let`-wrapped — so a green build is itself a
+  proof that none of those carry `grind =`.
 - **Transporting `FpPoly` multiplication to `Polynomial (ZMod p)`
   (`map_mul'`-shaped goals): push `toZMod` through the executable List-fold,
   *then* convert to a Finset sum on the `ZMod p` side — you cannot meet in the
