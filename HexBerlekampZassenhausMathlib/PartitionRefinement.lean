@@ -1949,4 +1949,134 @@ theorem rawIrreducible_of_cut
       f hf_ne B primeData rows_pos trueSupports hcore hcut hsize hpartition)
     hfast
 
+/--
+Fast-branch raw irreducibility capstone from the #8051 recovered-lift cut
+package.
+
+This is the raw `factorFastFactorsWithBound` analogue of the core-level
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift`: instead
+of taking the forward cut certificate `hcut` as an opaque hypothesis, it
+consumes the per-support `BHKS.RecoveredLift` family (the data the executable
+fast-core recovery actually exposes) together with its monicity, prime,
+Hensel-precision, threshold, and per-index congruence side conditions, and
+builds `hcut` through the #8051 producer
+`BHKS.cutProjectionHypotheses_of_recoveredLift` (period-adjusted short vectors →
+retained projected-row span).  The count-equality / UFD-partition plumbing is
+not re-derived here — it is routed through `rawIrreducible_of_cut`, which
+discharges `reassemblyExpansionComplete` and the factor-count refinement from
+`hsize`/`hpartition`.
+
+Scoped to the fast-core success disjunct: the slow modular branch, the
+trial-division branch, and the public `factor_irreducible_of_nonUnit` assembly
+are left to later issues. -/
+theorem factorFastFactorsWithBound_raw_zpolyIrreducible_of_recoveredLift
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat)
+    (primeData : Hex.PrimeChoiceData)
+    (hB_pos : 1 ≤ B)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some primeData)
+    (hdeg :
+      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hmulti : 1 < primeData.factorsModP.size)
+    (hquadratic :
+      B = 1 ∨
+        Hex.quadraticIntegerRootFactors?
+          (Hex.normalizeForFactor f).squareFreeCore = none)
+    (rows_pos :
+      BHKS.HasPositiveDimension (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.toMonicLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          B primeData))
+    (trueSupports :
+      Set (Set (Fin
+        (BHKS.projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.toMonicLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            B primeData)
+          rows_pos).factorCount)))
+    {expectedFactors : Array Hex.ZPoly}
+    (hcore :
+      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B
+        primeData (Hex.initialHenselPrecision B)
+        (Hex.ZPoly.quadraticDoublingSteps B + 2) =
+          some expectedFactors)
+    (hbasis :
+      (BHKS.latticeBasisOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.toMonicLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          B primeData)).basis.independent)
+    (lift : ∀ S : trueSupports,
+      BHKS.RecoveredLift
+        (BHKS.latticeBasisOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.toMonicLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            B primeData)) S.1)
+    (hf_lc : ∀ S : trueSupports,
+      Hex.DensePoly.leadingCoeff (lift S).f = 1)
+    (hfactor_monic : ∀ S : trueSupports,
+      (HexPolyMathlib.toPolynomial (lift S).factor).Monic)
+    (hp : ∀ S : trueSupports, 2 ≤ (lift S).p)
+    (hk : ∀ S : trueSupports, 1 < (lift S).p ^ (lift S).a)
+    (hsep : ∀ S : trueSupports,
+      ∀ j, 2 * Hex.bhksCoeffBound (lift S).f j < (lift S).p ^ (lift S).a)
+    (hthr : ∀ S : trueSupports,
+      ∀ j, Hex.bhksCoeffCutThreshold (lift S).p (lift S).f j ≤ (lift S).a)
+    (hfac : ∀ S : trueSupports,
+      ∀ i : Fin (BHKS.latticeBasisOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (Hex.ZPoly.toMonicLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            B primeData)).factorCount, i ∈ S.1 →
+        ∃ g : Hex.ZPoly,
+          Hex.DensePoly.Monic
+            ((BHKS.latticeBasisOfLiftData
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.toMonicLiftData
+                (Hex.normalizeForFactor f).squareFreeCore
+                B primeData)).liftedFactors.getD i.val 1) ∧
+          0 < ((BHKS.latticeBasisOfLiftData
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.toMonicLiftData
+                (Hex.normalizeForFactor f).squareFreeCore
+                B primeData)).liftedFactors.getD i.val 1).degree?.getD 0 ∧
+          Hex.ZPoly.congr (lift S).f
+            ((BHKS.latticeBasisOfLiftData
+              (Hex.normalizeForFactor f).squareFreeCore
+              (Hex.ZPoly.toMonicLiftData
+                (Hex.normalizeForFactor f).squareFreeCore
+                B primeData)).liftedFactors.getD i.val 1 * g)
+            ((lift S).p ^ (lift S).a))
+    (hsize :
+      expectedFactors.size =
+        (Hex.bhksEquivalenceClassIndicators
+          (BHKS.projectedRowsOfLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (Hex.ZPoly.toMonicLiftData
+              (Hex.normalizeForFactor f).squareFreeCore
+              B primeData)
+            rows_pos)).size)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial
+            (Hex.normalizeForFactor f).squareFreeCore)).card)
+    {rawFactors : Array Hex.ZPoly}
+    (hfast : Hex.factorFastFactorsWithBound f B = some rawFactors) :
+    ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Irreducible raw :=
+  rawIrreducible_of_cut
+    f hf_ne B primeData hB_pos hchoose hdeg hmulti hquadratic
+    rows_pos trueSupports hcore
+    (BHKS.cutProjectionHypotheses_of_recoveredLift
+      (BHKS.latticeBasisOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.toMonicLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          B primeData))
+      rows_pos hbasis trueSupports lift hf_lc hfactor_monic hp hk hsep hthr hfac)
+    hsize hpartition hfast
+
 end HexBerlekampZassenhausMathlib
