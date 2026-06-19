@@ -327,8 +327,25 @@ core — and imply the guarded form by `fun raw hmem _ => producer raw hmem`. No
 this guarded contract is the fast-path counterpart to the `normalizeFactorSign`
 sign-guard trap below: both are sound *narrowings* of an over-quantified raw
 obligation, not core-facts assembly. Still missing as of #8079: guarded
-producers for the fast small-mod-singleton (`factorsModP.size ≤ 1`) and
-quadratic short-circuit sub-branches.
+producers for the fast small-mod-singleton (`factorsModP.size ≤ 1`) sub-branch
+(the quadratic short-circuit producer
+`factorFastFactorsWithBound_raw_irreducible_of_quadratic` landed in #8096).
+
+**Writing a Mathlib-layer raw producer: `reassemblePolynomialFactors` is
+`private` to the executable `Basic.lean`, so you cannot name it to build the
+branch-dispatch equation `factorFastFactorsWithBound f B = some
+(reassemblePolynomialFactors (normalizeForFactor f) coreFactors)`.** `unfold
+Hex.factorFastFactorsWithBound` in the Mathlib layer then fails with `Unknown
+identifier Hex.reassemblePolynomialFactors`. The constant producer
+(`_raw_irreducible_of_constant`) gets away with `unfold` only because it lives
+*in* Basic.lean where the private def is in scope. The entry umbrellas dodge it
+via `factorWithBound_entry_mem_*_branch_raw` (membership lemmas whose *types*
+carry the private term, which flows through without you naming it). For a new
+raw producer, add a one-line public equation lemma in Basic.lean
+(`factorFastFactorsWithBound_eq_some_of_<branch>`, proved by `unfold` +
+`if_neg`/`rw [hquad]`) and consume it from the Mathlib side; the private term
+then arrives inside the equation's type, and the `_factor_irreducible_of_complete_and_core_irreducible`
+lift accepts the resulting `hmem` directly.
 
 The slow-path raw irreducibility (`slowModularRaw_irreducible_of_fast_none`,
 #7665) is *unconditional* because the slow path runs a single fixed-precision
