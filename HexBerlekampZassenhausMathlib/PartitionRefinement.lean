@@ -465,6 +465,46 @@ theorem factorFastCoreWithBound_some_size_eq_indicators
   BHKS.size_eq_indicators_of_candidates hcandidates
 
 /--
+Fast-core loop `hpartition` producer for forward-cut irreducibility endpoints.
+
+Specializes the canonical lifted-support partition count
+`BHKS.supportPartitionByMinColumn_length_eq_normalizedFactors_card_of_toMonicPrimeData`
+to the accepted `toMonicLiftData` precision, presenting the canonical lifted
+true-support family `liftedTrueSupports core (toMonicLiftData core B primeData)`
+at the projected-row index type so it lines up directly with the `hpartition`
+hypothesis consumed by `factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut`.
+This is the partition-equality sibling of
+`factorFastCoreWithBound_some_size_eq_indicators`; the projected-row factor count
+is definitionally the lift-data factor-array size, so no transport is needed.
+-/
+theorem factorFastCoreWithBound_some_partition_eq_normalizedFactors_card
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    {rows_pos : BHKS.HasPositiveDimension core
+      (Hex.ZPoly.toMonicLiftData core B primeData)}
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
+    (hB_ne_zero : B ≠ 0)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
+    (hcore_bound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p) :
+    (BHKS.supportPartitionByMinColumn
+        (liftedTrueSupports core
+            (Hex.ZPoly.toMonicLiftData core B primeData) :
+          Set (Set (Fin (BHKS.projectedRowsOfLiftData core
+            (Hex.ZPoly.toMonicLiftData core B primeData) rows_pos).factorCount)))).length =
+      (UniqueFactorizationMonoid.normalizedFactors
+        (HexPolyZMathlib.toPolynomial core)).card :=
+  BHKS.supportPartitionByMinColumn_length_eq_normalizedFactors_card_of_toMonicPrimeData
+    core B primeData hselected hcore_lc_pos hcore_pos hcore_prim hcore_sqfree
+    hB_ne_zero hbound hcore_bound
+
+/--
 Forward-recovery loop-identification wrapper.
 
 If the target precision is on the executable fast-core schedule, the supplied
