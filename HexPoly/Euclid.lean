@@ -24,7 +24,7 @@ def leadingCoeff (p : DensePoly R) : R :=
 /-- The zero polynomial has leading coefficient `0`. Registered as a `simp`
 normal form so callers reasoning about `leadingCoeff` discharge the zero case
 automatically. -/
-@[simp] theorem leadingCoeff_zero : (0 : DensePoly R).leadingCoeff = 0 := by
+@[simp, grind =] theorem leadingCoeff_zero : (0 : DensePoly R).leadingCoeff = 0 := by
   rfl
 
 /-- The constant polynomial `1`. -/
@@ -34,7 +34,7 @@ instance [One R] : One (DensePoly R) where
 /-- The leading coefficient of the constant polynomial `C c` is `c` itself,
 covering both `c = 0` (the empty backing array) and `c ≠ 0`. The `simp` form
 lets callers read the leading coefficient off any constant. -/
-@[simp] theorem leadingCoeff_C (c : R) : (C c).leadingCoeff = c := by
+@[simp, grind =] theorem leadingCoeff_C (c : R) : (C c).leadingCoeff = c := by
   by_cases hc : c = (0 : R)
   · rw [hc]
     unfold leadingCoeff
@@ -47,7 +47,7 @@ lets callers read the leading coefficient off any constant. -/
 /-- The constant polynomial `1` has leading coefficient `1`, hence is monic.
 Specialises `leadingCoeff_C` and feeds the monicity facts about `1` that the
 division and gcd routines rely on. -/
-@[simp] theorem leadingCoeff_one [One R] : (1 : DensePoly R).leadingCoeff = 1 := by
+@[simp, grind =] theorem leadingCoeff_one [One R] : (1 : DensePoly R).leadingCoeff = 1 := by
   change (C (1 : R)).leadingCoeff = 1
   rw [leadingCoeff_C]
 
@@ -943,7 +943,7 @@ theorem xgcd_gcd_eq_gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
     (xgcd p q).gcd = gcd p q := rfl
 
 /-- The executable gcd of two zero dense polynomials is zero. -/
-@[simp] theorem gcd_zero_zero [One R] [Add R] [Sub R] [Mul R] [Div R] :
+@[simp, grind =] theorem gcd_zero_zero [One R] [Add R] [Sub R] [Mul R] [Div R] :
     gcd (0 : DensePoly R) (0 : DensePoly R) = 0 := by
   rfl
 
@@ -1056,7 +1056,7 @@ theorem mod_eq_divMod [One R] [Add R] [Sub R] [Mul R] [Div R]
   rfl
 
 /-- Zero has zero remainder for the executable division algorithm. -/
-@[simp] theorem zero_mod_eq_zero_core {S : Type _}
+@[simp, grind =] theorem zero_mod_eq_zero_core {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
     (m : DensePoly S) :
     (0 : DensePoly S) % m = 0 := by
@@ -1229,7 +1229,7 @@ theorem div_mul_add_mod [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
   simpa [DensePoly.div, DensePoly.mod] using divMod_spec p q
 
 /-- If `q ∣ p`, then `p % q = 0`. -/
-@[simp] theorem mod_eq_zero_of_dvd [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
+@[simp, grind =] theorem mod_eq_zero_of_dvd [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
     (p q : DensePoly R) :
     q ∣ p → p % q = 0 := by
   exact DivModLaws.mod_eq_zero_of_dvd p q
@@ -1243,7 +1243,7 @@ theorem modByMonic_eq_mod [One R] [Add R] [Sub R] [Mul R] [Div R]
   rw [modByMonic_eq_divModMonic, mod_eq_divMod, divModMonic_eq_divMod_of_monic p q hq]
 
 /-- The remainder modulo `q` is idempotent under `% q`. -/
-@[simp] theorem mod_mod [One R] [Add R] [Sub R] [Mul R] [Div R]
+@[simp, grind =] theorem mod_mod [One R] [Add R] [Sub R] [Mul R] [Div R]
     [DivModLaws R]
     (p q : DensePoly R) :
     (p % q) % q = p % q := by
@@ -4823,7 +4823,7 @@ private theorem list_getD_map_ediv_zero (c : Int) (coeffs : List Int) (n : Nat) 
 
 /-- Scaling the primitive part by the content reconstructs the original
 integer polynomial. -/
-@[simp]
+@[simp, grind =]
 theorem content_mul_primitivePart (p : DensePoly Int) :
     scale (content p) (primitivePart p) = p := by
   apply ext_coeff
@@ -4856,7 +4856,7 @@ theorem content_mul_primitivePart (p : DensePoly Int) :
         rw [hpart, hmul]
 
 /-- Multiplying an integer polynomial by `-1` preserves its content. -/
-@[simp]
+@[simp, grind =]
 theorem content_scale_neg_one (p : DensePoly Int) :
     content (scale (-1 : Int) p) = content p := by
   unfold content
@@ -4958,7 +4958,7 @@ private theorem foldl_gcd_natAbs_trim_eq (xs : List Int) (acc : Nat) :
         exact ih (Nat.gcd acc x.natAbs)
 
 /-- Content scales by the absolute value of the scaling integer. -/
-@[simp]
+@[simp, grind =]
 theorem content_scale_int (c : Int) (p : DensePoly Int) :
     content (scale c p) = Int.ofNat c.natAbs * content p := by
   show Int.ofNat (contentNat (scale c p)) =
@@ -4989,14 +4989,14 @@ theorem scale_neg_one_zero :
   simp
 
 /-- The zero integer polynomial has content zero. -/
-@[simp]
+@[simp, grind =]
 theorem content_zero :
     content (0 : DensePoly Int) = 0 := by
   rfl
 
 /-- The content of a constant integer polynomial is the absolute value of the
 constant. -/
-@[simp]
+@[simp, grind =]
 theorem content_C (c : Int) :
     content (C c) = Int.ofNat c.natAbs := by
   unfold content contentNat toArray
@@ -5006,7 +5006,7 @@ theorem content_C (c : Int) :
     simp
 
 /-- If an integer polynomial has zero content, its primitive part is zero. -/
-@[simp]
+@[simp, grind =]
 theorem primitivePart_eq_zero_of_content_eq_zero (p : DensePoly Int) (h : content p = 0) :
     primitivePart p = 0 := by
   have hc : contentNat p = 0 := by
@@ -5015,7 +5015,7 @@ theorem primitivePart_eq_zero_of_content_eq_zero (p : DensePoly Int) (h : conten
   simp [primitivePart, hc]
 
 /-- A polynomial whose content is `1` equals its primitive part. -/
-@[simp]
+@[simp, grind =]
 theorem primitivePart_eq_self_of_content_eq_one
     (p : DensePoly Int) (h : content p = 1) :
     primitivePart p = p := by
