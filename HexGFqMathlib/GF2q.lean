@@ -106,7 +106,7 @@ private theorem coeff_packedGF2FpPoly (lower : UInt64) (n i : Nat) :
 
 /-- The packed `GF2n` modulus, transported to `FpPoly 2`, is the Conway
 polynomial selected for the same committed packed entry. -/
-@[simp]
+@[simp, grind =]
 theorem modulusFpPoly_eq_conway :
     HexGF2Mathlib.GF2n.modulusFpPoly (n := n) (irr := h.lower) =
       GFq.modulus h.entry := by
