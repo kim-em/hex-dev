@@ -29,17 +29,17 @@ def matrixEquiv : Hex.Matrix R n m ≃ Matrix (Fin n) (Fin m) R where
     ext i j
     simp [Hex.Matrix.ofFn]
 
-@[simp]
+@[simp, grind =]
 theorem matrixEquiv_apply (M : Hex.Matrix R n m) (i : Fin n) (j : Fin m) :
     matrixEquiv M i j = M[i][j] :=
   rfl
 
-@[simp]
+@[simp, grind =]
 theorem matrixEquiv_symm_apply (M : Matrix (Fin n) (Fin m) R) (i : Fin n) (j : Fin m) :
     (matrixEquiv.symm M)[i][j] = M i j :=
   by simp [matrixEquiv, Hex.Matrix.ofFn]
 
-@[simp]
+@[simp, grind =]
 theorem matrixEquiv_ofFn (f : Fin n → Fin m → R) :
     matrixEquiv (Hex.Matrix.ofFn f) = f := by
   ext i j
