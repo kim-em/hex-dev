@@ -298,7 +298,7 @@ private theorem reduceMod_modulusFpPoly_toFpPoly_of_reduced (p : Hex.GF2Poly)
   · rw [Hex.GF2Poly.eq_zero_of_isZero h, Hex.GF2Poly.degree_zero]; exact hn
   · exact h
 
-@[simp]
+@[simp, grind =]
 theorem ofGeneric_toGeneric (x : Hex.GF2n n irr hn hn64 hirr) :
     ofGeneric (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr)
         (toGeneric (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr) x) = x := by
@@ -321,7 +321,7 @@ theorem ofGeneric_toGeneric (x : Hex.GF2n n irr hn hn64 hirr) :
     (hxred.imp_right
       (fun h => by rw [Hex.GF2Poly.degree_ofUInt64Monic_of_lt_64 irr hn64]; exact h))
 
-@[simp]
+@[simp, grind =]
 theorem toGeneric_ofGeneric
     (x : GenericFiniteField (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr)) :
     toGeneric (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr)
@@ -346,7 +346,7 @@ theorem toGeneric_ofGeneric
     ofUInt64_toWords_getD_of_reduced _ hofred, HexGF2Mathlib.GF2Poly.toFpPoly_ofFpPoly,
     Hex.GFqRing.reduceMod_eq_self_of_degree_lt _ _ (Hex.GFqField.degree_repr_lt_degree x)]
 
-@[simp]
+@[simp, grind =]
 theorem toGeneric_add (x y : Hex.GF2n n irr hn hn64 hirr) :
     toGeneric (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr) (x + y) =
       (toGeneric (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr) x +
@@ -358,7 +358,7 @@ theorem toGeneric_add (x y : Hex.GF2n n irr hn hn64 hirr) :
   rw [ofUInt64_add_val, toFpPoly_mod_modulus (hn := hn) (hn64 := hn64),
     HexGF2Mathlib.GF2Poly.toFpPoly_add, Hex.GFqRing.reduceMod_idem]
 
-@[simp]
+@[simp, grind =]
 theorem toGeneric_mul (x y : Hex.GF2n n irr hn hn64 hirr) :
     toGeneric (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr) (x * y) =
       (toGeneric (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr) x *
@@ -458,13 +458,13 @@ def reducedPackedRepOfIndex (i : Fin (2 ^ f.degree)) : ReducedPackedRep f :=
   ⟨HexGF2Mathlib.GF2Poly.ofNatBelowDegree f.degree i.1,
     HexGF2Mathlib.GF2Poly.ofNatBelowDegree_reduced f.degree i⟩
 
-@[simp]
+@[simp, grind =]
 theorem reducedPackedRepIndex_ofIndex (i : Fin (2 ^ f.degree)) :
     reducedPackedRepIndex (f := f) (reducedPackedRepOfIndex (f := f) i) = i := by
   apply Fin.ext
   exact HexGF2Mathlib.GF2Poly.toNat_ofNatBelowDegree f.degree i
 
-@[simp]
+@[simp, grind =]
 theorem reducedPackedRepOfIndex_index (x : ReducedPackedRep f) :
     reducedPackedRepOfIndex (f := f) (reducedPackedRepIndex (f := f) x) = x := by
   cases x with
@@ -599,7 +599,7 @@ theorem repr_toGeneric (x : Hex.GF2nPoly f hirr) :
     simpa [Hex.GF2Poly.degree, Hex.GF2Poly.degree?] using hdeg
   · exact hlt
 
-@[simp]
+@[simp, grind =]
 theorem ofGeneric_toGeneric (x : Hex.GF2nPoly f hirr) :
     ofGeneric (f := f) (hirr := hirr) (hdeg := hdeg)
       (toGeneric (f := f) (hirr := hirr) (hdeg := hdeg) x) = x := by
@@ -609,7 +609,7 @@ theorem ofGeneric_toGeneric (x : Hex.GF2nPoly f hirr) :
   rw [Hex.GF2nPoly.reducePoly_val_eq_mod]
   exact Hex.GF2Poly.mod_eq_self_of_reduced x.val f x.val_reduced
 
-@[simp]
+@[simp, grind =]
 theorem toGeneric_ofGeneric (x : GenericFiniteField (f := f) (hirr := hirr) (hdeg := hdeg)) :
     toGeneric (f := f) (hirr := hirr) (hdeg := hdeg)
       (ofGeneric (f := f) (hirr := hirr) (hdeg := hdeg) x) = x := by
@@ -622,7 +622,7 @@ theorem toGeneric_ofGeneric (x : GenericFiniteField (f := f) (hirr := hirr) (hde
   exact Hex.GFqRing.reduceMod_eq_self_of_degree_lt _ _
     (Hex.GFqField.degree_repr_lt_degree x)
 
-@[simp]
+@[simp, grind =]
 theorem toGeneric_add (x y : Hex.GF2nPoly f hirr) :
     toGeneric (f := f) (hirr := hirr) (hdeg := hdeg) (x + y) =
       (toGeneric (f := f) (hirr := hirr) (hdeg := hdeg) x +
@@ -632,7 +632,7 @@ theorem toGeneric_add (x y : Hex.GF2nPoly f hirr) :
     Hex.GF2nPoly.add_val, toFpPoly_reduceMod _ _ hdeg, HexGF2Mathlib.GF2Poly.toFpPoly_add,
     show modulusFpPoly (f := f) = HexGF2Mathlib.GF2Poly.toFpPoly f from rfl]
 
-@[simp]
+@[simp, grind =]
 theorem toGeneric_mul (x y : Hex.GF2nPoly f hirr) :
     toGeneric (f := f) (hirr := hirr) (hdeg := hdeg) (x * y) =
       (toGeneric (f := f) (hirr := hirr) (hdeg := hdeg) x *
