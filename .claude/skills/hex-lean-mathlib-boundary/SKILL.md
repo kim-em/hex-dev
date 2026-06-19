@@ -968,6 +968,15 @@ from your file; building on them is the established project state. Only check
 that *your added lines* are `sorry`/`axiom`/`native_decide`-free
 (`git diff -U0 <file> | grep '^+' | grep -iE 'sorry|axiom|native_decide'`).
 
+**Reviewing a *transitive* proof term (the "no hidden sorry/axiom/native_decide"
+review deliverable) is different — grepping added lines is not enough.** Use
+`#print axioms <decl>` in a throwaway `lake env lean Scratch.lean` (after a
+`lake build <Module>` so the olean is fresh). A clean cone reports exactly
+`[propext, Classical.choice, Quot.sound]`; a `sorryAx` entry means a shipped
+`sorry` (e.g. `Hex.ZPoly.isIrreducible_iff` in `Basic.lean`) is in the cone, and
+a `Lean.ofReduceBool` entry means `native_decide`. This cleanly distinguishes
+in-cone from the project's out-of-cone shipped sorries, which line-grep cannot.
+
 ## Heartbeat timeouts in heavy assembly proofs
 
 `maxHeartbeats` is a **per-declaration** budget, not per-tactic. In big proofs
