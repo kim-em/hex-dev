@@ -1842,7 +1842,7 @@ def spanContains [Lean.Grind.Field R] [DecidableEq R] (E : IsEchelonForm M D)
   (E.spanCoeffs v).isSome
 
 /-- `spanContains` is the Boolean `isSome` view of `spanCoeffs`. -/
-@[simp] theorem spanContains_eq_isSome [Lean.Grind.Field R] [DecidableEq R]
+@[simp, grind =] theorem spanContains_eq_isSome [Lean.Grind.Field R] [DecidableEq R]
     (E : IsEchelonForm M D) (v : Vector R m) :
     E.spanContains v = (E.spanCoeffs v).isSome := rfl
 
@@ -2268,14 +2268,14 @@ def nullspaceMatrix [Lean.Grind.Ring R] (E : IsRREF M D) :
       | none => 0
 
 /-- In the `k`th nullspace-matrix column, the row for its own free column is `1`. -/
-@[simp] theorem nullspaceMatrix_free [Lean.Grind.Ring R] (E : IsRREF M D)
+@[simp, grind =] theorem nullspaceMatrix_free [Lean.Grind.Ring R] (E : IsRREF M D)
     (k : Fin (m - D.rank)) :
     E.nullspaceMatrix[E.toIsEchelonForm.freeCols.get k][k] = 1 := by
   unfold nullspaceMatrix Matrix.ofFn
   simp
 
 /-- In the `k`th nullspace-matrix column, every other free-column row is `0`. -/
-@[simp] theorem nullspaceMatrix_free_ne [Lean.Grind.Ring R] (E : IsRREF M D)
+@[simp, grind =] theorem nullspaceMatrix_free_ne [Lean.Grind.Ring R] (E : IsRREF M D)
     {k l : Fin (m - D.rank)} (hkl : k ≠ l) :
     E.nullspaceMatrix[E.toIsEchelonForm.freeCols.get l][k] = 0 := by
   unfold nullspaceMatrix Matrix.ofFn
@@ -2286,7 +2286,7 @@ def nullspaceMatrix [Lean.Grind.Ring R] (E : IsRREF M D) :
 
 /-- In a pivot-column row, a nullspace-matrix entry is the negative RREF entry in
 the matching pivot row and free column. -/
-@[simp] theorem nullspaceMatrix_pivot [Lean.Grind.Ring R] (E : IsRREF M D)
+@[simp, grind =] theorem nullspaceMatrix_pivot [Lean.Grind.Ring R] (E : IsRREF M D)
     (i : Fin D.rank) (k : Fin (m - D.rank)) :
     E.nullspaceMatrix[D.pivotCols.get i][k] =
       -(D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i)][E.toIsEchelonForm.freeCols.get k]) := by
@@ -2306,14 +2306,14 @@ private theorem nullspace_get [Lean.Grind.Ring R] (E : IsRREF M D)
   rw [Vector.get_ofFn]
 
 /-- On its own free column, a nullspace basis vector has entry `1`. -/
-@[simp] theorem nullspace_get_free [Lean.Grind.Ring R] (E : IsRREF M D)
+@[simp, grind =] theorem nullspace_get_free [Lean.Grind.Ring R] (E : IsRREF M D)
     (k : Fin (m - D.rank)) :
     (E.nullspace.get k)[E.toIsEchelonForm.freeCols.get k] = 1 := by
   rw [nullspace_get]
   simpa [Matrix.col] using nullspaceMatrix_free E k
 
 /-- On every other free column, a nullspace basis vector has entry `0`. -/
-@[simp] theorem nullspace_get_free_ne [Lean.Grind.Ring R] (E : IsRREF M D)
+@[simp, grind =] theorem nullspace_get_free_ne [Lean.Grind.Ring R] (E : IsRREF M D)
     {k l : Fin (m - D.rank)} (hkl : k ≠ l) :
     (E.nullspace.get k)[E.toIsEchelonForm.freeCols.get l] = 0 := by
   rw [nullspace_get]
@@ -2321,7 +2321,7 @@ private theorem nullspace_get [Lean.Grind.Ring R] (E : IsRREF M D)
 
 /-- On a pivot column, a nullspace basis vector is the negative RREF entry in
 the matching pivot row and free column. -/
-@[simp] theorem nullspace_get_pivot [Lean.Grind.Ring R] (E : IsRREF M D)
+@[simp, grind =] theorem nullspace_get_pivot [Lean.Grind.Ring R] (E : IsRREF M D)
     (i : Fin D.rank) (k : Fin (m - D.rank)) :
     (E.nullspace.get k)[D.pivotCols.get i] =
       -(D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i)][E.toIsEchelonForm.freeCols.get k]) := by
@@ -2994,7 +2994,7 @@ def spanContains [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) (v : Ve
 
 /-- The public `spanContains` wrapper is the Boolean `isSome` view of
 `spanCoeffs`. -/
-@[simp] theorem spanContains_eq_isSome [Lean.Grind.Field R] [DecidableEq R]
+@[simp, grind =] theorem spanContains_eq_isSome [Lean.Grind.Field R] [DecidableEq R]
     (M : Matrix R n m) (v : Vector R m) :
     spanContains M v = (spanCoeffs M v).isSome := by
   rfl
