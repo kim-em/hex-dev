@@ -73,10 +73,10 @@ instance : CoeOut (MontResidue p) Nat where
   coe := toNat
 
 /-- The `UInt64` view of a Montgomery residue is its backing word. -/
-@[simp] theorem toUInt64_eq_val (a : MontResidue p) : a.toUInt64 = a.val := rfl
+@[simp, grind =] theorem toUInt64_eq_val (a : MontResidue p) : a.toUInt64 = a.val := rfl
 
 /-- The Nat view of a Montgomery residue is the Nat value of its backing word. -/
-@[simp] theorem toNat_eq_val (a : MontResidue p) : a.toNat = a.val.toNat := rfl
+@[simp, grind =] theorem toNat_eq_val (a : MontResidue p) : a.toNat = a.val.toNat := rfl
 
 /-- The Nat view of a Montgomery residue is reduced modulo its indexed modulus. -/
 @[simp] theorem toNat_lt (a : MontResidue p) : a.toNat < p := a.isLt
@@ -114,11 +114,11 @@ def ofModulus (hp : 1 < p) (hlt : p < 2 ^ 32) : BarrettCtx p := by
       toUInt64Ctx := _root_.BarrettCtx.mk m (by simpa [hm] using hp) (by simpa [hm] using hlt) }
 
 /-- The smart constructor stores the indexed modulus as a machine word. -/
-@[simp] theorem ofModulus_modulus (hp : 1 < p) (hlt : p < 2 ^ 32) :
+@[simp, grind =] theorem ofModulus_modulus (hp : 1 < p) (hlt : p < 2 ^ 32) :
     (ofModulus (p := p) hp hlt).modulus = UInt64.ofNat p := rfl
 
 /-- The smart constructor's stored word modulus agrees with the indexed modulus. -/
-@[simp] theorem ofModulus_modulus_eq (hp : 1 < p) (hlt : p < 2 ^ 32) :
+@[simp, grind =] theorem ofModulus_modulus_eq (hp : 1 < p) (hlt : p < 2 ^ 32) :
     (ofModulus (p := p) hp hlt).modulus.toNat = p :=
   (ofModulus (p := p) hp hlt).modulus_eq
 
@@ -146,7 +146,7 @@ theorem ofModulus_toUInt64Ctx (hp : 1 < p) (hlt : p < 2 ^ 32) :
 The smart constructor's underlying Barrett context stores the reciprocal for
 the indexed modulus.
 -/
-@[simp] theorem ofModulus_toUInt64Ctx_pinv (hp : 1 < p) (hlt : p < 2 ^ 32) :
+@[simp, grind =] theorem ofModulus_toUInt64Ctx_pinv (hp : 1 < p) (hlt : p < 2 ^ 32) :
     ((ofModulus (p := p) hp hlt).toUInt64Ctx).pinv =
       UInt64.ofNat (barrettRadix / p) := by
   rw [show ((ofModulus (p := p) hp hlt).toUInt64Ctx).pinv =
@@ -198,7 +198,7 @@ multiplication surface.
 Barrett hot-loop multiplication by one on the left returns the original
 standard residue.
 -/
-@[simp] theorem mulMod_one_left (ctx : BarrettCtx p) (a : ZMod64 p) :
+@[simp, grind =] theorem mulMod_one_left (ctx : BarrettCtx p) (a : ZMod64 p) :
     ctx.mulMod 1 a = a := by
   rw [mulMod_eq_mul]
   apply (ZMod64.eq_iff_toNat_eq (1 * a) a).mpr
@@ -211,7 +211,7 @@ standard residue.
 /--
 Barrett hot-loop multiplication by zero on the left returns zero.
 -/
-@[simp] theorem mulMod_zero_left (ctx : BarrettCtx p) (a : ZMod64 p) :
+@[simp, grind =] theorem mulMod_zero_left (ctx : BarrettCtx p) (a : ZMod64 p) :
     ctx.mulMod 0 a = 0 := by
   rw [mulMod_eq_mul]
   apply (ZMod64.eq_iff_toNat_eq (0 * a) 0).mpr
@@ -225,7 +225,7 @@ Barrett hot-loop multiplication by zero on the left returns zero.
 Barrett hot-loop multiplication by one on the right returns the original
 standard residue.
 -/
-@[simp] theorem mulMod_one_right (ctx : BarrettCtx p) (a : ZMod64 p) :
+@[simp, grind =] theorem mulMod_one_right (ctx : BarrettCtx p) (a : ZMod64 p) :
     ctx.mulMod a 1 = a := by
   rw [mulMod_eq_mul]
   apply (ZMod64.eq_iff_toNat_eq (a * 1) a).mpr
@@ -238,7 +238,7 @@ standard residue.
 /--
 Barrett hot-loop multiplication by zero on the right returns zero.
 -/
-@[simp] theorem mulMod_zero_right (ctx : BarrettCtx p) (a : ZMod64 p) :
+@[simp, grind =] theorem mulMod_zero_right (ctx : BarrettCtx p) (a : ZMod64 p) :
     ctx.mulMod a 0 = 0 := by
   rw [mulMod_eq_mul]
   apply (ZMod64.eq_iff_toNat_eq (a * 0) 0).mpr
@@ -281,18 +281,18 @@ def ofOddModulus (hp : p < UInt64.word)
     toUInt64Ctx := _root_.MontCtx.mk (ZMod64.modulusWord p hp) hodd }
 
 /-- The smart constructor stores the canonical machine-word modulus. -/
-@[simp] theorem modulus_ofOddModulus (hp : p < UInt64.word)
+@[simp, grind =] theorem modulus_ofOddModulus (hp : p < UInt64.word)
     (hodd : ZMod64.modulusWord p hp % 2 = 1) :
     (ofOddModulus (p := p) hp hodd).modulus = ZMod64.modulusWord p hp := rfl
 
 /-- The smart constructor's stored word modulus agrees with the indexed modulus. -/
-@[simp] theorem modulus_toNat_ofOddModulus (hp : p < UInt64.word)
+@[simp, grind =] theorem modulus_toNat_ofOddModulus (hp : p < UInt64.word)
     (hodd : ZMod64.modulusWord p hp % 2 = 1) :
     (ofOddModulus (p := p) hp hodd).modulus.toNat = p :=
   (ofOddModulus (p := p) hp hodd).modulus_eq
 
 /-- The smart constructor delegates to the underlying `UInt64` Montgomery context. -/
-@[simp] theorem toUInt64Ctx_ofOddModulus (hp : p < UInt64.word)
+@[simp, grind =] theorem toUInt64Ctx_ofOddModulus (hp : p < UInt64.word)
     (hodd : ZMod64.modulusWord p hp % 2 = 1) :
     (ofOddModulus (p := p) hp hodd).toUInt64Ctx =
       _root_.MontCtx.mk (ZMod64.modulusWord p hp) hodd := rfl
@@ -456,7 +456,7 @@ leaving Montgomery form agrees with ordinary `ZMod64` multiplication.
 The Montgomery round trip for a wrapped product returns the original residue
 when the left standard input is one.
 -/
-@[simp] theorem fromMont_mulMont_toMont_one_left (ctx : MontCtx p) (a : ZMod64 p) :
+@[simp, grind =] theorem fromMont_mulMont_toMont_one_left (ctx : MontCtx p) (a : ZMod64 p) :
     ctx.fromMont (ctx.mulMont (ctx.toMont 1) (ctx.toMont a)) = a := by
   rw [fromMont_mulMont_toMont]
   apply (ZMod64.eq_iff_toNat_eq (1 * a) a).mpr
@@ -470,7 +470,7 @@ when the left standard input is one.
 The Montgomery round trip for a wrapped product returns zero when the left
 standard input is zero.
 -/
-@[simp] theorem fromMont_mulMont_toMont_zero_left (ctx : MontCtx p) (a : ZMod64 p) :
+@[simp, grind =] theorem fromMont_mulMont_toMont_zero_left (ctx : MontCtx p) (a : ZMod64 p) :
     ctx.fromMont (ctx.mulMont (ctx.toMont 0) (ctx.toMont a)) = 0 := by
   rw [fromMont_mulMont_toMont]
   apply (ZMod64.eq_iff_toNat_eq (0 * a) 0).mpr
@@ -484,7 +484,7 @@ standard input is zero.
 The Montgomery round trip for a wrapped product returns the original residue
 when the right standard input is one.
 -/
-@[simp] theorem fromMont_mulMont_toMont_one_right (ctx : MontCtx p) (a : ZMod64 p) :
+@[simp, grind =] theorem fromMont_mulMont_toMont_one_right (ctx : MontCtx p) (a : ZMod64 p) :
     ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont 1)) = a := by
   rw [fromMont_mulMont_toMont]
   apply (ZMod64.eq_iff_toNat_eq (a * 1) a).mpr
@@ -498,7 +498,7 @@ when the right standard input is one.
 The Montgomery round trip for a wrapped product returns zero when the right
 standard input is zero.
 -/
-@[simp] theorem fromMont_mulMont_toMont_zero_right (ctx : MontCtx p) (a : ZMod64 p) :
+@[simp, grind =] theorem fromMont_mulMont_toMont_zero_right (ctx : MontCtx p) (a : ZMod64 p) :
     ctx.fromMont (ctx.mulMont (ctx.toMont a) (ctx.toMont 0)) = 0 := by
   rw [fromMont_mulMont_toMont]
   apply (ZMod64.eq_iff_toNat_eq (a * 0) 0).mpr
