@@ -2859,7 +2859,8 @@ private theorem exists_bezout_eq_one_of_gcd_dvd_one
       (DensePoly.xgcd a b).left * a + (DensePoly.xgcd a b).right * b =
         (DensePoly.xgcd a b).gcd := by
     simpa using DensePoly.xgcd_bezout a b
-  have hxgcd_eq : (DensePoly.xgcd a b).gcd = DensePoly.gcd a b := rfl
+  have hxgcd_eq : (DensePoly.xgcd a b).gcd = DensePoly.gcd a b :=
+    DensePoly.xgcd_gcd_eq_gcd a b
   refine ⟨e * (DensePoly.xgcd a b).left, e * (DensePoly.xgcd a b).right, ?_⟩
   calc
     e * (DensePoly.xgcd a b).left * a + e * (DensePoly.xgcd a b).right * b

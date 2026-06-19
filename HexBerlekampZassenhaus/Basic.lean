@@ -17586,8 +17586,10 @@ private theorem factorFastWithBound_product_of_some
                 | none =>
                     exfalso
                     have hfast_none : factorFastFactorsWithBound f 1 = none := by
-                      -- TODO(bpoly-fix): degenerate B=1, simp-normal-form mismatch.
-                      sorry
+                      unfold factorFastFactorsWithBound
+                      rw [if_neg hdeg, if_neg (show (1 : Nat) ≠ 0 by omega),
+                          if_pos rfl]
+                      simp [hc, hsmall, hcore]
                     unfold factorFastWithBound at h
                     rw [hfast_none] at h
                     simp at h

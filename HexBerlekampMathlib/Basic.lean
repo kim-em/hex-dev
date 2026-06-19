@@ -486,7 +486,7 @@ theorem isCoprime_toMathlibPolynomial_of_isUnitPolynomial_gcd
   -- Executable Bezout: `left * a + right * b = gcd a b`.
   have hbez : (Hex.DensePoly.xgcd a b).left * a + (Hex.DensePoly.xgcd a b).right * b
       = Hex.DensePoly.gcd a b :=
-    Hex.DensePoly.xgcd_bezout a b
+    (Hex.DensePoly.xgcd_bezout a b).trans (Hex.DensePoly.xgcd_gcd_eq_gcd a b)
   have hbezM :
       toMathlibPolynomial (Hex.DensePoly.xgcd a b).left * toMathlibPolynomial a +
         toMathlibPolynomial (Hex.DensePoly.xgcd a b).right * toMathlibPolynomial b =
