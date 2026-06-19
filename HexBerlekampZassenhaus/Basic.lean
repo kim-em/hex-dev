@@ -7026,25 +7026,84 @@ def cldCoeffFloor (core : ZPoly) : Nat :=
   let n := monicCore.degree?.getD 0
   2 * (List.range (n + 1)).foldl (fun acc j => max acc (bhksCoeffBound monicCore j)) 0
 
-/-- BHKS fast-core recombination loop, exposed publicly so that Mathlib-side
-lemmas can quantify over its success state.  Internally driven by the
-classified BHKS recovery `bhksRecoverClassified`; `none` indicates the
-loop exhausted its precision bound without producing a verified factor
-list.
+/-- The CLD column-adequacy floor used solely as the fast-core loop's skip gate.
 
-The successful classified recovery is only *accepted* once the schedule
-coefficient bound `k` reaches `cldCoeffFloor core` — the CLD column-adequacy
-floor that makes the lift precision satisfy the BHKS separation `hsep`.  A
-success below the floor is treated like the non-success classes: the loop
-continues to the next scheduled precision (and reports `none` only if the cap
-`B` is reached first).  The schedule reaches the cap `B`, and the cap clears
-the floor, so acceptance is only deferred, never lost. -/
-def factorFastCoreWithBound
-    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Nat → Nat → Option (Array ZPoly)
+Definitionally `cldCoeffFloor`, but marked `irreducible` so that `whnf` in
+downstream proofs that case-split on a `factorFastCoreWithBound` application
+does not eagerly expand the (symbolic, structurally large) `cldCoeffFloor`
+computation while reducing the loop's head `if`.  The loop's behavioural
+unfolding lemma `factorFastCoreWithBound_unfold` re-exposes the plain
+`cldCoeffFloor` comparison, so proofs reason about the genuine floor. -/
+@[irreducible] def cldCoeffFloorGate (core : ZPoly) : Nat :=
+  cldCoeffFloor core
+
+theorem cldCoeffFloorGate_eq (core : ZPoly) :
+    cldCoeffFloorGate core = cldCoeffFloor core := by
+  simp only [cldCoeffFloorGate]
+
+/-- Inner fast-core recombination loop, parameterised by a precomputed CLD
+column-adequacy `floor`.  Below `floor` a success cannot be accepted and every
+recovery class (success or failure) advances the schedule identically, so the
+expensive Hensel-lift / CLD-lattice / LLL / reconstruction pipeline is skipped
+and the loop steps straight to the next scheduled precision.  At/above `floor`
+a success is column-adequate and accepted immediately.
+
+`floor` is threaded as a parameter so the (structurally large, degree-
+exponential) `cldCoeffFloor` is evaluated once by `factorFastCoreWithBound`
+rather than re-evaluated at every doubling step.
+
+Private: only `factorFastCoreWithBound` (which passes `cldCoeffFloorGate core`)
+is the semantically supported entry point; the bare `floor` parameter must not
+be set independently. -/
+private def factorFastCoreLoop
+    (core : ZPoly) (B floor : Nat) (primeData : PrimeChoiceData) :
+    Nat → Nat → Option (Array ZPoly)
   | _k, 0 => none
   | k, fuel + 1 =>
-      let liftData := ZPoly.toMonicLiftData core k primeData
-      match bhksRecoverClassified core liftData with
+      if k < floor then
+        if k ≥ B then
+          none
+        else
+          factorFastCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
+      else
+        match bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
+        | .success factors =>
+          some factors
+        | .candidateFailure =>
+          if k ≥ B then
+            none
+          else
+            factorFastCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
+        | .productMismatch _ =>
+          if k ≥ B then
+            none
+          else
+            factorFastCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
+        | .degenerate =>
+          if k ≥ B then
+            none
+          else
+            factorFastCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
+
+/-- BHKS fast-core recombination loop.  Computes the CLD column-adequacy floor
+once (through the irreducible `cldCoeffFloorGate`, so `whnf` in downstream
+proofs that case-split on this application does not eagerly expand the symbolic
+floor) and runs `factorFastCoreLoop`. -/
+def factorFastCoreWithBound
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) (k fuel : Nat) :
+    Option (Array ZPoly) :=
+  factorFastCoreLoop core B (cldCoeffFloorGate core) primeData k fuel
+
+/-- Behavioural unfolding for the optimized fast-core loop: the precision-floor
+short-circuit is propositionally equal to the original "recover at every step,
+accept only at the floor" body.  Below the floor every recovery class steps to
+the next precision, and at/above the floor a success is column-adequate; both
+match the gated form, so this lemma lets the recovery-on-schedule proofs reason
+about the loop exactly as before. -/
+private theorem factorFastCoreWithBound_unfold
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) (k fuel : Nat) :
+    factorFastCoreWithBound core B primeData k (fuel + 1) =
+      match bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | .success factors =>
         if k ≥ cldCoeffFloor core then
           some factors
@@ -7066,7 +7125,23 @@ def factorFastCoreWithBound
         if k ≥ B then
           none
         else
-          factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel
+          factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel := by
+  have hrec : ∀ k',
+      factorFastCoreLoop core B (cldCoeffFloor core) primeData k' fuel =
+        factorFastCoreWithBound core B primeData k' fuel := by
+    intro k'
+    rw [factorFastCoreWithBound, cldCoeffFloorGate_eq]
+  rw [factorFastCoreWithBound, cldCoeffFloorGate_eq, factorFastCoreLoop]
+  simp only [hrec]
+  by_cases hf : k < cldCoeffFloor core
+  · rw [if_pos hf]
+    have hfloor : ¬ k ≥ cldCoeffFloor core := Nat.not_le.mpr hf
+    cases bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) <;>
+      simp only [hfloor, if_false]
+  · rw [if_neg hf]
+    have hfloor : k ≥ cldCoeffFloor core := Nat.le_of_not_lt hf
+    cases bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) <;>
+      simp only [hfloor, if_true]
 
 /-- Finite list of Hensel precisions inspected by the fast BHKS core loop. -/
 def henselPrecisionSchedule (B : Nat) : Nat → Nat → List Nat
@@ -7227,7 +7302,7 @@ private theorem factorFastCoreWithBound_isSome_of_recovery_on_schedule
   | zero =>
       simp [henselPrecisionSchedule] at hmem
   | succ fuel ih =>
-      rw [factorFastCoreWithBound]
+      rw [factorFastCoreWithBound_unfold]
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core start primeData) with
       | success xs =>
           by_cases hstart : start ≥ cldCoeffFloor core
@@ -7350,7 +7425,7 @@ theorem factorFastCoreWithBound_eq_some_of_recovery_on_schedule_of_no_prior_reco
   | zero =>
       simp [henselPrecisionSchedule] at hmem
   | succ fuel ih =>
-      rw [factorFastCoreWithBound]
+      rw [factorFastCoreWithBound_unfold]
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core start primeData) with
       | success xs =>
           by_cases htarget : start = target
@@ -11704,10 +11779,10 @@ theorem factorFastCoreWithBound_product
   induction fuel generalizing k with
   | zero =>
       intro coreFactors hfast
-      simp [factorFastCoreWithBound] at hfast
+      simp [factorFastCoreWithBound, factorFastCoreLoop] at hfast
   | succ fuel ih =>
       intro coreFactors hfast
-      rw [factorFastCoreWithBound] at hfast
+      rw [factorFastCoreWithBound_unfold] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
           by_cases hfloor : k ≥ cldCoeffFloor core
@@ -11800,10 +11875,10 @@ private theorem factorFastCoreWithBound_some_classifiedSuccess
   induction fuel generalizing k with
   | zero =>
       intro coreFactors hfast
-      simp [factorFastCoreWithBound] at hfast
+      simp [factorFastCoreWithBound, factorFastCoreLoop] at hfast
   | succ fuel ih =>
       intro coreFactors hfast
-      rw [factorFastCoreWithBound] at hfast
+      rw [factorFastCoreWithBound_unfold] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
           by_cases hfloor : k ≥ cldCoeffFloor core
@@ -11898,10 +11973,10 @@ private theorem factorFastCoreWithBound_some_all_of_recovery
   induction fuel generalizing k with
   | zero =>
       intro coreFactors hfast
-      simp [factorFastCoreWithBound] at hfast
+      simp [factorFastCoreWithBound, factorFastCoreLoop] at hfast
   | succ fuel ih =>
       intro coreFactors hfast
-      rw [factorFastCoreWithBound] at hfast
+      rw [factorFastCoreWithBound_unfold] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
           by_cases hfloor : k ≥ cldCoeffFloor core
@@ -11974,10 +12049,10 @@ theorem factorFastCoreWithBound_some_dvd
   induction fuel generalizing k with
   | zero =>
       intro coreFactors hfast
-      simp [factorFastCoreWithBound] at hfast
+      simp [factorFastCoreWithBound, factorFastCoreLoop] at hfast
   | succ fuel ih =>
       intro coreFactors hfast
-      rw [factorFastCoreWithBound] at hfast
+      rw [factorFastCoreWithBound_unfold] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
           by_cases hfloor : k ≥ cldCoeffFloor core
