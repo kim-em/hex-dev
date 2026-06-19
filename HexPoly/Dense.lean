@@ -108,7 +108,27 @@ theorem trimTrailingZerosList_normalized (coeffs : List R) :
             · apply has_last
               simpa [trimTrailingZerosList, htrim, htail] using hlast
 
+/-- Runtime helper for `trimTrailingZeros`: scan `coeffs` from index `ceil - 1`
+downward for the highest nonzero coefficient and keep that prefix. Structural on
+`ceil`, mirroring `trimTrailingZerosList` on `coeffs.toList` without the
+`Array → List → Array` round-trip. -/
+private def trimTrailingZerosImplAux (coeffs : Array R) : Nat → Array R
+  | 0 => #[]
+  | ceil + 1 =>
+      if coeffs.getD ceil (Zero.zero : R) = (Zero.zero : R) then
+        trimTrailingZerosImplAux coeffs ceil
+      else
+        coeffs.shrink (ceil + 1)
+
+/-- Runtime implementation of `trimTrailingZeros`. Returns the same array value as
+the reference definition (the input with its trailing zeros dropped) but works
+directly on the array, reusing the input storage in place when it is uniquely
+referenced instead of allocating an intermediate list. -/
+private def trimTrailingZerosImpl (coeffs : Array R) : Array R :=
+  trimTrailingZerosImplAux coeffs coeffs.size
+
 /-- Normalize a coefficient array by discarding all trailing zeros. -/
+@[implemented_by trimTrailingZerosImpl]
 def trimTrailingZeros (coeffs : Array R) : Array R :=
   (trimTrailingZerosList coeffs.toList).toArray
 

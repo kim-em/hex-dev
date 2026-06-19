@@ -96,6 +96,18 @@ structure SquareFreeInput where
   poly : FpPoly 5
   deriving Hashable
 
+/-- Prepared input for field long division: a dividend and a lower-degree divisor. -/
+structure DivModInput where
+  num : FpPoly 65537
+  den : FpPoly 65537
+  deriving Hashable
+
+/-- Prepared input for the Euclidean gcd remainder sequence over `F_p`. -/
+structure GcdInput where
+  f : FpPoly 65537
+  g : FpPoly 65537
+  deriving Hashable
+
 /-- Deterministic coefficient generator keyed by size, index, and salt. -/
 def coeffValueFive (n i salt : Nat) : ZMod64 5 :=
   ZMod64.ofNat 5 <|
@@ -223,6 +235,19 @@ def prepWeightedInput (n : Nat) : WeightedInput :=
 def prepSquareFreeInput (n : Nat) : SquareFreeInput :=
   { poly := weightedProduct (balancedSquareFreeFactors n) }
 
+/-- Per-parameter fixture for field long division: a degree-`2n` dividend over a
+degree-`n` divisor, so the division loop runs `Θ(n)` elimination steps. -/
+def prepDivModInput (n : Nat) : DivModInput :=
+  { num := densePolyLarge (2 * n + 1) 17
+    den := densePolyLarge (n + 1) 23 }
+
+/-- Per-parameter fixture for the Euclidean gcd remainder sequence: two
+independent degree-`n` polynomials, almost always coprime over `F_p`, so the
+remainder sequence has `Θ(n)` `divMod` steps. -/
+def prepGcdInput (n : Nat) : GcdInput :=
+  { f := densePolyLarge (n + 1) 5
+    g := densePolyLarge (n + 1) 9 }
+
 /-- Benchmark target: compute `base^exponent mod modulus`. -/
 def runPowModMonicChecksum (input : ModInput) : UInt64 :=
   checksumPoly <|
@@ -257,6 +282,15 @@ def runWeightedProductChecksum (input : WeightedInput) : UInt64 :=
 /-- Benchmark target: compute a square-free decomposition summary. -/
 def runSquareFreeDecompositionSummary (input : SquareFreeInput) : UInt64 :=
   checksumSquareFree <| squareFreeDecomposition prime_five input.poly
+
+/-- Benchmark target: field long division, checksumming quotient and remainder. -/
+def runDivModChecksum (input : DivModInput) : UInt64 :=
+  let qr := DensePoly.divMod input.num input.den
+  mixHash (checksumPoly qr.1) (checksumPoly qr.2)
+
+/-- Benchmark target: Euclidean gcd over `F_p`, checksumming the result. -/
+def runGcdChecksum (input : GcdInput) : UInt64 :=
+  checksumPoly <| DensePoly.gcd input.f input.g
 
 /-
 The modulus degree, reduced base degree, and exponent all scale with `n`.
@@ -377,6 +411,41 @@ setup_benchmark runSquareFreeDecompositionSummary n => n * n
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     slopeTolerance := 0.30
+  }
+
+/-
+Field long division of a degree-`2n` dividend by a degree-`n` divisor runs
+`Θ(n)` elimination steps, each subtracting a shifted scalar multiple of the
+divisor across `Θ(n)` coefficients, for `Θ(n²)` total work. The schedule covers
+the BHKS-relevant low degrees `8/16/32/64` plus higher rungs so the `n²` slope
+is visible above the per-call constant.
+-/
+setup_benchmark runDivModChecksum n => n * n
+  with prep := prepDivModInput
+  where {
+    paramFloor := 8
+    paramCeiling := 256
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+  }
+
+/-
+The Euclidean gcd of two independent degree-`n` polynomials over `F_p` is a
+remainder sequence of `Θ(n)` `divMod` steps whose degrees shrink by one each
+step, summing to `Θ(n²)` coefficient operations. This is the substrate under
+the BHKS separability test `gcd(f, f')`; the schedule matches the divMod rungs.
+-/
+setup_benchmark runGcdChecksum n => n * n
+  with prep := prepGcdInput
+  where {
+    paramFloor := 8
+    paramCeiling := 256
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
   }
 
 end FpPolyBench

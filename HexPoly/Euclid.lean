@@ -493,10 +493,54 @@ private theorem subtractScaledShift_getD_last_cancel [Sub R] [Mul R]
   rw [subtractScaledShift_getD_last rem q shift qDegree coeff hsize hidx]
   exact hcancel
 
+/-- Runtime helper for `subtractScaledShift`: subtract `coeff * q[j]` from position
+`shift + j` of `rem` for `j = 0 … cnt-1`, tail-recursively. Returns the same array
+value as `(List.range q.size).foldl (subtractScaledShiftStep q shift coeff) rem` when
+called with `j = 0`, `cnt = q.size`, but does not allocate the index list. -/
+private def subtractScaledShiftImpl [Sub R] [Mul R]
+    (q : Array R) (shift : Nat) (coeff : R) : Nat → Nat → Array R → Array R
+  | _, 0, rem => rem
+  | j, cnt + 1, rem =>
+      subtractScaledShiftImpl q shift coeff (j + 1) cnt
+        (subtractScaledShiftStep q shift coeff rem j)
+
+/-- Runtime loop for `divModArrayAux` that resumes the degree scan from the previous
+remainder degree instead of rescanning from the top each step. The reference loop calls
+`arrayDegree? rem` (a scan from `rem.size` downward) on every iteration, which is `O(n)`
+per step and `O(n²)` overall; here `ceil` is the scan ceiling, which only ever decreases,
+so the total scanning cost is `O(n)`. Every coefficient above the current degree `rd` is
+already zero, so `arrayDegreeAux rem ceil` with `ceil = rd + 1` returns the same index as
+the reference's `arrayDegree? rem`. -/
+private def divModArrayAuxImplGo [Sub R] [Mul R]
+    (q : Array R) (qDegree : Nat) (scaleLead : R → R) :
+    Nat → Nat → Array R → Array R → Array R × Array R
+  | 0, _, quot, rem => (quot, rem)
+  | fuel + 1, ceil, quot, rem =>
+      match arrayDegreeAux rem ceil with
+      | none => (quot, rem)
+      | some rd =>
+          if rd < qDegree then
+            (quot, rem)
+          else
+            let shift := rd - qDegree
+            let coeff := scaleLead (rem.getD rd (Zero.zero : R))
+            let quot := quot.set! shift coeff
+            let rem := subtractScaledShiftImpl q shift coeff 0 q.size rem
+            divModArrayAuxImplGo q qDegree scaleLead fuel (rd + 1) quot rem
+
+/-- Runtime implementation of `divModArrayAux`. Seeds the scan ceiling at `rem.size`, so
+the first iteration is identical to the reference's `arrayDegree? rem`; thereafter the
+ceiling tracks the working degree (see `divModArrayAuxImplGo`). -/
+private def divModArrayAuxImpl [Sub R] [Mul R]
+    (q : Array R) (qDegree : Nat) (scaleLead : R → R)
+    (fuel : Nat) (quot rem : Array R) : Array R × Array R :=
+  divModArrayAuxImplGo q qDegree scaleLead fuel rem.size quot rem
+
 /-- The fuel-bounded long-division loop: while the remainder's degree `rd` is at least
 the divisor degree `qDegree`, pick the quotient coefficient `scaleLead (rem[rd])`, record
 it in `quot`, eliminate the leading term via `subtractScaledShift`, and recurse, returning
 the final `(quotient, remainder)` pair. -/
+@[implemented_by divModArrayAuxImpl]
 private def divModArrayAux [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R)
     (fuel : Nat) (quot rem : Array R) : Array R × Array R :=
