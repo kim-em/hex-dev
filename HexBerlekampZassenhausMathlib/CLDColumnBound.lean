@@ -2121,6 +2121,39 @@ def supportShortVectorData_of_toMonicRepresents
   exact
     supportShortVectorData_of_recoveredLift D hf_lc hfactor_monic hp hk hsep hthr hfac
 
+/--
+Build the BHKS forward cut/projection package from a recovered-lift family.
+
+This is the named `CutProjectionHypotheses` producer for the fast branch: each
+recovered support first yields period-adjusted `SupportShortVectorData`, then
+`cutProjectionHypotheses_of_shortVectors` places its indicator in the retained
+projected row span.
+-/
+def cutProjectionHypotheses_of_recoveredLift
+    (L : Hex.BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth)
+    (hbasis : L.basis.independent)
+    (trueSupports : Set (Set (Fin (Hex.bhksProjectedRows L hrows).factorCount)))
+    (lift : ∀ S : trueSupports, RecoveredLift L S.1)
+    (hf_lc : ∀ S : trueSupports, Hex.DensePoly.leadingCoeff (lift S).f = 1)
+    (hfactor_monic : ∀ S : trueSupports,
+      (HexPolyMathlib.toPolynomial (lift S).factor).Monic)
+    (hp : ∀ S : trueSupports, 2 ≤ (lift S).p)
+    (hk : ∀ S : trueSupports, 1 < (lift S).p ^ (lift S).a)
+    (hsep : ∀ S : trueSupports,
+      ∀ j, 2 * Hex.bhksCoeffBound (lift S).f j < (lift S).p ^ (lift S).a)
+    (hthr : ∀ S : trueSupports,
+      ∀ j, Hex.bhksCoeffCutThreshold (lift S).p (lift S).f j ≤ (lift S).a)
+    (hfac : ∀ S : trueSupports, ∀ i : Fin L.factorCount, i ∈ S.1 →
+        ∃ h : Hex.ZPoly,
+          Hex.DensePoly.Monic (L.liftedFactors.getD i.val 1) ∧
+          0 < (L.liftedFactors.getD i.val 1).degree?.getD 0 ∧
+          Hex.ZPoly.congr (lift S).f ((L.liftedFactors.getD i.val 1) * h)
+            ((lift S).p ^ (lift S).a)) :
+    CutProjectionHypotheses (Hex.bhksProjectedRows L hrows) trueSupports :=
+  cutProjectionHypotheses_of_shortVectors L hrows hbasis trueSupports
+    (fun S => supportShortVectorData_of_recoveredLift (lift S) (hf_lc S)
+      (hfactor_monic S) (hp S) (hk S) (hsep S) (hthr S) (hfac S))
+
 open Classical in
 /--
 **Tight per-column estimate for the period-corrected recovered CLD vector
