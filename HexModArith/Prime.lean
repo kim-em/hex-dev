@@ -111,7 +111,7 @@ theorem pow_prime (hp : Hex.Nat.Prime p) (a : ZMod64 p) : a ^ p = a := by
 /--
 Fermat's little theorem for an ambient prime modulus.
 -/
-@[simp] theorem pow_prime_of_prime_modulus [PrimeModulus p] (a : ZMod64 p) :
+@[simp, grind =] theorem pow_prime_of_prime_modulus [PrimeModulus p] (a : ZMod64 p) :
     a ^ p = a :=
   pow_prime (PrimeModulus.prime (p := p)) a
 
