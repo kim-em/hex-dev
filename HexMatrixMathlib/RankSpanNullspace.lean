@@ -32,15 +32,15 @@ def vectorEquiv : Vector R n ≃ (Fin n → R) where
     funext i
     simp
 
-@[simp] theorem vectorEquiv_apply (v : Vector R n) (i : Fin n) :
+@[simp, grind =] theorem vectorEquiv_apply (v : Vector R n) (i : Fin n) :
     vectorEquiv v i = v[i] :=
   rfl
 
-@[simp] theorem vectorEquiv_symm_apply (f : Fin n → R) (i : Fin n) :
+@[simp, grind =] theorem vectorEquiv_symm_apply (f : Fin n → R) (i : Fin n) :
     (vectorEquiv.symm f)[i] = f i := by
   simp [vectorEquiv]
 
-@[simp] theorem matrixEquiv_row (M : Hex.Matrix R n m) (i : Fin n) :
+@[simp, grind =] theorem matrixEquiv_row (M : Hex.Matrix R n m) (i : Fin n) :
     _root_.Matrix.row (matrixEquiv M) i = vectorEquiv (Hex.Matrix.row M i) := by
   funext j
   simp [Hex.Matrix.row]
