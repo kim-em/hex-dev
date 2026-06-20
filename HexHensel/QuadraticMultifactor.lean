@@ -54,17 +54,6 @@ def quadraticDoublingSteps (k : Nat) : Nat :=
     quadraticDoublingSteps 1 = 0 := by
   simp [quadraticDoublingSteps]
 
-/--
-Requested precision above `p^1` needs at least one quadratic doubling step.
-
-This lets callers reason about the wrapper's nontrivial branch without
-unfolding the logarithmic definition.
--/
-theorem quadraticDoublingSteps_pos_of_one_lt {k : Nat} (hk : 1 < k) :
-    0 < quadraticDoublingSteps k := by
-  have hnot : ¬ k ≤ 1 := Nat.not_le_of_gt hk
-  simp [quadraticDoublingSteps, hnot]
-
 /-- Lift a Bezout-witnessed factorisation modulo `p` to one valid modulo
 `p^k` by iterating `quadraticHenselStep`.
 
@@ -224,6 +213,11 @@ theorem le_two_pow_quadraticDoublingSteps (k : Nat) :
     simp [quadraticDoublingSteps, hk]
     omega
 
+/-- The loop invariant for quadratic doubling: starting from the
+`QuadraticLiftLoopInvariant` at modulus `p^current`, `fuel` doubling steps
+preserve it at modulus `p^(current * 2^fuel)`. Each step squares the modulus,
+so `fuel` steps reach exponent `current * 2^fuel`. The heart of the quadratic
+multifactor correctness. -/
 private theorem iterateQuadraticHensel_invariant
     (p : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (current fuel : Nat) (acc : QuadraticLiftResult)
@@ -1261,6 +1255,10 @@ theorem multifactorLiftQuadratic_each_congr_mod_base
     multifactorLiftQuadraticList_each_congr_mod_base p k f factors.toList hk hp
       hf_monic hfactors_monic_list hinv hproduct_list i
 
+/-- Every factor produced by the quadratic multifactor list lift is monic,
+provided the input invariant holds and `f` is monic. Per-output monicity is
+threaded through the recursion on `factors` and feeds the public list-lift
+correctness statement. -/
 private theorem multifactorLiftQuadraticList_each_monic
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (factors : List ZPoly)

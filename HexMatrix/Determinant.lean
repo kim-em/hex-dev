@@ -8783,7 +8783,10 @@ theorem det_mul
 Encoding for the universal 3-term Plucker identity substrate. -/
 
 /-- Embed `Fin n` into `Fin (n + 2)` while skipping two deleted indices
-`p < q`. This indexes minors with two removed rows. -/
+`p < q`. This indexes minors with two removed rows.
+
+The ordering proof `_hpq` is a phantom argument: it documents and pins the
+`p < q` precondition at call sites but is not consumed by the definition. -/
 def skipIndex2 {n : Nat} (p q : Fin (n + 2)) (_hpq : p.val < q.val)
     (i : Fin n) : Fin (n + 2) :=
   if hi1 : i.val < p.val then

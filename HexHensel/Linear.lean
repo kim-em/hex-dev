@@ -1556,6 +1556,9 @@ private theorem size_le_of_degree?_getD_lt
   · simp [hzero] at hdeg
     omega
 
+/-- Adding a polynomial of strictly smaller degree to a monic `g` leaves
+`degree?` unchanged: the monic leading term dominates the sum. Load-bearing
+for monicity preservation across a linear Hensel step. -/
 private theorem add_low_degree_degree?_eq
     (g a : ZPoly)
     (hmonic : DensePoly.Monic g)
@@ -1588,6 +1591,9 @@ private theorem add_low_degree_degree?_eq
     _ = g.degree? := by
       rw [degree?_eq_some_size_sub_one_of_monic g hmonic]
 
+/-- Monicity is preserved when adding a polynomial of strictly smaller degree
+to a monic `g`: the leading coefficient is untouched by the low-degree
+correction. The step's `g`-update is exactly such a low-degree addition. -/
 private theorem add_low_degree_monic
     (g a : ZPoly)
     (hmonic : DensePoly.Monic g)
@@ -1625,6 +1631,9 @@ private theorem one_lt_pow_succ_of_one_lt (p k : Nat) (hp : 1 < p) :
       exact Nat.lt_of_lt_of_le ih
         (Nat.le_mul_of_pos_right (p ^ (k + 1)) (Nat.zero_lt_of_lt hp))
 
+/-- Reducing a monic polynomial modulo `p^(k+1)` (with `1 < p`) preserves its
+`degree?`: a monic leading coefficient of `1` survives reduction modulo any
+modulus `> 1`. Used to show the reduced step output keeps the input degree. -/
 private theorem reduceModPow_degree?_eq_of_monic
     (p k : Nat) (f : ZPoly)
     (hp : 1 < p)
@@ -1802,45 +1811,6 @@ theorem linearHenselStep_g_degree?_eq
       reduceModPow_degree?_eq_of_monic p k g' hp hgRawMonic
     _ = g.degree? := hgRawDegree
 
-/-- The linear step keeps the degree of `h` unchanged under the expected invariant. -/
-theorem linearHenselStep_h_degree?_eq
-    (p k : Nat) [ZMod64.Bounds p]
-    (f g h : ZPoly) (s t : FpPoly p)
-    (_hp : 1 < p)
-    (_hprod : ZPoly.congr (g * h) f (p ^ k))
-    (hhRawDegree :
-      let e := ZPoly.coeffwiseDiv (f - g * h) (p ^ k)
-      let gMod := ZPoly.modP p g
-      let hMod := ZPoly.modP p h
-      let eMod := ZPoly.modP p e
-      let qr := DensePoly.divMod (t * eMod) gMod
-      let hCorrection := s * eMod + qr.1 * hMod
-      let h' := h + LinearLiftResult.liftScaledIncrement p k hCorrection
-      h'.degree? = h.degree?)
-    (hhReducedDegree :
-      let e := ZPoly.coeffwiseDiv (f - g * h) (p ^ k)
-      let gMod := ZPoly.modP p g
-      let hMod := ZPoly.modP p h
-      let eMod := ZPoly.modP p e
-      let qr := DensePoly.divMod (t * eMod) gMod
-      let hCorrection := s * eMod + qr.1 * hMod
-      let h' := h + LinearLiftResult.liftScaledIncrement p k hCorrection
-      (ZPoly.reduceModPow h' p (k + 1)).degree? = h'.degree?) :
-    (linearHenselStep p k f g h s t).h.degree? = h.degree? := by
-  unfold linearHenselStep
-  let e := ZPoly.coeffwiseDiv (f - g * h) (p ^ k)
-  let gMod := ZPoly.modP p g
-  let hMod := ZPoly.modP p h
-  let eMod := ZPoly.modP p e
-  let qr := DensePoly.divMod (t * eMod) gMod
-  let hCorrection := s * eMod + qr.1 * hMod
-  let h' := h + LinearLiftResult.liftScaledIncrement p k hCorrection
-  calc
-    (ZPoly.reduceModPow h' p (k + 1)).degree? = h'.degree? := by
-      simpa [e, gMod, hMod, eMod, qr, hCorrection, h'] using hhReducedDegree
-    _ = h.degree? := by
-      simpa [e, gMod, hMod, eMod, qr, hCorrection, h'] using hhRawDegree
-
 /-- Lifting and scaling a mod-`p` polynomial of degree below `D` keeps the degree
 below `D`. The lift is injective on degree (the nonzero top survives the
 nonnegative `Nat` lift) and scaling by `p ^ current` is a nonzero multiplier, so
@@ -1893,6 +1863,11 @@ private theorem stepDegree_of_monic_pos
   rw [hgMod] at hlt
   exact hlt
 
+/-- The core invariant-preservation lemma for the linear-lift loop: given the
+`LinearLiftLoopInvariant` at modulus `p^current` plus the per-step degree and
+Bezout preservation hypotheses, running `steps` iterations keeps the invariant
+at the advanced modulus. The product/Bezout/monic correctness of `henselLift`
+factors through this. -/
 private theorem henselLiftLoop_invariant
     (p steps current : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
     (f : ZPoly) (s t : FpPoly p) (acc : LinearLiftResult)
