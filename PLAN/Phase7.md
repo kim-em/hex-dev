@@ -57,8 +57,8 @@ Each chapter should cover:
    computational libs) or to the computational counterpart (for
    `hex-*-mathlib` libs).
 
-Six Verso constraints bite chapter authors and only surface at
-build time:
+Several Verso syntax constraints bite chapter authors and only surface
+at build time:
 
 - A `{ref "tag"}[text]` (or `{name}`/`{docstring}`) directive must sit
   on a **single line** — breaking `{ref` from its `"tag"}[text]` across
@@ -66,11 +66,6 @@ build time:
 - Lean code blocks (```` ```lean ````) are capped at **60 columns**;
   longer lines warn. Lift wide `example`/`theorem` binders into a
   `variable` block above the block to fit.
-- `{docstring X}` on a **structure** errors unless *every field* of `X`
-  carries its own docstring (`'Ns.X.field' is not documented.`). Add the
-  field docstrings in the source structure (a pure-comment change that
-  also helps the Phase 6 docstring-coverage criterion), or fall back to
-  `{name X}` plus prose.
 - `{name X}` requires `X` to be a **constant** (def/theorem/structure),
   not a namespace. Referring to a namespace like `GramSchmidt.Int` errors
   with `Unknown constant`; name a real declaration in it, or use a plain
@@ -86,6 +81,16 @@ build time:
   (`ZPoly.content f`, not `content f`). Validate `#guard` values in a
   throwaway file importing the fast Mathlib-free library before the
   slow `HexManual` build.
+- `{docstring T}` on a `structure`/`inductive`/`class` requires **every
+  field to have its own docstring**, not just the type — an undocumented field
+  errors with `'…' is not documented` (and cascades into a misleading
+  "declaration uses `sorry`" warning on the `#doc`). Add a `/-- … -/` to
+  each field in the source library before referencing the type, or embed
+  it with `{name}` and describe the fields in prose instead.
+- Prose containing a literal `[` (e.g. a formula like `Fₚ[x]`) parses as
+  a markdown link target and errors with `expected link target '(url)'
+  or '[ref]'`. Wrap such formulas in a code span (`` `Fₚ[x] / (f)` ``) or
+  escape the bracket as `\[`.
 
 ## Additional Phase 7 work: tutorials
 

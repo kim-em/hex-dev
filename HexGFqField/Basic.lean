@@ -20,6 +20,7 @@ residues modulo an irreducible polynomial. -/
 structure FiniteField
     (f : FpPoly p) (hf : 0 < FpPoly.degree f)
     (_hp : Hex.Nat.Prime p) (_hirr : FpPoly.Irreducible f) where
+  /-- The underlying reduced quotient-ring residue backing this field element. -/
   toQuotient : GFqRing.PolyQuotient f hf
 
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
