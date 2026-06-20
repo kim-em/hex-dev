@@ -69,10 +69,14 @@ def coeffLists (p : Nat) [ZMod64.Bounds p] : Nat → List (List (ZMod64 p))
       (ZMod64.values p).flatMap fun c =>
         (coeffLists p d).map fun coeffs => c :: coeffs
 
+/-- There is exactly one coefficient list of length `0`: the empty list.
+Base case of `coeffLists`. -/
 @[simp, grind =] theorem coeffLists_zero :
     coeffLists p 0 = ([[]] : List (List (ZMod64 p))) :=
   rfl
 
+/-- Coefficient lists of length `d + 1` prepend each `ZMod64 p` value to
+every length-`d` list. Recursive step of `coeffLists`. -/
 @[simp, grind =] theorem coeffLists_succ (d : Nat) :
     coeffLists p (d + 1) =
       (ZMod64.values p).flatMap fun c =>

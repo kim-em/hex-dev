@@ -5,6 +5,7 @@ import HexManual.Chapters.HexGFqRing
 import HexManual.Chapters.HexGFqMathlib
 import HexManual.Chapters.HexModArithMathlib
 import HexManual.Chapters.HexPoly
+import HexManual.Chapters.HexPolyZ
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -41,3 +42,5 @@ documentation phase of the development plan.
 {include 0 HexManual.Chapters.HexModArithMathlib}
 
 {include 0 HexManual.Chapters.HexPoly}
+
+{include 0 HexManual.Chapters.HexPolyZ}

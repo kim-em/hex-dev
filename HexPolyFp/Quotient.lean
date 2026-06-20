@@ -32,6 +32,8 @@ variable {g : FpPoly p} {hmonic : DensePoly.Monic g}
 variable {hg_pos : 0 < g.degree?.getD 0}
 
 omit [ZMod64.PrimeModulus p] in
+/-- Two quotient elements are equal when their underlying representatives
+agree; the extensionality principle for `Quotient g`. -/
 @[ext] theorem ext {a b : Quotient g hmonic hg_pos} (h : a.val = b.val) :
     a = b := by
   cases a
@@ -212,6 +214,8 @@ def elements : List (Quotient g hmonic hg_pos) :=
   (Enumeration.polysBelowDegree p (g.degree?.getD 0)).map
     (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos))
 
+/-- `elements` enumerates exactly `p ^ deg g` canonical representatives —
+the order of the quotient ring `FpPoly p / g`. -/
 @[simp, grind =] theorem elements_length :
     (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).length =
       p ^ g.degree?.getD 0 := by
@@ -627,6 +631,7 @@ theorem reduce_monomial_eq_const_mul_X_pow (n : Nat) (c : ZMod64 p) :
               reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) * q)
             hpow
 
+/-- `0` is a right identity for addition in the quotient ring. -/
 @[simp, grind =] theorem add_zero (a : Quotient g hmonic hg_pos) :
     a + (0 : Quotient g hmonic hg_pos) = a := by
   calc
@@ -640,6 +645,7 @@ theorem reduce_monomial_eq_const_mul_X_pow (n : Nat) (c : ZMod64 p) :
           rw [FpPoly.add_zero]
     _ = a := reduce_val_self a
 
+/-- `0` is a left identity for addition in the quotient ring. -/
 @[simp, grind =] theorem zero_add (a : Quotient g hmonic hg_pos) :
     (0 : Quotient g hmonic hg_pos) + a = a := by
   calc

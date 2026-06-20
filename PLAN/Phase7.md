@@ -57,7 +57,7 @@ Each chapter should cover:
    computational libs) or to the computational counterpart (for
    `hex-*-mathlib` libs).
 
-Three Verso constraints bite chapter authors and only surface at
+Four Verso constraints bite chapter authors and only surface at
 build time:
 
 - A `{ref "tag"}[text]` (or `{name}`/`{docstring}`) directive must sit
@@ -73,6 +73,14 @@ build time:
   Likewise, `#eval`/`#guard` on an `@[extern]` def fails in the manual's
   evaluator (no native binding) — document those by signature/law and
   keep evaluated example blocks to the pure-Lean surface.
+- When the library is an `abbrev` over a more generic type
+  (`ZPoly = DensePoly Int`, `FpPoly p = DensePoly (ZMod64 p)`), a
+  worked-example `#guard` over an op defined in *both* namespaces
+  (`content`, `primitivePart`, …) is ambiguous under
+  `open Hex Hex.DensePoly`. Qualify the specialized op explicitly
+  (`ZPoly.content f`, not `content f`). Validate `#guard` values in a
+  throwaway file importing the fast Mathlib-free library before the
+  slow `HexManual` build.
 
 ## Additional Phase 7 work: tutorials
 
