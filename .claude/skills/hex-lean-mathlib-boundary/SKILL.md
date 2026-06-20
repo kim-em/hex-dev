@@ -57,7 +57,19 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   refuses it with `invalid E-matching equality theorem, conclusion must be an
   equality` even though it "looks like a literal equation." Leave such lemmas
   `@[simp]`-only; it is a permanent property of the statement shape, not a
-  fixable regression, so no follow-up issue is warranted.
+  fixable regression, so no follow-up issue is warranted. A third rejection,
+  independent of the head/conclusion shape: a literal `lhs = rhs` whose
+  **parameters appear only under a binder in the LHS** is rejected with
+  `invalid pattern(s) for <lemma> … the following theorem parameters cannot
+  be instantiated`. `grind =` keys on the LHS head term, so a param that
+  surfaces only inside a `fun`/`ofFn` lambda (e.g. `dotProduct_basis_basis`'s
+  `i j` inside `ofFn (fun b => if i = b then …)`, or
+  `columnTupleMatrix_compose_perm_entry`'s `s sigma` inside
+  `fun i => s[sigma[i]]`, both `HexMatrix`) cannot be solved for. Same hard
+  build error, same disposition: leave `@[simp]`-only, note why in the
+  docstring/PR body. Indices that appear as a projection of a direct param
+  (`i.val` inside a `Fin.mk` index) DO instantiate fine — only fully
+  binder-bound params fail.
 - **`grind =` ACCEPTS `↔` (Iff) — it is NOT an ineligible shape.** `grind =`
   registers `a ↔ b` as a rewrite rule exactly like `a = b`, so a public
   characterising `↔` lemma (`p.isZero = true ↔ p = 0`,
