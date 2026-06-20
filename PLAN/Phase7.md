@@ -66,6 +66,14 @@ build time:
 - Lean code blocks (```` ```lean ````) are capped at **60 columns**;
   longer lines warn. Lift wide `example`/`theorem` binders into a
   `variable` block above the block to fit.
+- When the library is an `abbrev` over a more generic type
+  (`ZPoly = DensePoly Int`, `FpPoly p = DensePoly (ZMod64 p)`), a
+  worked-example `#guard` over an op defined in *both* namespaces
+  (`content`, `primitivePart`, …) is ambiguous under
+  `open Hex Hex.DensePoly`. Qualify the specialized op explicitly
+  (`ZPoly.content f`, not `content f`). Validate `#guard` values in a
+  throwaway file importing the fast Mathlib-free library before the
+  slow `HexManual` build.
 
 ## Additional Phase 7 work: tutorials
 
