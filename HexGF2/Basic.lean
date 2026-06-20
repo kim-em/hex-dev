@@ -17,6 +17,8 @@ def GF2PolyNormalized (words : Array UInt64) : Prop :=
 /-- Polynomials over `F_2`, packed into 64-bit words. Bit `j` of `words[i]`
 stores the coefficient of `x^(64 * i + j)`. -/
 structure GF2Poly where
+  /-- The packed coefficient words: bit `j` of `words[i]` is the coefficient of
+  `x^(64 * i + j)`. -/
   words : Array UInt64
   normalized : GF2PolyNormalized words
 

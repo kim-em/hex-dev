@@ -137,7 +137,7 @@ libraries:
   HexGF2:
     deps: [HexPoly]
     mathlib: false
-    done_through: 5
+    done_through: 6
     status: active
     phase4:
       comparators:
@@ -286,7 +286,7 @@ libraries:
   HexConway:
     deps: [HexBerlekamp]
     mathlib: false
-    done_through: 6
+    done_through: 7
     status: active
     phase4:
       input_families:
@@ -295,7 +295,7 @@ libraries:
   HexGFq:
     deps: [HexGFqField, HexConway, HexGF2]
     mathlib: false
-    done_through: 5
+    done_through: 6
     status: active
     phase4:
       input_families:
