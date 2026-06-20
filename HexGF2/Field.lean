@@ -1186,12 +1186,12 @@ def frobeniusIter (a : GF2nPoly f hirr) : Nat → GF2nPoly f hirr
   | k + 1 => frobeniusIter a k * frobeniusIter a k
 
 /-- Zero Frobenius iterations leave the quotient element unchanged. -/
-@[simp] theorem frobeniusIter_zero (a : GF2nPoly f hirr) :
+@[simp, grind =] theorem frobeniusIter_zero (a : GF2nPoly f hirr) :
     frobeniusIter a 0 = a := rfl
 
 /-- One more Frobenius iteration squares the previous iterate in the quotient
 field. -/
-@[simp] theorem frobeniusIter_succ (a : GF2nPoly f hirr) (k : Nat) :
+@[simp, grind =] theorem frobeniusIter_succ (a : GF2nPoly f hirr) (k : Nat) :
     frobeniusIter a (k + 1) = frobeniusIter a k * frobeniusIter a k := rfl
 
 /-- Frobenius iterates compose by adding their iteration counts. -/
@@ -1679,7 +1679,7 @@ end Internal
       rw [frobeniusIter_succ, ih, frobeniusIter_succ, frobeniusIter_succ, add_sq]
 
 /-- Zero is fixed by every iterated Frobenius. -/
-@[simp] theorem frobeniusIter_zero_eq (k : Nat) :
+@[simp, grind =] theorem frobeniusIter_zero_eq (k : Nat) :
     frobeniusIter (0 : GF2nPoly f hirr) k = 0 := by
   induction k with
   | zero =>
@@ -1718,7 +1718,7 @@ Frobenius iterate. -/
   rw [mul_comm, one_mul]
 
 /-- One is fixed by every iterated Frobenius. -/
-@[simp] theorem frobeniusIter_one_eq (k : Nat) :
+@[simp, grind =] theorem frobeniusIter_one_eq (k : Nat) :
     frobeniusIter (1 : GF2nPoly f hirr) k = 1 := by
   induction k with
   | zero =>
@@ -1962,7 +1962,7 @@ def rootsOfCoeffList (cs : List (GF2nPoly f hirr)) : List (GF2nPoly f hirr) :=
 
 /-- Membership in the computed root list is exactly vanishing of the
 coefficient-list polynomial at that quotient element. -/
-@[simp] theorem mem_rootsOfCoeffList
+@[simp, grind =] theorem mem_rootsOfCoeffList
     (cs : List (GF2nPoly f hirr)) (β : GF2nPoly f hirr) :
     β ∈ rootsOfCoeffList (f := f) (hirr := hirr) cs ↔
       evalCoeffList cs β = 0 := by
