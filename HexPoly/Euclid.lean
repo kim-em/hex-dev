@@ -84,7 +84,7 @@ theorem leadingCoeff_ne_zero_of_pos_size (p : DensePoly R) (hpos : 0 < p.size) :
 
 /-- `arrayDegreeAux coeffs fuel` scans indices below `fuel` downward and returns the
 greatest index whose coefficient is nonzero, or `none` if every coefficient below `fuel` is zero. -/
-private def arrayDegreeAux (coeffs : Array R) : Nat → Option Nat
+def arrayDegreeAux (coeffs : Array R) : Nat → Option Nat
   | 0 => none
   | fuel + 1 =>
       let i := fuel
@@ -95,7 +95,7 @@ private def arrayDegreeAux (coeffs : Array R) : Nat → Option Nat
 
 /-- `arrayDegree? coeffs` is the highest index of a nonzero coefficient of `coeffs`, or `none`
 when every coefficient is zero, computed by scanning from `coeffs.size` downward. -/
-private def arrayDegree? (coeffs : Array R) : Option Nat :=
+def arrayDegree? (coeffs : Array R) : Option Nat :=
   arrayDegreeAux coeffs coeffs.size
 
 /-- A degree `arrayDegreeAux` reports lies strictly below the scan ceiling `fuel`. -/
@@ -233,7 +233,7 @@ private theorem ofCoeffs_degree_getD_lt_of_forall_zero_ge {coeffs : Array R} {bo
 /-- One coefficient of a long-division elimination step: subtract `coeff * q[j]` from
 position `shift + j` of `next`, the inner action folded by `subtractScaledShift` to wipe
 out the leading term of the current remainder. -/
-private def subtractScaledShiftStep [Sub R] [Mul R]
+def subtractScaledShiftStep [Sub R] [Mul R]
     (q : Array R) (shift : Nat) (coeff : R) (next : Array R) (j : Nat) : Array R :=
   let idx := shift + j
   next.set! idx (next.getD idx (Zero.zero : R) - coeff * q.getD j (Zero.zero : R))
@@ -241,7 +241,7 @@ private def subtractScaledShiftStep [Sub R] [Mul R]
 /-- Subtract `coeff` times the divisor `q` shifted up by `shift` positions from the
 remainder `rem`, i.e. one full long-division step `rem - coeff * xˢʰⁱᶠᵗ * q`, realised by
 folding `subtractScaledShiftStep` over every index of `q`. -/
-private def subtractScaledShift [Sub R] [Mul R]
+def subtractScaledShift [Sub R] [Mul R]
     (rem q : Array R) (shift : Nat) (coeff : R) : Array R :=
   (List.range q.size).foldl (subtractScaledShiftStep q shift coeff) rem
 
@@ -546,7 +546,7 @@ it in `quot`, eliminate the leading term via `subtractScaledShift`, and recurse,
 the final `(quotient, remainder)` pair. The compiled runtime uses the value-equal
 `divModArrayAuxImpl` (proved by `divModArrayAux_eq_impl`, registered `@[csimp]`), which
 tracks the working degree instead of rescanning. -/
-private def divModArrayAux [Sub R] [Mul R]
+def divModArrayAux [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R)
     (fuel : Nat) (quot rem : Array R) : Array R × Array R :=
   match fuel with
@@ -775,7 +775,7 @@ private theorem divModArrayAux_remainder_zero_ge [Sub R] [Mul R]
 /-- Array-backed long division of dense polynomial `p` by `q`: returns `(0, p)` when `q`
 is zero, otherwise seeds a zero quotient and runs `divModArrayAux` with `p.size` fuel,
 packaging the resulting coefficient arrays back as `DensePoly` quotient and remainder. -/
-private def divModArray [Sub R] [Mul R]
+def divModArray [Sub R] [Mul R]
     (p q : DensePoly R) (scaleLead : R → R) : DensePoly R × DensePoly R :=
   if q.isZero then
     (0, p)
