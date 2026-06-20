@@ -9,6 +9,7 @@ import HexManual.Chapters.HexModArith
 import HexManual.Chapters.HexModArithMathlib
 import HexManual.Chapters.HexPoly
 import HexManual.Chapters.HexPolyZ
+import HexManual.Chapters.HexPolyFp
 import HexManual.Chapters.HexGramSchmidt
 import HexManual.Chapters.HexLLL
 
@@ -55,6 +56,8 @@ documentation phase of the development plan.
 {include 0 HexManual.Chapters.HexPoly}
 
 {include 0 HexManual.Chapters.HexPolyZ}
+
+{include 0 HexManual.Chapters.HexPolyFp}
 
 {include 0 HexManual.Chapters.HexGramSchmidt}
 
