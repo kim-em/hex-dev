@@ -165,12 +165,6 @@ theorem length_of_mem_coeffLists {d : Nat} {coeffs : List (ZMod64 p)}
           rw [Nat.pow_succ]
           exact Nat.mul_comm p (p ^ d)
 
-private theorem coeffLists_nodup_cons_branch
-    {c : ZMod64 p} {tail : List (ZMod64 p)}
-    (hmem : tail ∈ coeffLists p d) :
-    c :: tail ∈ (coeffLists p d).map fun coeffs => c :: coeffs := by
-  exact List.mem_map.mpr ⟨tail, hmem, rfl⟩
-
 /-- The fixed-length coefficient-list enumeration has no duplicate lists. -/
 theorem coeffLists_nodup (d : Nat) :
     (coeffLists p d).Nodup := by

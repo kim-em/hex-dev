@@ -1385,25 +1385,6 @@ private theorem C_ne_zero_of_ne_zero {u : ZMod64 p} (hu : u ≠ 0) :
   exact hu hcoeff
 
 /--
-Derivative is linear over constant-polynomial scaling: `D(C c · f) = C c · D(f)`.
-Uses the Leibniz rule and `derivative_C_semiring`.
--/
-private theorem derivative_C_mul (c : ZMod64 p) (f : FpPoly p) :
-    DensePoly.derivative (DensePoly.C c * f) =
-      DensePoly.C c * DensePoly.derivative f := by
-  apply DensePoly.ext_coeff
-  intro n
-  have hzero : c * (0 : ZMod64 p) = 0 := Lean.Grind.Semiring.mul_zero c
-  have hzeroN : ((n + 1 : Nat) : ZMod64 p) * (0 : ZMod64 p) = 0 :=
-    Lean.Grind.Semiring.mul_zero _
-  rw [C_mul_eq_scale c f, C_mul_eq_scale c (DensePoly.derivative f)]
-  rw [DensePoly.coeff_scale _ _ _ hzero]
-  rw [DensePoly.coeff_derivative _ _ hzeroN]
-  rw [DensePoly.coeff_derivative _ _ hzeroN]
-  rw [DensePoly.coeff_scale _ _ _ hzero]
-  grind
-
-/--
 Left cancellation by a nonzero constant polynomial: `C u · a = C u · b ⇒ a = b`.
 Reduces to right cancellation via commutativity.
 -/

@@ -2377,16 +2377,6 @@ private theorem fold_add_single_range
         rw [if_neg hne]
         exact zmod_add_zero a
 
-private theorem fold_add_single_range_zero
-    (n t : Nat) (a : ZMod64 p) (ht : ¬ t < n + 1) :
-    (List.range (n + 1)).foldl
-        (fun acc i => acc + if i = t then a else 0) 0 = 0 := by
-  apply fold_add_zero_terms
-  intro i hi
-  have hi' : i < n + 1 := List.mem_range.mp hi
-  have hit : i ≠ t := by omega
-  simp [hit]
-
 /-- Multiplying `f` by the scaled monomial `c · Xⁱ` shifts each coefficient up
 by `i` and scales it by `c`. Gives a closed form for the coefficients produced
 when a polynomial is multiplied by a single monomial term. -/
