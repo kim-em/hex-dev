@@ -1962,7 +1962,7 @@ def rootsOfCoeffList (cs : List (GF2nPoly f hirr)) : List (GF2nPoly f hirr) :=
 
 /-- Membership in the computed root list is exactly vanishing of the
 coefficient-list polynomial at that quotient element. -/
-@[simp] theorem mem_rootsOfCoeffList
+@[simp, grind =] theorem mem_rootsOfCoeffList
     (cs : List (GF2nPoly f hirr)) (β : GF2nPoly f hirr) :
     β ∈ rootsOfCoeffList (f := f) (hirr := hirr) cs ↔
       evalCoeffList cs β = 0 := by
