@@ -507,10 +507,13 @@ private def subtractScaledShiftImpl [Sub R] [Mul R]
 /-- Runtime loop for `divModArrayAux` that resumes the degree scan from the previous
 remainder degree instead of rescanning from the top each step. The reference loop calls
 `arrayDegree? rem` (a scan from `rem.size` downward) on every iteration, which is `O(n)`
-per step and `O(n²)` overall; here `ceil` is the scan ceiling, which only ever decreases,
-so the total scanning cost is `O(n)`. Every coefficient above the current degree `rd` is
-already zero, so `arrayDegreeAux rem ceil` with `ceil = rd + 1` returns the same index as
-the reference's `arrayDegree? rem`. -/
+per step and `O(n²)` overall; here `ceil` is the scan ceiling, which in the well-formed
+case (`q.size = qDegree + 1`) only ever decreases, so the total scanning cost is `O(n)`.
+After eliminating at degree `rd`, the only coefficients that can be nonzero are those at
+or below `max (rd + 1) (shift + q.size)` — the elimination window tops out at
+`shift + q.size - 1` and everything above `rd` was already zero — so seeding the next scan
+at that ceiling returns the same index as the reference's `arrayDegree? rem`.
+`divModArrayAux_eq_impl` proves the two loops agree on every input. -/
 private def divModArrayAuxImplGo [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R) :
     Nat → Nat → Array R → Array R → Array R × Array R
@@ -526,7 +529,8 @@ private def divModArrayAuxImplGo [Sub R] [Mul R]
             let coeff := scaleLead (rem.getD rd (Zero.zero : R))
             let quot := quot.set! shift coeff
             let rem := subtractScaledShiftImpl q shift coeff 0 q.size rem
-            divModArrayAuxImplGo q qDegree scaleLead fuel (rd + 1) quot rem
+            divModArrayAuxImplGo q qDegree scaleLead fuel
+              (Nat.max (rd + 1) (shift + q.size)) quot rem
 
 /-- Runtime implementation of `divModArrayAux`. Seeds the scan ceiling at `rem.size`, so
 the first iteration is identical to the reference's `arrayDegree? rem`; thereafter the
@@ -539,8 +543,9 @@ private def divModArrayAuxImpl [Sub R] [Mul R]
 /-- The fuel-bounded long-division loop: while the remainder's degree `rd` is at least
 the divisor degree `qDegree`, pick the quotient coefficient `scaleLead (rem[rd])`, record
 it in `quot`, eliminate the leading term via `subtractScaledShift`, and recurse, returning
-the final `(quotient, remainder)` pair. -/
-@[implemented_by divModArrayAuxImpl]
+the final `(quotient, remainder)` pair. The compiled runtime uses the value-equal
+`divModArrayAuxImpl` (proved by `divModArrayAux_eq_impl`, registered `@[csimp]`), which
+tracks the working degree instead of rescanning. -/
 private def divModArrayAux [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R)
     (fuel : Nat) (quot rem : Array R) : Array R × Array R :=
@@ -558,6 +563,120 @@ private def divModArrayAux [Sub R] [Mul R]
             let quot := quot.set! shift coeff
             let rem := subtractScaledShift rem q shift coeff
             divModArrayAux q qDegree scaleLead fuel quot rem
+
+/-- Dropping a run of indices on which `coeffs` is zero does not change what
+`arrayDegreeAux` reports: scanning down from `c + n` through `n` zeros reaches the same
+answer as scanning down from `c`. -/
+private theorem arrayDegreeAux_drop {coeffs : Array R} {c : Nat}
+    (h : ∀ i, c ≤ i → coeffs.getD i (Zero.zero : R) = (Zero.zero : R)) (n : Nat) :
+    arrayDegreeAux coeffs (c + n) = arrayDegreeAux coeffs c := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+      have hzero : coeffs.getD (c + n) (Zero.zero : R) = (Zero.zero : R) := h _ (by omega)
+      show (if coeffs.getD (c + n) (Zero.zero : R) = (Zero.zero : R)
+              then arrayDegreeAux coeffs (c + n) else some (c + n)) = arrayDegreeAux coeffs c
+      rw [if_pos hzero]
+      exact ih
+
+/-- When every coefficient at or above the scan ceiling `ceil` is zero, the bounded scan
+`arrayDegreeAux coeffs ceil` reports the same degree as the full `arrayDegree? coeffs`. -/
+private theorem arrayDegreeAux_eq_arrayDegree? {coeffs : Array R} {ceil : Nat}
+    (h : ∀ i, ceil ≤ i → coeffs.getD i (Zero.zero : R) = (Zero.zero : R)) :
+    arrayDegreeAux coeffs ceil = arrayDegree? coeffs := by
+  have hsize : ∀ i, coeffs.size ≤ i → coeffs.getD i (Zero.zero : R) = (Zero.zero : R) := by
+    intro i hi
+    unfold Array.getD
+    exact dif_neg (by omega)
+  rw [arrayDegree?]
+  rcases Nat.le_total ceil coeffs.size with hle | hle
+  · have hdrop := arrayDegreeAux_drop h (coeffs.size - ceil)
+    rw [show ceil + (coeffs.size - ceil) = coeffs.size from by omega] at hdrop
+    exact hdrop.symm
+  · have hdrop := arrayDegreeAux_drop hsize (ceil - coeffs.size)
+    rw [show coeffs.size + (ceil - coeffs.size) = ceil from by omega] at hdrop
+    exact hdrop
+
+omit [DecidableEq R] in
+/-- The tail-recursive `subtractScaledShiftImpl` realises the same fold as
+`subtractScaledShiftStep` over `List.range' j cnt`. -/
+private theorem subtractScaledShiftImpl_eq_foldl [Sub R] [Mul R]
+    (q : Array R) (shift : Nat) (coeff : R) (cnt : Nat) :
+    ∀ (j : Nat) (rem : Array R),
+      subtractScaledShiftImpl q shift coeff j cnt rem =
+        (List.range' j cnt).foldl (subtractScaledShiftStep q shift coeff) rem := by
+  induction cnt with
+  | zero => intro j rem; rfl
+  | succ cnt ih =>
+      intro j rem
+      rw [subtractScaledShiftImpl, List.range'_succ]
+      simp only [List.foldl_cons]
+      exact ih (j + 1) (subtractScaledShiftStep q shift coeff rem j)
+
+omit [DecidableEq R] in
+/-- The runtime subtraction loop computes the same array as `subtractScaledShift`. -/
+private theorem subtractScaledShiftImpl_eq [Sub R] [Mul R]
+    (rem q : Array R) (shift : Nat) (coeff : R) :
+    subtractScaledShiftImpl q shift coeff 0 q.size rem =
+      subtractScaledShift rem q shift coeff := by
+  rw [subtractScaledShiftImpl_eq_foldl, subtractScaledShift, List.range_eq_range']
+
+/-- The ceiling-tracking loop `divModArrayAuxImplGo` agrees with the rescanning reference
+`divModArrayAux`, provided every coefficient at or above the seed ceiling is already zero. -/
+private theorem divModArrayAuxImplGo_eq [Sub R] [Mul R]
+    (q : Array R) (qDegree : Nat) (scaleLead : R → R) (fuel : Nat) :
+    ∀ (ceil : Nat) (quot rem : Array R),
+      (∀ i, ceil ≤ i → rem.getD i (Zero.zero : R) = (Zero.zero : R)) →
+      divModArrayAuxImplGo q qDegree scaleLead fuel ceil quot rem =
+        divModArrayAux q qDegree scaleLead fuel quot rem := by
+  induction fuel with
+  | zero => intro ceil quot rem _; rfl
+  | succ fuel ih =>
+      intro ceil quot rem hzero
+      have hdeg : arrayDegreeAux rem ceil = arrayDegree? rem :=
+        arrayDegreeAux_eq_arrayDegree? hzero
+      unfold divModArrayAuxImplGo divModArrayAux
+      rw [hdeg]
+      cases hd : arrayDegree? rem with
+      | none => rfl
+      | some rd =>
+          dsimp only
+          by_cases hlt : rd < qDegree
+          · rw [if_pos hlt, dif_pos hlt]
+          · rw [if_neg hlt, dif_neg hlt]
+            rw [subtractScaledShiftImpl_eq rem q (rd - qDegree)
+              (scaleLead (rem.getD rd (Zero.zero : R)))]
+            apply ih
+            intro i hi
+            have hb1 : rd + 1 ≤ Nat.max (rd + 1) (rd - qDegree + q.size) :=
+              Nat.le_max_left _ _
+            have hb2 : rd - qDegree + q.size ≤ Nat.max (rd + 1) (rd - qDegree + q.size) :=
+              Nat.le_max_right _ _
+            have hi1 : rd < i := by omega
+            have hi2 : rd - qDegree + q.size ≤ i := by omega
+            rw [subtractScaledShift_getD_of_forall_ne rem q (rd - qDegree)
+              (scaleLead (rem.getD rd (Zero.zero : R))) i (by intro j hj; omega)]
+            exact arrayDegree?_some_above_eq_zero hd hi1
+
+/-- The runtime long-division loop computes the same quotient/remainder as the reference. -/
+private theorem divModArrayAuxImpl_eq [Sub R] [Mul R]
+    (q : Array R) (qDegree : Nat) (scaleLead : R → R)
+    (fuel : Nat) (quot rem : Array R) :
+    divModArrayAuxImpl q qDegree scaleLead fuel quot rem =
+      divModArrayAux q qDegree scaleLead fuel quot rem := by
+  unfold divModArrayAuxImpl
+  apply divModArrayAuxImplGo_eq
+  intro i hi
+  unfold Array.getD
+  exact dif_neg (by omega)
+
+/-- Register the value-equal `divModArrayAuxImpl` as the compiled implementation of
+`divModArrayAux`. Unlike `@[implemented_by]`, the `@[csimp]` swap is backed by the proof
+`divModArrayAuxImpl_eq`, so the runtime loop is verified equal to the specification. -/
+@[csimp]
+private theorem divModArrayAux_eq_impl : @divModArrayAux = @divModArrayAuxImpl := by
+  funext R _ _ _ _ q qDegree scaleLead fuel quot rem
+  exact (divModArrayAuxImpl_eq q qDegree scaleLead fuel quot rem).symm
 
 /-- `divModArrayAux` depends only on the pointwise values of its `scaleLead` argument:
 two scaling functions agreeing on every input produce identical quotient/remainder, so
