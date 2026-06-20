@@ -21,7 +21,9 @@ local instance : DensePoly.DivModLaws (ZMod64 p) :=
 a monic positive-degree modulus. -/
 structure Quotient (g : FpPoly p) (hmonic : DensePoly.Monic g)
     (hg_pos : 0 < g.degree?.getD 0) where
+  /-- The chosen representative polynomial, of degree below `g`. -/
   val : FpPoly p
+  /-- The representative's degree is strictly below that of the modulus `g`. -/
   reduced : val.degree?.getD 0 < g.degree?.getD 0
 
 namespace Quotient
