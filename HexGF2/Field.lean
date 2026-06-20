@@ -364,6 +364,7 @@ end GF2Poly
 /-- `GF(2^n)` for arbitrary `n`, represented by reduced `GF2Poly` residues
 modulo an irreducible polynomial. -/
 structure GF2nPoly (f : GF2Poly) (hirr : GF2Poly.Irreducible f) where
+  /-- The canonical residue representing this field element, reduced modulo `f`. -/
   val : GF2Poly
   val_reduced : val.IsZero ∨ val.degree < f.degree
 
@@ -373,6 +374,8 @@ structure GF2nPoly (f : GF2Poly) (hirr : GF2Poly.Irreducible f) where
 structure GF2n (n : Nat) (irr : UInt64)
     (hn : 0 < n) (hn64 : n < 64)
     (hirr : GF2Poly.Irreducible (GF2Poly.ofUInt64Monic irr n)) where
+  /-- The packed canonical representative: the lower `n` coefficients of the
+  residue modulo the implicit modulus `x^n + irr`. -/
   val : UInt64
   val_lt : val.toNat < 2 ^ n
 
@@ -522,6 +525,10 @@ def pow (a : GF2n n irr hn hn64 hirr) (k : Nat) : GF2n n irr hn hn64 hirr :=
     simp_wf
     exact Nat.div_lt_self (Nat.pos_of_ne_zero hk) (by decide)
   go 1 a k
+
+/-- Square-and-multiply accumulator loop for `GF2n.pow`: `go acc base k`
+computes `acc * base ^ k`. -/
+add_decl_doc GF2n.pow.go
 
 instance : Pow (GF2n n irr hn hn64 hirr) Nat where
   pow := pow
@@ -1175,6 +1182,10 @@ def pow (a : GF2nPoly f hirr) (k : Nat) : GF2nPoly f hirr :=
     simp_wf
     exact Nat.div_lt_self (Nat.pos_of_ne_zero hk) (by decide)
   go 1 a k
+
+/-- Square-and-multiply accumulator loop for `GF2nPoly.pow`: `go acc base k`
+computes `acc * base ^ k`. -/
+add_decl_doc GF2nPoly.pow.go
 
 instance : Pow (GF2nPoly f hirr) Nat where
   pow := pow
