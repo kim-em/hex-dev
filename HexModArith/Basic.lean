@@ -148,7 +148,7 @@ def values (p : Nat) [Bounds p] : List (ZMod64 p) :=
   (List.range p).map fun n => ofNat p n
 
 /-- The canonical list of residues modulo `p` has one entry for each representative. -/
-@[simp] theorem values_length : (values p).length = p := by
+@[simp, grind =] theorem values_length : (values p).length = p := by
   simp [values]
 
 /-- Every residue appears in `values`. -/
@@ -162,7 +162,7 @@ theorem mem_values (a : ZMod64 p) : a ∈ values p := by
   exact (Nat.mod_eq_of_lt a.toNat_lt).trans (by rfl)
 
 /-- Membership in the canonical residue list is automatic for every residue. -/
-@[simp] theorem mem_values_iff (a : ZMod64 p) : a ∈ values p ↔ True :=
+@[simp, grind =] theorem mem_values_iff (a : ZMod64 p) : a ∈ values p ↔ True :=
   iff_true_intro (mem_values a)
 
 /-- Reduced representatives below `p` construct the same residue exactly when
