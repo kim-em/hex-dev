@@ -1123,7 +1123,9 @@ theorem pivotCols_injective (E : IsEchelonForm M D) :
 
 The echelon-form witness `_E` is a phantom argument: it carries no runtime
 data but enables dot-notation (`E.freeColsList`) and fixes the implicit
-matrix/data parameters. -/
+matrix/data parameters. This intentionally triggers the `unusedArguments`
+linter; the binder is kept deliberately (no `@[nolint]` exists in the
+Mathlib-free layer). -/
 def freeColsList (_E : IsEchelonForm M D) : List (Fin m) :=
   (List.finRange m).filter fun j => j ∉ D.pivotCols.toList
 

@@ -81,7 +81,7 @@ def ofFn (f : Fin n → Fin m → R) : Matrix R n m :=
   Vector.ofFn fun i => Vector.ofFn fun j => f i j
 
 /-- Entry access for a matrix built from an entry function. -/
-@[simp, grind =] theorem getElem_ofFn (f : Fin n → Fin m → R) (i : Fin n) (j : Fin m) :
+@[grind =] theorem getElem_ofFn (f : Fin n → Fin m → R) (i : Fin n) (j : Fin m) :
     (ofFn f)[i][j] = f i j := by
   simp [ofFn]
 
@@ -90,7 +90,7 @@ def row (M : Matrix R n m) (i : Fin n) : Vector R m :=
   M[i]
 
 /-- Entry access for a selected matrix row. -/
-@[simp, grind =] theorem row_getElem (M : Matrix R n m) (i : Fin n) (j : Fin m) :
+@[grind =] theorem row_getElem (M : Matrix R n m) (i : Fin n) (j : Fin m) :
     (row M i)[j] = M[i][j] := by
   rfl
 
@@ -99,7 +99,7 @@ def col (M : Matrix R n m) (j : Fin m) : Vector R n :=
   Vector.ofFn fun i => M[i][j]
 
 /-- Entry access for a selected matrix column. -/
-@[simp, grind =] theorem col_getElem (M : Matrix R n m) (j : Fin m) (i : Fin n) :
+@[grind =] theorem col_getElem (M : Matrix R n m) (j : Fin m) (i : Fin n) :
     (col M j)[i] = M[i][j] := by
   simp [col]
 
@@ -108,7 +108,7 @@ def transpose (M : Matrix R n m) : Matrix R m n :=
   Vector.ofFn fun j => col M j
 
 /-- Entry access for the transpose of a dense matrix. -/
-@[simp, grind =] theorem transpose_getElem (M : Matrix R n m) (i : Fin m) (j : Fin n) :
+@[grind =] theorem transpose_getElem (M : Matrix R n m) (i : Fin m) (j : Fin n) :
     (transpose M)[i][j] = M[j][i] := by
   simp [transpose, col]
 
@@ -171,14 +171,14 @@ instance [Mul R] [Add R] [OfNat R 0] : HMul (Matrix R n m) (Matrix R m k) (Matri
   hMul := mul
 
 /-- Entry characterization for matrix-vector multiplication. -/
-@[simp, grind =] theorem mulVec_getElem [Mul R] [Add R] [OfNat R 0]
+@[grind =] theorem mulVec_getElem [Mul R] [Add R] [OfNat R 0]
     (M : Matrix R n m) (v : Vector R m) (i : Fin n) :
     (M * v)[i] = dot (row M i) v := by
   show (mulVec M v)[i] = dot (row M i) v
   simp [mulVec]
 
 /-- Entry characterization for matrix multiplication. -/
-@[simp, grind =] theorem mul_getElem [Mul R] [Add R] [OfNat R 0]
+@[grind =] theorem mul_getElem [Mul R] [Add R] [OfNat R 0]
     (M : Matrix R n m) (N : Matrix R m k) (i : Fin n) (j : Fin k) :
     (M * N)[i][j] = dot (row M i) (col N j) := by
   show (mul M N)[i][j] = dot (row M i) (col N j)
@@ -608,7 +608,7 @@ def gramMatrix [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) : Matrix R n n :=
   ofFn fun i j => Hex.Vector.dotProduct (row M i) (row M j)
 
 /-- Entry characterization for the Gram matrix of the rows of a dense matrix. -/
-@[simp, grind =] theorem gramMatrix_getElem [Mul R] [Add R] [OfNat R 0]
+@[grind =] theorem gramMatrix_getElem [Mul R] [Add R] [OfNat R 0]
     (M : Matrix R n m) (i j : Fin n) :
     (gramMatrix M)[i][j] = Hex.Vector.dotProduct (row M i) (row M j) := by
   rw [gramMatrix, getElem_ofFn]
@@ -638,7 +638,7 @@ def leadingRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) : Matrix R k m :=
 the source entry `M[i][j]` at the same coordinates, reembedded into `Fin n`. This
 is the `simp` normalization that rewrites a prefix lookup back to a source lookup
 in determinant expansions. -/
-@[simp, grind =] theorem leadingPrefix_entry (M : Matrix R n n) (k : Nat) (hk : k ≤ n)
+@[grind =] theorem leadingPrefix_entry (M : Matrix R n n) (k : Nat) (hk : k ≤ n)
     (i j : Fin k) :
     (leadingPrefix M k hk)[i][j] =
       (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
@@ -650,7 +650,7 @@ in determinant expansions. -/
 source entry `M[i][j]` with the row index reembedded into `Fin n` and the column
 index `j` retained unchanged. This is the `simp` normalization a determinant
 expansion relies on to rewrite a row-slice lookup back to a source lookup. -/
-@[simp, grind =] theorem leadingRows_entry (M : Matrix R n m) (k : Nat) (hk : k ≤ n)
+@[grind =] theorem leadingRows_entry (M : Matrix R n m) (k : Nat) (hk : k ≤ n)
     (i : Fin k) (j : Fin m) :
     (leadingRows M k hk)[i][j] =
       (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
@@ -661,7 +661,7 @@ expansion relies on to rewrite a row-slice lookup back to a source lookup. -/
 to the source entry `M[i][j]` at the same coordinates, reembedded into `Fin n` via
 `k.val + 1 ≤ n`. This is the `simp` normalization that rewrites a submatrix lookup
 back to a source lookup in determinant expansions. -/
-@[simp, grind =] theorem submatrix_entry (M : Matrix R n n) (k : Fin n)
+@[grind =] theorem submatrix_entry (M : Matrix R n n) (k : Fin n)
     (i j : Fin (k.val + 1)) :
     (submatrix M k)[i][j] =
       (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt (Nat.succ_le_of_lt k.isLt)⟩
@@ -702,7 +702,7 @@ def borderedMinor (M : Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
 and `c.val < k`, the `(r, c)` entry resolves to the source entry `M[r][c]` at the
 reembedded leading-block coordinates, independent of the border row `i` and column
 `j`. This is the `simp` normalization for the top-left `k × k` block. -/
-@[simp, grind =] theorem borderedMinor_entry_lt_lt (M : Matrix R n n) (k : Nat) (hk : k < n)
+@[grind =] theorem borderedMinor_entry_lt_lt (M : Matrix R n n) (k : Nat) (hk : k < n)
     (i j : Fin n) (r c : Fin (k + 1)) (hr : r.val < k) (hc : c.val < k) :
     (borderedMinor M k hk i j)[r][c] =
       (let rr : Fin n := ⟨r.val, Nat.lt_trans hr hk⟩
@@ -714,7 +714,7 @@ reembedded leading-block coordinates, independent of the border row `i` and colu
 `Fin.last k` with `r.val < k`, the `(r, last)` entry resolves to the source entry
 `M[r][j]`, taking the border column `j` and the reembedded leading-block row. This
 is the `simp` normalization for the appended border column. -/
-@[simp, grind =] theorem borderedMinor_entry_lt_last (M : Matrix R n n) (k : Nat) (hk : k < n)
+@[grind =] theorem borderedMinor_entry_lt_last (M : Matrix R n n) (k : Nat) (hk : k < n)
     (i j : Fin n) (r : Fin (k + 1)) (hr : r.val < k) :
     (borderedMinor M k hk i j)[r][Fin.last k] =
       (let rr : Fin n := ⟨r.val, Nat.lt_trans hr hk⟩
@@ -725,7 +725,7 @@ is the `simp` normalization for the appended border column. -/
 `Fin.last k` with `c.val < k`, the `(last, c)` entry resolves to the source entry
 `M[i][c]`, taking the border row `i` and the reembedded leading-block column. This
 is the `simp` normalization for the appended border row. -/
-@[simp, grind =] theorem borderedMinor_entry_last_lt (M : Matrix R n n) (k : Nat) (hk : k < n)
+@[grind =] theorem borderedMinor_entry_last_lt (M : Matrix R n n) (k : Nat) (hk : k < n)
     (i j : Fin n) (c : Fin (k + 1)) (hc : c.val < k) :
     (borderedMinor M k hk i j)[Fin.last k][c] =
       (let cc : Fin n := ⟨c.val, Nat.lt_trans hc hk⟩
@@ -736,7 +736,7 @@ is the `simp` normalization for the appended border row. -/
 `(Fin.last k, Fin.last k)`, the entry resolves to the source entry `M[i][j]` formed
 from the border row `i` and border column `j`. This is the `simp` normalization for
 the corner that a determinant expansion isolates last. -/
-@[simp, grind =] theorem borderedMinor_entry_last_last (M : Matrix R n n) (k : Nat) (hk : k < n)
+@[grind =] theorem borderedMinor_entry_last_last (M : Matrix R n n) (k : Nat) (hk : k < n)
     (i j : Fin n) :
     (borderedMinor M k hk i j)[Fin.last k][Fin.last k] = M[i][j] := by
   simp [borderedMinor, ofFn]
@@ -776,7 +776,7 @@ theorem leadingPrefix_borderedMinor_succ_eq_borderedMinor (M : Matrix R n n)
     simp [leadingPrefix, borderedMinor, ofFn, hr_eq, hc_eq]
 
 /-- The identity matrix entry function: `1[i][j] = 1` if `i = j`, else `0`. -/
-@[simp, grind =] theorem getElem_one [OfNat R 0] [OfNat R 1] {n : Nat} (i j : Fin n) :
+@[grind =] theorem getElem_one [OfNat R 0] [OfNat R 1] {n : Nat} (i j : Fin n) :
     (1 : Matrix R n n)[i][j] = if i = j then (1 : R) else 0 := by
   simp [show (1 : Matrix R n n) = Matrix.identity from rfl, Matrix.identity, ofFn]
 
