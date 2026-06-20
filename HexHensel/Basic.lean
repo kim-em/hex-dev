@@ -450,12 +450,6 @@ theorem congr_liftToZ_modP (f : ZPoly) :
   rw [hmod]
   exact ZPoly.intModNat_sub_self_emod (f.coeff i) hp
 
-/-- The canonical integer lift is congruent to itself after reduction modulo `p^k`. -/
-theorem congr_reduceModPow_liftToZ (f : FpPoly p) (k : Nat) :
-    ZPoly.congr (ZPoly.reduceModPow (liftToZ f) p k) (liftToZ f) (p ^ k) := by
-  simpa using
-    ZPoly.congr_reduceModPow (liftToZ f) p k (Nat.pow_pos (ZMod64.Bounds.pPos (p := p)))
-
 end FpPoly
 
 namespace ZPoly

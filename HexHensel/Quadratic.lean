@@ -32,13 +32,6 @@ m^2)`. -/
 def factorError (f g h : ZPoly) : ZPoly :=
   f - g * h
 
-/-- Residue `s * g + t * h - 1` corrected by the Bezout update of the quadratic
-Hensel step: after the factor update, this quantity measured against the new
-factors is divisible by `m` and its lift drives the witness correction that
-achieves `s' * g' + t' * h' ≡ 1 (mod m^2)`. -/
-def bezoutError (g h s t : ZPoly) : ZPoly :=
-  s * g + t * h - 1
-
 end QuadraticLiftResult
 
 namespace ZPoly
