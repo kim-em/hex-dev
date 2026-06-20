@@ -333,7 +333,7 @@ libraries:
   HexPolyMathlib:
     deps: [HexPoly]
     mathlib: true
-    done_through: 5
+    done_through: 6
     status: active
     phase4:
       input_families:
