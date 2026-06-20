@@ -251,6 +251,15 @@ or `Monoid`/`CommRing` lemmas — those modules don't import Mathlib.
   `push_neg` → `Classical.not_forall.mp` / `Classical.not_exists.mp`; `conv_lhs
   => rw [h]` → `rw [h] at <aux-have>` then `exact`. `omega`/`simp`/`rcases` are
   core and available.
+- **`@[nolint ...]` is unavailable** — the attribute lives in Mathlib's
+  linter framework, so writing `@[nolint unusedArguments]` (or any
+  `nolint`) in a Mathlib-free file is a build error (`unsupportedSyntax`),
+  even though `lake exe runLinter` itself resolves from the mathlib dep.
+  This bites Phase 6 linter audits: a Mathlib-free lib **cannot suppress**
+  a `unusedArguments` lint on a deliberate phantom argument (e.g. a proof
+  carried only to pin a precondition, or a witness carried only for
+  dot-notation). Restructure the signature or punch-list the lint as an
+  accepted exception — do not reach for `@[nolint]`.
 - **Integer `^` has no `pow_add`/`pow_succ`/`pow_one`/`one_pow` (Mathlib).**
   Use `Lean.Grind.Semiring.pow_succ` (`a^(n+1) = a^n * a`) and
   `Lean.Grind.Semiring.pow_zero`; `Int.one_pow`, `Int.mul_assoc`,
