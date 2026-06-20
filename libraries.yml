@@ -367,7 +367,7 @@ libraries:
   HexPolyZMathlib:
     deps: [HexPolyZ, HexHensel, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 6
     status: active
   HexLLLMathlib:
     deps: [HexLLL, HexMatrixMathlib, HexGramSchmidtMathlib]
