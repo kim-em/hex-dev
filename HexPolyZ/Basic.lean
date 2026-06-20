@@ -2388,39 +2388,6 @@ private theorem rat_product_size_gt_top
   · exact hlt
   · exact False.elim (hcoeff_ne (DensePoly.coeff_eq_zero_of_size_le (f * g) hle))
 
-private theorem rat_size_le_one_of_mul_dvd_self
-    (d r : DensePoly Rat) (hr : r.size ≠ 0) :
-    d * r ∣ r → d.size ≤ 1 := by
-  intro hdiv
-  rcases hdiv with ⟨k, hk⟩
-  by_cases hd_zero : d.size = 0
-  · omega
-  have hd_pos : 0 < d.size := Nat.pos_of_ne_zero hd_zero
-  have hr_pos : 0 < r.size := Nat.pos_of_ne_zero hr
-  by_cases hk_zero : k.size = 0
-  · have hk_eq : k = 0 := rat_eq_zero_of_size_zero k hk_zero
-    have hr_eq_zero : r = 0 := by
-      rw [hk_eq, rat_mul_zero_right] at hk
-      exact hk
-    have hr_size_zero : r.size = 0 := by
-      rw [hr_eq_zero]
-      exact DensePoly.size_zero
-    contradiction
-  · have hk_pos : 0 < k.size := Nat.pos_of_ne_zero hk_zero
-    by_cases hd_le : d.size ≤ 1
-    · exact hd_le
-    · have hdr_top_lt : d.size - 1 + (r.size - 1) < (d * r).size :=
-        rat_product_size_gt_top d r hd_pos hr_pos
-      have hdr_pos : 0 < (d * r).size := by omega
-      have htop_lt : (d * r).size - 1 + (k.size - 1) < ((d * r) * k).size :=
-        rat_product_size_gt_top (d * r) k hdr_pos hk_pos
-      have hsize_eq : ((d * r) * k).size = r.size := by
-        rw [← hk]
-      rw [hsize_eq] at htop_lt
-      have hdr_lower : r.size ≤ (d * r).size - 1 := by omega
-      have hcontr : r.size ≤ (d * r).size - 1 + (k.size - 1) := by omega
-      omega
-
 /-- A nonzero rational polynomial divisor has size at most the size of the
 nonzero polynomial it divides. -/
 theorem rat_size_le_of_dvd_nonzero
@@ -2843,21 +2810,6 @@ private theorem rat_common_divisor_quotient_derivative_dvd_repeated
   have hddf : d ∣ derivative := by
     simpa [derivative, hrec] using hderivative_factor
   simpa [repeatedRat] using DensePoly.dvd_gcd d ratPrimitive derivative hdf hddf
-
-private theorem rat_quotient_derivative_gcd_dvd_repeated
-    (ratPrimitive : DensePoly Rat) :
-    let derivative := DensePoly.derivative ratPrimitive
-    let repeatedRat := DensePoly.gcd ratPrimitive derivative
-    let quotientRat := ratPrimitive / repeatedRat
-    DensePoly.gcd quotientRat (DensePoly.derivative quotientRat) ∣ repeatedRat := by
-  intro derivative repeatedRat quotientRat
-  exact
-    rat_common_divisor_quotient_derivative_dvd_repeated ratPrimitive
-      (DensePoly.gcd quotientRat (DensePoly.derivative quotientRat))
-      (by simpa [quotientRat] using
-        DensePoly.gcd_dvd_left quotientRat (DensePoly.derivative quotientRat))
-      (by simpa [quotientRat] using
-        DensePoly.gcd_dvd_right quotientRat (DensePoly.derivative quotientRat))
 
 /-- If `d` divides the derivative of a product `d * a`, then `d` divides
 `a * d'` (where `d' = derivative d`). This is the characteristic-zero

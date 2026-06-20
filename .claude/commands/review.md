@@ -25,16 +25,23 @@ Rotate through these areas across sessions:
 **Slop detection**:
 - Dead code, duplicated logic, verbose comments, unused imports
 - Other signs of AI-generated bloat
-- Dead-code scan gotcha: a decl is dead only if its name occurs **once**
-  repo-wide (its own definition). When counting references, **count
-  namespace-qualified uses** (`Ns.foo` is a use of `foo`) — a regex that
-  excludes a leading `.` will false-flag used decls as dead. Also exempt
-  decls carrying `@[simp]`/`@[grind]`/etc. (automation uses them without
-  naming them). For a "real dead-code cluster" (many decls / >~200 lines /
-  cascading orphans), file a punch-list feature issue and leave
-  `done_through` unbumped rather than bashing the deletion through a
-  review session; removal needs an iterative delete→rescan→rebuild
-  fixpoint.
+- Dead-code caveat: a plain "grep for the name" check produces dangerous
+  false positives. `instance`s are consumed by typeclass resolution and
+  `@[simp]`/`@[grind]`/`@[grind =]` lemmas by tactic automation — neither
+  is referenced by name, so both look unused but are live (deleting them
+  breaks proofs silently or at build time). Treat instances and
+  `simp`/`grind`-tagged decls as roots. The reliable check: reachability
+  from roots (public/exported decls + instances + tagged lemmas + anything
+  referenced from another file) following name references inside decl
+  bodies; a `private` decl unreachable from roots is genuinely dead.
+  Confirm every removal by rebuilding — the compiler is ground truth.
+- Dead-code scan gotcha: when counting references, **count namespace-
+  qualified uses** (`Ns.foo` is a use of `foo`) — a regex that excludes a
+  leading `.` will false-flag used decls as dead. For a "real dead-code
+  cluster" (many decls / >~200 lines / cascading orphans), file a
+  punch-list feature issue and leave `done_through` unbumped rather than
+  bashing the deletion through a review session; removal needs an iterative
+  delete→rescan→rebuild fixpoint.
 
 **Idioms and best practices**:
 - Are newer APIs or language features being used where appropriate?
