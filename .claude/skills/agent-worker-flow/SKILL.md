@@ -293,6 +293,15 @@ Build and test the project. Compare quality metrics with the starting values.
 Review your diff: `git diff <starting-commit>..HEAD`.
 Use `/second-opinion` if available.
 
+**Mathlib environment linter (Phase 6 audits).** To check "the Mathlib
+linter is clean" on a library, run the linter exe straight from the
+mathlib dependency on each module: `lake exe runLinter <Module.Name>`
+(e.g. `lake exe runLinter HexPolyMathlib.Basic`). This runs the full
+`#lint` suite (docBlame, simpNF, unusedArguments, …) and prints
+"Linting passed" per module — stronger evidence than build-time
+syntactic linters alone. There is no project-local `runLinter` target;
+it resolves from `mathlib`.
+
 ## Step 7: Publish
 
 Write a progress entry to `progress/<UTC-timestamp>_<UUID-prefix>.md`:
