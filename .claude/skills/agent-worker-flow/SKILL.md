@@ -302,6 +302,20 @@ mathlib dependency on each module: `lake exe runLinter <Module.Name>`
 syntactic linters alone. There is no project-local `runLinter` target;
 it resolves from `mathlib`.
 
+**Calibrate before treating `runLinter` output as a blocker.** The full
+`#lint` suite flags `simpNF` and `unusedArguments` findings that the
+project tolerates by design — `simpNF` noise from intentional `@[simp]`
+unfolding lemmas (e.g. `toNat_eq_val`), and `unusedArguments` on
+deliberate API-symmetry args (e.g. an `_hp` kept for signature parity).
+These are NOT what "the Mathlib linter is clean" gates on: `runLinter` is
+wired into neither `.github/` nor `scripts/`, and the build-time linter
+(a green `lake build` with zero warnings) is the actual CI gate. Confirm
+by running `runLinter` on a sibling library already at `done_through ≥ 6`
+(e.g. `HexGFqRing`): if it shows the same finding categories, they are
+non-gating, so do not block the bump and do not attempt a cross-cutting
+`@[simp]` refactor to silence them. Only build-time-linter warnings and
+genuine `docBlame` (missing-docstring) hits gate the bump.
+
 ## Step 7: Publish
 
 Write a progress entry to `progress/<UTC-timestamp>_<UUID-prefix>.md`:
