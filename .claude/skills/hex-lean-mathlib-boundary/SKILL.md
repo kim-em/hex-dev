@@ -58,6 +58,22 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   equality` even though it "looks like a literal equation." Leave such lemmas
   `@[simp]`-only; it is a permanent property of the statement shape, not a
   fixable regression, so no follow-up issue is warranted.
+- **A clean `Eq` conclusion is still rejected if the LHS pattern cannot
+  instantiate a *data* parameter the conclusion drops.** `grind =`
+  E-matches on the LHS, so every theorem parameter must be recoverable
+  from it. A *proof*-typed dropped parameter is tolerated (grind leaves it
+  as a metavariable); a *data*-typed one is a hard build error: `invalid
+  pattern(s) for `foo` … the following theorem parameters cannot be
+  instantiated: ctx : …`. Canonical offender: `p_odd_nat (ctx : MontCtx p)
+  : p.toNat % 2 = 1` in `HexArith/Montgomery/Context.lean` — the pattern
+  `p.toNat % 2` mentions only `p`, never the data parameter `ctx`, so it is
+  rejected and left `@[simp]`-only. Contrast `mk_p_odd_nat (p) (hp : p % 2
+  = 1) : p.toNat % 2 = 1` in the same file: same conclusion, but its
+  dropped `hp` is a *proof*, so `grind =` accepts it. Rule of thumb for
+  sweeps: a projection/specialization lemma whose conclusion forgets a
+  *data* argument is ineligible; one that forgets only a *proof* argument
+  (including proof-equality `mk_*` projections like `(mk p hp).p_odd = hp`)
+  is fine.
 - **`grind =` ACCEPTS `↔` (Iff) — it is NOT an ineligible shape.** `grind =`
   registers `a ↔ b` as a rewrite rule exactly like `a = b`, so a public
   characterising `↔` lemma (`p.isZero = true ↔ p = 0`,
