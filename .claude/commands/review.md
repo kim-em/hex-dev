@@ -51,6 +51,18 @@ Rotate through these areas across sessions:
   `done_through` unbumped rather than bashing the deletion through a
   review session; removal needs an iterative delete→rescan→rebuild
   fixpoint.
+- Module-consumption gotcha: to decide whether an *imported module* is
+  actually used, enumerate that module's **declared symbol names** and
+  grep each downstream — never theory/module keywords. A keyword grep
+  (`grep "RobinsonForm\|graceWalsh\|schmeisser"`) misses consumed symbols
+  whose names don't contain the keyword, wrongly flagging a load-bearing
+  import as stale: `CLDColumnBound` consumes `RobinsonForm`'s
+  `rootDeletionDerivativeSummand` family, so the keyword grep declared the
+  import dead in two successive audits (#8233 and the #8245 premise built
+  on it) when dropping it would break the build. Loop over
+  `grep -oE '^(def|theorem|lemma|abbrev) +\w+' Mod.lean` and check each
+  name; module is dead only if **every** declared name has zero external
+  hits.
 
 **Idioms and best practices**:
 - Are newer APIs or language features being used where appropriate?
