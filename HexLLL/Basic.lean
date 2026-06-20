@@ -1085,8 +1085,11 @@ def certCheck (B B' : Matrix Int n m) (U V : Matrix Int n n) (δ η : Rat) : Boo
 connect the stored Gram determinants and scaled coefficients to the executable
 Gram-Schmidt integer data for `b`. -/
 structure LLLState (n m : Nat) where
+  /-- The current integer basis, as a matrix of row vectors. -/
   b : Matrix Int n m
+  /-- The integer scaled Gram-Schmidt coefficients of `b`. -/
   ν : Matrix Int n n
+  /-- The leading Gram determinants of `b` (`d[k]` for `k ≤ n`). -/
   d : Vector Nat (n + 1)
 
 namespace LLLState
@@ -1096,9 +1099,13 @@ namespace LLLState
 computational; Mathlib-side modules can prove preservation when they need the
 Gram-Schmidt interpretation. -/
 structure Valid (s : LLLState n m) : Prop where
+  /-- Each below-diagonal `ν` entry equals the executable scaled Gram-Schmidt
+  coefficient of `s.b`. -/
   ν_eq : ∀ i j, (hi : i < n) → (hj : j < n) → j < i →
       (s.ν.get ⟨i, hi⟩).get ⟨j, hj⟩ =
         ((GramSchmidt.Int.scaledCoeffs s.b).get ⟨i, hi⟩).get ⟨j, hj⟩
+  /-- Each `d` entry equals the corresponding leading Gram determinant of
+  `s.b`. -/
   d_eq : ∀ i, (hi : i < n + 1) →
       s.d.get ⟨i, hi⟩ = GramSchmidt.Int.gramDet s.b i (Nat.le_of_lt_succ hi)
 
@@ -1689,8 +1696,12 @@ fallback. -/
 `j < i`) approximates the Gram-Schmidt coefficient `μ[i][j]` and `bb[i]`
 approximates `‖b*_i‖²`; both are untrusted and never enter a proof. -/
 structure SteeredState (n m : Nat) where
+  /-- The exact integer basis — the only proof-relevant field. -/
   b  : Matrix Int n m
+  /-- Untrusted `Float` approximations of the Gram-Schmidt coefficients
+  `μ[i][j]` (for `j < i`). -/
   mu : Array (Array Float)
+  /-- Untrusted `Float` approximations of the squared norms `‖b*_i‖²`. -/
   bb : Array Float
 
 namespace SteeredState
