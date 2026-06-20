@@ -392,7 +392,7 @@ libraries:
   HexGFqMathlib:
     deps: [HexGFq, HexGF2Mathlib]
     mathlib: true
-    done_through: 6
+    done_through: 7
     status: active
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexHenselMathlib, HexPolyZMathlib, HexMatrixMathlib, HexLLLMathlib]
