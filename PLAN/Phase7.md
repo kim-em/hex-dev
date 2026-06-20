@@ -70,6 +70,14 @@ build time:
   and errors if any field is undocumented. Add a `/--` docstring to
   every field of a structure/class you embed, or embed it with `{name}`
   and describe it in prose instead.
+- When the library is an `abbrev` over a more generic type
+  (`ZPoly = DensePoly Int`, `FpPoly p = DensePoly (ZMod64 p)`), a
+  worked-example `#guard` over an op defined in *both* namespaces
+  (`content`, `primitivePart`, …) is ambiguous under
+  `open Hex Hex.DensePoly`. Qualify the specialized op explicitly
+  (`ZPoly.content f`, not `content f`). Validate `#guard` values in a
+  throwaway file importing the fast Mathlib-free library before the
+  slow `HexManual` build.
 
 ## Additional Phase 7 work: tutorials
 
