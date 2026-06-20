@@ -521,18 +521,6 @@ private theorem foldl_det_product_congr {R : Type u} [Mul R] {β : Type v}
       intro y hy
       exact h y (List.mem_cons_of_mem x hy)
 
-/-- The permutation product depends only on the matrix entries, so entry-wise
-equal matrices share it. -/
-private theorem detProduct_congr_matrix {R : Type u} [Lean.Grind.Ring R] {n : Nat}
-    {M N : Matrix R n n}
-    (h : ∀ (r : Fin n) (c : Fin n), M[r][c] = N[r][c])
-    (perm : Vector (Fin n) n) :
-    detProduct M perm = detProduct N perm := by
-  unfold detProduct
-  apply foldl_det_product_congr
-  intro r _hr
-  exact h r perm[r]
-
 /-- A product left fold is invariant under permuting the list. -/
 private theorem foldl_det_product_perm {R : Type u} [Lean.Grind.CommRing R]
     {β : Type v} (f : β → R) {xs ys : List β} (hperm : xs.Perm ys) (z : R) :
@@ -954,22 +942,6 @@ private theorem insertAt_last_get_castSucc {α : Type u} {n : Nat}
   unfold insertAt
   simp [List.getElem_insertIdx_of_lt]
 
-/-- For an index `r` strictly below the insertion point `i`, reading
-`insertAt x v i.castSucc` at `r.castSucc.castSucc` returns the original `v[r]`. -/
-private theorem insertAt_get_castSucc_of_lt {α : Type u} {n : Nat}
-    (x : α) (v : Vector α (n + 1)) (i r : Fin (n + 1)) (h : r.val < i.val) :
-    (insertAt x v i.castSucc)[r.castSucc.castSucc] = v[r] := by
-  unfold insertAt
-  simp [List.getElem_insertIdx_of_lt, h]
-
-/-- After inserting at `(Fin.last n).castSucc`, reading the result at
-`Fin.last (n + 1)` returns the original final entry `v[Fin.last n]`. -/
-private theorem insertAt_get_last_of_castSucc_last {α : Type u} {n : Nat}
-    (x : α) (v : Vector α (n + 1)) :
-    (insertAt x v (Fin.last n).castSucc)[Fin.last (n + 1)] = v[Fin.last n] := by
-  unfold insertAt
-  simp [List.getElem_insertIdx_of_gt]
-
 /-- For `i ≤ r < xs.length`, element `r + 1` of `xs.insertIdx i x` is the original
 `xs[r]`, since the insertion shifts later entries up by one. -/
 private theorem list_getElem_insertIdx_succ_of_le {α : Type u}
@@ -996,38 +968,6 @@ private theorem list_getElem_insertIdx_succ_of_le {α : Type u}
           | succ r =>
               simp only [List.insertIdx, List.getElem_cons_succ]
               exact ih (Nat.succ_le_succ_iff.mp h) (Nat.succ_lt_succ_iff.mp hr)
-
-/-- For `i.val ≤ r.val`, reading `insertAt x v i.castSucc.castSucc` at index
-`r.val + 1` returns the original `v[r]`. -/
-private theorem insertAt_prefix_get_shifted {α : Type u} {n : Nat}
-    (x : α) (v : Vector α (n + 1)) (i : Fin n) (r : Fin (n + 1))
-    (h : i.val ≤ r.val) :
-    (insertAt x v i.castSucc.castSucc)[(⟨r.val + 1, by omega⟩ : Fin (n + 2))] =
-      v[r] := by
-  unfold insertAt
-  simpa [Vector.toList] using
-    list_getElem_insertIdx_succ_of_le v.toList x h (by simp [Vector.length_toList])
-
-/-- Reading `insertAt x v (Fin.last n).castSucc` at the insertion index
-`(Fin.last n).castSucc` returns the inserted element `x`. -/
-private theorem insertAt_castSucc_last_get_boundary {α : Type u} {n : Nat}
-    (x : α) (v : Vector α (n + 1)) :
-    (insertAt x v (Fin.last n).castSucc)[(Fin.last n).castSucc] = x := by
-  exact insertAt_get_self x v (Fin.last n).castSucc
-
-/-- Reading `insertAt x v (Fin.last n).castSucc` at `Fin.last (n + 1)` returns the
-original final entry `v[Fin.last n]`. -/
-private theorem insertAt_castSucc_last_get_last {α : Type u} {n : Nat}
-    (x : α) (v : Vector α (n + 1)) :
-    (insertAt x v (Fin.last n).castSucc)[Fin.last (n + 1)] = v[Fin.last n] := by
-  exact insertAt_get_last_of_castSucc_last x v
-
-/-- For a prefix index `i`, reading `insertAt x v (Fin.last n).castSucc` at
-`i.castSucc.castSucc` returns the original `v[i.castSucc]`. -/
-private theorem insertAt_castSucc_last_get_prefix {α : Type u} {n : Nat}
-    (x : α) (v : Vector α (n + 1)) (i : Fin n) :
-    (insertAt x v (Fin.last n).castSucc)[i.castSucc.castSucc] = v[i.castSucc] := by
-  exact insertAt_get_castSucc_of_lt x v (Fin.last n) i.castSucc (by simp)
 
 /-- `detProduct` of the identity matrix along `insertAt (Fin.last n) (v.map
 Fin.castSucc) i` is `0` when `i ≠ Fin.last n`, since the inserted index is then
@@ -5439,10 +5379,6 @@ private def columnChoiceMatrix {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     | some k => source[r][k]
     | none => (List.finRange m).foldl (fun acc k => acc + coeff[c][k] * source[r][k]) 0
 
-private def setColumnChoice {n m : Nat} (choices : Fin n → Option (Fin m))
-    (dst : Fin n) (k : Fin m) : Fin n → Option (Fin m) :=
-  fun c => if c = dst then some k else choices c
-
 @[grind =] private theorem columnChoiceMatrix_entry
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) (r c : Fin n) :
@@ -5451,60 +5387,6 @@ private def setColumnChoice {n m : Nat} (choices : Fin n → Option (Fin m))
       | some k => source[r][k]
       | none => (List.finRange m).foldl (fun acc k => acc + coeff[c][k] * source[r][k]) 0 := by
   simp [columnChoiceMatrix, ofFn]
-
-private theorem colReplace_columnChoiceMatrix_none_self
-    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
-    (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) (dst : Fin n)
-    (hchoice : choices dst = none) :
-    colReplace (columnChoiceMatrix source coeff choices) dst
-        (fun r => (List.finRange m).foldl
-          (fun acc k => acc + coeff[dst][k] * source[r][k]) 0) =
-      columnChoiceMatrix source coeff choices := by
-  apply Vector.ext
-  intro r hr
-  apply Vector.ext
-  intro c hc
-  change
-    (colReplace (columnChoiceMatrix source coeff choices) dst
-        (fun r => (List.finRange m).foldl
-          (fun acc k => acc + coeff[dst][k] * source[r][k]) 0))[
-          (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
-      (columnChoiceMatrix source coeff choices)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [colReplace_get]
-  by_cases hcol : (⟨c, hc⟩ : Fin n) = dst
-  · subst dst
-    rw [if_pos rfl]
-    rw [columnChoiceMatrix_entry]
-    rw [hchoice]
-  · simp [hcol]
-
-private theorem colReplace_columnChoiceMatrix_set_some
-    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
-    (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) (dst : Fin n)
-    (k : Fin m) :
-    colReplace (columnChoiceMatrix source coeff choices) dst (fun r => source[r][k]) =
-      columnChoiceMatrix source coeff (setColumnChoice choices dst k) := by
-  apply Vector.ext
-  intro r hr
-  apply Vector.ext
-  intro c hc
-  change
-    (colReplace (columnChoiceMatrix source coeff choices) dst (fun r => source[r][k]))[
-        (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
-      (columnChoiceMatrix source coeff (setColumnChoice choices dst k))[
-        (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [colReplace_get]
-  by_cases hcol : (⟨c, hc⟩ : Fin n) = dst
-  · subst dst
-    rw [if_pos rfl]
-    rw [columnChoiceMatrix_entry]
-    simp [setColumnChoice]
-  · rw [if_neg hcol]
-    rw [columnChoiceMatrix_entry, columnChoiceMatrix_entry]
-    have hset : setColumnChoice choices dst k (⟨c, hc⟩ : Fin n) = choices (⟨c, hc⟩ : Fin n) := by
-      unfold setColumnChoice
-      rw [if_neg hcol]
-    rw [hset]
 
 /-- A determinant with two equal rows is zero. -/
 theorem det_eq_zero_of_row_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
@@ -6198,47 +6080,6 @@ private def columnSumMatrixWithPrefix
         (List.finRange m).foldl
           (fun acc k => acc + coeff[j][k] * source[r][k]) 0 := by
   simp [columnSumMatrixWithPrefix, ofFn]
-
-/-- Replacing the column at index `chosen.length` of the partial-prefix matrix
-with a fixed `source` column extends the prefix by that selection. -/
-private theorem colReplace_columnSumMatrixWithPrefix_extend
-    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
-    (source coeff : Matrix R n m) (chosen : List (Fin m))
-    (hk : chosen.length < n) (c : Fin m) :
-    colReplace (columnSumMatrixWithPrefix source coeff chosen)
-        (⟨chosen.length, hk⟩ : Fin n) (fun r => source[r][c]) =
-      columnSumMatrixWithPrefix source coeff (chosen ++ [c]) := by
-  apply Vector.ext
-  intro r hr
-  apply Vector.ext
-  intro k hk2
-  change (colReplace (columnSumMatrixWithPrefix source coeff chosen)
-      (⟨chosen.length, hk⟩ : Fin n) (fun r => source[r][c]))[
-      (⟨r, hr⟩ : Fin n)][(⟨k, hk2⟩ : Fin n)] =
-    (columnSumMatrixWithPrefix source coeff (chosen ++ [c]))[
-      (⟨r, hr⟩ : Fin n)][(⟨k, hk2⟩ : Fin n)]
-  rw [colReplace_get]
-  simp only [columnSumMatrixWithPrefix_entry]
-  have happ_len : (chosen ++ [c]).length = chosen.length + 1 := by
-    simp [List.length_append]
-  by_cases hkd : (⟨k, hk2⟩ : Fin n) = (⟨chosen.length, hk⟩ : Fin n)
-  · have hkeq : k = chosen.length := by
-      have := congrArg Fin.val hkd; simpa using this
-    subst hkeq
-    rw [if_pos hkd]
-    rw [dif_pos (show chosen.length < (chosen ++ [c]).length by omega)]
-    congr 1
-    rw [List.getElem_append_right (Nat.le_refl _)]
-    simp
-  · rw [if_neg hkd]
-    have hkne : k ≠ chosen.length := fun h => hkd (Fin.ext h)
-    by_cases hk_lt : k < chosen.length
-    · rw [dif_pos hk_lt]
-      rw [dif_pos (show k < (chosen ++ [c]).length by omega)]
-      congr 1
-      exact (List.getElem_append_left hk_lt).symm
-    · rw [dif_neg hk_lt]
-      rw [dif_neg (show ¬ k < (chosen ++ [c]).length by omega)]
 
 /-! ### Suffix-based partial assignment
 
@@ -10745,24 +10586,6 @@ theorem det_plucker_three_term_consecutive_top
     omega
   exact det_plucker_three_term_basisVec_of_between_p1_p2_of_nDet
     B alpha q pk plast halpha_lt_q hq_lt_pk h23
-
-/-- Sign-shift relation between the outer `(Fin.last (n+1))` cofactor sign
-used by `twoColDet_basisVec_basisVec_of_lt` for the *second* basis column and
-the inner `(Fin.last n)` cofactor sign used for the *first* basis column:
-incrementing the last-column index by one negates the sign. -/
-private theorem cofactorSign_succ_last_eq_neg
-    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
-    (x : Fin (n + 2)) (hx : x.val < n + 1) :
-    cofactorSign (R := R) x (Fin.last (n + 1)) =
-      -cofactorSign (R := R) (⟨x.val, hx⟩ : Fin (n + 1)) (Fin.last n) := by
-  unfold cofactorSign
-  simp only [Fin.val_mk, Fin.last]
-  by_cases h : (x.val + n) % 2 = 0
-  · have hnext : (x.val + (n + 1)) % 2 ≠ 0 := by omega
-    rw [if_pos h, if_neg hnext]
-  · have hnext : (x.val + (n + 1)) % 2 = 0 := by omega
-    rw [if_neg h, if_pos hnext]
-    grind
 
 end Matrix
 end Hex

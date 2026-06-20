@@ -92,7 +92,7 @@ libraries:
   HexMatrix:
     deps: []
     mathlib: false
-    done_through: 5
+    done_through: 6
     status: active
     phase4:
       comparators:
@@ -295,7 +295,7 @@ libraries:
   HexGFq:
     deps: [HexGFqField, HexConway, HexGF2]
     mathlib: false
-    done_through: 6
+    done_through: 7
     status: active
     phase4:
       input_families:
@@ -333,7 +333,7 @@ libraries:
   HexPolyMathlib:
     deps: [HexPoly]
     mathlib: true
-    done_through: 6
+    done_through: 7
     status: active
     phase4:
       input_families:
@@ -382,7 +382,7 @@ libraries:
   HexHenselMathlib:
     deps: [HexHensel, HexPolyMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 6
     status: active
   HexGF2Mathlib:
     deps: [HexGF2, HexPolyFp, HexGFqField]

@@ -28,56 +28,70 @@ abbrev toPolynomial (p : Hex.ZPoly) : Polynomial ℤ :=
 abbrev ofPolynomial (p : Polynomial ℤ) : Hex.ZPoly :=
   HexPolyMathlib.ofPolynomial p
 
+/-- Coefficients of the embedded Mathlib polynomial agree with the executable
+coefficients. -/
 @[simp, grind =]
 theorem coeff_toPolynomial (p : Hex.ZPoly) (n : Nat) :
     (toPolynomial p).coeff n = p.coeff n :=
   HexPolyMathlib.coeff_toPolynomial p n
 
+/-- `ofPolynomial` sends the zero polynomial to the zero `ZPoly`. -/
 @[simp, grind =]
 theorem ofPolynomial_zero :
     ofPolynomial (0 : Polynomial ℤ) = 0 :=
   HexPolyMathlib.ofPolynomial_zero
 
+/-- `toPolynomial` sends the zero `ZPoly` to the zero polynomial. -/
 @[simp, grind =]
 theorem toPolynomial_zero :
     toPolynomial (0 : Hex.ZPoly) = 0 :=
   HexPolyMathlib.toPolynomial_zero
 
+/-- `toPolynomial` sends the executable constant `C c` to Mathlib's `Polynomial.C c`. -/
 @[simp, grind =]
 theorem toPolynomial_C (c : ℤ) :
     toPolynomial (Hex.DensePoly.C c) = Polynomial.C c :=
   HexPolyMathlib.toPolynomial_C c
 
+/-- `toPolynomial` is additive. -/
 @[simp, grind =]
 theorem toPolynomial_add (p q : Hex.ZPoly) :
     toPolynomial (p + q) = toPolynomial p + toPolynomial q :=
   HexPolyMathlib.toPolynomial_add p q
 
+/-- `toPolynomial` is multiplicative. -/
 @[simp, grind =]
 theorem toPolynomial_mul (p q : Hex.ZPoly) :
     toPolynomial (p * q) = toPolynomial p * toPolynomial q :=
   HexPolyMathlib.toPolynomial_mul p q
 
+/-- `toPolynomial` sends the executable `1` to Mathlib's `1`. -/
 @[simp, grind =]
 theorem toPolynomial_one :
     toPolynomial (1 : Hex.ZPoly) = 1 :=
   HexPolyMathlib.toPolynomial_one
 
+/-- `toPolynomial` commutes with negation. -/
 @[simp, grind =]
 theorem toPolynomial_neg (p : Hex.ZPoly) :
     toPolynomial (-p) = -toPolynomial p :=
   HexPolyMathlib.toPolynomial_neg p
 
+/-- `toPolynomial` commutes with subtraction. -/
 @[simp, grind =]
 theorem toPolynomial_sub (p q : Hex.ZPoly) :
     toPolynomial (p - q) = toPolynomial p - toPolynomial q :=
   HexPolyMathlib.toPolynomial_sub p q
 
+/-- `toPolynomial` is a left inverse of `ofPolynomial`: embedding a rebuilt
+polynomial recovers it. -/
 @[simp, grind =]
 theorem toPolynomial_ofPolynomial (p : Polynomial ℤ) :
     toPolynomial (ofPolynomial p) = p :=
   HexPolyMathlib.toPolynomial_ofPolynomial p
 
+/-- `ofPolynomial` is a left inverse of `toPolynomial`: rebuilding an embedded
+`ZPoly` recovers it. -/
 @[simp, grind =]
 theorem ofPolynomial_toPolynomial (p : Hex.ZPoly) :
     ofPolynomial (toPolynomial p) = p :=
@@ -88,11 +102,13 @@ polynomials over `ℤ`. -/
 abbrev equiv : Hex.ZPoly ≃+* Polynomial ℤ :=
   HexPolyMathlib.equiv
 
+/-- The ring equivalence acts as `toPolynomial` in the forward direction. -/
 @[simp, grind =]
 theorem equiv_apply (p : Hex.ZPoly) :
     equiv p = toPolynomial p := by
   rfl
 
+/-- The inverse ring equivalence acts as `ofPolynomial`. -/
 @[simp, grind =]
 theorem equiv_symm_apply (p : Polynomial ℤ) :
     equiv.symm p = ofPolynomial p := by
@@ -164,18 +180,6 @@ theorem eq_map_intCast_of_coeff_eq_toZMod_modP
   ext n
   rw [hq, coeff_toZMod_modP_eq_coeff_map_intCast]
 
-/--
-Divisibility of executable integer polynomials reduces modulo `p` after
-transporting both sides to Mathlib polynomials over `ZMod p`.
--/
-theorem map_intCast_zmod_dvd_of_zpoly_dvd
-    (p : Nat) {g f : Hex.ZPoly} (hgf : g ∣ f) :
-    (toPolynomial g).map (Int.castRingHom (ZMod p)) ∣
-      (toPolynomial f).map (Int.castRingHom (ZMod p)) := by
-  rcases hgf with ⟨q, rfl⟩
-  refine ⟨(toPolynomial q).map (Int.castRingHom (ZMod p)), ?_⟩
-  rw [toPolynomial_mul, Polynomial.map_mul]
-
 /-- Reduction modulo `p` preserves natural degree when the leading coefficient
 survives the map to `ZMod p`. -/
 theorem natDegree_map_intCast_zmod_eq_of_leadingCoeff_ne_zero
@@ -188,15 +192,16 @@ theorem natDegree_map_intCast_zmod_eq_of_leadingCoeff_ne_zero
     (Int.castRingHom (ZMod p)) hlc
 
 /--
-Issue-spec rename of `map_intCast_zmod_dvd_of_zpoly_dvd`: divisibility of
-executable integer polynomials transports to divisibility of their Mathlib
-reductions modulo `p`.
+Divisibility of executable integer polynomials transports to divisibility of
+their Mathlib reductions modulo `p`.
 -/
 theorem dvd_modP_of_dvd
     (p : Nat) {g f : Hex.ZPoly} (hgf : g ∣ f) :
     (toPolynomial g).map (Int.castRingHom (ZMod p)) ∣
-      (toPolynomial f).map (Int.castRingHom (ZMod p)) :=
-  map_intCast_zmod_dvd_of_zpoly_dvd p hgf
+      (toPolynomial f).map (Int.castRingHom (ZMod p)) := by
+  rcases hgf with ⟨q, rfl⟩
+  refine ⟨(toPolynomial q).map (Int.castRingHom (ZMod p)), ?_⟩
+  rw [toPolynomial_mul, Polynomial.map_mul]
 
 /--
 Core integer-to-`ZMod p` identity underlying `modP`: pushing an

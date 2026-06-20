@@ -10,9 +10,11 @@ import HexManual.Chapters.HexModArithMathlib
 import HexManual.Chapters.HexPoly
 import HexManual.Chapters.HexPolyZ
 import HexManual.Chapters.HexPolyFp
+import HexManual.Chapters.HexPolyMathlib
 import HexManual.Chapters.HexGramSchmidt
 import HexManual.Chapters.HexLLL
 import HexManual.Chapters.HexConway
+import HexManual.Chapters.HexGFq
 import HexManual.Chapters.HexGF2
 
 open Verso.Genre Manual
@@ -61,10 +63,14 @@ documentation phase of the development plan.
 
 {include 0 HexManual.Chapters.HexPolyFp}
 
+{include 0 HexManual.Chapters.HexPolyMathlib}
+
 {include 0 HexManual.Chapters.HexGramSchmidt}
 
 {include 0 HexManual.Chapters.HexLLL}
 
 {include 0 HexManual.Chapters.HexConway}
+
+{include 0 HexManual.Chapters.HexGFq}
 
 {include 0 HexManual.Chapters.HexGF2}

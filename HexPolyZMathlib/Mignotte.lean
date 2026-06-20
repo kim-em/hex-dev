@@ -17,6 +17,9 @@ namespace HexPolyZMathlib
 
 noncomputable section
 
+/-- A left fold of additions over `List.range m` equals the corresponding
+`Finset.range` sum. Bridges the executable `coeffNormSq` accumulation fold to a
+Mathlib `Finset` sum. -/
 private theorem range_foldl_add_eq_finset_sum_nat (g : Nat → Nat) (m : Nat) :
     (List.range m).foldl (fun acc i => acc + g i) 0 = ∑ i ∈ Finset.range m, g i := by
   induction m with
@@ -31,11 +34,14 @@ private theorem range_foldl_add_eq_finset_sum_nat (g : Nat → Nat) (m : Nat) :
 def l2norm (f : Polynomial ℤ) : ℝ :=
   Real.sqrt (∑ i ∈ f.support, (f.coeff i : ℝ) ^ 2)
 
+/-- Coefficients of the complex cast of an integer polynomial are the complex
+casts of its integer coefficients. -/
 @[simp, grind =]
 theorem coeff_map_intCast (f : Polynomial ℤ) (n : Nat) :
     (f.map (Int.castRingHom ℂ)).coeff n = (f.coeff n : ℂ) := by
   simp
 
+/-- Casting an integer polynomial into `ℂ[X]` preserves its natural degree. -/
 @[simp, grind =]
 theorem natDegree_map_intCast (f : Polynomial ℤ) :
     (f.map (Int.castRingHom ℂ)).natDegree = f.natDegree := by
@@ -43,6 +49,7 @@ theorem natDegree_map_intCast (f : Polynomial ℤ) :
     (Polynomial.natDegree_map_eq_of_injective (f := Int.castRingHom ℂ)
       (hf := RingHom.injective_int (Int.castRingHom ℂ)) f)
 
+/-- Casting an integer polynomial into `ℂ[X]` preserves its support. -/
 @[simp, grind =]
 theorem support_map_intCast (f : Polynomial ℤ) :
     (f.map (Int.castRingHom ℂ)).support = f.support := by
@@ -50,11 +57,15 @@ theorem support_map_intCast (f : Polynomial ℤ) :
     (Polynomial.support_map_of_injective (f := Int.castRingHom ℂ) f
       (RingHom.injective_int (Int.castRingHom ℂ)))
 
+/-- The complex norm of a cast coefficient is the absolute value of the integer
+coefficient. -/
 @[simp, grind =]
 theorem norm_coeff_map_intCast (f : Polynomial ℤ) (n : Nat) :
     ‖(f.map (Int.castRingHom ℂ)).coeff n‖ = (Int.natAbs (f.coeff n) : ℝ) := by
   simp [Complex.norm_intCast]
 
+/-- The squared complex norm of a cast coefficient is the squared integer
+coefficient, the term appearing under the `l2norm` square root. -/
 theorem sq_norm_coeff_map_intCast (f : Polynomial ℤ) (n : Nat) :
     ‖(f.map (Int.castRingHom ℂ)).coeff n‖ ^ 2 = (f.coeff n : ℝ) ^ 2 := by
   simp [Complex.norm_intCast, pow_two]
@@ -170,6 +181,8 @@ theorem l2norm_toPolynomial_sq_eq_coeffNormSq (f : Hex.ZPoly) :
     _ = ∑ i ∈ Finset.range f.size, (p.coeff i : ℝ) ^ 2 := hsupport_sum
     _ = (Hex.ZPoly.coeffNormSq f : ℝ) := hnorm_sum.symm
 
+/-- The executable multiplicative binomial-coefficient fold over `List.range m`
+equals `Nat.choose n m`, the recurrence the `binom_eq_choose` bridge consumes. -/
 private theorem foldl_binom_iter_eq_choose (n m : Nat) :
     (List.range m).foldl (fun acc i => acc * (n - i) / (i + 1)) 1 = Nat.choose n m := by
   induction m with

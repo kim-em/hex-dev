@@ -30,12 +30,20 @@ in this Mathlib-side module because their proof path composes
 `HexMatrixMathlib.bareiss_eq_mathlib_det` with
 `HexMatrixMathlib.det_eq.symm`. -/
 
+/-- The size-reduce row operation leaves every leading Gram determinant
+unchanged: `sizeReduce b j k r` adds `-r` times the earlier row `j` to the
+later row `k` (`j < k`), a unimodular operation. Specialises
+`gramDet_rowAdd_earlier`. -/
 theorem gramDet_sizeReduce (b : Matrix Int n m) (j k : Fin n) (hjk : j.val < k.val)
     (r : Int) (t : Nat) (ht : t ≤ n) :
     gramDet (sizeReduce b j k r) t ht = gramDet b t ht := by
   unfold sizeReduce
   exact gramDet_rowAdd_earlier b j k (-r) t ht hjk
 
+/-- Size-reduce update at the pivot column `j`: the scaled coefficient at
+`(k, j)` decreases by `r * gramDet b (j+1)`, reflecting that subtracting
+`r` times row `j` cancels exactly that multiple of the `j`-leading Gram
+determinant from the `(k, j)` Cramer numerator. -/
 theorem scaledCoeffs_sizeReduce_pivot (b : Matrix Int n m) (j k : Fin n)
     (hjk : j.val < k.val) (r : Int) :
     GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k j =
@@ -45,6 +53,10 @@ theorem scaledCoeffs_sizeReduce_pivot (b : Matrix Int n m) (j k : Fin n)
   rw [scaledCoeffs_rowAdd_pivot (b := b) (j := j) (k := k) hjk (-r)]
   rw [Int.neg_mul, Lean.Grind.Ring.sub_eq_add_neg]
 
+/-- Size-reduce update at a column `l` below the pivot (`l < j < k`): the
+scaled coefficient at `(k, l)` decreases by `r` times the `(j, l)`
+coefficient, since row `k` inherits `-r` times row `j`'s contribution in
+that column. -/
 theorem scaledCoeffs_sizeReduce_lower (b : Matrix Int n m) (l j k : Fin n)
     (hlj : l.val < j.val) (hjk : j.val < k.val) (r : Int) :
     GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k l =
@@ -54,12 +66,18 @@ theorem scaledCoeffs_sizeReduce_lower (b : Matrix Int n m) (l j k : Fin n)
   rw [scaledCoeffs_rowAdd_lower (b := b) (l := l) (j := j) (k := k) hlj hjk (-r)]
   rw [Int.neg_mul, Lean.Grind.Ring.sub_eq_add_neg]
 
+/-- Size-reduce touches only row `k`: every other row `i ≠ k` of the
+scaled-coefficient matrix is left unchanged. -/
 theorem scaledCoeffs_sizeReduce_other_row (b : Matrix Int n m) (j k : Fin n)
     (hjk : j.val < k.val) (r : Int) (i : Fin n) (hik : i ≠ k) :
     (scaledCoeffs (sizeReduce b j k r)).row i = (scaledCoeffs b).row i := by
   rw [sizeReduce]
   exact scaledCoeffs_rowAdd_other_row (b := b) (j := j) (k := k) hjk (-r) i hik
 
+/-- Size-reduce leaves the scaled coefficient at `(k, l)` unchanged for any
+column `l` strictly between the pivot `j` and `k` (`j < l < k`): row `j`'s
+contribution there is already orthogonalised away, so adding a multiple of
+it has no effect. -/
 theorem scaledCoeffs_sizeReduce_above_pivot (b : Matrix Int n m) (j k : Fin n)
     (hjk : j.val < k.val) (r : Int) (l : Fin n)
     (hjl : j.val < l.val) (hlk : l.val < k.val) :
@@ -399,6 +417,11 @@ private theorem det_rowSwap_transpose_rowSwap_transpose
       Matrix.det_transpose, Matrix.det_rowSwap _ _ _ h]
   grind
 
+/-- Swapping the adjacent rows `k-1` and `k` leaves the `t`-leading Gram
+determinant unchanged for every `t ≠ k`. For `t > k` both swapped rows lie
+inside the leading block, so the Gram matrix is conjugated by a row-and-column
+swap (determinant invariant); for `t < k` neither row is involved. Only the
+`t = k` prefix, which separates the two swapped rows, can change. -/
 theorem gramDet_adjacentSwap_of_ne (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val)
     (t : Nat) (ht : t ≤ n) (htk : t ≠ k.val) :
     gramDet (adjacentSwap b k hk) t ht = gramDet b t ht := by
@@ -438,6 +461,10 @@ private theorem intCast_rat_injective_local {a b : Int} (h : (a : Rat) = (b : Ra
   have hsub : a - b = 0 := Rat.intCast_eq_zero_iff.mp hz
   omega
 
+/-- Adjacent-swap update for a column `j` strictly below the swapped block
+(`j + 1 < k`): the new scaled coefficient at row `k-1` equals the old one at
+row `k`, because the swap moves the original row `k` into position `k-1`
+while leaving the `j`-leading Gram determinant fixed. -/
 theorem scaledCoeffs_adjacentSwap_lower_prev (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val) (j : Fin n) (hj : j.val + 1 < k.val) :
     let km1 := GramSchmidt.prevRow k hk
@@ -471,6 +498,10 @@ theorem scaledCoeffs_adjacentSwap_lower_prev (b : Matrix Int n m)
           rw [hdet, hcoeff]
     _ = ((GramSchmidt.entry (scaledCoeffs b) k j : Int) : Rat) := hRHS.symm
 
+/-- Adjacent-swap companion to `scaledCoeffs_adjacentSwap_lower_prev`: for a
+column `j` strictly below the swapped block (`j + 1 < k`), the new scaled
+coefficient at row `k` equals the old one at row `k-1`, since the swap moves
+the original row `k-1` into position `k`. -/
 theorem scaledCoeffs_adjacentSwap_lower_curr (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val) (j : Fin n) (hj : j.val + 1 < k.val) :
     let km1 := GramSchmidt.prevRow k hk
@@ -504,6 +535,9 @@ theorem scaledCoeffs_adjacentSwap_lower_curr (b : Matrix Int n m)
           rw [hdet, hcoeff]
     _ = ((GramSchmidt.entry (scaledCoeffs b) km1 j : Int) : Rat) := hRHS.symm
 
+/-- The pivot scaled coefficient `(k, k-1)` is invariant under the adjacent
+swap of rows `k-1` and `k`: the swap transposes the Cramer minor
+`scaledCoeffMatrix`, and a transpose preserves its determinant. -/
 theorem scaledCoeffs_adjacentSwap_pivot (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val) :
     let km1 := GramSchmidt.prevRow k hk
@@ -529,6 +563,9 @@ theorem scaledCoeffs_adjacentSwap_pivot (b : Matrix Int n m)
           rw [← scaledCoeffs_eq_scaledCoeffMatrix_det]
 
 
+/-- The adjacent swap of rows `k-1, k` leaves the scaled coefficient at
+`(i, j)` unchanged whenever the whole entry lies strictly below the swapped
+block (`i + 1 < k`, so both row `i` and its columns `j < i` are untouched). -/
 theorem scaledCoeffs_adjacentSwap_before (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val) (i j : Fin n)
     (hi : i.val + 1 < k.val) (hji : j.val < i.val) :
@@ -564,6 +601,10 @@ theorem scaledCoeffs_adjacentSwap_before (b : Matrix Int n m)
           rw [hdet, hcoeff]
     _ = ((GramSchmidt.entry (scaledCoeffs b) i j : Int) : Rat) := hRHS.symm
 
+/-- For a row `i` above the swapped block (`i > k`) and a column `j` strictly
+below it (`j + 1 < k`), the adjacent swap of rows `k-1, k` leaves the scaled
+coefficient at `(i, j)` unchanged: the `j`-leading Gram determinant and the
+relevant Cramer numerator are both unaffected. -/
 theorem scaledCoeffs_adjacentSwap_above_low (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val) (i j : Fin n)
     (hki : k.val < i.val) (hj : j.val + 1 < k.val) :
@@ -600,6 +641,9 @@ theorem scaledCoeffs_adjacentSwap_above_low (b : Matrix Int n m)
           rw [hdet, hcoeff]
     _ = ((GramSchmidt.entry (scaledCoeffs b) i j : Int) : Rat) := hRHS.symm
 
+/-- For a row `i` and column `j` both strictly above the swapped block
+(`k < j < i`), the adjacent swap of rows `k-1, k` leaves the scaled
+coefficient at `(i, j)` unchanged. -/
 theorem scaledCoeffs_adjacentSwap_above_high (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val) (i j : Fin n)
     (hki : k.val < i.val) (hkj : k.val < j.val) (hji : j.val < i.val) :
@@ -632,6 +676,12 @@ theorem scaledCoeffs_adjacentSwap_above_high (b : Matrix Int n m)
           rw [hdet, hcoeff]
     _ = ((GramSchmidt.entry (scaledCoeffs b) i j : Int) : Rat) := hRHS.symm
 
+/-- The single `k`-leading Gram determinant that the adjacent swap of rows
+`k-1, k` can change, expressed as an exact integer quotient: writing
+`B = scaledCoeffs b k (k-1)`, the new value is
+`(d_{k+1} · d_{k-1} + B²) / d_k`, where `d_t = gramDet b t`. Exactness of the
+division is supplied by `adjacentSwap_gramDetNumerator_dvd`; the hypothesis
+`d_k ≠ 0` makes the quotient well-defined. -/
 theorem gramDet_adjacentSwap_pivot (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val)
     (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
     let km1 := GramSchmidt.prevRow k hk
@@ -662,6 +712,10 @@ theorem gramDet_adjacentSwap_pivot (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.
   rw [← hprod]
   exact (Int.mul_ediv_cancel _ hdk_pos).symm
 
+/-- Exactness witness for `gramDet_adjacentSwap_pivot`: the pre-swap pivot
+`adjacentSwapDenom b k = d_k` divides the numerator
+`adjacentSwapGramDetNumerator b k = d_{k+1} · d_{k-1} + B²`, because that
+numerator equals `d_k` times the post-swap `k`-leading Gram determinant. -/
 theorem adjacentSwap_gramDetNumerator_dvd (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val)
     (_hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
@@ -696,6 +750,11 @@ where `B = nu[k][km1]`. The proof linearises `nu'[i][km1]` (as a `Rat`) through
 the basis identity `basis (rowSwap b km1 k) [km1] = basis b [k] + μ * basis b [km1]`
 (via `basis_rowSwap_adjacent_prev`), identifies `bareiss = nu'` via
 `scaledCoeffs_eq_scaledCoeffMatrix_bareiss`, and discharges with `ring`. -/
+/-- Bordered-minor identity for the swapped `prev` (`km1`) column at a row
+`i > k`: the executable Bareiss determinant of the Cramer minor times the
+pre-swap pivot `d_k` equals the integer numerator
+`adjacentSwapScaledCoeffAbovePrevNumerator`. Feeds the exact division in
+`scaledCoeffs_adjacentSwap_above_prev`. -/
 theorem bareiss_scaledCoeffMatrix_rowSwap_above_prev
     (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val)
     (i : Fin n) (hki : k.val < i.val)
@@ -919,6 +978,11 @@ expansion) and `dot_basis_rowSwap_curr_prev_eq_normSq` (`D = Nk'`), combined
 with `gramDet_adjacentSwap_of_ne` for `t = k + 1 ≠ k` (giving
 `d_{k+1}(b') = d_{k+1}(b)`), and the standard rationalisation lemmas for
 gramDet. -/
+/-- Bordered-minor identity for the swapped `curr` (`k`) column at a row
+`i > k`: the executable Bareiss determinant of the Cramer minor times the
+pre-swap pivot `d_k` equals the integer numerator
+`adjacentSwapScaledCoeffAboveCurrNumerator`. Feeds the exact division in
+`scaledCoeffs_adjacentSwap_above_curr`. -/
 theorem bareiss_scaledCoeffMatrix_rowSwap_above_curr
     (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val)
     (i : Fin n) (hki : k.val < i.val)
@@ -1121,6 +1185,10 @@ from the bordered-minor identities `bareiss_scaledCoeffMatrix_rowSwap_above_prev
 and `_above_curr` once we rewrite `bareiss → scaledCoeffs` via
 `scaledCoeffs_eq_scaledCoeffMatrix_bareiss`. -/
 
+/-- Exactness witness for `scaledCoeffs_adjacentSwap_above_prev`: the pre-swap
+pivot `adjacentSwapDenom b k = d_k` divides
+`adjacentSwapScaledCoeffAbovePrevNumerator`, immediate from the bordered-minor
+identity `bareiss_scaledCoeffMatrix_rowSwap_above_prev`. -/
 theorem adjacentSwap_scaledCoeffAbovePrevNumerator_dvd (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val) (i : Fin n) (hki : k.val < i.val)
     (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
@@ -1131,6 +1199,10 @@ theorem adjacentSwap_scaledCoeffAbovePrevNumerator_dvd (b : Matrix Int n m)
   rw [← h]
   exact ⟨_, Int.mul_comm _ _⟩
 
+/-- Exactness witness for `scaledCoeffs_adjacentSwap_above_curr`: the pre-swap
+pivot `adjacentSwapDenom b k = d_k` divides
+`adjacentSwapScaledCoeffAboveCurrNumerator`, immediate from the bordered-minor
+identity `bareiss_scaledCoeffMatrix_rowSwap_above_curr`. -/
 theorem adjacentSwap_scaledCoeffAboveCurrNumerator_dvd (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val) (i : Fin n) (hki : k.val < i.val)
     (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
@@ -1141,6 +1213,11 @@ theorem adjacentSwap_scaledCoeffAboveCurrNumerator_dvd (b : Matrix Int n m)
   rw [← h]
   exact ⟨_, Int.mul_comm _ _⟩
 
+/-- Adjacent-swap quotient formula at the `prev` (`km1`) column for a row
+`i > k`: the new scaled coefficient equals
+`adjacentSwapScaledCoeffAbovePrevNumerator / adjacentSwapDenom`, an exact
+integer division by the divisibility witness
+`adjacentSwap_scaledCoeffAbovePrevNumerator_dvd`. -/
 theorem scaledCoeffs_adjacentSwap_above_prev (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val) (i : Fin n) (hki : k.val < i.val)
     (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
@@ -1162,6 +1239,11 @@ theorem scaledCoeffs_adjacentSwap_above_prev (b : Matrix Int n m)
   rw [hbridge, ← h]
   exact (Int.mul_ediv_cancel _ hdk_pos).symm
 
+/-- Adjacent-swap quotient formula at the `curr` (`k`) column for a row
+`i > k`: the new scaled coefficient equals
+`adjacentSwapScaledCoeffAboveCurrNumerator / adjacentSwapDenom`, an exact
+integer division by the divisibility witness
+`adjacentSwap_scaledCoeffAboveCurrNumerator_dvd`. -/
 theorem scaledCoeffs_adjacentSwap_above_curr (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val) (i : Fin n) (hki : k.val < i.val)
     (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
