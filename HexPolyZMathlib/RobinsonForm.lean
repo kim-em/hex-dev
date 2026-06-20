@@ -57,6 +57,12 @@ def schurReflectedAtRootForm (p : ℂ[X]) (α : ℂ) : ℂ[X] :=
 def rootDeletionDerivativeSummand (p : ℂ[X]) (α : ℂ) : ℂ[X] :=
   C p.leadingCoeff * ((p.roots.erase α).map fun β => X - C β).prod
 
+/--
+Leibniz expansion of the derivative over the splitting field: `p.derivative` is
+the sum, over the roots `α` of `p`, of the root-deletion summands
+`rootDeletionDerivativeSummand p α`.  `CLDColumnBound` uses this to bound each
+derivative coefficient through the individual summands.
+-/
 theorem derivative_eq_sum_rootDeletionDerivativeSummand (p : ℂ[X]) :
     p.derivative =
       (p.roots.map fun α => rootDeletionDerivativeSummand p α).sum := by
@@ -75,6 +81,12 @@ theorem derivative_eq_sum_rootDeletionDerivativeSummand (p : ℂ[X]) :
         AddMonoidHom.coe_mulLeft]
       simp [rootDeletionDerivativeSummand]
 
+/--
+Each root-deletion summand has Mahler measure at most that of `p`: deleting the
+linear factor `X - C α` from the full root product only drops the `max 1 ‖·‖`
+weight of that root.  This is the per-summand bound `CLDColumnBound` combines
+with the Leibniz expansion above.
+-/
 theorem mahlerMeasure_rootDeletionDerivativeSummand_le (p : ℂ[X]) (α : ℂ) :
     (rootDeletionDerivativeSummand p α).mahlerMeasure ≤ p.mahlerMeasure := by
   classical
@@ -100,14 +112,21 @@ theorem mahlerMeasure_rootDeletionDerivativeSummand_le (p : ℂ[X]) (α : ℂ) :
     · rw [Multiset.erase_of_notMem hα]
   · exact norm_nonneg _
 
+/-- The Schur root path starts at `α` (the `t = 0` endpoint). -/
 @[simp, grind =]
 theorem schurRootPath_zero (α : ℂ) : schurRootPath α 0 = α := by
   simp [schurRootPath]
 
+/-- The Schur root path ends at the reflected root (the `t = 1` endpoint). -/
 @[simp, grind =]
 theorem schurRootPath_one (α : ℂ) : schurRootPath α 1 = schurReflectedRoot α := by
   simp [schurRootPath]
 
+/--
+The reflected linear factor `1 - C (conj α) * X` factors as
+`C (-(conj α)) * (X - C (schurReflectedRoot α))`, exhibiting `schurReflectedRoot α`
+as its single root with leading coefficient `-(conj α)`.
+-/
 theorem reflectedLinearFactor_eq_C_mul_X_sub_C_schurReflectedRoot {α : ℂ} (hα : α ≠ 0) :
     (1 - C (conj α) * X : ℂ[X]) =
       C (-(conj α)) * (X - C (schurReflectedRoot α)) := by
@@ -127,6 +146,11 @@ theorem reflectedLinearFactor_eq_C_mul_X_sub_C_schurReflectedRoot {α : ℂ} (h�
   norm_num
   ring
 
+/--
+Replacing the moving linear factor by its reflected form scales the derivative's
+Mahler measure by `‖α‖`: the Mahler measure of `(f * (1 - C (conj α) * X)).derivative`
+equals `‖α‖` times `derivativeMahlerAlongLinearFactor f (schurReflectedRoot α)`.
+-/
 theorem derivativeMahler_reflectedLinearFactor_eq
     (f : ℂ[X]) {α : ℂ} (hα : α ≠ 0) :
     ((f * (1 - C (conj α) * X)).derivative).mahlerMeasure =
@@ -139,6 +163,11 @@ theorem derivativeMahler_reflectedLinearFactor_eq
   rw [hpoly, derivative_C_mul, mahlerMeasure_mul, mahlerMeasure_const,
     derivativeMahlerAlongLinearFactor, norm_neg, Complex.norm_conj]
 
+/--
+If the derivative Mahler measure is monotone along the Schur path on `[0,1]`,
+its value at the original root `α` is at most its value at the reflected root —
+the comparison of the two path endpoints.
+-/
 theorem derivativeMahlerAlongLinearFactor_le_schurReflectedRoot_of_monotoneOn
     (f : ℂ[X]) (α : ℂ)
     (hmono : MonotoneOn
@@ -154,6 +183,11 @@ theorem derivativeMahlerAlongLinearFactor_le_schurReflectedRoot_of_monotoneOn
   rw [schurRootPath_zero, schurRootPath_one] at h
   exact h
 
+/--
+For an exterior root (`1 < ‖α‖`), assuming the derivative Mahler measure does
+not decrease from `α` to its reflection, replacing `X - C α` by the reflected
+factor `1 - C (conj α) * X` does not decrease the derivative's Mahler measure.
+-/
 theorem mahlerMeasure_derivative_le_of_schurRootPath_monotone
     (f : ℂ[X]) {α : ℂ} (hα : 1 < ‖α‖)
     (hmono : derivativeMahlerAlongLinearFactor f α ≤
@@ -170,6 +204,10 @@ theorem mahlerMeasure_derivative_le_of_schurRootPath_monotone
     _ ≤ ‖α‖ * derivativeMahlerAlongLinearFactor f (schurReflectedRoot α) := by
       exact le_mul_of_one_le_left (mahlerMeasure_nonneg _) hα.le
 
+/--
+`MonotoneOn`-hypothesis form of `mahlerMeasure_derivative_le_of_schurRootPath_monotone`:
+the path-monotonicity premise is reduced to the endpoint comparison automatically.
+-/
 theorem mahlerMeasure_derivative_le_of_schurRootPath_monotoneOn
     (f : ℂ[X]) {α : ℂ} (hα : 1 < ‖α‖)
     (hmono : MonotoneOn
@@ -218,20 +256,28 @@ theorem mahlerMeasure_derivative_le_schurReflectedAtRootForm_derivative_of_monot
     _ = (schurReflectedAtRootForm p α).derivative.mahlerMeasure := by
       rw [hreflect]
 
+/-- For a root in the closed unit disk, the Robinson factor is the ordinary `X - C α`. -/
 @[simp, grind =]
 theorem robinsonFactor_of_norm_le {α : ℂ} (hα : ‖α‖ ≤ 1) :
     robinsonFactor α = X - C α := by
   simp [robinsonFactor, hα]
 
+/-- For an exterior root, the Robinson factor is the reflected `1 - C (conj α) * X`. -/
 @[simp, grind =]
 theorem robinsonFactor_of_one_lt_norm {α : ℂ} (hα : 1 < ‖α‖) :
     robinsonFactor α = 1 - C (conj α) * X := by
   simp [robinsonFactor, not_le.mpr hα]
 
+/-- The Robinson form of the zero polynomial is zero. -/
 @[simp, grind =]
 theorem robinsonForm_zero : robinsonForm (0 : ℂ[X]) = 0 := by
   simp [robinsonForm]
 
+/--
+On the unit circle (`‖z‖ = 1`) the Robinson factor has the same modulus as the
+unreflected factor `X - C α`.  Schur reflection moves roots across the circle but
+preserves the boundary modulus pointwise.
+-/
 theorem norm_eval_robinsonFactor_eq_norm_eval_X_sub_C
     {α z : ℂ} (hz : ‖z‖ = 1) :
     ‖(robinsonFactor α).eval z‖ = ‖(X - C α : ℂ[X]).eval z‖ := by
@@ -262,6 +308,11 @@ theorem norm_eval_robinsonFactor_eq_norm_eval_X_sub_C
       _ = ‖z - α‖ := by simp [hz]
       _ = ‖(X - C α : ℂ[X]).eval z‖ := by simp
 
+/--
+The Robinson form agrees with `p` in modulus everywhere on the unit circle —
+the pointwise boundary identity behind the Mahler-measure equality
+`mahlerMeasure_robinsonForm`.
+-/
 theorem norm_eval_robinsonForm_eq_norm_eval
     {p : ℂ[X]} {z : ℂ} (hz : ‖z‖ = 1) :
     ‖(p.robinsonForm).eval z‖ = ‖p.eval z‖ := by
@@ -285,6 +336,10 @@ theorem norm_eval_robinsonForm_eq_norm_eval
         rw [(IsAlgClosed.splits p).eval_eq_prod_roots z]
         simp
 
+/--
+Two polynomials with equal modulus everywhere on the unit circle have equal
+logarithmic Mahler measure, since the latter is the circle average of `log ‖·‖`.
+-/
 theorem logMahlerMeasure_eq_of_boundary_norm_eq {p q : ℂ[X]}
     (hboundary : ∀ {z : ℂ}, ‖z‖ = 1 → ‖q.eval z‖ = ‖p.eval z‖) :
     q.logMahlerMeasure = p.logMahlerMeasure := by
@@ -295,6 +350,10 @@ theorem logMahlerMeasure_eq_of_boundary_norm_eq {p q : ℂ[X]}
     simpa [Metric.mem_sphere, dist_zero_right] using hz
   simpa using congrArg Real.log (hboundary hz_norm)
 
+/--
+Nonzero polynomials with equal modulus on the unit circle have equal Mahler
+measure (exponentiating `logMahlerMeasure_eq_of_boundary_norm_eq`).
+-/
 theorem mahlerMeasure_eq_of_boundary_norm_eq_of_ne_zero {p q : ℂ[X]}
     (hboundary : ∀ {z : ℂ}, ‖z‖ = 1 → ‖q.eval z‖ = ‖p.eval z‖)
     (hp : p ≠ 0) (hq : q ≠ 0) :
@@ -354,6 +413,7 @@ theorem mahlerMeasure_le_circleAverage_norm (p : ℂ[X]) :
       rw [Real.circleAverage_eq_intervalAverage, Real.circleAverage_eq_intervalAverage]
       exact average_congr hlog_ae
 
+/-- The Mahler measure of a single Robinson factor is `max 1 ‖α‖`. -/
 theorem mahlerMeasure_robinsonFactor (α : ℂ) :
     (robinsonFactor α).mahlerMeasure = max 1 ‖α‖ := by
   by_cases hα : ‖α‖ ≤ 1
@@ -378,6 +438,10 @@ theorem mahlerMeasure_robinsonFactor (α : ℂ) :
         rw [norm_neg, Complex.norm_conj, norm_one]
         exact max_comm _ _
 
+/--
+Schur reflection preserves the Mahler measure: `p.robinsonForm` and `p` have the
+same Mahler measure (the multiplicative form of the boundary-modulus identity).
+-/
 theorem mahlerMeasure_robinsonForm (p : ℂ[X]) :
     p.robinsonForm.mahlerMeasure = p.mahlerMeasure := by
   rw [robinsonForm, mahlerMeasure_mul, mahlerMeasure_const,
@@ -388,6 +452,7 @@ theorem mahlerMeasure_robinsonForm (p : ℂ[X]) :
   | cons α s ih =>
       simp [mahlerMeasure_robinsonFactor]
 
+/-- Every Robinson factor is nonzero (it has degree one). -/
 theorem robinsonFactor_ne_zero (α : ℂ) : robinsonFactor α ≠ 0 := by
   by_cases hα : ‖α‖ ≤ 1
   · rw [robinsonFactor_of_norm_le hα]
@@ -407,6 +472,7 @@ theorem robinsonFactor_ne_zero (α : ℂ) : robinsonFactor α ≠ 0 := by
     rw [h, degree_zero] at hdeg
     exact (by decide : (⊥ : WithBot ℕ) ≠ 1) hdeg
 
+/-- Each root of a Robinson factor lies in the closed unit disk. -/
 theorem norm_root_robinsonFactor_le (α : ℂ) {β : ℂ}
     (hβ : β ∈ (robinsonFactor α).roots) : ‖β‖ ≤ 1 := by
   by_cases hα : ‖α‖ ≤ 1
@@ -432,6 +498,10 @@ theorem norm_root_robinsonFactor_le (α : ℂ) {β : ℂ}
     right
     exact hα'.le
 
+/--
+Every root of `p.robinsonForm` lies in the closed unit disk: this is the defining
+property of the Robinson form (exterior roots have been reflected inward).
+-/
 theorem norm_root_robinsonForm_le {p : ℂ[X]} {β : ℂ}
     (hβ : β ∈ p.robinsonForm.roots) : ‖β‖ ≤ 1 := by
   by_cases hp : p = 0
@@ -450,6 +520,7 @@ theorem norm_root_robinsonForm_le {p : ℂ[X]} {β : ℂ}
   obtain ⟨α, _, rfl⟩ := hq_mem
   exact norm_root_robinsonFactor_le α hβq
 
+/-- Each Robinson factor has degree one. -/
 theorem natDegree_robinsonFactor (α : ℂ) : (robinsonFactor α).natDegree = 1 := by
   by_cases hα : ‖α‖ ≤ 1
   · rw [robinsonFactor_of_norm_le hα]
@@ -465,6 +536,7 @@ theorem natDegree_robinsonFactor (α : ℂ) : (robinsonFactor α).natDegree = 1 
         simp [sub_eq_add_neg, add_comm, neg_mul, map_neg, map_one]]
     exact natDegree_linear (neg_ne_zero.mpr hconj_ne)
 
+/-- The Robinson form preserves the degree of `p`. -/
 theorem natDegree_robinsonForm (p : ℂ[X]) : p.robinsonForm.natDegree = p.natDegree := by
   by_cases hp : p = 0
   · simp [hp]
@@ -482,6 +554,11 @@ theorem natDegree_robinsonForm (p : ℂ[X]) : p.robinsonForm.natDegree = p.natDe
   rw [hcong]
   simp [Multiset.sum_replicate, IsAlgClosed.card_roots_eq_natDegree]
 
+/--
+Every root of `p.robinsonForm.derivative` lies in the closed unit disk.  By
+Gauss-Lucas the derivative's roots sit in the convex hull of the roots of
+`p.robinsonForm`, which is itself inside the closed unit disk.
+-/
 theorem norm_root_robinsonForm_derivative_le {p : ℂ[X]} {β : ℂ}
     (hβ : β ∈ p.robinsonForm.derivative.roots) : ‖β‖ ≤ 1 := by
   have hd_ne : p.robinsonForm.derivative ≠ 0 := by
@@ -516,6 +593,10 @@ theorem norm_root_robinsonForm_derivative_le {p : ℂ[X]} {β : ℂ}
   have hchm := convexHull_min hsub hconv hβ_convex
   rwa [Metric.mem_closedBall, dist_zero_right] at hchm
 
+/--
+When all roots lie in the closed unit disk, the Mahler measure collapses to the
+norm of the leading coefficient (every `max 1 ‖α‖` factor is `1`).
+-/
 private theorem mahlerMeasure_eq_norm_leadingCoeff_of_roots_le_one {p : ℂ[X]}
     (h : ∀ α ∈ p.roots, ‖α‖ ≤ 1) : p.mahlerMeasure = ‖p.leadingCoeff‖ := by
   rw [mahlerMeasure_eq_leadingCoeff_mul_prod_roots]
@@ -527,6 +608,10 @@ private theorem mahlerMeasure_eq_norm_leadingCoeff_of_roots_le_one {p : ℂ[X]}
     exact max_eq_left (h α hα)
   rw [hprod, mul_one]
 
+/--
+Gauss-Lucas for the closed unit disk: if every root of `p` lies in the closed
+unit disk, so does every root of `p.derivative`.
+-/
 theorem norm_root_derivative_le_of_roots_le_one {p : ℂ[X]}
     (hroots : ∀ α ∈ p.roots, ‖α‖ ≤ 1) {β : ℂ}
     (hβ : β ∈ p.derivative.roots) : ‖β‖ ≤ 1 := by
@@ -562,6 +647,11 @@ theorem norm_root_derivative_le_of_roots_le_one {p : ℂ[X]}
   have hchm := convexHull_min hsub hconv hβ_convex
   rwa [Metric.mem_closedBall, dist_zero_right] at hchm
 
+/--
+For a polynomial with all roots in the closed unit disk, the derivative's Mahler
+measure is exactly `natDegree * mahlerMeasure` (both sides reduce to a leading
+coefficient norm, scaled by the degree).
+-/
 theorem mahlerMeasure_derivative_eq_natDegree_mul_of_roots_le_one
     (p : ℂ[X]) (hroots : ∀ α ∈ p.roots, ‖α‖ ≤ 1) :
     p.derivative.mahlerMeasure = p.natDegree * p.mahlerMeasure := by
@@ -590,6 +680,11 @@ theorem mahlerMeasure_derivative_eq_natDegree_mul_of_roots_le_one
     exact mahlerMeasure_eq_norm_leadingCoeff_of_roots_le_one hroots
   rw [hMM_deriv, hlead_deriv, norm_mul, Complex.norm_natCast, ← hMM_p, mul_comm]
 
+/--
+Integer-coefficient form: if the complexification of `f : ℤ[X]` has all roots in
+the closed unit disk, the Mahler measure of `f.derivative`'s complexification is
+at most `f.natDegree` times that of `f`'s.
+-/
 theorem mahlerMeasure_derivative_map_intCast_le_of_roots_le_one
     (f : Polynomial ℤ)
     (hroots : ∀ α ∈ (f.map (Int.castRingHom ℂ)).roots, ‖α‖ ≤ 1) :
@@ -605,6 +700,10 @@ theorem mahlerMeasure_derivative_map_intCast_le_of_roots_le_one
       (natDegree_map_le (p := f) (f := Int.castRingHom ℂ)))
     (mahlerMeasure_nonneg _)
 
+/--
+For multisets of positive reals, a comparison of log-sums (`∑ log ≤ ∑ log`)
+lifts to a comparison of the products (`∏ ≤ ∏`).
+-/
 theorem Multiset.prod_le_of_sum_log_le {s t : Multiset ℝ}
     (hs : ∀ x ∈ s, 0 < x) (ht : ∀ x ∈ t, 0 < x)
     (hlog : (s.map fun x => Real.log x).sum ≤ (t.map fun x => Real.log x).sum) :
@@ -616,6 +715,10 @@ theorem Multiset.prod_le_of_sum_log_le {s t : Multiset ℝ}
     Real.log_multiset_prod (fun x hx => (ht x hx).ne')]
   exact hlog
 
+/--
+The `max 1 ‖·‖` root-product comparison `derivative ≤ original` follows from the
+corresponding sum-of-logs comparison, via `Multiset.prod_le_of_sum_log_le`.
+-/
 theorem prod_max_one_norm_roots_derivative_le_of_sum_log_le
     (p : ℂ[X])
     (hlog :
@@ -634,6 +737,10 @@ theorem prod_max_one_norm_roots_derivative_le_of_sum_log_le
     exact lt_of_lt_of_le zero_lt_one (le_max_left (1 : ℝ) ‖α‖)
   · simpa [Multiset.map_map, Function.comp_def] using hlog
 
+/--
+Rewrites the `max 1 ‖z‖` product over a multiset as the plain-norm product over
+its sub-multiset of entries with `1 ≤ ‖z‖` (the `‖z‖ < 1` entries contribute `1`).
+-/
 private theorem Multiset.prod_max_one_norm_eq_prod_filter_norm (s : Multiset ℂ) :
     (s.map fun z => max (1 : ℝ) ‖z‖).prod =
       ((s.filter fun z => 1 ≤ ‖z‖).map fun z => ‖z‖).prod := by
@@ -681,6 +788,11 @@ theorem roots_filter_norm_product_derivative_le_of_X_mul_derivative
       simp
     rwa [hroots] at h
 
+/--
+A Mahler-measure derivative bound `p.derivative.mahlerMeasure ≤ natDegree * p.mahlerMeasure`
+implies the `max 1 ‖·‖` root-product comparison between `p.derivative` and `p`,
+cancelling the common `natDegree * ‖leadingCoeff‖` scale.
+-/
 theorem prod_max_one_norm_roots_derivative_le_of_mahlerMeasure_derivative_le
     (p : ℂ[X])
     (hderiv : p.derivative.mahlerMeasure ≤ p.natDegree * p.mahlerMeasure) :
@@ -789,6 +901,11 @@ theorem mahlerMeasure_derivative_le_derivative_of_boundary_norm_eq_of_roots_le_o
     _ = q.natDegree * q.mahlerMeasure := by rw [← hdeg, hmeasure]
     _ = q.derivative.mahlerMeasure := hqderiv.symm
 
+/--
+The derivative of the Robinson form attains the exact identity
+`mahlerMeasure = natDegree * mahlerMeasure`, combining root-confinement
+(`norm_root_robinsonForm_le`) with degree and measure preservation.
+-/
 theorem mahlerMeasure_robinsonForm_derivative (p : ℂ[X]) :
     p.robinsonForm.derivative.mahlerMeasure = p.natDegree * p.mahlerMeasure := by
   rw [mahlerMeasure_derivative_eq_natDegree_mul_of_roots_le_one p.robinsonForm
