@@ -375,62 +375,6 @@ private theorem getArrayEntry_foldl_setArrayEntry_col_mem
         exact ih (setArrayEntry coeffs x k (getArrayEntry rows x k))
           hr_in hnodup' hrow' hcol'
 
-/-- A `foldl` that sets indices appearing in `xs` leaves untouched indices
-unchanged. Used to characterise the outer and inner sweeps of
-`stepScaledRows`. -/
-private theorem getElem!_foldl_set!_of_notMem
-    {α : Type} [Inhabited α]
-    (xs : List Nat) (arr : Array α) (f : Nat → α) (r : Nat)
-    (hr : r ∉ xs) :
-    (xs.foldl (fun next x => next.set! x (f x)) arr)[r]! = arr[r]! := by
-  induction xs generalizing arr with
-  | nil => simp
-  | cons x xs ih =>
-      have hx : r ≠ x := fun h => hr (h ▸ List.mem_cons_self)
-      have hxs : r ∉ xs := fun h => hr (List.mem_cons_of_mem _ h)
-      simp only [List.foldl_cons]
-      rw [ih _ hxs]
-      grind
-
-/-- A `foldl` that sets indices appearing in a `Nodup` list `xs` writes the
-final image `f r` at every member index `r` that is in-bounds for the input
-array. Used to read trailing entries of `stepScaledRows`. -/
-private theorem getElem!_foldl_set!_of_mem_nodup
-    {α : Type} [Inhabited α]
-    (xs : List Nat) (arr : Array α) (f : Nat → α) (r : Nat)
-    (hr : r ∈ xs) (hnodup : xs.Nodup) (hbound : r < arr.size) :
-    (xs.foldl (fun next x => next.set! x (f x)) arr)[r]! = f r := by
-  induction xs generalizing arr with
-  | nil => exact absurd hr (by simp)
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      have hnodup' : xs.Nodup := hnodup.tail
-      have hxnotmem : x ∉ xs := by
-        simp [List.nodup_cons] at hnodup
-        exact hnodup.1
-      rcases List.mem_cons.mp hr with hr_eq | hr_in
-      · subst hr_eq
-        rw [getElem!_foldl_set!_of_notMem _ _ _ _ hxnotmem]
-        have hsize : r < (arr.set! r (f r)).size := by
-          simp [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds, hbound]
-        grind
-      · have hbound' : r < (arr.set! x (f x)).size := by
-          simp [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds, hbound]
-        exact ih _ hr_in hnodup' hbound'
-
-/-- A `foldl` that sets indices via `Array.set!` preserves the outer array
-size. -/
-private theorem size_foldl_set!
-    {α : Type} [Inhabited α]
-    (xs : List Nat) (arr : Array α) (f : Nat → α) :
-    (xs.foldl (fun next x => next.set! x (f x)) arr).size = arr.size := by
-  induction xs generalizing arr with
-  | nil => simp
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [ih]
-      simp [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds]
-
 /-- A `foldl` whose write value reads the same column being written still
 leaves non-member indices unchanged. -/
 private theorem getElem!_foldl_setSelf_of_notMem
@@ -752,27 +696,6 @@ private theorem getArrayEntry_stepScaledRows_of_row_le
     omega
   rw [getElem!_foldl_modify_of_notMem _ _ _ _ hnot]
 
-/-- After one `stepScaledRows` sweep, rows whose index is past the matrix
-extent are untouched by the outer fold (`Array.set!` is a no-op out of
-bounds, and the iteration range stops at `n`). -/
-private theorem getArrayEntry_stepScaledRows_of_row_ge
-    (rows : Array (Array Int)) (n k : Nat) (pivot prevPivot : Int)
-    (r c : Nat) (hr : n ≤ r) :
-    getArrayEntry (stepScaledRows rows n k pivot prevPivot) r c =
-      getArrayEntry rows r c := by
-  show
-      (stepScaledRows rows n k pivot prevPivot)[r]![c]! =
-        rows[r]![c]!
-  unfold stepScaledRows
-  simp [Std.Legacy.Range.forIn_eq_forIn_range', Std.Legacy.Range.size,
-    -Array.set!_eq_setIfInBounds]
-  have hnot : r ∉ List.range' (k + 1) (n - (k + 1)) := by
-    intro hmem
-    rw [List.mem_range'] at hmem
-    obtain ⟨i, hi, hri⟩ := hmem
-    omega
-  rw [getElem!_foldl_modify_of_notMem _ _ _ _ hnot]
-
 /-- The new row written at trailing index `r` (with `k < r` and `r < n`) by
 `stepScaledRows`, expressed in fold form. This is an intermediate
 characterisation; downstream lemmas read individual entries via
@@ -1019,16 +942,6 @@ private theorem rowsToMatrix_stepScaledRows_eq_stepMatrix
     getArrayEntry_stepScaledRows_matches_stepMatrix rows (rowsToMatrix rows n)
       k pivot prevPivot hentry hsize hrowsize ⟨i, hi⟩ ⟨j, hj⟩
 
-/-- Local view of the canonical Bareiss array step: after reading the private
-Gram-Schmidt row storage as a matrix, `Matrix.stepArray` is exactly
-`Matrix.stepMatrix`. -/
-private theorem rowsToMatrix_stepArray_eq_stepMatrix
-    {n : Nat} (rows : Array (Array Int)) (k : Nat) (pivot prevPivot : Int) :
-    rowsToMatrix (Matrix.stepArray rows n k pivot prevPivot) n =
-      Matrix.stepMatrix (rowsToMatrix rows n) k pivot prevPivot := by
-  simpa [rowsToMatrix, Matrix.rowsToMatrix, Matrix.ofFn, getArrayEntry, Matrix.getEntry] using
-    Matrix.rowsToMatrix_stepArray (n := n) rows k pivot prevPivot
-
 end StepScaledRowsBookkeeping
 
 private def scaledCoeffArrayLoop (n fuel : Nat) (state : ScaledCoeffArrayState) :
@@ -1144,93 +1057,6 @@ private theorem getArrayEntry_scaledCoeffArrayLoop_preserve_col_before_step
           rw [getArrayEntry_writeScaledColumn_of_col_ne]
           omega
       · simp only [hstep, ↓reduceIte]
-
-/-- If the array loop starts at column `state.step`, then the lower-triangle
-entry written in that column is the current matrix-column value. In the regular
-branch, the preservation lemma carries that captured column through the
-remaining fuel. -/
-private theorem getArrayEntry_scaledCoeffArrayLoop_capture_current_col
-    (n fuel : Nat) (state : ScaledCoeffArrayState) (i : Nat)
-    (hStep : state.step < n) (hji : state.step < i) (hi : i < n)
-    (h_coeffs_size : state.coeffs.size = n)
-    (h_coeffs_rows_size : ∀ r, r < n → state.coeffs[r]!.size = n) :
-    getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state).coeffs i state.step =
-      getArrayEntry state.matrix i state.step := by
-  have hrow : i < state.coeffs.size := by
-    rw [h_coeffs_size]; exact hi
-  have hcol : state.step < state.coeffs[i]!.size := by
-    rw [h_coeffs_rows_size i hi]; exact hStep
-  rw [scaledCoeffArrayLoop]
-  simp only [hStep, ↓reduceIte]
-  by_cases hNext : state.step + 1 < n
-  · simp only [hNext, ↓reduceIte]
-    by_cases hpivot : getArrayEntry state.matrix state.step state.step = 0
-    · simp only [hpivot, ↓reduceIte]
-      exact getArrayEntry_writeScaledColumn_below state.coeffs state.matrix n
-        state.step i hji hi hrow hcol
-    · simp only [hpivot, ↓reduceIte]
-      rw [getArrayEntry_scaledCoeffArrayLoop_preserve_col_before_step]
-      · exact getArrayEntry_writeScaledColumn_below state.coeffs state.matrix n
-          state.step i hji hi hrow hcol
-      · show state.step < state.step + 1
-        omega
-  · simp only [hNext, ↓reduceIte]
-    exact getArrayEntry_writeScaledColumn_below state.coeffs state.matrix n
-      state.step i hji hi hrow hcol
-
-/-- Matrix-state form of the current-column lower-triangle capture: for
-aligned array and no-pivot states, the coefficient written at the current
-column is exactly the pre-step matrix entry, not the later pivot-column value
-after the next elimination step clears it. -/
-private theorem scaledCoeffArrayLoop_lower_matches_current_step
-    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState n}
-    (h_step_eq : state_array.step = state_matrix.step)
-    (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
-    (h_coeffs_size : state_array.coeffs.size = n)
-    (h_coeffs_rows_size : ∀ r, r < n → state_array.coeffs[r]!.size = n)
-    (fuel : Nat) (i : Fin n)
-    (hji : state_matrix.step < i.val) :
-    getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs
-        i.val state_array.step =
-      state_matrix.matrix[i][
-        (⟨state_matrix.step, Nat.lt_trans hji i.isLt⟩ : Fin n)] := by
-  have hStepArray : state_array.step < n := by
-    rw [h_step_eq]
-    exact Nat.lt_trans hji i.isLt
-  have hjiArray : state_array.step < i.val := by
-    rw [h_step_eq]
-    exact hji
-  rw [getArrayEntry_scaledCoeffArrayLoop_capture_current_col n fuel state_array
-    i.val hStepArray hjiArray i.isLt h_coeffs_size h_coeffs_rows_size]
-  let col_array : Fin n := ⟨state_array.step, hStepArray⟩
-  let col_matrix : Fin n := ⟨state_matrix.step, Nat.lt_trans hji i.isLt⟩
-  have hcol_eq : col_array = col_matrix := Fin.ext h_step_eq
-  have hentry :
-      getArrayEntry state_array.matrix i.val state_array.step =
-        (rowsToMatrix state_array.matrix n)[i][col_array] := by
-    simp [rowsToMatrix, Matrix.ofFn, col_array]
-  rw [hentry, h_matrix_eq]
-  exact congrArg (fun c => state_matrix.matrix[i][c]) hcol_eq
-
-/-- Base target-column form of lower-triangle capture. If the requested lower
-column is exactly the starting no-pivot step, the scaled-coefficient loop
-records the matrix entry from the pre-step `Matrix.noPivotLoop 0` state. -/
-private theorem scaledCoeffArrayLoop_lower_matches_start_column
-    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState n}
-    (h_step_eq : state_array.step = state_matrix.step)
-    (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
-    (h_coeffs_size : state_array.coeffs.size = n)
-    (h_coeffs_rows_size : ∀ r, r < n → state_array.coeffs[r]!.size = n)
-    (fuel : Nat) (i : Fin n)
-    (hji : state_matrix.step < i.val) :
-    getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs
-        i.val state_array.step =
-      (Matrix.noPivotLoop 0 state_matrix).matrix[i][
-        (⟨state_matrix.step, Nat.lt_trans hji i.isLt⟩ : Fin n)] := by
-  simpa [Matrix.noPivotLoop_zero_fuel] using
-    scaledCoeffArrayLoop_lower_matches_current_step
-      (n := n) (state_array := state_array) (state_matrix := state_matrix)
-      h_step_eq h_matrix_eq h_coeffs_size h_coeffs_rows_size fuel i hji
 
 /-- Run one no-pivot fraction-free Gram elimination and record each scaled
 coefficient column immediately before the elimination step zeroes it. -/
@@ -2961,135 +2787,6 @@ private theorem noPivotLoop_full_eq_leadingPrefix_at_gramDetVecEntry
   -- hcongr's LHS index in Fin n has val = r; same as the goal's LHS index.
   exact hcongr
 
-/-- The `gramDetVecEntry` slot at index `r + 1` for the no-pivot Bareiss pass
-on `M : Matrix Int n n` is determined by the intermediate state after `r`
-iterations of `Matrix.noPivotLoop`: the iterations from `r` to `n` either
-leave the state unchanged (when a singular step is already recorded, by the
-singular fixed point) or preserve the `(r, r)` diagonal entry and only
-record singularities at steps `≥ r`, which the slot's match resolves to
-the same natural value. -/
-private theorem gramDetVecEntry_bareissNoPivot_eq_at_r
-    {n : Nat} (M : Matrix Int n n) (r : Nat) (hr : r < n) :
-    gramDetVecEntry (Matrix.bareissNoPivotData M) ⟨r + 1, Nat.succ_lt_succ hr⟩ =
-      gramDetVecEntry
-        (Matrix.finish (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)))
-        ⟨r + 1, Nat.succ_lt_succ hr⟩ := by
-  have h_factor : Matrix.noPivotLoop n (Matrix.noPivotInitialState M) =
-      Matrix.noPivotLoop (n - r) (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)) := by
-    have h_add := noPivotLoop_add r (n - r) (Matrix.noPivotInitialState M)
-    have h_split : r + (n - r) = n := by omega
-    rw [h_split] at h_add
-    exact h_add
-  show gramDetVecEntry (Matrix.finish (Matrix.noPivotLoop n (Matrix.noPivotInitialState M)))
-      ⟨r + 1, Nat.succ_lt_succ hr⟩ = _
-  rw [h_factor]
-  rcases noPivotLoop_singular_inv (n := n) r (Matrix.noPivotInitialState M) rfl with
-    h_r_none | ⟨k_r, h_r_sing, h_r_step, h_r_zero, h_r_klt⟩
-  · -- After r iterations, no singular step recorded yet.
-    have h_step_r :
-        (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).step = r := by
-      have := noPivotLoop_step_eq_add_of_singularStep_none r
-        (Matrix.noPivotInitialState M) rfl (show 0 + r + 1 ≤ n by omega) h_r_none
-      simpa [Matrix.noPivotInitialState] using this
-    have h_diag_preserved :
-        (Matrix.noPivotLoop (n - r) (Matrix.noPivotLoop r
-            (Matrix.noPivotInitialState M))).matrix[(⟨r, hr⟩ : Fin n)][(⟨r, hr⟩ : Fin n)] =
-          (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).matrix[(⟨r, hr⟩ : Fin n)][(⟨r, hr⟩ : Fin n)] := by
-      apply Matrix.noPivotLoop_diag_of_le_step
-      show r ≤ (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).step
-      rw [h_step_r]
-      exact Nat.le_refl r
-    rcases noPivotLoop_singular_inv (n := n) (n - r)
-        (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)) h_r_none with
-      h_extra_none | ⟨k, h_extra_sing, h_extra_step, h_extra_zero, h_extra_klt⟩
-    · -- No singularity introduced by the extra iterations.
-      simp only [gramDetVecEntry, Matrix.finish, bareissDiagNat,
-        h_extra_none, h_r_none]
-      exact congrArg Int.toNat h_diag_preserved
-    · -- Singularity introduced at step k.val ≥ r.
-      have h_step_mono := noPivotLoop_step_monotone (n - r)
-        (Matrix.noPivotLoop r (Matrix.noPivotInitialState M))
-      have h_k_ge_r : r ≤ k.val := by
-        rw [← h_step_r, ← h_extra_step]; exact h_step_mono
-      simp only [gramDetVecEntry, Matrix.finish, bareissDiagNat,
-        h_extra_sing, h_r_none]
-      by_cases h : k.val < r + 1
-      · -- k.val = r, so the (r, r) entry was zero.
-        have h_k_eq_r : k.val = r := by omega
-        rw [if_pos h]
-        have h_k_idx : k = ⟨r, hr⟩ := Fin.ext h_k_eq_r
-        rw [h_k_idx] at h_extra_zero
-        have h_diag_zero :
-            (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).matrix[(⟨r, hr⟩ : Fin n)][(⟨r, hr⟩ : Fin n)] = 0 := by
-          rw [← h_diag_preserved]; exact h_extra_zero
-        exact (congrArg Int.toNat h_diag_zero).symm
-      · rw [if_neg h]
-        exact congrArg Int.toNat h_diag_preserved
-  · -- After r iterations, a singular step was already recorded.
-    have h_extra_id :
-        Matrix.noPivotLoop (n - r) (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)) =
-          Matrix.noPivotLoop r (Matrix.noPivotInitialState M) := by
-      have h_hDone :
-          (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).step + 1 < n := by
-        rw [h_r_step]; exact h_r_klt
-      have h_idx :
-          (⟨(Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).step,
-              Nat.lt_of_succ_lt h_hDone⟩ : Fin n) = k_r :=
-        Fin.ext h_r_step
-      have h_hp :
-          (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).matrix[
-              (⟨(Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).step,
-                  Nat.lt_of_succ_lt h_hDone⟩ : Fin n)][
-              (⟨(Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).step,
-                  Nat.lt_of_succ_lt h_hDone⟩ : Fin n)] = 0 := by
-        have h_lift := congrArg
-          (fun (i : Fin n) =>
-            (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).matrix[i][i])
-          h_idx
-        exact h_lift.trans h_r_zero
-      have h_hsing :
-          (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).singularStep =
-            some (Matrix.noPivotLoop r (Matrix.noPivotInitialState M)).step := by
-        rw [h_r_sing, h_r_step]
-      exact noPivotLoop_id_at_singular_fixedpoint (n - r) _ h_hDone h_hp h_hsing
-    rw [h_extra_id]
-
-/-- The `gramDetVecEntry` slot at index `r + 1` for the no-pivot Bareiss pass
-over the full Gram matrix agrees with the same slot for the no-pivot Bareiss
-pass over its `(r + 1)` leading prefix. This is the `bareissNoPivotData`-level
-wrapper assembled from the `r`-iteration loop sync. -/
-theorem gramDetVecEntry_bareissNoPivot_full_eq_leadingPrefix
-    (b : Matrix Int n m) (r : Nat) (hr : r < n) :
-    gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
-        ⟨r + 1, Nat.succ_lt_succ hr⟩ =
-      gramDetVecEntry
-        (Matrix.bareissNoPivotData
-          (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
-            (Nat.succ_le_of_lt hr)))
-        ⟨r + 1, Nat.lt_succ_self _⟩ := by
-  obtain ⟨h_diag, h_sing⟩ :=
-    noPivotLoop_full_eq_leadingPrefix_at_gramDetVecEntry (b := b) r hr
-  rw [gramDetVecEntry_bareissNoPivot_eq_at_r (Matrix.gramMatrix b) r hr]
-  rw [gramDetVecEntry_bareissNoPivot_eq_at_r
-    (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1) (Nat.succ_le_of_lt hr)) r
-    (Nat.lt_succ_self r)]
-  -- Reduce both gramDetVecEntry calls to their match form, then case on the
-  -- shared singularStep value.
-  simp only [gramDetVecEntry, Matrix.finish, bareissDiagNat]
-  rw [← h_sing]
-  generalize hs :
-      (Matrix.noPivotLoop r (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = ss
-  cases ss with
-  | none =>
-      dsimp only
-      exact congrArg Int.toNat h_diag
-  | some s_val =>
-      dsimp only
-      by_cases h : s_val < r + 1
-      · rw [if_pos h, if_pos h]
-      · rw [if_neg h, if_neg h]
-        exact congrArg Int.toNat h_diag
-
 /-- Signed diagonal projection for a non-singular target prefix: the final
 no-pivot full-Gram diagonal at `r` is the public Bareiss determinant of the
 `(r + 1)` leading prefix. -/
@@ -3414,20 +3111,6 @@ private theorem rowCombination_bareissGramRegularStepQuotient
     Matrix.rowCombination b (bareissGramRowInvariantStepCoeff hinv hnext i hi) =
       Matrix.rowCombination b (Vector.ofFn hq.q) := by
   rw [bareissGramRegularStepQuotient_stepCoeff_eq hprev hq]
-
-private theorem dot_rowCombination_bareissGramRegularStepQuotient
-    {b : Matrix Int n m} {state : Matrix.BareissState n}
-    {hinv : BareissGramRowInvariant b state}
-    {hnext : state.step + 1 < n} {i : Fin n} {hi : state.step + 1 ≤ i.val}
-    (hprev : state.prevPivot ≠ 0)
-    (hq : BareissGramRegularStepQuotient hinv hnext i hi)
-    (w : Vector Int m) :
-    Matrix.dot
-        (Matrix.rowCombination b
-          (bareissGramRowInvariantStepCoeff hinv hnext i hi))
-        w =
-      Matrix.dot (Matrix.rowCombination b (Vector.ofFn hq.q)) w := by
-  rw [rowCombination_bareissGramRegularStepQuotient hprev hq]
 
 private theorem bareissGramRowInvariantStepCoeff_support
     {b : Matrix Int n m} {state : Matrix.BareissState n}
@@ -3854,63 +3537,6 @@ theorem bareissGramRowInvariant_regular_step_coeff_canonical
       rw [dif_neg hi]
     rw [hLHS, bareissGramCanonicalCoeff_succ_processed b elapsed i hnext hp hi]
     exact h_canon i
-
-/-- Extract the represented lattice row vector and entry equation carried by
-`BareissGramRowInvariant`. This is the caller-facing shape needed by
-singular no-pivot arguments: an active row of the current Bareiss matrix is a
-dot product against an explicitly represented integer combination of input
-rows. -/
-private theorem bareissGramRowInvariant_exists_rowVec
-    {b : Matrix Int n m} {state : Matrix.BareissState n}
-    (hinv : BareissGramRowInvariant b state) (i j : Fin n)
-    (hi : state.step ≤ i.val) :
-    ∃ v : Vector Int m,
-      (∃ c : Vector Int n,
-        (∀ k : Fin n, i.val < k.val → c[k] = 0) ∧
-          v = Matrix.rowCombination b c) ∧
-        state.matrix[i][j] = Matrix.dot v (b.row j) := by
-  refine ⟨Matrix.rowCombination b (hinv.coeff i), ?_, hinv.entry_eq_dot i j hi⟩
-  exact ⟨hinv.coeff i, fun k hik => hinv.coeff_supp i k hi hik, rfl⟩
-
-/-- Recursive preservation package for `Matrix.noPivotLoop`.  Every regular
-step delegates the exact row-entry relation to the one-step package; done and
-singular branches preserve the current coefficient witnesses unchanged. -/
-private def bareissGramRowInvariant_noPivotLoop
-    {b : Matrix Int n m} (fuel : Nat) {state : Matrix.BareissState n}
-    (hinv : BareissGramRowInvariant b state)
-    (hentry_regular :
-      ∀ {state : Matrix.BareissState n},
-        (hinv_state : BareissGramRowInvariant b state) →
-        (hnext : state.step + 1 < n) →
-        state.matrix[state.step][state.step] ≠ 0 →
-        ∀ i j : Fin n, (hi : state.step + 1 ≤ i.val) →
-          (Matrix.stepMatrix state.matrix state.step
-              state.matrix[state.step][state.step] state.prevPivot)[i][j] =
-            Matrix.dot
-              (Matrix.rowCombination b
-                (bareissGramRowInvariantStepCoeff
-                  hinv_state hnext i hi))
-              (b.row j)) :
-    BareissGramRowInvariant b (Matrix.noPivotLoop fuel state) := by
-  induction fuel generalizing state with
-  | zero =>
-      simpa [Matrix.noPivotLoop_zero_fuel] using hinv
-  | succ fuel ih =>
-      by_cases hDone : state.step + 1 < n
-      · by_cases hp : state.matrix[state.step][state.step] = 0
-        · rw [Matrix.noPivotLoop_singular_branch fuel state hDone hp]
-          refine
-            { coeff := hinv.coeff
-              coeff_supp := ?_
-              entry_eq_dot := ?_ }
-          · simpa using hinv.coeff_supp
-          · simpa using hinv.entry_eq_dot
-        · rw [Matrix.noPivotLoop_regular_branch fuel state hDone hp]
-          apply ih
-          exact bareissGramRowInvariant_regular_step hDone hp hinv
-            (hentry_regular hinv hDone hp)
-      · rw [Matrix.noPivotLoop_done fuel state hDone]
-        exact hinv
 
 /-- If the initial no-pivot Gram pass reaches column `s` without recording a
 singular step, its state step is exactly `s`.  This keeps the later singular
@@ -4423,27 +4049,6 @@ private theorem noPivotLoop_initial_gram_bareiss_step_dvd
   rw [dot_rowCombination_mul_right_int b hq.q state.prevPivot (b.row j)]
   exact Int.mul_comm _ _
 
-/-- Caller-facing row-vector package for a no-pivot Gram pass from the
-initial state. Downstream singular-step proofs can apply this at the loop
-result to rewrite active trailing entries as dots against represented lattice
-row vectors. -/
-private theorem noPivotLoop_initial_gram_entry_eq_dot_of_rowInvariant
-    (b : Matrix Int n m) (fuel : Nat)
-    (hquot : StepWitness b)
-    (i j : Fin n)
-    (hi :
-      (Matrix.noPivotLoop fuel
-        (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step ≤ i.val) :
-    ∃ v : Vector Int m,
-      (∃ c : Vector Int n,
-        (∀ k : Fin n, i.val < k.val → c[k] = 0) ∧
-          v = Matrix.rowCombination b c) ∧
-        (Matrix.noPivotLoop fuel
-          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[i][j] =
-          Matrix.dot v (b.row j) := by
-  exact bareissGramRowInvariant_exists_rowVec
-    (bareissGramRowInvariant_noPivotLoop_initial b fuel hquot) i j hi
-
 /-- Row-vector consumer for an initial no-pivot Gram pass.  A single supported
 integer row combination represents the active row `i` against every original
 input row, so downstream singular-column arguments do not need to inspect
@@ -4545,34 +4150,6 @@ private theorem int_dot_self_eq_zero_get (v : Vector Int m)
   exact foldl_int_dot_self_eq_zero_of_mem (xs := List.finRange m) (v := v)
     (acc := 0) (by decide)
     (by simpa [Matrix.dot, Hex.Vector.dotProduct] using hzero) i hmem
-
-/-- An integer vector whose self-dot product is zero is itself the zero vector.
-A finite-dimensional positive-definiteness fact for `Vector Int m`. -/
-private theorem int_vector_eq_zero_of_dot_self_zero (v : Vector Int m)
-    (hzero : Matrix.dot v v = 0) :
-    v = Vector.ofFn fun _ : Fin m => (0 : Int) := by
-  apply Vector.ext
-  intro i hi
-  rw [Vector.getElem_ofFn]
-  exact int_dot_self_eq_zero_get v hzero ⟨i, hi⟩
-
-/-- If `v : Vector Int m` has zero self-dot product, then its dot product
-against any other integer vector is zero. -/
-private theorem int_dot_eq_zero_of_dot_self_zero (u v : Vector Int m)
-    (hzero : Matrix.dot v v = 0) :
-    Matrix.dot u v = 0 := by
-  unfold Matrix.dot Hex.Vector.dotProduct
-  induction List.finRange m with
-  | nil =>
-      simp
-  | cons i xs ih =>
-      simp only [List.foldl_cons]
-      rw [int_dot_self_eq_zero_get v hzero i]
-      have hzero_mul : u[i] * (0 : Int) = 0 := by grind
-      rw [hzero_mul]
-      have hadd_zero : (0 : Int) + 0 = 0 := by grind
-      rw [hadd_zero]
-      exact ih
 
 /-- If `v : Vector Int m` has zero self-dot product, then any other integer
 vector dots it to zero from the left as well. -/
@@ -5600,92 +5177,6 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
           rw [hdist, Matrix.noPivotLoop_regular_branch _ state_matrix hDone hp]
           rfl
 
-/-- Early-singular lower-column preservation before the singular column:
-when the aligned matrix-side state sees a zero pivot at the current step, the
-array loop halts after writing only that current column, so lower entries in
-strictly earlier columns retain their already-captured matrix values. -/
-private theorem scaledCoeffArrayLoop_lower_singular_before_step
-    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState n}
-    (h_step_eq : state_array.step = state_matrix.step)
-    (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
-    (h_coeffs_processed : ∀ r c : Fin n,
-      c.val < state_matrix.step → c.val < r.val →
-        getArrayEntry state_array.coeffs r.val c.val = state_matrix.matrix[r][c])
-    (fuel : Nat) (i j : Fin n)
-    (hjs : j.val < state_matrix.step) (hji : j.val < i.val)
-    (hDone : state_matrix.step + 1 < n)
-    (hp : state_matrix.matrix[
-        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
-        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0) :
-    getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs i.val j.val =
-      state_matrix.matrix[i][j] := by
-  have hArrayStep : state_array.step < n := h_step_eq ▸ Nat.lt_of_succ_lt hDone
-  have hArrayNext : state_array.step + 1 < n := h_step_eq ▸ hDone
-  let kFin : Fin n := ⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩
-  have hp_array :
-      getArrayEntry state_array.matrix state_array.step state_array.step = 0 := by
-    rw [h_step_eq]
-    have := getArrayEntry_eq_rowsToMatrix (n := n) state_array.matrix kFin kFin
-    rw [this, h_matrix_eq]
-    exact hp
-  rw [scaledCoeffArrayLoop_singular_branch fuel state_array hArrayStep hArrayNext hp_array]
-  rw [getArrayEntry_writeScaledColumn_of_col_ne]
-  · exact h_coeffs_processed i j hjs hji
-  · rw [h_step_eq]
-    omega
-
-/-- Early-singular current-column capture: the singular column itself follows
-`writeScaledColumn` semantics, recording the pre-step matrix-column value
-before the array loop halts. -/
-private theorem scaledCoeffArrayLoop_lower_singular_current_step
-    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState n}
-    (h_step_eq : state_array.step = state_matrix.step)
-    (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
-    (h_coeffs_size : state_array.coeffs.size = n)
-    (h_coeffs_rows_size : ∀ r, r < n → state_array.coeffs[r]!.size = n)
-    (fuel : Nat) (i : Fin n)
-    (hji : state_matrix.step < i.val)
-    (hDone : state_matrix.step + 1 < n)
-    (hp : state_matrix.matrix[
-        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
-        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0) :
-    getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs
-        i.val state_array.step =
-      state_matrix.matrix[i][
-        (⟨state_matrix.step, Nat.lt_trans hji i.isLt⟩ : Fin n)] := by
-  have hArrayStep : state_array.step < n := h_step_eq ▸ Nat.lt_of_succ_lt hDone
-  have hArrayNext : state_array.step + 1 < n := h_step_eq ▸ hDone
-  let kFin : Fin n := ⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩
-  have hp_array :
-      getArrayEntry state_array.matrix state_array.step state_array.step = 0 := by
-    rw [h_step_eq]
-    have := getArrayEntry_eq_rowsToMatrix (n := n) state_array.matrix kFin kFin
-    rw [this, h_matrix_eq]
-    exact hp
-  have hrow : i.val < state_array.coeffs.size := by
-    rw [h_coeffs_size]
-    exact i.isLt
-  have hcol : state_array.step < state_array.coeffs[i.val]!.size := by
-    rw [h_coeffs_rows_size i.val i.isLt]
-    exact hArrayStep
-  rw [scaledCoeffArrayLoop_singular_branch fuel state_array hArrayStep hArrayNext hp_array]
-  rw [getArrayEntry_writeScaledColumn_below state_array.coeffs state_array.matrix n
-    state_array.step i.val]
-  · let col_array : Fin n := ⟨state_array.step, hArrayStep⟩
-    let col_matrix : Fin n := ⟨state_matrix.step, Nat.lt_trans hji i.isLt⟩
-    have hcol_eq : col_array = col_matrix := Fin.ext h_step_eq
-    have hentry :
-        getArrayEntry state_array.matrix i.val state_array.step =
-          (rowsToMatrix state_array.matrix n)[i][col_array] := by
-      simp [rowsToMatrix, Matrix.ofFn, col_array]
-    rw [hentry, h_matrix_eq]
-    exact congrArg (fun c => state_matrix.matrix[i][c]) hcol_eq
-  · rw [h_step_eq]
-    exact hji
-  · exact i.isLt
-  · exact hrow
-  · exact hcol
-
 /-- Early-singular zero tail after the singular column: if the lower entries
 in columns strictly after the current step are still unwritten before the
 singular branch, writing the current column preserves that zero tail. -/
@@ -5717,121 +5208,6 @@ private theorem scaledCoeffArrayLoop_lower_singular_after_step
   · exact h_coeffs_unwritten i j hsj hji
   · rw [h_step_eq]
     omega
-
-/-- Packaged early-singular lower-column relation. At a zero pivot before the
-last column, the array loop writes exactly the singular column and halts:
-earlier lower columns keep their processed matrix values, the singular column
-records the pre-step matrix entry, and later lower columns keep the unwritten
-zero tail. -/
-private theorem scaledCoeffArrayLoop_lower_singular_matches
-    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState n}
-    (h_step_eq : state_array.step = state_matrix.step)
-    (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
-    (h_coeffs_size : state_array.coeffs.size = n)
-    (h_coeffs_rows_size : ∀ r, r < n → state_array.coeffs[r]!.size = n)
-    (h_coeffs_processed : ∀ r c : Fin n,
-      c.val < state_matrix.step → c.val < r.val →
-        getArrayEntry state_array.coeffs r.val c.val = state_matrix.matrix[r][c])
-    (h_coeffs_unwritten : ∀ r c : Fin n,
-      state_matrix.step < c.val → c.val < r.val →
-        getArrayEntry state_array.coeffs r.val c.val = 0)
-    (fuel : Nat) (i j : Fin n)
-    (hji : j.val < i.val)
-    (hDone : state_matrix.step + 1 < n)
-    (hp : state_matrix.matrix[
-        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
-        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0) :
-    (j.val < state_matrix.step ∧
-      getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs i.val j.val =
-        state_matrix.matrix[i][j]) ∨
-    (j.val = state_matrix.step ∧
-      getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs
-          i.val state_array.step =
-        state_matrix.matrix[i][j]) ∨
-    (state_matrix.step < j.val ∧
-      getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs i.val j.val = 0) := by
-  by_cases h_before : j.val < state_matrix.step
-  · left
-    refine ⟨h_before, ?_⟩
-    exact scaledCoeffArrayLoop_lower_singular_before_step
-      (n := n) (state_array := state_array) (state_matrix := state_matrix)
-      h_step_eq h_matrix_eq h_coeffs_processed fuel i j h_before hji hDone hp
-  · by_cases h_current : j.val = state_matrix.step
-    · right
-      left
-      refine ⟨h_current, ?_⟩
-      have hstep_lt_i : state_matrix.step < i.val := by omega
-      have h_current_capture :=
-        scaledCoeffArrayLoop_lower_singular_current_step
-          (n := n) (state_array := state_array) (state_matrix := state_matrix)
-          h_step_eq h_matrix_eq h_coeffs_size h_coeffs_rows_size fuel i
-          hstep_lt_i hDone hp
-      let stepFin : Fin n := ⟨state_matrix.step, Nat.lt_trans hstep_lt_i i.isLt⟩
-      have hcol_eq : stepFin = j := Fin.ext h_current.symm
-      exact h_current_capture.trans (congrArg (fun c => state_matrix.matrix[i][c]) hcol_eq)
-    · right
-      right
-      have h_after : state_matrix.step < j.val := by omega
-      refine ⟨h_after, ?_⟩
-      exact scaledCoeffArrayLoop_lower_singular_after_step
-        (n := n) (state_array := state_array) (state_matrix := state_matrix)
-        h_step_eq h_matrix_eq h_coeffs_unwritten fuel i j h_after hji hDone hp
-
-/-- State-level lower-triangle branch splitter for the scaled-coefficient
-array loop. At a real matrix step, a zero pivot is discharged by the packaged
-singular-column relation; a nonzero path to the target column is discharged by
-the non-singular target-column capture theorem. -/
-private theorem scaledCoeffArrayLoop_lower_matches
-    {state_array : ScaledCoeffArrayState} {state_matrix : Matrix.BareissState n}
-    (h_step_eq : state_array.step = state_matrix.step)
-    (h_matrix_eq : rowsToMatrix state_array.matrix n = state_matrix.matrix)
-    (h_prev_eq : state_array.prevPivot = state_matrix.prevPivot)
-    (h_array_size : state_array.matrix.size = n)
-    (h_array_rows_size : ∀ r, r < n → state_array.matrix[r]!.size = n)
-    (h_coeffs_size : state_array.coeffs.size = n)
-    (h_coeffs_rows_size : ∀ r, r < n → state_array.coeffs[r]!.size = n)
-    (h_coeffs_processed : ∀ r c : Fin n,
-      c.val < state_matrix.step → c.val < r.val →
-        getArrayEntry state_array.coeffs r.val c.val = state_matrix.matrix[r][c])
-    (h_coeffs_unwritten : ∀ r c : Fin n,
-      state_matrix.step < c.val → c.val < r.val →
-        getArrayEntry state_array.coeffs r.val c.val = 0)
-    (fuel : Nat) (i j : Fin n)
-    (h_step_le_j : state_matrix.step ≤ j.val)
-    (hji : j.val < i.val)
-    (h_fuel : j.val < state_matrix.step + (fuel + 1))
-    (hDone : state_matrix.step + 1 < n) :
-    ((hp : state_matrix.matrix[
-        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
-        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] = 0) →
-      (j.val < state_matrix.step ∧
-        getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs i.val j.val =
-          state_matrix.matrix[i][j]) ∨
-      (j.val = state_matrix.step ∧
-        getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs
-            i.val state_array.step =
-          state_matrix.matrix[i][j]) ∨
-      (state_matrix.step < j.val ∧
-        getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs i.val j.val = 0)) ∧
-    ((hp : state_matrix.matrix[
-        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)][
-        (⟨state_matrix.step, Nat.lt_of_succ_lt hDone⟩ : Fin n)] ≠ 0) →
-      (h_target_nonsing :
-        (Matrix.noPivotLoop (j.val - state_matrix.step) state_matrix).singularStep = none) →
-      getArrayEntry (scaledCoeffArrayLoop n (fuel + 1) state_array).coeffs i.val j.val =
-        (Matrix.noPivotLoop (j.val - state_matrix.step) state_matrix).matrix[i][j]) := by
-  constructor
-  · intro hp
-    exact scaledCoeffArrayLoop_lower_singular_matches
-      (n := n) (state_array := state_array) (state_matrix := state_matrix)
-      h_step_eq h_matrix_eq h_coeffs_size h_coeffs_rows_size
-      h_coeffs_processed h_coeffs_unwritten fuel i j hji hDone hp
-  · intro _hp h_target_nonsing
-    exact scaledCoeffArrayLoop_lower_matches_target_column
-      (n := n) (state_array := state_array) (state_matrix := state_matrix)
-      h_step_eq h_matrix_eq h_prev_eq h_array_size h_array_rows_size
-      h_coeffs_size h_coeffs_rows_size (fuel + 1) i j h_step_le_j hji
-      h_fuel h_target_nonsing
 
 /-- Singular dual of `scaledCoeffArrayLoop_lower_matches_target_column`.
 When the matrix-side `noPivotLoop` records a singular step strictly before
@@ -6403,59 +5779,6 @@ private theorem scaledCoeffRows_diag_toNat_eq_gramDet
   rw [scaledCoeffRows_diag_toNat_eq_gramDetVecEntry (b := b) i hi]
   rw [gramDetVecEntry_eq_gramDet (b := b) hquot (i + 1) (Nat.succ_le_of_lt hi)]
 
-/-- Signed diagonal information from the executable scaled-coefficient loop:
-the diagonal slot is either the zero tail recorded after an earlier singular
-no-pivot step, or the signed diagonal entry in the final no-pivot Bareiss
-matrix for the full Gram matrix. -/
-private theorem scaledCoeffRows_diag_eq_zero_or_eq_noPivotData_diag
-    (b : Matrix Int n m) (i : Nat) (hi : i < n) :
-    getArrayEntry (scaledCoeffRows b) i i = 0 ∨
-      getArrayEntry (scaledCoeffRows b) i i =
-        (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix[
-          (⟨i, hi⟩ : Fin n)][(⟨i, hi⟩ : Fin n)] := by
-  let iFin : Fin n := ⟨i, hi⟩
-  have hdiag :=
-    scaledCoeffArrayLoop_diag_matches
-      (state_array :=
-        { step := 0
-          matrix := gramRows b
-          coeffs := zeroRows n
-          prevPivot := 1 })
-      (state_matrix := Matrix.noPivotInitialState (Matrix.gramMatrix b))
-      (by rfl) (rowsToMatrix_gramRows b) (by rfl) (by rfl)
-      (gramRows_size b) (gramRows_row_size b)
-      (zeroRows_size n) (zeroRows_row_size n)
-      (by
-        intro j hjs _hjn
-        simp [Matrix.noPivotInitialState] at hjs)
-      (by
-        intro j _hjs _hjn
-        exact getArrayEntry_zeroRows n j j)
-      n iFin (by
-        left
-        simp [Matrix.noPivotInitialState, iFin, hi])
-  show getArrayEntry
-      (scaledCoeffArrayLoop n n
-        { step := 0
-          matrix := gramRows b
-          coeffs := zeroRows n
-          prevPivot := 1 }).coeffs i i = 0 ∨
-    getArrayEntry
-      (scaledCoeffArrayLoop n n
-        { step := 0
-          matrix := gramRows b
-          coeffs := zeroRows n
-          prevPivot := 1 }).coeffs i i =
-        (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix[iFin][iFin]
-  rcases hdiag with ⟨_h_sing, h_eq⟩ | ⟨s, _h_sing, h_cases⟩
-  · right
-    simpa [Matrix.bareissNoPivotData, Matrix.finish, iFin] using h_eq
-  · rcases h_cases with ⟨_hsi, h_zero⟩ | ⟨_his, h_eq⟩
-    · left
-      simpa [iFin] using h_zero
-    · right
-      simpa [Matrix.bareissNoPivotData, Matrix.finish, iFin] using h_eq
-
 /-- Signed leading-prefix diagonal information from the executable
 scaled-coefficient loop: the diagonal slot is either the zero tail after an
 early singular no-pivot step, or the Bareiss determinant of the matching
@@ -6560,18 +5883,6 @@ private theorem scaledCoeffRows_diag_eq_zero_or_eq_leadingPrefix_bareiss
             (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix[iFin][iFin] := by
         simpa [Matrix.bareissNoPivotData, Matrix.finish, iFin] using h_eq
       exact h_eq_noPivot.trans h_leading
-
-/-- If the diagonal executable entry is known nonnegative, the Nat-level
-diagonal synchronization can be lifted back to the corresponding Int equality.
-That nonnegativity is a Mathlib-side obligation for Gram determinants. -/
-private theorem scaledCoeffRows_diag_eq_gramDet_of_nonneg
-    (b : Matrix Int n m) (hquot : StepWitness b) (i : Nat) (hi : i < n)
-    (hnonneg : 0 ≤ getArrayEntry (scaledCoeffRows b) i i) :
-    getArrayEntry (scaledCoeffRows b) i i =
-      Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
-  have hdiag := scaledCoeffRows_diag_toNat_eq_gramDet (b := b) hquot i hi
-  rw [← hdiag]
-  exact (Int.toNat_of_nonneg hnonneg).symm
 
 /-- The empty leading Gram determinant is `1`: the determinant of the `0 × 0`
 principal Gram minor. This is the base case anchoring the `gramDetVec` diagonal
@@ -6790,11 +6101,6 @@ private def prefixCoeffsCast (c : Vector Int n) (k : Fin n) : Vector Rat (k.val 
     let jn : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩
     (c[jn] : Rat)
 
-/-- The last entry of `prefixCoeffsCast c k` is the rational cast of `c[k]`. -/
-private theorem prefixCoeffsCast_last (c : Vector Int n) (k : Fin n) :
-    (prefixCoeffsCast c k)[k.val]'(Nat.lt_succ_self k.val) = (c[k] : Rat) := by
-  simp [prefixCoeffsCast]
-
 /-- Integer cast distributes over an inner-product-style integer `foldl`. -/
 private theorem foldl_int_dot_cast {n' : Nat}
     (xs : List (Fin n')) (g h : Fin n' → Int) (acc : Int) :
@@ -6937,21 +6243,6 @@ theorem prefixSpan_basis_and_coeffs_apply_eq_of_rowCombination
           (Vector.map (fun x : Int => (x : Rat)) c))[k] = (c[k] : Rat) :=
   ⟨prefixSpan_basis_of_rowCombination b c k hzero,
     rowCombination_coeffs_apply_eq_of_zero_above b c k hzero⟩
-
-/-- Nonzero specialization of
-`prefixSpan_basis_and_coeffs_apply_eq_of_rowCombination`, for the highest
-nonzero integer coefficient in a lattice row combination. -/
-theorem prefixSpan_basis_and_coeffs_apply_ne_zero_of_rowCombination
-    (b : Matrix Int n m) (c : Vector Int n) (k : Fin n)
-    (hck : c[k] ≠ 0)
-    (hzero : ∀ j : Fin n, k.val < j.val → c[j] = 0) :
-    GramSchmidt.prefixSpan (basis b) k.val k.isLt
-        (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c)) ∧
-      (Matrix.rowCombination (coeffs b)
-          (Vector.map (fun x : Int => (x : Rat)) c))[k] ≠ 0 := by
-  refine ⟨prefixSpan_basis_of_rowCombination b c k hzero, ?_⟩
-  rw [rowCombination_coeffs_apply_eq_of_zero_above b c k hzero]
-  exact_mod_cast hck
 
 /-- The coefficient matrix reconstructs the cast integer input rows from the
 Gram-Schmidt basis rows: `coeffs b * basis b` collapses to the cast input
@@ -7840,83 +7131,6 @@ private theorem noPivotLoop_initial_gram_diag_ne_zero_of_lt
   rw [h_q_plus_one, h_one_more] at h_prefix_succ_none
   simp at h_prefix_succ_none
 
-/-- Base case for the σ-chain/Bareiss correction invariant.  At `q = 0` the
-fold is empty, and one Bareiss update from the initial Gram matrix reduces the
-closed form to the product of the two column-zero Schur coefficients. -/
-private theorem schurSigma_foldl_eq_noPivotCorrection_zero
-    {n m : Nat} (b : Matrix Int n m) (a p_out : Nat)
-    (hp_out_pos : 0 < p_out) (hp_out_n : p_out < n)
-    (han : a < n) (hpa : p_out ≤ a)
-    (h_nonsing :
-      (Matrix.noPivotLoop p_out
-          (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = none)
-    (outer_ih : ∀ l (hlp : l < p_out),
-        getArrayEntry (scaledCoeffRowsSchur b) l l =
-          (Matrix.noPivotLoop l
-              (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
-            (⟨l, Nat.lt_trans hlp hp_out_n⟩ : Fin n)][
-            (⟨l, Nat.lt_trans hlp hp_out_n⟩ : Fin n)] ∧
-        ∀ c (_hlc : l < c) (hcn : c < n),
-          getArrayEntry (scaledCoeffRowsSchur b) c l =
-            (Matrix.noPivotLoop l
-                (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
-              (⟨c, hcn⟩ : Fin n)][
-              (⟨l, Nat.lt_trans hlp hp_out_n⟩ : Fin n)]) :
-      (List.range' 1 0).foldl
-          (fun σ p_iter =>
-            Matrix.exactDiv
-              (getArrayEntry (scaledCoeffRowsSchur b) p_iter p_iter * σ +
-                getArrayEntry (scaledCoeffRowsSchur b) a p_iter *
-                getArrayEntry (scaledCoeffRowsSchur b) p_out p_iter)
-              (getArrayEntry (scaledCoeffRowsSchur b) (p_iter - 1) (p_iter - 1)))
-          (getArrayEntry (scaledCoeffRowsSchur b) a 0 *
-            getArrayEntry (scaledCoeffRowsSchur b) p_out 0) =
-        (Matrix.noPivotLoop 0
-            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
-          (⟨0, Nat.lt_trans hp_out_pos hp_out_n⟩ : Fin n)][
-          (⟨0, Nat.lt_trans hp_out_pos hp_out_n⟩ : Fin n)] *
-          (Matrix.gramMatrix b)[(⟨a, han⟩ : Fin n)][(⟨p_out, hp_out_n⟩ : Fin n)] -
-        (Matrix.noPivotLoop (0 + 1)
-            (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
-          (⟨a, han⟩ : Fin n)][(⟨p_out, hp_out_n⟩ : Fin n)] := by
-  have h0p : 0 < p_out := hp_out_pos
-  have h0a : 0 < a := Nat.lt_of_lt_of_le hp_out_pos hpa
-  have h_rows_a0 :
-      getArrayEntry (scaledCoeffRowsSchur b) a 0 =
-        (Matrix.gramMatrix b)[(⟨a, han⟩ : Fin n)][
-          (⟨0, Nat.lt_trans h0p hp_out_n⟩ : Fin n)] := by
-    simpa [Matrix.noPivotLoop_zero_fuel, Matrix.noPivotInitialState] using
-      (outer_ih 0 h0p).2 a h0a han
-  have h_rows_p0 :
-      getArrayEntry (scaledCoeffRowsSchur b) p_out 0 =
-        (Matrix.gramMatrix b)[(⟨p_out, hp_out_n⟩ : Fin n)][
-          (⟨0, Nat.lt_trans h0p hp_out_n⟩ : Fin n)] := by
-    simpa [Matrix.noPivotLoop_zero_fuel, Matrix.noPivotInitialState] using
-      (outer_ih 0 h0p).2 p_out h0p hp_out_n
-  have h_sym_p0 :
-      (Matrix.gramMatrix b)[(⟨p_out, hp_out_n⟩ : Fin n)][
-          (⟨0, Nat.lt_trans h0p hp_out_n⟩ : Fin n)] =
-        (Matrix.gramMatrix b)[(⟨0, Nat.lt_trans h0p hp_out_n⟩ : Fin n)][
-          (⟨p_out, hp_out_n⟩ : Fin n)] :=
-    gramMatrix_symm (b := b) _ _
-  have hDone :
-      (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step + 1 < n := by
-    simp [Matrix.noPivotInitialState]
-    omega
-  have hpivot :
-      (Matrix.noPivotInitialState (Matrix.gramMatrix b)).matrix[
-        (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step][
-        (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step] ≠ 0 := by
-    simpa [Matrix.noPivotInitialState] using
-      noPivotLoop_initial_gram_diag_ne_zero_of_lt
-        (b := b) p_out 0 hp_out_pos hp_out_n h_nonsing
-  rw [Matrix.noPivotLoop_regular_branch 0
-      (Matrix.noPivotInitialState (Matrix.gramMatrix b)) hDone hpivot]
-  simp [Matrix.noPivotLoop_zero_fuel, Matrix.noPivotInitialState]
-  simp [Matrix.stepMatrix, Matrix.exactDiv, Matrix.ofFn, h0a, h0p,
-    h_rows_a0, h_rows_p0]
-  grind
-
 /-- Algebraic exact-division step used by the σ-chain correction successor:
 if the Bareiss update numerator is divisible by the previous pivot, the σ-body
 quotient subtracts the corresponding Bareiss quotient from `pivot * gram`. -/
@@ -8766,21 +7980,6 @@ theorem scaledCoeffs_diag_toNat (b : Matrix Int n m) (hquot : StepWitness b)
 
 /-- Signed diagonal information for the public scaled-coefficient matrix.
 The diagonal slot is either the zero tail recorded after an earlier singular
-no-pivot step, or the signed diagonal entry in the final no-pivot Bareiss
-matrix for the full Gram matrix. -/
-theorem scaledCoeffs_diag_eq_zero_or_eq_noPivotData_diag
-    (b : Matrix Int n m) (hquot : StepWitness b)
-    (i : Nat) (hi : i < n) :
-    GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ = 0 ∨
-      GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ =
-        (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix[
-          (⟨i, hi⟩ : Fin n)][(⟨i, hi⟩ : Fin n)] := by
-  rw [scaledCoeffs_entry_eq_getArrayEntry,
-    getArrayEntry_scaledCoeffRowsSchur_eq b hquot]
-  exact scaledCoeffRows_diag_eq_zero_or_eq_noPivotData_diag (b := b) i hi
-
-/-- Signed diagonal information for the public scaled-coefficient matrix.
-The diagonal slot is either the zero tail recorded after an earlier singular
 no-pivot step, or the Bareiss determinant of the corresponding leading Gram
 prefix. -/
 theorem scaledCoeffs_diag_eq_zero_or_eq_leadingPrefix_bareiss
@@ -9088,83 +8287,6 @@ expands `Matrix.det (borderedMinor G k hk i j)` as a sum over `a` of
 `Matrix.det (coeffBM G k hk i a) * G[a][j]`, applying `det_colReplace_sum_finRange`
 to the indicator expansion of the last column. -/
 
-/-- Foldl congruence for `Int` accumulator: replace the body if every
-on-list invocation agrees. -/
-private theorem foldl_acc_congr_int {α : Type u}
-    (xs : List α) (f g : Int → α → Int) (z : Int)
-    (h : ∀ acc x, x ∈ xs → f acc x = g acc x) :
-    xs.foldl f z = xs.foldl g z := by
-  induction xs generalizing z with
-  | nil => rfl
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [h z x List.mem_cons_self]
-      exact ih (g z x) (fun acc y hy => h acc y (List.mem_cons_of_mem x hy))
-
-/-- Indicator expansion: a function value `g q : Int` equals the foldl over
-`List.finRange n` whose body weights `g a` by the `Fin`-index indicator
-`if q.val = a.val then 1 else 0`. -/
-private theorem foldl_finRange_indicator_eval_int {n : Nat}
-    (q : Fin n) (g : Fin n → Int) :
-    (List.finRange n).foldl
-        (fun acc a => acc + g a * (if q.val = a.val then (1 : Int) else (0 : Int))) 0 =
-      g q := by
-  -- Generalize over an arbitrary list with `q ∈ xs` and `xs.Nodup`.
-  have aux : ∀ (xs : List (Fin n)) (z : Int),
-      q ∈ xs → xs.Nodup →
-      xs.foldl
-          (fun acc a => acc + g a * (if q.val = a.val then (1 : Int) else (0 : Int))) z =
-        z + g q := by
-    intro xs
-    induction xs with
-    | nil => intro z hmem _; simp at hmem
-    | cons x xs ih =>
-        intro z hmem hnodup
-        simp only [List.foldl_cons]
-        by_cases hxq : q.val = x.val
-        · -- x is the matching element. By nodup, x = q ∉ xs.
-          have hxq_eq : x = q := Fin.ext hxq.symm
-          rw [if_pos hxq]
-          rw [show g x = g q from congrArg g hxq_eq]
-          have hzgq : z + g q * (1 : Int) = z + g q := by grind
-          rw [hzgq]
-          have hxs_nomem : x ∉ xs := (List.nodup_cons.mp hnodup).1
-          have hq_nomem : q ∉ xs := hxq_eq ▸ hxs_nomem
-          -- For every y ∈ xs we have q.val ≠ y.val, so the foldl over xs is
-          -- the constant z + g q.
-          have hbody : ∀ acc, ∀ y ∈ xs,
-              acc + g y * (if q.val = y.val then (1 : Int) else (0 : Int)) = acc := by
-            intro acc y hy
-            have hy_ne : q ≠ y := fun heq => hq_nomem (heq ▸ hy)
-            have hval_ne : q.val ≠ y.val := fun heq => hy_ne (Fin.ext heq)
-            rw [if_neg hval_ne]
-            grind
-          clear ih hmem hnodup hxs_nomem hq_nomem hxq hxq_eq
-          induction xs with
-          | nil => rfl
-          | cons y ys ih' =>
-              simp only [List.foldl_cons]
-              have hy_in : y ∈ y :: ys := List.mem_cons_self
-              rw [hbody (z + g q) y hy_in]
-              exact ih' (fun acc y' hy'_in_ys =>
-                hbody acc y' (List.mem_cons_of_mem _ hy'_in_ys))
-        · rw [if_neg hxq]
-          have hmul_zero : g x * (0 : Int) = 0 := by grind
-          rw [hmul_zero]
-          have hz_zero : z + (0 : Int) = z := by grind
-          rw [hz_zero]
-          have hmem' : q ∈ xs := by
-            cases List.mem_cons.mp hmem with
-            | inl h =>
-                have hval : q.val = x.val := congrArg Fin.val h
-                exact absurd hval hxq
-            | inr h => exact h
-          have hnodup' : xs.Nodup := (List.nodup_cons.mp hnodup).2
-          exact ih z hmem' hnodup'
-  have h := aux (List.finRange n) 0 (List.mem_finRange q) (List.nodup_finRange n)
-  rw [h]
-  grind
-
 /-- The coefficient bordered minor. Its first `k` columns match
 `Matrix.borderedMinor G k hk i j` for any `j` (those columns are independent of
 `j`), and its last column is the indicator vector for row index `a`. -/
@@ -9178,206 +8300,6 @@ private def coeffBM {n : Nat} (G : Matrix Int n n) (k : Nat) (hk : k < n)
       let cc : Fin n := ⟨c.val, Nat.lt_trans hc hk⟩
       G[rr][cc]
     else (if rr.val = a.val then (1 : Int) else (0 : Int))
-
-/-- For `c.val < k`, `coeffBM` and `borderedMinor` agree at `(r, c)` (the
-first `k` columns are independent of `j` and `a`). -/
-private theorem coeffBM_entry_lt {n : Nat} (G : Matrix Int n n) (k : Nat) (hk : k < n)
-    (i a j : Fin n) (r c : Fin (k + 1)) (hc : c.val < k) :
-    (coeffBM G k hk i a)[r][c] = (Matrix.borderedMinor G k hk i j)[r][c] := by
-  unfold coeffBM
-  simp only [Matrix.getElem_ofFn, dif_pos hc]
-  by_cases hr : r.val < k
-  · simp only [dif_pos hr]
-    rw [Matrix.borderedMinor_entry_lt_lt G k hk i j r c hr hc]
-  · simp only [dif_neg hr]
-    have hr_eq : r.val = k := by have := r.isLt; omega
-    have hrFin : r = Fin.last k := Fin.ext (by simp [hr_eq])
-    have h_rhs : (Matrix.borderedMinor G k hk i j)[r][c] =
-        (Matrix.borderedMinor G k hk i j)[Fin.last k][c] :=
-      congrArg (fun (r' : Fin (k + 1)) =>
-        (Matrix.borderedMinor G k hk i j)[r'][c]) hrFin
-    rw [h_rhs]
-    rw [Matrix.borderedMinor_entry_last_lt G k hk i j c hc]
-
-/-- For `c = Fin.last k`, the last column of `coeffBM G k hk i a` is the
-indicator `if (liftBorderedIdx hk i r).val = a.val then 1 else 0`. -/
-private theorem coeffBM_entry_last {n : Nat} (G : Matrix Int n n) (k : Nat) (hk : k < n)
-    (i a : Fin n) (r : Fin (k + 1)) :
-    (coeffBM G k hk i a)[r][Fin.last k] =
-      (if (liftBorderedIdx hk i r).val = a.val then (1 : Int) else (0 : Int)) := by
-  unfold coeffBM
-  have hlast : ¬ (Fin.last k).val < k := Nat.lt_irrefl k
-  simp only [Matrix.getElem_ofFn, dif_neg hlast]
-  -- The `let rr` body is definitionally `liftBorderedIdx hk i r`, so the goal
-  -- now matches the RHS up to that identification.
-  rfl
-
-/-- The last column of `borderedMinor G k hk i j` at row `r` equals
-`G[liftBorderedIdx hk i r][j]`. -/
-private theorem borderedMinor_last_col_eq {n : Nat} (G : Matrix Int n n) (k : Nat)
-    (hk : k < n) (i j : Fin n) (r : Fin (k + 1)) :
-    (Matrix.borderedMinor G k hk i j)[r][Fin.last k] =
-      G[liftBorderedIdx hk i r][j] := by
-  rw [borderedMinor_entry_eq_lift G k hk i j r (Fin.last k)]
-  congr 1
-  rw [liftBorderedIdx_val_eq_k hk j (Fin.last k) (by simp)]
-
-/-- Replacing the last column of `borderedMinor G k hk i j` with the indicator
-vector for row index `a` yields `coeffBM G k hk i a`. -/
-private theorem colReplace_borderedMinor_indicator_eq_coeffBM
-    {n : Nat} (G : Matrix Int n n) (k : Nat) (hk : k < n) (i j a : Fin n) :
-    Matrix.colReplace (Matrix.borderedMinor G k hk i j) (Fin.last k)
-        (fun r => if (liftBorderedIdx hk i r).val = a.val then (1 : Int) else (0 : Int)) =
-      coeffBM G k hk i a := by
-  apply Vector.ext
-  intro r hr
-  apply Vector.ext
-  intro c hc
-  change (Matrix.colReplace (Matrix.borderedMinor G k hk i j) (Fin.last k)
-      (fun r => if (liftBorderedIdx hk i r).val = a.val then (1 : Int) else (0 : Int)))[
-        (⟨r, hr⟩ : Fin (k + 1))][(⟨c, hc⟩ : Fin (k + 1))] =
-    (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][(⟨c, hc⟩ : Fin (k + 1))]
-  rw [Matrix.colReplace_get]
-  by_cases hc_eq : (⟨c, hc⟩ : Fin (k + 1)) = Fin.last k
-  · rw [if_pos hc_eq]
-    -- Replace `⟨c, hc⟩` with `Fin.last k` on the RHS via congrArg, then use
-    -- `coeffBM_entry_last`.
-    have hRHS :
-        (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][(⟨c, hc⟩ : Fin (k + 1))] =
-          (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][Fin.last k] :=
-      congrArg (fun (c' : Fin (k + 1)) =>
-        (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][c']) hc_eq
-    rw [hRHS]
-    rw [coeffBM_entry_last G k hk i a (⟨r, hr⟩ : Fin (k + 1))]
-  · rw [if_neg hc_eq]
-    have hc_lt : c < k := by
-      have hc_ne : c ≠ k := fun heq => hc_eq (Fin.ext (by simp [heq]))
-      omega
-    rw [(coeffBM_entry_lt G k hk i a j (⟨r, hr⟩ : Fin (k + 1))
-        (⟨c, hc⟩ : Fin (k + 1)) hc_lt).symm]
-
-/-- **Multilinearity entry equation**: the determinant of the bordered minor at
-`(i, j)` expands as a sum over `a : Fin n` of `det (coeffBM G k hk i a) * G[a][j]`.
-The first `k` columns of `borderedMinor G k hk i j` are independent of `j`; only
-the last column carries `j`, and expanding it in the standard basis via
-`det_colReplace_sum_finRange` produces the indicator-weighted sum identified by
-`colReplace_borderedMinor_indicator_eq_coeffBM`. -/
-private theorem det_borderedMinor_eq_sum_coeffBM
-    {n : Nat} (G : Matrix Int n n) (k : Nat) (hk : k < n) (i j : Fin n) :
-    Matrix.det (Matrix.borderedMinor G k hk i j) =
-      (List.finRange n).foldl
-        (fun acc a =>
-          acc + Matrix.det (coeffBM G k hk i a) * G[a][j]) 0 := by
-  -- Identify the last column of `borderedMinor` with the linear combination of
-  -- indicator vectors weighted by `G[a][j]`.
-  have hcol_eq : (fun r : Fin (k + 1) =>
-        (Matrix.borderedMinor G k hk i j)[r][Fin.last k]) =
-      (fun r : Fin (k + 1) => (List.finRange n).foldl
-        (fun acc a =>
-          acc + G[a][j] * (if (liftBorderedIdx hk i r).val = a.val then
-            (1 : Int) else (0 : Int))) 0) := by
-    funext r
-    rw [borderedMinor_last_col_eq G k hk i j r]
-    have hindicator := foldl_finRange_indicator_eval_int (n := n)
-        (liftBorderedIdx hk i r) (fun a => G[a][j])
-    rw [hindicator]
-  -- `borderedMinor` equals `colReplace borderedMinor (Fin.last k)` of its own
-  -- last column.
-  have hself : Matrix.borderedMinor G k hk i j =
-      Matrix.colReplace (Matrix.borderedMinor G k hk i j) (Fin.last k)
-        (fun r => (Matrix.borderedMinor G k hk i j)[r][Fin.last k]) :=
-    (Matrix.colReplace_self (Matrix.borderedMinor G k hk i j) (Fin.last k)).symm
-  -- Apply `det_colReplace_sum_finRange`.
-  have hsum := Matrix.det_colReplace_sum_finRange (R := Int) (m := n)
-      (Matrix.borderedMinor G k hk i j) (Fin.last k)
-      (fun a => G[a][j])
-      (fun a r => if (liftBorderedIdx hk i r).val = a.val then
-        (1 : Int) else (0 : Int))
-  -- Rewrite `det borderedMinor` to the colReplace-self form, then to the foldl form.
-  calc Matrix.det (Matrix.borderedMinor G k hk i j)
-      = Matrix.det (Matrix.colReplace (Matrix.borderedMinor G k hk i j) (Fin.last k)
-          (fun r => (Matrix.borderedMinor G k hk i j)[r][Fin.last k])) := by
-        rw [← hself]
-    _ = Matrix.det (Matrix.colReplace (Matrix.borderedMinor G k hk i j) (Fin.last k)
-          (fun r => (List.finRange n).foldl
-            (fun acc a =>
-              acc + G[a][j] * (if (liftBorderedIdx hk i r).val = a.val then
-                (1 : Int) else (0 : Int))) 0)) := by
-        rw [hcol_eq]
-    _ = (List.finRange n).foldl
-          (fun acc a =>
-            acc + G[a][j] * Matrix.det (Matrix.colReplace
-              (Matrix.borderedMinor G k hk i j) (Fin.last k)
-              (fun r => if (liftBorderedIdx hk i r).val = a.val then
-                (1 : Int) else (0 : Int)))) 0 := hsum
-    _ = (List.finRange n).foldl
-          (fun acc a =>
-            acc + G[a][j] * Matrix.det (coeffBM G k hk i a)) 0 := by
-        apply foldl_acc_congr_int
-        intro acc a _ha
-        rw [colReplace_borderedMinor_indicator_eq_coeffBM G k hk i j a]
-    _ = (List.finRange n).foldl
-          (fun acc a => acc + Matrix.det (coeffBM G k hk i a) * G[a][j]) 0 := by
-        apply foldl_acc_congr_int
-        intro acc a _ha
-        rw [Int.mul_comm]
-
-/-- **Support lemma**: when `a.val ≥ k` and `a ≠ i`, every entry of the last
-column of `coeffBM G k hk i a` is zero, so its determinant vanishes. -/
-private theorem det_coeffBM_eq_zero_of_ge_and_ne
-    {n : Nat} (G : Matrix Int n n) (k : Nat) (hk : k < n) (i a : Fin n)
-    (hak : k ≤ a.val) (hai : a ≠ i) :
-    Matrix.det (coeffBM G k hk i a) = 0 := by
-  -- The last column of `coeffBM G k hk i a` is all-zero under the hypotheses.
-  have hzero_col : ∀ r : Fin (k + 1),
-      (coeffBM G k hk i a)[r][Fin.last k] = 0 := by
-    intro r
-    rw [coeffBM_entry_last G k hk i a r]
-    by_cases hr : r.val < k
-    · have : (liftBorderedIdx hk i r).val = r.val := by
-        simp [liftBorderedIdx, hr]
-      rw [this]
-      have hne : r.val ≠ a.val := by omega
-      rw [if_neg hne]
-    · have hr_eq : r.val = k := by have := r.isLt; omega
-      have hrFin : r = Fin.last k := Fin.ext (by simp [hr_eq])
-      have : (liftBorderedIdx hk i r).val = i.val := by
-        rw [hrFin]
-        rw [liftBorderedIdx_val_eq_k hk i (Fin.last k) (by simp)]
-      rw [this]
-      have hai_val : i.val ≠ a.val := fun heq => hai (Fin.ext heq).symm
-      rw [if_neg hai_val]
-  -- Rewrite `coeffBM` as `colReplace` of itself with the all-zero column.
-  have hrep : coeffBM G k hk i a =
-      Matrix.colReplace (coeffBM G k hk i a) (Fin.last k) (fun _ => (0 : Int)) := by
-    apply Vector.ext
-    intro r hr
-    apply Vector.ext
-    intro c hc
-    change (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][(⟨c, hc⟩ : Fin (k + 1))] =
-      (Matrix.colReplace (coeffBM G k hk i a) (Fin.last k) (fun _ => (0 : Int)))[
-        (⟨r, hr⟩ : Fin (k + 1))][(⟨c, hc⟩ : Fin (k + 1))]
-    rw [Matrix.colReplace_get]
-    by_cases hc_eq : (⟨c, hc⟩ : Fin (k + 1)) = Fin.last k
-    · rw [if_pos hc_eq]
-      have hLHS :
-          (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][(⟨c, hc⟩ : Fin (k + 1))] =
-            (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][Fin.last k] :=
-        congrArg (fun (c' : Fin (k + 1)) =>
-          (coeffBM G k hk i a)[(⟨r, hr⟩ : Fin (k + 1))][c']) hc_eq
-      rw [hLHS]
-      exact hzero_col (⟨r, hr⟩ : Fin (k + 1))
-    · rw [if_neg hc_eq]
-  rw [hrep]
-  -- `det (colReplace M dst (fun _ => 0)) = 0` via `det_colReplace_smul` at scalar `0`.
-  have hsmul := Matrix.det_colReplace_smul (R := Int) (coeffBM G k hk i a)
-      (Fin.last k) (0 : Int) (fun _ => (1 : Int))
-  have hcol_eq : (fun _ : Fin (k + 1) => (0 : Int) * (1 : Int)) =
-      (fun _ : Fin (k + 1) => (0 : Int)) := by
-    funext _; grind
-  rw [hcol_eq] at hsmul
-  rw [hsmul]
-  grind
 
 end GramSchmidt.Int
 
