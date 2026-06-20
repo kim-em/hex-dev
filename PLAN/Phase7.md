@@ -66,6 +66,9 @@ at build time:
 - Lean code blocks (```` ```lean ````) are capped at **60 columns**;
   longer lines warn. Lift wide `example`/`theorem` binders into a
   `variable` block above the block to fit.
+- `#eval`/`#guard` on an `@[extern]` def fails in the manual's
+  evaluator (no native binding) — document those by signature/law and
+  keep evaluated example blocks to the pure-Lean surface.
 - When the library is an `abbrev` over a more generic type
   (`ZPoly = DensePoly Int`, `FpPoly p = DensePoly (ZMod64 p)`), a
   worked-example `#guard` over an op defined in *both* namespaces
@@ -74,8 +77,8 @@ at build time:
   (`ZPoly.content f`, not `content f`). Validate `#guard` values in a
   throwaway file importing the fast Mathlib-free library before the
   slow `HexManual` build.
-- `{docstring T}` on a `structure`/`inductive` requires **every field
-  to have its own docstring**, not just the type — an undocumented field
+- `{docstring T}` on a `structure`/`inductive`/`class` requires **every
+  field to have its own docstring**, not just the type — an undocumented field
   errors with `'…' is not documented` (and cascades into a misleading
   "declaration uses `sorry`" warning on the `#doc`). Add a `/-- … -/` to
   each field in the source library before referencing the type, or embed
