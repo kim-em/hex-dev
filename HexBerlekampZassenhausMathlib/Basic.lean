@@ -156,7 +156,7 @@ def irreducibleByFactorization (f : Polynomial ℤ) : Bool :=
   Hex.ZPoly.isIrreducible (HexPolyZMathlib.ofPolynomial f)
 
 /-- The default executable factorization multiplies back to the input. -/
-@[simp]
+@[simp, grind =]
 theorem factor_product (f : Hex.ZPoly) :
     Hex.Factorization.product (Hex.factor f) = f := by
   exact Hex.factorWithBound_product f (Hex.ZPoly.defaultFactorCoeffBound f)
@@ -242,7 +242,7 @@ instance Hex.ZPoly.instDecidableIrreducible (f : Hex.ZPoly) :
 The executable factorization predicate agrees with Mathlib irreducibility over
 `Polynomial ℤ`.
 -/
-@[simp]
+@[simp, grind =]
 theorem irreducibleByFactorization_iff (f : Polynomial ℤ) :
     irreducibleByFactorization f = true ↔ Irreducible f := by
   rw [irreducibleByFactorization]
