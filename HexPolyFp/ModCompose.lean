@@ -60,11 +60,14 @@ def composeModMonic (f g modulus : FpPoly p)
     (fun acc coeff => modByMonic modulus (acc * g + C coeff) hmonic)
     0
 
+/-- Modular composition of the zero polynomial is `0`. -/
 @[simp, grind =] theorem composeModMonic_zero
     (g modulus : FpPoly p) (hmonic : DensePoly.Monic modulus) :
     composeModMonic 0 g modulus hmonic = 0 := by
   rfl
 
+/-- Modular composition of a constant `C c` reduces `C c` modulo the monic
+modulus. -/
 @[simp, grind =] theorem composeModMonic_C
     (c : ZMod64 p) (g modulus : FpPoly p) (hmonic : DensePoly.Monic modulus) :
     composeModMonic (C c) g modulus hmonic = modByMonic modulus (C c) hmonic := by
