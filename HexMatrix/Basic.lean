@@ -887,7 +887,11 @@ private theorem foldl_dotProduct_basis_body {R : Type u} [Lean.Grind.CommRing R]
       rw [hxi, hxj]
       exact ih (acc + (if i = x then 1 else 0) * (if j = x then 1 else 0))
 
-/-- Dot product of the `i`-th and `j`-th identity rows. -/
+/-- Dot product of the `i`-th and `j`-th identity rows.
+
+Left `@[simp]`-only (not promoted to `grind =`): the indices `i j` appear only
+under the `ofFn` binders, so the LHS pattern `dotProduct (ofFn _) (ofFn _)`
+cannot instantiate them and `grind =` rejects it. -/
 @[simp] theorem dotProduct_basis_basis {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (i j : Fin n) :
     Hex.Vector.dotProduct
