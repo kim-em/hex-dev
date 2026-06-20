@@ -118,7 +118,7 @@ def coeffWords (words : Array UInt64) (n : Nat) : Bool :=
     trimTrailingZeroWordsList_getD words.toList i
 
 /-- Trailing-zero normalization preserves packed coefficients. -/
-@[simp] theorem coeffWords_normalizeWords (words : Array UInt64) (n : Nat) :
+@[simp, grind =] theorem coeffWords_normalizeWords (words : Array UInt64) (n : Nat) :
     coeffWords (normalizeWords words) n = coeffWords words n := by
   rw [coeffWords, coeffWords, normalizeWords_get?_getD]
 

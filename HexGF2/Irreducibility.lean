@@ -144,7 +144,7 @@ def powWitness? (k : Nat) : Option GF2Poly :=
   cert.powChain[k]?
 
 /-- Certificate pow witnesses are backed directly by the pow-chain array. -/
-@[simp] theorem powWitness?_eq_getElem? (k : Nat) :
+@[simp, grind =] theorem powWitness?_eq_getElem? (k : Nat) :
     cert.powWitness? k = cert.powChain[k]? := rfl
 
 /-- Read the Bezout witness for the `i`-th maximal proper divisor, if present. -/
@@ -152,7 +152,7 @@ def bezoutWitness? (i : Nat) : Option RabinBezoutWitness :=
   cert.bezout[i]?
 
 /-- Certificate Bezout witnesses are backed directly by the Bezout array. -/
-@[simp] theorem bezoutWitness?_eq_getElem? (i : Nat) :
+@[simp, grind =] theorem bezoutWitness?_eq_getElem? (i : Nat) :
     cert.bezoutWitness? i = cert.bezout[i]? := rfl
 
 end IrreducibilityCertificate
