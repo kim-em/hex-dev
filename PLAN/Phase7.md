@@ -57,7 +57,7 @@ Each chapter should cover:
    computational libs) or to the computational counterpart (for
    `hex-*-mathlib` libs).
 
-Three Verso syntax constraints bite chapter authors and only surface at
+Five Verso constraints bite chapter authors and only surface at
 build time:
 
 - A `{ref "tag"}[text]` (or `{name}`/`{docstring}`) directive must sit
@@ -70,6 +70,9 @@ build time:
   and errors if any field is undocumented. Add a `/--` docstring to
   every field of a structure/class you embed, or embed it with `{name}`
   and describe it in prose instead.
+- `#eval`/`#guard` on an `@[extern]` def fails in the manual's
+  evaluator (no native binding) — document those by signature/law and
+  keep evaluated example blocks to the pure-Lean surface.
 - When the library is an `abbrev` over a more generic type
   (`ZPoly = DensePoly Int`, `FpPoly p = DensePoly (ZMod64 p)`), a
   worked-example `#guard` over an op defined in *both* namespaces

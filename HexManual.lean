@@ -1,5 +1,6 @@
 import VersoManual
 
+import HexManual.Chapters.HexArith
 import HexManual.Chapters.HexGFqRing
 import HexManual.Chapters.HexGFqMathlib
 import HexManual.Chapters.HexModArith
@@ -32,6 +33,8 @@ correspondence layer that re-exports the executable theory as theorems
 about the corresponding Mathlib structures. This manual collects per-library
 reference chapters for the libraries that have reached the
 documentation phase of the development plan.
+
+{include 0 HexManual.Chapters.HexArith}
 
 {include 0 HexManual.Chapters.HexGFqRing}
 

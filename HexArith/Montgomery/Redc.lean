@@ -11,10 +11,15 @@ reduced residue.
 /-- Runtime Montgomery context for an odd `UInt64` modulus. -/
 structure MontCtx (p : UInt64) where
   mkCtx ::
+  /-- The modulus is odd. -/
   p_odd : p % 2 = 1
+  /-- The Montgomery inverse word, satisfying `p' · p ≡ -1 (mod R)`. -/
   p' : UInt64
+  /-- The inverse field satisfies `p' · p ≡ R - 1 (mod R)`. -/
   p'_eq : (p'.toNat * p.toNat) % UInt64.word = UInt64.word - 1
+  /-- The constant `R² mod p`, used to convert a residue into Montgomery form. -/
   r2 : UInt64
+  /-- The `r2` field is exactly `R² mod p`. -/
   r2_eq : r2.toNat = (UInt64.word * UInt64.word) % p.toNat
 
 /--

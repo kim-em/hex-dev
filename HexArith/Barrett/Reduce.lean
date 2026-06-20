@@ -14,9 +14,13 @@ regime `p < 2^32` where products of residues still fit in one `UInt64`.
 -/
 structure BarrettCtx (p : UInt64) where
   mkCtx ::
+  /-- The modulus is at least `2`. -/
   p_gt : p.toNat > 1
+  /-- The small-modulus bound `p < 2^32`, so products of residues fit in one word. -/
   p_lt : p.toNat < 2 ^ 32
+  /-- The precomputed reciprocal word `⌊R / p⌋`. -/
   pinv : UInt64
+  /-- The reciprocal field is exactly `⌊R / p⌋`. -/
   pinv_eq : pinv = .ofNat (barrettRadix / p.toNat)
 
 namespace BarrettCtx
