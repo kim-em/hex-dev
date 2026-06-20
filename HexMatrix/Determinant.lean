@@ -5594,6 +5594,8 @@ def columnTupleMatrix {R : Type u} {n m : Nat}
     (A : Matrix R n m) (cols : Fin n → Fin m) : Matrix R n n :=
   ofFn fun r c => A[r][cols c]
 
+/-- Entry `(r, c)` of the column-selected minor is the source entry
+`A[r][cols c]`. -/
 @[simp, grind =] theorem columnTupleMatrix_entry {R : Type u} {n m : Nat}
     (A : Matrix R n m) (cols : Fin n → Fin m) (r c : Fin n) :
     (columnTupleMatrix A cols)[r][c] = A[r][cols c] := by
@@ -5603,6 +5605,8 @@ def columnTupleMatrix {R : Type u} {n m : Nat}
 def columnTupleVectorFn {n m : Nat} (cols : Vector (Fin m) n) : Fin n → Fin m :=
   fun i => cols[i]
 
+/-- Applying the column-selection function at `i` reads the `i`-th entry
+`cols[i]` of the tuple vector. -/
 @[simp, grind =] theorem columnTupleVectorFn_apply {n m : Nat}
     (cols : Vector (Fin m) n) (i : Fin n) :
     columnTupleVectorFn cols i = cols[i] := rfl
@@ -7162,6 +7166,8 @@ is still well-defined but may have repeated values. -/
 def sortInjPerm {m n : Nat} (cols : Vector (Fin m) n) : Vector (Fin n) n :=
   Vector.ofFn fun i => ⟨columnRankNat cols i, columnRankNat_lt cols i⟩
 
+/-- The `i`-th value of the sorting permutation is the rank `columnRankNat cols i`
+of `cols[i]` (the number of strictly smaller positions). -/
 @[simp, grind =] theorem sortInjPerm_getElem_val {m n : Nat}
     (cols : Vector (Fin m) n) (i : Fin n) :
     (sortInjPerm cols)[i].val = columnRankNat cols i := by
@@ -7425,11 +7431,16 @@ def reconstructInjTuple {m n : Nat}
     (sel : Vector (Fin m) n) (perm : Vector (Fin n) n) : Vector (Fin m) n :=
   Vector.ofFn fun i => sel[perm[i]]
 
+/-- The `i`-th entry of the reconstructed tuple is `sel[perm[i]]`: read the
+sorted choice `sel` through the permutation `perm`. -/
 @[simp, grind =] theorem reconstructInjTuple_getElem {m n : Nat}
     (sel : Vector (Fin m) n) (perm : Vector (Fin n) n) (i : Fin n) :
     (reconstructInjTuple sel perm)[i] = sel[perm[i]] := by
   rw [reconstructInjTuple, vector_ofFn_getElem_fin]
 
+/-- Selecting columns via the reconstructed tuple equals selecting via `sel`
+with the column index permuted by `perm`: entry `(r, c)` agrees with entry
+`(r, perm[c])` of the `sel`-selected minor. -/
 @[simp, grind =] theorem columnTupleMatrix_reconstructInjTuple_entry
     {R : Type u} {n m : Nat} (A : Matrix R n m)
     (sel : Vector (Fin m) n) (perm : Vector (Fin n) n)
@@ -7970,6 +7981,8 @@ theorem det_gramMatrix_nonneg {n m : Nat} (A : Matrix Int n m) :
 def firstColumns (k n : Nat) (hk : k ≤ n) : Vector (Fin n) k :=
   Vector.ofFn fun i => ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
 
+/-- The `i`-th entry of the first-`k`-columns selection is the index `i` itself,
+embedded into `Fin n`. -/
 @[simp, grind =] theorem firstColumns_entry (k n : Nat) (hk : k ≤ n) (i : Fin k) :
     (firstColumns k n hk)[i] = (⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩ : Fin n) := by
   simp [firstColumns]
@@ -8061,6 +8074,7 @@ def setRow {R : Type u} {n m : Nat}
     (M : Matrix R n m) (dst : Fin n) (v : Vector R m) : Matrix R n m :=
   M.set dst v
 
+/-- Reading back the replaced row `dst` of `setRow M dst v` yields `v`. -/
 @[simp, grind =] theorem setRow_get_self {R : Type u} {n m : Nat}
     (M : Matrix R n m) (dst : Fin n) (v : Vector R m) :
     (setRow M dst v)[dst] = v := by
@@ -8174,6 +8188,8 @@ def adjugate {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) : Matrix R (n + 1) (n + 1) :=
   ofFn fun i j => cofactor M j i
 
+/-- Entry `(i, j)` of the adjugate is the cofactor of `M` at row `j`, column `i`
+(the transpose of the cofactor matrix). -/
 @[simp, grind =] theorem adjugate_get {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) :
     (adjugate M)[i][j] = cofactor M j i := by
@@ -8463,17 +8479,23 @@ def skipIndex2 {n : Nat} (p q : Fin (n + 2)) (_hpq : p.val < q.val)
   else
     ⟨i.val + 2, by have hi := i.isLt; omega⟩
 
+/-- Below the first deleted index `p`, `skipIndex2` is the identity: its value
+at `i` is `i`. -/
 @[simp, grind =] theorem skipIndex2_val_of_lt_p {n : Nat} (p q : Fin (n + 2))
     (hpq : p.val < q.val) (i : Fin n) (h : i.val < p.val) :
     (skipIndex2 p q hpq i).val = i.val := by
   simp [skipIndex2, h]
 
+/-- Between the two deleted indices `p` and `q`, `skipIndex2` shifts up by one:
+its value at `i` is `i + 1`. -/
 @[simp, grind =] theorem skipIndex2_val_of_between {n : Nat} (p q : Fin (n + 2))
     (hpq : p.val < q.val) (i : Fin n) (h1 : ¬ i.val < p.val)
     (h2 : i.val + 1 < q.val) :
     (skipIndex2 p q hpq i).val = i.val + 1 := by
   simp [skipIndex2, h1, h2]
 
+/-- At or beyond the second deleted index `q`, `skipIndex2` shifts up by two:
+its value at `i` is `i + 2`. -/
 @[simp, grind =] theorem skipIndex2_val_of_ge_q {n : Nat} (p q : Fin (n + 2))
     (hpq : p.val < q.val) (i : Fin n) (h1 : ¬ i.val < p.val)
     (h2 : ¬ i.val + 1 < q.val) :
@@ -8550,6 +8572,8 @@ def nMatrix {R : Type u} {n : Nat}
     Matrix R n n :=
   ofFn fun i j => B[skipIndex2 p q hpq i][j]
 
+/-- Entry `(i, j)` of the two-row-deleted minor `nMatrix B p q hpq` is the source
+entry `B[skipIndex2 p q hpq i][j]`. -/
 @[simp, grind =] theorem nMatrix_entry {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val)
     (i : Fin n) (j : Fin n) :
@@ -9516,6 +9540,8 @@ def basisVec {R : Type u} [Zero R] [One R] {n : Nat} (q : Fin (n + 2)) :
     Vector R (n + 2) :=
   Vector.ofFn fun i => if i = q then (1 : R) else (0 : R)
 
+/-- Entry `i` of the standard basis vector `e_q` is `1` when `i = q` and `0`
+otherwise. -/
 @[simp, grind =] theorem basisVec_getElem {R : Type u} [Zero R] [One R] {n : Nat}
     (q : Fin (n + 2)) (i : Fin (n + 2)) :
     (basisVec (R := R) q)[i] = if i = q then (1 : R) else (0 : R) := by
