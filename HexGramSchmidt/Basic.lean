@@ -25,13 +25,6 @@ private def projectionCoeff (row basisRow : Vector Rat m) : Rat :=
 private def subtractProjection (row basisRow : Vector Rat m) : Vector Rat m :=
   row - projectionCoeff row basisRow • basisRow
 
-/-- If `row` and `other` are both orthogonal to `basis`, then so is `row - c • other`. -/
-private theorem dot_sub_smul_zero_of_dot_zero (row other basis : Vector Rat m) (c : Rat)
-    (hrow : Matrix.dot row basis = 0) (hother : Matrix.dot other basis = 0) :
-    Matrix.dot (row - c • other) basis = 0 := by
-  rw [Matrix.dot_sub_smul_rat, hrow, hother]
-  grind
-
 /-- `dot (subtractProjection row basisRow) target` expands as `dot row target`
 minus the projection coefficient times `dot basisRow target`. -/
 private theorem dot_subtractProjection (row basisRow target : Vector Rat m) :
@@ -50,15 +43,6 @@ private theorem subtractProjection_add_projection (row basisRow : Vector Rat m) 
   rw [Vector.getElem_add, subtractProjection, Vector.getElem_sub, Vector.getElem_smul]
   grind
 
-/-- If `row` and `basisRow` are both orthogonal to `target`, then so is
-`subtractProjection row basisRow`. -/
-private theorem dot_subtractProjection_zero_of_dot_zero
-    (row basisRow target : Vector Rat m)
-    (hrow : Matrix.dot row target = 0) (hbasis : Matrix.dot basisRow target = 0) :
-    Matrix.dot (subtractProjection row basisRow) target = 0 := by
-  rw [dot_subtractProjection, hrow, hbasis]
-  grind
-
 /-- The residual `subtractProjection row basisRow` is orthogonal to `basisRow`
 whenever `basisRow` has nonzero norm. -/
 private theorem dot_subtractProjection_self_zero (row basisRow : Vector Rat m)
@@ -66,26 +50,6 @@ private theorem dot_subtractProjection_self_zero (row basisRow : Vector Rat m)
     Matrix.dot (subtractProjection row basisRow) basisRow = 0 := by
   rw [dot_subtractProjection]
   simp [projectionCoeff, hnorm]
-  grind
-
-/-- Subtracting `c • basisRow` from `row` decreases its projection coefficient
-onto `basisRow` by `c`, given `basisRow` has nonzero norm. -/
-private theorem projectionCoeff_sub_smul_self
-    (row basisRow : Vector Rat m) (c : Rat)
-    (hnorm : Matrix.dot basisRow basisRow ≠ 0) :
-    projectionCoeff (row - c • basisRow) basisRow =
-      projectionCoeff row basisRow - c := by
-  simp [projectionCoeff, Matrix.dot_sub_smul_rat, hnorm]
-  grind
-
-/-- The projection coefficient onto `basisRow` is linear: subtracting `c • other`
-from `row` subtracts `c` times `other`'s projection coefficient, given nonzero norm. -/
-private theorem projectionCoeff_sub_smul
-    (row other basisRow : Vector Rat m) (c : Rat)
-    (hnorm : Matrix.dot basisRow basisRow ≠ 0) :
-    projectionCoeff (row - c • other) basisRow =
-      projectionCoeff row basisRow - c * projectionCoeff other basisRow := by
-  simp [projectionCoeff, Matrix.dot_sub_smul_rat, hnorm]
   grind
 
 /-- A rational multiplied by itself is nonnegative. -/
@@ -1265,12 +1229,6 @@ private theorem basisRows_get!_eq_of_prefix
     congrArg (fun xs : List (Vector Rat m) => xs[i]?) htake
   simp [hi_b1, hi_b2] at hget
   simp [hget, hi_b1, hi_b2]
-
-private theorem add_zero_vec (v : Vector Rat m) : v + (0 : Vector Rat m) = v := by
-  apply Vector.ext
-  intro k hk
-  rw [Vector.getElem_add, Vector.getElem_zero]
-  grind
 
 /-- Reducing the next source row against the prefix before its predecessor
 leaves the old next basis row plus the predecessor projection term. -/
@@ -2700,12 +2658,6 @@ private theorem prefixSpan_rowSwap_adjacent_at_or_after
           simpa [hswap_swap] using hrowspan)
     rwa [hc] at hspan
 
-private theorem prefixSpan_rowSwap_adjacent_after
-    (b : Matrix Rat n m) (km1 k : Fin n) (i : Nat) (hi : i < n)
-    (hkm1 : km1.val + 1 = k.val) (hki : k.val < i) (v : Vector Rat m) :
-    prefixSpan (Matrix.rowSwap b km1 k) i hi v ↔ prefixSpan b i hi v :=
-  prefixSpan_rowSwap_adjacent_at_or_after b km1 k i hi hkm1 (Nat.le_of_lt hki) v
-
 private theorem prefixSpan_strictPrefix_rowCombination
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) (c : Vector Rat i) :
     prefixSpan M i hi
@@ -2938,17 +2890,6 @@ private theorem prefixSumByRow_eq_projectionCombination
       have hbasisrow : (basisMatrix b).row ⟨k, hk_lt⟩ = (basisRows b.toList)[k]! := by
         rw [basisMatrix_row_eq_basisRows_get!]
       rw [hbasisrow]
-
-/-- The projection combination over the first `i` generated basis rows is a
-row combination of the strict prefix of the executable basis matrix. -/
-private theorem projectionCombination_basisRows_take_eq_rowCombination
-    (b : Matrix Rat n m) (row : Vector Rat m) (i : Nat) (hi : i ≤ n) :
-    projectionCombination row ((basisRows b.toList).take i) 0 =
-      Matrix.rowCombination (strictPrefixRows (basisMatrix b) i hi)
-        (projectionCoeffVector row (basisMatrix b) i hi) := by
-  rw [← prefixSumByRow_eq_projectionCombination (b := b) (row := row) (i := i) (hi := hi)]
-  exact (rowCombination_strictPrefixRows_projectionCoeffVector
-    (row := row) (basis := basisMatrix b) (k := i) (hk := hi)).symm
 
 /-- The coefficient-matrix prefix term is an executable row combination of the
 earlier generated basis rows. -/
@@ -3480,28 +3421,6 @@ theorem coeffs_rowSwap_adjacent_pivot (b : Matrix Rat n m) (km1 k : Fin n)
   have hnorm' : Matrix.dot swappedPrev swappedPrev ≠ 0 := by
     simpa [swappedPrev, curr, prev, mu] using hnorm
   simp [hnorm', hrow_swapped, swappedPrev, curr, prev, mu]
-
-private theorem rowAdd_row_dst_rat (b : Matrix Rat n m) (src dst : Fin n) (c : Rat) :
-    (Matrix.rowAdd b src dst c).row dst = b.row dst + c • b.row src := by
-  apply Vector.ext
-  intro idx hidx
-  simp [Matrix.rowAdd, Matrix.row, Vector.getElem_set_self,
-    Vector.getElem_add, Vector.getElem_smul]
-  rfl
-
-private theorem rowAdd_row_other_rat (b : Matrix Rat n m) (src dst row : Fin n) (c : Rat)
-    (hrow : row ≠ dst) :
-    (Matrix.rowAdd b src dst c).row row = b.row row := by
-  apply Vector.ext
-  intro idx hidx
-  unfold Matrix.rowAdd Matrix.row
-  have hval : dst.val ≠ row.val := by
-    intro h
-    exact hrow (Fin.ext h.symm)
-  change
-    ((Vector.set b dst.val (Vector.ofFn fun k => b[dst][k] + c * b[src][k])
-      dst.isLt)[row.val])[idx] = b[row.val][idx]
-  rw [Vector.getElem_set_ne dst.isLt row.isLt hval]
 
 /-- Under `rowAdd b src dst c` with `src < dst`, lower coefficients in the
 destination row update linearly below the pivot source column. -/
