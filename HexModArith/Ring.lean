@@ -441,7 +441,7 @@ instance : Lean.Grind.Semiring (ZMod64 p) := by
     simp [Nat.mul_mod]
 
 /-- Adding zero on the right leaves a residue unchanged. -/
-@[simp] theorem add_zero (a : ZMod64 p) : a + 0 = a := by
+@[simp, grind =] theorem add_zero (a : ZMod64 p) : a + 0 = a := by
   apply ext_toNat
   rw [show a + 0 = ZMod64.add a ZMod64.zero from rfl]
   change (ZMod64.add a ZMod64.zero).toNat = a.toNat
@@ -449,7 +449,7 @@ instance : Lean.Grind.Semiring (ZMod64 p) := by
   exact Nat.mod_eq_of_lt a.isLt
 
 /-- Adding zero on the left leaves a residue unchanged. -/
-@[simp] theorem zero_add (a : ZMod64 p) : 0 + a = a := by
+@[simp, grind =] theorem zero_add (a : ZMod64 p) : 0 + a = a := by
   apply ext_toNat
   rw [show 0 + a = ZMod64.add ZMod64.zero a from rfl]
   change (ZMod64.add ZMod64.zero a).toNat = a.toNat
@@ -499,7 +499,7 @@ instance : Lean.Grind.Semiring (ZMod64 p) := by
   simpa using Nat.mod_eq_of_lt a.isLt
 
 /-- Successor powers multiply the previous power by the base. -/
-@[simp] theorem pow_succ (a : ZMod64 p) (n : Nat) :
+@[simp, grind =] theorem pow_succ (a : ZMod64 p) (n : Nat) :
     a ^ (n + 1) = a ^ n * a := by
   apply ext_toNat
   change (ZMod64.pow a (n + 1)).toNat =
