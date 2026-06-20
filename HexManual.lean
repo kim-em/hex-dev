@@ -1,6 +1,7 @@
 import VersoManual
 
 import HexManual.Chapters.HexGFqRing
+import HexManual.Chapters.HexModArithMathlib
 import HexManual.Chapters.HexPoly
 
 open Verso.Genre Manual
@@ -30,5 +31,7 @@ reference chapters for the libraries that have reached the
 documentation phase of the development plan.
 
 {include 0 HexManual.Chapters.HexGFqRing}
+
+{include 0 HexManual.Chapters.HexModArithMathlib}
 
 {include 0 HexManual.Chapters.HexPoly}
