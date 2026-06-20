@@ -16,7 +16,9 @@ def DensePolyNormalized {R : Type u} [Zero R] [DecidableEq R] (coeffs : Array R)
 /-- Dense polynomials store coefficients in ascending degree order, with index `i` holding the
 coefficient of `x^i`. -/
 structure DensePoly (R : Type u) [Zero R] [DecidableEq R] where
+  /-- The stored coefficients in ascending degree order. -/
   coeffs : Array R
+  /-- Proof that `coeffs` carries no trailing zeros. -/
   normalized : DensePolyNormalized coeffs
 
 namespace DensePoly
