@@ -290,24 +290,6 @@ private theorem dotProduct_smul_ofFn_left [Lean.Grind.Ring R]
   rw [hofFn]
   exact Lean.Grind.Semiring.mul_assoc s v[i] w[i]
 
-/-- Pull a scalar multiple out of the right argument of a dot product when the
-right vector is given by `Vector.ofFn (fun k => v[k] * s)`. -/
-private theorem dotProduct_smul_ofFn_right [Lean.Grind.Ring R]
-    (s : R) (v w : Vector R m) :
-    Hex.Vector.dotProduct v (Vector.ofFn fun k => w[k] * s) =
-    Hex.Vector.dotProduct v w * s := by
-  unfold Hex.Vector.dotProduct
-  rw [foldl_sum_mul_right_aux (xs := List.finRange m)
-        (f := fun i => v[i] * w[i]) (c := s) (acc := 0)]
-  have hzero : (0 : R) * s = 0 := by grind
-  rw [hzero]
-  apply foldl_sum_congr_aux
-  intro i _
-  have hofFn : (Vector.ofFn (fun k : Fin m => w[k] * s))[i] = w[i] * s := by
-    simp
-  rw [hofFn]
-  exact (Lean.Grind.Semiring.mul_assoc v[i] w[i] s).symm
-
 /-- Distribute the left argument of a dot product over a sum of the form
 `Vector.ofFn (fun k => v[k] + s * w[k])`. -/
 private theorem dotProduct_add_smul_ofFn_left [Lean.Grind.Ring R]

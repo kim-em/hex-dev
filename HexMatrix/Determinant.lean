@@ -106,20 +106,6 @@ private theorem inversionCount_append {n : Nat} (xs ys : List (Fin n)) :
       rw [inversionFold_append, ih]
       omega
 
-/-- Cross-inversion count is additive in its left argument under
-concatenation. -/
-private theorem crossInversionCount_append_left {n : Nat}
-    (xs ys zs : List (Fin n)) :
-    crossInversionCount (xs ++ ys) zs =
-      crossInversionCount xs zs + crossInversionCount ys zs := by
-  induction xs with
-  | nil =>
-      simp [crossInversionCount]
-  | cons x xs ih =>
-      simp only [List.cons_append, crossInversionCount]
-      rw [ih]
-      omega
-
 /-- Cross-inversion count is additive in its right argument under
 concatenation. -/
 private theorem crossInversionCount_append_right {n : Nat}
@@ -133,14 +119,6 @@ private theorem crossInversionCount_append_right {n : Nat}
       simp only [crossInversionCount]
       rw [inversionFold_append, ih]
       omega
-
-/-- Cross-inversions from a singleton left list count the right-list entries
-below that element. -/
-private theorem crossInversionCount_singleton_left {n : Nat}
-    (x : Fin n) (ys : List (Fin n)) :
-    crossInversionCount [x] ys =
-      ys.foldl (fun acc y => acc + if y < x then 1 else 0) 0 := by
-  simp [crossInversionCount]
 
 /-- Cross-inversions into a singleton right list count the left-list entries
 above that element. -/
@@ -554,16 +532,6 @@ private theorem detProduct_congr_matrix {R : Type u} [Lean.Grind.Ring R] {n : Na
   apply foldl_det_product_congr
   intro r _hr
   exact h r perm[r]
-
-/-- The Leibniz summand depends only on the matrix entries, so entry-wise equal
-matrices share it. -/
-private theorem detTerm_congr_matrix {R : Type u} [Lean.Grind.Ring R] {n : Nat}
-    {M N : Matrix R n n}
-    (h : ∀ (r : Fin n) (c : Fin n), M[r][c] = N[r][c])
-    (perm : Vector (Fin n) n) :
-    detTerm M perm = detTerm N perm := by
-  unfold detTerm
-  rw [detProduct_congr_matrix h perm]
 
 /-- A product left fold is invariant under permuting the list. -/
 private theorem foldl_det_product_perm {R : Type u} [Lean.Grind.CommRing R]
@@ -1029,20 +997,6 @@ private theorem list_getElem_insertIdx_succ_of_le {α : Type u}
               simp only [List.insertIdx, List.getElem_cons_succ]
               exact ih (Nat.succ_le_succ_iff.mp h) (Nat.succ_lt_succ_iff.mp hr)
 
-/-- Reading `insertAt x v i.castSucc.castSucc` at its own insertion index
-`i.castSucc.castSucc` returns the inserted element `x`. -/
-private theorem insertAt_prefix_get_self {α : Type u} {n : Nat}
-    (x : α) (v : Vector α (n + 1)) (i : Fin n) :
-    (insertAt x v i.castSucc.castSucc)[i.castSucc.castSucc] = x := by
-  exact insertAt_get_self x v i.castSucc.castSucc
-
-/-- For `r.val < i.val`, reading `insertAt x v i.castSucc.castSucc` at
-`r.castSucc.castSucc` returns the original `v[r.castSucc]`. -/
-private theorem insertAt_prefix_get_before {α : Type u} {n : Nat}
-    (x : α) (v : Vector α (n + 1)) (i r : Fin n) (h : r.val < i.val) :
-    (insertAt x v i.castSucc.castSucc)[r.castSucc.castSucc] = v[r.castSucc] := by
-  exact insertAt_get_castSucc_of_lt x v i.castSucc r.castSucc (by simpa using h)
-
 /-- For `i.val ≤ r.val`, reading `insertAt x v i.castSucc.castSucc` at index
 `r.val + 1` returns the original `v[r]`. -/
 private theorem insertAt_prefix_get_shifted {α : Type u} {n : Nat}
@@ -1053,15 +1007,6 @@ private theorem insertAt_prefix_get_shifted {α : Type u} {n : Nat}
   unfold insertAt
   simpa [Vector.toList] using
     list_getElem_insertIdx_succ_of_le v.toList x h (by simp [Vector.length_toList])
-
-/-- Reading `insertAt x v i.castSucc.castSucc` at `Fin.last (n + 1)` returns the
-original final entry `v[Fin.last n]`. -/
-private theorem insertAt_prefix_get_last {α : Type u} {n : Nat}
-    (x : α) (v : Vector α (n + 1)) (i : Fin n) :
-    (insertAt x v i.castSucc.castSucc)[Fin.last (n + 1)] = v[Fin.last n] := by
-  have hle : i.val ≤ (Fin.last n).val := by
-    simp [Nat.le_of_lt i.isLt]
-  simpa using insertAt_prefix_get_shifted x v i (Fin.last n) hle
 
 /-- Reading `insertAt x v (Fin.last n).castSucc` at the insertion index
 `(Fin.last n).castSucc` returns the inserted element `x`. -/
@@ -1349,14 +1294,6 @@ private theorem insertAt_last_castSucc_nodup {n : Nat}
   have hidx : i.val ≤ (v.map Fin.castSucc).toList.length := by
     simpa using Nat.lt_succ_iff.mp i.isLt
   exact (List.perm_insertIdx (Fin.last n) (v.map Fin.castSucc).toList hidx).symm.nodup hcons
-
-/-- A `Nodup` list of `Fin n` has length at most `n`. -/
-private theorem finList_length_le_card {n : Nat} {xs : List (Fin n)}
-    (hnodup : xs.Nodup) :
-    xs.length ≤ n := by
-  have hsub : List.Subperm xs (List.finRange n) := by
-    exact List.subperm_of_subset hnodup (fun x _hx => List.mem_finRange x)
-  simpa [List.length_finRange] using List.Subperm.length_le hsub
 
 /-- A `Nodup` list of `Fin (n + 1)` with full length `n + 1` must contain
 `Fin.last n`. -/
@@ -2588,15 +2525,6 @@ private theorem finTranspose_injective {n : Nat} (i j : Fin n) :
   have h' := congrArg (finTranspose i j) h
   simpa [finTranspose_involutive] using h'
 
-/-- `finTranspose i j` preserves and reflects distinctness of its arguments. -/
-private theorem finTranspose_ne_iff {n : Nat} (i j a b : Fin n) :
-    finTranspose i j a ≠ finTranspose i j b ↔ a ≠ b := by
-  constructor
-  · intro h hab
-    exact h (hab ▸ rfl)
-  · intro h hab
-    exact h (finTranspose_injective i j hab)
-
 /-- Mapping `finTranspose i j` over `List.finRange n` permutes it, since the
 transposition is a bijection of `Fin n`. -/
 private theorem finRange_map_finTranspose_perm {n : Nat} (i j : Fin n) :
@@ -2672,106 +2600,6 @@ private theorem transposePermutationValues_get {n : Nat}
     (perm : Vector (Fin n) n) (i j r : Fin n) :
     (transposePermutationValues perm i j)[r] = perm[finTranspose i j r] := by
   simp [transposePermutationValues]
-
-/-- Swapping the last row with the boundary row in the last-position insertion
-of `v` produces the boundary-position insertion of `v`, the base case relating
-the two `insertAt` placements under a single transposition. -/
-private theorem transposePermutationValues_insertAt_last_boundary {n : Nat}
-    (v : Vector (Fin (n + 1)) (n + 1)) :
-    transposePermutationValues
-        (insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last (n + 1)))
-        (Fin.last n).castSucc (Fin.last (n + 1)) =
-      insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last n).castSucc := by
-  apply Vector.ext
-  intro r hr
-  let row : Fin (n + 2) := ⟨r, hr⟩
-  let old : Fin (n + 2) := (Fin.last n).castSucc
-  let last : Fin (n + 2) := Fin.last (n + 1)
-  let finalPerm :=
-    insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last (n + 1))
-  let boundaryPerm :=
-    insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last n).castSucc
-  change (transposePermutationValues finalPerm old last)[row] = boundaryPerm[row]
-  rw [transposePermutationValues_get]
-  by_cases hrowOld : row = old
-  · have hft : finTranspose old last row = last := by
-      rw [hrowOld]
-      exact finTranspose_left old last
-    calc
-      finalPerm[finTranspose old last row] = finalPerm[last] := by
-        exact congrArg (fun c => finalPerm[c]) hft
-      _ = Fin.last (n + 1) := by
-        exact insertAt_get_self (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last (n + 1))
-      _ = boundaryPerm[old] := by
-        exact (insertAt_castSucc_last_get_boundary
-          (Fin.last (n + 1)) (v.map Fin.castSucc)).symm
-      _ = boundaryPerm[row] := by
-        exact (congrArg (fun c => boundaryPerm[c]) hrowOld).symm
-  · by_cases hrowLast : row = last
-    · have hft : finTranspose old last row = old := by
-        rw [hrowLast]
-        exact finTranspose_right old last
-      have hfinal :
-          finalPerm[old] = (v[Fin.last n]).castSucc := by
-        change
-          (insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last (n + 1)))[
-              (Fin.last n).castSucc] =
-            (v[Fin.last n]).castSucc
-        simpa using
-          insertAt_last_get_castSucc (Fin.last (n + 1)) (v.map Fin.castSucc)
-            (Fin.last n)
-      have hboundary :
-          boundaryPerm[last] = (v[Fin.last n]).castSucc := by
-        change
-          (insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last n).castSucc)[
-              Fin.last (n + 1)] =
-            (v[Fin.last n]).castSucc
-        simpa using
-          insertAt_castSucc_last_get_last (Fin.last (n + 1)) (v.map Fin.castSucc)
-      calc
-        finalPerm[finTranspose old last row] = finalPerm[old] := by
-          exact congrArg (fun c => finalPerm[c]) hft
-        _ = (v[Fin.last n]).castSucc := hfinal
-        _ = boundaryPerm[last] := hboundary.symm
-        _ = boundaryPerm[row] := by
-          exact (congrArg (fun c => boundaryPerm[c]) hrowLast).symm
-    · have hrowLt : row.val < n := by
-        have hneOldVal : row.val ≠ n := by
-          intro hval
-          exact hrowOld (Fin.ext hval)
-        have hneLastVal : row.val ≠ n + 1 := by
-          intro hval
-          exact hrowLast (Fin.ext hval)
-        omega
-      let i : Fin n := ⟨row.val, hrowLt⟩
-      have hrow : row = i.castSucc.castSucc := Fin.ext rfl
-      have hfinal :
-          finalPerm[i.castSucc.castSucc] = (v[i.castSucc]).castSucc := by
-        change
-          (insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last (n + 1)))[
-              i.castSucc.castSucc] =
-            (v[i.castSucc]).castSucc
-        simpa using
-          insertAt_last_get_castSucc (Fin.last (n + 1)) (v.map Fin.castSucc)
-            i.castSucc
-      have hboundary :
-          boundaryPerm[i.castSucc.castSucc] = (v[i.castSucc]).castSucc := by
-        change
-          (insertAt (Fin.last (n + 1)) (v.map Fin.castSucc) (Fin.last n).castSucc)[
-              i.castSucc.castSucc] =
-            (v[i.castSucc]).castSucc
-        simpa using
-          insertAt_castSucc_last_get_prefix (Fin.last (n + 1)) (v.map Fin.castSucc) i
-      calc
-        finalPerm[finTranspose old last row] = finalPerm[row] := by
-          exact congrArg (fun c => finalPerm[c])
-            (finTranspose_of_ne old last row hrowOld hrowLast)
-        _ = finalPerm[i.castSucc.castSucc] := by
-          exact congrArg (fun c => finalPerm[c]) hrow
-        _ = (v[i.castSucc]).castSucc := hfinal
-        _ = boundaryPerm[i.castSucc.castSucc] := hboundary.symm
-        _ = boundaryPerm[row] := by
-          exact (congrArg (fun c => boundaryPerm[c]) hrow).symm
 
 /-- `vector_toList_eq_finRange_map_get` rewrites a vector's list view as the finite range of indices mapped through its getter. -/
 private theorem vector_toList_eq_finRange_map_get {α : Type u} {n : Nat}
@@ -3077,36 +2905,6 @@ private theorem swapPermutationValues_involutive {n : Nat}
   apply Vector.ext
   intro r hr
   simp [swapPermutationValues, finTranspose_involutive]
-
-private theorem swapPermutationValues_map_permutationVectors_perm {n : Nat}
-    (i j : Fin n) :
-    ((permutationVectors n).map fun perm => swapPermutationValues perm i j).Perm
-      (permutationVectors n) := by
-  have hmapNodup :
-      ((permutationVectors n).map fun perm => swapPermutationValues perm i j).Nodup := by
-    exact list_nodup_map_of_injective
-      (f := fun perm => swapPermutationValues perm i j)
-      (fun a b h => by
-        have h' := congrArg (fun perm => swapPermutationValues perm i j) h
-        change
-          swapPermutationValues (swapPermutationValues a i j) i j =
-            swapPermutationValues (swapPermutationValues b i j) i j at h'
-        rw [swapPermutationValues_involutive] at h'
-        rw [swapPermutationValues_involutive] at h'
-        exact h')
-      permutationVectors_nodup_list
-  apply (List.perm_ext_iff_of_nodup hmapNodup permutationVectors_nodup_list).mpr
-  intro perm
-  constructor
-  · intro hmem
-    simp only [List.mem_map] at hmem
-    rcases hmem with ⟨pre, hpre, rfl⟩
-    exact swapPermutationValues_mem_permutationVectors i j hpre
-  · intro hmem
-    simp only [List.mem_map]
-    refine ⟨swapPermutationValues perm i j,
-      swapPermutationValues_mem_permutationVectors i j hmem, ?_⟩
-    exact swapPermutationValues_involutive perm i j
 
 /-- `fin_mem_of_full_nodup` shows that a length-`n` nodup list of `Fin n`
 values contains every `x : Fin n`, the pigeonhole fact that makes the
@@ -3715,13 +3513,6 @@ private theorem swapPermutationValues_eq_transposePermutationValues {n : Nat}
         exact hrj (Fin.ext hval)
       rw [finTranspose_of_ne i j perm[(⟨r, hr⟩ : Fin n)] hnot_i hnot_j]
       exact vector_get_fin_congr perm (finTranspose_of_ne pi pj ⟨r, hr⟩ hri hrj).symm
-
-private theorem detSign_transposePermutationValues_involutive {R : Type u}
-    [Lean.Grind.Ring R] {n : Nat}
-    (perm : Vector (Fin n) n) (i j : Fin n) :
-    detSign (R := R) (transposePermutationValues (transposePermutationValues perm i j) i j) =
-      detSign (R := R) perm := by
-  rw [transposePermutationValues_involutive]
 
 private theorem inversionCount_transposePermutationValues_parity {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n)
@@ -5661,19 +5452,6 @@ private def setColumnChoice {n m : Nat} (choices : Fin n → Option (Fin m))
       | none => (List.finRange m).foldl (fun acc k => acc + coeff[c][k] * source[r][k]) 0 := by
   simp [columnChoiceMatrix, ofFn]
 
-private theorem columnChoiceMatrix_none
-    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
-    (source coeff : Matrix R n m) :
-    columnChoiceMatrix source coeff (fun _ => none) = columnSumMatrix source coeff := by
-  apply Vector.ext
-  intro r hr
-  apply Vector.ext
-  intro c hc
-  change
-    (columnChoiceMatrix source coeff (fun _ => none))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
-      (columnSumMatrix source coeff)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [columnChoiceMatrix_entry, columnSumMatrix_entry]
-
 private theorem colReplace_columnChoiceMatrix_none_self
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) (dst : Fin n)
@@ -5727,37 +5505,6 @@ private theorem colReplace_columnChoiceMatrix_set_some
       unfold setColumnChoice
       rw [if_neg hcol]
     rw [hset]
-
-private theorem det_columnChoiceMatrix_expand_column
-    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
-    (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) (dst : Fin n)
-    (hchoice : choices dst = none) :
-    det (columnChoiceMatrix source coeff choices) =
-      (List.finRange m).foldl
-        (fun acc k =>
-          acc + coeff[dst][k] *
-            det (columnChoiceMatrix source coeff (setColumnChoice choices dst k))) 0 := by
-  have hsum :=
-    det_colReplace_sum_list
-      (columnChoiceMatrix source coeff choices) dst (List.finRange m)
-      (fun k => coeff[dst][k]) (fun k r => source[r][k])
-  have hself := colReplace_columnChoiceMatrix_none_self source coeff choices dst hchoice
-  rw [hself] at hsum
-  have hreplace :
-      (List.finRange m).foldl
-          (fun acc k =>
-            acc + coeff[dst][k] *
-              det (colReplace (columnChoiceMatrix source coeff choices) dst
-                (fun r => source[r][k]))) 0 =
-        (List.finRange m).foldl
-          (fun acc k =>
-            acc + coeff[dst][k] *
-              det (columnChoiceMatrix source coeff (setColumnChoice choices dst k))) 0 := by
-    apply foldl_det_sum_congr
-    intro k _hmem
-    rw [colReplace_columnChoiceMatrix_set_some source coeff choices dst k]
-  rw [hreplace] at hsum
-  exact hsum
 
 /-- A determinant with two equal rows is zero. -/
 theorem det_eq_zero_of_row_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
@@ -5851,20 +5598,6 @@ def columnTupleMatrix {R : Type u} {n m : Nat}
     (A : Matrix R n m) (cols : Fin n → Fin m) (r c : Fin n) :
     (columnTupleMatrix A cols)[r][c] = A[r][cols c] := by
   simp [columnTupleMatrix, ofFn]
-
-private theorem columnChoiceMatrix_some
-    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
-    (source coeff : Matrix R n m) (cols : Fin n → Fin m) :
-    columnChoiceMatrix source coeff (fun c => some (cols c)) = columnTupleMatrix source cols := by
-  apply Vector.ext
-  intro r hr
-  apply Vector.ext
-  intro c hc
-  change
-    (columnChoiceMatrix source coeff (fun c => some (cols c)))[(⟨r, hr⟩ : Fin n)][
-        (⟨c, hc⟩ : Fin n)] =
-      (columnTupleMatrix source cols)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [columnChoiceMatrix_entry, columnTupleMatrix_entry]
 
 /-- Interpret an ordered column tuple vector as its column-selection function. -/
 def columnTupleVectorFn {n m : Nat} (cols : Vector (Fin m) n) : Fin n → Fin m :=
@@ -6461,34 +6194,6 @@ private def columnSumMatrixWithPrefix
           (fun acc k => acc + coeff[j][k] * source[r][k]) 0 := by
   simp [columnSumMatrixWithPrefix, ofFn]
 
-private theorem columnSumMatrixWithPrefix_nil
-    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
-    (source coeff : Matrix R n m) :
-    columnSumMatrixWithPrefix source coeff [] = columnSumMatrix source coeff := by
-  apply Vector.ext
-  intro r hr
-  apply Vector.ext
-  intro c hc
-  change (columnSumMatrixWithPrefix source coeff [])[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
-      (columnSumMatrix source coeff)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [columnSumMatrixWithPrefix_entry, columnSumMatrix_entry]
-  rw [dif_neg (by simp : ¬ c < ([] : List (Fin m)).length)]
-
-private theorem columnSumMatrixWithPrefix_eq_columnTupleMatrix
-    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
-    (source coeff : Matrix R n m) (chosen : List (Fin m))
-    (hfull : chosen.length = n) :
-    columnSumMatrixWithPrefix source coeff chosen =
-      columnTupleMatrix source (fun j => chosen[j.val]'(by omega)) := by
-  apply Vector.ext
-  intro r hr
-  apply Vector.ext
-  intro c hc
-  change (columnSumMatrixWithPrefix source coeff chosen)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
-      (columnTupleMatrix source (fun j => chosen[j.val]'(by omega)))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [columnSumMatrixWithPrefix_entry, dif_pos (by omega : c < chosen.length)]
-  simp [columnTupleMatrix, ofFn]
-
 /-- Replacing the column at index `chosen.length` of the partial-prefix matrix
 with a fixed `source` column extends the prefix by that selection. -/
 private theorem colReplace_columnSumMatrixWithPrefix_extend
@@ -6529,44 +6234,6 @@ private theorem colReplace_columnSumMatrixWithPrefix_extend
       exact (List.getElem_append_left hk_lt).symm
     · rw [dif_neg hk_lt]
       rw [dif_neg (show ¬ k < (chosen ++ [c]).length by omega)]
-
-/-- One-step expansion of the partial column-sum matrix: when not all columns
-are fixed, peel off the next column as a sum over `Fin m`. -/
-private theorem det_columnSumMatrixWithPrefix_expand
-    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
-    (source coeff : Matrix R n m) (chosen : List (Fin m))
-    (hk : chosen.length < n) :
-    det (columnSumMatrixWithPrefix source coeff chosen) =
-      (List.finRange m).foldl
-        (fun acc c => acc + coeff[(⟨chosen.length, hk⟩ : Fin n)][c] *
-          det (columnSumMatrixWithPrefix source coeff (chosen ++ [c]))) 0 := by
-  let dst : Fin n := ⟨chosen.length, hk⟩
-  have hself :
-      colReplace (columnSumMatrixWithPrefix source coeff chosen) dst
-          (fun r => (List.finRange m).foldl
-            (fun acc k => acc + coeff[dst][k] * source[r][k]) 0) =
-        columnSumMatrixWithPrefix source coeff chosen := by
-    apply Vector.ext
-    intro r hr
-    apply Vector.ext
-    intro c hc
-    change (colReplace (columnSumMatrixWithPrefix source coeff chosen) dst _)[
-        (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
-      (columnSumMatrixWithPrefix source coeff chosen)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-    rw [colReplace_get, columnSumMatrixWithPrefix_entry]
-    by_cases hcd : (⟨c, hc⟩ : Fin n) = dst
-    · rw [if_pos hcd, hcd]
-      rw [dif_neg (show ¬ dst.val < chosen.length by simp [dst])]
-    · rw [if_neg hcd]
-  have hsum := det_colReplace_sum_list
-      (columnSumMatrixWithPrefix source coeff chosen) dst
-      (List.finRange m) (fun k => coeff[dst][k]) (fun k r => source[r][k])
-  rw [hself] at hsum
-  rw [hsum]
-  apply foldl_det_sum_congr
-  intro c _hc
-  congr 2
-  exact colReplace_columnSumMatrixWithPrefix_extend source coeff chosen hk c
 
 /-! ### Suffix-based partial assignment
 
@@ -10991,27 +10658,6 @@ private theorem det_plucker_three_term_basisVec_of_between_p1_p2_of_nDet
       (by have := p3.isLt; omega)]
   grind
 
-/-- Basis-vector case `q > p3` of the universal three-term Plucker identity:
-expanding `mDet B (basisVec q) p_i` via `mDet_basisVec_eq_signed_nDet_of_lt`
-(each `q > p_i`) reduces the goal to a sign-aligned restatement of the
-canonical four-row `nDet` identity at `(p1, p2, p3, q)`. -/
-private theorem det_plucker_three_term_basisVec_of_gt_p3_of_nDet
-    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
-    (B : Matrix R (n + 2) n)
-    (p1 p2 p3 q : Fin (n + 2))
-    (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
-    (h3q : p3.val < q.val) :
-    mDet B (basisVec (R := R) q) p1 * nDet B p2 p3 h23 -
-      mDet B (basisVec (R := R) q) p2 *
-        nDet B p1 p3 (Nat.lt_trans h12 h23) +
-      mDet B (basisVec (R := R) q) p3 * nDet B p1 p2 h12 = 0 := by
-  have hraw := nDet_plucker_four_row_canonical B p1 p2 p3 q h12 h23 h3q
-  rw [mDet_basisVec_eq_signed_nDet_of_lt B p1 q
-    (Nat.lt_trans h12 (Nat.lt_trans h23 h3q))]
-  rw [mDet_basisVec_eq_signed_nDet_of_lt B p2 q (Nat.lt_trans h23 h3q)]
-  rw [mDet_basisVec_eq_signed_nDet_of_lt B p3 q h3q]
-  grind
-
 /-- Consecutive-top vector-column Plücker identity.
 
 This is the Mathlib-free specialization used by the Gram/Bareiss trajectory:
@@ -11088,41 +10734,6 @@ private theorem cofactorSign_succ_last_eq_neg
   · have hnext : (x.val + (n + 1)) % 2 = 0 := by omega
     rw [if_neg h, if_pos hnext]
     grind
-
-/-- Basis-vector case `q < p1` of the four-basis-column `twoColDet` Plucker
-identity. Expanding each of the six `twoColDet B (basisVec _) (basisVec _)`
-factors via `twoColDet_basisVec_basisVec_of_lt` reduces the goal to a
-sign-aligned restatement of the canonical four-row `nDet` identity at
-`(q, p1, p2, p3)`. After the six expansions, `cofactorSign_succ_last_eq_neg`
-at `p1` and `p2` flips the two `(Fin.last (n+1))` signs that block uniform
-factorisation, leaving a common coefficient
-`-cofactorSign p3 (Fin.last (n+1)) * cofactorSign ⟨q.val,_⟩ (Fin.last n) *
-cofactorSign ⟨p1.val,_⟩ (Fin.last n) * cofactorSign ⟨p2.val,_⟩ (Fin.last n)`
-on all three Plucker terms. -/
-private theorem twoColDet_plucker_basisVec_of_lt_p1
-    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
-    (B : Matrix R (n + 2) n)
-    (q p1 p2 p3 : Fin (n + 2))
-    (hq1 : q.val < p1.val) (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) :
-    twoColDet B (basisVec (R := R) p2) (basisVec (R := R) p3) *
-        twoColDet B (basisVec (R := R) q) (basisVec (R := R) p1) -
-      twoColDet B (basisVec (R := R) p1) (basisVec (R := R) p3) *
-        twoColDet B (basisVec (R := R) q) (basisVec (R := R) p2) +
-      twoColDet B (basisVec (R := R) p1) (basisVec (R := R) p2) *
-        twoColDet B (basisVec (R := R) q) (basisVec (R := R) p3) = 0 := by
-  have hraw := nDet_plucker_four_row_canonical B q p1 p2 p3 hq1 h12 h23
-  rw [twoColDet_basisVec_basisVec_of_lt B p2 p3 h23]
-  rw [twoColDet_basisVec_basisVec_of_lt B q p1 hq1]
-  rw [twoColDet_basisVec_basisVec_of_lt B p1 p3 (Nat.lt_trans h12 h23)]
-  rw [twoColDet_basisVec_basisVec_of_lt B q p2 (Nat.lt_trans hq1 h12)]
-  rw [twoColDet_basisVec_basisVec_of_lt B p1 p2 h12]
-  rw [twoColDet_basisVec_basisVec_of_lt B q p3
-      (Nat.lt_trans hq1 (Nat.lt_trans h12 h23))]
-  have hp1 : p1.val < n + 1 := by have := p3.isLt; omega
-  have hp2 : p2.val < n + 1 := by have := p3.isLt; omega
-  rw [cofactorSign_succ_last_eq_neg (R := R) p1 hp1]
-  rw [cofactorSign_succ_last_eq_neg (R := R) p2 hp2]
-  grind
 
 end Matrix
 end Hex
