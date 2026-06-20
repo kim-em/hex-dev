@@ -756,7 +756,7 @@ theorem natCast_eq_natCast_iff_mod_eq
   simp
 
 /-- Division is field multiplication by inverse. -/
-@[simp]
+@[simp, grind =]
 theorem div_eq_mul_inv
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) :

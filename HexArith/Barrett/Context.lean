@@ -10,12 +10,12 @@ connect the executable `UInt64` code to ordinary modular arithmetic on `Nat`.
 namespace BarrettCtx
 
 /-- The small-modulus lower-bound proof stored by `BarrettCtx.mk`. -/
-@[simp]
+@[simp, grind =]
 theorem mk_p_gt (p : UInt64) (hp : p.toNat > 1) (hlt : p.toNat < 2 ^ 32) :
     (mk p hp hlt).p_gt = hp := rfl
 
 /-- The small-modulus upper-bound proof stored by `BarrettCtx.mk`. -/
-@[simp]
+@[simp, grind =]
 theorem mk_p_lt (p : UInt64) (hp : p.toNat > 1) (hlt : p.toNat < 2 ^ 32) :
     (mk p hp hlt).p_lt = hlt := rfl
 
