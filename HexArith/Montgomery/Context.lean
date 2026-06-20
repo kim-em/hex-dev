@@ -249,6 +249,11 @@ def mulMont (ctx : MontCtx p) (a b : UInt64) : UInt64 :=
   let (hi, lo) := UInt64.mulFull a b
   redc ctx hi lo
 
+/--
+For reduced inputs `a, b < p`, the two-word product `a * b` (encoded as
+`lo + hi * word`) stays below `p * word`. This is the range precondition
+`redc` needs to behave as Montgomery reduction on the `mulMont` product.
+-/
 private theorem twoWordProduct_lt_p_word (ctx : MontCtx p) (a b : UInt64)
     (ha : a.toNat < p.toNat) (hb : b.toNat < p.toNat) :
     (UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word <
@@ -263,6 +268,12 @@ private theorem twoWordProduct_lt_p_word (ctx : MontCtx p) (a b : UInt64)
     _ < p.toNat * p.toNat := hprod_lt_p2
     _ < p.toNat * UInt64.word := hp2_lt_pword
 
+/--
+Reducing the two-word product through `redc` produces the Montgomery
+representative: multiplying the result back by `word` recovers `a * b` modulo
+`p`. The `p * p' ≡ -1 (mod word)` hypothesis is the Montgomery inverse
+condition that makes the reduction exact.
+-/
 private theorem redc_mulFull_repr_word (ctx : MontCtx p) (a b : UInt64)
     (hT :
       (UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word <
@@ -281,6 +292,11 @@ private theorem redc_mulFull_repr_word (ctx : MontCtx p) (a b : UInt64)
             UInt64.word) % p.toNat := hredc
     _ = (a.toNat * b.toNat) % p.toNat := by grind
 
+/--
+Reducing the two-word product through `redc` lands strictly below the modulus,
+so `mulMont` returns an already-reduced residue with no extra conditional
+subtraction.
+-/
 private theorem redc_mulFull_lt (ctx : MontCtx p) (a b : UInt64)
     (hT :
       (UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word <
@@ -290,6 +306,12 @@ private theorem redc_mulFull_lt (ctx : MontCtx p) (a b : UInt64)
   rw [toNat_redc ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2 hT]
   exact redcNat_lt ctx.p_pos ctx.p_lt_R hpp' hT
 
+/--
+Multiplication by `word` is injective on residues modulo `p`: since `p` is odd
+it is coprime to `word = 2 ^ 64`, so two reduced values `x, y < p` with
+`x * word ≡ y * word (mod p)` are equal. This is what lets the
+representative-mod-word characterisation pin down a unique `mulMont` value.
+-/
 private theorem cancel_word_mod_of_lt (ctx : MontCtx p) {x y : Nat}
     (hx : x < p.toNat) (hy : y < p.toNat)
     (h : x * UInt64.word % p.toNat = y * UInt64.word % p.toNat) :
@@ -414,6 +436,12 @@ theorem toNat_toMont (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
             _ = ((a.toNat * UInt64.word) % p.toNat * UInt64.word) % p.toNat := by
                   rw [Nat.mul_mod_mod]
 
+/--
+The Montgomery product `mulMont a b` represents `a * b` scaled by `word`:
+its representative multiplied back by `word` equals `a * b` modulo `p`. This
+is the core algebraic identity from which the user-facing `mulMont`
+correctness lemmas are derived.
+-/
 private theorem mulMont_repr_word (ctx : MontCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     (ctx.mulMont a b).toNat * UInt64.word % p.toNat =
