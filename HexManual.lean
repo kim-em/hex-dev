@@ -17,6 +17,7 @@ import HexManual.Chapters.HexLLL
 import HexManual.Chapters.HexConway
 import HexManual.Chapters.HexGFq
 import HexManual.Chapters.HexGF2
+import HexManual.Chapters.HexMatrix
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -77,3 +78,5 @@ documentation phase of the development plan.
 {include 0 HexManual.Chapters.HexGFq}
 
 {include 0 HexManual.Chapters.HexGF2}
+
+{include 0 HexManual.Chapters.HexMatrix}
