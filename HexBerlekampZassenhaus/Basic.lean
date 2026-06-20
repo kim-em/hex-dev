@@ -1456,7 +1456,7 @@ theorem transformedCore_monic (core : ZPoly) (degree : Nat) :
   unfold DensePoly.Monic DensePoly.leadingCoeff transformedCore
   simp [transformedCoeffs]
 
-@[simp] theorem transformedCore_degree_getD (core : ZPoly) (degree : Nat) :
+@[simp, grind =] theorem transformedCore_degree_getD (core : ZPoly) (degree : Nat) :
     (transformedCore core degree).degree?.getD 0 = degree := by
   unfold DensePoly.degree? transformedCore DensePoly.size
   simp [transformedCoeffs]
