@@ -1506,13 +1506,13 @@ def evalCoeffList : List (GF2nPoly f hirr) → GF2nPoly f hirr → GF2nPoly f hi
   | c :: cs, β => c + β * evalCoeffList cs β
 
 /-- Evaluating the empty coefficient list yields `0`. -/
-@[simp] theorem evalCoeffList_nil (β : GF2nPoly f hirr) :
+@[simp, grind =] theorem evalCoeffList_nil (β : GF2nPoly f hirr) :
     evalCoeffList ([] : List (GF2nPoly f hirr)) β = 0 :=
   rfl
 
 /-- Horner recursion equation: evaluating `c :: cs` at `β` peels off the head
 coefficient `c` and folds the tail through one more multiplication by `β`. -/
-@[simp] theorem evalCoeffList_cons
+@[simp, grind =] theorem evalCoeffList_cons
     (c : GF2nPoly f hirr) (cs : List (GF2nPoly f hirr))
     (β : GF2nPoly f hirr) :
     evalCoeffList (c :: cs) β = c + β * evalCoeffList cs β :=
@@ -1536,18 +1536,18 @@ def dividedDifferenceCoeffs :
       evalCoeffList (c :: cs) α :: dividedDifferenceCoeffs (c :: cs) α
 
 /-- The divided-difference coefficient list of the zero polynomial is empty. -/
-@[simp] theorem dividedDifferenceCoeffs_nil (α : GF2nPoly f hirr) :
+@[simp, grind =] theorem dividedDifferenceCoeffs_nil (α : GF2nPoly f hirr) :
     dividedDifferenceCoeffs ([] : List (GF2nPoly f hirr)) α = [] :=
   rfl
 
 /-- A constant coefficient list has no divided-difference coefficients. -/
-@[simp] theorem dividedDifferenceCoeffs_singleton
+@[simp, grind =] theorem dividedDifferenceCoeffs_singleton
     (c : GF2nPoly f hirr) (α : GF2nPoly f hirr) :
     dividedDifferenceCoeffs ([c] : List (GF2nPoly f hirr)) α = [] :=
   rfl
 
 /-- Divided differences peel the tail polynomial evaluated at the base point. -/
-@[simp] theorem dividedDifferenceCoeffs_cons_cons
+@[simp, grind =] theorem dividedDifferenceCoeffs_cons_cons
     (c d : GF2nPoly f hirr) (cs : List (GF2nPoly f hirr))
     (α : GF2nPoly f hirr) :
     dividedDifferenceCoeffs (c :: d :: cs) α =
@@ -1555,7 +1555,7 @@ def dividedDifferenceCoeffs :
   rfl
 
 /-- The synthetic divided-difference coefficient list has one fewer entry. -/
-@[simp] theorem dividedDifferenceCoeffs_length
+@[simp, grind =] theorem dividedDifferenceCoeffs_length
     (cs : List (GF2nPoly f hirr)) (α : GF2nPoly f hirr) :
     (dividedDifferenceCoeffs cs α).length = cs.length - 1 := by
   induction cs with
@@ -1576,13 +1576,13 @@ def dividedDifference
   evalCoeffList (dividedDifferenceCoeffs cs α) β
 
 /-- The divided difference of an empty coefficient list is zero. -/
-@[simp] theorem dividedDifference_nil (α β : GF2nPoly f hirr) :
+@[simp, grind =] theorem dividedDifference_nil (α β : GF2nPoly f hirr) :
     dividedDifference ([] : List (GF2nPoly f hirr)) α β = 0 :=
   rfl
 
 /-- The divided difference of a nonconstant list satisfies the synthetic
 recurrence used by the root-count induction. -/
-@[simp] theorem dividedDifference_cons
+@[simp, grind =] theorem dividedDifference_cons
     (c d : GF2nPoly f hirr) (cs : List (GF2nPoly f hirr))
     (α β : GF2nPoly f hirr) :
     dividedDifference (c :: d :: cs) α β =
@@ -2224,13 +2224,13 @@ def linearPow (a : GF2nPoly f hirr) : Nat → GF2nPoly f hirr
   | n + 1 => linearPow a n * a
 
 /-- Base case of proof-facing linear exponentiation: the zeroth power is `1`. -/
-@[simp] theorem linearPow_zero (a : GF2nPoly f hirr) :
+@[simp, grind =] theorem linearPow_zero (a : GF2nPoly f hirr) :
     linearPow a 0 = 1 :=
   rfl
 
 /-- Recursion equation for proof-facing linear exponentiation: each successor
 power multiplies the previous power by one more factor of `a`. -/
-@[simp] theorem linearPow_succ (a : GF2nPoly f hirr) (n : Nat) :
+@[simp, grind =] theorem linearPow_succ (a : GF2nPoly f hirr) (n : Nat) :
     linearPow a (n + 1) = linearPow a n * a :=
   rfl
 
@@ -2551,13 +2551,13 @@ def listProd (xs : List (GF2nPoly f hirr)) : GF2nPoly f hirr :=
   xs.foldr (· * ·) 1
 
 /-- The right-folded product of the empty quotient-element list is one. -/
-@[simp] theorem listProd_nil :
+@[simp, grind =] theorem listProd_nil :
     listProd ([] : List (GF2nPoly f hirr)) = 1 :=
   rfl
 
 /-- The right-folded product of a cons multiplies the head by the tail
 product. -/
-@[simp] theorem listProd_cons (x : GF2nPoly f hirr)
+@[simp, grind =] theorem listProd_cons (x : GF2nPoly f hirr)
     (xs : List (GF2nPoly f hirr)) :
     listProd (x :: xs) = x * listProd xs :=
   rfl
