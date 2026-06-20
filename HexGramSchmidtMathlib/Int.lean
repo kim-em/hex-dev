@@ -1022,11 +1022,18 @@ private theorem gramDet_eq_prod_normSq_core (b : Matrix Int n m)
   rw [progressMatrix_full_eq_auxMatrix]
   exact auxMatrix_det_eq_prod_normSq b k hk
 
+/-- The `k`-leading Gram determinant equals, as a rational, the product of the
+squared Gram-Schmidt norms of the first `k` basis vectors
+(`gramSchmidtNormProduct b k`). Public wrapper over
+`gramDet_eq_prod_normSq_core`. -/
 theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) :
     (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk :=
   gramDet_eq_prod_normSq_core b hli k hk
 
+/-- For an independent integer matrix `b`, every nonempty leading Gram
+determinant is strictly positive (`0 < k ≤ n`). Public wrapper over
+`gramDet_pos_core`. -/
 theorem gramDet_pos (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
     0 < gramDet b k hk := by
@@ -1067,6 +1074,9 @@ private theorem basis_normSq_core (b : Matrix Int n m)
   rw [Rat.mul_comm]
   exact (Rat.mul_div_cancel hprod_ne).symm
 
+/-- The squared norm of the `k`-th Gram-Schmidt basis vector is the ratio of
+consecutive leading Gram determinants `d_{k+1} / d_k`, the standard telescoping
+identity. Public wrapper over `basis_normSq_core`. -/
 theorem basis_normSq (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k < n) :
     Vector.normSq ((basis b).row ⟨k, hk⟩) =
@@ -2568,12 +2578,15 @@ private theorem intCast_rat_injective_int_eq {a b : Int} (h : (a : Rat) = (b : R
   have hsub : a - b = 0 := Rat.intCast_eq_zero_iff.mp hz
   omega
 
+/-- The rational dot product is additive in its left argument. -/
 theorem dot_add_left_rat {m' : Nat} (u v w : Vector Rat m') :
     Matrix.dot (u + v) w = Matrix.dot u w + Matrix.dot v w := by
   rw [dot_comm_rat (u := u + v) (v := w)]
   rw [dot_add_right_rat (u := w) (v := u) (w := v)]
   rw [dot_comm_rat (u := w) (v := u), dot_comm_rat (u := w) (v := v)]
 
+/-- The rational dot product is homogeneous in its left argument: a scalar
+factors out. -/
 theorem dot_smul_left_rat {m' : Nat} (s : Rat) (u v : Vector Rat m') :
     Matrix.dot (s • u) v = s * Matrix.dot u v := by
   rw [dot_comm_rat (u := s • u) (v := v)]
@@ -3976,6 +3989,8 @@ theorem independent_of_det_positive (b : Matrix Int n m)
   exact gramDet_pos_of_det_positive b hdet (k.val + 1) (Nat.succ_le_of_lt k.isLt)
     (Nat.succ_pos k.val)
 
+/-- The identity matrix is independent: its Gram matrix is the identity, so
+every leading principal minor has determinant `1 > 0`. -/
 theorem independent_one {n : Nat} : independent (1 : Matrix Int n n) := by
   exact independent_of_det_positive (1 : Matrix Int n n) (by
     intro k
