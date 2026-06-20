@@ -267,7 +267,7 @@ libraries:
   HexHensel:
     deps: [HexPolyFp, HexPolyZ]
     mathlib: false
-    done_through: 6
+    done_through: 7
     status: active
     phase4:
       comparators:
