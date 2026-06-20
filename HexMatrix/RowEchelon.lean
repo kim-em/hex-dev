@@ -1052,9 +1052,13 @@ theorem mul_colAddRight [Lean.Grind.Ring R]
 
 /-- Pure data produced by an echelon-form algorithm. -/
 structure RowEchelonData (R : Type u) (n m : Nat) where
+  /-- Number of pivots, i.e. the rank of the original matrix. -/
   rank : Nat
+  /-- The matrix reduced to row-echelon form. -/
   echelon : Matrix R n m
+  /-- The accumulated row-operation transform `T` with `T * original = echelon`. -/
   transform : Matrix R n n
+  /-- Column index of each pivot, in increasing order. -/
   pivotCols : Vector (Fin m) rank
 
 /-- Shared conditions for any echelon form. -/
@@ -1133,7 +1137,11 @@ theorem pivotCols_injective (E : IsEchelonForm M D) :
       rw [h'] at hp
       exact False.elim (by omega)
 
-/-- The non-pivot columns, enumerated in increasing order. -/
+/-- The non-pivot columns, enumerated in increasing order.
+
+The echelon-form witness `_E` is a phantom argument: it carries no runtime
+data but enables dot-notation (`E.freeColsList`) and fixes the implicit
+matrix/data parameters. -/
 def freeColsList (_E : IsEchelonForm M D) : List (Fin m) :=
   (List.finRange m).filter fun j => j ∉ D.pivotCols.toList
 
