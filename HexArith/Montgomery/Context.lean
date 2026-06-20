@@ -174,7 +174,7 @@ def mk (p : UInt64) (hp : p % 2 = 1) : MontCtx p :=
       exact toNat_r2OfModulus p hp_pos }
 
 /-- The oddness witness stored by `MontCtx.mk`. -/
-@[simp]
+@[simp, grind =]
 theorem mk_p_odd (p : UInt64) (hp : p % 2 = 1) :
     (mk p hp).p_odd = hp := rfl
 
@@ -218,7 +218,7 @@ theorem p_lt_R (_ctx : MontCtx p) : p.toNat < UInt64.word := by
   simpa [UInt64.word, UInt64.size] using UInt64.toNat_lt_size p
 
 /-- The Nat-level oddness fact specialized to `MontCtx.mk`. -/
-@[simp]
+@[simp, grind =]
 theorem mk_p_odd_nat (p : UInt64) (hp : p % 2 = 1) :
     p.toNat % 2 = 1 :=
   (mk p hp).p_odd_nat
