@@ -188,6 +188,9 @@ class PackedGF2Entry (n : Nat) where
   degree_lt_word : n < 64
   packed_irreducible : GF2Poly.Irreducible (GF2Poly.ofUInt64Monic lower n)
 
+/-- A degree-one `GF2Poly` is either the monomial `X` or `X + 1` — the only two
+monic degree-one polynomials over `𝔽₂`. Used to enumerate the possible factors
+when proving a degree-two packed modulus irreducible. -/
 private theorem gf2poly_degree_one_eq_monomial_or_x_plus_one {p : GF2Poly}
     (hp : p.degree = 1) :
     p = GF2Poly.monomial 1 ∨ p = GF2Poly.ofUInt64Monic 1 1 := by
@@ -241,6 +244,7 @@ private theorem gf2poly_degree_one_eq_monomial_or_x_plus_one {p : GF2Poly}
             rw [GF2Poly.coeff_monomial_ne
               (n := 1) (m := Nat.succ (Nat.succ n)) (by omega)]
 
+/-- The packed polynomial `X + 1` (`ofUInt64Monic 1 1`) is nonzero. -/
 private theorem gf2poly_x_plus_one_ne_zero :
     GF2Poly.ofUInt64Monic 1 1 ≠ 0 := by
   intro hzero
@@ -328,6 +332,11 @@ instance packedGF2Entry_2_1 : PackedGF2Entry 1 where
   degree_lt_word := by decide
   packed_irreducible := packedGF2Entry_2_1_irreducible
 
+/-- Build the Rabin-style irreducibility certificate for the packed degree-`n`
+modulus `ofUInt64Monic lower n`: the `X^(2^k)`-mod power chain for `k ≤ n`, and,
+for each maximal proper divisor `d` of `n`, the Bézout coefficients of the xgcd
+of the modulus with `X^(2^d) - X` (witnessing coprimality, hence no proper
+subfield root). Consumed by `checkIrreducibilityCertificate_imp_irreducible`. -/
 private def packedGF2IrreducibilityCertificate (lower : UInt64) (n : Nat) :
     GF2Poly.IrreducibilityCertificate :=
   let f := GF2Poly.ofUInt64Monic lower n
@@ -340,6 +349,8 @@ private def packedGF2IrreducibilityCertificate (lower : UInt64) (n : Nat) :
         { left := xg.left, right := xg.right }).toArray }
 
 set_option maxRecDepth 4096 in
+/-- The packed Conway modulus for `C(2, 2)` (`0x3`) is irreducible,
+checked from its certificate. -/
 private theorem packedGF2Entry_2_2_irreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x3 2) :=
   GF2Poly.checkIrreducibilityCertificate_imp_irreducible
@@ -348,6 +359,8 @@ private theorem packedGF2Entry_2_2_irreducible :
     (by decide)
 
 set_option maxRecDepth 4096 in
+/-- The packed Conway modulus for `C(2, 3)` (`0x3`) is irreducible,
+checked from its certificate. -/
 private theorem packedGF2Entry_2_3_irreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x3 3) :=
   GF2Poly.checkIrreducibilityCertificate_imp_irreducible
@@ -356,6 +369,8 @@ private theorem packedGF2Entry_2_3_irreducible :
     (by decide)
 
 set_option maxRecDepth 4096 in
+/-- The packed Conway modulus for `C(2, 5)` (`0x5`) is irreducible,
+checked from its certificate. -/
 private theorem packedGF2Entry_2_5_irreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x5 5) :=
   GF2Poly.checkIrreducibilityCertificate_imp_irreducible
@@ -364,6 +379,8 @@ private theorem packedGF2Entry_2_5_irreducible :
     (by decide)
 
 set_option maxRecDepth 4096 in
+/-- The packed Conway modulus for `C(2, 6)` (`0x1B`) is irreducible,
+checked from its certificate. -/
 private theorem packedGF2Entry_2_6_irreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 6) :=
   GF2Poly.checkIrreducibilityCertificate_imp_irreducible
