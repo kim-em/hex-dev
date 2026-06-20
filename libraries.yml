@@ -137,7 +137,7 @@ libraries:
   HexGF2:
     deps: [HexPoly]
     mathlib: false
-    done_through: 5
+    done_through: 6
     status: active
     phase4:
       comparators:

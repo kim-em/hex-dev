@@ -261,8 +261,11 @@ private theorem divModAux_remainder_degree_lt
 
 /-- Result package for the packed extended Euclidean algorithm. -/
 structure XGCDResult where
+  /-- The gcd of the two input polynomials. -/
   gcd : GF2Poly
+  /-- Bezout cofactor multiplying the first input: `left * a + right * b = gcd`. -/
   left : GF2Poly
+  /-- Bezout cofactor multiplying the second input: `left * a + right * b = gcd`. -/
   right : GF2Poly
 
 /-- Tail-recursive extended Euclidean algorithm over packed `GF(2)`

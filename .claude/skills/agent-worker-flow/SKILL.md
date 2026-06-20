@@ -316,6 +316,18 @@ non-gating, so do not block the bump and do not attempt a cross-cutting
 `@[simp]` refactor to silence them. Only build-time-linter warnings and
 genuine `docBlame` (missing-docstring) hits gate the bump.
 
+**Fixing `docBlame` hits.** `docBlame` is the ground-truth list of
+missing-docstring gaps — trust it over a manual scan. Two traps a manual
+scan hits: typeclass `instance`s are docBlame-*exempt* (not in the
+`def`/`structure`/`class`/`inductive` rule), so a scan that flags every
+undocumented `instance` massively over-reports; and structure *fields*
+each need their own `/-- -/`, not just the structure. For an internal
+recursion helper flagged as `Foo.go` (from a `let rec go`/`where go`
+inside a term-mode `def`), you cannot put `/-- -/` before the `let rec`
+(it fails to parse: "unexpected token '/--'"). Document it with a
+`/-- -/`-prefixed `add_decl_doc Foo.go` placed *after* the enclosing
+`def`.
+
 ## Step 7: Publish
 
 Write a progress entry to `progress/<UTC-timestamp>_<UUID-prefix>.md`:

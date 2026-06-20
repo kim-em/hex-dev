@@ -122,7 +122,11 @@ def rabinTest (f : GF2Poly) : Bool :=
 
 /-- Bezout evidence that one Rabin gcd leg is coprime. -/
 structure RabinBezoutWitness where
+  /-- Cofactor multiplying `f` in the Bezout identity
+  `left * f + right * (X^(2^d) - X mod f) = 1`. -/
   left : GF2Poly
+  /-- Cofactor multiplying the Rabin gcd leg in the Bezout identity
+  `left * f + right * (X^(2^d) - X mod f) = 1`. -/
   right : GF2Poly
 
 /-- Self-describing certificate data for Rabin irreducibility checking.
@@ -131,8 +135,11 @@ The `bezout` array is indexed in the same order as `maximalProperDivisors n`.
 Each witness proves coprimality of `f` and `X^(2^d) - X mod f` by the
 executable identity `left * f + right * (X^(2^d) - X mod f) = 1`. -/
 structure IrreducibilityCertificate where
+  /-- The degree `n = deg(f)` whose maximal proper divisors index the checks. -/
   n : Nat
+  /-- The chain of `X^(2^d) - X mod f` residues, one per relevant divisor of `n`. -/
   powChain : Array GF2Poly
+  /-- Bezout witnesses, indexed like `maximalProperDivisors n`. -/
   bezout : Array RabinBezoutWitness
 
 namespace IrreducibilityCertificate
