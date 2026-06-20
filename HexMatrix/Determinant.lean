@@ -5652,7 +5652,7 @@ private def setColumnChoice {n m : Nat} (choices : Fin n → Option (Fin m))
     (dst : Fin n) (k : Fin m) : Fin n → Option (Fin m) :=
   fun c => if c = dst then some k else choices c
 
-@[simp] private theorem columnChoiceMatrix_entry
+@[simp, grind =] private theorem columnChoiceMatrix_entry
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) (r c : Fin n) :
     (columnChoiceMatrix source coeff choices)[r][c] =
@@ -5875,7 +5875,11 @@ def columnTupleVectorFn {n m : Nat} (cols : Vector (Fin m) n) : Fin n → Fin m 
     columnTupleVectorFn cols i = cols[i] := rfl
 
 /-- Reindexing the selected columns by a permutation is entrywise the generic
-column permutation of the selected minor. -/
+column permutation of the selected minor.
+
+Left `@[simp]`-only (not promoted to `grind =`): the columns `s sigma` appear
+only under the `fun i => s[sigma[i]]` binder, so the LHS pattern cannot
+instantiate them and `grind =` rejects it. -/
 @[simp] theorem columnTupleMatrix_compose_perm_entry
     {R : Type u} {n m : Nat} (A : Matrix R n m)
     (s : Vector (Fin m) n) (sigma : Vector (Fin n) n)
@@ -6446,7 +6450,7 @@ private def columnSumMatrixWithPrefix
     else
       (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
 
-@[simp] private theorem columnSumMatrixWithPrefix_entry
+@[simp, grind =] private theorem columnSumMatrixWithPrefix_entry
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (chosen : List (Fin m)) (r j : Fin n) :
     (columnSumMatrixWithPrefix source coeff chosen)[r][j] =
@@ -6584,7 +6588,7 @@ private def columnSumMatrixWithSuffix
     else
       (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
 
-@[simp] private theorem columnSumMatrixWithSuffix_entry
+@[simp, grind =] private theorem columnSumMatrixWithSuffix_entry
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (chosen : List (Fin m)) (r j : Fin n) :
     (columnSumMatrixWithSuffix source coeff chosen)[r][j] =
@@ -6727,7 +6731,7 @@ private def assembleColumnsSuffix {n m : Nat} (chosen : List (Fin m))
   ⟨(pref.toList ++ chosen).toArray, by
     simp [hk]⟩
 
-@[simp] private theorem assembleColumnsSuffix_left
+@[simp, grind =] private theorem assembleColumnsSuffix_left
     {n m : Nat} (chosen : List (Fin m))
     (pref : Vector (Fin m) (n - chosen.length)) (hk : chosen.length ≤ n)
     (i : Fin (n - chosen.length)) :
@@ -6737,7 +6741,7 @@ private def assembleColumnsSuffix {n m : Nat} (chosen : List (Fin m))
           omega⟩ : Fin n)] = pref[i] := by
   simp [assembleColumnsSuffix]
 
-@[simp] private theorem assembleColumnsSuffix_right
+@[simp, grind =] private theorem assembleColumnsSuffix_right
     {n m : Nat} (chosen : List (Fin m))
     (pref : Vector (Fin m) (n - chosen.length)) (hk : chosen.length ≤ n)
     (i : Fin chosen.length) :
@@ -8908,7 +8912,7 @@ private def rowMoveUp {R : Type u} {n m : Nat} (M : Matrix R n m) (src : Nat) :
     rowMoveUp
       (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩) src k (by omega)
 
-@[simp] private theorem rowMoveUp_zero {R : Type u} {n m : Nat}
+@[simp, grind =] private theorem rowMoveUp_zero {R : Type u} {n m : Nat}
     (M : Matrix R n m) (src : Nat) (h : src + 0 < n) :
     rowMoveUp M src 0 h = M := rfl
 
