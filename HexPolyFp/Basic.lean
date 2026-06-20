@@ -1487,6 +1487,8 @@ theorem eval_sub (f h : FpPoly p) (x : ZMod64 p) :
   rw [eval_sub, eval_zero]
   exact DensePoly.ZeroSubNegLaw.zero_sub_eq_neg (DensePoly.eval f x)
 
+/-- `0` is a right identity for addition. Part of the commutative-ring
+structure on `FpPoly p`. -/
 @[simp, grind =] theorem add_zero (f : FpPoly p) :
     f + 0 = f := by
   apply DensePoly.ext_coeff
@@ -1495,6 +1497,8 @@ theorem eval_sub (f h : FpPoly p) (x : ZMod64 p) :
   rw [DensePoly.coeff_zero]
   grind
 
+/-- `0` is a left identity for addition. Part of the commutative-ring
+structure on `FpPoly p`. -/
 @[simp, grind =] theorem zero_add (f : FpPoly p) :
     0 + f = f := by
   apply DensePoly.ext_coeff
@@ -1525,6 +1529,7 @@ theorem add_assoc (f g h : FpPoly p) :
   rw [DensePoly.coeff_add_semiring]
   grind
 
+/-- Negating `0` gives `0`. -/
 @[simp, grind =] theorem neg_zero :
     -(0 : FpPoly p) = 0 := by
   apply DensePoly.ext_coeff
@@ -1533,6 +1538,7 @@ theorem add_assoc (f g h : FpPoly p) :
   rw [DensePoly.coeff_zero]
   grind
 
+/-- The negation is a left additive inverse: `-f + f = 0`. -/
 @[simp, grind =] theorem add_left_neg (f : FpPoly p) :
     -f + f = 0 := by
   apply DensePoly.ext_coeff
@@ -1542,6 +1548,7 @@ theorem add_assoc (f g h : FpPoly p) :
   rw [DensePoly.coeff_zero]
   grind
 
+/-- The negation is a right additive inverse: `f + -f = 0`. -/
 @[simp, grind =] theorem add_right_neg (f : FpPoly p) :
     f + -f = 0 := by
   apply DensePoly.ext_coeff
@@ -1551,6 +1558,7 @@ theorem add_assoc (f g h : FpPoly p) :
   rw [DensePoly.coeff_zero]
   grind
 
+/-- Subtracting `0` leaves a polynomial unchanged. -/
 @[simp, grind =] theorem sub_zero (f : FpPoly p) :
     f - 0 = f := by
   apply DensePoly.ext_coeff
@@ -1559,10 +1567,12 @@ theorem add_assoc (f g h : FpPoly p) :
   rw [DensePoly.coeff_zero]
   grind
 
+/-- Subtracting a polynomial from `0` yields its negation. -/
 @[simp, grind =] theorem zero_sub (f : FpPoly p) :
     0 - f = -f := by
   rfl
 
+/-- A polynomial minus itself is `0`. -/
 @[simp, grind =] theorem sub_self (f : FpPoly p) :
     f - f = 0 := by
   apply DensePoly.ext_coeff
@@ -1586,10 +1596,12 @@ example (f : FpPoly p) :
     (f + 0) - f = 0 := by
   simp
 
+/-- `0` is a left absorbing element for multiplication. -/
 @[simp, grind =] theorem zero_mul (f : FpPoly p) :
     0 * f = 0 := by
   rfl
 
+/-- `0` is a right absorbing element for multiplication. -/
 @[simp, grind =] theorem mul_zero (f : FpPoly p) :
     f * 0 = 0 := by
   exact (DensePoly.mul_comm_poly f 0).trans (DensePoly.zero_mul f)
@@ -1623,10 +1635,12 @@ private theorem coeff_mul_one_fold (f : FpPoly p) (n k : Nat) :
             simp [hk, hks, hsub]
       · exact zmod_mul_zero (f.coeff n)
 
+/-- `1` is a left identity for multiplication. -/
 @[simp, grind =] theorem one_mul (f : FpPoly p) :
     1 * f = f := by
   exact (DensePoly.mul_comm_poly (1 : FpPoly p) f).trans (DensePoly.mul_one_right_poly f)
 
+/-- `1` is a right identity for multiplication. -/
 @[simp, grind =] theorem mul_one (f : FpPoly p) :
     f * 1 = f := by
   exact DensePoly.mul_one_right_poly f
@@ -2737,6 +2751,7 @@ theorem eval_C_mul (c : ZMod64 p) (f : FpPoly p) (x : ZMod64 p) :
     rw [DensePoly.coeff_eq_zero_of_size_le f hi]
     exact hzero
 
+/-- Evaluating the constant polynomial `1` at any point gives `1`. -/
 @[simp, grind =] theorem eval_one (x : ZMod64 p) :
     DensePoly.eval (1 : FpPoly p) x = 1 := by
   change DensePoly.eval (FpPoly.C (1 : ZMod64 p)) x = 1
@@ -3882,6 +3897,8 @@ def linearPow (f : FpPoly p) : Nat → FpPoly p
   | 0 => 1
   | n + 1 => linearPow f n * f
 
+/-- The zeroth power is the multiplicative identity `1`. Base case pairing
+with `linearPow_succ`. -/
 @[simp, grind =] theorem linearPow_zero (f : FpPoly p) : linearPow f 0 = 1 := rfl
 
 /-- Successor exponents append one right multiplication by the base. -/

@@ -37,10 +37,12 @@ private theorem C_zero_eq_zero :
   rw [DensePoly.coeff_C, DensePoly.coeff_zero]
   cases n <;> rfl
 
+/-- Substituting any `q` into the zero polynomial gives `0`. -/
 @[grind =] theorem compose_zero (q : FpPoly p) :
     DensePoly.compose (0 : FpPoly p) q = 0 := by
   rfl
 
+/-- Substituting `q` into a constant polynomial leaves the constant fixed. -/
 @[simp, grind =] theorem compose_C (c : ZMod64 p) (q : FpPoly p) :
     DensePoly.compose (FpPoly.C c) q = FpPoly.C c := by
   by_cases hc : c = (0 : ZMod64 p)
@@ -72,6 +74,8 @@ private theorem one_ne_zero_of_prime [ZMod64.PrimeModulus p] :
       Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
   exact absurd htoNat (by omega)
 
+/-- Substituting `q` into `X` returns `q`; `X` is the identity of
+composition. -/
 @[simp, grind =] theorem compose_X [ZMod64.PrimeModulus p] (q : FpPoly p) :
     DensePoly.compose (FpPoly.X : FpPoly p) q = q := by
   unfold DensePoly.compose DensePoly.toArray FpPoly.X DensePoly.monomial
@@ -175,6 +179,7 @@ Small `C` homomorphism laws for `+`, `-`, `*` and `Neg` are needed to
 manipulate the coefficients of products like `f * (X - C c)`.
 -/
 
+/-- The constant embedding `C` is additive: `C (a + b) = C a + C b`. -/
 theorem C_add_eq (a b : ZMod64 p) :
     (DensePoly.C (a + b) : FpPoly p) = DensePoly.C a + DensePoly.C b := by
   apply DensePoly.ext_coeff
@@ -830,6 +835,9 @@ The product `xs.foldl (fun acc c => acc * (X - C c)) init` substituted at
 `w` reduces to the same foldl with each `X` replaced by `w`.
 -/
 
+/-- Substituting `w` into a left-fold product of linear factors
+`∏ (X - C c)` equals the same fold with each `X` replaced by `w`. The
+transport law underlying composition of the prime-field linear product. -/
 theorem compose_foldl_X_sub_C [ZMod64.PrimeModulus p]
     (xs : List (ZMod64 p)) (init w : FpPoly p) :
     DensePoly.compose
