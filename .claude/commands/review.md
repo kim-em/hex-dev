@@ -35,6 +35,13 @@ Rotate through these areas across sessions:
   referenced from another file) following name references inside decl
   bodies; a `private` decl unreachable from roots is genuinely dead.
   Confirm every removal by rebuilding — the compiler is ground truth.
+- Dead-code scan gotcha: when counting references, **count namespace-
+  qualified uses** (`Ns.foo` is a use of `foo`) — a regex that excludes a
+  leading `.` will false-flag used decls as dead. For a "real dead-code
+  cluster" (many decls / >~200 lines / cascading orphans), file a
+  punch-list feature issue and leave `done_through` unbumped rather than
+  bashing the deletion through a review session; removal needs an iterative
+  delete→rescan→rebuild fixpoint.
 
 **Idioms and best practices**:
 - Are newer APIs or language features being used where appropriate?
