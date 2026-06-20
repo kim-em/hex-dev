@@ -57,7 +57,7 @@ Each chapter should cover:
    computational libs) or to the computational counterpart (for
    `hex-*-mathlib` libs).
 
-Two Verso syntax constraints bite chapter authors and only surface at
+Three Verso syntax constraints bite chapter authors and only surface at
 build time:
 
 - A `{ref "tag"}[text]` (or `{name}`/`{docstring}`) directive must sit
@@ -66,6 +66,10 @@ build time:
 - Lean code blocks (```` ```lean ````) are capped at **60 columns**;
   longer lines warn. Lift wide `example`/`theorem` binders into a
   `variable` block above the block to fit.
+- `{docstring StructName}` (or a class) renders the type's **fields**
+  and errors if any field is undocumented. Add a `/--` docstring to
+  every field of a structure/class you embed, or embed it with `{name}`
+  and describe it in prose instead.
 - When the library is an `abbrev` over a more generic type
   (`ZPoly = DensePoly Int`, `FpPoly p = DensePoly (ZMod64 p)`), a
   worked-example `#guard` over an op defined in *both* namespaces
