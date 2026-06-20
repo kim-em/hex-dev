@@ -229,7 +229,7 @@ theorem modP_eq_of_congr (p : Nat) [ZMod64.Bounds p] (f g : ZPoly)
   rw [hnat]
 
 /-- Reducing modulo `p^(k+1)` does not change the reduction modulo `p`. -/
-@[simp] theorem modP_reduceModPow
+@[simp, grind =] theorem modP_reduceModPow
     (p k : Nat) [ZMod64.Bounds p] (f : ZPoly) :
     modP p (reduceModPow f p (k + 1)) = modP p f := by
   apply modP_eq_of_congr

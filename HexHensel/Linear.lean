@@ -128,6 +128,8 @@ def linearHenselStep
     h := reduceModPow h' p (k + 1) }
 
 /-- The `g` projection of a linear Hensel step, exposed without unfolding the result record. -/
+-- `@[simp]`-only: the RHS is `let`-wrapped, which `grind =` rejects, so it is
+-- deliberately excluded from the Phase 6 grind sweep.
 @[simp] theorem linearHenselStep_g
     (p k : Nat) [ZMod64.Bounds p]
     (f g h : ZPoly) (s t : FpPoly p) :
@@ -140,6 +142,8 @@ def linearHenselStep
   simp [linearHenselStep]
 
 /-- The `h` projection of a linear Hensel step, exposed without unfolding the result record. -/
+-- `@[simp]`-only: the RHS is `let`-wrapped, which `grind =` rejects, so it is
+-- deliberately excluded from the Phase 6 grind sweep.
 @[simp] theorem linearHenselStep_h
     (p k : Nat) [ZMod64.Bounds p]
     (f g h : ZPoly) (s t : FpPoly p) :
