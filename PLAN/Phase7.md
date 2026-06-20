@@ -80,7 +80,16 @@ at build time:
   `open Hex Hex.DensePoly`. Qualify the specialized op explicitly
   (`ZPoly.content f`, not `content f`). Validate `#guard` values in a
   throwaway file importing the fast Mathlib-free library before the
-  slow `HexManual` build.
+  slow `HexManual` build. Build that throwaway file *through* `lake`
+  (e.g. as a temporary module, or trust the values pinned by the
+  library's `Conformance.lean`): a standalone `lake env lean file.lean`
+  has no precompiled native binding, so `#guard`s over `@[extern]` ops
+  (any `ZMod64` arithmetic) error with "Could not find native
+  implementation" even when the values are correct. Those same extern
+  `#guard`s *do* evaluate green inside the real `HexManual` build, which
+  precompiles — so an elaboration-clean throwaway run with only
+  native-impl runtime errors at the `#guard` lines is a pass, not a
+  failure.
 - `{docstring T}` on a `structure`/`inductive`/`class` requires **every
   field to have its own docstring**, not just the type — an undocumented field
   errors with `'…' is not documented` (and cascades into a misleading
