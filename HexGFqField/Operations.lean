@@ -91,17 +91,6 @@ private def invPoly {f : FpPoly p} {hf : 0 < FpPoly.degree f}
   let unitInv : ZMod64 p := (r.gcd.coeff 0)⁻¹
   DensePoly.scale unitInv r.left
 
-/-- The inverse candidate is the normalized left Bezout coefficient from the
-extended gcd between the representative and the modulus. -/
-private theorem invPoly_eq_scale_xgcd_left
-    {f : FpPoly p} {hf : 0 < FpPoly.degree f}
-    (x : GFqRing.PolyQuotient f hf) :
-    invPoly x =
-      let r := DensePoly.xgcd (GFqRing.repr x) f
-      let unitInv : ZMod64 p := (r.gcd.coeff 0)⁻¹
-      DensePoly.scale unitInv r.left := by
-  rfl
-
 /-- The extended-gcd output gives the unscaled Bezout identity for the reduced
 representative and the modulus. -/
 private theorem xgcd_repr_bezout
