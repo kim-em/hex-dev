@@ -57,8 +57,8 @@ Each chapter should cover:
    computational libs) or to the computational counterpart (for
    `hex-*-mathlib` libs).
 
-Two Verso syntax constraints bite chapter authors and only surface at
-build time:
+Several Verso syntax constraints bite chapter authors and only surface
+at build time:
 
 - A `{ref "tag"}[text]` (or `{name}`/`{docstring}`) directive must sit
   on a **single line** — breaking `{ref` from its `"tag"}[text]` across
@@ -74,6 +74,15 @@ build time:
   (`ZPoly.content f`, not `content f`). Validate `#guard` values in a
   throwaway file importing the fast Mathlib-free library before the
   slow `HexManual` build.
+- `{docstring T}` on a `structure`/`inductive` requires **every field
+  to have its own docstring**, not just the type — an undocumented field
+  errors with `'…' is not documented` (and cascades into a misleading
+  "declaration uses `sorry`" warning on the `#doc`). Add a `/-- … -/` to
+  each field in the source library before referencing the type.
+- Prose containing a literal `[` (e.g. a formula like `Fₚ[x]`) parses as
+  a markdown link target and errors with `expected link target '(url)'
+  or '[ref]'`. Wrap such formulas in a code span (`` `Fₚ[x] / (f)` ``) or
+  escape the bracket as `\[`.
 
 ## Additional Phase 7 work: tutorials
 
