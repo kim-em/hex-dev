@@ -71,36 +71,6 @@ instance : DensePoly.ZeroSubNegLaw (ZMod64 p) where
     rw [toNat_sub, toNat_neg, toNat_zero]
     simp [Nat.zero_add]
 
-private theorem coeff_add_semiring_rw_smoke (a b : ZMod64 p) (n : Nat) :
-    (DensePoly.C a + DensePoly.C b : DensePoly (ZMod64 p)).coeff n =
-      (DensePoly.C a).coeff n + (DensePoly.C b).coeff n := by
-  rw [DensePoly.coeff_add_semiring]
-
-private theorem coeff_add_semiring_simp_smoke (a b : ZMod64 p) (n : Nat) :
-    (DensePoly.C a + DensePoly.C b : DensePoly (ZMod64 p)).coeff n =
-      (DensePoly.C a).coeff n + (DensePoly.C b).coeff n := by
-  simp
-
-private theorem coeff_sub_ring_rw_smoke (a b : ZMod64 p) (n : Nat) :
-    (DensePoly.C a - DensePoly.C b : DensePoly (ZMod64 p)).coeff n =
-      (DensePoly.C a).coeff n - (DensePoly.C b).coeff n := by
-  rw [DensePoly.coeff_sub_ring]
-
-private theorem coeff_sub_ring_simp_smoke (a b : ZMod64 p) (n : Nat) :
-    (DensePoly.C a - DensePoly.C b : DensePoly (ZMod64 p)).coeff n =
-      (DensePoly.C a).coeff n - (DensePoly.C b).coeff n := by
-  simp
-
-private theorem coeff_neg_ring_rw_smoke (a : ZMod64 p) (n : Nat) :
-    (-DensePoly.C a : DensePoly (ZMod64 p)).coeff n =
-      -((DensePoly.C a).coeff n) := by
-  rw [DensePoly.coeff_neg_ring]
-
-private theorem coeff_neg_ring_simp_smoke (a : ZMod64 p) (n : Nat) :
-    (-DensePoly.C a : DensePoly (ZMod64 p)).coeff n =
-      -((DensePoly.C a).coeff n) := by
-  simp
-
 /-- `DensePoly.divMod f g` returns a quotient-remainder pair `(q, r)` with `q * g + r = f`. -/
 private theorem divMod_spec_core [PrimeModulus p] (f g : DensePoly (ZMod64 p)) :
     let qr := DensePoly.divMod f g
@@ -957,7 +927,7 @@ private theorem coeff_one (n : Nat) :
   exact DensePoly.coeff_C (1 : ZMod64 p) n
 
 /-- The zero polynomial evaluates to zero at every point. -/
-@[simp, grind =] theorem eval_zero (x : ZMod64 p) :
+@[grind =] theorem eval_zero (x : ZMod64 p) :
     DensePoly.eval (0 : FpPoly p) x = 0 := by
   exact DensePoly.eval_zero x
 
@@ -1037,13 +1007,13 @@ theorem eval_monomial (n : Nat) (c x : ZMod64 p) :
   exact DensePoly.coeff_C c n
 
 /-- The degree-zero coefficient of the indeterminate wrapper is zero. -/
-@[simp, grind =] theorem coeff_X_zero :
+@[grind =] theorem coeff_X_zero :
     ((FpPoly.X : FpPoly p)).coeff 0 = 0 := by
   unfold FpPoly.X
   exact DensePoly.coeff_monomial 1 (1 : ZMod64 p) 0
 
 /-- The degree-one coefficient of the indeterminate wrapper is one. -/
-@[simp, grind =] theorem coeff_X_one :
+@[grind =] theorem coeff_X_one :
     ((FpPoly.X : FpPoly p)).coeff 1 = 1 := by
   unfold FpPoly.X
   exact DensePoly.coeff_monomial 1 (1 : ZMod64 p) 1
@@ -2746,7 +2716,7 @@ theorem C_mul_eq_scale (c : ZMod64 p) (f : FpPoly p) :
 
 /-- Evaluating `C c * f` at `x` multiplies the value of `f` by the scalar `c`.
 The constant-multiplication special case of `eval_mul`. -/
-@[simp, grind =]
+@[grind =]
 theorem eval_C_mul (c : ZMod64 p) (f : FpPoly p) (x : ZMod64 p) :
     DensePoly.eval (DensePoly.C c * f) x = c * DensePoly.eval f x := by
   rw [C_mul_eq_scale]
@@ -3933,7 +3903,7 @@ theorem linearPow_succ_left (f : FpPoly p) (n : Nat) :
         _ = f * linearPow f (n + 1) := rfl
 
 /-- The first `linearPow` of a polynomial is the polynomial itself. -/
-@[simp, grind =] theorem linearPow_one (f : FpPoly p) :
+@[grind =] theorem linearPow_one (f : FpPoly p) :
     linearPow f 1 = f := by
   grind
 

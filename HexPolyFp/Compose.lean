@@ -37,7 +37,7 @@ private theorem C_zero_eq_zero :
   rw [DensePoly.coeff_C, DensePoly.coeff_zero]
   cases n <;> rfl
 
-@[simp, grind =] theorem compose_zero (q : FpPoly p) :
+@[grind =] theorem compose_zero (q : FpPoly p) :
     DensePoly.compose (0 : FpPoly p) q = 0 := by
   rfl
 

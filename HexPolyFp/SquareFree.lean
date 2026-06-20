@@ -19,12 +19,16 @@ variable {p : Nat} [ZMod64.Bounds p]
 
 /-- One square-free factor together with its multiplicity. -/
 structure SquareFreeFactor (p : Nat) [ZMod64.Bounds p] where
+  /-- The square-free factor polynomial. -/
   factor : FpPoly p
+  /-- The exponent with which `factor` divides the original polynomial. -/
   multiplicity : Nat
 
 /-- A square-free decomposition records the scalar unit and the nonconstant factors. -/
 structure SquareFreeDecomposition (p : Nat) [ZMod64.Bounds p] where
+  /-- The leading-coefficient scalar unit pulled out of the polynomial. -/
   unit : ZMod64 p
+  /-- The square-free factors together with their multiplicities. -/
   factors : List (SquareFreeFactor p)
 
 /-- Detect the unit polynomial `1`. -/
