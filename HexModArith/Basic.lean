@@ -17,14 +17,18 @@ namespace ZMod64
 
 /-- `ZMod64 p` is only valid when `p` is positive and fits in one machine word. -/
 class Bounds (p : Nat) : Prop where
+  /-- The modulus is positive. -/
   pPos : 0 < p
+  /-- The modulus fits in one machine word. -/
   pLeR : p ≤ UInt64.word
 
 end ZMod64
 
 /-- Residues mod `p` stored in a single machine word, with a proof of reduction. -/
 structure ZMod64 (p : Nat) [ZMod64.Bounds p] where
+  /-- The backing machine word holding the standard representative. -/
   val : UInt64
+  /-- Proof that the stored word is already reduced below the modulus. -/
   isLt : val.toNat < p
 
 namespace ZMod64
