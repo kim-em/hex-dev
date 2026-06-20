@@ -85,51 +85,28 @@ The earlier Mahler measure library (by Fabrizio Barroero) provides:
 ("Mahler Measure for other rings") extends the Mahler measure definition
 beyond `ℂ[X]`. If this lands, the `ℤ → ℂ` coercion step becomes cleaner.
 
-**Schmeisser / de Bruijn-Springer source theorem surface.**
+**Robinson-form derivative surface (CLD Φ Mahler bound).**
 
-The Schmeisser/de Bruijn-Springer composition-polynomial theorem belongs in
-`hex-poly-z-mathlib`, not in the Mathlib-free `hex-poly-z` library. It is an
-analytic theorem about roots of complex polynomials, uses Mathlib's complex
-polynomial root and Mahler-measure APIs, and supplies the external analytic
-input for later integer-polynomial coefficient and derivative bounds.
+The analytic input for the BHKS van Hoeij CLD `Φ` coefficient bound belongs in
+`hex-poly-z-mathlib`, not in the Mathlib-free `hex-poly-z` library. It is a
+collection of theorems about roots of complex polynomials that uses Mathlib's
+complex polynomial root and Mahler-measure APIs.
 
-This library owns the following `Polynomial ℂ` API surface:
+This library owns the Robinson-reflection root-deletion surface in
+`HexPolyZMathlib/RobinsonForm.lean`. The Robinson form keeps roots in the
+closed unit disk as `X - C α` and reflects exterior roots to
+`1 - C (conj α) * X`; the derivative is expanded as a sum of root-deletion
+summands whose Mahler measures are individually controlled:
 
-- The binomial-normalized Schmeisser composition polynomial
-  `Polynomial.schmeisserComposition n f g` and its coefficient, degree, and
-  support lemmas.
-- The derivative specialization kernel
-  `Polynomial.schmeisserDerivativeKernel n`, including the coefficient
-  identity identifying
-  `schmeisserComposition p.natDegree p (schmeisserDerivativeKernel p.natDegree)`
-  with `X * p.derivative`, and the proof that the kernel roots lie in the
-  closed unit disk.
-- The exterior-root product helper
-  `Polynomial.rootsRadiusProduct r s` and the finite multiset conversion
-  from radius-wise root-count domination to exterior-product domination.
-- The hard source theorem, exposed in a derivative-adapter-free form:
+- The root-deletion derivative summand `Polynomial.rootDeletionDerivativeSummand g α`
+  and the derivative expansion
+  `Polynomial.derivative_eq_sum_rootDeletionDerivativeSummand`.
+- The per-summand Mahler-measure bound
+  `Polynomial.mahlerMeasure_rootDeletionDerivativeSummand_le`.
 
-  ```lean
-  theorem Polynomial.rootsRadiusProduct_le_of_schmeisserComposition
-      {n : ℕ} {f g : ℂ[X]} {r : ℝ}
-      (hr : 0 < r)
-      (hfg_degree : f.natDegree ≤ n ∧ g.natDegree ≤ n)
-      (hg_roots : ∀ z ∈ g.roots, ‖z‖ ≤ 1) :
-      Polynomial.rootsRadiusProduct r
-          (Polynomial.schmeisserComposition n f g).roots ≤
-        Polynomial.rootsRadiusProduct r f.roots
-  ```
-
-  If the literature proof is easiest to formalize first as radius-wise
-  root-count domination, that theorem may be kept as an internal or
-  intermediate lemma, but the public downstream handoff is the product
-  theorem above.
-- Coefficient-form wrappers that turn an arbitrary polynomial `h` with the
-  Schmeisser composition coefficients into the corresponding
-  `rootsRadiusProduct` and radius-one filtered-product inequalities.
-- Local derivative adapters in `HexPolyZMathlib/RobinsonForm.lean`, including
-  removal of the extra `X` root and the radius-one implication for
-  `p.derivative`.
+`HexBerlekampZassenhausMathlib/CLDColumnBound.lean` consumes this surface to
+discharge the `hphi_mahler` hypothesis of `abs_phi_coeff_le` — the replacement
+analytic obligation for the BHKS CLD `Φ` Mahler-measure bound.
 
 Downstream libraries may depend on these theorems as Mathlib-side analytic
 inputs. Mathlib-free libraries must not import this surface directly; they

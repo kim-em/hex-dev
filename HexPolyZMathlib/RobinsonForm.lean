@@ -1,4 +1,3 @@
-import HexPolyZMathlib.SchurSzego
 import Mathlib.Analysis.Polynomial.MahlerMeasure
 import Mathlib.Analysis.Complex.Polynomial.GaussLucas
 import Mathlib.Analysis.Normed.Module.Convex
