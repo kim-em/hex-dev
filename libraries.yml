@@ -382,7 +382,7 @@ libraries:
   HexHenselMathlib:
     deps: [HexHensel, HexPolyMathlib]
     mathlib: true
-    done_through: 6
+    done_through: 7
     status: active
   HexGF2Mathlib:
     deps: [HexGF2, HexPolyFp, HexGFqField]
