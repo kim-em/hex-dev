@@ -78,7 +78,8 @@ at build time:
   to have its own docstring**, not just the type — an undocumented field
   errors with `'…' is not documented` (and cascades into a misleading
   "declaration uses `sorry`" warning on the `#doc`). Add a `/-- … -/` to
-  each field in the source library before referencing the type.
+  each field in the source library before referencing the type, or embed
+  it with `{name}` and describe the fields in prose instead.
 - Prose containing a literal `[` (e.g. a formula like `Fₚ[x]`) parses as
   a markdown link target and errors with `expected link target '(url)'
   or '[ref]'`. Wrap such formulas in a code span (`` `Fₚ[x] / (f)` ``) or
