@@ -175,7 +175,7 @@ libraries:
   HexLLL:
     deps: [HexGramSchmidt]
     mathlib: false
-    done_through: 6
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -198,7 +198,7 @@ libraries:
   HexPolyFp:
     deps: [HexPoly, HexModArith]
     mathlib: false
-    done_through: 5
+    done_through: 6
     status: active
     phase4:
       input_families:

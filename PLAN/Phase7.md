@@ -66,6 +66,10 @@ at build time:
 - Lean code blocks (```` ```lean ````) are capped at **60 columns**;
   longer lines warn. Lift wide `example`/`theorem` binders into a
   `variable` block above the block to fit.
+- `{name X}` requires `X` to be a **constant** (def/theorem/structure),
+  not a namespace. Referring to a namespace like `GramSchmidt.Int` errors
+  with `Unknown constant`; name a real declaration in it, or use a plain
+  `` `code span` `` in prose.
 - `#eval`/`#guard` on an `@[extern]` def fails in the manual's
   evaluator (no native binding) — document those by signature/law and
   keep evaluated example blocks to the pure-Lean surface.

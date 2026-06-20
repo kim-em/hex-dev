@@ -10,6 +10,7 @@ import HexManual.Chapters.HexModArithMathlib
 import HexManual.Chapters.HexPoly
 import HexManual.Chapters.HexPolyZ
 import HexManual.Chapters.HexGramSchmidt
+import HexManual.Chapters.HexLLL
 import HexManual.Chapters.HexConway
 
 open Verso.Genre Manual
@@ -57,5 +58,7 @@ documentation phase of the development plan.
 {include 0 HexManual.Chapters.HexPolyZ}
 
 {include 0 HexManual.Chapters.HexGramSchmidt}
+
+{include 0 HexManual.Chapters.HexLLL}
 
 {include 0 HexManual.Chapters.HexConway}
