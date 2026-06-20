@@ -1917,6 +1917,10 @@ member of the old one. -/
     have hne : j ≠ k := fun h => Nat.lt_irrefl j.val (h ▸ hjk)
     exact LLLState.rowAdd_memLattice_iff s.b hne _ v
 
+/-- Folding `reduceColumn` over a list of source columns preserves the lattice:
+each step adds an integer multiple of one row to row `k`, so by induction the
+whole pass leaves the spanned integer lattice unchanged. Lifts
+`reduceColumn_memLattice_iff` to the column sweep performed by size reduction. -/
 private theorem sizeReduce_foldl_memLattice_iff (s : SteeredState n m) (k : Nat) (hk : k < n)
     (xs : List (Fin k)) (v : Vector Int m) :
     Matrix.memLattice
