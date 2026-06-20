@@ -1434,7 +1434,7 @@ private def transformedCore (core : ZPoly) (degree : Nat) : ZPoly :=
       change (transformedCoeffs core degree).back? ≠ some (0 : Int)
       simp [transformedCoeffs] }
 
-@[simp] theorem transformedCoeffs_size (core : ZPoly) (degree : Nat) :
+@[simp, grind =] theorem transformedCoeffs_size (core : ZPoly) (degree : Nat) :
     (transformedCoeffs core degree).size = degree + 1 := by
   simp [transformedCoeffs]
 
@@ -1442,7 +1442,7 @@ private def transformedCore (core : ZPoly) (degree : Nat) : ZPoly :=
     (transformedCoeffs core degree).getD degree 0 = 1 := by
   simp [transformedCoeffs]
 
-@[simp] theorem transformedCore_size (core : ZPoly) (degree : Nat) :
+@[simp, grind =] theorem transformedCore_size (core : ZPoly) (degree : Nat) :
     (transformedCore core degree).size = degree + 1 := by
   simp [transformedCore, DensePoly.size]
 
@@ -1456,7 +1456,7 @@ theorem transformedCore_monic (core : ZPoly) (degree : Nat) :
   unfold DensePoly.Monic DensePoly.leadingCoeff transformedCore
   simp [transformedCoeffs]
 
-@[simp] theorem transformedCore_degree_getD (core : ZPoly) (degree : Nat) :
+@[simp, grind =] theorem transformedCore_degree_getD (core : ZPoly) (degree : Nat) :
     (transformedCore core degree).degree?.getD 0 = degree := by
   unfold DensePoly.degree? transformedCore DensePoly.size
   simp [transformedCoeffs]
@@ -1475,13 +1475,13 @@ def toMonic (core : ZPoly) : ToMonicData :=
       else
         ToMonicData.transformedCore core degree }
 
-@[simp] theorem toMonic_core (core : ZPoly) :
+@[simp, grind =] theorem toMonic_core (core : ZPoly) :
     (toMonic core).core = core := rfl
 
-@[simp] theorem toMonic_leadingCoeff (core : ZPoly) :
+@[simp, grind =] theorem toMonic_leadingCoeff (core : ZPoly) :
     (toMonic core).leadingCoeff = DensePoly.leadingCoeff core := rfl
 
-@[simp] theorem toMonic_degree (core : ZPoly) :
+@[simp, grind =] theorem toMonic_degree (core : ZPoly) :
     (toMonic core).degree = core.degree?.getD 0 := rfl
 
 /-- The `monic` field of `toMonic core` is monic once the source has positive
@@ -1558,17 +1558,17 @@ private def polyPow (f : ZPoly) : Nat → ZPoly
 def factorPower (f : ZPoly) (n : Nat) : ZPoly :=
   polyPow f n
 
-@[simp] theorem factorPower_zero (f : ZPoly) :
+@[simp, grind =] theorem factorPower_zero (f : ZPoly) :
     factorPower f 0 = (1 : ZPoly) := rfl
 
-@[simp] theorem factorPower_succ (f : ZPoly) (n : Nat) :
+@[simp, grind =] theorem factorPower_succ (f : ZPoly) (n : Nat) :
     factorPower f (n + 1) = factorPower f n * f := rfl
 
 /-- Expand multiplicity pairs into the ordered polynomial product. -/
 def product (φ : Factorization) : ZPoly :=
   φ.factors.foldl (fun acc factor => acc * polyPow factor.1 factor.2) (DensePoly.C φ.scalar)
 
-@[simp] theorem product_mk_empty (scalar : Int) :
+@[simp, grind =] theorem product_mk_empty (scalar : Int) :
     product { scalar := scalar, factors := #[] } = DensePoly.C scalar := rfl
 
 /--
@@ -2699,10 +2699,10 @@ def henselLiftData (f : ZPoly) (B : Nat) (d : PrimeChoiceData) : LiftData :=
     k := B
     liftedFactors := ZPoly.multifactorLiftQuadratic d.p B f factors }
 
-@[simp] theorem henselLiftData_p (f : ZPoly) (B : Nat) (d : PrimeChoiceData) :
+@[simp, grind =] theorem henselLiftData_p (f : ZPoly) (B : Nat) (d : PrimeChoiceData) :
     (henselLiftData f B d).p = d.p := rfl
 
-@[simp] theorem henselLiftData_k (f : ZPoly) (B : Nat) (d : PrimeChoiceData) :
+@[simp, grind =] theorem henselLiftData_k (f : ZPoly) (B : Nat) (d : PrimeChoiceData) :
     (henselLiftData f B d).k = B := rfl
 
 namespace ZPoly
@@ -7782,7 +7782,7 @@ returns `none` when no admissible modular prime is available.
 def factorSlowModular (f : ZPoly) : Option Factorization :=
   factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f)
 
-@[simp] theorem factorSlowModular_eq_factorSlowModularWithBound_default
+@[simp, grind =] theorem factorSlowModular_eq_factorSlowModularWithBound_default
     (f : ZPoly) :
     factorSlowModular f =
       factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f) := rfl
@@ -8387,7 +8387,7 @@ the removed silent prime-data fallback is never consulted.
 def factor (f : ZPoly) : Factorization :=
   factorWithBound f (ZPoly.defaultFactorCoeffBound f)
 
-@[simp] theorem factor_eq_factorWithBound_default (f : ZPoly) :
+@[simp, grind =] theorem factor_eq_factorWithBound_default (f : ZPoly) :
     factor f = factorWithBound f (ZPoly.defaultFactorCoeffBound f) := rfl
 
 /--
@@ -8421,7 +8421,7 @@ Option-returning factoring entry point at the default Mignotte bound; mirrors
 def factor? (f : ZPoly) : Option Factorization :=
   factorWithBound? f (ZPoly.defaultFactorCoeffBound f)
 
-@[simp] theorem factor?_eq_factorWithBound?_default (f : ZPoly) :
+@[simp, grind =] theorem factor?_eq_factorWithBound?_default (f : ZPoly) :
     factor? f = factorWithBound? f (ZPoly.defaultFactorCoeffBound f) := rfl
 
 /-- When `factorWithBound?` succeeds, it agrees with the total `factorWithBound`.
@@ -8567,7 +8567,7 @@ theorem factorizationOfFactors_scalar (f : ZPoly) (rawFactors : Array ZPoly) :
         ZPoly.content f := by
   rfl
 
-@[simp] theorem factorizationOfFactors_scalar_zero (rawFactors : Array ZPoly) :
+@[simp, grind =] theorem factorizationOfFactors_scalar_zero (rawFactors : Array ZPoly) :
     (factorizationOfFactors 0 rawFactors).scalar = 0 := by
   simp [factorizationOfFactors_scalar]
 
@@ -8604,7 +8604,7 @@ theorem factorWithBound_scalar (f : ZPoly) (B : Nat) :
   rw [hfactor]
   exact factorizationOfFactors_scalar f rawFactors
 
-@[simp] theorem factorWithBound_scalar_zero (B : Nat) :
+@[simp, grind =] theorem factorWithBound_scalar_zero (B : Nat) :
     (factorWithBound 0 B).scalar = 0 := by
   simp [factorWithBound_scalar]
 
@@ -8638,7 +8638,7 @@ theorem factor_scalar (f : ZPoly) :
   simpa [factor_eq_factorWithBound_default] using
     factorWithBound_scalar f (ZPoly.defaultFactorCoeffBound f)
 
-@[simp] theorem factor_scalar_zero :
+@[simp, grind =] theorem factor_scalar_zero :
     (factor 0).scalar = 0 := by
   simp [factor_eq_factorWithBound_default]
 
