@@ -29,16 +29,23 @@ def matrixEquiv : Hex.Matrix R n m ≃ Matrix (Fin n) (Fin m) R where
     ext i j
     simp [Hex.Matrix.ofFn]
 
+/-- The Mathlib matrix produced by `matrixEquiv` reads off the executable
+matrix entrywise, so a caller can rewrite `matrixEquiv M i j` to the underlying
+`M[i][j]` without unfolding the equivalence. -/
 @[simp, grind =]
 theorem matrixEquiv_apply (M : Hex.Matrix R n m) (i : Fin n) (j : Fin m) :
     matrixEquiv M i j = M[i][j] :=
   rfl
 
+/-- The inverse direction of `matrixEquiv` materialises a Mathlib matrix as an
+executable one entrywise: `(matrixEquiv.symm M)[i][j]` is just `M i j`. -/
 @[simp, grind =]
 theorem matrixEquiv_symm_apply (M : Matrix (Fin n) (Fin m) R) (i : Fin n) (j : Fin m) :
-    (matrixEquiv.symm M)[i][j] = M i j :=
+    (matrixEquiv.symm M)[(i : Nat)][(j : Nat)] = M i j :=
   by simp [matrixEquiv, Hex.Matrix.ofFn]
 
+/-- `matrixEquiv` is a left inverse of `Hex.Matrix.ofFn`: building an executable
+matrix from `f` and transporting it to Mathlib recovers `f` itself. -/
 @[simp, grind =]
 theorem matrixEquiv_ofFn (f : Fin n → Fin m → R) :
     matrixEquiv (Hex.Matrix.ofFn f) = f := by
@@ -49,6 +56,9 @@ section RowOps
 
 variable [Semiring R]
 
+/-- The executable elementary row swap corresponds to left multiplication by
+Mathlib's permutation matrix `Matrix.swap`, so downstream determinant and rank
+lemmas can reason about `rowSwap` through Mathlib's swap algebra. -/
 theorem matrixEquiv_rowSwap (M : Hex.Matrix R n m) (i j : Fin n) :
     matrixEquiv (Hex.Matrix.rowSwap M i j) = Matrix.swap R i j * matrixEquiv M := by
   ext r k
@@ -62,6 +72,9 @@ theorem matrixEquiv_rowSwap (M : Hex.Matrix R n m) (i j : Fin n) :
       simp [hrj]
     · simp [hrj, hri, Matrix.swap_mul_of_ne]
 
+/-- The executable elementary row scaling corresponds to left multiplication by
+the diagonal matrix that carries `c` in row `i` and `1` elsewhere, exposing
+`rowScale` to Mathlib's diagonal-matrix algebra. -/
 theorem matrixEquiv_rowScale (M : Hex.Matrix R n m) (i : Fin n) (c : R) :
     matrixEquiv (Hex.Matrix.rowScale M i c) =
       Matrix.diagonal (Function.update (fun _ : Fin n => (1 : R)) i c) * matrixEquiv M := by
@@ -88,6 +101,9 @@ section RowAdd
 
 variable [CommRing R]
 
+/-- The executable elementary row addition (add `c` times row `src` to row
+`dst`) corresponds to left multiplication by Mathlib's transvection matrix,
+completing the row-operation dictionary used by the determinant correspondence. -/
 theorem matrixEquiv_rowAdd (M : Hex.Matrix R n m) (src dst : Fin n) (c : R) :
     matrixEquiv (Hex.Matrix.rowAdd M src dst c) =
       Matrix.transvection dst src c * matrixEquiv M := by

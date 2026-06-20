@@ -32,14 +32,21 @@ def vectorEquiv : Vector R n ≃ (Fin n → R) where
     funext i
     simp
 
+/-- `vectorEquiv` reads off the executable vector entrywise, so a caller can
+rewrite `vectorEquiv v i` to the underlying `v[i]` without unfolding it. -/
 @[simp, grind =] theorem vectorEquiv_apply (v : Vector R n) (i : Fin n) :
     vectorEquiv v i = v[i] :=
   rfl
 
+/-- The inverse direction of `vectorEquiv` materialises a function as an
+executable vector entrywise: `(vectorEquiv.symm f)[i]` is just `f i`. -/
 @[simp, grind =] theorem vectorEquiv_symm_apply (f : Fin n → R) (i : Fin n) :
-    (vectorEquiv.symm f)[i] = f i := by
+    (vectorEquiv.symm f)[(i : Nat)] = f i := by
   simp [vectorEquiv]
 
+/-- Row `i` of the Mathlib matrix `matrixEquiv M` is the image under
+`vectorEquiv` of the executable row `Hex.Matrix.row M i`, letting span/rank
+lemmas pass between the two row representations. -/
 @[simp, grind =] theorem matrixEquiv_row (M : Hex.Matrix R n m) (i : Fin n) :
     _root_.Matrix.row (matrixEquiv M) i = vectorEquiv (Hex.Matrix.row M i) := by
   funext j
@@ -52,6 +59,9 @@ private theorem foldl_finRange_eq_sum [AddCommMonoid R] {n : Nat} (f : Fin n →
   rw [← List.sum_toFinset f (List.nodup_finRange n)]
   rw [List.toFinset_finRange]
 
+/-- Bridge invariant: the executable matrix-vector product transports to
+Mathlib's `Matrix.mulVec` under `matrixEquiv`/`vectorEquiv`. This is the key
+step letting nullspace membership be phrased against `mulVecLin`. -/
 private theorem vectorEquiv_mulVec [Field R] (M : Hex.Matrix R n m) (v : Vector R m) :
     vectorEquiv (M * v) = (matrixEquiv M).mulVec (vectorEquiv v) := by
   funext i
@@ -65,6 +75,10 @@ private theorem vectorEquiv_mulVec [Field R] (M : Hex.Matrix R n m) (v : Vector 
   intro k _
   rfl
 
+/-- The executable row combination `Hex.Matrix.rowCombination M c` (the linear
+combination of the rows of `M` with coefficients `c`) transports under
+`vectorEquiv` to Mathlib's `Fintype.linearCombination` over the rows of
+`matrixEquiv M`. This identifies the computed row span with Mathlib's span. -/
 theorem vectorEquiv_rowCombination [CommRing R] (M : Hex.Matrix R n m) (c : Vector R n) :
     vectorEquiv (Hex.Matrix.rowCombination M c) =
       Fintype.linearCombination R (_root_.Matrix.row (matrixEquiv M)) (vectorEquiv c) := by
@@ -87,6 +101,10 @@ theorem vectorEquiv_rowCombination [CommRing R] (M : Hex.Matrix R n m) (c : Vect
   congr 1
   simp [Vector.getElem_ofFn]
 
+/-- Bridge invariant: applying the executable nullspace matrix to a coefficient
+vector `c` expands, under `vectorEquiv`, as the `c`-weighted sum of the computed
+nullspace basis vectors. Used to express an arbitrary kernel element as a span
+of the basis. -/
 private theorem vectorEquiv_nullspaceMatrix_mulVec [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRREF M D) (c : Vector R (m - D.rank)) :
@@ -104,6 +122,10 @@ private theorem vectorEquiv_nullspaceMatrix_mulVec [Field R]
   unfold Hex.Matrix.IsRREF.nullspace Hex.Matrix.col
   simp [mul_comm]
 
+/-- Soundness of the executable `spanCoeffs`: when echelon-form data certifies
+`v` as a row combination with coefficients `c`, the Mathlib image of `v` is the
+corresponding `linearCombination` of the rows of `M`. Witnesses span membership
+with explicit coefficients. -/
 theorem spanCoeffs_eq_linearCombination [Field R] [DecidableEq R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsEchelonForm M D) (v : Vector R m) (c : Vector R n) :
@@ -120,6 +142,9 @@ theorem spanCoeffs_eq_linearCombination [Field R] [DecidableEq R]
     exact (congrArg vectorEquiv hrow.symm).trans (vectorEquiv_rowCombination M _)
   · contradiction
 
+/-- The executable span-membership test `spanContains` is correct: it returns
+`true` exactly when the Mathlib image of `v` lies in the `R`-span of the rows of
+`M`. The decision procedure agrees with Mathlib's `Submodule.span`. -/
 theorem spanContains_iff_mem_span [Field R] [DecidableEq R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRREF M D) (v : Vector R m) :
@@ -138,6 +163,9 @@ theorem spanContains_iff_mem_span [Field R] [DecidableEq R]
     rw [vectorEquiv_rowCombination M (vectorEquiv.symm c)]
     simpa using hc
 
+/-- Every row of the computed echelon form lies in the row span of the original
+matrix `M`: row reduction does not enlarge the span. One inclusion of the
+"echelon rows span the same subspace as `M`" equivalence. -/
 theorem rref_echelon_row_mem_span [Field R] [DecidableEq R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRREF M D) (i : Fin n) :
@@ -152,6 +180,9 @@ theorem rref_echelon_row_mem_span [Field R] [DecidableEq R]
     simpa [e] using Hex.Matrix.IsRREF.rowCombination_single (M := D.echelon) i
   rw [htransport, hsingle]
 
+/-- Converse direction: any vector in the row span of `M` is realised as an
+executable row combination of the echelon rows. Together with
+`rref_echelon_row_mem_span` this shows row reduction preserves the row span. -/
 theorem rref_mem_span_echelon_of_mem_span [Field R] [DecidableEq R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRREF M D) {v : Fin m → R} :
@@ -165,6 +196,9 @@ theorem rref_mem_span_echelon_of_mem_span [Field R] [DecidableEq R]
   exact E.toIsEchelonForm.exists_rowCombination_echelon_of_M
     ((E.spanContains_iff (vectorEquiv.symm v)).mp hcontains)
 
+/-- Each computed nullspace basis vector lies in the kernel of `M` (viewed as
+Mathlib's linear map `mulVecLin`): the executable nullspace really annihilates
+`M`. -/
 theorem nullspace_mem_ker [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRREF M D) (k : Fin (m - D.rank)) :
@@ -180,6 +214,9 @@ theorem nullspace_mem_ker [Field R]
   rw [hzero] at hbridge
   exact hbridge.symm
 
+/-- The computed nullspace basis spans exactly the kernel of `M`: the span of
+the executable basis vectors equals Mathlib's `LinearMap.ker (mulVecLin M)`.
+This is the completeness counterpart to `nullspace_mem_ker`. -/
 theorem nullspace_span_eq_ker [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRREF M D) :
@@ -215,6 +252,9 @@ theorem nullspace_span_eq_ker [Field R]
     exact Submodule.sum_mem _ fun k _ =>
       Submodule.smul_mem _ c[k] (Submodule.subset_span ⟨k, rfl⟩)
 
+/-- Invariant pinning the free-column entries of the nullspace basis: basis
+vector `k` reads `1` at its own free column and `0` at the others. This Kronecker
+pattern is what makes the basis linearly independent. -/
 private theorem nullspace_get_free_entry [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRREF M D) (k l : Fin (m - D.rank)) :
@@ -225,6 +265,9 @@ private theorem nullspace_get_free_entry [Field R]
     simpa using Hex.Matrix.IsRREF.nullspace_get_free E l
   · simpa [hkl] using Hex.Matrix.IsRREF.nullspace_get_free_ne E hkl
 
+/-- The computed nullspace basis is linearly independent, read off from the
+Kronecker pattern of `nullspace_get_free_entry`. Supplies the dimension count in
+`rank_eq`. -/
 private theorem nullspace_linearIndependent [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRREF M D) :
@@ -249,6 +292,9 @@ private theorem nullspace_linearIndependent [Field R]
   · intro hmem
     exact (hmem (Finset.mem_univ l)).elim
 
+/-- The rank computed by row reduction agrees with Mathlib's `Matrix.rank`.
+Proven by rank-nullity: the `m - D.rank` independent nullspace basis vectors pin
+the kernel dimension, and the complement is the matrix rank. -/
 theorem rank_eq [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRREF M D) :

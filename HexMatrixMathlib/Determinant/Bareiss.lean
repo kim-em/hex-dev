@@ -1562,9 +1562,9 @@ private theorem pivotLoop_initial_regular_step_eq_pred
   omega
 
 /-- Mathlib-side correctness theorem for the packaged row-pivoted Bareiss
-data. This theorem avoids using the Mathlib-free `Hex.Matrix.bareiss_eq_det`
-hole; it combines the row-pivot invariant with the singular-branch
-determinant-zero theorem above. -/
+data: its `.det` field equals Mathlib's determinant of the corresponding
+matrix. Proven directly here by combining the row-pivot invariant with the
+singular-branch determinant-zero theorem above. -/
 theorem bareissData_eq_mathlib_det (M : Hex.Matrix Int n n) :
     (Hex.Matrix.bareissData M).det = Matrix.det (matrixEquiv M) := by
   by_cases hregular : (Hex.Matrix.bareissData M).singularStep = none
