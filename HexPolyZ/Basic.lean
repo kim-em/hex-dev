@@ -2890,10 +2890,10 @@ private def ratPolyPow (d : DensePoly Rat) : Nat → DensePoly Rat
   | 0 => 1
   | n + 1 => d * ratPolyPow d n
 
-@[simp] private theorem ratPolyPow_zero (d : DensePoly Rat) :
+@[simp, grind =] private theorem ratPolyPow_zero (d : DensePoly Rat) :
     ratPolyPow d 0 = 1 := rfl
 
-@[simp] private theorem ratPolyPow_succ (d : DensePoly Rat) (n : Nat) :
+@[simp, grind =] private theorem ratPolyPow_succ (d : DensePoly Rat) (n : Nat) :
     ratPolyPow d (n + 1) = d * ratPolyPow d n := rfl
 
 private theorem ratPolyPow_one (d : DensePoly Rat) :

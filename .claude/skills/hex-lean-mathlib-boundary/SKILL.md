@@ -69,7 +69,21 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   build error, same disposition: leave `@[simp]`-only, note why in the
   docstring/PR body. Indices that appear as a projection of a direct param
   (`i.val` inside a `Fin.mk` index) DO instantiate fine — only fully
-  binder-bound params fail.
+  binder-bound params fail. A second flavour of the same rejection:
+  params that survive only inside a **reducible type wrapper** that
+  `grind` unfolds away. A junk-value lemma like
+  `(0 : GFq p n h)⁻¹ = 0` (`HexGFq/Basic.lean`, #8144) looks clean —
+  `lhs = rhs`, params `n`/`h` present in the `GFq p n h` type — but
+  `GFq p n h` reduces to `GFqField.FiniteField (modulus h) …`, so the
+  LHS pattern collapses to the parameter-free literal
+  `@OfNat.ofNat (GFqField.FiniteField …) 0` (`modulus h` is opaque to
+  pattern solving), and `n`/`h` cannot be instantiated. Same hard build
+  error, same disposition. Note this does **not** transfer from a
+  sibling library where the wrapper does *not* reduce: GF2n's
+  `inv_zero` (`HexGF2/Field.lean`, #8124) keeps the `GF2n n …` type in
+  its pattern and promotes fine. Premise-check each wrapper-type
+  junk-value lemma against the real build before trusting a cross-library
+  precedent.
 - **A clean `Eq` conclusion is still rejected if the LHS pattern cannot
   instantiate a *data* parameter the conclusion drops.** `grind =`
   E-matches on the LHS, so every theorem parameter must be recoverable
