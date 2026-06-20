@@ -2,6 +2,7 @@ import VersoManual
 
 import HexManual.Chapters.HexArith
 import HexManual.Chapters.HexGFqRing
+import HexManual.Chapters.HexGFqField
 import HexManual.Chapters.HexGFqMathlib
 import HexManual.Chapters.HexModArith
 import HexManual.Chapters.HexModArithMathlib
@@ -38,6 +39,8 @@ documentation phase of the development plan.
 {include 0 HexManual.Chapters.HexArith}
 
 {include 0 HexManual.Chapters.HexGFqRing}
+
+{include 0 HexManual.Chapters.HexGFqField}
 
 {include 0 HexManual.Chapters.HexGFqMathlib}
 
