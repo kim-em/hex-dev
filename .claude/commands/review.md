@@ -49,6 +49,27 @@ Rotate through these areas across sessions:
 **Security**:
 - Check for new issues in recent code, verify past fixes
 
+## Phase 6 exit-criteria audits
+
+For a "Phase 6 exit-criteria audit" issue, the *linter clean* criterion
+has a trap: `lake build` caches build output and **replays nothing on a
+cache hit**, so a library that is already built shows zero warnings even
+if its source emits linter warnings on a real compile. Trusting that is a
+false "clean". Force a fresh recompile of just the target library's core
+modules — delete their oleans, then rebuild:
+
+```bash
+find .lake/build -path '*/HexFoo/*' \( -name 'Bar.*' -o -name 'Baz.*' \) -delete
+lake build HexFoo 2>&1 | grep -iE 'warning|error|sorry|linter|unused' || echo CLEAN
+```
+
+For `mathlib: false` libraries the "Mathlib linter" is just Lean's
+built-in linters (Mathlib's `#lint` cannot run without importing
+Mathlib); a clean fresh recompile satisfies the criterion. Always
+rebuild the direct downstream consumer too (`HexFooMathlib`) after any
+dead-code removal — the cross-repo grep can miss nothing, but the
+compiler is the only proof the removals were safe.
+
 ## Updating Skills
 
 When you discover a recurring pattern or encounter a situation not covered by
