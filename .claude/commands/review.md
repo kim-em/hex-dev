@@ -37,11 +37,20 @@ Rotate through these areas across sessions:
   Confirm every removal by rebuilding — the compiler is ground truth.
 - Dead-code scan gotcha: when counting references, **count namespace-
   qualified uses** (`Ns.foo` is a use of `foo`) — a regex that excludes a
-  leading `.` will false-flag used decls as dead. For a "real dead-code
-  cluster" (many decls / >~200 lines / cascading orphans), file a
-  punch-list feature issue and leave `done_through` unbumped rather than
-  bashing the deletion through a review session; removal needs an iterative
-  delete→rescan→rebuild fixpoint.
+  leading `.` will false-flag used decls as dead. **But for `private`
+  decls the opposite holds**: a private decl is file-local and never
+  referenced qualified, so counting `Ns.foo` matches collide with
+  same-named decls in *other* namespaces and make dead privates look
+  live (e.g. a private `derivative_pow_succ` collides with Mathlib's
+  `Polynomial.derivative_pow_succ`). For private decls use a word-boundary
+  match that does **not** count a leading `.`, and treat `_core`/`_done`/
+  `_tail`-style siblings as distinct names (a substring grep conflates
+  them). The compiler is ground truth either way — rebuild after every
+  removal. For a "real dead-code cluster" (many decls / >~200 lines /
+  cascading orphans), file a punch-list feature issue and leave
+  `done_through` unbumped rather than bashing the deletion through a
+  review session; removal needs an iterative delete→rescan→rebuild
+  fixpoint.
 
 **Idioms and best practices**:
 - Are newer APIs or language features being used where appropriate?
