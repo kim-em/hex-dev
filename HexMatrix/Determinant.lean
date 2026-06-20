@@ -345,7 +345,7 @@ def deleteRowCol {R : Type u} {n : Nat} (M : Matrix R (n + 1) (n + 1))
 
 /-- Entries of a deleted-row/deleted-column minor are the corresponding source
 entries at the skipped row and column indices. -/
-@[simp, grind =] theorem deleteRowCol_entry {R : Type u} {n : Nat}
+@[grind =] theorem deleteRowCol_entry {R : Type u} {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) (i j : Fin n) :
     (deleteRowCol M row col)[i][j] = M[skipIndex row i][skipIndex col j] := by
   simp [deleteRowCol, ofFn]
@@ -5382,7 +5382,7 @@ private def columnSumMatrix {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
   ofFn fun r j =>
     (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
 
-@[simp, grind =] private theorem columnSumMatrix_entry
+@[grind =] private theorem columnSumMatrix_entry
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (r j : Fin n) :
     (columnSumMatrix source coeff)[r][j] =
@@ -5443,7 +5443,7 @@ private def setColumnChoice {n m : Nat} (choices : Fin n → Option (Fin m))
     (dst : Fin n) (k : Fin m) : Fin n → Option (Fin m) :=
   fun c => if c = dst then some k else choices c
 
-@[simp, grind =] private theorem columnChoiceMatrix_entry
+@[grind =] private theorem columnChoiceMatrix_entry
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) (r c : Fin n) :
     (columnChoiceMatrix source coeff choices)[r][c] =
@@ -5596,7 +5596,7 @@ def columnTupleMatrix {R : Type u} {n m : Nat}
 
 /-- Entry `(r, c)` of the column-selected minor is the source entry
 `A[r][cols c]`. -/
-@[simp, grind =] theorem columnTupleMatrix_entry {R : Type u} {n m : Nat}
+@[grind =] theorem columnTupleMatrix_entry {R : Type u} {n m : Nat}
     (A : Matrix R n m) (cols : Fin n → Fin m) (r c : Fin n) :
     (columnTupleMatrix A cols)[r][c] = A[r][cols c] := by
   simp [columnTupleMatrix, ofFn]
@@ -5614,10 +5614,11 @@ def columnTupleVectorFn {n m : Nat} (cols : Vector (Fin m) n) : Fin n → Fin m 
 /-- Reindexing the selected columns by a permutation is entrywise the generic
 column permutation of the selected minor.
 
-Left `@[simp]`-only (not promoted to `grind =`): the columns `s sigma` appear
-only under the `fun i => s[sigma[i]]` binder, so the LHS pattern cannot
-instantiate them and `grind =` rejects it. -/
-@[simp] theorem columnTupleMatrix_compose_perm_entry
+Unattributed: the LHS `[r][c]` is not in simp-normal form (`Fin.getElem_fin`
+rewrites the `Fin` indices to `↑r`/`↑c`), and `grind =` rejects the pattern
+because the columns `s sigma` appear only under the `fun i => s[sigma[i]]`
+binder, so the LHS cannot instantiate them. Invoked explicitly via `rw`. -/
+theorem columnTupleMatrix_compose_perm_entry
     {R : Type u} {n m : Nat} (A : Matrix R n m)
     (s : Vector (Fin m) n) (sigma : Vector (Fin n) n)
     (r c : Fin n) :
@@ -6187,7 +6188,7 @@ private def columnSumMatrixWithPrefix
     else
       (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
 
-@[simp, grind =] private theorem columnSumMatrixWithPrefix_entry
+@[grind =] private theorem columnSumMatrixWithPrefix_entry
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (chosen : List (Fin m)) (r j : Fin n) :
     (columnSumMatrixWithPrefix source coeff chosen)[r][j] =
@@ -6259,7 +6260,7 @@ private def columnSumMatrixWithSuffix
     else
       (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
 
-@[simp, grind =] private theorem columnSumMatrixWithSuffix_entry
+@[grind =] private theorem columnSumMatrixWithSuffix_entry
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (chosen : List (Fin m)) (r j : Fin n) :
     (columnSumMatrixWithSuffix source coeff chosen)[r][j] =
@@ -6402,7 +6403,7 @@ private def assembleColumnsSuffix {n m : Nat} (chosen : List (Fin m))
   ⟨(pref.toList ++ chosen).toArray, by
     simp [hk]⟩
 
-@[simp, grind =] private theorem assembleColumnsSuffix_left
+@[grind =] private theorem assembleColumnsSuffix_left
     {n m : Nat} (chosen : List (Fin m))
     (pref : Vector (Fin m) (n - chosen.length)) (hk : chosen.length ≤ n)
     (i : Fin (n - chosen.length)) :
@@ -6412,7 +6413,7 @@ private def assembleColumnsSuffix {n m : Nat} (chosen : List (Fin m))
           omega⟩ : Fin n)] = pref[i] := by
   simp [assembleColumnsSuffix]
 
-@[simp, grind =] private theorem assembleColumnsSuffix_right
+@[grind =] private theorem assembleColumnsSuffix_right
     {n m : Nat} (chosen : List (Fin m))
     (pref : Vector (Fin m) (n - chosen.length)) (hk : chosen.length ≤ n)
     (i : Fin chosen.length) :
@@ -7168,7 +7169,7 @@ def sortInjPerm {m n : Nat} (cols : Vector (Fin m) n) : Vector (Fin n) n :=
 
 /-- The `i`-th value of the sorting permutation is the rank `columnRankNat cols i`
 of `cols[i]` (the number of strictly smaller positions). -/
-@[simp, grind =] theorem sortInjPerm_getElem_val {m n : Nat}
+@[grind =] theorem sortInjPerm_getElem_val {m n : Nat}
     (cols : Vector (Fin m) n) (i : Fin n) :
     (sortInjPerm cols)[i].val = columnRankNat cols i := by
   simp [sortInjPerm]
@@ -7433,7 +7434,7 @@ def reconstructInjTuple {m n : Nat}
 
 /-- The `i`-th entry of the reconstructed tuple is `sel[perm[i]]`: read the
 sorted choice `sel` through the permutation `perm`. -/
-@[simp, grind =] theorem reconstructInjTuple_getElem {m n : Nat}
+@[grind =] theorem reconstructInjTuple_getElem {m n : Nat}
     (sel : Vector (Fin m) n) (perm : Vector (Fin n) n) (i : Fin n) :
     (reconstructInjTuple sel perm)[i] = sel[perm[i]] := by
   rw [reconstructInjTuple, vector_ofFn_getElem_fin]
@@ -7441,7 +7442,7 @@ sorted choice `sel` through the permutation `perm`. -/
 /-- Selecting columns via the reconstructed tuple equals selecting via `sel`
 with the column index permuted by `perm`: entry `(r, c)` agrees with entry
 `(r, perm[c])` of the `sel`-selected minor. -/
-@[simp, grind =] theorem columnTupleMatrix_reconstructInjTuple_entry
+@[grind =] theorem columnTupleMatrix_reconstructInjTuple_entry
     {R : Type u} {n m : Nat} (A : Matrix R n m)
     (sel : Vector (Fin m) n) (perm : Vector (Fin n) n)
     (r c : Fin n) :
@@ -7983,7 +7984,7 @@ def firstColumns (k n : Nat) (hk : k ≤ n) : Vector (Fin n) k :=
 
 /-- The `i`-th entry of the first-`k`-columns selection is the index `i` itself,
 embedded into `Fin n`. -/
-@[simp, grind =] theorem firstColumns_entry (k n : Nat) (hk : k ≤ n) (i : Fin k) :
+@[grind =] theorem firstColumns_entry (k n : Nat) (hk : k ≤ n) (i : Fin k) :
     (firstColumns k n hk)[i] = (⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩ : Fin n) := by
   simp [firstColumns]
 
@@ -8075,7 +8076,7 @@ def setRow {R : Type u} {n m : Nat}
   M.set dst v
 
 /-- Reading back the replaced row `dst` of `setRow M dst v` yields `v`. -/
-@[simp, grind =] theorem setRow_get_self {R : Type u} {n m : Nat}
+@[grind =] theorem setRow_get_self {R : Type u} {n m : Nat}
     (M : Matrix R n m) (dst : Fin n) (v : Vector R m) :
     (setRow M dst v)[dst] = v := by
   simp [setRow]
@@ -8190,7 +8191,7 @@ def adjugate {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
 
 /-- Entry `(i, j)` of the adjugate is the cofactor of `M` at row `j`, column `i`
 (the transpose of the cofactor matrix). -/
-@[simp, grind =] theorem adjugate_get {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+@[grind =] theorem adjugate_get {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) :
     (adjugate M)[i][j] = cofactor M j i := by
   simp [adjugate, ofFn]
@@ -8309,7 +8310,7 @@ theorem adjugate_eq_cofactorSign_mul_deleteRowCol
 
 /-- The `(0, 0)` adjugate entry equals the determinant of the minor
 obtained by deleting row `0` and column `0`. -/
-@[simp, grind =] theorem adjugate_zero_zero
+@[grind =] theorem adjugate_zero_zero
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
     (adjugate M)[(0 : Fin (n + 1))][(0 : Fin (n + 1))] =
@@ -8319,7 +8320,7 @@ obtained by deleting row `0` and column `0`. -/
 
 /-- The `(Fin.last, Fin.last)` adjugate entry equals the determinant of
 the leading prefix minor obtained by deleting the last row and column. -/
-@[simp, grind =] theorem adjugate_last_last
+@[grind =] theorem adjugate_last_last
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
     (adjugate M)[Fin.last n][Fin.last n] =
@@ -8469,7 +8470,9 @@ Encoding for the universal 3-term Plucker identity substrate. -/
 `p < q`. This indexes minors with two removed rows.
 
 The ordering proof `_hpq` is a phantom argument: it documents and pins the
-`p < q` precondition at call sites but is not consumed by the definition. -/
+`p < q` precondition at call sites but is not consumed by the definition.
+This intentionally triggers the `unusedArguments` linter; the binder is kept
+deliberately (no `@[nolint]` exists in the Mathlib-free layer). -/
 def skipIndex2 {n : Nat} (p q : Fin (n + 2)) (_hpq : p.val < q.val)
     (i : Fin n) : Fin (n + 2) :=
   if hi1 : i.val < p.val then
@@ -8574,7 +8577,7 @@ def nMatrix {R : Type u} {n : Nat}
 
 /-- Entry `(i, j)` of the two-row-deleted minor `nMatrix B p q hpq` is the source
 entry `B[skipIndex2 p q hpq i][j]`. -/
-@[simp, grind =] theorem nMatrix_entry {R : Type u} {n : Nat}
+@[grind =] theorem nMatrix_entry {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val)
     (i : Fin n) (j : Fin n) :
     (nMatrix B p q hpq)[i][j] = B[skipIndex2 p q hpq i][j] := by
@@ -9542,7 +9545,7 @@ def basisVec {R : Type u} [Zero R] [One R] {n : Nat} (q : Fin (n + 2)) :
 
 /-- Entry `i` of the standard basis vector `e_q` is `1` when `i = q` and `0`
 otherwise. -/
-@[simp, grind =] theorem basisVec_getElem {R : Type u} [Zero R] [One R] {n : Nat}
+@[grind =] theorem basisVec_getElem {R : Type u} [Zero R] [One R] {n : Nat}
     (q : Fin (n + 2)) (i : Fin (n + 2)) :
     (basisVec (R := R) q)[i] = if i = q then (1 : R) else (0 : R) := by
   simp [basisVec]
