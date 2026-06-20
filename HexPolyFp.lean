@@ -1,4 +1,5 @@
 import HexPolyFp.Basic
+import HexPolyFp.Packed
 import HexPolyFp.PrimeField
 import HexPolyFp.Compose
 import HexPolyFp.Enumeration
