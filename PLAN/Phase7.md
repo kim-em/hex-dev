@@ -57,7 +57,7 @@ Each chapter should cover:
    computational libs) or to the computational counterpart (for
    `hex-*-mathlib` libs).
 
-Four Verso constraints bite chapter authors and only surface at
+Five Verso constraints bite chapter authors and only surface at
 build time:
 
 - A `{ref "tag"}[text]` (or `{name}`/`{docstring}`) directive must sit
@@ -66,11 +66,11 @@ build time:
 - Lean code blocks (```` ```lean ````) are capped at **60 columns**;
   longer lines warn. Lift wide `example`/`theorem` binders into a
   `variable` block above the block to fit.
-- `{docstring StructName}` errors unless **every field** of the
-  structure is documented (`'Foo.bar' is not documented`). To embed a
-  structure's docstring, first add a `/-- … -/` field docstring to each
-  field in the source `structure`, or fall back to `{name StructName}`.
-  Likewise, `#eval`/`#guard` on an `@[extern]` def fails in the manual's
+- `{docstring StructName}` (or a class) renders the type's **fields**
+  and errors if any field is undocumented. Add a `/--` docstring to
+  every field of a structure/class you embed, or embed it with `{name}`
+  and describe it in prose instead.
+- `#eval`/`#guard` on an `@[extern]` def fails in the manual's
   evaluator (no native binding) — document those by signature/law and
   keep evaluated example blocks to the pure-Lean surface.
 - When the library is an `abbrev` over a more generic type
