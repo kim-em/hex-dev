@@ -66,12 +66,12 @@ theorem hensel_extends
     (f g h : Hex.ZPoly) (p k : Nat) [Hex.ZMod64.Bounds p]
     (s t : Hex.FpPoly p)
     (hk : 1 ≤ k)
-    (hprod : Hex.ZPoly.congr (g * h) f p)
-    (hbez :
+    (_hprod : Hex.ZPoly.congr (g * h) f p)
+    (_hbez :
       Hex.ZPoly.congr
         (Hex.FpPoly.liftToZ (s * Hex.ZPoly.modP p g + t * Hex.ZPoly.modP p h))
         1 p)
-    (hmonic : Hex.DensePoly.Monic g) :
+    (_hmonic : Hex.DensePoly.Monic g) :
     let r := Hex.ZPoly.henselLift p k f g h s t
     let φ := Int.castRingHom (ZMod p)
     (HexPolyMathlib.toPolynomial r.g).map φ =
