@@ -25,6 +25,16 @@ Rotate through these areas across sessions:
 **Slop detection**:
 - Dead code, duplicated logic, verbose comments, unused imports
 - Other signs of AI-generated bloat
+- Dead-code caveat: a plain "grep for the name" check produces dangerous
+  false positives. `instance`s are consumed by typeclass resolution and
+  `@[simp]`/`@[grind]`/`@[grind =]` lemmas by tactic automation — neither
+  is referenced by name, so both look unused but are live (deleting them
+  breaks proofs silently or at build time). Treat instances and
+  `simp`/`grind`-tagged decls as roots. The reliable check: reachability
+  from roots (public/exported decls + instances + tagged lemmas + anything
+  referenced from another file) following name references inside decl
+  bodies; a `private` decl unreachable from roots is genuinely dead.
+  Confirm every removal by rebuilding — the compiler is ground truth.
 
 **Idioms and best practices**:
 - Are newer APIs or language features being used where appropriate?
