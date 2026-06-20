@@ -111,7 +111,7 @@ libraries:
   HexModArith:
     deps: [HexArith]
     mathlib: false
-    done_through: 5
+    done_through: 6
     status: active
     phase4:
       input_families:
