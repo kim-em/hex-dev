@@ -609,6 +609,11 @@ convention and has zero representative. -/
   simp [repr]
 
 /-- The zero inverse in `GFq` follows the field wrapper's junk-value convention. -/
+-- `@[simp]`-only: `grind =` keys this on the `(0 : GFq p n h)` literal, whose
+-- `GFqField.FiniteField` carrier holds `n`/`h` as erased instance args, so they
+-- cannot be instantiated from the pattern (`invalid pattern(s) for inv_zero`).
+-- The GF2n sibling `HexGF2.Field.inv_zero` carries `grind =` because there the
+-- type indices appear explicitly in the keyed term.
 @[simp] theorem inv_zero (h : Conway.SupportedEntry p n) :
     ((0 : GFq p n h)⁻¹ : GFq p n h) = 0 := by
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime h.prime
