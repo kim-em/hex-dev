@@ -86,6 +86,22 @@ rebuild the direct downstream consumer too (`HexFooMathlib`) after any
 dead-code removal — the cross-repo grep can miss nothing, but the
 compiler is the only proof the removals were safe.
 
+The *docstring coverage* criterion has its own trap: a Lean docstring is
+`/-- … -/`, but `/-! … -/` is a **section/module comment** that does NOT
+attach to the following declaration. A coverage script that just checks
+"is the line above a decl a `-/`?" counts section headers as docstrings
+and **undercounts** the gap — a whole `/-! ### Foo updates -/`-headed
+block of theorems reads as documented when none of them are. Match the
+comment *opener* (`/--` vs `/-!`), not just the closer. Note the doc rule
+(`SPEC/design-principles.md` § Docstrings) covers **every importable
+theorem**, not only `def`/`structure`, so thin public wrappers over a
+documented private `_core` still each need their own `/--`. When a
+library has *dozens* of undocumented public theorems, that is the issue's
+explicit signal to leave `done_through` unbumped and punch-list the
+docstrings (verdict (b)) rather than cram them — but still land the
+genuinely-trivial inline fixes (linter, dead decls, the obvious one-line
+docstrings) in the same PR.
+
 ## Updating Skills
 
 When you discover a recurring pattern or encounter a situation not covered by

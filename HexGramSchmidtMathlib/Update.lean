@@ -664,7 +664,7 @@ theorem gramDet_adjacentSwap_pivot (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.
 
 theorem adjacentSwap_gramDetNumerator_dvd (b : Matrix Int n m)
     (k : Fin n) (hk : 0 < k.val)
-    (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
+    (_hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
     adjacentSwapDenom b k ∣ adjacentSwapGramDetNumerator b k hk := by
   let km1 := GramSchmidt.prevRow k hk
   have hkm1 : km1.val + 1 = k.val := by
@@ -699,7 +699,7 @@ the basis identity `basis (rowSwap b km1 k) [km1] = basis b [k] + μ * basis b [
 theorem bareiss_scaledCoeffMatrix_rowSwap_above_prev
     (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val)
     (i : Fin n) (hki : k.val < i.val)
-    (hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
+    (_hdet : gramDet b k.val (Nat.le_of_lt k.isLt) ≠ 0) :
     let km1 := GramSchmidt.prevRow k hk
     let hkm1i : km1.val < i.val := by
       dsimp [km1, GramSchmidt.prevRow]; omega

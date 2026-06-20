@@ -2839,7 +2839,7 @@ theorem dot_basis_castRow_eq_coeffs_mul_normSq
 /-- Foldl isolation for two indices: when every term except those at `j₁` and `j₂`
 vanishes, the foldl over `List.finRange i` collapses to `f ⟨j₁, hj₁⟩ + f ⟨j₂, hj₂⟩`. -/
 private theorem foldl_finRange_isolate_two_rat :
-    ∀ (i : Nat) (j₁ j₂ : Nat) (hj₁ : j₁ < i) (hj₂ : j₂ < i) (hne : j₁ ≠ j₂)
+    ∀ (i : Nat) (j₁ j₂ : Nat) (hj₁ : j₁ < i) (hj₂ : j₂ < i) (_hne : j₁ ≠ j₂)
       (f : Fin i → Rat),
       (∀ q : Fin i, q.val ≠ j₁ → q.val ≠ j₂ → f q = 0) →
       (List.finRange i).foldl (fun acc q => acc + f q) 0 =

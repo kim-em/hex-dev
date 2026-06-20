@@ -18,38 +18,42 @@ space on `Fin m`. -/
 def rowToEuclidean (row : Vector Rat m) : EuclideanSpace ℝ (Fin m) :=
   WithLp.toLp 2 (fun j : Fin m => (row[j] : ℝ))
 
+/-- Coordinate access commutes with `rowToEuclidean`: the `j`-th component of the
+converted vector is the real cast of the `j`-th rational entry. -/
 @[simp, grind =]
 theorem rowToEuclidean_apply (row : Vector Rat m) (j : Fin m) :
     rowToEuclidean row j = (row[j] : ℝ) := by
   rfl
 
+/-- `rowToEuclidean` sends the zero row to the zero vector. -/
 @[simp, grind =]
 theorem rowToEuclidean_zero :
     rowToEuclidean (0 : Vector Rat m) = 0 := by
   ext j
   simp [rowToEuclidean]
 
+/-- `rowToEuclidean` is additive: it sends a rowwise sum to the sum of converted
+vectors. -/
 @[simp, grind =]
 theorem rowToEuclidean_add (a b : Vector Rat m) :
     rowToEuclidean (a + b) = rowToEuclidean a + rowToEuclidean b := by
   ext j
   simp [rowToEuclidean]
 
+/-- `rowToEuclidean` commutes with subtraction. -/
 @[simp, grind =]
 theorem rowToEuclidean_sub (a b : Vector Rat m) :
     rowToEuclidean (a - b) = rowToEuclidean a - rowToEuclidean b := by
   ext j
   simp [rowToEuclidean]
 
+/-- `rowToEuclidean` is rational-linear: it sends a rational scalar multiple to the
+corresponding real scalar multiple of the converted vector. -/
 @[simp, grind =]
 theorem rowToEuclidean_smul (c : Rat) (row : Vector Rat m) :
     rowToEuclidean (c • row) = (c : ℝ) • rowToEuclidean row := by
   ext j
   simp [rowToEuclidean]
-
-/-- Cast a rational dense matrix into the real matrix space used by the correspondence. -/
-def castRatMatrix (b : Matrix Rat n m) : Matrix ℝ n m :=
-  Vector.map (fun row => Vector.map (fun x : Rat => (x : ℝ)) row) b
 
 /-- Cast an integer dense matrix into the rational matrix space of `HexGramSchmidt`. -/
 def castIntMatrix (b : Matrix Int n m) : Matrix Rat n m :=
