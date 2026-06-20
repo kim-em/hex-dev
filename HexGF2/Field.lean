@@ -64,7 +64,7 @@ def boolCoeffValues : List Bool :=
 
 /-- The internal Boolean coefficient enumeration has exactly the two field
 coefficients. -/
-@[simp] theorem boolCoeffValues_length : boolCoeffValues.length = 2 := by
+@[simp, grind =] theorem boolCoeffValues_length : boolCoeffValues.length = 2 := by
   rfl
 
 /-- Every Boolean coefficient appears in the internal coefficient enumeration. -/
@@ -132,13 +132,13 @@ def coeffBoolLists : Nat → List (List Bool)
 
 /-- Base case of the coefficient-list enumeration: the only length-`0` Boolean
 list is the empty list. -/
-@[simp] theorem coeffBoolLists_zero :
+@[simp, grind =] theorem coeffBoolLists_zero :
     coeffBoolLists 0 = ([[]] : List (List Bool)) :=
   rfl
 
 /-- Recursion equation for the coefficient-list enumeration: every length-`d+1`
 list is obtained by prepending each Boolean head value to a length-`d` list. -/
-@[simp] theorem coeffBoolLists_succ (d : Nat) :
+@[simp, grind =] theorem coeffBoolLists_succ (d : Nat) :
     coeffBoolLists (d + 1) =
       boolCoeffValues.flatMap fun b =>
         (coeffBoolLists d).map fun coeffs => b :: coeffs :=
@@ -194,7 +194,7 @@ theorem mem_coeffBoolLists_of_length_eq {d : Nat} {coeffs : List Bool}
   (mem_coeffBoolLists_iff (d := d) (coeffs := coeffs)).mpr hlen
 
 /-- The Boolean coefficient-list enumeration has exactly `2 ^ d` entries. -/
-@[simp] theorem coeffBoolLists_length (d : Nat) :
+@[simp, grind =] theorem coeffBoolLists_length (d : Nat) :
     (coeffBoolLists d).length = 2 ^ d := by
   induction d with
   | zero =>
@@ -580,7 +580,7 @@ instance : HPow (GF2n n irr hn hn64 hirr) Int (GF2n n irr hn hn64 hirr) where
 
 /-- The inverse of `0` in `GF2n` is `0` (the field convention that makes
 inversion total). -/
-@[simp] theorem inv_zero : (0 : GF2n n irr hn hn64 hirr)⁻¹ = 0 := by
+@[simp, grind =] theorem inv_zero : (0 : GF2n n irr hn hn64 hirr)⁻¹ = 0 := by
   have hzeroVal : (0 : GF2n n irr hn hn64 hirr).val = 0 := by
     simp [OfNat.ofNat, natCast]
   apply eq_of_val_eq
@@ -677,7 +677,7 @@ def reducePoly (p : GF2Poly) : GF2nPoly f hirr :=
 
 /-- The value stored by canonical quotient reduction is the ordinary remainder
 modulo the irreducible modulus. -/
-@[simp] theorem reducePoly_val_eq_mod (p : GF2Poly) :
+@[simp, grind =] theorem reducePoly_val_eq_mod (p : GF2Poly) :
     (reducePoly (f := f) (hirr := hirr) p).val = p % f := by
   unfold reducePoly modulus
   by_cases hzero : (p % f).isZero = true
@@ -947,7 +947,7 @@ def elements : List (GF2nPoly f hirr) :=
 
 /-- The quotient field `GF2[X]/(f)` has exactly `2 ^ f.degree` elements, the
 expected cardinality of a degree-`f.degree` extension of `GF(2)`. -/
-@[simp] theorem elements_length :
+@[simp, grind =] theorem elements_length :
     (elements (f := f) (hirr := hirr)).length = 2 ^ f.degree := by
   simp [elements]
 
