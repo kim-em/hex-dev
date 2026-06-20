@@ -57,6 +57,16 @@ Each chapter should cover:
    computational libs) or to the computational counterpart (for
    `hex-*-mathlib` libs).
 
+Two Verso syntax constraints bite chapter authors and only surface at
+build time:
+
+- A `{ref "tag"}[text]` (or `{name}`/`{docstring}`) directive must sit
+  on a **single line** — breaking `{ref` from its `"tag"}[text]` across
+  a newline is a parse error.
+- Lean code blocks (```` ```lean ````) are capped at **60 columns**;
+  longer lines warn. Lift wide `example`/`theorem` binders into a
+  `variable` block above the block to fit.
+
 ## Additional Phase 7 work: tutorials
 
 Some libraries have extra Phase 7 scope beyond the reference chapter —
