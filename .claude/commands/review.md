@@ -98,6 +98,19 @@ rebuild the direct downstream consumer too (`HexFooMathlib`) after any
 dead-code removal — the cross-repo grep can miss nothing, but the
 compiler is the only proof the removals were safe.
 
+For `mathlib: true` libraries you can run Mathlib's actual `#lint`
+(`docBlame`, `unusedArguments`, `simpNF`, …), which is stronger than the
+built-in recompile — `docBlame` in particular *directly* validates the
+docstring-coverage criterion. The project ships no `runLinter` binary, and
+a scratch file that just `import`s the library lints **nothing**: `#lint`
+only checks declarations defined in the file where it runs. So append
+`#lint` (or `#lint only docBlame …`) to the **end of the target file
+itself**, force a fresh recompile (delete the file's oleans —
+`find .lake/build -path '*/HexFoo/*' -name 'Mod.*' -delete`), read the
+result from the build log (`Found 0 errors in N declarations`), then
+remove the line and rebuild clean. Mathlib decls in the `Foo` namespace
+are still linted regardless of the open namespace.
+
 The *docstring coverage* criterion has its own trap: a Lean docstring is
 `/-- … -/`, but `/-! … -/` is a **section/module comment** that does NOT
 attach to the following declaration. A coverage script that just checks
