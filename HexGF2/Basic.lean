@@ -112,7 +112,7 @@ def coeffWords (words : Array UInt64) (n : Nat) : Bool :=
   (((word >>> (n % 64).toUInt64) &&& 1) != 0)
 
 /-- Trailing-zero normalization preserves every packed coefficient word. -/
-@[simp] theorem normalizeWords_get?_getD (words : Array UInt64) (i : Nat) :
+@[simp, grind =] theorem normalizeWords_get?_getD (words : Array UInt64) (i : Nat) :
     ((normalizeWords words)[i]?).getD 0 = (words[i]?).getD 0 := by
   simpa [normalizeWords, Array.getD, List.getD] using
     trimTrailingZeroWordsList_getD words.toList i
@@ -604,12 +604,12 @@ def degree (p : GF2Poly) : Nat :=
   p.degree?.getD 0
 
 /-- A normalized packed polynomial is `isZero` iff its stored word array is empty. -/
-@[simp] theorem isZero_eq_true_iff_words_eq_empty (p : GF2Poly) :
+@[simp, grind =] theorem isZero_eq_true_iff_words_eq_empty (p : GF2Poly) :
     p.isZero = true ↔ p.words = #[] := by
   simp [isZero]
 
 /-- A normalized packed polynomial is non-`isZero` iff its stored word array is nonempty. -/
-@[simp] theorem isZero_eq_false_iff_words_ne_empty (p : GF2Poly) :
+@[simp, grind =] theorem isZero_eq_false_iff_words_ne_empty (p : GF2Poly) :
     p.isZero = false ↔ p.words ≠ #[] := by
   simp [isZero]
 
