@@ -66,6 +66,15 @@ build time:
 - Lean code blocks (```` ```lean ````) are capped at **60 columns**;
   longer lines warn. Lift wide `example`/`theorem` binders into a
   `variable` block above the block to fit.
+- `{docstring X}` on a **structure** errors unless *every field* of `X`
+  carries its own docstring (`'Ns.X.field' is not documented.`). Add the
+  field docstrings in the source structure (a pure-comment change that
+  also helps the Phase 6 docstring-coverage criterion), or fall back to
+  `{name X}` plus prose.
+- `{name X}` requires `X` to be a **constant** (def/theorem/structure),
+  not a namespace. Referring to a namespace like `GramSchmidt.Int` errors
+  with `Unknown constant`; name a real declaration in it, or use a plain
+  `` `code span` `` in prose.
 
 ## Additional Phase 7 work: tutorials
 
