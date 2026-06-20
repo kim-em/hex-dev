@@ -58,6 +58,7 @@ def det (data : BareissData n) : Int :=
       | none => data.sign
 
 /-- A recorded singular step encodes determinant zero. -/
+@[grind →]
 theorem det_eq_zero_of_singularStep {data : BareissData n} {k : Nat}
     (h : data.singularStep = some k) :
     data.det = 0 := by
@@ -66,6 +67,7 @@ theorem det_eq_zero_of_singularStep {data : BareissData n} {k : Nat}
 
 /-- For a non-singular Bareiss elimination of a positive-size matrix, the
 encoded determinant is `sign * (last diagonal entry)`. -/
+@[grind =]
 theorem det_succ_eq {k : Nat} (data : BareissData (k + 1))
     (h : data.singularStep = none) :
     data.det = data.sign *
@@ -77,6 +79,7 @@ theorem det_succ_eq {k : Nat} (data : BareissData (k + 1))
 
 /-- For a non-singular Bareiss elimination of an empty matrix, the encoded
 determinant is the sign. -/
+@[grind =]
 theorem det_zero_eq (data : BareissData 0)
     (h : data.singularStep = none) :
     data.det = data.sign := by
@@ -117,6 +120,8 @@ binding compiles the call directly to `lean_int_div_exact`, matching
 def exactDiv (num denom : @& Int) : Int := num / denom
 
 /-- When divisibility is known, `exactDiv` is the GMP-backed exact quotient. -/
+-- @[grind]-excluded: RHS `Int.divExact num denom h` mentions the divisibility
+-- proof term `h`, which `grind =` cannot instantiate from the LHS pattern.
 theorem exactDiv_eq_divExact {num denom : Int} (h : denom ∣ num) :
     exactDiv num denom = Int.divExact num denom h := by
   simp [exactDiv, Int.divExact_eq_ediv]
@@ -142,6 +147,8 @@ def findPivot? (M : Matrix Int n n) (col : Fin n) (start : Nat) :
   findPivotAux M col start (n - start)
 
 /-- A pivot returned by `findPivotAux` is always at or below its starting row. -/
+-- @[grind]-excluded: subsumed by `findPivot?_ge_start`; tagging the fuelled
+-- helper too would duplicate grind's rule for the same fact.
 theorem findPivotAux_ge_start (M : Matrix Int n n) (col : Fin n)
     (start fuel : Nat) {pivot : Fin n}
     (hfind : findPivotAux M col start fuel = some pivot) :
@@ -159,6 +166,7 @@ theorem findPivotAux_ge_start (M : Matrix Int n n) (col : Fin n)
       · simp [findPivotAux, hstart] at hfind
 
 /-- A pivot returned by `findPivot?` is always at or below its starting row. -/
+@[grind →]
 theorem findPivot?_ge_start (M : Matrix Int n n) (col : Fin n)
     (start : Nat) {pivot : Fin n}
     (hfind : findPivot? M col start = some pivot) :
@@ -167,6 +175,7 @@ theorem findPivot?_ge_start (M : Matrix Int n n) (col : Fin n)
 
 /-- If bounded pivot search fails, every checked entry in the pivot column is
 zero. -/
+-- @[grind]-excluded: subsumed by `findPivot?_eq_zero_of_none`.
 theorem findPivotAux_eq_zero_of_none (M : Matrix Int n n) (col : Fin n)
     (start fuel : Nat) (hfind : findPivotAux M col start fuel = none)
     (i : Fin n) (hstart : start ≤ i.val) (hfuel : i.val < start + fuel) :
@@ -204,6 +213,7 @@ theorem findPivotAux_eq_zero_of_none (M : Matrix Int n n) (col : Fin n)
 
 /-- If pivot search fails, every entry in the searched suffix of the pivot
 column is zero. -/
+@[grind]
 theorem findPivot?_eq_zero_of_none (M : Matrix Int n n) (col : Fin n)
     (start : Nat) (hfind : findPivot? M col start = none)
     (i : Fin n) (hstart : start ≤ i.val) :
@@ -213,6 +223,8 @@ theorem findPivot?_eq_zero_of_none (M : Matrix Int n n) (col : Fin n)
 
 /-- If every entry in the bounded suffix searched by `findPivotAux` is zero,
 the search fails. -/
+-- @[grind]-excluded: ∀-quantified `hzero` premise grind cannot discharge (same
+-- reason its `findPivot?` wrapper is left untagged).
 theorem findPivotAux_eq_none_of_zero (M : Matrix Int n n) (col : Fin n)
     (start fuel : Nat)
     (hzero : ∀ i : Fin n, start ≤ i.val → i.val < start + fuel → M[i][col] = 0) :
@@ -238,6 +250,11 @@ theorem findPivotAux_eq_none_of_zero (M : Matrix Int n n) (col : Fin n)
 search fails. This is the converse of `findPivot?_eq_zero_of_none` and lets
 callers turn a column-zero invariant into the executable no-replacement-pivot
 condition used by `pivotLoop`. -/
+-- @[grind]-excluded: its conclusion `findPivot? … = none` makes grind E-match on
+-- every `findPivot?` term and inject an existential case-split from the ∀-premise
+-- (`hzero`), derailing unrelated goals — confirmed to break `findPivot?_ge_start`
+-- closes under `grind`. Use the lemma explicitly when the column-zero converse is
+-- needed.
 theorem findPivot?_eq_none_of_zero (M : Matrix Int n n) (col : Fin n)
     (start : Nat)
     (hzero : ∀ i : Fin n, start ≤ i.val → M[i][col] = 0) :
@@ -248,6 +265,7 @@ theorem findPivot?_eq_none_of_zero (M : Matrix Int n n) (col : Fin n)
 
 /-- A pivot returned by `findPivotAux` indexes a nonzero entry in the pivot
 column. -/
+-- @[grind]-excluded: subsumed by `findPivot?_some_ne_zero`.
 theorem findPivotAux_some_ne_zero (M : Matrix Int n n) (col : Fin n)
     (start fuel : Nat) {pivot : Fin n}
     (hfind : findPivotAux M col start fuel = some pivot) :
@@ -272,6 +290,7 @@ theorem findPivotAux_some_ne_zero (M : Matrix Int n n) (col : Fin n)
 /-- A pivot returned by `findPivot?` indexes a nonzero entry in the pivot
 column. Lets row-pivoted Bareiss callers read off the nonzero post-swap pivot
 without unfolding the `findPivotAux` recursion. -/
+@[grind →]
 theorem findPivot?_some_ne_zero (M : Matrix Int n n) (col : Fin n)
     (start : Nat) {pivot : Fin n}
     (hfind : findPivot? M col start = some pivot) :
@@ -294,6 +313,7 @@ def stepMatrix (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) :
 
 /-- Outside the trailing update region and pivot column below the pivot,
 `stepMatrix` leaves entries unchanged. -/
+@[grind =]
 theorem stepMatrix_eq_of_not_update
     (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) (i j : Fin n)
     (htrail : ¬ (k < i.val ∧ k < j.val))
@@ -303,6 +323,7 @@ theorem stepMatrix_eq_of_not_update
 
 /-- `stepMatrix` preserves diagonal entries whose index is at or before the
 current pivot step. -/
+@[grind =]
 theorem stepMatrix_diag_of_le
     (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) (i : Fin n)
     (hi : i.val ≤ k) :
@@ -314,6 +335,7 @@ theorem stepMatrix_diag_of_le
     exact Nat.not_lt_of_ge hi hcol.1
 
 /-- `stepMatrix` clears the pivot column below the current pivot. -/
+@[grind =]
 theorem stepMatrix_pivot_col_below
     (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) (i colK : Fin n)
     (hi : k < i.val) (hcolK : colK.val = k) :
@@ -321,6 +343,8 @@ theorem stepMatrix_pivot_col_below
   simp [stepMatrix, Matrix.ofFn, hi, hcolK]
 
 /-- Entry formula for the trailing block updated by one Bareiss step. -/
+-- @[grind]-excluded: `let`-wrapped RHS (`let colK := …; let rowK := …`) is
+-- rejected by `grind =`; left untagged like the analogous Hensel step lemmas.
 theorem stepMatrix_update_eq
     (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) (i j : Fin n)
     (hi : k < i.val) (hj : k < j.val) :
@@ -333,6 +357,8 @@ theorem stepMatrix_update_eq
 /-- If the current matrix entries already match bordered minors and exact
 division evaluates to the next bordered minor, then one `stepMatrix` update
 preserves the bordered-minor invariant at the updated entry. -/
+-- @[grind]-excluded: one-shot bordered-minor invariant-preservation lemma whose
+-- bespoke premises (`hpivot`/`hentry`/`hexact`) are not a characterising rewrite.
 theorem stepMatrix_borderedMinor_update
     (source current : Matrix Int n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
     (i j : Fin n) (hi : k < i.val) (hj : k < j.val) (pivot prevPivot : Int)
@@ -377,6 +403,8 @@ theorem stepMatrix_borderedMinor_update
 Once a determinant identity supplies the numerator as `nextMinor * prevPivot`,
 this lemma packages it as the `exactDiv` premise expected by
 `stepMatrix_borderedMinor_update`. -/
+-- @[grind]-excluded: proof-composition lemma gated on a determinant identity
+-- premise (`hdesnanot`); not a local rewrite.
 theorem bareissExactDiv_borderedMinor_of_mul_eq
     (source : Matrix Int n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
     (i j : Fin n) (hi : k < i.val) (hj : k < j.val) (prevPivot : Int)
@@ -457,12 +485,14 @@ def rowsToMatrix (rows : Array (Array Int)) (n : Nat) : Matrix Int n n :=
 
 /-- Pointwise round-trip: `getEntry (matrixToRows M)` reads back the matrix
 entry at the same index. -/
+@[grind =]
 theorem getEntry_matrixToRows (M : Matrix Int n n) (i j : Fin n) :
     getEntry (matrixToRows M) i.val j.val = M[i][j] := by
   simp [getEntry, matrixToRows]
 
 /-- Reading back the array storage produced by `matrixToRows` recovers the
 original matrix. -/
+@[grind =]
 theorem rowsToMatrix_matrixToRows (M : Matrix Int n n) :
     rowsToMatrix (matrixToRows M) n = M := by
   apply Vector.ext
@@ -473,6 +503,8 @@ theorem rowsToMatrix_matrixToRows (M : Matrix Int n n) :
 
 /-- `set!`-ing index `i` to `v` makes `(xs.set! i v)[i]!` return `v` when `i` is
 in bounds, the base case for tracking entries through the array row swap. -/
+-- @[grind]-excluded: generic `Array.set!` bookkeeping; tagging would enlarge
+-- grind's global search with no Bareiss-specific gain.
 private theorem array_getElem!_set!_same {α : Type} [Inhabited α]
     (xs : Array α) {i : Nat} (hi : i < xs.size) (v : α) :
     (xs.set! i v)[i]! = v := by
@@ -481,6 +513,7 @@ private theorem array_getElem!_set!_same {α : Type} [Inhabited α]
 
 /-- `set!`-ing index `i` leaves every other entry untouched: `(xs.set! i v)[j]!`
 equals `xs[j]!` whenever `j ≠ i`, the non-target case of the array row swap. -/
+-- @[grind]-excluded: generic `Array.set!` bookkeeping (see `_set!_same`).
 private theorem array_getElem!_set!_ne {α : Type} [Inhabited α]
     (xs : Array α) {i j : Nat} (hij : j ≠ i) (v : α) :
     (xs.set! i v)[j]! = xs[j]! := by
@@ -495,6 +528,7 @@ private theorem array_getElem!_set!_ne {α : Type} [Inhabited α]
 
 /-- The `setIfInBounds` analogue of `array_getElem!_set!_same`:
 `(xs.setIfInBounds i v)[i]!` returns `v` when `i` is in bounds. -/
+-- @[grind]-excluded: generic `Array.setIfInBounds` bookkeeping (see `_set!_same`).
 private theorem array_getElem!_setIfInBounds_same {α : Type} [Inhabited α]
     (xs : Array α) {i : Nat} (hi : i < xs.size) (v : α) :
     (xs.setIfInBounds i v)[i]! = v := by
@@ -504,6 +538,7 @@ private theorem array_getElem!_setIfInBounds_same {α : Type} [Inhabited α]
 
 /-- The `setIfInBounds` analogue of `array_getElem!_set!_ne`:
 `(xs.setIfInBounds i v)[j]!` equals `xs[j]!` whenever `j ≠ i`. -/
+-- @[grind]-excluded: generic `Array.setIfInBounds` bookkeeping (see `_set!_same`).
 private theorem array_getElem!_setIfInBounds_ne {α : Type} [Inhabited α]
     (xs : Array α) {i j : Nat} (hij : j ≠ i) (v : α) :
     (xs.setIfInBounds i v)[j]! = xs[j]! := by
@@ -526,6 +561,7 @@ private def swapRowsArray (rows : Array (Array Int)) (rowA rowB : Nat) :
 
 /-- Entry-wise value of the abstract `rowSwap M rowA rowB` at `[i][j]`: the
 swapped rows read from the opposite source, every other row is unchanged. -/
+@[grind =]
 private theorem rowSwap_get (M : Matrix Int n n) (rowA rowB i j : Fin n) :
     (rowSwap M rowA rowB)[i][j] =
       if i = rowB then M[rowA][j] else if i = rowA then M[rowB][j] else M[i][j] := by
@@ -561,6 +597,7 @@ private theorem rowSwap_get (M : Matrix Int n n) (rowA rowB i j : Fin n) :
 
 /-- `swapRowsArray` applied to `matrixToRows M` matches the abstract
 `rowSwap M rowA rowB` entry by entry. -/
+@[grind =]
 private theorem getEntry_swapRowsArray_matrixToRows (M : Matrix Int n n)
     (rowA rowB i j : Fin n) :
     getEntry (swapRowsArray (matrixToRows M) rowA.val rowB.val) i.val j.val =
@@ -637,6 +674,7 @@ private theorem getEntry_swapRowsArray_matrixToRows (M : Matrix Int n n)
 
 /-- Round-tripping `swapRowsArray (matrixToRows M)` back through `rowsToMatrix`
 reproduces the abstract `rowSwap M rowA rowB`. -/
+@[grind =]
 private theorem rowsToMatrix_swapRowsArray_matrixToRows (M : Matrix Int n n)
     (rowA rowB : Fin n) :
     rowsToMatrix (swapRowsArray (matrixToRows M) rowA.val rowB.val) n =
@@ -650,6 +688,7 @@ private theorem rowsToMatrix_swapRowsArray_matrixToRows (M : Matrix Int n n)
 
 /-- For any `rows` that already matches `M` entry-wise, `swapRowsArray` agrees
 with the abstract `rowSwap M rowA rowB` entry by entry. -/
+-- @[grind]-excluded: ∀-quantified `hentry` premise that grind cannot discharge.
 private theorem getEntry_swapRowsArray_matches
     (rows : Array (Array Int)) (M : Matrix Int n n)
     (hsize : rows.size = n)
@@ -744,6 +783,7 @@ private def findPivotArray? (rows : Array (Array Int)) (n col start : Nat) :
 
 /-- `findPivotArrayAux_matrixToRows` identifies bounded array pivot search on
 `matrixToRows M` with the matrix-level `findPivotAux` result. -/
+-- @[grind]-excluded: subsumed by `findPivotArray?_matrixToRows`.
 private theorem findPivotArrayAux_matrixToRows (M : Matrix Int n n)
     (col : Fin n) (start fuel : Nat) :
     findPivotArrayAux (matrixToRows M) n col.val start fuel =
@@ -772,6 +812,7 @@ private theorem findPivotArrayAux_matrixToRows (M : Matrix Int n n)
 
 /-- `findPivotArray?_matrixToRows` identifies full array pivot search on
 `matrixToRows M` with the matrix-level `findPivot?` result. -/
+@[grind =]
 private theorem findPivotArray?_matrixToRows (M : Matrix Int n n)
     (col : Fin n) (start : Nat) :
     findPivotArray? (matrixToRows M) n col.val start =
@@ -780,6 +821,7 @@ private theorem findPivotArray?_matrixToRows (M : Matrix Int n n)
 
 /-- `findPivotArrayAux_matches` shows bounded array pivot search agrees with
 `findPivotAux` whenever the searched array column matches the matrix column. -/
+-- @[grind]-excluded: ∀-quantified `hentry` premise that grind cannot discharge.
 private theorem findPivotArrayAux_matches (rows : Array (Array Int))
     (M : Matrix Int n n) (col : Fin n) (start fuel : Nat)
     (hentry : ∀ i : Fin n, getEntry rows i.val col.val = M[i][col]) :
@@ -806,6 +848,7 @@ private theorem findPivotArrayAux_matches (rows : Array (Array Int))
 
 /-- `findPivotArray?_matches` shows full array pivot search agrees with
 `findPivot?` whenever the searched array column matches the matrix column. -/
+-- @[grind]-excluded: ∀-quantified `hentry` premise that grind cannot discharge.
 private theorem findPivotArray?_matches (rows : Array (Array Int))
     (M : Matrix Int n n) (col : Fin n) (start : Nat)
     (hentry : ∀ i : Fin n, getEntry rows i.val col.val = M[i][col]) :
@@ -835,6 +878,8 @@ def stepArray (rows : Array (Array Int)) (n k : Nat) (pivot prevPivot : Int) :
 
 /-- `getEntry_rangeMap₂` proves that reading entry `(i, j)` from the matrix
 materialised by the doubly-ranged `Array.range` map of `f` recovers `f i j`. -/
+-- @[grind]-excluded: the function parameter `f` lives only inside the inner
+-- `Array.map`, unreachable from the LHS pattern, so `grind =` cannot instantiate it.
 private theorem getEntry_rangeMap₂ (f : Nat → Nat → Int) (i j : Fin n) :
     getEntry ((Array.range n).map fun row => (Array.range n).map fun col => f row col)
       i.val j.val = f i.val j.val := by
@@ -843,6 +888,7 @@ private theorem getEntry_rangeMap₂ (f : Nat → Nat → Int) (i j : Fin n) :
 /-- Pointwise correspondence: if the array storage `rows` matches a matrix `M`
 at every entry, then `stepArray` on `rows` matches `stepMatrix` on `M` at
 every entry. -/
+-- @[grind]-excluded: ∀-quantified `hentry` premise that grind cannot discharge.
 theorem getEntry_stepArray_matches
     (rows : Array (Array Int)) (M : Matrix Int n n)
     (hentry : ∀ i j : Fin n, getEntry rows i.val j.val = M[i][j])
@@ -889,6 +935,7 @@ theorem getEntry_stepArray_matches
     exact hij
 
 /-- `stepArray` rebuilds the storage as an `n`-sized array of rows. -/
+@[grind =]
 theorem stepArray_size (rows : Array (Array Int)) (n k : Nat)
     (pivot prevPivot : Int) :
     (stepArray rows n k pivot prevPivot).size = n := by
@@ -898,6 +945,7 @@ theorem stepArray_size (rows : Array (Array Int)) (n k : Nat)
 and reading it back as a matrix agrees with applying `stepMatrix` to the
 matrix view of the same row storage. The one-step companion to
 `getEntry_stepArray_matches` packaged at the `rowsToMatrix` level. -/
+@[grind =]
 theorem rowsToMatrix_stepArray {n : Nat} (rows : Array (Array Int)) (k : Nat)
     (pivot prevPivot : Int) :
     rowsToMatrix (stepArray rows n k pivot prevPivot) n =
@@ -975,12 +1023,14 @@ def pivotLoop (fuel : Nat) (state : BareissState n) : BareissState n :=
         state
 
 /-- With zero fuel, the row-pivoted Bareiss loop returns its input state. -/
+@[grind]
 theorem pivotLoop_zero_fuel (state : BareissState n) :
     pivotLoop 0 state = state := by
   rfl
 
 /-- If the current step is already past the last update step, the row-pivoted
 Bareiss loop returns its input state. -/
+@[grind]
 theorem pivotLoop_done (fuel : Nat) (state : BareissState n)
     (hDone : ¬ state.step + 1 < n) :
     pivotLoop (fuel + 1) state = state := by
@@ -989,6 +1039,7 @@ theorem pivotLoop_done (fuel : Nat) (state : BareissState n)
 /-- If the current row-pivoted Bareiss pivot is already nonzero, one loop
 iteration applies `stepMatrix`, advances the step, and recurses without
 changing the row-swap counter. -/
+@[grind]
 theorem pivotLoop_regular_branch_no_swap (fuel : Nat) (state : BareissState n)
     (hDone : state.step + 1 < n)
     (hp : state.matrix[state.step][state.step] ≠ 0) :
@@ -1004,6 +1055,7 @@ theorem pivotLoop_regular_branch_no_swap (fuel : Nat) (state : BareissState n)
 
 /-- If the current pivot is zero and pivot search finds no replacement row,
 the row-pivoted Bareiss loop records a singular step. -/
+@[grind]
 theorem pivotLoop_singular_branch_no_pivot (fuel : Nat) (state : BareissState n)
     (hDone : state.step + 1 < n)
     (hp0 : state.matrix[state.step][state.step] = 0)
@@ -1018,6 +1070,7 @@ theorem pivotLoop_singular_branch_no_pivot (fuel : Nat) (state : BareissState n)
 /-- If the current pivot is zero, pivot search finds a replacement row, and
 the swapped pivot is nonzero, one loop iteration swaps rows, applies
 `stepMatrix`, advances the step, increments the row-swap counter, and recurses. -/
+@[grind]
 theorem pivotLoop_regular_branch_swap (fuel : Nat) (state : BareissState n)
     (hDone : state.step + 1 < n)
     (hp0 : state.matrix[state.step][state.step] = 0) {pivot : Fin n}
@@ -1117,12 +1170,14 @@ def noPivotLoop (fuel : Nat) (state : BareissState n) : BareissState n :=
         state
 
 /-- With zero fuel, the no-pivot Bareiss loop returns its input state. -/
+@[grind]
 theorem noPivotLoop_zero_fuel (state : BareissState n) :
     noPivotLoop 0 state = state := by
   rfl
 
 /-- If the current step is already past the last update step, the no-pivot loop
 returns its input state. -/
+@[grind]
 theorem noPivotLoop_done (fuel : Nat) (state : BareissState n)
     (hDone : ¬ state.step + 1 < n) :
     noPivotLoop (fuel + 1) state = state := by
@@ -1130,6 +1185,7 @@ theorem noPivotLoop_done (fuel : Nat) (state : BareissState n)
 
 /-- If the no-pivot loop sees a zero pivot before completion, it records the
 current step as singular. -/
+@[grind]
 theorem noPivotLoop_singular_branch (fuel : Nat) (state : BareissState n)
     (hDone : state.step + 1 < n)
     (hp : state.matrix[state.step][state.step] = 0) :
@@ -1138,6 +1194,7 @@ theorem noPivotLoop_singular_branch (fuel : Nat) (state : BareissState n)
 
 /-- If the current no-pivot Bareiss pivot is nonzero, one loop iteration applies
 `stepMatrix`, advances the step, and recurses on the remaining fuel. -/
+@[grind]
 theorem noPivotLoop_regular_branch (fuel : Nat) (state : BareissState n)
     (hDone : state.step + 1 < n)
     (hp : state.matrix[state.step][state.step] ≠ 0) :
@@ -1153,6 +1210,7 @@ theorem noPivotLoop_regular_branch (fuel : Nat) (state : BareissState n)
 
 /-- Entries in rows already processed, or in columns strictly before the current
 step, are unchanged by subsequent no-pivot loop iterations. -/
+@[grind]
 theorem noPivotLoop_matrix_entry_of_row_le_or_col_lt (fuel : Nat)
     (state : BareissState n) (i j : Fin n)
     (hfixed : i.val ≤ state.step ∨ j.val < state.step) :
@@ -1201,12 +1259,14 @@ theorem noPivotLoop_matrix_entry_of_row_le_or_col_lt (fuel : Nat)
 
 /-- Diagonal entries at or before the current step are unchanged by subsequent
 no-pivot loop iterations. -/
+@[grind =]
 theorem noPivotLoop_diag_of_le_step (fuel : Nat) (state : BareissState n)
     (i : Fin n) (hi : i.val ≤ state.step) :
     (noPivotLoop fuel state).matrix[i][i] = state.matrix[i][i] :=
   noPivotLoop_matrix_entry_of_row_le_or_col_lt fuel state i i (Or.inl hi)
 
 /-- The no-pivot loop never changes the row-swap counter. -/
+@[grind =]
 theorem noPivotLoop_rowSwaps (fuel : Nat) (state : BareissState n) :
     (noPivotLoop fuel state).rowSwaps = state.rowSwaps := by
   induction fuel generalizing state with
@@ -1233,6 +1293,8 @@ theorem noPivotLoop_rowSwaps (fuel : Nat) (state : BareissState n) :
 
 /-- Once a no-pivot Bareiss state is already at the terminal step boundary,
 additional fuel leaves it unchanged. -/
+-- @[grind]-excluded: structural fixed-point lemma overlapping `noPivotLoop_done`;
+-- kept for manual fuel reasoning.
 theorem noPivotLoop_id_at_done
     {n : Nat} (fuel : Nat) (state : BareissState n)
     (hDone : ¬ state.step + 1 < n) :
@@ -1243,6 +1305,8 @@ theorem noPivotLoop_id_at_done
 
 /-- Once a no-pivot Bareiss state has recorded a zero pivot at the current
 step, additional fuel leaves that singular fixed point unchanged. -/
+-- @[grind]-excluded: structural fixed-point lemma with bespoke singular-state
+-- premises; used once inside `noPivotLoop_add`.
 theorem noPivotLoop_id_at_singular_fixedpoint
     {n : Nat} (fuel : Nat) (state : BareissState n)
     (hDone : state.step + 1 < n)
@@ -1260,6 +1324,8 @@ theorem noPivotLoop_id_at_singular_fixedpoint
 
 /-- Fuel composition for the no-pivot Bareiss loop: running `a + b` units of
 fuel from `state` equals running `b` more units after `a` initial units. -/
+-- @[grind]-excluded: fuel-composition (associativity) lemma; as a rewrite it
+-- splits one loop into two and risks non-termination of grind's saturation.
 theorem noPivotLoop_add
     {n : Nat} (a b : Nat) (state : BareissState n) :
     noPivotLoop (a + b) state = noPivotLoop b (noPivotLoop a state) := by
@@ -1320,6 +1386,8 @@ theorem noPivotLoop_add
 
 /-- When a no-pivot Bareiss run records no singular step and has enough room,
 the `step` field advances by exactly the amount of consumed fuel. -/
+-- @[grind]-excluded: step-count accounting lemma with arithmetic-room and
+-- no-singular premises; proof-internal, not a characterising rewrite.
 theorem noPivotLoop_step_eq_add_of_singularStep_none
     {n : Nat} (fuel : Nat) (state : BareissState n)
     (h_init : state.singularStep = none)
@@ -1355,6 +1423,8 @@ recording a singular step, the row-pivoted Bareiss loop produces an
 identical state: every diagonal pivot is nonzero, so the row search and
 swap branches of `pivotLoop` are never entered and both loops apply the
 same `stepMatrix` updates. -/
+-- @[grind]-excluded: one-shot equivalence-of-two-algorithms bridge gated on a
+-- no-singular premise.
 theorem pivotLoop_eq_noPivotLoop_of_no_singular {n : Nat}
     (fuel : Nat) (state : BareissState n)
     (h_no_sing : (noPivotLoop fuel state).singularStep = none) :
@@ -1413,6 +1483,8 @@ def bareissData (M : Matrix Int n n) : BareissData n :=
 /-- The packaged row-pivoted Bareiss data is exactly the structured pivot loop
 state finished into public determinant data. This is the equality consumed by the
 Mathlib determinant proof; array storage is erased by `rowsToMatrix`. -/
+-- @[grind]-excluded: array-erasure bridge consumed by the Mathlib determinant
+-- proof; not a local rewrite.
 theorem bareissData_eq_finish_pivotLoop (M : Matrix Int n n) :
     bareissData M = finish (pivotLoop n (noPivotInitialState M)) := by
   simp [bareissData, bareissArrayState, noPivotInitialState, finish,
@@ -1426,6 +1498,7 @@ def bareiss (M : Matrix Int n n) : Int :=
 /-- The public row-pivoted determinant agrees with the determinant encoded by
 `bareissData`. This separates executable array evaluation from the packaged
 elimination data used by correctness proofs. -/
+-- @[grind]-excluded: one-shot executable-vs-packaged determinant bridge.
 theorem bareiss_eq_bareissData_det (M : Matrix Int n n) :
     bareiss M = (bareissData M).det := by
   cases n with
@@ -1442,6 +1515,7 @@ theorem bareiss_eq_bareissData_det (M : Matrix Int n n) :
 /-- If the no-pivot Bareiss pass reaches the final pivot without recording a
 singular step, then the public row-pivoted `bareiss` determinant is exactly
 the no-pivot final diagonal entry. -/
+-- @[grind]-excluded: premise-heavy final-diagonal identity; one-shot.
 theorem bareiss_eq_noPivotLoop_last_of_no_singular {k : Nat}
     (M : Matrix Int (k + 1) (k + 1))
     (h_no_sing :
