@@ -616,6 +616,7 @@ convention and has zero representative. -/
     (modulus_prime h) (modulus_irreducible h)
 
 /-- Division in `GFq` is multiplication by inverse. -/
+@[grind =]
 theorem div_eq_mul_inv {h : Conway.SupportedEntry p n}
     (x y : GFq p n h) :
     x / y = x * y⁻¹ := by
