@@ -134,6 +134,11 @@ open PR on it first (`gh pr list --head agent/<id>`). If a PR exists, create
 a new branch with a suffix (`agent/<id>-v2`). If no PR exists, reset it to
 master: `git checkout agent/<id> && git reset --hard origin/master`.
 
+Before that `reset --hard`, run `git status` — reused worktrees commonly
+carry uncommitted pod-local `.claude/` edits. If any uncommitted changes
+exist, `git stash` them first (never `-u`/`--include-untracked`), so the
+hard reset does not silently discard in-progress work.
+
 Record any project-specific quality metrics (e.g. sorry count, test coverage)
 as described in the project's CLAUDE.md.
 
