@@ -110,29 +110,113 @@ theorem trimTrailingZerosList_normalized (coeffs : List R) :
             · apply has_last
               simpa [trimTrailingZerosList, htrim, htail] using hlast
 
-/-- Runtime helper for `trimTrailingZeros`: scan `coeffs` from index `ceil - 1`
-downward for the highest nonzero coefficient and keep that prefix. Structural on
-`ceil`, mirroring `trimTrailingZerosList` on `coeffs.toList` without the
-`Array → List → Array` round-trip. -/
-private def trimTrailingZerosImplAux (coeffs : Array R) : Nat → Array R
-  | 0 => #[]
-  | ceil + 1 =>
-      if coeffs.getD ceil (Zero.zero : R) = (Zero.zero : R) then
-        trimTrailingZerosImplAux coeffs ceil
-      else
-        coeffs.shrink (ceil + 1)
+/-- Appending a trailing zero does not change the trailing-zero-trimmed list. -/
+private theorem trimTrailingZerosList_append_zero (L : List R) :
+    trimTrailingZerosList (L ++ [(Zero.zero : R)]) = trimTrailingZerosList L := by
+  induction L with
+  | nil => simp [trimTrailingZerosList]
+  | cons a as ih =>
+      show trimTrailingZerosList (a :: (as ++ [Zero.zero])) = trimTrailingZerosList (a :: as)
+      unfold trimTrailingZerosList
+      rw [ih]
 
-/-- Runtime implementation of `trimTrailingZeros`. Returns the same array value as
-the reference definition (the input with its trailing zeros dropped) but works
-directly on the array, reusing the input storage in place when it is uniquely
-referenced instead of allocating an intermediate list. -/
-private def trimTrailingZerosImpl (coeffs : Array R) : Array R :=
-  trimTrailingZerosImplAux coeffs coeffs.size
+/-- A list whose last entry is nonzero is its own trailing-zero-trim. -/
+private theorem trimTrailingZerosList_append_ne_zero (L : List R) {v : R}
+    (hv : v ≠ (Zero.zero : R)) :
+    trimTrailingZerosList (L ++ [v]) = L ++ [v] := by
+  induction L with
+  | nil => simp [trimTrailingZerosList, hv]
+  | cons a as ih =>
+      show trimTrailingZerosList (a :: (as ++ [v])) = a :: (as ++ [v])
+      unfold trimTrailingZerosList
+      rw [ih]; simp
 
-/-- Normalize a coefficient array by discarding all trailing zeros. -/
-@[implemented_by trimTrailingZerosImpl]
+/-- Normalize a coefficient array by discarding all trailing zeros. The compiled runtime
+uses the value-equal `trimTrailingZerosImpl` (proved by `trimTrailingZeros_eq_impl`,
+registered `@[csimp]`), which pops trailing zeros off the array in place instead of
+round-tripping through `coeffs.toList`. -/
 def trimTrailingZeros (coeffs : Array R) : Array R :=
   (trimTrailingZerosList coeffs.toList).toArray
+
+omit [Zero R] [DecidableEq R] in
+/-- An array with last element `v` splits as `pop ++ [v]` on the list side. -/
+private theorem toList_eq_pop_append (coeffs : Array R) {v : R} (hb : coeffs.back? = some v) :
+    coeffs.toList = coeffs.pop.toList ++ [v] := by
+  have hgl : coeffs.toList.getLast? = some v := by
+    rw [List.getLast?_eq_getElem?, Array.length_toList, Array.getElem?_toList,
+      ← Array.back?_eq_getElem?, hb]
+  have hne : coeffs.toList ≠ [] := by intro h; rw [h] at hgl; simp at hgl
+  have hv : coeffs.toList.getLast hne = v := by
+    rw [List.getLast?_eq_some_getLast hne] at hgl
+    exact (Option.some.injEq _ _).mp hgl
+  rw [Array.toList_pop, ← hv]
+  exact (List.dropLast_concat_getLast hne).symm
+
+/-- An array whose last entry is nonzero (or which is empty) is already trailing-zero free,
+so trimming its coefficient list returns the list unchanged. -/
+private theorem trimTrailingZerosList_toList_self (coeffs : Array R)
+    (hb : coeffs.back? ≠ some (Zero.zero : R)) :
+    trimTrailingZerosList coeffs.toList = coeffs.toList := by
+  cases hbk : coeffs.back? with
+  | none => rw [Array.back?_eq_none_iff] at hbk; subst hbk; simp [trimTrailingZerosList]
+  | some v =>
+      have hv : v ≠ (Zero.zero : R) := fun h => hb (h ▸ hbk)
+      rw [toList_eq_pop_append coeffs hbk, trimTrailingZerosList_append_ne_zero _ hv]
+
+/-- Trimming an array with nonzero last entry (or empty) is the identity. -/
+private theorem trimTrailingZeros_self (coeffs : Array R)
+    (hb : coeffs.back? ≠ some (Zero.zero : R)) :
+    trimTrailingZeros coeffs = coeffs := by
+  unfold trimTrailingZeros
+  rw [trimTrailingZerosList_toList_self coeffs hb, Array.toArray_toList]
+
+/-- Popping a trailing zero does not change the trim. -/
+private theorem trimTrailingZeros_pop (coeffs : Array R)
+    (hb : coeffs.back? = some (Zero.zero : R)) :
+    trimTrailingZeros coeffs.pop = trimTrailingZeros coeffs := by
+  unfold trimTrailingZeros
+  rw [toList_eq_pop_append coeffs hb, trimTrailingZerosList_append_zero]
+
+/-- Runtime loop for `trimTrailingZeros`: pop trailing zeros off the array, up to `n` of
+them. With `n = coeffs.size` it pops the whole trailing-zero run, reusing the input
+storage in place when it is uniquely referenced rather than allocating a list. -/
+private def trimTrailingZerosGo (coeffs : Array R) : Nat → Array R
+  | 0 => coeffs
+  | n + 1 =>
+      if coeffs.back? = some (Zero.zero : R) then trimTrailingZerosGo coeffs.pop n else coeffs
+
+/-- Once the fuel `n` is at least the array size, `trimTrailingZerosGo` has popped the whole
+trailing-zero run and so agrees with `trimTrailingZeros`. -/
+private theorem trimTrailingZerosGo_eq (n : Nat) :
+    ∀ (coeffs : Array R), coeffs.size ≤ n →
+      trimTrailingZerosGo coeffs n = trimTrailingZeros coeffs := by
+  induction n with
+  | zero =>
+      intro coeffs hsize
+      have hbk : coeffs.back? = none := by
+        rw [Array.back?_eq_getElem?]; exact Array.getElem?_eq_none (by omega)
+      have hbne : coeffs.back? ≠ some (Zero.zero : R) := by rw [hbk]; simp
+      rw [trimTrailingZerosGo, trimTrailingZeros_self coeffs hbne]
+  | succ n ih =>
+      intro coeffs hsize
+      rw [trimTrailingZerosGo]
+      by_cases hb : coeffs.back? = some (Zero.zero : R)
+      · rw [if_pos hb, ih coeffs.pop (by rw [Array.size_pop]; omega), trimTrailingZeros_pop coeffs hb]
+      · rw [if_neg hb, trimTrailingZeros_self coeffs hb]
+
+/-- Runtime implementation of `trimTrailingZeros`. -/
+private def trimTrailingZerosImpl (coeffs : Array R) : Array R :=
+  trimTrailingZerosGo coeffs coeffs.size
+
+/-- Register the value-equal `trimTrailingZerosImpl` as the compiled implementation of
+`trimTrailingZeros`. Unlike `@[implemented_by]`, the `@[csimp]` swap is backed by the proof
+`trimTrailingZerosGo_eq`, so the runtime loop is verified equal to the specification. -/
+@[csimp]
+private theorem trimTrailingZeros_eq_impl : @trimTrailingZeros = @trimTrailingZerosImpl := by
+  funext R _ _ coeffs
+  show trimTrailingZeros coeffs = trimTrailingZerosImpl coeffs
+  unfold trimTrailingZerosImpl
+  exact (trimTrailingZerosGo_eq coeffs.size coeffs (Nat.le_refl _)).symm
 
 /-- Build a dense polynomial from a raw coefficient array by normalizing away trailing zeros. -/
 def ofCoeffs (coeffs : Array R) : DensePoly R :=
