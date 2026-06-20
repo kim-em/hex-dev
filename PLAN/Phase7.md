@@ -57,7 +57,7 @@ Each chapter should cover:
    computational libs) or to the computational counterpart (for
    `hex-*-mathlib` libs).
 
-Two Verso syntax constraints bite chapter authors and only surface at
+Three Verso constraints bite chapter authors and only surface at
 build time:
 
 - A `{ref "tag"}[text]` (or `{name}`/`{docstring}`) directive must sit
@@ -66,6 +66,13 @@ build time:
 - Lean code blocks (```` ```lean ````) are capped at **60 columns**;
   longer lines warn. Lift wide `example`/`theorem` binders into a
   `variable` block above the block to fit.
+- `{docstring StructName}` errors unless **every field** of the
+  structure is documented (`'Foo.bar' is not documented`). To embed a
+  structure's docstring, first add a `/-- … -/` field docstring to each
+  field in the source `structure`, or fall back to `{name StructName}`.
+  Likewise, `#eval`/`#guard` on an `@[extern]` def fails in the manual's
+  evaluator (no native binding) — document those by signature/law and
+  keep evaluated example blocks to the pure-Lean surface.
 
 ## Additional Phase 7 work: tutorials
 
