@@ -981,6 +981,97 @@ theorem factorFastCore_irreducible_of_monicRecoveredLift
         BHKS.ForwardRecoveryInputs.recoveredLift_subtypeFamily_of_indicatorCandidates_a]
     exact BHKS.toMonicLiftData_one_lt_modulus core k' primeData hvalid hprecision
 
+/--
+**Centered `RecoveredLift` for a genuine lifted true support (#8068 keystone).**
+
+For any support `U` in the genuine `liftedTrueSupports core (toMonicLiftData core
+B primeData)` family, the centered recovered lift over the monic basis exists.
+
+Unlike `recoveredLift_subtypeFamily_of_indicatorCandidates`, this consumes **no**
+`hindicators` (`L' = W`) hypothesis: the witnessing integer factor `f` carried by
+the `liftedTrueSupports` membership is descended to its monic correspondent `gf`
+(via `IntReductionMod.monicCorrespondentDescent_of_representsAtLift`), whose
+monic-coordinate representation feeds `recoveredLiftOfToMonicRepresents`.  The
+support is then transported back along the membership's coercion `↑S = U`.  This
+is the separation-free producer of the `lift` family consumed by
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift`.
+-/
+noncomputable def recoveredLiftOfLiftedTrueSupport
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hB_ne_zero : B ≠ 0)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
+    (U : Set (LiftedFactorIndex (Hex.ZPoly.toMonicLiftData core B primeData)))
+    (hU : U ∈ liftedTrueSupports core (Hex.ZPoly.toMonicLiftData core B primeData)) :
+    BHKS.RecoveredLift
+      (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData).p
+        (Hex.ZPoly.toMonicLiftData core B primeData).k
+        (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors) U := by
+  classical
+  have hsize_d :
+      (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors.size =
+        primeData.factorsModP.size :=
+    Hex.ZPoly.toMonicLiftData_liftedFactors_size_eq core B primeData
+  have hp_eq : (Hex.ZPoly.toMonicLiftData core B primeData).p = primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_p _ _ _
+  have hk_eq : (Hex.ZPoly.toMonicLiftData core B primeData).k =
+      Hex.precisionForCoeffBound B primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_k _ _ _
+  have hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k := by
+    rw [hp_eq, hk_eq]; exact hbound
+  -- Extract the witnessing integer factor and its representing subset (Prop → data: `choose`).
+  have hf_irr : Irreducible (HexPolyZMathlib.toPolynomial hU.choose) :=
+    hU.choose_spec.choose_spec.1
+  have hf_dvd : hU.choose ∣ core := hU.choose_spec.choose_spec.2.1
+  have hrep :
+      RepresentsIntegerFactorAtLift core (Hex.ZPoly.toMonicLiftData core B primeData)
+        hU.choose hU.choose_spec.choose :=
+    hU.choose_spec.choose_spec.2.2.1
+  have hcoe :
+      (↑hU.choose_spec.choose :
+          Set (LiftedFactorIndex (Hex.ZPoly.toMonicLiftData core B primeData))) = U :=
+    hU.choose_spec.choose_spec.2.2.2
+  -- Descend to the monic correspondent.
+  have hdesc :=
+    IntReductionMod.monicCorrespondentDescent_of_representsAtLift core B primeData hselected
+      hcore_lc_pos hcore_pos hcore_prim hB_ne_zero hbound hf_irr hf_dvd hrep
+  have hgf_monic := hdesc.choose_spec.choose_spec.1
+  have hgf_dvd := hdesc.choose_spec.choose_spec.2.1
+  have hgf_irr := hdesc.choose_spec.choose_spec.2.2.1
+  have hmodP := hdesc.choose_spec.choose_spec.2.2.2.1
+  have hSeq := hdesc.choose_spec.choose_spec.2.2.2.2.2
+  -- Monic-coordinate lifted representation of the correspondent.
+  have hliftM :
+      RepresentsIntegerFactorAtLift (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData) hdesc.choose
+        (liftedSubsetOfModPSubset primeData (Hex.ZPoly.toMonicLiftData core B primeData)
+          hsize_d hdesc.choose_spec.choose) :=
+    toMonicLiftData_represents_lifted_monicCorrespondent core B primeData hcore_lc_pos
+      hcore_pos hselected hB_ne_zero hgf_monic hgf_irr hgf_dvd hmodP
+  -- Build the recovered lift over the monic basis, then transport the support to `U`.
+  have hsupp :
+      BHKS.supportOfSubset (Hex.ZPoly.toMonic core).monic
+          (Hex.ZPoly.toMonicLiftData core B primeData)
+          (liftedSubsetOfModPSubset primeData (Hex.ZPoly.toMonicLiftData core B primeData)
+            hsize_d hdesc.choose_spec.choose) = U := by
+    show (↑(liftedSubsetOfModPSubset primeData (Hex.ZPoly.toMonicLiftData core B primeData)
+        hsize_d hdesc.choose_spec.choose) :
+        Set (LiftedFactorIndex (Hex.ZPoly.toMonicLiftData core B primeData))) = U
+    rw [← hSeq]; exact hcoe
+  exact hsupp ▸ BHKS.recoveredLiftOfToMonicRepresents core B primeData
+    (liftedSubsetOfModPSubset primeData (Hex.ZPoly.toMonicLiftData core B primeData)
+      hsize_d hdesc.choose_spec.choose)
+    hdesc.choose hgf_dvd.choose hcore_lc_pos hcore_pos hgf_dvd.choose_spec.symm hprecision hliftM
+
 /-- Cardinality equality for a successful BHKS fast-core branch under the B8
 partition-refinement package.  Pairs `factorFastCoreWithBound_some_factor_count_le`
 with `factorFastCoreWithBound_some_factor_count_ge`, exposing the count
