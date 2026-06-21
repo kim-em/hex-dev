@@ -3113,6 +3113,128 @@ theorem initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData
     exact toMonicLiftData_liftedRecoveryCandidate_eq core B primeData hcore_lc_pos hcore_pos
       hselected hbound hfsign hrep
 
+/--
+**Monic-correspondent descent for a represented integer factor (#8068).**
+
+Top-level extraction of the `descent` step inside
+`initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData`.  From an
+original-core represented factor `f` (irreducible, dividing `core`, represented
+at the `toMonicLiftData` lift by subset `S`) this reconstructs the *monic
+correspondent* `gf` of `f` from `f` alone: the monic irreducible factor of
+`(toMonic core).monic`, its mod-`p` representing subset `S₀`, the
+`primitivePart ∘ dilate` recovery `f = primitivePart (dilate (lc core) gf)`, and
+the identification `S = liftedSubsetOfModPSubset … S₀`.
+
+This is the keystone that lets the centered `RecoveredLift` family for
+`liftedTrueSupports core d` be built directly (via
+`recoveredLiftOfToMonicRepresents`), without the reverse `L' = W` separation: the
+witnessing `f` carried by a `liftedTrueSupports` membership is enough to recover
+the monic-coordinate representation that the recovered-lift producers consume.
+-/
+theorem monicCorrespondentDescent_of_representsAtLift
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hB_ne_zero : B ≠ 0)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
+    {f : Hex.ZPoly}
+    {S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData)}
+    (hf_irr : Irreducible (HexPolyZMathlib.toPolynomial f))
+    (hf_dvd : f ∣ core)
+    (hrep :
+      RepresentsIntegerFactorAtLift core (Hex.ZPoly.toMonicLiftData core B primeData) f S) :
+    ∃ (gf : Hex.ZPoly) (S₀ : ModPFactorSubset primeData),
+      Hex.DensePoly.Monic gf ∧
+      gf ∣ (Hex.ZPoly.toMonic core).monic ∧
+      Irreducible (HexPolyZMathlib.toPolynomial gf) ∧
+      RepresentsIntegerFactorModP primeData gf S₀ ∧
+      Hex.ZPoly.primitivePart
+        (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) gf) = f ∧
+      S = liftedSubsetOfModPSubset primeData
+        (Hex.ZPoly.toMonicLiftData core B primeData)
+        (Hex.ZPoly.toMonicLiftData_liftedFactors_size_eq core B primeData) S₀ := by
+  classical
+  have hp_prime : Hex.Nat.Prime primeData.p :=
+    Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+  have hp2 : 2 ≤ primeData.p := hp_prime.two_le
+  have hprec_spec : 2 * B < primeData.p ^ Hex.precisionForCoeffBound B primeData.p :=
+    Hex.precisionForCoeffBound_spec hp2 B
+  have hB1 : 1 ≤ B := Nat.one_le_iff_ne_zero.mpr hB_ne_zero
+  have hmodulus : 2 ≤ primeData.p ^ Hex.precisionForCoeffBound B primeData.p := by omega
+  have hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p := by
+    by_contra hlt
+    have hzero : Hex.precisionForCoeffBound B primeData.p = 0 := by omega
+    rw [hzero, pow_zero] at hmodulus
+    omega
+  have hcore0 : core ≠ 0 := by
+    intro h
+    rw [h, Hex.DensePoly.leadingCoeff_zero] at hcore_lc_pos
+    exact lt_irrefl 0 hcore_lc_pos
+  have hdeg : 1 ≤ (Hex.ZPoly.toMonic core).degree := hcore_pos
+  have hM_monic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
+    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+  have hM_ne : (Hex.ZPoly.toMonic core).monic ≠ 0 := zpoly_ne_zero_of_monic hM_monic
+  have hsize : (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors.size =
+      primeData.factorsModP.size :=
+    Hex.ZPoly.toMonicLiftData_liftedFactors_size_eq core B primeData
+  have hlf_monic :
+      ∀ i, Hex.DensePoly.Monic
+        (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) i) :=
+    Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData core B primeData
+      hcore_lc_pos hcore_pos hselected hprecision
+  have hp_eq : (Hex.ZPoly.toMonicLiftData core B primeData).p = primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_p _ _ _
+  have hk_eq : (Hex.ZPoly.toMonicLiftData core B primeData).k =
+      Hex.precisionForCoeffBound B primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_k _ _ _
+  have hmod2 : 2 ≤ (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+      (Hex.ZPoly.toMonicLiftData core B primeData).k := by
+    rw [hp_eq, hk_eq]; exact hmodulus
+  have hprec_dk :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k := by
+    rw [hp_eq, hk_eq]; exact hbound
+  have hfsign : Hex.normalizeFactorSign f = f :=
+    normalizeFactorSign_eq_of_representsAtLift hrep hcore_lc_pos hM_ne hlf_monic hprec_dk
+  have hcand :
+      liftedRecoveryCandidate core (Hex.ZPoly.toMonicLiftData core B primeData) S = f :=
+    toMonicLiftData_liftedRecoveryCandidate_eq core B primeData hcore_lc_pos hcore_pos
+      hselected hbound hfsign hrep
+  have hf_prim : Hex.ZPoly.Primitive f := by
+    rw [← hcand]
+    exact zpoly_primitive_liftedRecoveryCandidate hcore_lc_pos hmod2 hlf_monic S
+  have hfdeg : 1 ≤ f.degree?.getD 0 :=
+    one_le_degree_getD_of_irreducible_dvd_primitive hcore_prim hf_irr hf_dvd
+  obtain ⟨gf, hgf_monic, hgf_dvd, hrecover⟩ :=
+    exists_monicCorrespondent_of_dvd core f hcore0 hcore_lc_pos hdeg hfdeg hf_dvd hf_prim hfsign
+  have hgf_irr : Irreducible (HexPolyZMathlib.toPolynomial gf) :=
+    irreducible_toPolynomial_monicCorrespondent (ne_of_gt hcore_lc_pos) hgf_monic hf_prim
+      hf_irr hrecover
+  obtain ⟨S₀, hS₀⟩ :=
+    representsModP_correspondent core primeData hcore_lc_pos hcore_pos hselected hgf_irr hgf_dvd
+  have hliftM :
+      RepresentsIntegerFactorAtLift (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData) gf
+        (liftedSubsetOfModPSubset primeData (Hex.ZPoly.toMonicLiftData core B primeData)
+          hsize S₀) :=
+    toMonicLiftData_represents_lifted_monicCorrespondent core B primeData hcore_lc_pos
+      hcore_pos hselected hB_ne_zero hgf_monic hgf_irr hgf_dvd hS₀
+  have hliftcore :
+      RepresentsIntegerFactorAtLift core (Hex.ZPoly.toMonicLiftData core B primeData) f
+        (liftedSubsetOfModPSubset primeData (Hex.ZPoly.toMonicLiftData core B primeData)
+          hsize S₀) :=
+    representsIntegerFactorAtLift_of_monicCorrespondent rfl hM_monic hliftM hrecover
+  have hSeq : S = liftedSubsetOfModPSubset primeData
+      (Hex.ZPoly.toMonicLiftData core B primeData) hsize S₀ :=
+    toMonicLiftData_unique_subset core B primeData hcore_lc_pos hcore_pos hselected
+      hprecision hbound hf_irr hf_dvd hrep hliftcore
+  exact ⟨gf, S₀, hgf_monic, hgf_dvd, hgf_irr, hS₀, hrecover, hSeq⟩
+
 end IntReductionMod
 
 /-- **#7584 core-facts producer (lifted-subset partition).**
