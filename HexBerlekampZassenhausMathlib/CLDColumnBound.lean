@@ -2090,6 +2090,161 @@ theorem defaultFactorCoeffBound_toMonic_le_cldCoeffFloor (core : Hex.ZPoly)
   exact Hex.ZPoly.defaultFactorCoeffBound_le _
     (fun k hk _j _hj => mignotteCoeffBound_toMonic_le_cldCoeffFloor core hn hk)
 
+/-- `List.range`-`foldl` addition rewritten as a `Finset.range` sum (local copy of
+the private BHKSBound helper). -/
+private theorem range_foldl_add_eq_finset_sum (g : Nat → Nat) (m : Nat) :
+    (List.range m).foldl (fun acc i => acc + g i) 0 = ∑ i ∈ Finset.range m, g i := by
+  induction m with
+  | zero => simp
+  | succ k ih =>
+      rw [List.range_succ, List.foldl_append, ih, Finset.sum_range_succ]
+      simp
+
+/-- **(★★) norm leaf.**  For a core with nonzero constant term and degree `≥ 2`,
+the executable squared coefficient norm does not exceed that of its monic
+transform: the monic transform inflates each low coefficient by a power of the
+leading coefficient, and the nonzero constant term lets the inflated bottom
+coefficient absorb the leading-coefficient deficit at the top. -/
+private theorem coeffNormSq_le_toMonic_monic_of_const_degree (core : Hex.ZPoly)
+    (hconst : core.coeff 0 ≠ 0) (hn : 2 ≤ core.degree?.getD 0) :
+    Hex.ZPoly.coeffNormSq core ≤
+      Hex.ZPoly.coeffNormSq (Hex.ZPoly.toMonic core).monic := by
+  classical
+  by_cases hlc1 : Hex.DensePoly.leadingCoeff core = 1
+  · rw [Hex.ZPoly.toMonic_monic_eq_core_of_leadingCoeff_eq_one core hlc1]
+  · set n := core.degree?.getD 0 with hn_def
+    have hcore_ne : core ≠ 0 := fun h => hconst (by rw [h]; rfl)
+    have hsize_pos : 0 < core.size := Hex.ZPoly.size_pos_of_ne_zero core hcore_ne
+    have hn_size : n = core.size - 1 := by
+      simp [hn_def, Hex.DensePoly.degree?, Nat.ne_of_gt hsize_pos]
+    have hcoresize : core.size = n + 1 := by omega
+    have hmonsize : (Hex.ZPoly.toMonic core).monic.size = n + 1 :=
+      Hex.ZPoly.toMonic_monic_size_of_pos_degree core (by omega)
+    set L := Hex.DensePoly.leadingCoeff core with hL_def
+    have hL_ne : L ≠ 0 := Hex.ZPoly.leadingCoeff_ne_zero_of_ne_zero core hcore_ne
+    have hsizeidx : core.size - 1 = n := by omega
+    have hcore_top : core.coeff n = L := by
+      rw [hL_def, Hex.DensePoly.leadingCoeff_eq_coeff_last core hsize_pos, hsizeidx]
+    have hmon_coeff : ∀ i, (Hex.ZPoly.toMonic core).monic.coeff i =
+        if i < n then core.coeff i * L ^ (n - 1 - i) else if i = n then 1 else 0 := by
+      intro i
+      rw [Hex.ZPoly.toMonic_monic_coeff_of_leadingCoeff_ne_one core hlc1 i]
+    -- convert both norms to `Finset.range` sums
+    rw [Hex.ZPoly.coeffNormSq_eq_sum, Hex.ZPoly.coeffNormSq_eq_sum, hcoresize, hmonsize,
+      range_foldl_add_eq_finset_sum, range_foldl_add_eq_finset_sum]
+    -- peel the top index `n`
+    rw [Finset.sum_range_succ (fun i => (core.coeff i).natAbs ^ 2) n,
+      Finset.sum_range_succ
+        (fun i => ((Hex.ZPoly.toMonic core).monic.coeff i).natAbs ^ 2) n]
+    -- top terms: `core.coeff n = L`, `monic.coeff n = 1`
+    have hc_top : (core.coeff n).natAbs ^ 2 = L.natAbs ^ 2 := by rw [hcore_top]
+    have hm_top : ((Hex.ZPoly.toMonic core).monic.coeff n).natAbs ^ 2 = 1 := by
+      rw [hmon_coeff n]; simp
+    rw [hc_top, hm_top]
+    set l := L.natAbs with hl_def
+    have hlpos : 1 ≤ l := Int.natAbs_pos.mpr hL_ne
+    -- per-index domination on `(range n).erase 0`
+    have h0mem : (0 : Nat) ∈ Finset.range n := Finset.mem_range.mpr (by omega)
+    have hcmono : ∀ i ∈ (Finset.range n).erase 0,
+        (core.coeff i).natAbs ^ 2 ≤
+          ((Hex.ZPoly.toMonic core).monic.coeff i).natAbs ^ 2 := by
+      intro i hi
+      have hilt : i < n := Finset.mem_range.mp (Finset.mem_of_mem_erase hi)
+      rw [hmon_coeff i, if_pos hilt, Int.natAbs_mul, mul_pow, Int.natAbs_pow, ← pow_mul]
+      exact Nat.le_mul_of_pos_right _ (pow_pos (by omega : (0 : Nat) < l) _)
+    -- bottom boost: `monic.coeff 0 = core.coeff 0 * L ^ (n-1)`
+    have hm0 : ((Hex.ZPoly.toMonic core).monic.coeff 0).natAbs ^ 2 =
+        (core.coeff 0).natAbs ^ 2 * l ^ (2 * (n - 1)) := by
+      rw [hmon_coeff 0, if_pos (by omega : 0 < n), Int.natAbs_mul, mul_pow, Int.natAbs_pow,
+        ← pow_mul, hl_def]
+      congr 2; omega
+    have hnum : (core.coeff 0).natAbs ^ 2 + l ^ 2 ≤
+        ((Hex.ZPoly.toMonic core).monic.coeff 0).natAbs ^ 2 + 1 := by
+      rw [hm0]
+      set c0 := (core.coeff 0).natAbs with hc0_def
+      have hc0pos : 1 ≤ c0 := Int.natAbs_pos.mpr hconst
+      have hA : 1 ≤ c0 ^ 2 := Nat.one_le_pow _ _ (by omega)
+      have hB : 1 ≤ l ^ 2 := Nat.one_le_pow _ _ (by omega)
+      have hpow : l ^ 2 ≤ l ^ (2 * (n - 1)) := Nat.pow_le_pow_right (by omega) (by omega)
+      have step1 : c0 ^ 2 * l ^ 2 ≤ c0 ^ 2 * l ^ (2 * (n - 1)) :=
+        Nat.mul_le_mul_left _ hpow
+      have step2 : c0 ^ 2 + l ^ 2 ≤ c0 ^ 2 * l ^ 2 + 1 := by
+        obtain ⟨B', hB'⟩ : ∃ B', l ^ 2 = B' + 1 := ⟨l ^ 2 - 1, by omega⟩
+        have hexp : c0 ^ 2 * (B' + 1) = c0 ^ 2 * B' + c0 ^ 2 := by ring
+        have hle : B' ≤ c0 ^ 2 * B' := Nat.le_mul_of_pos_left B' (by omega)
+        rw [hB', hexp]; omega
+      exact le_trans step2 (Nat.add_le_add_right step1 1)
+    -- assemble: split off index `0` from both `range n` sums
+    rw [← Finset.add_sum_erase _ (fun i => (core.coeff i).natAbs ^ 2) h0mem,
+      ← Finset.add_sum_erase _
+        (fun i => ((Hex.ZPoly.toMonic core).monic.coeff i).natAbs ^ 2) h0mem]
+    have hsum_erase :
+        ∑ i ∈ (Finset.range n).erase 0, (core.coeff i).natAbs ^ 2 ≤
+          ∑ i ∈ (Finset.range n).erase 0,
+            ((Hex.ZPoly.toMonic core).monic.coeff i).natAbs ^ 2 :=
+      Finset.sum_le_sum hcmono
+    omega
+
+/-- **(★★) norm bound.**  The executable Euclidean-norm bound of a positive-degree
+core with nonzero constant term does not exceed that of its monic transform. -/
+theorem coeffL2NormBound_le_toMonic_monic_of_const_degree (core : Hex.ZPoly)
+    (hconst : core.coeff 0 ≠ 0) (hn : 2 ≤ core.degree?.getD 0) :
+    Hex.ZPoly.coeffL2NormBound core ≤
+      Hex.ZPoly.coeffL2NormBound (Hex.ZPoly.toMonic core).monic := by
+  rw [Hex.ZPoly.coeffL2NormBound_eq_ceilSqrt_coeffNormSq core]
+  apply ceilSqrt_le_of_le_sq
+  calc Hex.ZPoly.coeffNormSq core
+        ≤ Hex.ZPoly.coeffNormSq (Hex.ZPoly.toMonic core).monic :=
+          coeffNormSq_le_toMonic_monic_of_const_degree core hconst hn
+    _ ≤ (Hex.ZPoly.coeffL2NormBound (Hex.ZPoly.toMonic core).monic) ^ 2 := by
+          rw [Hex.ZPoly.coeffL2NormBound_eq_ceilSqrt_coeffNormSq]
+          exact Hex.ZPoly.le_ceilSqrt_sq _
+
+/-- **(★★) The un-monic Mignotte recovery bound is certified by the CLD
+column-adequacy floor.**  For a core with nonzero constant term and degree `≥ 2`
+(both supplied by the multi-factor branch: the normalized square-free core has a
+nonzero constant term and at least two local factors), the core's own default
+factor coefficient bound is dominated by the floor.  This is the un-monic sibling
+of `defaultFactorCoeffBound_toMonic_le_cldCoeffFloor`, supplying the
+`hcore_bound` precision that the partition-count leaf
+(`factorFastCoreWithBound_some_partition_eq_normalizedFactors_card`) needs for the
+integer factor recovery, which the monic floor `(★)` alone does not. -/
+theorem defaultFactorCoeffBound_le_cldCoeffFloor (core : Hex.ZPoly)
+    (hconst : core.coeff 0 ≠ 0) (hn : 2 ≤ core.degree?.getD 0) :
+    Hex.ZPoly.defaultFactorCoeffBound core ≤ Hex.cldCoeffFloor core := by
+  have hMfloor : ∀ j, 2 * Hex.bhksCoeffBound core j ≤ Hex.cldCoeffFloor core := by
+    intro j
+    have hbhks_le :
+        Hex.bhksCoeffBound core j ≤
+          Hex.bhksCoeffBound (Hex.ZPoly.toMonic core).monic j := by
+      simp only [Hex.bhksCoeffBound, Hex.ZPoly.toMonic_monic_degree_getD]
+      gcongr
+      exact coeffL2NormBound_le_toMonic_monic_of_const_degree core hconst hn
+    calc 2 * Hex.bhksCoeffBound core j
+          ≤ 2 * Hex.bhksCoeffBound (Hex.ZPoly.toMonic core).monic j := by gcongr
+      _ ≤ Hex.cldCoeffFloor core := two_mul_bhksCoeffBound_le_cldCoeffFloor core j
+  exact Hex.ZPoly.defaultFactorCoeffBound_le core
+    (fun k hk _j _hj => mignotteCoeffBound_le_floor_aux core core hMfloor (by omega) hk)
+
+/-- The `hcore_bound` precision leaf follows from the CLD-adequacy gate
+`cldCoeffFloor core ≤ k`: at the lift precision `precisionForCoeffBound k p` the
+modulus `p ^ a` clears `2 · defaultFactorCoeffBound core`, so the core's own
+integer factors are recovered.  Un-monic companion of
+`two_mul_bhksCoeffBound_lt_pow_of_cldCoeffFloor_le`, routed through the `(★★)`
+floor bridge; this is the leaf the partition-count theorem
+(`factorFastCoreWithBound_some_partition_eq_normalizedFactors_card`) consumes. -/
+theorem two_mul_defaultFactorCoeffBound_core_lt_pow_of_cldCoeffFloor_le
+    (core : Hex.ZPoly) (k : Nat) (primeData : Hex.PrimeChoiceData)
+    (hp : 2 ≤ primeData.p) (hfloor : Hex.cldCoeffFloor core ≤ k)
+    (hconst : core.coeff 0 ≠ 0) (hn : 2 ≤ core.degree?.getD 0) :
+    2 * Hex.ZPoly.defaultFactorCoeffBound core <
+      primeData.p ^ Hex.precisionForCoeffBound k primeData.p := by
+  have hle : Hex.ZPoly.defaultFactorCoeffBound core ≤ k :=
+    le_trans (defaultFactorCoeffBound_le_cldCoeffFloor core hconst hn) hfloor
+  have hspec : 2 * k < primeData.p ^ Hex.precisionForCoeffBound k primeData.p :=
+    Hex.precisionForCoeffBound_spec hp k
+  omega
+
 /-- The BHKS separation `hsep` follows from the CLD-adequacy gate
 `cldCoeffFloor core ≤ k`: at the lift precision `precisionForCoeffBound k p`
 the modulus `p ^ a` clears `2 · bhksCoeffBound (toMonic core).monic j` for every
