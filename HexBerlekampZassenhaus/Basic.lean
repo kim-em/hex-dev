@@ -11892,7 +11892,7 @@ private theorem factorFastCoreWithBound_some_classifiedSuccess
     ∀ k fuel coreFactors,
       factorFastCoreWithBound core B primeData k fuel = some coreFactors →
         ∃ k', bhksRecoverClassified core (ZPoly.toMonicLiftData core k' primeData) =
-          .success coreFactors := by
+          .success coreFactors ∧ cldCoeffFloor core ≤ k' := by
   intro k fuel
   induction fuel generalizing k with
   | zero =>
@@ -11906,7 +11906,7 @@ private theorem factorFastCoreWithBound_some_classifiedSuccess
           by_cases hfloor : k ≥ cldCoeffFloor core
           · simp [hclass, hfloor] at hfast
             cases hfast
-            exact ⟨k, hclass⟩
+            exact ⟨k, hclass, hfloor⟩
           · by_cases hk : k ≥ B
             · simp [hclass, hfloor, hk] at hfast
             · simp [hclass, hfloor, hk] at hfast
@@ -11974,12 +11974,12 @@ theorem factorFastCoreWithBound_some_indicatorCandidates
                 (ZPoly.toMonicLiftData core k' primeData).liftedFactors)
               hrows)) =
         false ∧
-      Array.polyProduct coreFactors = core := by
-  obtain ⟨k', hsuccess⟩ :=
+      Array.polyProduct coreFactors = core ∧ cldCoeffFloor core ≤ k' := by
+  obtain ⟨k', hsuccess, hfloor⟩ :=
     factorFastCoreWithBound_some_classifiedSuccess core B primeData k fuel coreFactors h
   obtain ⟨hrows, hcand, hdeg⟩ :=
     bhksRecoverClassified_success_indicatorCandidates hsuccess
-  exact ⟨k', hrows, hcand, hdeg, bhksRecoverClassified_success_product hsuccess⟩
+  exact ⟨k', hrows, hcand, hdeg, bhksRecoverClassified_success_product hsuccess, hfloor⟩
 
 private theorem factorFastCoreWithBound_some_all_of_recovery
     (P : ZPoly → Prop)
