@@ -105,41 +105,40 @@ private def splitWithWitnesses? (f : FpPoly p) : List (FpPoly p) → Option (Spl
       | some split => some split
       | none => splitWithWitnesses? f witnesses
 
-/-- Split the first factor in the list that admits a Berlekamp witness split. -/
-private def splitFirstFactor? (witnesses : List (FpPoly p)) :
-    List (FpPoly p) → Option (List (FpPoly p))
-  | [] => none
-  | factor :: rest =>
-      match splitWithWitnesses? factor witnesses with
-      | some split => some (split.factor :: split.cofactor :: rest)
-      | none =>
-          match splitFirstFactor? witnesses rest with
-          | some rest' => some (factor :: rest')
-          | none => none
-
 /--
-Repeatedly split the current factor list using the fixed-space witnesses.
-The fuel bounds the executable loop; for square-free input, every successful
-split increases the factor count and the natural bound is the input size.
+Fully split a single factor into its witness-irreducible pieces.
+
+Once `splitWithWitnesses?` reports that `f` admits no kernel-witness split,
+`f` is irreducible and is emitted as a leaf — the recursion never re-tests
+it. Each side of a successful split recurses independently, so an
+already-irreducible factor is tested against the witnesses exactly once
+(the former restart-from-front loop re-tested every irreducible factor on
+every pass). The fuel bounds the recursion depth; `f.size` strictly
+decreases at every split, so `f.size + 1` fuel reaches the
+witness-irreducible leaves.
+
+The output preserves the depth-first, factor-before-cofactor order of the
+former loop, keeping the factor multiset *and its order* identical.
 -/
-private def berlekampFactorLoop (witnesses : List (FpPoly p)) :
-    Nat → List (FpPoly p) → List (FpPoly p)
-  | 0, factors => factors
-  | fuel + 1, factors =>
-      match splitFirstFactor? witnesses factors with
-      | some factors' => berlekampFactorLoop witnesses fuel factors'
-      | none => factors
+private def fullySplit (witnesses : List (FpPoly p)) :
+    Nat → FpPoly p → List (FpPoly p)
+  | 0, f => [f]
+  | fuel + 1, f =>
+      match splitWithWitnesses? f witnesses with
+      | none => [f]
+      | some split =>
+          fullySplit witnesses fuel split.factor ++ fullySplit witnesses fuel split.cofactor
 
 /--
 Compute the Berlekamp factorization of a monic polynomial over `F_p` by
-building the fixed-space kernel of `Q_f - I` and repeatedly splitting current
-factors with the resulting kernel representatives.
+building the fixed-space kernel of `Q_f - I` and fully splitting the input
+with the resulting kernel representatives.
 -/
 def berlekampFactor (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [Lean.Grind.Field (ZMod64 p)] : Factorization p :=
   let witnesses := (fixedSpaceKernel f hmonic).toList
   { input := f
-    factors := berlekampFactorLoop witnesses (f.size + 1) [f] }
+    factors := fullySplit witnesses (f.size + 1) f }
 
 /-- Definitional unfolding of `splitFactorAt` to its underlying `gcd` candidate. -/
 theorem splitFactorAt_spec (f witness : FpPoly p) (c : ZMod64 p) :
@@ -720,71 +719,51 @@ theorem factorProduct_cons
   rw [one_mul_poly x]
   exact foldl_mul_eq_mul_foldl x xs
 
-private theorem factorProduct_splitFirstFactor?_eq
+/-- `factorProduct` distributes over list append. -/
+private theorem factorProduct_append
     [ZMod64.PrimeModulus p]
-    (witnesses : List (FpPoly p))
-    {factors factors' : List (FpPoly p)}
-    (h : splitFirstFactor? witnesses factors = some factors') :
-    factorProduct factors' = factorProduct factors := by
-  induction factors generalizing factors' with
-  | nil => simp [splitFirstFactor?] at h
-  | cons fac rest ih =>
-    rw [splitFirstFactor?] at h
-    cases hsplit : splitWithWitnesses? fac witnesses with
-    | some r =>
-      rw [hsplit] at h
-      simp only [Option.some.injEq] at h
-      subst h
-      have hp : r.factor * r.cofactor = fac :=
-        splitWithWitnesses?_product_spec fac witnesses hsplit
-      rw [factorProduct_cons r.factor, factorProduct_cons r.cofactor,
-        factorProduct_cons fac]
-      have hassoc : r.factor * (r.cofactor * factorProduct rest)
-          = (r.factor * r.cofactor) * factorProduct rest :=
-        (DensePoly.mul_assoc_poly r.factor r.cofactor (factorProduct rest)).symm
-      rw [hassoc, hp]
-    | none =>
-      rw [hsplit] at h
-      cases hrest : splitFirstFactor? witnesses rest with
-      | some rest' =>
-        rw [hrest] at h
-        simp only [Option.some.injEq] at h
-        subst h
-        rw [factorProduct_cons fac, factorProduct_cons fac]
-        rw [ih hrest]
-      | none =>
-        rw [hrest] at h
-        exact absurd h (by simp)
+    (xs ys : List (FpPoly p)) :
+    factorProduct (xs ++ ys) = factorProduct xs * factorProduct ys := by
+  induction xs with
+  | nil =>
+      show factorProduct ys = factorProduct ([] : List (FpPoly p)) * factorProduct ys
+      rw [factorProduct_nil]
+      exact (one_mul_poly (factorProduct ys)).symm
+  | cons x xs ih =>
+      show factorProduct (x :: (xs ++ ys)) = factorProduct (x :: xs) * factorProduct ys
+      rw [factorProduct_cons, factorProduct_cons, ih]
+      exact (DensePoly.mul_assoc_poly x (factorProduct xs) (factorProduct ys)).symm
 
-private theorem factorProduct_berlekampFactorLoop_eq
+/-- The product of the witness-irreducible pieces of `f` recovers `f`. -/
+private theorem factorProduct_fullySplit
     [ZMod64.PrimeModulus p]
-    (witnesses : List (FpPoly p)) (fuel : Nat)
-    (factors : List (FpPoly p)) :
-    factorProduct (berlekampFactorLoop witnesses fuel factors)
-      = factorProduct factors := by
-  induction fuel generalizing factors with
-  | zero => rfl
+    (witnesses : List (FpPoly p)) (fuel : Nat) (f : FpPoly p) :
+    factorProduct (fullySplit witnesses fuel f) = f := by
+  induction fuel generalizing f with
+  | zero =>
+      show factorProduct [f] = f
+      rw [factorProduct_cons, factorProduct_nil]
+      exact DensePoly.mul_one_right_poly f
   | succ fuel ih =>
-    rw [berlekampFactorLoop]
-    cases hsplit : splitFirstFactor? witnesses factors with
-    | some factors' =>
-      rw [ih]
-      exact factorProduct_splitFirstFactor?_eq witnesses hsplit
-    | none => rfl
+      rw [fullySplit]
+      cases hsplit : splitWithWitnesses? f witnesses with
+      | none =>
+          show factorProduct [f] = f
+          rw [factorProduct_cons, factorProduct_nil]
+          exact DensePoly.mul_one_right_poly f
+      | some split =>
+          rw [factorProduct_append, ih, ih]
+          exact splitWithWitnesses?_product_spec f witnesses hsplit
 
-/-- The Berlekamp factor list's product equals the input polynomial.  The
-splitting loop preserves `factorProduct` without using square-freeness, so the
+/-- The Berlekamp factor list's product equals the input polynomial.  Fully
+splitting preserves `factorProduct` without using square-freeness, so the
 product equality holds for every monic input. -/
 theorem factorProduct_berlekampFactor
     [Lean.Grind.Field (ZMod64 p)]
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
-    factorProduct (berlekampFactor f hmonic).factors = f := by
-  rw [show (berlekampFactor f hmonic).factors
-        = berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList)
-            (f.size + 1) [f] from rfl]
-  rw [factorProduct_berlekampFactorLoop_eq, factorProduct_cons, factorProduct_nil]
-  exact DensePoly.mul_one_right_poly f
+    factorProduct (berlekampFactor f hmonic).factors = f :=
+  factorProduct_fullySplit ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f
 
 /--
 The executable Berlekamp factorization preserves the input polynomial as the
@@ -798,95 +777,48 @@ theorem prod_berlekampFactor
   simp only [Factorization.product_def]
   exact factorProduct_berlekampFactor f hmonic
 
-/-! ### Singleton-output loop structure
+/-! ### Witness-irreducible leaf structure
 
-Each successful `splitFirstFactor?` extends the factor list by one entry, so
-`berlekampFactorLoop` is length-monotone. When `berlekampFactor` returns at
-most one factor (starting from the singleton `[f]`), the very first
-`splitFirstFactor?` invocation must have returned `none`, which by direct
-unfolding means every fixed-space kernel witness yields
-`kernelWitnessSplit? = none`. This isolates the executable / loop side of
-Berlekamp completeness; the algebraic implication "no kernel-witness split
-implies irreducibility" lives in a separate finite-field module. -/
+`fullySplit` emits a factor as a singleton leaf exactly when it admits no
+kernel-witness split, and a successful split produces two nonempty subtrees.
+So the output is always nonempty, and a length-≤-1 output means the input
+itself admits no split — every fixed-space kernel witness yields
+`kernelWitnessSplit? = none`. This isolates the executable side of Berlekamp
+completeness; the algebraic implication "no kernel-witness split implies
+irreducibility" lives in a separate finite-field module. -/
 
-private theorem splitFirstFactor?_length_succ_of_some
-    (witnesses : List (FpPoly p)) :
-    ∀ {factors factors' : List (FpPoly p)},
-      splitFirstFactor? witnesses factors = some factors' →
-        factors'.length = factors.length + 1 := by
-  intro factors
-  induction factors with
-  | nil =>
-      intro factors' h
-      simp [splitFirstFactor?] at h
-  | cons fac rest ih =>
-      intro factors' h
-      rw [splitFirstFactor?] at h
-      cases hsplit : splitWithWitnesses? fac witnesses with
-      | some _ =>
-          rw [hsplit] at h
-          simp only [Option.some.injEq] at h
-          subst h
-          simp [List.length_cons]
-      | none =>
-          rw [hsplit] at h
-          cases hrest : splitFirstFactor? witnesses rest with
-          | some rest' =>
-              rw [hrest] at h
-              simp only [Option.some.injEq] at h
-              subst h
-              have ihr := ih hrest
-              simp [List.length_cons, ihr]
-          | none =>
-              rw [hrest] at h
-              exact absurd h (by simp)
-
-theorem berlekampFactorLoop_length_ge
-    (witnesses : List (FpPoly p)) (fuel : Nat) (factors : List (FpPoly p)) :
-    factors.length ≤ (berlekampFactorLoop witnesses fuel factors).length := by
-  induction fuel generalizing factors with
-  | zero => exact Nat.le_refl _
+/-- Fully splitting always retains at least one factor. -/
+private theorem fullySplit_ne_nil
+    (witnesses : List (FpPoly p)) (fuel : Nat) (f : FpPoly p) :
+    fullySplit witnesses fuel f ≠ [] := by
+  induction fuel generalizing f with
+  | zero => show ([f] : List (FpPoly p)) ≠ []; exact List.cons_ne_nil f []
   | succ fuel ih =>
-      rw [berlekampFactorLoop]
-      cases hsplit : splitFirstFactor? witnesses factors with
-      | some factors' =>
-          change factors.length ≤
-            (berlekampFactorLoop witnesses fuel factors').length
-          have hlen := splitFirstFactor?_length_succ_of_some witnesses hsplit
-          have hih := ih factors'
-          omega
-      | none =>
-          exact Nat.le_refl _
+      rw [fullySplit]
+      cases hsplit : splitWithWitnesses? f witnesses with
+      | none => show ([f] : List (FpPoly p)) ≠ []; exact List.cons_ne_nil f []
+      | some split =>
+          show (fullySplit witnesses fuel split.factor
+            ++ fullySplit witnesses fuel split.cofactor) ≠ []
+          intro hcontra
+          cases hA : fullySplit witnesses fuel split.factor with
+          | nil => exact ih split.factor hA
+          | cons a as => rw [hA] at hcontra; simp at hcontra
+
+/-- When `f` admits no kernel-witness split, fully splitting it (with positive
+fuel) returns the singleton `[f]`. -/
+private theorem fullySplit_succ_eq_self_of_none
+    (witnesses : List (FpPoly p)) (fuel : Nat) (f : FpPoly p)
+    (h : splitWithWitnesses? f witnesses = none) :
+    fullySplit witnesses (fuel + 1) f = [f] := by
+  rw [fullySplit, h]
 
 /-- Executable Berlekamp factorization always retains at least one factor. -/
 theorem berlekampFactor_factors_ne_nil
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [Lean.Grind.Field (ZMod64 p)] :
-    (berlekampFactor f hmonic).factors ≠ [] := by
-  intro hnil
-  have hlen :=
-    berlekampFactorLoop_length_ge
-      ((fixedSpaceKernel f hmonic).toList) (f.size + 1) [f]
-  change
-    ([f] : List (FpPoly p)).length ≤
-      (berlekampFactor f hmonic).factors.length at hlen
-  rw [hnil] at hlen
-  simp at hlen
-
-private theorem splitFirstFactor?_singleton_none_iff
-    (witnesses : List (FpPoly p)) (f : FpPoly p) :
-    splitFirstFactor? witnesses [f] = none ↔
-      splitWithWitnesses? f witnesses = none := by
-  constructor
-  · intro h
-    rw [splitFirstFactor?] at h
-    cases hw : splitWithWitnesses? f witnesses with
-    | some _ =>
-        rw [hw] at h
-        simp at h
-    | none => rfl
-  · intro h
-    rw [splitFirstFactor?, h, splitFirstFactor?]
+    (berlekampFactor f hmonic).factors ≠ [] :=
+  fullySplit_ne_nil ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f
 
 private theorem splitWithWitnesses?_none_iff_forall
     (f : FpPoly p) (witnesses : List (FpPoly p)) :
@@ -929,29 +861,27 @@ theorem kernelWitnessSplit?_none_of_berlekampFactor_factors_length_le_one
     (hsmall : (berlekampFactor f hmonic).factors.length ≤ 1) :
     ∀ w ∈ (fixedSpaceKernel f hmonic).toList,
       kernelWitnessSplit? f w = none := by
-  have hloop_eq :
-      (berlekampFactor f hmonic).factors
-        = berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList)
-            (f.size + 1) [f] := rfl
-  rw [hloop_eq] at hsmall
-  have hsplit :
-      splitFirstFactor? ((fixedSpaceKernel f hmonic).toList) [f] = none := by
-    rw [berlekampFactorLoop] at hsmall
-    cases h : splitFirstFactor? ((fixedSpaceKernel f hmonic).toList) [f] with
+  -- A length-≤-1 output forces `f` itself to admit no kernel-witness split:
+  -- a successful split would emit two nonempty subtrees, hence length ≥ 2.
+  have hsplit_none :
+      splitWithWitnesses? f ((fixedSpaceKernel f hmonic).toList) = none := by
+    cases hsp : splitWithWitnesses? f ((fixedSpaceKernel f hmonic).toList) with
     | none => rfl
-    | some factors' =>
-        simp only [h] at hsmall
-        have hlen' :=
-          splitFirstFactor?_length_succ_of_some
-            ((fixedSpaceKernel f hmonic).toList) h
-        have hmono :=
-          berlekampFactorLoop_length_ge
-            ((fixedSpaceKernel f hmonic).toList) f.size factors'
-        simp at hlen'
+    | some split =>
+        exfalso
+        have hfac_eq : (berlekampFactor f hmonic).factors
+            = fullySplit ((fixedSpaceKernel f hmonic).toList) f.size split.factor
+              ++ fullySplit ((fixedSpaceKernel f hmonic).toList) f.size split.cofactor := by
+          show fullySplit ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f = _
+          rw [fullySplit, hsp]
+        rw [hfac_eq, List.length_append] at hsmall
+        have h1 : 0 < (fullySplit ((fixedSpaceKernel f hmonic).toList) f.size split.factor).length :=
+          List.length_pos_iff.mpr (fullySplit_ne_nil _ _ _)
+        have h2 : 0 < (fullySplit ((fixedSpaceKernel f hmonic).toList) f.size split.cofactor).length :=
+          List.length_pos_iff.mpr (fullySplit_ne_nil _ _ _)
         omega
-  rw [splitFirstFactor?_singleton_none_iff,
-      splitWithWitnesses?_none_iff_forall] at hsplit
-  exact hsplit
+  rw [splitWithWitnesses?_none_iff_forall] at hsplit_none
+  exact hsplit_none
 
 /-! ### `Nodup` invariant on `berlekampFactor.factors`
 
@@ -1105,6 +1035,55 @@ private theorem splitWithWitnesses?_cofactor_pos_degree
   simp [hcof_size_ne] at hdeg
   omega
 
+/-- A polynomial of positive degree is nonzero. -/
+private theorem ne_zero_of_pos_degree {g : FpPoly p}
+    (h : 0 < g.degree?.getD 0) : g ≠ 0 := by
+  intro hz
+  rw [hz] at h
+  have hnone : (0 : FpPoly p).degree? = none := rfl
+  rw [hnone] at h
+  simp at h
+
+/-- A polynomial of positive degree has `size` at least two. -/
+private theorem size_ge_two_of_pos_degree {g : FpPoly p}
+    (h : 0 < g.degree?.getD 0) : 2 ≤ g.size := by
+  rcases Nat.lt_or_ge g.size 2 with hlt | hge
+  · exfalso
+    have hsize_pos : 0 < g.size := FpPoly.size_pos_of_ne_zero (ne_zero_of_pos_degree h)
+    have hsize1 : g.size = 1 := by omega
+    have hdeg : g.degree? = some 0 := by
+      unfold DensePoly.degree?
+      simp [hsize1]
+    rw [hdeg] at h
+    simp at h
+  · exact hge
+
+/-- A successful `splitWithWitnesses?` cofactor is strictly smaller than the
+input.  Together with `splitWithWitnesses?_size_lt` this drives the recursion
+depth of `fullySplit`. -/
+private theorem splitWithWitnesses?_cofactor_size_lt
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (witnesses : List (FpPoly p))
+    (hf_ne : f ≠ 0)
+    {r : SplitResult p}
+    (h : splitWithWitnesses? f witnesses = some r) :
+    r.cofactor.size < f.size := by
+  have hfac_pos := splitWithWitnesses?_factor_pos_degree f witnesses h
+  have hprod := splitWithWitnesses?_product_spec f witnesses h
+  have hfac_ne : r.factor ≠ 0 := ne_zero_of_pos_degree hfac_pos
+  have hcof_ne : r.cofactor ≠ 0 := by
+    intro hr
+    rw [hr, FpPoly.mul_zero] at hprod
+    exact hf_ne hprod.symm
+  have hfac_ge_2 : 2 ≤ r.factor.size := size_ge_two_of_pos_degree hfac_pos
+  have hsize_sum : r.factor.size + r.cofactor.size = f.size + 1 := by
+    have hf_size_eq : f.size = (r.factor * r.cofactor).size := by rw [hprod]
+    rw [hf_size_eq, FpPoly.size_mul_eq_add_sub_one r.factor r.cofactor hfac_ne hcof_ne]
+    have hfac_size_pos := FpPoly.size_pos_of_ne_zero hfac_ne
+    have hcof_size_pos := FpPoly.size_pos_of_ne_zero hcof_ne
+    omega
+  omega
+
 /-- An element of a list of `FpPoly p` divides the product of the list. -/
 private theorem dvd_factorProduct_of_mem
     [ZMod64.PrimeModulus p]
@@ -1198,195 +1177,77 @@ private theorem factorProduct_tail_dvd_cons
   rw [factorProduct_cons]
   exact ⟨fac, DensePoly.mul_comm_poly fac (factorProduct rest)⟩
 
-/-- Loop invariant preserved by one `splitFirstFactor?` step: when every
-entry of the factor list has positive degree and no positive-degree
-polynomial squares to a divisor of `factorProduct xs`, then a successful
-split returns a `Nodup` list whose entries again all have positive
-degree. -/
-private theorem splitFirstFactor?_invariant
+/-- Tree invariant for `fullySplit`: when `f` has positive degree and no
+positive-degree polynomial squares to a divisor of `f`, the witness-irreducible
+pieces form a `Nodup` list whose entries all have positive degree.  Distinctness
+comes from the no-squared hypothesis: a factor shared by the two subtrees would
+square-divide `f`. -/
+private theorem fullySplit_nodup_pos
     [ZMod64.PrimeModulus p]
-    (witnesses : List (FpPoly p))
-    {xs xs' : List (FpPoly p)}
-    (h_nodup : xs.Nodup)
-    (h_pos : ∀ g ∈ xs, 0 < g.degree?.getD 0)
+    (witnesses : List (FpPoly p)) (fuel : Nat) (f : FpPoly p)
+    (h_pos : 0 < f.degree?.getD 0)
     (h_no_squared : ∀ g : FpPoly p,
-        g * g ∣ factorProduct xs → ¬ (0 < g.degree?.getD 0))
-    (h_split : splitFirstFactor? witnesses xs = some xs') :
-    xs'.Nodup ∧ (∀ g ∈ xs', 0 < g.degree?.getD 0) := by
-  induction xs generalizing xs' with
-  | nil => simp [splitFirstFactor?] at h_split
-  | cons fac rest ih =>
-      rw [splitFirstFactor?] at h_split
-      have h_fac_pos : 0 < fac.degree?.getD 0 := h_pos fac List.mem_cons_self
-      have h_fac_ne_zero : fac ≠ 0 := by
-        intro hzero
-        rw [hzero] at h_fac_pos
-        have : (0 : FpPoly p).degree? = none := rfl
-        rw [this] at h_fac_pos
-        simp at h_fac_pos
-      have h_fac_notmem : fac ∉ rest := (List.nodup_cons.mp h_nodup).1
-      have h_rest_nodup : rest.Nodup := (List.nodup_cons.mp h_nodup).2
-      have h_rest_pos : ∀ g ∈ rest, 0 < g.degree?.getD 0 :=
-        fun g hg => h_pos g (List.mem_cons_of_mem fac hg)
-      cases hsplit : splitWithWitnesses? fac witnesses with
-      | some split =>
-          rw [hsplit] at h_split
-          simp only [Option.some.injEq] at h_split
-          subst h_split
-          have h_factor_pos := splitWithWitnesses?_factor_pos_degree fac witnesses hsplit
-          have h_cofactor_pos :=
-            splitWithWitnesses?_cofactor_pos_degree fac witnesses h_fac_ne_zero hsplit
-          have h_prod := splitWithWitnesses?_product_spec fac witnesses hsplit
-          -- factorProduct (split.factor :: split.cofactor :: rest)
-          --   = split.factor * (split.cofactor * factorProduct rest)
-          --   = (split.factor * split.cofactor) * factorProduct rest
-          --   = fac * factorProduct rest = factorProduct (fac :: rest)
-          have h_factorProduct_eq :
-              factorProduct (split.factor :: split.cofactor :: rest)
-                = factorProduct (fac :: rest) := by
-            rw [factorProduct_cons split.factor (split.cofactor :: rest),
-                factorProduct_cons split.cofactor rest,
-                factorProduct_cons fac rest]
-            calc split.factor * (split.cofactor * factorProduct rest)
-                = (split.factor * split.cofactor) * factorProduct rest :=
-                  (DensePoly.mul_assoc_poly split.factor split.cofactor _).symm
-              _ = fac * factorProduct rest := by rw [h_prod]
-          -- Set up the squared-divisor hypothesis on the new list's product.
-          have h_no_squared_new : ∀ g : FpPoly p,
-              g * g ∣ factorProduct (split.factor :: split.cofactor :: rest) →
-                ¬ (0 < g.degree?.getD 0) := by
-            intro g hgg
-            rw [h_factorProduct_eq] at hgg
-            exact h_no_squared g hgg
-          -- Show Nodup of split.factor :: split.cofactor :: rest.
-          have h_fac_dvd : split.factor ∣ fac := ⟨split.cofactor, h_prod.symm⟩
-          have h_cof_dvd : split.cofactor ∣ fac :=
-            ⟨split.factor, by rw [← h_prod]; exact FpPoly.mul_comm _ _⟩
-          have h_factorProduct_xs : factorProduct (fac :: rest) = fac * factorProduct rest :=
-            factorProduct_cons fac rest
-          -- split.factor ≠ split.cofactor.
-          have h_factor_ne_cofactor : split.factor ≠ split.cofactor := by
-            intro heq
-            have hgg : split.factor * split.factor ∣ factorProduct (fac :: rest) := by
-              rw [h_factorProduct_xs]
-              have hfac_eq : fac = split.factor * split.cofactor := h_prod.symm
-              rw [hfac_eq, ← heq]
-              exact ⟨factorProduct rest, rfl⟩
-            exact h_no_squared split.factor hgg h_factor_pos
-          -- split.factor ∉ rest.
-          have h_factor_notmem : split.factor ∉ rest := by
-            intro hmem
-            have hfac_dvd_rest : split.factor ∣ factorProduct rest :=
-              dvd_factorProduct_of_mem rest hmem
-            have hgg : split.factor * split.factor ∣ factorProduct (fac :: rest) := by
-              rw [h_factorProduct_xs]
-              exact squared_dvd_of_dvd_dvd h_fac_dvd hfac_dvd_rest
-            exact h_no_squared split.factor hgg h_factor_pos
-          -- split.cofactor ∉ rest.
-          have h_cofactor_notmem : split.cofactor ∉ rest := by
-            intro hmem
-            have hcof_dvd_rest : split.cofactor ∣ factorProduct rest :=
-              dvd_factorProduct_of_mem rest hmem
-            have hgg : split.cofactor * split.cofactor ∣ factorProduct (fac :: rest) := by
-              rw [h_factorProduct_xs]
-              exact squared_dvd_of_dvd_dvd h_cof_dvd hcof_dvd_rest
-            exact h_no_squared split.cofactor hgg h_cofactor_pos
-          -- Assemble Nodup.
-          have h_nodup' :
-              (split.factor :: split.cofactor :: rest).Nodup := by
-            apply List.nodup_cons.mpr
-            refine ⟨?_, ?_⟩
-            · intro hmem
-              rcases List.mem_cons.mp hmem with heq | hmem'
-              · exact h_factor_ne_cofactor heq
-              · exact h_factor_notmem hmem'
-            apply List.nodup_cons.mpr
-            exact ⟨h_cofactor_notmem, h_rest_nodup⟩
-          refine ⟨h_nodup', ?_⟩
-          intro g hg
-          rcases List.mem_cons.mp hg with heq | hmem
-          · subst heq; exact h_factor_pos
-          rcases List.mem_cons.mp hmem with heq | hmem'
-          · subst heq; exact h_cofactor_pos
-          exact h_rest_pos g hmem'
-      | none =>
-          rw [hsplit] at h_split
-          cases hrest : splitFirstFactor? witnesses rest with
-          | some rest' =>
-              rw [hrest] at h_split
-              simp only [Option.some.injEq] at h_split
-              subst h_split
-              -- IH on rest with appropriate hypotheses.
-              have h_no_squared_rest : ∀ g : FpPoly p,
-                  g * g ∣ factorProduct rest → ¬ (0 < g.degree?.getD 0) := by
-                intro g hgg
-                have htrans : g * g ∣ factorProduct (fac :: rest) := by
-                  rcases hgg with ⟨k, hk⟩
-                  refine ⟨fac * k, ?_⟩
-                  calc factorProduct (fac :: rest)
-                      = fac * factorProduct rest := factorProduct_cons fac rest
-                    _ = fac * (g * g * k) := by rw [hk]
-                    _ = (fac * (g * g)) * k :=
-                        (DensePoly.mul_assoc_poly fac (g * g) k).symm
-                    _ = ((g * g) * fac) * k :=
-                        congrArg (fun y => y * k) (DensePoly.mul_comm_poly fac (g * g))
-                    _ = (g * g) * (fac * k) :=
-                        DensePoly.mul_assoc_poly (g * g) fac k
-                exact h_no_squared g htrans
-              have ⟨h_rest'_nodup, h_rest'_pos⟩ :=
-                ih h_rest_nodup h_rest_pos h_no_squared_rest hrest
-              -- factorProduct rest' = factorProduct rest.
-              have h_rest_prod_eq : factorProduct rest' = factorProduct rest :=
-                factorProduct_splitFirstFactor?_eq witnesses hrest
-              -- Goal: (fac :: rest').Nodup ∧ ∀ g ∈ fac :: rest', pos degree.
-              -- Need fac ∉ rest'.
-              have h_fac_notmem' : fac ∉ rest' := by
-                intro hmem
-                have hfac_dvd_rest' : fac ∣ factorProduct rest' :=
-                  dvd_factorProduct_of_mem rest' hmem
-                rw [h_rest_prod_eq] at hfac_dvd_rest'
-                have hfac_dvd_self : fac ∣ fac := ⟨1, (DensePoly.mul_one_right_poly fac).symm⟩
-                have hgg : fac * fac ∣ factorProduct (fac :: rest) := by
-                  rw [factorProduct_cons]
-                  exact squared_dvd_of_dvd_dvd hfac_dvd_self hfac_dvd_rest'
-                exact h_no_squared fac hgg h_fac_pos
-              refine ⟨?_, ?_⟩
-              · exact List.nodup_cons.mpr ⟨h_fac_notmem', h_rest'_nodup⟩
-              intro g hg
-              rcases List.mem_cons.mp hg with heq | hmem
-              · subst heq; exact h_fac_pos
-              · exact h_rest'_pos g hmem
-          | none =>
-              rw [hrest] at h_split
-              exact absurd h_split (by simp)
-
-private theorem berlekampFactorLoop_invariant
-    [ZMod64.PrimeModulus p]
-    (witnesses : List (FpPoly p)) (fuel : Nat) (factors : List (FpPoly p))
-    (h_nodup : factors.Nodup)
-    (h_pos : ∀ g ∈ factors, 0 < g.degree?.getD 0)
-    (h_no_squared : ∀ g : FpPoly p,
-        g * g ∣ factorProduct factors → ¬ (0 < g.degree?.getD 0)) :
-    (berlekampFactorLoop witnesses fuel factors).Nodup ∧
-      (∀ g ∈ berlekampFactorLoop witnesses fuel factors, 0 < g.degree?.getD 0) := by
-  induction fuel generalizing factors with
-  | zero => exact ⟨h_nodup, h_pos⟩
+        g * g ∣ f → ¬ (0 < g.degree?.getD 0)) :
+    (fullySplit witnesses fuel f).Nodup ∧
+      (∀ g ∈ fullySplit witnesses fuel f, 0 < g.degree?.getD 0) := by
+  induction fuel generalizing f with
+  | zero =>
+      refine ⟨?_, ?_⟩
+      · show ([f] : List (FpPoly p)).Nodup
+        exact List.nodup_cons.mpr ⟨List.not_mem_nil, List.nodup_nil⟩
+      · intro g hg
+        have hgf := List.eq_of_mem_singleton hg
+        subst hgf
+        exact h_pos
   | succ fuel ih =>
-      rw [berlekampFactorLoop]
-      cases hsplit : splitFirstFactor? witnesses factors with
-      | some factors' =>
-          have ⟨h_nodup', h_pos'⟩ :=
-            splitFirstFactor?_invariant witnesses h_nodup h_pos h_no_squared hsplit
-          -- factorProduct factors' = factorProduct factors (existing lemma)
-          have h_prod_eq : factorProduct factors' = factorProduct factors :=
-            factorProduct_splitFirstFactor?_eq witnesses hsplit
-          have h_no_squared' : ∀ g : FpPoly p,
-              g * g ∣ factorProduct factors' → ¬ (0 < g.degree?.getD 0) := by
-            intro g hgg
-            rw [h_prod_eq] at hgg
-            exact h_no_squared g hgg
-          exact ih factors' h_nodup' h_pos' h_no_squared'
-      | none => exact ⟨h_nodup, h_pos⟩
+      rw [fullySplit]
+      cases hsplit : splitWithWitnesses? f witnesses with
+      | none =>
+          refine ⟨?_, ?_⟩
+          · show ([f] : List (FpPoly p)).Nodup
+            exact List.nodup_cons.mpr ⟨List.not_mem_nil, List.nodup_nil⟩
+          · intro g hg
+            rw [List.mem_singleton] at hg
+            subst hg
+            exact h_pos
+      | some split =>
+          have hf_ne : f ≠ 0 := ne_zero_of_pos_degree h_pos
+          have h_factor_pos := splitWithWitnesses?_factor_pos_degree f witnesses hsplit
+          have h_cofactor_pos :=
+            splitWithWitnesses?_cofactor_pos_degree f witnesses hf_ne hsplit
+          have h_prod := splitWithWitnesses?_product_spec f witnesses hsplit
+          have h_fac_dvd : split.factor ∣ f := ⟨split.cofactor, h_prod.symm⟩
+          have h_cof_dvd : split.cofactor ∣ f :=
+            ⟨split.factor, by rw [← h_prod]; exact FpPoly.mul_comm _ _⟩
+          have h_no_sq_fac : ∀ g : FpPoly p,
+              g * g ∣ split.factor → ¬ (0 < g.degree?.getD 0) :=
+            fun g hgg => h_no_squared g (dvd_trans_fp hgg h_fac_dvd)
+          have h_no_sq_cof : ∀ g : FpPoly p,
+              g * g ∣ split.cofactor → ¬ (0 < g.degree?.getD 0) :=
+            fun g hgg => h_no_squared g (dvd_trans_fp hgg h_cof_dvd)
+          have hA := ih split.factor h_factor_pos h_no_sq_fac
+          have hB := ih split.cofactor h_cofactor_pos h_no_sq_cof
+          have hA_prod : factorProduct (fullySplit witnesses fuel split.factor) = split.factor :=
+            factorProduct_fullySplit witnesses fuel split.factor
+          have hB_prod : factorProduct (fullySplit witnesses fuel split.cofactor) = split.cofactor :=
+            factorProduct_fullySplit witnesses fuel split.cofactor
+          refine ⟨?_, ?_⟩
+          · rw [List.nodup_append]
+            refine ⟨hA.1, hB.1, ?_⟩
+            intro a haA b hbB hab
+            subst hab
+            have ha_fac : a ∣ split.factor := by
+              rw [← hA_prod]; exact dvd_factorProduct_of_mem _ haA
+            have ha_cof : a ∣ split.cofactor := by
+              rw [← hB_prod]; exact dvd_factorProduct_of_mem _ hbB
+            have ha_sq : a * a ∣ f := by
+              rw [← h_prod]; exact squared_dvd_of_dvd_dvd ha_fac ha_cof
+            exact h_no_squared a ha_sq (hA.2 a haA)
+          · intro g hg
+            rw [List.mem_append] at hg
+            rcases hg with hgA | hgB
+            · exact hA.2 g hgA
+            · exact hB.2 g hgB
 
 /-- Abstract form of `berlekampFactor.factors.Nodup`: when no positive-degree
 polynomial squares to a divisor of `f`, the executable Berlekamp factor list
@@ -1401,30 +1262,11 @@ theorem berlekampFactor_factors_nodup_of_no_squared
     (h_no_squared : ∀ g : FpPoly p,
         g * g ∣ f → ¬ (0 < g.degree?.getD 0)) :
     (berlekampFactor f hmonic).factors.Nodup := by
-  -- Case split on whether f has positive degree.
-  have h_singleton_nodup : ([f] : List (FpPoly p)).Nodup :=
-    List.nodup_cons.mpr ⟨List.not_mem_nil, List.nodup_nil⟩
   by_cases h_f_pos : 0 < f.degree?.getD 0
-  · -- Positive-degree case: use the loop invariant.
-    have h_init_pos : ∀ g ∈ ([f] : List (FpPoly p)), 0 < g.degree?.getD 0 := by
-      intro g hg
-      rw [List.mem_singleton] at hg
-      subst hg
-      exact h_f_pos
-    have h_init_prod : factorProduct ([f] : List (FpPoly p)) = f := by
-      rw [factorProduct_cons, factorProduct_nil]
-      exact DensePoly.mul_one_right_poly f
-    have h_init_no_squared : ∀ g : FpPoly p,
-        g * g ∣ factorProduct ([f] : List (FpPoly p)) → ¬ (0 < g.degree?.getD 0) := by
-      intro g hgg
-      rw [h_init_prod] at hgg
-      exact h_no_squared g hgg
-    exact (berlekampFactorLoop_invariant ((fixedSpaceKernel f hmonic).toList)
-      (f.size + 1) [f] h_singleton_nodup h_init_pos h_init_no_squared).1
-  · -- Degree 0: any returned split must have positive-degree factor of strictly
-    -- smaller size, which is impossible when `f.size ≤ 1`.  The loop therefore
-    -- preserves the initial singleton `[f]`, which is trivially `Nodup`.
-    -- Step 1: derive `f.size ≤ 1` from the negation of pos degree.
+  · exact (fullySplit_nodup_pos ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f
+      h_f_pos h_no_squared).1
+  · -- Degree 0: `f` admits no kernel split, so the factor list is `[f]`,
+    -- which is trivially `Nodup`.
     have h_f_size_le_one : f.size ≤ 1 := by
       rcases Nat.lt_or_ge f.size 2 with hlt | hge
       · omega
@@ -1437,9 +1279,8 @@ theorem berlekampFactor_factors_nodup_of_no_squared
         rw [hdeg_eq]
         simp
         omega
-    -- Step 2: every kernel split is impossible.
-    have h_no_split : ∀ w ∈ ((fixedSpaceKernel f hmonic).toList),
-        kernelWitnessSplit? f w = none := by
+    have h_no_split : splitWithWitnesses? f ((fixedSpaceKernel f hmonic).toList) = none := by
+      rw [splitWithWitnesses?_none_iff_forall]
       intro w _hw
       cases hopt : kernelWitnessSplit? f w with
       | none => rfl
@@ -1447,50 +1288,11 @@ theorem berlekampFactor_factors_nodup_of_no_squared
           exfalso
           have hsize_lt := kernelWitnessSplit_size_lt f w r hopt
           have hfac_pos := kernelWitnessSplit_factor_pos_degree f w r hopt
-          -- r.factor.size ≥ 2 from pos degree.
-          have hfac_size_ge_two : 2 ≤ r.factor.size := by
-            rcases Nat.lt_or_ge r.factor.size 2 with hlt | hge
-            · exfalso
-              -- r.factor.size ≤ 1
-              cases hfac_size : r.factor.size with
-              | zero =>
-                  have hfac_eq_zero : r.factor = 0 := by
-                    apply DensePoly.ext_coeff
-                    intro i
-                    rw [DensePoly.coeff_zero]
-                    exact DensePoly.coeff_eq_zero_of_size_le r.factor (by omega)
-                  rw [hfac_eq_zero] at hfac_pos
-                  have hzero : (0 : FpPoly p).degree? = none := rfl
-                  rw [hzero] at hfac_pos
-                  simp at hfac_pos
-              | succ k =>
-                  have hk : k = 0 := by omega
-                  subst hk
-                  have hdeg : r.factor.degree? = some 0 := by
-                    unfold DensePoly.degree?
-                    simp [hfac_size]
-                  rw [hdeg] at hfac_pos
-                  simp at hfac_pos
-            · exact hge
+          have hfac_size_ge_two : 2 ≤ r.factor.size := size_ge_two_of_pos_degree hfac_pos
           omega
-    -- Step 3: the loop preserves [f].
-    have h_loop : ∀ fuel,
-        berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList) fuel [f] = [f] := by
-      intro fuel
-      induction fuel with
-      | zero => rfl
-      | succ fuel _ih_fuel =>
-          rw [berlekampFactorLoop]
-          have h_sff_none :
-              splitFirstFactor? ((fixedSpaceKernel f hmonic).toList) [f] = none := by
-            rw [splitFirstFactor?_singleton_none_iff,
-                splitWithWitnesses?_none_iff_forall]
-            exact h_no_split
-          rw [h_sff_none]
-    show (berlekampFactor f hmonic).factors.Nodup
-    change (berlekampFactorLoop _ (f.size + 1) [f]).Nodup
-    rw [h_loop]
-    exact h_singleton_nodup
+    show (fullySplit ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f).Nodup
+    rw [fullySplit_succ_eq_self_of_none _ _ _ h_no_split]
+    exact List.nodup_cons.mpr ⟨List.not_mem_nil, List.nodup_nil⟩
 
 /-- Under the no-squared invariant on `factorProduct`, distinct factors in a
 list of `FpPoly p` are pairwise coprime: no positive-degree polynomial
@@ -1560,114 +1362,65 @@ theorem berlekampFactor_factors_pairwise_coprime
   exact factorProduct_pairwise_no_common_pos_divisor
     (berlekampFactor f hmonic).factors h_no_squared'
 
-/-- Positivity-only variant of the single-step `splitFirstFactor?` invariant:
-positive degree of every factor is preserved by a successful split, without
-requiring the squareness-free hypothesis used by the joint Nodup/positivity
-invariant.  Positivity is preserved because each new factor produced by
-`splitWithWitnesses?` has strictly positive degree, and remaining unchanged
-entries already had positive degree by assumption. -/
-private theorem splitFirstFactor?_pos_invariant
+/-- Positivity-only variant of the `fullySplit` invariant: every emitted
+factor has positive degree, without requiring the squareness-free hypothesis.
+Each side of a split has positive degree, and a witness-irreducible leaf is the
+positive-degree input itself. -/
+private theorem fullySplit_pos
     [ZMod64.PrimeModulus p]
-    (witnesses : List (FpPoly p))
-    {xs xs' : List (FpPoly p)}
-    (h_pos : ∀ g ∈ xs, 0 < g.degree?.getD 0)
-    (h_split : splitFirstFactor? witnesses xs = some xs') :
-    ∀ g ∈ xs', 0 < g.degree?.getD 0 := by
-  induction xs generalizing xs' with
-  | nil => simp [splitFirstFactor?] at h_split
-  | cons fac rest ih =>
-      rw [splitFirstFactor?] at h_split
-      have h_fac_pos : 0 < fac.degree?.getD 0 := h_pos fac List.mem_cons_self
-      have h_fac_ne_zero : fac ≠ 0 := by
-        intro hzero
-        rw [hzero] at h_fac_pos
-        have : (0 : FpPoly p).degree? = none := rfl
-        rw [this] at h_fac_pos
-        simp at h_fac_pos
-      have h_rest_pos : ∀ g ∈ rest, 0 < g.degree?.getD 0 :=
-        fun g hg => h_pos g (List.mem_cons_of_mem fac hg)
-      cases hsplit : splitWithWitnesses? fac witnesses with
-      | some split =>
-          rw [hsplit] at h_split
-          simp only [Option.some.injEq] at h_split
-          subst h_split
-          have h_factor_pos := splitWithWitnesses?_factor_pos_degree fac witnesses hsplit
-          have h_cofactor_pos :=
-            splitWithWitnesses?_cofactor_pos_degree fac witnesses h_fac_ne_zero hsplit
-          intro g hg
-          rcases List.mem_cons.mp hg with heq | hmem
-          · subst heq; exact h_factor_pos
-          rcases List.mem_cons.mp hmem with heq | hmem'
-          · subst heq; exact h_cofactor_pos
-          exact h_rest_pos g hmem'
-      | none =>
-          rw [hsplit] at h_split
-          cases hrest : splitFirstFactor? witnesses rest with
-          | some rest' =>
-              rw [hrest] at h_split
-              simp only [Option.some.injEq] at h_split
-              subst h_split
-              have h_rest'_pos := ih h_rest_pos hrest
-              intro g hg
-              rcases List.mem_cons.mp hg with heq | hmem
-              · subst heq; exact h_fac_pos
-              · exact h_rest'_pos g hmem
-          | none =>
-              rw [hrest] at h_split
-              exact absurd h_split (by simp)
-
-/-- Positivity-only variant of `berlekampFactorLoop_invariant`: positive degree
-of every entry is preserved by the entire splitting loop, without requiring
-the squareness-free hypothesis. -/
-private theorem berlekampFactorLoop_pos_invariant
-    [ZMod64.PrimeModulus p]
-    (witnesses : List (FpPoly p)) (fuel : Nat) (factors : List (FpPoly p))
-    (h_pos : ∀ g ∈ factors, 0 < g.degree?.getD 0) :
-    ∀ g ∈ berlekampFactorLoop witnesses fuel factors, 0 < g.degree?.getD 0 := by
-  induction fuel generalizing factors with
-  | zero => exact h_pos
+    (witnesses : List (FpPoly p)) (fuel : Nat) (f : FpPoly p)
+    (h_pos : 0 < f.degree?.getD 0) :
+    ∀ g ∈ fullySplit witnesses fuel f, 0 < g.degree?.getD 0 := by
+  induction fuel generalizing f with
+  | zero =>
+      intro g hg
+      have hgf := List.eq_of_mem_singleton hg
+      subst hgf
+      exact h_pos
   | succ fuel ih =>
-      rw [berlekampFactorLoop]
-      cases hsplit : splitFirstFactor? witnesses factors with
-      | some factors' =>
-          have h_pos' := splitFirstFactor?_pos_invariant witnesses h_pos hsplit
-          exact ih factors' h_pos'
-      | none => exact h_pos
+      rw [fullySplit]
+      cases hsplit : splitWithWitnesses? f witnesses with
+      | none =>
+          intro g hg
+          rw [List.mem_singleton] at hg
+          subst hg
+          exact h_pos
+      | some split =>
+          have hf_ne : f ≠ 0 := ne_zero_of_pos_degree h_pos
+          have h_factor_pos := splitWithWitnesses?_factor_pos_degree f witnesses hsplit
+          have h_cofactor_pos :=
+            splitWithWitnesses?_cofactor_pos_degree f witnesses hf_ne hsplit
+          intro g hg
+          rw [List.mem_append] at hg
+          rcases hg with hgA | hgB
+          · exact ih split.factor h_factor_pos g hgA
+          · exact ih split.cofactor h_cofactor_pos g hgB
 
 /-- Abstract form of `berlekampFactor`'s output factor-degree positivity: if
 the input polynomial has positive degree, then every factor in the executable
 Berlekamp factor list has positive degree.  The squareness-free hypothesis
 needed by `berlekampFactor_factors_nodup_of_no_squared` is not needed here:
-positivity is preserved by every loop step regardless of square-freeness. -/
+positivity is preserved by every split regardless of square-freeness. -/
 theorem berlekampFactor_factors_pos_degree
     [Lean.Grind.Field (ZMod64 p)]
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (hf_pos : 0 < f.degree?.getD 0) :
-    ∀ g ∈ (berlekampFactor f hmonic).factors, 0 < g.degree?.getD 0 := by
-  have h_init_pos : ∀ g ∈ ([f] : List (FpPoly p)), 0 < g.degree?.getD 0 := by
-    intro g hg
-    rw [List.mem_singleton] at hg
-    subst hg
-    exact hf_pos
-  change ∀ g ∈ berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList)
-    (f.size + 1) [f], 0 < g.degree?.getD 0
-  exact berlekampFactorLoop_pos_invariant ((fixedSpaceKernel f hmonic).toList)
-    (f.size + 1) [f] h_init_pos
+    ∀ g ∈ (berlekampFactor f hmonic).factors, 0 < g.degree?.getD 0 :=
+  fullySplit_pos ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f hf_pos
 
 /-- For a monic input of size ≤ 1, the executable Berlekamp factor list is
-exactly the singleton `[f]`.  The Berlekamp loop only adds entries via
-nontrivial splits (which require positive-degree gcd outputs), and a polynomial
-of size ≤ 1 has no positive-degree divisors, so the loop preserves the initial
-singleton `[f]`. -/
+exactly the singleton `[f]`.  A polynomial of size ≤ 1 has no positive-degree
+divisors, so it admits no kernel-witness split and `fullySplit` emits it as a
+leaf. -/
 theorem berlekampFactor_factors_eq_singleton_of_size_le_one
     [Lean.Grind.Field (ZMod64 p)]
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (hsize : f.size ≤ 1) :
     (berlekampFactor f hmonic).factors = [f] := by
-  have h_no_split : ∀ w ∈ ((fixedSpaceKernel f hmonic).toList),
-      kernelWitnessSplit? f w = none := by
+  have h_no_split : splitWithWitnesses? f ((fixedSpaceKernel f hmonic).toList) = none := by
+    rw [splitWithWitnesses?_none_iff_forall]
     intro w _hw
     cases hopt : kernelWitnessSplit? f w with
     | none => rfl
@@ -1682,21 +1435,8 @@ theorem berlekampFactor_factors_eq_singleton_of_size_le_one
           simpa [DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hfac_size_zero
         rw [hfac_iszero] at hnt
         simp at hnt
-  have h_loop : ∀ fuel,
-      berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList) fuel [f] = [f] := by
-    intro fuel
-    induction fuel with
-    | zero => rfl
-    | succ fuel _ih_fuel =>
-        rw [berlekampFactorLoop]
-        have h_sff_none :
-            splitFirstFactor? ((fixedSpaceKernel f hmonic).toList) [f] = none := by
-          rw [splitFirstFactor?_singleton_none_iff,
-              splitWithWitnesses?_none_iff_forall]
-          exact h_no_split
-        rw [h_sff_none]
-  change berlekampFactorLoop _ _ [f] = [f]
-  exact h_loop _
+  show fullySplit ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f = [f]
+  exact fullySplit_succ_eq_self_of_none _ _ _ h_no_split
 
 /-- Every factor in the Berlekamp factor list is nonzero.  Splits the positive-
 degree case (where every factor has positive degree via
@@ -1741,142 +1481,66 @@ theorem berlekampFactor_factors_ne_zero
 /-! ### Every returned factor resists all kernel-witness splits
 
 The completeness theorem for monic divisors needs, for each returned factor,
-that no fixed-space kernel witness splits it.  This holds because the loop
-reaches a fixpoint: the `f.size + 1` fuel exceeds the number of possible splits,
-since each split adds a positive-degree factor while the product is preserved as
-`f`, capping the factor count at `deg f`. -/
+that no fixed-space kernel witness splits it.  This is structural for
+`fullySplit`: a factor is emitted only as a witness-irreducible leaf, where
+`splitWithWitnesses?` already reported `none`.  The `f.size + 1` fuel never
+runs out before the leaves, because `size` strictly decreases at every split. -/
 
-/-- A failed `splitFirstFactor?` search means no listed factor admits a witness
-split. -/
-private theorem splitWithWitnesses?_none_of_splitFirstFactor?_none
+/-- **Per-factor no-split.** With enough fuel (`f.size ≤ fuel`) every factor
+emitted by `fullySplit` admits no kernel-witness split — it was emitted exactly
+because `splitWithWitnesses?` returned `none` on it. -/
+private theorem fullySplit_unsplittable
+    [ZMod64.PrimeModulus p]
     (witnesses : List (FpPoly p)) :
-    ∀ {factors : List (FpPoly p)},
-      splitFirstFactor? witnesses factors = none →
-        ∀ g ∈ factors, splitWithWitnesses? g witnesses = none := by
-  intro factors
-  induction factors with
-  | nil => intro _ g hg; simp at hg
-  | cons fac rest ih =>
-      intro h g hg
-      rw [splitFirstFactor?] at h
-      cases hfac : splitWithWitnesses? fac witnesses with
-      | some split => rw [hfac] at h; simp at h
-      | none =>
-          rw [hfac] at h
-          cases hrest : splitFirstFactor? witnesses rest with
-          | some rest' => rw [hrest] at h; simp at h
-          | none =>
-              rcases List.mem_cons.mp hg with heq | hmem
-              · exact heq ▸ hfac
-              · exact ih hrest g hmem
-
-/-- The splitting loop either reaches a fixpoint (no factor splits) or consumes
-all its fuel, growing the list by exactly `fuel` entries. -/
-private theorem berlekampFactorLoop_terminates_or_full
-    (witnesses : List (FpPoly p)) :
-    ∀ (fuel : Nat) (factors : List (FpPoly p)),
-      splitFirstFactor? witnesses (berlekampFactorLoop witnesses fuel factors) = none ∨
-        (berlekampFactorLoop witnesses fuel factors).length = factors.length + fuel := by
+    ∀ (fuel : Nat) (f : FpPoly p), f ≠ 0 → f.size ≤ fuel →
+      ∀ g ∈ fullySplit witnesses fuel f, splitWithWitnesses? g witnesses = none := by
   intro fuel
   induction fuel with
-  | zero => intro factors; right; simp [berlekampFactorLoop]
+  | zero =>
+      intro f hne hle
+      exact absurd hle (by have := FpPoly.size_pos_of_ne_zero hne; omega)
   | succ fuel ih =>
-      intro factors
-      rw [berlekampFactorLoop]
-      cases hsplit : splitFirstFactor? witnesses factors with
-      | none => left; exact hsplit
-      | some factors' =>
-          rcases ih factors' with hnone | hlen
-          · left; exact hnone
-          · right
-            have hlen' := splitFirstFactor?_length_succ_of_some witnesses hsplit
-            rw [hlen, hlen']; omega
-
-/-- A product of positive-degree factors has degree at least the number of
-factors: each contributes at least one to the total degree. -/
-private theorem factorProduct_length_le_degree
-    [ZMod64.PrimeModulus p]
-    (factors : List (FpPoly p))
-    (hpos : ∀ g ∈ factors, 0 < g.degree?.getD 0)
-    (hne : factorProduct factors ≠ 0) :
-    factors.length ≤ (factorProduct factors).degree?.getD 0 := by
-  induction factors with
-  | nil => simp
-  | cons fac rest ih =>
-      rw [factorProduct_cons] at hne ⊢
-      have hfac_pos := hpos fac (by simp)
-      have hfac_ne : fac ≠ 0 := by
-        intro h; rw [h] at hfac_pos; simp at hfac_pos
-      have hrest_ne : factorProduct rest ≠ 0 := by
-        intro h; apply hne; rw [h]; exact FpPoly.mul_zero fac
-      have hrest_pos : ∀ g ∈ rest, 0 < g.degree?.getD 0 :=
-        fun g hg => hpos g (List.mem_cons_of_mem _ hg)
-      have hdeg := FpPoly.degree?_mul_eq_add_degree? fac (factorProduct rest) hfac_ne hrest_ne
-      have hih := ih hrest_pos hrest_ne
-      rw [hdeg]
-      have hlen : (fac :: rest).length = rest.length + 1 := by simp
-      omega
+      intro f hne hle g hg
+      rw [fullySplit] at hg
+      cases hsplit : splitWithWitnesses? f witnesses with
+      | none =>
+          rw [hsplit] at hg
+          rw [List.mem_singleton] at hg
+          subst hg
+          exact hsplit
+      | some split =>
+          rw [hsplit] at hg
+          rw [List.mem_append] at hg
+          have hfac_pos := splitWithWitnesses?_factor_pos_degree f witnesses hsplit
+          have hcof_pos := splitWithWitnesses?_cofactor_pos_degree f witnesses hne hsplit
+          have hfac_ne : split.factor ≠ 0 := ne_zero_of_pos_degree hfac_pos
+          have hcof_ne : split.cofactor ≠ 0 := ne_zero_of_pos_degree hcof_pos
+          have hfac_size_lt := splitWithWitnesses?_size_lt f witnesses hsplit
+          have hcof_size_lt := splitWithWitnesses?_cofactor_size_lt f witnesses hne hsplit
+          rcases hg with hgA | hgB
+          · exact ih split.factor hfac_ne (by omega) g hgA
+          · exact ih split.cofactor hcof_ne (by omega) g hgB
 
 /-- **Per-factor no-split.** Every factor returned by the executable Berlekamp
 factorization of a monic input resists every fixed-space kernel-witness split.
-The loop's `f.size + 1` fuel always suffices to reach a fixpoint. -/
+The `f.size + 1` fuel always suffices to reach the witness-irreducible leaves. -/
 theorem kernelWitnessSplit?_none_of_berlekampFactor_factors
     [Lean.Grind.Field (ZMod64 p)] [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     ∀ g ∈ (berlekampFactor f hmonic).factors,
       ∀ w ∈ (fixedSpaceKernel f hmonic).toList, kernelWitnessSplit? g w = none := by
-  have hloop_eq : (berlekampFactor f hmonic).factors
-      = berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList) (f.size + 1) [f] := rfl
   have hf_ne : f ≠ 0 := by
     intro h
     have hlead_zero : DensePoly.leadingCoeff (0 : FpPoly p) = 0 := rfl
     unfold DensePoly.Monic at hmonic
     rw [h, hlead_zero] at hmonic
     exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hmonic.symm
-  have hfix : splitFirstFactor? ((fixedSpaceKernel f hmonic).toList)
-      (berlekampFactor f hmonic).factors = none := by
-    rw [hloop_eq]
-    rcases berlekampFactorLoop_terminates_or_full
-        ((fixedSpaceKernel f hmonic).toList) (f.size + 1) [f] with hnone | hfull
-    · exact hnone
-    · exfalso
-      simp only [List.length_cons, List.length_nil] at hfull
-      by_cases hf_pos : 0 < f.degree?.getD 0
-      · have hpos_all : ∀ g ∈ berlekampFactorLoop ((fixedSpaceKernel f hmonic).toList)
-            (f.size + 1) [f], 0 < g.degree?.getD 0 := by
-          intro g hg
-          rw [← hloop_eq] at hg
-          exact berlekampFactor_factors_pos_degree f hmonic hf_pos g hg
-        have hprod : factorProduct (berlekampFactorLoop
-            ((fixedSpaceKernel f hmonic).toList) (f.size + 1) [f]) = f := by
-          rw [← hloop_eq]; exact factorProduct_berlekampFactor f hmonic
-        have hprod_ne : factorProduct (berlekampFactorLoop
-            ((fixedSpaceKernel f hmonic).toList) (f.size + 1) [f]) ≠ 0 := by
-          rw [hprod]; exact hf_ne
-        have hbound := factorProduct_length_le_degree _ hpos_all hprod_ne
-        rw [hprod] at hbound
-        have hdeg_le : f.degree?.getD 0 ≤ f.size := by
-          unfold DensePoly.degree?
-          split <;> simp
-        omega
-      · have hf_size_le : f.size ≤ 1 := by
-          rcases Nat.lt_or_ge f.size 2 with hlt | hge
-          · omega
-          · exfalso; apply hf_pos
-            have hsize_ne : f.size ≠ 0 := by omega
-            have hdeg_eq : f.degree? = some (f.size - 1) := by
-              unfold DensePoly.degree?; simp [hsize_ne]
-            rw [hdeg_eq]; simp; omega
-        have hsingle :=
-          berlekampFactor_factors_eq_singleton_of_size_le_one f hmonic hf_size_le
-        rw [hloop_eq] at hsingle
-        rw [hsingle] at hfull
-        simp at hfull
   intro g hg w hw
-  have hsww := splitWithWitnesses?_none_of_splitFirstFactor?_none
-    ((fixedSpaceKernel f hmonic).toList) hfix g hg
-  rw [splitWithWitnesses?_none_iff_forall] at hsww
-  exact hsww w hw
+  have hg_none : splitWithWitnesses? g ((fixedSpaceKernel f hmonic).toList) = none :=
+    fullySplit_unsplittable ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f hf_ne
+      (by omega) g hg
+  rw [splitWithWitnesses?_none_iff_forall] at hg_none
+  exact hg_none w hw
 
 /-- Every factor returned by the executable Berlekamp factorization divides the
 input.  Immediate from `factorProduct_berlekampFactor`. -/
