@@ -96,11 +96,11 @@ The hex implementation is deterministic Berlekamp (null space + linear
 constant sweep), which is correct and proof-friendly but pays the
 `Θ(r²·p)`-gcd tax. The matrix/null-space substrate is already fast.
 
-## Validated fix (deliverable 3, designed + validated; landed via #8269)
+## Validated fix (deliverable 3, designed + validated + landed)
 
-The cheapest value-preserving win, prototyped and measured: in
-`kernelWitnessSplit?`, reduce the witness modulo the factor once and skip
-the entire constant sweep when the remainder is constant:
+The cheapest value-preserving win: in `kernelWitnessSplit?`, skip the entire
+constant sweep when the witness is constant modulo the factor (`(witness %
+f).size ≤ 1`):
 
 ```
 def kernelWitnessSplit? (f witness : FpPoly p) : Option (SplitResult p) :=
@@ -122,36 +122,47 @@ whole split loop, same kernel basis):
 with **0 factor-multiset mismatches over 32 distinct inputs** (product of
 per-factor checksums identical to the library `berlekampFactor`).
 
-### Proof obligation for landing the fix
+### Soundness proof (landed)
 
 The guard is referenced by load-bearing lemmas (`RabinSoundness.lean`
 consumes `kernelWitnessSplit?_some_of_nontrivial_splitFactorAt` and
-`kernelWitnessSplit?_none_scale`), so it needs a completeness lemma:
+`kernelWitnessSplit?_none_scale`), so it is justified by the completeness
+lemma `isNontrivialSplitFactor_false_of_mod_size_le_one`:
 
 > `(witness % f).size ≤ 1 → ∀ c, isNontrivialSplitFactor f
 > (splitFactorAt f witness c) = false`
 
-A clean divisibility proof (avoids unfolding `gcdAux`): let
+The divisibility proof (avoids unfolding `gcdAux`): let
 `g = gcd f (witness − C c)`, `r = witness % f` with `r.size ≤ 1`.
 
 - `g ∣ f` (`gcd_dvd_left`) and `g ∣ (witness − C c)` (`gcd_dvd_right`).
-- `f ∣ (witness − r)` (`div_mul_add_mod` + `dvd_mul_left_poly`), so
-  `g ∣ (witness − r)` (dvd-trans).
-- `g ∣ ((witness − C c) − (witness − r)) = r − C c` (`dvd_sub_poly`),
-  where `(r − C c).size ≤ 1`.
-- If `r − C c ≠ 0`: `g ∣` a nonzero constant ⟹ `g.size ≤ 1` ⟹ not
-  nontrivial (degree 0 or zero).
+- `g ∣ ((witness − C c) − (witness / f) * f) = r − C c` (`dvd_sub_poly` +
+  `dvd_mul_left_poly`), where `(r − C c).size ≤ 1`.
+- If `r − C c ≠ 0`: `g ∣` a nonzero constant ⟹ via
+  `degree?_mul_eq_add_degree?`, `g.degree? = some 0` ⟹ not nontrivial.
 - If `r − C c = 0`: `f ∣ (witness − C c)`, so `f ∣ g` (`dvd_gcd`) and
-  `g ∣ f`; mutual dvd ⟹ `g.size = f.size` ⟹ not (`g.size < f.size`).
+  `g ∣ f`; mutual dvd ⟹ `g.size = f.size` (`size_eq_of_dvd_dvd`) ⟹ not
+  (`g.size < f.size`).
 
-Missing helper lemmas to build first (the FpPoly degree-additivity
-`HexPolyFp.Basic.size_mul_eq_add_sub_one` and
-`degree?_mul_eq_add_degree?` exist; these follow from them):
+The guard then makes `kernelWitnessSplit?` extensionally equal to the
+unguarded `kernelWitnessSplitAux` sweep
+(`kernelWitnessSplitAux_none_of_mod_size_le_one`), so every existing
+soundness lemma about `kernelWitnessSplit?` carries over unchanged.
 
-- `dvd → size_le` (`g ∣ h → h ≠ 0 → g.size ≤ h.size`);
-- mutual-dvd ⟹ size equal;
-- dvd-transitivity for `FpPoly` (inline via the `Dvd` unfolding);
-- a size bound for subtraction of two `size ≤ 1` polynomials.
+### Measured speedup (landed)
+
+The `runFactorFastChecksum` split-family ladder `(X−1)…(X−n)`, warm cache,
+Darwin arm64 (this work vs the same binary with the guard reverted):
+
+| degree | no guard | with guard | speedup |
+|---|---|---|---|
+| 12 | 112.7 ms | 18.3 ms | 6.2× |
+| 16 | 416.9 ms | 56.9 ms | 7.3× |
+| 20 | 1.355 s | 125.6 ms | 10.8× |
+| 24 | 3.294 s | 224.4 ms | **14.7×** |
+
+All 18 `hexbz_bench verify` checksums are bit-identical with and without
+the guard.
 
 The four existing `kernelWitnessSplit?` lemmas (`_product_spec`,
 `_nontrivial`, `_size_lt`, `_none_scale`) need the trivial `if`-split
