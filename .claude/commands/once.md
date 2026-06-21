@@ -21,18 +21,27 @@ immediately with `ABORT: no issue number provided`.
    prescribes.
 2. **Read the matching worker skill** so you know the standard
    lifecycle (`agent-worker-flow`, `pr-repair-flow`, etc.).
-3. **Claim the issue explicitly** with
+3. **Triage-type issues (`replan`, `plan`) do NOT claim.** These
+   worker types edit issues directly and produce no PR;
+   `coordination claim` is built to *reject* a `replan` issue
+   ("needs replan. You MUST NOT work on this issue"). For these
+   types, skip steps 4–5 entirely: follow the matching skill's
+   direct-edit workflow on `#<N>` (read the issue + closing comments,
+   apply exactly one disposition, edit/close the issue), then go to
+   step 6. Do **NOT** treat the claim guard's rejection as an ABORT.
+4. **Claimable types (`feature`, `review`, `summarize`, `meditate`,
+   `repair`): claim the issue explicitly** with
    `coordination claim <N> --label <type>`. Do **NOT** use
    `coordination list-unclaimed` — you are not picking from the
    queue.
-4. **If the claim fails** (issue already claimed by another agent,
+5. **If the claim fails** (issue already claimed by another agent,
    issue closed, issue not labelled with the worker type, etc.),
    exit immediately. Print `ABORT: claim failed for #<N>` and do
    nothing else. No worktree commits, no branches, no PR.
-5. Once the claim succeeds, **execute the issue end-to-end**
+6. Once the claim succeeds, **execute the issue end-to-end**
    following the standard worker flow for the matched type
    (implementation, build, tests, commit, push, open PR).
-6. Run `/reflect` before finishing.
+7. Run `/reflect` before finishing.
 
 ## Hard constraints
 
