@@ -157,6 +157,63 @@ private theorem choose_succ_mul_eq (n k : Nat) :
       | succ k =>
           grind [choose]
 
+/-- Within-row multiplicative recurrence `(k+1) · choose n (k+1) = (n - k) · choose n k`.
+Reading it left to right computes one Pascal row in a single linear pass, which is
+what `chooseFast` exploits. -/
+theorem succ_mul_choose_succ (n k : Nat) :
+    (k + 1) * choose n (k + 1) = (n - k) * choose n k := by
+  have hcross := choose_succ_mul_eq n k
+  have hpascal : choose (n + 1) (k + 1) = choose n k + choose n (k + 1) := rfl
+  rw [hpascal, Nat.mul_add] at hcross
+  rcases Nat.lt_or_ge n k with hlt | hge
+  · rw [choose_eq_zero_of_lt hlt, choose_eq_zero_of_lt (Nat.lt_succ_of_lt hlt),
+      Nat.mul_zero, Nat.mul_zero]
+  · have hsplit : (n + 1) * choose n k
+        = (n - k) * choose n k + (k + 1) * choose n k := by
+      rw [← Nat.add_mul]
+      congr 1
+      omega
+    rw [hsplit] at hcross
+    omega
+
+/--
+Linear-time binomial coefficient.
+
+`chooseFast n k` walks a single Pascal row from `choose n 0 = 1` using the
+multiplicative recurrence `succ_mul_choose_succ`, so it costs `O(k)` natural-number
+operations.  The proof-facing `choose` is the exponential Pascal double recursion
+(`choose n k` spawns `Θ(choose n k)` calls); `chooseFast` is proven equal to it and
+registered `@[csimp]`, so every compiled caller of `choose` runs this instead.
+-/
+def chooseFast (n k : Nat) : Nat :=
+  if n < k then 0
+  else (List.range k).foldl (fun acc j => acc * (n - j) / (j + 1)) 1
+
+private theorem chooseFast_foldl (n : Nat) :
+    ∀ k, k ≤ n →
+      (List.range k).foldl (fun acc j => acc * (n - j) / (j + 1)) 1 = choose n k := by
+  intro k
+  induction k with
+  | zero => intro _; simp
+  | succ k ih =>
+      intro hk
+      rw [List.range_succ, List.foldl_append, ih (Nat.le_of_succ_le hk)]
+      simp only [List.foldl_cons, List.foldl_nil]
+      have hid : choose n k * (n - k) = (k + 1) * choose n (k + 1) := by
+        rw [Nat.mul_comm, succ_mul_choose_succ]
+      rw [hid, Nat.mul_div_cancel_left _ (Nat.succ_pos k)]
+
+/-- `chooseFast` agrees with the proof-facing Pascal `choose`. -/
+theorem chooseFast_eq (n k : Nat) : chooseFast n k = choose n k := by
+  unfold chooseFast
+  by_cases h : n < k
+  · rw [if_pos h]; exact (choose_eq_zero_of_lt h).symm
+  · rw [if_neg h]; exact chooseFast_foldl n k (Nat.le_of_not_lt h)
+
+@[csimp] theorem choose_eq_chooseFast : @choose = @chooseFast := by
+  funext n k
+  exact (chooseFast_eq n k).symm
+
 /-- Euclid-step bridge turning the multiplicative Pascal identity into `p ∣ choose p k`. -/
 private theorem choose_prime_dvd_from_mul_identity {p k : Nat} (hp : Prime p)
     (hk : 0 < k) (hk' : k < p) : p ∣ choose p k := by
