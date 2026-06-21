@@ -836,7 +836,23 @@ find a `theorem … : <StructureName> …` whose body builds it (or a `{ field :
 literal), not just `(h : <StructureName>)` binders and `…_fields h` projections.
 If every occurrence is a hypothesis or destructor, the substrate is unproduced —
 diagnose on the issue (per the CLAUDE.md "Directives are hypotheses" rule) and
-`coordination skip` rather than attempting the integration. Substrate producers
+`coordination skip` rather than attempting the integration. **But before
+concluding a transport/producer is genuinely missing, grep producer proof
+*bodies*, not just signatures: a needed construction is frequently performed
+*inline inside a larger producer's proof* and can be lifted to a top-level
+lemma, even when no theorem states it.** #8068 was nearly skipped a 5th time on
+"no original→monic `RepresentsIntegerFactorAtLift` inversion exists"
+(`representsIntegerFactorAtLift_of_monicCorrespondent` only goes monic→original);
+that conclusion was *wrong* — the partition producer
+`initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData` already
+reconstructs the monic correspondent from the *factor itself* (a local `descent`
+`have`, `IntReductionMod.lean`), via `exists_monicCorrespondent_of_dvd` +
+`representsModP_correspondent` + `toMonicLiftData_represents_lifted_monicCorrespondent`,
+never the represents predicate's hidden witness. Extracting that `have` as
+`monicCorrespondentDescent_of_representsAtLift` unblocked the whole separation-free
+route. A fan-out `Explore` agent that only checks the named-lemma path will
+report a confident, wrong "NO" here — read the construction sites yourself.
+Substrate producers
 still missing as of this writing: `HenselLiftDescentHypotheses` and the
 `toMonicLiftData` modP→lift transport. `InitialLiftedFactorSubsetPartitionEvidence`
 now *has* one — `initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData`
