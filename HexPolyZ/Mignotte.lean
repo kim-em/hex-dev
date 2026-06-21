@@ -710,6 +710,49 @@ theorem coeffL2NormBound_le_defaultFactorCoeffBound (f : ZPoly) :
     (mignotteCoeffBound_le_defaultFactorCoeffBound f
       (k := 0) (j := 0) (Nat.zero_le _) (Nat.zero_le _))
 
+/-- A maximizing natural-number `foldl` is bounded above by any value `B` that
+dominates the seed and every `g x` at a member index. -/
+private theorem foldl_max_le_of_forall {α : Type} (g : α → Nat) (B : Nat) :
+    ∀ (xs : List α) (init : Nat), init ≤ B → (∀ x ∈ xs, g x ≤ B) →
+      xs.foldl (fun acc x => max acc (g x)) init ≤ B := by
+  intro xs
+  induction xs with
+  | nil => intro init hinit _; exact hinit
+  | cons x xs ih =>
+      intro init hinit hall
+      simp only [List.foldl_cons]
+      exact ih (max init (g x))
+        (Nat.max_le.mpr ⟨hinit, hall x (List.mem_cons.mpr (Or.inl rfl))⟩)
+        (fun y hy => hall y (List.mem_cons.mpr (Or.inr hy)))
+
+/-- Upper-bound companion of `mignotteCoeffBound_le_defaultFactorCoeffBound`: if
+every executable Mignotte coefficient bound within the ambient degree range is at
+most `B`, then so is the default uniform factor coefficient bound. -/
+theorem defaultFactorCoeffBound_le (f : ZPoly) {B : Nat}
+    (h : ∀ k, k ≤ f.degree?.getD 0 → ∀ j, j ≤ k → mignotteCoeffBound f k j ≤ B) :
+    defaultFactorCoeffBound f ≤ B := by
+  unfold defaultFactorCoeffBound
+  have outer : ∀ (ks : List Nat) (init : Nat), init ≤ B →
+      (∀ k ∈ ks, ∀ j, j ≤ k → mignotteCoeffBound f k j ≤ B) →
+      ks.foldl
+        (fun acc k =>
+          (List.range (k + 1)).foldl
+            (fun acc j => max acc (mignotteCoeffBound f k j)) acc)
+        init ≤ B := by
+    intro ks
+    induction ks with
+    | nil => intro init hinit _; exact hinit
+    | cons k ks ih =>
+        intro init hinit hall
+        simp only [List.foldl_cons]
+        refine ih _ ?_ (fun k' hk' j hj => hall k' (List.mem_cons.mpr (Or.inr hk')) j hj)
+        exact foldl_max_le_of_forall (fun j => mignotteCoeffBound f k j) B
+          (List.range (k + 1)) init hinit
+          (fun j hj => hall k (List.mem_cons.mpr (Or.inl rfl)) j
+            (Nat.lt_succ_iff.mp (List.mem_range.mp hj)))
+  exact outer (List.range (f.degree?.getD 0 + 1)) 0 (Nat.zero_le _)
+    (fun k hk j hj => h k (Nat.lt_succ_iff.mp (List.mem_range.mp hk)) j hj)
+
 /-- An additive natural-number `foldl` only increases (or preserves) its
 accumulator. -/
 private theorem le_foldl_add_self {α : Type} (xs : List α) (g : α → Nat)

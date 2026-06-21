@@ -1990,6 +1990,106 @@ theorem two_mul_bhksCoeffBound_le_cldCoeffFloor (core : Hex.ZPoly) (j : Nat) :
   simp only [Hex.cldCoeffFloor]
   omega
 
+/-- One Pascal step bounds a central binomial of row `m + 1` by twice the central
+binomial of row `m`: `C(m+1, ⌊(m+1)/2⌋) ≤ 2 · C(m, ⌊m/2⌋)`.  The two Pascal
+summands of the row-`m+1` central entry are each at most the row-`m` middle
+binomial. -/
+private theorem choose_central_succ_le (m : Nat) :
+    Nat.choose (m + 1) ((m + 1) / 2) ≤ 2 * Nat.choose m (m / 2) := by
+  rcases Nat.eq_zero_or_pos ((m + 1) / 2) with hr | hr
+  · rw [hr, Nat.choose_zero_right]
+    have hpos : 0 < Nat.choose m (m / 2) := Nat.choose_pos (Nat.div_le_self m 2)
+    omega
+  · obtain ⟨s, hs⟩ := Nat.exists_eq_succ_of_ne_zero hr.ne'
+    rw [hs, Nat.choose_succ_succ' m s]
+    have h1 : Nat.choose m s ≤ Nat.choose m (m / 2) := Nat.choose_le_middle s m
+    have h2 : Nat.choose m (s + 1) ≤ Nat.choose m (m / 2) := Nat.choose_le_middle (s + 1) m
+    omega
+
+/-- Central-binomial descent across the `n`/`n-1` row boundary: for `n ≥ 1`,
+`C(n, ⌊n/2⌋) ≤ 2 · C(n-1, ⌊(n-1)/2⌋)`.  This is `choose_central_succ_le` after
+`n = (n-1) + 1`. -/
+private theorem choose_central_pred (n : Nat) (hn : 1 ≤ n) :
+    Nat.choose n (n / 2) ≤ 2 * Nat.choose (n - 1) ((n - 1) / 2) := by
+  obtain ⟨m, rfl⟩ : ∃ m, n = m + 1 := Nat.exists_eq_succ_of_ne_zero (by omega)
+  simpa using choose_central_succ_le m
+
+/-- Every binomial coefficient `C(k, j)` with `k ≤ n` is bounded by
+`2 · C(n-1, ⌊(n-1)/2⌋) · n` (for `n ≥ 1`).  Chain: monotonicity in the upper
+index (`k ≤ n`), the row-`n` middle bound, the central-binomial descent across
+the row boundary, then the slack factor `n`.  (No `j ≤ k` premise is needed: the
+row-middle bound caps every column.) -/
+private theorem choose_le_two_mul_central_pred_mul (n k j : Nat)
+    (hn : 1 ≤ n) (hk : k ≤ n) :
+    Nat.choose k j ≤ 2 * Nat.choose (n - 1) ((n - 1) / 2) * n :=
+  calc Nat.choose k j
+        ≤ Nat.choose n j := Nat.choose_le_choose j hk
+    _ ≤ Nat.choose n (n / 2) := Nat.choose_le_middle j n
+    _ ≤ 2 * Nat.choose (n - 1) ((n - 1) / 2) := choose_central_pred n hn
+    _ ≤ 2 * Nat.choose (n - 1) ((n - 1) / 2) * n := Nat.le_mul_of_pos_right _ hn
+
+/-- Abstract per-term core of `mignotteCoeffBound_toMonic_le_cldCoeffFloor`: any
+polynomial `M` of positive degree whose per-coordinate doubled BHKS bounds are
+dominated by `cldCoeffFloor core` also dominates each in-range executable Mignotte
+coefficient bound.  Bounding `binom k j` by `2 · C(n-1, ⌊(n-1)/2⌋) · n` and
+recognising the right side as `2 · bhksCoeffBound` at the central index closes the
+gap. -/
+private theorem mignotteCoeffBound_le_floor_aux (M core : Hex.ZPoly)
+    (hMfloor : ∀ j, 2 * Hex.bhksCoeffBound M j ≤ Hex.cldCoeffFloor core)
+    (hn : 1 ≤ M.degree?.getD 0) {k j : Nat}
+    (hk : k ≤ M.degree?.getD 0) :
+    Hex.ZPoly.mignotteCoeffBound M k j ≤ Hex.cldCoeffFloor core := by
+  rw [Hex.ZPoly.mignotteCoeffBound_eq]
+  have hbinom : Hex.ZPoly.binom k j ≤
+      2 * Nat.choose (M.degree?.getD 0 - 1) ((M.degree?.getD 0 - 1) / 2) *
+        M.degree?.getD 0 := by
+    rw [HexPolyZMathlib.binom_eq_choose]
+    exact choose_le_two_mul_central_pred_mul (M.degree?.getD 0) k j hn hk
+  have hbhks : Hex.bhksCoeffBound M ((M.degree?.getD 0 - 1) / 2)
+      = Nat.choose (M.degree?.getD 0 - 1) ((M.degree?.getD 0 - 1) / 2) *
+          M.degree?.getD 0 * Hex.ZPoly.coeffL2NormBound M := by
+    simp only [Hex.bhksCoeffBound, hex_choose_eq]
+  calc Hex.ZPoly.binom k j * Hex.ZPoly.coeffL2NormBound M
+        ≤ (2 * Nat.choose (M.degree?.getD 0 - 1) ((M.degree?.getD 0 - 1) / 2) *
+            M.degree?.getD 0) * Hex.ZPoly.coeffL2NormBound M :=
+          Nat.mul_le_mul_right _ hbinom
+    _ = 2 * (Nat.choose (M.degree?.getD 0 - 1) ((M.degree?.getD 0 - 1) / 2) *
+            M.degree?.getD 0 * Hex.ZPoly.coeffL2NormBound M) := by ring
+    _ = 2 * Hex.bhksCoeffBound M ((M.degree?.getD 0 - 1) / 2) := by rw [hbhks]
+    _ ≤ Hex.cldCoeffFloor core := hMfloor _
+
+/-- Each in-range executable Mignotte coefficient bound of the monic transform
+`(toMonic core).monic` is dominated by the CLD column-adequacy floor. -/
+theorem mignotteCoeffBound_toMonic_le_cldCoeffFloor (core : Hex.ZPoly) {k j : Nat}
+    (hn : 1 ≤ (Hex.ZPoly.toMonic core).monic.degree?.getD 0)
+    (hk : k ≤ (Hex.ZPoly.toMonic core).monic.degree?.getD 0) :
+    Hex.ZPoly.mignotteCoeffBound (Hex.ZPoly.toMonic core).monic k j ≤
+      Hex.cldCoeffFloor core :=
+  mignotteCoeffBound_le_floor_aux (Hex.ZPoly.toMonic core).monic core
+    (two_mul_bhksCoeffBound_le_cldCoeffFloor core) hn hk
+
+/-- **(★) The Mignotte recovery bound is certified by the CLD column-adequacy
+floor.**  For any `core` of positive degree,
+`defaultFactorCoeffBound (toMonic core).monic ≤ cldCoeffFloor core`.
+
+This is the gating lemma that lets the fast-core multi-factor producer instantiate
+the keystone's Mignotte precision hypothesis at the loop's *success* precision
+`k'` from the floor gate `cldCoeffFloor core ≤ k'` alone: the floor certifies not
+only CLD column adequacy (`hsep`/`hthr`) but the full Mignotte recovery precision.
+
+The positive-degree premise is essential.  At degree `0` the monic transform is a
+nonzero constant with `cldCoeffFloor core = 0` (the `bhksCoeffBound` degree factor
+`n` vanishes) while `defaultFactorCoeffBound` is the positive coefficient norm, so
+the inequality fails; the multi-factor core arm always supplies positive degree. -/
+theorem defaultFactorCoeffBound_toMonic_le_cldCoeffFloor (core : Hex.ZPoly)
+    (hpos : 0 < core.degree?.getD 0) :
+    Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic ≤
+      Hex.cldCoeffFloor core := by
+  have hn : 1 ≤ (Hex.ZPoly.toMonic core).monic.degree?.getD 0 := by
+    rw [Hex.ZPoly.toMonic_monic_degree_getD]; omega
+  exact Hex.ZPoly.defaultFactorCoeffBound_le _
+    (fun k hk _j _hj => mignotteCoeffBound_toMonic_le_cldCoeffFloor core hn hk)
+
 /-- The BHKS separation `hsep` follows from the CLD-adequacy gate
 `cldCoeffFloor core ≤ k`: at the lift precision `precisionForCoeffBound k p`
 the modulus `p ^ a` clears `2 · bhksCoeffBound (toMonic core).monic j` for every
