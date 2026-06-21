@@ -404,6 +404,41 @@ cannot be named from the Mathlib layer to state the dispatcher's value equation
 `factorFastFactorsWithBound f B = some (reassemblePolynomialFactors …)`, and
 there are two ways around that obstacle.
 
+### The separation-free recovered-lift keystone is on the *monic* basis, but the executable recovers on the *core* basis — `hsize` does not bridge them
+
+When assembling the multi-factor core arm via
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift` (the
+807 endpoint) with the separation-free keystone
+`recoveredLiftOfLiftedTrueSupport`, there is a basis trap. The keystone returns
+`RecoveredLift (bhksLatticeBasis (toMonic core).monic …) U` — the **monic**
+basis — and `RecoveredLift` is *indexed by* its basis (carries a `basis_eq`
+field), so feeding it to the 807 endpoint **forces `L` to the monic basis**.
+Then the endpoint's `hsize` obligation is over the **monic** projected-row
+equivalence-class count
+`(bhksEquivalenceClassIndicators (bhksProjectedRows (monic basis) _)).size`.
+But the executable `factorFastCoreWithBound core …` runs
+`bhksRecoverClassified core (toMonicLiftData core k primeData)`, which builds
+`bhksLatticeBasis core …` (the **core** basis, first arg `core`, not its monic
+transform — `HexBerlekampZassenhaus/Basic.lean` `bhksRecoverClassified`), so
+`factorFastCoreWithBound_some_size_eq_indicators` only certifies the **core**
+count. The two are not defeq (different `cldCoeffs`/`cutThresholds`) and there
+is **no `toMonic`-invariance lemma** equating the class counts. Closing `hsize`
+would need `core-classes = monic-classes`, reachable only via monic-basis
+**reverse separation** (the forbidden #6779/#2564 route). A core-basis keystone
+would dodge it, but `recoveredLiftOfRepresents` (`LiftBridge.lean`) needs
+`Monic core`, false for the non-monic `squareFreeCore`. This is the open
+residual of #8282; every *other* 807 leaf (`hbasis`, `hf_lc`, `hfactor_monic`,
+`hp`/`hk`, `hsep`/`hthr`, `hfac`, `hpartition`, and the (★)/(★★) precision
+bounds) discharges from core facts at the success precision `k'`.
+
+General tactic that surfaced this fast: for a large multi-leaf endpoint,
+**scaffold every leaf with `sorry` (`refine … ?leaf₁ ?leaf₂ …` with named
+holes) and `lake build` once** before hand-proving any of them. The compiler
+adjudicates every basis/defeq/index-alignment question in one pass and isolates
+which leaves are genuinely hard (here: only `hsize`), instead of spending
+budget resolving defeq by reading `bhksLatticeBasis`/`RecoveredLift`/
+`bhksProjectedRows` definitions by hand.
+
 **Route A — name the reassembly value through the public branch theorem (the
 singleton route).** Do **not** reach for `unfold Hex.factorFastFactorsWithBound`
 in the Mathlib-layer proof — unfolding that def forces a `whnf` of the schedule
