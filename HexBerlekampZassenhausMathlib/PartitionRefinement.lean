@@ -1072,6 +1072,123 @@ noncomputable def recoveredLiftOfLiftedTrueSupport
       hsize_d hdesc.choose_spec.choose)
     hdesc.choose hgf_dvd.choose hcore_lc_pos hcore_pos hgf_dvd.choose_spec.symm hprecision hliftM
 
+/-- The lift modulus base `p` of the separation-free keystone recovered lift is
+the underlying `toMonicLiftData`'s prime base. -/
+@[simp] theorem recoveredLiftOfLiftedTrueSupport_p
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hB_ne_zero : B ≠ 0)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
+    (U : Set (LiftedFactorIndex (Hex.ZPoly.toMonicLiftData core B primeData)))
+    (hU : U ∈ liftedTrueSupports core (Hex.ZPoly.toMonicLiftData core B primeData)) :
+    (recoveredLiftOfLiftedTrueSupport core B primeData hselected hcore_lc_pos hcore_pos
+      hcore_prim hB_ne_zero hbound U hU).p =
+        (Hex.ZPoly.toMonicLiftData core B primeData).p := by
+  unfold recoveredLiftOfLiftedTrueSupport
+  simp only [BHKS.ForwardRecoveryInputs.RecoveredLift.p_eqRec, BHKS.recoveredLiftOfToMonicRepresents_p]
+
+/-- The lift precision `a` of the separation-free keystone recovered lift is the
+underlying `toMonicLiftData`'s precision. -/
+@[simp] theorem recoveredLiftOfLiftedTrueSupport_a
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hB_ne_zero : B ≠ 0)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
+    (U : Set (LiftedFactorIndex (Hex.ZPoly.toMonicLiftData core B primeData)))
+    (hU : U ∈ liftedTrueSupports core (Hex.ZPoly.toMonicLiftData core B primeData)) :
+    (recoveredLiftOfLiftedTrueSupport core B primeData hselected hcore_lc_pos hcore_pos
+      hcore_prim hB_ne_zero hbound U hU).a =
+        (Hex.ZPoly.toMonicLiftData core B primeData).k := by
+  unfold recoveredLiftOfLiftedTrueSupport
+  simp only [BHKS.ForwardRecoveryInputs.RecoveredLift.a_eqRec, BHKS.recoveredLiftOfToMonicRepresents_a]
+
+/-- The lift target `f` of the separation-free keystone recovered lift is the
+monic transform `(toMonic core).monic`. -/
+@[simp] theorem recoveredLiftOfLiftedTrueSupport_f
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hB_ne_zero : B ≠ 0)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
+    (U : Set (LiftedFactorIndex (Hex.ZPoly.toMonicLiftData core B primeData)))
+    (hU : U ∈ liftedTrueSupports core (Hex.ZPoly.toMonicLiftData core B primeData)) :
+    (recoveredLiftOfLiftedTrueSupport core B primeData hselected hcore_lc_pos hcore_pos
+      hcore_prim hB_ne_zero hbound U hU).f = (Hex.ZPoly.toMonic core).monic := by
+  unfold recoveredLiftOfLiftedTrueSupport
+  simp only [BHKS.ForwardRecoveryInputs.RecoveredLift.f_eqRec, BHKS.recoveredLiftOfToMonicRepresents_f]
+
+/-- The recovered integer factor of the separation-free keystone lift is the
+monic correspondent descended from the witnessing factor, hence monic. -/
+theorem recoveredLiftOfLiftedTrueSupport_factor_denseMonic
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hB_ne_zero : B ≠ 0)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
+    (U : Set (LiftedFactorIndex (Hex.ZPoly.toMonicLiftData core B primeData)))
+    (hU : U ∈ liftedTrueSupports core (Hex.ZPoly.toMonicLiftData core B primeData)) :
+    Hex.DensePoly.Monic
+      (recoveredLiftOfLiftedTrueSupport core B primeData hselected hcore_lc_pos hcore_pos
+        hcore_prim hB_ne_zero hbound U hU).factor := by
+  classical
+  have hf_irr : Irreducible (HexPolyZMathlib.toPolynomial hU.choose) :=
+    hU.choose_spec.choose_spec.1
+  have hf_dvd : hU.choose ∣ core := hU.choose_spec.choose_spec.2.1
+  have hrep :
+      RepresentsIntegerFactorAtLift core (Hex.ZPoly.toMonicLiftData core B primeData)
+        hU.choose hU.choose_spec.choose :=
+    hU.choose_spec.choose_spec.2.2.1
+  have hdesc :=
+    IntReductionMod.monicCorrespondentDescent_of_representsAtLift core B primeData hselected
+      hcore_lc_pos hcore_pos hcore_prim hB_ne_zero hbound hf_irr hf_dvd hrep
+  have hval :
+      (recoveredLiftOfLiftedTrueSupport core B primeData hselected hcore_lc_pos hcore_pos
+        hcore_prim hB_ne_zero hbound U hU).factor = hdesc.choose := by
+    unfold recoveredLiftOfLiftedTrueSupport
+    simp only [BHKS.ForwardRecoveryInputs.RecoveredLift.factor_eqRec,
+      BHKS.recoveredLiftOfToMonicRepresents_factor]
+  rw [hval]
+  exact hdesc.choose_spec.choose_spec.1
+
+/-- Mathlib-monic form of `recoveredLiftOfLiftedTrueSupport_factor_denseMonic`,
+the `hfactor_monic` leaf of the separation-free fast-core endpoint. -/
+theorem recoveredLiftOfLiftedTrueSupport_factor_monic
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hB_ne_zero : B ≠ 0)
+    (hbound :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
+    (U : Set (LiftedFactorIndex (Hex.ZPoly.toMonicLiftData core B primeData)))
+    (hU : U ∈ liftedTrueSupports core (Hex.ZPoly.toMonicLiftData core B primeData)) :
+    (HexPolyMathlib.toPolynomial
+      (recoveredLiftOfLiftedTrueSupport core B primeData hselected hcore_lc_pos hcore_pos
+        hcore_prim hB_ne_zero hbound U hU).factor).Monic :=
+  HexHenselMathlib.toPolynomial_monic_of_dense_monic _
+    (recoveredLiftOfLiftedTrueSupport_factor_denseMonic core B primeData hselected
+      hcore_lc_pos hcore_pos hcore_prim hB_ne_zero hbound U hU)
+
 /-- Cardinality equality for a successful BHKS fast-core branch under the B8
 partition-refinement package.  Pairs `factorFastCoreWithBound_some_factor_count_le`
 with `factorFastCoreWithBound_some_factor_count_ge`, exposing the count

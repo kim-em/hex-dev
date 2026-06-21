@@ -192,6 +192,80 @@ def recoveredLiftOfToMonicRepresents
   exact recoveredLiftOfRepresents M d S factor cofactor hM_monic hfactor
     hprecisionM hrep
 
+@[simp] theorem recoveredLiftOfToMonicRepresents_f
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData))
+    (factor cofactor : Hex.ZPoly)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hfactor : factor * cofactor = (Hex.ZPoly.toMonic core).monic)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k)
+    (hrep :
+      RepresentsIntegerFactorAtLift (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData) factor S) :
+    (recoveredLiftOfToMonicRepresents core B primeData S factor cofactor
+      hcore_lc_pos hcore_pos hfactor hprecision hrep).f = (Hex.ZPoly.toMonic core).monic := by
+  simp [recoveredLiftOfToMonicRepresents, recoveredLiftOfRepresents, recoveredLiftOfSubset]
+
+@[simp] theorem recoveredLiftOfToMonicRepresents_p
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData))
+    (factor cofactor : Hex.ZPoly)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hfactor : factor * cofactor = (Hex.ZPoly.toMonic core).monic)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k)
+    (hrep :
+      RepresentsIntegerFactorAtLift (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData) factor S) :
+    (recoveredLiftOfToMonicRepresents core B primeData S factor cofactor
+      hcore_lc_pos hcore_pos hfactor hprecision hrep).p =
+        (Hex.ZPoly.toMonicLiftData core B primeData).p := by
+  simp [recoveredLiftOfToMonicRepresents, recoveredLiftOfRepresents, recoveredLiftOfSubset]
+
+@[simp] theorem recoveredLiftOfToMonicRepresents_a
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData))
+    (factor cofactor : Hex.ZPoly)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hfactor : factor * cofactor = (Hex.ZPoly.toMonic core).monic)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k)
+    (hrep :
+      RepresentsIntegerFactorAtLift (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData) factor S) :
+    (recoveredLiftOfToMonicRepresents core B primeData S factor cofactor
+      hcore_lc_pos hcore_pos hfactor hprecision hrep).a =
+        (Hex.ZPoly.toMonicLiftData core B primeData).k := by
+  simp [recoveredLiftOfToMonicRepresents, recoveredLiftOfRepresents, recoveredLiftOfSubset]
+
+@[simp] theorem recoveredLiftOfToMonicRepresents_factor
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData))
+    (factor cofactor : Hex.ZPoly)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hfactor : factor * cofactor = (Hex.ZPoly.toMonic core).monic)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k)
+    (hrep :
+      RepresentsIntegerFactorAtLift (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData) factor S) :
+    (recoveredLiftOfToMonicRepresents core B primeData S factor cofactor
+      hcore_lc_pos hcore_pos hfactor hprecision hrep).factor = factor := by
+  simp [recoveredLiftOfToMonicRepresents, recoveredLiftOfRepresents, recoveredLiftOfSubset]
+
 /--
 Transport a represented monic-coordinate factor through `toMonic` and recover
 the original non-monic factor as the primitive-part carrier.
@@ -764,15 +838,27 @@ def recoveredLift_subtypeFamily_of_indicatorCandidates
 
 /-- Transport along a support equality leaves the `RecoveredLift.p` field
 unchanged: the field does not depend on the support index. -/
-private theorem RecoveredLift.p_eqRec {L : Hex.BhksLatticeBasis}
+@[simp] theorem RecoveredLift.p_eqRec {L : Hex.BhksLatticeBasis}
     {a b : LiftedFactorSupport L} (h : a = b) (x : RecoveredLift L a) :
     (h ▸ x).p = x.p := by subst h; rfl
 
 /-- Transport along a support equality leaves the `RecoveredLift.a` field
 unchanged: the field does not depend on the support index. -/
-private theorem RecoveredLift.a_eqRec {L : Hex.BhksLatticeBasis}
+@[simp] theorem RecoveredLift.a_eqRec {L : Hex.BhksLatticeBasis}
     {a b : LiftedFactorSupport L} (h : a = b) (x : RecoveredLift L a) :
     (h ▸ x).a = x.a := by subst h; rfl
+
+/-- Transport along a support equality leaves the `RecoveredLift.f` field
+unchanged: the field does not depend on the support index. -/
+@[simp] theorem RecoveredLift.f_eqRec {L : Hex.BhksLatticeBasis}
+    {a b : LiftedFactorSupport L} (h : a = b) (x : RecoveredLift L a) :
+    (h ▸ x).f = x.f := by subst h; rfl
+
+/-- Transport along a support equality leaves the `RecoveredLift.factor` field
+unchanged: the field does not depend on the support index. -/
+@[simp] theorem RecoveredLift.factor_eqRec {L : Hex.BhksLatticeBasis}
+    {a b : LiftedFactorSupport L} (h : a = b) (x : RecoveredLift L a) :
+    (h ▸ x).factor = x.factor := by subst h; rfl
 
 /-- The lift modulus base `p` of every member of the subtype-indexed
 recovered-lift family is the underlying lift data's prime base `d.p`. -/
