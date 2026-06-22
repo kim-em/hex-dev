@@ -7007,6 +7007,43 @@ def toMonicLiftData
   henselLiftData (toMonic core).monic
     (precisionForCoeffBound B primeData.p) primeData
 
+/--
+Multiplicative inverse of `core`'s leading coefficient modulo `p ^ k`, read off
+the integer Bezout certificate `s · ℓf + t · p^k = gcd(ℓf, p^k)`.  When
+`gcd(leadingCoeff core, p ^ k) = 1` (the good-prime condition `p ∤ ℓf`) this is a
+genuine inverse: `leadingCoeffInverse core p k * leadingCoeff core ≡ 1 (mod p^k)`
+(`leadingCoeffInverse_mul_emod`).
+-/
+def leadingCoeffInverse (core : ZPoly) (p k : Nat) : Int :=
+  (HexArith.Int.extGcd (DensePoly.leadingCoeff core) (Int.ofNat (p ^ k))).2.1
+
+/--
+BHKS leading-coefficient-faithful monic target for `core`: rescale `core` by the
+modular inverse of its leading coefficient, then reduce modulo `p ^ k`.
+
+This is van Hoeij's `M1` normalisation (factor out `ℓf`, BHKS §2: `f = ℓf·f₁···fr`
+with the `fᵢ` monic in `Z_p`), distinct from the `toMonic` `x ↦ x/ℓf` substitution
+(`M2`).  Over `(ℤ/p^k)[x]` it equals `core · ℓf⁻¹`, so its monic local factors
+divide `core` directly with no dilation.  It is monic over ℤ when
+`gcd(leadingCoeff core, p ^ k) = 1` and `core` is nonconstant
+(`monicTarget_monic`).
+-/
+def monicTarget (core : ZPoly) (p k : Nat) : ZPoly :=
+  reduceModPow (DensePoly.scale (leadingCoeffInverse core p k) core) p k
+
+/--
+Fixed-precision Hensel lift data over `core`'s own coordinate (BHKS-faithful).
+
+Mirrors `toMonicLiftData`, but lifts `core`'s monic modular factors against the
+leading-coefficient-normalised `monicTarget` rather than the `x ↦ x/ℓf` dilation
+`(toMonic core).monic`.  The lifted factors therefore divide `core` in
+`(ℤ/p^a)[x]` directly, and the CLD lattice runs over `core`'s own coordinate.
+-/
+def coreLiftData
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : LiftData :=
+  henselLiftData (monicTarget core primeData.p (precisionForCoeffBound B primeData.p))
+    (precisionForCoeffBound B primeData.p) primeData
+
 end ZPoly
 
 /--
