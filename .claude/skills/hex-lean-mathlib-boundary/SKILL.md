@@ -1273,6 +1273,37 @@ domain `Polynomial.natDegree_mul`. Note the CLD residue bridge
 `residue_eq_phi_coeff_of_congr` is still monic-only and needs the analogous
 non-monic restatement before a non-monic consumer can use it.
 
+#### A "core-coordinate forward cut" over `bhksLatticeBasis core …` is the dilation obstruction, not scalar scale-invariance (#8288/#8290)
+
+A directive asking to build a forward cut (`SupportShortVectorData` /
+`CutProjectionHypotheses`) over the executable's *actual* raw-core basis
+`bhksLatticeBasis core …`, framed as a "trivial scale-invariance bridge"
+`phi(core, c·h) = phi(core, h)` for a constant `c` plus the non-monic CLD bound
+(#8292), is **premise-unsound** — skip it with the counterexample below. The
+executable builds `bhksLatticeBasis core d.p d.k d.liftedFactors` with `f = core`
+(raw non-monic) but `d.liftedFactors = gᵢ` the monic Hensel factors of
+**`(toMonic core).monic`** (`bhksRecoverClassified core (toMonicLiftData core k
+primeData)`, `Basic.lean:7069`). `toMonic` is the *dilate*-monic transform
+`D(x) = ℓ^{n-1}·core(x/ℓ)` (`transformedCoeffs`, `Basic.lean:1430`,
+`coeff i = core.coeff i · ℓ^(n-1-i)`, `ℓ = leadingCoeff core`), so each `gᵢ` is a
+**dilation** `σ_ℓ(h)` of an integer factor `h | core`, *not* a scalar multiple
+`c·h`. Two false claims fall out: (a) `supportProduct ≡ c·h (mod p^a)` is false
+(truth: `supportProduct ≡ σ_ℓ(h)`); the codebase's own sound recovery is
+dilation-based, `primitivePart (dilate (leadingCoeff core) monicFactor) = factor`
+(`recoveredAtLiftOfToMonic`, `LiftBridge.lean:278`). (b) The aggregate-residue's
+per-factor congruence `cldQuotientMod_congr_mul_derivative` (`CLDColumnBound.lean:607`)
+needs `gᵢ ∣ core (mod p^a)`, but `gᵢ ∣ toMonic core`, not `core`. Counterexample:
+`core = 2x²−3x+1 = (x−1)(2x−1)`, `toMonic core = (x−1)(x−2)`; the factor `x−1`
+maps to monic-coordinate `x−2`, which does not divide `core` (`core(2)=3`), and
+`cldQuotientMod core (x−2) = 2x+1 ≠ 2x−1 = core/(x−1)` (the genuine raw column).
+The real obstruction is structural dilation covariance of the CLD column under
+`x ↦ ℓ·x` (the #7479-class dilation automorphism), soundness substrate rather than
+a thin producer; the raw-core lattice is validated downstream only by the
+`Array.polyProduct candidates == f` product check, not a provable cut radius. The
+sound routes are (1) a new CLD-covariance theorem transporting the monic-coordinate
+adequacy onto the raw-core rows, or (2) routing irreducibility through the monic
+cut plus `recoveredAtLiftOfToMonic`. (#8290 skipped on exactly this.)
+
 ### "Package the recovery witnesses into `TrueFactorLift`" is the centered/raw trap
 
 A directive asking you to derive a `TrueFactorLift` family (the hypothesis of
