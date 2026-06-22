@@ -1252,6 +1252,27 @@ integer (`|y| ≤ B`, `2B < p^b`). Sanity-check any "tight CLD column" directive
 that points at `abs_cldCoeffs`: that is the loose route and will not close the
 `factorCount` shape.
 
+### `BHKS.phi f g` is `0` for non-monic `g` — bound the real column `h·g'`, not `phi`
+
+`phi f g := (f * g').divByMonic g`, and `Polynomial.divByMonic _ q = 0`
+whenever `q` is **not** monic (`if Monic q then … else 0`). So any directive
+that asks to "drop the monic hypothesis from a `phi`-stated bound" while keeping
+the conclusion over `phi (toPolynomial f) (toPolynomial g)` is **vacuous for
+exactly the non-monic case** it claims to cover: the LHS is identically `0`.
+This bites the core-coordinate cut, whose true integer factors are primitive
+(non-monic). The genuine BHKS column is `Φ(g) = f·g'/g = h·g'` for `f = g·h`,
+which `phi` computes only when `g` is monic. The monic-free bound is
+`BHKS.abs_factorDeriv_coeff_le` / `BHKS.abs_factorDeriv_coeff_le_bhksCoeffBound`
+(`CLDColumnBound.lean`), stated over `h * g.derivative` with a cofactor witness
+`hfac : f = g * h` — not over `phi`. The analytic core
+(`derivative_eq_sum_rootDeletionDerivativeSummand`,
+`mahlerMeasure_rootDeletionDerivativeSummand_le`) is already monic-free; only
+`phi_eq_factor_mul_derivative` (the `divByMonic` identity) and
+`Monic.natDegree_mul'` used monic, replaced by starting from `h·g'` and the
+domain `Polynomial.natDegree_mul`. Note the CLD residue bridge
+`residue_eq_phi_coeff_of_congr` is still monic-only and needs the analogous
+non-monic restatement before a non-monic consumer can use it.
+
 ### "Package the recovery witnesses into `TrueFactorLift`" is the centered/raw trap
 
 A directive asking you to derive a `TrueFactorLift` family (the hypothesis of
