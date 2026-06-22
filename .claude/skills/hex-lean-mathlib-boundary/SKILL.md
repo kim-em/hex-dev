@@ -821,6 +821,37 @@ The **non-monic-core** producer (where `primitivePart`/`dilate` do not collapse)
 is still the harder monic-transform recovery direction owned by the
 fast-BHKS-monic-lift migration issue.
 
+**A directive proposing to "lift non-monic `core`'s own local factors directly"
+(route recovery through `henselLiftData core` instead of `toMonicLiftData`) is
+refutable without re-investigating: the entire Hensel-lift stack is monic-only.**
+(#8293 skipped on exactly this.) The chain, top to bottom: (1)
+`berlekampFactorsModP` (`Basic.lean:935-946`) factors the **monic associate**
+`monicModularImage fModP`, so `choosePrimeData? core`'s `factorsModP` are monic
+with product ≡ `core/ℓf (mod p)`, **not** `core`; (2)
+`QuadraticMultifactorLiftInvariant` (`QuadraticMultifactor.lean:574-586`) requires
+in its recursive arm `∏ ≡ core (mod p)` **and** a monic leading factor
+(`QuadraticLiftLoopInvariant`, :118-122), both false for non-monic core — so the
+`Array.polyProduct candidates == core` accept check (`Basic.lean:6758`) fails and
+the fast path silently stops succeeding; (3)
+`QuadraticMultifactorLiftInvariant_of_choosePrimeData` (`Basic.lean:2724-2737`)
+takes `hcore_monic` + the product congruence as explicit hypotheses; (4) the
+division kernel `divModMonicModSquareAux` (`Quadratic.lean:67-85`) hardwires a
+**monic** divisor — it uses `rem.leadingCoeff` with no `/q.leadingCoeff`
+(docstring :64-66); (5) `bhksIndicatorCandidate?` (`Basic.lean:5555-5557`)
+hardwires `dilate (leadingCoeff f)`, the transform that *undoes* the `x→x/ℓf`
+monic dilation — a core-coordinate lift needs this removed, not a `LiftData`
+swap; (6) **both** the fast (`toMonicLiftData`, :7069) and slow
+(`exhaustiveCoreFactorsWithBound`, :7630) paths lift the monic transform, so no
+direct core lift exists anywhere. The genuine missing bridge is **new
+leading-coefficient-tracking Hensel infrastructure** (a unit-leading-coefficient
+mod-`p^a` division kernel + a multifactor invariant absorbing `ℓf` into the
+complement to prove `core ≡ ℓf·∏fᵢ (mod p^k)`) — the `toMonic` transform exists
+precisely to dodge building it. Also note "each `fᵢ ∣ core`" holds only mod
+`p^a` (where `ℓf` is a unit), **not over ℤ** (`2x²-3x+1`: monic `x-1/2 ∤ core`
+over ℤ), so #8292's `abs_factorDeriv_coeff_le` (needs `core = g·h` over ℤ with
+the integer factor) does not apply to the monic `fᵢ` directly. Diagnose + skip
+unless the directive explicitly scopes building the lc-tracking lift stack.
+
 ### "Final integration" issues: confirm the substrate *producer* exists, not just that the feeder issue closed
 
 A `feature` issue that says "instantiate `SlowPathHenselSubstrate` / `…Evidence`
