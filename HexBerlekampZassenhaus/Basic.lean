@@ -7007,6 +7007,131 @@ def toMonicLiftData
   henselLiftData (toMonic core).monic
     (precisionForCoeffBound B primeData.p) primeData
 
+/--
+Multiplicative inverse of `core`'s leading coefficient modulo `p ^ k`, read off
+the integer Bezout certificate `s · ℓf + t · p^k = gcd(ℓf, p^k)`.  When
+`gcd(leadingCoeff core, p ^ k) = 1` (the good-prime condition `p ∤ ℓf`) this is a
+genuine inverse: `leadingCoeffInverse core p k * leadingCoeff core ≡ 1 (mod p^k)`
+(`leadingCoeffInverse_mul_emod`).
+-/
+def leadingCoeffInverse (core : ZPoly) (p k : Nat) : Int :=
+  (HexArith.Int.extGcd (DensePoly.leadingCoeff core) (Int.ofNat (p ^ k))).2.1
+
+/--
+BHKS leading-coefficient-faithful monic target for `core`: rescale `core` by the
+modular inverse of its leading coefficient, then reduce modulo `p ^ k`.
+
+This is van Hoeij's `M1` normalisation (factor out `ℓf`, BHKS §2: `f = ℓf·f₁···fr`
+with the `fᵢ` monic in `Z_p`), distinct from the `toMonic` `x ↦ x/ℓf` substitution
+(`M2`).  Over `(ℤ/p^k)[x]` it equals `core · ℓf⁻¹`, so its monic local factors
+divide `core` directly with no dilation.  It is monic over ℤ when
+`gcd(leadingCoeff core, p ^ k) = 1` and `core` is nonconstant
+(`monicTarget_monic`).
+-/
+def monicTarget (core : ZPoly) (p k : Nat) : ZPoly :=
+  reduceModPow (DensePoly.scale (leadingCoeffInverse core p k) core) p k
+
+/--
+Fixed-precision Hensel lift data over `core`'s own coordinate (BHKS-faithful).
+
+Mirrors `toMonicLiftData`, but lifts `core`'s monic modular factors against the
+leading-coefficient-normalised `monicTarget` rather than the `x ↦ x/ℓf` dilation
+`(toMonic core).monic`.  The lifted factors therefore divide `core` in
+`(ℤ/p^a)[x]` directly, and the CLD lattice runs over `core`'s own coordinate.
+-/
+def coreLiftData
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : LiftData :=
+  henselLiftData (monicTarget core primeData.p (precisionForCoeffBound B primeData.p))
+    (precisionForCoeffBound B primeData.p) primeData
+
+/-- Abstract Bezout-to-residue step: if `A + t·P = 1` and `1 < P` then `A % P = 1`.
+Used to read the unit residue `leadingCoeffInverse · ℓf ≡ 1 (mod p^k)` off the
+integer extended-GCD certificate. -/
+private theorem emod_eq_one_of_bezout {A t P : Int} (hP : 1 < P) (h : A + t * P = 1) :
+    A % P = 1 := by
+  have h2 : A = 1 + (-t) * P := by
+    have hsub : A = 1 - t * P := by omega
+    rw [hsub, Int.sub_eq_add_neg, Int.neg_mul]
+  rw [h2, Int.add_mul_emod_self_right]
+  exact Int.emod_eq_of_lt (by decide) hP
+
+/-- The `leadingCoeffInverse` is a genuine inverse of `core`'s leading coefficient
+modulo `p ^ k` when the leading coefficient is coprime to `p ^ k` (the good-prime
+condition `p ∤ ℓf`).  This is the unit-residue fact the BHKS monic target rests on. -/
+theorem leadingCoeffInverse_mul_emod (core : ZPoly) (p k : Nat)
+    (hpk : 1 < p ^ k)
+    (hgcd : Int.gcd (DensePoly.leadingCoeff core) (Int.ofNat (p ^ k)) = 1) :
+    (leadingCoeffInverse core p k * DensePoly.leadingCoeff core)
+        % Int.ofNat (p ^ k) = 1 := by
+  unfold leadingCoeffInverse
+  have hbez := HexArith.Int.extGcd_bezout_proj
+    (DensePoly.leadingCoeff core) (Int.ofNat (p ^ k))
+  rw [HexArith.Int.extGcd_fst, hgcd] at hbez
+  have hP : (1 : Int) < Int.ofNat (p ^ k) := by
+    have h := Int.ofNat_lt.mpr hpk
+    simpa using h
+  exact emod_eq_one_of_bezout hP hbez
+
+/-- Size of `reduceModPow` is bounded by the source size (trimming only drops
+trailing zeros). -/
+theorem reduceModPow_size_le (f : ZPoly) (p k : Nat) :
+    (reduceModPow f p k).size ≤ f.size := by
+  unfold reduceModPow
+  refine Nat.le_trans (DensePoly.size_ofCoeffs_le _) ?_
+  simp
+
+/--
+The BHKS leading-coefficient-faithful monic target is genuinely monic over ℤ when
+`core`'s leading coefficient is coprime to `p ^ k` and `core` is nonconstant.
+
+This is the load-bearing soundness fact for routing the existing monic Hensel lift
+against `monicTarget` (van Hoeij `M1`) instead of the `toMonic` `x ↦ x/ℓf`
+dilation (`M2`): the lift's producer lemma
+`QuadraticMultifactorLiftInvariant_of_choosePrimeData` requires its target monic,
+and `monicTarget` supplies that while keeping `core`'s own coordinate.
+-/
+theorem monicTarget_monic (core : ZPoly) (p k : Nat)
+    (hpk : 1 < p ^ k)
+    (hgcd : Int.gcd (DensePoly.leadingCoeff core) (Int.ofNat (p ^ k)) = 1)
+    (hcore : 0 < core.size) :
+    DensePoly.Monic (monicTarget core p k) := by
+  have hpk_pos : 0 < p ^ k := Nat.lt_of_lt_of_le Nat.zero_lt_one (Nat.le_of_lt hpk)
+  have hemod := leadingCoeffInverse_mul_emod core p k hpk hgcd
+  have hs_ne : leadingCoeffInverse core p k ≠ 0 := by
+    intro h0
+    rw [h0, Int.zero_mul, Int.zero_emod] at hemod
+    exact absurd hemod (by decide)
+  have hscale_size :
+      (DensePoly.scale (leadingCoeffInverse core p k) core).size = core.size :=
+    scale_size_of_nonzero _ core hs_ne
+  have hscale_pos :
+      0 < (DensePoly.scale (leadingCoeffInverse core p k) core).size := by
+    rw [hscale_size]; exact hcore
+  have hg_top :
+      (DensePoly.scale (leadingCoeffInverse core p k) core).coeff (core.size - 1)
+        = leadingCoeffInverse core p k * DensePoly.leadingCoeff core := by
+    have h1 := leadingCoeff_scale_of_nonzero (leadingCoeffInverse core p k) core hs_ne
+    rw [DensePoly.leadingCoeff_eq_coeff_last _ hscale_pos, hscale_size] at h1
+    exact h1
+  have htop : (monicTarget core p k).coeff (core.size - 1) = 1 := by
+    unfold monicTarget
+    rw [coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpk_pos, hg_top]
+    exact hemod
+  have hmt_le : (monicTarget core p k).size ≤ core.size := by
+    unfold monicTarget
+    exact Nat.le_trans (reduceModPow_size_le _ p k) (Nat.le_of_eq hscale_size)
+  have hmt_ge : core.size ≤ (monicTarget core p k).size := by
+    rcases Nat.lt_or_ge (monicTarget core p k).size core.size with hlt | hge
+    · have hle : (monicTarget core p k).size ≤ core.size - 1 := by omega
+      have hz := DensePoly.coeff_eq_zero_of_size_le (monicTarget core p k) hle
+      rw [htop] at hz
+      exact absurd hz (by decide)
+    · exact hge
+  have hsize : (monicTarget core p k).size = core.size := Nat.le_antisymm hmt_le hmt_ge
+  unfold DensePoly.Monic
+  rw [DensePoly.leadingCoeff_eq_coeff_last _ (by rw [hsize]; exact hcore), hsize]
+  exact htop
+
 end ZPoly
 
 /--

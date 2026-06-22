@@ -251,6 +251,14 @@ or `Monoid`/`CommRing` lemmas — those modules don't import Mathlib.
   `push_neg` → `Classical.not_forall.mp` / `Classical.not_exists.mp`; `conv_lhs
   => rw [h]` → `rw [h] at <aux-have>` then `exact`. `omega`/`simp`/`rcases` are
   core and available.
+- **The general order lemmas and transitivity dot-notation are out too.**
+  `le_trans`/`lt_of_le_of_lt`/`lt_of_lt_of_le` report "unknown identifier", and
+  `(h : a ≤ b).trans_eq`/`.trans` fail with "environment does not contain
+  `Nat.le.trans_eq`". Use the type-prefixed core lemmas — `Nat.le_trans`,
+  `Nat.lt_of_le_of_lt`, `Nat.le_of_lt`, `Nat.le_of_eq`, `Nat.le_antisymm` (and
+  `Int.*` analogues) — or just `omega` for any concrete `Nat`/`Int` inequality
+  chain. Transitivity is common in size/degree bookkeeping, so this bites most
+  arithmetic proofs in the executable layer.
 - **`@[nolint ...]` is unavailable** — the attribute lives in Mathlib's
   linter framework, so writing `@[nolint unusedArguments]` (or any
   `nolint`) in a Mathlib-free file is a build error (`unsupportedSyntax`),
