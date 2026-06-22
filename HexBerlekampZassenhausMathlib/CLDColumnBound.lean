@@ -369,6 +369,219 @@ theorem abs_phi_coeff_le_of_monic_factor
           (f.natDegree : ℝ) * HexPolyZMathlib.l2norm f := by
         rw [hB_def]; ring
 
+/--
+Partial-fractions decomposition of the genuine CLD column `h * g'` over `ℂ`,
+with **no monic hypothesis**: `(h * g').map ℂ` is the multiset sum over the
+complex roots of `g.map ℂ` of `h.map ℂ` times the root-deletion derivative
+summand.  This is the monic-free analytic frame; the leading coefficient of `g`
+is absorbed into each `rootDeletionDerivativeSummand`.
+-/
+private theorem map_h_mul_deriv_eq_sum (g h : Polynomial ℤ) :
+    (h * g.derivative).map (Int.castRingHom ℂ) =
+      ((g.map (Int.castRingHom ℂ)).roots.map fun α =>
+        (h.map (Int.castRingHom ℂ)) *
+          Polynomial.rootDeletionDerivativeSummand
+            (g.map (Int.castRingHom ℂ)) α).sum := by
+  rw [Polynomial.map_mul, ← Polynomial.derivative_map]
+  rw [Polynomial.derivative_eq_sum_rootDeletionDerivativeSummand]
+  exact (Multiset.sum_map_mul_left
+    (s := (g.map (Int.castRingHom ℂ)).roots)
+    (a := h.map (Int.castRingHom ℂ))
+    (f := fun α => Polynomial.rootDeletionDerivativeSummand
+      (g.map (Int.castRingHom ℂ)) α)).symm
+
+/--
+Degree bound for one `h * rootDeletionDerivativeSummand g α` summand at a root
+`α` of `g.map ℂ`, with **no monic hypothesis** (only `g ≠ 0`, `h ≠ 0`): under
+`f = g * h` each such summand has degree at most `f.natDegree - 1`.
+-/
+private theorem natDegree_summand_le'
+    (f g h : Polynomial ℤ) (hg : g ≠ 0) (hh : h ≠ 0) (hfac : f = g * h) (α : ℂ)
+    (hα : α ∈ (g.map (Int.castRingHom ℂ)).roots) :
+    ((h.map (Int.castRingHom ℂ)) *
+        Polynomial.rootDeletionDerivativeSummand
+          (g.map (Int.castRingHom ℂ)) α).natDegree ≤
+      f.natDegree - 1 := by
+  classical
+  have hcardroots :
+      Multiset.card (g.map (Int.castRingHom ℂ)).roots ≤
+        (g.map (Int.castRingHom ℂ)).natDegree :=
+    Polynomial.card_roots' _
+  have hgnat : (g.map (Int.castRingHom ℂ)).natDegree = g.natDegree :=
+    HexPolyZMathlib.natDegree_map_intCast g
+  have hgd_pos : 0 < g.natDegree := by
+    rw [hgnat] at hcardroots
+    have hpos : 0 < Multiset.card (g.map (Int.castRingHom ℂ)).roots :=
+      Multiset.card_pos.mpr
+        (by intro hz; rw [hz] at hα; exact (Multiset.notMem_zero _) hα)
+    omega
+  have hgh : (g * h).natDegree = g.natDegree + h.natDegree :=
+    Polynomial.natDegree_mul hg hh
+  have hf_deg : f.natDegree = g.natDegree + h.natDegree := by rw [hfac, hgh]
+  have hh_map_deg : (h.map (Int.castRingHom ℂ)).natDegree ≤ h.natDegree :=
+    Polynomial.natDegree_map_le
+  have hcarderase :
+      Multiset.card ((g.map (Int.castRingHom ℂ)).roots.erase α) =
+        Multiset.card (g.map (Int.castRingHom ℂ)).roots - 1 :=
+    Multiset.card_erase_of_mem hα
+  have hsummand_deg :
+      (Polynomial.rootDeletionDerivativeSummand
+        (g.map (Int.castRingHom ℂ)) α).natDegree ≤ g.natDegree - 1 := by
+    rw [Polynomial.rootDeletionDerivativeSummand]
+    refine (Polynomial.natDegree_C_mul_le _ _).trans ?_
+    rw [Polynomial.natDegree_multiset_prod_X_sub_C_eq_card]
+    rw [hgnat] at hcardroots
+    omega
+  have hmul_deg :
+      ((h.map (Int.castRingHom ℂ)) *
+        Polynomial.rootDeletionDerivativeSummand
+          (g.map (Int.castRingHom ℂ)) α).natDegree ≤
+      (h.map (Int.castRingHom ℂ)).natDegree +
+        (Polynomial.rootDeletionDerivativeSummand
+          (g.map (Int.castRingHom ℂ)) α).natDegree :=
+    Polynomial.natDegree_mul_le
+  omega
+
+/--
+**BHKS Lemma 4.1, non-monic form.**  For `f = g * h` over `Polynomial ℤ`, every
+coefficient of the genuine CLD column `Φ(g) = f * g' / g = h * g'` is bounded by
+`C(n-1, j) · n · ‖f‖₂` where `n = f.natDegree`.  No monic hypothesis on `g`.
+
+This generalises `abs_phi_coeff_le_of_monic_factor`: when `g` is monic,
+`phi f g = h * g'`, so this recovers the `phi`-stated bound.  For non-monic `g`
+the Lean `phi f g = (f * g').divByMonic g` is `0` (division by a non-monic
+divisor), so the genuine column must be named as `h * g'` rather than `phi f g`.
+-/
+theorem abs_factorDeriv_coeff_le
+    (f g h : Polynomial ℤ) (hfac : f = g * h) (j : Nat) :
+    (Int.natAbs ((h * g.derivative).coeff j) : ℝ) ≤
+      (Nat.choose (f.natDegree - 1) j : ℝ) *
+        (f.natDegree : ℝ) * HexPolyZMathlib.l2norm f := by
+  classical
+  -- Degenerate cases: `h = 0` or `g = 0` make the column `h * g'` vanish.
+  by_cases hh : h = 0
+  · subst hh
+    simp only [zero_mul, Polynomial.coeff_zero, Int.natAbs_zero, Nat.cast_zero]
+    have : (0 : ℝ) ≤ HexPolyZMathlib.l2norm f := Real.sqrt_nonneg _
+    positivity
+  by_cases hg : g = 0
+  · subst hg
+    simp only [Polynomial.derivative_zero, mul_zero, Polynomial.coeff_zero,
+      Int.natAbs_zero, Nat.cast_zero]
+    have : (0 : ℝ) ≤ HexPolyZMathlib.l2norm f := Real.sqrt_nonneg _
+    positivity
+  -- From here on `g ≠ 0` and `h ≠ 0`.
+  -- Step 0: lift to ℂ.
+  rw [(HexPolyZMathlib.norm_coeff_map_intCast (f := h * g.derivative) (n := j)).symm]
+  -- Step 1: substitute the partial-fractions decomposition.
+  rw [map_h_mul_deriv_eq_sum g h]
+  -- Step 2: push `coeff j` through the multiset sum via the linear map `lcoeff`.
+  rw [show (((g.map (Int.castRingHom ℂ)).roots.map fun α =>
+            (h.map (Int.castRingHom ℂ)) *
+              Polynomial.rootDeletionDerivativeSummand
+                (g.map (Int.castRingHom ℂ)) α).sum).coeff j =
+          (((g.map (Int.castRingHom ℂ)).roots.map fun α =>
+            ((h.map (Int.castRingHom ℂ)) *
+              Polynomial.rootDeletionDerivativeSummand
+                (g.map (Int.castRingHom ℂ)) α).coeff j)).sum from ?_]
+  pick_goal 2
+  · rw [← Polynomial.lcoeff_apply (R := ℂ) j,
+      map_multiset_sum (Polynomial.lcoeff ℂ j)]
+    simp [Multiset.map_map, Polynomial.lcoeff_apply]
+  -- Step 3: norm of multiset sum ≤ multiset sum of norms.
+  refine (norm_multiset_sum_le _).trans ?_
+  rw [Multiset.map_map]
+  -- Step 4: bound each per-summand coefficient norm.
+  set B : ℝ := (Nat.choose (f.natDegree - 1) j : ℝ) * HexPolyZMathlib.l2norm f with hB_def
+  have hB_nonneg : 0 ≤ B := by
+    refine mul_nonneg ?_ (Real.sqrt_nonneg _)
+    exact Nat.cast_nonneg _
+  have hsummand_bound : ∀ α ∈ (g.map (Int.castRingHom ℂ)).roots,
+      ((fun x : ℂ[X] => ‖x.coeff j‖) ∘ fun α =>
+          (h.map (Int.castRingHom ℂ)) *
+            Polynomial.rootDeletionDerivativeSummand
+              (g.map (Int.castRingHom ℂ)) α) α ≤ B := by
+    intro α hα
+    simp only [Function.comp_apply]
+    have hcoeff_le := Polynomial.norm_coeff_le_choose_mul_mahlerMeasure
+      (n := j)
+      (p := (h.map (Int.castRingHom ℂ)) *
+        Polynomial.rootDeletionDerivativeSummand
+          (g.map (Int.castRingHom ℂ)) α)
+    have hM_le := mahlerMeasure_h_mul_rootDeletionDerivativeSummand_le
+      f g h hfac α
+    have hdeg_le := natDegree_summand_le' f g h hg hh hfac α hα
+    have hM_nonneg :
+        0 ≤ ((h.map (Int.castRingHom ℂ)) *
+              Polynomial.rootDeletionDerivativeSummand
+                (g.map (Int.castRingHom ℂ)) α).mahlerMeasure :=
+      Polynomial.mahlerMeasure_nonneg _
+    have hchoose_le :
+        (Nat.choose
+            ((h.map (Int.castRingHom ℂ)) *
+              Polynomial.rootDeletionDerivativeSummand
+                (g.map (Int.castRingHom ℂ)) α).natDegree j : ℝ) ≤
+          (Nat.choose (f.natDegree - 1) j : ℝ) := by
+      exact_mod_cast Nat.choose_le_choose j hdeg_le
+    have hchoose_nonneg : (0 : ℝ) ≤ Nat.choose (f.natDegree - 1) j :=
+      Nat.cast_nonneg _
+    have hmf_le_l2 :
+        (f.map (Int.castRingHom ℂ)).mahlerMeasure ≤ HexPolyZMathlib.l2norm f :=
+      HexPolyZMathlib.mahlerMeasure_le_l2norm f
+    calc ‖((h.map (Int.castRingHom ℂ)) *
+              Polynomial.rootDeletionDerivativeSummand
+                (g.map (Int.castRingHom ℂ)) α).coeff j‖
+        ≤ (Nat.choose
+            ((h.map (Int.castRingHom ℂ)) *
+              Polynomial.rootDeletionDerivativeSummand
+                (g.map (Int.castRingHom ℂ)) α).natDegree j : ℝ) *
+            ((h.map (Int.castRingHom ℂ)) *
+              Polynomial.rootDeletionDerivativeSummand
+                (g.map (Int.castRingHom ℂ)) α).mahlerMeasure := hcoeff_le
+      _ ≤ (Nat.choose (f.natDegree - 1) j : ℝ) *
+            (f.map (Int.castRingHom ℂ)).mahlerMeasure := by
+          exact mul_le_mul hchoose_le hM_le hM_nonneg hchoose_nonneg
+      _ ≤ B := by
+          rw [hB_def]; gcongr
+  -- Step 5: multiset sum ≤ card • B.
+  have hsum_le_card_nsmul := Multiset.sum_le_card_nsmul
+    ((g.map (Int.castRingHom ℂ)).roots.map
+      ((fun x : ℂ[X] => ‖x.coeff j‖) ∘ fun α =>
+        (h.map (Int.castRingHom ℂ)) *
+          Polynomial.rootDeletionDerivativeSummand
+            (g.map (Int.castRingHom ℂ)) α))
+    B (by
+      intro x hx
+      rw [Multiset.mem_map] at hx
+      obtain ⟨α, hα, rfl⟩ := hx
+      exact hsummand_bound α hα)
+  refine hsum_le_card_nsmul.trans ?_
+  -- Step 6: card • B ≤ f.natDegree * (choose * l2norm).
+  rw [Multiset.card_map]
+  rw [nsmul_eq_mul]
+  have hcardroots : Multiset.card (g.map (Int.castRingHom ℂ)).roots ≤ g.natDegree := by
+    have h1 : Multiset.card (g.map (Int.castRingHom ℂ)).roots ≤
+        (g.map (Int.castRingHom ℂ)).natDegree :=
+      Polynomial.card_roots' _
+    have h2 : (g.map (Int.castRingHom ℂ)).natDegree = g.natDegree :=
+      HexPolyZMathlib.natDegree_map_intCast g
+    rw [h2] at h1
+    exact h1
+  have hgh : (g * h).natDegree = g.natDegree + h.natDegree :=
+    Polynomial.natDegree_mul hg hh
+  have hf_deg : f.natDegree = g.natDegree + h.natDegree := by rw [hfac, hgh]
+  have hcardroots_f : Multiset.card (g.map (Int.castRingHom ℂ)).roots ≤ f.natDegree := by
+    omega
+  have hcardroots_real :
+      ((Multiset.card (g.map (Int.castRingHom ℂ)).roots : ℕ) : ℝ) ≤ (f.natDegree : ℝ) :=
+    Nat.cast_le.mpr hcardroots_f
+  calc ((Multiset.card (g.map (Int.castRingHom ℂ)).roots : ℕ) : ℝ) * B
+      ≤ (f.natDegree : ℝ) * B :=
+        mul_le_mul_of_nonneg_right hcardroots_real hB_nonneg
+    _ = (Nat.choose (f.natDegree - 1) j : ℝ) *
+          (f.natDegree : ℝ) * HexPolyZMathlib.l2norm f := by
+        rw [hB_def]; ring
+
 end BHKS
 
 /-- CLD quotient congruence (BHKS logarithmic-derivative bridge).
@@ -1113,6 +1326,49 @@ theorem abs_phi_coeff_le_bhksCoeffBound (f g : Hex.ZPoly) (j : Nat)
     rw [hbb_nat]; push_cast; ring
   have hkey :
       (((phi (HexPolyMathlib.toPolynomial f) (HexPolyMathlib.toPolynomial g)).coeff j).natAbs : ℝ)
+        ≤ (Hex.bhksCoeffBound f j : ℝ) := by
+    refine hreal.trans ?_
+    rw [hnd, hbb]
+    have hnn : (0 : ℝ) ≤ (Nat.choose (f.degree?.getD 0 - 1) j : ℝ) * (f.degree?.getD 0 : ℝ) := by
+      positivity
+    exact mul_le_mul_of_nonneg_left hl2 hnn
+  exact_mod_cast hkey
+
+/-- **BHKS Lemma 4.1, non-monic executable bound.**  For any (possibly
+non-monic) factor `g` of `f` over `Polynomial ℤ` with cofactor `h`
+(so `f = g * h`), every coefficient of the genuine CLD column
+`Φ(g) = f * g' / g = h * g'` is bounded by the executable Mignotte column
+bound `Hex.bhksCoeffBound f j`.
+
+The Lean `phi f g = (f * g').divByMonic g` computes this column only when `g`
+is monic; `divByMonic` by a non-monic divisor is `0`, so the genuine column is
+named here as `h * g'` rather than `phi f g`.  This is the version the
+core-coordinate cut needs, where the true integer factors are primitive
+(non-monic). -/
+theorem abs_factorDeriv_coeff_le_bhksCoeffBound
+    (f g : Hex.ZPoly) (h : Polynomial ℤ) (j : Nat)
+    (hfac : HexPolyMathlib.toPolynomial f = HexPolyMathlib.toPolynomial g * h) :
+    ((h * (HexPolyMathlib.toPolynomial g).derivative).coeff j).natAbs
+      ≤ Hex.bhksCoeffBound f j := by
+  classical
+  have hreal := abs_factorDeriv_coeff_le
+    (HexPolyMathlib.toPolynomial f) (HexPolyMathlib.toPolynomial g) h hfac j
+  have hnd : (HexPolyMathlib.toPolynomial f).natDegree = f.degree?.getD 0 :=
+    HexPolyMathlib.natDegree_toPolynomial f
+  have hZeq : HexPolyZMathlib.toPolynomial f = HexPolyMathlib.toPolynomial f := rfl
+  have hl2 : HexPolyZMathlib.l2norm (HexPolyMathlib.toPolynomial f)
+      ≤ (Hex.ZPoly.coeffL2NormBound f : ℝ) := by
+    rw [← hZeq]; exact l2norm_toPolynomial_le_coeffL2NormBound f
+  have hbb_nat : Hex.bhksCoeffBound f j
+      = Nat.choose (f.degree?.getD 0 - 1) j * (f.degree?.getD 0)
+          * Hex.ZPoly.coeffL2NormBound f := by
+    simp only [Hex.bhksCoeffBound, hex_choose_eq]
+  have hbb : (Hex.bhksCoeffBound f j : ℝ)
+      = (Nat.choose (f.degree?.getD 0 - 1) j : ℝ) * (f.degree?.getD 0 : ℝ)
+          * (Hex.ZPoly.coeffL2NormBound f : ℝ) := by
+    rw [hbb_nat]; push_cast; ring
+  have hkey :
+      (((h * (HexPolyMathlib.toPolynomial g).derivative).coeff j).natAbs : ℝ)
         ≤ (Hex.bhksCoeffBound f j : ℝ) := by
     refine hreal.trans ?_
     rw [hnd, hbb]
