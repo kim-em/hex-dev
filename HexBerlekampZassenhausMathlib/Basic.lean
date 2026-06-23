@@ -3323,6 +3323,99 @@ theorem scaledLiftedFactorProduct_congr_core_of_product_congr_monicTarget
     (scale_congr_of_congr (Hex.DensePoly.leadingCoeff core) _ _ _ hprod)
     (leadingCoeff_scale_monicTarget_congr_core core d.p d.k hpk hgcd)
 
+/-- Core-coordinate recovery capstone (`M1`): when the lifted product is congruent
+to the whole `monicTarget core p k` modulo the Hensel modulus `p^a`, the executable
+centred lift of the `ℓf`-scaled lifted product recovers `core` exactly, provided the
+modulus is beyond twice the default Mignotte coefficient bound for `core`.
+
+This is the core-coordinate analogue of
+`centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision`: it threads the M1
+mod-bridge (`scaledLiftedFactorProduct_congr_core_of_product_congr_monicTarget`)
+into the existing Mignotte recovery with `factor := core`.  No `dilate` is needed —
+the recovery lands directly in `core`'s own coordinate. -/
+theorem centeredLift_scaledLiftedFactorProduct_eq_core_of_product_congr_monicTarget
+    {core : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hpk : 1 < d.p ^ d.k)
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core) (Int.ofNat (d.p ^ d.k)) = 1)
+    (hprod :
+      Hex.ZPoly.congr (liftedFactorProduct d S)
+        (Hex.ZPoly.monicTarget core d.p d.k) (d.p ^ d.k))
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    Hex.centeredLiftPoly
+        (Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k)
+        (d.p ^ d.k) = core := by
+  have hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k
+        = Hex.ZPoly.reduceModPow core d.p d.k :=
+    Hex.ZPoly.reduceModPow_eq_of_congr _ _ d.p d.k
+      (scaledLiftedFactorProduct_congr_core_of_product_congr_monicTarget hpk hgcd hprod)
+  exact centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision
+    hcore_ne (Hex.DensePoly.dvd_refl_poly core) hscaled hprecision
+
+/--
+M1 (`monicTarget`-coordinate) recovery witness, the van Hoeij analogue of
+`RecoveredAtLift`.
+
+The selected lifted product represents a monic-coordinate factor `monicFactor`
+modulo `p^k`; the integer factor is recovered by scaling that monic factor by
+`ℓf = leadingCoeff core` and taking the primitive part of its centred lift — no
+`dilate`, because the `monicTarget` coordinate already *is* `core`'s coordinate
+(`monicTarget ≡ core·ℓf⁻¹`).  Accordingly `monic_dvd` pins `monicFactor` to a
+divisor of `monicTarget core p k` rather than `(toMonic core).monic`.
+
+Stated standalone (a fresh carrier with its own recovery lemma `candidate_eq`)
+so it lands green without rerouting any existing `RecoveredAtLift` (M2) consumer.
+-/
+structure RecoveredAtLiftM1
+    (core : Hex.ZPoly) (d : Hex.LiftData) (factor : Hex.ZPoly)
+    (S : LiftedFactorSubset d) where
+  monicFactor : Hex.ZPoly
+  congr :
+    Hex.ZPoly.reduceModPow (liftedFactorProduct d S) d.p d.k =
+      Hex.ZPoly.reduceModPow monicFactor d.p d.k
+  recovered_eq :
+    Hex.ZPoly.primitivePart
+        (Hex.centeredLiftPoly
+          (Hex.ZPoly.reduceModPow
+            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) monicFactor)
+            d.p d.k)
+          (d.p ^ d.k)) =
+      factor
+  monic_dvd : monicFactor ∣ Hex.ZPoly.monicTarget core d.p d.k
+
+/-- Recovery formula in `core`'s own coordinate: an `M1` recovery witness recovers
+its integer factor as the primitive part of the centred lift of the `ℓf`-scaled
+selected lifted product, `primitivePart (centeredLiftPoly ((ℓf · ∏ S) % p^k)) =
+factor`.  This is the core-coordinate analogue of
+`RecoveredAtLift.candidate_eq_of_monic_dvd`, but with no `dilate` — the proof just
+transports the witness `congr` through the `ℓf`-scaling (`scale_congr_of_congr`).
+-/
+theorem RecoveredAtLiftM1.candidate_eq
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hrec : RecoveredAtLiftM1 core d factor S) (hpk : 0 < d.p ^ d.k) :
+    Hex.ZPoly.primitivePart
+        (Hex.centeredLiftPoly
+          (Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k)
+          (d.p ^ d.k)) =
+      factor := by
+  have hcongr :
+      Hex.ZPoly.congr (liftedFactorProduct d S) hrec.monicFactor (d.p ^ d.k) := by
+    have hf := Hex.ZPoly.congr_reduceModPow (liftedFactorProduct d S) d.p d.k hpk
+    have hg := Hex.ZPoly.congr_reduceModPow hrec.monicFactor d.p d.k hpk
+    rw [hrec.congr] at hf
+    exact Hex.ZPoly.congr_trans _ _ _ _ (Hex.ZPoly.congr_symm _ _ _ hf) hg
+  have hscale_eq :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k
+        = Hex.ZPoly.reduceModPow
+            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) hrec.monicFactor)
+            d.p d.k := by
+    unfold scaledLiftedFactorProduct
+    exact Hex.ZPoly.reduceModPow_eq_of_congr _ _ d.p d.k
+      (scale_congr_of_congr (Hex.DensePoly.leadingCoeff core) _ _ _ hcongr)
+  rw [hscale_eq]
+  exact hrec.recovered_eq
+
 /--
 Abstract-bound variant of
 `existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence`:
