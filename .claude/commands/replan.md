@@ -47,6 +47,10 @@ the following:
   close with a forward link.
 - **Plan stale / approach changed**: create a corrected replacement
   issue via `coordination plan`, close the original linking forward.
+  Invocation is `coordination plan [--label L] "<title>"` with the
+  **body piped on stdin** — there is no `--help`; any argument you pass
+  becomes an issue title, so probing usage creates a junk issue. Use
+  `--label feature` when the replacement is directly claimable work.
 - **Partial progress**: create an issue for the remaining deliverables,
   close the original linking forward.
 - **Worker-decomposed**: the worker created sub-issues before releasing
