@@ -431,3 +431,18 @@ libraries:
     mathlib: true
     done_through: 0
     status: planned
+  HexRealRoots:
+    deps: [HexPolyZ]
+    mathlib: false
+    done_through: 0
+    status: planned
+  HexRealRootsMathlib:
+    deps: [HexRealRoots, HexPolyZMathlib]
+    mathlib: true
+    done_through: 0
+    status: planned
+  HexRCF:
+    deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
+    mathlib: true
+    done_through: 0
+    status: planned
