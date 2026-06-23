@@ -20006,6 +20006,45 @@ theorem scale_mul_scale (a b : Int) (p q : Hex.ZPoly) :
     HexPolyZMathlib.toPolynomial_C, Polynomial.C_mul]
   ring
 
+/-- **Honest scale-coordinate congruence from a `monicTarget` subset correspondence**
+(the algebraic core of deliverable (b) of #8319).
+
+Given the per-support `monicTarget`-coordinate correspondence
+`scale (leadingCoeff factor) (∏ S) ≡ factor (mod p^k)` — the selected lifted
+product, rescaled to `factor`'s leading coefficient, lands on `factor` itself —
+together with the leading-coefficient factorisation
+`leadingCoeff core = leadingCoeff factor * cofactorLc`, the honest proportional
+congruence `scale (leadingCoeff core) (∏ S) ≡ scale cofactorLc factor (mod p^k)`
+follows by scaling the correspondence by `cofactorLc` and composing the two
+scalings (`scale_scale`).  This is exactly the `hhonest` field that
+`recoveredAtLiftM1_of_recovery` / `cutProjectionHypotheses_of_recoveryData`
+consume per support.
+
+The spurious constant `cofactorLc` is the cofactor's leading coefficient; it is
+the `c` of the M1 recovery, stripped by `primitivePart` in `recovered_eq`.  This
+lemma is the `dilate`-free, soundness-clean reduction: it leaves a *single*
+remaining obligation — the correspondence hypothesis `hcorr`, i.e. the
+Hensel-uniqueness subset recovery in the `monicTarget` coordinate, which the
+`dilate`-coordinate `RecoveredAtLift` witness backing each true support does not
+itself supply (the two coordinates diverge). -/
+theorem honestCongr_of_correspondence
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (cofactorLc : Int)
+    (hlc : Hex.DensePoly.leadingCoeff core
+        = Hex.DensePoly.leadingCoeff factor * cofactorLc)
+    (hcorr :
+      Hex.ZPoly.congr
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff factor) (liftedFactorProduct d S))
+        factor (d.p ^ d.k)) :
+    Hex.ZPoly.congr
+      (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) (liftedFactorProduct d S))
+      (Hex.DensePoly.scale cofactorLc factor)
+      (d.p ^ d.k) := by
+  have hscaled := scale_congr_of_congr cofactorLc _ _ _ hcorr
+  rw [scale_scale] at hscaled
+  rwa [show cofactorLc * Hex.DensePoly.leadingCoeff factor
+        = Hex.DensePoly.leadingCoeff core by rw [hlc]; ring] at hscaled
+
 /-- The monic dilation transform of `base` by `c`: coefficient `n` is
 `c ^ (deg - n) * base.coeff n / leadingCoeff base` below the degree `deg`, and `1`
 at `deg`.  When `leadingCoeff base ∣ c`, dilating this by `c` recovers a scalar
