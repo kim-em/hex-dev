@@ -3416,6 +3416,118 @@ theorem RecoveredAtLiftM1.candidate_eq
   rw [hscale_eq]
   exact hrec.recovered_eq
 
+/-! ### M1 Hensel lift invariant: `monicTarget` mod-`p` structure transfers from `core`
+
+The fast-core lift `coreLiftData` lifts `core`'s Berlekamp factors against the
+`monicTarget`, but the prime is selected against `core`.  Over `ℤ/p` the
+`monicTarget` is the unit rescaling `ℓf⁻¹·core`, so it shares its monic modular
+image with `core`; the boundary facts the Hensel lift invariant consumes
+(`factorsModP` product congruence, monicity, good prime) transfer verbatim. -/
+
+private theorem zmod64_toZMod_injective {p : Nat} [Hex.ZMod64.Bounds p] :
+    Function.Injective (HexModArithMathlib.ZMod64.toZMod (p := p)) := by
+  intro x y h
+  rw [← HexModArithMathlib.ZMod64.ofZMod_toZMod x,
+    ← HexModArithMathlib.ZMod64.ofZMod_toZMod y, h]
+
+/-- Reduction modulo `p` of an integer rescaling: the integer scalar reduces to
+its `ZMod64 p` image, `modP p (scale c f) = scale (↑c) (modP p f)`. -/
+theorem modP_scale_intCast {p : Nat} [Hex.ZMod64.Bounds p] (c : Int) (f : Hex.ZPoly) :
+    Hex.ZPoly.modP p (Hex.DensePoly.scale c f) =
+      Hex.DensePoly.scale ((c : Hex.ZMod64 p)) (Hex.ZPoly.modP p f) := by
+  apply Hex.DensePoly.ext_coeff
+  intro i
+  rw [Hex.ZPoly.coeff_modP,
+    Hex.DensePoly.coeff_scale c f i (Int.mul_zero c),
+    Hex.DensePoly.coeff_scale ((c : Hex.ZMod64 p)) (Hex.ZPoly.modP p f) i
+      (Lean.Grind.Semiring.mul_zero _),
+    Hex.ZPoly.coeff_modP]
+  apply zmod64_toZMod_injective
+  rw [HexModArithMathlib.ZMod64.toZMod_mul,
+    HexPolyZMathlib.toZMod_ZMod64_ofNat_intModNat_eq_intCast,
+    HexPolyZMathlib.toZMod_ZMod64_ofNat_intModNat_eq_intCast,
+    HexModArithMathlib.ZMod64.toZMod_intCast]
+  push_cast
+  ring
+
+/-- The BHKS `monicTarget` reduces mod `p` to the monic modular image of `core`.
+Both are the monic mod-`p` factor pattern of `core`; the `monicTarget` realises it
+as an honest reduction (`ℓf⁻¹·core ≡ monicModularImage (modP p core)`), provided
+the prime is good for `core` and `ℓf` is coprime to `p^k`. -/
+theorem monicModularImage_modP_eq_modP_monicTarget
+    (core : Hex.ZPoly) (p k : Nat) [Hex.ZMod64.Bounds p]
+    (hprime : Hex.Nat.Prime p)
+    (hpk : 1 < p ^ k) (hk : 0 < k)
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core) (Int.ofNat (p ^ k)) = 1)
+    (hgood : Hex.isGoodPrime core p = true) :
+    Hex.monicModularImage (Hex.ZPoly.modP p core) =
+      Hex.ZPoly.modP p (Hex.ZPoly.monicTarget core p k) := by
+  haveI : Fact (_root_.Nat.Prime p) := ⟨natPrime_of_hexNatPrime hprime⟩
+  have hadm : Hex.leadingCoeffAdmissible core p :=
+    Hex.isGoodPrime_leadingCoeffAdmissible core p hgood
+  have hsize : 0 < (Hex.ZPoly.modP p core).size := by
+    rw [Hex.size_modP_eq_of_leadingCoeffAdmissible core p hadm]
+    exact Hex.leadingCoeffAdmissible_size_pos core p hadm
+  have hzero : (Hex.ZPoly.modP p core).isZero = false :=
+    (Hex.DensePoly.isZero_eq_false_iff _).mpr hsize
+  set s := Hex.ZPoly.leadingCoeffInverse core p k with hs
+  set ℓf := Hex.DensePoly.leadingCoeff core with hℓf
+  set a := Hex.DensePoly.leadingCoeff (Hex.ZPoly.modP p core) with ha
+  -- RHS as a scaling of `modP p core`.
+  have hrhs : Hex.ZPoly.modP p (Hex.ZPoly.monicTarget core p k) =
+      Hex.DensePoly.scale ((s : Hex.ZMod64 p)) (Hex.ZPoly.modP p core) := by
+    unfold Hex.ZPoly.monicTarget
+    rw [Hex.ZPoly.modP_reduceModPow_of_pos p k _ hk, modP_scale_intCast]
+  -- LHS as a scaling of `modP p core`.
+  have hlhs : Hex.monicModularImage (Hex.ZPoly.modP p core) =
+      Hex.DensePoly.scale (a⁻¹) (Hex.ZPoly.modP p core) :=
+    monicModularImage_eq_scale_inv_leadingCoeff_of_isZero_false hzero
+  rw [hlhs, hrhs]
+  -- It remains to identify the scalars in `ZMod64 p`.
+  have ha_ne : a ≠ 0 := by
+    rw [ha, Hex.leadingCoeff_modP_eq_leadingCoeffModP_of_admissible core p hadm]
+    exact hadm
+  -- `a = ↑ℓf` in `ZMod64 p`.
+  have ha_eq : a = ((ℓf : Int) : Hex.ZMod64 p) := by
+    apply zmod64_toZMod_injective
+    rw [ha, Hex.leadingCoeff_modP_eq_leadingCoeffModP_of_admissible core p hadm,
+      Hex.ZPoly.leadingCoeffModP,
+      HexPolyZMathlib.toZMod_ZMod64_ofNat_intModNat_eq_intCast,
+      HexModArithMathlib.ZMod64.toZMod_intCast]
+  -- `ℓf · s ≡ 1 (mod p)` in the field `ZMod p`.
+  have hsl_zmod : ((ℓf : Int) : ZMod p) * ((s : Int) : ZMod p) = 1 := by
+    have hbez : (s * ℓf) % (Int.ofNat (p ^ k)) = 1 :=
+      Hex.ZPoly.leadingCoeffInverse_mul_emod core p k hpk hgcd
+    have hmod : (s * ℓf) ≡ 1 [ZMOD (Int.ofNat (p ^ k))] := by
+      unfold Int.ModEq
+      rw [hbez, Int.emod_eq_of_lt (by decide) (by simpa using Int.ofNat_lt.mpr hpk)]
+    have hdvd_pk : ((p : Int)) ∣ (Int.ofNat (p ^ k)) := by
+      rw [Int.ofNat_eq_natCast]
+      exact_mod_cast dvd_pow_self p hk.ne'
+    have hmod_p : (s * ℓf) ≡ 1 [ZMOD (p : Int)] := hmod.of_dvd hdvd_pk
+    have hcast : ((s * ℓf : Int) : ZMod p) = 1 := by
+      rw [(ZMod.intCast_eq_intCast_iff _ _ _).mpr hmod_p, Int.cast_one]
+    rw [mul_comm, ← Int.cast_mul]
+    exact hcast
+  -- Hence `a⁻¹ = ↑s` in `ZMod64 p`, via the field `ZMod p`.
+  have hscalar : a⁻¹ = ((s : Int) : Hex.ZMod64 p) := by
+    apply zmod64_toZMod_injective
+    have hinv_z : HexModArithMathlib.ZMod64.toZMod (a⁻¹) =
+        (HexModArithMathlib.ZMod64.toZMod a)⁻¹ := by
+      have hmul1 : HexModArithMathlib.ZMod64.toZMod a *
+          HexModArithMathlib.ZMod64.toZMod (a⁻¹) = 1 := by
+        rw [← HexModArithMathlib.ZMod64.toZMod_mul]
+        have hia : a * a⁻¹ = 1 := Hex.ZMod64.mul_inv_eq_one_of_prime hprime ha_ne
+        rw [hia, HexModArithMathlib.ZMod64.toZMod_one]
+      exact eq_inv_of_mul_eq_one_right hmul1
+    rw [hinv_z, HexModArithMathlib.ZMod64.toZMod_intCast]
+    -- `(toZMod a)⁻¹ = ↑s`, since `↑ℓf · ↑s = 1` and `toZMod a = ↑ℓf`.
+    have ha_zmod : HexModArithMathlib.ZMod64.toZMod a = ((ℓf : Int) : ZMod p) := by
+      rw [ha_eq, HexModArithMathlib.ZMod64.toZMod_intCast]
+    rw [ha_zmod]
+    exact (eq_inv_of_mul_eq_one_right hsl_zmod).symm
+  rw [hscalar]
+
 /--
 Abstract-bound variant of
 `existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence`:
@@ -7507,6 +7619,100 @@ theorem factorsModP_polyProduct_congr_of_factorsModPBerlekampForm_of_primitive_p
   -- `primeData.factorsModP = (raw.map monicModularImage).toArray` by `heq`.
   rw [heq, List.map_toArray]
   exact hbridge
+
+/-- Form-only product congruence at the monic modular image: the product of
+`core`'s lifted Berlekamp factors is congruent modulo `p` to
+`liftToZ (monicModularImage (modP p core))`.  Depends only on the Berlekamp form;
+this is `_of_primitive_pos_lc_core` with the (unused) primitivity / leading-
+coefficient / good-prime premises dropped. -/
+theorem factorsModP_polyProduct_congr_monicImage_of_factorsModPBerlekampForm
+    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (hform : Hex.factorsModPBerlekampForm core primeData) :
+    letI := primeData.bounds
+    Hex.ZPoly.congr
+      (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+      (Hex.FpPoly.liftToZ
+        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)))
+      primeData.p := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  obtain ⟨hprime, hzero, heq⟩ := hform
+  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
+    (Hex.ZMod64.primeModulusOfPrime hprime)
+  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime
+  have hmonicImage_monic :
+      Hex.DensePoly.Monic (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) :=
+    Hex.monicModularImage_monic hprime (Hex.ZPoly.modP primeData.p core) hzero
+  let raw :=
+      (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
+        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+        hmonicImage_monic hfield).factors
+  have hprod_eq_raw :
+      Hex.Berlekamp.factorProduct raw =
+        Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) := by
+    show Hex.Berlekamp.factorProduct
+        (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
+          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+          hmonicImage_monic hfield).factors = _
+    rw [Hex.Berlekamp.factorProduct_berlekampFactor]
+  have hraw_ne : ∀ g ∈ raw, g ≠ 0 :=
+    Hex.Berlekamp.berlekampFactor_factors_ne_zero
+      (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
+      hmonicImage_monic
+  have hmonicImage_idem :
+      Hex.monicModularImage (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) =
+        Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) :=
+    Hex.monicModularImage_eq_self_of_monic hprime _ hmonicImage_monic
+  have hprod_eq_mapped :
+      Hex.Berlekamp.factorProduct (raw.map Hex.monicModularImage) =
+        Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) := by
+    rw [Hex.factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct
+        hprime raw hraw_ne, hprod_eq_raw, hmonicImage_idem]
+  have hbridge :=
+    polyProduct_map_liftToZ_congr_factorProduct (p := primeData.p)
+      (raw.map Hex.monicModularImage)
+  rw [hprod_eq_mapped] at hbridge
+  rw [heq, List.map_toArray]
+  exact hbridge
+
+/--
+**`monicTarget` factor-product congruence** (M1 Hensel lift invariant boundary).
+
+The product of `core`'s lifted modular factors is congruent to the `monicTarget`
+modulo `p`.  Derived from `core`'s Berlekamp form (which lands the product at the
+monic modular image of `modP p core`) plus the bridge
+`monicModularImage_modP_eq_modP_monicTarget`. -/
+theorem factorsModP_polyProduct_congr_monicTarget
+    (core : Hex.ZPoly) (k : Nat) (primeData : Hex.PrimeChoiceData)
+    (hpk : 1 < primeData.p ^ k) (hk : 0 < k)
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
+      (Int.ofNat (primeData.p ^ k)) = 1)
+    (hform : Hex.factorsModPBerlekampForm core primeData)
+    (hgood :
+      letI := primeData.bounds
+      Hex.isGoodPrime core primeData.p = true) :
+    letI := primeData.bounds
+    Hex.ZPoly.congr
+      (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+      (Hex.ZPoly.monicTarget core primeData.p k) primeData.p := by
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  obtain ⟨hprime, hz, he⟩ := hform
+  have h1 :
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        (Hex.FpPoly.liftToZ
+          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)))
+        primeData.p :=
+    factorsModP_polyProduct_congr_monicImage_of_factorsModPBerlekampForm
+      core primeData ⟨hprime, hz, he⟩
+  have hbridge :
+      Hex.ZPoly.congr
+        (Hex.FpPoly.liftToZ
+          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)))
+        (Hex.ZPoly.monicTarget core primeData.p k) primeData.p := by
+    rw [monicModularImage_modP_eq_modP_monicTarget core primeData.p k hprime hpk hk hgcd hgood]
+    exact Hex.FpPoly.congr_liftToZ_modP (Hex.ZPoly.monicTarget core primeData.p k)
+  exact Hex.ZPoly.congr_trans _ _ _ _ h1 hbridge
 
 /-- Discharge of the `polyProduct (factorsModP.map liftToZ) ≡ core (mod p)`
 premise on `henselLiftData_liftedFactor_monic_of_choosePrimeData` (and the two
