@@ -2353,6 +2353,174 @@ def cutProjectionHypotheses_of_aggregateResidue
     (fun S => supportShortVectorData_of_aggregateResidue f p a liftedFactors
       S.1 hp hthr (hagg S))
 
+/-- **Core aggregate-residue producer (the non-monic `#8290` deliverable).**
+
+Discharges `AggregateResidueData` for one true support `S` of the executable's
+*core* basis `bhksLatticeBasis f p a liftedFactors`, where `f = core` is **not**
+monic, so the monic `RecoveredLift` / `phi` route (`recoveredLift_aggregate_residue`)
+is unavailable.
+
+The integer column extracted is the genuine non-monic CLD numerator
+`cof · factor'` (with `core = factor · cof` over `ℤ`), bounded by
+`abs_factorDeriv_coeff_le_bhksCoeffBound` (#8292) — **not** the monic `phi`,
+which vanishes for the non-monic factor.
+
+Two inputs drive the bridge:
+* `hfac` — the per-selected-factor Hensel congruence `gᵢ ∣ core (mod p^a)`
+  (monic `gᵢ`), supplied by `coreLiftData_liftedFactor_hensel_semantics` (#8307);
+  it powers the landed aggregate CLD congruence `G · Σ ≡ core · G' (mod p^a)`.
+* `hbridge` — the recovery proportionality `factor · G' ≡ G · factor' (mod p^a)`
+  of the monic support product `G = supportProduct L S` and the integer factor
+  `factor` (both have proportional logarithmic-derivative numerators mod `p^a`
+  because `G ≡ unit · factor (mod p^a)`).
+
+`G` is monic (a product of monic Hensel factors), so it is cancelled by
+`C_dvd_of_monic_mul` exactly as in the monic proof; no non-monic polynomial
+cancellation is needed. -/
+theorem aggregateResidueData_of_factorBridge
+    (f factor cof : Hex.ZPoly) (p a : Nat)
+    (liftedFactors : Array Hex.ZPoly)
+    (S : LiftedFactorSupport (Hex.bhksLatticeBasis f p a liftedFactors))
+    (hk : 1 < p ^ a)
+    (hsep : ∀ j, 2 * Hex.bhksCoeffBound f j < p ^ a)
+    (hfac : ∀ i : Fin (Hex.bhksLatticeBasis f p a liftedFactors).factorCount, i ∈ S →
+        ∃ h : Hex.ZPoly,
+          Hex.DensePoly.Monic
+            ((Hex.bhksLatticeBasis f p a liftedFactors).liftedFactors.getD i.val 1) ∧
+          0 < ((Hex.bhksLatticeBasis f p a liftedFactors).liftedFactors.getD i.val 1).degree?.getD 0 ∧
+          Hex.ZPoly.congr f
+            (((Hex.bhksLatticeBasis f p a liftedFactors).liftedFactors.getD i.val 1) * h) (p ^ a))
+    (hfactor : HexPolyMathlib.toPolynomial f
+        = HexPolyMathlib.toPolynomial factor * HexPolyMathlib.toPolynomial cof)
+    (hbridge : Hex.ZPoly.congr
+        (factor *
+          Hex.DensePoly.derivative (supportProduct (Hex.bhksLatticeBasis f p a liftedFactors) S))
+        (supportProduct (Hex.bhksLatticeBasis f p a liftedFactors) S *
+          Hex.DensePoly.derivative factor) (p ^ a)) :
+    AggregateResidueData (Hex.bhksLatticeBasis f p a liftedFactors) S f p a := by
+  classical
+  -- Landed aggregate CLD congruence over the core basis (folded into `G` below).
+  have hagg := supportProduct_cldSum_congr_of_factors f p a hk hfac
+  set G := supportProduct (Hex.bhksLatticeBasis f p a liftedFactors) S with hG
+  -- Monicity of the support product `G` (product of monic Hensel factors).
+  have hGG_monic : (HexPolyMathlib.toPolynomial G).Monic := by
+    have heq : HexPolyZMathlib.toPolynomial G
+        = ∏ i ∈ Finset.univ.filter
+            (fun i : Fin (Hex.bhksLatticeBasis f p a liftedFactors).factorCount => i ∈ S),
+            HexPolyZMathlib.toPolynomial
+              ((Hex.bhksLatticeBasis f p a liftedFactors).liftedFactors.getD i.val 1) := by
+      rw [hG]
+      unfold supportProduct
+      rw [polyProduct_toPolynomial, List.toList_toArray, List.map_map]
+      simp only [Function.comp_def]
+      rw [← List.prod_toFinset
+        (fun i => HexPolyZMathlib.toPolynomial
+          ((Hex.bhksLatticeBasis f p a liftedFactors).liftedFactors.getD i.val 1))
+        ((List.nodup_finRange (Hex.bhksLatticeBasis f p a liftedFactors).factorCount).filter _)]
+      refine Finset.prod_congr ?_ (fun _ _ => rfl)
+      ext i
+      simp only [List.mem_toFinset, List.mem_filter, List.mem_finRange, true_and,
+        decide_eq_true_eq, Finset.mem_filter, Finset.mem_univ]
+    show (HexPolyZMathlib.toPolynomial G).Monic
+    rw [heq]
+    refine Polynomial.monic_prod_of_monic _ _ (fun i hi => ?_)
+    obtain ⟨h, hmono, _, _⟩ := hfac i (Finset.mem_filter.mp hi).2
+    exact HexHenselMathlib.toPolynomial_monic_of_dense_monic _ hmono
+  -- Transport `hagg` and `hbridge` to `C (p^a)`-divisibilities over `Polynomial ℤ`.
+  have hC_agg : Polynomial.C ((p ^ a : Nat) : ℤ)
+      ∣ (HexPolyMathlib.toPolynomial G
+            * HexPolyMathlib.toPolynomial
+                (supportCldSum (Hex.bhksLatticeBasis f p a liftedFactors) S f p a)
+          - HexPolyMathlib.toPolynomial f * (HexPolyMathlib.toPolynomial G).derivative) := by
+    have h := C_dvd_toPolynomial_sub_of_congr
+      (G * supportCldSum (Hex.bhksLatticeBasis f p a liftedFactors) S f p a)
+      (f * Hex.DensePoly.derivative G) (p ^ a) hagg
+    rwa [HexPolyMathlib.toPolynomial_mul, HexPolyMathlib.toPolynomial_mul,
+      HexPolyMathlib.toPolynomial_derivative] at h
+  have hC_bridge : Polynomial.C ((p ^ a : Nat) : ℤ)
+      ∣ (HexPolyMathlib.toPolynomial factor * (HexPolyMathlib.toPolynomial G).derivative
+          - HexPolyMathlib.toPolynomial G * (HexPolyMathlib.toPolynomial factor).derivative) := by
+    have h := C_dvd_toPolynomial_sub_of_congr (factor * Hex.DensePoly.derivative G)
+      (G * Hex.DensePoly.derivative factor) (p ^ a) hbridge
+    rwa [HexPolyMathlib.toPolynomial_mul, HexPolyMathlib.toPolynomial_mul,
+      HexPolyMathlib.toPolynomial_derivative, HexPolyMathlib.toPolynomial_derivative] at h
+  -- Combine: `C (p^a) ∣ GG * (Σ − cof·factor')`.
+  have key : (HexPolyMathlib.toPolynomial G
+            * HexPolyMathlib.toPolynomial
+                (supportCldSum (Hex.bhksLatticeBasis f p a liftedFactors) S f p a)
+          - HexPolyMathlib.toPolynomial f * (HexPolyMathlib.toPolynomial G).derivative)
+        + HexPolyMathlib.toPolynomial cof
+            * (HexPolyMathlib.toPolynomial factor * (HexPolyMathlib.toPolynomial G).derivative
+              - HexPolyMathlib.toPolynomial G * (HexPolyMathlib.toPolynomial factor).derivative)
+      = HexPolyMathlib.toPolynomial G
+          * (HexPolyMathlib.toPolynomial
+                (supportCldSum (Hex.bhksLatticeBasis f p a liftedFactors) S f p a)
+              - HexPolyMathlib.toPolynomial cof * (HexPolyMathlib.toPolynomial factor).derivative) := by
+    rw [hfactor]; ring
+  have hC_final : Polynomial.C ((p ^ a : Nat) : ℤ)
+      ∣ HexPolyMathlib.toPolynomial G
+          * (HexPolyMathlib.toPolynomial
+                (supportCldSum (Hex.bhksLatticeBasis f p a liftedFactors) S f p a)
+              - HexPolyMathlib.toPolynomial cof * (HexPolyMathlib.toPolynomial factor).derivative) := by
+    rw [← key]
+    exact dvd_add hC_agg (Dvd.dvd.mul_left hC_bridge (HexPolyMathlib.toPolynomial cof))
+  -- Cancel the monic support product.
+  have hZ := C_dvd_of_monic_mul hGG_monic hC_final
+  rw [Polynomial.C_dvd_iff_dvd_coeff] at hZ
+  -- The Mignotte bound on the genuine non-monic column (#8292).
+  have hbnd : ∀ j, ((HexPolyMathlib.toPolynomial cof
+        * (HexPolyMathlib.toPolynomial factor).derivative).coeff j).natAbs
+      ≤ Hex.bhksCoeffBound f j := fun j =>
+    abs_factorDeriv_coeff_le_bhksCoeffBound f factor (HexPolyMathlib.toPolynomial cof) j hfactor
+  -- The per-column residue identity: `residue (Σ.coeff j) = (cof·factor').coeff j`.
+  have hcol : ∀ j, Hex.centeredResiduePow p a
+        ((supportCldSum (Hex.bhksLatticeBasis f p a liftedFactors) S f p a).coeff j)
+      = (HexPolyMathlib.toPolynomial cof * (HexPolyMathlib.toPolynomial factor).derivative).coeff j := by
+    intro j
+    have hj := hZ j
+    rw [Polynomial.coeff_sub, HexPolyMathlib.coeff_toPolynomial] at hj
+    have hcongr_emod : (HexPolyMathlib.toPolynomial cof
+            * (HexPolyMathlib.toPolynomial factor).derivative).coeff j % ((p ^ a : Nat) : Int)
+        = (supportCldSum (Hex.bhksLatticeBasis f p a liftedFactors) S f p a).coeff j
+            % ((p ^ a : Nat) : Int) :=
+      Int.modEq_iff_dvd.mpr hj
+    exact Hex.centeredResiduePow_eq_of_natAbs_le p a _ _ (Hex.bhksCoeffBound f j)
+      (hbnd j) (hsep j) hcongr_emod
+  -- Assemble `AggregateResidueData`.
+  unfold AggregateResidueData
+  intro j
+  refine ⟨_, ?_, hbnd j⟩
+  rw [← hcol j]
+  refine centeredResiduePow_emod_eq p a _ _ ?_
+  have hA : (∑ i ∈ Finset.univ.filter
+        (fun i : Fin (Hex.bhksLatticeBasis f p a liftedFactors).factorCount => i ∈ S),
+        Hex.centeredResiduePow p a
+          ((Hex.cldQuotientMod f
+            ((Hex.bhksLatticeBasis f p a liftedFactors).liftedFactors.getD i.val 1) p a).coeff j))
+      = (((List.finRange (Hex.bhksLatticeBasis f p a liftedFactors).factorCount).filter
+            (fun i => decide (i ∈ S))).map
+          (fun i => Hex.centeredResiduePow p a
+            ((Hex.cldQuotientMod f
+              ((Hex.bhksLatticeBasis f p a liftedFactors).liftedFactors.getD i.val 1)
+                p a).coeff j))).sum :=
+    sum_filter_univ_eq_listSum (fun i => i ∈ S) _
+  have hB : (supportCldSum (Hex.bhksLatticeBasis f p a liftedFactors) S f p a).coeff j
+      = (((List.finRange (Hex.bhksLatticeBasis f p a liftedFactors).factorCount).filter
+            (fun i => decide (i ∈ S))).map
+          (fun i => (Hex.cldQuotientMod f
+            ((Hex.bhksLatticeBasis f p a liftedFactors).liftedFactors.getD i.val 1)
+              p a).coeff j)).sum := by
+    show (((List.finRange (Hex.bhksLatticeBasis f p a liftedFactors).factorCount).filter
+          (fun i => decide (i ∈ S))).map
+          (fun i => Hex.cldQuotientMod f
+            ((Hex.bhksLatticeBasis f p a liftedFactors).liftedFactors.getD i.val 1) p a)).sum.coeff j
+        = _
+    rw [coeff_listSum, List.map_map]
+    rfl
+  rw [hA, hB]
+  exact listSum_emod_eq _ _ _ _
+    (fun i _ => centeredResiduePow_emod_self p a _)
+
 /-- The accumulator of a `max`-fold never decreases below its seed. -/
 private theorem foldl_max_ge_init (l : List Nat) (f : Nat → Nat) :
     ∀ init : Nat, init ≤ l.foldl (fun acc x => max acc (f x)) init := by
