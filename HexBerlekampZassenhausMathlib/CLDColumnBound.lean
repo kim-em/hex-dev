@@ -2446,6 +2446,31 @@ theorem congr_logDeriv_bridge_of_scale_congr
     Hex.ZPoly.congr_trans _ _ _ _ hD (Hex.ZPoly.congr_symm _ _ _ hC)
   exact congr_scale_cancel ℓf _ _ m hgcd hcancel
 
+/-- **`hbridge` producer from an `M1` recovery witness.**
+
+Chains the recovery proportionality `exists_scale_congr_factor_of_recoveredM1` into
+the logarithmic-derivative bridge `congr_logDeriv_bridge_of_scale_congr`, delivering
+the exact `hbridge` hypothesis consumed by `aggregateResidueData_of_factorBridge`,
+over the executable's concrete support product `supportProduct L S`.
+
+The only call-site obligation beyond the recovery witness and the good-prime gcd is
+the identification `liftedFactorProduct d Ssub = supportProduct L S` of the abstract
+lifted product with the concrete BHKS support product. -/
+theorem congr_logDeriv_bridge_of_recoveredM1
+    {core factor : Hex.ZPoly} {d : Hex.LiftData}
+    {L : Hex.BhksLatticeBasis} {Ssub : LiftedFactorSubset d}
+    {S : LiftedFactorSupport L}
+    (hrec : RecoveredAtLiftM1 core d factor Ssub)
+    (hpk : 0 < d.p ^ d.k)
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core) (Int.ofNat (d.p ^ d.k)) = 1)
+    (hsupp : liftedFactorProduct d Ssub = supportProduct L S) :
+    Hex.ZPoly.congr
+      (factor * Hex.DensePoly.derivative (supportProduct L S))
+      (supportProduct L S * Hex.DensePoly.derivative factor) (d.p ^ d.k) := by
+  obtain ⟨c, hpropr⟩ := exists_scale_congr_factor_of_recoveredM1 hrec hpk
+  rw [hsupp] at hpropr
+  exact congr_logDeriv_bridge_of_scale_congr hgcd hpropr
+
 /-- **Core aggregate-residue producer (the non-monic `#8290` deliverable).**
 
 Discharges `AggregateResidueData` for one true support `S` of the executable's
