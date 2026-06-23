@@ -2830,6 +2830,55 @@ theorem bhksRecover_eq_some_of_capSeparation
       expectedFactors hsize hcandidate product_eq)
 
 /--
+Core (van Hoeij `M1`) cap-level specialisation: compose
+`ForwardRecoveryInputsCore.ofCapSeparation` with
+`coreRecover?_eq_some_of_forwardInputsCore` at a fixed `LiftData`.  Under
+cap-level BHKS separation and the residual B7 / `M1` A2 obligations,
+`Hex.coreRecover? f d` returns `some expectedFactors`.
+
+This is the core-coordinate analogue of `bhksRecover_eq_some_of_capSeparation`
+and the termination-side recovery producer the `#8304` swap consumes: once the
+executable `factorFast` routes through `Hex.coreRecover?`, the ~36 termination
+theorems re-point to this producer (their cap-separation `hcap` is supplied by
+`capSeparationOfBridgeDataAtFactorFastCoreCapLift`).
+-/
+theorem coreRecover?_eq_some_of_capSeparation
+    (f : Hex.ZPoly) (d : Hex.LiftData)
+    (rows_pos : HasPositiveDimension f d)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (hcap_le : Hex.factorFastPrecisionCap f ≤ d.k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcap :
+      ExecutableCapSeparationHypotheses
+        (badVectorWitnessOfLiftData f d rows_pos localFactorIndex
+          localFactorDegree H)
+        trueSupports)
+    (mignotte_precision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (expectedIndicators : Array (Array Int))
+    (indicators_match :
+      equivalenceClassIndicatorsOfLiftData f d rows_pos = expectedIndicators)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d rows_pos) expectedIndicators = false)
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size = expectedIndicators.size)
+    (hcandidate :
+      ∀ i, i < expectedIndicators.size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidateCore? f d (expectedIndicators.getD i #[]) =
+            some (expectedFactors.getD i 0, quotient))
+    (product_eq : Array.polyProduct expectedFactors = f) :
+    Hex.coreRecover? f d = some expectedFactors :=
+  coreRecover?_eq_some_of_forwardInputsCore f d
+    (ForwardRecoveryInputsCore.ofCapSeparation rows_pos trueSupports
+      localFactorIndex localFactorDegree H hcap_le C hC_nonneg hC hcap
+      mignotte_precision expectedIndicators indicators_match nondegenerate
+      expectedFactors hsize hcandidate product_eq)
+
+/--
 Compose the Mathlib-side forward-recovery inputs with the executable scheduled
 fast-path lemma: if a scheduled lift for the normalized square-free core
 satisfies the forward-verification inputs, then the public `Hex.factorFast`
@@ -10983,6 +11032,96 @@ theorem projectedRowSpan_eq_trueFactorIndicatorLattice_of_factorFastCoreCapLift_
     (capSeparationOfBridgeDataAtFactorFastCoreCapLift
       f primeData rows_pos localFactorIndex localFactorDegree H
       trueSupports hcut bridge hp hcomparison)
+
+/--
+Core (van Hoeij `M1`) recovery success for the actual `factorFast` cap lift:
+thread the landed cap-separation producer
+`capSeparationOfBridgeDataAtFactorFastCoreCapLift` (bridge package + analytic
+comparison) into `coreRecover?_eq_some_of_capSeparation`, discharging the
+`hcap` obligation from the bridge data and leaving only the B7 / `M1` A2 fields.
+
+This is the cap-lift-keyed recovery producer the `#8304` swap consumes: once the
+executable `factorFast` routes through `Hex.coreRecover?`, the termination
+theorems obtain `Hex.coreRecover? core (factorFastCoreCapLiftData f primeData) =
+some expectedFactors` from the same bridge/cut/comparison hypotheses that feed
+`projectedRowSpan_eq_trueFactorIndicatorLattice_of_factorFastCoreCapLift_bridge`.
+-/
+theorem coreRecover?_eq_some_of_factorFastCoreCapLift_bridge
+    (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
+    (rows_pos :
+      HasPositiveDimension
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCoreCapLiftData f primeData))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCoreCapLiftData f primeData)
+        rows_pos).factorCount)))
+    (hcap_le :
+      Hex.factorFastPrecisionCap (Hex.normalizeForFactor f).squareFreeCore ≤
+        (factorFastCoreCapLiftData f primeData).k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcut :
+      CutProjectionHypotheses
+        (projectedRowsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCoreCapLiftData f primeData)
+          rows_pos)
+        trueSupports)
+    (bridge :
+      ExecutableBadVectorWitness.BadVectorBridgeData
+        (badVectorWitnessOfFactorFastCoreCapLiftData
+          f primeData rows_pos localFactorIndex localFactorDegree H)
+        trueSupports)
+    (hp : 0 < (factorFastCoreCapLiftData f primeData).p)
+    (hcomparison :
+      FactorFastCoreCapLiftAnalyticComparison
+        f primeData rows_pos localFactorIndex localFactorDegree H)
+    (mignotte_precision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound
+            (Hex.normalizeForFactor f).squareFreeCore <
+        (factorFastCoreCapLiftData f primeData).p ^
+          (factorFastCoreCapLiftData f primeData).k)
+    (expectedIndicators : Array (Array Int))
+    (indicators_match :
+      equivalenceClassIndicatorsOfLiftData
+          (Hex.normalizeForFactor f).squareFreeCore
+          (factorFastCoreCapLiftData f primeData) rows_pos =
+        expectedIndicators)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData
+            (Hex.normalizeForFactor f).squareFreeCore
+            (factorFastCoreCapLiftData f primeData) rows_pos)
+          expectedIndicators = false)
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size = expectedIndicators.size)
+    (hcandidate :
+      ∀ i, i < expectedIndicators.size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidateCore?
+              (Hex.normalizeForFactor f).squareFreeCore
+              (factorFastCoreCapLiftData f primeData)
+              (expectedIndicators.getD i #[]) =
+            some (expectedFactors.getD i 0, quotient))
+    (product_eq :
+      Array.polyProduct expectedFactors =
+        (Hex.normalizeForFactor f).squareFreeCore) :
+    Hex.coreRecover?
+        (Hex.normalizeForFactor f).squareFreeCore
+        (factorFastCoreCapLiftData f primeData) =
+      some expectedFactors :=
+  coreRecover?_eq_some_of_capSeparation
+    (Hex.normalizeForFactor f).squareFreeCore
+    (factorFastCoreCapLiftData f primeData)
+    rows_pos trueSupports localFactorIndex localFactorDegree H hcap_le
+    C hC_nonneg hC
+    (capSeparationOfBridgeDataAtFactorFastCoreCapLift
+      f primeData rows_pos localFactorIndex localFactorDegree H
+      trueSupports hcut bridge hp hcomparison)
+    mignotte_precision expectedIndicators indicators_match nondegenerate
+    expectedFactors hsize hcandidate product_eq
 
 end BHKS
 
