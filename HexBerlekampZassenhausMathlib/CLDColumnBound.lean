@@ -2751,6 +2751,74 @@ theorem cutProjectionHypotheses_of_recoveredM1
     (fun S => congr_logDeriv_bridge_of_recoveredM1 (hrec S)
       (lt_trans Nat.zero_lt_one hk) hgcd (hsupp S))
 
+/-- **Forward cut from per-support M1 recovery data.**
+
+The assembly-tier wrapper over `cutProjectionHypotheses_of_recoveredM1`: rather than
+demanding a pre-built `RecoveredAtLiftM1` family, it accepts the genuine
+core-coordinate recovery data per true support and builds the witness family in line
+via `recoveredAtLiftM1_of_recovery`.  Each support `S` supplies a monic-coordinate
+witness `monicFactor S` congruent to the selected lifted product and dividing
+`monicTarget core p k`, together with the M1 recovery congruence
+`scaledLiftedFactorProduct core d (subset S) ≡ factor S (mod p^k)`, the factor's
+primitivity, and divisibility into `core`.  The Mignotte precision bound is supplied
+once as `hprecision` (the `defaultFactorCoeffBound` form); `hsep`, `hthr`, `hfac`,
+`hfactor`, `hsupp` are threaded unchanged to the underlying consumer. -/
+theorem cutProjectionHypotheses_of_recoveryData
+    (core : Hex.ZPoly) (d : Hex.LiftData)
+    (hrows :
+      1 ≤ (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).factorCount +
+        (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).coeffWidth)
+    (hbasis : (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).basis.independent)
+    (trueSupports :
+      Set (Set (Fin
+        (Hex.bhksProjectedRows
+          (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors) hrows).factorCount)))
+    (hp : 2 ≤ d.p)
+    (hk : 1 < d.p ^ d.k)
+    (hsep : ∀ j, 2 * Hex.bhksCoeffBound core j < d.p ^ d.k)
+    (hthr : ∀ j, Hex.bhksCoeffCutThreshold d.p core j ≤ d.k)
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core) (Int.ofNat (d.p ^ d.k)) = 1)
+    (factor cof : trueSupports → Hex.ZPoly)
+    (subset : trueSupports → LiftedFactorSubset d)
+    (monicFactor : trueSupports → Hex.ZPoly)
+    (hcore_ne : core ≠ 0)
+    (hcongr : ∀ S : trueSupports,
+      Hex.ZPoly.reduceModPow (liftedFactorProduct d (subset S)) d.p d.k =
+        Hex.ZPoly.reduceModPow (monicFactor S) d.p d.k)
+    (hmonic_dvd : ∀ S : trueSupports,
+      monicFactor S ∣ Hex.ZPoly.monicTarget core d.p d.k)
+    (hfactor_dvd : ∀ S : trueSupports, factor S ∣ core)
+    (hscaled : ∀ S : trueSupports,
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d (subset S)) d.p d.k =
+        Hex.ZPoly.reduceModPow (factor S) d.p d.k)
+    (hfactor_prim : ∀ S : trueSupports,
+      Hex.ZPoly.primitivePart (factor S) = factor S)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (hsupp : ∀ S : trueSupports,
+      liftedFactorProduct d (subset S)
+        = supportProduct (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors) S.1)
+    (hfac : ∀ S : trueSupports,
+      ∀ i : Fin (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).factorCount, i ∈ S.1 →
+        ∃ h : Hex.ZPoly,
+          Hex.DensePoly.Monic
+            ((Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).liftedFactors.getD i.val 1) ∧
+          0 < ((Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).liftedFactors.getD
+            i.val 1).degree?.getD 0 ∧
+          Hex.ZPoly.congr core
+            (((Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).liftedFactors.getD i.val 1) * h)
+            (d.p ^ d.k))
+    (hfactor : ∀ S : trueSupports,
+      HexPolyMathlib.toPolynomial core
+        = HexPolyMathlib.toPolynomial (factor S) * HexPolyMathlib.toPolynomial (cof S)) :
+    CutProjectionHypotheses
+      (Hex.bhksProjectedRows (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors) hrows)
+      trueSupports :=
+  cutProjectionHypotheses_of_recoveredM1 core d hrows hbasis trueSupports hp hk hsep
+    hthr hgcd factor cof subset
+    (fun S => recoveredAtLiftM1_of_recovery (hcongr S) (hmonic_dvd S) hcore_ne
+      (hfactor_dvd S) (hscaled S) (hfactor_prim S) hprecision)
+    hsupp hfac hfactor
+
 /-- The accumulator of a `max`-fold never decreases below its seed. -/
 private theorem foldl_max_ge_init (l : List Nat) (f : Nat → Nat) :
     ∀ init : Nat, init ≤ l.foldl (fun acc x => max acc (f x)) init := by

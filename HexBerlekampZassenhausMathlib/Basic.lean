@@ -6017,6 +6017,64 @@ theorem centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
     hscaled hprecision
 
+/-- **M1 recovery-witness constructor.**
+
+Build a `RecoveredAtLiftM1 core d factor S` from genuine core-coordinate recovery
+data: a monic-coordinate witness `monicFactor` congruent to the selected lifted
+product modulo `p^k` and dividing the `monicTarget core p k`, together with the M1
+recovery congruence `ℓf·∏S ≡ factor (mod p^k)`
+(`scaledLiftedFactorProduct core d S ≡ factor`), the factor's primitivity, and the
+Mignotte precision bound.
+
+This is the core-coordinate (`scale`/`monicTarget`) analogue of
+`recoveredLiftOfRepresents`, which builds the M2 `RecoveredLift` from a
+dilation-coordinate witness.  `recovered_eq` is discharged from the recovery
+congruence by the landed per-factor recovery
+`centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery` (after pushing
+the `ℓf`-scaling through `congr` exactly as `RecoveredAtLiftM1.candidate_eq` does in
+the reverse direction); `congr` and `monic_dvd` are recorded verbatim.  No `dilate`
+and no `(toMonic core).monic` divisibility: the `monicTarget` coordinate already is
+`core`'s own coordinate. -/
+def recoveredAtLiftM1_of_recovery
+    {core factor monicFactor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hcongr :
+      Hex.ZPoly.reduceModPow (liftedFactorProduct d S) d.p d.k =
+        Hex.ZPoly.reduceModPow monicFactor d.p d.k)
+    (hmonic_dvd : monicFactor ∣ Hex.ZPoly.monicTarget core d.p d.k)
+    (hcore_ne : core ≠ 0)
+    (hdvd : factor ∣ core)
+    (hscaled :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow factor d.p d.k)
+    (hfactor_prim : Hex.ZPoly.primitivePart factor = factor)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    RecoveredAtLiftM1 core d factor S where
+  monicFactor := monicFactor
+  congr := hcongr
+  monic_dvd := hmonic_dvd
+  recovered_eq := by
+    have hp_pos : 0 < d.p := d.p_pos
+    have hpk : 0 < d.p ^ d.k := Nat.pow_pos hp_pos
+    -- `∏S ≡ monicFactor (mod p^k)`, from the reduced-form congruence.
+    have hcongr_poly :
+        Hex.ZPoly.congr (liftedFactorProduct d S) monicFactor (d.p ^ d.k) := by
+      have hf := Hex.ZPoly.congr_reduceModPow (liftedFactorProduct d S) d.p d.k hpk
+      have hg := Hex.ZPoly.congr_reduceModPow monicFactor d.p d.k hpk
+      rw [hcongr] at hf
+      exact Hex.ZPoly.congr_trans _ _ _ _ (Hex.ZPoly.congr_symm _ _ _ hf) hg
+    -- `ℓf·monicFactor ≡ ℓf·∏S = scaledLiftedFactorProduct (mod p^k)`.
+    have hscale_eq :
+        Hex.ZPoly.reduceModPow
+            (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) monicFactor) d.p d.k
+          = Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k := by
+      unfold scaledLiftedFactorProduct
+      exact Hex.ZPoly.reduceModPow_eq_of_congr _ _ d.p d.k
+        (scale_congr_of_congr (Hex.DensePoly.leadingCoeff core) _ _ _
+          (Hex.ZPoly.congr_symm _ _ _ hcongr_poly))
+    rw [hscale_eq, centeredLiftPoly_reduceModPow_eq _ _ _ hp_pos,
+      centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
+        hcore_ne hdvd hscaled hprecision, hfactor_prim]
+
 /-- Abstract-bound recovered-coordinate equality: if the variable-dilated
 centred lifted-factor product is congruent to `factor` modulo the Hensel
 modulus, then Mignotte precision recovers `factor` exactly. -/
