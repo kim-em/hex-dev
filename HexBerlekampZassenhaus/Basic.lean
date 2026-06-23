@@ -7415,6 +7415,221 @@ theorem bhksIndicatorCandidatesCore?_size_eq
     bhksIndicatorCandidatesCoreStep_fold_size_eq f d indicators.toList #[] candidates h
   simpa [Array.length_toList] using hfold
 
+private theorem bhksIndicatorCandidatesCoreStep_fold_eq_some_append
+    (f : ZPoly) (d : LiftData) :
+    ∀ (indicators : List (Array Int)) (candidates : List ZPoly) (acc : Array ZPoly),
+      (hlength : candidates.length = indicators.length) →
+      (∀ i (hi : i < indicators.length),
+        ∃ quotient,
+          bhksIndicatorCandidateCore? f d indicators[i] =
+            some (candidates[i]'(by rw [hlength]; exact hi), quotient)) →
+      List.foldl (bhksIndicatorCandidatesCoreStep f d) (some acc) indicators =
+        some (acc ++ candidates.toArray)
+  | [], candidates, acc, hlength, _ => by
+      have hcandidates : candidates = [] := List.eq_nil_of_length_eq_zero hlength
+      subst hcandidates
+      apply congrArg some
+      rw [← Array.toList_inj]
+      simp
+  | indicator :: indicators, candidates, acc, hlength, hcandidate => by
+      cases candidates with
+      | nil => simp at hlength
+      | cons candidate candidates =>
+          have hhead :
+              ∃ quotient,
+                bhksIndicatorCandidateCore? f d indicator =
+                  some (candidate, quotient) := by
+            simpa using hcandidate 0 (Nat.succ_pos _)
+          rcases hhead with ⟨quotient, hhead⟩
+          have hlength_tail : candidates.length = indicators.length := by
+            simpa using Nat.succ.inj hlength
+          have htail :
+              ∀ i (hi : i < indicators.length),
+                ∃ quotient,
+                  bhksIndicatorCandidateCore? f d indicators[i] =
+                    some (candidates[i]'(by rw [hlength_tail]; exact hi), quotient) := by
+            intro i hi
+            simpa using hcandidate (i + 1) (Nat.succ_lt_succ hi)
+          calc
+            List.foldl (bhksIndicatorCandidatesCoreStep f d) (some acc)
+                (indicator :: indicators)
+                =
+              List.foldl (bhksIndicatorCandidatesCoreStep f d)
+                (some (acc.push candidate)) indicators := by
+                  simp [bhksIndicatorCandidatesCoreStep, hhead]
+            _ = some (acc.push candidate ++ candidates.toArray) := by
+                  exact bhksIndicatorCandidatesCoreStep_fold_eq_some_append
+                    f d indicators candidates (acc.push candidate) hlength_tail htail
+            _ = some (acc ++ (candidate :: candidates).toArray) := by
+                  apply congrArg some
+                  rw [← Array.toList_inj]
+                  simp [Array.toList_append]
+
+/--
+Assemble the Core indicator-candidate fold from per-indicator reconstruction
+facts.  The Core-coordinate (van Hoeij `M1`) analogue of
+`bhksIndicatorCandidates?_eq_some_of_getD`: with a size agreement and one
+quotient witness for each indicator row, the executable Core fold returns the
+requested candidate array.
+-/
+theorem bhksIndicatorCandidatesCore?_eq_some_of_getD
+    (f : ZPoly) (d : LiftData)
+    (indicators : Array (Array Int)) (candidates : Array ZPoly)
+    (hsize : candidates.size = indicators.size)
+    (hcandidate :
+      ∀ i, i < indicators.size →
+        ∃ quotient,
+          bhksIndicatorCandidateCore? f d (indicators.getD i #[]) =
+            some (candidates.getD i 0, quotient)) :
+    bhksIndicatorCandidatesCore? f d indicators = some candidates := by
+  unfold bhksIndicatorCandidatesCore?
+  rw [← Array.foldl_toList]
+  have hlength : candidates.toList.length = indicators.toList.length := by
+    simpa [Array.length_toList] using hsize
+  have hcandidate_list :
+      ∀ i (hi : i < indicators.toList.length),
+        ∃ quotient,
+          bhksIndicatorCandidateCore? f d indicators.toList[i] =
+            some (candidates.toList[i]'(by rw [hlength]; exact hi), quotient) := by
+    intro i hi
+    have hi_array : i < indicators.size := by
+      simpa [Array.length_toList] using hi
+    have hi_candidates : i < candidates.size := by
+      simpa [hsize] using hi_array
+    rcases hcandidate i hi_array with ⟨quotient, hquotient⟩
+    refine ⟨quotient, ?_⟩
+    have hind :
+        indicators.toList[i] = indicators.getD i #[] := by
+      simp [Array.getD, Array.getElem_toList, hi_array]
+    have hcand :
+        candidates.toList[i] = candidates.getD i 0 := by
+      simp [Array.getD, Array.getElem_toList, hi_candidates]
+    rw [hind, hcand]
+    exact hquotient
+  have hfold :=
+    bhksIndicatorCandidatesCoreStep_fold_eq_some_append f d
+      indicators.toList candidates.toList #[] hlength hcandidate_list
+  rw [hfold]
+  apply congrArg some
+  rw [← Array.toList_inj]
+  simp
+
+/--
+If the executable Core BHKS recovery guards all pass, `coreRecover?` returns the
+verified candidate array.  Core-coordinate (van Hoeij `M1`) analogue of
+`bhksRecover?_eq_some_of_checks`: the public proof-facing surface for callers
+that should not unfold the private failure classifier.
+-/
+theorem coreRecover?_eq_some_of_checks
+    (f : ZPoly) (d : LiftData) {candidates : Array ZPoly}
+    (hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth)
+    (hnondeg :
+      bhksDegenerateIndicatorPartition
+          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows
+              (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) = false)
+    (hcand :
+      bhksIndicatorCandidatesCore? f d
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows
+              (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) =
+        some candidates)
+    (hprod : Array.polyProduct candidates = f) :
+    coreRecover? f d = some candidates := by
+  unfold coreRecover?
+  rw [bhksRecoverClassifiedCore]
+  have hproductCheck : (Array.polyProduct candidates == f) = true := by
+    simpa [beq_iff_eq] using hprod
+  simp only [dif_pos hrows, hnondeg, Bool.false_eq_true, if_false, hcand,
+    hproductCheck, if_true, BhksRecoveryResult.toOption]
+
+/--
+`M1` A2 reconstruction surface for a single Core indicator, stated at the
+Mathlib-free executable layer.  Core-coordinate analogue of
+`bhksIndicatorCandidate?_eq_some_of_dilatedCenteredLift`: if the indicator
+selects `selected`, the primitive part of the scaled selected-product centred
+lift (`ℓf · ∏ selected mod p^k`, the van Hoeij `M1` formula) is the expected
+factor, and that factor divides `f` as a positive-leading-coefficient
+positive-degree sign-normalised factor, then `bhksIndicatorCandidateCore?`
+returns that expected factor with some quotient.
+-/
+theorem bhksIndicatorCandidateCore?_eq_some_of_scaledCenteredLift
+    (f : ZPoly) (d : LiftData) (indicator : Array Int)
+    (selected : Array ZPoly) (expectedFactor : ZPoly)
+    (hselected :
+      bhksIndicatorSelectedFactors d.liftedFactors indicator = some selected)
+    (hdvd : expectedFactor ∣ f)
+    (hexpected_sign : 0 ≤ DensePoly.leadingCoeff expectedFactor)
+    (hexpected_pos_lc : 0 < DensePoly.leadingCoeff expectedFactor)
+    (hexpected_degree : 0 < expectedFactor.degree?.getD 0)
+    (hscaled :
+      ZPoly.primitivePart
+          (centeredLiftPoly
+            (ZPoly.reduceModPow
+              (DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected))
+              d.p d.k)
+            (d.p ^ d.k)) =
+        expectedFactor) :
+    ∃ quotient,
+      bhksIndicatorCandidateCore? f d indicator = some (expectedFactor, quotient) := by
+  have hnormalize :
+      normalizeFactorSign
+          (ZPoly.primitivePart
+            (centeredLiftPoly
+              (ZPoly.reduceModPow
+                (DensePoly.scale (DensePoly.leadingCoeff f)
+                  (Array.polyProduct selected))
+                d.p d.k)
+              (d.p ^ d.k))) =
+        expectedFactor := by
+    rw [hscaled]
+    exact normalizeFactorSign_eq_self_of_leadingCoeff_nonneg expectedFactor hexpected_sign
+  have hrecord :
+      shouldRecordPolynomialFactor expectedFactor = true := by
+    apply shouldRecordPolynomialFactor_eq_true_of_ne
+    · intro hzero
+      rw [hzero] at hexpected_degree
+      simp [DensePoly.degree?] at hexpected_degree
+    · intro hone
+      rw [hone] at hexpected_degree
+      have hdeg0 : (DensePoly.degree? (1 : ZPoly)).getD 0 = 0 := by rfl
+      rw [hdeg0] at hexpected_degree
+      omega
+    · intro hneg
+      rw [hneg] at hexpected_degree
+      have hdeg0 : (DensePoly.degree? (DensePoly.C (-1 : Int))).getD 0 = 0 := by simp
+      rw [hdeg0] at hexpected_degree
+      omega
+  rcases hdvd with ⟨quotient, hquotient_mul⟩
+  have hmul : quotient * expectedFactor = f := by
+    rw [DensePoly.mul_comm_poly (S := Int)]
+    exact hquotient_mul.symm
+  have hquotient :
+      exactQuotient? f expectedFactor = some quotient :=
+    exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq
+      hexpected_pos_lc hexpected_degree hmul
+  refine ⟨quotient, ?_⟩
+  unfold bhksIndicatorCandidateCore?
+  rw [hselected]
+  change
+    (let modulus := liftModulus d
+     let candidate :=
+       normalizeFactorSign <| ZPoly.primitivePart <|
+         centeredLiftPoly
+           (ZPoly.reduceModPow
+             (DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected))
+             d.p d.k)
+           modulus
+     if shouldRecordPolynomialFactor candidate then
+       match exactQuotient? f candidate with
+       | some quotient => some (candidate, quotient)
+       | none => none
+     else
+       none) = some (expectedFactor, quotient)
+  simp [liftModulus, hnormalize, hrecord, hquotient]
+
 private def recombinationSearchAux
     (target : ZPoly) (localFactors : List ZPoly) : Nat → Option (List ZPoly)
   | 0 => none
