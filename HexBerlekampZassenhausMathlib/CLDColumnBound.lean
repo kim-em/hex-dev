@@ -2758,11 +2758,19 @@ demanding a pre-built `RecoveredAtLiftM1` family, it accepts the genuine
 core-coordinate recovery data per true support and builds the witness family in line
 via `recoveredAtLiftM1_of_recovery`.  Each support `S` supplies a monic-coordinate
 witness `monicFactor S` congruent to the selected lifted product and dividing
-`monicTarget core p k`, together with the M1 recovery congruence
-`scaledLiftedFactorProduct core d (subset S) ≡ factor S (mod p^k)`, the factor's
-primitivity, and divisibility into `core`.  The Mignotte precision bound is supplied
-once as `hprecision` (the `defaultFactorCoeffBound` form); `hsep`, `hthr`, `hfac`,
-`hfactor`, `hsupp` are threaded unchanged to the underlying consumer. -/
+`monicTarget core p k`, together with the *honest* M1 recovery congruence
+`ℓf · (∏ subset S) ≡ cofactorLc S · factor S (mod p^k)` (the `ℓf`-scaled lifted
+product is a positive constant multiple of the primitive integer factor, where the
+constant `cofactorLc S > 0` is the cofactor's leading coefficient), the factor's
+primitivity, and a per-support Mignotte precision bound on `cofactorLc S · factor S`.
+`hsep`, `hthr`, `hfac`, `hfactor`, `hsupp` are threaded unchanged to the underlying
+consumer.
+
+The earlier signature carried the strong congruence
+`reduceModPow (scaledLiftedFactorProduct …) = reduceModPow factor`, which is false
+for proper factors with non-unit cofactor leading coefficient; the honest
+proportional congruence above is the satisfiable premise (see
+`recoveredAtLiftM1_of_recovery`). -/
 theorem cutProjectionHypotheses_of_recoveryData
     (core : Hex.ZPoly) (d : Hex.LiftData)
     (hrows :
@@ -2781,19 +2789,25 @@ theorem cutProjectionHypotheses_of_recoveryData
     (factor cof : trueSupports → Hex.ZPoly)
     (subset : trueSupports → LiftedFactorSubset d)
     (monicFactor : trueSupports → Hex.ZPoly)
-    (hcore_ne : core ≠ 0)
+    (cofactorLc : trueSupports → Int)
+    (hcofactorLc_pos : ∀ S : trueSupports, 0 < cofactorLc S)
     (hcongr : ∀ S : trueSupports,
       Hex.ZPoly.reduceModPow (liftedFactorProduct d (subset S)) d.p d.k =
         Hex.ZPoly.reduceModPow (monicFactor S) d.p d.k)
     (hmonic_dvd : ∀ S : trueSupports,
       monicFactor S ∣ Hex.ZPoly.monicTarget core d.p d.k)
-    (hfactor_dvd : ∀ S : trueSupports, factor S ∣ core)
-    (hscaled : ∀ S : trueSupports,
-      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d (subset S)) d.p d.k =
-        Hex.ZPoly.reduceModPow (factor S) d.p d.k)
+    (hhonest : ∀ S : trueSupports,
+      Hex.ZPoly.congr
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+          (liftedFactorProduct d (subset S)))
+        (Hex.DensePoly.scale (cofactorLc S) (factor S))
+        (d.p ^ d.k))
     (hfactor_prim : ∀ S : trueSupports,
       Hex.ZPoly.primitivePart (factor S) = factor S)
-    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k)
+    (coeffBound : trueSupports → Nat)
+    (hvalid : ∀ S : trueSupports, ∀ i,
+      ((Hex.DensePoly.scale (cofactorLc S) (factor S)).coeff i).natAbs ≤ coeffBound S)
+    (hprecision : ∀ S : trueSupports, 2 * coeffBound S < d.p ^ d.k)
     (hsupp : ∀ S : trueSupports,
       liftedFactorProduct d (subset S)
         = supportProduct (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors) S.1)
@@ -2815,8 +2829,9 @@ theorem cutProjectionHypotheses_of_recoveryData
       trueSupports :=
   cutProjectionHypotheses_of_recoveredM1 core d hrows hbasis trueSupports hp hk hsep
     hthr hgcd factor cof subset
-    (fun S => recoveredAtLiftM1_of_recovery (hcongr S) (hmonic_dvd S) hcore_ne
-      (hfactor_dvd S) (hscaled S) (hfactor_prim S) hprecision)
+    (fun S => recoveredAtLiftM1_of_recovery (cofactorLc S) (hcofactorLc_pos S)
+      (hcongr S) (hmonic_dvd S) (hhonest S) (hfactor_prim S)
+      (coeffBound S) (hvalid S) (hprecision S))
     hsupp hfac hfactor
 
 /-- The accumulator of a `max`-fold never decreases below its seed. -/
