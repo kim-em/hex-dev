@@ -2353,6 +2353,124 @@ def cutProjectionHypotheses_of_aggregateResidue
     (fun S => supportShortVectorData_of_aggregateResidue f p a liftedFactors
       S.1 hp hthr (hagg S))
 
+/-- Pulling a constant scalar out of a product on the left:
+`scale c p * q = scale c (p * q)`. -/
+theorem scale_mul_left (c : Int) (p q : Hex.ZPoly) :
+    Hex.DensePoly.scale c p * q = Hex.DensePoly.scale c (p * q) := by
+  rw [← Hex.ZPoly.C_mul_eq_scale, ← Hex.ZPoly.C_mul_eq_scale,
+    Hex.DensePoly.mul_assoc_poly]
+
+/-- Pulling a constant scalar out of a product on the right:
+`p * scale c q = scale c (p * q)`. -/
+theorem scale_mul_right (c : Int) (p q : Hex.ZPoly) :
+    p * Hex.DensePoly.scale c q = Hex.DensePoly.scale c (p * q) := by
+  rw [← Hex.ZPoly.C_mul_eq_scale, ← Hex.ZPoly.C_mul_eq_scale,
+    ← Hex.DensePoly.mul_assoc_poly,
+    Hex.DensePoly.mul_comm_poly p (Hex.DensePoly.C c),
+    Hex.DensePoly.mul_assoc_poly]
+
+/-- The formal derivative commutes with constant scaling:
+`derivative (scale c p) = scale c (derivative p)`. -/
+theorem derivative_scale (c : Int) (p : Hex.ZPoly) :
+    Hex.DensePoly.derivative (Hex.DensePoly.scale c p) =
+      Hex.DensePoly.scale c (Hex.DensePoly.derivative p) := by
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.DensePoly.coeff_derivative _ n (mul_zero _),
+    Hex.DensePoly.coeff_scale c p (n + 1) (mul_zero c),
+    Hex.DensePoly.coeff_scale c (Hex.DensePoly.derivative p) n (mul_zero c),
+    Hex.DensePoly.coeff_derivative p n (mul_zero _)]
+  ring
+
+/-- Cancelling a constant scalar coprime to the modulus from a congruence: if `c`
+is coprime to `m` and `scale c x ≡ scale c y (mod m)`, then `x ≡ y (mod m)`. -/
+theorem congr_scale_cancel (c : Int) (x y : Hex.ZPoly) (m : Nat)
+    (hgcd : Int.gcd c (Int.ofNat m) = 1)
+    (h : Hex.ZPoly.congr (Hex.DensePoly.scale c x) (Hex.DensePoly.scale c y) m) :
+    Hex.ZPoly.congr x y m := by
+  intro i
+  have hi := h i
+  rw [Hex.DensePoly.coeff_scale c x i (mul_zero c),
+    Hex.DensePoly.coeff_scale c y i (mul_zero c)] at hi
+  have hdvd : (m : Int) ∣ c * (x.coeff i - y.coeff i) := by
+    have hd := Int.dvd_of_emod_eq_zero hi
+    have he : c * x.coeff i - c * y.coeff i = c * (x.coeff i - y.coeff i) := by ring
+    rwa [he] at hd
+  have hcop : IsCoprime (m : Int) c := by
+    rw [Int.isCoprime_iff_gcd_eq_one, Int.gcd_comm]
+    simpa [Int.ofNat_eq_natCast] using hgcd
+  exact Int.emod_eq_zero_of_dvd (hcop.dvd_of_dvd_mul_left hdvd)
+
+/-- **Logarithmic-derivative bridge from recovery proportionality.**
+
+Given the recovery proportionality `ℓf · G ≡ c · factor (mod m)` (the centred-lift
+/ primitive-part relation between the monic support product `G` scaled by `core`'s
+leading coefficient and the recovered integer factor) with `ℓf` coprime to `m`, the
+logarithmic-derivative numerators are proportional:
+`factor · G' ≡ G · factor' (mod m)`.
+
+This is exactly the `hbridge` hypothesis consumed by
+`aggregateResidueData_of_factorBridge`: differentiate the proportionality, cross-
+multiply by the respective other factor, and cancel the unit scalar `ℓf`. -/
+theorem congr_logDeriv_bridge_of_scale_congr
+    {ℓf c : Int} {factor G : Hex.ZPoly} {m : Nat}
+    (hgcd : Int.gcd ℓf (Int.ofNat m) = 1)
+    (hpropr : Hex.ZPoly.congr (Hex.DensePoly.scale ℓf G)
+        (Hex.DensePoly.scale c factor) m) :
+    Hex.ZPoly.congr
+      (factor * Hex.DensePoly.derivative G)
+      (G * Hex.DensePoly.derivative factor) m := by
+  -- Differentiate the proportionality and commute the scalar through.
+  have hder : Hex.ZPoly.congr
+      (Hex.DensePoly.scale ℓf (Hex.DensePoly.derivative G))
+      (Hex.DensePoly.scale c (Hex.DensePoly.derivative factor)) m := by
+    have h := congr_derivative _ _ _ hpropr
+    rwa [derivative_scale, derivative_scale] at h
+  -- Multiply the proportionality by `factor'` and the derivative congruence by `factor`.
+  have hC : Hex.ZPoly.congr
+      (Hex.DensePoly.scale ℓf (G * Hex.DensePoly.derivative factor))
+      (Hex.DensePoly.scale c (factor * Hex.DensePoly.derivative factor)) m := by
+    have h := Hex.ZPoly.congr_mul _ _ _ _ _ hpropr
+      (Hex.ZPoly.congr_refl (Hex.DensePoly.derivative factor) m)
+    rwa [scale_mul_left, scale_mul_left] at h
+  have hD : Hex.ZPoly.congr
+      (Hex.DensePoly.scale ℓf (factor * Hex.DensePoly.derivative G))
+      (Hex.DensePoly.scale c (factor * Hex.DensePoly.derivative factor)) m := by
+    have h := Hex.ZPoly.congr_mul _ _ _ _ _
+      (Hex.ZPoly.congr_refl factor m) hder
+    rwa [scale_mul_right, scale_mul_right] at h
+  -- Both sides equal `scale c (factor · factor')`; cancel `ℓf`.
+  have hcancel : Hex.ZPoly.congr
+      (Hex.DensePoly.scale ℓf (factor * Hex.DensePoly.derivative G))
+      (Hex.DensePoly.scale ℓf (G * Hex.DensePoly.derivative factor)) m :=
+    Hex.ZPoly.congr_trans _ _ _ _ hD (Hex.ZPoly.congr_symm _ _ _ hC)
+  exact congr_scale_cancel ℓf _ _ m hgcd hcancel
+
+/-- **`hbridge` producer from an `M1` recovery witness.**
+
+Chains the recovery proportionality `exists_scale_congr_factor_of_recoveredM1` into
+the logarithmic-derivative bridge `congr_logDeriv_bridge_of_scale_congr`, delivering
+the exact `hbridge` hypothesis consumed by `aggregateResidueData_of_factorBridge`,
+over the executable's concrete support product `supportProduct L S`.
+
+The only call-site obligation beyond the recovery witness and the good-prime gcd is
+the identification `liftedFactorProduct d Ssub = supportProduct L S` of the abstract
+lifted product with the concrete BHKS support product. -/
+theorem congr_logDeriv_bridge_of_recoveredM1
+    {core factor : Hex.ZPoly} {d : Hex.LiftData}
+    {L : Hex.BhksLatticeBasis} {Ssub : LiftedFactorSubset d}
+    {S : LiftedFactorSupport L}
+    (hrec : RecoveredAtLiftM1 core d factor Ssub)
+    (hpk : 0 < d.p ^ d.k)
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core) (Int.ofNat (d.p ^ d.k)) = 1)
+    (hsupp : liftedFactorProduct d Ssub = supportProduct L S) :
+    Hex.ZPoly.congr
+      (factor * Hex.DensePoly.derivative (supportProduct L S))
+      (supportProduct L S * Hex.DensePoly.derivative factor) (d.p ^ d.k) := by
+  obtain ⟨c, hpropr⟩ := exists_scale_congr_factor_of_recoveredM1 hrec hpk
+  rw [hsupp] at hpropr
+  exact congr_logDeriv_bridge_of_scale_congr hgcd hpropr
+
 /-- **Core aggregate-residue producer (the non-monic `#8290` deliverable).**
 
 Discharges `AggregateResidueData` for one true support `S` of the executable's
