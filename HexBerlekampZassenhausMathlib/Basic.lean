@@ -3221,6 +3221,108 @@ theorem centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
     hscaled hprecision
 
+/-! ### M1 (`monicTarget`-coordinate) recovery math
+
+Additive congruence machinery for routing the fast-core recovery through the van
+Hoeij `M1` target `monicTarget core p k = core · ℓf⁻¹ (mod p^k)`
+(`Hex.ZPoly.monicTarget`) instead of the `toMonic` `x ↦ x/ℓf` dilation.  Over
+`(ℤ/p^k)` the `monicTarget` keeps `core`'s own coordinate, so scaling the lifted
+monic product by `ℓf = leadingCoeff core` lands back on `core` directly — no
+`dilate`.  These lemmas are the "new math" the core-coordinate swap consumes; they
+are stated additively so they land green ahead of that atomic remodel. -/
+
+/-- Constant scaling preserves coefficientwise congruence modulo `m`:
+`f ≡ g (mod m) → c·f ≡ c·g (mod m)`. -/
+theorem scale_congr_of_congr (c : Int) (f g : Hex.ZPoly) (m : Nat)
+    (h : Hex.ZPoly.congr f g m) :
+    Hex.ZPoly.congr (Hex.DensePoly.scale c f) (Hex.DensePoly.scale c g) m := by
+  intro i
+  rw [Hex.DensePoly.coeff_scale c f i (mul_zero c),
+      Hex.DensePoly.coeff_scale c g i (mul_zero c)]
+  have hdvd : (m : Int) ∣ (f.coeff i - g.coeff i) := Int.dvd_of_emod_eq_zero (h i)
+  have hrw : c * f.coeff i - c * g.coeff i = c * (f.coeff i - g.coeff i) := by ring
+  rw [hrw]
+  exact Int.emod_eq_zero_of_dvd (hdvd.mul_left c)
+
+/-- The BHKS `monicTarget` is, coefficientwise modulo `p^k`, the rescaling of
+`core` by the modular inverse of its leading coefficient:
+`monicTarget core p k ≡ core · ℓf⁻¹ (mod p^k)`.  Immediate from
+`monicTarget = reduceModPow (scale ℓf⁻¹ core) p k`. -/
+theorem monicTarget_congr_scaleInv (core : Hex.ZPoly) (p k : Nat) (hpk : 0 < p ^ k) :
+    Hex.ZPoly.congr (Hex.ZPoly.monicTarget core p k)
+      (Hex.DensePoly.scale (Hex.ZPoly.leadingCoeffInverse core p k) core) (p ^ k) :=
+  Hex.ZPoly.congr_reduceModPow
+    (Hex.DensePoly.scale (Hex.ZPoly.leadingCoeffInverse core p k) core) p k hpk
+
+/-- The BHKS mod-bridge: rescaling the `monicTarget` by `ℓf = leadingCoeff core`
+recovers `core` modulo `p^k`, i.e. `ℓf · monicTarget core p k ≡ core (mod p^k)`,
+provided `core`'s leading coefficient is coprime to `p^k` (the good-prime
+condition).  This is what lets the lifted monic factors of `monicTarget` recover
+integer factors of `core` directly in `core`'s own coordinate. -/
+theorem leadingCoeff_scale_monicTarget_congr_core (core : Hex.ZPoly) (p k : Nat)
+    (hpk : 1 < p ^ k)
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core) (Int.ofNat (p ^ k)) = 1) :
+    Hex.ZPoly.congr
+      (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+        (Hex.ZPoly.monicTarget core p k))
+      core (p ^ k) := by
+  have hpk_pos : 0 < p ^ k := Nat.lt_of_lt_of_le Nat.zero_lt_one (Nat.le_of_lt hpk)
+  -- `ℓ · s ≡ 1 (mod p^k)` from the unit-residue certificate.
+  have hsl : (Hex.ZPoly.leadingCoeffInverse core p k
+      * Hex.DensePoly.leadingCoeff core) ≡ 1 [ZMOD (↑(p ^ k) : Int)] := by
+    have hemod := Hex.ZPoly.leadingCoeffInverse_mul_emod core p k hpk hgcd
+    rw [Int.ofNat_eq_natCast] at hemod
+    have h1 : (1 : Int) % (↑(p ^ k) : Int) = 1 :=
+      Int.emod_eq_of_lt (by decide) (by exact_mod_cast hpk)
+    show _ % _ = _ % _
+    rw [hemod, h1]
+  intro i
+  set s := Hex.ZPoly.leadingCoeffInverse core p k with hs
+  set ℓ := Hex.DensePoly.leadingCoeff core with hℓ
+  set a := core.coeff i with ha
+  set m := (↑(p ^ k) : Int) with hm
+  -- Compute the `monicTarget` coefficient as a centered residue of `s · a`.
+  have hcoeff : (Hex.DensePoly.scale ℓ (Hex.ZPoly.monicTarget core p k)).coeff i
+      = ℓ * ((s * a) % m) := by
+    rw [Hex.DensePoly.coeff_scale ℓ _ i (mul_zero ℓ)]
+    unfold Hex.ZPoly.monicTarget
+    rw [Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ p k i hpk_pos,
+      Hex.DensePoly.coeff_scale s core i (mul_zero s)]
+    rw [Int.ofNat_eq_natCast]
+  rw [hcoeff]
+  -- `ℓ · ((s·a) % m) ≡ a (mod m)`, hence the congruence subtraction vanishes.
+  have hmod : ℓ * ((s * a) % m) ≡ a [ZMOD m] := by
+    have hself : ((s * a) % m) ≡ (s * a) [ZMOD m] :=
+      Int.emod_emod_of_dvd _ (dvd_refl _)
+    calc ℓ * ((s * a) % m)
+        ≡ ℓ * (s * a) [ZMOD m] := hself.mul_left ℓ
+      _ = (s * ℓ) * a := by ring
+      _ ≡ 1 * a [ZMOD m] := hsl.mul_right a
+      _ = a := by ring
+  have hdvd : m ∣ (ℓ * ((s * a) % m) - a) :=
+    (Int.modEq_iff_dvd.mp hmod.symm)
+  exact Int.emod_eq_zero_of_dvd hdvd
+
+/-- The core-coordinate scaled-product congruence: given the `M1` lift congruence
+`∏ liftedFactors ≡ monicTarget core p k (mod p^k)` for a selected subset `S`,
+the `ℓf`-scaled lifted product is congruent to `core` itself modulo `p^k`:
+`scaledLiftedFactorProduct core d S ≡ core (mod p^k)`.  This is the precise
+hypothesis the existing Mignotte recovery
+(`centeredLift_scaledLiftedFactorProduct_eq_of_mignottePrecision`) consumes,
+delivered in `core`'s own coordinate. -/
+theorem scaledLiftedFactorProduct_congr_core_of_product_congr_monicTarget
+    {core : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hpk : 1 < d.p ^ d.k)
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core) (Int.ofNat (d.p ^ d.k)) = 1)
+    (hprod :
+      Hex.ZPoly.congr (liftedFactorProduct d S)
+        (Hex.ZPoly.monicTarget core d.p d.k) (d.p ^ d.k)) :
+    Hex.ZPoly.congr (scaledLiftedFactorProduct core d S) core (d.p ^ d.k) := by
+  unfold scaledLiftedFactorProduct
+  exact Hex.ZPoly.congr_trans _ _ _ _
+    (scale_congr_of_congr (Hex.DensePoly.leadingCoeff core) _ _ _ hprod)
+    (leadingCoeff_scale_monicTarget_congr_core core d.p d.k hpk hgcd)
+
 /--
 Abstract-bound variant of
 `existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence`:
