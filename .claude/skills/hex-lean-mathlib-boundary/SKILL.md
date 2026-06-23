@@ -1361,6 +1361,43 @@ proved; #7876 strengthened it in place); (b) the period reduction lives in the
 lattice's *period rows*, applied to the ordinary per-factor cut sum — no
 executable basis change (and no `aggregateCldTail` emission) is needed.
 
+### M1 (`monicTarget`/`scale`) per-subset recovery: the strong scaled congruence is FALSE for proper factors (#8319)
+
+The non-monic M1 recovery directive (the `RecoveredAtLiftM1` family producer
+feeding the fast-core `hcut`) is repeatedly rescoped to "produce, per true
+support `S`, `reduceModPow (scaledLiftedFactorProduct core d S) = reduceModPow
+factor` with `factor` a primitive divisor of `core`." That congruence — the
+`hscaled` field of the landed `recoveredAtLiftM1_of_recovery` (`Basic.lean`) and
+of `cutProjectionHypotheses_of_recoveryData` (`CLDColumnBound.lean`) — is **not
+merely unproduced; it is false** for any proper factor whose cofactor has
+non-unit leading coefficient. `scaledLiftedFactorProduct core d S = scale
+(leadingCoeff core) (∏S)` scales by the **full** `lc core = lc(g)·lc(h)`
+regardless of `S`, while `∏S ≡ g/lc(g)` (the monic factor of `monicTarget`), so
+`scale (lc core)(∏S) ≡ lc(h)·g (mod p^k)` — carrying the spurious constant
+`lc(cofactor)`. Executable counterexample (`lake env lean`, pure-integer ZPoly
+ops, no extern): `core=(2x+1)(x+3)`, `g=x+3`, `lc core=2`; `scale 2 (x+3)=2x+6`,
+`reduceModPow (2x+6) 5 3 = [6,2] ≠ [3,1] = reduceModPow (x+3) 5 3`, yet
+`primitivePart (2x+6) = x+3`. The strong form holds only at `lc(cofactor)=1` —
+i.e. the **whole-product** support (`factor=core`), which is exactly what the
+only producer
+`scaledLiftedFactorProduct_congr_core_of_product_congr_monicTarget` covers.
+
+So `recoveredAtLiftM1_of_recovery`'s premise is unsatisfiable for proper
+supports — a dead end for the capstone despite compiling green. The structure's
+*own* `RecoveredAtLiftM1.recovered_eq` is sound (it has the `primitivePart` that
+strips `lc(h)`); only the `_of_recovery` constructor's strong hypothesis is
+wrong. The sound path is (a) a primitivePart-aware constructor taking the honest
+`scale (lc core)(∏S) ≡ c·factor (mod p^k)`, `c = lc(cofactor) > 0`, plus (b) a
+producer of *that* honest per-subset congruence — the subset→integer-divisor
+modular-factorization correspondence in the **scale** coordinate. (b) is the
+#7479/#7866-class remodel: the correspondence exists only in the **dilate**
+coordinate (`RepresentsIntegerFactorAtLift`/`RecoveredAtLift`, on which
+`liftedTrueSupports` is defined; `dilate c q` coeff `cⁿ·qₙ` ≠ `scale c q` coeff
+`c·qₙ`, no bridge), and `coreLiftData_liftedFactor_hensel_semantics`
+(`LiftBridge.lean`) gives only the per-**factor** `hfac` `core ≡ gᵢ·h`, not
+per-**subset** primitive-divisor recovery. Before claiming any rescoped #8319,
+do not attempt the strong congruence — it is unsound; the real work is (b).
+
 ### Producers of data-carrying certificate structures must be `def`, not `theorem`
 
 This layer has many certificate *structures* that carry data, not Props:
