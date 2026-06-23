@@ -2380,6 +2380,291 @@ theorem bhksRecover_isSome_of_forwardInputs
     (Hex.bhksRecover? f d).isSome :=
   bhksRecover_isSome_of_recovery f d h.toRecoveryHypotheses
 
+/-! ### Core-coordinate (van Hoeij `M1`) recovery-success producers
+
+The structures and producers below mirror the monic-transform (`M2`)
+`RecoveryHypotheses` / `ForwardRecoveryInputs` family, but target the
+core-coordinate recovery `Hex.coreRecover?` and the core candidate fold
+`Hex.bhksIndicatorCandidatesCore?` instead of `Hex.bhksRecover?` /
+`Hex.bhksIndicatorCandidates?`.  The lattice machinery
+(`projectedRowsOfLiftData`, `equivalenceClassIndicatorsOfLiftData`, the B7
+indicator partition) is shared verbatim — only the per-indicator candidate
+reconstruction differs (no `dilate`; the `M1` formula scales the selected
+lifted product by `lc f` and takes the primitive part), so these producers
+carry the candidate equality over the core fold while reusing every lattice
+field from the monic-side layer.
+
+This is the termination-side substrate for the `#8304` M1 fast-path swap: the
+irreducibility side landed via `…_zpolyIrreducible_of_recoveredM1` (`#8312`);
+the termination side (`factorFast ≠ none`) needs a `coreRecover? = some`
+producer, which is `coreRecover?_eq_some_of_forwardInputsCore` below. -/
+
+/--
+Proof-facing hypotheses for forward Core (van Hoeij `M1`) BHKS recovery at fixed
+precision.  Core-coordinate analogue of `RecoveryHypotheses`: the only field
+that differs is `candidates_eq`, which is over the core candidate fold
+`Hex.bhksIndicatorCandidatesCore?`.
+-/
+structure RecoveryHypothesesCore (f : Hex.ZPoly) (d : Hex.LiftData) where
+  /-- Positive lattice dimension so the recovery enters the recovery branch. -/
+  rows_pos : HasPositiveDimension f d
+  /-- The equivalence-class partition is non-degenerate, so the executable
+      function does not bail out via `bhksDegenerateIndicatorPartition`. -/
+  nondegenerate :
+    Hex.bhksDegenerateIndicatorPartition
+        (projectedRowsOfLiftData f d rows_pos)
+        (equivalenceClassIndicatorsOfLiftData f d rows_pos) = false
+  /-- The verified factor list returned by the executable Core recovery. -/
+  expectedFactors : Array Hex.ZPoly
+  /-- Per-indicator `M1` centred-residue reconstruction succeeds and divides
+      `f`. -/
+  candidates_eq :
+    Hex.bhksIndicatorCandidatesCore? f d
+        (equivalenceClassIndicatorsOfLiftData f d rows_pos) =
+      some expectedFactors
+  /-- The reconstructed factors multiply back to `f`, so the final product
+      check inside `Hex.coreRecover?` succeeds. -/
+  product_eq : Array.polyProduct expectedFactors = f
+
+/--
+Core-coordinate forward-verification theorem: under the executable Core recovery
+hypotheses, `Hex.coreRecover? f d` returns `some <expected factors>`.  Mirrors
+`bhksRecover_eq_some_of_recovery`, routing through the executable
+`Hex.coreRecover?_eq_some_of_checks`.
+-/
+theorem coreRecover_eq_some_of_recovery
+    (f : Hex.ZPoly) (d : Hex.LiftData) (h : RecoveryHypothesesCore f d) :
+    Hex.coreRecover? f d = some h.expectedFactors := by
+  have hrows : 1 ≤ (Hex.bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (Hex.bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth := h.rows_pos
+  have hnondeg :
+      Hex.bhksDegenerateIndicatorPartition
+          (Hex.bhksProjectedRows (Hex.bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
+          (Hex.bhksEquivalenceClassIndicators
+            (Hex.bhksProjectedRows
+              (Hex.bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) = false :=
+    h.nondegenerate
+  have hcand :
+      Hex.bhksIndicatorCandidatesCore? f d
+          (Hex.bhksEquivalenceClassIndicators
+            (Hex.bhksProjectedRows
+              (Hex.bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) =
+        some h.expectedFactors :=
+    h.candidates_eq
+  have hprod := h.product_eq
+  exact Hex.coreRecover?_eq_some_of_checks f d hrows hnondeg hcand hprod
+
+/-- Corollary form of `coreRecover_eq_some_of_recovery` that drops the
+expected-factors witness from the conclusion. -/
+theorem coreRecover_isSome_of_recovery
+    (f : Hex.ZPoly) (d : Hex.LiftData) (h : RecoveryHypothesesCore f d) :
+    (Hex.coreRecover? f d).isSome := by
+  rw [coreRecover_eq_some_of_recovery f d h]
+  rfl
+
+/--
+Core-coordinate analogue of `bhksIndicatorCandidates?_eq_some_of_forwardCandidates`:
+assemble the core candidate fold equality from per-indicator `M1` reconstruction
+facts.  Mathlib-side wrapper around the executable
+`Hex.bhksIndicatorCandidatesCore?_eq_some_of_getD`.
+-/
+theorem bhksIndicatorCandidatesCore?_eq_some_of_forwardCandidates
+    (f : Hex.ZPoly) (d : Hex.LiftData)
+    (expectedIndicators : Array (Array Int)) (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size = expectedIndicators.size)
+    (hcandidate :
+      ∀ i, i < expectedIndicators.size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidateCore? f d (expectedIndicators.getD i #[]) =
+            some (expectedFactors.getD i 0, quotient)) :
+    Hex.bhksIndicatorCandidatesCore? f d expectedIndicators =
+      some expectedFactors :=
+  Hex.bhksIndicatorCandidatesCore?_eq_some_of_getD
+    f d expectedIndicators expectedFactors hsize hcandidate
+
+/--
+Core-coordinate (van Hoeij `M1`) analogue of `ForwardRecoveryInputs`.
+
+Every field except `candidates_eq` is identical to the monic-side
+`ForwardRecoveryInputs` (the lattice / B7 indicator machinery is shared);
+`candidates_eq` is over the core candidate fold `Hex.bhksIndicatorCandidatesCore?`,
+reconstructing each indicator through the `M1` formula instead of the
+`dilate`-based `M2` one.
+-/
+structure ForwardRecoveryInputsCore (f : Hex.ZPoly) (d : Hex.LiftData) where
+  /-- Positive lattice dimension so the projected rows / recovery branch make
+      sense. -/
+  rows_pos : HasPositiveDimension f d
+  /-- True-factor supports backing the indicator lattice `W`. -/
+  trueSupports :
+    Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount))
+  /-- BHKS `L' = W` at this lift data, the recovery-level core lattice
+      equality (the completeness sibling of the `#8290`/`#8312` cut). -/
+  lattice_eq_indicators :
+    BHKS.projectedRowSpanInt (projectedRowsOfLiftData f d rows_pos) =
+      BHKS.trueFactorIndicatorLattice trueSupports
+  /-- Mignotte-precision side condition: the modular precision exceeds twice
+      the executable Mignotte coefficient bound. -/
+  mignotte_precision :
+    2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k
+  /-- BHKS Lemma 3.3 / B7 conclusion: the executable equivalence-class
+      indicators agree with a target indicator list `expectedIndicators`. -/
+  expectedIndicators : Array (Array Int)
+  indicators_match :
+    equivalenceClassIndicatorsOfLiftData f d rows_pos = expectedIndicators
+  /-- The chosen indicator partition is non-degenerate. -/
+  nondegenerate :
+    Hex.bhksDegenerateIndicatorPartition
+        (projectedRowsOfLiftData f d rows_pos) expectedIndicators = false
+  /-- `M1` A2 + exact division: each indicator reconstructs into a verified
+      integer factor via the core fold. -/
+  expectedFactors : Array Hex.ZPoly
+  candidates_eq :
+    Hex.bhksIndicatorCandidatesCore? f d expectedIndicators = some expectedFactors
+  /-- Final product check: the verified factors multiply back to `f`. -/
+  product_eq : Array.polyProduct expectedFactors = f
+
+namespace ForwardRecoveryInputsCore
+
+/-- Promote a core SPEC-input bundle to the immediate recovery hypotheses
+consumed by `coreRecover_eq_some_of_recovery`.  Mirrors
+`ForwardRecoveryInputs.toRecoveryHypotheses`. -/
+def toRecoveryHypothesesCore {f : Hex.ZPoly} {d : Hex.LiftData}
+    (h : ForwardRecoveryInputsCore f d) : RecoveryHypothesesCore f d where
+  rows_pos := h.rows_pos
+  nondegenerate := by
+    have hindicators := h.indicators_match
+    show
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d h.rows_pos)
+          (equivalenceClassIndicatorsOfLiftData f d h.rows_pos) = false
+    rw [hindicators]
+    exact h.nondegenerate
+  expectedFactors := h.expectedFactors
+  candidates_eq := by
+    have hindicators := h.indicators_match
+    show
+      Hex.bhksIndicatorCandidatesCore? f d
+        (equivalenceClassIndicatorsOfLiftData f d h.rows_pos) =
+        some h.expectedFactors
+    rw [hindicators]
+    exact h.candidates_eq
+  product_eq := h.product_eq
+
+/--
+Build `ForwardRecoveryInputsCore` when the `M1` A2/exact-division obligation is
+available as per-indicator core reconstruction witnesses rather than as the
+folded candidate equality.  Core analogue of
+`ForwardRecoveryInputs.ofIndicatorCandidateFacts`.
+-/
+def ofIndicatorCandidateFacts
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (lattice_eq_indicators :
+      BHKS.projectedRowSpanInt (projectedRowsOfLiftData f d rows_pos) =
+        BHKS.trueFactorIndicatorLattice trueSupports)
+    (mignotte_precision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (expectedIndicators : Array (Array Int))
+    (indicators_match :
+      equivalenceClassIndicatorsOfLiftData f d rows_pos = expectedIndicators)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d rows_pos) expectedIndicators = false)
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size = expectedIndicators.size)
+    (hcandidate :
+      ∀ i, i < expectedIndicators.size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidateCore? f d (expectedIndicators.getD i #[]) =
+            some (expectedFactors.getD i 0, quotient))
+    (product_eq : Array.polyProduct expectedFactors = f) :
+    ForwardRecoveryInputsCore f d where
+  rows_pos := rows_pos
+  trueSupports := trueSupports
+  lattice_eq_indicators := lattice_eq_indicators
+  mignotte_precision := mignotte_precision
+  expectedIndicators := expectedIndicators
+  indicators_match := indicators_match
+  nondegenerate := nondegenerate
+  expectedFactors := expectedFactors
+  candidates_eq :=
+    bhksIndicatorCandidatesCore?_eq_some_of_forwardCandidates
+      f d expectedIndicators expectedFactors hsize hcandidate
+  product_eq := product_eq
+
+/--
+Build `ForwardRecoveryInputsCore f d` from cap-level BHKS separation plus the
+abstract B7 / `M1` A2 obligations.  Core analogue of
+`ForwardRecoveryInputs.ofCapSeparation`: `lattice_eq_indicators` is supplied
+internally by `projectedRowsOfLiftData_eq_trueFactorIndicatorLattice_of_cap`
+(shared with the monic side, since the lattice basis is the same), and the
+remaining fields pass through to `ofIndicatorCandidateFacts`.
+-/
+def ofCapSeparation
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly)
+    (hcap_le : Hex.factorFastPrecisionCap f ≤ d.k)
+    (C : ℝ) (hC_nonneg : 0 ≤ C) (hC : C ≤ 2)
+    (hcap :
+      ExecutableCapSeparationHypotheses
+        (badVectorWitnessOfLiftData f d rows_pos localFactorIndex
+          localFactorDegree H)
+        trueSupports)
+    (mignotte_precision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (expectedIndicators : Array (Array Int))
+    (indicators_match :
+      equivalenceClassIndicatorsOfLiftData f d rows_pos = expectedIndicators)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d rows_pos) expectedIndicators = false)
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size = expectedIndicators.size)
+    (hcandidate :
+      ∀ i, i < expectedIndicators.size →
+        ∃ quotient,
+          Hex.bhksIndicatorCandidateCore? f d (expectedIndicators.getD i #[]) =
+            some (expectedFactors.getD i 0, quotient))
+    (product_eq : Array.polyProduct expectedFactors = f) :
+    ForwardRecoveryInputsCore f d :=
+  ofIndicatorCandidateFacts
+    rows_pos trueSupports
+    (projectedRowsOfLiftData_eq_trueFactorIndicatorLattice_of_cap
+      f d rows_pos localFactorIndex localFactorDegree H trueSupports
+      hcap_le C hC_nonneg hC hcap)
+    mignotte_precision
+    expectedIndicators indicators_match nondegenerate
+    expectedFactors hsize hcandidate product_eq
+
+end ForwardRecoveryInputsCore
+
+/--
+Core-coordinate (van Hoeij `M1`) forward-verification statement at one
+precision/recovery call: under `L' = W`, Mignotte precision, and the residual
+B7 / `M1` A2 obligations, the executable `Hex.coreRecover? f d` returns
+`some <expected factors>`.
+
+This is the termination-side headline producer the `#8304` swap consumes (the
+irreducibility side is `#8312`'s `…_zpolyIrreducible_of_recoveredM1`).
+-/
+theorem coreRecover?_eq_some_of_forwardInputsCore
+    (f : Hex.ZPoly) (d : Hex.LiftData) (h : ForwardRecoveryInputsCore f d) :
+    Hex.coreRecover? f d = some h.expectedFactors :=
+  coreRecover_eq_some_of_recovery f d h.toRecoveryHypothesesCore
+
+/-- Corollary form: under the core forward-verification inputs,
+`Hex.coreRecover? f d` is `some _`. -/
+theorem coreRecover?_isSome_of_forwardInputsCore
+    (f : Hex.ZPoly) (d : Hex.LiftData) (h : ForwardRecoveryInputsCore f d) :
+    (Hex.coreRecover? f d).isSome :=
+  coreRecover_isSome_of_recovery f d h.toRecoveryHypothesesCore
+
 /--
 Cap-level specialisation: compose `ForwardRecoveryInputs.ofCapSeparation`
 with `bhksRecover_eq_some_of_forwardInputs` at a fixed `LiftData`.  Under
