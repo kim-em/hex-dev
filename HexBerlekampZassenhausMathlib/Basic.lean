@@ -10533,6 +10533,119 @@ theorem henselLiftData_liftedSubset_congr_of_modP
       hg_monic hg'_monic hdeg hprod hprod' hg1 hh1 hcop
   exact HexHenselMathlib.zpoly_congr_of_toPolynomial_map_eq _ _ _ hgg'
 
+/--
+M1 (`monicTarget`-coordinate) subset Hensel uniqueness for `coreLiftData`.
+
+If the modular subset `S` represents the `monicTarget` coordinate of an integer
+factor, and that coordinate participates in a modular factorisation of
+`monicTarget core p k`, then the canonical selected product in
+`coreLiftData core B primeData` is congruent to `monicTarget factor p k` modulo
+the Hensel modulus.  The modular product decomposition is an explicit premise:
+it is the scale-coordinate M1 fact to be supplied by callers, not something
+derived from the older dilation-coordinate recovery carrier.
+-/
+theorem coreLiftData_subset_congr_monicTarget
+    (core factor : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.choosePrimeData? core = some primeData)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_size : 0 < core.size)
+    (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p)
+    (hgcd_core : Int.gcd (Hex.DensePoly.leadingCoeff core)
+      (Int.ofNat (primeData.p ^ Hex.precisionForCoeffBound B primeData.p)) = 1)
+    (hfactor_size : 0 < factor.size)
+    (hgcd_factor : Int.gcd (Hex.DensePoly.leadingCoeff factor)
+      (Int.ofNat (primeData.p ^ Hex.precisionForCoeffBound B primeData.p)) = 1)
+    {cofactor : Hex.ZPoly} {S : ModPFactorSubset primeData}
+    (hfactor_product :
+      Hex.ZPoly.congr
+        (Hex.ZPoly.monicTarget factor primeData.p
+            (Hex.precisionForCoeffBound B primeData.p) * cofactor)
+        (Hex.ZPoly.monicTarget core primeData.p
+            (Hex.precisionForCoeffBound B primeData.p))
+        (primeData.p ^ Hex.precisionForCoeffBound B primeData.p))
+    (hrepP : RepresentsIntegerFactorModP primeData
+      (Hex.ZPoly.monicTarget factor primeData.p
+        (Hex.precisionForCoeffBound B primeData.p)) S) :
+    letI := primeData.bounds
+    Hex.ZPoly.congr
+      (liftedFactorProduct (Hex.ZPoly.coreLiftData core B primeData)
+        (liftedSubsetOfModPSubset primeData (Hex.ZPoly.coreLiftData core B primeData)
+          (henselLiftData_liftedFactors_size_eq
+            (Hex.ZPoly.monicTarget core primeData.p
+              (Hex.precisionForCoeffBound B primeData.p))
+            (Hex.precisionForCoeffBound B primeData.p) primeData) S))
+      (Hex.ZPoly.monicTarget factor primeData.p
+        (Hex.precisionForCoeffBound B primeData.p))
+      ((Hex.ZPoly.coreLiftData core B primeData).p ^
+        (Hex.ZPoly.coreLiftData core B primeData).k) := by
+  letI := primeData.bounds
+  set precision := Hex.precisionForCoeffBound B primeData.p with hprecision_def
+  set target := Hex.ZPoly.monicTarget core primeData.p precision with htarget_def
+  set monicFactor := Hex.ZPoly.monicTarget factor primeData.p precision with hfactor_def
+  have hp_prime_hex : Hex.Nat.Prime primeData.p :=
+    Hex.choosePrimeData?_prime core primeData hselected
+  have hp_prime : _root_.Nat.Prime primeData.p :=
+    natPrime_of_hexNatPrime hp_prime_hex
+  have hp : 1 < primeData.p := hp_prime_hex.one_lt
+  have hpk : 1 < primeData.p ^ precision :=
+    Nat.one_lt_pow (by omega) hp
+  have htarget_monic : Hex.DensePoly.Monic target := by
+    rw [htarget_def]
+    exact Hex.ZPoly.monicTarget_monic core primeData.p precision hpk
+      (by simpa [hprecision_def] using hgcd_core) hcore_size
+  have hfactor_monic : Hex.DensePoly.Monic monicFactor := by
+    rw [hfactor_def]
+    exact Hex.ZPoly.monicTarget_monic factor primeData.p precision hpk
+      (by simpa [hprecision_def] using hgcd_factor) hfactor_size
+  obtain ⟨hzeroP, heqP⟩ :=
+    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
+  have hform : Hex.factorsModPBerlekampForm core primeData :=
+    ⟨hp_prime_hex, hzeroP, heqP⟩
+  have hgood : Hex.isGoodPrime core primeData.p = true :=
+    Hex.choosePrimeData?_isGoodPrime core primeData hselected
+  have hfactors_monic :
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g :=
+    factorsModP_monic_of_factorsModPBerlekampForm core primeData hform
+  have hproduct_mod_p :
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        target primeData.p := by
+    rw [htarget_def]
+    exact factorsModP_polyProduct_congr_monicTarget core precision primeData hpk
+      (by omega) (by simpa [hprecision_def] using hgcd_core) hform hgood
+  have hcoprime :
+      Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
+        primeData.factorsModP.toList :=
+    factorsModP_coprime_of_factorsModPBerlekampForm core primeData hform hgood
+  have hnonempty : primeData.factorsModP.toList ≠ [] :=
+    factorsModP_ne_nil_of_factorsModPBerlekampForm core primeData hform
+  have hinv :
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant primeData.p precision target
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList :=
+    Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData
+      target precision primeData hp_prime_hex hp
+      (by simpa [hprecision_def] using hprecision)
+      htarget_monic hfactors_monic hproduct_mod_p hcoprime hnonempty
+  have hfactors_irr :
+      ∀ i : ModPFactorIndex primeData,
+        Irreducible
+          (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)) :=
+    factors_irreducible_of_factorsModPBerlekampForm
+      core primeData hform hgood hcore_pos
+  have hfactors_nodup : primeData.factorsModP.toList.Nodup :=
+    factorsModP_nodup_of_factorsModPBerlekampForm core primeData hform hgood
+  have hproduct : Hex.ZPoly.congr (monicFactor * cofactor) target
+      (primeData.p ^ precision) := by
+    simpa [hfactor_def, htarget_def, hprecision_def] using hfactor_product
+  have hrepP' : RepresentsIntegerFactorModP primeData monicFactor S := by
+    simpa [hfactor_def, hprecision_def] using hrepP
+  have hcongr :=
+    henselLiftData_liftedSubset_congr_of_modP target precision primeData
+      htarget_monic hp_prime hinv (by simpa [hprecision_def] using hprecision)
+      hfactors_monic hproduct_mod_p hfactors_irr hfactors_nodup
+      hfactor_monic hproduct hrepP'
+  simpa [Hex.ZPoly.coreLiftData, htarget_def, hfactor_def, hprecision_def] using hcongr
+
 /-- **#7453.**
 
 Monic-coordinate forward Hensel-lift transport for `toMonicLiftData`
