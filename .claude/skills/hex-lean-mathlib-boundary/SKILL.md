@@ -1346,6 +1346,35 @@ proved; #7876 strengthened it in place); (b) the period reduction lives in the
 lattice's *period rows*, applied to the ordinary per-factor cut sum — no
 executable basis change (and no `aggregateCldTail` emission) is needed.
 
+### "Core recovery equals the M2 path" is unsound — the two lift datas don't share liftedFactors (#8303)
+
+A directive asking you to prove the M1 core-coordinate recovery equals the M2
+path as a *function/array equality* —
+`bhksRecoverClassifiedCore core (coreLiftData core B pd) =
+bhksRecoverClassified core (toMonicLiftData core B pd)` (or the weaker
+`coreRecover? = bhksRecover?`) — is **false**, not just hard. Both lift datas
+route through `henselLiftData` (`Basic.lean:2694`), which Hensel-lifts the *same*
+`pd.factorsModP` against the **target** passed in, and the targets differ:
+`coreLiftData` targets `monicTarget core p a` (`≡ core·ℓf⁻¹`), `toMonicLiftData`
+targets `(toMonic core).monic` (`c^(n-1)·core(X/c)`). Non-congruent targets ⇒
+different `liftedFactors` ⇒ different `bhksLatticeBasis` / `bhksProjectedRows` /
+RREF `bhksEquivalenceClassIndicators`, so the two recovery loops iterate over
+different indicators and different selected subsets. The #8298 per-candidate
+bridge (`RecoveredAtLiftM1.candidate_eq`) is stated for a *fixed* `d`/`S` — there
+is no per-selection correspondence to "lift through the loop's `map`", which is
+the route such directives propose. Empirically (temporary `#eval` of both sides
+at `B = factorFastPrecisionCap` on the step-1 non-monic smoke cores): with the
+production shared `primeData = choosePrimeData? core`, the M2 side is `none` on
+genuinely non-monic cores the M1 side recovers; even charitably giving M2 its own
+`toMonicPrimeData?`, the recovered factor *multiset* agrees but the `Array` order
+differs on 3/4 cores (RREF of two different lattices). So the order-sensitive
+`Option (Array ZPoly)` / `BhksRecoveryResult` equality cannot hold. The M1 swap
+is not behaviour-preserving anyway — that is its *purpose* (it recovers non-monic
+cores M2 punts to the slow path). The provable statement is at most an
+up-to-permutation equality plus matching success/failure classes, derived from
+each path's *soundness* — not from `candidate_eq` alone. Diagnose with the
+`#eval` counterexamples and skip. (#8303 skipped on exactly this.)
+
 ### Producers of data-carrying certificate structures must be `def`, not `theorem`
 
 This layer has many certificate *structures* that carry data, not Props:
