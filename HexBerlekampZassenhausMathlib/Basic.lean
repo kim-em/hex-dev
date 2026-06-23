@@ -10324,6 +10324,215 @@ theorem henselLiftData_represents_lifted_of_modP
           (show Hex.DensePoly.leadingCoeff core = (1 : Int) from hcore_monic)]
         exact ⟨q, hcoreq⟩ }
 
+/--
+Subset-level Hensel uniqueness in additive congruence form.
+
+This is the proof core behind the recovered-coordinate
+`henselLiftData_represents_lifted_of_modP`: if a selected modular subset `S`
+represents a monic integer factor `factor` modulo `p`, and `factor * cofactor`
+is a second factorisation of the same monic Hensel target modulo `p ^ B`, then
+the canonical lifted subset product is congruent to `factor` modulo `p ^ B`.
+
+The statement deliberately returns only the coefficientwise congruence.  This
+fits non-recovered coordinates such as the BHKS `monicTarget` M1 target, where
+the product comparison is a modular target-coordinate assertion rather than an
+integer equality `target = factor * cofactor`.
+-/
+theorem henselLiftData_liftedSubset_congr_of_modP
+    (target : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (htarget_monic : Hex.DensePoly.Monic target)
+    (hprime : _root_.Nat.Prime primeData.p)
+    (hprime_invariant :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p B target
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList)
+    (hB : 1 ≤ B)
+    (hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g)
+    (hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        target primeData.p)
+    (hfactors_irr :
+      letI := primeData.bounds
+      ∀ i : ModPFactorIndex primeData,
+        Irreducible
+          (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)))
+    (hfactors_nodup : primeData.factorsModP.toList.Nodup)
+    {factor cofactor : Hex.ZPoly} {S : ModPFactorSubset primeData}
+    (hfactor_monic : Hex.DensePoly.Monic factor)
+    (hfactor_product :
+      Hex.ZPoly.congr (factor * cofactor) target (primeData.p ^ B))
+    (hrepP : RepresentsIntegerFactorModP primeData factor S) :
+    letI := primeData.bounds
+    Hex.ZPoly.congr
+      (liftedFactorProduct (Hex.henselLiftData target B primeData)
+        (liftedSubsetOfModPSubset primeData (Hex.henselLiftData target B primeData)
+          (henselLiftData_liftedFactors_size_eq target B primeData) S))
+      factor (primeData.p ^ B) := by
+  letI := primeData.bounds
+  haveI hprime_fact : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime⟩
+  letI : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime
+      (by
+        constructor
+        · exact hprime.two_le
+        · intro m hmdvd
+          rcases hprime.eq_one_or_self_of_dvd m hmdvd with h | h
+          · exact Or.inl h
+          · exact Or.inr h)
+  have hp : 1 < primeData.p := hprime.one_lt
+  have hprime_hex : Hex.Nat.Prime primeData.p := by
+    constructor
+    · exact hprime.two_le
+    · intro m hmdvd
+      rcases hprime.eq_one_or_self_of_dvd m hmdvd with h | h
+      · exact Or.inl h
+      · exact Or.inr h
+  set d := Hex.henselLiftData target B primeData with hd_def
+  set hsize := henselLiftData_liftedFactors_size_eq target B primeData with hsize_def
+  set liftedS := liftedSubsetOfModPSubset primeData d hsize S with hliftedS_def
+  set complementS : LiftedFactorSubset d := (Finset.univ : LiftedFactorSubset d) \ liftedS
+    with hcomplementS_def
+  set f := HexPolyZMathlib.toPolynomial target with hf_def
+  set g := HexPolyZMathlib.toPolynomial (liftedFactorProduct d liftedS) with hg_def
+  set h := HexPolyZMathlib.toPolynomial (liftedFactorProduct d complementS) with hh_def
+  set g' := HexPolyZMathlib.toPolynomial factor with hg'_def
+  set h' := HexPolyZMathlib.toPolynomial cofactor with hh'_def
+  have hg_dense_monic : Hex.DensePoly.Monic (liftedFactorProduct d liftedS) :=
+    henselLiftData_liftedFactorProduct_monic target B primeData
+      htarget_monic hprime_invariant hp hB liftedS
+  have hg_monic : g.Monic :=
+    HexHenselMathlib.toPolynomial_monic_of_dense_monic _ hg_dense_monic
+  have hg'_monic : g'.Monic :=
+    HexHenselMathlib.toPolynomial_monic_of_dense_monic _ hfactor_monic
+  have hgh_congr :
+      Hex.ZPoly.congr
+        (liftedFactorProduct d liftedS * liftedFactorProduct d complementS)
+        target (primeData.p ^ B) :=
+    henselLiftData_liftedFactorProduct_subset_complement_congr_core
+      target B primeData hprime_invariant hp hB liftedS
+  have hgh_map_pB :
+      (HexPolyZMathlib.toPolynomial
+          (liftedFactorProduct d liftedS * liftedFactorProduct d complementS)).map
+          (Int.castRingHom (ZMod (primeData.p ^ B))) =
+        f.map (Int.castRingHom (ZMod (primeData.p ^ B))) :=
+    HexHenselMathlib.zpoly_congr_toPolynomial_map_eq _ _ _ hgh_congr
+  have hprod :
+      (g.map (Int.castRingHom (ZMod (primeData.p ^ B)))) *
+          (h.map (Int.castRingHom (ZMod (primeData.p ^ B)))) =
+        f.map (Int.castRingHom (ZMod (primeData.p ^ B))) := by
+    have hmul := hgh_map_pB
+    rw [HexPolyZMathlib.toPolynomial_mul, Polynomial.map_mul] at hmul
+    exact hmul
+  have hfactor_map_pB :
+      (HexPolyZMathlib.toPolynomial (factor * cofactor)).map
+          (Int.castRingHom (ZMod (primeData.p ^ B))) =
+        f.map (Int.castRingHom (ZMod (primeData.p ^ B))) :=
+    HexHenselMathlib.zpoly_congr_toPolynomial_map_eq _ _ _ hfactor_product
+  have hprod' :
+      (g'.map (Int.castRingHom (ZMod (primeData.p ^ B)))) *
+          (h'.map (Int.castRingHom (ZMod (primeData.p ^ B)))) =
+        f.map (Int.castRingHom (ZMod (primeData.p ^ B))) := by
+    have hmul := hfactor_map_pB
+    rw [HexPolyZMathlib.toPolynomial_mul, Polynomial.map_mul] at hmul
+    exact hmul
+  have hg1 :
+      g.map (Int.castRingHom (ZMod primeData.p)) =
+        g'.map (Int.castRingHom (ZMod primeData.p)) := by
+    have h1 :=
+      toPolynomial_liftedSubset_map_intCast_zmod_eq_toMathlibPolynomial
+        target B primeData htarget_monic hprime_invariant hp hB
+        hfactors_monic hproduct_mod_p S
+    have h2 : modPFactorProduct primeData S =
+        monicModPImage (Hex.ZPoly.modP primeData.p factor) := hrepP
+    have h3 := monicModPImage_modP_eq_self_of_monic
+      (f := factor) hfactor_monic hprime_hex hp
+    have h4 := toMathlibPolynomial_modP_eq_map_intCast_zmod (p := primeData.p) factor
+    show (HexPolyZMathlib.toPolynomial (liftedFactorProduct d liftedS)).map
+          (Int.castRingHom (ZMod primeData.p)) =
+        (HexPolyZMathlib.toPolynomial factor).map (Int.castRingHom (ZMod primeData.p))
+    rw [show liftedS = liftedSubsetOfModPSubset primeData d hsize S from rfl,
+      h1, h2, h3, h4]
+  haveI : Nontrivial (ZMod primeData.p) := inferInstance
+  have hdeg : g.natDegree = g'.natDegree := by
+    have hg_map_natDeg :
+        (g.map (Int.castRingHom (ZMod primeData.p))).natDegree = g.natDegree :=
+      hg_monic.natDegree_map (Int.castRingHom (ZMod primeData.p))
+    have hg'_map_natDeg :
+        (g'.map (Int.castRingHom (ZMod primeData.p))).natDegree = g'.natDegree :=
+      hg'_monic.natDegree_map (Int.castRingHom (ZMod primeData.p))
+    rw [← hg_map_natDeg, ← hg'_map_natDeg, hg1]
+  have hp_dvd_pB : primeData.p ∣ primeData.p ^ B := by
+    have h := Nat.pow_dvd_pow primeData.p hB
+    simpa using h
+  have hgh_congr_p :
+      Hex.ZPoly.congr
+        (liftedFactorProduct d liftedS * liftedFactorProduct d complementS)
+        target primeData.p :=
+    Hex.ZPoly.congr_of_dvd_modulus _ _ hp_dvd_pB hgh_congr
+  have hgh_map_p :
+      (HexPolyZMathlib.toPolynomial
+          (liftedFactorProduct d liftedS * liftedFactorProduct d complementS)).map
+          (Int.castRingHom (ZMod primeData.p)) =
+        f.map (Int.castRingHom (ZMod primeData.p)) :=
+    HexHenselMathlib.zpoly_congr_toPolynomial_map_eq _ _ _ hgh_congr_p
+  have hprod_p :
+      (g.map (Int.castRingHom (ZMod primeData.p))) *
+          (h.map (Int.castRingHom (ZMod primeData.p))) =
+        f.map (Int.castRingHom (ZMod primeData.p)) := by
+    have hmul := hgh_map_p
+    rw [HexPolyZMathlib.toPolynomial_mul, Polynomial.map_mul] at hmul
+    exact hmul
+  have hfactor_congr_p :
+      Hex.ZPoly.congr (factor * cofactor) target primeData.p :=
+    Hex.ZPoly.congr_of_dvd_modulus _ _ hp_dvd_pB hfactor_product
+  have hfactor_map_p :
+      (HexPolyZMathlib.toPolynomial (factor * cofactor)).map
+          (Int.castRingHom (ZMod primeData.p)) =
+        f.map (Int.castRingHom (ZMod primeData.p)) :=
+    HexHenselMathlib.zpoly_congr_toPolynomial_map_eq _ _ _ hfactor_congr_p
+  have hprod'_p :
+      (g'.map (Int.castRingHom (ZMod primeData.p))) *
+          (h'.map (Int.castRingHom (ZMod primeData.p))) =
+        f.map (Int.castRingHom (ZMod primeData.p)) := by
+    have hmul := hfactor_map_p
+    rw [HexPolyZMathlib.toPolynomial_mul, Polynomial.map_mul] at hmul
+    exact hmul
+  have hg'_map_p_monic : (g'.map (Int.castRingHom (ZMod primeData.p))).Monic :=
+    hg'_monic.map _
+  have hg'_map_p_ne_zero : g'.map (Int.castRingHom (ZMod primeData.p)) ≠ 0 :=
+    hg'_map_p_monic.ne_zero
+  have hh1 :
+      h.map (Int.castRingHom (ZMod primeData.p)) =
+        h'.map (Int.castRingHom (ZMod primeData.p)) := by
+    have hsame :
+        (g'.map (Int.castRingHom (ZMod primeData.p))) *
+            (h.map (Int.castRingHom (ZMod primeData.p))) =
+          (g'.map (Int.castRingHom (ZMod primeData.p))) *
+            (h'.map (Int.castRingHom (ZMod primeData.p))) := by
+      calc (g'.map (Int.castRingHom (ZMod primeData.p))) *
+              (h.map (Int.castRingHom (ZMod primeData.p)))
+          = (g.map (Int.castRingHom (ZMod primeData.p))) *
+              (h.map (Int.castRingHom (ZMod primeData.p))) := by rw [hg1]
+        _ = f.map (Int.castRingHom (ZMod primeData.p)) := hprod_p
+        _ = (g'.map (Int.castRingHom (ZMod primeData.p))) *
+              (h'.map (Int.castRingHom (ZMod primeData.p))) := hprod'_p.symm
+    exact mul_left_cancel₀ hg'_map_p_ne_zero hsame
+  have hcop :
+      IsCoprime (g.map (Int.castRingHom (ZMod primeData.p)))
+        (h.map (Int.castRingHom (ZMod primeData.p))) :=
+    henselLiftData_liftedSubset_complement_isCoprime_mod_p
+      target B primeData htarget_monic hprime hprime_invariant hp hB
+      hfactors_monic hproduct_mod_p hfactors_irr hfactors_nodup S
+  obtain ⟨hgg', _⟩ :=
+    HexHenselMathlib.hensel_unique f g h g' h' primeData.p B hB
+      hg_monic hg'_monic hdeg hprod hprod' hg1 hh1 hcop
+  exact HexHenselMathlib.zpoly_congr_of_toPolynomial_map_eq _ _ _ hgg'
+
 /-- **#7453.**
 
 Monic-coordinate forward Hensel-lift transport for `toMonicLiftData`
