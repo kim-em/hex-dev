@@ -3416,6 +3416,54 @@ theorem RecoveredAtLiftM1.candidate_eq
   rw [hscale_eq]
   exact hrec.recovered_eq
 
+/-- A centred lift is coefficientwise congruent to its argument modulo `m`: each
+coefficient is the centred representative `centeredModNat`, which differs from the
+original by a multiple of `m`. -/
+theorem centeredLiftPoly_congr_self (g : Hex.ZPoly) (m : Nat) :
+    Hex.ZPoly.congr (Hex.centeredLiftPoly g m) g m := by
+  intro i
+  rw [Hex.coeff_centeredLiftPoly]
+  apply Int.emod_eq_zero_of_dvd
+  simpa [neg_sub] using (dvd_neg (α := Int)).mpr (Hex.self_sub_centeredModNat_dvd (g.coeff i) m)
+
+/-- **Recovery proportionality (the `#8290` recovery glue).**
+
+From an `M1` recovery witness `RecoveredAtLiftM1 core d factor S`, the `ℓf`-scaled
+selected lifted product is congruent to a constant multiple of the recovered integer
+factor modulo `p^k`: `ℓf · (∏ S) ≡ c · factor (mod p^k)`, where `c` is the content
+of the centred lift.  This is the proportionality hypothesis consumed by the
+logarithmic-derivative bridge `congr_logDeriv_bridge_of_scale_congr`.
+
+The witness recovers `factor` as the primitive part of the centred lift `L` of the
+`ℓf`-scaled product, so `L = scale (content L) factor` by `content_mul_primitivePart`;
+`L` is itself congruent to the `ℓf`-scaled product (`centeredLiftPoly_congr_self`
+composed with `congr_reduceModPow`). -/
+theorem exists_scale_congr_factor_of_recoveredM1
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (hrec : RecoveredAtLiftM1 core d factor S) (hpk : 0 < d.p ^ d.k) :
+    ∃ c : Int, Hex.ZPoly.congr
+      (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) (liftedFactorProduct d S))
+      (Hex.DensePoly.scale c factor)
+      (d.p ^ d.k) := by
+  classical
+  set L := Hex.centeredLiftPoly
+      (Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k)
+      (d.p ^ d.k) with hL
+  refine ⟨Hex.ZPoly.content L, ?_⟩
+  -- `L = scale (content L) factor` from the recovery `primitivePart L = factor`.
+  have hLeq : Hex.DensePoly.scale (Hex.ZPoly.content L) factor = L := by
+    have hpp : Hex.ZPoly.primitivePart L = factor := hrec.candidate_eq hpk
+    have hcm := Hex.ZPoly.content_mul_primitivePart L
+    rw [hpp] at hcm
+    exact hcm
+  -- `L ≡ scaledLiftedFactorProduct core d S (mod p^k)`.
+  have hcong : Hex.ZPoly.congr L (scaledLiftedFactorProduct core d S) (d.p ^ d.k) :=
+    Hex.ZPoly.congr_trans _ _ _ _
+      (centeredLiftPoly_congr_self _ _)
+      (Hex.ZPoly.congr_reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k hpk)
+  rw [hLeq]
+  exact Hex.ZPoly.congr_symm _ _ _ hcong
+
 /-! ### M1 Hensel lift invariant: `monicTarget` mod-`p` structure transfers from `core`
 
 The fast-core lift `coreLiftData` lifts `core`'s Berlekamp factors against the
