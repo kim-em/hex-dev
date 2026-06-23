@@ -6851,6 +6851,91 @@ private def bhksProductMismatchRecoverLift : LiftData :=
 #guard BhksRecoveryResult.toOption
     (.productMismatch #[DensePoly.ofCoeffs #[-2, 1]]) = none
 
+/--
+Reconstruct and verify one BHKS equivalence-class indicator in `core`'s own
+coordinate (van Hoeij `M1`).
+
+Mirrors `bhksIndicatorCandidate?`, but the lifted factors here are the monic
+factors of the leading-coefficient-faithful `monicTarget` (`core · ℓf⁻¹ mod
+p^k`), so the integer factor of `core` is recovered with **no** `dilate`: scale
+the selected lifted product by `ℓf = leadingCoeff f`, reduce modulo `p^k`,
+centre-lift, and take the primitive part.  This is the executable image of the
+M1 recovery formula `RecoveredAtLiftM1.candidate_eq`
+(`primitivePart (centeredLiftPoly ((ℓf · ∏ selected) % p^k))`), with the outer
+sign normalisation that makes the candidate canonical for the division check.
+-/
+def bhksIndicatorCandidateCore?
+    (f : ZPoly) (d : LiftData) (indicator : Array Int) : Option (ZPoly × ZPoly) :=
+  match bhksIndicatorSelectedFactors d.liftedFactors indicator with
+  | none => none
+  | some selected =>
+      let modulus := liftModulus d
+      let candidate := normalizeFactorSign <|
+        ZPoly.primitivePart <|
+          centeredLiftPoly
+            (ZPoly.reduceModPow
+              (DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected))
+              d.p d.k)
+            modulus
+      if shouldRecordPolynomialFactor candidate then
+        match exactQuotient? f candidate with
+        | some quotient => some (candidate, quotient)
+        | none => none
+      else
+        none
+
+private def bhksIndicatorCandidatesCoreStep
+    (f : ZPoly) (d : LiftData) :
+    Option (Array ZPoly) → Array Int → Option (Array ZPoly)
+  | none, _ => none
+  | some candidates, indicator =>
+      match bhksIndicatorCandidateCore? f d indicator with
+      | some candidate => some (candidates.push candidate.1)
+      | none => none
+
+/-- Core-coordinate analogue of `bhksIndicatorCandidates?`: folds
+`bhksIndicatorCandidateCore?` over the indicator vectors, pushing each verified
+`M1` candidate factor onto the accumulator and short-circuiting to `none` on the
+first reconstruction failure. -/
+def bhksIndicatorCandidatesCore?
+    (f : ZPoly) (d : LiftData) (indicators : Array (Array Int)) :
+    Option (Array ZPoly) :=
+  indicators.foldl (bhksIndicatorCandidatesCoreStep f d) (some #[])
+
+/--
+Core-coordinate (van Hoeij `M1`) analogue of `bhksRecoverClassified`.
+
+Runs the same fixed-precision BHKS recovery pipeline — CLD lattice, LLL plus the
+Gram-Schmidt cut, RREF equivalence-class indicators, product check — but
+reconstructs each indicated candidate through `bhksIndicatorCandidateCore?`,
+which lifts `monicTarget`'s monic factors back into `core`'s own coordinate with
+no `dilate`.  The lattice basis and indicator partition machinery is shared
+verbatim; only the per-indicator candidate shape differs.
+-/
+private def bhksRecoverClassifiedCore (f : ZPoly) (d : LiftData) : BhksRecoveryResult :=
+  let L := bhksLatticeBasis f d.p d.k d.liftedFactors
+  if hrows : 1 ≤ L.factorCount + L.coeffWidth then
+    let projected := bhksProjectedRows L hrows
+    let indicators := bhksEquivalenceClassIndicators projected
+    if bhksDegenerateIndicatorPartition projected indicators then
+      .degenerate
+    else
+      match bhksIndicatorCandidatesCore? f d indicators with
+      | none => .candidateFailure
+      | some candidates =>
+          if Array.polyProduct candidates == f then
+            .success candidates
+          else
+            .productMismatch candidates
+  else
+    .degenerate
+
+/-- Core-coordinate (van Hoeij `M1`) fast recovery: the recovered factor array
+on success, `none` on any failure class.  Coordinate-faithful counterpart to
+`bhksRecover?`, consuming `coreLiftData` rather than `toMonicLiftData`. -/
+def coreRecover? (f : ZPoly) (d : LiftData) : Option (Array ZPoly) :=
+  (bhksRecoverClassifiedCore f d).toOption
+
 private def recombinationSearchAux
     (target : ZPoly) (localFactors : List ZPoly) : Nat → Option (List ZPoly)
   | 0 => none
@@ -8320,6 +8405,40 @@ def factorFast (f : ZPoly) : Option Factorization :=
 
 #guard factorFastWithBound (DensePoly.ofCoeffs #[1, 0, 0, 0, 1]) 4 = none
 #guard factorFastWithBound cldGuardF 1 = none
+
+/-- Smoke-test driver for the core-coordinate fast recovery: select the good
+prime exactly as the fast path does, then run `coreRecover?` against the
+`coreLiftData` (`monicTarget`) lift at the public precision cap.  Used by the
+`#guard`s below to exercise `coreRecover?` end-to-end on real non-monic
+multi-factor inputs; nothing in the production path routes through it (the
+existing `factorFast*` loop still consumes `bhksRecover?`). -/
+private def coreRecoverSmoke? (c : ZPoly) : Option (Array ZPoly) :=
+  match choosePrimeData? c with
+  | some pd => coreRecover? c (ZPoly.coreLiftData c (factorFastPrecisionCap c) pd)
+  | none => none
+
+-- `(2x+1)(x⁴+1)`: recovers the two integer factors in `core`'s own coordinate.
+#guard coreRecoverSmoke? (DensePoly.ofCoeffs #[1, 2, 0, 0, 1, 2]) =
+  some #[DensePoly.ofCoeffs #[1, 0, 0, 0, 1], DensePoly.ofCoeffs #[1, 2]]
+-- `(3x+2)(x²+2)`
+#guard coreRecoverSmoke? (DensePoly.ofCoeffs #[4, 6, 2, 3]) =
+  some #[DensePoly.ofCoeffs #[2, 3], DensePoly.ofCoeffs #[2, 0, 1]]
+-- `(6x²-1)(x+5)`
+#guard coreRecoverSmoke? (DensePoly.ofCoeffs #[-5, -1, 30, 6]) =
+  some #[DensePoly.ofCoeffs #[5, 1], DensePoly.ofCoeffs #[-1, 0, 6]]
+-- `2x²-3x+1 = (2x-1)(x-1)`
+#guard coreRecoverSmoke? (DensePoly.ofCoeffs #[1, -3, 2]) =
+  some #[DensePoly.ofCoeffs #[-1, 1], DensePoly.ofCoeffs #[-1, 2]]
+
+-- Each recovered factorization multiplies back to the core input.
+#guard (coreRecoverSmoke? (DensePoly.ofCoeffs #[1, 2, 0, 0, 1, 2])).map Array.polyProduct =
+  some (DensePoly.ofCoeffs #[1, 2, 0, 0, 1, 2])
+#guard (coreRecoverSmoke? (DensePoly.ofCoeffs #[4, 6, 2, 3])).map Array.polyProduct =
+  some (DensePoly.ofCoeffs #[4, 6, 2, 3])
+#guard (coreRecoverSmoke? (DensePoly.ofCoeffs #[-5, -1, 30, 6])).map Array.polyProduct =
+  some (DensePoly.ofCoeffs #[-5, -1, 30, 6])
+#guard (coreRecoverSmoke? (DensePoly.ofCoeffs #[1, -3, 2])).map Array.polyProduct =
+  some (DensePoly.ofCoeffs #[1, -3, 2])
 
 /--
 Product of every odd prime searched by the historical bounded
