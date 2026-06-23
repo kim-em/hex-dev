@@ -6936,6 +6936,485 @@ on success, `none` on any failure class.  Coordinate-faithful counterpart to
 def coreRecover? (f : ZPoly) (d : LiftData) : Option (Array ZPoly) :=
   (bhksRecoverClassifiedCore f d).toOption
 
+private theorem bhksIndicatorCandidateCore?_normalizeFactorSign
+    {f : ZPoly} {d : LiftData} {indicator : Array Int}
+    {candidate quotient : ZPoly}
+    (h : bhksIndicatorCandidateCore? f d indicator = some (candidate, quotient)) :
+    normalizeFactorSign candidate = candidate := by
+  unfold bhksIndicatorCandidateCore? at h
+  cases hselected : bhksIndicatorSelectedFactors d.liftedFactors indicator with
+  | none =>
+      simp [hselected] at h
+  | some selected =>
+      simp only [hselected] at h
+      let modulus := liftModulus d
+      let candidate0 :=
+        ZPoly.primitivePart
+          (centeredLiftPoly
+            (ZPoly.reduceModPow
+              (DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected))
+              d.p d.k)
+            modulus)
+      let candidate' := normalizeFactorSign candidate0
+      change
+        (if shouldRecordPolynomialFactor candidate' then
+          match exactQuotient? f candidate' with
+          | some quotient => some (candidate', quotient)
+          | none => none
+        else
+          none) = some (candidate, quotient) at h
+      by_cases hrecord : shouldRecordPolynomialFactor candidate'
+      · rw [if_pos hrecord] at h
+        cases hquot : exactQuotient? f candidate' with
+        | none =>
+            simp [hquot] at h
+        | some quotient' =>
+            simp [hquot] at h
+            rcases h with ⟨hcandidate, _hquotient⟩
+            subst candidate
+            exact normalizeFactorSign_idem candidate0
+      · rw [if_neg hrecord] at h
+        simp at h
+
+private theorem bhksIndicatorCandidateCore?_shouldRecord
+    {f : ZPoly} {d : LiftData} {indicator : Array Int}
+    {candidate quotient : ZPoly}
+    (h : bhksIndicatorCandidateCore? f d indicator = some (candidate, quotient)) :
+    shouldRecordPolynomialFactor candidate = true := by
+  unfold bhksIndicatorCandidateCore? at h
+  cases hselected : bhksIndicatorSelectedFactors d.liftedFactors indicator with
+  | none =>
+      simp [hselected] at h
+  | some selected =>
+      simp only [hselected] at h
+      let modulus := liftModulus d
+      let candidate0 :=
+        ZPoly.primitivePart
+          (centeredLiftPoly
+            (ZPoly.reduceModPow
+              (DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected))
+              d.p d.k)
+            modulus)
+      let candidate' := normalizeFactorSign candidate0
+      change
+        (if shouldRecordPolynomialFactor candidate' then
+          match exactQuotient? f candidate' with
+          | some quotient => some (candidate', quotient)
+          | none => none
+        else
+          none) = some (candidate, quotient) at h
+      by_cases hrecord : shouldRecordPolynomialFactor candidate'
+      · rw [if_pos hrecord] at h
+        cases hquot : exactQuotient? f candidate' with
+        | none =>
+            simp [hquot] at h
+        | some quotient' =>
+            simp [hquot] at h
+            rcases h with ⟨hcandidate, _hquotient⟩
+            subst candidate
+            exact hrecord
+      · rw [if_neg hrecord] at h
+        simp at h
+
+/--
+A successful Core indicator candidate divides `f`. As with the M2
+`bhksIndicatorCandidate?`, the executable only returns `some (candidate, _)`
+after `exactQuotient? f candidate` succeeds, so the candidate is a verified
+integer divisor of `f`.
+-/
+theorem bhksIndicatorCandidateCore?_dvd
+    {f : ZPoly} {d : LiftData} {indicator : Array Int}
+    {candidate quotient : ZPoly}
+    (h : bhksIndicatorCandidateCore? f d indicator = some (candidate, quotient)) :
+    candidate ∣ f := by
+  unfold bhksIndicatorCandidateCore? at h
+  cases hselected : bhksIndicatorSelectedFactors d.liftedFactors indicator with
+  | none =>
+      simp [hselected] at h
+  | some selected =>
+      simp only [hselected] at h
+      let modulus := liftModulus d
+      let candidate0 :=
+        ZPoly.primitivePart
+          (centeredLiftPoly
+            (ZPoly.reduceModPow
+              (DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected))
+              d.p d.k)
+            modulus)
+      let candidate' := normalizeFactorSign candidate0
+      change
+        (if shouldRecordPolynomialFactor candidate' then
+          match exactQuotient? f candidate' with
+          | some quotient => some (candidate', quotient)
+          | none => none
+        else
+          none) = some (candidate, quotient) at h
+      by_cases hrecord : shouldRecordPolynomialFactor candidate'
+      · rw [if_pos hrecord] at h
+        cases hquot : exactQuotient? f candidate' with
+        | none =>
+            simp [hquot] at h
+        | some quotient' =>
+            simp [hquot] at h
+            rcases h with ⟨hcandidate, hquotient⟩
+            subst candidate
+            subst quotient
+            have hmul : quotient' * candidate' = f := exactQuotient?_product hquot
+            refine ⟨quotient', ?_⟩
+            rw [DensePoly.mul_comm_poly (S := Int)]
+            exact hmul.symm
+      · rw [if_neg hrecord] at h
+        simp at h
+
+/-- A successful Core indicator candidate has nonnegative leading coefficient:
+the final `normalizeFactorSign` layer is a fixed point on the candidate, so the
+candidate inherits the `≥ 0` leading-coefficient guarantee of
+`normalizeFactorSign`. -/
+private theorem bhksIndicatorCandidateCore?_leadingCoeff_nonneg
+    {f : ZPoly} {d : LiftData} {indicator : Array Int}
+    {candidate quotient : ZPoly}
+    (h : bhksIndicatorCandidateCore? f d indicator = some (candidate, quotient)) :
+    0 ≤ DensePoly.leadingCoeff candidate := by
+  have hnorm := bhksIndicatorCandidateCore?_normalizeFactorSign h
+  have hsign := normalizeFactorSign_leadingCoeff_nonneg candidate
+  rwa [hnorm] at hsign
+
+/-- A successful Core indicator candidate is primitive: the candidate equals
+`normalizeFactorSign (ZPoly.primitivePart _)`, and `shouldRecord = true` forces
+the primitive part to be nonzero, hence the centred lift has nonzero content and
+its primitive part is genuinely primitive. -/
+theorem bhksIndicatorCandidateCore?_primitive
+    {f : ZPoly} {d : LiftData} {indicator : Array Int}
+    {candidate quotient : ZPoly}
+    (h : bhksIndicatorCandidateCore? f d indicator = some (candidate, quotient)) :
+    ZPoly.Primitive candidate := by
+  unfold bhksIndicatorCandidateCore? at h
+  cases hselected : bhksIndicatorSelectedFactors d.liftedFactors indicator with
+  | none =>
+      simp [hselected] at h
+  | some selected =>
+      simp only [hselected] at h
+      let modulus := liftModulus d
+      let inner :=
+        centeredLiftPoly
+          (ZPoly.reduceModPow
+            (DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected))
+            d.p d.k)
+          modulus
+      let candidate0 := ZPoly.primitivePart inner
+      let candidate' := normalizeFactorSign candidate0
+      change
+        (if shouldRecordPolynomialFactor candidate' then
+          match exactQuotient? f candidate' with
+          | some quotient => some (candidate', quotient)
+          | none => none
+        else
+          none) = some (candidate, quotient) at h
+      by_cases hrecord : shouldRecordPolynomialFactor candidate'
+      · rw [if_pos hrecord] at h
+        cases hquot : exactQuotient? f candidate' with
+        | none =>
+            simp [hquot] at h
+        | some quotient' =>
+            simp [hquot] at h
+            rcases h with ⟨hcandidate, _hquotient⟩
+            subst candidate
+            have hcand'_ne : candidate' ≠ 0 := by
+              intro hzero
+              rw [hzero] at hrecord
+              unfold shouldRecordPolynomialFactor at hrecord
+              simp at hrecord
+            have hcand0_ne : candidate0 ≠ 0 := by
+              intro hzero
+              apply hcand'_ne
+              show normalizeFactorSign candidate0 = 0
+              rw [hzero]
+              unfold normalizeFactorSign
+              have hlc :
+                  ¬ DensePoly.leadingCoeff (0 : ZPoly) < 0 := by
+                simp
+              rw [if_neg hlc]
+            have hinner_content_ne : ZPoly.content inner ≠ 0 := by
+              intro hzero
+              apply hcand0_ne
+              show DensePoly.primitivePart inner = 0
+              exact
+                DensePoly.primitivePart_eq_zero_of_content_eq_zero inner
+                  (by simpa [ZPoly.content] using hzero)
+            have hprim_cand0 : ZPoly.Primitive candidate0 :=
+              ZPoly.primitivePart_primitive inner hinner_content_ne
+            exact normalizeFactorSign_primitive _ hprim_cand0
+      · rw [if_neg hrecord] at h
+        simp at h
+
+/-- A successful Core indicator candidate has positive degree: it is primitive
+with nonnegative leading coefficient and is not a unit, so it cannot be a
+constant polynomial. -/
+private theorem bhksIndicatorCandidateCore?_positive_degree
+    {f : ZPoly} {d : LiftData} {indicator : Array Int}
+    {candidate quotient : ZPoly}
+    (h : bhksIndicatorCandidateCore? f d indicator = some (candidate, quotient)) :
+    0 < candidate.degree?.getD 0 := by
+  have hrecord := bhksIndicatorCandidateCore?_shouldRecord h
+  have hprim := bhksIndicatorCandidateCore?_primitive h
+  have hsign := bhksIndicatorCandidateCore?_leadingCoeff_nonneg h
+  have hne : candidate ≠ 0 := by
+    intro hzero
+    rw [hzero] at hrecord
+    unfold shouldRecordPolynomialFactor at hrecord
+    simp at hrecord
+  have hne_one : candidate ≠ 1 := by
+    intro hone
+    rw [hone] at hrecord
+    unfold shouldRecordPolynomialFactor at hrecord
+    simp at hrecord
+  have hne_neg : candidate ≠ DensePoly.C (-1 : Int) := by
+    intro hneg
+    rw [hneg] at hrecord
+    unfold shouldRecordPolynomialFactor at hrecord
+    simp at hrecord
+  have hsize_pos : 0 < candidate.size := by
+    rcases Nat.lt_or_ge 0 candidate.size with hpos | _hle
+    · exact hpos
+    · have hsz : candidate.size = 0 := by omega
+      have hcand_zero : candidate = 0 := by
+        apply DensePoly.ext_coeff
+        intro n
+        rw [DensePoly.coeff_zero]
+        exact DensePoly.coeff_eq_zero_of_size_le candidate (by omega)
+      exact False.elim (hne hcand_zero)
+  have hsize_ge_two : 2 ≤ candidate.size := by
+    rcases Nat.lt_or_ge 1 candidate.size with hge | _hle
+    · omega
+    · have hsize_one : candidate.size = 1 := by omega
+      have hcandidate_eq : candidate = DensePoly.C (candidate.coeff 0) := by
+        apply DensePoly.ext_coeff
+        intro n
+        cases n with
+        | zero =>
+            rw [DensePoly.coeff_C]
+            simp
+        | succ n =>
+            rw [DensePoly.coeff_C, if_neg (Nat.succ_ne_zero n)]
+            exact DensePoly.coeff_eq_zero_of_size_le candidate (by omega)
+      have hprim_C :
+          DensePoly.content (DensePoly.C (candidate.coeff 0)) = 1 := by
+        have hcontent_eq : DensePoly.content candidate
+            = DensePoly.content (DensePoly.C (candidate.coeff 0)) :=
+          congrArg DensePoly.content hcandidate_eq
+        exact hcontent_eq.symm.trans hprim
+      have hcontent_C_eq :
+          DensePoly.content (DensePoly.C (candidate.coeff 0))
+            = Int.ofNat (candidate.coeff 0).natAbs :=
+        DensePoly.content_C (candidate.coeff 0)
+      have hnat_int :
+          Int.ofNat (candidate.coeff 0).natAbs = 1 := by
+        rw [← hcontent_C_eq]
+        exact hprim_C
+      have hnat : (candidate.coeff 0).natAbs = 1 := by
+        exact Int.ofNat.inj hnat_int
+      have hc_cases :
+          candidate.coeff 0 = ↑(1 : Nat) ∨ candidate.coeff 0 = -↑(1 : Nat) :=
+        Int.natAbs_eq_iff.mp hnat
+      exfalso
+      rcases hc_cases with hpos | hneg
+      · apply hne_one
+        rw [hcandidate_eq]
+        show DensePoly.C (candidate.coeff 0) = DensePoly.C 1
+        rw [hpos]
+        rfl
+      · apply hne_neg
+        rw [hcandidate_eq]
+        show DensePoly.C (candidate.coeff 0) = DensePoly.C (-1)
+        rw [hneg]
+        rfl
+  have hne_size : candidate.size ≠ 0 := by omega
+  have hdeg_eq :
+      (DensePoly.degree? candidate).getD 0 = candidate.size - 1 := by
+    unfold DensePoly.degree?
+    rw [dif_neg hne_size]
+    rfl
+  show 0 < (DensePoly.degree? candidate).getD 0
+  rw [hdeg_eq]
+  omega
+
+private theorem bhksIndicatorCandidatesCoreStep_fold_none
+    (f : ZPoly) (d : LiftData) (indicators : List (Array Int)) :
+    List.foldl (bhksIndicatorCandidatesCoreStep f d) none indicators = none := by
+  induction indicators with
+  | nil => rfl
+  | cons indicator indicators ih =>
+      rw [List.foldl_cons]
+      simpa [bhksIndicatorCandidatesCoreStep] using ih
+
+private theorem bhksIndicatorCandidatesCoreStep_fold_all_of_candidate
+    (P : ZPoly → Prop)
+    (f : ZPoly) (d : LiftData)
+    (hcandidate :
+      ∀ {indicator candidate quotient},
+        bhksIndicatorCandidateCore? f d indicator = some (candidate, quotient) →
+          P candidate) :
+    ∀ (indicators : List (Array Int)) (acc candidates : Array ZPoly),
+      (∀ factor ∈ acc.toList, P factor) →
+        List.foldl (bhksIndicatorCandidatesCoreStep f d) (some acc) indicators =
+            some candidates →
+          ∀ factor ∈ candidates.toList, P factor
+  | [], acc, candidates, hacc, hfold => by
+      simp at hfold
+      cases hfold
+      exact hacc
+  | indicator :: indicators, acc, candidates, hacc, hfold => by
+      rw [List.foldl_cons] at hfold
+      cases hhead : bhksIndicatorCandidateCore? f d indicator with
+      | none =>
+          have hnone :=
+            bhksIndicatorCandidatesCoreStep_fold_none f d indicators
+          simp [bhksIndicatorCandidatesCoreStep, hhead, hnone] at hfold
+      | some pair =>
+          rcases pair with ⟨candidate, quotient⟩
+          have hnext :
+              List.foldl (bhksIndicatorCandidatesCoreStep f d) (some (acc.push candidate))
+                  indicators = some candidates := by
+            simpa [bhksIndicatorCandidatesCoreStep, hhead] using hfold
+          have hacc_push :
+              ∀ factor ∈ (acc.push candidate).toList, P factor := by
+            intro factor hmem
+            rw [Array.toList_push] at hmem
+            simp only [List.mem_append, List.mem_singleton] at hmem
+            cases hmem with
+            | inl hacc_mem => exact hacc factor hacc_mem
+            | inr hfactor =>
+                rw [hfactor]
+                exact hcandidate hhead
+          exact
+            bhksIndicatorCandidatesCoreStep_fold_all_of_candidate
+              P f d hcandidate indicators (acc.push candidate) candidates
+              hacc_push hnext
+
+private theorem bhksIndicatorCandidatesCore?_all_of_candidate
+    (P : ZPoly → Prop)
+    (f : ZPoly) (d : LiftData)
+    (hcandidate :
+      ∀ {indicator candidate quotient},
+        bhksIndicatorCandidateCore? f d indicator = some (candidate, quotient) →
+          P candidate)
+    {indicators : Array (Array Int)} {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidatesCore? f d indicators = some candidates) :
+    ∀ factor ∈ candidates.toList, P factor := by
+  unfold bhksIndicatorCandidatesCore? at h
+  rw [← Array.foldl_toList] at h
+  exact
+    bhksIndicatorCandidatesCoreStep_fold_all_of_candidate
+      P f d hcandidate indicators.toList #[] candidates (by simp) h
+
+private theorem bhksIndicatorCandidatesCore?_normalizeFactorSign
+    {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+    {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidatesCore? f d indicators = some candidates) :
+    ∀ factor ∈ candidates.toList, normalizeFactorSign factor = factor :=
+  bhksIndicatorCandidatesCore?_all_of_candidate
+    (fun factor => normalizeFactorSign factor = factor)
+    f d (fun hcandidate => bhksIndicatorCandidateCore?_normalizeFactorSign hcandidate) h
+
+private theorem bhksIndicatorCandidatesCore?_shouldRecord
+    {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+    {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidatesCore? f d indicators = some candidates) :
+    ∀ factor ∈ candidates.toList, shouldRecordPolynomialFactor factor = true :=
+  bhksIndicatorCandidatesCore?_all_of_candidate
+    (fun factor => shouldRecordPolynomialFactor factor = true)
+    f d (fun hcandidate => bhksIndicatorCandidateCore?_shouldRecord hcandidate) h
+
+/-- Every candidate emitted by `bhksIndicatorCandidatesCore?` divides the input
+polynomial; the Core-coordinate analogue of `bhksIndicatorCandidates?_dvd`. -/
+theorem bhksIndicatorCandidatesCore?_dvd
+    {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+    {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidatesCore? f d indicators = some candidates) :
+    ∀ factor ∈ candidates.toList, factor ∣ f :=
+  bhksIndicatorCandidatesCore?_all_of_candidate
+    (fun factor => factor ∣ f)
+    f d (fun hcandidate => bhksIndicatorCandidateCore?_dvd hcandidate) h
+
+/-- Every candidate emitted by `bhksIndicatorCandidatesCore?` is primitive; the
+Core-coordinate analogue of `bhksIndicatorCandidates?_primitive`. -/
+theorem bhksIndicatorCandidatesCore?_primitive
+    {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+    {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidatesCore? f d indicators = some candidates) :
+    ∀ factor ∈ candidates.toList, ZPoly.Primitive factor :=
+  bhksIndicatorCandidatesCore?_all_of_candidate
+    (fun factor => ZPoly.Primitive factor)
+    f d (fun hcandidate => bhksIndicatorCandidateCore?_primitive hcandidate) h
+
+/-- Every candidate emitted by `bhksIndicatorCandidatesCore?` has nonnegative
+leading coefficient; the Core-coordinate analogue of
+`bhksIndicatorCandidates?_leadingCoeff_nonneg`. -/
+theorem bhksIndicatorCandidatesCore?_leadingCoeff_nonneg
+    {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+    {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidatesCore? f d indicators = some candidates) :
+    ∀ factor ∈ candidates.toList, 0 ≤ DensePoly.leadingCoeff factor :=
+  bhksIndicatorCandidatesCore?_all_of_candidate
+    (fun factor => 0 ≤ DensePoly.leadingCoeff factor)
+    f d (fun hcandidate => bhksIndicatorCandidateCore?_leadingCoeff_nonneg hcandidate) h
+
+/-- Every candidate emitted by `bhksIndicatorCandidatesCore?` has positive degree;
+the Core-coordinate analogue of `bhksIndicatorCandidates?_positive_degree`. -/
+theorem bhksIndicatorCandidatesCore?_positive_degree
+    {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+    {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidatesCore? f d indicators = some candidates) :
+    ∀ factor ∈ candidates.toList, 0 < factor.degree?.getD 0 :=
+  bhksIndicatorCandidatesCore?_all_of_candidate
+    (fun factor => 0 < factor.degree?.getD 0)
+    f d (fun hcandidate => bhksIndicatorCandidateCore?_positive_degree hcandidate) h
+
+private theorem bhksIndicatorCandidatesCoreStep_fold_size_eq
+    (f : ZPoly) (d : LiftData) :
+    ∀ (indicators : List (Array Int)) (acc candidates : Array ZPoly),
+      List.foldl (bhksIndicatorCandidatesCoreStep f d) (some acc) indicators =
+          some candidates →
+        candidates.size = acc.size + indicators.length
+  | [], acc, candidates, hfold => by
+      simp at hfold
+      cases hfold
+      simp
+  | indicator :: indicators, acc, candidates, hfold => by
+      rw [List.foldl_cons] at hfold
+      cases hhead : bhksIndicatorCandidateCore? f d indicator with
+      | none =>
+          have hnone :=
+            bhksIndicatorCandidatesCoreStep_fold_none f d indicators
+          simp [bhksIndicatorCandidatesCoreStep, hhead, hnone] at hfold
+      | some pair =>
+          rcases pair with ⟨candidate, quotient⟩
+          have hnext :
+              List.foldl (bhksIndicatorCandidatesCoreStep f d)
+                  (some (acc.push candidate)) indicators = some candidates := by
+            simpa [bhksIndicatorCandidatesCoreStep, hhead] using hfold
+          have ih :=
+            bhksIndicatorCandidatesCoreStep_fold_size_eq f d indicators
+              (acc.push candidate) candidates hnext
+          rw [ih, Array.size_push, List.length_cons]
+          omega
+
+/--
+A successful Core indicator-candidate fold produces a candidate array of the
+same size as the input indicator array.  The Core-coordinate analogue of
+`bhksIndicatorCandidates?_size_eq`, needed by the size wrapper consumers.
+-/
+theorem bhksIndicatorCandidatesCore?_size_eq
+    {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+    {candidates : Array ZPoly}
+    (h : bhksIndicatorCandidatesCore? f d indicators = some candidates) :
+    candidates.size = indicators.size := by
+  unfold bhksIndicatorCandidatesCore? at h
+  rw [← Array.foldl_toList] at h
+  have hfold :=
+    bhksIndicatorCandidatesCoreStep_fold_size_eq f d indicators.toList #[] candidates h
+  simpa [Array.length_toList] using hfold
+
 private def recombinationSearchAux
     (target : ZPoly) (localFactors : List ZPoly) : Nat → Option (List ZPoly)
   | 0 => none
@@ -12109,6 +12588,162 @@ private theorem bhksRecoverClassified_success_indicatorCandidates
     · simp [hdeg] at hrecover
     · simp only [hdeg, Bool.false_eq_true, if_false] at hrecover
       cases hcand : bhksIndicatorCandidates? f d
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
+              hrows)) with
+      | none => simp [hcand] at hrecover
+      | some cands =>
+          simp only [hcand] at hrecover
+          by_cases hprod : Array.polyProduct cands == f
+          · simp only [hprod, if_true] at hrecover
+            cases hrecover
+            exact ⟨hrows, hcand, by simpa using hdeg⟩
+          · simp [hprod] at hrecover
+  · rw [dif_neg hrows] at hrecover
+    simp at hrecover
+
+private theorem bhksRecoverClassifiedCore_success_product
+    {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
+    (hrecover : bhksRecoverClassifiedCore f d = .success candidates) :
+    Array.polyProduct candidates = f := by
+  rw [bhksRecoverClassifiedCore] at hrecover
+  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
+  · rw [dif_pos hrows] at hrecover
+    by_cases hdeg :
+        bhksDegenerateIndicatorPartition
+          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
+              hrows)) = true
+    · simp [hdeg] at hrecover
+    · simp only [hdeg, Bool.false_eq_true, if_false] at hrecover
+      cases hcand : bhksIndicatorCandidatesCore? f d
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
+              hrows)) with
+      | none => simp [hcand] at hrecover
+      | some cands =>
+          simp only [hcand] at hrecover
+          by_cases hprod : Array.polyProduct cands == f
+          · simp only [hprod, if_true] at hrecover
+            cases hrecover
+            simpa [beq_iff_eq] using hprod
+          · simp [hprod] at hrecover
+  · rw [dif_neg hrows] at hrecover
+    simp at hrecover
+
+private theorem bhksRecoverClassifiedCore_success_all_of_candidates
+    (P : ZPoly → Prop)
+    (hall :
+      ∀ {f : ZPoly} {d : LiftData} {indicators : Array (Array Int)}
+        {candidates : Array ZPoly},
+        bhksIndicatorCandidatesCore? f d indicators = some candidates →
+          ∀ factor ∈ candidates.toList, P factor)
+    {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
+    (hrecover : bhksRecoverClassifiedCore f d = .success candidates) :
+    ∀ factor ∈ candidates.toList, P factor := by
+  rw [bhksRecoverClassifiedCore] at hrecover
+  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
+  · rw [dif_pos hrows] at hrecover
+    let projected :=
+      bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows
+    let indicators := bhksEquivalenceClassIndicators projected
+    by_cases hdeg : bhksDegenerateIndicatorPartition projected indicators = true
+    · simp [projected, indicators, hdeg] at hrecover
+    · simp only [projected, indicators, hdeg, Bool.false_eq_true, if_false] at hrecover
+      cases hcand : bhksIndicatorCandidatesCore? f d indicators with
+      | none => simp [projected, indicators, hcand] at hrecover
+      | some cands =>
+          simp only [projected, indicators, hcand] at hrecover
+          by_cases hprod : Array.polyProduct cands == f
+          · simp only [hprod, if_true] at hrecover
+            cases hrecover
+            exact hall hcand
+          · simp [hprod] at hrecover
+  · rw [dif_neg hrows] at hrecover
+    simp at hrecover
+
+private theorem bhksRecoverClassifiedCore_success_normalizeFactorSign
+    {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
+    (h : bhksRecoverClassifiedCore f d = .success candidates) :
+    ∀ factor ∈ candidates.toList, normalizeFactorSign factor = factor :=
+  bhksRecoverClassifiedCore_success_all_of_candidates
+    (fun factor => normalizeFactorSign factor = factor)
+    (fun hcand => bhksIndicatorCandidatesCore?_normalizeFactorSign hcand) h
+
+private theorem bhksRecoverClassifiedCore_success_shouldRecord
+    {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
+    (h : bhksRecoverClassifiedCore f d = .success candidates) :
+    ∀ factor ∈ candidates.toList, shouldRecordPolynomialFactor factor = true :=
+  bhksRecoverClassifiedCore_success_all_of_candidates
+    (fun factor => shouldRecordPolynomialFactor factor = true)
+    (fun hcand => bhksIndicatorCandidatesCore?_shouldRecord hcand) h
+
+/-- A successful Core recovery emits only candidates that divide `f`, since each
+candidate has passed the executable exact-division check inside
+`bhksIndicatorCandidateCore?`.  The dependence of the conclusion on `f` prevents
+a one-liner via `bhksRecoverClassifiedCore_success_all_of_candidates`, so we
+unfold `bhksRecoverClassifiedCore` directly. -/
+private theorem bhksRecoverClassifiedCore_success_dvd
+    {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
+    (hrecover : bhksRecoverClassifiedCore f d = .success candidates) :
+    ∀ factor ∈ candidates.toList, factor ∣ f := by
+  rw [bhksRecoverClassifiedCore] at hrecover
+  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
+  · rw [dif_pos hrows] at hrecover
+    let projected :=
+      bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows
+    let indicators := bhksEquivalenceClassIndicators projected
+    by_cases hdeg : bhksDegenerateIndicatorPartition projected indicators = true
+    · simp [projected, indicators, hdeg] at hrecover
+    · simp only [projected, indicators, hdeg, Bool.false_eq_true, if_false] at hrecover
+      cases hcand : bhksIndicatorCandidatesCore? f d indicators with
+      | none => simp [projected, indicators, hcand] at hrecover
+      | some cands =>
+          simp only [projected, indicators, hcand] at hrecover
+          by_cases hprod : Array.polyProduct cands == f
+          · simp only [hprod, if_true] at hrecover
+            cases hrecover
+            exact bhksIndicatorCandidatesCore?_dvd hcand
+          · simp [hprod] at hrecover
+  · rw [dif_neg hrows] at hrecover
+    simp at hrecover
+
+/-- A successful Core classified recovery exposes the underlying
+indicator-candidate reconstruction: there is a positive-dimension witness
+`hrows` for which the equivalence-class indicator candidates reconstruct exactly
+to `candidates`, and the chosen indicator partition is non-degenerate.  The
+Core-coordinate analogue of `bhksRecoverClassified_success_indicatorCandidates`. -/
+private theorem bhksRecoverClassifiedCore_success_indicatorCandidates
+    {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
+    (hrecover : bhksRecoverClassifiedCore f d = .success candidates) :
+    ∃ hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+        (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth,
+      bhksIndicatorCandidatesCore? f d
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) =
+        some candidates ∧
+      bhksDegenerateIndicatorPartition
+          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) =
+        false := by
+  rw [bhksRecoverClassifiedCore] at hrecover
+  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
+  · rw [dif_pos hrows] at hrecover
+    by_cases hdeg :
+        bhksDegenerateIndicatorPartition
+          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
+          (bhksEquivalenceClassIndicators
+            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
+              hrows)) = true
+    · simp [hdeg] at hrecover
+    · simp only [hdeg, Bool.false_eq_true, if_false] at hrecover
+      cases hcand : bhksIndicatorCandidatesCore? f d
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
               hrows)) with
