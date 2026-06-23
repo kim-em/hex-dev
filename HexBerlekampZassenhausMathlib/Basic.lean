@@ -6017,37 +6017,52 @@ theorem centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
     hscaled hprecision
 
-/-- **M1 recovery-witness constructor.**
+/-- **M1 recovery-witness constructor (primitivePart-aware).**
 
 Build a `RecoveredAtLiftM1 core d factor S` from genuine core-coordinate recovery
-data: a monic-coordinate witness `monicFactor` congruent to the selected lifted
-product modulo `p^k` and dividing the `monicTarget core p k`, together with the M1
-recovery congruence `ℓf·∏S ≡ factor (mod p^k)`
-(`scaledLiftedFactorProduct core d S ≡ factor`), the factor's primitivity, and the
-Mignotte precision bound.
+data, in the *honest* scale coordinate.  The recovery input is the proportional
+congruence
+
+  `ℓf · (∏ S) ≡ c · factor (mod p^k)`,   `ℓf = leadingCoeff core`,   `c > 0`,
+
+which is the true shape of the M1 recovery: the `ℓf`-scaled lifted product lands on
+a *constant multiple* of the primitive integer factor (the constant `c` is the
+leading coefficient of the cofactor), not on `factor` itself.  Together with a
+monic-coordinate witness `monicFactor` congruent to the selected lifted product and
+dividing `monicTarget core p k`, the factor's primitivity, and a Mignotte precision
+bound on `c · factor`, this recovers `factor` as the primitive part of the centred
+lift.
+
+This replaces the earlier `_of_recovery` constructor whose `hscaled` premise asked
+for the *strong* congruence `reduceModPow (scaledLiftedFactorProduct …) =
+reduceModPow factor`, which is provably **false** for proper factors with a non-unit
+cofactor leading coefficient (the scale carries the spurious constant `c`).  The
+`primitivePart` in `RecoveredAtLiftM1.recovered_eq` is exactly what strips that
+constant, so the honest proportional congruence above is the satisfiable premise.
 
 This is the core-coordinate (`scale`/`monicTarget`) analogue of
-`recoveredLiftOfRepresents`, which builds the M2 `RecoveredLift` from a
-dilation-coordinate witness.  `recovered_eq` is discharged from the recovery
-congruence by the landed per-factor recovery
-`centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery` (after pushing
-the `ℓf`-scaling through `congr` exactly as `RecoveredAtLiftM1.candidate_eq` does in
-the reverse direction); `congr` and `monic_dvd` are recorded verbatim.  No `dilate`
-and no `(toMonic core).monic` divisibility: the `monicTarget` coordinate already is
-`core`'s own coordinate. -/
+`recoveredLiftOfRepresents`.  `recovered_eq` is discharged by
+`centeredLiftPoly_eq_of_reduceModPow_eq` on the target `c · factor` (its centred
+lift is `scale c factor` exactly), followed by `primitivePart (scale c factor) =
+primitivePart factor = factor` (`c > 0`, `factor` primitive).  `congr` and
+`monic_dvd` are recorded verbatim.  No `dilate` and no `(toMonic core).monic`
+divisibility: the `monicTarget` coordinate already is `core`'s own coordinate. -/
 def recoveredAtLiftM1_of_recovery
     {core factor monicFactor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (c : Int) (hc_pos : 0 < c)
     (hcongr :
       Hex.ZPoly.reduceModPow (liftedFactorProduct d S) d.p d.k =
         Hex.ZPoly.reduceModPow monicFactor d.p d.k)
     (hmonic_dvd : monicFactor ∣ Hex.ZPoly.monicTarget core d.p d.k)
-    (hcore_ne : core ≠ 0)
-    (hdvd : factor ∣ core)
-    (hscaled :
-      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
-        Hex.ZPoly.reduceModPow factor d.p d.k)
+    (hhonest :
+      Hex.ZPoly.congr
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) (liftedFactorProduct d S))
+        (Hex.DensePoly.scale c factor)
+        (d.p ^ d.k))
     (hfactor_prim : Hex.ZPoly.primitivePart factor = factor)
-    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    (B' : Nat)
+    (hvalid : ∀ i, ((Hex.DensePoly.scale c factor).coeff i).natAbs ≤ B')
+    (hprecision : 2 * B' < d.p ^ d.k) :
     RecoveredAtLiftM1 core d factor S where
   monicFactor := monicFactor
   congr := hcongr
@@ -6062,18 +6077,28 @@ def recoveredAtLiftM1_of_recovery
       have hg := Hex.ZPoly.congr_reduceModPow monicFactor d.p d.k hpk
       rw [hcongr] at hf
       exact Hex.ZPoly.congr_trans _ _ _ _ (Hex.ZPoly.congr_symm _ _ _ hf) hg
-    -- `ℓf·monicFactor ≡ ℓf·∏S = scaledLiftedFactorProduct (mod p^k)`.
+    -- `ℓf·monicFactor ≡ ℓf·∏S ≡ c·factor (mod p^k)`.
     have hscale_eq :
         Hex.ZPoly.reduceModPow
             (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) monicFactor) d.p d.k
-          = Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k := by
-      unfold scaledLiftedFactorProduct
-      exact Hex.ZPoly.reduceModPow_eq_of_congr _ _ d.p d.k
-        (scale_congr_of_congr (Hex.DensePoly.leadingCoeff core) _ _ _
-          (Hex.ZPoly.congr_symm _ _ _ hcongr_poly))
-    rw [hscale_eq, centeredLiftPoly_reduceModPow_eq _ _ _ hp_pos,
-      centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
-        hcore_ne hdvd hscaled hprecision, hfactor_prim]
+          = Hex.ZPoly.reduceModPow (Hex.DensePoly.scale c factor) d.p d.k :=
+      Hex.ZPoly.reduceModPow_eq_of_congr _ _ d.p d.k
+        (Hex.ZPoly.congr_trans _ _ _ _
+          (scale_congr_of_congr (Hex.DensePoly.leadingCoeff core) _ _ _
+            (Hex.ZPoly.congr_symm _ _ _ hcongr_poly))
+          hhonest)
+    -- Recover `c·factor` exactly, then strip the positive constant via primitivePart.
+    have hcl :
+        Hex.centeredLiftPoly
+            (Hex.ZPoly.reduceModPow
+              (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) monicFactor) d.p d.k)
+            (d.p ^ d.k) =
+          Hex.DensePoly.scale c factor :=
+      Hex.centeredLiftPoly_eq_of_reduceModPow_eq
+        (Hex.DensePoly.scale c factor)
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) monicFactor)
+        d.p d.k B' hvalid hprecision hscale_eq
+    rw [hcl, primitivePart_scale_of_pos hc_pos factor, hfactor_prim]
 
 /-- Abstract-bound recovered-coordinate equality: if the variable-dilated
 centred lifted-factor product is congruent to `factor` modulo the Hensel
