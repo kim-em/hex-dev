@@ -25,10 +25,21 @@ immediately with `ABORT: no issue number provided`.
    `coordination claim <N> --label <type>`. Do **NOT** use
    `coordination list-unclaimed` — you are not picking from the
    queue.
+   - **Exception — `replan` and `plan` worker types do not use
+     `coordination claim`.** That helper is for `feature`/`repair`
+     workers and **deliberately refuses** any `replan`-labelled issue
+     (it prints `CLAIM FAILED: Issue #<N> needs replan`). Replan triage
+     edits the issue directly (see the `replan` skill) and the planner
+     lock is held by `pod`, not claimed per-issue. For these types,
+     skip steps 3-4 and go straight to executing the skill's flow on
+     `<N>` (confirm `<N>` is in `coordination list-replan` first; that
+     is the only allowed list call — it is not queue-picking).
 4. **If the claim fails** (issue already claimed by another agent,
    issue closed, issue not labelled with the worker type, etc.),
    exit immediately. Print `ABORT: claim failed for #<N>` and do
-   nothing else. No worktree commits, no branches, no PR.
+   nothing else. No worktree commits, no branches, no PR. (Does not
+   apply to the `replan`/`plan` exception above, where a `claim`
+   refusal is expected, not a failure.)
 5. Once the claim succeeds, **execute the issue end-to-end**
    following the standard worker flow for the matched type
    (implementation, build, tests, commit, push, open PR).
