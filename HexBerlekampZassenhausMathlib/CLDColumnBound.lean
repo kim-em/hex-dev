@@ -2202,6 +2202,157 @@ def supportShortVectorData_of_recoveredLift
   rw [hcoord_eq j]
   exact le_trans (ht j) hcard
 
+/-- Aggregate residue data for one true support in the concrete BHKS basis.
+
+This is the non-`RecoveredLift` input shape needed by the core-coordinate cut:
+the centered aggregate of the selected CLD quotient coefficients is equal to
+some small integer column value.  The column value may be the usual monic
+`phi` coefficient or the genuine non-monic `h * g'` coefficient; this surface
+only needs the equality and Mignotte bound consumed by the period carry lemma. -/
+def AggregateResidueData
+    (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
+    (f : Hex.ZPoly) (p a : Nat) : Prop := by
+  classical
+  exact
+    ∀ j : Nat, ∃ y : ℤ,
+      Hex.centeredResiduePow p a
+          (∑ i ∈ Finset.univ.filter (fun i : Fin L.factorCount => i ∈ S),
+            Hex.centeredResiduePow p a
+              ((Hex.cldQuotientMod f (L.liftedFactors.getD i.val 1) p a).coeff j))
+        = y ∧ y.natAbs ≤ Hex.bhksCoeffBound f j
+
+/-- Period-adjusted short vector from aggregate residue data in the concrete
+BHKS basis.
+
+Unlike `supportShortVectorData_of_recoveredLift`, this producer does not require
+a monic `RecoveredLift` package.  It works directly over
+`bhksLatticeBasis f p a liftedFactors`, so it is suitable for the executable's
+actual core-coordinate basis once the caller supplies the aggregate residue
+lemma for each true support. -/
+def supportShortVectorData_of_aggregateResidue
+    (f : Hex.ZPoly) (p a : Nat) (liftedFactors : Array Hex.ZPoly)
+    (S : LiftedFactorSupport (Hex.bhksLatticeBasis f p a liftedFactors))
+    (hp : 2 ≤ p)
+    (hthr : ∀ j, Hex.bhksCoeffCutThreshold p f j ≤ a)
+    (hagg :
+      AggregateResidueData (Hex.bhksLatticeBasis f p a liftedFactors) S f p a) :
+    SupportShortVectorData (Hex.bhksLatticeBasis f p a liftedFactors) S := by
+  classical
+  let L := Hex.bhksLatticeBasis f p a liftedFactors
+  have hsep_b : ∀ j : Fin L.coeffWidth,
+      2 * Hex.bhksCoeffBound f j.val < p ^ Hex.bhksCoeffCutThreshold p f j.val := by
+    intro j
+    have hcut := Hex.le_pow_ceilLogP hp (2 * Hex.bhksCoeffBound f j.val + 1)
+    have hcut2 : 2 * Hex.bhksCoeffBound f j.val + 1
+        ≤ p ^ Hex.bhksCoeffCutThreshold p f j.val := hcut
+    omega
+  have hperiod : ∀ j : Fin L.coeffWidth, ∃ tj : ℤ,
+      2 * (((∑ i ∈ Finset.univ.filter (fun i : Fin L.factorCount => i ∈ S),
+          Hex.psiCut p a (Hex.bhksCoeffCutThreshold p f j.val)
+            ((Hex.cldQuotientMod f (L.liftedFactors.getD i.val 1) p a).coeff j.val))
+        - tj * (p ^ (a - Hex.bhksCoeffCutThreshold p f j.val) : Int))).natAbs
+        ≤ (Finset.univ.filter (fun i : Fin L.factorCount => i ∈ S)).card := by
+    intro j
+    obtain ⟨y, hres, hbnd⟩ := hagg j.val
+    exact two_mul_natAbs_sum_psiCut_period_le
+      (Finset.univ.filter (fun i : Fin L.factorCount => i ∈ S)) p a
+      (Hex.bhksCoeffCutThreshold p f j.val) (hthr j.val) (by omega)
+      (fun i => (Hex.cldQuotientMod f (L.liftedFactors.getD i.val 1) p a).coeff j.val)
+      y (Hex.bhksCoeffBound f j.val) hres hbnd (hsep_b j)
+  set t : Fin L.coeffWidth → ℤ := fun j => Classical.choose (hperiod j) with ht_def
+  have ht : ∀ j : Fin L.coeffWidth,
+      2 * (((∑ i ∈ Finset.univ.filter (fun i : Fin L.factorCount => i ∈ S),
+          Hex.psiCut p a (Hex.bhksCoeffCutThreshold p f j.val)
+            ((Hex.cldQuotientMod f (L.liftedFactors.getD i.val 1) p a).coeff j.val))
+        - t j * (p ^ (a - Hex.bhksCoeffCutThreshold p f j.val) : Int))).natAbs
+        ≤ (Finset.univ.filter (fun i : Fin L.factorCount => i ∈ S)).card :=
+    fun j => Classical.choose_spec (hperiod j)
+  have hcard : (Finset.univ.filter (fun i : Fin L.factorCount => i ∈ S)).card
+      ≤ L.factorCount := by
+    calc (Finset.univ.filter (fun i : Fin L.factorCount => i ∈ S)).card
+          ≤ (Finset.univ : Finset (Fin L.factorCount)).card := Finset.card_filter_le _ _
+      _ = L.factorCount := by simp
+  have hblock : BhksBlockForm L := by
+    dsimp [L]
+    exact bhksLatticeBasis_blockForm f p a liftedFactors
+  have hcoord_eq : ∀ j : Fin L.coeffWidth,
+      ((periodAdjustedVector L S t)[Fin.natAdd L.factorCount j] : ℤ)
+        = (∑ i ∈ Finset.univ.filter (fun i : Fin L.factorCount => i ∈ S),
+            Hex.psiCut p a (Hex.bhksCoeffCutThreshold p f j.val)
+              ((Hex.cldQuotientMod f (L.liftedFactors.getD i.val 1) p a).coeff j.val))
+          - t j * (p ^ (a - Hex.bhksCoeffCutThreshold p f j.val) : Int) := by
+    intro j
+    have hjlt : j.val < f.degree?.getD 0 := by
+      have hwidth : L.coeffWidth = f.degree?.getD 0 := by
+        dsimp [L, Hex.bhksLatticeBasis]
+      exact j.isLt.trans_eq hwidth
+    have hcoord := periodAdjustedVector_coeff_of_blockForm S hblock t j
+    rw [show ((periodAdjustedVector L S t)[Fin.natAdd L.factorCount j] : ℤ)
+        = (periodAdjustedVector L S t)[(⟨L.factorCount + j.val,
+            Nat.add_lt_add_left j.isLt L.factorCount⟩ :
+            Fin (L.factorCount + L.coeffWidth))] from rfl, hcoord]
+    have hp_eq : L.p = p := by dsimp [L, Hex.bhksLatticeBasis]
+    have ha_eq : L.precision = a := by dsimp [L, Hex.bhksLatticeBasis]
+    have hthr_eq : L.cutThresholds.getD j.val 0 = Hex.bhksCoeffCutThreshold p f j.val := by
+      have hcut : L.cutThresholds = Hex.bhksCutThresholds f p := by
+        dsimp [L, Hex.bhksLatticeBasis]
+      rw [hcut]
+      exact bhksCutThresholds_getD_of_lt f p j.val hjlt
+    rw [hp_eq, ha_eq, hthr_eq]
+    congr 1
+    · rw [Finset.sum_filter]
+      refine Finset.sum_congr rfl (fun i _ => ?_)
+      by_cases hi : i ∈ S
+      · rw [indicatorVector_apply_mem S hi, one_mul, if_pos hi]
+        have hcld : (L.cldRows.getD i.val #[]).getD j.val 0
+            = (Hex.cldCoeffs f p a (L.liftedFactors.getD i.val 1)).getD j.val 0 := by
+          dsimp [L, Hex.bhksLatticeBasis]
+          have hsz : i.val < liftedFactors.size := by
+            have hcount : L.factorCount = liftedFactors.size := by
+              dsimp [L, Hex.bhksLatticeBasis]
+            exact i.isLt.trans_eq hcount
+          simp [Array.getD, hsz]
+        rw [hcld, Hex.cldCoeffs_getD_of_lt f p a
+          (L.liftedFactors.getD i.val 1) j.val hjlt]
+      · rw [indicatorVector_apply_not_mem S hi, zero_mul, if_neg hi]
+    · rw [Int.ofNat_eq_natCast, Nat.cast_pow]
+      ring
+  refine
+    { vector := periodAdjustedVector L S t
+      memLattice := periodAdjustedVector_memLattice L S t
+      project_eq := fun i => periodAdjustedVector_project_of_blockForm S hblock t i
+      four_mul_sq_norm_le := ?_ }
+  refine four_mul_sq_norm_le_of_colBound S (periodAdjustedVector L S t)
+    (fun i => periodAdjustedVector_project_of_blockForm S hblock t i)
+    (fun j => ?_)
+  rw [hcoord_eq j]
+  exact le_trans (ht j) hcard
+
+/-- Forward cut over a concrete BHKS basis from aggregate residue data for each
+true support.  This is the non-`RecoveredLift` analogue of
+`cutProjectionHypotheses_of_recoveredLift`, intended for the core-coordinate
+fast path. -/
+def cutProjectionHypotheses_of_aggregateResidue
+    (f : Hex.ZPoly) (p a : Nat) (liftedFactors : Array Hex.ZPoly)
+    (hrows :
+      1 ≤ (Hex.bhksLatticeBasis f p a liftedFactors).factorCount +
+        (Hex.bhksLatticeBasis f p a liftedFactors).coeffWidth)
+    (hbasis : (Hex.bhksLatticeBasis f p a liftedFactors).basis.independent)
+    (trueSupports :
+      Set (Set (Fin
+        (Hex.bhksProjectedRows (Hex.bhksLatticeBasis f p a liftedFactors) hrows).factorCount)))
+    (hp : 2 ≤ p)
+    (hthr : ∀ j, Hex.bhksCoeffCutThreshold p f j ≤ a)
+    (hagg : ∀ S : trueSupports,
+      AggregateResidueData (Hex.bhksLatticeBasis f p a liftedFactors) S.1 f p a) :
+    CutProjectionHypotheses
+      (Hex.bhksProjectedRows (Hex.bhksLatticeBasis f p a liftedFactors) hrows)
+      trueSupports :=
+  cutProjectionHypotheses_of_shortVectors (Hex.bhksLatticeBasis f p a liftedFactors)
+    hrows hbasis trueSupports
+    (fun S => supportShortVectorData_of_aggregateResidue f p a liftedFactors
+      S.1 hp hthr (hagg S))
+
 /-- The accumulator of a `max`-fold never decreases below its seed. -/
 private theorem foldl_max_ge_init (l : List Nat) (f : Nat → Nat) :
     ∀ init : Nat, init ≤ l.foldl (fun acc x => max acc (f x)) init := by
