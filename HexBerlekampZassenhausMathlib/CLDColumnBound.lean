@@ -2639,6 +2639,118 @@ theorem aggregateResidueData_of_factorBridge
   exact listSum_emod_eq _ _ _ _
     (fun i _ => centeredResiduePow_emod_self p a _)
 
+/-- **Forward cut over the core basis from per-support factor-bridge data
+(the non-monic `#8290` assembly).**
+
+Builds the core-coordinate `CutProjectionHypotheses` — the forward `W ⊆ L'` over
+the executable's actual non-monic basis `bhksLatticeBasis core p a liftedFactors`
+— by discharging `AggregateResidueData` for each true support via
+`aggregateResidueData_of_factorBridge` and routing the family through
+`cutProjectionHypotheses_of_aggregateResidue`.
+
+This is the non-monic analogue of `cutProjectionHypotheses_of_recoveredLift`: per
+support it consumes the genuine integer factorisation `core = factorₛ · cofₛ`
+(`hfactor`), the per-selected-factor Hensel congruence (`hfac`), and the
+logarithmic-derivative bridge `factorₛ · G' ≡ G · factorₛ' (mod pᵃ)` (`hbridge`,
+where `G = supportProduct …`). -/
+theorem cutProjectionHypotheses_of_factorBridge
+    (core : Hex.ZPoly) (p a : Nat) (liftedFactors : Array Hex.ZPoly)
+    (hrows :
+      1 ≤ (Hex.bhksLatticeBasis core p a liftedFactors).factorCount +
+        (Hex.bhksLatticeBasis core p a liftedFactors).coeffWidth)
+    (hbasis : (Hex.bhksLatticeBasis core p a liftedFactors).basis.independent)
+    (trueSupports :
+      Set (Set (Fin
+        (Hex.bhksProjectedRows
+          (Hex.bhksLatticeBasis core p a liftedFactors) hrows).factorCount)))
+    (hp : 2 ≤ p)
+    (hk : 1 < p ^ a)
+    (hsep : ∀ j, 2 * Hex.bhksCoeffBound core j < p ^ a)
+    (hthr : ∀ j, Hex.bhksCoeffCutThreshold p core j ≤ a)
+    (factor cof : trueSupports → Hex.ZPoly)
+    (hfac : ∀ S : trueSupports,
+      ∀ i : Fin (Hex.bhksLatticeBasis core p a liftedFactors).factorCount, i ∈ S.1 →
+        ∃ h : Hex.ZPoly,
+          Hex.DensePoly.Monic
+            ((Hex.bhksLatticeBasis core p a liftedFactors).liftedFactors.getD i.val 1) ∧
+          0 < ((Hex.bhksLatticeBasis core p a liftedFactors).liftedFactors.getD
+            i.val 1).degree?.getD 0 ∧
+          Hex.ZPoly.congr core
+            (((Hex.bhksLatticeBasis core p a liftedFactors).liftedFactors.getD i.val 1) * h)
+            (p ^ a))
+    (hfactor : ∀ S : trueSupports,
+      HexPolyMathlib.toPolynomial core
+        = HexPolyMathlib.toPolynomial (factor S) * HexPolyMathlib.toPolynomial (cof S))
+    (hbridge : ∀ S : trueSupports,
+      Hex.ZPoly.congr
+        ((factor S) *
+          Hex.DensePoly.derivative
+            (supportProduct (Hex.bhksLatticeBasis core p a liftedFactors) S.1))
+        (supportProduct (Hex.bhksLatticeBasis core p a liftedFactors) S.1 *
+          Hex.DensePoly.derivative (factor S)) (p ^ a)) :
+    CutProjectionHypotheses
+      (Hex.bhksProjectedRows (Hex.bhksLatticeBasis core p a liftedFactors) hrows)
+      trueSupports :=
+  cutProjectionHypotheses_of_aggregateResidue core p a liftedFactors hrows hbasis
+    trueSupports hp hthr
+    (fun S => aggregateResidueData_of_factorBridge core (factor S) (cof S) p a
+      liftedFactors S.1 hk hsep (hfac S) (hfactor S) (hbridge S))
+
+/-- **Forward cut over the core basis from a family of `M1` recovery witnesses.**
+
+The non-monic analogue of `cutProjectionHypotheses_of_recoveredLift`: where the
+monic route consumes a `RecoveredLift` per support, this consumes the
+`RecoveredAtLiftM1` witness that the executable fast-core recovery actually
+exposes (#8290), plus the abstract/concrete support-product identification
+`hsupp : liftedFactorProduct d (subset S) = supportProduct L S`.  Each witness
+yields the logarithmic-derivative bridge via
+`congr_logDeriv_bridge_of_recoveredM1`, which then drives
+`cutProjectionHypotheses_of_factorBridge`.
+
+Everything is stated over the lift data `d`'s own modulus `d.p ^ d.k`; the basis
+is `bhksLatticeBasis core d.p d.k d.liftedFactors`. -/
+theorem cutProjectionHypotheses_of_recoveredM1
+    (core : Hex.ZPoly) (d : Hex.LiftData)
+    (hrows :
+      1 ≤ (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).factorCount +
+        (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).coeffWidth)
+    (hbasis : (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).basis.independent)
+    (trueSupports :
+      Set (Set (Fin
+        (Hex.bhksProjectedRows
+          (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors) hrows).factorCount)))
+    (hp : 2 ≤ d.p)
+    (hk : 1 < d.p ^ d.k)
+    (hsep : ∀ j, 2 * Hex.bhksCoeffBound core j < d.p ^ d.k)
+    (hthr : ∀ j, Hex.bhksCoeffCutThreshold d.p core j ≤ d.k)
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core) (Int.ofNat (d.p ^ d.k)) = 1)
+    (factor cof : trueSupports → Hex.ZPoly)
+    (subset : trueSupports → LiftedFactorSubset d)
+    (hrec : ∀ S : trueSupports, RecoveredAtLiftM1 core d (factor S) (subset S))
+    (hsupp : ∀ S : trueSupports,
+      liftedFactorProduct d (subset S)
+        = supportProduct (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors) S.1)
+    (hfac : ∀ S : trueSupports,
+      ∀ i : Fin (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).factorCount, i ∈ S.1 →
+        ∃ h : Hex.ZPoly,
+          Hex.DensePoly.Monic
+            ((Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).liftedFactors.getD i.val 1) ∧
+          0 < ((Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).liftedFactors.getD
+            i.val 1).degree?.getD 0 ∧
+          Hex.ZPoly.congr core
+            (((Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).liftedFactors.getD i.val 1) * h)
+            (d.p ^ d.k))
+    (hfactor : ∀ S : trueSupports,
+      HexPolyMathlib.toPolynomial core
+        = HexPolyMathlib.toPolynomial (factor S) * HexPolyMathlib.toPolynomial (cof S)) :
+    CutProjectionHypotheses
+      (Hex.bhksProjectedRows (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors) hrows)
+      trueSupports :=
+  cutProjectionHypotheses_of_factorBridge core d.p d.k d.liftedFactors hrows hbasis
+    trueSupports hp hk hsep hthr factor cof hfac hfactor
+    (fun S => congr_logDeriv_bridge_of_recoveredM1 (hrec S)
+      (lt_trans Nat.zero_lt_one hk) hgcd (hsupp S))
+
 /-- The accumulator of a `max`-fold never decreases below its seed. -/
 private theorem foldl_max_ge_init (l : List Nat) (f : Nat → Nat) :
     ∀ init : Nat, init ≤ l.foldl (fun acc x => max acc (f x)) init := by

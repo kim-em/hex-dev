@@ -844,6 +844,76 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift
     hcore_ne h hcut hsize hpartition
 
 /--
+Non-monic sibling of
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift`: the
+fast-core irreducibility endpoint discharged over the executable's **core**
+(non-monic) basis `bhksLatticeBasis core d.p d.k d.liftedFactors`, issue #8290.
+
+Where the monic version consumes a `RecoveredLift` per true support, this consumes
+the `RecoveredAtLiftM1` recovery witness the fast-core path actually exposes,
+together with the abstract/concrete support-product identification
+`hsupp : liftedFactorProduct d (subset S) = supportProduct L S`.  The forward cut
+is built by `BHKS.cutProjectionHypotheses_of_recoveredM1` (recovery proportionality
+→ logarithmic-derivative bridge → non-monic aggregate residue), bypassing the
+type-impossible monic `RecoveredLift` (#8288).  `hgcd` is the good-prime condition
+`p ∤ leadingCoeff core`; `hp`/`hk`/`hsep`/`hthr` are the BHKS Lemma 5.7 separation
+inputs at the recovery precision; `hfac` is the per-selected-factor Hensel datum
+`gᵢ ∣ core (mod pᵃ)`; `hfactor` is the genuine integer factorisation
+`core = factorₛ · cofₛ`. -/
+theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredM1
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    {d : Hex.LiftData}
+    {hrows :
+      1 ≤ (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).factorCount +
+        (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).coeffWidth}
+    (trueSupports :
+      Set (Set (Fin
+        (Hex.bhksProjectedRows
+          (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors) hrows).factorCount)))
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (hbasis : (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).basis.independent)
+    (hp : 2 ≤ d.p)
+    (hk : 1 < d.p ^ d.k)
+    (hsep : ∀ j, 2 * Hex.bhksCoeffBound core j < d.p ^ d.k)
+    (hthr : ∀ j, Hex.bhksCoeffCutThreshold d.p core j ≤ d.k)
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core) (Int.ofNat (d.p ^ d.k)) = 1)
+    (factor cof : trueSupports → Hex.ZPoly)
+    (subset : trueSupports → LiftedFactorSubset d)
+    (hrec : ∀ S : trueSupports, RecoveredAtLiftM1 core d (factor S) (subset S))
+    (hsupp : ∀ S : trueSupports,
+      liftedFactorProduct d (subset S)
+        = BHKS.supportProduct (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors) S.1)
+    (hfac : ∀ S : trueSupports,
+      ∀ i : Fin (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).factorCount, i ∈ S.1 →
+        ∃ g : Hex.ZPoly,
+          Hex.DensePoly.Monic
+            ((Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).liftedFactors.getD i.val 1) ∧
+          0 < ((Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).liftedFactors.getD
+            i.val 1).degree?.getD 0 ∧
+          Hex.ZPoly.congr core
+            (((Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).liftedFactors.getD i.val 1) * g)
+            (d.p ^ d.k))
+    (hfactor : ∀ S : trueSupports,
+      HexPolyMathlib.toPolynomial core
+        = HexPolyMathlib.toPolynomial (factor S) * HexPolyMathlib.toPolynomial (cof S))
+    (hsize :
+      coreFactors.size =
+        (Hex.bhksEquivalenceClassIndicators
+          (Hex.bhksProjectedRows
+            (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors) hrows)).size)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    ∀ factor ∈ coreFactors.toList, Hex.ZPoly.Irreducible factor := by
+  have hcut := BHKS.cutProjectionHypotheses_of_recoveredM1 core d hrows hbasis
+    trueSupports hp hk hsep hthr hgcd factor cof subset hrec hsupp hfac hfactor
+  exact factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut trueSupports
+    hcore_ne h hcut hsize hpartition
+
+/--
 Fast-core irreducibility wrapper from a monic recovered-lift family produced by
 `recoveredLift_subtypeFamily_of_indicatorCandidates`.
 
