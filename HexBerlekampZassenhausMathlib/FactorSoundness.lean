@@ -343,6 +343,228 @@ theorem factor_unique_of_product_default
     (factor_entries_normalizeFactorSign f) hφ_nonconst
     (factor_entries_degree_pos f h_raw) hirr
 
+/-!
+### HO-1 capstone assembly: `factor_irreducible_of_nonUnit` reduced to the fast-core arm
+
+The default-factor irreducibility capstone `factor_irreducible_of_nonUnit`
+reduces, via `factor_entries_irreducible`, to the guarded raw-source
+irreducibility hypothesis `h_raw` over the three-way fast/slow dispatch.  Every
+branch of `h_raw` is discharged by an existing per-branch producer **except the
+fast BHKS core-success arm**, whose only routes
+(`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut` and friends in
+`PartitionRefinement.lean`) require a `BHKS.CutProjectionHypotheses` /
+`RecoveredAtLiftM1` recovery certificate that no theorem produces from the bare
+loop success `factorFastCoreWithBound … = some coreFactors` (see the issue
+diagnosis).
+
+`factor_irreducible_of_nonUnit_of_fastCore` below isolates exactly that arm: it
+takes the single hypothesis "fast-core loop success implies every emitted core
+factor is irreducible" and discharges *all* other branches (constant, small-mod
+singleton, quadratic, slow-modular, slow-trial) from the landed producers.  This
+pins the remaining capstone obligation to one clean, recovery-witness-free,
+basis-free statement.
+
+The cut-free completeness helper `fastCoreReassemblyComplete_of_coreIrreducible`
+lives in `IntReductionMod.lean` (it needs that file's private `factorPower`/`foldl`
+divisibility helpers). -/
+
+/--
+Guarded raw-factor irreducibility for the fast BHKS core-success branch from the
+emitted-factor irreducibility `hcore_irr`.
+
+The dispatcher returns `reassemblePolynomialFactors (normalizeForFactor f)
+coreFactors` (`factorFastFactorsWithBound_eq_some_of_core_success`); the
+reassembly is expansion-complete by `fastCoreReassemblyComplete_of_coreIrreducible`,
+so every raw factor is irreducible by the Mathlib-free reassembly lift.  The
+`shouldRecord` guard is therefore not even consumed.
+-/
+theorem fastCoreRawGuarded_of_coreIrreducible
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (hB_pos : 1 ≤ B)
+    (primeData : Hex.PrimeChoiceData)
+    (hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hchoose :
+      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+        some primeData)
+    (hnotsingleton : ¬ primeData.factorsModP.size ≤ 1)
+    (hquadratic :
+      B = 1 ∨
+        Hex.quadraticIntegerRootFactors?
+          (Hex.normalizeForFactor f).squareFreeCore = none)
+    {coreFactors : Array Hex.ZPoly}
+    (hcore :
+      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B
+        primeData (Hex.initialHenselPrecision B)
+        (Hex.ZPoly.quadraticDoublingSteps B + 2) = some coreFactors)
+    (hcore_irr : ∀ factor ∈ coreFactors.toList, Hex.ZPoly.Irreducible factor)
+    {rawFactors : Array Hex.ZPoly}
+    (hfast : Hex.factorFastFactorsWithBound f B = some rawFactors) :
+    ∀ raw ∈ rawFactors.toList,
+      Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true →
+        Hex.ZPoly.Irreducible raw := by
+  have hfast_eq :=
+    Hex.factorFastFactorsWithBound_eq_some_of_core_success f B primeData
+      coreFactors hB_pos hchoose hdeg hnotsingleton hquadratic hcore
+  rw [hfast] at hfast_eq
+  have hraw_eq := Option.some.inj hfast_eq
+  have hcomplete :=
+    fastCoreReassemblyComplete_of_coreIrreducible f hf_ne B primeData hcore hcore_irr
+  intro raw hmem _hrecord
+  rw [hraw_eq] at hmem
+  exact
+    Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+      (Hex.normalizeForFactor f) coreFactors hcomplete hcore_irr hmem
+
+/--
+**HO-1 capstone reduced to the fast-core arm.**
+
+Every polynomial factor emitted by the default executable factorization of a
+nonzero input is irreducible, **given** the single hypothesis `h_fastcore`: if
+the chosen prime selects `primeData` and the fast BHKS core loop succeeds, then
+every emitted core factor is irreducible.
+
+All other branches of the raw-source dispatch are discharged from landed
+producers: the constant early-return
+(`Hex.factorFastFactorsWithBound_raw_irreducible_of_constant`), the small-mod
+singleton (`factorFastFactorsWithBound_raw_guardedIrreducible_of_smallModSingleton`),
+the quadratic short-circuit (`factorFastFactorsWithBound_raw_irreducible_of_quadratic`),
+the slow-modular fallback (`slowModularRaw_irreducible_of_fast_none`), and the
+slow-trial fallback (`factorSlowTrialFactorsWithBound_factor_irreducible_of_fast_none`).
+
+`h_fastcore` is precisely the conclusion of
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut`
+(`PartitionRefinement.lean`) — discharging it from bare loop success is the one
+remaining capstone obligation (it needs a forward-cut / `RecoveredAtLiftM1`
+recovery certificate that no producer currently supplies from
+`factorFastCoreWithBound … = some coreFactors`).
+-/
+theorem factor_irreducible_of_nonUnit_of_fastCore
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    (h_fastcore :
+      ∀ (primeData : Hex.PrimeChoiceData) (coreFactors : Array Hex.ZPoly),
+        Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+          some primeData →
+        Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore
+            (Hex.ZPoly.defaultFactorCoeffBound f) primeData
+            (Hex.initialHenselPrecision (Hex.ZPoly.defaultFactorCoeffBound f))
+            (Hex.ZPoly.quadraticDoublingSteps
+              (Hex.ZPoly.defaultFactorCoeffBound f) + 2) =
+          some coreFactors →
+        ∀ factor ∈ coreFactors.toList, Hex.ZPoly.Irreducible factor) :
+    ∀ entry ∈ (Hex.factor f).factors, Hex.ZPoly.Irreducible entry.1 := by
+  have hB_pos : 1 ≤ Hex.ZPoly.defaultFactorCoeffBound f :=
+    Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hf
+  apply factor_entries_irreducible f
+  intro rawFactors hsource raw hmem hrecord
+  rcases hsource with hfast | ⟨hfastnone, hmod⟩ | ⟨hfastnone, _hmodnone, htrial⟩
+  · -- Fast path: `factorFastFactorsWithBound = some rawFactors`.
+    by_cases hdeg0 :
+        (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+    · -- (a) constant early-return.
+      exact Hex.factorFastFactorsWithBound_raw_irreducible_of_constant f hf
+        (Hex.ZPoly.defaultFactorCoeffBound f) hdeg0 hfast raw hmem hrecord
+    · by_cases hB1 : Hex.ZPoly.defaultFactorCoeffBound f = 1
+      · -- B = 1: dispatch on `choosePrimeData?` and the singleton predicate.
+        cases hchoose :
+            Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore with
+        | none =>
+            exfalso
+            have hnone : Hex.factorFastFactorsWithBound f
+                (Hex.ZPoly.defaultFactorCoeffBound f) = none := by
+              unfold Hex.factorFastFactorsWithBound
+              rw [if_neg hdeg0,
+                if_neg (by omega : Hex.ZPoly.defaultFactorCoeffBound f ≠ 0),
+                if_pos hB1]
+              simp [hchoose]
+            rw [hnone] at hfast
+            simp at hfast
+        | some primeData =>
+            by_cases hsmall : primeData.factorsModP.size ≤ 1
+            · -- (c) small-mod singleton.
+              exact factorFastFactorsWithBound_raw_guardedIrreducible_of_smallModSingleton
+                f hf (Hex.ZPoly.defaultFactorCoeffBound f) hB_pos primeData hdeg0
+                hchoose hsmall (Or.inl hB1) hfast raw hmem hrecord
+            · cases hcore :
+                  Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore
+                    (Hex.ZPoly.defaultFactorCoeffBound f) primeData
+                    (Hex.initialHenselPrecision (Hex.ZPoly.defaultFactorCoeffBound f))
+                    (Hex.ZPoly.quadraticDoublingSteps
+                      (Hex.ZPoly.defaultFactorCoeffBound f) + 2) with
+              | none =>
+                  exfalso
+                  have hnone : Hex.factorFastFactorsWithBound f
+                      (Hex.ZPoly.defaultFactorCoeffBound f) = none := by
+                    unfold Hex.factorFastFactorsWithBound
+                    rw [if_neg hdeg0,
+                      if_neg (by omega : Hex.ZPoly.defaultFactorCoeffBound f ≠ 0),
+                      if_pos hB1]
+                    simp [hchoose, hsmall, hcore]
+                  rw [hnone] at hfast
+                  simp at hfast
+              | some coreFactors =>
+                  -- (d) fast-core success — the isolated arm.
+                  exact fastCoreRawGuarded_of_coreIrreducible f hf
+                    (Hex.ZPoly.defaultFactorCoeffBound f) hB_pos primeData hdeg0
+                    hchoose hsmall (Or.inl hB1) hcore
+                    (h_fastcore primeData coreFactors hchoose hcore) hfast raw hmem hrecord
+      · -- B > 1.
+        have hBgt : 1 < Hex.ZPoly.defaultFactorCoeffBound f := by omega
+        cases hquad :
+            Hex.quadraticIntegerRootFactors?
+              (Hex.normalizeForFactor f).squareFreeCore with
+        | some coreFactors =>
+            -- (f) quadratic short-circuit.
+            exact factorFastFactorsWithBound_raw_irreducible_of_quadratic f hf
+              (Hex.ZPoly.defaultFactorCoeffBound f) hBgt hdeg0 hquad hfast raw hmem hrecord
+        | none =>
+            cases hchoose :
+                Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore with
+            | none =>
+                exfalso
+                have hnone : Hex.factorFastFactorsWithBound f
+                    (Hex.ZPoly.defaultFactorCoeffBound f) = none := by
+                  unfold Hex.factorFastFactorsWithBound
+                  rw [if_neg hdeg0,
+                    if_neg (by omega : Hex.ZPoly.defaultFactorCoeffBound f ≠ 0),
+                    if_neg hB1, hquad]
+                  simp [hchoose]
+                rw [hnone] at hfast
+                simp at hfast
+            | some primeData =>
+                by_cases hsmall : primeData.factorsModP.size ≤ 1
+                · -- (g) small-mod singleton.
+                  exact factorFastFactorsWithBound_raw_guardedIrreducible_of_smallModSingleton
+                    f hf (Hex.ZPoly.defaultFactorCoeffBound f) hB_pos primeData hdeg0
+                    hchoose hsmall (Or.inr hquad) hfast raw hmem hrecord
+                · cases hcore :
+                      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore
+                        (Hex.ZPoly.defaultFactorCoeffBound f) primeData
+                        (Hex.initialHenselPrecision (Hex.ZPoly.defaultFactorCoeffBound f))
+                        (Hex.ZPoly.quadraticDoublingSteps
+                          (Hex.ZPoly.defaultFactorCoeffBound f) + 2) with
+                  | none =>
+                      exfalso
+                      have hnone : Hex.factorFastFactorsWithBound f
+                          (Hex.ZPoly.defaultFactorCoeffBound f) = none := by
+                        unfold Hex.factorFastFactorsWithBound
+                        rw [if_neg hdeg0,
+                          if_neg (by omega : Hex.ZPoly.defaultFactorCoeffBound f ≠ 0),
+                          if_neg hB1, hquad]
+                        simp [hchoose, hsmall, hcore]
+                      rw [hnone] at hfast
+                      simp at hfast
+                  | some coreFactors =>
+                      -- (h) fast-core success — the isolated arm.
+                      exact fastCoreRawGuarded_of_coreIrreducible f hf
+                        (Hex.ZPoly.defaultFactorCoeffBound f) hB_pos primeData hdeg0
+                        hchoose hsmall (Or.inr hquad) hcore
+                        (h_fastcore primeData coreFactors hchoose hcore) hfast raw hmem hrecord
+  · -- Slow-modular fallback (`fast = none`).
+    exact slowModularRaw_irreducible_of_fast_none f hfastnone hmod raw hmem
+  · -- Slow-trial fallback (`fast = none`).
+    subst htrial
+    exact factorSlowTrialFactorsWithBound_factor_irreducible_of_fast_none f hf
+      hfastnone raw hmem
+
 end
 
 end HexBerlekampZassenhausMathlib

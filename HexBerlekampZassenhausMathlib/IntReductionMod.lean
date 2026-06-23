@@ -6777,4 +6777,101 @@ theorem factorSlowTrialFactorsWithBound_factor_irreducible_of_fast_none
           exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_at_default
             f hf
 
+/--
+Reassembly expansion-completeness for the fast BHKS core-success branch from loop
+success plus core-factor irreducibility, with **no** forward-cut hypothesis.
+
+This factors the cut-free part of `fastCoreComplete_of_cut`
+(`PartitionRefinement.lean`): the product, sign-normalisation, degree, leading-
+coefficient, and fuel facts are all unconditional consequences of the loop
+success `hcore`; only the per-factor irreducibility `hirr` (there derived from
+the forward cut) is taken as a hypothesis here, isolating the cut dependence.
+Consumed by the capstone assembly `fastCoreRawGuarded_of_coreIrreducible`
+(`FactorSoundness.lean`).
+-/
+theorem fastCoreReassemblyComplete_of_coreIrreducible
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    {expectedFactors : Array Hex.ZPoly}
+    (hcore :
+      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B
+        primeData (Hex.initialHenselPrecision B)
+        (Hex.ZPoly.quadraticDoublingSteps B + 2) =
+          some expectedFactors)
+    (hirr : ∀ q ∈ expectedFactors.toList, Hex.ZPoly.Irreducible q) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) expectedFactors := by
+  have hprod :
+      Array.polyProduct expectedFactors =
+        (Hex.normalizeForFactor f).squareFreeCore := by
+    simpa using
+      Hex.factorFastCoreWithBound_product
+        (Hex.normalizeForFactor f).squareFreeCore B primeData
+        (Hex.initialHenselPrecision B) (Hex.ZPoly.quadraticDoublingSteps B + 2)
+        expectedFactors hcore
+  have hnorm :
+      ∀ q ∈ expectedFactors.toList, Hex.normalizeFactorSign q = q := by
+    intro q hq
+    exact Hex.factorFastCoreWithBound_some_normalizeFactorSign hcore q hq
+  have hdegree :
+      ∀ q ∈ expectedFactors.toList, 0 < q.degree?.getD 0 := by
+    intro q hq
+    exact Hex.factorFastCoreWithBound_some_degree_pos hcore q hq
+  have hpos_lc :
+      ∀ q ∈ expectedFactors.toList, 0 < Hex.DensePoly.leadingCoeff q := by
+    intro q hq
+    have hq_ne : q ≠ 0 := (hirr q hq).not_zero
+    have hq_norm : Hex.normalizeFactorSign q = q := hnorm q hq
+    have hq_nonneg : 0 ≤ Hex.DensePoly.leadingCoeff q := by
+      rw [← hq_norm]
+      exact leadingCoeff_normalizeFactorSign_nonneg q
+    have hq_lc_ne : Hex.DensePoly.leadingCoeff q ≠ 0 :=
+      Hex.ZPoly.leadingCoeff_ne_zero_of_ne_zero q hq_ne
+    omega
+  have hrp_ne :
+      (Hex.normalizeForFactor f).repeatedPart ≠ 0 :=
+    Hex.repeatedPart_ne_zero_of_ne_zero f hf_ne
+  have hfuel :
+      ∀ exponents : List Nat,
+        exponents.length = expectedFactors.size →
+        (Hex.normalizeForFactor f).repeatedPart =
+          ((expectedFactors.toList.zip exponents).map
+            (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 →
+        ∀ (qe : Hex.ZPoly × Nat),
+          qe ∈ expectedFactors.toList.zip exponents →
+            qe.2 + 1 ≤ (Hex.normalizeForFactor f).repeatedPart.size + 1 := by
+    intro exponents _ hdecomp qe hqe
+    have hq_mem : qe.1 ∈ expectedFactors.toList :=
+      (List.of_mem_zip hqe).1
+    have hq_deg : 0 < qe.1.degree?.getD 0 := hdegree qe.1 hq_mem
+    have hfp_size_lb : qe.2 + 1 ≤
+        (Hex.Factorization.factorPower qe.1 qe.2).size :=
+      factorPower_size_lower_bound hq_deg qe.2
+    have hfp_ne : Hex.Factorization.factorPower qe.1 qe.2 ≠ 0 := by
+      intro h0
+      have : (Hex.Factorization.factorPower qe.1 qe.2).size = 0 := by
+        rw [h0]
+        rfl
+      omega
+    have hfp_in_map :
+        Hex.Factorization.factorPower qe.1 qe.2 ∈
+          (expectedFactors.toList.zip exponents).map
+            (fun qe => Hex.Factorization.factorPower qe.1 qe.2) := by
+      rw [List.mem_map]
+      exact ⟨qe, hqe, rfl⟩
+    have hfp_dvd :
+        Hex.Factorization.factorPower qe.1 qe.2 ∣
+          ((expectedFactors.toList.zip exponents).map
+            (fun qe => Hex.Factorization.factorPower qe.1 qe.2)).foldl (· * ·) 1 :=
+      mem_dvd_foldl_mul_zpoly _ 1 _ hfp_in_map
+    have hfp_dvd_rp :
+        Hex.Factorization.factorPower qe.1 qe.2 ∣
+          (Hex.normalizeForFactor f).repeatedPart := by
+      rw [hdecomp]
+      exact hfp_dvd
+    have hsize_le : (Hex.Factorization.factorPower qe.1 qe.2).size ≤
+        (Hex.normalizeForFactor f).repeatedPart.size :=
+      Hex.ZPoly.size_le_of_dvd_nonzero hfp_ne hrp_ne hfp_dvd_rp
+    omega
+  exact IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_pos_lc
+    f hf_ne expectedFactors hirr hprod hnorm hpos_lc hdegree hfuel
+
 end HexBerlekampZassenhausMathlib
