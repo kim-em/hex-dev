@@ -663,6 +663,141 @@ theorem toMonicLiftData_liftedFactor_hensel_semantics
     liftedFactorProduct_singleton d i] at hcongr
   exact Hex.ZPoly.congr_symm _ _ _ hcongr
 
+/-- A constant rescaling pulls through one factor of a product:
+`scale c (a * b) = a * scale c b`.  Proved by transport to `Polynomial ℤ`. -/
+private theorem scale_mul_right_zpoly (c : Int) (a b : Hex.ZPoly) :
+    Hex.DensePoly.scale c (a * b) = a * Hex.DensePoly.scale c b := by
+  apply HexPolyZMathlib.equiv.injective
+  show HexPolyZMathlib.toPolynomial (Hex.DensePoly.scale c (a * b))
+      = HexPolyZMathlib.toPolynomial (a * Hex.DensePoly.scale c b)
+  simp only [← Hex.ZPoly.C_mul_eq_scale, HexPolyZMathlib.toPolynomial_mul,
+    HexPolyZMathlib.toPolynomial_C]
+  ring
+
+/--
+**M1 (`monicTarget`-coordinate) Hensel lift semantics.**  The `coreLiftData`
+analogue of `toMonicLiftData_liftedFactor_hensel_semantics`: each lifted factor
+`gᵢ` of `coreLiftData core B primeData` is monic, of positive degree, and divides
+`core` directly modulo `p^a` (the complement is the `ℓf`-scaled product of the
+other lifted factors).  This is the per-factor `hfac` the core forward cut
+(#8290) consumes, landed against `core` itself rather than against the lift
+target.
+
+The Hensel lift invariant for the `monicTarget` is rebuilt from `core`'s own
+`choosePrimeData?` selection witness: over `ℤ/p` the `monicTarget` is the unit
+rescaling `ℓf⁻¹·core` (`monicModularImage_modP_eq_modP_monicTarget`), so the
+`factorsModP` boundary facts transfer verbatim
+(`factorsModP_polyProduct_congr_monicTarget`).  The translation back to `core`'s
+coordinate is the BHKS mod-bridge `leadingCoeff_scale_monicTarget_congr_core`. -/
+theorem coreLiftData_liftedFactor_hensel_semantics
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.choosePrimeData? core = some primeData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hgcd : Int.gcd (Hex.DensePoly.leadingCoeff core)
+      (Int.ofNat (primeData.p ^ Hex.precisionForCoeffBound B primeData.p)) = 1)
+    (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p)
+    (i : Fin (Hex.ZPoly.coreLiftData core B primeData).liftedFactors.size) :
+    ∃ h : Hex.ZPoly,
+      Hex.DensePoly.Monic (liftedFactor (Hex.ZPoly.coreLiftData core B primeData) i) ∧
+        0 < (liftedFactor (Hex.ZPoly.coreLiftData core B primeData) i).degree?.getD 0 ∧
+        Hex.ZPoly.congr core
+          (liftedFactor (Hex.ZPoly.coreLiftData core B primeData) i * h)
+          ((Hex.ZPoly.coreLiftData core B primeData).p ^
+            (Hex.ZPoly.coreLiftData core B primeData).k) := by
+  classical
+  letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+  set prec := Hex.precisionForCoeffBound B primeData.p with hprec
+  set target := Hex.ZPoly.monicTarget core primeData.p prec with htarget
+  set d := Hex.henselLiftData target prec primeData with hd
+  -- Prime / selection boundary facts about `core`.
+  have hp_prime : Hex.Nat.Prime primeData.p :=
+    Hex.choosePrimeData?_prime core primeData hselected
+  have hp : 1 < primeData.p := by have := hp_prime.two_le; omega
+  have hpk : 1 < primeData.p ^ prec :=
+    Nat.one_lt_pow (by omega) hp
+  obtain ⟨hzeroP, heqP⟩ :=
+    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
+  have hform : Hex.factorsModPBerlekampForm core primeData := ⟨hp_prime, hzeroP, heqP⟩
+  have hgood : Hex.isGoodPrime core primeData.p = true :=
+    Hex.choosePrimeData?_isGoodPrime core primeData hselected
+  -- `monicTarget` is monic.
+  have hcore_size : 0 < core.size := by
+    rcases Nat.eq_zero_or_pos core.size with hz | hpos
+    · exfalso
+      have : core.degree?.getD 0 = 0 := by simp [Hex.DensePoly.degree?, hz]
+      omega
+    · exact hpos
+  have hmonic_target : Hex.DensePoly.Monic target :=
+    Hex.ZPoly.monicTarget_monic core primeData.p prec hpk hgcd hcore_size
+  -- The four `QuadraticMultifactorLiftInvariant` boundary hypotheses.
+  have hfactors_monic :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g :=
+    factorsModP_monic_of_factorsModPBerlekampForm core primeData hform
+  have hproduct_mod_p :
+      letI := primeData.bounds
+      Hex.ZPoly.congr
+        (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
+        target primeData.p :=
+    factorsModP_polyProduct_congr_monicTarget core prec primeData hpk
+      (by omega) hgcd hform hgood
+  have hcoprime :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
+        primeData.factorsModP.toList :=
+    factorsModP_coprime_of_factorsModPBerlekampForm core primeData hform hgood
+  have hnonempty : primeData.factorsModP.toList ≠ [] :=
+    factorsModP_ne_nil_of_factorsModPBerlekampForm core primeData hform
+  have hfactors_natDegree :
+      letI := primeData.bounds
+      ∀ g ∈ primeData.factorsModP,
+        0 < (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ g)).natDegree :=
+    factorsModP_natDegree_pos_of_factorsModPBerlekampForm core primeData hform hgood hcore_pos
+  -- Monicity and positive degree of the lifted factor, from the `choosePrimeData`
+  -- umbrellas applied at the `monicTarget`.
+  have hmonic :=
+    henselLiftData_liftedFactor_monic_of_choosePrimeData target prec primeData
+      hmonic_target hp_prime hp hprecision hfactors_monic hproduct_mod_p hcoprime hnonempty i
+  have hnat :=
+    henselLiftData_liftedFactor_natDegree_pos_of_choosePrimeData target prec primeData
+      hmonic_target hp_prime hp hprecision hfactors_monic hproduct_mod_p hcoprime hnonempty
+      hfactors_natDegree i
+  rw [show HexPolyZMathlib.toPolynomial
+        (liftedFactor (Hex.henselLiftData target prec primeData) i) =
+      HexPolyMathlib.toPolynomial
+        (liftedFactor (Hex.henselLiftData target prec primeData) i) from rfl,
+    HexPolyMathlib.natDegree_toPolynomial] at hnat
+  -- The Hensel lift invariant for the `monicTarget`.
+  have hinv :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant primeData.p prec target
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList :=
+    Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData target prec primeData
+      hp_prime hp hprecision hmonic_target hfactors_monic hproduct_mod_p hcoprime hnonempty
+  -- The subset/complement congruence at the singleton `{i}`, against the `monicTarget`.
+  have hcongr :
+      Hex.ZPoly.congr
+        (liftedFactorProduct d ({i} : LiftedFactorSubset d) *
+          liftedFactorProduct d (Finset.univ \ ({i} : LiftedFactorSubset d)))
+        target (primeData.p ^ prec) := by
+    exact
+      henselLiftData_liftedFactorProduct_subset_complement_congr_core
+        target prec primeData hinv hp hprecision ({i} : LiftedFactorSubset d)
+  rw [show liftedFactorProduct d ({i} : LiftedFactorSubset d) = liftedFactor d i from
+    liftedFactorProduct_singleton d i] at hcongr
+  -- Translate from the `monicTarget` coordinate back to `core` by scaling by `ℓf`.
+  refine ⟨Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core)
+      (liftedFactorProduct d (Finset.univ \ ({i} : LiftedFactorSubset d))),
+    hmonic, hnat, ?_⟩
+  have hscaled :=
+    scale_congr_of_congr (Hex.DensePoly.leadingCoeff core) _ _ _ hcongr
+  have hmt_core :=
+    leadingCoeff_scale_monicTarget_congr_core core primeData.p prec hpk hgcd
+  have hchain := Hex.ZPoly.congr_trans _ _ _ _ hscaled hmt_core
+  rw [scale_mul_right_zpoly] at hchain
+  exact Hex.ZPoly.congr_symm _ _ _ hchain
+
 namespace ForwardRecoveryInputs
 
 /--
