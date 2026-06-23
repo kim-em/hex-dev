@@ -2642,6 +2642,128 @@ def ofCapSeparation
     expectedIndicators indicators_match nondegenerate
     expectedFactors hsize hcandidate product_eq
 
+/--
+Fold the single-indicator `M1` reconstruction theorem over an expected indicator
+array.  Core analogue of `ForwardRecoveryInputs.candidatesOfDilatedCenteredLift`:
+callers supply the selected lifted-factor products, true-factor facts, and the
+`M1` scaled-centred-lift equalities (`primitivePart (ℓf · ∏ selected mod p^k)`)
+for each indicator, and the executable Core candidate fold returns the expected
+factor array.
+-/
+theorem candidatesOfScaledCenteredLift
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (expectedIndicators : Array (Array Int))
+    (selectedFactors : Array (Array Hex.ZPoly))
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size = expectedIndicators.size)
+    (hselected :
+      ∀ i, i < expectedIndicators.size →
+        Hex.bhksIndicatorSelectedFactors d.liftedFactors
+            (expectedIndicators.getD i #[]) =
+          some (selectedFactors.getD i #[]))
+    (hdivides :
+      ∀ i, i < expectedIndicators.size →
+        expectedFactors.getD i 0 ∣ f)
+    (hsign :
+      ∀ i, i < expectedIndicators.size →
+        0 ≤ Hex.DensePoly.leadingCoeff (expectedFactors.getD i 0))
+    (hpos_lc :
+      ∀ i, i < expectedIndicators.size →
+        0 < Hex.DensePoly.leadingCoeff (expectedFactors.getD i 0))
+    (hdegree :
+      ∀ i, i < expectedIndicators.size →
+        0 < (expectedFactors.getD i 0).degree?.getD 0)
+    (hscaled :
+      ∀ i, i < expectedIndicators.size →
+        Hex.ZPoly.primitivePart
+            (Hex.centeredLiftPoly
+              (Hex.ZPoly.reduceModPow
+                (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)
+                  (Array.polyProduct (selectedFactors.getD i #[])))
+                d.p d.k)
+              (d.p ^ d.k)) =
+          expectedFactors.getD i 0) :
+    Hex.bhksIndicatorCandidatesCore? f d expectedIndicators =
+      some expectedFactors :=
+  bhksIndicatorCandidatesCore?_eq_some_of_forwardCandidates
+    f d expectedIndicators expectedFactors hsize
+    (fun i hi =>
+      Hex.bhksIndicatorCandidateCore?_eq_some_of_scaledCenteredLift
+        f d (expectedIndicators.getD i #[])
+        (selectedFactors.getD i #[]) (expectedFactors.getD i 0)
+        (hselected i hi) (hdivides i hi)
+        (hsign i hi) (hpos_lc i hi) (hdegree i hi)
+        (hscaled i hi))
+
+/--
+Build `ForwardRecoveryInputsCore` from per-indicator `M1` reconstruction facts.
+Core analogue of `ForwardRecoveryInputs.ofMignottePrecisionCandidateProducts`:
+callers supply the selected-factor array for each indicator and the `M1`
+scaled-centred-lift equality the recovery formula establishes, and this
+constructor packages them through the Core candidate fold.
+-/
+def ofMignottePrecisionCandidateProducts
+    {f : Hex.ZPoly} {d : Hex.LiftData}
+    (rows_pos : HasPositiveDimension f d)
+    (trueSupports :
+      Set (Set (Fin (projectedRowsOfLiftData f d rows_pos).factorCount)))
+    (lattice_eq_indicators :
+      BHKS.projectedRowSpanInt (projectedRowsOfLiftData f d rows_pos) =
+        BHKS.trueFactorIndicatorLattice trueSupports)
+    (mignotte_precision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound f < d.p ^ d.k)
+    (expectedIndicators : Array (Array Int))
+    (indicators_match :
+      equivalenceClassIndicatorsOfLiftData f d rows_pos = expectedIndicators)
+    (nondegenerate :
+      Hex.bhksDegenerateIndicatorPartition
+          (projectedRowsOfLiftData f d rows_pos) expectedIndicators = false)
+    (selectedFactors : Array (Array Hex.ZPoly))
+    (expectedFactors : Array Hex.ZPoly)
+    (hsize : expectedFactors.size = expectedIndicators.size)
+    (hselected :
+      ∀ i, i < expectedIndicators.size →
+        Hex.bhksIndicatorSelectedFactors d.liftedFactors
+            (expectedIndicators.getD i #[]) =
+          some (selectedFactors.getD i #[]))
+    (hdivides :
+      ∀ i, i < expectedIndicators.size →
+        expectedFactors.getD i 0 ∣ f)
+    (hsign :
+      ∀ i, i < expectedIndicators.size →
+        0 ≤ Hex.DensePoly.leadingCoeff (expectedFactors.getD i 0))
+    (hpos_lc :
+      ∀ i, i < expectedIndicators.size →
+        0 < Hex.DensePoly.leadingCoeff (expectedFactors.getD i 0))
+    (hdegree :
+      ∀ i, i < expectedIndicators.size →
+        0 < (expectedFactors.getD i 0).degree?.getD 0)
+    (hscaled :
+      ∀ i, i < expectedIndicators.size →
+        Hex.ZPoly.primitivePart
+            (Hex.centeredLiftPoly
+              (Hex.ZPoly.reduceModPow
+                (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)
+                  (Array.polyProduct (selectedFactors.getD i #[])))
+                d.p d.k)
+              (d.p ^ d.k)) =
+          expectedFactors.getD i 0)
+    (product_eq : Array.polyProduct expectedFactors = f) :
+    ForwardRecoveryInputsCore f d :=
+  { rows_pos := rows_pos
+    trueSupports := trueSupports
+    lattice_eq_indicators := lattice_eq_indicators
+    mignotte_precision := mignotte_precision
+    expectedIndicators := expectedIndicators
+    indicators_match := indicators_match
+    nondegenerate := nondegenerate
+    expectedFactors := expectedFactors
+    candidates_eq :=
+      candidatesOfScaledCenteredLift
+        expectedIndicators selectedFactors expectedFactors hsize
+        hselected hdivides hsign hpos_lc hdegree hscaled
+    product_eq := product_eq }
+
 end ForwardRecoveryInputsCore
 
 /--

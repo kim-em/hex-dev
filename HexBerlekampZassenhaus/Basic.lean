@@ -7545,6 +7545,91 @@ theorem coreRecover?_eq_some_of_checks
   simp only [dif_pos hrows, hnondeg, Bool.false_eq_true, if_false, hcand,
     hproductCheck, if_true, BhksRecoveryResult.toOption]
 
+/--
+`M1` A2 reconstruction surface for a single Core indicator, stated at the
+Mathlib-free executable layer.  Core-coordinate analogue of
+`bhksIndicatorCandidate?_eq_some_of_dilatedCenteredLift`: if the indicator
+selects `selected`, the primitive part of the scaled selected-product centred
+lift (`ℓf · ∏ selected mod p^k`, the van Hoeij `M1` formula) is the expected
+factor, and that factor divides `f` as a positive-leading-coefficient
+positive-degree sign-normalised factor, then `bhksIndicatorCandidateCore?`
+returns that expected factor with some quotient.
+-/
+theorem bhksIndicatorCandidateCore?_eq_some_of_scaledCenteredLift
+    (f : ZPoly) (d : LiftData) (indicator : Array Int)
+    (selected : Array ZPoly) (expectedFactor : ZPoly)
+    (hselected :
+      bhksIndicatorSelectedFactors d.liftedFactors indicator = some selected)
+    (hdvd : expectedFactor ∣ f)
+    (hexpected_sign : 0 ≤ DensePoly.leadingCoeff expectedFactor)
+    (hexpected_pos_lc : 0 < DensePoly.leadingCoeff expectedFactor)
+    (hexpected_degree : 0 < expectedFactor.degree?.getD 0)
+    (hscaled :
+      ZPoly.primitivePart
+          (centeredLiftPoly
+            (ZPoly.reduceModPow
+              (DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected))
+              d.p d.k)
+            (d.p ^ d.k)) =
+        expectedFactor) :
+    ∃ quotient,
+      bhksIndicatorCandidateCore? f d indicator = some (expectedFactor, quotient) := by
+  have hnormalize :
+      normalizeFactorSign
+          (ZPoly.primitivePart
+            (centeredLiftPoly
+              (ZPoly.reduceModPow
+                (DensePoly.scale (DensePoly.leadingCoeff f)
+                  (Array.polyProduct selected))
+                d.p d.k)
+              (d.p ^ d.k))) =
+        expectedFactor := by
+    rw [hscaled]
+    exact normalizeFactorSign_eq_self_of_leadingCoeff_nonneg expectedFactor hexpected_sign
+  have hrecord :
+      shouldRecordPolynomialFactor expectedFactor = true := by
+    apply shouldRecordPolynomialFactor_eq_true_of_ne
+    · intro hzero
+      rw [hzero] at hexpected_degree
+      simp [DensePoly.degree?] at hexpected_degree
+    · intro hone
+      rw [hone] at hexpected_degree
+      have hdeg0 : (DensePoly.degree? (1 : ZPoly)).getD 0 = 0 := by rfl
+      rw [hdeg0] at hexpected_degree
+      omega
+    · intro hneg
+      rw [hneg] at hexpected_degree
+      have hdeg0 : (DensePoly.degree? (DensePoly.C (-1 : Int))).getD 0 = 0 := by simp
+      rw [hdeg0] at hexpected_degree
+      omega
+  rcases hdvd with ⟨quotient, hquotient_mul⟩
+  have hmul : quotient * expectedFactor = f := by
+    rw [DensePoly.mul_comm_poly (S := Int)]
+    exact hquotient_mul.symm
+  have hquotient :
+      exactQuotient? f expectedFactor = some quotient :=
+    exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq
+      hexpected_pos_lc hexpected_degree hmul
+  refine ⟨quotient, ?_⟩
+  unfold bhksIndicatorCandidateCore?
+  rw [hselected]
+  change
+    (let modulus := liftModulus d
+     let candidate :=
+       normalizeFactorSign <| ZPoly.primitivePart <|
+         centeredLiftPoly
+           (ZPoly.reduceModPow
+             (DensePoly.scale (DensePoly.leadingCoeff f) (Array.polyProduct selected))
+             d.p d.k)
+           modulus
+     if shouldRecordPolynomialFactor candidate then
+       match exactQuotient? f candidate with
+       | some quotient => some (candidate, quotient)
+       | none => none
+     else
+       none) = some (expectedFactor, quotient)
+  simp [liftModulus, hnormalize, hrecord, hquotient]
+
 private def recombinationSearchAux
     (target : ZPoly) (localFactors : List ZPoly) : Nat → Option (List ZPoly)
   | 0 => none
