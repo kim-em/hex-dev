@@ -235,6 +235,21 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   type ascription first (`have hlc : (HexPolyZMathlib.toPolynomial g).leadingCoeff
   = … := HexPolyMathlib.leadingCoeff_toPolynomial g`), then `rw [← hlc, …]`.
 
+- **Don't `set`/`let` `bhksLatticeBasis …` when a hypothesis depends on it
+  through a dependent type.** In BHKS proofs `S : LiftedFactorSupport
+  (bhksLatticeBasis f p a liftedFactors)` (and `Fin L.factorCount`,
+  `AggregateResidueData`, etc.) mention the basis in their *type*. `set L :=
+  bhksLatticeBasis …` abstracts inside that type and produces an `S✝` /
+  `i ∈ S✝` mismatch against the goal's `S`, which then cascades into
+  `(deterministic) timeout at whnf` on later lemma applications. A `let L`
+  is defeq but its fvar won't match the goal's spelled-out basis under the
+  syntactic `rw` you need for the final `AggregateResidueData`/sum
+  assembly. Simplest fix in the Mathlib layer: **spell
+  `Hex.bhksLatticeBasis f p a liftedFactors` out in full** everywhere it must
+  match the goal; only `set` the plain `ZPoly` pieces (`G := supportProduct …`),
+  whose types carry no `S` dependency, and compute `supportProduct_cldSum_*`
+  *before* that `set` so it folds the product into `G`.
+
 ## Proving *inside* the Mathlib-free files
 
 Lemmas that live in the executable files themselves (`HexPoly/*`,
