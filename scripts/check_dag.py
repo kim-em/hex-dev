@@ -145,9 +145,15 @@ def main() -> int:
     errors.extend(check_lakefile_alignment(libraries, lakefile_libs))
 
     # Root-file existence per PLAN/Conventions.md §"Library status":
-    #   active entry  ⟺  <Name>.lean exists at repo root
+    #   active local entry  ⟺  <Name>.lean exists at repo root
     #   planned/draft entry  ⟹  <Name>.lean must not exist
-    active_names = [name for name, info in libraries.items() if info.is_active]
+    # External libraries are consumed via a git `require`; their sources
+    # (root file included) live in the released repo, not locally, so they
+    # are exempt from the local root-file existence check.
+    active_names = [
+        name for name, info in libraries.items()
+        if info.is_active and not info.is_external
+    ]
     nonactive_names = [name for name, info in libraries.items() if not info.is_active]
     for name in active_names + sorted(KNOWN_EXCEPTIONS):
         if not (root / f"{name}.lean").exists():

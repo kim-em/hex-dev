@@ -56,12 +56,12 @@ jobs:
           lake build \
             $(python3 scripts/conformance_targets.py --space-separated) \
             hexpoly_emit_fixtures hexpolyfp_emit_fixtures \
-            hexberlekamp_emit_fixtures hexmatrix_emit_fixtures \
+            hexberlekamp_emit_fixtures \
             hexbz_emit_fixtures hexpolyz_emit_fixtures \
             hexgf2_emit_fixtures hexgfq_emit_fixtures \
             hexgfqring_emit_fixtures hexgfqfield_emit_fixtures \
-            hexgramschmidt_emit_fixtures hexhensel_emit_fixtures \
-            hexconway_emit_fixtures hexlll_emit_fixtures
+            hexhensel_emit_fixtures \
+            hexconway_emit_fixtures
       - name: Cross-check fixtures and run oracles
         run: bash scripts/ci/run_oracles.sh
       - name: Upload failure records

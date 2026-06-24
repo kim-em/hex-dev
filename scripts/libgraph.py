@@ -97,10 +97,21 @@ class LibraryInfo:
     done_through: int
     status: str
     phase4: Phase4Info | None = None
+    external: str | None = None
 
     @property
     def is_active(self) -> bool:
         return self.status == "active"
+
+    @property
+    def is_external(self) -> bool:
+        """True iff the library lives in its own released git repo.
+
+        External libraries are consumed via a git ``require`` in the
+        Lake config rather than a local ``lean_lib`` plus root file, so
+        the Lake-alignment and root-file checks are waived for them
+        (they still participate in the dependency-closure graph)."""
+        return self.external is not None
 
 
 def repo_root() -> Path:
@@ -146,6 +157,9 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
         phase4 = current_fields.get("phase4")
         if phase4 is not None and not isinstance(phase4, Phase4Info):
             raise ValueError(f"{current_name} has malformed phase4 block")
+        external = current_fields.get("external")
+        if external is not None and not isinstance(external, str):
+            raise ValueError(f"{current_name} has malformed external field")
         libs[current_name] = LibraryInfo(
             name=current_name,
             deps=tuple(deps),
@@ -153,6 +167,7 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
             done_through=done_through,
             status=status,
             phase4=phase4,
+            external=external,
         )
         current_name = None
         current_fields = {}
@@ -181,6 +196,9 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
             if key == "phase4" and value == "":
                 phase4, line_index = _parse_phase4_block(lines, line_index, current_name)
                 current_fields[key] = phase4
+                continue
+            if key == "external":
+                current_fields[key] = _parse_string(value)
                 continue
             current_fields[key] = _parse_scalar(value)
             continue
@@ -435,10 +453,20 @@ def load_lakefile_libs(path: Path | None = None) -> list[str]:
 def check_lakefile_alignment(libraries: OrderedDict[str, LibraryInfo], lakefile_libs: list[str]) -> list[str]:
     errors: list[str] = []
     # Lake alignment per PLAN/Conventions.md §"Library status":
-    #   active entry  ⟺  lean_lib in lakefile
+    #   active local entry  ⟺  lean_lib in lakefile
     #   planned/draft entry  ⟹  no lean_lib in lakefile
-    active_library_names = {name for name, info in libraries.items() if info.is_active}
-    nonactive_library_names = {name for name, info in libraries.items() if not info.is_active}
+    # External libraries (released into their own git repo and consumed via
+    # a git `require`) have no local `lean_lib`; they are exempt from this
+    # check while still participating in the dependency graph.
+    active_library_names = {
+        name for name, info in libraries.items()
+        if info.is_active and not info.is_external
+    }
+    nonactive_library_names = {
+        name for name, info in libraries.items()
+        if not info.is_active and not info.is_external
+    }
+    external_library_names = {name for name, info in libraries.items() if info.is_external}
     lake_names = set(lakefile_libs)
     for name in sorted(active_library_names - lake_names):
         errors.append(f"libraries.yml entry {name} (status: active) missing from Lake config")
@@ -448,7 +476,13 @@ def check_lakefile_alignment(libraries: OrderedDict[str, LibraryInfo], lakefile_
             f"libraries.yml entry {name} (status: {info.status}) "
             f"appears in Lake config; non-active libraries must not have a lean_lib entry"
         )
-    for name in sorted(lake_names - active_library_names - nonactive_library_names - KNOWN_EXCEPTIONS):
+    for name in sorted(
+        lake_names
+        - active_library_names
+        - nonactive_library_names
+        - external_library_names
+        - KNOWN_EXCEPTIONS
+    ):
         errors.append(f"Lake config library {name} missing from libraries.yml")
     for name in sorted(KNOWN_EXCEPTIONS):
         if name not in lake_names:

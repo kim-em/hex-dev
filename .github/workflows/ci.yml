@@ -56,70 +56,25 @@ jobs:
         # since lean-bench's verify path runs in-process.
         run: |
           lake build \
-            hexarith_bench hexmatrix_bench hexpoly_bench hexpolyz_bench \
-            hexpolyfp_bench hexmodarith_bench hexgramschmidt_bench \
+            hexarith_bench hexpoly_bench hexpolyz_bench \
+            hexpolyfp_bench hexmodarith_bench \
             hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
-            hexlll_bench hexhensel_bench hexberlekamp_bench hexbz_bench \
-            hexconway_bench hexlll_provider_probe
+            hexhensel_bench hexberlekamp_bench hexbz_bench \
+            hexconway_bench
       - name: Build HO-1 Mathlib bridge
         run: lake build HexBerlekampZassenhausMathlib
-      - name: HexLLL provider probe
-        run: |
-          .lake/build/bin/hexlll_provider_probe absent
-          cc -shared -fPIC scripts/ci/hexlll_probe_provider.c \
-            -o .lake/build/hexlll_probe_provider.so
-          LD_PRELOAD="$PWD/.lake/build/hexlll_probe_provider.so" \
-            .lake/build/bin/hexlll_provider_probe present
       - name: Bench verify (smoke gate per SPEC/benchmarking.md §CI integration)
         env:
           # Hard cap enforced per SPEC/benchmarking.md §CI integration
-          # "Time budget". The full 16-bench verify step includes the
-          # large fixed comparator smoke rungs for hexgf2_bench and
-          # hexlll_bench; 360 s leaves a narrow variance buffer while
-          # still flagging per-spawn-overhead regressions.
+          # "Time budget". The verify step includes the large fixed
+          # comparator smoke rung for hexgf2_bench; 360 s leaves a narrow
+          # variance buffer while still flagging per-spawn-overhead
+          # regressions.
           BENCH_VERIFY_HARD_CAP_SECONDS: "360"
         run: |
-          HEX_LLL_ISABELLE_SVP="$(scripts/oracle/setup_lll_isabelle.sh)"
-          export HEX_LLL_ISABELLE_SVP
-          HEX_LLL_ISABELLE_CERTIFIED_SVP="$(scripts/oracle/setup_lll_isabelle.sh certified)"
-          export HEX_LLL_ISABELLE_CERTIFIED_SVP
-          # fpLLL comparator (#6642): build the fplll-ffi shim and dlopen it
-          # at hexlll_bench start-up. The shim depends on Lean's
-          # libLake_shared.so, which is reachable via LD_LIBRARY_PATH set
-          # above ("Configure Lean shared library path").
-          HEX_FPLLL_FFI_LIB="$(scripts/oracle/setup_fplll_ffi.sh)"
-          export HEX_FPLLL_FFI_LIB
           bash scripts/ci/check_bench_verify_budget.sh \
-            hexarith_bench hexmatrix_bench hexpoly_bench hexpolyz_bench \
-            hexpolyfp_bench hexmodarith_bench hexgramschmidt_bench \
+            hexarith_bench hexpoly_bench hexpolyz_bench \
+            hexpolyfp_bench hexmodarith_bench \
             hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
-            hexlll_bench hexhensel_bench hexberlekamp_bench hexbz_bench \
+            hexhensel_bench hexberlekamp_bench hexbz_bench \
             hexconway_bench
-
-  build-macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - run: python3 scripts/check_dag.py
-      - run: brew install gmp
-      - name: Set up Lean toolchain (no build)
-        uses: leanprover/lean-action@v1
-        with:
-          auto-config: false
-          build: false
-          use-mathlib-cache: false
-      - name: Fetch Mathlib cache
-        run: lake exe cache get
-      - name: Verify Mathlib cache populated (hard fail on miss)
-        run: bash scripts/ci/check_no_mathlib_rebuild.sh
-      - name: Build hex (dyld symbol-resolution cross-check)
-        run: lake build hexlll_provider_probe
-      - name: HexLLL provider probe
-        run: |
-          .lake/build/bin/hexlll_provider_probe absent
-          cc -shared -fPIC scripts/ci/hexlll_probe_provider.c \
-            -o .lake/build/hexlll_probe_provider.dylib
-          DYLD_INSERT_LIBRARIES="$PWD/.lake/build/hexlll_probe_provider.dylib" \
-            .lake/build/bin/hexlll_provider_probe present

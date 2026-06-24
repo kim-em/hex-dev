@@ -46,6 +46,10 @@ def check_headline_reports(root: Path) -> tuple[int, str | None]:
     for name, info in libraries.items():
         if info.done_through < 4:
             continue
+        # External libraries carry their Phase-4 headline reports in their
+        # own released repo, not locally; skip the local-report check.
+        if info.is_external:
+            continue
         checked += 1
         report = root / "reports" / f"{report_slug(root, name)}-performance.md"
         if info.mathlib and info.phase4 is None and not report.exists():
