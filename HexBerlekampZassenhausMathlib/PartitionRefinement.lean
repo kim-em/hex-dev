@@ -914,6 +914,275 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredM1
     hcore_ne h hcut hsize hpartition
 
 /--
+M1 recovery-data form of the fast-core irreducibility endpoint.
+
+This is the `coreLiftData` call-site for the subset congruence / honest-scale
+bridge: callers supply, for each true support, the subset product congruence to
+`monicTarget (factor S)` (the #8327 output) and the leading-coefficient split
+through `cofactorLc`.  The proof builds the honest proportional congruence with
+`honestCongr_of_product_congr_monicTarget` (#8328) and feeds it directly to
+`BHKS.cutProjectionHypotheses_of_recoveryData`; it does not read any
+scale-coordinate congruence from a dilation-coordinate `RecoveredAtLift` witness.
+-/
+theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveryData
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    {d : Hex.LiftData}
+    {hrows :
+      1 ≤ (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).factorCount +
+        (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).coeffWidth}
+    (trueSupports :
+      Set (Set (Fin
+        (Hex.bhksProjectedRows
+          (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors) hrows).factorCount)))
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (hbasis : (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).basis.independent)
+    (hp : 2 ≤ d.p)
+    (hk : 1 < d.p ^ d.k)
+    (hsep : ∀ j, 2 * Hex.bhksCoeffBound core j < d.p ^ d.k)
+    (hthr : ∀ j, Hex.bhksCoeffCutThreshold d.p core j ≤ d.k)
+    (hgcd_core : Int.gcd (Hex.DensePoly.leadingCoeff core)
+      (Int.ofNat (d.p ^ d.k)) = 1)
+    (factor cof : trueSupports → Hex.ZPoly)
+    (subset : trueSupports → LiftedFactorSubset d)
+    (cofactorLc : trueSupports → Int)
+    (hcofactorLc_pos : ∀ S : trueSupports, 0 < cofactorLc S)
+    (hlc : ∀ S : trueSupports,
+      Hex.DensePoly.leadingCoeff core =
+        Hex.DensePoly.leadingCoeff (factor S) * cofactorLc S)
+    (hprod : ∀ S : trueSupports,
+      Hex.ZPoly.congr
+        (liftedFactorProduct d (subset S))
+        (Hex.ZPoly.monicTarget (factor S) d.p d.k)
+        (d.p ^ d.k))
+    (hgcd_factor : ∀ S : trueSupports,
+      Int.gcd (Hex.DensePoly.leadingCoeff (factor S))
+        (Int.ofNat (d.p ^ d.k)) = 1)
+    (hmonic_dvd : ∀ S : trueSupports,
+      Hex.ZPoly.monicTarget (factor S) d.p d.k ∣
+        Hex.ZPoly.monicTarget core d.p d.k)
+    (hfactor_prim : ∀ S : trueSupports,
+      Hex.ZPoly.primitivePart (factor S) = factor S)
+    (coeffBound : trueSupports → Nat)
+    (hvalid : ∀ S : trueSupports, ∀ i,
+      ((Hex.DensePoly.scale (cofactorLc S) (factor S)).coeff i).natAbs ≤ coeffBound S)
+    (hprecision : ∀ S : trueSupports, 2 * coeffBound S < d.p ^ d.k)
+    (hsupp : ∀ S : trueSupports,
+      liftedFactorProduct d (subset S)
+        = BHKS.supportProduct (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors) S.1)
+    (hfac : ∀ S : trueSupports,
+      ∀ i : Fin (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).factorCount, i ∈ S.1 →
+        ∃ g : Hex.ZPoly,
+          Hex.DensePoly.Monic
+            ((Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).liftedFactors.getD i.val 1) ∧
+          0 < ((Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).liftedFactors.getD
+            i.val 1).degree?.getD 0 ∧
+          Hex.ZPoly.congr core
+            (((Hex.bhksLatticeBasis core d.p d.k d.liftedFactors).liftedFactors.getD i.val 1) * g)
+            (d.p ^ d.k))
+    (hfactor : ∀ S : trueSupports,
+      HexPolyMathlib.toPolynomial core
+        = HexPolyMathlib.toPolynomial (factor S) * HexPolyMathlib.toPolynomial (cof S))
+    (hsize :
+      coreFactors.size =
+        (Hex.bhksEquivalenceClassIndicators
+          (Hex.bhksProjectedRows
+            (Hex.bhksLatticeBasis core d.p d.k d.liftedFactors) hrows)).size)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    ∀ factor ∈ coreFactors.toList, Hex.ZPoly.Irreducible factor := by
+  have hcut := BHKS.cutProjectionHypotheses_of_recoveryData core d hrows hbasis
+    trueSupports hp hk hsep hthr hgcd_core factor cof subset
+    (fun S => Hex.ZPoly.monicTarget (factor S) d.p d.k)
+    cofactorLc hcofactorLc_pos
+    (fun S => Hex.ZPoly.reduceModPow_eq_of_congr _ _ d.p d.k (hprod S))
+    hmonic_dvd
+    (fun S => honestCongr_of_product_congr_monicTarget
+      (cofactorLc S) (hlc S) (hprod S) (hgcd_factor S) hk)
+    hfactor_prim coeffBound hvalid hprecision hsupp hfac hfactor
+  exact factorFastCoreWithBound_some_factor_zpolyIrreducible_of_cut trueSupports
+    hcore_ne h hcut hsize hpartition
+
+/--
+`coreLiftData` specialization of
+`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveryData`.
+
+This is the fully threaded M1 call-site: for each support, the modular subset
+representation of `monicTarget (factor S)` is lifted through
+`coreLiftData_subset_congr_monicTarget` (#8327), then the resulting product
+congruence is converted to the honest scale-coordinate congruence by
+`honestCongr_of_product_congr_monicTarget` through the recovery-data wrapper
+above (#8328).
+-/
+theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_coreLiftDataRecoveryData
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
+    {hrows :
+      1 ≤ (Hex.bhksLatticeBasis core
+          (Hex.ZPoly.coreLiftData core B primeData).p
+          (Hex.ZPoly.coreLiftData core B primeData).k
+          (Hex.ZPoly.coreLiftData core B primeData).liftedFactors).factorCount +
+        (Hex.bhksLatticeBasis core
+          (Hex.ZPoly.coreLiftData core B primeData).p
+          (Hex.ZPoly.coreLiftData core B primeData).k
+          (Hex.ZPoly.coreLiftData core B primeData).liftedFactors).coeffWidth}
+    (trueSupports :
+      Set (Set (Fin
+        (Hex.bhksProjectedRows
+          (Hex.bhksLatticeBasis core
+            (Hex.ZPoly.coreLiftData core B primeData).p
+            (Hex.ZPoly.coreLiftData core B primeData).k
+            (Hex.ZPoly.coreLiftData core B primeData).liftedFactors) hrows).factorCount)))
+    (hcore_ne : core ≠ 0)
+    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (hbasis :
+      (Hex.bhksLatticeBasis core
+        (Hex.ZPoly.coreLiftData core B primeData).p
+        (Hex.ZPoly.coreLiftData core B primeData).k
+        (Hex.ZPoly.coreLiftData core B primeData).liftedFactors).basis.independent)
+    (hp : 2 ≤ (Hex.ZPoly.coreLiftData core B primeData).p)
+    (hk :
+      1 <
+        (Hex.ZPoly.coreLiftData core B primeData).p ^
+          (Hex.ZPoly.coreLiftData core B primeData).k)
+    (hsep : ∀ j,
+      2 * Hex.bhksCoeffBound core j <
+        (Hex.ZPoly.coreLiftData core B primeData).p ^
+          (Hex.ZPoly.coreLiftData core B primeData).k)
+    (hthr : ∀ j,
+      Hex.bhksCoeffCutThreshold (Hex.ZPoly.coreLiftData core B primeData).p core j ≤
+        (Hex.ZPoly.coreLiftData core B primeData).k)
+    (hselected : Hex.choosePrimeData? core = some primeData)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_size : 0 < core.size)
+    (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p)
+    (hgcd_core : Int.gcd (Hex.DensePoly.leadingCoeff core)
+      (Int.ofNat (primeData.p ^ Hex.precisionForCoeffBound B primeData.p)) = 1)
+    (factor cof : trueSupports → Hex.ZPoly)
+    (modPSubset : trueSupports → ModPFactorSubset primeData)
+    (cofactor : trueSupports → Hex.ZPoly)
+    (cofactorLc : trueSupports → Int)
+    (hcofactorLc_pos : ∀ S : trueSupports, 0 < cofactorLc S)
+    (hlc : ∀ S : trueSupports,
+      Hex.DensePoly.leadingCoeff core =
+        Hex.DensePoly.leadingCoeff (factor S) * cofactorLc S)
+    (hfactor_size : ∀ S : trueSupports, 0 < (factor S).size)
+    (hgcd_factor : ∀ S : trueSupports,
+      Int.gcd (Hex.DensePoly.leadingCoeff (factor S))
+        (Int.ofNat (primeData.p ^ Hex.precisionForCoeffBound B primeData.p)) = 1)
+    (hfactor_product : ∀ S : trueSupports,
+      Hex.ZPoly.congr
+        (Hex.ZPoly.monicTarget (factor S) primeData.p
+            (Hex.precisionForCoeffBound B primeData.p) * cofactor S)
+        (Hex.ZPoly.monicTarget core primeData.p
+            (Hex.precisionForCoeffBound B primeData.p))
+        (primeData.p ^ Hex.precisionForCoeffBound B primeData.p))
+    (hrepP : ∀ S : trueSupports,
+      RepresentsIntegerFactorModP primeData
+        (Hex.ZPoly.monicTarget (factor S) primeData.p
+          (Hex.precisionForCoeffBound B primeData.p))
+        (modPSubset S))
+    (hmonic_dvd : ∀ S : trueSupports,
+      Hex.ZPoly.monicTarget (factor S)
+          (Hex.ZPoly.coreLiftData core B primeData).p
+          (Hex.ZPoly.coreLiftData core B primeData).k ∣
+        Hex.ZPoly.monicTarget core
+          (Hex.ZPoly.coreLiftData core B primeData).p
+          (Hex.ZPoly.coreLiftData core B primeData).k)
+    (hfactor_prim : ∀ S : trueSupports,
+      Hex.ZPoly.primitivePart (factor S) = factor S)
+    (coeffBound : trueSupports → Nat)
+    (hvalid : ∀ S : trueSupports, ∀ i,
+      ((Hex.DensePoly.scale (cofactorLc S) (factor S)).coeff i).natAbs ≤ coeffBound S)
+    (hprecision_factor : ∀ S : trueSupports,
+      2 * coeffBound S <
+        (Hex.ZPoly.coreLiftData core B primeData).p ^
+          (Hex.ZPoly.coreLiftData core B primeData).k)
+    (hsupp : ∀ S : trueSupports,
+      liftedFactorProduct (Hex.ZPoly.coreLiftData core B primeData)
+          (liftedSubsetOfModPSubset primeData (Hex.ZPoly.coreLiftData core B primeData)
+            (henselLiftData_liftedFactors_size_eq
+              (Hex.ZPoly.monicTarget core primeData.p
+                (Hex.precisionForCoeffBound B primeData.p))
+              (Hex.precisionForCoeffBound B primeData.p) primeData)
+            (modPSubset S))
+        = BHKS.supportProduct
+            (Hex.bhksLatticeBasis core
+              (Hex.ZPoly.coreLiftData core B primeData).p
+              (Hex.ZPoly.coreLiftData core B primeData).k
+              (Hex.ZPoly.coreLiftData core B primeData).liftedFactors) S.1)
+    (hfac : ∀ S : trueSupports,
+      ∀ i : Fin
+          (Hex.bhksLatticeBasis core
+            (Hex.ZPoly.coreLiftData core B primeData).p
+            (Hex.ZPoly.coreLiftData core B primeData).k
+            (Hex.ZPoly.coreLiftData core B primeData).liftedFactors).factorCount,
+        i ∈ S.1 →
+        ∃ g : Hex.ZPoly,
+          Hex.DensePoly.Monic
+            ((Hex.bhksLatticeBasis core
+              (Hex.ZPoly.coreLiftData core B primeData).p
+              (Hex.ZPoly.coreLiftData core B primeData).k
+              (Hex.ZPoly.coreLiftData core B primeData).liftedFactors).liftedFactors.getD
+                i.val 1) ∧
+          0 <
+            ((Hex.bhksLatticeBasis core
+              (Hex.ZPoly.coreLiftData core B primeData).p
+              (Hex.ZPoly.coreLiftData core B primeData).k
+              (Hex.ZPoly.coreLiftData core B primeData).liftedFactors).liftedFactors.getD
+                i.val 1).degree?.getD 0 ∧
+          Hex.ZPoly.congr core
+            (((Hex.bhksLatticeBasis core
+              (Hex.ZPoly.coreLiftData core B primeData).p
+              (Hex.ZPoly.coreLiftData core B primeData).k
+              (Hex.ZPoly.coreLiftData core B primeData).liftedFactors).liftedFactors.getD
+                i.val 1) * g)
+            ((Hex.ZPoly.coreLiftData core B primeData).p ^
+              (Hex.ZPoly.coreLiftData core B primeData).k))
+    (hfactor : ∀ S : trueSupports,
+      HexPolyMathlib.toPolynomial core
+        = HexPolyMathlib.toPolynomial (factor S) * HexPolyMathlib.toPolynomial (cof S))
+    (hsize :
+      coreFactors.size =
+        (Hex.bhksEquivalenceClassIndicators
+          (Hex.bhksProjectedRows
+            (Hex.bhksLatticeBasis core
+              (Hex.ZPoly.coreLiftData core B primeData).p
+              (Hex.ZPoly.coreLiftData core B primeData).k
+              (Hex.ZPoly.coreLiftData core B primeData).liftedFactors) hrows)).size)
+    (hpartition :
+      (BHKS.supportPartitionByMinColumn trueSupports).length =
+        (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card) :
+    ∀ factor ∈ coreFactors.toList, Hex.ZPoly.Irreducible factor := by
+  let d := Hex.ZPoly.coreLiftData core B primeData
+  let hsize_d :
+      d.liftedFactors.size = primeData.factorsModP.size :=
+    henselLiftData_liftedFactors_size_eq
+      (Hex.ZPoly.monicTarget core primeData.p
+        (Hex.precisionForCoeffBound B primeData.p))
+      (Hex.precisionForCoeffBound B primeData.p) primeData
+  refine
+    factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveryData
+      (core := core) (B := B) (primeData := primeData) (k := k) (fuel := fuel)
+      (coreFactors := coreFactors) (d := d) (hrows := hrows)
+      trueSupports hcore_ne h hbasis hp hk hsep hthr ?_ factor cof
+      (fun S => liftedSubsetOfModPSubset primeData d hsize_d (modPSubset S))
+      cofactorLc hcofactorLc_pos hlc ?_ ?_ hmonic_dvd hfactor_prim coeffBound
+      hvalid hprecision_factor hsupp hfac hfactor hsize hpartition
+  · simpa [d, Hex.ZPoly.coreLiftData] using hgcd_core
+  · intro S
+    simpa [d] using
+      coreLiftData_subset_congr_monicTarget core (factor S) B primeData
+        hselected hcore_pos hcore_size hprecision hgcd_core
+        (hfactor_size S) (hgcd_factor S) (hfactor_product S) (hrepP S)
+  · intro S
+    simpa [d, Hex.ZPoly.coreLiftData] using hgcd_factor S
+
+/--
 Fast-core irreducibility wrapper from a monic recovered-lift family produced by
 `recoveredLift_subtypeFamily_of_indicatorCandidates`.
 
