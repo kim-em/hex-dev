@@ -13,6 +13,19 @@ require «lean-bench» from git
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @ "v4.30.0-rc2"
 
+require HexMatrix from git
+  "https://github.com/kim-em/hex-matrix.git" @ "20e4c73f958cf7996199972a45e538d06121f91f"
+require HexMatrixMathlib from git
+  "https://github.com/kim-em/hex-matrix-mathlib.git" @ "7e2eed8ae6d962d11e65d5763ce93439ce3fcb72"
+require HexGramSchmidt from git
+  "https://github.com/kim-em/hex-gram-schmidt.git" @ "d9ffab41cd4b400bc05eb69eb1724484d43017e3"
+require HexGramSchmidtMathlib from git
+  "https://github.com/kim-em/hex-gram-schmidt-mathlib.git" @ "29404cfe535ec3dc53a6a174235e69fbf0c3c7e8"
+require HexLLL from git
+  "https://github.com/kim-em/hex-lll.git" @ "ff9729a08b65fda89f391eca5ce5b4497711f815"
+require HexLLLMathlib from git
+  "https://github.com/kim-em/hex-lll-mathlib.git" @ "e4554e109e1cd93547572819499c33db769300af"
+
 private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexGF2" / "ffi" / "clmul.o"
   let srcTarget ← inputTextFile <| pkg.dir / "HexGF2" / "ffi" / "clmul.c"
@@ -23,13 +36,6 @@ private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
 private def zmod64MulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexModArith" / "ffi" / "zmod64_mul.o"
   let srcTarget ← inputTextFile <| pkg.dir / "HexModArith" / "ffi" / "zmod64_mul.c"
-  buildFileAfterDep oFile srcTarget fun srcFile => do
-    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
-    compileO oFile srcFile flags
-
-private def hexlllProviderOTarget (pkg : Package) : FetchM (Job FilePath) := do
-  let oFile := pkg.dir / defaultBuildDir / "HexLLL" / "ffi" / "lean_hexlll_provider.o"
-  let srcTarget ← inputTextFile <| pkg.dir / "HexLLL" / "ffi" / "lean_hexlll_provider.c"
   buildFileAfterDep oFile srcTarget fun srcFile => do
     let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
     compileO oFile srcFile flags
@@ -57,11 +63,6 @@ extern_lib hexmodarithffi (pkg) := do
   let oTarget ← zmod64MulOTarget pkg
   buildStaticLib (pkg.staticLibDir / name) #[oTarget]
 
-extern_lib hexlllffi (pkg) := do
-  let name := nameToStaticLib "hexlllffi"
-  let oTarget ← hexlllProviderOTarget pkg
-  buildStaticLib (pkg.staticLibDir / name) #[oTarget]
-
 lean_lib Hex where
 
 lean_lib HexArith where
@@ -73,9 +74,6 @@ lean_lib HexArith where
 
 lean_lib HexPoly where
 
-lean_lib HexMatrix where
-  precompileModules := true
-
 lean_lib HexModArith where
   precompileModules := true
   moreLinkArgs := #[
@@ -83,18 +81,10 @@ lean_lib HexModArith where
     "-lgmp"
   ]
 
-lean_lib HexGramSchmidt where
-
 lean_lib HexGF2 where
   precompileModules := true
 
 lean_lib HexPolyZ where
-
-lean_lib HexLLL where
-  moreLinkArgs := #[
-    s!"{(defaultBuildDir / "lib" / nameToStaticLib "hexlllffi").toString}",
-    "-ldl"
-  ]
 
 lean_lib HexPolyFp where
 
@@ -114,15 +104,9 @@ lean_lib HexBerlekampZassenhaus where
 
 lean_lib HexPolyMathlib where
 
-lean_lib HexMatrixMathlib where
-
 lean_lib HexModArithMathlib where
 
-lean_lib HexGramSchmidtMathlib where
-
 lean_lib HexPolyZMathlib where
-
-lean_lib HexLLLMathlib where
 
 lean_lib HexBerlekampMathlib where
 
@@ -133,9 +117,6 @@ lean_lib HexGF2Mathlib where
 lean_lib HexGFqMathlib where
 
 lean_lib HexBerlekampZassenhausMathlib where
-
-lean_exe hexmatrix_bench where
-  root := `HexMatrix.Bench
 
 lean_exe hexarith_bench where
   root := `HexArith.Bench
@@ -151,9 +132,6 @@ lean_exe hexpolyfp_emit_fixtures where
 
 lean_exe hexberlekamp_emit_fixtures where
   root := `HexBerlekamp.EmitFixtures
-
-lean_exe hexmatrix_emit_fixtures where
-  root := `HexMatrix.EmitFixtures
 
 lean_exe hexbz_emit_fixtures where
   root := `HexBerlekampZassenhaus.EmitFixtures
@@ -173,12 +151,6 @@ lean_exe hexhensel_emit_fixtures where
 lean_exe hexconway_emit_fixtures where
   root := `HexConway.EmitFixtures
 
-lean_exe hexgramschmidt_emit_fixtures where
-  root := `HexGramSchmidt.EmitFixtures
-
-lean_exe hexlll_emit_fixtures where
-  root := `HexLLL.EmitFixtures
-
 lean_exe hexgfqring_emit_fixtures where
   root := `HexGFqRing.EmitFixtures
 
@@ -190,9 +162,6 @@ lean_exe hexpolyz_bench where
 
 lean_exe hexpolyz_emit_fixtures where
   root := `HexPolyZ.EmitFixtures
-
-lean_exe hexgramschmidt_bench where
-  root := `HexGramSchmidt.Bench
 
 lean_exe hexmodarith_bench where
   root := `HexModArith.Bench
@@ -215,12 +184,6 @@ lean_exe hexgfqfield_bench where
 
 lean_exe hexgfq_bench where
   root := `HexGFq.Bench
-
-lean_exe hexlll_bench where
-  root := `HexLLL.Bench
-
-lean_exe hexlll_provider_probe where
-  root := `HexLLL.ProviderProbe
 
 lean_exe hexhensel_bench where
   root := `HexHensel.Bench
