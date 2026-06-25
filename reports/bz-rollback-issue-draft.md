@@ -69,7 +69,7 @@ and are dispatched alongside this issue:
 
 1. **HO-5a — wire `verified Isabelle BZ` Phase-4 comparator.**
    Add `scripts/oracle/setup_bz_isabelle.sh` mirroring the existing
-   [scripts/oracle/setup_lll_isabelle.sh](../blob/main/scripts/oracle/setup_lll_isabelle.sh)
+   [scripts/oracle/setup_lll_isabelle.sh](https://github.com/kim-em/hex-lll/blob/main/scripts/oracle/setup_lll_isabelle.sh)
    as the starting template. The worker must satisfy the following
    **acceptance matrix** before the issue closes — without it, the
    comparator's numbers may be incomparable to hex's and the gate

@@ -321,7 +321,7 @@ subsection. Default oracle assignments:
   oracle.
 - `hex-poly`, `hex-poly-z`, `hex-poly-fp` — `python-flint` primary
   for univariate polynomial arithmetic.
-- `hex-matrix`, `hex-gram-schmidt` — `python-flint` exact
+- `hex-matrix`, `hex-gram-schmidt` (released — oracle conformance runs in their own repos) — `python-flint` exact
   (`fmpz_mat` / `fmpq_mat`); numpy/scipy float for well-conditioned
   float-level cross-checks; `fpylll`'s `GSO.Mat` for Gram-Schmidt
   size-reduction parity.
@@ -334,7 +334,7 @@ subsection. Default oracle assignments:
 - `hex-hensel` — `cypari2` (PARI `factorpadic`) primary for the
   mod-`p^k` lift surface; `python-flint` does not expose mod-`p^k`
   polynomial factorisation.
-- `hex-lll` — `fpylll`, which wraps fpLLL directly, comparing
+- `hex-lll` (released — oracle conformance runs in the hex-lll repo) — `fpylll`, which wraps fpLLL directly, comparing
   reducedness, lattice equality, and determinant preservation rather
   than exact basis equality.
 - `hex-conway` — `cypari2` (PARI `ffinit`) plus a committed Frank

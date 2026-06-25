@@ -121,8 +121,8 @@ hex-gfq-field   hex-conway   hex-gf2
 ## Index
 
 - [hex-arith.md](hex-arith.md) — extended GCD, Barrett/Montgomery reduction, binomial coefficients, Fermat's little theorem
-- [hex-matrix.md](hex-matrix.md) — dense matrices, RREF, Bareiss determinant, span, nullspace
-- [hex-matrix-mathlib.md](hex-matrix-mathlib.md) — matrix equivalence with Mathlib, determinant/rank/nullspace correspondence
+- [hex-matrix](https://github.com/kim-em/hex-matrix/blob/main/SPEC/hex-matrix.md) (released) — dense matrices, RREF, Bareiss determinant, span, nullspace
+- [hex-matrix-mathlib](https://github.com/kim-em/hex-matrix-mathlib/blob/main/SPEC/hex-matrix-mathlib.md) (released) — matrix equivalence with Mathlib, determinant/rank/nullspace correspondence
 - [hex-mod-arith.md](hex-mod-arith.md) — `ZMod64 p`: `UInt64`-backed arithmetic in `Z/pZ`
 - [hex-mod-arith-mathlib.md](hex-mod-arith-mathlib.md) — `ZMod64 p ≃+* ZMod p`
 - [hex-poly.md](hex-poly.md) — dense polynomial library, operations, GCD, CRT
@@ -147,9 +147,9 @@ hex-gfq-field   hex-conway   hex-gf2
 - [hex-gfq-field.md](hex-gfq-field.md) — field structure on top of the quotient ring when `f` is irreducible
 - [hex-gfq.md](hex-gfq.md) — convenience wrapper `GFq p n` and optimized `GF2q n` using Conway polynomials
 - [hex-gfq-mathlib.md](hex-gfq-mathlib.md) — finiteness/cardinality for quotient fields and `GFq p n ≃+* GaloisField p n`
-- [hex-gram-schmidt.md](hex-gram-schmidt.md) — Gram-Schmidt orthogonalization, coefficients, Gram determinants
-- [hex-gram-schmidt-mathlib.md](hex-gram-schmidt-mathlib.md) — correspondence with Mathlib's `gramSchmidt`
-- [hex-lll.md](hex-lll.md) — LLL lattice basis reduction algorithm and proofs
-- [hex-lll-mathlib.md](hex-lll-mathlib.md) — lattice = `Submodule Z`, short vector bound
+- [hex-gram-schmidt](https://github.com/kim-em/hex-gram-schmidt/blob/main/SPEC/hex-gram-schmidt.md) (released) — Gram-Schmidt orthogonalization, coefficients, Gram determinants
+- [hex-gram-schmidt-mathlib](https://github.com/kim-em/hex-gram-schmidt-mathlib/blob/main/SPEC/hex-gram-schmidt-mathlib.md) (released) — correspondence with Mathlib's `gramSchmidt`
+- [hex-lll](https://github.com/kim-em/hex-lll/blob/main/SPEC/hex-lll.md) (released) — LLL lattice basis reduction algorithm and proofs
+- [hex-lll-mathlib](https://github.com/kim-em/hex-lll-mathlib/blob/main/SPEC/hex-lll-mathlib.md) (released) — lattice = `Submodule Z`, short vector bound
 - [hex-berlekamp-zassenhaus.md](hex-berlekamp-zassenhaus.md) — complete factoring of `Z[x]`
 - [hex-berlekamp-zassenhaus-mathlib.md](hex-berlekamp-zassenhaus-mathlib.md) — unconditional factoring correctness
