@@ -20,9 +20,9 @@ jobs:
       - run: python3 scripts/check_phase4.py
       - name: Lint benches are Mathlib-free (SPEC/benchmarking.md §Mathlib-free benches)
         run: python3 scripts/ci/check_benches_mathlib_free.py
-      - run: sudo apt-get install -y libgmp-dev libfplll-dev fplll-tools libntl-dev libmpfr-dev libc++-dev libc++abi-dev autoconf automake libtool pkg-config
+      - run: sudo apt-get install -y libgmp-dev
       - name: Install Python bench comparator dependencies
-        run: python3 -m pip install --user cysignals fpylll python-flint
+        run: python3 -m pip install --user python-flint
       - name: Set up Lean toolchain (no build)
         uses: leanprover/lean-action@v1
         with:

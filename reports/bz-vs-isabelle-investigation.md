@@ -3,7 +3,7 @@
 This report documents what was found while comparing hex's
 `HexBerlekampZassenhaus.factor` against the Isabelle/AFP
 `Berlekamp_Zassenhaus.factorize_int_poly` extracted-Haskell binary
-([scripts/oracle/setup_lll_isabelle.sh](../scripts/oracle/setup_lll_isabelle.sh)
+([scripts/oracle/setup_lll_isabelle.sh](https://github.com/kim-em/hex-lll/blob/main/scripts/oracle/setup_lll_isabelle.sh)
 sets up the LLL deposit; for BZ I built the AFP session locally and exported
 `factor_int_poly` to Haskell). All measurements on `Apple M2`, May 2026.
 
@@ -40,7 +40,7 @@ This violates the documented `Factorization` contract.
 - **Issue [#2565](https://github.com/kim-em/hex/issues/2565) (closed, "HO-2")**: added adversarial conformance fixtures (Φ₁₅, SD₃, X⁴+1, (X²−2)(X²−3)). These pass in current `main` — the failure modes in this report are not in the fixture corpus.
 - **Issue [#2566](https://github.com/kim-em/hex/issues/2566) (closed, "HO-3")**: added `HexBerlekampZassenhaus/Bench.lean`. Phase-4 schedules cover the `splitScientificSchedule = #[2, 3, 4, 5]` and a degree/height matrix, none of which reach `n` large enough to expose the failure.
 - **[reports/hex-berlekamp-zassenhaus-performance.md](hex-berlekamp-zassenhaus-performance.md)**: every scaling verdict is *inconclusive* (`cMin=2.6, cMax=349` for `runFactorChecksum`). No external comparator is declared in [libraries.yml](../libraries.yml) for `HexBerlekampZassenhaus.phase4`. The §"Concerns" closing notes explicitly flag that "final Phase 4 coverage should add or explicitly justify comparator metadata before bumping `done_through`." So the repo has no Isabelle-vs-hex BZ baseline yet.
-- **[reports/hex-lll-performance.md](hex-lll-performance.md)** *does* have an Isabelle LLL comparator and reports hex 10.88× faster at `n=25` trending down to 1.49× slower at `n=55`. That's where the "we were faster" intuition comes from — but it's the LLL line of work, not BZ.
+- **[reports/hex-lll-performance.md](https://github.com/kim-em/hex-lll/blob/main/reports/hex-lll-performance.md)** *does* have an Isabelle LLL comparator and reports hex 10.88× faster at `n=25` trending down to 1.49× slower at `n=55`. That's where the "we were faster" intuition comes from — but it's the LLL line of work, not BZ.
 
 ## 3. Root cause: `isGoodPrime` rejects all candidate primes, then `fallbackPrimeChoiceData` silently uses `p = 3`
 

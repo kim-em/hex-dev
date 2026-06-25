@@ -68,7 +68,7 @@ comparator:
 - **`verified Isabelle BZ (AFP Berlekamp_Zassenhaus; Haskell extraction
   of `factor_int_poly` via `Factorization_External_Interface.thy`)`**.
   Build via a sibling of
-  [scripts/oracle/setup_lll_isabelle.sh](../../scripts/oracle/setup_lll_isabelle.sh)
+  [scripts/oracle/setup_lll_isabelle.sh](https://github.com/kim-em/hex-lll/blob/main/scripts/oracle/setup_lll_isabelle.sh)
   that targets the AFP `Berlekamp_Zassenhaus` session instead of the
   Zenodo LLL deposit. Set-up: `isabelle build -b Berlekamp_Zassenhaus`
   using the AFP release matching the pinned Isabelle, then
@@ -82,7 +82,7 @@ comparator:
   rung of every registered scientific bench target.** Justification:
   both implementations are pure-functional verified code extracted to
   a strict runtime with native integer arithmetic. The
-  `hex-lll` row in [reports/hex-lll-performance.md](../../reports/hex-lll-performance.md)
+  `hex-lll` row in [reports/hex-lll-performance.md](https://github.com/kim-em/hex-lll/blob/main/reports/hex-lll-performance.md)
   already demonstrates parity is achievable across the dimension
   ladder against the analogous AFP-extracted LLL binary (hex within
   ±10%, faster at small `n`). There is no architectural reason hex
