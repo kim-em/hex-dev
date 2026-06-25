@@ -13,7 +13,7 @@
 #   scripts/run-oracles-local.sh hensel_pari --check
 #
 # Supported oracles map to system + pip dependencies:
-#   poly_flint, berlekamp_flint, bz_flint, matrix_flint  → python-flint
+#   poly_flint, berlekamp_flint, bz_flint  → python-flint
 #   hensel_pari                                          → cypari2 (+libpari)
 #
 # Platform detection picks one of:
@@ -52,7 +52,7 @@ oracle_path="$REPO_ROOT/scripts/oracle/${oracle}.py"
 
 # Per-oracle dependency declarations.
 case "$oracle" in
-  poly_flint|berlekamp_flint|bz_flint|matrix_flint)
+  poly_flint|berlekamp_flint|bz_flint)
     pip_packages="python-flint"
     need_pari=0
     need_fplll=0
