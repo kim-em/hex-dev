@@ -1,9 +1,5 @@
-module
-
-public import Mathlib.Algebra.Order.BigOperators.Ring.Finset
-public import Mathlib.Data.Real.Basic
-
-public section
+import Mathlib.Algebra.Order.BigOperators.Ring.Finset
+import Mathlib.Data.Real.Basic
 
 /-!
 Finite real sum inequalities used by the BHKS bad-vector bounds.

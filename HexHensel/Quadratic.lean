@@ -43,11 +43,13 @@ end QuadraticLiftResult
 namespace ZPoly
 
 /-- The working modulus `m * m = m²` of one quadratic Hensel doubling step. -/
-private def quadraticModulus (m : Nat) : Nat :=
+@[expose]
+def quadraticModulus (m : Nat) : Nat :=
   m * m
 
 /-- Canonical nonnegative residue of `z` in the range `[0, modulus)`. -/
-private def canonicalMod (z : Int) (modulus : Nat) : Int :=
+@[expose]
+def canonicalMod (z : Int) (modulus : Nat) : Int :=
   Int.ofNat <| Int.toNat (z % Int.ofNat modulus)
 
 /-- Reduce a single coefficient to its canonical residue modulo `m²`. -/

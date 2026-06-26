@@ -1,8 +1,4 @@
-module
-
-public import HexBerlekampZassenhausMathlib.IntReductionMod
-
-public section
+import HexBerlekampZassenhausMathlib.IntReductionMod
 
 /-!
 Public factorization soundness surface that needs the post-`IntReductionMod`

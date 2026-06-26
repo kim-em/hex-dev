@@ -1,12 +1,8 @@
-module
-
-public import HexBerlekampZassenhausMathlib.Lattice
-public import HexBerlekampZassenhausMathlib.ColumnSignature
-public import HexBerlekampZassenhausMathlib.SignatureClasses
-public import HexBerlekampZassenhausMathlib.TerminationBound
-public import HexBerlekampZassenhausMathlib.BadVectorAuxiliary
-
-public section
+import HexBerlekampZassenhausMathlib.Lattice
+import HexBerlekampZassenhausMathlib.ColumnSignature
+import HexBerlekampZassenhausMathlib.SignatureClasses
+import HexBerlekampZassenhausMathlib.TerminationBound
+import HexBerlekampZassenhausMathlib.BadVectorAuxiliary
 
 /-!
 Forward-verification of BHKS recovery at fixed precision.
@@ -209,7 +205,6 @@ theorem supportPartitionByMinColumn_length_le_partitionByMinColumn_length
 
 /-- The RREF column signature expression used by
 `Hex.bhksEquivalenceClassIndicators`, exposed as a proof-facing definition. -/
-@[expose]
 def projectedRowsRrefColumnSignature (L : Hex.BhksProjectedRows) (j : Nat) :
     Array Rat :=
   let n := L.projectedRows.size
@@ -409,7 +404,6 @@ theorem supportPartitionByMinColumn_length_le_bhksEquivalenceClassIndicators_siz
 This is the same expression that `Hex.bhksRecover?` builds internally;
 extracting it as a named definition lets the proof-facing recovery layer
 refer to it without rebuilding the lift data each time. -/
-@[expose]
 def latticeBasisOfLiftData (f : Hex.ZPoly) (d : Hex.LiftData) :
     Hex.BhksLatticeBasis :=
   Hex.bhksLatticeBasis f d.p d.k d.liftedFactors
@@ -417,13 +411,11 @@ def latticeBasisOfLiftData (f : Hex.ZPoly) (d : Hex.LiftData) :
 /-- Positive-dimension hypothesis on the executable BHKS lattice basis at the
 abstract Hensel-lift data.  The executable `Hex.bhksRecover?` early-returns
 `none` when this fails. -/
-@[expose]
 abbrev HasPositiveDimension (f : Hex.ZPoly) (d : Hex.LiftData) : Prop :=
   1 ≤ (latticeBasisOfLiftData f d).factorCount +
       (latticeBasisOfLiftData f d).coeffWidth
 
 /-- The executable BHKS projected-row data at the abstract Hensel-lift data. -/
-@[expose]
 def projectedRowsOfLiftData (f : Hex.ZPoly) (d : Hex.LiftData)
     (hrows : HasPositiveDimension f d) : Hex.BhksProjectedRows :=
   Hex.bhksProjectedRows (latticeBasisOfLiftData f d) hrows
@@ -433,7 +425,6 @@ ones used by the forward-recovery package at the given lift data.  The
 remaining fields identify the selected local factor and auxiliary polynomial
 for the bad-vector route; cap-separation callers supply their proof obligations
 through `ExecutableCapSeparationHypotheses`. -/
-@[expose]
 def badVectorWitnessOfLiftData
     (f : Hex.ZPoly) (d : Hex.LiftData) (hrows : HasPositiveDimension f d)
     (localFactorIndex localFactorDegree : Nat) (H : Hex.ZPoly) :
@@ -458,7 +449,6 @@ the four field projections — `auxiliary_eq`/`auxiliaryCorrections`,
 `resultant_divisible_by_p_pow_of_bridge_data` — into one assembled bridge for
 use by `capSeparationOfBridgeData`.
 -/
-@[expose]
 def bridgeOfLiftData
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (hrows : HasPositiveDimension f d)
@@ -484,7 +474,6 @@ together: the `BadVectorBridgeData` carries the four bridge fields, and the
 `hcut`/`hp`/`hlt` arguments supply the cap structure and the analytic
 strict inequality.
 -/
-@[expose]
 def capSeparationOfBridgeData
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (hrows : HasPositiveDimension f d)
@@ -546,7 +535,6 @@ theorem projectedRowsOfLiftData_eq_trueFactorIndicatorLattice_of_cap
 
 /-- The executable BHKS equivalence-class indicator array at the abstract
 Hensel-lift data. -/
-@[expose]
 def equivalenceClassIndicatorsOfLiftData (f : Hex.ZPoly) (d : Hex.LiftData)
     (hrows : HasPositiveDimension f d) : Array (Array Int) :=
   Hex.bhksEquivalenceClassIndicators (projectedRowsOfLiftData f d hrows)
@@ -598,7 +586,6 @@ namespace EquivalenceClassRecoveryHypotheses
 
 /-- Build the B7 recovery package directly from `L' = W`, targeting the
 canonical support-driven indicator array. -/
-@[expose]
 noncomputable def ofIndicatorLattice
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
@@ -1004,7 +991,6 @@ theorem expectedTrueFactors_of_monic
 
 /-- Extract the B7 equivalence-class recovery package from the full
 forward-recovery input bundle. -/
-@[expose]
 def toEquivalenceClassRecoveryHypotheses {f : Hex.ZPoly} {d : Hex.LiftData}
     (h : ForwardRecoveryInputs f d) : EquivalenceClassRecoveryHypotheses f d where
   rows_pos := h.rows_pos
@@ -1095,14 +1081,12 @@ theorem canonicalSupportIndicators_nondegenerate
 
 /-- The selected lifted factors attached to an explicit support-class member
 list, using the canonical BHKS selector array. -/
-@[expose]
 def selectedFactorsOfMembers
     (liftedFactors : Array Hex.ZPoly) (members : List Nat) : Array Hex.ZPoly :=
   Hex.bhksIndicatorSelectedFactorsArray liftedFactors
     (classIndicatorArray liftedFactors.size members)
 
 /-- Proof-side lifted-factor subset selected by a support-class member list. -/
-@[expose]
 def liftedFactorSubsetOfMembers
     (d : Hex.LiftData) (members : List Nat) : LiftedFactorSubset d :=
   Finset.univ.filter fun i : LiftedFactorIndex d => i.val ∈ members
@@ -1369,7 +1353,6 @@ theorem bhksIndicatorSelectedFactors_classIndicatorArray
 
 /-- Canonical selected-factor arrays corresponding to
 `expectedIndicatorArrayOfSupports`. -/
-@[expose]
 noncomputable def selectedFactorArraysOfSupports
     (liftedFactors : Array Hex.ZPoly)
     {r : Nat} (trueSupports : Set (Set (Fin r))) : Array (Array Hex.ZPoly) :=
@@ -1378,7 +1361,6 @@ noncomputable def selectedFactorArraysOfSupports
 
 /-- Canonical proof-side lifted-factor subsets corresponding to
 `supportPartitionByMinColumn`. -/
-@[expose]
 noncomputable def liftedFactorSubsetsOfSupports
     (d : Hex.LiftData)
     {r : Nat} (trueSupports : Set (Set (Fin r))) :
@@ -1775,7 +1757,6 @@ Build `ForwardRecoveryInputs` when the A2/exact-division obligation is
 available as per-indicator reconstruction witnesses rather than as the folded
 candidate equality.
 -/
-@[expose]
 def ofIndicatorCandidateFacts
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
@@ -1872,7 +1853,6 @@ array for each indicator, the modular-product equality that B7/A2 establishes,
 and the expected true-factor facts; this constructor packages them through the
 existing candidate fold.
 -/
-@[expose]
 def ofMignottePrecisionCandidateProducts
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
@@ -1942,7 +1922,6 @@ wrapper for the forward-recovery layer: callers identify the true factor list
 once, and the final `Array.polyProduct expectedFactors = f` guard is extracted
 by `productOfExpectedFactors`.
 -/
-@[expose]
 def ofMignottePrecisionExpectedFactors
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
@@ -2003,7 +1982,6 @@ facts are stated against the canonical indicator array
 `expectedIndicatorArrayOfSupports trueSupports`, so callers consume the
 support-driven indicator partition directly.
 -/
-@[expose]
 noncomputable def ofMignottePrecisionCanonicalIndicators
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
@@ -2066,7 +2044,6 @@ This is the canonical-indicator wrapper corresponding to
 `ofMignottePrecisionExpectedFactors`; callers identify the true factor list
 once, and the final product check is extracted by `productOfExpectedFactors`.
 -/
-@[expose]
 noncomputable def ofMignottePrecisionCanonicalIndicatorsExpectedFactors
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
@@ -2120,7 +2097,6 @@ under `hp : 2 ≤ d.p` and the lift-data shape equation `hk`).  Mirrors
 `ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound` for the Mignotte
 chain that arrives with the `ExpectedTrueFactors` package directly.
 -/
-@[expose]
 noncomputable def ofMignottePrecisionCanonicalIndicatorsExpectedFactorsAtPrecisionForCoeffBound
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
@@ -2173,7 +2149,6 @@ fields (`mignotte_precision`, `expectedIndicators`, `indicators_match`,
 `nondegenerate`, `expectedFactors`, per-indicator candidate facts, and the
 final product check) pass through unchanged to `ofIndicatorCandidateFacts`.
 -/
-@[expose]
 def ofCapSeparation
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
@@ -2227,7 +2202,6 @@ check) pass through unchanged.  The candidate facts are stated against the
 canonical indicator array `expectedIndicatorArrayOfSupports trueSupports`,
 so callers consume the support-driven indicator partition directly.
 -/
-@[expose]
 noncomputable def ofCapSeparationCanonicalIndicators
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
@@ -2280,7 +2254,6 @@ indicator array) and the `mignotte_precision` side condition (discharged via
 `mignotte_precision_of_liftData_precisionForCoeffBound_factorFastPrecisionCap`
 under `hp : 2 ≤ d.p`).
 -/
-@[expose]
 noncomputable def ofCapSeparationCanonicalIndicatorsAtPrecisionForCoeffBound
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
@@ -2324,7 +2297,6 @@ consumed by `bhksRecover_eq_some_of_recovery`.  The promotion is a
 field-by-field repackaging that uses `indicators_match` to substitute
 `expectedIndicators` for the executable equivalence-class output in the
 non-degenerate and candidate fields. -/
-@[expose]
 def toRecoveryHypotheses {f : Hex.ZPoly} {d : Hex.LiftData}
     (h : ForwardRecoveryInputs f d) : RecoveryHypotheses f d where
   rows_pos := h.rows_pos
@@ -2557,7 +2529,6 @@ namespace ForwardRecoveryInputsCore
 /-- Promote a core SPEC-input bundle to the immediate recovery hypotheses
 consumed by `coreRecover_eq_some_of_recovery`.  Mirrors
 `ForwardRecoveryInputs.toRecoveryHypotheses`. -/
-@[expose]
 def toRecoveryHypothesesCore {f : Hex.ZPoly} {d : Hex.LiftData}
     (h : ForwardRecoveryInputsCore f d) : RecoveryHypothesesCore f d where
   rows_pos := h.rows_pos
@@ -2586,7 +2557,6 @@ available as per-indicator core reconstruction witnesses rather than as the
 folded candidate equality.  Core analogue of
 `ForwardRecoveryInputs.ofIndicatorCandidateFacts`.
 -/
-@[expose]
 def ofIndicatorCandidateFacts
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
@@ -2633,7 +2603,6 @@ internally by `projectedRowsOfLiftData_eq_trueFactorIndicatorLattice_of_cap`
 (shared with the monic side, since the lattice basis is the same), and the
 remaining fields pass through to `ofIndicatorCandidateFacts`.
 -/
-@[expose]
 def ofCapSeparation
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
@@ -2733,7 +2702,6 @@ callers supply the selected-factor array for each indicator and the `M1`
 scaled-centred-lift equality the recovery formula establishes, and this
 constructor packages them through the Core candidate fold.
 -/
-@[expose]
 def ofMignottePrecisionCandidateProducts
     {f : Hex.ZPoly} {d : Hex.LiftData}
     (rows_pos : HasPositiveDimension f d)
@@ -3001,7 +2969,6 @@ This is a named cap-lift specialization of `badVectorWitnessOfLiftData`, so
 callers no longer have to rebuild the nested executable lift expression before
 feeding the witness to the cap-separation layer.
 -/
-@[expose]
 def badVectorWitnessOfFactorFastCapLiftData
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (rows_pos :
@@ -3484,7 +3451,6 @@ already built `ExecutableCapSeparationHypotheses`: callers can pass this named
 comparison to the actual-cap projected-row-span bridge without restating the
 Hadamard/l2norm inequality field.
 -/
-@[expose]
 def FactorFastCapLiftAnalyticComparison.ofCapSeparationHypotheses
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (rows_pos :
@@ -3748,7 +3714,6 @@ theorem no_bhks_bad_setup_of_factorFastCapLiftAnalyticComparison
 Cap-separation hypotheses for the actual `factorFast` cap lift, assembled from
 the landed bridge package and the named cap-lift analytic comparison package.
 -/
-@[expose]
 def capSeparationOfBridgeDataAtFactorFastCapLift
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (rows_pos :
@@ -4631,7 +4596,6 @@ namespace CanonicalRecoveryInputs
 unconditional support-partition shape facts (`class_nonempty`,
 `class_bounds`) internally, keeping caller obligations focused on the
 genuinely mathematical inputs. -/
-@[expose]
 def ofExpectedFactors
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     (rows_pos : HasPositiveDimension
@@ -4756,7 +4720,6 @@ namespace CanonicalRecoveryTailInputs
 
 /-- Constructor for `CanonicalRecoveryTailInputs` that discharges the two
 unconditional support-partition shape facts internally. -/
-@[expose]
 def ofExpectedFactors
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -4819,7 +4782,6 @@ The per-class Mignotte product congruence is derived from those certificates,
 and the unconditional `class_nonempty` / `class_bounds` shape facts are
 discharged via `ofExpectedFactors`.
 -/
-@[expose]
 def ofCanonicalSupportRepresentations
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -4894,7 +4856,6 @@ API does not expose an unconditional monic theorem for
 normalization surface can discharge those hypotheses before using this
 constructor.
 -/
-@[expose]
 def ofForwardRecoveryInputsCanonicalRepresentations
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     (h :
@@ -5009,7 +4970,6 @@ This is the closed record producer for callers that already have the
 prime-choice equation, and stored normalized-core precision equation at
 `factorFastCapLiftData f primeData`.
 -/
-@[expose]
 def ofBridgeDataWithComparison
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -5069,7 +5029,6 @@ The prime-choice equation supplies the prime positivity needed by
 `FactorFastCapLiftAnalyticComparison.ofBridgeData`; the stored precision
 equation is threaded into `ofBridgeDataWithComparison`.
 -/
-@[expose]
 def ofBridgeData
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -5144,7 +5103,6 @@ internally, so downstream final assembly consumes a single
 `FactorFastCapSeparationInputs` record rather than re-threading the corrected
 l2norm plumbing.
 -/
-@[expose]
 def ofBridgeDataCorrectedAuxiliaryL2normSq
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -5363,7 +5321,6 @@ the resulting bound on `auxiliaryBound ^ 2`. Internally it uses
 into the explicit finite sum required by
 `ofBridgeDataCorrectedAuxiliaryL2normSq`.
 -/
-@[expose]
 def ofBridgeDataPointwiseAuxiliaryBounds
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -6106,7 +6063,6 @@ The remaining analytical content — bounding the canonical
 `bhksPaperThresholdReal` for the actual cap-lift bad-vector bridge — is left
 as the `hpaper` hypothesis here.
 -/
-@[expose]
 def ofBridgeDataPointwiseAuxiliaryBoundsAndPaperThreshold
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -6228,7 +6184,6 @@ chain `bhksPaperThresholdReal_chain_lt_p_pow_kLocalFactorDegree_factored`; the
 `auxiliaryBound`-nonneg hypothesis is the same one already required by the
 pointwise constructor.
 -/
-@[expose]
 def ofBridgeDataPointwiseAuxiliaryBoundsAndFactoredPaperThreshold
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -6350,7 +6305,6 @@ auxiliary-power sub-bound is stated against the named
 product.  One-step shim that unfolds the named target and dispatches to the
 unprimed variant.
 -/
-@[expose]
 def ofBridgeDataPointwiseAuxiliaryBoundsAndFactoredPaperThreshold'
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -6477,7 +6431,6 @@ pointwise vector/correction estimates; compared to
 corrected-l2-norm-squared form rather than a direct `‖aux‖ ≤ auxiliaryBound`
 bound.
 -/
-@[expose]
 def ofBridgeDataCorrectedAuxiliaryL2normSqAndPaperThreshold
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -6590,7 +6543,6 @@ cap-arithmetic chain
 `auxiliaryBound`-nonneg hypothesis is the same one already required by the
 structured-corrected-l2-norm-squared constructor.
 -/
-@[expose]
 def ofBridgeDataCorrectedAuxiliaryL2normSqAndFactoredPaperThreshold
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -6704,7 +6656,6 @@ supplies one BHKS §5 domination inequality for
 This is the corrected-squared bridge-data surface needed by the capstone route
 that preserves the cancellation in the joint product.
 -/
-@[expose]
 def ofBridgeDataCorrectedAuxiliaryL2normSqAndJointPaperThreshold
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -6853,7 +6804,6 @@ auxiliary-power sub-bound is stated against the named
 product.  One-step shim that unfolds the named target and dispatches to the
 unprimed variant.
 -/
-@[expose]
 def ofBridgeDataCorrectedAuxiliaryL2normSqAndFactoredPaperThreshold'
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -6964,7 +6914,6 @@ upgrading the bound via
 `factorFastCapLift_l2norm_product_lt_divisor_of_auxiliary_bound`. The
 input-side `coeffL2NormBound` bound is discharged automatically.
 -/
-@[expose]
 def ofBridgeDataAuxiliaryL2norm
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -7031,7 +6980,6 @@ Composes `ofBridgeDataAuxiliaryL2norm` with the cap-arithmetic chain
 cap-arithmetic comparison is dispatched internally once the caller supplies the
 paper-threshold inequality (the BHKS Theorem 5.2 inequality content).
 -/
-@[expose]
 def ofBridgeDataAuxiliaryL2normAndPaperThreshold
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -7099,7 +7047,6 @@ inequality for
 product through the cap arithmetic instead of splitting it into coefficient
 and auxiliary sub-bounds.
 -/
-@[expose]
 def ofBridgeDataAuxiliaryL2normAndJointPaperThreshold
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -7197,7 +7144,6 @@ and supplies the corresponding shortness certificate.  The BHKS paper-threshold
 obligation is discharged by `BHKS.auxiliary_le_paperThreshold`, so no split
 `h_coeff` / `h_aux` premises appear at the call site.
 -/
-@[expose]
 noncomputable def ofBridgeDataC2Auxiliary
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -7311,7 +7257,6 @@ coefficient-power sub-bound against `‖core‖₂^(2n-1)` and the auxiliary-pow
 sub-bound against `n · (2C)^(n²) · (log ‖core‖₂)^n` without re-deriving the
 combined product inequality.
 -/
-@[expose]
 def ofBridgeDataAuxiliaryL2normAndFactoredPaperThreshold
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -7384,7 +7329,6 @@ the auxiliary-power sub-bound is stated against the named
 product.  One-step shim that unfolds the named target and dispatches to the
 unprimed variant.
 -/
-@[expose]
 def ofBridgeDataAuxiliaryL2normAndFactoredPaperThreshold'
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -7457,7 +7401,6 @@ auxiliaryBound` hypothesis: both are derived internally from the bridge via
 caller still supplies the CLD-coefficient bound `hcld`, the projected vector
 `v` together with `hin`/`hnot`, and the paper-threshold inequality.
 -/
-@[expose]
 noncomputable def ofBridgeDataAndPaperThreshold
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -7565,7 +7508,6 @@ chain `bhksPaperThresholdReal_chain_lt_p_pow_kLocalFactorDegree_factored`.  The
 caller no longer supplies an `auxiliaryBound` parameter or a separate `‖aux‖ ≤
 auxiliaryBound` hypothesis: both are derived internally from the bridge.
 -/
-@[expose]
 noncomputable def ofBridgeDataAndFactoredPaperThreshold
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -7669,7 +7611,6 @@ auxiliary-power sub-bound is stated against the named
 product.  One-step shim that unfolds the named target and dispatches to the
 unprimed variant.
 -/
-@[expose]
 noncomputable def ofBridgeDataAndFactoredPaperThreshold'
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -7824,7 +7765,6 @@ The resulting record feeds directly into
 `factorFast_ne_none_of_canonicalRecoveryInputs_internalCapPositiveAndPrimeLowerBound`,
 matching the canonical final-theorem consumer shape.
 -/
-@[expose]
 def ofFactorFastCapSeparationInputsAndCanonicalRecoveryTailInputs
     {f : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {rows_pos : HasPositiveDimension
@@ -10258,7 +10198,6 @@ This is a named cap-lift specialization of `badVectorWitnessOfLiftData`, so
 callers no longer have to rebuild the nested executable lift expression before
 feeding the witness to the cap-separation layer.
 -/
-@[expose]
 def badVectorWitnessOfFactorFastCoreCapLiftData
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (rows_pos :
@@ -10741,7 +10680,6 @@ already built `ExecutableCapSeparationHypotheses`: callers can pass this named
 comparison to the actual-cap projected-row-span bridge without restating the
 Hadamard/l2norm inequality field.
 -/
-@[expose]
 def FactorFastCoreCapLiftAnalyticComparison.ofCapSeparationHypotheses
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (rows_pos :
@@ -11005,7 +10943,6 @@ theorem no_bhks_bad_setup_of_factorFastCoreCapLiftAnalyticComparison
 Cap-separation hypotheses for the actual `factorFast` cap lift, assembled from
 the landed bridge package and the named cap-lift analytic comparison package.
 -/
-@[expose]
 def capSeparationOfBridgeDataAtFactorFastCoreCapLift
     (f : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (rows_pos :

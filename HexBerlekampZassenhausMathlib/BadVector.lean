@@ -1,10 +1,6 @@
-module
-
-public import HexBerlekampZassenhaus.Basic
-public import HexBerlekampZassenhausMathlib.Lattice
-public import HexBerlekampZassenhausMathlib.Resultant
-
-public section
+import HexBerlekampZassenhaus.Basic
+import HexBerlekampZassenhausMathlib.Lattice
+import HexBerlekampZassenhausMathlib.Resultant
 
 /-!
 Abstract resultant/divisibility layer for the BHKS bad-vector argument.
@@ -45,12 +41,10 @@ structure BadVectorResultantData where
 namespace BadVectorResultantData
 
 /-- The integer resultant attached to bad-vector proof data. -/
-@[expose]
 def resultant (D : BadVectorResultantData) : ℤ :=
   Polynomial.resultant D.f D.H
 
 /-- The modular lower-bound divisor attached to bad-vector proof data. -/
-@[expose]
 def divisor (D : BadVectorResultantData) : Nat :=
   D.p ^ (D.a * D.d)
 
@@ -198,17 +192,14 @@ structure ExecutableBadVectorWitness where
 namespace ExecutableBadVectorWitness
 
 /-- The input polynomial transported to Mathlib's `Polynomial ℤ`. -/
-@[expose]
 def inputPolynomial (W : ExecutableBadVectorWitness) : Polynomial ℤ :=
   HexPolyZMathlib.toPolynomial W.input
 
 /-- The auxiliary bad-vector polynomial transported to Mathlib's `Polynomial ℤ`. -/
-@[expose]
 def auxiliaryPolynomial (W : ExecutableBadVectorWitness) : Polynomial ℤ :=
   HexPolyZMathlib.toPolynomial W.H
 
 /-- The selected lifted factor, if the executable array contains the index. -/
-@[expose]
 def selectedLiftedFactor (W : ExecutableBadVectorWitness) : Hex.ZPoly :=
   W.liftData.liftedFactors.getD W.localFactorIndex 0
 
@@ -216,7 +207,6 @@ def selectedLiftedFactor (W : ExecutableBadVectorWitness) : Hex.ZPoly :=
 Package an executable bad-vector witness and the remaining BHKS local
 coprimality/divisibility hypotheses as abstract resultant data.
 -/
-@[expose]
 def toResultantData
     (W : ExecutableBadVectorWitness)
     (hp : 0 < W.liftData.p)
@@ -307,7 +297,6 @@ subtract the diagonal-row correction coordinates from the CLD block.  The
 `corrections` array stores those diagonal-row coefficients, one per
 coefficient index `j`.
 -/
-@[expose]
 def auxiliaryPolynomialWithCorrections
     (input : Hex.ZPoly) (liftData : Hex.LiftData)
     (vec corrections : Array Int) : Hex.ZPoly :=
@@ -333,7 +322,6 @@ Downstream BHKS bad-vector construction should prefer
 coordinates; this wrapper is the zero-correction specialization used by the
 existing resultant-bound surface.
 -/
-@[expose]
 def auxiliaryPolynomial
     (input : Hex.ZPoly) (liftData : Hex.LiftData) (vec : Array Int) : Hex.ZPoly :=
   auxiliaryPolynomialWithCorrections input liftData vec #[]
@@ -346,7 +334,6 @@ indices `j < n` of the input, where `n := input.degree?.getD 0`.
 The prime `p` is carried for API symmetry with the surrounding BHKS column
 infrastructure; the body does not depend on it.
 -/
-@[expose]
 def cldColumnNormBound (input : Hex.ZPoly) (_p : Nat) : Nat :=
   let n := input.degree?.getD 0
   (List.range n).foldl (fun acc j => acc + (Hex.bhksCoeffBound input j) ^ 2) 0
@@ -1084,14 +1071,12 @@ namespace ExecutableBadVectorWitness
 
 /-- Promote an executable `Array Int` row to a vector function indexed by the
 witness's projected factor count. -/
-@[expose]
 def projectedVectorFn (W : ExecutableBadVectorWitness) (vec : Array Int) :
     Fin W.projectedRows.factorCount → ℤ :=
   fun i => vec.getD i.val 0
 
 /-- Store a proof-facing projected vector in the executable array shape used
 by the BHKS auxiliary-polynomial construction. -/
-@[expose]
 def projectedVectorArray (W : ExecutableBadVectorWitness)
     (v : Fin W.projectedRows.factorCount → ℤ) : Array Int :=
   (List.ofFn v).toArray
@@ -1105,7 +1090,6 @@ the selected lifted factor.  This constructor discharges the structural part of
 the BHKS bad-vector setup; the rational coprimality and resultant divisibility
 clauses remain the genuine BHKS Lemma 3.2 algebraic obligations.
 -/
-@[expose]
 def ofProjectedVector
     (input : Hex.ZPoly) (liftData : Hex.LiftData)
     (hrows :
@@ -1304,7 +1288,6 @@ cap separation.  The structural `L' \ W` fields are transported through the
 canonical executable array representation; the local BHKS Lemma 3.2 algebraic
 clauses remain explicit hypotheses.
 -/
-@[expose]
 def isBhksBadVectorSetup_of_projected_not_indicator
     (W : ExecutableBadVectorWitness)
     (trueSupports : Set (Set (Fin W.projectedRows.factorCount)))
@@ -1347,7 +1330,6 @@ uses the executable selected local-factor degree.  Callers still provide the
 positive-degree fact and the two resultant hypotheses; this is the intended
 boundary before the full BHKS Lemma 3.2 proof.
 -/
-@[expose]
 def isBhksBadVectorSetup_of_projectedVector
     (input : Hex.ZPoly) (liftData : Hex.LiftData)
     (hrows :
@@ -1510,7 +1492,6 @@ structure BadVectorBridgeData
 namespace BadVectorBridgeData
 
 /-- Correction coordinates supplied by `BadVectorBridgeData`. -/
-@[expose]
 def auxiliaryCorrections
     {W : ExecutableBadVectorWitness}
     {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
@@ -1542,7 +1523,6 @@ theorem auxiliary_eq'
 Scaled-lattice shortness certificate supplied by `BadVectorBridgeData`, stated
 using the public correction accessor.
 -/
-@[expose]
 def shortness
     {W : ExecutableBadVectorWitness}
     {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
@@ -1778,7 +1758,6 @@ theorem resultant_divisible_by_p_pow_of_bridge_data
 Forget the project-level bridge data to the compact callback package consumed
 by cap separation.
 -/
-@[expose]
 def BadVectorBridgeData.toProjectedBadVectorSetupBridge
     {W : ExecutableBadVectorWitness}
     {trueSupports : Set (Set (Fin W.projectedRows.factorCount))}
@@ -1794,7 +1773,6 @@ def BadVectorBridgeData.toProjectedBadVectorSetupBridge
 Convert the packaged `ProjectedBadVectorSetupBridge` into the callback shape
 expected by `BHKS.ExecutableCapSeparationHypotheses`.
 -/
-@[expose]
 def bad_setup_of_projected_not_indicator
     (W : ExecutableBadVectorWitness)
     (trueSupports : Set (Set (Fin W.projectedRows.factorCount)))
@@ -1840,7 +1818,6 @@ theorem coprime_input_aux_over_rat_of_forward
 Bad-vector setup constructor using the van Hoeij forward correspondence for
 the rational coprimality clause.
 -/
-@[expose]
 def isBhksBadVectorSetup_of_forward
     (W : ExecutableBadVectorWitness)
     (trueSupports : Set (Set (Fin W.projectedRows.factorCount)))
@@ -1897,7 +1874,6 @@ theorem resultant_divisible_by_p_pow_of_bhks_bad
 Package a BHKS bad-vector setup as the abstract resultant data consumed by
 the lower/upper-bound comparison lemmas.
 -/
-@[expose]
 def resultantDataOfBhksBad
     (W : ExecutableBadVectorWitness) (h_bad : IsBhksBadVectorSetup W)
     (hp : 0 < W.liftData.p) :

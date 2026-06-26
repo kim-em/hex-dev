@@ -1,8 +1,4 @@
-module
-
-public import HexMatrixMathlib.RankSpanNullspace
-
-public section
+import HexMatrixMathlib.RankSpanNullspace
 
 /-!
 Column-agreement equivalence for the BHKS RREF signature step.

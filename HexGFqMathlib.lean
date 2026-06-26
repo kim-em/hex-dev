@@ -1,9 +1,5 @@
-module
-
-public import HexGFqMathlib.Basic
-public import HexGFqMathlib.GF2q
-
-public section
+import HexGFqMathlib.Basic
+import HexGFqMathlib.GF2q
 
 /-!
 Mathlib-side correspondence lemmas for the canonical finite-field convenience

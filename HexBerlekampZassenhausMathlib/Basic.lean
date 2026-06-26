@@ -1,16 +1,12 @@
-module
-
-public import HexBerlekampZassenhaus
-public import HexBerlekampMathlib.Basic
-public import HexBerlekampZassenhausMathlib.UFDPartition
-public import HexHenselMathlib.Correctness
-public import HexPolyZMathlib.Basic
-public import HexPolyZMathlib.Mignotte
-public import Mathlib.RingTheory.Coprime.Lemmas
-public import Mathlib.RingTheory.Polynomial.UniqueFactorization
-public import Mathlib.RingTheory.PrincipalIdealDomain
-
-public section
+import HexBerlekampZassenhaus
+import HexBerlekampMathlib.Basic
+import HexBerlekampZassenhausMathlib.UFDPartition
+import HexHenselMathlib.Correctness
+import HexPolyZMathlib.Basic
+import HexPolyZMathlib.Mignotte
+import Mathlib.RingTheory.Coprime.Lemmas
+import Mathlib.RingTheory.Polynomial.UniqueFactorization
+import Mathlib.RingTheory.PrincipalIdealDomain
 
 /-!
 Mathlib-facing correctness surface for `HexBerlekampZassenhaus`.
@@ -156,7 +152,6 @@ Executable irreducibility predicate for transported integer polynomials.
 The checker delegates to the Mathlib-free `Hex.ZPoly` executable predicate
 after transporting the Mathlib polynomial into the project representation.
 -/
-@[expose]
 def irreducibleByFactorization (f : Polynomial ℤ) : Bool :=
   Hex.ZPoly.isIrreducible (HexPolyZMathlib.ofPolynomial f)
 
@@ -526,12 +521,10 @@ theorem polyProduct_toPolynomial (factors : Array Hex.ZPoly) :
 
 /-- Expand factorization entries by multiplicity, forgetting their packed
 array shape. -/
-@[expose]
 def flattenedFactorEntries (entries : List (Hex.ZPoly × Nat)) : List Hex.ZPoly :=
   entries.flatMap fun entry => List.replicate entry.2 entry.1
 
 /-- Expand the polynomial entries of a `Hex.Factorization` by multiplicity. -/
-@[expose]
 def factorizationFlattenedFactors (φ : Hex.Factorization) : List Hex.ZPoly :=
   flattenedFactorEntries φ.factors.toList
 
@@ -1444,23 +1437,19 @@ theorem checkIrreducibleCert_sound_zpoly
       (checkIrreducibleCert_sound f cert hprime hprim hpos hcert)
 
 /-- Index type for the modular factors stored in executable prime-choice data. -/
-@[expose]
 abbrev ModPFactorIndex (primeData : Hex.PrimeChoiceData) : Type :=
   Fin primeData.factorsModP.size
 
 /-- A finite subset of the modular factors stored in executable prime-choice data. -/
-@[expose]
 abbrev ModPFactorSubset (primeData : Hex.PrimeChoiceData) : Type :=
   Finset (ModPFactorIndex primeData)
 
 /-- The selected modular factor at an executable `PrimeChoiceData` index. -/
-@[expose]
 def modPFactor (primeData : Hex.PrimeChoiceData)
     (i : ModPFactorIndex primeData) : @Hex.FpPoly primeData.p primeData.bounds :=
   primeData.factorsModP[i]
 
 /-- Product of the selected modular factors. -/
-@[expose]
 def modPFactorProduct
     (primeData : Hex.PrimeChoiceData) (S : ModPFactorSubset primeData) :
     @Hex.FpPoly primeData.p primeData.bounds :=
@@ -1496,7 +1485,6 @@ The monic modular image used for subset partition statements. This mirrors the
 executable prime-choice normalization: zero stays zero, and nonzero inputs are
 scaled by the inverse of their leading coefficient.
 -/
-@[expose]
 def monicModPImage {p : Nat} [Hex.ZMod64.Bounds p] (f : Hex.FpPoly p) : Hex.FpPoly p :=
   if f.isZero then
     0
@@ -1769,7 +1757,6 @@ An integer factor is represented modulo the selected prime by a subset of the
 recorded modular factors when the subset product is the monic modular image of
 that integer factor.
 -/
-@[expose]
 def RepresentsIntegerFactorModP
     (primeData : Hex.PrimeChoiceData) (factor : Hex.ZPoly)
     (S : ModPFactorSubset primeData) : Prop :=
@@ -2249,27 +2236,22 @@ theorem modPFactorSubset_disjoint_of_not_associated
   exact (hpart.factors_irreducible i).not_isUnit (hsqfree _ hsqM)
 
 /-- Index type for the local factors stored in executable Hensel lift data. -/
-@[expose]
 abbrev LiftedFactorIndex (d : Hex.LiftData) : Type :=
   Fin d.liftedFactors.size
 
 /-- A finite subset of the local factors stored in executable Hensel lift data. -/
-@[expose]
 abbrev LiftedFactorSubset (d : Hex.LiftData) : Type :=
   Finset (LiftedFactorIndex d)
 
 /-- The lifted local factor at an executable `LiftData` index. -/
-@[expose]
 def liftedFactor (d : Hex.LiftData) (i : LiftedFactorIndex d) : Hex.ZPoly :=
   d.liftedFactors[i]
 
 /-- Product of the lifted local factors selected by a finite subset. -/
-@[expose]
 def liftedFactorProduct (d : Hex.LiftData) (S : LiftedFactorSubset d) : Hex.ZPoly :=
   S.toList.foldl (fun acc i => acc * liftedFactor d i) 1
 
 /-- Transport a modular-factor index to the corresponding lifted-factor index. -/
-@[expose]
 def liftedIndexOfModPIndex
     (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
     (hsize : d.liftedFactors.size = primeData.factorsModP.size)
@@ -2279,7 +2261,6 @@ def liftedIndexOfModPIndex
     exact i.isLt⟩
 
 /-- Embedding version of `liftedIndexOfModPIndex` for finite-set transport. -/
-@[expose]
 def modPIndexToLiftedEmbedding
     (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
     (hsize : d.liftedFactors.size = primeData.factorsModP.size) :
@@ -2297,7 +2278,6 @@ def modPIndexToLiftedEmbedding
 Transport a selected subset of modular factors to the corresponding selected
 subset of lifted factors, once the lift stage is known to preserve factor count.
 -/
-@[expose]
 def liftedSubsetOfModPSubset
     (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
     (hsize : d.liftedFactors.size = primeData.factorsModP.size)
@@ -2375,7 +2355,6 @@ Selected lifted-factor product scaled by the leading coefficient of the integer
 core, matching the product formed by the executable recombination candidate
 checker.
 -/
-@[expose]
 def scaledLiftedFactorProduct
     (core : Hex.ZPoly) (d : Hex.LiftData) (S : LiftedFactorSubset d) : Hex.ZPoly :=
   Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff core) (liftedFactorProduct d S)
@@ -2418,7 +2397,6 @@ leading-coefficient dilation has primitive part equal to the integer factor.
 The public predicate is proof-only; helper lemmas can unpack the underlying
 `RecoveredAtLift` witness when they need the monic-coordinate data.
 -/
-@[expose]
 def RepresentsIntegerFactorAtLift
     (core : Hex.ZPoly) (d : Hex.LiftData) (factor : Hex.ZPoly)
     (S : LiftedFactorSubset d) : Prop :=
@@ -2564,7 +2542,6 @@ lifted-factor product directly.  The executable-list version is introduced
 later, after the list-selection identification has been developed, and is proved equal
 to this definition.
 -/
-@[expose]
 def liftedFactorProductCandidate (d : Hex.LiftData) (S : LiftedFactorSubset d) :
     Hex.ZPoly :=
   Hex.normalizeFactorSign <|
@@ -2578,7 +2555,6 @@ centred in the Hensel modulus, then transported back from the `toMonic`
 coordinate system by `X ↦ leadingCoeff core * X`, and finally made primitive
 with canonical sign.
 -/
-@[expose]
 def liftedRecoveryCandidate
     (core : Hex.ZPoly) (d : Hex.LiftData) (S : LiftedFactorSubset d) :
     Hex.ZPoly :=
@@ -2604,7 +2580,6 @@ end liftedRecoveryCandidate
 leading-coefficient-scaled selected lifted-factor product, primitivised and
 sign-normalised.  This is the primitive non-monic supporting lemma used by the scaled
 recombination search. -/
-@[expose]
 def scaledRecombinationCandidate
     (core : Hex.ZPoly) (d : Hex.LiftData) (S : LiftedFactorSubset d) :
     Hex.ZPoly :=
@@ -2821,7 +2796,6 @@ structure MonicDescent
 namespace MonicDescent
 
 /-- Pack the explicit monic-correspondent reverse-descent fields. -/
-@[expose]
 def ofRecovered
     {core factor : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     {d : Hex.LiftData} {T : LiftedFactorSubset d}
@@ -3071,7 +3045,6 @@ The mod-`p` partition plus Hensel transport produces the existing
 use the stable lifted-factor API without depending on the intermediate
 mod-`p` vocabulary.
 -/
-@[expose]
 def henselSubsetCorrespondence_of_modPSubsetPartition
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {d : Hex.LiftData}
@@ -3983,7 +3956,6 @@ The accompanying partition lemmas specialize to the full lifted-index universe
 `J = Finset.univ`; proper recursive rest partitions keep their remaining-index
 guard outside this support family.
 -/
-@[expose]
 def liftedTrueSupports (core : Hex.ZPoly) (d : Hex.LiftData) :
     Set (Set (LiftedFactorIndex d)) :=
   fun U =>
@@ -4255,7 +4227,6 @@ index-preserving partition and `S.toList` becomes a permutation.
 
 /-- Boolean indicator vector for `S`, indexed by the same `Fin` order as
 `d.liftedFactors.toList`. -/
-@[expose]
 def liftedSubsetMask (d : Hex.LiftData) (S : LiftedFactorSubset d) : List Bool :=
   (List.finRange d.liftedFactors.size).map fun i => decide (i ∈ S)
 
@@ -4265,7 +4236,6 @@ theorem liftedSubsetMask_length (d : Hex.LiftData) (S : LiftedFactorSubset d) :
 
 /-- The list of lifted factors selected by `S`, ordered by their original
 `d.liftedFactors` index. -/
-@[expose]
 def liftedSubsetSelectedList (d : Hex.LiftData) (S : LiftedFactorSubset d) :
     List Hex.ZPoly :=
   (d.liftedFactors.toList.zip (liftedSubsetMask d S)).filterMap fun p =>
@@ -4273,7 +4243,6 @@ def liftedSubsetSelectedList (d : Hex.LiftData) (S : LiftedFactorSubset d) :
 
 /-- The list of lifted factors not selected by `S`, ordered by their original
 `d.liftedFactors` index. -/
-@[expose]
 def liftedSubsetRejectedList (d : Hex.LiftData) (S : LiftedFactorSubset d) :
     List Hex.ZPoly :=
   (d.liftedFactors.toList.zip (liftedSubsetMask d S)).filterMap fun p =>
@@ -4495,7 +4464,6 @@ unconsumed indices.
 Used by the recursive coverage proof to connect the proof-side
 `HenselSubsetCorrespondenceRest core d J target` to the executable list
 threaded through `Hex.recombinationSearchModAux`. -/
-@[expose]
 def LiftedFactorListMatches (d : Hex.LiftData) (J : LiftedFactorSubset d)
     (localFactors : List Hex.ZPoly) : Prop :=
   localFactors =
@@ -5718,7 +5686,6 @@ subset: this is the `Hex.ZPoly` value that the recombination search compares
 against the running target via `shouldRecordPolynomialFactor` /
 `exactQuotient?`.  Definitionally equal to the inline expression used inside
 `Hex.recombinationSearchModAux`. -/
-@[expose]
 def recombinationCandidate (d : Hex.LiftData) (S : LiftedFactorSubset d) :
     Hex.ZPoly :=
   Hex.normalizeFactorSign <|
@@ -6080,7 +6047,6 @@ lift is `scale c factor` exactly), followed by `primitivePart (scale c factor) =
 primitivePart factor = factor` (`c > 0`, `factor` primitive).  `congr` and
 `monic_dvd` are recorded verbatim.  No `dilate` and no `(toMonic core).monic`
 divisibility: the `monicTarget` coordinate already is `core`'s own coordinate. -/
-@[expose]
 def recoveredAtLiftM1_of_recovery
     {core factor monicFactor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
     (c : Int) (hc_pos : 0 < c)
@@ -9942,7 +9908,6 @@ two component divisibilities `hf.monicFactor ∣ (toMonic core).monic` and
 the two coordinates.  The product divisibility is therefore taken as an explicit
 premise `hmul_dvd`, supplied by the squarefree-lift context where it genuinely
 holds. -/
-@[expose]
 def RecoveredAtLift.mul
     {core f g : Hex.ZPoly} {d : Hex.LiftData}
     {S T : LiftedFactorSubset d}
@@ -20461,7 +20426,6 @@ theorem honestCongr_of_product_congr_monicTarget
 at `deg`.  When `leadingCoeff base ∣ c`, dilating this by `c` recovers a scalar
 multiple of `base` (`dilate_monicDilate`); it is the monic correspondent of a
 factor consumed by recombination recovery. -/
-@[expose]
 def Hex.ZPoly.monicDilate (c : Int) (base : Hex.ZPoly) : Hex.ZPoly where
   coeffs :=
     (((List.range (base.degree?.getD 0)).map

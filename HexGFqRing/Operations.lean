@@ -908,7 +908,8 @@ theorem intCast_neg_eq (f : FpPoly p) (hf : 0 < FpPoly.degree f)
 `pow_zero` / `pow_succ` fields of the `Lean.Grind.Semiring` instance. The
 executable `pow` is square-and-multiply (`O(log n)`); `pow_eq_linearPow` ties
 the two together. -/
-private def linearPow {f : FpPoly p} {hf : 0 < FpPoly.degree f}
+@[expose]
+def linearPow {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) : Nat → PolyQuotient f hf
   | 0 => 1
   | n + 1 => linearPow x n * x
@@ -1036,7 +1037,7 @@ private theorem pow_go_eq_acc_mul_linearPow
 /-- The executable square-and-multiply `pow` returns the same element as the
 proof-only linear recurrence `linearPow`. The `Lean.Grind.Semiring` instance
 rewrites by this equality to discharge its `pow_succ` field. -/
-private theorem pow_eq_linearPow
+theorem pow_eq_linearPow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) :
     pow x n = linearPow x n := by

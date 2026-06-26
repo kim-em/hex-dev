@@ -1,12 +1,10 @@
-module
-
-public import HexHensel.Basic
-public import HexHensel.Linear
-public import HexHensel.Multifactor
-public import HexHensel.Quadratic
-public import HexHensel.QuadraticMultifactor
-
-public section
+import HexHensel.Basic
+import HexHensel.Linear
+import HexHensel.Multifactor
+import HexHensel.Quadratic
+import HexHensel.QuadraticMultifactor
+import HexHensel.Conformance
+import HexHensel.CrossCheck
 
 /-!
 The `HexHensel` library provides the executable conversion and lifting layers

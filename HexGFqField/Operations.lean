@@ -1,10 +1,6 @@
-module
-
-public import Init.Grind.Ring.Field
-public import HexGFqField.Basic
-public import HexGFqRing.Operations
-
-public section
+import Init.Grind.Ring.Field
+import HexGFqField.Basic
+import HexGFqRing.Operations
 
 /-!
 Executable finite-field operations for `F_p[x] / (f)`.
@@ -23,70 +19,59 @@ variable {p : Nat} [ZMod64.Bounds p] {hp : Hex.Nat.Prime p}
 
 /-- Natural-number literals reuse the quotient-ring cast and then rewrap the
 resulting reduced residue. -/
-@[expose]
 def natCast (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p)
     (hirr : FpPoly.Irreducible f) (n : Nat) : FiniteField f hf hp hirr :=
   ofQuotient (n : GFqRing.PolyQuotient f hf)
 
 /-- The additive identity in the finite-field wrapper. -/
-@[expose]
 def zero (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p)
     (hirr : FpPoly.Irreducible f) :
     FiniteField f hf hp hirr :=
   ofQuotient 0
 
 /-- The multiplicative identity in the finite-field wrapper. -/
-@[expose]
 def one (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p)
     (hirr : FpPoly.Irreducible f) :
     FiniteField f hf hp hirr :=
   ofQuotient 1
 
 /-- Field addition reuses the quotient-ring sum. -/
-@[expose]
 def add {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   ofQuotient (x.toQuotient + y.toQuotient)
 
 /-- Field multiplication reuses the quotient-ring product. -/
-@[expose]
 def mul {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   ofQuotient (x.toQuotient * y.toQuotient)
 
 /-- Field negation reuses the quotient-ring additive inverse. -/
-@[expose]
 def neg {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   ofQuotient (-x.toQuotient)
 
 /-- Field subtraction reuses the quotient-ring difference. -/
-@[expose]
 def sub {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   ofQuotient (x.toQuotient - y.toQuotient)
 
 /-- Exponentiation reuses the quotient-ring repeated-multiplication path. -/
-@[expose]
 def pow {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) (n : Nat) : FiniteField f hf hp hirr :=
   ofQuotient (x.toQuotient ^ n)
 
 /-- Natural scalar multiplication reuses the quotient-ring scalar action. -/
-@[expose]
 def nsmul {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (n : Nat) (x : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   ofQuotient (n • x.toQuotient)
 
 /-- Integer literals reuse the quotient-ring cast and then rewrap the reduced
 residue. -/
-@[expose]
 def intCast (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p)
     (hirr : FpPoly.Irreducible f) (i : Int) : FiniteField f hf hp hirr :=
   ofQuotient (i : GFqRing.PolyQuotient f hf)
 
 /-- Integer scalar multiplication reuses the quotient-ring scalar action. -/
-@[expose]
 def zsmul {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (i : Int) (x : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   ofQuotient (i • x.toQuotient)
@@ -474,7 +459,6 @@ end InverseInternals
 polynomial extended-GCD witness, normalized by the gcd's constant unit factor.
 The `0` case follows the usual junk-value convention required by
 `Lean.Grind.Field`. -/
-@[expose]
 def inv {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
@@ -493,14 +477,12 @@ private theorem toQuotient_inv_of_ne_zero
   simp [GFqField.inv, hx]
 
 /-- Division is multiplication by the inverse candidate. -/
-@[expose]
 def div {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x y : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   mul x (inv y)
 
 /-- Integer exponentiation uses the existing natural-power path together with
 the inverse candidate for negative exponents. -/
-@[expose]
 def zpow {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) : Int → FiniteField f hf hp hirr
   | .ofNat n => pow x n
@@ -508,7 +490,6 @@ def zpow {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
 
 /-- The Frobenius map is the `p`-th power map on the existing quotient
 representation. -/
-@[expose]
 def frob {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) : FiniteField f hf hp hirr :=
   pow x p

@@ -1,11 +1,7 @@
-module
-
-public import HexHenselMathlib.Basic
-public import HexPolyMathlib.Basic
-public import Mathlib.Algebra.Polynomial.Degree.IsMonicOfDegree
-public import Mathlib.Algebra.Field.ZMod
-
-public section
+import HexHenselMathlib.Basic
+import HexPolyMathlib.Basic
+import Mathlib.Algebra.Polynomial.Degree.IsMonicOfDegree
+import Mathlib.Algebra.Field.ZMod
 
 /-!
 Mathlib-facing correctness and uniqueness theorem surface for executable

@@ -1,9 +1,5 @@
-module
-
-public import HexBerlekampZassenhausMathlib.BadVector
-public import HexBerlekampZassenhausMathlib.BHKSBound
-
-public section
+import HexBerlekampZassenhausMathlib.BadVector
+import HexBerlekampZassenhausMathlib.BHKSBound
 
 /-!
 Coefficient-facing helper lemmas for the BHKS auxiliary polynomial.

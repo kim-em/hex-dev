@@ -1,9 +1,5 @@
-module
-
-public import HexGF2.Basic
-public import HexGF2.Clmul
-
-public section
+import HexGF2.Basic
+import HexGF2.Clmul
 
 /-!
 Packed `GF2Poly` multiplication.
@@ -6394,7 +6390,6 @@ private theorem coeffWords_mulWords_assoc
 
 /-- Multiplication in `F_2[x]` via carry-less word products and XOR
 accumulation. -/
-@[expose]
 def mul (p q : GF2Poly) : GF2Poly :=
   ofWords (mulWords p.words q.words)
 

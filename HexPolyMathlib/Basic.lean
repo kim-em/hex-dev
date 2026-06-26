@@ -516,7 +516,7 @@ theorem leadingCoeff_toPolynomial [Semiring R] [DecidableEq R]
       rw [Hex.DensePoly.coeff_zero]
       exact Hex.DensePoly.coeff_eq_zero_of_size_le p (by omega)
     rw [hp_zero]
-    rfl
+    simp [Hex.DensePoly.leadingCoeff_zero, Hex.DensePoly.coeff_zero]
   · have hpos : 0 < p.size := Nat.pos_of_ne_zero hsize
     have hdegree_some : p.degree? = some (p.size - 1) := by
       simp [Hex.DensePoly.degree?, hsize]

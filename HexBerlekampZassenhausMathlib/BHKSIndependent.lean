@@ -1,9 +1,5 @@
-module
-
-public import HexBerlekampZassenhaus
-public import HexLLLMathlib.Independent
-
-public section
+import HexBerlekampZassenhaus
+import HexLLLMathlib.Independent
 
 /-!
 BHKS lattice-basis independence theorems.

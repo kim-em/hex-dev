@@ -1,13 +1,9 @@
-module
-
-public import HexBerlekamp.Irreducibility
-public import HexBerlekamp.Factor
-public import HexPolyFp.Compose
-public import HexPolyFp.Quotient
-public import HexPolyFp.QuotientFrobenius
-public import HexArith.Nat.Pow
-
-public section
+import HexBerlekamp.Irreducibility
+import HexBerlekamp.Factor
+import HexPolyFp.Compose
+import HexPolyFp.Quotient
+import HexPolyFp.QuotientFrobenius
+import HexArith.Nat.Pow
 
 /-!
 Project-side soundness of `Berlekamp.rabinTest` against
@@ -35,20 +31,17 @@ The polynomial `X^(p^k) - X` viewed inside the executable `FpPoly p` model.
 Used to phrase the absolute (not modular) divisibility leg `f ∣ X^(p^n) - X`
 underlying Rabin's test.
 -/
-@[expose]
 def xPowSubX (k : Nat) : FpPoly p :=
   DensePoly.monomial (p ^ k) (1 : ZMod64 p) - FpPoly.X
 
 /-! ### Prime-field linear product -/
 
 /-- The executable product `∏ c ∈ F_p, (X - c)` over canonical residues. -/
-@[expose]
 def primeFieldLinearProduct : FpPoly p :=
   (ZMod64.values p).foldl
     (fun acc c => acc * (FpPoly.X - FpPoly.C c)) 1
 
 /-- The linear factor corresponding to a prime-field residue. -/
-@[expose]
 def primeFieldLinearFactor (c : ZMod64 p) : FpPoly p :=
   FpPoly.X - FpPoly.C c
 
@@ -109,7 +102,6 @@ The zero-one CRT representative used to separate a coprime product
 `a * b`: it is congruent to `0` modulo `a` and to `1` modulo `b` when
 `s * a + t * b = 1`.
 -/
-@[expose]
 def crtZeroOneCandidate (a b s t : FpPoly p) : FpPoly p :=
   DensePoly.polyCRT a b 0 1 s t
 
@@ -180,7 +172,6 @@ theorem crtZeroOneCandidate_mod_one_right
       (0 : FpPoly p) (1 : FpPoly p) s t hb hbez)
 
 /-- The same zero-one CRT representative, using the executable xgcd coefficients. -/
-@[expose]
 def crtZeroOneXGCDCandidate (a b : FpPoly p) : FpPoly p :=
   let r := DensePoly.xgcd a b
   crtZeroOneCandidate a b r.left r.right

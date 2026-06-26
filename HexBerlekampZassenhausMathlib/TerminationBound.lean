@@ -1,10 +1,6 @@
-module
-
-public import HexBerlekampZassenhausMathlib.BadVector
-public import HexBerlekampZassenhausMathlib.BadVectorAuxiliary
-public import HexBerlekampZassenhausMathlib.BHKSBound
-
-public section
+import HexBerlekampZassenhausMathlib.BadVector
+import HexBerlekampZassenhausMathlib.BadVectorAuxiliary
+import HexBerlekampZassenhausMathlib.BHKSBound
 
 /-!
 BHKS termination-bound packaging.
@@ -482,7 +478,6 @@ Instantiate the cap-separation hypotheses from the packaged
 `ProjectedBadVectorSetupBridge` supplied by `BadVector.lean`, plus the
 existing cut and resultant-bound side conditions.
 -/
-@[expose]
 def ofProjectedBadVectorSetupBridge
     (W : ExecutableBadVectorWitness)
     (trueSupports : Set (Set (Fin W.projectedRows.factorCount)))

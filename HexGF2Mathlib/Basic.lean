@@ -1,10 +1,6 @@
-module
-
-public import HexGF2
-public import HexPolyFp
-public import Mathlib.Data.Nat.Bitwise
-
-public section
+import HexGF2
+import HexPolyFp
+import Mathlib.Data.Nat.Bitwise
 
 /-!
 Correspondence definitions between packed `Hex.GF2Poly` values and the generic
@@ -35,7 +31,6 @@ namespace TypeEquiv
 variable {α : Type u} {β : Type v} {γ : Type w}
 
 /-- Compose project-local type equivalences. -/
-@[expose]
 def trans (e₁ : TypeEquiv α β) (e₂ : TypeEquiv β γ) : TypeEquiv α γ where
   toFun := e₂.toFun ∘ e₁.toFun
   invFun := e₁.invFun ∘ e₂.invFun
@@ -68,7 +63,6 @@ instance : CoeFun (R ≃+* S) (fun _ => R → S) where
   coe e := e.toFun
 
 /-- The inverse of a project-local ring equivalence. -/
-@[expose]
 def symm (e : R ≃+* S) : S ≃+* R where
   toFun := e.invFun
   invFun := e.toFun
@@ -109,7 +103,6 @@ private def coeffOfFp (a : Hex.ZMod64 2) : UInt64 :=
 
 /-- Unpack a packed `GF2Poly` into the generic dense polynomial over
 `Hex.ZMod64 2`. -/
-@[expose]
 def toFpPoly (p : Hex.GF2Poly) : Hex.FpPoly 2 :=
   let coeffs :=
     if p.isZero then
@@ -130,7 +123,6 @@ private def packWord (p : Hex.FpPoly 2) (wordIdx : Nat) : UInt64 :=
 
 /-- Repack a generic dense polynomial over `Hex.ZMod64 2` into the packed
 `GF2Poly` representation. -/
-@[expose]
 def ofFpPoly (p : Hex.FpPoly 2) : Hex.GF2Poly :=
   let wordCount := (p.size + 63) / 64
   let words := Array.ofFn fun i : Fin wordCount => packWord p i.1
@@ -492,7 +484,6 @@ theorem toFpPoly_mul (p q : Hex.GF2Poly) :
 
 /-- The packed `GF2Poly` representation is ring-equivalent to the generic
 degree-normalized `FpPoly 2` representation. -/
-@[expose]
 def equiv : Hex.GF2Poly ≃+* Hex.FpPoly 2 where
   toFun := toFpPoly
   invFun := ofFpPoly
@@ -594,7 +585,6 @@ private def wordsToNatAux : List UInt64 → Nat → Nat
   | [], _ => 0
   | w :: ws, i => w.toNat * 2 ^ (64 * i) + wordsToNatAux ws (i + 1)
 
-@[expose]
 def toNat (p : Hex.GF2Poly) : Nat :=
   wordsToNatAux p.toWords.toList 0
 
@@ -714,7 +704,6 @@ theorem toNat_testBit_eq_coeff (p : Hex.GF2Poly) (j : Nat) :
 /-- Rebuild the low `degree` bits of a natural number as a packed polynomial.
 The input is expected to be bounded by `2 ^ degree` by callers that need a
 canonical finite representative. -/
-@[expose]
 def ofNatBelowDegree (degree : Nat) (n : Nat) : Hex.GF2Poly :=
   let wordCount := (degree + 63) / 64
   Hex.GF2Poly.ofWords <|

@@ -1,8 +1,4 @@
-module
-
-public import HexBerlekampZassenhausMathlib.Basic
-
-public section
+import HexBerlekampZassenhausMathlib.Basic
 
 /-!
 Stable unpacking lemmas for the executable BHKS precision cap.
@@ -28,32 +24,26 @@ private theorem range_foldl_add_eq_finset_sum_nat (g : Nat → Nat) (m : Nat) :
       rw [ih, Finset.sum_range_succ]
 
 /-- Executable degree parameter used by the BHKS precision cap. -/
-@[expose]
 def bhksDegree (f : Hex.ZPoly) : Nat :=
   f.degree?.getD 0
 
 /-- Squared coefficient norm parameter used by the BHKS precision cap. -/
-@[expose]
 def bhksSumSquared (f : Hex.ZPoly) : Nat :=
   Hex.ZPoly.coeffNormSq f
 
 /-- The direct degree factor in the SPEC Group-D integer cap. -/
-@[expose]
 def bhksDegreeFactor (f : Hex.ZPoly) : Nat :=
   bhksDegree f
 
 /-- The `4^(n*n)` factor in the SPEC Group-D integer cap. -/
-@[expose]
 def bhksFourPowFactor (f : Hex.ZPoly) : Nat :=
   4 ^ (bhksDegree f * bhksDegree f)
 
 /-- The `(sumSquared + 1)^n` coefficient-norm factor in the SPEC Group-D cap. -/
-@[expose]
 def bhksCoeffNormFactor (f : Hex.ZPoly) : Nat :=
   (bhksSumSquared f + 1) ^ bhksDegree f
 
 /-- The `(log2 (sumSquared + 1))^n` logarithmic factor in the SPEC Group-D cap. -/
-@[expose]
 def bhksLog2Factor (f : Hex.ZPoly) : Nat :=
   (Nat.log2 (bhksSumSquared f + 1)) ^ bhksDegree f
 
@@ -64,7 +54,6 @@ This is the expression documented in
 `SPEC/Libraries/hex-berlekamp-zassenhaus.md`: `1 + n * 4^(n*n) *
 (sumSquared + 1)^n * log2(sumSquared + 1)^n`.
 -/
-@[expose]
 def bhksThresholdNatBound (f : Hex.ZPoly) : Nat :=
   1 + bhksDegreeFactor f * bhksFourPowFactor f *
     bhksCoeffNormFactor f * bhksLog2Factor f
@@ -159,27 +148,22 @@ theorem bhksThresholdNatBound_real_le_bhksBound (f : Hex.ZPoly) :
   exact_mod_cast bhksThresholdNatBound_le_bhksBound f
 
 /-- Real-valued degree factor appearing in the BHKS paper threshold. -/
-@[expose]
 def bhksPaperDegreeFactorReal (f : Hex.ZPoly) : ℝ :=
   bhksDegree f
 
 /-- Real-valued `(2C)^(n^2)` factor appearing in the BHKS paper threshold. -/
-@[expose]
 def bhksPaperConstantFactorReal (f : Hex.ZPoly) (C : ℝ) : ℝ :=
   (2 * C) ^ (bhksDegree f * bhksDegree f)
 
 /-- Real-valued coefficient-norm factor `‖f‖₂^(2n-1)` from BHKS. -/
-@[expose]
 noncomputable def bhksPaperCoeffNormFactorReal (f : Hex.ZPoly) : ℝ :=
   (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f)) ^ (2 * bhksDegree f - 1)
 
 /-- Real-valued logarithmic factor `(log ‖f‖₂)^n` from BHKS. -/
-@[expose]
 noncomputable def bhksPaperLogFactorReal (f : Hex.ZPoly) : ℝ :=
   (Real.log (HexPolyZMathlib.l2norm (HexPolyZMathlib.toPolynomial f))) ^ bhksDegree f
 
 /-- Product-shaped real BHKS paper threshold, with the project constant explicit. -/
-@[expose]
 noncomputable def bhksPaperThresholdReal (f : Hex.ZPoly) (C : ℝ) : ℝ :=
   bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
     bhksPaperCoeffNormFactorReal f * bhksPaperLogFactorReal f
@@ -1217,7 +1201,6 @@ This packages the three paper factors that the auxiliary-power sub-bound
 (`auxiliaryBound^input.natDegree ≤ ...`) must dominate, leaving the
 coefficient-norm factor `‖f‖₂^(2n-1)` as the separate sub-bound target.
 -/
-@[expose]
 noncomputable def bhksPaperAuxiliaryFactorReal (f : Hex.ZPoly) (C : ℝ) : ℝ :=
   bhksPaperDegreeFactorReal f * bhksPaperConstantFactorReal f C *
     bhksPaperLogFactorReal f

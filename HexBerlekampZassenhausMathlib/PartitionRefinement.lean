@@ -1,12 +1,8 @@
-module
-
-public import HexBerlekampZassenhausMathlib.Recovery
-public import HexBerlekampZassenhausMathlib.Basic
-public import HexBerlekampZassenhausMathlib.CLDColumnBound
-public import HexBerlekampZassenhausMathlib.IntReductionMod
-public import HexBerlekampZassenhausMathlib.BHKSIndependent
-
-public section
+import HexBerlekampZassenhausMathlib.Recovery
+import HexBerlekampZassenhausMathlib.Basic
+import HexBerlekampZassenhausMathlib.CLDColumnBound
+import HexBerlekampZassenhausMathlib.IntReductionMod
+import HexBerlekampZassenhausMathlib.BHKSIndependent
 
 /-!
 BHKS B8 partition-refinement step.
@@ -1340,7 +1336,6 @@ support is then transported back along the membership's coercion `↑S = U`.  Th
 is the separation-free producer of the `lift` family consumed by
 `factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift`.
 -/
-@[expose]
 noncomputable def recoveredLiftOfLiftedTrueSupport
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)

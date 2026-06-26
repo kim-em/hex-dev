@@ -1,12 +1,8 @@
-module
-
-public import HexBerlekampZassenhaus.Basic
-public import HexLLLMathlib.Independent
-public import Mathlib.Data.Real.Basic
-public import Mathlib.LinearAlgebra.Matrix.RowCol
-public import Mathlib.Algebra.BigOperators.Fin
-
-public section
+import HexBerlekampZassenhaus.Basic
+import HexLLLMathlib.Independent
+import Mathlib.Data.Real.Basic
+import Mathlib.LinearAlgebra.Matrix.RowCol
+import Mathlib.Algebra.BigOperators.Fin
 
 /-!
 Mathlib-facing row-span interface for the executable BHKS projected lattice.
@@ -39,13 +35,11 @@ theorem traceReducedMatrix_memLattice_iff
     Hex.lll_delta_lower Hex.lll_delta_upper hrows v
 
 /-- The projected integer rows of the executable BHKS cut as a Mathlib matrix. -/
-@[expose]
 def projectedRowsIntMatrix (L : Hex.BhksProjectedRows) :
     Matrix (Fin L.projectedRows.size) (Fin L.factorCount) ℤ :=
   fun i j => (L.projectedRows.getD i.val #[]).getD j.val 0
 
 /-- The projected rational rows of the executable BHKS cut as a Mathlib matrix. -/
-@[expose]
 def projectedRowsRatMatrix (L : Hex.BhksProjectedRows) :
     Matrix (Fin L.projectedRows.size) (Fin L.factorCount) ℚ :=
   fun i j => ((L.projectedRows.getD i.val #[]).getD j.val 0 : ℚ)
@@ -54,7 +48,6 @@ def projectedRowsRatMatrix (L : Hex.BhksProjectedRows) :
 The integer row span represented by the executable projected BHKS rows.  This
 is the proof-facing `L' <= Z^r`.
 -/
-@[expose]
 def projectedRowSpanInt (L : Hex.BhksProjectedRows) :
     Submodule ℤ (Fin L.factorCount → ℤ) :=
   Submodule.span ℤ (Set.range fun i : Fin L.projectedRows.size =>
@@ -64,19 +57,16 @@ def projectedRowSpanInt (L : Hex.BhksProjectedRows) :
 The rational row space represented by the same executable projected rows.  This
 is the row-space input used by the RREF equivalence-class stage.
 -/
-@[expose]
 def projectedRowSpaceRat (L : Hex.BhksProjectedRows) :
     Submodule ℚ (Fin L.factorCount → ℚ) :=
   Submodule.span ℚ (Set.range fun i : Fin L.projectedRows.size =>
     Matrix.row (projectedRowsRatMatrix L) i)
 
 /-- Cast an integer vector over the lifted-factor indices to a rational vector. -/
-@[expose]
 def intVectorToRat {r : Nat} (v : Fin r → ℤ) : Fin r → ℚ :=
   fun i => (v i : ℚ)
 
 /-- A `0/1` indicator vector for a support of lifted factor indices. -/
-@[expose]
 def indicatorVector {r : Nat} (S : Set (Fin r)) : Fin r → ℤ :=
   by
     classical
@@ -143,12 +133,10 @@ theorem indicatorVector_sq_sum_le_projectedRows_cutRadiusSq4
     (indicatorVector_sq_sum_le_bhksCutRadiusSq4 L S)
 
 /-- A support of lifted local-factor indices for a BHKS lattice basis. -/
-@[expose]
 abbrev LiftedFactorSupport (L : Hex.BhksLatticeBasis) :=
   Set (Fin L.factorCount)
 
 /-- The `0/1` indicator vector attached to a lifted-factor support. -/
-@[expose]
 def liftedFactorIndicator (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) :
     Fin L.factorCount → ℤ :=
   indicatorVector S
@@ -160,7 +148,6 @@ rather than the raw array size so it remains well-typed for abstract
 `BhksLatticeBasis` values; `TrueFactorLift.basis_eq` ties these together for
 the executable basis.
 -/
-@[expose]
 def supportProduct (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) :
     Hex.ZPoly :=
   by
@@ -176,7 +163,6 @@ pre-indicator column-`j` entry of the true-factor CLD vector; the centering
 (`psiCut`) and indicator weighting are layered on top by the tight-column work
 (`#7651`).
 -/
-@[expose]
 def supportCldSum (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
     (f : Hex.ZPoly) (p a : Nat) : Hex.ZPoly :=
   by
@@ -189,7 +175,6 @@ def supportCldSum (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
 Selected lifted factors as an executable array, in the same support order used
 by `supportProduct` and `supportCldSum`.
 -/
-@[expose]
 def selectedFactors (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) :
     Array Hex.ZPoly :=
   by
@@ -337,7 +322,6 @@ Coefficient vector selecting the top BHKS lattice rows attached to a
 lifted-factor support.  The first `factorCount` entries are the support
 indicator; the diagonal correction-row coefficients are zero.
 -/
-@[expose]
 def trueFactorRowCoeffs (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) :
     Vector ℤ (L.factorCount + L.coeffWidth) :=
   Vector.ofFn fun i =>
@@ -349,7 +333,6 @@ the selected top rows of the all-coefficients BHKS lattice basis; equivalently,
 its first block is the `0/1` support indicator and its coefficient block is the
 corresponding CLD-column sum, with zero diagonal correction coefficients.
 -/
-@[expose]
 def trueFactorCLDVector (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) :
     Vector ℤ (L.factorCount + L.coeffWidth) :=
   Hex.Matrix.rowCombination L.basis (trueFactorRowCoeffs L S)
@@ -446,7 +429,6 @@ This holds definitionally for `Hex.bhksLatticeBasis` (see
 `bhksLatticeBasis_blockForm`) and is the only fact the canonical coordinate
 producers need about the basis.
 -/
-@[expose]
 def BhksBlockForm (L : Hex.BhksLatticeBasis) : Prop :=
   L.basis =
     Hex.Matrix.ofFn
@@ -893,7 +875,6 @@ deliverable 4) is supplied as `hnorm`: it is a genuinely separate analytic
 obligation, isolated by `TrueFactorCLDNormBound` and reduced to a per-coordinate
 CLD magnitude bound by `trueFactorCLDNormBound_of_cldTail_sq_sum_le` below.
 -/
-@[expose]
 def trueFactorCLDVectorData
     (f : Hex.ZPoly) (p a : Nat) (liftedFactors : Array Hex.ZPoly)
     (S : LiftedFactorSupport (Hex.bhksLatticeBasis f p a liftedFactors))
@@ -1229,7 +1210,6 @@ sum of per-factor high-bit cuts.  This is exactly the trailing
 `trueFactorCLDVector` coordinate (`trueFactorCoord_eq_recoveredColumnSum`), and
 the quantity the #7869 carry lemma reduces modulo the period.
 -/
-@[expose]
 def recoveredColumnSum
     {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
     (D : RecoveredLift L S) (j : Nat) : ℤ :=
@@ -1244,7 +1224,6 @@ value `2·|col − t·p^(a−ℓ_j)| ≤ |S|`.  This is the conclusion of the #7
 aggregate carry lemma; the recovered norm-bound producer discharges it from a
 `RecoveredLift` plus Hensel-factorisation data.
 -/
-@[expose]
 def recoveredPeriodReducible
     {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
     (D : RecoveredLift L S) (j : Nat) : Prop :=
@@ -1266,7 +1245,6 @@ plus the Hensel-factorisation data, landing in the true branch.  The sign is
 negated so that adding the diagonal contribution `p^(a−ℓ_j)·(−t_j)` reduces the
 column to `col_j − t_j·p^(a−ℓ_j)`.
 -/
-@[expose]
 noncomputable def recoveredPeriodCoeff
     {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
     (D : RecoveredLift L S) (j : Nat) : ℤ :=
@@ -1277,7 +1255,6 @@ Row-coefficient vector for the period-corrected recovered CLD vector: the `0/1`
 support indicator on the first `factorCount` rows, and the period multiple
 `recoveredPeriodCoeff` on each diagonal (period) row `factorCount + j`.
 -/
-@[expose]
 noncomputable def recoveredRowCoeffs
     {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
     (D : RecoveredLift L S) : Vector ℤ (L.factorCount + L.coeffWidth) :=
@@ -1292,7 +1269,6 @@ the BHKS basis with the period-correction coefficients.  Unlike
 `diag(p^(a−ℓ_j))` absorb the large part of the raw cut-sum, leaving a short
 column while preserving the support projection.
 -/
-@[expose]
 noncomputable def recoveredCLDVector
     {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
     (D : RecoveredLift L S) : Vector ℤ (L.factorCount + L.coeffWidth) :=
@@ -1419,21 +1395,18 @@ structure RecoveredCLDTightNormBound
 The true-factor indicator lattice `W`, generated by the indicator vectors of
 the true integer factors' lifted-factor supports.
 -/
-@[expose]
 def trueFactorIndicatorLattice {r : Nat} (trueSupports : Set (Set (Fin r))) :
     Submodule ℤ (Fin r → ℤ) :=
   Submodule.span ℤ (Set.range fun S : trueSupports => indicatorVector S.1)
 
 /-- Two lifted-factor columns have the same support signature across all true
 factor supports. -/
-@[expose]
 def supportEquivalent {r : Nat} (trueSupports : Set (Set (Fin r)))
     (j k : Fin r) : Prop :=
   ∀ S ∈ trueSupports, (j ∈ S ↔ k ∈ S)
 
 /-- Nat-indexed form of `supportEquivalent`, convenient for filtering
 `List.range r` while retaining proof irrelevance for the bounds. -/
-@[expose]
 def supportEquivalentAt {r : Nat} (trueSupports : Set (Set (Fin r)))
     (j k : Nat) : Prop :=
   ∃ (hj : j < r) (hk : k < r),
@@ -1474,7 +1447,6 @@ theorem supportEquivalentAt_trans {r : Nat}
 
 /-- Minimum representatives of support-equivalence classes, emitted in
 ascending column order. -/
-@[expose]
 def supportRepresentativeColumns {r : Nat}
     (trueSupports : Set (Set (Fin r))) : List Nat :=
   by
@@ -1486,7 +1458,6 @@ def supportRepresentativeColumns {r : Nat}
 
 /-- The support-equivalence class represented by `rep`, listed in ascending
 column order. -/
-@[expose]
 def supportClassMembers {r : Nat}
     (trueSupports : Set (Set (Fin r))) (rep : Nat) : List Nat :=
   by
@@ -1495,14 +1466,12 @@ def supportClassMembers {r : Nat}
       (fun j => decide (supportEquivalentAt trueSupports j rep))
 
 /-- Canonical partition of columns by true-support membership signatures. -/
-@[expose]
 def supportPartitionByMinColumn {r : Nat}
     (trueSupports : Set (Set (Fin r))) : List (List Nat) :=
   (supportRepresentativeColumns trueSupports).map
     (fun rep => supportClassMembers trueSupports rep)
 
 /-- The executable indicator-array shape for a finite Nat-indexed class. -/
-@[expose]
 def classIndicatorArray (r : Nat) (members : List Nat) : Array Int :=
   ((List.range r).map (fun i => if i ∈ members then (1 : Int) else 0)).toArray
 
@@ -1592,7 +1561,6 @@ Entries are `0/1` indicators of support-equivalence classes.  The class order
 is ascending by the least column in each class, matching the executable
 signature-class fold order characterised in `SignatureClasses.lean`.
 -/
-@[expose]
 noncomputable def expectedIndicatorArrayOfSupports
     {r : Nat} (trueSupports : Set (Set (Fin r))) : Array (Array Int) :=
   ((supportPartitionByMinColumn trueSupports).map
@@ -1675,7 +1643,6 @@ theorem indicatorVector_mem_trueFactorIndicatorLattice
   exact Submodule.subset_span ⟨S, rfl⟩
 
 /-- The true-factor indicator lattice over the lifted factors of a BHKS basis. -/
-@[expose]
 def liftedFactorIndicatorLattice
     (L : Hex.BhksLatticeBasis) (trueSupports : Set (LiftedFactorSupport L)) :
     Submodule ℤ (Fin L.factorCount → ℤ) :=
@@ -1959,7 +1926,6 @@ theorem mem_projected
   simpa [hcut.rowOfIndicator_eq S] using hrow
 
 /-- Package retained-row evidence as the standard cut hypothesis record. -/
-@[expose]
 def toCut
     (L : Hex.BhksProjectedRows) (trueSupports : Set (Set (Fin L.factorCount)))
     (hcut : CutSurvival L trueSupports) :
@@ -1981,7 +1947,6 @@ stores the projected rows.
 -/
 
 /-- Projection onto the first `r` coordinates as a `ℤ`-linear map. -/
-@[expose]
 def projFirst (r n : Nat) : (Fin (r + n) → ℤ) →ₗ[ℤ] (Fin r → ℤ) where
   toFun w := fun i => w (Fin.castAdd n i)
   map_add' a b := by funext i; simp
@@ -2111,7 +2076,6 @@ survivor-span lemma only needs lattice membership plus the tight cut-radius
 bound, and the final projection only needs the first block to be the support
 indicator.
 -/
-@[expose]
 def cutProjectionHypotheses_of_shortVectors
     (L : Hex.BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth)
     (hbasis : L.basis.independent)
@@ -2165,7 +2129,6 @@ prefix span; projecting to the first `factorCount` coordinates lands the
 indicator in `projectedRowSpanInt`.  This route does **not** pass through
 `CutRetention`.
 -/
-@[expose]
 def cutProjectionHypotheses_of_trueFactors
     (L : Hex.BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth)
     (hbasis : L.basis.independent)
@@ -2244,7 +2207,6 @@ theorem span_rat_image_eq_of_span_int_eq
 
 /-- The rational counterpart of `trueFactorIndicatorLattice`: the rational span
 of the rational-cast indicator vectors. -/
-@[expose]
 def trueFactorIndicatorLattice_rat
     {r : Nat} (trueSupports : Set (Set (Fin r))) :
     Submodule ℚ (Fin r → ℚ) :=
