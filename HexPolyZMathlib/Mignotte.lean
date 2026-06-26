@@ -1,10 +1,6 @@
-module
-
-public import HexPolyZMathlib.Basic
-public import Mathlib.Analysis.Polynomial.MahlerMeasure
-public import Mathlib.NumberTheory.MahlerMeasure
-
-public section
+import HexPolyZMathlib.Basic
+import Mathlib.Analysis.Polynomial.MahlerMeasure
+import Mathlib.NumberTheory.MahlerMeasure
 
 /-!
 Mignotte-bound infrastructure for integer polynomials.
@@ -35,7 +31,6 @@ private theorem range_foldl_add_eq_finset_sum_nat (g : Nat → Nat) (m : Nat) :
       rw [ih, Finset.sum_range_succ]
 
 /-- The Euclidean norm of the coefficient vector of an integer polynomial. -/
-@[expose]
 def l2norm (f : Polynomial ℤ) : ℝ :=
   Real.sqrt (∑ i ∈ f.support, (f.coeff i : ℝ) ^ 2)
 
