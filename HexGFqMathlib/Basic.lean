@@ -1,7 +1,11 @@
-import HexGFq
-import HexGF2Mathlib.Field
-import Mathlib.Algebra.Field.MinimalAxioms
-import Mathlib.FieldTheory.Finite.GaloisField
+module
+
+public import HexGFq
+public import HexGF2Mathlib.Field
+public import Mathlib.Algebra.Field.MinimalAxioms
+public import Mathlib.FieldTheory.Finite.GaloisField
+
+public section
 
 /-!
 Generic Mathlib-side definitions for the executable `GFq` model.
@@ -27,6 +31,7 @@ polynomials and `Fin (p ^ degree)`; `ofIndexBelowDegree` is its inverse on
 bounded inputs (`coeffIndex_ofIndexBelowDegree`,
 `ofIndexBelowDegree_coeffIndex`), and the value is always below `p ^ degree`
 (`coeffIndex_lt`). -/
+@[expose]
 def coeffIndex (degree : Nat) (f : Hex.FpPoly p) : Nat :=
   (List.range degree).foldl
     (fun acc i => acc + (f.coeff i).toNat * p ^ i)
@@ -40,6 +45,7 @@ characterised by `coeff_ofIndexBelowDegree_of_lt` (in range, a `simp` normal
 form) and `coeff_ofIndexBelowDegree_of_ge` (beyond the width, zero), and its
 `FpPoly.degree` stays below `degree` when the width is positive
 (`ofIndexBelowDegree_degree_lt`). -/
+@[expose]
 def ofIndexBelowDegree (degree index : Nat) : Hex.FpPoly p :=
   Hex.FpPoly.ofCoeffs <|
     ((List.range degree).map fun i =>
@@ -257,11 +263,13 @@ noncomputable instance field :
     ⟨0, 1, Hex.GFqField.zero_ne_one f hf hp hirr⟩
 
 /-- Reduced polynomial representatives for the quotient by `f`. -/
+@[expose]
 abbrev ReducedRep (f : Hex.FpPoly p) : Type :=
   { g : Hex.FpPoly p // Hex.FpPoly.degree g < Hex.FpPoly.degree f }
 
 /-- The executable finite-field wrapper is equivalent to its canonical reduced
 polynomial representatives. -/
+@[expose]
 def reducedRepEquiv :
     HexGF2Mathlib.TypeEquiv
       (Hex.GFqField.FiniteField f hf hp hirr)
@@ -282,6 +290,7 @@ def reducedRepEquiv :
 positive-degree hypothesis is needed for the decoder's degree bound (see
 `FpPoly.ofIndexBelowDegree_degree_lt`); it is supplied at every call site by the
 nonconstant-modulus assumption. -/
+@[expose]
 def reducedRepFinEquiv (f : Hex.FpPoly p) (hf : 0 < Hex.FpPoly.degree f) :
     HexGF2Mathlib.TypeEquiv
       (ReducedRep f)
@@ -302,6 +311,7 @@ def reducedRepFinEquiv (f : Hex.FpPoly p) (hf : 0 < Hex.FpPoly.degree f) :
 
 /-- Generic finite-field elements are equivalent to the expected finite index
 type. -/
+@[expose]
 noncomputable def finEquiv :
     Hex.GFqField.FiniteField f hf hp hirr ≃
       Fin (p ^ Hex.FpPoly.degree f) :=
@@ -372,6 +382,7 @@ theorem card_eq_galoisField_card [Fact p.Prime]
 
 /-- Canonical `GFq` values are ring-equivalent to Mathlib's `GaloisField`
 with the same characteristic and extension degree. -/
+@[expose]
 noncomputable def equivGaloisField [Fact p.Prime]
     (h : Hex.Conway.SupportedEntry p n) (hn : n ≠ 0) :
     _root_.RingEquiv (Hex.GFq p n h) (GaloisField p n) := by

@@ -1,5 +1,9 @@
-import HexBerlekampZassenhaus
-import Mathlib.Data.Nat.Find
+module
+
+public import HexBerlekampZassenhaus
+public import Mathlib.Data.Nat.Find
+
+public section
 
 /-!
 Partition semantics for the executable `bhksInsertSignatureClass` fold.
@@ -27,6 +31,7 @@ Representative columns for the `sig j = sig k` equivalence on
 `{0, …, r-1}`: the columns whose signature has not been seen at any
 earlier column. The list is ascending by construction.
 -/
+@[expose]
 def representativeColumns (r : Nat) (sig : Nat → Array Rat) : List Nat :=
   (List.range r).filter
     (fun j => ((List.range j).filter (fun k => sig k = sig j)).isEmpty)
@@ -37,6 +42,7 @@ class per representative column, listing exactly the columns with the
 same signature as that representative.  Classes appear in ascending
 representative order; each class's member list is ascending.
 -/
+@[expose]
 def partitionByMinColumn (r : Nat) (sig : Nat → Array Rat) : List (List Nat) :=
   (representativeColumns r sig).map
     (fun rep => (List.range r).filter (fun j => sig j = sig rep))
@@ -47,6 +53,7 @@ The full `(signature, members)` payload after folding
 representative column's signature with the ascending list of columns
 sharing that signature.
 -/
+@[expose]
 def partitionAcc (r : Nat) (sig : Nat → Array Rat) :
     List (Array Rat × List Nat) :=
   (representativeColumns r sig).map

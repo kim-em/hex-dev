@@ -1,5 +1,9 @@
-import HexGF2.Basic
-import Std.Tactic.BVDecide
+module
+
+public import HexGF2.Basic
+public import Std.Tactic.BVDecide
+
+public section
 
 /-!
 Carry-less `UInt64` multiplication for `hex-gf2`.
@@ -25,6 +29,7 @@ private def clmulAccumulateBit (acc : UInt64 × UInt64) (a : UInt64) (bitIdx : N
 
 /-- Pure Lean carry-less multiplication of two 64-bit words, returned as
 `(hi, lo)` for the 128-bit product. -/
+@[expose]
 def pureClmul (a b : UInt64) : UInt64 × UInt64 :=
   (List.range 64).foldl
     (fun acc bitIdx =>
@@ -548,7 +553,7 @@ theorem pureClmul_oneHot_left (a : UInt64) {bit : Nat} (hbit : bit < 64) :
 
 The compiled C shim must return the same `(hi, lo)` pair as `pureClmul`; the
 intrinsic-backed implementations are an optimization only. -/
-@[extern "lean_hex_clmul_u64"]
+@[expose, extern "lean_hex_clmul_u64"]
 def clmul (a b : @& UInt64) : UInt64 × UInt64 :=
   pureClmul a b
 

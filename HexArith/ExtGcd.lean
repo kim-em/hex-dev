@@ -1,3 +1,7 @@
+module
+
+public section
+
 /-!
 Extended GCD algorithms and specifications.
 
@@ -15,7 +19,8 @@ Lean 4.30's stdlib exposes `Nat.div` and `Nat.mod`, but not a public fused
 `Nat.divMod`; keep the pairing local so the Euclidean step can switch to a
 fused primitive once one is available.
 -/
-private def natDivMod (a b : Nat) : Nat × Nat :=
+@[expose]
+def natDivMod (a b : Nat) : Nat × Nat :=
   (a / b, a % b)
 
 /--
@@ -26,6 +31,7 @@ Pure natural-number extended GCD.
 `HexArith.Int.extGcd` for the GMP-backed integer API and
 `HexArith.UInt64.extGcd` for machine-word inputs.
 -/
+@[expose]
 def extGcd (a b : Nat) : Nat × Int × Int :=
   if hb : b = 0 then
     (a, 1, 0)
@@ -155,7 +161,8 @@ Pure Lean reference implementation of extended GCD over integers.
 This runs the Euclidean algorithm directly on `Int`, carrying Bezout
 coefficients through the usual quotient/remainder updates.
 -/
-private def pureIntExtGcd.go (old_r r old_s s old_t t : Int) : Nat × Int × Int :=
+@[expose]
+def pureIntExtGcd.go (old_r r old_s s old_t t : Int) : Nat × Int × Int :=
   match r with
   | 0 =>
       if old_r < 0 then
@@ -202,6 +209,7 @@ Pure Lean integer extended GCD.
 `HexArith.Int.extGcd`; callers that want the project public integer API should
 use `HexArith.Int.extGcd` instead.
 -/
+@[expose]
 def pureIntExtGcd (a b : Int) : Nat × Int × Int :=
   pureIntExtGcd.go a b 1 0 0 1
 
@@ -378,7 +386,7 @@ Trusted runtime contract: the `lean_hex_mpz_gcdext` attachment may replace this
 pure Lean reference with a GMP-backed implementation that returns the same
 `(g, s, t)` triple, where `g = Int.gcd a b` and `s * a + t * b = g`.
 -/
-@[extern "lean_hex_mpz_gcdext"]
+@[expose, extern "lean_hex_mpz_gcdext"]
 def extGcd (a b : @& Int) : Nat × Int × Int :=
   Hex.pureIntExtGcd a b
 
@@ -482,6 +490,7 @@ The input words are interpreted by their natural representatives. The gcd is
 returned as a `UInt64`, while the Bezout coefficients remain signed integers so
 the certificate can be stated over `Int.ofNat a.toNat` and `Int.ofNat b.toNat`.
 -/
+@[expose]
 def extGcd (a b : UInt64) : UInt64 × Int × Int :=
   let (g, s, t) := HexArith.Int.extGcd (Int.ofNat a.toNat) (Int.ofNat b.toNat)
   (UInt64.ofNat g, s, t)

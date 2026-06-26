@@ -1,7 +1,11 @@
-import HexModArith.Prime
-import HexPoly.Euclid
-import Init.Data.List.Lemmas
-import Init.Data.List.Perm
+module
+
+public import HexModArith.Prime
+public import HexPoly.Euclid
+public import Init.Data.List.Lemmas
+public import Init.Data.List.Perm
+
+public section
 
 /-!
 Core definitions for executable polynomials over `F_p`.
@@ -866,6 +870,7 @@ instance instGcdLawsZMod64Fp [PrimeModulus p] : DensePoly.GcdLaws (ZMod64 p) whe
 end ZMod64
 
 /-- Executable dense polynomials over the prime-field candidate `ZMod64 p`. -/
+@[expose]
 abbrev FpPoly (p : Nat) [ZMod64.Bounds p] := DensePoly (ZMod64 p)
 
 namespace FpPoly
@@ -874,23 +879,28 @@ variable {p : Nat} [ZMod64.Bounds p]
 
 /-- Polynomial irreducibility over `F_p` phrased as the absence of nontrivial
 factorizations inside the executable dense-polynomial model. -/
+@[expose]
 def Irreducible (f : FpPoly p) : Prop :=
   f ≠ 0 ∧
     ∀ a b : FpPoly p, a * b = f → a.degree? = some 0 ∨ b.degree? = some 0
 
 /-- Build an `FpPoly` from raw coefficients, trimming trailing zero residues. -/
+@[expose]
 def ofCoeffs (coeffs : Array (ZMod64 p)) : FpPoly p :=
   DensePoly.ofCoeffs coeffs
 
 /-- Constant polynomial in `F_p[x]`. -/
+@[expose]
 def C (c : ZMod64 p) : FpPoly p :=
   DensePoly.C c
 
 /-- The polynomial indeterminate `X`. -/
+@[expose]
 def X : FpPoly p :=
   DensePoly.monomial 1 (1 : ZMod64 p)
 
 /-- Reduction modulo a monic polynomial over `F_p[x]`. -/
+@[expose]
 def modByMonic (f g : FpPoly p) (hmonic : DensePoly.Monic f) : FpPoly p :=
   DensePoly.modByMonic g f hmonic
 
@@ -1663,12 +1673,14 @@ the multiplication characterisations and is intentionally not exported. -/
 /-- The `i`th schoolbook contribution to coefficient `n` of `f * g`.
 Proof-facing Hensel scaffolding: ordinary `FpPoly` multiplication callers
 should use `coeff_mul`, not this definition. -/
+@[expose]
 def mulCoeffTerm (f g : FpPoly p) (n i : Nat) : ZMod64 p :=
   if n < i then 0 else f.coeff i * g.coeff (n - i)
 
 /-- The executable schoolbook coefficient sum matching `FpPoly`
 multiplication. Proof-facing Hensel scaffolding: ordinary `FpPoly`
 multiplication callers should use `coeff_mul`, not this definition. -/
+@[expose]
 def mulCoeffSum (f g : FpPoly p) (n : Nat) : ZMod64 p :=
   (List.range f.size).foldl (fun acc i => acc + mulCoeffTerm f g n i) 0
 
@@ -3883,6 +3895,7 @@ theorem monomial_zero_one_eq_one :
 /-- Linear polynomial exponentiation by repeated right-multiplication.
 This is the building block for the geometric-series identity used by
 the `xPowSubX` divisibility chain. -/
+@[expose]
 def linearPow (f : FpPoly p) : Nat → FpPoly p
   | 0 => 1
   | n + 1 => linearPow f n * f

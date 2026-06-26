@@ -1,5 +1,9 @@
-import HexBerlekampZassenhausMathlib.IntReductionMod
-import HexBerlekampZassenhausMathlib.Resultant
+module
+
+public import HexBerlekampZassenhausMathlib.IntReductionMod
+public import HexBerlekampZassenhausMathlib.Resultant
+
+public section
 
 /-!
 `isGoodPrime`-failure divisibility for the BHKS hot-path discriminant.

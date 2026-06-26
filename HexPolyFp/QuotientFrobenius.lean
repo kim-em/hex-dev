@@ -1,5 +1,9 @@
-import HexPolyFp.Quotient
-import HexPolyFp.SquareFree
+module
+
+public import HexPolyFp.Quotient
+public import HexPolyFp.SquareFree
+
+public section
 
 /-!
 Quotient-side Frobenius properties for `F_p[X] / (g)`.

@@ -1,4 +1,8 @@
-import HexBerlekampZassenhaus.Basic
+module
+
+public import HexBerlekampZassenhaus.Basic
+
+public section
 
 open Hex
 
@@ -11,6 +15,7 @@ private def showF (name : String) (f : ZPoly) : IO Unit := do
   for (g, m) in φ.factors do
     IO.println s!"  factor^{m}: {g.toArray.toList}"
 
+@[expose]
 def main : IO Unit := do
   showF "x^5 - 1" (zp #[-1,0,0,0,0,1])
   showF "x^4 + 1" (zp #[1,0,0,0,1])

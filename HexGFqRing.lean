@@ -1,6 +1,9 @@
-import HexGFqRing.Basic
-import HexGFqRing.Operations
-import HexGFqRing.Conformance
+module
+
+public import HexGFqRing.Basic
+public import HexGFqRing.Operations
+
+public section
 
 /-!
 Canonical quotient-ring API for executable `F_p[x] / (f)`.

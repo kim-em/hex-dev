@@ -1,6 +1,10 @@
-import HexGF2Mathlib.Basic
-import HexGFqField
-import Mathlib.Data.Fintype.Card
+module
+
+public import HexGF2Mathlib.Basic
+public import HexGFqField
+public import Mathlib.Data.Fintype.Card
+
+public section
 
 /-!
 Identification definitions between the packed `HexGF2` extension-field
@@ -19,6 +23,7 @@ open Hex
 namespace TypeEquiv
 
 /-- Convert the project-local equivalence record to Mathlib's `Equiv`. -/
+@[expose]
 def toEquiv {α : Type u} {β : Type v} (e : TypeEquiv α β) : α ≃ β where
   toFun := e.toFun
   invFun := e.invFun
@@ -50,6 +55,7 @@ variable {hirr : Hex.GF2Poly.Irreducible (Hex.GF2Poly.ofUInt64Monic irr n)}
 
 /-- The packed irreducible modulus viewed inside the generic `FpPoly 2`
 representation. -/
+@[expose]
 def modulusFpPoly : Hex.FpPoly 2 :=
   HexGF2Mathlib.GF2Poly.toFpPoly (Hex.GF2Poly.ofUInt64Monic irr n)
 
@@ -72,6 +78,7 @@ theorem modulusFpPoly_irreducible :
 include hn hn64 hirr in
 /-- The generic finite-field model corresponding to the packed single-word
 `GF(2^n)` wrapper. -/
+@[expose]
 abbrev GenericFiniteField :=
   Hex.GFqField.FiniteField
     (modulusFpPoly (n := n) (irr := irr))
@@ -81,6 +88,7 @@ abbrev GenericFiniteField :=
 
 /-- Interpret a packed single-word field element inside the generic quotient
 field model. -/
+@[expose]
 def toGeneric (x : Hex.GF2n n irr hn hn64 hirr) :
     GenericFiniteField (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr) :=
   Hex.GFqField.ofPoly
@@ -92,6 +100,7 @@ def toGeneric (x : Hex.GF2n n irr hn hn64 hirr) :
 
 /-- Repack the canonical representative of a generic quotient-field element as a
 single-word `GF(2^n)` element. -/
+@[expose]
 def ofGeneric
     (x : GenericFiniteField (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr)) :
     Hex.GF2n n irr hn hn64 hirr :=
@@ -372,6 +381,7 @@ theorem toGeneric_mul (x y : Hex.GF2n n irr hn hn64 hirr) :
 
 /-- The packed single-word field wrapper is ring-equivalent to the generic
 finite-field construction over the transported modulus. -/
+@[expose]
 def equiv : Hex.GF2n n irr hn hn64 hirr ≃+*
     GenericFiniteField (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr) where
   toFun := toGeneric
@@ -383,6 +393,7 @@ def equiv : Hex.GF2n n irr hn hn64 hirr ≃+*
 
 /-- Single-word packed field elements are indexed by their bounded canonical
 word representatives. -/
+@[expose]
 def finEquiv : Hex.GF2n n irr hn hn64 hirr ≃ Fin (2 ^ n) where
   toFun x := ⟨x.val.toNat, x.val_lt⟩
   invFun i :=
@@ -431,11 +442,13 @@ variable {hdeg : 0 < f.degree}
 /-- Reduced packed representatives modulo `f`, isolated from the field wrapper
 so Mathlib-side finite support can be transported before the final public
 `GF2nPoly` cardinality statements are proved. -/
+@[expose]
 abbrev ReducedPackedRep (f : Hex.GF2Poly) : Type :=
   { p : Hex.GF2Poly // p.IsZero ∨ p.degree < f.degree }
 
 /-- The executable packed quotient wrapper is exactly the reduced-representative
 subtype used for finite support. -/
+@[expose]
 def reducedPackedRepEquiv : TypeEquiv (Hex.GF2nPoly f hirr) (ReducedPackedRep f) where
   toFun x := ⟨x.val, x.val_reduced⟩
   invFun x := ⟨x.1, x.2⟩
@@ -449,11 +462,13 @@ def reducedPackedRepEquiv : TypeEquiv (Hex.GF2nPoly f hirr) (ReducedPackedRep f)
     rfl
 
 /-- Encode a reduced packed representative as a bounded binary index. -/
+@[expose]
 def reducedPackedRepIndex (x : ReducedPackedRep f) : Fin (2 ^ f.degree) :=
   ⟨HexGF2Mathlib.GF2Poly.toNat x.1, HexGF2Mathlib.GF2Poly.toNat_lt_of_degree_lt x.2⟩
 
 /-- Decode a bounded binary index into the corresponding reduced packed
 representative. -/
+@[expose]
 def reducedPackedRepOfIndex (i : Fin (2 ^ f.degree)) : ReducedPackedRep f :=
   ⟨HexGF2Mathlib.GF2Poly.ofNatBelowDegree f.degree i.1,
     HexGF2Mathlib.GF2Poly.ofNatBelowDegree_reduced f.degree i⟩
@@ -474,6 +489,7 @@ theorem reducedPackedRepOfIndex_index (x : ReducedPackedRep f) :
 
 /-- Reduced packed representatives are equivalent to the finite binary index
 space determined by the modulus degree. -/
+@[expose]
 def reducedPackedRepFinEquiv : TypeEquiv (ReducedPackedRep f) (Fin (2 ^ f.degree)) where
   toFun := reducedPackedRepIndex (f := f)
   invFun := reducedPackedRepOfIndex (f := f)
@@ -482,6 +498,7 @@ def reducedPackedRepFinEquiv : TypeEquiv (ReducedPackedRep f) (Fin (2 ^ f.degree
 
 /-- The packed irreducible modulus viewed inside the generic `FpPoly 2`
 representation. -/
+@[expose]
 def modulusFpPoly : Hex.FpPoly 2 :=
   HexGF2Mathlib.GF2Poly.toFpPoly f
 
@@ -512,6 +529,7 @@ theorem modulusFpPoly_irreducible :
 include hirr hdeg in
 /-- The generic finite-field model corresponding to the packed arbitrary-degree
 `GF(2^n)` wrapper. -/
+@[expose]
 abbrev GenericFiniteField :=
   Hex.GFqField.FiniteField
     (modulusFpPoly (f := f))
@@ -521,6 +539,7 @@ abbrev GenericFiniteField :=
 
 /-- Interpret a packed quotient-field element inside the generic quotient field
 model. -/
+@[expose]
 def toGeneric (x : Hex.GF2nPoly f hirr) :
     GenericFiniteField (f := f) (hirr := hirr) (hdeg := hdeg) :=
   Hex.GFqField.ofPoly
@@ -532,6 +551,7 @@ def toGeneric (x : Hex.GF2nPoly f hirr) :
 
 /-- Repack the canonical representative of a generic quotient-field element as a
 packed `GF(2^n)` residue. -/
+@[expose]
 def ofGeneric (x : GenericFiniteField (f := f) (hirr := hirr) (hdeg := hdeg)) :
     Hex.GF2nPoly f hirr :=
   Hex.GF2nPoly.reducePoly (f := f) (HexGF2Mathlib.GF2Poly.ofFpPoly (Hex.GFqField.repr x))
@@ -645,6 +665,7 @@ theorem toGeneric_mul (x y : Hex.GF2nPoly f hirr) :
 include hdeg in
 /-- The packed arbitrary-degree field wrapper is ring-equivalent to the generic
 finite-field construction over the transported modulus. -/
+@[expose]
 def equiv : Hex.GF2nPoly f hirr ≃+* GenericFiniteField (f := f) (hirr := hirr) (hdeg := hdeg) where
   toFun := toGeneric
   invFun := ofGeneric
@@ -655,6 +676,7 @@ def equiv : Hex.GF2nPoly f hirr ≃+* GenericFiniteField (f := f) (hirr := hirr)
 
 /-- Packed arbitrary-degree field elements are indexed by reduced packed
 representatives below the modulus degree. -/
+@[expose]
 def finEquiv : Hex.GF2nPoly f hirr ≃ Fin (2 ^ f.degree) :=
   TypeEquiv.toEquiv <|
     TypeEquiv.trans

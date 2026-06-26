@@ -1,4 +1,8 @@
-import HexPoly
+module
+
+public import HexPoly
+
+public section
 
 /-!
 Core `ZPoly` definitions for `hex-poly-z`.
@@ -12,6 +16,7 @@ namespace Hex
 
 /-- Integer polynomials represented by the dense normalized coefficient type
 from `HexPoly`. -/
+@[expose]
 abbrev ZPoly := DensePoly Int
 
 instance : DensePoly.AddZeroLaw Int where
@@ -37,19 +42,23 @@ instance : DensePoly.ZeroSubNegLaw Rat where
 namespace ZPoly
 
 /-- Coefficientwise congruence modulo `m`. -/
+@[expose]
 def congr (f g : ZPoly) (m : Nat) : Prop :=
   ∀ i, (f.coeff i - g.coeff i) % (m : Int) = 0
 
 /-- Two integer polynomials are coprime mod `p` when they admit a Bezout
 combination congruent to `1` modulo `p`. -/
+@[expose]
 def coprimeModP (f g : ZPoly) (p : Nat) : Prop :=
   ∃ s t : ZPoly, congr (s * f + t * g) 1 p
 
 /-- The nonnegative gcd of the coefficients of `f`. -/
+@[expose]
 def content (f : ZPoly) : Int :=
   DensePoly.content f
 
 /-- Divide every coefficient by the content to obtain a primitive polynomial. -/
+@[expose]
 def primitivePart (f : ZPoly) : ZPoly :=
   DensePoly.primitivePart f
 
@@ -62,6 +71,7 @@ monic factor `g` of the transform to `g(c · X)`, an integer multiple of the
 corresponding factor of `core`. Composing with `primitivePart` recovers the
 primitive integer factor of `core`. This is *not* the same as `DensePoly.scale`,
 which multiplies the whole polynomial by a constant. -/
+@[expose]
 def dilate (c : Int) (p : ZPoly) : ZPoly :=
   DensePoly.ofCoeffs <| ((List.range p.size).map fun i => c ^ i * p.coeff i).toArray
 
@@ -86,10 +96,12 @@ the trivial dilation. -/
   rw [coeff_dilate, Int.one_pow, Int.one_mul]
 
 /-- A `ZPoly` is primitive when its content is `1`. -/
+@[expose]
 def Primitive (f : ZPoly) : Prop :=
   content f = 1
 
 /-- A `ZPoly` is a unit iff it is the constant polynomial `1` or `-1`. -/
+@[expose]
 def IsUnit (f : ZPoly) : Prop :=
   f = DensePoly.C 1 ∨ f = DensePoly.C (-1)
 
@@ -145,6 +157,7 @@ theorem isUnit_of_eq_neg_one {f : ZPoly} (h : f = -1) : IsUnit f := by
   isUnit_of_eq_neg_one rfl
 
 /-- View an integer polynomial as a rational polynomial. -/
+@[expose]
 def toRatPoly (f : ZPoly) : DensePoly Rat :=
   DensePoly.ofCoeffs <| f.toArray.map fun coeff : Int => (coeff : Rat)
 
@@ -328,17 +341,20 @@ theorem toRatPoly_mul (f g : ZPoly) :
 
 /-- The common denominator of a list of rationals, the `Nat.lcm` of all their
 denominators starting from `1`. -/
-private def ratCommonDen (coeffs : List Rat) : Nat :=
+@[expose]
+def ratCommonDen (coeffs : List Rat) : Nat :=
   coeffs.foldl (fun acc coeff => Nat.lcm acc coeff.den) 1
 
 /-- Clear a single rational `coeff` against a common denominator `den`, returning the
 integer `coeff.num * (den / coeff.den)`. -/
-private def ratCoeffToIntWithDen (den : Nat) (coeff : Rat) : Int :=
+@[expose]
+def ratCoeffToIntWithDen (den : Nat) (coeff : Rat) : Int :=
   coeff.num * Int.ofNat (den / coeff.den)
 
 /-- Negate `f` when its leading coefficient is negative, normalizing a primitive part to
 have nonnegative leading sign. -/
-private def normalizePrimitiveSign (f : ZPoly) : ZPoly :=
+@[expose]
+def normalizePrimitiveSign (f : ZPoly) : ZPoly :=
   if DensePoly.leadingCoeff f < 0 then
     DensePoly.scale (-1 : Int) f
   else
@@ -465,7 +481,8 @@ private theorem ratCommonDen_dvd_coeff (f : DensePoly Rat) (n : Nat) :
 
 /-- Clear every coefficient of the rational polynomial `f` against its common denominator
 `ratCommonDen`, producing the integer polynomial that is `f` scaled into `ℤ`. -/
-private def ratPolyPrimitivePartCleared (f : DensePoly Rat) : ZPoly :=
+@[expose]
+def ratPolyPrimitivePartCleared (f : DensePoly Rat) : ZPoly :=
   let den := ratCommonDen f.toArray.toList
   DensePoly.ofCoeffs <|
     f.toArray.toList.map (fun coeff => ratCoeffToIntWithDen den coeff) |>.toArray
@@ -522,6 +539,7 @@ private theorem rat_scale_toRatPoly_neg_int (u : Rat) (p : ZPoly) :
 Clear denominators in a rational polynomial and return the primitive integer
 representative of the resulting rational associate.
 -/
+@[expose]
 def ratPolyPrimitivePart (f : DensePoly Rat) : ZPoly :=
   normalizePrimitiveSign (primitivePart (ratPolyPrimitivePartCleared f))
 
@@ -579,6 +597,7 @@ structure PrimitiveSquareFreeDecomposition where
   repeatedPart : ZPoly
 
 /-- Square-free over `Rat[x]`, up to the executable rational gcd's unit factor. -/
+@[expose]
 def SquareFreeRat (f : ZPoly) : Prop :=
   (DensePoly.gcd (toRatPoly f) (DensePoly.derivative (toRatPoly f))).size ≤ 1
 
@@ -586,6 +605,7 @@ def SquareFreeRat (f : ZPoly) : Prop :=
 Compute the primitive square-free normalization data needed by the integer
 factorization pipeline.
 -/
+@[expose]
 def primitiveSquareFreeDecomposition (f : ZPoly) : PrimitiveSquareFreeDecomposition :=
   let primitive := primitivePart f
   if primitive.isZero then
@@ -602,6 +622,7 @@ def primitiveSquareFreeDecomposition (f : ZPoly) : PrimitiveSquareFreeDecomposit
         repeatedPart := ratPolyPrimitivePart repeatedRat }
 
 /-- The square-free core projection of `primitiveSquareFreeDecomposition`. -/
+@[expose]
 def squareFreeCore (f : ZPoly) : ZPoly :=
   (primitiveSquareFreeDecomposition f).squareFreeCore
 
@@ -1041,12 +1062,12 @@ theorem leadingCoeff_mul_pos_of_pos (p q : ZPoly)
   have hp_ne : p ≠ 0 := by
     intro hp_zero
     rw [hp_zero] at hp_pos
-    change 0 < (0 : Int) at hp_pos
+    simp only [DensePoly.leadingCoeff_zero] at hp_pos
     omega
   have hq_ne : q ≠ 0 := by
     intro hq_zero
     rw [hq_zero] at hq_pos
-    change 0 < (0 : Int) at hq_pos
+    simp only [DensePoly.leadingCoeff_zero] at hq_pos
     omega
   rw [leadingCoeff_mul_of_nonzero p q hp_ne hq_ne]
   exact Int.mul_pos hp_pos hq_pos
@@ -1166,10 +1187,7 @@ theorem leadingCoeff_scale_of_nonzero (c : Int) (p : ZPoly) (hc : c ≠ 0) :
       rw [DensePoly.coeff_zero]
       exact DensePoly.coeff_eq_zero_of_size_le p (by omega)
     rw [hpzero]
-    change (DensePoly.scale c (0 : ZPoly)).leadingCoeff = c * (0 : Int)
-    have hleft : (DensePoly.scale c (0 : ZPoly)).leadingCoeff = 0 := by
-      rfl
-    rw [hleft, Int.mul_zero]
+    simp [DensePoly.leadingCoeff_zero]
 
 private theorem shift_size_of_nonzero_core (k : Nat) {p : ZPoly} (hp : p ≠ 0) :
     (DensePoly.shift k p).size = k + p.size := by

@@ -1,13 +1,17 @@
-import HexHensel
-import Mathlib.Algebra.Polynomial.Basic
-import Mathlib.Algebra.Polynomial.Coeff
-import Mathlib.Algebra.Polynomial.Degree.Domain
-import Mathlib.Algebra.Polynomial.Eval.Coeff
-import Mathlib.Algebra.Polynomial.Monic
-import Mathlib.Data.ZMod.Basic
-import Mathlib.RingTheory.Coprime.Lemmas
-import Mathlib.RingTheory.Nilpotent.Basic
-import Mathlib.Tactic.LinearCombination
+module
+
+public import HexHensel
+public import Mathlib.Algebra.Polynomial.Basic
+public import Mathlib.Algebra.Polynomial.Coeff
+public import Mathlib.Algebra.Polynomial.Degree.Domain
+public import Mathlib.Algebra.Polynomial.Eval.Coeff
+public import Mathlib.Algebra.Polynomial.Monic
+public import Mathlib.Data.ZMod.Basic
+public import Mathlib.RingTheory.Coprime.Lemmas
+public import Mathlib.RingTheory.Nilpotent.Basic
+public import Mathlib.Tactic.LinearCombination
+
+public section
 
 /-!
 Initial coprimality-lifting infrastructure for `HexHenselMathlib`.

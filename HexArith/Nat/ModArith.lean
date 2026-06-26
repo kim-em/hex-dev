@@ -1,3 +1,7 @@
+module
+
+public section
+
 /-!
 Shared `Nat`-level modular-arithmetic lemmas used by `HexArith` proofs.
 

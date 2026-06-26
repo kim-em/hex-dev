@@ -1,11 +1,15 @@
-import Mathlib.Algebra.Polynomial.Basic
-import Mathlib.Algebra.Polynomial.Coeff
-import Mathlib.Algebra.Polynomial.Degree.Defs
-import Mathlib.Algebra.Polynomial.Degree.Lemmas
-import Mathlib.Algebra.Polynomial.Degree.Operations
-import Mathlib.Algebra.Polynomial.Derivative
-import Mathlib.Algebra.Polynomial.Monomial
-import HexPoly
+module
+
+public import Mathlib.Algebra.Polynomial.Basic
+public import Mathlib.Algebra.Polynomial.Coeff
+public import Mathlib.Algebra.Polynomial.Degree.Defs
+public import Mathlib.Algebra.Polynomial.Degree.Lemmas
+public import Mathlib.Algebra.Polynomial.Degree.Operations
+public import Mathlib.Algebra.Polynomial.Derivative
+public import Mathlib.Algebra.Polynomial.Monomial
+public import HexPoly
+
+public section
 
 /-!
 Identification definitions between the executable `Hex.DensePoly`
@@ -36,10 +40,12 @@ theorem list_getD_map_range_zero [Zero R] (size n : Nat) (f : Nat → R) :
   · simp [hn, List.getD]
 
 /-- Interpret a normalized dense coefficient array as a Mathlib polynomial. -/
+@[expose]
 def toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) : Polynomial R :=
   Finset.sum (Finset.range p.size) fun i => Polynomial.monomial i (p.coeff i)
 
 /-- Rebuild a normalized dense polynomial from the coefficients of a Mathlib polynomial. -/
+@[expose]
 def ofPolynomial [Semiring R] [DecidableEq R] (p : Polynomial R) : Hex.DensePoly R :=
   Hex.DensePoly.ofCoeffs <| ((List.range (p.natDegree + 1)).map p.coeff).toArray
 
@@ -442,6 +448,7 @@ theorem ofPolynomial_toPolynomial [CommRing R] [DecidableEq R] (p : Hex.DensePol
   simp [coeff_ofPolynomial, coeff_toPolynomial]
 
 /-- The executable dense-polynomial representation is ring-equivalent to Mathlib polynomials. -/
+@[expose]
 def equiv [CommRing R] [DecidableEq R] : Hex.DensePoly R ≃+* Polynomial R where
   toFun := toPolynomial
   invFun := ofPolynomial

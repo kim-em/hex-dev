@@ -1,5 +1,9 @@
-import HexArith.Nat.ModArith
-import HexArith.UInt64.Wide
+module
+
+public import HexArith.Nat.ModArith
+public import HexArith.UInt64.Wide
+
+public section
 
 /-!
 Nat-level Montgomery reduction for `HexArith`.
@@ -10,6 +14,7 @@ is proved against these definitions.
 -/
 
 /-- Nat-level Montgomery reduction with radix `R = 2^64`. -/
+@[expose]
 def redcNat (p p' T : Nat) : Nat :=
   let m := (T % UInt64.word) * p' % UInt64.word
   let u := (T + m * p) / UInt64.word

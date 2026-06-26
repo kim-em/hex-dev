@@ -1,4 +1,8 @@
-import HexBerlekamp.Basic
+module
+
+public import HexBerlekamp.Basic
+
+public section
 
 /-!
 Executable Berlekamp split-step factoring for `hex-berlekamp`.
@@ -26,10 +30,12 @@ structure Factorization (p : Nat) [ZMod64.Bounds p] where
   factors : List (FpPoly p)
 
 /-- Multiply a list of `F_p[x]` factors in stored order, starting from `1`. -/
+@[expose]
 def factorProduct (factors : List (FpPoly p)) : FpPoly p :=
   factors.foldl (fun acc factor => acc * factor) 1
 
 /-- Product of the factors returned by a `Factorization`. -/
+@[expose]
 def Factorization.product (result : Factorization p) : FpPoly p :=
   factorProduct result.factors
 
@@ -42,6 +48,7 @@ def Factorization.product (result : Factorization p) : FpPoly p :=
   rfl
 
 /-- The gcd candidate attached to one field constant `c`. -/
+@[expose]
 def splitFactorAt (f witness : FpPoly p) (c : ZMod64 p) : FpPoly p :=
   DensePoly.gcd f (witness - FpPoly.C c)
 
@@ -53,7 +60,8 @@ private def isNontrivialSplitFactor (f g : FpPoly p) : Bool :=
   !g.isZero && g.degree? ≠ some 0 && g.size < f.size
 
 /-- Search the constants `0, 1, ..., p - 1` for a nontrivial Berlekamp split. -/
-private def kernelWitnessSplitAux (f witness : FpPoly p) : Nat → Nat → Option (SplitResult p)
+@[expose]
+def kernelWitnessSplitAux (f witness : FpPoly p) : Nat → Nat → Option (SplitResult p)
   | 0, _ => none
   | fuel + 1, c =>
       let splitConstant := ZMod64.ofNat p c
@@ -80,6 +88,7 @@ value-preserving: `kernelWitnessSplitAux_none_of_mod_size_le_one` proves the
 skipped sweep would have returned `none` (over a field), so this agrees with
 the unguarded search at every input.
 -/
+@[expose]
 def kernelWitnessSplit? (f witness : FpPoly p) : Option (SplitResult p) :=
   if (witness % f).size ≤ 1 then none
   else kernelWitnessSplitAux f witness p 0
@@ -120,7 +129,8 @@ witness-irreducible leaves.
 The output preserves the depth-first, factor-before-cofactor order of the
 former loop, keeping the factor multiset *and its order* identical.
 -/
-private def fullySplit (witnesses : List (FpPoly p)) :
+@[expose]
+def fullySplit (witnesses : List (FpPoly p)) :
     Nat → FpPoly p → List (FpPoly p)
   | 0, f => [f]
   | fuel + 1, f =>
@@ -134,6 +144,7 @@ Compute the Berlekamp factorization of a monic polynomial over `F_p` by
 building the fixed-space kernel of `Q_f - I` and fully splitting the input
 with the resulting kernel representatives.
 -/
+@[expose]
 def berlekampFactor (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [Lean.Grind.Field (ZMod64 p)] : Factorization p :=
   let witnesses := (fixedSpaceKernel f hmonic).toList

@@ -1,4 +1,8 @@
-import HexArith.Barrett.Reduce
+module
+
+public import HexArith.Barrett.Reduce
+
+public section
 
 /-!
 User-facing Barrett modular multiplication for `HexArith`.
@@ -35,6 +39,7 @@ Multiply two residues modulo `p` using the Barrett reduction context. The
 caller-side condition `a, b < p < 2^32` ensures the product fits in one
 `UInt64`.
 -/
+@[expose]
 def mulMod (ctx : BarrettCtx p) (a b : UInt64) : UInt64 :=
   barrettReduce ctx (a * b)
 

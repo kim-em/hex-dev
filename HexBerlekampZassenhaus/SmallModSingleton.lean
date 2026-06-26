@@ -1,5 +1,9 @@
-import HexBerlekampZassenhaus.Basic
-import HexBerlekamp.RabinSoundness
+module
+
+public import HexBerlekampZassenhaus.Basic
+public import HexBerlekamp.RabinSoundness
+
+public section
 
 /-!
 Small-mod singleton Berlekamp irreducibility wrapper.

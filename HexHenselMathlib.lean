@@ -1,5 +1,9 @@
-import HexHenselMathlib.Basic
-import HexHenselMathlib.Correctness
+module
+
+public import HexHenselMathlib.Basic
+public import HexHenselMathlib.Correctness
+
+public section
 
 /-!
 The `HexHenselMathlib` library transfers the executable `HexHensel` surface to

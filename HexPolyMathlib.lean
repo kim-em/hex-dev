@@ -1,5 +1,9 @@
-import HexPolyMathlib.Basic
-import HexPolyMathlib.Euclid
+module
+
+public import HexPolyMathlib.Basic
+public import HexPolyMathlib.Euclid
+
+public section
 
 /-!
 The `HexPolyMathlib` library identifies the executable `HexPoly` core with

@@ -1,4 +1,8 @@
-import HexHensel.Basic
+module
+
+public import HexHensel.Basic
+
+public section
 
 /-!
 Executable single-step linear Hensel lifting.
@@ -21,6 +25,7 @@ private theorem list_getD_map_range {α : Type} [Zero α] (size n : Nat) (f : Na
 namespace ZPoly
 
 /-- Divide every coefficient by `m` using Lean's truncating integer division. -/
+@[expose]
 def coeffwiseDiv (f : ZPoly) (m : Nat) : ZPoly :=
   DensePoly.ofCoeffs <|
     (List.range f.size).map (fun i => f.coeff i / Int.ofNat m) |>.toArray
@@ -80,6 +85,7 @@ structure LinearLiftResult where
 namespace LinearLiftResult
 
 /-- The lifted-and-scaled increment used by one linear Hensel step. -/
+@[expose]
 def liftScaledIncrement (p k : Nat) [ZMod64.Bounds p] (r : FpPoly p) : ZPoly :=
   DensePoly.scale (Int.ofNat (p ^ k)) (FpPoly.liftToZ r)
 
@@ -111,6 +117,7 @@ end LinearLiftResult
 namespace ZPoly
 
 /-- One linear Hensel correction step from modulus `p^k` to `p^(k+1)`. -/
+@[expose]
 def linearHenselStep
     (p k : Nat) [ZMod64.Bounds p]
     (f g h : ZPoly) (s t : FpPoly p) : LinearLiftResult :=
@@ -1320,7 +1327,8 @@ private theorem linearHenselStep_reduced_factor_congr
 
 /-- Iterates `linearHenselStep` for `steps` rounds starting at precision
 `p ^ current`, returning the accumulated lifted factor pair. -/
-private def henselLiftLoop
+@[expose]
+def henselLiftLoop
     (p : Nat) [ZMod64.Bounds p]
     (steps current : Nat)
     (f : ZPoly) (s t : FpPoly p)
@@ -1339,6 +1347,7 @@ preserves `acc.g`'s degree) and is exactly what makes the per-step degree
 obligation `LinearLiftStepDegreeInvariant` provable from the invariant alone:
 without it the admissible constant case `acc.g = 1` satisfies every other
 component yet has degree `0`, so no strict degree drop is available. -/
+@[expose]
 def LinearLiftLoopInvariant
     (p current : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (s t : FpPoly p) (acc : LinearLiftResult) : Prop :=
@@ -1392,6 +1401,7 @@ theorem pos_degree
 end LinearLiftLoopInvariant
 
 /-- The per-step degree hypothesis needed to preserve monicity of the `g` factor. -/
+@[expose]
 def LinearLiftStepDegreeInvariant
     (p current : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (_s t : FpPoly p) (acc : LinearLiftResult) : Prop :=
@@ -1406,6 +1416,7 @@ def LinearLiftStepDegreeInvariant
 Lift a factorization modulo `p` to a factorization modulo `p^k` by iterating the
 linear Hensel step.
 -/
+@[expose]
 def henselLift
     (p k : Nat) [ZMod64.Bounds p]
     (f g h : ZPoly) (s t : FpPoly p) : LinearLiftResult :=

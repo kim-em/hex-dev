@@ -1,4 +1,8 @@
-import HexPolyFp.Basic
+module
+
+public import HexPolyFp.Basic
+
+public section
 
 /-!
 Packed `Array UInt64` monic-division kernel for `FpPoly` and its
@@ -31,12 +35,14 @@ variable {p : Nat} [Bounds p]
 /-- Overflow-safe modular product of two raw words, reconstructing residues and
 delegating to the (extern-backed) `ZMod64.mul`. Defined so that
 `mulWord p x.val y.val = (x * y).val`. -/
+@[expose]
 def mulWord (p : Nat) [Bounds p] (a b : UInt64) : UInt64 :=
   (mul (ofNat p a.toNat) (ofNat p b.toNat)).val
 
 /-- Overflow-safe modular difference of two raw words, reconstructing residues
 and delegating to `ZMod64.sub`. Defined so that
 `subWord p x.val y.val = (x - y).val`. -/
+@[expose]
 def subWord (p : Nat) [Bounds p] (a b : UInt64) : UInt64 :=
   (sub (ofNat p a.toNat) (ofNat p b.toNat)).val
 
@@ -83,10 +89,12 @@ namespace FpPoly
 variable {p : Nat} [ZMod64.Bounds p]
 
 /-- Pack a residue coefficient array into its backing words. -/
+@[expose]
 def toWords (a : Array (ZMod64 p)) : Array UInt64 :=
   a.map (fun x => x.val)
 
 /-- Reconstruct a residue coefficient array from raw words. -/
+@[expose]
 def ofWords (p : Nat) [ZMod64.Bounds p] (a : Array UInt64) : Array (ZMod64 p) :=
   a.map (fun w => ZMod64.ofNat p w.toNat)
 
@@ -126,6 +134,7 @@ theorem ofWords_toWords (a : Array (ZMod64 p)) : ofWords p (toWords a) = a := by
 
 /-- Packed downward degree scan: the highest index below `fuel` with a nonzero
 word, mirroring `DensePoly.arrayDegreeAux`. -/
+@[expose]
 def arrayDegreeAuxPacked (coeffs : Array UInt64) : Nat → Option Nat
   | 0 => none
   | fuel + 1 =>
@@ -136,11 +145,13 @@ def arrayDegreeAuxPacked (coeffs : Array UInt64) : Nat → Option Nat
 
 /-- Packed degree: the highest index of a nonzero word, mirroring
 `DensePoly.arrayDegree?`. -/
+@[expose]
 def arrayDegreePacked? (coeffs : Array UInt64) : Option Nat :=
   arrayDegreeAuxPacked coeffs coeffs.size
 
 /-- One packed elimination coefficient write, mirroring
 `DensePoly.subtractScaledShiftStep` with overflow-safe word arithmetic. -/
+@[expose]
 def subtractScaledShiftStepPacked (p : Nat) [ZMod64.Bounds p]
     (q : Array UInt64) (shift : Nat) (coeff : UInt64) (next : Array UInt64) (j : Nat) :
     Array UInt64 :=
@@ -149,12 +160,14 @@ def subtractScaledShiftStepPacked (p : Nat) [ZMod64.Bounds p]
 
 /-- One full packed elimination step `rem - coeff * xˢʰⁱᶠᵗ * q`, mirroring
 `DensePoly.subtractScaledShift`. -/
+@[expose]
 def subtractScaledShiftPacked (p : Nat) [ZMod64.Bounds p]
     (rem q : Array UInt64) (shift : Nat) (coeff : UInt64) : Array UInt64 :=
   (List.range q.size).foldl (subtractScaledShiftStepPacked p q shift coeff) rem
 
 /-- The packed fuel-bounded long-division loop, mirroring
 `DensePoly.divModArrayAux`. -/
+@[expose]
 def divModArrayAuxPacked (p : Nat) [ZMod64.Bounds p]
     (q : Array UInt64) (qDegree : Nat) (scaleLead : UInt64 → UInt64)
     (fuel : Nat) (quot rem : Array UInt64) : Array UInt64 × Array UInt64 :=
@@ -177,6 +190,7 @@ def divModArrayAuxPacked (p : Nat) [ZMod64.Bounds p]
 `FpPoly.modByMonic` (csimp requirement). Packs both operand arrays, runs the
 packed loop with `scaleLead = id` (the divisor is monic), and reconstructs the
 remainder. -/
+@[expose]
 def modByMonicPacked (f g : FpPoly p) (_hmonic : DensePoly.Monic f) : FpPoly p :=
   if f.isZero then
     g

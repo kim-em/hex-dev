@@ -1,4 +1,8 @@
-import HexBerlekampMathlib.Basic
+module
+
+public import HexBerlekampMathlib.Basic
+
+public section
 
 /-!
 The `HexBerlekampMathlib` library contains the Mathlib-facing correctness

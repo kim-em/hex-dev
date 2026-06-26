@@ -1,4 +1,8 @@
-import HexBerlekampZassenhaus.Basic
+module
+
+public import HexBerlekampZassenhaus.Basic
+
+public section
 
 open Hex
 
@@ -12,6 +16,7 @@ private def splitProduct (n : Nat) : ZPoly := Id.run do
 
 private instance b13 : ZMod64.Bounds 13 := ⟨by decide, by decide⟩
 
+@[expose]
 def main : IO Unit := do
   let f := splitProduct 11
   let fModP := @ZPoly.modP 13 b13 f

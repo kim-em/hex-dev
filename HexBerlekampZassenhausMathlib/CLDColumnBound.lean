@@ -1,13 +1,17 @@
-import HexBerlekampZassenhaus
-import HexBerlekampZassenhausMathlib.BadVectorAuxiliary
-import HexBerlekampZassenhausMathlib.LiftBridge
-import HexBerlekampZassenhausMathlib.Resultant
-import HexHenselMathlib.Correctness
-import HexPolyZMathlib.Mignotte
-import HexPolyZMathlib.RobinsonForm
-import Mathlib.Algebra.Polynomial.FieldDivision
-import Mathlib.Algebra.BigOperators.Ring.Multiset
-import Mathlib.Data.Nat.Choose.Bounds
+module
+
+public import HexBerlekampZassenhaus
+public import HexBerlekampZassenhausMathlib.BadVectorAuxiliary
+public import HexBerlekampZassenhausMathlib.LiftBridge
+public import HexBerlekampZassenhausMathlib.Resultant
+public import HexHenselMathlib.Correctness
+public import HexPolyZMathlib.Mignotte
+public import HexPolyZMathlib.RobinsonForm
+public import Mathlib.Algebra.Polynomial.FieldDivision
+public import Mathlib.Algebra.BigOperators.Ring.Multiset
+public import Mathlib.Data.Nat.Choose.Bounds
+
+public section
 
 /-!
 BHKS CLD-column coefficient bounds.
@@ -27,6 +31,7 @@ open Polynomial
 namespace BHKS
 
 /-- The exact integer-polynomial CLD column `Phi(g) = f * g' / g`. -/
+@[expose]
 def phi (f g : Polynomial ℤ) : Polynomial ℤ :=
   (f * g.derivative).divByMonic g
 
@@ -1848,6 +1853,7 @@ theorem bhksCutThresholds_getD_of_lt (f : Hex.ZPoly) (p j : Nat)
 
 /-- Selection coefficients for the period-adjusted true-factor short vector: the
 support indicator on the first block, and `−t j` on the diagonal-period rows. -/
+@[expose]
 def periodAdjustedRowCoeffs (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
     (t : Fin L.coeffWidth → ℤ) : Vector ℤ (L.factorCount + L.coeffWidth) :=
   Vector.ofFn fun x =>
@@ -1877,6 +1883,7 @@ theorem periodAdjustedRowCoeffs_natAdd (L : Hex.BhksLatticeBasis)
 
 /-- The period-adjusted true-factor short vector: the support indicator on the
 first block, with the CLD tail reduced by the diagonal-period rows. -/
+@[expose]
 def periodAdjustedVector (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
     (t : Fin L.coeffWidth → ℤ) : Vector ℤ (L.factorCount + L.coeffWidth) :=
   Hex.Matrix.rowCombination L.basis (periodAdjustedRowCoeffs L S t)
@@ -2103,6 +2110,7 @@ and lattice-membership facts, this yields a `SupportShortVectorData` for the
 recovered support — the genuine aggregate-tail lattice path the period trap
 (#7866/#7867) forces, feeding the fast-disjunct consumer through
 `cutProjectionHypotheses_of_shortVectors`. -/
+@[expose]
 def supportShortVectorData_of_recoveredLift
     {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
     (D : RecoveredLift L S)
@@ -2209,6 +2217,7 @@ the centered aggregate of the selected CLD quotient coefficients is equal to
 some small integer column value.  The column value may be the usual monic
 `phi` coefficient or the genuine non-monic `h * g'` coefficient; this surface
 only needs the equality and Mignotte bound consumed by the period carry lemma. -/
+@[expose]
 def AggregateResidueData
     (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
     (f : Hex.ZPoly) (p a : Nat) : Prop := by
@@ -2229,6 +2238,7 @@ a monic `RecoveredLift` package.  It works directly over
 `bhksLatticeBasis f p a liftedFactors`, so it is suitable for the executable's
 actual core-coordinate basis once the caller supplies the aggregate residue
 lemma for each true support. -/
+@[expose]
 def supportShortVectorData_of_aggregateResidue
     (f : Hex.ZPoly) (p a : Nat) (liftedFactors : Array Hex.ZPoly)
     (S : LiftedFactorSupport (Hex.bhksLatticeBasis f p a liftedFactors))
@@ -2332,6 +2342,7 @@ def supportShortVectorData_of_aggregateResidue
 true support.  This is the non-`RecoveredLift` analogue of
 `cutProjectionHypotheses_of_recoveredLift`, intended for the core-coordinate
 fast path. -/
+@[expose]
 def cutProjectionHypotheses_of_aggregateResidue
     (f : Hex.ZPoly) (p a : Nat) (liftedFactors : Array Hex.ZPoly)
     (hrows :
@@ -3188,6 +3199,7 @@ This is deliberately only the recovered-lift/short-vector side of the BHKS cut
 package: coverage, partition equality, and fast-vs-slow output equivalence are
 separate obligations.
 -/
+@[expose]
 def supportShortVectorData_of_toMonicRepresents
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData))
@@ -3272,6 +3284,7 @@ recovered support first yields period-adjusted `SupportShortVectorData`, then
 `cutProjectionHypotheses_of_shortVectors` places its indicator in the retained
 projected row span.
 -/
+@[expose]
 def cutProjectionHypotheses_of_recoveredLift
     (L : Hex.BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth)
     (hbasis : L.basis.independent)

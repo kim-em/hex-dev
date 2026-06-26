@@ -1,12 +1,16 @@
-import HexPolyMathlib.Basic
-import HexHensel.Basic
-import HexModArithMathlib
-import Mathlib.Algebra.Polynomial.Degree.Units
-import Mathlib.Algebra.Ring.Int.Units
-import Mathlib.Data.ZMod.Basic
-import Mathlib.RingTheory.Polynomial.Content
-import Mathlib.Algebra.GCDMonoid.Nat
-import HexPolyZ
+module
+
+public import HexPolyMathlib.Basic
+public import HexHensel.Basic
+public import HexModArithMathlib
+public import Mathlib.Algebra.Polynomial.Degree.Units
+public import Mathlib.Algebra.Ring.Int.Units
+public import Mathlib.Data.ZMod.Basic
+public import Mathlib.RingTheory.Polynomial.Content
+public import Mathlib.Algebra.GCDMonoid.Nat
+public import HexPolyZ
+
+public section
 
 /-!
 Correspondence definitions between `Hex.ZPoly` and Mathlib's `Polynomial ℤ`.
@@ -21,10 +25,12 @@ namespace HexPolyZMathlib
 noncomputable section
 
 /-- Interpret an executable integer polynomial as a Mathlib polynomial. -/
+@[expose]
 abbrev toPolynomial (p : Hex.ZPoly) : Polynomial ℤ :=
   HexPolyMathlib.toPolynomial p
 
 /-- Rebuild an executable integer polynomial from a Mathlib polynomial. -/
+@[expose]
 abbrev ofPolynomial (p : Polynomial ℤ) : Hex.ZPoly :=
   HexPolyMathlib.ofPolynomial p
 
@@ -99,6 +105,7 @@ theorem ofPolynomial_toPolynomial (p : Hex.ZPoly) :
 
 /-- The executable `ZPoly` representation is ring-equivalent to Mathlib
 polynomials over `ℤ`. -/
+@[expose]
 abbrev equiv : Hex.ZPoly ≃+* Polynomial ℤ :=
   HexPolyMathlib.equiv
 

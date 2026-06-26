@@ -1,6 +1,9 @@
-import HexGFqField.Basic
-import HexGFqField.Operations
-import HexGFqField.Conformance
+module
+
+public import HexGFqField.Basic
+public import HexGFqField.Operations
+
+public section
 
 /-!
 Thin finite-field wrapper for executable `F_p[x] / (f)`.

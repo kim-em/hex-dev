@@ -1,7 +1,11 @@
-import HexArith.Barrett.Context
-import HexArith.Montgomery.Context
-import HexModArith.Basic
-import HexModArith.Ring
+module
+
+public import HexArith.Barrett.Context
+public import HexArith.Montgomery.Context
+public import HexModArith.Basic
+public import HexModArith.Ring
+
+public section
 
 /-!
 Hot-loop optimization wrappers for `hex-mod-arith`.
@@ -59,10 +63,12 @@ namespace MontResidue
 variable {p : Nat} [ZMod64.Bounds p]
 
 /-- View a Montgomery-form residue as its backing machine word. -/
+@[expose]
 def toUInt64 (a : MontResidue p) : UInt64 :=
   a.val
 
 /-- View a Montgomery-form residue as its reduced Nat representative. -/
+@[expose]
 def toNat (a : MontResidue p) : Nat :=
   a.val.toNat
 
@@ -103,6 +109,7 @@ namespace BarrettCtx
 variable {p : Nat} [ZMod64.Bounds p]
 
 /-- Build a Barrett hot-loop context from the indexed small modulus. -/
+@[expose]
 def ofModulus (hp : 1 < p) (hlt : p < 2 ^ 32) : BarrettCtx p := by
   let m := UInt64.ofNat p
   have hm : m.toNat = p := by
@@ -162,6 +169,7 @@ private theorem residue_lt_modulus (ctx : BarrettCtx p) (a : ZMod64 p) :
 Multiply two standard residues using the Barrett context and repackage the
 result as a `ZMod64`.
 -/
+@[expose]
 def mulMod (ctx : BarrettCtx p) (a b : ZMod64 p) : ZMod64 p :=
   ZMod64.ofNat p ((_root_.BarrettCtx.mulMod ctx.toUInt64Ctx a.toUInt64 b.toUInt64).toNat)
 
@@ -274,6 +282,7 @@ Build a Montgomery hot-loop context from the indexed modulus and the
 word-level odd-modulus side condition required by the underlying `HexArith`
 context.
 -/
+@[expose]
 def ofOddModulus (hp : p < UInt64.word)
     (hodd : ZMod64.modulusWord p hp % 2 = 1) : MontCtx p :=
   { modulus := ZMod64.modulusWord p hp
@@ -308,6 +317,7 @@ private theorem montResidue_lt_modulus (ctx : MontCtx p) (a : MontResidue p) :
     simpa [ctx.modulus_eq] using a.toNat_lt
 
 /-- Convert a standard residue into Montgomery form. -/
+@[expose]
 def toMont (ctx : MontCtx p) (a : ZMod64 p) : MontResidue p :=
   let w := _root_.MontCtx.toMont ctx.toUInt64Ctx a.toUInt64
   have hw : w.toNat < p := by
@@ -318,6 +328,7 @@ def toMont (ctx : MontCtx p) (a : ZMod64 p) : MontResidue p :=
   ⟨w, hw⟩
 
 /-- Multiply two Montgomery-form residues, staying inside the Montgomery domain. -/
+@[expose]
 def mulMont (ctx : MontCtx p) (a b : MontResidue p) : MontResidue p :=
   let w := _root_.MontCtx.mulMont ctx.toUInt64Ctx a.toUInt64 b.toUInt64
   have hw : w.toNat < p := by
@@ -332,6 +343,7 @@ def mulMont (ctx : MontCtx p) (a b : MontResidue p) : MontResidue p :=
 Convert a Montgomery-form loop temporary back to the standard `ZMod64`
 representation.
 -/
+@[expose]
 def fromMont (ctx : MontCtx p) (a : MontResidue p) : ZMod64 p :=
   ZMod64.ofNat p ((_root_.MontCtx.fromMont ctx.toUInt64Ctx a.toUInt64).toNat)
 

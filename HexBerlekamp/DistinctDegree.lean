@@ -1,6 +1,10 @@
-import HexBerlekamp.Factor
-import HexBerlekamp.Irreducibility
-import HexBerlekamp.RabinSoundness
+module
+
+public import HexBerlekamp.Factor
+public import HexBerlekamp.Irreducibility
+public import HexBerlekamp.RabinSoundness
+
+public section
 
 /-!
 Executable distinct-degree factorization surface for `hex-berlekamp`.
@@ -32,6 +36,7 @@ structure DistinctDegreeFactorization (p : Nat) [ZMod64.Bounds p] where
   residual : FpPoly p
 
 /-- Extract the polynomial factors recorded in distinct-degree buckets. -/
+@[expose]
 def degreeBucketFactors (buckets : List (DegreeBucket p)) : List (FpPoly p) :=
   buckets.map DegreeBucket.factor
 
@@ -59,6 +64,7 @@ bucket list are the concatenation of each part's factors. -/
   simp [degreeBucketFactors]
 
 /-- Multiply the polynomial factors recorded in distinct-degree buckets. -/
+@[expose]
 def degreeBucketProduct (buckets : List (DegreeBucket p)) : FpPoly p :=
   factorProduct (degreeBucketFactors buckets)
 
@@ -69,6 +75,7 @@ def degreeBucketProduct (buckets : List (DegreeBucket p)) : FpPoly p :=
   rfl
 
 /-- Product represented by a distinct-degree factorization result. -/
+@[expose]
 def DistinctDegreeFactorization.product (result : DistinctDegreeFactorization p) :
     FpPoly p :=
   degreeBucketProduct result.buckets * result.residual
@@ -82,12 +89,14 @@ factors times the residual. Definitional rewrite (`by rfl`) characterising
   rfl
 
 /-- The degree-`d` gcd candidate against the current residual polynomial. -/
+@[expose]
 def distinctDegreeCandidate
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (residual : FpPoly p) (d : Nat) : FpPoly p :=
   DensePoly.gcd residual (frobeniusDiffMod f hmonic d)
 
 /-- One executable DDF step, returning an optional newly found bucket. -/
+@[expose]
 def distinctDegreeStep
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (residual : FpPoly p) (d : Nat) :
@@ -164,6 +173,7 @@ private def distinctDegreeLoop
 Compute the distinct-degree factorization surface of a monic polynomial over
 `F_p`.
 -/
+@[expose]
 def distinctDegreeFactor
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     DistinctDegreeFactorization p :=
@@ -182,6 +192,7 @@ left of `gcd bucket.factor (frobeniusDiffMod ...) = bucket.factor` (e.g.
 `gcd X (2*X) = 2*X` over `F_3`), so the morally-correct invariant is the
 divisibility statement that `gcd_dvd_right` already supplies.
 -/
+@[expose]
 def DegreeBucket.matchesFrobeniusDegree
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (bucket : DegreeBucket p) : Prop :=

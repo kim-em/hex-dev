@@ -1,5 +1,9 @@
-import HexGF2Mathlib.Basic
-import HexGF2Mathlib.Field
+module
+
+public import HexGF2Mathlib.Basic
+public import HexGF2Mathlib.Field
+
+public section
 
 /-!
 The `HexGF2Mathlib` library connects the packed `HexGF2` execution path to the

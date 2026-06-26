@@ -1,4 +1,8 @@
-import HexBerlekampZassenhaus.Basic
+module
+
+public import HexBerlekampZassenhaus.Basic
+
+public section
 
 open Hex
 
@@ -53,6 +57,7 @@ private def report (label : String) (f : ZPoly) : IO Unit := do
   let degs := φFull.factors.toList.map (fun e => e.1.degree?.getD 0)
   IO.println s!"  factor   (combinator): {φFull.factors.size} factors degrees={degs}  ({fullMs} ms, chk={chk})"
 
+@[expose]
 def main : IO Unit := do
   for n in [3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 22, 24] do
     report s!"(x-1)..(x-{n})" (splitProduct n)

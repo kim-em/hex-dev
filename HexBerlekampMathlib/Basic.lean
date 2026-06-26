@@ -1,10 +1,14 @@
-import HexBerlekamp.Factor
-import HexBerlekamp.Irreducibility
-import HexBerlekamp.RabinSoundness
-import HexModArithMathlib
-import HexPolyMathlib
-import Mathlib.FieldTheory.Finite.Extension
-import Mathlib.FieldTheory.Finite.GaloisField
+module
+
+public import HexBerlekamp.Factor
+public import HexBerlekamp.Irreducibility
+public import HexBerlekamp.RabinSoundness
+public import HexModArithMathlib
+public import HexPolyMathlib
+public import Mathlib.FieldTheory.Finite.Extension
+public import Mathlib.FieldTheory.Finite.GaloisField
+
+public section
 
 /-!
 Mathlib-facing correctness surface for `HexBerlekamp`.
@@ -25,11 +29,13 @@ open Polynomial
 variable {p : Nat} [Hex.ZMod64.Bounds p]
 
 /-- Interpret an executable `FpPoly p` as a Mathlib polynomial over `ZMod p`. -/
+@[expose]
 def fpPolyToPolynomial (f : Hex.FpPoly p) : Polynomial (ZMod p) :=
   Finset.sum (Finset.range f.size) fun i =>
     Polynomial.monomial i (HexModArithMathlib.ZMod64.toZMod (f.coeff i))
 
 /-- Rebuild an executable `FpPoly p` from a Mathlib polynomial over `ZMod p`. -/
+@[expose]
 def polynomialToFpPoly (f : Polynomial (ZMod p)) : Hex.FpPoly p :=
   Hex.DensePoly.ofCoeffs <|
     ((List.range (f.natDegree + 1)).map fun i =>
@@ -145,6 +151,7 @@ private theorem sum_ite_diagonal_eq_range_succ (f g : Hex.FpPoly p) (n : Nat) :
 The executable finite-field polynomial representation is ring-equivalent to
 Mathlib polynomials over `ZMod p`.
 -/
+@[expose]
 def fpPolyEquiv : Hex.FpPoly p ≃+* Polynomial (ZMod p) where
   toFun := fpPolyToPolynomial
   invFun := polynomialToFpPoly
@@ -199,6 +206,7 @@ def fpPolyEquiv : Hex.FpPoly p ≃+* Polynomial (ZMod p) where
     exact HexModArithMathlib.ZMod64.toZMod_add _ _
 
 /-- Interpret an executable `FpPoly p` as a Mathlib polynomial over `ZMod p`. -/
+@[expose]
 def toMathlibPolynomial (f : Hex.FpPoly p) : Polynomial (ZMod p) :=
   fpPolyEquiv f
 
@@ -500,6 +508,7 @@ theorem isCoprime_toMathlibPolynomial_of_isUnitPolynomial_gcd
 namespace Rabin
 
 /-- The Mathlib polynomial `X^(p^n) - X` used by Rabin's divisibility leg. -/
+@[expose]
 abbrev frobeniusPolynomial (p n : Nat) : Polynomial (ZMod p) :=
   X ^ (p ^ n) - X
 

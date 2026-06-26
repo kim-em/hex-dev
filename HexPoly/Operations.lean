@@ -1,5 +1,9 @@
-import HexPoly.Dense
-import Init.Data.Array.Lemmas
+module
+
+public import HexPoly.Dense
+public import Init.Data.Array.Lemmas
+
+public section
 
 /-!
 Executable arithmetic operations for dense array-backed polynomials.
@@ -18,10 +22,12 @@ namespace DensePoly
 variable {R : Type u} [Zero R] [DecidableEq R]
 
 /-- Multiply every coefficient by `c`. -/
+@[expose]
 def scale [Mul R] (c : R) (p : DensePoly R) : DensePoly R :=
   ofCoeffs <| p.toArray.toList.map (fun a => c * a) |>.toArray
 
 /-- Multiply by `x^n`. -/
+@[expose]
 def shift (n : Nat) (p : DensePoly R) : DensePoly R :=
   if p.isZero then 0 else
     ofCoeffs <| ((List.replicate n (Zero.zero : R)) ++ p.toArray.toList).toArray
@@ -168,6 +174,7 @@ for the common algebraic setting. -/
   coeff_shift_scale i c p k (Lean.Grind.Semiring.mul_zero c)
 
 /-- Add two dense polynomials coefficientwise. -/
+@[expose]
 def add [Add R] (p q : DensePoly R) : DensePoly R :=
   let size := max p.size q.size
   ofCoeffs <| (List.range size).map (fun i => p.coeff i + q.coeff i) |>.toArray
@@ -176,6 +183,7 @@ instance [Add R] : Add (DensePoly R) where
   add := add
 
 /-- Subtract two dense polynomials coefficientwise. -/
+@[expose]
 def sub [Sub R] (p q : DensePoly R) : DensePoly R :=
   let size := max p.size q.size
   ofCoeffs <| (List.range size).map (fun i => p.coeff i - q.coeff i) |>.toArray
@@ -184,6 +192,7 @@ instance [Sub R] : Sub (DensePoly R) where
   sub := sub
 
 /-- Coefficientwise additive inverse, expressed through executable subtraction. -/
+@[expose]
 def neg [Sub R] (p : DensePoly R) : DensePoly R :=
   0 - p
 
@@ -219,6 +228,7 @@ instance zeroSubNegLaw_of_ring {S : Type u} [Lean.Grind.Ring S] : ZeroSubNegLaw 
     grind
 
 /-- Schoolbook dense polynomial multiplication by direct coefficient convolution. -/
+@[expose]
 def mul [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
   if p.isZero || q.isZero then 0 else
     let size := p.size + q.size - 1
@@ -237,10 +247,12 @@ instance [Add R] [Mul R] : Mul (DensePoly R) where
   mul := mul
 
 /-- One inner schoolbook multiplication step, projected to coefficient `n`. -/
+@[expose]
 def mulCoeffStep [Add R] [Mul R] (p q : DensePoly R) (n i : Nat) (acc : R) (j : Nat) : R :=
   if i + j = n then acc + p.coeff i * q.coeff j else acc
 
 /-- The schoolbook coefficient fold matching the executable multiplication loop order. -/
+@[expose]
 def mulCoeffSum [Add R] [Mul R] (p q : DensePoly R) (n : Nat) : R :=
   (List.range p.size).foldl
     (fun acc i => (List.range q.size).foldl (mulCoeffStep p q n i) acc)
@@ -391,6 +403,7 @@ theorem coeff_mul [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
     simpa [mulCoeffSum, size, Array.getD] using hfold
 
 /-- Evaluate a polynomial using Horner's method. -/
+@[expose]
 def eval [Add R] [Mul R] (p : DensePoly R) (x : R) : R :=
   p.toArray.toList.reverse.foldl (fun acc coeff => acc * x + coeff) (Zero.zero : R)
 
@@ -506,6 +519,7 @@ private theorem evalCoeffList_zipWith_sub [Sub R] [Mul R] [Add R] (xs ys : List 
           exact hstep (evalCoeffList cs x) (evalCoeffList ds x) c d
 
 /-- Compose polynomials using Horner's method. -/
+@[expose]
 def compose [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
   p.toArray.toList.reverse.foldl (fun acc coeff => acc * q + C coeff) (0 : DensePoly R)
 
@@ -563,6 +577,7 @@ law needed by the generic `compose_C`. -/
   compose_C c q (by grind)
 
 /-- List-level Horner form for composition, reading coefficients from low to high degree. -/
+@[expose]
 def composeScalarCoeffList [Add R] [Mul R] :
     List R → DensePoly R → DensePoly R
   | [], _ => 0
@@ -583,11 +598,13 @@ theorem compose_eq_composeScalarCoeffList_of_step [Add R] [Mul R] (p q : DensePo
       exact hstep (composeScalarCoeffList cs q) c
 
 /-- Iterated polynomial power used by the compose power-sum characterisation. -/
+@[expose]
 def composePower [One R] [Add R] [Mul R] (q : DensePoly R) : Nat → DensePoly R
   | 0 => C (1 : R)
   | n + 1 => q * composePower q n
 
 /-- List-backed power-sum form for composition, starting at a coefficient base index. -/
+@[expose]
 def composeCoeffPowerSumFrom [One R] [Add R] [Mul R] :
     List R → Nat → DensePoly R → DensePoly R
   | [], _, _ => 0
@@ -595,6 +612,7 @@ def composeCoeffPowerSumFrom [One R] [Add R] [Mul R] :
       C c * composePower q base + composeCoeffPowerSumFrom cs (base + 1) q
 
 /-- Coefficient-indexed bounded power-sum form for composition. -/
+@[expose]
 def composeCoeffPowerSumUpTo [One R] [Add R] [Mul R]
     (coeff : Nat → R) :
     Nat → Nat → DensePoly R → DensePoly R
@@ -671,6 +689,7 @@ theorem toArray_toList_eq_coeff_range (p : DensePoly R) :
     simp [hi_size]
 
 /-- Formal derivative. The coefficient of `x^i` becomes `(i + 1) * a_(i+1)`. -/
+@[expose]
 def derivative [NatCast R] [Mul R] (p : DensePoly R) : DensePoly R :=
   ofCoeffs <|
     (List.range (p.size - 1)).map (fun i => ((i + 1 : Nat) : R) * p.coeff (i + 1)) |>.toArray

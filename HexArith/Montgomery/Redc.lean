@@ -1,4 +1,8 @@
-import HexArith.Montgomery.InvNat
+module
+
+public import HexArith.Montgomery.InvNat
+
+public section
 
 /-!
 Executable `UInt64` Montgomery reduction for `HexArith`.
@@ -26,6 +30,7 @@ structure MontCtx (p : UInt64) where
 Executable Montgomery reduction from a two-word product `(Thi, Tlo)` encoded in
 base `2^64`.
 -/
+@[expose]
 def redc (ctx : MontCtx p) (Thi Tlo : UInt64) : UInt64 :=
   let m := Tlo * ctx.p'
   let (mhi, mlo) := UInt64.mulFull m p

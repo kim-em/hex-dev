@@ -1,4 +1,8 @@
-import HexHensel.Basic
+module
+
+public import HexHensel.Basic
+
+public section
 
 /-!
 Executable quadratic Hensel lifting.
@@ -22,6 +26,7 @@ structure QuadraticLiftResult where
 namespace QuadraticLiftResult
 
 /-- Canonical coefficient reduction modulo `m^2`. -/
+@[expose]
 def reduceModSquare (f : ZPoly) (m : Nat) : ZPoly :=
   ZPoly.reduceModPow f m 2
 
@@ -29,6 +34,7 @@ def reduceModSquare (f : ZPoly) (m : Nat) : ZPoly :=
 step: starting from `g * h ≡ f (mod m)`, this quantity is divisible by `m` and
 its lift drives the first-order correction that achieves `g' * h' ≡ f (mod
 m^2)`. -/
+@[expose]
 def factorError (f g h : ZPoly) : ZPoly :=
   f - g * h
 
@@ -45,26 +51,31 @@ private def canonicalMod (z : Int) (modulus : Nat) : Int :=
   Int.ofNat <| Int.toNat (z % Int.ofNat modulus)
 
 /-- Reduce a single coefficient to its canonical residue modulo `m²`. -/
-private def reduceCoeffModSquare (z : Int) (m : Nat) : Int :=
+@[expose]
+def reduceCoeffModSquare (z : Int) (m : Nat) : Int :=
   canonicalMod z (quadraticModulus m)
 
 /-- Polynomial sum `f + g` with every coefficient reduced modulo `m²`. -/
-private def addModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
+@[expose]
+def addModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
   QuadraticLiftResult.reduceModSquare (f + g) m
 
 /-- Polynomial difference `f - g` with every coefficient reduced modulo `m²`. -/
-private def subModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
+@[expose]
+def subModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
   QuadraticLiftResult.reduceModSquare (f - g) m
 
 /-- Polynomial product `f * g` with every coefficient reduced modulo `m²`. -/
-private def mulModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
+@[expose]
+def mulModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
   QuadraticLiftResult.reduceModSquare (f * g) m
 
 /-- Fuel-driven long-division kernel returning the quotient/remainder of the
 running `rem` by the monic divisor `q`, with all arithmetic reduced modulo `m²`.
 The Hensel theorem surface supplies monic divisors, so this exploits that
 invariant to avoid coefficient division in the modular hot path. -/
-private def divModMonicModSquareAux
+@[expose]
+def divModMonicModSquareAux
     (m : Nat) (q : ZPoly) : Nat → ZPoly → ZPoly → ZPoly × ZPoly
   | 0, quot, rem => (quot, rem)
   | fuel + 1, quot, rem =>
@@ -86,7 +97,8 @@ private def divModMonicModSquareAux
 
 /-- Quotient and remainder of `p` divided by the monic divisor `q`, working
 modulo `m²`, with the dividend size supplying the recursion fuel. -/
-private def divModMonicModSquare (p q : ZPoly) (m : Nat) : ZPoly × ZPoly :=
+@[expose]
+def divModMonicModSquare (p q : ZPoly) (m : Nat) : ZPoly × ZPoly :=
   let p := QuadraticLiftResult.reduceModSquare p m
   divModMonicModSquareAux m q p.size 0 p
 
@@ -1858,6 +1870,7 @@ complementary factor `h`, and the Bezout witnesses `s`, `t` for the current
 factorisation. Preconditions consumed by the spec theorems below are `g`
 monic, `g * h ≡ f (mod m)`, and `s * g + t * h ≡ 1 (mod m)`; the returned
 `QuadraticLiftResult` then satisfies the same conjuncts modulo `m^2`. -/
+@[expose]
 def quadraticHenselStep
     (m : Nat) (f g h s t : ZPoly) : QuadraticLiftResult :=
   let e := QuadraticLiftResult.factorError f g h

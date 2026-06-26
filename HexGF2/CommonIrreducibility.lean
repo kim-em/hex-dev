@@ -1,4 +1,8 @@
-import HexGF2.RabinSoundness
+module
+
+public import HexGF2.RabinSoundness
+
+public section
 
 /-!
 Project-side irreducibility witnesses for committed packed `GF(2)` moduli.

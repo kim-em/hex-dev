@@ -1,4 +1,8 @@
-import HexBerlekampZassenhaus.Basic
+module
+
+public import HexBerlekampZassenhaus.Basic
+
+public section
 
 open Hex
 
@@ -35,6 +39,7 @@ private def row (p : Nat) (inst : ZMod64.Bounds p) (f : ZPoly) : (Nat × Nat × 
   let gDegZero := g.toArray.size > 0 && lead != 0
   (p, g.toArray.size, lead.toNat, gIs1, gDegZero)
 
+@[expose]
 def main : IO Unit := do
   for n in [3, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20, 22, 24] do
     let f := splitProduct n

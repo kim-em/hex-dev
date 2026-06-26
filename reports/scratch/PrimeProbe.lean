@@ -1,4 +1,8 @@
-import HexBerlekampZassenhaus.Basic
+module
+
+public import HexBerlekampZassenhaus.Basic
+
+public section
 
 open Hex
 
@@ -21,6 +25,7 @@ private instance b23 : ZMod64.Bounds 23 := ⟨by decide, by decide⟩
 private instance b31 : ZMod64.Bounds 31 := ⟨by decide, by decide⟩
 private instance b71 : ZMod64.Bounds 71 := ⟨by decide, by decide⟩
 
+@[expose]
 def main : IO Unit := do
   for n in [11, 12, 13, 15, 18, 22, 24] do
     let f := splitProduct n

@@ -1,8 +1,12 @@
-import HexPolyZMathlib.Mignotte
-import Mathlib.Algebra.Polynomial.FieldDivision
-import Mathlib.Analysis.InnerProductSpace.Orientation
-import Mathlib.Data.ZMod.Basic
-import Mathlib.RingTheory.Polynomial.Resultant.Basic
+module
+
+public import HexPolyZMathlib.Mignotte
+public import Mathlib.Algebra.Polynomial.FieldDivision
+public import Mathlib.Analysis.InnerProductSpace.Orientation
+public import Mathlib.Data.ZMod.Basic
+public import Mathlib.RingTheory.Polynomial.Resultant.Basic
+
+public section
 
 /-!
 Resultant correspondence lemmas for the Berlekamp-Zassenhaus Mathlib layer.
@@ -739,6 +743,7 @@ others fixed. The matrix is upper triangular with diagonal entry `b.coeff (n-d)`
 at each pivot (and `1` elsewhere), so `det = (b.coeff (n-d)) ^ d`; under a monic
 cofactor `b` this diagonal entry is `1` and the determinant is preserved.
 -/
+@[expose]
 def colReduceTransform {R : Type*} [CommRing R] (a b : Polynomial R) (m n d : Nat) :
     Matrix (Fin (m + n)) (Fin (m + n)) R :=
   Matrix.of fun i j =>
@@ -1104,6 +1109,7 @@ the diagonal, so `det = 1`. Unlike `colReduceTransform`, the monic pivot here is
 the *left* component `q`, so the matrix is not triangular under the natural
 order; the determinant is read off the block decomposition.
 -/
+@[expose]
 def cldColReduceTransform {R : Type*} [CommRing R] (q : Polynomial R) (m n d : Nat) :
     Matrix (Fin (m + n)) (Fin (m + n)) R :=
   Matrix.of fun i j =>

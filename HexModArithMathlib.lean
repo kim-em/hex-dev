@@ -1,4 +1,8 @@
-import HexModArithMathlib.Basic
+module
+
+public import HexModArithMathlib.Basic
+
+public section
 
 /-!
 The `HexModArithMathlib` library identifies executable `Hex.ZMod64` residues

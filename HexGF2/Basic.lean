@@ -1,4 +1,8 @@
-import Std
+module
+
+public import Std
+
+public section
 
 /-!
 Core packed polynomial definitions for `hex-gf2`.
@@ -11,6 +15,7 @@ namespace Hex
 
 /-- Packed-word normalization for `GF2Poly`: either the polynomial is zero, or
 its highest stored word is nonzero. -/
+@[expose]
 def GF2PolyNormalized (words : Array UInt64) : Prop :=
   words.size = 0 ∨ words.back? ≠ some (0 : UInt64)
 
@@ -105,10 +110,12 @@ private theorem trimTrailingZeroWordsList_getD (ws : List UInt64) (i : Nat) :
             simpa [trimTrailingZeroWordsList, hdrop, List.getD] using ih i
 
 /-- Normalize a word array by discarding trailing zero words. -/
+@[expose]
 def normalizeWords (words : Array UInt64) : Array UInt64 :=
   (trimTrailingZeroWordsList words.toList).toArray
 
 /-- Packed-word coefficient lookup before wrapping the array as a `GF2Poly`. -/
+@[expose]
 def coeffWords (words : Array UInt64) (n : Nat) : Bool :=
   let word := words[n / 64]?.getD 0
   (((word >>> (n % 64).toUInt64) &&& 1) != 0)
@@ -137,6 +144,7 @@ private def highestSetBitBelow? (fuel : Nat) (w : UInt64) : Option Nat :=
         highestSetBitBelow? fuel' w
 
 /-- The index of the highest set bit in a machine word, if any. -/
+@[expose]
 def highestSetBit? (w : UInt64) : Option Nat :=
   highestSetBitBelow? 64 w
 
@@ -456,6 +464,7 @@ theorem oneHotWord_ne_zero {bit : Nat} (hbit : bit < 64) :
   simp at hset
 
 /-- Build a normalized packed polynomial from a raw word array. -/
+@[expose]
 def ofWords (words : Array UInt64) : GF2Poly :=
   let normalizedWords := normalizeWords words
   { words := normalizedWords
@@ -469,6 +478,7 @@ def ofWords (words : Array UInt64) : GF2Poly :=
   rfl
 
 /-- The zero polynomial. -/
+@[expose]
 def zero : GF2Poly :=
   ofWords #[]
 
@@ -481,6 +491,7 @@ instance : Zero GF2Poly where
   rfl
 
 /-- The constant polynomial `1`. -/
+@[expose]
 def one : GF2Poly :=
   ofWords #[1]
 
@@ -488,6 +499,7 @@ instance : One GF2Poly where
   one := one
 
 /-- Build a packed polynomial from a single machine word. -/
+@[expose]
 def ofUInt64 (w : UInt64) : GF2Poly :=
   ofWords #[w]
 
@@ -507,28 +519,34 @@ representation. -/
   simp [ofWords, normalizeWords, trimTrailingZeroWordsList, hw]
 
 /-- The monomial `x^n`. -/
+@[expose]
 def monomial (n : Nat) : GF2Poly :=
   let wordIdx := n / 64
   let bitIdx := n % 64
   ofWords <| (Array.replicate wordIdx (0 : UInt64)).push ((1 : UInt64) <<< bitIdx.toUInt64)
 
 /-- The stored packed words. -/
+@[expose]
 def toWords (p : GF2Poly) : Array UInt64 :=
   p.words
 
 /-- Number of stored machine words. -/
+@[expose]
 def wordCount (p : GF2Poly) : Nat :=
   p.words.size
 
 /-- `true` exactly when the polynomial is zero. -/
+@[expose]
 def isZero (p : GF2Poly) : Bool :=
   p.words.isEmpty
 
 /-- Proposition-level zero predicate used by the packed quotient wrappers. -/
+@[expose]
 def IsZero (p : GF2Poly) : Prop :=
   p.isZero = true
 
 /-- The coefficient of `x^n`. -/
+@[expose]
 def coeff (p : GF2Poly) (n : Nat) : Bool :=
   coeffWords p.words n
 
@@ -593,6 +611,7 @@ theorem ofUInt64_injective : Function.Injective ofUInt64 := by
           (Nat.pow_le_pow_right (by decide : 0 < 2) hge)]
 
 /-- The degree of a nonzero polynomial, if any. -/
+@[expose]
 def degree? (p : GF2Poly) : Option Nat :=
   match p.words.back? with
   | none => none
@@ -602,6 +621,7 @@ def degree? (p : GF2Poly) : Option Nat :=
       | some bitIdx => some (64 * (p.words.size - 1) + bitIdx)
 
 /-- The degree of a polynomial, defaulting to `0` for the zero polynomial. -/
+@[expose]
 def degree (p : GF2Poly) : Nat :=
   p.degree?.getD 0
 
@@ -944,6 +964,7 @@ theorem ext_coeff {p q : GF2Poly}
   rfl
 
 /-- Word-wise XOR of packed coefficient arrays. -/
+@[expose]
 def xorWords (xs ys : Array UInt64) : Array UInt64 :=
   Array.ofFn fun i : Fin (max xs.size ys.size) => xs.getD i.1 0 ^^^ ys.getD i.1 0
 
@@ -991,6 +1012,7 @@ theorem xorWords_get?_getD (xs ys : Array UInt64) (i : Nat) :
     simp [xorWords, hi, Nat.not_lt.mpr hxs, Nat.not_lt.mpr hys]
 
 /-- Addition in `F_2[x]` is coefficientwise XOR. -/
+@[expose]
 def add (p q : GF2Poly) : GF2Poly :=
   ofWords (xorWords p.words q.words)
 
@@ -1190,6 +1212,7 @@ theorem add_assoc (p q r : GF2Poly) :
   cases p.coeff n <;> cases q.coeff n <;> rfl
 
 /-- Shift a normalized word list left by `bitShift ∈ [1, 63]`. -/
+@[expose]
 def shiftLeftBitsList (bitShift : Nat) (carry : UInt64) : List UInt64 → List UInt64
   | [] =>
       if carry = 0 then [] else [carry]
@@ -1673,6 +1696,7 @@ private def shiftRightBitsRevList (bitShift : Nat) (carry : UInt64) :
       out :: shiftRightBitsRevList bitShift nextCarry ws
 
 /-- Multiply by `x^k`. -/
+@[expose]
 def shiftLeft (p : GF2Poly) (k : Nat) : GF2Poly :=
   let wordShift := k / 64
   let bitShift := k % 64
@@ -1684,6 +1708,7 @@ def shiftLeft (p : GF2Poly) (k : Nat) : GF2Poly :=
   ofWords <| (Array.replicate wordShift (0 : UInt64)) ++ shiftedBits
 
 /-- Divide by `x^k`, discarding the remainder. -/
+@[expose]
 def shiftRight (p : GF2Poly) (k : Nat) : GF2Poly :=
   let wordShift := k / 64
   let bitShift := k % 64
@@ -1696,6 +1721,7 @@ def shiftRight (p : GF2Poly) (k : Nat) : GF2Poly :=
   ofWords shiftedBits
 
 /-- Alias for multiplication by a power of `x`. -/
+@[expose]
 def mulXk (p : GF2Poly) (k : Nat) : GF2Poly :=
   shiftLeft p k
 
@@ -1960,6 +1986,7 @@ theorem division_step_degree_lt {rem q : GF2Poly} {rd qd : Nat}
 
 /-- Alias for exact division by a power of `x` when the low coefficients vanish;
 otherwise this drops the discarded remainder. -/
+@[expose]
 def divXk (p : GF2Poly) (k : Nat) : GF2Poly :=
   shiftRight p k
 

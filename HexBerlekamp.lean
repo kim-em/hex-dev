@@ -1,9 +1,12 @@
-import HexBerlekamp.Basic
-import HexBerlekamp.DistinctDegree
-import HexBerlekamp.Factor
-import HexBerlekamp.Irreducibility
-import HexBerlekamp.RabinSoundness
-import HexBerlekamp.Conformance
+module
+
+public import HexBerlekamp.Basic
+public import HexBerlekamp.DistinctDegree
+public import HexBerlekamp.Factor
+public import HexBerlekamp.Irreducibility
+public import HexBerlekamp.RabinSoundness
+
+public section
 
 /-!
 `HexBerlekamp` exposes the executable Berlekamp-matrix surface for factoring

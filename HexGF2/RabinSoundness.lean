@@ -1,4 +1,8 @@
-import HexGF2.Field
+module
+
+public import HexGF2.Field
+
+public section
 
 /-!
 Project-side soundness of `GF2Poly.rabinTest` against
@@ -22,6 +26,7 @@ The absolute polynomial `X^(2^k) - X` in characteristic two.
 Packed `GF(2)` subtraction is addition, so this is represented as
 `X^(2^k) + X`.
 -/
+@[expose]
 def xPowSubX (k : Nat) : GF2Poly :=
   monomial (2 ^ k) + monomial 1
 

@@ -1,6 +1,10 @@
-import HexGFqMathlib.Basic
-import HexGF2Mathlib.Field
-import Mathlib.Algebra.Ring.Equiv
+module
+
+public import HexGFqMathlib.Basic
+public import HexGF2Mathlib.Field
+public import Mathlib.Algebra.Ring.Equiv
+
+public section
 
 /-!
 Mathlib-side correspondence between the optimized binary Conway field and the
@@ -190,6 +194,7 @@ private def packedRingEquiv :
 canonical Conway field over `p = 2`. The packed-side equivalence is the
 project-local `HexGF2Mathlib.RingEquiv`, which this composition repackages with
 the canonical Conway field on the generic side through `genericEquivGFq`. -/
+@[expose]
 def equivGFq : RingEquiv (GF2q n) (GFq 2 n h.entry) where
   toFun x := genericEquivGFq (n := n) (packedRingEquiv (n := n) x)
   invFun x := (packedRingEquiv (n := n)).invFun ((genericEquivGFq (n := n)).symm x)

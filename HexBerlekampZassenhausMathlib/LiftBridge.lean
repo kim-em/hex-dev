@@ -1,6 +1,10 @@
-import HexBerlekampZassenhausMathlib.Basic
-import HexBerlekampZassenhausMathlib.Lattice
-import HexBerlekampZassenhausMathlib.Recovery
+module
+
+public import HexBerlekampZassenhausMathlib.Basic
+public import HexBerlekampZassenhausMathlib.Lattice
+public import HexBerlekampZassenhausMathlib.Recovery
+
+public section
 
 /-!
 Bridge from recovery-side lifted-factor subsets to BHKS true-factor packages.
@@ -18,6 +22,7 @@ Transport a recovery-side lifted-factor subset to the BHKS support type.
 This relies on the executable `bhksLatticeBasis` computing `factorCount`
 definitionally as `d.liftedFactors.size`, so the two `Fin` index types coincide.
 -/
+@[expose]
 def supportOfSubset (f : Hex.ZPoly) (d : Hex.LiftData) (T : LiftedFactorSubset d) :
     LiftedFactorSupport (Hex.bhksLatticeBasis f d.p d.k d.liftedFactors) :=
   (T : Set (LiftedFactorIndex d))
@@ -76,6 +81,7 @@ subset product witness.  The caller supplies the named `factor` because
 recovery-side evidence is usually stated against an externally represented
 integer factor, not just the raw selected lifted product.
 -/
+@[expose]
 def trueFactorLiftOfSubset
     (f : Hex.ZPoly) (d : Hex.LiftData) (T : LiftedFactorSubset d)
     (factor cofactor : Hex.ZPoly)
@@ -102,6 +108,7 @@ Unlike `trueFactorLiftOfSubset`, this constructor does not require the raw
 integer equality `liftedFactorProduct d T = factor`; it records exactly the
 recovered product shape exposed by the BHKS candidate/recovery lemmas.
 -/
+@[expose]
 def recoveredLiftOfSubset
     (f : Hex.ZPoly) (d : Hex.LiftData) (T : LiftedFactorSubset d)
     (factor cofactor : Hex.ZPoly)
@@ -135,6 +142,7 @@ hypothesis is the regime the fast-core extractor operates in (`Monic core`),
 where the leading-coefficient dilation collapses and the represented
 monic-coordinate witness is itself primitive.
 -/
+@[expose]
 def recoveredLiftOfRepresents
     (core : Hex.ZPoly) (d : Hex.LiftData) (S : LiftedFactorSubset d)
     (factor cofactor : Hex.ZPoly)
@@ -158,6 +166,7 @@ The executable non-monic fast path selects prime and lift data from the original
 packages a representation witness for that monic coordinate as a `RecoveredLift`
 over the `bhksLatticeBasis` built from the same `toMonicLiftData`.
 -/
+@[expose]
 def recoveredLiftOfToMonicRepresents
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData))
@@ -275,6 +284,7 @@ This is the sound non-monic replacement for asking for a raw
 over `(toMonic core).monic`, and returning to `core` requires
 `primitivePart (dilate (leadingCoeff core) ·)`.
 -/
+@[expose]
 noncomputable def recoveredAtLiftOfToMonic
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (S : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData))
@@ -352,6 +362,7 @@ caller supplies the corresponding centered/dilated recovery equality.  This is a
 thin adapter for proof paths that already carry `TrueFactorLift` data but need
 to enter the recovered-product API.
 -/
+@[expose]
 def recoveredLiftOfTrueFactorLift
     {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
     (D : TrueFactorLift L S)
@@ -378,6 +389,7 @@ The represented factor's monicity remains an explicit input: the structural
 `TrueFactorLift` package only stores the selected product and does not make an
 arbitrary recovered integer factor monic.
 -/
+@[expose]
 def trueFactorLiftSemanticsOfToMonicSubset
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (T : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData))
@@ -823,6 +835,7 @@ need `content (dilate (lc core) monicFactor) = 1`, false for non-unit
 
 This is a `def` because `RecoveredLift` is a data-carrying certificate, not a
 `Prop`. -/
+@[expose]
 def recoveredLift_family_of_indicatorCandidates
     {core : Hex.ZPoly} {d : Hex.LiftData} {coreFactors : Array Hex.ZPoly}
     (rows_pos : HasPositiveDimension core d)
@@ -918,6 +931,7 @@ index/surjectivity fact (#7923) hold *by construction* — every member is,
 definitionally, reached by one of the array indices — rather than requiring a
 disjointness or partition hypothesis on a free `trueSupports` (which is unsound:
 overlapping supports collapse under `supportPartitionByMinColumn`). -/
+@[expose]
 noncomputable def emittedSupports
     (M : Hex.ZPoly) (d : Hex.LiftData)
     {r : Nat} (trueSupports : Set (Set (Fin r))) :
@@ -941,6 +955,7 @@ This is the shape consumed by the line-714 endpoint
 instantiated to `emittedSupports (toMonic core).monic d …`.
 
 This is a `def` because `RecoveredLift` is a data-carrying certificate. -/
+@[expose]
 def recoveredLift_subtypeFamily_of_indicatorCandidates
     {core : Hex.ZPoly} {d : Hex.LiftData} {coreFactors : Array Hex.ZPoly}
     (rows_pos : HasPositiveDimension core d)

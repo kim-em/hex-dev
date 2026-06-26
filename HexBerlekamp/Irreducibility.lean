@@ -1,4 +1,8 @@
-import HexBerlekamp.Basic
+module
+
+public import HexBerlekamp.Basic
+
+public section
 
 /-!
 Executable irreducibility tests for `hex-berlekamp`.
@@ -15,6 +19,7 @@ namespace Berlekamp
 variable {p : Nat} [ZMod64.Bounds p]
 
 /-- `X^(p^k) - X` reduced modulo `f`. -/
+@[expose]
 def frobeniusDiffMod (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat) :
     FpPoly p :=
   FpPoly.frobeniusXPowMod f hmonic k - FpPoly.modByMonic f FpPoly.X hmonic
@@ -25,6 +30,7 @@ Positive divisors of `n` below `n`, listed in ascending order.
 These are the candidates from which Rabin's test extracts the maximal proper
 divisors.
 -/
+@[expose]
 def properDivisors (n : Nat) : List Nat :=
   ((List.range (n - 1)).map Nat.succ).filter fun d => n % d = 0
 
@@ -32,11 +38,13 @@ def properDivisors (n : Nat) : List Nat :=
 The maximal proper divisors of `n`, i.e. those proper divisors not strictly
 below any other proper divisor of `n`.
 -/
+@[expose]
 def maximalProperDivisors (n : Nat) : List Nat :=
   let ds := properDivisors n
   ds.filter fun d => !(ds.any fun e => d < e && e % d = 0)
 
 /-- `true` exactly when `g` is a nonzero constant polynomial. -/
+@[expose]
 def isUnitPolynomial (g : FpPoly p) : Bool :=
   match g.degree? with
   | some 0 => true
@@ -46,6 +54,7 @@ def isUnitPolynomial (g : FpPoly p) : Bool :=
 Berlekamp's executable rank criterion: a nonconstant monic `f` passes when
 `rank(Q_f - I) = deg(f) - 1`.
 -/
+@[expose]
 def berlekampRankTest (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [Lean.Grind.Field (ZMod64 p)] : Bool :=
   let n := basisSize f
@@ -55,6 +64,7 @@ def berlekampRankTest (f : FpPoly p) (hmonic : DensePoly.Monic f)
 The divisibility leg of Rabin's criterion: `f` divides `X^(p^n) - X`, with
 `n = deg(f)`, exactly when the reduced remainder vanishes.
 -/
+@[expose]
 def rabinDividesTest (f : FpPoly p) (hmonic : DensePoly.Monic f) : Bool :=
   let n := basisSize f
   (frobeniusDiffMod f hmonic n).isZero
@@ -63,6 +73,7 @@ def rabinDividesTest (f : FpPoly p) (hmonic : DensePoly.Monic f) : Bool :=
 The gcd leg of Rabin's criterion at a single maximal proper divisor `d` of
 `deg(f)`.
 -/
+@[expose]
 def rabinCoprimeTest (f : FpPoly p) (hmonic : DensePoly.Monic f) (d : Nat) : Bool :=
   isUnitPolynomial (DensePoly.gcd f (frobeniusDiffMod f hmonic d))
 
@@ -70,6 +81,7 @@ def rabinCoprimeTest (f : FpPoly p) (hmonic : DensePoly.Monic f) (d : Nat) : Boo
 Record the per-divisor Rabin gcd checks so downstream factorization code can
 see which maximal proper divisor rejected a candidate polynomial.
 -/
+@[expose]
 def rabinWitnesses (f : FpPoly p) (hmonic : DensePoly.Monic f) : List (Nat × Bool) :=
   let n := basisSize f
   (maximalProperDivisors n).map fun d => (d, rabinCoprimeTest f hmonic d)
@@ -99,10 +111,12 @@ namespace IrreducibilityCertificate
 variable (cert : IrreducibilityCertificate)
 
 /-- Read the certified `X^(p^k) mod f` witness, if present. -/
+@[expose]
 def powWitness? (k : Nat) : Option (@FpPoly cert.p cert.bounds) :=
   cert.powChain[k]?
 
 /-- Read the Bezout witness for the `i`-th maximal proper divisor, if present. -/
+@[expose]
 def bezoutWitness? (i : Nat) : Option (@RabinBezoutWitness cert.p cert.bounds) :=
   cert.bezout[i]?
 
@@ -122,6 +136,7 @@ Match a certificate's stored prime against the ambient `p`. Returns the
 same-prime view on success, or `none` if the certificate is for a different
 prime.
 -/
+@[expose]
 def IrreducibilityCertificate.toAmbient?
     (cert : IrreducibilityCertificate) (p : Nat) [ZMod64.Bounds p] :
     Option (SamePrimeIrreducibilityCertificate p) := by
@@ -135,11 +150,13 @@ def IrreducibilityCertificate.toAmbient?
         exact none
 
 /-- The Rabin difference polynomial represented by a certificate pow-chain entry. -/
+@[expose]
 def certifiedFrobeniusDiffMod (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (powWitness : FpPoly p) : FpPoly p :=
   powWitness - FpPoly.modByMonic f FpPoly.X hmonic
 
 /-- Check that a certificate's pow chain matches the committed Frobenius routine. -/
+@[expose]
 def checkPowChain (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate p) : Bool :=
   cert.powChain.size == cert.n + 1 &&
@@ -151,6 +168,7 @@ Kernel-reducible pow-chain check for small closed polynomials. It checks the
 same mathematical witnesses as `checkPowChain`, but compares against the
 structural Frobenius evaluator so `decide` can reduce concrete certificates.
 -/
+@[expose]
 def checkPowChainLinear (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate p) : Bool :=
   cert.powChain.size == cert.n + 1 &&
@@ -158,6 +176,7 @@ def checkPowChainLinear (f : FpPoly p) (hmonic : DensePoly.Monic f)
       cert.powChain[k]? == some (FpPoly.frobeniusXPowModLinear f hmonic k)
 
 /-- Check one Bezout witness for a Rabin maximal-proper-divisor leg. -/
+@[expose]
 def checkRabinBezoutWitness (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate p) (i d : Nat) : Bool :=
   match cert.powChain[d]?, cert.bezout[i]? with
@@ -167,6 +186,7 @@ def checkRabinBezoutWitness (f : FpPoly p) (hmonic : DensePoly.Monic f)
   | _, _ => false
 
 /-- Check all Bezout witnesses against `maximalProperDivisors cert.n`. -/
+@[expose]
 def checkRabinBezoutWitnesses (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate p) : Bool :=
   let divisors := maximalProperDivisors cert.n
@@ -181,6 +201,7 @@ It validates the self-described `p` and `n`, recomputes every pow-chain
 entry, checks the divisibility leg `X^(p^n) = X mod f`, and verifies each
 Bezout identity for the maximal proper divisors of `n`.
 -/
+@[expose]
 def checkIrreducibilityCertificate (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : IrreducibilityCertificate) : Bool :=
   match cert.toAmbient? p with
@@ -197,6 +218,7 @@ Kernel-reducible Rabin certificate checker. This is intended for small
 record-literal polynomials where the theorem input
 `rabinTest f hmonic = true` should be discharged by `decide`.
 -/
+@[expose]
 def checkIrreducibilityCertificateLinear (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : IrreducibilityCertificate) : Bool :=
   match cert.toAmbient? p with
@@ -213,6 +235,7 @@ Rabin's executable irreducibility test: `f` must be nonconstant, divide
 `X^(p^n) - X`, and be coprime to `X^(p^d) - X` for every maximal proper
 divisor `d` of `n = deg(f)`.
 -/
+@[expose]
 def rabinTest (f : FpPoly p) (hmonic : DensePoly.Monic f) : Bool :=
   let n := basisSize f
   decide (0 < n) &&
@@ -564,6 +587,7 @@ multiplications, dropping the total work from `Σ p^k` to `n · p`. -/
 The single-step recurrence: `powChain[k+1]` must equal
 `(powChain[k])^p mod f`.
 -/
+@[expose]
 def checkPowChainLinearIncrementalStep
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate p) (k : Nat) : Bool :=
@@ -576,6 +600,7 @@ Kernel-reducible incremental pow-chain check.  Validates that
 `powChain[0] = X mod f` and that each successor is the previous entry's
 `p`-th power modulo `f`.  Total work is `O(n · p)` instead of `O(Σ p^k)`.
 -/
+@[expose]
 def checkPowChainLinearIncremental (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate p) : Bool :=
   cert.powChain.size == cert.n + 1 &&
@@ -589,6 +614,7 @@ Quotient-witness checker for `FpPoly 2` pow chains.  Entry `k` of
 `powChain[k] * powChain[k] = powChain[k+1] + quotients[k] * f`, with both
 chain entries already reduced modulo `f`.
 -/
+@[expose]
 def checkPowChainLinearIncrementalQuotientWitnessStep
     (f : FpPoly 2) (cert : SamePrimeIrreducibilityCertificate 2)
     (quotients : Array (FpPoly 2)) (k : Nat) : Bool :=
@@ -691,6 +717,7 @@ theorem checkPowChainLinearIncrementalQuotientWitnessStep_of_entry_size_bounds
 The `i`-th coefficient in `ZMod64 2` of a packed `UInt64` bit-word: `1`
 when bit `i` of `bits` is set, `0` otherwise.
 -/
+@[expose]
 def gf2BitCoeff (bits : UInt64) (i : Nat) : ZMod64 2 :=
   if (((bits >>> i.toUInt64) &&& 1) = 0) then
     0
@@ -701,6 +728,7 @@ def gf2BitCoeff (bits : UInt64) (i : Nat) : ZMod64 2 :=
 Reinterpret the low `width` bits of `bits` as an `FpPoly 2`, with
 coefficient `i` given by `gf2BitCoeff bits i`.
 -/
+@[expose]
 def gf2WordPoly (bits : UInt64) (width : Nat) : FpPoly 2 :=
   FpPoly.ofCoeffs (((List.range width).map fun i => gf2BitCoeff bits i).toArray)
 
@@ -738,11 +766,13 @@ theorem gf2WordPoly_coeff (bits : UInt64) (width i : Nat) :
 
 /-- `true` exactly when `a` and `b` agree on every coefficient `0 … bound-1`;
 the bounded executable prefix-equality check over `List.range bound`. -/
+@[expose]
 def coeffsEqUpTo (bound : Nat) (a b : FpPoly 2) : Bool :=
   (List.range bound).all fun i => a.coeff i == b.coeff i
 
 /-- Bounded per-step quotient-witness test: `prev * prev` and `curr + quot * f`
 agree on coefficients below `bound`. -/
+@[expose]
 def quotientStepCoeffCheck
     (bound : Nat) (prev curr quot f : FpPoly 2) : Bool :=
   coeffsEqUpTo bound (prev * prev) (curr + quot * f)
@@ -797,6 +827,7 @@ theorem quotientStep_coeffs_eq_of_check
 
 /-- `quotientStepCoeffCheck` specialised to GF(2) operands packed as `UInt64`
 bit-words, decoded through `gf2WordPoly`. -/
+@[expose]
 def gf2WordQuotientStepCoeffCheck
     (bound width : Nat) (prevBits currBits quotBits fBits : UInt64) : Bool :=
   quotientStepCoeffCheck bound
@@ -989,6 +1020,7 @@ chain size, that `powChain[0] = X mod f`, and every per-step witness via
 `checkPowChainLinearIncrementalQuotientWitnessStep`. Avoids recomputing the
 modular squarings by reading the quotients off the certificate.
 -/
+@[expose]
 def checkPowChainLinearIncrementalQuotientWitnesses
     (f : FpPoly 2) (hmonic : DensePoly.Monic f)
     (cert : SamePrimeIrreducibilityCertificate 2) (quotients : Array (FpPoly 2)) :
@@ -1125,6 +1157,7 @@ Incremental Rabin certificate checker, suitable for `(p, n)` regimes where
 `p^n` is too large for `checkIrreducibilityCertificateLinear` but `n · p`
 remains in budget (e.g. `(5, 6)` or `(7, 6)`).
 -/
+@[expose]
 def checkIrreducibilityCertificateLinearIncremental
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (cert : IrreducibilityCertificate) : Bool :=

@@ -1,5 +1,9 @@
-import HexPolyFp.Basic
-import Init.Grind.Ring.Field
+module
+
+public import HexPolyFp.Basic
+public import Init.Grind.Ring.Field
+
+public section
 
 /-!
 Prime-modulus field instance for `Hex.ZMod64 p`.
@@ -20,7 +24,8 @@ namespace ZMod64
 
 variable {p : Nat} [Bounds p]
 
-private def intPow (a : ZMod64 p) : Int → ZMod64 p
+@[expose]
+def intPow (a : ZMod64 p) : Int → ZMod64 p
   | .ofNat n => a ^ n
   | .negSucc n => (a ^ (n + 1))⁻¹
 

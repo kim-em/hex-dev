@@ -1,6 +1,8 @@
-import HexGFq.Basic
-import HexGFq.Conformance
-import HexGFq.CrossCheck
+module
+
+public import HexGFq.Basic
+
+public section
 
 /-!
 User-facing canonical finite-field constructors.
