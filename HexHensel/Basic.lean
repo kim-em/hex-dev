@@ -1,9 +1,5 @@
-module
-
-public import HexPolyFp
-public import HexPolyZ
-
-public section
+import HexPolyFp
+import HexPolyZ
 
 /-!
 Core conversion operations for executable Hensel lifting.
@@ -34,7 +30,6 @@ congruent to `z`. Used coefficientwise by `modP` and `reduceModPow` to land
 integer coefficients in the standard representative window before transport
 to `FpPoly` or back into `ZPoly`.
 -/
-@[expose]
 def intModNat (z : Int) (m : Nat) : Nat :=
   Int.toNat (z % Int.ofNat m)
 
@@ -62,13 +57,11 @@ private theorem intModNat_eq_of_congr {a b : Int} {m : Nat} (h : (a - b) % (m : 
   simp [intModNat, hmod]
 
 /-- Reduce the coefficients of an integer polynomial modulo `p`. -/
-@[expose]
 def modP (p : Nat) [ZMod64.Bounds p] (f : ZPoly) : FpPoly p :=
   FpPoly.ofCoeffs <|
     (List.range f.size).map (fun i => ZMod64.ofNat p (intModNat (f.coeff i) p)) |>.toArray
 
 /-- Reduce each coefficient to its canonical representative modulo `p^k`. -/
-@[expose]
 def reduceModPow (f : ZPoly) (p k : Nat) : ZPoly :=
   DensePoly.ofCoeffs <|
     (List.range f.size).map (fun i => Int.ofNat (intModNat (f.coeff i) (p ^ k))) |>.toArray
@@ -264,7 +257,6 @@ namespace FpPoly
 variable {p : Nat} [ZMod64.Bounds p]
 
 /-- Lift `F_p` coefficients to their standard nonnegative integer representatives. -/
-@[expose]
 def liftToZ (f : FpPoly p) : ZPoly :=
   DensePoly.ofCoeffs <|
     (List.range f.size).map (fun i => Int.ofNat (f.coeff i).toNat) |>.toArray

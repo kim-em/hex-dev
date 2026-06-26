@@ -1,8 +1,4 @@
-module
-
-public import HexPolyZ.Basic
-
-public section
+import HexPolyZ.Basic
 
 /-!
 Executable Mignotte-bound helpers for `hex-poly-z`.
@@ -18,7 +14,6 @@ namespace Hex
 namespace ZPoly
 
 /-- Executable binomial coefficients for the Mignotte bound. -/
-@[expose]
 def binom (n k : Nat) : Nat :=
   if n < k then
     0
@@ -27,13 +22,11 @@ def binom (n k : Nat) : Nat :=
     (List.range kk).foldl (fun acc i => acc * (n - i) / (i + 1)) 1
 
 /-- One Newton step for the natural-number square-root iteration. -/
-@[expose]
-def sqrtStep (n x : Nat) : Nat :=
+private def sqrtStep (n x : Nat) : Nat :=
   (x + n / x) / 2
 
 /-- A fuel-bounded Newton iteration for the natural floor square root. -/
-@[expose]
-def sqrtAux (n : Nat) : Nat → Nat → Nat
+private def sqrtAux (n : Nat) : Nat → Nat → Nat
   | 0, x => x
   | fuel + 1, x =>
       let next := sqrtStep n x
@@ -43,7 +36,6 @@ def sqrtAux (n : Nat) : Nat → Nat → Nat
         sqrtAux n fuel next
 
 /-- The floor of the square root of `n`. -/
-@[expose]
 def floorSqrt (n : Nat) : Nat :=
   if n = 0 then
     0
@@ -51,7 +43,6 @@ def floorSqrt (n : Nat) : Nat :=
     sqrtAux n (2 * n.log2 + 1) n
 
 /-- The least natural number whose square is at least `n`. -/
-@[expose]
 def ceilSqrt (n : Nat) : Nat :=
   let r := floorSqrt n
   if r * r = n then
@@ -396,19 +387,16 @@ private theorem sqrtAux_full_fuel_sq_le
   simpa [hself] using hsq
 
 /-- The squared Euclidean norm of the coefficient vector of `f`. -/
-@[expose]
 def coeffNormSq (f : ZPoly) : Nat :=
   (List.range f.size).foldl (fun acc i => acc + (f.coeff i).natAbs ^ 2) 0
 
 /-- A conservative natural-number upper bound on the Euclidean norm of the
 coefficient vector of `f`. -/
-@[expose]
 def coeffL2NormBound (f : ZPoly) : Nat :=
   ceilSqrt (coeffNormSq f)
 
 /-- The executable Mignotte bound for the `j`-th coefficient of a degree-`k`
 factor of `f`, using the conservative `coeffL2NormBound`. -/
-@[expose]
 def mignotteCoeffBound (f : ZPoly) (k j : Nat) : Nat :=
   binom k j * coeffL2NormBound f
 
@@ -420,7 +408,6 @@ It takes the maximum of the executable Mignotte coefficient bounds over every
 candidate factor degree up to `f.degree?.getD 0` and every coefficient index up
 to that degree.
 -/
-@[expose]
 def defaultFactorCoeffBound (f : ZPoly) : Nat :=
   let degreeBound := f.degree?.getD 0
   (List.range (degreeBound + 1)).foldl

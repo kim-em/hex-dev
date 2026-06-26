@@ -1,19 +1,17 @@
-module
-
-public import HexArith.Nat.ModArith
-public import HexArith.Nat.Pow
-public import HexArith.Nat.Prime
-public import HexArith.Barrett.ReduceNat
-public import HexArith.Barrett.Reduce
-public import HexArith.Barrett.Context
-public import HexArith.ExtGcd
-public import HexArith.Montgomery.Context
-public import HexArith.Montgomery.InvNat
-public import HexArith.Montgomery.Redc
-public import HexArith.Montgomery.RedcNat
-public import HexArith.UInt64.Wide
-
-public section
+import HexArith.Nat.ModArith
+import HexArith.Nat.Pow
+import HexArith.Nat.Prime
+import HexArith.Barrett.ReduceNat
+import HexArith.Barrett.Reduce
+import HexArith.Barrett.Context
+import HexArith.Conformance
+import HexArith.CrossCheck
+import HexArith.ExtGcd
+import HexArith.Montgomery.Context
+import HexArith.Montgomery.InvNat
+import HexArith.Montgomery.Redc
+import HexArith.Montgomery.RedcNat
+import HexArith.UInt64.Wide
 
 /-!
 `HexArith` collects the low-level arithmetic foundations for the project:

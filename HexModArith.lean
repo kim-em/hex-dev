@@ -1,11 +1,9 @@
-module
-
-public import HexModArith.Basic
-public import HexModArith.HotLoop
-public import HexModArith.Prime
-public import HexModArith.Ring
-
-public section
+import HexModArith.Basic
+import HexModArith.Conformance
+import HexModArith.HotLoop
+import HexModArith.Prime
+import HexModArith.Ring
+import HexModArith.Smoke
 
 /-!
 The `HexModArith` library provides `UInt64`-backed modular arithmetic,

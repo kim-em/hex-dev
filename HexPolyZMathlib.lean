@@ -1,10 +1,6 @@
-module
-
-public import HexPolyZMathlib.Basic
-public import HexPolyZMathlib.Mignotte
-public import HexPolyZMathlib.RobinsonForm
-
-public section
+import HexPolyZMathlib.Basic
+import HexPolyZMathlib.Mignotte
+import HexPolyZMathlib.RobinsonForm
 
 /-!
 The `HexPolyZMathlib` library identifies executable integer dense polynomials

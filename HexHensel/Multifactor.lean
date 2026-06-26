@@ -1,8 +1,4 @@
-module
-
-public import HexHensel.Linear
-
-public section
+import HexHensel.Linear
 
 /-!
 Executable multifactor Hensel lifting surface.
@@ -15,7 +11,6 @@ reducing the problem to the binary Hensel lift.
 namespace Array
 
 /-- Ordered product of integer polynomial factors, using left-fold order. -/
-@[expose]
 def polyProduct (factors : Array Hex.ZPoly) : Hex.ZPoly :=
   factors.foldl (· * ·) 1
 
@@ -29,7 +24,6 @@ namespace ZPoly
 Extended gcd witnesses scaled so their Bezout combination is monic when the
 raw Euclidean gcd is a nonzero constant unit.
 -/
-@[expose]
 def normalizedXGCD
     (p : Nat) [ZMod64.Bounds p]
     (g h : ZPoly) : DensePoly.XGCDResult (ZMod64 p) :=
@@ -96,7 +90,6 @@ complementary product `Array.polyProduct rest.toArray` via `henselLift`, and
 recurses with `lifted.h` as the new target on `rest`. The singleton case
 returns the input reduced modulo `p^k`; the empty case returns the empty
 array. -/
-@[expose]
 def multifactorLiftList
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) : List ZPoly → Array ZPoly
@@ -113,7 +106,6 @@ def multifactorLiftList
 Lift an ordered array of factors from congruence modulo `p` to congruence
 modulo `p^k`.
 -/
-@[expose]
 def multifactorLift
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (factors : Array ZPoly) : Array ZPoly :=
@@ -161,7 +153,6 @@ needs the linear-path lifted factors modulo `p^k` should obtain them via
 the two paths under the Mathlib `Polynomial.map (Int.castRingHom (ZMod (p^k)))`
 canonicalisation.
 -/
-@[expose]
 def MultifactorLiftInvariant
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) : List ZPoly → Prop

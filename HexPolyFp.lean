@@ -1,17 +1,14 @@
-module
-
-public import HexPolyFp.Basic
-public import HexPolyFp.Packed
-public import HexPolyFp.PrimeField
-public import HexPolyFp.Compose
-public import HexPolyFp.Enumeration
-public import HexPolyFp.Frobenius
-public import HexPolyFp.SquareFree
-public import HexPolyFp.ModCompose
-public import HexPolyFp.Quotient
-public import HexPolyFp.QuotientFrobenius
-
-public section
+import HexPolyFp.Basic
+import HexPolyFp.Packed
+import HexPolyFp.PrimeField
+import HexPolyFp.Compose
+import HexPolyFp.Enumeration
+import HexPolyFp.Frobenius
+import HexPolyFp.SquareFree
+import HexPolyFp.ModCompose
+import HexPolyFp.Quotient
+import HexPolyFp.QuotientFrobenius
+import HexPolyFp.Conformance
 
 /-!
 `HexPolyFp` specializes the executable dense-polynomial API to

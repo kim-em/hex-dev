@@ -1,9 +1,5 @@
-module
-
-public import HexMatrix
-public import HexPolyFp
-
-public section
+import HexMatrix
+import HexPolyFp
 
 /-!
 Executable Berlekamp-matrix support for `hex-berlekamp`.
@@ -21,7 +17,6 @@ namespace Berlekamp
 variable {p : Nat} [ZMod64.Bounds p]
 
 /-- The basis size used for the Berlekamp matrix of `f`. -/
-@[expose]
 def basisSize (f : FpPoly p) : Nat :=
   f.degree?.getD 0
 
@@ -40,7 +35,6 @@ private theorem basisSize_eq_size_sub_one (f : FpPoly p)
   simp [Nat.ne_of_gt h]
 
 /-- Read a polynomial's first `degree f` coefficients as a vector. -/
-@[expose]
 def coeffVector (f g : FpPoly p) : Vector (ZMod64 p) (basisSize f) :=
   Vector.ofFn fun i => g.coeff i.val
 
@@ -48,7 +42,6 @@ def coeffVector (f g : FpPoly p) : Vector (ZMod64 p) (basisSize f) :=
 The `j`-th Berlekamp-matrix column, obtained by reducing
 `(X^p mod f)^j` modulo `f` and reading the result in the monomial basis.
 -/
-@[expose]
 def berlekampColumn (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (j : Fin (basisSize f)) : Vector (ZMod64 p) (basisSize f) :=
   let frobX := FpPoly.frobeniusXMod f hmonic
@@ -84,8 +77,7 @@ Iteratively build the array of Berlekamp-matrix column polynomials
 Each step costs one polynomial product and one monic reduction, both
 quadratic in `n`, so the array of `n` columns is built in `O(n^3)` total.
 -/
-@[expose]
-def berlekampColumnPolys (f : FpPoly p) (hmonic : DensePoly.Monic f)
+private def berlekampColumnPolys (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (frobX : FpPoly p) : Nat → FpPoly p → Array (FpPoly p) → Array (FpPoly p)
   | 0, _, acc => acc
   | k + 1, current, acc =>
@@ -168,7 +160,6 @@ The Berlekamp matrix `Q_f`, whose `j`-th column records the coordinates of
 iteratively from the recurrence `column (j + 1) = column j * (X^p mod f) mod f`
 to avoid the per-column fast-exponentiation log factor.
 -/
-@[expose]
 def berlekampMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     Matrix (ZMod64 p) (basisSize f) (basisSize f) :=
   let frobX := FpPoly.frobeniusXMod f hmonic
@@ -638,14 +629,12 @@ theorem berlekampMatrix_mulVec_coeffVector_eq
   rw [matrixActionPolySum_eq_linearPow_mod f hmonic w hw]
 
 /-- The fixed-space matrix `Q_f - I` used in Berlekamp's kernel computation. -/
-@[expose]
 def fixedSpaceMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     Matrix (ZMod64 p) (basisSize f) (basisSize f) :=
   let Q := berlekampMatrix f hmonic
   Matrix.ofFn fun i j => Q[i][j] - if i = j then 1 else 0
 
 /-- Convert a coefficient vector back to its polynomial representative. -/
-@[expose]
 def vectorToPoly {n : Nat} (v : Vector (ZMod64 p) n) : FpPoly p :=
   FpPoly.ofCoeffs v.toArray
 
@@ -661,7 +650,6 @@ theorem coeffVector_vectorToPoly (f : FpPoly p) (v : Vector (ZMod64 p) (basisSiz
 The fixed-space kernel of `Q_f - I`, reusing `HexMatrix.nullspace` instead of a
 Berlekamp-local linear-algebra implementation.
 -/
-@[expose]
 def fixedSpaceKernelVectors (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [inst : Lean.Grind.Field (ZMod64 p)] :
     Vector (Vector (ZMod64 p) (basisSize f))
@@ -669,7 +657,6 @@ def fixedSpaceKernelVectors (f : FpPoly p) (hmonic : DensePoly.Monic f)
   Matrix.nullspace (fixedSpaceMatrix f hmonic)
 
 /-- The fixed-space kernel basis converted back to polynomial representatives. -/
-@[expose]
 def fixedSpaceKernel (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [inst : Lean.Grind.Field (ZMod64 p)] :
     Vector (FpPoly p)
@@ -678,7 +665,6 @@ def fixedSpaceKernel (f : FpPoly p) (hmonic : DensePoly.Monic f)
 
 /-- Vector-level executable Berlekamp kernel condition for the fixed-space
 matrix `Q_f - I`. -/
-@[expose]
 def IsFixedSpaceKernelVector (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (v : Vector (ZMod64 p) (basisSize f)) : Prop :=
   Matrix.mulVec (fixedSpaceMatrix f hmonic) v = 0
@@ -716,7 +702,6 @@ theorem isFixedSpaceKernelVector_iff_berlekampMatrix_mulVec_eq
 
 /-- Polynomial-level executable Berlekamp kernel condition, by reading the
 representative in the quotient basis used by `fixedSpaceMatrix`. -/
-@[expose]
 def IsFixedSpaceKernelPolynomial (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (g : FpPoly p) : Prop :=
   IsFixedSpaceKernelVector f hmonic (coeffVector f g)

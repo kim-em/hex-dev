@@ -1,9 +1,5 @@
-module
-
-public import HexPolyMathlib.Basic
-public import Mathlib.Algebra.Polynomial.FieldDivision
-
-public section
+import HexPolyMathlib.Basic
+import Mathlib.Algebra.Polynomial.FieldDivision
 
 /-!
 Euclidean-algorithm correspondence for `HexPolyMathlib`.
