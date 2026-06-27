@@ -104,8 +104,8 @@ reverse. We have thrashed too often bending the implementation to ease proofs.
 | Size-ordered classical recombination + subset budget + counters | #8376 | #8385 | ✅ merged |
 | `factorClassical` full-domain entry + FLINT invariant op | #8377 | #8386 | ✅ merged |
 | Adversarial corpus + metamorphic relations | #8378 | #8387 | ✅ merged |
-| Merge-blocking conformance + counter + wall-clock gate | #8379 | — | ⬜ next (unblocked) |
-| Harden the CLD large-`r` tier | #8380 | — | ⬜ blocked on #8379 |
+| Merge-blocking conformance + counter + wall-clock gate (+ budget soundness) | #8379 | #8390 | ✅ merged |
+| CLD lattice tier: certify irreducibility (Swinnerton-Dyer / high-`r`) | #8380 | — | ⬜ next (unblocked); root cause diagnosed |
 | Cost-based `dispatchTier` | #8381 | — | ⬜ blocked on #8379, #8380 |
 | Optimize the easy regime (arithmetic constants) | #8382 | — | ⬜ blocked on #8379 |
 | Swap public `factor` to the hybrid | #8383 | — | ⬜ blocked on #8380, #8381, #8382 |
@@ -134,20 +134,30 @@ staged in `conformance-fixtures/HexBerlekampZassenhaus/bz-scheduled.jsonl`.
 - **Risk:** infra-heavy (CI YAML + counter probe + baseline). The `FactorTrace`
   scaffold may sit on `factorClassical` until the dispatch lands.
 
-### #8380 — Harden the CLD large-`r` tier  *(the riskiest)*
-- **Goal:** make `factorLattice` reliable and polynomial on high-`r` inputs so the
-  dispatcher can trust it.
-- **Work:** confirm the existing van Hoeij CLD (`factorFast` /
-  `factorFastCoreWithBound`, Basic.lean ~`bhks*`/`factorFastCore*`) returns the
-  correct factorization, polynomially, at the full BHKS cap on SD4/SD5/Φ₁₀₅; fix
-  the cap/precision "miss" that returns `none` spuriously; expose the
-  lattice-dimension counter; validate via the now-active scheduled conformance +
-  an offline "beats Isabelle's exhaustive" bench.
-- **Risk:** this is the old, complex BHKS machinery; the "miss" bug may be deep.
-  Most likely issue to surface real engineering. **If the CLD tier can't be made
-  reliable, reassess here** — it is load-bearing for the beat-Isabelle-on-hard
-  story. The kept BHKS proofs (Recovery/Lattice/CLDColumnBound/BadVector/…) earn
-  their place here.
+### #8380 — CLD lattice tier: certify irreducibility (Swinnerton-Dyer / high-`r`)
+- **Goal:** make `factorLattice` return `some #[f]` (not `none`) on irreducible
+  high-`r` inputs, so the dispatcher can route Swinnerton-Dyer-class inputs to it
+  instead of the exponential exhaustive fallback.
+- **Root cause (diagnosed 2026-06):** the "miss" is **not** a cap/precision bug and
+  the lattice is **not** broken. `bhksRecoverClassified` (Basic.lean ~6747)
+  correctly finds the single all-ones equivalence class for an irreducible input,
+  but `bhksDegenerateIndicatorPartition` treats that — a *correct irreducibility
+  proof* — as `degenerate → none`. Measured: `bhksRecover?` / `factorFast` return
+  `none` at every precision up to the (10²¹⁺) cap on SD2/SD3/Φ₁₅. This was right
+  for the old fall-back-to-slow architecture; it is wrong for the hybrid, where
+  the lattice tier must certify irreducibility itself.
+- **Work:** add an irreducibility **stopping criterion** — at the cap
+  (`k ≥ bhksBound`), classify the all-ones single-class partition as `success #[f]`
+  rather than `degenerate` (keep declining at sub-cap precision); expose the
+  lattice-dimension counter; validate via the FLINT oracle + counter gate on the
+  SD/cyclotomic corpus (those inputs are irreducible, so `[f]` is correct).
+- **Open question (not a blocker):** *speed*. The localized fix makes the tier
+  **correct**; whether it is fast enough to strictly beat Isabelle's exponential
+  on the SD ladder needs a clean benchmark (the earlier ">90s" was a
+  wrong-precision probe artifact). If too slow, reassess (lattice/LLL optimization
+  vs accept parity-via-classical).
+- The kept BHKS proofs (Recovery/Lattice/CLDColumnBound/BadVector/…) and the
+  cap-suffices proof (BHKS Thm 5.2 / D1, deferred per principle 9) live here.
 
 ### #8381 — Cost-based `dispatchTier`
 - **Goal:** the hybrid router.
