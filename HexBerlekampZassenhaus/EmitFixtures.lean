@@ -315,6 +315,50 @@ private def cases_good_prime_regression : List ExpectedCase :=
   , mkExpected "regression/split_roots_1_72" (splitProductCoeffs 72)
       1 (splitProductExpectedFactors 72) ]
 
+/-- Adversarial conformance corpus (per-PR; the heavy high-`r` cases SD4-SD6 and
+`Φ_105` live in the scheduled fixture set). One representative per family; all
+cross-checked against FLINT via both `factor` and `classicalFactor`. -/
+private def cases_adversarial : List Case :=
+  [ mk "adv/swinnerton_dyer_2" #[1, 0, -10, 0, 1]                          -- √2±√3, irreducible
+  , mk "adv/swinnerton_dyer_3_shift1" #[-71, -744, 580, 664, -178, -184, -12, 8, 1]
+  , mk "adv/cyclotomic_8" #[1, 0, 0, 0, 1]
+  , mk "adv/cyclotomic_12" #[1, 0, -1, 0, 1]
+  , mk "adv/cyclotomic_15" #[1, -1, 0, 1, -1, 1, 0, -1, 1]
+  , mk "adv/x6_minus_1" #[-1, 0, 0, 0, 0, 0, 1]                            -- product of cyclotomics
+  , mk "adv/x12_minus_1" #[-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+  , mk "adv/large_height" #[3001500000, -2500500, -1501, 1]               -- roots far apart
+  , mk "adv/high_multiplicity" #[9, -6, 28, -18, 30, -18, 12, -6, 1]      -- (x²+1)³(x-3)²
+  , mk "adv/non_monic" #[-15, 1, 6]                                       -- (2x-3)(3x+5)
+  , mk "adv/neg_content" #[8, -6, -2]                                     -- -2(x-1)(x+4)
+  , mk "adv/reciprocal" #[1, 0, -7, 0, 1]                                 -- palindromic
+  , mk "adv/identical_mod_profile" #[6, 0, -5, 0, 1]                      -- (x²-2)(x²-3)
+  , mk "adv/eisenstein_5" #[-2, 0, 0, 0, 0, 1]                            -- x⁵-2
+  , mk "adv/trinomial" #[1, 1, 0, 0, 1]                                   -- x⁴+x+1
+  , mk "adv/planted_1" #[-6, -7, -5, 2, 0, 3, 0, 1]
+  , mk "adv/planted_nonmonic" #[-5, -7, -12, -3, 1, 2]
+  , mk "adv/bad_prime_retry" #[-180, 0, 156, 0, -35, 0, 1]               -- (x²-2)(x²-3)(x²-30)
+  , mk "adv/large_plus_distractors" #[-6, 5, -1, 0, 0, 6, -5, 1]
+  , mk "adv/mignotte_swell" #[1, 0, -10000, 0, 2, 0, 0, 0, 1] ]          -- (x⁴-100x+1)(x⁴+100x+1)
+
+-- Metamorphic relations (checked without an external oracle): factoring a
+-- transformed input relates predictably to factoring the original.
+private def metamorphicBase : ZPoly := DensePoly.ofCoeffs #[6, 0, -5, 0, 1]  -- (x²-2)(x²-3)
+
+-- multiply-then-factor: a product of two irreducible quadratics yields two factors.
+#guard ((factorClassical metamorphicBase).map (·.factors.size)) = some 2
+
+-- negation: `factor (-f)` keeps the same polynomial factors and negates the scalar.
+#guard
+  match factorClassical metamorphicBase, factorClassical (DensePoly.scale (-1) metamorphicBase) with
+  | some φ, some ψ => ψ.scalar == -φ.scalar && Factorization.product ψ == DensePoly.scale (-1) metamorphicBase
+  | _, _ => false
+
+-- content scaling: `factor (k·f)` keeps the factors and scales the scalar by `k`.
+#guard
+  match factorClassical metamorphicBase, factorClassical (DensePoly.scale 3 metamorphicBase) with
+  | some φ, some ψ => ψ.scalar == 3 * φ.scalar && Factorization.product ψ == DensePoly.scale 3 metamorphicBase
+  | _, _ => false
+
 private def emitCase (c : Case) : IO Unit :=
   emitFactorCase c.id (DensePoly.ofCoeffs c.coeffs)
 
@@ -346,3 +390,4 @@ def main : IO Unit := do
   for c in Hex.BZEmit.cases_pinned_expected do Hex.BZEmit.emitPinnedExpectedCase c
   for c in Hex.BZEmit.cases_content do Hex.BZEmit.emitExpectedCase c
   for c in Hex.BZEmit.cases_good_prime_regression do Hex.BZEmit.emitExpectedCase c
+  for c in Hex.BZEmit.cases_adversarial do Hex.BZEmit.emitCase c
