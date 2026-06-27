@@ -106,10 +106,19 @@ private def factorValue (φ : Factorization) : String :=
 private def expectedFactorValue (scalar : Int) (factors : List (List Int × Nat)) : String :=
   "[" ++ toString scalar ++ "," ++ factorEntriesValue factors ++ "]"
 
-/-- Emit one fixture record plus the `factor` result record. -/
+/-- Emit the size-ordered classical tier's result (`factorClassical`) for cross
+checking against FLINT. Emits `null` when the tier declines (no admissible prime
+or subset budget exceeded), which the oracle treats as a skip. -/
+private def emitClassicalResult (case : String) (f : ZPoly) : IO Unit :=
+  match factorClassical f with
+  | some φ => emitResult lib case "classicalFactor" (factorValue φ)
+  | none => emitResult lib case "classicalFactor" "null"
+
+/-- Emit one fixture record plus the `factor` and `classicalFactor` result records. -/
 private def emitFactorCase (case : String) (f : ZPoly) : IO Unit := do
   emitPolyFixture lib case (liftCoeffs f) none
   emitResult lib case "factor" (factorValue (factor f))
+  emitClassicalResult case f
 
 /-- One fixture whose result is emitted by running the public Lean `factor`. -/
 private structure Case where
@@ -312,16 +321,19 @@ private def emitCase (c : Case) : IO Unit :=
 private def emitExpectedCase (c : ExpectedCase) : IO Unit := do
   emitPolyFixture lib c.id c.coeffs.toList none
   emitResult lib c.id "factor" (expectedFactorValue c.scalar c.factors)
+  emitClassicalResult c.id (DensePoly.ofCoeffs c.coeffs)
 
 private def emitPinnedCase (c : PinnedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
   emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
   emitResult lib c.id "factor" (factorValue (factor f))
+  emitClassicalResult c.id f
 
 private def emitPinnedExpectedCase (c : PinnedExpectedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
   emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
   emitResult lib c.id "factor" (expectedFactorValue c.scalar c.factors)
+  emitClassicalResult c.id f
 
 end Hex.BZEmit
 
