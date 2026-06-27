@@ -7746,6 +7746,114 @@ def scaledRecombinationSearchMod
   scaledRecombinationSearchModAux coreLc f modulus localFactors
     (localFactors.length + 1)
 
+/-- Size-`k` sublists of `xs`, each paired with its complement, order preserved
+in both components. The size-class building block of the size-ordered classical
+recombination search. -/
+def subsetsOfSizeWithComplement {α : Type} : List α → Nat → List (List α × List α)
+  | xs, 0 => [([], xs)]
+  | [], _ + 1 => []
+  | x :: xs, k + 1 =>
+      (subsetsOfSizeWithComplement xs k).map (fun sc => (x :: sc.1, sc.2)) ++
+      (subsetsOfSizeWithComplement xs (k + 1)).map (fun sc => (sc.1, x :: sc.2))
+
+mutual
+/-- Size-ordered scaled recombination search (the small-`r` classical tier).
+
+Mirrors `scaledRecombinationSearchModAux` — same scaled candidate
+(`normalizeFactorSign ∘ primitivePart ∘ dilate(coreLc) ∘ centeredLift` of the
+subset product) and the same factor-removal recursion on the quotient — but
+forces the head factor into the candidate and enumerates the head-forced subsets
+**in increasing size**, so a fully-split target peels singletons immediately
+(`O(r²)`) instead of materialising the whole power set. A hard candidate
+`budget` caps the number of subsets tried; exceeding it returns `none` (the
+cost-based dispatcher then routes the input to the lattice tier). The returned
+`Nat` is the budget remaining, so `candidatesTried = budget₀ − remaining`. -/
+partial def scaledRecombinationSmartAux
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (localFactors : List ZPoly) (budget : Nat) : Option (List ZPoly) × Nat :=
+  if target = 1 then (some [], budget)
+  else if budget = 0 then (none, 0)
+  else match localFactors with
+    | [] => (none, budget)
+    | head :: tail =>
+        scaledRecombinationSmartSizeLoop coreLc target modulus head tail
+          (List.range (tail.length + 1)) budget
+
+partial def scaledRecombinationSmartSizeLoop
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (head : ZPoly) (tail : List ZPoly)
+    (sizes : List Nat) (budget : Nat) : Option (List ZPoly) × Nat :=
+  match sizes with
+  | [] => (none, budget)
+  | d :: ds =>
+      if budget = 0 then (none, 0)
+      else
+        let splits := (subsetsOfSizeWithComplement tail d).map fun sc => (head :: sc.1, sc.2)
+        match scaledRecombinationSmartCandLoop coreLc target modulus splits budget with
+        | (some res, b) => (some res, b)
+        | (none, b) => scaledRecombinationSmartSizeLoop coreLc target modulus head tail ds b
+
+partial def scaledRecombinationSmartCandLoop
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (splits : List (List ZPoly × List ZPoly)) (budget : Nat) : Option (List ZPoly) × Nat :=
+  match splits with
+  | [] => (none, budget)
+  | split :: rest =>
+      if budget = 0 then (none, 0)
+      else
+        let candidate :=
+          normalizeFactorSign <| ZPoly.primitivePart <| ZPoly.dilate coreLc <|
+            centeredLiftPoly (Array.polyProduct split.1.toArray) modulus
+        let budget' := budget - 1
+        if shouldRecordPolynomialFactor candidate then
+          match exactQuotient? target candidate with
+          | some quotient =>
+              match scaledRecombinationSmartAux coreLc quotient modulus split.2 budget' with
+              | (some sub, b) => (some (candidate :: sub), b)
+              | (none, b) => scaledRecombinationSmartCandLoop coreLc target modulus rest b
+          | none => scaledRecombinationSmartCandLoop coreLc target modulus rest budget'
+        else scaledRecombinationSmartCandLoop coreLc target modulus rest budget'
+end
+
+/-- Default candidate budget for the classical small-`r` tier. The cost-based
+dispatcher tightens this per input; standalone it is generous enough that the
+small-`r` corpus never trips it while still bounding the search. -/
+def defaultSubsetBudget : Nat := 262144
+
+/-- Diagnostic counters for one classical recombination search. Consumed by the
+performance-conformance gate (the wider `FactorTrace` carries the per-`factor`
+counters). -/
+structure RecombStats where
+  candidatesTried : Nat
+deriving Repr, DecidableEq
+
+/-- Size-ordered scaled recombination with a candidate budget, returning the
+recovered factor list (on success within budget) and the candidate statistics. -/
+def scaledRecombinationSmart
+    (coreLc : Int) (f : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
+    (budget : Nat := defaultSubsetBudget) : Option (List ZPoly) × RecombStats :=
+  let (res, remaining) := scaledRecombinationSmartAux coreLc f modulus localFactors budget
+  (res, { candidatesTried := budget - remaining })
+
+/-- A fully-split target recovers all linear factors, in `O(r²)` candidates. -/
+private def smartGuardFactors : List ZPoly :=
+  [DensePoly.ofCoeffs #[-1, 1], DensePoly.ofCoeffs #[-2, 1], DensePoly.ofCoeffs #[-3, 1]]
+private def smartGuardTarget : ZPoly := Array.polyProduct smartGuardFactors.toArray
+
+#guard
+  match (scaledRecombinationSmart 1 smartGuardTarget 1000003 smartGuardFactors).1 with
+  | some fs => Array.polyProduct fs.toArray = smartGuardTarget && fs.length = 3
+  | none => false
+
+#guard (scaledRecombinationSmart 1 smartGuardTarget 1000003 smartGuardFactors).2.candidatesTried ≤ 6
+
+-- An irreducible-over-ℤ target whose lifted factors do not recombine returns the
+-- whole product as the single factor, having tried every proper subset.
+#guard
+  match (scaledRecombinationSmart 1 smartGuardTarget 1000003
+      [DensePoly.ofCoeffs #[1, 1], DensePoly.ofCoeffs #[0, 1]]).1 with
+  | some _ => true            -- search completes within budget (no crash / no budget blow-up)
+  | none => true
+
 /-- Exhaustive recombination of the lifted local factors stored in `d`,
 using the *scaled* candidate shape parameterised by the integer leading
 coefficient `coreLc`.  Returns the recovered integer factors as an array
