@@ -111,7 +111,7 @@ def check_umbrella_completeness(
 def project_lean_files(root: Path) -> list[Path]:
     files = []
     for path in root.rglob("*.lean"):
-        if ".lake" in path.parts:
+        if ".lake" in path.parts or "released" in path.parts:
             continue
         files.append(path.relative_to(root))
     return sorted(files)
