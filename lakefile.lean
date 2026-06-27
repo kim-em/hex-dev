@@ -122,6 +122,12 @@ lean_lib HexGFqMathlib where
 
 lean_lib HexBerlekampZassenhausMathlib where
 
+lean_exe hex_arith_floor where
+  root := `HexBench.ArithFloor
+
+lean_exe hex_classical_spike where
+  root := `HexBench.ClassicalSpike
+
 lean_exe hexarith_bench where
   root := `HexArith.Bench
 
