@@ -64,6 +64,15 @@ jobs:
             hexconway_emit_fixtures
       - name: Cross-check fixtures and run oracles
         run: bash scripts/ci/run_oracles.sh
+      - name: BZ performance gate (FactorTrace counters)
+        # Deterministic anti-regression gate: a recombination blow-up, unexpected
+        # tier downgrade, or unexpected decline/fallback fails the merge even
+        # though it would still factor correctly. See scripts/oracle/bz_trace_gate.py.
+        run: python3 scripts/oracle/bz_trace_gate.py
+      - name: BZ wall-clock backstop
+        # Catastrophic (order-of-magnitude) slow-downs trip this generous cap;
+        # runner noise does not. Complements the deterministic counter gate above.
+        run: timeout 180 lake exe hexbz_emit_fixtures > /dev/null
       - name: Upload failure records
         if: failure()
         uses: actions/upload-artifact@v4

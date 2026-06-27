@@ -106,13 +106,26 @@ private def factorValue (φ : Factorization) : String :=
 private def expectedFactorValue (scalar : Int) (factors : List (List Int × Nat)) : String :=
   "[" ++ toString scalar ++ "," ++ factorEntriesValue factors ++ "]"
 
+/-- Serialise a `FactorTrace` to JSON for the performance gate. Deterministic
+(no wall-clock), so it lives in the committed fixtures and is pinned by the gate
+baseline. -/
+private def traceValue (t : FactorTrace) : String :=
+  "{\"tier\":\"" ++ t.tier ++ "\",\"prime\":" ++ toString t.prime ++
+    ",\"r\":" ++ toString t.liftedFactorCount ++
+    ",\"subsetCandidates\":" ++ toString t.subsetCandidates ++
+    ",\"declined\":" ++ (if t.declined then "true" else "false") ++ "}"
+
 /-- Emit the size-ordered classical tier's result (`factorClassical`) for cross
-checking against FLINT. Emits `null` when the tier declines (no admissible prime
-or subset budget exceeded), which the oracle treats as a skip. -/
-private def emitClassicalResult (case : String) (f : ZPoly) : IO Unit :=
-  match factorClassical f with
+checking against FLINT, plus its diagnostic `trace` (tier, prime, `r`, subset
+candidate count, declined) for the performance gate. The `classicalFactor` value
+is `null` when the tier declines (no admissible prime or subset budget exceeded),
+which the oracle treats as a skip. -/
+private def emitClassicalResult (case : String) (f : ZPoly) : IO Unit := do
+  let (result, trace) := factorClassicalTraced f
+  match result with
   | some φ => emitResult lib case "classicalFactor" (factorValue φ)
   | none => emitResult lib case "classicalFactor" "null"
+  emitResult lib case "trace" (traceValue trace)
 
 /-- Emit one fixture record plus the `factor` and `classicalFactor` result records. -/
 private def emitFactorCase (case : String) (f : ZPoly) : IO Unit := do
