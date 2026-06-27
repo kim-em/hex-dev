@@ -321,6 +321,39 @@ def _check_mod_factor_metadata(
     )
 
 
+def _check_factor_invariants(
+    *, case_id: str, lib: str, op: str, factors: list[Any],
+) -> None:
+    """Independent structural checks on the reported factors (not via FLINT):
+    each factor primitive with positive leading coefficient and positive
+    multiplicity, and no two entries share a polynomial."""
+    import math
+
+    seen: list[list[int]] = []
+    for entry in factors:
+        fc = [int(c) for c in entry[0]]
+        mult = int(entry[1])
+        content = 0
+        for c in fc:
+            content = math.gcd(content, abs(c))
+        if content != 1:
+            raise OracleMismatch(
+                f"{lib}/{case_id} ({op}): factor {fc} is not primitive (content {content})"
+            )
+        lead = next((c for c in reversed(fc) if c != 0), 0)
+        if lead <= 0:
+            raise OracleMismatch(
+                f"{lib}/{case_id} ({op}): factor {fc} has non-positive leading coefficient"
+            )
+        if mult <= 0:
+            raise OracleMismatch(
+                f"{lib}/{case_id} ({op}): factor {fc} has non-positive multiplicity {mult}"
+            )
+        if fc in seen:
+            raise OracleMismatch(f"{lib}/{case_id} ({op}): duplicate factor {fc}")
+        seen.append(fc)
+
+
 def _check_factor(
     *,
     case_id: str,
@@ -331,6 +364,7 @@ def _check_factor(
     profile: str,
     seed: int,
     oracle_version: str,
+    op: str = "factor",
 ) -> None:
     coeffs = _coeffs(poly_record)
     _check_mod_factor_metadata(
@@ -351,8 +385,8 @@ def _check_factor(
             _factorization_product(lean_value[0], lean_value[1]),
             _trim_zeros(coeffs),
             library=lib,
-            case_id=f"{case_id}:factor:product",
-            kind="factor-product",
+            case_id=f"{case_id}:{op}:product",
+            kind=f"{op}-product",
             input_record=poly_record,
             oracle_name="python-flint",
             oracle_version=oracle_version,
@@ -360,9 +394,12 @@ def _check_factor(
             profile=profile,
             seed=seed,
         )
+        _check_factor_invariants(
+            case_id=case_id, lib=lib, op=op, factors=lean_value[1]
+        )
     else:
         raise OracleMismatch(
-            f"{lib}/{case_id}: factor result must be a Factorization JSON "
+            f"{lib}/{case_id}: {op} result must be a Factorization JSON "
             f"value [scalar, [[coeffs, multiplicity], ...]], got {lean_value!r}"
         )
 
@@ -370,8 +407,8 @@ def _check_factor(
         _signature_to_serialisable(lean_sig),
         _signature_to_serialisable(flint_sig),
         library=lib,
-        case_id=f"{case_id}:factor",
-        kind="factor",
+        case_id=f"{case_id}:{op}",
+        kind=op,
         input_record=poly_record,
         oracle_name="python-flint",
         oracle_version=oracle_version,
@@ -412,6 +449,19 @@ def check(
                     lean_value=lean_value,
                     failure_dir=failure_dir, profile=profile, seed=seed,
                     oracle_version=oracle_version,
+                )
+            elif op == "classicalFactor":
+                # The size-ordered classical tier may decline (no admissible
+                # prime / subset budget exceeded), emitted as null; that is a
+                # skip until the cost-based dispatcher routes such inputs. When
+                # it answers, it must agree with FLINT under the same checks.
+                if lean_value is None:
+                    continue
+                _check_factor(
+                    case_id=case_id, lib=lib, poly_record=poly_record,
+                    lean_value=lean_value,
+                    failure_dir=failure_dir, profile=profile, seed=seed,
+                    oracle_version=oracle_version, op="classicalFactor",
                 )
             else:
                 raise OracleMismatch(

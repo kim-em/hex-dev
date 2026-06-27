@@ -8799,6 +8799,57 @@ def factorSlowModular (f : ZPoly) : Option Factorization :=
     factorSlowModular f =
       factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f) := rfl
 
+/-- Recover the integer factors of `f` from the lifted local factors `d` using
+the **size-ordered** classical recombination (the small-`r` tier), mirroring
+`recombineScaledExhaustive` but routed through `scaledRecombinationSmart`. -/
+def recombineScaledSmart (coreLc : Int) (f : ZPoly) (d : LiftData) : Array ZPoly :=
+  match (scaledRecombinationSmart coreLc f (liftModulus d) d.liftedFactors.toList).1 with
+  | some factors => factors.toArray
+  | none => #[]
+
+/-- Classical-tier core factorisation: mirror of `exhaustiveCoreFactorsWithBound`
+using the size-ordered recombination. -/
+def classicalCoreFactorsWithBound
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Array ZPoly :=
+  if B = 0 then
+    #[core]
+  else
+    let liftData := ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData
+    let factors := recombineScaledSmart (DensePoly.leadingCoeff core) core liftData
+    if factors.isEmpty then #[core] else factors
+
+/-- Raw factor array for the classical small-`r` tier; mirror of
+`factorSlowModularFactorsWithBound` with the size-ordered recombination. -/
+def factorClassicalFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
+  let normalized := normalizeForFactor f
+  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+    some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
+  else
+    match quadraticIntegerRootFactors? normalized.squareFreeCore with
+    | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
+    | none =>
+        (ZPoly.toMonicPrimeData? normalized.squareFreeCore).map fun primeData =>
+          reassemblePolynomialFactors normalized
+            (classicalCoreFactorsWithBound normalized.squareFreeCore B primeData)
+
+def factorClassicalWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
+  (factorClassicalFactorsWithBound f B).map (factorizationOfFactors f)
+
+/-- Factor via the size-ordered classical recombination tier at the default
+Mignotte bound. The small-`r` tier of the cost-based hybrid; returns `none` when
+no admissible prime is available or the subset budget is exceeded. -/
+def factorClassical (f : ZPoly) : Option Factorization :=
+  factorClassicalWithBound f (ZPoly.defaultFactorCoeffBound f)
+
+-- (X-1)(X-2)(X-3): a reducible cubic (past the quadratic short-circuit) that the
+-- size-ordered recombination must split into three linear factors.
+private def classicalGuardCubic : ZPoly := DensePoly.ofCoeffs #[-6, 11, -6, 1]
+
+#guard ((factorClassical classicalGuardCubic).map Factorization.product) = some classicalGuardCubic
+#guard ((factorClassical classicalGuardCubic).map (·.factors.size)) = some 3
+#guard ((factorClassical exhaustiveNonMonicQuadraticGuard).map Factorization.product)
+  = some exhaustiveNonMonicQuadraticGuard
+
 /-- Raw factor array produced by the integer trial-division slow path.
 
 Mirrors `factorSlowModularFactorsWithBound`'s constant/quadratic-root short-circuits
