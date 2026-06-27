@@ -1,3 +1,18 @@
+> # ⚠️ CORRECTION / RETRACTION (2026-06)
+>
+> **The Isabelle-comparator numbers below — and every "Lean N× faster/slower than
+> the verified reference" verdict derived from them — are retracted.** The ~820 ms
+> per-call Isabelle figure they rest on was a per-call process-startup artifact, not
+> steady factorization compute.
+>
+> An honest same-hardware re-measure lives in
+> [bz-classical-spike-findings.md](bz-classical-spike-findings.md): the verified
+> Isabelle/AFP reference factors in 419 µs–3.5 ms at deg 8–24; the current BHKS
+> public `factor` is exponential on many-factor inputs (low Mignotte cap → CLD miss
+> → 2ⁿ subset fallback); and a classical-BZ prototype with smart recombination,
+> in plain `Int`, lands within ~6–9× of Isabelle. Treat all ratio ladders below as
+> superseded.
+
 # HexBerlekampZassenhaus Performance Report
 
 ## Bench Targets
