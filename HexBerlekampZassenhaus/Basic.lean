@@ -7821,9 +7821,16 @@ def defaultSubsetBudget : Nat := 262144
 
 /-- Diagnostic counters for one classical recombination search. Consumed by the
 performance-conformance gate (the wider `FactorTrace` carries the per-`factor`
-counters). -/
+counters).
+
+`budgetExhausted` distinguishes the two ways the search returns no
+recombination: `false` means it enumerated every subset within budget and the
+target is genuinely irreducible (a *trustworthy* irreducible verdict); `true`
+means the budget was hit first, so the "no split" result is **not** trustworthy
+and the input must be routed to the lattice tier. -/
 structure RecombStats where
   candidatesTried : Nat
+  budgetExhausted : Bool
 deriving Repr, DecidableEq
 
 /-- Size-ordered scaled recombination with a candidate budget, returning the
@@ -7832,7 +7839,7 @@ def scaledRecombinationSmart
     (coreLc : Int) (f : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
     (budget : Nat := defaultSubsetBudget) : Option (List ZPoly) × RecombStats :=
   let (res, remaining) := scaledRecombinationSmartAux coreLc f modulus localFactors budget
-  (res, { candidatesTried := budget - remaining })
+  (res, { candidatesTried := budget - remaining, budgetExhausted := res.isNone && remaining == 0 })
 
 /-- A fully-split target recovers all linear factors, in `O(r²)` candidates. -/
 private def smartGuardFactors : List ZPoly :=
@@ -8799,27 +8806,31 @@ def factorSlowModular (f : ZPoly) : Option Factorization :=
     factorSlowModular f =
       factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f) := rfl
 
-/-- Recover the integer factors of `f` from the lifted local factors `d` using
-the **size-ordered** classical recombination (the small-`r` tier), mirroring
-`recombineScaledExhaustive` but routed through `scaledRecombinationSmart`. -/
-def recombineScaledSmart (coreLc : Int) (f : ZPoly) (d : LiftData) : Array ZPoly :=
-  match (scaledRecombinationSmart coreLc f (liftModulus d) d.liftedFactors.toList).1 with
-  | some factors => factors.toArray
-  | none => #[]
-
-/-- Classical-tier core factorisation: mirror of `exhaustiveCoreFactorsWithBound`
-using the size-ordered recombination. -/
+/-- Classical-tier core factorisation (the small-`r` tier): mirror of
+`exhaustiveCoreFactorsWithBound` routed through the size-ordered
+`scaledRecombinationSmart`. Returns `none` when the subset budget is exhausted
+before the search completes — an *untrustworthy* "no split" that the cost-based
+dispatcher routes to the lattice tier rather than reporting as irreducible. A
+genuine irreducible core (search completed within budget) returns `some #[core]`. -/
 def classicalCoreFactorsWithBound
-    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Array ZPoly :=
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Option (Array ZPoly) :=
   if B = 0 then
-    #[core]
+    some #[core]
   else
     let liftData := ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData
-    let factors := recombineScaledSmart (DensePoly.leadingCoeff core) core liftData
-    if factors.isEmpty then #[core] else factors
+    let (res, stats) :=
+      scaledRecombinationSmart (DensePoly.leadingCoeff core) core
+        (liftModulus liftData) liftData.liftedFactors.toList
+    if stats.budgetExhausted then
+      none
+    else
+      match res with
+      | some factors => some (if factors.isEmpty then #[core] else factors.toArray)
+      | none => some #[core]
 
 /-- Raw factor array for the classical small-`r` tier; mirror of
-`factorSlowModularFactorsWithBound` with the size-ordered recombination. -/
+`factorSlowModularFactorsWithBound`. Declines (`none`) on no admissible prime or
+subset-budget exhaustion. -/
 def factorClassicalFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
@@ -8828,9 +8839,9 @@ def factorClassicalFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly)
     match quadraticIntegerRootFactors? normalized.squareFreeCore with
     | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
     | none =>
-        (ZPoly.toMonicPrimeData? normalized.squareFreeCore).map fun primeData =>
-          reassemblePolynomialFactors normalized
-            (classicalCoreFactorsWithBound normalized.squareFreeCore B primeData)
+        (ZPoly.toMonicPrimeData? normalized.squareFreeCore).bind fun primeData =>
+          (classicalCoreFactorsWithBound normalized.squareFreeCore B primeData).map fun coreFactors =>
+            reassemblePolynomialFactors normalized coreFactors
 
 def factorClassicalWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
   (factorClassicalFactorsWithBound f B).map (factorizationOfFactors f)
@@ -8841,6 +8852,64 @@ no admissible prime is available or the subset budget is exceeded. -/
 def factorClassical (f : ZPoly) : Option Factorization :=
   factorClassicalWithBound f (ZPoly.defaultFactorCoeffBound f)
 
+/-- Per-`factor` diagnostic trace, consumed by the merge-blocking performance gate.
+`tier` records which path produced the answer (`constant` / `quadratic` /
+`classical` / `noPrime`); `declined = true` marks an untrustworthy result (no
+admissible prime, or subset-budget exhaustion) that the dispatcher routes onward.
+As the lattice tier and dispatcher land, `tier`/`latticeDim` gain those cases. -/
+structure FactorTrace where
+  tier : String
+  prime : Nat
+  liftedFactorCount : Nat
+  subsetCandidates : Nat
+  declined : Bool
+deriving Repr, DecidableEq
+
+/-- Classical-tier factorisation with its diagnostic trace. The `Option` result
+agrees with `factorClassicalWithBound f B`; the trace exposes the prime, the
+lifted-factor count `r`, the recombination candidate count, and whether the tier
+declined (budget exhausted / no admissible prime). -/
+def factorClassicalTracedWithBound (f : ZPoly) (B : Nat) : Option Factorization × FactorTrace :=
+  let normalized := normalizeForFactor f
+  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+    (some (factorizationOfFactors f
+        (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])),
+      { tier := "constant", prime := 0, liftedFactorCount := 0, subsetCandidates := 0, declined := false })
+  else
+    match quadraticIntegerRootFactors? normalized.squareFreeCore with
+    | some coreFactors =>
+        (some (factorizationOfFactors f (reassemblePolynomialFactors normalized coreFactors)),
+          { tier := "quadratic", prime := 0, liftedFactorCount := 0, subsetCandidates := 0, declined := false })
+    | none =>
+        match ZPoly.toMonicPrimeData? normalized.squareFreeCore with
+        | none =>
+            (none, { tier := "noPrime", prime := 0, liftedFactorCount := 0, subsetCandidates := 0, declined := true })
+        | some primeData =>
+            if B = 0 then
+              (some (factorizationOfFactors f (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])),
+                { tier := "classical", prime := primeData.p, liftedFactorCount := 0, subsetCandidates := 0, declined := false })
+            else
+              let core := normalized.squareFreeCore
+              let liftData := ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData
+              let (res, stats) :=
+                scaledRecombinationSmart (DensePoly.leadingCoeff core) core
+                  (liftModulus liftData) liftData.liftedFactors.toList
+              let r := liftData.liftedFactors.size
+              let trace : FactorTrace :=
+                { tier := "classical", prime := primeData.p, liftedFactorCount := r,
+                  subsetCandidates := stats.candidatesTried, declined := stats.budgetExhausted }
+              if stats.budgetExhausted then
+                (none, trace)
+              else
+                let coreFactors := match res with
+                  | some factors => if factors.isEmpty then #[core] else factors.toArray
+                  | none => #[core]
+                (some (factorizationOfFactors f (reassemblePolynomialFactors normalized coreFactors)), trace)
+
+/-- Classical-tier factorisation with trace, at the default Mignotte bound. -/
+def factorClassicalTraced (f : ZPoly) : Option Factorization × FactorTrace :=
+  factorClassicalTracedWithBound f (ZPoly.defaultFactorCoeffBound f)
+
 -- (X-1)(X-2)(X-3): a reducible cubic (past the quadratic short-circuit) that the
 -- size-ordered recombination must split into three linear factors.
 private def classicalGuardCubic : ZPoly := DensePoly.ofCoeffs #[-6, 11, -6, 1]
@@ -8849,6 +8918,13 @@ private def classicalGuardCubic : ZPoly := DensePoly.ofCoeffs #[-6, 11, -6, 1]
 #guard ((factorClassical classicalGuardCubic).map (·.factors.size)) = some 3
 #guard ((factorClassical exhaustiveNonMonicQuadraticGuard).map Factorization.product)
   = some exhaustiveNonMonicQuadraticGuard
+
+-- the traced variant's result agrees with `factorClassical`, and reports the
+-- classical tier, no decline, and a small (size-ordered) candidate count.
+#guard (factorClassicalTraced classicalGuardCubic).1 = factorClassical classicalGuardCubic
+#guard (factorClassicalTraced classicalGuardCubic).2.tier = "classical"
+#guard (factorClassicalTraced classicalGuardCubic).2.declined = false
+#guard (factorClassicalTraced classicalGuardCubic).2.subsetCandidates ≤ 64
 
 /-- Raw factor array produced by the integer trial-division slow path.
 

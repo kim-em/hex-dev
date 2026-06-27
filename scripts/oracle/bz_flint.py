@@ -463,6 +463,10 @@ def check(
                     failure_dir=failure_dir, profile=profile, seed=seed,
                     oracle_version=oracle_version, op="classicalFactor",
                 )
+            elif op == "trace":
+                # Diagnostic FactorTrace for the performance gate
+                # (scripts/oracle/bz_trace_gate.py); not a FLINT cross-check.
+                continue
             else:
                 raise OracleMismatch(
                     f"{lib}/{case_id}: unsupported op {op!r} "
