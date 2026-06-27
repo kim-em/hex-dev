@@ -1,4 +1,8 @@
-import HexPolyFp.Basic
+module
+
+public import HexPolyFp.Basic
+
+public section
 
 /-!
 Frobenius-style power maps in `F_p[x]`.
@@ -18,7 +22,8 @@ variable {p : Nat} [ZMod64.Bounds p]
 Exponentiation by squaring in the quotient `F_p[x] / (f)`, reducing after
 every multiplication with the executable `DensePoly.modByMonic` routine.
 -/
-private def powModMonicAux
+@[expose]
+def powModMonicAux
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     Nat → FpPoly p → FpPoly p → FpPoly p
   | 0, _, acc => acc
@@ -35,6 +40,7 @@ decreasing_by
   simpa using Nat.div_lt_self (Nat.succ_pos n) (by decide : 1 < 2)
 
 /-- Compute `base^n mod f` for monic `f`. -/
+@[expose]
 def powModMonic (base f : FpPoly p) (hmonic : DensePoly.Monic f) (n : Nat) :
     FpPoly p :=
   powModMonicAux f hmonic n (modByMonic f base hmonic) 1
@@ -50,25 +56,30 @@ Structurally recursive modular exponentiation. This is intentionally linear in
 the exponent: unlike `powModMonic`, it reduces by kernel computation on small
 closed terms.
 -/
+@[expose]
 def powModMonicLinear (base f : FpPoly p) (hmonic : DensePoly.Monic f) :
     Nat → FpPoly p
   | 0 => 1
   | n + 1 => modByMonic f (powModMonicLinear base f hmonic n * base) hmonic
 
 /-- Compute `X^p mod f`, the basic Frobenius generator used downstream. -/
+@[expose]
 def frobeniusXMod (f : FpPoly p) (hmonic : DensePoly.Monic f) : FpPoly p :=
   powModMonic X f hmonic p
 
 /-- Kernel-reducible variant of `frobeniusXMod` for small closed terms. -/
+@[expose]
 def frobeniusXModLinear (f : FpPoly p) (hmonic : DensePoly.Monic f) : FpPoly p :=
   powModMonicLinear X f hmonic p
 
 /-- Compute `X^(p^k) mod f` for arbitrary `k`. -/
+@[expose]
 def frobeniusXPowMod (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat) :
     FpPoly p :=
   powModMonic X f hmonic (p ^ k)
 
 /-- Kernel-reducible variant of `frobeniusXPowMod` for small closed terms. -/
+@[expose]
 def frobeniusXPowModLinear (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat) :
     FpPoly p :=
   powModMonicLinear X f hmonic (p ^ k)

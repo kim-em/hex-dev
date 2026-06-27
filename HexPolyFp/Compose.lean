@@ -1,6 +1,10 @@
-import HexPolyFp.Basic
-import HexPolyFp.SquareFree
-import HexPolyFp.QuotientFrobenius
+module
+
+public import HexPolyFp.Basic
+public import HexPolyFp.SquareFree
+public import HexPolyFp.QuotientFrobenius
+
+public section
 
 /-!
 Non-modular composition laws for `DensePoly` over `FpPoly p`.
@@ -300,6 +304,7 @@ the polynomial substitution: each step adds a single
 `C(coeff base) · linearPow w base` term and recurses with `base + 1`.
 This shape is matched by Berlekamp's matrix-action sum after replacing
 `linearPow w` with the reduced `powModMonic` columns. -/
+@[expose]
 def composeCoeffPowerSumUpTo
     (coeff : Nat → ZMod64 p) :
     Nat → Nat → FpPoly p → FpPoly p

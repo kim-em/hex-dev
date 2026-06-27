@@ -1,5 +1,9 @@
-import HexModArith.Prime
-import HexGFqRing.Basic
+module
+
+public import HexModArith.Prime
+public import HexGFqRing.Basic
+
+public section
 
 /-!
 Core finite-field wrapper definitions for executable `F_p[x] / (f)`.
@@ -40,17 +44,20 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
         exact congrArg FiniteField.toQuotient hxy)
 
 /-- Wrap a quotient-ring element as a finite-field element. -/
+@[expose]
 def ofQuotient {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : GFqRing.PolyQuotient f hf) : FiniteField f hf hp hirr :=
   ⟨x⟩
 
 /-- Reduce a polynomial into the finite field by reusing the quotient-ring
 constructor. -/
+@[expose]
 def ofPoly (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p)
     (hirr : FpPoly.Irreducible f) (g : FpPoly p) : FiniteField f hf hp hirr :=
   ofQuotient (GFqRing.ofPoly f hf g)
 
 /-- Project a finite-field element to its canonical polynomial representative. -/
+@[expose]
 def repr {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     (x : FiniteField f hf hp hirr) : FpPoly p :=
   GFqRing.repr x.toQuotient

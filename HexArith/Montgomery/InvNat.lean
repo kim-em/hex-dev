@@ -1,4 +1,10 @@
-import HexArith.Montgomery.RedcNat
+module
+public meta import Std.Tactic.BVDecide
+
+public import HexArith.Montgomery.RedcNat
+
+public section
+set_option maxHeartbeats 1000000
 
 /-!
 Montgomery inverses for `HexArith`.
@@ -9,7 +15,8 @@ resulting modular-inverse properties.
 -/
 
 /-- One Newton/Hensel refinement step for the positive Montgomery inverse. -/
-private def montPosInvStep (p x : UInt64) : UInt64 :=
+@[expose]
+def montPosInvStep (p x : UInt64) : UInt64 :=
   x * (2 - p * x)
 
 /-- The executable wrapping Newton step lifts a 3-bit inverse to 6 bits. -/
@@ -303,6 +310,7 @@ private theorem montPosInvStep_mod_refine (p x : UInt64) {k t : Nat}
 Starting from the odd-modulus seed `x = p`, five refinement steps lift the
 inverse from mod `2^3` to mod `2^96 ≥ 2^64`.
 -/
+@[expose]
 def montPosInv (p : UInt64) : UInt64 :=
   let x1 := montPosInvStep p p
   let x2 := montPosInvStep p x1
@@ -311,6 +319,7 @@ def montPosInv (p : UInt64) : UInt64 :=
   montPosInvStep p x4
 
 /-- The user-facing Montgomery inverse is the negated positive inverse. -/
+@[expose]
 def montInv (p : UInt64) : UInt64 :=
   0 - montPosInv p
 

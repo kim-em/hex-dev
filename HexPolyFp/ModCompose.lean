@@ -1,4 +1,8 @@
-import HexPolyFp.Basic
+module
+
+public import HexPolyFp.Basic
+
+public section
 
 /-!
 Modular composition in `F_p[x]`.
@@ -54,6 +58,7 @@ The reduction after each multiplication keeps the intermediate polynomials
 bounded by the modulus degree while preserving the same result as composing
 first and reducing once at the end.
 -/
+@[expose]
 def composeModMonic (f g modulus : FpPoly p)
     (hmonic : DensePoly.Monic modulus) : FpPoly p :=
   f.toArray.toList.reverse.foldl

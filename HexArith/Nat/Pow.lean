@@ -1,3 +1,7 @@
+module
+
+public section
+
 /-!
 Mathlib-free natural-number lemmas about exponentiation, used by the
 project-side polynomial divisibility chain in `HexBerlekamp.RabinSoundness`.

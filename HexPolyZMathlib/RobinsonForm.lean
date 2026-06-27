@@ -1,6 +1,10 @@
-import Mathlib.Analysis.Polynomial.MahlerMeasure
-import Mathlib.Analysis.Complex.Polynomial.GaussLucas
-import Mathlib.Analysis.Normed.Module.Convex
+module
+
+public import Mathlib.Analysis.Polynomial.MahlerMeasure
+public import Mathlib.Analysis.Complex.Polynomial.GaussLucas
+public import Mathlib.Analysis.Normed.Module.Convex
+
+public section
 
 /-!
 Schur-reflected Robinson forms for complex polynomials.
@@ -19,6 +23,7 @@ namespace Polynomial
 noncomputable section
 
 /-- The linear factor contributed by a root in the Robinson form. -/
+@[expose]
 def robinsonFactor (α : ℂ) : ℂ[X] :=
   if ‖α‖ ≤ 1 then X - C α else 1 - C (conj α) * X
 
@@ -26,10 +31,12 @@ def robinsonFactor (α : ℂ) : ℂ[X] :=
 The Robinson form of a complex polynomial, obtained by Schur-reflecting roots
 outside the closed unit disk.
 -/
+@[expose]
 def robinsonForm (p : ℂ[X]) : ℂ[X] :=
   C p.leadingCoeff * (p.roots.map robinsonFactor).prod
 
 /-- The root obtained by Schur-reflecting `α` across the unit circle. -/
+@[expose]
 def schurReflectedRoot (α : ℂ) : ℂ :=
   (conj α)⁻¹
 
@@ -38,10 +45,12 @@ The straight-line root path from `α` to its Schur reflection.  The Boyd/Mahler
 single-factor argument needs a monotonicity theorem for the Mahler measure of
 the derivative along this family.
 -/
+@[expose]
 def schurRootPath (α : ℂ) (t : ℝ) : ℂ :=
   ((1 - t : ℝ) : ℂ) * α + (t : ℂ) * schurReflectedRoot α
 
 /-- Mahler measure of the derivative after adjoining one moving linear factor. -/
+@[expose]
 def derivativeMahlerAlongLinearFactor (f : ℂ[X]) (β : ℂ) : ℝ :=
   ((f * (X - C β)).derivative).mahlerMeasure
 
@@ -49,11 +58,13 @@ def derivativeMahlerAlongLinearFactor (f : ℂ[X]) (β : ℂ) : ℝ :=
 The polynomial obtained from `p` by Schur-reflecting one selected exterior root
 while leaving all other roots in their original linear factors.
 -/
+@[expose]
 def schurReflectedAtRootForm (p : ℂ[X]) (α : ℂ) : ℂ[X] :=
   C p.leadingCoeff * ((p.roots.erase α).map fun β => X - C β).prod *
     (1 - C (conj α) * X)
 
 /-- The summand obtained by differentiating the linear factor for one root. -/
+@[expose]
 def rootDeletionDerivativeSummand (p : ℂ[X]) (α : ℂ) : ℂ[X] :=
   C p.leadingCoeff * ((p.roots.erase α).map fun β => X - C β).prod
 

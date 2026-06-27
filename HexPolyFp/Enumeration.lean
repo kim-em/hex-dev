@@ -1,4 +1,8 @@
-import HexPolyFp.Basic
+module
+
+public import HexPolyFp.Basic
+
+public section
 
 /-!
 Finite enumerations of bounded-degree `FpPoly` values.
@@ -63,6 +67,7 @@ private theorem nodup_flatMap_of_disjoint
           exact hxs.1 (hxy ▸ hy)) a ha (hab ▸ hby)
 
 /-- All coefficient lists of length `d`, with entries ranging over `ZMod64 p`. -/
+@[expose]
 def coeffLists (p : Nat) [ZMod64.Bounds p] : Nat → List (List (ZMod64 p))
   | 0 => [[]]
   | d + 1 =>
@@ -188,11 +193,13 @@ theorem coeffLists_nodup (d : Nat) :
         exact hne hhead
 
 /-- Turn a fixed coefficient list into an `FpPoly`. -/
+@[expose]
 def ofCoeffList (coeffs : List (ZMod64 p)) : FpPoly p :=
   FpPoly.ofCoeffs coeffs.toArray
 
 /-- All `FpPoly p` values whose degree is below `d`, represented by length-`d`
 coefficient lists. -/
+@[expose]
 def polysBelowDegree (p : Nat) [ZMod64.Bounds p] (d : Nat) : List (FpPoly p) :=
   (coeffLists p d).map ofCoeffList
 

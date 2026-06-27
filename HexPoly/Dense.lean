@@ -1,4 +1,10 @@
-import Std
+module
+
+public import Std
+
+public section
+set_option backward.proofsInPublic true
+set_option backward.privateInPublic true
 
 /-!
 Dense array-backed polynomials with the invariant that the stored coefficient array has no
@@ -10,6 +16,7 @@ universe u
 
 /-- `DensePolyNormalized coeffs` means either `coeffs` is empty or its last coefficient is
 nonzero, so the array has no trailing zeros. -/
+@[expose]
 def DensePolyNormalized {R : Type u} [Zero R] [DecidableEq R] (coeffs : Array R) : Prop :=
   coeffs.size = 0 ∨ coeffs.back? ≠ some (Zero.zero : R)
 
@@ -41,6 +48,7 @@ instance : DecidableEq (DensePoly R) := by
         exact congrArg DensePoly.coeffs hab)
 
 /-- Remove trailing zeros from a coefficient list without disturbing the remaining order. -/
+@[expose]
 def trimTrailingZerosList : List R → List R
   | [] => []
   | a :: as =>
@@ -135,6 +143,7 @@ private theorem trimTrailingZerosList_append_ne_zero (L : List R) {v : R}
 uses the value-equal `trimTrailingZerosImpl` (proved by `trimTrailingZeros_eq_impl`,
 registered `@[csimp]`), which pops trailing zeros off the array in place instead of
 round-tripping through `coeffs.toList`. -/
+@[expose]
 def trimTrailingZeros (coeffs : Array R) : Array R :=
   (trimTrailingZerosList coeffs.toList).toArray
 
@@ -205,20 +214,22 @@ private theorem trimTrailingZerosGo_eq (n : Nat) :
       · rw [if_neg hb, trimTrailingZeros_self coeffs hb]
 
 /-- Runtime implementation of `trimTrailingZeros`. -/
-private def trimTrailingZerosImpl (coeffs : Array R) : Array R :=
+@[expose]
+def trimTrailingZerosImpl (coeffs : Array R) : Array R :=
   trimTrailingZerosGo coeffs coeffs.size
 
 /-- Register the value-equal `trimTrailingZerosImpl` as the compiled implementation of
 `trimTrailingZeros`. Unlike `@[implemented_by]`, the `@[csimp]` swap is backed by the proof
 `trimTrailingZerosGo_eq`, so the runtime loop is verified equal to the specification. -/
 @[csimp]
-private theorem trimTrailingZeros_eq_impl : @trimTrailingZeros = @trimTrailingZerosImpl := by
+theorem trimTrailingZeros_eq_impl : @trimTrailingZeros = @trimTrailingZerosImpl := by
   funext R _ _ coeffs
   show trimTrailingZeros coeffs = trimTrailingZerosImpl coeffs
   unfold trimTrailingZerosImpl
   exact (trimTrailingZerosGo_eq coeffs.size coeffs (Nat.le_refl _)).symm
 
 /-- Build a dense polynomial from a raw coefficient array by normalizing away trailing zeros. -/
+@[expose]
 def ofCoeffs (coeffs : Array R) : DensePoly R :=
   { coeffs := trimTrailingZeros coeffs
     normalized := by
@@ -226,6 +237,7 @@ def ofCoeffs (coeffs : Array R) : DensePoly R :=
       simpa using trimTrailingZerosList_normalized (R := R) coeffs.toList }
 
 /-- The zero polynomial. -/
+@[expose]
 def zero : DensePoly R :=
   ofCoeffs #[]
 
@@ -233,15 +245,18 @@ instance : Zero (DensePoly R) where
   zero := zero
 
 /-- Build a dense polynomial from a coefficient list by normalizing away trailing zeros. -/
+@[expose]
 def ofList (coeffs : List R) : DensePoly R :=
   ofCoeffs coeffs.toArray
 
 /-- Build the constant polynomial with value `c`. The zero constant collapses to the zero
 polynomial. -/
+@[expose]
 def C (c : R) : DensePoly R :=
   ofCoeffs #[c]
 
 /-- Build the monomial `c * x^n`. The zero coefficient collapses to the zero polynomial. -/
+@[expose]
 def monomial (n : Nat) (c : R) : DensePoly R :=
   if hc : c = (Zero.zero : R) then 0 else
     { coeffs := (Array.replicate n (Zero.zero : R)).push c
@@ -256,6 +271,7 @@ def monomial (n : Nat) (c : R) : DensePoly R :=
 
 /-- The number of stored coefficients. For a normalized polynomial this is one more than the
 degree, except for the zero polynomial where it is `0`. -/
+@[expose]
 def size (p : DensePoly R) : Nat :=
   p.coeffs.size
 
@@ -267,10 +283,12 @@ theorem size_ofCoeffs_le (coeffs : Array R) :
   simpa using trimTrailingZerosList_length_le (R := R) coeffs.toList
 
 /-- `true` exactly when the polynomial is zero. -/
+@[expose]
 def isZero (p : DensePoly R) : Bool :=
   p.coeffs.isEmpty
 
 /-- The coefficient of `x^n`, defaulting to `0` when `n` is out of range. -/
+@[expose]
 def coeff (p : DensePoly R) (n : Nat) : R :=
   p.coeffs.getD n (Zero.zero : R)
 
@@ -426,6 +444,7 @@ is forced (via `size_eq_of_coeff_eq`). -/
   exact hcoeff i
 
 /-- The largest exponent with a stored coefficient, or `none` for the zero polynomial. -/
+@[expose]
 def degree? (p : DensePoly R) : Option Nat :=
   if _h : p.size = 0 then none else some (p.size - 1)
 
@@ -582,6 +601,7 @@ theorem monomial_ne_zero_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
   exact Nat.succ_ne_zero n hsize.symm
 
 /-- The support of a dense polynomial, listed in ascending degree order. -/
+@[expose]
 def support (p : DensePoly R) : List Nat :=
   (List.range p.size).filter fun i => p.coeff i ≠ (Zero.zero : R)
 
@@ -638,6 +658,7 @@ theorem mem_support_monomial {n : Nat} {c : R} {i : Nat} :
   · simp [hc]
 
 /-- Return the underlying normalized coefficient array. -/
+@[expose]
 def toArray (p : DensePoly R) : Array R :=
   p.coeffs
 

@@ -74,6 +74,7 @@ private def linear (r : Int) : ZPoly :=
 private def fromRoots (roots : List Int) : ZPoly :=
   Array.polyProduct (roots.map linear).toArray
 
+@[expose]
 private def coeffs (f : ZPoly) : List Int :=
   f.toArray.toList
 

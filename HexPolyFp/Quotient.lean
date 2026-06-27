@@ -1,4 +1,8 @@
-import HexPolyFp.Enumeration
+module
+
+public import HexPolyFp.Enumeration
+
+public section
 
 /-!
 Project-side quotient API for `F_p[X] / (g)`.
@@ -54,6 +58,7 @@ instance : DecidableEq (Quotient g hmonic hg_pos) := by
         exact h (congrArg Quotient.val hab))
 
 /-- Reduce a polynomial to its canonical quotient representative. -/
+@[expose]
 def reduce (f : FpPoly p) : Quotient g hmonic hg_pos :=
   ⟨FpPoly.modByMonic g f hmonic, by
     rw [FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
@@ -73,6 +78,7 @@ theorem reduce_val_eq_mod (f : FpPoly p) :
   rw [reduce_val, FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
 
 /-- Polynomial congruence modulo the defining quotient polynomial. -/
+@[expose]
 def Congr (f h : FpPoly p) : Prop :=
   DensePoly.Congr f h g
 
@@ -210,6 +216,7 @@ private theorem perm_of_nodup_mem_iff
 
 /-- All canonical quotient representatives, enumerated via bounded-degree
 polynomials. -/
+@[expose]
 def elements : List (Quotient g hmonic hg_pos) :=
   (Enumeration.polysBelowDegree p (g.degree?.getD 0)).map
     (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos))
@@ -265,6 +272,7 @@ theorem eq_iff_val_eq {a b : Quotient g hmonic hg_pos} :
   ⟨fun h => by cases h; rfl, ext⟩
 
 /-- Zero in the quotient. -/
+@[expose]
 def zero : Quotient g hmonic hg_pos :=
   reduce 0
 
@@ -275,6 +283,7 @@ namespace Internal
 
 /-- The nonzero quotient elements, as a concrete duplicate-free sublist of
 `elements`. -/
+@[expose]
 def nonzeroElements : List (Quotient g hmonic hg_pos) :=
   (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter
     (fun a => decide (a ≠ 0))
@@ -304,6 +313,7 @@ theorem nonzeroElements_card :
 end Internal
 
 /-- One in the quotient. -/
+@[expose]
 def one : Quotient g hmonic hg_pos :=
   reduce 1
 
@@ -311,10 +321,12 @@ instance : One (Quotient g hmonic hg_pos) where
   one := one
 
 /-- The class of the polynomial indeterminate. -/
+@[expose]
 def X : Quotient g hmonic hg_pos :=
   reduce FpPoly.X
 
 /-- Addition of canonical quotient representatives. -/
+@[expose]
 def add (a b : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
   reduce (a.val + b.val)
 
@@ -322,6 +334,7 @@ instance : Add (Quotient g hmonic hg_pos) where
   add := add
 
 /-- Negation of canonical quotient representatives. -/
+@[expose]
 def neg (a : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
   reduce (-a.val)
 
@@ -329,6 +342,7 @@ instance : Neg (Quotient g hmonic hg_pos) where
   neg := neg
 
 /-- Subtraction of canonical quotient representatives. -/
+@[expose]
 def sub (a b : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
   reduce (a.val - b.val)
 
@@ -336,6 +350,7 @@ instance : Sub (Quotient g hmonic hg_pos) where
   sub := sub
 
 /-- Multiplication of canonical quotient representatives. -/
+@[expose]
 def mul (a b : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
   reduce (a.val * b.val)
 
@@ -343,6 +358,7 @@ instance : Mul (Quotient g hmonic hg_pos) where
   mul := mul
 
 /-- Natural-number powers in the quotient. -/
+@[expose]
 def pow (a : Quotient g hmonic hg_pos) : Nat → Quotient g hmonic hg_pos
   | 0 => 1
   | n + 1 => pow a n * a
@@ -841,6 +857,7 @@ theorem right_distrib (a b c : Quotient g hmonic hg_pos) :
 
 /-- The xgcd-based inverse candidate, normalized by the leading coefficient of
 the computed gcd. -/
+@[expose]
 def inverseCandidate (a : FpPoly p) : FpPoly p :=
   DensePoly.scale (DensePoly.leadingCoeff (DensePoly.gcd a g))⁻¹
     (DensePoly.xgcd a g).left
@@ -969,6 +986,7 @@ theorem mul_mod_inverseCandidate_eq_one_of_irreducible
 
 /-- Multiplicative inverse candidate in the quotient, with the conventional
 junk value `0⁻¹ = 0`.  The cancellation theorem below requires irreducibility. -/
+@[expose]
 def inv (a : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
   if a.val = 0 then
     0
@@ -1182,6 +1200,7 @@ The list `[c₀, c₁, ...]` denotes `c₀ + β * (c₁ + β * (...))`. This
 proof-facing evaluator is used by quotient-field root-count arguments where
 the coefficients already live in `F_p[X] / (g)`.
 -/
+@[expose]
 def evalCoeffList :
     List (Quotient g hmonic hg_pos) →
       Quotient g hmonic hg_pos → Quotient g hmonic hg_pos
@@ -1208,6 +1227,7 @@ If `P` is represented by `cs`, this list represents the quotient
 `(P(T) - P(α)) / (T - α)`. Its length is one less than the input list, which
 is the measure used by root-count induction.
 -/
+@[expose]
 def dividedDifferenceCoeffs :
     List (Quotient g hmonic hg_pos) →
       Quotient g hmonic hg_pos → List (Quotient g hmonic hg_pos)
@@ -1267,6 +1287,7 @@ theorem dividedDifferenceCoeffs_length_lt_of_ne_nil
 Evaluate the divided difference of a quotient-coefficient polynomial between
 the base point `α` and target point `β`.
 -/
+@[expose]
 def dividedDifference
     (cs : List (Quotient g hmonic hg_pos))
     (α β : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
@@ -1380,6 +1401,7 @@ project-side evaluation layer for root-counting arguments over
 `F_p[X] / (g)`, without introducing a ring typeclass for the executable
 quotient representation.
 -/
+@[expose]
 def eval (f : FpPoly p) (β : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
   f.toArray.toList.reverse.foldl
     (fun acc coeff =>
@@ -1389,6 +1411,7 @@ def eval (f : FpPoly p) (β : Quotient g hmonic hg_pos) : Quotient g hmonic hg_p
 
 /-- Stored `FpPoly` coefficients embedded as quotient constants, in low-to-high
 coefficient order. -/
+@[expose]
 def evalQuotientCoeffs (f : FpPoly p) : List (Quotient g hmonic hg_pos) :=
   f.toArray.toList.map
     (fun coeff =>
@@ -1600,6 +1623,7 @@ theorem eval_eq_evalCoeffList (f : FpPoly p) (β : Quotient g hmonic hg_pos) :
 
 /-- `FpPoly`-specific divided-difference quotient evaluated between `α` and
 `β`, using the existing executable coefficient representation. -/
+@[expose]
 def evalDividedDifference (f : FpPoly p)
     (α β : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
   dividedDifference
@@ -1607,6 +1631,7 @@ def evalDividedDifference (f : FpPoly p)
 
 /-- Synthetic quotient coefficients for the `FpPoly` divided difference at
 `α`. -/
+@[expose]
 def evalDividedDifferenceCoeffs (f : FpPoly p)
     (α : Quotient g hmonic hg_pos) : List (Quotient g hmonic hg_pos) :=
   dividedDifferenceCoeffs
@@ -2302,6 +2327,7 @@ This predicate is the syntactic degree witness used by root-count induction:
 such a list represents a nonzero quotient-coefficient polynomial of degree
 `cs.length - 1`.
 -/
+@[expose]
 def coeffListTopNonzero : List (Quotient g hmonic hg_pos) → Prop
   | cs => ∃ c, cs.getLast? = some c ∧ c ≠ 0
 
@@ -2344,6 +2370,7 @@ private theorem coeffListTopNonzero_dividedDifferenceCoeffs
 
 /-- Roots of a quotient-coefficient polynomial inside the canonical quotient
 enumeration. -/
+@[expose]
 def rootsOfCoeffList (cs : List (Quotient g hmonic hg_pos)) :
     List (Quotient g hmonic hg_pos) :=
   (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter
@@ -2634,6 +2661,7 @@ private theorem evalQuotientCoeffs_topNonzero_of_ne_zero
 
 /-- Roots of an `FpPoly` quotient evaluation inside the canonical quotient
 enumeration. -/
+@[expose]
 def rootsOfFpPoly (f : FpPoly p) : List (Quotient g hmonic hg_pos) :=
   (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter
     (fun β => decide (eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β = 0))
@@ -2762,6 +2790,7 @@ theorem one_ne_zero :
   exact fpPoly_one_ne_zero hval
 
 /-- Product of a list of quotient elements (right fold). -/
+@[expose]
 def listProd (xs : List (Quotient g hmonic hg_pos)) : Quotient g hmonic hg_pos :=
   xs.foldr (· * ·) 1
 

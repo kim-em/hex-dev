@@ -1,4 +1,8 @@
-import HexPolyFp.Basic
+module
+
+public import HexPolyFp.Basic
+
+public section
 
 /-!
 Core quotient-representation definitions for executable `F_p[x] / (f)`.
@@ -14,6 +18,7 @@ namespace FpPoly
 variable {p : Nat} [ZMod64.Bounds p]
 
 /-- The degree of a polynomial, defaulting to `0` for the zero polynomial. -/
+@[expose]
 def degree (f : FpPoly p) : Nat :=
   f.degree?.getD 0
 
@@ -30,6 +35,7 @@ set_option linter.unusedSectionVars false
 variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
 
 /-- Canonical remainder reduction modulo `f`, using the existing division surface. -/
+@[expose]
 def reduceMod (f : FpPoly p) : FpPoly p → FpPoly p :=
   fun g => (Hex.DensePoly.divMod g f).2
 
@@ -55,19 +61,23 @@ theorem reduceMod_eq_self_of_degree_lt (f g : FpPoly p) :
   exact reduceMod_eq_self_of_degree_lt f 1 (by simpa [hone] using hf)
 
 /-- Polynomials already known to be canonical representatives modulo `f`. -/
+@[expose]
 def IsReduced (f : FpPoly p) (g : FpPoly p) : Prop :=
   ∃ h : FpPoly p, g = reduceMod f h
 
 /-- Executable quotient elements represented by canonical reduced polynomials. -/
+@[expose]
 abbrev PolyQuotient (f : FpPoly p) (_hf : 0 < FpPoly.degree f) :=
   { g : FpPoly p // IsReduced f g }
 
 /-- Inject a polynomial into the quotient by reducing it modulo `f`. -/
+@[expose]
 def ofPoly (f : FpPoly p) (hf : 0 < FpPoly.degree f) (g : FpPoly p) :
     PolyQuotient f hf :=
   ⟨reduceMod f g, ⟨g, rfl⟩⟩
 
 /-- Project a quotient element to its canonical polynomial representative. -/
+@[expose]
 def repr {f : FpPoly p} {hf : 0 < FpPoly.degree f} (x : PolyQuotient f hf) : FpPoly p :=
   x.1
 

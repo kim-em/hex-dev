@@ -59,6 +59,7 @@ roots, all factors linear). -/
 private def sortedRoots (factors : Array ZPoly) : Array Int :=
   (factors.map fun p => -(p.coeff 0)).qsort (· ≤ ·)
 
+@[expose]
 private def coeffs (f : ZPoly) : List Int :=
   f.toArray.toList
 

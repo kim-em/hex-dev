@@ -1,4 +1,8 @@
-import HexArith.Nat.ModArith
+module
+
+public import HexArith.Nat.ModArith
+
+public section
 
 /-!
 Mathlib-free combinatorial and prime-number lemmas for `HexArith`.
@@ -15,6 +19,7 @@ namespace Nat
 /--
 Binomial coefficients on natural numbers, defined by the Pascal recursion.
 -/
+@[expose]
 def choose : Nat -> Nat -> Nat
   | _, 0 => 1
   | 0, _ + 1 => 0
@@ -71,6 +76,7 @@ A natural number is prime when it is at least `2` and its positive divisors are
 trivial. This is the Mathlib-free prime predicate used by downstream modular
 arithmetic layers.
 -/
+@[expose]
 def Prime (p : Nat) : Prop :=
   2 ≤ p ∧ ∀ m : Nat, m ∣ p → m = 1 ∨ m = p
 
@@ -185,6 +191,7 @@ operations.  The proof-facing `choose` is the exponential Pascal double recursio
 (`choose n k` spawns `Θ(choose n k)` calls); `chooseFast` is proven equal to it and
 registered `@[csimp]`, so every compiled caller of `choose` runs this instead.
 -/
+@[expose]
 def chooseFast (n k : Nat) : Nat :=
   if n < k then 0
   else (List.range k).foldl (fun acc j => acc * (n - j) / (j + 1)) 1
@@ -400,6 +407,7 @@ and no integer in `[2, n)` divides `n`. Used by downstream prime-search
 extensions to produce primality witnesses for candidates beyond any fixed
 list, without depending on `Mathlib` or `native_decide`.
 -/
+@[expose]
 def isPrimeTrial (n : Nat) : Bool :=
   decide (2 ≤ n) &&
     (List.range n).all (fun k => decide (k < 2) || decide (n % k ≠ 0))

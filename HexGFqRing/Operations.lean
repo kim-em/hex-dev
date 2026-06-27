@@ -1,6 +1,10 @@
-import Init.Grind.Ring.Basic
-import HexModArith.Ring
-import HexGFqRing.Basic
+module
+
+public import Init.Grind.Ring.Basic
+public import HexModArith.Ring
+public import HexGFqRing.Basic
+
+public section
 
 /-!
 Executable quotient-ring operations for canonical representatives in `F_p[x] / (f)`.
@@ -18,40 +22,48 @@ set_option linter.unusedSectionVars false
 variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
 
 /-- The quotient zero element. -/
+@[expose]
 def zero (f : FpPoly p) (hf : 0 < FpPoly.degree f) : PolyQuotient f hf :=
   ofPoly f hf 0
 
 /-- The quotient one element. -/
+@[expose]
 def one (f : FpPoly p) (hf : 0 < FpPoly.degree f) : PolyQuotient f hf :=
   ofPoly f hf 1
 
 /-- Embed a prime-field constant as a quotient-ring constant polynomial. -/
+@[expose]
 def const (f : FpPoly p) (hf : 0 < FpPoly.degree f) (c : ZMod64 p) :
     PolyQuotient f hf :=
   ofPoly f hf (FpPoly.C c)
 
 /-- Quotient addition reduces the sum of representatives. -/
+@[expose]
 def add {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y : PolyQuotient f hf) : PolyQuotient f hf :=
   ofPoly f hf (repr x + repr y)
 
 /-- Quotient multiplication reduces the product of representatives. -/
+@[expose]
 def mul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y : PolyQuotient f hf) : PolyQuotient f hf :=
   ofPoly f hf (repr x * repr y)
 
 /-- Quotient negation reduces the coefficientwise additive inverse. -/
+@[expose]
 def neg {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) : PolyQuotient f hf :=
   ofPoly f hf (-repr x)
 
 /-- Quotient subtraction reduces the difference of representatives. -/
+@[expose]
 def sub {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x y : PolyQuotient f hf) : PolyQuotient f hf :=
   ofPoly f hf (repr x - repr y)
 
 /-- Quotient exponentiation by square-and-multiply on the exponent bits, costing
 `O(log n)` quotient-ring multiplications. -/
+@[expose]
 def pow {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) : PolyQuotient f hf :=
   let rec go (acc base : PolyQuotient f hf) (k : Nat) : PolyQuotient f hf :=
@@ -67,10 +79,12 @@ def pow {f : FpPoly p} {hf : 0 < FpPoly.degree f}
   go (one f hf) x n
 
 /-- Natural-number literals in the quotient ring are reduced constant polynomials. -/
+@[expose]
 def natCast (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) : PolyQuotient f hf :=
   const f hf (n : ZMod64 p)
 
 /-- Natural scalar multiplication in the quotient ring. -/
+@[expose]
 def nsmul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (n : Nat) (x : PolyQuotient f hf) : PolyQuotient f hf :=
   let rec go (acc base : PolyQuotient f hf) (k : Nat) : PolyQuotient f hf :=
@@ -86,11 +100,13 @@ def nsmul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
   go (zero f hf) x n
 
 /-- Integer literals in the quotient ring. -/
+@[expose]
 def intCast (f : FpPoly p) (hf : 0 < FpPoly.degree f) : Int → PolyQuotient f hf
   | .ofNat n => natCast f hf n
   | .negSucc n => neg (natCast f hf (n + 1))
 
 /-- Integer scalar multiplication in the quotient ring. -/
+@[expose]
 def zsmul {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (i : Int) (x : PolyQuotient f hf) : PolyQuotient f hf :=
   match i with
@@ -892,7 +908,8 @@ theorem intCast_neg_eq (f : FpPoly p) (hf : 0 < FpPoly.degree f)
 `pow_zero` / `pow_succ` fields of the `Lean.Grind.Semiring` instance. The
 executable `pow` is square-and-multiply (`O(log n)`); `pow_eq_linearPow` ties
 the two together. -/
-private def linearPow {f : FpPoly p} {hf : 0 < FpPoly.degree f}
+@[expose]
+def linearPow {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) : Nat → PolyQuotient f hf
   | 0 => 1
   | n + 1 => linearPow x n * x
@@ -1020,7 +1037,7 @@ private theorem pow_go_eq_acc_mul_linearPow
 /-- The executable square-and-multiply `pow` returns the same element as the
 proof-only linear recurrence `linearPow`. The `Lean.Grind.Semiring` instance
 rewrites by this equality to discharge its `pow_succ` field. -/
-private theorem pow_eq_linearPow
+theorem pow_eq_linearPow
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : PolyQuotient f hf) (n : Nat) :
     pow x n = linearPow x n := by

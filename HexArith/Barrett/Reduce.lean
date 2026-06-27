@@ -1,4 +1,8 @@
-import HexArith.Barrett.ReduceNat
+module
+
+public import HexArith.Barrett.ReduceNat
+
+public section
 
 /-!
 Executable `UInt64` Barrett reduction for `HexArith`.
@@ -26,6 +30,7 @@ structure BarrettCtx (p : UInt64) where
 namespace BarrettCtx
 
 /-- Build the executable Barrett context for a small `UInt64` modulus. -/
+@[expose]
 def mk (p : UInt64) (hp : p.toNat > 1) (hlt : p.toNat < 2 ^ 32) : BarrettCtx p :=
   { p_gt := hp
     p_lt := hlt
@@ -38,6 +43,7 @@ end BarrettCtx
 Executable Barrett reduction on a single machine word, using the reciprocal
 stored in `ctx`.
 -/
+@[expose]
 def barrettReduce (ctx : BarrettCtx p) (T : UInt64) : UInt64 :=
   let q := UInt64.mulHi T ctx.pinv
   let r := T - q * p

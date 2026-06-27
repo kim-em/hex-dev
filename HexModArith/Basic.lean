@@ -1,6 +1,10 @@
-import HexArith.ExtGcd
-import HexArith.Nat.ModArith
-import HexArith.UInt64.Wide
+module
+
+public import HexArith.ExtGcd
+public import HexArith.Nat.ModArith
+public import HexArith.UInt64.Wide
+
+public section
 
 /-!
 Core `ZMod64` definitions for `hex-mod-arith`.
@@ -36,10 +40,12 @@ namespace ZMod64
 variable {p : Nat} [Bounds p]
 
 /-- View a residue as its reduced Nat representative. -/
+@[expose]
 def toNat (a : ZMod64 p) : Nat :=
   a.val.toNat
 
 /-- View a residue as its underlying `UInt64` word. -/
+@[expose]
 def toUInt64 (a : ZMod64 p) : UInt64 :=
   a.val
 
@@ -71,6 +77,7 @@ theorem ext_toNat {a b : ZMod64 p} (h : a.toNat = b.toNat) : a = b :=
   ext (UInt64.toNat_inj.mp h)
 
 /-- Reduce a Nat representative modulo `p`. -/
+@[expose]
 def normalize (p n : Nat) : Nat :=
   n % p
 
@@ -92,6 +99,7 @@ Build a reduced residue by taking the Nat representative mod `p`.
 The bound `p ≤ 2^64` ensures the reduced representative is stored faithfully in
 the backing `UInt64`.
 -/
+@[expose]
 def ofNat (p n : Nat) [Bounds p] : ZMod64 p := by
   let reduced := normalize p n
   have hred : reduced < p := normalize_lt p n
@@ -148,6 +156,7 @@ theorem ofNat_eq_ofNat_iff_mod_eq (x y : Nat) :
   rw [eq_iff_toNat_eq, toNat_ofNat, toNat_ofNat]
 
 /-- All canonical residues modulo `p`, listed in representative order. -/
+@[expose]
 def values (p : Nat) [Bounds p] : List (ZMod64 p) :=
   (List.range p).map fun n => ofNat p n
 
@@ -213,18 +222,22 @@ theorem values_nodup : (values p).Nodup := by
       (List.mem_range.mp hx) (List.mem_range.mp hy)).mp hxy
 
 /-- The zero residue class. -/
+@[expose]
 protected def zero : ZMod64 p :=
   ofNat p 0
 
 /-- The residue class of one. -/
+@[expose]
 protected def one : ZMod64 p :=
   ofNat p 1
 
 /-- The modulus as a `UInt64` word when `p < 2^64`. -/
+@[expose]
 def modulusWord (p : Nat) (hp : p < UInt64.word) : UInt64 :=
   UInt64.ofNatLT p hp
 
 /-- The correction word `2^64 - p` used when `p < 2^64`. -/
+@[expose]
 def complementWord (p : Nat) [Bounds p] (_hp : p < UInt64.word) : UInt64 :=
   UInt64.ofNatLT (UInt64.word - p) <| by
     exact Nat.sub_lt (by decide : 0 < 2 ^ 64) (Bounds.pPos (p := p))
@@ -430,6 +443,7 @@ private theorem sub_borrow_lt (a b : ZMod64 p) {hpLt : p < UInt64.word}
 Add two reduced residues using wrapped machine-word addition plus one
 correction step when `p < 2^64`.
 -/
+@[expose]
 def add (a b : ZMod64 p) : ZMod64 p := by
   by_cases hp : p = UInt64.word
   · refine ⟨a.val + b.val, ?_⟩
@@ -448,6 +462,7 @@ def add (a b : ZMod64 p) : ZMod64 p := by
 Subtract two residues by adding the modular complement of the second and
 reducing mod `p`.
 -/
+@[expose]
 def sub (a b : ZMod64 p) : ZMod64 p := by
   by_cases hp : p = UInt64.word
   · refine ⟨a.val - b.val, ?_⟩
@@ -465,7 +480,7 @@ Multiply two reduced residues and reduce the product mod `p`.
 The trusted runtime contract is the `lean_hex_zmod64_mul` extern, whose C body
 must agree with this pure Lean fallback.
 -/
-@[extern "lean_hex_zmod64_mul"]
+@[expose, extern "lean_hex_zmod64_mul"]
 def mul (a b : ZMod64 p) : ZMod64 p :=
   ofNat p (a.toNat * b.toNat)
 
@@ -475,7 +490,7 @@ Raise a residue to a natural power using exponentiation by squaring.
 The accumulator form keeps the executable path close to the intended downstream
 runtime usage while preserving a simple semantic contract.
 -/
-@[extern "lean_hex_zmod64_pow"]
+@[expose, extern "lean_hex_zmod64_pow"]
 def pow (a : ZMod64 p) (n : Nat) : ZMod64 p :=
   let rec go (base acc : ZMod64 p) (k : Nat) : ZMod64 p :=
     match k with
@@ -496,6 +511,7 @@ When `a` is coprime to `p`, this is the canonical inverse mod `p`; otherwise it
 still exposes the executable Bezout-derived residue needed by later algebraic
 layers.
 -/
+@[expose]
 def inv (a : ZMod64 p) : ZMod64 p :=
   let (_, s, _) := HexArith.Int.extGcd (Int.ofNat a.toNat) (Int.ofNat p)
   ofNat p (Int.toNat (s % Int.ofNat p))

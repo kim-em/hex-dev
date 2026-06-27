@@ -1,4 +1,11 @@
-import HexArith.Montgomery.Redc
+module
+
+public import HexArith.Montgomery.Redc
+
+public section
+set_option backward.proofsInPublic true
+set_option backward.privateInPublic true
+set_option maxHeartbeats 1000000
 
 /-!
 User-facing Montgomery modular arithmetic for `HexArith`.
@@ -24,7 +31,8 @@ private def r2Loop (p : UInt64) : Nat → UInt64 → UInt64
   | n + 1, acc => r2Loop p n (doubleMod p acc)
 
 /-- The `R^2 mod p` constant used to enter Montgomery form. -/
-private def r2OfModulus (p : UInt64) : UInt64 :=
+@[expose]
+def r2OfModulus (p : UInt64) : UInt64 :=
   if p ≤ 1 then
     0
   else
@@ -155,6 +163,7 @@ private theorem toNat_r2OfModulus (p : UInt64) (hp_pos : 0 < p.toNat) :
     · simpa [UInt64.word] using hsquare_lt
 
 /-- Build the executable Montgomery context for an odd `UInt64` modulus. -/
+@[expose]
 def mk (p : UInt64) (hp : p % 2 = 1) : MontCtx p :=
   { p_odd := hp
     p' := montInv p
@@ -236,15 +245,18 @@ theorem mk_p_lt_R (p : UInt64) (hp : p % 2 = 1) :
   (mk p hp).p_lt_R
 
 /-- Convert a standard residue into Montgomery form. -/
+@[expose]
 def toMont (ctx : MontCtx p) (a : UInt64) : UInt64 :=
   let (hi, lo) := UInt64.mulFull a ctx.r2
   redc ctx hi lo
 
 /-- Convert a Montgomery residue back to the standard representation. -/
+@[expose]
 def fromMont (ctx : MontCtx p) (a : UInt64) : UInt64 :=
   redc ctx 0 a
 
 /-- Multiply two Montgomery residues, staying inside the Montgomery domain. -/
+@[expose]
 def mulMont (ctx : MontCtx p) (a b : UInt64) : UInt64 :=
   let (hi, lo) := UInt64.mulFull a b
   redc ctx hi lo
@@ -655,7 +667,8 @@ private def powMont (ctx : MontCtx p) (base : UInt64) (n : Nat) : UInt64 :=
   powMontBitsGo ctx n (bitLength n) 0 (ctx.toMont (UInt64.ofNat (1 % p.toNat))) base
 
 /-- Word-sized odd-modulus modular exponentiation via Montgomery arithmetic. -/
-private def powModWordOdd (a n : Nat) (p : UInt64) (hp : p % 2 = 1) : Nat :=
+@[expose]
+def powModWordOdd (a n : Nat) (p : UInt64) (hp : p % 2 = 1) : Nat :=
   let ctx := MontCtx.mk p hp
   let base := ctx.toMont (UInt64.ofNat (a % p.toNat))
   (ctx.fromMont (powMont ctx base n)).toNat
@@ -669,7 +682,8 @@ private def powModNatGo (n p : Nat) : Nat → Nat → Nat → Nat → Nat
       powModNatGo n p remaining (bit + 1) acc' base'
 
 /-- Nat-level fallback modular exponentiation by repeated squaring. -/
-private def powModNat (a n p : Nat) : Nat :=
+@[expose]
+def powModNat (a n p : Nat) : Nat :=
   powModNatGo n p (bitLength n) 0 (1 % p) (a % p)
 
 /-- `pow_sq`: an even power `base ^ (2 * q)` equals the squared base `(base * base) ^ q`. -/
@@ -976,6 +990,7 @@ private theorem powModWordOdd_eq (a n : Nat) (p : UInt64) (hp : p % 2 = 1) :
 Modular exponentiation by repeated squaring, using Montgomery arithmetic for
 odd `UInt64` moduli and a direct Nat fallback otherwise.
 -/
+@[expose]
 def powMod (a n p : Nat) : Nat :=
   if _hp0 : p = 0 then
     0

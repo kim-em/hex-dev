@@ -1,5 +1,9 @@
-import HexArith.Nat.Prime
-import HexModArith.Ring
+module
+
+public import HexArith.Nat.Prime
+public import HexModArith.Ring
+
+public section
 
 /-!
 Prime-modulus theorem surface for `hex-mod-arith`.
@@ -21,7 +25,7 @@ class PrimeModulus (p : Nat) : Prop where
 
 /-- Build the prime-modulus typeclass witness from an explicit project-local
 primality proof. -/
-@[reducible]
+@[expose, reducible]
 def primeModulusOfPrime (hp : Hex.Nat.Prime p) : PrimeModulus p :=
   ⟨hp⟩
 

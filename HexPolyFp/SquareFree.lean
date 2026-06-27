@@ -1,5 +1,11 @@
-import HexModArith.Prime
-import HexPolyFp.Basic
+module
+public meta import HexPolyFp.Basic
+public meta import HexModArith.Ring
+
+public import HexModArith.Prime
+public import HexPolyFp.Basic
+
+public section
 
 /-!
 Executable square-free decomposition for `F_p[x]`.
@@ -32,7 +38,8 @@ structure SquareFreeDecomposition (p : Nat) [ZMod64.Bounds p] where
   factors : List (SquareFreeFactor p)
 
 /-- Detect the unit polynomial `1`. -/
-private def isOne (f : FpPoly p) : Bool :=
+@[expose]
+def isOne (f : FpPoly p) : Bool :=
   match f.degree? with
   | some 0 =>
       if f.coeff 0 = (1 : ZMod64 p) then
@@ -75,7 +82,8 @@ private theorem eq_one_of_isOne_true
         simp [hdeg] at h
 
 /-- Polynomial exponentiation uses square-and-multiply on the exponent bits. -/
-private def pow (f : FpPoly p) (n : Nat) : FpPoly p :=
+@[expose]
+def pow (f : FpPoly p) (n : Nat) : FpPoly p :=
   let rec go (acc base : FpPoly p) (k : Nat) : FpPoly p :=
     if hk : k = 0 then
       acc
@@ -579,6 +587,7 @@ private theorem powLinear_add_prime
   rw [hmid, powLinearBinomTerm_prime_top]
 
 /-- Multiply the factors in a square-free decomposition with their multiplicities. -/
+@[expose]
 def weightedProduct (factors : List (SquareFreeFactor p)) : FpPoly p :=
   factors.foldl (fun acc sf => acc * pow sf.factor sf.multiplicity) 1
 
@@ -647,7 +656,8 @@ private theorem weightedProduct_reverse_cons
 Extract the formal `p`-th root by keeping exactly the coefficients whose
 degrees are multiples of `p`.
 -/
-private def pthRoot (f : FpPoly p) : FpPoly p :=
+@[expose]
+def pthRoot (f : FpPoly p) : FpPoly p :=
   let rootSize := (f.size + p - 1) / p
   ofCoeffs <|
     (List.range rootSize).map (fun i => f.coeff (i * p)) |>.toArray
@@ -1164,7 +1174,8 @@ theorem fpPoly_leadingCoeff_ne_zero_of_isZero_false
   exact hlast
 
 /-- Split off the leading coefficient so the recursive Yun loop can work on a monic input. -/
-private def normalizeMonic (f : FpPoly p) : ZMod64 p × FpPoly p :=
+@[expose]
+def normalizeMonic (f : FpPoly p) : ZMod64 p × FpPoly p :=
   if f.isZero then
     (0, 0)
   else
@@ -1283,7 +1294,8 @@ emitting `c / gcd c w` then leaks that scalar into the square-free factor,
 breaking the exact reconstruction `weightedProduct = f`. The monic associate
 divides `c` and `w` exactly as the raw gcd does, so every reconstruction
 identity carries over, but the emitted quotient stays monic. -/
-private def monicGcd (c w : FpPoly p) : FpPoly p :=
+@[expose]
+def monicGcd (c w : FpPoly p) : FpPoly p :=
   (normalizeMonic (DensePoly.gcd c w)).2
 
 /-- Definitional unfolding lemma for `monicGcd`. The def itself is sealed
@@ -1966,7 +1978,8 @@ Yun's inner loop: peel off the factors with multiplicities `i`, `i + 1`, ...
 from the coprime/repeated split `(c, w)`, consing each discovered factor onto
 the reverse-order accumulator.
 -/
-private def yunFactorsWithLevel
+@[expose]
+def yunFactorsWithLevel
     (c w : FpPoly p) (base level : Nat) (fuel : Nat)
     (accRev : List (SquareFreeFactor p)) :
     List (SquareFreeFactor p) × FpPoly p :=
@@ -2557,9 +2570,8 @@ private theorem ne_zero_of_monic_fpoly
   intro hzero
   have hlead_one : DensePoly.leadingCoeff f = 1 := hmonic
   rw [hzero] at hlead_one
-  have hlead_zero : DensePoly.leadingCoeff (0 : FpPoly p) = (0 : ZMod64 p) := by
-    unfold DensePoly.leadingCoeff
-    rfl
+  have hlead_zero : DensePoly.leadingCoeff (0 : FpPoly p) = (0 : ZMod64 p) :=
+    DensePoly.leadingCoeff_zero
   rw [hlead_zero] at hlead_one
   exact zmod64_one_ne_zero_of_prime hp hlead_one.symm
 
@@ -3516,7 +3528,8 @@ Tail-recursive square-free decomposition over `F_p[x]`, accumulating factors
 in reverse output order. A derivative-zero branch descends through the formal
 `p`-th root and scales multiplicities by `p`.
 -/
-private def squareFreeAuxRev (f : FpPoly p) (multiplicity : Nat) :
+@[expose]
+def squareFreeAuxRev (f : FpPoly p) (multiplicity : Nat) :
     Nat → List (SquareFreeFactor p) → List (SquareFreeFactor p)
   | 0, accRev => accRev
   | fuel + 1, accRev =>
@@ -3541,7 +3554,8 @@ private def squareFreeAuxRev (f : FpPoly p) (multiplicity : Nat) :
 Recursive square-free decomposition over `F_p[x]`. A derivative-zero branch
 descends through the formal `p`-th root and scales multiplicities by `p`.
 -/
-private def squareFreeAux (f : FpPoly p) (multiplicity : Nat)
+@[expose]
+def squareFreeAux (f : FpPoly p) (multiplicity : Nat)
     (fuel : Nat) : List (SquareFreeFactor p) :=
   (squareFreeAuxRev f multiplicity fuel []).reverse
 
@@ -7795,6 +7809,7 @@ private theorem squareFreeAux_zero_weightedProduct
 Compute a square-free decomposition by normalizing away the leading scalar and
 running Yun's algorithm on the resulting monic polynomial.
 -/
+@[expose]
 def squareFreeDecomposition (hp : Hex.Nat.Prime p) (f : FpPoly p) : SquareFreeDecomposition p :=
   let _ := hp
   let normalized := normalizeMonic f

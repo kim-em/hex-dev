@@ -1,4 +1,8 @@
-import Lake
+module
+
+public import Lake
+
+public section
 
 open System Lake DSL
 
@@ -14,17 +18,17 @@ require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @ "v4.30.0-rc2"
 
 require HexMatrix from git
-  "https://github.com/kim-em/hex-matrix.git" @ "20e4c73f958cf7996199972a45e538d06121f91f"
+  "https://github.com/kim-em/hex-matrix.git" @ "863836597fb000c6263042ce023a9375db33cb1f"
 require HexMatrixMathlib from git
-  "https://github.com/kim-em/hex-matrix-mathlib.git" @ "7e2eed8ae6d962d11e65d5763ce93439ce3fcb72"
+  "https://github.com/kim-em/hex-matrix-mathlib.git" @ "bbdbd6f2b4b3ed8dcd95abb170d9186ceb88e3a1"
 require HexGramSchmidt from git
-  "https://github.com/kim-em/hex-gram-schmidt.git" @ "d9ffab41cd4b400bc05eb69eb1724484d43017e3"
+  "https://github.com/kim-em/hex-gram-schmidt.git" @ "5e607d0d5e4d6de7382a69f1087e50a5f68d3e57"
 require HexGramSchmidtMathlib from git
-  "https://github.com/kim-em/hex-gram-schmidt-mathlib.git" @ "29404cfe535ec3dc53a6a174235e69fbf0c3c7e8"
+  "https://github.com/kim-em/hex-gram-schmidt-mathlib.git" @ "336e3338fe5446f6eca0e4291460480a92678cd9"
 require HexLLL from git
-  "https://github.com/kim-em/hex-lll.git" @ "ff9729a08b65fda89f391eca5ce5b4497711f815"
+  "https://github.com/kim-em/hex-lll.git" @ "4b7cad78861fd1c3f5919631964e8e8ede4c2d7c"
 require HexLLLMathlib from git
-  "https://github.com/kim-em/hex-lll-mathlib.git" @ "e4554e109e1cd93547572819499c33db769300af"
+  "https://github.com/kim-em/hex-lll-mathlib.git" @ "1ca96d0887e32be55106b2b468e026fe08097af1"
 
 private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexGF2" / "ffi" / "clmul.o"

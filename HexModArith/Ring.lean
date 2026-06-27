@@ -1,5 +1,9 @@
-import Init.Grind.Ring.Basic
-import HexModArith.Basic
+module
+
+public import Init.Grind.Ring.Basic
+public import HexModArith.Basic
+
+public section
 
 /-!
 Ring-facing `ZMod64` API for `hex-mod-arith`.
@@ -71,6 +75,7 @@ private theorem neg_nonzero_lt (a : ZMod64 p) {hpLt : p < UInt64.word}
   omega
 
 /-- The additive inverse represented by the complementary residue mod `p`. -/
+@[expose]
 def neg (a : ZMod64 p) : ZMod64 p := by
   by_cases hp : p = UInt64.word
   · refine ⟨-a.val, ?_⟩
@@ -83,19 +88,23 @@ def neg (a : ZMod64 p) : ZMod64 p := by
     · exact ⟨-a.val - c64, by simpa [c64] using neg_nonzero_lt a hzero⟩
 
 /-- Natural-number literals in `ZMod64`. -/
+@[expose]
 def natCast (p : Nat) [Bounds p] (n : Nat) : ZMod64 p :=
   ofNat p n
 
 /-- Natural scalar multiplication on `ZMod64`. -/
+@[expose]
 def nsmul (n : Nat) (a : ZMod64 p) : ZMod64 p :=
   ofNat p (n * a.toNat)
 
 /-- Integer literals in `ZMod64`, reduced mod `p`. -/
+@[expose]
 def intCast (p : Nat) [Bounds p] : Int → ZMod64 p
   | .ofNat n => natCast p n
   | .negSucc n => neg (natCast p (n + 1))
 
 /-- Integer scalar multiplication on `ZMod64`. -/
+@[expose]
 def zsmul (i : Int) (a : ZMod64 p) : ZMod64 p :=
   match i with
   | .ofNat n => nsmul n a
@@ -257,7 +266,7 @@ theorem toNat_inv (a : ZMod64 p) (hcop : Nat.Coprime a.val.toNat p) :
 fully reduced form where each operand is already taken `% m`. This is the
 reduced-arithmetic identity discharging the additive-associativity ring
 law on `ZMod64 p` after the operands are normalised. -/
-private theorem nat_add_assoc_mod (x y z m : Nat) :
+theorem nat_add_assoc_mod (x y z m : Nat) :
     (((x % m + y % m) % m + z % m) % m) =
       (x % m + (y % m + z % m) % m) % m := by
   calc
@@ -270,7 +279,7 @@ private theorem nat_add_assoc_mod (x y z m : Nat) :
 /-- Associativity of `Nat` multiplication under an outer `% m`, with each
 operand pre-reduced `% m`. This is the reduced-arithmetic identity
 discharging the multiplicative-associativity ring law on `ZMod64 p`. -/
-private theorem nat_mul_assoc_mod (x y z m : Nat) :
+theorem nat_mul_assoc_mod (x y z m : Nat) :
     (((x % m * (y % m)) % m * (z % m)) % m) =
       (x % m * ((y % m * (z % m)) % m)) % m := by
   calc
@@ -284,7 +293,7 @@ private theorem nat_mul_assoc_mod (x y z m : Nat) :
 outer `% m`, with each operand pre-reduced `% m`. This is the
 reduced-arithmetic identity discharging the left-distributivity ring law
 on `ZMod64 p`. -/
-private theorem nat_left_distrib_mod (x y z m : Nat) :
+theorem nat_left_distrib_mod (x y z m : Nat) :
     (x % m * ((y % m + z % m) % m) % m) =
       ((x % m * (y % m)) % m + (x % m * (z % m)) % m) % m := by
   calc
@@ -299,7 +308,7 @@ private theorem nat_left_distrib_mod (x y z m : Nat) :
 outer `% m`, with each operand pre-reduced `% m`. This is the
 reduced-arithmetic identity discharging the right-distributivity ring law
 on `ZMod64 p`. -/
-private theorem nat_right_distrib_mod (x y z m : Nat) :
+theorem nat_right_distrib_mod (x y z m : Nat) :
     (((x % m + y % m) % m) * (z % m) % m) =
       ((x % m * (z % m)) % m + (y % m * (z % m)) % m) % m := by
   calc
@@ -338,7 +347,7 @@ private theorem nat_neg_neg_mod (x m : Nat) (hx : x < m) :
 /-- Commutativity of `Nat` multiplication under an outer `% m`. This is the
 reduced-arithmetic identity discharging the multiplicative-commutativity
 law of the `CommRing (ZMod64 p)` instance. -/
-private theorem nat_mul_comm_mod (x y m : Nat) :
+theorem nat_mul_comm_mod (x y m : Nat) :
     (x * y) % m = (y * x) % m := by
   rw [Nat.mul_comm]
 

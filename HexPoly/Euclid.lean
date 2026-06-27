@@ -1,6 +1,12 @@
-import Init.Grind.Ring.Basic
-import Init.Data.List.Lemmas
-import HexPoly.Operations
+module
+
+public import Init.Grind.Ring.Basic
+public import Init.Data.List.Lemmas
+public import HexPoly.Operations
+
+public section
+set_option backward.proofsInPublic true
+set_option backward.privateInPublic true
 
 /-!
 Executable Euclidean-algorithm operations for dense array-backed polynomials.
@@ -18,6 +24,7 @@ namespace DensePoly
 variable {R : Type u} [Zero R] [DecidableEq R]
 
 /-- The leading coefficient, or `0` for the zero polynomial. -/
+@[expose]
 def leadingCoeff (p : DensePoly R) : R :=
   p.coeffs.back?.getD 0
 
@@ -25,7 +32,9 @@ def leadingCoeff (p : DensePoly R) : R :=
 normal form so callers reasoning about `leadingCoeff` discharge the zero case
 automatically. -/
 @[simp, grind =] theorem leadingCoeff_zero : (0 : DensePoly R).leadingCoeff = 0 := by
-  rfl
+  unfold leadingCoeff
+  rw [show (DensePoly.coeffs (0 : DensePoly R)) = #[] from rfl]
+  simp
 
 /-- The constant polynomial `1`. -/
 instance [One R] : One (DensePoly R) where
@@ -39,10 +48,10 @@ lets callers read the leading coefficient off any constant. -/
   · rw [hc]
     unfold leadingCoeff
     rw [coeffs_C_zero]
-    rfl
+    simp
   · unfold leadingCoeff
     rw [coeffs_C_of_ne_zero hc]
-    rfl
+    simp
 
 /-- The constant polynomial `1` has leading coefficient `1`, hence is monic.
 Specialises `leadingCoeff_C` and feeds the monicity facts about `1` that the
@@ -52,6 +61,7 @@ division and gcd routines rely on. -/
   rw [leadingCoeff_C]
 
 /-- A polynomial is monic when its leading coefficient is `1`. -/
+@[expose]
 def Monic [One R] (p : DensePoly R) : Prop :=
   p.leadingCoeff = 1
 
@@ -84,6 +94,7 @@ theorem leadingCoeff_ne_zero_of_pos_size (p : DensePoly R) (hpos : 0 < p.size) :
 
 /-- `arrayDegreeAux coeffs fuel` scans indices below `fuel` downward and returns the
 greatest index whose coefficient is nonzero, or `none` if every coefficient below `fuel` is zero. -/
+@[expose]
 def arrayDegreeAux (coeffs : Array R) : Nat → Option Nat
   | 0 => none
   | fuel + 1 =>
@@ -95,6 +106,7 @@ def arrayDegreeAux (coeffs : Array R) : Nat → Option Nat
 
 /-- `arrayDegree? coeffs` is the highest index of a nonzero coefficient of `coeffs`, or `none`
 when every coefficient is zero, computed by scanning from `coeffs.size` downward. -/
+@[expose]
 def arrayDegree? (coeffs : Array R) : Option Nat :=
   arrayDegreeAux coeffs coeffs.size
 
@@ -233,6 +245,7 @@ private theorem ofCoeffs_degree_getD_lt_of_forall_zero_ge {coeffs : Array R} {bo
 /-- One coefficient of a long-division elimination step: subtract `coeff * q[j]` from
 position `shift + j` of `next`, the inner action folded by `subtractScaledShift` to wipe
 out the leading term of the current remainder. -/
+@[expose]
 def subtractScaledShiftStep [Sub R] [Mul R]
     (q : Array R) (shift : Nat) (coeff : R) (next : Array R) (j : Nat) : Array R :=
   let idx := shift + j
@@ -241,6 +254,7 @@ def subtractScaledShiftStep [Sub R] [Mul R]
 /-- Subtract `coeff` times the divisor `q` shifted up by `shift` positions from the
 remainder `rem`, i.e. one full long-division step `rem - coeff * xˢʰⁱᶠᵗ * q`, realised by
 folding `subtractScaledShiftStep` over every index of `q`. -/
+@[expose]
 def subtractScaledShift [Sub R] [Mul R]
     (rem q : Array R) (shift : Nat) (coeff : R) : Array R :=
   (List.range q.size).foldl (subtractScaledShiftStep q shift coeff) rem
@@ -546,6 +560,7 @@ it in `quot`, eliminate the leading term via `subtractScaledShift`, and recurse,
 the final `(quotient, remainder)` pair. The compiled runtime uses the value-equal
 `divModArrayAuxImpl` (proved by `divModArrayAux_eq_impl`, registered `@[csimp]`), which
 tracks the working degree instead of rescanning. -/
+@[expose]
 def divModArrayAux [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R)
     (fuel : Nat) (quot rem : Array R) : Array R × Array R :=
@@ -674,7 +689,7 @@ private theorem divModArrayAuxImpl_eq [Sub R] [Mul R]
 `divModArrayAux`. Unlike `@[implemented_by]`, the `@[csimp]` swap is backed by the proof
 `divModArrayAuxImpl_eq`, so the runtime loop is verified equal to the specification. -/
 @[csimp]
-private theorem divModArrayAux_eq_impl : @divModArrayAux = @divModArrayAuxImpl := by
+theorem divModArrayAux_eq_impl : @divModArrayAux = @divModArrayAuxImpl := by
   funext R _ _ _ _ q qDegree scaleLead fuel quot rem
   exact (divModArrayAuxImpl_eq q qDegree scaleLead fuel quot rem).symm
 
@@ -775,6 +790,7 @@ private theorem divModArrayAux_remainder_zero_ge [Sub R] [Mul R]
 /-- Array-backed long division of dense polynomial `p` by `q`: returns `(0, p)` when `q`
 is zero, otherwise seeds a zero quotient and runs `divModArrayAux` with `p.size` fuel,
 packaging the resulting coefficient arrays back as `DensePoly` quotient and remainder. -/
+@[expose]
 def divModArray [Sub R] [Mul R]
     (p q : DensePoly R) (scaleLead : R → R) : DensePoly R × DensePoly R :=
   if q.isZero then
@@ -891,6 +907,7 @@ private def divModMonicAux [One R] [Add R] [Sub R] [Mul R]
 
 /-- Divide by a monic polynomial. The remainder has degree below the divisor whenever the fuel
 is sufficient, which is the case for normalized dense polynomials. -/
+@[expose]
 def divModMonic [One R] [Add R] [Sub R] [Mul R]
     (p q : DensePoly R) (_hmonic : Monic q) :
     DensePoly R × DensePoly R :=
@@ -918,6 +935,7 @@ private def divModAux [One R] [Add R] [Sub R] [Mul R] [Div R]
         | _, _ => (quot, rem)
 
 /-- Polynomial division with remainder over a field. -/
+@[expose]
 def divMod [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : DensePoly R × DensePoly R :=
   if p.degree?.getD 0 < q.degree?.getD 0 then
@@ -1041,16 +1059,19 @@ theorem divMod_eq_zero_self_of_size_zero_core [One R] [Add R] [Sub R] [Mul R] [D
   simp [hqzero]
 
 /-- Quotient from polynomial long division over a field. -/
+@[expose]
 def div [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : DensePoly R :=
   (divMod p q).1
 
 /-- Remainder from polynomial long division over a field. -/
+@[expose]
 def mod [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : DensePoly R :=
   (divMod p q).2
 
 /-- Remainder from long division by a monic polynomial over a commutative ring. -/
+@[expose]
 def modByMonic [One R] [Add R] [Sub R] [Mul R]
     (p q : DensePoly R) (hmonic : Monic q) : DensePoly R :=
   (divModMonic p q hmonic).2
@@ -1091,6 +1112,7 @@ private def xgcdAux [One R] [Add R] [Sub R] [Mul R] [Div R]
         xgcdAux r₁ s₁ t₁ r (s₀ - q * s₁) (t₀ - q * t₁) fuel
 
 /-- Extended gcd over a field, returning the gcd together with Bezout coefficients. -/
+@[expose]
 def xgcd [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : XGCDResult R :=
   xgcdAux p 1 0 q 0 1 (p.size + q.size + 1)
@@ -1130,6 +1152,7 @@ theorem gcdAux_eq_xgcdAux_gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
 Bezout coefficients, and computing them costs an extra polynomial multiplication
 per step (`O(deg³)` vs `O(deg²)`). `xgcd` stays available for callers that
 genuinely need Bezout coefficients. -/
+@[expose]
 def gcd [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : DensePoly R :=
   gcdAux p q (p.size + q.size + 1)
@@ -1461,6 +1484,7 @@ namespace DensePoly
 /-- The `i`-th summand of the degree-`n` convolution diagonal of `p * q`,
 `p.coeff i * q.coeff (n - i)`, zeroed once the degree guard `n < i` fires;
 the single-index term that `mulCoeffSum` is reorganised into. -/
+@[expose]
 def diagonalMulCoeffTerm {S : Type _} [Zero S] [DecidableEq S] [Mul S]
     (p q : DensePoly S) (n i : Nat) : S :=
   if n < i then 0 else p.coeff i * q.coeff (n - i)
@@ -4307,10 +4331,12 @@ private def contentNat (p : DensePoly Int) : Nat :=
   p.toArray.toList.foldl (fun acc coeff => Nat.gcd acc coeff.natAbs) 0
 
 /-- The integer content of a polynomial. This is always nonnegative. -/
+@[expose]
 def content (p : DensePoly Int) : Int :=
   Int.ofNat (contentNat p)
 
 /-- The primitive part obtained by dividing every coefficient by the content. -/
+@[expose]
 def primitivePart (p : DensePoly Int) : DensePoly Int :=
   let cNat := contentNat p
   if cNat = 0 then
@@ -5280,11 +5306,13 @@ theorem primitivePart_primitive (p : DensePoly Int) (h : content p ≠ 0) :
 If `s * a + t * b = 1`, then `polyCRT a b u v s t` is congruent to `u`
 modulo `a` and to `v` modulo `b`; see `polyCRT_congr_fst`,
 `polyCRT_congr_snd`, `polyCRT_mod_fst`, and `polyCRT_mod_snd`. -/
+@[expose]
 def polyCRT {S : Type _} [Zero S] [DecidableEq S] [One S] [Add S] [Mul S]
     (a b u v s t : DensePoly S) : DensePoly S :=
   u * t * b + v * s * a
 
 /-- `Congr p q m` means `p` and `q` differ by a multiple of `m`. -/
+@[expose]
 def Congr {S : Type _} [Zero S] [DecidableEq S] [Add S] [Sub S] [Mul S]
     (p q m : DensePoly S) : Prop :=
   m ∣ (p - q)
@@ -5614,7 +5642,7 @@ theorem polyCRT_mod_snd :
 /-! ## Gauss's lemma on content multiplicativity for `DensePoly Int`. -/
 
 /-- Local primality predicate for `Nat`. `HexPoly` is foundational and does not
-import the `Hex.Nat.Prime` API; we keep a private copy of just enough machinery
+public import the `Hex.Nat.Prime` API; we keep a private copy of just enough machinery
 to formulate Gauss's lemma on integer polynomial content. -/
 private def NatPrime (p : Nat) : Prop :=
   2 ≤ p ∧ ∀ m : Nat, m ∣ p → m = 1 ∨ m = p

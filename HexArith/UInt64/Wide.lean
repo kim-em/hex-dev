@@ -1,4 +1,8 @@
-import Std
+module
+
+public import Std
+
+public section
 
 /-!
 Wide-word helper operations for `UInt64`.
@@ -11,6 +15,7 @@ these operations as the only interface to machine-word overflow behavior.
 namespace UInt64
 
 /-- The radix for a single `UInt64` word. -/
+@[expose]
 def word : Nat := 2 ^ 64
 
 /-- The `UInt64` word radix is positive. -/
@@ -27,12 +32,12 @@ theorem toNat_ofNat_mod_word (n : Nat) :
   simp [word]
 
 /-- The high 64 bits of the product `a * b`, viewed in radix `2^64`. -/
-@[extern "lean_hex_uint64_mul_hi"]
+@[expose, extern "lean_hex_uint64_mul_hi"]
 def mulHi (a b : UInt64) : UInt64 :=
   .ofNat (a.toNat * b.toNat / word)
 
 /-- The full `UInt64 × UInt64` product, split into high and low radix-`2^64` words. -/
-@[extern "lean_hex_uint64_mul_full"]
+@[expose, extern "lean_hex_uint64_mul_full"]
 def mulFull (a b : UInt64) : UInt64 × UInt64 :=
   let p := a.toNat * b.toNat
   (.ofNat (p / word), .ofNat p)
@@ -41,7 +46,7 @@ def mulFull (a b : UInt64) : UInt64 × UInt64 :=
 Add `a`, `b`, and an incoming carry bit, returning the wrapped low word and the
 outgoing carry bit.
 -/
-@[extern "lean_hex_uint64_add_carry"]
+@[expose, extern "lean_hex_uint64_add_carry"]
 def addCarry (a b : UInt64) (cin : Bool) : UInt64 × Bool :=
   let total := a.toNat + b.toNat + cin.toNat
   (.ofNat total, decide (word ≤ total))
@@ -50,7 +55,7 @@ def addCarry (a b : UInt64) (cin : Bool) : UInt64 × Bool :=
 Subtract `b` and an incoming borrow bit from `a`, returning the wrapped low
 word and the outgoing borrow bit.
 -/
-@[extern "lean_hex_uint64_sub_borrow"]
+@[expose, extern "lean_hex_uint64_sub_borrow"]
 def subBorrow (a b : UInt64) (bin : Bool) : UInt64 × Bool :=
   let rhs := b.toNat + bin.toNat
   if rhs ≤ a.toNat then
