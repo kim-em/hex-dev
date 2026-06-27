@@ -9335,6 +9335,81 @@ def factorFast (f : ZPoly) : Option Factorization :=
 #guard factorFastWithBound (DensePoly.ofCoeffs #[1, 0, 0, 0, 1]) 4 = none
 #guard factorFastWithBound cldGuardF 1 = none
 
+/-- The CLD recovery's equivalence-class partition at this precision is the single
+all-ones class — the signature of an *irreducible* input (all lifted mod-`p`
+factors form the one integer factor). At cap precision this certifies
+irreducibility; below the cap it may instead mean the lattice has not separated
+the factors yet, so callers must only trust it at `k ≥ bhksBound`. (`factorFast`
+itself treats this partition as `degenerate` and declines, which is why it
+"misses" on Swinnerton-Dyer inputs; the lattice tier uses this predicate to turn
+the declined-but-certified case into a positive irreducibility verdict.) -/
+def bhksSingleAllOnesPartition (f : ZPoly) (d : LiftData) : Bool :=
+  let L := bhksLatticeBasis f d.p d.k d.liftedFactors
+  if hrows : 1 ≤ L.factorCount + L.coeffWidth then
+    let projected := bhksProjectedRows L hrows
+    let indicators := bhksEquivalenceClassIndicators projected
+    !indicators.isEmpty && !projected.projectedRows.isEmpty &&
+      indicators.size == 1 && bhksIndicatorAllOnes projected.factorCount (indicators.getD 0 #[])
+  else
+    false
+
+/-- Large-`r` lattice-tier core factorisation: the van Hoeij CLD recovery, plus
+**irreducibility certification at the cap**. When the recovery splits `core`, use
+its factors; when it declines (no split found), check the cap-precision partition:
+the single all-ones class means `core` is irreducible (`#[core]`), anything else
+is a genuine failure (`none`). -/
+def latticeCoreFactorsWithBound
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Option (Array ZPoly) :=
+  if primeData.factorsModP.size ≤ 1 then
+    some #[core]
+  else
+    match factorFastCoreWithBound core B primeData
+        (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
+    | some coreFactors => some coreFactors
+    | none =>
+        if bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core B primeData) then
+          some #[core]
+        else
+          none
+
+/-- Raw factor array for the large-`r` lattice tier; mirror of
+`factorFastFactorsWithBound` but certifying irreducibility at the cap so that
+Swinnerton-Dyer / high-`r` irreducibles return `some #[f]` instead of `none`. -/
+def factorLatticeFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
+  let normalized := normalizeForFactor f
+  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+    some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
+  else if B = 0 then
+    none
+  else
+    match quadraticIntegerRootFactors? normalized.squareFreeCore with
+    | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
+    | none =>
+        match choosePrimeData? normalized.squareFreeCore with
+        | none => none
+        | some primeData =>
+            (latticeCoreFactorsWithBound normalized.squareFreeCore B primeData).map
+              fun coreFactors => reassemblePolynomialFactors normalized coreFactors
+
+def factorLatticeWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
+  (factorLatticeFactorsWithBound f B).map (factorizationOfFactors f)
+
+/-- Van Hoeij CLD lattice tier (large-`r`) at the full BHKS precision cap. Unlike
+`factorFast`, certifies irreducibility, so it returns `some` on Swinnerton-Dyer
+and cyclotomic high-`r` irreducibles. -/
+def factorLattice (f : ZPoly) : Option Factorization :=
+  factorLatticeWithBound f (factorFastPrecisionCap f)
+
+-- Swinnerton-Dyer SD2 and Φ₁₅: irreducible over ℤ but split mod p; `factorFast`
+-- misses, `factorLattice` certifies them as single irreducible factors.
+#guard ((factorLattice (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).map (·.factors.size)) = some 1
+#guard ((factorLattice (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).map Factorization.product)
+  = some (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])
+#guard ((factorLattice (DensePoly.ofCoeffs #[1, -1, 0, 1, -1, 1, 0, -1, 1])).map (·.factors.size)) = some 1
+-- a reducible input the CLD splits directly still works
+#guard ((factorLattice (DensePoly.ofCoeffs #[6, 0, -5, 0, 1])).map Factorization.product)
+  = some (DensePoly.ofCoeffs #[6, 0, -5, 0, 1])
+
 /-- Smoke-test driver for the core-coordinate fast recovery: select the good
 prime exactly as the fast path does, then run `coreRecover?` against the
 `coreLiftData` (`monicTarget`) lift at the public precision cap.  Used by the
