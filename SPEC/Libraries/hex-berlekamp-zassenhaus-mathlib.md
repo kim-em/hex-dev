@@ -4,7 +4,18 @@ Instantiates the conditional correctness theorems from
 hex-berlekamp-zassenhaus (which take an abstract coefficient bound)
 with the Mignotte bound from hex-poly-z-mathlib, giving unconditional
 results. All statements use the `Factorization` record from
-`hex-berlekamp-zassenhaus.md`'s output-convention section:
+`hex-berlekamp-zassenhaus.md`'s output-convention section.
+
+The headline theorems below hold over the **cost-based hybrid `factor`**
+(the `factorClassical` / `factorLattice` / `factorTrial` tiers). By the
+tier-result-equivalence and dispatch-soundness contracts (main spec
+§*Invariant contracts and dispatch soundness*), `factor`'s output is
+independent of which tier the dispatcher selects, so these theorems
+reduce to the per-tier correctness — Group A for the classical tier,
+Group B for the lattice tier, Group C for the combinator. Per the
+project's performance-led principle (`SPEC/design-principles.md`), these
+proofs adapt to the committed executable tiers; the implementation is
+not reshaped to ease them.
 
 ```lean
 theorem factor_product (f : ZPoly) :

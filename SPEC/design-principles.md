@@ -133,6 +133,24 @@
    the phase in which the helper lives. The same rollback path
    that applies under principle 7 applies here.
 
+9. **Performance-led implementation; proofs adapt to it.** Where a
+   library competes with a verified external reference (e.g.
+   `hex-berlekamp-zassenhaus` vs the AFP `Berlekamp_Zassenhaus`), the
+   *shape* of the data-level implementation is chosen for performance
+   and validated by **conformance** (differential testing against the
+   reference / an oracle) and **benchmarking** (match the reference on
+   easy inputs, beat it where the reference is asymptotically worse).
+   These two gates are required and **merge-blocking** before the
+   correctness proofs are completed; the formal proofs then adapt to the
+   committed executable invariants. Do **not** weaken a spec, or modify a
+   committed `def`, to make a proof go through — that inverts the
+   dependency and has repeatedly produced churn. Freeze the proof-shaped
+   invariant surface early (state the contracts, check them in
+   conformance) so the proofs have a stable target, but let correctness
+   be *established* by the gates first and *certified* by the proofs
+   last. This does not relax principle 7 (no data-level scaffolding) or
+   the no-`axiom` rule; it orders the work, it does not lower the bar.
+
 ## Lakefile
 
 Use `precompileModules := true` only on libraries that export

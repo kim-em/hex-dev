@@ -5,14 +5,43 @@ Depends on hex-berlekamp + hex-hensel + hex-lll.
 Complete factoring of univariate polynomials over `Z`.
 
 This library exposes a stable public factoring API delivered by a
-**two-tier architecture**: a fast van Hoeij CLD lattice path
-(`factorFast`, returning `Option`, conditionally correct), an
-exhaustive slow path (`factorSlow`, unconditionally correct), and an
-unconditionally-correct combinator `factor` defaulting to fast with
-fallback to slow. Both paths are first-class top-level functions; the
-fast path is the production code path; the slow path is the verified
-backstop. No `axiom` declarations are introduced in this library or
-its Mathlib bridge; every theorem has a real proof.
+**cost-based hybrid architecture**. Three recombination tiers share
+the same front end (normalise → choose prime → Hensel lift) and differ
+only in how they recombine the lifted mod-`p` factors into integer
+factors:
+
+- **`factorClassical`** (returns `Option`) — classical *size-ordered*
+  subset recombination with factor removal: the same algorithm class
+  as the verified Isabelle/AFP reference (`zassenhaus_reconstruction`,
+  which iterates `subseqs` of the lifted factors). Fast when the
+  number of lifted factors `r` is small; worst-case `O(2^r)`.
+- **`factorLattice`** (returns `Option`) — van Hoeij CLD lattice
+  recombination via `hex-lll`. *Polynomial in `r`*; used when `r` is
+  large enough that classical recombination would explode (e.g.
+  Swinnerton-Dyer inputs, on which the classical reference *also*
+  explodes — this is where the lattice tier strictly beats the
+  reference).
+- **`factorTrial`** (total) — exhaustive integer trial division. No
+  modular reduction; the unconditional totality backstop, reached only
+  when no admissible prime exists.
+
+The public combinator `factor` estimates the recombination cost from
+the modular factorisation and dispatches: `factorClassical` for small
+estimated cost, `factorLattice` for large `r`, `factorTrial` as the
+final backstop. All three return canonical factorisations; the tiers
+are result-equivalent, differing only in cost. The classical tier wins
+the *constant-factor* race against the reference on easy inputs; the
+lattice tier wins *asymptotically* on hard (high-`r`) inputs. No
+`axiom` declarations are introduced in this library or its Mathlib
+bridge; every theorem has a real proof.
+
+> **Historical note (not part of the timeless design).** The current
+> implementation names the lattice tier `factorFast` and the classical
+> tier `factorSlowModular`, and its public `factor` dispatches by a
+> *precision cap* rather than by estimated cost — which is why it is
+> exponential on easy reducible inputs (a low-cap lattice attempt
+> misses, then falls through to exhaustive recombination). The
+> cost-based dispatch below replaces that.
 
 The public API accepts arbitrary input polynomials and normalizes
 internally: extract content, remove powers of `X`, and reduce to the
@@ -30,34 +59,30 @@ of that order.
 
 **Top-level API:**
 ```lean
-def factorSlow (f : ZPoly) : Factorization
-def factorFast (f : ZPoly) : Option Factorization
-def factorWithBound (f : ZPoly) (B : Nat) : Factorization :=
-  (factorFastWithBound f B).getD (factorSlowWithBound f B)
-def factor (f : ZPoly) : Factorization :=
-  factorWithBound f (ZPoly.defaultFactorCoeffBound f)
+def factorClassical (f : ZPoly) : Option Factorization
+def factorLattice   (f : ZPoly) : Option Factorization
+def factorTrial     (f : ZPoly) : Factorization
+def factor          (f : ZPoly) : Factorization
 ```
 
-`factorSlow` is the unconditionally-correct exhaustive recombination
-path; `factorFast` is the proof-facing van Hoeij CLD path exposing the
-combined BHKS/Mignotte precision cap (`factorFastPrecisionCap`);
-`factorWithBound` is the bounded combinator shared by the slow and
-fast paths at a caller-supplied precision; `factor` is the public
-entry point and uses the runtime-oriented Mignotte coefficient bound
-`ZPoly.defaultFactorCoeffBound` for both paths.
+`factorClassical` and `factorLattice` are the two recombination tiers,
+both `Option`-valued because both require an admissible prime;
+`factorTrial` is the total trial-division backstop; `factor` is the
+public cost-based combinator. Each tier also exposes a bounded variant
+`…WithBound f B` parameterised by a Mignotte coefficient bound `B`
+(used by the precision/conformance tests); `factor` runs the tiers at
+`ZPoly.defaultFactorCoeffBound f`.
 
-The public `factor` does **not** call `factorFast` at the full BHKS
-threshold. Irreducible inputs that split modulo the chosen prime
-(e.g. `X^4 + 1`, `Φ_15`) force the van Hoeij doubling loop to grind
-through every precision up to `bhksBound f`, which is intractable
-even on the small conformance corpus. The smaller Mignotte cap keeps
-public `factor` runtime within the per-call CI budget and falls
-through to `factorSlow` whenever the fast attempt does not yield a
-recombination certificate. `factorFast` itself is retained at the
-full BHKS cap as the proof-facing entry point: its conditional-
-correctness theorem (Group B) and the eventual BHKS Theorem 5.2
-termination guarantee (Group D, leaf) apply to the BHKS-capped
-combinator.
+The dispatch is **by estimated recombination cost, not by a precision
+cap** (see *Cost-based hybrid dispatch* below). The estimate is read
+off the modular factorisation: the lifted-factor count `r`, the
+degree distribution of the modular factors, the coefficient height /
+Mignotte precision, the expected size-ordered subset count, and the
+CLD lattice dimension. When the estimated classical cost is small,
+`factor` runs `factorClassical`; when `r` is large, it runs
+`factorLattice`; when no admissible prime exists, it runs
+`factorTrial`. The combinator is unconditionally correct because the
+final backstop is `choosePrimeData?`-independent.
 
 **Output convention: the `Factorization` record.**
 
@@ -229,12 +254,15 @@ candidate primes in increasing order and returns the first `p` with
 matches the verified Isabelle/AFP `Berlekamp_Zassenhaus` reference
 (`Suitable_Prime.thy` `find_prime` selects the first separable prime;
 `berlekamp_zassenhaus_main` then runs `finite_field_factorization_int p f`
-once). It deliberately does **not** factor `f mod p` at multiple primes
-to minimise the modular-factor count: that classical Zassenhaus heuristic
-costs one modular factorisation per candidate prime (≈95 per call here),
-and van Hoeij's recombination is polynomial in the factor count `r`, so
-the optimisation buys almost nothing. First-suitable factors `f mod p`
-exactly once.
+once). It does not *exhaustively* minimise the modular-factor count
+across all candidate primes — that classical Zassenhaus heuristic costs
+one modular factorisation per candidate prime (≈95 per call here). But
+because `r` drives the cost-based dispatch (§*Cost-based hybrid
+dispatch*), when the first suitable prime yields an `r` **near the
+classical/lattice threshold**, the dispatcher may factor at one or two
+further admissible primes and keep the smallest `r` — a bounded retry,
+not a full sweep. On inputs comfortably inside the small-`r` regime,
+first-suitable factors `f mod p` exactly once.
 
 **Explicit pipeline records:**
 ```lean
@@ -310,105 +338,111 @@ inside `choosePrimeData?` would cascade through every consumer of
 `PrimeChoiceData` (the `ZMod64.Bounds`-indexed fields prevent
 holding a non-ZMod64-backed `PrimeChoiceData`).
 
-**Architectural invariant: the fallback chain culminates in
-something `choosePrimeData?`-independent.** This is the
-load-bearing clause that makes `factor` unconditionally correct on
-every `ZPoly`. Each tier is strictly more general but slower than
-the previous one:
+### Cost-based hybrid dispatch
+
+**Load-bearing invariant: the dispatch always terminates in a
+`choosePrimeData?`-independent backstop.** This is what makes `factor`
+unconditionally correct on every `ZPoly`. The combinator chooses a
+recombination tier from the modular factorisation, then falls back if
+the chosen `Option`-tier returns `none`:
 
 ```lean
 def factor (f : ZPoly) : Factorization :=
-  match factorFast f with
-  | some r => r                       -- BHKS van Hoeij CLD; fast in practice
-  | none =>
-    match factorSlowModular f with
-    | some r => r                     -- Hensel + exhaustive recombination
-    | none => factorSlowTrial f       -- exhaustive integer trial division
+  match choosePrimeData? f with
+  | none => factorTrial f                       -- no admissible prime: total backstop
+  | some d =>
+    let tier := dispatchTier f d                 -- cost estimate from `d`
+    match (if tier = .lattice then factorLattice f else factorClassical f) with
+    | some r => r
+    | none =>
+      -- the chosen tier missed (precision/lattice failure): try the
+      -- other recombination tier, then the unconditional trial backstop
+      match (if tier = .lattice then factorClassical f else factorLattice f) with
+      | some r => r
+      | none => factorTrial f
 ```
 
-- `factorFast` — conditional on `choosePrimeData? ≠ none` **and**
-  BHKS termination at `bhksBound f`. Realistic inputs almost
-  always exit here at hot-path speed.
-- `factorSlowModular` — Hensel lift + exhaustive subset
-  recombination (the historical `factorSlow`). Conditional on
-  `choosePrimeData? ≠ none` only. Exponential in degree but with
-  a small constant; runs in seconds on adversarial inputs like
-  `X⁴ + 1`, `Φ₁₅`, Swinnerton-Dyer SD₃ where `factorFast`
-  legitimately misses because of mod-`p` splitting. Returns
-  `Option` because it requires a good prime; the `none` branch
-  is reached only when `choosePrimeData? f = none`.
-- `factorSlowTrial` — exhaustive integer trial division over the
+`dispatchTier f d` estimates the classical recombination cost from the
+lifted-factor count `r`, the modular factors' degree distribution, the
+coefficient height / Mignotte precision, the expected size-ordered
+subset count, and the CLD lattice dimension; near the threshold it may
+re-run `choosePrimeData?` at another admissible prime that yields a
+smaller `r` (`r` depends on the prime, not on `f` alone). Small
+estimated cost → `factorClassical`; large `r` → `factorLattice`.
+
+- **`factorClassical`** — Hensel lift + *size-ordered* subset
+  recombination with factor removal, under a **hard subset budget**
+  (a cap on candidate subsets tried, derived from the cost estimate).
+  Same algorithm class as the verified reference; the win is the
+  arithmetic constant. Returns `none` only when `choosePrimeData? f =
+  none` (which the outer `match` already handles) or when its subset
+  budget is exceeded — in which case the budget was mis-estimated and
+  `factorLattice` takes over.
+- **`factorLattice`** — van Hoeij CLD lattice recombination; polynomial
+  in `r`. Used when `r` is large enough that the classical subset
+  search would exceed its budget (e.g. Swinnerton-Dyer inputs). May
+  return `none` if its precision schedule does not reach the
+  separation bound; the trial backstop then catches it.
+- **`factorTrial`** — exhaustive integer trial division over the
   Mignotte-bounded divisor enumeration. No modular reduction, no
-  Hensel lift, no `PrimeChoiceData` parameter. Astronomically slow
-  in the worst case but truly unconditional. Reached only on
-  inputs where `choosePrimeData? f = none`, which by D2 below
-  means `|lc(f)·disc(f)| ≥ ∏ HotPathCandidates`.
+  `PrimeChoiceData`. Astronomically slow in the worst case but truly
+  unconditional. Reached only when `choosePrimeData? f = none`, which
+  by D2 below means `|lc(f)·disc(f)| ≥ ∏ HotPathCandidates`.
 
-Routing `factorSlowTrial` as the only fallback is a SPEC
-violation: on adversarial bench fixtures (`X⁴ + 1` etc.) where
-`factorFast` misses but `choosePrimeData?` succeeds, the trial
-backstop enumerates `O((2 · ZPoly.defaultFactorCoeffBound f + 1) ^ deg(f))`
-candidates and hangs the benchmark harness. The
-`factorSlowModular` middle tier exists exactly to handle these.
-
-Routing `factorSlowModular` as the only fallback is also a SPEC
-violation: on inputs where `choosePrimeData? f = none` (e.g.
-`X² − L²` with `L := ∏ HotPathCandidates`), the historical silent
-fallback returned `p = 3, factorsModP = #[]`, and
-`exhaustiveCoreFactorsWithBound` silently reported the input core
-as a single factor. That was a soundness bug, not slowness. The
-`factorSlowTrial` backstop is what catches these.
-
-The pathological-input characterisation (Group D obligation D2
-below) gives a tight, provable lower bound on inputs that reach
-`factorSlowTrial`: if `factorFast f = none` **and**
-`factorSlowModular f = none` then `lc(f) · disc(f)` is divisible
-by every prime in `HotPathCandidates`, hence
-`|lc(f)·disc(f)| ≥ ∏ HotPathCandidates`, an astronomically large
-number that no realistic polynomial reaches. The conformance
-benchmark harness MUST track which of the three tiers each
-fixture exits on. Per the **named conformance suite** (the
-fixtures committed under
+**Dispatch must be observable, and the merge gate asserts on it
+(not just on wall-clock).** `factor` records a `FactorTrace` —
+chosen tier, prime `p`, `r`, Hensel precision, subset candidates
+tried, lattice dimension, and **whether the trial backstop ran**.
+A pure timing gate is gameable (a regression can "pass" by silently
+falling back to a slow tier, or by only timing out on machines CI does
+not expose); the counter assertions close that hole. Per the named
+conformance suite (fixtures under
 `conformance-fixtures/HexBerlekampZassenhaus/`):
 
-- every fixture must exit on `factorFast` or `factorSlowModular`
-  (`factorSlowTrial` MUST never run);
-- the existing scientific schedule fixtures (the regular
-  factorisations and the adversarial recombination cases
-  `X⁴ + 1`, `Φ₁₅`, Swinnerton-Dyer SD₃) are expected on
-  `factorFast` and a regression to `factorSlowModular` is a
-  SPEC violation;
-- any new `factorSlowTrial` regression fixture (added per the
-  D2 work to demonstrate it works on `X² − L²`-style inputs)
-  must be tagged with `scheduledHardwareTag` and is not part
-  of per-PR CI.
+- every designated fixture must exit on its **expected tier**; an
+  unexpected `factorTrial` fallback, or a small-`r` case entering
+  `factorLattice` (or vice versa), is a SPEC violation and **fails the
+  merge gate**;
+- the size-ordered subset count on small-`r` fixtures must stay under
+  the declared bound;
+- `factorTrial` MUST never run on any fixture except the dedicated
+  `X² − L²`-style regression cases that exercise the
+  `choosePrimeData? = none` path; those are tagged `scheduledHardwareTag`
+  and excluded from per-PR CI.
 
-No silent suite-shrinking.
+No silent suite-shrinking, and no silent tier-downgrade.
 
-## Recombination: conditional fast / unconditional slow / fallback combinator
+## Recombination tiers and the cost-based combinator
 
-Three top-level functions, all with full Mathlib-bridge proofs:
+Three recombination tiers, all with full Mathlib-bridge proofs:
 
-- **`factorSlow : ZPoly → Factorization`.** Exhaustive subset enumeration. Worst-case `O(2^r)`. **Unconditional correctness:** `factorSlow f = irreducibleFactorisationOf f`.
-- **`factorFast : ZPoly → Option Factorization`.** Van Hoeij CLD at the full BHKS precision cap (`factorFastPrecisionCap f := max (bhksBound f) (defaultFactorCoeffBound f)`). **Conditional correctness:** `factorFast f = some φ ⟹ φ is the irreducible factorisation of f`. May return `none`. Proof-facing entry point.
-- **`factorWithBound : ZPoly → Nat → Factorization := λ f B, (factorFastWithBound f B).getD (factorSlowWithBound f B)`.** Bounded combinator at caller-supplied precision `B`.
-- **`factor : ZPoly → Factorization := λ f, factorWithBound f (defaultFactorCoeffBound f)`.** Public entry point at the runtime-oriented Mignotte coefficient bound. Unconditionally correct.
-
-The public `factor` does not use `factorFast`'s full BHKS cap. Irreducible inputs that split modulo the chosen prime force the van Hoeij doubling loop to grind to `bhksBound f`, which is intractable even on the small conformance corpus (e.g. `X^4 + 1`, `Φ_15`). Using `defaultFactorCoeffBound` as the public cap keeps the runtime within the per-call CI budget while preserving unconditional correctness via the `factorSlow` fallback.
+- **`factorClassical : ZPoly → Option Factorization`.** Size-ordered subset recombination with factor removal, under a hard subset budget. Same algorithm class as the verified reference. **Unconditional correctness when it returns `some`:** the output is the irreducible factorisation of `f`. Returns `none` only on budget exhaustion or no admissible prime.
+- **`factorLattice : ZPoly → Option Factorization`.** Van Hoeij CLD at the full BHKS precision cap (`factorFastPrecisionCap f := max (bhksBound f) (defaultFactorCoeffBound f)`). **Conditional correctness:** `factorLattice f = some φ ⟹ φ is the irreducible factorisation of f`. May return `none`.
+- **`factorTrial : ZPoly → Factorization`.** Exhaustive integer trial division. **Unconditional correctness:** `factorTrial f = irreducibleFactorisationOf f`.
+- **`factor : ZPoly → Factorization`.** The cost-based combinator (above): dispatch by estimated recombination cost, fall back to the other tier, then to `factorTrial`. Unconditionally correct.
 
 No axioms. BHKS Theorem 5.2 ("for precision exceeding a paper-stated
-bound, `factorFast` always returns `some`") is a leaf theorem of this
-development: it is in the project's requirements (Group D obligation
-D1 below) but no `Decidable` instance, no `factor` correctness
-theorem, and no public-API contract depends on it.
+bound, `factorLattice` always returns `some`") is a leaf theorem of
+this development: it is in the project's requirements (Group D
+obligation D1 below) but no `Decidable` instance, no `factor`
+correctness theorem, and no public-API contract depends on it.
 
-## Slow path: exhaustive recombination
+## Classical recombination (small r)
 
-Algorithm:
+`factorClassical` — the same algorithm class as Isabelle's
+`zassenhaus_reconstruction` (which iterates `subseqs` of the lifted
+factors), refined with size-ordering, factor removal, and a subset
+budget:
 
-1. Hensel-lift `f mod p` to `f mod p^a` for `a := ⌈log_p (2 · ZPoly.defaultFactorCoeffBound f + 1)⌉`, the smallest exponent with `p^a > 2 · defaultFactorCoeffBound f`. Obtain lifted factors `g_1, …, g_r ∈ (ℤ/p^a)[x]`.
-2. Enumerate subsets `S ⊆ {1, …, r}` (current implementation: the existing `recombinationSearch` helper). For each: compute `g_S := lc(f) · ∏_{i ∈ S} g_i mod p^a`, lift via centred residue, remove content, check exact division of `f`. On exact division, accept and recurse on the quotient.
-3. Termination is by induction on `|remaining factors|`; the search is finite by construction.
+1. Hensel-lift `f mod p` to `f mod p^a` for `a := ⌈log_p (2 · ZPoly.defaultFactorCoeffBound f + 1)⌉`, the smallest exponent with `p^a > 2 · defaultFactorCoeffBound f`. Obtain lifted factors `g_1, …, g_r ∈ (ℤ/p^a)[x]`. The lift may proceed **incrementally** — recombine at a low precision and double only when a candidate's centred lift fails exact division — with `a` (the Mignotte precision) as the completeness backstop.
+2. Search subsets **in increasing size with factor removal**: for sizes `d = 1, …, ⌊r/2⌋`, and each size-`d` subset `S` of the *remaining* factors, form the candidate `g_S := normalizeFactorSign(primitivePart(dilate(lc(f))(centeredLift(∏_{i ∈ S} g_i mod p^a))))`; if `g_S` exactly divides the current target, accept it, remove `S`, and continue on the quotient. When no proper subset of the remaining factors divides, those factors form a single irreducible factor. A **hard subset budget** caps the candidates tried; exceeding it returns `none` (dispatch then routes to `factorLattice`).
+3. Termination is by induction on `|remaining factors|`, bounded by the subset budget.
+
+Size-ordering with factor removal makes fully-split inputs `O(r²)`
+(singletons peel immediately) while enumerating the same candidate set
+as naive search, so soundness is unchanged; the worst case (irreducible
+over ℤ but splitting into many factors mod every prime) is `O(2^r)` —
+the regime handed to `factorLattice`.
 
 The Mignotte coefficient bound `defaultFactorCoeffBound f` and the
 Hensel precision exponent `a` are different quantities and **must
@@ -433,7 +467,16 @@ Argument:
 
 No BHKS termination theorem is needed: the loop is finite by subset enumeration, and correctness is by Hensel + Mignotte + UFD.
 
-## Fast path: van Hoeij CLD lattice
+## Large-r recombination: van Hoeij CLD lattice
+
+`factorLattice` — the tier the cost-based combinator selects when the
+lifted-factor count `r` is large enough that `factorClassical`'s
+size-ordered subset search would exceed its budget. It is **polynomial
+in `r`** (the classical reference, and `factorClassical`, are `O(2^r)`
+there), so it is where `factor` strictly beats the verified reference —
+e.g. Swinnerton-Dyer inputs, which split into many small factors mod
+every prime. It is built on the verified `hex-lll` short-vector
+machinery.
 
 Recombination uses van Hoeij's algorithm with the **Combined Logarithmic Derivative (CLD)** invariant (BHKS Definition 3.1.1; HHN Definition 2). The all-coefficients-lattice variant of BHKS §5.2 is pinned: every coefficient index of the CLD is a column of the lattice. HHN's incremental-column / U-LLL / Progress-potential refinements are deliberately not used — they are a constant-factor performance optimisation, not required for correctness, and add proof complexity disproportionate to their gain.
 
@@ -517,9 +560,15 @@ An additive-coefficient lattice that decodes short vectors as `Σ λ_i g_i (mod 
 
 ## Proof obligations (for `hex-berlekamp-zassenhaus-mathlib`)
 
-Four groups, reflecting the two-tier architecture. Groups A, B, C are
-deliverables of HO-1's bridge work; Group D is HO-4's leaf theorem
-(non-blocking — nothing else depends on it). No axioms.
+Four groups. **Naming:** the obligations below use the historical tier
+names — **`factorSlow` is the classical tier `factorClassical`** and
+**`factorFast` is the lattice tier `factorLattice`**; the mathematical
+content is unchanged by the rename. Group A gives `factorClassical`'s
+unconditional correctness (the tier `factor` uses for small `r`); Group
+B gives `factorLattice`'s conditional correctness (large `r`); Group C
+gives `factor`'s correctness via the cost-based combinator (and the
+tier-equivalence / dispatch-soundness contracts above); Group D is the
+non-blocking leaf performance theorem. No axioms.
 
 ### Group A — slow-path correctness (gives full mathematical guarantee for `factorSlow`)
 
@@ -648,21 +697,119 @@ Lemmas that satisfy neither are dead weight and should be removed or refactored 
 
 A bridge file that proves an arbitrary collection of intermediate lemmas but does not prove the headline correctness theorem is incomplete by SPEC: the orchestrator must not bump `done_through` to 4 in that state. The local realisation of this clause for the open BZ architectural directive is rewritten in the dispatched rollback issue.
 
-## Conformance fixtures
+### Invariant contracts and dispatch soundness
 
-Core-tier conformance must include at least one input where true integer factors require a non-trivial subset product of lifted mod-p factors, and at least one input that splits heavily (≥ 4 distinct mod-p factors) over a small admissible prime. Concrete fixture instances live in [HexBerlekampZassenhaus/Conformance.lean](../../HexBerlekampZassenhaus/Conformance.lean) and the JSONL fixture file, not in this spec.
+Beyond the five-clause headline, the cost-based dispatch adds contracts
+that the implementation must satisfy and that **conformance checks from
+the start, even though the formal proofs land last** (freezing the
+proof-shaped surface early so the migration does not discover, late,
+that there is no clean theorem boundary):
+
+- **Tier-result equivalence.** `factorClassical f`, `factorLattice f`
+  (when `some`), and `factorTrial f` all return the *same* canonical
+  factorisation; the cost-based dispatch therefore cannot change the
+  result, only the cost.
+- **Dispatch soundness.** `factor f` equals the canonical factorisation
+  for every `f`, independent of which tier `dispatchTier` selects and of
+  any fallback taken.
+- **Fallback semantics.** The trial backstop is a *correctness* backstop,
+  not a silent recovery for a buggy tier: a tier returning `some` must be
+  correct (it is never "rescued" by re-running), and an unexpected
+  fallback on a designated fixture is a gate failure (see *Quality
+  gates*).
+- **Normalisation / reconstruction.** The `normalizeForFactor` →
+  recombine → `reassemblePolynomialFactors` pipeline preserves the
+  product and the primitive/content/sign bookkeeping (the metamorphic
+  relations below are the executable shadow of these).
+
+The dispatch-soundness and tier-equivalence theorems are discharged
+together with C1 (they reduce to it: each tier, when it answers, answers
+canonically, so the combinator does too). They are listed here, not as a
+separate group, because they carry no new mathematical content beyond
+A–C — only the new control-flow shape.
+
+## Conformance fixtures (primary correctness mechanism)
+
+Correctness is established primarily by **extensive differential
+conformance against FLINT** plus metamorphic relations. Conformance is
+*evidence toward* correctness, not correctness itself; the formal
+obligations (Groups A–D) remain binding but land last (see *Quality
+gates* and the design principle in
+[SPEC/design-principles.md](../design-principles.md)).
+
+The oracle does not merely compare the output multiset to FLINT. For
+each input it independently checks: product reconstruction
+(`∏ factors^mult · scalar = f`); each factor primitive with positive
+leading coefficient; multiplicities positive and distinct factors
+distinct; and each reported factor irreducible according to FLINT.
+
+The committed corpus must span (concrete instances live in
+[HexBerlekampZassenhaus/Conformance.lean](../../HexBerlekampZassenhaus/Conformance.lean)
+and the JSONL fixtures, not in this spec):
+
+- **Swinnerton-Dyer ladder** SD2–SD6 (degrees 4–64) and shifted variants
+  — the dispatch stressor spanning small→large `r`; the high rungs
+  exercise `factorLattice` where the classical reference explodes.
+- **Mignotte coefficient-swell** inputs (a true factor whose
+  coefficients dwarf `f`'s) — exercises Hensel precision; a too-low
+  precision silently *misses* or *mis-lifts* factors. Highest-value
+  correctness family.
+- non-monic / large-content / negative-leading-coefficient (lc-scaling
+  and sign normalisation); high-multiplicity `g^k · h^m` (squarefree
+  decomposition + multiplicity);
+- cyclotomic products / `X^n − 1` / `Φ_n` for composite and prime-power
+  `n`; reciprocal / palindromic factors; two factors with identical
+  modular degree profiles;
+- planted-factor randomized inputs with controlled `r` (monic and
+  non-monic); bad-prime-retry (discriminant divisible by the first
+  several primes); Eisenstein / sparse / trinomial irreducibles; one
+  large factor plus many linear/quadratic distractors;
+- seeded random differential cases vs FLINT;
+- the boundary cases (`0`, `±1`, constants, `X^k`, linears).
+
+**Metamorphic relations** (no external oracle): `factor f` vs
+`factor (−f)` vs `factor (content · f)` vs `factor (f(X + k))` agree up to
+the documented scalar/shift bookkeeping; multiply known factors then
+re-factor → same canonical multiset; re-run with a different admissible
+prime → identical result.
+
+## Quality gates
+
+Two gates, distinct enforcement:
+
+- **Merge-blocking conformance + counter + wall-clock gate** (the single
+  ubuntu CI job, per [SPEC/CI.md](../CI.md)). On the committed adversarial
+  corpus: the invariant / differential / metamorphic checks above must
+  pass; every designated fixture must finish under a *generous*
+  wall-clock budget (catastrophic order-of-magnitude regressions trip it
+  while runner noise does not); and the `FactorTrace` counters must
+  satisfy per-fixture assertions — expected tier used, **no unexpected
+  `factorTrial` fallback**, size-ordered subset count under bound, no
+  small-`r` case entering `factorLattice` (or vice versa). A checked-in
+  baseline JSON pins the counters and a coarse timing band. This gate is
+  what prevents a future change from replacing the implementation with
+  something exponentially slower "so that it can be verified"; a pure
+  timing gate is gameable (pass by silently falling back, or by timing
+  out only off-CI), so the counter assertions are load-bearing.
+- **Scheduled Isabelle ratio** (dedicated hardware, per
+  [SPEC/benchmarking.md](../benchmarking.md); informational, *not*
+  merge-blocking) — the fine-grained `hex/isabelle` ratio across the
+  scaling ladder, where runner noise would make a strict per-PR gate
+  flaky.
 
 ## External comparators
 
-Phase 4 for `hex-berlekamp-zassenhaus` declares one **gating** external comparator:
+Phase 4 declares one external comparator:
 
-- **`verified Isabelle BZ (AFP Berlekamp_Zassenhaus; Haskell extraction of factor_int_poly via Factorization_External_Interface.thy)`**. Build via a sibling of [scripts/oracle/setup_lll_isabelle.sh](https://github.com/kim-em/hex-lll/blob/main/scripts/oracle/setup_lll_isabelle.sh) that targets the AFP `Berlekamp_Zassenhaus` session instead of the Zenodo LLL deposit. Set-up: `isabelle build -b Berlekamp_Zassenhaus` using the AFP release matching the pinned Isabelle, then `isabelle export -d <wrapper-session> -x '*:code/**'` on a wrapper theory that re-exports `factor_int_poly` to Haskell. The generated module is compiled with `ghc -O2` against a persistent stdin/stdout driver per [SPEC/benchmarking.md §External comparators — Process call](../benchmarking.md#external-comparators).
+- **`verified Isabelle BZ (AFP Berlekamp_Zassenhaus; Haskell extraction of factor_int_poly via Factorization_External_Interface.thy)`**. Build via a sibling of [scripts/oracle/setup_lll_isabelle.sh](https://github.com/kim-em/hex-lll/blob/main/scripts/oracle/setup_lll_isabelle.sh) targeting the AFP `Berlekamp_Zassenhaus` session: `isabelle build -b Berlekamp_Zassenhaus`, then `isabelle export` on a wrapper theory re-exporting `factor_int_poly` to Haskell, compiled `ghc -O2` against a persistent stdin/stdout driver per [SPEC/benchmarking.md](../benchmarking.md).
 
-  **Gating goal: `hex/isabelle ≤ 1×` at the largest eligible scaling rung of every registered scientific bench target.** Justification: both implementations are pure-functional verified code extracted to a strict runtime with native integer arithmetic. The `hex-lll` row in [reports/hex-lll-performance.md](https://github.com/kim-em/hex-lll/blob/main/reports/hex-lll-performance.md) already demonstrates parity is achievable across the dimension ladder against the analogous AFP-extracted LLL binary (hex within ±10%, faster at small `n`). There is no architectural reason hex should require concessional headroom against the BZ comparator.
+  **The reference is classical exhaustive recombination, not a lattice method**: `factor_int_poly` reconstructs via `zassenhaus_reconstruction` over `subseqs` of the lifted factors (`Reconstruction.thy`), with fast constants (GHC + Karatsuba). It is exponential in the modular-factor count `r` — the same class as `factorClassical`.
 
-  *Algorithm-class caveat.* The 1× gate presumes the comparator implements an algorithm of the same class or weaker than hex's. Isabelle's `Berlekamp_Zassenhaus.berlekamp_zassenhaus_factorization` uses classical exhaustive lifted-factor recombination; hex's spec mandates the BHKS van Hoeij CLD construction (see §"Fast path: van Hoeij CLD lattice"), which is strictly more sophisticated and asymptotically better on adversarial inputs, so parity holds without algorithmic-class concession. If a future comparator implements a fundamentally stronger algorithm, this clause must be explicitly amended to loosen the goal or reclassify the comparator.
+  **Gating goal, by regime:**
+  - small/medium `r` (reference is fast): **`hex/isabelle ≤ a small constant`** — a constant-factor race won by competitive arithmetic. Measured on the scheduled ratio workflow.
+  - large `r` (Swinnerton-Dyer class, reference's exhaustive search explodes): **hex strictly faster.** CI cannot wait out the reference's blow-up, so the merge gate only checks hex finishes the large-`r` corpus under cap *using `factorLattice`*; the "strictly beats the reference" claim is recorded offline against a checked-in baseline.
 
-The fpLLL/python-flint comparators that adjacent libraries declare for their LLL or polynomial-arithmetic surfaces are *informational only* at the BZ level; the verified-Isabelle path is the only same-class (verified-to-verified) comparator and so is the only one classified as gating here.
+The fpLLL/python-flint comparators that adjacent libraries declare are *informational only* at the BZ level.
 
 ## References
 
