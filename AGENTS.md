@@ -5,19 +5,48 @@ incubated before they are split out for release. `hex` is the released
 aggregate repo; it depends on released split libraries at exact Lake
 revisions.
 
-The currently pinned upstream split repos for `hex` are:
+The released split repos, in dependency order, are:
 
 - `hex-matrix`
-- `hex-matrix-mathlib`
-- `hex-gram-schmidt`
-- `hex-gram-schmidt-mathlib`
-- `hex-lll`
+- `hex-matrix-mathlib`, `hex-gram-schmidt`
+- `hex-gram-schmidt-mathlib`, `hex-lll`
 - `hex-lll-mathlib`
 
-Treat this as the current pinned set, not a permanent exhaustive list:
-more sublibraries may be released from `hex-dev` later. Computational
+Treat this as the current set, not a permanent exhaustive list: more
+sublibraries may be released from `hex-dev` later. Computational
 libraries are Mathlib-free; `*-mathlib` repos are the Mathlib bridge
 layers and should contain correspondence proofs and Mathlib-facing APIs.
+
+## Workbench model: released repos are submodules
+
+The six released repos are vendored as git submodules under `released/`,
+and `hex-dev`'s `lakefile.lean` requires them by **relative path**. A
+single `lake build` at the root builds the whole graph against the
+working trees, so you can refactor across repo boundaries in one place
+and see how it all hangs together. (Lake resolves a package name from
+the root's `require` first, so these relative-path requires override the
+transitive git pins inside each submodule's own lakefile — no need to
+touch those.)
+
+- **Clone** with `git clone --recurse-submodules`, or run
+  `git submodule update --init` in an existing checkout.
+- Each `released/<repo>` is a real checkout on its own branch. Make a
+  refactor's commits **inside the submodule**, not in `hex-dev`.
+- **The submodule SHAs are `hex-dev`'s pins.** Bumping a dependency means
+  checking out the new commit inside the submodule and committing the
+  moved gitlink in `hex-dev`; there are no dependency revs in
+  `hex-dev`'s lakefile to bump.
+
+## Preparing a multi-repo (cascading) PR
+
+A coordinated change validated here propagates outward **upstream-first**
+in the dependency order listed above. Open and merge the `hex-matrix` PR,
+then for each downstream repo bump the now-merged upstream rev in *its*
+lakefile as you PR it, finishing with `hex-lll-mathlib` (and the released
+`hex` aggregate, which pins all six). Finally, in `hex-dev`, move the
+`released/` submodule pointers to the merged commits and commit the
+gitlinks. The relative-path requires mean `hex-dev` itself needs no
+lakefile rev bumps — only the gitlink moves.
 
 # hex — agent-specific conventions
 

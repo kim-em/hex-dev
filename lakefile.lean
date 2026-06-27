@@ -17,18 +17,17 @@ require «lean-bench» from git
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @ "v4.30.0-rc2"
 
-require HexMatrix from git
-  "https://github.com/kim-em/hex-matrix.git" @ "85c2bb9b2f93677fe1435d898c81a56b9e7b33e8"
-require HexMatrixMathlib from git
-  "https://github.com/kim-em/hex-matrix-mathlib.git" @ "9cc6d8689d12c2775f8e1016b946a3debe6a8c9f"
-require HexGramSchmidt from git
-  "https://github.com/kim-em/hex-gram-schmidt.git" @ "3ce6d453934ca1bb5eb84ebd5e09b43e3d8ae4ce"
-require HexGramSchmidtMathlib from git
-  "https://github.com/kim-em/hex-gram-schmidt-mathlib.git" @ "9e04dc003acbb73973b0aa728a437174534f0066"
-require HexLLL from git
-  "https://github.com/kim-em/hex-lll.git" @ "79eb689115559c45edf7eb35ae809379243290a5"
-require HexLLLMathlib from git
-  "https://github.com/kim-em/hex-lll-mathlib.git" @ "4fb7328b3456d262b80001e68805627161eae61a"
+-- The six released split repos are vendored as git submodules under `released/`
+-- and required by relative path, so a single `lake build` at the root builds the
+-- whole graph against the working trees. The submodule SHAs are the pins; these
+-- relative-path requires override the transitive git pins inside each submodule's
+-- own lakefile. See AGENTS.md § "Hex repo family".
+require HexMatrix from "released/hex-matrix"
+require HexMatrixMathlib from "released/hex-matrix-mathlib"
+require HexGramSchmidt from "released/hex-gram-schmidt"
+require HexGramSchmidtMathlib from "released/hex-gram-schmidt-mathlib"
+require HexLLL from "released/hex-lll"
+require HexLLLMathlib from "released/hex-lll-mathlib"
 
 private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexGF2" / "ffi" / "clmul.o"
