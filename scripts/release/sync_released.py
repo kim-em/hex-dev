@@ -149,6 +149,33 @@ def rewrite_pins(entry: dict, clone: Path, synced: dict[str, str]) -> list[str]:
     return notes
 
 
+def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str]) -> list[str]:
+    """Pin the synced SHAs in the committed lake-manifest.json too, so the
+    released repo's CI builds against the new revisions rather than the stale
+    lockfile (Lake trusts the manifest, not just the lakefile)."""
+    notes: list[str] = []
+    pins = entry.get("pins") or []
+    mf = clone / "lake-manifest.json"
+    if not pins or not mf.exists():
+        return notes
+    import json as _json
+    doc = _json.loads(mf.read_text(encoding="utf-8"))
+    by_url = {f"github.com/kim-em/{dep}.git": dep for dep in pins}
+    changed = 0
+    for pkg in doc.get("packages", []):
+        url = pkg.get("url", "")
+        for frag, dep in by_url.items():
+            if frag in url and synced.get(dep):
+                pkg["rev"] = synced[dep]
+                if "inputRev" in pkg and pkg["inputRev"] and len(pkg["inputRev"]) >= 7:
+                    pkg["inputRev"] = synced[dep]
+                changed += 1
+                notes.append(f"  manifest {dep} -> {synced[dep][:12]}")
+    if changed:
+        mf.write_text(_json.dumps(doc, indent=2) + "\n", encoding="utf-8")
+    return notes
+
+
 def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
               synced: dict[str, str], baseline: dict[str, str], force: bool) -> bool:
     """Sync one repo. Returns True if the baseline SHA changed (a push happened)."""
@@ -173,6 +200,8 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
         for line in apply_paths(entry, clone):
             print(line)
         for line in rewrite_pins(entry, clone, synced):
+            print(line)
+        for line in rewrite_manifest(entry, clone, synced):
             print(line)
         status = run(["git", "status", "--porcelain"], cwd=clone, capture=True)
         if not status:
