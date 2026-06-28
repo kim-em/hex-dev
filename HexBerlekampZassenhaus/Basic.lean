@@ -7882,6 +7882,108 @@ private def smartGuardTarget : ZPoly := Array.polyProduct smartGuardFactors.toAr
   | some _ => true            -- search completes within budget (no crash / no budget blow-up)
   | none => true
 
+mutual
+/-- Product reconstruction for the size-ordered classical recombination search,
+mirroring `scaledRecombinationSearchModAux_product` for the smart (head-forced,
+budgeted) variant. Every recorded factor is gated by `exactQuotient?`, so whenever
+the search returns `some factors`, their product is the target — for any `fuel`.
+The three loops share the conclusion (`target` is common), so they are proved
+together by structural recursion on `fuel`. -/
+theorem scaledRecombinationSmartAux_product
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
+    (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
+    (h : scaledRecombinationSmartAux coreLc target modulus localFactors budget fuel
+        = (some factors, b)) :
+    Array.polyProduct factors.toArray = target := by
+  unfold scaledRecombinationSmartAux at h
+  split at h
+  · -- target = 1
+    rename_i htarget
+    simp only [Prod.mk.injEq, Option.some.injEq] at h
+    obtain ⟨hfac, _⟩ := h
+    subst hfac
+    simpa [Array.polyProduct] using htarget.symm
+  · split at h
+    · simp at h                              -- budget = 0
+    · split at h
+      · simp at h                            -- fuel = 0
+      · split at h
+        · simp at h                          -- localFactors = []
+        · exact scaledRecombinationSmartSizeLoop_product _ _ _ _ _ _ _ _ _ _ h
+termination_by fuel
+
+theorem scaledRecombinationSmartSizeLoop_product
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (head : ZPoly) (tail : List ZPoly)
+    (sizes : List Nat) (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
+    (h : scaledRecombinationSmartSizeLoop coreLc target modulus head tail sizes budget fuel
+        = (some factors, b)) :
+    Array.polyProduct factors.toArray = target := by
+  unfold scaledRecombinationSmartSizeLoop at h
+  split at h
+  · simp at h                                -- sizes = []
+  · split at h
+    · simp at h                              -- budget = 0
+    · split at h
+      · simp at h                            -- fuel = 0
+      · simp only [] at h                     -- zeta-reduce `let splits`
+        split at h
+        · -- CandLoop returned (some res, _)
+          rename_i res bres hcand
+          simp only [Prod.mk.injEq, Option.some.injEq] at h
+          obtain ⟨hres, _⟩ := h
+          subst hres
+          exact scaledRecombinationSmartCandLoop_product _ _ _ _ _ _ _ _ hcand
+        · -- CandLoop returned none: recurse on the next size class
+          exact scaledRecombinationSmartSizeLoop_product _ _ _ _ _ _ _ _ _ _ h
+termination_by fuel
+
+theorem scaledRecombinationSmartCandLoop_product
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (splits : List (List ZPoly × List ZPoly)) (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
+    (h : scaledRecombinationSmartCandLoop coreLc target modulus splits budget fuel
+        = (some factors, b)) :
+    Array.polyProduct factors.toArray = target := by
+  unfold scaledRecombinationSmartCandLoop at h
+  split at h
+  · simp at h                                -- splits = []
+  · rename_i split rest                      -- splits = split :: rest
+    split at h
+    · simp at h                              -- budget = 0
+    · split at h
+      · simp at h                            -- fuel = 0
+      · rename_i fuel'                        -- fuel = fuel' + 1
+        simp only [] at h                     -- zeta-reduce `let candidate`/`let budget'`
+        split at h
+        · -- shouldRecord the candidate
+          cases hquot : exactQuotient? target
+              (normalizeFactorSign (ZPoly.primitivePart
+                (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
+          | none =>
+              simp only [hquot] at h        -- exactQuotient? none ⇒ recurse on the rest
+              exact scaledRecombinationSmartCandLoop_product _ _ _ _ _ _ _ _ h
+          | some quotient =>
+              simp only [hquot] at h
+              cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
+                  (budget - 1) fuel' with
+              | mk ores ob =>
+                  cases ores with
+                  | none =>
+                      simp only [haux] at h  -- Aux declined ⇒ recurse on the rest
+                      exact scaledRecombinationSmartCandLoop_product _ _ _ _ _ _ _ _ h
+                  | some sub =>
+                      simp only [haux] at h
+                      simp only [Prod.mk.injEq, Option.some.injEq] at h
+                      obtain ⟨hfac, _⟩ := h
+                      subst hfac
+                      have hsub := scaledRecombinationSmartAux_product _ _ _ _ _ _ _ _ haux
+                      rw [ZPoly.polyProduct_cons_toArray, hsub,
+                        DensePoly.mul_comm_poly (S := Int)]
+                      exact exactQuotient?_product hquot
+        · -- cand not recorded: recurse on the rest
+          exact scaledRecombinationSmartCandLoop_product _ _ _ _ _ _ _ _ h
+termination_by fuel
+end
+
 /-- Exhaustive recombination of the lifted local factors stored in `d`,
 using the *scaled* candidate shape parameterised by the integer leading
 coefficient `coreLc`.  Returns the recovered integer factors as an array
