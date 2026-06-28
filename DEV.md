@@ -173,20 +173,26 @@ This is deep, multi-session BHKS lattice-soundness work — not a re-pointing ch
 
 ## Deferred
 
-### #8382 — Optimize the easy regime  *(deferred; sound part overlaps #8395)*
-- **Goal:** close the ~6–9× to Isabelle on small/medium `r`.
-- **Why deferred:** the headline lever — the incremental-precision Hensel lift
-  (~2.6×, lift low then escalate) — is only **sound** with a per-remainder
-  completeness certificate. The size-ordered recombination accepts only verified
-  exact integer divisors, so a low-precision run always has `product = f` yet may be
-  **incomplete** (an unsplit factor is byte-identical to a genuine irreducible);
-  detecting "incomplete vs done" cheaply is exactly the certificate scoped to
-  **#8395**. `exhaustiveLiftBound = max(B, defaultFactorCoeffBound(monic core))` is
-  already the tight Mignotte bound, so there is no free sound win from tightening it.
-- **What's left here:** the modest/risky levers — balanced product-tree lift
-  (1.2–1.4× at full precision) and `choosePrimeData?`/Berlekamp micro-opt (touches
-  heavily-proven code). Verification is the **informational** scheduled ratio, not a
-  merge gate. Land after the capstone; fold the incremental-precision piece into #8395.
+### #8382 — Constant-factor arithmetic speedups  *(narrowed; fully parallel-safe)*
+- **Goal:** close the ~6–9× to Isabelle on small/medium `r` via the low-precision
+  bottleneck (`choosePrimeData?`/Berlekamp + per-op `FpPoly`/`DensePoly`/`ZMod64`
+  arithmetic).
+- **Narrowed (2026-06)** to *output- and shape-preserving* speedups only: same
+  factorization outputs (conformance 100/0 and trace 50/0 stay **identical**), and
+  no change to any `def` a Mathlib proof unfolds (so it cannot break #8384). That
+  makes it fully independent of #8384/#8395 — safe to run in parallel.
+- **Moved out to #8395:** the precision-changing levers — incremental-precision
+  Hensel lift (~2.6×) and the balanced product-tree multifactor lift — because both
+  reshape the lift / precision schedule the Mathlib layer models and need the same
+  soundness certificate #8395 develops.
+
+### Parallelism of the remaining work
+- **#8382** is independent (above).
+- **#8384** (output-factor irreducibility) and **#8395** (lattice early-stop +
+  classical incremental-precision) **share proof substrate** — the separation
+  certificate `lattice_eq_indicators : L = W` and the `BadVector`/`TerminationBound`
+  precision characterisation. Run them as **one coordinated effort**, or sequence
+  #8395 after #8384. So: two clean parallel tracks (#8382 ∥ {#8384, #8395}), not three.
 
 ### #8395 — Certificate-backed early-stop for the lattice tier  *(stretch)*
 - Making `factorLattice` fast on the extreme-`r` tail (SD6+) needs a believed-sound
