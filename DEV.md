@@ -105,7 +105,7 @@ reverse. We have thrashed too often bending the implementation to ease proofs.
 | `factorClassical` full-domain entry + FLINT invariant op | #8377 | #8386 | ✅ merged |
 | Adversarial corpus + metamorphic relations | #8378 | #8387 | ✅ merged |
 | Merge-blocking conformance + counter + wall-clock gate (+ budget soundness) | #8379 | #8390 | ✅ merged |
-| CLD lattice tier: certify irreducibility (Swinnerton-Dyer / high-`r`) | #8380 | — | ⬜ next (unblocked); root cause diagnosed |
+| CLD lattice tier: certify irreducibility (Swinnerton-Dyer / high-`r`) | #8380 | #8393 | ✅ merged (correctness); speed = #8395 stretch |
 | Cost-based `dispatchTier` | #8381 | — | ⬜ blocked on #8379, #8380 |
 | Optimize the easy regime (arithmetic constants) | #8382 | — | ⬜ blocked on #8379 |
 | Swap public `factor` to the hybrid | #8383 | — | ⬜ blocked on #8380, #8381, #8382 |
@@ -151,11 +151,19 @@ staged in `conformance-fixtures/HexBerlekampZassenhaus/bz-scheduled.jsonl`.
   rather than `degenerate` (keep declining at sub-cap precision); expose the
   lattice-dimension counter; validate via the FLINT oracle + counter gate on the
   SD/cyclotomic corpus (those inputs are irreducible, so `[f]` is correct).
-- **Open question (not a blocker):** *speed*. The localized fix makes the tier
-  **correct**; whether it is fast enough to strictly beat Isabelle's exponential
-  on the SD ladder needs a clean benchmark (the earlier ">90s" was a
-  wrong-precision probe artifact). If too slow, reassess (lattice/LLL optimization
-  vs accept parity-via-classical).
+- **Outcome (merged in #8393, correctness only):** `factorLattice` certifies SD2 /
+  Φ₁₅ etc. as `some #[f]`. **But it is slow** — it grinds the doubling loop to the
+  cap on irreducibles (SD2 14ms → Φ₁₅ 216ms → SD3 1.8s → SD4 deg16 **>120s**). The
+  classical tier already handles everything up to its budget (~`r ≤ 18`, including
+  SD2–SD5) fast, so the lattice is only the **correct fallback** for the extreme-`r`
+  tail (SD6+). On that tail it is slow (correct-but-slow), so the practical goal is
+  **parity** with Isabelle via the classical tier, not beating it on hard inputs.
+- **Speed is deferred to #8395 (stretch).** Making the lattice fast needs a
+  *certificate-backed* early-stop (a believed-sound `L'=W`/no-bad-vector check
+  before the cap), **not** a partition-stability heuristic (which could mis-declare
+  a reducible input irreducible — a wrong factorisation, not a deferred proof).
+  #8395 scopes a feasibility spike on exposing such a certificate from the kept
+  `BadVector`/`Recovery`/`TerminationBound` proofs; if infeasible, we bank parity.
 - The kept BHKS proofs (Recovery/Lattice/CLDColumnBound/BadVector/…) and the
   cap-suffices proof (BHKS Thm 5.2 / D1, deferred per principle 9) live here.
 
@@ -258,8 +266,14 @@ Never bend the implementation to a future proof. Never introduce an `axiom`.
 
 ## End state
 
-Public `factor` is the cost-based hybrid: it ties the verified Isabelle reference
-on easy inputs (after #8382), strictly beats it on hard (Swinnerton-Dyer) inputs
-via the verified LLL, the counter gate blocks performance regressions, and the
-headline correctness theorem is restored (after #8384). The BHKS work is
-preserved as the large-`r` tier, not deleted.
+Public `factor` is the cost-based hybrid: it reaches **parity** with the verified
+Isabelle reference on every input the classical tier covers (after #8382) — which
+is everything up to the classical subset budget, including the Swinnerton-Dyer
+ladder up to SD5; the verified-LLL lattice tier is a **correct fallback** for the
+extreme-`r` tail (SD6+) where exhaustive search would explode; the counter gate
+blocks performance regressions; and the headline correctness theorem is restored
+(after #8384). The BHKS work is preserved as the large-`r` tier, not deleted.
+
+*Stretch (#8395):* a certificate-backed early-stop would make the lattice tier
+fast enough to *strictly beat* the reference on the extreme-`r` tail too, not just
+match it. Not on the critical path.
