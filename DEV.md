@@ -128,6 +128,18 @@ staged in `conformance-fixtures/HexBerlekampZassenhaus/bz-scheduled.jsonl`.
 
 ## Next — the #8383 + #8384 capstone (swap `factor` to the hybrid, re-prove)
 
+**Entry point for the next session: GitHub issue #8383** (self-contained brief).
+**Run the gates BEFORE and AFTER the swap** and record both in the PR:
+`lake exe hexbz_emit_fixtures | python3 scripts/oracle/bz_flint.py` (expect 100/0),
+`python3 scripts/oracle/bz_trace_gate.py` (expect 50/0),
+`timeout 180 lake exe hexbz_emit_fixtures > /dev/null`,
+`lake exe hexbz_bench verify` + `lake exe hexbz_bench run` (easy-regime timings must
+not regress), and a green `lake build HexBerlekampZassenhausMathlib` (CI-gated). The
+classical tier passes the self-certify guard on the whole corpus, so any change in
+conformance/trace counts or easy-regime timings signals a real regression — stop and
+diagnose.
+
+
 #8383 (swap the executable) and #8384 (re-prove) **cannot be separated**: the
 public `Hex.factor` is referenced by ~34 Mathlib-free and ~75 Mathlib-layer
 theorems (all bridged through `factor_eq_factorWithBound_default`), and the
