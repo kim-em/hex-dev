@@ -17,10 +17,12 @@ factors:
   number of lifted factors `r` is small; worst-case `O(2^r)`.
 - **`factorLattice`** (returns `Option`) — van Hoeij CLD lattice
   recombination via `hex-lll`. *Polynomial in `r`*; used when `r` is
-  large enough that classical recombination would explode (e.g.
-  Swinnerton-Dyer inputs, on which the classical reference *also*
-  explodes — this is where the lattice tier strictly beats the
-  reference).
+  large enough that classical recombination would exceed its subset
+  budget (e.g. Swinnerton-Dyer inputs, on which the classical reference
+  *also* explodes). The lattice tier is a **correct fallback** there;
+  whether it is *fast enough to strictly beat* the reference on that
+  extreme-`r` tail is a separate optimisation (it currently grinds to
+  the precision cap — see the early-termination follow-up).
 - **`factorTrial`** (total) — exhaustive integer trial division. No
   modular reduction; the unconditional totality backstop, reached only
   when no admissible prime exists.
@@ -473,9 +475,14 @@ No BHKS termination theorem is needed: the loop is finite by subset enumeration,
 lifted-factor count `r` is large enough that `factorClassical`'s
 size-ordered subset search would exceed its budget. It is **polynomial
 in `r`** (the classical reference, and `factorClassical`, are `O(2^r)`
-there), so it is where `factor` strictly beats the verified reference —
-e.g. Swinnerton-Dyer inputs, which split into many small factors mod
-every prime. It is built on the verified `hex-lll` short-vector
+there), so it is the asymptotically-correct path on the extreme-`r` tail
+— e.g. Swinnerton-Dyer inputs, which split into many small factors mod
+every prime. It certifies irreducibility (unlike a CLD recovery that
+declines on the single-class case), so it returns `some` where exhaustive
+search would explode. Beating the reference *in wall-clock* on that tail
+additionally requires terminating before the precision cap (a separate
+optimisation; today it grinds to the cap and is correct-but-slow). It is
+built on the verified `hex-lll` short-vector
 machinery.
 
 Recombination uses van Hoeij's algorithm with the **Combined Logarithmic Derivative (CLD)** invariant (BHKS Definition 3.1.1; HHN Definition 2). The all-coefficients-lattice variant of BHKS §5.2 is pinned: every coefficient index of the CLD is a column of the lattice. HHN's incremental-column / U-LLL / Progress-potential refinements are deliberately not used — they are a constant-factor performance optimisation, not required for correctness, and add proof complexity disproportionate to their gain.
@@ -806,8 +813,8 @@ Phase 4 declares one external comparator:
   **The reference is classical exhaustive recombination, not a lattice method**: `factor_int_poly` reconstructs via `zassenhaus_reconstruction` over `subseqs` of the lifted factors (`Reconstruction.thy`), with fast constants (GHC + Karatsuba). It is exponential in the modular-factor count `r` — the same class as `factorClassical`.
 
   **Gating goal, by regime:**
-  - small/medium `r` (reference is fast): **`hex/isabelle ≤ a small constant`** — a constant-factor race won by competitive arithmetic. Measured on the scheduled ratio workflow.
-  - large `r` (Swinnerton-Dyer class, reference's exhaustive search explodes): **hex strictly faster.** CI cannot wait out the reference's blow-up, so the merge gate only checks hex finishes the large-`r` corpus under cap *using `factorLattice`*; the "strictly beats the reference" claim is recorded offline against a checked-in baseline.
+  - small/medium `r` (reference is fast; the classical tier handles it, including the Swinnerton-Dyer ladder up to where its subset budget is exceeded): **`hex/isabelle ≤ a small constant`** — a constant-factor race won by competitive arithmetic. This is the achievable target: **parity** with the reference on every input the classical tier covers. Measured on the scheduled ratio workflow.
+  - extreme `r` (beyond the classical budget, reference's exhaustive search explodes): hex is **correct** via `factorLattice` (which exhaustive search cannot be — it would explode). *Strictly beating* the reference in wall-clock here additionally requires `factorLattice` terminating before the precision cap; until that optimisation lands it is correct-but-slow, so the merge gate only checks hex finishes under cap *using `factorLattice`* (not `factorTrial`), and the "strictly beats" claim is a goal, not a current guarantee.
 
 The fpLLL/python-flint comparators that adjacent libraries declare are *informational only* at the BZ level.
 
