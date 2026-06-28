@@ -298,7 +298,7 @@ theorem rowCombination_basis_coeffs_reconstruction
     (Matrix.transpose (basis b) *
       (Matrix.transpose (coeffs b) *
         Vector.map (fun x : Int => (x : Rat)) c))[jj]
-  rw [Matrix.transpose_mul_of_mul_comm Lean.Grind.CommSemiring.mul_comm]
+  rw [Matrix.transpose_mul_of_mul_comm]
   rw [Matrix.mul_assoc_vec]
 
 private theorem exists_highest_nonzero_coeff_in_list
@@ -595,10 +595,11 @@ theorem scaledCoeffMatrix_eq_borderedMinor
             (⟨cc.val, Nat.lt_trans hcj (Nat.lt_trans hji i.isLt)⟩ : Fin n)] := by
         have hpr_not : ¬ pp.val < j.val := Nat.not_lt.mpr (Nat.le_of_eq hpr.symm)
         simp [Matrix.borderedMinor, Matrix.ofFn, Vector.getElem_ofFn, hpr_not, hcj]
-      rw [h_sc, h_bm]
-      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Vector.dotProduct]
-      congr 2
-      exact Fin.ext hpr
+      rw [h_sc, h_bm, Matrix.gramMatrix_getElem]
+      have hrow : (⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
+          (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩ : Fin n)
+          = ⟨j.val, Nat.lt_trans hji i.isLt⟩ := Fin.ext hpr
+      rw [hrow]
   · -- Border column: cc.val = j.val.
     have hcj_eq : cc.val = j.val :=
       Nat.le_antisymm (Nat.lt_succ_iff.mp cc.isLt) (Nat.le_of_not_lt hcj)
@@ -632,10 +633,11 @@ theorem scaledCoeffMatrix_eq_borderedMinor
           (Matrix.gramMatrix b)[(⟨j.val, Nat.lt_trans hji i.isLt⟩ : Fin n)][i] := by
         have hpr_not : ¬ pp.val < j.val := hrj
         simp [Matrix.borderedMinor, Matrix.ofFn, Vector.getElem_ofFn, hpr_not, hcj]
-      rw [h_sc, h_bm]
-      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Vector.dotProduct]
-      congr 2
-      exact Fin.ext hpr_eq
+      rw [h_sc, h_bm, Matrix.gramMatrix_getElem]
+      have hrow : (⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
+          (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩ : Fin n)
+          = ⟨j.val, Nat.lt_trans hji i.isLt⟩ := Fin.ext hpr_eq
+      rw [hrow]
 
 /-- The no-pivot Bareiss-style trailing value on `scaledCoeffMatrix b i j hji`
 agrees with the value on the bordered minor of `gramMatrix b` whose border
