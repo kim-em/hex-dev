@@ -38,6 +38,13 @@ near-mechanical copy):
   drivers (shared `conformance/` sub-project).
 - `conformance-fixtures/HexX/*.jsonl`, `scripts/oracle/<lib>_*.py`.
 
+The publish mechanism is `scripts/release/released.yml` (the per-repo
+managed-path + pin manifest), `scripts/release/sync_released.py` (the
+driver; supports `--dry-run`), and `.github/workflows/sync-released.yml`
+(manual dispatch). A real sync overwrites each released repo's managed
+paths and rewrites its Lake pins, so it must only run once this monorepo
+is at or ahead of every released repo's `main`. Run `--dry-run` first.
+
 # hex — agent-specific conventions
 
 Conventions specifically for LLM agents working on this project.

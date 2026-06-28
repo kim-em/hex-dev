@@ -1,0 +1,103 @@
+# Publish-out sync manifest.
+#
+# `hex-dev` is the source of truth. The sync (scripts/release/sync_released.py,
+# driven by .github/workflows/sync-released.yml) regenerates each released repo
+# from this monorepo: it overwrites the repo's *managed* paths from here, leaves
+# everything else (root + sidecar lakefiles, CI, toolchains, LICENSE, README,
+# manifests) untouched, rewrites the root lakefile's cross-repo Hex pins to the
+# commits just synced, and commits to the released repo's `main`.
+#
+# Order is topological (upstream first) so each repo's freshly-pushed SHA is
+# known before its downstream consumers are processed.
+#
+# Per-repo managed path conventions (resolved by the driver):
+#   <Lib>/            (minus <Lib>/SPEC/)   -> <Lib>/
+#   <Lib>.lean        (if umbrella: true)   -> <Lib>.lean
+#   <Lib>/SPEC/<spec>.md                    -> SPEC/<spec>.md
+#   bench/<Lib>/       (if bench: true)      -> bench/<Lib>/
+#   conformance/<Lib>/ (if conformance)      -> conformance/<Lib>/
+#   conformance-fixtures/<f>/                -> conformance-fixtures/<f>/
+#   scripts/oracle/<o>                       -> scripts/oracle/<o>
+# `pins` lists the upstream repos whose git rev is rewritten in this repo's root
+# lakefile (matched by their github URL); `lakefile` is that file's format.
+
+repos:
+  - repo: kim-em/hex-test-kit
+    lib: Hex
+    umbrella: false        # released HexTestKit.lean umbrella is fixed
+    paths:                 # explicit: only the shared helper source
+      - { src: "Hex", dest: "Hex" }
+    spec: null
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: []
+    lakefile: toml
+
+  - repo: kim-em/hex-matrix
+    lib: HexMatrix
+    umbrella: true
+    spec: hex-matrix
+    bench: true
+    conformance: true
+    fixtures: [HexMatrix]
+    oracles: [matrix_flint.py, common.py, flint_bench_driver.py]
+    pins: []
+    lakefile: toml
+
+  - repo: kim-em/hex-matrix-mathlib
+    lib: HexMatrixMathlib
+    umbrella: true
+    spec: hex-matrix-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-matrix]
+    lakefile: toml
+
+  - repo: kim-em/hex-gram-schmidt
+    lib: HexGramSchmidt
+    umbrella: true
+    spec: hex-gram-schmidt
+    bench: true
+    conformance: true
+    fixtures: [HexGramSchmidt]
+    oracles: [gs_flint.py, common.py]
+    pins: [hex-matrix]
+    lakefile: toml
+
+  - repo: kim-em/hex-gram-schmidt-mathlib
+    lib: HexGramSchmidtMathlib
+    umbrella: true
+    spec: hex-gram-schmidt-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-gram-schmidt, hex-matrix-mathlib, hex-matrix]
+    lakefile: toml
+
+  - repo: kim-em/hex-lll
+    lib: HexLLL
+    umbrella: true
+    spec: hex-lll
+    bench: true
+    bench_dir: HexLLLBench   # multi-file bench lives under bench/HexLLLBench/
+    conformance: true
+    fixtures: [HexLLL]
+    oracles: [lll_fpylll.py, lll_fpylll_bench_driver.py, common.py, __init__.py, setup_fplll_ffi.sh, setup_lll_isabelle.sh, patches]
+    pins: [hex-matrix, hex-gram-schmidt]
+    lakefile: lean
+
+  - repo: kim-em/hex-lll-mathlib
+    lib: HexLLLMathlib
+    umbrella: true
+    spec: hex-lll-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-lll, hex-gram-schmidt-mathlib, hex-matrix-mathlib, hex-gram-schmidt, hex-matrix]
+    lakefile: toml
