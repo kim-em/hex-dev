@@ -61,6 +61,7 @@ jobs:
             hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
             hexhensel_bench hexberlekamp_bench hexbz_bench \
             hexconway_bench \
+            hexmatrix_bench hexgramschmidt_bench hexlll_bench \
             HexMatrix HexGramSchmidt HexLLL hexlll_provider_probe \
             HexMatrixMathlib HexGramSchmidtMathlib HexLLLMathlib
       - name: Build HO-1 Mathlib bridge

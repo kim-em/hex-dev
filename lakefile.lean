@@ -127,6 +127,7 @@ lean_lib HexMatrix where
 lean_lib HexGramSchmidt where
 
 lean_lib HexLLL where
+  precompileModules := true
   extraDepTargets := #[`hexlllffi]
   moreLinkArgs :=
     if System.Platform.isOSX then
@@ -143,61 +144,124 @@ lean_lib HexLLLMathlib where
 lean_exe hexlll_provider_probe where
   root := `HexLLL.ProviderProbe
 
+-- Multi-file bench drivers: their modules live under `bench/` and are owned by
+-- a precompiled lean_lib (mirroring the released bench sub-project), so the bench
+-- exes can root into them. Single-file bench drivers instead carry
+-- `srcDir := "bench"` on their own `lean_exe`.
+lean_lib HexLLLBenchSupport where
+  srcDir := "bench"
+  globs := #[`HexLLLBench, `HexLLLBench.Inputs, `HexLLLBench.Targets]
+
+lean_lib HexGF2BenchSupport where
+  srcDir := "bench"
+  globs := #[`HexGF2.Bench]
+
+-- Conformance #guard drivers live under `conformance/` and are built by this
+-- library (mirroring the released conformance sub-projects). EmitFixtures drivers
+-- are the `*_emit_fixtures` exes below, carrying `srcDir := "conformance"`.
+lean_lib HexConformance where
+  srcDir := "conformance"
+  globs := #[`HexArith.Conformance, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexConway.Conformance, `HexGF2.Conformance, `HexGFq.Conformance, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexModArith.Conformance, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance]
+
+lean_exe hexmatrix_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexMatrix.EmitFixtures
+
+lean_exe hexgramschmidt_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexGramSchmidt.EmitFixtures
+
+lean_exe hexlll_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexLLL.EmitFixtures
+
+lean_exe hexmatrix_bench where
+  srcDir := "bench"
+  root := `HexMatrix.Bench
+
+lean_exe hexgramschmidt_bench where
+  srcDir := "bench"
+  root := `HexGramSchmidt.Bench
+
+lean_exe hexlll_bench where
+  srcDir := "bench"
+  supportInterpreter := true
+  root := `HexLLLBench.Main
+
 lean_exe hex_arith_floor where
+  srcDir := "bench"
   root := `HexBench.ArithFloor
 
 lean_exe hex_classical_spike where
+  srcDir := "bench"
   root := `HexBench.ClassicalSpike
 
 lean_exe hexarith_bench where
+  srcDir := "bench"
   root := `HexArith.Bench
 
 lean_exe hexpoly_bench where
+  srcDir := "bench"
   root := `HexPoly.Bench
 
 lean_exe hexpoly_emit_fixtures where
+  srcDir := "conformance"
   root := `HexPoly.EmitFixtures
 
 lean_exe hexpolyfp_emit_fixtures where
+  srcDir := "conformance"
   root := `HexPolyFp.EmitFixtures
 
 lean_exe hexberlekamp_emit_fixtures where
+  srcDir := "conformance"
   root := `HexBerlekamp.EmitFixtures
 
 lean_exe hexbz_emit_fixtures where
+  srcDir := "conformance"
   root := `HexBerlekampZassenhaus.EmitFixtures
 
 lean_exe hexbz_bench where
+  srcDir := "bench"
   root := `HexBerlekampZassenhaus.Bench
 
 lean_exe hexgfq_emit_fixtures where
+  srcDir := "conformance"
   root := `HexGFq.EmitFixtures
 
 lean_exe hexgf2_emit_fixtures where
+  srcDir := "conformance"
   root := `HexGF2.EmitFixtures
 
 lean_exe hexhensel_emit_fixtures where
+  srcDir := "conformance"
   root := `HexHensel.EmitFixtures
 
 lean_exe hexconway_emit_fixtures where
+  srcDir := "conformance"
   root := `HexConway.EmitFixtures
 
 lean_exe hexgfqring_emit_fixtures where
+  srcDir := "conformance"
   root := `HexGFqRing.EmitFixtures
 
 lean_exe hexgfqfield_emit_fixtures where
+  srcDir := "conformance"
   root := `HexGFqField.EmitFixtures
 
 lean_exe hexpolyz_bench where
+  srcDir := "bench"
   root := `HexPolyZ.Bench
 
 lean_exe hexpolyz_emit_fixtures where
+  srcDir := "conformance"
   root := `HexPolyZ.EmitFixtures
 
 lean_exe hexmodarith_bench where
+  srcDir := "bench"
   root := `HexModArith.Bench
 
 lean_exe hexgf2_bench where
+  srcDir := "bench"
   root := `HexGF2Bench
 
 -- No bench exes for `Hex*Mathlib` libraries — see
@@ -205,24 +269,31 @@ lean_exe hexgf2_bench where
 -- are proof-only; there is no computational kernel to benchmark.
 
 lean_exe hexpolyfp_bench where
+  srcDir := "bench"
   root := `HexPolyFp.Bench
 
 lean_exe hexgfqring_bench where
+  srcDir := "bench"
   root := `HexGFqRing.Bench
 
 lean_exe hexgfqfield_bench where
+  srcDir := "bench"
   root := `HexGFqField.Bench
 
 lean_exe hexgfq_bench where
+  srcDir := "bench"
   root := `HexGFq.Bench
 
 lean_exe hexhensel_bench where
+  srcDir := "bench"
   root := `HexHensel.Bench
 
 lean_exe hexberlekamp_bench where
+  srcDir := "bench"
   root := `HexBerlekamp.Bench
 
 lean_exe hexconway_bench where
+  srcDir := "bench"
   root := `HexConway.Bench
 
 @[default_target]

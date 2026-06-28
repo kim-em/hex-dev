@@ -9,6 +9,10 @@ import tomllib
 
 
 KNOWN_EXCEPTIONS = {"Hex", "HexManual"}
+# Build-only lean_libs that build the per-library bench/conformance drivers under
+# `bench/` and `conformance/`. They are not project libraries (no libraries.yml
+# entry, no repo-root file); exempt them from the Lake-config alignment check only.
+BUILD_ONLY_LIBS = {"HexLLLBenchSupport", "HexGF2BenchSupport", "HexConformance"}
 EXTERNAL_IMPORT_ROOTS = {"Mathlib", "Verso"}
 RELEASE_LIBRARIES = {
     1: [
@@ -482,6 +486,7 @@ def check_lakefile_alignment(libraries: OrderedDict[str, LibraryInfo], lakefile_
         - nonactive_library_names
         - external_library_names
         - KNOWN_EXCEPTIONS
+        - BUILD_ONLY_LIBS
     ):
         errors.append(f"Lake config library {name} missing from libraries.yml")
     for name in sorted(KNOWN_EXCEPTIONS):
@@ -587,7 +592,12 @@ def pascal_to_spec_path(name: str) -> str:
     parts = ["hex"]
     for token in tokens:
         parts.append(mapping.get(token, token.lower()))
-    return f"SPEC/Libraries/{'-'.join(parts)}.md"
+    slug = "-".join(parts)
+    # Per-library SPEC is co-located at `<Lib>/SPEC/<slug>.md`; source-less
+    # planned libraries keep their SPEC under `SPEC/Libraries/<slug>.md`.
+    if Path(name).is_dir():
+        return f"{name}/SPEC/{slug}.md"
+    return f"SPEC/Libraries/{slug}.md"
 
 
 def library_owner_for_path(path: Path, libraries: OrderedDict[str, LibraryInfo]) -> str | None:

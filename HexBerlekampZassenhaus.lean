@@ -1,5 +1,4 @@
 import HexBerlekampZassenhaus.Basic
-import HexBerlekampZassenhaus.Conformance
 import HexBerlekampZassenhaus.CrossCheck
 import HexBerlekampZassenhaus.SmallModSingleton
 

@@ -33,7 +33,10 @@ def fallback_report_slug(library_name: str) -> str:
 
 def report_slug(root: Path, library_name: str) -> str:
     normalized_name = library_name.lower()
-    for spec in sorted((root / "SPEC" / "Libraries").glob("*.md")):
+    # Per-library SPEC lives at `<Lib>/SPEC/<slug>.md`; source-less planned
+    # libraries keep theirs under `SPEC/Libraries/<slug>.md`.
+    specs = list((root / "SPEC" / "Libraries").glob("*.md")) + list(root.glob("Hex*/SPEC/*.md"))
+    for spec in sorted(specs):
         slug = spec.stem
         if slug.replace("-", "") == normalized_name:
             return slug

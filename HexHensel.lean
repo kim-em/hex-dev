@@ -3,7 +3,6 @@ import HexHensel.Linear
 import HexHensel.Multifactor
 import HexHensel.Quadratic
 import HexHensel.QuadraticMultifactor
-import HexHensel.Conformance
 import HexHensel.CrossCheck
 
 /-!
