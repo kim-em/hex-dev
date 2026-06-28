@@ -115,89 +115,59 @@ reverse. We have thrashed too often bending the implementation to ease proofs.
 | Merge-blocking conformance + counter + wall-clock gate (+ budget soundness) | #8379 | #8390 | ✅ merged |
 | CLD lattice tier: certify irreducibility (Swinnerton-Dyer / high-`r`) | #8380 | #8393 | ✅ merged (correctness); speed = #8395 stretch |
 | Cost-based hybrid dispatch (classical-first, self-certifying) | #8381 | #8397, #8398 | ✅ merged (`factorHybrid` + `factorHybrid_product`) |
+| Classical recombination structurally recursive + reconstruction proved | — | #8401 | ✅ merged (capstone foundation) |
+| **Swap public `factor` to the hybrid** (re-point ~100 theorems, both layers) | #8383 | #8404 | ✅ **merged — the public `factor` is now the hybrid** |
 | Optimize the easy regime (arithmetic constants) | #8382 | — | ⏸️ deferred — sound part overlaps #8395 (see below) |
-| Swap public `factor` to the hybrid + re-prove over it | #8383 + #8384 | — | ⬜ **next** — one capstone (see below) |
+| Prove output factors irreducible over the hybrid (the headline `sorry`) | #8384 | — | ⬜ open — long-standing, deep (see below) |
 
-Everything merged so far is **purely additive**: the public `factor` is unchanged
-until the #8383/#8384 capstone, so `main` stays stable while the tiers are built
-and validated. Conformance stands at 100 checks / 0 failures (50 `factor` + 50
-`factorClassical`) on the per-PR corpus; heavy high-`r` cases (SD4/SD5/Φ₁₀₅) are
-staged in `conformance-fixtures/HexBerlekampZassenhaus/bz-scheduled.jsonl`.
+The public `factor` now **is** the cost-based hybrid (since #8404): the
+exponential-on-easy-inputs blow-up is gone (deg-22 reducible: 781.8 ms → 82.75 ms),
+product preservation holds over the hybrid, and the unconditional per-factor
+contracts (normalization, primitivity from `f ≠ 0`, pairwise-distinct, scalar)
+re-point through the `factorHybrid f = factorizationOfFactors f (factorHybridFactors f)`
+bridge. Conformance stands at 100 checks / 0 failures (50 `factor` + 50
+`factorClassical`); heavy high-`r` cases (SD4/SD5/Φ₁₀₅) are staged in
+`conformance-fixtures/HexBerlekampZassenhaus/bz-scheduled.jsonl`.
 
 ---
 
-## Next — the #8383 + #8384 capstone (swap `factor` to the hybrid, re-prove)
+## Next — #8384: prove the output factors are irreducible (the headline `sorry`)
 
-**Entry point for the next session: GitHub issue #8383** (self-contained brief).
-**Run the gates BEFORE and AFTER the swap** and record both in the PR:
-`lake exe hexbz_emit_fixtures | python3 scripts/oracle/bz_flint.py` (expect 100/0),
-`python3 scripts/oracle/bz_trace_gate.py` (expect 50/0),
-`timeout 180 lake exe hexbz_emit_fixtures > /dev/null`,
-`lake exe hexbz_bench verify` + `lake exe hexbz_bench run` (easy-regime timings must
-not regress), and a green `lake build HexBerlekampZassenhausMathlib` (CI-gated). The
-classical tier passes the self-certify guard on the whole corpus, so any change in
-conformance/trace counts or easy-regime timings signals a real regression — stop and
-diagnose.
+The migration is functionally complete: the public `factor` is the hybrid, it is
+fast, and its product/normalization contracts are proven. The one remaining
+*proof* obligation is `factor_irreducible_of_nonUnit` — that every factor `factor`
+returns is genuinely irreducible (can't be split further). It is a `sorry` today,
+and has been since long before this migration (the "HO-1 capstone", #4170); the
+swap neither helped nor hurt it.
 
+**Why it is hard (plain version).** The algorithm factors `f` by choosing a prime
+`p`, factoring `f` mod `p` into pieces, Hensel-lifting them to mod `p^k`, then
+keeping any *combination* of lifted pieces whose product divides `f` over ℤ.
+Proving an output factor is irreducible means proving its set of pieces is
+**minimal** — no smaller sub-combination is also a genuine factor. That needs an
+exact dictionary between "subsets of the mod-`p` pieces" and "true integer factors"
+(the *Hensel-subset correspondence*).
 
-#8383 (swap the executable) and #8384 (re-prove) **cannot be separated**: the
-public `Hex.factor` is referenced by ~34 Mathlib-free and ~75 Mathlib-layer
-theorems (all bridged through `factor_eq_factorWithBound_default`), and the
-Mathlib layer is CI-gated, so redefining `factor` must re-point all of them in one
-green PR.
+**Where it is stuck.**
+- The correspondence is proven in one coordinate (`dilate`, the substitution
+  `x ↦ c·x`) but the minimality/subset argument needs it in another (`scale`,
+  multiply by `c`). They agree only when the leading coefficient is `1` (monic);
+  for **non-monic** inputs there is no bridge — that is the missing math. Earlier
+  attempts (#7479, #7550, #7561, #8319) were each diagnosed as needing genuinely
+  new lattice theory or as resting on a *false* hypothesis, and were skipped rather
+  than forced. (Details in those issues and the `hex-lean-mathlib-boundary` skill.)
+- Even with the correspondence, it is only exact once the lift precision passes a
+  threshold, and whether the algorithm's actual precision provably reaches it is a
+  second open question (the BHKS column-adequacy / bad-vector lemmas).
 
-**Corrected premise (verified 2026-06, reading the source):** the swap does **not**
-require a new classical-tier *irreducibility* proof.
+**What is already in hand for it.** `scaledRecombinationSmart` is now structurally
+recursive with its reconstruction (`product = target`) proven (#8401) — the
+foundation an *unconditional classical-tier* irreducibility proof would build on.
+The conditional `factor*_branch_entry_irreducible_of_choosePrimeData` lemmas (over
+the proof-facing `factorWithBound`) already discharge several dispatch branches; the
+non-monic correspondence is the genuinely-blocked remainder.
 
-- The headline `factor_irreducible_of_nonUnit` (`FactorSoundness.lean:18`) is an
-  accepted, shipped **`sorry`** on `main`; `factorWithBound_entries_irreducible`
-  (`Basic.lean:421`) is **conditional** on an `h_raw` hypothesis (raw factors
-  irreducible) whose producers are partly landed, partly blocked on the
-  #7479-class unscaled-support gap (see the `hex-lean-mathlib-boundary` skill).
-- So `Hex.factor` has **no unconditional entries-irreducible guarantee to regress**.
-  Keeping `factor_irreducible_of_nonUnit` a `sorry` over the hybrid is no regression;
-  the conditional `factor_*_branch_entry_irreducible_of_choosePrimeData` cluster is
-  about `factorWithBound`'s specific dispatch branches and stays attached to
-  `factorWithBound` (now proof-facing, not the public entry).
-- The **unconditional** `factor`-level contracts (`factor_product`,
-  `factor_entry_*` normalization, `factor_pairwise_first`, `factor_scalar`, and the
-  Mathlib-layer `factor_headline_*` / `FactorSoundness` users) are what must
-  genuinely re-point: product via `factorHybrid_product` (#8398, done), the rest via
-  a one-time `factorHybrid f = factorizationOfFactors f (factorHybridFactors f)`
-  bridge (every hybrid tier assembles via `factorizationOfFactors`, like
-  `factorWithBound`).
-
-**Banked already:**
-- **#8398:** `factorHybrid` is self-certifying (accepts a tier's result only when
-  `Factorization.product φ = f`, else the proven trial backstop) and
-  `factorHybrid_product` is proven — the product half of the headline.
-- **#8401:** `scaledRecombinationSmart*` converted from `partial def` to structurally
-  recursive (explicit `fuel`, behavior-identical), and its reconstruction proved
-  (`scaledRecombinationSmart{Aux,SizeLoop,CandLoop}_product`). The classical-tier
-  reconstruction foundation — useful for an eventual *unconditional* classical
-  irreducibility, though the swap (below) does not need it.
-
-**Capstone steps remaining (in order):**
-
-1. ~~Make `scaledRecombinationSmart*` provable~~ — done (#8401).
-2. ~~Prove the smart-core reconstruction~~ — done (#8401).
-3. **Swap `factor := factorHybrid` and re-point ~100 `factor`-level theorems** (the
-   real remaining work — voluminous, dual-layer, CI-gated, one PR, no intermediate
-   green state per the boundary skill). Not mathematically hard:
-   - Mathlib-free: delete `factor_eq_factorWithBound_default`; `factor_product` via
-     `factorHybrid_product`; `factor_entry_*` / `factor_pairwise_first` / `factor_scalar`
-     via a one-time `factorHybrid f = factorizationOfFactors f (factorHybridFactors f)`
-     bridge lemma.
-   - Mathlib layer: re-point `factor_product`, the unconditional `factor_headline_*`
-     / `FactorSoundness` users (product + normalization + pairwise + scalar); keep
-     `factor_irreducible_of_nonUnit` a **`sorry`** (no regression — already one); leave
-     the conditional `factor_*_branch_entry_irreducible_of_choosePrimeData` cluster
-     attached to `factorWithBound` (it is about that combinator's branches, now
-     proof-facing). Build the **whole** `HexBerlekampZassenhausMathlib` library green.
-4. **Gates + cleanup.** `Conformance.lean` expectations, `EmitFixtures` (already routes
-   through `factor`), baselines; full gate green. Retire the cap-based combinator **from
-   the public path only** — keep the `factorWithBound`/`factorFast` defs (the lattice tier
-   and ~dozens of proofs use them).
+This is deep, multi-session BHKS lattice-soundness work — not a re-pointing chore.
 
 ---
 
@@ -253,6 +223,12 @@ require a new classical-tier *irreducibility* proof.
 - **#8401:** `scaledRecombinationSmart*` made structurally recursive (drop `partial`,
   explicit `fuel`, behavior-identical) + reconstruction proved — the classical-tier
   capstone foundation (steps 1-2).
+- **#8383 → #8404:** swapped the public `factor`/`factor?` to the hybrid; added
+  `factorHybridFactors` + the `factor f = factorizationOfFactors f (factorHybridFactors f)`
+  bridge; re-pointed ~100 `factor`-level theorems across both layers. The conditional
+  `h_raw` primitivity hypotheses collapsed to just `f ≠ 0` (the self-certifying
+  product reconstruction makes primitivity derivable). Headline irreducibility stays a
+  `sorry` (no regression). Easy-input blow-up removed (deg-22: 781.8 ms → 82.75 ms).
 
 ---
 
@@ -285,10 +261,10 @@ Never bend the implementation to a future proof. Never introduce an `axiom`.
     `RecombStats`), `factorClassical` (+ `…WithBound`, `classicalCoreFactorsWithBound`);
   — lattice tier: `factorLattice` (+ `bhksSingleAllOnesPartition`) over the
     `bhks*` / `factorFastCore*` machinery;
-  — hybrid (merged, self-certifying): `factorHybrid` / `factorHybridTraced`,
-    `factorHybrid_product`;
-  — public entry (to swap in the capstone): `factor` (currently the cap-based
-    `factorWithBound`).
+  — hybrid (self-certifying): `factorHybrid` / `factorHybridTraced`,
+    `factorHybrid_product`, `factorHybridFactors`;
+  — public entry (now the hybrid, since #8404): `factor` / `factor?`. The old
+    cap-based `factorWithBound` / `factorFast` remain as proof-facing combinators.
 - **Reused tiers:** `HexBerlekamp/` (mod-`p` Berlekamp), `HexHensel/` (lift),
   `HexLLL/` (van Hoeij short vectors), `HexPoly*/` (arithmetic).
 - **Conformance:** `HexBerlekampZassenhaus/EmitFixtures.lean`,
@@ -306,14 +282,15 @@ Never bend the implementation to a future proof. Never introduce an `axiom`.
 
 ## End state
 
-Public `factor` is the cost-based hybrid (after the capstone): it reaches
-**parity** with the verified Isabelle reference on every input the classical tier
-covers — everything up to the classical subset budget, including the
-Swinnerton-Dyer ladder up to SD5; the verified-LLL lattice tier is a **correct
-fallback** for the extreme-`r` tail (SD6+) where exhaustive search would explode;
-the counter gate blocks performance regressions; and the headline correctness
-theorem is restored over the hybrid. The BHKS work is preserved as the large-`r`
-tier, not deleted. (#8382's easy-regime constants are a later polish, not required
+Public `factor` is the cost-based hybrid (since #8404): it reaches **parity** with
+the verified Isabelle reference on every input the classical tier covers —
+everything up to the classical subset budget, including the Swinnerton-Dyer ladder
+up to SD5; the verified-LLL lattice tier is a **correct fallback** for the
+extreme-`r` tail (SD6+) where exhaustive search would explode; the counter gate
+blocks performance regressions; product and normalization contracts are proven over
+the hybrid. The one open proof is the headline irreducibility (`#8384`, still a
+`sorry`). The BHKS work is preserved as the large-`r` tier, not deleted. (#8382's
+easy-regime constants are a later polish, not required
 for parity.)
 
 *Stretch (#8395):* a certificate-backed early-stop would make the lattice tier
