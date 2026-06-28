@@ -40,10 +40,22 @@ near-mechanical copy):
 
 The publish mechanism is `scripts/release/released.yml` (the per-repo
 managed-path + pin manifest), `scripts/release/sync_released.py` (the
-driver; supports `--dry-run`), and `.github/workflows/sync-released.yml`
-(manual dispatch). A real sync overwrites each released repo's managed
-paths and rewrites its Lake pins, so it must only run once this monorepo
-is at or ahead of every released repo's `main`. Run `--dry-run` first.
+driver; supports `--dry-run`), `scripts/release/synced.json` (the
+per-repo `main` baseline this monorepo corresponds to), and
+`.github/workflows/sync-released.yml` (manual dispatch, dry by default).
+A real sync overwrites each released repo's managed paths and rewrites
+its Lake pins, so it must only run once this monorepo is at or ahead of
+every released repo's `main`. Run `--dry-run` first.
+
+**Uncoordinated-commit guard.** The sync refuses to overwrite a released
+repo whose `main` HEAD has moved off its `synced.json` baseline, so an
+out-of-band commit on a released repo is never silently clobbered; it
+skips that repo and reports the divergence (override with `--force` only
+after reconciling). Reconciling means **re-seeding**: bring the affected
+library's content here up to the released `main`, rebuild the whole graph
+green (a released repo can advance with breaking API changes its
+downstream consumers have not adopted — the monorepo build surfaces
+that), then update the baseline.
 
 # hex — agent-specific conventions
 

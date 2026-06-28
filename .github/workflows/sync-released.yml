@@ -22,6 +22,9 @@ concurrency:
   group: sync-released
   cancel-in-progress: false
 
+permissions:
+  contents: write   # to commit the advanced scripts/release/synced.json baseline
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -41,4 +44,14 @@ jobs:
             python3 scripts/release/sync_released.py
           else
             python3 scripts/release/sync_released.py --dry-run
+          fi
+      - name: Commit advanced baseline
+        if: ${{ inputs.dry_run == false }}
+        run: |
+          if ! git diff --quiet -- scripts/release/synced.json; then
+            git config user.name "hex-dev sync"
+            git config user.email "noreply@anthropic.com"
+            git add scripts/release/synced.json
+            git commit -m "chore(release): advance sync baseline"
+            git push origin HEAD:main
           fi

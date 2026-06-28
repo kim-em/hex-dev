@@ -21,6 +21,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -33,6 +34,7 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "scripts" / "release" / "released.yml"
+BASELINE = REPO_ROOT / "scripts" / "release" / "synced.json"
 
 
 def run(cmd: list[str], cwd: Path | None = None, capture: bool = False) -> str:
@@ -148,13 +150,26 @@ def rewrite_pins(entry: dict, clone: Path, synced: dict[str, str]) -> list[str]:
 
 
 def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
-              synced: dict[str, str]) -> None:
+              synced: dict[str, str], baseline: dict[str, str], force: bool) -> bool:
+    """Sync one repo. Returns True if the baseline SHA changed (a push happened)."""
     repo = entry["repo"]
     short = repo.split("/")[-1]
     print(f"\n=== {repo} ===")
     with tempfile.TemporaryDirectory() as td:
         clone = Path(td) / short
         run(["git", "clone", "--depth", "1", clone_url(repo, token), str(clone)], capture=True)
+        head = run(["git", "rev-parse", "HEAD"], cwd=clone, capture=True)
+        # Compare-and-swap guard: refuse to overwrite a repo whose main has moved
+        # off the baseline this monorepo was synced from (an uncoordinated commit).
+        expected = baseline.get(short)
+        if expected and head != expected:
+            msg = (f"  UNCOORDINATED: {repo} main is {head[:12]}, baseline expects "
+                   f"{expected[:12]}. Reconcile (re-seed from main) before syncing.")
+            if not force:
+                print(msg + " Skipping (use --force to override).")
+                synced[short] = expected
+                return False
+            print(msg + " Overriding (--force).")
         for line in apply_paths(entry, clone):
             print(line)
         for line in rewrite_pins(entry, clone, synced):
@@ -162,16 +177,15 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
         status = run(["git", "status", "--porcelain"], cwd=clone, capture=True)
         if not status:
             print("  (no changes)")
-            synced[short] = run(["git", "rev-parse", "HEAD"], cwd=clone, capture=True)
-            return
+            synced[short] = head
+            return False
         print("  changed files:")
         for l in status.splitlines():
             print(f"    {l}")
         if dry_run:
-            # stand-in SHA so downstream pin rewrites can be previewed
-            synced[short] = run(["git", "rev-parse", "HEAD"], cwd=clone, capture=True)
+            synced[short] = head  # stand-in so downstream pin previews resolve
             print("  DRY-RUN: not committing or pushing")
-            return
+            return False
         run(["git", "add", "-A"], cwd=clone)
         run(["git", "-c", "user.name=hex-dev sync",
              "-c", "user.email=noreply@anthropic.com",
@@ -179,6 +193,7 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
         run(["git", "push", "origin", "HEAD:main"], cwd=clone)
         synced[short] = run(["git", "rev-parse", "HEAD"], cwd=clone, capture=True)
         print(f"  pushed {synced[short][:12]} to {repo}@main")
+        return True
 
 
 def main() -> int:
@@ -187,18 +202,29 @@ def main() -> int:
     ap.add_argument("--token", default=os.environ.get("RELEASED_SYNC_PAT"),
                     help="GitHub token with contents:write on the released repos")
     ap.add_argument("--only", help="sync only this repo short-name (e.g. hex-matrix)")
+    ap.add_argument("--force", action="store_true",
+                    help="override the uncoordinated-commit guard and overwrite anyway")
     args = ap.parse_args()
 
     if not args.dry_run and not args.token:
         ap.error("a token (--token or $RELEASED_SYNC_PAT) is required unless --dry-run")
 
     manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
+    baseline_doc = json.loads(BASELINE.read_text(encoding="utf-8")) if BASELINE.exists() else {}
+    baseline = {k: v for k, v in baseline_doc.items() if not k.startswith("_")}
     source_sha = run(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, capture=True)
     synced: dict[str, str] = {}
+    pushed_any = False
     for entry in manifest["repos"]:
         if args.only and entry["repo"].split("/")[-1] != args.only:
             continue
-        sync_repo(entry, source_sha, args.token, args.dry_run, synced)
+        pushed_any |= sync_repo(entry, source_sha, args.token, args.dry_run,
+                                synced, baseline, args.force)
+    # Persist the advanced baseline so the next run's guard is accurate.
+    if pushed_any and not args.dry_run:
+        baseline_doc.update({k: v for k, v in synced.items()})
+        BASELINE.write_text(json.dumps(baseline_doc, indent=2) + "\n", encoding="utf-8")
+        print(f"\nupdated {BASELINE.relative_to(REPO_ROOT)} (commit it back to hex-dev)")
     print(f"\nsynced {len(synced)} repo(s) from hex-dev@{source_sha[:12]}"
           + (" (dry-run)" if args.dry_run else ""))
     return 0
