@@ -50,20 +50,28 @@ the lifted mod-`p` factors:
 - **`factorTrial`** — exhaustive integer trial division; the total totality
   backstop, reached only when no admissible prime exists.
 
+The dispatch is **classical-first** (not an up-front cost estimator), and
+**self-certifying**:
+
 ```
-def factor f :=
-  match choosePrimeData? f with
-  | none   => factorTrial f                      -- no admissible prime
-  | some d =>
-      match dispatchTier f d with                -- COST estimate, not a precision cap
-      | .classical => factorClassical f <|> factorLattice f <|> factorTrial f
-      | .lattice   => factorLattice f  <|> factorClassical f <|> factorTrial f
+def factorHybrid f :=                              -- (factorHybridTraced f).1
+  match factorClassical f with
+  | some φ => if Factorization.product φ = f then φ      -- certified classical answer
+              else factorTrial f                          -- (corpus-never) miss → backstop
+  | none =>                                               -- classical declined (budget / r too large)
+      match factorLattice f with
+      | some φ => if Factorization.product φ = f then φ else factorTrial f
+      | none   => factorTrial f                           -- no admissible prime
 ```
 
-`dispatchTier` estimates cost from `r`, the modular factors' degree distribution,
-coefficient height / Mignotte precision, the expected size-ordered subset count,
-and the CLD lattice dimension; near the threshold it may re-choose the prime to
-get a smaller `r` (`r` depends on the prime, not on `f` alone).
+Classical-first dominates an up-front `r`-estimate: `factorClassical` peels
+reducibles fast and, on irreducibles, exhausts subsets only up to its budget
+(~0.26 s worst case) then *declines* cheaply, whereas `factorLattice` grinds to
+the precision cap. So we never run the slow tier speculatively — an estimator that
+mis-routes a reducible high-`r` input to the lattice would be a disaster.
+Each tier's answer is accepted only when it reconstructs the input
+(`Factorization.product φ = f`, decidable on `ZPoly`); this is defense-in-depth and
+makes product preservation provable now without proving the recombination loop.
 
 **Gating goal, by regime:** match Isabelle on small/medium `r`; **strictly beat**
 it on large `r` (Swinnerton-Dyer class).
@@ -106,116 +114,112 @@ reverse. We have thrashed too often bending the implementation to ease proofs.
 | Adversarial corpus + metamorphic relations | #8378 | #8387 | ✅ merged |
 | Merge-blocking conformance + counter + wall-clock gate (+ budget soundness) | #8379 | #8390 | ✅ merged |
 | CLD lattice tier: certify irreducibility (Swinnerton-Dyer / high-`r`) | #8380 | #8393 | ✅ merged (correctness); speed = #8395 stretch |
-| Cost-based `dispatchTier` | #8381 | — | ⬜ blocked on #8379, #8380 |
-| Optimize the easy regime (arithmetic constants) | #8382 | — | ⬜ blocked on #8379 |
-| Swap public `factor` to the hybrid | #8383 | — | ⬜ blocked on #8380, #8381, #8382 |
-| Re-prove headline + dispatch soundness over the hybrid | #8384 | — | ⬜ blocked on #8383 |
+| Cost-based hybrid dispatch (classical-first, self-certifying) | #8381 | #8397, #8398 | ✅ merged (`factorHybrid` + `factorHybrid_product`) |
+| Optimize the easy regime (arithmetic constants) | #8382 | — | ⏸️ deferred — sound part overlaps #8395 (see below) |
+| Swap public `factor` to the hybrid + re-prove over it | #8383 + #8384 | — | ⬜ **next** — one capstone (see below) |
 
 Everything merged so far is **purely additive**: the public `factor` is unchanged
-until #8383, so `main` stays stable while the tiers are built and validated.
-Conformance currently stands at 100 checks / 0 failures (50 `factor` + 50
+until the #8383/#8384 capstone, so `main` stays stable while the tiers are built
+and validated. Conformance stands at 100 checks / 0 failures (50 `factor` + 50
 `factorClassical`) on the per-PR corpus; heavy high-`r` cases (SD4/SD5/Φ₁₀₅) are
 staged in `conformance-fixtures/HexBerlekampZassenhaus/bz-scheduled.jsonl`.
 
 ---
 
-## Remaining issues (detail)
+## Next — the #8383 + #8384 capstone (swap `factor` to the hybrid, re-prove)
 
-### #8379 — Merge-blocking conformance + counter + wall-clock gate
-- **Goal:** make "can't quietly regress to something slower" enforceable.
-- **Work:** thread a `FactorTrace` (tier, `p`, `r`, Hensel precision, subset count,
-  lattice dim, fallback-used) through the factor path; add one CI step (extend the
-  *single* ubuntu job per `SPEC/CI.md` — no fan-out) that runs the corpus under
-  generous wall-clock caps and asserts per-fixture counters (expected tier, no
-  unexpected trial fallback, subset count ≤ bound) against a committed baseline
-  JSON; wire a scheduled run for `bz-scheduled.jsonl`.
-- **Verify:** gate passes on the current corpus; deliberately slowing a tier or
-  forcing a fallback fails it locally.
-- **Risk:** infra-heavy (CI YAML + counter probe + baseline). The `FactorTrace`
-  scaffold may sit on `factorClassical` until the dispatch lands.
+#8383 (swap the executable) and #8384 (re-prove) **cannot be separated**: the
+public `Hex.factor` carries proven contracts in *both* layers, so redefining it to
+the unproven hybrid would regress a proven soundness theorem unless the re-proof
+lands with it. Concretely:
 
-### #8380 — CLD lattice tier: certify irreducibility (Swinnerton-Dyer / high-`r`)
-- **Goal:** make `factorLattice` return `some #[f]` (not `none`) on irreducible
-  high-`r` inputs, so the dispatcher can route Swinnerton-Dyer-class inputs to it
-  instead of the exponential exhaustive fallback.
-- **Root cause (diagnosed 2026-06):** the "miss" is **not** a cap/precision bug and
-  the lattice is **not** broken. `bhksRecoverClassified` (Basic.lean ~6747)
-  correctly finds the single all-ones equivalence class for an irreducible input,
-  but `bhksDegenerateIndicatorPartition` treats that — a *correct irreducibility
-  proof* — as `degenerate → none`. Measured: `bhksRecover?` / `factorFast` return
-  `none` at every precision up to the (10²¹⁺) cap on SD2/SD3/Φ₁₅. This was right
-  for the old fall-back-to-slow architecture; it is wrong for the hybrid, where
-  the lattice tier must certify irreducibility itself.
-- **Work:** add an irreducibility **stopping criterion** — at the cap
-  (`k ≥ bhksBound`), classify the all-ones single-class partition as `success #[f]`
-  rather than `degenerate` (keep declining at sub-cap precision); expose the
-  lattice-dimension counter; validate via the FLINT oracle + counter gate on the
-  SD/cyclotomic corpus (those inputs are irreducible, so `[f]` is correct).
-- **Outcome (merged in #8393, correctness only):** `factorLattice` certifies SD2 /
-  Φ₁₅ etc. as `some #[f]`. **But it is slow** — it grinds the doubling loop to the
-  cap on irreducibles (SD2 14ms → Φ₁₅ 216ms → SD3 1.8s → SD4 deg16 **>120s**). The
-  classical tier already handles everything up to its budget (~`r ≤ 18`, including
-  SD2–SD5) fast, so the lattice is only the **correct fallback** for the extreme-`r`
-  tail (SD6+). On that tail it is slow (correct-but-slow), so the practical goal is
-  **parity** with Isabelle via the classical tier, not beating it on hard inputs.
-- **Speed is deferred to #8395 (stretch).** Making the lattice fast needs a
-  *certificate-backed* early-stop (a believed-sound `L'=W`/no-bad-vector check
-  before the cap), **not** a partition-stability heuristic (which could mis-declare
-  a reducible input irreducible — a wrong factorisation, not a deferred proof).
-  #8395 scopes a feasibility spike on exposing such a certificate from the kept
-  `BadVector`/`Recovery`/`TerminationBound` proofs; if infeasible, we bank parity.
-- The kept BHKS proofs (Recovery/Lattice/CLDColumnBound/BadVector/…) and the
-  cap-suffices proof (BHKS Thm 5.2 / D1, deferred per principle 9) live here.
+- Mathlib-free (`HexBerlekampZassenhaus/Basic.lean`): `factor_product`,
+  `factor_entry_*`, `factor_pairwise_first`, `factor_scalar` — all via
+  `factor_eq_factorWithBound_default`.
+- Mathlib layer (`HexBerlekampZassenhausMathlib/`): `Basic.lean:397-436` proves
+  `Hex.factor`'s recorded **entries are irreducible**, bridged through
+  `factor_eq_factorWithBound_default` into the `factorWithBound_entries_irreducible`
+  apparatus (IntReductionMod / PartitionRefinement); `FactorSoundness.lean` consumes
+  the Mathlib-free trio. A runtime `product = f` certificate is
+  necessary-not-sufficient, so it **cannot** restore irreducibility.
 
-### #8381 — Cost-based `dispatchTier`
-- **Goal:** the hybrid router.
-- **Work:** `dispatchTier f d` estimator from `r` + modular degree distribution +
-  coefficient height + expected subset count + lattice dim; near-threshold bounded
-  multi-prime retry keeping the smallest `r`; the combinator classical → lattice →
-  trial, recording the `FactorTrace`, flagging unexpected fallback. Kept **off**
-  the public `factor` (behind `factorHybrid`) and gated by #8379.
-- **Risk:** threshold tuning; the multi-prime retry; getting the counter
-  assertions exactly right.
+**Banked already (#8398):** `factorHybrid` is self-certifying and
+`factorHybrid_product` is proven — the product half of the headline, no swap.
 
-### #8382 — Optimize the easy regime  *(parallel; only needs #8379)*
-- **Goal:** close the ~6–9× to Isabelle on small/medium `r`.
-- **Work:** incremental-precision Hensel lift with Mignotte backstop (~2.6×) +
-  balanced product-tree lift; speed up `choosePrimeData?`/Berlekamp (the dominant
-  low-precision cost); re-measure on the scheduled ratio; record the baseline.
-- **Risk:** touches shared arithmetic — guarded by conformance; may not fully
-  close the gap (parity is the target, not a strict win on easy inputs).
+**Capstone steps (in order):**
 
-### #8383 — Swap public `factor` to the hybrid  *(first behavior-changing change)*
-- **Goal:** make the cost-based hybrid the real entry point; retire the cap-based
-  three-tier.
-- **Work:** point `factor`/`factor?` at `dispatchTier` (#8381); all conformance +
-  counter + wall-clock gates green; update `Conformance.lean` expectations and the
-  baseline JSON.
-- **Risk:** the first non-additive public change; the gate must be solid. After
-  this, the exponential-on-easy-inputs bug is gone and hard inputs route through
-  the lattice tier.
-
-### #8384 — Re-prove over the hybrid  *(the big proof unknown; deferred by design)*
-- **Goal:** restore formal correctness on the new `factor`.
-- **Work:** prove the classical tier (Group A, promoted) + dispatch soundness +
-  tier equivalence; re-target the headline theorem (`factor_product`,
-  `factor_irreducible_of_nonUnit`) over the hybrid; keep Group B/D1 (lattice tier).
-- **Risk:** largest effort, but conformance + benchmark already establish
-  correctness; proofs adapt to the implementation (principle 9). The existing
-  slow-path proofs likely carry most of the classical tier.
+1. **Make `scaledRecombinationSmart*` provable.** It is a 3-way mutual `partial def`
+   (`Aux`/`SizeLoop`/`CandLoop`, Basic.lean ~7771-7815) with **zero** lemmas. The
+   proven analog `scaledRecombinationSearchModAux` (~7714) is a fuel-indexed
+   structural `def` proved by `induction fuel`. Add an explicit fuel parameter
+   (mirror searchMod; behavior-preserving) or a lexicographic `termination_by` on
+   (budget, list-being-processed). Fuel is the safe route.
+2. **Mirror searchMod's suite** for the smart core: `_product` (template at
+   `scaledRecombinationSearchModAux_product` ~12481), `_normalizeFactorSign`,
+   `_primitive`, `_shouldRecord` (~12369-12387). The reconstruction invariant is
+   identical (record `candidate` only when `exactQuotient? target candidate = some
+   quotient`, recurse on quotient).
+3. **`factorClassical_product` + entry invariants** (via `factorizationOfFactors_*`).
+4. **`factorLattice` product + entries** — reuse `factorFastCoreWithBound_product`
+   and the exhaustive-branch irreducibility apparatus.
+5. **Swap `factor := factorHybrid`; re-point both layers.** Mathlib-free: product via
+   `factorHybrid_product`; entries via a one-time `factorHybrid f = factorizationOfFactors f (factorHybridFactors f)` bridge. Mathlib: `factor_product`, entries-irreducible, FactorSoundness.
+6. **Gates + cleanup.** `Conformance.lean` expectations (references `factorWithBound`/
+   `factor`), `EmitFixtures` (already routes through `factor`), baselines; full gate
+   green. Retire the cap-based combinator **from the public path only** — keep the
+   `factorWithBound`/`factorFast` defs (the lattice tier and ~dozens of proofs use them).
 
 ---
 
-## Order and parallelism
+## Deferred
 
-```
-#8379 ──┬─► #8380 ──► #8381 ──► #8383 ──► #8384
-        └─► #8382 ──────────────►┘
-```
+### #8382 — Optimize the easy regime  *(deferred; sound part overlaps #8395)*
+- **Goal:** close the ~6–9× to Isabelle on small/medium `r`.
+- **Why deferred:** the headline lever — the incremental-precision Hensel lift
+  (~2.6×, lift low then escalate) — is only **sound** with a per-remainder
+  completeness certificate. The size-ordered recombination accepts only verified
+  exact integer divisors, so a low-precision run always has `product = f` yet may be
+  **incomplete** (an unsplit factor is byte-identical to a genuine irreducible);
+  detecting "incomplete vs done" cheaply is exactly the certificate scoped to
+  **#8395**. `exhaustiveLiftBound = max(B, defaultFactorCoeffBound(monic core))` is
+  already the tight Mignotte bound, so there is no free sound win from tightening it.
+- **What's left here:** the modest/risky levers — balanced product-tree lift
+  (1.2–1.4× at full precision) and `choosePrimeData?`/Berlekamp micro-opt (touches
+  heavily-proven code). Verification is the **informational** scheduled ratio, not a
+  merge gate. Land after the capstone; fold the incremental-precision piece into #8395.
 
-**Critical path:** #8379 → #8380 → #8381 → #8383 → #8384.  **#8382** runs in
-parallel after #8379. (Alternative: tackle #8380 first to de-risk the CLD tier
-before building the gate/dispatch around it.)
+### #8395 — Certificate-backed early-stop for the lattice tier  *(stretch)*
+- Making `factorLattice` fast on the extreme-`r` tail (SD6+) needs a believed-sound
+  `L'=W` / no-bad-vector check before the BHKS precision cap, exposed from the kept
+  `BadVector`/`Recovery`/`TerminationBound` proofs — **not** a partition-stability
+  heuristic (which could mis-declare a reducible input irreducible). Not on the
+  critical path; without it we bank parity via the classical tier.
+
+---
+
+## History (merged)
+
+- **SPEC rewrite (#8375):** hybrid design, counter gate, invariant contracts,
+  principle 9.
+- **#8376 → #8385:** size-ordered classical recombination (`scaledRecombinationSmart`)
+  + hard subset budget + `RecombStats` counters.
+- **#8377 → #8386:** `factorClassical` full-domain entry + FLINT invariant op.
+- **#8378 → #8387:** adversarial corpus (Swinnerton-Dyer ladder, Mignotte swell,
+  cyclotomic, …) + metamorphic relations.
+- **#8379 → #8390:** merge-blocking conformance + `FactorTrace` counter gate +
+  wall-clock backstop (single ubuntu job, no fan-out); classical declines (`none`)
+  on budget exhaustion rather than reporting an untrustworthy "irreducible".
+- **#8380 → #8393:** `factorLattice` certifies irreducibility (single all-ones
+  partition at the cap → `some #[f]`) on Swinnerton-Dyer / cyclotomic high-`r`
+  inputs. *Correct but slow* (grinds to the cap: SD2 14 ms → SD4 deg16 >120 s), so
+  it is the **correct fallback** for the extreme-`r` tail; speed is #8395. The
+  classical tier already covers everything up to its budget (incl. SD2–SD5) fast, so
+  the practical goal is **parity** with Isabelle, lattice as the safety net.
+- **#8381 → #8397:** `factorHybrid`/`factorHybridTraced` — classical-first dispatch,
+  lattice on decline, trial backstop, traced. (Chose classical-first over the
+  directive's up-front cost estimator: classical declines cheaply, lattice grinds.)
+- **#8398:** self-certifying hybrid + `factorHybrid_product` (product preservation
+  proven unconditionally, no public swap).
 
 ---
 
@@ -245,10 +249,13 @@ Never bend the implementation to a future proof. Never introduce an `axiom`.
   — front end: `normalizeForFactor`, `reassemblePolynomialFactors`,
     `choosePrimeData?`, `henselLiftData`;
   — classical tier: `scaledRecombinationSmart` (+ `subsetsOfSizeWithComplement`,
-    `RecombStats`), `factorClassical` (+ `…WithBound`, `classicalCoreFactorsWithBound`,
-    `recombineScaledSmart`);
-  — lattice tier (to harden): the `bhks*` / `factorFastCore*` machinery;
-  — public entry (to swap in #8383): `factor`.
+    `RecombStats`), `factorClassical` (+ `…WithBound`, `classicalCoreFactorsWithBound`);
+  — lattice tier: `factorLattice` (+ `bhksSingleAllOnesPartition`) over the
+    `bhks*` / `factorFastCore*` machinery;
+  — hybrid (merged, self-certifying): `factorHybrid` / `factorHybridTraced`,
+    `factorHybrid_product`;
+  — public entry (to swap in the capstone): `factor` (currently the cap-based
+    `factorWithBound`).
 - **Reused tiers:** `HexBerlekamp/` (mod-`p` Berlekamp), `HexHensel/` (lift),
   `HexLLL/` (van Hoeij short vectors), `HexPoly*/` (arithmetic).
 - **Conformance:** `HexBerlekampZassenhaus/EmitFixtures.lean`,
@@ -266,13 +273,15 @@ Never bend the implementation to a future proof. Never introduce an `axiom`.
 
 ## End state
 
-Public `factor` is the cost-based hybrid: it reaches **parity** with the verified
-Isabelle reference on every input the classical tier covers (after #8382) — which
-is everything up to the classical subset budget, including the Swinnerton-Dyer
-ladder up to SD5; the verified-LLL lattice tier is a **correct fallback** for the
-extreme-`r` tail (SD6+) where exhaustive search would explode; the counter gate
-blocks performance regressions; and the headline correctness theorem is restored
-(after #8384). The BHKS work is preserved as the large-`r` tier, not deleted.
+Public `factor` is the cost-based hybrid (after the capstone): it reaches
+**parity** with the verified Isabelle reference on every input the classical tier
+covers — everything up to the classical subset budget, including the
+Swinnerton-Dyer ladder up to SD5; the verified-LLL lattice tier is a **correct
+fallback** for the extreme-`r` tail (SD6+) where exhaustive search would explode;
+the counter gate blocks performance regressions; and the headline correctness
+theorem is restored over the hybrid. The BHKS work is preserved as the large-`r`
+tier, not deleted. (#8382's easy-regime constants are a later polish, not required
+for parity.)
 
 *Stretch (#8395):* a certificate-backed early-stop would make the lattice tier
 fast enough to *strictly beat* the reference on the extreme-`r` tail too, not just
