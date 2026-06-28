@@ -30,7 +30,7 @@ theorem identity_independent {n : Nat} : (1 : Matrix Int n n).independent := by
 
 theorem gramMatrix_leadingRows_eq_submatrix {n : Nat} (M : Matrix Int n n) (k : Fin n) :
     gramMatrix (leadingRows M (k.val + 1) (Nat.succ_le_of_lt k.isLt)) =
-      submatrix (gramMatrix M) k := by
+      leadingSubmatrix (gramMatrix M) k := by
   apply Vector.ext
   intro i hi
   apply Vector.ext
@@ -55,7 +55,7 @@ theorem gramMatrix_leadingRows_eq_submatrix {n : Nat} (M : Matrix Int n n) (k : 
           (row (leadingRows M (k.val + 1) (Nat.succ_le_of_lt k.isLt)) jFin) =
         Hex.Vector.dotProduct (row M ii) (row M jj) := by
     rw [hrow_i, hrow_j]
-  simpa [gramMatrix, submatrix, ofFn, iFin, jFin, ii, jj] using
+  simpa [gramMatrix, leadingSubmatrix, ofFn, iFin, jFin, ii, jj] using
     hdot
 
 theorem independent_of_upperTriangular_pos_diag {n : Nat}
