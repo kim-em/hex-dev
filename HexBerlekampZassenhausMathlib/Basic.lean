@@ -158,8 +158,8 @@ def irreducibleByFactorization (f : Polynomial ℤ) : Bool :=
 /-- The default executable factorization multiplies back to the input. -/
 @[simp, grind =]
 theorem factor_product (f : Hex.ZPoly) :
-    Hex.Factorization.product (Hex.factor f) = f := by
-  exact Hex.factorWithBound_product f (Hex.ZPoly.defaultFactorCoeffBound f)
+    Hex.Factorization.product (Hex.factor f) = f :=
+  Hex.factor_product f
 
 /--
 The Mathlib-free executable irreducibility predicate agrees with Mathlib's
@@ -374,7 +374,8 @@ the public `Hex.factor` entry point.  This is the form consumed by the
 HO-1 capstone `factor_irreducible_of_nonUnit` (#4170). -/
 theorem factor_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
     {f : Hex.ZPoly} {entry : Hex.ZPoly × Nat}
-    (hmem : entry ∈ (Hex.factor f).factors.toList)
+    (hmem : entry ∈
+      (Hex.factorWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)).factors.toList)
     (h_raw :
       ∀ rawFactors : Array Hex.ZPoly,
         (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
@@ -395,9 +396,7 @@ theorem factor_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
             Hex.ZPoly.Irreducible raw) :
     Hex.ZPoly.Irreducible entry.1 :=
   factorWithBound_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
-    (B := Hex.ZPoly.defaultFactorCoeffBound f)
-    (by simpa [Hex.factor_eq_factorWithBound_default] using hmem)
-    h_raw
+    (B := Hex.ZPoly.defaultFactorCoeffBound f) hmem h_raw
 
 /-- **#3987 assembled output theorem.**
 
@@ -436,10 +435,11 @@ theorem factorWithBound_entries_irreducible
   exact factorWithBound_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
     (Array.mem_toList_iff.mpr hentry) h_raw
 
-/-- Default-precision specialisation of `factorWithBound_entries_irreducible`
-for the public `Hex.factor` entry point.  Matches the signature of
-`factor_irreducible_of_nonUnit` (#4170 capstone) modulo the `h_raw` hypothesis;
-unconditional discharge of `h_raw` is tracked by #4170. -/
+/-- Default-precision specialisation of `factorWithBound_entries_irreducible`,
+attached to the now-proof-facing `factorWithBound` combinator (the public
+`Hex.factor` is the cost-based hybrid since #8383; its headline irreducibility is
+the still-`sorry` `factor_irreducible_of_nonUnit`). Unconditional discharge of
+`h_raw` is tracked by #8384. -/
 theorem factor_entries_irreducible
     (f : Hex.ZPoly)
     (h_raw :
@@ -460,36 +460,22 @@ theorem factor_entries_irreducible
         ∀ raw ∈ rawFactors.toList,
           Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true →
             Hex.ZPoly.Irreducible raw) :
-    ∀ entry ∈ (Hex.factor f).factors, Hex.ZPoly.Irreducible entry.1 := by
+    ∀ entry ∈ (Hex.factorWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)).factors,
+      Hex.ZPoly.Irreducible entry.1 := by
   intro entry hentry
   exact factor_entry_zpolyIrreducible_of_chosen_raw_zpolyIrreducible
     (Array.mem_toList_iff.mpr hentry) h_raw
 
 /--
-Every polynomial factor emitted by the default executable factorization is
-primitive once the selected raw fast branch, or the slow fallback branch when
-the fast path returns `none`, is primitive entrywise.
+Every polynomial factor emitted by the default executable factorization of a
+nonzero input is primitive. The public path is the self-certifying hybrid
+(#8383), so primitivity is discharged from `f ≠ 0` alone (the filtered product
+reconstructs `f`); no raw-source hypothesis is needed.
 -/
 theorem factor_entries_primitive_of_chosen_raw_primitive
-    (f : Hex.ZPoly)
-    (h_raw :
-      ∀ rawFactors : Array Hex.ZPoly,
-        (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-            some rawFactors ∨
-          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            Hex.factorSlowModularFactorsWithBound f
-                (Hex.ZPoly.defaultFactorCoeffBound f) = some rawFactors) ∨
-          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            Hex.factorSlowModularWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            rawFactors =
-              Hex.factorSlowTrialFactorsWithBound f
-                (Hex.ZPoly.defaultFactorCoeffBound f))) →
-        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Primitive raw) :
+    (f : Hex.ZPoly) (hf : f ≠ 0) :
     ∀ entry ∈ (Hex.factor f).factors, Hex.ZPoly.Primitive entry.1 :=
-  Hex.factor_entries_primitive f h_raw
+  Hex.factor_entries_primitive_of_ne_zero f hf
 
 private theorem toPolynomial_foldl_mul (lst : List Hex.ZPoly) (init : Hex.ZPoly) :
     HexPolyZMathlib.toPolynomial (lst.foldl (· * ·) init) =
@@ -678,28 +664,12 @@ theorem zpoly_not_associated_of_ne_of_primitive_pos_leading
 set_option maxHeartbeats 3000000
 
 /--
-Recorded entries of the default executable factorization are pairwise
-non-associated after transport to `Polynomial ℤ`, assuming the selected raw
-factor branch is primitive entrywise.
+Recorded entries of the default executable factorization of a nonzero input are
+pairwise non-associated after transport to `Polynomial ℤ`. Primitivity is
+discharged from `f ≠ 0` (the self-certifying hybrid, #8383).
 -/
 theorem factor_entries_not_associated
-    (f : Hex.ZPoly)
-    (h_raw :
-      ∀ rawFactors : Array Hex.ZPoly,
-        (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-            some rawFactors ∨
-          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            Hex.factorSlowModularFactorsWithBound f
-                (Hex.ZPoly.defaultFactorCoeffBound f) = some rawFactors) ∨
-          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            Hex.factorSlowModularWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            rawFactors =
-              Hex.factorSlowTrialFactorsWithBound f
-                (Hex.ZPoly.defaultFactorCoeffBound f))) →
-        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Primitive raw) :
+    (f : Hex.ZPoly) (hf : f ≠ 0) :
     List.Pairwise
       (fun a b : Hex.ZPoly × Nat =>
         ¬ Associated (HexPolyZMathlib.toPolynomial a.1)
@@ -708,8 +678,8 @@ theorem factor_entries_not_associated
   exact List.Pairwise.imp_of_mem
     (fun {a b} ha hb hab =>
       zpoly_not_associated_of_ne_of_primitive_pos_leading
-        (Hex.factor_entries_primitive f h_raw a (Array.mem_toList_iff.mp ha))
-        (Hex.factor_entries_primitive f h_raw b (Array.mem_toList_iff.mp hb))
+        (Hex.factor_entries_primitive_of_ne_zero f hf a (Array.mem_toList_iff.mp ha))
+        (Hex.factor_entries_primitive_of_ne_zero f hf b (Array.mem_toList_iff.mp hb))
         (Hex.factor_entry_leadingCoeff_pos f a ha)
         (Hex.factor_entry_leadingCoeff_pos f b hb)
         hab)
