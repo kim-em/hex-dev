@@ -1,7 +1,7 @@
 {
   "_comment": "Per-repo `main` HEAD that this monorepo's content corresponds to. The publish sync (sync_released.py) refuses to overwrite a released repo whose main has moved off this baseline (an uncoordinated commit), and updates the baseline after each push. Edit only via a re-seed or the sync itself.",
   "hex-test-kit": "597e6a3b68807ef0fdf23ba3f6ae31549124ce23",
-  "hex-matrix": "85c2bb9b2f93677fe1435d898c81a56b9e7b33e8",
+  "hex-matrix": "aa6f75c83e6464bbe58e01ce53d99eefb5d994bd",
   "hex-matrix-mathlib": "9cc6d8689d12c2775f8e1016b946a3debe6a8c9f",
   "hex-gram-schmidt": "3ce6d453934ca1bb5eb84ebd5e09b43e3d8ae4ce",
   "hex-gram-schmidt-mathlib": "9e04dc003acbb73973b0aa728a437174534f0066",
