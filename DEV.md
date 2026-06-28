@@ -129,45 +129,60 @@ staged in `conformance-fixtures/HexBerlekampZassenhaus/bz-scheduled.jsonl`.
 ## Next — the #8383 + #8384 capstone (swap `factor` to the hybrid, re-prove)
 
 #8383 (swap the executable) and #8384 (re-prove) **cannot be separated**: the
-public `Hex.factor` carries proven contracts in *both* layers, so redefining it to
-the unproven hybrid would regress a proven soundness theorem unless the re-proof
-lands with it. Concretely:
+public `Hex.factor` is referenced by ~34 Mathlib-free and ~75 Mathlib-layer
+theorems (all bridged through `factor_eq_factorWithBound_default`), and the
+Mathlib layer is CI-gated, so redefining `factor` must re-point all of them in one
+green PR.
 
-- Mathlib-free (`HexBerlekampZassenhaus/Basic.lean`): `factor_product`,
-  `factor_entry_*`, `factor_pairwise_first`, `factor_scalar` — all via
-  `factor_eq_factorWithBound_default`.
-- Mathlib layer (`HexBerlekampZassenhausMathlib/`): `Basic.lean:397-436` proves
-  `Hex.factor`'s recorded **entries are irreducible**, bridged through
-  `factor_eq_factorWithBound_default` into the `factorWithBound_entries_irreducible`
-  apparatus (IntReductionMod / PartitionRefinement); `FactorSoundness.lean` consumes
-  the Mathlib-free trio. A runtime `product = f` certificate is
-  necessary-not-sufficient, so it **cannot** restore irreducibility.
+**Corrected premise (verified 2026-06, reading the source):** the swap does **not**
+require a new classical-tier *irreducibility* proof.
+
+- The headline `factor_irreducible_of_nonUnit` (`FactorSoundness.lean:18`) is an
+  accepted, shipped **`sorry`** on `main`; `factorWithBound_entries_irreducible`
+  (`Basic.lean:421`) is **conditional** on an `h_raw` hypothesis (raw factors
+  irreducible) whose producers are partly landed, partly blocked on the
+  #7479-class unscaled-support gap (see the `hex-lean-mathlib-boundary` skill).
+- So `Hex.factor` has **no unconditional entries-irreducible guarantee to regress**.
+  Keeping `factor_irreducible_of_nonUnit` a `sorry` over the hybrid is no regression;
+  the conditional `factor_*_branch_entry_irreducible_of_choosePrimeData` cluster is
+  about `factorWithBound`'s specific dispatch branches and stays attached to
+  `factorWithBound` (now proof-facing, not the public entry).
+- The **unconditional** `factor`-level contracts (`factor_product`,
+  `factor_entry_*` normalization, `factor_pairwise_first`, `factor_scalar`, and the
+  Mathlib-layer `factor_headline_*` / `FactorSoundness` users) are what must
+  genuinely re-point: product via `factorHybrid_product` (#8398, done), the rest via
+  a one-time `factorHybrid f = factorizationOfFactors f (factorHybridFactors f)`
+  bridge (every hybrid tier assembles via `factorizationOfFactors`, like
+  `factorWithBound`).
 
 **Banked already:**
 - **#8398:** `factorHybrid` is self-certifying (accepts a tier's result only when
   `Factorization.product φ = f`, else the proven trial backstop) and
-  `factorHybrid_product` is proven. **This already discharges the product half** of
-  the headline — so the swap's remaining critical path is *irreducibility*, not product.
+  `factorHybrid_product` is proven — the product half of the headline.
 - **#8401:** `scaledRecombinationSmart*` converted from `partial def` to structurally
   recursive (explicit `fuel`, behavior-identical), and its reconstruction proved
-  (`scaledRecombinationSmart{Aux,SizeLoop,CandLoop}_product`). A `partial def` exposed
-  no equation lemmas; this is what makes *any* classical-tier proof possible.
+  (`scaledRecombinationSmart{Aux,SizeLoop,CandLoop}_product`). The classical-tier
+  reconstruction foundation — useful for an eventual *unconditional* classical
+  irreducibility, though the swap (below) does not need it.
 
 **Capstone steps remaining (in order):**
 
 1. ~~Make `scaledRecombinationSmart*` provable~~ — done (#8401).
-2. ~~Prove the smart-core reconstruction~~ — done (#8401). (The other searchMod-suite
-   lemmas — `_normalizeFactorSign`/`_primitive`/`_shouldRecord` — come from the shared
-   `factorizationOfFactors` filter, not the loop, so they re-point structurally.)
-3. **Classical-tier per-factor irreducibility** — the genuinely hard remaining proof.
-   Mirror the `factorWithBound_entries_irreducible` apparatus (the #7738 Hensel-subset
-   correspondence in IntReductionMod / PartitionRefinement) for the smart core, building
-   on the #8401 reconstruction. This is what the runtime product certificate cannot give.
-4. **Swap `factor := factorHybrid`; re-point both layers.** Mathlib-free: `factor_product`
-   via `factorHybrid_product`; `factor_entry_*` via a one-time `factorHybrid f =
-   factorizationOfFactors f (factorHybridFactors f)` bridge. Mathlib: `factor_product`,
-   entries-irreducible (from step 3), `FactorSoundness`.
-5. **Gates + cleanup.** `Conformance.lean` expectations, `EmitFixtures` (already routes
+2. ~~Prove the smart-core reconstruction~~ — done (#8401).
+3. **Swap `factor := factorHybrid` and re-point ~100 `factor`-level theorems** (the
+   real remaining work — voluminous, dual-layer, CI-gated, one PR, no intermediate
+   green state per the boundary skill). Not mathematically hard:
+   - Mathlib-free: delete `factor_eq_factorWithBound_default`; `factor_product` via
+     `factorHybrid_product`; `factor_entry_*` / `factor_pairwise_first` / `factor_scalar`
+     via a one-time `factorHybrid f = factorizationOfFactors f (factorHybridFactors f)`
+     bridge lemma.
+   - Mathlib layer: re-point `factor_product`, the unconditional `factor_headline_*`
+     / `FactorSoundness` users (product + normalization + pairwise + scalar); keep
+     `factor_irreducible_of_nonUnit` a **`sorry`** (no regression — already one); leave
+     the conditional `factor_*_branch_entry_irreducible_of_choosePrimeData` cluster
+     attached to `factorWithBound` (it is about that combinator's branches, now
+     proof-facing). Build the **whole** `HexBerlekampZassenhausMathlib` library green.
+4. **Gates + cleanup.** `Conformance.lean` expectations, `EmitFixtures` (already routes
    through `factor`), baselines; full gate green. Retire the cap-based combinator **from
    the public path only** — keep the `factorWithBound`/`factorFast` defs (the lattice tier
    and ~dozens of proofs use them).
