@@ -17,6 +17,20 @@ public import HexMatrix.Submatrix
 
 public section
 
+/-!
+Core Leibniz-formula definitions for the dense determinant.
+
+This module defines the determinant `det` of a dense square matrix as the
+`permutationVectors`-indexed sum of signed Leibniz terms, built from `detSign`
+(the inversion-parity sign of a permutation vector), `detProduct` (the unsigned
+diagonal product), and `detTerm` (their product). It records the small base
+cases `det_one_by_one`, `det_two_by_two`, and `det_leadingPrefix_zero`, and
+provides the reusable `foldl`-arithmetic toolkit (scalar factoring, additive
+splitting, permutation invariance, single-index scaling) plus the
+`Fin.castSucc`/`Fin.last` inversion-count lemmas used by the recursive
+determinant proofs in the sibling modules.
+-/
+
 namespace Hex
 universe u
 namespace Matrix

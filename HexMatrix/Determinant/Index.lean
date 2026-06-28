@@ -13,6 +13,23 @@ import all HexMatrix.Determinant.Enumeration
 
 public section
 
+/-!
+Index-manipulation lemmas and triangular-determinant corollaries.
+
+This module supplies the index plumbing that lets the Leibniz determinant
+recurse on the final row and column. `raiseFinAbove`, `lowerFinLast`, and
+`peelLastVector` move between `Fin n` and `Fin (n + 1)` while inserting or
+removing `Fin.last n`, and the surrounding lemmas prove that
+`permutationVectors` is complete (`permutationVectors_complete`) and
+duplicate-free (`permutationVectors_nodup`, `permutationVectors_nodup_list`).
+Building on these, it derives the determinant's behaviour on the
+`insertAt`-extended permutation (`detTerm_insertAt_general`,
+`detSign_insertAt_general`), the last-row factorisation
+`det_eq_det_leadingPrefix_mul_last_of_last_row_zero`, and the triangular
+results `det_upperTriangular_eq_finFoldl_diag`,
+`det_upperTriangular_eq_foldl_diag`, and `det_upperTriangular_pos_diag`.
+-/
+
 namespace Hex
 universe u
 namespace Matrix

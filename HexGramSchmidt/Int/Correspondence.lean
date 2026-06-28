@@ -11,6 +11,21 @@ import all HexGramSchmidt.Int.Invariant
 
 public section
 
+/-!
+Correspondence between the executable `scaledCoeffRows` pass and the
+matrix-level Gram-determinant API for `hex-gram-schmidt`.
+
+This module proves that the array-storage scaled-coefficient loop tracks the
+matrix-level no-pivot Bareiss pass entry for entry: the diagonal slots record
+the leading Gram determinants (`gramDetVecEntry_eq_gramDet`,
+`scaledCoeffRows_diag_toNat_eq_gramDet`) including the zero tail after an early
+singular step, and the lower-triangle slots capture the corresponding Bareiss
+target-column values. It exposes the determinant base case `gramDet_zero`, the
+lower-triangularity of the public matrix (`scaledCoeffs_upper`), and the
+lattice-norm helper `rowCombination_coeffs_apply_eq_of_zero_above` giving the
+top Gram-Schmidt coordinate of a row combination when the later integer
+coefficients vanish.
+-/
 namespace Hex
 namespace GramSchmidt.Int
 /-- Bareiss-side counterpart of the Schur `j = 0` boundary: at column `0`,

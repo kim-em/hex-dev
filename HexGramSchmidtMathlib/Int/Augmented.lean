@@ -11,6 +11,23 @@ import all HexGramSchmidtMathlib.Int.GramDet
 
 public section
 
+/-!
+Mathlib-side determinantal identification of the canonical Bareiss
+Gram-Schmidt coefficients for `hex-gram-schmidt`.
+
+This module finishes the Cramer identity
+`scaledCoeffMatrix_det_eq_gramDet_mul_coeffs`, expressing the scaled
+coefficient determinant as `gramDet (j+1) * coeffs[i][j]`.  Its second half
+introduces the augmented `(n+1) × (n+1)` matrix `augmentedGram`, whose upper
+block is `gramMatrix b` and whose trailing column carries a standard basis
+vector, and proves `noPivotLoop_augmentedGram_invariant`: the no-pivot Bareiss
+pass on the augmented matrix mirrors the pass on `gramMatrix b` while its
+trailing column tracks `bareissGramCanonicalCoeff`.  This yields
+`bareissGramCanonicalCoeff_eq_augmentedGram_entry` and its bordered-minor
+form, identifying the canonical row coefficients with a Bareiss minor
+determinant.
+-/
+
 namespace Hex
 namespace GramSchmidt
 namespace Int

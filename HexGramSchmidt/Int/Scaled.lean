@@ -11,6 +11,24 @@ import all HexGramSchmidt.Int.Core
 
 public section
 
+/-!
+Scaled-coefficient and Gram-determinant surface for `hex-gram-schmidt`.
+
+This module packages the executable scaled Gram-Schmidt output: the `Data`
+record bundling the leading Gram determinant vector `d` with the scaled
+coefficient matrix `ν`, produced by `data` from a single
+`scaledCoeffRowsSchur` pass, and exposed as the public `gramDetVec` and
+`scaledCoeffs`. It proves the per-row Schur kernel agrees with the reference
+`scaledCoeffRows` formulation (`schurSigma_congr` and the column/boundary
+frame lemmas), and develops the Bareiss commutation infrastructure the
+determinant correspondence rests on: a `Matrix.stepMatrix` step commutes with
+taking a `leadingPrefix` and with taking a trailing `borderedMinor`
+(`leadingPrefix_stepMatrix_eq`, `borderedMinor_stepMatrix_eq`), the no-pivot
+loop stays synchronized across a matrix and its bordered minor
+(`noPivotLoop_full_eq_borderedMinor_at_trailing`), it preserves trailing-block
+symmetry, and its `step`/`singularStep` bookkeeping is monotone and stable
+under prefixing.
+-/
 namespace Hex
 namespace GramSchmidt.Int
 /-- σ-chain dependency frame lemma. The value of `schurSigma rows i j`

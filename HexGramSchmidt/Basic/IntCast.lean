@@ -11,6 +11,18 @@ import all HexGramSchmidt.Basic.Rat
 
 public section
 
+/-!
+Integer-cast layer of the Gram-Schmidt surface for `hex-gram-schmidt`.
+
+This module defines the rational-valued `basis` and `coeffs` of an integer
+input matrix (via `GramSchmidt.castIntMatrix`) and lifts the rational results
+of `HexGramSchmidt/Basic/Rat.lean` to the integer setting: the leading-row,
+orthogonality, triangular-decomposition, and prefix-span facts (`basis_zero`,
+`basis_orthogonal`, `basis_decomposition`, `coeffs_diag`, `coeffs_upper`,
+`basis_span`), together with the behaviour of `basis`/`coeffs` under the
+integer row operations `Matrix.rowAdd` and adjacent `Matrix.rowSwap` used by
+the LLL size-reduction and swap steps.
+-/
 namespace Hex
 namespace GramSchmidt.Int
 

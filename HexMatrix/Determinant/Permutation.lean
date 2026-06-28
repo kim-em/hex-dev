@@ -11,6 +11,22 @@ import all HexMatrix.Determinant.Index
 
 public section
 
+/-!
+Permutation-group structure on permutation vectors and the multiplicative
+determinant laws.
+
+This module develops the operations on permutation vectors needed to prove the
+determinant's reaction to elementary row and column operations: `finTranspose`
+and `transposePermutationValues`/`swapPermutationValues` (position and value
+swaps), `inversePermutationVector`, and `composePermutationValues`. It shows
+these preserve membership in `permutationVectors` and tracks their effect on
+inversion parity, culminating in `detSign_swapPermutationValues` and the
+multiplicativity law `detSign_composePermutationValues`. These feed the headline
+determinant theorems `det_one`, `det_rowSwap`, `det_rowScale`, `det_rowAdd`,
+`det_transpose`, `cofactor_transpose`, `det_colPermute_vector`, `det_colSwap`,
+`det_colAdd`, and the lower-triangular diagonal-product formulas.
+-/
+
 namespace Hex
 universe u
 namespace Matrix

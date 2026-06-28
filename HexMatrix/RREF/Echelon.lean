@@ -11,6 +11,20 @@ import all HexMatrix.RREF.Loop
 
 public section
 
+/-!
+Echelon/RREF span and nullspace APIs for `hex-matrix`.
+
+This module hangs the row-span and nullspace correctness theory off the
+`IsEchelonForm` and `IsRREF` contracts. The `IsEchelonForm` section transports
+row combinations across the echelon transform and builds the decidable
+row-span tests `spanCoeffs`/`spanContains` with their soundness lemmas. The
+`IsRREF` section proves these tests complete (`spanContains_iff`), constructs
+the nullspace basis (`nullspaceMatrix`, `nullspace`) from the free columns,
+and shows it is both sound (`nullspace_sound`) and complete
+(`nullspace_complete`). The file closes with the public `rref`-backed wrappers
+`spanCoeffs`, `spanContains`, `nullspaceBasisMatrix`, and `nullspace`.
+-/
+
 namespace Hex
 universe u
 namespace Matrix
