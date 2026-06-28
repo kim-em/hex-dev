@@ -5,7 +5,9 @@ public import Init.Grind.Ring.Field
 public import Batteries.Data.Fin.Fold
 public import Batteries.Data.List.Lemmas
 public import Batteries.Data.Vector.Lemmas
+public import HexMatrix.Determinant.Enumeration
 public import HexMatrix.RowEchelon
+public import HexMatrix.Submatrix
 
 public section
 
@@ -13,249 +15,6 @@ namespace Hex
 universe u
 namespace Matrix
 variable {α : Type u}
-
-/-- Insert an element into a vector at a given position. -/
-@[expose]
-def insertAt (x : α) (v : Vector α n) (i : Fin (n + 1)) : Vector α (n + 1) :=
-  ⟨(v.toList.insertIdx i.val x).toArray, by
-    have hi : i.val ≤ v.toList.length := by
-      simpa using Nat.lt_succ_iff.mp i.isLt
-    simpa using List.length_insertIdx_of_le_length (a := x) (as := v.toList) hi⟩
-
-/-- The unique empty vector. -/
-@[expose]
-def emptyVec : Vector α 0 :=
-  ⟨#[], rfl⟩
-
-/-- Enumerate the permutations of `Fin n` as length-`n` vectors. -/
-@[expose]
-def permutationVectors : (n : Nat) → List (Vector (Fin n) n)
-  | 0 => [emptyVec]
-  | n + 1 =>
-      List.flatMap
-        (fun v =>
-          (List.finRange (n + 1)).map fun i =>
-            insertAt (Fin.last n) (v.map Fin.castSucc) i)
-        (permutationVectors n)
-
-/-- Count inversions in a permutation written as a list. -/
-@[expose]
-def inversionCount : List (Fin n) → Nat
-  | [] => 0
-  | x :: xs =>
-      xs.foldl (fun acc y => acc + if y < x then 1 else 0) 0 + inversionCount xs
-
-/-- Count the cross-inversions between two lists: pairs `(x, y)` with `x` drawn
-from the first list, `y` from the second, and `y < x`. -/
-private def crossInversionCount {n : Nat} : List (Fin n) → List (Fin n) → Nat
-  | [], _ => 0
-  | x :: xs, ys =>
-      ys.foldl (fun acc y => acc + if y < x then 1 else 0) 0 +
-        crossInversionCount xs ys
-
-/-- A predicate-counting left fold splits its starting accumulator off
-additively. -/
-private theorem foldCount_start {α : Type u} (xs : List α) (p : α → Prop)
-    [DecidablePred p] (acc : Nat) :
-    xs.foldl (fun acc y => acc + if p y then 1 else 0) acc =
-      acc + xs.foldl (fun acc y => acc + if p y then 1 else 0) 0 := by
-  induction xs generalizing acc with
-  | nil => simp
-  | cons y ys ih =>
-      simp only [List.foldl_cons]
-      rw [ih (acc + if p y then 1 else 0), ih (0 + if p y then 1 else 0)]
-      omega
-
-/-- The inversion-counting left fold splits its starting accumulator off
-additively. -/
-private theorem inversionFold_start {n : Nat} (xs : List (Fin n)) (x : Fin n)
-    (acc : Nat) :
-    xs.foldl (fun acc y => acc + if y < x then 1 else 0) acc =
-      acc + xs.foldl (fun acc y => acc + if y < x then 1 else 0) 0 := by
-  induction xs generalizing acc with
-  | nil => simp
-  | cons y ys ih =>
-      simp only [List.foldl_cons]
-      rw [ih (acc + if y < x then 1 else 0), ih (0 + if y < x then 1 else 0)]
-      omega
-
-/-- The inversion-counting fold over an appended list is the sum of the folds
-over each part. -/
-private theorem inversionFold_append {n : Nat} (xs ys : List (Fin n)) (x : Fin n) :
-    (xs ++ ys).foldl (fun acc y => acc + if y < x then 1 else 0) 0 =
-      xs.foldl (fun acc y => acc + if y < x then 1 else 0) 0 +
-        ys.foldl (fun acc y => acc + if y < x then 1 else 0) 0 := by
-  rw [List.foldl_append, inversionFold_start]
-
-/-- Inversions of a concatenation split into the inversions within each part
-plus the cross-inversions between them. -/
-private theorem inversionCount_append {n : Nat} (xs ys : List (Fin n)) :
-    inversionCount (xs ++ ys) =
-      inversionCount xs + inversionCount ys + crossInversionCount xs ys := by
-  induction xs with
-  | nil =>
-      change inversionCount ys =
-        inversionCount ([] : List (Fin n)) + inversionCount ys +
-          crossInversionCount ([] : List (Fin n)) ys
-      simp [inversionCount, crossInversionCount]
-  | cons x xs ih =>
-      simp only [List.cons_append, inversionCount, crossInversionCount]
-      rw [inversionFold_append, ih]
-      omega
-
-/-- Cross-inversion count is additive in its right argument under
-concatenation. -/
-private theorem crossInversionCount_append_right {n : Nat}
-    (xs ys zs : List (Fin n)) :
-    crossInversionCount xs (ys ++ zs) =
-      crossInversionCount xs ys + crossInversionCount xs zs := by
-  induction xs with
-  | nil =>
-      simp [crossInversionCount]
-  | cons x xs ih =>
-      simp only [crossInversionCount]
-      rw [inversionFold_append, ih]
-      omega
-
-/-- Cross-inversions into a singleton right list count the left-list entries
-above that element. -/
-private theorem crossInversionCount_singleton_right {n : Nat}
-    (xs : List (Fin n)) (y : Fin n) :
-    crossInversionCount xs [y] =
-      xs.foldl (fun acc x => acc + if y < x then 1 else 0) 0 := by
-  induction xs with
-  | nil =>
-      simp [crossInversionCount]
-  | cons x xs ih =>
-      simp only [crossInversionCount, List.foldl_cons, List.foldl_nil]
-      rw [ih]
-      exact (foldCount_start xs (fun x => y < x) (0 + if y < x then 1 else 0)).symm
-
-/-- Swapping the two elements of a right-hand pair leaves the cross-inversion
-count unchanged. -/
-private theorem crossInversionCount_pair_swap_right {n : Nat}
-    (xs : List (Fin n)) (a b : Fin n) :
-    crossInversionCount xs [a, b] =
-      crossInversionCount xs [b, a] := by
-  induction xs with
-  | nil =>
-      simp [crossInversionCount]
-  | cons x xs ih =>
-      simp [crossInversionCount]
-      rw [ih]
-      omega
-
-/-- Swapping the two elements of a left-hand pair leaves the cross-inversion
-count unchanged. -/
-private theorem crossInversionCount_pair_swap_left {n : Nat}
-    (xs : List (Fin n)) (a b : Fin n) :
-    crossInversionCount [a, b] xs =
-      crossInversionCount [b, a] xs := by
-  simp [crossInversionCount]
-  omega
-
-/-- A two-element list has exactly one inversion precisely when its entries are
-out of order. -/
-private theorem inversionCount_pair {n : Nat} (a b : Fin n) :
-    inversionCount [a, b] = if b < a then 1 else 0 := by
-  simp [inversionCount]
-
-/-- Swapping two distinct adjacent entries flips the parity of the inversion
-count. -/
-private theorem inversionCount_adjacent_swap_parity {n : Nat}
-    (pre post : List (Fin n)) (a b : Fin n) (h : a ≠ b) :
-    inversionCount (pre ++ a :: b :: post) % 2 =
-      (inversionCount (pre ++ b :: a :: post) + 1) % 2 := by
-  have horder : a < b ∨ b < a := by
-    have hval : a.val ≠ b.val := by
-      intro hv
-      exact h (Fin.ext hv)
-    cases Nat.lt_or_gt_of_ne hval with
-    | inl hab => exact Or.inl hab
-    | inr hba => exact Or.inr hba
-  rw [show pre ++ a :: b :: post = pre ++ ([a, b] ++ post) by simp]
-  rw [show pre ++ b :: a :: post = pre ++ ([b, a] ++ post) by simp]
-  have hcross :
-      crossInversionCount pre ([a, b] ++ post) =
-        crossInversionCount pre ([b, a] ++ post) := by
-    repeat rw [crossInversionCount_append_right]
-    rw [crossInversionCount_pair_swap_right]
-  have htail :
-      crossInversionCount [a, b] post =
-        crossInversionCount [b, a] post := by
-    exact crossInversionCount_pair_swap_left post a b
-  rw [inversionCount_append pre ([a, b] ++ post)]
-  rw [inversionCount_append pre ([b, a] ++ post)]
-  rw [hcross]
-  rw [inversionCount_append [a, b] post]
-  rw [inversionCount_append [b, a] post]
-  rw [htail]
-  rw [inversionCount_pair a b]
-  rw [inversionCount_pair b a]
-  cases horder with
-  | inl hab =>
-      have hba : ¬ b < a := by omega
-      simp [hab, hba]
-      omega
-  | inr hba =>
-      have hab : ¬ a < b := by omega
-      simp [hab, hba]
-      omega
-
-/-- Swapping two entries separated by an arbitrary duplicate-free middle segment
-flips the parity of the inversion count. -/
-private theorem inversionCount_swap_separated_parity {n : Nat}
-    (pre mid post : List (Fin n)) (a b : Fin n)
-    (hnodup : (pre ++ a :: mid ++ b :: post).Nodup) :
-    inversionCount (pre ++ b :: mid ++ a :: post) % 2 =
-      (inversionCount (pre ++ a :: mid ++ b :: post) + 1) % 2 := by
-  induction mid generalizing pre with
-  | nil =>
-      have hne : b ≠ a := by
-        intro hba
-        subst b
-        have hsplit : ((pre ++ [a]) ++ a :: post).Nodup := by
-          simpa [List.append_assoc] using hnodup
-        exact ((List.nodup_append (l₁ := pre ++ [a]) (l₂ := a :: post)).mp hsplit).2.2
-          a (by simp) a (by simp) rfl
-      simpa [Nat.add_comm] using
-        (inversionCount_adjacent_swap_parity pre post b a hne)
-  | cons x xs ih =>
-      have hswap₁ :
-          inversionCount (pre ++ b :: x :: xs ++ a :: post) % 2 =
-            (inversionCount (pre ++ x :: b :: xs ++ a :: post) + 1) % 2 := by
-        simpa [List.append_assoc] using
-          inversionCount_adjacent_swap_parity pre (xs ++ a :: post) b x (by
-            intro hbx
-            subst b
-            have hsplit : ((pre ++ a :: x :: xs) ++ x :: post).Nodup := by
-              simpa [List.append_assoc] using hnodup
-            exact ((List.nodup_append (l₁ := pre ++ a :: x :: xs) (l₂ := x :: post)).mp hsplit).2.2
-              x (by simp) x (by simp) rfl)
-      have hnodup_tail : ((pre ++ [x]) ++ a :: xs ++ b :: post).Nodup := by
-        have hp :
-            ((pre ++ [x]) ++ a :: xs ++ b :: post).Perm
-              (pre ++ a :: x :: xs ++ b :: post) := by
-          simpa [List.append_assoc] using
-            List.Perm.append_left pre (List.Perm.swap a x (xs ++ b :: post))
-        exact hp.nodup_iff.mpr hnodup
-      have hmid :
-          inversionCount (pre ++ x :: b :: xs ++ a :: post) % 2 =
-            (inversionCount (pre ++ x :: a :: xs ++ b :: post) + 1) % 2 := by
-        simpa only [List.cons_append, List.append_assoc] using
-          (ih (pre ++ [x]) hnodup_tail)
-      have hswap₂ :
-          inversionCount (pre ++ x :: a :: xs ++ b :: post) % 2 =
-            (inversionCount (pre ++ a :: x :: xs ++ b :: post) + 1) % 2 := by
-        simpa [List.append_assoc] using
-          inversionCount_adjacent_swap_parity pre (xs ++ b :: post) x a (by
-            intro hxa
-            subst x
-            have hsplit : (pre ++ [a] ++ (a :: xs ++ b :: post)).Nodup := by
-              simpa [List.append_assoc] using hnodup
-            exact ((List.nodup_append (l₁ := pre ++ [a]) (l₂ := a :: xs ++ b :: post)).mp hsplit).2.2
-              a (by simp) a (by simp) rfl)
-      omega
 
 /-- The sign of a permutation vector, computed from inversion parity. -/
 @[expose]
@@ -279,172 +38,12 @@ def detTerm {R : Type u} [Lean.Grind.Ring R] {n : Nat}
 def det {R : Type u} [Lean.Grind.Ring R] {n : Nat} (M : Matrix R n n) : R :=
   (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0
 
-/-- Embed `Fin n` into `Fin (n + 1)` while skipping one deleted index. -/
-@[expose]
-def skipIndex {n : Nat} (skip : Fin (n + 1)) (i : Fin n) : Fin (n + 1) :=
-  if h : i.val < skip.val then
-    ⟨i.val, by omega⟩
-  else
-    ⟨i.val + 1, by omega⟩
-
-/-- The skipped-index embedding leaves entries below the deleted index unchanged.
-This is the low-side `simp` branch for row and column deletion. -/
-@[simp, grind =] theorem skipIndex_val_of_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
-    (h : i.val < skip.val) :
-    (skipIndex skip i).val = i.val := by
-  simp [skipIndex, h]
-
-/-- The skipped-index embedding shifts entries at or above the deleted index by
-one. This is the high-side `simp` branch for row and column deletion. -/
-@[simp, grind =] theorem skipIndex_val_of_not_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
-    (h : ¬ i.val < skip.val) :
-    (skipIndex skip i).val = i.val + 1 := by
-  simp [skipIndex, h]
-
-/-- The index produced by `skipIndex skip` is never the deleted index `skip`.
-This is the basic side condition for minors that remove a row or column. -/
-theorem skipIndex_ne {n : Nat} (skip : Fin (n + 1)) (i : Fin n) :
-    skipIndex skip i ≠ skip := by
-  intro hsame
-  have hval : (skipIndex skip i).val = skip.val := congrArg Fin.val hsame
-  by_cases hlt : i.val < skip.val
-  · rw [skipIndex_val_of_lt skip i hlt] at hval
-    omega
-  · rw [skipIndex_val_of_not_lt skip i hlt] at hval
-    omega
-
-/-- The deleted-index embedding `skipIndex skip` is injective. -/
-private theorem skipIndex_injective {n : Nat} (skip : Fin (n + 1)) :
-    Function.Injective (skipIndex skip) := by
-  intro i j h
-  apply Fin.ext
-  have hval : (skipIndex skip i).val = (skipIndex skip j).val := congrArg Fin.val h
-  by_cases hi : i.val < skip.val
-  · rw [skipIndex_val_of_lt skip i hi] at hval
-    by_cases hj : j.val < skip.val
-    · rw [skipIndex_val_of_lt skip j hj] at hval
-      exact hval
-    · rw [skipIndex_val_of_not_lt skip j hj] at hval
-      omega
-  · rw [skipIndex_val_of_not_lt skip i hi] at hval
-    by_cases hj : j.val < skip.val
-    · rw [skipIndex_val_of_lt skip j hj] at hval
-      omega
-    · rw [skipIndex_val_of_not_lt skip j hj] at hval
-      omega
-
-/-- Skipping the final index embeds `Fin n` by `castSucc`.
-This normalizes bottom-right minors to leading prefixes. -/
-@[simp, grind =] theorem skipIndex_last {n : Nat} (i : Fin n) :
-    skipIndex (Fin.last n) i = i.castSucc := by
-  apply Fin.ext
-  simp [skipIndex, Fin.last, i.isLt]
-
-/-- Delete one row and one column from an `(n + 1) × (n + 1)` matrix. -/
-@[expose]
-def deleteRowCol {R : Type u} {n : Nat} (M : Matrix R (n + 1) (n + 1))
-    (row col : Fin (n + 1)) : Matrix R n n :=
-  ofFn fun i j => M[skipIndex row i][skipIndex col j]
-
-/-- Entries of a deleted-row/deleted-column minor are the corresponding source
-entries at the skipped row and column indices. -/
-@[grind =] theorem deleteRowCol_entry {R : Type u} {n : Nat}
-    (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) (i j : Fin n) :
-    (deleteRowCol M row col)[i][j] = M[skipIndex row i][skipIndex col j] := by
-  simp [deleteRowCol, ofFn]
-
-/-- Deleting the final row and final column gives the leading prefix.
-This is the minor normalization used by bottom-right cofactor expansion. -/
-@[simp, grind =] theorem deleteRowCol_last_last {R : Type u} {n : Nat}
-    (M : Matrix R (n + 1) (n + 1)) :
-    deleteRowCol M (Fin.last n) (Fin.last n) =
-      leadingPrefix M n (Nat.le_succ n) := by
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin n := ⟨j, hj⟩
-  change (deleteRowCol M (Fin.last n) (Fin.last n))[ii][jj] =
-    (leadingPrefix M n (Nat.le_succ n))[ii][jj]
-  rw [deleteRowCol_entry]
-  simp [leadingPrefix, ofFn]
-
-/-- Deleting row `row` and column `col` after transposing is the transpose of
-the minor obtained by deleting row `col` and column `row` before transposing. -/
-theorem deleteRowCol_transpose {R : Type u} {n : Nat}
-    (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) :
-    deleteRowCol M.transpose row col = (deleteRowCol M col row).transpose := by
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
-  let ii : Fin n := ⟨i, hi⟩
-  let jj : Fin n := ⟨j, hj⟩
-  change (deleteRowCol M.transpose row col)[ii][jj] =
-    (deleteRowCol M col row).transpose[ii][jj]
-  simp [deleteRowCol, ofFn, Matrix.transpose, Matrix.col]
-
-/-- The alternating sign used in signed cofactors. -/
-@[expose]
-def cofactorSign {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
-    (row col : Fin (n + 1)) : R :=
-  if (row.val + col.val) % 2 = 0 then 1 else -1
-
-/-- An even row-plus-column parity gives cofactor sign `1`.
-This is the positive `simp` branch for signed cofactors. -/
-@[simp, grind =] theorem cofactorSign_of_even {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
-    (row col : Fin (n + 1)) (h : (row.val + col.val) % 2 = 0) :
-    cofactorSign (R := R) row col = 1 := by
-  simp [cofactorSign, h]
-
-/-- An odd row-plus-column parity gives cofactor sign `-1`.
-This is the negative `simp` branch for signed cofactors. -/
-@[simp, grind =] theorem cofactorSign_of_odd {R : Type u} [OfNat R 1] [Neg R] {n : Nat}
-    (row col : Fin (n + 1)) (h : (row.val + col.val) % 2 ≠ 0) :
-    cofactorSign (R := R) row col = -1 := by
-  simp [cofactorSign, h]
-
-/-- The signed cofactor for the local Leibniz determinant. -/
-@[expose]
-def cofactor {R : Type u} [Lean.Grind.Ring R] {n : Nat}
-    (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) : R :=
-  cofactorSign row col * det (deleteRowCol M row col)
-
-/-- At even parity, a signed cofactor is just the determinant of its minor.
-This removes the sign in cofactor-expansion normalization. -/
-@[simp, grind =] theorem cofactor_of_even {R : Type u} [Lean.Grind.Ring R] {n : Nat}
-    (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1))
-    (h : (row.val + col.val) % 2 = 0) :
-    cofactor M row col = det (deleteRowCol M row col) := by
-  simp [cofactor, h]
-  grind
-
-/-- At odd parity, a signed cofactor is the negated determinant of its minor.
-This supplies the alternating sign in cofactor-expansion normalization. -/
-@[simp, grind =] theorem cofactor_of_odd {R : Type u} [Lean.Grind.Ring R] {n : Nat}
-    (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1))
-    (h : (row.val + col.val) % 2 ≠ 0) :
-    cofactor M row col = -det (deleteRowCol M row col) := by
-  simp [cofactor, h]
-  grind
-
-/-- The bottom-right cofactor reduces to the determinant of the leading prefix.
-This combines the final-index minor with its even sign. -/
-@[simp, grind =] theorem cofactor_last_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
-    (M : Matrix R (n + 1) (n + 1)) :
-    cofactor M (Fin.last n) (Fin.last n) =
-      det (leadingPrefix M n (Nat.le_succ n)) := by
-  rw [cofactor_of_even]
-  · simp
-  · omega
-
 /-- The determinant of the empty leading prefix is the Bareiss previous-pivot
 convention `1`. -/
 @[simp, grind =] theorem det_leadingPrefix_zero {R : Type u} [Lean.Grind.Ring R]
     (M : Matrix R n n) :
     det (leadingPrefix M 0 (Nat.zero_le n)) = (1 : R) := by
-  simp [det, detTerm, detSign, detProduct, permutationVectors, emptyVec, inversionCount]
+  simp [det, detTerm, detSign, detProduct, permutationVectors, inversionCount]
   grind
 
 /-- The determinant of a `1 × 1` matrix is its only entry.
@@ -452,7 +51,7 @@ This is the smallest non-empty determinant base case. -/
 @[simp, grind =] theorem det_one_by_one {R : Type u} [Lean.Grind.Ring R]
     (M : Matrix R 1 1) :
     det M = M[0][0] := by
-  simp [det, detTerm, detSign, detProduct, permutationVectors, emptyVec, insertAt,
+  simp [det, detTerm, detSign, detProduct, permutationVectors, insertAt,
     inversionCount, List.finRange]
   grind
 
@@ -461,7 +60,7 @@ closed form used by small cofactor expansions. -/
 @[simp, grind =] theorem det_two_by_two {R : Type u} [Lean.Grind.CommRing R]
     (M : Matrix R 2 2) :
     det M = M[0][0] * M[1][1] - M[1][0] * M[0][1] := by
-  simp [det, detTerm, detSign, detProduct, permutationVectors, emptyVec, insertAt,
+  simp [det, detTerm, detSign, detProduct, permutationVectors, insertAt,
     inversionCount, List.finRange]
   grind
 
@@ -931,22 +530,6 @@ private theorem detProduct_identity_zero {R : Type u}
       rw [identity_get]
       rw [if_neg hsymm])
 
-/-- Reading `insertAt x v i` at the insertion position `i` returns the inserted
-element `x`. -/
-private theorem insertAt_get_self {α : Type u} {n : Nat}
-    (x : α) (v : Vector α n) (i : Fin (n + 1)) :
-    (insertAt x v i)[i] = x := by
-  unfold insertAt
-  simp [List.getElem_insertIdx_self]
-
-/-- After inserting `x` at `Fin.last n`, reading the result at `i.castSucc` returns
-the original entry `v[i]`. -/
-private theorem insertAt_last_get_castSucc {α : Type u} {n : Nat}
-    (x : α) (v : Vector α n) (i : Fin n) :
-    (insertAt x v (Fin.last n))[i.castSucc] = v[i] := by
-  unfold insertAt
-  simp [List.getElem_insertIdx_of_lt]
-
 /-- For `i ≤ r < xs.length`, element `r + 1` of `xs.insertIdx i x` is the original
 `xs[r]`, since the insertion shifts later entries up by one. -/
 private theorem list_getElem_insertIdx_succ {α : Type u}
@@ -1154,40 +737,6 @@ private theorem inversionCount_insertIdx_castSucc_last_eq {n : Nat}
           rw [ih p hp']
           rw [hlen]
           grind
-
-/-- Inserting an element at index `xs.length` is the same as appending it. -/
-private theorem list_insertIdx_length {α : Type u} (xs : List α) (x : α) :
-    xs.insertIdx xs.length x = xs ++ [x] := by
-  induction xs with
-  | nil => rfl
-  | cons y ys ih =>
-      simp [ih]
-
-/-- `Vector.map` commutes with `Vector.toList`. -/
-private theorem vector_toList_map {α β : Type u} {n : Nat} (v : Vector α n)
-    (f : α → β) :
-    (v.map f).toList = v.toList.map f := by
-  apply List.ext_getElem
-  · simp
-  · intro i h₁ h₂
-    simp
-
-/-- `insertAt x v (Fin.last n)` appends `x` to the end of `v.toList`. -/
-private theorem insertAt_last_toList {α : Type u} {n : Nat} (x : α) (v : Vector α n) :
-    (insertAt x v (Fin.last n)).toList = v.toList ++ [x] := by
-  unfold insertAt
-  simp only [Vector.toList]
-  have hidx : (Fin.last n).val = v.toArray.toList.length := by
-    simp
-  simpa [hidx] using list_insertIdx_length v.toArray.toList x
-
-/-- `insertAt x v i` corresponds to `List.insertIdx` at position `i` on the
-underlying list. -/
-private theorem insertAt_toList {α : Type u} {n : Nat}
-    (x : α) (v : Vector α n) (i : Fin (n + 1)) :
-    (insertAt x v i).toList = v.toList.insertIdx i.val x := by
-  unfold insertAt
-  simp [Vector.toList]
 
 /-- Mapping a `Nodup` list through the injective `Fin.castSucc` keeps it `Nodup`. -/
 private theorem list_nodup_map_castSucc {n : Nat} (xs : List (Fin n)) :

@@ -25,7 +25,7 @@ theorem rowCombination_transform_transpose [Lean.Grind.CommRing R]
           exact (Matrix.mul_assoc_vec (A := Matrix.transpose M)
             (B := Matrix.transpose D.transform) (v := e)).symm
     _ = Matrix.transpose (D.transform * M) * e := by
-          rw [← Matrix.transpose_mul_of_mul_comm Lean.Grind.CommSemiring.mul_comm]
+          rw [← Matrix.transpose_mul_of_mul_comm]
     _ = Matrix.transpose D.echelon * e := by
           rw [E.transform_mul]
 
@@ -46,7 +46,7 @@ theorem rowCombination_transformInv_transpose [Lean.Grind.CommRing R]
             exact (Matrix.mul_assoc_vec (A := Matrix.transpose D.transform)
               (B := Matrix.transpose Tinv) (v := c)).symm
       _ = Matrix.transpose (Tinv * D.transform) * c := by
-            rw [← Matrix.transpose_mul_of_mul_comm Lean.Grind.CommSemiring.mul_comm]
+            rw [← Matrix.transpose_mul_of_mul_comm]
       _ = Matrix.transpose (1 : Matrix R n n) * c := by
             rw [hTinv]
       _ = (1 : Matrix R n n) * c := by
@@ -218,8 +218,7 @@ theorem rowCombination_single {R : Type u} [Lean.Grind.CommRing R]
     {n m : Nat} (M : Matrix R n m) (i : Fin n) :
     rowCombination M (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0) =
       row M i := by
-  apply Vector.ext
-  intro j hj
+  ext j hj
   let jf : Fin m := ⟨j, hj⟩
   change
     (rowCombination M (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0))[jf] =
@@ -228,7 +227,7 @@ theorem rowCombination_single {R : Type u} [Lean.Grind.CommRing R]
   change (Matrix.mulVec (Matrix.transpose M)
       (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0))[jf] =
     (row M i)[jf]
-  unfold Matrix.mulVec Matrix.dot Matrix.row Hex.Vector.dotProduct Matrix.transpose
+  unfold Matrix.mulVec Matrix.row Hex.Vector.dotProduct Matrix.transpose
     Matrix.col
   change (Vector.ofFn fun j : Fin m =>
       (List.finRange n).foldl
@@ -310,7 +309,7 @@ private theorem rowCombination_pivotCoeff [Lean.Grind.Field R] (E : IsRREF M D)
     (rowCombination D.echelon c)[D.pivotCols.get p] =
       c[E.toIsEchelonForm.pivotRow p] := by
   unfold rowCombination
-  simp [HMul.hMul, Matrix.mulVec, Matrix.dot, Matrix.row, Hex.Vector.dotProduct,
+  simp [HMul.hMul, Matrix.mulVec, Matrix.row, Hex.Vector.dotProduct,
     Matrix.transpose, Matrix.col]
   change (List.finRange n).foldl
       (fun acc i => acc + D.echelon[i][D.pivotCols.get p] * c[i]) 0 =
@@ -341,11 +340,10 @@ private theorem rowCombination_eq_of_coeffs_eq_on_rank [Lean.Grind.Field R]
     (hcoeff : ∀ i : Fin D.rank,
       c[E.toIsEchelonForm.pivotRow i] = d[E.toIsEchelonForm.pivotRow i]) :
     rowCombination D.echelon c = rowCombination D.echelon d := by
-  apply Vector.ext
-  intro j hj
+  ext j hj
   let jj : Fin m := ⟨j, hj⟩
   unfold rowCombination
-  simp [HMul.hMul, Matrix.mulVec, Matrix.dot, Matrix.row, Hex.Vector.dotProduct,
+  simp [HMul.hMul, Matrix.mulVec, Matrix.row, Hex.Vector.dotProduct,
     Matrix.transpose, Matrix.col]
   change (List.finRange n).foldl
       (fun acc i => acc + D.echelon[i][jj] * c[i]) 0 =
@@ -733,8 +731,7 @@ private theorem nullspace_echelon_sound {R : Type u} [Lean.Grind.Ring R] {n m : 
     {M : Matrix R n m} {D : RowEchelonData R n m} (E : IsRREF M D)
     (k : Fin (m - D.rank)) :
     D.echelon * E.nullspace.get k = 0 := by
-  apply Vector.ext
-  intro r hr
+  ext r hr
   let row : Fin n := ⟨r, hr⟩
   by_cases hrow : r < D.rank
   · let ri : Fin D.rank := ⟨r, hrow⟩
@@ -747,7 +744,7 @@ private theorem nullspace_echelon_sound {R : Type u} [Lean.Grind.Ring R] {n m : 
     have hpivotFree : pivot ≠ free := by
       exact E.toIsEchelonForm.pivotCols_disjoint_freeCols ri k
     change (Matrix.mulVec D.echelon (E.nullspace.get k))[r] = (0 : Vector R n)[r]
-    unfold Matrix.mulVec Matrix.dot Matrix.row Hex.Vector.dotProduct
+    unfold Matrix.mulVec Matrix.row Hex.Vector.dotProduct
     rw [Vector.getElem_ofFn hr]
     rw [Vector.getElem_zero r hr]
     change (List.finRange m).foldl
@@ -816,7 +813,7 @@ private theorem nullspace_echelon_sound {R : Type u} [Lean.Grind.Ring R] {n m : 
   · have hzeroRow := E.toIsEchelonForm.zero_row row (by
       exact Nat.le_of_not_gt hrow)
     change (Matrix.mulVec D.echelon (E.nullspace.get k))[r] = (0 : Vector R n)[r]
-    unfold Matrix.mulVec Matrix.dot Matrix.row Hex.Vector.dotProduct
+    unfold Matrix.mulVec Matrix.row Hex.Vector.dotProduct
     rw [Vector.getElem_ofFn hr]
     rw [Vector.getElem_zero r hr]
     change (List.finRange m).foldl
@@ -1007,7 +1004,7 @@ private theorem freeSum_eq_neg_pivot {R : Type u} [Lean.Grind.Field R] {n m : Na
         (E.toIsEchelonForm.pivotRow i).isLt =
       (0 : Vector R n)[(E.toIsEchelonForm.pivotRow i).val]'
         (E.toIsEchelonForm.pivotRow i).isLt at hentry
-    unfold Matrix.mulVec Matrix.dot Matrix.row Hex.Vector.dotProduct at hentry
+    unfold Matrix.mulVec Matrix.row Hex.Vector.dotProduct at hentry
     rw [Vector.getElem_ofFn (E.toIsEchelonForm.pivotRow i).isLt] at hentry
     rw [Vector.getElem_zero (E.toIsEchelonForm.pivotRow i).val
       (E.toIsEchelonForm.pivotRow i).isLt] at hentry
@@ -1119,7 +1116,7 @@ theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
       (Matrix.mulVec E.nullspaceMatrix
         (Vector.ofFn (fun k => v[E.toIsEchelonForm.freeCols.get k]) :
           Vector R (m - D.rank)))[jj.val]'jj.isLt = v[jj.val]'jj.isLt
-    unfold Matrix.mulVec Matrix.dot Matrix.row Hex.Vector.dotProduct
+    unfold Matrix.mulVec Matrix.row Hex.Vector.dotProduct
     rw [Vector.getElem_ofFn jj.isLt]
     change
       (List.finRange (m - D.rank)).foldl
@@ -1227,8 +1224,7 @@ theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
         (fun k => v[E.toIsEchelonForm.freeCols.get k])
         (List.mem_finRange l) (List.nodup_finRange (m - D.rank)) 0]
       grind
-  apply Vector.ext
-  intro j hj
+  ext j hj
   exact key ⟨j, hj⟩
 
 end IsRREF

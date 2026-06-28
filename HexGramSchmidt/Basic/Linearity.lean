@@ -33,8 +33,8 @@ private theorem foldl_dot_add_left
 
 /-- `dot_add_left` states left-additivity of the dot product. -/
 private theorem dot_add_left (a b c : Vector Rat m) :
-    Matrix.dot (a + b) c = Matrix.dot a c + Matrix.dot b c := by
-  unfold Matrix.dot Hex.Vector.dotProduct
+    Vector.dotProduct (a + b) c = Vector.dotProduct a c + Vector.dotProduct b c := by
+  unfold Vector.dotProduct
   have hzero : (0 : Rat) + 0 = 0 := by grind
   simpa [hzero] using
     foldl_dot_add_left (xs := List.finRange m) (a := a) (b := b) (c := c)
@@ -61,8 +61,8 @@ private theorem foldl_dot_smul_left
 
 /-- `dot_smul_left` states left-homogeneity of the dot product. -/
 private theorem dot_smul_left (s : Rat) (a c : Vector Rat m) :
-    Matrix.dot (s • a) c = s * Matrix.dot a c := by
-  unfold Matrix.dot Hex.Vector.dotProduct
+    Vector.dotProduct (s • a) c = s * Vector.dotProduct a c := by
+  unfold Vector.dotProduct
   have hzero : s * (0 : Rat) = 0 := by grind
   simpa [hzero] using
     foldl_dot_smul_left (xs := List.finRange m) (s := s) (a := a) (c := c) (acc := 0)
@@ -71,7 +71,7 @@ private theorem dot_smul_left (s : Rat) (a c : Vector Rat m) :
 private theorem projectionCoeff_add_left (a b c : Vector Rat m) :
     projectionCoeff (a + b) c = projectionCoeff a c + projectionCoeff b c := by
   unfold projectionCoeff
-  by_cases hnorm : Matrix.dot c c = 0
+  by_cases hnorm : Vector.dotProduct c c = 0
   · simp [hnorm]
     grind
   · simp [hnorm]
@@ -82,7 +82,7 @@ private theorem projectionCoeff_add_left (a b c : Vector Rat m) :
 private theorem projectionCoeff_smul_left (s : Rat) (a c : Vector Rat m) :
     projectionCoeff (s • a) c = s * projectionCoeff a c := by
   unfold projectionCoeff
-  by_cases hnorm : Matrix.dot c c = 0
+  by_cases hnorm : Vector.dotProduct c c = 0
   · simp [hnorm]
   · simp [hnorm]
     rw [dot_smul_left]
@@ -173,11 +173,11 @@ private theorem reduceAgainstBasis_append
 private theorem basisRows_get!_dot_eq_zero_of_list
     (rows : List (Vector Rat m)) (i j : Nat)
     (hi : i < rows.length) (hj : j < rows.length) (hij : i ≠ j) :
-    Matrix.dot (basisRows rows)[i]! (basisRows rows)[j]! = 0 := by
+    Vector.dotProduct (basisRows rows)[i]! (basisRows rows)[j]! = 0 := by
   have hilen : i < (basisRows rows).length := by simpa [basisRows_length]
   have hjlen : j < (basisRows rows).length := by simpa [basisRows_length]
   have hpair : (basisRows rows).Pairwise
-      (fun x y => Matrix.dot x y = 0 ∧ Matrix.dot y x = 0) :=
+      (fun x y => Vector.dotProduct x y = 0 ∧ Vector.dotProduct y x = 0) :=
     basisRows_pairwise rows
   have hget_i : (basisRows rows).get ⟨i, hilen⟩ = (basisRows rows)[i]! := by
     simp [hilen]
@@ -901,22 +901,22 @@ private theorem basisMatrix_rowSwap_adjacent_curr
     -- dot swappedPrev (basisRows[idx]) = dot curr (basisRows[idx]) + mu * dot prev (basisRows[idx])
     -- Both inner products vanish by pairwise orthogonality.
     have hcurr_orth :
-        Matrix.dot curr (basisRows b.toList)[idx]! = 0 := by
-      change Matrix.dot ((basisMatrix b).row k) _ = 0
+        Vector.dotProduct curr (basisRows b.toList)[idx]! = 0 := by
+      change Vector.dotProduct ((basisMatrix b).row k) _ = 0
       rw [basisMatrix_row_eq_basisRows_get!]
       exact basisRows_get!_dot_eq_zero_of_list b.toList k.val idx
         (by simp [k.isLt])
         (by simp only [Vector.length_toList]; omega)
         (by omega)
     have hprev_orth :
-        Matrix.dot prev (basisRows b.toList)[idx]! = 0 := by
-      change Matrix.dot ((basisMatrix b).row km1) _ = 0
+        Vector.dotProduct prev (basisRows b.toList)[idx]! = 0 := by
+      change Vector.dotProduct ((basisMatrix b).row km1) _ = 0
       rw [basisMatrix_row_eq_basisRows_get!]
       exact basisRows_get!_dot_eq_zero_of_list b.toList km1.val idx
         (by simp [km1.isLt])
         (by simp only [Vector.length_toList]; omega)
         (by omega)
-    show Matrix.dot (curr + mu • prev) _ = 0
+    show Vector.dotProduct (curr + mu • prev) _ = 0
     rw [dot_add_left, dot_smul_left, hcurr_orth, hprev_orth]
     grind
   rw [hreduce_row, hreduce_sP]
@@ -987,8 +987,7 @@ private theorem rowCombination_prefixRows_extendStrictPrefixCoeff
               (M.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt hi)⟩)[idxFin] *
                 (extendStrictPrefixCoeff c)[j])
           0 by
-        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Matrix.dot
-          Hex.Vector.dotProduct prefixRows
+        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Vector.dotProduct prefixRows
         simp [Matrix.row]]
   rw [show
       (Matrix.mulVec (Matrix.transpose (strictPrefixRows M i (Nat.le_of_lt hi)))
@@ -999,8 +998,7 @@ private theorem rowCombination_prefixRows_extendStrictPrefixCoeff
               (M.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.le_of_lt hi)⟩)[idxFin] *
                 c[j])
           0 by
-        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Matrix.dot
-          Hex.Vector.dotProduct strictPrefixRows
+        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Vector.dotProduct strictPrefixRows
         simp [Matrix.row]]
   rw [List.finRange_succ_last]
   rw [List.foldl_append, List.foldl_map]
@@ -1019,7 +1017,7 @@ private theorem rowCombination_add_rat
   change (Matrix.mulVec (Matrix.transpose M) (c + d))[idxFin] =
     (Matrix.rowCombination M c + Matrix.rowCombination M d)[idxFin]
   simp [Matrix.rowCombination, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
-    Matrix.row, Matrix.dot, Hex.Vector.dotProduct, Vector.getElem_add]
+    Matrix.row, Vector.dotProduct, Vector.getElem_add]
   have hfold :
       ∀ xs : List (Fin n), ∀ accC accD : Rat,
         xs.foldl
@@ -1058,7 +1056,7 @@ private theorem rowCombination_smul_rat
   change (Matrix.mulVec (Matrix.transpose M) (a • c))[idxFin] =
     (a • Matrix.rowCombination M c)[idxFin]
   simp [Matrix.rowCombination, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
-    Matrix.row, Matrix.dot, Hex.Vector.dotProduct, Vector.getElem_smul]
+    Matrix.row, Vector.dotProduct, Vector.getElem_smul]
   have hfold :
       ∀ xs : List (Fin n), ∀ acc : Rat,
         xs.foldl
@@ -1118,17 +1116,17 @@ private theorem prefixSpan_sub
 
 /-- `dot_add_right` gives additivity of the rational dot product in its right argument. -/
 private theorem dot_add_right (a b c : Vector Rat m) :
-    Matrix.dot a (b + c) = Matrix.dot a b + Matrix.dot a c := by
+    Vector.dotProduct a (b + c) = Vector.dotProduct a b + Vector.dotProduct a c := by
   rw [dot_comm_rat, dot_add_left, dot_comm_rat b a, dot_comm_rat c a]
 
 /-- `dot_smul_right` pulls a rational scalar out of the right argument of the dot product. -/
 private theorem dot_smul_right (s : Rat) (a b : Vector Rat m) :
-    Matrix.dot a (s • b) = s * Matrix.dot a b := by
+    Vector.dotProduct a (s • b) = s * Vector.dotProduct a b := by
   rw [dot_comm_rat, dot_smul_left, dot_comm_rat b a]
 
 /-- `dot_sub_right` gives subtractivity of the rational dot product in its right argument. -/
 private theorem dot_sub_right (a b c : Vector Rat m) :
-    Matrix.dot a (b - c) = Matrix.dot a b - Matrix.dot a c := by
+    Vector.dotProduct a (b - c) = Vector.dotProduct a b - Vector.dotProduct a c := by
   have hsub : b - c = b + (-1 : Rat) • c := by
     apply Vector.ext
     intro idx hidx
@@ -1140,8 +1138,8 @@ private theorem dot_sub_right (a b c : Vector Rat m) :
 
 /-- `dot_zero_right` says the rational dot product with a zero right argument is zero. -/
 private theorem dot_zero_right (a : Vector Rat m) :
-    Matrix.dot a 0 = 0 := by
-  unfold Matrix.dot Hex.Vector.dotProduct
+    Vector.dotProduct a 0 = 0 := by
+  unfold Vector.dotProduct
   change (List.finRange m).foldl
       (fun acc i => acc + a[i] * (0 : Vector Rat m)[i]) 0 = 0
   induction List.finRange m with
@@ -1229,7 +1227,7 @@ private theorem rowCombination_prefixRows_unitCoeff
     (Matrix.mulVec (Matrix.transpose (prefixRows M i hi)) (unitCoeff j))[idxFin] =
       ((prefixRows M i hi).row j)[idxFin]
   simp [HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
-    Matrix.row, Matrix.dot, Hex.Vector.dotProduct, unitCoeff]
+    Matrix.row, Vector.dotProduct, unitCoeff]
   have h :=
     foldl_indicator_mul_unique_rat
       (xs := List.finRange (i + 1)) (i := j)
@@ -1258,8 +1256,7 @@ private theorem rowCombination_eq_foldl_rows
         (List.finRange n).foldl
           (fun acc j => acc + M[j.val][idxFin.val] * c[j])
           0 by
-        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Matrix.dot
-          Hex.Vector.dotProduct
+        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Vector.dotProduct
         simp]
   have hfold :
       ∀ xs : List (Fin n), ∀ accL : Rat, ∀ accR : Vector Rat m,
@@ -1288,14 +1285,14 @@ private theorem dot_eq_zero_of_prefixSpan
     (M : Matrix Rat n m) (i : Nat) (hi : i < n)
     (u v : Vector Rat m)
     (hspan : prefixSpan M i hi v)
-    (horth : ∀ j : Fin (i + 1), Matrix.dot u ((prefixRows M i hi).row j) = 0) :
-    Matrix.dot u v = 0 := by
+    (horth : ∀ j : Fin (i + 1), Vector.dotProduct u ((prefixRows M i hi).row j) = 0) :
+    Vector.dotProduct u v = 0 := by
   rcases hspan with ⟨c, hc⟩
   rw [← hc, rowCombination_eq_foldl_rows]
   have hfold :
       ∀ xs : List (Fin (i + 1)), ∀ acc : Vector Rat m,
-        Matrix.dot u acc = 0 →
-          Matrix.dot u
+        Vector.dotProduct u acc = 0 →
+          Vector.dotProduct u
             (xs.foldl
               (fun acc j => acc + c[j] • (prefixRows M i hi).row j) acc) = 0 := by
     intro xs
@@ -1315,7 +1312,7 @@ private theorem dot_eq_zero_of_prefixSpan
 self-dot-product, a sum of squares (via `foldl_dot_self_start_le`). -/
 private theorem rat_normSq_nonneg (v : Vector Rat m) :
     0 ≤ Vector.normSq v := by
-  simpa [Vector.normSq, Matrix.dot, Hex.Vector.dotProduct] using
+  simpa [Vector.normSq, Vector.dotProduct] using
     foldl_dot_self_start_le (xs := List.finRange m) (v := v)
       (acc := 0) (by decide)
 
@@ -1323,11 +1320,11 @@ private theorem rat_normSq_nonneg (v : Vector Rat m) :
 `acc + c • row` expands to `Vector.normSq acc + c * c * Vector.normSq row`. -/
 private theorem normSq_add_smul
     (acc row : Vector Rat m) (c : Rat)
-    (horth : Matrix.dot acc row = 0) :
+    (horth : Vector.dotProduct acc row = 0) :
     Vector.normSq (acc + c • row) =
       Vector.normSq acc + c * c * Vector.normSq row := by
-  change Matrix.dot (acc + c • row) (acc + c • row) =
-    Matrix.dot acc acc + c * c * Matrix.dot row row
+  change Vector.dotProduct (acc + c • row) (acc + c • row) =
+    Vector.dotProduct acc acc + c * c * Vector.dotProduct row row
   rw [dot_add_left]
   rw [dot_add_right acc acc (c • row)]
   rw [dot_smul_right]
@@ -1335,7 +1332,7 @@ private theorem normSq_add_smul
   rw [dot_add_right row acc (c • row)]
   rw [dot_smul_right]
   rw [horth]
-  have horth' : Matrix.dot row acc = 0 := by
+  have horth' : Vector.dotProduct row acc = 0 := by
     rw [dot_comm_rat]
     exact horth
   rw [horth']
@@ -1368,9 +1365,9 @@ private theorem foldl_orthogonal_expansion_normSq
     (xs : List (Fin n)) (rows : Matrix Rat n m) (coeffs : Vector Rat n)
     (acc : Vector Rat m)
     (hnodup : xs.Nodup)
-    (hacc : ∀ i ∈ xs, Matrix.dot acc (rows.row i) = 0)
+    (hacc : ∀ i ∈ xs, Vector.dotProduct acc (rows.row i) = 0)
     (horth : ∀ i ∈ xs, ∀ j ∈ xs, i ≠ j →
-      Matrix.dot (rows.row i) (rows.row j) = 0) :
+      Vector.dotProduct (rows.row i) (rows.row j) = 0) :
     Vector.normSq
         (xs.foldl (fun acc i => acc + coeffs[i] • rows.row i) acc) =
       Vector.normSq acc +
@@ -1385,19 +1382,19 @@ private theorem foldl_orthogonal_expansion_normSq
     have hnodup_tail : rest.Nodup := (List.nodup_cons.mp hnodup).2
     have hi_not_mem : i ∉ rest := (List.nodup_cons.mp hnodup).1
     let acc' := acc + coeffs[i] • rows.row i
-    have hacc' : ∀ j ∈ rest, Matrix.dot acc' (rows.row j) = 0 := by
+    have hacc' : ∀ j ∈ rest, Vector.dotProduct acc' (rows.row j) = 0 := by
       intro j hj
       have hij : i ≠ j := by
         intro h
         subst h
         exact hi_not_mem hj
-      have hrow : Matrix.dot (rows.row i) (rows.row j) = 0 :=
+      have hrow : Vector.dotProduct (rows.row i) (rows.row j) = 0 :=
         horth i (by simp) j (by simp [hj]) hij
       simp only [acc']
       rw [dot_add_left, dot_smul_left, hacc j (by simp [hj]), hrow]
       grind
     have horth' : ∀ a ∈ rest, ∀ b ∈ rest, a ≠ b →
-        Matrix.dot (rows.row a) (rows.row b) = 0 := by
+        Vector.dotProduct (rows.row a) (rows.row b) = 0 := by
       intro a ha b hb hab
       exact horth a (by simp [ha]) b (by simp [hb]) hab
     rw [ih (acc := acc') hnodup_tail hacc' horth']
@@ -1413,17 +1410,17 @@ orthogonal rows the squared norm of the full row combination equals the fold of
 private theorem foldl_orthogonal_expansion_normSq_zero
     (rows : Matrix Rat n m) (coeffs : Vector Rat n)
     (horth : ∀ i j : Fin n, i ≠ j →
-      Matrix.dot (rows.row i) (rows.row j) = 0) :
+      Vector.dotProduct (rows.row i) (rows.row j) = 0) :
     Vector.normSq
         ((List.finRange n).foldl (fun acc i => acc + coeffs[i] • rows.row i) 0) =
       (List.finRange n).foldl
         (fun total i => total + coeffs[i] * coeffs[i] * Vector.normSq (rows.row i)) 0 := by
-  have hacc : ∀ i ∈ List.finRange n, Matrix.dot (0 : Vector Rat m) (rows.row i) = 0 := by
+  have hacc : ∀ i ∈ List.finRange n, Vector.dotProduct (0 : Vector Rat m) (rows.row i) = 0 := by
     intro i _hi
     rw [dot_comm_rat]
     exact dot_zero_right (rows.row i)
   have horth' : ∀ i ∈ List.finRange n, ∀ j ∈ List.finRange n, i ≠ j →
-      Matrix.dot (rows.row i) (rows.row j) = 0 := by
+      Vector.dotProduct (rows.row i) (rows.row j) = 0 := by
     intro i _hi j _hj hij
     exact horth i j hij
   have h :=
@@ -1539,7 +1536,7 @@ norm of the whole row combination is at least the squared norm of row `k`. -/
 theorem rowCombination_normSq_ge_of_orthogonal_coeff_sq_ge_one
     (rows : Matrix Rat n m) (coeffs : Vector Rat n) (k : Fin n)
     (horth : ∀ i j : Fin n, i ≠ j →
-      Matrix.dot (rows.row i) (rows.row j) = 0)
+      Vector.dotProduct (rows.row i) (rows.row j) = 0)
     (hcoeff : 1 ≤ coeffs[k] * coeffs[k]) :
     Vector.normSq (rows.row k) ≤ Vector.normSq (Matrix.rowCombination rows coeffs) := by
   rw [rowCombination_eq_foldl_rows]
@@ -1598,9 +1595,9 @@ theorem one_le_intCast_mul_self_of_ne_zero (z : Int) (hz : z ≠ 0) :
 private theorem eq_zero_of_prefixSpan
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) (v : Vector Rat m)
     (hspan : prefixSpan M i hi v)
-    (horth : ∀ j : Fin (i + 1), Matrix.dot v ((prefixRows M i hi).row j) = 0) :
+    (horth : ∀ j : Fin (i + 1), Vector.dotProduct v ((prefixRows M i hi).row j) = 0) :
     v = 0 := by
-  have hself : Matrix.dot v v = 0 :=
+  have hself : Vector.dotProduct v v = 0 :=
     dot_eq_zero_of_prefixSpan M i hi v v hspan horth
   apply Vector.ext
   intro idx hidx
@@ -1616,8 +1613,8 @@ private theorem residual_eq_of_same_prefixSpan
     (row r s : Vector Rat m)
     (hrspan : prefixSpan M i hi (row - r))
     (hsspan : prefixSpan M i hi (row - s))
-    (hrorth : ∀ j : Fin (i + 1), Matrix.dot r ((prefixRows M i hi).row j) = 0)
-    (hsorth : ∀ j : Fin (i + 1), Matrix.dot s ((prefixRows M i hi).row j) = 0) :
+    (hrorth : ∀ j : Fin (i + 1), Vector.dotProduct r ((prefixRows M i hi).row j) = 0)
+    (hsorth : ∀ j : Fin (i + 1), Vector.dotProduct s ((prefixRows M i hi).row j) = 0) :
     r = s := by
   have hspanDiff :
       prefixSpan M i hi ((row - s) - (row - r)) :=
@@ -1630,7 +1627,7 @@ private theorem residual_eq_of_same_prefixSpan
   have hspan : prefixSpan M i hi (r - s) := by
     simpa [hdiff_eq] using hspanDiff
   have horth : ∀ j : Fin (i + 1),
-      Matrix.dot (r - s) ((prefixRows M i hi).row j) = 0 := by
+      Vector.dotProduct (r - s) ((prefixRows M i hi).row j) = 0 := by
     intro j
     rw [dot_comm_rat (r - s) ((prefixRows M i hi).row j)]
     rw [dot_sub_right]
@@ -1657,8 +1654,8 @@ private theorem residual_eq_of_equiv_prefixSpan
     (hB_to_A : ∀ v : Vector Rat m, prefixSpan B i hi v → prefixSpan A i hi v)
     (hA_rows_to_B :
       ∀ j : Fin (i + 1), prefixSpan B i hi ((prefixRows A i hi).row j))
-    (hrorth : ∀ j : Fin (i + 1), Matrix.dot r ((prefixRows A i hi).row j) = 0)
-    (hsorth : ∀ j : Fin (i + 1), Matrix.dot s ((prefixRows B i hi).row j) = 0) :
+    (hrorth : ∀ j : Fin (i + 1), Vector.dotProduct r ((prefixRows A i hi).row j) = 0)
+    (hsorth : ∀ j : Fin (i + 1), Vector.dotProduct s ((prefixRows B i hi).row j) = 0) :
     r = s := by
   apply residual_eq_of_same_prefixSpan A i hi row r s hrspan (hB_to_A _ hsspan) hrorth
   intro j
@@ -1976,8 +1973,7 @@ private theorem rowCombination_strictPrefixRows_projectionCoeffVector
               (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)[idxFin] *
                 projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩))
           0 by
-        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Matrix.dot
-          Hex.Vector.dotProduct strictPrefixRows projectionCoeffVector
+        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Vector.dotProduct strictPrefixRows projectionCoeffVector
         simp [Matrix.row]]
   rw [show
       (prefixSumByRow row basis k hk)[idxFin] =

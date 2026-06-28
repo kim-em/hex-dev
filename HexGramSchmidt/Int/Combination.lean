@@ -45,8 +45,8 @@ private theorem rowCombination_int_getElem
         (fun (acc : Int) (i : Fin n) => acc + b[i][col] * c[i]) 0 := by
   show (Matrix.transpose b * c)[col] = _
   rw [Matrix.mulVec_getElem]
-  show Matrix.dot ((Matrix.transpose b).row col) c = _
-  simp [Matrix.dot, Hex.Vector.dotProduct, Matrix.row, Matrix.transpose, Matrix.col]
+  show Vector.dotProduct ((Matrix.transpose b).row col) c = _
+  simp [Vector.dotProduct, Matrix.row, Matrix.transpose, Matrix.col]
 
 /-- Entry expansion of the cast prefix row combination. The `(j + 1)`-row prefix
 of `castIntMatrix b` combined with `prefixCoeffsCast c k` reads out as a sum of
@@ -63,8 +63,8 @@ private theorem rowCombination_prefix_castIntMatrix_getElem
           acc + (b[jn][col] : Rat) * (c[jn] : Rat)) 0 := by
   show (Matrix.transpose _ * _)[col] = _
   rw [Matrix.mulVec_getElem]
-  show Matrix.dot ((Matrix.transpose _).row col) _ = _
-  simp [Matrix.dot, Hex.Vector.dotProduct, GramSchmidt.prefixRows,
+  show Vector.dotProduct ((Matrix.transpose _).row col) _ = _
+  simp [Vector.dotProduct, GramSchmidt.prefixRows,
     castIntMatrix, prefixCoeffsCast, Matrix.row, Matrix.transpose, Matrix.col]
 
 /-- Cast row-combination prefix-span truncation. If an integer coefficient
@@ -173,7 +173,7 @@ Gram-Schmidt basis rows: `coeffs b * basis b` collapses to the cast input
     simpa [castIntMatrix, Matrix.row, Vector.getElem_add] using hdecj.symm
   show (coeffs b * basis b)[ii][jj] = (castIntMatrix b)[ii][jj]
   rw [Matrix.mul_getElem]
-  unfold Matrix.dot Hex.Vector.dotProduct
+  unfold Vector.dotProduct
   let f : Fin n → Rat := fun k => ((coeffs b).row ii)[k] * ((basis b).col jj)[k]
   have hzero : ∀ k : Fin n, i < k.val → f k = 0 := by
     intro k hk
@@ -289,7 +289,7 @@ theorem rowCombination_basis_coeffs_reconstruction
     show _ = (Matrix.transpose (castIntMatrix b) *
         Vector.map (fun x : Int => (x : Rat)) c)[jj]
     rw [Matrix.mulVec_getElem]
-    simp [Matrix.dot, Hex.Vector.dotProduct, Matrix.row, Matrix.transpose,
+    simp [Vector.dotProduct, Matrix.row, Matrix.transpose,
       Matrix.col, castIntMatrix]
   rw [hleft]
   rw [← hcoeff]
@@ -369,7 +369,7 @@ the normal form `((normSq v : Int) : Rat)`. -/
 @[simp, grind =] theorem normSq_map_intCast (v : Vector Int m) :
     Vector.normSq (Vector.map (fun x : Int => (x : Rat)) v) =
       ((Vector.normSq v : Int) : Rat) := by
-  simpa [Vector.normSq, Hex.Vector.normSq, Matrix.dot, Hex.Vector.dotProduct]
+  simpa [Vector.normSq, Hex.Vector.normSq, Vector.dotProduct]
     using (foldl_int_dot_cast (List.finRange m)
       (fun i : Fin m => v[i]) (fun i : Fin m => v[i]) 0).symm
 
@@ -409,7 +409,7 @@ theorem normSq_latticeVec_ge_min_basis_normSq
     exact GramSchmidt.one_le_intCast_mul_self_of_ne_zero c[k] hck
   refine ⟨k, ?_⟩
   have horth : ∀ i j : Fin n, i ≠ j →
-      Matrix.dot ((basis b).row i) ((basis b).row j) = 0 := by
+      Vector.dotProduct ((basis b).row i) ((basis b).row j) = 0 := by
     intro i j hij
     exact basis_orthogonal b i.val j.val i.isLt j.isLt (by
       intro hval
@@ -474,7 +474,7 @@ theorem exists_top_index_normSq_le_of_memLattice
     rw [htop]
     exact GramSchmidt.one_le_intCast_mul_self_of_ne_zero c[k] hck
   have horth : ∀ i j : Fin n, i ≠ j →
-      Matrix.dot ((basis b).row i) ((basis b).row j) = 0 := by
+      Vector.dotProduct ((basis b).row i) ((basis b).row j) = 0 := by
     intro i j hij
     exact basis_orthogonal b i.val j.val i.isLt j.isLt (by
       intro hval
@@ -513,8 +513,8 @@ private theorem foldl_dot_comm_int {n' : Nat} (xs : List (Fin n'))
 
 /-- The dot product of integer vectors is commutative. -/
 private theorem dot_comm_int {n' : Nat} (u v : Vector Int n') :
-    Matrix.dot u v = Matrix.dot v u := by
-  simpa [Matrix.dot, Hex.Vector.dotProduct] using
+    Vector.dotProduct u v = Vector.dotProduct v u := by
+  simpa [Vector.dotProduct] using
     foldl_dot_comm_int (xs := List.finRange n') (u := u) (v := v)
       (accU := 0) (accV := 0) rfl
 
@@ -560,7 +560,7 @@ theorem scaledCoeffMatrix_eq_borderedMinor
     -- `pp.val = j.val`. Splitting on the row case mirrors the bordered minor.
     by_cases hrj : pp.val < j.val
     · have h_sc : (GramSchmidt.scaledCoeffMatrix b i j hji)[pp][cc] =
-          Matrix.dot
+          Vector.dotProduct
             (Matrix.row b ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
               (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩)
             (Matrix.row b ⟨cc.val, Nat.lt_of_lt_of_le cc.isLt
@@ -576,12 +576,12 @@ theorem scaledCoeffMatrix_eq_borderedMinor
         rw [Matrix.borderedMinor_entry_lt_lt (Matrix.gramMatrix b) j.val
           (Nat.lt_trans hji i.isLt) ⟨j.val, Nat.lt_trans hji i.isLt⟩ i pp cc hrj hcj]
       rw [h_sc, h_bm]
-      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Matrix.dot]
+      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Vector.dotProduct]
     · -- pp.val = j.val (since not < j.val and bounded by j.val + 1).
       have hpr : pp.val = j.val :=
         Nat.le_antisymm (Nat.lt_succ_iff.mp pp.isLt) (Nat.le_of_not_lt hrj)
       have h_sc : (GramSchmidt.scaledCoeffMatrix b i j hji)[pp][cc] =
-          Matrix.dot
+          Vector.dotProduct
             (Matrix.row b ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
               (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩)
             (Matrix.row b ⟨cc.val, Nat.lt_of_lt_of_le cc.isLt
@@ -596,7 +596,7 @@ theorem scaledCoeffMatrix_eq_borderedMinor
         have hpr_not : ¬ pp.val < j.val := Nat.not_lt.mpr (Nat.le_of_eq hpr.symm)
         simp [Matrix.borderedMinor, Matrix.ofFn, Vector.getElem_ofFn, hpr_not, hcj]
       rw [h_sc, h_bm]
-      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Matrix.dot]
+      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Vector.dotProduct]
       congr 2
       exact Fin.ext hpr
   · -- Border column: cc.val = j.val.
@@ -604,7 +604,7 @@ theorem scaledCoeffMatrix_eq_borderedMinor
       Nat.le_antisymm (Nat.lt_succ_iff.mp cc.isLt) (Nat.le_of_not_lt hcj)
     by_cases hrj : pp.val < j.val
     · have h_sc : (GramSchmidt.scaledCoeffMatrix b i j hji)[pp][cc] =
-          Matrix.dot
+          Vector.dotProduct
             (Matrix.row b ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
               (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩)
             (Matrix.row b i) := by
@@ -616,12 +616,12 @@ theorem scaledCoeffMatrix_eq_borderedMinor
             (⟨pp.val, Nat.lt_trans hrj (Nat.lt_trans hji i.isLt)⟩ : Fin n)][i] := by
         simp [Matrix.borderedMinor, Matrix.ofFn, Vector.getElem_ofFn, hrj, hcj]
       rw [h_sc, h_bm]
-      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Matrix.dot]
+      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Vector.dotProduct]
     · -- pp.val = j.val and cc.val = j.val: corner case.
       have hpr_eq : pp.val = j.val :=
         Nat.le_antisymm (Nat.lt_succ_iff.mp pp.isLt) (Nat.le_of_not_lt hrj)
       have h_sc : (GramSchmidt.scaledCoeffMatrix b i j hji)[pp][cc] =
-          Matrix.dot
+          Vector.dotProduct
             (Matrix.row b ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
               (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩)
             (Matrix.row b i) := by
@@ -633,7 +633,7 @@ theorem scaledCoeffMatrix_eq_borderedMinor
         have hpr_not : ¬ pp.val < j.val := hrj
         simp [Matrix.borderedMinor, Matrix.ofFn, Vector.getElem_ofFn, hpr_not, hcj]
       rw [h_sc, h_bm]
-      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Matrix.dot]
+      simp [Matrix.gramMatrix, Matrix.ofFn, Vector.getElem_ofFn, Vector.dotProduct]
       congr 2
       exact Fin.ext hpr_eq
 

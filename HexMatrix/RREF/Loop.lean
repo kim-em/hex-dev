@@ -910,8 +910,7 @@ theorem rref_isRREF (M : Matrix R n m) : IsRREF M (rref M) := by
     have hi_ge : final.pivots.length ≤ i.val := hrank_eq ▸ hi
     have hrow_le_i : final.row ≤ i.val := hshape.row_eq_length ▸ hi_ge
     rw [hechelon_eq]
-    apply Vector.ext
-    intro c hc
+    ext c hc
     rw [Vector.getElem_zero c hc]
     let cFin : Fin m := ⟨c, hc⟩
     show final.echelon[i][cFin] = 0

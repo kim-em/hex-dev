@@ -1,6 +1,14 @@
 module
 
 public import HexMatrix.Basic
+public import HexMatrix.Vector.Insert
+public import HexMatrix.Vector.Modify
+public import HexMatrix.DotProduct
+public import HexMatrix.MatrixAlgebra
+public import HexMatrix.Elementary
+public import HexMatrix.Submatrix
+public import HexMatrix.BorderedMinor
+public import HexMatrix.Gram
 public import HexMatrix.Determinant
 public import HexMatrix.RowEchelon
 public import HexMatrix.RREF

@@ -1,7 +1,9 @@
 module
 
-public import HexMatrix.Determinant.Leibniz
+public import HexMatrix.Determinant.Minor
+import all HexMatrix.Determinant.Minor
 import all HexMatrix.Determinant.Leibniz
+import all HexMatrix.Determinant.Enumeration
 
 public section
 
@@ -433,9 +435,8 @@ theorem permutationVectors_complete {n : Nat} {perm : Vector (Fin n) n}
       have hnil : perm.toList = [] := by
         apply List.eq_nil_iff_length_eq_zero.mpr
         simp [Vector.length_toList]
-      have hperm : perm = emptyVec := by
-        apply Vector.ext
-        intro i hi
+      have hperm : perm = #v[] := by
+        ext i hi
         omega
       simp [permutationVectors, hperm]
   | succ n ih =>
@@ -663,22 +664,19 @@ theorem detSign_identity {R : Type u} [Lean.Grind.Ring R] (n : Nat) :
     detSign (R := R) (Vector.ofFn fun i : Fin n => i) = 1 := by
   induction n with
   | zero =>
-      have hvec : (Vector.ofFn fun i : Fin 0 => i) = emptyVec := by
-        apply Vector.ext
-        intro i hi
+      have hvec : (Vector.ofFn fun i : Fin 0 => i) = #v[] := by
+        ext i hi
         omega
-      simp [hvec, detSign, emptyVec, inversionCount]
+      simp [hvec, detSign, inversionCount]
   | succ n ih =>
       have hvec :
           (Vector.ofFn fun i : Fin (n + 1) => i) =
             insertAt (Fin.last n)
               ((Vector.ofFn fun i : Fin n => i).map Fin.castSucc) (Fin.last n) := by
-        apply Vector.ext
-        intro k hk
+        ext k hk
         by_cases hlast : k = n
         · subst k
           simp [insertAt, List.getElem_insertIdx_self]
-          exact Fin.ext rfl
         · have hklt : k < n := by omega
           simp [insertAt, List.getElem_insertIdx_of_lt, hklt]
       rw [hvec, detSign_insertAt_last]
@@ -1014,7 +1012,7 @@ theorem det_upperTriangular_pos_diag
     0 < det M := by
   induction n with
   | zero =>
-      simp [det, permutationVectors, detTerm, detSign, detProduct, emptyVec, inversionCount]
+      simp [det, permutationVectors, detTerm, detSign, detProduct, inversionCount]
   | succ n ih =>
       have hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0 := by
         intro j hj
@@ -1051,7 +1049,7 @@ theorem det_upperTriangular_eq_finFoldl_diag
   induction n with
   | zero =>
       simp only [Fin.foldl_zero]
-      simp [det, permutationVectors, detTerm, detSign, detProduct, emptyVec,
+      simp [det, permutationVectors, detTerm, detSign, detProduct,
         inversionCount]
       grind
   | succ n ih =>

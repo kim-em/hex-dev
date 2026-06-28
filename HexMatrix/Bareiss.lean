@@ -1,6 +1,7 @@
 module
 
 public import HexMatrix.Determinant
+public import HexMatrix.BorderedMinor
 
 public section
 
@@ -507,10 +508,7 @@ original matrix. -/
 @[grind =]
 theorem rowsToMatrix_matrixToRows (M : Matrix Int n n) :
     rowsToMatrix (matrixToRows M) n = M := by
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
+  ext i hi j hj
   simpa [rowsToMatrix, Matrix.ofFn] using getEntry_matrixToRows M ⟨i, hi⟩ ⟨j, hj⟩
 
 /-- `set!`-ing index `i` to `v` makes `(xs.set! i v)[i]!` return `v` when `i` is
@@ -691,10 +689,7 @@ private theorem rowsToMatrix_swapRowsArray_matrixToRows (M : Matrix Int n n)
     (rowA rowB : Fin n) :
     rowsToMatrix (swapRowsArray (matrixToRows M) rowA.val rowB.val) n =
       rowSwap M rowA rowB := by
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
+  ext i hi j hj
   simpa [rowsToMatrix, Matrix.ofFn] using
     getEntry_swapRowsArray_matrixToRows M rowA rowB ⟨i, hi⟩ ⟨j, hj⟩
 
@@ -889,10 +884,7 @@ theorem rowsToMatrix_stepArray {n : Nat} (rows : Array (Array Int)) (k : Nat)
     (pivot prevPivot : Int) :
     rowsToMatrix (stepArray rows n k pivot prevPivot) n =
       stepMatrix (rowsToMatrix rows n) k pivot prevPivot := by
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
+  ext i hi j hj
   have hentry : ∀ a b : Fin n,
       getEntry rows a.val b.val = (rowsToMatrix rows n)[a][b] := by
     intro a b

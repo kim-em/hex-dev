@@ -208,7 +208,6 @@ def runFlintBareissDet384 : Unit → IO Int := runFlintBareissDetAt 384
 def runBareissDet512 : Unit → IO Int := runBareissDetAt 512
 def runFlintBareissDet512 : Unit → IO Int := runFlintBareissDetAt 512
 
--- Declared cost-model derivation: O(n * n * n) in the parameter `n`.
 setup_benchmark runSquareMulChecksum n => n * n * n
   with prep := prepMulInput
   where {
@@ -219,7 +218,6 @@ setup_benchmark runSquareMulChecksum n => n * n * n
     targetInnerNanos := 200000000
   }
 
--- Declared cost-model derivation: O(n * n * n) in the parameter `n`.
 setup_benchmark runBareissDet n => n * n * n
   with prep := prepDetInput
   where {
@@ -230,7 +228,6 @@ setup_benchmark runBareissDet n => n * n * n
     targetInnerNanos := 2000000000
   }
 
--- Declared cost-model derivation: O(n * leibnizDetComplexity n) in the parameter `n`.
 setup_benchmark runLeibnizDet n => n * leibnizDetComplexity n
   with prep := prepDetInput
   where {

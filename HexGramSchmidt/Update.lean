@@ -103,7 +103,7 @@ nondegeneracy hypothesis `hnorm` records that row `j` of the basis is nonzero,
 so its coefficient is well defined. -/
 theorem coeffs_sizeReduce_pivot (b : Matrix Int n m) (j k : Fin n) (hjk : j.val < k.val)
     (r : Int)
-    (hnorm : Matrix.dot ((basis b).row j) ((basis b).row j) ≠ 0) :
+    (hnorm : Vector.dotProduct ((basis b).row j) ((basis b).row j) ≠ 0) :
     GramSchmidt.entry (coeffs (sizeReduce b j k r)) k j =
       GramSchmidt.entry (coeffs b) k j - (r : Rat) := by
   rw [sizeReduce]
@@ -214,15 +214,15 @@ theorem basis_adjacentSwap_curr (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.val
       let km1 := GramSchmidt.prevRow k hk
       let swappedPrev :=
         (basis b).row k + GramSchmidt.entry (coeffs b) k km1 • (basis b).row km1
-      Matrix.dot swappedPrev swappedPrev ≠ 0) :
+      Vector.dotProduct swappedPrev swappedPrev ≠ 0) :
     let km1 := GramSchmidt.prevRow k hk
     let μ := GramSchmidt.entry (coeffs b) k km1
     let prev := (basis b).row km1
     let curr := (basis b).row k
     let swappedPrev := curr + μ • prev
     (basis (adjacentSwap b k hk)).row k =
-      (Matrix.dot curr curr / Matrix.dot swappedPrev swappedPrev) • prev -
-        (μ * Matrix.dot prev prev / Matrix.dot swappedPrev swappedPrev) • curr := by
+      (Vector.dotProduct curr curr / Vector.dotProduct swappedPrev swappedPrev) • prev -
+        (μ * Vector.dotProduct prev prev / Vector.dotProduct swappedPrev swappedPrev) • curr := by
   let km1 := GramSchmidt.prevRow k hk
   have hkm1 : km1.val + 1 = k.val := by
     dsimp [km1, GramSchmidt.prevRow]
@@ -285,14 +285,14 @@ theorem coeffs_adjacentSwap_pivot (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.v
       let km1 := GramSchmidt.prevRow k hk
       let swappedPrev :=
         (basis b).row k + GramSchmidt.entry (coeffs b) k km1 • (basis b).row km1
-      Matrix.dot swappedPrev swappedPrev ≠ 0) :
+      Vector.dotProduct swappedPrev swappedPrev ≠ 0) :
     let km1 := GramSchmidt.prevRow k hk
     let μ := GramSchmidt.entry (coeffs b) k km1
     let prev := (basis b).row km1
     let curr := (basis b).row k
     let swappedPrev := curr + μ • prev
     GramSchmidt.entry (coeffs (adjacentSwap b k hk)) k km1 =
-      μ * Matrix.dot prev prev / Matrix.dot swappedPrev swappedPrev := by
+      μ * Vector.dotProduct prev prev / Vector.dotProduct swappedPrev swappedPrev := by
   let km1 := GramSchmidt.prevRow k hk
   have hkm1 : km1.val + 1 = k.val := by
     dsimp [km1, GramSchmidt.prevRow]

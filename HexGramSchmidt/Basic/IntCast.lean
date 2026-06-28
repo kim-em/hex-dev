@@ -33,7 +33,7 @@ mutually orthogonal. -/
 @[grind =]
 theorem basis_orthogonal (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i ≠ j) :
-    Matrix.dot ((basis b).row ⟨i, hi⟩) ((basis b).row ⟨j, hj⟩) = 0 := by
+    Vector.dotProduct ((basis b).row ⟨i, hi⟩) ((basis b).row ⟨j, hj⟩) = 0 := by
   simpa [basis, GramSchmidt.Rat.basis] using
     GramSchmidt.Rat.basis_orthogonal (b := GramSchmidt.castIntMatrix b) i j hi hj hij
 
@@ -158,7 +158,7 @@ combination of the old basis rows `km1, k`. -/
 theorem basis_rowSwap_adjacent_curr (b : Matrix Int n m) (km1 k : Fin n)
     (hkm1 : km1.val + 1 = k.val)
     (hnorm :
-      Matrix.dot
+      Vector.dotProduct
         ((basis b).row k + GramSchmidt.entry (coeffs b) k km1 • (basis b).row km1)
         ((basis b).row k + GramSchmidt.entry (coeffs b) k km1 • (basis b).row km1) ≠ 0) :
     let prev := (basis b).row km1
@@ -166,10 +166,10 @@ theorem basis_rowSwap_adjacent_curr (b : Matrix Int n m) (km1 k : Fin n)
     let mu := GramSchmidt.entry (coeffs b) k km1
     let swappedPrev := curr + mu • prev
     (basis (Matrix.rowSwap b km1 k)).row k =
-      (Matrix.dot curr curr / Matrix.dot swappedPrev swappedPrev) • prev -
-        (mu * Matrix.dot prev prev / Matrix.dot swappedPrev swappedPrev) • curr := by
+      (Vector.dotProduct curr curr / Vector.dotProduct swappedPrev swappedPrev) • prev -
+        (mu * Vector.dotProduct prev prev / Vector.dotProduct swappedPrev swappedPrev) • curr := by
   have hnormRat :
-      Matrix.dot
+      Vector.dotProduct
         ((GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row k +
           GramSchmidt.entry (GramSchmidt.Rat.coeffs (GramSchmidt.castIntMatrix b)) k km1 •
             (GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row km1)
@@ -213,7 +213,7 @@ after an adjacent swap of an integer matrix. -/
 theorem coeffs_rowSwap_adjacent_pivot (b : Matrix Int n m) (km1 k : Fin n)
     (hkm1 : km1.val + 1 = k.val)
     (hnorm :
-      Matrix.dot
+      Vector.dotProduct
         ((basis b).row k + GramSchmidt.entry (coeffs b) k km1 • (basis b).row km1)
         ((basis b).row k + GramSchmidt.entry (coeffs b) k km1 • (basis b).row km1) ≠ 0) :
     let mu := GramSchmidt.entry (coeffs b) k km1
@@ -221,9 +221,9 @@ theorem coeffs_rowSwap_adjacent_pivot (b : Matrix Int n m) (km1 k : Fin n)
     let curr := (basis b).row k
     let swappedPrev := curr + mu • prev
     GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) k km1 =
-      mu * Matrix.dot prev prev / Matrix.dot swappedPrev swappedPrev := by
+      mu * Vector.dotProduct prev prev / Vector.dotProduct swappedPrev swappedPrev := by
   have hnormRat :
-      Matrix.dot
+      Vector.dotProduct
         ((GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row k +
           GramSchmidt.entry (GramSchmidt.Rat.coeffs (GramSchmidt.castIntMatrix b)) k km1 •
             (GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row km1)
@@ -295,11 +295,11 @@ destination row increases by the added integer multiple. -/
 @[grind =]
 theorem coeffs_rowAdd_pivot (b : Matrix Int n m) (src dst : Fin n)
     (hsrcdst : src.val < dst.val) (c : Int)
-    (hnorm : Matrix.dot ((basis b).row src) ((basis b).row src) ≠ 0) :
+    (hnorm : Vector.dotProduct ((basis b).row src) ((basis b).row src) ≠ 0) :
     GramSchmidt.entry (coeffs (Matrix.rowAdd b src dst c)) dst src =
       GramSchmidt.entry (coeffs b) dst src + (c : Rat) := by
   have hnormRat :
-      Matrix.dot ((GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row src)
+      Vector.dotProduct ((GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row src)
           ((GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row src) ≠ 0 := by
     simpa [basis, GramSchmidt.Rat.basis] using hnorm
   simpa [coeffs, basis, GramSchmidt.Rat.coeffs, GramSchmidt.Rat.basis,

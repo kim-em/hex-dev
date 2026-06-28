@@ -332,8 +332,8 @@ private theorem transposePermutationValues_toList_of_gt {n : Nat}
         (perm.toList.drop (j.val + 1)).take (i.val - j.val - 1) ++
           perm[j] :: perm.toList.drop (i.val + 1) := by
   have hcomm : transposePermutationValues perm i j = transposePermutationValues perm j i := by
-    apply Vector.ext
-    intro r hr
+    ext r hr
+    apply Fin.val_eq_of_eq
     change (transposePermutationValues perm i j)[(⟨r, hr⟩ : Fin n)] =
       (transposePermutationValues perm j i)[(⟨r, hr⟩ : Fin n)]
     repeat rw [transposePermutationValues_get]
@@ -358,8 +358,7 @@ private theorem transposePermutationValues_toList_of_gt {n : Nat}
 private theorem transposePermutationValues_involutive {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n) :
     transposePermutationValues (transposePermutationValues perm i j) i j = perm := by
-  apply Vector.ext
-  intro r hr
+  ext r hr
   simp [transposePermutationValues, finTranspose_involutive]
 
 /-- `transposePermutationValues_map_permutationVectors_perm` shows that mapping a fixed value transpose permutes `permutationVectors n`. -/
@@ -432,8 +431,7 @@ private theorem swapPermutationValues_mem_permutationVectors {n : Nat}
 private theorem swapPermutationValues_involutive {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n) :
     swapPermutationValues (swapPermutationValues perm i j) i j = perm := by
-  apply Vector.ext
-  intro r hr
+  ext r hr
   simp [swapPermutationValues, finTranspose_involutive]
 
 /-- `fin_mem_of_full_nodup` shows that a length-`n` nodup list of `Fin n`
@@ -530,8 +528,8 @@ private theorem inversePermutationValues_insertAt_last_castSucc {n : Nat}
         (insertAt_last_castSucc_nodup v i hnodup) =
       insertAt i ((inversePermutationValues v hnodup).map (raiseFinAbove i))
         (Fin.last n) := by
-  apply Vector.ext
-  intro k hk
+  ext k hk
+  apply Fin.val_eq_of_eq
   let c : Fin (n + 1) := ⟨k, hk⟩
   by_cases hlast : k = n
   · subst k
@@ -649,8 +647,7 @@ private theorem inversionCount_inversePermutationValues_mod_two {n : Nat}
               inversePermutationValues
                 (insertAt (Fin.last n) (peeled.map Fin.castSucc) pos)
                 hnodup_insert := by
-          apply Vector.ext
-          intro c hc
+          ext c hc
           simp [inversePermutationValues, hinsert]
         rw [hinv_eq]
         simpa [peeled, pos] using
@@ -686,8 +683,8 @@ private theorem inversePermutationValues_involutive {n : Nat}
     inversePermutationValues
         (inversePermutationValues perm hnodup)
         (inversePermutationValues_nodup perm hnodup) = perm := by
-  apply Vector.ext
-  intro k hk
+  ext k hk
+  apply Fin.val_eq_of_eq
   let i : Fin n := ⟨k, hk⟩
   have h :=
     inversePermutationValues_get_index
@@ -814,8 +811,8 @@ private theorem composePermutationValues_left_involutive {n : Nat}
     composePermutationValues
         (inversePermutationVector sigma)
         (composePermutationValues sigma tau) = tau := by
-  apply Vector.ext
-  intro k hk
+  ext k hk
+  apply Fin.val_eq_of_eq
   let i : Fin n := ⟨k, hk⟩
   change
     (composePermutationValues
@@ -980,8 +977,7 @@ private theorem swapPermutationValues_eq {n : Nat}
         fin_idxOf_lt j (by simp [Vector.length_toList]) hnodup⟩
     swapPermutationValues perm i j = transposePermutationValues perm pi pj := by
   dsimp
-  apply Vector.ext
-  intro r hr
+  ext r hr
   let pi : Fin n := ⟨perm.toList.idxOf i,
     by simpa [Vector.length_toList] using
       fin_idxOf_lt i (by simp [Vector.length_toList]) hnodup⟩
@@ -1000,6 +996,7 @@ private theorem swapPermutationValues_eq {n : Nat}
     have hget : perm.toList[perm.toList.idxOf j]'hlt = j :=
       List.getElem_idxOf (x := j) (xs := perm.toList) hlt
     exact hget
+  apply Fin.val_eq_of_eq
   change (swapPermutationValues perm i j)[(⟨r, hr⟩ : Fin n)] =
     (transposePermutationValues perm pi pj)[(⟨r, hr⟩ : Fin n)]
   rw [swapPermutationValues_get, transposePermutationValues_get]
@@ -1244,8 +1241,8 @@ private theorem composePermutationValues_transposePermutationValues_right
     {n : Nat} (sigma tau : Vector (Fin n) n) (i j : Fin n) :
     composePermutationValues sigma (transposePermutationValues tau i j) =
       transposePermutationValues (composePermutationValues sigma tau) i j := by
-  apply Vector.ext
-  intro k hk
+  ext k hk
+  apply Fin.val_eq_of_eq
   let r : Fin n := ⟨k, hk⟩
   show
     (composePermutationValues sigma (transposePermutationValues tau i j))[r] =
@@ -1429,8 +1426,7 @@ private theorem perm_eq_identity {n : Nat}
     perm = Vector.ofFn fun i : Fin n => i := by
   induction n with
   | zero =>
-      apply Vector.ext
-      intro i hi
+      ext i hi
       omega
   | succ n ih =>
       have hnodup : perm.toList.Nodup := permutationVectors_nodup hmem
@@ -1473,12 +1469,10 @@ private theorem perm_eq_identity {n : Nat}
           (Vector.ofFn fun i : Fin (n + 1) => i) =
             insertAt (Fin.last n)
               ((Vector.ofFn fun i : Fin n => i).map Fin.castSucc) (Fin.last n) := by
-        apply Vector.ext
-        intro r hr
+        ext r hr
         by_cases hlast : r = n
         · subst r
           simp [insertAt, List.getElem_insertIdx_self]
-          exact Fin.ext rfl
         · have hr_lt : r < n := by omega
           simp [insertAt, List.getElem_insertIdx_of_lt, hr_lt]
       exact hvec.symm
@@ -1509,8 +1503,7 @@ theorem detSign_composePermutationValues
       have hcompose_id :
           composePermutationValues sigma tau' = sigma := by
         rw [hid]
-        apply Vector.ext
-        intro r hr
+        ext r hr
         simp [composePermutationValues]
       rw [hcompose_id, hid, detSign_identity]
       grind
@@ -1623,8 +1616,8 @@ private theorem swapPermutationValues_idxOf_right {n : Nat}
     (hnodup : perm.toList.Nodup) :
     (swapPermutationValues perm i j).toList.idxOf j = perm.toList.idxOf i := by
   have hcomm : swapPermutationValues perm i j = swapPermutationValues perm j i := by
-    apply Vector.ext
-    intro r hr
+    ext r hr
+    apply Fin.val_eq_of_eq
     change (swapPermutationValues perm i j)[(⟨r, hr⟩ : Fin n)] =
       (swapPermutationValues perm j i)[(⟨r, hr⟩ : Fin n)]
     repeat rw [swapPermutationValues_get]
@@ -1858,7 +1851,7 @@ private theorem permutationVectors_identity_sum {R : Type u} [Lean.Grind.CommRin
         (fun acc perm => acc + detTerm (1 : Matrix R n n) perm) 0 = 1 := by
   induction n with
   | zero =>
-      simp [permutationVectors, emptyVec, detTerm, detSign, detProduct, inversionCount]
+      simp [permutationVectors, detTerm, detSign, detProduct, inversionCount]
       grind
   | succ n ih =>
       simp only [permutationVectors]
@@ -2031,10 +2024,7 @@ private theorem foldl_det_sum_map {R : Type u} [Zero R] [Add R]
 private theorem rowSwap_rowAddDuplicate_eq {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (_h : src ≠ dst) :
     rowSwap (rowAddDuplicate M src dst) src dst = rowAddDuplicate M src dst := by
-  apply Vector.ext
-  intro r hr
-  apply Vector.ext
-  intro k hk
+  ext r hr k hk
   change
     (rowSwap (rowAddDuplicate M src dst) src dst)[(⟨r, hr⟩ : Fin n)][(⟨k, hk⟩ : Fin n)] =
       (rowAddDuplicate M src dst)[(⟨r, hr⟩ : Fin n)][(⟨k, hk⟩ : Fin n)]
@@ -2554,10 +2544,7 @@ theorem det_colSwap {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     det (ofFn fun r c => M[r][finTranspose i j c]) = -det M := by
   let C : Matrix R n n := ofFn fun r c => M[r][finTranspose i j c]
   have htranspose : C.transpose = rowSwap M.transpose i j := by
-    apply Vector.ext
-    intro r hr
-    apply Vector.ext
-    intro c hc
+    ext r hr c hc
     let rr : Fin n := ⟨r, hr⟩
     let cc : Fin n := ⟨c, hc⟩
     change C.transpose[rr][cc] = (rowSwap M.transpose i j)[rr][cc]

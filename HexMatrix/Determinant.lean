@@ -1,10 +1,16 @@
 module
 
 public import HexMatrix.Determinant.Leibniz
+public import HexMatrix.Determinant.Enumeration
+public import HexMatrix.Determinant.Minor
 public import HexMatrix.Determinant.Index
 public import HexMatrix.Determinant.Permutation
+public import HexMatrix.Determinant.ColumnLinear
+public import HexMatrix.Determinant.Laplace
+public import HexMatrix.Determinant.CauchyBinet
 public import HexMatrix.Determinant.Expansion
 public import HexMatrix.Determinant.Selection
+public import HexMatrix.Determinant.Adjugate
 public import HexMatrix.Determinant.Plucker
 
 public section

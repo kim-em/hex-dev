@@ -26,7 +26,7 @@ recurses on the remaining prefix with the smaller bound `c.val`. -/
 @[expose]
 def selectedColumnTuplesUpTo (m : Nat) :
     (n : Nat) → (bound : Nat) → List (Vector (Fin m) n)
-  | 0, _ => [emptyVec]
+  | 0, _ => [#v[]]
   | n + 1, bound =>
       ((List.finRange m).filter (fun c : Fin m => decide (c.val < bound))).flatMap
         fun c =>
@@ -44,8 +44,8 @@ def selectedColumnTuples (n m : Nat) : List (Vector (Fin m) n) :=
 def IsStrictlyIncreasingColumnTuple {m n : Nat} (cols : Vector (Fin m) n) : Prop :=
   ∀ i j : Fin n, i.val < j.val → cols[i].val < cols[j].val
 
-private theorem isStrictlyIncreasingColumnTuple_emptyVec {m : Nat} :
-    IsStrictlyIncreasingColumnTuple (m := m) (n := 0) emptyVec := by
+private theorem isStrictlyIncreasingColumnTuple_nil {m : Nat} :
+    IsStrictlyIncreasingColumnTuple (m := m) (n := 0) #v[] := by
   intro i _ _
   exact i.elim0
 
@@ -95,9 +95,11 @@ private theorem mem_selectedColumnTuplesUpTo_imp {m : Nat} :
           ∀ i : Fin n, v[i].val < bound
   | 0, _, v, hv => by
       simp [selectedColumnTuplesUpTo] at hv
-      subst hv
-      refine ⟨isStrictlyIncreasingColumnTuple_emptyVec, ?_⟩
-      intro i; exact i.elim0
+      refine ⟨?_, ?_⟩
+      · intro i _ _
+        exact i.elim0
+      · intro i
+        exact i.elim0
   | n + 1, bound, v, hv => by
       rw [selectedColumnTuplesUpTo, List.mem_flatMap] at hv
       rcases hv with ⟨c, hc, hmem⟩
@@ -132,9 +134,8 @@ private theorem mem_selectedColumnTuplesUpTo_of_strictly_increasing {m : Nat} :
         (∀ i : Fin n, v[i].val < bound) →
         v ∈ selectedColumnTuplesUpTo m n bound
   | 0, _, v, _, _ => by
-      have hv : v = emptyVec := by
-        apply Vector.ext
-        intro i hi
+      have hv : v = #v[] := by
+        ext i hi
         exact absurd hi (by omega)
       simp [selectedColumnTuplesUpTo, hv]
   | n + 1, bound, v, hsi, hbound => by
@@ -458,8 +459,8 @@ private theorem vector_ofFn_getElem_fin {α : Type u} {n : Nat}
 theorem mem_columnTupleVectors {n m : Nat} (cols : Vector (Fin m) n) :
     cols ∈ columnTupleVectors n m := by
   have hcols : cols = Vector.ofFn (fun i : Fin n => cols[i]) := by
-    apply Vector.ext
-    intro i hi
+    ext i hi
+    apply Fin.val_eq_of_eq
     let k : Fin n := ⟨i, hi⟩
     change cols[k] = (Vector.ofFn fun i : Fin n => cols[i])[k]
     rw [vector_ofFn_getElem_fin]
@@ -556,8 +557,8 @@ theorem sortInj_pair_injective {m n : Nat} {cols cols' : Vector (Fin m) n}
     (hsort : sortInjTuple cols = sortInjTuple cols')
     (hperm : sortInjPerm cols = sortInjPerm cols') :
     cols = cols' := by
-  apply Vector.ext
-  intro k hk
+  ext k hk
+  apply Fin.val_eq_of_eq
   let i : Fin n := ⟨k, hk⟩
   show cols[i] = cols'[i]
   rw [cols_getElem_eq_sortInjTuple_sortInjPerm cols hinj i,
@@ -609,10 +610,7 @@ private theorem columnTupleMatrix_reconstructInjTuple_eq
     (sel : Vector (Fin m) n) (perm : Vector (Fin n) n) :
     columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)) =
       columnTupleMatrix A (fun i => sel[perm[i]]) := by
-  apply Vector.ext
-  intro r hr
-  apply Vector.ext
-  intro c hc
+  ext r hr c hc
   change
     (columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)))[
         (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
@@ -761,8 +759,8 @@ theorem sortInjPerm_reconstructInjTuple {m n : Nat}
     (hsel : IsStrictlyIncreasingColumnTuple sel)
     (hperm : perm ∈ permutationVectors n) :
     sortInjPerm (reconstructInjTuple sel perm) = perm := by
-  apply Vector.ext
-  intro k hk
+  ext k hk
+  apply Fin.val_eq_of_eq
   let i : Fin n := ⟨k, hk⟩
   show (sortInjPerm (reconstructInjTuple sel perm))[i] = perm[i]
   apply Fin.ext
@@ -778,8 +776,8 @@ theorem sortInjTuple_reconstructInjTuple {m n : Nat}
   -- Use the factorization equation on the reconstructed tuple, which is injective.
   have hinj : Function.Injective (columnTupleVectorFn (reconstructInjTuple sel perm)) :=
     reconstructInjTuple_injective hsel hperm
-  apply Vector.ext
-  intro k hk
+  ext k hk
+  apply Fin.val_eq_of_eq
   let r : Fin n := ⟨k, hk⟩
   show (sortInjTuple (reconstructInjTuple sel perm))[r] = sel[r]
   -- The reconstruction at index `inv perm [r]` equals sel[perm[(inv perm) r]] = sel[r].
@@ -830,8 +828,8 @@ theorem reconstructInjTuple_sortInj {m n : Nat}
     (cols : Vector (Fin m) n)
     (hinj : Function.Injective (columnTupleVectorFn cols)) :
     reconstructInjTuple (sortInjTuple cols) (sortInjPerm cols) = cols := by
-  apply Vector.ext
-  intro k hk
+  ext k hk
+  apply Fin.val_eq_of_eq
   let i : Fin n := ⟨k, hk⟩
   show (reconstructInjTuple (sortInjTuple cols) (sortInjPerm cols))[i] = cols[i]
   rw [reconstructInjTuple_getElem]
@@ -1155,10 +1153,7 @@ theorem columnTupleMatrix_leadingRows_firstColumns_eq_leadingPrefix
     {R : Type u} {n : Nat} (M : Matrix R n n) (k : Nat) (hk : k ≤ n) :
     columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn (firstColumns k n hk)) =
       leadingPrefix M k hk := by
-  apply Vector.ext
-  intro i hi
-  apply Vector.ext
-  intro j hj
+  ext i hi j hj
   change
     (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn (firstColumns k n hk)))[
         (⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)] =

@@ -162,7 +162,7 @@ private theorem noPivotLoop_initial_gram_bareiss_step_dvd
   have hq := hquot fuel hinv h_canon h_prefix_none hnext hp i hi
   have h_step_le_i : state.step ≤ i.val := Nat.le_trans (Nat.le_succ _) hi
   have h_step_le_k : state.step ≤ k.val := Nat.le_refl _
-  refine ⟨Matrix.dot (Matrix.rowCombination b (Vector.ofFn hq.q)) (b.row j), ?_⟩
+  refine ⟨Vector.dotProduct (Matrix.rowCombination b (Vector.ofFn hq.q)) (b.row j), ?_⟩
   rw [hinv.entry_eq_dot i j h_step_le_i, hinv.entry_eq_dot k j h_step_le_k]
   rw [← dot_bareiss_row_update_left state.matrix[k][k] state.matrix[i][k]
         (Matrix.rowCombination b (hinv.coeff i))
@@ -202,7 +202,7 @@ private theorem noPivotLoop_initial_gram_exists_rowVec
         ∀ j : Fin n,
           (Matrix.noPivotLoop fuel
             (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[i][j] =
-            Matrix.dot v (b.row j) := by
+            Vector.dotProduct v (b.row j) := by
   let hinv :=
     bareissGramRowInvariant_noPivotLoop_initial b fuel hquot
   refine ⟨Matrix.rowCombination b (hinv.coeff i), ?_, ?_⟩
@@ -274,23 +274,23 @@ private theorem foldl_int_dot_self_eq_zero_of_mem (xs : List (Fin m))
       | inr h =>
           exact ih (acc := acc + v[head] * v[head]) hnext_nonneg hzero i h
 
-/-- `int_dot_self_eq_zero_get`: from a vanishing self-dot `Matrix.dot v v = 0`
+/-- `int_dot_self_eq_zero_get`: from a vanishing self-dot `Vector.dotProduct v v = 0`
 each component `v[i]` is zero, specialising the fold lemma to the full index
-list and the running form of `Matrix.dot`. -/
+list and the running form of `Vector.dotProduct`. -/
 private theorem int_dot_self_eq_zero_get (v : Vector Int m)
-    (hzero : Matrix.dot v v = 0) (i : Fin m) :
+    (hzero : Vector.dotProduct v v = 0) (i : Fin m) :
     v[i] = 0 := by
   have hmem : i ∈ List.finRange m := by simp
   exact foldl_int_dot_self_eq_zero_of_mem (xs := List.finRange m) (v := v)
     (acc := 0) (by decide)
-    (by simpa [Matrix.dot, Hex.Vector.dotProduct] using hzero) i hmem
+    (by simpa [Vector.dotProduct] using hzero) i hmem
 
 /-- If `v : Vector Int m` has zero self-dot product, then any other integer
 vector dots it to zero from the left as well. -/
 private theorem int_dot_eq_zero_of_dot_self_zero_left (u v : Vector Int m)
-    (hzero : Matrix.dot v v = 0) :
-    Matrix.dot v u = 0 := by
-  unfold Matrix.dot Hex.Vector.dotProduct
+    (hzero : Vector.dotProduct v v = 0) :
+    Vector.dotProduct v u = 0 := by
+  unfold Vector.dotProduct
   induction List.finRange m with
   | nil =>
       simp
@@ -321,8 +321,8 @@ private theorem foldl_dot_comm_int_local {n' : Nat} (xs : List (Fin n'))
 /-- The dot product of integer vectors is commutative. (Local form for use
 inside this file before the existing `dot_comm_int` declaration.) -/
 private theorem int_dot_comm_local {n' : Nat} (u v : Vector Int n') :
-    Matrix.dot u v = Matrix.dot v u := by
-  simpa [Matrix.dot, Hex.Vector.dotProduct] using
+    Vector.dotProduct u v = Vector.dotProduct v u := by
+  simpa [Vector.dotProduct] using
     foldl_dot_comm_int_local (xs := List.finRange n') (u := u) (v := v)
       (accU := 0) (accV := 0) rfl
 
@@ -351,7 +351,7 @@ private theorem rowCombination_getElem_int
       (List.finRange n).foldl (fun acc k => acc + b[k][j] * c[k]) 0 := by
   show (Matrix.transpose b * c)[j] = _
   rw [Matrix.mulVec_getElem]
-  unfold Matrix.dot Hex.Vector.dotProduct
+  unfold Vector.dotProduct
   apply foldl_add_pointwise_eq_int
   intro k _hk
   simp [Matrix.transpose, Matrix.col, Matrix.row]
@@ -375,16 +375,16 @@ second argument's row combination distributes outside the sum, giving the
 identity. -/
 private theorem dot_rowCombination_right_eq
     {n m : Nat} (b : Matrix Int n m) (u : Vector Int m) (c : Vector Int n) :
-    Matrix.dot u (Matrix.rowCombination b c) =
+    Vector.dotProduct u (Matrix.rowCombination b c) =
       (List.finRange n).foldl
-        (fun acc k => acc + c[k] * Matrix.dot u (b.row k)) 0 := by
+        (fun acc k => acc + c[k] * Vector.dotProduct u (b.row k)) 0 := by
   -- Step 1: rewrite each (rowComb b c)[j] entry using rowCombination_getElem_int.
   have h_lhs :
-      Matrix.dot u (Matrix.rowCombination b c) =
+      Vector.dotProduct u (Matrix.rowCombination b c) =
         (List.finRange m).foldl
           (fun accj j => accj + u[j] *
             (List.finRange n).foldl (fun acck k => acck + b[k][j] * c[k]) 0) 0 := by
-    unfold Matrix.dot Hex.Vector.dotProduct
+    unfold Vector.dotProduct
     apply foldl_add_pointwise_eq_int
     intro j _hj
     rw [rowCombination_getElem_int (b := b) (c := c) j]
@@ -417,7 +417,7 @@ private theorem dot_rowCombination_right_eq
   intro k _hk
   -- We want:
   --   (List.finRange m).foldl (fun accj j => accj + u[j] * (b[k][j] * c[k])) 0
-  --     = c[k] * Matrix.dot u (b.row k)
+  --     = c[k] * Vector.dotProduct u (b.row k)
   -- Rearrange body so c[k] is the multiplier: u[j] * (b[k][j] * c[k])
   --     = c[k] * (u[j] * b[k][j]).
   have h_body :
@@ -437,12 +437,12 @@ private theorem dot_rowCombination_right_eq
   rw [h_zero] at h_pull
   rw [← h_pull]
   -- Goal: c[k] * (List.finRange m).foldl (fun accj j => accj + u[j] * b[k][j]) 0
-  --      = c[k] * Matrix.dot u (b.row k)
-  -- Rewrite Matrix.dot definitionally to the foldl form using row entry equality.
+  --      = c[k] * Vector.dotProduct u (b.row k)
+  -- Rewrite Vector.dotProduct definitionally to the foldl form using row entry equality.
   have h_dot_eq :
-      Matrix.dot u (b.row k) =
+      Vector.dotProduct u (b.row k) =
         (List.finRange m).foldl (fun accj j => accj + u[j] * b[k][j]) 0 := by
-    unfold Matrix.dot Hex.Vector.dotProduct
+    unfold Vector.dotProduct
     apply foldl_add_pointwise_eq_int
     intro j _hj
     simp [Matrix.row]
@@ -484,10 +484,10 @@ The argument: by the closed row-vector consumer, the represented pivot row has
 integer support on indices `≤ s` and inner product zero against `b.row k` for
 every `k.val ≤ s` (those matrix entries are either the zero pivot itself or
 zeros left by earlier regular elimination steps). Linearity of dot against
-`rowCombination` over the supported indices then gives `Matrix.dot v v = 0`,
+`rowCombination` over the supported indices then gives `Vector.dotProduct v v = 0`,
 and integer positive definiteness forces every dot against `v` to be zero.
 Trailing-block symmetry transports
-`state.matrix[sFin][i] = Matrix.dot v (b.row i) = 0` across the diagonal to
+`state.matrix[sFin][i] = Vector.dotProduct v (b.row i) = 0` across the diagonal to
 `state.matrix[i][sFin] = 0`. -/
 private theorem leadingPrefix_gram_zero_pivot_column_zero
     {n m : Nat} (b : Matrix Int n m) (s : Nat) (hs : s + 1 < n)
@@ -516,14 +516,14 @@ private theorem leadingPrefix_gram_zero_pivot_column_zero
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step ≤ sFin.val := by
     rw [h_step]; show s ≤ s; exact Nat.le_refl _
   -- The row-vector consumer aligns `matrix[sFin][j]` with
-  -- `Matrix.dot v (b.row j)` for all columns `j`.
+  -- `Vector.dotProduct v (b.row j)` for all columns `j`.
   obtain ⟨v, ⟨c, h_coeff_supp_above, hv_def⟩, h_dot_eq_matrix⟩ :=
     noPivotLoop_initial_gram_exists_rowVec b s hquot sFin h_state_step_le_sFin
   -- The represented row is orthogonal to `b.row k` for every `k.val ≤ s`:
   -- on `k.val = s`, the hypothesis `h_zero` gives a zero pivot dot, and on
   -- `k.val < s` the column was cleared by an earlier regular Bareiss step.
   have h_dot_zero_le : ∀ k : Fin n, k.val ≤ s →
-      Matrix.dot v (b.row k) = 0 := by
+      Vector.dotProduct v (b.row k) = 0 := by
     intro k hks
     rw [← h_dot_eq_matrix k]
     by_cases hk_eq : k.val = s
@@ -545,12 +545,12 @@ private theorem leadingPrefix_gram_zero_pivot_column_zero
       exact noPivotLoop_matrix_processed_col_eq_zero s
         (Matrix.noPivotInitialState (Matrix.gramMatrix b)) h_prefix_none
         k.val h_init_step_le h_k_lt_result k rfl sFin h_k_lt_sFin
-  -- `Matrix.dot v v = 0`: every term in the rowCombination expansion is zero.
-  have h_dot_self_zero : Matrix.dot v v = 0 := by
+  -- `Vector.dotProduct v v = 0`: every term in the rowCombination expansion is zero.
+  have h_dot_self_zero : Vector.dotProduct v v = 0 := by
     have h_expand_aux :
-        Matrix.dot v (Matrix.rowCombination b c) =
+        Vector.dotProduct v (Matrix.rowCombination b c) =
           (List.finRange n).foldl
-            (fun acc k => acc + c[k] * Matrix.dot v (b.row k))
+            (fun acc k => acc + c[k] * Vector.dotProduct v (b.row k))
             0 :=
       dot_rowCombination_right_eq b v c
     rw [← hv_def] at h_expand_aux
