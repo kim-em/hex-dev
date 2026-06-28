@@ -105,6 +105,29 @@ benches specifically, the structural and timing rules in
 [SPEC/benchmarking.md §CI integration "Time budget"](benchmarking.md)
 constrain what a new bench is allowed to look like.
 
+## Source-file lints
+
+Every tracked `.lean` file (except `lakefile.lean`) MUST open with a
+Mathlib-style copyright header naming Lean FRO, LLC as the copyright
+holder:
+
+```
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+```
+
+The header is a plain block comment (`/- -/`, not a `/-!` doc comment)
+and is the first thing in the file, ahead of any `module` keyword,
+`import`, or module docstring. `scripts/check_copyright_headers.py`
+enforces this as a step in `ci.yml`'s single `build` job: it matches the
+copyright and license lines exactly (the year may be any four digits) and
+requires a non-empty `Authors:` line, so additional contributors may be
+named. Run `python3 scripts/check_copyright_headers.py --fix` to add the
+header to any new file.
+
 ## Mathlib cache is mandatory
 
 Hex depends transitively on Mathlib (see `lakefile.lean`). Every
