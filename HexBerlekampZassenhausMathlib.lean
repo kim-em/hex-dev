@@ -5,24 +5,9 @@ Authors: Kim Morrison
 -/
 
 import HexBerlekampZassenhausMathlib.Basic
-import HexBerlekampZassenhausMathlib.BadVector
-import HexBerlekampZassenhausMathlib.BadVectorAuxiliary
-import HexBerlekampZassenhausMathlib.BHKSBound
-import HexBerlekampZassenhausMathlib.BHKSIndependent
-import HexBerlekampZassenhausMathlib.CLDColumnBound
-import HexBerlekampZassenhausMathlib.ColumnSignature
-import HexBerlekampZassenhausMathlib.FiniteSumBounds
-import HexBerlekampZassenhausMathlib.HotPathDiscriminant
+import HexBerlekampZassenhausMathlib.UFDPartition
 import HexBerlekampZassenhausMathlib.IntReductionMod
 import HexBerlekampZassenhausMathlib.FactorSoundness
-import HexBerlekampZassenhausMathlib.Lattice
-import HexBerlekampZassenhausMathlib.LiftBridge
-import HexBerlekampZassenhausMathlib.PartitionRefinement
-import HexBerlekampZassenhausMathlib.Recovery
-import HexBerlekampZassenhausMathlib.Resultant
-import HexBerlekampZassenhausMathlib.SignatureClasses
-import HexBerlekampZassenhausMathlib.TerminationBound
-import HexBerlekampZassenhausMathlib.UFDPartition
 
 /-!
 Root module for the Mathlib-side correspondence of the integer
