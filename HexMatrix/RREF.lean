@@ -1,0 +1,15 @@
+module
+
+public import HexMatrix.RREF.Pivot
+public import HexMatrix.RREF.Loop
+public import HexMatrix.RREF.Echelon
+
+public section
+
+/-!
+Executable RREF, row-span, and nullspace routines for `hex-matrix`, split by
+subject across `HexMatrix/RREF/*`: pivot search and column elimination
+(`Pivot`), the `rref` loop with its canonical/no-pivot-zero invariants
+(`Loop`), and the `IsEchelonForm`/`IsRREF` contracts with span/nullspace APIs
+(`Echelon`). This module re-exports them.
+-/

@@ -94,7 +94,6 @@ libraries:
     mathlib: false
     done_through: 7
     status: active
-    external: "https://github.com/kim-em/hex-matrix.git@20e4c73f958cf7996199972a45e538d06121f91f"
     phase4:
       comparators:
         - tool: "FLINT fmpz_mat_det via python-flint"
@@ -127,7 +126,6 @@ libraries:
     mathlib: false
     done_through: 7
     status: active
-    external: "https://github.com/kim-em/hex-gram-schmidt.git@d9ffab41cd4b400bc05eb69eb1724484d43017e3"
     phase4:
       input_families:
         - name: integer-gram-surface
@@ -179,7 +177,6 @@ libraries:
     mathlib: false
     done_through: 7
     status: active
-    external: "https://github.com/kim-em/hex-lll.git@ff9729a08b65fda89f391eca5ce5b4497711f815"
     phase4:
       comparators:
         - tool: "fpLLL via fplll-ffi"
@@ -349,7 +346,6 @@ libraries:
     mathlib: true
     done_through: 5
     status: active
-    external: "https://github.com/kim-em/hex-matrix-mathlib.git@7e2eed8ae6d962d11e65d5763ce93439ce3fcb72"
     phase4:
       input_families:
         - name: matrix-representation-conversion
@@ -368,7 +364,6 @@ libraries:
     mathlib: true
     done_through: 5
     status: active
-    external: "https://github.com/kim-em/hex-gram-schmidt-mathlib.git@29404cfe535ec3dc53a6a174235e69fbf0c3c7e8"
   HexPolyZMathlib:
     deps: [HexPolyZ, HexHensel, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
@@ -379,7 +374,6 @@ libraries:
     mathlib: true
     done_through: 4
     status: active
-    external: "https://github.com/kim-em/hex-lll-mathlib.git@e4554e109e1cd93547572819499c33db769300af"
   HexBerlekampMathlib:
     deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
