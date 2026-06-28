@@ -11,6 +11,20 @@ import all HexMatrix.Determinant.Permutation
 
 public section
 
+/-!
+Determinant column linearity for `hex-matrix`.
+
+This module proves that `det` is multilinear in a single replaced column.
+Working from the per-permutation product `detProduct` and signed term
+`detTerm`, it establishes the additive `det_setCol_add`, the scalar
+`det_setCol_smul`, and the finite-list/`Fin m` aggregated forms
+`det_setCol_sum_list` and `det_setCol_sum_finRange`. It also collects the
+duplicate-column/row vanishing lemmas (`det_eq_zero_of_col_eq`,
+`det_eq_zero_of_row_eq`) and `det_setCol_add_otherCols` (column operations
+preserve the determinant), plus the `columnSumMatrix` builder and the Fubini
+sum-swap `foldl_det_sum_swap` used by the Cauchy-Binet expansion.
+-/
+
 namespace Hex
 universe u
 namespace Matrix

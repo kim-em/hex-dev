@@ -11,6 +11,21 @@ import all HexGramSchmidt.Basic.Linearity
 
 public section
 
+/-!
+Rational Gram-Schmidt API for `hex-gram-schmidt`.
+
+This module wraps the executable kernel into the rational-valued `basis` and
+`coeffs` of a `Matrix Rat n m` and proves their defining properties: the
+leading row is untouched (`basis_zero`), distinct basis rows are orthogonal
+(`basis_orthogonal`), the triangular factorization `b = coeffs · basis`
+(`basis_decomposition`), and the unit-diagonal / lower-triangular shape of
+`coeffs` (`coeffs_diag`, `coeffs_upper`, `coeffs_lower_projection`). It also
+tracks how `basis` and `coeffs` transform under `Matrix.rowAdd` and adjacent
+`Matrix.rowSwap` (the explicit re-orthogonalization formulas
+`basis_rowSwap_adjacent_prev`/`_curr` and the coefficient updates), and proves
+that orthogonalization preserves every row-prefix span (`basis_span`). These
+are the rational facts the integer-cast layer lifts.
+-/
 namespace Hex
 namespace GramSchmidt.Rat
 

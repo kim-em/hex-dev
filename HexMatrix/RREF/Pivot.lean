@@ -12,6 +12,21 @@ public import HexMatrix.RowEchelon
 
 public section
 
+/-!
+Pivot search and column elimination for the `hex-matrix` RREF loop.
+
+This module supplies the executable building blocks of Gauss-Jordan
+elimination and their entrywise lemmas. It defines `rowCombination`, the
+`RrefState` carrier, the pivot search `findPivot?` (with the `_some_ge`,
+`_some_nonzero`, `_some_above`, `_none` characterizations) and the
+column-clearing `eliminateColumn`, proving the latter zeros non-pivot rows,
+fixes the pivot row, leaves other columns untouched, and preserves both the
+transform equation and the transform's left/right inverses. It assembles the
+`rrefLoop` driver itself together with the proof-only `RrefShapeInvariant`,
+`RrefCanonicalInvariant` structures and their one-step `concat` extension
+lemmas, which `RREF/Loop` then carries through the recursion.
+-/
+
 namespace Hex
 universe u
 namespace Matrix

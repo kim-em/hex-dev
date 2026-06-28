@@ -12,6 +12,21 @@ import all HexMatrix.Determinant.ColumnLinear
 
 public section
 
+/-!
+Ordered column-tuple expansion underlying Cauchy-Binet for `hex-matrix`.
+
+This module expands the determinant of a column-sum matrix as a finite sum
+over all ordered column tuples drawn from `Fin m`. It defines the
+column-selected minor `columnTupleMatrix`, its product coefficient
+`columnTupleCoeff`, the tuple enumerator `columnTupleVectors`, and proves the
+summands of repeated columns vanish. The headline results are
+`det_columnSumMatrix_eq_sum_columnTuples` (the Mathlib-free multilinearity
+form) and `det_gramMatrix_eq_sum_columnTuples`, which specializes it to a row
+Gram matrix. The bulk of the file is a suffix-based partial-assignment
+recursion (`columnSumMatrixWithSuffix`) aligning the iteration with
+`columnTupleVectors`.
+-/
+
 namespace Hex
 universe u
 namespace Matrix

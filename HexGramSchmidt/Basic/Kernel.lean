@@ -10,6 +10,20 @@ public import HexMatrix.RREF
 
 public section
 
+/-!
+Executable Gram-Schmidt orthogonalization kernel for `hex-gram-schmidt`.
+
+This module is the rational core that the rest of the library builds on. It
+defines the projection primitives (`projectionCoeff`, `subtractProjection`),
+the per-row reduction `reduceAgainstBasis`, the left-to-right orthogonalization
+`basisRows`/`basisMatrix`, the coefficient matrix `coeffMatrix`, and the
+supporting entry/prefix helpers (`entry`, `castIntMatrix`, `prefixCombination`,
+`prefixRows`, `prefixSpan`). It also proves the foundational facts the
+correspondence proofs consume: pairwise orthogonality of `basisRows`, the
+residual/projection reconstruction identity, the leading-row equation, and the
+zero-norm degeneracy lemmas (a `Rat` vector with zero self-dot-product is the
+zero vector).
+-/
 namespace Hex
 namespace GramSchmidt
 

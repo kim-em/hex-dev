@@ -11,6 +11,21 @@ import all HexGramSchmidt.Int.Canonical
 
 public section
 
+/-!
+Bareiss row-invariant proofs for the no-pivot Gram pass in `hex-gram-schmidt`.
+
+This module establishes that the no-pivot Bareiss elimination over a Gram
+matrix carries the `BareissGramRowInvariant` row-coefficient invariant and
+that its coefficients stay canonical (matching `bareissGramCanonicalCoeff`),
+threading the `StepWitness`/`IsCanonicalAt` quotient gate through the
+recursion. It proves the supporting fraction-free divisibility and
+singular-step facts (exact divisibility of each Bareiss step, propagation of
+the first singular step, and that a singular leading Gram prefix forces the
+later leading determinants to zero), the integer dot-product degeneracy
+lemmas, and the row-combination expansion of inner products. It also supplies
+the `scaledCoeffArrayLoop` branch/size lemmas (singular, regular, last-step,
+done, and current-column-written) that the correspondence proofs unfold.
+-/
 namespace Hex
 namespace GramSchmidt.Int
 /-- Initial no-pivot Gram specialization indexed by elapsed fuel.  The regular

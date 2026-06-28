@@ -11,6 +11,19 @@ import all HexMatrix.Determinant.ColumnLinear
 
 public section
 
+/-!
+Laplace (cofactor) expansion of the determinant.
+
+This module proves that `det` expands as a signed sum of `M[·][·] * cofactor`
+along any fixed row or column. `det_eq_foldl_laplace_last` and
+`det_eq_foldl_laplace_last_row` handle the final column and final row, and
+`det_eq_foldl_laplace_col` / `det_eq_foldl_laplace_row` generalize to an
+arbitrary column or row. The general case is reduced to the last-column case by
+the column-move permutation `moveColumnToLastValues`, whose sign
+`(-1) ^ (n - col.val)` is computed via the inversion-count machinery and
+cancelled against the cofactor sign through `cofactorSign_col_eq`.
+-/
+
 namespace Hex
 universe u
 namespace Matrix

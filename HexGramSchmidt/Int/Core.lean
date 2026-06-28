@@ -12,6 +12,23 @@ public import HexMatrix.Determinant
 
 public section
 
+/-!
+Executable array/loop machinery for the integer scaled Gram-Schmidt pass in
+`hex-gram-schmidt`.
+
+This module defines the integer-determinant surface (`gramDet` and
+`independent`, the leading Gram matrices (`leadingGramMatrixInt`/`Rat`),
+`scaledCoeffMatrix`, lattice membership `memLattice`, and the no-pivot Bareiss
+determinant reader `gramDetVecEntry`) together with the mutable row-major array
+kernel that computes the scaled coefficients fraction-free. The kernel includes the
+nested-array storage (`gramRows`, `zeroRows`, `getArrayEntry`/`setArrayEntry`,
+`rowsToMatrix`), the Bareiss-style elimination sweep `stepScaledRows` and
+column-writer `writeScaledColumn`, the driver `scaledCoeffArrayLoop`, the two
+formulations `scaledCoeffRows` (reference) and `scaledCoeffRowsSchur` (live
+per-row Schur recurrence, with `schurSigma`/`schurScaledCoeffEntry`), and a
+large body of frame/size bookkeeping lemmas plus the per-step correspondence
+`rowsToMatrix_stepScaledRows_eq` between the array update and `Matrix.stepMatrix`.
+-/
 namespace Hex
 
 namespace GramSchmidt
