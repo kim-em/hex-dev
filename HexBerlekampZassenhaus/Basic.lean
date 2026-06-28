@@ -9423,13 +9423,26 @@ to trial division when no admissible prime exists. This dominates an up-front
 
 Returns the chosen `Factorization` and a `FactorTrace` whose `tier` records which
 tier answered; `declined = true` marks that the classical tier did not answer and
-a fallback was taken (the merge gate asserts this never happens unexpectedly). -/
+a fallback was taken (the merge gate asserts this never happens unexpectedly).
+
+**Self-certifying.** Each non-backstop tier's `Factorization` is accepted only
+when it reconstructs the input (`Factorization.product φ = f`, decidable on
+`ZPoly`); on the (corpus-never) miss it falls through to the proven
+`factorSlowTrial` backstop. This makes `Factorization.product (factorHybrid f) = f`
+provable unconditionally without yet proving the classical recombination loop
+reconstructs (that, with per-factor irreducibility, is the separate re-proof
+step). The classical tier is correct on the whole conformance corpus, so the
+guard always passes there and the emitted factor/trace values are unchanged. -/
 def factorHybridTraced (f : ZPoly) : Factorization × FactorTrace :=
   match factorClassicalTraced f with
-  | (some φ, trace) => (φ, trace)                       -- classical answered
+  | (some φ, trace) =>
+      if Factorization.product φ = f then (φ, trace)   -- classical answered, certified
+      else (factorSlowTrial f, { trace with tier := "trial", declined := true })
   | (none, trace) =>
       match factorLattice f with
-      | some φ => (φ, { trace with tier := "lattice" }) -- fallback: large-r lattice
+      | some φ =>
+          if Factorization.product φ = f then (φ, { trace with tier := "lattice" })
+          else (factorSlowTrial f, { trace with tier := "trial", declined := true })
       | none => (factorSlowTrial f, { trace with tier := "trial" })  -- totality backstop
 
 /-- Cost-based hybrid factorisation: classical-first, lattice on decline, trial
@@ -19507,6 +19520,30 @@ theorem factorFast_product_of_some
 theorem factor_product (f : ZPoly) :
     Factorization.product (factor f) = f := by
   exact factorWithBound_product f (ZPoly.defaultFactorCoeffBound f)
+
+/-- Product preservation for the cost-based hybrid. Holds unconditionally: each
+non-backstop tier's result is accepted only when it reconstructs `f` (the
+self-certifying guard in `factorHybridTraced`), and every fallback is the proven
+`factorSlowTrial` backstop. This is the headline contract the public `factor`
+swap will inherit, established here without yet proving the classical
+recombination loop reconstructs (that, with per-factor irreducibility, is the
+re-proof capstone). -/
+theorem factorHybrid_product (f : ZPoly) :
+    Factorization.product (factorHybrid f) = f := by
+  unfold factorHybrid factorHybridTraced
+  rcases hcl : factorClassicalTraced f with ⟨cres, trace⟩
+  cases cres with
+  | some φ =>
+      by_cases hp : Factorization.product φ = f
+      · simp [hp]
+      · simp only [hp, if_false]; exact factorSlowTrial_product f
+  | none =>
+      cases hl : factorLattice f with
+      | some φ =>
+          by_cases hp : Factorization.product φ = f
+          · simp [hp]
+          · simp only [hp, if_false]; exact factorSlowTrial_product f
+      | none => exact factorSlowTrial_product f
 
 /-- Product preservation for the Option-returning bounded API on its successful
 branch. The `none` branch is the explicit no-admissible-prime surface; when a
