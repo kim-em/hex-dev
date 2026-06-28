@@ -9,6 +9,10 @@ import tomllib
 
 
 KNOWN_EXCEPTIONS = {"Hex", "HexManual"}
+# Build-only lean_libs that own multi-file bench driver helpers under `bench/`.
+# They are not project libraries (no libraries.yml entry, no repo-root file);
+# exempt them from the Lake-config alignment check only.
+BUILD_ONLY_LIBS = {"HexLLLBenchSupport", "HexGF2BenchSupport"}
 EXTERNAL_IMPORT_ROOTS = {"Mathlib", "Verso"}
 RELEASE_LIBRARIES = {
     1: [
@@ -482,6 +486,7 @@ def check_lakefile_alignment(libraries: OrderedDict[str, LibraryInfo], lakefile_
         - nonactive_library_names
         - external_library_names
         - KNOWN_EXCEPTIONS
+        - BUILD_ONLY_LIBS
     ):
         errors.append(f"Lake config library {name} missing from libraries.yml")
     for name in sorted(KNOWN_EXCEPTIONS):

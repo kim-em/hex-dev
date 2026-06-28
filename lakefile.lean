@@ -127,6 +127,7 @@ lean_lib HexMatrix where
 lean_lib HexGramSchmidt where
 
 lean_lib HexLLL where
+  precompileModules := true
   extraDepTargets := #[`hexlllffi]
   moreLinkArgs :=
     if System.Platform.isOSX then
@@ -143,16 +144,45 @@ lean_lib HexLLLMathlib where
 lean_exe hexlll_provider_probe where
   root := `HexLLL.ProviderProbe
 
+-- Multi-file bench drivers: their modules live under `bench/` and are owned by
+-- a precompiled lean_lib (mirroring the released bench sub-project), so the bench
+-- exes can root into them. Single-file bench drivers instead carry
+-- `srcDir := "bench"` on their own `lean_exe`.
+lean_lib HexLLLBenchSupport where
+  srcDir := "bench"
+  globs := #[`HexLLLBench, `HexLLLBench.Inputs, `HexLLLBench.Targets]
+
+lean_lib HexGF2BenchSupport where
+  srcDir := "bench"
+  globs := #[`HexGF2.Bench]
+
+lean_exe hexmatrix_bench where
+  srcDir := "bench"
+  root := `HexMatrix.Bench
+
+lean_exe hexgramschmidt_bench where
+  srcDir := "bench"
+  root := `HexGramSchmidt.Bench
+
+lean_exe hexlll_bench where
+  srcDir := "bench"
+  supportInterpreter := true
+  root := `HexLLLBench.Main
+
 lean_exe hex_arith_floor where
+  srcDir := "bench"
   root := `HexBench.ArithFloor
 
 lean_exe hex_classical_spike where
+  srcDir := "bench"
   root := `HexBench.ClassicalSpike
 
 lean_exe hexarith_bench where
+  srcDir := "bench"
   root := `HexArith.Bench
 
 lean_exe hexpoly_bench where
+  srcDir := "bench"
   root := `HexPoly.Bench
 
 lean_exe hexpoly_emit_fixtures where
@@ -168,6 +198,7 @@ lean_exe hexbz_emit_fixtures where
   root := `HexBerlekampZassenhaus.EmitFixtures
 
 lean_exe hexbz_bench where
+  srcDir := "bench"
   root := `HexBerlekampZassenhaus.Bench
 
 lean_exe hexgfq_emit_fixtures where
@@ -189,15 +220,18 @@ lean_exe hexgfqfield_emit_fixtures where
   root := `HexGFqField.EmitFixtures
 
 lean_exe hexpolyz_bench where
+  srcDir := "bench"
   root := `HexPolyZ.Bench
 
 lean_exe hexpolyz_emit_fixtures where
   root := `HexPolyZ.EmitFixtures
 
 lean_exe hexmodarith_bench where
+  srcDir := "bench"
   root := `HexModArith.Bench
 
 lean_exe hexgf2_bench where
+  srcDir := "bench"
   root := `HexGF2Bench
 
 -- No bench exes for `Hex*Mathlib` libraries — see
@@ -205,24 +239,31 @@ lean_exe hexgf2_bench where
 -- are proof-only; there is no computational kernel to benchmark.
 
 lean_exe hexpolyfp_bench where
+  srcDir := "bench"
   root := `HexPolyFp.Bench
 
 lean_exe hexgfqring_bench where
+  srcDir := "bench"
   root := `HexGFqRing.Bench
 
 lean_exe hexgfqfield_bench where
+  srcDir := "bench"
   root := `HexGFqField.Bench
 
 lean_exe hexgfq_bench where
+  srcDir := "bench"
   root := `HexGFq.Bench
 
 lean_exe hexhensel_bench where
+  srcDir := "bench"
   root := `HexHensel.Bench
 
 lean_exe hexberlekamp_bench where
+  srcDir := "bench"
   root := `HexBerlekamp.Bench
 
 lean_exe hexconway_bench where
+  srcDir := "bench"
   root := `HexConway.Bench
 
 @[default_target]
