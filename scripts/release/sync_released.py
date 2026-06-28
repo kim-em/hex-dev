@@ -204,27 +204,31 @@ def main() -> int:
     ap.add_argument("--only", help="sync only this repo short-name (e.g. hex-matrix)")
     ap.add_argument("--force", action="store_true",
                     help="override the uncoordinated-commit guard and overwrite anyway")
+    ap.add_argument("--baseline", default=str(BASELINE), type=Path,
+                    help="path to the per-repo baseline JSON to read and advance "
+                         "(the workflow points this at the release-sync-baseline branch's copy)")
     args = ap.parse_args()
 
     if not args.dry_run and not args.token:
         ap.error("a token (--token or $RELEASED_SYNC_PAT) is required unless --dry-run")
 
     manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
-    baseline_doc = json.loads(BASELINE.read_text(encoding="utf-8")) if BASELINE.exists() else {}
+    baseline_doc = json.loads(args.baseline.read_text(encoding="utf-8")) if args.baseline.exists() else {}
     baseline = {k: v for k, v in baseline_doc.items() if not k.startswith("_")}
     source_sha = run(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, capture=True)
     synced: dict[str, str] = {}
-    pushed_any = False
     for entry in manifest["repos"]:
         if args.only and entry["repo"].split("/")[-1] != args.only:
             continue
-        pushed_any |= sync_repo(entry, source_sha, args.token, args.dry_run,
-                                synced, baseline, args.force)
-    # Persist the advanced baseline so the next run's guard is accurate.
-    if pushed_any and not args.dry_run:
-        baseline_doc.update({k: v for k, v in synced.items()})
-        BASELINE.write_text(json.dumps(baseline_doc, indent=2) + "\n", encoding="utf-8")
-        print(f"\nupdated {BASELINE.relative_to(REPO_ROOT)} (commit it back to hex-dev)")
+        sync_repo(entry, source_sha, args.token, args.dry_run,
+                  synced, baseline, args.force)
+    # Advance the baseline to every processed repo's current HEAD (pushed, skipped,
+    # or unchanged) so the next run's guard is accurate. Written on a real run only;
+    # the workflow commits it to the release-sync-baseline branch.
+    if not args.dry_run and synced:
+        baseline_doc.update(synced)
+        args.baseline.write_text(json.dumps(baseline_doc, indent=2) + "\n", encoding="utf-8")
+        print(f"\nadvanced baseline -> {args.baseline}")
     print(f"\nsynced {len(synced)} repo(s) from hex-dev@{source_sha[:12]}"
           + (" (dry-run)" if args.dry_run else ""))
     return 0

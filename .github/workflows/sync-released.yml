@@ -3,12 +3,12 @@ name: Sync released repos
 # Publish-out sync: regenerate the released split repos from this monorepo
 # (scripts/release/released.yml + scripts/release/sync_released.py).
 #
-# Manual-only for now, defaulting to a dry run. A real sync OVERWRITES the
-# managed paths in each released repo and rewrites their cross-repo Lake pins,
-# so it must only be run once the monorepo content is known to be at or ahead of
-# every released repo's `main` (otherwise it would delete released-only work).
-# Flip `dry_run` to false — and, once trusted, add an `on: push` trigger — after
-# that invariant holds and the `RELEASED_SYNC_PAT` secret is configured.
+# Manual dispatch, defaulting to a dry run. A real sync (dry_run=false) overwrites
+# each released repo's managed paths, rewrites their cross-repo Lake pins, pushes
+# to their `main`, and advances the baseline — one dispatch drives it all the way
+# through. The uncoordinated-commit guard skips any released repo whose `main` has
+# moved off the baseline, so out-of-band commits are never clobbered. Needs the
+# `RELEASED_SYNC_PAT` secret (contents:write on the released repos).
 
 on:
   workflow_dispatch:
@@ -22,8 +22,14 @@ concurrency:
   group: sync-released
   cancel-in-progress: false
 
+# `main` is protected, so the advanced baseline is kept on a dedicated,
+# unprotected `release-sync-baseline` branch that this job pushes to with the
+# built-in token. One dispatch drives the whole publish end to end.
 permissions:
-  contents: read
+  contents: write
+
+env:
+  BASELINE_BRANCH: release-sync-baseline
 
 jobs:
   sync:
@@ -36,29 +42,34 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 -m pip install --user pyyaml
+      - name: Load live baseline
+        # From the dedicated branch if it exists; otherwise seed from the
+        # committed scripts/release/synced.json (first run / bootstrap).
+        run: |
+          if git fetch origin "$BASELINE_BRANCH" 2>/dev/null; then
+            git show "origin/$BASELINE_BRANCH:synced.json" > /tmp/baseline.json
+          else
+            cp scripts/release/synced.json /tmp/baseline.json
+          fi
       - name: Sync released repos
         env:
           RELEASED_SYNC_PAT: ${{ secrets.RELEASED_SYNC_PAT }}
         run: |
-          if [ "${{ inputs.dry_run }}" = "false" ]; then
-            python3 scripts/release/sync_released.py
-          else
-            python3 scripts/release/sync_released.py --dry-run
-          fi
-      # `main` is a protected branch, so the advanced baseline cannot be pushed
-      # from CI. After a real sync it is uploaded as an artifact; download it and
-      # commit `scripts/release/synced.json` via a normal PR to keep the guard
-      # accurate for the next run.
-      - name: Upload advanced baseline
+          extra=""
+          [ "${{ inputs.dry_run }}" = "false" ] || extra="--dry-run"
+          python3 scripts/release/sync_released.py --baseline /tmp/baseline.json $extra
+      - name: Publish advanced baseline
         if: ${{ inputs.dry_run == false }}
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if ! git diff --quiet -- scripts/release/synced.json; then
-            echo "::notice::Baseline advanced — commit scripts/release/synced.json via a PR."
-            git --no-pager diff -- scripts/release/synced.json
-          fi
-      - uses: actions/upload-artifact@v4
-        if: ${{ inputs.dry_run == false }}
-        with:
-          name: advanced-sync-baseline
-          path: scripts/release/synced.json
-          if-no-files-found: ignore
+          work=$(mktemp -d); cd "$work"
+          git init -q -b "$BASELINE_BRANCH"
+          cp /tmp/baseline.json synced.json
+          git add synced.json
+          git -c user.name="hex-dev sync" -c user.email="noreply@anthropic.com" \
+            commit -q -m "chore: sync baseline @ ${GITHUB_SHA:0:12}"
+          git push -q -f \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "$BASELINE_BRANCH"
+          echo "::notice::Advanced baseline pushed to $BASELINE_BRANCH."

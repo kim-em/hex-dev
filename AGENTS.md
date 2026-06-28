@@ -48,14 +48,20 @@ its Lake pins, so it must only run once this monorepo is at or ahead of
 every released repo's `main`. Run `--dry-run` first.
 
 **Uncoordinated-commit guard.** The sync refuses to overwrite a released
-repo whose `main` HEAD has moved off its `synced.json` baseline, so an
+repo whose `main` HEAD has moved off the recorded baseline, so an
 out-of-band commit on a released repo is never silently clobbered; it
 skips that repo and reports the divergence (override with `--force` only
 after reconciling). Reconciling means **re-seeding**: bring the affected
 library's content here up to the released `main`, rebuild the whole graph
 green (a released repo can advance with breaking API changes its
 downstream consumers have not adopted — the monorepo build surfaces
-that), then update the baseline.
+that), then re-run the sync.
+
+The baseline lives on a dedicated, unprotected `release-sync-baseline`
+branch that the workflow reads and advances on every real run, so a single
+`workflow_dispatch` (dry-run first, then `dry_run=false`) drives the whole
+publish through with no follow-up. `scripts/release/synced.json` is the
+bootstrap seed used only before that branch exists.
 
 # hex — agent-specific conventions
 
