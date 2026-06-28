@@ -9410,6 +9410,45 @@ def factorLattice (f : ZPoly) : Option Factorization :=
 #guard ((factorLattice (DensePoly.ofCoeffs #[6, 0, -5, 0, 1])).map Factorization.product)
   = some (DensePoly.ofCoeffs #[6, 0, -5, 0, 1])
 
+/-- Cost-based hybrid dispatch (the public combinator, once swapped in).
+
+**Policy: classical-first.** The size-ordered classical tier handles every input
+within its subset budget — fast for reducibles (it peels factors) and bounded for
+irreducibles (it exhausts subsets up to the budget, ~0.26s worst case, then
+declines). The lattice tier is *correct but slow* (it grinds to the precision cap),
+so we never run it speculatively: we run classical first and fall back to the
+lattice only when classical declines (budget exhausted, i.e. `r` too large), then
+to trial division when no admissible prime exists. This dominates an up-front
+`r`-estimate that could mis-route a reducible high-`r` input to the slow lattice.
+
+Returns the chosen `Factorization` and a `FactorTrace` whose `tier` records which
+tier answered; `declined = true` marks that the classical tier did not answer and
+a fallback was taken (the merge gate asserts this never happens unexpectedly). -/
+def factorHybridTraced (f : ZPoly) : Factorization × FactorTrace :=
+  match factorClassicalTraced f with
+  | (some φ, trace) => (φ, trace)                       -- classical answered
+  | (none, trace) =>
+      match factorLattice f with
+      | some φ => (φ, { trace with tier := "lattice" }) -- fallback: large-r lattice
+      | none => (factorSlowTrial f, { trace with tier := "trial" })  -- totality backstop
+
+/-- Cost-based hybrid factorisation: classical-first, lattice on decline, trial
+backstop. Total. Not yet the public `factor` (swap is a separate step). -/
+def factorHybrid (f : ZPoly) : Factorization :=
+  (factorHybridTraced f).1
+
+-- classical answers the corpus, including small/medium-r Swinnerton-Dyer / cyclotomic
+-- irreducibles, so no fallback is taken (the lattice/trial arms cover only the
+-- budget-exceeding tail and the no-prime case).
+#guard Factorization.product (factorHybrid (DensePoly.ofCoeffs #[6, 0, -5, 0, 1]))
+  = DensePoly.ofCoeffs #[6, 0, -5, 0, 1]                                      -- reducible
+#guard (factorHybridTraced (DensePoly.ofCoeffs #[6, 0, -5, 0, 1])).2.tier = "classical"
+#guard Factorization.product (factorHybrid (DensePoly.ofCoeffs #[1, 0, -10, 0, 1]))
+  = DensePoly.ofCoeffs #[1, 0, -10, 0, 1]                                     -- SD2, irreducible
+#guard ((factorHybrid (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).factors.size) = 1
+#guard (factorHybridTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.tier = "classical"
+#guard (factorHybridTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.declined = false
+
 /-- Smoke-test driver for the core-coordinate fast recovery: select the good
 prime exactly as the fast path does, then run `coreRecover?` against the
 `coreLiftData` (`monicTarget`) lift at the public precision cap.  Used by the
