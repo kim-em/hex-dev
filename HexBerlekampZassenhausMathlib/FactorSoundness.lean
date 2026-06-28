@@ -109,23 +109,7 @@ headline primitive-irreducibility clause as a single per-entry conjunction under
 the raw-branch primitive hypothesis supplied by the executable layer.
 -/
 theorem factor_headline_contract_core_with_primitive
-    (f : Hex.ZPoly)
-    (h_raw :
-      ∀ rawFactors : Array Hex.ZPoly,
-        (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-            some rawFactors ∨
-          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            Hex.factorSlowModularFactorsWithBound f
-                (Hex.ZPoly.defaultFactorCoeffBound f) = some rawFactors) ∨
-          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            Hex.factorSlowModularWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            rawFactors =
-              Hex.factorSlowTrialFactorsWithBound f
-                (Hex.ZPoly.defaultFactorCoeffBound f))) →
-        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Primitive raw) :
+    (f : Hex.ZPoly) (hf : f ≠ 0) :
     Hex.Factorization.product (Hex.factor f) = f ∧
       (∀ entry ∈ (Hex.factor f).factors,
         Hex.ZPoly.Primitive entry.1 ∧
@@ -143,7 +127,7 @@ theorem factor_headline_contract_core_with_primitive
   refine ⟨factor_product f, ?_, ?_, Hex.factor_pairwise_first f, Hex.factor_scalar f⟩
   · intro entry hentry
     exact
-      ⟨factor_entries_primitive_of_chosen_raw_primitive f h_raw entry hentry,
+      ⟨factor_entries_primitive_of_chosen_raw_primitive f hf entry hentry,
         factor_polynomialIrreducible_of_nonUnit f entry hentry⟩
   · intro entry hentry
     exact Hex.factor_entry_multiplicity_pos f entry (Array.mem_toList_iff.mpr hentry)
@@ -179,8 +163,7 @@ theorem factor_headline_primitive (f : Hex.ZPoly) (hf : f ≠ 0) :
           -Hex.ZPoly.content f
         else
           Hex.ZPoly.content f :=
-  factor_headline_contract_core_with_primitive f
-    (Hex.factor_chosen_raw_primitive_of_ne_zero f hf)
+  factor_headline_contract_core_with_primitive f hf
 
 /--
 The HO-1 headline contract for the default executable factorization of a nonzero
@@ -224,8 +207,7 @@ theorem factor_headline (f : Hex.ZPoly) (hf : f ≠ 0) :
     ⟨hproduct, hentries, hmultiplicity, _, hscalar⟩
   exact
     ⟨hproduct, hentries, hmultiplicity,
-      factor_entries_not_associated f
-        (Hex.factor_chosen_raw_primitive_of_ne_zero f hf),
+      factor_entries_not_associated f hf,
       hscalar⟩
 
 /--
@@ -249,33 +231,17 @@ Positive degree is *not* derivable from `shouldRecordPolynomialFactor` alone —
 constant like `Hex.DensePoly.C 2` passes the recording filter, has positive
 leading coefficient, and is sign-normalized. The constant case is excluded by
 *primitivity* (content `1` forces a constant to be `±1`), so this carries the
-same raw-source primitivity hypothesis `h_raw` as `Hex.factor_entries_primitive`
-and `factor_headline_contract_core_with_primitive`. The constant-exclusion
-argument itself is `Hex.degree_pos_of_primitive_norm_record`.
+`f ≠ 0` side condition that `Hex.factor_entries_primitive_of_ne_zero` needs
+(the self-certifying hybrid, #8383). The constant-exclusion argument itself is
+`Hex.degree_pos_of_primitive_norm_record`.
 -/
 theorem factor_entries_degree_pos
-    (f : Hex.ZPoly)
-    (h_raw :
-      ∀ rawFactors : Array Hex.ZPoly,
-        (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-            some rawFactors ∨
-          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            Hex.factorSlowModularFactorsWithBound f
-                (Hex.ZPoly.defaultFactorCoeffBound f) = some rawFactors) ∨
-          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            Hex.factorSlowModularWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            rawFactors =
-              Hex.factorSlowTrialFactorsWithBound f
-                (Hex.ZPoly.defaultFactorCoeffBound f))) →
-        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Primitive raw) :
+    (f : Hex.ZPoly) (hf : f ≠ 0) :
     ∀ entry ∈ (Hex.factor f).factors, 0 < entry.1.degree?.getD 0 := by
   intro entry hentry
   have hmem := Array.mem_toList_iff.mpr hentry
   exact Hex.degree_pos_of_primitive_norm_record entry.1
-    (Hex.factor_entries_primitive f h_raw entry hentry)
+    (Hex.factor_entries_primitive_of_ne_zero f hf entry hentry)
     (Hex.factor_entry_normalizeFactorSign_id f entry hmem)
     (Hex.factor_entry_shouldRecord f entry hmem)
 
@@ -309,39 +275,22 @@ theorem factor_unique_of_product
 Default-specialised sibling of `factor_unique_of_product` that discharges the
 default factorization's own sign-normalization and nonconstant side conditions
 internally, so callers no longer supply `hψ_norm` or `hψ_nonconst`. The
-nonconstant clause needs the raw-source primitivity hypothesis `h_raw` (the same
-hypothesis `factor_entries_degree_pos` and `Hex.factor_entries_primitive`
-require); `hψ_norm` is discharged unconditionally.
+nonconstant clause needs only `f ≠ 0` (the same `hf_ne` already supplied), via
+`factor_entries_degree_pos`; `hψ_norm` is discharged unconditionally.
 -/
 theorem factor_unique_of_product_default
     (f : Hex.ZPoly) (φ : Hex.Factorization) (hf_ne : f ≠ 0)
     (hproduct : Hex.Factorization.product φ = f)
     (hφ_norm : ∀ entry ∈ φ.factors, Hex.normalizeFactorSign entry.1 = entry.1)
     (hφ_nonconst : ∀ entry ∈ φ.factors, 0 < entry.1.degree?.getD 0)
-    (hirr : ∀ entry ∈ φ.factors, Hex.ZPoly.Irreducible entry.1)
-    (h_raw :
-      ∀ rawFactors : Array Hex.ZPoly,
-        (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-            some rawFactors ∨
-          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            Hex.factorSlowModularFactorsWithBound f
-                (Hex.ZPoly.defaultFactorCoeffBound f) = some rawFactors) ∨
-          (Hex.factorFastFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            Hex.factorSlowModularWithBound f (Hex.ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            rawFactors =
-              Hex.factorSlowTrialFactorsWithBound f
-                (Hex.ZPoly.defaultFactorCoeffBound f))) →
-        ∀ raw ∈ rawFactors.toList, Hex.ZPoly.Primitive raw) :
+    (hirr : ∀ entry ∈ φ.factors, Hex.ZPoly.Irreducible entry.1) :
     φ.scalar = (Hex.factor f).scalar ∧
       (φ.factors.toList.map (fun e => Multiset.replicate e.2 e.1)).sum =
         ((Hex.factor f).factors.toList.map
           (fun e => Multiset.replicate e.2 e.1)).sum :=
   factor_unique_of_product f φ hf_ne hproduct hφ_norm
     (factor_entries_normalizeFactorSign f) hφ_nonconst
-    (factor_entries_degree_pos f h_raw) hirr
+    (factor_entries_degree_pos f hf_ne) hirr
 
 /-!
 ### HO-1 capstone assembly: `factor_irreducible_of_nonUnit` reduced to the fast-core arm
@@ -450,7 +399,8 @@ theorem factor_irreducible_of_nonUnit_of_fastCore
               (Hex.ZPoly.defaultFactorCoeffBound f) + 2) =
           some coreFactors →
         ∀ factor ∈ coreFactors.toList, Hex.ZPoly.Irreducible factor) :
-    ∀ entry ∈ (Hex.factor f).factors, Hex.ZPoly.Irreducible entry.1 := by
+    ∀ entry ∈ (Hex.factorWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)).factors,
+      Hex.ZPoly.Irreducible entry.1 := by
   have hB_pos : 1 ≤ Hex.ZPoly.defaultFactorCoeffBound f :=
     Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hf
   apply factor_entries_irreducible f

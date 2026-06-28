@@ -9585,6 +9585,117 @@ def factorHybrid (f : ZPoly) : Factorization :=
 #guard (factorHybridTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.tier = "classical"
 #guard (factorHybridTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.declined = false
 
+/-- The classical traced tier's `Factorization` agrees with the raw classical
+factor array packed through `factorizationOfFactors f`. The traced variant only
+adds the diagnostic `FactorTrace` in the `.2` component; its `.1` is the same
+self-certifying-free classical answer as `factorClassicalFactorsWithBound`. -/
+theorem factorClassicalTracedWithBound_fst (f : ZPoly) (B : Nat) :
+    (factorClassicalTracedWithBound f B).1 =
+      (factorClassicalFactorsWithBound f B).map (factorizationOfFactors f) := by
+  unfold factorClassicalTracedWithBound factorClassicalFactorsWithBound
+    classicalCoreFactorsWithBound
+  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  · simp only [hdeg, if_true, Option.map_some]
+  · simp only [hdeg, if_false]
+    cases quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
+    | some cf => simp only [Option.map_some]
+    | none =>
+        cases ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore with
+        | none => simp only [Option.map_none, Option.bind_none]
+        | some primeData =>
+            simp only [Option.bind_some]
+            by_cases hB : B = 0
+            · simp only [hB, if_true, Option.map_some]
+            · simp only [hB, if_false]
+              generalize
+                scaledRecombinationSmart
+                  (DensePoly.leadingCoeff (normalizeForFactor f).squareFreeCore)
+                  (normalizeForFactor f).squareFreeCore
+                  (liftModulus
+                    (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
+                      (ZPoly.exhaustiveLiftBound (normalizeForFactor f).squareFreeCore B)
+                      primeData))
+                  (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
+                      (ZPoly.exhaustiveLiftBound (normalizeForFactor f).squareFreeCore B)
+                      primeData).liftedFactors.toList = rs
+              obtain ⟨res, stats⟩ := rs
+              by_cases hbudget : stats.budgetExhausted = true
+              · rw [if_pos hbudget, if_pos hbudget]; rfl
+              · rw [if_neg hbudget, if_neg hbudget]
+                cases res with
+                | some factors => simp only [Option.map_some]
+                | none => simp only [Option.map_some]
+
+/-- The CLD lattice tier's `Factorization` is the raw lattice factor array packed
+through `factorizationOfFactors f`. -/
+theorem factorLattice_eq_map (f : ZPoly) :
+    factorLattice f =
+      (factorLatticeFactorsWithBound f (factorFastPrecisionCap f)).map
+        (factorizationOfFactors f) := rfl
+
+/-- Raw factor array assembled by the cost-based hybrid, the bridge counterpart
+of `factorHybridFactors`-consuming structural lemmas.
+
+Each non-backstop tier (`factorClassicalFactorsWithBound` / lattice) is accepted
+only when its `factorizationOfFactors`-packed answer reconstructs `f` (the
+self-certifying guard mirrored here), and every fallback is the proven
+`factorSlowTrial` backstop's raw array. The headline contract
+`factorHybrid f = factorizationOfFactors f (factorHybridFactors f)` is
+`factorHybrid_eq_factorizationOfFactors`. -/
+def factorHybridFactors (f : ZPoly) : Array ZPoly :=
+  match factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) with
+  | some cf =>
+      if Factorization.product (factorizationOfFactors f cf) = f then cf
+      else factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
+  | none =>
+      match factorLatticeFactorsWithBound f (factorFastPrecisionCap f) with
+      | some cf =>
+          if Factorization.product (factorizationOfFactors f cf) = f then cf
+          else factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
+      | none => factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
+
+/-- The cost-based hybrid factorisation is the `factorizationOfFactors`-packed
+form of its raw factor array `factorHybridFactors`. Every tier (classical /
+lattice / trial) assembles via `factorizationOfFactors f`, so this bridge lets
+the structural `factorizationOfFactors_entry_*` lemmas re-point every
+`factor`-level entry contract onto the hybrid. -/
+theorem factorHybrid_eq_factorizationOfFactors (f : ZPoly) :
+    factorHybrid f = factorizationOfFactors f (factorHybridFactors f) := by
+  have htrial : factorSlowTrial f =
+      factorizationOfFactors f
+        (factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)) := by
+    rw [factorSlowTrial, factorSlowTrialWithBound_eq_factorizationOfFactors]
+  unfold factorHybrid factorHybridTraced factorHybridFactors
+  have hclassical :
+      (factorClassicalTraced f).1 =
+        (factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)).map
+          (factorizationOfFactors f) := by
+    rw [factorClassicalTraced, factorClassicalTracedWithBound_fst]
+  rcases hcl : factorClassicalTraced f with ⟨cres, trace⟩
+  rw [hcl] at hclassical
+  cases hcf : factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) with
+  | some cf =>
+      rw [hcf] at hclassical
+      simp only [Option.map_some] at hclassical
+      subst hclassical
+      by_cases hp : Factorization.product (factorizationOfFactors f cf) = f
+      · simp only [hp, if_true]
+      · simp only [hp, if_false]; exact htrial
+  | none =>
+      rw [hcf] at hclassical
+      simp only [Option.map_none] at hclassical
+      subst hclassical
+      simp only
+      rw [factorLattice_eq_map]
+      cases hl : factorLatticeFactorsWithBound f (factorFastPrecisionCap f) with
+      | some cf =>
+          simp only [Option.map_some]
+          by_cases hp : Factorization.product (factorizationOfFactors f cf) = f
+          · simp only [hp, if_true]
+          · simp only [hp, if_false]; exact htrial
+      | none =>
+          simp only [Option.map_none]; exact htrial
+
 /-- Smoke-test driver for the core-coordinate fast recovery: select the good
 prime exactly as the fast path does, then run `coreRecover?` against the
 `coreLiftData` (`monicTarget`) lift at the public precision cap.  Used by the
@@ -9808,10 +9919,15 @@ path, and on no admissible prime continues to integer trial division so that
 the removed silent prime-data fallback is never consulted.
 -/
 def factor (f : ZPoly) : Factorization :=
-  factorWithBound f (ZPoly.defaultFactorCoeffBound f)
+  factorHybrid f
 
-@[simp, grind =] theorem factor_eq_factorWithBound_default (f : ZPoly) :
-    factor f = factorWithBound f (ZPoly.defaultFactorCoeffBound f) := rfl
+/-- The public factorisation is the `factorizationOfFactors`-packed form of the
+hybrid's raw factor array. This bridge re-points every `factor`-level entry
+contract onto the hybrid via the structural `factorizationOfFactors_entry_*`
+lemmas. -/
+theorem factor_eq_factorizationOfFactors (f : ZPoly) :
+    factor f = factorizationOfFactors f (factorHybridFactors f) :=
+  factorHybrid_eq_factorizationOfFactors f
 
 /--
 Option-returning bounded factoring entry point that propagates explicit failure
@@ -9838,14 +9954,17 @@ def factorWithBound? (f : ZPoly) (B : Nat) : Option Factorization :=
     none
 
 /--
-Option-returning factoring entry point at the default Mignotte bound; mirrors
-`factor` but propagates explicit failure on no-admissible-prime per #5816.
+Option-returning factoring entry point at the default Mignotte bound. The public
+path is now the total cost-based hybrid (`factor = factorHybrid`, whose trial
+backstop never declines), so there is no no-admissible-prime failure surface to
+propagate: this always succeeds with the hybrid factorisation. (The proof-facing
+`factorWithBound?` retains the cap-based three-tier `none` surface.)
 -/
 def factor? (f : ZPoly) : Option Factorization :=
-  factorWithBound? f (ZPoly.defaultFactorCoeffBound f)
+  some (factor f)
 
-@[simp, grind =] theorem factor?_eq_factorWithBound?_default (f : ZPoly) :
-    factor? f = factorWithBound? f (ZPoly.defaultFactorCoeffBound f) := rfl
+@[simp, grind =] theorem factor?_eq_some (f : ZPoly) :
+    factor? f = some (factor f) := rfl
 
 /-- When `factorWithBound?` succeeds, it agrees with the total `factorWithBound`.
 The total form's fallback only engages on the `none` branch this function
@@ -9870,18 +9989,6 @@ theorem factorWithBound?_eq_some_iff_safe_branch (f : ZPoly) (B : Nat) :
           (ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore).isSome
         · simp [hdeg, hquad, hprime, hmonicPrime]
         · simp [hdeg, hquad, hprime, hmonicPrime]
-
-/-- `factor?` and `factor` agree on the `some` branch (immediate from
-`factorWithBound?_eq_some_iff_safe_branch`). -/
-theorem factor?_eq_some_iff_safe_branch (f : ZPoly) :
-    factor? f =
-      (if (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0 ∨
-          (quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore).isSome ∨
-          (choosePrimeData? (normalizeForFactor f).squareFreeCore).isSome ∨
-          (ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore).isSome
-        then some (factor f) else none) := by
-  unfold factor? factor
-  exact factorWithBound?_eq_some_iff_safe_branch f _
 
 set_option maxHeartbeats 800000
 
@@ -10058,31 +10165,30 @@ theorem factor_scalar (f : ZPoly) :
         -ZPoly.content f
       else
         ZPoly.content f := by
-  simpa [factor_eq_factorWithBound_default] using
-    factorWithBound_scalar f (ZPoly.defaultFactorCoeffBound f)
+  rw [factor_eq_factorizationOfFactors]
+  exact factorizationOfFactors_scalar f (factorHybridFactors f)
 
 @[simp, grind =] theorem factor_scalar_zero :
     (factor 0).scalar = 0 := by
-  simp [factor_eq_factorWithBound_default]
+  rw [factor_eq_factorizationOfFactors]
+  exact factorizationOfFactors_scalar_zero (factorHybridFactors 0)
 
 theorem factor_scalar_of_leadingCoeff_neg
     {f : ZPoly} (hf : f ≠ 0) (hneg : DensePoly.leadingCoeff f < 0) :
     (factor f).scalar = -ZPoly.content f := by
-  simpa [factor_eq_factorWithBound_default] using
-    factorWithBound_scalar_of_leadingCoeff_neg
-      (f := f) (ZPoly.defaultFactorCoeffBound f) hf hneg
+  rw [factor_eq_factorizationOfFactors]
+  exact factorizationOfFactors_scalar_of_leadingCoeff_neg (factorHybridFactors f) hf hneg
 
 theorem factor_scalar_of_leadingCoeff_pos
     {f : ZPoly} (hf : f ≠ 0) (hpos : 0 < DensePoly.leadingCoeff f) :
     (factor f).scalar = ZPoly.content f := by
-  simpa [factor_eq_factorWithBound_default] using
-    factorWithBound_scalar_of_leadingCoeff_pos
-      (f := f) (ZPoly.defaultFactorCoeffBound f) hf hpos
+  rw [factor_eq_factorizationOfFactors]
+  exact factorizationOfFactors_scalar_of_leadingCoeff_pos (factorHybridFactors f) hf hpos
 
 theorem factor_scalar_eq_zero_iff (f : ZPoly) :
     (factor f).scalar = 0 ↔ f = 0 := by
-  simpa [factor_eq_factorWithBound_default] using
-    factorWithBound_scalar_eq_zero_iff f (ZPoly.defaultFactorCoeffBound f)
+  rw [factor_eq_factorizationOfFactors]
+  exact factorizationOfFactors_scalar_eq_zero_iff f (factorHybridFactors f)
 
 /-- Any recorded entry of `factorWithBound` comes from one of three raw factor
 arrays: the fast path's output, the modular slow path's
@@ -10209,9 +10315,8 @@ theorem factor_entry_multiplicity_pos
     (f : ZPoly) (entry : ZPoly × Nat)
     (hmem : entry ∈ (factor f).factors.toList) :
     0 < entry.2 := by
-  simpa [factor_eq_factorWithBound_default] using
-    factorWithBound_entry_multiplicity_pos
-      f (ZPoly.defaultFactorCoeffBound f) entry hmem
+  rw [factor_eq_factorizationOfFactors] at hmem
+  exact factorizationOfFactors_entry_multiplicity_pos f (factorHybridFactors f) entry hmem
 
 /-- Every recorded entry of the default public factorization is fixed by
 `normalizeFactorSign`. -/
@@ -10219,9 +10324,8 @@ theorem factor_entry_normalizeFactorSign_id
     (f : ZPoly) (entry : ZPoly × Nat)
     (hmem : entry ∈ (factor f).factors.toList) :
     normalizeFactorSign entry.1 = entry.1 := by
-  simpa [factor_eq_factorWithBound_default] using
-    factorWithBound_entry_normalizeFactorSign_id
-      f (ZPoly.defaultFactorCoeffBound f) entry hmem
+  rw [factor_eq_factorizationOfFactors] at hmem
+  exact factorizationOfFactors_entry_normalizeFactorSign_id f (factorHybridFactors f) entry hmem
 
 /-- Every recorded entry of the default public factorization has positive
 leading coefficient. -/
@@ -10229,9 +10333,8 @@ theorem factor_entry_leadingCoeff_pos
     (f : ZPoly) (entry : ZPoly × Nat)
     (hmem : entry ∈ (factor f).factors.toList) :
     0 < DensePoly.leadingCoeff entry.1 := by
-  simpa [factor_eq_factorWithBound_default] using
-    factorWithBound_entry_leadingCoeff_pos
-      f (ZPoly.defaultFactorCoeffBound f) entry hmem
+  rw [factor_eq_factorizationOfFactors] at hmem
+  exact factorizationOfFactors_entry_leadingCoeff_pos f (factorHybridFactors f) entry hmem
 
 /-- Every recorded entry of the default public factorization passes the
 `shouldRecordPolynomialFactor` filter. -/
@@ -10239,77 +10342,36 @@ theorem factor_entry_shouldRecord
     (f : ZPoly) (entry : ZPoly × Nat)
     (hmem : entry ∈ (factor f).factors.toList) :
     shouldRecordPolynomialFactor entry.1 = true := by
-  simpa [factor_eq_factorWithBound_default] using
-    factorWithBound_entry_shouldRecord
-      f (ZPoly.defaultFactorCoeffBound f) entry hmem
+  rw [factor_eq_factorizationOfFactors] at hmem
+  have hmem' : entry ∈ (collectFactorMultiplicities (factorHybridFactors f)).toList := by
+    simpa only [factorizationOfFactors] using hmem
+  exact collectFactorMultiplicities_entry_shouldRecord (factorHybridFactors f) entry hmem'
 
-/-- Any recorded entry of the default public factorization comes from the raw
-factor array selected by one of the three tiers (fast, slow-modular,
-slow-trial), up to sign normalization. -/
+/-- Any recorded entry of the default public factorization comes from the
+hybrid's raw factor array `factorHybridFactors`, up to sign normalization. -/
 theorem factor_entry_mem_raw_source
     (f : ZPoly) (entry : ZPoly × Nat)
     (hmem : entry ∈ (factor f).factors.toList) :
-    ∃ rawFactors : Array ZPoly,
-      (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
-          some rawFactors ∨
-        (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
-            none ∧
-          factorSlowModularFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
-            some rawFactors) ∨
-        (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
-            none ∧
-          factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f) = none ∧
-          rawFactors =
-            factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f))) ∧
-      ∃ raw ∈ rawFactors.toList, entry.1 = normalizeFactorSign raw := by
-  simpa [factor_eq_factorWithBound_default] using
-    factorWithBound_entry_mem_raw_source
-      f (ZPoly.defaultFactorCoeffBound f) entry hmem
+    ∃ raw ∈ (factorHybridFactors f).toList, entry.1 = normalizeFactorSign raw := by
+  rw [factor_eq_factorizationOfFactors] at hmem
+  exact factorizationOfFactors_entry_mem_normalized_raw f (factorHybridFactors f) entry hmem
 
 /-- Every recorded entry of the default public factorization is primitive once
-every raw factor in the selected default-precision dispatch branch is
-primitive. -/
+every raw factor in the hybrid's raw factor array is primitive. -/
 theorem factor_entry_primitive_of_chosen_raw_primitive
     {f : ZPoly} {entry : ZPoly × Nat}
     (hmem : entry ∈ (factor f).factors.toList)
-    (h_raw :
-      ∀ rawFactors : Array ZPoly,
-        (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
-            some rawFactors ∨
-          (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            factorSlowModularFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
-              some rawFactors) ∨
-          (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f) = none ∧
-            rawFactors =
-              factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f))) →
-        ∀ raw ∈ rawFactors.toList, ZPoly.Primitive raw) :
-    ZPoly.Primitive entry.1 :=
-  factorWithBound_entry_primitive_of_chosen_raw_primitive
-    (B := ZPoly.defaultFactorCoeffBound f)
-    (by simpa [factor_eq_factorWithBound_default] using hmem)
-    h_raw
+    (h_raw : ∀ raw ∈ (factorHybridFactors f).toList, ZPoly.Primitive raw) :
+    ZPoly.Primitive entry.1 := by
+  obtain ⟨raw, hraw_mem, hentry_eq⟩ := factor_entry_mem_raw_source f entry hmem
+  rw [hentry_eq]
+  exact normalizeFactorSign_primitive _ (h_raw raw hraw_mem)
 
-/-- Default-precision specialisation of `factorWithBound_entries_primitive`
-for the public `factor` entry point. -/
+/-- Public-entry specialisation: every recorded entry is primitive once the
+hybrid's raw factor array is primitive entrywise. -/
 theorem factor_entries_primitive
     (f : ZPoly)
-    (h_raw :
-      ∀ rawFactors : Array ZPoly,
-        (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
-            some rawFactors ∨
-          (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            factorSlowModularFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
-              some rawFactors) ∨
-          (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
-              none ∧
-            factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f) = none ∧
-            rawFactors =
-              factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f))) →
-        ∀ raw ∈ rawFactors.toList, ZPoly.Primitive raw) :
+    (h_raw : ∀ raw ∈ (factorHybridFactors f).toList, ZPoly.Primitive raw) :
     ∀ entry ∈ (factor f).factors, ZPoly.Primitive entry.1 := by
   intro entry hentry
   exact factor_entry_primitive_of_chosen_raw_primitive
@@ -10320,8 +10382,8 @@ theorem factor_pairwise_first
     (f : ZPoly) :
     List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1)
       (factor f).factors.toList := by
-  simpa [factor_eq_factorWithBound_default] using
-    factorWithBound_pairwise_first f (ZPoly.defaultFactorCoeffBound f)
+  rw [factor_eq_factorizationOfFactors]
+  exact factorizationOfFactors_pairwise_first f (factorHybridFactors f)
 
 /-- In the slow exhaustive modular fallback branch, every recorded
 `factorWithBound` entry comes from the explicit raw exhaustive slow-factor
@@ -10422,36 +10484,6 @@ theorem factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassembly
       (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
         primeData)
       raw hcomplete hraw_mem
-
-/--
-Default-precision specialization of
-`factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete`
-for the public `factor` entry point.
--/
-theorem factor_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
-    (f : ZPoly) (entry : ZPoly × Nat)
-    (primeData : PrimeChoiceData)
-    (hchoose :
-      ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
-    (hbranch :
-      factorWithBoundUsesExhaustiveBranch f (ZPoly.defaultFactorCoeffBound f))
-    (hcomplete :
-      reassemblyExpansionComplete (normalizeForFactor f)
-        (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore
-          (ZPoly.defaultFactorCoeffBound f)
-          primeData))
-    (hmem : entry ∈ (factor f).factors.toList) :
-    ∃ raw,
-      (raw ∈ (xPowerFactorArray (normalizeForFactor f).xPower).toList ∨
-        raw ∈
-          (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore
-            (ZPoly.defaultFactorCoeffBound f)
-            primeData).toList) ∧
-        entry.1 = normalizeFactorSign raw := by
-  simpa [factor_eq_factorWithBound_default] using
-    factorWithBound_entry_mem_exhaustive_branch_xPower_or_core_of_reassemblyComplete
-      f (ZPoly.defaultFactorCoeffBound f) entry primeData hchoose
-      hbranch hcomplete hmem
 
 /-- In the fast-path small-mod singleton branch, every recorded
 `factorWithBound` entry comes from the normalization reassembly whose core array
@@ -19455,45 +19487,6 @@ private theorem primitive_of_signedContentScalar_mul_eq
   · show ZPoly.content P = 1
     omega
 
-/-- The default-precision raw factor array selected by the dispatch is primitive
-entrywise, for nonzero `f`. This is the closed discharge of the raw-source
-primitivity hypothesis threaded through `factor_entries_primitive`: the array
-product reconstructs `f` from its signed content scalar
-(`factor*FactorsWithBound_polyProduct*` per branch), so the product is primitive
-and hence so is every member. -/
-theorem factor_chosen_raw_primitive_of_ne_zero
-    (f : ZPoly) (hf : f ≠ 0) :
-    ∀ rawFactors : Array ZPoly,
-      (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
-          some rawFactors ∨
-        (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) = none ∧
-          factorSlowModularFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
-            some rawFactors) ∨
-        (factorFastFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) = none ∧
-          factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f) = none ∧
-          rawFactors =
-            factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f))) →
-      ∀ raw ∈ rawFactors.toList, ZPoly.Primitive raw := by
-  intro rawFactors hsource
-  have hprod : DensePoly.C (signedContentScalar f) *
-      Array.polyProduct rawFactors = f := by
-    rcases hsource with hfast | ⟨_, hmod⟩ | ⟨_, _, htrial⟩
-    · exact factorFastFactorsWithBound_polyProduct_of_some hfast
-    · exact factorSlowModularFactorsWithBound_polyProduct_of_some hmod
-    · subst htrial
-      exact factorSlowTrialFactorsWithBound_polyProduct f _
-  have hprim : ZPoly.Primitive (Array.polyProduct rawFactors) :=
-    primitive_of_signedContentScalar_mul_eq f (Array.polyProduct rawFactors) hf hprod
-  exact polyProduct_mem_primitive_of_primitive rawFactors hprim
-
-/-- Every recorded entry of the default factorization of a nonzero `f` is
-primitive, with no raw-source hypothesis: it is discharged internally by
-`factor_chosen_raw_primitive_of_ne_zero`. -/
-theorem factor_entries_primitive_of_ne_zero
-    (f : ZPoly) (hf : f ≠ 0) :
-    ∀ entry ∈ (factor f).factors, ZPoly.Primitive entry.1 :=
-  factor_entries_primitive f (factor_chosen_raw_primitive_of_ne_zero f hf)
-
 private theorem factorSlowTrialWithBound_product_of_all_recorded_normalized
     (f : ZPoly) (B : Nat)
     (hnormalized :
@@ -19639,18 +19632,13 @@ theorem factorFast_product_of_some
     Factorization.product φ = f := by
   exact factorFastWithBound_product_of_some h
 
-/-- Product contract for the public total factorization entry point. -/
-theorem factor_product (f : ZPoly) :
-    Factorization.product (factor f) = f := by
-  exact factorWithBound_product f (ZPoly.defaultFactorCoeffBound f)
-
 /-- Product preservation for the cost-based hybrid. Holds unconditionally: each
 non-backstop tier's result is accepted only when it reconstructs `f` (the
 self-certifying guard in `factorHybridTraced`), and every fallback is the proven
 `factorSlowTrial` backstop. This is the headline contract the public `factor`
-swap will inherit, established here without yet proving the classical
-recombination loop reconstructs (that, with per-factor irreducibility, is the
-re-proof capstone). -/
+swap inherits, established without proving the classical recombination loop
+reconstructs (that, with per-factor irreducibility, is the still-blocked re-proof
+capstone #8384). -/
 theorem factorHybrid_product (f : ZPoly) :
     Factorization.product (factorHybrid f) = f := by
   unfold factorHybrid factorHybridTraced
@@ -19667,6 +19655,53 @@ theorem factorHybrid_product (f : ZPoly) :
           · simp [hp]
           · simp only [hp, if_false]; exact factorSlowTrial_product f
       | none => exact factorSlowTrial_product f
+
+/-- Product contract for the public total factorization entry point: the
+self-certifying hybrid always reconstructs its input. -/
+theorem factor_product (f : ZPoly) :
+    Factorization.product (factor f) = f :=
+  factorHybrid_product f
+
+/-- Every recorded entry of the default factorization of a nonzero `f` is
+primitive, with no raw-source hypothesis. The hybrid's `factorizationOfFactors`
+packing certifies the *filtered* product reconstructs `f`
+(`factor_product` + `factorizationOfFactors_product`), so that product is
+primitive and hence so is every recorded (filtered) entry. -/
+theorem factor_entries_primitive_of_ne_zero
+    (f : ZPoly) (hf : f ≠ 0) :
+    ∀ entry ∈ (factor f).factors, ZPoly.Primitive entry.1 := by
+  intro entry hentry
+  have hmem : entry ∈ (factor f).factors.toList := Array.mem_toList_iff.mpr hentry
+  -- The filtered product reconstructs `f`, hence is primitive.
+  have hfiltered_prod :
+      DensePoly.C (signedContentScalar f) *
+        Array.polyProduct
+          (filteredNormalizedFactors (factorHybridFactors f).toList).toArray = f := by
+    have hp := factor_product f
+    rw [factor_eq_factorizationOfFactors, factorizationOfFactors_product] at hp
+    exact hp
+  have hprim :
+      ZPoly.Primitive
+        (Array.polyProduct
+          (filteredNormalizedFactors (factorHybridFactors f).toList).toArray) :=
+    primitive_of_signedContentScalar_mul_eq f _ hf hfiltered_prod
+  have hmem_filtered :
+      ∀ g ∈ (filteredNormalizedFactors (factorHybridFactors f).toList).toArray.toList,
+        ZPoly.Primitive g :=
+    polyProduct_mem_primitive_of_primitive _ hprim
+  -- The entry lies in the filtered list (it equals a sign-normalized raw factor
+  -- and passes the recording filter).
+  obtain ⟨raw, hraw_mem, hentry_eq⟩ := factor_entry_mem_raw_source f entry hmem
+  have hrecord : shouldRecordPolynomialFactor (normalizeFactorSign raw) = true := by
+    have := factor_entry_shouldRecord f entry hmem
+    rwa [hentry_eq] at this
+  have hentry_in :
+      entry.1 ∈ (filteredNormalizedFactors (factorHybridFactors f).toList).toArray.toList := by
+    rw [List.toList_toArray, hentry_eq]
+    unfold filteredNormalizedFactors
+    rw [List.mem_filterMap]
+    exact ⟨raw, hraw_mem, by simp only [hrecord, if_true]⟩
+  exact hmem_filtered entry.1 hentry_in
 
 /-- Product preservation for the Option-returning bounded API on its successful
 branch. The `none` branch is the explicit no-admissible-prime surface; when a
@@ -19694,7 +19729,9 @@ theorem factor?_product_of_some
     {f : ZPoly} {φ : Factorization}
     (h : factor? f = some φ) :
     Factorization.product φ = f := by
-  exact factorWithBound?_product_of_some h
+  rw [factor?_eq_some] at h
+  cases h
+  exact factor_product f
 
 /-- A successful `factorWithBound?` result is exactly the total bounded
 factorization. The `none` branch is the explicit no-admissible-prime surface;
@@ -19719,9 +19756,8 @@ theorem factor?_eq_some_eq_factor
     {f : ZPoly} {φ : Factorization}
     (h : factor? f = some φ) :
     φ = factor f := by
-  unfold factor? at h
-  simpa [factor_eq_factorWithBound_default] using
-    factorWithBound?_eq_some_eq_factorWithBound h
+  rw [factor?_eq_some] at h
+  exact (Option.some.inj h).symm
 
 /-- Scalar contract for the Option-returning bounded API on its successful
 branch. -/
