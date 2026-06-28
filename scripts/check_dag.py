@@ -18,9 +18,9 @@ from libgraph import (
 )
 
 
-IMPORT_RE = re.compile(r"^\s*import\s+(.+?)\s*$")
+IMPORT_RE = re.compile(r"^\s*(?:public\s+|private\s+)?import\s+(.+?)\s*$")
 LEAN_EXE_ROOT_RE = re.compile(r"^\s*root\s*:=\s*`([A-Za-z0-9_.]+)\s*$")
-QUALIFIED_IMPORT_RE = re.compile(r"^\s*import\s+([A-Za-z0-9_.]+)\s*$")
+QUALIFIED_IMPORT_RE = re.compile(r"^\s*(?:public\s+|private\s+)?import\s+([A-Za-z0-9_.]+)\s*$")
 
 
 def parse_imports(path: Path) -> list[str]:
@@ -111,7 +111,7 @@ def check_umbrella_completeness(
 def project_lean_files(root: Path) -> list[Path]:
     files = []
     for path in root.rglob("*.lean"):
-        if ".lake" in path.parts or "released" in path.parts:
+        if ".lake" in path.parts:
             continue
         files.append(path.relative_to(root))
     return sorted(files)

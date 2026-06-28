@@ -140,7 +140,7 @@ def changed_setup_lines(root: Path, base: str) -> list[tuple[Path, int, str]]:
 def all_setup_lines(root: Path) -> list[tuple[Path, int, str]]:
     found: list[tuple[Path, int, str]] = []
     for path in sorted(root.rglob("*.lean")):
-        if ".lake" in path.parts or "released" in path.parts:
+        if ".lake" in path.parts:
             continue
         rel = path.relative_to(root)
         for idx, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):

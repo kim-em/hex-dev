@@ -17,18 +17,6 @@ require «lean-bench» from git
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @ "v4.30.0-rc2"
 
--- The six released split repos are vendored as git submodules under `released/`
--- and required by relative path, so a single `lake build` at the root builds the
--- whole graph against the working trees. The submodule SHAs are the pins; these
--- relative-path requires override the transitive git pins inside each submodule's
--- own lakefile. See AGENTS.md § "Hex repo family".
-require HexMatrix from "released/hex-matrix"
-require HexMatrixMathlib from "released/hex-matrix-mathlib"
-require HexGramSchmidt from "released/hex-gram-schmidt"
-require HexGramSchmidtMathlib from "released/hex-gram-schmidt-mathlib"
-require HexLLL from "released/hex-lll"
-require HexLLLMathlib from "released/hex-lll-mathlib"
-
 private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexGF2" / "ffi" / "clmul.o"
   let srcTarget ← inputTextFile <| pkg.dir / "HexGF2" / "ffi" / "clmul.c"
@@ -64,6 +52,18 @@ extern_lib hexarithffi (pkg) := do
 extern_lib hexmodarithffi (pkg) := do
   let name := nameToStaticLib "hexmodarithffi"
   let oTarget ← zmod64MulOTarget pkg
+  buildStaticLib (pkg.staticLibDir / name) #[oTarget]
+
+private def hexlllProviderOTarget (pkg : Package) : FetchM (Job FilePath) := do
+  let oFile := pkg.dir / defaultBuildDir / "HexLLL" / "ffi" / "lean_hexlll_provider.o"
+  let srcTarget ← inputTextFile <| pkg.dir / "HexLLL" / "ffi" / "lean_hexlll_provider.c"
+  buildFileAfterDep oFile srcTarget fun srcFile => do
+    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
+    compileO oFile srcFile flags
+
+extern_lib hexlllffi (pkg) := do
+  let name := nameToStaticLib "hexlllffi"
+  let oTarget ← hexlllProviderOTarget pkg
   buildStaticLib (pkg.staticLibDir / name) #[oTarget]
 
 lean_lib Hex where
@@ -120,6 +120,28 @@ lean_lib HexGF2Mathlib where
 lean_lib HexGFqMathlib where
 
 lean_lib HexBerlekampZassenhausMathlib where
+
+lean_lib HexMatrix where
+  precompileModules := true
+
+lean_lib HexGramSchmidt where
+
+lean_lib HexLLL where
+  extraDepTargets := #[`hexlllffi]
+  moreLinkArgs :=
+    if System.Platform.isOSX then
+      #[]
+    else
+      #["-ldl"]
+
+lean_lib HexMatrixMathlib where
+
+lean_lib HexGramSchmidtMathlib where
+
+lean_lib HexLLLMathlib where
+
+lean_exe hexlll_provider_probe where
+  root := `HexLLL.ProviderProbe
 
 lean_exe hex_arith_floor where
   root := `HexBench.ArithFloor

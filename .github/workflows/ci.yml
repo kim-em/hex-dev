@@ -16,7 +16,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: recursive
       - run: python3 scripts/check_dag.py
       - run: python3 scripts/check_phase4.py
       - name: Lint benches are Mathlib-free (SPEC/benchmarking.md §Mathlib-free benches)
@@ -61,7 +60,9 @@ jobs:
             hexpolyfp_bench hexmodarith_bench \
             hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
             hexhensel_bench hexberlekamp_bench hexbz_bench \
-            hexconway_bench
+            hexconway_bench \
+            HexMatrix HexGramSchmidt HexLLL hexlll_provider_probe \
+            HexMatrixMathlib HexGramSchmidtMathlib HexLLLMathlib
       - name: Build HO-1 Mathlib bridge
         run: lake build HexBerlekampZassenhausMathlib
       - name: Bench verify (smoke gate per SPEC/benchmarking.md §CI integration)
