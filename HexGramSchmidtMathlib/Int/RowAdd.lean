@@ -43,8 +43,8 @@ private theorem foldl_dot_comm_int {n' : Nat} (xs : List (Fin n'))
 
 /-- The dot product of integer vectors is commutative. -/
 private theorem dot_comm_int {n' : Nat} (u v : Vector Int n') :
-    Matrix.dot u v = Matrix.dot v u := by
-  simpa [Matrix.dot, Hex.Vector.dotProduct] using
+    Vector.dotProduct u v = Vector.dotProduct v u := by
+  simpa [Hex.Vector.dotProduct] using
     foldl_dot_comm_int (xs := List.finRange n') (u := u) (v := v)
       (accU := 0) (accV := 0) rfl
 
@@ -89,17 +89,17 @@ private theorem foldl_dot_rowAdd_at {n' m' : Nat}
 so dot with `w` distributes over the sum. -/
 private theorem dot_rowAdd_row_at_left {n' m' : Nat}
     (M : Matrix Int n' m') (src dst : Fin n') (c : Int) (w : Vector Int m') :
-    Matrix.dot ((Matrix.rowAdd M src dst c)[dst]) w =
-      Matrix.dot M[dst] w + c * Matrix.dot M[src] w := by
-  simp only [Matrix.dot, Hex.Vector.dotProduct]
+    Vector.dotProduct ((Matrix.rowAdd M src dst c)[dst]) w =
+      Vector.dotProduct M[dst] w + c * Vector.dotProduct M[src] w := by
+  simp only [Hex.Vector.dotProduct]
   exact foldl_dot_rowAdd_at M src dst c w (List.finRange m')
     0 0 0 (by show (0 : Int) = 0 + c * 0; grind)
 
 /-- Symmetric form: dot product on the right with the modified row. -/
 private theorem dot_rowAdd_row_at_right {n' m' : Nat}
     (M : Matrix Int n' m') (src dst : Fin n') (c : Int) (w : Vector Int m') :
-    Matrix.dot w ((Matrix.rowAdd M src dst c)[dst]) =
-      Matrix.dot w M[dst] + c * Matrix.dot w M[src] := by
+    Vector.dotProduct w ((Matrix.rowAdd M src dst c)[dst]) =
+      Vector.dotProduct w M[dst] + c * Vector.dotProduct w M[src] := by
   rw [dot_comm_int w, dot_rowAdd_row_at_left, dot_comm_int w M[dst], dot_comm_int w M[src]]
 
 /-- Determinant-level pivot identity for scaled Gram-Schmidt coefficients under
@@ -119,12 +119,12 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
   let last : Fin t := ⟨j.val, Nat.lt_succ_self j.val⟩
   let M := GramSchmidt.leadingGramMatrixInt b t ht
   let oldCol : Fin t → Int := fun p =>
-    Matrix.dot (b.row (GramSchmidt.liftFinLE p ht)) (b.row k)
+    Vector.dotProduct (b.row (GramSchmidt.liftFinLE p ht)) (b.row k)
   let gramCol : Fin t → Int := fun p =>
-    Matrix.dot (b.row (GramSchmidt.liftFinLE p ht)) (b.row j)
+    Vector.dotProduct (b.row (GramSchmidt.liftFinLE p ht)) (b.row j)
   have hnew :
       GramSchmidt.scaledCoeffMatrix (Matrix.rowAdd b j k c) k j hjk =
-        Matrix.colReplace M last (fun p => oldCol p + c * gramCol p) := by
+        Matrix.setCol M last (fun p => oldCol p + c * gramCol p) := by
     apply Vector.ext
     intro r hr
     apply Vector.ext
@@ -141,15 +141,15 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
     · have hqNat : q = j.val := by
         simpa [qf] using hqj
       have hq_last : qf = last := Fin.ext hqj
-      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.colReplace, Matrix.ofFn,
+      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.setCol, Matrix.ofFn,
         Vector.getElem_ofFn, hqNat, if_true]
       rw [if_pos (rfl : (⟨j.val, Nat.lt_succ_self j.val⟩ : Fin t) = last)]
       simp only [Matrix.row]
-      change Matrix.dot ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht])
+      change Vector.dotProduct ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht])
           ((Matrix.rowAdd b j k c)[k]) =
         oldCol p + c * gramCol p
       rw [hp_row]
-      change Matrix.dot (b.row (GramSchmidt.liftFinLE p ht))
+      change Vector.dotProduct (b.row (GramSchmidt.liftFinLE p ht))
           ((Matrix.rowAdd b j k c)[k]) =
         oldCol p + c * gramCol p
       exact dot_rowAdd_row_at_right b j k c (b.row (GramSchmidt.liftFinLE p ht))
@@ -165,7 +165,7 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
           (Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE qf ht] =
             b[GramSchmidt.liftFinLE qf ht] :=
         rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE qf ht) c hq_ne_k
-      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.colReplace, Matrix.ofFn,
+      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.setCol, Matrix.ofFn,
         Vector.getElem_ofFn, if_neg hqNat]
       rw [if_neg hq_ne_last]
       simp only [Matrix.row]
@@ -174,7 +174,7 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
       rw [Vector.getElem_ofFn, Vector.getElem_ofFn]
   have hold :
       GramSchmidt.scaledCoeffMatrix b k j hjk =
-        Matrix.colReplace M last oldCol := by
+        Matrix.setCol M last oldCol := by
     apply Vector.ext
     intro r hr
     apply Vector.ext
@@ -185,7 +185,7 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
     · have hqNat : q = j.val := by
         simpa [qf] using hqj
       have hq_last : qf = last := Fin.ext hqj
-      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.colReplace, Matrix.ofFn,
+      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.setCol, Matrix.ofFn,
         Vector.getElem_ofFn, hqNat, if_true]
       rw [if_pos (rfl : (⟨j.val, Nat.lt_succ_self j.val⟩ : Fin t) = last)]
     · have hq_ne_last : qf ≠ last := by
@@ -194,13 +194,13 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
       have hqNat : q ≠ j.val := by
         intro h
         exact hqj (by simpa [qf] using h)
-      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.colReplace, Matrix.ofFn,
+      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.setCol, Matrix.ofFn,
         Vector.getElem_ofFn, if_neg hqNat]
       rw [if_neg hq_ne_last]
       dsimp [M, GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row]
       simp [Vector.getElem_ofFn]
   have hgram :
-      Matrix.colReplace M last gramCol = M := by
+      Matrix.setCol M last gramCol = M := by
     apply Vector.ext
     intro r hr
     apply Vector.ext
@@ -212,24 +212,24 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
         exact Fin.ext (by
           have hval := congrArg Fin.val hq_last
           simpa [last] using hval)
-      simp only [M, gramCol, GramSchmidt.leadingGramMatrixInt, Matrix.colReplace, Matrix.ofFn,
+      simp only [M, gramCol, GramSchmidt.leadingGramMatrixInt, Matrix.setCol, Matrix.ofFn,
         Vector.getElem_ofFn]
       rw [if_pos hq_last]
       rw [hq_lift]
-    · simp only [M, gramCol, GramSchmidt.leadingGramMatrixInt, Matrix.colReplace, Matrix.ofFn,
+    · simp only [M, gramCol, GramSchmidt.leadingGramMatrixInt, Matrix.setCol, Matrix.ofFn,
         Vector.getElem_ofFn]
       rw [if_neg hq_last]
       simp [Matrix.row]
   calc
     Matrix.det (GramSchmidt.scaledCoeffMatrix (Matrix.rowAdd b j k c) k j hjk)
-        = Matrix.det (Matrix.colReplace M last (fun p => oldCol p + c * gramCol p)) := by
+        = Matrix.det (Matrix.setCol M last (fun p => oldCol p + c * gramCol p)) := by
           rw [hnew]
-    _ = Matrix.det (Matrix.colReplace M last oldCol) +
-          Matrix.det (Matrix.colReplace M last (fun p => c * gramCol p)) := by
-          rw [Matrix.det_colReplace_add]
-    _ = Matrix.det (Matrix.colReplace M last oldCol) +
-          c * Matrix.det (Matrix.colReplace M last gramCol) := by
-          rw [Matrix.det_colReplace_smul]
+    _ = Matrix.det (Matrix.setCol M last oldCol) +
+          Matrix.det (Matrix.setCol M last (fun p => c * gramCol p)) := by
+          rw [Matrix.det_setCol_add]
+    _ = Matrix.det (Matrix.setCol M last oldCol) +
+          c * Matrix.det (Matrix.setCol M last gramCol) := by
+          rw [Matrix.det_setCol_smul]
     _ = Matrix.det (GramSchmidt.scaledCoeffMatrix b k j hjk) +
           c * Matrix.det
             (GramSchmidt.leadingGramMatrixInt b (j.val + 1) (Nat.succ_le_of_lt j.isLt)) := by
@@ -286,14 +286,14 @@ private theorem leadingGramMatrixInt_rowAdd_entry_inside
   -- The Gram matrix entry as a dot product of integer rows.
   have hM_entry : ∀ (a b' : Fin t),
       (GramSchmidt.leadingGramMatrixInt b t ht)[a][b'] =
-        Matrix.dot (b[GramSchmidt.liftFinLE a ht]) (b[GramSchmidt.liftFinLE b' ht]) := by
+        Vector.dotProduct (b[GramSchmidt.liftFinLE a ht]) (b[GramSchmidt.liftFinLE b' ht]) := by
     intro a b'
     simp [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row,
       Vector.getElem_ofFn]
   -- LHS is a dot product over `Matrix.rowAdd b j k c` rows.
   have hLHS :
       (GramSchmidt.leadingGramMatrixInt (Matrix.rowAdd b j k c) t ht)[p][q] =
-        Matrix.dot ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht])
+        Vector.dotProduct ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht])
           ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE q ht]) := by
     simp [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row,
       Vector.getElem_ofFn]
@@ -338,12 +338,12 @@ private theorem leadingGramMatrixInt_rowAdd_entry_inside
       rw [hrowAdd_p, hrowAdd_q]
       rw [dot_rowAdd_row_at_left b j k c ((Matrix.rowAdd b j k c)[k])]
       have hrec_k :
-          Matrix.dot b[k] ((Matrix.rowAdd b j k c)[k]) =
-            Matrix.dot b[k] b[k] + c * Matrix.dot b[k] b[j] :=
+          Vector.dotProduct b[k] ((Matrix.rowAdd b j k c)[k]) =
+            Vector.dotProduct b[k] b[k] + c * Vector.dotProduct b[k] b[j] :=
         dot_rowAdd_row_at_right b j k c b[k]
       have hrec_j :
-          Matrix.dot b[j] ((Matrix.rowAdd b j k c)[k]) =
-            Matrix.dot b[j] b[k] + c * Matrix.dot b[j] b[j] :=
+          Vector.dotProduct b[j] ((Matrix.rowAdd b j k c)[k]) =
+            Vector.dotProduct b[j] b[k] + c * Vector.dotProduct b[j] b[j] :=
         dot_rowAdd_row_at_right b j k c b[j]
       rw [hrec_k, hrec_j]
       simp only [if_pos hpk]
@@ -351,7 +351,7 @@ private theorem leadingGramMatrixInt_rowAdd_entry_inside
       have hb_q : b[GramSchmidt.liftFinLE q ht] = b[k] :=
         congrArg b.get hqn_k
       rw [hbjt_lift, hbkt_lift, hb_q]
-      have hsym : Matrix.dot b[j] b[k] = Matrix.dot b[k] b[j] := dot_comm_int _ _
+      have hsym : Vector.dotProduct b[j] b[k] = Vector.dotProduct b[k] b[j] := dot_comm_int _ _
       rw [hsym]
     · -- p ≠ kt, q = kt
       have hpn_ne : (GramSchmidt.liftFinLE p ht).val ≠ k.val :=
@@ -655,7 +655,7 @@ already have a determinant lemma for a special matrix family can produce the
 public `independent` predicate stated over Mathlib-free computed data. -/
 
 private theorem gramDet_pos_of_det_positive (b : Matrix Int n m)
-    (hdet : ∀ k : Fin n, 0 < Matrix.det (Matrix.submatrix (Matrix.gramMatrix b) k))
+    (hdet : ∀ k : Fin n, 0 < Matrix.det (Matrix.leadingSubmatrix (Matrix.gramMatrix b) k))
     (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
     0 < gramDet b k hk := by
   cases k with
@@ -664,12 +664,12 @@ private theorem gramDet_pos_of_det_positive (b : Matrix Int n m)
   | succ r =>
       have hrn : r < n := Nat.lt_of_succ_le hk
       let last : Fin n := ⟨r, hrn⟩
-      have hsub : 0 < Matrix.det (Matrix.submatrix (Matrix.gramMatrix b) last) :=
+      have hsub : 0 < Matrix.det (Matrix.leadingSubmatrix (Matrix.gramMatrix b) last) :=
         hdet last
       have hsub_eq :
-          Matrix.submatrix (Matrix.gramMatrix b) last =
+          Matrix.leadingSubmatrix (Matrix.gramMatrix b) last =
             GramSchmidt.leadingGramMatrixInt b (r + 1) hk := by
-        rw [Matrix.submatrix_eq_leadingPrefix]
+        rw [Matrix.leadingSubmatrix_eq_leadingPrefix]
         rw [GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram]
       have hdet_pos :
           0 < Matrix.det (GramSchmidt.leadingGramMatrixInt b (r + 1) hk) := by
@@ -687,7 +687,7 @@ private theorem gramDet_pos_of_det_positive (b : Matrix Int n m)
 have determinant lemmas for special matrix families, while keeping the public
 predicate stated over Mathlib-free computed data. -/
 theorem independent_of_det_positive (b : Matrix Int n m)
-    (hdet : ∀ k : Fin n, 0 < Matrix.det (Matrix.submatrix (Matrix.gramMatrix b) k)) :
+    (hdet : ∀ k : Fin n, 0 < Matrix.det (Matrix.leadingSubmatrix (Matrix.gramMatrix b) k)) :
     independent b := by
   intro k
   exact gramDet_pos_of_det_positive b hdet (k.val + 1) (Nat.succ_le_of_lt k.isLt)
@@ -698,7 +698,7 @@ every leading principal minor has determinant `1 > 0`. -/
 theorem independent_one {n : Nat} : independent (1 : Matrix Int n n) := by
   exact independent_of_det_positive (1 : Matrix Int n n) (by
     intro k
-    rw [Matrix.gramMatrix_one, Matrix.submatrix_one, Matrix.det_one]
+    rw [Matrix.gramMatrix_one, Matrix.leadingSubmatrix_one, Matrix.det_one]
     decide)
 
 
