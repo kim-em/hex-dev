@@ -19,7 +19,7 @@ private theorem rowCombination_eq_on_columns_of_rows_eq
   unfold Hex.Matrix.rowCombination
   change (Hex.Matrix.mulVec (Hex.Matrix.transpose M) c)[j] =
     (Hex.Matrix.mulVec (Hex.Matrix.transpose M) c)[k]
-  unfold Hex.Matrix.mulVec Hex.Matrix.dot Hex.Matrix.row Hex.Vector.dotProduct
+  unfold Hex.Matrix.mulVec Hex.Matrix.row Hex.Vector.dotProduct
     Hex.Matrix.transpose Hex.Matrix.col
   change
       (Vector.ofFn fun j : Fin m =>

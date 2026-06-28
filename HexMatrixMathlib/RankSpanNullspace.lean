@@ -72,7 +72,7 @@ private theorem vectorEquiv_mulVec [Field R] (M : Hex.Matrix R n m) (v : Vector 
   funext i
   simp only [vectorEquiv_apply]
   change (Hex.Matrix.mulVec M v)[i.val] = (matrixEquiv M).mulVec (vectorEquiv v) i
-  unfold Hex.Matrix.mulVec Hex.Matrix.dot Hex.Matrix.row Hex.Vector.dotProduct
+  unfold Hex.Matrix.mulVec Hex.Matrix.row Hex.Vector.dotProduct
   rw [Vector.getElem_ofFn i.isLt]
   rw [foldl_finRange_eq_sum]
   unfold _root_.Matrix.mulVec dotProduct
@@ -92,7 +92,7 @@ theorem vectorEquiv_rowCombination [CommRing R] (M : Hex.Matrix R n m) (c : Vect
   unfold Hex.Matrix.rowCombination
   change (Hex.Matrix.mulVec (Hex.Matrix.transpose M) c)[j.val] =
     (Fintype.linearCombination R (_root_.Matrix.row (matrixEquiv M)) (vectorEquiv c)) j
-  unfold Hex.Matrix.mulVec Hex.Matrix.dot Hex.Matrix.row Hex.Vector.dotProduct Hex.Matrix.transpose
+  unfold Hex.Matrix.mulVec Hex.Matrix.row Hex.Vector.dotProduct Hex.Matrix.transpose
     Hex.Matrix.col
   rw [Vector.getElem_ofFn j.isLt]
   rw [foldl_finRange_eq_sum]
@@ -119,7 +119,7 @@ private theorem vectorEquiv_nullspaceMatrix_mulVec [Field R]
   simp only [vectorEquiv_apply, Pi.smul_apply, Finset.sum_apply]
   change (Hex.Matrix.mulVec E.nullspaceMatrix c)[j.val] =
     ∑ k : Fin (m - D.rank), c[k] * (E.nullspace.get k)[j]
-  unfold Hex.Matrix.mulVec Hex.Matrix.dot Hex.Matrix.row Hex.Vector.dotProduct
+  unfold Hex.Matrix.mulVec Hex.Matrix.row Hex.Vector.dotProduct
   rw [Vector.getElem_ofFn j.isLt]
   rw [foldl_finRange_eq_sum]
   apply Finset.sum_congr rfl

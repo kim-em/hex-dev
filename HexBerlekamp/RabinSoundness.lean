@@ -3202,7 +3202,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
                 (fun acc k => acc +
                   ((Matrix.nullspaceBasisMatrix M)[i]'hi_fin)[k.val]'k.isLt *
                     c_coeff[k.val]'k.isLt) 0 := by
-          unfold Matrix.mulVec Matrix.dot Hex.Vector.dotProduct Matrix.row
+          unfold Matrix.mulVec Vector.dotProduct Matrix.row
           rw [Vector.getElem_ofFn hi_fin]
           rfl
         rw [hlhs] at hget
@@ -3732,7 +3732,7 @@ private theorem exists_basis_nonconst_mod_g
                 (fun acc k => acc +
                   ((Matrix.nullspaceBasisMatrix (fixedSpaceMatrix f hmonic))[i]'hi)[k.val]'k.isLt *
                     c_coeff[k.val]'k.isLt) 0 := by
-          unfold Matrix.mulVec Matrix.dot Hex.Vector.dotProduct Matrix.row
+          unfold Matrix.mulVec Vector.dotProduct Matrix.row
           rw [Vector.getElem_ofFn hi]; rfl
         rw [hlhs, hrhs] at hget
         rw [← hget]

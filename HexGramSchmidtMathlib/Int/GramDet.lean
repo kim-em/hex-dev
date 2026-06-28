@@ -39,7 +39,7 @@ theorem leadingGramMatrixInt_det_nonneg
     intro i hi
     apply Vector.ext
     intro j hj
-    simp [GramSchmidt.leadingGramMatrixInt, rowPrefix, Matrix.gramMatrix, Matrix.dot,
+    simp [GramSchmidt.leadingGramMatrixInt, rowPrefix, Matrix.gramMatrix, Vector.dotProduct,
       Matrix.row, Matrix.ofFn, GramSchmidt.liftFinLE]
   rw [hgram]
   exact Matrix.det_gramMatrix_nonneg rowPrefix
@@ -159,8 +159,8 @@ private theorem det_intCast {k : Nat} (M : Matrix Int k k) :
 
 /-- Right-side dot product distributes over vector addition. -/
 theorem dot_add_right_rat {m' : Nat} (u v w : Vector Rat m') :
-    Matrix.dot u (v + w) = Matrix.dot u v + Matrix.dot u w := by
-  unfold Matrix.dot Hex.Vector.dotProduct
+    Vector.dotProduct u (v + w) = Vector.dotProduct u v + Vector.dotProduct u w := by
+  unfold Vector.dotProduct
   have h :
       ∀ (xs : List (Fin m')) (accV accW : Rat),
         xs.foldl (fun acc i => acc + u[i] * (v + w)[i]) (accV + accW) =
@@ -187,8 +187,8 @@ theorem dot_add_right_rat {m' : Nat} (u v w : Vector Rat m') :
 
 /-- Right-side dot product distributes over scalar multiplication. -/
 theorem dot_smul_right_rat {m' : Nat} (s : Rat) (u v : Vector Rat m') :
-    Matrix.dot u (s • v) = s * Matrix.dot u v := by
-  unfold Matrix.dot Hex.Vector.dotProduct
+    Vector.dotProduct u (s • v) = s * Vector.dotProduct u v := by
+  unfold Vector.dotProduct
   have h :
       ∀ (xs : List (Fin m')) (acc : Rat),
         xs.foldl (fun acc i => acc + u[i] * (s • v)[i]) (s * acc) =
@@ -214,8 +214,8 @@ theorem dot_smul_right_rat {m' : Nat} (s : Rat) (u v : Vector Rat m') :
 
 /-- Dot product of a vector against the zero vector is zero. -/
 private theorem dot_zero_right_rat {m' : Nat} (u : Vector Rat m') :
-    Matrix.dot u (0 : Vector Rat m') = 0 := by
-  unfold Matrix.dot Hex.Vector.dotProduct
+    Vector.dotProduct u (0 : Vector Rat m') = 0 := by
+  unfold Vector.dotProduct
   have h : ∀ (xs : List (Fin m')) (acc : Rat),
       xs.foldl (fun acc i => acc + u[i] * (0 : Vector Rat m')[i]) acc = acc := by
     intro xs
@@ -249,8 +249,8 @@ private theorem foldl_sum_start_rat {α : Type v}
 
 /-- Rational dot product is commutative. -/
 private theorem dot_comm_rat {m' : Nat} (u v : Vector Rat m') :
-    Matrix.dot u v = Matrix.dot v u := by
-  unfold Matrix.dot Hex.Vector.dotProduct
+    Vector.dotProduct u v = Vector.dotProduct v u := by
+  unfold Vector.dotProduct
   have h : ∀ (xs : List (Fin m')) (accU accV : Rat),
       accU = accV →
         xs.foldl (fun acc i => acc + u[i] * v[i]) accU =
@@ -270,18 +270,18 @@ private theorem dot_comm_rat {m' : Nat} (u v : Vector Rat m') :
 private theorem dot_prefixCombination_right_rat
     (coeffs : Matrix Rat n n) (basisM : Matrix Rat n m)
     (i : Nat) (hi : i < n) (u : Vector Rat m) :
-    Matrix.dot u (GramSchmidt.prefixCombination coeffs basisM i hi) =
+    Vector.dotProduct u (GramSchmidt.prefixCombination coeffs basisM i hi) =
       (List.finRange i).foldl
         (fun (acc : Rat) (j : Fin i) =>
           acc +
             GramSchmidt.entry coeffs ⟨i, hi⟩
                 ⟨j.val, Nat.lt_trans j.isLt hi⟩ *
-              Matrix.dot u
+              Vector.dotProduct u
                 (basisM.row ⟨j.val, Nat.lt_trans j.isLt hi⟩)) 0 := by
   unfold GramSchmidt.prefixCombination
   have hgen :
       ∀ (xs : List (Fin i)) (acc : Vector Rat m),
-        Matrix.dot u
+        Vector.dotProduct u
             (xs.foldl
               (fun acc (j : Fin i) =>
                 acc +
@@ -289,13 +289,13 @@ private theorem dot_prefixCombination_right_rat
                       ⟨j.val, Nat.lt_trans j.isLt hi⟩ •
                     basisM.row ⟨j.val, Nat.lt_trans j.isLt hi⟩)
               acc) =
-          Matrix.dot u acc +
+          Vector.dotProduct u acc +
             xs.foldl
               (fun (acc' : Rat) (j : Fin i) =>
                 acc' +
                   GramSchmidt.entry coeffs ⟨i, hi⟩
                       ⟨j.val, Nat.lt_trans j.isLt hi⟩ *
-                    Matrix.dot u
+                    Vector.dotProduct u
                       (basisM.row ⟨j.val, Nat.lt_trans j.isLt hi⟩)) 0 := by
     intro xs
     induction xs with
@@ -310,7 +310,7 @@ private theorem dot_prefixCombination_right_rat
         rw [foldl_sum_start_rat xs _
           ((0 : Rat) + (GramSchmidt.entry coeffs ⟨i, hi⟩
               ⟨x.val, Nat.lt_trans x.isLt hi⟩ *
-            Matrix.dot u
+            Vector.dotProduct u
               (basisM.row ⟨x.val, Nat.lt_trans x.isLt hi⟩)))]
         grind
   rw [hgen (List.finRange i) 0]
@@ -323,9 +323,9 @@ private theorem dot_prefixCombination_right_eq_zero
     (coeffs : Matrix Rat n n) (basisM : Matrix Rat n m)
     (i : Nat) (hi : i < n) (u : Vector Rat m)
     (h : ∀ (j : Fin i),
-      Matrix.dot u
+      Vector.dotProduct u
           (basisM.row ⟨j.val, Nat.lt_trans j.isLt hi⟩) = 0) :
-    Matrix.dot u (GramSchmidt.prefixCombination coeffs basisM i hi) = 0 := by
+    Vector.dotProduct u (GramSchmidt.prefixCombination coeffs basisM i hi) = 0 := by
   rw [dot_prefixCombination_right_rat]
   -- All terms are zero: the foldl with each entry = 0 reduces to 0.
   induction (List.finRange i) with
@@ -408,8 +408,7 @@ private theorem rowCombination_eq_foldl_rows_rat
         (List.finRange n).foldl
           (fun acc j => acc + M[j.val][idxFin.val] * c[j])
           0 by
-        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Matrix.dot
-          Hex.Vector.dotProduct
+        unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Vector.dotProduct
         simp]
   have hfold :
       ∀ xs : List (Fin n), ∀ accL : Rat, ∀ accR : Vector Rat m,
@@ -436,15 +435,15 @@ private theorem rowCombination_eq_foldl_rows_rat
 
 private theorem dot_rowCombination_right_rat
     (u : Vector Rat m) (M : Matrix Rat n m) (c : Vector Rat n) :
-    Matrix.dot u (Matrix.rowCombination M c) =
+    Vector.dotProduct u (Matrix.rowCombination M c) =
       (List.finRange n).foldl
-        (fun acc j => acc + c[j] * Matrix.dot u (M.row j)) 0 := by
+        (fun acc j => acc + c[j] * Vector.dotProduct u (M.row j)) 0 := by
   rw [rowCombination_eq_foldl_rows_rat]
   have hgen :
       ∀ xs : List (Fin n), ∀ acc : Vector Rat m,
-        Matrix.dot u (xs.foldl (fun acc j => acc + c[j] • M.row j) acc) =
-          Matrix.dot u acc +
-            xs.foldl (fun acc' j => acc' + c[j] * Matrix.dot u (M.row j)) 0 := by
+        Vector.dotProduct u (xs.foldl (fun acc j => acc + c[j] • M.row j) acc) =
+          Vector.dotProduct u acc +
+            xs.foldl (fun acc' j => acc' + c[j] * Vector.dotProduct u (M.row j)) 0 := by
     intro xs
     induction xs with
     | nil =>
@@ -457,7 +456,7 @@ private theorem dot_rowCombination_right_rat
         rw [ih]
         rw [dot_add_right_rat, dot_smul_right_rat]
         rw [foldl_sum_start_rat xs _
-          ((0 : Rat) + c[x] * Matrix.dot u (M.row x))]
+          ((0 : Rat) + c[x] * Vector.dotProduct u (M.row x))]
         grind
   rw [hgen (List.finRange n) 0]
   rw [dot_zero_right_rat]
@@ -468,14 +467,14 @@ linear combination of original Gram-matrix entries. -/
 private theorem originalProjectionCoords_dot_eq
     (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < n)
     (p : Fin (j + 1)) :
-    Matrix.dot
+    Vector.dotProduct
         (castIntRow b
           ⟨p.val, Nat.lt_of_lt_of_le p.isLt (Nat.succ_le_of_lt hj)⟩)
         (basisPrefixProjection b i j hi hj) =
       (List.finRange (j + 1)).foldl
         (fun acc q =>
           acc + (originalProjectionCoords b i j hi hj)[q] *
-            Matrix.dot
+            Vector.dotProduct
               (castIntRow b
                 ⟨p.val, Nat.lt_of_lt_of_le p.isLt (Nat.succ_le_of_lt hj)⟩)
               (castIntRow b
@@ -492,13 +491,13 @@ Gram-Schmidt orthogonal basis row `b*_j`. -/
 private noncomputable def auxMatrix (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
     Matrix Rat k k :=
   Matrix.ofFn fun i j =>
-    Matrix.dot (castIntRow b (GramSchmidt.liftFinLE i hk))
+    Vector.dotProduct (castIntRow b (GramSchmidt.liftFinLE i hk))
       ((basis b).row (GramSchmidt.liftFinLE j hk))
 
 private theorem auxMatrix_get (b : Matrix Int n m) (k : Nat) (hk : k ≤ n)
     (i j : Fin k) :
     (auxMatrix b k hk)[i][j] =
-      Matrix.dot (castIntRow b (GramSchmidt.liftFinLE i hk))
+      Vector.dotProduct (castIntRow b (GramSchmidt.liftFinLE i hk))
         ((basis b).row (GramSchmidt.liftFinLE j hk)) := by
   simp [auxMatrix, Matrix.ofFn]
 
@@ -528,7 +527,7 @@ private theorem auxMatrix_zero_above (b : Matrix Int n m) (k : Nat) (hk : k ≤ 
   rw [basis_orthogonal b i.val j.val hi' hj' hij']
   -- Second term: prefixCombination orthogonal to ((basis b).row j).
   have hprefix :
-      Matrix.dot ((basis b).row ⟨j.val, hj'⟩)
+      Vector.dotProduct ((basis b).row ⟨j.val, hj'⟩)
           (GramSchmidt.prefixCombination (coeffs b) (basis b) i.val hi') = 0 := by
     apply dot_prefixCombination_right_eq_zero
       (coeffs := coeffs b) (basisM := basis b) (i := i.val) (hi := hi')
@@ -555,7 +554,7 @@ private theorem auxMatrix_diag (b : Matrix Int n m) (k : Nat) (hk : k ≤ n)
   -- First term: dot ((basis b).row i) ((basis b).row i) = normSq ((basis b).row i)
   -- Second term: dot ((basis b).row i) prefixCombination = 0.
   have hprefix :
-      Matrix.dot ((basis b).row ⟨i.val, hi'⟩)
+      Vector.dotProduct ((basis b).row ⟨i.val, hi'⟩)
           (GramSchmidt.prefixCombination (coeffs b) (basis b) i.val hi') = 0 := by
     apply dot_prefixCombination_right_eq_zero
       (coeffs := coeffs b) (basisM := basis b) (i := i.val) (hi := hi')
@@ -569,7 +568,7 @@ private theorem auxMatrix_diag (b : Matrix Int n m) (k : Nat) (hk : k ≤ n)
   -- Remaining: dot ((basis b).row i) ((basis b).row i) + 0 = normSq ((basis b).row i)
   have hns :
       Vector.normSq ((basis b).row ⟨i.val, hi'⟩) =
-        Matrix.dot ((basis b).row ⟨i.val, hi'⟩) ((basis b).row ⟨i.val, hi'⟩) := by
+        Vector.dotProduct ((basis b).row ⟨i.val, hi'⟩) ((basis b).row ⟨i.val, hi'⟩) := by
     rfl
   rw [hns]
   grind
@@ -596,23 +595,23 @@ private noncomputable def progressMatrix (b : Matrix Int n m) (k : Nat)
     (hk : k ≤ n) (s : Nat) : Matrix Rat k k :=
   Matrix.ofFn fun i j =>
     if j.val < s then
-      Matrix.dot (castIntRow b (GramSchmidt.liftFinLE i hk))
+      Vector.dotProduct (castIntRow b (GramSchmidt.liftFinLE i hk))
         ((basis b).row (GramSchmidt.liftFinLE j hk))
     else
-      Matrix.dot (castIntRow b (GramSchmidt.liftFinLE i hk))
+      Vector.dotProduct (castIntRow b (GramSchmidt.liftFinLE i hk))
         (castIntRow b (GramSchmidt.liftFinLE j hk))
 
 private theorem progressMatrix_get_lt (b : Matrix Int n m) (k : Nat) (hk : k ≤ n)
     (s : Nat) (i j : Fin k) (hj : j.val < s) :
     (progressMatrix b k hk s)[i][j] =
-      Matrix.dot (castIntRow b (GramSchmidt.liftFinLE i hk))
+      Vector.dotProduct (castIntRow b (GramSchmidt.liftFinLE i hk))
         ((basis b).row (GramSchmidt.liftFinLE j hk)) := by
   simp [progressMatrix, Matrix.ofFn, hj]
 
 private theorem progressMatrix_get_ge (b : Matrix Int n m) (k : Nat) (hk : k ≤ n)
     (s : Nat) (i j : Fin k) (hj : ¬ j.val < s) :
     (progressMatrix b k hk s)[i][j] =
-      Matrix.dot (castIntRow b (GramSchmidt.liftFinLE i hk))
+      Vector.dotProduct (castIntRow b (GramSchmidt.liftFinLE i hk))
         (castIntRow b (GramSchmidt.liftFinLE j hk)) := by
   simp [progressMatrix, Matrix.ofFn, hj]
 
@@ -663,7 +662,7 @@ plus a linear combination of columns with index `< s`. -/
 private theorem progressMatrix_succ_eq_colReplace
     (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) (s : Nat) (hs : s < k) :
     progressMatrix b k hk (s + 1) =
-      Matrix.colReplace (progressMatrix b k hk s) (⟨s, hs⟩ : Fin k)
+      Matrix.setCol (progressMatrix b k hk s) (⟨s, hs⟩ : Fin k)
         (fun i =>
           (progressMatrix b k hk s)[i][(⟨s, hs⟩ : Fin k)] +
           (progressMatrixSources k s hs).foldl
@@ -676,14 +675,14 @@ private theorem progressMatrix_succ_eq_colReplace
   intro j hj
   let ii : Fin k := ⟨i, hi⟩
   change (progressMatrix b k hk (s + 1))[ii][(⟨j, hj⟩ : Fin k)] =
-    (Matrix.colReplace (progressMatrix b k hk s) (⟨s, hs⟩ : Fin k)
+    (Matrix.setCol (progressMatrix b k hk s) (⟨s, hs⟩ : Fin k)
       (fun i' =>
         (progressMatrix b k hk s)[i'][(⟨s, hs⟩ : Fin k)] +
         (progressMatrixSources k s hs).foldl
           (fun acc src =>
             acc + progressMatrixCoeff b k hk s hs src *
               (progressMatrix b k hk s)[i'][src]) 0))[ii][(⟨j, hj⟩ : Fin k)]
-  rw [Matrix.colReplace_get]
+  rw [Matrix.setCol_getElem]
   -- Case split on Fin k equality.
   by_cases hjs : (⟨j, hj⟩ : Fin k) = (⟨s, hs⟩ : Fin k)
   · -- Column s case.
@@ -702,8 +701,8 @@ private theorem progressMatrix_succ_eq_colReplace
     rw [progressMatrix_get_lt b k hk (s + 1) ii (⟨s, hs⟩ : Fin k) hjlt]
     have hjnlt : ¬ (⟨s, hs⟩ : Fin k).val < s := Nat.lt_irrefl s
     rw [progressMatrix_get_ge b k hk s ii (⟨s, hs⟩ : Fin k) hjnlt]
-    -- LHS = Matrix.dot (castIntRow b (lift ii)) ((basis b).row (lift ⟨s, hs⟩))
-    -- RHS' first piece = Matrix.dot (castIntRow b (lift ii)) (castIntRow b (lift ⟨s, hs⟩))
+    -- LHS = Vector.dotProduct (castIntRow b (lift ii)) ((basis b).row (lift ⟨s, hs⟩))
+    -- RHS' first piece = Vector.dotProduct (castIntRow b (lift ii)) (castIntRow b (lift ⟨s, hs⟩))
     -- We need: LHS = RHS' first + foldl (coeff * (basis row p))
     have hsn : s < n := Nat.lt_of_lt_of_le hs hk
     have hslift : GramSchmidt.liftFinLE (⟨s, hs⟩ : Fin k) hk = ⟨s, hsn⟩ := rfl
@@ -732,7 +731,7 @@ private theorem progressMatrix_succ_eq_colReplace
             acc +
               GramSchmidt.entry (coeffs b) ⟨s, hsn⟩
                   ⟨jp.val, Nat.lt_trans jp.isLt hsn⟩ *
-                Matrix.dot (castIntRow b (GramSchmidt.liftFinLE ii hk))
+                Vector.dotProduct (castIntRow b (GramSchmidt.liftFinLE ii hk))
                   ((basis b).row ⟨jp.val, Nat.lt_trans jp.isLt hsn⟩)) 0 =
         - ((progressMatrixSources k s hs).foldl
           (fun acc src =>
@@ -819,7 +818,7 @@ private theorem progressMatrix_succ_det
     Matrix.det (progressMatrix b k hk (s + 1)) =
       Matrix.det (progressMatrix b k hk s) := by
   rw [progressMatrix_succ_eq_colReplace b k hk s hs]
-  apply Matrix.det_colReplace_add_otherCols
+  apply Matrix.det_setCol_add_otherCols
   exact progressMatrixSources_ne_dst k s hs
 
 /-- All progress matrices have the same determinant: induct from 0 to k. -/
@@ -838,9 +837,9 @@ private theorem progressMatrix_det_invariant
 dot product. -/
 private theorem dot_castIntRow_eq_cast_dot
     (b : Matrix Int n m) (i j : Fin n) :
-    Matrix.dot (castIntRow b i) (castIntRow b j) =
-      ((Matrix.dot (b.row i) (b.row j) : Int) : Rat) := by
-  unfold Matrix.dot Hex.Vector.dotProduct
+    Vector.dotProduct (castIntRow b i) (castIntRow b j) =
+      ((Vector.dotProduct (b.row i) (b.row j) : Int) : Rat) := by
+  unfold Vector.dotProduct
   rw [foldl_intCast_add_aux (xs := List.finRange m)
     (f := fun k : Fin m => (b.row i)[k] * (b.row j)[k]) (acc := 0)]
   rw [show ((0 : Int) : Rat) = (0 : Rat) from rfl]
@@ -868,7 +867,7 @@ private theorem scaledCoeffMatrix_replacementColumn_solve
         (GramSchmidt.leadingGramMatrixInt b (j + 1)
           (Nat.succ_le_of_lt (Nat.lt_trans hj hi))) *
         originalProjectionCoords b i j hi (Nat.lt_trans hj hi))[p] =
-        Matrix.dot
+        Vector.dotProduct
           (castIntRow b
             ⟨p.val, Nat.lt_of_lt_of_le p.isLt
               (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩)
@@ -883,7 +882,7 @@ private theorem scaledCoeffMatrix_replacementColumn_solve
           (GramSchmidt.leadingGramMatrixInt b (j + 1)
             (Nat.succ_le_of_lt (Nat.lt_trans hj hi))))
         (originalProjectionCoords b i j hi (Nat.lt_trans hj hi)))[p] =
-      Matrix.dot
+      Vector.dotProduct
         (castIntRow b
           ⟨p.val, Nat.lt_of_lt_of_le p.isLt
             (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩)
@@ -892,12 +891,12 @@ private theorem scaledCoeffMatrix_replacementColumn_solve
   unfold Matrix.mulVec Matrix.row
   have hleft :
       (Vector.ofFn fun i' : Fin (j + 1) =>
-          Matrix.dot
+          Vector.dotProduct
             (castIntDetMatrix
               (GramSchmidt.leadingGramMatrixInt b (j + 1)
                 (Nat.succ_le_of_lt (Nat.lt_trans hj hi))))[i']
             (originalProjectionCoords b i j hi (Nat.lt_trans hj hi)))[p] =
-        Matrix.dot
+        Vector.dotProduct
           (castIntDetMatrix
             (GramSchmidt.leadingGramMatrixInt b (j + 1)
               (Nat.succ_le_of_lt (Nat.lt_trans hj hi))))[p]
@@ -916,7 +915,7 @@ private theorem scaledCoeffMatrix_replacementColumn_solve
       (fun acc q =>
         acc +
           (originalProjectionCoords b i j hi (Nat.lt_trans hj hi))[q] *
-            Matrix.dot
+            Vector.dotProduct
               (castIntRow b
                 ⟨p.val, Nat.lt_of_lt_of_le p.isLt
                   (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩)
@@ -951,9 +950,9 @@ private theorem progressMatrix_zero_eq_castIntDetMatrix (b : Matrix Int n m)
   have hjnlt : ¬ jj.val < 0 := Nat.not_lt_zero _
   rw [progressMatrix_get_ge b k hk 0 ii jj hjnlt]
   rw [castIntDetMatrix_get]
-  -- LHS: Matrix.dot (castIntRow b (lift ii)) (castIntRow b (lift jj))
+  -- LHS: Vector.dotProduct (castIntRow b (lift ii)) (castIntRow b (lift jj))
   -- RHS: ((leadingGramMatrixInt b k hk)[ii][jj] : Int : Rat)
-  --   = (Matrix.dot (b.row (lift ii)) (b.row (lift jj)) : Int : Rat)
+  --   = (Vector.dotProduct (b.row (lift ii)) (b.row (lift jj)) : Int : Rat)
   rw [dot_castIntRow_eq_cast_dot]
   -- Match up the leadingGramMatrixInt entry definition.
   simp [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn]
@@ -1073,13 +1072,13 @@ index. For `p < r`, `castIntRow b p` lies in the basis-vector span of indices
 `≤ p`, which is orthogonal to `(basis b).row r`. -/
 private theorem dot_castIntRow_basis_eq_zero_of_lt
     (b : Matrix Int n m) (p r : Nat) (hp : p < n) (hr : r < n) (hpr : p < r) :
-    Matrix.dot (castIntRow b ⟨p, hp⟩) ((basis b).row ⟨r, hr⟩) = 0 := by
+    Vector.dotProduct (castIntRow b ⟨p, hp⟩) ((basis b).row ⟨r, hr⟩) = 0 := by
   rw [dot_comm_rat]
   rw [castIntRow_decomposition b p hp]
   rw [dot_add_right_rat]
-  have hbasis : Matrix.dot ((basis b).row ⟨r, hr⟩) ((basis b).row ⟨p, hp⟩) = 0 :=
+  have hbasis : Vector.dotProduct ((basis b).row ⟨r, hr⟩) ((basis b).row ⟨p, hp⟩) = 0 :=
     basis_orthogonal b r p hr hp (Nat.ne_of_gt hpr)
-  have hprefix : Matrix.dot ((basis b).row ⟨r, hr⟩)
+  have hprefix : Vector.dotProduct ((basis b).row ⟨r, hr⟩)
       (GramSchmidt.prefixCombination (coeffs b) (basis b) p hp) = 0 := by
     apply dot_prefixCombination_right_eq_zero
       (coeffs := coeffs b) (basisM := basis b) (i := p) (hi := hp)
@@ -1136,8 +1135,8 @@ of indices `> j`, hence orthogonal to `castIntRow b p`. -/
 private theorem dot_castIntRow_castIntRow_eq
     (b : Matrix Int n m) (i j p : Nat) (hi : i < n) (hj : j < i)
     (hp_le_j : p ≤ j) (hp : p < n) :
-    Matrix.dot (castIntRow b ⟨p, hp⟩) (castIntRow b ⟨i, hi⟩) =
-      Matrix.dot (castIntRow b ⟨p, hp⟩)
+    Vector.dotProduct (castIntRow b ⟨p, hp⟩) (castIntRow b ⟨i, hi⟩) =
+      Vector.dotProduct (castIntRow b ⟨p, hp⟩)
         (basisPrefixProjection b i j hi (Nat.lt_trans hj hi)) := by
   -- Substitute `i = (j + 1) + d` so the foldl bounds align with the helper.
   obtain ⟨d, rfl⟩ : ∃ d, i = (j + 1) + d := ⟨i - (j + 1), by omega⟩
@@ -1156,7 +1155,7 @@ private theorem dot_castIntRow_castIntRow_eq
   -- Define a Nat-indexed body shared by both sides.
   let body : ∀ (k : Nat), k < n → Rat := fun k hk =>
     GramSchmidt.entry (coeffs b) ⟨(j + 1) + d, hi⟩ ⟨k, hk⟩ *
-      Matrix.dot (castIntRow b ⟨p, hp⟩) ((basis b).row ⟨k, hk⟩)
+      Vector.dotProduct (castIntRow b ⟨p, hp⟩) ((basis b).row ⟨k, hk⟩)
   -- Normalize the RHS foldl body to use `body`. The literal proof inside the
   -- unfolded `basisPrefixProjection` is `Nat.lt_trans hj hi`.
   have hRHS :
@@ -1165,7 +1164,7 @@ private theorem dot_castIntRow_castIntRow_eq
             acc' +
               (projectionCoeffPrefix b ((j + 1) + d) j hi
                 (Nat.lt_trans hj hi))[q] *
-              Matrix.dot (castIntRow b ⟨p, hp⟩)
+              Vector.dotProduct (castIntRow b ⟨p, hp⟩)
                 ((GramSchmidt.prefixRows (basis b) j (Nat.lt_trans hj hi)).row q)) 0 =
         (List.finRange (j + 1)).foldl
           (fun (acc' : Rat) (q : Fin (j + 1)) =>
@@ -1190,7 +1189,7 @@ private theorem dot_castIntRow_castIntRow_eq
     (by
       intro r hjr hrn
       show GramSchmidt.entry (coeffs b) ⟨(j + 1) + d, hi⟩ ⟨r, hrn⟩ *
-          Matrix.dot (castIntRow b ⟨p, hp⟩) ((basis b).row ⟨r, hrn⟩) = 0
+          Vector.dotProduct (castIntRow b ⟨p, hp⟩) ((basis b).row ⟨r, hrn⟩) = 0
       have hpr : p < r := Nat.lt_of_le_of_lt hp_le_j (Nat.lt_of_succ_le hjr)
       rw [dot_castIntRow_basis_eq_zero_of_lt b p r hp hrn hpr]
       grind)
@@ -1199,12 +1198,12 @@ private theorem dot_castIntRow_castIntRow_eq
 private theorem dot_basisPrefixProjection_eq_castIntGram
     (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i)
     (p : Fin (j + 1)) :
-    Matrix.dot
+    Vector.dotProduct
         (castIntRow b
           ⟨p.val, Nat.lt_of_lt_of_le p.isLt
             (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩)
         (basisPrefixProjection b i j hi (Nat.lt_trans hj hi)) =
-      ((Matrix.dot
+      ((Vector.dotProduct
           (b.row
             ⟨p.val, Nat.lt_of_lt_of_le p.isLt
               (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩)
@@ -1226,7 +1225,7 @@ private theorem scaledCoeffMatrix_replacementColumn_solve_intGram
         (GramSchmidt.leadingGramMatrixInt b (j + 1)
           (Nat.succ_le_of_lt (Nat.lt_trans hj hi))) *
         originalProjectionCoords b i j hi (Nat.lt_trans hj hi))[p] =
-      ((Matrix.dot
+      ((Vector.dotProduct
           (b.row
             ⟨p.val, Nat.lt_of_lt_of_le p.isLt
               (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩)
@@ -1266,7 +1265,7 @@ private theorem foldl_finRange_succ_isolate_last
 weighted by `(basis b).row j`'s squared norm. -/
 private theorem dot_basis_basisPrefixProjection_eq_coeff_mul_normSq
     (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
-    Matrix.dot ((basis b).row ⟨j, Nat.lt_trans hj hi⟩)
+    Vector.dotProduct ((basis b).row ⟨j, Nat.lt_trans hj hi⟩)
         (basisPrefixProjection b i j hi (Nat.lt_trans hj hi)) =
       GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ *
         Vector.normSq ((basis b).row ⟨j, Nat.lt_trans hj hi⟩) := by
@@ -1302,7 +1301,7 @@ private theorem dot_basis_basisPrefixProjection_eq_coeff_mul_normSq
 extracts the original-row coordinate, weighted by the squared norm. -/
 private theorem dot_basis_basisPrefixProjection_eq_origProjCoords_mul_normSq
     (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
-    Matrix.dot ((basis b).row ⟨j, Nat.lt_trans hj hi⟩)
+    Vector.dotProduct ((basis b).row ⟨j, Nat.lt_trans hj hi⟩)
         (basisPrefixProjection b i j hi (Nat.lt_trans hj hi)) =
       (originalProjectionCoords b i j hi (Nat.lt_trans hj hi))[Fin.last j] *
         Vector.normSq ((basis b).row ⟨j, Nat.lt_trans hj hi⟩) := by
@@ -1322,11 +1321,11 @@ private theorem dot_basis_basisPrefixProjection_eq_origProjCoords_mul_normSq
     rw [castIntRow_decomposition b j hjlt]
     rw [dot_add_right_rat]
     have hbasis_self :
-        Matrix.dot ((basis b).row ⟨j, hjlt⟩) ((basis b).row ⟨j, hjlt⟩) =
+        Vector.dotProduct ((basis b).row ⟨j, hjlt⟩) ((basis b).row ⟨j, hjlt⟩) =
           Vector.normSq ((basis b).row ⟨j, hjlt⟩) := rfl
     rw [hbasis_self]
     have hprefix :
-        Matrix.dot ((basis b).row ⟨j, hjlt⟩)
+        Vector.dotProduct ((basis b).row ⟨j, hjlt⟩)
             (GramSchmidt.prefixCombination (coeffs b) (basis b) j hjlt) = 0 := by
       apply dot_prefixCombination_right_eq_zero
         (coeffs := coeffs b) (basisM := basis b) (i := j) (hi := hjlt)

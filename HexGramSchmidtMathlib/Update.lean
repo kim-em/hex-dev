@@ -792,7 +792,7 @@ theorem bareiss_scaledCoeffMatrix_rowSwap_above_prev
     rw [h_succ, hgnp_k_eq,
         gramSchmidtNormProduct_succ b km1.val hkm1_succ_le]
   -- Basis orthogonality between curr and prev.
-  have horth : Matrix.dot curr prev = 0 :=
+  have horth : Vector.dotProduct curr prev = 0 :=
     basis_orthogonal b k.val km1.val k.isLt km1.isLt (by omega)
   -- New basis row at km1 of the swapped matrix.
   have hbasis_swap :
@@ -868,21 +868,21 @@ theorem bareiss_scaledCoeffMatrix_rowSwap_above_prev
     rw [hrow_b'_i]
     rfl
   -- Inner products of basis(b)[k] and basis(b)[km1] with cast(b.row i).
-  have hdotk : Matrix.dot curr
+  have hdotk : Vector.dotProduct curr
         (Vector.map (fun x : Int => (x : Rat)) (b.row i)) =
       GramSchmidt.entry (coeffs b) i k * Nk := by
     have h := dot_basis_castRow_eq_coeffs_mul_normSq b i.val k.val i.isLt hki
-    show Matrix.dot ((basis b).row ⟨k.val, k.isLt⟩) _ = _
+    show Vector.dotProduct ((basis b).row ⟨k.val, k.isLt⟩) _ = _
     rw [h]
-  have hdotkm1 : Matrix.dot prev
+  have hdotkm1 : Vector.dotProduct prev
         (Vector.map (fun x : Int => (x : Rat)) (b.row i)) =
       GramSchmidt.entry (coeffs b) i km1 * Nkm1 := by
     have h := dot_basis_castRow_eq_coeffs_mul_normSq b i.val km1.val i.isLt hkm1_lt_i
-    show Matrix.dot ((basis b).row ⟨km1.val, km1.isLt⟩) _ = _
+    show Vector.dotProduct ((basis b).row ⟨km1.val, km1.isLt⟩) _ = _
     rw [h]
   -- Inner product of basis(b')[km1] with cast(b'.row i) = c[i][k] * Nk + μ * c[i][km1] * Nkm1.
   have hdot_b'_km1 :
-      Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row km1)
+      Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row km1)
           (Vector.map (fun x : Int => (x : Rat)) ((Matrix.rowSwap b km1 k).row i)) =
         GramSchmidt.entry (coeffs b) i k * Nk +
           μ * (GramSchmidt.entry (coeffs b) i km1 * Nkm1) := by
@@ -903,7 +903,7 @@ theorem bareiss_scaledCoeffMatrix_rowSwap_above_prev
     have hcoeff_normSq :
         GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) i km1 *
           Vector.normSq ((basis (Matrix.rowSwap b km1 k)).row km1) =
-        Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row km1)
+        Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row km1)
           (Vector.map (fun x : Int => (x : Rat))
             ((Matrix.rowSwap b km1 k).row i)) := by
       have h := dot_basis_castRow_eq_coeffs_mul_normSq
@@ -1080,7 +1080,7 @@ theorem bareiss_scaledCoeffMatrix_rowSwap_above_curr
   -- Cramer dot product for b' at col k.
   have hcoeff_normSq :
       GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) i k * Nk' =
-      Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+      Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
         (Vector.map (fun x : Int => (x : Rat))
           ((Matrix.rowSwap b km1 k).row i)) := by
     have h := dot_basis_castRow_eq_coeffs_mul_normSq
@@ -1106,23 +1106,23 @@ theorem bareiss_scaledCoeffMatrix_rowSwap_above_curr
     rw [hrow_b'_i]
     rfl
   -- D = dot u_k prev, and dot u_k (cast b.row i) = D * (c[i][km1] - μ * c[i][k]).
-  set D : Rat := Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row km1)
+  set D : Rat := Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row km1)
     with hD_def
   have hdot_castb_i :
-      Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+      Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
           (Vector.map (fun x : Int => (x : Rat)) (b.row i)) =
         D * (GramSchmidt.entry (coeffs b) i km1 -
           μ * GramSchmidt.entry (coeffs b) i k) := by
     have h := dot_basis_rowSwap_curr_castRow_eq b km1 k hkm1 i hki
     -- The conclusion of dot_basis_rowSwap_curr_castRow_eq matches (modulo Fin equality).
-    show Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k)
+    show Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
         (Vector.map (fun x : Int => (x : Rat)) (b.row i)) =
-      Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row km1) *
+      Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row km1) *
         (GramSchmidt.entry (coeffs b) i km1 -
          μ * GramSchmidt.entry (coeffs b) i k)
     convert h using 2
   have hD_eq_normSq : D = Nk' := by
-    show Matrix.dot ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row km1) =
+    show Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row km1) =
       Vector.normSq ((basis (Matrix.rowSwap b km1 k)).row k)
     exact dot_basis_rowSwap_curr_prev_eq_normSq b km1 k hkm1
   -- Combine into a Cramer-style identity: c'[i][k] * Nk' = Nk' * (c[i][km1] - μ * c[i][k])

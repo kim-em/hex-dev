@@ -310,7 +310,7 @@ theorem rowCombination_getElem_eq_sum {n m : Nat}
     (Hex.Matrix.rowCombination M c)[k] = ∑ i : Fin n, M[i][k] * c[i] := by
   show (Hex.Matrix.transpose M * c)[k] = _
   rw [Hex.Matrix.mulVec_getElem]
-  unfold Hex.Matrix.dot Hex.Vector.dotProduct
+  unfold Hex.Vector.dotProduct
   rw [finRange_foldl_add_eq_sum
     (g := fun i : Fin n => (Hex.Matrix.row (Hex.Matrix.transpose M) k)[i] * c[i])]
   refine Finset.sum_congr rfl ?_

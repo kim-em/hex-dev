@@ -22,7 +22,7 @@ structure BareissGramRowInvariant (b : Matrix Int n m)
     (coeff i)[k] = 0
   entry_eq_dot : ∀ i j : Fin n, state.step ≤ i.val →
     state.matrix[i][j] =
-      Matrix.dot (Matrix.rowCombination b (coeff i)) (b.row j)
+      Vector.dotProduct (Matrix.rowCombination b (coeff i)) (b.row j)
 
 /-- The initial no-pivot Gram state satisfies the row-coefficient invariant
 with each row represented by the standard basis vector `eᵢ`. -/
@@ -46,7 +46,7 @@ def bareissGramRowInvariant_initial (b : Matrix Int n m) :
           b.row i :=
       Matrix.IsRREF.rowCombination_single (M := b) i
     rw [hsingle]
-    simp [Matrix.noPivotInitialState, Matrix.gramMatrix, Matrix.ofFn, Matrix.dot]
+    simp [Matrix.noPivotInitialState, Matrix.gramMatrix, Matrix.ofFn, Vector.dotProduct]
 
 /-- `foldl_sum_bareiss_row_update` pulls a Bareiss left row-update through a folded sum for later dot-product identities. -/
 private theorem foldl_sum_bareiss_row_update
@@ -72,9 +72,9 @@ private theorem foldl_sum_bareiss_row_update
 /-- `dot_bareiss_row_update_left` expands the dot product of a Bareiss-updated left vector as the corresponding linear combination of dots. -/
 private theorem dot_bareiss_row_update_left
     (x y : Int) (u v w : Vector Int m) :
-    Matrix.dot (Vector.ofFn fun a : Fin m => x * u[a] - y * v[a]) w =
-      x * Matrix.dot u w - y * Matrix.dot v w := by
-  unfold Matrix.dot Hex.Vector.dotProduct
+    Vector.dotProduct (Vector.ofFn fun a : Fin m => x * u[a] - y * v[a]) w =
+      x * Vector.dotProduct u w - y * Vector.dotProduct v w := by
+  unfold Vector.dotProduct
   simpa using
     foldl_sum_bareiss_row_update
       (xs := List.finRange m) x y
@@ -107,9 +107,9 @@ private theorem foldl_sum_bareiss_row_update_right
 /-- `dot_bareiss_row_update_right` expands the dot product with a Bareiss-updated right vector as the corresponding linear combination of dots. -/
 private theorem dot_bareiss_row_update_right
     (x y : Int) (w u v : Vector Int m) :
-    Matrix.dot w (Vector.ofFn fun a : Fin m => x * u[a] - y * v[a]) =
-      x * Matrix.dot w u - y * Matrix.dot w v := by
-  unfold Matrix.dot Hex.Vector.dotProduct
+    Vector.dotProduct w (Vector.ofFn fun a : Fin m => x * u[a] - y * v[a]) =
+      x * Vector.dotProduct w u - y * Vector.dotProduct w v := by
+  unfold Vector.dotProduct
   simpa using
     foldl_sum_bareiss_row_update_right
       (xs := List.finRange m) x y
@@ -179,11 +179,11 @@ private theorem dot_rowCombination_exactDiv_eq_of_eq_mul_right
     (M : Matrix Int n m) {denom : Int} (hdenom : denom ≠ 0)
     (num q : Fin n → Int) (hnum : ∀ a : Fin n, num a = q a * denom)
     (w : Vector Int m) :
-    Matrix.dot
+    Vector.dotProduct
         (Matrix.rowCombination M
           (Vector.ofFn fun a : Fin n => Matrix.exactDiv (num a) denom))
         w =
-      Matrix.dot (Matrix.rowCombination M (Vector.ofFn q)) w := by
+      Vector.dotProduct (Matrix.rowCombination M (Vector.ofFn q)) w := by
   rw [rowCombination_exactDiv_eq_of_eq_mul_right M hdenom num q hnum]
 
 /-- Project the explicit coefficient witness for the row at index `i`. -/
@@ -467,9 +467,9 @@ to factor the Bareiss exact-division denominator out of a quotient-backed row
 combination. -/
 private theorem dot_rowCombination_mul_right_int
     (b : Matrix Int n m) (f : Fin n → Int) (s : Int) (w : Vector Int m) :
-    Matrix.dot
+    Vector.dotProduct
         (Matrix.rowCombination b (Vector.ofFn fun a : Fin n => f a * s)) w =
-      Matrix.dot (Matrix.rowCombination b (Vector.ofFn f)) w * s := by
+      Vector.dotProduct (Matrix.rowCombination b (Vector.ofFn f)) w * s := by
   have h_eq_input :
       (Vector.ofFn fun a : Fin n => f a * s) =
         Vector.ofFn fun a : Fin n =>
@@ -504,7 +504,7 @@ private theorem bareissGramRegularStep_entry_eq_dot
     (j : Fin n) :
     (Matrix.stepMatrix state.matrix state.step
         state.matrix[state.step][state.step] state.prevPivot)[i][j] =
-      Matrix.dot
+      Vector.dotProduct
         (Matrix.rowCombination b
           (bareissGramRowInvariantStepCoeff hinv hnext i hi))
         (b.row j) := by
@@ -520,7 +520,7 @@ private theorem bareissGramRegularStep_entry_eq_dot
         state.matrix[i][k] * state.matrix[k][j] := rfl
   -- Claim A: the dot product of the "numerator-side" row combination is lhsNum.
   have h_dot_num :
-      Matrix.dot
+      Vector.dotProduct
           (Matrix.rowCombination b
             (Vector.ofFn fun a : Fin n =>
               state.matrix[k][k] * (hinv.coeff i)[a] -
@@ -538,7 +538,7 @@ private theorem bareissGramRegularStep_entry_eq_dot
   -- Claim B: the dot product of the step coefficient row combination equals
   -- `exactDiv lhsNum prevPivot`.
   have h_dot_step :
-      Matrix.dot
+      Vector.dotProduct
           (Matrix.rowCombination b
             (bareissGramRowInvariantStepCoeff hinv hnext i hi))
           (b.row j) = Matrix.exactDiv lhsNum state.prevPivot := by
@@ -608,7 +608,7 @@ def bareissGramRowInvariant_regular_step
       ∀ i j : Fin n, (hi : state.step + 1 ≤ i.val) →
         (Matrix.stepMatrix state.matrix state.step
             state.matrix[state.step][state.step] state.prevPivot)[i][j] =
-          Matrix.dot
+          Vector.dotProduct
             (Matrix.rowCombination b
               (bareissGramRowInvariantStepCoeff hinv hnext i hi))
             (b.row j)) :
@@ -671,7 +671,7 @@ theorem bareissGramRowInvariant_regular_step_coeff_canonical
                 (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step]
           (Matrix.noPivotLoop elapsed
             (Matrix.noPivotInitialState (Matrix.gramMatrix b))).prevPivot)[i][j] =
-          Matrix.dot
+          Vector.dotProduct
             (Matrix.rowCombination b
               (bareissGramRowInvariantStepCoeff hinv hnext i hi))
             (b.row j))
@@ -869,7 +869,7 @@ private theorem bareissGramInitialRegularStep_entry_eq_dot
               (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step]
         (Matrix.noPivotLoop fuel
           (Matrix.noPivotInitialState (Matrix.gramMatrix b))).prevPivot)[i][j] =
-      Matrix.dot
+      Vector.dotProduct
         (Matrix.rowCombination b
           (bareissGramRowInvariantStepCoeff hinv hnext i hi))
         (b.row j) := by

@@ -4,11 +4,15 @@ import HexMatrix.RREF
 /-!
 Core conformance checks for `hex-matrix`.
 
+Run this file through the conformance Lake target (`lake build
+HexMatrixConformance` from `conformance/`), not direct `lake env lean`: the
+Bareiss guards need the native code generated for `Matrix.exactDiv`.
+
 Oracle: none
 Mode: always
 Covered operations:
-- dense matrix constructors and accessors (`ofFn`, `row`, `col`, `transpose`, `submatrix`)
-- vector and matrix arithmetic (`dot`, `normSq`, `mulVec`, `mul`, `gramMatrix`)
+- dense matrix constructors and accessors (`ofFn`, `row`, `col`, `transpose`, `leadingSubmatrix`)
+- vector and matrix arithmetic (`dotProduct`, `Hex.Vector.normSq`, `mulVec`, `mul`, `gramMatrix`)
 - elementary row operations (`rowSwap`, `rowScale`, `rowAdd`)
 - determinant APIs (`det`, `bareiss`, `bareissData`)
 - row reduction and span APIs (`rref`, `spanCoeffs`, `spanContains`)
@@ -159,10 +163,10 @@ private def emptyNullspace : Vector (Vector Rat 2) 0 :=
 
 #guard Matrix.row baseInt ⟨1, by decide⟩ = rowOneInt
 #guard Matrix.col baseInt ⟨0, by decide⟩ = colZeroInt
-#guard Matrix.submatrix baseInt ⟨0, by decide⟩ = unitSubmatrix
-#guard Matrix.submatrix baseInt ⟨1, by decide⟩ = baseInt
-#guard Matrix.intNormSq vecInt = 61
-#guard Matrix.ratNormSq spanVec = 14
+#guard Matrix.leadingSubmatrix baseInt ⟨0, by decide⟩ = unitSubmatrix
+#guard Matrix.leadingSubmatrix baseInt ⟨1, by decide⟩ = baseInt
+#guard Hex.Vector.normSq vecInt = 61
+#guard Hex.Vector.normSq spanVec = 14
 #guard Matrix.gramMatrix baseInt = baseGramInt
 #guard (1 : Matrix Int 2 2) * baseInt = baseInt
 #guard baseInt * (1 : Matrix Int 2 2) = baseInt

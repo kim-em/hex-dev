@@ -636,7 +636,7 @@ The verified-Isabelle Haskell extraction reports the same scalar. Runs the
 default native path (`lll.firstShortVectorUnchecked`, the approximation-steered
 reducer with certified output). -/
 def runFirstShortVectorNormSq (input : FirstShortVectorInput) : Int :=
-  Vector.intNormSq
+  Vector.normSq
     (lll.firstShortVectorUnchecked input.basis (3 / 4)
       lllDeltaLower lllDeltaUpper input.hn)
 
@@ -646,7 +646,7 @@ fplll-independent exact integer reducer that the steered path demotes to its
 certification fallback; measuring it directly keeps the exact-native curve of
 the comparator plot independent of the steered default. -/
 def runNativeFirstShortVectorNormSq (input : FirstShortVectorInput) : Int :=
-  Vector.intNormSq
+  Vector.normSq
     ((lllNative input.basis (3 / 4) lllDeltaLower lllDeltaUpper input.hn).row
       ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one input.hn⟩)
 

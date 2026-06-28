@@ -1061,7 +1061,7 @@ theorem rowCombination_coeffs_apply_eq_of_zero_above
             (fun acc i => acc + (coeffs b)[i][k] * castc[i]) 0 := by
     show ((coeffs b).transpose * castc)[k] = _
     rw [Matrix.mulVec_getElem]
-    show Matrix.dot (((coeffs b).transpose).row k) castc = _
+    show Vector.dotProduct (((coeffs b).transpose).row k) castc = _
     show (List.finRange n).foldl
         (fun acc i =>
           acc + (((coeffs b).transpose).row k)[i] * castc[i]) 0 = _

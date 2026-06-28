@@ -19,7 +19,7 @@ def liftFinLE (i : Fin k) (hk : k ≤ n) : Fin n :=
 @[expose]
 def leadingGramMatrixInt (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) : Matrix Int k k :=
   Matrix.ofFn fun i j =>
-    Matrix.dot (b.row (liftFinLE i hk)) (b.row (liftFinLE j hk))
+    Vector.dotProduct (b.row (liftFinLE i hk)) (b.row (liftFinLE j hk))
 
 /-- The Gram-Schmidt leading Gram matrix is the leading prefix of the full
 Gram matrix. This is the shape equation between the public `gramDet` API and
@@ -32,14 +32,14 @@ theorem leadingGramMatrixInt_eq_leadingPrefix_gram
   intro i hi
   apply Vector.ext
   intro j hj
-  simp [leadingGramMatrixInt, Matrix.leadingPrefix, Matrix.gramMatrix, Matrix.dot, Matrix.ofFn,
+  simp [leadingGramMatrixInt, Matrix.leadingPrefix, Matrix.gramMatrix, Vector.dotProduct, Matrix.ofFn,
     liftFinLE]
 
 /-- Leading principal Gram matrix of the first `k` rows of a rational basis. -/
 @[expose]
 def leadingGramMatrixRat (b : Matrix Rat n m) (k : Nat) (hk : k ≤ n) : Matrix Rat k k :=
   Matrix.ofFn fun i j =>
-    Matrix.dot (b.row (liftFinLE i hk)) (b.row (liftFinLE j hk))
+    Vector.dotProduct (b.row (liftFinLE i hk)) (b.row (liftFinLE j hk))
 
 /-- Determinant matrix used by the integral `scaledCoeffs` entry formula:
 take the leading `j + 1` Gram matrix and replace its last column by the inner
@@ -51,10 +51,10 @@ def scaledCoeffMatrix (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) :
   Matrix.ofFn fun p q =>
     let p' := liftFinLE p hk
     if q.val = j.val then
-      Matrix.dot (b.row p') (b.row i)
+      Vector.dotProduct (b.row p') (b.row i)
     else
       let q' := liftFinLE q hk
-      Matrix.dot (b.row p') (b.row q')
+      Vector.dotProduct (b.row p') (b.row q')
 
 end GramSchmidt
 
@@ -156,13 +156,13 @@ def zeroRows (n : Nat) : Array (Array Int) :=
 def gramRows (b : Matrix Int n m) : Array (Array Int) :=
   Array.ofFn fun i : Fin n =>
     Array.ofFn fun j : Fin n =>
-      Matrix.dot (b.row i) (b.row j)
+      Vector.dotProduct (b.row i) (b.row j)
 
 /-- Reading entry `(i, j)` of `gramRows b` recovers the Gram matrix entry
 `(gramMatrix b)[i][j]`. -/
 private theorem getArrayEntry_gramRows (b : Matrix Int n m) (i j : Fin n) :
     getArrayEntry (gramRows b) i.val j.val = (Matrix.gramMatrix b)[i][j] := by
-  simp [getArrayEntry, gramRows, Matrix.gramMatrix, Matrix.dot, Matrix.ofFn]
+  simp [getArrayEntry, gramRows, Matrix.gramMatrix, Vector.dotProduct, Matrix.ofFn]
 
 /-- Reconstruct an `n × n` integer matrix from a row-major nested array, reading
 entry `(i, j)` as `rows[i]![j]!` (`getArrayEntry`). This converts the executable

@@ -26,11 +26,11 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
   have hM_colReplace :
       castIntDetMatrix
           (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, hjlt⟩ hj) =
-        Matrix.colReplace
+        Matrix.setCol
           (castIntDetMatrix (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))
           (⟨j, Nat.lt_succ_self j⟩ : Fin (j + 1))
           (fun p : Fin (j + 1) =>
-            Matrix.dot
+            Vector.dotProduct
               (castIntRow b ⟨p.val, Nat.lt_of_lt_of_le p.isLt hjsuc⟩)
               (castIntRow b ⟨i, hi⟩)) := by
     apply Vector.ext
@@ -42,14 +42,14 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
     change
       (castIntDetMatrix
           (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, hjlt⟩ hj))[pp][cc] =
-        (Matrix.colReplace _ _ _)[pp][cc]
-    rw [Matrix.colReplace_get, castIntDetMatrix_get]
+        (Matrix.setCol _ _ _)[pp][cc]
+    rw [Matrix.setCol_getElem, castIntDetMatrix_get]
     by_cases hc_eq : cc = (⟨j, Nat.lt_succ_self j⟩ : Fin (j + 1))
     · rw [if_pos hc_eq]
       have hc_val : cc.val = j := congrArg Fin.val hc_eq
       have hsc :
           (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, hjlt⟩ hj)[pp][cc] =
-            Matrix.dot
+            Vector.dotProduct
               (b.row ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt hjsuc⟩)
               (b.row ⟨i, hi⟩) := by
         simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn,
@@ -59,14 +59,14 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
       have hc_ne : cc.val ≠ j := fun h => hc_eq (Fin.ext h)
       have hsc :
           (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, hjlt⟩ hj)[pp][cc] =
-            Matrix.dot
+            Vector.dotProduct
               (b.row ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt hjsuc⟩)
               (b.row ⟨cc.val, Nat.lt_of_lt_of_le cc.isLt hjsuc⟩) := by
         simp [GramSchmidt.scaledCoeffMatrix, Matrix.ofFn,
           GramSchmidt.liftFinLE, hc_ne]
       have hG :
           (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc)[pp][cc] =
-            Matrix.dot
+            Vector.dotProduct
               (b.row ⟨pp.val, Nat.lt_of_lt_of_le pp.isLt hjsuc⟩)
               (b.row ⟨cc.val, Nat.lt_of_lt_of_le cc.isLt hjsuc⟩) := by
         simp [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn,
@@ -76,7 +76,7 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
   -- Step 2: rewrite the replacement column as `castG * originalProjectionCoords`.
   have hcol_lin_comb :
       (fun p : Fin (j + 1) =>
-        Matrix.dot
+        Vector.dotProduct
           (castIntRow b ⟨p.val, Nat.lt_of_lt_of_le p.isLt hjsuc⟩)
           (castIntRow b ⟨i, hi⟩)) =
       (fun p : Fin (j + 1) =>
@@ -101,35 +101,35 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
     unfold Matrix.mulVec Matrix.row
     have hleft :
         (Vector.ofFn fun i' : Fin (j + 1) =>
-            Matrix.dot
+            Vector.dotProduct
               (castIntDetMatrix
                 (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))[i']
               (originalProjectionCoords b i j hi hjlt))[p] =
-          Matrix.dot
+          Vector.dotProduct
             (castIntDetMatrix
               (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))[p]
             (originalProjectionCoords b i j hi hjlt) := by
       simp [Vector.getElem_ofFn]
     rw [hleft]
-    unfold Matrix.dot Hex.Vector.dotProduct
+    unfold Vector.dotProduct
     apply foldl_sum_congr_simple
     intro q _hq
     grind
   rw [hcol_lin_comb]
-  -- Step 3: apply det_colReplace_sum_finRange.
-  rw [Matrix.det_colReplace_sum_finRange]
+  -- Step 3: apply det_setCol_sum_finRange.
+  rw [Matrix.det_setCol_sum_finRange]
   -- Step 4: isolate the q = ⟨j, _⟩ term.
   rw [foldl_finRange_succ_isolate_last j _ ?_]
   · -- Last term: origProjCoords[⟨j, _⟩] * det castG.
     have hlast_self :
-        Matrix.colReplace
+        Matrix.setCol
             (castIntDetMatrix (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))
             (⟨j, Nat.lt_succ_self j⟩ : Fin (j + 1))
             (fun p : Fin (j + 1) =>
               (castIntDetMatrix
                 (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))[p][Fin.last j]) =
           castIntDetMatrix (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc) :=
-      Matrix.colReplace_self _ _
+      Matrix.setCol_self _ _
     rw [hlast_self]
     -- det castG = (gramDet (j+1) : Rat).
     have hdetG :
@@ -192,7 +192,7 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
         q ≠ (⟨j, Nat.lt_succ_self j⟩ : Fin (j + 1)) := by
       intro h
       exact Nat.ne_of_lt hqval (congrArg Fin.val h)
-    rw [Matrix.det_colReplace_existing_col_eq_zero _ _ _ hq_ne]
+    rw [Matrix.det_setCol_existing_col_eq_zero _ _ _ hq_ne]
     grind
 
 /-- Substitution helper for the diagonal `(i, i)` matrix entry under a Fin
