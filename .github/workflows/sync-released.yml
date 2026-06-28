@@ -1,0 +1,44 @@
+name: Sync released repos
+
+# Publish-out sync: regenerate the released split repos from this monorepo
+# (scripts/release/released.yml + scripts/release/sync_released.py).
+#
+# Manual-only for now, defaulting to a dry run. A real sync OVERWRITES the
+# managed paths in each released repo and rewrites their cross-repo Lake pins,
+# so it must only be run once the monorepo content is known to be at or ahead of
+# every released repo's `main` (otherwise it would delete released-only work).
+# Flip `dry_run` to false — and, once trusted, add an `on: push` trigger — after
+# that invariant holds and the `RELEASED_SYNC_PAT` secret is configured.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (print planned changes; do not push)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: sync-released
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 -m pip install --user pyyaml
+      - name: Sync released repos
+        env:
+          RELEASED_SYNC_PAT: ${{ secrets.RELEASED_SYNC_PAT }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "false" ]; then
+            python3 scripts/release/sync_released.py
+          else
+            python3 scripts/release/sync_released.py --dry-run
+          fi
