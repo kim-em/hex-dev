@@ -143,31 +143,34 @@ lands with it. Concretely:
   the Mathlib-free trio. A runtime `product = f` certificate is
   necessary-not-sufficient, so it **cannot** restore irreducibility.
 
-**Banked already (#8398):** `factorHybrid` is self-certifying and
-`factorHybrid_product` is proven — the product half of the headline, no swap.
+**Banked already:**
+- **#8398:** `factorHybrid` is self-certifying (accepts a tier's result only when
+  `Factorization.product φ = f`, else the proven trial backstop) and
+  `factorHybrid_product` is proven. **This already discharges the product half** of
+  the headline — so the swap's remaining critical path is *irreducibility*, not product.
+- **#8401:** `scaledRecombinationSmart*` converted from `partial def` to structurally
+  recursive (explicit `fuel`, behavior-identical), and its reconstruction proved
+  (`scaledRecombinationSmart{Aux,SizeLoop,CandLoop}_product`). A `partial def` exposed
+  no equation lemmas; this is what makes *any* classical-tier proof possible.
 
-**Capstone steps (in order):**
+**Capstone steps remaining (in order):**
 
-1. **Make `scaledRecombinationSmart*` provable.** It is a 3-way mutual `partial def`
-   (`Aux`/`SizeLoop`/`CandLoop`, Basic.lean ~7771-7815) with **zero** lemmas. The
-   proven analog `scaledRecombinationSearchModAux` (~7714) is a fuel-indexed
-   structural `def` proved by `induction fuel`. Add an explicit fuel parameter
-   (mirror searchMod; behavior-preserving) or a lexicographic `termination_by` on
-   (budget, list-being-processed). Fuel is the safe route.
-2. **Mirror searchMod's suite** for the smart core: `_product` (template at
-   `scaledRecombinationSearchModAux_product` ~12481), `_normalizeFactorSign`,
-   `_primitive`, `_shouldRecord` (~12369-12387). The reconstruction invariant is
-   identical (record `candidate` only when `exactQuotient? target candidate = some
-   quotient`, recurse on quotient).
-3. **`factorClassical_product` + entry invariants** (via `factorizationOfFactors_*`).
-4. **`factorLattice` product + entries** — reuse `factorFastCoreWithBound_product`
-   and the exhaustive-branch irreducibility apparatus.
-5. **Swap `factor := factorHybrid`; re-point both layers.** Mathlib-free: product via
-   `factorHybrid_product`; entries via a one-time `factorHybrid f = factorizationOfFactors f (factorHybridFactors f)` bridge. Mathlib: `factor_product`, entries-irreducible, FactorSoundness.
-6. **Gates + cleanup.** `Conformance.lean` expectations (references `factorWithBound`/
-   `factor`), `EmitFixtures` (already routes through `factor`), baselines; full gate
-   green. Retire the cap-based combinator **from the public path only** — keep the
-   `factorWithBound`/`factorFast` defs (the lattice tier and ~dozens of proofs use them).
+1. ~~Make `scaledRecombinationSmart*` provable~~ — done (#8401).
+2. ~~Prove the smart-core reconstruction~~ — done (#8401). (The other searchMod-suite
+   lemmas — `_normalizeFactorSign`/`_primitive`/`_shouldRecord` — come from the shared
+   `factorizationOfFactors` filter, not the loop, so they re-point structurally.)
+3. **Classical-tier per-factor irreducibility** — the genuinely hard remaining proof.
+   Mirror the `factorWithBound_entries_irreducible` apparatus (the #7738 Hensel-subset
+   correspondence in IntReductionMod / PartitionRefinement) for the smart core, building
+   on the #8401 reconstruction. This is what the runtime product certificate cannot give.
+4. **Swap `factor := factorHybrid`; re-point both layers.** Mathlib-free: `factor_product`
+   via `factorHybrid_product`; `factor_entry_*` via a one-time `factorHybrid f =
+   factorizationOfFactors f (factorHybridFactors f)` bridge. Mathlib: `factor_product`,
+   entries-irreducible (from step 3), `FactorSoundness`.
+5. **Gates + cleanup.** `Conformance.lean` expectations, `EmitFixtures` (already routes
+   through `factor`), baselines; full gate green. Retire the cap-based combinator **from
+   the public path only** — keep the `factorWithBound`/`factorFast` defs (the lattice tier
+   and ~dozens of proofs use them).
 
 ---
 
@@ -220,6 +223,9 @@ lands with it. Concretely:
   directive's up-front cost estimator: classical declines cheaply, lattice grinds.)
 - **#8398:** self-certifying hybrid + `factorHybrid_product` (product preservation
   proven unconditionally, no public swap).
+- **#8401:** `scaledRecombinationSmart*` made structurally recursive (drop `partial`,
+  explicit `fuel`, behavior-identical) + reconstruction proved — the classical-tier
+  capstone foundation (steps 1-2).
 
 ---
 
