@@ -156,6 +156,25 @@ lean_lib HexGF2BenchSupport where
   srcDir := "bench"
   globs := #[`HexGF2.Bench]
 
+-- Conformance #guard drivers live under `conformance/` and are built by this
+-- library (mirroring the released conformance sub-projects). EmitFixtures drivers
+-- are the `*_emit_fixtures` exes below, carrying `srcDir := "conformance"`.
+lean_lib HexConformance where
+  srcDir := "conformance"
+  globs := #[`HexArith.Conformance, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexConway.Conformance, `HexGF2.Conformance, `HexGFq.Conformance, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexModArith.Conformance, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance]
+
+lean_exe hexmatrix_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexMatrix.EmitFixtures
+
+lean_exe hexgramschmidt_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexGramSchmidt.EmitFixtures
+
+lean_exe hexlll_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexLLL.EmitFixtures
+
 lean_exe hexmatrix_bench where
   srcDir := "bench"
   root := `HexMatrix.Bench
@@ -186,15 +205,19 @@ lean_exe hexpoly_bench where
   root := `HexPoly.Bench
 
 lean_exe hexpoly_emit_fixtures where
+  srcDir := "conformance"
   root := `HexPoly.EmitFixtures
 
 lean_exe hexpolyfp_emit_fixtures where
+  srcDir := "conformance"
   root := `HexPolyFp.EmitFixtures
 
 lean_exe hexberlekamp_emit_fixtures where
+  srcDir := "conformance"
   root := `HexBerlekamp.EmitFixtures
 
 lean_exe hexbz_emit_fixtures where
+  srcDir := "conformance"
   root := `HexBerlekampZassenhaus.EmitFixtures
 
 lean_exe hexbz_bench where
@@ -202,21 +225,27 @@ lean_exe hexbz_bench where
   root := `HexBerlekampZassenhaus.Bench
 
 lean_exe hexgfq_emit_fixtures where
+  srcDir := "conformance"
   root := `HexGFq.EmitFixtures
 
 lean_exe hexgf2_emit_fixtures where
+  srcDir := "conformance"
   root := `HexGF2.EmitFixtures
 
 lean_exe hexhensel_emit_fixtures where
+  srcDir := "conformance"
   root := `HexHensel.EmitFixtures
 
 lean_exe hexconway_emit_fixtures where
+  srcDir := "conformance"
   root := `HexConway.EmitFixtures
 
 lean_exe hexgfqring_emit_fixtures where
+  srcDir := "conformance"
   root := `HexGFqRing.EmitFixtures
 
 lean_exe hexgfqfield_emit_fixtures where
+  srcDir := "conformance"
   root := `HexGFqField.EmitFixtures
 
 lean_exe hexpolyz_bench where
@@ -224,6 +253,7 @@ lean_exe hexpolyz_bench where
   root := `HexPolyZ.Bench
 
 lean_exe hexpolyz_emit_fixtures where
+  srcDir := "conformance"
   root := `HexPolyZ.EmitFixtures
 
 lean_exe hexmodarith_bench where

@@ -1,5 +1,4 @@
 import HexGFq.Basic
-import HexGFq.Conformance
 import HexGFq.CrossCheck
 
 /-!

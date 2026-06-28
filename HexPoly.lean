@@ -1,5 +1,4 @@
 import HexPoly.Dense
-import HexPoly.Conformance
 import HexPoly.Euclid
 import HexPoly.Operations
 

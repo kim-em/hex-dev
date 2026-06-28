@@ -8,7 +8,6 @@ import HexPolyFp.SquareFree
 import HexPolyFp.ModCompose
 import HexPolyFp.Quotient
 import HexPolyFp.QuotientFrobenius
-import HexPolyFp.Conformance
 
 /-!
 `HexPolyFp` specializes the executable dense-polynomial API to
