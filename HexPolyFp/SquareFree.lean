@@ -1073,7 +1073,7 @@ private theorem zmod64_coprime_of_prime_ne_zero
         apply ha
         apply ZMod64.ext
         apply UInt64.toNat_inj.mp
-        simpa [ZMod64.toNat_eq_val] using hnat
+        exact hnat
       · exact Nat.pos_of_ne_zero hnat
     have hk_pos : 0 < k := by
       cases k with
@@ -1101,7 +1101,7 @@ private theorem zmod64_mul_inv_eq_one_of_prime_ne_zero
     a * a⁻¹ = 1 := by
   have hcop := zmod64_coprime_of_prime_ne_zero hp ha
   have hinv : (a⁻¹ * a).toNat = (1 : ZMod64 p).toNat := by
-    simpa [ZMod64.toNat_one] using ZMod64.inv_mul_eq_one (p := p) a hcop
+    exact ZMod64.inv_mul_eq_one (p := p) a hcop
   have hcomm : a * a⁻¹ = a⁻¹ * a := by grind
   rw [hcomm]
   apply ZMod64.ext
@@ -1468,7 +1468,8 @@ private theorem coeff_zero_ne_zero_of_size_one
     f.coeff 0 ≠ 0 := by
   have hpos : 0 < f.size := by omega
   have hlast := DensePoly.coeff_last_ne_zero_of_pos_size f hpos
-  simpa [hsize] using hlast
+  rw [hsize] at hlast
+  exact hlast
 
 /--
 The size of `(1 : FpPoly p)` is one (its coefficient array stores `[1]`).
@@ -1957,7 +1958,7 @@ private theorem div_zero_eq_zero (f : FpPoly p) :
     f / (0 : FpPoly p) = 0 := by
   have hpair :=
     DensePoly.divMod_eq_zero_self_of_size_zero_core f (0 : FpPoly p) (by simp)
-  simpa [DensePoly.div] using congrArg Prod.fst hpair
+  exact congrArg Prod.fst hpair
 
 /-- `div_zero_C_mul_left` shows constant scaling commutes with division by the
 zero polynomial on the left input `c` when `gcd c w` vanishes. -/
@@ -2215,15 +2216,18 @@ private theorem derivative_coeff_pred_of_pos_lt
           (((n - 1 + 1 : Nat) : ZMod64 p) * f.coeff (n - 1 + 1)) := by
     simp [List.getD, hpred]
   have hsucc : n - 1 + 1 = n := by omega
-  simpa [hsucc] using hget
+  rw [hsucc] at hget
+  exact hget
 
 private theorem zmod64_natCast_ne_zero_of_mod_ne_zero
     (n : Nat) (hn : n % p ≠ 0) :
     ((n : Nat) : ZMod64 p) ≠ 0 := by
   intro hzero
   apply hn
-  have hnat := congrArg ZMod64.toNat hzero
-  simpa using hnat
+  have hnat : (ZMod64.natCast p n).toNat = (0 : ZMod64 p).toNat :=
+    congrArg ZMod64.toNat hzero
+  rw [ZMod64.toNat_natCast] at hnat
+  exact hnat
 
 private theorem derivative_zero_coeff_non_pmultiple
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (n : Nat)
@@ -4044,7 +4048,7 @@ private theorem derivative_degree?_lt_self_of_ne_zero
   let n := (DensePoly.derivative f).size - 1
   have hlast :
       (DensePoly.derivative f).coeff n ≠ 0 := by
-    simpa [n] using
+    exact
       DensePoly.coeff_last_ne_zero_of_pos_size (DensePoly.derivative f) hder_pos
   have hn_lt : n + 1 < f.size := by
     by_cases hlt : n + 1 < f.size
@@ -4207,7 +4211,8 @@ private theorem dvd_one_of_all_powers_dvd_nonzero
     omega
   have hcoeff_ne : d.coeff 0 ≠ 0 := by
     have hlast := DensePoly.coeff_last_ne_zero_of_pos_size d hd_size_pos
-    simpa [hd_size_one] using hlast
+    rw [hd_size_one] at hlast
+    exact hlast
   have hd_const : d = DensePoly.C (d.coeff 0) := by
     apply DensePoly.ext_coeff
     intro n
@@ -4671,7 +4676,7 @@ private theorem normalizeMonic_derivative_zero_of_derivative_zero
       have h := congrArg (fun g : FpPoly p => g.coeff n) hderiv_zero
       change (DensePoly.derivative f).coeff n = (0 : FpPoly p).coeff n at h
       rw [coeff_derivative, DensePoly.coeff_zero] at h
-      simpa using h
+      exact h
     change
       (DensePoly.derivative
           (DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f)).coeff n =
@@ -6870,7 +6875,7 @@ private theorem yunFactorsWithLevel_factors_coprime_repeated_of_reachable
                 a { factor := tail.2, multiplicity := base * (level + 1) * p } := by
           simpa [tail] using ih y (w / y) (level + 1) htail_reachable
         by_cases hz : isOne z
-        · simpa [y, z, tail, hz] using htail_cross
+        · simpa [y, z, tail, hz, squareFreeFactorCoprimeRel] using htail_cross
         · have hrev :
               (yunFactorsWithLevel y (w / y) base (level + 1) fuel [sf]).1.reverse =
                 [sf] ++ tail.1.reverse := by

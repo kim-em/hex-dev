@@ -1507,7 +1507,9 @@ private theorem quadraticHenselStep_bezout_error_from_factor_update
         (addModSquare (mulModSquare s g' m) (mulModSquare t h' m) m) 1
         (s * g + t * h) 1 m haddInner (ZPoly.congr_refl 1 m))
   have htarget : ZPoly.congr (s * g + t * h - 1) 0 m := by
-    simpa using congr_sub (s * g + t * h) 1 1 1 m hbez (ZPoly.congr_refl 1 m)
+    have key := congr_sub (s * g + t * h) 1 1 1 m hbez (ZPoly.congr_refl 1 m)
+    rw [sub_self_eq_zero] at key
+    exact key
   exact ZPoly.congr_trans b (s * g + t * h - 1) 0 m hbToError htarget
 
 private theorem quadraticHenselStep_bezout_correction_congr_core

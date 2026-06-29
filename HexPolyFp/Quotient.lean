@@ -1029,7 +1029,7 @@ theorem mul_inv_cancel (hg_irr : FpPoly.Irreducible g)
     apply ha
     apply ext
     change a.val = (0 : Quotient g hmonic hg_pos).val
-    simpa [zero, reduce_val_eq_mod, hval] using
+    simpa [zero, reduce_val_eq_mod, hval, FpPoly.modByMonic] using
       (DensePoly.modByMonic_zero g hmonic).symm
   apply ext
   change (a * inv (g := g) (hmonic := hmonic) (hg_pos := hg_pos) a).val =
@@ -2319,8 +2319,7 @@ theorem mul_left_injective (hg_irr : FpPoly.Irreducible g)
     {a : Quotient g hmonic hg_pos} (ha : a ≠ 0)
     {b₁ b₂ : Quotient g hmonic hg_pos} (heq : a * b₁ = a * b₂) :
     b₁ = b₂ := by
-  have h := congrArg (fun x => a⁻¹ * x) heq
-  dsimp at h
+  have h : a⁻¹ * (a * b₁) = a⁻¹ * (a * b₂) := congrArg (fun x => a⁻¹ * x) heq
   rw [← mul_assoc, ← mul_assoc, inv_mul_cancel hg_irr ha, one_mul, one_mul] at h
   exact h
 
