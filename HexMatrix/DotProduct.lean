@@ -106,10 +106,10 @@ theorem dotProduct_add_left {R : Type u} [Lean.Grind.Ring R]
     rw [hentry]
     grind
 
-/-- Dot product is homogeneous in a pointwise left scalar multiple. -/
-theorem dotProduct_mul_left {R : Type u} [Lean.Grind.Ring R]
+/-- Dot product is homogeneous in its left argument. -/
+theorem dotProduct_smul_left {R : Type u} [Lean.Grind.Ring R]
     (c : R) (u w : Vector R n) :
-    dotProduct (Vector.ofFn fun i => c * u[i]) w = c * dotProduct u w := by
+    dotProduct (c • u) w = c * dotProduct u w := by
   unfold dotProduct
   rw [foldl_sum_mul_left_aux (xs := List.finRange n)
         (f := fun i => u[i] * w[i]) (c := c) (acc := 0)]
@@ -118,8 +118,10 @@ theorem dotProduct_mul_left {R : Type u} [Lean.Grind.Ring R]
   rw [hzero]
   apply foldl_sum_congr_aux
   intro i _
-  have hentry : (Vector.ofFn (fun i : Fin n => c * u[i]))[i] = c * u[i] := by
-    simp
+  -- `getElem_smul` rewrites the entry to `c • u[i]`, which is defeq to `c * u[i]`
+  -- for the scalar action on the coefficient ring.
+  have hentry : (c • u)[i] = c * u[i] := by
+    simp only [Fin.getElem_fin, Vector.getElem_smul]; rfl
   rw [hentry]
   exact Lean.Grind.Semiring.mul_assoc c u[i] w[i]
 
@@ -152,27 +154,6 @@ theorem dotProduct_add_right {R : Type u} [Lean.Grind.Ring R]
       rw [Vector.getElem_add]
     rw [hentry]
     grind
-
-/-- Dot product is homogeneous in a pointwise right scalar multiple. -/
-theorem dotProduct_mul_right {R : Type u} [Lean.Grind.CommRing R]
-    (c : R) (u v : Vector R n) :
-    dotProduct u (Vector.ofFn fun i => c * v[i]) = c * dotProduct u v := by
-  rw [dotProduct_comm u (Vector.ofFn fun i => c * v[i]), dotProduct_mul_left,
-    dotProduct_comm v u]
-
-/-- Dot product is homogeneous in its left argument. -/
-theorem dotProduct_smul_left {R : Type u} [Lean.Grind.Ring R]
-    (c : R) (u w : Vector R n) :
-    dotProduct (c • u) w = c * dotProduct u w := by
-  rw [show c • u = Vector.ofFn (fun i : Fin n => c * u[i]) by
-    ext i hi
-    let ii : Fin n := ⟨i, hi⟩
-    show (c • u)[ii] = (Vector.ofFn (fun i : Fin n => c * u[i]))[ii]
-    change (c • u)[i] = (Vector.ofFn (fun i : Fin n => c * u[i]))[i]
-    rw [Vector.getElem_smul]
-    change c * u[i] = (Vector.ofFn (fun i : Fin n => c * u[i]))[i]
-    simp]
-  exact dotProduct_mul_left c u w
 
 /-- Dot product is homogeneous in its right argument. -/
 theorem dotProduct_smul_right {R : Type u} [Lean.Grind.CommRing R]
