@@ -59,9 +59,8 @@ theorem scaledCoeffs_sizeReduce_pivot (b : Matrix Int n m) (j k : Fin n)
     GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k j =
       GramSchmidt.entry (scaledCoeffs b) k j -
         r * Int.ofNat (gramDet b (j.val + 1) (Nat.succ_le_of_lt j.isLt)) := by
-  rw [sizeReduce]
-  rw [scaledCoeffs_rowAdd_pivot (b := b) (j := j) (k := k) hjk (-r)]
-  rw [Int.neg_mul, Lean.Grind.Ring.sub_eq_add_neg]
+  rw [sizeReduce, scaledCoeffs_rowAdd_pivot (b := b) (j := j) (k := k) hjk (-r),
+    Int.neg_mul, Lean.Grind.Ring.sub_eq_add_neg]
 
 /-- Size-reduce update at a column `l` below the pivot (`l < j < k`): the
 scaled coefficient at `(k, l)` decreases by `r` times the `(j, l)`
@@ -72,9 +71,8 @@ theorem scaledCoeffs_sizeReduce_lower (b : Matrix Int n m) (l j k : Fin n)
     GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k l =
       GramSchmidt.entry (scaledCoeffs b) k l -
         r * GramSchmidt.entry (scaledCoeffs b) j l := by
-  rw [sizeReduce]
-  rw [scaledCoeffs_rowAdd_lower (b := b) (l := l) (j := j) (k := k) hlj hjk (-r)]
-  rw [Int.neg_mul, Lean.Grind.Ring.sub_eq_add_neg]
+  rw [sizeReduce, scaledCoeffs_rowAdd_lower (b := b) (l := l) (j := j) (k := k) hlj hjk (-r),
+    Int.neg_mul, Lean.Grind.Ring.sub_eq_add_neg]
 
 /-- Size-reduce touches only row `k`: every other row `i ≠ k` of the
 scaled-coefficient matrix is left unchanged. -/
@@ -105,7 +103,7 @@ private theorem rowSwap_row_eq_of_ne_int {n' m' : Nat}
   intro idx hidx
   let c : Fin m' := ⟨idx, hidx⟩
   change (Matrix.rowSwap b i j)[r][c] = b[r][c]
-  rw [Matrix.rowSwap_getElem]
+  rw [Matrix.getElem_rowSwap]
   by_cases hrj' : r = j
   · exact absurd hrj' hrj
   · by_cases hri' : r = i
@@ -122,8 +120,8 @@ private theorem leadingGramMatrixInt_rowSwap_outside
     (t : Nat) (ht : t ≤ n) (htkm1 : t ≤ km1.val) :
     GramSchmidt.leadingGramMatrixInt (Matrix.rowSwap b km1 k) t ht =
       GramSchmidt.leadingGramMatrixInt b t ht := by
-  rw [GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram,
-      GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram]
+  rw [GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram,
+      GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram]
   apply Vector.ext
   intro p hp
   apply Vector.ext
@@ -152,9 +150,9 @@ private theorem leadingGramMatrixInt_rowSwap_outside
     rowSwap_row_eq_of_ne_int b km1 k pn hp_ne_km1 hp_ne_k
   have hq_eq : (Matrix.rowSwap b km1 k)[qn] = b[qn] :=
     rowSwap_row_eq_of_ne_int b km1 k qn hq_ne_km1 hq_ne_k
-  show (Matrix.leadingPrefix (Matrix.gramMatrix (Matrix.rowSwap b km1 k)) t ht)[pp][qq] =
-       (Matrix.leadingPrefix (Matrix.gramMatrix b) t ht)[pp][qq]
-  simp only [Matrix.leadingPrefix_entry]
+  show (Matrix.principalSubmatrix (Matrix.gramMatrix (Matrix.rowSwap b km1 k)) t ht)[pp][qq] =
+       (Matrix.principalSubmatrix (Matrix.gramMatrix b) t ht)[pp][qq]
+  simp only [Matrix.getElem_principalSubmatrix]
   show (Matrix.gramMatrix (Matrix.rowSwap b km1 k))[pn][qn] =
        (Matrix.gramMatrix b)[pn][qn]
   have hentry_swap :
@@ -182,12 +180,12 @@ private theorem leadingGramMatrixInt_rowSwap_inside
         ((Matrix.rowSwap (GramSchmidt.leadingGramMatrixInt b t ht) km1' k').transpose)
         km1' k').transpose := by
   intro km1' k'
-  rw [GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram
+  rw [GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram
         (b := Matrix.rowSwap b km1 k) (k := t) (hk := ht),
-      GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram
+      GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram
         (b := b) (k := t) (hk := ht)]
-  let M : Matrix Int t t := Matrix.leadingPrefix (Matrix.gramMatrix b) t ht
-  show Matrix.leadingPrefix (Matrix.gramMatrix (Matrix.rowSwap b km1 k)) t ht =
+  let M : Matrix Int t t := Matrix.principalSubmatrix (Matrix.gramMatrix b) t ht
+  show Matrix.principalSubmatrix (Matrix.gramMatrix (Matrix.rowSwap b km1 k)) t ht =
        (Matrix.rowSwap ((Matrix.rowSwap M km1' k').transpose) km1' k').transpose
   apply Vector.ext
   intro p hp
@@ -197,25 +195,25 @@ private theorem leadingGramMatrixInt_rowSwap_inside
   let qq : Fin t := ⟨q, hq⟩
   let pn : Fin n := ⟨p, Nat.lt_of_lt_of_le hp ht⟩
   let qn : Fin n := ⟨q, Nat.lt_of_lt_of_le hq ht⟩
-  change (Matrix.leadingPrefix (Matrix.gramMatrix (Matrix.rowSwap b km1 k)) t ht)[pp][qq] =
+  change (Matrix.principalSubmatrix (Matrix.gramMatrix (Matrix.rowSwap b km1 k)) t ht)[pp][qq] =
          ((Matrix.rowSwap ((Matrix.rowSwap M km1' k').transpose) km1' k').transpose)[pp][qq]
   have hLHS :
-      (Matrix.leadingPrefix (Matrix.gramMatrix (Matrix.rowSwap b km1 k)) t ht)[pp][qq] =
+      (Matrix.principalSubmatrix (Matrix.gramMatrix (Matrix.rowSwap b km1 k)) t ht)[pp][qq] =
         Hex.Vector.dotProduct ((Matrix.rowSwap b km1 k)[pn]) ((Matrix.rowSwap b km1 k)[qn]) := by
-    simp [Matrix.leadingPrefix, Matrix.gramMatrix, Matrix.row, Matrix.ofFn,
+    simp [Matrix.principalSubmatrix, Matrix.gramMatrix, Matrix.row, Matrix.ofFn,
       pp, qq, pn, qn]
   have hM_entry : ∀ (a b' : Fin t),
       M[a][b'] =
         Hex.Vector.dotProduct (b[(⟨a.val, Nat.lt_of_lt_of_le a.isLt ht⟩ : Fin n)])
           (b[(⟨b'.val, Nat.lt_of_lt_of_le b'.isLt ht⟩ : Fin n)]) := by
     intro a b'
-    simp [M, Matrix.leadingPrefix, Matrix.gramMatrix, Matrix.row, Matrix.ofFn]
+    simp [M, Matrix.principalSubmatrix, Matrix.gramMatrix, Matrix.row, Matrix.ofFn]
   have hRHS_T :
       ((Matrix.rowSwap ((Matrix.rowSwap M km1' k').transpose) km1' k').transpose)[pp][qq] =
         (Matrix.rowSwap ((Matrix.rowSwap M km1' k').transpose) km1' k')[qq][pp] := by
     simp [Matrix.transpose, Matrix.col]
   rw [hLHS, hRHS_T]
-  rw [Matrix.rowSwap_getElem (M := (Matrix.rowSwap M km1' k').transpose)
+  rw [Matrix.getElem_rowSwap (M := (Matrix.rowSwap M km1' k').transpose)
     (i := km1') (j := k') (r := qq) (k := pp)]
   have hkm1'_ne_k' : (km1' : Fin t) ≠ k' := by
     intro h
@@ -230,8 +228,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
     have hT : (Matrix.rowSwap M km1' k').transpose[idx][pp] =
         (Matrix.rowSwap M km1' k')[pp][idx] := by
       simp [Matrix.transpose, Matrix.col]
-    rw [hT]
-    rw [Matrix.rowSwap_getElem (M := M) (i := km1') (j := k') (r := pp) (k := idx)]
+    rw [hT, Matrix.getElem_rowSwap (M := M) (i := km1') (j := k') (r := pp) (k := idx)]
     by_cases hpk : pp = k'
     · simp [hpk]
     · by_cases hpkm1 : pp = km1'
@@ -895,8 +892,7 @@ theorem bareiss_scaledCoeffMatrix_rowSwap_above_prev
     rw [hcastRow_b'i, hbasis_swap]
     -- dot (curr + μ • prev) (cast b.row i)
     --   = dot curr (cast b.row i) + μ * dot prev (cast b.row i)
-    rw [dot_add_left_rat, dot_smul_left_rat]
-    rw [hdotk, hdotkm1]
+    rw [dot_add_left_rat, dot_smul_left_rat, hdotk, hdotkm1]
   -- Key Rat identity: nu'[i][km1] = G * <basis(b')[km1], cast(b'.row i)>.
   -- The proof uses scaledCoeffs_eq for b', plus dot_basis_castRow on b', plus
   -- the fact that d_k(b') = G * |basis(b')[km1]|^2 so the cancellation is clean.
@@ -940,8 +936,7 @@ theorem bareiss_scaledCoeffMatrix_rowSwap_above_prev
           (Nk + μ ^ 2 * Nkm1) =
         GramSchmidt.entry (coeffs b) i k * Nk +
           μ * (GramSchmidt.entry (coeffs b) i km1 * Nkm1) := by
-      rw [← hN'_eq]
-      rw [hcoeff_normSq]
+      rw [← hN'_eq, hcoeff_normSq]
       exact hdot_b'_km1
     linear_combination G * hcoeff_inner
   -- Combine all rational identities and discharge by ring.

@@ -47,15 +47,15 @@ def leadingGramMatrixInt (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) : Matrix 
 /-- The Gram-Schmidt leading Gram matrix is the leading prefix of the full
 Gram matrix. This is the shape equation between the public `gramDet` API and
 the one-pass `gramDetVec` implementation. -/
-theorem leadingGramMatrixInt_eq_leadingPrefix_gram
+theorem leadingGramMatrixInt_eq_principalSubmatrix_gram
     (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
     leadingGramMatrixInt b k hk =
-      Matrix.leadingPrefix (Matrix.gramMatrix b) k hk := by
+      Matrix.principalSubmatrix (Matrix.gramMatrix b) k hk := by
   apply Vector.ext
   intro i hi
   apply Vector.ext
   intro j hj
-  simp [leadingGramMatrixInt, Matrix.leadingPrefix, Matrix.gramMatrix, Vector.dotProduct, Matrix.ofFn,
+  simp [leadingGramMatrixInt, Matrix.principalSubmatrix, Matrix.gramMatrix, Vector.dotProduct, Matrix.ofFn,
     liftFinLE]
 
 /-- Leading principal Gram matrix of the first `k` rows of a rational basis. -/
@@ -323,8 +323,8 @@ private theorem getArrayEntry_foldl_setArrayEntry_row_ne
         intro y hy
         exact hxs y (by simp [hy])
       simp only [List.foldl_cons]
-      rw [ih (setArrayEntry coeffs x k (getArrayEntry rows x k)) hxs']
-      rw [getArrayEntry_setArrayEntry_of_row_ne]
+      rw [ih (setArrayEntry coeffs x k (getArrayEntry rows x k)) hxs',
+        getArrayEntry_setArrayEntry_of_row_ne]
       omega
 
 /-- A column-targeted `foldl` preserves rows whose index is absent from the
@@ -343,8 +343,8 @@ private theorem getArrayEntry_foldl_setArrayEntry_row_notMem
       have hrx : r ≠ x := fun h => hr (h ▸ List.mem_cons_self)
       have hrxs : r ∉ xs := fun h => hr (List.mem_cons_of_mem _ h)
       simp only [List.foldl_cons]
-      rw [ih (setArrayEntry coeffs x k (getArrayEntry rows x k)) hrxs]
-      rw [getArrayEntry_setArrayEntry_of_row_ne]
+      rw [ih (setArrayEntry coeffs x k (getArrayEntry rows x k)) hrxs,
+        getArrayEntry_setArrayEntry_of_row_ne]
       exact hrx
 
 /-- A column-targeted `foldl` of `setArrayEntry`s at column `k` leaves entries
@@ -538,8 +538,7 @@ private theorem getElem!_foldl_modify_of_mem_nodup
         have hbound' : r < (arr.modify x (f x)).size := by
           rw [modify_size]
           exact hbound
-        rw [ih _ hr_in hnodup' hbound']
-        rw [getElem!_modify_ne arr x r (f x) hr_ne_x]
+        rw [ih _ hr_in hnodup' hbound', getElem!_modify_ne arr x r (f x) hr_ne_x]
 
 /-- A `foldl` that modifies indices via `Array.modify` preserves the outer
 array size. -/
@@ -1199,8 +1198,7 @@ private theorem getArrayEntry_schurRowLoop_upper
       simp
   | cons row rowList ih =>
       simp only [List.foldl_cons]
-      rw [ih _]
-      rw [getArrayEntry_schurColumnLoop_upper]
+      rw [ih _, getArrayEntry_schurColumnLoop_upper]
       · exact hij
       · intro c hc
         rw [List.mem_range'] at hc
@@ -1336,8 +1334,8 @@ private theorem getArrayEntry_schurColumnLoop_col_zero
           · exact h.symm
           · exact (h_zero_in_tail h).elim
         subst h_col_eq
-        rw [getArrayEntry_schurColumnLoop_col_zero_preserve _ _ _ _ h_zero_in_tail]
-        rw [getArrayEntry_setArrayEntry_self _ _ _ _ hrow hcol]
+        rw [getArrayEntry_schurColumnLoop_col_zero_preserve _ _ _ _ h_zero_in_tail,
+          getArrayEntry_setArrayEntry_self _ _ _ _ hrow hcol]
         simp [schurScaledCoeffEntry]
 
 /-- Size preservation: the Schur column loop keeps the outer-array length. -/

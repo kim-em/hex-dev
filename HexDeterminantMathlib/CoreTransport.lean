@@ -148,9 +148,7 @@ theorem detSign_vectorOfPerm_eq_permSign [CommRing R] (σ : Equiv.Perm (Fin n)) 
             -Hex.Matrix.detSign (R := R) (Vector.ofFn fun r : Fin n => σ r) := by
         rw [hflip]
         simp
-      rw [hswapped]
-      rw [Equiv.Perm.sign_mul, Equiv.Perm.sign_swap hne]
-      rw [ih]
+      rw [hswapped, Equiv.Perm.sign_mul, Equiv.Perm.sign_swap hne, ih]
       norm_num
 
 /-- Hex's inversion-count determinant sign agrees with Mathlib's permutation sign. -/
@@ -217,8 +215,7 @@ private theorem foldl_prod_finRange {S : Type u} [CommMonoid S] {n : Nat}
     (List.finRange n).foldl (fun acc i => acc * f i) 1 = ∏ i, f i := by
   rw [foldl_prod_map_start]
   simp only [one_mul]
-  rw [← List.prod_toFinset f (List.nodup_finRange n)]
-  rw [List.toFinset_finRange]
+  rw [← List.prod_toFinset f (List.nodup_finRange n), List.toFinset_finRange]
 
 private theorem prod_perm_inv [CommRing R] (A : Matrix (Fin n) (Fin n) R)
     (σ : Equiv.Perm (Fin n)) :
@@ -281,26 +278,24 @@ theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
             rw [foldl_prod_finRange]
             simp [PermutationVector.toPerm_apply]
       _ = ((PermutationVector.equivs n).map term).sum := by
-            rw [PermutationVector.equivs]
-            rw [List.map_map]
+            rw [PermutationVector.equivs, List.map_map]
             apply congrArg List.sum
             apply List.map_congr_left
             intro p hp
             rfl
       _ = (PermutationVector.equivs n).toFinset.sum term := by
             exact (List.sum_toFinset term (PermutationVector.equivs_nodup n)).symm
-  rw [hhex, det_apply_row]
-  rw [equivs_toFinset]
+  rw [hhex, det_apply_row, equivs_toFinset]
 
 /-- `matrixEquiv` sends Hex leading prefixes to Mathlib submatrices. -/
-theorem matrixEquiv_leadingPrefix
+theorem matrixEquiv_principalSubmatrix
     (M : Hex.Matrix R n n) (k : Nat) (hk : k ≤ n) :
-    matrixEquiv (Hex.Matrix.leadingPrefix M k hk) =
+    matrixEquiv (Hex.Matrix.principalSubmatrix M k hk) =
       (matrixEquiv M).submatrix
         (fun r : Fin k => ⟨r.val, Nat.lt_of_lt_of_le r.isLt hk⟩)
         (fun c : Fin k => ⟨c.val, Nat.lt_of_lt_of_le c.isLt hk⟩) := by
   ext r c
-  simp [Hex.Matrix.leadingPrefix, Hex.Matrix.ofFn]
+  simp [Hex.Matrix.principalSubmatrix, Hex.Matrix.ofFn]
 
 /-- `matrixEquiv` sends Hex bordered Bareiss minors to Mathlib submatrices. -/
 theorem matrixEquiv_borderedMinor
@@ -314,15 +309,15 @@ theorem matrixEquiv_borderedMinor
   ext r c
   simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn]
 
-/-- Determinant form of `matrixEquiv_leadingPrefix`. -/
-theorem det_leadingPrefix_eq_submatrix_det [CommRing R]
+/-- Determinant form of `matrixEquiv_principalSubmatrix`. -/
+theorem det_principalSubmatrix_eq_submatrix_det [CommRing R]
     (M : Hex.Matrix R n n) (k : Nat) (hk : k ≤ n) :
-    Hex.Matrix.det (Hex.Matrix.leadingPrefix M k hk) =
+    Hex.Matrix.det (Hex.Matrix.principalSubmatrix M k hk) =
       Matrix.det
         ((matrixEquiv M).submatrix
           (fun r : Fin k => ⟨r.val, Nat.lt_of_lt_of_le r.isLt hk⟩)
           (fun c : Fin k => ⟨c.val, Nat.lt_of_lt_of_le c.isLt hk⟩)) := by
-  rw [det_eq, matrixEquiv_leadingPrefix]
+  rw [det_eq, matrixEquiv_principalSubmatrix]
 
 /-- Determinant form of `matrixEquiv_borderedMinor`. -/
 theorem det_borderedMinor_eq_submatrix_det [CommRing R]
@@ -345,7 +340,7 @@ theorem matrixEquiv_deleteRowCol
   ext i j
   change (Hex.Matrix.deleteRowCol M row col)[i][j] =
     M[Hex.Matrix.skipIndex row i][Hex.Matrix.skipIndex col j]
-  rw [Hex.Matrix.deleteRowCol_entry]
+  rw [Hex.Matrix.getElem_deleteRowCol]
 
 private theorem matrixEquiv_deleteRowCol_zero_zero
     (M : Hex.Matrix R (n + 2) (n + 2)) :
@@ -388,8 +383,7 @@ private theorem matrixEquiv_deleteRowCol_zero_zero_last_last
       (matrixEquiv M).submatrix
         (Fin.succAbove 0 ∘ (Fin.last n).succAbove)
         (Fin.succAbove 0 ∘ (Fin.last n).succAbove) := by
-  rw [matrixEquiv_deleteRowCol]
-  rw [matrixEquiv_deleteRowCol_zero_zero]
+  rw [matrixEquiv_deleteRowCol, matrixEquiv_deleteRowCol_zero_zero]
   ext i j
   rfl
 
@@ -528,8 +522,7 @@ private theorem mathlib_det_mul_adjugate_updateRow_of_ne
     simp [adjN, adjA, N, Matrix.adjugate_apply]
   have hNr :
       (N * adjA) r s = (A.updateRow s rowv).det := by
-    rw [Matrix.mul_apply]
-    rw [Matrix.det_eq_sum_mul_adjugate_row (A.updateRow s rowv) s]
+    rw [Matrix.mul_apply, Matrix.det_eq_sum_mul_adjugate_row (A.updateRow s rowv) s]
     apply Finset.sum_congr rfl
     intro k _hk
     simp [N, adjA, Matrix.adjugate_apply]
@@ -721,7 +714,7 @@ theorem nMatrix_ordered_four_row_p2 {R : Type u} {n : Nat}
   change (Hex.Matrix.nMatrix B p1 q
       (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)))[
         (⟨p2.val - 1, by have := q.isLt; omega⟩ : Fin n)][jj] = B[p2][jj]
-  rw [Hex.Matrix.nMatrix_entry]
+  rw [Hex.Matrix.getElem_nMatrix]
   have hrow := skipIndex2_ordered_four_row_p2 p1 p2 p3 q h12 h23 h3q
   simp [hrow]
 
@@ -737,7 +730,7 @@ theorem nMatrix_ordered_four_row_p3 {R : Type u} {n : Nat}
   change (Hex.Matrix.nMatrix B p1 q
       (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)))[
         (⟨p3.val - 1, by have := q.isLt; omega⟩ : Fin n)][jj] = B[p3][jj]
-  rw [Hex.Matrix.nMatrix_entry]
+  rw [Hex.Matrix.getElem_nMatrix]
   have hrow := skipIndex2_ordered_four_row_p3 p1 p2 p3 q h12 h23 h3q
   simp [hrow]
 
@@ -780,7 +773,7 @@ theorem nMatrix_ordered_four_p1_p2_row_q {R : Type u} {n : Nat}
   let jj : Fin (n + 1) := ⟨j, hj⟩
   change (Hex.Matrix.nMatrix B p1 p2 h12)[
         (⟨q.val - 2, by have := q.isLt; omega⟩ : Fin (n + 1))][jj] = B[q][jj]
-  rw [Hex.Matrix.nMatrix_entry]
+  rw [Hex.Matrix.getElem_nMatrix]
   have hrow := skipIndex2_ordered_four_p1_p2_row_q p1 p2 p3 q h12 h23 h3q
   simp [hrow]
 
@@ -795,7 +788,7 @@ theorem nMatrix_ordered_four_p1_p3_row_q {R : Type u} {n : Nat}
   let jj : Fin (n + 1) := ⟨j, hj⟩
   change (Hex.Matrix.nMatrix B p1 p3 (Nat.lt_trans h12 h23))[
         (⟨q.val - 2, by have := q.isLt; omega⟩ : Fin (n + 1))][jj] = B[q][jj]
-  rw [Hex.Matrix.nMatrix_entry]
+  rw [Hex.Matrix.getElem_nMatrix]
   have hrow := skipIndex2_ordered_four_p1_p3_row_q p1 p2 p3 q h12 h23 h3q
   simp [hrow]
 
@@ -1127,7 +1120,7 @@ private theorem matrixEquiv_setRow_p1_eq_submatrix_nMatrix
     rw [Hex.Matrix.setRow_row_ne M r i B[p1] hir]
     show (Hex.Matrix.nMatrix B p1 q h1q)[i][j] =
       (Hex.Matrix.nMatrix B p_t q htq)[σ i][j]
-    rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+    rw [Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
     apply B_entry_congr
     apply Fin.ext
     rw [Hex.Matrix.skipIndex2_val_of_lt_p p1 q h1q i h_below,
@@ -1150,7 +1143,7 @@ private theorem matrixEquiv_setRow_p1_eq_submatrix_nMatrix
       rw [Hex.Matrix.setRow_row_ne M r i B[p1] hir]
       show (Hex.Matrix.nMatrix B p1 q h1q)[i][j] =
         (Hex.Matrix.nMatrix B p_t q htq)[σ i][j]
-      rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+      rw [Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
       apply B_entry_congr
       apply Fin.ext
       have h_not_lt_pt_for_σi : ¬ (σ i).val < p_t.val := by
@@ -1186,7 +1179,7 @@ private theorem matrixEquiv_setRow_p1_eq_submatrix_nMatrix
           omega
         have hσ_val : (σ r).val = p1.val :=
           OrderedFourShift.cycleAhead_val_top p1.val m hm_bound r h_r_at_top
-        rw [Hex.Matrix.nMatrix_entry]
+        rw [Hex.Matrix.getElem_nMatrix]
         apply B_entry_congr
         apply Fin.ext
         show p1.val = (Hex.Matrix.skipIndex2 p_t q htq (σ r)).val
@@ -1208,7 +1201,7 @@ private theorem matrixEquiv_setRow_p1_eq_submatrix_nMatrix
         rw [Hex.Matrix.setRow_row_ne M r i B[p1] hir]
         show (Hex.Matrix.nMatrix B p1 q h1q)[i][j] =
           (Hex.Matrix.nMatrix B p_t q htq)[σ i][j]
-        rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+        rw [Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
         apply B_entry_congr
         apply Fin.ext
         have h_not_lt_p1 : ¬ i.val < p1.val := by
@@ -1329,8 +1322,8 @@ private theorem matrixEquiv_nMatrix_p1_pt_eq_submatrix_setRow_q
       have hv : (σ i).val = r.val := congrArg Fin.val he
       rw [hr_val, hσ_val] at hv
       omega
-    rw [Hex.Matrix.setRow_row_ne M r (σ i) B[q] hσ_ne_r]
-    rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+    rw [Hex.Matrix.setRow_row_ne M r (σ i) B[q] hσ_ne_r,
+      Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
     apply B_entry_congr
     apply Fin.ext
     by_cases hi1 : i.val < p1.val
@@ -1352,8 +1345,8 @@ private theorem matrixEquiv_nMatrix_p1_pt_eq_submatrix_setRow_q
         have hv : (σ i).val = r.val := congrArg Fin.val he
         rw [hr_val, hσ_val] at hv
         omega
-      rw [Hex.Matrix.setRow_row_ne M r (σ i) B[q] hσ_ne_r]
-      rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+      rw [Hex.Matrix.setRow_row_ne M r (σ i) B[q] hσ_ne_r,
+        Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
       apply B_entry_congr
       apply Fin.ext
       have hi_not_lt_p1 : ¬ i.val < p1.val := by omega
@@ -1373,8 +1366,7 @@ private theorem matrixEquiv_nMatrix_p1_pt_eq_submatrix_setRow_q
           rw [hσ_val, hr_val, ha_val]
         have hrow : (Hex.Matrix.setRow M r B[q])[σ i] = B[q] := by
           simpa [hσ_eq_r] using Hex.Matrix.setRow_get_self M r B[q]
-        rw [hrow]
-        rw [Hex.Matrix.nMatrix_entry]
+        rw [hrow, Hex.Matrix.getElem_nMatrix]
         apply B_entry_congr
         apply Fin.ext
         have hi_not_lt_p1 : ¬ i.val < p1.val := by omega
@@ -1389,8 +1381,8 @@ private theorem matrixEquiv_nMatrix_p1_pt_eq_submatrix_setRow_q
           have hv : (σ i).val = r.val := congrArg Fin.val he
           rw [hr_val, hσ_val] at hv
           omega
-        rw [Hex.Matrix.setRow_row_ne M r (σ i) B[q] hσ_ne_r]
-        rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+        rw [Hex.Matrix.setRow_row_ne M r (σ i) B[q] hσ_ne_r,
+          Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
         apply B_entry_congr
         apply Fin.ext
         have hi_not_lt_p1 : ¬ i.val < p1.val := by omega
@@ -1441,8 +1433,7 @@ private theorem det_setRow_q
     rw [h_cast]
   have hsign_sq : (-1 : R) ^ m * ((-1 : R) ^ m * Hex.Matrix.det (Hex.Matrix.setRow M r B[q])) =
       Hex.Matrix.det (Hex.Matrix.setRow M r B[q]) := by
-    rw [← mul_assoc]
-    rw [← pow_add]
+    rw [← mul_assoc, ← pow_add]
     have h_even : m + m = 2 * m := by omega
     rw [h_even, pow_mul]
     simp

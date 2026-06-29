@@ -40,7 +40,7 @@ def columnTupleMatrix {R : Type u} {n m : Nat}
 
 /-- Entry `(r, c)` of the column-selected minor is the source entry
 `A[r][cols c]`. -/
-@[grind =] theorem columnTupleMatrix_entry {R : Type u} {n m : Nat}
+@[grind =] theorem getElem_columnTupleMatrix {R : Type u} {n m : Nat}
     (A : Matrix R n m) (cols : Fin n → Fin m) (r c : Fin n) :
     (columnTupleMatrix A cols)[r][c] = A[r][cols c] := by
   simp [columnTupleMatrix, ofFn]
@@ -63,13 +63,13 @@ Unattributed: the LHS `[r][c]` is not in simp-normal form (`Fin.getElem_fin`
 rewrites the `Fin` indices to `↑r`/`↑c`), and `grind =` rejects the pattern
 because the columns `s sigma` appear only under the `fun i => s[sigma[i]]`
 binder, so the LHS cannot instantiate them. Invoked explicitly via `rw`. -/
-theorem columnTupleMatrix_compose_perm_entry
+theorem getElem_columnTupleMatrix_compose_perm
     {R : Type u} {n m : Nat} (A : Matrix R n m)
     (s : Vector (Fin m) n) (sigma : Vector (Fin n) n)
     (r c : Fin n) :
     (columnTupleMatrix A (fun i => s[sigma[i]]))[r][c] =
       (columnTupleMatrix A (columnTupleVectorFn s))[r][sigma[c]] := by
-  rw [columnTupleMatrix_entry, columnTupleMatrix_entry]
+  rw [getElem_columnTupleMatrix, getElem_columnTupleMatrix]
   exact (congrArg (fun col : Fin m => A[r][col])
     (columnTupleVectorFn_apply s (sigma[c]))).symm
 
@@ -86,7 +86,7 @@ theorem columnTupleMatrix_compose_perm_eq_colPermute
       (ofFn fun r c =>
         (columnTupleMatrix A (columnTupleVectorFn s))[r][sigma[c]])[
           (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [columnTupleMatrix_compose_perm_entry]
+  rw [getElem_columnTupleMatrix_compose_perm]
   simp [Matrix.ofFn]
 
 /-- Specialization of the generic column-permutation determinant sign theorem
@@ -133,8 +133,7 @@ theorem columnTupleVectors_mem_ofFn {n m : Nat} (cols : Fin n → Fin m) :
   | zero =>
       simp [columnTupleVectors]
   | succ n ih =>
-      rw [columnTupleVectors_ofFn_succ cols]
-      rw [columnTupleVectors, List.mem_flatMap]
+      rw [columnTupleVectors_ofFn_succ cols, columnTupleVectors, List.mem_flatMap]
       refine ⟨Vector.ofFn fun i : Fin n => cols i.castSucc, ih (fun i => cols i.castSucc), ?_⟩
       rw [List.mem_map]
       exact ⟨cols (Fin.last n), List.mem_finRange (cols (Fin.last n)), rfl⟩
@@ -213,7 +212,7 @@ theorem det_columnTupleMatrix_eq_zero_of_col_eq
     det (columnTupleMatrix A cols) = 0 := by
   apply det_eq_zero_of_col_eq (columnTupleMatrix A cols) src dst h
   intro r
-  rw [columnTupleMatrix_entry, columnTupleMatrix_entry]
+  rw [getElem_columnTupleMatrix, getElem_columnTupleMatrix]
   exact congrArg (fun c : Fin m => A[r][c]) hcols
 
 /-- An ordered column-tuple minor with a non-injective selected-column map has
@@ -244,7 +243,7 @@ private def columnSumMatrixWithPrefix
     else
       (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
 
-@[grind =] private theorem columnSumMatrixWithPrefix_entry
+@[grind =] private theorem getElem_columnSumMatrixWithPrefix
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (chosen : List (Fin m)) (r j : Fin n) :
     (columnSumMatrixWithPrefix source coeff chosen)[r][j] =
@@ -275,7 +274,7 @@ private def columnSumMatrixWithSuffix
     else
       (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
 
-@[grind =] private theorem columnSumMatrixWithSuffix_entry
+@[grind =] private theorem getElem_columnSumMatrixWithSuffix
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (chosen : List (Fin m)) (r j : Fin n) :
     (columnSumMatrixWithSuffix source coeff chosen)[r][j] =
@@ -294,8 +293,8 @@ private theorem columnSumMatrixWithSuffix_nil
   ext r hr c hc
   change (columnSumMatrixWithSuffix source coeff [])[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
       (columnSumMatrix source coeff)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [columnSumMatrixWithSuffix_entry, columnSumMatrix_entry]
-  rw [dif_neg (show ¬ n - ([] : List (Fin m)).length ≤ c by simp; omega)]
+  rw [getElem_columnSumMatrixWithSuffix, getElem_columnSumMatrix,
+    dif_neg (show ¬ n - ([] : List (Fin m)).length ≤ c by simp; omega)]
 
 private theorem columnSumMatrixWithSuffix_eq
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
@@ -306,7 +305,7 @@ private theorem columnSumMatrixWithSuffix_eq
   ext r hr c hc
   change (columnSumMatrixWithSuffix source coeff chosen)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
       (columnTupleMatrix source (fun j => chosen[j.val]'(by omega)))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [columnSumMatrixWithSuffix_entry, dif_pos (by omega : n - chosen.length ≤ c)]
+  rw [getElem_columnSumMatrixWithSuffix, dif_pos (by omega : n - chosen.length ≤ c)]
   simp [columnTupleMatrix, ofFn, hfull]
 
 /-- Replacing the rightmost sum column of the suffix-partial matrix with a fixed
@@ -324,14 +323,13 @@ private theorem setCol_columnSumMatrixWithSuffix_extend
       (⟨r, hr⟩ : Fin n)][(⟨k, hk2⟩ : Fin n)] =
     (columnSumMatrixWithSuffix source coeff (c :: chosen))[
       (⟨r, hr⟩ : Fin n)][(⟨k, hk2⟩ : Fin n)]
-  rw [setCol_getElem]
-  simp only [columnSumMatrixWithSuffix_entry]
+  rw [getElem_setCol]
+  simp only [getElem_columnSumMatrixWithSuffix]
   have hccons_len : (c :: chosen).length = chosen.length + 1 := rfl
   by_cases hkd : (⟨k, hk2⟩ : Fin n) = (⟨n - chosen.length - 1, by omega⟩ : Fin n)
   · have hkeq : k = n - chosen.length - 1 := by
       have := congrArg Fin.val hkd; simpa using this
-    rw [if_pos hkd]
-    rw [dif_pos (show n - (c :: chosen).length ≤ k by rw [hccons_len]; omega)]
+    rw [if_pos hkd, dif_pos (show n - (c :: chosen).length ≤ k by rw [hccons_len]; omega)]
     have hsub0 : k - (n - (c :: chosen).length) = 0 := by rw [hccons_len]; omega
     have hgetval : (c :: chosen)[k - (n - (c :: chosen).length)]'(by
         have : k < n := hk2; rw [hccons_len]; omega) = c := by
@@ -385,7 +383,7 @@ private theorem det_columnSumMatrixWithSuffix_expand
     change (setCol (columnSumMatrixWithSuffix source coeff chosen) dst _)[
         (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
       (columnSumMatrixWithSuffix source coeff chosen)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-    rw [setCol_getElem, columnSumMatrixWithSuffix_entry]
+    rw [getElem_setCol, getElem_columnSumMatrixWithSuffix]
     by_cases hcd : (⟨c, hc⟩ : Fin n) = dst
     · rw [if_pos hcd, hcd]
       rw [dif_neg (show ¬ n - chosen.length ≤ dst.val by simp [dst]; omega)]
@@ -513,8 +511,7 @@ private theorem partialColumnTupleCoeff_insertAt_last_fold
             have hi : i.val < rem := i.isLt
             omega⟩ : Fin n)][pref[i]]) 1 *
         coeff[(⟨rem, hrem⟩ : Fin n)][c] := by
-  rw [List.finRange_succ_last]
-  rw [List.foldl_append, List.foldl_cons, List.foldl_nil]
+  rw [List.finRange_succ_last, List.foldl_append, List.foldl_cons, List.foldl_nil]
   congr 1
   · simp only [List.foldl_map]
     apply foldl_det_product_congr
@@ -625,8 +622,7 @@ private theorem columnTupleVectors_suffix_rhs_step
                         omega))))) 0) 0
   rw [foldl_det_sum_flatMap]
   simp only [List.foldl_map]
-  rw [foldl_det_sum_nested_zero]
-  rw [foldl_det_sum_swap]
+  rw [foldl_det_sum_nested_zero, foldl_det_sum_swap]
   apply foldl_det_sum_congr
   intro c _hc
   have hfactor :
@@ -755,7 +751,8 @@ private theorem partialColumnTupleCoeff_full
     partialColumnTupleCoeff coeff chosen pref = 1 := by
   subst n
   unfold partialColumnTupleCoeff
-  have hlist : List.finRange (chosen.length - chosen.length) = [] := by simp
+  have hlist : List.finRange (chosen.length - chosen.length) = [] := by
+    rw [Nat.sub_self]; rfl
   rw [hlist]
   rfl
 
@@ -794,8 +791,8 @@ private theorem det_columnSumMatrixWithSuffix_eq_sum
       grind
   ·
       have hklt : chosen.length < n := by omega
-      rw [det_columnSumMatrixWithSuffix_expand source coeff chosen hklt]
-      rw [columnTupleVectors_suffix_rhs_step_natural source coeff chosen hklt]
+      rw [det_columnSumMatrixWithSuffix_expand source coeff chosen hklt,
+        columnTupleVectors_suffix_rhs_step_natural source coeff chosen hklt]
       apply foldl_det_sum_congr
       intro c _hc
       congr 2
@@ -819,8 +816,8 @@ theorem det_columnSumMatrix_eq_sum_columnTuples
         (fun acc cols => acc +
           columnTupleCoeff coeff cols *
             det (columnTupleMatrix source (columnTupleVectorFn cols))) 0 := by
-  rw [← columnSumMatrixWithSuffix_nil source coeff]
-  rw [det_columnSumMatrixWithSuffix_eq_sum source coeff [] (by simp)]
+  rw [← columnSumMatrixWithSuffix_nil source coeff,
+    det_columnSumMatrixWithSuffix_eq_sum source coeff [] (by simp)]
   apply foldl_det_sum_congr
   intro cols _hcols
   have hcoeff : partialColumnTupleCoeff coeff [] cols = columnTupleCoeff coeff cols :=
@@ -851,7 +848,7 @@ theorem det_gramMatrix_eq_sum_columnTuples
     ext r hr c hc
     change (gramMatrix A)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
       (columnSumMatrix A A)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-    rw [columnSumMatrix_entry]
+    rw [getElem_columnSumMatrix]
     simp [gramMatrix, ofFn, row, Hex.Vector.dotProduct]
     apply foldl_det_sum_congr
     intro k _hk

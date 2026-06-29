@@ -248,9 +248,9 @@ theorem dotProduct_packRow (K : Nat) (M : Matrix Int n n) (A : Matrix Int n m)
       (List.finRange n).foldl
         (fun acc l => acc + (row M i)[l] * A[l][(⟨j, hj⟩ : Fin m)])
         ((Vector.replicate m (0 : Int))[(⟨j, hj⟩ : Fin m)]) := by
-    simp only [row_getElem, mul_getElem]
+    simp only [getElem_row, getElem_mul]
     unfold Vector.dotProduct
-    simp only [col_getElem, row_getElem]
+    simp only [getElem_col, getElem_row]
     simp only [Fin.getElem_fin, Vector.getElem_replicate]
   exact hentry.trans htarget.symm
 
@@ -350,10 +350,10 @@ private theorem two_mul_lt_width {x B : Nat} (hx : x ≤ B) :
 theorem natAbs_mul_entry_le (M : Matrix Int n n) (A : Matrix Int n m)
     (i : Fin n) (j : Fin m) :
     (M * A)[i][j].natAbs ≤ n * (maxAbs M * maxAbs A) := by
-  rw [mul_getElem]
+  rw [getElem_mul]
   exact natAbs_dotProduct_le _ _ _ _
     (fun l => natAbs_le_maxAbs M i l)
-    (fun l => by rw [col_getElem]; exact natAbs_le_maxAbs A l j)
+    (fun l => by rw [getElem_col]; exact natAbs_le_maxAbs A l j)
 
 /-- The packed certificate decides product equality: sound (`= true` implies
 `M * A = C`, by balanced-digit uniqueness at width `packWidth M A C`) and
@@ -513,9 +513,8 @@ private theorem divStep_arith (d N Np : Rat) (hd : 0 < d)
   have hinv_nonneg : 0 ≤ (1 / d : Rat) := by grind
   have hmul := Rat.mul_le_mul_of_nonneg_left h hinv_nonneg
   have hleft : (1 / d : Rat) * (d * N) = N := by
-    rw [Rat.div_def]
-    rw [show (1 : Rat) * d⁻¹ = d⁻¹ by grind]
-    rw [← Rat.mul_assoc, Rat.inv_mul_cancel d hdne]
+    rw [Rat.div_def, show (1 : Rat) * d⁻¹ = d⁻¹ by grind,
+      ← Rat.mul_assoc, Rat.inv_mul_cancel d hdne]
     grind
   simpa [hleft] using hmul
 
@@ -700,8 +699,7 @@ theorem short_vector_bound_of_size_bound (b : Matrix Int n m) {δ η : Rat}
     have h_le : δ - η * η ≤ 1 := by grind
     have hne : δ - η * η ≠ 0 := by grind
     have hα_eq : (1 / (δ - η * η)) * (δ - η * η) = 1 := by
-      rw [Rat.div_def]
-      rw [show (1 : Rat) * (δ - η * η)⁻¹ = (δ - η * η)⁻¹ from by grind]
+      rw [Rat.div_def, show (1 : Rat) * (δ - η * η)⁻¹ = (δ - η * η)⁻¹ from by grind]
       exact Rat.inv_mul_cancel _ hne
     have hstep : (1 / (δ - η * η)) * (δ - η * η) ≤ (1 / (δ - η * η)) * 1 :=
       Rat.mul_le_mul_of_nonneg_left h_le hα_nn
@@ -2098,8 +2096,7 @@ membership of `v` is unchanged. -/
   | cons k ks ih =>
     intro t
     simp only [List.foldl_cons]
-    rw [ih]
-    rw [sizeReduce_memLattice_iff, refreshRow_b]
+    rw [ih, sizeReduce_memLattice_iff, refreshRow_b]
 
 end SteeredState
 

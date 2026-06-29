@@ -268,8 +268,7 @@ private theorem zmod64_one_ne_zero_of_prime [ZMod64.PrimeModulus p] :
 theorem primeFieldLinearFactor_coeff_one (c : ZMod64 p) :
     (primeFieldLinearFactor c).coeff 1 = (1 : ZMod64 p) := by
   unfold primeFieldLinearFactor FpPoly.X FpPoly.C
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_monomial, DensePoly.coeff_C]
+  rw [DensePoly.coeff_sub_ring, DensePoly.coeff_monomial, DensePoly.coeff_C]
   simp
   show (1 : ZMod64 p) - 0 = 1
   grind
@@ -807,9 +806,8 @@ theorem dvd_xPowSubX_iff_frobeniusDiffMod_isZero
           ∀ i, f.size - 1 ≤ i → (frobeniusDiffMod f hmonic k).coeff i = 0 := by
         intro i hi
         unfold frobeniusDiffMod
-        rw [DensePoly.coeff_sub_ring]
-        rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega : _ ≤ i)]
-        rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega : _ ≤ i)]
+        rw [DensePoly.coeff_sub_ring, DensePoly.coeff_eq_zero_of_size_le _ (by omega : _ ≤ i),
+          DensePoly.coeff_eq_zero_of_size_le _ (by omega : _ ≤ i)]
         grind
       -- Conclude: (frobeniusDiffMod).size ≤ f.size - 1.
       have hdiff_size : (frobeniusDiffMod f hmonic k).size ≤ f.size - 1 := by
@@ -967,8 +965,7 @@ private theorem factor_degree_lt
     (hy_pos : 0 < y.degree?.getD 0) :
     x.degree?.getD 0 < a.degree?.getD 0 := by
   have hy_ne_zero : y ≠ 0 := ne_zero_of_pos_degree hy_pos
-  rw [← hxy]
-  rw [FpPoly.degree?_mul_eq_add_degree? x y hx_ne_zero hy_ne_zero]
+  rw [← hxy, FpPoly.degree?_mul_eq_add_degree? x y hx_ne_zero hy_ne_zero]
   omega
 
 private theorem exists_monic_irreducible_factor_of_pos_degree_aux :
@@ -1223,10 +1220,8 @@ private theorem xPowSubX_factor (k : Nat) :
     exact DensePoly.coeff_C (1 : ZMod64 p) i
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_sub_ring]
-  rw [FpPoly.coeff_monomial_mul]
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_monomial, DensePoly.coeff_monomial, hcoeff_one]
+  rw [DensePoly.coeff_sub_ring, FpPoly.coeff_monomial_mul, DensePoly.coeff_sub_ring,
+    DensePoly.coeff_monomial, DensePoly.coeff_monomial, hcoeff_one]
   by_cases hn0 : n = 0
   · subst hn0
     have h0pow_ne : ¬ 0 = p ^ k := by omega
@@ -1581,8 +1576,7 @@ theorem factor_degree_lt_basisSize
     a.degree?.getD 0 < basisSize f := by
   have hb_ne_zero : b ≠ 0 := ne_zero_of_pos_degree hb_pos
   unfold basisSize
-  rw [← hab]
-  rw [FpPoly.degree?_mul_eq_add_degree? a b ha_ne_zero hb_ne_zero]
+  rw [← hab, FpPoly.degree?_mul_eq_add_degree? a b ha_ne_zero hb_ne_zero]
   omega
 
 omit [ZMod64.PrimeModulus p] in
@@ -1612,8 +1606,8 @@ little theorem packaged through the executable `FpPoly` evaluation. -/
 theorem xPowSubX_one_eval_eq_zero (c : ZMod64 p) :
     DensePoly.eval (xPowSubX (p := p) 1) c = 0 := by
   unfold xPowSubX
-  rw [FpPoly.eval_sub, FpPoly.eval_monomial, FpPoly.eval_X]
-  rw [Nat.pow_one, ZMod64.pow_prime_of_prime_modulus]
+  rw [FpPoly.eval_sub, FpPoly.eval_monomial, FpPoly.eval_X,
+    Nat.pow_one, ZMod64.pow_prime_of_prime_modulus]
   grind
 
 /-- Each prime-field linear factor `X - C c` divides `xPowSubX 1`. -/
@@ -1631,9 +1625,7 @@ private theorem primeFieldLinearFactor_sub_eq (c d : ZMod64 p) :
   apply DensePoly.ext_coeff
   intro n
   unfold primeFieldLinearFactor FpPoly.X FpPoly.C
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_sub_ring]
+  rw [DensePoly.coeff_sub_ring, DensePoly.coeff_sub_ring, DensePoly.coeff_sub_ring]
   rw [DensePoly.coeff_monomial, DensePoly.coeff_C, DensePoly.coeff_C,
       DensePoly.coeff_C]
   have h0 : (Zero.zero : ZMod64 p) = 0 := rfl
@@ -1764,8 +1756,7 @@ omit [ZMod64.PrimeModulus p] in
 private theorem primeFieldLinearFactor_coeff_high (c : ZMod64 p) {n : Nat}
     (hn : 2 ≤ n) : (primeFieldLinearFactor c).coeff n = 0 := by
   unfold primeFieldLinearFactor FpPoly.X FpPoly.C
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_monomial, DensePoly.coeff_C]
+  rw [DensePoly.coeff_sub_ring, DensePoly.coeff_monomial, DensePoly.coeff_C]
   have hn1 : ¬ n = 1 := by omega
   have hn0 : ¬ n = 0 := by omega
   simp [hn1, hn0]
@@ -1823,8 +1814,7 @@ private theorem monic_mul_monic (a b : FpPoly p)
     hprod
   change DensePoly.leadingCoeff (a * b) =
     DensePoly.leadingCoeff a * DensePoly.leadingCoeff b at hlead
-  rw [hlead]
-  rw [ha, hb]
+  rw [hlead, ha, hb]
   grind
 
 /-- Foldl induction: size grows by one for each linear factor multiplied in. -/
@@ -1924,9 +1914,7 @@ theorem primeFieldLinearProduct_monic :
 private theorem xPowSubX_one_coeff_p :
     (xPowSubX (p := p) 1).coeff p = (1 : ZMod64 p) := by
   unfold xPowSubX FpPoly.X
-  rw [Nat.pow_one]
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_monomial, DensePoly.coeff_monomial]
+  rw [Nat.pow_one, DensePoly.coeff_sub_ring, DensePoly.coeff_monomial, DensePoly.coeff_monomial]
   have hp_pos : 2 ≤ p :=
     Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
   have hp1 : ¬ p = 1 := by omega
@@ -1939,9 +1927,7 @@ private theorem xPowSubX_one_coeff_p :
 private theorem xPowSubX_one_coeff_high {n : Nat} (hn : p < n) :
     (xPowSubX (p := p) 1).coeff n = 0 := by
   unfold xPowSubX FpPoly.X
-  rw [Nat.pow_one]
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_monomial, DensePoly.coeff_monomial]
+  rw [Nat.pow_one, DensePoly.coeff_sub_ring, DensePoly.coeff_monomial, DensePoly.coeff_monomial]
   have hp_pos : 2 ≤ p :=
     Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
   have hn_ne_p : ¬ n = p := by omega
@@ -2030,8 +2016,7 @@ private theorem eq_of_dvd_of_size_eq_of_monic
     grind
   rw [hq, hq_eq_C, hq_coeff0]
   show a = a * (DensePoly.C (1 : ZMod64 p))
-  rw [show (DensePoly.C (1 : ZMod64 p) : FpPoly p) = 1 from rfl]
-  rw [FpPoly.mul_one]
+  rw [show (DensePoly.C (1 : ZMod64 p) : FpPoly p) = 1 from rfl, FpPoly.mul_one]
 
 /-- The variable prime-field product identity: the canonical product over field
 constants equals `xPowSubX 1`. This is the headline deliverable for #4085. -/
@@ -2067,8 +2052,8 @@ theorem compose_xPowSubX_one (w : FpPoly p) :
     show DensePoly.monomial (p ^ 1) (1 : ZMod64 p) - FpPoly.X =
       FpPoly.linearPow FpPoly.X p - FpPoly.X
     congr 1
-    rw [show (FpPoly.X : FpPoly p) = DensePoly.monomial 1 (1 : ZMod64 p) from rfl]
-    rw [FpPoly.linearPow_monomial_one]
+    rw [show (FpPoly.X : FpPoly p) = DensePoly.monomial 1 (1 : ZMod64 p) from rfl,
+      FpPoly.linearPow_monomial_one]
     congr 1
     exact Nat.pow_one p
   rw [hxPow]
@@ -2079,8 +2064,7 @@ theorem primeFieldProduct_witness_eq (w : FpPoly p) :
     (ZMod64.values p).foldl
       (fun acc c => acc * (w - FpPoly.C c)) 1 =
         FpPoly.linearPow w p - w := by
-  rw [← FpPoly.compose_primeFieldLinearProduct w]
-  rw [primeFieldProduct_X_eq_xPowSubX]
+  rw [← FpPoly.compose_primeFieldLinearProduct w, primeFieldProduct_X_eq_xPowSubX]
   exact compose_xPowSubX_one w
 
 /-- Divisibility by `w^p - w` transports to the canonical witness product. -/
@@ -2607,9 +2591,7 @@ private theorem witnessLinearFactor_sub_eq
       = (DensePoly.C (d - c) : FpPoly p) := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_sub_ring]
+  rw [DensePoly.coeff_sub_ring, DensePoly.coeff_sub_ring, DensePoly.coeff_sub_ring]
   show w.coeff n - (FpPoly.C c).coeff n - (w.coeff n - (FpPoly.C d).coeff n)
     = (DensePoly.C (d - c) : FpPoly p).coeff n
   rw [show (FpPoly.C c).coeff n = (DensePoly.C c : FpPoly p).coeff n from rfl,
@@ -3029,11 +3011,14 @@ private theorem nullspaceBasisMatrix_entry_eq_basis_coeff
     unfold coeffVector
     rw [Vector.getElem_ofFn]
   -- coeffVector f (basis k) = (fixedSpaceKernelVectors f hmonic).get k
+  have hker_get : (fixedSpaceKernel f hmonic).get k =
+      vectorToPoly ((fixedSpaceKernelVectors f hmonic).get k) := by
+    unfold fixedSpaceKernel
+    exact Vector.getElem_ofFn _
   have hker_eq :
       coeffVector f ((fixedSpaceKernel f hmonic).get k) =
         (fixedSpaceKernelVectors f hmonic).get k := by
-    unfold fixedSpaceKernel
-    rw [Vector.get_ofFn, coeffVector_vectorToPoly]
+    rw [hker_get, coeffVector_vectorToPoly]
   rw [hker_coeff, hker_eq]
   -- Goal: M'[i][k.val] = ((fixedSpaceKernelVectors f hmonic).get k)[i]
   unfold fixedSpaceKernelVectors
@@ -3176,7 +3161,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
         (fixedSpaceKernel f hmonic).get k =
           vectorToPoly ((fixedSpaceKernelVectors f hmonic).get k) := by
       unfold fixedSpaceKernel
-      rw [Vector.get_ofFn]
+      exact Vector.getElem_ofFn _
     rw [hker_eq]
     unfold vectorToPoly
     have hle :
@@ -3479,8 +3464,7 @@ private theorem congr_mul_right_of_congr {m a b : FpPoly p} (z : FpPoly p)
     DensePoly.Congr (a * z) (b * z) m := by
   rcases hab with ⟨r, hr⟩
   refine ⟨r * z, ?_⟩
-  rw [← sub_mul_poly a b z]
-  rw [show a - b = m * r from hr, FpPoly.mul_assoc]
+  rw [← sub_mul_poly a b z, show a - b = m * r from hr, FpPoly.mul_assoc]
 
 omit [ZMod64.PrimeModulus p] in
 /-- The `i`-th coefficient commutes with a `(· + ·)`-`foldl` of polynomials. -/
@@ -3555,7 +3539,7 @@ private theorem fixedSpaceKernel_get_size_le
       (fixedSpaceKernel f hmonic).get k =
         vectorToPoly ((fixedSpaceKernelVectors f hmonic).get k) := by
     unfold fixedSpaceKernel
-    rw [Vector.get_ofFn]
+    exact Vector.getElem_ofFn _
   rw [hker_eq]
   unfold vectorToPoly
   have hle :

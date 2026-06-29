@@ -1052,10 +1052,8 @@ private theorem powModMonicLinear_two_eq_of_quotientWitness
   have hquotMod : (quot * f) % f = 0 :=
     DensePoly.mod_eq_zero_of_dvd (quot * f) f ⟨quot, (FpPoly.mul_comm f quot).symm⟩
   have hsquareMod : (prev * prev) % f = curr := by
-    rw [hmul]
-    rw [DensePoly.DivModLaws.mod_add_mod curr (quot * f) f]
-    rw [hcurrMod, hquotMod]
-    rw [FpPoly.add_zero]
+    rw [hmul, DensePoly.DivModLaws.mod_add_mod curr (quot * f) f, hcurrMod, hquotMod,
+      FpPoly.add_zero]
     exact hcurrMod
   unfold FpPoly.powModMonicLinear
   change FpPoly.modByMonic f (FpPoly.modByMonic f (1 * prev) hmonic * prev) hmonic =

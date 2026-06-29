@@ -109,7 +109,7 @@ the Bareiss recurrence.
 
 {docstring Hex.Matrix.gramMatrix}
 
-{docstring Hex.Matrix.leadingPrefix}
+{docstring Hex.Matrix.principalSubmatrix}
 
 # The determinant
 %%%

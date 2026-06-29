@@ -86,9 +86,7 @@ theorem inv_inv_of_prime
       rw [Lean.Grind.CommSemiring.mul_comm]
       exact ZMod64.inv_mul_eq_one_of_prime hp ha
     have hprod : (((a⁻¹)⁻¹ - a) * a⁻¹) = (0 : ZMod64 p) := by
-      rw [Lean.Grind.Ring.sub_eq_add_neg]
-      rw [Lean.Grind.Semiring.right_distrib]
-      rw [hleft]
+      rw [Lean.Grind.Ring.sub_eq_add_neg, Lean.Grind.Semiring.right_distrib, hleft]
       grind
     rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero hp hprod with hdiff | hzero
     · grind

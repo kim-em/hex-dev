@@ -282,8 +282,7 @@ private theorem scale_C (c d : ZMod64 p) :
   apply DensePoly.ext_coeff
   intro n
   have hzero : c * (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_scale _ _ _ hzero]
-  rw [DensePoly.coeff_C, DensePoly.coeff_C]
+  rw [DensePoly.coeff_scale _ _ _ hzero, DensePoly.coeff_C, DensePoly.coeff_C]
   cases n with
   | zero => rfl
   | succ n => exact hzero
@@ -368,8 +367,7 @@ private theorem dvd_left_of_mul_const_right_eq
   have hc : c ≠ 0 := coeff_zero_ne_zero_of_degree_eq_zero r hrdeg
   refine ⟨DensePoly.C c⁻¹, ?_⟩
   have hfgC : g * DensePoly.C c = f := by
-    rw [← hfg]
-    rw [hrC]
+    rw [← hfg, hrC]
   calc
     g = g * (1 : FpPoly p) := by rw [FpPoly.mul_one]
     _ = g * (DensePoly.C c * DensePoly.C c⁻¹) := by
@@ -459,8 +457,7 @@ private theorem reduceMod_repr_mul_invPoly_eq_one
   have hnormalized :
       GFqRing.reduceMod f (DensePoly.scale c⁻¹ r.gcd) =
         GFqRing.reduceMod f 1 := by
-    rw [hgcd_C]
-    rw [scale_inv_C_eq_one_of_ne_zero hp hc]
+    rw [hgcd_C, scale_inv_C_eq_one_of_ne_zero hp hc]
   exact hscaled.trans (by simpa [r, c] using hnormalized)
 
 end InverseInternals
@@ -803,8 +800,7 @@ theorem mul_inv_cancel
         hmulReduce
     _ = GFqRing.reduceMod f 1 := hreduced
     _ = GFqRing.repr ((1 : FiniteField f hf hp hirr).toQuotient) := by
-        rw [toQuotient_one]
-        rw [honeQuotient]
+        rw [toQuotient_one, honeQuotient]
         rfl
 
 /-- A nonzero field element cancels against its inverse on the left. -/

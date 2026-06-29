@@ -8,11 +8,6 @@ module
 
 public import Std
 public import Init.Grind.Ring.Field
-public import Batteries.Data.Fin.Fold
-public import Batteries.Data.List.Lemmas
-public import Batteries.Data.List.Pairwise
-public import Batteries.Data.List.Perm
-public import Batteries.Data.Vector.Lemmas
 public import HexDeterminant.Enumeration
 public import HexMatrix.Elementary
 public import HexMatrix.DotProduct
@@ -28,7 +23,7 @@ This module defines the determinant `det` of a dense square matrix as the
 `permutationVectors`-indexed sum of signed Leibniz terms, built from `detSign`
 (the inversion-parity sign of a permutation vector), `detProduct` (the unsigned
 diagonal product), and `detTerm` (their product). It records the small base
-cases `det_one_by_one`, `det_two_by_two`, and `det_leadingPrefix_zero`, and
+cases `det_one_by_one`, `det_two_by_two`, and `det_principalSubmatrix_zero`, and
 provides the reusable `foldl`-arithmetic toolkit (scalar factoring, additive
 splitting, permutation invariance, single-index scaling) plus the
 `Fin.castSucc`/`Fin.last` inversion-count lemmas used by the recursive
@@ -64,9 +59,9 @@ def det {R : Type u} [Lean.Grind.Ring R] {n : Nat} (M : Matrix R n n) : R :=
 
 /-- The determinant of the empty leading prefix is the Bareiss previous-pivot
 convention `1`. -/
-@[simp, grind =] theorem det_leadingPrefix_zero {R : Type u} [Lean.Grind.Ring R]
+@[simp, grind =] theorem det_principalSubmatrix_zero {R : Type u} [Lean.Grind.Ring R]
     (M : Matrix R n n) :
-    det (leadingPrefix M 0 (Nat.zero_le n)) = (1 : R) := by
+    det (principalSubmatrix M 0 (Nat.zero_le n)) = (1 : R) := by
   simp [det, detTerm, detSign, detProduct, permutationVectors, inversionCount]
   grind
 
@@ -603,8 +598,7 @@ private theorem detProduct_identity_insertAt_last {R : Type u}
       (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n)) =
     detProduct (1 : Matrix R n n) v := by
   unfold detProduct
-  rw [← Fin.foldl_eq_foldl_finRange, ← Fin.foldl_eq_foldl_finRange]
-  rw [Fin.foldl_succ_last]
+  rw [← Fin.foldl_eq_finRange_foldl, ← Fin.foldl_eq_finRange_foldl, Fin.foldl_succ_last]
   have hfold :
       Fin.foldl n
           (fun acc i =>
@@ -671,9 +665,7 @@ private theorem inversionCount_insert_last_castSucc {n : Nat} (xs : List (Fin n)
   | nil => rfl
   | cons x xs ih =>
       simp only [List.map_cons, List.cons_append, inversionCount]
-      rw [ih]
-      rw [List.foldl_append, List.foldl_cons, List.foldl_nil]
-      rw [inversionFold_map_castSucc]
+      rw [ih, List.foldl_append, List.foldl_cons, List.foldl_nil, inversionFold_map_castSucc]
       simp [Fin.lt_def]
 
 /-- Inserting `Fin.last n` at any position into the `castSucc`-embedded list leaves
@@ -739,8 +731,7 @@ private theorem inversionCount_insertIdx_castSucc_last_eq {n : Nat}
           simp only [inversionCount, List.foldl_cons]
           rw [foldl_all_lt_last_castSucc xs
             (0 + if x.castSucc < Fin.last n then 1 else 0)]
-          rw [inversionFold_map_castSucc]
-          rw [inversionCount_map_castSucc]
+          rw [inversionFold_map_castSucc, inversionCount_map_castSucc]
           simp [Fin.lt_def]
           omega
       | succ p =>
@@ -756,10 +747,8 @@ private theorem inversionCount_insertIdx_castSucc_last_eq {n : Nat}
                 inversionCount ((xs.map Fin.castSucc).insertIdx p (Fin.last n)) =
               xs.foldl (fun acc y => acc + if y < x then 1 else 0) 0 +
                 inversionCount xs + ((x :: xs).length - (p + 1))
-          rw [foldl_insertIdx_last_castSucc_not_lt xs x p]
-          rw [inversionFold_map_castSucc]
-          rw [ih p hp']
-          rw [hlen]
+          rw [foldl_insertIdx_last_castSucc_not_lt xs x p, inversionFold_map_castSucc, ih p hp',
+            hlen]
           grind
 
 /-- Mapping a `Nodup` list through the injective `Fin.castSucc` keeps it `Nodup`. -/
@@ -821,14 +810,13 @@ private theorem finLast_mem {n : Nat} {xs : List (Fin (n + 1))}
   by_cases hmem : Fin.last n ∈ xs
   · exact hmem
   · exfalso
-    have hsub : List.Subperm xs ((List.finRange (n + 1)).erase (Fin.last n)) := by
-      apply List.subperm_of_subset hnodup
+    have hsubset : xs ⊆ (List.finRange (n + 1)).erase (Fin.last n) := by
       intro x hx
-      exact (List.mem_erase_of_ne (by
-        intro hxlast
-        exact hmem (hxlast ▸ hx))).2 (List.mem_finRange x)
+      refine (List.mem_erase_of_ne ?_).2 (List.mem_finRange x)
+      rintro rfl
+      exact hmem hx
     have hle : xs.length ≤ ((List.finRange (n + 1)).erase (Fin.last n)).length :=
-      List.Subperm.length_le hsub
+      List.nodup_subset_length_le hnodup hsubset
     have herase :
         ((List.finRange (n + 1)).erase (Fin.last n)).length = n := by
       rw [List.length_erase]

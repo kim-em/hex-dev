@@ -61,8 +61,7 @@ private theorem foldl_mulWords_size (is : List Nat) (acc : Array UInt64)
 /-- `bit_eq_one_eq_testBit` identifies the shifted low-bit test with `Nat.testBit`. -/
 private theorem bit_eq_one_eq_testBit (x i : Nat) :
     (x >>> i % 2 == 1) = x.testBit i := by
-  rw [Nat.testBit_eq_decide_div_mod_eq]
-  rw [Nat.shiftRight_eq_div_pow]
+  rw [Nat.testBit_eq_decide_div_mod_eq, Nat.shiftRight_eq_div_pow]
   apply decide_eq_decide.mpr
   exact Iff.rfl
 
@@ -71,13 +70,10 @@ private theorem UInt64.bit_xor_bne (a b : UInt64) (i : Nat) :
     ((((a ^^^ b) >>> i.toUInt64) &&& 1) != 0) =
       ((((a >>> i.toUInt64) &&& 1) != 0) !=
         (((b >>> i.toUInt64) &&& 1) != 0)) := by
-  rw [UInt64.bne_zero_eq_toNat_bne_zero]
-  rw [UInt64.bne_zero_eq_toNat_bne_zero]
-  rw [UInt64.bne_zero_eq_toNat_bne_zero]
+  rw [UInt64.bne_zero_eq_toNat_bne_zero, UInt64.bne_zero_eq_toNat_bne_zero,
+    UInt64.bne_zero_eq_toNat_bne_zero]
   simp [UInt64.toNat_xor, UInt64.toNat_shiftRight, UInt64.toNat_and]
-  rw [bit_eq_one_eq_testBit]
-  rw [bit_eq_one_eq_testBit]
-  rw [bit_eq_one_eq_testBit]
+  rw [bit_eq_one_eq_testBit, bit_eq_one_eq_testBit, bit_eq_one_eq_testBit]
   simp [Nat.testBit_xor]
 
 /-- `clmul_xor_left_snd_bit` gives bitwise linearity in the left input for the low word of `clmul`. -/
@@ -101,9 +97,7 @@ private theorem clmul_xor_right_snd_bit (x y z : UInt64) (i : Nat) :
     ((((clmul x (y ^^^ z)).2 >>> i.toUInt64) &&& 1) != 0) =
       (((((clmul x y).2 >>> i.toUInt64) &&& 1) != 0) !=
         ((((clmul x z).2 >>> i.toUInt64) &&& 1) != 0)) := by
-  rw [clmul_comm x (y ^^^ z)]
-  rw [clmul_xor_left]
-  rw [clmul_comm y x, clmul_comm z x]
+  rw [clmul_comm x (y ^^^ z), clmul_xor_left, clmul_comm y x, clmul_comm z x]
   exact UInt64.bit_xor_bne (clmul x y).2 (clmul x z).2 i
 
 /-- `clmul_xor_right_fst_bit` gives bitwise linearity in the right input for the high word of `clmul`. -/
@@ -111,9 +105,7 @@ private theorem clmul_xor_right_fst_bit (x y z : UInt64) (i : Nat) :
     ((((clmul x (y ^^^ z)).1 >>> i.toUInt64) &&& 1) != 0) =
       (((((clmul x y).1 >>> i.toUInt64) &&& 1) != 0) !=
         ((((clmul x z).1 >>> i.toUInt64) &&& 1) != 0)) := by
-  rw [clmul_comm x (y ^^^ z)]
-  rw [clmul_xor_left]
-  rw [clmul_comm y x, clmul_comm z x]
+  rw [clmul_comm x (y ^^^ z), clmul_xor_left, clmul_comm y x, clmul_comm z x]
   exact UInt64.bit_xor_bne (clmul x y).1 (clmul x z).1 i
 
 /-- `coeffWords_xorClmulAt_low` describes the low-word contribution of one `xorClmulAt` update. -/
@@ -147,9 +139,8 @@ private theorem coeffWords_xorClmulAt_low_xor_left (acc : Array UInt64) {idx n :
     coeffWords (xorClmulAt acc idx (x ^^^ y) z) n =
       (coeffWords (xorClmulAt acc idx x z) n !=
         ((((clmul y z).2 >>> (n % 64).toUInt64) &&& 1) != 0)) := by
-  rw [coeffWords_xorClmulAt_low acc (x ^^^ y) z hidx hn]
-  rw [coeffWords_xorClmulAt_low acc x z hidx hn]
-  rw [clmul_xor_left_snd_bit]
+  rw [coeffWords_xorClmulAt_low acc (x ^^^ y) z hidx hn, coeffWords_xorClmulAt_low acc x z hidx hn,
+    clmul_xor_left_snd_bit]
   cases coeffWords acc n <;>
     cases ((((clmul x z).2 >>> (n % 64).toUInt64) &&& 1) != 0) <;>
     cases ((((clmul y z).2 >>> (n % 64).toUInt64) &&& 1) != 0) <;>
@@ -162,9 +153,8 @@ private theorem coeffWords_xorClmulAt_high_xor_left (acc : Array UInt64) {idx n 
     coeffWords (xorClmulAt acc idx (x ^^^ y) z) n =
       (coeffWords (xorClmulAt acc idx x z) n !=
         ((((clmul y z).1 >>> (n % 64).toUInt64) &&& 1) != 0)) := by
-  rw [coeffWords_xorClmulAt_high acc (x ^^^ y) z hidx hidxNext hn]
-  rw [coeffWords_xorClmulAt_high acc x z hidx hidxNext hn]
-  rw [clmul_xor_left_fst_bit]
+  rw [coeffWords_xorClmulAt_high acc (x ^^^ y) z hidx hidxNext hn,
+    coeffWords_xorClmulAt_high acc x z hidx hidxNext hn, clmul_xor_left_fst_bit]
   cases coeffWords acc n <;>
     cases ((((clmul x z).1 >>> (n % 64).toUInt64) &&& 1) != 0) <;>
     cases ((((clmul y z).1 >>> (n % 64).toUInt64) &&& 1) != 0) <;>
@@ -318,8 +308,7 @@ private theorem coeffWords_xorClmulAt_oneHot_low_same_word
     omega
   rw [coeffWords_xorClmulAt_low acc x ((1 : UInt64) <<< shift.toUInt64) hidx
     htargetDiv]
-  rw [htargetMod]
-  rw [clmul_oneHot_low_bit_same_word x hshiftPos hshift hold hbit]
+  rw [htargetMod, clmul_oneHot_low_bit_same_word x hshiftPos hshift hold hbit]
 
 /-- `coeffWords_xorClmulAt_oneHot_low_before_shift` says coefficients below the one-hot shift are left unchanged. -/
 private theorem coeffWords_xorClmulAt_oneHot_low_before_shift
@@ -328,8 +317,8 @@ private theorem coeffWords_xorClmulAt_oneHot_low_before_shift
     (hn : target / 64 = idx) (hbit : target % 64 < shift) :
     coeffWords (xorClmulAt acc idx x ((1 : UInt64) <<< shift.toUInt64)) target =
       coeffWords acc target := by
-  rw [coeffWords_xorClmulAt_low acc x ((1 : UInt64) <<< shift.toUInt64) hidx hn]
-  rw [clmul_oneHot_low_bit_before_shift_false x hshiftPos hshift hbit]
+  rw [coeffWords_xorClmulAt_low acc x ((1 : UInt64) <<< shift.toUInt64) hidx hn,
+    clmul_oneHot_low_bit_before_shift_false x hshiftPos hshift hbit]
   simp
 
 /-- `coeffWords_xorClmulAt_oneHot_high_carry_word` says a one-hot right factor XORs the shifted source bit into the target coefficient when the shift carries it into the high word. -/
@@ -350,8 +339,7 @@ private theorem coeffWords_xorClmulAt_oneHot_high_carry_word
     omega
   rw [coeffWords_xorClmulAt_high acc x ((1 : UInt64) <<< shift.toUInt64) hidx
     hidxNext htargetDiv]
-  rw [htargetMod]
-  rw [clmul_oneHot_high_bit_carry_word x hshiftPos hshift hold hbit]
+  rw [htargetMod, clmul_oneHot_high_bit_carry_word x hshiftPos hshift hold hbit]
 
 /-- `coeffWords_xorClmulAt_oneHot_high_after_carry` says high-word coefficients at or beyond the shift window are left unchanged. -/
 private theorem coeffWords_xorClmulAt_oneHot_high_after_carry
@@ -460,8 +448,7 @@ private theorem coeffWords_xorClmulAt_oneHot_left_low_same_word
     omega
   rw [coeffWords_xorClmulAt_low acc ((1 : UInt64) <<< shift.toUInt64) x hidx
     htargetDiv]
-  rw [htargetMod]
-  rw [clmul_oneHot_left_low_bit_same_word x hshiftPos hshift hold hbit]
+  rw [htargetMod, clmul_oneHot_left_low_bit_same_word x hshiftPos hshift hold hbit]
 
 /-- `coeffWords_xorClmulAt_oneHot_left_low_before_shift` says coefficients below the one-hot shift are left unchanged for a left one-hot factor. -/
 private theorem coeffWords_xorClmulAt_oneHot_left_low_before_shift
@@ -470,8 +457,8 @@ private theorem coeffWords_xorClmulAt_oneHot_left_low_before_shift
     (hn : target / 64 = idx) (hbit : target % 64 < shift) :
     coeffWords (xorClmulAt acc idx ((1 : UInt64) <<< shift.toUInt64) x) target =
       coeffWords acc target := by
-  rw [coeffWords_xorClmulAt_low acc ((1 : UInt64) <<< shift.toUInt64) x hidx hn]
-  rw [clmul_oneHot_left_low_bit_before_shift_false x hshiftPos hshift hbit]
+  rw [coeffWords_xorClmulAt_low acc ((1 : UInt64) <<< shift.toUInt64) x hidx hn,
+    clmul_oneHot_left_low_bit_before_shift_false x hshiftPos hshift hbit]
   simp
 
 /-- `coeffWords_xorClmulAt_oneHot_left_high_carry_word` says a one-hot left factor XORs the shifted source bit into the target coefficient when the shift carries it into the high word. -/
@@ -492,8 +479,7 @@ private theorem coeffWords_xorClmulAt_oneHot_left_high_carry_word
     omega
   rw [coeffWords_xorClmulAt_high acc ((1 : UInt64) <<< shift.toUInt64) x hidx
     hidxNext htargetDiv]
-  rw [htargetMod]
-  rw [clmul_oneHot_left_high_bit_carry_word x hshiftPos hshift hold hbit]
+  rw [htargetMod, clmul_oneHot_left_high_bit_carry_word x hshiftPos hshift hold hbit]
 
 /-- `coeffWords_xorClmulAt_oneHot_left_high_after_carry` says high-word coefficients at or beyond the shift window are left unchanged for a left one-hot factor. -/
 private theorem coeffWords_xorClmulAt_oneHot_left_high_after_carry
@@ -513,8 +499,7 @@ private theorem coeffWords_xorClmulAt_oneHot_left_high_after_carry
 private theorem words_monomial_getElem!_active (k : Nat) :
     (monomial k).words[k / 64]! =
       ((1 : UInt64) <<< (k % 64).toUInt64) := by
-  rw [words_monomial]
-  rw [Array.getElem!_eq_getD]
+  rw [words_monomial, Array.getElem!_eq_getD]
   unfold Array.getD
   rw [dif_pos (by simp)]
   change ((Array.replicate (k / 64) (0 : UInt64)).push
@@ -526,8 +511,7 @@ private theorem words_monomial_getElem!_active (k : Nat) :
 /-- `words_monomial_getElem!_zero_lt` says every word of `monomial k` below the active index `k / 64` is zero. -/
 private theorem words_monomial_getElem!_zero_lt {j k : Nat} (hj : j < k / 64) :
     (monomial k).words[j]! = 0 := by
-  rw [words_monomial]
-  rw [Array.getElem!_eq_getD]
+  rw [words_monomial, Array.getElem!_eq_getD]
   unfold Array.getD
   rw [dif_pos]
   · simp [Array.getElem_push, hj]
@@ -705,8 +689,7 @@ private theorem foldl_xorClmulAt_monomial_active_low
         (n + k) =
       (coeffWords acc (n + k) !=
         (((x >>> (n % 64).toUInt64) &&& 1) != 0)) := by
-  rw [show k / 64 + 1 = (k / 64).succ by omega]
-  rw [List.range_succ, List.foldl_append]
+  rw [show k / 64 + 1 = (k / 64).succ by omega, List.range_succ, List.foldl_append]
   simp only [List.foldl_cons, List.foldl_nil]
   rw [coeffWords_xorClmulAt_monomial_active_low
     (hidx := by simpa [foldl_xorClmulAt_size] using hidx)
@@ -725,8 +708,7 @@ private theorem foldl_xorClmulAt_monomial_active_zero
         (n + k) =
       (coeffWords acc (n + k) !=
         (((x >>> (n % 64).toUInt64) &&& 1) != 0)) := by
-  rw [show k / 64 + 1 = (k / 64).succ by omega]
-  rw [List.range_succ, List.foldl_append]
+  rw [show k / 64 + 1 = (k / 64).succ by omega, List.range_succ, List.foldl_append]
   simp only [List.foldl_cons, List.foldl_nil]
   rw [coeffWords_xorClmulAt_monomial_active_zero
     (hidx := by simpa [foldl_xorClmulAt_size] using hidx)
@@ -744,8 +726,7 @@ private theorem foldl_xorClmulAt_monomial_active_low_before_shift
           acc)
         target =
       coeffWords acc target := by
-  rw [show k / 64 + 1 = (k / 64).succ by omega]
-  rw [List.range_succ, List.foldl_append]
+  rw [show k / 64 + 1 = (k / 64).succ by omega, List.range_succ, List.foldl_append]
   simp only [List.foldl_cons, List.foldl_nil]
   rw [coeffWords_xorClmulAt_monomial_active_low_before_shift
     (hidx := by simpa [foldl_xorClmulAt_size] using hidx)
@@ -764,8 +745,7 @@ private theorem foldl_xorClmulAt_monomial_active_high
         (n + k) =
       (coeffWords acc (n + k) !=
         (((x >>> (n % 64).toUInt64) &&& 1) != 0)) := by
-  rw [show k / 64 + 1 = (k / 64).succ by omega]
-  rw [List.range_succ, List.foldl_append]
+  rw [show k / 64 + 1 = (k / 64).succ by omega, List.range_succ, List.foldl_append]
   simp only [List.foldl_cons, List.foldl_nil]
   rw [coeffWords_xorClmulAt_monomial_active_high
     (hidx := by simpa [foldl_xorClmulAt_size] using hidx)
@@ -784,8 +764,7 @@ private theorem foldl_xorClmulAt_monomial_active_high_after_carry
           acc)
         target =
       coeffWords acc target := by
-  rw [show k / 64 + 1 = (k / 64).succ by omega]
-  rw [List.range_succ, List.foldl_append]
+  rw [show k / 64 + 1 = (k / 64).succ by omega, List.range_succ, List.foldl_append]
   simp only [List.foldl_cons, List.foldl_nil]
   rw [coeffWords_xorClmulAt_monomial_active_high_after_carry
     (hidx := by simpa [foldl_xorClmulAt_size] using hidx)
@@ -804,8 +783,7 @@ private theorem foldl_xorClmulAt_monomial_ne
           acc)
         target =
       coeffWords acc target := by
-  rw [show k / 64 + 1 = (k / 64).succ by omega]
-  rw [List.range_succ, List.foldl_append]
+  rw [show k / 64 + 1 = (k / 64).succ by omega, List.range_succ, List.foldl_append]
   simp only [List.foldl_cons, List.foldl_nil]
   rw [coeffWords_xorClmulAt_ne
     (hnLow := hLow) (hnHigh := hHigh)]
@@ -833,9 +811,8 @@ private theorem coeffWords_xorClmulAt_xor_left
         coeffWords (xorClmulAt accY idx y z) n) := by
   by_cases hLow : n / 64 = idx
   · rw [coeffWords_xorClmulAt_low accXY (x ^^^ y) z hidx hLow]
-    rw [coeffWords_xorClmulAt_low accX x z (by simpa [hsizeX]) hLow]
-    rw [coeffWords_xorClmulAt_low accY y z (by simpa [hsizeY]) hLow]
-    rw [clmul_xor_left_snd_bit, hacc]
+    rw [coeffWords_xorClmulAt_low accX x z (by simpa [hsizeX]) hLow,
+      coeffWords_xorClmulAt_low accY y z (by simpa [hsizeY]) hLow, clmul_xor_left_snd_bit, hacc]
     cases coeffWords accX n <;>
       cases coeffWords accY n <;>
       cases ((((clmul x z).2 >>> (n % 64).toUInt64) &&& 1) != 0) <;>
@@ -854,8 +831,8 @@ private theorem coeffWords_xorClmulAt_xor_left
         cases ((((clmul y z).1 >>> (n % 64).toUInt64) &&& 1) != 0) <;>
         rfl
     · rw [coeffWords_xorClmulAt_ne accXY (x ^^^ y) z hLow hHigh]
-      rw [coeffWords_xorClmulAt_ne accX x z hLow hHigh]
-      rw [coeffWords_xorClmulAt_ne accY y z hLow hHigh]
+      rw [coeffWords_xorClmulAt_ne accX x z hLow hHigh,
+        coeffWords_xorClmulAt_ne accY y z hLow hHigh]
       exact hacc
 
 /-- `foldl_xorClmulAt_xor_left_coeff` lifts left-factor xor-distributivity across the inner `xorClmulAt` fold over a list of word indices. -/
@@ -979,12 +956,10 @@ private theorem coeffWords_xorClmulAt_congr
       coeffWords (xorClmulAt accB idx x y) n := by
   by_cases hLow : n / 64 = idx
   · rw [coeffWords_xorClmulAt_low accA x y (by omega) hLow]
-    rw [coeffWords_xorClmulAt_low accB x y (by omega) hLow]
-    rw [hacc]
+    rw [coeffWords_xorClmulAt_low accB x y (by omega) hLow, hacc]
   · by_cases hHigh : n / 64 = idx + 1
     · rw [coeffWords_xorClmulAt_high accA x y (by omega) hidxA hHigh]
-      rw [coeffWords_xorClmulAt_high accB x y (by omega) hidxB hHigh]
-      rw [hacc]
+      rw [coeffWords_xorClmulAt_high accB x y (by omega) hidxB hHigh, hacc]
     · rw [coeffWords_xorClmulAt_ne accA x y hLow hHigh]
       rw [coeffWords_xorClmulAt_ne accB x y hLow hHigh]
       exact hacc
@@ -1122,8 +1097,7 @@ private theorem foldl_xorClmulAt_zero_left_coeff (js : List Nat) (acc : Array UI
 private theorem getElem!_eq_zero_of_size_le (xs : Array UInt64) {i : Nat}
     (hi : xs.size ≤ i) :
     xs[i]! = 0 := by
-  rw [getElem!_def]
-  rw [Array.getElem?_eq_none]
+  rw [getElem!_def, Array.getElem?_eq_none]
   · rfl
   · exact hi
 
@@ -1152,11 +1126,9 @@ private theorem foldl_mulWords_range_add_zero_left_coeff
   | zero =>
       simp
   | succ k ih =>
-      rw [show xs.size + Nat.succ k = xs.size + k + 1 by omega]
-      rw [List.range_succ, List.foldl_append]
+      rw [show xs.size + Nat.succ k = xs.size + k + 1 by omega, List.range_succ, List.foldl_append]
       simp only [List.foldl_cons, List.foldl_nil]
-      rw [getElem!_eq_zero_of_size_le xs (by omega)]
-      rw [foldl_xorClmulAt_zero_left_coeff]
+      rw [getElem!_eq_zero_of_size_le xs (by omega), foldl_xorClmulAt_zero_left_coeff]
       exact ih
 
 /-- `foldl_mulWords_range_extend_left_coeff` says running the outer `mulWords` fold over any range bound `m ≥ xs.size` gives the same coefficients as the exact `xs.size` range. -/
@@ -1542,8 +1514,7 @@ private theorem foldl_xorClmulAt_monomial_left_prefix_before_source
   | succ m ih =>
       have hm_le : m ≤ source / 64 := by omega
       have hm_lt : m < source / 64 := by omega
-      rw [show m + 1 = m.succ by omega]
-      rw [List.range_succ, List.foldl_append]
+      rw [show m + 1 = m.succ by omega, List.range_succ, List.foldl_append]
       simp only [List.foldl_cons, List.foldl_nil]
       rw [words_monomial_size]
       by_cases hLow : (source + k) / 64 = k / 64 + m
@@ -1639,8 +1610,7 @@ private theorem foldl_xorClmulAt_monomial_left_prefix_after_source
   | succ m ih =>
       by_cases hm_active : m = source / 64
       · subst hm_active
-        rw [show source / 64 + 1 = (source / 64).succ by omega]
-        rw [List.range_succ, List.foldl_append]
+        rw [show source / 64 + 1 = (source / 64).succ by omega, List.range_succ, List.foldl_append]
         simp only [List.foldl_cons, List.foldl_nil]
         rw [words_monomial_size]
         have hprefix := foldl_xorClmulAt_monomial_left_prefix_before_source xs
@@ -1729,8 +1699,7 @@ private theorem foldl_xorClmulAt_monomial_left_prefix_after_source
             simp [coeffWords, hget]
       · have hm_tail : source / 64 + 1 ≤ m := by omega
         have hm_gt : source / 64 < m := by omega
-        rw [show m + 1 = m.succ by omega]
-        rw [List.range_succ, List.foldl_append]
+        rw [show m + 1 = m.succ by omega, List.range_succ, List.foldl_append]
         simp only [List.foldl_cons, List.foldl_nil]
         rw [words_monomial_size]
         by_cases hLow : (source + k) / 64 = k / 64 + m
@@ -1835,8 +1804,7 @@ private theorem foldl_mulWords_monomial_active_zero
             acc)
           (n + k) !=
         (((xs[n / 64]! >>> (n % 64).toUInt64) &&& 1) != 0)) := by
-  rw [show n / 64 + 1 = (n / 64).succ by omega]
-  rw [List.range_succ, List.foldl_append]
+  rw [show n / 64 + 1 = (n / 64).succ by omega, List.range_succ, List.foldl_append]
   simp only [List.foldl_cons, List.foldl_nil]
   rw [words_monomial_size]
   exact foldl_xorClmulAt_monomial_active_zero
@@ -1881,8 +1849,7 @@ private theorem foldl_mulWords_monomial_active_low
             acc)
           (n + k) !=
         (((xs[n / 64]! >>> (n % 64).toUInt64) &&& 1) != 0)) := by
-  rw [show n / 64 + 1 = (n / 64).succ by omega]
-  rw [List.range_succ, List.foldl_append]
+  rw [show n / 64 + 1 = (n / 64).succ by omega, List.range_succ, List.foldl_append]
   simp only [List.foldl_cons, List.foldl_nil]
   rw [words_monomial_size]
   exact foldl_xorClmulAt_monomial_active_low
@@ -1928,8 +1895,7 @@ private theorem foldl_mulWords_monomial_active_high
             acc)
           (n + k) !=
         (((xs[n / 64]! >>> (n % 64).toUInt64) &&& 1) != 0)) := by
-  rw [show n / 64 + 1 = (n / 64).succ by omega]
-  rw [List.range_succ, List.foldl_append]
+  rw [show n / 64 + 1 = (n / 64).succ by omega, List.range_succ, List.foldl_append]
   simp only [List.foldl_cons, List.foldl_nil]
   rw [words_monomial_size]
   exact foldl_xorClmulAt_monomial_active_high
@@ -1976,8 +1942,7 @@ private theorem foldl_mulWords_monomial_active_low_before_shift
               acc)
           acc)
         target := by
-  rw [show i + 1 = i.succ by omega]
-  rw [List.range_succ, List.foldl_append]
+  rw [show i + 1 = i.succ by omega, List.range_succ, List.foldl_append]
   simp only [List.foldl_cons, List.foldl_nil]
   rw [words_monomial_size]
   exact foldl_xorClmulAt_monomial_active_low_before_shift
@@ -2020,8 +1985,7 @@ private theorem foldl_mulWords_monomial_active_high_after_carry
               acc)
           acc)
         target := by
-  rw [show i + 1 = i.succ by omega]
-  rw [List.range_succ, List.foldl_append]
+  rw [show i + 1 = i.succ by omega, List.range_succ, List.foldl_append]
   simp only [List.foldl_cons, List.foldl_nil]
   rw [words_monomial_size]
   exact foldl_xorClmulAt_monomial_active_high_after_carry
@@ -2068,8 +2032,7 @@ private theorem foldl_mulWords_monomial_ne
               acc)
           acc)
         target := by
-  rw [show i + 1 = i.succ by omega]
-  rw [List.range_succ, List.foldl_append]
+  rw [show i + 1 = i.succ by omega, List.range_succ, List.foldl_append]
   simp only [List.foldl_cons, List.foldl_nil]
   rw [words_monomial_size]
   exact foldl_xorClmulAt_monomial_ne
@@ -2392,8 +2355,7 @@ private theorem coeffWords_mulWords_monomial_lt
         · rw [Array.getElem?_eq_none]
           · rfl
           · exact Nat.le_of_not_gt h
-      rw [hword]
-      rw [UInt64.bne_zero_eq_toNat_bne_zero]
+      rw [hword, UInt64.bne_zero_eq_toNat_bne_zero]
       simp
     · intro i hi
       exact List.mem_range.mp hi
@@ -2422,8 +2384,7 @@ private theorem coeffWords_mulWords_monomial_source_oob
         · rw [Array.getElem?_eq_none]
           · rfl
           · exact Nat.le_of_not_gt h
-      rw [hword]
-      rw [UInt64.bne_zero_eq_toNat_bne_zero]
+      rw [hword, UInt64.bne_zero_eq_toNat_bne_zero]
       simp
     · intro i hi
       exact List.mem_range.mp hi
@@ -2462,8 +2423,7 @@ private theorem foldl_mulWords_monomial_prefix_before_source
   | succ m ih =>
       have hm_le : m ≤ source / 64 := by omega
       have hm_lt : m < source / 64 := by omega
-      rw [show m + 1 = m.succ by omega]
-      rw [List.range_succ, List.foldl_append]
+      rw [show m + 1 = m.succ by omega, List.range_succ, List.foldl_append]
       simp only [List.foldl_cons, List.foldl_nil]
       rw [words_monomial_size]
       by_cases hLow : (source + k) / 64 = m + k / 64
@@ -2611,8 +2571,7 @@ private theorem foldl_mulWords_monomial_prefix_after_source
             simp [coeffWords, hget]
       · have hm_tail : source / 64 + 1 ≤ m := by omega
         have hm_gt : source / 64 < m := by omega
-        rw [show m + 1 = m.succ by omega]
-        rw [List.range_succ, List.foldl_append]
+        rw [show m + 1 = m.succ by omega, List.range_succ, List.foldl_append]
         simp only [List.foldl_cons, List.foldl_nil]
         rw [words_monomial_size]
         by_cases hLow : (source + k) / 64 = m + k / 64
@@ -2731,12 +2690,10 @@ private theorem coeffWords_monomial_mulWords_lt
   by_cases hxs : xs.isEmpty
   · simp [hmon, hxs, coeffWords]
   · simp [hmon, hxs]
-    rw [words_monomial_size]
-    rw [show k / 64 + 1 = (k / 64).succ by omega]
-    rw [List.range_succ, List.foldl_append]
+    rw [words_monomial_size, show k / 64 + 1 = (k / 64).succ by omega,
+      List.range_succ, List.foldl_append]
     simp only [List.foldl_cons, List.foldl_nil]
-    rw [foldl_mulWords_left_monomial_zero_prefix]
-    rw [foldl_xorClmulAt_monomial_left_target_lt]
+    rw [foldl_mulWords_left_monomial_zero_prefix, foldl_xorClmulAt_monomial_left_target_lt]
     · rw [coeffWords]
       have hword :
           ((Array.replicate (k / 64 + 1 + xs.size) (0 : UInt64))[target / 64]?).getD
@@ -2766,12 +2723,10 @@ private theorem coeffWords_monomial_mulWords_source_oob
   by_cases hxs : xs.isEmpty
   · simp [hmon, hxs, coeffWords]
   · simp [hmon, hxs]
-    rw [words_monomial_size]
-    rw [show k / 64 + 1 = (k / 64).succ by omega]
-    rw [List.range_succ, List.foldl_append]
+    rw [words_monomial_size, show k / 64 + 1 = (k / 64).succ by omega,
+      List.range_succ, List.foldl_append]
     simp only [List.foldl_cons, List.foldl_nil]
-    rw [foldl_mulWords_left_monomial_zero_prefix]
-    rw [foldl_xorClmulAt_monomial_left_source_oob]
+    rw [foldl_mulWords_left_monomial_zero_prefix, foldl_xorClmulAt_monomial_left_source_oob]
     · rw [coeffWords]
       have hword :
           ((Array.replicate (k / 64 + 1 + xs.size) (0 : UInt64))[(source + k) / 64]?).getD
@@ -2805,9 +2760,8 @@ private theorem coeffWords_monomial_mulWords_source
       simpa [Array.isEmpty] using hempty
     omega
   simp [hmon, hxs]
-  rw [words_monomial_size]
-  rw [show k / 64 + 1 = (k / 64).succ by omega]
-  rw [List.range_succ, List.foldl_append]
+  rw [words_monomial_size, show k / 64 + 1 = (k / 64).succ by omega,
+    List.range_succ, List.foldl_append]
   simp only [List.foldl_cons, List.foldl_nil]
   rw [foldl_mulWords_left_monomial_zero_prefix]
   simpa [words_monomial_size] using
@@ -2891,8 +2845,7 @@ private theorem List.flatMap_congr_left {α β : Type} {xs : List α} {f g : α 
       rfl
   | cons x xs ih =>
       simp only [List.flatMap_cons]
-      rw [h x (by simp)]
-      rw [ih]
+      rw [h x (by simp), ih]
       intro y hy
       exact h y (by simp [hy])
 
@@ -2907,8 +2860,7 @@ private theorem xorBoolList_flatMap_append {α : Type}
       simp [xorBoolList]
   | cons x xs ih =>
       simp only [List.flatMap_cons]
-      rw [xorBoolList_append, xorBoolList_append, xorBoolList_append, ih]
-      rw [xorBoolList_append]
+      rw [xorBoolList_append, xorBoolList_append, xorBoolList_append, ih, xorBoolList_append]
       generalize xorBoolList (left x) = a
       generalize xorBoolList (List.flatMap left xs) = b
       generalize xorBoolList (right x) = c
@@ -2935,8 +2887,7 @@ private theorem xorBoolList_wordPairs_swap
   | succ m ih =>
       rw [List.range_succ, List.flatMap_append]
       simp only [List.flatMap_cons]
-      rw [xorBoolList_append, ih]
-      rw [List.flatMap_empty_input]
+      rw [xorBoolList_append, ih, List.flatMap_empty_input]
       simp only [List.append_nil]
       have hcols :
           xorBoolList
@@ -2949,8 +2900,7 @@ private theorem xorBoolList_wordPairs_swap
                   (List.range n)) !=
               xorBoolList ((List.range n).map (fun j => term m j))) := by
         simp only [List.map_append, List.map_cons, List.map_nil]
-        rw [xorBoolList_flatMap_append]
-        rw [List.flatMap_singleton]
+        rw [xorBoolList_flatMap_append, List.flatMap_singleton]
       rw [hcols]
 
 /-- Congruence for `flatMap` under `xorBoolList`: if `left x` and `right x`
@@ -2965,8 +2915,7 @@ private theorem xorBoolList_flatMap_congr_xor {α : Type}
       rfl
   | cons x xs ih =>
       simp only [List.flatMap_cons]
-      rw [xorBoolList_append, xorBoolList_append]
-      rw [h x (by simp), ih]
+      rw [xorBoolList_append, xorBoolList_append, h x (by simp), ih]
       intro y hy
       exact h y (by simp [hy])
 
@@ -2997,8 +2946,7 @@ private theorem xorBoolList_map_bne_congr {α : Type}
       rfl
   | cons x xs ih =>
       simp only [List.map_cons]
-      rw [xorBoolList_cons, xorBoolList_cons, xorBoolList_cons]
-      rw [Bool.bne_medial, h x (by simp), ih]
+      rw [xorBoolList_cons, xorBoolList_cons, xorBoolList_cons, Bool.bne_medial, h x (by simp), ih]
       intro y hy
       exact h y (by simp [hy])
 
@@ -3016,8 +2964,8 @@ private theorem xorBoolList_flatMap_bne_congr {α : Type}
       rfl
   | cons x xs ih =>
       simp only [List.flatMap_cons]
-      rw [xorBoolList_append, xorBoolList_append, xorBoolList_append]
-      rw [Bool.bne_medial, h x (by simp), ih]
+      rw [xorBoolList_append, xorBoolList_append, xorBoolList_append,
+        Bool.bne_medial, h x (by simp), ih]
       intro y hy
       exact h y (by simp [hy])
 
@@ -3267,8 +3215,7 @@ private theorem foldl_mulWords_getElem!_contrib
         (by
           intro j hj
           exact hbound i (by simp) j hj)
-      rw [hinner]
-      rw [xorWordList_append, UInt64.xor_assoc]
+      rw [hinner, xorWordList_append, UInt64.xor_assoc]
 
 /-- Bit `n` of the carry-less word-pair product vanishes when the left
 factor word is zero; the left base case of the bilinearity ladder. -/
@@ -3430,8 +3377,7 @@ private theorem foldl_mulWords_coeff_contrib
           (by
             intro j hj
             exact hbound i (by simp) j hj)
-        rw [hinner]
-        rw [xorBoolList_append, Bool.bne_assoc]
+        rw [hinner, xorBoolList_append, Bool.bne_assoc]
       · intro i' hi' j hj
         have h := hbound i' (by simp [hi']) j hj
         simpa [foldl_xorClmulAt_size] using h
@@ -3600,8 +3546,7 @@ private theorem wordBitAt_getElem!_eq_coeff
     (p : GF2Poly) {i bit : Nat} (hbit : bit < 64) :
     wordBitAt p.words[i]! bit = p.coeff (64 * i + bit) := by
   have hdiv : (64 * i + bit) / 64 = i := by
-    rw [Nat.mul_add_div (by decide : 64 > 0)]
-    rw [Nat.div_eq_of_lt hbit, Nat.add_zero]
+    rw [Nat.mul_add_div (by decide : 64 > 0), Nat.div_eq_of_lt hbit, Nat.add_zero]
   have hmod : (64 * i + bit) % 64 = bit := by
     rw [Nat.mul_add_mod]
     exact Nat.mod_eq_of_lt hbit
@@ -5463,8 +5408,7 @@ private theorem clmulAssoc_left_middle_sourceTriple
     (wordBitAt (clmul (clmul x y).2 z).1 bit !=
         wordBitAt (clmul (clmul x y).1 z).2 bit) =
       clmulSourceTripleCoeff x y z (bit + 64) := by
-  rw [clmulSourcePairCoeff_high (clmul x y).2 z hbit]
-  rw [clmulSourcePairCoeff_low (clmul x y).1 z hbit]
+  rw [clmulSourcePairCoeff_high (clmul x y).2 z hbit, clmulSourcePairCoeff_low (clmul x y).1 z hbit]
   unfold clmulSourcePairCoeff
   exact xorBoolList_left_middle_sourceTriple_collapse x y z hbit
 
@@ -6370,9 +6314,8 @@ private theorem coeffWords_mulWords_normalize_right
     (xs ys : Array UInt64) (n : Nat) :
     coeffWords (mulWords xs (normalizeWords ys)) n =
       coeffWords (mulWords xs ys) n := by
-  rw [coeffWords_mulWords_comm xs (normalizeWords ys)]
-  rw [coeffWords_mulWords_normalize_left ys xs]
-  rw [coeffWords_mulWords_comm ys xs]
+  rw [coeffWords_mulWords_comm xs (normalizeWords ys), coeffWords_mulWords_normalize_left ys xs,
+    coeffWords_mulWords_comm ys xs]
 
 private theorem coeffWords_mulWords_ofWords_left
     (xs ys zs : Array UInt64) (n : Nat) :

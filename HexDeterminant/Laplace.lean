@@ -143,9 +143,7 @@ pairwise distinct, the no-repeat condition needed to certify it as a genuine
 permutation of the columns. -/
 private theorem moveColumnToLastValues_nodup {n : Nat} (col : Fin (n + 1)) :
     (moveColumnToLastValues col).toList.Nodup := by
-  rw [moveColumnToLastValues, insertAt_last_toList]
-  rw [vector_toList_eq]
-  rw [List.nodup_append]
+  rw [moveColumnToLastValues, insertAt_last_toList, vector_toList_eq, List.nodup_append]
   refine ⟨?_, ?_, ?_⟩
   · apply list_nodup_map_of_injective
     · intro i j h
@@ -180,8 +178,7 @@ shape consumed by the inversion-count sign lemma. -/
 private theorem moveColumnToLastValues_toList {n : Nat} (col : Fin (n + 1)) :
     (moveColumnToLastValues col).toList =
       ((List.finRange n).map (raiseFinAbove col)) ++ [col] := by
-  rw [moveColumnToLastValues, insertAt_last_toList]
-  rw [vector_toList_eq]
+  rw [moveColumnToLastValues, insertAt_last_toList, vector_toList_eq]
   apply congrArg (fun xs => xs ++ [col])
   apply List.map_congr_left
   intro i _hi
@@ -203,9 +200,8 @@ private theorem detSign_moveColumnToLastValues
         (-1 : R) ^ (n - col.val) *
           detSign (R := R) (Vector.ofFn fun i : Fin n => i) := by
       apply detSign_of_inversionCount_add
-      rw [moveColumnToLastValues_toList, hidList]
-      rw [inversionCount_map_raiseFinAbove_append_self]
-      rw [foldCount_finRange_ge]
+      rw [moveColumnToLastValues_toList, hidList, inversionCount_map_raiseFinAbove_append_self,
+        foldCount_finRange_ge]
     _ = (-1 : R) ^ (n - col.val) := by
       rw [detSign_identity]
       grind
@@ -303,7 +299,7 @@ theorem det_eq_foldl_laplace_col
           let jj : Fin n := ⟨j, hj⟩
           change (deleteRowCol C row (Fin.last n))[ii][jj] =
             (deleteRowCol M row col)[ii][jj]
-          rw [deleteRowCol_entry, deleteRowCol_entry]
+          rw [getElem_deleteRowCol, getElem_deleteRowCol]
           rw [show C[skipIndex row ii][skipIndex (Fin.last n) jj] =
               C[skipIndex row ii][jj.castSucc] by
             exact congrArg (fun c => C[skipIndex row ii][c]) (skipIndex_last jj)]
@@ -312,8 +308,7 @@ theorem det_eq_foldl_laplace_col
             simp [C, ofFn]]
           exact congrArg (fun c => M[skipIndex row ii][c])
             (moveColumnToLastValues_castSucc col jj)
-        rw [hClast, hminor]
-        rw [cofactorSign_col_eq (R := R) row col]
+        rw [hClast, hminor, cofactorSign_col_eq (R := R) row col]
         grind
 
 /-- Laplace expansion of the determinant along an arbitrary fixed row. -/
@@ -334,8 +329,7 @@ theorem det_eq_foldl_laplace_row
         (fun acc col => acc + M[row][col] * cofactor M row col) 0 := by
         apply foldl_acc_congr
         intro acc col _hmem
-        rw [cofactor_transpose]
-        rw [transpose_getElem]
+        rw [cofactor_transpose, getElem_transpose]
 
 end Matrix
 end Hex

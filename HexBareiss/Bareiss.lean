@@ -580,36 +580,8 @@ swapped rows read from the opposite source, every other row is unchanged. -/
 @[grind =]
 private theorem rowSwap_get (M : Matrix Int n n) (rowA rowB i j : Fin n) :
     (rowSwap M rowA rowB)[i][j] =
-      if i = rowB then M[rowA][j] else if i = rowA then M[rowB][j] else M[i][j] := by
-  by_cases hiB : i = rowB
-  · subst i
-    simp [rowSwap]
-  · by_cases hiA : i = rowA
-    · subst i
-      simp [rowSwap, hiB]
-      have hval : rowB.val ≠ rowA.val := by
-        intro hval
-        exact hiB (Fin.ext hval.symm)
-      have hrow : ((M.set rowA M[rowB]).set rowB M[rowA])[rowA] =
-          (M.set rowA M[rowB])[rowA] := by
-        exact Vector.getElem_set_ne (xs := M.set rowA M[rowB]) (x := M[rowA])
-          rowB.isLt rowA.isLt hval
-      simpa using congrArg (fun row => row[j]) hrow
-    · simp [rowSwap, hiB, hiA]
-      have hAi : rowA.val ≠ i.val := by
-        intro hval
-        exact hiA (Fin.ext hval.symm)
-      have hBi : rowB.val ≠ i.val := by
-        intro hval
-        exact hiB (Fin.ext hval.symm)
-      have hrow₁ : (M.set rowA M[rowB])[i] = M[i] := by
-        exact Vector.getElem_set_ne (xs := M) (x := M[rowB]) rowA.isLt i.isLt hAi
-      have hrow₂ : ((M.set rowA M[rowB]).set rowB M[rowA])[i] =
-          (M.set rowA M[rowB])[i] := by
-        exact Vector.getElem_set_ne (xs := M.set rowA M[rowB]) (x := M[rowA])
-          rowB.isLt i.isLt hBi
-      exact (congrArg (fun row => row[j]) hrow₂).trans
-        (congrArg (fun row => row[j]) hrow₁)
+      if i = rowB then M[rowA][j] else if i = rowA then M[rowB][j] else M[i][j] :=
+  getElem_rowSwap M rowA rowB i j
 
 /-- `swapRowsArray` applied to `matrixToRows M` matches the abstract
 `rowSwap M rowA rowB` entry by entry. -/
@@ -621,7 +593,9 @@ private theorem getEntry_swapRowsArray_matrixToRows (M : Matrix Int n n)
   by_cases hsame : rowA.val = rowB.val
   · have hrows : rowA = rowB := Fin.ext hsame
     subst rowB
-    simp [swapRowsArray, getEntry_matrixToRows, rowSwap]
+    rw [rowSwap_get]
+    by_cases hir : i = rowA <;>
+      simp [swapRowsArray, getEntry_matrixToRows, hir]
   · have hrows_size : (matrixToRows M).size = n := by
       simp [matrixToRows]
     have hrowA : rowA.val < (matrixToRows M).size := by
@@ -850,8 +824,7 @@ theorem getEntry_stepArray_matches
       simp [getEntry, hi, hj]
       change exactDiv (pivot * getEntry rows i.val j.val - getEntry rows i.val k *
           getEntry rows k j.val) prevPivot = (stepMatrix M k pivot prevPivot)[i][j]
-      rw [stepMatrix_update_eq M k pivot prevPivot i j hi hj]
-      rw [hij, hcol₁, hrow₁]
+      rw [stepMatrix_update_eq M k pivot prevPivot i j hi hj, hij, hcol₁, hrow₁]
     · by_cases hjeq : j.val = k
       · have hjFin : j = (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n) := Fin.ext hjeq
         subst j
@@ -1390,8 +1363,8 @@ theorem pivotLoop_eq_noPivotLoop_of_no_singular {n : Nat}
               prevPivot := state.matrix[state.step][state.step]
               rowSwaps := state.rowSwaps
               singularStep := none }
-          rw [noPivotLoop_regular_branch f state hDone hp]
-          rw [pivotLoop_regular_branch_no_swap f state hDone hp]
+          rw [noPivotLoop_regular_branch f state hDone hp,
+            pivotLoop_regular_branch_no_swap f state hDone hp]
           show pivotLoop f next = noPivotLoop f next
           apply ih
           show (noPivotLoop f next).singularStep = none

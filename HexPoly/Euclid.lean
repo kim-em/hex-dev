@@ -864,10 +864,8 @@ theorem divModArray_remainder_degree_lt_of_pos_degree [Sub R] [Mul R]
         q.coeffs.back?.getD (Zero.zero : R)
       have hidx : q.coeffs.size - 1 < q.coeffs.size := by
         simpa [size] using Nat.sub_one_lt_of_lt hqpos
-      rw [Array.getD_eq_getD_getElem?]
-      rw [Array.getElem?_eq_getElem hidx]
-      rw [Array.back?_eq_getElem?]
-      rw [Array.getElem?_eq_getElem hidx]
+      rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hidx, Array.back?_eq_getElem?,
+        Array.getElem?_eq_getElem hidx]
     have hzero_start :
         ∀ i, qDegree + p.size ≤ i → p.toArray.getD i (Zero.zero : R) = (Zero.zero : R) := by
       intro i hi
@@ -1007,8 +1005,7 @@ theorem divMod_remainder_eq_zero_of_degree_zero_core [One R] [Add R] [Sub R] [Mu
     change q.coeffs.getD 0 (Zero.zero : R) = q.coeffs.back?.getD (Zero.zero : R)
     rw [Array.getD_eq_getD_getElem?]
     have hidx : 0 < q.coeffs.size := by omega
-    rw [Array.getElem?_eq_getElem hidx]
-    rw [Array.back?_eq_getElem?]
+    rw [Array.getElem?_eq_getElem hidx, Array.back?_eq_getElem?]
     have hlast : q.coeffs.size - 1 = 0 := by omega
     rw [hlast, Array.getElem?_eq_getElem hidx]
   have hzero_start :
@@ -1330,9 +1327,8 @@ private theorem ofCoeffs_set!_eq_add_monomial {S : Type _}
     intro x
     change x + (0 : S) = x
     grind
-  rw [coeff_ofCoeffs]
-  rw [coeff_add (ofCoeffs coeffs) (monomial shift coeff) n hzero_add]
-  rw [coeff_ofCoeffs, coeff_monomial]
+  rw [coeff_ofCoeffs, coeff_add (ofCoeffs coeffs) (monomial shift coeff) n hzero_add,
+    coeff_ofCoeffs, coeff_monomial]
   by_cases hn : n = shift
   · subst n
     rw [array_getD_set!_same]
@@ -1693,8 +1689,7 @@ private theorem fold_add_reverse_commring {S : Type _} [Lean.Grind.CommRing S]
   | cons x xs ih =>
       rw [List.reverse_cons, List.foldl_append]
       simp only [List.foldl_cons, List.foldl_nil]
-      rw [ih]
-      rw [fold_add_right_commring xs a x]
+      rw [ih, fold_add_right_commring xs a x]
 
 /-- `(List.range (n + 1)).reverse = (List.range (n + 1)).map (fun i => n - i)`; the
 index reflection `i ↦ n - i` underlying the convolution commutativity reindexing. -/
@@ -1755,9 +1750,7 @@ private theorem fold_diagonal_comm {S : Type _}
     simpa [List.foldl_map, ← List.map_reverse] using
       fold_add_reverse_commring (S := S)
         ((List.range (n + 1)).map (fun i => diagonalMulCoeffTerm p q n i)) 0
-  rw [← hrev]
-  rw [range_succ_reverse_eq_map_sub]
-  rw [List.foldl_map]
+  rw [← hrev, range_succ_reverse_eq_map_sub, List.foldl_map]
   exact fold_diagonal_comm_reindex_list p q n (List.range (n + 1)) (by
     intro i hi
     exact List.mem_range.mp hi) 0
@@ -1791,8 +1784,7 @@ private theorem diagonalSum_neg_right_aux {S : Type _}
       grind
   | cons i xs ih =>
       simp only [List.foldl_cons]
-      rw [diagonalMulCoeffTerm_neg_right]
-      rw [ih]
+      rw [diagonalMulCoeffTerm_neg_right, ih]
       have htail :=
         fold_add_right_commring (S := S)
           (xs.map (fun i => diagonalMulCoeffTerm p q n i)) 0 (diagonalMulCoeffTerm p q n i)
@@ -1823,11 +1815,10 @@ theorem mul_sub_zero_comm {S : Type _}
   apply ext_coeff
   intro n
   have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
-  rw [coeff_mul, coeff_sub 0 (q * p) n hzero_sub, coeff_zero, coeff_mul]
-  rw [mulCoeffSum_eq_diagonal p (0 - q) n, mulCoeffSum_eq_diagonal q p n]
-  rw [diagonalSum_eq_degree_bound p (0 - q) n, diagonalSum_eq_degree_bound q p n]
-  rw [diagonalSum_neg_right p q n]
-  rw [fold_diagonal_comm p q n]
+  rw [coeff_mul, coeff_sub 0 (q * p) n hzero_sub, coeff_zero, coeff_mul,
+    mulCoeffSum_eq_diagonal p (0 - q) n, mulCoeffSum_eq_diagonal q p n,
+    diagonalSum_eq_degree_bound p (0 - q) n, diagonalSum_eq_degree_bound q p n,
+    diagonalSum_neg_right p q n, fold_diagonal_comm p q n]
 
 /-- Commutativity of `DensePoly` multiplication. Hand-proved because `DensePoly`
 carries only `Lean.Grind.CommRing`, not Mathlib's `CommRing`, so `mul_comm`
@@ -1838,10 +1829,8 @@ theorem mul_comm_poly {S : Type _}
     p * q = q * p := by
   apply ext_coeff
   intro n
-  rw [coeff_mul, coeff_mul]
-  rw [mulCoeffSum_eq_diagonal p q n, mulCoeffSum_eq_diagonal q p n]
-  rw [diagonalSum_eq_degree_bound p q n, diagonalSum_eq_degree_bound q p n]
-  rw [fold_diagonal_comm p q n]
+  rw [coeff_mul, coeff_mul, mulCoeffSum_eq_diagonal p q n, mulCoeffSum_eq_diagonal q p n,
+    diagonalSum_eq_degree_bound p q n, diagonalSum_eq_degree_bound q p n, fold_diagonal_comm p q n]
 
 /-- Cancellation rearrangement `(x + y) - (z + x) = y + (0 - z)`, used to
 simplify mixed add/sub combinations arising in the Euclidean update steps. -/
@@ -1853,10 +1842,8 @@ theorem add_sub_add_swap {S : Type _}
   intro n
   have hzero_add : (0 : S) + (0 : S) = 0 := by grind
   have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
-  rw [coeff_sub (x + y) (z + x) n hzero_sub]
-  rw [coeff_add x y n hzero_add, coeff_add z x n hzero_add]
-  rw [coeff_add y (0 - z) n hzero_add]
-  rw [coeff_sub 0 z n hzero_sub, coeff_zero]
+  rw [coeff_sub (x + y) (z + x) n hzero_sub, coeff_add x y n hzero_add, coeff_add z x n hzero_add,
+    coeff_add y (0 - z) n hzero_add, coeff_sub 0 z n hzero_sub, coeff_zero]
   grind
 
 /-- Cancellation rearrangement `(x + y) - (x + z) = y + (0 - z)`. -/
@@ -1868,10 +1855,8 @@ theorem add_sub_add_left {S : Type _}
   intro n
   have hzero_add : (0 : S) + (0 : S) = 0 := by grind
   have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
-  rw [coeff_sub (x + y) (x + z) n hzero_sub]
-  rw [coeff_add x y n hzero_add, coeff_add x z n hzero_add]
-  rw [coeff_add y (0 - z) n hzero_add]
-  rw [coeff_sub 0 z n hzero_sub, coeff_zero]
+  rw [coeff_sub (x + y) (x + z) n hzero_sub, coeff_add x y n hzero_add, coeff_add x z n hzero_add,
+    coeff_add y (0 - z) n hzero_add, coeff_sub 0 z n hzero_sub, coeff_zero]
   grind
 
 /-- Commutativity of `DensePoly` addition (the Mathlib-free `add_comm`). -/
@@ -1893,10 +1878,8 @@ theorem add_assoc_poly {S : Type _}
   apply ext_coeff
   intro n
   have hzero_add : (0 : S) + (0 : S) = 0 := by grind
-  rw [coeff_add (p + q) r n hzero_add]
-  rw [coeff_add p q n hzero_add]
-  rw [coeff_add p (q + r) n hzero_add]
-  rw [coeff_add q r n hzero_add]
+  rw [coeff_add (p + q) r n hzero_add, coeff_add p q n hzero_add, coeff_add p (q + r) n hzero_add,
+    coeff_add q r n hzero_add]
   grind
 
 /-- Right identity for polynomial addition over a commutative ring: `p + 0 = p`.
@@ -1921,9 +1904,8 @@ theorem sub_eq_add_neg_poly {S : Type _}
   intro n
   have hzero_add : (0 : S) + (0 : S) = 0 := by grind
   have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
-  rw [coeff_sub p q n hzero_sub]
-  rw [coeff_add p (0 - q) n hzero_add]
-  rw [coeff_sub 0 q n hzero_sub, coeff_zero]
+  rw [coeff_sub p q n hzero_sub, coeff_add p (0 - q) n hzero_add,
+    coeff_sub 0 q n hzero_sub, coeff_zero]
   grind
 
 private theorem diagonalMulCoeffTerm_one_right {S : Type _}
@@ -2036,8 +2018,7 @@ private theorem fold_add_acc_commring {S : Type _} [Lean.Grind.CommRing S]
   have h :=
     fold_add_right_commring (S := S) (xs.map f) 0 acc
   simp [List.foldl_map] at h
-  rw [← show (0 : S) + acc = acc by grind]
-  rw [h]
+  rw [← show (0 : S) + acc = acc by grind, h]
   grind
 
 /-- Flatten a nested additive fold over a mapped list of rows. -/
@@ -2189,11 +2170,8 @@ private theorem triangular_fold_reindex_commring {S : Type _} [Lean.Grind.CommRi
   | zero =>
       simp
   | succ n ih =>
-      rw [triangular_total_succ_commring F n]
-      rw [triangular_first_succ_commring F n]
-      rw [ih]
-      rw [triangular_prefix_succ_commring F n]
-      rw [triangular_boundary_succ_commring F n]
+      rw [triangular_total_succ_commring F n, triangular_first_succ_commring F n, ih,
+        triangular_prefix_succ_commring F n, triangular_boundary_succ_commring F n]
       grind
 
 private theorem fold_diagonal_add_right {S : Type _}
@@ -2262,10 +2240,8 @@ private theorem fold_add_mul_right_commring {S : Type _} [Lean.Grind.CommRing S]
       simp only [List.foldl_cons]
       have hzero_f : (0 : S) + f i = f i := by grind
       have hzero_fc : (0 : S) + f i * c = f i * c := by grind
-      rw [hzero_f, hzero_fc]
-      rw [fold_add_acc_commring xs f (f i)]
-      rw [fold_add_acc_commring xs (fun i => f i * c) (f i * c)]
-      rw [← ih]
+      rw [hzero_f, hzero_fc, fold_add_acc_commring xs f (f i),
+        fold_add_acc_commring xs (fun i => f i * c) (f i * c), ← ih]
       grind
 
 /-- Distribute left multiplication by a constant through an additive fold. -/
@@ -2280,10 +2256,8 @@ private theorem fold_add_mul_left_commring {S : Type _} [Lean.Grind.CommRing S]
       simp only [List.foldl_cons]
       have hzero_f : (0 : S) + f i = f i := by grind
       have hzero_cf : (0 : S) + c * f i = c * f i := by grind
-      rw [hzero_f, hzero_cf]
-      rw [fold_add_acc_commring xs f (f i)]
-      rw [fold_add_acc_commring xs (fun i => c * f i) (c * f i)]
-      rw [← ih]
+      rw [hzero_f, hzero_cf, fold_add_acc_commring xs f (f i),
+        fold_add_acc_commring xs (fun i => c * f i) (c * f i), ← ih]
       grind
 
 private theorem rat_fold_add_range_succ (A : Nat → Rat) (m : Nat) :
@@ -2387,12 +2361,9 @@ theorem rat_mulCoeffSum_derivative_product_rule
     (p q : DensePoly Rat) (n : Nat) :
     ((n + 1 : Nat) : Rat) * mulCoeffSum p q (n + 1) =
       mulCoeffSum (derivative p) q n + mulCoeffSum p (derivative q) n := by
-  rw [mulCoeffSum_eq_diagonal p q (n + 1)]
-  rw [diagonalSum_eq_degree_bound p q (n + 1)]
-  rw [mulCoeffSum_eq_diagonal (derivative p) q n]
-  rw [diagonalSum_eq_degree_bound (derivative p) q n]
-  rw [mulCoeffSum_eq_diagonal p (derivative q) n]
-  rw [diagonalSum_eq_degree_bound p (derivative q) n]
+  rw [mulCoeffSum_eq_diagonal p q (n + 1), diagonalSum_eq_degree_bound p q (n + 1),
+    mulCoeffSum_eq_diagonal (derivative p) q n, diagonalSum_eq_degree_bound (derivative p) q n,
+    mulCoeffSum_eq_diagonal p (derivative q) n, diagonalSum_eq_degree_bound p (derivative q) n]
   have hleft :
       (List.range (n + 2)).foldl
           (fun acc i => acc + diagonalMulCoeffTerm p q (n + 1) i) 0 =
@@ -2403,8 +2374,7 @@ theorem rat_mulCoeffSum_derivative_product_rule
     have hi' : i < n + 2 := List.mem_range.mp hi
     have hnot : ¬ n + 1 < i := by omega
     simp [diagonalMulCoeffTerm, hnot]
-  rw [hleft]
-  rw [rat_weighted_diagonal_fold (fun i => p.coeff i * q.coeff (n + 1 - i)) n]
+  rw [hleft, rat_weighted_diagonal_fold (fun i => p.coeff i * q.coeff (n + 1 - i)) n]
   congr 1
   · apply fold_add_congr
     intro i hi
@@ -2518,12 +2488,9 @@ theorem mulCoeffSum_derivative_product_rule [DecidableEq S]
     (p q : DensePoly S) (n : Nat) :
     ((n + 1 : Nat) : S) * mulCoeffSum p q (n + 1) =
       mulCoeffSum (derivative p) q n + mulCoeffSum p (derivative q) n := by
-  rw [mulCoeffSum_eq_diagonal p q (n + 1)]
-  rw [diagonalSum_eq_degree_bound p q (n + 1)]
-  rw [mulCoeffSum_eq_diagonal (derivative p) q n]
-  rw [diagonalSum_eq_degree_bound (derivative p) q n]
-  rw [mulCoeffSum_eq_diagonal p (derivative q) n]
-  rw [diagonalSum_eq_degree_bound p (derivative q) n]
+  rw [mulCoeffSum_eq_diagonal p q (n + 1), diagonalSum_eq_degree_bound p q (n + 1),
+    mulCoeffSum_eq_diagonal (derivative p) q n, diagonalSum_eq_degree_bound (derivative p) q n,
+    mulCoeffSum_eq_diagonal p (derivative q) n, diagonalSum_eq_degree_bound p (derivative q) n]
   have hleft :
       (List.range (n + 2)).foldl
           (fun acc i => acc + diagonalMulCoeffTerm p q (n + 1) i) 0 =
@@ -2534,8 +2501,7 @@ theorem mulCoeffSum_derivative_product_rule [DecidableEq S]
     have hi' : i < n + 2 := List.mem_range.mp hi
     have hnot : ¬ n + 1 < i := by omega
     simp [diagonalMulCoeffTerm, hnot]
-  rw [hleft]
-  rw [weighted_diagonal_fold_commring (fun i => p.coeff i * q.coeff (n + 1 - i)) n]
+  rw [hleft, weighted_diagonal_fold_commring (fun i => p.coeff i * q.coeff (n + 1 - i)) n]
   congr 1
   · apply fold_add_congr
     intro i hi
@@ -2564,12 +2530,10 @@ theorem derivative_mul [DecidableEq S]
       derivative p * q + p * derivative q := by
   apply DensePoly.ext_coeff
   intro n
-  rw [coeff_derivative_semiring]
-  rw [coeff_mul p q (n + 1)]
+  rw [coeff_derivative_semiring, coeff_mul p q (n + 1)]
   rw [coeff_add (derivative p * q) (p * derivative q) n
     (Lean.Grind.Semiring.add_zero (0 : S))]
-  rw [coeff_mul (derivative p) q n]
-  rw [coeff_mul p (derivative q) n]
+  rw [coeff_mul (derivative p) q n, coeff_mul p (derivative q) n]
   exact mulCoeffSum_derivative_product_rule p q n
 
 end CommRingDerivative
@@ -2634,8 +2598,7 @@ private theorem fold_diagonal_mul_assoc {S : Type _}
         (fun acc i => acc + diagonalMulCoeffTerm (p * q) r n i) 0 =
       (List.range p.size).foldl
         (fun acc i => acc + diagonalMulCoeffTerm p (q * r) n i) 0 := by
-  rw [diagonalSum_eq_degree_bound (p * q) r n]
-  rw [diagonalSum_eq_degree_bound p (q * r) n]
+  rw [diagonalSum_eq_degree_bound (p * q) r n, diagonalSum_eq_degree_bound p (q * r) n]
   let F : Nat → Nat → S := fun j k => p.coeff j * q.coeff k * r.coeff (n - (j + k))
   have hleft :
       (List.range (n + 1)).foldl
@@ -2682,9 +2645,8 @@ theorem mul_assoc_poly {S : Type _}
     (p * q) * r = p * (q * r) := by
   apply ext_coeff
   intro n
-  rw [coeff_mul, coeff_mul]
-  rw [mulCoeffSum_eq_diagonal (p * q) r n]
-  rw [mulCoeffSum_eq_diagonal p (q * r) n]
+  rw [coeff_mul, coeff_mul, mulCoeffSum_eq_diagonal (p * q) r n,
+    mulCoeffSum_eq_diagonal p (q * r) n]
   exact fold_diagonal_mul_assoc p q r n
 
 /-- Left distributivity for `DensePoly`: `p * (q + r) = p * q + p * r`. -/
@@ -2695,9 +2657,9 @@ theorem mul_add_right_poly {S : Type _}
   apply ext_coeff
   intro n
   have hzero_add : (0 : S) + (0 : S) = 0 := by grind
-  rw [coeff_mul, coeff_add (p * q) (p * r) n hzero_add, coeff_mul, coeff_mul]
-  rw [mulCoeffSum_eq_diagonal p (q + r) n]
-  rw [mulCoeffSum_eq_diagonal p q n, mulCoeffSum_eq_diagonal p r n]
+  rw [coeff_mul, coeff_add (p * q) (p * r) n hzero_add, coeff_mul, coeff_mul,
+    mulCoeffSum_eq_diagonal p (q + r) n,
+    mulCoeffSum_eq_diagonal p q n, mulCoeffSum_eq_diagonal p r n]
   exact fold_diagonal_add_right p q r n
 
 /-- Right distributivity for `DensePoly`: `(p + q) * r = p * r + q * r`. -/
@@ -2727,8 +2689,7 @@ theorem monomial_mul_monomial {S : Type _}
     (monomial m c) * (monomial k d) = monomial (m + k) (c * d) := by
   apply ext_coeff
   intro n
-  rw [coeff_mul, mulCoeffSum_eq_diagonal, diagonalSum_eq_degree_bound]
-  rw [coeff_monomial]
+  rw [coeff_mul, mulCoeffSum_eq_diagonal, diagonalSum_eq_degree_bound, coeff_monomial]
   have hterm : ∀ i,
       diagonalMulCoeffTerm (monomial m c) (monomial k d) n i =
         if i = m ∧ n = m + k then c * d else 0 := by
@@ -2791,8 +2752,7 @@ theorem monomial_mul_monomial {S : Type _}
           simp only [List.foldl_cons]
           rw [hsimp i]
           exact ih _
-    rw [hfold2 (List.range (n + 1)) 0]
-    rw [fold_single_index]
+    rw [hfold2 (List.range (n + 1)) 0, fold_single_index]
     have hm_lt : m < n + 1 := by omega
     rw [if_pos hm_lt, if_pos hnmk]
   · have hzero_fold : ∀ (xs : List Nat) (acc : S),
@@ -2804,11 +2764,9 @@ theorem monomial_mul_monomial {S : Type _}
           intro acc
           simp only [List.foldl_cons]
           have hcond : ¬ (i = m ∧ n = m + k) := fun ⟨_, h⟩ => hnmk h
-          rw [if_neg hcond]
-          rw [show acc + (0 : S) = acc by grind]
+          rw [if_neg hcond, show acc + (0 : S) = acc by grind]
           exact ih _
-    rw [hzero_fold]
-    rw [if_neg hnmk]
+    rw [hzero_fold, if_neg hnmk]
     rfl
 
 /-- Multiplication by a unit-coefficient monomial shifts coefficients upward. -/
@@ -2818,8 +2776,7 @@ theorem monomial_one_mul_poly_eq_shift {S : Type _}
     monomial shift 1 * q = DensePoly.shift shift q := by
   apply ext_coeff
   intro n
-  rw [coeff_mul, mulCoeffSum_eq_diagonal, diagonalSum_eq_degree_bound]
-  rw [coeff_shift]
+  rw [coeff_mul, mulCoeffSum_eq_diagonal, diagonalSum_eq_degree_bound, coeff_shift]
   have hterm : ∀ i,
       diagonalMulCoeffTerm (monomial shift 1) q n i =
         if i = shift ∧ shift ≤ n then q.coeff (n - shift) else 0 := by
@@ -2876,9 +2833,7 @@ theorem monomial_one_mul_poly_eq_shift {S : Type _}
           simp only [List.foldl_cons]
           rw [hsimp i]
           exact ih _
-    rw [hfold2 (List.range (n + 1)) 0]
-    rw [fold_single_index]
-    rw [if_pos (by omega : shift < n + 1)]
+    rw [hfold2 (List.range (n + 1)) 0, fold_single_index, if_pos (by omega : shift < n + 1)]
   · rw [if_pos (by omega : n < shift)]
     have hzero_fold : ∀ (xs : List Nat) (acc : S),
         xs.foldl (fun acc i =>
@@ -2894,8 +2849,7 @@ theorem monomial_one_mul_poly_eq_shift {S : Type _}
           have hzero :
               (if i = shift ∧ shift ≤ n then q.coeff (n - shift) else 0) = 0 := by
             simp [hshift]
-          rw [hzero]
-          rw [show acc + (0 : S) = acc by grind]
+          rw [hzero, show acc + (0 : S) = acc by grind]
           exact ih _
     rw [hzero_fold]
     rfl
@@ -2920,10 +2874,8 @@ theorem add_mul_sub_cancel_right {S : Type _}
   intro n
   have hzero_add : (0 : S) + (0 : S) = 0 := by grind
   have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
-  rw [coeff_add (p * q + t * q) (r - t * q) n hzero_add]
-  rw [coeff_add (p * q) (t * q) n hzero_add]
-  rw [coeff_sub r (t * q) n hzero_sub]
-  rw [coeff_add (p * q) r n hzero_add]
+  rw [coeff_add (p * q + t * q) (r - t * q) n hzero_add, coeff_add (p * q) (t * q) n hzero_add,
+    coeff_sub r (t * q) n hzero_sub, coeff_add (p * q) r n hzero_add]
   grind
 
 /-- One long-division reconstruction step preserves the accumulated identity
@@ -2947,13 +2899,9 @@ private theorem ofCoeffs_subtractScaledShift_eq_sub_monomial_mul {S : Type _}
   apply ext_coeff
   intro n
   have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
-  rw [coeff_ofCoeffs]
-  rw [coeff_sub (ofCoeffs rem) (monomial shift coeff * ofCoeffs q) n hzero_sub]
-  rw [coeff_ofCoeffs]
-  rw [coeff_mul]
-  rw [mulCoeffSum_eq_diagonal]
-  rw [diagonalSum_eq_degree_bound]
-  rw [subtractScaledShift_getD rem q shift coeff n hbound]
+  rw [coeff_ofCoeffs, coeff_sub (ofCoeffs rem) (monomial shift coeff * ofCoeffs q) n hzero_sub,
+    coeff_ofCoeffs, coeff_mul, mulCoeffSum_eq_diagonal, diagonalSum_eq_degree_bound,
+    subtractScaledShift_getD rem q shift coeff n hbound]
   -- Compute each diagonal term using the monomial's coefficient law.
   have hterm : ∀ i,
       diagonalMulCoeffTerm (monomial shift coeff) (ofCoeffs q) n i =
@@ -3020,8 +2968,7 @@ private theorem ofCoeffs_subtractScaledShift_eq_sub_monomial_mul {S : Type _}
           simp only [List.foldl_cons]
           rw [hsimp i]
           exact ih _
-    rw [hfold2 (List.range (n + 1)) 0]
-    rw [fold_single_index]
+    rw [hfold2 (List.range (n + 1)) 0, fold_single_index]
     have hshift_lt : shift < n + 1 := by omega
     rw [if_pos hshift_lt]
     by_cases hsize : n - shift < q.size
@@ -3050,8 +2997,7 @@ private theorem ofCoeffs_subtractScaledShift_eq_sub_monomial_mul {S : Type _}
               then coeff * q.getD (n - shift) (Zero.zero : S)
               else (0 : S)) = 0 := by
             simp [hshift]
-          rw [h0]
-          rw [show acc + (0 : S) = acc by grind]
+          rw [h0, show acc + (0 : S) = acc by grind]
           exact ih _
     rw [hzero_fold (List.range (n + 1)) 0]
     have hand : ¬ (shift ≤ n ∧ n - shift < q.size) := fun ⟨h, _⟩ => hshift h
@@ -3172,24 +3118,21 @@ private theorem xgcd_bezout_step {S : Type _}
     (a s₀ t₀ s₁ t₁ p q : DensePoly S) :
     (s₀ - a * s₁) * p + (t₀ - a * t₁) * q =
       (s₀ * p + t₀ * q) - a * (s₁ * p + t₁ * q) := by
-  rw [sub_eq_add_neg_poly s₀ (a * s₁), sub_eq_add_neg_poly t₀ (a * t₁)]
-  rw [mul_add_left_poly, mul_add_left_poly]
-  rw [neg_mul_right_poly, neg_mul_right_poly]
-  rw [mul_assoc_poly a s₁ p, mul_assoc_poly a t₁ q]
-  rw [mul_add_right_poly]
+  rw [sub_eq_add_neg_poly s₀ (a * s₁), sub_eq_add_neg_poly t₀ (a * t₁),
+    mul_add_left_poly, mul_add_left_poly, neg_mul_right_poly, neg_mul_right_poly,
+    mul_assoc_poly a s₁ p, mul_assoc_poly a t₁ q, mul_add_right_poly]
   apply ext_coeff
   intro n
   have hzero_add : (0 : S) + (0 : S) = 0 := by grind
   have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
   rw [coeff_add (s₀ * p + (0 - a * (s₁ * p))) (t₀ * q + (0 - a * (t₁ * q))) n
     hzero_add]
-  rw [coeff_add (s₀ * p) (0 - a * (s₁ * p)) n hzero_add]
-  rw [coeff_sub 0 (a * (s₁ * p)) n hzero_sub, coeff_zero]
-  rw [coeff_add (t₀ * q) (0 - a * (t₁ * q)) n hzero_add]
-  rw [coeff_sub 0 (a * (t₁ * q)) n hzero_sub, coeff_zero]
-  rw [coeff_sub (s₀ * p + t₀ * q) (a * (s₁ * p) + a * (t₁ * q)) n hzero_sub]
-  rw [coeff_add (s₀ * p) (t₀ * q) n hzero_add]
-  rw [coeff_add (a * (s₁ * p)) (a * (t₁ * q)) n hzero_add]
+  rw [coeff_add (s₀ * p) (0 - a * (s₁ * p)) n hzero_add,
+    coeff_sub 0 (a * (s₁ * p)) n hzero_sub, coeff_zero,
+    coeff_add (t₀ * q) (0 - a * (t₁ * q)) n hzero_add,
+    coeff_sub 0 (a * (t₁ * q)) n hzero_sub, coeff_zero,
+    coeff_sub (s₀ * p + t₀ * q) (a * (s₁ * p) + a * (t₁ * q)) n hzero_sub,
+    coeff_add (s₀ * p) (t₀ * q) n hzero_add, coeff_add (a * (s₁ * p)) (a * (t₁ * q)) n hzero_add]
   grind
 
 /-- `xgcdAux` satisfies the Bezout identity: the returned `left * p + right * q`
@@ -3535,8 +3478,8 @@ theorem divModArray_reconstruction {S : Type _}
       have hcoeffpos : 0 < q.coeffs.size := by simpa [size] using hqpos
       have hidx : q.coeffs.size - 1 < q.coeffs.size :=
         Nat.sub_one_lt_of_lt hcoeffpos
-      rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hidx]
-      rw [Array.back?_eq_getElem?, Array.getElem?_eq_getElem hidx]
+      rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hidx,
+        Array.back?_eq_getElem?, Array.getElem?_eq_getElem hidx]
     have hcancel_array :
         ∀ a, a - scaleLead a * q.toArray.getD (q.size - 1) (Zero.zero : S) =
           (Zero.zero : S) := by
@@ -3645,8 +3588,7 @@ private theorem coeff_mul_top_general {S : Type _}
     (hp : 0 < p.size) (hq : 0 < q.size) :
     (p * q).coeff (p.size - 1 + (q.size - 1)) =
       p.coeff (p.size - 1) * q.coeff (q.size - 1) := by
-  rw [coeff_mul, mulCoeffSum_eq_diagonal]
-  rw [foldl_add_general_eq_at_predecessor _ p.size hp]
+  rw [coeff_mul, mulCoeffSum_eq_diagonal, foldl_add_general_eq_at_predecessor _ p.size hp]
   · unfold diagonalMulCoeffTerm
     have hno : ¬ p.size - 1 + (q.size - 1) < p.size - 1 := by omega
     rw [if_neg hno]
@@ -3997,8 +3939,7 @@ private theorem divModArrayAux_eq_of_polynomial_mul {S : Type _}
               intro i hi
               have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
               show (m - monomial shift coeff).coeff i = 0
-              rw [coeff_sub m (monomial shift coeff) i hzero_sub]
-              rw [coeff_monomial]
+              rw [coeff_sub m (monomial shift coeff) i hzero_sub, coeff_monomial]
               by_cases hi_eq : i = shift
               · subst i
                 rw [if_pos rfl, hcoeff_eq, hshift_eq_size]
@@ -4015,8 +3956,8 @@ private theorem divModArrayAux_eq_of_polynomial_mul {S : Type _}
                 (ofCoeffs rem' : DensePoly S) = m_new * ofCoeffs q := by
               show (ofCoeffs (subtractScaledShift rem q shift coeff) : DensePoly S) =
                 (m - monomial shift coeff) * ofCoeffs q
-              rw [ofCoeffs_subtractScaledShift_eq_sub_monomial_mul rem q shift coeff hbound_rem]
-              rw [h_inv]
+              rw [ofCoeffs_subtractScaledShift_eq_sub_monomial_mul rem q shift coeff hbound_rem,
+                h_inv]
               apply ext_coeff
               intro n
               have hzero_add : (0 : S) + (0 : S) = 0 := by grind
@@ -4027,8 +3968,8 @@ private theorem divModArrayAux_eq_of_polynomial_mul {S : Type _}
                   (m - monomial shift coeff) + monomial shift coeff = m := by
                 apply ext_coeff
                 intro k
-                rw [coeff_add (m - monomial shift coeff) (monomial shift coeff) k hzero_add]
-                rw [coeff_sub m (monomial shift coeff) k hzero_sub]
+                rw [coeff_add (m - monomial shift coeff) (monomial shift coeff) k hzero_add,
+                  coeff_sub m (monomial shift coeff) k hzero_sub]
                 grind
               have hrhs := congrArg (fun p : DensePoly S => p.coeff n)
                 (add_mul_sub_cancel_right (m - monomial shift coeff)
@@ -4121,9 +4062,9 @@ private theorem divModArrayAux_eq_of_polynomial_mul {S : Type _}
               have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
               rw [coeff_add (ofCoeffs quot + monomial shift coeff)
                 (m - monomial shift coeff) n hzero_add]
-              rw [coeff_add (ofCoeffs quot) (monomial shift coeff) n hzero_add]
-              rw [coeff_sub m (monomial shift coeff) n hzero_sub]
-              rw [coeff_add (ofCoeffs quot) m n hzero_add]
+              rw [coeff_add (ofCoeffs quot) (monomial shift coeff) n hzero_add,
+                coeff_sub m (monomial shift coeff) n hzero_sub,
+                coeff_add (ofCoeffs quot) m n hzero_add]
               grind
             · simp [hrd_lt_q]
               simp only [← Array.set!_eq_setIfInBounds, ← Array.getD_eq_getD_getElem?]
@@ -4465,8 +4406,7 @@ private theorem nat_gcd_bezout (a b : Nat) :
         rw [Int.natCast_mul] at h
         rw [Int.mul_comm ((a : Int)) ((b / a : Nat) : Int)] at h
         omega
-      rw [Nat.gcd_rec]
-      rw [← hxy]
+      rw [Nat.gcd_rec, ← hxy]
       calc
         (y - x * (b / a : Nat)) * (a : Int) + x * (b : Int) =
             x * ((b : Int) - (b / a : Nat) * (a : Int)) + y * (a : Int) := by
@@ -4527,10 +4467,8 @@ private theorem foldl_add_int_sub_terms
       simp
   | cons x xs ih =>
       simp only [List.foldl_cons]
-      rw [list_foldl_add_term_int xs f (0 + f x)]
-      rw [list_foldl_add_term_int xs g (0 + g x)]
-      rw [list_foldl_add_term_int xs (fun x => f x - g x) (0 + (f x - g x))]
-      rw [← ih]
+      rw [list_foldl_add_term_int xs f (0 + f x), list_foldl_add_term_int xs g (0 + g x),
+        list_foldl_add_term_int xs (fun x => f x - g x) (0 + (f x - g x)), ← ih]
       grind
 
 /-- If `d` divides the additive fold of `f` and divides each `f x - g x`, then it divides the additive fold of `g`, transporting divisibility across a term-wise congruence. -/
@@ -4736,9 +4674,7 @@ private theorem dvd_diagonalMulCoeffTerm_of_dvd_mul_coeff_of_dvd_other_diagonal_
   · have hsum :
         (d : Int) ∣ (List.range (n + 1)).foldl
           (fun s r => s + diagonalMulCoeffTerm p q n r) 0 := by
-      rw [← diagonalSum_eq_degree_bound p q n]
-      rw [← mulCoeffSum_eq_diagonal p q n]
-      rw [← coeff_mul p q n]
+      rw [← diagonalSum_eq_degree_bound p q n, ← mulCoeffSum_eq_diagonal p q n, ← coeff_mul p q n]
       exact hprod
     exact dvd_term_of_dvd_foldl_add_of_dvd_others (d : Int) (List.range (n + 1))
       (fun r => diagonalMulCoeffTerm p q n r) i
@@ -4852,9 +4788,7 @@ private theorem list_natAbs_gcd_bezout_aux (xs : List Int) (acc : Nat) :
       refine ⟨a * u, (a * v * sgn) :: weights, ?_, ?_⟩
       · simp [hlen]
       · simp only [List.zipWith_cons_cons, List.foldl_cons, List.foldl_cons]
-        rw [← hsum]
-        rw [← huv]
-        rw [list_foldl_add_int]
+        rw [← hsum, ← huv, list_foldl_add_int]
         have hterm : a * v * sgn * x = a * v * Int.ofNat x.natAbs := by
           rw [← hsgn]
           grind
@@ -4893,8 +4827,7 @@ divides the polynomial content. -/
 theorem dvd_content_of_nat_dvd_coeff (p : DensePoly Int) (d : Nat)
     (h : ∀ n, (d : Int) ∣ p.coeff n) :
     (d : Int) ∣ content p := by
-  rw [content]
-  rw [Int.ofNat_dvd_left]
+  rw [content, Int.ofNat_dvd_left]
   exact dvd_contentNat_of_dvd_coeff p d h
 
 /-- If a natural number divides every coefficient, then it divides the content. -/
@@ -5082,9 +5015,7 @@ theorem content_mul_primitivePart (p : DensePoly Int) :
       · have hpart :
             (primitivePart p).coeff n = p.coeff n / content p := by
           unfold primitivePart content
-          rw [if_neg hc]
-          rw [coeff_ofCoeffs_list]
-          rw [list_getD_map_ediv_zero]
+          rw [if_neg hc, coeff_ofCoeffs_list, list_getD_map_ediv_zero]
           unfold coeff toArray Array.getD
           by_cases hn : n < p.coeffs.size
           · simp [hn]
@@ -5212,9 +5143,7 @@ theorem content_scale_int (c : Int) (p : DensePoly Int) :
         trimTrailingZerosList (p.toArray.toList.map (fun x => c * x)) := by
     unfold scale ofCoeffs toArray trimTrailingZeros
     simp
-  rw [hscale_coeffs]
-  rw [foldl_gcd_natAbs_trim_eq]
-  rw [List.foldl_map]
+  rw [hscale_coeffs, foldl_gcd_natAbs_trim_eq, List.foldl_map]
   have h := foldl_gcd_natAbs_mul_const_int c p.toArray.toList 0
   rw [Nat.mul_zero] at h
   exact h
@@ -5338,9 +5267,8 @@ private theorem mod_sub_self_eq_mul_neg_div {S : Type _}
   have hzero_add : (0 : S) + (0 : S) = 0 := by grind
   change (((p / m) * m + (p % m)).coeff n = p.coeff n) at hcoeff
   rw [coeff_add ((p / m) * m) (p % m) n hzero_add] at hcoeff
-  rw [coeff_sub (p % m) p n hzero_sub]
-  rw [mul_sub_zero_comm m (p / m), coeff_sub 0 ((p / m) * m) n hzero_sub]
-  rw [coeff_zero]
+  rw [coeff_sub (p % m) p n hzero_sub,
+    mul_sub_zero_comm m (p / m), coeff_sub 0 ((p / m) * m) n hzero_sub, coeff_zero]
   grind
 
 /-- Packages `mod_sub_self_eq_mul_neg_div` as the divisibility `m ∣ (p % m - p)`, the core
@@ -5466,10 +5394,8 @@ theorem dvd_of_mod_eq_mod {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] [
       rw [coeff_sub 0 ((q / m) * m) n hzero_sub, coeff_zero]
       grind
     · -- m * (a - b) = a * m + (0 - b * m), via sub_eq_add_neg + mul_sub_zero_comm + mul_comm.
-      rw [sub_eq_add_neg_poly]
-      rw [mul_add_right_poly]
-      rw [mul_sub_zero_comm m (q / m)]
-      rw [mul_comm_poly m (p / m)]
+      rw [sub_eq_add_neg_poly, mul_add_right_poly, mul_sub_zero_comm m (q / m),
+        mul_comm_poly m (p / m)]
   rw [hgoal]
   grind
 
@@ -5508,10 +5434,7 @@ private theorem mod_mul_self_left {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
     (m r : DensePoly S) :
     (m * r) % m = 0 := by
-  rw [mod_mul_mod]
-  rw [mod_self_eq_zero]
-  rw [zero_mul_left]
-  rw [zero_mod_eq_zero]
+  rw [mod_mul_mod, mod_self_eq_zero, zero_mul_left, zero_mod_eq_zero]
 
 /-- Adding a multiple of `m` leaves the canonical remainder unchanged,
 `(q + m * r) % m = q % m`. -/
@@ -5525,9 +5448,7 @@ private theorem mod_add_mul_self {S : Type _}
     intro n
     have hzero_sub : (0 : S) - (0 : S) = 0 := by grind
     have hzero_add : (0 : S) + (0 : S) = 0 := by grind
-    rw [coeff_sub (q + m * r) q n hzero_sub]
-    rw [coeff_add q (m * r) n hzero_add]
-    rw [coeff_mul]
+    rw [coeff_sub (q + m * r) q n hzero_sub, coeff_add q (m * r) n hzero_add, coeff_mul]
     grind⟩
 
 /-- Under the Bezout hypothesis `s * a + t * b = 1`, exhibits `polyCRT a b u v s t - u` as
@@ -5613,8 +5534,7 @@ theorem polyCRT_modByMonic_fst :
     (a b u v s t : DensePoly S) -> (ha : Monic a) -> s * a + t * b = 1 ->
     modByMonic (polyCRT a b u v s t) a ha = modByMonic u a ha := by
   intro S _ _ _ _ a b u v s t ha hbez
-  rw [modByMonic_eq_mod]
-  rw [modByMonic_eq_mod]
+  rw [modByMonic_eq_mod, modByMonic_eq_mod]
   exact mod_eq_mod_of_congr (polyCRT_congr_fst a b u v s t hbez)
 
 /-- The CRT witness reduces to the prescribed first residue modulo `a`. -/
@@ -5633,8 +5553,7 @@ theorem polyCRT_modByMonic_snd :
     (a b u v s t : DensePoly S) -> (hb : Monic b) -> s * a + t * b = 1 ->
     modByMonic (polyCRT a b u v s t) b hb = modByMonic v b hb := by
   intro S _ _ _ _ a b u v s t hb hbez
-  rw [modByMonic_eq_mod]
-  rw [modByMonic_eq_mod]
+  rw [modByMonic_eq_mod, modByMonic_eq_mod]
   exact mod_eq_mod_of_congr (polyCRT_congr_snd a b u v s t hbez)
 
 /-- The CRT witness reduces to the prescribed second residue modulo `b`. -/
@@ -5805,8 +5724,7 @@ theorem coeff_mul_top_int (p q : DensePoly Int)
     (hp : 0 < p.size) (hq : 0 < q.size) :
     (p * q).coeff (p.size - 1 + (q.size - 1)) =
       p.coeff (p.size - 1) * q.coeff (q.size - 1) := by
-  rw [coeff_mul, mulCoeffSum_eq_diagonal]
-  rw [foldl_add_int_eq_at_predecessor _ p.size hp]
+  rw [coeff_mul, mulCoeffSum_eq_diagonal, foldl_add_int_eq_at_predecessor _ p.size hp]
   · unfold diagonalMulCoeffTerm
     have hno : ¬ (p.size - 1 + (q.size - 1)) < p.size - 1 := by omega
     rw [if_neg hno]
@@ -5893,8 +5811,7 @@ private theorem foldl_add_int_diagonal_scaled
         by_cases hn : n < m'
         · simp [hn]
         · rw [if_neg hn]
-          rw [coeff_scale a r m' (Int.mul_zero a)]
-          rw [coeff_scale b s (n - m') (Int.mul_zero b)]
+          rw [coeff_scale a r m' (Int.mul_zero a), coeff_scale b s (n - m') (Int.mul_zero b)]
           grind
       rw [hterm]
       grind
@@ -5902,8 +5819,7 @@ private theorem foldl_add_int_diagonal_scaled
 /-- Coefficient identity: scaling both factors of a product. -/
 private theorem coeff_scale_mul_scale (a b : Int) (r s : DensePoly Int) (n : Nat) :
     ((scale a r) * (scale b s)).coeff n = a * b * (r * s).coeff n := by
-  rw [coeff_mul (scale a r) (scale b s) n]
-  rw [coeff_mul r s n]
+  rw [coeff_mul (scale a r) (scale b s) n, coeff_mul r s n]
   rw [mulCoeffSum_eq_diagonal (scale a r) (scale b s) n,
       mulCoeffSum_eq_diagonal r s n]
   rw [diagonalSum_eq_degree_bound (scale a r) (scale b s) n,

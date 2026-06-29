@@ -148,8 +148,8 @@ private lemma det_aux_adjugate_m_eq (M : Matrix (Fin (n + 2)) (Fin (n + 2)) R) :
   have h_M'_expand : (auxAdjugateM M).det =
       auxAdjugateM M 0 0 * M'11.det + (-1 : R) ^ (n + 1) *
       auxAdjugateM M 0 (Fin.last (n + 1)) * M'1n.det := by
-    rw [Matrix.det_succ_row (auxAdjugateM M) 0, Fin.sum_univ_succ]
-    rw [Finset.sum_eq_single (Fin.last n)]
+    rw [Matrix.det_succ_row (auxAdjugateM M) 0, Fin.sum_univ_succ,
+      Finset.sum_eq_single (Fin.last n)]
     · simp [M'11, M'1n, f0, fn]
     · intro b _ hb
       have h1 : (b.succ : Fin (n + 2)) ≠ 0 := Fin.succ_ne_zero b
@@ -192,8 +192,8 @@ private lemma det_aux_adjugate_m_eq (M : Matrix (Fin (n + 2)) (Fin (n + 2)) R) :
         simp [submatrix_apply, M'1n, auxAdjugateM,
             f0, fn, Fin.succAbove_zero, Fin.succAbove_last, Fin.succ_last, hr]
     · simp
-  rw [h_M'00, h_M'11_det, h_M'0n, h_M'1n]
-  rw [mul_neg, ← mul_assoc, ← mul_pow, neg_mul_neg, one_mul, one_pow]
+  rw [h_M'00, h_M'11_det, h_M'0n, h_M'1n,
+    mul_neg, ← mul_assoc, ← mul_pow, neg_mul_neg, one_mul, one_pow]
   ring
 
 private theorem det_desnanot_jacobi_mul

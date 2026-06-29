@@ -186,8 +186,7 @@ constant case. -/
     toRatPoly (DensePoly.C c) = DensePoly.C (c : Rat) := by
   apply DensePoly.ext_coeff
   intro n
-  rw [coeff_toRatPoly]
-  rw [DensePoly.coeff_C, DensePoly.coeff_C]
+  rw [coeff_toRatPoly, DensePoly.coeff_C, DensePoly.coeff_C]
   by_cases hn : n = 0
   · simp [hn]
   · simp [hn]
@@ -208,8 +207,7 @@ theorem toRatPoly_scale_int (c : Int) (f : ZPoly) :
     toRatPoly (DensePoly.scale c f) = DensePoly.scale (c : Rat) (toRatPoly f) := by
   apply DensePoly.ext_coeff
   intro n
-  rw [coeff_toRatPoly]
-  rw [DensePoly.coeff_scale (R := Int) c f n (Int.mul_zero c)]
+  rw [coeff_toRatPoly, DensePoly.coeff_scale (R := Int) c f n (Int.mul_zero c)]
   rw [DensePoly.coeff_scale (R := Rat) (c : Rat) (toRatPoly f) n (by
     exact Rat.mul_zero (c : Rat))]
   rw [coeff_toRatPoly]
@@ -309,8 +307,7 @@ private theorem toRatPoly_mulCoeffOuter_fold (f g : ZPoly) (n : Nat)
       rfl
   | cons i xs ih =>
       simp only [List.foldl_cons]
-      rw [size_toRatPoly g]
-      rw [toRatPoly_mulCoeffStep_fold]
+      rw [size_toRatPoly g, toRatPoly_mulCoeffStep_fold]
       simpa [size_toRatPoly g] using
         ih ((List.range g.size).foldl (DensePoly.mulCoeffStep (R := Int) f g n i) a)
 
@@ -515,8 +512,7 @@ private theorem rat_scale_toRatPoly_neg_int (u : Rat) (p : ZPoly) :
       DensePoly.scale (-u) (toRatPoly (DensePoly.scale (-1 : Int) p)) := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_scale (R := Rat) u (toRatPoly p) n (Rat.mul_zero u)]
-  rw [toRatPoly_scale_int]
+  rw [DensePoly.coeff_scale (R := Rat) u (toRatPoly p) n (Rat.mul_zero u), toRatPoly_scale_int]
   change u * (toRatPoly p).coeff n =
     (DensePoly.scale (-u) (DensePoly.scale (-1 : Rat) (toRatPoly p))).coeff n
   rw [DensePoly.coeff_scale (R := Rat) (-u)
@@ -1031,9 +1027,8 @@ theorem leadingCoeff_mul_of_nonzero (p q : ZPoly)
   have hq_pos : 0 < q.size := size_pos_of_ne_zero q hq
   have hpq_size := mul_size_eq_top_succ_of_nonzero p q hp_pos hq_pos
   have hpq_pos : 0 < (p * q).size := by omega
-  rw [DensePoly.leadingCoeff_eq_coeff_last (p * q) hpq_pos]
-  rw [DensePoly.leadingCoeff_eq_coeff_last p hp_pos]
-  rw [DensePoly.leadingCoeff_eq_coeff_last q hq_pos]
+  rw [DensePoly.leadingCoeff_eq_coeff_last (p * q) hpq_pos,
+    DensePoly.leadingCoeff_eq_coeff_last p hp_pos, DensePoly.leadingCoeff_eq_coeff_last q hq_pos]
   have hlast : (p * q).size - 1 = p.size - 1 + (q.size - 1) := by omega
   rw [hlast]
   exact coeff_mul_top p q hp_pos hq_pos
@@ -1159,8 +1154,8 @@ theorem leadingCoeff_scale_of_nonzero (c : Int) (p : ZPoly) (hc : c ≠ 0) :
   by_cases hp : 0 < p.size
   · rw [DensePoly.leadingCoeff_eq_coeff_last (DensePoly.scale c p)]
     · rw [scale_size_of_nonzero c p hc]
-      rw [DensePoly.coeff_scale (R := Int) c p (p.size - 1) (Int.mul_zero c)]
-      rw [DensePoly.leadingCoeff_eq_coeff_last p hp]
+      rw [DensePoly.coeff_scale (R := Int) c p (p.size - 1) (Int.mul_zero c),
+        DensePoly.leadingCoeff_eq_coeff_last p hp]
     · rw [scale_size_of_nonzero c p hc]
       exact hp
   · have hpsize : p.size = 0 := by omega
@@ -1236,8 +1231,7 @@ theorem leadingCoeff_shift_of_nonzero (k : Nat) (p : ZPoly) (hp : p ≠ 0) :
     rw [DensePoly.coeff_shift]
     have hnot : ¬ k + p.size - 1 < k := by omega
     have hidx : k + p.size - 1 - k = p.size - 1 := by omega
-    rw [if_neg hnot, hidx]
-    rw [DensePoly.leadingCoeff_eq_coeff_last p hpos]
+    rw [if_neg hnot, hidx, DensePoly.leadingCoeff_eq_coeff_last p hpos]
   · rw [shift_size_of_nonzero_core k hp]
     omega
 
@@ -1271,8 +1265,8 @@ theorem mul_right_cancel_of_ne_zero {p q r : ZPoly}
   intro n
   have hzero_add : (0 : Int) + 0 = 0 := by omega
   have hzero_sub : (0 : Int) - 0 = 0 := by omega
-  rw [DensePoly.coeff_add (q * r) (0 - q * r) n hzero_add]
-  rw [DensePoly.coeff_sub 0 (q * r) n hzero_sub, DensePoly.coeff_zero]
+  rw [DensePoly.coeff_add (q * r) (0 - q * r) n hzero_add,
+    DensePoly.coeff_sub 0 (q * r) n hzero_sub, DensePoly.coeff_zero]
   omega
 
 /-- A nonzero divisor of a nonzero integer polynomial has no larger dense size. -/
@@ -1284,8 +1278,7 @@ theorem size_le_of_dvd_nonzero {d r : ZPoly}
   by_cases hk_zero : k = 0
   · apply False.elim
     apply hr
-    rw [hk, hk_zero]
-    rw [DensePoly.mul_comm_poly d (0 : ZPoly), DensePoly.zero_mul]
+    rw [hk, hk_zero, DensePoly.mul_comm_poly d (0 : ZPoly), DensePoly.zero_mul]
   · have hd_pos : 0 < d.size := by
       rcases Nat.lt_or_ge 0 d.size with h | h
       · exact h
@@ -1384,9 +1377,9 @@ theorem divMod_remainder_eq_zero_of_monic_mul_eq
       rw [DensePoly.coeff_mul] at hcoeff
       rw [DensePoly.sub_eq_add_neg_poly, DensePoly.mul_add_left_poly,
         DensePoly.neg_mul_right_poly]
-      rw [DensePoly.coeff_add (quotient * candidate) (0 - qr.1 * candidate) n hzero_add]
-      rw [DensePoly.coeff_sub 0 (qr.1 * candidate) n hzero_sub, DensePoly.coeff_zero]
-      rw [DensePoly.coeff_mul, DensePoly.coeff_mul]
+      rw [DensePoly.coeff_add (quotient * candidate) (0 - qr.1 * candidate) n hzero_add,
+        DensePoly.coeff_sub 0 (qr.1 * candidate) n hzero_sub, DensePoly.coeff_zero,
+        DensePoly.coeff_mul, DensePoly.coeff_mul]
       omega
     have hsize_le : candidate.size ≤ qr.2.size :=
       size_le_of_dvd_nonzero hcandidate_ne hrem_zero hrem_dvd
@@ -1709,8 +1702,7 @@ private theorem rat_scale_zero (p : DensePoly Rat) :
     DensePoly.scale 0 p = 0 := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_scale (R := Rat) 0 p n (Rat.mul_zero 0)]
-  rw [DensePoly.coeff_zero]
+  rw [DensePoly.coeff_scale (R := Rat) 0 p n (Rat.mul_zero 0), DensePoly.coeff_zero]
   exact Rat.zero_mul (p.coeff n)
 
 /-- Scaling the zero rational dense polynomial by any unit `u` yields the zero polynomial. -/
@@ -1718,8 +1710,8 @@ private theorem rat_scale_zero_right (u : Rat) :
     DensePoly.scale u (0 : DensePoly Rat) = 0 := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_scale (R := Rat) u (0 : DensePoly Rat) n (Rat.mul_zero u)]
-  rw [DensePoly.coeff_zero]
+  rw [DensePoly.coeff_scale (R := Rat) u (0 : DensePoly Rat) n (Rat.mul_zero u),
+    DensePoly.coeff_zero]
   exact Rat.mul_zero u
 
 /-- Scaling a rational dense polynomial by `1` leaves it unchanged. -/
@@ -1761,10 +1753,9 @@ private theorem rat_derivative_scale (u : Rat) (p : DensePoly Rat) :
       DensePoly.scale u (DensePoly.derivative p) := by
   apply DensePoly.ext_coeff
   intro n
-  rw [rat_coeff_derivative]
-  rw [DensePoly.coeff_scale (R := Rat) u (DensePoly.derivative p) n (Rat.mul_zero u)]
-  rw [rat_coeff_derivative]
-  rw [DensePoly.coeff_scale (R := Rat) u p (n + 1) (Rat.mul_zero u)]
+  rw [rat_coeff_derivative,
+    DensePoly.coeff_scale (R := Rat) u (DensePoly.derivative p) n (Rat.mul_zero u),
+    rat_coeff_derivative, DensePoly.coeff_scale (R := Rat) u p (n + 1) (Rat.mul_zero u)]
   grind [Rat.mul_assoc, Rat.mul_comm]
 
 /-- The Leibniz product rule `derivative (p * q) = derivative p * q + p * derivative q` for rational dense polynomials. -/
@@ -1773,12 +1764,11 @@ private theorem rat_derivative_mul (p q : DensePoly Rat) :
       DensePoly.derivative p * q + p * DensePoly.derivative q := by
   apply DensePoly.ext_coeff
   intro n
-  rw [rat_coeff_derivative]
-  rw [DensePoly.coeff_mul p q (n + 1)]
+  rw [rat_coeff_derivative, DensePoly.coeff_mul p q (n + 1)]
   rw [DensePoly.coeff_add (DensePoly.derivative p * q) (p * DensePoly.derivative q) n
     (by exact Rat.zero_add (0 : Rat))]
-  rw [DensePoly.coeff_mul (DensePoly.derivative p) q n]
-  rw [DensePoly.coeff_mul p (DensePoly.derivative q) n]
+  rw [DensePoly.coeff_mul (DensePoly.derivative p) q n,
+    DensePoly.coeff_mul p (DensePoly.derivative q) n]
   exact DensePoly.rat_mulCoeffSum_derivative_product_rule p q n
 
 /-- If `d` divides `p`, then `d` divides the left multiple `q * p`. -/
@@ -1882,8 +1872,8 @@ private theorem rat_scale_mulCoeffStep (u v : Rat) (p q : DensePoly Rat)
   unfold DensePoly.mulCoeffStep
   by_cases hij : i + j = n
   · rw [if_pos hij, if_pos hij]
-    rw [DensePoly.coeff_scale (R := Rat) u p i (Rat.mul_zero u)]
-    rw [DensePoly.coeff_scale (R := Rat) v q j (Rat.mul_zero v)]
+    rw [DensePoly.coeff_scale (R := Rat) u p i (Rat.mul_zero u),
+      DensePoly.coeff_scale (R := Rat) v q j (Rat.mul_zero v)]
     grind
   · rw [if_neg hij, if_neg hij]
 
@@ -1932,8 +1922,7 @@ private theorem rat_scale_mulCoeffSum_of_ne_zero {u v : Rat} (hu : u ≠ 0) (hv 
     DensePoly.mulCoeffSum (DensePoly.scale u p) (DensePoly.scale v q) n =
       (u * v) * DensePoly.mulCoeffSum p q n := by
   unfold DensePoly.mulCoeffSum
-  rw [rat_scale_size_of_ne_zero hu p]
-  rw [rat_scale_size_of_ne_zero hv q]
+  rw [rat_scale_size_of_ne_zero hu p, rat_scale_size_of_ne_zero hv q]
   have key := rat_scale_mulCoeffOuter_fold u v p q n (List.range p.size) 0
   simp only [Rat.mul_zero] at key
   exact key
@@ -1957,10 +1946,9 @@ private theorem rat_scale_mul_scale (u v : Rat) (p q : DensePoly Rat) :
       exact rat_list_foldl_ignore (List.range (DensePoly.scale u p).size) (0 : Rat)
     · apply DensePoly.ext_coeff
       intro n
-      rw [DensePoly.coeff_mul]
-      rw [rat_scale_mulCoeffSum_of_ne_zero hu hv]
-      rw [DensePoly.coeff_scale (R := Rat) (u * v) (p * q) n (Rat.mul_zero (u * v))]
-      rw [DensePoly.coeff_mul]
+      rw [DensePoly.coeff_mul, rat_scale_mulCoeffSum_of_ne_zero hu hv,
+        DensePoly.coeff_scale (R := Rat) (u * v) (p * q) n (Rat.mul_zero (u * v)),
+        DensePoly.coeff_mul]
 
 /-- `rat_dvd_scale_of_dvd`: a divisor of `p` also divides any scalar multiple
 `scale u p`, since the witness scales along with the dividend. -/
@@ -1984,9 +1972,7 @@ private theorem rat_leadingCoeff_ne_zero_of_pos_size (p : DensePoly Rat) (hpos :
     unfold DensePoly.leadingCoeff DensePoly.coeff
     change p.coeffs.back?.getD (0 : Rat) =
       p.coeffs.getD (p.coeffs.size - 1) (Zero.zero : Rat)
-    rw [Array.back?_eq_getElem?]
-    rw [Array.getD_eq_getD_getElem?]
-    rw [Array.getElem?_eq_getElem hidx]
+    rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hidx]
     rfl
   rw [hlead_eq]
   exact DensePoly.coeff_last_ne_zero_of_pos_size p hpos
@@ -2023,8 +2009,7 @@ private theorem rat_divMod_spec_core (p q : DensePoly Rat) :
     have hqzero : q = 0 := by
       apply DensePoly.ext_coeff
       intro n
-      rw [DensePoly.coeff_eq_zero_of_size_le q (by omega)]
-      rw [DensePoly.coeff_zero]
+      rw [DensePoly.coeff_eq_zero_of_size_le q (by omega), DensePoly.coeff_zero]
       rfl
     change (DensePoly.divMod p q).1 * q + (DensePoly.divMod p q).2 = p
     rw [hrem, hqzero]
@@ -2098,9 +2083,8 @@ private theorem rat_mod_sub_self_eq_mul_neg_div_of_not_isZero (p m : DensePoly R
       have hzero_add : (0 : Rat) + (0 : Rat) = 0 := by grind
       change (((p / m) * m + (p % m)).coeff n = p.coeff n) at hcoeff
       rw [DensePoly.coeff_add ((p / m) * m) (p % m) n hzero_add] at hcoeff
-      rw [DensePoly.coeff_sub (p % m) p n hzero_sub]
-      rw [DensePoly.coeff_sub 0 ((p / m) * m) n hzero_sub]
-      rw [DensePoly.coeff_zero]
+      rw [DensePoly.coeff_sub (p % m) p n hzero_sub,
+        DensePoly.coeff_sub 0 ((p / m) * m) n hzero_sub, DensePoly.coeff_zero]
       grind
     _ = m * (0 - (p / m)) := by
       exact (DensePoly.mul_sub_zero_comm m (p / m)).symm
@@ -2123,8 +2107,7 @@ private theorem rat_congr_mod_core (p m : DensePoly Rat) :
     apply DensePoly.ext_coeff
     intro i
     have hzero_sub : (0 : Rat) - (0 : Rat) = 0 := by grind
-    rw [DensePoly.coeff_sub p p i hzero_sub]
-    rw [DensePoly.zero_mul, DensePoly.coeff_zero]
+    rw [DensePoly.coeff_sub p p i hzero_sub, DensePoly.zero_mul, DensePoly.coeff_zero]
     grind
   · exact ⟨0 - (p / m), rat_mod_sub_self_eq_mul_neg_div_of_not_isZero p m hmzero⟩
 
@@ -2153,12 +2136,9 @@ private theorem rat_add_sub_add_right (a b c d : DensePoly Rat) :
   intro n
   have hzero_sub : (0 : Rat) - (0 : Rat) = 0 := by grind
   have hzero_add : (0 : Rat) + (0 : Rat) = 0 := by grind
-  rw [DensePoly.coeff_sub (a + b) (c + d) n hzero_sub]
-  rw [DensePoly.coeff_add a b n hzero_add]
-  rw [DensePoly.coeff_add c d n hzero_add]
-  rw [DensePoly.coeff_add (a - c) (b - d) n hzero_add]
-  rw [DensePoly.coeff_sub a c n hzero_sub]
-  rw [DensePoly.coeff_sub b d n hzero_sub]
+  rw [DensePoly.coeff_sub (a + b) (c + d) n hzero_sub, DensePoly.coeff_add a b n hzero_add,
+    DensePoly.coeff_add c d n hzero_add, DensePoly.coeff_add (a - c) (b - d) n hzero_add,
+    DensePoly.coeff_sub a c n hzero_sub, DensePoly.coeff_sub b d n hzero_sub]
   grind
 
 /-- `rat_sub_zero_right`: subtracting the zero polynomial leaves `p` unchanged,
@@ -2186,8 +2166,7 @@ private theorem rat_sub_self_right_add (a b : DensePoly Rat) :
   intro n
   have hzero_sub : (0 : Rat) - (0 : Rat) = 0 := by grind
   have hzero_add : (0 : Rat) + (0 : Rat) = 0 := by grind
-  rw [DensePoly.coeff_sub (a + b) a n hzero_sub]
-  rw [DensePoly.coeff_add a b n hzero_add]
+  rw [DensePoly.coeff_sub (a + b) a n hzero_sub, DensePoly.coeff_add a b n hzero_add]
   grind
 
 /-- `rat_mul_left_remainder_delta`: expresses the difference between the product of
@@ -2834,8 +2813,7 @@ private theorem rat_dvd_cofactor_derivative
         DensePoly.derivative d * a := by
     apply DensePoly.ext_coeff
     intro n
-    rw [DensePoly.coeff_sub_ring]
-    rw [DensePoly.coeff_add_semiring]
+    rw [DensePoly.coeff_sub_ring, DensePoly.coeff_add_semiring]
     grind
   rw [heq] at hsub
   rw [DensePoly.mul_comm_poly]
@@ -2887,23 +2865,16 @@ private theorem ratPolyPow_succ_dvd_a_mul_derivative
   | succ k ih =>
     show d * ratPolyPow d (k + 1) ∣
       a * DensePoly.derivative (d * ratPolyPow d (k + 1))
-    rw [rat_derivative_mul]
-    rw [DensePoly.mul_add_right_poly]
+    rw [rat_derivative_mul, DensePoly.mul_add_right_poly]
     apply rat_dvd_add
     · rcases h with ⟨c, hc⟩
       refine ⟨c, ?_⟩
-      rw [← DensePoly.mul_assoc_poly]
-      rw [hc]
-      rw [DensePoly.mul_assoc_poly d c (ratPolyPow d (k + 1))]
-      rw [DensePoly.mul_comm_poly c (ratPolyPow d (k + 1))]
-      rw [← DensePoly.mul_assoc_poly]
+      rw [← DensePoly.mul_assoc_poly, hc, DensePoly.mul_assoc_poly d c (ratPolyPow d (k + 1)),
+        DensePoly.mul_comm_poly c (ratPolyPow d (k + 1)), ← DensePoly.mul_assoc_poly]
     · rcases ih with ⟨c, hc⟩
       refine ⟨c, ?_⟩
-      rw [← DensePoly.mul_assoc_poly]
-      rw [DensePoly.mul_comm_poly a d]
-      rw [DensePoly.mul_assoc_poly]
-      rw [hc]
-      rw [← DensePoly.mul_assoc_poly]
+      rw [← DensePoly.mul_assoc_poly, DensePoly.mul_comm_poly a d, DensePoly.mul_assoc_poly, hc,
+        ← DensePoly.mul_assoc_poly]
 
 /-- Iterated power-divisibility: if `d` divides both the square-free quotient
 and its derivative, then every power `d^(n+1)` divides the repeated factor. -/
@@ -2938,12 +2909,11 @@ private theorem rat_pow_dvd_repeated_of_quotient_common_divisor
     apply DensePoly.dvd_gcd
     · refine ⟨a * Q, ?_⟩
       have h1 : ratPrimitive = quotientRat * repeatedRat := hrec.symm
-      rw [h1, ha, hQ]
-      rw [DensePoly.mul_assoc_poly d a (ratPolyPow d (k + 1) * Q)]
-      rw [← DensePoly.mul_assoc_poly a (ratPolyPow d (k + 1)) Q]
-      rw [DensePoly.mul_comm_poly a (ratPolyPow d (k + 1))]
-      rw [DensePoly.mul_assoc_poly (ratPolyPow d (k + 1)) a Q]
-      rw [← DensePoly.mul_assoc_poly d (ratPolyPow d (k + 1)) (a * Q)]
+      rw [h1, ha, hQ, DensePoly.mul_assoc_poly d a (ratPolyPow d (k + 1) * Q),
+        ← DensePoly.mul_assoc_poly a (ratPolyPow d (k + 1)) Q,
+        DensePoly.mul_comm_poly a (ratPolyPow d (k + 1)),
+        DensePoly.mul_assoc_poly (ratPolyPow d (k + 1)) a Q,
+        ← DensePoly.mul_assoc_poly d (ratPolyPow d (k + 1)) (a * Q)]
     · have hd_eq : derivative =
           DensePoly.derivative quotientRat * repeatedRat +
             quotientRat * DensePoly.derivative repeatedRat := by
@@ -2956,15 +2926,13 @@ private theorem rat_pow_dvd_repeated_of_quotient_common_divisor
       apply rat_dvd_add
       · rcases hdq' with ⟨a', ha'⟩
         refine ⟨a' * Q, ?_⟩
-        rw [ha', hQ]
-        rw [DensePoly.mul_assoc_poly d a' (ratPolyPow d (k + 1) * Q)]
-        rw [← DensePoly.mul_assoc_poly a' (ratPolyPow d (k + 1)) Q]
-        rw [DensePoly.mul_comm_poly a' (ratPolyPow d (k + 1))]
-        rw [DensePoly.mul_assoc_poly (ratPolyPow d (k + 1)) a' Q]
-        rw [← DensePoly.mul_assoc_poly d (ratPolyPow d (k + 1)) (a' * Q)]
+        rw [ha', hQ, DensePoly.mul_assoc_poly d a' (ratPolyPow d (k + 1) * Q),
+          ← DensePoly.mul_assoc_poly a' (ratPolyPow d (k + 1)) Q,
+          DensePoly.mul_comm_poly a' (ratPolyPow d (k + 1)),
+          DensePoly.mul_assoc_poly (ratPolyPow d (k + 1)) a' Q,
+          ← DensePoly.mul_assoc_poly d (ratPolyPow d (k + 1)) (a' * Q)]
       · rw [ha, hQ]
-        rw [rat_derivative_mul]
-        rw [DensePoly.mul_add_right_poly]
+        rw [rat_derivative_mul, DensePoly.mul_add_right_poly]
         apply rat_dvd_add
         · have haux := ratPolyPow_succ_dvd_a_mul_derivative hcofactor k
           rcases haux with ⟨c, hc⟩
@@ -2973,9 +2941,8 @@ private theorem rat_pow_dvd_repeated_of_quotient_common_divisor
             (DensePoly.derivative (ratPolyPow d (k + 1)) * Q)]
           rw [← DensePoly.mul_assoc_poly a
             (DensePoly.derivative (ratPolyPow d (k + 1))) Q]
-          rw [hc]
-          rw [DensePoly.mul_assoc_poly (ratPolyPow d (k + 1)) c Q]
-          rw [← DensePoly.mul_assoc_poly d (ratPolyPow d (k + 1)) (c * Q)]
+          rw [hc, DensePoly.mul_assoc_poly (ratPolyPow d (k + 1)) c Q,
+            ← DensePoly.mul_assoc_poly d (ratPolyPow d (k + 1)) (c * Q)]
         · refine ⟨a * DensePoly.derivative Q, ?_⟩
           rw [DensePoly.mul_assoc_poly d a
             (ratPolyPow d (k + 1) * DensePoly.derivative Q)]
@@ -3043,8 +3010,7 @@ private theorem densePoly_eq_zero_of_isZero_true {R : Type _} [Zero R] [Decidabl
   intro n
   have hsize : p.size = 0 := by
     simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero] using h
-  rw [DensePoly.coeff_eq_zero_of_size_le p (by omega)]
-  rw [DensePoly.coeff_zero]
+  rw [DensePoly.coeff_eq_zero_of_size_le p (by omega), DensePoly.coeff_zero]
   rfl
 
 private theorem rat_coeff_succ_eq_zero_of_derivative_zero {p : DensePoly Rat}
@@ -3133,8 +3099,7 @@ private theorem int_scale_zero (p : ZPoly) :
     DensePoly.scale (0 : Int) p = 0 := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_scale (R := Int) (0 : Int) p n (Int.zero_mul 0)]
-  rw [DensePoly.coeff_zero]
+  rw [DensePoly.coeff_scale (R := Int) (0 : Int) p n (Int.zero_mul 0), DensePoly.coeff_zero]
   exact Int.zero_mul (p.coeff n)
 
 private theorem content_ne_zero_of_ne_zero (p : ZPoly) (hp : p ≠ 0) :
@@ -3181,8 +3146,7 @@ private theorem ratPolyPrimitivePart_ne_zero_of_ne_zero (p : DensePoly Rat)
   rcases ratPolyPrimitivePart_rational_associate p with ⟨unit, hunit⟩
   intro hprimitive_zero
   apply hp
-  rw [hunit, hprimitive_zero]
-  rw [toRatPoly_zero]
+  rw [hunit, hprimitive_zero, toRatPoly_zero]
   exact rat_scale_zero_right unit
 
 private theorem int_eq_one_or_neg_one_of_natAbs_eq_one {c : Int}
@@ -3272,8 +3236,7 @@ theorem primitiveSquareFreeDecomposition_reassembly_over_rat (f : ZPoly) :
     rw [if_pos hzero]
     have hprimitive_zero : primitivePart f = 0 :=
       densePoly_eq_zero_of_isZero_true (primitivePart f) hzero
-    rw [hprimitive_zero, toRatPoly_zero]
-    rw [rat_scale_zero]
+    rw [hprimitive_zero, toRatPoly_zero, rat_scale_zero]
   · rw [if_neg hzero]
     let ratPrimitive := toRatPoly (primitivePart f)
     let derivative := DensePoly.derivative ratPrimitive
@@ -3281,8 +3244,7 @@ theorem primitiveSquareFreeDecomposition_reassembly_over_rat (f : ZPoly) :
     · rcases toRatPoly_normalizePrimitiveSign_rational_associate (primitivePart f) with
         ⟨unit, hunit⟩
       refine ⟨unit, ?_⟩
-      rw [if_pos hderivative]
-      rw [toRatPoly_one, DensePoly.mul_one_right_poly]
+      rw [if_pos hderivative, toRatPoly_one, DensePoly.mul_one_right_poly]
       simpa [ratPrimitive] using hunit
     · rw [if_neg hderivative]
       let repeatedRat := DensePoly.gcd ratPrimitive derivative
@@ -3792,8 +3754,7 @@ theorem primitiveSquareFreeDecomposition_reassembly_signed
       toRatPoly (primitivePart f)
     have htarget := hunit_product
     rw [hunit_one, rat_scale_one] at htarget
-    rw [rat_scale_one]
-    rw [← hdprimitive]
+    rw [rat_scale_one, ← hdprimitive]
     exact htarget.symm
   · refine ⟨-1, Or.inr rfl, ?_⟩
     apply toRatPoly_injective

@@ -55,8 +55,7 @@ of `ofPolynomial p` agrees with the `n`th coefficient of `p`. -/
 theorem coeff_ofPolynomial [Semiring R] [DecidableEq R] (p : Polynomial R) (n : Nat) :
     (ofPolynomial p).coeff n = p.coeff n := by
   unfold ofPolynomial
-  rw [Hex.DensePoly.coeff_ofCoeffs_list]
-  rw [list_getD_map_range_zero]
+  rw [Hex.DensePoly.coeff_ofCoeffs_list, list_getD_map_range_zero]
   by_cases hn : n < p.natDegree + 1
   · simp [hn]
   · have hlt : p.natDegree < n := by omega
@@ -404,8 +403,8 @@ theorem toPolynomial_mul [Semiring R] [DecidableEq R] (p q : Hex.DensePoly R) :
   ext n
   rw [coeff_toPolynomial, Polynomial.coeff_mul]
   simp_rw [coeff_toPolynomial]
-  rw [Hex.DensePoly.coeff_mul, mulCoeffSum_eq_diagonal, diagonalSum_eq_degree_bound]
-  rw [range_foldl_add_eq_finset_sum]
+  rw [Hex.DensePoly.coeff_mul, mulCoeffSum_eq_diagonal, diagonalSum_eq_degree_bound,
+    range_foldl_add_eq_finset_sum]
   rw [show
       (∑ x ∈ Finset.antidiagonal n, p.coeff x.1 * q.coeff x.2) =
         ∑ i ∈ Finset.range (n + 1), p.coeff i * q.coeff (n - i) from
@@ -525,8 +524,8 @@ theorem leadingCoeff_toPolynomial [Semiring R] [DecidableEq R]
     have hidx : p.coeffs.size - 1 < p.coeffs.size := by
       have hs : p.size = p.coeffs.size := rfl
       omega
-    rw [Array.back?_eq_getElem?, Array.getElem?_eq_getElem hidx, Option.getD_some]
-    rw [show p.size = p.coeffs.size from rfl]
+    rw [Array.back?_eq_getElem?, Array.getElem?_eq_getElem hidx, Option.getD_some,
+      show p.size = p.coeffs.size from rfl]
     exact (Array.getElem_eq_getD (Zero.zero : R)).symm
 
 /-- `toPolynomial` preserves divisibility: a divisibility in the executable

@@ -73,30 +73,30 @@ def borderedMinor (M : Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
 
 /-- The top-left `k × k` block of a bordered minor is the leading prefix of the
 source matrix. -/
-theorem leadingPrefix_borderedMinor_eq_leadingPrefix (M : Matrix R n n) (k : Nat)
+theorem principalSubmatrix_borderedMinor_eq_principalSubmatrix (M : Matrix R n n) (k : Nat)
     (hk : k < n) (i j : Fin n) :
-    leadingPrefix (borderedMinor M k hk i j) k (Nat.le_succ k) =
-      leadingPrefix M k (Nat.le_of_lt hk) := by
+    principalSubmatrix (borderedMinor M k hk i j) k (Nat.le_succ k) =
+      principalSubmatrix M k (Nat.le_of_lt hk) := by
   ext r _hr c _hc
-  simp [leadingPrefix, borderedMinor, ofFn]
+  simp [principalSubmatrix, borderedMinor, ofFn]
 
 /-- The top-left `(k + 1) × (k + 1)` block of the next bordered minor is the
 current bordered minor whose extra row/column are the `k`-th source row/column. -/
-theorem leadingPrefix_borderedMinor_succ_eq_borderedMinor (M : Matrix R n n)
+theorem principalSubmatrix_borderedMinor_succ_eq_borderedMinor (M : Matrix R n n)
     (k : Nat) (hk : k < n) (hnext : k + 1 < n) (i j : Fin n) :
-    leadingPrefix (borderedMinor M (k + 1) hnext i j) (k + 1)
+    principalSubmatrix (borderedMinor M (k + 1) hnext i j) (k + 1)
         (Nat.le_succ (k + 1)) =
       borderedMinor M k hk ⟨k, hk⟩ ⟨k, hk⟩ := by
   ext r _hr c _hc
   by_cases hrk : r < k <;> by_cases hck : c < k
-  · simp [leadingPrefix, borderedMinor, ofFn, hrk, hck]
+  · simp [principalSubmatrix, borderedMinor, ofFn, hrk, hck]
   · have hc_eq : c = k := by omega
-    simp [leadingPrefix, borderedMinor, ofFn, hrk, hc_eq]
+    simp [principalSubmatrix, borderedMinor, ofFn, hrk, hc_eq]
   · have hr_eq : r = k := by omega
-    simp [leadingPrefix, borderedMinor, ofFn, hck, hr_eq]
+    simp [principalSubmatrix, borderedMinor, ofFn, hck, hr_eq]
   · have hr_eq : r = k := by omega
     have hc_eq : c = k := by omega
-    simp [leadingPrefix, borderedMinor, ofFn, hr_eq, hc_eq]
+    simp [principalSubmatrix, borderedMinor, ofFn, hr_eq, hc_eq]
 
 end Matrix
 

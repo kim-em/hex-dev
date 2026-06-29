@@ -192,8 +192,7 @@ representatives.
         _root_.BarrettCtx.mulMod ctx.toUInt64Ctx a.toUInt64 b.toUInt64 < ctx.modulus :=
       _root_.BarrettCtx.mulMod_lt ctx.toUInt64Ctx a.toUInt64 b.toUInt64 ha hb
     simpa [ctx.modulus_eq] using UInt64.lt_iff_toNat_lt.mp hlt64
-  rw [mulMod, ZMod64.toNat_ofNat]
-  rw [Nat.mod_eq_of_lt hlt]
+  rw [mulMod, ZMod64.toNat_ofNat, Nat.mod_eq_of_lt hlt]
   simpa [ctx.modulus_eq] using
     (_root_.BarrettCtx.toNat_mulMod ctx.toUInt64Ctx a.toUInt64 b.toUInt64 ha hb)
 

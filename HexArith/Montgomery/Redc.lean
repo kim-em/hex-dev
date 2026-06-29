@@ -66,8 +66,7 @@ private theorem redc_cancel_pred_word (a : Nat) (ha : a < UInt64.word) :
           have hword : UInt64.word - 1 + 1 = UInt64.word :=
             Nat.sub_add_cancel hword_pos
           have hmul : a + a * (UInt64.word - 1) = a * UInt64.word := by
-            rw [Nat.add_comm]
-            rw [← Nat.mul_succ]
+            rw [Nat.add_comm, ← Nat.mul_succ]
             have hs : (UInt64.word - 1).succ = UInt64.word := by
               simpa [Nat.succ_eq_add_one] using hword
             rw [hs]
@@ -91,8 +90,7 @@ private theorem redc_low_correction_zero (ctx : MontCtx p) (Tlo : UInt64) :
           = (Tlo.toNat * ctx.p'.toNat * p.toNat) % UInt64.word := by
             rw [Nat.mul_mod ((Tlo.toNat * ctx.p'.toNat) % UInt64.word) p.toNat
               UInt64.word]
-            rw [Nat.mod_mod]
-            rw [← Nat.mul_mod (Tlo.toNat * ctx.p'.toNat) p.toNat UInt64.word]
+            rw [Nat.mod_mod, ← Nat.mul_mod (Tlo.toNat * ctx.p'.toNat) p.toNat UInt64.word]
       _ = (Tlo.toNat * (ctx.p'.toNat * p.toNat)) % UInt64.word := by
             rw [Nat.mul_assoc]
   calc
@@ -107,8 +105,7 @@ private theorem redc_low_correction_zero (ctx : MontCtx p) (Tlo : UInt64) :
           rw [hmul_mod]
     _ = (Tlo.toNat + (Tlo.toNat * ((ctx.p'.toNat * p.toNat) %
             UInt64.word)) % UInt64.word) % UInt64.word := by
-          rw [Nat.mul_mod]
-          rw [Nat.mod_eq_of_lt hTlo]
+          rw [Nat.mul_mod, Nat.mod_eq_of_lt hTlo]
     _ = 0 := by
           rw [hpp']
           exact redc_cancel_pred_word Tlo.toNat hTlo
@@ -197,10 +194,8 @@ theorem redc_u_spec (ctx : MontCtx p) (Thi Tlo : UInt64) :
                 UInt64.word * (Thi.toNat + (UInt64.mulHi m p).toNat + c1.toNat) := by
             have hlow_exact := hlow.2
             have hmul_exact := hmul
-            rw [Nat.mul_add, Nat.mul_add]
-            rw [Nat.mul_comm UInt64.word Thi.toNat]
-            rw [Nat.mul_comm UInt64.word (UInt64.mulHi m p).toNat]
-            rw [Nat.mul_comm UInt64.word c1.toNat]
+            rw [Nat.mul_add, Nat.mul_add, Nat.mul_comm UInt64.word Thi.toNat,
+              Nat.mul_comm UInt64.word (UInt64.mulHi m p).toNat, Nat.mul_comm UInt64.word c1.toNat]
             omega
           have hresult :
               addHi.toNat + c2.toNat * UInt64.word =

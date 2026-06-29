@@ -285,8 +285,7 @@ bit agrees with `Nat.testBit`. This is the bridge used by the word-bit
 inspection lemmas that compare packed `UInt64` bits with natural-bit facts. -/
 private theorem bit_eq_one_eq_testBit (x i : Nat) :
     (x >>> i % 2 == 1) = x.testBit i := by
-  rw [Nat.testBit_eq_decide_div_mod_eq]
-  rw [Nat.shiftRight_eq_div_pow]
+  rw [Nat.testBit_eq_decide_div_mod_eq, Nat.shiftRight_eq_div_pow]
   apply decide_eq_decide.mpr
   exact Iff.rfl
 
@@ -339,13 +338,10 @@ private theorem UInt64.bit_xor_bne (a b : UInt64) (i : Nat) :
     ((((a ^^^ b) >>> i.toUInt64) &&& 1) != 0) =
       ((((a >>> i.toUInt64) &&& 1) != 0) !=
         (((b >>> i.toUInt64) &&& 1) != 0)) := by
-  rw [UInt64.bne_zero_eq_toNat_bne_zero]
-  rw [UInt64.bne_zero_eq_toNat_bne_zero]
-  rw [UInt64.bne_zero_eq_toNat_bne_zero]
+  rw [UInt64.bne_zero_eq_toNat_bne_zero, UInt64.bne_zero_eq_toNat_bne_zero,
+    UInt64.bne_zero_eq_toNat_bne_zero]
   simp [UInt64.toNat_xor, UInt64.toNat_shiftRight, UInt64.toNat_and]
-  rw [bit_eq_one_eq_testBit]
-  rw [bit_eq_one_eq_testBit]
-  rw [bit_eq_one_eq_testBit]
+  rw [bit_eq_one_eq_testBit, bit_eq_one_eq_testBit, bit_eq_one_eq_testBit]
   simp [Nat.testBit_xor]
 
 /-- In the high-bit branch of a shifted word with carry, where `old + shift <
@@ -358,13 +354,11 @@ private theorem UInt64.shiftLeft_or_carry_high_bit
     (((((w <<< shift.toUInt64) ||| (prev >>> (64 - shift).toUInt64)) >>>
           (old + shift).toUInt64) &&& 1) != 0) =
       ((((w >>> old.toUInt64) &&& 1) != 0)) := by
-  rw [UInt64.bne_zero_eq_toNat_bne_zero]
-  rw [UInt64.bne_zero_eq_toNat_bne_zero]
+  rw [UInt64.bne_zero_eq_toNat_bne_zero, UInt64.bne_zero_eq_toNat_bne_zero]
   simp [UInt64.toNat_or, UInt64.toNat_shiftLeft, UInt64.toNat_shiftRight,
     UInt64.toNat_and, Nat.mod_eq_of_lt hshift, Nat.mod_eq_of_lt hold,
     Nat.mod_eq_of_lt htarget]
-  rw [bit_eq_one_eq_testBit]
-  rw [bit_eq_one_eq_testBit]
+  rw [bit_eq_one_eq_testBit, bit_eq_one_eq_testBit]
   simp [Nat.testBit_or, Nat.testBit_shiftRight]
   have hprev :
       (prev.toNat >>> (64 - shift)).testBit (old + shift) = false := by
@@ -402,13 +396,11 @@ private theorem UInt64.shiftLeft_or_carry_low_bit
       ((((prev >>> old.toUInt64) &&& 1) != 0)) := by
   have htargetLt : old + shift - 64 < 64 := by omega
   have htargetShift : old + shift - 64 < shift := by omega
-  rw [UInt64.bne_zero_eq_toNat_bne_zero]
-  rw [UInt64.bne_zero_eq_toNat_bne_zero]
+  rw [UInt64.bne_zero_eq_toNat_bne_zero, UInt64.bne_zero_eq_toNat_bne_zero]
   simp [UInt64.toNat_or, UInt64.toNat_shiftLeft, UInt64.toNat_shiftRight,
     UInt64.toNat_and, Nat.mod_eq_of_lt hshift, Nat.mod_eq_of_lt hold,
     Nat.mod_eq_of_lt htargetLt]
-  rw [bit_eq_one_eq_testBit]
-  rw [bit_eq_one_eq_testBit]
+  rw [bit_eq_one_eq_testBit, bit_eq_one_eq_testBit]
   simp [Nat.testBit_or, Nat.testBit_shiftRight]
   have hleft :
       (((w.toNat <<< shift) % 18446744073709551616).testBit (old + shift - 64)) =
@@ -752,8 +744,7 @@ theorem coeff_eq_true_of_degree?_eq_some {p : GF2Poly} {d : Nat}
   obtain ⟨last, bit, hback, hbit, hwordBit, hd⟩ := degree?_eq_some_high_bit h
   have hbitLt : bit < 64 := highestSetBit?_lt hbit
   have hwordIdx : d / 64 = p.words.size - 1 := by
-    rw [hd, Nat.mul_add_div (by decide : 64 > 0)]
-    rw [Nat.div_eq_of_lt hbitLt, Nat.add_zero]
+    rw [hd, Nat.mul_add_div (by decide : 64 > 0), Nat.div_eq_of_lt hbitLt, Nat.add_zero]
   have hbitIdx : d % 64 = bit := by
     rw [hd, Nat.mul_add_mod]
     exact Nat.mod_eq_of_lt hbitLt
@@ -841,8 +832,7 @@ theorem wordCount_eq_of_coeff_eq {p q : GF2Poly}
     obtain ⟨_last, bit, _hback, hbit, hdEq⟩ := degree?_eq_some_highestSetBit hd
     have hbitLt : bit < 64 := highestSetBit?_lt hbit
     have hdword : d / 64 = q.words.size - 1 := by
-      rw [hdEq, Nat.mul_add_div (by decide : 64 > 0)]
-      rw [Nat.div_eq_of_lt hbitLt, Nat.add_zero]
+      rw [hdEq, Nat.mul_add_div (by decide : 64 > 0), Nat.div_eq_of_lt hbitLt, Nat.add_zero]
     have hpClear : p.coeff d = false := by
       apply coeff_eq_false_of_wordCount_le
       have hpSize : p.words.size < q.words.size := by
@@ -863,8 +853,7 @@ theorem wordCount_eq_of_coeff_eq {p q : GF2Poly}
     obtain ⟨_last, bit, _hback, hbit, hdEq⟩ := degree?_eq_some_highestSetBit hd
     have hbitLt : bit < 64 := highestSetBit?_lt hbit
     have hdword : d / 64 = p.words.size - 1 := by
-      rw [hdEq, Nat.mul_add_div (by decide : 64 > 0)]
-      rw [Nat.div_eq_of_lt hbitLt, Nat.add_zero]
+      rw [hdEq, Nat.mul_add_div (by decide : 64 > 0), Nat.div_eq_of_lt hbitLt, Nat.add_zero]
     have hqClear : q.coeff d = false := by
       apply coeff_eq_false_of_wordCount_le
       have hqSize : q.words.size < p.words.size := by
@@ -891,8 +880,7 @@ agree and every packed coefficient agrees. -/
     intro j
     by_cases hj : j < 64
     · have hdiv : (64 * i + j) / 64 = i := by
-        rw [Nat.mul_add_div (by decide : 64 > 0)]
-        rw [Nat.div_eq_of_lt hj, Nat.add_zero]
+        rw [Nat.mul_add_div (by decide : 64 > 0), Nat.div_eq_of_lt hj, Nat.add_zero]
       have hmod : (64 * i + j) % 64 = j := by
         rw [Nat.mul_add_mod]
         exact Nat.mod_eq_of_lt hj
@@ -1475,8 +1463,7 @@ private theorem UInt64.shiftRight_high_bit_false
   apply hne
   apply UInt64.toNat_inj.mp
   simp [UInt64.toNat_shiftRight, UInt64.toNat_and, Nat.mod_eq_of_lt hbit]
-  rw [← Nat.shiftRight_add]
-  rw [Nat.shiftRight_eq_div_pow]
+  rw [← Nat.shiftRight_add, Nat.shiftRight_eq_div_pow]
   have hzero :
       w.toNat / 2 ^ ((64 - shift) % 64 + bit) = 0 := by
     apply Nat.div_eq_of_lt
@@ -1914,9 +1901,7 @@ step used by long division. -/
 theorem coeff_division_step_cancel {rem q : GF2Poly} {rd qd : Nat}
     (hrem : rem.degree? = some rd) (hq : q.degree? = some qd) (hrd : ¬ rd < qd) :
     (rem + q.mulXk (rd - qd)).coeff rd = false := by
-  rw [coeff_add_bne]
-  rw [coeff_eq_true_of_degree?_eq_some hrem]
-  rw [coeff_mulXk_division_step hq hrd]
+  rw [coeff_add_bne, coeff_eq_true_of_degree?_eq_some hrem, coeff_mulXk_division_step hq hrd]
   rfl
 
 /-- A non-terminal long-division subtraction step strictly lowers the

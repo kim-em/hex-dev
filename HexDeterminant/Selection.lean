@@ -457,8 +457,8 @@ than to its repackaged Nat-value form. -/
 private theorem vector_ofFn_getElem_fin {α : Type u} {n : Nat}
     (f : Fin n → α) (k : Fin n) :
     (Vector.ofFn f)[k] = f k := by
-  rw [show ((Vector.ofFn f)[k] : α) = (Vector.ofFn f)[k.val]'(by simp [k.isLt]) from rfl]
-  rw [Vector.getElem_ofFn]
+  rw [show ((Vector.ofFn f)[k] : α) = (Vector.ofFn f)[k.val]'(by simp [k.isLt]) from rfl,
+    Vector.getElem_ofFn]
 
 /-- Every length-`n` tuple of column indices appears in
 `columnTupleVectors n m`. -/
@@ -593,7 +593,7 @@ def reconstructInjTuple {m n : Nat}
 
 /-- The `i`-th entry of the reconstructed tuple is `sel[perm[i]]`: read the
 sorted choice `sel` through the permutation `perm`. -/
-@[grind =] theorem reconstructInjTuple_getElem {m n : Nat}
+@[grind =] theorem getElem_reconstructInjTuple {m n : Nat}
     (sel : Vector (Fin m) n) (perm : Vector (Fin n) n) (i : Fin n) :
     (reconstructInjTuple sel perm)[i] = sel[perm[i]] := by
   rw [reconstructInjTuple, vector_ofFn_getElem_fin]
@@ -601,15 +601,15 @@ sorted choice `sel` through the permutation `perm`. -/
 /-- Selecting columns via the reconstructed tuple equals selecting via `sel`
 with the column index permuted by `perm`: entry `(r, c)` agrees with entry
 `(r, perm[c])` of the `sel`-selected minor. -/
-@[grind =] theorem columnTupleMatrix_reconstructInjTuple_entry
+@[grind =] theorem getElem_columnTupleMatrix_reconstructInjTuple
     {R : Type u} {n m : Nat} (A : Matrix R n m)
     (sel : Vector (Fin m) n) (perm : Vector (Fin n) n)
     (r c : Fin n) :
     (columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)))[r][c] =
       (columnTupleMatrix A (columnTupleVectorFn sel))[r][perm[c]] := by
-  rw [columnTupleMatrix_entry, columnTupleMatrix_entry]
+  rw [getElem_columnTupleMatrix, getElem_columnTupleMatrix]
   exact congrArg (fun col : Fin m => A[r][col])
-    (reconstructInjTuple_getElem sel perm c)
+    (getElem_reconstructInjTuple sel perm c)
 
 private theorem columnTupleMatrix_reconstructInjTuple_eq
     {R : Type u} {n m : Nat} (A : Matrix R n m)
@@ -621,9 +621,9 @@ private theorem columnTupleMatrix_reconstructInjTuple_eq
     (columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)))[
         (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
       (columnTupleMatrix A (fun i => sel[perm[i]]))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [columnTupleMatrix_entry, columnTupleMatrix_entry]
+  rw [getElem_columnTupleMatrix, getElem_columnTupleMatrix]
   exact congrArg (fun col : Fin m => A[(⟨r, hr⟩ : Fin n)][col])
-    (reconstructInjTuple_getElem sel perm (⟨c, hc⟩ : Fin n))
+    (getElem_reconstructInjTuple sel perm (⟨c, hc⟩ : Fin n))
 
 /-- Reconstructing an injective tuple from a selected tuple and a permutation
 turns the coefficient product into the corresponding determinant product. -/
@@ -635,9 +635,9 @@ theorem columnTupleCoeff_reconstructInjTuple
   unfold columnTupleCoeff detProduct
   apply foldl_det_product_congr
   intro i _hmem
-  rw [columnTupleMatrix_entry]
+  rw [getElem_columnTupleMatrix]
   exact congrArg (fun col : Fin m => A[i][col])
-    (reconstructInjTuple_getElem sel perm i)
+    (getElem_reconstructInjTuple sel perm i)
 
 /-- Counting how many entries of `List.finRange n` have value `< k`. -/
 private theorem countP_finRange_val_lt :
@@ -688,8 +688,8 @@ theorem reconstructInjTuple_injective {m n : Nat}
   have hperm_inj := permutationVectors_getElem_injective hperm
   -- `hij` is equality of reconstructed entries; extract `sel[perm[i]] = sel[perm[j]]`.
   have hval : sel[perm[i]] = sel[perm[j]] := by
-    have hi := reconstructInjTuple_getElem sel perm i
-    have hj := reconstructInjTuple_getElem sel perm j
+    have hi := getElem_reconstructInjTuple sel perm i
+    have hj := getElem_reconstructInjTuple sel perm j
     have hij' :
         (reconstructInjTuple sel perm)[i] = (reconstructInjTuple sel perm)[j] := hij
     exact hi.symm.trans (hij'.trans hj)
@@ -733,9 +733,8 @@ private theorem permutationVectors_count_val_lt {n : Nat}
     rfl
   have htoList : perm.toList = (List.finRange n).map (fun j : Fin n => perm[j]) :=
     vector_toList_eq perm
-  rw [hmap, ← htoList]
-  rw [List.Perm.countP_eq _ (permutationVectors_toList_perm_finRange hmem)]
-  rw [countP_finRange_val_lt]
+  rw [hmap, ← htoList, List.Perm.countP_eq _ (permutationVectors_toList_perm_finRange hmem),
+    countP_finRange_val_lt]
   exact Nat.min_eq_right (Nat.le_of_lt k.isLt)
 
 /-- For a strictly-increasing `sel` and a permutation `perm`, the column
@@ -754,7 +753,7 @@ private theorem columnRankNat_reconstructInjTuple {m n : Nat}
                                    < (reconstructInjTuple sel perm)[i].val)) =
         (fun j : Fin n => decide ((perm[j]).val < (perm[i]).val)) := by
     funext j
-    rw [reconstructInjTuple_getElem, reconstructInjTuple_getElem]
+    rw [getElem_reconstructInjTuple, getElem_reconstructInjTuple]
     exact decide_eq_decide.mpr (isStrictlyIncreasingColumnTuple_val_lt_iff hsel _ _)
   rw [hpred]
   exact permutationVectors_count_val_lt hperm (perm[i])
@@ -810,7 +809,7 @@ theorem sortInjTuple_reconstructInjTuple {m n : Nat}
       hinv_eq
   rw [hstep]
   -- Now: reconstruction at (inv perm)[r] = sel[perm[(inv perm)[r]]] = sel[r].
-  rw [reconstructInjTuple_getElem]
+  rw [getElem_reconstructInjTuple]
   -- Use that perm ∘ inv perm = id (i.e., perm[(inv perm)[r]] = r).
   have hnodup := permutationVectors_nodup hperm
   have hinv_perm : inversePermutationVector perm
@@ -838,7 +837,7 @@ theorem reconstructInjTuple_sortInj {m n : Nat}
   apply Fin.val_eq_of_eq
   let i : Fin n := ⟨k, hk⟩
   show (reconstructInjTuple (sortInjTuple cols) (sortInjPerm cols))[i] = cols[i]
-  rw [reconstructInjTuple_getElem]
+  rw [getElem_reconstructInjTuple]
   exact (cols_getElem_eq_sortInjTuple_sortInjPerm cols hinj i).symm
 
 /-- For each fixed `sel`, the inner `map (reconstructInjTuple sel)` list
@@ -1007,9 +1006,8 @@ private theorem columnTupleExpansionTerm_reconstructInjTuple
       detTerm (columnTupleMatrix A (columnTupleVectorFn sel)) perm *
         det (columnTupleMatrix A (columnTupleVectorFn sel)) := by
   unfold columnTupleExpansionTerm detTerm
-  rw [columnTupleCoeff_reconstructInjTuple]
-  rw [columnTupleMatrix_reconstructInjTuple_eq A sel perm]
-  rw [det_columnTupleMatrix_compose_perm A sel perm hperm]
+  rw [columnTupleCoeff_reconstructInjTuple, columnTupleMatrix_reconstructInjTuple_eq A sel perm,
+    det_columnTupleMatrix_compose_perm A sel perm hperm]
   grind
 
 private theorem columnTupleExpansion_reconstruct_orbit_sum
@@ -1048,8 +1046,7 @@ private theorem columnTupleExpansion_selectedPerm_collapse
   intro acc sel _hsel
   rw [foldl_det_sum_start]
   congr 1
-  rw [foldl_det_sum_map]
-  rw [columnTupleExpansion_reconstruct_orbit_sum A sel]
+  rw [foldl_det_sum_map, columnTupleExpansion_reconstruct_orbit_sum A sel]
 
 /-- Cauchy-Binet for the row Gram matrix: the Gram determinant is the finite
 sum of squares of the selected column minors. -/
@@ -1141,7 +1138,7 @@ def firstColumns (k n : Nat) (hk : k ≤ n) : Vector (Fin n) k :=
 
 /-- The `i`-th entry of the first-`k`-columns selection is the index `i` itself,
 embedded into `Fin n`. -/
-@[grind =] theorem firstColumns_entry (k n : Nat) (hk : k ≤ n) (i : Fin k) :
+@[grind =] theorem getElem_firstColumns (k n : Nat) (hk : k ≤ n) (i : Fin k) :
     (firstColumns k n hk)[i] = (⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩ : Fin n) := by
   simp [firstColumns]
 
@@ -1155,62 +1152,62 @@ theorem firstColumns_mem_selectedColumnTuples (k n : Nat) (hk : k ≤ n) :
 
 /-- Selecting the first `k` columns from the leading `k` rows of a square
 matrix gives exactly its leading `k × k` prefix. -/
-theorem columnTupleMatrix_leadingRows_firstColumns_eq_leadingPrefix
+theorem columnTupleMatrix_takeRows_firstColumns_eq_principalSubmatrix
     {R : Type u} {n : Nat} (M : Matrix R n n) (k : Nat) (hk : k ≤ n) :
-    columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn (firstColumns k n hk)) =
-      leadingPrefix M k hk := by
+    columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn (firstColumns k n hk)) =
+      principalSubmatrix M k hk := by
   ext i hi j hj
   change
-    (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn (firstColumns k n hk)))[
+    (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn (firstColumns k n hk)))[
         (⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)] =
-      (leadingPrefix M k hk)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)]
-  simp [columnTupleMatrix, leadingRows, leadingPrefix, columnTupleVectorFn, firstColumns, ofFn]
+      (principalSubmatrix M k hk)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)]
+  simp [columnTupleMatrix, takeRows, principalSubmatrix, columnTupleVectorFn, firstColumns, ofFn]
 
 /-- The Gram determinant of the first `k` rows of a positive-diagonal integer
 upper-triangular matrix is strictly positive. The leading-principal minor
 provides a positive square term in the Cauchy-Binet expansion. -/
-theorem det_gramMatrix_leadingRows_pos_of_upperTriangular_pos_diag
+theorem det_gramMatrix_takeRows_pos_of_upperTriangular_pos_diag
     {n : Nat} (M : Matrix Int n n)
     (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0)
     (hdiag : ∀ i : Fin n, 0 < M[i][i])
     (k : Nat) (hk : k ≤ n) :
-    0 < det (gramMatrix (leadingRows M k hk)) := by
-  rw [det_gramMatrix_eq_sum_minors_sq (leadingRows M k hk)]
+    0 < det (gramMatrix (takeRows M k hk)) := by
+  rw [det_gramMatrix_eq_sum_minors_sq (takeRows M k hk)]
   let cols := firstColumns k n hk
   have hmem : cols ∈ selectedColumnTuples k n :=
     firstColumns_mem_selectedColumnTuples k n hk
   have hminor_eq :
-      det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)) =
-        det (leadingPrefix M k hk) := by
+      det (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn cols)) =
+        det (principalSubmatrix M k hk) := by
     dsimp [cols]
-    rw [columnTupleMatrix_leadingRows_firstColumns_eq_leadingPrefix M k hk]
+    rw [columnTupleMatrix_takeRows_firstColumns_eq_principalSubmatrix M k hk]
   have hprefixZero :
-      ∀ i j : Fin k, j.val < i.val → (leadingPrefix M k hk)[i][j] = 0 := by
+      ∀ i j : Fin k, j.val < i.val → (principalSubmatrix M k hk)[i][j] = 0 := by
     intro i j hij
     let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
     let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
-    have hentry : (leadingPrefix M k hk)[i][j] = M[ii][jj] := by
-      simp [leadingPrefix, ofFn, ii, jj]
+    have hentry : (principalSubmatrix M k hk)[i][j] = M[ii][jj] := by
+      simp [principalSubmatrix, ofFn, ii, jj]
     rw [hentry]
     exact hzero ii jj hij
   have hprefixDiag :
-      ∀ i : Fin k, 0 < (leadingPrefix M k hk)[i][i] := by
+      ∀ i : Fin k, 0 < (principalSubmatrix M k hk)[i][i] := by
     intro i
     let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
-    have hentry : (leadingPrefix M k hk)[i][i] = M[ii][ii] := by
-      simp [leadingPrefix, ofFn, ii]
+    have hentry : (principalSubmatrix M k hk)[i][i] = M[ii][ii] := by
+      simp [principalSubmatrix, ofFn, ii]
     rw [hentry]
     exact hdiag ii
   have hminor_pos :
-      0 < det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)) := by
+      0 < det (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn cols)) := by
     rw [hminor_eq]
-    exact det_upperTriangular_pos_diag (leadingPrefix M k hk) hprefixZero hprefixDiag
+    exact det_upperTriangular_pos_diag (principalSubmatrix M k hk) hprefixZero hprefixDiag
   have hminor_sq_pos :
-      0 < det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)) ^ 2 := by
+      0 < det (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn cols)) ^ 2 := by
     simpa [Lean.Grind.Semiring.pow_two] using Int.mul_pos hminor_pos hminor_pos
   exact foldl_int_sum_sq_pos_of_mem
     (xs := selectedColumnTuples k n)
-    (f := fun cols => det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)))
+    (f := fun cols => det (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn cols)))
     (x := cols) hmem hminor_sq_pos
 
 

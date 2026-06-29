@@ -318,7 +318,7 @@ private theorem getElem_foldl_add_smul {m' : Nat} (xs : List (Fin m'))
       rw [this]
       ring
 
-private theorem prefixCombination_getElem
+private theorem getElem_prefixCombination
     (C : Hex.Matrix Rat n n) (B : Hex.Matrix Rat n m) (i : Nat) (hi : i < n)
     (l : Fin m) :
     (GramSchmidt.prefixCombination C B i hi)[l] =
@@ -361,7 +361,7 @@ private theorem dot_prefixCombination (u : Vector Rat m)
           GramSchmidt.entry C ⟨i, hi⟩ ⟨k.val, Nat.lt_trans k.isLt hi⟩ *
             ((B.row ⟨k.val, Nat.lt_trans k.isLt hi⟩)[l] * u[l]) := by
     intro l
-    rw [prefixCombination_getElem, Finset.mul_sum]
+    rw [getElem_prefixCombination, Finset.mul_sum]
     refine Finset.sum_congr rfl fun k _ => ?_
     ring
   simp_rw [this]
@@ -411,8 +411,7 @@ private theorem gsDot_eq_mu_mul_nrm (b : Hex.Matrix Int n m) {i j : Fin n}
     rw [dot_comm]
     exact GramSchmidt.Int.basis_orthogonal b i.val j.val i.isLt j.isLt
       (Nat.ne_of_gt hji)
-  rw [horth, zero_add]
-  rw [Finset.sum_eq_single (⟨j.val, hji⟩ : Fin i.val)]
+  rw [horth, zero_add, Finset.sum_eq_single (⟨j.val, hji⟩ : Fin i.val)]
   · rw [dot_comm, nrm_eq_dot]
   · intro k _ hk
     have hkj : k.val ≠ j.val := fun h => hk (Fin.ext h)
@@ -861,7 +860,7 @@ private theorem g_entries (b : Hex.Matrix Int n m) (i : Nat) (hi : i < n)
     exact hj
   rw [getElem!_pos (((Matrix.gramMatrix b).toArray[i]'hi2).toArray) j hj1]
   simp only [Vector.getElem_toArray]
-  simpa using Hex.Matrix.gramMatrix_getElem b ⟨i, hi⟩ ⟨j, hj⟩
+  simpa using Hex.Matrix.getElem_gramMatrix b ⟨i, hi⟩ ⟨j, hj⟩
 
 /-! ### Positivity of the Gram-determinant product -/
 

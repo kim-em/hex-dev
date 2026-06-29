@@ -112,10 +112,7 @@ private theorem berlekampColumnPolys_toList_eq_powModMonicLinear
             FpPoly.powModMonicLinear frobX f hmonic (offset + 1)
         rw [show offset + 1 = Nat.succ offset by omega]
         rfl
-      rw [hstep]
-      rw [ih (offset + 1)]
-      rw [Array.toList_push]
-      rw [List.range_succ_eq_map]
+      rw [hstep, ih (offset + 1), Array.toList_push, List.range_succ_eq_map]
       simp only [List.map_cons, List.map_map, List.append_assoc, List.append_cancel_left_eq]
       apply List.cons_eq_cons.mpr
       constructor
@@ -301,9 +298,8 @@ private theorem coeffVector_matrixActionPolySum_eq_mulVec
     (berlekampMatrix f hmonic)[ii][j] * (coeffVector f w)[j.val]
   rw [FpPoly.C_mul_eq_scale]
   have h_zero : w.coeff j.val * (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_scale _ _ _ h_zero]
-  rw [berlekampMatrix_entry_eq_powModMonic_coeff f hmonic ii j]
-  rw [show (coeffVector f w)[j.val] = w.coeff j.val from by simp [coeffVector]]
+  rw [DensePoly.coeff_scale _ _ _ h_zero, berlekampMatrix_entry_eq_powModMonic_coeff f hmonic ii j,
+    show (coeffVector f w)[j.val] = w.coeff j.val from by simp [coeffVector]]
   show w.coeff j.val *
       (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).coeff i =
     (FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val).coeff i *
@@ -389,9 +385,7 @@ private theorem composeCoeffPowerSumUpTo_succ_right
         (DensePoly.C (coeff base) * FpPoly.linearPow q base +
           FpPoly.composeCoeffPowerSumUpTo coeff n (base + 1) q) +
         DensePoly.C (coeff (base + (n + 1))) * FpPoly.linearPow q (base + (n + 1))
-      rw [ih (base + 1)]
-      rw [show base + 1 + n = base + (n + 1) from by omega]
-      rw [FpPoly.add_assoc]
+      rw [ih (base + 1), show base + 1 + n = base + (n + 1) from by omega, FpPoly.add_assoc]
 
 /-- `composeCoeffPowerSumUpTo … n 0 q` viewed as the `List.finRange n`-foldl
 sum `Σ_{j < n} C(coeff j) · linearPow q j`. -/
@@ -406,11 +400,8 @@ private theorem composeCoeffPowerSumUpTo_eq_foldl_finRange
   | zero =>
       simp [FpPoly.composeCoeffPowerSumUpTo]
   | succ n ih =>
-      rw [composeCoeffPowerSumUpTo_succ_right coeff q n 0]
-      rw [Nat.zero_add]
-      rw [ih]
-      rw [List.finRange_succ_last]
-      rw [List.foldl_append]
+      rw [composeCoeffPowerSumUpTo_succ_right coeff q n 0, Nat.zero_add, ih,
+        List.finRange_succ_last, List.foldl_append]
       simp only [List.foldl_cons, List.foldl_nil]
       -- foldl over (finRange n).map Fin.castSucc = foldl over finRange n
       have hmap :
@@ -589,8 +580,7 @@ private theorem matrixActionPolySum_eq_linearPow_mod
         apply DensePoly.ext_coeff
         intro n
         show (matrixActionPolySum f hmonic w).coeff n = (0 : FpPoly p).coeff n
-        rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega : _ ≤ n)]
-        rw [DensePoly.coeff_zero]
+        rw [DensePoly.coeff_eq_zero_of_size_le _ (by omega : _ ≤ n), DensePoly.coeff_zero]
         rfl
       rw [h_zero]
       exact DensePoly.zero_mod_eq_zero_core (S := ZMod64 p) f
@@ -632,8 +622,8 @@ theorem berlekampMatrix_mulVec_coeffVector_eq
     (hw : w.size ≤ basisSize f) :
     Matrix.mulVec (berlekampMatrix f hmonic) (coeffVector f w) =
       coeffVector f (FpPoly.linearPow w p % f) := by
-  rw [← coeffVector_matrixActionPolySum_eq_mulVec f hmonic w]
-  rw [matrixActionPolySum_eq_linearPow_mod f hmonic w hw]
+  rw [← coeffVector_matrixActionPolySum_eq_mulVec f hmonic w,
+    matrixActionPolySum_eq_linearPow_mod f hmonic w hw]
 
 /-- The fixed-space matrix `Q_f - I` used in Berlekamp's kernel computation. -/
 def fixedSpaceMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f) :
@@ -730,8 +720,12 @@ theorem fixedSpaceKernel_sound (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (k : Fin (basisSize f -
       Matrix.rref_rank (fixedSpaceMatrix f hmonic))) :
     IsFixedSpaceKernelPolynomial f hmonic ((fixedSpaceKernel f hmonic).get k) := by
-  unfold IsFixedSpaceKernelPolynomial fixedSpaceKernel
-  rw [Vector.get_ofFn, coeffVector_vectorToPoly]
+  have hk : (fixedSpaceKernel f hmonic).get k =
+      vectorToPoly ((fixedSpaceKernelVectors f hmonic).get k) := by
+    unfold fixedSpaceKernel
+    exact Vector.getElem_ofFn _
+  unfold IsFixedSpaceKernelPolynomial
+  rw [hk, coeffVector_vectorToPoly]
   exact fixedSpaceKernelVectors_sound f hmonic k
 
 /-- Every vector satisfying the executable fixed-space kernel condition is a
@@ -853,8 +847,8 @@ theorem isFixedSpaceKernelPolynomial_iff_dvd_linearPow_sub_self
   · have hbasis_pos : 0 < basisSize f := Nat.pos_of_ne_zero hbasis_zero
     have hw_mod : w % f = w := mod_eq_self_of_size_le_basis f w hw hbasis_pos
     unfold IsFixedSpaceKernelPolynomial
-    rw [isFixedSpaceKernelVector_iff_berlekampMatrix_mulVec_eq]
-    rw [berlekampMatrix_mulVec_coeffVector_eq f hmonic w hw]
+    rw [isFixedSpaceKernelVector_iff_berlekampMatrix_mulVec_eq,
+      berlekampMatrix_mulVec_coeffVector_eq f hmonic w hw]
     rw [coeffVector_eq_iff_eq_of_size_le f _ _
         (linearPow_mod_size_le_of_basis_pos f w hbasis_pos) hw]
     refine ⟨?_, ?_⟩

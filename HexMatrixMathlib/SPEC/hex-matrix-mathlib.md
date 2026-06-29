@@ -28,3 +28,45 @@ theorem matrixEquiv_rowAdd   (M : Hex.Matrix R n m) (src dst : Fin n) (c : R) : 
 These give the base dictionary through which the determinant and rank bridges
 transfer Mathlib theorems (Cramer's rule, Cayley-Hamilton, rank-nullity,
 `diagonal_transvection_induction`) to our matrices.
+
+**Algebraic instances and equivalence upgrades:**
+`Hex.Matrix` carries the Mathlib algebraic tower whose operations are the
+executable ones (entrywise `+`/`-`/`•` from the `Vector` representation, the
+`ofFn` zero/identity, and the executable matrix product). The instances are
+transported along `matrixEquiv` (so the laws come from Mathlib's `Matrix`):
+
+```lean
+instance [AddCommMonoid R] : AddCommMonoid (Hex.Matrix R n m)
+instance [AddCommGroup R]  : AddCommGroup (Hex.Matrix R n m)
+instance [Semiring R]      : Module R (Hex.Matrix R n m)
+instance [Semiring R]      : Semiring (Hex.Matrix R n n)
+instance [Ring R]          : Ring (Hex.Matrix R n n)
+instance [CommSemiring R]  : Algebra R (Hex.Matrix R n n)
+```
+
+`matrixEquiv` upgrades to the matching bundled equivalences:
+
+```lean
+def matrixAddEquiv    [AddCommMonoid R] : Hex.Matrix R n m ≃+ Matrix (Fin n) (Fin m) R
+def matrixLinearEquiv [Semiring R]      : Hex.Matrix R n m ≃ₗ[R] Matrix (Fin n) (Fin m) R
+def matrixRingEquiv   [Semiring R]      : Hex.Matrix R n n ≃+* Matrix (Fin n) (Fin n) R
+def matrixAlgEquiv    [CommSemiring R]  : Hex.Matrix R n n ≃ₐ[R] Matrix (Fin n) (Fin n) R
+```
+
+with `@[simp]` transport lemmas (`matrixEquiv_add`, `matrixEquiv_mul`,
+`matrixEquiv_smul`, `matrixEquiv_one`, …) feeding `simp`/`grind`.
+
+**Operation correspondence across the equivalence:**
+The vector equivalence and the basic container API also cross `matrixEquiv`:
+
+```lean
+def vectorEquiv : Vector R n ≃ (Fin n → R)
+theorem vectorEquiv_mulVec    : vectorEquiv (M * v) = (matrixEquiv M).mulVec (vectorEquiv v)
+theorem matrixEquiv_transpose : matrixEquiv Mᵀ = (matrixEquiv M)ᵀ
+theorem matrixEquiv_setRow    : matrixEquiv (setRow M i v) = (matrixEquiv M).updateRow i (vectorEquiv v)
+theorem matrixEquiv_setCol    : matrixEquiv (setCol M j v) = (matrixEquiv M).updateCol j v
+theorem matrixEquiv_gramMatrix         : matrixEquiv (gramMatrix M) = matrixEquiv M * (matrixEquiv M)ᵀ
+theorem matrixEquiv_principalSubmatrix : matrixEquiv (principalSubmatrix M k hk) = (matrixEquiv M).submatrix (Fin.castLE hk) (Fin.castLE hk)
+```
+
+(plus `matrixEquiv_takeRows`).

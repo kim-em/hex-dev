@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexMatrix.Basic
-public import Batteries.Data.List.Lemmas
 
 public section
 
@@ -69,6 +68,23 @@ private theorem foldl_sum_add_aux {R : Type u} [Lean.Grind.Ring R]
       rw [h]
       grind
 
+/-- The fold-sum of a pointwise difference splits into the difference of fold-sums. -/
+private theorem foldl_sum_sub_aux {R : Type u} [Lean.Grind.Ring R]
+    {α : Type v} (xs : List α) (f g : α → R) (acc accF accG : R)
+    (h : acc = accF - accG) :
+    xs.foldl (fun acc x => acc + (f x - g x)) acc =
+    xs.foldl (fun acc x => acc + f x) accF -
+    xs.foldl (fun acc x => acc + g x) accG := by
+  induction xs generalizing acc accF accG with
+  | nil =>
+      simp only [List.foldl_nil]
+      exact h
+  | cons x xs ih =>
+      simp only [List.foldl_cons]
+      apply ih (acc := acc + (f x - g x)) (accF := accF + f x) (accG := accG + g x)
+      rw [h]
+      grind
+
 /-- Dot product is additive in its left argument. -/
 theorem dotProduct_add_left {R : Type u} [Lean.Grind.Ring R]
     (u v w : Vector R n) :
@@ -90,10 +106,10 @@ theorem dotProduct_add_left {R : Type u} [Lean.Grind.Ring R]
     rw [hentry]
     grind
 
-/-- Dot product is homogeneous in a pointwise left scalar multiple. -/
-theorem dotProduct_mul_left {R : Type u} [Lean.Grind.Ring R]
+/-- Dot product is homogeneous in its left argument. -/
+theorem dotProduct_smul_left {R : Type u} [Lean.Grind.Ring R]
     (c : R) (u w : Vector R n) :
-    dotProduct (Vector.ofFn fun i => c * u[i]) w = c * dotProduct u w := by
+    dotProduct (c • u) w = c * dotProduct u w := by
   unfold dotProduct
   rw [foldl_sum_mul_left_aux (xs := List.finRange n)
         (f := fun i => u[i] * w[i]) (c := c) (acc := 0)]
@@ -102,8 +118,10 @@ theorem dotProduct_mul_left {R : Type u} [Lean.Grind.Ring R]
   rw [hzero]
   apply foldl_sum_congr_aux
   intro i _
-  have hentry : (Vector.ofFn (fun i : Fin n => c * u[i]))[i] = c * u[i] := by
-    simp
+  -- `getElem_smul` rewrites the entry to `c • u[i]`, which is defeq to `c * u[i]`
+  -- for the scalar action on the coefficient ring.
+  have hentry : (c • u)[i] = c * u[i] := by
+    simp only [Fin.getElem_fin, Vector.getElem_smul]; rfl
   rw [hentry]
   exact Lean.Grind.Semiring.mul_assoc c u[i] w[i]
 
@@ -117,42 +135,31 @@ theorem dotProduct_comm {R : Type u} [Lean.Grind.CommRing R]
   grind
 
 /-- Dot product is additive in its right argument. -/
-theorem dotProduct_add_right {R : Type u} [Lean.Grind.CommRing R]
+theorem dotProduct_add_right {R : Type u} [Lean.Grind.Ring R]
     (u v w : Vector R n) :
     dotProduct u (v + w) = dotProduct u v + dotProduct u w := by
-  rw [dotProduct_comm u (v + w)]
-  rw [dotProduct_add_left]
-  rw [dotProduct_comm v u, dotProduct_comm w u]
-
-/-- Dot product is homogeneous in a pointwise right scalar multiple. -/
-theorem dotProduct_mul_right {R : Type u} [Lean.Grind.CommRing R]
-    (c : R) (u v : Vector R n) :
-    dotProduct u (Vector.ofFn fun i => c * v[i]) = c * dotProduct u v := by
-  rw [dotProduct_comm u (Vector.ofFn fun i => c * v[i])]
-  rw [dotProduct_mul_left]
-  rw [dotProduct_comm v u]
-
-/-- Dot product is homogeneous in its left argument. -/
-theorem dotProduct_smul_left {R : Type u} [Lean.Grind.Ring R]
-    (c : R) (u w : Vector R n) :
-    dotProduct (c • u) w = c * dotProduct u w := by
-  rw [show c • u = Vector.ofFn (fun i : Fin n => c * u[i]) by
-    ext i hi
-    let ii : Fin n := ⟨i, hi⟩
-    show (c • u)[ii] = (Vector.ofFn (fun i : Fin n => c * u[i]))[ii]
-    change (c • u)[i] = (Vector.ofFn (fun i : Fin n => c * u[i]))[i]
-    rw [Vector.getElem_smul]
-    change c * u[i] = (Vector.ofFn (fun i : Fin n => c * u[i]))[i]
-    simp]
-  exact dotProduct_mul_left c u w
+  unfold dotProduct
+  rw [show (List.finRange n).foldl
+        (fun acc i => acc + u[i] * (v + w)[i]) 0 =
+      (List.finRange n).foldl
+        (fun acc i => acc + (u[i] * v[i] + u[i] * w[i])) 0 from ?_]
+  · rw [foldl_sum_add_aux (xs := List.finRange n)
+        (f := fun i => u[i] * v[i])
+        (g := fun i => u[i] * w[i])
+        (acc := 0) (accF := 0) (accG := 0) (h := by grind)]
+  · apply foldl_sum_congr_aux
+    intro i _
+    have hentry : (v + w)[i] = v[i] + w[i] := by
+      change (v + w)[i.val] = v[i.val] + w[i.val]
+      rw [Vector.getElem_add]
+    rw [hentry]
+    grind
 
 /-- Dot product is homogeneous in its right argument. -/
 theorem dotProduct_smul_right {R : Type u} [Lean.Grind.CommRing R]
     (c : R) (u v : Vector R n) :
     dotProduct u (c • v) = c * dotProduct u v := by
-  rw [dotProduct_comm u (c • v)]
-  rw [dotProduct_smul_left]
-  rw [dotProduct_comm v u]
+  rw [dotProduct_comm u (c • v), dotProduct_smul_left, dotProduct_comm v u]
 
 /-- Dot product is additive over subtraction in its left argument. -/
 theorem dotProduct_sub_left {R : Type u} [Lean.Grind.Ring R]
@@ -172,12 +179,25 @@ theorem dotProduct_sub_left {R : Type u} [Lean.Grind.Ring R]
   grind
 
 /-- Dot product is additive over subtraction in its right argument. -/
-theorem dotProduct_sub_right {R : Type u} [Lean.Grind.CommRing R]
+theorem dotProduct_sub_right {R : Type u} [Lean.Grind.Ring R]
     (u v w : Vector R n) :
     dotProduct u (v - w) = dotProduct u v - dotProduct u w := by
-  rw [dotProduct_comm u (v - w)]
-  rw [dotProduct_sub_left]
-  rw [dotProduct_comm v u, dotProduct_comm w u]
+  unfold dotProduct
+  rw [show (List.finRange n).foldl
+        (fun acc i => acc + u[i] * (v - w)[i]) 0 =
+      (List.finRange n).foldl
+        (fun acc i => acc + (u[i] * v[i] - u[i] * w[i])) 0 from ?_]
+  · rw [foldl_sum_sub_aux (xs := List.finRange n)
+        (f := fun i => u[i] * v[i])
+        (g := fun i => u[i] * w[i])
+        (acc := 0) (accF := 0) (accG := 0) (h := by grind)]
+  · apply foldl_sum_congr_aux
+    intro i _
+    have hentry : (v - w)[i] = v[i] - w[i] := by
+      change (v - w)[i.val] = v[i.val] - w[i.val]
+      rw [Vector.getElem_sub]
+    rw [hentry]
+    grind
 
 /-- Dot product distributes over subtracting a scalar multiple in the left argument. -/
 theorem dotProduct_sub_smul_left {R : Type u} [Lean.Grind.Ring R]

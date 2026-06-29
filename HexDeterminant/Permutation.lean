@@ -103,31 +103,8 @@ when `r = j`, from row `j` when `r = i`, and from row `r` otherwise. -/
 private theorem rowSwap_get {R : Type u} {n m : Nat}
     (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
     (rowSwap M i j)[r][k] =
-      if r = j then M[i][k] else if r = i then M[j][k] else M[r][k] := by
-  by_cases hrj : r = j
-  · subst r
-    simp [rowSwap]
-  · by_cases hri : r = i
-    · subst r
-      simp [rowSwap, hrj]
-      have hval : j.val ≠ i.val := by
-        intro hval
-        exact hrj (Fin.ext hval.symm)
-      have hrow : ((M.set i M[j]).set j M[i])[i] = (M.set i M[j])[i] := by
-        exact Vector.getElem_set_ne (xs := M.set i M[j]) (x := M[i]) j.isLt i.isLt hval
-      simpa using congrArg (fun row => row[k]) hrow
-    · simp [rowSwap, hrj, hri]
-      have hir : i.val ≠ r.val := by
-        intro hval
-        exact hri (Fin.ext hval.symm)
-      have hjr : j.val ≠ r.val := by
-        intro hval
-        exact hrj (Fin.ext hval.symm)
-      have hrow₁ : (M.set i M[j])[r] = M[r] := by
-        exact Vector.getElem_set_ne (xs := M) (x := M[j]) i.isLt r.isLt hir
-      have hrow₂ : ((M.set i M[j]).set j M[i])[r] = (M.set i M[j])[r] := by
-        exact Vector.getElem_set_ne (xs := M.set i M[j]) (x := M[i]) j.isLt r.isLt hjr
-      exact (congrArg (fun row => row[k]) hrow₂).trans (congrArg (fun row => row[k]) hrow₁)
+      if r = j then M[i][k] else if r = i then M[j][k] else M[r][k] :=
+  getElem_rowSwap M i j r k
 
 /-- For distinct `i, j`, reading row `r` of `rowSwap M i j` is the same as
 reading row `finTranspose i j r` of `M`, identifying the swap with the
@@ -165,8 +142,7 @@ private theorem vector_toList_eq {α : Type u} {n : Nat}
 private theorem transposePermutationValues_toList_perm {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n) :
     (transposePermutationValues perm i j).toList.Perm perm.toList := by
-  rw [vector_toList_eq (transposePermutationValues perm i j)]
-  rw [vector_toList_eq perm]
+  rw [vector_toList_eq (transposePermutationValues perm i j), vector_toList_eq perm]
   have hleft :
       (List.finRange n).map (fun r => (transposePermutationValues perm i j)[r]) =
         (List.finRange n).map ((fun r => perm[r]) ∘ finTranspose i j) := by
@@ -334,10 +310,10 @@ private theorem transposePermutationValues_toList_of_lt {n : Nat}
       perm.toList.take i.val ++ perm[j] ::
         (perm.toList.drop (i.val + 1)).take (j.val - i.val - 1) ++
           perm[i] :: perm.toList.drop (j.val + 1) := by
-  rw [vector_toList_split_two (transposePermutationValues perm i j) hij]
-  rw [transposePermutationValues_take_of_lt perm hij]
-  rw [transposePermutationValues_middle_of_lt perm hij]
-  rw [transposePermutationValues_drop_of_lt perm hij]
+  rw [vector_toList_split_two (transposePermutationValues perm i j) hij,
+    transposePermutationValues_take_of_lt perm hij,
+    transposePermutationValues_middle_of_lt perm hij,
+    transposePermutationValues_drop_of_lt perm hij]
   have hi : (transposePermutationValues perm i j)[i] = perm[j] := by
     rw [transposePermutationValues_get]
     exact vector_get_fin_congr perm (finTranspose_left i j)
@@ -465,14 +441,13 @@ private theorem fin_mem_of_full_nodup {n : Nat} {xs : List (Fin n)}
   by_cases hmem : x ∈ xs
   · exact hmem
   · exfalso
-    have hsub : List.Subperm xs ((List.finRange n).erase x) := by
-      apply List.subperm_of_subset hnodup
+    have hsubset : xs ⊆ (List.finRange n).erase x := by
       intro y hy
-      exact (List.mem_erase_of_ne (by
-        intro hyx
-        exact hmem (hyx ▸ hy))).2 (List.mem_finRange y)
+      refine (List.mem_erase_of_ne ?_).2 (List.mem_finRange y)
+      rintro rfl
+      exact hmem hy
     have hle : xs.length ≤ ((List.finRange n).erase x).length :=
-      List.Subperm.length_le hsub
+      List.nodup_subset_length_le hnodup hsubset
     have herase : ((List.finRange n).erase x).length = n - 1 := by
       rw [List.length_erase]
       simp [List.mem_finRange, List.length_finRange]
@@ -622,11 +597,8 @@ private theorem inversionCount_inversePermutationValues_insertAt_last_castSucc {
           (insertAt (Fin.last n) (v.map Fin.castSucc) i)
           (insertAt_last_castSucc_nodup v i hnodup)).toList =
       inversionCount (inversePermutationValues v hnodup).toList + (n - i.val) := by
-  rw [inversePermutationValues_insertAt_last_castSucc v i hnodup]
-  rw [insertAt_last_toList]
-  rw [vector_toList_map]
-  rw [inversionCount_map_raiseFinAbove_append_self]
-  rw [foldCount_full_nodup_ge i]
+  rw [inversePermutationValues_insertAt_last_castSucc v i hnodup, insertAt_last_toList,
+    vector_toList_map, inversionCount_map_raiseFinAbove_append_self, foldCount_full_nodup_ge i]
   · simp [Vector.length_toList]
   · exact inversePermutationValues_nodup v hnodup
 
@@ -678,8 +650,7 @@ private theorem inversionCount_inversePermutationValues_mod_two {n : Nat}
       have hperm_count :
           inversionCount perm.toList =
             inversionCount peeled.toList + (n - pos.val) := by
-        rw [← hinsert]
-        rw [insertAt_toList, vector_toList_map]
+        rw [← hinsert, insertAt_toList, vector_toList_map]
         simpa [peeled, pos, Vector.length_toList] using
           inversionCount_insertIdx_castSucc_last_eq peeled.toList pos.val (by
             simp [Vector.length_toList, pos]
@@ -1216,8 +1187,8 @@ private theorem inversionCount_adjacent_swap_descent {n : Nat}
     (pre post : List (Fin n)) (a b : Fin n) (hba : b < a) :
     inversionCount (pre ++ a :: b :: post) =
       inversionCount (pre ++ b :: a :: post) + 1 := by
-  rw [show pre ++ a :: b :: post = pre ++ ([a, b] ++ post) by simp]
-  rw [show pre ++ b :: a :: post = pre ++ ([b, a] ++ post) by simp]
+  rw [show pre ++ a :: b :: post = pre ++ ([a, b] ++ post) by simp,
+    show pre ++ b :: a :: post = pre ++ ([b, a] ++ post) by simp]
   have hcross :
       crossInversionCount pre ([a, b] ++ post) =
         crossInversionCount pre ([b, a] ++ post) := by
@@ -1227,14 +1198,9 @@ private theorem inversionCount_adjacent_swap_descent {n : Nat}
       crossInversionCount [a, b] post =
         crossInversionCount [b, a] post :=
     crossInversionCount_pair_swap_left post a b
-  rw [inversionCount_append pre ([a, b] ++ post)]
-  rw [inversionCount_append pre ([b, a] ++ post)]
-  rw [hcross]
-  rw [inversionCount_append [a, b] post]
-  rw [inversionCount_append [b, a] post]
-  rw [htail]
-  rw [inversionCount_pair a b]
-  rw [inversionCount_pair b a]
+  rw [inversionCount_append pre ([a, b] ++ post), inversionCount_append pre ([b, a] ++ post),
+    hcross, inversionCount_append [a, b] post, inversionCount_append [b, a] post, htail,
+    inversionCount_pair a b, inversionCount_pair b a]
   have hab' : ¬ a < b := by omega
   simp [hba, hab']
   omega
@@ -1311,8 +1277,7 @@ private theorem exists_adjacent_descent {n : Nat}
       have hcount :
           inversionCount perm.toList =
             inversionCount peeled.toList + (n - pos.val) := by
-        rw [← hinsert]
-        rw [insertAt_toList, vector_toList_map]
+        rw [← hinsert, insertAt_toList, vector_toList_map]
         simpa [peeled, pos, Vector.length_toList] using
           inversionCount_insertIdx_castSucc_last_eq peeled.toList pos.val (by
             simp [Vector.length_toList, pos]
@@ -1470,8 +1435,7 @@ private theorem perm_eq_identity {n : Nat}
       have hcount :
           inversionCount perm.toList =
             inversionCount peeled.toList + (n - pos.val) := by
-        rw [← hinsert]
-        rw [insertAt_toList, vector_toList_map]
+        rw [← hinsert, insertAt_toList, vector_toList_map]
         simpa [peeled, pos, Vector.length_toList] using
           inversionCount_insertIdx_castSucc_last_eq peeled.toList pos.val (by
             simp [Vector.length_toList, pos]
@@ -1718,8 +1682,8 @@ private theorem detTerm_colDuplicate_swapValues {R : Type u}
     (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
     detTerm M perm = -detTerm M (swapPermutationValues perm src dst) := by
   unfold detTerm
-  rw [detProduct_colDuplicate_swapValues M src dst hcol perm]
-  rw [detSign_swapPermutationValues (R := R) perm src dst hnodup h]
+  rw [detProduct_colDuplicate_swapValues M src dst hcol perm,
+    detSign_swapPermutationValues (R := R) perm src dst hnodup h]
   grind
 
 /-- `M` with column `dst` overwritten by a copy of column `src`. -/
@@ -1740,7 +1704,7 @@ private theorem colAdd_get {R : Type u} [Mul R] [Add R] {n : Nat}
     (M : Matrix R n n) (src dst r cidx : Fin n) (c : R) :
     (colAdd M src dst c)[r][cidx] =
       if cidx = dst then M[r][cidx] + c * M[r][src] else M[r][cidx] := by
-  simp [colAdd, Matrix.ofFn]
+  exact getElem_colAdd M src dst c r cidx
 
 /-- For a nodup permutation, the product term of `colAdd M src dst c` splits as
 `detProduct M perm + c · detProduct (colAddDuplicate M src dst) perm`. -/
@@ -1830,8 +1794,8 @@ private theorem detTerm_rowSwap_transposeValues {R : Type u}
     detTerm (rowSwap M i j) perm =
       -detTerm M (transposePermutationValues perm i j) := by
   unfold detTerm
-  rw [detProduct_rowSwap_transposeValues M i j h perm]
-  rw [detSign_transposeValues (R := R) perm i j hnodup h]
+  rw [detProduct_rowSwap_transposeValues M i j h perm,
+    detSign_transposeValues (R := R) perm i j hnodup h]
   grind
 
 private theorem permutationVectors_transposeValues_neg_sum {R : Type u}
@@ -1917,21 +1881,8 @@ private def rowAddDuplicate {R : Type u} {n : Nat}
 private theorem rowAdd_get {R : Type u} [Mul R] [Add R] {n : Nat}
     (M : Matrix R n n) (src dst r : Fin n) (c : R) (k : Fin n) :
     (rowAdd M src dst c)[r][k] =
-      if r = dst then M[dst][k] + c * M[src][k] else M[r][k] := by
-  by_cases h : r = dst
-  · subst r
-    simp [rowAdd]
-  · simp [rowAdd, h]
-    have hval : dst.val ≠ r.val := by
-      intro hval
-      exact h (Fin.ext hval.symm)
-    have hrow :
-        (M.set dst (Vector.ofFn fun k => M[dst][k] + c * M[src][k]))[r] = M[r] := by
-      exact
-        (Vector.getElem_set_ne
-          (xs := M) (x := Vector.ofFn fun k => M[dst][k] + c * M[src][k])
-          dst.isLt r.isLt hval)
-    simpa [rowAdd] using congrArg (fun row => row[k]) hrow
+      if r = dst then M[dst][k] + c * M[src][k] else M[r][k] :=
+  getElem_rowAdd M src dst r c k
 
 /-- Entrywise value of `rowAddDuplicate M src dst`: row `dst` reads from row
 `src`, every other row is left unchanged. -/
@@ -1970,8 +1921,7 @@ private theorem detProduct_rowAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         intro r _hmem
         by_cases h : r = dst
         · subst r
-          rw [rowAdd_get M src dst dst c perm[dst]]
-          rw [rowAddDuplicate_get M src dst dst perm[dst]]
+          rw [rowAdd_get M src dst dst c perm[dst], rowAddDuplicate_get M src dst dst perm[dst]]
           simp
         · rw [rowAdd_get, rowAddDuplicate_get]
           simp [h]
@@ -2089,8 +2039,8 @@ private theorem detTerm_rowAddDuplicate_transposeValues {R : Type u}
       -detTerm (rowAddDuplicate M src dst)
         (transposePermutationValues perm src dst) := by
   unfold detTerm
-  rw [detProduct_rowAddDuplicate_transposeValues M src dst h perm]
-  rw [detSign_transposeValues (R := R) perm src dst hnodup h]
+  rw [detProduct_rowAddDuplicate_transposeValues M src dst h perm,
+    detSign_transposeValues (R := R) perm src dst hnodup h]
   grind
 
 private theorem permutationVectors_duplicateRow_sum {R : Type u} [Lean.Grind.CommRing R]
@@ -2270,8 +2220,8 @@ private theorem permutationVectors_duplicateCol_sum {R : Type u} [Lean.Grind.Com
         · exact swapPermutationValues_mem_permutationVectors src dst hpreMem
         · have hpreNodup := permutationVectors_nodup hpreMem
           simp [p] at hpreP ⊢
-          rw [swapPermutationValues_idxOf_left pre src dst hpreNodup]
-          rw [swapPermutationValues_idxOf_right pre src dst hpreNodup]
+          rw [swapPermutationValues_idxOf_left pre src dst hpreNodup,
+            swapPermutationValues_idxOf_right pre src dst hpreNodup]
           omega
       · intro hmem
         simp only [List.mem_filter] at hmem
@@ -2281,8 +2231,8 @@ private theorem permutationVectors_duplicateCol_sum {R : Type u} [Lean.Grind.Com
           ⟨swapPermutationValues_mem_permutationVectors src dst hpermMem, ?_⟩, ?_⟩
         · have hpermNodup := permutationVectors_nodup hpermMem
           simp [p] at hpfalse ⊢
-          rw [swapPermutationValues_idxOf_left perm src dst hpermNodup]
-          rw [swapPermutationValues_idxOf_right perm src dst hpermNodup]
+          rw [swapPermutationValues_idxOf_left perm src dst hpermNodup,
+            swapPermutationValues_idxOf_right perm src dst hpermNodup]
           have hneIdx := permutation_idxOf_ne perm src dst hpermNodup h
           omega
         · exact swapPermutationValues_involutive perm src dst
@@ -2470,8 +2420,8 @@ theorem det_transpose {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         have hnodup := permutationVectors_nodup hmem
         rw [inversePermutationVector_eq perm hnodup]
         unfold detTerm
-        rw [detProduct_transpose_inversePermutationValues M perm hnodup]
-        rw [← detSign_inversePermutationValues (R := R) perm hnodup]
+        rw [detProduct_transpose_inversePermutationValues M perm hnodup,
+          ← detSign_inversePermutationValues (R := R) perm hnodup]
     _ =
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 := by
         exact permutationVectors_inverseVector_sum (R := R) (n := n) (fun perm => detTerm M perm)
@@ -2487,9 +2437,7 @@ theorem cofactor_transpose {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     unfold cofactorSign
     have hsum : row.val + col.val = col.val + row.val := Nat.add_comm _ _
     rw [hsum]
-  rw [hsign]
-  rw [deleteRowCol_transpose]
-  rw [det_transpose]
+  rw [hsign, deleteRowCol_transpose, det_transpose]
 
 /-- Diagonal-product formula for the determinant of a lower-triangular matrix
 (entries above the diagonal are zero). Derived from the upper-triangular form
@@ -2511,7 +2459,7 @@ theorem det_lowerTriangular_eq_finFoldl_diag
     intro i
     simp [transpose, col]
   -- Rewrite the foldl over `M.transpose[i][i]` to `M[i][i]`.
-  rw [Fin.foldl_eq_foldl_finRange, Fin.foldl_eq_foldl_finRange]
+  rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl]
   apply foldl_acc_congr
   intro acc i _hmem
   rw [hdiag]
@@ -2522,8 +2470,7 @@ theorem det_lowerTriangular_eq_foldl_diag
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (M : Matrix R n n)
     (hzero : ∀ i j : Fin n, i.val < j.val → M[i][j] = 0) :
     det M = (List.finRange n).foldl (fun acc i => acc * M[i][i]) 1 := by
-  rw [det_lowerTriangular_eq_finFoldl_diag M hzero]
-  rw [Fin.foldl_eq_foldl_finRange]
+  rw [det_lowerTriangular_eq_finFoldl_diag M hzero, Fin.foldl_eq_finRange_foldl]
 
 /-- Permuting columns multiplies the determinant by the sign of the column permutation. -/
 theorem det_colPermute_vector {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
@@ -2570,9 +2517,9 @@ theorem det_colSwap {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     let rr : Fin n := ⟨r, hr⟩
     let cc : Fin n := ⟨c, hc⟩
     change C.transpose[rr][cc] = (rowSwap M.transpose i j)[rr][cc]
-    rw [rowSwap_get_finTranspose M.transpose i j rr h cc]
-    rw [show C.transpose[rr][cc] = C[cc][rr] by simp [Matrix.transpose, Matrix.col]]
-    rw [show C[cc][rr] = M[cc][finTranspose i j rr] by simp [C, ofFn]]
+    rw [rowSwap_get_finTranspose M.transpose i j rr h cc,
+      show C.transpose[rr][cc] = C[cc][rr] by simp [Matrix.transpose, Matrix.col],
+      show C[cc][rr] = M[cc][finTranspose i j rr] by simp [C, ofFn]]
     simp [Matrix.transpose, Matrix.col]
   calc
     det C = det C.transpose := (det_transpose C).symm

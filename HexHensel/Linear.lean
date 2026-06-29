@@ -38,8 +38,7 @@ coefficient, with no dependence on the polynomial's size. -/
 @[simp, grind =] theorem coeff_coeffwiseDiv (f : ZPoly) (m i : Nat) :
     (coeffwiseDiv f m).coeff i = f.coeff i / Int.ofNat m := by
   unfold coeffwiseDiv
-  rw [DensePoly.coeff_ofCoeffs_list]
-  rw [list_getD_map_range]
+  rw [DensePoly.coeff_ofCoeffs_list, list_getD_map_range]
   by_cases hi : i < f.size
   · simp [hi]
   · have hcoeff : f.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le f (Nat.le_of_not_gt hi)
@@ -108,8 +107,7 @@ theorem congr_liftScaledIncrement_zero
     (p k : Nat) [ZMod64.Bounds p] (r : FpPoly p) :
     ZPoly.congr (liftScaledIncrement p k r) 0 (p ^ k) := by
   intro i
-  rw [coeff_liftScaledIncrement]
-  rw [DensePoly.coeff_zero]
+  rw [coeff_liftScaledIncrement, DensePoly.coeff_zero]
   simp
 
 end LinearLiftResult
@@ -311,10 +309,9 @@ theorem liftToZ_add_congr
     (p : Nat) [ZMod64.Bounds p] (f g : FpPoly p) :
     ZPoly.congr (FpPoly.liftToZ (f + g)) (FpPoly.liftToZ f + FpPoly.liftToZ g) p := by
   intro i
-  rw [FpPoly.coeff_liftToZ]
-  rw [DensePoly.coeff_add f g i (zmod_add_zero_zero p)]
-  rw [DensePoly.coeff_add (FpPoly.liftToZ f) (FpPoly.liftToZ g) i (by rfl)]
-  rw [FpPoly.coeff_liftToZ, FpPoly.coeff_liftToZ]
+  rw [FpPoly.coeff_liftToZ, DensePoly.coeff_add f g i (zmod_add_zero_zero p),
+    DensePoly.coeff_add (FpPoly.liftToZ f) (FpPoly.liftToZ g) i (by rfl),
+    FpPoly.coeff_liftToZ, FpPoly.coeff_liftToZ]
   exact zmod_add_lift_congr p (f.coeff i) (g.coeff i)
 
 /-- The integer lift of a `ZMod64 p` product agrees modulo `p` with the product
@@ -600,8 +597,7 @@ theorem liftToZ_mul_congr
     (p : Nat) [ZMod64.Bounds p] (f g : FpPoly p) :
     ZPoly.congr (FpPoly.liftToZ (f * g)) (FpPoly.liftToZ f * FpPoly.liftToZ g) p := by
   intro n
-  rw [FpPoly.coeff_liftToZ, FpPoly.coeff_mul, DensePoly.coeff_mul]
-  rw [mulCoeffSum_eq_diagonal_int]
+  rw [FpPoly.coeff_liftToZ, FpPoly.coeff_mul, DensePoly.coeff_mul, mulCoeffSum_eq_diagonal_int]
   rw [diagonalSum_eq_bound_int (FpPoly.liftToZ f) (FpPoly.liftToZ g) n f.size
     (liftToZ_size_le p f)]
   exact fold_liftToZ_mulCoeffTerm_congr p f g n (List.range f.size) 0 0 (by
@@ -751,8 +747,7 @@ private theorem scale_congr_of_congr_mod_base
   rcases hbase with ⟨w, hw⟩
   apply Int.emod_eq_zero_of_dvd
   refine ⟨w, ?_⟩
-  rw [← Int.mul_sub, hw]
-  rw [← Int.mul_assoc]
+  rw [← Int.mul_sub, hw, ← Int.mul_assoc]
   have hpow : p ^ (k + 1) = p ^ k * p := by
     rw [Nat.pow_succ]
   rw [hpow]
@@ -774,8 +769,7 @@ private theorem liftScaledCoeff_product_dvd_next
   have hpow_exp : (1 + k0) + (1 + k0) = (1 + k0 + 1) + k0 := by
     omega
   have hpow : p ^ (1 + k0) * p ^ (1 + k0) = p ^ (1 + k0 + 1) * p ^ k0 := by
-    rw [← Nat.pow_add, ← Nat.pow_add]
-    rw [hpow_exp]
+    rw [← Nat.pow_add, ← Nat.pow_add, hpow_exp]
   calc
     Int.ofNat (p ^ (1 + k0)) * Int.ofNat (r.coeff i).toNat *
         (Int.ofNat (p ^ (1 + k0)) * Int.ofNat (hCorrection.coeff j).toNat)
@@ -1007,9 +1001,8 @@ private theorem dense_scale_mul_left_int
 private theorem dense_scale_mul_right_int
     (c : Int) (hc : c ≠ 0) (f g : ZPoly) :
     f * DensePoly.scale c g = DensePoly.scale c (f * g) := by
-  rw [DensePoly.mul_comm_poly f (DensePoly.scale c g)]
-  rw [dense_scale_mul_left_int c hc]
-  rw [DensePoly.mul_comm_poly g f]
+  rw [DensePoly.mul_comm_poly f (DensePoly.scale c g), dense_scale_mul_left_int c hc,
+    DensePoly.mul_comm_poly g f]
 
 /-- Scaling by `c` distributes over addition:
 `scale c (f + g) = scale c f + scale c g`. -/
@@ -1018,11 +1011,9 @@ private theorem dense_scale_add_int
     DensePoly.scale c (f + g) = DensePoly.scale c f + DensePoly.scale c g := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero c)]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero c)]
-  rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero c)]
+  rw [DensePoly.coeff_scale _ _ _ (Int.mul_zero c), DensePoly.coeff_add_semiring,
+    DensePoly.coeff_add_semiring, DensePoly.coeff_scale _ _ _ (Int.mul_zero c),
+    DensePoly.coeff_scale _ _ _ (Int.mul_zero c)]
   grind
 
 /-- When the cross term is zero modulo `m`, the regrouping
@@ -1032,11 +1023,8 @@ private theorem add_cross_congr
     (hcross : ZPoly.congr cross 0 m) :
     ZPoly.congr (base + a + (b + cross)) (base + (a + b)) m := by
   intro i
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_add_semiring, DensePoly.coeff_add_semiring,
+    DensePoly.coeff_add_semiring, DensePoly.coeff_add_semiring]
   have hx := hcross i
   rw [DensePoly.coeff_zero] at hx
   have hdiff :
@@ -1453,8 +1441,7 @@ private theorem coeff_last_eq_leadingCoeff (f : ZPoly) (hpos : 0 < f.size) :
       have hcoeffs : 0 < coeffs.size := by simpa [DensePoly.size] using hpos
       have hidx : coeffs.size - 1 < coeffs.size := Nat.sub_one_lt (Nat.ne_of_gt hcoeffs)
       change coeffs.getD (coeffs.size - 1) 0 = coeffs.back?.getD 0
-      rw [Array.back?_eq_getElem?]
-      rw [Array.getElem?_eq_getElem hidx]
+      rw [Array.back?_eq_getElem?, Array.getElem?_eq_getElem hidx]
       exact (Array.getElem_eq_getD 0).symm
 
 /-- A monic polynomial is nonempty: its `size` is positive. A zero-size `f` would

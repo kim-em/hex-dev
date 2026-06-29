@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrixMathlib.Basic
+public import HexMatrixMathlib.Vector
 public import HexRowReduce.RREF
 public import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 public import Mathlib.LinearAlgebra.Dimension.Constructions
@@ -29,63 +29,6 @@ universe u
 
 variable {R : Type u} {n m : Nat}
 
-/-- Convert an executable `Vector` into Mathlib's function representation. -/
-@[expose]
-def vectorEquiv : Vector R n ≃ (Fin n → R) where
-  toFun := fun v i => v[i]
-  invFun := Vector.ofFn
-  left_inv := by
-    intro v
-    ext i
-    simp
-  right_inv := by
-    intro f
-    funext i
-    simp
-
-/-- `vectorEquiv` reads off the executable vector entrywise, so a caller can
-rewrite `vectorEquiv v i` to the underlying `v[i]` without unfolding it. -/
-@[simp, grind =] theorem vectorEquiv_apply (v : Vector R n) (i : Fin n) :
-    vectorEquiv v i = v[i] :=
-  rfl
-
-/-- The inverse direction of `vectorEquiv` materialises a function as an
-executable vector entrywise: `(vectorEquiv.symm f)[i]` is just `f i`. -/
-@[simp, grind =] theorem vectorEquiv_symm_apply (f : Fin n → R) (i : Fin n) :
-    (vectorEquiv.symm f)[(i : Nat)] = f i := by
-  simp [vectorEquiv]
-
-/-- Row `i` of the Mathlib matrix `matrixEquiv M` is the image under
-`vectorEquiv` of the executable row `Hex.Matrix.row M i`, letting span/rank
-lemmas pass between the two row representations. -/
-@[simp, grind =] theorem matrixEquiv_row (M : Hex.Matrix R n m) (i : Fin n) :
-    _root_.Matrix.row (matrixEquiv M) i = vectorEquiv (Hex.Matrix.row M i) := by
-  funext j
-  simp [Hex.Matrix.row]
-
-private theorem foldl_finRange_eq_sum [AddCommMonoid R] {n : Nat} (f : Fin n → R) :
-    (List.finRange n).foldl (fun acc i => acc + f i) 0 = ∑ i, f i := by
-  rw [← List.foldl_map]
-  rw [← List.sum_eq_foldl]
-  rw [← List.sum_toFinset f (List.nodup_finRange n)]
-  rw [List.toFinset_finRange]
-
-/-- Bridge invariant: the executable matrix-vector product transports to
-Mathlib's `Matrix.mulVec` under `matrixEquiv`/`vectorEquiv`. This is the key
-step letting nullspace membership be phrased against `mulVecLin`. -/
-private theorem vectorEquiv_mulVec [Field R] (M : Hex.Matrix R n m) (v : Vector R m) :
-    vectorEquiv (M * v) = (matrixEquiv M).mulVec (vectorEquiv v) := by
-  funext i
-  simp only [vectorEquiv_apply]
-  change (Hex.Matrix.mulVec M v)[i.val] = (matrixEquiv M).mulVec (vectorEquiv v) i
-  unfold Hex.Matrix.mulVec Hex.Matrix.row Hex.Vector.dotProduct
-  rw [Vector.getElem_ofFn i.isLt]
-  rw [foldl_finRange_eq_sum]
-  unfold _root_.Matrix.mulVec dotProduct
-  apply Finset.sum_congr rfl
-  intro k _
-  rfl
-
 /-- The executable row combination `Hex.Matrix.rowCombination M c` (the linear
 combination of the rows of `M` with coefficients `c`) transports under
 `vectorEquiv` to Mathlib's `Fintype.linearCombination` over the rows of
@@ -100,10 +43,8 @@ theorem vectorEquiv_rowCombination [CommRing R] (M : Hex.Matrix R n m) (c : Vect
     (Fintype.linearCombination R (_root_.Matrix.row (matrixEquiv M)) (vectorEquiv c)) j
   unfold Hex.Matrix.mulVec Hex.Matrix.row Hex.Vector.dotProduct Hex.Matrix.transpose
     Hex.Matrix.col
-  rw [Vector.getElem_ofFn j.isLt]
-  rw [foldl_finRange_eq_sum]
-  rw [Fintype.linearCombination_apply]
-  rw [Finset.sum_apply]
+  rw [Vector.getElem_ofFn j.isLt, foldl_finRange_eq_sum, Fintype.linearCombination_apply,
+    Finset.sum_apply]
   apply Finset.sum_congr rfl
   intro i _
   simp only [vectorEquiv_apply, matrixEquiv_apply, _root_.Matrix.row_apply, Pi.smul_apply,
@@ -126,12 +67,11 @@ private theorem vectorEquiv_nullspaceMatrix_mulVec [Field R]
   change (Hex.Matrix.mulVec E.nullspaceMatrix c)[j.val] =
     ∑ k : Fin (m - D.rank), c[k] * (E.nullspace.get k)[j]
   unfold Hex.Matrix.mulVec Hex.Matrix.row Hex.Vector.dotProduct
-  rw [Vector.getElem_ofFn j.isLt]
-  rw [foldl_finRange_eq_sum]
+  rw [Vector.getElem_ofFn j.isLt, foldl_finRange_eq_sum]
   apply Finset.sum_congr rfl
   intro k _
   unfold Hex.Matrix.IsRREF.nullspace Hex.Matrix.col
-  simp [mul_comm]
+  simp [mul_comm, Vector.get, Vector.toArray_ofFn]
 
 /-- Soundness of the executable `spanCoeffs`: when echelon-form data certifies
 `v` as a row combination with coefficients `c`, the Mathlib image of `v` is the

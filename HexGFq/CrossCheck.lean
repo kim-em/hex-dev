@@ -1909,8 +1909,7 @@ reduced modulo `genericMod`. -/
 private theorem genericN32_finalEntry :
     genericN32SamePrimeCert.powChain[genericN32SamePrimeCert.n]? =
       some (FpPoly.modByMonic genericMod FpPoly.X genericMod_monic) := by
-  rw [genericMod_modByMonic_X]
-  rw [← polyP2_zero_one_eq_X]
+  rw [genericMod_modByMonic_X, ← polyP2_zero_one_eq_X]
   rfl
 
 /-- `genericN32Cert` passes the linear-incremental irreducibility-certificate check

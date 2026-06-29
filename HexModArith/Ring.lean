@@ -311,8 +311,7 @@ theorem nat_left_distrib_mod (x y z m : Nat) :
       rw [← Nat.add_mod y z m, ← Nat.mul_mod x (y + z) m]
     _ = (x * y + x * z) % m := by rw [Nat.left_distrib]
     _ = ((x % m * (y % m)) % m + (x % m * (z % m)) % m) % m := by
-      rw [Nat.add_mod]
-      rw [Nat.mul_mod x y m, Nat.mul_mod x z m]
+      rw [Nat.add_mod, Nat.mul_mod x y m, Nat.mul_mod x z m]
 
 /-- Right distributivity of `Nat` multiplication over addition under an
 outer `% m`, with each operand pre-reduced `% m`. This is the
@@ -326,8 +325,7 @@ theorem nat_right_distrib_mod (x y z m : Nat) :
       rw [← Nat.add_mod x y m, ← Nat.mul_mod (x + y) z m]
     _ = (x * z + y * z) % m := by rw [Nat.right_distrib]
     _ = ((x % m * (z % m)) % m + (y % m * (z % m)) % m) % m := by
-      rw [Nat.add_mod]
-      rw [Nat.mul_mod x z m, Nat.mul_mod y z m]
+      rw [Nat.add_mod, Nat.mul_mod x z m, Nat.mul_mod y z m]
 
 /-- Additive cancellation of the modular negation representative: for
 `x < m`, the reduced complement `(m - x) % m` added back to `x` is `0`
@@ -445,18 +443,17 @@ instance : Lean.Grind.Semiring (ZMod64 p) := by
     apply ext_toNat
     change (OfNat.ofNat (n + 1) : ZMod64 p).toNat =
       (ZMod64.add (OfNat.ofNat n) ZMod64.one).toNat
-    rw [show (OfNat.ofNat (n + 1) : ZMod64 p) = ZMod64.natCast p (n + 1) from rfl]
-    rw [show (OfNat.ofNat n : ZMod64 p) = ZMod64.natCast p n from rfl]
-    rw [toNat_natCast, toNat_add, toNat_natCast, toNat_one]
+    rw [show (OfNat.ofNat (n + 1) : ZMod64 p) = ZMod64.natCast p (n + 1) from rfl,
+      show (OfNat.ofNat n : ZMod64 p) = ZMod64.natCast p n from rfl,
+      toNat_natCast, toNat_add, toNat_natCast, toNat_one]
     simp [Nat.add_mod]
   · intro n
     rfl
   · intro n a
     apply ext_toNat
     change (ZMod64.nsmul n a).toNat = (ZMod64.mul (↑n : ZMod64 p) a).toNat
-    rw [toNat_nsmul, toNat_mul]
-    rw [show (↑n : ZMod64 p).toNat = (ZMod64.natCast p n).toNat from rfl]
-    rw [toNat_natCast]
+    rw [toNat_nsmul, toNat_mul, show (↑n : ZMod64 p).toNat = (ZMod64.natCast p n).toNat from rfl,
+      toNat_natCast]
     simp [Nat.mul_mod]
 
 /-- Adding zero on the right leaves a residue unchanged. -/
@@ -539,8 +536,7 @@ instance : Lean.Grind.Semiring (ZMod64 p) := by
 @[simp, grind =] theorem one_pow (n : Nat) : (1 : ZMod64 p) ^ n = 1 := by
   apply ext_toNat
   change (ZMod64.pow ZMod64.one n).toNat = (ZMod64.one : ZMod64 p).toNat
-  rw [toNat_pow, toNat_one]
-  rw [← Nat.pow_mod (1 : Nat) n p]
+  rw [toNat_pow, toNat_one, ← Nat.pow_mod (1 : Nat) n p]
   simp
 
 instance : Lean.Grind.Ring (ZMod64 p) where

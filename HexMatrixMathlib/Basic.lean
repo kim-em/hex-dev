@@ -74,7 +74,7 @@ theorem matrixEquiv_rowSwap (M : Hex.Matrix R n m) (i j : Fin n) :
     matrixEquiv (Hex.Matrix.rowSwap M i j) = Matrix.swap R i j * matrixEquiv M := by
   ext r k
   change (Hex.Matrix.rowSwap M i j)[r][k] = (Matrix.swap R i j * matrixEquiv M) r k
-  rw [Hex.Matrix.rowSwap_getElem]
+  rw [Hex.Matrix.getElem_rowSwap]
   by_cases hrj : r = j
   · subst r
     simp
@@ -92,19 +92,11 @@ theorem matrixEquiv_rowScale (M : Hex.Matrix R n m) (i : Fin n) (c : R) :
   ext r k
   change (Hex.Matrix.rowScale M i c)[r][k] =
     (Matrix.diagonal (Function.update (fun _ : Fin n => (1 : R)) i c) * matrixEquiv M) r k
+  rw [Hex.Matrix.getElem_rowScale]
   by_cases hri : r = i
   · subst r
-    simp [Hex.Matrix.rowScale]
-  · have hval : i.val ≠ r.val := by
-      intro h
-      exact hri (Fin.ext h).symm
-    have hentry :
-        ((Vector.set M i.val (Vector.ofFn fun k => c * M[i][k]) i.isLt)[r.val])[k.val] =
-          M[r][k] := by
-      exact congrArg (fun row => row[k])
-        (Vector.getElem_set_ne (xs := M) (x := Vector.ofFn fun k => c * M[i][k])
-          (hi := i.isLt) (hj := r.isLt) hval)
-    simpa [Hex.Matrix.rowScale, hri] using hentry
+    simp
+  · simp [hri]
 
 end RowOps
 
@@ -121,6 +113,7 @@ theorem matrixEquiv_rowAdd (M : Hex.Matrix R n m) (src dst : Fin n) (c : R) :
   ext r k
   change (Hex.Matrix.rowAdd M src dst c)[r][k] =
     (Matrix.transvection dst src c * matrixEquiv M) r k
+  rw [Hex.Matrix.rowAdd_eq_set]
   by_cases hrd : r = dst
   · subst r
     have hentry :
@@ -134,8 +127,7 @@ theorem matrixEquiv_rowAdd (M : Hex.Matrix R n m) (src dst : Fin n) (c : R) :
       have hone :
           ((1 : Matrix (Fin n) (Fin n) R) * matrixEquiv M) dst k =
             M[dst][k] := by
-        rw [← Matrix.diagonal_one, Matrix.diagonal_mul]
-        rw [one_mul]
+        rw [← Matrix.diagonal_one, Matrix.diagonal_mul, one_mul]
         rfl
       have hsingle :
           (Matrix.single dst src c * matrixEquiv M) dst k =
@@ -164,8 +156,7 @@ theorem matrixEquiv_rowAdd (M : Hex.Matrix R n m) (src dst : Fin n) (c : R) :
       have hone :
           ((1 : Matrix (Fin n) (Fin n) R) * matrixEquiv M) r k =
             M[r][k] := by
-        rw [← Matrix.diagonal_one, Matrix.diagonal_mul]
-        rw [one_mul]
+        rw [← Matrix.diagonal_one, Matrix.diagonal_mul, one_mul]
         rfl
       have hsingle :
           (Matrix.single dst src c * matrixEquiv M) r k = 0 := by

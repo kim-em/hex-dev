@@ -39,7 +39,7 @@ theorem deleteRowCol_setRow_self {R : Type u} {n : Nat}
   let jj : Fin n := ⟨j, hj⟩
   change (deleteRowCol (setRow M dst v) dst col)[ii][jj] =
     (deleteRowCol M dst col)[ii][jj]
-  rw [deleteRowCol_entry, deleteRowCol_entry]
+  rw [getElem_deleteRowCol, getElem_deleteRowCol]
   have hne : skipIndex dst ii ≠ dst := skipIndex_ne dst ii
   have hrow := setRow_row_ne M dst (skipIndex dst ii) v hne
   exact congrArg (fun row => row[skipIndex col jj]) hrow
@@ -217,9 +217,7 @@ theorem adjugate_mul_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     apply foldl_acc_congr
     intro acc k _hmem
     rw [Lean.Grind.CommSemiring.mul_comm]
-  rw [hentry]
-  rw [mul_adjugate_apply M.transpose j i]
-  rw [det_transpose M]
+  rw [hentry, mul_adjugate_apply M.transpose j i, det_transpose M]
   by_cases hij : i = j
   · subst hij
     rfl
@@ -265,7 +263,7 @@ the leading prefix minor obtained by deleting the last row and column. -/
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
     (adjugate M)[Fin.last n][Fin.last n] =
-      det (leadingPrefix M n (Nat.le_succ n)) := by
+      det (principalSubmatrix M n (Nat.le_succ n)) := by
   rw [adjugate_get]
   exact cofactor_last_last M
 
@@ -298,7 +296,7 @@ private theorem columnTupleMatrix_eq_ofFn_ofFn
   show (columnTupleMatrix M cols)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
     (ofFn (fun r c => M[r][(Vector.ofFn cols)[c]]) : Matrix R n n)[
       (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [columnTupleMatrix_entry]
+  rw [getElem_columnTupleMatrix]
   unfold ofFn
   rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
   exact congrArg (fun col : Fin n => M[(⟨r, hr⟩ : Fin n)][col])
@@ -337,7 +335,7 @@ private theorem mul_eq_columnSumMatrix_transpose
   let rr : Fin n := ⟨r, hr⟩
   let cc : Fin n := ⟨c, hc⟩
   show (M * N)[rr][cc] = (columnSumMatrix M N.transpose)[rr][cc]
-  rw [columnSumMatrix_entry]
+  rw [getElem_columnSumMatrix]
   change (Matrix.mul M N)[rr][cc] = _
   unfold Matrix.mul ofFn
   rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
@@ -370,8 +368,7 @@ theorem det_mul
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M N : Matrix R n n) :
     det (M * N) = det M * det N := by
-  rw [mul_eq_columnSumMatrix_transpose M N]
-  rw [det_columnSumMatrix_eq_sum_columnTuples M N.transpose]
+  rw [mul_eq_columnSumMatrix_transpose M N, det_columnSumMatrix_eq_sum_columnTuples M N.transpose]
   have hbody_eq :
       (columnTupleVectors n n).foldl
           (fun acc cols => acc +
@@ -468,7 +465,7 @@ private theorem mul_apply_foldl
   unfold Hex.Vector.dotProduct
   apply foldl_acc_congr
   intro acc l _hmem
-  rw [row_getElem, col_getElem]
+  rw [getElem_row, getElem_col]
 
 /-- Row decomposition of `setRow M r u * adjugate M`: the `(i, s)` entry is
 the `cofactor-row pairing` of `M`'s row `s` against the (possibly replaced)
@@ -627,8 +624,7 @@ private theorem det_mul_cofactor_setRow_eq
           rw [if_pos rfl, if_pos rfl, Lean.Grind.AddCommMonoid.zero_add]
         · rw [if_neg his, if_neg his, Lean.Grind.Semiring.mul_zero,
             Lean.Grind.AddCommMonoid.add_zero]
-    rw [hbody]
-    rw [foldl_det_sum_add_zero]
+    rw [hbody, foldl_det_sum_add_zero]
     have hr_extract :=
       foldl_add_with_unique_match (α := R) (List.finRange (n + 1)) (0 : R) r
         (fun i => (adjugate (setRow M r u))[c][i] * cofactorRowPairing M s u)

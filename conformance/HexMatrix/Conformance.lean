@@ -14,7 +14,7 @@ Run this file through the conformance Lake target, not direct `lake env lean`.
 Oracle: none
 Mode: always
 Covered operations:
-- dense matrix constructors and accessors (`ofFn`, `row`, `col`, `transpose`, `leadingSubmatrix`)
+- dense matrix constructors and accessors (`ofFn`, `row`, `col`, `transpose`, `principalSubmatrix`)
 - vector and matrix arithmetic (`dotProduct`, `Hex.Vector.normSq`, `mulVec`, `mul`, `gramMatrix`)
 - elementary row operations (`rowSwap`, `rowScale`, `rowAdd`)
 Covered properties:
@@ -82,8 +82,8 @@ private def spanVec : Vector Rat 3 :=
 
 #guard Matrix.row baseInt ⟨1, by decide⟩ = rowOneInt
 #guard Matrix.col baseInt ⟨0, by decide⟩ = colZeroInt
-#guard Matrix.leadingSubmatrix baseInt ⟨0, by decide⟩ = unitSubmatrix
-#guard Matrix.leadingSubmatrix baseInt ⟨1, by decide⟩ = baseInt
+#guard Matrix.principalSubmatrix baseInt 1 (by decide) = unitSubmatrix
+#guard Matrix.principalSubmatrix baseInt 2 (by decide) = baseInt
 #guard Hex.Vector.normSq vecInt = 61
 #guard Hex.Vector.normSq spanVec = 14
 #guard Matrix.gramMatrix baseInt = baseGramInt

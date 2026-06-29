@@ -455,8 +455,7 @@ theorem checkIrreducibilityCertificate_rabinTest
     have hxpow_eq : xpow2kMod f cert.n = monomial 1 % f := by
       have hsome := hdividesWitness
       exact Option.some.inj hsome
-    rw [← hn]
-    rw [hxpow_eq]
+    rw [← hn, hxpow_eq]
     -- Goal: (monomial 1 % f + monomial 1 % f).isZero = true
     have hself : monomial 1 % f + monomial 1 % f = 0 := by simp
     rw [hself]
@@ -525,8 +524,7 @@ theorem checkIrreducibilityCertificateLinear_rabinTest
     have hxpow_eq : xpow2kMod f cert.n = monomial 1 % f := by
       have hsome := hdividesWitness
       exact Option.some.inj hsome
-    rw [← hn]
-    rw [hxpow_eq]
+    rw [← hn, hxpow_eq]
     have hself : monomial 1 % f + monomial 1 % f = 0 := by simp
     rw [hself]
     exact (isZero_of_eq_zero rfl)

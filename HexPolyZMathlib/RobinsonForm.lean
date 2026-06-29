@@ -154,12 +154,10 @@ theorem reflectedLinearFactor_eq_C_mul_X_sub_C_schurReflectedRoot {α : ℂ} (h�
   rw [schurReflectedRoot, mul_sub, ← C_mul]
   have hmul : -(conj α) * (conj α)⁻¹ = -1 := by
     rw [neg_mul, mul_inv_cancel₀ hconj]
-  rw [hmul]
-  rw [mul_comm]
+  rw [hmul, mul_comm]
   have hxneg : X * C (-(conj α)) = -(X * C (conj α)) := by
     rw [← mul_neg, ← C_neg]
-  rw [mul_comm (C (-(conj α))) X]
-  rw [hxneg]
+  rw [mul_comm (C (-(conj α))) X, hxneg]
   norm_num
   ring
 
@@ -447,8 +445,7 @@ theorem mahlerMeasure_robinsonFactor (α : ℂ) :
         congr 1
         rw [map_neg]
         simp only [map_one]
-        rw [sub_eq_add_neg, add_comm]
-        rw [neg_mul]
+        rw [sub_eq_add_neg, add_comm, neg_mul]
       _ = max ‖-(conj α)‖ ‖(1 : ℂ)‖ := by
         simpa using mahlerMeasure_C_mul_X_add_C (a := -(conj α)) (b := 1) (by simpa using hconj_ne)
       _ = max 1 ‖α‖ := by
@@ -510,8 +507,7 @@ theorem norm_root_robinsonFactor_le (α : ℂ) {β : ℂ}
     rw [hβ]
     have : ‖-((-(conj α))⁻¹ * 1)‖ = ‖α‖⁻¹ := by
       rw [mul_one, norm_neg, norm_inv, norm_neg, Complex.norm_conj]
-    rw [this]
-    rw [inv_le_one_iff₀]
+    rw [this, inv_le_one_iff₀]
     right
     exact hα'.le
 

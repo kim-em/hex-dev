@@ -80,10 +80,10 @@ theorem ordered_four_det_mul_det_setRow_setRow_eq_det_setRow_mul_sub
         Hex.Matrix.det (Hex.Matrix.setRow M r3 B[p1]) *
           Hex.Matrix.det (Hex.Matrix.setRow M r2 B[q]) := by
   intro M r2 r3
-  rw [← ordered_four_cofactorRowPairing_p2_p1_eq_det_setRow B p1 p2 p3 q h12 h23 h3q]
-  rw [← ordered_four_cofactorRowPairing_p3_q_eq_det_setRow B p1 p2 p3 q h12 h23 h3q]
-  rw [← ordered_four_cofactorRowPairing_p3_p1_eq_det_setRow B p1 p2 p3 q h12 h23 h3q]
-  rw [← ordered_four_cofactorRowPairing_p2_q_eq_det_setRow B p1 p2 p3 q h12 h23 h3q]
+  rw [← ordered_four_cofactorRowPairing_p2_p1_eq_det_setRow B p1 p2 p3 q h12 h23 h3q,
+    ← ordered_four_cofactorRowPairing_p3_q_eq_det_setRow B p1 p2 p3 q h12 h23 h3q,
+    ← ordered_four_cofactorRowPairing_p3_p1_eq_det_setRow B p1 p2 p3 q h12 h23 h3q,
+    ← ordered_four_cofactorRowPairing_p2_q_eq_det_setRow B p1 p2 p3 q h12 h23 h3q]
   exact ordered_four_det_mul_det_setRow_setRow_eq_cofactorRowPairing_mul_sub
     B p1 p2 p3 q h12 h23 h3q
 
@@ -162,7 +162,7 @@ private theorem matrixEquiv_double_setRow_eq_submatrix_nMatrix
         Hex.Matrix.setRow_row_ne _ r2 i B[p1] hir2]
     show (Hex.Matrix.nMatrix B p1 q h1q)[i][j] =
       (Hex.Matrix.nMatrix B p2 p3 h23)[σ i][j]
-    rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+    rw [Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
     apply B_entry_congr; apply Fin.ext
     rw [Hex.Matrix.skipIndex2_val_of_lt_p p1 q h1q i h_below_p1,
         Hex.Matrix.skipIndex2_val_of_lt_p p2 p3 h23 (σ i)
@@ -189,7 +189,7 @@ private theorem matrixEquiv_double_setRow_eq_submatrix_nMatrix
         rw [hσ_apply _, h_cb_eq]
         exact OrderedFourShift.cycleAhead_val_top p1.val m1 hm1 r2 h_r2_top
       show B[p1][j] = (Hex.Matrix.nMatrix B p2 p3 h23)[σ r2][j]
-      rw [Hex.Matrix.nMatrix_entry]
+      rw [Hex.Matrix.getElem_nMatrix]
       apply B_entry_congr; apply Fin.ext
       show p1.val = (Hex.Matrix.skipIndex2 p2 p3 h23 (σ r2)).val
       have h_σ_lt : (σ r2).val < p2.val := by rw [hσ_val]; exact h12
@@ -216,7 +216,7 @@ private theorem matrixEquiv_double_setRow_eq_submatrix_nMatrix
           rw [hσ_apply _, OrderedFourShift.cycleAhead_val_above p1.val m1 hm1 _ h_above]
           exact h_cb_q2
         show B[q][j] = (Hex.Matrix.nMatrix B p2 p3 h23)[σ r3][j]
-        rw [Hex.Matrix.nMatrix_entry]
+        rw [Hex.Matrix.getElem_nMatrix]
         apply B_entry_congr; apply Fin.ext
         show q.val = (Hex.Matrix.skipIndex2 p2 p3 h23 (σ r3)).val
         have h_not_lt : ¬ (σ r3).val < p2.val := by rw [hσ_val]; omega
@@ -236,7 +236,7 @@ private theorem matrixEquiv_double_setRow_eq_submatrix_nMatrix
             Hex.Matrix.setRow_row_ne _ r2 i B[p1] hir2]
         show (Hex.Matrix.nMatrix B p1 q h1q)[i][j] =
           (Hex.Matrix.nMatrix B p2 p3 h23)[σ i][j]
-        rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+        rw [Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
         -- Split on where i.val sits relative to the cycle ranges.
         by_cases h_below_p2 : i.val < p2.val
         · -- Case D: p1 ≤ i.val < p2 - 1. cycleA "in", cycleB fixes. σ(i).val = i.val + 1.
@@ -304,8 +304,7 @@ private theorem matrixEquiv_double_setRow_eq_submatrix_nMatrix
                     (OrderedFourShift.cycleBehind (n := n) (p3.val - 1) m2 hm2 i).val := by
                 rw [h_cb_val, hm1_val]; omega
               have hσ_val : (σ i).val = i.val - 1 := by
-                rw [hσ_apply _]
-                rw [OrderedFourShift.cycleAhead_val_above p1.val m1 hm1 _ h_above_a1]
+                rw [hσ_apply _, OrderedFourShift.cycleAhead_val_above p1.val m1 hm1 _ h_above_a1]
                 exact h_cb_val
               apply B_entry_congr; apply Fin.ext
               have h_not_lt_p1 : ¬ i.val < p1.val := by omega
@@ -695,9 +694,9 @@ private theorem det_plucker_three_term_basisVec_of_eq_p1
         Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
       Hex.Matrix.mDet B (Hex.Vector.unit (R := R) p1) p3 *
         Hex.Matrix.nDet B p1 p2 h12 = 0 := by
-  rw [Hex.Matrix.mDet_unit_eq_zero_of_eq B p1]
-  rw [Hex.Matrix.mDet_unit_eq_signed_nDet_of_gt B p2 p1 h12]
-  rw [Hex.Matrix.mDet_unit_eq_signed_nDet_of_gt B p3 p1 (Nat.lt_trans h12 h23)]
+  rw [Hex.Matrix.mDet_unit_eq_zero_of_eq B p1,
+    Hex.Matrix.mDet_unit_eq_signed_nDet_of_gt B p2 p1 h12,
+    Hex.Matrix.mDet_unit_eq_signed_nDet_of_gt B p3 p1 (Nat.lt_trans h12 h23)]
   ring
 
 private theorem det_plucker_three_term_basisVec_of_eq_p2
@@ -711,9 +710,8 @@ private theorem det_plucker_three_term_basisVec_of_eq_p2
         Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
       Hex.Matrix.mDet B (Hex.Vector.unit (R := R) p2) p3 *
         Hex.Matrix.nDet B p1 p2 h12 = 0 := by
-  rw [Hex.Matrix.mDet_unit_eq_signed_nDet_of_lt B p1 p2 h12]
-  rw [Hex.Matrix.mDet_unit_eq_zero_of_eq B p2]
-  rw [Hex.Matrix.mDet_unit_eq_signed_nDet_of_gt B p3 p2 h23]
+  rw [Hex.Matrix.mDet_unit_eq_signed_nDet_of_lt B p1 p2 h12,
+    Hex.Matrix.mDet_unit_eq_zero_of_eq B p2, Hex.Matrix.mDet_unit_eq_signed_nDet_of_gt B p3 p2 h23]
   have hrow :
       (⟨p2.val, by have := p3.isLt; omega⟩ : Fin (n + 2)) =
         (⟨p2.val - 1 + 1, by have := p3.isLt; omega⟩ : Fin (n + 2)) := by
@@ -736,9 +734,8 @@ private theorem det_plucker_three_term_basisVec_of_eq_p3
         Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
       Hex.Matrix.mDet B (Hex.Vector.unit (R := R) p3) p3 *
         Hex.Matrix.nDet B p1 p2 h12 = 0 := by
-  rw [Hex.Matrix.mDet_unit_eq_signed_nDet_of_lt B p1 p3 (Nat.lt_trans h12 h23)]
-  rw [Hex.Matrix.mDet_unit_eq_signed_nDet_of_lt B p2 p3 h23]
-  rw [Hex.Matrix.mDet_unit_eq_zero_of_eq B p3]
+  rw [Hex.Matrix.mDet_unit_eq_signed_nDet_of_lt B p1 p3 (Nat.lt_trans h12 h23),
+    Hex.Matrix.mDet_unit_eq_signed_nDet_of_lt B p2 p3 h23, Hex.Matrix.mDet_unit_eq_zero_of_eq B p3]
   ring
 
 private theorem foldl_det_sum_congr {R : Type u} [Add R] {β : Type v}
@@ -821,9 +818,8 @@ private theorem det_plucker_three_term_of_basisVec
     Hex.Matrix.mDet B v p1 * Hex.Matrix.nDet B p2 p3 h23 -
       Hex.Matrix.mDet B v p2 * Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
       Hex.Matrix.mDet B v p3 * Hex.Matrix.nDet B p1 p2 h12 = 0 := by
-  rw [Hex.Matrix.mDet_eq_sum_unit B v p1]
-  rw [Hex.Matrix.mDet_eq_sum_unit B v p2]
-  rw [Hex.Matrix.mDet_eq_sum_unit B v p3]
+  rw [Hex.Matrix.mDet_eq_sum_unit B v p1, Hex.Matrix.mDet_eq_sum_unit B v p2,
+    Hex.Matrix.mDet_eq_sum_unit B v p3]
   rw [← foldl_det_sum_mul_right_zero (List.finRange (n + 3))
       (fun q => v[q] * Hex.Matrix.mDet B (Hex.Vector.unit (R := R) q) p1)
       (Hex.Matrix.nDet B p2 p3 h23)]
@@ -1352,22 +1348,22 @@ private theorem M_k1_eq_matrixEquiv_borderedMinor_submatrix [CommRing R]
 
 /-- The interior `(k × k)` submatrix of the reindexed Bareiss bordered minor:
 deleting both row 0 and the last row (and similarly columns) leaves exactly
-`matrixEquiv (leadingPrefix source k _)`. -/
-private theorem M_interior_eq_matrixEquiv_leadingPrefix [CommRing R]
+`matrixEquiv (principalSubmatrix source k _)`. -/
+private theorem M_interior_eq_matrixEquiv_principalSubmatrix [CommRing R]
     (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
     (i j : Fin n) :
     (((matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix
         (bareissDesnanotIndex k) (bareissDesnanotIndex k)).submatrix
         (Fin.succAbove (0 : Fin (k + 2)) ∘ (Fin.last k).succAbove)
         (Fin.succAbove (0 : Fin (k + 2)) ∘ (Fin.last k).succAbove)) =
-      matrixEquiv (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) := by
+      matrixEquiv (Hex.Matrix.principalSubmatrix source k (Nat.le_of_lt hk)) := by
   ext r c
   show matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
         (bareissDesnanotIndex k (Fin.succAbove (0 : Fin (k + 2))
           ((Fin.last k).succAbove r)))
         (bareissDesnanotIndex k (Fin.succAbove (0 : Fin (k + 2))
           ((Fin.last k).succAbove c))) =
-      matrixEquiv (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) r c
+      matrixEquiv (Hex.Matrix.principalSubmatrix source k (Nat.le_of_lt hk)) r c
   -- (last k).succAbove r = r.castSucc, then succAbove 0 of r.castSucc = r.castSucc.succ
   simp only [Fin.succAbove_last, Fin.succAbove_zero]
   -- Now use bareissDesnanotIndex_succ_lt with r.castSucc, since (r.castSucc).val = r.val < k
@@ -1382,7 +1378,7 @@ private theorem M_interior_eq_matrixEquiv_leadingPrefix [CommRing R]
   show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
       (⟨r.val, by omega⟩ : Fin (k + 2))][
       (⟨c.val, by omega⟩ : Fin (k + 2))] = _
-  simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Hex.Matrix.leadingPrefix,
+  simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Hex.Matrix.principalSubmatrix,
     show r.val ≤ k from r.isLt.le, show c.val ≤ k from c.isLt.le]
 
 /-- After reindexing the `(k+2)` bordered minor by `bareissDesnanotIndex k`,
@@ -1407,14 +1403,14 @@ private theorem M11_eq_matrixEquiv_borderedMinor [CommRing R]
 
 /-- Desnanot-Jacobi specialised to a Bareiss bordered minor: the Mathlib
 determinant identity from `desnanot_jacobi_borderedMinor_reindex` translated
-back into Hex `borderedMinor`/`leadingPrefix` determinants. This produces the
+back into Hex `borderedMinor`/`principalSubmatrix` determinants. This produces the
 `hdesnanot` premise expected by `bareissExactDiv_borderedMinor_of_mul_eq` with
-`prevPivot` instantiated as `det (leadingPrefix source k _)`. -/
+`prevPivot` instantiated as `det (principalSubmatrix source k _)`. -/
 theorem desnanot_jacobi_borderedMinor [CommRing R]
     (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
     (i j : Fin n) (hi : k < i.val) (hj : k < j.val) :
     Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) *
-        Hex.Matrix.det (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) =
+        Hex.Matrix.det (Hex.Matrix.principalSubmatrix source k (Nat.le_of_lt hk)) =
       Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
           (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
           (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
@@ -1429,7 +1425,7 @@ theorem desnanot_jacobi_borderedMinor [CommRing R]
   dsimp only at hdj
   -- Identify each Mathlib determinant with a Hex determinant.
   rw [det_borderedMinor_bareissDesnanotIndex source k hnext i j] at hdj
-  rw [M_interior_eq_matrixEquiv_leadingPrefix source k hk hnext i j,
+  rw [M_interior_eq_matrixEquiv_principalSubmatrix source k hk hnext i j,
       ← det_eq] at hdj
   rw [M11_eq_matrixEquiv_borderedMinor source k hk hnext i j, ← det_eq] at hdj
   rw [M_kk_eq_matrixEquiv_borderedMinor_submatrix source k hk hnext i j,

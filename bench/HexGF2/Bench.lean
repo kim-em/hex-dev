@@ -5,7 +5,6 @@ Authors: Kim Morrison
 -/
 
 import HexGF2
-import Batteries.Lean.IO.Process
 import LeanBench
 
 /-!

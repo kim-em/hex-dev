@@ -61,7 +61,7 @@ private theorem detProduct_setCol_add {R : Type u} [Lean.Grind.CommRing R]
             (setCol M dst v)[x][perm[x]]) 1 := by
         apply foldl_det_product_congr
         intro x _hx
-        rw [setCol_getElem, setCol_getElem, setCol_getElem]
+        rw [getElem_setCol, getElem_setCol, getElem_setCol]
         by_cases hxp : x = pivot
         · subst x
           rw [if_pos hpivot, if_pos hpivot, if_pos hpivot, if_pos rfl]
@@ -115,7 +115,7 @@ private theorem detProduct_setCol_add {R : Type u} [Lean.Grind.CommRing R]
                 exact hxp (Fin.ext hval)
               change (setCol M dst w)[x][perm[x]] =
                 (setCol M dst v)[x][perm[x]]
-              rw [setCol_getElem, setCol_getElem]
+              rw [getElem_setCol, getElem_setCol]
               change (if perm[x] = dst then w x else M[x][perm[x]]) =
                 (if perm[x] = dst then v x else M[x][perm[x]])
               rw [if_neg hperm_ne, if_neg hperm_ne])
@@ -156,7 +156,7 @@ private theorem detProduct_setCol_smul {R : Type u} [Lean.Grind.CommRing R]
             (setCol M dst v)[x][perm[x]]) 1 := by
         apply foldl_det_product_congr
         intro x _hx
-        rw [setCol_getElem, setCol_getElem]
+        rw [getElem_setCol, getElem_setCol]
         by_cases hxp : x = pivot
         · subst x
           rw [if_pos hpivot, if_pos hpivot, if_pos rfl]
@@ -340,7 +340,7 @@ def columnSumMatrix {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
   ofFn fun r j =>
     (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
 
-@[grind =] private theorem columnSumMatrix_entry
+@[grind =] private theorem getElem_columnSumMatrix
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (r j : Fin n) :
     (columnSumMatrix source coeff)[r][j] =
@@ -361,11 +361,11 @@ private theorem setCol_columnSumMatrix_self
           (fun acc k => acc + coeff[dst][k] * source[r][k]) 0))[
           (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
       (columnSumMatrix source coeff)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [setCol_getElem]
+  rw [getElem_setCol]
   by_cases hcol : (⟨c, hc⟩ : Fin n) = dst
   · subst dst
     rw [if_pos rfl]
-    exact (columnSumMatrix_entry source coeff (⟨r, hr⟩ : Fin n) (⟨c, hc⟩ : Fin n)).symm
+    exact (getElem_columnSumMatrix source coeff (⟨r, hr⟩ : Fin n) (⟨c, hc⟩ : Fin n)).symm
   · simp [hcol]
 
 private theorem det_columnSumMatrix_expand_column
@@ -394,7 +394,7 @@ private def columnChoiceMatrix {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     | some k => source[r][k]
     | none => (List.finRange m).foldl (fun acc k => acc + coeff[c][k] * source[r][k]) 0
 
-@[grind =] private theorem columnChoiceMatrix_entry
+@[grind =] private theorem getElem_columnChoiceMatrix
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) (r c : Fin n) :
     (columnChoiceMatrix source coeff choices)[r][c] =
@@ -436,8 +436,7 @@ theorem det_setCol_existing_col_eq_zero
     det (setCol M dst (fun r => M[r][src])) = 0 := by
   apply det_eq_zero_of_col_eq (setCol M dst (fun r => M[r][src])) src dst hsrcdst
   intro r
-  rw [setCol_getElem, setCol_getElem]
-  rw [if_neg hsrcdst, if_pos rfl]
+  rw [getElem_setCol, getElem_setCol, if_neg hsrcdst, if_pos rfl]
 
 /-- Adding a finite linear combination of other columns of `M` to column `dst`
 preserves the determinant. The sources are given as a list and each source is
@@ -546,8 +545,8 @@ private theorem foldl_det_sum_nested_start {R : Type u} [Lean.Grind.CommRing R]
       grind
   | cons x xs ih =>
       simp only [List.foldl_cons]
-      rw [foldl_det_sum_start ys (fun y => f x y) z]
-      rw [ih (z + ys.foldl (fun acc' y => acc' + f x y) 0)]
+      rw [foldl_det_sum_start ys (fun y => f x y) z,
+        ih (z + ys.foldl (fun acc' y => acc' + f x y) 0)]
       rw [foldl_det_sum_start xs
         (fun x => ys.foldl (fun acc' y => acc' + f x y) 0)
         (0 + ys.foldl (fun acc' y => acc' + f x y) 0)]

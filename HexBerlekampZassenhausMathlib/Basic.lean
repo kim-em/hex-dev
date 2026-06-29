@@ -552,8 +552,8 @@ private theorem factorizationProduct_toPolynomial_foldl
   | nil =>
       simp [flattenedFactorEntries]
   | cons entry entries ih =>
-      rw [List.foldl_cons, ih (init * Hex.Factorization.factorPower entry.1 entry.2)]
-      rw [HexPolyZMathlib.toPolynomial_mul, factorPower_toPolynomial]
+      rw [List.foldl_cons, ih (init * Hex.Factorization.factorPower entry.1 entry.2),
+        HexPolyZMathlib.toPolynomial_mul, factorPower_toPolynomial]
       simp [flattenedFactorEntries]
       ring
 
@@ -568,9 +568,9 @@ theorem factorizationProduct_toPolynomial (φ : Hex.Factorization) :
       (φ.factors.foldl
         (fun acc factor => acc * Hex.Factorization.factorPower factor.1 factor.2)
         (Hex.DensePoly.C φ.scalar)) = _
-  rw [← Array.foldl_toList]
-  rw [factorizationProduct_toPolynomial_foldl φ.factors.toList (Hex.DensePoly.C φ.scalar)]
-  rw [HexPolyZMathlib.toPolynomial_C]
+  rw [← Array.foldl_toList,
+    factorizationProduct_toPolynomial_foldl φ.factors.toList (Hex.DensePoly.C φ.scalar),
+    HexPolyZMathlib.toPolynomial_C]
   rfl
 
 /--
@@ -1370,8 +1370,7 @@ theorem checkIrreducibleCert_sound
           rw [Array.getElem_toList]
           have := natDegree_toMathlibPolynomial_factorPolys_eq primeData hfacts_align i
             hi_polys hi_deg hi_cert
-          rw [this]
-          rw [Array.getElem_toList]
+          rw [this, Array.getElem_toList]
       have hS_le' : S ≤ (primeData.factorDegrees.toList : Multiset Nat) := by
         have hmapcoe :
             Multiset.map Polynomial.natDegree
@@ -1653,12 +1652,8 @@ private theorem fpPoly_mul_dvd_mul
   obtain ⟨q, hq⟩ := hab
   obtain ⟨v, hv⟩ := hcd
   refine ⟨q * v, ?_⟩
-  rw [hq, hv]
-  rw [Hex.FpPoly.mul_assoc a q (c * v)]
-  rw [← Hex.FpPoly.mul_assoc q c v]
-  rw [Hex.FpPoly.mul_comm q c]
-  rw [Hex.FpPoly.mul_assoc c q v]
-  rw [← Hex.FpPoly.mul_assoc a c (q * v)]
+  rw [hq, hv, Hex.FpPoly.mul_assoc a q (c * v), ← Hex.FpPoly.mul_assoc q c v,
+    Hex.FpPoly.mul_comm q c, Hex.FpPoly.mul_assoc c q v, ← Hex.FpPoly.mul_assoc a c (q * v)]
 
 theorem monicModPImage_dvd_monicModularImage_of_dvd_of_choosePrimeData?_some
     {core factor : Hex.ZPoly}
@@ -3062,8 +3057,7 @@ private theorem centeredLiftPoly_reduceModPow_eq
   rw [Hex.coeff_centeredLiftPoly, Hex.coeff_centeredLiftPoly,
     Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpkpos]
   unfold Hex.centeredModNat
-  rw [if_neg hpkne, if_neg hpkne]
-  rw [Int.emod_emod_of_dvd _ (dvd_refl _)]
+  rw [if_neg hpkne, if_neg hpkne, Int.emod_emod_of_dvd _ (dvd_refl _)]
 
 /-- Precision-gated exact recovery for `liftedRecoveryCandidate` in the
 dilation-coordinate model. -/
@@ -4478,8 +4472,7 @@ theorem LiftedFactorListMatches.length_eq_card
     {d : Hex.LiftData} {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
     (h : LiftedFactorListMatches d J localFactors) :
     localFactors.length = J.card := by
-  rw [h, List.length_map]
-  rw [(finRange_filter_mem_perm_toList J).length_eq, Finset.length_toList]
+  rw [h, List.length_map, (finRange_filter_mem_perm_toList J).length_eq, Finset.length_toList]
 
 /-- A matched `localFactors` is `Nodup` whenever `liftedFactor d` is injective
 on the index set `J`.
@@ -4942,8 +4935,7 @@ theorem liftedSubsetSelectedList_eq_mask_partition_of_matches
     rw [show (J.min' hne :: ys).filter (fun i => decide (i ∈ T)) =
             J.min' hne :: ys.filter (fun i => decide (i ∈ T)) from
       List.filter_cons_of_pos (by simp [hmin_in_T])]
-    rw [List.map_cons]
-    rw [hhead_eq, htail_eq]
+    rw [List.map_cons, hhead_eq, htail_eq]
     congr 1
     -- (ys.filter (· ∈ T)).map (liftedFactor d) =
     --   ((ys.map (liftedFactor d)).zip mask).filterMap selected
@@ -8364,8 +8356,7 @@ private theorem gcd_monicModularImage_derivative_isUnit_local
     have hC_unit :
         IsUnit (Polynomial.C (HexModArithMathlib.ZMod64.toZMod u)) :=
       Polynomial.isUnit_C.mpr (isUnit_iff_ne_zero.mpr hu_ne)
-    rw [hmonic_eq, toMathlibPolynomial_scale]
-    rw [Polynomial.derivative_C_mul]
+    rw [hmonic_eq, toMathlibPolynomial_scale, Polynomial.derivative_C_mul]
     exact (isCoprime_mul_unit_left hC_unit
       (HexBerlekampMathlib.toMathlibPolynomial f)
       (Polynomial.derivative (HexBerlekampMathlib.toMathlibPolynomial f))).mpr hcop_f
@@ -19081,8 +19072,7 @@ private lemma toMathlibPolynomial_factorsModP_product_eq_monicModularImage
       (primeData.factorsModP.toList.map HexBerlekampMathlib.toMathlibPolynomial).prod =
         HexBerlekampMathlib.toMathlibPolynomial
           (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) := by
-    rw [hlist]
-    rw [← toMathlibPolynomial_listFoldlMul_one (raw.map Hex.monicModularImage)]
+    rw [hlist, ← toMathlibPolynomial_listFoldlMul_one (raw.map Hex.monicModularImage)]
     show HexBerlekampMathlib.toMathlibPolynomial
         (Hex.Berlekamp.factorProduct (raw.map Hex.monicModularImage)) = _
     rw [hprod_mapped]
@@ -19194,8 +19184,8 @@ theorem exists_factor_of_modPIndex
         HexBerlekampMathlib.toMathlibPolynomial
           (Hex.monicModularImage
             (@Hex.ZPoly.modP primeData.p primeData.bounds core)) := by
-    rw [← toMathlibPolynomial_factorsModP_product_eq_monicModularImage hsome]
-    rw [← univ_val_map_modPFactor_eq_factorsModP_map primeData]
+    rw [← toMathlibPolynomial_factorsModP_product_eq_monicModularImage hsome,
+      ← univ_val_map_modPFactor_eq_factorsModP_map primeData]
     exact Multiset.dvd_prod (by
       rw [Multiset.mem_map]
       exact ⟨i, by simp, rfl⟩)
@@ -19452,9 +19442,8 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
     monicModPImage_dvd_monicModularImage_of_dvd_of_choosePrimeData?_some
       hdvd hcore_ne hsome
   have hmathD_dvd : mathD ∣ factorsM.prod := by
-    rw [hfactorsM_def]
-    rw [toMathlibPolynomial_factorsModP_product_eq_monicModularImage hsome]
-    rw [hmathD_def]
+    rw [hfactorsM_def, toMathlibPolynomial_factorsModP_product_eq_monicModularImage hsome,
+      hmathD_def]
     rcases hbridge_dvd with ⟨c, hc⟩
     refine ⟨HexBerlekampMathlib.toMathlibPolynomial c, ?_⟩
     rw [hc, toMathlibPolynomial_mul]

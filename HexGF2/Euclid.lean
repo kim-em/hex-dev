@@ -619,8 +619,7 @@ private theorem nonzero_degree_zero_eq_one {p : GF2Poly}
   | zero =>
       rw [coeff_eq_true_of_degree?_eq_some hd, coeff_monomial_self]
   | succ n =>
-      rw [coeff_eq_false_of_degree?_lt hd (by omega)]
-      rw [coeff_monomial_ne (by omega)]
+      rw [coeff_eq_false_of_degree?_lt hd (by omega), coeff_monomial_ne (by omega)]
 
 /-- A nonzero divisor of a nonzero packed polynomial has degree no larger than
 the dividend. -/
@@ -685,8 +684,7 @@ private theorem lowerMask_toNat_of_lt_64 {n : Nat} (hn64 : n < 64) :
   have hle : (1 : UInt64) ≤ ((1 : UInt64) <<< n.toUInt64) := by
     rw [UInt64.le_iff_toNat_le, hshift]
     exact Nat.one_le_two_pow
-  rw [if_pos hn64]
-  rw [UInt64.toNat_sub_of_le _ _ hle, hshift]
+  rw [if_pos hn64, UInt64.toNat_sub_of_le _ _ hle, hshift]
   simp
 
 /-- Masking a word whose value is already `< 2 ^ n` with `lowerMask n` returns
@@ -1089,8 +1087,7 @@ theorem xgcd_left_mul_mod_eq_one_of_irreducible_of_nonzero_reduced {a f : GF2Pol
         exact False.elim (ha (eq_zero_of_isZero hzero))
     | inr hlt =>
         omega
-  rw [xgcd_left_mul_mod_eq_gcd_mod]
-  rw [gcd_eq_one_of_irreducible_of_nonzero_reduced hf ha hred]
+  rw [xgcd_left_mul_mod_eq_gcd_mod, gcd_eq_one_of_irreducible_of_nonzero_reduced hf ha hred]
   exact one_mod_eq_one_of_degree_pos hfdegree
 
 /-- Reducing the xgcd left coefficient before multiplying preserves the

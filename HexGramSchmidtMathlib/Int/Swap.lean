@@ -38,17 +38,15 @@ private theorem intCast_rat_injective_int_eq {a b : Int} (h : (a : Rat) = (b : R
 /-- The rational dot product is additive in its left argument. -/
 theorem dot_add_left_rat {m' : Nat} (u v w : Vector Rat m') :
     Vector.dotProduct (u + v) w = Vector.dotProduct u w + Vector.dotProduct v w := by
-  rw [dot_comm_rat (u := u + v) (v := w)]
-  rw [dot_add_right_rat (u := w) (v := u) (w := v)]
-  rw [dot_comm_rat (u := w) (v := u), dot_comm_rat (u := w) (v := v)]
+  rw [dot_comm_rat (u := u + v) (v := w), dot_add_right_rat (u := w) (v := u) (w := v),
+    dot_comm_rat (u := w) (v := u), dot_comm_rat (u := w) (v := v)]
 
 /-- The rational dot product is homogeneous in its left argument: a scalar
 factors out. -/
 theorem dot_smul_left_rat {m' : Nat} (s : Rat) (u v : Vector Rat m') :
     Vector.dotProduct (s • u) v = s * Vector.dotProduct u v := by
-  rw [dot_comm_rat (u := s • u) (v := v)]
-  rw [dot_smul_right_rat (s := s) (u := v) (v := u)]
-  rw [dot_comm_rat (u := v) (v := u)]
+  rw [dot_comm_rat (u := s • u) (v := v), dot_smul_right_rat (s := s) (u := v) (v := u),
+    dot_comm_rat (u := v) (v := u)]
 
 /-- Pythagoras: if `curr ⊥ prev`, then the squared norm of `curr + μ • prev`
 splits as `‖curr‖² + μ² · ‖prev‖²`. -/
@@ -59,13 +57,13 @@ theorem normSq_add_smul_orthogonal_rat {m' : Nat}
       Vector.normSq curr + μ ^ 2 * Vector.normSq prev := by
   show Vector.dotProduct (curr + μ • prev) (curr + μ • prev) =
     Vector.dotProduct curr curr + μ ^ 2 * Vector.dotProduct prev prev
-  rw [dot_add_left_rat (u := curr) (v := μ • prev) (w := curr + μ • prev)]
-  rw [dot_add_right_rat (u := curr) (v := curr) (w := μ • prev)]
-  rw [dot_add_right_rat (u := μ • prev) (v := curr) (w := μ • prev)]
-  rw [dot_smul_right_rat (s := μ) (u := curr) (v := prev)]
-  rw [dot_smul_left_rat (s := μ) (u := prev) (v := curr)]
-  rw [dot_smul_left_rat (s := μ) (u := prev) (v := μ • prev)]
-  rw [dot_smul_right_rat (s := μ) (u := prev) (v := prev)]
+  rw [dot_add_left_rat (u := curr) (v := μ • prev) (w := curr + μ • prev),
+    dot_add_right_rat (u := curr) (v := curr) (w := μ • prev),
+    dot_add_right_rat (u := μ • prev) (v := curr) (w := μ • prev),
+    dot_smul_right_rat (s := μ) (u := curr) (v := prev),
+    dot_smul_left_rat (s := μ) (u := prev) (v := curr),
+    dot_smul_left_rat (s := μ) (u := prev) (v := μ • prev),
+    dot_smul_right_rat (s := μ) (u := prev) (v := prev)]
   have horth_swap : Vector.dotProduct prev curr = 0 := by
     rw [dot_comm_rat]; exact horth
   rw [horth, horth_swap]
@@ -94,9 +92,8 @@ not actually used by the proof. -/
 theorem gramDet_eq_prod_normSq_uncond (b : Matrix Int n m)
     (k : Nat) (hk : k ≤ n) :
     (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk := by
-  rw [gramDet_rat_eq_progressMatrix_zero_det b k hk]
-  rw [← progressMatrix_det_invariant b k hk k (Nat.le_refl k)]
-  rw [progressMatrix_full_eq_auxMatrix]
+  rw [gramDet_rat_eq_progressMatrix_zero_det b k hk,
+    ← progressMatrix_det_invariant b k hk k (Nat.le_refl k), progressMatrix_full_eq_auxMatrix]
   exact auxMatrix_det_eq_prod_normSq b k hk
 
 /-- `gramDet` is independent of the propositional `≤ n` proof, and depends only
@@ -285,11 +282,9 @@ theorem dot_basis_castRow_eq_coeffs_mul_normSq
   -- Expand `castIntRow b i` via `basis_decomposition`.
   have hrow := castIntRow_decomposition b i hi
   show Vector.dotProduct ((basis b).row ⟨j, hjlt⟩) (castIntRow b ⟨i, hi⟩) = _
-  rw [hrow]
-  rw [dot_add_right_rat]
+  rw [hrow, dot_add_right_rat]
   -- First term: `dot basis[j] basis[i] = 0` by orthogonality (j ≠ i).
-  rw [basis_orthogonal b j i hjlt hi (Nat.ne_of_lt hj)]
-  rw [Rat.zero_add]
+  rw [basis_orthogonal b j i hjlt hi (Nat.ne_of_lt hj), Rat.zero_add]
   -- Second term: linearise the prefixCombination, then isolate the j-th index.
   rw [dot_prefixCombination_right_rat (coeffs := coeffs b) (basisM := basis b)
       (i := i) (hi := hi) (u := (basis b).row ⟨j, hjlt⟩)]
@@ -419,7 +414,7 @@ theorem dot_basis_rowSwap_curr_prev_eq_normSq
     intro idx hidx
     let c : Fin m := ⟨idx, hidx⟩
     change (Matrix.rowSwap b km1 k)[k][c] = b[km1][c]
-    rw [Matrix.rowSwap_getElem]
+    rw [Matrix.getElem_rowSwap]
     simp
   -- prefixCombination of b at km1 vanishes against u_k.
   have hpfx_b_zero :
@@ -613,8 +608,7 @@ theorem dot_basis_rowSwap_curr_castRow_eq
           ((basis b).row ⟨k.val, _⟩) = _
     have hi_eq : (⟨i.val, i.isLt⟩ : Fin n) = i := Fin.ext rfl
     have hk_eq : (⟨k.val, Nat.lt_trans hki i.isLt⟩ : Fin n) = k := Fin.ext rfl
-    rw [hi_eq, hk_eq]
-    rw [hdot_curr]
+    rw [hi_eq, hk_eq, hdot_curr]
   rw [hf_km1, hf_k]
   ring
 
@@ -660,7 +654,7 @@ theorem scaledCoeffs_diag (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ =
       Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
   let hk : i + 1 ≤ n := Nat.succ_le_of_lt hi
-  rcases scaledCoeffs_diag_eq_zero_or_eq_leadingPrefix_bareiss b (StepWitness.ofGram b)
+  rcases scaledCoeffs_diag_eq_zero_or_eq_principalSubmatrix_bareiss b (StepWitness.ofGram b)
       i hi with hzero | hbareiss
   · have hnat := scaledCoeffs_diag_toNat (b := b) (StepWitness.ofGram b) i hi
     rw [hzero] at hnat
@@ -671,9 +665,9 @@ theorem scaledCoeffs_diag (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     rw [hbareiss]
     have hbareiss_eq :
         Matrix.bareiss
-            (Matrix.leadingPrefix (Matrix.gramMatrix b) (i + 1) hk) =
+            (Matrix.principalSubmatrix (Matrix.gramMatrix b) (i + 1) hk) =
           Matrix.det (GramSchmidt.leadingGramMatrixInt b (i + 1) hk) := by
-      rw [← GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram]
+      rw [← GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram]
       exact HexMatrixMathlib.bareiss_eq_det
         (GramSchmidt.leadingGramMatrixInt b (i + 1) hk)
     rw [hbareiss_eq]
@@ -717,8 +711,8 @@ theorem gramDet_pos_of_upperTriangular_pos_diag
   | succ r =>
       have hrn : r < n := Nat.lt_of_succ_le hk
       have hlead :
-          Matrix.gramMatrix (Matrix.leadingRows M (r + 1) hk) =
-            Matrix.leadingPrefix (Matrix.gramMatrix M) (r + 1) hk := by
+          Matrix.gramMatrix (Matrix.takeRows M (r + 1) hk) =
+            Matrix.principalSubmatrix (Matrix.gramMatrix M) (r + 1) hk := by
         apply Vector.ext
         intro i hi
         apply Vector.ext
@@ -728,30 +722,30 @@ theorem gramDet_pos_of_upperTriangular_pos_diag
         let ii : Fin n := ⟨i, Nat.lt_of_lt_of_le hi hk⟩
         let jj : Fin n := ⟨j, Nat.lt_of_lt_of_le hj hk⟩
         have hrow_i :
-            Matrix.row (Matrix.leadingRows M (r + 1) hk) iFin =
+            Matrix.row (Matrix.takeRows M (r + 1) hk) iFin =
               Matrix.row M ii := by
           apply Vector.ext
           intro c hc
-          simp [Matrix.row, Matrix.leadingRows, Matrix.ofFn, iFin, ii]
+          simp [Matrix.row, Matrix.takeRows, Matrix.ofFn, iFin, ii]
         have hrow_j :
-            Matrix.row (Matrix.leadingRows M (r + 1) hk) jFin =
+            Matrix.row (Matrix.takeRows M (r + 1) hk) jFin =
               Matrix.row M jj := by
           apply Vector.ext
           intro c hc
-          simp [Matrix.row, Matrix.leadingRows, Matrix.ofFn, jFin, jj]
+          simp [Matrix.row, Matrix.takeRows, Matrix.ofFn, jFin, jj]
         have hdot :
-            Vector.dotProduct (Matrix.row (Matrix.leadingRows M (r + 1) hk) iFin)
-                (Matrix.row (Matrix.leadingRows M (r + 1) hk) jFin) =
+            Vector.dotProduct (Matrix.row (Matrix.takeRows M (r + 1) hk) iFin)
+                (Matrix.row (Matrix.takeRows M (r + 1) hk) jFin) =
               Vector.dotProduct (Matrix.row M ii) (Matrix.row M jj) := by
           rw [hrow_i, hrow_j]
-        simpa [Matrix.gramMatrix, Matrix.leadingPrefix, Matrix.ofFn, iFin, jFin, ii, jj]
+        simpa [Matrix.gramMatrix, Matrix.principalSubmatrix, Matrix.ofFn, iFin, jFin, ii, jj]
           using hdot
       have hdet_pos :
           0 < Matrix.det (GramSchmidt.leadingGramMatrixInt M (r + 1) hk) := by
         have hpos :=
-          Matrix.det_gramMatrix_leadingRows_pos_of_upperTriangular_pos_diag M hzero hdiag
+          Matrix.det_gramMatrix_takeRows_pos_of_upperTriangular_pos_diag M hzero hdiag
             (r + 1) hk
-        rwa [hlead, ← GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram] at hpos
+        rwa [hlead, ← GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram] at hpos
       have hdet_nat :
           Matrix.det (GramSchmidt.leadingGramMatrixInt M (r + 1) hk) =
             Int.ofNat (gramDet M (r + 1) hk) :=

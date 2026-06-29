@@ -691,8 +691,7 @@ theorem toArray_toList_eq_coeff_range (p : DensePoly R) :
   · intro i hi
     have hi_size : i < p.size := by
       simpa [toArray, size] using hi
-    rw [toArray_toList_getD_eq_coeff]
-    rw [list_getD_map_range]
+    rw [toArray_toList_getD_eq_coeff, list_getD_map_range]
     simp [hi_size]
 
 /-- Formal derivative. The coefficient of `x^i` becomes `(i + 1) * a_(i+1)`. -/
@@ -708,8 +707,7 @@ theorem coeff_add [Add R] (p q : DensePoly R) (n : Nat)
     (p + q).coeff n = (p.coeff n + q.coeff n) := by
   change (add p q).coeff n = (p.coeff n + q.coeff n)
   unfold add
-  rw [coeff_ofCoeffs_list]
-  rw [list_getD_map_range]
+  rw [coeff_ofCoeffs_list, list_getD_map_range]
   by_cases hn : n < max p.size q.size
   · simp [hn]
   · have hmax : max p.size q.size ≤ n := Nat.le_of_not_gt hn
@@ -732,8 +730,7 @@ theorem coeff_sub [Sub R] (p q : DensePoly R) (n : Nat)
     (p - q).coeff n = (p.coeff n - q.coeff n) := by
   change (sub p q).coeff n = (p.coeff n - q.coeff n)
   unfold sub
-  rw [coeff_ofCoeffs_list]
-  rw [list_getD_map_range]
+  rw [coeff_ofCoeffs_list, list_getD_map_range]
   by_cases hn : n < max p.size q.size
   · simp [hn]
   · have hmax : max p.size q.size ≤ n := Nat.le_of_not_gt hn

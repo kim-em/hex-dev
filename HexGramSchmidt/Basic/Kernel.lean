@@ -149,9 +149,8 @@ theorem dot_zero_of_dot_self_zero (row v : Vector Rat m)
       simp
   | cons i xs ih =>
       simp only [List.foldl_cons]
-      rw [dot_self_eq_zero_get v hzero i]
-      rw [show row[i] * (0 : Rat) = 0 by grind]
-      rw [show (0 : Rat) + 0 = 0 by grind]
+      rw [dot_self_eq_zero_get v hzero i, show row[i] * (0 : Rat) = 0 by grind,
+        show (0 : Rat) + 0 = 0 by grind]
       change xs.foldl (fun acc i => acc + row[i] * v[i]) 0 = 0
       exact ih
 
@@ -485,20 +484,18 @@ private theorem basisRows_get!_dot_eq_zero
   have hjrows : j < rows.length := by simpa [hlen] using hj
   have hpair : rows.Pairwise (fun x y => Vector.dotProduct x y = 0 ∧ Vector.dotProduct y x = 0) := by
     simpa [rows] using basisRows_pairwise (rows := b.toList)
-  have hget_i : rows.get ⟨i, hirows⟩ = rows[i]! := by
-    simp [hirows]
-  have hget_j : rows.get ⟨j, hjrows⟩ = rows[j]! := by
-    simp [hjrows]
+  have hget_i : rows[i]! = rows[i] := by simp [hirows]
+  have hget_j : rows[j]! = rows[j] := by simp [hjrows]
   by_cases hlt : i < j
   · have hrel :=
-      (List.pairwise_iff_get.1 hpair) ⟨i, hirows⟩ ⟨j, hjrows⟩ (by simpa using hlt)
-    rw [← hget_i, ← hget_j]
+      (List.pairwise_iff_getElem.1 hpair) i j hirows hjrows hlt
+    rw [hget_i, hget_j]
     exact hrel.1
   · have hji : j < i := by
       exact Nat.lt_of_le_of_ne (Nat.le_of_not_gt hlt) (fun h => hij h.symm)
     have hrel :=
-      (List.pairwise_iff_get.1 hpair) ⟨j, hjrows⟩ ⟨i, hirows⟩ (by simpa using hji)
-    rw [← hget_i, ← hget_j]
+      (List.pairwise_iff_getElem.1 hpair) j i hjrows hirows hji
+    rw [hget_i, hget_j]
     exact hrel.2
 
 private theorem basisRows_head (b : Matrix Rat n m) (hn : 0 < n) :
@@ -630,8 +627,8 @@ private theorem foldl_vec_acc_split_pointwise
       grind
   | cons x rest ih =>
       simp only [List.foldl_cons]
-      rw [ih (acc := acc + f x), ih (acc := 0 + f x)]
-      rw [Vector.getElem_add, Vector.getElem_add, Vector.getElem_zero]
+      rw [ih (acc := acc + f x), ih (acc := 0 + f x),
+        Vector.getElem_add, Vector.getElem_add, Vector.getElem_zero]
       grind
 
 /-- `projectionCombination` extracts the accumulator from the fold. -/
@@ -726,8 +723,7 @@ private theorem subtractProjection_zero_left (basisRow : Vector Rat m) :
       have hentry : (0 : Vector Rat m)[i] = 0 := by
         change (0 : Vector Rat m)[i.val] = 0
         rw [Vector.getElem_zero]
-      rw [hentry]
-      rw [show (0 : Rat) + 0 * basisRow[i] = 0 by grind]
+      rw [hentry, show (0 : Rat) + 0 * basisRow[i] = 0 by grind]
       exact ih
   apply Vector.ext
   intro idx hidx

@@ -87,8 +87,7 @@ private theorem toNat_doubleMod (p acc : UInt64) (hacc : acc.toNat < p.toNat) :
         simpa [UInt64.word, UInt64.size] using UInt64.toNat_lt_size p
       omega
     have hadd : (acc + acc).toNat = 2 * acc.toNat := by
-      rw [UInt64.toNat_add]
-      rw [Nat.mod_eq_of_lt]
+      rw [UInt64.toNat_add, Nat.mod_eq_of_lt]
       · omega
       · simpa [UInt64.word, Nat.two_mul] using htwo_lt_word
     have hmod : (2 * acc.toNat) % p.toNat = 2 * acc.toNat :=
@@ -1083,8 +1082,8 @@ and reduce. -/
 @[grind =>]
 theorem powMod_succ (a n p : Nat) (hp : p > 0) :
     powMod a (n + 1) p = (a * powMod a n p) % p := by
-  rw [powMod_eq a (n + 1) p hp, powMod_eq a n p hp, Nat.pow_succ]
-  rw [Nat.mul_comm (a ^ n) a, Nat.mul_mod_mod]
+  rw [powMod_eq a (n + 1) p hp, powMod_eq a n p hp, Nat.pow_succ,
+    Nat.mul_comm (a ^ n) a, Nat.mul_mod_mod]
 
 /-- Reducing the base before modular exponentiation does not change `powMod`. -/
 @[simp, grind =]
