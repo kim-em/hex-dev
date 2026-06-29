@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexMatrix.Basic
-public import Batteries.Data.List.Lemmas
 
 public section
 

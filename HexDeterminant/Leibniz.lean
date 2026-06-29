@@ -8,11 +8,6 @@ module
 
 public import Std
 public import Init.Grind.Ring.Field
-public import Batteries.Data.Fin.Fold
-public import Batteries.Data.List.Lemmas
-public import Batteries.Data.List.Pairwise
-public import Batteries.Data.List.Perm
-public import Batteries.Data.Vector.Lemmas
 public import HexDeterminant.Enumeration
 public import HexMatrix.Elementary
 public import HexMatrix.DotProduct
@@ -603,7 +598,7 @@ private theorem detProduct_identity_insertAt_last {R : Type u}
       (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n)) =
     detProduct (1 : Matrix R n n) v := by
   unfold detProduct
-  rw [← Fin.foldl_eq_foldl_finRange, ← Fin.foldl_eq_foldl_finRange]
+  rw [← Fin.foldl_eq_finRange_foldl, ← Fin.foldl_eq_finRange_foldl]
   rw [Fin.foldl_succ_last]
   have hfold :
       Fin.foldl n
@@ -821,14 +816,13 @@ private theorem finLast_mem {n : Nat} {xs : List (Fin (n + 1))}
   by_cases hmem : Fin.last n ∈ xs
   · exact hmem
   · exfalso
-    have hsub : List.Subperm xs ((List.finRange (n + 1)).erase (Fin.last n)) := by
-      apply List.subperm_of_subset hnodup
+    have hsubset : xs ⊆ (List.finRange (n + 1)).erase (Fin.last n) := by
       intro x hx
-      exact (List.mem_erase_of_ne (by
-        intro hxlast
-        exact hmem (hxlast ▸ hx))).2 (List.mem_finRange x)
+      refine (List.mem_erase_of_ne ?_).2 (List.mem_finRange x)
+      rintro rfl
+      exact hmem hx
     have hle : xs.length ≤ ((List.finRange (n + 1)).erase (Fin.last n)).length :=
-      List.Subperm.length_le hsub
+      List.nodup_subset_length_le hnodup hsubset
     have herase :
         ((List.finRange (n + 1)).erase (Fin.last n)).length = n := by
       rw [List.length_erase]

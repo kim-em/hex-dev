@@ -755,7 +755,8 @@ private theorem partialColumnTupleCoeff_full
     partialColumnTupleCoeff coeff chosen pref = 1 := by
   subst n
   unfold partialColumnTupleCoeff
-  have hlist : List.finRange (chosen.length - chosen.length) = [] := by simp
+  have hlist : List.finRange (chosen.length - chosen.length) = [] := by
+    rw [Nat.sub_self]; rfl
   rw [hlist]
   rfl
 

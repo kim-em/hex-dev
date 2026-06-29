@@ -9,9 +9,6 @@ module
 public import HexMatrix.Elementary
 public import HexMatrix.DotProduct
 public import HexMatrix.MatrixAlgebra
-public import Batteries.Data.List.Lemmas
-public import Batteries.Data.List.Pairwise
-public import Batteries.Data.List.Perm
 
 public section
 

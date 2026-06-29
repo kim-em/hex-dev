@@ -465,14 +465,13 @@ private theorem fin_mem_of_full_nodup {n : Nat} {xs : List (Fin n)}
   by_cases hmem : x ∈ xs
   · exact hmem
   · exfalso
-    have hsub : List.Subperm xs ((List.finRange n).erase x) := by
-      apply List.subperm_of_subset hnodup
+    have hsubset : xs ⊆ (List.finRange n).erase x := by
       intro y hy
-      exact (List.mem_erase_of_ne (by
-        intro hyx
-        exact hmem (hyx ▸ hy))).2 (List.mem_finRange y)
+      refine (List.mem_erase_of_ne ?_).2 (List.mem_finRange y)
+      rintro rfl
+      exact hmem hy
     have hle : xs.length ≤ ((List.finRange n).erase x).length :=
-      List.Subperm.length_le hsub
+      List.nodup_subset_length_le hnodup hsubset
     have herase : ((List.finRange n).erase x).length = n - 1 := by
       rw [List.length_erase]
       simp [List.mem_finRange, List.length_finRange]
@@ -2511,7 +2510,7 @@ theorem det_lowerTriangular_eq_finFoldl_diag
     intro i
     simp [transpose, col]
   -- Rewrite the foldl over `M.transpose[i][i]` to `M[i][i]`.
-  rw [Fin.foldl_eq_foldl_finRange, Fin.foldl_eq_foldl_finRange]
+  rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl]
   apply foldl_acc_congr
   intro acc i _hmem
   rw [hdiag]
@@ -2523,7 +2522,7 @@ theorem det_lowerTriangular_eq_foldl_diag
     (hzero : ∀ i j : Fin n, i.val < j.val → M[i][j] = 0) :
     det M = (List.finRange n).foldl (fun acc i => acc * M[i][i]) 1 := by
   rw [det_lowerTriangular_eq_finFoldl_diag M hzero]
-  rw [Fin.foldl_eq_foldl_finRange]
+  rw [Fin.foldl_eq_finRange_foldl]
 
 /-- Permuting columns multiplies the determinant by the sign of the column permutation. -/
 theorem det_colPermute_vector {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
