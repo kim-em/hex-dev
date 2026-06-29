@@ -227,21 +227,14 @@ omit [DecidableEq R] in
 private theorem rowAdd_get_dst (M : Matrix R n m) (src dst : Fin n) (c : R)
     (k : Fin m) :
     (rowAdd M src dst c)[dst][k] = M[dst][k] + c * M[src][k] := by
-  simp [rowAdd]
+  rw [getElem_rowAdd, if_pos rfl]
 
 omit [DecidableEq R] in
 /-- Entry of `rowAdd M src dst c` at any row other than `dst`. -/
 private theorem rowAdd_get_other (M : Matrix R n m) (src dst : Fin n) (c : R)
     {r : Fin n} (hne : r ≠ dst) (k : Fin m) :
     (rowAdd M src dst c)[r][k] = M[r][k] := by
-  have hval : dst.val ≠ r.val := by
-    intro hval
-    exact hne (Fin.ext hval.symm)
-  have hrow :
-      (M.set dst (Vector.ofFn fun k => M[dst][k] + c * M[src][k]))[r] = M[r] :=
-    Vector.getElem_set_ne (xs := M)
-      (x := Vector.ofFn fun k => M[dst][k] + c * M[src][k]) dst.isLt r.isLt hval
-  simpa [rowAdd] using congrArg (fun row => row[k]) hrow
+  rw [getElem_rowAdd, if_neg hne]
 
 /-- One step of `eliminateColumn`'s fold preserves the entry at the pivot row. -/
 private theorem eliminateColumn_step_pivotRow_unchanged

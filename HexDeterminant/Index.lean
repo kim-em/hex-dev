@@ -1143,20 +1143,8 @@ private theorem foldl_detTerm_identity_insertions {R : Type u}
 
 private theorem rowScale_get {R : Type u} [Mul R] {n m : Nat}
     (M : Matrix R n m) (i r : Fin n) (c : R) (k : Fin m) :
-    (rowScale M i c)[r][k] = if r = i then c * M[i][k] else M[r][k] := by
-  by_cases h : r = i
-  · subst r
-    simp [rowScale]
-  · simp [rowScale, h]
-    have hval : i.val ≠ r.val := by
-      intro hval
-      exact h (Fin.ext hval.symm)
-    have hrow :
-        (M.set i (Vector.ofFn fun k => c * M[i][k]))[r] = M[r] := by
-      exact
-        (Vector.getElem_set_ne (xs := M) (x := Vector.ofFn fun k => c * M[i][k])
-          i.isLt r.isLt hval)
-    simpa [rowScale] using congrArg (fun row => row[k]) hrow
+    (rowScale M i c)[r][k] = if r = i then c * M[i][k] else M[r][k] :=
+  getElem_rowScale M i r c k
 
 private theorem detProduct_rowScale {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (i : Fin n) (c : R) (perm : Vector (Fin n) n) :

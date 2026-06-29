@@ -94,11 +94,11 @@ private theorem castIntMatrix_rowAdd (b : Matrix Int n m) (src dst : Fin n) (c :
   intro col hcol
   by_cases hdst : row = dst.val
   · subst row
-    simp [GramSchmidt.castIntMatrix, Matrix.rowAdd, Vector.getElem_set_self]
+    simp [GramSchmidt.castIntMatrix, Matrix.rowAdd_eq_set, Vector.getElem_set_self]
   · have hne : dst.val ≠ row := by
       intro h
       exact hdst h.symm
-    simp [GramSchmidt.castIntMatrix, Matrix.rowAdd, Vector.getElem_set_ne, hne]
+    simp [GramSchmidt.castIntMatrix, Matrix.rowAdd_eq_set, Vector.getElem_set_ne, hne]
 
 private theorem castIntMatrix_rowSwap (b : Matrix Int n m) (i j : Fin n) :
     GramSchmidt.castIntMatrix (Matrix.rowSwap b i j) =

@@ -601,7 +601,7 @@ private theorem basisMatrix_rowAdd
       (Matrix.rowAdd b src dst c).toList =
         b.toList.set dst.val
           (b.toList[dst.val]! + c • b.toList[src.val]!) := by
-    show (b.set dst (Vector.ofFn fun k => b[dst][k] + c * b[src][k])).toList = _
+    rw [Matrix.rowAdd_eq_set]
     rw [Vector.toList_set]
     congr 1
     rw [hsrc_toList, hdst_toList]
