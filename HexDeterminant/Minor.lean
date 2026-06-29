@@ -107,14 +107,14 @@ This is the minor normalization used by bottom-right cofactor expansion. -/
 @[simp, grind =] theorem deleteRowCol_last_last {R : Type u} {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
     deleteRowCol M (Fin.last n) (Fin.last n) =
-      leadingPrefix M n (Nat.le_succ n) := by
+      principalSubmatrix M n (Nat.le_succ n) := by
   ext i hi j hj
   let ii : Fin n := ⟨i, hi⟩
   let jj : Fin n := ⟨j, hj⟩
   change (deleteRowCol M (Fin.last n) (Fin.last n))[ii][jj] =
-    (leadingPrefix M n (Nat.le_succ n))[ii][jj]
+    (principalSubmatrix M n (Nat.le_succ n))[ii][jj]
   rw [deleteRowCol_entry]
-  simp [leadingPrefix, ofFn]
+  simp [principalSubmatrix, ofFn]
 
 /-- Deleting row `row` and column `col` after transposing is the transpose of
 the minor obtained by deleting row `col` and column `row` before transposing. -/
@@ -177,7 +177,7 @@ This combines the final-index minor with its even sign. -/
 @[simp, grind =] theorem cofactor_last_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
     cofactor M (Fin.last n) (Fin.last n) =
-      det (leadingPrefix M n (Nat.le_succ n)) := by
+      det (principalSubmatrix M n (Nat.le_succ n)) := by
   rw [cofactor_of_even]
   · simp
   · omega

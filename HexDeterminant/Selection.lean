@@ -1155,62 +1155,62 @@ theorem firstColumns_mem_selectedColumnTuples (k n : Nat) (hk : k ≤ n) :
 
 /-- Selecting the first `k` columns from the leading `k` rows of a square
 matrix gives exactly its leading `k × k` prefix. -/
-theorem columnTupleMatrix_leadingRows_firstColumns_eq_leadingPrefix
+theorem columnTupleMatrix_takeRows_firstColumns_eq_principalSubmatrix
     {R : Type u} {n : Nat} (M : Matrix R n n) (k : Nat) (hk : k ≤ n) :
-    columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn (firstColumns k n hk)) =
-      leadingPrefix M k hk := by
+    columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn (firstColumns k n hk)) =
+      principalSubmatrix M k hk := by
   ext i hi j hj
   change
-    (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn (firstColumns k n hk)))[
+    (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn (firstColumns k n hk)))[
         (⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)] =
-      (leadingPrefix M k hk)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)]
-  simp [columnTupleMatrix, leadingRows, leadingPrefix, columnTupleVectorFn, firstColumns, ofFn]
+      (principalSubmatrix M k hk)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)]
+  simp [columnTupleMatrix, takeRows, principalSubmatrix, columnTupleVectorFn, firstColumns, ofFn]
 
 /-- The Gram determinant of the first `k` rows of a positive-diagonal integer
 upper-triangular matrix is strictly positive. The leading-principal minor
 provides a positive square term in the Cauchy-Binet expansion. -/
-theorem det_gramMatrix_leadingRows_pos_of_upperTriangular_pos_diag
+theorem det_gramMatrix_takeRows_pos_of_upperTriangular_pos_diag
     {n : Nat} (M : Matrix Int n n)
     (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0)
     (hdiag : ∀ i : Fin n, 0 < M[i][i])
     (k : Nat) (hk : k ≤ n) :
-    0 < det (gramMatrix (leadingRows M k hk)) := by
-  rw [det_gramMatrix_eq_sum_minors_sq (leadingRows M k hk)]
+    0 < det (gramMatrix (takeRows M k hk)) := by
+  rw [det_gramMatrix_eq_sum_minors_sq (takeRows M k hk)]
   let cols := firstColumns k n hk
   have hmem : cols ∈ selectedColumnTuples k n :=
     firstColumns_mem_selectedColumnTuples k n hk
   have hminor_eq :
-      det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)) =
-        det (leadingPrefix M k hk) := by
+      det (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn cols)) =
+        det (principalSubmatrix M k hk) := by
     dsimp [cols]
-    rw [columnTupleMatrix_leadingRows_firstColumns_eq_leadingPrefix M k hk]
+    rw [columnTupleMatrix_takeRows_firstColumns_eq_principalSubmatrix M k hk]
   have hprefixZero :
-      ∀ i j : Fin k, j.val < i.val → (leadingPrefix M k hk)[i][j] = 0 := by
+      ∀ i j : Fin k, j.val < i.val → (principalSubmatrix M k hk)[i][j] = 0 := by
     intro i j hij
     let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
     let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
-    have hentry : (leadingPrefix M k hk)[i][j] = M[ii][jj] := by
-      simp [leadingPrefix, ofFn, ii, jj]
+    have hentry : (principalSubmatrix M k hk)[i][j] = M[ii][jj] := by
+      simp [principalSubmatrix, ofFn, ii, jj]
     rw [hentry]
     exact hzero ii jj hij
   have hprefixDiag :
-      ∀ i : Fin k, 0 < (leadingPrefix M k hk)[i][i] := by
+      ∀ i : Fin k, 0 < (principalSubmatrix M k hk)[i][i] := by
     intro i
     let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
-    have hentry : (leadingPrefix M k hk)[i][i] = M[ii][ii] := by
-      simp [leadingPrefix, ofFn, ii]
+    have hentry : (principalSubmatrix M k hk)[i][i] = M[ii][ii] := by
+      simp [principalSubmatrix, ofFn, ii]
     rw [hentry]
     exact hdiag ii
   have hminor_pos :
-      0 < det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)) := by
+      0 < det (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn cols)) := by
     rw [hminor_eq]
-    exact det_upperTriangular_pos_diag (leadingPrefix M k hk) hprefixZero hprefixDiag
+    exact det_upperTriangular_pos_diag (principalSubmatrix M k hk) hprefixZero hprefixDiag
   have hminor_sq_pos :
-      0 < det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)) ^ 2 := by
+      0 < det (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn cols)) ^ 2 := by
     simpa [Lean.Grind.Semiring.pow_two] using Int.mul_pos hminor_pos hminor_pos
   exact foldl_int_sum_sq_pos_of_mem
     (xs := selectedColumnTuples k n)
-    (f := fun cols => det (columnTupleMatrix (leadingRows M k hk) (columnTupleVectorFn cols)))
+    (f := fun cols => det (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn cols)))
     (x := cols) hmem hminor_sq_pos
 
 

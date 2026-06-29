@@ -661,22 +661,21 @@ already have a determinant lemma for a special matrix family can produce the
 public `independent` predicate stated over Mathlib-free computed data. -/
 
 private theorem gramDet_pos_of_det_positive (b : Matrix Int n m)
-    (hdet : ∀ k : Fin n, 0 < Matrix.det (Matrix.leadingSubmatrix (Matrix.gramMatrix b) k))
+    (hdet : ∀ (k : Nat) (hk : k ≤ n),
+      0 < Matrix.det (Matrix.principalSubmatrix (Matrix.gramMatrix b) k hk))
     (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
     0 < gramDet b k hk := by
   cases k with
   | zero =>
       omega
   | succ r =>
-      have hrn : r < n := Nat.lt_of_succ_le hk
-      let last : Fin n := ⟨r, hrn⟩
-      have hsub : 0 < Matrix.det (Matrix.leadingSubmatrix (Matrix.gramMatrix b) last) :=
-        hdet last
+      have hsub :
+          0 < Matrix.det (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1) hk) :=
+        hdet (r + 1) hk
       have hsub_eq :
-          Matrix.leadingSubmatrix (Matrix.gramMatrix b) last =
-            GramSchmidt.leadingGramMatrixInt b (r + 1) hk := by
-        rw [Matrix.leadingSubmatrix_eq_leadingPrefix]
-        rw [GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram]
+          Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1) hk =
+            GramSchmidt.leadingGramMatrixInt b (r + 1) hk :=
+        (GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram b (r + 1) hk).symm
       have hdet_pos :
           0 < Matrix.det (GramSchmidt.leadingGramMatrixInt b (r + 1) hk) := by
         simpa [hsub_eq] using hsub
@@ -693,7 +692,8 @@ private theorem gramDet_pos_of_det_positive (b : Matrix Int n m)
 have determinant lemmas for special matrix families, while keeping the public
 predicate stated over Mathlib-free computed data. -/
 theorem independent_of_det_positive (b : Matrix Int n m)
-    (hdet : ∀ k : Fin n, 0 < Matrix.det (Matrix.leadingSubmatrix (Matrix.gramMatrix b) k)) :
+    (hdet : ∀ (k : Nat) (hk : k ≤ n),
+      0 < Matrix.det (Matrix.principalSubmatrix (Matrix.gramMatrix b) k hk)) :
     independent b := by
   intro k
   exact gramDet_pos_of_det_positive b hdet (k.val + 1) (Nat.succ_le_of_lt k.isLt)
@@ -703,8 +703,8 @@ theorem independent_of_det_positive (b : Matrix Int n m)
 every leading principal minor has determinant `1 > 0`. -/
 theorem independent_one {n : Nat} : independent (1 : Matrix Int n n) := by
   exact independent_of_det_positive (1 : Matrix Int n n) (by
-    intro k
-    rw [Matrix.gramMatrix_one, Matrix.leadingSubmatrix_one, Matrix.det_one]
+    intro k hk
+    rw [Matrix.gramMatrix_one, Matrix.principalSubmatrix_one, Matrix.det_one]
     decide)
 
 
@@ -714,7 +714,7 @@ When the no-pivot Bareiss loop on a Gram matrix records a singular step at
 index `s`, the `(s+1)`-leading Gram prefix has zero determinant. By the
 multiplicative succession `gramSchmidtNormProduct_succ`, the same vanishing
 propagates to every larger prefix. This is the singular branch of the
-`gramDetVecEntry_eq_leadingPrefix_bareiss` placeholder. -/
+`gramDetVecEntry_eq_principalSubmatrix_bareiss` placeholder. -/
 
 
 /-- From a partial no-pivot Bareiss pass on `M` recording a singular step at
@@ -815,7 +815,7 @@ private theorem bareissNoPivotInvariant_diag_eq
     (hinv : HexMatrixMathlib.BareissNoPivotInvariant M state)
     (hsk : k = state.step) (hk : k < n) :
     state.matrix[(⟨k, hk⟩ : Fin n)][(⟨k, hk⟩ : Fin n)] =
-      Matrix.det (Matrix.leadingPrefix M (k + 1) (Nat.succ_le_of_lt hk)) := by
+      Matrix.det (Matrix.principalSubmatrix M (k + 1) (Nat.succ_le_of_lt hk)) := by
   subst hsk
   have h_trail :
       state.matrix[(⟨state.step, hk⟩ : Fin n)][(⟨state.step, hk⟩ : Fin n)] =
@@ -823,18 +823,18 @@ private theorem bareissNoPivotInvariant_diag_eq
           (⟨state.step, hk⟩ : Fin n) (⟨state.step, hk⟩ : Fin n)) :=
     hinv.trailing_eq hk (⟨state.step, hk⟩ : Fin n) (⟨state.step, hk⟩ : Fin n)
       (Nat.le_refl _) (Nat.le_refl _)
-  rw [HexMatrixMathlib.borderedMinor_corner_eq_leadingPrefix M state.step hk] at h_trail
+  rw [HexMatrixMathlib.borderedMinor_corner_eq_principalSubmatrix M state.step hk] at h_trail
   exact h_trail
 
 /-- Identification with the Mathlib leading-prefix determinant: from a partial
 no-pivot Bareiss pass that records a singular step at index `s`, the
 `(s+1)`-leading prefix of the source matrix has zero determinant (Hex's
 `Matrix.det`). -/
-private theorem leadingPrefix_det_eq_zero
+private theorem principalSubmatrix_det_eq_zero
     {n : Nat} (M : Matrix Int n n) (fuel s : Nat) (hs : s + 1 ≤ n)
     (h_sing : (Matrix.noPivotLoop fuel
         (Matrix.noPivotInitialState M)).singularStep = some s) :
-    Matrix.det (Matrix.leadingPrefix M (s + 1) hs) = 0 := by
+    Matrix.det (Matrix.principalSubmatrix M (s + 1) hs) = 0 := by
   obtain ⟨h_none, h_step, h_zero⟩ :=
     noPivotLoop_prefix_state_at_singular M fuel s hs h_sing
   -- Apply the noPivotLoop_invariant variant: S satisfies BareissNoPivotInvariant.
@@ -846,15 +846,15 @@ private theorem leadingPrefix_det_eq_zero
     HexMatrixMathlib.noPivotLoop_invariant_of_singularStep_eq_none M s
       (Matrix.noPivotInitialState M) hinv_init h_none
   -- Use Nat.lt_of_succ_le hs as the bound throughout to match the helper's output type.
-  -- Specialize the diagonal-corner helper: matrix[⟨s, _⟩][⟨s, _⟩] = det(leadingPrefix M (s+1) _).
+  -- Specialize the diagonal-corner helper: matrix[⟨s, _⟩][⟨s, _⟩] = det(principalSubmatrix M (s+1) _).
   have h_diag_eq_lp :
       (Matrix.noPivotLoop s (Matrix.noPivotInitialState M)).matrix[(⟨s, Nat.lt_of_succ_le hs⟩ : Fin n)][(⟨s, Nat.lt_of_succ_le hs⟩ : Fin n)] =
-        Matrix.det (Matrix.leadingPrefix M (s + 1) (Nat.succ_le_of_lt (Nat.lt_of_succ_le hs))) :=
+        Matrix.det (Matrix.principalSubmatrix M (s + 1) (Nat.succ_le_of_lt (Nat.lt_of_succ_le hs))) :=
     bareissNoPivotInvariant_diag_eq
       M (Matrix.noPivotLoop s (Matrix.noPivotInitialState M)) s hinv_S
       h_step.symm (Nat.lt_of_succ_le hs)
   rw [h_zero] at h_diag_eq_lp
-  -- h_diag_eq_lp : 0 = det(leadingPrefix M (s+1) (Nat.succ_le_of_lt ...)). The proof
+  -- h_diag_eq_lp : 0 = det(principalSubmatrix M (s+1) (Nat.succ_le_of_lt ...)). The proof
   -- argument is definitionally equal to `hs`, so the goal matches up to proof irrelevance.
   exact h_diag_eq_lp.symm
 
@@ -886,18 +886,18 @@ slot `r + 1`, the public row-pivoted Bareiss determinant of the `(r + 1)`
 leading Gram prefix is zero.
 
 This is the supporting lemma needed by the singular branch of the
-`gramDetVecEntry_eq_leadingPrefix_bareiss` placeholder: both sides vanish in
+`gramDetVecEntry_eq_principalSubmatrix_bareiss` placeholder: both sides vanish in
 this case, and this lemma supplies the right-hand side. The proof composes the
 new lemma `HexMatrixMathlib.noPivotLoop_invariant_of_singularStep_eq_none`
-(to identify `det(leadingPrefix _ (s+1)) = 0` at the moment of singularity) with
+(to identify `det(principalSubmatrix _ (s+1)) = 0` at the moment of singularity) with
 the unconditional `gramDet_eq_prod_normSq_uncond` and the multiplicative
 succession `gramSchmidtNormProduct_succ` to propagate zero from `s + 1` to
 `r + 1`. -/
-theorem leadingPrefix_gram_bareiss_eq_zero_of_singularStep_lt
+theorem principalSubmatrix_gram_bareiss_eq_zero_of_singularStep_lt
     (b : Matrix Int n m) (r : Nat) (hr : r < n) (s : Nat)
     (h_sing : (Matrix.noPivotLoop r
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s) :
-    Matrix.bareiss (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+    Matrix.bareiss (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1)
         (Nat.succ_le_of_lt hr)) = 0 := by
   -- Step A: derive `s < r` from the partial-pass singular bound.
   have hsr : s < r := by
@@ -906,16 +906,16 @@ theorem leadingPrefix_gram_bareiss_eq_zero_of_singularStep_lt
     change s < 0 + r at h
     omega
   have hs1 : s + 1 ≤ n := Nat.le_trans (Nat.succ_le_of_lt hsr) (Nat.le_of_lt hr)
-  -- Step B: derive det(leadingPrefix (gramMatrix b) (s+1)) = 0 via the new lemma.
+  -- Step B: derive det(principalSubmatrix (gramMatrix b) (s+1)) = 0 via the new lemma.
   have h_det_s1_zero :
-      Matrix.det (Matrix.leadingPrefix (Matrix.gramMatrix b) (s + 1) hs1) = 0 :=
-    leadingPrefix_det_eq_zero
+      Matrix.det (Matrix.principalSubmatrix (Matrix.gramMatrix b) (s + 1) hs1) = 0 :=
+    principalSubmatrix_det_eq_zero
       (Matrix.gramMatrix b) r s hs1 h_sing
   -- Step C: convert to gramSchmidtNormProduct b (s+1) = 0.
   have h_lead_eq_s :
       GramSchmidt.leadingGramMatrixInt b (s + 1) hs1 =
-        Matrix.leadingPrefix (Matrix.gramMatrix b) (s + 1) hs1 :=
-    GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram b (s + 1) hs1
+        Matrix.principalSubmatrix (Matrix.gramMatrix b) (s + 1) hs1 :=
+    GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram b (s + 1) hs1
   have h_det_lead_s1_zero :
       Matrix.det (GramSchmidt.leadingGramMatrixInt b (s + 1) hs1) = 0 := by
     rw [h_lead_eq_s]; exact h_det_s1_zero
@@ -948,11 +948,11 @@ theorem leadingPrefix_gram_bareiss_eq_zero_of_singularStep_lt
     rw [h_gd_r1_zero] at hnat
     simpa using hnat
   have h_det_prefix_r1_zero :
-      Matrix.det (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1) hr1) = 0 := by
+      Matrix.det (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1) hr1) = 0 := by
     have h_lead_eq_r :
         GramSchmidt.leadingGramMatrixInt b (r + 1) hr1 =
-          Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1) hr1 :=
-      GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram b (r + 1) hr1
+          Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1) hr1 :=
+      GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram b (r + 1) hr1
     rw [← h_lead_eq_r]; exact h_det_lead_r1_zero
   rw [HexMatrixMathlib.bareiss_eq_det]
   exact h_det_prefix_r1_zero
@@ -966,12 +966,12 @@ This theorem lives in `HexGramSchmidtMathlib` because the proof path for the
 singular branch identifies the executable determinant with Mathlib's Leibniz
 determinant. Mathlib-free callers should use the executable `gramDet` API
 instead of depending on this Bareiss-facing statement. -/
-theorem gramDetVecEntry_eq_leadingPrefix_bareiss
+theorem gramDetVecEntry_eq_principalSubmatrix_bareiss
     (b : Matrix Int n m) (r : Nat) (hr : r < n) :
     gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
         ⟨r + 1, Nat.succ_lt_succ hr⟩ =
       (Matrix.bareiss
-        (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+        (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1)
           (Nat.succ_le_of_lt hr))).toNat := by
   let GM := Matrix.gramMatrix b
   let init := Matrix.noPivotInitialState GM
@@ -980,7 +980,7 @@ theorem gramDetVecEntry_eq_leadingPrefix_bareiss
   by_cases h_prefix :
       (Matrix.noPivotLoop r init).singularStep = none
   · have hdiag :=
-      bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
+      bareissNoPivotData_diag_eq_principalSubmatrix_bareiss_of_prefix_nonsingular
         (b := b) r hr (by simpa [GM, init] using h_prefix)
     have h_step_r : (Matrix.noPivotLoop r init).step = r := by
       have h_room : init.step + r + 1 ≤ n := by
@@ -1031,7 +1031,7 @@ theorem gramDetVecEntry_eq_leadingPrefix_bareiss
           (data.matrix[i][i]).toNat := by
             simpa [data, GM, i] using h_entry_diag
       _ = (Matrix.bareiss
-            (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+            (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1)
               (Nat.succ_le_of_lt hr))).toNat := by
             exact congrArg Int.toNat (by simpa [data, GM, i] using hdiag)
   · rcases noPivotLoop_singular_inv (n := n) r init rfl with h_none | h_sing
@@ -1055,9 +1055,9 @@ theorem gramDetVecEntry_eq_leadingPrefix_bareiss
         simp [gramDetVecEntry, data, hdata, hsr]
       have hright :
           Matrix.bareiss
-            (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+            (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1)
               (Nat.succ_le_of_lt hr)) = 0 :=
-        leadingPrefix_gram_bareiss_eq_zero_of_singularStep_lt
+        principalSubmatrix_gram_bareiss_eq_zero_of_singularStep_lt
           (b := b) r hr k.val (by simpa [GM, init] using h_sing_r)
       rw [hright]
       simpa [data, GM] using hleft

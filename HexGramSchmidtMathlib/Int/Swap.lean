@@ -660,7 +660,7 @@ theorem scaledCoeffs_diag (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ =
       Int.ofNat (gramDet b (i + 1) (Nat.succ_le_of_lt hi)) := by
   let hk : i + 1 ≤ n := Nat.succ_le_of_lt hi
-  rcases scaledCoeffs_diag_eq_zero_or_eq_leadingPrefix_bareiss b (StepWitness.ofGram b)
+  rcases scaledCoeffs_diag_eq_zero_or_eq_principalSubmatrix_bareiss b (StepWitness.ofGram b)
       i hi with hzero | hbareiss
   · have hnat := scaledCoeffs_diag_toNat (b := b) (StepWitness.ofGram b) i hi
     rw [hzero] at hnat
@@ -671,9 +671,9 @@ theorem scaledCoeffs_diag (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     rw [hbareiss]
     have hbareiss_eq :
         Matrix.bareiss
-            (Matrix.leadingPrefix (Matrix.gramMatrix b) (i + 1) hk) =
+            (Matrix.principalSubmatrix (Matrix.gramMatrix b) (i + 1) hk) =
           Matrix.det (GramSchmidt.leadingGramMatrixInt b (i + 1) hk) := by
-      rw [← GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram]
+      rw [← GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram]
       exact HexMatrixMathlib.bareiss_eq_det
         (GramSchmidt.leadingGramMatrixInt b (i + 1) hk)
     rw [hbareiss_eq]
@@ -717,8 +717,8 @@ theorem gramDet_pos_of_upperTriangular_pos_diag
   | succ r =>
       have hrn : r < n := Nat.lt_of_succ_le hk
       have hlead :
-          Matrix.gramMatrix (Matrix.leadingRows M (r + 1) hk) =
-            Matrix.leadingPrefix (Matrix.gramMatrix M) (r + 1) hk := by
+          Matrix.gramMatrix (Matrix.takeRows M (r + 1) hk) =
+            Matrix.principalSubmatrix (Matrix.gramMatrix M) (r + 1) hk := by
         apply Vector.ext
         intro i hi
         apply Vector.ext
@@ -728,30 +728,30 @@ theorem gramDet_pos_of_upperTriangular_pos_diag
         let ii : Fin n := ⟨i, Nat.lt_of_lt_of_le hi hk⟩
         let jj : Fin n := ⟨j, Nat.lt_of_lt_of_le hj hk⟩
         have hrow_i :
-            Matrix.row (Matrix.leadingRows M (r + 1) hk) iFin =
+            Matrix.row (Matrix.takeRows M (r + 1) hk) iFin =
               Matrix.row M ii := by
           apply Vector.ext
           intro c hc
-          simp [Matrix.row, Matrix.leadingRows, Matrix.ofFn, iFin, ii]
+          simp [Matrix.row, Matrix.takeRows, Matrix.ofFn, iFin, ii]
         have hrow_j :
-            Matrix.row (Matrix.leadingRows M (r + 1) hk) jFin =
+            Matrix.row (Matrix.takeRows M (r + 1) hk) jFin =
               Matrix.row M jj := by
           apply Vector.ext
           intro c hc
-          simp [Matrix.row, Matrix.leadingRows, Matrix.ofFn, jFin, jj]
+          simp [Matrix.row, Matrix.takeRows, Matrix.ofFn, jFin, jj]
         have hdot :
-            Vector.dotProduct (Matrix.row (Matrix.leadingRows M (r + 1) hk) iFin)
-                (Matrix.row (Matrix.leadingRows M (r + 1) hk) jFin) =
+            Vector.dotProduct (Matrix.row (Matrix.takeRows M (r + 1) hk) iFin)
+                (Matrix.row (Matrix.takeRows M (r + 1) hk) jFin) =
               Vector.dotProduct (Matrix.row M ii) (Matrix.row M jj) := by
           rw [hrow_i, hrow_j]
-        simpa [Matrix.gramMatrix, Matrix.leadingPrefix, Matrix.ofFn, iFin, jFin, ii, jj]
+        simpa [Matrix.gramMatrix, Matrix.principalSubmatrix, Matrix.ofFn, iFin, jFin, ii, jj]
           using hdot
       have hdet_pos :
           0 < Matrix.det (GramSchmidt.leadingGramMatrixInt M (r + 1) hk) := by
         have hpos :=
-          Matrix.det_gramMatrix_leadingRows_pos_of_upperTriangular_pos_diag M hzero hdiag
+          Matrix.det_gramMatrix_takeRows_pos_of_upperTriangular_pos_diag M hzero hdiag
             (r + 1) hk
-        rwa [hlead, ← GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram] at hpos
+        rwa [hlead, ← GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram] at hpos
       have hdet_nat :
           Matrix.det (GramSchmidt.leadingGramMatrixInt M (r + 1) hk) =
             Int.ofNat (gramDet M (r + 1) hk) :=

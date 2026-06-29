@@ -265,7 +265,7 @@ the leading prefix minor obtained by deleting the last row and column. -/
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
     (adjugate M)[Fin.last n][Fin.last n] =
-      det (leadingPrefix M n (Nat.le_succ n)) := by
+      det (principalSubmatrix M n (Nat.le_succ n)) := by
   rw [adjugate_get]
   exact cofactor_last_last M
 

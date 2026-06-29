@@ -22,8 +22,8 @@ coefficient matrix `ν`, produced by `data` from a single
 `scaledCoeffRows` formulation (`schurSigma_congr` and the column/boundary
 frame lemmas), and develops the Bareiss commutation infrastructure the
 determinant correspondence rests on: a `Matrix.stepMatrix` step commutes with
-taking a `leadingPrefix` and with taking a trailing `borderedMinor`
-(`leadingPrefix_stepMatrix_eq`, `borderedMinor_stepMatrix_eq`), the no-pivot
+taking a `principalSubmatrix` and with taking a trailing `borderedMinor`
+(`principalSubmatrix_stepMatrix_eq`, `borderedMinor_stepMatrix_eq`), the no-pivot
 loop stays synchronized across a matrix and its bordered minor
 (`noPivotLoop_full_eq_borderedMinor_at_trailing`), it preserves trailing-block
 symmetry, and its `step`/`singularStep` bookkeeping is monotone and stable
@@ -428,11 +428,11 @@ theorem scaledCoeffs_entry_eq_getArrayEntry
 prefix: the leading prefix of the updated full matrix equals the result
 of running the same step on the leading prefix. The pivot/`prevPivot`
 scalars are passed through unchanged. -/
-private theorem leadingPrefix_stepMatrix_eq
+private theorem principalSubmatrix_stepMatrix_eq
     {n K : Nat} (M : Matrix Int n n) (hK : K ≤ n)
     (k : Nat) (pivot prevPivot : Int) :
-    Matrix.leadingPrefix (Matrix.stepMatrix M k pivot prevPivot) K hK =
-      Matrix.stepMatrix (Matrix.leadingPrefix M K hK) k pivot prevPivot := by
+    Matrix.principalSubmatrix (Matrix.stepMatrix M k pivot prevPivot) K hK =
+      Matrix.stepMatrix (Matrix.principalSubmatrix M K hK) k pivot prevPivot := by
   apply Vector.ext
   intro i hi
   apply Vector.ext
@@ -441,20 +441,20 @@ private theorem leadingPrefix_stepMatrix_eq
   let jK : Fin K := ⟨j, hj⟩
   let iN : Fin n := ⟨i, Nat.lt_of_lt_of_le hi hK⟩
   let jN : Fin n := ⟨j, Nat.lt_of_lt_of_le hj hK⟩
-  show (Matrix.leadingPrefix (Matrix.stepMatrix M k pivot prevPivot) K hK)[iK][jK] =
-      (Matrix.stepMatrix (Matrix.leadingPrefix M K hK) k pivot prevPivot)[iK][jK]
-  simp only [Matrix.leadingPrefix_entry]
+  show (Matrix.principalSubmatrix (Matrix.stepMatrix M k pivot prevPivot) K hK)[iK][jK] =
+      (Matrix.stepMatrix (Matrix.principalSubmatrix M K hK) k pivot prevPivot)[iK][jK]
+  simp only [Matrix.getElem_principalSubmatrix]
   show (Matrix.stepMatrix M k pivot prevPivot)[iN][jN] =
-      (Matrix.stepMatrix (Matrix.leadingPrefix M K hK) k pivot prevPivot)[iK][jK]
+      (Matrix.stepMatrix (Matrix.principalSubmatrix M K hK) k pivot prevPivot)[iK][jK]
   by_cases htrail : k < i ∧ k < j
   · have hki_n : k < iN.val := htrail.1
     have hkj_n : k < jN.val := htrail.2
     have hki_K : k < iK.val := htrail.1
     have hkj_K : k < jK.val := htrail.2
     rw [Matrix.stepMatrix_update_eq M k pivot prevPivot iN jN hki_n hkj_n]
-    rw [Matrix.stepMatrix_update_eq (Matrix.leadingPrefix M K hK) k pivot prevPivot
+    rw [Matrix.stepMatrix_update_eq (Matrix.principalSubmatrix M K hK) k pivot prevPivot
       iK jK hki_K hkj_K]
-    simp only [Matrix.leadingPrefix_entry]
+    simp only [Matrix.getElem_principalSubmatrix]
     rfl
   · by_cases hbelow : k < i ∧ j = k
     · have hki_n : k < iN.val := hbelow.1
@@ -462,16 +462,16 @@ private theorem leadingPrefix_stepMatrix_eq
       have hki_K : k < iK.val := hbelow.1
       have hjk_K : jK.val = k := hbelow.2
       rw [Matrix.stepMatrix_pivot_col_below M k pivot prevPivot iN jN hki_n hjk_n]
-      rw [Matrix.stepMatrix_pivot_col_below (Matrix.leadingPrefix M K hK) k
+      rw [Matrix.stepMatrix_pivot_col_below (Matrix.principalSubmatrix M K hK) k
         pivot prevPivot iK jK hki_K hjk_K]
     · have hnot_n : ¬ (k < iN.val ∧ k < jN.val) := htrail
       have hnot_n' : ¬ (k < iN.val ∧ jN.val = k) := hbelow
       have hnot_K : ¬ (k < iK.val ∧ k < jK.val) := htrail
       have hnot_K' : ¬ (k < iK.val ∧ jK.val = k) := hbelow
       rw [Matrix.stepMatrix_eq_of_not_update M k pivot prevPivot iN jN hnot_n hnot_n']
-      rw [Matrix.stepMatrix_eq_of_not_update (Matrix.leadingPrefix M K hK) k
+      rw [Matrix.stepMatrix_eq_of_not_update (Matrix.principalSubmatrix M K hK) k
         pivot prevPivot iK jK hnot_K hnot_K']
-      simp only [Matrix.leadingPrefix_entry]
+      simp only [Matrix.getElem_principalSubmatrix]
       rfl
 
 /-- A bordered-minor entry equals the source matrix at the lifted index.
@@ -951,14 +951,14 @@ prefix from two BareissStates that agree on the leading prefix. While
 both runs are still synchronized (fuel fits within `K - state.step`),
 their bookkeeping fields agree and the full state's matrix, restricted
 to the leading prefix, matches the prefix state's matrix. -/
-private theorem noPivotLoop_sync_leadingPrefix_aux
+private theorem noPivotLoop_sync_principalSubmatrix_aux
     {n K : Nat} (hK : K ≤ n) (fuel : Nat) :
     ∀ (state_full : Matrix.BareissState n) (state_pref : Matrix.BareissState K),
       state_full.step = state_pref.step →
       state_full.prevPivot = state_pref.prevPivot →
       state_full.rowSwaps = state_pref.rowSwaps →
       state_full.singularStep = state_pref.singularStep →
-      Matrix.leadingPrefix state_full.matrix K hK = state_pref.matrix →
+      Matrix.principalSubmatrix state_full.matrix K hK = state_pref.matrix →
       fuel + state_full.step < K →
       (Matrix.noPivotLoop fuel state_full).step =
           (Matrix.noPivotLoop fuel state_pref).step ∧
@@ -968,7 +968,7 @@ private theorem noPivotLoop_sync_leadingPrefix_aux
           (Matrix.noPivotLoop fuel state_pref).rowSwaps ∧
       (Matrix.noPivotLoop fuel state_full).singularStep =
           (Matrix.noPivotLoop fuel state_pref).singularStep ∧
-      Matrix.leadingPrefix (Matrix.noPivotLoop fuel state_full).matrix K hK =
+      Matrix.principalSubmatrix (Matrix.noPivotLoop fuel state_full).matrix K hK =
           (Matrix.noPivotLoop fuel state_pref).matrix := by
   induction fuel with
   | zero =>
@@ -995,7 +995,7 @@ private theorem noPivotLoop_sync_leadingPrefix_aux
       have h_pivot_eq : state_full.matrix[k_full][k_full] =
           state_pref.matrix[k_pref][k_pref] := by
         have hcongr := congrArg (fun (M : Matrix Int K K) => M[k_pref][k_pref]) h_mat
-        simp only [Matrix.leadingPrefix_entry] at hcongr
+        simp only [Matrix.getElem_principalSubmatrix] at hcongr
         -- hcongr : state_full.matrix[⟨k_pref.val, _⟩][⟨k_pref.val, _⟩] =
         --          state_pref.matrix[k_pref][k_pref]
         -- k_full.val = state_full.step = state_pref.step = k_pref.val (by h_step),
@@ -1024,12 +1024,12 @@ private theorem noPivotLoop_sync_leadingPrefix_aux
         rw [Matrix.noPivotLoop_regular_branch f state_pref h_pref_done hp_pref]
         -- After one step, the new states are still linked.
         have h_new_mat :
-            Matrix.leadingPrefix
+            Matrix.principalSubmatrix
               (Matrix.stepMatrix state_full.matrix state_full.step
                 state_full.matrix[k_full][k_full] state_full.prevPivot) K hK =
               Matrix.stepMatrix state_pref.matrix state_pref.step
                 state_pref.matrix[k_pref][k_pref] state_pref.prevPivot := by
-          rw [leadingPrefix_stepMatrix_eq, h_mat, h_step, h_prev, h_pivot_eq]
+          rw [principalSubmatrix_stepMatrix_eq, h_mat, h_step, h_prev, h_pivot_eq]
         apply ih
         · -- step
           simp [h_step]
@@ -1390,19 +1390,19 @@ matrix and on its `(r+1)`-leading prefix yields states whose `(r, r)`
 diagonal entry agrees (after the leading-prefix identification) and
 whose `singularStep` field agrees. This is the executable-loop
 projection needed by the parent assembly of
-`gramDetVecEntry_eq_leadingPrefix_bareiss`. -/
+`gramDetVecEntry_eq_principalSubmatrix_bareiss`. -/
 private theorem noPivotLoop_full_eq
     (b : Matrix Int n m) (r : Nat) (hr : r < n) :
     let GM := Matrix.gramMatrix b
     let hK : r + 1 ≤ n := Nat.succ_le_of_lt hr
-    let LP := Matrix.leadingPrefix GM (r + 1) hK
+    let LP := Matrix.principalSubmatrix GM (r + 1) hK
     let s_full := Matrix.noPivotLoop r (Matrix.noPivotInitialState GM)
     let s_pref := Matrix.noPivotLoop r (Matrix.noPivotInitialState LP)
     s_full.matrix[(⟨r, hr⟩ : Fin n)][(⟨r, hr⟩ : Fin n)] =
         s_pref.matrix[(⟨r, Nat.lt_succ_self r⟩ : Fin (r + 1))][(⟨r, Nat.lt_succ_self r⟩ : Fin (r + 1))]
       ∧ s_full.singularStep = s_pref.singularStep := by
   intro GM hK LP s_full s_pref
-  have h_sync := noPivotLoop_sync_leadingPrefix_aux hK r
+  have h_sync := noPivotLoop_sync_principalSubmatrix_aux hK r
     (Matrix.noPivotInitialState GM) (Matrix.noPivotInitialState LP)
     rfl rfl rfl rfl rfl
     (show r + (Matrix.noPivotInitialState GM).step < r + 1 by
@@ -1415,14 +1415,14 @@ private theorem noPivotLoop_full_eq
     (fun (M : Matrix Int (r + 1) (r + 1)) =>
       M[(⟨r, Nat.lt_succ_self r⟩ : Fin (r + 1))][(⟨r, Nat.lt_succ_self r⟩ : Fin (r + 1))])
     h_mat
-  simp only [Matrix.leadingPrefix_entry] at hcongr
+  simp only [Matrix.getElem_principalSubmatrix] at hcongr
   -- hcongr's LHS index in Fin n has val = r; same as the goal's LHS index.
   exact hcongr
 
 /-- Signed diagonal projection for a non-singular target prefix: the final
 no-pivot full-Gram diagonal at `r` is the public Bareiss determinant of the
 `(r + 1)` leading prefix. -/
-theorem bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
+theorem bareissNoPivotData_diag_eq_principalSubmatrix_bareiss_of_prefix_nonsingular
     (b : Matrix Int n m) (r : Nat) (hr : r < n)
     (h_nonsing :
       (Matrix.noPivotLoop r
@@ -1430,12 +1430,12 @@ theorem bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
     (Matrix.bareissNoPivotData (Matrix.gramMatrix b)).matrix[
         (⟨r, hr⟩ : Fin n)][(⟨r, hr⟩ : Fin n)] =
       Matrix.bareiss
-        (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+        (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1)
           (Nat.succ_le_of_lt hr)) := by
   let GM := Matrix.gramMatrix b
   let init := Matrix.noPivotInitialState GM
   let fullAtR := Matrix.noPivotLoop r init
-  let LP := Matrix.leadingPrefix GM (r + 1) (Nat.succ_le_of_lt hr)
+  let LP := Matrix.principalSubmatrix GM (r + 1) (Nat.succ_le_of_lt hr)
   have h_step_r : fullAtR.step = r := by
     have h_room : init.step + r + 1 ≤ n := by
       simp [init, Matrix.noPivotInitialState]

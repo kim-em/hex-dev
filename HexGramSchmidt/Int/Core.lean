@@ -47,15 +47,15 @@ def leadingGramMatrixInt (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) : Matrix 
 /-- The Gram-Schmidt leading Gram matrix is the leading prefix of the full
 Gram matrix. This is the shape equation between the public `gramDet` API and
 the one-pass `gramDetVec` implementation. -/
-theorem leadingGramMatrixInt_eq_leadingPrefix_gram
+theorem leadingGramMatrixInt_eq_principalSubmatrix_gram
     (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
     leadingGramMatrixInt b k hk =
-      Matrix.leadingPrefix (Matrix.gramMatrix b) k hk := by
+      Matrix.principalSubmatrix (Matrix.gramMatrix b) k hk := by
   apply Vector.ext
   intro i hi
   apply Vector.ext
   intro j hj
-  simp [leadingGramMatrixInt, Matrix.leadingPrefix, Matrix.gramMatrix, Vector.dotProduct, Matrix.ofFn,
+  simp [leadingGramMatrixInt, Matrix.principalSubmatrix, Matrix.gramMatrix, Vector.dotProduct, Matrix.ofFn,
     liftFinLE]
 
 /-- Leading principal Gram matrix of the first `k` rows of a rational basis. -/
