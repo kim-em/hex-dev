@@ -104,7 +104,7 @@ private theorem rowSwap_get {R : Type u} {n m : Nat}
     (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
     (rowSwap M i j)[r][k] =
       if r = j then M[i][k] else if r = i then M[j][k] else M[r][k] :=
-  rowSwap_getElem M i j r k
+  getElem_rowSwap M i j r k
 
 /-- For distinct `i, j`, reading row `r` of `rowSwap M i j` is the same as
 reading row `finTranspose i j r` of `M`, identifying the swap with the
@@ -1704,7 +1704,7 @@ private theorem colAdd_get {R : Type u} [Mul R] [Add R] {n : Nat}
     (M : Matrix R n n) (src dst r cidx : Fin n) (c : R) :
     (colAdd M src dst c)[r][cidx] =
       if cidx = dst then M[r][cidx] + c * M[r][src] else M[r][cidx] := by
-  exact colAdd_getElem M src dst c r cidx
+  exact getElem_colAdd M src dst c r cidx
 
 /-- For a nodup permutation, the product term of `colAdd M src dst c` splits as
 `detProduct M perm + c · detProduct (colAddDuplicate M src dst) perm`. -/

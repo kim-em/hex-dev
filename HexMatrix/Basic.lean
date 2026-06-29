@@ -45,7 +45,7 @@ def unit [Zero R] [One R] (i : Fin n) : Vector R n :=
   Vector.ofFn fun j => if i = j then One.one else Zero.zero
 
 /-- Entry formula for a standard basis vector. -/
-@[grind =] theorem unit_getElem [Zero R] [One R] (i j : Fin n) :
+@[grind =] theorem getElem_unit [Zero R] [One R] (i j : Fin n) :
     (unit (R := R) i)[j] = if i = j then One.one else Zero.zero := by
   simp [unit]
 
@@ -69,7 +69,7 @@ def row (M : Matrix R n m) (i : Fin n) : Vector R m :=
   M[i]
 
 /-- Entry access for a selected matrix row. -/
-@[grind =] theorem row_getElem (M : Matrix R n m) (i : Fin n) (j : Fin m) :
+@[grind =] theorem getElem_row (M : Matrix R n m) (i : Fin n) (j : Fin m) :
     (row M i)[j] = M[i][j] := by
   rfl
 
@@ -79,7 +79,7 @@ def col (M : Matrix R n m) (j : Fin m) : Vector R n :=
   Vector.ofFn fun i => M[i][j]
 
 /-- Entry access for a selected matrix column. -/
-@[grind =] theorem col_getElem (M : Matrix R n m) (j : Fin m) (i : Fin n) :
+@[grind =] theorem getElem_col (M : Matrix R n m) (j : Fin m) (i : Fin n) :
     (col M j)[i] = M[i][j] := by
   simp [col]
 
@@ -107,7 +107,7 @@ def setCol (M : Matrix R n m) (dst : Fin m) (v : Fin n → R) : Matrix R n m :=
 
 /-- Entrywise characterization of `setCol`: the destination column is read from
 the replacement function and every other column is read from `M`. -/
-@[grind =] theorem setCol_getElem (M : Matrix R n m) (dst : Fin m) (v : Fin n → R)
+@[grind =] theorem getElem_setCol (M : Matrix R n m) (dst : Fin m) (v : Fin n → R)
     (r : Fin n) (c : Fin m) :
     (setCol M dst v)[r][c] = if c = dst then v r else M[r][c] := by
   simp [setCol, ofFn]
@@ -118,7 +118,7 @@ the replacement function and every other column is read from `M`. -/
   ext r hr c hc
   change (setCol M dst (fun r => M[r][dst]))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin m)] =
     M[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin m)]
-  rw [setCol_getElem]
+  rw [getElem_setCol]
   by_cases hc' : (⟨c, hc⟩ : Fin m) = dst
   · rw [if_pos hc']
     exact congrArg (fun c' : Fin m => M[(⟨r, hr⟩ : Fin n)][c']) hc'.symm
@@ -130,7 +130,7 @@ def transpose (M : Matrix R n m) : Matrix R m n :=
   Vector.ofFn fun j => col M j
 
 /-- Entry access for the transpose of a dense matrix. -/
-@[grind =] theorem transpose_getElem (M : Matrix R n m) (i : Fin m) (j : Fin n) :
+@[grind =] theorem getElem_transpose (M : Matrix R n m) (i : Fin m) (j : Fin n) :
     (transpose M)[i][j] = M[j][i] := by
   simp [transpose, col]
 
@@ -140,7 +140,7 @@ def transpose (M : Matrix R n m) : Matrix R m n :=
   ext i hi j hj
   show (transpose (transpose M))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin m)] =
     M[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin m)]
-  rw [transpose_getElem, transpose_getElem]
+  rw [getElem_transpose, getElem_transpose]
 
 /-- The all-zero matrix. -/
 @[expose]
@@ -177,14 +177,14 @@ instance [Mul R] [Add R] [OfNat R 0] : HMul (Matrix R n m) (Matrix R m k) (Matri
   hMul := mul
 
 /-- Entry characterization for matrix-vector multiplication. -/
-@[grind =] theorem mulVec_getElem [Mul R] [Add R] [OfNat R 0]
+@[grind =] theorem getElem_mulVec [Mul R] [Add R] [OfNat R 0]
     (M : Matrix R n m) (v : Vector R m) (i : Fin n) :
     (M * v)[i] = Hex.Vector.dotProduct (row M i) v := by
   show (mulVec M v)[i] = Hex.Vector.dotProduct (row M i) v
   simp [mulVec]
 
 /-- Entry characterization for matrix multiplication. -/
-@[grind =] theorem mul_getElem [Mul R] [Add R] [OfNat R 0]
+@[grind =] theorem getElem_mul [Mul R] [Add R] [OfNat R 0]
     (M : Matrix R n m) (N : Matrix R m k) (i : Fin n) (j : Fin k) :
     (M * N)[i][j] = Hex.Vector.dotProduct (row M i) (col N j) := by
   show (mul M N)[i][j] = Hex.Vector.dotProduct (row M i) (col N j)
@@ -201,7 +201,7 @@ instance [Mul R] [Add R] [OfNat R 0] : HMul (Matrix R n m) (Matrix R m k) (Matri
   ext i hi j hj
   show (Matrix.transpose (1 : Matrix R n n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] =
     (1 : Matrix R n n)[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)]
-  rw [transpose_getElem, getElem_one, getElem_one]
+  rw [getElem_transpose, getElem_one, getElem_one]
   by_cases hij : (⟨i, hi⟩ : Fin n) = ⟨j, hj⟩
   · have hji : (⟨j, hj⟩ : Fin n) = ⟨i, hi⟩ := hij.symm
     rw [if_pos hij, if_pos hji]

@@ -114,8 +114,8 @@ private theorem castIntMatrix_rowSwap (b : Matrix Int n m) (i j : Fin n) :
         = ((Matrix.rowSwap b i j)[r][c] : Rat) := by
           simp [GramSchmidt.castIntMatrix]
     _ = (Matrix.rowSwap (GramSchmidt.castIntMatrix b) i j)[r][c] := by
-          rw [Matrix.rowSwap_getElem (M := b) (i := i) (j := j) (r := r) (k := c)]
-          rw [Matrix.rowSwap_getElem (M := GramSchmidt.castIntMatrix b)
+          rw [Matrix.getElem_rowSwap (M := b) (i := i) (j := j) (r := r) (k := c)]
+          rw [Matrix.getElem_rowSwap (M := GramSchmidt.castIntMatrix b)
             (i := i) (j := j) (r := r) (k := c)]
           by_cases hrj : r = j
           · simp [hrj, GramSchmidt.castIntMatrix]

@@ -593,7 +593,7 @@ def reconstructInjTuple {m n : Nat}
 
 /-- The `i`-th entry of the reconstructed tuple is `sel[perm[i]]`: read the
 sorted choice `sel` through the permutation `perm`. -/
-@[grind =] theorem reconstructInjTuple_getElem {m n : Nat}
+@[grind =] theorem getElem_reconstructInjTuple {m n : Nat}
     (sel : Vector (Fin m) n) (perm : Vector (Fin n) n) (i : Fin n) :
     (reconstructInjTuple sel perm)[i] = sel[perm[i]] := by
   rw [reconstructInjTuple, vector_ofFn_getElem_fin]
@@ -609,7 +609,7 @@ with the column index permuted by `perm`: entry `(r, c)` agrees with entry
       (columnTupleMatrix A (columnTupleVectorFn sel))[r][perm[c]] := by
   rw [getElem_columnTupleMatrix, getElem_columnTupleMatrix]
   exact congrArg (fun col : Fin m => A[r][col])
-    (reconstructInjTuple_getElem sel perm c)
+    (getElem_reconstructInjTuple sel perm c)
 
 private theorem columnTupleMatrix_reconstructInjTuple_eq
     {R : Type u} {n m : Nat} (A : Matrix R n m)
@@ -623,7 +623,7 @@ private theorem columnTupleMatrix_reconstructInjTuple_eq
       (columnTupleMatrix A (fun i => sel[perm[i]]))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
   rw [getElem_columnTupleMatrix, getElem_columnTupleMatrix]
   exact congrArg (fun col : Fin m => A[(⟨r, hr⟩ : Fin n)][col])
-    (reconstructInjTuple_getElem sel perm (⟨c, hc⟩ : Fin n))
+    (getElem_reconstructInjTuple sel perm (⟨c, hc⟩ : Fin n))
 
 /-- Reconstructing an injective tuple from a selected tuple and a permutation
 turns the coefficient product into the corresponding determinant product. -/
@@ -637,7 +637,7 @@ theorem columnTupleCoeff_reconstructInjTuple
   intro i _hmem
   rw [getElem_columnTupleMatrix]
   exact congrArg (fun col : Fin m => A[i][col])
-    (reconstructInjTuple_getElem sel perm i)
+    (getElem_reconstructInjTuple sel perm i)
 
 /-- Counting how many entries of `List.finRange n` have value `< k`. -/
 private theorem countP_finRange_val_lt :
@@ -688,8 +688,8 @@ theorem reconstructInjTuple_injective {m n : Nat}
   have hperm_inj := permutationVectors_getElem_injective hperm
   -- `hij` is equality of reconstructed entries; extract `sel[perm[i]] = sel[perm[j]]`.
   have hval : sel[perm[i]] = sel[perm[j]] := by
-    have hi := reconstructInjTuple_getElem sel perm i
-    have hj := reconstructInjTuple_getElem sel perm j
+    have hi := getElem_reconstructInjTuple sel perm i
+    have hj := getElem_reconstructInjTuple sel perm j
     have hij' :
         (reconstructInjTuple sel perm)[i] = (reconstructInjTuple sel perm)[j] := hij
     exact hi.symm.trans (hij'.trans hj)
@@ -753,7 +753,7 @@ private theorem columnRankNat_reconstructInjTuple {m n : Nat}
                                    < (reconstructInjTuple sel perm)[i].val)) =
         (fun j : Fin n => decide ((perm[j]).val < (perm[i]).val)) := by
     funext j
-    rw [reconstructInjTuple_getElem, reconstructInjTuple_getElem]
+    rw [getElem_reconstructInjTuple, getElem_reconstructInjTuple]
     exact decide_eq_decide.mpr (isStrictlyIncreasingColumnTuple_val_lt_iff hsel _ _)
   rw [hpred]
   exact permutationVectors_count_val_lt hperm (perm[i])
@@ -809,7 +809,7 @@ theorem sortInjTuple_reconstructInjTuple {m n : Nat}
       hinv_eq
   rw [hstep]
   -- Now: reconstruction at (inv perm)[r] = sel[perm[(inv perm)[r]]] = sel[r].
-  rw [reconstructInjTuple_getElem]
+  rw [getElem_reconstructInjTuple]
   -- Use that perm ∘ inv perm = id (i.e., perm[(inv perm)[r]] = r).
   have hnodup := permutationVectors_nodup hperm
   have hinv_perm : inversePermutationVector perm
@@ -837,7 +837,7 @@ theorem reconstructInjTuple_sortInj {m n : Nat}
   apply Fin.val_eq_of_eq
   let i : Fin n := ⟨k, hk⟩
   show (reconstructInjTuple (sortInjTuple cols) (sortInjPerm cols))[i] = cols[i]
-  rw [reconstructInjTuple_getElem]
+  rw [getElem_reconstructInjTuple]
   exact (cols_getElem_eq_sortInjTuple_sortInjPerm cols hinj i).symm
 
 /-- For each fixed `sel`, the inner `map (reconstructInjTuple sel)` list

@@ -646,7 +646,7 @@ private theorem rowSwap_toList_get!_of_lt
   intro idx hidx
   let cc : Fin m := ⟨idx, hidx⟩
   change (Matrix.rowSwap b km1 k)[r][cc] = b[r][cc]
-  rw [Matrix.rowSwap_getElem]
+  rw [Matrix.getElem_rowSwap]
   simp [hrk, hrkm1]
 
 /-- `rowSwap_toList_get!_left`: at the lower swapped index `km1`, the swapped matrix
@@ -668,7 +668,7 @@ private theorem rowSwap_toList_get!_left
   intro idx hidx
   let cc : Fin m := ⟨idx, hidx⟩
   change (Matrix.rowSwap b km1 k)[km1][cc] = b[k][cc]
-  rw [Matrix.rowSwap_getElem]
+  rw [Matrix.getElem_rowSwap]
   simp [hne]
 
 /-- `rowSwap_toList_get!_right`: at the upper swapped index `k`, the swapped matrix
@@ -687,7 +687,7 @@ private theorem rowSwap_toList_get!_right
   intro idx hidx
   let cc : Fin m := ⟨idx, hidx⟩
   change (Matrix.rowSwap b km1 k)[k][cc] = b[km1][cc]
-  rw [Matrix.rowSwap_getElem]
+  rw [Matrix.getElem_rowSwap]
   simp
 
 /-- `rowSwap_toList_get!_of_gt`: reading `toList`/`get!` at an index `t` strictly
@@ -723,7 +723,7 @@ private theorem rowSwap_toList_get!_of_gt
   intro idx hidx
   let cc : Fin m := ⟨idx, hidx⟩
   change (Matrix.rowSwap b km1 k)[r][cc] = b[r][cc]
-  rw [Matrix.rowSwap_getElem]
+  rw [Matrix.getElem_rowSwap]
   simp [hrk, hrkm1]
 
 /-- `basisMatrix_rowSwap`: swapping rows `km1` and `k` leaves the
@@ -1747,7 +1747,7 @@ private theorem prefixRows_rowSwap_row_mem_prefixSpan
       let c : Fin m := ⟨col, hcol⟩
       simp [prefixRows, Matrix.row]
       change (Matrix.rowSwap b km1 k)[r][c] = b[k][c]
-      rw [Matrix.rowSwap_getElem]
+      rw [Matrix.getElem_rowSwap]
       simp [hjkm1, hkm1_ne_k]
     rw [hrow]
     exact prefixSpan_mono_le b k.isLt hi hki (prefixSpan_matrix_row b k)
@@ -1761,7 +1761,7 @@ private theorem prefixRows_rowSwap_row_mem_prefixSpan
         let c : Fin m := ⟨col, hcol⟩
         simp [prefixRows, Matrix.row]
         change (Matrix.rowSwap b km1 k)[r][c] = b[km1][c]
-        rw [Matrix.rowSwap_getElem]
+        rw [Matrix.getElem_rowSwap]
         simp [hjk]
       rw [hrow]
       exact prefixSpan_mono_le b km1.isLt hi hkm1_le_i (prefixSpan_matrix_row b km1)
@@ -1773,7 +1773,7 @@ private theorem prefixRows_rowSwap_row_mem_prefixSpan
         let c : Fin m := ⟨col, hcol⟩
         simp [prefixRows, Matrix.row, r]
         change (Matrix.rowSwap b km1 k)[r][c] = b[r][c]
-        rw [Matrix.rowSwap_getElem]
+        rw [Matrix.getElem_rowSwap]
         simp [hjk, hjkm1]
       rw [hrow]
       exact prefixSpan_mono_le b r.isLt hi hrle (prefixSpan_matrix_row b r)

@@ -103,7 +103,7 @@ private theorem rowSwap_row_eq_of_ne_int {n' m' : Nat}
   intro idx hidx
   let c : Fin m' := ⟨idx, hidx⟩
   change (Matrix.rowSwap b i j)[r][c] = b[r][c]
-  rw [Matrix.rowSwap_getElem]
+  rw [Matrix.getElem_rowSwap]
   by_cases hrj' : r = j
   · exact absurd hrj' hrj
   · by_cases hri' : r = i
@@ -213,7 +213,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
         (Matrix.rowSwap ((Matrix.rowSwap M km1' k').transpose) km1' k')[qq][pp] := by
     simp [Matrix.transpose, Matrix.col]
   rw [hLHS, hRHS_T]
-  rw [Matrix.rowSwap_getElem (M := (Matrix.rowSwap M km1' k').transpose)
+  rw [Matrix.getElem_rowSwap (M := (Matrix.rowSwap M km1' k').transpose)
     (i := km1') (j := k') (r := qq) (k := pp)]
   have hkm1'_ne_k' : (km1' : Fin t) ≠ k' := by
     intro h
@@ -228,7 +228,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
     have hT : (Matrix.rowSwap M km1' k').transpose[idx][pp] =
         (Matrix.rowSwap M km1' k')[pp][idx] := by
       simp [Matrix.transpose, Matrix.col]
-    rw [hT, Matrix.rowSwap_getElem (M := M) (i := km1') (j := k') (r := pp) (k := idx)]
+    rw [hT, Matrix.getElem_rowSwap (M := M) (i := km1') (j := k') (r := pp) (k := idx)]
     by_cases hpk : pp = k'
     · simp [hpk]
     · by_cases hpkm1 : pp = km1'

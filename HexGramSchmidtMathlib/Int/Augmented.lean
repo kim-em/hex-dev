@@ -66,7 +66,7 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
       (castIntDetMatrix
           (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, hjlt⟩ hj))[pp][cc] =
         (Matrix.setCol _ _ _)[pp][cc]
-    rw [Matrix.setCol_getElem, castIntDetMatrix_get]
+    rw [Matrix.getElem_setCol, castIntDetMatrix_get]
     by_cases hc_eq : cc = (⟨j, Nat.lt_succ_self j⟩ : Fin (j + 1))
     · rw [if_pos hc_eq]
       have hc_val : cc.val = j := congrArg Fin.val hc_eq

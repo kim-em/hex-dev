@@ -691,7 +691,7 @@ private theorem progressMatrix_succ_eq_colReplace
           (fun acc src =>
             acc + progressMatrixCoeff b k hk s hs src *
               (progressMatrix b k hk s)[i'][src]) 0))[ii][(⟨j, hj⟩ : Fin k)]
-  rw [Matrix.setCol_getElem]
+  rw [Matrix.getElem_setCol]
   -- Case split on Fin k equality.
   by_cases hjs : (⟨j, hj⟩ : Fin k) = (⟨s, hs⟩ : Fin k)
   · -- Column s case.

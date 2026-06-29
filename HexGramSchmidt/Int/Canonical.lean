@@ -143,7 +143,7 @@ private theorem rowCombination_bareiss_coeff_update
         x * (M.transpose * c)[jf] - y * (M.transpose * d)[jf] := by
     simp
   rw [h_rhs]
-  repeat rw [Matrix.mulVec_getElem]
+  repeat rw [Matrix.getElem_mulVec]
   exact dot_bareiss_row_update_right x y ((Matrix.transpose M).row jf) c d
 
 /-- `exactDiv_eq_of_eq_mul_right` recovers the right quotient when the exact-division numerator is a quotient times the nonzero denominator. -/

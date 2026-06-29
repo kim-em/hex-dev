@@ -365,12 +365,12 @@ private theorem foldl_add_pointwise_eq_int {α : Type v}
 
 /-- Entry-level formula for `rowCombination` over integers: the `j`th entry is
 the sum over `k` of `b[k][j] * c[k]`. -/
-private theorem rowCombination_getElem_int
+private theorem getElem_rowCombination_int
     {n m : Nat} (b : Matrix Int n m) (c : Vector Int n) (j : Fin m) :
     (Matrix.rowCombination b c)[j] =
       (List.finRange n).foldl (fun acc k => acc + b[k][j] * c[k]) 0 := by
   show (Matrix.transpose b * c)[j] = _
-  rw [Matrix.mulVec_getElem]
+  rw [Matrix.getElem_mulVec]
   unfold Vector.dotProduct
   apply foldl_add_pointwise_eq_int
   intro k _hk
@@ -398,7 +398,7 @@ private theorem dot_rowCombination_right_eq
     Vector.dotProduct u (Matrix.rowCombination b c) =
       (List.finRange n).foldl
         (fun acc k => acc + c[k] * Vector.dotProduct u (b.row k)) 0 := by
-  -- Step 1: rewrite each (rowComb b c)[j] entry using rowCombination_getElem_int.
+  -- Step 1: rewrite each (rowComb b c)[j] entry using getElem_rowCombination_int.
   have h_lhs :
       Vector.dotProduct u (Matrix.rowCombination b c) =
         (List.finRange m).foldl
@@ -407,7 +407,7 @@ private theorem dot_rowCombination_right_eq
     unfold Vector.dotProduct
     apply foldl_add_pointwise_eq_int
     intro j _hj
-    rw [rowCombination_getElem_int (b := b) (c := c) j]
+    rw [getElem_rowCombination_int (b := b) (c := c) j]
   rw [h_lhs]
   -- Step 2: distribute u[j] over the inner sum so the body has shape (acc + f j k).
   have h_distrib :
@@ -594,7 +594,7 @@ private theorem principalSubmatrix_gram_zero_pivot_column_zero
           (Matrix.noPivotInitialState (Matrix.gramMatrix b)).matrix[c][a] := by
     intros a c _ha _hc
     show (Matrix.gramMatrix b)[a][c] = (Matrix.gramMatrix b)[c][a]
-    rw [Matrix.gramMatrix_getElem, Matrix.gramMatrix_getElem]
+    rw [Matrix.getElem_gramMatrix, Matrix.getElem_gramMatrix]
     exact int_dot_comm_local (Matrix.row b a) (Matrix.row b c)
   have h_symm :
       (Matrix.noPivotLoop s

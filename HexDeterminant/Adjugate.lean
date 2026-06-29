@@ -465,7 +465,7 @@ private theorem mul_apply_foldl
   unfold Hex.Vector.dotProduct
   apply foldl_acc_congr
   intro acc l _hmem
-  rw [row_getElem, col_getElem]
+  rw [getElem_row, getElem_col]
 
 /-- Row decomposition of `setRow M r u * adjugate M`: the `(i, s)` entry is
 the `cofactor-row pairing` of `M`'s row `s` against the (possibly replaced)

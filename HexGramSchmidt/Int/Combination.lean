@@ -50,7 +50,7 @@ private theorem rowCombination_int_getElem
       (List.finRange n).foldl
         (fun (acc : Int) (i : Fin n) => acc + b[i][col] * c[i]) 0 := by
   show (Matrix.transpose b * c)[col] = _
-  rw [Matrix.mulVec_getElem]
+  rw [Matrix.getElem_mulVec]
   show Vector.dotProduct ((Matrix.transpose b).row col) c = _
   simp [Vector.dotProduct, Matrix.row, Matrix.transpose, Matrix.col]
 
@@ -68,7 +68,7 @@ private theorem rowCombination_prefix_castIntMatrix_getElem
             ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩
           acc + (b[jn][col] : Rat) * (c[jn] : Rat)) 0 := by
   show (Matrix.transpose _ * _)[col] = _
-  rw [Matrix.mulVec_getElem]
+  rw [Matrix.getElem_mulVec]
   show Vector.dotProduct ((Matrix.transpose _).row col) _ = _
   simp [Vector.dotProduct, GramSchmidt.prefixRows,
     castIntMatrix, prefixCoeffsCast, Matrix.row, Matrix.transpose, Matrix.col]
@@ -176,7 +176,7 @@ Gram-Schmidt basis rows: `coeffs b * basis b` collapses to the cast input
     have hdecj := congrArg (fun v : Vector Rat m => v[jj]) hdec
     simpa [castIntMatrix, Matrix.row, Vector.getElem_add] using hdecj.symm
   show (coeffs b * basis b)[ii][jj] = (castIntMatrix b)[ii][jj]
-  rw [Matrix.mul_getElem]
+  rw [Matrix.getElem_mul]
   unfold Vector.dotProduct
   let f : Fin n → Rat := fun k => ((coeffs b).row ii)[k] * ((basis b).col jj)[k]
   have hzero : ∀ k : Fin n, i < k.val → f k = 0 := by
@@ -291,7 +291,7 @@ theorem rowCombination_basis_coeffs_reconstruction
     rw [show ((0 : Int) : Rat) = 0 by norm_cast]
     show _ = (Matrix.transpose (castIntMatrix b) *
         Vector.map (fun x : Int => (x : Rat)) c)[jj]
-    rw [Matrix.mulVec_getElem]
+    rw [Matrix.getElem_mulVec]
     simp [Vector.dotProduct, Matrix.row, Matrix.transpose,
       Matrix.col, castIntMatrix]
   rw [hleft, ← hcoeff]
@@ -596,7 +596,7 @@ theorem scaledCoeffMatrix_eq_borderedMinor
             (⟨cc.val, Nat.lt_trans hcj (Nat.lt_trans hji i.isLt)⟩ : Fin n)] := by
         have hpr_not : ¬ pp.val < j.val := Nat.not_lt.mpr (Nat.le_of_eq hpr.symm)
         simp [Matrix.borderedMinor, Matrix.ofFn, Vector.getElem_ofFn, hpr_not, hcj]
-      rw [h_sc, h_bm, Matrix.gramMatrix_getElem]
+      rw [h_sc, h_bm, Matrix.getElem_gramMatrix]
       have hrow : (⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
           (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩ : Fin n)
           = ⟨j.val, Nat.lt_trans hji i.isLt⟩ := Fin.ext hpr
@@ -634,7 +634,7 @@ theorem scaledCoeffMatrix_eq_borderedMinor
           (Matrix.gramMatrix b)[(⟨j.val, Nat.lt_trans hji i.isLt⟩ : Fin n)][i] := by
         have hpr_not : ¬ pp.val < j.val := hrj
         simp [Matrix.borderedMinor, Matrix.ofFn, Vector.getElem_ofFn, hpr_not, hcj]
-      rw [h_sc, h_bm, Matrix.gramMatrix_getElem]
+      rw [h_sc, h_bm, Matrix.getElem_gramMatrix]
       have hrow : (⟨pp.val, Nat.lt_of_lt_of_le pp.isLt
           (Nat.succ_le_of_lt (Nat.lt_trans hji i.isLt))⟩ : Fin n)
           = ⟨j.val, Nat.lt_trans hji i.isLt⟩ := Fin.ext hpr_eq
@@ -1970,7 +1970,7 @@ private theorem rowSwap_row_eq_of_ne_int {n' m' : Nat}
   intro c hc
   have hr_ne_j : r ≠ j := fun h => hrj (congrArg Fin.val h)
   have hr_ne_i : r ≠ i := fun h => hri (congrArg Fin.val h)
-  have hget := Matrix.rowSwap_getElem M i j r ⟨c, hc⟩
+  have hget := Matrix.getElem_rowSwap M i j r ⟨c, hc⟩
   rw [if_neg hr_ne_j, if_neg hr_ne_i] at hget
   simpa [Matrix.row] using hget
 
@@ -1984,10 +1984,10 @@ theorem rowSwap_row_left_int {n' m' : Nat}
   intro c hc
   by_cases hij : i = j
   · subst j
-    have hget := Matrix.rowSwap_getElem M i i i ⟨c, hc⟩
+    have hget := Matrix.getElem_rowSwap M i i i ⟨c, hc⟩
     rw [if_pos rfl] at hget
     exact hget
-  · have hget := Matrix.rowSwap_getElem M i j i ⟨c, hc⟩
+  · have hget := Matrix.getElem_rowSwap M i j i ⟨c, hc⟩
     rw [if_neg hij, if_pos rfl] at hget
     simpa [Matrix.row] using hget
 
@@ -1999,7 +1999,7 @@ theorem rowSwap_row_right_int {n' m' : Nat}
     (Matrix.rowSwap M i j)[j] = M[i] := by
   apply Vector.ext
   intro c hc
-  have hget := Matrix.rowSwap_getElem M i j j ⟨c, hc⟩
+  have hget := Matrix.getElem_rowSwap M i j j ⟨c, hc⟩
   rw [if_pos rfl] at hget
   simpa [Matrix.row] using hget
 
@@ -2024,7 +2024,7 @@ private theorem rowSwap_getRow_left_val_int {n' m' : Nat}
   intro c hc
   let ii : Fin n' := ⟨i.val, hr⟩
   change (Matrix.rowSwap M i j)[ii][c] = M[j][c]
-  have hget := Matrix.rowSwap_getElem M i j ii ⟨c, hc⟩
+  have hget := Matrix.getElem_rowSwap M i j ii ⟨c, hc⟩
   by_cases hij : ii = j
   · have hij' : i = j := by
       apply Fin.ext
@@ -2046,7 +2046,7 @@ private theorem rowSwap_getRow_right_val_int {n' m' : Nat}
   let jj : Fin n' := ⟨j.val, hr⟩
   change (Matrix.rowSwap M i j)[jj][c] = M[i][c]
   have hjj : jj = j := Fin.ext rfl
-  have hget := Matrix.rowSwap_getElem M i j jj ⟨c, hc⟩
+  have hget := Matrix.getElem_rowSwap M i j jj ⟨c, hc⟩
   rw [if_pos hjj] at hget
   simpa [Matrix.row] using hget
 
