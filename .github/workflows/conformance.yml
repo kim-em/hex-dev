@@ -62,7 +62,8 @@ jobs:
             hexgfqring_emit_fixtures hexgfqfield_emit_fixtures \
             hexhensel_emit_fixtures \
             hexconway_emit_fixtures \
-            hexmatrix_emit_fixtures hexgramschmidt_emit_fixtures \
+            hexrowreduce_emit_fixtures hexdeterminant_emit_fixtures \
+            hexbareiss_emit_fixtures hexgramschmidt_emit_fixtures \
             hexlll_emit_fixtures
       - name: Cross-check fixtures and run oracles
         run: bash scripts/ci/run_oracles.sh
