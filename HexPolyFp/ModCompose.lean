@@ -27,11 +27,10 @@ private theorem mod_horner_step_eq
     [ZMod64.PrimeModulus p]
     (acc g modulus : FpPoly p) (c : ZMod64 p) :
     ((acc % modulus) * g + C c) % modulus = (acc * g + C c) % modulus := by
-  rw [DensePoly.DivModLaws.mod_add_mod ((acc % modulus) * g) (C c) modulus]
-  rw [DensePoly.DivModLaws.mod_add_mod (acc * g) (C c) modulus]
-  rw [DensePoly.DivModLaws.mod_mul_mod (acc % modulus) g modulus]
-  rw [DensePoly.DivModLaws.mod_mul_mod acc g modulus]
-  rw [DensePoly.mod_mod]
+  rw [DensePoly.DivModLaws.mod_add_mod ((acc % modulus) * g) (C c) modulus,
+    DensePoly.DivModLaws.mod_add_mod (acc * g) (C c) modulus,
+    DensePoly.DivModLaws.mod_mul_mod (acc % modulus) g modulus,
+    DensePoly.DivModLaws.mod_mul_mod acc g modulus, DensePoly.mod_mod]
 
 private theorem modByMonic_horner_step_eq
     [ZMod64.PrimeModulus p]

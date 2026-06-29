@@ -1130,8 +1130,7 @@ theorem reducePoly_add_eq (p q : GF2Poly) :
       reducePoly (f := f) (hirr := hirr)
         ((reducePoly (f := f) (hirr := hirr) p).val +
           (reducePoly (f := f) (hirr := hirr) q).val) := by
-  rw [reducePoly_eq_iff_mod_eq]
-  rw [reducePoly_val_eq_mod, reducePoly_val_eq_mod]
+  rw [reducePoly_eq_iff_mod_eq, reducePoly_val_eq_mod, reducePoly_val_eq_mod]
   exact (mod_add_mod_eq_mod_add p q f).symm
 
 /-- Negation is the identity in characteristic two. -/
@@ -1170,8 +1169,7 @@ theorem reducePoly_mul_eq (p q : GF2Poly) :
       reducePoly (f := f) (hirr := hirr)
         ((reducePoly (f := f) (hirr := hirr) p).val *
           (reducePoly (f := f) (hirr := hirr) q).val) := by
-  rw [reducePoly_eq_iff_mod_eq]
-  rw [reducePoly_val_eq_mod, reducePoly_val_eq_mod]
+  rw [reducePoly_eq_iff_mod_eq, reducePoly_val_eq_mod, reducePoly_val_eq_mod]
   exact (mod_mul_mod_eq_mod_mul p q f).symm
 
 /-- Natural power in the packed quotient field by repeated squaring. -/
@@ -1413,11 +1411,8 @@ theorem add_assoc (a b c : GF2nPoly f hirr) :
 private theorem add_pair_swap_quot
     (a b c d : GF2nPoly f hirr) :
     (a + b) + (c + d) = (a + c) + (b + d) := by
-  rw [add_assoc a b (c + d)]
-  rw [← add_assoc b c d]
-  rw [add_comm b c]
-  rw [add_assoc c b d]
-  rw [← add_assoc a c (b + d)]
+  rw [add_assoc a b (c + d), ← add_assoc b c d, add_comm b c, add_assoc c b d,
+    ← add_assoc a c (b + d)]
 
 /-- The additive identity is a left identity. -/
 @[simp, grind =] theorem zero_add (a : GF2nPoly f hirr) :
@@ -1502,8 +1497,7 @@ theorem add_sq (a b : GF2nPoly f hirr) :
     _ = (a * a + a * b) + (b * a + b * b) := by
       rw [left_distrib, left_distrib]
     _ = (a * a + b * b) + (a * b + b * a) := by
-      rw [add_comm (b * a) (b * b)]
-      rw [add_pair_swap_quot]
+      rw [add_comm (b * a) (b * b), add_pair_swap_quot]
     _ = (a * a + b * b) + (a * b + a * b) := by
       rw [mul_comm b a]
     _ = a * a + b * b := by
@@ -1776,8 +1770,7 @@ theorem frobeniusIter_reducePoly_monomial_eq_self_of_X_fixed {k : Nat}
           reducePoly (f := f) (hirr := hirr) (GF2Poly.monomial (n + 1))
               = reducePoly (f := f) (hirr := hirr)
                   (GF2Poly.monomial 1 * GF2Poly.monomial n) := by
-                    rw [GF2Poly.monomial_mul_monomial]
-                    rw [Nat.add_comm]
+                    rw [GF2Poly.monomial_mul_monomial, Nat.add_comm]
           _ = reducePoly (f := f) (hirr := hirr)
                 ((reducePoly (f := f) (hirr := hirr) (GF2Poly.monomial 1)).val *
                   (reducePoly (f := f) (hirr := hirr) (GF2Poly.monomial n)).val) := by
@@ -2300,8 +2293,7 @@ theorem frobeniusIter_eq_linearPow_two_pow (a : GF2nPoly f hirr) (k : Nat) :
         _ = linearPow a (2 ^ k + 2 ^ k) := by
               rw [linearPow_add]
         _ = linearPow a (2 ^ (k + 1)) := by
-              rw [Nat.pow_succ]
-              rw [show 2 ^ k + 2 ^ k = 2 ^ k * 2 by omega]
+              rw [Nat.pow_succ, show 2 ^ k + 2 ^ k = 2 ^ k * 2 by omega]
 
 end Internal
 

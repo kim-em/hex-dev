@@ -428,8 +428,7 @@ private theorem coeff_last_eq_leadingCoeff (f : ZPoly) (hpos : 0 < f.size) :
       have hcoeffs : 0 < coeffs.size := by simpa [DensePoly.size] using hpos
       have hidx : coeffs.size - 1 < coeffs.size := Nat.sub_one_lt (Nat.ne_of_gt hcoeffs)
       change coeffs.getD (coeffs.size - 1) 0 = coeffs.back?.getD 0
-      rw [Array.back?_eq_getElem?]
-      rw [Array.getElem?_eq_getElem hidx]
+      rw [Array.back?_eq_getElem?, Array.getElem?_eq_getElem hidx]
       exact (Array.getElem_eq_getD 0).symm
 
 /-- `monic_of_coeff_eq_one_and_high_coeff_zero` builds monicity from a coefficient equal to one with all higher coefficients zero. -/
@@ -851,8 +850,7 @@ private theorem coeff_monomial_mul
     (k : Nat) (c : Int) (q : ZPoly) (n : Nat) :
     ((DensePoly.monomial k c : ZPoly) * q).coeff n =
       if n < k then 0 else c * q.coeff (n - k) := by
-  rw [DensePoly.coeff_mul, mulCoeffSum_eq_diagonal_int]
-  rw [fold_diagonal_monomial_left]
+  rw [DensePoly.coeff_mul, mulCoeffSum_eq_diagonal_int, fold_diagonal_monomial_left]
   by_cases hk : k < (DensePoly.monomial k c : ZPoly).size
   · simp [hk, diagonalCoeffTerm, DensePoly.coeff_monomial]
   · have hcoeff : (DensePoly.monomial k c : ZPoly).coeff k = 0 :=
@@ -883,8 +881,7 @@ private theorem coeff_mulModSquare_monomial_leading
     (mulModSquare (DensePoly.monomial k c) q m).coeff (k + qd) =
       c % Int.ofNat (m ^ 2) := by
   unfold mulModSquare QuadraticLiftResult.reduceModSquare
-  rw [ZPoly.coeff_reduceModPow_eq_emod_of_pos]
-  rw [coeff_monomial_mul]
+  rw [ZPoly.coeff_reduceModPow_eq_emod_of_pos, coeff_monomial_mul]
   have hnot : ¬ k + qd < k := by omega
   have hsub : k + qd - k = qd := by omega
   have hqpos : 0 < q.size := by omega
@@ -1130,22 +1127,17 @@ private theorem quadraticHenselStep_bezout_correction_exact
   calc
     ((s - s * b - q * h) * g + (t - r) * h)
         = ((s - s * b) * g + (0 - q * h) * g) + (t - r) * h := by
-          rw [DensePoly.sub_eq_add_neg_poly (s - s * b) (q * h)]
-          rw [DensePoly.mul_add_left_poly]
+          rw [DensePoly.sub_eq_add_neg_poly (s - s * b) (q * h), DensePoly.mul_add_left_poly]
     _ = ((s * g + (0 - s * b) * g) + (0 - q * h) * g) + (t - r) * h := by
-          rw [DensePoly.sub_eq_add_neg_poly s (s * b)]
-          rw [DensePoly.mul_add_left_poly]
+          rw [DensePoly.sub_eq_add_neg_poly s (s * b), DensePoly.mul_add_left_poly]
     _ = ((s * g + (0 - s * b * g)) + (0 - (q * h) * g)) + (t - r) * h := by
-          rw [DensePoly.neg_mul_right_poly (s * b) g]
-          rw [DensePoly.neg_mul_right_poly (q * h) g]
+          rw [DensePoly.neg_mul_right_poly (s * b) g, DensePoly.neg_mul_right_poly (q * h) g]
     _ = ((s * g + (0 - s * b * g)) + (0 - (q * g) * h)) + (t - r) * h := by
-          rw [DensePoly.mul_assoc_poly q h g]
-          rw [DensePoly.mul_comm_poly h g]
-          rw [← DensePoly.mul_assoc_poly q g h]
+          rw [DensePoly.mul_assoc_poly q h g, DensePoly.mul_comm_poly h g,
+            ← DensePoly.mul_assoc_poly q g h]
     _ = ((s * g + (0 - s * b * g)) + (0 - (q * g) * h)) +
           (t * h + (0 - r) * h) := by
-          rw [DensePoly.sub_eq_add_neg_poly t r]
-          rw [DensePoly.mul_add_left_poly]
+          rw [DensePoly.sub_eq_add_neg_poly t r, DensePoly.mul_add_left_poly]
     _ = ((s * g + (0 - s * b * g)) + (0 - (q * g) * h)) +
           (t * h + (0 - r * h)) := by
           rw [DensePoly.neg_mul_right_poly r h]
@@ -1820,10 +1812,8 @@ private theorem quadraticHenselStep_factor_first_order_exact
         = (g * (s * e) + g * (q * h)) + r * h := by
           rw [DensePoly.mul_add_right_poly]
     _ = ((s * g) * e + (q * g) * h) + r * h := by
-          rw [← DensePoly.mul_assoc_poly g s e]
-          rw [DensePoly.mul_comm_poly g s]
-          rw [← DensePoly.mul_assoc_poly g q h]
-          rw [DensePoly.mul_comm_poly g q]
+          rw [← DensePoly.mul_assoc_poly g s e, DensePoly.mul_comm_poly g s,
+            ← DensePoly.mul_assoc_poly g q h, DensePoly.mul_comm_poly g q]
     _ = (s * g) * e + ((q * g) * h + r * h) := by
           apply DensePoly.ext_coeff
           intro n
@@ -1839,9 +1829,8 @@ private theorem quadraticHenselStep_factor_first_order_bezout_exact
   calc
     (s * g) * e + (t * e) * h
         = (s * g) * e + (t * h) * e := by
-          rw [DensePoly.mul_assoc_poly t e h]
-          rw [DensePoly.mul_comm_poly e h]
-          rw [← DensePoly.mul_assoc_poly t h e]
+          rw [DensePoly.mul_assoc_poly t e h, DensePoly.mul_comm_poly e h,
+            ← DensePoly.mul_assoc_poly t h e]
     _ = (s * g + t * h) * e := by
           rw [DensePoly.mul_add_left_poly]
 

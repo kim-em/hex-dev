@@ -719,11 +719,8 @@ theorem add_comm (a b : Quotient g hmonic hg_pos) :
 
 private theorem add_pair_swap_quot (a b c d : Quotient g hmonic hg_pos) :
     (a + b) + (c + d) = (a + c) + (b + d) := by
-  rw [add_assoc a b (c + d)]
-  rw [← add_assoc b c d]
-  rw [add_comm b c]
-  rw [add_assoc c b d]
-  rw [← add_assoc a c (b + d)]
+  rw [add_assoc a b (c + d), ← add_assoc b c d, add_comm b c, add_assoc c b d,
+    ← add_assoc a c (b + d)]
 
 /-- Adding a quotient element to its left additive inverse gives zero. -/
 @[simp, grind =] theorem add_left_neg (a : Quotient g hmonic hg_pos) :
@@ -1496,8 +1493,7 @@ private theorem foldl_eval_replicate_zero (β : Quotient g hmonic hg_pos) :
       simp
   | n + 1, acc => by
       simp only [List.replicate_succ, List.foldl_cons]
-      rw [reduce_C_zero, add_zero]
-      rw [foldl_eval_replicate_zero β n (acc * β)]
+      rw [reduce_C_zero, add_zero, foldl_eval_replicate_zero β n (acc * β)]
       calc
         (acc * β) * β ^ n = acc * (β * β ^ n) := by rw [mul_assoc]
         _ = acc * (β ^ n * β) := by rw [mul_comm β (β ^ n)]
@@ -1535,8 +1531,7 @@ private theorem mul_evalCoeffPowerSumFrom_eq_succ
       simp [evalCoeffPowerSumFrom]
   | coeff :: coeffs, base => by
       simp only [evalCoeffPowerSumFrom]
-      rw [left_distrib]
-      rw [mul_evalCoeffPowerSumFrom_eq_succ β coeffs (base + 1)]
+      rw [left_distrib, mul_evalCoeffPowerSumFrom_eq_succ β coeffs (base + 1)]
       congr 1
       calc
         β *
@@ -1782,8 +1777,7 @@ private theorem toArray_toList_eq_coeff_range (f : FpPoly p) :
   · intro i hi
     have hi_size : i < f.size := by
       simpa [DensePoly.toArray, DensePoly.size] using hi
-    rw [eval_coeff_list_getD_eq_coeff]
-    rw [list_getD_map_range_zmod]
+    rw [eval_coeff_list_getD_eq_coeff, list_getD_map_range_zmod]
     simp [hi_size]
 
 /-- Power-sum evaluation of a coefficient function over a finite interval. -/
@@ -1822,8 +1816,7 @@ private theorem eval_eq_coeff_power_sum_upTo_size (f : FpPoly p)
       evalCoeffPowerSumUpTo
         (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
         (fun i => f.coeff i) f.size 0 β := by
-  rw [eval_eq_coeff_power_sum]
-  rw [toArray_toList_eq_coeff_range]
+  rw [eval_eq_coeff_power_sum, toArray_toList_eq_coeff_range]
   simpa using evalCoeffPowerSumFrom_range_eq_upTo
     (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
     (fun i => f.coeff i) β f.size 0
@@ -1840,9 +1833,8 @@ private theorem evalCoeffPowerSumUpTo_extend_zero
       simp [evalCoeffPowerSumUpTo]
   | extra + 1, base, hbase => by
       simp only [evalCoeffPowerSumUpTo]
-      rw [hzero base hbase, reduce_C_zero, zero_mul]
-      rw [evalCoeffPowerSumUpTo_extend_zero coeff β hzero extra (base + 1) (by omega)]
-      rw [zero_add]
+      rw [hzero base hbase, reduce_C_zero, zero_mul,
+        evalCoeffPowerSumUpTo_extend_zero coeff β hzero extra (base + 1) (by omega), zero_add]
 
 private theorem evalCoeffPowerSumUpTo_succ_of_next_zero
     (coeff : Nat → ZMod64 p) (β : Quotient g hmonic hg_pos) :
@@ -1879,8 +1871,7 @@ private theorem evalCoeffPowerSumUpTo_le_extend_base
   | 0 => by
       simp
   | extra + 1 => by
-      rw [evalCoeffPowerSumUpTo_le_extend_base coeff β hzero extra]
-      rw [Nat.add_succ]
+      rw [evalCoeffPowerSumUpTo_le_extend_base coeff β hzero extra, Nat.add_succ]
       exact evalCoeffPowerSumUpTo_succ_of_next_zero
         coeff β (bound + extra) base (hzero (base + (bound + extra)) (by omega))
 
@@ -2026,23 +2017,19 @@ private theorem evalCoeffPowerSumUpTo_add
       simp [evalCoeffPowerSumUpTo]
   | n + 1, base => by
       simp only [evalCoeffPowerSumUpTo]
-      rw [reduce_C_add]
-      rw [evalCoeffPowerSumUpTo_add f h β n (base + 1)]
-      rw [right_distrib]
+      rw [reduce_C_add, evalCoeffPowerSumUpTo_add f h β n (base + 1), right_distrib]
       exact add_pair_swap_quot _ _ _ _
 
 private theorem neg_add_quot (a b : Quotient g hmonic hg_pos) :
     -(a + b) = -a + -b := by
   have hzero : (a + b) + (-a + -b) = 0 := by
-    rw [add_pair_swap_quot a b (-a) (-b)]
-    rw [add_right_neg, add_right_neg, zero_add]
+    rw [add_pair_swap_quot a b (-a) (-b), add_right_neg, add_right_neg, zero_add]
   exact (eq_neg_of_add_eq_zero_right hzero).symm
 
 private theorem add_sub_pair_swap
     (a b c d : Quotient g hmonic hg_pos) :
     (a - b) + (c - d) = (a + c) - (b + d) := by
-  rw [sub_eq_add_neg a b, sub_eq_add_neg c d, sub_eq_add_neg (a + c) (b + d)]
-  rw [neg_add_quot]
+  rw [sub_eq_add_neg a b, sub_eq_add_neg c d, sub_eq_add_neg (a + c) (b + d), neg_add_quot]
   exact add_pair_swap_quot a (-b) c (-d)
 
 private theorem evalCoeffPowerSumUpTo_sub
@@ -2061,9 +2048,7 @@ private theorem evalCoeffPowerSumUpTo_sub
       simp [evalCoeffPowerSumUpTo, sub_self]
   | n + 1, base => by
       simp only [evalCoeffPowerSumUpTo]
-      rw [reduce_C_sub]
-      rw [evalCoeffPowerSumUpTo_sub f h β n (base + 1)]
-      rw [sub_mul]
+      rw [reduce_C_sub, evalCoeffPowerSumUpTo_sub f h β n (base + 1), sub_mul]
       exact add_sub_pair_swap _ _ _ _
 
 private theorem evalCoeffPowerSumUpTo_const_mul
@@ -2081,9 +2066,7 @@ private theorem evalCoeffPowerSumUpTo_const_mul
       simp [evalCoeffPowerSumUpTo, mul_zero]
   | n + 1, base => by
       simp only [evalCoeffPowerSumUpTo]
-      rw [reduce_C_mul]
-      rw [evalCoeffPowerSumUpTo_const_mul c f β n (base + 1)]
-      rw [left_distrib]
+      rw [reduce_C_mul, evalCoeffPowerSumUpTo_const_mul c f β n (base + 1), left_distrib]
       congr 1
       rw [mul_assoc]
 
@@ -2252,9 +2235,7 @@ private theorem eval_monomial_core (n : Nat) (c : ZMod64 p)
           (DensePoly.C (0 : ZMod64 p)) *
         β ^ n
     unfold DensePoly.monomial
-    rw [dif_pos (show (0 : ZMod64 p) = Zero.zero from rfl)]
-    rw [eval_zero, reduce_C_zero]
-    rw [zero_mul]
+    rw [dif_pos (show (0 : ZMod64 p) = Zero.zero from rfl), eval_zero, reduce_C_zero, zero_mul]
   · unfold eval DensePoly.toArray DensePoly.monomial
     have hc0 : ¬ c = (Zero.zero : ZMod64 p) := hc
     rw [dif_neg hc0]
@@ -2655,8 +2636,7 @@ private theorem evalQuotientCoeffs_topNonzero_of_ne_zero
     reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C topCoeff)
   refine ⟨topQuot, ?_, ?_⟩
   · unfold evalQuotientCoeffs topQuot topCoeff DensePoly.toArray DensePoly.coeff
-    rw [List.getLast?_map, List.getLast?_eq_getElem?]
-    rw [Array.getElem?_toList]
+    rw [List.getLast?_map, List.getLast?_eq_getElem?, Array.getElem?_toList]
     rw [Array.getElem?_eq_getElem
       (by simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hsize_pos)]
     rw [Array.getElem_eq_getD (Zero.zero : ZMod64 p)]

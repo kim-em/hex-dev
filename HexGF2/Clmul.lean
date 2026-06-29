@@ -200,8 +200,7 @@ private theorem oneHot_shiftRight_of_sum_ge {hot bitIdx : Nat}
   simp [UInt64.toNat_shiftLeft, UInt64.toNat_shiftRight,
     Nat.mod_eq_of_lt hhot, Nat.mod_eq_of_lt hshift, Nat.mod_eq_of_lt htarget,
     Nat.mod_eq_of_lt hpowHot, Nat.mod_eq_of_lt hpowTarget, Nat.shiftLeft_eq]
-  rw [hexp, Nat.pow_add]
-  rw [Nat.shiftRight_eq_div_pow]
+  rw [hexp, Nat.pow_add, Nat.shiftRight_eq_div_pow]
   have hrhs : 64 - bitIdx + (hot + bitIdx - 64) + bitIdx - 64 =
       hot + bitIdx - 64 := by
     omega
@@ -316,8 +315,8 @@ private theorem foldl_oneHot_list (a : UInt64) {hot : Nat} (hhot : hot < 64) :
       · subst bitIdx
         have hnotTail : hot ∉ xs := by
           exact (List.nodup_cons.mp hnodup).1
-        rw [List.foldl_cons, clmulOneHotStep_self a hhot]
-        rw [foldl_oneHot_absent a hhot _ xs hnotTail hltTail]
+        rw [List.foldl_cons, clmulOneHotStep_self a hhot,
+          foldl_oneHot_absent a hhot _ xs hnotTail hltTail]
         simp
       · have hstep :
             clmulOneHotStep a hot (0, 0) bitIdx = (0, 0) :=
@@ -726,8 +725,7 @@ private theorem foldl_clmulLeftBitFoldStep_eq_right (bits : List Nat) (w y : UIn
       have htail : ∀ bit ∈ bits, bit < 64 := by
         intro bit hmem
         exact hlt bit (by simp [hmem])
-      rw [List.foldl_cons, List.foldl_cons]
-      rw [clmulLeftBitFoldStep_eq_right w y hbit acc]
+      rw [List.foldl_cons, List.foldl_cons, clmulLeftBitFoldStep_eq_right w y hbit acc]
       exact ih htail _
 
 /-- The left one-hot fold pulls its starting accumulator out as a leading XOR:
@@ -744,9 +742,9 @@ private theorem foldl_clmulLeftBitFoldStep_acc (bits : List Nat) (w y : UInt64)
       simp only [List.foldl_cons]
       by_cases hbit : (((w >>> bit.toUInt64) &&& 1) != 0)
       · simp [clmulLeftBitFoldStep, hbit]
-        rw [ih (xorPair acc (clmul ((1 : UInt64) <<< bit.toUInt64) y))]
-        rw [ih (xorPair (0, 0) (clmul ((1 : UInt64) <<< bit.toUInt64) y))]
-        rw [xorPair_zero_left, xorPair_assoc]
+        rw [ih (xorPair acc (clmul ((1 : UInt64) <<< bit.toUInt64) y)),
+          ih (xorPair (0, 0) (clmul ((1 : UInt64) <<< bit.toUInt64) y)),
+          xorPair_zero_left, xorPair_assoc]
       · simp [clmulLeftBitFoldStep, hbit]
         exact ih acc
 
@@ -772,8 +770,7 @@ private theorem clmul_wordBitFold_left_eq_bits_acc (bits : List Nat) (w y seed :
         rw [ih (seed ^^^ ((1 : UInt64) <<< bit.toUInt64)) htail]
         rw [foldl_clmulLeftBitFoldStep_acc bits w y
           (xorPair (0, 0) (clmul ((1 : UInt64) <<< bit.toUInt64) y))]
-        rw [clmul_xor_left]
-        rw [xorPair_zero_left]
+        rw [clmul_xor_left, xorPair_zero_left]
         simpa [xorPair] using
           xorPair_assoc (clmul seed y) (clmul ((1 : UInt64) <<< bit.toUInt64) y)
             (bits.foldl (clmulLeftBitFoldStep w y) (0, 0))
@@ -889,7 +886,6 @@ theorem pureClmul_xor_right (x y z : UInt64) :
     pureClmul x (y ^^^ z) =
       ((pureClmul x y).1 ^^^ (pureClmul x z).1,
         (pureClmul x y).2 ^^^ (pureClmul x z).2) := by
-  rw [← clmul_eq_pureClmul, clmul_xor_right]
-  rw [clmul_eq_pureClmul, clmul_eq_pureClmul]
+  rw [← clmul_eq_pureClmul, clmul_xor_right, clmul_eq_pureClmul, clmul_eq_pureClmul]
 
 end Hex

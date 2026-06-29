@@ -209,9 +209,8 @@ private theorem mod_powLinear_mod_eq
   | succ n ih =>
       show (powLinear (base % f) n * (base % f)) % f =
         (powLinear base n * base) % f
-      rw [DensePoly.DivModLaws.mod_mul_mod (powLinear (base % f) n) (base % f) f]
-      rw [ih, DensePoly.mod_mod base f]
-      rw [← DensePoly.DivModLaws.mod_mul_mod (powLinear base n) base f]
+      rw [DensePoly.DivModLaws.mod_mul_mod (powLinear (base % f) n) (base % f) f,
+        ih, DensePoly.mod_mod base f, ← DensePoly.DivModLaws.mod_mul_mod (powLinear base n) base f]
 
 private theorem linearPow_eq_powLinear (f : FpPoly p) (n : Nat) :
     FpPoly.linearPow f n = powLinear f n := by
@@ -257,10 +256,9 @@ private theorem powModMonicLinear_mod_eq
       rw [show modByMonic f (powModMonicLinear base f hmonic n * base) hmonic =
             (powModMonicLinear base f hmonic n * base) % f from
           DensePoly.modByMonic_eq_mod _ _ hmonic]
-      rw [DensePoly.mod_mod]
-      rw [DensePoly.DivModLaws.mod_mul_mod (powModMonicLinear base f hmonic n) base f]
-      rw [ih]
-      rw [← DensePoly.DivModLaws.mod_mul_mod (powLinear base n) base f]
+      rw [DensePoly.mod_mod,
+        DensePoly.DivModLaws.mod_mul_mod (powModMonicLinear base f hmonic n) base f, ih,
+        ← DensePoly.DivModLaws.mod_mul_mod (powLinear base n) base f]
 
 /-- Positive structural powers are already reduced modulo the monic modulus. -/
 private theorem powModMonicLinear_pos_self_mod
@@ -296,8 +294,7 @@ private theorem powModMonicAux_mod_eq
     | succ m =>
         have hlt : (m + 1) / 2 < m + 1 :=
           Nat.div_lt_self (Nat.succ_pos m) (by decide)
-        rw [powModMonicAux_succ_eq]
-        rw [ih ((m + 1) / 2) hlt]
+        rw [powModMonicAux_succ_eq, ih ((m + 1) / 2) hlt]
         rw [show modByMonic f (base * base) hmonic = (base * base) % f from
               DensePoly.modByMonic_eq_mod _ _ hmonic]
         rcases Nat.mod_two_eq_zero_or_one (m + 1) with hmod | hmod

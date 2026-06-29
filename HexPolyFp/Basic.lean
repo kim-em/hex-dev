@@ -107,9 +107,7 @@ private theorem divMod_spec_core [PrimeModulus p] (f g : DensePoly (ZMod64 p)) :
       unfold DensePoly.leadingCoeff DensePoly.coeff
       change g.coeffs.back?.getD (0 : ZMod64 p) =
         g.coeffs.getD (g.coeffs.size - 1) (Zero.zero : ZMod64 p)
-      rw [Array.back?_eq_getElem?]
-      rw [Array.getD_eq_getD_getElem?]
-      rw [Array.getElem?_eq_getElem hidx]
+      rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hidx]
       rfl
     have hlead_ne : g.leadingCoeff ≠ (Zero.zero : ZMod64 p) := by
       rw [hlead_eq]
@@ -149,9 +147,7 @@ private theorem mod_sub_self_eq_mul_neg_div [PrimeModulus p] (f m : DensePoly (Z
       have hcoeff := congrArg (fun x : DensePoly (ZMod64 p) => x.coeff n) hdiv
       change (((f / m) * m + (f % m)).coeff n = f.coeff n) at hcoeff
       rw [DensePoly.coeff_add_semiring] at hcoeff
-      rw [DensePoly.coeff_sub_ring]
-      rw [DensePoly.coeff_sub_ring]
-      rw [DensePoly.coeff_zero]
+      rw [DensePoly.coeff_sub_ring, DensePoly.coeff_sub_ring, DensePoly.coeff_zero]
       grind
     _ = m * (0 - (f / m)) := by
       exact (DensePoly.mul_sub_zero_comm m (f / m)).symm
@@ -178,10 +174,8 @@ private theorem add_sub_add_right (a b c d : DensePoly (ZMod64 p)) :
     (a + b) - (c + d) = (a - c) + (b - d) := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_sub_ring, DensePoly.coeff_sub_ring]
+  rw [DensePoly.coeff_sub_ring, DensePoly.coeff_add_semiring, DensePoly.coeff_add_semiring,
+    DensePoly.coeff_add_semiring, DensePoly.coeff_sub_ring, DensePoly.coeff_sub_ring]
   grind
 
 /-- `(DensePoly.divMod f m).2` has degree strictly below `m` when `m` has positive degree. -/
@@ -204,9 +198,7 @@ private theorem divMod_remainder_degree_lt_core
       simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos_size
     change m.coeffs.back?.getD (0 : ZMod64 p) =
       m.coeffs.getD (m.coeffs.size - 1) (Zero.zero : ZMod64 p)
-    rw [Array.back?_eq_getElem?]
-    rw [Array.getD_eq_getD_getElem?]
-    rw [Array.getElem?_eq_getElem hidx]
+    rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hidx]
     rfl
   have hlead_ne : lead ≠ (Zero.zero : ZMod64 p) := by
     rw [hlead_eq]
@@ -593,9 +585,7 @@ private theorem mod_eq_mod_of_congr_not_pos_degree
         unfold DensePoly.leadingCoeff DensePoly.coeff
         change m.coeffs.back?.getD (0 : ZMod64 p) =
           m.coeffs.getD (m.coeffs.size - 1) (Zero.zero : ZMod64 p)
-        rw [Array.back?_eq_getElem?]
-        rw [Array.getD_eq_getD_getElem?]
-        rw [Array.getElem?_eq_getElem hidx]
+        rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hidx]
         rfl
       have hcoeff_ne := DensePoly.coeff_last_ne_zero_of_pos_size m hpos
       rw [hlead_eq]
@@ -645,8 +635,7 @@ private theorem sub_self_right_add (a b : DensePoly (ZMod64 p)) :
     (a + b) - a = b := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_sub_ring, DensePoly.coeff_add_semiring]
   grind
 
 private theorem mul_left_remainder_delta (f g m rf rg : DensePoly (ZMod64 p))
@@ -989,11 +978,8 @@ private theorem foldl_eval_replicate_zero (x : ZMod64 p) :
   | succ n ih =>
       intro acc
       simp only [List.replicate_succ, List.foldl_cons]
-      rw [zmod_add_zero]
-      rw [ih (acc * x)]
-      rw [Lean.Grind.Semiring.pow_succ x n]
-      rw [Lean.Grind.Semiring.mul_assoc acc x (x ^ n)]
-      rw [Lean.Grind.CommSemiring.mul_comm x (x ^ n)]
+      rw [zmod_add_zero, ih (acc * x), Lean.Grind.Semiring.pow_succ x n,
+        Lean.Grind.Semiring.mul_assoc acc x (x ^ n), Lean.Grind.CommSemiring.mul_comm x (x ^ n)]
 
 /-- Evaluating a monomial gives the coefficient times the corresponding power. -/
 @[simp, grind =]
@@ -1066,15 +1052,12 @@ private theorem mul_evalCoeffPowerSumFrom_eq_succ
       simp [evalCoeffPowerSumFrom, Lean.Grind.Semiring.mul_zero]
   | coeff :: coeffs, base => by
       simp only [evalCoeffPowerSumFrom]
-      rw [Lean.Grind.Semiring.left_distrib]
-      rw [mul_evalCoeffPowerSumFrom_eq_succ x coeffs (base + 1)]
-      rw [← Lean.Grind.Semiring.mul_assoc x coeff (x ^ base)]
-      rw [Lean.Grind.CommSemiring.mul_comm x coeff]
-      rw [Lean.Grind.Semiring.mul_assoc coeff x (x ^ base)]
-      rw [Lean.Grind.CommSemiring.mul_comm x (x ^ base)]
-      rw [← Lean.Grind.Semiring.mul_assoc coeff (x ^ base) x]
-      rw [Lean.Grind.Semiring.pow_succ x base]
-      rw [Lean.Grind.Semiring.mul_assoc coeff (x ^ base) x]
+      rw [Lean.Grind.Semiring.left_distrib, mul_evalCoeffPowerSumFrom_eq_succ x coeffs (base + 1),
+        ← Lean.Grind.Semiring.mul_assoc x coeff (x ^ base),
+        Lean.Grind.CommSemiring.mul_comm x coeff, Lean.Grind.Semiring.mul_assoc coeff x (x ^ base),
+        Lean.Grind.CommSemiring.mul_comm x (x ^ base),
+        ← Lean.Grind.Semiring.mul_assoc coeff (x ^ base) x, Lean.Grind.Semiring.pow_succ x base,
+        Lean.Grind.Semiring.mul_assoc coeff (x ^ base) x]
 
 /-- The Horner evaluation of a coefficient list equals its power sum based at
 exponent zero. -/
@@ -1086,8 +1069,8 @@ private theorem evalScalarCoeffList_eq_powerSumFrom_zero
       simp [evalScalarCoeffList, evalCoeffPowerSumFrom]
   | coeff :: coeffs => by
       simp only [evalScalarCoeffList, evalCoeffPowerSumFrom]
-      rw [evalScalarCoeffList_eq_powerSumFrom_zero x coeffs]
-      rw [mul_evalCoeffPowerSumFrom_eq_succ x coeffs 0]
+      rw [evalScalarCoeffList_eq_powerSumFrom_zero x coeffs,
+        mul_evalCoeffPowerSumFrom_eq_succ x coeffs 0]
       grind
 
 /-- The Horner-step left fold over the reversed coefficient list equals
@@ -1102,9 +1085,8 @@ private theorem foldl_eval_reverse_eq_evalScalarCoeffList
   | coeff :: coeffs => by
       rw [List.reverse_cons, List.foldl_append]
       simp only [List.foldl_cons, List.foldl_nil]
-      rw [foldl_eval_reverse_eq_evalScalarCoeffList x coeffs]
-      rw [Lean.Grind.CommSemiring.mul_comm]
-      rw [Lean.Grind.Semiring.add_comm]
+      rw [foldl_eval_reverse_eq_evalScalarCoeffList x coeffs, Lean.Grind.CommSemiring.mul_comm,
+        Lean.Grind.Semiring.add_comm]
       rfl
 
 /-- `DensePoly.eval f x` equals the power sum of `f`'s coefficient list based at
@@ -1170,8 +1152,7 @@ private theorem toArray_toList_eq_coeff_range (f : FpPoly p) :
   · intro i hi
     have hi_size : i < f.size := by
       simpa [DensePoly.toArray, DensePoly.size] using hi
-    rw [eval_coeff_list_getD_eq_coeff]
-    rw [list_getD_map_range_zmod]
+    rw [eval_coeff_list_getD_eq_coeff, list_getD_map_range_zmod]
     simp [hi_size]
 
 /-- `evalCoeffPowerSumUpTo coeff n base x` is the power sum
@@ -1206,8 +1187,7 @@ coefficients up to `f.size`. -/
 private theorem eval_eq_coeff_power_sum_upTo_size (f : FpPoly p)
     (x : ZMod64 p) :
     DensePoly.eval f x = evalCoeffPowerSumUpTo (fun i => f.coeff i) f.size 0 x := by
-  rw [eval_eq_coeff_power_sum]
-  rw [toArray_toList_eq_coeff_range]
+  rw [eval_eq_coeff_power_sum, toArray_toList_eq_coeff_range]
   simpa using evalCoeffPowerSumFrom_range_eq_upTo (fun i => f.coeff i) x f.size 0
 
 /-- Extending the power sum by one more term leaves it unchanged when the next
@@ -1220,9 +1200,8 @@ private theorem evalCoeffPowerSumUpTo_succ_of_next_zero
           evalCoeffPowerSumUpTo coeff (n + 1) base x
   | 0, base, hzero => by
       have hz : coeff base = 0 := by simpa using hzero
-      rw [evalCoeffPowerSumUpTo, evalCoeffPowerSumUpTo, hz]
-      rw [evalCoeffPowerSumUpTo]
-      rw [Lean.Grind.Semiring.add_zero]
+      rw [evalCoeffPowerSumUpTo, evalCoeffPowerSumUpTo, hz, evalCoeffPowerSumUpTo,
+        Lean.Grind.Semiring.add_zero]
       exact (Lean.Grind.Semiring.zero_mul (x ^ base)).symm
   | n + 1, base, hzero => by
       simp only [evalCoeffPowerSumUpTo]
@@ -1241,8 +1220,7 @@ private theorem evalCoeffPowerSumUpTo_le_extend_base
   | 0 => by
       simp
   | extra + 1 => by
-      rw [evalCoeffPowerSumUpTo_le_extend_base coeff x hzero extra]
-      rw [Nat.add_succ]
+      rw [evalCoeffPowerSumUpTo_le_extend_base coeff x hzero extra, Nat.add_succ]
       exact evalCoeffPowerSumUpTo_succ_of_next_zero
         coeff x (bound + extra) base (hzero (base + (bound + extra)) (by omega))
 
@@ -1325,18 +1303,17 @@ private theorem evalCoeffPowerSumUpTo_rebase_mul
       simp [evalCoeffPowerSumUpTo]
   | n + 1, base => by
       simp only [evalCoeffPowerSumUpTo]
-      rw [Lean.Grind.Semiring.left_distrib]
-      rw [evalCoeffPowerSumUpTo_rebase_mul coeff x shift n (base + 1)]
+      rw [Lean.Grind.Semiring.left_distrib,
+        evalCoeffPowerSumUpTo_rebase_mul coeff x shift n (base + 1)]
       have hpow :
           x ^ shift * x ^ base = x ^ (shift + base) := by
         exact (Lean.Grind.Semiring.pow_add x shift base).symm
       have hterm :
           x ^ shift * (coeff (shift + base) * x ^ base) =
             coeff (shift + base) * x ^ (shift + base) := by
-        rw [← Lean.Grind.Semiring.mul_assoc]
-        rw [Lean.Grind.CommSemiring.mul_comm (x ^ shift) (coeff (shift + base))]
-        rw [Lean.Grind.Semiring.mul_assoc]
-        rw [hpow]
+        rw [← Lean.Grind.Semiring.mul_assoc,
+          Lean.Grind.CommSemiring.mul_comm (x ^ shift) (coeff (shift + base)),
+          Lean.Grind.Semiring.mul_assoc, hpow]
       rw [hterm]
       grind
 
@@ -1350,8 +1327,7 @@ private theorem evalCoeffPowerSumUpTo_zero_prefix_shift
         x ^ shift * evalCoeffPowerSumUpTo coeff n 0 x
   | 0, n => by
       simp only [Nat.zero_add]
-      rw [Lean.Grind.Semiring.pow_zero]
-      rw [Lean.Grind.Semiring.one_mul]
+      rw [Lean.Grind.Semiring.pow_zero, Lean.Grind.Semiring.one_mul]
       rfl
   | shift + 1, n => by
       rw [Nat.succ_add]
@@ -1373,8 +1349,7 @@ private theorem evalCoeffPowerSumUpTo_zero_prefix_shift
           (fun k => if k < shift + 1 then 0 else coeff (k - (shift + 1)))
           x 1 (shift + n) 0]
         have hx_one : x ^ 1 = x := by
-          rw [Lean.Grind.Semiring.pow_succ x 0]
-          rw [Lean.Grind.Semiring.pow_zero]
+          rw [Lean.Grind.Semiring.pow_succ x 0, Lean.Grind.Semiring.pow_zero]
           grind
         rw [hx_one]
         have hfun :
@@ -1388,9 +1363,8 @@ private theorem evalCoeffPowerSumUpTo_zero_prefix_shift
             have hsub : 1 + k - (shift + 1) = k - shift := by omega
             simp [hk, hk', hsub]
         rw [hfun]
-      rw [htail]
-      rw [evalCoeffPowerSumUpTo_zero_prefix_shift coeff x shift n]
-      rw [Lean.Grind.Semiring.pow_succ x shift]
+      rw [htail, evalCoeffPowerSumUpTo_zero_prefix_shift coeff x shift n,
+        Lean.Grind.Semiring.pow_succ x shift]
       grind
 
 /-- A polynomial's size is at most `bound` when all coefficients from `bound`
@@ -1509,8 +1483,7 @@ structure on `FpPoly p`. -/
     f + 0 = f := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_zero]
+  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_zero]
   grind
 
 /-- `0` is a left identity for addition. Part of the commutative-ring
@@ -1519,8 +1492,7 @@ structure on `FpPoly p`. -/
     0 + f = f := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_zero]
+  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_zero]
   grind
 
 /-- Polynomial addition is commutative. Part of the commutative-ring
@@ -1529,8 +1501,7 @@ theorem add_comm (f g : FpPoly p) :
     f + g = g + f := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_add_semiring]
   grind
 
 /-- Polynomial addition is associative, letting callers regroup sums freely.
@@ -1539,10 +1510,8 @@ theorem add_assoc (f g h : FpPoly p) :
     f + g + h = f + (g + h) := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_add_semiring, DensePoly.coeff_add_semiring,
+    DensePoly.coeff_add_semiring]
   grind
 
 /-- Negating `0` gives `0`. -/
@@ -1550,8 +1519,7 @@ theorem add_assoc (f g h : FpPoly p) :
     -(0 : FpPoly p) = 0 := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_neg_ring]
-  rw [DensePoly.coeff_zero]
+  rw [DensePoly.coeff_neg_ring, DensePoly.coeff_zero]
   grind
 
 /-- The negation is a left additive inverse: `-f + f = 0`. -/
@@ -1559,9 +1527,7 @@ theorem add_assoc (f g h : FpPoly p) :
     -f + f = 0 := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_neg_ring]
-  rw [DensePoly.coeff_zero]
+  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_neg_ring, DensePoly.coeff_zero]
   grind
 
 /-- The negation is a right additive inverse: `f + -f = 0`. -/
@@ -1569,9 +1535,7 @@ theorem add_assoc (f g h : FpPoly p) :
     f + -f = 0 := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_neg_ring]
-  rw [DensePoly.coeff_zero]
+  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_neg_ring, DensePoly.coeff_zero]
   grind
 
 /-- Subtracting `0` leaves a polynomial unchanged. -/
@@ -1579,8 +1543,7 @@ theorem add_assoc (f g h : FpPoly p) :
     f - 0 = f := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_zero]
+  rw [DensePoly.coeff_sub_ring, DensePoly.coeff_zero]
   grind
 
 /-- Subtracting a polynomial from `0` yields its negation. -/
@@ -1593,8 +1556,7 @@ theorem add_assoc (f g h : FpPoly p) :
     f - f = 0 := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_zero]
+  rw [DensePoly.coeff_sub_ring, DensePoly.coeff_zero]
   grind
 
 /-- Subtraction unfolds to adding the negation. Rewrites subtraction in terms
@@ -1603,9 +1565,7 @@ theorem sub_eq_add_neg (f g : FpPoly p) :
     f - g = f + -g := by
   apply DensePoly.ext_coeff
   intro i
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_neg_ring]
+  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_sub_ring, DensePoly.coeff_neg_ring]
   grind
 
 example (f : FpPoly p) :
@@ -1636,8 +1596,7 @@ private theorem coeff_mul_one_fold (f : FpPoly p) (n k : Nat) :
   | succ n ih =>
       rw [List.range_succ, List.foldl_append]
       simp only [List.foldl_cons, List.foldl_nil]
-      rw [DensePoly.coeff_add_semiring, ih]
-      rw [DensePoly.coeff_shift_scale]
+      rw [DensePoly.coeff_add_semiring, ih, DensePoly.coeff_shift_scale]
       · rw [coeff_one]
         by_cases hk : k < n
         · have hks : k < n + 1 := Nat.lt_trans hk (Nat.lt_succ_self n)
@@ -1906,8 +1865,7 @@ private theorem fold_add_reverse
   | cons x xs ih =>
       rw [List.reverse_cons, List.foldl_append]
       simp only [List.foldl_cons, List.foldl_nil]
-      rw [ih]
-      rw [fold_add_right xs a x]
+      rw [ih, fold_add_right xs a x]
 
 /-- `(List.range (n + 1)).reverse` equals `List.range (n + 1)` mapped by
 `fun i => n - i`, recasting the reversed summation order as the index
@@ -1966,9 +1924,7 @@ private theorem fold_mulCoeff_comm
     simpa [List.foldl_map, ← List.map_reverse] using
       fold_add_reverse (p := p)
         ((List.range (n + 1)).map (fun i => mulCoeffTerm f g n i)) 0
-  rw [← hrev]
-  rw [range_succ_reverse_eq_map_sub]
-  rw [List.foldl_map]
+  rw [← hrev, range_succ_reverse_eq_map_sub, List.foldl_map]
   exact fold_mulCoeff_comm_reindex_list f g n (List.range (n + 1)) (by
     intro i hi
     exact List.mem_range.mp hi) 0
@@ -1980,9 +1936,7 @@ theorem mul_comm (f g : FpPoly p) :
     f * g = g * f := by
   apply DensePoly.ext_coeff
   intro n
-  rw [coeff_mul, coeff_mul]
-  rw [mulCoeffSum_eq_degree_bound f g n]
-  rw [mulCoeffSum_eq_degree_bound g f n]
+  rw [coeff_mul, coeff_mul, mulCoeffSum_eq_degree_bound f g n, mulCoeffSum_eq_degree_bound g f n]
   exact fold_mulCoeff_comm f g n
 
 private theorem mulCoeffTerm_left_distrib (f g h : FpPoly p) (n i : Nat) :
@@ -2295,9 +2249,8 @@ private theorem fold_flatMap_map_add
   | nil =>
       rfl
   | cons x xs ih =>
-      rw [List.flatMap_cons, List.foldl_append]
-      rw [fold_add_acc (p := p) ((row x).map (term x)) acc]
-      rw [ih]
+      rw [List.flatMap_cons, List.foldl_append, fold_add_acc (p := p) ((row x).map (term x)) acc,
+        ih]
       simp [List.foldl_map]
 
 /-- `fold_triangular_assoc_reindex` reindexes the triangular coefficient double-fold
@@ -2353,8 +2306,7 @@ private theorem fold_add_zero_terms_acc
       rfl
   | cons i xs ih =>
       simp only [List.foldl_cons]
-      rw [hterm i (by simp)]
-      rw [zmod_add_zero]
+      rw [hterm i (by simp), zmod_add_zero]
       exact ih (by
         intro j hj
         exact hterm j (by simp [hj])) acc
@@ -2386,8 +2338,7 @@ private theorem fold_add_single_range
           have hi' : i < n + 1 := List.mem_range.mp hi
           have hne : i ≠ n + 1 := by omega
           rw [if_neg hne]
-        rw [hzero]
-        rw [if_pos rfl]
+        rw [hzero, if_pos rfl]
         exact zmod_zero_add a
       · have ht' : t < n + 1 := by omega
         rw [ih ht']
@@ -2469,8 +2420,7 @@ theorem coeff_mul_shift_scale_one
         have hlt : n - j < i := by omega
         simp [hlt]
         exact zmod_mul_zero (f.coeff j)
-    rw [hzero]
-    rw [if_neg hin]
+    rw [hzero, if_neg hin]
 
 /-- Expands the degree-`n` coefficient of `(f * g) * h` into a left-associated
 triple fold: the outer sum over `i` pairs the `i`-th coefficient of `f * g`
@@ -2642,10 +2592,9 @@ theorem right_distrib (f g h : FpPoly p) :
   apply DensePoly.ext_coeff
   intro n
   let m := max (max (f + g).size f.size) g.size
-  rw [DensePoly.coeff_add_semiring]
-  rw [coeff_mul_of_size_le (f + g) h n m (by dsimp [m]; omega)]
-  rw [coeff_mul_of_size_le f h n m (by dsimp [m]; omega)]
-  rw [coeff_mul_of_size_le g h n m (by dsimp [m]; omega)]
+  rw [DensePoly.coeff_add_semiring, coeff_mul_of_size_le (f + g) h n m (by dsimp [m]; omega),
+    coeff_mul_of_size_le f h n m (by dsimp [m]; omega),
+    coeff_mul_of_size_le g h n m (by dsimp [m]; omega)]
   exact fold_right_distrib (List.range m) f g h n
 
 /-- Polynomial multiplication is associative, letting callers regroup products
@@ -2654,9 +2603,8 @@ theorem mul_assoc (f g h : FpPoly p) :
     (f * g) * h = f * (g * h) := by
   apply DensePoly.ext_coeff
   intro n
-  rw [coeff_mul, coeff_mul]
-  rw [mulCoeffSum_eq_degree_bound (f * g) h n]
-  rw [mulCoeffSum_eq_degree_bound f (g * h) n]
+  rw [coeff_mul, coeff_mul, mulCoeffSum_eq_degree_bound (f * g) h n,
+    mulCoeffSum_eq_degree_bound f (g * h) n]
   calc
     (List.range (n + 1)).foldl
         (fun acc i => acc + mulCoeffTerm (f * g) h n i) 0
@@ -2684,11 +2632,8 @@ theorem scale_add (c : ZMod64 p) (f g : FpPoly p) :
   apply DensePoly.ext_coeff
   intro n
   have hzero : c * (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_scale _ _ _ hzero]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_scale _ _ _ hzero]
-  rw [DensePoly.coeff_scale _ _ _ hzero]
+  rw [DensePoly.coeff_scale _ _ _ hzero, DensePoly.coeff_add_semiring, DensePoly.coeff_add_semiring,
+    DensePoly.coeff_scale _ _ _ hzero, DensePoly.coeff_scale _ _ _ hzero]
   grind
 
 /-- Scaling a product equals scaling its left factor. With `mul_comm` this lets
@@ -2699,11 +2644,9 @@ theorem scale_mul_left (c : ZMod64 p) (f g : FpPoly p) :
   apply DensePoly.ext_coeff
   intro n
   have hzero : c * (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_scale _ _ _ hzero]
-  rw [coeff_mul, coeff_mul]
-  rw [mulCoeffSum_eq_degree_bound (DensePoly.scale c f) g n]
-  rw [mulCoeffSum_eq_degree_bound f g n]
-  rw [fold_mul_left]
+  rw [DensePoly.coeff_scale _ _ _ hzero, coeff_mul, coeff_mul,
+    mulCoeffSum_eq_degree_bound (DensePoly.scale c f) g n, mulCoeffSum_eq_degree_bound f g n,
+    fold_mul_left]
   apply fold_add_congr
   intro i _hi
   unfold mulCoeffTerm
@@ -2741,8 +2684,7 @@ The constant-multiplication special case of `eval_mul`. -/
 @[grind =]
 theorem eval_C_mul (c : ZMod64 p) (f : FpPoly p) (x : ZMod64 p) :
     DensePoly.eval (DensePoly.C c * f) x = c * DensePoly.eval f x := by
-  rw [C_mul_eq_scale]
-  rw [eval_eq_coeff_power_sum_upTo_bound (DensePoly.scale c f) x (bound := f.size)]
+  rw [C_mul_eq_scale, eval_eq_coeff_power_sum_upTo_bound (DensePoly.scale c f) x (bound := f.size)]
   · rw [eval_eq_coeff_power_sum_upTo_size f x]
     have hcoeff :
         (fun i => (DensePoly.scale c f).coeff i) =
@@ -2755,8 +2697,7 @@ theorem eval_C_mul (c : ZMod64 p) (f : FpPoly p) (x : ZMod64 p) :
   · apply size_le_of_coeff_eq_zero_from
     intro i hi
     have hzero : c * (0 : ZMod64 p) = 0 := by grind
-    rw [DensePoly.coeff_scale _ _ _ hzero]
-    rw [DensePoly.coeff_eq_zero_of_size_le f hi]
+    rw [DensePoly.coeff_scale _ _ _ hzero, DensePoly.coeff_eq_zero_of_size_le f hi]
     exact hzero
 
 /-- Evaluating the constant polynomial `1` at any point gives `1`. -/
@@ -2779,9 +2720,8 @@ private theorem fold_eval_shift_scale_rows
       rfl
   | cons i xs ih =>
       simp only [List.foldl_cons]
-      rw [ih (acc + DensePoly.shift i (DensePoly.scale (f.coeff i) h))]
-      rw [eval_add]
-      rw [eval_shift_scale_row]
+      rw [ih (acc + DensePoly.shift i (DensePoly.scale (f.coeff i) h)), eval_add,
+        eval_shift_scale_row]
 
 private theorem fold_shift_scale_one_eq_self (f : FpPoly p) :
     (List.range f.size).foldl
@@ -2803,8 +2743,7 @@ private theorem mul_eq_fold_shift_scale_rows (f h : FpPoly p) :
         (0 : FpPoly p) := by
   apply DensePoly.ext_coeff
   intro n
-  rw [coeff_mul]
-  rw [coeff_mul_fold]
+  rw [coeff_mul, coeff_mul_fold]
   unfold mulCoeffSum
   rw [DensePoly.coeff_zero]
   rfl
@@ -2815,9 +2754,7 @@ evaluation, used wherever a root or factorization is checked pointwise. -/
 @[simp, grind =]
 theorem eval_mul (f h : FpPoly p) (x : ZMod64 p) :
     DensePoly.eval (f * h) x = DensePoly.eval f x * DensePoly.eval h x := by
-  rw [mul_eq_fold_shift_scale_rows]
-  rw [fold_eval_shift_scale_rows]
-  rw [DensePoly.eval_zero]
+  rw [mul_eq_fold_shift_scale_rows, fold_eval_shift_scale_rows, DensePoly.eval_zero]
   have hf :
       DensePoly.eval f x =
         (List.range f.size).foldl
@@ -2826,8 +2763,7 @@ theorem eval_mul (f h : FpPoly p) (x : ZMod64 p) :
     rw [← fold_eval_shift_scale_rows
       (List.range f.size) (0 : FpPoly p) f (1 : FpPoly p) x]
     rw [fold_shift_scale_one_eq_self]
-  rw [hf]
-  rw [DensePoly.eval_zero, eval_one]
+  rw [hf, DensePoly.eval_zero, eval_one]
   have hone :
       (List.range f.size).foldl
           (fun acc i => acc + (f.coeff i * x ^ i) * (1 : ZMod64 p)) 0 =
@@ -2859,9 +2795,8 @@ theorem scale_scale (c d : ZMod64 p) (f : FpPoly p) :
   have hzero_c : c * (0 : ZMod64 p) = 0 := by grind
   have hzero_d : d * (0 : ZMod64 p) = 0 := by grind
   have hzero_cd : (c * d) * (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_scale _ _ _ hzero_c]
-  rw [DensePoly.coeff_scale _ _ _ hzero_d]
-  rw [DensePoly.coeff_scale _ _ _ hzero_cd]
+  rw [DensePoly.coeff_scale _ _ _ hzero_c, DensePoly.coeff_scale _ _ _ hzero_d,
+    DensePoly.coeff_scale _ _ _ hzero_cd]
   grind
 
 /-- Scaling by `1` leaves the polynomial unchanged. The identity law of the
@@ -3000,10 +2935,9 @@ theorem leadingCoeff_scale_of_ne_zero_of_pos_degree [ZMod64.PrimeModulus p]
     scale_size_eq_of_ne_zero (p := p) hc f
   have hscale_pos : 0 < (DensePoly.scale c f).size := by omega
   have hscale_zero : c * (0 : ZMod64 p) = 0 := by grind
-  rw [leadingCoeff_eq_coeff_pred (DensePoly.scale c f) hscale_pos]
-  rw [leadingCoeff_eq_coeff_pred f hfpos]
-  rw [show (DensePoly.scale c f).size - 1 = f.size - 1 by omega]
-  rw [DensePoly.coeff_scale _ _ _ hscale_zero]
+  rw [leadingCoeff_eq_coeff_pred (DensePoly.scale c f) hscale_pos,
+    leadingCoeff_eq_coeff_pred f hfpos, show (DensePoly.scale c f).size - 1 = f.size - 1 by omega,
+    DensePoly.coeff_scale _ _ _ hscale_zero]
 
 /-- The same leading-coefficient scaling law as
 `leadingCoeff_scale_of_ne_zero_of_pos_degree`, stated from the weaker nonempty
@@ -3019,10 +2953,9 @@ theorem leadingCoeff_scale_of_ne_zero_of_nonzero [ZMod64.PrimeModulus p]
     scale_size_eq_of_ne_zero (p := p) hc f
   have hscale_pos : 0 < (DensePoly.scale c f).size := by omega
   have hscale_zero : c * (0 : ZMod64 p) = 0 := by grind
-  rw [leadingCoeff_eq_coeff_pred (DensePoly.scale c f) hscale_pos]
-  rw [leadingCoeff_eq_coeff_pred f hfpos]
-  rw [show (DensePoly.scale c f).size - 1 = f.size - 1 by omega]
-  rw [DensePoly.coeff_scale _ _ _ hscale_zero]
+  rw [leadingCoeff_eq_coeff_pred (DensePoly.scale c f) hscale_pos,
+    leadingCoeff_eq_coeff_pred f hfpos, show (DensePoly.scale c f).size - 1 = f.size - 1 by omega,
+    DensePoly.coeff_scale _ _ _ hscale_zero]
 
 /-- Scaling a positive-degree polynomial by the inverse of its leading
 coefficient produces a monic polynomial. This is the monic-normalization step
@@ -3075,8 +3008,7 @@ theorem irreducible_scale_iff_of_ne_zero [ZMod64.PrimeModulus p]
       apply DensePoly.ext_coeff
       intro n
       have hzero : c * (0 : ZMod64 p) = 0 := by grind
-      rw [DensePoly.coeff_scale _ _ _ hzero]
-      rw [DensePoly.coeff_zero]
+      rw [DensePoly.coeff_scale _ _ _ hzero, DensePoly.coeff_zero]
       exact hzero
     · intro a b hab
       have hab' : DensePoly.scale c (a * b) = DensePoly.scale c f := by
@@ -3102,8 +3034,7 @@ theorem irreducible_scale_iff_of_ne_zero [ZMod64.PrimeModulus p]
         apply DensePoly.ext_coeff
         intro n
         have hz : c⁻¹ * (0 : ZMod64 p) = 0 := by grind
-        rw [DensePoly.coeff_scale _ _ _ hz]
-        rw [DensePoly.coeff_zero]
+        rw [DensePoly.coeff_scale _ _ _ hz, DensePoly.coeff_zero]
         exact hz
       rw [hzero] at hback
       exact hback.symm
@@ -3367,10 +3298,8 @@ theorem leadingCoeff_mul
   have hab_pos : 0 < (a * b).size := size_pos_of_ne_zero hab_ne
   have hsize := size_mul_eq_add_sub_one a b ha hb
   have hindex : (a * b).size - 1 = a.size - 1 + (b.size - 1) := by omega
-  rw [DensePoly.leadingCoeff_eq_coeff_last (a * b) hab_pos]
-  rw [hindex]
-  rw [DensePoly.leadingCoeff_eq_coeff_last a ha_pos]
-  rw [DensePoly.leadingCoeff_eq_coeff_last b hb_pos]
+  rw [DensePoly.leadingCoeff_eq_coeff_last (a * b) hab_pos, hindex,
+    DensePoly.leadingCoeff_eq_coeff_last a ha_pos, DensePoly.leadingCoeff_eq_coeff_last b hb_pos]
   exact ZMod64.coeff_mul_at_top a b ha_pos hb_pos
 
 /-- Right cancellation for multiplication by a nonzero `FpPoly p` polynomial. -/
@@ -3649,13 +3578,11 @@ private theorem fold_mulCoeffTerm_monomial_eq
       simp
   | succ m ih =>
       intro acc
-      rw [List.range_succ, List.foldl_append, List.foldl_cons, List.foldl_nil]
-      rw [ih]
+      rw [List.range_succ, List.foldl_append, List.foldl_cons, List.foldl_nil, ih]
       by_cases hkm : k < m
       · -- k < m, so the new index m is not k.
         have hm_ne : m ≠ k := by omega
-        rw [mulCoeffTerm_monomial_eq_zero_of_ne k c g n m hm_ne]
-        rw [zmod_add_zero]
+        rw [mulCoeffTerm_monomial_eq_zero_of_ne k c g n m hm_ne, zmod_add_zero]
         have hkm' : k < m + 1 := by omega
         by_cases hkn : ¬ n < k
         · simp [hkm, hkn, hkm']
@@ -3672,8 +3599,7 @@ private theorem fold_mulCoeffTerm_monomial_eq
         · -- ¬ k < m and k ≠ m. So k > m, in particular k ≥ m + 1.
           have hkm' : ¬ k < m + 1 := by omega
           have hm_ne : m ≠ k := fun h => hkm_eq h.symm
-          rw [mulCoeffTerm_monomial_eq_zero_of_ne k c g n m hm_ne]
-          rw [zmod_add_zero]
+          rw [mulCoeffTerm_monomial_eq_zero_of_ne k c g n m hm_ne, zmod_add_zero]
           simp [hkm, hkm']
 
 /-- Coefficient of `monomial k c * g` at degree `n`: zero below `k`, `c · g[n-k]`
@@ -3681,9 +3607,8 @@ above. -/
 theorem coeff_monomial_mul (k : Nat) (c : ZMod64 p) (g : FpPoly p) (n : Nat) :
     ((DensePoly.monomial k c : FpPoly p) * g).coeff n =
       if n < k then 0 else c * g.coeff (n - k) := by
-  rw [coeff_mul, mulCoeffSum_eq_degree_bound]
-  rw [fold_mulCoeffTerm_monomial_eq k c g n (n + 1) 0]
-  rw [zmod_zero_add]
+  rw [coeff_mul, mulCoeffSum_eq_degree_bound, fold_mulCoeffTerm_monomial_eq k c g n (n + 1) 0,
+    zmod_zero_add]
   by_cases hnk : n < k
   · simp [hnk]
   · have hkn : k < n + 1 := by omega
@@ -3788,27 +3713,22 @@ private theorem scalar_linear_factor_mul_dividedDifference_coeff
   have hneg_mul : (-(FpPoly.C α) : FpPoly p) * q = -(FpPoly.C α * q) := by
     show (0 - FpPoly.C α) * q = 0 - FpPoly.C α * q
     exact DensePoly.neg_mul_right_poly (FpPoly.C α) q
-  rw [sub_eq_add_neg, right_distrib]
-  rw [DensePoly.coeff_add_semiring]
-  rw [hneg_mul]
-  rw [DensePoly.coeff_neg_ring]
+  rw [sub_eq_add_neg, right_distrib, DensePoly.coeff_add_semiring, hneg_mul,
+    DensePoly.coeff_neg_ring]
   have hCmul : FpPoly.C α * q = DensePoly.scale α q := C_mul_eq_scale α q
-  rw [hCmul]
-  rw [DensePoly.coeff_scale _ _ _ hzero_mul]
-  rw [show FpPoly.X = (DensePoly.monomial 1 (1 : ZMod64 p) : FpPoly p) from rfl]
-  rw [coeff_monomial_mul]
-  rw [DensePoly.coeff_ofCoeffs_list, DensePoly.coeff_ofCoeffs_list]
-  rw [zmod_Zero_zero_eq_zero]
+  rw [hCmul, DensePoly.coeff_scale _ _ _ hzero_mul,
+    show FpPoly.X = (DensePoly.monomial 1 (1 : ZMod64 p) : FpPoly p) from rfl, coeff_monomial_mul,
+    DensePoly.coeff_ofCoeffs_list, DensePoly.coeff_ofCoeffs_list, zmod_Zero_zero_eq_zero]
   cases n with
   | zero =>
       simp
-      rw [scalarDividedDifferenceCoeffs_getElem?_getD cs α 0]
-      rw [show cs.drop 1 = cs.tail by cases cs <;> rfl]
+      rw [scalarDividedDifferenceCoeffs_getElem?_getD cs α 0,
+        show cs.drop 1 = cs.tail by cases cs <;> rfl]
       grind
   | succ n =>
       simp
-      rw [scalarDividedDifferenceCoeffs_getElem?_getD cs α n]
-      rw [scalarDividedDifferenceCoeffs_getElem?_getD cs α (n + 1)]
+      rw [scalarDividedDifferenceCoeffs_getElem?_getD cs α n,
+        scalarDividedDifferenceCoeffs_getElem?_getD cs α (n + 1)]
       grind
 
 /-- Capstone factorization (Ruffini / Horner remainder identity): the polynomial
@@ -3824,15 +3744,12 @@ private theorem ofCoeffs_eq_C_eval_add_linear_mul_dividedDifference
           (DensePoly.ofCoeffs (scalarDividedDifferenceCoeffs cs α).toArray : FpPoly p) := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_ofCoeffs_list]
-  rw [zmod_Zero_zero_eq_zero]
+  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_ofCoeffs_list, zmod_Zero_zero_eq_zero]
   rw [show (FpPoly.C (evalScalarCoeffList cs α)).coeff n =
       if n = 0 then evalScalarCoeffList cs α else (Zero.zero : ZMod64 p) by
     unfold FpPoly.C
     rw [DensePoly.coeff_C]]
-  rw [zmod_Zero_zero_eq_zero]
-  rw [scalar_linear_factor_mul_dividedDifference_coeff cs α n]
+  rw [zmod_Zero_zero_eq_zero, scalar_linear_factor_mul_dividedDifference_coeff cs α n]
   cases n with
   | zero =>
       have hdrop := evalScalarCoeffList_drop_eq_getD_add cs α 0
@@ -3857,10 +3774,7 @@ theorem X_sub_C_dvd_of_eval_eq_zero
   rw [eval_eq_coeff_power_sum] at hroot
   have hroot_scalar : evalScalarCoeffList f.toArray.toList c = 0 := by
     rw [evalScalarCoeffList_eq_powerSumFrom_zero, hroot]
-  rw [← ofCoeffs_toArray_fp f]
-  rw [hcoeffs]
-  rw [hroot_scalar]
-  rw [C_zero_fp]
+  rw [← ofCoeffs_toArray_fp f, hcoeffs, hroot_scalar, C_zero_fp]
   change (0 : FpPoly p) +
       (FpPoly.X - FpPoly.C c) * q = (FpPoly.X - FpPoly.C c) * q
   exact zero_add ((FpPoly.X - FpPoly.C c) * q)
@@ -3872,8 +3786,7 @@ theorem monomial_mul_monomial (m n : Nat) :
       DensePoly.monomial (m + n) (1 : ZMod64 p) := by
   apply DensePoly.ext_coeff
   intro i
-  rw [coeff_monomial_mul]
-  rw [DensePoly.coeff_monomial, DensePoly.coeff_monomial]
+  rw [coeff_monomial_mul, DensePoly.coeff_monomial, DensePoly.coeff_monomial]
   by_cases him : i < m
   · simp [him]
     have hne : i ≠ m + n := by omega
@@ -4022,16 +3935,14 @@ theorem linearPow_C (c : ZMod64 p) (n : Nat) :
 /-- The polynomial-level subtraction-multiplication identity: `(P - 1) * Y = P * Y - Y`. -/
 private theorem sub_one_mul_eq (P Y : FpPoly p) :
     (P - 1) * Y = P * Y - Y := by
-  rw [sub_eq_add_neg]
-  rw [right_distrib]
+  rw [sub_eq_add_neg, right_distrib]
   have hneg : (-(1 : FpPoly p)) * Y = -Y := by
     show (0 - (1 : FpPoly p)) * Y = 0 - Y
     have h := DensePoly.neg_mul_right_poly (1 : FpPoly p) Y
     have h1 : (1 : FpPoly p) * Y = Y := one_mul Y
     calc (0 - (1 : FpPoly p)) * Y = 0 - 1 * Y := h
       _ = 0 - Y := by rw [h1]
-  rw [hneg]
-  rw [← sub_eq_add_neg]
+  rw [hneg, ← sub_eq_add_neg]
 
 /-- Geometric-series divisibility: `Y - 1 ∣ Y^j - 1`. -/
 theorem sub_one_dvd_linearPow_sub_one (Y : FpPoly p) (j : Nat) :
@@ -4044,19 +3955,15 @@ theorem sub_one_dvd_linearPow_sub_one (Y : FpPoly p) (j : Nat) :
       obtain ⟨q, hq⟩ := ih
       refine ⟨q * Y + 1, ?_⟩
       -- Need: linearPow Y (j + 1) - 1 = (Y - 1) * (q * Y + 1)
-      rw [linearPow_succ]
-      rw [left_distrib, mul_one]
-      rw [show (Y - 1) * (q * Y) = ((Y - 1) * q) * Y from (mul_assoc _ _ _).symm]
-      rw [← hq]
-      rw [sub_one_mul_eq]
+      rw [linearPow_succ, left_distrib, mul_one,
+        show (Y - 1) * (q * Y) = ((Y - 1) * q) * Y from (mul_assoc _ _ _).symm, ← hq,
+        sub_one_mul_eq]
       -- goal: linearPow Y j * Y - 1 = linearPow Y j * Y - Y + (Y - 1)
       -- A - 1 = A - Y + Y - 1, regroup at coefficient level.
       apply DensePoly.ext_coeff
       intro n
-      rw [DensePoly.coeff_sub_ring]
-      rw [DensePoly.coeff_add_semiring]
-      rw [DensePoly.coeff_sub_ring]
-      rw [DensePoly.coeff_sub_ring]
+      rw [DensePoly.coeff_sub_ring, DensePoly.coeff_add_semiring, DensePoly.coeff_sub_ring,
+        DensePoly.coeff_sub_ring]
       grind
 
 /-- Geometric-series divisibility for monomials: when `k ∣ l`,

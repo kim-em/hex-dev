@@ -123,8 +123,7 @@ private theorem foldl_dotProduct_unit_body {R : Type u} [Lean.Grind.CommRing R]
       · have hjl : j ≠ l := fun heq => hij (hil.trans heq.symm)
         rw [if_pos hil, if_neg hjl]; grind
       · rw [if_neg hil]; grind
-    rw [foldl_add_eq_acc (List.finRange n) _ _ hzero]
-    rw [if_neg hij]
+    rw [foldl_add_eq_acc (List.finRange n) _ _ hzero, if_neg hij]
 
 end Vector
 
@@ -150,18 +149,16 @@ def gramMatrix [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) : Matrix R n n :=
     ext a ha
     show ((1 : Matrix R n n).row ⟨i, hi⟩)[(⟨a, ha⟩ : Fin n)] =
       (Hex.Vector.unit (R := R) ⟨i, hi⟩)[(⟨a, ha⟩ : Fin n)]
-    rw [Matrix.row]
-    rw [Hex.Matrix.getElem_one (i := (⟨i, hi⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
-    rw [Hex.Vector.unit_getElem (i := (⟨i, hi⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
+    rw [Matrix.row, Hex.Matrix.getElem_one (i := (⟨i, hi⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n)),
+      Hex.Vector.unit_getElem (i := (⟨i, hi⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
     rfl
   have hrow_j : (1 : Matrix R n n).row ⟨j, hj⟩ =
       Hex.Vector.unit (R := R) ⟨j, hj⟩ := by
     ext a ha
     show ((1 : Matrix R n n).row ⟨j, hj⟩)[(⟨a, ha⟩ : Fin n)] =
       (Hex.Vector.unit (R := R) ⟨j, hj⟩)[(⟨a, ha⟩ : Fin n)]
-    rw [Matrix.row]
-    rw [Hex.Matrix.getElem_one (i := (⟨j, hj⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
-    rw [Hex.Vector.unit_getElem (i := (⟨j, hj⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
+    rw [Matrix.row, Hex.Matrix.getElem_one (i := (⟨j, hj⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n)),
+      Hex.Vector.unit_getElem (i := (⟨j, hj⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
     rfl
   show (gramMatrix (1 : Matrix R n n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] =
     (1 : Matrix R n n)[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)]

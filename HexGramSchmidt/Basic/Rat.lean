@@ -211,8 +211,7 @@ private theorem projectionCoeff_row_later_basis_eq_zero
             have hentry : (0 : Vector Rat m)[idx] = 0 := by
               change (0 : Vector Rat m)[idx.val] = 0
               rw [Vector.getElem_zero]
-            rw [hentry]
-            rw [show (0 : Rat) + 0 * ((basis b).row col)[idx] = 0 by grind]
+            rw [hentry, show (0 : Rat) + 0 * ((basis b).row col)[idx] = 0 by grind]
             exact ih
       have hzero_div : (0 : Rat) / Vector.dotProduct ((basis b).row col) ((basis b).row col) = 0 := by
         grind
@@ -438,9 +437,8 @@ theorem coeffs_rowSwap_adjacent_lower_prev (b : Matrix Rat n m) (km1 k j : Fin n
   have hbasis :
       (basis (Matrix.rowSwap b km1 k)).row j = (basis b).row j := by
     exact basis_rowSwap_of_before (b := b) (km1 := km1) (k := k) (i := j) hkm1k hj
-  rw [coeffs_lower_projection (b := Matrix.rowSwap b km1 k) (i := km1) (j := j) hj]
-  rw [coeffs_lower_projection (b := b) (i := k) (j := j) (Nat.lt_trans hj hkm1k)]
-  rw [hrow, hbasis]
+  rw [coeffs_lower_projection (b := Matrix.rowSwap b km1 k) (i := km1) (j := j) hj,
+    coeffs_lower_projection (b := b) (i := k) (j := j) (Nat.lt_trans hj hkm1k), hrow, hbasis]
 
 /-- Dual of `coeffs_rowSwap_adjacent_lower_prev`: after an adjacent swap, the
 coefficient at row `k` against an earlier column `j` equals the old coefficient
@@ -458,8 +456,7 @@ theorem coeffs_rowSwap_adjacent_lower_curr (b : Matrix Rat n m) (km1 k j : Fin n
     exact basis_rowSwap_of_before (b := b) (km1 := km1) (k := k) (i := j) hkm1k hj
   rw [coeffs_lower_projection (b := Matrix.rowSwap b km1 k) (i := k) (j := j)
     (by omega)]
-  rw [coeffs_lower_projection (b := b) (i := km1) (j := j) hj]
-  rw [hrow, hbasis]
+  rw [coeffs_lower_projection (b := b) (i := km1) (j := j) hj, hrow, hbasis]
 
 /-- The explicit value of the new pivot coefficient (row `k`, column `km1`)
 after an adjacent swap, in terms of the old projection coefficient and basis-row
@@ -547,8 +544,7 @@ theorem coeffs_rowAdd_lower (b : Matrix Rat n m) (col src dst : Fin n)
     intro idx hidx
     simp [Vector.getElem_add, Vector.getElem_smul]
     rfl
-  rw [hvec]
-  rw [GramSchmidt.projectionCoeff_add_left, GramSchmidt.projectionCoeff_smul_left]
+  rw [hvec, GramSchmidt.projectionCoeff_add_left, GramSchmidt.projectionCoeff_smul_left]
 
 /-- Under `rowAdd b src dst c` with `src < dst`, the pivot coefficient in the
 destination row increases by `c` when the source basis row has nonzero norm. -/
@@ -957,9 +953,8 @@ theorem coeffs_rowSwap_adjacent_before (b : Matrix Rat n m) (km1 k i j : Fin n)
       (basis (Matrix.rowSwap b km1 k)).row j = (basis b).row j := by
     exact basis_rowSwap_of_before (b := b) (km1 := km1) (k := k) (i := j) hkm1k
       (Nat.lt_trans hji hi)
-  rw [coeffs_lower_projection (b := Matrix.rowSwap b km1 k) (i := i) (j := j) hji]
-  rw [coeffs_lower_projection (b := b) (i := i) (j := j) hji]
-  rw [hrow, hbasis]
+  rw [coeffs_lower_projection (b := Matrix.rowSwap b km1 k) (i := i) (j := j) hji,
+    coeffs_lower_projection (b := b) (i := i) (j := j) hji, hrow, hbasis]
 
 /-- Coefficient entries for a row after the swapped pair against a column before
 it are unaffected by an adjacent swap. -/
@@ -981,9 +976,8 @@ theorem coeffs_rowSwap_adjacent_after_low (b : Matrix Rat n m) (km1 k i j : Fin 
   have hbasis :
       (basis (Matrix.rowSwap b km1 k)).row j = (basis b).row j := by
     exact basis_rowSwap_of_before (b := b) (km1 := km1) (k := k) (i := j) hkm1k hj
-  rw [coeffs_lower_projection (b := Matrix.rowSwap b km1 k) (i := i) (j := j) hji]
-  rw [coeffs_lower_projection (b := b) (i := i) (j := j) hji]
-  rw [hrow, hbasis]
+  rw [coeffs_lower_projection (b := Matrix.rowSwap b km1 k) (i := i) (j := j) hji,
+    coeffs_lower_projection (b := b) (i := i) (j := j) hji, hrow, hbasis]
 
 /-- Coefficient entries for a row and column both lying after the swapped pair
 are unaffected by an adjacent swap. -/
@@ -1004,9 +998,8 @@ theorem coeffs_rowSwap_adjacent_after_high (b : Matrix Rat n m) (km1 k i j : Fin
   have hbasis :
       (basis (Matrix.rowSwap b km1 k)).row j = (basis b).row j := by
     exact basis_rowSwap_of_after (b := b) (km1 := km1) (k := k) (i := j) hkm1 hj
-  rw [coeffs_lower_projection (b := Matrix.rowSwap b km1 k) (i := i) (j := j) hji]
-  rw [coeffs_lower_projection (b := b) (i := i) (j := j) hji]
-  rw [hrow, hbasis]
+  rw [coeffs_lower_projection (b := Matrix.rowSwap b km1 k) (i := i) (j := j) hji,
+    coeffs_lower_projection (b := b) (i := i) (j := j) hji, hrow, hbasis]
 
 end GramSchmidt.Rat
 end Hex

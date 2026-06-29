@@ -77,8 +77,8 @@ private theorem bit_and_one_eq_zero_iff (w : UInt64) {i : Nat} (hi : i < 64) :
       exact Nat.mod_eq_of_lt (Nat.lt_of_lt_of_le hi (by norm_num))
     rw [hi64]; exact Nat.mod_eq_of_lt hi
   simp only [UInt64.toNat_and, UInt64.toNat_shiftRight, hshift]
-  rw [show ((1 : UInt64).toNat) = 1 from rfl, show ((0 : UInt64).toNat) = 0 from rfl]
-  rw [Nat.testBit, Nat.and_comm (w.toNat >>> i) 1]
+  rw [show ((1 : UInt64).toNat) = 1 from rfl, show ((0 : UInt64).toNat) = 0 from rfl,
+    Nat.testBit, Nat.and_comm (w.toNat >>> i) 1]
   generalize 1 &&& (w.toNat >>> i) = b
   constructor
   · intro hb; simp [hb]

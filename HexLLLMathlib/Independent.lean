@@ -91,9 +91,8 @@ theorem sizeReduce_independent (s : LLLState n m) (k : Nat)
       GramSchmidt.Int.gramDet (s.sizeReduce k).b (i.val + 1)
           (Nat.succ_le_of_lt i.isLt) =
         GramSchmidt.Int.gramDet s.b (i.val + 1) (Nat.succ_le_of_lt i.isLt) := by
-    rw [← hvalid'.d_eq (i.val + 1) (Nat.succ_lt_succ i.isLt)]
-    rw [hd_vec]
-    rw [hvalid.d_eq (i.val + 1) (Nat.succ_lt_succ i.isLt)]
+    rw [← hvalid'.d_eq (i.val + 1) (Nat.succ_lt_succ i.isLt), hd_vec,
+      hvalid.d_eq (i.val + 1) (Nat.succ_lt_succ i.isLt)]
   rw [hgram]
   exact hind i
 
@@ -257,8 +256,7 @@ private theorem foldl_modify_rows_get
 private theorem swapStep_b_eq (s : LLLState n m) (k : Nat) (hk : k < n) (hk0 : 0 < k) :
     (s.swapStep k).b = GramSchmidt.Int.adjacentSwap s.b ⟨k, hk⟩ hk0 := by
   unfold swapStep
-  rw [dif_pos hk]
-  rw [dif_pos hk0]
+  rw [dif_pos hk, dif_pos hk0]
 
 theorem swapStep_valid (s : LLLState n m) (k : Nat)
     (hind : s.b.independent) (hvalid : s.Valid) :
@@ -381,18 +379,15 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
             ∀ (l : Fin n), l.val ≠ km1.val → l.val ≠ kFin.val →
               νRowsSwapped.get l = s.ν.get l := by
           intro l hl_km1 hl_kFin
-          rw [hνRows_def]
-          rw [vector_modify_get_ne _ kFin.val _ l (fun h => hl_kFin h.symm)]
-          rw [vector_modify_get_ne _ km1.val _ l (fun h => hl_km1 h.symm)]
+          rw [hνRows_def, vector_modify_get_ne _ kFin.val _ l (fun h => hl_kFin h.symm),
+            vector_modify_get_ne _ km1.val _ l (fun h => hl_km1 h.symm)]
         have hνRows_get_km1 : νRowsSwapped.get km1 = setPrefix (s.ν.get kFin) (s.ν.get km1) km1 := by
-          rw [hνRows_def]
-          rw [vector_modify_get_ne _ kFin.val _ km1 (fun h => hkm1_val_ne_kFin h.symm)]
+          rw [hνRows_def, vector_modify_get_ne _ kFin.val _ km1 (fun h => hkm1_val_ne_kFin h.symm)]
           exact vector_modify_get_self _ km1 _
         have hνRows_get_kFin :
             νRowsSwapped.get kFin = setPrefix (s.ν.get km1) (s.ν.get kFin) km1 := by
-          rw [hνRows_def]
-          rw [vector_modify_get_self _ kFin _]
-          rw [vector_modify_get_ne _ km1.val _ kFin hkm1_val_ne_kFin]
+          rw [hνRows_def, vector_modify_get_self _ kFin _,
+            vector_modify_get_ne _ km1.val _ kFin hkm1_val_ne_kFin]
         -- Evaluate νPivot.get.
         have hνPivot_get_ne :
             ∀ (l : Fin n), l.val ≠ kFin.val → νPivot.get l = νRowsSwapped.get l := by
@@ -415,8 +410,7 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
           have hi_ne_kFin : iFin.val ≠ kFin.val := by
             have : iFin.val > kFin.val := hki
             omega
-          rw [hνPivot_get_ne iFin hi_ne_kFin]
-          rw [hνRows_get_ne iFin hi_ne_km1 hi_ne_kFin]
+          rw [hνPivot_get_ne iFin hi_ne_kFin, hνRows_get_ne iFin hi_ne_km1 hi_ne_kFin]
           -- Now LHS = (upd iFin (s.ν.get iFin)).get jFin. Unfold `upd` to expose
           -- the `pairs.get iFin` reference, then substitute it with its explicit
           -- value (valid since `k < iFin.val` in this branch).
@@ -594,8 +588,7 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
               have hi_ne_km1 : iFin.val ≠ km1.val := Nat.ne_of_lt hi_lt_km1
               have hi_ne_kFin : iFin.val ≠ kFin.val := by
                 rw [hkFinVal]; omega
-              rw [hνPivot_get_ne iFin hi_ne_kFin]
-              rw [hνRows_get_ne iFin hi_ne_km1 hi_ne_kFin]
+              rw [hνPivot_get_ne iFin hi_ne_kFin, hνRows_get_ne iFin hi_ne_km1 hi_ne_kFin]
               -- LHS = (s.ν.get iFin).get jFin. Bridge through Valid then
               -- scaledCoeffs_adjacentSwap_before.
               have hν := hν_eq iFin.val jFin.val iFin.isLt jFin.isLt hjiFin
@@ -1124,8 +1117,7 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
               (Nat.le_of_lt j.isLt) (s.ν.get iFin) (s.ν.get iFin) (s.ν.get j) r jFin]
           by_cases hjlt : jFin.val < j.val
           · -- Below pivot.
-            rw [if_pos hjlt]
-            rw [hν_at iFin jFin hji', hν_at j jFin hjlt]
+            rw [if_pos hjlt, hν_at iFin jFin hji', hν_at j jFin hjlt]
             have hsc :=
               GramSchmidt.Int.scaledCoeffs_sizeReduce_lower s.b jFin j iFin hjlt hjk r
             have hsc' : ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin =
@@ -1150,8 +1142,7 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
             rw [hsc']
             rfl
       · -- Case iFin ≠ k.
-        rw [sizeReduceColumn_ν_get_ne s j k hjk hreduce iFin hi_k]
-        rw [hν_at iFin jFin hji']
+        rw [sizeReduceColumn_ν_get_ne s j k hjk hreduce iFin hi_k, hν_at iFin jFin hji']
         have hsc :=
           GramSchmidt.Int.scaledCoeffs_sizeReduce_other_row s.b j k hjk r iFin hi_k
         -- hsc : (scaledCoeffs b').row iFin = (scaledCoeffs s.b).row iFin
@@ -1164,8 +1155,7 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
         rfl
     · -- d_eq
       intro i hi
-      rw [hd_state_eq]
-      rw [hd_at i hi, hb_eq]
+      rw [hd_state_eq, hd_at i hi, hb_eq]
       exact (GramSchmidt.Int.gramDet_sizeReduce s.b j k hjk r i (Nat.le_of_lt_succ hi)).symm
   · -- The non-reducing branch: state unchanged.
     have h_eq : s.sizeReduceColumn j k hjk = s := by
@@ -1415,12 +1405,11 @@ private theorem sizeReduce_foldl_size_reduced {n m : Nat}
 /-- `(List.finRange k).reverse` is Pairwise strictly decreasing. -/
 private theorem pairwise_finRange_reverse_lt (k : Nat) :
     ((List.finRange k).reverse).Pairwise (fun a b : Fin k => b.val < a.val) := by
-  rw [List.pairwise_reverse]
-  rw [List.pairwise_iff_getElem]
+  rw [List.pairwise_reverse, List.pairwise_iff_getElem]
   intro i j hi hj hij
   rw [List.length_finRange] at hi hj
-  rw [List.getElem_finRange (by rw [List.length_finRange]; exact hi)]
-  rw [List.getElem_finRange (by rw [List.length_finRange]; exact hj)]
+  rw [List.getElem_finRange (by rw [List.length_finRange]; exact hi),
+    List.getElem_finRange (by rw [List.length_finRange]; exact hj)]
   exact hij
 
 /-- Integer formulation: after `s.sizeReduce k`, every column `j < k` of
@@ -1636,8 +1625,8 @@ private theorem foldl_mul_strict_lt {α : Type*} {xs : List α} (hnd : xs.Nodup)
         hpos i (List.mem_cons.mpr (Or.inr hi))
       have hP_pos : 0 < rest.foldl (fun acc i => acc * f i) 1 :=
         foldl_mul_pos rest f 1 Nat.one_pos hpos_rest
-      rw [foldl_mul_pull rest g (a * g x), foldl_mul_pull rest f (a * f x)]
-      rw [← foldl_mul_congr_pointwise rest f g 1 heq_rest]
+      rw [foldl_mul_pull rest g (a * g x), foldl_mul_pull rest f (a * f x),
+        ← foldl_mul_congr_pointwise rest f g 1 heq_rest]
       have h_factor : a * g x < a * f x := (Nat.mul_lt_mul_left ha).mpr hlt
       exact (Nat.mul_lt_mul_right hP_pos).mpr h_factor
     · have hk_rest : k ∈ rest := by

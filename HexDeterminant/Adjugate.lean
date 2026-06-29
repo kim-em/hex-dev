@@ -217,9 +217,7 @@ theorem adjugate_mul_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     apply foldl_acc_congr
     intro acc k _hmem
     rw [Lean.Grind.CommSemiring.mul_comm]
-  rw [hentry]
-  rw [mul_adjugate_apply M.transpose j i]
-  rw [det_transpose M]
+  rw [hentry, mul_adjugate_apply M.transpose j i, det_transpose M]
   by_cases hij : i = j
   · subst hij
     rfl
@@ -370,8 +368,7 @@ theorem det_mul
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M N : Matrix R n n) :
     det (M * N) = det M * det N := by
-  rw [mul_eq_columnSumMatrix_transpose M N]
-  rw [det_columnSumMatrix_eq_sum_columnTuples M N.transpose]
+  rw [mul_eq_columnSumMatrix_transpose M N, det_columnSumMatrix_eq_sum_columnTuples M N.transpose]
   have hbody_eq :
       (columnTupleVectors n n).foldl
           (fun acc cols => acc +
@@ -627,8 +624,7 @@ private theorem det_mul_cofactor_setRow_eq
           rw [if_pos rfl, if_pos rfl, Lean.Grind.AddCommMonoid.zero_add]
         · rw [if_neg his, if_neg his, Lean.Grind.Semiring.mul_zero,
             Lean.Grind.AddCommMonoid.add_zero]
-    rw [hbody]
-    rw [foldl_det_sum_add_zero]
+    rw [hbody, foldl_det_sum_add_zero]
     have hr_extract :=
       foldl_add_with_unique_match (α := R) (List.finRange (n + 1)) (0 : R) r
         (fun i => (adjugate (setRow M r u))[c][i] * cofactorRowPairing M s u)

@@ -131,9 +131,8 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
         rw [getArrayEntry_scaledCoeffArrayLoop_current_col_written n fuel' state_array
           i.val j.val h_array_step hji i.isLt h_coeffs_size h_coeffs_rows_size]
         have hdist : j.val - state_matrix.step = 0 := by omega
-        rw [hdist, Matrix.noPivotLoop_zero_fuel]
-        rw [getArrayEntry_eq_rowsToMatrix state_array.matrix i j]
-        rw [h_matrix_eq]
+        rw [hdist, Matrix.noPivotLoop_zero_fuel,
+          getArrayEntry_eq_rowsToMatrix state_array.matrix i j, h_matrix_eq]
       · have h_step_lt_j : state_matrix.step < j.val :=
           Nat.lt_of_le_of_ne h_step_le_j h_at_target
         have hDone : state_matrix.step + 1 < n := by
@@ -222,8 +221,7 @@ private theorem scaledCoeffArrayLoop_lower_matches_target_column
           have hdist :
               j.val - state_matrix.step = (j.val - (state_matrix.step + 1)) + 1 := by
             omega
-          rw [h_capture]
-          rw [hdist, Matrix.noPivotLoop_regular_branch _ state_matrix hDone hp]
+          rw [h_capture, hdist, Matrix.noPivotLoop_regular_branch _ state_matrix hDone hp]
           rfl
 
 /-- Early-singular zero tail after the singular column: if the lower entries
@@ -252,8 +250,8 @@ private theorem scaledCoeffArrayLoop_lower_singular_after_step
     have := getArrayEntry_eq_rowsToMatrix (n := n) state_array.matrix kFin kFin
     rw [this, h_matrix_eq]
     exact hp
-  rw [scaledCoeffArrayLoop_singular_branch fuel state_array hArrayStep hArrayNext hp_array]
-  rw [getArrayEntry_writeScaledColumn]
+  rw [scaledCoeffArrayLoop_singular_branch fuel state_array hArrayStep hArrayNext hp_array,
+    getArrayEntry_writeScaledColumn]
   · exact h_coeffs_unwritten i j hsj hji
   · rw [h_step_eq]
     omega
@@ -461,8 +459,8 @@ private theorem scaledCoeffArrayLoop_diag_matches
         · -- A1: singular branch.
           have hp_array : getArrayEntry state_array.matrix state_array.step state_array.step = 0 := by
             rw [h_pivot_array_eq_matrix]; exact hp
-          rw [scaledCoeffArrayLoop_singular_branch fuel' state_array hArrayStep hArrayNext hp_array]
-          rw [Matrix.noPivotLoop_singular_branch fuel' state_matrix hDone hp]
+          rw [scaledCoeffArrayLoop_singular_branch fuel' state_array hArrayStep hArrayNext hp_array,
+            Matrix.noPivotLoop_singular_branch fuel' state_matrix hDone hp]
           right
           refine ⟨state_matrix.step, rfl, ?_⟩
           by_cases h_ilt : i.val < state_matrix.step
@@ -505,8 +503,8 @@ private theorem scaledCoeffArrayLoop_diag_matches
         · -- A2: regular branch.
           have hp_array : getArrayEntry state_array.matrix state_array.step state_array.step ≠ 0 := by
             rw [h_pivot_array_eq_matrix]; exact hp
-          rw [scaledCoeffArrayLoop_regular_branch fuel' state_array hArrayStep hArrayNext hp_array]
-          rw [Matrix.noPivotLoop_regular_branch fuel' state_matrix hDone hp]
+          rw [scaledCoeffArrayLoop_regular_branch fuel' state_array hArrayStep hArrayNext hp_array,
+            Matrix.noPivotLoop_regular_branch fuel' state_matrix hDone hp]
           -- Build new compatible states.
           let new_array : ScaledCoeffArrayState :=
             { step := state_array.step + 1
@@ -576,8 +574,7 @@ private theorem scaledCoeffArrayLoop_diag_matches
                 rw [h_coeffs_rows_size j hjn]; exact hjn
               rw [getArrayEntry_writeScaledColumn_diag _ _ _ _ hrow hcol]
               -- Goal: getArrayEntry state_array.matrix j j = state_matrix.matrix[jFin][jFin]
-              rw [getArrayEntry_eq_rowsToMatrix state_array.matrix jFin jFin]
-              rw [h_matrix_eq]
+              rw [getArrayEntry_eq_rowsToMatrix state_array.matrix jFin jFin, h_matrix_eq]
             · have hj_lt : j < state_matrix.step := Nat.lt_of_le_of_ne hj_le hj_eq
               rw [getArrayEntry_writeScaledColumn _ _ _ _ _ _
                 (show j ≠ state_array.step by rw [h_step_eq]; omega)]
@@ -621,9 +618,8 @@ private theorem scaledCoeffArrayLoop_diag_matches
               rw [h_coeffs_size]; exact i.isLt
             have hcol : i.val < state_array.coeffs[i.val]!.size := by
               rw [h_coeffs_rows_size i.val i.isLt]; exact i.isLt
-            rw [getArrayEntry_writeScaledColumn_diag _ _ _ _ hrow hcol]
-            rw [getArrayEntry_eq_rowsToMatrix state_array.matrix i i]
-            rw [h_matrix_eq]
+            rw [getArrayEntry_writeScaledColumn_diag _ _ _ _ hrow hcol,
+              getArrayEntry_eq_rowsToMatrix state_array.matrix i i, h_matrix_eq]
           · by_cases h_ilt : i.val < state_matrix.step
             · change getArrayEntry (writeScaledColumn _ _ _ _) i.val i.val = _
               rw [getArrayEntry_writeScaledColumn _ _ _ _ _ _
@@ -825,8 +821,8 @@ private theorem scaledCoeffRows_diag_toNat_eq_gramDet
     (b : Matrix Int n m) (hquot : StepWitness b) (i : Nat) (hi : i < n) :
     (getArrayEntry (scaledCoeffRows b) i i).toNat =
       gramDet b (i + 1) (Nat.succ_le_of_lt hi) := by
-  rw [scaledCoeffRows_diag_toNat_eq_gramDetVecEntry (b := b) i hi]
-  rw [gramDetVecEntry_eq_gramDet (b := b) hquot (i + 1) (Nat.succ_le_of_lt hi)]
+  rw [scaledCoeffRows_diag_toNat_eq_gramDetVecEntry (b := b) i hi,
+    gramDetVecEntry_eq_gramDet (b := b) hquot (i + 1) (Nat.succ_le_of_lt hi)]
 
 /-- Signed leading-prefix diagonal information from the executable
 scaled-coefficient loop: the diagonal slot is either the zero tail after an

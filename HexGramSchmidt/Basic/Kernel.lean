@@ -149,9 +149,8 @@ theorem dot_zero_of_dot_self_zero (row v : Vector Rat m)
       simp
   | cons i xs ih =>
       simp only [List.foldl_cons]
-      rw [dot_self_eq_zero_get v hzero i]
-      rw [show row[i] * (0 : Rat) = 0 by grind]
-      rw [show (0 : Rat) + 0 = 0 by grind]
+      rw [dot_self_eq_zero_get v hzero i, show row[i] * (0 : Rat) = 0 by grind,
+        show (0 : Rat) + 0 = 0 by grind]
       change xs.foldl (fun acc i => acc + row[i] * v[i]) 0 = 0
       exact ih
 
@@ -628,8 +627,8 @@ private theorem foldl_vec_acc_split_pointwise
       grind
   | cons x rest ih =>
       simp only [List.foldl_cons]
-      rw [ih (acc := acc + f x), ih (acc := 0 + f x)]
-      rw [Vector.getElem_add, Vector.getElem_add, Vector.getElem_zero]
+      rw [ih (acc := acc + f x), ih (acc := 0 + f x),
+        Vector.getElem_add, Vector.getElem_add, Vector.getElem_zero]
       grind
 
 /-- `projectionCombination` extracts the accumulator from the fold. -/
@@ -724,8 +723,7 @@ private theorem subtractProjection_zero_left (basisRow : Vector Rat m) :
       have hentry : (0 : Vector Rat m)[i] = 0 := by
         change (0 : Vector Rat m)[i.val] = 0
         rw [Vector.getElem_zero]
-      rw [hentry]
-      rw [show (0 : Rat) + 0 * basisRow[i] = 0 by grind]
+      rw [hentry, show (0 : Rat) + 0 * basisRow[i] = 0 by grind]
       exact ih
   apply Vector.ext
   intro idx hidx

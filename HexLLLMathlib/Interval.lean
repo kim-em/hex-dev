@@ -411,8 +411,7 @@ private theorem gsDot_eq_mu_mul_nrm (b : Hex.Matrix Int n m) {i j : Fin n}
     rw [dot_comm]
     exact GramSchmidt.Int.basis_orthogonal b i.val j.val i.isLt j.isLt
       (Nat.ne_of_gt hji)
-  rw [horth, zero_add]
-  rw [Finset.sum_eq_single (⟨j.val, hji⟩ : Fin i.val)]
+  rw [horth, zero_add, Finset.sum_eq_single (⟨j.val, hji⟩ : Fin i.val)]
   · rw [dot_comm, nrm_eq_dot]
   · intro k _ hk
     have hkj : k.val ≠ j.val := fun h => hk (Fin.ext h)

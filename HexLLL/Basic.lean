@@ -513,9 +513,8 @@ private theorem divStep_arith (d N Np : Rat) (hd : 0 < d)
   have hinv_nonneg : 0 ≤ (1 / d : Rat) := by grind
   have hmul := Rat.mul_le_mul_of_nonneg_left h hinv_nonneg
   have hleft : (1 / d : Rat) * (d * N) = N := by
-    rw [Rat.div_def]
-    rw [show (1 : Rat) * d⁻¹ = d⁻¹ by grind]
-    rw [← Rat.mul_assoc, Rat.inv_mul_cancel d hdne]
+    rw [Rat.div_def, show (1 : Rat) * d⁻¹ = d⁻¹ by grind,
+      ← Rat.mul_assoc, Rat.inv_mul_cancel d hdne]
     grind
   simpa [hleft] using hmul
 
@@ -700,8 +699,7 @@ theorem short_vector_bound_of_size_bound (b : Matrix Int n m) {δ η : Rat}
     have h_le : δ - η * η ≤ 1 := by grind
     have hne : δ - η * η ≠ 0 := by grind
     have hα_eq : (1 / (δ - η * η)) * (δ - η * η) = 1 := by
-      rw [Rat.div_def]
-      rw [show (1 : Rat) * (δ - η * η)⁻¹ = (δ - η * η)⁻¹ from by grind]
+      rw [Rat.div_def, show (1 : Rat) * (δ - η * η)⁻¹ = (δ - η * η)⁻¹ from by grind]
       exact Rat.inv_mul_cancel _ hne
     have hstep : (1 / (δ - η * η)) * (δ - η * η) ≤ (1 / (δ - η * η)) * 1 :=
       Rat.mul_le_mul_of_nonneg_left h_le hα_nn
@@ -2098,8 +2096,7 @@ membership of `v` is unchanged. -/
   | cons k ks ih =>
     intro t
     simp only [List.foldl_cons]
-    rw [ih]
-    rw [sizeReduce_memLattice_iff, refreshRow_b]
+    rw [ih, sizeReduce_memLattice_iff, refreshRow_b]
 
 end SteeredState
 

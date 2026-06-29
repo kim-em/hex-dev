@@ -448,8 +448,7 @@ private theorem gcd_monicModularImage_derivative_isUnit
     have hC_unit :
         IsUnit (Polynomial.C (HexModArithMathlib.ZMod64.toZMod u)) :=
       Polynomial.isUnit_C.mpr (isUnit_iff_ne_zero.mpr hu_ne)
-    rw [hmonic_eq, toMathlibPolynomial_scale]
-    rw [Polynomial.derivative_C_mul]
+    rw [hmonic_eq, toMathlibPolynomial_scale, Polynomial.derivative_C_mul]
     exact (isCoprime_mul_unit_left hC_unit
       (HexBerlekampMathlib.toMathlibPolynomial f)
       (Polynomial.derivative (HexBerlekampMathlib.toMathlibPolynomial f))).mpr hcop_f
@@ -2088,8 +2087,7 @@ theorem normalizeForFactor_repeatedPart_isFactorPower_polyProduct_of_irreducible
                 (UniqueFactorizationMonoid.normalizedFactors R)))
         from zip_map_self _ _]
     simp [List.map_map, Function.comp_def]
-  rw [hRHS_eq]
-  rw [← List.prod_toFinset _ hPq_list_nodup]
+  rw [hRHS_eq, ← List.prod_toFinset _ hPq_list_nodup]
   -- Goal: R = ∏ p ∈ (coreFactors.toList.map toPoly).toFinset, p ^ count p (normalizedFactors R)
   have hR_prod_norm :
       (UniqueFactorizationMonoid.normalizedFactors R).prod = R := by

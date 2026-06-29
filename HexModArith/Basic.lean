@@ -822,8 +822,7 @@ private theorem nat_mod_mul_pow_square_odd (acc base k p : Nat) (hodd : k % 2 �
   calc
     ((acc * base) % p * ((base * base) % p) ^ (k / 2)) % p =
         (acc * base * (base * base) ^ (k / 2)) % p := by
-      rw [Nat.mul_mod]
-      rw [Nat.mod_mod]
+      rw [Nat.mul_mod, Nat.mod_mod]
       rw [show ((base * base) % p) ^ (k / 2) % p = (base * base) ^ (k / 2) % p by
         exact (Nat.pow_mod (base * base) (k / 2) p).symm]
       rw [← Nat.mul_mod]
@@ -856,24 +855,19 @@ private theorem pow_go_toNat (base acc : ZMod64 p) (k : Nat) :
             have hrec := ih ((m + 1) / 2) hlt (mul base base) acc
             change (pow.go (mul base base) acc ((m + 1) / 2)).toNat =
               acc.toNat * base.toNat ^ (m + 1) % p
-            rw [hrec]
-            rw [toNat_mul]
+            rw [hrec, toNat_mul]
             exact nat_mod_mul_pow_square_even acc.toNat base.toNat (m + 1) p heven
           · rw [if_neg heven]
             have hrec := ih ((m + 1) / 2) hlt (mul base base) (mul acc base)
             change (pow.go (mul base base) (mul acc base) ((m + 1) / 2)).toNat =
               acc.toNat * base.toNat ^ (m + 1) % p
-            rw [hrec]
-            rw [toNat_mul, toNat_mul]
+            rw [hrec, toNat_mul, toNat_mul]
             exact nat_mod_mul_pow_square_odd acc.toNat base.toNat (m + 1) p heven
 
 /-- Exponentiation agrees with natural-power reduction of the canonical representative. -/
 @[simp, grind =] theorem toNat_pow (a : ZMod64 p) (n : Nat) :
     (pow a n).toNat = a.toNat ^ n % p := by
-  rw [pow]
-  rw [pow_go_toNat]
-  rw [toNat_one]
-  rw [← Nat.mod_mul_mod]
+  rw [pow, pow_go_toNat, toNat_one, ← Nat.mod_mul_mod]
   simp
 
 /-- Exponentiation is the residue built from the representative's natural power. -/

@@ -93,8 +93,7 @@ instance : Hex.ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 
 private theorem bit_eq_one_eq_testBit (x i : Nat) :
     (x >>> i % 2 == 1) = x.testBit i := by
-  rw [Nat.testBit_eq_decide_div_mod_eq]
-  rw [Nat.shiftRight_eq_div_pow]
+  rw [Nat.testBit_eq_decide_div_mod_eq, Nat.shiftRight_eq_div_pow]
   apply decide_eq_decide.mpr
   exact Iff.rfl
 
@@ -610,10 +609,9 @@ private theorem testBit_add_of_dvd_high {x y j : Nat}
 
 private theorem add_shift_testBit (x k s t : Nat) (hx : x < 2 ^ s) :
     (x + k * 2 ^ s).testBit (s + t) = k.testBit t := by
-  rw [Nat.testBit_eq_decide_div_mod_eq, Nat.testBit_eq_decide_div_mod_eq]
-  rw [Nat.pow_add, ← Nat.div_div_eq_div_mul]
-  rw [Nat.mul_comm k (2 ^ s)]
-  rw [Nat.add_mul_div_left _ _ (Nat.two_pow_pos s), Nat.div_eq_of_lt hx, Nat.zero_add]
+  rw [Nat.testBit_eq_decide_div_mod_eq, Nat.testBit_eq_decide_div_mod_eq,
+    Nat.pow_add, ← Nat.div_div_eq_div_mul, Nat.mul_comm k (2 ^ s),
+    Nat.add_mul_div_left _ _ (Nat.two_pow_pos s), Nat.div_eq_of_lt hx, Nat.zero_add]
 
 private theorem shift_testBit (k s t : Nat) :
     (k * 2 ^ s).testBit (s + t) = k.testBit t := by
@@ -623,8 +621,7 @@ private theorem testBit_add_of_lt_low {x y s t : Nat}
     (hx : x < 2 ^ s) (hy : 2 ^ s ∣ y) :
     (x + y).testBit (s + t) = y.testBit (s + t) := by
   rcases hy with ⟨k, hk⟩
-  rw [hk, Nat.mul_comm]
-  rw [add_shift_testBit x k s t hx, shift_testBit k s t]
+  rw [hk, Nat.mul_comm, add_shift_testBit x k s t hx, shift_testBit k s t]
 
 private theorem wordsToNatAux_dvd_shift :
     ∀ (ws : List UInt64) (i : Nat), 2 ^ (64 * i) ∣ wordsToNatAux ws i
@@ -685,8 +682,7 @@ private theorem wordsToNatAux_testBit_getD :
       have htargetLow :
           64 * (i + (wordIdx + 1)) + bitIdx =
             64 * (i + 1) + (64 * wordIdx + bitIdx) := by omega
-      rw [htargetLow]
-      rw [testBit_add_of_lt_low (s := 64 * (i + 1)) (t := 64 * wordIdx + bitIdx)]
+      rw [htargetLow, testBit_add_of_lt_low (s := 64 * (i + 1)) (t := 64 * wordIdx + bitIdx)]
       · rw [← htargetLow, htarget]
         exact wordsToNatAux_testBit_getD ws (i + 1) wordIdx bitIdx hbit
       · exact Nat.lt_of_lt_of_le (word_shift_lt_next w i) (le_rfl)
@@ -699,8 +695,7 @@ theorem toNat_testBit_eq_coeff (p : Hex.GF2Poly) (j : Nat) :
   have hbit : j % 64 < 64 := Nat.mod_lt j (by decide : 0 < 64)
   have hdecomp : 64 * (0 + j / 64) + j % 64 = j := by
     simpa using Nat.div_add_mod j 64
-  rw [← hdecomp]
-  rw [wordsToNatAux_testBit_getD p.toWords.toList 0 (j / 64) (j % 64) hbit]
+  rw [← hdecomp, wordsToNatAux_testBit_getD p.toWords.toList 0 (j / 64) (j % 64) hbit]
   have hdiv : (64 * (j / 64) + j % 64) / 64 = j / 64 := by
     rw [Nat.mul_add_div (by decide : 64 > 0), Nat.div_eq_of_lt hbit, Nat.add_zero]
   simp [Hex.GF2Poly.coeffWords, Hex.GF2Poly.UInt64.bne_zero_eq_toNat_bne_zero,

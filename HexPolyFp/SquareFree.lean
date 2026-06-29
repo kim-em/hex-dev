@@ -270,10 +270,8 @@ private theorem scale_add_scalar (c d : ZMod64 p) (f : FpPoly p) :
   have hzero_cd : (c + d) * (0 : ZMod64 p) = 0 := by grind
   have hzero_c : c * (0 : ZMod64 p) = 0 := by grind
   have hzero_d : d * (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_scale _ _ _ hzero_cd]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_scale _ _ _ hzero_c]
-  rw [DensePoly.coeff_scale _ _ _ hzero_d]
+  rw [DensePoly.coeff_scale _ _ _ hzero_cd, DensePoly.coeff_add_semiring,
+    DensePoly.coeff_scale _ _ _ hzero_c, DensePoly.coeff_scale _ _ _ hzero_d]
   grind
 
 /-- Scalar scaling commutes through the right factor of a product. -/
@@ -308,8 +306,7 @@ private theorem powLinearBinom_scalar_zero (h : FpPoly p) :
   apply DensePoly.ext_coeff
   intro n
   have hzero : (0 : ZMod64 p) * (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_scale _ _ _ hzero]
-  rw [DensePoly.coeff_zero]
+  rw [DensePoly.coeff_scale _ _ _ hzero, DensePoly.coeff_zero]
   grind
 
 /-- Scaling by `1` is the identity. -/
@@ -369,8 +366,7 @@ private theorem powLinearBinomTerm_succ_zero (f g : FpPoly p) (n : Nat) :
   simp [Hex.Nat.choose]
   change DensePoly.scale (1 : ZMod64 p) (powLinear f (n + 1) * powLinear g 0) =
     f * DensePoly.scale (1 : ZMod64 p) (powLinear f n * powLinear g 0)
-  rw [powLinearBinom_scalar_one]
-  rw [powLinearBinom_scalar_one]
+  rw [powLinearBinom_scalar_one, powLinearBinom_scalar_one]
   have hg0 : powLinear g 0 = 1 := rfl
   rw [hg0]
   calc
@@ -388,8 +384,7 @@ private theorem powLinearBinomTerm_succ_succ_of_lt
       f * powLinearBinomTerm f g n (k + 1) +
         g * powLinearBinomTerm f g n k := by
   unfold powLinearBinomTerm
-  rw [Hex.Nat.choose_succ_succ]
-  rw [powLinearBinom_scalar_add]
+  rw [Hex.Nat.choose_succ_succ, powLinearBinom_scalar_add]
   have hsub : n + 1 - (k + 1) = n - k := by omega
   rw [hsub]
   have hf :
@@ -405,9 +400,7 @@ private theorem powLinearBinomTerm_succ_succ_of_lt
         powLinear f (n - k) * powLinear g (k + 1) := by
     exact congrArg (fun x => powLinear f (n - k) * x)
       (powLinear_succ_left g k).symm
-  rw [mul_powLinearBinom_scaled_left]
-  rw [mul_powLinearBinom_scaled_right]
-  rw [hf, hg]
+  rw [mul_powLinearBinom_scaled_left, mul_powLinearBinom_scaled_right, hf, hg]
   exact DensePoly.add_comm_poly _ _
 
 /-- The diagonal (`k = n`) case of Pascal's rule for binomial terms. -/
@@ -420,8 +413,7 @@ private theorem powLinearBinomTerm_succ_succ_top
   rw [Hex.Nat.choose_succ_succ]
   have hzero_choose : Hex.Nat.choose n (n + 1) = 0 :=
     Hex.Nat.choose_eq_zero_of_lt (by omega)
-  rw [hzero_choose]
-  rw [Hex.Nat.choose_self]
+  rw [hzero_choose, Hex.Nat.choose_self]
   have hcast : (((1 + 0 : Nat) : ZMod64 p)) = (1 : ZMod64 p) := by grind
   rw [hcast]
   have hsub_left : n + 1 - (n + 1) = 0 := by omega
@@ -431,15 +423,12 @@ private theorem powLinearBinomTerm_succ_succ_top
   change DensePoly.scale (1 : ZMod64 p) (powLinear f 0 * powLinear g (n + 1)) =
     f * DensePoly.scale (0 : ZMod64 p) (powLinear f 0 * powLinear g (n + 1)) +
       g * DensePoly.scale (1 : ZMod64 p) (powLinear f 0 * powLinear g n)
-  rw [powLinearBinom_scalar_one]
-  rw [powLinearBinom_scalar_zero]
-  rw [powLinearBinom_mul_zero]
+  rw [powLinearBinom_scalar_one, powLinearBinom_scalar_zero, powLinearBinom_mul_zero]
   have hzadd : (0 : FpPoly p) +
       g * DensePoly.scale (1 : ZMod64 p) (powLinear f 0 * powLinear g n) =
         g * DensePoly.scale (1 : ZMod64 p) (powLinear f 0 * powLinear g n) :=
     DensePoly.zero_add _
-  rw [hzadd]
-  rw [powLinearBinom_scalar_one]
+  rw [hzadd, powLinearBinom_scalar_one]
   have hf0 : powLinear f 0 = 1 := rfl
   rw [hf0]
   calc
@@ -471,10 +460,8 @@ private theorem powLinearBinomSum_succ_row
   | zero =>
       simp [powLinearBinomSum, powLinearBinomTerm_succ_zero]
   | succ m ih =>
-      rw [powLinearBinomSum, ih (by omega)]
-      rw [powLinearBinomSum]
-      rw [powLinearBinomSum]
-      rw [powLinearBinomTerm_succ_succ f g (by omega : m ≤ n)]
+      rw [powLinearBinomSum, ih (by omega), powLinearBinomSum, powLinearBinomSum,
+        powLinearBinomTerm_succ_succ f g (by omega : m ≤ n)]
       have hdistL :
           f * (powLinearBinomSum f g n m + powLinearBinomTerm f g n m) =
             f * powLinearBinomSum f g n m + f * powLinearBinomTerm f g n m :=
@@ -496,8 +483,7 @@ private theorem powLinearBinomSum_succ_row
       have hsum :
           powLinearBinomSum f g n (m + 1) =
             powLinearBinomSum f g n m + powLinearBinomTerm f g n m := rfl
-      rw [hsum]
-      rw [← hdistL]
+      rw [hsum, ← hdistL]
       apply DensePoly.ext_coeff
       intro i
       repeat rw [DensePoly.coeff_add_semiring]
@@ -516,8 +502,7 @@ private theorem powLinearBinomSum_top_succ
     (f g : FpPoly p) (n : Nat) :
     powLinearBinomSum f g n (n + 1 + 1) =
       powLinearBinomSum f g n (n + 1) := by
-  rw [powLinearBinomSum]
-  rw [powLinearBinomTerm_above f g (by omega : n < n + 1)]
+  rw [powLinearBinomSum, powLinearBinomTerm_above f g (by omega : n < n + 1)]
   exact DensePoly.add_zero_poly _
 
 /-- The binomial theorem: `(f + g)^n` equals its full binomial sum over the first `n + 1` terms. -/
@@ -529,9 +514,8 @@ private theorem powLinear_add_binom_sum
       simp [powLinear, powLinearBinomSum, powLinearBinomTerm, Hex.Nat.choose]
       exact (powLinearBinom_scalar_one (1 : FpPoly p)).symm
   | succ n ih =>
-      rw [powLinear_succ_left, ih]
-      rw [powLinearBinomSum_succ_row f g n (n + 1) (by omega)]
-      rw [powLinearBinomSum_top_succ f g n]
+      rw [powLinear_succ_left, ih, powLinearBinomSum_succ_row f g n (n + 1) (by omega),
+        powLinearBinomSum_top_succ f g n]
       exact DensePoly.mul_add_left_poly f g (powLinearBinomSum f g n (n + 1))
 
 /-- The zeroth term of the degree-`p` binomial expansion is `f^p`. -/
@@ -573,8 +557,8 @@ private theorem powLinearBinomSum_prime_middle
       rw [powLinearBinomSum, powLinearBinomTerm_prime_zero]
       exact DensePoly.zero_add _
   | succ m ih =>
-      rw [powLinearBinomSum, ih (by omega)]
-      rw [powLinearBinomTerm_prime_middle hp f g (by omega : 0 < m + 1) (by omega)]
+      rw [powLinearBinomSum, ih (by omega),
+        powLinearBinomTerm_prime_middle hp f g (by omega : 0 < m + 1) (by omega)]
       exact DensePoly.add_zero_poly _
 
 /-- The freshman's-dream identity `(f + g)^p = f^p + g^p` for prime `p`. -/
@@ -583,8 +567,7 @@ private theorem powLinear_add_prime
     powLinear (f + g) p = powLinear f p + powLinear g p := by
   have hp_two : 2 ≤ p := Hex.Nat.Prime.two_le hp
   have hp_pos : 0 < p := by omega
-  rw [powLinear_add_binom_sum]
-  rw [powLinearBinomSum]
+  rw [powLinear_add_binom_sum, powLinearBinomSum]
   have hmid : powLinearBinomSum f g p p = powLinear f p := by
     have hmid0 :
         powLinearBinomSum f g p ((p - 1) + 1) = powLinear f p :=
@@ -614,8 +597,8 @@ private theorem weightedProduct_foldl_eq_mul
   | cons sf factors ih =>
       unfold weightedProduct
       simp only [List.foldl_cons]
-      rw [ih (acc * pow sf.factor sf.multiplicity)]
-      rw [ih ((1 : FpPoly p) * pow sf.factor sf.multiplicity)]
+      rw [ih (acc * pow sf.factor sf.multiplicity),
+        ih ((1 : FpPoly p) * pow sf.factor sf.multiplicity)]
       have hone :
           (1 : FpPoly p) * pow sf.factor sf.multiplicity =
             pow sf.factor sf.multiplicity := by
@@ -805,19 +788,14 @@ private theorem coeffFold_coeff (g : FpPoly p) (m n : Nat) :
       by_cases hlt : n < m
       · rw [if_pos hlt]
         have hne : n ≠ m := by omega
-        rw [if_neg hne]
-        rw [if_pos (by omega : n < m + 1)]
+        rw [if_neg hne, if_pos (by omega : n < m + 1)]
         exact zmod64_add_zero_coeff (g.coeff n)
       · by_cases heq : n = m
         · rw [if_neg hlt]
-          rw [if_pos heq]
-          rw [if_pos (by omega : n < m + 1)]
-          rw [heq]
+          rw [if_pos heq, if_pos (by omega : n < m + 1), heq]
           exact zmod64_zero_add_coeff (g.coeff m)
         · have hsucc : ¬n < m + 1 := by omega
-          rw [if_neg hlt]
-          rw [if_neg heq]
-          rw [if_neg hsucc]
+          rw [if_neg hlt, if_neg heq, if_neg hsucc]
           exact zmod64_add_zero_zero_coeff
 
 /-- Any coefficient fold whose bound reaches `g.size` reconstructs `g`. -/
@@ -973,8 +951,7 @@ private theorem coeffFoldPowerCoeff_prime_coeff
           · have hnm : n = p * m := by rw [hn_eq, heq]
             rw [if_pos hnm]
             have hltsucc : n / p < m + 1 := by omega
-            rw [if_pos hltsucc]
-            rw [heq]
+            rw [if_pos hltsucc, heq]
             exact zmod64_zero_add_coeff (g.coeff m ^ p)
           · have hne : n ≠ p * m := by
               intro habs
@@ -1035,8 +1012,7 @@ private theorem powLinear_prime_coeff
             · rw [if_neg hsize]
               have hcoeff : g.coeff (n / p) = 0 :=
                 DensePoly.coeff_eq_zero_of_size_le g (by omega)
-              rw [hcoeff]
-              rw [if_pos hn]
+              rw [hcoeff, if_pos hn]
               exact (ZMod64.pow_prime hp (0 : ZMod64 p)).symm
           · rw [if_neg hn]
             rw [if_neg hn]
@@ -1209,8 +1185,7 @@ private theorem eq_zero_of_isZero_true
 private theorem normalizeMonic_zero_reconstruct
     (f : FpPoly p) (hzero : f.isZero = true) :
     DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2 = f := by
-  rw [normalizeMonic_zero f hzero]
-  rw [eq_zero_of_isZero_true f hzero]
+  rw [normalizeMonic_zero f hzero, eq_zero_of_isZero_true f hzero]
   exact mul_zero (DensePoly.C (0 : ZMod64 p))
 
 /-- On a nonzero `f`, `normalizeMonic f` is the pair of its leading coefficient and
@@ -1226,8 +1201,7 @@ over a prime modulus. -/
 private theorem normalizeMonic_nonzero_reconstruct
     (hp : Hex.Nat.Prime p) (f : FpPoly p) (hzero : f.isZero = false) :
     DensePoly.C (normalizeMonic f).1 * (normalizeMonic f).2 = f := by
-  rw [normalizeMonic_nonzero f hzero]
-  rw [C_mul_eq_scale, scale_scale]
+  rw [normalizeMonic_nonzero f hzero, C_mul_eq_scale, scale_scale]
   have hlead_ne := fpPoly_leadingCoeff_ne_zero_of_isZero_false f hzero
   rw [zmod64_mul_inv_eq_one_of_prime_ne_zero hp hlead_ne]
   exact scale_one_left f
@@ -2318,8 +2292,7 @@ private theorem squareFreeAuxRevContribution_one
         simp [hsize, DensePoly.isZero, DensePoly.ofCoeffs, DensePoly.trimTrailingZeros]
         rfl
       simp [hone_ne]
-      rw [hdf_one]
-      rw [pthRoot_one hp]
+      rw [hdf_one, pthRoot_one hp]
       exact ih (multiplicity * p)
 
 /-- A polynomial of `size` one is constant, so its derivative is zero. -/
@@ -3054,8 +3027,7 @@ private theorem quotient_common_dvd_mul_derivative_base
     have hfirst_eq :
         DensePoly.derivative c - d * DensePoly.derivative q =
           DensePoly.derivative d * q := by
-      rw [hderiv]
-      rw [sub_eq_add_neg]
+      rw [hderiv, sub_eq_add_neg]
       calc
         (DensePoly.derivative d * q + d * DensePoly.derivative q) +
             -(d * DensePoly.derivative q)
@@ -3226,8 +3198,7 @@ private theorem derivativeSplit_quotient_pow_succ_dvd_gcd
       rcases hpow with ⟨q, hq⟩
       have hg_eq : g = pow d (k + 1) * q := by simpa [g] using hq
       have hsucc_dvd_f : pow d (k + 2) ∣ f := by
-        rw [← hprod]
-        rw [ha, hg_eq]
+        rw [← hprod, ha, hg_eq]
         refine ⟨a * q, ?_⟩
         calc
           (d * a) * (pow d (k + 1) * q)
@@ -4356,8 +4327,8 @@ private theorem derivativeSplit_quotient_size_one_eq_one
           DensePoly.derivative c * g + c * DensePoly.derivative g := by
             exact DensePoly.derivative_mul c g
       _ = 0 * g + c * 0 := by
-            rw [eq_zero_of_isZero_true (DensePoly.derivative c) hc_der]
-            rw [eq_zero_of_isZero_true (DensePoly.derivative g) hg_der]
+            rw [eq_zero_of_isZero_true (DensePoly.derivative c) hc_der,
+              eq_zero_of_isZero_true (DensePoly.derivative g) hg_der]
       _ = 0 := by simp
   exfalso
   apply hdf
@@ -5262,8 +5233,8 @@ private theorem constant_nonzero_dvd
         rw [hg_coeff_zero]
         exact (DensePoly.coeff_C unit (n + 1)).symm
   refine ⟨DensePoly.scale unit⁻¹ f, ?_⟩
-  rw [hg_eq_C, C_mul_eq_scale, scale_scale]
-  rw [zmod64_mul_inv_eq_one_of_prime_ne_zero (ZMod64.PrimeModulus.prime (p := p)) hunit_ne]
+  rw [hg_eq_C, C_mul_eq_scale, scale_scale,
+    zmod64_mul_inv_eq_one_of_prime_ne_zero (ZMod64.PrimeModulus.prime (p := p)) hunit_ne]
   exact (scale_one_left f).symm
 
 private theorem yunStep_gcd_nonzero_of_left_nonzero

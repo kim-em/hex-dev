@@ -87,9 +87,8 @@ theorem add_pow_prime (a b : Quotient g hmonic hg_pos) :
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
         (FpPoly.linearPow (a.val + b.val) p) from
     (reduce_linearPow_eq_pow (a.val + b.val) p).symm]
-  rw [FpPoly.linearPow_add_prime hp]
-  rw [reduce_add]
-  rw [pow_eq_reduce_linearPow a, pow_eq_reduce_linearPow b]
+  rw [FpPoly.linearPow_add_prime hp, reduce_add,
+    pow_eq_reduce_linearPow a, pow_eq_reduce_linearPow b]
 
 omit [ZMod64.PrimeModulus p] in
 private theorem zmod64_pow_succ (c : ZMod64 p) (n : Nat) :
@@ -99,9 +98,8 @@ private theorem zmod64_pow_succ (c : ZMod64 p) (n : Nat) :
   show (c ^ (n + 1)).toNat = (c ^ n * c).toNat
   rw [show ((c ^ n * c) : ZMod64 p) = ZMod64.mul (c ^ n) c from rfl,
     ZMod64.toNat_mul]
-  rw [show (c ^ (n + 1) : ZMod64 p) = ZMod64.pow c (n + 1) from rfl]
-  rw [show (c ^ n : ZMod64 p) = ZMod64.pow c n from rfl]
-  rw [ZMod64.toNat_pow, ZMod64.toNat_pow]
+  rw [show (c ^ (n + 1) : ZMod64 p) = ZMod64.pow c (n + 1) from rfl,
+    show (c ^ n : ZMod64 p) = ZMod64.pow c n from rfl, ZMod64.toNat_pow, ZMod64.toNat_pow]
   have hc_lt : c.toNat < p := c.toNat_lt
   have hcm : c.toNat % p = c.toNat := Nat.mod_eq_of_lt hc_lt
   rw [Nat.pow_succ, Nat.mul_mod, hcm]
@@ -144,9 +142,8 @@ private theorem zmod64_pow_zero (c : ZMod64 p) :
   apply ZMod64.ext
   apply UInt64.toNat_inj.mp
   show (c ^ (0 : Nat) : ZMod64 p).toNat = (1 : ZMod64 p).toNat
-  rw [show ((c ^ (0 : Nat)) : ZMod64 p) = ZMod64.pow c 0 from rfl]
-  rw [ZMod64.toNat_pow]
-  rw [show ((1 : ZMod64 p) : ZMod64 p) = ZMod64.one from rfl, ZMod64.toNat_one]
+  rw [show ((c ^ (0 : Nat)) : ZMod64 p) = ZMod64.pow c 0 from rfl, ZMod64.toNat_pow,
+    show ((1 : ZMod64 p) : ZMod64 p) = ZMod64.one from rfl, ZMod64.toNat_one]
   simp
 
 omit [ZMod64.PrimeModulus p] in
@@ -171,8 +168,7 @@ theorem linearPow_C_pow_prime (c : ZMod64 p) :
 theorem reduce_C_pow_prime_eq (c : ZMod64 p) :
     (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c)) ^ p =
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c) := by
-  rw [← reduce_linearPow_eq_pow]
-  rw [linearPow_C_pow_prime]
+  rw [← reduce_linearPow_eq_pow, linearPow_C_pow_prime]
 
 /-- Constants are fixed by every iterate of the Frobenius on the quotient. -/
 theorem reduce_C_pow_pPow_eq (c : ZMod64 p) (k : Nat) :
@@ -263,8 +259,7 @@ theorem reduce_monomial_eq (m : Nat) (c : ZMod64 p) :
   rw [show (DensePoly.C c * DensePoly.monomial m (1 : ZMod64 p)
     : FpPoly p) = DensePoly.scale c (DensePoly.monomial m (1 : ZMod64 p))
     from FpPoly.C_mul_eq_scale c _]
-  rw [DensePoly.coeff_scale c _ k hzero]
-  rw [DensePoly.coeff_monomial m (1 : ZMod64 p) k]
+  rw [DensePoly.coeff_scale c _ k hzero, DensePoly.coeff_monomial m (1 : ZMod64 p) k]
   by_cases hk : k = m
   · simp only [hk, if_true]
     show c = c * (1 : ZMod64 p)
@@ -298,9 +293,7 @@ private theorem coeff_fpPolyMonoSum (f : FpPoly p) (m k : Nat) :
   | succ m ih =>
       show (fpPolyMonoSum f m + DensePoly.monomial m (f.coeff m)).coeff k =
         if k < m + 1 then f.coeff k else 0
-      rw [DensePoly.coeff_add_semiring]
-      rw [ih]
-      rw [DensePoly.coeff_monomial m (f.coeff m) k]
+      rw [DensePoly.coeff_add_semiring, ih, DensePoly.coeff_monomial m (f.coeff m) k]
       by_cases hk_lt_m : k < m
       · have hk_lt_succ : k < m + 1 := Nat.lt_succ_of_lt hk_lt_m
         have hk_ne_m : k ≠ m := Nat.ne_of_lt hk_lt_m
@@ -375,13 +368,9 @@ private theorem quotMonoSum_pow_pPow_eq_self
         quotMonoSum f g hmonic hg_pos m +
           reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
             (DensePoly.monomial m (f.coeff m))
-      rw [add_pow_pPow]
-      rw [ih]
+      rw [add_pow_pPow, ih]
       congr 1
-      rw [reduce_monomial_eq]
-      rw [mul_pow]
-      rw [reduce_C_pow_pPow_eq]
-      rw [X_pow_pPowN hp_pos hX m]
+      rw [reduce_monomial_eq, mul_pow, reduce_C_pow_pPow_eq, X_pow_pPowN hp_pos hX m]
 
 /-- **Capstone:** if the Frobenius iterate `β ↦ β ^ (p ^ n)` fixes
 `Quotient.X`, it fixes every quotient element.
@@ -398,8 +387,7 @@ theorem pow_pPowN_eq_self_of_pow_pPowN_X_eq_X
   -- Reduce β to its canonical representative.
   have hβ : β = reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) β.val :=
     (reduce_val_self β).symm
-  rw [hβ]
-  rw [reduce_eq_quotMonoSum]
+  rw [hβ, reduce_eq_quotMonoSum]
   exact quotMonoSum_pow_pPow_eq_self hX β.val β.val.size
 
 end Quotient

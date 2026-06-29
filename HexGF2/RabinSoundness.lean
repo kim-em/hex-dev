@@ -82,8 +82,8 @@ private theorem mul_dvd_mul_left' (c : GF2Poly) {a b : GF2Poly} (h : a ∣ b) :
 /-- Char-2 freshman's dream: `(a + b) * (a + b) = a * a + b * b`. -/
 private theorem freshman_dream (a b : GF2Poly) :
     (a + b) * (a + b) = a * a + b * b := by
-  rw [right_distrib, left_distrib, left_distrib, mul_comm b a]
-  rw [add_assoc, ← add_assoc (a * b) (a * b) (b * b), add_self, zero_add]
+  rw [right_distrib, left_distrib, left_distrib, mul_comm b a,
+    add_assoc, ← add_assoc (a * b) (a * b) (b * b), add_self, zero_add]
 
 /-- The remainder added to its dividend is divisible by the divisor in
 characteristic two. -/
@@ -345,9 +345,8 @@ private theorem monomial_add_one_dvd_geom (k : Nat) :
       have heq :
           monomial (k * (n + 1)) + 1 =
             monomial k * (monomial (k * n) + 1) + (monomial k + 1) := by
-        rw [right_distrib, mul_one', monomial_mul_monomial]
-        rw [show k + k * n = k * (n + 1) from by rw [Nat.mul_succ]; omega]
-        rw [add_assoc]
+        rw [right_distrib, mul_one', monomial_mul_monomial,
+          show k + k * n = k * (n + 1) from by rw [Nat.mul_succ]; omega, add_assoc]
         congr 1
         rw [← add_assoc, add_self, zero_add]
       rw [heq]
@@ -606,9 +605,7 @@ theorem dvd_xPowSubX_iff_quotient_X_frobeniusIter_eq_X
         GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (frobeniusDiffMod g k) =
           0 := by
       unfold frobeniusDiffMod
-      rw [GF2nPoly.reducePoly_add_eq]
-      rw [GF2nPoly.reducePoly_mod_eq]
-      rw [hquot']
+      rw [GF2nPoly.reducePoly_add_eq, GF2nPoly.reducePoly_mod_eq, hquot']
       change
         GF2nPoly.reducePoly (f := g) (hirr := hg_irr)
             ((GF2nPoly.reducePoly (f := g) (hirr := hg_irr) (monomial 1)).val +

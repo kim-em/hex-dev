@@ -95,9 +95,7 @@ private theorem cast_rowCombination_eq
       = (Matrix.rowCombination
           (GramSchmidt.prefixRows (castIntMatrix b) k.val k.isLt)
           (prefixCoeffsCast c k))[cf]
-  rw [hLHS]
-  rw [rowCombination_int_getElem b c cf]
-  rw [rowCombination_prefix_castIntMatrix_getElem b c k cf]
+  rw [hLHS, rowCombination_int_getElem b c cf, rowCombination_prefix_castIntMatrix_getElem b c k cf]
   -- LHS: cast of an integer foldl; RHS: a rational foldl over `finRange (k+1)`.
   -- First, push the cast through the integer foldl, getting a rational foldl
   -- over `finRange n` whose later terms vanish; then truncate to `k + 1`.
@@ -192,8 +190,7 @@ Gram-Schmidt basis rows: `coeffs b * basis b` collapses to the cast input
   have htrunc := foldl_finRange_eq_prefix_of_zero_above ii f hzero
   change (List.finRange n).foldl (fun acc k => acc + f k) 0 =
     (castIntMatrix b)[ii][jj]
-  rw [htrunc]
-  rw [List.finRange_succ_last, List.foldl_append, List.foldl_map]
+  rw [htrunc, List.finRange_succ_last, List.foldl_append, List.foldl_map]
   simp only [List.foldl_cons, List.foldl_nil]
   have hprefix :
       (List.finRange i).foldl
@@ -297,15 +294,13 @@ theorem rowCombination_basis_coeffs_reconstruction
     rw [Matrix.mulVec_getElem]
     simp [Vector.dotProduct, Matrix.row, Matrix.transpose,
       Matrix.col, castIntMatrix]
-  rw [hleft]
-  rw [← hcoeff]
+  rw [hleft, ← hcoeff]
   change ((Matrix.transpose (coeffs b * basis b)) *
       Vector.map (fun x : Int => (x : Rat)) c)[jj] =
     (Matrix.transpose (basis b) *
       (Matrix.transpose (coeffs b) *
         Vector.map (fun x : Int => (x : Rat)) c))[jj]
-  rw [Matrix.transpose_mul_of_mul_comm]
-  rw [Matrix.mul_assoc_vec]
+  rw [Matrix.transpose_mul_of_mul_comm, Matrix.mul_assoc_vec]
 
 private theorem exists_highest_nonzero_coeff_in_list
     (c : Vector Int n) (xs : List (Fin n))
@@ -2103,9 +2098,8 @@ theorem scaledCoeffMatrix_rowSwap_adjacent_pivot_transpose
       dsimp [GramSchmidt.scaledCoeffMatrix, Matrix.transpose, Matrix.col,
         Matrix.row, Matrix.ofFn]
       repeat rw [Vector.getElem_ofFn]
-      rw [if_pos hq_val]
-      rw [if_pos (by simpa [last] using congrArg Fin.val hp_last)]
-      rw [rowSwap_getRow_right_val_int]
+      rw [if_pos hq_val, if_pos (by simpa [last] using congrArg Fin.val hp_last),
+        rowSwap_getRow_right_val_int]
       rw [show (GramSchmidt.liftFinLE (⟨p.val, hr⟩ : Fin t) _) = km1 by
         apply Fin.ext
         dsimp [GramSchmidt.liftFinLE]
@@ -2128,10 +2122,8 @@ theorem scaledCoeffMatrix_rowSwap_adjacent_pivot_transpose
       dsimp [GramSchmidt.scaledCoeffMatrix, Matrix.transpose, Matrix.col,
         Matrix.row, Matrix.ofFn]
       repeat rw [Vector.getElem_ofFn]
-      rw [if_pos hq_val]
-      rw [if_neg hp_val_ne]
-      rw [rowSwap_getRow_right_val_int]
-      rw [rowSwap_getRow_eq_of_ne_val_int]
+      rw [if_pos hq_val, if_neg hp_val_ne, rowSwap_getRow_right_val_int,
+        rowSwap_getRow_eq_of_ne_val_int]
       · rw [show (GramSchmidt.liftFinLE q _) = km1 by
           apply Fin.ext
           dsimp [GramSchmidt.liftFinLE]
@@ -2156,14 +2148,12 @@ theorem scaledCoeffMatrix_rowSwap_adjacent_pivot_transpose
       dsimp [GramSchmidt.scaledCoeffMatrix, Matrix.transpose, Matrix.col,
         Matrix.row, Matrix.ofFn]
       repeat rw [Vector.getElem_ofFn]
-      rw [if_neg hq_ne_val]
-      rw [if_pos hp_val]
+      rw [if_neg hq_ne_val, if_pos hp_val]
       rw [show (GramSchmidt.liftFinLE (⟨p.val, hr⟩ : Fin t) _) = km1 by
         apply Fin.ext
         dsimp [GramSchmidt.liftFinLE]
         omega]
-      rw [rowSwap_getRow_left_val_int]
-      rw [rowSwap_getRow_eq_of_ne_val_int]
+      rw [rowSwap_getRow_left_val_int, rowSwap_getRow_eq_of_ne_val_int]
       · exact dot_comm_int _ _
       · dsimp [GramSchmidt.liftFinLE]
         omega
@@ -2181,9 +2171,7 @@ theorem scaledCoeffMatrix_rowSwap_adjacent_pivot_transpose
       dsimp [GramSchmidt.scaledCoeffMatrix, Matrix.transpose, Matrix.col,
         Matrix.row, Matrix.ofFn]
       repeat rw [Vector.getElem_ofFn]
-      rw [if_neg hq_ne_val]
-      rw [if_neg hp_ne_val]
-      rw [rowSwap_getRow_eq_of_ne_val_int]
+      rw [if_neg hq_ne_val, if_neg hp_ne_val, rowSwap_getRow_eq_of_ne_val_int]
       · rw [rowSwap_getRow_eq_of_ne_val_int]
         · exact dot_comm_int _ _
         · dsimp [GramSchmidt.liftFinLE]

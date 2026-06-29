@@ -112,8 +112,7 @@ theorem coeffs_sizeReduce_pivot (b : Matrix Int n m) (j k : Fin n) (hjk : j.val 
     (hnorm : Vector.dotProduct ((basis b).row j) ((basis b).row j) ≠ 0) :
     GramSchmidt.entry (coeffs (sizeReduce b j k r)) k j =
       GramSchmidt.entry (coeffs b) k j - (r : Rat) := by
-  rw [sizeReduce]
-  rw [coeffs_rowAdd_pivot (b := b) (src := j) (dst := k) hjk (c := -r) hnorm]
+  rw [sizeReduce, coeffs_rowAdd_pivot (b := b) (src := j) (dst := k) hjk (c := -r) hnorm]
   grind
 
 /-- How size reduction propagates to coefficients below the pivot: for a column
@@ -126,8 +125,7 @@ theorem coeffs_sizeReduce_lower (b : Matrix Int n m) (l j k : Fin n)
     GramSchmidt.entry (coeffs (sizeReduce b j k r)) k l =
       GramSchmidt.entry (coeffs b) k l -
         (r : Rat) * GramSchmidt.entry (coeffs b) j l := by
-  rw [sizeReduce]
-  rw [coeffs_rowAdd_lower (b := b) (col := l) (src := j) (dst := k) hlj hjk (c := -r)]
+  rw [sizeReduce, coeffs_rowAdd_lower (b := b) (col := l) (src := j) (dst := k) hlj hjk (c := -r)]
   grind
 
 /-- Size reduction is local to the row being reduced: every coefficient row

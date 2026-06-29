@@ -242,8 +242,8 @@ private theorem getArrayEntry_scaledCoeffRowsSchur_eq_schurScaledCoeffEntry
         schurScaledCoeffEntry rowsBeforeC gram a c := by
     simp [scaledCoeffRowsSchur, gram, h_rows_split, h_cols_split, rowsBeforeA,
       rowsBeforeC]
-    rw [getArrayEntry_schurRowLoop_row_not_mem _ _ _ _ _ h_a_not_suffix]
-    rw [getArrayEntry_schurColumnLoop_col_not_mem _ _ _ _ _ h_c_not_colSuffix]
+    rw [getArrayEntry_schurRowLoop_row_not_mem _ _ _ _ _ h_a_not_suffix,
+      getArrayEntry_schurColumnLoop_col_not_mem _ _ _ _ _ h_c_not_colSuffix]
     exact getArrayEntry_setArrayEntry_self rowsBeforeC a c
       (schurScaledCoeffEntry rowsBeforeC gram a c) hrow_beforeC hcol_beforeC
   rw [h_write]
@@ -281,8 +281,8 @@ private theorem getArrayEntry_scaledCoeffRowsSchur_eq_schurScaledCoeffEntry
                     next) (zeroRows n)) k k := by
             rw [h_rows_split]
             simp [rowsBeforeA, gram]
-            rw [getArrayEntry_schurRowLoop_row_not_mem _ _ _ _ _ hk_not_suffix]
-            rw [getArrayEntry_schurColumnLoop_row_ne _ _ _ _ _ _ hk_not_a]
+            rw [getArrayEntry_schurRowLoop_row_not_mem _ _ _ _ _ hk_not_suffix,
+              getArrayEntry_schurColumnLoop_row_ne _ _ _ _ _ _ hk_not_a]
           _ = getArrayEntry (scaledCoeffRowsSchur b) k k := by
             simp [scaledCoeffRowsSchur]
       have h_row_a_cells :
@@ -361,8 +361,8 @@ private theorem getArrayEntry_scaledCoeffRowsSchur_eq_schurScaledCoeffEntry
                       next) (zeroRows n)) c p := by
               rw [h_rows_split]
               simp [rowsBeforeA, gram]
-              rw [getArrayEntry_schurRowLoop_row_not_mem _ _ _ _ _ hc_not_suffix]
-              rw [getArrayEntry_schurColumnLoop_row_ne _ _ _ _ _ _ hca_ne]
+              rw [getArrayEntry_schurRowLoop_row_not_mem _ _ _ _ _ hc_not_suffix,
+                getArrayEntry_schurColumnLoop_row_ne _ _ _ _ _ _ hca_ne]
             _ = getArrayEntry (scaledCoeffRowsSchur b) c p := by
               simp [scaledCoeffRowsSchur]
       have h_diag_prev :
@@ -728,15 +728,15 @@ private theorem noPivotLoop_sync_borderedMinor_aux
       · -- Singular branch on both sides.
         have hp_bm : state_bm.matrix[k_bm][k_bm] = 0 := by
           rw [← h_pivot_eq]; exact hp_full
-        rw [Matrix.noPivotLoop_singular_branch f state_full h_full_done hp_full]
-        rw [Matrix.noPivotLoop_singular_branch f state_bm h_bm_done hp_bm]
+        rw [Matrix.noPivotLoop_singular_branch f state_full h_full_done hp_full,
+          Matrix.noPivotLoop_singular_branch f state_bm h_bm_done hp_bm]
         refine ⟨h_step, h_prev, h_rows, ?_, h_mat⟩
         simp [h_step]
       · -- Regular branch on both sides; apply IH to the updated states.
         have hp_bm : state_bm.matrix[k_bm][k_bm] ≠ 0 := by
           rw [← h_pivot_eq]; exact hp_full
-        rw [Matrix.noPivotLoop_regular_branch f state_full h_full_done hp_full]
-        rw [Matrix.noPivotLoop_regular_branch f state_bm h_bm_done hp_bm]
+        rw [Matrix.noPivotLoop_regular_branch f state_full h_full_done hp_full,
+          Matrix.noPivotLoop_regular_branch f state_bm h_bm_done hp_bm]
         have h_new_mat :
             Matrix.borderedMinor
               (Matrix.stepMatrix state_full.matrix state_full.step
@@ -1013,15 +1013,15 @@ private theorem noPivotLoop_sync_principalSubmatrix_aux
       · -- Singular branch on both sides.
         have hp_pref : state_pref.matrix[k_pref][k_pref] = 0 := by
           rw [← h_pivot_eq]; exact hp_full
-        rw [Matrix.noPivotLoop_singular_branch f state_full h_full_done hp_full]
-        rw [Matrix.noPivotLoop_singular_branch f state_pref h_pref_done hp_pref]
+        rw [Matrix.noPivotLoop_singular_branch f state_full h_full_done hp_full,
+          Matrix.noPivotLoop_singular_branch f state_pref h_pref_done hp_pref]
         refine ⟨h_step, h_prev, h_rows, ?_, h_mat⟩
         simp [h_step]
       · -- Regular branch on both sides; apply IH to the updated states.
         have hp_pref : state_pref.matrix[k_pref][k_pref] ≠ 0 := by
           rw [← h_pivot_eq]; exact hp_full
-        rw [Matrix.noPivotLoop_regular_branch f state_full h_full_done hp_full]
-        rw [Matrix.noPivotLoop_regular_branch f state_pref h_pref_done hp_pref]
+        rw [Matrix.noPivotLoop_regular_branch f state_full h_full_done hp_full,
+          Matrix.noPivotLoop_regular_branch f state_pref h_pref_done hp_pref]
         -- After one step, the new states are still linked.
         have h_new_mat :
             Matrix.principalSubmatrix
@@ -1135,8 +1135,8 @@ theorem noPivotLoop_add
           rw [h_lhs, h_rhs_inner]
           exact ih _
       · -- Boundary: both sides return `state` unchanged.
-        rw [noPivotLoop_id_at_done (a' + 1 + b) state hDone]
-        rw [noPivotLoop_id_at_done (a' + 1) state hDone]
+        rw [noPivotLoop_id_at_done (a' + 1 + b) state hDone,
+          noPivotLoop_id_at_done (a' + 1) state hDone]
         exact (noPivotLoop_id_at_done b state hDone).symm
 
 /-- After running `noPivotLoop` from a state without a recorded singular
@@ -1346,8 +1346,7 @@ private theorem noPivotLoop_singularStep
         (Matrix.noPivotLoop a state).singularStep =
           some (Matrix.noPivotLoop a state).step := by
       rw [h_sing, h_step]
-    rw [noPivotLoop_id_at_singular_fixedpoint b _ hDone hp hsing_state]
-    rw [hs]
+    rw [noPivotLoop_id_at_singular_fixedpoint b _ hDone hp hsing_state, hs]
     exact h_sing
 
 /-- If a full no-pivot run has no singular step, every initial prefix run also

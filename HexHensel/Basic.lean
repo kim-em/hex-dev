@@ -77,8 +77,7 @@ is the `ZMod64` image of the canonical representative of the original coefficien
 @[simp, grind =] theorem coeff_modP (p : Nat) [ZMod64.Bounds p] (f : ZPoly) (i : Nat) :
     (modP p f).coeff i = ZMod64.ofNat p (intModNat (f.coeff i) p) := by
   unfold modP FpPoly.ofCoeffs
-  rw [DensePoly.coeff_ofCoeffs_list]
-  rw [list_getD_map_range]
+  rw [DensePoly.coeff_ofCoeffs_list, list_getD_map_range]
   by_cases hi : i < f.size
   · simp [hi]
   · have hcoeff : f.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le f (Nat.le_of_not_gt hi)
@@ -103,8 +102,7 @@ by its canonical nonnegative representative in `[0, p^k)`. -/
 @[simp, grind =] theorem coeff_reduceModPow (f : ZPoly) (p k i : Nat) :
     (reduceModPow f p k).coeff i = Int.ofNat (intModNat (f.coeff i) (p ^ k)) := by
   unfold reduceModPow
-  rw [DensePoly.coeff_ofCoeffs_list]
-  rw [list_getD_map_range]
+  rw [DensePoly.coeff_ofCoeffs_list, list_getD_map_range]
   by_cases hi : i < f.size
   · simp [hi]
   · have hcoeff : f.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le f (Nat.le_of_not_gt hi)
@@ -272,8 +270,7 @@ nonnegative `Nat` representative of the corresponding `ZMod64` element. -/
 @[simp, grind =] theorem coeff_liftToZ (f : FpPoly p) (i : Nat) :
     (liftToZ f).coeff i = Int.ofNat (f.coeff i).toNat := by
   unfold liftToZ
-  rw [DensePoly.coeff_ofCoeffs_list]
-  rw [list_getD_map_range]
+  rw [DensePoly.coeff_ofCoeffs_list, list_getD_map_range]
   by_cases hi : i < f.size
   · simp [hi]
   · have hcoeff : f.coeff i = 0 := DensePoly.coeff_eq_zero_of_size_le f (Nat.le_of_not_gt hi)
@@ -323,16 +320,14 @@ theorem modP_liftToZ_coeff (f : FpPoly p) (i : Nat) :
 `1 % p` form that blocks rewriting in monicity proofs of `liftToZ`. -/
 private theorem zmod64_toNat_one_of_one_lt (hp : 1 < p) :
     ZMod64.toNat (1 : ZMod64 p) = 1 := by
-  rw [show (1 : ZMod64 p) = ZMod64.one from rfl]
-  rw [ZMod64.toNat_one, Nat.mod_eq_of_lt hp]
+  rw [show (1 : ZMod64 p) = ZMod64.one from rfl, ZMod64.toNat_one, Nat.mod_eq_of_lt hp]
 
 /-- Specialised `toNat` reduction for `(0 : ZMod64 p)`, dual to
 `zmod64_toNat_one_of_one_lt`; lets monicity proofs derive `1 ≠ 0` from the lifted
 representatives. -/
 private theorem zmod64_toNat_zero :
     ZMod64.toNat (0 : ZMod64 p) = 0 := by
-  rw [show (0 : ZMod64 p) = ZMod64.zero from rfl]
-  rw [ZMod64.toNat_zero]
+  rw [show (0 : ZMod64 p) = ZMod64.zero from rfl, ZMod64.toNat_zero]
 
 /-- Size-positivity step for the monicity-preservation proof: a monic `FpPoly p`
 with `1 < p` lifts to a `ZPoly` of positive size. Factored out to keep the
@@ -387,8 +382,7 @@ theorem monic_liftToZ_of_monic
     DensePoly.Monic (liftToZ f) := by
   have hpos : 0 < (liftToZ f).size :=
     liftToZ_size_pos_of_monic f hp hf
-  rw [DensePoly.Monic, DensePoly.leadingCoeff_eq_coeff_last (liftToZ f) hpos]
-  rw [coeff_liftToZ]
+  rw [DensePoly.Monic, DensePoly.leadingCoeff_eq_coeff_last (liftToZ f) hpos, coeff_liftToZ]
   have hf_pos : 0 < f.size := by
     by_cases hf_pos : 0 < f.size
     · exact hf_pos
@@ -442,8 +436,7 @@ theorem monic_liftToZ_of_monic
 theorem congr_liftToZ_modP (f : ZPoly) :
     ZPoly.congr (liftToZ (ZPoly.modP p f)) f p := by
   intro i
-  rw [coeff_liftToZ, ZPoly.coeff_modP]
-  rw [ZMod64.toNat_ofNat]
+  rw [coeff_liftToZ, ZPoly.coeff_modP, ZMod64.toNat_ofNat]
   have hp : 0 < p := ZMod64.Bounds.pPos (p := p)
   have hmod : ZPoly.intModNat (f.coeff i) p % p = ZPoly.intModNat (f.coeff i) p := by
     rw [Nat.mod_eq_of_lt]
