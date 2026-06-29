@@ -127,6 +127,7 @@ theorem common_dvd_one_of_isGoodPrime_monicModularImage
     unfold Hex.Berlekamp.isUnitPolynomial
     have hpos : 0 < (DensePoly.gcd r (DensePoly.derivative r)).size := by omega
     rw [DensePoly.degree?_eq_some_of_pos_size _ hpos, hsize]
+    rfl
   exact Hex.Berlekamp.isUnitPolynomial_of_dvd_gcd_isUnit hg_r hg_dr hgcd_unit
 
 /--

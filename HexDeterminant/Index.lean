@@ -343,7 +343,7 @@ private def peelLastVector {n : Nat} (perm : Vector (Fin (n + 1)) (n + 1))
           perm.toList.idxOf (perm.toList[j]'hjlen) = j := by
         exact hnodup.idxOf_getElem j hjlen
       have hylist : perm.toList[j]'hjlen = Fin.last n := by
-        simpa [Vector.getElem_toList] using hy
+        rw [Vector.getElem_toList]; exact hy
       have hkj : k = j := by
         rw [← hidx, ← hylist, hjidx]
       dsimp [j] at hkj

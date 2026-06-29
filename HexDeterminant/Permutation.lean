@@ -600,7 +600,7 @@ private theorem inversePermutationValues_insertAt_last_castSucc {n : Nat}
           (insertAt (Fin.last n) (v.map Fin.castSucc) i).toList.idxOf
               (⟨old.val, by omega⟩ : Fin (n + 1)) =
             (raiseFinAbove i ((inversePermutationValues v hnodup)[old])).val := by
-        simpa using hidx
+        exact hidx
       simpa [inversePermutationValues] using hidx'
     have hright :
         (insertAt i ((inversePermutationValues v hnodup).map (raiseFinAbove i))

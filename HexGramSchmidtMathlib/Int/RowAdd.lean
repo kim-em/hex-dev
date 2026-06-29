@@ -215,9 +215,10 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
     let qf : Fin t := ⟨q, hq⟩
     by_cases hq_last : qf = last
     · have hq_lift : GramSchmidt.liftFinLE qf ht = j := by
-        exact Fin.ext (by
-          have hval := congrArg Fin.val hq_last
-          simpa [last] using hval)
+        apply Fin.ext
+        show (qf : Nat) = (j : Nat)
+        have hval := congrArg Fin.val hq_last
+        simpa [last] using hval
       simp only [M, gramCol, GramSchmidt.leadingGramMatrixInt, Matrix.setCol, Matrix.ofFn,
         Vector.getElem_ofFn]
       rw [if_pos hq_last]

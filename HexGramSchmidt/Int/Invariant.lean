@@ -141,9 +141,11 @@ private theorem bareissGramRowInvariant_noPivotLoop_initial_canonical
     IsCanonicalAt b fuel
       (bareissGramRowInvariant_noPivotLoop_initial b fuel hquot) := by
   intro i
-  simpa using (bareissGramRowInvariant_noPivotLoop_initialAux
+  have key := (bareissGramRowInvariant_noPivotLoop_initialAux
     (b := b) 0 fuel (bareissGramRowInvariant_initial b)
     (isCanonicalAt_initial b) rfl hquot).2 i
+  simp only [Nat.zero_add] at key
+  exact key
 
 /-- Matrix-level Bareiss-step divisibility on the initial no-pivot Gram
 trajectory: the numerator of one fraction-free row update is divisible by the

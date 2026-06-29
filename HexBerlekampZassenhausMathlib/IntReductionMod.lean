@@ -378,6 +378,7 @@ private theorem isUnitPolynomial_of_gcdIsUnit
   unfold Hex.Berlekamp.isUnitPolynomial
   have hpos : 0 < g.size := by omega
   rw [Hex.DensePoly.degree?_eq_some_of_pos_size g hpos, hsize]
+  rfl
 
 set_option maxHeartbeats 4000000 in
 /--
@@ -436,7 +437,8 @@ private theorem gcd_monicModularImage_derivative_isUnit
           ((Hex.DensePoly.isZero_eq_false_iff _).mp hzero)
       intro hu_zero
       have hone_hex : u * Hex.DensePoly.leadingCoeff f = (1 : Hex.ZMod64 p) := by
-        simpa [u] using Hex.ZMod64.inv_mul_eq_one_of_prime hp_hex hlead_ne
+        show (Hex.DensePoly.leadingCoeff f)⁻¹ * Hex.DensePoly.leadingCoeff f = (1 : Hex.ZMod64 p)
+        exact Hex.ZMod64.inv_mul_eq_one_of_prime hp_hex hlead_ne
       have hone_z :
           HexModArithMathlib.ZMod64.toZMod u *
               HexModArithMathlib.ZMod64.toZMod (Hex.DensePoly.leadingCoeff f) =
@@ -1048,7 +1050,8 @@ theorem isCoprime_toPolynomial_map_intCast_derivative_of_squareFreeRat
   -- Last (= only) coefficient of `G` is nonzero, so `toPolynomial G = C (G.coeff 0)`.
   have hG_coeff_zero_ne : G.coeff 0 ≠ 0 := by
     have h := Hex.DensePoly.coeff_last_ne_zero_of_pos_size G hG_size_pos
-    simpa [hG_size_eq] using h
+    have key : G.coeff 0 ≠ Zero.zero := by simpa [hG_size_eq] using h
+    exact key
   have hG_eq_C :
       HexPolyMathlib.toPolynomial G = Polynomial.C (G.coeff 0) := by
     apply Polynomial.ext

@@ -7069,6 +7069,7 @@ private theorem squareFree_common_of_squareFreeModP
           (Hex.DensePoly.derivative (Hex.ZPoly.modP p f))).size := by
     omega
   rw [Hex.DensePoly.degree?_eq_some_of_pos_size _ hpos, hsize]
+  rfl
 
 /-- `choosePrimeData`-shaped caller wrapper for the Berlekamp factor `Nodup`
 property: given the `factorsModPBerlekampForm` invariant (which records that
@@ -8312,6 +8313,7 @@ private theorem isUnitPolynomial_of_gcdIsUnit_local
   unfold Hex.Berlekamp.isUnitPolynomial
   have hpos : 0 < g.size := by omega
   rw [Hex.DensePoly.degree?_eq_some_of_pos_size g hpos, hsize]
+  rfl
 
 private theorem gcd_monicModularImage_derivative_isUnit_local
     {p : Nat} [Hex.ZMod64.Bounds p] [Fact (Nat.Prime p)]
@@ -8349,7 +8351,8 @@ private theorem gcd_monicModularImage_derivative_isUnit_local
           ((Hex.DensePoly.isZero_eq_false_iff _).mp hzero)
       intro hu_zero
       have hone_hex : u * Hex.DensePoly.leadingCoeff f = (1 : Hex.ZMod64 p) := by
-        simpa [u] using Hex.ZMod64.inv_mul_eq_one_of_prime hp_hex hlead_ne
+        show (Hex.DensePoly.leadingCoeff f)⁻¹ * Hex.DensePoly.leadingCoeff f = (1 : Hex.ZMod64 p)
+        exact Hex.ZMod64.inv_mul_eq_one_of_prime hp_hex hlead_ne
       have hone_z :
           HexModArithMathlib.ZMod64.toZMod u *
               HexModArithMathlib.ZMod64.toZMod (Hex.DensePoly.leadingCoeff f) =
@@ -9409,7 +9412,10 @@ theorem henselLiftData_liftedSubset_product_congr_mod_base
     have hfactor_modP' :
         Hex.ZPoly.modP primeData.p (liftedFactor d (emb i)) =
           modPFactor primeData i := by
-      simpa [d, emb, hsize] using hfactor_modP
+      show Hex.ZPoly.modP primeData.p
+          (liftedFactor d (liftedIndexOfModPIndex primeData d hsize i)) =
+        modPFactor primeData i
+      exact hfactor_modP
     change
       (HexPolyZMathlib.toPolynomial (liftedFactor d (emb i))).map
           (Int.castRingHom (ZMod primeData.p)) =
@@ -12397,7 +12403,7 @@ theorem toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
     have hisUnit : Hex.ZPoly.IsUnit f :=
       (HexPolyZMathlib.isUnit_iff_toPolynomial_isUnit f).mpr hunit
     rcases hisUnit with hone | hneg_one
-    · exact hne_one' (by simpa using hone)
+    · exact hne_one' hone
     · exact hne_neg_one' hneg_one
 
 /--

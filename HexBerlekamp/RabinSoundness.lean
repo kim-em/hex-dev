@@ -116,7 +116,7 @@ theorem crtZeroOneCandidate_congr_zero_left
     (a b s t : FpPoly p) (hbez : s * a + t * b = 1) :
     DensePoly.Congr (crtZeroOneCandidate a b s t) 0 a := by
   unfold crtZeroOneCandidate
-  simpa using
+  exact
     (DensePoly.polyCRT_congr_fst a b (0 : FpPoly p) (1 : FpPoly p) s t hbez)
 
 /-- The zero-one CRT representative is congruent to `1` modulo the right factor. -/
@@ -124,7 +124,7 @@ theorem crtZeroOneCandidate_congr_one_right
     (a b s t : FpPoly p) (hbez : s * a + t * b = 1) :
     DensePoly.Congr (crtZeroOneCandidate a b s t) 1 b := by
   unfold crtZeroOneCandidate
-  simpa using
+  exact
     (DensePoly.polyCRT_congr_snd a b (0 : FpPoly p) (1 : FpPoly p) s t hbez)
 
 /-- Monic reduction of the zero-one CRT representative modulo the left factor. -/
@@ -135,7 +135,7 @@ theorem crtZeroOneCandidate_modByMonic_zero_left
       DensePoly.modByMonic (0 : FpPoly p) a ha := by
   haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
   unfold crtZeroOneCandidate
-  simpa using
+  exact
     (@DensePoly.polyCRT_modByMonic_fst (ZMod64 p) inferInstance inferInstance
       inferInstance (ZMod64.instDivModLawsZMod64Fp p) a b
       (0 : FpPoly p) (1 : FpPoly p) s t ha hbez)
@@ -148,7 +148,7 @@ theorem crtZeroOneCandidate_modByMonic_one_right
       DensePoly.modByMonic (1 : FpPoly p) b hb := by
   haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
   unfold crtZeroOneCandidate
-  simpa using
+  exact
     (@DensePoly.polyCRT_modByMonic_snd (ZMod64 p) inferInstance inferInstance
       inferInstance (ZMod64.instDivModLawsZMod64Fp p) a b
       (0 : FpPoly p) (1 : FpPoly p) s t hb hbez)
@@ -160,7 +160,7 @@ theorem crtZeroOneCandidate_mod_zero_left
     crtZeroOneCandidate a b s t % a = (0 : FpPoly p) % a := by
   haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
   unfold crtZeroOneCandidate
-  simpa using
+  exact
     (@DensePoly.polyCRT_mod_fst (ZMod64 p) inferInstance inferInstance
       inferInstance (ZMod64.instDivModLawsZMod64Fp p) a b
       (0 : FpPoly p) (1 : FpPoly p) s t ha hbez)
@@ -172,7 +172,7 @@ theorem crtZeroOneCandidate_mod_one_right
     crtZeroOneCandidate a b s t % b = (1 : FpPoly p) % b := by
   haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
   unfold crtZeroOneCandidate
-  simpa using
+  exact
     (@DensePoly.polyCRT_mod_snd (ZMod64 p) inferInstance inferInstance
       inferInstance (ZMod64.instDivModLawsZMod64Fp p) a b
       (0 : FpPoly p) (1 : FpPoly p) s t hb hbez)
@@ -299,7 +299,8 @@ private theorem constant_eq_zero_of_mod_eq_zero
   have hpoly : (DensePoly.C c : FpPoly p) = 0 := by
     simpa [hC, hzero] using hmod
   have hcoeff := congrArg (fun q : FpPoly p => q.coeff 0) hpoly
-  simpa using hcoeff
+  simp only [DensePoly.coeff_C, DensePoly.coeff_zero, if_pos] at hcoeff
+  exact hcoeff
 
 private theorem constant_eq_one_of_mod_eq_one
     [ZMod64.PrimeModulus p] {b : FpPoly p} {c : ZMod64 p}
@@ -1529,6 +1530,7 @@ theorem isUnitPolynomial_of_dvd_isUnitPolynomial
     rw [hg_deg, hg_deg_zero]
   unfold isUnitPolynomial
   rw [hg_deg_some]
+  rfl
 
 omit [ZMod64.PrimeModulus p] in
 /-- The factor `a` of a nontrivial product `a * b = f` is nonzero. -/
@@ -2773,6 +2775,7 @@ theorem exists_nontrivial_gcd_of_witnessProduct_dvd_of_pos_degree
         isUnitPolynomial (DensePoly.gcd f (w - FpPoly.C c)) = true := by
       unfold isUnitPolynomial
       rw [hdeg]
+      rfl
     rw [hunit] at hnotUnit
     exact Bool.noConfusion hnotUnit
   · intro hgcd_eq_f
@@ -2820,6 +2823,7 @@ theorem exists_kernelWitnessSplit?_some_of_witnessProduct_dvd_of_pos_degree
         unfold DensePoly.degree?
         simp [hquot_size]
       rw [hquot_deg]
+      rfl
     have hquot_dvd_one :
         (f / DensePoly.gcd f (w - FpPoly.C c)) ∣ (1 : FpPoly p) :=
       dvd_one_of_isUnitPolynomial hquot_unit

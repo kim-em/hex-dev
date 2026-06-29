@@ -522,8 +522,17 @@ theorem det_plucker_three_term_nDet_of_ordered_four
         Hex.Matrix.nDet B p2 q (Nat.lt_trans h23 h3q) *
             Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) -
           Hex.Matrix.nDet B p3 q h3q * Hex.Matrix.nDet B p1 p2 h12 := by
-    have hmul := congrArg (e * ·) hp1'
-    simp only at hmul
+    have hmul :
+        e *
+          (e *
+            (Hex.Matrix.nDet B p1 q (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)) *
+              Hex.Matrix.nDet B p2 p3 h23)) =
+        e *
+          (e *
+            (Hex.Matrix.nDet B p2 q (Nat.lt_trans h23 h3q) *
+                Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) -
+              Hex.Matrix.nDet B p3 q h3q * Hex.Matrix.nDet B p1 p2 h12)) :=
+      congrArg (e * ·) hp1'
     rw [← mul_assoc e e, ← mul_assoc e e, h_sq, one_mul, one_mul] at hmul
     exact hmul
   -- Rearrange to match the target via commutativity.
@@ -1018,7 +1027,9 @@ private theorem sign_bareissCyclicShift (k : Nat) :
     Equiv.Perm.sign (bareissCyclicShift k) = (-1) ^ k := by
   show Equiv.Perm.sign (finRotate (k + 1)).symm = _
   rw [Equiv.Perm.sign_symm]
-  exact sign_finRotate k
+  have h := sign_finRotate (k + 1)
+  rw [Nat.add_sub_cancel] at h
+  exact h
 
 /-- The entry formula for a Bareiss-reindexed bordered minor: the position
 returned by `bareissDesnanotIndex k s.succ` is either an interior source row

@@ -768,9 +768,9 @@ private theorem genericN16Cert_check :
   simp [Berlekamp.checkIrreducibilityCertificateLinearIncremental,
     genericN16Cert, Berlekamp.IrreducibilityCertificate.toAmbient?]
   exact ⟨⟨⟨genericN16_basisSize,
-    by simpa [genericN16SamePrimeCert] using genericN16PowChain_check⟩,
-    by simpa using genericN16_finalEntry⟩,
-    by simpa [genericN16SamePrimeCert] using genericN16_bezout⟩
+    genericN16PowChain_check⟩,
+    genericN16_finalEntry⟩,
+    genericN16_bezout⟩
 
 /-- The degree-16 packed modulus `0x100B` is irreducible over `FpPoly 2`. -/
 theorem genericN16_irr :

@@ -12,10 +12,10 @@ require verso from git
   "https://github.com/leanprover/verso.git" @ "v4.32.0-rc1"
 
 require «lean-bench» from git
-  "https://github.com/kim-em/lean-bench.git" @ "master"
+  "https://github.com/kim-em/lean-bench.git" @ "0963bff8d9f71b92bf7453fa50d0aa42c16111fe"
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "v4.32.0-rc1"
+  "https://github.com/leanprover-community/mathlib4.git" @ "aaedc74a09fbe1da58b11cf4d27806a6fa1a86eb"
 
 private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexGF2" / "ffi" / "clmul.o"

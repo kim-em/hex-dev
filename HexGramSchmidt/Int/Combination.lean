@@ -1162,9 +1162,11 @@ private theorem schurSigma_foldl_eq
         (Matrix.noPivotInitialState (Matrix.gramMatrix b)).matrix[
           (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step][
           (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step] ≠ 0 := by
-      simpa [Matrix.noPivotInitialState] using
+      have key :=
         noPivotLoop_initial_gram_diag_ne_zero
           (b := b) p_out 0 hp_out_pos hp_out_n h_nonsing
+      simp only [Matrix.noPivotInitialState]
+      exact key
     rw [Matrix.noPivotLoop_regular_branch 0
         (Matrix.noPivotInitialState (Matrix.gramMatrix b)) hDone hpivot]
     simp [Matrix.noPivotLoop_zero_fuel, Matrix.noPivotInitialState]

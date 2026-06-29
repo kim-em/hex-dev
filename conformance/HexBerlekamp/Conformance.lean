@@ -99,7 +99,7 @@ private def unitPoly : FpPoly 5 :=
   { coeffs := #[(1 : ZMod64 5)]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      decide }
 
 private theorem unitPoly_monic : DensePoly.Monic unitPoly := by
   rfl
@@ -108,7 +108,7 @@ private def linearPoly : FpPoly 5 :=
   { coeffs := #[(1 : ZMod64 5), 1]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      decide }
 
 private theorem linearPoly_monic : DensePoly.Monic linearPoly := by
   rfl
@@ -117,7 +117,7 @@ private def irreducibleQuad : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 1]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      decide }
 
 private theorem irreducibleQuad_monic : DensePoly.Monic irreducibleQuad := by
   rfl
@@ -126,7 +126,7 @@ private def reducibleQuad : FpPoly 5 :=
   { coeffs := #[(4 : ZMod64 5), 0, 1]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      decide }
 
 private theorem reducibleQuad_monic : DensePoly.Monic reducibleQuad := by
   rfl
@@ -139,7 +139,7 @@ private def irreducibleQuint : FpPoly 5 :=
   { coeffs := #[(4 : ZMod64 5), 4, 0, 0, 0, 1]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      decide }
 
 private theorem irreducibleQuint_monic : DensePoly.Monic irreducibleQuint := by
   rfl
@@ -157,7 +157,7 @@ private def bigPoly : FpPoly 5 :=
   { coeffs := #[(3 : ZMod64 5), 1, 2, 3, 4, 2, 2, 1, 1]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      decide }
 
 private theorem bigPoly_monic : DensePoly.Monic bigPoly := by
   rfl
