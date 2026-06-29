@@ -103,31 +103,8 @@ when `r = j`, from row `j` when `r = i`, and from row `r` otherwise. -/
 private theorem rowSwap_get {R : Type u} {n m : Nat}
     (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
     (rowSwap M i j)[r][k] =
-      if r = j then M[i][k] else if r = i then M[j][k] else M[r][k] := by
-  by_cases hrj : r = j
-  · subst r
-    simp [rowSwap]
-  · by_cases hri : r = i
-    · subst r
-      simp [rowSwap, hrj]
-      have hval : j.val ≠ i.val := by
-        intro hval
-        exact hrj (Fin.ext hval.symm)
-      have hrow : ((M.set i M[j]).set j M[i])[i] = (M.set i M[j])[i] := by
-        exact Vector.getElem_set_ne (xs := M.set i M[j]) (x := M[i]) j.isLt i.isLt hval
-      simpa using congrArg (fun row => row[k]) hrow
-    · simp [rowSwap, hrj, hri]
-      have hir : i.val ≠ r.val := by
-        intro hval
-        exact hri (Fin.ext hval.symm)
-      have hjr : j.val ≠ r.val := by
-        intro hval
-        exact hrj (Fin.ext hval.symm)
-      have hrow₁ : (M.set i M[j])[r] = M[r] := by
-        exact Vector.getElem_set_ne (xs := M) (x := M[j]) i.isLt r.isLt hir
-      have hrow₂ : ((M.set i M[j]).set j M[i])[r] = (M.set i M[j])[r] := by
-        exact Vector.getElem_set_ne (xs := M.set i M[j]) (x := M[i]) j.isLt r.isLt hjr
-      exact (congrArg (fun row => row[k]) hrow₂).trans (congrArg (fun row => row[k]) hrow₁)
+      if r = j then M[i][k] else if r = i then M[j][k] else M[r][k] :=
+  rowSwap_getElem M i j r k
 
 /-- For distinct `i, j`, reading row `r` of `rowSwap M i j` is the same as
 reading row `finTranspose i j r` of `M`, identifying the swap with the
@@ -1739,7 +1716,7 @@ private theorem colAdd_get {R : Type u} [Mul R] [Add R] {n : Nat}
     (M : Matrix R n n) (src dst r cidx : Fin n) (c : R) :
     (colAdd M src dst c)[r][cidx] =
       if cidx = dst then M[r][cidx] + c * M[r][src] else M[r][cidx] := by
-  simp [colAdd, Matrix.ofFn]
+  exact colAdd_getElem M src dst c r cidx
 
 /-- For a nodup permutation, the product term of `colAdd M src dst c` splits as
 `detProduct M perm + c · detProduct (colAddDuplicate M src dst) perm`. -/
