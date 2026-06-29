@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGramSchmidt.Int
-public import HexMatrixMathlib.Determinant
+public import HexBareissMathlib
 
 public section
 

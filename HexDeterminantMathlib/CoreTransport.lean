@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexMatrixMathlib.Basic
-public import HexMatrixMathlib.Determinant.DesnanotJacobi
+public import HexDeterminantMathlib.DesnanotJacobi
 public import HexBareiss.Bareiss
 public import HexDeterminant
 public import Mathlib.LinearAlgebra.Matrix.Adjugate

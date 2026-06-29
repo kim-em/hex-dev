@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrixMathlib.Determinant.CoreTransport
-import all HexMatrixMathlib.Determinant.CoreTransport
+public import HexDeterminantMathlib.CoreTransport
+import all HexDeterminantMathlib.CoreTransport
 
 public section
 
