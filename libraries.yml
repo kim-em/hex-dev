@@ -361,7 +361,7 @@ libraries:
         - name: euclidean-bridge-transport
           description: Polynomial Fibonacci quotient-chain fixtures over `Rat` carried through the executable `DensePoly.gcd`/`DensePoly.xgcd` plus the dense-to-Mathlib bridge.
   HexMatrixMathlib:
-    deps: [HexRowReduce, HexDeterminant, HexBareiss]
+    deps: [HexMatrix]
     mathlib: true
     done_through: 5
     status: active
@@ -373,13 +373,28 @@ libraries:
           description: Deterministic square integer matrices exercising executable row swap, scale, and add operations against the corresponding Mathlib-side row-operation constructions.
         - name: determinant-bridge-checks
           description: Small deterministic integer matrices exercising the Hex and Mathlib Leibniz determinant bridge paths on the shared fixture schedule.
+  HexRowReduceMathlib:
+    deps: [HexMatrixMathlib, HexRowReduce]
+    mathlib: true
+    done_through: 5
+    status: active
+  HexDeterminantMathlib:
+    deps: [HexBareiss, HexDeterminant, HexMatrixMathlib]
+    mathlib: true
+    done_through: 5
+    status: active
+  HexBareissMathlib:
+    deps: [HexDeterminantMathlib]
+    mathlib: true
+    done_through: 5
+    status: active
   HexModArithMathlib:
     deps: [HexModArith]
     mathlib: true
     done_through: 7
     status: active
   HexGramSchmidtMathlib:
-    deps: [HexGramSchmidt, HexMatrixMathlib]
+    deps: [HexGramSchmidt, HexBareissMathlib]
     mathlib: true
     done_through: 5
     status: active
@@ -389,7 +404,7 @@ libraries:
     done_through: 6
     status: active
   HexLLLMathlib:
-    deps: [HexLLL, HexMatrixMathlib, HexGramSchmidtMathlib]
+    deps: [HexLLL, HexGramSchmidtMathlib, HexRowReduceMathlib]
     mathlib: true
     done_through: 4
     status: active

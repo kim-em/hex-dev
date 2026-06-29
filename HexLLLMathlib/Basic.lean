@@ -9,7 +9,7 @@ module
 public import HexLLL.Basic
 public import HexLLLMathlib.Interval
 public import HexGramSchmidtMathlib.Int
-public import HexMatrixMathlib.RankSpanNullspace
+public import HexRowReduceMathlib.RankSpanNullspace
 public import Mathlib.Analysis.InnerProductSpace.GramSchmidtOrtho
 
 public section

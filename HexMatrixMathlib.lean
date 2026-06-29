@@ -7,19 +7,17 @@ Authors: Kim Morrison
 module
 
 public import HexMatrixMathlib.Basic
-public import HexMatrixMathlib.Determinant
-public import HexMatrixMathlib.Determinant.Bareiss
-public import HexMatrixMathlib.RankSpanNullspace
 
 public section
 
 /-!
-The `HexMatrixMathlib` library connects the executable `HexMatrix` core to
-Mathlib's matrix API and linear-algebra definitions.
+The `HexMatrixMathlib` library is the base Mathlib bridge for the matrix family.
+It exposes the concrete equivalence `matrixEquiv` between the executable
+`HexMatrix` dense representation and Mathlib's function-based `Matrix`, together
+with the row-operation correspondence lemmas relating our executable `rowSwap`,
+`rowScale`, and `rowAdd` helpers to Mathlib's elementary matrix operations.
 
-This library exposes the concrete equivalence between the two matrix
-representations and the row-operation lemmas relating our executable
-`rowSwap`, `rowScale`, and `rowAdd` helpers to Mathlib's standard elementary
-matrix operations, the determinant comparison theorem, and the
-rank/span/nullspace correspondence theorems for row reduction.
+The determinant correspondence lives in `HexDeterminantMathlib`, the row-pivoted
+Bareiss correctness theorems in `HexBareissMathlib`, and the rank/span/nullspace
+correspondence in `HexRowReduceMathlib`.
 -/

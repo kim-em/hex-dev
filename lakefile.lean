@@ -146,6 +146,12 @@ lean_lib HexLLL where
 
 lean_lib HexMatrixMathlib where
 
+lean_lib HexRowReduceMathlib where
+
+lean_lib HexDeterminantMathlib where
+
+lean_lib HexBareissMathlib where
+
 lean_lib HexGramSchmidtMathlib where
 
 lean_lib HexLLLMathlib where

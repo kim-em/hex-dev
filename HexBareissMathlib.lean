@@ -6,16 +6,16 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrixMathlib.Determinant.Core
-public import HexMatrixMathlib.Determinant.Bareiss
+public import HexBareissMathlib.Bareiss
 
 public section
 
 /-!
-Determinant correspondence theorems for `hex-matrix-mathlib`.
-
-This module re-exports the generic determinant correspondence core and exposes
-the row-pivoted Bareiss correctness theorem against Mathlib's determinant.
+The `HexBareissMathlib` library is the Mathlib bridge for `hex-bareiss`. It
+exposes the row-pivoted Bareiss determinant correctness theorems against both
+Mathlib's determinant and the executable Leibniz determinant, building on the
+no-pivot bordered-minor invariant in `HexBareissMathlib.Bareiss` and the
+determinant correspondence in `HexDeterminantMathlib`.
 -/
 
 namespace HexMatrixMathlib

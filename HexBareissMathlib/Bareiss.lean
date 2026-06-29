@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrixMathlib.Determinant.Core
+public import HexDeterminantMathlib.Core
 public import Mathlib.LinearAlgebra.Matrix.ToLinearEquiv
 
 public section
