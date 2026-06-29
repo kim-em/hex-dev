@@ -119,60 +119,61 @@ def apply_paths(entry: dict, clone: Path) -> list[str]:
     return notes
 
 
+def _lake_files(clone: Path, name_globs: list[str]) -> list[Path]:
+    """All matching files in the repo, excluding Lake build dirs. Covers the
+    root and the bench/ and conformance/ sub-Lake-projects."""
+    out: list[Path] = []
+    for g in name_globs:
+        out += [p for p in clone.glob(f"**/{g}") if ".lake" not in p.parts]
+    return sorted(out)
+
+
 def rewrite_pins(entry: dict, clone: Path, synced: dict[str, str]) -> list[str]:
-    """Rewrite the root lakefile's cross-repo Hex pins to synced SHAs."""
+    """Rewrite every synced-repo git pin across all lakefiles (root + the
+    bench/ and conformance/ sub-projects pin upstream repos and hex-test-kit)."""
     notes: list[str] = []
-    pins = entry.get("pins") or []
-    if not pins:
-        return notes
-    fmt = entry["lakefile"]
-    lf = clone / ("lakefile.toml" if fmt == "toml" else "lakefile.lean")
-    text = lf.read_text(encoding="utf-8")
-    for dep in pins:
-        sha = synced.get(dep)
-        if sha is None:
-            notes.append(f"  WARN no synced SHA for pin {dep} (left unchanged)")
-            continue
-        url = re.escape(f"github.com/kim-em/{dep}.git")
-        if fmt == "toml":
-            # `git = ".../<dep>.git"` then the next `rev = "..."`
-            pat = re.compile(r'(git\s*=\s*"https://' + url + r'"\s*\n\s*rev\s*=\s*")[0-9a-f]{7,40}(")')
-        else:
-            # `".../<dep>.git" @ "<sha>"`
-            pat = re.compile(r'("https://' + url + r'"\s*@\s*")[0-9a-f]{7,40}(")')
-        text, n = pat.subn(lambda m: m.group(1) + sha + m.group(2), text)
-        if n:
-            notes.append(f"  pin {dep} -> {sha[:12]} ({n} site)")
-        else:
-            notes.append(f"  WARN pin {dep} not found in {lf.name}")
-    lf.write_text(text, encoding="utf-8")
+    for lf in _lake_files(clone, ["lakefile.toml", "lakefile.lean"]):
+        text = lf.read_text(encoding="utf-8")
+        orig = text
+        for dep, sha in synced.items():
+            url = re.escape(f"github.com/kim-em/{dep}.git")
+            # toml: `git = ".../<dep>.git"\n  rev = "..."`
+            text, n1 = re.subn(
+                r'(git\s*=\s*"https://' + url + r'"\s*\n\s*rev\s*=\s*")[0-9a-f]{7,40}(")',
+                lambda m: m.group(1) + sha + m.group(2), text)
+            # lean: `".../<dep>.git" @ "<sha>"`
+            text, n2 = re.subn(
+                r'("https://' + url + r'"\s*@\s*")[0-9a-f]{7,40}(")',
+                lambda m: m.group(1) + sha + m.group(2), text)
+            if n1 or n2:
+                notes.append(f"  pin {dep} -> {sha[:12]} ({lf.relative_to(clone)})")
+        if text != orig:
+            lf.write_text(text, encoding="utf-8")
     return notes
 
 
 def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str]) -> list[str]:
-    """Pin the synced SHAs in the committed lake-manifest.json too, so the
-    released repo's CI builds against the new revisions rather than the stale
-    lockfile (Lake trusts the manifest, not just the lakefile)."""
+    """Pin the synced SHAs in every lake-manifest.json (root + sub-projects), so
+    Lake's lockfile points at the new revisions, not a stale checkout. Lake
+    trusts the manifest, and the bench/ and conformance/ sub-projects keep their
+    own manifests that otherwise pin the old hex-matrix."""
     notes: list[str] = []
-    pins = entry.get("pins") or []
-    mf = clone / "lake-manifest.json"
-    if not pins or not mf.exists():
-        return notes
     import json as _json
-    doc = _json.loads(mf.read_text(encoding="utf-8"))
-    by_url = {f"github.com/kim-em/{dep}.git": dep for dep in pins}
-    changed = 0
-    for pkg in doc.get("packages", []):
-        url = pkg.get("url", "")
-        for frag, dep in by_url.items():
-            if frag in url and synced.get(dep):
-                pkg["rev"] = synced[dep]
-                if "inputRev" in pkg and pkg["inputRev"] and len(pkg["inputRev"]) >= 7:
-                    pkg["inputRev"] = synced[dep]
-                changed += 1
-                notes.append(f"  manifest {dep} -> {synced[dep][:12]}")
-    if changed:
-        mf.write_text(_json.dumps(doc, indent=2) + "\n", encoding="utf-8")
+    by_url = {f"github.com/kim-em/{dep}.git": dep for dep in synced}
+    for mf in _lake_files(clone, ["lake-manifest.json"]):
+        doc = _json.loads(mf.read_text(encoding="utf-8"))
+        changed = 0
+        for pkg in doc.get("packages", []):
+            url = pkg.get("url", "")
+            for frag, dep in by_url.items():
+                if frag in url:
+                    pkg["rev"] = synced[dep]
+                    if pkg.get("inputRev") and len(pkg["inputRev"]) >= 7:
+                        pkg["inputRev"] = synced[dep]
+                    changed += 1
+                    notes.append(f"  manifest {dep} -> {synced[dep][:12]} ({mf.relative_to(clone)})")
+        if changed:
+            mf.write_text(_json.dumps(doc, indent=2) + "\n", encoding="utf-8")
     return notes
 
 
