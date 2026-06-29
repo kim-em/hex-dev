@@ -9,13 +9,14 @@ module
 public import HexDeterminant.Leibniz
 public import HexDeterminant.Enumeration
 public import HexDeterminant.Minor
-public import HexDeterminant.Index
+public import HexDeterminant.LastRow
 public import HexDeterminant.Permutation
+public import HexDeterminant.RowOps
 public import HexDeterminant.ColumnLinear
 public import HexDeterminant.Laplace
 public import HexDeterminant.CauchyBinet
-public import HexDeterminant.Expansion
-public import HexDeterminant.Selection
+public import HexDeterminant.Triangular
+public import HexDeterminant.Gram
 public import HexDeterminant.Adjugate
 public import HexDeterminant.Plucker
 

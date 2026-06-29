@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexDeterminant.Selection
-import all HexDeterminant.Selection
+public import HexDeterminant.Gram
+import all HexDeterminant.Gram
 
 public section
 

@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexDeterminant.Permutation
-import all HexDeterminant.Permutation
+public import HexDeterminant.RowOps
+import all HexDeterminant.RowOps
 
 public section
 
