@@ -8,7 +8,7 @@
    "rev": "aaedc74a09fbe1da58b11cf4d27806a6fa1a86eb",
    "name": "mathlib",
    "manifestFile": "lake-manifest.json",
-   "inputRev": "aaedc74a09fbe1da58b11cf4d27806a6fa1a86eb",
+   "inputRev": "v4.32.0-rc1-patch1",
    "inherited": false,
    "configFile": "lakefile.lean"},
   {"url": "https://github.com/kim-em/lean-bench.git",
