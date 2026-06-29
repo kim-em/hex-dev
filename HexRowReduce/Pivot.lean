@@ -288,10 +288,7 @@ private theorem eliminateColumn_step_zero_at_x
   rw [dif_neg hxp]
   by_cases hcoeff : -s.1[x][col] = 0
   · rw [if_pos hcoeff]
-    have : s.1[x][col] = 0 := by
-      have h := hcoeff
-      grind
-    exact this
+    grind
   · rw [if_neg hcoeff]
     show (rowAdd s.1 pivotRow x (-s.1[x][col]))[x][col] = 0
     rw [rowAdd_get_dst s.1 pivotRow x (-s.1[x][col]) col, hpivot]
