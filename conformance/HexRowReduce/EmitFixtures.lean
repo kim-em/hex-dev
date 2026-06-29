@@ -5,51 +5,36 @@ Authors: Kim Morrison
 -/
 
 import Hex.Conformance.Emit
-import HexBareiss.Bareiss
 import HexRowReduce.RREF
-import HexDeterminant
 
 /-!
-JSONL emit driver for the `hex-matrix` oracle.
+JSONL emit driver for the `hex-row-reduce` oracle.
 
-`lake exe hexmatrix_emit_fixtures` writes one `matrix` fixture record
-plus several `result` records per case to `stdout` (or to
-`$HEX_FIXTURE_OUTPUT` when set).  The companion oracle driver
+`lake exe hexrowreduce_emit_fixtures` writes one `matrix` fixture record plus
+`rank`, `rref`, and `nullspace` result records per case to `stdout` (or to
+`$HEX_FIXTURE_OUTPUT` when set). The companion oracle driver
 `scripts/oracle/matrix_flint.py` reads the same stream and re-runs each
 operation through python-flint's `fmpz_mat` / `fmpq_mat`.
 
-Cases are square integer matrices at dimensions 4×4, 6×6, and 8×8 in
-three structural shapes:
+Cases are square integer matrices at dimensions 4×4, 6×6, and 8×8 in three
+structural shapes (`random/*`, `singular/*`, `triangular/*`); see the
+`HexRowReduce` Conformance module for the shape rationale. The emitted
+operations are `rank` (`Matrix.rref_rank` over `Q`), `rref` (the rational
+reduced row echelon form), and `nullspace` (the rational basis of the right
+kernel). All three are computed after lifting the integer entries to `Rat`.
 
-* `random/*` — generic, deterministic "random-looking" full-rank
-  matrices with bounded entry magnitudes;
-* `singular/*` — rank-deficient matrices constructed by setting the
-  last rows to integer combinations of earlier rows (deficiency 1, 2);
-* `triangular/*` — upper-triangular matrices whose determinant is the
-  product of the diagonal (so the expected `det` is independent of the
-  Lean implementation).
-
-For each case we emit results for the operations the oracle will
-verify: `det` (Lean's combinatorial `Matrix.det`), `bareiss` (the
-fraction-free Bareiss algorithm, expected to agree with `det` on every
-fixture), `rank` (`Matrix.rref_rank` over `Q`), `rref` (the rational
-reduced row echelon form), and `nullspace` (the rational basis of the
-right kernel).  RREF / nullspace are computed after lifting the
-integer entries to `Rat`.
-
-Coordinate any future case-id additions with the `HexMatrix`
-Conformance module so identical ids stay in sync.
+Coordinate any future case-id additions with the sibling `HexDeterminant` and
+`HexBareiss` emit drivers so identical ids stay in sync.
 -/
 
-namespace Hex.MatrixEmit
+namespace Hex.RowReduceEmit
 
 open Hex.Conformance.Emit
 open Hex
 open Hex.Matrix
 
-private def lib : String := "HexMatrix"
+private def lib : String := "HexRowReduce"
 
-/-- A row of a matrix as a `List Int`. -/
 private def matrixIntRows {n m : Nat} (M : Matrix Int n m) : List (List Int) :=
   M.toList.map (fun row => row.toList)
 
@@ -106,52 +91,36 @@ private def basisValue {m : Nat} (B : Array (Vector Rat m)) : String := Id.run d
     out := out ++ ratArrayValue v.toArray
   out.push ']'
 
-/-- Emit one fixture record plus the five result records the oracle
-will cross-check. -/
+/-- Emit one matrix fixture record plus its `rank`, `rref`, and `nullspace`
+result records (all computed over `Q`). -/
 private def emitSquare (n : Nat) (id : String) (M : Matrix Int n n) : IO Unit := do
   emitMatrixFixture lib id (matrixIntRows M)
-  emitResult lib id "det"     (jsonInt (Matrix.det M))
-  emitResult lib id "bareiss" (jsonInt (Matrix.bareiss M))
   let MQ := intToRat M
   let D : RowEchelonData Rat n n := Matrix.rref MQ
   emitResult lib id "rank"      (jsonNat D.rank)
   emitResult lib id "rref"      (rrefValue D)
   emitResult lib id "nullspace" (basisValue (Matrix.nullspace MQ).toArray)
 
-/-- Build a square `Matrix Int n n` from a 2-D array of rows.  When
-`rows.size ≠ n` or any row has fewer than `n` entries, missing entries
-default to `0` (so the caller is responsible for shape-correct input). -/
+/-- Build a square `Matrix Int n n` from a 2-D array of rows; missing entries
+default to `0`. -/
 private def mkSquare (n : Nat) (rows : Array (Array Int)) : Matrix Int n n :=
   Matrix.ofFn fun i j =>
     (rows.getD i.val #[]).getD j.val 0
 
-/-! ## 4×4 fixtures -/
-
-/-- Generic 4×4 with bounded entries: the integer matrix
-`[[3,1,4,1],[5,9,2,6],[5,3,5,8],[9,7,9,3]]`. -/
 private def random4 : Matrix Int 4 4 :=
   mkSquare 4 #[#[3, 1, 4, 1], #[5, 9, 2, 6], #[5, 3, 5, 8], #[9, 7, 9, 3]]
 
-/-- 4×4 with rank deficiency 1: the last row is the sum of the first
-two.  `det = 0`. -/
 private def singular4Def1 : Matrix Int 4 4 :=
   mkSquare 4 #[#[2, 0, -1, 3], #[1, 5, 4, -2], #[0, 3, 7, 1],
                #[3, 5, 3, 1]]
 
-/-- 4×4 with rank deficiency 2: rows 2 and 3 are integer combinations
-of rows 0 and 1.  `det = 0`, nullity = 2. -/
 private def singular4Def2 : Matrix Int 4 4 :=
   mkSquare 4 #[#[1, 2, 3, 4], #[2, 1, 0, -1],
                #[3, 3, 3, 3], #[5, 4, 3, 2]]
 
-/-- 4×4 upper triangular with diagonal `[2, -3, 5, 7]`.  `det = -210`. -/
 private def triangular4 : Matrix Int 4 4 :=
   mkSquare 4 #[#[2, 1, 4, 0], #[0, -3, 2, 1], #[0, 0, 5, 6], #[0, 0, 0, 7]]
 
-/-! ## 6×6 fixtures -/
-
-/-- Generic 6×6, bounded entries.  Computed `det = 4818` via Bareiss
-locally; oracle will recompute. -/
 private def random6 : Matrix Int 6 6 :=
   mkSquare 6 #[
     #[ 3,  1, -2,  4,  0,  1],
@@ -162,7 +131,6 @@ private def random6 : Matrix Int 6 6 :=
     #[ 4,  3,  1,  2, -3,  5]
   ]
 
-/-- 6×6 with rank deficiency 1 — the last row equals row 0 + row 1. -/
 private def singular6Def1 : Matrix Int 6 6 :=
   mkSquare 6 #[
     #[ 1,  2,  3, -1,  0,  4],
@@ -173,8 +141,6 @@ private def singular6Def1 : Matrix Int 6 6 :=
     #[ 1,  3,  1,  2,  1,  6]   -- = row0 + row1
   ]
 
-/-- 6×6 upper triangular with diagonal `[1, 2, 3, 4, 5, 6]`.
-`det = 720`. -/
 private def triangular6 : Matrix Int 6 6 :=
   mkSquare 6 #[
     #[1,  2, -1,  3,  0,  1],
@@ -185,9 +151,6 @@ private def triangular6 : Matrix Int 6 6 :=
     #[0,  0,  0,  0,  0,  6]
   ]
 
-/-! ## 8×8 fixtures -/
-
-/-- Generic 8×8 with small integer entries. -/
 private def random8 : Matrix Int 8 8 :=
   mkSquare 8 #[
     #[ 2,  0,  1, -1,  3,  0,  4,  1],
@@ -200,7 +163,6 @@ private def random8 : Matrix Int 8 8 :=
     #[ 0,  1,  3,  4,  1, -1,  2,  3]
   ]
 
-/-- 8×8 upper triangular with diagonal `[1,1,2,2,3,3,4,4]`.  `det = 576`. -/
 private def triangular8 : Matrix Int 8 8 :=
   mkSquare 8 #[
     #[1, 2, 0, 1, 3, -1, 0, 2],
@@ -224,7 +186,7 @@ private def emitAll : IO Unit := do
   emitSquare 8 "random/8x8"        random8
   emitSquare 8 "triangular/8x8"    triangular8
 
-end Hex.MatrixEmit
+end Hex.RowReduceEmit
 
 def main : IO Unit :=
-  Hex.MatrixEmit.emitAll
+  Hex.RowReduceEmit.emitAll

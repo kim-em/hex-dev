@@ -95,17 +95,9 @@ libraries:
     done_through: 7
     status: active
     phase4:
-      comparators:
-        - tool: "FLINT fmpz_mat_det via python-flint"
-          class: informational
-          rationale: "FLINT's fmpz_mat_det uses multimodular reduction (determinant modulo many small primes, then CRT), which has a different asymptotic and constant-factor profile from the Hex row-pivoted Bareiss fraction-free elimination over Int. The ratio is recorded for orientation but is not a Phase-4 gate. The other Phase-4 matrix surfaces (multiplication, row operations) declare absence with the structural-layer reason per SPEC/benchmarking.md §Comparator naming. Wired via a persistent-subprocess Python driver per SPEC/benchmarking.md §External comparators §Process call."
       input_families:
         - name: dense-square-multiplication
           description: Deterministic dense square integer matrices for textbook cubic matrix multiplication.
-        - name: structured-bareiss-determinant
-          description: Deterministic tridiagonal integer matrices for row-pivoted Bareiss determinant scaling without arbitrary coefficient blow-up.
-        - name: leibniz-small-determinant
-          description: Small structured integer matrices where the generic Leibniz determinant remains practical for Bareiss cross-checking.
   HexRowReduce:
     deps: [HexMatrix]
     mathlib: false
@@ -116,11 +108,23 @@ libraries:
     mathlib: false
     done_through: 7
     status: active
+    phase4:
+      input_families:
+        - name: leibniz-small-determinant
+          description: Small structured integer matrices where the generic Leibniz determinant remains practical, cross-checked against the row-pivoted Bareiss determinant.
   HexBareiss:
     deps: [HexDeterminant, HexMatrix]
     mathlib: false
     done_through: 7
     status: active
+    phase4:
+      comparators:
+        - tool: "FLINT fmpz_mat_det via python-flint"
+          class: informational
+          rationale: "FLINT's fmpz_mat_det uses multimodular reduction (determinant modulo many small primes, then CRT), which has a different asymptotic and constant-factor profile from the Hex row-pivoted Bareiss fraction-free elimination over Int. The ratio is recorded for orientation but is not a Phase-4 gate. Wired via a persistent-subprocess Python driver per SPEC/benchmarking.md §External comparators §Process call."
+      input_families:
+        - name: structured-bareiss-determinant
+          description: Deterministic tridiagonal integer matrices for row-pivoted Bareiss determinant scaling without arbitrary coefficient blow-up.
 
   # ---------- Depth 1 ----------
   HexModArith:

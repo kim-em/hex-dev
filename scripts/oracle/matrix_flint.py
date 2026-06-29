@@ -41,8 +41,11 @@ Usage::
     # Read from an explicit JSONL path.
     python3 scripts/oracle/matrix_flint.py path/to/file.jsonl
 
-`--check` is exactly equivalent to passing
-``conformance-fixtures/HexMatrix/matrix.jsonl``.
+The same driver serves the `hex-row-reduce` (`rank`/`rref`/`nullspace`),
+`hex-determinant` (`det`), and `hex-bareiss` (`bareiss`) fixture streams; the
+op dispatch is keyed per result record, so each per-library fixture file is
+self-contained. `--check` reads the `hex-determinant` stream as a representative
+default; `scripts/ci/run_oracles.sh` passes each library's path explicitly.
 """
 from __future__ import annotations
 
@@ -54,7 +57,7 @@ from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-DEFAULT_FIXTURE = REPO_ROOT / "conformance-fixtures" / "HexMatrix" / "matrix.jsonl"
+DEFAULT_FIXTURE = REPO_ROOT / "conformance-fixtures" / "HexDeterminant" / "determinant.jsonl"
 DEFAULT_FAILURE_DIR = REPO_ROOT / "conformance-failures"
 
 sys.path.insert(0, str(REPO_ROOT))

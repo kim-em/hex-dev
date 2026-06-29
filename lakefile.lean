@@ -170,11 +170,19 @@ lean_lib HexGF2BenchSupport where
 -- are the `*_emit_fixtures` exes below, carrying `srcDir := "conformance"`.
 lean_lib HexConformance where
   srcDir := "conformance"
-  globs := #[`HexArith.Conformance, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexConway.Conformance, `HexGF2.Conformance, `HexGFq.Conformance, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexModArith.Conformance, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance]
+  globs := #[`HexArith.Conformance, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexConway.Conformance, `HexGF2.Conformance, `HexGFq.Conformance, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance]
 
-lean_exe hexmatrix_emit_fixtures where
+lean_exe hexrowreduce_emit_fixtures where
   srcDir := "conformance"
-  root := `HexMatrix.EmitFixtures
+  root := `HexRowReduce.EmitFixtures
+
+lean_exe hexdeterminant_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexDeterminant.EmitFixtures
+
+lean_exe hexbareiss_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexBareiss.EmitFixtures
 
 lean_exe hexgramschmidt_emit_fixtures where
   srcDir := "conformance"
@@ -187,6 +195,14 @@ lean_exe hexlll_emit_fixtures where
 lean_exe hexmatrix_bench where
   srcDir := "bench"
   root := `HexMatrix.Bench
+
+lean_exe hexdeterminant_bench where
+  srcDir := "bench"
+  root := `HexDeterminant.Bench
+
+lean_exe hexbareiss_bench where
+  srcDir := "bench"
+  root := `HexBareiss.Bench
 
 lean_exe hexgramschmidt_bench where
   srcDir := "bench"

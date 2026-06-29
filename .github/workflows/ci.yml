@@ -62,8 +62,10 @@ jobs:
             hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
             hexhensel_bench hexberlekamp_bench hexbz_bench \
             hexconway_bench \
-            hexmatrix_bench hexgramschmidt_bench hexlll_bench \
-            HexMatrix HexGramSchmidt HexLLL hexlll_provider_probe \
+            hexmatrix_bench hexdeterminant_bench hexbareiss_bench \
+            hexgramschmidt_bench hexlll_bench \
+            HexMatrix HexRowReduce HexDeterminant HexBareiss \
+            HexGramSchmidt HexLLL hexlll_provider_probe \
             HexMatrixMathlib HexGramSchmidtMathlib HexLLLMathlib
       - name: Build HO-1 Mathlib bridge
         run: lake build HexBerlekampZassenhausMathlib
@@ -76,9 +78,14 @@ jobs:
           # regressions.
           BENCH_VERIFY_HARD_CAP_SECONDS: "360"
         run: |
+          # hexmatrix_bench (dense multiplication fixtures) and
+          # hexbareiss_bench (the large fixed FLINT comparator ladder) and
+          # hexgramschmidt_bench / hexlll_bench stay build-only to keep this
+          # step inside the time budget; hexdeterminant_bench (Leibniz, n ≤ 8)
+          # is cheap and is smoke-verified here.
           bash scripts/ci/check_bench_verify_budget.sh \
             hexarith_bench hexpoly_bench hexpolyz_bench \
             hexpolyfp_bench hexmodarith_bench \
             hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
             hexhensel_bench hexberlekamp_bench hexbz_bench \
-            hexconway_bench
+            hexconway_bench hexdeterminant_bench
