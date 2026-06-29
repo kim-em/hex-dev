@@ -221,7 +221,7 @@ MUST NOT appear in any `Conformance.lean`:
 
 - **Scaffold-locking `#guard`s.** A `#guard` that asserts against
   *current stub output* rather than against the SPEC contract —
-  e.g. `#guard (rref M).rank = 0` when `rref` is a placeholder —
+  e.g. `#guard (rowReduce M).rank = 0` when `rowReduce` is a placeholder —
   locks the wrong answer in and hides the scaffold. Per
   [design-principles.md §7](design-principles.md) and
   [PLAN/Phase1.md](../PLAN/Phase1.md), no data-level placeholders

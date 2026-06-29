@@ -3000,7 +3000,7 @@ of the `k`-th basis polynomial, for `i < basisSize f`. -/
 private theorem nullspaceBasisMatrix_entry_eq_basis_coeff
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (k : Fin (basisSize f -
-      Matrix.rref_rank (fixedSpaceMatrix f hmonic)))
+      Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic)))
     (i : Nat) (hi : i < basisSize f) :
     ((Matrix.nullspaceBasisMatrix (fixedSpaceMatrix f hmonic))[i]'hi)[k.val]'k.isLt =
       ((fixedSpaceKernel f hmonic).get k).coeff i := by
@@ -3150,7 +3150,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
   -- Notation for the basis matrix.
   let M := fixedSpaceMatrix f hmonic
   -- Set kernel dimension shorthand.
-  let ndim := basisSize f - Matrix.rref_rank M
+  let ndim := basisSize f - Matrix.rowReduce_rank M
   -- Extract a nonconstant basis polynomial, contradicting `hno_split`.
   -- Strategy: if every basis polynomial is a constant, then h is a constant,
   -- contradicting h_nonconst applied to h.coeff 0.
@@ -3533,7 +3533,7 @@ private theorem foldl_add_congr_terms {α : Type _} (F G : α → ZMod64 p) :
 /-- Each fixed-space kernel basis polynomial is reduced modulo `f`. -/
 private theorem fixedSpaceKernel_get_size_le
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    (k : Fin (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic))) :
+    (k : Fin (basisSize f - Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic))) :
     ((fixedSpaceKernel f hmonic).get k).size ≤ basisSize f := by
   have hker_eq :
       (fixedSpaceKernel f hmonic).get k =
@@ -3678,17 +3678,17 @@ private theorem exists_basis_nonconst_mod_g
     (H : FpPoly p) (hH_kernel : IsFixedSpaceKernelPolynomial f hmonic H)
     (hH_size : H.size ≤ basisSize f)
     (hH_nonconst : ∀ c : ZMod64 p, ¬ DensePoly.Congr H (DensePoly.C c) g) :
-    ∃ k : Fin (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic)),
+    ∃ k : Fin (basisSize f - Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic)),
       ∀ c : ZMod64 p,
         ¬ DensePoly.Congr ((fixedSpaceKernel f hmonic).get k) (DensePoly.C c) g := by
-  by_cases hall : ∀ k : Fin (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic)),
+  by_cases hall : ∀ k : Fin (basisSize f - Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic)),
       ∃ c : ZMod64 p,
         DensePoly.Congr ((fixedSpaceKernel f hmonic).get k) (DensePoly.C c) g
   · -- Every basis polynomial is constant mod `g`; derive that `H` is too.
     exfalso
     obtain ⟨c_coeff, hc_eq⟩ :=
       fixedSpaceKernelPolynomial_coeffVector_complete f hmonic H hH_kernel
-    let ndim := basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic)
+    let ndim := basisSize f - Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic)
     let term : Fin ndim → FpPoly p := fun k =>
       (fixedSpaceKernel f hmonic).get k * DensePoly.C (c_coeff[k.val]'k.isLt)
     -- The span polynomial `P = Σ_k basis_k · c_coeff[k]` is constant mod `g`.

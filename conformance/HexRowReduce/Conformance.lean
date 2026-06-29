@@ -11,15 +11,15 @@ Core conformance checks for `hex-row-reduce`.
 
 Run this file through the conformance Lake target, not direct `lake env lean`.
 
-Oracle: `scripts/oracle/matrix_flint.py` (`rank` / `rref` / `nullspace` ops,
+Oracle: `scripts/oracle/matrix_flint.py` (`rank` / `rowReduce` / `nullspace` ops,
 via the `hexrowreduce_emit_fixtures` stream)
 Mode: always
 Covered operations:
-- row reduction and span APIs (`rref`, `rref_rank`, `spanCoeffs`,
+- row reduction and span APIs (`rowReduce`, `rowReduce_rank`, `spanCoeffs`,
   `rowCombination`, `spanContains`)
 - nullspace basis extraction (`nullspace`, `nullspaceBasisMatrix`)
 Covered properties:
-- `rref` returns data whose transform matrix multiplies the input to the
+- `rowReduce` returns data whose transform matrix multiplies the input to the
   reported echelon form
 - `spanCoeffs` witnesses row-span membership on a committed dependent-row example
 - the committed nullspace basis vectors are annihilated by the source matrix
@@ -42,7 +42,7 @@ private def dependentRat : Matrix Rat 2 3 :=
     | 1, 1 => 4
     | _, _ => 6
 
-private def dependentRref : Matrix Rat 2 3 :=
+private def dependentRowReduced : Matrix Rat 2 3 :=
   Matrix.ofFn fun i j =>
     match i.val, j.val with
     | 0, 0 => 1
@@ -104,13 +104,13 @@ private def emptyNullspace : Vector (Vector Rat 2) 0 :=
 
 /- RREF, span, and nullspace executable conformance guards. -/
 
-#guard let D := Matrix.rref dependentRat; D.rank = 1
-#guard let D := Matrix.rref dependentRat; D.echelon = dependentRref
-#guard let D := Matrix.rref dependentRat; D.transform * dependentRat = D.echelon
-#guard let D := Matrix.rref zeroRat23; D.rank = 0
-#guard let D := Matrix.rref zeroRat23; D.pivotCols = Vector.ofFn (fun i => nomatch i)
-#guard let D := Matrix.rref fullRat22; D.rank = 2
-#guard let D := Matrix.rref fullRat22; D.echelon = (1 : Matrix Rat 2 2)
+#guard let D := Matrix.rowReduce dependentRat; D.rank = 1
+#guard let D := Matrix.rowReduce dependentRat; D.echelon = dependentRowReduced
+#guard let D := Matrix.rowReduce dependentRat; D.transform * dependentRat = D.echelon
+#guard let D := Matrix.rowReduce zeroRat23; D.rank = 0
+#guard let D := Matrix.rowReduce zeroRat23; D.pivotCols = Vector.ofFn (fun i => nomatch i)
+#guard let D := Matrix.rowReduce fullRat22; D.rank = 2
+#guard let D := Matrix.rowReduce fullRat22; D.echelon = (1 : Matrix Rat 2 2)
 
 #guard Matrix.spanCoeffs dependentRat spanVec = some spanCoeffsWitness
 #guard Matrix.rowCombination dependentRat spanCoeffsWitness = spanVec
@@ -127,7 +127,7 @@ private def emptyNullspace : Vector (Vector Rat 2) 0 :=
 
 /- RREF, span, and nullspace proof-mode automation examples. -/
 
-section RREFWrapperAutomation
+section RowReduceWrapperAutomation
 
 example (M : Matrix Rat n m) (v : Vector Rat m) (c : Vector Rat n) :
     Matrix.spanCoeffs M v = some c → Matrix.rowCombination M c = v := by
@@ -142,14 +142,14 @@ example (M : Matrix Rat n m) (v : Vector Rat m) :
       ∃ c : Vector Rat n, Matrix.rowCombination M c = v := by
   exact (Matrix.spanContains_iff M v).mp
 
-example (M : Matrix Rat n m) (k : Fin (m - Matrix.rref_rank M)) :
+example (M : Matrix Rat n m) (k : Fin (m - Matrix.rowReduce_rank M)) :
     M * (Matrix.nullspace M).get k = 0 := by
   grind
 
-example (M : Matrix Rat n m) (k : Fin (m - Matrix.rref_rank M)) :
+example (M : Matrix Rat n m) (k : Fin (m - Matrix.rowReduce_rank M)) :
     Matrix.col (Matrix.nullspaceBasisMatrix M) k = (Matrix.nullspace M).get k := by
   grind
 
-end RREFWrapperAutomation
+end RowReduceWrapperAutomation
 
 end Matrix

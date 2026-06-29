@@ -703,7 +703,7 @@ structure IsEchelonForm [Mul R] [Add R] [OfNat R 0] [OfNat R 1]
   zero_row : ∀ (i : Fin n), D.rank ≤ i.val → D.echelon[i] = 0
 
 /-- RREF-specific conditions on top of `IsEchelonForm`. -/
-structure IsRREF [Mul R] [Add R] [OfNat R 0] [OfNat R 1]
+structure IsRowReduced [Mul R] [Add R] [OfNat R 0] [OfNat R 1]
     (M : Matrix R n m) (D : RowEchelonData R n m)
     : Prop extends IsEchelonForm M D where
   pivot_one : ∀ (i : Fin D.rank), D.echelon[i][D.pivotCols.get i] = 1

@@ -15,13 +15,13 @@ public section
 Echelon/RREF span and nullspace APIs for `hex-matrix`.
 
 This module hangs the row-span and nullspace correctness theory off the
-`IsEchelonForm` and `IsRREF` contracts. The `IsEchelonForm` section transports
+`IsEchelonForm` and `IsRowReduced` contracts. The `IsEchelonForm` section transports
 row combinations across the echelon transform and builds the decidable
 row-span tests `spanCoeffs`/`spanContains` with their soundness lemmas. The
-`IsRREF` section proves these tests complete (`spanContains_iff`), constructs
+`IsRowReduced` section proves these tests complete (`spanContains_iff`), constructs
 the nullspace basis (`nullspaceMatrix`, `nullspace`) from the free columns,
 and shows it is both sound (`nullspace_sound`) and complete
-(`nullspace_complete`). The file closes with the public `rref`-backed wrappers
+(`nullspace_complete`). The file closes with the public `rowReduce`-backed wrappers
 `spanCoeffs`, `spanContains`, `nullspaceBasisMatrix`, and `nullspace`.
 -/
 
@@ -153,11 +153,11 @@ theorem spanContains_sound [Lean.Grind.Field R] [DecidableEq R]
 
 end IsEchelonForm
 
-namespace IsRREF
+namespace IsRowReduced
 
 /-- RREF data has nonzero pivots because every pivot is normalized to one. -/
 theorem hasNonzeroPivots [Lean.Grind.Field R]
-    {M : Matrix R n m} {D : RowEchelonData R n m} (E : IsRREF M D) :
+    {M : Matrix R n m} {D : RowEchelonData R n m} (E : IsRowReduced M D) :
     E.toIsEchelonForm.HasNonzeroPivots := by
   intro i
   have hpivot :
@@ -280,7 +280,7 @@ theorem rowCombination_single {R : Type u} [Lean.Grind.CommRing R]
 
 /-- In an RREF, a pivot column is a standard basis vector: its entry in row `i`
 is `1` when `i` is the pivot row of `p` and `0` otherwise. -/
-private theorem pivot_column_entry [Lean.Grind.Field R] (E : IsRREF M D)
+private theorem pivot_column_entry [Lean.Grind.Field R] (E : IsRowReduced M D)
     (p : Fin D.rank) (i : Fin n) :
     D.echelon[i][D.pivotCols.get p] =
       if E.toIsEchelonForm.pivotRow p = i then 1 else 0 := by
@@ -322,7 +322,7 @@ private theorem pivot_column_entry [Lean.Grind.Field R] (E : IsRREF M D)
 /-- Reading a row combination of the echelon rows off at pivot column `p` recovers
 exactly the coefficient applied to the pivot row of `p`, since that column is a
 standard basis vector. -/
-private theorem rowCombination_pivotCoeff [Lean.Grind.Field R] (E : IsRREF M D)
+private theorem rowCombination_pivotCoeff [Lean.Grind.Field R] (E : IsRowReduced M D)
     (c : Vector R n) (p : Fin D.rank) :
     (rowCombination D.echelon c)[D.pivotCols.get p] =
       c[E.toIsEchelonForm.pivotRow p] := by
@@ -354,7 +354,7 @@ private theorem rowCombination_pivotCoeff [Lean.Grind.Field R] (E : IsRREF M D)
 combination of the echelon rows, because the non-pivot rows are zero rows and
 contribute nothing. -/
 private theorem rowCombination_eq_of_coeffs_eq_on_rank [Lean.Grind.Field R]
-    (E : IsRREF M D) {c d : Vector R n}
+    (E : IsRowReduced M D) {c d : Vector R n}
     (hcoeff : ∀ i : Fin D.rank,
       c[E.toIsEchelonForm.pivotRow i] = d[E.toIsEchelonForm.pivotRow i]) :
     rowCombination D.echelon c = rowCombination D.echelon d := by
@@ -389,7 +389,7 @@ private theorem rowCombination_eq_of_coeffs_eq_on_rank [Lean.Grind.Field R]
 by `echelonCoeffs` reproduce it, so `echelonCoeffs` is a right inverse to row
 combination on the span. -/
 private theorem rowCombination_echelonCoeffs_of_rowCombination [Lean.Grind.Field R]
-    (E : IsRREF M D) {v : Vector R m}
+    (E : IsRowReduced M D) {v : Vector R m}
     (h : ∃ c : Vector R n, rowCombination D.echelon c = v) :
     rowCombination D.echelon (E.toIsEchelonForm.echelonCoeffs v) = v := by
   rcases h with ⟨c, hc⟩
@@ -415,7 +415,7 @@ private theorem rowCombination_echelonCoeffs_of_rowCombination [Lean.Grind.Field
 /-- Any vector in the row span produces coefficients via the RREF-backed
 `spanCoeffs` API. -/
 theorem spanCoeffs_complete [Lean.Grind.Field R] [DecidableEq R]
-    (E : IsRREF M D) (v : Vector R m) :
+    (E : IsRowReduced M D) (v : Vector R m) :
     (∃ c : Vector R n, rowCombination M c = v) →
       (E.toIsEchelonForm.spanCoeffs v).isSome := by
   intro h
@@ -436,7 +436,7 @@ theorem spanCoeffs_complete [Lean.Grind.Field R] [DecidableEq R]
 
 /-- For RREF data, `spanContains` is exactly row-span membership. -/
 theorem spanContains_iff [Lean.Grind.Field R] [DecidableEq R]
-    (E : IsRREF M D) (v : Vector R m) :
+    (E : IsRowReduced M D) (v : Vector R m) :
     E.toIsEchelonForm.spanContains v = true ↔
       ∃ c : Vector R n, rowCombination M c = v := by
   constructor
@@ -531,7 +531,7 @@ private theorem pivotIndex?_free_none (E : IsEchelonForm M D) (k : Fin (m - D.ra
 
 /-- Nullspace basis vectors assembled as columns indexed by the free variables. -/
 @[expose]
-def nullspaceMatrix [Lean.Grind.Ring R] (E : IsRREF M D) :
+def nullspaceMatrix [Lean.Grind.Ring R] (E : IsRowReduced M D) :
     Matrix R m (m - D.rank) :=
   let freeCols := E.toIsEchelonForm.freeCols
   Matrix.ofFn fun j k =>
@@ -544,14 +544,14 @@ def nullspaceMatrix [Lean.Grind.Ring R] (E : IsRREF M D) :
       | none => 0
 
 /-- In the `k`th nullspace-matrix column, the row for its own free column is `1`. -/
-@[grind =] theorem nullspaceMatrix_free [Lean.Grind.Ring R] (E : IsRREF M D)
+@[grind =] theorem nullspaceMatrix_free [Lean.Grind.Ring R] (E : IsRowReduced M D)
     (k : Fin (m - D.rank)) :
     E.nullspaceMatrix[E.toIsEchelonForm.freeCols.get k][k] = 1 := by
   unfold nullspaceMatrix Matrix.ofFn
   simp
 
 /-- In the `k`th nullspace-matrix column, every other free-column row is `0`. -/
-@[grind =] theorem nullspaceMatrix_free_ne [Lean.Grind.Ring R] (E : IsRREF M D)
+@[grind =] theorem nullspaceMatrix_free_ne [Lean.Grind.Ring R] (E : IsRowReduced M D)
     {k l : Fin (m - D.rank)} (hkl : k ≠ l) :
     E.nullspaceMatrix[E.toIsEchelonForm.freeCols.get l][k] = 0 := by
   unfold nullspaceMatrix Matrix.ofFn
@@ -562,7 +562,7 @@ def nullspaceMatrix [Lean.Grind.Ring R] (E : IsRREF M D) :
 
 /-- In a pivot-column row, a nullspace-matrix entry is the negative RREF entry in
 the matching pivot row and free column. -/
-@[grind =] theorem nullspaceMatrix_pivot [Lean.Grind.Ring R] (E : IsRREF M D)
+@[grind =] theorem nullspaceMatrix_pivot [Lean.Grind.Ring R] (E : IsRowReduced M D)
     (i : Fin D.rank) (k : Fin (m - D.rank)) :
     E.nullspaceMatrix[D.pivotCols.get i][k] =
       -(D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i)][E.toIsEchelonForm.freeCols.get k]) := by
@@ -572,25 +572,25 @@ the matching pivot row and free column. -/
 
 /-- The individual nullspace basis vectors. -/
 @[expose]
-def nullspace [Lean.Grind.Ring R] (E : IsRREF M D) :
+def nullspace [Lean.Grind.Ring R] (E : IsRowReduced M D) :
     Vector (Vector R m) (m - D.rank) :=
   Vector.ofFn fun k => Matrix.col (E.nullspaceMatrix) k
 
-private theorem nullspace_get [Lean.Grind.Ring R] (E : IsRREF M D)
+private theorem nullspace_get [Lean.Grind.Ring R] (E : IsRowReduced M D)
     (k : Fin (m - D.rank)) :
     E.nullspace.get k = Matrix.col E.nullspaceMatrix k := by
   unfold nullspace
   exact Vector.getElem_ofFn _
 
 /-- On its own free column, a nullspace basis vector has entry `1`. -/
-@[grind =] theorem nullspace_get_free [Lean.Grind.Ring R] (E : IsRREF M D)
+@[grind =] theorem nullspace_get_free [Lean.Grind.Ring R] (E : IsRowReduced M D)
     (k : Fin (m - D.rank)) :
     (E.nullspace.get k)[E.toIsEchelonForm.freeCols.get k] = 1 := by
   rw [nullspace_get]
   simpa [Matrix.col] using nullspaceMatrix_free E k
 
 /-- On every other free column, a nullspace basis vector has entry `0`. -/
-@[grind =] theorem nullspace_get_free_ne [Lean.Grind.Ring R] (E : IsRREF M D)
+@[grind =] theorem nullspace_get_free_ne [Lean.Grind.Ring R] (E : IsRowReduced M D)
     {k l : Fin (m - D.rank)} (hkl : k ≠ l) :
     (E.nullspace.get k)[E.toIsEchelonForm.freeCols.get l] = 0 := by
   rw [nullspace_get]
@@ -598,7 +598,7 @@ private theorem nullspace_get [Lean.Grind.Ring R] (E : IsRREF M D)
 
 /-- On a pivot column, a nullspace basis vector is the negative RREF entry in
 the matching pivot row and free column. -/
-@[grind =] theorem nullspace_get_pivot [Lean.Grind.Ring R] (E : IsRREF M D)
+@[grind =] theorem nullspace_get_pivot [Lean.Grind.Ring R] (E : IsRowReduced M D)
     (i : Fin D.rank) (k : Fin (m - D.rank)) :
     (E.nullspace.get k)[D.pivotCols.get i] =
       -(D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i)][E.toIsEchelonForm.freeCols.get k]) := by
@@ -740,7 +740,7 @@ private theorem foldl_two_nonzero {R : Type u} [Lean.Grind.Ring R]
 
 omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
 private theorem nullspace_echelon_sound {R : Type u} [Lean.Grind.Ring R] {n m : Nat}
-    {M : Matrix R n m} {D : RowEchelonData R n m} (E : IsRREF M D)
+    {M : Matrix R n m} {D : RowEchelonData R n m} (E : IsRowReduced M D)
     (k : Fin (m - D.rank)) :
     D.echelon * E.nullspace.get k = 0 := by
   ext r hr
@@ -841,7 +841,7 @@ private theorem nullspace_echelon_sound {R : Type u} [Lean.Grind.Ring R] {n m : 
 
 /-- Every basis vector returned by `nullspace` lies in the nullspace of `M`. -/
 theorem nullspace_sound {R : Type u} [Lean.Grind.Ring R] {n m : Nat}
-    {M : Matrix R n m} {D : RowEchelonData R n m} (E : IsRREF M D) (k : Fin (m - D.rank)) :
+    {M : Matrix R n m} {D : RowEchelonData R n m} (E : IsRowReduced M D) (k : Fin (m - D.rank)) :
     M * E.nullspace.get k = 0 := by
   let b := E.nullspace.get k
   have hbEchelon : D.echelon * b = 0 := by
@@ -967,7 +967,7 @@ omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
 indices match. This is the indicator characterization used to extract
 `v[D.pivotCols.get i]` from the row sum. -/
 private theorem pivot_column_entry_pivotRow {R : Type u} [Lean.Grind.Field R]
-    {n m : Nat} {M : Matrix R n m} {D : RowEchelonData R n m} (E : IsRREF M D)
+    {n m : Nat} {M : Matrix R n m} {D : RowEchelonData R n m} (E : IsRowReduced M D)
     (i i' : Fin D.rank) :
     D.echelon[E.toIsEchelonForm.pivotRow i][D.pivotCols.get i'] =
       if i' = i then (1 : R) else 0 := by
@@ -991,7 +991,7 @@ free-column contributions. When `D.echelon * v = 0`, this gives a relation
 between `v[D.pivotCols.get i]` and the free-column entries. -/
 private theorem freeSum_eq_neg_pivot {R : Type u} [Lean.Grind.Field R] {n m : Nat}
     {M : Matrix R n m} {D : RowEchelonData R n m}
-    (E : IsRREF M D) {v : Vector R m}
+    (E : IsRowReduced M D) {v : Vector R m}
     (hEchelon : D.echelon * v = 0) (i : Fin D.rank) :
     v[D.pivotCols.get i] +
       (List.finRange (m - D.rank)).foldl
@@ -1094,7 +1094,7 @@ omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
 /-- Every nullspace vector is generated by the computed nullspace basis. -/
 theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
     {M : Matrix R n m} {D : RowEchelonData R n m}
-    (E : IsRREF M D) (v : Vector R m) :
+    (E : IsRowReduced M D) (v : Vector R m) :
     M * v = 0 → ∃ c : Vector R (m - D.rank), E.nullspaceMatrix * c = v := by
   intro hMv
   have hEchelon : D.echelon * v = 0 := by
@@ -1234,13 +1234,13 @@ theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
   ext j hj
   exact key ⟨j, hj⟩
 
-end IsRREF
+end IsRowReduced
 
-/-- Convenience wrapper: compute row-span coefficients using `rref` internally. -/
+/-- Convenience wrapper: compute row-span coefficients using `rowReduce` internally. -/
 @[expose]
 def spanCoeffs [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) (v : Vector R m) :
     Option (Vector R n) :=
-  let E := (rref_isRREF M).toIsEchelonForm
+  let E := (rowReduce_isRowReduced M).toIsEchelonForm
   E.spanCoeffs v
 
 /-- Wrapper-layer soundness contract for `Matrix.spanCoeffs`. -/
@@ -1249,13 +1249,13 @@ theorem spanCoeffs_sound [Lean.Grind.Field R] [DecidableEq R]
     (M : Matrix R n m) (v : Vector R m) (c : Vector R n) :
     spanCoeffs M v = some c → rowCombination M c = v := by
   intro h
-  exact (rref_isRREF M).toIsEchelonForm.spanCoeffs_sound v c h
+  exact (rowReduce_isRowReduced M).toIsEchelonForm.spanCoeffs_sound v c h
 
-/-- Convenience wrapper: decide row-span membership using `rref` internally. -/
+/-- Convenience wrapper: decide row-span membership using `rowReduce` internally. -/
 @[expose]
 def spanContains [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) (v : Vector R m) :
     Bool :=
-  let E := (rref_isRREF M).toIsEchelonForm
+  let E := (rowReduce_isRowReduced M).toIsEchelonForm
   E.spanContains v
 
 /-- The public `spanContains` wrapper is the Boolean `isSome` view of
@@ -1271,25 +1271,25 @@ theorem spanContains_iff [Lean.Grind.Field R] [DecidableEq R]
     (M : Matrix R n m) (v : Vector R m) :
     spanContains M v = true ↔ ∃ c : Vector R n, rowCombination M c = v := by
   unfold spanContains
-  simpa using (rref_isRREF M).spanContains_iff v
+  simpa using (rowReduce_isRowReduced M).spanContains_iff v
 
-/-- The rank returned by `rref`. -/
+/-- The rank returned by `rowReduce`. -/
 @[expose]
-def rref_rank [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) : Nat :=
-  (rref M).rank
+def rowReduce_rank [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) : Nat :=
+  (rowReduce M).rank
 
 /-- The public nullspace basis assembled as a matrix of basis columns. -/
 @[expose]
 def nullspaceBasisMatrix [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) :
-    Matrix R m (m - rref_rank M) :=
-  let E := rref_isRREF M
+    Matrix R m (m - rowReduce_rank M) :=
+  let E := rowReduce_isRowReduced M
   E.nullspaceMatrix
 
-/-- Convenience wrapper: compute the nullspace basis using `rref` internally. -/
+/-- Convenience wrapper: compute the nullspace basis using `rowReduce` internally. -/
 @[expose]
 def nullspace [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) :
-    Vector (Vector R m) (m - rref_rank M) :=
-  let E := rref_isRREF M
+    Vector (Vector R m) (m - rowReduce_rank M) :=
+  let E := rowReduce_isRowReduced M
   E.nullspace
 
 /-- Public column bridge between the matrix and vector nullspace wrappers:
@@ -1297,27 +1297,27 @@ the `k`-th column of `nullspaceBasisMatrix M` is the `k`-th vector in
 `nullspace M`. -/
 @[grind =>]
 theorem nullspaceBasisMatrix_col [Lean.Grind.Field R] [DecidableEq R]
-    (M : Matrix R n m) (k : Fin (m - rref_rank M)) :
+    (M : Matrix R n m) (k : Fin (m - rowReduce_rank M)) :
     Matrix.col (nullspaceBasisMatrix M) k = (nullspace M).get k := by
   unfold nullspaceBasisMatrix nullspace
-  exact ((rref_isRREF M).nullspace_get k).symm
+  exact ((rowReduce_isRowReduced M).nullspace_get k).symm
 
 /-- Every vector returned by the public `nullspace` wrapper is annihilated by `M`. -/
 @[grind =>]
 theorem nullspace_sound [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m)
-    (k : Fin (m - rref_rank M)) :
+    (k : Fin (m - rowReduce_rank M)) :
     M * (nullspace M).get k = 0 := by
-  unfold nullspace rref_rank
-  exact (rref_isRREF M).nullspace_sound k
+  unfold nullspace rowReduce_rank
+  exact (rowReduce_isRowReduced M).nullspace_sound k
 
 /-- Every vector annihilated by `M` is generated by the public nullspace basis matrix. -/
 @[grind =>]
 theorem nullspace_complete [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m)
     (v : Vector R m) :
-    M * v = 0 → ∃ c : Vector R (m - rref_rank M), nullspaceBasisMatrix M * c = v := by
+    M * v = 0 → ∃ c : Vector R (m - rowReduce_rank M), nullspaceBasisMatrix M * c = v := by
   intro hv
-  unfold nullspaceBasisMatrix rref_rank
-  exact (rref_isRREF M).nullspace_complete v hv
+  unfold nullspaceBasisMatrix rowReduce_rank
+  exact (rowReduce_isRowReduced M).nullspace_complete v hv
 
 
 end Matrix
