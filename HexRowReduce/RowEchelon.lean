@@ -739,7 +739,7 @@ private theorem pivotCols_pairwise (E : IsEchelonForm M D) :
   have hi' : i < D.rank := by simpa [Vector.length_toList] using hi
   have hj' : j < D.rank := by simpa [Vector.length_toList] using hj
   have h := E.pivotCols_sorted ⟨i, hi'⟩ ⟨j, hj'⟩ hij
-  simpa [Vector.getElem_toList] using h
+  exact h
 
 private theorem pivotCols_nodup (E : IsEchelonForm M D) :
     D.pivotCols.toList.Nodup := by
@@ -866,7 +866,7 @@ theorem colPartition (E : IsEchelonForm M D) (j : Fin m) :
     rw [List.mem_iff_getElem] at hp
     rcases hp with ⟨i, hi, hget⟩
     have hi' : i < D.rank := by simpa [Vector.length_toList] using hi
-    exact ⟨⟨i, hi'⟩, by simpa [Vector.getElem_toList] using hget⟩
+    exact ⟨⟨i, hi'⟩, by simp only [Vector.getElem_toList] at hget; exact hget⟩
   · right
     have hfreeMem : j ∈ E.freeColsList := by
       unfold freeColsList

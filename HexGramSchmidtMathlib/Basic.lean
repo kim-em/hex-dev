@@ -233,8 +233,9 @@ theorem rat_basis_row_eq_gramSchmidt (b : Matrix Rat n m) (i : Fin n) :
 theorem int_basis_row_eq_gramSchmidt (b : Matrix Int n m) (i : Fin n) :
     rowToEuclidean ((Hex.GramSchmidt.Int.basis b).row i) =
       InnerProductSpace.gramSchmidt ℝ (intRowFamily b) i := by
-  simpa [intRowFamily, castIntMatrix, Hex.GramSchmidt.Int.basis, Hex.GramSchmidt.Rat.basis]
-    using rat_basis_row_eq_gramSchmidt (castIntMatrix b) i
+  have key := rat_basis_row_eq_gramSchmidt (castIntMatrix b) i
+  simp only [intRowFamily, castIntMatrix, Hex.GramSchmidt.Int.basis, Hex.GramSchmidt.Rat.basis] at key ⊢
+  exact key
 
 end GramSchmidtMathlib
 end Hex

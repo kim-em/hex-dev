@@ -188,7 +188,10 @@ theorem nullspace_span_eq_ker [Field R]
       have hzero : (matrixEquiv M).mulVec x = 0 := hx
       rw [hzero] at hbridge
       have hzeroVec : vectorEquiv (M * v) = vectorEquiv (0 : Vector R n) := by
-        simpa [vectorEquiv] using hbridge
+        apply funext
+        intro i
+        have hi := congrFun hbridge i
+        simpa [vectorEquiv] using hi
       exact Equiv.injective vectorEquiv hzeroVec
     rcases Hex.Matrix.IsRREF.nullspace_complete E v hMv with ⟨c, hc⟩
     have hxsum :

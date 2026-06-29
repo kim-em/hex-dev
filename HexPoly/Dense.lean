@@ -624,7 +624,7 @@ def support (p : DensePoly R) : List Nat :=
     (C c).support = if c = (0 : R) then [] else [0] := by
   by_cases hc : c = (0 : R)
   · simp [hc, support]
-  · have hcz : c ≠ Zero.zero := by simpa using hc
+  · have hcz : c ≠ Zero.zero := hc
     simp [support, size_C_of_ne_zero hc, hc, hcz]
 
 /-- Membership in the support of a constant polynomial is exactly nonzero degree zero. -/
@@ -651,7 +651,7 @@ private theorem filter_range_succ_eq_singleton (n : Nat) :
     (monomial n c).support = if c = (0 : R) then [] else [n] := by
   by_cases hc : c = (0 : R)
   · simp [hc]
-  · have hcz : c ≠ Zero.zero := by simpa using hc
+  · have hcz : c ≠ Zero.zero := hc
     simpa [support, size_monomial_of_ne_zero hc, coeff_monomial, hc, hcz]
       using filter_range_succ_eq_singleton n
 

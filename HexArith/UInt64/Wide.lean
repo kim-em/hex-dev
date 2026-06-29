@@ -293,7 +293,7 @@ theorem mulHi_mulLo (a b : UInt64) :
     (mulHi a b).toNat * word + (a * b).toNat = a.toNat * b.toNat := by
   have h := Nat.div_add_mod (a.toNat * b.toNat) word
   simpa [toNat_mulHi, UInt64.toNat_mul, Nat.mul_comm, Nat.mul_left_comm,
-    Nat.mul_assoc] using h
+    Nat.mul_assoc, word] using h
 
 /--
 Low-word-first product reconstruction for callers that encode a two-word value

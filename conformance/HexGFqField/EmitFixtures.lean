@@ -198,7 +198,7 @@ private theorem maxProperDiv_6 : Berlekamp.maximalProperDivisors 6 = [2, 3] := b
 /-- `x^2 + x + 1` — irreducible over `F_2`. -/
 private def m_p2_n2 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_two) }
+    normalized := Or.inr (by decide) }
 private theorem m_p2_n2_pos : 0 < FpPoly.degree m_p2_n2 := by decide
 private theorem m_p2_n2_monic : DensePoly.Monic m_p2_n2 := by rfl
 
@@ -239,7 +239,7 @@ private theorem m_p2_n2_irr : FpPoly.Irreducible m_p2_n2 :=
 /-- `x^3 + x + 1` — irreducible over `F_2`. -/
 private def m_p2_n3 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 0, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_two) }
+    normalized := Or.inr (by decide) }
 private theorem m_p2_n3_pos : 0 < FpPoly.degree m_p2_n3 := by decide
 private theorem m_p2_n3_monic : DensePoly.Monic m_p2_n3 := by rfl
 
@@ -281,7 +281,7 @@ private theorem m_p2_n3_irr : FpPoly.Irreducible m_p2_n3 :=
 /-- `x^4 + x + 1` — irreducible over `F_2`. -/
 private def m_p2_n4 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 0, 0, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_two) }
+    normalized := Or.inr (by decide) }
 private theorem m_p2_n4_pos : 0 < FpPoly.degree m_p2_n4 := by decide
 private theorem m_p2_n4_monic : DensePoly.Monic m_p2_n4 := by rfl
 
@@ -324,7 +324,7 @@ private theorem m_p2_n4_irr : FpPoly.Irreducible m_p2_n4 :=
 /-- `x^6 + x + 1` — irreducible over `F_2`. -/
 private def m_p2_n6 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 0, 0, 0, 0, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_two) }
+    normalized := Or.inr (by decide) }
 private theorem m_p2_n6_pos : 0 < FpPoly.degree m_p2_n6 := by decide
 private theorem m_p2_n6_monic : DensePoly.Monic m_p2_n6 := by rfl
 
@@ -376,7 +376,7 @@ private theorem m_p2_n6_irr : FpPoly.Irreducible m_p2_n6 :=
 /-- `x^2 + 1` — irreducible over `F_3` (-1 is a non-square mod 3). -/
 private def m_p3_n2 : FpPoly 3 :=
   { coeffs := #[(1 : ZMod64 3), 0, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_three) }
+    normalized := Or.inr (by decide) }
 private theorem m_p3_n2_pos : 0 < FpPoly.degree m_p3_n2 := by decide
 private theorem m_p3_n2_monic : DensePoly.Monic m_p3_n2 := by rfl
 
@@ -417,7 +417,7 @@ private theorem m_p3_n2_irr : FpPoly.Irreducible m_p3_n2 :=
 /-- `x^3 + 2x + 1` — irreducible over `F_3`. -/
 private def m_p3_n3 : FpPoly 3 :=
   { coeffs := #[(1 : ZMod64 3), 2, 0, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_three) }
+    normalized := Or.inr (by decide) }
 private theorem m_p3_n3_pos : 0 < FpPoly.degree m_p3_n3 := by decide
 private theorem m_p3_n3_monic : DensePoly.Monic m_p3_n3 := by rfl
 
@@ -459,7 +459,7 @@ private theorem m_p3_n3_irr : FpPoly.Irreducible m_p3_n3 :=
 /-- `x^4 + 2x^3 + 2` — Conway polynomial for `GF(81)`. -/
 private def m_p3_n4 : FpPoly 3 :=
   { coeffs := #[(2 : ZMod64 3), 0, 0, 2, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_three) }
+    normalized := Or.inr (by decide) }
 private theorem m_p3_n4_pos : 0 < FpPoly.degree m_p3_n4 := by decide
 private theorem m_p3_n4_monic : DensePoly.Monic m_p3_n4 := by rfl
 
@@ -502,7 +502,7 @@ private theorem m_p3_n4_irr : FpPoly.Irreducible m_p3_n4 :=
 /-- `x^6 + 2x^4 + x^2 + 2x + 2` — Conway polynomial for `GF(729)`. -/
 private def m_p3_n6 : FpPoly 3 :=
   { coeffs := #[(2 : ZMod64 3), 2, 1, 0, 2, 0, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_three) }
+    normalized := Or.inr (by decide) }
 private theorem m_p3_n6_pos : 0 < FpPoly.degree m_p3_n6 := by decide
 private theorem m_p3_n6_monic : DensePoly.Monic m_p3_n6 := by rfl
 
@@ -554,7 +554,7 @@ private theorem m_p3_n6_irr : FpPoly.Irreducible m_p3_n6 :=
 /-- `x^2 + 4x + 2` — Conway polynomial for `GF(25)`. -/
 private def m_p5_n2 : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 4, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_five) }
+    normalized := Or.inr (by decide) }
 private theorem m_p5_n2_pos : 0 < FpPoly.degree m_p5_n2 := by decide
 private theorem m_p5_n2_monic : DensePoly.Monic m_p5_n2 := by rfl
 
@@ -595,7 +595,7 @@ private theorem m_p5_n2_irr : FpPoly.Irreducible m_p5_n2 :=
 /-- `x^3 + 3x + 3` — Conway polynomial for `GF(125)`. -/
 private def m_p5_n3 : FpPoly 5 :=
   { coeffs := #[(3 : ZMod64 5), 3, 0, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_five) }
+    normalized := Or.inr (by decide) }
 private theorem m_p5_n3_pos : 0 < FpPoly.degree m_p5_n3 := by decide
 private theorem m_p5_n3_monic : DensePoly.Monic m_p5_n3 := by rfl
 
@@ -638,7 +638,7 @@ private theorem m_p5_n3_irr : FpPoly.Irreducible m_p5_n3 :=
 /-- `x^4 + 2` — irreducible over `F_5` (matches `HexGFqField.Conformance`). -/
 private def m_p5_n4 : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 0, 0, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_five) }
+    normalized := Or.inr (by decide) }
 private theorem m_p5_n4_pos : 0 < FpPoly.degree m_p5_n4 := by decide
 private theorem m_p5_n4_monic : DensePoly.Monic m_p5_n4 := by rfl
 
@@ -691,7 +691,7 @@ uses `(X^(p^k) mod m)^p mod m` (only `p` mults per step) and discharges this
 case in `n · p = 30` total multiplications. -/
 private def m_p5_n6 : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 1, 4, 1, 0, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_five) }
+    normalized := Or.inr (by decide) }
 private theorem m_p5_n6_pos : 0 < FpPoly.degree m_p5_n6 := by decide
 private theorem m_p5_n6_monic : DensePoly.Monic m_p5_n6 := by rfl
 
@@ -747,7 +747,7 @@ private theorem m_p5_n6_irr : FpPoly.Irreducible m_p5_n6 :=
 /-- `x^2 + 6x + 3` — Conway polynomial for `GF(49)`. -/
 private def m_p7_n2 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 6, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+    normalized := Or.inr (by decide) }
 private theorem m_p7_n2_pos : 0 < FpPoly.degree m_p7_n2 := by decide
 private theorem m_p7_n2_monic : DensePoly.Monic m_p7_n2 := by rfl
 
@@ -788,7 +788,7 @@ private theorem m_p7_n2_irr : FpPoly.Irreducible m_p7_n2 :=
 /-- `x^3 + 6x^2 + 4` — Conway polynomial for `GF(343)`. -/
 private def m_p7_n3 : FpPoly 7 :=
   { coeffs := #[(4 : ZMod64 7), 0, 6, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+    normalized := Or.inr (by decide) }
 private theorem m_p7_n3_pos : 0 < FpPoly.degree m_p7_n3 := by decide
 private theorem m_p7_n3_monic : DensePoly.Monic m_p7_n3 := by rfl
 
@@ -831,7 +831,7 @@ private theorem m_p7_n3_irr : FpPoly.Irreducible m_p7_n3 :=
 /-- `x^4 + 5x^2 + 4x + 3` — Conway polynomial for `GF(2401)`. -/
 private def m_p7_n4 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 4, 5, 0, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+    normalized := Or.inr (by decide) }
 private theorem m_p7_n4_pos : 0 < FpPoly.degree m_p7_n4 := by decide
 private theorem m_p7_n4_monic : DensePoly.Monic m_p7_n4 := by rfl
 
@@ -880,7 +880,7 @@ straight-line path, but only `n · p = 42` total mults on the incremental
 path. -/
 private def m_p7_n6 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 6, 4, 5, 1, 0, 1]
-    normalized := Or.inr (by simpa using one_ne_zero_seven) }
+    normalized := Or.inr (by decide) }
 private theorem m_p7_n6_pos : 0 < FpPoly.degree m_p7_n6 := by decide
 private theorem m_p7_n6_monic : DensePoly.Monic m_p7_n6 := by rfl
 

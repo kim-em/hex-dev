@@ -238,7 +238,7 @@ theorem of_first_coeffs_eq_of_degree_getD_lt {f : FpPoly p} {d : Nat}
   have hget :
       ((List.range d).map (fun i => f.coeff i)).getD n 0 =
         if n < d then f.coeff n else 0 := by
-    simpa using (list_getD_map_range (α := ZMod64 p) d n (fun i => f.coeff i))
+    exact list_getD_map_range (α := ZMod64 p) d n (fun i => f.coeff i)
   rw [hget]
   by_cases hn : n < d
   · simp [hn]

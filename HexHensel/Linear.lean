@@ -895,7 +895,8 @@ private theorem linearHenselStep_product_expansion_cross_congr
   rw [DensePoly.coeff_mul, DensePoly.coeff_zero]
   apply Int.emod_eq_zero_of_dvd
   unfold DensePoly.mulCoeffSum
-  simpa using
+  simp only [Int.sub_zero]
+  exact
     foldl_mulCoeffSum_liftScaled_dvd_next p k r hCorrection _hk i
       (List.range (LinearLiftResult.liftScaledIncrement p k r).size) 0 ⟨0, by simp⟩
 

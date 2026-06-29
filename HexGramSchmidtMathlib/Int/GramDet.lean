@@ -391,9 +391,10 @@ private theorem basisPrefixProjection_mem_originalSpan
     (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < n) :
     GramSchmidt.prefixSpan (castIntMatrixRat b) j hj
       (basisPrefixProjection b i j hi hj) := by
-  simpa [castIntMatrixRat] using
-    ((basis_span b j hj (basisPrefixProjection b i j hi hj)).mp
+  have key := ((basis_span b j hj (basisPrefixProjection b i j hi hj)).mp
       (basisPrefixProjection_mem_basisSpan b i j hi hj))
+  simp only [castIntMatrixRat, Hex.GramSchmidt.castIntMatrix] at key ⊢
+  exact key
 
 /-- Original-row coordinates for the projection of row `i` onto the row prefix
 `0, ..., j`. The coordinates are chosen through the proved span equivalence

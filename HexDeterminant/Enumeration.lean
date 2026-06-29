@@ -241,7 +241,7 @@ private theorem inversionCount_swap_separated_parity {n : Nat}
       have hmid :
           inversionCount (pre ++ x :: b :: xs ++ a :: post) % 2 =
             (inversionCount (pre ++ x :: a :: xs ++ b :: post) + 1) % 2 := by
-        simpa only [List.cons_append, List.append_assoc] using
+        simpa only [List.cons_append, List.append_assoc, List.nil_append] using
           (ih (pre ++ [x]) hnodup_tail)
       have hswap₂ :
           inversionCount (pre ++ x :: a :: xs ++ b :: post) % 2 =

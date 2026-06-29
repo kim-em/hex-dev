@@ -88,7 +88,7 @@ def luebeckConwayPolynomial_2_1 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1]
     normalized := by
       right
-      simpa using one_ne_zero_two }
+      decide }
 
 /-- Tier 1 imported-table lookup for committed Luebeck Conway entries.
 
@@ -3797,7 +3797,8 @@ private theorem degree_eq_of_coeff_ne_zero_of_size_le
        · simp [luebeckConwayPolynomialOfCoeffs]
          exact zmod64_one_ne_zero_of_one_lt (by decide)
        · unfold luebeckConwayPolynomialOfCoeffs
-         simpa using (DensePoly.size_ofCoeffs_le _))
+         refine Nat.le_trans (DensePoly.size_ofCoeffs_le _) ?_
+         simp)
 
 /-- Supported Conway entries produce nonconstant moduli. -/
 @[simp, grind =>] theorem conwayPoly_nonconstant

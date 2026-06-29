@@ -829,8 +829,8 @@ theorem rref_pivotCols_sorted (M : Matrix R n m) :
     simpa [final] using rref_final_shape M
   change (⟨final.pivots.toArray, by simp⟩ : Vector (Fin m) final.pivots.length).get i <
     (⟨final.pivots.toArray, by simp⟩ : Vector (Fin m) final.pivots.length).get j
-  simpa [Vector.get, List.getElem_toArray] using
-    hshape.pivots_sorted i.val j.val i.isLt j.isLt hij
+  simp only [Vector.get, List.getElem_toArray]
+  exact hshape.pivots_sorted i.val j.val i.isLt j.isLt hij
 
 /-- Final `rref` row transform has a left inverse. -/
 private theorem rref_transform_left_inverse (M : Matrix R n m) :

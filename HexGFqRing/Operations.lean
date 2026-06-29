@@ -177,7 +177,7 @@ private theorem zmod64_eq_zero_of_modulus_one
   apply UInt64.toNat_inj.mp
   have ha : a.val.toNat = 0 := by
     exact Nat.lt_one_iff.mp (by simpa [hp] using a.isLt)
-  simpa [ZMod64.toNat_eq_val] using ha
+  exact ha
 
 private theorem zmod64_zero_ne_one_of_pos_degree
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
@@ -268,10 +268,10 @@ theorem natCast_eq_natCast_iff_reduceMod_const_eq
         reduceMod f (FpPoly.C (n : ZMod64 p)) := by
   constructor
   · intro h
-    simpa [repr_natCast] using congrArg repr h
+    exact congrArg repr h
   · intro h
     apply ext
-    simpa [repr_natCast] using h
+    exact h
 
 /-- Equality of natural-number casts in the quotient ring is exactly equality modulo `p`.
 This is the user-facing iff form (consumed for example by `Lean.Grind.IsCharP` on the field
@@ -752,7 +752,7 @@ theorem natCast_succ (f : FpPoly p) (hf : 0 < FpPoly.degree f) (n : Nat) :
   change natCast f hf (n + 1) = natCast f hf n + natCast f hf 1
   rw [natCast_eq_const, natCast_eq_const, natCast_eq_const]
   have hsucc : ((n + 1 : Nat) : ZMod64 p) = (n : ZMod64 p) + 1 := by
-    simpa using Lean.Grind.Semiring.ofNat_succ (α := ZMod64 p) n
+    exact Lean.Grind.Semiring.ofNat_succ (α := ZMod64 p) n
   rw [hsucc]
   exact const_add f hf (n : ZMod64 p) (1 : ZMod64 p)
 

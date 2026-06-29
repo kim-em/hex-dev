@@ -85,7 +85,7 @@ private theorem neg_nonzero_lt (a : ZMod64 p) {hpLt : p < UInt64.word}
 def neg (a : ZMod64 p) : ZMod64 p := by
   by_cases hp : p = UInt64.word
   · refine ⟨-a.val, ?_⟩
-    simpa [hp] using (UInt64.toNat_lt_size (-a.val))
+    simpa [hp, UInt64.size, UInt64.word] using (UInt64.toNat_lt_size (-a.val))
   · have hpLt : p < UInt64.word := Nat.lt_of_le_of_ne (Bounds.pLeR (p := p)) hp
     let c64 := complementWord p hpLt
     by_cases hzero : a.val = 0
@@ -164,7 +164,7 @@ theorem natCast_eq_ofNat (n : Nat) :
 /-- Operator-level form of `natCast_eq_ofNat`. -/
 theorem natCast_op_eq_ofNat (n : Nat) :
     (n : ZMod64 p) = ofNat p n := by
-  simpa using natCast_eq_ofNat (p := p) n
+  exact natCast_eq_ofNat (p := p) n
 
 /-- Negation takes the complementary representative modulo `p`. -/
 @[simp, grind =] theorem toNat_neg (a : ZMod64 p) : (neg a).toNat = (p - a.toNat) % p := by
@@ -203,7 +203,7 @@ theorem neg_eq_ofNat (a : ZMod64 p) :
 /-- Operator-level form of `neg_eq_ofNat`. -/
 theorem neg_op_eq_ofNat (a : ZMod64 p) :
     -a = ofNat p (p - a.toNat) := by
-  simpa using neg_eq_ofNat a
+  exact neg_eq_ofNat a
 
 /-- Natural scalar multiplication reduces the scaled representative modulo `p`. -/
 @[simp, grind =] theorem toNat_nsmul (n : Nat) (a : ZMod64 p) :
@@ -218,7 +218,7 @@ theorem nsmul_eq_ofNat (n : Nat) (a : ZMod64 p) :
 /-- Operator-level form of `nsmul_eq_ofNat`. -/
 theorem nsmul_op_eq_ofNat (n : Nat) (a : ZMod64 p) :
     n • a = ofNat p (n * a.toNat) := by
-  simpa using nsmul_eq_ofNat n a
+  exact nsmul_eq_ofNat n a
 
 /-- Integer casts of nonnegative representatives reduce modulo `p`. -/
 @[simp, grind =] theorem toNat_intCast_ofNat (n : Nat) :
@@ -245,11 +245,15 @@ theorem natCast_eq_natCast_iff (x y : Nat) :
     ((x : ZMod64 p) = y) ↔ x % p = y % p := by
   constructor
   · intro h
-    simpa using congrArg ZMod64.toNat h
+    have h2 : (natCast p x).toNat = (natCast p y).toNat := congrArg ZMod64.toNat h
+    rw [toNat_natCast, toNat_natCast] at h2
+    exact h2
   · intro h
     apply ext
     apply UInt64.toNat_inj.mp
-    simpa [toNat_natCast] using h
+    rw [show (↑x : ZMod64 p).val.toNat = x % p from toNat_natCast x,
+      show (↑y : ZMod64 p).val.toNat = y % p from toNat_natCast y]
+    exact h
 
 /-- A Nat literal vanishes in `ZMod64 p` exactly when `p` divides it. -/
 theorem natCast_eq_zero_iff_dvd (n : Nat) : ((n : ZMod64 p) = 0) ↔ p ∣ n := by
@@ -266,7 +270,7 @@ theorem natCast_eq_zero_iff_dvd (n : Nat) : ((n : ZMod64 p) = 0) ↔ p ∣ n := 
 /-- The spec-level inverse law on canonical representatives. -/
 theorem toNat_inv (a : ZMod64 p) (hcop : Nat.Coprime a.val.toNat p) :
     (a.inv * a).toNat = 1 % p := by
-  simpa [ZMod64.toNat_eq_val] using inv_mul_eq_one (p := p) a hcop
+  exact inv_mul_eq_one (p := p) a hcop
 
 /-- Associativity of `Nat` addition under an outer `% m`, written in the
 fully reduced form where each operand is already taken `% m`. This is the

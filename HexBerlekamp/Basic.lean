@@ -711,7 +711,7 @@ theorem fixedSpaceKernelVectors_sound (f : FpPoly p) (hmonic : DensePoly.Monic f
       Matrix.rref_rank (fixedSpaceMatrix f hmonic))) :
     IsFixedSpaceKernelVector f hmonic ((fixedSpaceKernelVectors f hmonic).get k) := by
   unfold IsFixedSpaceKernelVector fixedSpaceKernelVectors
-  simpa [HMul.hMul] using Matrix.nullspace_sound (fixedSpaceMatrix f hmonic) k
+  exact Matrix.nullspace_sound (fixedSpaceMatrix f hmonic) k
 
 /-- Every polynomial representative returned by `fixedSpaceKernel` satisfies the
 executable fixed-space kernel condition. -/

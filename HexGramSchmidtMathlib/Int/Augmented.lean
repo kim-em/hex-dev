@@ -427,7 +427,9 @@ theorem noPivotLoop_augmentedGram_invariant
         have h := Matrix.noPivotLoop_step_eq_add_of_singularStep_none fuel
           (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl (by
             show 0 + fuel + 1 ≤ n; omega) h_no_sing_prev
-        simpa [Matrix.noPivotInitialState] using h
+        simp only [Matrix.noPivotInitialState, Nat.zero_add] at h
+        rw [hstateG]
+        exact h
       have hDone_G : stateG.step + 1 < n := by rw [h_step_G_fuel]; omega
       have hk_G_lt : stateG.step < n := Nat.lt_of_succ_lt hDone_G
       -- Pivot non-zero on the Gram side.

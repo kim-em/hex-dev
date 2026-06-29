@@ -164,10 +164,12 @@ private theorem projectionCoeff_row_later_basis_eq_zero
   have hreduce :
       GramSchmidt.reduceAgainstBasis
           ((GramSchmidt.basisRows b.toList).take col.val).reverse (b.row src) = 0 := by
-    simpa [hsrc_toList] using
+    have key :=
       GramSchmidt.reduceAgainstBasis_basisRows_take_source_eq_zero
         (rows := b.toList) (j := src.val) (k := col.val) hsrccol
         (by simp [Vector.length_toList, Nat.le_of_lt col.isLt])
+    rw [hsrc_toList] at key
+    exact key
   have hproj :=
     GramSchmidt.projectionCoeff_reduceAgainstBasis_eq
       (basisRev := ((GramSchmidt.basisRows b.toList).take col.val).reverse)
@@ -235,7 +237,9 @@ private theorem projectionCoeff_row_basis_self_eq_one
       GramSchmidt.basisRows_get!_eq_reduceAgainstBasis_take
         (rows := b.toList) (k := src.val) (by
           simp [Vector.length_toList])
-    simpa [hsrc_toList, hbasis_src] using hbasis.symm
+    have key := hbasis.symm
+    rw [hsrc_toList, ← hbasis_src] at key
+    exact key
   have hproj :=
     GramSchmidt.projectionCoeff_reduceAgainstBasis_eq
       (basisRev := ((GramSchmidt.basisRows b.toList).take src.val).reverse)

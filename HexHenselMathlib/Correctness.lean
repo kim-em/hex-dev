@@ -660,7 +660,8 @@ theorem quadraticMultifactorLiftInvariant_of_multifactorLiftInvariant
     Hex.ZPoly.QuadraticMultifactorLiftInvariant p k f factors := by
   cases factors with
   | nil =>
-      simpa [Hex.ZPoly.QuadraticMultifactorLiftInvariant] using hinv
+      simpa [Hex.ZPoly.QuadraticMultifactorLiftInvariant,
+        Hex.ZPoly.MultifactorLiftInvariant] using hinv
   | cons g rest =>
       exact
         quadraticMultifactorLiftInvariant_of_multifactorLiftInvariant_congr

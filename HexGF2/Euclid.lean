@@ -788,7 +788,7 @@ private theorem ofUInt64_ne_zero_of_ne_zero {w : UInt64} (hw : w ≠ 0) :
   intro h
   apply hw
   apply ofUInt64_injective
-  simpa [ofUInt64] using h
+  exact h
 
 /-- A word with value `< 2 ^ n` unpacks to a polynomial that is either zero or
 of degree `< n`, i.e. reduced below `n`. -/
@@ -1147,9 +1147,8 @@ theorem packedReduceWord_clmul_packedInvWord_eq_one {n : Nat} {irr w : UInt64}
     rw [hfdegree]
     simpa [a] using ofUInt64_reduced_of_toNat_lt hwlt
   have hcanonical : invCanonical = invWord := by
-    simpa [invCanonical, invWord] using
-      canonicalWordLT_eq_self_of_lt hn64 (packedReduceWord_toNat_lt hn64
-        ((xgcd (ofUInt64 w) (ofUInt64Monic irr n)).left))
+    exact canonicalWordLT_eq_self_of_lt hn64 (packedReduceWord_toNat_lt hn64
+      ((xgcd (ofUInt64 w) (ofUInt64Monic irr n)).left))
   have hinvWord :
       ofUInt64 invWord = (xgcd a f).left % f := by
     have hred :

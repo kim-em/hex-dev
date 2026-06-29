@@ -156,7 +156,8 @@ private def modulus : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 0, 0, 1]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      show some (1 : ZMod64 5) ≠ some 0
+      exact fun h => one_ne_zero_five (Option.some.inj h) }
 
 private theorem modulus_pos_degree :
     0 < FpPoly.degree modulus := by decide

@@ -139,7 +139,7 @@ private theorem divMod_spec_core [PrimeModulus p] (f g : DensePoly (ZMod64 p)) :
 private theorem mod_sub_self_eq_mul_neg_div [PrimeModulus p] (f m : DensePoly (ZMod64 p)) :
     f % m - f = m * (0 - (f / m)) := by
   have hdiv : (f / m) * m + (f % m) = f := by
-    simpa [DensePoly.div, DensePoly.mod] using divMod_spec_core f m
+    exact divMod_spec_core f m
   calc
     f % m - f = 0 - (f / m) * m := by
       apply DensePoly.ext_coeff
@@ -257,7 +257,7 @@ private theorem mod_remainder_degree_lt_core
     [PrimeModulus p] (f m : DensePoly (ZMod64 p))
     (hdegree : 0 < m.degree?.getD 0) :
     (f % m).degree?.getD 0 < m.degree?.getD 0 := by
-  simpa [DensePoly.mod] using divMod_remainder_degree_lt_core f m hdegree
+  exact divMod_remainder_degree_lt_core f m hdegree
 
 /-- Folding `DensePoly.mulCoeffStep f g n i` over `List.range m` adds `f.coeff i * g.coeff (n - i)`
 exactly when `i ≤ n` and `n - i < m`, and `0` otherwise. -/
@@ -538,8 +538,7 @@ private theorem mod_eq_mod_of_congr_pos_degree
 private theorem mod_zero_right_of_size_zero (f m : DensePoly (ZMod64 p))
     (hm : m.size = 0) :
     f % m = f := by
-  simpa [DensePoly.mod] using
-    DensePoly.divMod_remainder_eq_self_of_size_zero_core f m hm
+  exact DensePoly.divMod_remainder_eq_self_of_size_zero_core f m hm
 
 /-- `eq_of_sub_eq_zero` recovers equality of dense polynomials from a zero difference, supplying the algebraic cancellation used in the degenerate case. -/
 private theorem eq_of_sub_eq_zero (f g : DensePoly (ZMod64 p))
@@ -592,14 +591,12 @@ private theorem mod_eq_mod_of_congr_not_pos_degree
       exact hcoeff_ne
     have hfmod :
         f % m = 0 := by
-      simpa [DensePoly.mod] using
-        DensePoly.divMod_remainder_eq_zero_of_degree_zero_core f m hm_size
-          (fun a => zmod_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
+      exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_core f m hm_size
+        (fun a => zmod_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
     have hgmod :
         g % m = 0 := by
-      simpa [DensePoly.mod] using
-        DensePoly.divMod_remainder_eq_zero_of_degree_zero_core g m hm_size
-          (fun a => zmod_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
+      exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_core g m hm_size
+        (fun a => zmod_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
     rw [hfmod, hgmod]
 
 /-- `mod_eq_mod_of_congr_core` combines the positive-degree and non-positive-degree branches into the core equality of congruent remainders. -/
@@ -2280,7 +2277,7 @@ private theorem fold_triangular_assoc_reindex
   rw [← fold_flatMap_map_add (p := p) (List.range (n + 1))
     (fun i => List.range (n - i + 1))
     (fun i j => term i j (n - i - j)) 0]
-  simpa [leftAssocTriples, rightAssocTriples, List.map_flatMap] using hfold
+  simpa [leftAssocTriples, rightAssocTriples, List.map_flatMap, Function.comp_def] using hfold
 
 private theorem fold_add_congr
     (xs : List Nat) {term₁ term₂ : Nat → ZMod64 p}

@@ -429,7 +429,8 @@ theorem isUnit_toMathlibPolynomial_of_isUnitPolynomial
         Hex.DensePoly.coeff_eq_zero_of_size_le g (by omega : g.size ≤ i)]
   have hne : g.coeff 0 ≠ 0 := by
     have hlast := Hex.DensePoly.coeff_last_ne_zero_of_pos_size g (by omega : 0 < g.size)
-    simpa [hsize] using hlast
+    have key : g.coeff 0 ≠ Zero.zero := by simpa [hsize] using hlast
+    exact key
   have htoZ_ne : HexModArithMathlib.ZMod64.toZMod (g.coeff 0) ≠ 0 := by
     intro hzero
     apply hne
@@ -468,9 +469,9 @@ theorem irreducible_toMathlibPolynomial_of_fpPolyIrreducible
   -- `FpPoly.Irreducible` forces one pulled-back factor to be a nonzero constant.
   rcases hirr.2 _ _ hprod with hdeg | hdeg
   · exact Or.inl (ha ▸ isUnit_toMathlibPolynomial_of_isUnitPolynomial
-      (by unfold Hex.Berlekamp.isUnitPolynomial; rw [hdeg]))
+      (by unfold Hex.Berlekamp.isUnitPolynomial; rw [hdeg]; rfl))
   · exact Or.inr (hb ▸ isUnit_toMathlibPolynomial_of_isUnitPolynomial
-      (by unfold Hex.Berlekamp.isUnitPolynomial; rw [hdeg]))
+      (by unfold Hex.Berlekamp.isUnitPolynomial; rw [hdeg]; rfl))
 
 /-- The Mathlib primality fact yields the executable prime-modulus witness, so
 executable field-dependent lemmas (gcd/Bezout, modular division) become
@@ -915,7 +916,8 @@ theorem toMathlibPolynomial_squareFree_coprime
   have hg_pos : 0 < g.size := by omega
   have hg_coeff_ne : g.coeff 0 ≠ 0 := by
     have hlast := Hex.DensePoly.coeff_last_ne_zero_of_pos_size g hg_pos
-    simpa [hg_size] using hlast
+    have key : g.coeff 0 ≠ Zero.zero := by simpa [hg_size] using hlast
+    exact key
   have hg_coeff_zmod_ne :
       HexModArithMathlib.ZMod64.toZMod (g.coeff 0) ≠ 0 := by
     intro hzero

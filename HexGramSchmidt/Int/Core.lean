@@ -875,8 +875,9 @@ private theorem stepScaledRows_rows_size
           Matrix.exactDiv
             (pivot * nextEntry - rows[r]![k]! * getArrayEntry rows k j)
             prevPivot)
-    simpa [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds,
-      hrowsize r hr] using hinner_size
+    simp only [Array.set!_eq_setIfInBounds, Array.size_setIfInBounds,
+      hrowsize r hr] at hinner_size ⊢
+    exact hinner_size
   · rw [getElem!_foldl_modify_of_notMem xs rows f r hmem]
     exact hrowsize r hr
 

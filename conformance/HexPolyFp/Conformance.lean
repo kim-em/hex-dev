@@ -87,7 +87,7 @@ private def constModulus : FpPoly 5 :=
   { coeffs := #[(1 : ZMod64 5)]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      decide }
 
 private theorem constModulus_monic : DensePoly.Monic constModulus := by
   rfl
@@ -96,7 +96,7 @@ private def linearModulus : FpPoly 5 :=
   { coeffs := #[(3 : ZMod64 5), 1]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      decide }
 
 private theorem linearModulus_monic : DensePoly.Monic linearModulus := by
   rfl
@@ -105,7 +105,7 @@ private def quadModulus : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 1]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      decide }
 
 private theorem quadModulus_monic : DensePoly.Monic quadModulus := by
   rfl
@@ -196,7 +196,7 @@ private def bigModulus : FpPoly 5 :=
   { coeffs := #[(3 : ZMod64 5), 2, 0, 0, 0, 0, 1]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      decide }
 
 private theorem bigModulus_monic : DensePoly.Monic bigModulus := by
   rfl

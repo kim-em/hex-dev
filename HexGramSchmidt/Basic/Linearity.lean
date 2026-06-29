@@ -1076,7 +1076,9 @@ private theorem rowCombination_smul_rat
           grind
         rw [hstep]
         exact ih (acc + M[row.val][idxFin.val] * c[row.val])
-  simpa using hfold (List.finRange n) 0
+  have key := hfold (List.finRange n) 0
+  simp only [Rat.mul_zero] at key
+  exact key
 
 /-- `prefixSpan_add` says the rational prefix row-span is closed under vector addition. -/
 private theorem prefixSpan_add
