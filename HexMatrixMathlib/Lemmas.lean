@@ -29,7 +29,7 @@ Mathlib's `ᵀ`. -/
 @[simp, grind =] theorem matrixEquiv_transpose (M : Hex.Matrix R n m) :
     matrixEquiv (Hex.Matrix.transpose M) = (matrixEquiv M)ᵀ := by
   ext i j
-  rw [matrixEquiv_apply, Hex.Matrix.transpose_getElem, Matrix.transpose_apply,
+  rw [matrixEquiv_apply, Hex.Matrix.getElem_transpose, Matrix.transpose_apply,
     matrixEquiv_apply]
 
 /-- Replacing a row carries `matrixEquiv` to Mathlib's `updateRow`. -/
@@ -52,7 +52,7 @@ Mathlib's `ᵀ`. -/
     (v : Fin n → R) :
     matrixEquiv (Hex.Matrix.setCol M dst v) = (matrixEquiv M).updateCol dst v := by
   ext i j
-  rw [matrixEquiv_apply, Hex.Matrix.setCol_getElem, Matrix.updateCol_apply,
+  rw [matrixEquiv_apply, Hex.Matrix.getElem_setCol, Matrix.updateCol_apply,
     matrixEquiv_apply]
 
 end HexMatrixMathlib

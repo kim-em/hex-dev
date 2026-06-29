@@ -27,7 +27,7 @@ variable {R : Type u} {n m : Nat}
 @[simp, grind =] theorem matrixEquiv_gramMatrix [Semiring R] (M : Hex.Matrix R n m) :
     matrixEquiv (Hex.Matrix.gramMatrix M) = matrixEquiv M * (matrixEquiv M)ᵀ := by
   ext i j
-  rw [matrixEquiv_apply, Hex.Matrix.gramMatrix_getElem, Matrix.mul_apply, dotProduct_eq]
+  rw [matrixEquiv_apply, Hex.Matrix.getElem_gramMatrix, Matrix.mul_apply, dotProduct_eq]
   unfold dotProduct
   refine Finset.sum_congr rfl (fun k _ => ?_)
   rw [Matrix.transpose_apply]
