@@ -176,6 +176,12 @@ instance [Mul R] [Add R] [OfNat R 0] : HMul (Matrix R n m) (Vector R m) (Vector 
 instance [Mul R] [Add R] [OfNat R 0] : HMul (Matrix R n m) (Matrix R m k) (Matrix R n k) where
   hMul := mul
 
+/-- Homogeneous multiplication on square matrices, agreeing with the
+heterogeneous `HMul`. This is the `Mul` instance Mathlib's `Semiring`/`Ring`
+structures build on; see `HexMatrixMathlib`. -/
+instance [Mul R] [Add R] [OfNat R 0] : Mul (Matrix R n n) where
+  mul := mul
+
 /-- Entry characterization for matrix-vector multiplication. -/
 @[grind =] theorem mulVec_getElem [Mul R] [Add R] [OfNat R 0]
     (M : Matrix R n m) (v : Vector R m) (i : Fin n) :
