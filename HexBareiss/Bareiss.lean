@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrix.Determinant
-public import HexMatrix.BorderedMinor
+public import HexDeterminant
+public import HexBareiss.BorderedMinor
 
 public section
 

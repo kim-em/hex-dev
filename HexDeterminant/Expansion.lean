@@ -6,12 +6,12 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrix.Determinant.ColumnLinear
-public import HexMatrix.Determinant.Laplace
-public import HexMatrix.Determinant.CauchyBinet
-import all HexMatrix.Determinant.ColumnLinear
-import all HexMatrix.Determinant.Laplace
-import all HexMatrix.Determinant.CauchyBinet
+public import HexDeterminant.ColumnLinear
+public import HexDeterminant.Laplace
+public import HexDeterminant.CauchyBinet
+import all HexDeterminant.ColumnLinear
+import all HexDeterminant.Laplace
+import all HexDeterminant.CauchyBinet
 
 public section
 

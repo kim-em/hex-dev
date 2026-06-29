@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrix.Determinant.Leibniz
+public import HexDeterminant.Leibniz
 
 public section
 

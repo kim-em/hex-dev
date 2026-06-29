@@ -6,10 +6,10 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrix.Determinant.Selection
-public import HexMatrix.Determinant.Adjugate
-import all HexMatrix.Determinant.Selection
-import all HexMatrix.Determinant.Adjugate
+public import HexDeterminant.Selection
+public import HexDeterminant.Adjugate
+import all HexDeterminant.Selection
+import all HexDeterminant.Adjugate
 
 public section
 

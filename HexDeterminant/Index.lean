@@ -6,10 +6,10 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrix.Determinant.Minor
-import all HexMatrix.Determinant.Minor
-import all HexMatrix.Determinant.Leibniz
-import all HexMatrix.Determinant.Enumeration
+public import HexDeterminant.Minor
+import all HexDeterminant.Minor
+import all HexDeterminant.Leibniz
+import all HexDeterminant.Enumeration
 
 public section
 

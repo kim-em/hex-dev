@@ -8,8 +8,8 @@ module
 
 public import HexMatrixMathlib.Basic
 public import HexMatrixMathlib.Determinant.DesnanotJacobi
-public import HexMatrix.Bareiss
-public import HexMatrix.Determinant
+public import HexBareiss.Bareiss
+public import HexDeterminant
 public import Mathlib.LinearAlgebra.Matrix.Adjugate
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 

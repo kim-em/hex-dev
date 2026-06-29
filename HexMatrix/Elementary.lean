@@ -15,7 +15,7 @@ Elementary row and column operations.
 
 This module contains the primitive executable row/column operations and their
 entrywise access lemmas. Algebraic preservation theorems for multiplication and
-inverse tracking live downstream in `HexMatrix.RowEchelon`.
+inverse tracking live downstream in `HexRowReduce.RowEchelon`.
 -/
 
 namespace Hex

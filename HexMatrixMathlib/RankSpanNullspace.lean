@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexMatrixMathlib.Basic
-public import HexMatrix.RREF
+public import HexRowReduce.RREF
 public import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import Mathlib.LinearAlgebra.Matrix.Rank

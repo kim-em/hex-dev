@@ -6,9 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrix.Determinant.ColumnLinear
+public import HexDeterminant.ColumnLinear
 public import HexMatrix.Gram
-import all HexMatrix.Determinant.ColumnLinear
+import all HexDeterminant.ColumnLinear
 
 public section
 

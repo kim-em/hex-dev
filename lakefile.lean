@@ -124,6 +124,15 @@ lean_lib HexBerlekampZassenhausMathlib where
 lean_lib HexMatrix where
   precompileModules := true
 
+lean_lib HexRowReduce where
+  precompileModules := true
+
+lean_lib HexDeterminant where
+  precompileModules := true
+
+lean_lib HexBareiss where
+  precompileModules := true
+
 lean_lib HexGramSchmidt where
 
 lean_lib HexLLL where

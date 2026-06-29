@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGramSchmidt.Int
-public import HexMatrix.RowEchelon
+public import HexRowReduce.RowEchelon
 
 public section
 

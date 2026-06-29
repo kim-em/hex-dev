@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexMatrix
+import HexRowReduce
 import HexPolyFp
 
 /-!

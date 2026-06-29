@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMatrix.Bareiss
-import HexMatrix.RREF
+import HexBareiss.Bareiss
+import HexRowReduce.RREF
 
 /-!
 Core conformance checks for `hex-matrix`.

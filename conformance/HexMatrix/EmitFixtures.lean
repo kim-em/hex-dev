@@ -5,9 +5,9 @@ Authors: Kim Morrison
 -/
 
 import Hex.Conformance.Emit
-import HexMatrix.Bareiss
-import HexMatrix.RREF
-import HexMatrix.Determinant
+import HexBareiss.Bareiss
+import HexRowReduce.RREF
+import HexDeterminant
 
 /-!
 JSONL emit driver for the `hex-matrix` oracle.

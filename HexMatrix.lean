@@ -13,18 +13,14 @@ public import HexMatrix.DotProduct
 public import HexMatrix.MatrixAlgebra
 public import HexMatrix.Elementary
 public import HexMatrix.Submatrix
-public import HexMatrix.BorderedMinor
 public import HexMatrix.Gram
-public import HexMatrix.Determinant
-public import HexMatrix.RowEchelon
-public import HexMatrix.RREF
-public import HexMatrix.Bareiss
 
 public section
 
 /-!
-The `HexMatrix` library exposes the dense matrix core used throughout the
-project's linear-algebra stack, including dense matrix operations,
-row-echelon transforms, determinant APIs, and the executable Bareiss
-determinant algorithm over `Int`.
+The `HexMatrix` library exposes the dense matrix core: the `Vector`-based
+matrix representation, basic vector helpers, the dot product, dense matrix
+algebra, elementary row/column operations, and submatrix/Gram helpers. The
+row-echelon transforms, determinant APIs, and the executable Bareiss algorithm
+live in the `HexRowReduce`, `HexDeterminant`, and `HexBareiss` libraries.
 -/
