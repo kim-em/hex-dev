@@ -39,11 +39,44 @@ repos:
     lib: HexMatrix
     umbrella: true
     spec: hex-matrix
-    bench: true
-    conformance: true
-    fixtures: [HexMatrix]
-    oracles: [matrix_flint.py, common.py, flint_bench_driver.py]
+    bench: true                # dense multiplication
+    conformance: true          # oracle-free base #guard module
+    fixtures: []
+    oracles: []
     pins: []
+    lakefile: toml
+
+  - repo: kim-em/hex-row-reduce
+    lib: HexRowReduce
+    umbrella: true
+    spec: hex-row-reduce
+    bench: false
+    conformance: true
+    fixtures: [HexRowReduce]
+    oracles: [matrix_flint.py, common.py]
+    pins: [hex-matrix]
+    lakefile: toml
+
+  - repo: kim-em/hex-determinant
+    lib: HexDeterminant
+    umbrella: true
+    spec: hex-determinant
+    bench: true                # Leibniz determinant
+    conformance: true
+    fixtures: [HexDeterminant]
+    oracles: [matrix_flint.py, common.py]
+    pins: [hex-matrix]
+    lakefile: toml
+
+  - repo: kim-em/hex-bareiss
+    lib: HexBareiss
+    umbrella: true
+    spec: hex-bareiss
+    bench: true                # Bareiss determinant + FLINT comparator
+    conformance: true
+    fixtures: [HexBareiss]
+    oracles: [matrix_flint.py, common.py, flint_bench_driver.py]
+    pins: [hex-determinant, hex-matrix]
     lakefile: toml
 
   - repo: kim-em/hex-matrix-mathlib
@@ -57,6 +90,39 @@ repos:
     pins: [hex-matrix]
     lakefile: toml
 
+  - repo: kim-em/hex-row-reduce-mathlib
+    lib: HexRowReduceMathlib
+    umbrella: true
+    spec: hex-row-reduce-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-row-reduce, hex-matrix-mathlib, hex-matrix]
+    lakefile: toml
+
+  - repo: kim-em/hex-determinant-mathlib
+    lib: HexDeterminantMathlib
+    umbrella: true
+    spec: hex-determinant-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-matrix]
+    lakefile: toml
+
+  - repo: kim-em/hex-bareiss-mathlib
+    lib: HexBareissMathlib
+    umbrella: true
+    spec: hex-bareiss-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-determinant-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-matrix]
+    lakefile: toml
+
   - repo: kim-em/hex-gram-schmidt
     lib: HexGramSchmidt
     umbrella: true
@@ -65,7 +131,7 @@ repos:
     conformance: true
     fixtures: [HexGramSchmidt]
     oracles: [gs_flint.py, common.py]
-    pins: [hex-matrix]
+    pins: [hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]
     lakefile: toml
 
   - repo: kim-em/hex-gram-schmidt-mathlib
@@ -76,7 +142,7 @@ repos:
     conformance: false
     fixtures: []
     oracles: []
-    pins: [hex-gram-schmidt, hex-matrix-mathlib, hex-matrix]
+    pins: [hex-gram-schmidt, hex-bareiss-mathlib, hex-determinant-mathlib, hex-matrix-mathlib, hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]
     lakefile: toml
 
   - repo: kim-em/hex-lll
@@ -88,7 +154,7 @@ repos:
     conformance: true
     fixtures: [HexLLL]
     oracles: [lll_fpylll.py, lll_fpylll_bench_driver.py, common.py, __init__.py, setup_fplll_ffi.sh, setup_lll_isabelle.sh, patches]
-    pins: [hex-matrix, hex-gram-schmidt]
+    pins: [hex-gram-schmidt, hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]
     lakefile: lean
 
   - repo: kim-em/hex-lll-mathlib
@@ -99,5 +165,5 @@ repos:
     conformance: false
     fixtures: []
     oracles: []
-    pins: [hex-lll, hex-gram-schmidt-mathlib, hex-matrix-mathlib, hex-gram-schmidt, hex-matrix]
+    pins: [hex-lll, hex-gram-schmidt-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-matrix-mathlib, hex-gram-schmidt, hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]
     lakefile: toml
