@@ -98,18 +98,6 @@ private theorem foldl_det_sum_congr {R : Type u} [Add R] {β : Type v}
       intro y hy
       exact h y (List.mem_cons_of_mem x hy)
 
-/-- Two left folds agree when their step functions agree on every list
-element. -/
-private theorem foldl_acc_congr {α : Type u} {β : Type v}
-    (xs : List β) (f g : α → β → α) (z : α)
-    (h : ∀ acc x, x ∈ xs → f acc x = g acc x) :
-    xs.foldl f z = xs.foldl g z := by
-  induction xs generalizing z with
-  | nil => rfl
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [h z x (by simp)]
-      exact ih (g z x) (fun acc y hy => h acc y (List.mem_cons_of_mem x hy))
 
 /-- A summing left fold is invariant under permuting the list. -/
 private theorem foldl_det_sum_perm {R : Type u} [Lean.Grind.CommRing R]
@@ -161,20 +149,6 @@ private theorem foldl_det_product_perm {R : Type u} [Lean.Grind.CommRing R]
   | trans _ _ ih₁ ih₂ =>
       exact (ih₁ z).trans (ih₂ z)
 
-/-- Mapping a duplicate-free list by an injective function preserves
-duplicate-freeness. -/
-private theorem list_nodup_map_of_injective {α : Type u} {β : Type v}
-    [DecidableEq β] {f : α → β} (hinj : Function.Injective f) :
-    ∀ {xs : List α}, xs.Nodup → (xs.map f).Nodup
-  | [], _ => by simp
-  | x :: xs, hnodup => by
-      simp only [List.map_cons, List.nodup_cons] at hnodup ⊢
-      constructor
-      · intro hmem
-        simp only [List.mem_map] at hmem
-        rcases hmem with ⟨y, hy, hfy⟩
-        exact hnodup.1 (hinj hfy.symm ▸ hy)
-      · exact list_nodup_map_of_injective hinj hnodup.2
 
 /-- Mapping a duplicate-free list preserves duplicate-freeness when the function
 is injective on that list's elements. -/
@@ -549,32 +523,6 @@ private theorem detProduct_identity_zero {R : Type u}
       rw [identity_get]
       rw [if_neg hsymm])
 
-/-- For `i ≤ r < xs.length`, element `r + 1` of `xs.insertIdx i x` is the original
-`xs[r]`, since the insertion shifts later entries up by one. -/
-private theorem list_getElem_insertIdx_succ {α : Type u}
-    (xs : List α) (x : α) {i r : Nat} (h : i ≤ r) (hr : r < xs.length) :
-    (xs.insertIdx i x)[r + 1]'(by
-      have hi : i ≤ xs.length := Nat.le_trans h (Nat.le_of_lt hr)
-      rw [List.length_insertIdx_of_le_length hi]
-      omega) = xs[r] := by
-  induction xs generalizing i r with
-  | nil =>
-      cases hr
-  | cons y ys ih =>
-      cases i with
-      | zero =>
-          cases r with
-          | zero =>
-              simp
-          | succ r =>
-              simp
-      | succ i =>
-          cases r with
-          | zero =>
-              omega
-          | succ r =>
-              simp only [List.insertIdx, List.getElem_cons_succ]
-              exact ih (Nat.succ_le_succ_iff.mp h) (Nat.succ_lt_succ_iff.mp hr)
 
 /-- `detProduct` of the identity matrix along `insertAt (Fin.last n) (v.map
 Fin.castSucc) i` is `0` when `i ≠ Fin.last n`, since the inserted index is then
@@ -750,78 +698,6 @@ private theorem inversionCount_insertIdx_castSucc_last_eq {n : Nat}
           rw [foldl_insertIdx_last_castSucc_not_lt xs x p, inversionFold_map_castSucc, ih p hp',
             hlen]
           grind
-
-/-- Mapping a `Nodup` list through the injective `Fin.castSucc` keeps it `Nodup`. -/
-private theorem list_nodup_map_castSucc {n : Nat} (xs : List (Fin n)) :
-    xs.Nodup → (xs.map Fin.castSucc).Nodup := by
-  induction xs with
-  | nil =>
-      intro _h
-      simp
-  | cons x xs ih =>
-      intro hnodup
-      rw [List.nodup_cons] at hnodup
-      rw [List.map_cons, List.nodup_cons]
-      constructor
-      · intro hmem
-        rw [List.mem_map] at hmem
-        rcases hmem with ⟨y, hy, hxy⟩
-        have hval : x.val = y.val := by
-          simpa using (congrArg Fin.val hxy).symm
-        exact hnodup.1 (Fin.ext hval ▸ hy)
-      · exact ih hnodup.2
-
-/-- `Fin.last n` never lies in the image of a list under `Fin.castSucc`. -/
-private theorem finLast_not_mem_map_castSucc {n : Nat} (xs : List (Fin n)) :
-    Fin.last n ∉ xs.map Fin.castSucc := by
-  intro hmem
-  rw [List.mem_map] at hmem
-  rcases hmem with ⟨x, _hxmem, hxlast⟩
-  have hval : x.val = n := by
-    simpa using congrArg Fin.val hxlast
-  exact Nat.ne_of_lt x.isLt hval
-
-/-- Inserting `Fin.last n` at any position into the `castSucc`-embedded nodup vector
-keeps the resulting list `Nodup`, since `Fin.last n` is new and the embedding
-stays injective. -/
-private theorem insertAt_last_castSucc_nodup {n : Nat}
-    (v : Vector (Fin n) n) (i : Fin (n + 1))
-    (hnodup : v.toList.Nodup) :
-    (insertAt (Fin.last n) (v.map Fin.castSucc) i).toList.Nodup := by
-  rw [insertAt_toList]
-  have hmap : (v.map Fin.castSucc).toList.Nodup := by
-    rw [vector_toList_map]
-    exact list_nodup_map_castSucc v.toList hnodup
-  have hlast : Fin.last n ∉ (v.map Fin.castSucc).toList := by
-    rw [vector_toList_map]
-    exact finLast_not_mem_map_castSucc v.toList
-  have hcons : (Fin.last n :: (v.map Fin.castSucc).toList).Nodup := by
-    rw [List.nodup_cons]
-    exact ⟨hlast, hmap⟩
-  have hidx : i.val ≤ (v.map Fin.castSucc).toList.length := by
-    simpa using Nat.lt_succ_iff.mp i.isLt
-  exact (List.perm_insertIdx (Fin.last n) (v.map Fin.castSucc).toList hidx).symm.nodup hcons
-
-/-- A `Nodup` list of `Fin (n + 1)` with full length `n + 1` must contain
-`Fin.last n`. -/
-private theorem finLast_mem {n : Nat} {xs : List (Fin (n + 1))}
-    (hlen : xs.length = n + 1) (hnodup : xs.Nodup) :
-    Fin.last n ∈ xs := by
-  by_cases hmem : Fin.last n ∈ xs
-  · exact hmem
-  · exfalso
-    have hsubset : xs ⊆ (List.finRange (n + 1)).erase (Fin.last n) := by
-      intro x hx
-      refine (List.mem_erase_of_ne ?_).2 (List.mem_finRange x)
-      rintro rfl
-      exact hmem hx
-    have hle : xs.length ≤ ((List.finRange (n + 1)).erase (Fin.last n)).length :=
-      List.nodup_subset_length_le hnodup hsubset
-    have herase :
-        ((List.finRange (n + 1)).erase (Fin.last n)).length = n := by
-      rw [List.length_erase]
-      simp [List.mem_finRange, List.length_finRange]
-    omega
 
 
 end Matrix

@@ -6,9 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public import HexDeterminant.Selection
+public import HexDeterminant.Gram
 public import HexDeterminant.Adjugate
-import all HexDeterminant.Selection
+import all HexDeterminant.Gram
 import all HexDeterminant.Adjugate
 
 public section

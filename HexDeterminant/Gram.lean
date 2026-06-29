@@ -6,8 +6,12 @@ Authors: Kim Morrison
 
 module
 
-public import HexDeterminant.Expansion
-import all HexDeterminant.Expansion
+public import HexDeterminant.Laplace
+public import HexDeterminant.CauchyBinet
+public import HexDeterminant.Triangular
+import all HexDeterminant.Laplace
+import all HexDeterminant.CauchyBinet
+import all HexDeterminant.Triangular
 
 public section
 
