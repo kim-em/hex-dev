@@ -87,7 +87,7 @@ private theorem one_ne_zero_zmod (p : Nat) [ZMod64.Bounds p] (h : 2 ≤ p) :
     (1 : ZMod64 p) ≠ 0 := by
   intro hzero
   have hcast : ((1 : Nat) : ZMod64 p) = ((0 : Nat) : ZMod64 p) := by
-    simpa using hzero
+    exact hzero
   have hmod := (ZMod64.natCast_eq_natCast_iff (p := p) 1 0).mp hcast
   -- `1 % p = 0 % p` — but `p ≥ 2` makes `1 % p = 1` and `0 % p = 0`.
   have : (1 : Nat) % p = 1 := Nat.mod_eq_of_lt (by omega)
