@@ -98,7 +98,7 @@ private def emitSquare (n : Nat) (id : String) (M : Matrix Int n n) : IO Unit :=
   let MQ := intToRat M
   let D : RowEchelonData Rat n n := Matrix.rowReduce MQ
   emitResult lib id "rank"      (jsonNat D.rank)
-  emitResult lib id "rowReduce"      (rowReduceValue D)
+  emitResult lib id "rref"      (rowReduceValue D)
   emitResult lib id "nullspace" (basisValue (Matrix.nullspace MQ).toArray)
 
 /-- Build a square `Matrix Int n n` from a 2-D array of rows; missing entries
