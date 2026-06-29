@@ -5,13 +5,13 @@ Authors: Kim Morrison
 -/
 
 import Hex.Conformance.Emit
-import HexRowReduce.RREF
+import HexRowReduce
 
 /-!
 JSONL emit driver for the `hex-row-reduce` oracle.
 
 `lake exe hexrowreduce_emit_fixtures` writes one `matrix` fixture record plus
-`rank`, `rref`, and `nullspace` result records per case to `stdout` (or to
+`rank`, `rowReduce`, and `nullspace` result records per case to `stdout` (or to
 `$HEX_FIXTURE_OUTPUT` when set). The companion oracle driver
 `scripts/oracle/matrix_flint.py` reads the same stream and re-runs each
 operation through python-flint's `fmpz_mat` / `fmpq_mat`.
@@ -19,7 +19,7 @@ operation through python-flint's `fmpz_mat` / `fmpq_mat`.
 Cases are square integer matrices at dimensions 4×4, 6×6, and 8×8 in three
 structural shapes (`random/*`, `singular/*`, `triangular/*`); see the
 `HexRowReduce` Conformance module for the shape rationale. The emitted
-operations are `rank` (`Matrix.rref_rank` over `Q`), `rref` (the rational
+operations are `rank` (`Matrix.rowReduce_rank` over `Q`), `rowReduce` (the rational
 reduced row echelon form), and `nullspace` (the rational basis of the right
 kernel). All three are computed after lifting the integer entries to `Rat`.
 
@@ -74,9 +74,9 @@ private def intArrayValue (xs : Array Int) : String := Id.run do
     out := out ++ jsonInt x
   out.push ']'
 
-/-- `rref` value:
+/-- `rowReduce` value:
 `{"rank":k,"pivotCols":[i...],"echelon":[[[num,den],...],...]}`. -/
-private def rrefValue {n m : Nat} (D : RowEchelonData Rat n m) : String :=
+private def rowReduceValue {n m : Nat} (D : RowEchelonData Rat n m) : String :=
   let cols : Array Int := D.pivotCols.toArray.map (fun c => Int.ofNat c.val)
   "{\"rank\":" ++ jsonNat D.rank ++
   ",\"pivotCols\":" ++ intArrayValue cols ++
@@ -91,14 +91,14 @@ private def basisValue {m : Nat} (B : Array (Vector Rat m)) : String := Id.run d
     out := out ++ ratArrayValue v.toArray
   out.push ']'
 
-/-- Emit one matrix fixture record plus its `rank`, `rref`, and `nullspace`
+/-- Emit one matrix fixture record plus its `rank`, `rowReduce`, and `nullspace`
 result records (all computed over `Q`). -/
 private def emitSquare (n : Nat) (id : String) (M : Matrix Int n n) : IO Unit := do
   emitMatrixFixture lib id (matrixIntRows M)
   let MQ := intToRat M
-  let D : RowEchelonData Rat n n := Matrix.rref MQ
+  let D : RowEchelonData Rat n n := Matrix.rowReduce MQ
   emitResult lib id "rank"      (jsonNat D.rank)
-  emitResult lib id "rref"      (rrefValue D)
+  emitResult lib id "rref"      (rowReduceValue D)
   emitResult lib id "nullspace" (basisValue (Matrix.nullspace MQ).toArray)
 
 /-- Build a square `Matrix Int n n` from a 2-D array of rows; missing entries

@@ -16,13 +16,13 @@ Pivot search and column elimination for the `hex-matrix` RREF loop.
 
 This module supplies the executable building blocks of Gauss-Jordan
 elimination and their entrywise lemmas. It defines `rowCombination`, the
-`RrefState` carrier, the pivot search `findPivot?` (with the `_some_ge`,
+`RowReduceState` carrier, the pivot search `findPivot?` (with the `_some_ge`,
 `_some_nonzero`, `_some_above`, `_none` characterizations) and the
 column-clearing `eliminateColumn`, proving the latter zeros non-pivot rows,
 fixes the pivot row, leaves other columns untouched, and preserves both the
 transform equation and the transform's left/right inverses. It assembles the
-`rrefLoop` driver itself together with the proof-only `RrefShapeInvariant`,
-`RrefCanonicalInvariant` structures and their one-step `concat` extension
+`rowReduceLoop` driver itself together with the proof-only `RowReduceShapeInvariant`,
+`RowReduceCanonicalInvariant` structures and their one-step `concat` extension
 lemmas, which `RREF/Loop` then carries through the recursion.
 -/
 
@@ -37,7 +37,7 @@ def rowCombination [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (c : Vector R 
     Vector R m :=
   Matrix.transpose M * c
 
-structure RrefState (R : Type u) (n m : Nat) where
+structure RowReduceState (R : Type u) (n m : Nat) where
   row : Nat
   echelon : Matrix R n m
   transform : Matrix R n n
@@ -288,10 +288,7 @@ private theorem eliminateColumn_step_zero_at_x
   rw [dif_neg hxp]
   by_cases hcoeff : -s.1[x][col] = 0
   · rw [if_pos hcoeff]
-    have : s.1[x][col] = 0 := by
-      have h := hcoeff
-      grind
-    exact this
+    grind
   · rw [if_neg hcoeff]
     show (rowAdd s.1 pivotRow x (-s.1[x][col]))[x][col] = 0
     rw [rowAdd_get_dst s.1 pivotRow x (-s.1[x][col]) col, hpivot]
@@ -710,7 +707,7 @@ private theorem eliminateColumn_preserve_canonical_column
           simp only [dif_neg hx, if_neg hcoeff]; exact ih next hSrcNext hcanon.1 hcanon.2
 
 /-- Process columns left-to-right, performing Gauss-Jordan elimination. -/
-def rrefLoop (col fuel : Nat) (state : RrefState R n m) : RrefState R n m :=
+def rowReduceLoop (col fuel : Nat) (state : RowReduceState R n m) : RowReduceState R n m :=
   match fuel with
   | 0 => state
   | fuel + 1 =>
@@ -719,7 +716,7 @@ def rrefLoop (col fuel : Nat) (state : RrefState R n m) : RrefState R n m :=
           let colFin : Fin m := ⟨col, hCol⟩
           match findPivot? state.echelon colFin state.row with
           | none =>
-              rrefLoop (col + 1) fuel state
+              rowReduceLoop (col + 1) fuel state
           | some pivot =>
               let target : Fin n := ⟨state.row, hRow⟩
               let swappedEchelon := rowSwap state.echelon target pivot
@@ -728,21 +725,21 @@ def rrefLoop (col fuel : Nat) (state : RrefState R n m) : RrefState R n m :=
               let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
               let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
               let eliminated := eliminateColumn scaledEchelon scaledTransform target colFin
-              let nextState : RrefState R n m :=
+              let nextState : RowReduceState R n m :=
                 { row := state.row + 1
                   echelon := eliminated.1
                   transform := eliminated.2
                   pivots := state.pivots.concat colFin }
-              rrefLoop (col + 1) fuel nextState
+              rowReduceLoop (col + 1) fuel nextState
         else
           state
       else
         state
 
-/-- Proof-only shape invariant for `rrefLoop`: the row counter tracks the
+/-- Proof-only shape invariant for `rowReduceLoop`: the row counter tracks the
 number of pivots, discovered pivot columns are strictly increasing, and all
 recorded pivots lie before the next column to inspect. -/
-private structure RrefShapeInvariant (col : Nat) (state : RrefState R n m) : Prop where
+private structure RowReduceShapeInvariant (col : Nat) (state : RowReduceState R n m) : Prop where
   row_eq_length : state.row = state.pivots.length
   row_le_n : state.row ≤ n
   length_le_col : state.pivots.length ≤ col
@@ -752,21 +749,21 @@ private structure RrefShapeInvariant (col : Nat) (state : RrefState R n m) : Pro
   pivots_lt_col : ∀ p ∈ state.pivots, p.val < col
 
 omit [Lean.Grind.Field R] [DecidableEq R] in
-/-- `RrefShapeInvariant.mono_col` relaxes the column bound: the shape invariant
+/-- `RowReduceShapeInvariant.mono_col` relaxes the column bound: the shape invariant
 at `col` still holds at any larger column bound `col' ≥ col`. -/
-private theorem RrefShapeInvariant.mono_col {col col' : Nat} {state : RrefState R n m}
-    (hcol : col ≤ col') (h : RrefShapeInvariant (R := R) (n := n) (m := m) col state) :
-    RrefShapeInvariant (R := R) (n := n) (m := m) col' state where
+private theorem RowReduceShapeInvariant.mono_col {col col' : Nat} {state : RowReduceState R n m}
+    (hcol : col ≤ col') (h : RowReduceShapeInvariant (R := R) (n := n) (m := m) col state) :
+    RowReduceShapeInvariant (R := R) (n := n) (m := m) col' state where
   row_eq_length := h.row_eq_length
   row_le_n := h.row_le_n
   length_le_col := Nat.le_trans h.length_le_col hcol
   pivots_sorted := h.pivots_sorted
   pivots_lt_col := fun p hp => Nat.lt_of_lt_of_le (h.pivots_lt_col p hp) hcol
 
-/-- Proof-only invariant for `rrefLoop`: every processed pivot column is
+/-- Proof-only invariant for `rowReduceLoop`: every processed pivot column is
 canonical — the pivot row has entry `1`, and every other row has entry `0`.
 The pivot row of the `i`-th pivot is row `i` of the echelon matrix. -/
-private structure RrefCanonicalInvariant (state : RrefState R n m) : Prop where
+private structure RowReduceCanonicalInvariant (state : RowReduceState R n m) : Prop where
   pivot_entry_one : ∀ (i : Nat) (hi : i < state.pivots.length) (hin : i < n),
     state.echelon[(⟨i, hin⟩ : Fin n)][state.pivots[i]] = 1
   other_entry_zero : ∀ (i : Nat) (hi : i < state.pivots.length) (r : Fin n),
@@ -817,14 +814,14 @@ private theorem list_sorted_get_concat_of_lt {ps : List (Fin m)} {col : Nat}
     exact hlt ps[i] (List.getElem_mem hiOld)
 
 omit [Lean.Grind.Field R] [DecidableEq R] in
-/-- `rrefShapeInvariant_concat` is the one-step extension: recording a new pivot
+/-- `rowReduceShapeInvariant_concat` is the one-step extension: recording a new pivot
 at `col` (advancing the row and appending the column to `pivots`) preserves the
 shape invariant at the next column bound `col + 1`. -/
-private theorem rrefShapeInvariant_concat {col : Nat} {state : RrefState R n m}
-    (h : RrefShapeInvariant (R := R) (n := n) (m := m) col state)
+private theorem rowReduceShapeInvariant_concat {col : Nat} {state : RowReduceState R n m}
+    (h : RowReduceShapeInvariant (R := R) (n := n) (m := m) col state)
     (hRow : state.row < n) (hCol : col < m)
     (echelon : Matrix R n m) (transform : Matrix R n n) :
-    RrefShapeInvariant (R := R) (n := n) (m := m) (col + 1)
+    RowReduceShapeInvariant (R := R) (n := n) (m := m) (col + 1)
       { row := state.row + 1
         echelon := echelon
         transform := transform

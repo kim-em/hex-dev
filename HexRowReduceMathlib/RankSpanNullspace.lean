@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexMatrixMathlib.Vector
-public import HexRowReduce.RREF
+public import HexRowReduce
 public import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import Mathlib.LinearAlgebra.Matrix.Rank
@@ -59,7 +59,7 @@ nullspace basis vectors. Used to express an arbitrary kernel element as a span
 of the basis. -/
 private theorem vectorEquiv_nullspaceMatrix_mulVec [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
-    (E : Hex.Matrix.IsRREF M D) (c : Vector R (m - D.rank)) :
+    (E : Hex.Matrix.IsRowReduced M D) (c : Vector R (m - D.rank)) :
     vectorEquiv (E.nullspaceMatrix * c) =
       ∑ k : Fin (m - D.rank), c[k] • vectorEquiv (E.nullspace.get k) := by
   funext j
@@ -70,7 +70,7 @@ private theorem vectorEquiv_nullspaceMatrix_mulVec [Field R]
   rw [Vector.getElem_ofFn j.isLt, foldl_finRange_eq_sum]
   apply Finset.sum_congr rfl
   intro k _
-  unfold Hex.Matrix.IsRREF.nullspace Hex.Matrix.col
+  unfold Hex.Matrix.IsRowReduced.nullspace Hex.Matrix.col
   simp [mul_comm, Vector.get, Vector.toArray_ofFn]
 
 /-- Soundness of the executable `spanCoeffs`: when echelon-form data certifies
@@ -98,7 +98,7 @@ theorem spanCoeffs_eq_linearCombination [Field R] [DecidableEq R]
 `M`. The decision procedure agrees with Mathlib's `Submodule.span`. -/
 theorem spanContains_iff_mem_span [Field R] [DecidableEq R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
-    (E : Hex.Matrix.IsRREF M D) (v : Vector R m) :
+    (E : Hex.Matrix.IsRowReduced M D) (v : Vector R m) :
     E.toIsEchelonForm.spanContains v = true ↔
       vectorEquiv v ∈ Submodule.span R (Set.range (_root_.Matrix.row (matrixEquiv M))) := by
   rw [← Fintype.range_linearCombination]
@@ -117,9 +117,9 @@ theorem spanContains_iff_mem_span [Field R] [DecidableEq R]
 /-- Every row of the computed echelon form lies in the row span of the original
 matrix `M`: row reduction does not enlarge the span. One inclusion of the
 "echelon rows span the same subspace as `M`" equivalence. -/
-theorem rref_echelon_row_mem_span [Field R] [DecidableEq R]
+theorem rowReduce_echelon_row_mem_span [Field R] [DecidableEq R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
-    (E : Hex.Matrix.IsRREF M D) (i : Fin n) :
+    (E : Hex.Matrix.IsRowReduced M D) (i : Fin n) :
     vectorEquiv (Hex.Matrix.row D.echelon i) ∈
       Submodule.span R (Set.range (_root_.Matrix.row (matrixEquiv M))) := by
   rw [← Fintype.range_linearCombination]
@@ -128,15 +128,15 @@ theorem rref_echelon_row_mem_span [Field R] [DecidableEq R]
   rw [← vectorEquiv_rowCombination M (Hex.Matrix.transpose D.transform * e)]
   have htransport := E.toIsEchelonForm.rowCombination_transform_transpose (e := e)
   have hsingle : Hex.Matrix.rowCombination D.echelon e = Hex.Matrix.row D.echelon i := by
-    simpa [e] using Hex.Matrix.IsRREF.rowCombination_single (M := D.echelon) i
+    simpa [e] using Hex.Matrix.IsRowReduced.rowCombination_single (M := D.echelon) i
   rw [htransport, hsingle]
 
 /-- Converse direction: any vector in the row span of `M` is realised as an
 executable row combination of the echelon rows. Together with
-`rref_echelon_row_mem_span` this shows row reduction preserves the row span. -/
-theorem rref_mem_span_echelon_of_mem_span [Field R] [DecidableEq R]
+`rowReduce_echelon_row_mem_span` this shows row reduction preserves the row span. -/
+theorem rowReduce_mem_span_echelon_of_mem_span [Field R] [DecidableEq R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
-    (E : Hex.Matrix.IsRREF M D) {v : Fin m → R} :
+    (E : Hex.Matrix.IsRowReduced M D) {v : Fin m → R} :
     v ∈ Submodule.span R (Set.range (_root_.Matrix.row (matrixEquiv M))) →
       ∃ c : Vector R n, Hex.Matrix.rowCombination D.echelon c = vectorEquiv.symm v := by
   intro hv
@@ -152,11 +152,11 @@ Mathlib's linear map `mulVecLin`): the executable nullspace really annihilates
 `M`. -/
 theorem nullspace_mem_ker [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
-    (E : Hex.Matrix.IsRREF M D) (k : Fin (m - D.rank)) :
+    (E : Hex.Matrix.IsRowReduced M D) (k : Fin (m - D.rank)) :
     vectorEquiv (E.nullspace.get k) ∈
       LinearMap.ker ((_root_.Matrix.mulVecLin (matrixEquiv M))) := by
   rw [LinearMap.mem_ker, _root_.Matrix.mulVecLin_apply]
-  have hsound := Hex.Matrix.IsRREF.nullspace_sound E k
+  have hsound := Hex.Matrix.IsRowReduced.nullspace_sound E k
   have hbridge := vectorEquiv_mulVec (M := M) (v := E.nullspace.get k)
   rw [hsound] at hbridge
   have hzero : vectorEquiv (0 : Vector R n) = 0 := by
@@ -170,7 +170,7 @@ the executable basis vectors equals Mathlib's `LinearMap.ker (mulVecLin M)`.
 This is the completeness counterpart to `nullspace_mem_ker`. -/
 theorem nullspace_span_eq_ker [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
-    (E : Hex.Matrix.IsRREF M D) :
+    (E : Hex.Matrix.IsRowReduced M D) :
     Submodule.span R (Set.range fun k : Fin (m - D.rank) => vectorEquiv (E.nullspace.get k)) =
       LinearMap.ker (_root_.Matrix.mulVecLin (matrixEquiv M)) := by
   apply le_antisymm
@@ -193,7 +193,7 @@ theorem nullspace_span_eq_ker [Field R]
         have hi := congrFun hbridge i
         simpa [vectorEquiv] using hi
       exact Equiv.injective vectorEquiv hzeroVec
-    rcases Hex.Matrix.IsRREF.nullspace_complete E v hMv with ⟨c, hc⟩
+    rcases Hex.Matrix.IsRowReduced.nullspace_complete E v hMv with ⟨c, hc⟩
     have hxsum :
         x = ∑ k : Fin (m - D.rank), c[k] • vectorEquiv (E.nullspace.get k) := by
       have hlin := vectorEquiv_nullspaceMatrix_mulVec E c
@@ -211,20 +211,20 @@ vector `k` reads `1` at its own free column and `0` at the others. This Kronecke
 pattern is what makes the basis linearly independent. -/
 private theorem nullspace_get_free_entry [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
-    (E : Hex.Matrix.IsRREF M D) (k l : Fin (m - D.rank)) :
+    (E : Hex.Matrix.IsRowReduced M D) (k l : Fin (m - D.rank)) :
     (E.nullspace.get k)[E.toIsEchelonForm.freeCols.get l] =
       if k = l then (1 : R) else 0 := by
   by_cases hkl : k = l
   · subst k
-    simpa using Hex.Matrix.IsRREF.nullspace_get_free E l
-  · simpa [hkl] using Hex.Matrix.IsRREF.nullspace_get_free_ne E hkl
+    simpa using Hex.Matrix.IsRowReduced.nullspace_get_free E l
+  · simpa [hkl] using Hex.Matrix.IsRowReduced.nullspace_get_free_ne E hkl
 
 /-- The computed nullspace basis is linearly independent, read off from the
 Kronecker pattern of `nullspace_get_free_entry`. Supplies the dimension count in
 `rank_eq`. -/
 private theorem nullspace_linearIndependent [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
-    (E : Hex.Matrix.IsRREF M D) :
+    (E : Hex.Matrix.IsRowReduced M D) :
     LinearIndependent R (fun k : Fin (m - D.rank) => vectorEquiv (E.nullspace.get k)) := by
   classical
   rw [Fintype.linearIndependent_iff]
@@ -251,7 +251,7 @@ Proven by rank-nullity: the `m - D.rank` independent nullspace basis vectors pin
 the kernel dimension, and the complement is the matrix rank. -/
 theorem rank_eq [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
-    (E : Hex.Matrix.IsRREF M D) :
+    (E : Hex.Matrix.IsRowReduced M D) :
     D.rank = _root_.Matrix.rank (matrixEquiv M) := by
   classical
   have hker :

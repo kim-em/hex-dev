@@ -650,14 +650,14 @@ Berlekamp-local linear-algebra implementation.
 def fixedSpaceKernelVectors (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [inst : Lean.Grind.Field (ZMod64 p)] :
     Vector (Vector (ZMod64 p) (basisSize f))
-      (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic)) :=
+      (basisSize f - Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic)) :=
   Matrix.nullspace (fixedSpaceMatrix f hmonic)
 
 /-- The fixed-space kernel basis converted back to polynomial representatives. -/
 def fixedSpaceKernel (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [inst : Lean.Grind.Field (ZMod64 p)] :
     Vector (FpPoly p)
-      (basisSize f - Matrix.rref_rank (fixedSpaceMatrix f hmonic)) :=
+      (basisSize f - Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic)) :=
   Vector.ofFn fun i => vectorToPoly ((fixedSpaceKernelVectors f hmonic).get i)
 
 /-- Vector-level executable Berlekamp kernel condition for the fixed-space
@@ -708,7 +708,7 @@ fixed-space kernel condition. -/
 theorem fixedSpaceKernelVectors_sound (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [ZMod64.PrimeModulus p]
     (k : Fin (basisSize f -
-      Matrix.rref_rank (fixedSpaceMatrix f hmonic))) :
+      Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic))) :
     IsFixedSpaceKernelVector f hmonic ((fixedSpaceKernelVectors f hmonic).get k) := by
   unfold IsFixedSpaceKernelVector fixedSpaceKernelVectors
   exact Matrix.nullspace_sound (fixedSpaceMatrix f hmonic) k
@@ -718,7 +718,7 @@ executable fixed-space kernel condition. -/
 theorem fixedSpaceKernel_sound (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [ZMod64.PrimeModulus p]
     (k : Fin (basisSize f -
-      Matrix.rref_rank (fixedSpaceMatrix f hmonic))) :
+      Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic))) :
     IsFixedSpaceKernelPolynomial f hmonic ((fixedSpaceKernel f hmonic).get k) := by
   have hk : (fixedSpaceKernel f hmonic).get k =
       vectorToPoly ((fixedSpaceKernelVectors f hmonic).get k) := by
@@ -735,7 +735,7 @@ theorem fixedSpaceKernelVectors_complete (f : FpPoly p) (hmonic : DensePoly.Moni
     IsFixedSpaceKernelVector f hmonic v →
       ∃ c : Vector (ZMod64 p)
           (basisSize f -
-            Matrix.rref_rank (fixedSpaceMatrix f hmonic)),
+            Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic)),
         Matrix.mulVec (Matrix.nullspaceBasisMatrix (fixedSpaceMatrix f hmonic)) c = v := by
   intro hv
   simpa [HMul.hMul] using Matrix.nullspace_complete (fixedSpaceMatrix f hmonic) v hv
@@ -747,7 +747,7 @@ theorem fixedSpaceKernelPolynomial_coeffVector_complete (f : FpPoly p)
     IsFixedSpaceKernelPolynomial f hmonic g →
       ∃ c : Vector (ZMod64 p)
           (basisSize f -
-            Matrix.rref_rank (fixedSpaceMatrix f hmonic)),
+            Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic)),
         Matrix.mulVec (Matrix.nullspaceBasisMatrix (fixedSpaceMatrix f hmonic)) c =
           coeffVector f g := by
   intro hg

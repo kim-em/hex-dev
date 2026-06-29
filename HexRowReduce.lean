@@ -7,13 +7,18 @@ Authors: Kim Morrison
 module
 
 public import HexRowReduce.RowEchelon
-public import HexRowReduce.RREF
+public import HexRowReduce.Pivot
+public import HexRowReduce.Loop
+public import HexRowReduce.Span
+public import HexRowReduce.Nullspace
+public import HexRowReduce.Api
 
 public section
 
 /-!
-The `HexRowReduce` library exposes the executable row-reduction stack over the
-`HexMatrix` dense core: the row-echelon transform and its elementary-operation
-contracts (`RowEchelon`), and the executable RREF loop with its pivot/free-column
-partition and span/nullspace APIs (`RREF`). This module re-exports them.
+The `HexRowReduce` library: the executable row-reduction stack over the
+`HexMatrix` dense core. It re-exports the elementary-operation algebra and
+echelon contracts (`RowEchelon`), the pivot search and column elimination
+(`Pivot`), the `rowReduce` loop and its correctness (`Loop`), and the row-span
+and nullspace APIs (`Span`, `Nullspace`, `Api`).
 -/

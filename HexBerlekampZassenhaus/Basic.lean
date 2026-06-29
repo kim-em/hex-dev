@@ -5280,7 +5280,7 @@ BHKS equivalence-class indicator vectors over the projected lattice rows
 of `L`.
 
 Lifts the projected integer rows into a rational row-basis matrix, runs
-`Matrix.rref` over `Q`, and groups column indices `0, …, r - 1` by their
+`Matrix.rowReduce` over `Q`, and groups column indices `0, …, r - 1` by their
 echelon-column signature: indices `i` and `j` are equivalent iff every
 echelon row agrees at positions `i` and `j` (BHKS Lemma 3.3 / FLINT
 Algorithm 8). Each equivalence class produces one compact `0/1` indicator
@@ -5291,7 +5291,7 @@ def bhksEquivalenceClassIndicators (L : BhksProjectedRows) : Array (Array Int) :
   let n := L.projectedRows.size
   let r := L.factorCount
   let M : Matrix Rat n r := bhksProjectedRowsAsRatMatrix L.projectedRows n r
-  let D := Matrix.rref M
+  let D := Matrix.rowReduce M
   let echelonRows : Array (Array Rat) := D.echelon.toArray.map (·.toArray)
   let groups : List (List Nat) :=
     ((List.range r).foldl

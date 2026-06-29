@@ -11,7 +11,7 @@ then apply the 2×2 row transformation `[[s, t], [-b/g, a/g]]` to
 zero out `b` and replace `a` with `g`. Reduce entries above each pivot
 modulo the pivot. The result is unique. Returns `RowEchelonData`; an
 `IsHNF` Prop-valued structure extending `IsEchelonForm` (parallel to
-`IsRREF`) certifies correctness, with HNF-specific fields:
+`IsRowReduced`) certifies correctness, with HNF-specific fields:
 - Each pivot is positive
 - Entries above each pivot are in `[0, pivot)`
 - `det transform = 1 ∨ det transform = -1`

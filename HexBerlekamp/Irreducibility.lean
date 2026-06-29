@@ -55,7 +55,7 @@ Berlekamp's executable rank criterion: a nonconstant monic `f` passes when
 def berlekampRankTest (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [Lean.Grind.Field (ZMod64 p)] : Bool :=
   let n := basisSize f
-  decide (0 < n ∧ Matrix.rref_rank (fixedSpaceMatrix f hmonic) = n - 1)
+  decide (0 < n ∧ Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic) = n - 1)
 
 /--
 The divisibility leg of Rabin's criterion: `f` divides `X^(p^n) - X`, with
@@ -231,7 +231,7 @@ theorem berlekampRankTest_spec (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [Lean.Grind.Field (ZMod64 p)] :
     berlekampRankTest f hmonic = true ↔
       0 < basisSize f ∧
-      Matrix.rref_rank (fixedSpaceMatrix f hmonic) = basisSize f - 1 := by
+      Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic) = basisSize f - 1 := by
   simp [berlekampRankTest]
 
 /-- `rabinDividesTest` reduces to checking that `frobeniusDiffMod f _ n`

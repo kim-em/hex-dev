@@ -9,7 +9,7 @@ import VersoManual
 import HexMatrix.Basic
 import HexDeterminant
 import HexRowReduce.RowEchelon
-import HexRowReduce.RREF
+import HexRowReduce
 import HexBareiss.Bareiss
 
 open Verso.Genre Manual
@@ -217,22 +217,22 @@ Two predicates capture what it means for such a record to be a genuine
 echelon or reduced-echelon form. {name}`Hex.Matrix.IsEchelonForm` bundles
 the conditions shared by any echelon form — the transform equation, the
 transform's invertibility, the rank bounds, and the staircase pivot
-structure. {name}`Hex.Matrix.IsRREF` extends it with the two
+structure. {name}`Hex.Matrix.IsRowReduced` extends it with the two
 reduced-form conditions: each pivot is one, and every entry above a
 pivot is zero.
 
-{name}`Hex.Matrix.IsEchelonForm` and {name}`Hex.Matrix.IsRREF` are those
+{name}`Hex.Matrix.IsEchelonForm` and {name}`Hex.Matrix.IsRowReduced` are those
 two predicates.
 
 The driver is Gauss-Jordan elimination, returning a
 {name}`Hex.Matrix.RowEchelonData` whose record satisfies the
 reduced-form contract.
 
-{docstring Hex.Matrix.rref}
+{docstring Hex.Matrix.rowReduce}
 
-{docstring Hex.Matrix.rref_transform_mul}
+{docstring Hex.Matrix.rowReduce_transform_mul}
 
-{docstring Hex.Matrix.rref_isRREF}
+{docstring Hex.Matrix.rowReduce_isRowReduced}
 
 On top of the reduced form sit the linear-algebra readers a caller
 actually wants: membership in the row span with an explicit witness, the

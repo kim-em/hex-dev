@@ -50,7 +50,7 @@ def bareissGramRowInvariant_initial (b : Matrix Int n m) :
         Matrix.rowCombination b
             (Vector.ofFn fun k : Fin n => if i = k then (1 : Int) else 0) =
           b.row i :=
-      Matrix.IsRREF.rowCombination_single (M := b) i
+      Matrix.IsRowReduced.rowCombination_single (M := b) i
     rw [hsingle]
     simp [Matrix.noPivotInitialState, Matrix.gramMatrix, Matrix.ofFn, Vector.dotProduct]
 

@@ -25,14 +25,14 @@ structure IsEchelonForm (M : Matrix R n m) (D : RowEchelonData R n m) : Prop whe
   zero_row : ∀ (i : Fin n), D.rank ≤ i.val → D.echelon[i] = 0
 
 /-- RREF-specific: pivots are 1, everything above is 0. -/
-structure IsRREF (M : Matrix R n m) (D : RowEchelonData R n m)
+structure IsRowReduced (M : Matrix R n m) (D : RowEchelonData R n m)
     extends IsEchelonForm M D : Prop where
   pivot_one : ∀ (i : Fin D.rank), D.echelon[i][D.pivotCols[i]] = 1
   above_pivot_zero : ∀ (i : Fin D.rank) (j : Fin n),
       j.val < i.val → D.echelon[j][D.pivotCols[i]] = 0
 
-def rref [Field R] [DecidableEq R] (M : Matrix R n m) : RowEchelonData R n m
-theorem rref_isRREF [Field R] [DecidableEq R] (M : Matrix R n m) : IsRREF M (rref M)
+def rowReduce [Field R] [DecidableEq R] (M : Matrix R n m) : RowEchelonData R n m
+theorem rowReduce_isRowReduced [Field R] [DecidableEq R] (M : Matrix R n m) : IsRowReduced M (rowReduce M)
 ```
 
 **Column partition.** The sorted complement of `pivotCols` in `Fin m`. Together
@@ -69,10 +69,10 @@ basis-vector formula uses negation (`[Ring R]`); the proof of completeness
 requires RREF (`[Field R]`).
 
 ```lean
-def IsRREF.nullspaceMatrix [Ring R] (E : IsRREF M D) : Matrix R m (m - D.rank)
-def IsRREF.nullspace [Ring R] (E : IsRREF M D) : Vector (Vector R m) (m - D.rank)
+def IsRowReduced.nullspaceMatrix [Ring R] (E : IsRowReduced M D) : Matrix R m (m - D.rank)
+def IsRowReduced.nullspace [Ring R] (E : IsRowReduced M D) : Vector (Vector R m) (m - D.rank)
 def Matrix.nullspace [Field R] [DecidableEq R] (M : Matrix R n m) :
-    Vector (Vector R m) (m - rref_rank)
+    Vector (Vector R m) (m - rowReduce_rank)
 ```
 
 **Key properties:**
@@ -87,9 +87,9 @@ def Matrix.nullspace [Field R] [DecidableEq R] (M : Matrix R n m) :
 **Nullspace correctness:**
 
 ```lean
-theorem nullspace_sound [Ring R] (E : IsRREF M D) (k : Fin (m - D.rank)) :
+theorem nullspace_sound [Ring R] (E : IsRowReduced M D) (k : Fin (m - D.rank)) :
     M * E.nullspace[k] = 0
-theorem nullspace_complete [Field R] (E : IsRREF M D) (v : Vector R m) :
+theorem nullspace_complete [Field R] (E : IsRowReduced M D) (v : Vector R m) :
     M * v = 0 → ∃ c : Vector R (m - D.rank), E.nullspaceMatrix * c = v
 ```
 
@@ -108,7 +108,7 @@ package into `E.nullspaceMatrix * c = v`.
 
 ## External comparators
 
-The `rank`, `rref`, and `nullspace` operations are cross-checked for correctness
+The `rank`, `rowReduce`, and `nullspace` operations are cross-checked for correctness
 against python-flint's `fmpz_mat` / `fmpq_mat` through the conformance oracle
 (`scripts/oracle/matrix_flint.py`, driven by `hexrowreduce_emit_fixtures`).
 There is no Phase-4 performance comparator: row reduction is an exact rational

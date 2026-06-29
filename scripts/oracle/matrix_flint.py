@@ -17,11 +17,13 @@ Operations cross-checked
 * `bareiss`   — Lean `Matrix.bareiss` (fraction-free Bareiss).  The
   oracle expectation is identical to `det`: any disagreement here means
   Lean's two determinant implementations have drifted.
-* `rank`      — Lean `Matrix.rref_rank` over `Q`.  python-flint's
+* `rank`      — Lean `Matrix.rowReduce_rank` over `Q`.  python-flint's
   `fmpz_mat.rank()` agrees with the rational rank of the integer matrix.
-* `rref`      — Lean's rational reduced row echelon form together with
-  pivot columns and rank.  RREF is unique over `Q`, so the oracle can
-  compare entrywise after building both sides as `fmpq_mat`.
+* `rref`      — Lean's rational reduced row echelon form (`Matrix.rowReduce`)
+  together with pivot columns and rank.  RREF is unique over `Q`, so the
+  oracle can compare entrywise after building both sides as `fmpq_mat`.  The
+  JSON op key stays `"rref"` (the operation's standard name and the oracle
+  dispatch key) even though the Lean definition is `rowReduce`.
 * `nullspace` — Lean's rational basis of the right kernel.  Bases are
   not unique, so the oracle verifies basis-independent invariants:
   (a) the number of basis vectors equals `m - rank`,

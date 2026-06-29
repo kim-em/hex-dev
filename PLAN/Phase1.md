@@ -34,9 +34,9 @@ unless it explicitly fixes the public API or theorem split.
   correctly implements the SPEC contract for that declaration.
   There is no acceptable placeholder form:
   - NOT wrong-but-plausible bodies
-    (`def rref M := { rank := 0, echelon := M, transform := 1 }`).
-  - NOT `sorry` bodies (`noncomputable def rref ... := sorry`).
-  - NOT `axiom rref : ...`.
+    (`def rowReduce M := { rank := 0, echelon := M, transform := 1 }`).
+  - NOT `sorry` bodies (`noncomputable def rowReduce ... := sorry`).
+  - NOT `axiom rowReduce : ...`.
   - NOT trivial returns (`Matrix.identity`, `none`, the input
     unchanged, an identity cast).
   - NOT alternative implementations with the wrong algorithmic
