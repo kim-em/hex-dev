@@ -340,7 +340,7 @@ theorem matrixEquiv_deleteRowCol
   ext i j
   change (Hex.Matrix.deleteRowCol M row col)[i][j] =
     M[Hex.Matrix.skipIndex row i][Hex.Matrix.skipIndex col j]
-  rw [Hex.Matrix.deleteRowCol_entry]
+  rw [Hex.Matrix.getElem_deleteRowCol]
 
 private theorem matrixEquiv_deleteRowCol_zero_zero
     (M : Hex.Matrix R (n + 2) (n + 2)) :
@@ -714,7 +714,7 @@ theorem nMatrix_ordered_four_row_p2 {R : Type u} {n : Nat}
   change (Hex.Matrix.nMatrix B p1 q
       (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)))[
         (⟨p2.val - 1, by have := q.isLt; omega⟩ : Fin n)][jj] = B[p2][jj]
-  rw [Hex.Matrix.nMatrix_entry]
+  rw [Hex.Matrix.getElem_nMatrix]
   have hrow := skipIndex2_ordered_four_row_p2 p1 p2 p3 q h12 h23 h3q
   simp [hrow]
 
@@ -730,7 +730,7 @@ theorem nMatrix_ordered_four_row_p3 {R : Type u} {n : Nat}
   change (Hex.Matrix.nMatrix B p1 q
       (Nat.lt_trans h12 (Nat.lt_trans h23 h3q)))[
         (⟨p3.val - 1, by have := q.isLt; omega⟩ : Fin n)][jj] = B[p3][jj]
-  rw [Hex.Matrix.nMatrix_entry]
+  rw [Hex.Matrix.getElem_nMatrix]
   have hrow := skipIndex2_ordered_four_row_p3 p1 p2 p3 q h12 h23 h3q
   simp [hrow]
 
@@ -773,7 +773,7 @@ theorem nMatrix_ordered_four_p1_p2_row_q {R : Type u} {n : Nat}
   let jj : Fin (n + 1) := ⟨j, hj⟩
   change (Hex.Matrix.nMatrix B p1 p2 h12)[
         (⟨q.val - 2, by have := q.isLt; omega⟩ : Fin (n + 1))][jj] = B[q][jj]
-  rw [Hex.Matrix.nMatrix_entry]
+  rw [Hex.Matrix.getElem_nMatrix]
   have hrow := skipIndex2_ordered_four_p1_p2_row_q p1 p2 p3 q h12 h23 h3q
   simp [hrow]
 
@@ -788,7 +788,7 @@ theorem nMatrix_ordered_four_p1_p3_row_q {R : Type u} {n : Nat}
   let jj : Fin (n + 1) := ⟨j, hj⟩
   change (Hex.Matrix.nMatrix B p1 p3 (Nat.lt_trans h12 h23))[
         (⟨q.val - 2, by have := q.isLt; omega⟩ : Fin (n + 1))][jj] = B[q][jj]
-  rw [Hex.Matrix.nMatrix_entry]
+  rw [Hex.Matrix.getElem_nMatrix]
   have hrow := skipIndex2_ordered_four_p1_p3_row_q p1 p2 p3 q h12 h23 h3q
   simp [hrow]
 
@@ -1120,7 +1120,7 @@ private theorem matrixEquiv_setRow_p1_eq_submatrix_nMatrix
     rw [Hex.Matrix.setRow_row_ne M r i B[p1] hir]
     show (Hex.Matrix.nMatrix B p1 q h1q)[i][j] =
       (Hex.Matrix.nMatrix B p_t q htq)[σ i][j]
-    rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+    rw [Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
     apply B_entry_congr
     apply Fin.ext
     rw [Hex.Matrix.skipIndex2_val_of_lt_p p1 q h1q i h_below,
@@ -1143,7 +1143,7 @@ private theorem matrixEquiv_setRow_p1_eq_submatrix_nMatrix
       rw [Hex.Matrix.setRow_row_ne M r i B[p1] hir]
       show (Hex.Matrix.nMatrix B p1 q h1q)[i][j] =
         (Hex.Matrix.nMatrix B p_t q htq)[σ i][j]
-      rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+      rw [Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
       apply B_entry_congr
       apply Fin.ext
       have h_not_lt_pt_for_σi : ¬ (σ i).val < p_t.val := by
@@ -1179,7 +1179,7 @@ private theorem matrixEquiv_setRow_p1_eq_submatrix_nMatrix
           omega
         have hσ_val : (σ r).val = p1.val :=
           OrderedFourShift.cycleAhead_val_top p1.val m hm_bound r h_r_at_top
-        rw [Hex.Matrix.nMatrix_entry]
+        rw [Hex.Matrix.getElem_nMatrix]
         apply B_entry_congr
         apply Fin.ext
         show p1.val = (Hex.Matrix.skipIndex2 p_t q htq (σ r)).val
@@ -1201,7 +1201,7 @@ private theorem matrixEquiv_setRow_p1_eq_submatrix_nMatrix
         rw [Hex.Matrix.setRow_row_ne M r i B[p1] hir]
         show (Hex.Matrix.nMatrix B p1 q h1q)[i][j] =
           (Hex.Matrix.nMatrix B p_t q htq)[σ i][j]
-        rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+        rw [Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
         apply B_entry_congr
         apply Fin.ext
         have h_not_lt_p1 : ¬ i.val < p1.val := by
@@ -1323,7 +1323,7 @@ private theorem matrixEquiv_nMatrix_p1_pt_eq_submatrix_setRow_q
       rw [hr_val, hσ_val] at hv
       omega
     rw [Hex.Matrix.setRow_row_ne M r (σ i) B[q] hσ_ne_r,
-      Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+      Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
     apply B_entry_congr
     apply Fin.ext
     by_cases hi1 : i.val < p1.val
@@ -1346,7 +1346,7 @@ private theorem matrixEquiv_nMatrix_p1_pt_eq_submatrix_setRow_q
         rw [hr_val, hσ_val] at hv
         omega
       rw [Hex.Matrix.setRow_row_ne M r (σ i) B[q] hσ_ne_r,
-        Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+        Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
       apply B_entry_congr
       apply Fin.ext
       have hi_not_lt_p1 : ¬ i.val < p1.val := by omega
@@ -1366,7 +1366,7 @@ private theorem matrixEquiv_nMatrix_p1_pt_eq_submatrix_setRow_q
           rw [hσ_val, hr_val, ha_val]
         have hrow : (Hex.Matrix.setRow M r B[q])[σ i] = B[q] := by
           simpa [hσ_eq_r] using Hex.Matrix.setRow_get_self M r B[q]
-        rw [hrow, Hex.Matrix.nMatrix_entry]
+        rw [hrow, Hex.Matrix.getElem_nMatrix]
         apply B_entry_congr
         apply Fin.ext
         have hi_not_lt_p1 : ¬ i.val < p1.val := by omega
@@ -1382,7 +1382,7 @@ private theorem matrixEquiv_nMatrix_p1_pt_eq_submatrix_setRow_q
           rw [hr_val, hσ_val] at hv
           omega
         rw [Hex.Matrix.setRow_row_ne M r (σ i) B[q] hσ_ne_r,
-          Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+          Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
         apply B_entry_congr
         apply Fin.ext
         have hi_not_lt_p1 : ¬ i.val < p1.val := by omega

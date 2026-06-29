@@ -340,7 +340,7 @@ def columnSumMatrix {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
   ofFn fun r j =>
     (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
 
-@[grind =] private theorem columnSumMatrix_entry
+@[grind =] private theorem getElem_columnSumMatrix
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (r j : Fin n) :
     (columnSumMatrix source coeff)[r][j] =
@@ -365,7 +365,7 @@ private theorem setCol_columnSumMatrix_self
   by_cases hcol : (⟨c, hc⟩ : Fin n) = dst
   · subst dst
     rw [if_pos rfl]
-    exact (columnSumMatrix_entry source coeff (⟨r, hr⟩ : Fin n) (⟨c, hc⟩ : Fin n)).symm
+    exact (getElem_columnSumMatrix source coeff (⟨r, hr⟩ : Fin n) (⟨c, hc⟩ : Fin n)).symm
   · simp [hcol]
 
 private theorem det_columnSumMatrix_expand_column
@@ -394,7 +394,7 @@ private def columnChoiceMatrix {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     | some k => source[r][k]
     | none => (List.finRange m).foldl (fun acc k => acc + coeff[c][k] * source[r][k]) 0
 
-@[grind =] private theorem columnChoiceMatrix_entry
+@[grind =] private theorem getElem_columnChoiceMatrix
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) (r c : Fin n) :
     (columnChoiceMatrix source coeff choices)[r][c] =

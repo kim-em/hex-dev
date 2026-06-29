@@ -859,7 +859,7 @@ private theorem detProduct_insertAt_general {R : Type u} [Lean.Grind.CommRing R]
       simp [Vector.getElem_map]
     have hRHS_col :
         skipIndex (Fin.last n) v[r'] = (v[r']).castSucc := skipIndex_last v[r']
-    simp only [deleteRowCol_entry, hLHS_col, hRHS_col]
+    simp only [getElem_deleteRowCol, hLHS_col, hRHS_col]
 
 /-- Leibniz-term equation for an arbitrary insertion position. -/
 private theorem detTerm_insertAt_general {R : Type u} [Lean.Grind.CommRing R] {n : Nat}

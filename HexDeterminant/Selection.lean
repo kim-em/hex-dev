@@ -601,13 +601,13 @@ sorted choice `sel` through the permutation `perm`. -/
 /-- Selecting columns via the reconstructed tuple equals selecting via `sel`
 with the column index permuted by `perm`: entry `(r, c)` agrees with entry
 `(r, perm[c])` of the `sel`-selected minor. -/
-@[grind =] theorem columnTupleMatrix_reconstructInjTuple_entry
+@[grind =] theorem getElem_columnTupleMatrix_reconstructInjTuple
     {R : Type u} {n m : Nat} (A : Matrix R n m)
     (sel : Vector (Fin m) n) (perm : Vector (Fin n) n)
     (r c : Fin n) :
     (columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)))[r][c] =
       (columnTupleMatrix A (columnTupleVectorFn sel))[r][perm[c]] := by
-  rw [columnTupleMatrix_entry, columnTupleMatrix_entry]
+  rw [getElem_columnTupleMatrix, getElem_columnTupleMatrix]
   exact congrArg (fun col : Fin m => A[r][col])
     (reconstructInjTuple_getElem sel perm c)
 
@@ -621,7 +621,7 @@ private theorem columnTupleMatrix_reconstructInjTuple_eq
     (columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)))[
         (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
       (columnTupleMatrix A (fun i => sel[perm[i]]))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [columnTupleMatrix_entry, columnTupleMatrix_entry]
+  rw [getElem_columnTupleMatrix, getElem_columnTupleMatrix]
   exact congrArg (fun col : Fin m => A[(⟨r, hr⟩ : Fin n)][col])
     (reconstructInjTuple_getElem sel perm (⟨c, hc⟩ : Fin n))
 
@@ -635,7 +635,7 @@ theorem columnTupleCoeff_reconstructInjTuple
   unfold columnTupleCoeff detProduct
   apply foldl_det_product_congr
   intro i _hmem
-  rw [columnTupleMatrix_entry]
+  rw [getElem_columnTupleMatrix]
   exact congrArg (fun col : Fin m => A[i][col])
     (reconstructInjTuple_getElem sel perm i)
 
@@ -1138,7 +1138,7 @@ def firstColumns (k n : Nat) (hk : k ≤ n) : Vector (Fin n) k :=
 
 /-- The `i`-th entry of the first-`k`-columns selection is the index `i` itself,
 embedded into `Fin n`. -/
-@[grind =] theorem firstColumns_entry (k n : Nat) (hk : k ≤ n) (i : Fin k) :
+@[grind =] theorem getElem_firstColumns (k n : Nat) (hk : k ≤ n) (i : Fin k) :
     (firstColumns k n hk)[i] = (⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩ : Fin n) := by
   simp [firstColumns]
 

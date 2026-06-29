@@ -80,7 +80,7 @@ private theorem rrefCanonicalInvariant_pivot_step
   have hpivotVal_ne : pivotVal ≠ 0 := by
     have hentry : pivotVal = state.echelon[pivot][colFin] := by
       simpa [pivotVal, swappedEchelon] using
-        rowSwap_target_pivot_entry state.echelon target pivot colFin
+        getElem_rowSwap_target_pivot state.echelon target pivot colFin
     rw [hentry]
     exact findPivot?_some_nonzero state.echelon colFin hpivot
   -- Step A: for each OLD pivot index `i`, canonical column is preserved by
@@ -451,7 +451,7 @@ private theorem eliminateColumn_foldl_other_column
               if coeff = 0 then s
               else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).1[pivotRow][k]
             = 0 := by
-        rw [eliminateColumn_step_pivotRow_entry s pivotRow x col k]
+        rw [eliminateColumn_step_pivotRow_unchanged s pivotRow x col k]
         exact hs
       rw [ih _ r hstep_pivot]
       by_cases hxp : x = pivotRow
@@ -670,7 +670,7 @@ private theorem rrefLoop_left_inverse_preserve (col fuel : Nat)
                 have hpivotNonzero := findPivot?_some_nonzero state.echelon colFin hpivot
                 have hentry : pivotVal = state.echelon[pivot][colFin] := by
                   simpa [pivotVal, swappedEchelon] using
-                    (rowSwap_target_pivot_entry state.echelon target pivot colFin)
+                    (getElem_rowSwap_target_pivot state.echelon target pivot colFin)
                 simpa [hentry] using hpivotNonzero
               have hscale :
                   ∃ Tinv : Matrix R n n, Tinv * scaledTransform = 1 :=
@@ -722,7 +722,7 @@ private theorem rrefLoop_right_inverse_preserve (col fuel : Nat)
                 have hpivotNonzero := findPivot?_some_nonzero state.echelon colFin hpivot
                 have hentry : pivotVal = state.echelon[pivot][colFin] := by
                   simpa [pivotVal, swappedEchelon] using
-                    (rowSwap_target_pivot_entry state.echelon target pivot colFin)
+                    (getElem_rowSwap_target_pivot state.echelon target pivot colFin)
                 simpa [hentry] using hpivotNonzero
               have hscale :
                   ∃ Tinv : Matrix R n n, scaledTransform * Tinv = 1 :=

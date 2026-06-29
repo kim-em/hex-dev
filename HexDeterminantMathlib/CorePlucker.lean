@@ -162,7 +162,7 @@ private theorem matrixEquiv_double_setRow_eq_submatrix_nMatrix
         Hex.Matrix.setRow_row_ne _ r2 i B[p1] hir2]
     show (Hex.Matrix.nMatrix B p1 q h1q)[i][j] =
       (Hex.Matrix.nMatrix B p2 p3 h23)[σ i][j]
-    rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+    rw [Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
     apply B_entry_congr; apply Fin.ext
     rw [Hex.Matrix.skipIndex2_val_of_lt_p p1 q h1q i h_below_p1,
         Hex.Matrix.skipIndex2_val_of_lt_p p2 p3 h23 (σ i)
@@ -189,7 +189,7 @@ private theorem matrixEquiv_double_setRow_eq_submatrix_nMatrix
         rw [hσ_apply _, h_cb_eq]
         exact OrderedFourShift.cycleAhead_val_top p1.val m1 hm1 r2 h_r2_top
       show B[p1][j] = (Hex.Matrix.nMatrix B p2 p3 h23)[σ r2][j]
-      rw [Hex.Matrix.nMatrix_entry]
+      rw [Hex.Matrix.getElem_nMatrix]
       apply B_entry_congr; apply Fin.ext
       show p1.val = (Hex.Matrix.skipIndex2 p2 p3 h23 (σ r2)).val
       have h_σ_lt : (σ r2).val < p2.val := by rw [hσ_val]; exact h12
@@ -216,7 +216,7 @@ private theorem matrixEquiv_double_setRow_eq_submatrix_nMatrix
           rw [hσ_apply _, OrderedFourShift.cycleAhead_val_above p1.val m1 hm1 _ h_above]
           exact h_cb_q2
         show B[q][j] = (Hex.Matrix.nMatrix B p2 p3 h23)[σ r3][j]
-        rw [Hex.Matrix.nMatrix_entry]
+        rw [Hex.Matrix.getElem_nMatrix]
         apply B_entry_congr; apply Fin.ext
         show q.val = (Hex.Matrix.skipIndex2 p2 p3 h23 (σ r3)).val
         have h_not_lt : ¬ (σ r3).val < p2.val := by rw [hσ_val]; omega
@@ -236,7 +236,7 @@ private theorem matrixEquiv_double_setRow_eq_submatrix_nMatrix
             Hex.Matrix.setRow_row_ne _ r2 i B[p1] hir2]
         show (Hex.Matrix.nMatrix B p1 q h1q)[i][j] =
           (Hex.Matrix.nMatrix B p2 p3 h23)[σ i][j]
-        rw [Hex.Matrix.nMatrix_entry, Hex.Matrix.nMatrix_entry]
+        rw [Hex.Matrix.getElem_nMatrix, Hex.Matrix.getElem_nMatrix]
         -- Split on where i.val sits relative to the cycle ranges.
         by_cases h_below_p2 : i.val < p2.val
         · -- Case D: p1 ≤ i.val < p2 - 1. cycleA "in", cycleB fixes. σ(i).val = i.val + 1.
