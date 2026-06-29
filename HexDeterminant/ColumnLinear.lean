@@ -436,8 +436,7 @@ theorem det_setCol_existing_col_eq_zero
     det (setCol M dst (fun r => M[r][src])) = 0 := by
   apply det_eq_zero_of_col_eq (setCol M dst (fun r => M[r][src])) src dst hsrcdst
   intro r
-  rw [setCol_getElem, setCol_getElem]
-  rw [if_neg hsrcdst, if_pos rfl]
+  rw [setCol_getElem, setCol_getElem, if_neg hsrcdst, if_pos rfl]
 
 /-- Adding a finite linear combination of other columns of `M` to column `dst`
 preserves the determinant. The sources are given as a list and each source is
@@ -546,8 +545,8 @@ private theorem foldl_det_sum_nested_start {R : Type u} [Lean.Grind.CommRing R]
       grind
   | cons x xs ih =>
       simp only [List.foldl_cons]
-      rw [foldl_det_sum_start ys (fun y => f x y) z]
-      rw [ih (z + ys.foldl (fun acc' y => acc' + f x y) 0)]
+      rw [foldl_det_sum_start ys (fun y => f x y) z,
+        ih (z + ys.foldl (fun acc' y => acc' + f x y) 0)]
       rw [foldl_det_sum_start xs
         (fun x => ys.foldl (fun acc' y => acc' + f x y) 0)
         (0 + ys.foldl (fun acc' y => acc' + f x y) 0)]

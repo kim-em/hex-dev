@@ -598,8 +598,7 @@ private theorem detProduct_identity_insertAt_last {R : Type u}
       (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n)) =
     detProduct (1 : Matrix R n n) v := by
   unfold detProduct
-  rw [← Fin.foldl_eq_finRange_foldl, ← Fin.foldl_eq_finRange_foldl]
-  rw [Fin.foldl_succ_last]
+  rw [← Fin.foldl_eq_finRange_foldl, ← Fin.foldl_eq_finRange_foldl, Fin.foldl_succ_last]
   have hfold :
       Fin.foldl n
           (fun acc i =>
@@ -666,9 +665,7 @@ private theorem inversionCount_insert_last_castSucc {n : Nat} (xs : List (Fin n)
   | nil => rfl
   | cons x xs ih =>
       simp only [List.map_cons, List.cons_append, inversionCount]
-      rw [ih]
-      rw [List.foldl_append, List.foldl_cons, List.foldl_nil]
-      rw [inversionFold_map_castSucc]
+      rw [ih, List.foldl_append, List.foldl_cons, List.foldl_nil, inversionFold_map_castSucc]
       simp [Fin.lt_def]
 
 /-- Inserting `Fin.last n` at any position into the `castSucc`-embedded list leaves
@@ -734,8 +731,7 @@ private theorem inversionCount_insertIdx_castSucc_last_eq {n : Nat}
           simp only [inversionCount, List.foldl_cons]
           rw [foldl_all_lt_last_castSucc xs
             (0 + if x.castSucc < Fin.last n then 1 else 0)]
-          rw [inversionFold_map_castSucc]
-          rw [inversionCount_map_castSucc]
+          rw [inversionFold_map_castSucc, inversionCount_map_castSucc]
           simp [Fin.lt_def]
           omega
       | succ p =>
@@ -751,10 +747,8 @@ private theorem inversionCount_insertIdx_castSucc_last_eq {n : Nat}
                 inversionCount ((xs.map Fin.castSucc).insertIdx p (Fin.last n)) =
               xs.foldl (fun acc y => acc + if y < x then 1 else 0) 0 +
                 inversionCount xs + ((x :: xs).length - (p + 1))
-          rw [foldl_insertIdx_last_castSucc_not_lt xs x p]
-          rw [inversionFold_map_castSucc]
-          rw [ih p hp']
-          rw [hlen]
+          rw [foldl_insertIdx_last_castSucc_not_lt xs x p, inversionFold_map_castSucc, ih p hp',
+            hlen]
           grind
 
 /-- Mapping a `Nodup` list through the injective `Fin.castSucc` keeps it `Nodup`. -/

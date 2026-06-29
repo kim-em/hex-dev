@@ -239,8 +239,7 @@ private theorem isNontrivialSplitFactor_ne_one
       change DensePoly.C (1 : ZMod64 p) = 0
       apply DensePoly.ext_coeff
       intro n
-      rw [DensePoly.coeff_C]
-      rw [hone]
+      rw [DensePoly.coeff_C, hone]
       by_cases hn : n = 0 <;> simp [hn] <;> rfl
     rw [honePoly] at hnotZero
     have hzeroIsZero : (0 : FpPoly p).isZero = true := rfl
@@ -1027,8 +1026,7 @@ private theorem splitWithWitnesses?_cofactor_pos_degree
     exact hprod.symm
   have hsize_sum : r.factor.size + r.cofactor.size = f.size + 1 := by
     have hf_size_eq : f.size = (r.factor * r.cofactor).size := by rw [hprod]
-    rw [hf_size_eq]
-    rw [FpPoly.size_mul_eq_add_sub_one r.factor r.cofactor hfac_ne hcof_ne]
+    rw [hf_size_eq, FpPoly.size_mul_eq_add_sub_one r.factor r.cofactor hfac_ne hcof_ne]
     have hf_size_pos : 0 < f.size := FpPoly.size_pos_of_ne_zero hf_ne
     have hfac_size_pos : 0 < r.factor.size := FpPoly.size_pos_of_ne_zero hfac_ne
     have hcof_size_pos : 0 < r.cofactor.size := FpPoly.size_pos_of_ne_zero hcof_ne

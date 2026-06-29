@@ -96,16 +96,15 @@ theorem toNat_mulMod (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     (ctx.mulMod a b).toNat = (a.toNat * b.toNat) % p.toNat := by
   unfold mulMod
-  rw [toNat_barrettReduce_eq_mod ctx (a * b) (product_toNat_lt_p2 ctx a b ha hb)]
-  rw [product_toNat_eq ctx a b ha hb]
+  rw [toNat_barrettReduce_eq_mod ctx (a * b) (product_toNat_lt_p2 ctx a b ha hb),
+    product_toNat_eq ctx a b ha hb]
 
 /-- Barrett modular multiplication returns a residue strictly below the modulus. -/
 @[grind =>]
 theorem mulMod_lt (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     ctx.mulMod a b < p := by
-  rw [UInt64.lt_iff_toNat_lt]
-  rw [toNat_mulMod ctx a b ha hb]
+  rw [UInt64.lt_iff_toNat_lt, toNat_mulMod ctx a b ha hb]
   exact Nat.mod_lt _ (Nat.lt_trans (by decide : 0 < 1) ctx.p_gt)
 
 /--
@@ -117,8 +116,8 @@ theorem mulMod_eq (ctx : BarrettCtx p) (a b : UInt64)
     (ha : a < p) (hb : b < p) :
     ctx.mulMod a b = .ofNat ((a.toNat * b.toNat) % p.toNat) := by
   unfold mulMod
-  rw [barrettReduce_eq ctx (a * b) (product_toNat_lt_p2 ctx a b ha hb)]
-  rw [product_toNat_eq ctx a b ha hb]
+  rw [barrettReduce_eq ctx (a * b) (product_toNat_lt_p2 ctx a b ha hb),
+    product_toNat_eq ctx a b ha hb]
 
 /--
 Barrett modular multiplication fixes products that are already canonical

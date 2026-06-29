@@ -457,8 +457,8 @@ than to its repackaged Nat-value form. -/
 private theorem vector_ofFn_getElem_fin {α : Type u} {n : Nat}
     (f : Fin n → α) (k : Fin n) :
     (Vector.ofFn f)[k] = f k := by
-  rw [show ((Vector.ofFn f)[k] : α) = (Vector.ofFn f)[k.val]'(by simp [k.isLt]) from rfl]
-  rw [Vector.getElem_ofFn]
+  rw [show ((Vector.ofFn f)[k] : α) = (Vector.ofFn f)[k.val]'(by simp [k.isLt]) from rfl,
+    Vector.getElem_ofFn]
 
 /-- Every length-`n` tuple of column indices appears in
 `columnTupleVectors n m`. -/
@@ -733,9 +733,8 @@ private theorem permutationVectors_count_val_lt {n : Nat}
     rfl
   have htoList : perm.toList = (List.finRange n).map (fun j : Fin n => perm[j]) :=
     vector_toList_eq perm
-  rw [hmap, ← htoList]
-  rw [List.Perm.countP_eq _ (permutationVectors_toList_perm_finRange hmem)]
-  rw [countP_finRange_val_lt]
+  rw [hmap, ← htoList, List.Perm.countP_eq _ (permutationVectors_toList_perm_finRange hmem),
+    countP_finRange_val_lt]
   exact Nat.min_eq_right (Nat.le_of_lt k.isLt)
 
 /-- For a strictly-increasing `sel` and a permutation `perm`, the column
@@ -1007,9 +1006,8 @@ private theorem columnTupleExpansionTerm_reconstructInjTuple
       detTerm (columnTupleMatrix A (columnTupleVectorFn sel)) perm *
         det (columnTupleMatrix A (columnTupleVectorFn sel)) := by
   unfold columnTupleExpansionTerm detTerm
-  rw [columnTupleCoeff_reconstructInjTuple]
-  rw [columnTupleMatrix_reconstructInjTuple_eq A sel perm]
-  rw [det_columnTupleMatrix_compose_perm A sel perm hperm]
+  rw [columnTupleCoeff_reconstructInjTuple, columnTupleMatrix_reconstructInjTuple_eq A sel perm,
+    det_columnTupleMatrix_compose_perm A sel perm hperm]
   grind
 
 private theorem columnTupleExpansion_reconstruct_orbit_sum
@@ -1048,8 +1046,7 @@ private theorem columnTupleExpansion_selectedPerm_collapse
   intro acc sel _hsel
   rw [foldl_det_sum_start]
   congr 1
-  rw [foldl_det_sum_map]
-  rw [columnTupleExpansion_reconstruct_orbit_sum A sel]
+  rw [foldl_det_sum_map, columnTupleExpansion_reconstruct_orbit_sum A sel]
 
 /-- Cauchy-Binet for the row Gram matrix: the Gram determinant is the finite
 sum of squares of the selected column minors. -/

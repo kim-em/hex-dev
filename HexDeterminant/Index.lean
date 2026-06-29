@@ -150,8 +150,7 @@ private theorem inversionFold_map_raiseFinAbove_self {n : Nat} (i : Fin (n + 1))
             simp [raiseFinAbove, hxi]
             omega
           simp [hle, hlt]
-      rw [hhead]
-      rw [ih (acc + if i.val ≤ x.val then 1 else 0)]
+      rw [hhead, ih (acc + if i.val ≤ x.val then 1 else 0)]
       rw [foldCount_start xs (fun y : Fin n => i.val ≤ y.val)
         (0 + if i.val ≤ x.val then 1 else 0)]
       omega
@@ -163,13 +162,10 @@ private theorem inversionCount_map_raiseFinAbove_append_self {n : Nat}
     inversionCount ((xs.map (raiseFinAbove i)) ++ [i]) =
       inversionCount xs +
         xs.foldl (fun acc y => acc + if i.val ≤ y.val then 1 else 0) 0 := by
-  rw [inversionCount_append]
-  rw [inversionCount_map_raiseFinAbove]
+  rw [inversionCount_append, inversionCount_map_raiseFinAbove]
   have hsingle : inversionCount ([i] : List (Fin (n + 1))) = 0 := by
     simp [inversionCount]
-  rw [hsingle]
-  rw [crossInversionCount_singleton_right]
-  rw [inversionFold_map_raiseFinAbove_self i xs 0]
+  rw [hsingle, crossInversionCount_singleton_right, inversionFold_map_raiseFinAbove_self i xs 0]
   omega
 
 /-- The `i ≤ y` count fold is unchanged when the list is mapped through
@@ -226,10 +222,8 @@ private theorem foldCount_finRange_ge {n : Nat} (i : Fin (n + 1)) :
           _ = n + 1 - i.val := by omega
       · have hiLt : i.val < n + 1 := by omega
         let i' : Fin (n + 1) := ⟨i.val, hiLt⟩
-        rw [List.finRange_succ_last]
-        rw [List.foldl_append, List.foldl_cons, List.foldl_nil]
-        rw [foldCount_map_castSucc_ge i' (List.finRange n) 0]
-        rw [ih i']
+        rw [List.finRange_succ_last, List.foldl_append, List.foldl_cons, List.foldl_nil,
+          foldCount_map_castSucc_ge i' (List.finRange n) 0, ih i']
         have hleLast : i.val ≤ n := by omega
         simp [i', hleLast]
         omega
@@ -256,8 +250,8 @@ private theorem foldCount_perm {α : Type u} (p : α → Prop) [DecidablePred p]
               exact (foldCount_start l₂ p a).symm
   | swap x y xs =>
       simp only [List.foldl_cons]
-      rw [foldCount_start xs p ((0 + if p y then 1 else 0) + if p x then 1 else 0)]
-      rw [foldCount_start xs p ((0 + if p x then 1 else 0) + if p y then 1 else 0)]
+      rw [foldCount_start xs p ((0 + if p y then 1 else 0) + if p x then 1 else 0),
+        foldCount_start xs p ((0 + if p x then 1 else 0) + if p y then 1 else 0)]
       omega
   | trans _ _ ih₁ ih₂ =>
       exact ih₁.trans ih₂
@@ -434,8 +428,7 @@ private theorem insertAt_peelLastVector {n : Nat}
   change (insertAt (Fin.last n)
         ((peelLastVector perm k hk hidx hnodup).map Fin.castSucc) ⟨k, hk⟩).toList =
       perm.toList
-  rw [insertAt_toList]
-  rw [peelLastVector_castSucc_toList perm k hk hidx hnodup]
+  rw [insertAt_toList, peelLastVector_castSucc_toList perm k hk hidx hnodup]
   have hklist : k < perm.toList.length := by
     simpa [Vector.length_toList] using hk
   have hget : perm.toList[k]'hklist = Fin.last n := by
@@ -529,8 +522,7 @@ private theorem insertAt_last_castSucc_injective {n : Nat}
     i = j ∧ v = w := by
   have hidx :
       i.val = j.val := by
-    rw [← insertAt_last_castSucc_idxOf v i hv]
-    rw [h]
+    rw [← insertAt_last_castSucc_idxOf v i hv, h]
     exact insertAt_last_castSucc_idxOf w j hw
   have hij : i = j := Fin.ext hidx
   subst j
@@ -641,8 +633,7 @@ private theorem detSignParity_add {R : Type u} [Lean.Grind.Ring R] (a m : Nat) :
       simp [Nat.add_zero]
       grind
   | succ m ih =>
-      rw [Nat.add_succ]
-      rw [Lean.Grind.Semiring.pow_succ]
+      rw [Nat.add_succ, Lean.Grind.Semiring.pow_succ]
       rw [show (-1 : R) ^ m * -1 * (if a % 2 = 0 then (1 : R) else -1) =
           -1 * ((-1 : R) ^ m * if a % 2 = 0 then (1 : R) else -1) by
         grind]
@@ -712,8 +703,7 @@ theorem detProduct_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     detProduct M (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n)) =
       detProduct (principalSubmatrix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n] := by
   unfold detProduct
-  rw [← Fin.foldl_eq_finRange_foldl, ← Fin.foldl_eq_finRange_foldl]
-  rw [Fin.foldl_succ_last]
+  rw [← Fin.foldl_eq_finRange_foldl, ← Fin.foldl_eq_finRange_foldl, Fin.foldl_succ_last]
   have hfold :
       Fin.foldl n
           (fun acc i =>
@@ -842,9 +832,8 @@ private theorem foldl_finRange_succ_factor_skipIndex {R : Type u} [Lean.Grind.Co
   rw [foldl_det_product_perm f (list_finRange_succ_perm_skipIndex i) 1]
   show (i :: (List.finRange n).map (skipIndex i)).foldl (fun acc r => acc * f r) 1 = _
   simp only [List.foldl_cons]
-  rw [show (1 : R) * f i = f i * 1 from by grind]
-  rw [foldl_det_product_mul_left ((List.finRange n).map (skipIndex i)) (f i) f 1]
-  rw [List.foldl_map]
+  rw [show (1 : R) * f i = f i * 1 from by grind,
+    foldl_det_product_mul_left ((List.finRange n).map (skipIndex i)) (f i) f 1, List.foldl_map]
 
 /-- Permutation-product equation generalizing `detProduct_insertAt_last` to any
 insertion position: factor the Leibniz product into the `(i, last)` entry times
@@ -879,8 +868,7 @@ private theorem detTerm_insertAt_general {R : Type u} [Lean.Grind.CommRing R] {n
       cofactorSign (R := R) i (Fin.last n) *
         (M[i][Fin.last n] * detTerm (deleteRowCol M i (Fin.last n)) v) := by
   unfold detTerm
-  rw [detSign_insertAt_general, detProduct_insertAt_general]
-  rw [cofactorSign_last_eq_pow]
+  rw [detSign_insertAt_general, detProduct_insertAt_general, cofactorSign_last_eq_pow]
   grind
 
 private theorem detProduct_insertAt_not_last_zero
@@ -924,8 +912,7 @@ private theorem foldl_detTerm_last_row_insertions
           acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) z =
       z + detSign (R := R) v *
         (detProduct (principalSubmatrix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n]) := by
-  rw [← Fin.foldl_eq_finRange_foldl]
-  rw [Fin.foldl_succ_last]
+  rw [← Fin.foldl_eq_finRange_foldl, Fin.foldl_succ_last]
   have hprefix :
       Fin.foldl n
           (fun acc i =>
@@ -949,8 +936,7 @@ private theorem foldl_detTerm_last_row_insertions
             hrow]
       _ = z := by
           exact foldl_det_sum_zero (List.finRange n) z
-  rw [hprefix]
-  rw [detTerm_insertAt_last]
+  rw [hprefix, detTerm_insertAt_last]
 
 /-- If the last row is zero before the diagonal entry, the determinant
 factors as the leading principal determinant times the bottom-right entry.
@@ -1112,8 +1098,7 @@ theorem det_upperTriangular_eq_foldl_diag
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat} (M : Matrix R n n)
     (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0) :
     det M = (List.finRange n).foldl (fun acc i => acc * M[i][i]) 1 := by
-  rw [det_upperTriangular_eq_finFoldl_diag M hzero]
-  rw [Fin.foldl_eq_finRange_foldl]
+  rw [det_upperTriangular_eq_finFoldl_diag M hzero, Fin.foldl_eq_finRange_foldl]
 
 private theorem detTerm_identity_insertAt_last {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (v : Vector (Fin n) n) :
@@ -1130,8 +1115,7 @@ private theorem foldl_detTerm_identity_insertions {R : Type u}
           acc + detTerm (1 : Matrix R (n + 1) (n + 1))
             (insertAt (Fin.last n) (v.map Fin.castSucc) i)) z =
       z + detTerm (1 : Matrix R n n) v := by
-  rw [← Fin.foldl_eq_finRange_foldl]
-  rw [Fin.foldl_succ_last]
+  rw [← Fin.foldl_eq_finRange_foldl, Fin.foldl_succ_last]
   have hprefix :
       Fin.foldl n
           (fun acc i =>
@@ -1155,8 +1139,7 @@ private theorem foldl_detTerm_identity_insertions {R : Type u}
           grind
       _ = z := by
           exact foldl_det_sum_zero (List.finRange n) z
-  rw [hprefix]
-  rw [detTerm_identity_insertAt_last]
+  rw [hprefix, detTerm_identity_insertAt_last]
 
 private theorem rowScale_get {R : Type u} [Mul R] {n m : Nat}
     (M : Matrix R n m) (i r : Fin n) (c : R) (k : Fin m) :

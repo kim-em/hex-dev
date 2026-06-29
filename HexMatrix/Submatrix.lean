@@ -61,9 +61,8 @@ def takeRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) : Matrix R k m :=
   ext i hi j hj
   show (principalSubmatrix (1 : Matrix R n n) k hk)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)] =
     (1 : Matrix R k k)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)]
-  rw [getElem_principalSubmatrix]
-  rw [getElem_one (i := (⟨i, Nat.lt_of_lt_of_le hi hk⟩ : Fin n))]
-  rw [getElem_one (i := (⟨i, hi⟩ : Fin k))]
+  rw [getElem_principalSubmatrix, getElem_one (i := (⟨i, Nat.lt_of_lt_of_le hi hk⟩ : Fin n)),
+    getElem_one (i := (⟨i, hi⟩ : Fin k))]
   by_cases hij : (⟨i, hi⟩ : Fin k) = ⟨j, hj⟩
   · have hval : i = j := Fin.val_eq_of_eq hij
     have hijn :

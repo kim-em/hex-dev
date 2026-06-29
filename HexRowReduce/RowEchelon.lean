@@ -197,8 +197,7 @@ theorem rowSwap_mul [Lean.Grind.Ring R]
   let rr : Fin n := ⟨r, hr⟩
   let ll : Fin k := ⟨l, hl⟩
   show ((rowSwap A i j) * B)[rr][ll] = (rowSwap (A * B) i j)[rr][ll]
-  rw [mul_getElem (rowSwap A i j) B rr ll]
-  rw [rowSwap_getElem (A * B) i j rr ll]
+  rw [mul_getElem (rowSwap A i j) B rr ll, rowSwap_getElem (A * B) i j rr ll]
   by_cases hrj : rr = j
   · rw [if_pos hrj]
     rw [mul_getElem A B i ll]
@@ -235,8 +234,7 @@ theorem rowScale_mul [Lean.Grind.Ring R]
   let rr : Fin n := ⟨r, hr⟩
   let ll : Fin k := ⟨l, hl⟩
   show ((rowScale A i s) * B)[rr][ll] = (rowScale (A * B) i s)[rr][ll]
-  rw [mul_getElem (rowScale A i s) B rr ll]
-  rw [rowScale_getElem (A * B) i rr s ll]
+  rw [mul_getElem (rowScale A i s) B rr ll, rowScale_getElem (A * B) i rr s ll]
   by_cases hri : rr = i
   · rw [if_pos hri]
     rw [mul_getElem A B i ll]
@@ -258,12 +256,10 @@ theorem rowAdd_mul [Lean.Grind.Ring R]
   let rr : Fin n := ⟨r, hr⟩
   let ll : Fin k := ⟨l, hl⟩
   show ((rowAdd A src dst s) * B)[rr][ll] = (rowAdd (A * B) src dst s)[rr][ll]
-  rw [mul_getElem (rowAdd A src dst s) B rr ll]
-  rw [rowAdd_getElem (A * B) src dst rr s ll]
+  rw [mul_getElem (rowAdd A src dst s) B rr ll, rowAdd_getElem (A * B) src dst rr s ll]
   by_cases hrd : rr = dst
   · rw [if_pos hrd]
-    rw [mul_getElem A B dst ll]
-    rw [mul_getElem A B src ll]
+    rw [mul_getElem A B dst ll, mul_getElem A B src ll]
     rw [show row (rowAdd A src dst s) rr =
         Vector.ofFn (fun k' => A[dst][k'] + s * A[src][k']) by
       rw [hrd]
@@ -376,8 +372,7 @@ theorem rowSwap_rowSwap (M : Matrix R n m) (i j : Fin n) :
       rw [rowSwap_getElem]
       simp [hri]
     · rw [if_neg hri]
-      rw [rowSwap_getElem]
-      rw [if_neg hrj, if_neg hri]
+      rw [rowSwap_getElem, if_neg hrj, if_neg hri]
 
 /-- Swapping a row with itself leaves the matrix unchanged. -/
 @[simp, grind =] theorem rowSwap_self (M : Matrix R n m) (i : Fin n) :
@@ -431,12 +426,10 @@ theorem rowScale_rowScale_inv_left [Lean.Grind.Field R]
   rw [rowScale_getElem]
   by_cases hri : rr = i
   · rw [if_pos hri]
-    rw [rowScale_getElem]
-    rw [if_pos rfl]
+    rw [rowScale_getElem, if_pos rfl]
     grind
   · rw [if_neg hri]
-    rw [rowScale_getElem]
-    rw [if_neg hri]
+    rw [rowScale_getElem, if_neg hri]
 
 /-- Scaling a row by `s⁻¹` and then by `s` restores the original matrix when
 `s` is nonzero. -/
@@ -450,12 +443,10 @@ theorem rowScale_rowScale_inv_right [Lean.Grind.Field R]
   rw [rowScale_getElem]
   by_cases hri : rr = i
   · rw [if_pos hri]
-    rw [rowScale_getElem]
-    rw [if_pos rfl]
+    rw [rowScale_getElem, if_pos rfl]
     grind
   · rw [if_neg hri]
-    rw [rowScale_getElem]
-    rw [if_neg hri]
+    rw [rowScale_getElem, if_neg hri]
 
 /-- Adding `s` times a distinct source row to a destination row and then
 adding `-s` times that source row restores the original matrix. -/
@@ -469,15 +460,12 @@ theorem rowAdd_rowAdd_neg [Lean.Grind.Ring R]
   rw [rowAdd_getElem]
   by_cases hrd : rr = dst
   · rw [if_pos hrd]
-    rw [rowAdd_getElem]
-    rw [if_pos rfl]
+    rw [rowAdd_getElem, if_pos rfl]
     have hsrc_ne_dst : src ≠ dst := hsrcdst
-    rw [rowAdd_getElem]
-    rw [if_neg hsrc_ne_dst]
+    rw [rowAdd_getElem, if_neg hsrc_ne_dst]
     grind
   · rw [if_neg hrd]
-    rw [rowAdd_getElem]
-    rw [if_neg hrd]
+    rw [rowAdd_getElem, if_neg hrd]
 
 /-- Adding `-s` times a distinct source row to a destination row and then
 adding `s` times that source row restores the original matrix. -/
@@ -491,15 +479,12 @@ theorem rowAdd_rowAdd_neg_left [Lean.Grind.Ring R]
   rw [rowAdd_getElem]
   by_cases hrd : rr = dst
   · rw [if_pos hrd]
-    rw [rowAdd_getElem]
-    rw [if_pos rfl]
+    rw [rowAdd_getElem, if_pos rfl]
     have hsrc_ne_dst : src ≠ dst := hsrcdst
-    rw [rowAdd_getElem]
-    rw [if_neg hsrc_ne_dst]
+    rw [rowAdd_getElem, if_neg hsrc_ne_dst]
     grind
   · rw [if_neg hrd]
-    rw [rowAdd_getElem]
-    rw [if_neg hrd]
+    rw [rowAdd_getElem, if_neg hrd]
 
 private theorem leftMul_left_inverse_preserve [Lean.Grind.Ring R]
     {S Sinv T : Matrix R n n} (hSinvS : Sinv * S = 1)
@@ -625,13 +610,10 @@ theorem mul_colAdd [Lean.Grind.CommRing R]
   let rr : Fin n := ⟨r, hr⟩
   let ll : Fin k := ⟨l, hl⟩
   show (A * colAdd B src dst s)[rr][ll] = (colAdd (A * B) src dst s)[rr][ll]
-  rw [mul_getElem A (colAdd B src dst s) rr ll]
-  rw [colAdd_getElem (A * B) src dst s rr ll]
+  rw [mul_getElem A (colAdd B src dst s) rr ll, colAdd_getElem (A * B) src dst s rr ll]
   by_cases hld : ll = dst
   · rw [if_pos hld]
-    rw [hld]
-    rw [mul_getElem A B rr dst]
-    rw [mul_getElem A B rr src]
+    rw [hld, mul_getElem A B rr dst, mul_getElem A B rr src]
     rw [show col (colAdd B src dst s) dst =
         Vector.ofFn (fun i => B[i][dst] + s * B[i][src]) by
       exact col_colAdd_dst B src dst s]
@@ -654,13 +636,10 @@ theorem mul_colAddRight [Lean.Grind.Ring R]
   let ll : Fin k := ⟨l, hl⟩
   show (A * colAddRight B src dst s)[rr][ll] =
     (colAddRight (A * B) src dst s)[rr][ll]
-  rw [mul_getElem A (colAddRight B src dst s) rr ll]
-  rw [colAddRight_getElem (A * B) src dst s rr ll]
+  rw [mul_getElem A (colAddRight B src dst s) rr ll, colAddRight_getElem (A * B) src dst s rr ll]
   by_cases hld : ll = dst
   · rw [if_pos hld]
-    rw [hld]
-    rw [mul_getElem A B rr dst]
-    rw [mul_getElem A B rr src]
+    rw [hld, mul_getElem A B rr dst, mul_getElem A B rr src]
     rw [show col (colAddRight B src dst s) dst =
         Vector.ofFn (fun i => B[i][dst] + B[i][src] * s) by
       exact col_colAddRight_dst B src dst s]

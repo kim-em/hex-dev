@@ -344,8 +344,7 @@ elsewhere, even when `c = 0` (in which case the polynomial is zero and every coe
       · have hrep : i < (Array.replicate n (Zero.zero : R)).size := by
           simpa using hlt
         have hpush : i < n + 1 := by omega
-        rw [dif_pos hpush]
-        rw [Array.getElem_push_lt hrep]
+        rw [dif_pos hpush, Array.getElem_push_lt hrep]
         simp [hi]
       · have hnle : n < i := by omega
         have hpush_not : ¬ i < n + 1 := by omega

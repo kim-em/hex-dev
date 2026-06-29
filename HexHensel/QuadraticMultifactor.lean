@@ -779,8 +779,7 @@ theorem monic_of_congr_mul_monic_monic
         (g * h).coeff (gTop + hTop) = h.coeff hTop := by
       have htop := Hex.ZPoly.coeff_mul_top g h hg_pos hh_pos
       unfold gTop hTop
-      rw [htop]
-      rw [hg_top]
+      rw [htop, hg_top]
       omega
     have hmod : h.coeff hTop % (m : Int) = 0 := by
       have hc := hcongr (gTop + hTop)
@@ -823,8 +822,7 @@ theorem monic_of_congr_mul_monic_monic
     exact int_eq_of_congr_of_bounds hc
       (hh_bound_nonneg hTop) (hh_bound_lt hTop)
       (by decide) (by exact_mod_cast hm)
-  rw [Hex.DensePoly.Monic]
-  rw [Hex.DensePoly.leadingCoeff_eq_coeff_last h hh_pos]
+  rw [Hex.DensePoly.Monic, Hex.DensePoly.leadingCoeff_eq_coeff_last h hh_pos]
   unfold hTop at hlead_one
   exact hlead_one
 

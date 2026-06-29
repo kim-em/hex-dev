@@ -850,8 +850,7 @@ theorem getEntry_stepArray_matches
       simp [getEntry, hi, hj]
       change exactDiv (pivot * getEntry rows i.val j.val - getEntry rows i.val k *
           getEntry rows k j.val) prevPivot = (stepMatrix M k pivot prevPivot)[i][j]
-      rw [stepMatrix_update_eq M k pivot prevPivot i j hi hj]
-      rw [hij, hcol₁, hrow₁]
+      rw [stepMatrix_update_eq M k pivot prevPivot i j hi hj, hij, hcol₁, hrow₁]
     · by_cases hjeq : j.val = k
       · have hjFin : j = (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n) := Fin.ext hjeq
         subst j
@@ -1390,8 +1389,8 @@ theorem pivotLoop_eq_noPivotLoop_of_no_singular {n : Nat}
               prevPivot := state.matrix[state.step][state.step]
               rowSwaps := state.rowSwaps
               singularStep := none }
-          rw [noPivotLoop_regular_branch f state hDone hp]
-          rw [pivotLoop_regular_branch_no_swap f state hDone hp]
+          rw [noPivotLoop_regular_branch f state hDone hp,
+            pivotLoop_regular_branch_no_swap f state hDone hp]
           show pivotLoop f next = noPivotLoop f next
           apply ih
           show (noPivotLoop f next).singularStep = none

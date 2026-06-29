@@ -29,9 +29,7 @@ def redcNat (p p' T : Nat) : Nat :=
 /-- Reducing `T` before multiplying by `p'` does not change the correction word. -/
 private theorem redcNat_correction_eq (p' T : Nat) :
     T * p' % UInt64.word = (T % UInt64.word) * p' % UInt64.word := by
-  rw [Nat.mul_mod T p' UInt64.word]
-  rw [Nat.mul_mod (T % UInt64.word) p' UInt64.word]
-  rw [Nat.mod_mod]
+  rw [Nat.mul_mod T p' UInt64.word, Nat.mul_mod (T % UInt64.word) p' UInt64.word, Nat.mod_mod]
 
 /-- A word-sized value plus its `R - 1` multiple vanishes modulo `R`. -/
 private theorem redcNat_cancel_pred_word (a : Nat) (ha : a < UInt64.word) :
@@ -50,8 +48,7 @@ private theorem redcNat_cancel_pred_word (a : Nat) (ha : a < UInt64.word) :
           have hword : UInt64.word - 1 + 1 = UInt64.word :=
             Nat.sub_add_cancel hword_pos
           have hmul : a + a * (UInt64.word - 1) = a * UInt64.word := by
-            rw [Nat.add_comm]
-            rw [← Nat.mul_succ]
+            rw [Nat.add_comm, ← Nat.mul_succ]
             have hs : (UInt64.word - 1).succ = UInt64.word := by
               simpa [Nat.succ_eq_add_one] using hword
             rw [hs]
@@ -72,8 +69,7 @@ private theorem redcNat_exact_dvd (p p' T : Nat)
           = ((T % UInt64.word) * p' * p) % UInt64.word := by
             rw [Nat.mul_mod ((T % UInt64.word) * p' % UInt64.word) p
               UInt64.word]
-            rw [Nat.mod_mod]
-            rw [← Nat.mul_mod ((T % UInt64.word) * p') p UInt64.word]
+            rw [Nat.mod_mod, ← Nat.mul_mod ((T % UInt64.word) * p') p UInt64.word]
       _ = (T % UInt64.word * (p' * p)) % UInt64.word := by
             rw [Nat.mul_assoc]
   calc
@@ -91,8 +87,7 @@ private theorem redcNat_exact_dvd (p p' T : Nat)
     _ = (T % UInt64.word +
             (T % UInt64.word * ((p * p') % UInt64.word)) %
               UInt64.word) % UInt64.word := by
-          rw [Nat.mul_mod]
-          rw [Nat.mod_mod]
+          rw [Nat.mul_mod, Nat.mod_mod]
     _ = 0 := by
           rw [hpp']
           exact redcNat_cancel_pred_word (T % UInt64.word)
@@ -114,9 +109,7 @@ private theorem redcNat_u_lt_two_p_core (hp_pos : 0 < p)
         p * UInt64.word + UInt64.word * p :=
     Nat.add_lt_add hT hmulp_lt
   have htarget : UInt64.word * (2 * p) = p * UInt64.word + UInt64.word * p := by
-    rw [Nat.mul_comm UInt64.word (2 * p)]
-    rw [Nat.mul_assoc]
-    rw [Nat.two_mul]
+    rw [Nat.mul_comm UInt64.word (2 * p), Nat.mul_assoc, Nat.two_mul]
     simp [Nat.mul_comm]
   have hn_lt :
       T + ((T % UInt64.word) * p' % UInt64.word) * p <
@@ -152,8 +145,7 @@ theorem redcNat_eq_mod (hp_pos : 0 < p) (hp_lt : p < UInt64.word)
     exact hu_mod
   · have hpu : p ≤ u := Nat.le_of_not_lt h
     have hsub : (u - p) * UInt64.word + p * UInt64.word = u * UInt64.word := by
-      rw [← Nat.add_mul]
-      rw [Nat.sub_add_cancel hpu]
+      rw [← Nat.add_mul, Nat.sub_add_cancel hpu]
     simp [redcNat, h, u]
     calc
       (u - p) * UInt64.word % p

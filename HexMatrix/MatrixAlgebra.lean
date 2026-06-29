@@ -51,8 +51,7 @@ private theorem foldl_sum_start {R : Type u} [Lean.Grind.Ring R]
       grind
   | cons x xs ih =>
       simp only [List.foldl_cons]
-      rw [ih (acc := acc + f x)]
-      rw [ih (acc := (0 : R) + f x)]
+      rw [ih (acc := acc + f x), ih (acc := (0 : R) + f x)]
       grind
 
 /-- Two fold-sums over `xs` agree when their summand functions `f` and `g` agree
@@ -126,8 +125,7 @@ private theorem foldl_sum_comm {R : Type u} [Lean.Grind.Ring R]
         intro y _hy
         rw [foldl_sum_start xs (fun x' => g x' y) (0 + g x y)]
         grind
-      rw [hinner]
-      rw [foldl_sum_add]
+      rw [hinner, foldl_sum_add]
       grind
 
 /-- Right multiplication by `c` distributes through a fold-sum, scaling each summand `f x`
@@ -215,8 +213,7 @@ private theorem foldl_indicator_mul_unique {R : Type u} [Lean.Grind.Ring R]
           have hxy : x ≠ y := fun heq => (List.nodup_cons.mp hnodup).1 (heq ▸ hy)
           rw [if_neg hxy]
           grind
-        rw [if_pos rfl]
-        rw [foldl_add_eq_acc_ring xs _ _ hxs_zero]
+        rw [if_pos rfl, foldl_add_eq_acc_ring xs _ _ hxs_zero]
         grind
       · have hxi : i ≠ x := by
           intro heq

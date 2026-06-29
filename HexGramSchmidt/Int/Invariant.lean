@@ -200,8 +200,7 @@ private theorem noPivotLoop_initial_gram_bareiss_step_dvd
     intro a ha
     rw [Vector.getElem_ofFn, Vector.getElem_ofFn]
     exact hq.coeff_num_eq_mul ⟨a, ha⟩
-  rw [h_q_eq_num]
-  rw [dot_rowCombination_mul_right_int b hq.q state.prevPivot (b.row j)]
+  rw [h_q_eq_num, dot_rowCombination_mul_right_int b hq.q state.prevPivot (b.row j)]
   exact Int.mul_comm _ _
 
 /-- Row-vector consumer for an initial no-pivot Gram pass.  A single supported

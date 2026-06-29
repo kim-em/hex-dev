@@ -59,9 +59,8 @@ theorem scaledCoeffs_sizeReduce_pivot (b : Matrix Int n m) (j k : Fin n)
     GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k j =
       GramSchmidt.entry (scaledCoeffs b) k j -
         r * Int.ofNat (gramDet b (j.val + 1) (Nat.succ_le_of_lt j.isLt)) := by
-  rw [sizeReduce]
-  rw [scaledCoeffs_rowAdd_pivot (b := b) (j := j) (k := k) hjk (-r)]
-  rw [Int.neg_mul, Lean.Grind.Ring.sub_eq_add_neg]
+  rw [sizeReduce, scaledCoeffs_rowAdd_pivot (b := b) (j := j) (k := k) hjk (-r),
+    Int.neg_mul, Lean.Grind.Ring.sub_eq_add_neg]
 
 /-- Size-reduce update at a column `l` below the pivot (`l < j < k`): the
 scaled coefficient at `(k, l)` decreases by `r` times the `(j, l)`
@@ -72,9 +71,8 @@ theorem scaledCoeffs_sizeReduce_lower (b : Matrix Int n m) (l j k : Fin n)
     GramSchmidt.entry (scaledCoeffs (sizeReduce b j k r)) k l =
       GramSchmidt.entry (scaledCoeffs b) k l -
         r * GramSchmidt.entry (scaledCoeffs b) j l := by
-  rw [sizeReduce]
-  rw [scaledCoeffs_rowAdd_lower (b := b) (l := l) (j := j) (k := k) hlj hjk (-r)]
-  rw [Int.neg_mul, Lean.Grind.Ring.sub_eq_add_neg]
+  rw [sizeReduce, scaledCoeffs_rowAdd_lower (b := b) (l := l) (j := j) (k := k) hlj hjk (-r),
+    Int.neg_mul, Lean.Grind.Ring.sub_eq_add_neg]
 
 /-- Size-reduce touches only row `k`: every other row `i ≠ k` of the
 scaled-coefficient matrix is left unchanged. -/
@@ -230,8 +228,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
     have hT : (Matrix.rowSwap M km1' k').transpose[idx][pp] =
         (Matrix.rowSwap M km1' k')[pp][idx] := by
       simp [Matrix.transpose, Matrix.col]
-    rw [hT]
-    rw [Matrix.rowSwap_getElem (M := M) (i := km1') (j := k') (r := pp) (k := idx)]
+    rw [hT, Matrix.rowSwap_getElem (M := M) (i := km1') (j := k') (r := pp) (k := idx)]
     by_cases hpk : pp = k'
     · simp [hpk]
     · by_cases hpkm1 : pp = km1'
@@ -895,8 +892,7 @@ theorem bareiss_scaledCoeffMatrix_rowSwap_above_prev
     rw [hcastRow_b'i, hbasis_swap]
     -- dot (curr + μ • prev) (cast b.row i)
     --   = dot curr (cast b.row i) + μ * dot prev (cast b.row i)
-    rw [dot_add_left_rat, dot_smul_left_rat]
-    rw [hdotk, hdotkm1]
+    rw [dot_add_left_rat, dot_smul_left_rat, hdotk, hdotkm1]
   -- Key Rat identity: nu'[i][km1] = G * <basis(b')[km1], cast(b'.row i)>.
   -- The proof uses scaledCoeffs_eq for b', plus dot_basis_castRow on b', plus
   -- the fact that d_k(b') = G * |basis(b')[km1]|^2 so the cancellation is clean.
@@ -940,8 +936,7 @@ theorem bareiss_scaledCoeffMatrix_rowSwap_above_prev
           (Nk + μ ^ 2 * Nkm1) =
         GramSchmidt.entry (coeffs b) i k * Nk +
           μ * (GramSchmidt.entry (coeffs b) i km1 * Nkm1) := by
-      rw [← hN'_eq]
-      rw [hcoeff_normSq]
+      rw [← hN'_eq, hcoeff_normSq]
       exact hdot_b'_km1
     linear_combination G * hcoeff_inner
   -- Combine all rational identities and discharge by ring.

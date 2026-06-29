@@ -194,9 +194,7 @@ private theorem det_rowMoveUp {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         have hv : (⟨src + k, by omega⟩ : Fin n).val =
             (⟨src + k + 1, h⟩ : Fin n).val := congrArg Fin.val heq
         simp at hv
-      rw [ih]
-      rw [det_rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩ hne]
-      rw [Lean.Grind.Semiring.pow_succ]
+      rw [ih, det_rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩ hne, Lean.Grind.Semiring.pow_succ]
       grind
 
 /-- Rows of `M` strictly below the move interval are unchanged by
@@ -208,8 +206,7 @@ private theorem rowMoveUp_row_of_lt {R : Type u} {n m : Nat}
   induction k generalizing M with
   | zero => rfl
   | succ k ih =>
-      rw [rowMoveUp_succ]
-      rw [ih (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩) (by omega)]
+      rw [rowMoveUp_succ, ih (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩) (by omega)]
       ext j hj
       let jj : Fin m := ⟨j, hj⟩
       show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[i][jj] = M[i][jj]
@@ -253,8 +250,7 @@ private theorem rowMoveUp_row_eq_src {R : Type u} {n m : Nat}
       have hii : i = (⟨src + 0, h⟩ : Fin n) := Fin.ext (by simp [hi])
       rw [hii]; rfl
   | succ k ih =>
-      rw [rowMoveUp_succ]
-      rw [ih (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩) (by omega)]
+      rw [rowMoveUp_succ, ih (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩) (by omega)]
       ext j hj
       let jj : Fin m := ⟨j, hj⟩
       show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[
@@ -919,8 +915,7 @@ theorem twoColMatrix_entry_penultimate {R : Type u} {n : Nat}
     simp
   have hneq : (⟨n, by omega⟩ : Fin (n + 2)).val = n := by
     simp
-  rw [dif_neg hnlt]
-  rw [dif_pos hneq]
+  rw [dif_neg hnlt, dif_pos hneq]
 
 /-- The last column of `twoColMatrix B u v` is `v`. -/
 theorem twoColMatrix_entry_last {R : Type u} {n : Nat}
@@ -933,8 +928,7 @@ theorem twoColMatrix_entry_last {R : Type u} {n : Nat}
     simp [Fin.last]
   have hlast_ne : ¬ (Fin.last (n + 1) : Fin (n + 2)).val = n := by
     simp [Fin.last]
-  rw [dif_neg hlast_lt]
-  rw [dif_neg hlast_ne]
+  rw [dif_neg hlast_lt, dif_neg hlast_ne]
 
 /-- The determinant of `[B | u | v]`. -/
 @[expose]
@@ -1028,9 +1022,8 @@ theorem mMatrix_eq_setCol_last {R : Type u} {n : Nat}
       have hval := congrArg Fin.val h
       simp [Fin.last] at hval
       omega
-    rw [if_neg hjne]
-    rw [mMatrix_entry_lt B v p (⟨i, hi⟩ : Fin (n + 1)) (⟨j, hj⟩ : Fin (n + 1)) hjlt]
-    rw [mMatrix_entry_lt B w p (⟨i, hi⟩ : Fin (n + 1)) (⟨j, hj⟩ : Fin (n + 1)) hjlt]
+    rw [if_neg hjne, mMatrix_entry_lt B v p (⟨i, hi⟩ : Fin (n + 1)) (⟨j, hj⟩ : Fin (n + 1)) hjlt,
+      mMatrix_entry_lt B w p (⟨i, hi⟩ : Fin (n + 1)) (⟨j, hj⟩ : Fin (n + 1)) hjlt]
   · have hjeq : j = n := by omega
     have hjlast : (⟨j, hj⟩ : Fin (n + 1)) = Fin.last n := by
       apply Fin.ext
@@ -1053,9 +1046,7 @@ theorem mDet_add_v {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       fun i : Fin (n + 1) => v[skipIndex p i] + w[skipIndex p i] by
         funext i
         simp [Vector.getElem_add]]
-  rw [det_setCol_add]
-  rw [← mMatrix_eq_setCol_last B v v p]
-  rw [← mMatrix_eq_setCol_last B w v p]
+  rw [det_setCol_add, ← mMatrix_eq_setCol_last B v v p, ← mMatrix_eq_setCol_last B w v p]
 
 /-- `mDet` is homogeneous in the augmented vector column. -/
 theorem mDet_smul_v {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
@@ -1069,8 +1060,7 @@ theorem mDet_smul_v {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         simp [Vector.getElem_smul]
         change c * v[skipIndex p i] = c * v[skipIndex p i]
         rfl]
-  rw [det_setCol_smul]
-  rw [← mMatrix_eq_setCol_last B v v p]
+  rw [det_setCol_smul, ← mMatrix_eq_setCol_last B v v p]
 
 /-- Numeric entry form for the standard basis vector. -/
 private theorem unit_getElem_num {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
@@ -1176,8 +1166,7 @@ private theorem foldl_unit_weighted_single
     by_cases hp : p = q
     · rw [if_pos hp]
     · rw [if_neg hp]
-      rw [unit_getElem_num]
-      rw [if_neg hp]
+      rw [unit_getElem_num, if_neg hp]
       grind
   calc
     (List.finRange (n + 2)).foldl
@@ -1187,8 +1176,7 @@ private theorem foldl_unit_weighted_single
           acc + if p = q then (Hex.Vector.unit (R := R) q)[p] * f p else 0) 0 := hcongr
     _ = 0 + (Hex.Vector.unit (R := R) q)[q] * f q := hfold
     _ = f q := by
-      rw [unit_getElem_num]
-      rw [if_pos rfl]
+      rw [unit_getElem_num, if_pos rfl]
       grind
 
 /-- Expands the augmented vector column of `mDet` in the standard basis. -/
@@ -1223,8 +1211,7 @@ theorem mDet_eq_sum_unit
       by_cases hq : q = skipIndex p i
       · rw [if_pos hq]
       · rw [if_neg hq]
-        rw [unit_getElem_num]
-        rw [if_neg (fun h => hq h.symm)]
+        rw [unit_getElem_num, if_neg (fun h => hq h.symm)]
         grind
     symm
     calc
@@ -1236,11 +1223,9 @@ theorem mDet_eq_sum_unit
               v[q] * (Hex.Vector.unit (R := R) q)[skipIndex p i] else 0) 0 := hcongr
       _ = 0 + v[skipIndex p i] * (Hex.Vector.unit (R := R) (skipIndex p i))[skipIndex p i] := hfold
       _ = v[skipIndex p i] := by
-        rw [unit_getElem_num]
-        rw [if_pos rfl]
+        rw [unit_getElem_num, if_pos rfl]
         grind
-  rw [hcol]
-  rw [det_setCol_sum_finRange]
+  rw [hcol, det_setCol_sum_finRange]
   apply foldl_acc_congr
   intro acc q _hmem
   rw [← mMatrix_eq_setCol_last B (Hex.Vector.unit (R := R) q) v p]
@@ -1298,8 +1283,7 @@ theorem deleteRowCol_mMatrix_at_q_minus_one_eq_nMatrix_of_lt
   change (deleteRowCol (mMatrix B v p)
         (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)) (Fin.last n))[ii][jj] =
     (nMatrix B p q hpq)[ii][jj]
-  rw [deleteRowCol_entry]
-  rw [nMatrix_entry]
+  rw [deleteRowCol_entry, nMatrix_entry]
   -- The column index: skipIndex (Fin.last n) jj = jj.castSucc; its val = jj.val < n.
   have hjj_castSucc : (skipIndex (Fin.last n) jj).val = jj.val := by
     show (skipIndex (Fin.last n) jj).val = jj.val
@@ -1391,8 +1375,7 @@ theorem deleteRowCol_mMatrix_at_q_eq_nMatrix_of_gt
   change (deleteRowCol (mMatrix B v p)
         (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)) (Fin.last n))[ii][jj] =
     (nMatrix B q p hqp)[ii][jj]
-  rw [deleteRowCol_entry]
-  rw [nMatrix_entry]
+  rw [deleteRowCol_entry, nMatrix_entry]
   have hjj_castSucc : (skipIndex (Fin.last n) jj).val = jj.val := by
     show (skipIndex (Fin.last n) jj).val = jj.val
     rw [skipIndex_last]
@@ -1430,8 +1413,7 @@ theorem mDet_unit_eq_signed_nDet_of_gt
       (mMatrix B (Hex.Vector.unit (R := R) q) p)[r][Fin.last n] =
         if r = r_q then (1 : R) else (0 : R) := by
     intro r
-    rw [mMatrix_entry_last]
-    rw [unit_getElem_num]
+    rw [mMatrix_entry_last, unit_getElem_num]
     by_cases hreq : r = r_q
     · subst hreq
       rw [if_pos rfl]
@@ -1475,8 +1457,7 @@ theorem mDet_unit_eq_signed_nDet_of_lt
       (mMatrix B (Hex.Vector.unit (R := R) q) p)[r][Fin.last n] =
         if r = r_q then (1 : R) else (0 : R) := by
     intro r
-    rw [mMatrix_entry_last]
-    rw [unit_getElem_num]
+    rw [mMatrix_entry_last, unit_getElem_num]
     by_cases hreq : r = r_q
     · subst hreq
       rw [if_pos rfl]
@@ -1642,9 +1623,8 @@ private theorem det_plucker_three_term_unit_of_eq_p1
       mDet B (Hex.Vector.unit (R := R) p1) p2 *
         nDet B p1 p3 (Nat.lt_trans h12 h23) +
       mDet B (Hex.Vector.unit (R := R) p1) p3 * nDet B p1 p2 h12 = 0 := by
-  rw [mDet_unit_eq_zero_of_eq B p1]
-  rw [mDet_unit_eq_signed_nDet_of_gt B p2 p1 h12]
-  rw [mDet_unit_eq_signed_nDet_of_gt B p3 p1 (Nat.lt_trans h12 h23)]
+  rw [mDet_unit_eq_zero_of_eq B p1, mDet_unit_eq_signed_nDet_of_gt B p2 p1 h12,
+    mDet_unit_eq_signed_nDet_of_gt B p3 p1 (Nat.lt_trans h12 h23)]
   grind
 
 private theorem det_plucker_three_term_unit_of_eq_p2
@@ -1656,9 +1636,8 @@ private theorem det_plucker_three_term_unit_of_eq_p2
       mDet B (Hex.Vector.unit (R := R) p2) p2 *
         nDet B p1 p3 (Nat.lt_trans h12 h23) +
       mDet B (Hex.Vector.unit (R := R) p2) p3 * nDet B p1 p2 h12 = 0 := by
-  rw [mDet_unit_eq_signed_nDet_of_lt B p1 p2 h12]
-  rw [mDet_unit_eq_zero_of_eq B p2]
-  rw [mDet_unit_eq_signed_nDet_of_gt B p3 p2 h23]
+  rw [mDet_unit_eq_signed_nDet_of_lt B p1 p2 h12, mDet_unit_eq_zero_of_eq B p2,
+    mDet_unit_eq_signed_nDet_of_gt B p3 p2 h23]
   have hp2pos : 0 < p2.val := by omega
   have hrow :
       (⟨p2.val, by have := p3.isLt; omega⟩ : Fin (n + 1)) =
@@ -1680,9 +1659,8 @@ private theorem det_plucker_three_term_unit_of_eq_p3
       mDet B (Hex.Vector.unit (R := R) p3) p2 *
         nDet B p1 p3 (Nat.lt_trans h12 h23) +
       mDet B (Hex.Vector.unit (R := R) p3) p3 * nDet B p1 p2 h12 = 0 := by
-  rw [mDet_unit_eq_signed_nDet_of_lt B p1 p3 (Nat.lt_trans h12 h23)]
-  rw [mDet_unit_eq_signed_nDet_of_lt B p2 p3 h23]
-  rw [mDet_unit_eq_zero_of_eq B p3]
+  rw [mDet_unit_eq_signed_nDet_of_lt B p1 p3 (Nat.lt_trans h12 h23),
+    mDet_unit_eq_signed_nDet_of_lt B p2 p3 h23, mDet_unit_eq_zero_of_eq B p3]
   grind
 
 private theorem det_plucker_three_term_of_unit
@@ -1698,9 +1676,7 @@ private theorem det_plucker_three_term_of_unit
     mDet B v p1 * nDet B p2 p3 h23 -
       mDet B v p2 * nDet B p1 p3 (Nat.lt_trans h12 h23) +
       mDet B v p3 * nDet B p1 p2 h12 = 0 := by
-  rw [mDet_eq_sum_unit B v p1]
-  rw [mDet_eq_sum_unit B v p2]
-  rw [mDet_eq_sum_unit B v p3]
+  rw [mDet_eq_sum_unit B v p1, mDet_eq_sum_unit B v p2, mDet_eq_sum_unit B v p3]
   rw [← foldl_det_sum_mul_right_zero (List.finRange (n + 2))
       (fun q => v[q] * mDet B (Hex.Vector.unit (R := R) q) p1)
       (nDet B p2 p3 h23)]
@@ -1858,8 +1834,8 @@ private theorem det_plucker_three_term_unit_of_lt_p1_of_nDet
         nDet B p1 p3 (Nat.lt_trans h12 h23) +
       mDet B (Hex.Vector.unit (R := R) q) p3 * nDet B p1 p2 h12 = 0 := by
   have hraw := det_plucker_three_term_nDet_of_lt_p1 B q p1 p2 p3 hq1 h12 h23
-  rw [mDet_unit_eq_signed_nDet_of_gt B p1 q hq1]
-  rw [mDet_unit_eq_signed_nDet_of_gt B p2 q (Nat.lt_trans hq1 h12)]
+  rw [mDet_unit_eq_signed_nDet_of_gt B p1 q hq1,
+    mDet_unit_eq_signed_nDet_of_gt B p2 q (Nat.lt_trans hq1 h12)]
   rw [mDet_unit_eq_signed_nDet_of_gt B p3 q
       (Nat.lt_trans hq1 (Nat.lt_trans h12 h23))]
   grind
@@ -1880,9 +1856,8 @@ private theorem det_plucker_three_term_unit_of_between_p1_p2_of_nDet
         nDet B p1 p2 (Nat.lt_trans h1q hq2) = 0 := by
   have hraw :=
     det_plucker_three_term_nDet_of_between_p1_p2 B p1 q p2 p3 h1q hq2 h23
-  rw [mDet_unit_eq_signed_nDet_of_lt B p1 q h1q]
-  rw [mDet_unit_eq_signed_nDet_of_gt B p2 q hq2]
-  rw [mDet_unit_eq_signed_nDet_of_gt B p3 q (Nat.lt_trans hq2 h23)]
+  rw [mDet_unit_eq_signed_nDet_of_lt B p1 q h1q, mDet_unit_eq_signed_nDet_of_gt B p2 q hq2,
+    mDet_unit_eq_signed_nDet_of_gt B p3 q (Nat.lt_trans hq2 h23)]
   have hrow :
       (⟨q.val, by have := p3.isLt; omega⟩ : Fin (n + 1)) =
         (⟨q.val - 1 + 1, by have := p3.isLt; omega⟩ : Fin (n + 1)) := by

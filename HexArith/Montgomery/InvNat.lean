@@ -225,8 +225,7 @@ private theorem nat_mod_eq_pred_of_int_dvd_add_one {T n : Nat} (hT : 1 < T)
   obtain ⟨r, hr⟩ := Nat.exists_eq_succ_of_ne_zero (by omega : q.toNat ≠ 0)
   rw [hr] at hn_eq
   have hn_split : n = T * r + (T - 1) := by grind
-  rw [hn_split]
-  rw [Nat.add_mod]
+  rw [hn_split, Nat.add_mod]
   simp [Nat.mod_eq_of_lt (by omega : T - 1 < T)]
 
 /-- The 3-bit Newton seed fact: the square of any odd number is `1 mod 8`. -/

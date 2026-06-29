@@ -65,10 +65,8 @@ lemmas pass between the two row representations. -/
 
 private theorem foldl_finRange_eq_sum [AddCommMonoid R] {n : Nat} (f : Fin n → R) :
     (List.finRange n).foldl (fun acc i => acc + f i) 0 = ∑ i, f i := by
-  rw [← List.foldl_map]
-  rw [← List.sum_eq_foldl]
-  rw [← List.sum_toFinset f (List.nodup_finRange n)]
-  rw [List.toFinset_finRange]
+  rw [← List.foldl_map, ← List.sum_eq_foldl, ← List.sum_toFinset f (List.nodup_finRange n),
+    List.toFinset_finRange]
 
 /-- Bridge invariant: the executable matrix-vector product transports to
 Mathlib's `Matrix.mulVec` under `matrixEquiv`/`vectorEquiv`. This is the key
@@ -79,8 +77,7 @@ private theorem vectorEquiv_mulVec [Field R] (M : Hex.Matrix R n m) (v : Vector 
   simp only [vectorEquiv_apply]
   change (Hex.Matrix.mulVec M v)[i.val] = (matrixEquiv M).mulVec (vectorEquiv v) i
   unfold Hex.Matrix.mulVec Hex.Matrix.row Hex.Vector.dotProduct
-  rw [Vector.getElem_ofFn i.isLt]
-  rw [foldl_finRange_eq_sum]
+  rw [Vector.getElem_ofFn i.isLt, foldl_finRange_eq_sum]
   unfold _root_.Matrix.mulVec dotProduct
   apply Finset.sum_congr rfl
   intro k _
@@ -100,10 +97,8 @@ theorem vectorEquiv_rowCombination [CommRing R] (M : Hex.Matrix R n m) (c : Vect
     (Fintype.linearCombination R (_root_.Matrix.row (matrixEquiv M)) (vectorEquiv c)) j
   unfold Hex.Matrix.mulVec Hex.Matrix.row Hex.Vector.dotProduct Hex.Matrix.transpose
     Hex.Matrix.col
-  rw [Vector.getElem_ofFn j.isLt]
-  rw [foldl_finRange_eq_sum]
-  rw [Fintype.linearCombination_apply]
-  rw [Finset.sum_apply]
+  rw [Vector.getElem_ofFn j.isLt, foldl_finRange_eq_sum, Fintype.linearCombination_apply,
+    Finset.sum_apply]
   apply Finset.sum_congr rfl
   intro i _
   simp only [vectorEquiv_apply, matrixEquiv_apply, _root_.Matrix.row_apply, Pi.smul_apply,
@@ -126,8 +121,7 @@ private theorem vectorEquiv_nullspaceMatrix_mulVec [Field R]
   change (Hex.Matrix.mulVec E.nullspaceMatrix c)[j.val] =
     ∑ k : Fin (m - D.rank), c[k] * (E.nullspace.get k)[j]
   unfold Hex.Matrix.mulVec Hex.Matrix.row Hex.Vector.dotProduct
-  rw [Vector.getElem_ofFn j.isLt]
-  rw [foldl_finRange_eq_sum]
+  rw [Vector.getElem_ofFn j.isLt, foldl_finRange_eq_sum]
   apply Finset.sum_congr rfl
   intro k _
   unfold Hex.Matrix.IsRREF.nullspace Hex.Matrix.col

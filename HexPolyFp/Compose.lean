@@ -104,11 +104,9 @@ composition. -/
   have hstep1 : ((0 : FpPoly p) * q + DensePoly.C (1 : ZMod64 p)) = (1 : FpPoly p) := by
     rw [FpPoly.zero_mul, FpPoly.zero_add]
     rfl
-  rw [hstep1]
-  rw [FpPoly.one_mul]
+  rw [hstep1, FpPoly.one_mul]
   show q + DensePoly.C (Zero.zero : ZMod64 p) = q
-  rw [show (DensePoly.C (Zero.zero : ZMod64 p) : FpPoly p) = 0 from C_zero_eq_zero]
-  rw [FpPoly.add_zero]
+  rw [show (DensePoly.C (Zero.zero : ZMod64 p) : FpPoly p) = 0 from C_zero_eq_zero, FpPoly.add_zero]
 
 /-- Composing the constant polynomial `1` with any `q` yields `1`: the
 multiplicative identity of `FpPoly` is fixed by substitution. This is the
@@ -143,13 +141,10 @@ private theorem mul_composeCoeffPowerSumFrom_eq_succ (q : FpPoly p) :
       simp [composeCoeffPowerSumFrom, FpPoly.mul_zero]
   | c :: cs, base => by
       simp only [composeCoeffPowerSumFrom]
-      rw [FpPoly.left_distrib]
-      rw [mul_composeCoeffPowerSumFrom_eq_succ q cs (base + 1)]
+      rw [FpPoly.left_distrib, mul_composeCoeffPowerSumFrom_eq_succ q cs (base + 1)]
       congr 1
       -- q * (C c * linearPow q base) = C c * linearPow q (base + 1)
-      rw [← FpPoly.mul_assoc]
-      rw [FpPoly.mul_comm q (DensePoly.C c)]
-      rw [FpPoly.mul_assoc]
+      rw [← FpPoly.mul_assoc, FpPoly.mul_comm q (DensePoly.C c), FpPoly.mul_assoc]
       congr 1
       change q * linearPow q base = linearPow q (base + 1)
       rw [linearPow_succ_left]
@@ -161,8 +156,8 @@ private theorem composeScalarCoeffList_eq_powerSumFrom_zero (q : FpPoly p) :
       simp [DensePoly.composeScalarCoeffList, composeCoeffPowerSumFrom]
   | c :: cs => by
       simp only [DensePoly.composeScalarCoeffList, composeCoeffPowerSumFrom]
-      rw [composeScalarCoeffList_eq_powerSumFrom_zero q cs]
-      rw [mul_composeCoeffPowerSumFrom_eq_succ q cs 0]
+      rw [composeScalarCoeffList_eq_powerSumFrom_zero q cs,
+        mul_composeCoeffPowerSumFrom_eq_succ q cs 0]
       congr 1
       -- C c = C c * linearPow q 0
       change DensePoly.C c = DensePoly.C c * 1
@@ -224,8 +219,7 @@ theorem C_mul_C_eq (a b : ZMod64 p) :
   apply DensePoly.ext_coeff
   intro n
   have hzero : a * (0 : ZMod64 p) = 0 := Lean.Grind.Semiring.mul_zero a
-  rw [DensePoly.coeff_scale _ _ _ hzero]
-  rw [DensePoly.coeff_C, DensePoly.coeff_C]
+  rw [DensePoly.coeff_scale _ _ _ hzero, DensePoly.coeff_C, DensePoly.coeff_C]
   cases n with
   | zero => simp
   | succ n =>
@@ -259,8 +253,8 @@ private theorem composeCoeffPowerSumFrom_replicate_zero_append_one
             (List.replicate k (Zero.zero : ZMod64 p) ++ [(1 : ZMod64 p)]) (base + 1) w =
           linearPow w (base + (k + 1))
       have hCz : (DensePoly.C (Zero.zero : ZMod64 p) : FpPoly p) = 0 := C_zero_eq_zero
-      rw [hCz, FpPoly.zero_mul, FpPoly.zero_add]
-      rw [composeCoeffPowerSumFrom_replicate_zero_append_one w k (base + 1)]
+      rw [hCz, FpPoly.zero_mul, FpPoly.zero_add,
+        composeCoeffPowerSumFrom_replicate_zero_append_one w k (base + 1)]
       congr 1
       omega
 
@@ -324,8 +318,7 @@ private theorem composePower_eq_linearPow (w : FpPoly p) :
   | 0 => rfl
   | k + 1 => by
       simp only [DensePoly.composePower]
-      rw [composePower_eq_linearPow w k]
-      rw [linearPow_succ_left]
+      rw [composePower_eq_linearPow w k, linearPow_succ_left]
 
 /-- The local `FpPoly` power-sum accumulator built from `linearPow` agrees
 with the shared `DensePoly.composeCoeffPowerSumUpTo`. Callers use this to
@@ -339,8 +332,7 @@ theorem composeCoeffPowerSumUpTo_eq_core
   | 0, _, _ => rfl
   | n + 1, base, w => by
       simp only [composeCoeffPowerSumUpTo, DensePoly.composeCoeffPowerSumUpTo]
-      rw [composePower_eq_linearPow]
-      rw [composeCoeffPowerSumUpTo_eq_core coeff n (base + 1) w]
+      rw [composePower_eq_linearPow, composeCoeffPowerSumUpTo_eq_core coeff n (base + 1) w]
 
 /-- The list-fed accumulator `composeCoeffPowerSumFrom` over the coefficient
 slice `[coeff base, …, coeff (base + n - 1)]` agrees with the index-fed
@@ -369,8 +361,7 @@ extend-past-the-bound variant `compose_eq_coeff_power_sum_upTo_bound` follows. -
 private theorem compose_eq_coeff_power_sum_upTo_size (f w : FpPoly p) :
     DensePoly.compose f w =
       composeCoeffPowerSumUpTo (fun i => f.coeff i) f.size 0 w := by
-  rw [compose_eq_powerSum]
-  rw [DensePoly.toArray_toList_eq_coeff_range]
+  rw [compose_eq_powerSum, DensePoly.toArray_toList_eq_coeff_range]
   simpa using composeCoeffPowerSumFrom_range_eq_upTo (fun i => f.coeff i) w f.size 0
 
 /-- Single-step extension invariance: when the next coefficient
@@ -388,9 +379,7 @@ private theorem composeCoeffPowerSumUpTo_succ_of_next_zero
       show (0 : FpPoly p) =
         DensePoly.C (coeff base) * linearPow w base +
           composeCoeffPowerSumUpTo coeff 0 (base + 1) w
-      rw [hz]
-      rw [show (DensePoly.C (0 : ZMod64 p) : FpPoly p) = 0 from C_zero_eq_zero]
-      rw [FpPoly.zero_mul]
+      rw [hz, show (DensePoly.C (0 : ZMod64 p) : FpPoly p) = 0 from C_zero_eq_zero, FpPoly.zero_mul]
       show (0 : FpPoly p) = 0 + composeCoeffPowerSumUpTo coeff 0 (base + 1) w
       rw [FpPoly.zero_add]
       rfl
@@ -413,8 +402,7 @@ private theorem composeCoeffPowerSumUpTo_le_extend_base
   | 0 => by
       simp
   | extra + 1 => by
-      rw [composeCoeffPowerSumUpTo_le_extend_base coeff w hzero extra]
-      rw [Nat.add_succ]
+      rw [composeCoeffPowerSumUpTo_le_extend_base coeff w hzero extra, Nat.add_succ]
       exact composeCoeffPowerSumUpTo_succ_of_next_zero
         coeff w (bound + extra) base (hzero (base + (bound + extra)) (by omega))
 
@@ -458,9 +446,7 @@ identity through `DensePoly.ext_coeff`. -/
 private theorem fp_sub_mul_right
     (a b c : FpPoly p) :
     (a - b) * c = a * c - b * c := by
-  rw [FpPoly.sub_eq_add_neg a b]
-  rw [FpPoly.right_distrib]
-  rw [FpPoly.sub_eq_add_neg (a * c) (b * c)]
+  rw [FpPoly.sub_eq_add_neg a b, FpPoly.right_distrib, FpPoly.sub_eq_add_neg (a * c) (b * c)]
   congr 1
   show ((0 - b : FpPoly p) * c) = 0 - b * c
   exact DensePoly.neg_mul_right_poly b c
@@ -470,12 +456,8 @@ private theorem fp_add_sub_add_sub
     (x - y) + (u - v) = (x + u) - (y + v) := by
   apply DensePoly.ext_coeff
   intro n
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_sub_ring]
-  rw [DensePoly.coeff_add_semiring]
-  rw [DensePoly.coeff_add_semiring]
+  rw [DensePoly.coeff_add_semiring, DensePoly.coeff_sub_ring, DensePoly.coeff_sub_ring,
+    DensePoly.coeff_sub_ring, DensePoly.coeff_add_semiring, DensePoly.coeff_add_semiring]
   grind
 
 /-- The accumulator is additive under coefficient subtraction: running
@@ -492,8 +474,7 @@ private theorem composeCoeffPowerSumUpTo_sub
       simp [composeCoeffPowerSumUpTo]
   | n + 1, base => by
       simp only [composeCoeffPowerSumUpTo]
-      rw [composeCoeffPowerSumUpTo_sub f h w n (base + 1)]
-      rw [C_sub_eq]
+      rw [composeCoeffPowerSumUpTo_sub f h w n (base + 1), C_sub_eq]
       rw [fp_sub_mul_right (DensePoly.C (f.coeff base))
         (DensePoly.C (h.coeff base)) (linearPow w base)]
       exact fp_add_sub_add_sub
@@ -547,8 +528,7 @@ theorem compose_sub [ZMod64.PrimeModulus p] (f h w : FpPoly p) :
 substituting `w` for `X` in `a - X` yields `compose a w - w`. -/
 theorem compose_sub_X [ZMod64.PrimeModulus p] (a w : FpPoly p) :
     DensePoly.compose (a - FpPoly.X) w = DensePoly.compose a w - w := by
-  rw [compose_sub]
-  rw [compose_X]
+  rw [compose_sub, compose_X]
 
 /-- The headline `linearPow X k - X` substitution: substituting `w`
 for `X` in `linearPow X k - X` yields `linearPow w k - w`. -/
@@ -556,8 +536,7 @@ theorem compose_linearPow_X_sub_X
     [ZMod64.PrimeModulus p] (w : FpPoly p) (k : Nat) :
     DensePoly.compose (FpPoly.linearPow FpPoly.X k - FpPoly.X) w =
       FpPoly.linearPow w k - w := by
-  rw [compose_sub]
-  rw [compose_linearPow_X, compose_X]
+  rw [compose_sub, compose_linearPow_X, compose_X]
 
 /-! ### Substitution into `a * (X - C c)`
 
@@ -644,14 +623,10 @@ private theorem fp_add_acm_rearrange
   -- RHS = D + B + C + A.
   -- Strategy: rewrite RHS via add_assoc to D + (B + C + A), then show A + B + C + D = D + (B + C + A)
   -- by adding D and then commuting.
-  rw [FpPoly.add_assoc D B C]
-  rw [FpPoly.add_assoc D (B + C) A]
+  rw [FpPoly.add_assoc D B C, FpPoly.add_assoc D (B + C) A]
   -- Now goal: A + B + C + D = D + (B + C + A)
   -- LHS = A + B + C + D, swap A and D via comm of the full sum.
-  rw [FpPoly.add_comm A B]
-  rw [FpPoly.add_assoc B A C]
-  rw [FpPoly.add_comm A C]
-  rw [← FpPoly.add_assoc B C A]
+  rw [FpPoly.add_comm A B, FpPoly.add_assoc B A C, FpPoly.add_comm A C, ← FpPoly.add_assoc B C A]
   -- Now goal: B + C + A + D = D + (B + C + A)
   rw [FpPoly.add_comm (B + C + A) D]
 
@@ -661,28 +636,22 @@ private theorem alg_compose_step
     (cprev ccx cx w s : FpPoly p) :
     cprev - ccx * cx + w * (s * (w - ccx) + cx) =
       (cx + w * s) * (w - ccx) + cprev := by
-  rw [FpPoly.left_distrib w (s * (w - ccx)) cx]
-  rw [← FpPoly.mul_assoc w s (w - ccx)]
-  rw [FpPoly.right_distrib cx (w * s) (w - ccx)]
+  rw [FpPoly.left_distrib w (s * (w - ccx)) cx, ← FpPoly.mul_assoc w s (w - ccx),
+    FpPoly.right_distrib cx (w * s) (w - ccx)]
   have hcx_sub :
       cx * (w - ccx) = cx * w - cx * ccx := by
     -- Use mul_comm to commute the multiplications, then existing neg_mul_right_poly.
-    rw [FpPoly.mul_comm cx (w - ccx)]
-    rw [FpPoly.mul_comm cx w]
-    rw [FpPoly.mul_comm cx ccx]
+    rw [FpPoly.mul_comm cx (w - ccx), FpPoly.mul_comm cx w, FpPoly.mul_comm cx ccx]
     -- Goal: (w - ccx) * cx = w * cx - ccx * cx
     rw [sub_eq_add_neg, sub_eq_add_neg, FpPoly.right_distrib]
     congr 1
     -- Goal: (-ccx) * cx = -(ccx * cx)
-    rw [show (-ccx : FpPoly p) = 0 - ccx from (zero_sub _).symm]
-    rw [show (-(ccx * cx) : FpPoly p) = 0 - ccx * cx from (zero_sub _).symm]
+    rw [show (-ccx : FpPoly p) = 0 - ccx from (zero_sub _).symm,
+      show (-(ccx * cx) : FpPoly p) = 0 - ccx * cx from (zero_sub _).symm]
     -- Goal: (0 - ccx) * cx = 0 - ccx * cx
     exact DensePoly.neg_mul_right_poly ccx cx
-  rw [hcx_sub]
-  rw [FpPoly.mul_comm cx w]
-  rw [FpPoly.mul_comm cx ccx]
-  rw [sub_eq_add_neg cprev (ccx * cx)]
-  rw [sub_eq_add_neg (w * cx) (ccx * cx)]
+  rw [hcx_sub, FpPoly.mul_comm cx w, FpPoly.mul_comm cx ccx, sub_eq_add_neg cprev (ccx * cx),
+    sub_eq_add_neg (w * cx) (ccx * cx)]
   -- Goal:
   --   cprev + -(ccx * cx) + (w * s * (w - ccx) + w * cx) =
   --   (w * cx + -(ccx * cx) + w * s * (w - ccx)) + cprev
@@ -699,13 +668,11 @@ private theorem composeScalarCoeffList_mulXSubCListAux
   | prev, [] => by
       simp only [mulXSubCListAux, DensePoly.composeScalarCoeffList]
       -- Goal: DensePoly.C prev + w * 0 = 0 * (w - C c) + C prev
-      rw [FpPoly.mul_zero, FpPoly.zero_mul]
-      rw [FpPoly.add_zero, FpPoly.zero_add]
+      rw [FpPoly.mul_zero, FpPoly.zero_mul, FpPoly.add_zero, FpPoly.zero_add]
       rfl
   | prev, x :: xs => by
       simp only [mulXSubCListAux, DensePoly.composeScalarCoeffList]
-      rw [composeScalarCoeffList_mulXSubCListAux c w x xs]
-      rw [C_sub_eq, C_mul_C_eq]
+      rw [composeScalarCoeffList_mulXSubCListAux c w x xs, C_sub_eq, C_mul_C_eq]
       -- Goal:
       --   DensePoly.C prev - DensePoly.C c * DensePoly.C x +
       --     w * (S * (w - C c) + C x) =
@@ -720,8 +687,7 @@ private theorem composeScalarCoeffList_mulXSubCList
     DensePoly.composeScalarCoeffList (mulXSubCList c cs) w =
       DensePoly.composeScalarCoeffList cs w * (w - FpPoly.C c) := by
   unfold mulXSubCList
-  rw [composeScalarCoeffList_mulXSubCListAux c w 0 cs]
-  rw [fp_C_zero, FpPoly.add_zero]
+  rw [composeScalarCoeffList_mulXSubCListAux c w 0 cs, fp_C_zero, FpPoly.add_zero]
 
 private theorem toArray_toList_getD_eq_coeff
     (f : FpPoly p) (n : Nat) :
@@ -800,15 +766,11 @@ private theorem mul_X_sub_C_eq_ofCoeffs_mulXSubCList
     have hneg_mul : (-(FpPoly.C c) : FpPoly p) * a = -(FpPoly.C c * a) := by
       show (0 - FpPoly.C c) * a = 0 - FpPoly.C c * a
       exact DensePoly.neg_mul_right_poly (FpPoly.C c) a
-    rw [sub_eq_add_neg, right_distrib]
-    rw [DensePoly.coeff_add_semiring]
-    rw [hneg_mul]
-    rw [DensePoly.coeff_neg_ring]
-    rw [show FpPoly.X = (DensePoly.monomial 1 (1 : ZMod64 p) : FpPoly p) from rfl]
-    rw [coeff_monomial_mul]
+    rw [sub_eq_add_neg, right_distrib, DensePoly.coeff_add_semiring, hneg_mul,
+      DensePoly.coeff_neg_ring,
+      show FpPoly.X = (DensePoly.monomial 1 (1 : ZMod64 p) : FpPoly p) from rfl, coeff_monomial_mul]
     have hCmul : FpPoly.C c * a = DensePoly.scale c a := FpPoly.C_mul_eq_scale c a
-    rw [hCmul]
-    rw [DensePoly.coeff_scale _ _ _ hzero_mul_c]
+    rw [hCmul, DensePoly.coeff_scale _ _ _ hzero_mul_c]
     cases n with
     | zero =>
         simp; grind
@@ -816,10 +778,8 @@ private theorem mul_X_sub_C_eq_ofCoeffs_mulXSubCList
         simp; grind
   rw [hLHS]
   -- RHS computation
-  rw [DensePoly.coeff_ofCoeffs]
-  rw [array_getD_eq_list_getD]
-  rw [mulXSubCList_getD]
-  rw [toArray_toList_getD_eq_coeff a n]
+  rw [DensePoly.coeff_ofCoeffs, array_getD_eq_list_getD, mulXSubCList_getD,
+    toArray_toList_getD_eq_coeff a n]
   -- Replace cs.getD (n-1) 0 with a.coeff (n-1)
   cases n with
   | zero => simp
@@ -835,10 +795,8 @@ theorem compose_mul_X_sub_C [ZMod64.PrimeModulus p]
     (a : FpPoly p) (c : ZMod64 p) (w : FpPoly p) :
     DensePoly.compose (a * (FpPoly.X - FpPoly.C c)) w =
       DensePoly.compose a w * (w - FpPoly.C c) := by
-  rw [mul_X_sub_C_eq_ofCoeffs_mulXSubCList]
-  rw [compose_ofCoeffs_eq_composeScalarCoeffList]
-  rw [composeScalarCoeffList_mulXSubCList]
-  rw [compose_eq_composeScalarCoeffList]
+  rw [mul_X_sub_C_eq_ofCoeffs_mulXSubCList, compose_ofCoeffs_eq_composeScalarCoeffList,
+    composeScalarCoeffList_mulXSubCList, compose_eq_composeScalarCoeffList]
 
 /-! ### foldl transport for the prime-field linear product
 
@@ -859,8 +817,7 @@ theorem compose_foldl_X_sub_C [ZMod64.PrimeModulus p]
   | nil => simp
   | cons x xs ih =>
       simp only [List.foldl_cons]
-      rw [ih (init * (FpPoly.X - FpPoly.C x))]
-      rw [compose_mul_X_sub_C init x w]
+      rw [ih (init * (FpPoly.X - FpPoly.C x)), compose_mul_X_sub_C init x w]
 
 /-- Specialisation to the canonical prime-field linear product starting from
 `init = 1`: substituting `w` into the variable form gives the witness form. -/
@@ -871,8 +828,7 @@ theorem compose_primeFieldLinearProduct [ZMod64.PrimeModulus p]
         (fun acc c => acc * (FpPoly.X - FpPoly.C c)) 1) w =
       (ZMod64.values p).foldl
         (fun acc c => acc * (w - FpPoly.C c)) 1 := by
-  rw [compose_foldl_X_sub_C]
-  rw [compose_one]
+  rw [compose_foldl_X_sub_C, compose_one]
 
 /-! ### Compose-form Frobenius
 
@@ -919,13 +875,10 @@ private theorem composeCoeffPowerSumUpTo_subst_linearPow_X
       exact (linearPow_zero_of_pos p hp_pos).symm
   | n + 1, base => by
       simp only [composeCoeffPowerSumUpTo]
-      rw [composeCoeffPowerSumUpTo_subst_linearPow_X coeff n (base + 1)]
-      rw [FpPoly.linearPow_add_prime (ZMod64.PrimeModulus.prime (p := p))]
-      rw [FpPoly.linearPow_mul_base]
-      rw [Quotient.linearPow_C_pow_prime]
-      rw [linearPow_linearPow_mul FpPoly.X base p]
-      rw [linearPow_linearPow_mul FpPoly.X p base]
-      rw [Nat.mul_comm base p]
+      rw [composeCoeffPowerSumUpTo_subst_linearPow_X coeff n (base + 1),
+        FpPoly.linearPow_add_prime (ZMod64.PrimeModulus.prime (p := p)), FpPoly.linearPow_mul_base,
+        Quotient.linearPow_C_pow_prime, linearPow_linearPow_mul FpPoly.X base p,
+        linearPow_linearPow_mul FpPoly.X p base, Nat.mul_comm base p]
 
 private theorem composeCoeffPowerSumUpTo_X_coeff
     [ZMod64.PrimeModulus p] (coeff : Nat → ZMod64 p) :
@@ -940,8 +893,7 @@ private theorem composeCoeffPowerSumUpTo_X_coeff
       rfl
   | n + 1, base, k => by
       simp only [composeCoeffPowerSumUpTo]
-      rw [DensePoly.coeff_add_semiring]
-      rw [composeCoeffPowerSumUpTo_X_coeff coeff n (base + 1) k]
+      rw [DensePoly.coeff_add_semiring, composeCoeffPowerSumUpTo_X_coeff coeff n (base + 1) k]
       rw [show FpPoly.linearPow (FpPoly.X : FpPoly p) base
               = DensePoly.monomial base (1 : ZMod64 p) from
               FpPoly.linearPow_monomial_one base]
@@ -954,8 +906,7 @@ private theorem composeCoeffPowerSumUpTo_X_coeff
       have hzz : (Zero.zero : ZMod64 p) = (0 : ZMod64 p) := rfl
       have hmul_zero : coeff base * (Zero.zero : ZMod64 p) = Zero.zero := by
         rw [hzz]; grind
-      rw [DensePoly.coeff_scale _ _ _ hmul_zero]
-      rw [DensePoly.coeff_monomial]
+      rw [DensePoly.coeff_scale _ _ _ hmul_zero, DensePoly.coeff_monomial]
       have hzz_add : (Zero.zero : ZMod64 p) + Zero.zero = Zero.zero := by
         grind
       by_cases hk_base : k = base
@@ -983,8 +934,7 @@ private theorem composeCoeffPowerSumUpTo_X_coeff
             rw [if_neg (fun ⟨_, h⟩ => hcond h)]
             exact hzz_add
         · have hk1 : ¬ (base + 1 ≤ k) := by omega
-          rw [if_neg (fun ⟨h, _⟩ => hk1 h)]
-          rw [if_neg (fun ⟨h, _⟩ => hkb h)]
+          rw [if_neg (fun ⟨h, _⟩ => hk1 h), if_neg (fun ⟨h, _⟩ => hkb h)]
           exact hzz_add
 
 private theorem composeCoeffPowerSumUpTo_self_X_eq_self
@@ -1006,9 +956,9 @@ through the polynomial composition surface: viewed as
 theorem compose_w_linearPow_X [ZMod64.PrimeModulus p] (w : FpPoly p) :
     DensePoly.compose w (FpPoly.linearPow FpPoly.X p) =
       FpPoly.linearPow w p := by
-  rw [compose_eq_coeff_power_sum_upTo_size w (FpPoly.linearPow FpPoly.X p)]
-  rw [composeCoeffPowerSumUpTo_subst_linearPow_X (fun i => w.coeff i) w.size 0]
-  rw [composeCoeffPowerSumUpTo_self_X_eq_self w]
+  rw [compose_eq_coeff_power_sum_upTo_size w (FpPoly.linearPow FpPoly.X p),
+    composeCoeffPowerSumUpTo_subst_linearPow_X (fun i => w.coeff i) w.size 0,
+    composeCoeffPowerSumUpTo_self_X_eq_self w]
 
 end FpPoly
 end Hex

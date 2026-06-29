@@ -301,8 +301,7 @@ private theorem eliminateColumn_step_zero_at_x
     exact this
   · rw [if_neg hcoeff]
     show (rowAdd s.1 pivotRow x (-s.1[x][col]))[x][col] = 0
-    rw [rowAdd_get_dst s.1 pivotRow x (-s.1[x][col]) col]
-    rw [hpivot]
+    rw [rowAdd_get_dst s.1 pivotRow x (-s.1[x][col]) col, hpivot]
     grind
 
 /-- The pivot-row entries at column `col` are preserved through any fold of

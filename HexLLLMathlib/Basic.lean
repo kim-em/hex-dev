@@ -223,8 +223,7 @@ theorem lovasz_check_iff_isLLLReduced_pair
           ((gd_k1 : Rat) * (gd_km1 : Rat) +
             (gd_k : Rat) ^ 2 * μ ^ 2) ≥
         (δ.num : Rat) * (gd_k : Rat) ^ 2) := by
-    rw [ge_iff_le, ge_iff_le, ← @Int.cast_le ℚ]
-    rw [hdk_eq, hdkPrev_eq, hdkNext_eq]
+    rw [ge_iff_le, ge_iff_le, ← @Int.cast_le ℚ, hdk_eq, hdkPrev_eq, hdkNext_eq]
     push_cast
     rw [hB_sq]
     simp only [Int.ofNat_eq_natCast, Int.cast_natCast]
@@ -557,8 +556,7 @@ private theorem sizeSq_of_intCheck
     have hμ_val : μ = (νij : Rat) / (dj1 : Rat) := by
       rw [eq_div_iff hdj1_ne, mul_comm]
       exact hbridge.symm
-    rw [hμ_val]
-    rw [abs_div]
+    rw [hμ_val, abs_div]
     have habs_dj1 : |(dj1 : Rat)| = (dj1 : Rat) := abs_of_pos hdj1_pos
     rw [habs_dj1]
     have habs_νij : |(νij : Rat)| = (νij.natAbs : Rat) := by

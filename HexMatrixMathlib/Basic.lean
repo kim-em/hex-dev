@@ -134,8 +134,7 @@ theorem matrixEquiv_rowAdd (M : Hex.Matrix R n m) (src dst : Fin n) (c : R) :
       have hone :
           ((1 : Matrix (Fin n) (Fin n) R) * matrixEquiv M) dst k =
             M[dst][k] := by
-        rw [← Matrix.diagonal_one, Matrix.diagonal_mul]
-        rw [one_mul]
+        rw [← Matrix.diagonal_one, Matrix.diagonal_mul, one_mul]
         rfl
       have hsingle :
           (Matrix.single dst src c * matrixEquiv M) dst k =
@@ -164,8 +163,7 @@ theorem matrixEquiv_rowAdd (M : Hex.Matrix R n m) (src dst : Fin n) (c : R) :
       have hone :
           ((1 : Matrix (Fin n) (Fin n) R) * matrixEquiv M) r k =
             M[r][k] := by
-        rw [← Matrix.diagonal_one, Matrix.diagonal_mul]
-        rw [one_mul]
+        rw [← Matrix.diagonal_one, Matrix.diagonal_mul, one_mul]
         rfl
       have hsingle :
           (Matrix.single dst src c * matrixEquiv M) r k = 0 := by

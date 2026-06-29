@@ -121,8 +121,7 @@ theorem rat_coeffs_lower_projection_real (b : Matrix Rat n m) {i j : Fin n}
           ((Hex.GramSchmidt.Rat.basis b).row j) = 0
   · have hnorm_real :
         (‖rowToEuclidean ((Hex.GramSchmidt.Rat.basis b).row j)‖ : ℝ) ^ 2 = 0 := by
-      rw [← real_inner_self_eq_norm_sq]
-      rw [rowToEuclidean_inner]
+      rw [← real_inner_self_eq_norm_sq, rowToEuclidean_inner]
       exact_mod_cast hnorm
     simp [hnorm, hnorm_real]
   ·
@@ -130,8 +129,7 @@ theorem rat_coeffs_lower_projection_real (b : Matrix Rat n m) {i j : Fin n}
         (‖rowToEuclidean ((Hex.GramSchmidt.Rat.basis b).row j)‖ : ℝ) ^ 2 =
           ((Vector.dotProduct ((Hex.GramSchmidt.Rat.basis b).row j)
             ((Hex.GramSchmidt.Rat.basis b).row j) : Rat) : ℝ) := by
-      rw [← real_inner_self_eq_norm_sq]
-      rw [rowToEuclidean_inner]
+      rw [← real_inner_self_eq_norm_sq, rowToEuclidean_inner]
     simp [hnorm, rowToEuclidean_inner, hnorm_real]
 
 private theorem rowToEuclidean_foldl_linear

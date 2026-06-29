@@ -450,8 +450,7 @@ private theorem rowSwap_getElem_of_ne {R : Type u}
     (M : Hex.Matrix R n n) (kFin pivot r : Fin n) (c : Fin n)
     (hr_ne_kFin : r ≠ kFin) (hr_ne_pivot : r ≠ pivot) :
     (Hex.Matrix.rowSwap M kFin pivot)[r][c] = M[r][c] := by
-  rw [Hex.Matrix.rowSwap_getElem]
-  rw [if_neg hr_ne_pivot, if_neg hr_ne_kFin]
+  rw [Hex.Matrix.rowSwap_getElem, if_neg hr_ne_pivot, if_neg hr_ne_kFin]
 
 /-- Reading row `r` of `rowSwap M kFin pivot` returns row `swap_idx r` of `M`,
 where `swap_idx kFin pivot r = if r = pivot then kFin else if r = kFin then pivot else r`. -/
@@ -1202,8 +1201,7 @@ private theorem submatrix_borderedMinor_succAbove_last_eq_topBlock
       omega
     rw [dif_neg hctlt]
     have h_succAbove_eq : c'.succAbove t = Fin.last k := Fin.ext hct_eq
-    rw [h_succAbove_eq]
-    rw [failedBareissTopBlock_apply_last source k hk s]
+    rw [h_succAbove_eq, failedBareissTopBlock_apply_last source k hk s]
     rfl
 
 /-- For any source row `r`, the dot product of `failedBareissColumn` with row
@@ -1600,11 +1598,9 @@ theorem bareissData_eq_mathlib_det (M : Hex.Matrix Int n n) :
           change Hex.Matrix.det logicalSource = 1
           exact (det_eq logicalSource).trans (by rw [Matrix.det_isEmpty])
         have hsource_det : Hex.Matrix.det M = (Hex.Matrix.bareissData M).sign := by
-          rw [hdet]
-          rw [hlogical_det, mul_one]
+          rw [hdet, hlogical_det, mul_one]
           exact hdata_sign.symm
-        rw [Hex.Matrix.BareissData.det_zero_eq _ hregular]
-        rw [← hsource_det]
+        rw [Hex.Matrix.BareissData.det_zero_eq _ hregular, ← hsource_det]
         exact det_eq M
     | k + 1, M, logicalSource, hdet, hnopiv, hregular =>
         have hloop_regular :
@@ -1635,9 +1631,7 @@ theorem bareissData_eq_mathlib_det (M : Hex.Matrix Int n n) :
                   (⟨k, Nat.lt_succ_self k⟩ : Fin (k + 1))] =
               Hex.Matrix.det logicalSource := by
           simpa [Hex.Matrix.bareissData_eq_finish_pivotLoop, Hex.Matrix.finish] using hentry
-        rw [Hex.Matrix.BareissData.det_succ_eq _ hregular]
-        rw [hdata_entry, hsign]
-        rw [← hdet]
+        rw [Hex.Matrix.BareissData.det_succ_eq _ hregular, hdata_entry, hsign, ← hdet]
         exact det_eq M
   · have hdata_zero : (Hex.Matrix.bareissData M).det = 0 := by
       unfold Hex.Matrix.BareissData.det

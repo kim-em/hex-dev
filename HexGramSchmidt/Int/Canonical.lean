@@ -481,8 +481,7 @@ private theorem dot_rowCombination_mul_right_int
     intro a ha
     simp only [Vector.getElem_ofFn]
     grind
-  rw [h_eq_input]
-  rw [rowCombination_bareiss_coeff_update b s 0 (Vector.ofFn f) (Vector.ofFn f)]
+  rw [h_eq_input, rowCombination_bareiss_coeff_update b s 0 (Vector.ofFn f) (Vector.ofFn f)]
   rw [dot_bareiss_row_update_left s 0
     (Matrix.rowCombination b (Vector.ofFn f))
     (Matrix.rowCombination b (Vector.ofFn f)) w]
@@ -689,8 +688,7 @@ theorem bareissGramRowInvariant_regular_step_coeff_canonical
           bareissGramRowInvariantStepCoeff hinv hnext i hi := by
       show (if hi : _ then _ else _) = _
       rw [dif_pos hi]
-    rw [hLHS]
-    rw [bareissGramCanonicalCoeff_succ_regular b elapsed i hnext hp hi]
+    rw [hLHS, bareissGramCanonicalCoeff_succ_regular b elapsed i hnext hp hi]
     show Vector.ofFn (fun a : Fin n =>
         Matrix.exactDiv
           (_ * (hinv.coeff i)[a] - _ * (hinv.coeff _)[a])

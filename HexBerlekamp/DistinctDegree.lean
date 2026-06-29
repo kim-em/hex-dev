@@ -314,8 +314,7 @@ private theorem degreeBucketProduct_appendBucket?_some
     (buckets : List (DegreeBucket p)) (bucket : DegreeBucket p) :
     degreeBucketProduct (appendBucket? buckets (some bucket)) =
       degreeBucketProduct buckets * bucket.factor := by
-  rw [appendBucket?]
-  rw [degreeBucketProduct_append, degreeBucketProduct_singleton]
+  rw [appendBucket?, degreeBucketProduct_append, degreeBucketProduct_singleton]
 
 /-- The factor contributed by an optional bucket: `1` for `none`, the recorded
 factor for `some bucket`. -/
