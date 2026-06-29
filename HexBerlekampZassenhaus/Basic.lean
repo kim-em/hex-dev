@@ -5026,7 +5026,6 @@ def bhksRowsArrayToMatrix {m : Nat} (n : Nat) (rows : Array (Vector Int m)) :
   Matrix.ofFn fun i j => (rows.getD i.val (Vector.ofFn fun _ => 0))[j]
 
 set_option linter.unnecessarySimpa false in
-set_option linter.unreachableTactic false in
 theorem bhksRowsArrayToMatrix_row {m n : Nat} (rows : Array (Vector Int m))
     (i : Fin n) :
     Matrix.row (bhksRowsArrayToMatrix n rows) i =
@@ -5039,7 +5038,6 @@ theorem bhksRowsArrayToMatrix_row {m n : Nat} (rows : Array (Vector Int m))
       rfl)
 
 set_option linter.unnecessarySimpa false in
-set_option linter.unreachableTactic false in
 theorem bhksRowsArrayToMatrix_toArray {m n : Nat} (B : Matrix Int n m) :
     bhksRowsArrayToMatrix n B.toArray = B := by
   apply Vector.ext

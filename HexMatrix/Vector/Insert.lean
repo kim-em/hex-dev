@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import Batteries.Data.Vector.Lemmas
 public import HexMatrix.Basic
 
 public section

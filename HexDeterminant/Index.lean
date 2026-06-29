@@ -269,14 +269,13 @@ private theorem fin_mem_of_full_nodup_for_count {n : Nat} {xs : List (Fin n)}
   by_cases hmem : x ∈ xs
   · exact hmem
   · exfalso
-    have hsub : List.Subperm xs ((List.finRange n).erase x) := by
-      apply List.subperm_of_subset hnodup
+    have hsubset : xs ⊆ (List.finRange n).erase x := by
       intro y hy
-      exact (List.mem_erase_of_ne (by
-        intro hyx
-        exact hmem (hyx ▸ hy))).2 (List.mem_finRange y)
+      refine (List.mem_erase_of_ne ?_).2 (List.mem_finRange y)
+      rintro rfl
+      exact hmem hy
     have hle : xs.length ≤ ((List.finRange n).erase x).length :=
-      List.Subperm.length_le hsub
+      List.nodup_subset_length_le hnodup hsubset
     have herase : ((List.finRange n).erase x).length = n - 1 := by
       rw [List.length_erase]
       simp [List.mem_finRange, List.length_finRange]
@@ -713,7 +712,7 @@ theorem detProduct_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     detProduct M (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n)) =
       detProduct (leadingPrefix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n] := by
   unfold detProduct
-  rw [← Fin.foldl_eq_foldl_finRange, ← Fin.foldl_eq_foldl_finRange]
+  rw [← Fin.foldl_eq_finRange_foldl, ← Fin.foldl_eq_finRange_foldl]
   rw [Fin.foldl_succ_last]
   have hfold :
       Fin.foldl n
@@ -925,14 +924,14 @@ private theorem foldl_detTerm_last_row_insertions
           acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) z =
       z + detSign (R := R) v *
         (detProduct (leadingPrefix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n]) := by
-  rw [← Fin.foldl_eq_foldl_finRange]
+  rw [← Fin.foldl_eq_finRange_foldl]
   rw [Fin.foldl_succ_last]
   have hprefix :
       Fin.foldl n
           (fun acc i =>
             acc + detTerm M
               (insertAt (Fin.last n) (v.map Fin.castSucc) i.castSucc)) z = z := by
-    rw [Fin.foldl_eq_foldl_finRange]
+    rw [Fin.foldl_eq_finRange_foldl]
     calc
       (List.finRange n).foldl
           (fun acc i =>
@@ -1099,7 +1098,7 @@ theorem det_upperTriangular_eq_finFoldl_diag
           Fin.foldl n
               (fun acc i => acc * (leadingPrefix M n (Nat.le_succ n))[i][i]) 1 =
             Fin.foldl n (fun acc i => acc * M[i.castSucc][i.castSucc]) 1 := by
-        rw [Fin.foldl_eq_foldl_finRange, Fin.foldl_eq_foldl_finRange]
+        rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl]
         apply foldl_acc_congr
         intro acc i _hmem
         have hentry : (leadingPrefix M n (Nat.le_succ n))[i][i] = M[i.castSucc][i.castSucc] :=
@@ -1114,7 +1113,7 @@ theorem det_upperTriangular_eq_foldl_diag
     (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0) :
     det M = (List.finRange n).foldl (fun acc i => acc * M[i][i]) 1 := by
   rw [det_upperTriangular_eq_finFoldl_diag M hzero]
-  rw [Fin.foldl_eq_foldl_finRange]
+  rw [Fin.foldl_eq_finRange_foldl]
 
 private theorem detTerm_identity_insertAt_last {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (v : Vector (Fin n) n) :
@@ -1131,14 +1130,14 @@ private theorem foldl_detTerm_identity_insertions {R : Type u}
           acc + detTerm (1 : Matrix R (n + 1) (n + 1))
             (insertAt (Fin.last n) (v.map Fin.castSucc) i)) z =
       z + detTerm (1 : Matrix R n n) v := by
-  rw [← Fin.foldl_eq_foldl_finRange]
+  rw [← Fin.foldl_eq_finRange_foldl]
   rw [Fin.foldl_succ_last]
   have hprefix :
       Fin.foldl n
           (fun acc i =>
             acc + detTerm (1 : Matrix R (n + 1) (n + 1))
               (insertAt (Fin.last n) (v.map Fin.castSucc) i.castSucc)) z = z := by
-    rw [Fin.foldl_eq_foldl_finRange]
+    rw [Fin.foldl_eq_finRange_foldl]
     calc
       (List.finRange n).foldl
           (fun acc i =>

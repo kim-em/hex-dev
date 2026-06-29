@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import Std
-public import Batteries.Data.Vector.Lemmas
 public import HexRowReduce.RowEchelon
 
 public section

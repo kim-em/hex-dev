@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import Batteries.Data.List.Lemmas
+public import HexMatrix.ListShim
 
 public section
 

@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexLLL
-public import Batteries.Lean.IO.Process
 public import LeanBench
 
 public section

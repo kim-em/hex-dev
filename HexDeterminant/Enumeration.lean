@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import Init.Grind.Ring.Field
-public import Batteries.Data.List.Lemmas
 public import HexMatrix.Vector.Insert
 
 public section
