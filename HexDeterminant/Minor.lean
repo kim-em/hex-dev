@@ -97,7 +97,7 @@ def deleteRowCol {R : Type u} {n : Nat} (M : Matrix R (n + 1) (n + 1))
 
 /-- Entries of a deleted-row/deleted-column minor are the corresponding source
 entries at the skipped row and column indices. -/
-@[grind =] theorem deleteRowCol_entry {R : Type u} {n : Nat}
+@[grind =] theorem getElem_deleteRowCol {R : Type u} {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) (i j : Fin n) :
     (deleteRowCol M row col)[i][j] = M[skipIndex row i][skipIndex col j] := by
   simp [deleteRowCol, ofFn]
@@ -113,7 +113,7 @@ This is the minor normalization used by bottom-right cofactor expansion. -/
   let jj : Fin n := ⟨j, hj⟩
   change (deleteRowCol M (Fin.last n) (Fin.last n))[ii][jj] =
     (principalSubmatrix M n (Nat.le_succ n))[ii][jj]
-  rw [deleteRowCol_entry]
+  rw [getElem_deleteRowCol]
   simp [principalSubmatrix, ofFn]
 
 /-- Deleting row `row` and column `col` after transposing is the transpose of

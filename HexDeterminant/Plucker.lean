@@ -137,7 +137,7 @@ def nMatrix {R : Type u} {n : Nat}
 
 /-- Entry `(i, j)` of the two-row-deleted minor `nMatrix B p q hpq` is the source
 entry `B[skipIndex2 p q hpq i][j]`. -/
-@[grind =] theorem nMatrix_entry {R : Type u} {n : Nat}
+@[grind =] theorem getElem_nMatrix {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val)
     (i : Fin n) (j : Fin n) :
     (nMatrix B p q hpq)[i][j] = B[skipIndex2 p q hpq i][j] := by
@@ -157,7 +157,7 @@ ordered `nMatrix` row sequence with one row displaced downward. Each
 "row-move" is realised as a chain of adjacent `rowSwap`s; the determinant
 picks up `(-1) ^ k` for a `k`-step move. The four row-content lemmas
 identify the rows of the moved matrix so consumers can pair them with
-`nMatrix_entry` / `skipIndex2` value lemmas. -/
+`getElem_nMatrix` / `skipIndex2` value lemmas. -/
 
 /-- Move the row at position `src + k` of `M` to position `src` by `k`
 adjacent row swaps. The rows previously at positions `src, …, src + k - 1`
@@ -359,7 +359,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_first
         setRow_row_ne (nMatrix B a b hab) s ii B[a] hii_ne_s]
     let jj : Fin n := ⟨j, hj⟩
     show (nMatrix B a b hab)[ii][jj] = (nMatrix B b t hbt)[ii][jj]
-    rw [nMatrix_entry, nMatrix_entry]
+    rw [getElem_nMatrix, getElem_nMatrix]
     have hii_lt_b : ii.val < b.val := Nat.lt_trans h_below hab
     have hidx : skipIndex2 a b hab ii = skipIndex2 b t hbt ii := by
       apply Fin.ext
@@ -388,7 +388,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_first
       rw [h_row_eq]
       let jj : Fin n := ⟨j, hj⟩
       show B[a][jj] = (nMatrix B b t hbt)[ii][jj]
-      rw [nMatrix_entry]
+      rw [getElem_nMatrix]
       have hii_lt_b : ii.val < b.val := by rw [h_eq]; exact hab
       have hidx : skipIndex2 b t hbt ii = a := by
         apply Fin.ext
@@ -409,7 +409,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_first
         rw [setRow_row_ne (nMatrix B a b hab) s ii B[a] hii_ne_s]
         let jj : Fin n := ⟨j, hj⟩
         show (nMatrix B a b hab)[ii][jj] = (nMatrix B b t hbt)[ii][jj]
-        rw [nMatrix_entry, nMatrix_entry]
+        rw [getElem_nMatrix, getElem_nMatrix]
         have h_not_lt_a : ¬ ii.val < a.val := h_below
         have h_not_between_lhs : ¬ ii.val + 1 < b.val := by omega
         have h_not_lt_b_rhs : ¬ ii.val < b.val := by omega
@@ -439,7 +439,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_first
         rw [setRow_row_ne (nMatrix B a b hab) s j_minus B[a] hj_ne_s]
         let jj : Fin n := ⟨j, hj⟩
         show (nMatrix B a b hab)[j_minus][jj] = (nMatrix B b t hbt)[ii][jj]
-        rw [nMatrix_entry, nMatrix_entry]
+        rw [getElem_nMatrix, getElem_nMatrix]
         have h_not_lt_a : ¬ j_minus.val < a.val := by
           show ¬ ii.val - 1 < a.val; omega
         by_cases h_below_b : ii.val < b.val
@@ -497,7 +497,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_second
         setRow_row_ne (nMatrix B a b hab) s ii B[b] hii_ne_s]
     let jj : Fin n := ⟨j, hj⟩
     show (nMatrix B a b hab)[ii][jj] = (nMatrix B a t hat)[ii][jj]
-    rw [nMatrix_entry, nMatrix_entry]
+    rw [getElem_nMatrix, getElem_nMatrix]
     by_cases h_lt_a : ii.val < a.val
     · have hidx : skipIndex2 a b hab ii = skipIndex2 a t hat ii := by
         apply Fin.ext
@@ -533,7 +533,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_second
       rw [h_row_eq]
       let jj : Fin n := ⟨j, hj⟩
       show B[b][jj] = (nMatrix B a t hat)[ii][jj]
-      rw [nMatrix_entry]
+      rw [getElem_nMatrix]
       have h_not_lt_a : ¬ ii.val < a.val := by
         have : a.val ≤ b.val - 1 := by omega
         rw [h_eq]; omega
@@ -558,7 +558,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_second
         rw [setRow_row_ne (nMatrix B a b hab) s ii B[b] hii_ne_s]
         let jj : Fin n := ⟨j, hj⟩
         show (nMatrix B a b hab)[ii][jj] = (nMatrix B a t hat)[ii][jj]
-        rw [nMatrix_entry, nMatrix_entry]
+        rw [getElem_nMatrix, getElem_nMatrix]
         have h_not_lt_a : ¬ ii.val < a.val := by omega
         have h_not_between_lhs : ¬ ii.val + 1 < b.val := by omega
         have h_not_between_rhs : ¬ ii.val + 1 < t.val := by omega
@@ -587,7 +587,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_second
         rw [setRow_row_ne (nMatrix B a b hab) s j_minus B[b] hj_ne_s]
         let jj : Fin n := ⟨j, hj⟩
         show (nMatrix B a b hab)[j_minus][jj] = (nMatrix B a t hat)[ii][jj]
-        rw [nMatrix_entry, nMatrix_entry]
+        rw [getElem_nMatrix, getElem_nMatrix]
         have h_not_lt_a_lhs : ¬ j_minus.val < a.val := by
           show ¬ ii.val - 1 < a.val
           have : a.val ≤ b.val - 1 := by omega
@@ -947,7 +947,7 @@ theorem deleteRowCol_twoColMatrix_last_eq_mMatrix {R : Type u} {n : Nat}
   let jj : Fin (n + 1) := ⟨j, hj⟩
   change (deleteRowCol (twoColMatrix B u v) p (Fin.last (n + 1)))[ii][jj] =
     (mMatrix B u p)[ii][jj]
-  rw [deleteRowCol_entry]
+  rw [getElem_deleteRowCol]
   have hcol :
       (skipIndex (Fin.last (n + 1)) jj).val = jj.val := by
     rw [skipIndex_last]
@@ -1283,7 +1283,7 @@ theorem deleteRowCol_mMatrix_at_q_minus_one_eq_nMatrix_of_lt
   change (deleteRowCol (mMatrix B v p)
         (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)) (Fin.last n))[ii][jj] =
     (nMatrix B p q hpq)[ii][jj]
-  rw [deleteRowCol_entry, nMatrix_entry]
+  rw [getElem_deleteRowCol, getElem_nMatrix]
   -- The column index: skipIndex (Fin.last n) jj = jj.castSucc; its val = jj.val < n.
   have hjj_castSucc : (skipIndex (Fin.last n) jj).val = jj.val := by
     show (skipIndex (Fin.last n) jj).val = jj.val
@@ -1375,7 +1375,7 @@ theorem deleteRowCol_mMatrix_at_q_eq_nMatrix_of_gt
   change (deleteRowCol (mMatrix B v p)
         (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)) (Fin.last n))[ii][jj] =
     (nMatrix B q p hqp)[ii][jj]
-  rw [deleteRowCol_entry, nMatrix_entry]
+  rw [getElem_deleteRowCol, getElem_nMatrix]
   have hjj_castSucc : (skipIndex (Fin.last n) jj).val = jj.val := by
     show (skipIndex (Fin.last n) jj).val = jj.val
     rw [skipIndex_last]

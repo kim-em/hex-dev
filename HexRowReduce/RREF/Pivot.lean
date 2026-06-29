@@ -244,7 +244,7 @@ private theorem rowAdd_get_other (M : Matrix R n m) (src dst : Fin n) (c : R)
   simpa [rowAdd] using congrArg (fun row => row[k]) hrow
 
 /-- One step of `eliminateColumn`'s fold preserves the entry at the pivot row. -/
-private theorem eliminateColumn_step_pivotRow_entry
+private theorem eliminateColumn_step_pivotRow_unchanged
     (s : Matrix R n m × Matrix R n n) (pivotRow x : Fin n)
     (col : Fin m) (k : Fin m) :
     (if _h : x = pivotRow then s
@@ -263,7 +263,7 @@ private theorem eliminateColumn_step_pivotRow_entry
 
 /-- One step of `eliminateColumn`'s fold preserves the entry at any row other
 than `x` (the row currently being processed) at column `col`. -/
-private theorem eliminateColumn_step_other_entry
+private theorem eliminateColumn_step_other_unchanged
     (s : Matrix R n m × Matrix R n n) (pivotRow x : Fin n)
     (col : Fin m) {r : Fin n} (hrx : r ≠ x) :
     (if _h : x = pivotRow then s
@@ -324,7 +324,7 @@ private theorem eliminateColumn_foldl_pivotRow
       intro s
       simp only [List.foldl_cons]
       rw [ih]
-      exact eliminateColumn_step_pivotRow_entry s pivotRow x col k
+      exact eliminateColumn_step_pivotRow_unchanged s pivotRow x col k
 
 /-- Rows outside the fold's processed list are unchanged at column `col`. -/
 private theorem eliminateColumn_foldl_outside
@@ -348,7 +348,7 @@ private theorem eliminateColumn_foldl_outside
       have hrtail : r ∉ xs := fun h => hnotin (List.mem_cons.mpr (Or.inr h))
       simp only [List.foldl_cons]
       rw [ih _ r hrtail]
-      exact eliminateColumn_step_other_entry s pivotRow x col hrx
+      exact eliminateColumn_step_other_unchanged s pivotRow x col hrx
 
 /-- The whole pivot row is unchanged by `eliminateColumn` at column `k`. -/
 private theorem eliminateColumn_pivotRow (M : Matrix R n m) (T : Matrix R n n)
@@ -397,7 +397,7 @@ private theorem eliminateColumn_zero (M : Matrix R n m) (T : Matrix R n n)
                 if coeff = 0 then s
                 else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff))).1[pivotRow][col]
               = (1 : R) := by
-          rw [eliminateColumn_step_pivotRow_entry s pivotRow x col col]
+          rw [eliminateColumn_step_pivotRow_unchanged s pivotRow x col col]
           exact hs
         exact ih _ hpivot_step hrtail (List.nodup_cons.mp hnodup).2
 
@@ -582,7 +582,7 @@ private theorem eliminateColumn_right_inverse_preserve
 omit [Lean.Grind.Field R] [DecidableEq R] in
 /-- Swapping the current row with the discovered pivot moves the nonzero pivot
 entry into the target row. -/
-private theorem rowSwap_target_pivot_entry
+private theorem getElem_rowSwap_target_pivot
     (E : Matrix R n m) (target pivot : Fin n) (col : Fin m) :
     (rowSwap E target pivot)[target][col] = E[pivot][col] := by
   rw [rowSwap_getElem]

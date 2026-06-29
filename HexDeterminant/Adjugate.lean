@@ -39,7 +39,7 @@ theorem deleteRowCol_setRow_self {R : Type u} {n : Nat}
   let jj : Fin n := ⟨j, hj⟩
   change (deleteRowCol (setRow M dst v) dst col)[ii][jj] =
     (deleteRowCol M dst col)[ii][jj]
-  rw [deleteRowCol_entry, deleteRowCol_entry]
+  rw [getElem_deleteRowCol, getElem_deleteRowCol]
   have hne : skipIndex dst ii ≠ dst := skipIndex_ne dst ii
   have hrow := setRow_row_ne M dst (skipIndex dst ii) v hne
   exact congrArg (fun row => row[skipIndex col jj]) hrow
@@ -296,7 +296,7 @@ private theorem columnTupleMatrix_eq_ofFn_ofFn
   show (columnTupleMatrix M cols)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
     (ofFn (fun r c => M[r][(Vector.ofFn cols)[c]]) : Matrix R n n)[
       (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [columnTupleMatrix_entry]
+  rw [getElem_columnTupleMatrix]
   unfold ofFn
   rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
   exact congrArg (fun col : Fin n => M[(⟨r, hr⟩ : Fin n)][col])
@@ -335,7 +335,7 @@ private theorem mul_eq_columnSumMatrix_transpose
   let rr : Fin n := ⟨r, hr⟩
   let cc : Fin n := ⟨c, hc⟩
   show (M * N)[rr][cc] = (columnSumMatrix M N.transpose)[rr][cc]
-  rw [columnSumMatrix_entry]
+  rw [getElem_columnSumMatrix]
   change (Matrix.mul M N)[rr][cc] = _
   unfold Matrix.mul ofFn
   rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]

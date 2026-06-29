@@ -299,7 +299,7 @@ theorem det_eq_foldl_laplace_col
           let jj : Fin n := ⟨j, hj⟩
           change (deleteRowCol C row (Fin.last n))[ii][jj] =
             (deleteRowCol M row col)[ii][jj]
-          rw [deleteRowCol_entry, deleteRowCol_entry]
+          rw [getElem_deleteRowCol, getElem_deleteRowCol]
           rw [show C[skipIndex row ii][skipIndex (Fin.last n) jj] =
               C[skipIndex row ii][jj.castSucc] by
             exact congrArg (fun c => C[skipIndex row ii][c]) (skipIndex_last jj)]
