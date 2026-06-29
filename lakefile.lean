@@ -12,7 +12,7 @@ require verso from git
   "https://github.com/leanprover/verso.git" @ "v4.32.0-rc1"
 
 require «lean-bench» from git
-  "https://github.com/kim-em/lean-bench.git" @ "0963bff8d9f71b92bf7453fa50d0aa42c16111fe"
+  "https://github.com/kim-em/lean-bench.git" @ "master"
 
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @ "v4.32.0-rc1-patch1"
