@@ -185,20 +185,18 @@ private theorem basisRows_get!_dot_eq_zero_of_list
   have hpair : (basisRows rows).Pairwise
       (fun x y => Vector.dotProduct x y = 0 ∧ Vector.dotProduct y x = 0) :=
     basisRows_pairwise rows
-  have hget_i : (basisRows rows).get ⟨i, hilen⟩ = (basisRows rows)[i]! := by
-    simp [hilen]
-  have hget_j : (basisRows rows).get ⟨j, hjlen⟩ = (basisRows rows)[j]! := by
-    simp [hjlen]
+  have hget_i : (basisRows rows)[i]! = (basisRows rows)[i] := by simp [hilen]
+  have hget_j : (basisRows rows)[j]! = (basisRows rows)[j] := by simp [hjlen]
   by_cases hlt : i < j
   · have hrel :=
-      (List.pairwise_iff_get.1 hpair) ⟨i, hilen⟩ ⟨j, hjlen⟩ (by simpa using hlt)
-    rw [← hget_i, ← hget_j]
+      (List.pairwise_iff_getElem.1 hpair) i j hilen hjlen hlt
+    rw [hget_i, hget_j]
     exact hrel.1
   · have hji : j < i :=
       Nat.lt_of_le_of_ne (Nat.le_of_not_gt hlt) (fun h => hij h.symm)
     have hrel :=
-      (List.pairwise_iff_get.1 hpair) ⟨j, hjlen⟩ ⟨i, hilen⟩ (by simpa using hji)
-    rw [← hget_i, ← hget_j]
+      (List.pairwise_iff_getElem.1 hpair) j i hjlen hilen hji
+    rw [hget_i, hget_j]
     exact hrel.2
 
 private theorem zero_add_vec (v : Vector Rat m) : (0 : Vector Rat m) + v = v := by

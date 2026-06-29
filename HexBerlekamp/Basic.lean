@@ -730,8 +730,12 @@ theorem fixedSpaceKernel_sound (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (k : Fin (basisSize f -
       Matrix.rref_rank (fixedSpaceMatrix f hmonic))) :
     IsFixedSpaceKernelPolynomial f hmonic ((fixedSpaceKernel f hmonic).get k) := by
-  unfold IsFixedSpaceKernelPolynomial fixedSpaceKernel
-  rw [Vector.get_ofFn, coeffVector_vectorToPoly]
+  have hk : (fixedSpaceKernel f hmonic).get k =
+      vectorToPoly ((fixedSpaceKernelVectors f hmonic).get k) := by
+    unfold fixedSpaceKernel
+    exact Vector.getElem_ofFn _
+  unfold IsFixedSpaceKernelPolynomial
+  rw [hk, coeffVector_vectorToPoly]
   exact fixedSpaceKernelVectors_sound f hmonic k
 
 /-- Every vector satisfying the executable fixed-space kernel condition is a

@@ -252,9 +252,9 @@ theorem rowCombination_single {R : Type u} [Lean.Grind.CommRing R]
   change (Vector.ofFn fun j : Fin m =>
       (List.finRange n).foldl
         (fun acc l => acc + (Vector.ofFn fun j : Fin m => Vector.ofFn fun i : Fin n => M[i][j])[j][l] *
-          (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0)[l]) 0).get jf =
+          (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0)[l]) 0)[jf.1] =
     M[i][jf]
-  rw [Vector.get_ofFn]
+  rw [Vector.getElem_ofFn]
   change
     (List.finRange n).foldl
         (fun acc l => acc +
@@ -582,7 +582,7 @@ private theorem nullspace_get [Lean.Grind.Ring R] (E : IsRREF M D)
     (k : Fin (m - D.rank)) :
     E.nullspace.get k = Matrix.col E.nullspaceMatrix k := by
   unfold nullspace
-  rw [Vector.get_ofFn]
+  exact Vector.getElem_ofFn _
 
 /-- On its own free column, a nullspace basis vector has entry `1`. -/
 @[grind =] theorem nullspace_get_free [Lean.Grind.Ring R] (E : IsRREF M D)

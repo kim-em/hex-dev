@@ -131,7 +131,7 @@ private theorem vectorEquiv_nullspaceMatrix_mulVec [Field R]
   apply Finset.sum_congr rfl
   intro k _
   unfold Hex.Matrix.IsRREF.nullspace Hex.Matrix.col
-  simp [mul_comm]
+  simp [mul_comm, Vector.get, Vector.toArray_ofFn]
 
 /-- Soundness of the executable `spanCoeffs`: when echelon-form data certifies
 `v` as a row combination with coefficients `c`, the Mathlib image of `v` is the
