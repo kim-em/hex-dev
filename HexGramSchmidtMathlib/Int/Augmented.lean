@@ -171,9 +171,9 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
     rw [hdetG]
     -- Cancellation: origProjCoords[Fin.last j] * gramDet = gramDet * coeffs[i][j].
     have hcancel_normSq :
-        Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+        ((basis b).row ⟨j, hjlt⟩).normSq *
             (originalProjectionCoords b i j hi hjlt)[Fin.last j] =
-          Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+          ((basis b).row ⟨j, hjlt⟩).normSq *
             GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hjlt⟩ := by
       have hH2 := dot_basis_basisPrefixProjection_eq_coeff_mul_normSq b i j hi hj
       have hH3 := dot_basis_basisPrefixProjection_eq_origProjCoords_mul_normSq b i j hi hj
@@ -185,25 +185,25 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
     rw [hgd_succ]
     have hgnp_ne_or_zero :
         gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
-              Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+              ((basis b).row ⟨j, hjlt⟩).normSq *
             (originalProjectionCoords b i j hi hjlt)[Fin.last j] =
           gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
-              Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+              ((basis b).row ⟨j, hjlt⟩).normSq *
             GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hjlt⟩ := by
       have h1 :
           gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
-              Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+              ((basis b).row ⟨j, hjlt⟩).normSq *
             (originalProjectionCoords b i j hi hjlt)[Fin.last j] =
             gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
-              (Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+              (((basis b).row ⟨j, hjlt⟩).normSq *
                 (originalProjectionCoords b i j hi hjlt)[Fin.last j]) := by
         grind
       have h2 :
           gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
-              Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+              ((basis b).row ⟨j, hjlt⟩).normSq *
             GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hjlt⟩ =
             gramSchmidtNormProduct b j (Nat.le_of_succ_le hjsuc) *
-              (Vector.normSq ((basis b).row ⟨j, hjlt⟩) *
+              (((basis b).row ⟨j, hjlt⟩).normSq *
                 GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, hjlt⟩) := by
         grind
       rw [h1, h2, hcancel_normSq]
@@ -427,7 +427,9 @@ theorem noPivotLoop_augmentedGram_invariant
         have h := Matrix.noPivotLoop_step_eq_add_of_singularStep_none fuel
           (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl (by
             show 0 + fuel + 1 ≤ n; omega) h_no_sing_prev
-        simpa [Matrix.noPivotInitialState] using h
+        simp only [Matrix.noPivotInitialState, Nat.zero_add] at h
+        rw [hstateG]
+        exact h
       have hDone_G : stateG.step + 1 < n := by rw [h_step_G_fuel]; omega
       have hk_G_lt : stateG.step < n := Nat.lt_of_succ_lt hDone_G
       -- Pivot non-zero on the Gram side.

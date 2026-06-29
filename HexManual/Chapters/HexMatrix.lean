@@ -88,7 +88,7 @@ Multiplication is the usual row-by-column dot product, available both
 matrix-by-vector and matrix-by-matrix, with `*` notation for each. The
 dot product itself is exposed directly.
 
-{docstring Hex.Vector.dotProduct}
+{docstring Vector.dotProduct}
 
 {docstring Hex.Matrix.mulVec}
 

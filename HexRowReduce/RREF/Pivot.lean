@@ -694,9 +694,9 @@ private theorem eliminateColumn_preserve_canonical_column
       intro s hSrc hOld hzero
       simp only [List.foldl_cons]
       by_cases hx : x = newPivot
-      · simpa [hx] using ih s hSrc hOld hzero
+      · simp only [dif_pos hx]; exact ih s hSrc hOld hzero
       · by_cases hcoeff : -s.1[x][newCol] = 0
-        · simpa only [hx, hcoeff, if_false, if_true] using ih s hSrc hOld hzero
+        · simp only [dif_neg hx, hcoeff, if_pos]; exact ih s hSrc hOld hzero
         · let next : Matrix R n m × Matrix R n n :=
             (rowAdd s.1 newPivot x (-s.1[x][newCol]), rowAdd s.2 newPivot x (-s.1[x][newCol]))
           have hcanon :
@@ -707,7 +707,7 @@ private theorem eliminateColumn_preserve_canonical_column
                 (-s.1[x][newCol]) hSrc hOld hzero
           have hSrcNext : next.1[newPivot][oldCol] = 0 :=
             hcanon.2 newPivot (fun h => hOldNew h.symm)
-          simpa only [hx, hcoeff, if_false, next] using ih next hSrcNext hcanon.1 hcanon.2
+          simp only [dif_neg hx, if_neg hcoeff]; exact ih next hSrcNext hcanon.1 hcanon.2
 
 /-- Process columns left-to-right, performing Gauss-Jordan elimination. -/
 def rrefLoop (col fuel : Nat) (state : RrefState R n m) : RrefState R n m :=

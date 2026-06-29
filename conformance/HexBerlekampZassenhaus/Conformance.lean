@@ -123,7 +123,7 @@ private def unitPolyFive : FpPoly 5 :=
   { coeffs := #[(1 : ZMod64 5)]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      decide }
 
 private theorem unitPolyFive_monic : DensePoly.Monic unitPolyFive := by
   rfl
@@ -132,7 +132,7 @@ private def irreducibleQuadFive : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 1]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      decide }
 
 private theorem irreducibleQuadFive_monic : DensePoly.Monic irreducibleQuadFive := by
   rfl

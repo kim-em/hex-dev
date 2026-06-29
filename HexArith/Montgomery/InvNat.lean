@@ -58,7 +58,7 @@ private theorem mod_uint64_word_mod_two_pow (n t : Nat) (ht : t ≤ 64) :
 private theorem UInt64.toNat_mul_mod_two_pow (a b : UInt64) {t : Nat}
     (ht : t ≤ 64) :
     (a * b).toNat % 2 ^ t = (a.toNat * b.toNat) % 2 ^ t := by
-  simpa [UInt64.toNat_mul] using
+  simpa [UInt64.toNat_mul, UInt64.word] using
     mod_uint64_word_mod_two_pow (a.toNat * b.toNat) t ht
 
 /-- Subtraction wrap at `2^64` is invisible when reducing modulo fewer bits. -/
@@ -66,7 +66,7 @@ private theorem UInt64.toNat_sub_mod_two_pow (a b : UInt64) {t : Nat}
     (ht : t ≤ 64) :
     (a - b).toNat % 2 ^ t =
       (2 ^ 64 - b.toNat + a.toNat) % 2 ^ t := by
-  simpa [UInt64.toNat_sub] using
+  simpa [UInt64.toNat_sub, UInt64.word] using
     mod_uint64_word_mod_two_pow (2 ^ 64 - b.toNat + a.toNat) t ht
 
 /-- One integer Newton/Hensel step doubles 2-adic precision: if `m ∣ y - 1`

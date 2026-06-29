@@ -194,7 +194,7 @@ decreasing_by
     have hnatAbs_lt :
         ((old_r % Int.ofNat (n + 1)).natAbs : Int) < (Int.ofNat (n + 1)).natAbs := by
       rw [Int.ofNat_natAbs_of_nonneg hmod_nonneg]
-      simpa using hmod_lt
+      omega
     exact Int.ofNat_lt.mp hnatAbs_lt
   · have hmod_nonneg : 0 ≤ old_r % Int.negSucc n := by
       exact Int.emod_nonneg _ (by simp)
@@ -297,7 +297,7 @@ private theorem pureIntExtGcd_go_spec
                   exact Int.emod_lt_of_pos _ hpos
                 have hnatAbs_lt : ((old_r % r').natAbs : Int) < r'.natAbs := by
                   rw [Int.ofNat_natAbs_of_nonneg hmod_nonneg]
-                  simpa [r'] using hmod_lt
+                  omega
                 exact Int.ofNat_lt.mp hnatAbs_lt
               have hn : r'.natAbs = n := by
                 simpa [r'] using hmeasure

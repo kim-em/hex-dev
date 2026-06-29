@@ -56,7 +56,7 @@ theorem reduceMod_eq_self_of_degree_lt (f g : FpPoly p) :
 /-- The zero polynomial is already canonical modulo any nonconstant modulus. -/
 @[simp, grind =] theorem reduceMod_zero (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
     reduceMod f 0 = 0 := by
-  exact reduceMod_eq_self_of_degree_lt f 0 (by simpa using hf)
+  exact reduceMod_eq_self_of_degree_lt f 0 hf
 
 /-- The one polynomial is already canonical modulo any nonconstant modulus. -/
 @[simp, grind =] theorem reduceMod_one (f : FpPoly p) (hf : 0 < FpPoly.degree f) :

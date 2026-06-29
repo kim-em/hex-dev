@@ -247,7 +247,7 @@ private theorem inversionCount_swap_separated_parity {n : Nat}
       have hmid :
           inversionCount (pre ++ x :: b :: xs ++ a :: post) % 2 =
             (inversionCount (pre ++ x :: a :: xs ++ b :: post) + 1) % 2 := by
-        simpa only [List.cons_append, List.append_assoc] using
+        simpa only [List.cons_append, List.append_assoc, List.nil_append] using
           (ih (pre ++ [x]) hnodup_tail)
       have hswap₂ :
           inversionCount (pre ++ x :: a :: xs ++ b :: post) % 2 =
@@ -701,7 +701,7 @@ private def peelLastVector {n : Nat} (perm : Vector (Fin (n + 1)) (n + 1))
           perm.toList.idxOf (perm.toList[j]'hjlen) = j := by
         exact hnodup.idxOf_getElem j hjlen
       have hylist : perm.toList[j]'hjlen = Fin.last n := by
-        simpa [Vector.getElem_toList] using hy
+        rw [Vector.getElem_toList]; exact hy
       have hkj : k = j := by
         rw [← hidx, ← hylist, hjidx]
       dsimp [j] at hkj

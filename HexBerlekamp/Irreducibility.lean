@@ -304,6 +304,7 @@ private theorem isUnitPolynomial_of_dvd_one
       simp [DensePoly.degree?, hsize] at hdegree_getD ⊢
       omega
     rw [hdegree]
+    rfl
 
 private theorem isUnitPolynomial_gcd_of_bezout
     [ZMod64.PrimeModulus p] {f diff left right : FpPoly p}

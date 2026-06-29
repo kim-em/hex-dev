@@ -14,8 +14,6 @@ public section
 Algebraic properties of dense vector dot products.
 -/
 
-namespace Hex
-
 universe u v
 
 namespace Vector
@@ -212,5 +210,3 @@ theorem dotProduct_sub_smul_right {R : Type u} [Lean.Grind.CommRing R]
   rw [dotProduct_sub_right, dotProduct_smul_right]
 
 end Vector
-
-end Hex

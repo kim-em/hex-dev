@@ -3112,8 +3112,9 @@ private theorem splitInitialZeros_reassembles (coeffs : List Int) :
                   have hvalue :
                       (DensePoly.ofCoeffs core.toArray).coeff (n - power) =
                         coeffs.getD n 0 := by
-                    simpa [hn] using hcoeff_n
-                  simpa [hsucc, Nat.succ_sub_succ_eq_sub] using hvalue
+                    have key := hcoeff_n; rw [if_neg hn] at key; exact key
+                  simp only [hsucc, Nat.succ_sub_succ_eq_sub, if_false, List.getD_cons_succ]
+                  exact hvalue
       · simp [hcoeff]
 
 private theorem extractXPower_product (f : ZPoly) :
@@ -11255,7 +11256,7 @@ private theorem irreducible_of_size_two_primitive
           c = 1 ∨ c = -1 := by
       intro c hc_ne hdvd
       have hnat_dvd : c.natAbs ∣ (1 : Nat) := by
-        have := Int.ofNat_dvd.mp (by simpa using hdvd)
+        have := Int.ofNat_dvd.mp (show (c.natAbs : Int) ∣ ((1 : Nat) : Int) from hdvd)
         exact this
       have hnat_le : c.natAbs ≤ 1 := Nat.le_of_dvd (by omega) hnat_dvd
       have hnat_pos : 1 ≤ c.natAbs := by
@@ -11437,7 +11438,7 @@ theorem Irreducible_of_modP_irreducible_of_primitive_of_admissible
         exact ⟨h.coeff n, rfl⟩
       rw [hcontent_one] at hc_dvd_content
       have hnat_dvd : c.natAbs ∣ (1 : Nat) := by
-        have := Int.ofNat_dvd.mp (by simpa using hc_dvd_content)
+        have := Int.ofNat_dvd.mp (show (c.natAbs : Int) ∣ ((1 : Nat) : Int) from hc_dvd_content)
         exact this
       have hnat_le : c.natAbs ≤ 1 := Nat.le_of_dvd (by omega) hnat_dvd
       have hnat_pos : 1 ≤ c.natAbs := by
@@ -18637,8 +18638,14 @@ theorem squareFreeCore_coeff_zero_ne_zero (f : ZPoly) (hf : f ≠ 0) :
   show (ZPoly.primitiveSquareFreeDecomposition
       (ZPoly.extractXPower (ZPoly.primitivePart f)).core).squareFreeCore.coeff 0 ≠ 0
   intro hsfc0
-  have hc := congrArg (fun p : DensePoly Rat => p.coeff 0) hunit
-  simp only at hc
+  have hc :
+      (ZPoly.extractXPower (ZPoly.primitivePart f)).core.toRatPoly.coeff 0 =
+        (DensePoly.scale unit
+          ((ZPoly.primitiveSquareFreeDecomposition
+                (ZPoly.extractXPower (ZPoly.primitivePart f)).core).squareFreeCore *
+              (ZPoly.primitiveSquareFreeDecomposition
+                (ZPoly.extractXPower (ZPoly.primitivePart f)).core).repeatedPart).toRatPoly).coeff 0 :=
+    congrArg (fun p : DensePoly Rat => p.coeff 0) hunit
   rw [ZPoly.coeff_toRatPoly] at hc
   rw [DensePoly.coeff_scale (R := Rat) unit _ 0 (Rat.mul_zero unit)] at hc
   rw [ZPoly.coeff_toRatPoly, coeff_mul_const, hsfc0] at hc
@@ -18722,7 +18729,7 @@ theorem squareFreeCore_eq_one_of_constant_of_ne_zero
     ZPoly.primitiveSquareFreeDecomposition_squareFreeCore_eq_one_of_degree_zero
       (ZPoly.extractXPower (ZPoly.primitivePart f)).core
       (by
-        simpa using squareFreeCore_ne_zero_of_ne_zero f hf)
+        exact squareFreeCore_ne_zero_of_ne_zero f hf)
       hdeg
 
 /-- Companion to `squareFreeCore_eq_one_of_constant_of_ne_zero`: the recorded
@@ -18736,7 +18743,7 @@ private theorem normalizeForFactor_repeatedPart_eq_one_of_constant
     ZPoly.primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeCore_degree_zero
       (ZPoly.extractXPower (ZPoly.primitivePart f)).core
       (by
-        simpa using squareFreeCore_ne_zero_of_ne_zero f hf)
+        exact squareFreeCore_ne_zero_of_ne_zero f hf)
       hdeg
 
 /-- **#4585 HO-1 support lemma — fast-path constant arm `reassemblyExpansionComplete`

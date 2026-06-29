@@ -39,7 +39,7 @@ private theorem foldl_dot_add_left
 
 /-- `dot_add_left` states left-additivity of the dot product. -/
 private theorem dot_add_left (a b c : Vector Rat m) :
-    Vector.dotProduct (a + b) c = Vector.dotProduct a c + Vector.dotProduct b c := by
+    (a + b).dotProduct c = a.dotProduct c + b.dotProduct c := by
   unfold Vector.dotProduct
   have hzero : (0 : Rat) + 0 = 0 := by grind
   simpa [hzero] using
@@ -67,7 +67,7 @@ private theorem foldl_dot_smul_left
 
 /-- `dot_smul_left` states left-homogeneity of the dot product. -/
 private theorem dot_smul_left (s : Rat) (a c : Vector Rat m) :
-    Vector.dotProduct (s • a) c = s * Vector.dotProduct a c := by
+    (s • a).dotProduct c = s * a.dotProduct c := by
   unfold Vector.dotProduct
   have hzero : s * (0 : Rat) = 0 := by grind
   simpa [hzero] using
@@ -77,7 +77,7 @@ private theorem dot_smul_left (s : Rat) (a c : Vector Rat m) :
 private theorem projectionCoeff_add_left (a b c : Vector Rat m) :
     projectionCoeff (a + b) c = projectionCoeff a c + projectionCoeff b c := by
   unfold projectionCoeff
-  by_cases hnorm : Vector.dotProduct c c = 0
+  by_cases hnorm : c.dotProduct c = 0
   · simp [hnorm]
     grind
   · simp [hnorm]
@@ -88,7 +88,7 @@ private theorem projectionCoeff_add_left (a b c : Vector Rat m) :
 private theorem projectionCoeff_smul_left (s : Rat) (a c : Vector Rat m) :
     projectionCoeff (s • a) c = s * projectionCoeff a c := by
   unfold projectionCoeff
-  by_cases hnorm : Vector.dotProduct c c = 0
+  by_cases hnorm : c.dotProduct c = 0
   · simp [hnorm]
   · simp [hnorm]
     rw [dot_smul_left]
@@ -179,11 +179,11 @@ private theorem reduceAgainstBasis_append
 private theorem basisRows_get!_dot_eq_zero_of_list
     (rows : List (Vector Rat m)) (i j : Nat)
     (hi : i < rows.length) (hj : j < rows.length) (hij : i ≠ j) :
-    Vector.dotProduct (basisRows rows)[i]! (basisRows rows)[j]! = 0 := by
+    (basisRows rows)[i]!.dotProduct (basisRows rows)[j]! = 0 := by
   have hilen : i < (basisRows rows).length := by simpa [basisRows_length]
   have hjlen : j < (basisRows rows).length := by simpa [basisRows_length]
   have hpair : (basisRows rows).Pairwise
-      (fun x y => Vector.dotProduct x y = 0 ∧ Vector.dotProduct y x = 0) :=
+      (fun x y => x.dotProduct y = 0 ∧ y.dotProduct x = 0) :=
     basisRows_pairwise rows
   have hget_i : (basisRows rows)[i]! = (basisRows rows)[i] := by simp [hilen]
   have hget_j : (basisRows rows)[j]! = (basisRows rows)[j] := by simp [hjlen]
@@ -901,22 +901,22 @@ private theorem basisMatrix_rowSwap_adjacent_curr
     -- dot swappedPrev (basisRows[idx]) = dot curr (basisRows[idx]) + mu * dot prev (basisRows[idx])
     -- Both inner products vanish by pairwise orthogonality.
     have hcurr_orth :
-        Vector.dotProduct curr (basisRows b.toList)[idx]! = 0 := by
-      change Vector.dotProduct ((basisMatrix b).row k) _ = 0
+        curr.dotProduct (basisRows b.toList)[idx]! = 0 := by
+      change ((basisMatrix b).row k).dotProduct _ = 0
       rw [basisMatrix_row_eq_basisRows_get!]
       exact basisRows_get!_dot_eq_zero_of_list b.toList k.val idx
         (by simp [k.isLt])
         (by simp only [Vector.length_toList]; omega)
         (by omega)
     have hprev_orth :
-        Vector.dotProduct prev (basisRows b.toList)[idx]! = 0 := by
-      change Vector.dotProduct ((basisMatrix b).row km1) _ = 0
+        prev.dotProduct (basisRows b.toList)[idx]! = 0 := by
+      change ((basisMatrix b).row km1).dotProduct _ = 0
       rw [basisMatrix_row_eq_basisRows_get!]
       exact basisRows_get!_dot_eq_zero_of_list b.toList km1.val idx
         (by simp [km1.isLt])
         (by simp only [Vector.length_toList]; omega)
         (by omega)
-    show Vector.dotProduct (curr + mu • prev) _ = 0
+    show (curr + mu • prev).dotProduct _ = 0
     rw [dot_add_left, dot_smul_left, hcurr_orth, hprev_orth]
     grind
   rw [hreduce_row, hreduce_sP]
@@ -1076,7 +1076,9 @@ private theorem rowCombination_smul_rat
           grind
         rw [hstep]
         exact ih (acc + M[row.val][idxFin.val] * c[row.val])
-  simpa using hfold (List.finRange n) 0
+  have key := hfold (List.finRange n) 0
+  simp only [Rat.mul_zero] at key
+  exact key
 
 /-- `prefixSpan_add` says the rational prefix row-span is closed under vector addition. -/
 private theorem prefixSpan_add
@@ -1115,17 +1117,17 @@ private theorem prefixSpan_sub
 
 /-- `dot_add_right` gives additivity of the rational dot product in its right argument. -/
 private theorem dot_add_right (a b c : Vector Rat m) :
-    Vector.dotProduct a (b + c) = Vector.dotProduct a b + Vector.dotProduct a c := by
+    a.dotProduct (b + c) = a.dotProduct b + a.dotProduct c := by
   rw [dot_comm_rat, dot_add_left, dot_comm_rat b a, dot_comm_rat c a]
 
 /-- `dot_smul_right` pulls a rational scalar out of the right argument of the dot product. -/
 private theorem dot_smul_right (s : Rat) (a b : Vector Rat m) :
-    Vector.dotProduct a (s • b) = s * Vector.dotProduct a b := by
+    a.dotProduct (s • b) = s * a.dotProduct b := by
   rw [dot_comm_rat, dot_smul_left, dot_comm_rat b a]
 
 /-- `dot_sub_right` gives subtractivity of the rational dot product in its right argument. -/
 private theorem dot_sub_right (a b c : Vector Rat m) :
-    Vector.dotProduct a (b - c) = Vector.dotProduct a b - Vector.dotProduct a c := by
+    a.dotProduct (b - c) = a.dotProduct b - a.dotProduct c := by
   have hsub : b - c = b + (-1 : Rat) • c := by
     apply Vector.ext
     intro idx hidx
@@ -1137,7 +1139,7 @@ private theorem dot_sub_right (a b c : Vector Rat m) :
 
 /-- `dot_zero_right` says the rational dot product with a zero right argument is zero. -/
 private theorem dot_zero_right (a : Vector Rat m) :
-    Vector.dotProduct a 0 = 0 := by
+    a.dotProduct 0 = 0 := by
   unfold Vector.dotProduct
   change (List.finRange m).foldl
       (fun acc i => acc + a[i] * (0 : Vector Rat m)[i]) 0 = 0
@@ -1282,14 +1284,14 @@ private theorem dot_eq_zero_of_prefixSpan
     (M : Matrix Rat n m) (i : Nat) (hi : i < n)
     (u v : Vector Rat m)
     (hspan : prefixSpan M i hi v)
-    (horth : ∀ j : Fin (i + 1), Vector.dotProduct u ((prefixRows M i hi).row j) = 0) :
-    Vector.dotProduct u v = 0 := by
+    (horth : ∀ j : Fin (i + 1), u.dotProduct ((prefixRows M i hi).row j) = 0) :
+    u.dotProduct v = 0 := by
   rcases hspan with ⟨c, hc⟩
   rw [← hc, rowCombination_eq_foldl_rows]
   have hfold :
       ∀ xs : List (Fin (i + 1)), ∀ acc : Vector Rat m,
-        Vector.dotProduct u acc = 0 →
-          Vector.dotProduct u
+        u.dotProduct acc = 0 →
+          u.dotProduct
             (xs.foldl
               (fun acc j => acc + c[j] • (prefixRows M i hi).row j) acc) = 0 := by
     intro xs
@@ -1305,26 +1307,26 @@ private theorem dot_eq_zero_of_prefixSpan
         grind
   exact hfold (List.finRange (i + 1)) 0 (dot_zero_right u)
 
-/-- `Vector.normSq v` is nonnegative for a rational vector, since it is the
+/-- `v`.normSq is nonnegative for a rational vector, since it is the
 self-dot-product, a sum of squares (via `foldl_dot_self_start_le`). -/
 private theorem rat_normSq_nonneg (v : Vector Rat m) :
-    0 ≤ Vector.normSq v := by
+    0 ≤ v.normSq := by
   simpa [Vector.normSq, Vector.dotProduct] using
     foldl_dot_self_start_le (xs := List.finRange m) (v := v)
       (acc := 0) (by decide)
 
 /-- Pythagorean split: when `acc` is orthogonal to `row`, the squared norm of
-`acc + c • row` expands to `Vector.normSq acc + c * c * Vector.normSq row`. -/
+`acc + c • row` expands to `acc.normSq + c * c * row`..normSq -/
 private theorem normSq_add_smul
     (acc row : Vector Rat m) (c : Rat)
-    (horth : Vector.dotProduct acc row = 0) :
-    Vector.normSq (acc + c • row) =
-      Vector.normSq acc + c * c * Vector.normSq row := by
-  change Vector.dotProduct (acc + c • row) (acc + c • row) =
-    Vector.dotProduct acc acc + c * c * Vector.dotProduct row row
+    (horth : acc.dotProduct row = 0) :
+    (acc + c • row).normSq =
+      acc.normSq + c * c * row.normSq := by
+  change (acc + c • row).dotProduct (acc + c • row) =
+    acc.dotProduct acc + c * c * row.dotProduct row
   rw [dot_add_left, dot_add_right acc acc (c • row), dot_smul_right, dot_smul_left,
     dot_add_right row acc (c • row), dot_smul_right, horth]
-  have horth' : Vector.dotProduct row acc = 0 := by
+  have horth' : row.dotProduct acc = 0 := by
     rw [dot_comm_rat]
     exact horth
   rw [horth']
@@ -1351,20 +1353,20 @@ private theorem foldl_rat_sum_start {α : Type v}
 
 /-- Orthogonal-expansion of a folded row combination: when the listed rows are
 pairwise orthogonal and `acc` is orthogonal to each, the squared norm of the
-fold splits as `Vector.normSq acc` plus the fold of weighted squared norms
-`coeffs[i] * coeffs[i] * Vector.normSq (rows.row i)`. -/
+fold splits as `acc`.normSq plus the fold of weighted squared norms
+`coeffs[i] * coeffs[i] * (rows.row i)`..normSq -/
 private theorem foldl_orthogonal_expansion_normSq
     (xs : List (Fin n)) (rows : Matrix Rat n m) (coeffs : Vector Rat n)
     (acc : Vector Rat m)
     (hnodup : xs.Nodup)
-    (hacc : ∀ i ∈ xs, Vector.dotProduct acc (rows.row i) = 0)
+    (hacc : ∀ i ∈ xs, acc.dotProduct (rows.row i) = 0)
     (horth : ∀ i ∈ xs, ∀ j ∈ xs, i ≠ j →
-      Vector.dotProduct (rows.row i) (rows.row j) = 0) :
+      (rows.row i).dotProduct (rows.row j) = 0) :
     Vector.normSq
         (xs.foldl (fun acc i => acc + coeffs[i] • rows.row i) acc) =
-      Vector.normSq acc +
+      acc.normSq +
         xs.foldl
-          (fun total i => total + coeffs[i] * coeffs[i] * Vector.normSq (rows.row i)) 0 := by
+          (fun total i => total + coeffs[i] * coeffs[i] * (rows.row i).normSq) 0 := by
   induction xs generalizing acc with
   | nil =>
       simp
@@ -1374,52 +1376,52 @@ private theorem foldl_orthogonal_expansion_normSq
     have hnodup_tail : rest.Nodup := (List.nodup_cons.mp hnodup).2
     have hi_not_mem : i ∉ rest := (List.nodup_cons.mp hnodup).1
     let acc' := acc + coeffs[i] • rows.row i
-    have hacc' : ∀ j ∈ rest, Vector.dotProduct acc' (rows.row j) = 0 := by
+    have hacc' : ∀ j ∈ rest, acc'.dotProduct (rows.row j) = 0 := by
       intro j hj
       have hij : i ≠ j := by
         intro h
         subst h
         exact hi_not_mem hj
-      have hrow : Vector.dotProduct (rows.row i) (rows.row j) = 0 :=
+      have hrow : (rows.row i).dotProduct (rows.row j) = 0 :=
         horth i (by simp) j (by simp [hj]) hij
       simp only [acc']
       rw [dot_add_left, dot_smul_left, hacc j (by simp [hj]), hrow]
       grind
     have horth' : ∀ a ∈ rest, ∀ b ∈ rest, a ≠ b →
-        Vector.dotProduct (rows.row a) (rows.row b) = 0 := by
+        (rows.row a).dotProduct (rows.row b) = 0 := by
       intro a ha b hb hab
       exact horth a (by simp [ha]) b (by simp [hb]) hab
     rw [ih (acc := acc') hnodup_tail hacc' horth',
       normSq_add_smul acc (rows.row i) coeffs[i] (hacc i (by simp))]
     rw [foldl_rat_sum_start rest
-      (fun j => coeffs[j] * coeffs[j] * Vector.normSq (rows.row j))
-      (0 + coeffs[i] * coeffs[i] * Vector.normSq (rows.row i))]
+      (fun j => coeffs[j] * coeffs[j] * (rows.row j).normSq)
+      (0 + coeffs[i] * coeffs[i] * (rows.row i).normSq)]
     grind
 
 /-- The `acc = 0` case of `foldl_orthogonal_expansion_normSq`: for pairwise
 orthogonal rows the squared norm of the full row combination equals the fold of
-`coeffs[i] * coeffs[i] * Vector.normSq (rows.row i)` over `List.finRange n`. -/
+`coeffs[i] * coeffs[i] * (rows.row i)`.normSq over `List.finRange n`. -/
 private theorem foldl_orthogonal_expansion_normSq_zero
     (rows : Matrix Rat n m) (coeffs : Vector Rat n)
     (horth : ∀ i j : Fin n, i ≠ j →
-      Vector.dotProduct (rows.row i) (rows.row j) = 0) :
+      (rows.row i).dotProduct (rows.row j) = 0) :
     Vector.normSq
         ((List.finRange n).foldl (fun acc i => acc + coeffs[i] • rows.row i) 0) =
       (List.finRange n).foldl
-        (fun total i => total + coeffs[i] * coeffs[i] * Vector.normSq (rows.row i)) 0 := by
-  have hacc : ∀ i ∈ List.finRange n, Vector.dotProduct (0 : Vector Rat m) (rows.row i) = 0 := by
+        (fun total i => total + coeffs[i] * coeffs[i] * (rows.row i).normSq) 0 := by
+  have hacc : ∀ i ∈ List.finRange n, (0 : Vector Rat m).dotProduct (rows.row i) = 0 := by
     intro i _hi
     rw [dot_comm_rat]
     exact dot_zero_right (rows.row i)
   have horth' : ∀ i ∈ List.finRange n, ∀ j ∈ List.finRange n, i ≠ j →
-      Vector.dotProduct (rows.row i) (rows.row j) = 0 := by
+      (rows.row i).dotProduct (rows.row j) = 0 := by
     intro i _hi j _hj hij
     exact horth i j hij
   have h :=
     foldl_orthogonal_expansion_normSq (xs := List.finRange n)
       (rows := rows) (coeffs := coeffs) (acc := (0 : Vector Rat m))
       (List.nodup_finRange n) hacc horth'
-  have hzero : Vector.normSq (0 : Vector Rat m) = 0 := by
+  have hzero : (0 : Vector Rat m).normSq = 0 := by
     have hfold :
         ∀ xs : List (Fin m), ∀ acc : Rat,
           xs.foldl (fun acc _ => acc + 0) acc = acc := by
@@ -1434,48 +1436,48 @@ private theorem foldl_orthogonal_expansion_normSq_zero
           have hacc : acc + 0 = acc := by grind
           rw [hacc]
           exact ih acc
-    simpa [Vector.normSq, Hex.Vector.dotProduct] using
+    simpa [Vector.normSq, Vector.dotProduct] using
       hfold (List.finRange m) 0
   rw [hzero] at h
   have hzero_add :
       (0 : Rat) +
           (List.finRange n).foldl
-            (fun total i => total + coeffs[i] * coeffs[i] * Vector.normSq (rows.row i)) 0 =
+            (fun total i => total + coeffs[i] * coeffs[i] * (rows.row i).normSq) 0 =
         (List.finRange n).foldl
-            (fun total i => total + coeffs[i] * coeffs[i] * Vector.normSq (rows.row i)) 0 := by
+            (fun total i => total + coeffs[i] * coeffs[i] * (rows.row i).normSq) 0 := by
     grind
   rw [hzero_add] at h
   exact h
 
 /-- The weighted-squared-norm fold `xs.foldl (· + coeffs[i] * coeffs[i] *
-Vector.normSq (rows.row i)) 0` is nonnegative, being a sum of nonnegative
+(rows.row i).normSq) 0` is nonnegative, being a sum of nonnegative
 terms. -/
 private theorem foldl_orthogonal_weighted_nonneg
     (xs : List (Fin n)) (rows : Matrix Rat n m) (coeffs : Vector Rat n) :
     0 ≤ xs.foldl
-      (fun total i => total + coeffs[i] * coeffs[i] * Vector.normSq (rows.row i)) 0 := by
+      (fun total i => total + coeffs[i] * coeffs[i] * (rows.row i).normSq) 0 := by
   induction xs with
   | nil =>
       simp
   | cons i rest ih =>
       simp only [List.foldl_cons]
       rw [foldl_rat_sum_start rest
-        (fun j => coeffs[j] * coeffs[j] * Vector.normSq (rows.row j))
-        (0 + coeffs[i] * coeffs[i] * Vector.normSq (rows.row i))]
-      have hterm : 0 ≤ coeffs[i] * coeffs[i] * Vector.normSq (rows.row i) :=
+        (fun j => coeffs[j] * coeffs[j] * (rows.row j).normSq)
+        (0 + coeffs[i] * coeffs[i] * (rows.row i).normSq)]
+      have hterm : 0 ≤ coeffs[i] * coeffs[i] * (rows.row i).normSq :=
         Rat.mul_nonneg (rat_mul_self_nonneg coeffs[i]) (rat_normSq_nonneg (rows.row i))
       exact Rat.add_nonneg (by grind) ih
 
 /-- If `k ∈ xs` and its coefficient square is at least `1`, the
-weighted-squared-norm fold over `xs` is at least `Vector.normSq (rows.row k)`,
+weighted-squared-norm fold over `xs` is at least `(rows.row k)`.normSq,
 the single term contributed by `k`. -/
 private theorem foldl_orthogonal_weighted_normSq_ge
     (xs : List (Fin n)) (rows : Matrix Rat n m) (coeffs : Vector Rat n)
     (k : Fin n) (hk : k ∈ xs)
     (hcoeff : 1 ≤ coeffs[k] * coeffs[k]) :
-    Vector.normSq (rows.row k) ≤
+    (rows.row k).normSq ≤
       xs.foldl
-        (fun total i => total + coeffs[i] * coeffs[i] * Vector.normSq (rows.row i)) 0 := by
+        (fun total i => total + coeffs[i] * coeffs[i] * (rows.row i).normSq) 0 := by
   induction xs with
   | nil =>
       cases hk
@@ -1483,43 +1485,43 @@ private theorem foldl_orthogonal_weighted_normSq_ge
       simp only [List.foldl_cons]
       simp only [List.mem_cons] at hk
       have hterm_nonneg :
-          0 ≤ coeffs[i] * coeffs[i] * Vector.normSq (rows.row i) := by
+          0 ≤ coeffs[i] * coeffs[i] * (rows.row i).normSq := by
         exact Rat.mul_nonneg (rat_mul_self_nonneg coeffs[i]) (rat_normSq_nonneg (rows.row i))
       cases hk with
       | inl hik =>
           subst hik
           rw [foldl_rat_sum_start rest
-            (fun j => coeffs[j] * coeffs[j] * Vector.normSq (rows.row j))
-            (0 + coeffs[k] * coeffs[k] * Vector.normSq (rows.row k))]
-          have hrow_nonneg : 0 ≤ Vector.normSq (rows.row k) :=
+            (fun j => coeffs[j] * coeffs[j] * (rows.row j).normSq)
+            (0 + coeffs[k] * coeffs[k] * (rows.row k).normSq)]
+          have hrow_nonneg : 0 ≤ (rows.row k).normSq :=
             rat_normSq_nonneg (rows.row k)
           have hfirst :
-              Vector.normSq (rows.row k) ≤
-                coeffs[k] * coeffs[k] * Vector.normSq (rows.row k) := by
+              (rows.row k).normSq ≤
+                coeffs[k] * coeffs[k] * (rows.row k).normSq := by
             have hdelta_nonneg : 0 ≤ (coeffs[k] * coeffs[k] - 1) *
-                Vector.normSq (rows.row k) :=
+                (rows.row k).normSq :=
               Rat.mul_nonneg (by grind) hrow_nonneg
             have hsplit :
-                coeffs[k] * coeffs[k] * Vector.normSq (rows.row k) =
-                  Vector.normSq (rows.row k) +
-                    (coeffs[k] * coeffs[k] - 1) * Vector.normSq (rows.row k) := by
+                coeffs[k] * coeffs[k] * (rows.row k).normSq =
+                  (rows.row k).normSq +
+                    (coeffs[k] * coeffs[k] - 1) * (rows.row k).normSq := by
               grind
             calc
-              Vector.normSq (rows.row k) ≤
-                  Vector.normSq (rows.row k) +
-                    (coeffs[k] * coeffs[k] - 1) * Vector.normSq (rows.row k) := by
+              (rows.row k).normSq ≤
+                  (rows.row k).normSq +
+                    (coeffs[k] * coeffs[k] - 1) * (rows.row k).normSq := by
                     grind
-              _ = coeffs[k] * coeffs[k] * Vector.normSq (rows.row k) := hsplit.symm
+              _ = coeffs[k] * coeffs[k] * (rows.row k).normSq := hsplit.symm
           have htail_nonneg :
               0 ≤ rest.foldl
-                (fun total j => total + coeffs[j] * coeffs[j] * Vector.normSq (rows.row j)) 0 := by
+                (fun total j => total + coeffs[j] * coeffs[j] * (rows.row j).normSq) 0 := by
             exact foldl_orthogonal_weighted_nonneg rest rows coeffs
           exact Rat.le_trans hfirst (by grind)
       | inr htail =>
           have htail_le := ih htail
           rw [foldl_rat_sum_start rest
-            (fun j => coeffs[j] * coeffs[j] * Vector.normSq (rows.row j))
-            (0 + coeffs[i] * coeffs[i] * Vector.normSq (rows.row i))]
+            (fun j => coeffs[j] * coeffs[j] * (rows.row j).normSq)
+            (0 + coeffs[i] * coeffs[i] * (rows.row i).normSq)]
           exact Rat.le_trans htail_le (by grind)
 
 /-- Orthogonal row-combination lower bound. If the rows of `rows` are pairwise
@@ -1528,9 +1530,9 @@ norm of the whole row combination is at least the squared norm of row `k`. -/
 theorem rowCombination_normSq_ge_of_orthogonal_coeff_sq_ge_one
     (rows : Matrix Rat n m) (coeffs : Vector Rat n) (k : Fin n)
     (horth : ∀ i j : Fin n, i ≠ j →
-      Vector.dotProduct (rows.row i) (rows.row j) = 0)
+      (rows.row i).dotProduct (rows.row j) = 0)
     (hcoeff : 1 ≤ coeffs[k] * coeffs[k]) :
-    Vector.normSq (rows.row k) ≤ Vector.normSq (Matrix.rowCombination rows coeffs) := by
+    (rows.row k).normSq ≤ (Matrix.rowCombination rows coeffs).normSq := by
   rw [rowCombination_eq_foldl_rows, foldl_orthogonal_expansion_normSq_zero rows coeffs horth]
   exact foldl_orthogonal_weighted_normSq_ge (xs := List.finRange n)
     (rows := rows) (coeffs := coeffs) k (by simp) hcoeff
@@ -1586,9 +1588,9 @@ theorem one_le_intCast_mul_self_of_ne_zero (z : Int) (hz : z ≠ 0) :
 private theorem eq_zero_of_prefixSpan
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) (v : Vector Rat m)
     (hspan : prefixSpan M i hi v)
-    (horth : ∀ j : Fin (i + 1), Vector.dotProduct v ((prefixRows M i hi).row j) = 0) :
+    (horth : ∀ j : Fin (i + 1), v.dotProduct ((prefixRows M i hi).row j) = 0) :
     v = 0 := by
-  have hself : Vector.dotProduct v v = 0 :=
+  have hself : v.dotProduct v = 0 :=
     dot_eq_zero_of_prefixSpan M i hi v v hspan horth
   apply Vector.ext
   intro idx hidx
@@ -1604,8 +1606,8 @@ private theorem residual_eq_of_same_prefixSpan
     (row r s : Vector Rat m)
     (hrspan : prefixSpan M i hi (row - r))
     (hsspan : prefixSpan M i hi (row - s))
-    (hrorth : ∀ j : Fin (i + 1), Vector.dotProduct r ((prefixRows M i hi).row j) = 0)
-    (hsorth : ∀ j : Fin (i + 1), Vector.dotProduct s ((prefixRows M i hi).row j) = 0) :
+    (hrorth : ∀ j : Fin (i + 1), r.dotProduct ((prefixRows M i hi).row j) = 0)
+    (hsorth : ∀ j : Fin (i + 1), s.dotProduct ((prefixRows M i hi).row j) = 0) :
     r = s := by
   have hspanDiff :
       prefixSpan M i hi ((row - s) - (row - r)) :=
@@ -1618,7 +1620,7 @@ private theorem residual_eq_of_same_prefixSpan
   have hspan : prefixSpan M i hi (r - s) := by
     simpa [hdiff_eq] using hspanDiff
   have horth : ∀ j : Fin (i + 1),
-      Vector.dotProduct (r - s) ((prefixRows M i hi).row j) = 0 := by
+      (r - s).dotProduct ((prefixRows M i hi).row j) = 0 := by
     intro j
     rw [dot_comm_rat (r - s) ((prefixRows M i hi).row j), dot_sub_right]
     rw [dot_comm_rat ((prefixRows M i hi).row j) r,
@@ -1644,8 +1646,8 @@ private theorem residual_eq_of_equiv_prefixSpan
     (hB_to_A : ∀ v : Vector Rat m, prefixSpan B i hi v → prefixSpan A i hi v)
     (hA_rows_to_B :
       ∀ j : Fin (i + 1), prefixSpan B i hi ((prefixRows A i hi).row j))
-    (hrorth : ∀ j : Fin (i + 1), Vector.dotProduct r ((prefixRows A i hi).row j) = 0)
-    (hsorth : ∀ j : Fin (i + 1), Vector.dotProduct s ((prefixRows B i hi).row j) = 0) :
+    (hrorth : ∀ j : Fin (i + 1), r.dotProduct ((prefixRows A i hi).row j) = 0)
+    (hsorth : ∀ j : Fin (i + 1), s.dotProduct ((prefixRows B i hi).row j) = 0) :
     r = s := by
   apply residual_eq_of_same_prefixSpan A i hi row r s hrspan (hB_to_A _ hsspan) hrorth
   intro j

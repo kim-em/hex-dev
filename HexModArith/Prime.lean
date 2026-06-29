@@ -39,7 +39,8 @@ private theorem eq_zero_of_dvd_modulus {a : ZMod64 p} (h : p ∣ a.toNat) : a = 
   apply ext
   apply UInt64.toNat_inj.mp
   have hzero : a.toNat = 0 := Nat.eq_zero_of_dvd_of_lt h a.toNat_lt
-  simpa [ZMod64.toNat_eq_val] using hzero
+  show a.toNat = (ZMod64.zero : ZMod64 p).toNat
+  rw [toNat_zero, hzero]
 
 /--
 Prime-modulus residues have no zero divisors: if `a * b = 0`, then one of the
@@ -49,7 +50,9 @@ factors is already zero.
 theorem eq_zero_or_eq_zero_of_mul_eq_zero (hp : Hex.Nat.Prime p) {a b : ZMod64 p}
     (h : a * b = 0) : a = 0 ∨ b = 0 := by
   have hmod : (a.toNat * b.toNat) % p = 0 := by
-    simpa using congrArg ZMod64.toNat h
+    have h2 : (ZMod64.mul a b).toNat = (ZMod64.zero : ZMod64 p).toNat := congrArg ZMod64.toNat h
+    rw [toNat_mul, toNat_zero] at h2
+    exact h2
   have hdvd : p ∣ a.toNat * b.toNat := by
     have hdecomp := Nat.mod_add_div (a.toNat * b.toNat) p
     rw [hmod, Nat.zero_add] at hdecomp

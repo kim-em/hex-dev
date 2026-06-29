@@ -77,7 +77,7 @@ theorem toZMod_zero :
     toZMod (0 : Hex.ZMod64 p) = 0 := by
   apply ZMod.val_injective p
   rw [val_toZMod, ZMod.val_zero]
-  simpa using (Hex.ZMod64.toNat_zero (p := p))
+  exact Hex.ZMod64.toNat_zero (p := p)
 
 /-- `toZMod` carries the executable `1` to Mathlib's `1`, so the multiplicative
 identity transfers out to `ZMod`'s identity. -/
@@ -86,7 +86,7 @@ theorem toZMod_one :
     toZMod (1 : Hex.ZMod64 p) = 1 := by
   apply ZMod.val_injective p
   rw [val_toZMod, ZMod.val_one_eq_one_mod]
-  simpa using (Hex.ZMod64.toNat_one (p := p))
+  exact Hex.ZMod64.toNat_one (p := p)
 
 /-- `ofZMod` carries Mathlib's `1` to the executable `1`, so the multiplicative
 identity transfers in from `ZMod` to `ZMod64`. -/

@@ -32,8 +32,8 @@ When the basis row has zero norm we use `0`, which matches the degenerate
 case of Gram-Schmidt where the corresponding projection term vanishes. -/
 @[expose]
 def projectionCoeff (row basisRow : Vector Rat m) : Rat :=
-  let denom := Vector.dotProduct basisRow basisRow
-  if denom = 0 then 0 else Vector.dotProduct row basisRow / denom
+  let denom := basisRow.dotProduct basisRow
+  if denom = 0 then 0 else row.dotProduct basisRow / denom
 
 /-- Subtract the projection of `row` onto `basisRow`. -/
 @[expose]
@@ -43,8 +43,8 @@ def subtractProjection (row basisRow : Vector Rat m) : Vector Rat m :=
 /-- `dot (subtractProjection row basisRow) target` expands as `dot row target`
 minus the projection coefficient times `dot basisRow target`. -/
 private theorem dot_subtractProjection (row basisRow target : Vector Rat m) :
-    Vector.dotProduct (subtractProjection row basisRow) target =
-      Vector.dotProduct row target - projectionCoeff row basisRow * Vector.dotProduct basisRow target := by
+    (subtractProjection row basisRow).dotProduct target =
+      row.dotProduct target - projectionCoeff row basisRow * basisRow.dotProduct target := by
   simp [subtractProjection, Vector.dotProduct_sub_smul_left]
 
 /-- Reconstruction identity: `row` is the sum of its residual
@@ -61,8 +61,8 @@ private theorem subtractProjection_add_projection (row basisRow : Vector Rat m) 
 /-- The residual `subtractProjection row basisRow` is orthogonal to `basisRow`
 whenever `basisRow` has nonzero norm. -/
 private theorem dot_subtractProjection_self_zero (row basisRow : Vector Rat m)
-    (hnorm : Vector.dotProduct basisRow basisRow ≠ 0) :
-    Vector.dotProduct (subtractProjection row basisRow) basisRow = 0 := by
+    (hnorm : basisRow.dotProduct basisRow ≠ 0) :
+    (subtractProjection row basisRow).dotProduct basisRow = 0 := by
   rw [dot_subtractProjection]
   simp [projectionCoeff, hnorm]
   grind
@@ -130,7 +130,7 @@ private theorem foldl_dot_self_eq_zero_of_mem (xs : List (Fin m)) (v : Vector Ra
 
 /-- A vector with zero self-dot-product has every coordinate equal to zero. -/
 private theorem dot_self_eq_zero_get (v : Vector Rat m)
-    (hzero : Vector.dotProduct v v = 0) (i : Fin m) :
+    (hzero : v.dotProduct v = 0) (i : Fin m) :
     v[i] = 0 := by
   have hmem : i ∈ List.finRange m := by
     simp
@@ -141,8 +141,8 @@ private theorem dot_self_eq_zero_get (v : Vector Rat m)
 its dot product with any other row also vanishes. Used to discharge the
 degenerate zero-norm basis row case when reasoning about orthogonality. -/
 theorem dot_zero_of_dot_self_zero (row v : Vector Rat m)
-    (hzero : Vector.dotProduct v v = 0) :
-    Vector.dotProduct row v = 0 := by
+    (hzero : v.dotProduct v = 0) :
+    row.dotProduct v = 0 := by
   unfold Vector.dotProduct
   induction List.finRange m with
   | nil =>
@@ -158,8 +158,8 @@ theorem dot_zero_of_dot_self_zero (row v : Vector Rat m)
 orthogonal to `basisRow`. -/
 private theorem dot_subtractProjection_self_zero_of_dot_self_zero
     (row basisRow : Vector Rat m)
-    (hnorm : Vector.dotProduct basisRow basisRow = 0) :
-    Vector.dotProduct (subtractProjection row basisRow) basisRow = 0 := by
+    (hnorm : basisRow.dotProduct basisRow = 0) :
+    (subtractProjection row basisRow).dotProduct basisRow = 0 := by
   exact dot_zero_of_dot_self_zero (row := subtractProjection row basisRow)
     (v := basisRow) hnorm
 
@@ -179,7 +179,7 @@ private theorem foldl_dot_comm_rat (xs : List (Fin m)) (u v : Vector Rat m)
 
 /-- The rational dot product is commutative. -/
 private theorem dot_comm_rat (u v : Vector Rat m) :
-    Vector.dotProduct u v = Vector.dotProduct v u := by
+    u.dotProduct v = v.dotProduct u := by
   simpa [Vector.dotProduct] using
     foldl_dot_comm_rat (xs := List.finRange m) (u := u) (v := v)
       (accU := 0) (accV := 0) rfl
@@ -188,10 +188,10 @@ private theorem dot_comm_rat (u v : Vector Rat m) :
 leaves the projection coefficient onto `basisRow` unchanged. -/
 private theorem projectionCoeff_subtractProjection_eq
     (row otherBasisRow basisRow : Vector Rat m)
-    (horth : Vector.dotProduct otherBasisRow basisRow = 0) :
+    (horth : otherBasisRow.dotProduct basisRow = 0) :
     projectionCoeff (subtractProjection row otherBasisRow) basisRow =
       projectionCoeff row basisRow := by
-  by_cases hnorm : Vector.dotProduct basisRow basisRow = 0
+  by_cases hnorm : basisRow.dotProduct basisRow = 0
   · simp [projectionCoeff, hnorm]
   · simp [projectionCoeff, dot_subtractProjection, horth, hnorm]
     grind
@@ -206,16 +206,16 @@ def reduceAgainstBasis (basisRev : List (Vector Rat m)) (row : Vector Rat m) :
 does, whenever `target` is orthogonal to every row in `basisRev`. -/
 private theorem dot_reduceAgainstBasis_zero_of_forall_dot_zero
     (basisRev : List (Vector Rat m)) (row target : Vector Rat m)
-    (horth : ∀ basisRow ∈ basisRev, Vector.dotProduct basisRow target = 0) :
-    Vector.dotProduct (reduceAgainstBasis basisRev row) target = Vector.dotProduct row target := by
+    (horth : ∀ basisRow ∈ basisRev, basisRow.dotProduct target = 0) :
+    (reduceAgainstBasis basisRev row).dotProduct target = row.dotProduct target := by
   induction basisRev generalizing row with
   | nil =>
       simp [reduceAgainstBasis]
   | cons basisRow rest ih =>
       rw [reduceAgainstBasis]
       simp only [List.foldl_cons]
-      change Vector.dotProduct (reduceAgainstBasis rest (subtractProjection row basisRow)) target =
-        Vector.dotProduct row target
+      change (reduceAgainstBasis rest (subtractProjection row basisRow)).dotProduct target =
+        row.dotProduct target
       rw [ih]
       · rw [dot_subtractProjection, horth basisRow (by simp)]
         grind
@@ -226,9 +226,9 @@ private theorem dot_reduceAgainstBasis_zero_of_forall_dot_zero
 `row` and every row in `basisRev` are orthogonal to `target`. -/
 private theorem dot_reduceAgainstBasis_zero_of_dot_zero
     (basisRev : List (Vector Rat m)) (row target : Vector Rat m)
-    (hrow : Vector.dotProduct row target = 0)
-    (horth : ∀ basisRow ∈ basisRev, Vector.dotProduct basisRow target = 0) :
-    Vector.dotProduct (reduceAgainstBasis basisRev row) target = 0 := by
+    (hrow : row.dotProduct target = 0)
+    (horth : ∀ basisRow ∈ basisRev, basisRow.dotProduct target = 0) :
+    (reduceAgainstBasis basisRev row).dotProduct target = 0 := by
   rw [dot_reduceAgainstBasis_zero_of_forall_dot_zero basisRev row target horth, hrow]
 
 /-- `reduceAgainstBasis basisRev row` is orthogonal to every member of a pairwise-orthogonal
@@ -236,8 +236,8 @@ private theorem dot_reduceAgainstBasis_zero_of_dot_zero
 private theorem dot_reduceAgainstBasis_of_mem
     (basisRev : List (Vector Rat m)) (row basisRow : Vector Rat m)
     (hmem : basisRow ∈ basisRev)
-    (horth : basisRev.Pairwise (fun x y => Vector.dotProduct x y = 0 ∧ Vector.dotProduct y x = 0)) :
-    Vector.dotProduct (reduceAgainstBasis basisRev row) basisRow = 0 := by
+    (horth : basisRev.Pairwise (fun x y => x.dotProduct y = 0 ∧ y.dotProduct x = 0)) :
+    (reduceAgainstBasis basisRev row).dotProduct basisRow = 0 := by
   induction basisRev generalizing row with
   | nil =>
       simp at hmem
@@ -247,7 +247,7 @@ private theorem dot_reduceAgainstBasis_of_mem
       by_cases hhead : head = basisRow
       · subst basisRow
         apply dot_reduceAgainstBasis_zero_of_dot_zero
-        · by_cases hnorm : Vector.dotProduct head head = 0
+        · by_cases hnorm : head.dotProduct head = 0
           · exact dot_subtractProjection_self_zero_of_dot_self_zero row head hnorm
           · exact dot_subtractProjection_self_zero row head hnorm
         · intro later hlater
@@ -266,7 +266,7 @@ private theorem dot_reduceAgainstBasis_of_mem
 as `row`, when every row in `basisRev` is orthogonal to `basisRow`. -/
 private theorem projectionCoeff_reduceAgainstBasis_eq
     (basisRev : List (Vector Rat m)) (row basisRow : Vector Rat m)
-    (horth : ∀ otherBasisRow ∈ basisRev, Vector.dotProduct otherBasisRow basisRow = 0) :
+    (horth : ∀ otherBasisRow ∈ basisRev, otherBasisRow.dotProduct basisRow = 0) :
     projectionCoeff (reduceAgainstBasis basisRev row) basisRow =
       projectionCoeff row basisRow := by
   induction basisRev generalizing row with
@@ -328,7 +328,7 @@ private theorem subtractProjection_add_projection_with_acc
 combination reconstructs `row + acc`. -/
 private theorem reduceAgainstBasis_reconstruction_acc
     (basisRev : List (Vector Rat m)) (row acc : Vector Rat m)
-    (horth : basisRev.Pairwise (fun x y => Vector.dotProduct x y = 0 ∧ Vector.dotProduct y x = 0)) :
+    (horth : basisRev.Pairwise (fun x y => x.dotProduct y = 0 ∧ y.dotProduct x = 0)) :
     reduceAgainstBasis basisRev row + projectionCombination row basisRev acc =
       row + acc := by
   induction basisRev generalizing row acc with
@@ -359,7 +359,7 @@ private theorem reduceAgainstBasis_reconstruction_acc
 projections onto the basis rows. -/
 private theorem reduceAgainstBasis_reconstruction
     (basisRev : List (Vector Rat m)) (row : Vector Rat m)
-    (horth : basisRev.Pairwise (fun x y => Vector.dotProduct x y = 0 ∧ Vector.dotProduct y x = 0)) :
+    (horth : basisRev.Pairwise (fun x y => x.dotProduct y = 0 ∧ y.dotProduct x = 0)) :
     row =
       reduceAgainstBasis basisRev row +
         projectionCombination row basisRev 0 := by
@@ -429,8 +429,8 @@ private theorem basisRows_length (rows : List (Vector Rat m)) :
 
 /-- `rows.reverse` is pairwise orthogonal whenever `rows` is. -/
 private theorem orthPairwise_reverse (rows : List (Vector Rat m))
-    (horth : rows.Pairwise (fun x y => Vector.dotProduct x y = 0 ∧ Vector.dotProduct y x = 0)) :
-    rows.reverse.Pairwise (fun x y => Vector.dotProduct x y = 0 ∧ Vector.dotProduct y x = 0) := by
+    (horth : rows.Pairwise (fun x y => x.dotProduct y = 0 ∧ y.dotProduct x = 0)) :
+    rows.reverse.Pairwise (fun x y => x.dotProduct y = 0 ∧ y.dotProduct x = 0) := by
   rw [List.pairwise_iff_getElem] at horth ⊢
   intro i j hirev hjrev hij
   simp [List.length_reverse] at hirev hjrev
@@ -445,9 +445,9 @@ private theorem orthPairwise_reverse (rows : List (Vector Rat m))
 `basisRev` is. -/
 private theorem basisRowsAux_pairwise
     (basisRev pending : List (Vector Rat m))
-    (horth : basisRev.Pairwise (fun x y => Vector.dotProduct x y = 0 ∧ Vector.dotProduct y x = 0)) :
+    (horth : basisRev.Pairwise (fun x y => x.dotProduct y = 0 ∧ y.dotProduct x = 0)) :
     (basisRowsAux basisRev pending).Pairwise
-      (fun x y => Vector.dotProduct x y = 0 ∧ Vector.dotProduct y x = 0) := by
+      (fun x y => x.dotProduct y = 0 ∧ y.dotProduct x = 0) := by
   induction pending generalizing basisRev with
   | nil =>
       simpa [basisRowsAux] using orthPairwise_reverse basisRev horth
@@ -463,7 +463,7 @@ private theorem basisRowsAux_pairwise
 
 /-- `basisRows rows` is a pairwise-orthogonal list of rows. -/
 private theorem basisRows_pairwise (rows : List (Vector Rat m)) :
-    (basisRows rows).Pairwise (fun x y => Vector.dotProduct x y = 0 ∧ Vector.dotProduct y x = 0) := by
+    (basisRows rows).Pairwise (fun x y => x.dotProduct y = 0 ∧ y.dotProduct x = 0) := by
   simpa [basisRows] using
     basisRowsAux_pairwise ([] : List (Vector Rat m)) rows (by simp)
 
@@ -476,13 +476,13 @@ private theorem basisMatrix_row_eq_basisRows_get!
 /-- Distinct rows of `basisRows b.toList` have dot product zero. -/
 private theorem basisRows_get!_dot_eq_zero
     (b : Matrix Rat n m) (i j : Nat) (hi : i < n) (hj : j < n) (hij : i ≠ j) :
-    Vector.dotProduct (basisRows b.toList)[i]! (basisRows b.toList)[j]! = 0 := by
+    (basisRows b.toList)[i]!.dotProduct (basisRows b.toList)[j]! = 0 := by
   let rows := basisRows b.toList
   have hlen : rows.length = n := by
     simp [rows, basisRows_length]
   have hirows : i < rows.length := by simpa [hlen] using hi
   have hjrows : j < rows.length := by simpa [hlen] using hj
-  have hpair : rows.Pairwise (fun x y => Vector.dotProduct x y = 0 ∧ Vector.dotProduct y x = 0) := by
+  have hpair : rows.Pairwise (fun x y => x.dotProduct y = 0 ∧ y.dotProduct x = 0) := by
     simpa [rows] using basisRows_pairwise (rows := b.toList)
   have hget_i : rows[i]! = rows[i] := by simp [hirows]
   have hget_j : rows[j]! = rows[j] := by simp [hjrows]
@@ -612,7 +612,7 @@ private theorem basisRows_get!_eq_reduceAgainstBasis_take
 orthogonal — they form a Pairwise sublist. -/
 private theorem basisRows_take_pairwise (rows : List (Vector Rat m)) (k : Nat) :
     ((basisRows rows).take k).Pairwise
-      (fun x y => Vector.dotProduct x y = 0 ∧ Vector.dotProduct y x = 0) :=
+      (fun x y => x.dotProduct y = 0 ∧ y.dotProduct x = 0) :=
   ((basisRows_pairwise rows).sublist (List.take_sublist k _))
 
 /-- Pointwise foldl-with-accumulator-split for vector folds. -/
@@ -713,7 +713,7 @@ Base case for the vanishing facts the later `prefixSpan`/`projectionCoeff`
 proofs invoke when a reduced row has already collapsed to zero. -/
 private theorem subtractProjection_zero_left (basisRow : Vector Rat m) :
     subtractProjection 0 basisRow = 0 := by
-  have hdot : Vector.dotProduct (0 : Vector Rat m) basisRow = 0 := by
+  have hdot : (0 : Vector Rat m).dotProduct basisRow = 0 := by
     unfold Vector.dotProduct
     induction List.finRange m with
     | nil =>
@@ -727,7 +727,7 @@ private theorem subtractProjection_zero_left (basisRow : Vector Rat m) :
       exact ih
   apply Vector.ext
   intro idx hidx
-  by_cases hnorm : Vector.dotProduct basisRow basisRow = 0
+  by_cases hnorm : basisRow.dotProduct basisRow = 0
   · have hcoeff : projectionCoeff 0 basisRow = 0 := by
       simp [projectionCoeff, hnorm]
     rw [subtractProjection, Vector.getElem_sub, Vector.getElem_zero, Vector.getElem_smul,
@@ -735,7 +735,7 @@ private theorem subtractProjection_zero_left (basisRow : Vector Rat m) :
     change (0 : Rat) - 0 * basisRow[idx] = 0
     grind
   · have hcoeff : projectionCoeff 0 basisRow = 0 := by
-      have hzero_div : (0 : Rat) / Vector.dotProduct basisRow basisRow = 0 := by
+      have hzero_div : (0 : Rat) / basisRow.dotProduct basisRow = 0 := by
         grind
       simp [projectionCoeff, hnorm, hdot, hzero_div]
     rw [subtractProjection, Vector.getElem_sub, Vector.getElem_zero, Vector.getElem_smul,
@@ -760,22 +760,22 @@ private theorem reduceAgainstBasis_zero_left (basisRev : List (Vector Rat m)) :
       exact ih
 
 /-- A row already orthogonal to a basis row is unchanged by projecting that
-basis row out: when `Vector.dotProduct row basisRow = 0` the projection coefficient
+basis row out: when `row.dotProduct basisRow = 0` the projection coefficient
 is `0`, so `subtractProjection row basisRow = row`. The single-step
 orthogonality-invariance fact underpinning the list version below. -/
 private theorem subtractProjection_eq_self
-    (row basisRow : Vector Rat m) (h : Vector.dotProduct row basisRow = 0) :
+    (row basisRow : Vector Rat m) (h : row.dotProduct basisRow = 0) :
     subtractProjection row basisRow = row := by
   apply Vector.ext
   intro idx hidx
-  by_cases hnorm : Vector.dotProduct basisRow basisRow = 0
+  by_cases hnorm : basisRow.dotProduct basisRow = 0
   · have hcoeff : projectionCoeff row basisRow = 0 := by
       simp [projectionCoeff, hnorm]
     rw [subtractProjection, Vector.getElem_sub, Vector.getElem_smul, hcoeff]
     change row[idx] - 0 * basisRow[idx] = row[idx]
     grind
   · have hcoeff : projectionCoeff row basisRow = 0 := by
-      have hzero_div : (0 : Rat) / Vector.dotProduct basisRow basisRow = 0 := by
+      have hzero_div : (0 : Rat) / basisRow.dotProduct basisRow = 0 := by
         grind
       simp [projectionCoeff, h, hnorm, hzero_div]
     rw [subtractProjection, Vector.getElem_sub, Vector.getElem_smul, hcoeff]
@@ -788,7 +788,7 @@ gives `reduceAgainstBasis basisRev row = row`. Lets later proofs conclude a
 row lies outside the prefix span without recomputing the fold. -/
 private theorem reduceAgainstBasis_eq_self
     (basisRev : List (Vector Rat m)) (row : Vector Rat m)
-    (h : ∀ basisRow ∈ basisRev, Vector.dotProduct row basisRow = 0) :
+    (h : ∀ basisRow ∈ basisRev, row.dotProduct basisRow = 0) :
     reduceAgainstBasis basisRev row = row := by
   induction basisRev generalizing row with
   | nil =>
@@ -809,7 +809,7 @@ coefficient is `1` (or the row is already zero), so
 makes a basis row vanish once it appears in its own reduction prefix. -/
 private theorem subtractProjection_self_eq_zero (basisRow : Vector Rat m) :
     subtractProjection basisRow basisRow = 0 := by
-  by_cases hnorm : Vector.dotProduct basisRow basisRow = 0
+  by_cases hnorm : basisRow.dotProduct basisRow = 0
   · apply Vector.ext
     intro idx hidx
     have hzero : basisRow[idx] = 0 :=
@@ -822,7 +822,7 @@ private theorem subtractProjection_self_eq_zero (basisRow : Vector Rat m) :
     grind
   · apply Vector.ext
     intro idx hidx
-    have hdiv : Vector.dotProduct basisRow basisRow / Vector.dotProduct basisRow basisRow = 1 := by
+    have hdiv : basisRow.dotProduct basisRow / basisRow.dotProduct basisRow = 1 := by
       grind
     have hcoeff : projectionCoeff basisRow basisRow = 1 := by
       simp [projectionCoeff, hnorm, hdiv]

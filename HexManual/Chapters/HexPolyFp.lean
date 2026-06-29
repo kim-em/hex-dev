@@ -201,7 +201,8 @@ private def quadModulus : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 1]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      show some (1 : ZMod64 5) ≠ some 0
+      exact fun h => one_ne_zero_five (Option.some.inj h) }
 
 private theorem quadModulus_monic :
     DensePoly.Monic quadModulus := by rfl
@@ -211,7 +212,8 @@ private def linearModulus : FpPoly 5 :=
   { coeffs := #[(3 : ZMod64 5), 1]
     normalized := by
       right
-      simpa using one_ne_zero_five }
+      show some (1 : ZMod64 5) ≠ some 0
+      exact fun h => one_ne_zero_five (Option.some.inj h) }
 
 private theorem linearModulus_monic :
     DensePoly.Monic linearModulus := by rfl

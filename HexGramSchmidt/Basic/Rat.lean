@@ -52,7 +52,7 @@ basis rows are mutually orthogonal (their dot product is zero). -/
 @[grind =]
 theorem basis_orthogonal (b : Matrix Rat n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i ≠ j) :
-    Vector.dotProduct ((basis b).row ⟨i, hi⟩) ((basis b).row ⟨j, hj⟩) = 0 := by
+    ((basis b).row ⟨i, hi⟩).dotProduct ((basis b).row ⟨j, hj⟩) = 0 := by
   rw [basis, GramSchmidt.basisMatrix_row_eq_basisRows_get!,
     GramSchmidt.basisMatrix_row_eq_basisRows_get!]
   exact GramSchmidt.basisRows_get!_dot_eq_zero b i j hi hj hij
@@ -91,10 +91,10 @@ coefficient of the input row onto the earlier generated basis row. -/
 theorem coeffs_lower_projection (b : Matrix Rat n m) {i j : Fin n}
     (hji : j.val < i.val) :
     GramSchmidt.entry (coeffs b) i j =
-      (if Vector.dotProduct ((basis b).row j) ((basis b).row j) = 0 then 0
+      (if ((basis b).row j).dotProduct ((basis b).row j) = 0 then 0
        else
-        Vector.dotProduct (b.row i) ((basis b).row j) /
-          Vector.dotProduct ((basis b).row j) ((basis b).row j)) := by
+        (b.row i).dotProduct ((basis b).row j) /
+          ((basis b).row j).dotProduct ((basis b).row j)) := by
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn,
     GramSchmidt.projectionCoeff, Matrix.row, hji]
 
@@ -103,12 +103,12 @@ Mathlib's projection coefficient numerator. -/
 theorem coeffs_lower_projection_comm (b : Matrix Rat n m) {i j : Fin n}
     (hji : j.val < i.val) :
     GramSchmidt.entry (coeffs b) i j =
-      (if Vector.dotProduct ((basis b).row j) ((basis b).row j) = 0 then 0
+      (if ((basis b).row j).dotProduct ((basis b).row j) = 0 then 0
        else
-        Vector.dotProduct ((basis b).row j) (b.row i) /
-          Vector.dotProduct ((basis b).row j) ((basis b).row j)) := by
+        ((basis b).row j).dotProduct (b.row i) /
+          ((basis b).row j).dotProduct ((basis b).row j)) := by
   rw [coeffs_lower_projection (b := b) hji]
-  by_cases hnorm : Vector.dotProduct ((basis b).row j) ((basis b).row j) = 0
+  by_cases hnorm : ((basis b).row j).dotProduct ((basis b).row j) = 0
   · simp [hnorm]
   · simp [hnorm, GramSchmidt.dot_comm_rat]
 
@@ -164,10 +164,12 @@ private theorem projectionCoeff_row_later_basis_eq_zero
   have hreduce :
       GramSchmidt.reduceAgainstBasis
           ((GramSchmidt.basisRows b.toList).take col.val).reverse (b.row src) = 0 := by
-    simpa [hsrc_toList] using
+    have key :=
       GramSchmidt.reduceAgainstBasis_basisRows_take_source_eq_zero
         (rows := b.toList) (j := src.val) (k := col.val) hsrccol
         (by simp [Vector.length_toList, Nat.le_of_lt col.isLt])
+    rw [hsrc_toList] at key
+    exact key
   have hproj :=
     GramSchmidt.projectionCoeff_reduceAgainstBasis_eq
       (basisRev := ((GramSchmidt.basisRows b.toList).take col.val).reverse)
@@ -200,9 +202,9 @@ private theorem projectionCoeff_row_later_basis_eq_zero
           (Nat.ne_of_lt hidx_col))
   rw [hreduce] at hproj
   have hzero : GramSchmidt.projectionCoeff (0 : Vector Rat m) ((basis b).row col) = 0 := by
-    by_cases hnorm : Vector.dotProduct ((basis b).row col) ((basis b).row col) = 0
+    by_cases hnorm : ((basis b).row col).dotProduct ((basis b).row col) = 0
     · simp [GramSchmidt.projectionCoeff, hnorm]
-    · have hdot : Vector.dotProduct (0 : Vector Rat m) ((basis b).row col) = 0 := by
+    · have hdot : (0 : Vector Rat m).dotProduct ((basis b).row col) = 0 := by
         unfold Vector.dotProduct
         induction List.finRange m with
         | nil => rfl
@@ -213,14 +215,14 @@ private theorem projectionCoeff_row_later_basis_eq_zero
               rw [Vector.getElem_zero]
             rw [hentry, show (0 : Rat) + 0 * ((basis b).row col)[idx] = 0 by grind]
             exact ih
-      have hzero_div : (0 : Rat) / Vector.dotProduct ((basis b).row col) ((basis b).row col) = 0 := by
+      have hzero_div : (0 : Rat) / ((basis b).row col).dotProduct ((basis b).row col) = 0 := by
         grind
       simp [GramSchmidt.projectionCoeff, hnorm, hdot, hzero_div]
   simpa [hzero] using hproj.symm
 
 private theorem projectionCoeff_row_basis_self_eq_one
     (b : Matrix Rat n m) (src : Fin n)
-    (hnorm : Vector.dotProduct ((basis b).row src) ((basis b).row src) ≠ 0) :
+    (hnorm : ((basis b).row src).dotProduct ((basis b).row src) ≠ 0) :
     GramSchmidt.projectionCoeff (b.row src) ((basis b).row src) = 1 := by
   have hsrc_toList : b.toList[src.val]! = b.row src := by simp [Matrix.row]
   have hbasis_src :
@@ -235,7 +237,9 @@ private theorem projectionCoeff_row_basis_self_eq_one
       GramSchmidt.basisRows_get!_eq_reduceAgainstBasis_take
         (rows := b.toList) (k := src.val) (by
           simp [Vector.length_toList])
-    simpa [hsrc_toList, hbasis_src] using hbasis.symm
+    have key := hbasis.symm
+    rw [hsrc_toList, ← hbasis_src] at key
+    exact key
   have hproj :=
     GramSchmidt.projectionCoeff_reduceAgainstBasis_eq
       (basisRev := ((GramSchmidt.basisRows b.toList).take src.val).reverse)
@@ -270,8 +274,8 @@ private theorem projectionCoeff_row_basis_self_eq_one
   have hself :
       GramSchmidt.projectionCoeff ((basis b).row src) ((basis b).row src) = 1 := by
     have hdiv :
-        Vector.dotProduct ((basis b).row src) ((basis b).row src) /
-            Vector.dotProduct ((basis b).row src) ((basis b).row src) = 1 := by
+        ((basis b).row src).dotProduct ((basis b).row src) /
+            ((basis b).row src).dotProduct ((basis b).row src) = 1 := by
       grind
     simp [GramSchmidt.projectionCoeff, hnorm, hdiv]
   simpa [hself] using hproj.symm
@@ -291,8 +295,8 @@ theorem basis_rowSwap_adjacent_curr (b : Matrix Rat n m) (km1 k : Fin n)
     let mu := GramSchmidt.entry (coeffs b) k km1
     let swappedPrev := curr + mu • prev
     (basis (Matrix.rowSwap b km1 k)).row k =
-      (Vector.dotProduct curr curr / Vector.dotProduct swappedPrev swappedPrev) • prev -
-        (mu * Vector.dotProduct prev prev / Vector.dotProduct swappedPrev swappedPrev) • curr := by
+      (curr.dotProduct curr / swappedPrev.dotProduct swappedPrev) • prev -
+        (mu * prev.dotProduct prev / swappedPrev.dotProduct swappedPrev) • curr := by
   let prev := (basis b).row km1
   let curr := (basis b).row k
   let mu := GramSchmidt.entry (coeffs b) k km1
@@ -311,69 +315,69 @@ theorem basis_rowSwap_adjacent_curr (b : Matrix Rat n m) (km1 k : Fin n)
       (basis (Matrix.rowSwap b km1 k)).row k =
         prev - GramSchmidt.projectionCoeff (b.row km1) swappedPrev • swappedPrev := by
     simpa [basis, prev, curr, mu, swappedPrev, hmu_raw] using hraw
-  have horth_curr_prev : Vector.dotProduct curr prev = 0 := by
+  have horth_curr_prev : curr.dotProduct prev = 0 := by
     simpa [curr, prev] using
       basis_orthogonal (b := b) k.val km1.val k.isLt km1.isLt (by omega)
-  have horth_prev_curr : Vector.dotProduct prev curr = 0 := by
+  have horth_prev_curr : prev.dotProduct curr = 0 := by
     simpa [prev, curr, GramSchmidt.dot_comm_rat] using horth_curr_prev
-  have hrow_curr : Vector.dotProduct (b.row km1) curr = 0 := by
+  have hrow_curr : (b.row km1).dotProduct curr = 0 := by
     have hpc :=
       projectionCoeff_row_later_basis_eq_zero (b := b) (src := km1) (col := k) hlt
-    by_cases hcurr : Vector.dotProduct curr curr = 0
+    by_cases hcurr : curr.dotProduct curr = 0
     · exact GramSchmidt.dot_zero_of_dot_self_zero (row := b.row km1) (v := curr) hcurr
     · have hdiv :
-        Vector.dotProduct (b.row km1) curr / Vector.dotProduct curr curr = 0 := by
+        (b.row km1).dotProduct curr / curr.dotProduct curr = 0 := by
           simpa [curr, GramSchmidt.projectionCoeff, hcurr] using hpc
       grind
-  have hrow_prev : Vector.dotProduct (b.row km1) prev = Vector.dotProduct prev prev := by
-    by_cases hprev : Vector.dotProduct prev prev = 0
+  have hrow_prev : (b.row km1).dotProduct prev = prev.dotProduct prev := by
+    by_cases hprev : prev.dotProduct prev = 0
     · have hzero := GramSchmidt.dot_zero_of_dot_self_zero (row := b.row km1) (v := prev) hprev
       simp [hzero, hprev]
     · have hpc := projectionCoeff_row_basis_self_eq_one (b := b) (src := km1) (by
         simpa [prev] using hprev)
       have hdiv :
-        Vector.dotProduct (b.row km1) prev / Vector.dotProduct prev prev = 1 := by
+        (b.row km1).dotProduct prev / prev.dotProduct prev = 1 := by
           simpa [prev, GramSchmidt.projectionCoeff, hprev] using hpc
       grind
   have hrow_swapped :
-      Vector.dotProduct (b.row km1) swappedPrev = mu * Vector.dotProduct prev prev := by
+      (b.row km1).dotProduct swappedPrev = mu * prev.dotProduct prev := by
     rw [GramSchmidt.dot_comm_rat]
-    change Vector.dotProduct (curr + mu • prev) (b.row km1) = mu * Vector.dotProduct prev prev
+    change (curr + mu • prev).dotProduct (b.row km1) = mu * prev.dotProduct prev
     rw [GramSchmidt.dot_add_left, GramSchmidt.dot_smul_left]
-    have hcurr_row : Vector.dotProduct curr (b.row km1) = 0 := by
+    have hcurr_row : curr.dotProduct (b.row km1) = 0 := by
       simpa [GramSchmidt.dot_comm_rat] using hrow_curr
-    have hprev_row : Vector.dotProduct prev (b.row km1) = Vector.dotProduct prev prev := by
+    have hprev_row : prev.dotProduct (b.row km1) = prev.dotProduct prev := by
       simpa [GramSchmidt.dot_comm_rat] using hrow_prev
     rw [hcurr_row, hprev_row]
     grind
   have hproj :
       GramSchmidt.projectionCoeff (b.row km1) swappedPrev =
-        mu * Vector.dotProduct prev prev / Vector.dotProduct swappedPrev swappedPrev := by
-    have hnorm' : Vector.dotProduct swappedPrev swappedPrev ≠ 0 := by
+        mu * prev.dotProduct prev / swappedPrev.dotProduct swappedPrev := by
+    have hnorm' : swappedPrev.dotProduct swappedPrev ≠ 0 := by
       simpa [prev, curr, mu, swappedPrev] using hnorm
     simp [GramSchmidt.projectionCoeff, hnorm', hrow_swapped]
-  have hcurr_swapped : Vector.dotProduct curr swappedPrev = Vector.dotProduct curr curr := by
+  have hcurr_swapped : curr.dotProduct swappedPrev = curr.dotProduct curr := by
     rw [GramSchmidt.dot_comm_rat]
-    change Vector.dotProduct (curr + mu • prev) curr = Vector.dotProduct curr curr
+    change (curr + mu • prev).dotProduct curr = curr.dotProduct curr
     rw [GramSchmidt.dot_add_left, GramSchmidt.dot_smul_left, horth_prev_curr]
     grind
-  have hprev_swapped : Vector.dotProduct prev swappedPrev = mu * Vector.dotProduct prev prev := by
+  have hprev_swapped : prev.dotProduct swappedPrev = mu * prev.dotProduct prev := by
     rw [GramSchmidt.dot_comm_rat]
-    change Vector.dotProduct (curr + mu • prev) prev = mu * Vector.dotProduct prev prev
+    change (curr + mu • prev).dotProduct prev = mu * prev.dotProduct prev
     rw [GramSchmidt.dot_add_left, GramSchmidt.dot_smul_left, horth_curr_prev]
     grind
   have hdenom :
-      Vector.dotProduct swappedPrev swappedPrev =
-        Vector.dotProduct curr curr + mu * mu * Vector.dotProduct prev prev := by
-    change Vector.dotProduct (curr + mu • prev) swappedPrev =
-      Vector.dotProduct curr curr + mu * mu * Vector.dotProduct prev prev
+      swappedPrev.dotProduct swappedPrev =
+        curr.dotProduct curr + mu * mu * prev.dotProduct prev := by
+    change (curr + mu • prev).dotProduct swappedPrev =
+      curr.dotProduct curr + mu * mu * prev.dotProduct prev
     rw [GramSchmidt.dot_add_left, GramSchmidt.dot_smul_left, hcurr_swapped, hprev_swapped]
     grind
   rw [hraw', hproj]
   change
-    prev - (mu * Vector.dotProduct prev prev / Vector.dotProduct swappedPrev swappedPrev) • swappedPrev =
-      (Vector.dotProduct curr curr / Vector.dotProduct swappedPrev swappedPrev) • prev -
-        (mu * Vector.dotProduct prev prev / Vector.dotProduct swappedPrev swappedPrev) • curr
+    prev - (mu * prev.dotProduct prev / swappedPrev.dotProduct swappedPrev) • swappedPrev =
+      (curr.dotProduct curr / swappedPrev.dotProduct swappedPrev) • prev -
+        (mu * prev.dotProduct prev / swappedPrev.dotProduct swappedPrev) • curr
   apply Vector.ext
   intro idx hidx
   simp only [Vector.getElem_sub, Vector.getElem_smul]
@@ -384,11 +388,11 @@ theorem basis_rowSwap_adjacent_curr (b : Matrix Rat n m) (km1 k : Fin n)
   rw [hswapped_idx]
   change
     prev[idx] -
-        (mu * Vector.dotProduct prev prev / Vector.dotProduct swappedPrev swappedPrev) *
+        (mu * prev.dotProduct prev / swappedPrev.dotProduct swappedPrev) *
           (curr[idx] + mu * prev[idx]) =
-      (Vector.dotProduct curr curr / Vector.dotProduct swappedPrev swappedPrev) * prev[idx] -
-        (mu * Vector.dotProduct prev prev / Vector.dotProduct swappedPrev swappedPrev) * curr[idx]
-  have hdenom_ne : Vector.dotProduct swappedPrev swappedPrev ≠ 0 := by
+      (curr.dotProduct curr / swappedPrev.dotProduct swappedPrev) * prev[idx] -
+        (mu * prev.dotProduct prev / swappedPrev.dotProduct swappedPrev) * curr[idx]
+  have hdenom_ne : swappedPrev.dotProduct swappedPrev ≠ 0 := by
     simpa [prev, curr, mu, swappedPrev] using hnorm
   rw [hdenom]
   grind
@@ -472,7 +476,7 @@ theorem coeffs_rowSwap_adjacent_pivot (b : Matrix Rat n m) (km1 k : Fin n)
     let curr := (basis b).row k
     let swappedPrev := curr + mu • prev
     GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) k km1 =
-      mu * Vector.dotProduct prev prev / Vector.dotProduct swappedPrev swappedPrev := by
+      mu * prev.dotProduct prev / swappedPrev.dotProduct swappedPrev := by
   let mu := GramSchmidt.entry (coeffs b) k km1
   let prev := (basis b).row km1
   let curr := (basis b).row k
@@ -486,40 +490,40 @@ theorem coeffs_rowSwap_adjacent_pivot (b : Matrix Rat n m) (km1 k : Fin n)
     simpa [swappedPrev, curr, prev, mu] using
       basis_rowSwap_adjacent_prev (b := b) (km1 := km1) (k := k) hkm1
   rw [hrow, hbasis]
-  have horth_curr_prev : Vector.dotProduct curr prev = 0 := by
+  have horth_curr_prev : curr.dotProduct prev = 0 := by
     simpa [curr, prev] using
       basis_orthogonal (b := b) k.val km1.val k.isLt km1.isLt (by omega)
-  have hrow_curr : Vector.dotProduct (b.row km1) curr = 0 := by
+  have hrow_curr : (b.row km1).dotProduct curr = 0 := by
     have hpc :=
       projectionCoeff_row_later_basis_eq_zero (b := b) (src := km1) (col := k) hkm1k
-    by_cases hcurr : Vector.dotProduct curr curr = 0
+    by_cases hcurr : curr.dotProduct curr = 0
     · exact GramSchmidt.dot_zero_of_dot_self_zero (row := b.row km1) (v := curr) hcurr
     · have hdiv :
-        Vector.dotProduct (b.row km1) curr / Vector.dotProduct curr curr = 0 := by
+        (b.row km1).dotProduct curr / curr.dotProduct curr = 0 := by
           simpa [curr, GramSchmidt.projectionCoeff, hcurr] using hpc
       grind
-  have hrow_prev : Vector.dotProduct (b.row km1) prev = Vector.dotProduct prev prev := by
-    by_cases hprev : Vector.dotProduct prev prev = 0
+  have hrow_prev : (b.row km1).dotProduct prev = prev.dotProduct prev := by
+    by_cases hprev : prev.dotProduct prev = 0
     · have hzero := GramSchmidt.dot_zero_of_dot_self_zero (row := b.row km1) (v := prev) hprev
       simp [hzero, hprev]
     · have hpc := projectionCoeff_row_basis_self_eq_one (b := b) (src := km1) (by
         simpa [prev] using hprev)
       have hdiv :
-        Vector.dotProduct (b.row km1) prev / Vector.dotProduct prev prev = 1 := by
+        (b.row km1).dotProduct prev / prev.dotProduct prev = 1 := by
           simpa [prev, GramSchmidt.projectionCoeff, hprev] using hpc
       grind
   have hrow_swapped :
-      Vector.dotProduct (b.row km1) swappedPrev = mu * Vector.dotProduct prev prev := by
+      (b.row km1).dotProduct swappedPrev = mu * prev.dotProduct prev := by
     rw [GramSchmidt.dot_comm_rat]
-    change Vector.dotProduct (curr + mu • prev) (b.row km1) = mu * Vector.dotProduct prev prev
+    change (curr + mu • prev).dotProduct (b.row km1) = mu * prev.dotProduct prev
     rw [GramSchmidt.dot_add_left, GramSchmidt.dot_smul_left]
-    have hcurr_row : Vector.dotProduct curr (b.row km1) = 0 := by
+    have hcurr_row : curr.dotProduct (b.row km1) = 0 := by
       simpa [GramSchmidt.dot_comm_rat] using hrow_curr
-    have hprev_row : Vector.dotProduct prev (b.row km1) = Vector.dotProduct prev prev := by
+    have hprev_row : prev.dotProduct (b.row km1) = prev.dotProduct prev := by
       simpa [GramSchmidt.dot_comm_rat] using hrow_prev
     rw [hcurr_row, hprev_row]
     grind
-  have hnorm' : Vector.dotProduct swappedPrev swappedPrev ≠ 0 := by
+  have hnorm' : swappedPrev.dotProduct swappedPrev ≠ 0 := by
     simpa [swappedPrev, curr, prev, mu] using hnorm
   simp [hnorm', hrow_swapped, swappedPrev, curr, prev, mu]
 
@@ -551,7 +555,7 @@ destination row increases by `c` when the source basis row has nonzero norm. -/
 @[grind =]
 theorem coeffs_rowAdd_pivot (b : Matrix Rat n m) (src dst : Fin n)
     (hsrcdst : src.val < dst.val) (c : Rat)
-    (hnorm : Vector.dotProduct ((basis b).row src) ((basis b).row src) ≠ 0) :
+    (hnorm : ((basis b).row src).dotProduct ((basis b).row src) ≠ 0) :
     GramSchmidt.entry (coeffs (Matrix.rowAdd b src dst c)) dst src =
       GramSchmidt.entry (coeffs b) dst src + c := by
   have hbasis := basis_rowAdd (b := b) (src := src) (dst := dst) (c := c) hsrcdst
@@ -827,7 +831,7 @@ private theorem basis_row_orthogonal_prefix_pred
     (b : Matrix Rat n m) (i p : Nat) (hi : i < n) (hp : p < n)
     (hsucc : p + 1 = i) :
     ∀ j : Fin (p + 1),
-      Vector.dotProduct ((basis b).row ⟨i, hi⟩)
+      ((basis b).row ⟨i, hi⟩).dotProduct
         ((GramSchmidt.prefixRows (basis b) p hp).row j) = 0 := by
   subst i
   intro j

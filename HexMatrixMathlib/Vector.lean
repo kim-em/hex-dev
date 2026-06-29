@@ -65,8 +65,8 @@ theorem foldl_finRange_eq_sum [AddCommMonoid R] (f : Fin n → R) :
 /-- The executable dot product equals Mathlib's `dotProduct` of the two vectors
 read through `vectorEquiv`. -/
 theorem dotProduct_eq [NonUnitalNonAssocSemiring R] (u v : Vector R n) :
-    Hex.Vector.dotProduct u v = dotProduct (vectorEquiv u) (vectorEquiv v) := by
-  unfold Hex.Vector.dotProduct dotProduct
+    u.dotProduct v = dotProduct (vectorEquiv u) (vectorEquiv v) := by
+  unfold Vector.dotProduct dotProduct
   rw [foldl_finRange_eq_sum]
   rfl
 
@@ -92,7 +92,7 @@ theorem vectorEquiv_mulVec [Semiring R] (M : Hex.Matrix R n m) (v : Vector R m) 
   funext i
   simp only [vectorEquiv_apply]
   change (Hex.Matrix.mulVec M v)[i.val] = (matrixEquiv M).mulVec (vectorEquiv v) i
-  unfold Hex.Matrix.mulVec Hex.Matrix.row Hex.Vector.dotProduct
+  unfold Hex.Matrix.mulVec Hex.Matrix.row Vector.dotProduct
   rw [Vector.getElem_ofFn i.isLt]
   rw [foldl_finRange_eq_sum]
   unfold _root_.Matrix.mulVec dotProduct

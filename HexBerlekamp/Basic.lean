@@ -290,7 +290,7 @@ private theorem coeffVector_matrixActionPolySum_eq_mulVec
         FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val)
       0 i]
   rw [DensePoly.coeff_zero]
-  simp [HMul.hMul, Matrix.mulVec, Vector.dotProduct, Matrix.row, Hex.Vector.dotProduct]
+  simp [HMul.hMul, Matrix.mulVec, Vector.dotProduct, Matrix.row, Vector.dotProduct]
   apply foldl_add_congr
   intro j _hj
   show (DensePoly.C (w.coeff j.val) *
@@ -711,7 +711,7 @@ theorem fixedSpaceKernelVectors_sound (f : FpPoly p) (hmonic : DensePoly.Monic f
       Matrix.rref_rank (fixedSpaceMatrix f hmonic))) :
     IsFixedSpaceKernelVector f hmonic ((fixedSpaceKernelVectors f hmonic).get k) := by
   unfold IsFixedSpaceKernelVector fixedSpaceKernelVectors
-  simpa [HMul.hMul] using Matrix.nullspace_sound (fixedSpaceMatrix f hmonic) k
+  exact Matrix.nullspace_sound (fixedSpaceMatrix f hmonic) k
 
 /-- Every polynomial representative returned by `fixedSpaceKernel` satisfies the
 executable fixed-space kernel condition. -/

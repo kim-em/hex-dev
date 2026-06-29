@@ -1473,7 +1473,7 @@ theorem bareissNoPivotData_diag_eq_principalSubmatrix_bareiss_of_prefix_nonsingu
         (Matrix.noPivotLoop r (Matrix.noPivotInitialState LP)).matrix[
           (⟨r, Nat.lt_succ_self r⟩ : Fin (r + 1))][
           (⟨r, Nat.lt_succ_self r⟩ : Fin (r + 1))] := by
-          simpa [GM, LP, fullAtR, init] using h_diag
+          exact h_diag
     _ = Matrix.bareiss LP := by
           simpa [LP, Fin.last] using h_bareiss.symm
 

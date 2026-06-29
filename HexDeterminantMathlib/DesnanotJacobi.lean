@@ -108,10 +108,13 @@ private lemma mul_aux_adjugate_m_eq_aux_p (M : Matrix (Fin (n + 2)) (Fin (n + 2)
   simp only [auxAdjugateM, auxP, mul_apply]
   rcases eq_or_ne j 0 with rfl | hj0
   · have h := congr_fun (congr_fun (mul_adjugate M) i) 0
-    simpa only [smul_eq_mul, smul_apply, one_apply, mul_boole] using h
+    simpa only [smul_eq_mul, Matrix.smul_apply, one_apply, mul_boole, if_true, mul_apply] using h
   · rcases eq_or_ne j (Fin.last (n + 1)) with rfl | hjk
     · have h := congr_fun (congr_fun (mul_adjugate M) i) (Fin.last (n + 1))
-      simpa only [smul_eq_mul, smul_apply, one_apply, mul_boole] using h
+      have hlast : (Fin.last (n + 1) : Fin (n + 2)) ≠ 0 := by
+        simp [Fin.ext_iff, Fin.val_last]
+      simpa only [smul_eq_mul, Matrix.smul_apply, one_apply, mul_boole, mul_apply,
+        if_true, if_neg hlast] using h
     · simp only [hj0, hjk, mul_ite, mul_one, mul_zero]
       rw [sum_eq_single j]
       · exact if_pos rfl

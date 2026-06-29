@@ -15,7 +15,7 @@ Oracle: none
 Mode: always
 Covered operations:
 - dense matrix constructors and accessors (`ofFn`, `row`, `col`, `transpose`, `principalSubmatrix`)
-- vector and matrix arithmetic (`dotProduct`, `Hex.Vector.normSq`, `mulVec`, `mul`, `gramMatrix`)
+- vector and matrix arithmetic (`dotProduct`, ``.normSq, `mulVec`, `mul`, `gramMatrix`)
 - elementary row operations (`rowSwap`, `rowScale`, `rowAdd`)
 Covered properties:
 - transpose is involutive on committed fixtures
@@ -84,8 +84,8 @@ private def spanVec : Vector Rat 3 :=
 #guard Matrix.col baseInt ⟨0, by decide⟩ = colZeroInt
 #guard Matrix.principalSubmatrix baseInt 1 (by decide) = unitSubmatrix
 #guard Matrix.principalSubmatrix baseInt 2 (by decide) = baseInt
-#guard Hex.Vector.normSq vecInt = 61
-#guard Hex.Vector.normSq spanVec = 14
+#guard vecInt.normSq = 61
+#guard spanVec.normSq = 14
 #guard Matrix.gramMatrix baseInt = baseGramInt
 #guard (1 : Matrix Int 2 2) * baseInt = baseInt
 #guard baseInt * (1 : Matrix Int 2 2) = baseInt

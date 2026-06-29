@@ -103,7 +103,7 @@ def mulEqCert (M : Matrix Int n n) (A C : Matrix Int n m) : Bool :=
   let K := packWidth M A C
   let packs : Vector Int n := Vector.ofFn fun l => packRow K (row A l)
   (List.finRange n).all fun i =>
-    Vector.dotProduct (row M i) packs == packRow K (row C i)
+    (row M i).dotProduct packs == packRow K (row C i)
 
 /-- `foldl_max_le_init` shows that the initial accumulator is bounded by the
 running `Nat.max` scan used to compute entrywise absolute-value bounds. -/
@@ -228,10 +228,10 @@ private theorem foldl_zipWith_getElem (c : Vector Int n) (A : Matrix Int n m)
 the (unformed) product `M * A`. -/
 theorem dotProduct_packRow (K : Nat) (M : Matrix Int n n) (A : Matrix Int n m)
     (i : Fin n) :
-    Vector.dotProduct (row M i) (Vector.ofFn fun l => packRow K (row A l)) =
+    (row M i).dotProduct (Vector.ofFn fun l => packRow K (row A l)) =
       packRow K (row (M * A) i) := by
   have hstart :
-      Vector.dotProduct (row M i) (Vector.ofFn fun l => packRow K (row A l)) =
+      (row M i).dotProduct (Vector.ofFn fun l => packRow K (row A l)) =
         (List.finRange n).foldl
           (fun acc l => acc + (row M i)[l] * packRow K (row A l))
           (packRow K (Vector.replicate m (0 : Int))) := by
@@ -333,7 +333,7 @@ private theorem foldl_dot_natAbs_le (u v : Vector Int k) (Bu Bv : Nat)
 /-- Entrywise bound on an integer dot product. -/
 theorem natAbs_dotProduct_le (u v : Vector Int k) (Bu Bv : Nat)
     (hu : ∀ l : Fin k, u[l].natAbs ≤ Bu) (hv : ∀ l : Fin k, v[l].natAbs ≤ Bv) :
-    (Vector.dotProduct u v).natAbs ≤ k * (Bu * Bv) := by
+    (u.dotProduct v).natAbs ≤ k * (Bu * Bv) := by
   have h := foldl_dot_natAbs_le u v Bu Bv hu hv (List.finRange k) 0
   simpa [Vector.dotProduct] using h
 
@@ -431,7 +431,7 @@ namespace LLLCore
 /-- Recover the squared norm of a Gram-Schmidt basis vector. -/
 @[expose]
 def basisNormSq (basis : Matrix Rat n m) (i : Fin n) : Rat :=
-  Vector.normSq (basis.row i)
+  (basis.row i).normSq
 
 end LLLCore
 
@@ -478,7 +478,7 @@ private theorem foldlNonneg {α : Type} (xs : List α) (f : α → Rat)
 its rational entries. -/
 theorem basisNormSq_nonneg (basis : Matrix Rat n m) (i : Fin n) :
     0 ≤ basisNormSq basis i := by
-  simp only [basisNormSq, Vector.normSq, Hex.Vector.dotProduct]
+  simp only [basisNormSq, Vector.normSq, Vector.dotProduct]
   exact foldlNonneg (List.finRange m) (fun j => (basis.row i)[j] * (basis.row i)[j]) 0
     (by grind) (fun j => ratMulSelfNonneg ((basis.row i)[j]))
 
@@ -624,7 +624,7 @@ theorem teleBound (b : Matrix Int n m) {δ η : Rat}
 coincides with the 0-th input row, so their squared norms agree. -/
 theorem basisNormSq_zero (b : Matrix Int n m) (hn : 0 < n) :
     basisNormSq (GramSchmidt.Int.basis b) ⟨0, hn⟩ =
-      ((Vector.normSq (b.row ⟨0, hn⟩) : Int) : Rat) := by
+      (((b.row ⟨0, hn⟩).normSq : Int) : Rat) := by
   unfold basisNormSq
   rw [GramSchmidt.Int.basis_zero b hn]
   exact GramSchmidt.Int.normSq_map_intCast (b.row ⟨0, hn⟩)
@@ -668,9 +668,9 @@ theorem short_vector_bound_of_size_bound (b : Matrix Int n m) {δ η : Rat}
     (hli : Matrix.independent b) (hred : isLLLReduced b δ η)
     (hη : (1 / 2 : Rat) ≤ η) (hδη : η * η < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     {v : Vector Int m} (hv : Matrix.memLattice b v) (hv' : v ≠ 0) :
-    ((Vector.normSq (b.row ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩) : Int) : Rat) ≤
+    (((b.row ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩).normSq : Int) : Rat) ≤
       (1 / (δ - η * η)) ^ (n - 1) *
-        ((Vector.normSq v : Int) : Rat) := by
+        ((v.normSq : Int) : Rat) := by
   have h0n : 0 < n := Nat.lt_of_lt_of_le Nat.zero_lt_one hn
   obtain ⟨i, hi_norm⟩ :=
     GramSchmidt.Int.normSq_latticeVec_ge_min_basis_normSq b hli v hv hv'
@@ -713,13 +713,13 @@ theorem short_vector_bound_of_size_bound (b : Matrix Int n m) {δ η : Rat}
   have hαpow_nn : 0 ≤ (1 / (δ - η * η)) ^ (n - 1) :=
     LLLCore.ratPow_nonneg _ hα_nn (n - 1)
   calc
-    ((Vector.normSq (b.row ⟨0, h0n⟩) : Int) : Rat)
+    (((b.row ⟨0, h0n⟩).normSq : Int) : Rat)
         ≤ (1 / (δ - η * η)) ^ i.val *
             LLLCore.basisNormSq (GramSchmidt.Int.basis b) i := htele
     _ ≤ (1 / (δ - η * η)) ^ (n - 1) *
             LLLCore.basisNormSq (GramSchmidt.Int.basis b) i :=
         Rat.mul_le_mul_of_nonneg_right hpow_mono hbasis_nn
-    _ ≤ (1 / (δ - η * η)) ^ (n - 1) * ((Vector.normSq v : Int) : Rat) :=
+    _ ≤ (1 / (δ - η * η)) ^ (n - 1) * ((v.normSq : Int) : Rat) :=
         Rat.mul_le_mul_of_nonneg_left hi_norm hαpow_nn
 
 /-- Monotonicity of the size-reduction bound: a `(δ, η₁)`-LLL-reduced basis
@@ -1083,7 +1083,7 @@ dispatches that read it keep per-input timing deterministic. -/
 @[expose]
 def maxDiagBits (b : Matrix Int n m) : Nat :=
   (List.finRange n).foldl
-    (fun acc i => max acc (Vector.normSq (b.row i)).natAbs.log2)
+    (fun acc i => max acc ((b.row i).normSq).natAbs.log2)
     0
 
 /-- Size predictor for the reducedness dispatch: `true` when the
@@ -1779,7 +1779,7 @@ def init (b : Matrix Int n m) : SteeredState n m :=
       let mut c : Array Float := Array.replicate (i + 1) 0.0
       let mut mui : Array Float := Array.replicate i 0.0
       for j in [0:i+1] do
-        let mut s := Float.ofInt (Vector.dotProduct rows[i]! rows[j]!)
+        let mut s := Float.ofInt (rows[i]!.dotProduct rows[j]!)
         let murow := if j == i then mui else mu[j]!
         for l in [0:j] do
           s := s - murow[l]! * c[l]!
@@ -1807,7 +1807,7 @@ def refreshRow (s : SteeredState n m) (k : Nat) : SteeredState n m :=
     let mut c : Array Float := Array.replicate (k + 1) 0.0
     let mut muk : Array Float := Array.replicate k 0.0
     for j in [0:k+1] do
-      let mut sm := Float.ofInt (Vector.dotProduct rows[k]! rows[j]!)
+      let mut sm := Float.ofInt (rows[k]!.dotProduct rows[j]!)
       let murow := if j == k then muk else s.mu[j]!
       for l in [0:j] do
         sm := sm - murow[l]! * c[l]!
@@ -1943,7 +1943,7 @@ def fuel (b : Matrix Int n m) : Nat :=
   Id.run do
     let mut s := 0
     for i in [0:n] do
-      s := s + (Vector.dotProduct rows[i]! rows[i]!).natAbs.log2 + 1
+      s := s + (rows[i]!.dotProduct rows[i]!).natAbs.log2 + 1
     return (3 * s + 1) * (n + 1)
 
 end SteeredState

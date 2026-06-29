@@ -217,7 +217,7 @@ private theorem zmod64_coprime_of_prime_ne_zero
         apply ha
         apply ZMod64.ext
         apply UInt64.toNat_inj.mp
-        simpa [ZMod64.toNat_eq_val] using hnat
+        exact hnat
       · exact Nat.pos_of_ne_zero hnat
     have hk_pos : 0 < k := by
       cases k with
@@ -246,7 +246,7 @@ private theorem zmod64_mul_inv_eq_one_of_prime_ne_zero
     a * a⁻¹ = 1 := by
   have hcop := zmod64_coprime_of_prime_ne_zero hp ha
   have hinv : (a⁻¹ * a).toNat = (1 : ZMod64 p).toNat := by
-    simpa [ZMod64.toNat_one] using ZMod64.inv_mul_eq_one (p := p) a hcop
+    exact ZMod64.inv_mul_eq_one (p := p) a hcop
   have hcomm : a * a⁻¹ = a⁻¹ * a := by grind
   rw [hcomm]
   apply ZMod64.ext
@@ -342,7 +342,9 @@ private theorem coeff_zero_ne_zero_of_degree_eq_zero
     · have hpred : g.size - 1 = 0 := by
         simpa [hzero] using hdeg
       omega
-  simpa [hsize] using DensePoly.coeff_last_ne_zero_of_pos_size g (by omega)
+  have h := DensePoly.coeff_last_ne_zero_of_pos_size g (by omega)
+  simp only [hsize] at h
+  exact h
 
 /-- Polynomial divisibility is transitive, chaining xgcd divisibility facts into
 the downstream inverse-soundness argument. -/
@@ -431,7 +433,9 @@ private theorem xgcd_repr_gcd_coeff_zero_ne_zero_of_ne_zero
         simpa [hzero] using hdeg
       omega
   have hpos : 0 < g.size := by omega
-  simpa [g, hsize] using DensePoly.coeff_last_ne_zero_of_pos_size g hpos
+  have h := DensePoly.coeff_last_ne_zero_of_pos_size g hpos
+  simp only [g, hsize] at h
+  exact h
 
 /-- For a nonzero residue class modulo an irreducible polynomial, the
 normalized xgcd witness reduces to the multiplicative identity. -/
@@ -638,7 +642,7 @@ theorem natCast_eq_natCast_iff_reduceMod_const_eq
   · intro h
     apply GFqField.ext
     apply GFqRing.ext
-    simpa [repr_natCast] using h
+    exact h
 
 /-- Equality of natural literals is equivalent to congruence modulo `p`. -/
 theorem natCast_eq_natCast_iff_mod_eq
@@ -950,10 +954,10 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     simpa using Lean.Grind.Semiring.pow_succ a.toQuotient n
   · intro n
     apply GFqField.ext
-    simpa using Lean.Grind.Semiring.ofNat_succ (α := GFqRing.PolyQuotient f hf) n
+    exact Lean.Grind.Semiring.ofNat_succ (α := GFqRing.PolyQuotient f hf) n
   · intro n
     apply GFqField.ext
-    simpa using Lean.Grind.Semiring.ofNat_eq_natCast (α := GFqRing.PolyQuotient f hf) n
+    exact Lean.Grind.Semiring.ofNat_eq_natCast (α := GFqRing.PolyQuotient f hf) n
   · intro n a
     apply GFqField.ext
     simpa using
@@ -978,7 +982,7 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     simpa using Lean.Grind.Ring.zsmul_natCast_eq_nsmul (α := GFqRing.PolyQuotient f hf) n a.toQuotient
   · intro n
     apply GFqField.ext
-    simpa using Lean.Grind.Ring.intCast_ofNat (α := GFqRing.PolyQuotient f hf) n
+    exact Lean.Grind.Ring.intCast_ofNat (α := GFqRing.PolyQuotient f hf) n
   · intro i
     apply GFqField.ext
     simpa using Lean.Grind.Ring.intCast_neg (α := GFqRing.PolyQuotient f hf) i
@@ -1053,7 +1057,7 @@ private theorem pow_zero_eq_one
     pow x 0 = 1 := by
   letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
   apply GFqField.ext
-  simpa using Lean.Grind.Semiring.pow_zero x.toQuotient
+  exact Lean.Grind.Semiring.pow_zero x.toQuotient
 
 /-- Field laws for finite-field elements, using the field-level inverse lemmas. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
@@ -1070,10 +1074,10 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     exact mul_inv_cancel (x := a) ha'
   · intro a
     apply GFqField.ext
-    simpa [zpow] using Lean.Grind.Semiring.pow_zero a.toQuotient
+    exact Lean.Grind.Semiring.pow_zero a.toQuotient
   · intro a n
     apply GFqField.ext
-    simpa [zpow] using Lean.Grind.Semiring.pow_succ a.toQuotient n
+    exact Lean.Grind.Semiring.pow_succ a.toQuotient n
   · intro a n
     cases n with
     | ofNat m =>

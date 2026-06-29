@@ -17,7 +17,7 @@ into Phase 1 until the Phase 0 PR lands on `main`.
 ## Steps
 
 1. Create `lean-toolchain` containing exactly
-   `leanprover/lean4:v4.30.0-rc2`. This is the project baseline; do
+   `leanprover/lean4:v4.32.0-rc1`. This is the project baseline; do
    not substitute a different release.
 
 2. Create `lakefile.lean` (Lake's DSL form, **not** `lakefile.toml`)
@@ -25,7 +25,7 @@ into Phase 1 until the Phase 0 PR lands on `main`.
    computational + bridge libraries), plus one additional `lean_lib`
    for `HexManual` (the Verso-based documentation aggregator — see
    [Phase7.md](Phase7.md)). All `-mathlib` bridge libraries depend
-   on the Mathlib tag `v4.30.0-rc2`. `HexManual` depends on Verso
+   on the Mathlib tag `v4.32.0-rc1`. `HexManual` depends on Verso
    and on every `hex-*` library, and is the `@[default_target]`.
 
    **Use `lakefile.lean`, not `lakefile.toml`, even though the toml
@@ -295,7 +295,7 @@ Phase 0 is done when:
   `HexManual`) via `lean_lib` declarations; no `lakefile.toml`
   is present in the repo root;
 - `lake-manifest.json` pins Mathlib to the resolved tag for
-  `v4.30.0-rc2`;
+  `v4.32.0-rc1`;
 - every library has an empty-or-stub root `.lean` file and source
   directory, including `HexManual`;
 - `scripts/check_dag.py` and `scripts/status.py` exist;

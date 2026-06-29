@@ -289,6 +289,7 @@ private theorem isUnitPolynomial_of_dvd_one {g : GF2Poly}
   have hd0 : d = 0 := by simpa [degree, hd] using hgdeg
   unfold isUnitPolynomial
   rw [hd, hd0]
+  rfl
 
 private theorem dvd_add' {d a b : GF2Poly} :
     d ∣ a → d ∣ b → d ∣ a + b := by
@@ -483,7 +484,7 @@ theorem checkPowChainLinear_spec
       intro hk
       have hm := ih (Nat.le_of_succ_le hk)
       have hmem : m ∈ List.range cert.n := by
-        simpa [List.mem_range] using hk
+        exact List.mem_range.mpr hk
       have hstep_all :
           (match cert.powChain[m]?, cert.powChain[m + 1]? with
             | some prev, some curr => curr == sqMod f prev

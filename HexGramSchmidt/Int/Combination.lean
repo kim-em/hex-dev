@@ -51,7 +51,7 @@ private theorem rowCombination_int_getElem
         (fun (acc : Int) (i : Fin n) => acc + b[i][col] * c[i]) 0 := by
   show (Matrix.transpose b * c)[col] = _
   rw [Matrix.getElem_mulVec]
-  show Vector.dotProduct ((Matrix.transpose b).row col) c = _
+  show ((Matrix.transpose b).row col).dotProduct c = _
   simp [Vector.dotProduct, Matrix.row, Matrix.transpose, Matrix.col]
 
 /-- Entry expansion of the cast prefix row combination. The `(j + 1)`-row prefix
@@ -69,7 +69,7 @@ private theorem rowCombination_prefix_castIntMatrix_getElem
           acc + (b[jn][col] : Rat) * (c[jn] : Rat)) 0 := by
   show (Matrix.transpose _ * _)[col] = _
   rw [Matrix.getElem_mulVec]
-  show Vector.dotProduct ((Matrix.transpose _).row col) _ = _
+  show ((Matrix.transpose _).row col).dotProduct _ = _
   simp [Vector.dotProduct, GramSchmidt.prefixRows,
     castIntMatrix, prefixCoeffsCast, Matrix.row, Matrix.transpose, Matrix.col]
 
@@ -368,9 +368,9 @@ transfers norm facts proved over `ℤ` into the rational Gram-Schmidt setting. A
 a `simp` rule it pushes the cast outward, putting the rational squared norm in
 the normal form `((normSq v : Int) : Rat)`. -/
 @[simp, grind =] theorem normSq_map_intCast (v : Vector Int m) :
-    Vector.normSq (Vector.map (fun x : Int => (x : Rat)) v) =
-      ((Vector.normSq v : Int) : Rat) := by
-  simpa [Vector.normSq, Hex.Vector.normSq, Vector.dotProduct]
+    (Vector.map (fun x : Int => (x : Rat)) v).normSq =
+      ((v.normSq : Int) : Rat) := by
+  simpa [Vector.normSq, Vector.dotProduct]
     using (foldl_int_dot_cast (List.finRange m)
       (fun i : Fin m => v[i]) (fun i : Fin m => v[i]) 0).symm
 
@@ -382,7 +382,7 @@ theorem normSq_latticeVec_ge_min_basis_normSq
     (b : Matrix Int n m) (_hli : independent b)
     (v : Vector Int m) (hv : memLattice b v) (hv' : v ≠ 0) :
     ∃ i : Fin n,
-      Vector.normSq ((basis b).row i) ≤ ((Vector.normSq v : Int) : Rat) := by
+      ((basis b).row i).normSq ≤ ((v.normSq : Int) : Rat) := by
   rcases hv with ⟨c, hcv⟩
   have hc_nonzero : ∃ i : Fin n, c[i] ≠ 0 := by
     by_cases h : ∃ i : Fin n, c[i] ≠ 0
@@ -410,14 +410,14 @@ theorem normSq_latticeVec_ge_min_basis_normSq
     exact GramSchmidt.one_le_intCast_mul_self_of_ne_zero c[k] hck
   refine ⟨k, ?_⟩
   have horth : ∀ i j : Fin n, i ≠ j →
-      Vector.dotProduct ((basis b).row i) ((basis b).row j) = 0 := by
+      ((basis b).row i).dotProduct ((basis b).row j) = 0 := by
     intro i j hij
     exact basis_orthogonal b i.val j.val i.isLt j.isLt (by
       intro hval
       exact hij (Fin.ext hval))
   have hle :
-      Vector.normSq ((basis b).row k) ≤
-        Vector.normSq (Matrix.rowCombination (basis b) d) :=
+      ((basis b).row k).normSq ≤
+        (Matrix.rowCombination (basis b) d).normSq :=
     GramSchmidt.rowCombination_normSq_ge_of_orthogonal_coeff_sq_ge_one
       (rows := basis b) (coeffs := d) (k := k) horth hcoeff_sq
   have hrec :
@@ -427,8 +427,8 @@ theorem normSq_latticeVec_ge_min_basis_normSq
     dsimp [d]
     exact rowCombination_basis_coeffs_reconstruction b c
   have hnorm :
-      Vector.normSq (Matrix.rowCombination (basis b) d) =
-        ((Vector.normSq v : Int) : Rat) := by
+      (Matrix.rowCombination (basis b) d).normSq =
+        ((v.normSq : Int) : Rat) := by
     rw [← hrec, normSq_map_intCast]
   rw [← hnorm]
   exact hle
@@ -448,7 +448,7 @@ theorem exists_top_index_normSq_le_of_memLattice
       Matrix.rowCombination b c = v ∧
       c[k] ≠ 0 ∧
       (∀ j : Fin n, k.val < j.val → c[j] = 0) ∧
-      Vector.normSq ((basis b).row k) ≤ ((Vector.normSq v : Int) : Rat) := by
+      ((basis b).row k).normSq ≤ ((v.normSq : Int) : Rat) := by
   rcases hv with ⟨c, hcv⟩
   have hc_nonzero : ∃ i : Fin n, c[i] ≠ 0 := by
     by_cases h : ∃ i : Fin n, c[i] ≠ 0
@@ -475,14 +475,14 @@ theorem exists_top_index_normSq_le_of_memLattice
     rw [htop]
     exact GramSchmidt.one_le_intCast_mul_self_of_ne_zero c[k] hck
   have horth : ∀ i j : Fin n, i ≠ j →
-      Vector.dotProduct ((basis b).row i) ((basis b).row j) = 0 := by
+      ((basis b).row i).dotProduct ((basis b).row j) = 0 := by
     intro i j hij
     exact basis_orthogonal b i.val j.val i.isLt j.isLt (by
       intro hval
       exact hij (Fin.ext hval))
   have hle :
-      Vector.normSq ((basis b).row k) ≤
-        Vector.normSq (Matrix.rowCombination (basis b) d) :=
+      ((basis b).row k).normSq ≤
+        (Matrix.rowCombination (basis b) d).normSq :=
     GramSchmidt.rowCombination_normSq_ge_of_orthogonal_coeff_sq_ge_one
       (rows := basis b) (coeffs := d) (k := k) horth hcoeff_sq
   have hrec :
@@ -492,8 +492,8 @@ theorem exists_top_index_normSq_le_of_memLattice
     dsimp [d]
     exact rowCombination_basis_coeffs_reconstruction b c
   have hnorm :
-      Vector.normSq (Matrix.rowCombination (basis b) d) =
-        ((Vector.normSq v : Int) : Rat) := by
+      (Matrix.rowCombination (basis b) d).normSq =
+        ((v.normSq : Int) : Rat) := by
     rw [← hrec, normSq_map_intCast]
   rw [← hnorm]
   exact hle
@@ -514,7 +514,7 @@ private theorem foldl_dot_comm_int {n' : Nat} (xs : List (Fin n'))
 
 /-- The dot product of integer vectors is commutative. -/
 private theorem dot_comm_int {n' : Nat} (u v : Vector Int n') :
-    Vector.dotProduct u v = Vector.dotProduct v u := by
+    u.dotProduct v = v.dotProduct u := by
   simpa [Vector.dotProduct] using
     foldl_dot_comm_int (xs := List.finRange n') (u := u) (v := v)
       (accU := 0) (accV := 0) rfl
@@ -524,9 +524,9 @@ swapped index. Consumed by the no-pivot Bareiss symmetry/transpose argument for
 bordered minors of `gramMatrix b`. -/
 private theorem gramMatrix_symm (b : Matrix Int n m) (a c : Fin n) :
     (Matrix.gramMatrix b)[a][c] = (Matrix.gramMatrix b)[c][a] := by
-  show (Matrix.ofFn fun i j => Hex.Vector.dotProduct
+  show (Matrix.ofFn fun i j => Vector.dotProduct
         (Matrix.row b i) (Matrix.row b j))[a][c]
-    = (Matrix.ofFn fun i j => Hex.Vector.dotProduct
+    = (Matrix.ofFn fun i j => Vector.dotProduct
         (Matrix.row b i) (Matrix.row b j))[c][a]
   simp [Matrix.ofFn, Vector.getElem_ofFn]
   exact dot_comm_int _ _
@@ -1157,9 +1157,11 @@ private theorem schurSigma_foldl_eq
         (Matrix.noPivotInitialState (Matrix.gramMatrix b)).matrix[
           (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step][
           (Matrix.noPivotInitialState (Matrix.gramMatrix b)).step] ≠ 0 := by
-      simpa [Matrix.noPivotInitialState] using
+      have key :=
         noPivotLoop_initial_gram_diag_ne_zero
           (b := b) p_out 0 hp_out_pos hp_out_n h_nonsing
+      simp only [Matrix.noPivotInitialState]
+      exact key
     rw [Matrix.noPivotLoop_regular_branch 0
         (Matrix.noPivotInitialState (Matrix.gramMatrix b)) hDone hpivot]
     simp [Matrix.noPivotLoop_zero_fuel, Matrix.noPivotInitialState]

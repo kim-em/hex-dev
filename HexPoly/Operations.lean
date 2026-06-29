@@ -71,7 +71,8 @@ private theorem list_getD_replicate_append_zero (n k : Nat) (coeffs : List R) :
       | zero =>
           simp [List.replicate]
       | succ k =>
-          simpa [Nat.succ_sub_succ_eq_sub] using ih k
+          simpa [Nat.succ_sub_succ_eq_sub, List.replicate_succ, List.cons_append,
+            List.getElem?_cons_succ] using ih k
 
 omit [DecidableEq R] in
 /-- Default-indexed read of `(List.range size).map f`: index `n` reads `f n` when
@@ -91,7 +92,7 @@ theorem coeff_scale [Mul R] (c : R) (p : DensePoly R) (n : Nat)
     (scale c p).coeff n = c * p.coeff n := by
   unfold scale
   rw [coeff_ofCoeffs_list]
-  simpa [coeff] using list_getD_map_mul_zero (R := R) c p.toArray.toList n hzero
+  simpa [coeff, toArray] using list_getD_map_mul_zero (R := R) c p.toArray.toList n hzero
 
 /-- Scaling the zero polynomial yields the zero polynomial: `scale c 0 = 0`.
 A `simp`/`grind` normal form, so callers need no `c * 0 = 0` hypothesis to
@@ -142,7 +143,7 @@ coefficients are read from the original polynomial with the index shifted down. 
       exact coeff_eq_zero_of_size_le (0 : DensePoly R) (by simp)
   · rw [if_neg hp]
     rw [coeff_ofCoeffs_list]
-    simpa [coeff] using list_getD_replicate_append_zero (R := R) n k p.toArray.toList
+    simpa [coeff, toArray] using list_getD_replicate_append_zero (R := R) n k p.toArray.toList
 
 /-- Shifting the zero polynomial by any power leaves it zero: `shift n 0 = 0`.
 A `simp`/`grind` normal form for the degenerate input to `shift`. -/
@@ -939,7 +940,7 @@ theorem eval_neg [Sub R] [Add R] [Mul R] (p : DensePoly R) (x : R)
     eval (-p) x = (Zero.zero : R) - eval p x := by
   change eval (sub (0 : DensePoly R) p) x = (Zero.zero : R) - eval p x
   have h := eval_sub (0 : DensePoly R) p x hzero_sub hzero_horner hstep
-  simpa using h
+  exact h
 
 /-- Ring-specialized evaluation law for negation. -/
 @[simp, grind =] theorem eval_neg_ring {S : Type u}
