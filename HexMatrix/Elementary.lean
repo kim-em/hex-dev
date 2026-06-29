@@ -24,10 +24,14 @@ universe u
 
 namespace Matrix
 
-/-- Swap rows `i` and `j` in a dense matrix. -/
+/-- Swap rows `i` and `j` in a dense matrix.
+
+Implemented with `Vector.swap`, which updates the dense backing store in place
+when `M` is uniquely referenced, rather than reading both rows and writing them
+back through two `set`s (which forces a copy of the outer vector). -/
 @[expose]
 def rowSwap (M : Matrix R n m) (i j : Fin n) : Matrix R n m :=
-  (M.set i M[j]).set j M[i]
+  M.swap i j
 
 /-- Read an entry of `rowSwap M i j` by cases on the row index: row `j`
 returns the original row `i`, row `i` returns the original row `j`, and any
@@ -35,33 +39,9 @@ other row is unchanged. -/
 theorem rowSwap_getElem (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
     (rowSwap M i j)[r][k] =
       if r = j then M[i][k] else if r = i then M[j][k] else M[r][k] := by
-  by_cases hrj : r = j
-  · subst r
-    simp [rowSwap]
-  · by_cases hri : r = i
-    · subst r
-      simp [rowSwap, hrj]
-      have hval : j.val ≠ i.val := by
-        intro hval
-        exact hrj (Fin.ext hval.symm)
-      have hrow : ((M.set i M[j]).set j M[i])[i] = (M.set i M[j])[i] := by
-        exact Vector.getElem_set_ne (xs := M.set i M[j]) (x := M[i])
-          j.isLt i.isLt hval
-      simpa using congrArg (fun row => row[k]) hrow
-    · simp [rowSwap, hrj, hri]
-      have hir : i.val ≠ r.val := by
-        intro hval
-        exact hri (Fin.ext hval.symm)
-      have hjr : j.val ≠ r.val := by
-        intro hval
-        exact hrj (Fin.ext hval.symm)
-      have hrow₁ : (M.set i M[j])[r] = M[r] := by
-        exact Vector.getElem_set_ne (xs := M) (x := M[j]) i.isLt r.isLt hir
-      have hrow₂ : ((M.set i M[j]).set j M[i])[r] = (M.set i M[j])[r] := by
-        exact Vector.getElem_set_ne (xs := M.set i M[j]) (x := M[i])
-          j.isLt r.isLt hjr
-      exact (congrArg (fun row => row[k]) hrow₂).trans
-        (congrArg (fun row => row[k]) hrow₁)
+  rw [rowSwap]
+  by_cases hri : r = i <;> by_cases hrj : r = j <;>
+    simp_all [Fin.getElem_fin, Fin.ext_iff]
 
 /-- Row `i` of `rowSwap M i j` is the original row `j`. -/
 @[simp, grind =] theorem row_rowSwap_left (M : Matrix R n m) (i j : Fin n) :
@@ -104,10 +84,15 @@ theorem rowSwap_diag_of_ne (M : Matrix R n n) {k pivot : Fin n}
   · exact (h hkp.symm).elim
   · simp [hkp]
 
-/-- Scale row `i` by `c`. -/
+/-- Scale row `i` by `c`.
+
+The row is read once into `row`, so the only remaining reference to `M` is the
+consuming `set`, which updates the backing store in place when `M` is uniquely
+referenced. -/
 @[expose]
 def rowScale [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) : Matrix R n m :=
-  M.set i <| Vector.ofFn fun k => c * M[i][k]
+  let row := M[i]
+  M.set i <| Vector.ofFn fun k => c * row[k]
 
 /-- Read an entry of `rowScale M i c` by cases on the row index: row `i`
 returns `c * M[i][k]`, any other row is unchanged. -/
@@ -147,10 +132,16 @@ theorem row_rowScale_of_ne [Mul R] (M : Matrix R n m) {i r : Fin n} (c : R)
   rw [row_getElem, row_getElem, rowScale_getElem]
   simp [hri]
 
-/-- Replace row `dst` by `row dst + c * row src`. -/
+/-- Replace row `dst` by `row dst + c * row src`.
+
+Both rows are read once into `rdst`/`rsrc`, so the only remaining reference to
+`M` is the consuming `set`, which updates the backing store in place when `M` is
+uniquely referenced. -/
 @[expose]
 def rowAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin n) (c : R) : Matrix R n m :=
-  M.set dst <| Vector.ofFn fun k => M[dst][k] + c * M[src][k]
+  let rdst := M[dst]
+  let rsrc := M[src]
+  M.set dst <| Vector.ofFn fun k => rdst[k] + c * rsrc[k]
 
 /-- Read an entry of `rowAdd M src dst c` by cases on the row index: row `dst`
 returns `M[dst][k] + c * M[src][k]`, any other row is unchanged. -/
@@ -209,10 +200,16 @@ theorem row_rowAdd_of_ne [Mul R] [Add R]
     row (rowAdd M src dst c) src = row M src := by
   exact row_rowAdd_of_ne M src c hsrcdst
 
-/-- Replace column `dst` by `col dst + c * col src`. -/
+/-- Replace column `dst` by `col dst + c * col src`.
+
+Rather than rebuilding the whole matrix with `ofFn`, each row is mapped to its
+update of the single `dst` entry. `Vector.map` frees each row slot before
+applying the function, so the outer vector is reused when `M` is uniquely
+referenced, and each row's single-entry update is itself in place when that row
+vector is uniquely referenced. -/
 @[expose]
 def colAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin m) (c : R) : Matrix R n m :=
-  Matrix.ofFn fun i j => if j = dst then M[i][j] + c * M[i][src] else M[i][j]
+  M.map fun row => row.set dst (row[dst] + c * row[src])
 
 /-- Replace column `dst` by `col dst + col src * c`.
 
@@ -221,7 +218,7 @@ whose right-multiplication wrapper is valid over a noncommutative ring. -/
 @[expose]
 def colAddRight [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin m) (c : R) :
     Matrix R n m :=
-  Matrix.ofFn fun i j => if j = dst then M[i][j] + M[i][src] * c else M[i][j]
+  M.map fun row => row.set dst (row[dst] + row[src] * c)
 
 /-- Read an entry of `colAdd M src dst c` by cases on the column index:
 column `dst` returns `M[i][dst] + c * M[i][src]`, any other column is
@@ -230,7 +227,9 @@ theorem colAdd_getElem [Mul R] [Add R]
     (M : Matrix R n m) (src dst : Fin m) (c : R) (i : Fin n) (j : Fin m) :
     (colAdd M src dst c)[i][j] =
       if j = dst then M[i][j] + c * M[i][src] else M[i][j] := by
-  rw [colAdd, getElem_ofFn]
+  rw [colAdd]
+  simp only [Fin.getElem_fin, Vector.getElem_map]
+  grind
 
 /-- Read an entry of `colAddRight M src dst c` by cases on the column index:
 column `dst` returns `M[i][dst] + M[i][src] * c`, any other column is
@@ -239,7 +238,9 @@ theorem colAddRight_getElem [Mul R] [Add R]
     (M : Matrix R n m) (src dst : Fin m) (c : R) (i : Fin n) (j : Fin m) :
     (colAddRight M src dst c)[i][j] =
       if j = dst then M[i][j] + M[i][src] * c else M[i][j] := by
-  rw [colAddRight, getElem_ofFn]
+  rw [colAddRight]
+  simp only [Fin.getElem_fin, Vector.getElem_map]
+  grind
 
 /-- Column `dst` of `colAdd M src dst c` is the pointwise column combination. -/
 @[simp, grind =] theorem col_colAdd_dst [Mul R] [Add R]
