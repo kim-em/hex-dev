@@ -163,7 +163,7 @@ private theorem rrefCanonicalInvariant_pivot_step
     have hScaled_pivot : scaledEchelon[target][colFin] = 1 := by
       have hEntry : scaledEchelon[target][colFin] = pivotVal⁻¹ * pivotVal := by
         simpa [scaledEchelon, pivotVal] using
-          rowScale_getElem swappedEchelon target target pivotVal⁻¹ colFin
+          getElem_rowScale swappedEchelon target target pivotVal⁻¹ colFin
       rw [hEntry]
       exact Lean.Grind.Field.inv_mul_cancel hpivotVal_ne
     -- eliminateColumn_pivotRow: target's row is unchanged at colFin.
@@ -400,7 +400,7 @@ private theorem rowSwap_zero_column_preserve {M : Matrix R n m}
     (h : ∀ r : Fin n, start ≤ r.val → M[r][k] = 0) :
     ∀ r : Fin n, start ≤ r.val → (rowSwap M i j)[r][k] = 0 := by
   intro r hr
-  rw [rowSwap_getElem]
+  rw [getElem_rowSwap]
   by_cases hrj : r = j
   · subst r; rw [if_pos rfl]; exact h i hi
   · rw [if_neg hrj]
@@ -417,7 +417,7 @@ private theorem rowScale_zero_column_preserve {M : Matrix R n m}
     (h : ∀ r : Fin n, start ≤ r.val → M[r][k] = 0) :
     ∀ r : Fin n, start ≤ r.val → (rowScale M i c)[r][k] = 0 := by
   intro r hr
-  rw [rowScale_getElem]
+  rw [getElem_rowScale]
   by_cases hri : r = i
   · subst r
     rw [if_pos rfl, h i hr]

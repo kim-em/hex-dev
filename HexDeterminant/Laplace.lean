@@ -329,7 +329,7 @@ theorem det_eq_foldl_laplace_row
         (fun acc col => acc + M[row][col] * cofactor M row col) 0 := by
         apply foldl_acc_congr
         intro acc col _hmem
-        rw [cofactor_transpose, transpose_getElem]
+        rw [cofactor_transpose, getElem_transpose]
 
 end Matrix
 end Hex

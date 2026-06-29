@@ -248,9 +248,9 @@ theorem dotProduct_packRow (K : Nat) (M : Matrix Int n n) (A : Matrix Int n m)
       (List.finRange n).foldl
         (fun acc l => acc + (row M i)[l] * A[l][(⟨j, hj⟩ : Fin m)])
         ((Vector.replicate m (0 : Int))[(⟨j, hj⟩ : Fin m)]) := by
-    simp only [row_getElem, mul_getElem]
+    simp only [getElem_row, getElem_mul]
     unfold Vector.dotProduct
-    simp only [col_getElem, row_getElem]
+    simp only [getElem_col, getElem_row]
     simp only [Fin.getElem_fin, Vector.getElem_replicate]
   exact hentry.trans htarget.symm
 
@@ -350,10 +350,10 @@ private theorem two_mul_lt_width {x B : Nat} (hx : x ≤ B) :
 theorem natAbs_mul_entry_le (M : Matrix Int n n) (A : Matrix Int n m)
     (i : Fin n) (j : Fin m) :
     (M * A)[i][j].natAbs ≤ n * (maxAbs M * maxAbs A) := by
-  rw [mul_getElem]
+  rw [getElem_mul]
   exact natAbs_dotProduct_le _ _ _ _
     (fun l => natAbs_le_maxAbs M i l)
-    (fun l => by rw [col_getElem]; exact natAbs_le_maxAbs A l j)
+    (fun l => by rw [getElem_col]; exact natAbs_le_maxAbs A l j)
 
 /-- The packed certificate decides product equality: sound (`= true` implies
 `M * A = C`, by balanced-digit uniqueness at width `packWidth M A C`) and

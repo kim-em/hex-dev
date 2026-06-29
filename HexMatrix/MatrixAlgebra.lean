@@ -277,7 +277,7 @@ theorem transpose_mul_of_mul_comm [Lean.Grind.CommRing R]
   let ii : Fin k := ⟨i, hi⟩
   let jj : Fin n := ⟨j, hj⟩
   change (Matrix.transpose (A * B))[ii][jj] = (Matrix.transpose B * Matrix.transpose A)[ii][jj]
-  rw [transpose_getElem]
+  rw [getElem_transpose]
   change (A * B)[jj][ii] = (Matrix.transpose B * Matrix.transpose A)[ii][jj]
   simp [HMul.hMul, mul, row, col, transpose, Hex.Vector.dotProduct, ofFn]
   change

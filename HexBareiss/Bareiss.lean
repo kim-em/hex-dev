@@ -581,7 +581,7 @@ swapped rows read from the opposite source, every other row is unchanged. -/
 private theorem rowSwap_get (M : Matrix Int n n) (rowA rowB i j : Fin n) :
     (rowSwap M rowA rowB)[i][j] =
       if i = rowB then M[rowA][j] else if i = rowA then M[rowB][j] else M[i][j] :=
-  rowSwap_getElem M rowA rowB i j
+  getElem_rowSwap M rowA rowB i j
 
 /-- `swapRowsArray` applied to `matrixToRows M` matches the abstract
 `rowSwap M rowA rowB` entry by entry. -/

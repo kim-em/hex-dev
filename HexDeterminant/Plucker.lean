@@ -1015,7 +1015,7 @@ theorem mMatrix_eq_setCol_last {R : Type u} {n : Nat}
   change (mMatrix B v p)[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))] =
     (setCol (mMatrix B w p) (Fin.last n)
         (fun i : Fin (n + 1) => v[skipIndex p i]))[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))]
-  rw [setCol_getElem]
+  rw [getElem_setCol]
   by_cases hjlt : j < n
   · have hjne : (⟨j, hj⟩ : Fin (n + 1)) ≠ Fin.last n := by
       intro h
@@ -1063,10 +1063,10 @@ theorem mDet_smul_v {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
   rw [det_setCol_smul, ← mMatrix_eq_setCol_last B v v p]
 
 /-- Numeric entry form for the standard basis vector. -/
-private theorem unit_getElem_num {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+private theorem getElem_unit_num {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (q : Fin (n + 2)) (i : Fin (n + 2)) :
     (Hex.Vector.unit (R := R) q)[i] = if i = q then (1 : R) else (0 : R) := by
-  rw [Hex.Vector.unit_getElem]
+  rw [Hex.Vector.getElem_unit]
   by_cases h : i = q
   · rw [if_pos h.symm, if_pos h]
     rfl
@@ -1166,7 +1166,7 @@ private theorem foldl_unit_weighted_single
     by_cases hp : p = q
     · rw [if_pos hp]
     · rw [if_neg hp]
-      rw [unit_getElem_num, if_neg hp]
+      rw [getElem_unit_num, if_neg hp]
       grind
   calc
     (List.finRange (n + 2)).foldl
@@ -1176,7 +1176,7 @@ private theorem foldl_unit_weighted_single
           acc + if p = q then (Hex.Vector.unit (R := R) q)[p] * f p else 0) 0 := hcongr
     _ = 0 + (Hex.Vector.unit (R := R) q)[q] * f q := hfold
     _ = f q := by
-      rw [unit_getElem_num, if_pos rfl]
+      rw [getElem_unit_num, if_pos rfl]
       grind
 
 /-- Expands the augmented vector column of `mDet` in the standard basis. -/
@@ -1211,7 +1211,7 @@ theorem mDet_eq_sum_unit
       by_cases hq : q = skipIndex p i
       · rw [if_pos hq]
       · rw [if_neg hq]
-        rw [unit_getElem_num, if_neg (fun h => hq h.symm)]
+        rw [getElem_unit_num, if_neg (fun h => hq h.symm)]
         grind
     symm
     calc
@@ -1223,7 +1223,7 @@ theorem mDet_eq_sum_unit
               v[q] * (Hex.Vector.unit (R := R) q)[skipIndex p i] else 0) 0 := hcongr
       _ = 0 + v[skipIndex p i] * (Hex.Vector.unit (R := R) (skipIndex p i))[skipIndex p i] := hfold
       _ = v[skipIndex p i] := by
-        rw [unit_getElem_num, if_pos rfl]
+        rw [getElem_unit_num, if_pos rfl]
         grind
   rw [hcol, det_setCol_sum_finRange]
   apply foldl_acc_congr
@@ -1413,7 +1413,7 @@ theorem mDet_unit_eq_signed_nDet_of_gt
       (mMatrix B (Hex.Vector.unit (R := R) q) p)[r][Fin.last n] =
         if r = r_q then (1 : R) else (0 : R) := by
     intro r
-    rw [mMatrix_entry_last, unit_getElem_num]
+    rw [mMatrix_entry_last, getElem_unit_num]
     by_cases hreq : r = r_q
     · subst hreq
       rw [if_pos rfl]
@@ -1457,7 +1457,7 @@ theorem mDet_unit_eq_signed_nDet_of_lt
       (mMatrix B (Hex.Vector.unit (R := R) q) p)[r][Fin.last n] =
         if r = r_q then (1 : R) else (0 : R) := by
     intro r
-    rw [mMatrix_entry_last, unit_getElem_num]
+    rw [mMatrix_entry_last, getElem_unit_num]
     by_cases hreq : r = r_q
     · subst hreq
       rw [if_pos rfl]
@@ -1494,7 +1494,7 @@ theorem mDet_unit_eq_zero_of_eq {R : Type u} [Lean.Grind.CommRing R]
   have hcol : (fun r : Fin (n + 1) =>
       (Hex.Vector.unit (R := R) p)[skipIndex p r]) = (fun _ => (0 : R)) := by
     funext r
-    rw [unit_getElem_num]
+    rw [getElem_unit_num]
     exact if_neg (skipIndex_ne p r)
   -- Express mMatrix as setCol with that zero function on the last column.
   rw [mMatrix_eq_setCol_last B (Hex.Vector.unit (R := R) p)

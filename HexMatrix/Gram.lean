@@ -101,7 +101,7 @@ private theorem foldl_dotProduct_unit_body {R : Type u} [Lean.Grind.CommRing R]
   | nil => rfl
   | cons x xs ih =>
       simp only [List.foldl_cons]
-      rw [unit_getElem, unit_getElem]
+      rw [getElem_unit, getElem_unit]
       exact ih (acc + (if i = x then 1 else 0) * (if j = x then 1 else 0))
 
 /-- Dot product of standard basis vectors. -/
@@ -135,7 +135,7 @@ def gramMatrix [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) : Matrix R n n :=
   ofFn fun i j => Hex.Vector.dotProduct (row M i) (row M j)
 
 /-- Entry characterization for the Gram matrix of the rows of a dense matrix. -/
-@[grind =] theorem gramMatrix_getElem [Mul R] [Add R] [OfNat R 0]
+@[grind =] theorem getElem_gramMatrix [Mul R] [Add R] [OfNat R 0]
     (M : Matrix R n m) (i j : Fin n) :
     (gramMatrix M)[i][j] = Hex.Vector.dotProduct (row M i) (row M j) := by
   rw [gramMatrix, getElem_ofFn]
@@ -150,7 +150,7 @@ def gramMatrix [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) : Matrix R n n :=
     show ((1 : Matrix R n n).row ⟨i, hi⟩)[(⟨a, ha⟩ : Fin n)] =
       (Hex.Vector.unit (R := R) ⟨i, hi⟩)[(⟨a, ha⟩ : Fin n)]
     rw [Matrix.row, Hex.Matrix.getElem_one (i := (⟨i, hi⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n)),
-      Hex.Vector.unit_getElem (i := (⟨i, hi⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
+      Hex.Vector.getElem_unit (i := (⟨i, hi⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
     rfl
   have hrow_j : (1 : Matrix R n n).row ⟨j, hj⟩ =
       Hex.Vector.unit (R := R) ⟨j, hj⟩ := by
@@ -158,7 +158,7 @@ def gramMatrix [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) : Matrix R n n :=
     show ((1 : Matrix R n n).row ⟨j, hj⟩)[(⟨a, ha⟩ : Fin n)] =
       (Hex.Vector.unit (R := R) ⟨j, hj⟩)[(⟨a, ha⟩ : Fin n)]
     rw [Matrix.row, Hex.Matrix.getElem_one (i := (⟨j, hj⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n)),
-      Hex.Vector.unit_getElem (i := (⟨j, hj⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
+      Hex.Vector.getElem_unit (i := (⟨j, hj⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
     rfl
   show (gramMatrix (1 : Matrix R n n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] =
     (1 : Matrix R n n)[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)]

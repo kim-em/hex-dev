@@ -1077,12 +1077,12 @@ theorem rowCombination_coeffs_apply_eq_of_zero_above
         = (List.finRange n).foldl
             (fun acc i => acc + (coeffs b)[i][k] * castc[i]) 0 := by
     show ((coeffs b).transpose * castc)[k] = _
-    rw [Matrix.mulVec_getElem]
+    rw [Matrix.getElem_mulVec]
     show Vector.dotProduct (((coeffs b).transpose).row k) castc = _
     show (List.finRange n).foldl
         (fun acc i =>
           acc + (((coeffs b).transpose).row k)[i] * castc[i]) 0 = _
-    simp only [Matrix.row_getElem, Matrix.transpose_getElem]
+    simp only [Matrix.getElem_row, Matrix.getElem_transpose]
   rw [hcol]
   -- Step 2: drop the tail above `k` via the zero-above truncation helper.
   let f : Fin n → Rat := fun i => (coeffs b)[i][k] * castc[i]

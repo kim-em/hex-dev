@@ -414,7 +414,7 @@ theorem dot_basis_rowSwap_curr_prev_eq_normSq
     intro idx hidx
     let c : Fin m := ⟨idx, hidx⟩
     change (Matrix.rowSwap b km1 k)[k][c] = b[km1][c]
-    rw [Matrix.rowSwap_getElem]
+    rw [Matrix.getElem_rowSwap]
     simp
   -- prefixCombination of b at km1 vanishes against u_k.
   have hpfx_b_zero :

@@ -323,7 +323,7 @@ private theorem setCol_columnSumMatrixWithSuffix_extend
       (⟨r, hr⟩ : Fin n)][(⟨k, hk2⟩ : Fin n)] =
     (columnSumMatrixWithSuffix source coeff (c :: chosen))[
       (⟨r, hr⟩ : Fin n)][(⟨k, hk2⟩ : Fin n)]
-  rw [setCol_getElem]
+  rw [getElem_setCol]
   simp only [getElem_columnSumMatrixWithSuffix]
   have hccons_len : (c :: chosen).length = chosen.length + 1 := rfl
   by_cases hkd : (⟨k, hk2⟩ : Fin n) = (⟨n - chosen.length - 1, by omega⟩ : Fin n)
@@ -383,7 +383,7 @@ private theorem det_columnSumMatrixWithSuffix_expand
     change (setCol (columnSumMatrixWithSuffix source coeff chosen) dst _)[
         (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
       (columnSumMatrixWithSuffix source coeff chosen)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-    rw [setCol_getElem, getElem_columnSumMatrixWithSuffix]
+    rw [getElem_setCol, getElem_columnSumMatrixWithSuffix]
     by_cases hcd : (⟨c, hc⟩ : Fin n) = dst
     · rw [if_pos hcd, hcd]
       rw [dif_neg (show ¬ n - chosen.length ≤ dst.val by simp [dst]; omega)]

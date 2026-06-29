@@ -442,23 +442,23 @@ private theorem principalSubmatrix_rowSwap_eq_of_le {R : Type u}
       (⟨c, hc⟩ : Fin k)] =
     (M.principalSubmatrix k hk)[(⟨r, hr⟩ : Fin k)][(⟨c, hc⟩ : Fin k)]
   rw [Hex.Matrix.getElem_principalSubmatrix, Hex.Matrix.getElem_principalSubmatrix]
-  simp only [Hex.Matrix.rowSwap_getElem, if_neg h_r_ne_pivot, if_neg h_r_ne_kFin]
+  simp only [Hex.Matrix.getElem_rowSwap, if_neg h_r_ne_pivot, if_neg h_r_ne_kFin]
 
 /-- Auxiliary: a row of `rowSwap M kFin pivot` with index `r` not equal to
 either swap target equals the corresponding row of `M`. -/
-private theorem rowSwap_getElem_of_ne {R : Type u}
+private theorem getElem_rowSwap_of_ne {R : Type u}
     (M : Hex.Matrix R n n) (kFin pivot r : Fin n) (c : Fin n)
     (hr_ne_kFin : r ≠ kFin) (hr_ne_pivot : r ≠ pivot) :
     (Hex.Matrix.rowSwap M kFin pivot)[r][c] = M[r][c] := by
-  rw [Hex.Matrix.rowSwap_getElem, if_neg hr_ne_pivot, if_neg hr_ne_kFin]
+  rw [Hex.Matrix.getElem_rowSwap, if_neg hr_ne_pivot, if_neg hr_ne_kFin]
 
 /-- Reading row `r` of `rowSwap M kFin pivot` returns row `swap_idx r` of `M`,
 where `swap_idx kFin pivot r = if r = pivot then kFin else if r = kFin then pivot else r`. -/
-private theorem rowSwap_getElem_swap_eq {R : Type u}
+private theorem getElem_rowSwap_swap_eq {R : Type u}
     (M : Hex.Matrix R n n) (kFin pivot r : Fin n) (c : Fin n) :
     (Hex.Matrix.rowSwap M kFin pivot)[r][c] =
       M[if r = pivot then kFin else if r = kFin then pivot else r][c] := by
-  rw [Hex.Matrix.rowSwap_getElem]
+  rw [Hex.Matrix.getElem_rowSwap]
   by_cases hrp : r = pivot
   · simp only [if_pos hrp]
   · by_cases hrk : r = kFin
@@ -481,7 +481,7 @@ private theorem borderedMinor_rowSwap_source_row {R : Type u}
   -- then reads `M[rr][cc]`. For r < k, rr = ⟨r, _⟩ on both sides, so the
   -- equation reduces to a row equality on M (modulo the source row swap).
   -- For r = k, rr = i on LHS and rr = swap_idx i on RHS; the row equality
-  -- is exactly `rowSwap_getElem`.
+  -- is exactly `getElem_rowSwap`.
   apply Vector.ext
   intro r _hr
   apply Vector.ext
@@ -501,21 +501,21 @@ private theorem borderedMinor_rowSwap_source_row {R : Type u}
       simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hrk, hck]
       show (Hex.Matrix.rowSwap M kFin pivot)[(⟨r, hr_lt⟩ : Fin n)][(⟨c, hc_lt⟩ : Fin n)] =
           M[(⟨r, hr_lt⟩ : Fin n)][(⟨c, hc_lt⟩ : Fin n)]
-      exact rowSwap_getElem_of_ne M kFin pivot ⟨r, hr_lt⟩ _ h_r_ne_kFin h_r_ne_pivot
+      exact getElem_rowSwap_of_ne M kFin pivot ⟨r, hr_lt⟩ _ h_r_ne_kFin h_r_ne_pivot
     · simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, hrk, hck]
       show (Hex.Matrix.rowSwap M kFin pivot)[(⟨r, hr_lt⟩ : Fin n)][j] =
           M[(⟨r, hr_lt⟩ : Fin n)][j]
-      exact rowSwap_getElem_of_ne M kFin pivot ⟨r, hr_lt⟩ _ h_r_ne_kFin h_r_ne_pivot
+      exact getElem_rowSwap_of_ne M kFin pivot ⟨r, hr_lt⟩ _ h_r_ne_kFin h_r_ne_pivot
   · by_cases hck : c < k
     · have hc_lt : c < n := Nat.lt_trans hck hk
       simp only [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Vector.getElem_ofFn,
         hrk, hck, dif_pos, dif_neg, not_false_iff]
       show (Hex.Matrix.rowSwap M kFin pivot)[i][(⟨c, hc_lt⟩ : Fin n)] = _
-      exact rowSwap_getElem_swap_eq M kFin pivot i _
+      exact getElem_rowSwap_swap_eq M kFin pivot i _
     · simp only [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Vector.getElem_ofFn,
         hrk, hck, dif_neg, not_false_iff]
       show (Hex.Matrix.rowSwap M kFin pivot)[i][j] = _
-      exact rowSwap_getElem_swap_eq M kFin pivot i j
+      exact getElem_rowSwap_swap_eq M kFin pivot i j
 
 /-- Public regular swap-only step surface for the row-pivoted Bareiss proof.
 When the current diagonal pivot is zero and `findPivot?` returns a later row,
@@ -565,7 +565,7 @@ theorem bareissPivotInvariant_regular_swap
     exact hinv.prevPivot_eq
   · intro hnext i j hi hj
     -- The working matrix entry at (i, j) under rowSwap rewrites by cases on i.
-    rw [Hex.Matrix.rowSwap_getElem]
+    rw [Hex.Matrix.getElem_rowSwap]
     -- The bordered minor at (i, j) of the row-swapped source equals the
     -- bordered minor of the original source with the border row swapped.
     rw [borderedMinor_rowSwap_source_row source state.step hk kFin pivot hkF_val
@@ -684,7 +684,7 @@ private theorem pivotLoop_swap_pivot_ne_zero
   have hentry :
       (Hex.Matrix.rowSwap state.matrix kFin pivot)[kFin][kFin] =
         state.matrix[pivot][kFin] := by
-    rw [Hex.Matrix.rowSwap_getElem]
+    rw [Hex.Matrix.getElem_rowSwap]
     simp [hpivot_ne.symm]
   simpa [kFin] using hentry ▸ hpivot
 

@@ -74,7 +74,7 @@ theorem matrixEquiv_rowSwap (M : Hex.Matrix R n m) (i j : Fin n) :
     matrixEquiv (Hex.Matrix.rowSwap M i j) = Matrix.swap R i j * matrixEquiv M := by
   ext r k
   change (Hex.Matrix.rowSwap M i j)[r][k] = (Matrix.swap R i j * matrixEquiv M) r k
-  rw [Hex.Matrix.rowSwap_getElem]
+  rw [Hex.Matrix.getElem_rowSwap]
   by_cases hrj : r = j
   · subst r
     simp

@@ -585,7 +585,7 @@ entry into the target row. -/
 private theorem getElem_rowSwap_target_pivot
     (E : Matrix R n m) (target pivot : Fin n) (col : Fin m) :
     (rowSwap E target pivot)[target][col] = E[pivot][col] := by
-  rw [rowSwap_getElem]
+  rw [getElem_rowSwap]
   by_cases h : target = pivot
   · simp [h]
   · simp [h]
@@ -602,10 +602,10 @@ private theorem rowSwap_preserve_canonical_column
     (rowSwap E target pivot)[pivotRow][oldCol] = 1 ∧
       ∀ r : Fin n, r ≠ pivotRow → (rowSwap E target pivot)[r][oldCol] = 0 := by
   constructor
-  · rw [rowSwap_getElem]
+  · rw [getElem_rowSwap]
     simpa [hrowPivot, hrowTarget] using hpivotRow
   · intro r hr
-    rw [rowSwap_getElem]
+    rw [getElem_rowSwap]
     by_cases hrPivot : r = pivot
     · simpa [hrPivot] using hTarget
     · by_cases hrTarget : r = target
@@ -625,10 +625,10 @@ private theorem rowScale_preserve_canonical_column
     (rowScale E target c)[pivotRow][oldCol] = 1 ∧
       ∀ r : Fin n, r ≠ pivotRow → (rowScale E target c)[r][oldCol] = 0 := by
   constructor
-  · rw [rowScale_getElem]
+  · rw [getElem_rowScale]
     simpa [hrowTarget] using hpivotRow
   · intro r hr
-    rw [rowScale_getElem]
+    rw [getElem_rowScale]
     by_cases hrTarget : r = target
     · subst r
       rw [if_pos rfl, hTarget]
@@ -646,14 +646,14 @@ private theorem rowAdd_preserve_canonical_column
     (rowAdd E src dst c)[pivotRow][oldCol] = 1 ∧
       ∀ r : Fin n, r ≠ pivotRow → (rowAdd E src dst c)[r][oldCol] = 0 := by
   constructor
-  · rw [rowAdd_getElem]
+  · rw [getElem_rowAdd]
     by_cases hrowDst : pivotRow = dst
     · subst dst
       rw [if_pos rfl, hpivotRow, hSrc]
       grind
     · simpa [hrowDst] using hpivotRow
   · intro r hr
-    rw [rowAdd_getElem]
+    rw [getElem_rowAdd]
     by_cases hrDst : r = dst
     · subst dst
       rw [if_pos rfl, hzero r hr, hSrc]

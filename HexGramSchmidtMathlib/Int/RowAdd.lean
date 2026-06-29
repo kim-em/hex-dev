@@ -310,7 +310,7 @@ private theorem leadingGramMatrixInt_rowAdd_entry_inside
           (Matrix.rowAdd (GramSchmidt.leadingGramMatrixInt b t ht) jt kt c)[p][q] +
             c * (Matrix.rowAdd (GramSchmidt.leadingGramMatrixInt b t ht) jt kt c)[p][jt]
         else (Matrix.rowAdd (GramSchmidt.leadingGramMatrixInt b t ht) jt kt c)[p][q] := by
-    exact Matrix.colAdd_getElem
+    exact Matrix.getElem_colAdd
       (Matrix.rowAdd (GramSchmidt.leadingGramMatrixInt b t ht) jt kt c) jt kt c p q
   rw [hLHS, hRHS]
   -- Case split on `q = kt` and `p = kt`.

@@ -36,7 +36,7 @@ def rowSwap (M : Matrix R n m) (i j : Fin n) : Matrix R n m :=
 /-- Read an entry of `rowSwap M i j` by cases on the row index: row `j`
 returns the original row `i`, row `i` returns the original row `j`, and any
 other row is unchanged. -/
-theorem rowSwap_getElem (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
+theorem getElem_rowSwap (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
     (rowSwap M i j)[r][k] =
       if r = j then M[i][k] else if r = i then M[j][k] else M[r][k] := by
   rw [rowSwap]
@@ -49,7 +49,7 @@ theorem rowSwap_getElem (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
   ext k hk
   let kk : Fin m := ⟨k, hk⟩
   show (row (rowSwap M i j) i)[kk] = (row M j)[kk]
-  rw [row_getElem, row_getElem, rowSwap_getElem]
+  rw [getElem_row, getElem_row, getElem_rowSwap]
   by_cases hij : i = j
   · simp [hij]
   · simp [hij]
@@ -60,7 +60,7 @@ theorem rowSwap_getElem (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
   ext k hk
   let kk : Fin m := ⟨k, hk⟩
   show (row (rowSwap M i j) j)[kk] = (row M i)[kk]
-  rw [row_getElem, row_getElem, rowSwap_getElem]
+  rw [getElem_row, getElem_row, getElem_rowSwap]
   simp
 
 /-- Any row other than `i` and `j` is unchanged by `rowSwap M i j`. -/
@@ -70,16 +70,16 @@ theorem row_rowSwap_of_ne (M : Matrix R n m) {i j r : Fin n}
   ext k hk
   let kk : Fin m := ⟨k, hk⟩
   show (row (rowSwap M i j) r)[kk] = (row M r)[kk]
-  rw [row_getElem, row_getElem, rowSwap_getElem]
+  rw [getElem_row, getElem_row, getElem_rowSwap]
   simp [hri, hrj]
 
-/-- Diagonal-entry corollary of `rowSwap_getElem` for square matrices: when
+/-- Diagonal-entry corollary of `getElem_rowSwap` for square matrices: when
 `pivot ≠ k`, the `(k, k)` entry of `rowSwap M k pivot` is the original
 `(pivot, k)` entry. -/
 theorem rowSwap_diag_of_ne (M : Matrix R n n) {k pivot : Fin n}
     (h : pivot ≠ k) :
     (rowSwap M k pivot)[k][k] = M[pivot][k] := by
-  rw [rowSwap_getElem]
+  rw [getElem_rowSwap]
   by_cases hkp : k = pivot
   · exact (h hkp.symm).elim
   · simp [hkp]
@@ -96,7 +96,7 @@ def rowScale [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) : Matrix R n m :=
 
 /-- Read an entry of `rowScale M i c` by cases on the row index: row `i`
 returns `c * M[i][k]`, any other row is unchanged. -/
-theorem rowScale_getElem [Mul R] (M : Matrix R n m) (i r : Fin n) (c : R) (k : Fin m) :
+theorem getElem_rowScale [Mul R] (M : Matrix R n m) (i r : Fin n) (c : R) (k : Fin m) :
     (rowScale M i c)[r][k] =
       if r = i then c * M[i][k] else M[r][k] := by
   by_cases h : r = i
@@ -119,7 +119,7 @@ theorem rowScale_getElem [Mul R] (M : Matrix R n m) (i r : Fin n) (c : R) (k : F
   ext k hk
   let kk : Fin m := ⟨k, hk⟩
   show (row (rowScale M i c) i)[kk] = (Vector.ofFn (fun k => c * M[i][k]))[kk]
-  rw [row_getElem, rowScale_getElem]
+  rw [getElem_row, getElem_rowScale]
   simp
 
 /-- Any row other than `i` is unchanged by `rowScale M i c`. -/
@@ -129,7 +129,7 @@ theorem row_rowScale_of_ne [Mul R] (M : Matrix R n m) {i r : Fin n} (c : R)
   ext k hk
   let kk : Fin m := ⟨k, hk⟩
   show (row (rowScale M i c) r)[kk] = (row M r)[kk]
-  rw [row_getElem, row_getElem, rowScale_getElem]
+  rw [getElem_row, getElem_row, getElem_rowScale]
   simp [hri]
 
 /-- Replace row `dst` by `row dst + c * row src`.
@@ -145,7 +145,7 @@ def rowAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin n) (c : R) : Matrix
 
 /-- Read an entry of `rowAdd M src dst c` by cases on the row index: row `dst`
 returns `M[dst][k] + c * M[src][k]`, any other row is unchanged. -/
-theorem rowAdd_getElem [Mul R] [Add R]
+theorem getElem_rowAdd [Mul R] [Add R]
     (M : Matrix R n m) (src dst r : Fin n) (c : R) (k : Fin m) :
     (rowAdd M src dst c)[r][k] =
       if r = dst then M[dst][k] + c * M[src][k] else M[r][k] := by
@@ -165,10 +165,10 @@ theorem rowAdd_getElem [Mul R] [Add R]
     simpa [rowAdd] using congrArg (fun row => row[k]) hrow
 
 /-- Source-row entries are unchanged by `rowAdd M src dst c` when `src ≠ dst`. -/
-theorem rowAdd_getElem_src_of_ne [Mul R] [Add R]
+theorem getElem_rowAdd_src_of_ne [Mul R] [Add R]
     (M : Matrix R n m) {src dst : Fin n} (c : R) (hsrcdst : src ≠ dst) (k : Fin m) :
     (rowAdd M src dst c)[src][k] = M[src][k] := by
-  rw [rowAdd_getElem]
+  rw [getElem_rowAdd]
   simp [hsrcdst]
 
 /-- Row `dst` of `rowAdd M src dst c` is the pointwise row combination. -/
@@ -180,7 +180,7 @@ theorem rowAdd_getElem_src_of_ne [Mul R] [Add R]
   let kk : Fin m := ⟨k, hk⟩
   show (row (rowAdd M src dst c) dst)[kk] =
     (Vector.ofFn (fun k => M[dst][k] + c * M[src][k]))[kk]
-  rw [row_getElem, rowAdd_getElem]
+  rw [getElem_row, getElem_rowAdd]
   simp
 
 /-- Any row other than `dst` is unchanged by `rowAdd M src dst c`. -/
@@ -191,7 +191,7 @@ theorem row_rowAdd_of_ne [Mul R] [Add R]
   ext k hk
   let kk : Fin m := ⟨k, hk⟩
   show (row (rowAdd M src dst c) r)[kk] = (row M r)[kk]
-  rw [row_getElem, row_getElem, rowAdd_getElem]
+  rw [getElem_row, getElem_row, getElem_rowAdd]
   simp [hrdst]
 
 /-- The source row is unchanged by `rowAdd M src dst c` when `src ≠ dst`. -/
@@ -223,7 +223,7 @@ def colAddRight [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin m) (c : R) :
 /-- Read an entry of `colAdd M src dst c` by cases on the column index:
 column `dst` returns `M[i][dst] + c * M[i][src]`, any other column is
 unchanged. -/
-theorem colAdd_getElem [Mul R] [Add R]
+theorem getElem_colAdd [Mul R] [Add R]
     (M : Matrix R n m) (src dst : Fin m) (c : R) (i : Fin n) (j : Fin m) :
     (colAdd M src dst c)[i][j] =
       if j = dst then M[i][j] + c * M[i][src] else M[i][j] := by
@@ -234,7 +234,7 @@ theorem colAdd_getElem [Mul R] [Add R]
 /-- Read an entry of `colAddRight M src dst c` by cases on the column index:
 column `dst` returns `M[i][dst] + M[i][src] * c`, any other column is
 unchanged. -/
-theorem colAddRight_getElem [Mul R] [Add R]
+theorem getElem_colAddRight [Mul R] [Add R]
     (M : Matrix R n m) (src dst : Fin m) (c : R) (i : Fin n) (j : Fin m) :
     (colAddRight M src dst c)[i][j] =
       if j = dst then M[i][j] + M[i][src] * c else M[i][j] := by
@@ -251,7 +251,7 @@ theorem colAddRight_getElem [Mul R] [Add R]
   let ii : Fin n := ⟨i, hi⟩
   show (col (colAdd M src dst c) dst)[ii] =
     (Vector.ofFn (fun i => M[i][dst] + c * M[i][src]))[ii]
-  rw [col_getElem, colAdd_getElem]
+  rw [getElem_col, getElem_colAdd]
   simp
 
 /-- Column `dst` of `colAddRight M src dst c` is the pointwise column
@@ -264,7 +264,7 @@ combination with right scalar multiplication. -/
   let ii : Fin n := ⟨i, hi⟩
   show (col (colAddRight M src dst c) dst)[ii] =
     (Vector.ofFn (fun i => M[i][dst] + M[i][src] * c))[ii]
-  rw [col_getElem, colAddRight_getElem]
+  rw [getElem_col, getElem_colAddRight]
   simp
 
 /-- Any column other than `dst` is unchanged by `colAdd M src dst c`. -/
@@ -275,7 +275,7 @@ theorem col_colAdd_of_ne [Mul R] [Add R]
   ext i hi
   let ii : Fin n := ⟨i, hi⟩
   show (col (colAdd M src dst c) j)[ii] = (col M j)[ii]
-  rw [col_getElem, col_getElem, colAdd_getElem]
+  rw [getElem_col, getElem_col, getElem_colAdd]
   simp [hjdst]
 
 /-- Any column other than `dst` is unchanged by `colAddRight M src dst c`. -/
@@ -286,22 +286,22 @@ theorem col_colAddRight_of_ne [Mul R] [Add R]
   ext i hi
   let ii : Fin n := ⟨i, hi⟩
   show (col (colAddRight M src dst c) j)[ii] = (col M j)[ii]
-  rw [col_getElem, col_getElem, colAddRight_getElem]
+  rw [getElem_col, getElem_col, getElem_colAddRight]
   simp [hjdst]
 
 /-- Source-column entries are unchanged by `colAdd M src dst c` when `src ≠ dst`. -/
-theorem colAdd_getElem_src_of_ne [Mul R] [Add R]
+theorem getElem_colAdd_src_of_ne [Mul R] [Add R]
     (M : Matrix R n m) {src dst : Fin m} (c : R) (hsrcdst : src ≠ dst) (i : Fin n) :
     (colAdd M src dst c)[i][src] = M[i][src] := by
-  rw [colAdd_getElem]
+  rw [getElem_colAdd]
   simp [hsrcdst]
 
 /-- Source-column entries are unchanged by `colAddRight M src dst c` when
 `src ≠ dst`. -/
-theorem colAddRight_getElem_src_of_ne [Mul R] [Add R]
+theorem getElem_colAddRight_src_of_ne [Mul R] [Add R]
     (M : Matrix R n m) {src dst : Fin m} (c : R) (hsrcdst : src ≠ dst) (i : Fin n) :
     (colAddRight M src dst c)[i][src] = M[i][src] := by
-  rw [colAddRight_getElem]
+  rw [getElem_colAddRight]
   simp [hsrcdst]
 
 /-- The source column is unchanged by `colAdd M src dst c` when `src ≠ dst`. -/

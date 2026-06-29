@@ -399,7 +399,7 @@ private theorem rowSwap_row_left (b : Matrix Rat n m) (i j : Fin n) :
   intro idx hidx
   let c : Fin m := ⟨idx, hidx⟩
   change (Matrix.rowSwap b i j)[i][c] = b[j][c]
-  rw [Matrix.rowSwap_getElem (M := b) (i := i) (j := j) (r := i) (k := c)]
+  rw [Matrix.getElem_rowSwap (M := b) (i := i) (j := j) (r := i) (k := c)]
   by_cases hij : i = j
   · simp [hij]
   · simp [hij]
@@ -410,7 +410,7 @@ private theorem rowSwap_row_right (b : Matrix Rat n m) (i j : Fin n) :
   intro idx hidx
   let c : Fin m := ⟨idx, hidx⟩
   change (Matrix.rowSwap b i j)[j][c] = b[i][c]
-  rw [Matrix.rowSwap_getElem (M := b) (i := i) (j := j) (r := j) (k := c)]
+  rw [Matrix.getElem_rowSwap (M := b) (i := i) (j := j) (r := j) (k := c)]
   simp
 
 private theorem rowSwap_row_eq (b : Matrix Rat n m) (i j r : Fin n)
@@ -420,7 +420,7 @@ private theorem rowSwap_row_eq (b : Matrix Rat n m) (i j r : Fin n)
   intro idx hidx
   let c : Fin m := ⟨idx, hidx⟩
   change (Matrix.rowSwap b i j)[r][c] = b[r][c]
-  rw [Matrix.rowSwap_getElem (M := b) (i := i) (j := j) (r := r) (k := c)]
+  rw [Matrix.getElem_rowSwap (M := b) (i := i) (j := j) (r := r) (k := c)]
   simp [hri, hrj]
 
 /-- After an adjacent swap, the coefficient at the lower row `km1` against an
@@ -860,7 +860,7 @@ private theorem basis_rowSwap_of_after_private (b : Matrix Rat n m) (km1 k i : F
     intro col hcol
     let c : Fin m := ⟨col, hcol⟩
     change (Matrix.rowSwap b km1 k)[i][c] = b[i][c]
-    rw [Matrix.rowSwap_getElem]
+    rw [Matrix.getElem_rowSwap]
     have hik : i ≠ k := by
       intro h
       exact Nat.ne_of_gt hi (congrArg Fin.val h)
