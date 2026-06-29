@@ -65,7 +65,7 @@ theorem independent_of_upperTriangular_pos_diag {n : Nat}
     (hzero : ∀ i j : Fin n, j.val < i.val -> M[i][j] = 0)
     (hdiag : ∀ i : Fin n, 0 < M[i][i]) : M.independent := by
   exact GramSchmidt.Int.independent_of_det_positive M (by
-    intro k hk
+    intro k hk _
     have hpos :=
       det_gramMatrix_takeRows_pos_of_upperTriangular_pos_diag M hzero hdiag k hk
     rwa [gramMatrix_takeRows_eq_principalSubmatrix M k hk] at hpos)

@@ -661,7 +661,7 @@ already have a determinant lemma for a special matrix family can produce the
 public `independent` predicate stated over Mathlib-free computed data. -/
 
 private theorem gramDet_pos_of_det_positive (b : Matrix Int n m)
-    (hdet : ∀ (k : Nat) (hk : k ≤ n),
+    (hdet : ∀ (k : Nat) (hk : k ≤ n), 0 < k →
       0 < Matrix.det (Matrix.principalSubmatrix (Matrix.gramMatrix b) k hk))
     (k : Nat) (hk : k ≤ n) (hk' : 0 < k) :
     0 < gramDet b k hk := by
@@ -671,7 +671,7 @@ private theorem gramDet_pos_of_det_positive (b : Matrix Int n m)
   | succ r =>
       have hsub :
           0 < Matrix.det (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1) hk) :=
-        hdet (r + 1) hk
+        hdet (r + 1) hk (Nat.succ_pos r)
       have hsub_eq :
           Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1) hk =
             GramSchmidt.leadingGramMatrixInt b (r + 1) hk :=
@@ -692,7 +692,7 @@ private theorem gramDet_pos_of_det_positive (b : Matrix Int n m)
 have determinant lemmas for special matrix families, while keeping the public
 predicate stated over Mathlib-free computed data. -/
 theorem independent_of_det_positive (b : Matrix Int n m)
-    (hdet : ∀ (k : Nat) (hk : k ≤ n),
+    (hdet : ∀ (k : Nat) (hk : k ≤ n), 0 < k →
       0 < Matrix.det (Matrix.principalSubmatrix (Matrix.gramMatrix b) k hk)) :
     independent b := by
   intro k
@@ -703,7 +703,7 @@ theorem independent_of_det_positive (b : Matrix Int n m)
 every leading principal minor has determinant `1 > 0`. -/
 theorem independent_one {n : Nat} : independent (1 : Matrix Int n n) := by
   exact independent_of_det_positive (1 : Matrix Int n n) (by
-    intro k hk
+    intro k hk _
     rw [Matrix.gramMatrix_one, Matrix.principalSubmatrix_one, Matrix.det_one]
     decide)
 
