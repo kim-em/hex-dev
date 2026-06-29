@@ -102,7 +102,7 @@ theorem rowToEuclidean_inner (a b : Vector Rat m) :
   rw [PiLp.inner_apply]
   simp [rowToEuclidean, PiLp.toLp_apply, real_inner_eq_re_inner,
     RCLike.inner_apply, mul_comm]
-  rw [Hex.Vector.dotProduct, cast_foldl_dotProduct_rat]
+  rw [Vector.dotProduct, cast_foldl_dotProduct_rat]
   simp only [Rat.cast_zero, zero_add]
   rw [← List.sum_toFinset _ (List.nodup_finRange m)]
   simp [List.toFinset_finRange]
@@ -117,7 +117,7 @@ theorem rat_coeffs_lower_projection_real (b : Matrix Rat n m) {i j : Fin n}
         (‖rowToEuclidean ((Hex.GramSchmidt.Rat.basis b).row j)‖ : ℝ) ^ 2 := by
   rw [Hex.GramSchmidt.Rat.coeffs_lower_projection_comm (b := b) hji]
   by_cases hnorm :
-      Vector.dotProduct ((Hex.GramSchmidt.Rat.basis b).row j)
+      ((Hex.GramSchmidt.Rat.basis b).row j).dotProduct
           ((Hex.GramSchmidt.Rat.basis b).row j) = 0
   · have hnorm_real :
         (‖rowToEuclidean ((Hex.GramSchmidt.Rat.basis b).row j)‖ : ℝ) ^ 2 = 0 := by
@@ -127,7 +127,7 @@ theorem rat_coeffs_lower_projection_real (b : Matrix Rat n m) {i j : Fin n}
   ·
     have hnorm_real :
         (‖rowToEuclidean ((Hex.GramSchmidt.Rat.basis b).row j)‖ : ℝ) ^ 2 =
-          ((Vector.dotProduct ((Hex.GramSchmidt.Rat.basis b).row j)
+          ((((Hex.GramSchmidt.Rat.basis b).row j).dotProduct
             ((Hex.GramSchmidt.Rat.basis b).row j) : Rat) : ℝ) := by
       rw [← real_inner_self_eq_norm_sq, rowToEuclidean_inner]
     simp [hnorm, rowToEuclidean_inner, hnorm_real]

@@ -28,7 +28,7 @@ structure BareissGramRowInvariant (b : Matrix Int n m)
     (coeff i)[k] = 0
   entry_eq_dot : ∀ i j : Fin n, state.step ≤ i.val →
     state.matrix[i][j] =
-      Vector.dotProduct (Matrix.rowCombination b (coeff i)) (b.row j)
+      (Matrix.rowCombination b (coeff i)).dotProduct (b.row j)
 
 /-- The initial no-pivot Gram state satisfies the row-coefficient invariant
 with each row represented by the standard basis vector `eᵢ`. -/
@@ -78,8 +78,8 @@ private theorem foldl_sum_bareiss_row_update
 /-- `dot_bareiss_row_update_left` expands the dot product of a Bareiss-updated left vector as the corresponding linear combination of dots. -/
 private theorem dot_bareiss_row_update_left
     (x y : Int) (u v w : Vector Int m) :
-    Vector.dotProduct (Vector.ofFn fun a : Fin m => x * u[a] - y * v[a]) w =
-      x * Vector.dotProduct u w - y * Vector.dotProduct v w := by
+    (Vector.ofFn fun a : Fin m => x * u[a] - y * v[a]).dotProduct w =
+      x * u.dotProduct w - y * v.dotProduct w := by
   unfold Vector.dotProduct
   simpa using
     foldl_sum_bareiss_row_update
@@ -113,8 +113,8 @@ private theorem foldl_sum_bareiss_row_update_right
 /-- `dot_bareiss_row_update_right` expands the dot product with a Bareiss-updated right vector as the corresponding linear combination of dots. -/
 private theorem dot_bareiss_row_update_right
     (x y : Int) (w u v : Vector Int m) :
-    Vector.dotProduct w (Vector.ofFn fun a : Fin m => x * u[a] - y * v[a]) =
-      x * Vector.dotProduct w u - y * Vector.dotProduct w v := by
+    w.dotProduct (Vector.ofFn fun a : Fin m => x * u[a] - y * v[a]) =
+      x * w.dotProduct u - y * w.dotProduct v := by
   unfold Vector.dotProduct
   simpa using
     foldl_sum_bareiss_row_update_right
@@ -186,7 +186,7 @@ private theorem dot_rowCombination_exactDiv_eq_of_eq_mul_right
         (Matrix.rowCombination M
           (Vector.ofFn fun a : Fin n => Matrix.exactDiv (num a) denom))
         w =
-      Vector.dotProduct (Matrix.rowCombination M (Vector.ofFn q)) w := by
+      (Matrix.rowCombination M (Vector.ofFn q)).dotProduct w := by
   rw [rowCombination_exactDiv_eq_of_eq_mul_right M hdenom num q hnum]
 
 /-- Project the explicit coefficient witness for the row at index `i`. -/
@@ -472,7 +472,7 @@ private theorem dot_rowCombination_mul_right_int
     (b : Matrix Int n m) (f : Fin n → Int) (s : Int) (w : Vector Int m) :
     Vector.dotProduct
         (Matrix.rowCombination b (Vector.ofFn fun a : Fin n => f a * s)) w =
-      Vector.dotProduct (Matrix.rowCombination b (Vector.ofFn f)) w * s := by
+      (Matrix.rowCombination b (Vector.ofFn f)).dotProduct w * s := by
   have h_eq_input :
       (Vector.ofFn fun a : Fin n => f a * s) =
         Vector.ofFn fun a : Fin n =>

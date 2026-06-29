@@ -179,7 +179,7 @@ theorem lovasz_check_iff_isLLLReduced_pair
   have hNk_mul : (gd_k : Rat) * Nk = (gd_k1 : Rat) := by
     have hbn := Hex.GramSchmidt.Int.basis_normSq s.b hind k hk
     have hNk_val : Nk = (gd_k1 : Rat) / (gd_k : Rat) := by
-      show Hex.Vector.normSq ((Hex.GramSchmidt.Int.basis s.b).row ⟨k, hk⟩) = _
+      show ((Hex.GramSchmidt.Int.basis s.b).row ⟨k, hk⟩).normSq = _
       exact hbn
     rw [hNk_val, mul_div_cancel₀ _ hgd_k_ne]
   have hNkm1_mul : (gd_km1 : Rat) * Nkm1 = (gd_k : Rat) := by
@@ -187,7 +187,7 @@ theorem lovasz_check_iff_isLLLReduced_pair
     have hNkm1_val :
         Nkm1 = (Hex.GramSchmidt.Int.gramDet s.b (k - 1 + 1)
             (Nat.succ_le_of_lt hkm1lt) : Rat) / (gd_km1 : Rat) := by
-      show Hex.Vector.normSq ((Hex.GramSchmidt.Int.basis s.b).row ⟨k - 1, hkm1lt⟩) = _
+      show ((Hex.GramSchmidt.Int.basis s.b).row ⟨k - 1, hkm1lt⟩).normSq = _
       exact hbn
     have hgd_eq :
         Hex.GramSchmidt.Int.gramDet s.b (k - 1 + 1)
@@ -369,10 +369,10 @@ private theorem foldl_finRange_eq_sum {R : Type*} [AddCommMonoid R] {n : Nat}
 `EuclideanSpace ℝ (Fin m)` equals the real cast of the executable integer
 squared norm. -/
 theorem norm_sq_intRowToEuclidean (row : Vector Int m) :
-    ‖intRowToEuclidean row‖ ^ 2 = ((Hex.Vector.normSq row : Int) : ℝ) := by
+    ‖intRowToEuclidean row‖ ^ 2 = ((row.normSq : Int) : ℝ) := by
   rw [EuclideanSpace.real_norm_sq_eq]
   simp only [intRowToEuclidean, PiLp.toLp_apply]
-  unfold Hex.Vector.normSq Hex.Vector.dotProduct
+  unfold Vector.normSq Vector.dotProduct
   rw [foldl_finRange_eq_sum]
   push_cast
   refine Finset.sum_congr rfl ?_
@@ -384,7 +384,7 @@ theorem norm_sq_intRowToEuclidean (row : Vector Int m) :
 squared norm of its `Vector` preimage. -/
 theorem norm_sq_intVectorToEuclidean (x : Fin m → ℤ) :
     ‖intVectorToEuclidean x‖ ^ 2 =
-      ((Hex.Vector.normSq (HexMatrixMathlib.vectorEquiv.symm x) : Int) : ℝ) := by
+      (((HexMatrixMathlib.vectorEquiv.symm x).normSq : Int) : ℝ) := by
   have heq :
       intVectorToEuclidean x =
         intRowToEuclidean (HexMatrixMathlib.vectorEquiv.symm x) := by
@@ -681,13 +681,13 @@ private theorem lovasz_of_intCheck
   have hNi_mul : (gd_i : Rat) * Ni = (gd_i1 : Rat) := by
     have hbn := Hex.GramSchmidt.Int.basis_normSq b hindep i hi_lt
     have hNi_val : Ni = (gd_i1 : Rat) / (gd_i : Rat) := by
-      show Hex.Vector.normSq ((Hex.GramSchmidt.Int.basis b).row ⟨i, hi_lt⟩) = _
+      show ((Hex.GramSchmidt.Int.basis b).row ⟨i, hi_lt⟩).normSq = _
       exact hbn
     rw [hNi_val, mul_div_cancel₀ _ hgd_i_ne]
   have hNi1_mul : (gd_i1 : Rat) * Ni1 = (gd_i2 : Rat) := by
     have hbn := Hex.GramSchmidt.Int.basis_normSq b hindep (i + 1) hi1_lt
     have hNi1_val : Ni1 = (gd_i2 : Rat) / (gd_i1 : Rat) := by
-      show Hex.Vector.normSq ((Hex.GramSchmidt.Int.basis b).row ⟨i + 1, hi1_lt⟩) = _
+      show ((Hex.GramSchmidt.Int.basis b).row ⟨i + 1, hi1_lt⟩).normSq = _
       exact hbn
     rw [hNi1_val, mul_div_cancel₀ _ hgd_i1_ne]
   -- ν[i+1][i] = gd_i1 · μ via scaledCoeffs_eq.

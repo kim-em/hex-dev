@@ -54,8 +54,8 @@ theorem gramMatrix_takeRows_eq_principalSubmatrix {n : Nat} (M : Matrix Int n n)
     intro c hc
     simp [row, takeRows, ofFn, jFin, jj]
   have hdot :
-      Hex.Vector.dotProduct (row (takeRows M k hk) iFin) (row (takeRows M k hk) jFin) =
-        Hex.Vector.dotProduct (row M ii) (row M jj) := by
+      (row (takeRows M k hk) iFin).dotProduct (row (takeRows M k hk) jFin) =
+        (row M ii).dotProduct (row M jj) := by
     rw [hrow_i, hrow_j]
   simpa [gramMatrix, principalSubmatrix, ofFn, iFin, jFin, ii, jj] using
     hdot
@@ -2367,9 +2367,9 @@ theorem lllNative_short_vector
     (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent)
     {v : Vector Int m} (hv : Matrix.memLattice b v) (hv' : v ≠ 0) :
-    ((Vector.normSq ((lllNative b δ hδ hδ' hn).row
-        ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩) : Int) : Rat) ≤
-      (1 / (δ - 1 / 4)) ^ (n - 1) * ((Vector.normSq v : Int) : Rat) := by
+    ((((lllNative b δ hδ hδ' hn).row
+        ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩).normSq : Int) : Rat) ≤
+      (1 / (δ - 1 / 4)) ^ (n - 1) * ((v.normSq : Int) : Rat) := by
   have hred : isLLLReduced (lllNative b δ hδ hδ' hn) δ (1 / 2) :=
     lllNative_isLLLReduced b δ hδ hδ' hn hind
   have hind' : (lllNative b δ hδ hδ' hn).independent :=
@@ -2491,9 +2491,9 @@ theorem lll_short_vector
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent)
     {v : Vector Int m} (hv : Matrix.memLattice b v) (hv' : v ≠ 0) :
-    ((Vector.normSq ((lll b δ hδ hδ' hn hind).row
-        ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩) : Int) : Rat) ≤
-      (1 / (δ - 121 / 400)) ^ (n - 1) * ((Vector.normSq v : Int) : Rat) := by
+    ((((lll b δ hδ hδ' hn hind).row
+        ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩).normSq : Int) : Rat) ≤
+      (1 / (δ - 121 / 400)) ^ (n - 1) * ((v.normSq : Int) : Rat) := by
   have hred : isLLLReduced (lll b δ hδ hδ' hn hind) δ (11 / 20) :=
     lll_isLLLReduced b δ hδ hδ' hn hind
   have hind' : (lll b δ hδ hδ' hn hind).independent :=

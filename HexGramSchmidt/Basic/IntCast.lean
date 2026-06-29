@@ -51,7 +51,7 @@ mutually orthogonal. -/
 @[grind =]
 theorem basis_orthogonal (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i ≠ j) :
-    Vector.dotProduct ((basis b).row ⟨i, hi⟩) ((basis b).row ⟨j, hj⟩) = 0 := by
+    ((basis b).row ⟨i, hi⟩).dotProduct ((basis b).row ⟨j, hj⟩) = 0 := by
   simpa [basis, GramSchmidt.Rat.basis] using
     GramSchmidt.Rat.basis_orthogonal (b := GramSchmidt.castIntMatrix b) i j hi hj hij
 
@@ -184,8 +184,8 @@ theorem basis_rowSwap_adjacent_curr (b : Matrix Int n m) (km1 k : Fin n)
     let mu := GramSchmidt.entry (coeffs b) k km1
     let swappedPrev := curr + mu • prev
     (basis (Matrix.rowSwap b km1 k)).row k =
-      (Vector.dotProduct curr curr / Vector.dotProduct swappedPrev swappedPrev) • prev -
-        (mu * Vector.dotProduct prev prev / Vector.dotProduct swappedPrev swappedPrev) • curr := by
+      (curr.dotProduct curr / swappedPrev.dotProduct swappedPrev) • prev -
+        (mu * prev.dotProduct prev / swappedPrev.dotProduct swappedPrev) • curr := by
   have hnormRat :
       Vector.dotProduct
         ((GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row k +
@@ -239,7 +239,7 @@ theorem coeffs_rowSwap_adjacent_pivot (b : Matrix Int n m) (km1 k : Fin n)
     let curr := (basis b).row k
     let swappedPrev := curr + mu • prev
     GramSchmidt.entry (coeffs (Matrix.rowSwap b km1 k)) k km1 =
-      mu * Vector.dotProduct prev prev / Vector.dotProduct swappedPrev swappedPrev := by
+      mu * prev.dotProduct prev / swappedPrev.dotProduct swappedPrev := by
   have hnormRat :
       Vector.dotProduct
         ((GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row k +
@@ -313,11 +313,11 @@ destination row increases by the added integer multiple. -/
 @[grind =]
 theorem coeffs_rowAdd_pivot (b : Matrix Int n m) (src dst : Fin n)
     (hsrcdst : src.val < dst.val) (c : Int)
-    (hnorm : Vector.dotProduct ((basis b).row src) ((basis b).row src) ≠ 0) :
+    (hnorm : ((basis b).row src).dotProduct ((basis b).row src) ≠ 0) :
     GramSchmidt.entry (coeffs (Matrix.rowAdd b src dst c)) dst src =
       GramSchmidt.entry (coeffs b) dst src + (c : Rat) := by
   have hnormRat :
-      Vector.dotProduct ((GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row src)
+      ((GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row src).dotProduct
           ((GramSchmidt.Rat.basis (GramSchmidt.castIntMatrix b)).row src) ≠ 0 := by
     simpa [basis, GramSchmidt.Rat.basis] using hnorm
   simpa [coeffs, basis, GramSchmidt.Rat.coeffs, GramSchmidt.Rat.basis,

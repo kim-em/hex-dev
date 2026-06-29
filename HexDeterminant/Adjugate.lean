@@ -142,11 +142,11 @@ theorem mul_adjugate_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       if i = j then det M else 0 := by
   have hmul :
       (M * adjugate M)[i][j] =
-        Hex.Vector.dotProduct (row M i) (col (adjugate M) j) := by
+        (row M i).dotProduct (col (adjugate M) j) := by
     change (Matrix.mul M (adjugate M))[i][j] = _
     unfold Matrix.mul
     show
-      (ofFn fun i j => Hex.Vector.dotProduct (row M i) (col (adjugate M) j))[i][j] =
+      (ofFn fun i j => (row M i).dotProduct (col (adjugate M) j))[i][j] =
         _
     simp [ofFn]
   have hentry :
@@ -154,7 +154,7 @@ theorem mul_adjugate_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         (List.finRange (n + 1)).foldl
           (fun acc k => acc + M[i][k] * cofactor M j k) 0 := by
     rw [hmul]
-    unfold Hex.Vector.dotProduct
+    unfold Vector.dotProduct
     apply foldl_acc_congr
     intro acc k _hmem
     congr 1
@@ -187,7 +187,7 @@ theorem adjugate_mul_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       change (Matrix.mul (adjugate M) M)[i][j] = _
       unfold Matrix.mul
       rw [getElem_ofFn]
-      unfold Hex.Vector.dotProduct
+      unfold Vector.dotProduct
       apply foldl_acc_congr
       intro acc k _hmem
       have hrow : (row (adjugate M) i)[k] = (adjugate M)[i][k] := rfl
@@ -201,7 +201,7 @@ theorem adjugate_mul_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       change (Matrix.mul M.transpose (adjugate M.transpose))[j][i] = _
       unfold Matrix.mul
       rw [getElem_ofFn]
-      unfold Hex.Vector.dotProduct
+      unfold Vector.dotProduct
       apply foldl_acc_congr
       intro acc k _hmem
       have hrow : (row M.transpose j)[k] = M[k][j] := by
@@ -339,7 +339,7 @@ private theorem mul_eq_columnSumMatrix_transpose
   change (Matrix.mul M N)[rr][cc] = _
   unfold Matrix.mul ofFn
   rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
-  unfold Hex.Vector.dotProduct
+  unfold Vector.dotProduct
   apply foldl_det_sum_congr
   intro k _
   have hrow : (row M rr)[k] = M[rr][k] := by simp [row]
@@ -462,7 +462,7 @@ private theorem mul_apply_foldl
   change (Matrix.mul A B)[i][j] = _
   unfold Matrix.mul
   rw [getElem_ofFn]
-  unfold Hex.Vector.dotProduct
+  unfold Vector.dotProduct
   apply foldl_acc_congr
   intro acc l _hmem
   rw [getElem_row, getElem_col]

@@ -263,8 +263,8 @@ private theorem foldl_finRange_eq_sum {R : Type*} [AddCommMonoid R] {k : Nat}
     ← List.sum_toFinset f (List.nodup_finRange k), List.toFinset_finRange]
 
 private theorem dot_eq_sum {m' : Nat} (u v : Vector Rat m') :
-    Hex.Vector.dotProduct u v = ∑ k : Fin m', u[k] * v[k] := by
-  unfold Hex.Vector.dotProduct
+    u.dotProduct v = ∑ k : Fin m', u[k] * v[k] := by
+  unfold Vector.dotProduct
   exact foldl_finRange_eq_sum _
 
 /-- The rational cast of a basis row of the integer input. -/
@@ -278,24 +278,24 @@ private noncomputable def muExact (b : Hex.Matrix Int n m) (i j : Fin n) : Rat :
 /-- Exact dot product `⟨b_i, b*_j⟩` of an input row against a
 Gram-Schmidt basis row. -/
 private noncomputable def gsDot (b : Hex.Matrix Int n m) (i j : Fin n) : Rat :=
-  Hex.Vector.dotProduct (castRow b i) ((GramSchmidt.Int.basis b).row j)
+  (castRow b i).dotProduct ((GramSchmidt.Int.basis b).row j)
 
 /-- Exact squared Gram-Schmidt norm `‖b*_j‖²`. -/
 private noncomputable def nrm (b : Hex.Matrix Int n m) (j : Fin n) : Rat :=
   Hex.LLLCore.basisNormSq (GramSchmidt.Int.basis b) j
 
 private theorem nrm_eq_dot (b : Hex.Matrix Int n m) (j : Fin n) :
-    nrm b j = Hex.Vector.dotProduct ((GramSchmidt.Int.basis b).row j)
+    nrm b j = ((GramSchmidt.Int.basis b).row j).dotProduct
       ((GramSchmidt.Int.basis b).row j) := by
   unfold nrm Hex.LLLCore.basisNormSq
   rfl
 
 /-- Cast of an integer Gram entry as a rational dot product of cast rows. -/
 private theorem gram_cast (b : Hex.Matrix Int n m) (i j : Fin n) :
-    ((Hex.Vector.dotProduct (b.row i) (b.row j) : Int) : Rat) =
-      Hex.Vector.dotProduct (castRow b i) (castRow b j) := by
+    (((b.row i).dotProduct (b.row j) : Int) : Rat) =
+      (castRow b i).dotProduct (castRow b j) := by
   rw [dot_eq_sum]
-  rw [show Hex.Vector.dotProduct (b.row i) (b.row j) =
+  rw [show (b.row i).dotProduct (b.row j) =
       ∑ k : Fin m, (b.row i)[k] * (b.row j)[k] from foldl_finRange_eq_sum _]
   push_cast
   refine Finset.sum_congr rfl fun k _ => ?_
@@ -337,23 +337,23 @@ private theorem getElem_prefixCombination
   rw [← List.foldl_map, ← List.sum_eq_foldl]
 
 private theorem dot_add_right {m' : Nat} (u v w : Vector Rat m') :
-    Hex.Vector.dotProduct u (v + w) = Hex.Vector.dotProduct u v + Hex.Vector.dotProduct u w := by
+    u.dotProduct (v + w) = u.dotProduct v + u.dotProduct w := by
   rw [dot_eq_sum, dot_eq_sum, dot_eq_sum, ← Finset.sum_add_distrib]
   refine Finset.sum_congr rfl fun k _ => ?_
   simp only [Fin.getElem_fin, Vector.getElem_add]
   ring
 
 private theorem dot_comm {m' : Nat} (u v : Vector Rat m') :
-    Hex.Vector.dotProduct u v = Hex.Vector.dotProduct v u := by
+    u.dotProduct v = v.dotProduct u := by
   rw [dot_eq_sum, dot_eq_sum]
   exact Finset.sum_congr rfl fun k _ => mul_comm _ _
 
 private theorem dot_prefixCombination (u : Vector Rat m)
     (C : Hex.Matrix Rat n n) (B : Hex.Matrix Rat n m) (i : Nat) (hi : i < n) :
-    Hex.Vector.dotProduct u (GramSchmidt.prefixCombination C B i hi) =
+    u.dotProduct (GramSchmidt.prefixCombination C B i hi) =
       ∑ k : Fin i,
         GramSchmidt.entry C ⟨i, hi⟩ ⟨k.val, Nat.lt_trans k.isLt hi⟩ *
-          Hex.Vector.dotProduct u (B.row ⟨k.val, Nat.lt_trans k.isLt hi⟩) := by
+          u.dotProduct (B.row ⟨k.val, Nat.lt_trans k.isLt hi⟩) := by
   rw [dot_eq_sum]
   have : ∀ l : Fin m,
       u[l] * (GramSchmidt.prefixCombination C B i hi)[l] =
@@ -375,11 +375,11 @@ private theorem dot_prefixCombination (u : Vector Rat m)
 Gram-Schmidt basis: `⟨u, b_j⟩ = ⟨u, b*_j⟩ + Σ_{k<j} μ[j][k]·⟨u, b*_k⟩`. -/
 private theorem dot_castRow_decompose (b : Hex.Matrix Int n m)
     (u : Vector Rat m) (j : Fin n) :
-    Hex.Vector.dotProduct u (castRow b j) =
-      Hex.Vector.dotProduct u ((GramSchmidt.Int.basis b).row j) +
+    u.dotProduct (castRow b j) =
+      u.dotProduct ((GramSchmidt.Int.basis b).row j) +
         ∑ k : Fin j.val,
           muExact b j ⟨k.val, Nat.lt_trans k.isLt j.isLt⟩ *
-            Hex.Vector.dotProduct u
+            u.dotProduct
               ((GramSchmidt.Int.basis b).row ⟨k.val, Nat.lt_trans k.isLt j.isLt⟩) := by
   have hdecomp := GramSchmidt.Int.basis_decomposition b j.val j.isLt
   have hrow : castRow b j = Vector.map (fun x : Int => (x : Rat)) (b.row ⟨j.val, j.isLt⟩) := by
@@ -392,7 +392,7 @@ private theorem dot_castRow_decompose (b : Hex.Matrix Int n m)
 the `⟨b_i, b*_j⟩` dot product plus the `μ[j][·]`-weighted prefix of the
 `⟨b_i, b*_·⟩` dot products. -/
 private theorem gram_recurrence (b : Hex.Matrix Int n m) (i j : Fin n) :
-    ((Hex.Vector.dotProduct (b.row i) (b.row j) : Int) : Rat) =
+    (((b.row i).dotProduct (b.row j) : Int) : Rat) =
       gsDot b i j +
         ∑ k : Fin j.val,
           muExact b j ⟨k.val, Nat.lt_trans k.isLt j.isLt⟩ *
@@ -406,7 +406,7 @@ private theorem gsDot_eq_mu_mul_nrm (b : Hex.Matrix Int n m) {i j : Fin n}
     gsDot b i j = muExact b i j * nrm b j := by
   unfold gsDot
   rw [dot_comm, dot_castRow_decompose]
-  have horth : Hex.Vector.dotProduct ((GramSchmidt.Int.basis b).row j)
+  have horth : ((GramSchmidt.Int.basis b).row j).dotProduct
       ((GramSchmidt.Int.basis b).row i) = 0 := by
     rw [dot_comm]
     exact GramSchmidt.Int.basis_orthogonal b i.val j.val i.isLt j.isLt
@@ -415,7 +415,7 @@ private theorem gsDot_eq_mu_mul_nrm (b : Hex.Matrix Int n m) {i j : Fin n}
   · rw [dot_comm, nrm_eq_dot]
   · intro k _ hk
     have hkj : k.val ≠ j.val := fun h => hk (Fin.ext h)
-    have horth' : Hex.Vector.dotProduct ((GramSchmidt.Int.basis b).row j)
+    have horth' : ((GramSchmidt.Int.basis b).row j).dotProduct
         ((GramSchmidt.Int.basis b).row ⟨k.val, Nat.lt_trans k.isLt i.isLt⟩) = 0 := by
       rw [dot_comm]
       exact GramSchmidt.Int.basis_orthogonal b k.val j.val
@@ -431,10 +431,10 @@ private theorem gsDot_self (b : Hex.Matrix Int n m) (i : Fin n) :
   rw [dot_comm, dot_castRow_decompose]
   have hsum : (∑ k : Fin i.val,
       muExact b i ⟨k.val, Nat.lt_trans k.isLt i.isLt⟩ *
-        Hex.Vector.dotProduct ((GramSchmidt.Int.basis b).row i)
+        ((GramSchmidt.Int.basis b).row i).dotProduct
           ((GramSchmidt.Int.basis b).row ⟨k.val, Nat.lt_trans k.isLt i.isLt⟩)) = 0 := by
     refine Finset.sum_eq_zero fun k _ => ?_
-    have horth : Hex.Vector.dotProduct ((GramSchmidt.Int.basis b).row i)
+    have horth : ((GramSchmidt.Int.basis b).row i).dotProduct
         ((GramSchmidt.Int.basis b).row ⟨k.val, Nat.lt_trans k.isLt i.isLt⟩) = 0 :=
       GramSchmidt.Int.basis_orthogonal b i.val k.val i.isLt
         (Nat.lt_trans k.isLt i.isLt) (Nat.ne_of_gt k.isLt)
@@ -670,7 +670,7 @@ private theorem rowFold_spec (b : Hex.Matrix Int n m) {S : Int} (hS : 0 < S)
     (gRow : Array Int) (mus : Array (Array Ival)) (bstars : Array Ival)
     (i : Fin n) (hinv : Inv b S i.val (Nat.le_of_lt i.isLt) mus bstars)
     (hgRow : ∀ j (hj : j ≤ i.val),
-      gRow[j]! = Hex.Vector.dotProduct (b.row i)
+      gRow[j]! = (b.row i).dotProduct
         (b.row ⟨j, Nat.lt_of_le_of_lt hj i.isLt⟩))
     (t : Nat) (ht : t ≤ i.val) :
     ((List.range t).foldl (IntervalGS.rowStep S gRow mus bstars) (#[], #[])).1.size = t ∧
@@ -749,7 +749,7 @@ private theorem row_spec (b : Hex.Matrix Int n m) {S : Int} (hS : 0 < S)
     (gRow : Array Int) (mus : Array (Array Ival)) (bstars : Array Ival)
     (i : Fin n) (hinv : Inv b S i.val (Nat.le_of_lt i.isLt) mus bstars)
     (hgRow : ∀ j (hj : j ≤ i.val),
-      gRow[j]! = Hex.Vector.dotProduct (b.row i)
+      gRow[j]! = (b.row i).dotProduct
         (b.row ⟨j, Nat.lt_of_le_of_lt hj i.isLt⟩)) :
     (IntervalGS.row S gRow mus bstars i.val).1.size = i.val ∧
       (∀ j (hj : j < i.val),
@@ -787,7 +787,7 @@ private theorem row_spec (b : Hex.Matrix Int n m) {S : Int} (hS : 0 < S)
 private theorem pass_spec (b : Hex.Matrix Int n m) {S : Int} (hS : 0 < S)
     (g : Array (Array Int))
     (hg : ∀ i (hi : i < n) j (hj : j ≤ i),
-      (g[i]!)[j]! = Hex.Vector.dotProduct (b.row ⟨i, hi⟩)
+      (g[i]!)[j]! = (b.row ⟨i, hi⟩).dotProduct
         (b.row ⟨j, Nat.lt_of_le_of_lt hj hi⟩)) :
     ∀ t (ht : t ≤ n) (res : Array (Array Ival) × Array Ival),
       (List.range t).foldlM (IntervalGS.passStep S g) (#[], #[]) = some res →
@@ -813,7 +813,7 @@ private theorem pass_spec (b : Hex.Matrix Int n m) {S : Int} (hS : 0 < S)
       have htn : t < n := Nat.lt_of_succ_le ht
       let iF : Fin n := ⟨t, htn⟩
       have hgRow : ∀ j (hj : j ≤ iF.val),
-          (g[t]!)[j]! = Hex.Vector.dotProduct (b.row iF)
+          (g[t]!)[j]! = (b.row iF).dotProduct
             (b.row ⟨j, Nat.lt_of_le_of_lt hj iF.isLt⟩) := fun j hj => hg t htn j hj
       obtain ⟨hrsz, hrmu, hrb⟩ := row_spec b hS g[t]! s.1 s.2 iF hinv_t hgRow
       -- unfold the step and the positivity test
@@ -846,7 +846,7 @@ private theorem pass_spec (b : Hex.Matrix Int n m) {S : Int} (hS : 0 < S)
 private theorem g_entries (b : Hex.Matrix Int n m) (i : Nat) (hi : i < n)
     (j : Nat) (hj : j < n) :
     ((((Matrix.gramMatrix b).toArray.map Vector.toArray))[i]!)[j]! =
-      Hex.Vector.dotProduct (b.row ⟨i, hi⟩) (b.row ⟨j, hj⟩) := by
+      (b.row ⟨i, hi⟩).dotProduct (b.row ⟨j, hj⟩) := by
   have hi1 : i < ((Matrix.gramMatrix b).toArray.map Vector.toArray).size := by
     rw [Array.size_map, Vector.size_toArray]
     exact hi
@@ -912,7 +912,7 @@ theorem lllReducedInterval_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
   rw [Bool.and_eq_true] at h
   obtain ⟨hsizeOK, hlovOK⟩ := h
   have hg : ∀ i (hi : i < n) j (hj : j ≤ i),
-      (g[i]!)[j]! = Hex.Vector.dotProduct (b.row ⟨i, hi⟩)
+      (g[i]!)[j]! = (b.row ⟨i, hi⟩).dotProduct
         (b.row ⟨j, Nat.lt_of_le_of_lt hj hi⟩) :=
     fun i hi j hj => g_entries b i hi j (Nat.lt_of_le_of_lt hj hi)
   have hinv : Inv b S n (Nat.le_refl n) mus bstars :=

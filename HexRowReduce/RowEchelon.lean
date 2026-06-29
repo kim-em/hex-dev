@@ -96,9 +96,9 @@ private theorem foldl_sum_add_aux {R : Type u} [Lean.Grind.Ring R]
 left vector is given by `Vector.ofFn (fun k => s * v[k])`. -/
 private theorem dotProduct_smul_ofFn_left [Lean.Grind.Ring R]
     (s : R) (v w : Vector R m) :
-    Hex.Vector.dotProduct (Vector.ofFn fun k => s * v[k]) w =
-    s * Hex.Vector.dotProduct v w := by
-  unfold Hex.Vector.dotProduct
+    (Vector.ofFn fun k => s * v[k]).dotProduct w =
+    s * v.dotProduct w := by
+  unfold Vector.dotProduct
   rw [foldl_sum_mul_left_aux (xs := List.finRange m)
         (f := fun i => v[i] * w[i]) (c := s) (acc := 0)]
   have hzero : s * (0 : R) = 0 := by grind
@@ -114,9 +114,9 @@ private theorem dotProduct_smul_ofFn_left [Lean.Grind.Ring R]
 `Vector.ofFn (fun k => v[k] + s * w[k])`. -/
 private theorem dotProduct_add_smul_ofFn_left [Lean.Grind.Ring R]
     (u v w : Vector R m) (s : R) :
-    Hex.Vector.dotProduct (Vector.ofFn fun k => u[k] + s * v[k]) w =
-    Hex.Vector.dotProduct u w + s * Hex.Vector.dotProduct v w := by
-  unfold Hex.Vector.dotProduct
+    (Vector.ofFn fun k => u[k] + s * v[k]).dotProduct w =
+    u.dotProduct w + s * v.dotProduct w := by
+  unfold Vector.dotProduct
   -- LHS body: (u[k] + s * v[k]) * w[k] = u[k] * w[k] + s * (v[k] * w[k])
   rw [show (List.finRange m).foldl
         (fun acc i => acc + (Vector.ofFn fun k => u[k] + s * v[k])[i] * w[i]) 0 =
@@ -143,9 +143,9 @@ private theorem dotProduct_add_smul_ofFn_left [Lean.Grind.Ring R]
 `Vector.ofFn (fun k => v[k] + s * w[k])`. -/
 private theorem dotProduct_add_smul_ofFn_right [Lean.Grind.CommRing R]
     (u v w : Vector R m) (s : R) :
-    Hex.Vector.dotProduct u (Vector.ofFn fun k => v[k] + s * w[k]) =
-    Hex.Vector.dotProduct u v + s * Hex.Vector.dotProduct u w := by
-  unfold Hex.Vector.dotProduct
+    u.dotProduct (Vector.ofFn fun k => v[k] + s * w[k]) =
+    u.dotProduct v + s * u.dotProduct w := by
+  unfold Vector.dotProduct
   rw [show (List.finRange m).foldl
         (fun acc i => acc + u[i] * (Vector.ofFn fun k => v[k] + s * w[k])[i]) 0 =
       (List.finRange m).foldl
@@ -168,9 +168,9 @@ private theorem dotProduct_add_smul_ofFn_right [Lean.Grind.CommRing R]
 `Vector.ofFn (fun k => v[k] + w[k] * s)`. -/
 private theorem dotProduct_add_smulRight_ofFn_right [Lean.Grind.Ring R]
     (u v w : Vector R m) (s : R) :
-    Hex.Vector.dotProduct u (Vector.ofFn fun k => v[k] + w[k] * s) =
-    Hex.Vector.dotProduct u v + Hex.Vector.dotProduct u w * s := by
-  unfold Hex.Vector.dotProduct
+    u.dotProduct (Vector.ofFn fun k => v[k] + w[k] * s) =
+    u.dotProduct v + u.dotProduct w * s := by
+  unfold Vector.dotProduct
   rw [show (List.finRange m).foldl
         (fun acc i => acc + u[i] * (Vector.ofFn fun k => v[k] + w[k] * s)[i]) 0 =
       (List.finRange m).foldl
