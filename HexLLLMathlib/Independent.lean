@@ -23,6 +23,12 @@ out of the Mathlib-free `HexLLL/Basic.lean` so that the executable LLL core
 does not expose a proof-only surface tied to the Mathlib-side layer.
 -/
 
+/-- `Vector.get` is definitionally `getElem` at the index value, so this is `rfl`.
+A local restatement avoids depending on a Mathlib lemma name that is not present
+in the pinned Mathlib (`vector_get_eq_getElem` post-dates `v4.32.0-rc1-patch1`). -/
+private theorem vector_get_eq_getElem {α : Type*} {n : ℕ} (v : Vector α n) (i : Fin n) :
+    v.get i = v[i.1] := rfl
+
 namespace Hex
 
 namespace Matrix
@@ -303,7 +309,7 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
       have hB_eq :
           B = GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) kFin km1 := by
         rw [hB_def]
-        simpa [GramSchmidt.entry, Matrix.row, Vector.get_eq_getElem] using
+        simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using
           hvalid.ν_eq kFin.val km1.val kFin.isLt km1.isLt (by omega)
       have hdk_kFin_ne_zero :
           GramSchmidt.Int.gramDet s.b kFin.val (Nat.le_of_lt kFin.isLt) ≠ 0 := by
@@ -449,13 +455,13 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
                 GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) iFin kFin := by
             have := hν_eq iFin.val kFin.val iFin.isLt kFin.isLt
               (by rw [hkFinVal]; exact hki)
-            simpa [GramSchmidt.entry, Matrix.row, Vector.get_eq_getElem] using this
+            simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using this
           have hν_at_km1 :
               (s.ν.get iFin).get km1 =
                 GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) iFin km1 := by
             have hkm1_lt_i : km1.val < iFin.val := by omega
             have := hν_eq iFin.val km1.val iFin.isLt km1.isLt hkm1_lt_i
-            simpa [GramSchmidt.entry, Matrix.row, Vector.get_eq_getElem] using this
+            simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using this
           by_cases hjk : jFin.val = kFin.val
           · -- D2: jFin = kFin. Outer .set kFin curr_i applies.
             rw [show jFin = kFin from Fin.eq_of_val_eq hjk]
@@ -511,7 +517,7 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
                 calc (s.ν.get iFin)[jFin.val]
                     = ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin := hν
                   _ = ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin := by
-                        simpa [GramSchmidt.entry, Matrix.row, Vector.get_eq_getElem] using hsc.symm
+                        simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using hsc.symm
               · -- jFin above kFin.
                 have hj_gt_k : kFin.val < jFin.val := by
                   rw [hkFinVal]; rw [hkm1Val] at hj_lt_km1; omega
@@ -522,7 +528,7 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
                 calc (s.ν.get iFin)[jFin.val]
                     = ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin := hν
                   _ = ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin := by
-                        simpa [GramSchmidt.entry, Matrix.row, Vector.get_eq_getElem] using hsc.symm
+                        simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using hsc.symm
         · -- Cases A/B/C: iFin.val ≤ k.
           rw [if_neg hki]
           have hki : iFin.val ≤ k := Nat.le_of_not_lt hki
@@ -568,7 +574,7 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
               calc (s.ν.get km1).get jFin
                   = ((GramSchmidt.Int.scaledCoeffs s.b).get km1).get jFin := hν
                 _ = ((GramSchmidt.Int.scaledCoeffs b').get kFin).get jFin := by
-                      simpa [GramSchmidt.entry, Matrix.row, Vector.get_eq_getElem] using hsc.symm
+                      simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using hsc.symm
           · -- iFin.val < k.
             have hi_lt_k : iFin.val < kFin.val := lt_of_le_of_ne hki hi_eq_k
             by_cases hi_eq_km1 : iFin.val = km1.val
@@ -594,7 +600,7 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
               calc (s.ν.get kFin).get jFin
                   = ((GramSchmidt.Int.scaledCoeffs s.b).get kFin).get jFin := hν
                 _ = ((GramSchmidt.Int.scaledCoeffs b').get km1).get jFin := by
-                      simpa [GramSchmidt.entry, Matrix.row, Vector.get_eq_getElem] using hsc.symm
+                      simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using hsc.symm
             · -- Case A: iFin.val < km1.val.
               have hi_lt_km1 : iFin.val < km1.val := by omega
               have hi_ne_km1 : iFin.val ≠ km1.val := Nat.ne_of_lt hi_lt_km1
@@ -1074,7 +1080,7 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
           GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) i j' := by
       intro i j' hj'i
       have := hvalid.ν_eq i.val j'.val i.isLt j'.isLt hj'i
-      simpa [GramSchmidt.entry, Matrix.row, Vector.get_eq_getElem] using this
+      simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using this
     have hd_at : ∀ (i : Nat) (hi : i < n + 1),
         s.d.get ⟨i, hi⟩ =
           GramSchmidt.Int.gramDet s.b i (Nat.le_of_lt_succ hi) :=
@@ -1121,7 +1127,7 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
               ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin -
                 r * Int.ofNat (GramSchmidt.Int.gramDet s.b (jFin.val + 1)
                   (Nat.succ_le_of_lt jFin.isLt)) := by
-            simpa [GramSchmidt.entry, Matrix.row, Vector.get_eq_getElem] using hsc
+            simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using hsc
           rw [hsc']
           rfl
         · -- Non-pivot column.  The outer .set j misses jFin.
@@ -1141,7 +1147,7 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
             have hsc' : ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin =
                 ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin -
                   r * ((GramSchmidt.Int.scaledCoeffs s.b).get j).get jFin := by
-              simpa [GramSchmidt.entry, Matrix.row, Vector.get_eq_getElem] using hsc
+              simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using hsc
             rw [hsc']
             rfl
           · -- Above pivot.  jFin ≠ j and ¬ (jFin < j), so j < jFin.
@@ -1156,7 +1162,7 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
                 hjlt' hjlt_k
             have hsc' : ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin =
                 ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin := by
-              simpa [GramSchmidt.entry, Matrix.row, Vector.get_eq_getElem] using hsc
+              simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using hsc
             rw [hsc']
             rfl
       · -- Case iFin ≠ k.
@@ -1759,7 +1765,7 @@ theorem swapStep_potential_lt (s : LLLState n m) (k : Nat)
         GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) kFin km1 := by
     have h := hvalid.ν_eq kFin.val km1.val kFin.isLt km1.isLt
       (by show k - 1 < k; omega)
-    simpa [GramSchmidt.entry, Matrix.row, Vector.get_eq_getElem] using h
+    simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using h
   -- The pivot-product identity (no division needed since it's exact).
   have hprod :=
     GramSchmidt.Int.gramDet_rowSwap_adjacent_pivot_product (b := s.b)
