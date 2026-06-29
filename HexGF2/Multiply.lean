@@ -170,15 +170,22 @@ private theorem coeffWords_xorClmulAt_high_xor_left (acc : Array UInt64) {idx n 
     cases ((((clmul y z).1 >>> (n % 64).toUInt64) &&& 1) != 0) <;>
     rfl
 
+/-- Unchecked word lookup is the optional lookup defaulted to `0`. -/
+private theorem getElem!_eq_getD (a : Array UInt64) (i : Nat) :
+    a[i]! = a[i]?.getD 0 := by
+  rw [getElem!_def]; cases a[i]? <;> rfl
+
 /-- `xorWords_getElem!` unfolds unchecked access to `xorWords` into wordwise XOR. -/
 private theorem xorWords_getElem! (xs ys : Array UInt64) (i : Nat) :
     (xorWords xs ys)[i]! = xs[i]! ^^^ ys[i]! := by
-  simpa only [getElem!_def] using xorWords_get?_getD xs ys i
+  simp only [getElem!_eq_getD]
+  exact xorWords_get?_getD xs ys i
 
 /-- `normalizeWords_getElem!` shows normalization leaves unchecked word lookup unchanged. -/
 private theorem normalizeWords_getElem! (words : Array UInt64) (i : Nat) :
     (normalizeWords words)[i]! = words[i]! := by
-  simpa only [getElem!_def] using normalizeWords_get?_getD words i
+  simp only [getElem!_eq_getD]
+  exact normalizeWords_get?_getD words i
 
 /-- `foldl_keep` collapses a fold whose step ignores every input element. -/
 private theorem foldl_keep {α β : Type} (xs : List β) (acc : α) :

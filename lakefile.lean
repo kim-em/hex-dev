@@ -9,13 +9,13 @@ open System Lake DSL
 package Hex where
 
 require verso from git
-  "https://github.com/leanprover/verso.git" @ "v4.30.0-rc2"
+  "https://github.com/leanprover/verso.git" @ "v4.32.0-rc1"
 
 require «lean-bench» from git
   "https://github.com/kim-em/lean-bench.git" @ "master"
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "v4.30.0-rc2"
+  "https://github.com/leanprover-community/mathlib4.git" @ "v4.32.0-rc1"
 
 private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexGF2" / "ffi" / "clmul.o"

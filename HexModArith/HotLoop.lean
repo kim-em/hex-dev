@@ -451,12 +451,9 @@ when converted back out of Montgomery form.
   have hb := montResidue_lt_modulus ctx b
   have hmul :=
     _root_.MontCtx.mulMont_repr ctx.toUInt64Ctx a.toUInt64 b.toUInt64 ha hb
-  have hmulWord :
-      (ctx.mulMont a b).toUInt64 =
-        _root_.MontCtx.mulMont ctx.toUInt64Ctx a.toUInt64 b.toUInt64 := by
-    rw [toUInt64_mulMont]
+  rw [← toUInt64_mulMont ctx a b, ctx.modulus_eq] at hmul
   rw [toNat_fromMont, toNat_fromMont, toNat_fromMont]
-  simpa [ctx.modulus_eq, hmulWord, MontResidue.toUInt64_eq_val] using hmul
+  exact hmul
 
 /--
 Multiplying two standard residues by entering Montgomery form, multiplying, and

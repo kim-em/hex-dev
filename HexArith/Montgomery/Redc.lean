@@ -258,7 +258,7 @@ theorem redc_sub_spec (ctx : MontCtx p) (Thi Tlo : UInt64)
               have hu_lt :
                   addHi.toNat + c2.toNat * UInt64.word < 2 * p.toNat := by
                 rw [hu]
-                simpa [hTmod] using redcNat_u_lt_two_p hp_pos hp_lt hpp' hT
+                simpa [hTmod, UInt64.word] using redcNat_u_lt_two_p hp_pos hp_lt hpp' hT
               simp [redcNat, hTmod]
               simp only [UInt64.word] at hu ⊢
               rw [← hu]

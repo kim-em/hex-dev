@@ -398,7 +398,7 @@ private theorem ratCoeffToIntWithDen_cast (den : Nat) (coeff : Rat)
   have hden_ne : ((coeff.den : Nat) : Rat) ≠ 0 := by
     simp [coeff.den_nz]
   have hcoeff : ((coeff.num : Rat) / (coeff.den : Rat)) = coeff := by
-    simpa [Rat.divInt_eq_div] using coeff.num_divInt_den
+    simpa [Rat.divInt_eq_div, Rat.intCast_natCast] using coeff.num_divInt_den
   calc
     ((coeff.num * Int.ofNat k : Int) : Rat)
         = (coeff.num : Rat) * (k : Rat) := by
@@ -981,7 +981,7 @@ private theorem mul_size_le_top_succ (p q : ZPoly)
   have hle : (DensePoly.ofCoeffs coeffs).size ≤ coeffs.size :=
     ofCoeffs_size_le_int coeffs
   rw [hcoeffs_size] at hle
-  simpa [size, coeffs] using hle
+  exact hle
 
 /-- The size of a product of nonzero integer polynomials is one less than the
 sum of their sizes. -/
@@ -1934,7 +1934,9 @@ private theorem rat_scale_mulCoeffSum_of_ne_zero {u v : Rat} (hu : u ≠ 0) (hv 
   unfold DensePoly.mulCoeffSum
   rw [rat_scale_size_of_ne_zero hu p]
   rw [rat_scale_size_of_ne_zero hv q]
-  simpa using rat_scale_mulCoeffOuter_fold u v p q n (List.range p.size) 0
+  have key := rat_scale_mulCoeffOuter_fold u v p q n (List.range p.size) 0
+  simp only [Rat.mul_zero] at key
+  exact key
 
 /-- `rat_scale_mul_scale`: scaling distributes over the product, so
 `scale u p * scale v q = scale (u * v) (p * q)`. -/
@@ -1952,7 +1954,7 @@ private theorem rat_scale_mul_scale (u v : Rat) (p q : DensePoly Rat) :
       intro n
       rw [DensePoly.coeff_mul, DensePoly.coeff_zero]
       unfold DensePoly.mulCoeffSum
-      simpa using rat_list_foldl_ignore (List.range (DensePoly.scale u p).size) (0 : Rat)
+      exact rat_list_foldl_ignore (List.range (DensePoly.scale u p).size) (0 : Rat)
     · apply DensePoly.ext_coeff
       intro n
       rw [DensePoly.coeff_mul]
@@ -2071,15 +2073,14 @@ divisor. -/
 private theorem rat_mod_remainder_degree_lt_core (p q : DensePoly Rat)
     (hdegree : 0 < q.degree?.getD 0) :
     (p % q).degree?.getD 0 < q.degree?.getD 0 := by
-  simpa [DensePoly.mod] using rat_divMod_remainder_degree_lt_core p q hdegree
+  exact rat_divMod_remainder_degree_lt_core p q hdegree
 
 /-- `rat_mod_zero_right_of_size_zero`: over `DensePoly Rat`, `p % m = p`
 when the divisor `m` has size zero. -/
 private theorem rat_mod_zero_right_of_size_zero (p m : DensePoly Rat)
     (hm : m.size = 0) :
     p % m = p := by
-  simpa [DensePoly.mod] using
-    DensePoly.divMod_remainder_eq_self_of_size_zero_core p m hm
+  exact DensePoly.divMod_remainder_eq_self_of_size_zero_core p m hm
 
 /-- `rat_mod_sub_self_eq_mul_neg_div_of_not_isZero`: over `DensePoly Rat`
 with a nonzero divisor, `p % m - p = m * (0 - p / m)`. -/
@@ -2087,7 +2088,7 @@ private theorem rat_mod_sub_self_eq_mul_neg_div_of_not_isZero (p m : DensePoly R
     (hmzero : ¬ m.isZero) :
     p % m - p = m * (0 - p / m) := by
   have hdiv : (p / m) * m + (p % m) = p := by
-    simpa [DensePoly.div, DensePoly.mod] using rat_divMod_spec_core_of_not_isZero p m hmzero
+    exact rat_divMod_spec_core_of_not_isZero p m hmzero
   calc
     p % m - p = 0 - (p / m) * m := by
       apply DensePoly.ext_coeff
@@ -2611,14 +2612,12 @@ private theorem rat_mod_eq_mod_of_congr_not_pos_degree (p q m : DensePoly Rat)
       exact rat_leadingCoeff_ne_zero_of_pos_size m (by omega)
     have hpmod :
         p % m = 0 := by
-      simpa [DensePoly.mod] using
-        DensePoly.divMod_remainder_eq_zero_of_degree_zero_core p m hm_size
-          (fun a => rat_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
+      exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_core p m hm_size
+        (fun a => rat_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
     have hqmod :
         q % m = 0 := by
-      simpa [DensePoly.mod] using
-        DensePoly.divMod_remainder_eq_zero_of_degree_zero_core q m hm_size
-          (fun a => rat_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
+      exact DensePoly.divMod_remainder_eq_zero_of_degree_zero_core q m hm_size
+        (fun a => rat_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
     rw [hpmod, hqmod]
 
 /-- Congruent polynomials always have equal remainders modulo `m`, obtained by

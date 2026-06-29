@@ -877,7 +877,8 @@ theorem reducePoly_eq_zero_iff_dvd {p : GF2Poly} (hf : f ≠ 0) :
   · intro h
     apply dvd_of_mod_eq_zero
     have hval := congrArg GF2nPoly.val h
-    simpa [reducePoly_val_eq_mod (f := f) (hirr := hirr) p, zero] using hval
+    rw [reducePoly_val_eq_mod (f := f) (hirr := hirr) p] at hval
+    exact hval
   · intro h
     apply eq_of_val_eq
     change (reducePoly (f := f) (hirr := hirr) p).val = (zero (f := f)).val
@@ -1879,8 +1880,7 @@ theorem mul_ne_zero_of_ne_zero {a b : GF2nPoly f hirr}
 theorem mul_left_injective {a : GF2nPoly f hirr} (ha : a ≠ 0)
     {b₁ b₂ : GF2nPoly f hirr} (heq : a * b₁ = a * b₂) :
     b₁ = b₂ := by
-  have h := congrArg (fun x => a⁻¹ * x) heq
-  dsimp at h
+  have h : a⁻¹ * (a * b₁) = a⁻¹ * (a * b₂) := congrArg (fun x => a⁻¹ * x) heq
   rw [← mul_assoc, ← mul_assoc, inv_mul_cancel a ha, one_mul, one_mul] at h
   exact h
 

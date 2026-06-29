@@ -273,7 +273,7 @@ private theorem add_carry_toNat (a b : ZMod64 p) {hpLt : p < UInt64.word}
       (a.toNat + b.toNat - UInt64.word) + (UInt64.word - p) =
         a.toNat + b.toNat - p := by
     omega
-  simpa [toNat_eq_val] using hfinal
+  simpa [toNat_eq_val, UInt64.word] using hfinal
 
 /-- Carry branch of `add`: the corrected representative `a.toNat + b.toNat - p`
 stays in canonical range `< p`, so the result is a valid `ZMod64 p`. -/
@@ -313,7 +313,7 @@ private theorem add_noCarry_reduce_toNat (a b : ZMod64 p) {hpLt : p < UInt64.wor
       UInt64.word - p + (a.toNat + b.toNat) - UInt64.word =
         a.toNat + b.toNat - p := by
     omega
-  simpa [toNat_eq_val] using hfinal
+  simpa [toNat_eq_val, UInt64.word] using hfinal
 
 /-- No-carry-with-reduce branch of `add`: the reduced representative
 `a.toNat + b.toNat - p` stays in canonical range `< p`. -/
@@ -378,7 +378,7 @@ private theorem sub_noBorrow_toNat (a b : ZMod64 p)
     rw [← Nat.sub_add_comm hbWord, Nat.add_sub_assoc hbaNat]
   have hfinal : UInt64.word - b.toNat + a.toNat - UInt64.word = a.toNat - b.toNat := by
     rw [hsum, Nat.add_sub_cancel_left]
-  simpa [toNat_eq_val] using hfinal
+  simpa [toNat_eq_val, UInt64.word] using hfinal
 
 /-- No-borrow branch of `sub`: the difference `a.toNat - b.toNat` is
 bounded by `a.toNat < p`, so it stays in canonical range `< p`. -/
@@ -428,7 +428,7 @@ private theorem sub_borrow_toNat (a b : ZMod64 p) {hpLt : p < UInt64.word}
           UInt64.word =
         p - b.toNat + a.toNat := by
     omega
-  simpa [toNat_eq_val] using hfinal
+  simpa [toNat_eq_val, UInt64.word] using hfinal
 
 /-- Borrow branch of `sub`: the corrected representative
 `p - b.toNat + a.toNat` stays in canonical range `< p`, since the borrow
@@ -453,7 +453,7 @@ correction step when `p < 2^64`.
 def add (a b : ZMod64 p) : ZMod64 p := by
   by_cases hp : p = UInt64.word
   · refine ⟨a.val + b.val, ?_⟩
-    simpa [hp] using (UInt64.toNat_lt_size (a.val + b.val))
+    simpa [hp, UInt64.size, UInt64.word] using (UInt64.toNat_lt_size (a.val + b.val))
   · have hpLt : p < UInt64.word := Nat.lt_of_le_of_ne (Bounds.pLeR (p := p)) hp
     let p64 := modulusWord p hpLt
     let c64 := complementWord p hpLt
@@ -472,7 +472,7 @@ reducing mod `p`.
 def sub (a b : ZMod64 p) : ZMod64 p := by
   by_cases hp : p = UInt64.word
   · refine ⟨a.val - b.val, ?_⟩
-    simpa [hp] using (UInt64.toNat_lt_size (a.val - b.val))
+    simpa [hp, UInt64.size, UInt64.word] using (UInt64.toNat_lt_size (a.val - b.val))
   · have hpLt : p < UInt64.word := Nat.lt_of_le_of_ne (Bounds.pLeR (p := p)) hp
     let c64 := complementWord p hpLt
     let diff := a.val - b.val
@@ -610,7 +610,7 @@ theorem add_eq_ofNat (a b : ZMod64 p) :
 /-- Operator-level form of `add_eq_ofNat`. -/
 theorem add_op_eq_ofNat (a b : ZMod64 p) :
     a + b = ofNat p (a.toNat + b.toNat) := by
-  simpa using add_eq_ofNat a b
+  exact add_eq_ofNat a b
 
 /-- Subtraction agrees with modular subtraction of canonical representatives. -/
 @[simp, grind =] theorem toNat_sub (a b : ZMod64 p) :
@@ -660,7 +660,7 @@ theorem sub_eq_ofNat (a b : ZMod64 p) :
 /-- Operator-level form of `sub_eq_ofNat`. -/
 theorem sub_op_eq_ofNat (a b : ZMod64 p) :
     a - b = ofNat p (a.toNat + (p - b.toNat)) := by
-  simpa using sub_eq_ofNat a b
+  exact sub_eq_ofNat a b
 
 /-- Multiplication agrees with multiplication of canonical representatives modulo `p`. -/
 @[simp, grind =] theorem toNat_mul (a b : ZMod64 p) :
@@ -675,7 +675,7 @@ theorem mul_eq_ofNat (a b : ZMod64 p) :
 /-- Operator-level form of `mul_eq_ofNat`. -/
 theorem mul_op_eq_ofNat (a b : ZMod64 p) :
     a * b = ofNat p (a.toNat * b.toNat) := by
-  simpa using mul_eq_ofNat a b
+  exact mul_eq_ofNat a b
 
 /--
 Definition-level representative equation for the extended-GCD inverse candidate.
@@ -709,7 +709,7 @@ theorem inv_op_eq_ofNat (a : ZMod64 p) :
           ((let (_, s, _) :=
               HexArith.Int.extGcd (Int.ofNat a.toNat) (Int.ofNat p); s)
             % Int.ofNat p)) := by
-  simpa using inv_eq_ofNat a
+  exact inv_eq_ofNat a
 
 /-- A Bézout cofactor for `gcd a p = 1` reduces to a modular inverse of `a`:
 given `s * a + t * p = 1`, the centered representative `s % p` satisfies
@@ -884,7 +884,7 @@ theorem pow_eq_ofNat (a : ZMod64 p) (n : Nat) :
 /-- Operator-level form of `pow_eq_ofNat`. -/
 theorem pow_op_eq_ofNat (a : ZMod64 p) (n : Nat) :
     a ^ n = ofNat p (a.toNat ^ n) := by
-  simpa using pow_eq_ofNat a n
+  exact pow_eq_ofNat a n
 
 /--
 The extended-GCD inverse candidate is a left inverse whenever the representative
@@ -923,7 +923,7 @@ theorem inv_mul_eq_one_of_coprime (a : ZMod64 p) (hcop : Nat.Coprime a.toNat p) 
 @[grind =]
 theorem inv_op_mul_eq_one_of_coprime (a : ZMod64 p) (hcop : Nat.Coprime a.toNat p) :
     a⁻¹ * a = 1 := by
-  simpa using inv_mul_eq_one_of_coprime a hcop
+  exact inv_mul_eq_one_of_coprime a hcop
 
 /-- Addition produces a canonical representative below the modulus. -/
 theorem add_lt_modulus (a b : ZMod64 p) : (add a b).toNat < p := by
@@ -935,7 +935,7 @@ theorem sub_lt_modulus (a b : ZMod64 p) : (sub a b).toNat < p := by
 
 /-- Multiplication produces a canonical representative below the modulus. -/
 theorem mul_lt_modulus (a b : ZMod64 p) : (mul a b).toNat < p := by
-  simpa [toNat_mul] using normalize_lt p (a.toNat * b.toNat)
+  exact normalize_lt p (a.toNat * b.toNat)
 
 /-- Exponentiation produces a canonical representative below the modulus. -/
 theorem pow_lt_modulus (a : ZMod64 p) (n : Nat) : (pow a n).toNat < p := by

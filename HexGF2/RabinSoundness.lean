@@ -531,6 +531,7 @@ theorem isUnitPolynomial_of_dvd_isUnitPolynomial
   have hd0 : d = 0 := by simpa [degree, hd] using hg_deg_zero
   unfold isUnitPolynomial
   rw [hd, hd0]
+  rfl
 
 /-! ## Small structural helpers -/
 

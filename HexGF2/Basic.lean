@@ -627,7 +627,7 @@ def degree (p : GF2Poly) : Nat :=
   constructor
   · intro h
     apply ext_words
-    simpa using (isZero_eq_true_iff_words_eq_empty p).mp h
+    exact (isZero_eq_true_iff_words_eq_empty p).mp h
   · intro h
     subst h
     rfl
@@ -960,9 +960,9 @@ input. -/
   simp [xorWords]
 
 /-- In-bounds `getD` from an `Array.ofFn` recovers the function value. -/
-theorem Array.getD_ofFn_lt {α : Type u} [Inhabited α] {n : Nat}
-    (f : Fin n → α) {i : Nat} (hi : i < n) :
-    (Array.ofFn f).getD i default = f ⟨i, hi⟩ := by
+theorem Array.getD_ofFn_lt {α : Type u} {n : Nat}
+    (f : Fin n → α) {i : Nat} (hi : i < n) (d : α) :
+    (Array.ofFn f).getD i d = f ⟨i, hi⟩ := by
   simp [Array.getD, hi]
 
 /-- Out-of-bounds `getD` from an `Array.ofFn` returns the default value. -/
@@ -978,7 +978,7 @@ theorem xorWords_getD (xs ys : Array UInt64) (i : Nat) :
   · simpa [xorWords] using
       (Array.getD_ofFn_lt
         (fun i : Fin (max xs.size ys.size) => xs.getD i.1 0 ^^^ ys.getD i.1 0)
-        hi)
+        hi 0)
   · have hge : max xs.size ys.size ≤ i := Nat.le_of_not_gt hi
     have hxs : xs.size ≤ i := Nat.le_trans (Nat.le_max_left xs.size ys.size) hge
     have hys : ys.size ≤ i := Nat.le_trans (Nat.le_max_right xs.size ys.size) hge

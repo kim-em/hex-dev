@@ -1388,7 +1388,7 @@ theorem divModArray_eq_zero_self_of_degree_lt [Sub R] [Mul R]
             simp [divModArrayAux, ofCoeffs_replicate_zero, ofCoeffs_toArray, harray]
         | some rd =>
             have hrd_lt_size : rd < p.size := by
-              simpa [toArray] using arrayDegree?_some_lt harray
+              exact arrayDegree?_some_lt harray
             have hrd_lt : rd < qDegree := by omega
             have hrd_lt' : rd < q.size - 1 := by
               simpa [qDegree] using hrd_lt
@@ -1435,7 +1435,7 @@ theorem mod_eq_self_of_degree_lt [One R] [Add R] [Sub R] [Mul R] [Div R]
     p.degree?.getD 0 < q.degree?.getD 0 → p % q = p := by
   intro hdeg
   have hdiv := divMod_eq_zero_self_of_degree_lt p q hdeg
-  simpa [DensePoly.mod] using congrArg Prod.snd hdiv
+  exact congrArg Prod.snd hdiv
 
 /-- Constant-degree divisors are an idempotent edge case for `%`. -/
 @[grind =>]
@@ -1451,14 +1451,14 @@ theorem mod_degree_lt_of_pos_degree [One R] [Add R] [Sub R] [Mul R] [Div R]
     [DivModLaws R]
     (p q : DensePoly R) :
     0 < q.degree?.getD 0 → (p % q).degree?.getD 0 < q.degree?.getD 0 := by
-  simpa [DensePoly.mod] using divMod_remainder_degree_lt_of_pos_degree p q
+  exact divMod_remainder_degree_lt_of_pos_degree p q
 
 /-- Euclidean division identity: `(p / q) * q + (p % q) = p`. -/
 @[grind =>]
 theorem div_mul_add_mod [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
     (p q : DensePoly R) :
     (p / q) * q + (p % q) = p := by
-  simpa [DensePoly.div, DensePoly.mod] using divMod_spec p q
+  exact divMod_spec p q
 
 /-- If `q ∣ p`, then `p % q = 0`. -/
 @[simp, grind =] theorem mod_eq_zero_of_dvd [One R] [Add R] [Sub R] [Mul R] [Div R] [DivModLaws R]
@@ -4974,7 +4974,8 @@ theorem nat_dvd_of_scalar_mul_primitive_coeff_dvd
     rcases hc with ⟨i, hi, hget⟩
     have hcoeff_eq : p.coeff i = c := by
       have hgetArray : p.coeffs[i] = c := by
-        simpa [toArray, Array.getElem_toList] using hget
+        simp only [toArray, Array.getElem_toList] at hget
+        exact hget
       change p.coeffs.getD i (0 : Int) = c
       rw [← Array.getElem_eq_getD (0 : Int)]
       exact hgetArray
