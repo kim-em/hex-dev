@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexRowReduce.RREF
+public import HexRowReduce
 
 public section
 

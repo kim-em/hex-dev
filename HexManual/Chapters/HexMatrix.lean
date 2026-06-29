@@ -9,7 +9,7 @@ import VersoManual
 import HexMatrix.Basic
 import HexDeterminant
 import HexRowReduce.RowEchelon
-import HexRowReduce.RREF
+import HexRowReduce
 import HexBareiss.Bareiss
 
 open Verso.Genre Manual

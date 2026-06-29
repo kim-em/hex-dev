@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import Hex.Conformance.Emit
-import HexRowReduce.RREF
+import HexRowReduce
 
 /-!
 JSONL emit driver for the `hex-row-reduce` oracle.
