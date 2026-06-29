@@ -202,18 +202,22 @@ re-scoped from scratch and is naturally part of the lattice cluster below (a fas
 ### Parallelism of the remaining work
 - **Track 1 (independent): #8382** — shape-preserving arithmetic constants. Safe in
   parallel with everything.
-- **Track 2 (the headline): #8412 → #8413 → #8414** — the classical route to
-  `factor_irreducible_of_nonUnit`. Independent of the lattice cluster; the live path.
+- **Track 2 (the headline): #8412 → #8413 → #8417 → #8414** — the classical route to
+  `factor_irreducible_of_nonUnit`. Independent of #8382; the live path.
 - **Track 3 (lattice cluster): #8417 (irreducibility) + #8395 (speed)** — both
   concern the lattice tier and the deleted BHKS substrate; coordinate them. #8417
-  depends on #8413 (Route B). Sequence after Track 2.
+  depends on #8413 (Route B). Sequence after Track 2's classical core.
 
-### #8395 — Certificate-backed early-stop for the lattice tier  *(stretch)*
-- Making `factorLattice` fast on the extreme-`r` tail (SD6+) needs a believed-sound
-  `L'=W` / no-bad-vector check before the BHKS precision cap, exposed from the kept
-  `BadVector`/`Recovery`/`TerminationBound` proofs — **not** a partition-stability
-  heuristic (which could mis-declare a reducible input irreducible). Not on the
-  critical path; without it we bank parity via the classical tier.
+### Dispatch readiness (what to start a session on, today)
+- **Start now, in parallel:** **#8412** (foundation, no deps) and **#8382**
+  (independent perf). Both shovel-ready and self-contained; substrate verified present.
+- **Start right after #8412 lands:** **#8413** (the core proof). Shovel-ready but
+  gated on #8412 — don't start it cold.
+- **Downstream, do not start cold:** **#8417** (needs #8413 + a Route A/B decision)
+  and **#8414** (assembly; last step by construction).
+- **Do NOT start as written:** **#8395** — its body still points at the BHKS
+  substrate deleted in #8411; needs a ground-up rewrite first (re-scope onto whatever
+  #8417's route produces).
 
 ---
 
