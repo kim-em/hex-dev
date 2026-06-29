@@ -20,20 +20,8 @@ namespace Int
 private theorem rowAdd_get_rect {R : Type u} [Mul R] [Add R] {n' m' : Nat}
     (M : Matrix R n' m') (src dst r : Fin n') (c : R) (k : Fin m') :
     (Matrix.rowAdd M src dst c)[r][k] =
-      if r = dst then M[dst][k] + c * M[src][k] else M[r][k] := by
-  by_cases h : r = dst
-  · subst r
-    simp [Matrix.rowAdd]
-  · simp [Matrix.rowAdd, h]
-    have hval : dst.val ≠ r.val := by
-      intro hval
-      exact h (Fin.ext hval.symm)
-    have hrow :
-        (M.set dst (Vector.ofFn fun k => M[dst][k] + c * M[src][k]))[r] = M[r] :=
-      (Vector.getElem_set_ne (xs := M)
-        (x := Vector.ofFn fun k => M[dst][k] + c * M[src][k])
-        dst.isLt r.isLt hval)
-    simpa [Matrix.rowAdd] using congrArg (fun row => row[k]) hrow
+      if r = dst then M[dst][k] + c * M[src][k] else M[r][k] :=
+  Matrix.getElem_rowAdd M src dst r c k
 
 private theorem foldl_dot_comm_int {n' : Nat} (xs : List (Fin n'))
     (u v : Vector Int n') (accU accV : Int) (hacc : accU = accV) :
@@ -57,8 +45,9 @@ private theorem dot_comm_int {n' : Nat} (u v : Vector Int n') :
 /-- A row of `Matrix.rowAdd M src dst c` away from `dst` is unchanged. -/
 private theorem rowAdd_row_eq_of_ne {R : Type u} [Mul R] [Add R] {n' m' : Nat}
     (M : Matrix R n' m') (src dst r : Fin n') (c : R) (hr : r.val ≠ dst.val) :
-    (Matrix.rowAdd M src dst c)[r] = M[r] :=
-  Vector.getElem_set_ne (xs := M)
+    (Matrix.rowAdd M src dst c)[r] = M[r] := by
+  rw [Matrix.rowAdd_eq_set]
+  exact Vector.getElem_set_ne (xs := M)
     (x := Vector.ofFn fun k => M[dst][k] + c * M[src][k])
     dst.isLt r.isLt (fun heq => hr heq.symm)
 
@@ -68,8 +57,7 @@ private theorem rowAdd_row_at {R : Type u} [Mul R] [Add R] {n' m' : Nat}
     (M : Matrix R n' m') (src dst : Fin n') (c : R) :
     (Matrix.rowAdd M src dst c)[dst] =
       Vector.ofFn fun k => M[dst][k] + c * M[src][k] := by
-  unfold Matrix.rowAdd
-  simp
+  simp [Matrix.rowAdd_eq_set]
 
 /-- Inductive helper for `dot_rowAdd_row_at_left`: distribution along a foldl. -/
 private theorem foldl_dot_rowAdd_at {n' m' : Nat}

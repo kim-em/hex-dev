@@ -535,7 +535,7 @@ theorem coeffs_rowAdd_lower (b : Matrix Rat n m) (col src dst : Fin n)
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn,
     hcolsrc, Nat.lt_trans hcolsrc hsrcdst]
   rw [hbasis]
-  unfold Matrix.rowAdd
+  rw [Matrix.rowAdd_eq_set]
   simp [Vector.getElem_set_self]
   have hvec :
       (Vector.ofFn fun k : Fin m => b[dst.val][k.val] + c * b[src.val][k.val]) =
@@ -563,7 +563,7 @@ theorem coeffs_rowAdd_pivot (b : Matrix Rat n m) (src dst : Fin n)
     simpa [Matrix.row] using hself
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn, hsrcdst]
   rw [hbasis]
-  unfold Matrix.rowAdd
+  rw [Matrix.rowAdd_eq_set]
   simp [Vector.getElem_set_self]
   have hvec :
       (Vector.ofFn fun k : Fin m => b[dst.val][k.val] + c * b[src.val][k.val]) =
@@ -593,7 +593,7 @@ theorem coeffs_rowAdd_above_pivot (b : Matrix Rat n m) (src col dst : Fin n)
     simpa [Matrix.row] using hzero
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn, hcoldst]
   rw [hbasis]
-  unfold Matrix.rowAdd
+  rw [Matrix.rowAdd_eq_set]
   simp [Vector.getElem_set_self]
   have hvec :
       (Vector.ofFn fun k : Fin m => b[dst.val][k.val] + c * b[src.val][k.val]) =
@@ -621,7 +621,7 @@ theorem coeffs_rowAdd_other_row (b : Matrix Rat n m) (src dst : Fin n) (c : Rat)
   by_cases hlt : colFin.val < row.val
   · simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn, hlt]
     rw [hbasis]
-    unfold Matrix.rowAdd
+    rw [Matrix.rowAdd_eq_set]
     have hval : dst.val ≠ row.val := by
       intro h
       exact hrow (Fin.ext h.symm)

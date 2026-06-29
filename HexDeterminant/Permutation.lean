@@ -1881,21 +1881,8 @@ private def rowAddDuplicate {R : Type u} {n : Nat}
 private theorem rowAdd_get {R : Type u} [Mul R] [Add R] {n : Nat}
     (M : Matrix R n n) (src dst r : Fin n) (c : R) (k : Fin n) :
     (rowAdd M src dst c)[r][k] =
-      if r = dst then M[dst][k] + c * M[src][k] else M[r][k] := by
-  by_cases h : r = dst
-  · subst r
-    simp [rowAdd]
-  · simp [rowAdd, h]
-    have hval : dst.val ≠ r.val := by
-      intro hval
-      exact h (Fin.ext hval.symm)
-    have hrow :
-        (M.set dst (Vector.ofFn fun k => M[dst][k] + c * M[src][k]))[r] = M[r] := by
-      exact
-        (Vector.getElem_set_ne
-          (xs := M) (x := Vector.ofFn fun k => M[dst][k] + c * M[src][k])
-          dst.isLt r.isLt hval)
-    simpa [rowAdd] using congrArg (fun row => row[k]) hrow
+      if r = dst then M[dst][k] + c * M[src][k] else M[r][k] :=
+  getElem_rowAdd M src dst r c k
 
 /-- Entrywise value of `rowAddDuplicate M src dst`: row `dst` reads from row
 `src`, every other row is left unchanged. -/
