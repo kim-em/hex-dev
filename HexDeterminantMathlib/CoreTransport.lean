@@ -293,14 +293,14 @@ theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
   rw [equivs_toFinset]
 
 /-- `matrixEquiv` sends Hex leading prefixes to Mathlib submatrices. -/
-theorem matrixEquiv_leadingPrefix
+theorem matrixEquiv_principalSubmatrix
     (M : Hex.Matrix R n n) (k : Nat) (hk : k ≤ n) :
-    matrixEquiv (Hex.Matrix.leadingPrefix M k hk) =
+    matrixEquiv (Hex.Matrix.principalSubmatrix M k hk) =
       (matrixEquiv M).submatrix
         (fun r : Fin k => ⟨r.val, Nat.lt_of_lt_of_le r.isLt hk⟩)
         (fun c : Fin k => ⟨c.val, Nat.lt_of_lt_of_le c.isLt hk⟩) := by
   ext r c
-  simp [Hex.Matrix.leadingPrefix, Hex.Matrix.ofFn]
+  simp [Hex.Matrix.principalSubmatrix, Hex.Matrix.ofFn]
 
 /-- `matrixEquiv` sends Hex bordered Bareiss minors to Mathlib submatrices. -/
 theorem matrixEquiv_borderedMinor
@@ -314,15 +314,15 @@ theorem matrixEquiv_borderedMinor
   ext r c
   simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn]
 
-/-- Determinant form of `matrixEquiv_leadingPrefix`. -/
-theorem det_leadingPrefix_eq_submatrix_det [CommRing R]
+/-- Determinant form of `matrixEquiv_principalSubmatrix`. -/
+theorem det_principalSubmatrix_eq_submatrix_det [CommRing R]
     (M : Hex.Matrix R n n) (k : Nat) (hk : k ≤ n) :
-    Hex.Matrix.det (Hex.Matrix.leadingPrefix M k hk) =
+    Hex.Matrix.det (Hex.Matrix.principalSubmatrix M k hk) =
       Matrix.det
         ((matrixEquiv M).submatrix
           (fun r : Fin k => ⟨r.val, Nat.lt_of_lt_of_le r.isLt hk⟩)
           (fun c : Fin k => ⟨c.val, Nat.lt_of_lt_of_le c.isLt hk⟩)) := by
-  rw [det_eq, matrixEquiv_leadingPrefix]
+  rw [det_eq, matrixEquiv_principalSubmatrix]
 
 /-- Determinant form of `matrixEquiv_borderedMinor`. -/
 theorem det_borderedMinor_eq_submatrix_det [CommRing R]

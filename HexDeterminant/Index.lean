@@ -25,7 +25,7 @@ duplicate-free (`permutationVectors_nodup`, `permutationVectors_nodup_list`).
 Building on these, it derives the determinant's behaviour on the
 `insertAt`-extended permutation (`detTerm_insertAt_general`,
 `detSign_insertAt_general`), the last-row factorisation
-`det_eq_det_leadingPrefix_mul_last_of_last_row_zero`, and the triangular
+`det_eq_det_principalSubmatrix_mul_last_of_last_row_zero`, and the triangular
 results `det_upperTriangular_eq_finFoldl_diag`,
 `det_upperTriangular_eq_foldl_diag`, and `det_upperTriangular_pos_diag`.
 -/
@@ -710,7 +710,7 @@ row/column entry. -/
 theorem detProduct_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n) :
     detProduct M (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n)) =
-      detProduct (leadingPrefix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n] := by
+      detProduct (principalSubmatrix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n] := by
   unfold detProduct
   rw [← Fin.foldl_eq_finRange_foldl, ← Fin.foldl_eq_finRange_foldl]
   rw [Fin.foldl_succ_last]
@@ -721,14 +721,14 @@ theorem detProduct_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
               M[i.castSucc][
                 (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[i.castSucc]]) 1 =
         Fin.foldl n
-          (fun acc i => acc * (leadingPrefix M n (Nat.le_succ n))[i][v[i]]) 1 := by
+          (fun acc i => acc * (principalSubmatrix M n (Nat.le_succ n))[i][v[i]]) 1 := by
     congr
     funext acc i
     have hget :
         (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[i.castSucc] =
           (v[i]).castSucc := by
       simpa using insertAt_last_get_castSucc (Fin.last n) (v.map Fin.castSucc) i
-    simp [leadingPrefix, ofFn, hget]
+    simp [principalSubmatrix, ofFn, hget]
   have hlast :
       (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[Fin.last n] =
         Fin.last n := by
@@ -742,7 +742,7 @@ theorem detTerm_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n) :
     detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n)) =
       detSign (R := R) v *
-        (detProduct (leadingPrefix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n]) := by
+        (detProduct (principalSubmatrix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n]) := by
   unfold detTerm
   rw [detSign_insertAt_last, detProduct_insertAt_last]
 
@@ -923,7 +923,7 @@ private theorem foldl_detTerm_last_row_insertions
         (fun acc i =>
           acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) z =
       z + detSign (R := R) v *
-        (detProduct (leadingPrefix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n]) := by
+        (detProduct (principalSubmatrix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n]) := by
   rw [← Fin.foldl_eq_finRange_foldl]
   rw [Fin.foldl_succ_last]
   have hprefix :
@@ -956,11 +956,11 @@ private theorem foldl_detTerm_last_row_insertions
 factors as the leading principal determinant times the bottom-right entry.
 This is the triangular-recursion step used by positivity and diagonal-product
 lemmas. -/
-theorem det_eq_det_leadingPrefix_mul_last_of_last_row_zero
+theorem det_eq_det_principalSubmatrix_mul_last_of_last_row_zero
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1))
     (hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0) :
-    det M = det (leadingPrefix M n (Nat.le_succ n)) * M[Fin.last n][Fin.last n] := by
+    det M = det (principalSubmatrix M n (Nat.le_succ n)) * M[Fin.last n][Fin.last n] := by
   unfold det
   rw [show permutationVectors (n + 1) =
       List.flatMap
@@ -987,26 +987,26 @@ theorem det_eq_det_leadingPrefix_mul_last_of_last_row_zero
       (permutationVectors n).foldl
         (fun acc v =>
           acc + detSign (R := R) v *
-            (detProduct (leadingPrefix M n (Nat.le_succ n)) v *
+            (detProduct (principalSubmatrix M n (Nat.le_succ n)) v *
               M[Fin.last n][Fin.last n])) 0 := by
         apply foldl_acc_congr
         intro acc v _hmem
         exact foldl_detTerm_last_row_insertions M v acc hrow
     _ =
       (permutationVectors n).foldl
-          (fun acc v => acc + detTerm (leadingPrefix M n (Nat.le_succ n)) v) 0 *
+          (fun acc v => acc + detTerm (principalSubmatrix M n (Nat.le_succ n)) v) 0 *
         M[Fin.last n][Fin.last n] := by
         unfold detTerm
         calc
           (permutationVectors n).foldl
               (fun acc v =>
                 acc + detSign (R := R) v *
-                  (detProduct (leadingPrefix M n (Nat.le_succ n)) v *
+                  (detProduct (principalSubmatrix M n (Nat.le_succ n)) v *
                     M[Fin.last n][Fin.last n])) 0 =
             (permutationVectors n).foldl
               (fun acc v =>
                 acc + (detSign (R := R) v *
-                  detProduct (leadingPrefix M n (Nat.le_succ n)) v) *
+                  detProduct (principalSubmatrix M n (Nat.le_succ n)) v) *
                     M[Fin.last n][Fin.last n]) 0 := by
               apply foldl_det_sum_congr
               intro v _hmem
@@ -1015,14 +1015,14 @@ theorem det_eq_det_leadingPrefix_mul_last_of_last_row_zero
             (permutationVectors n).foldl
                 (fun acc v =>
                   acc + detSign (R := R) v *
-                    detProduct (leadingPrefix M n (Nat.le_succ n)) v) 0 *
+                    detProduct (principalSubmatrix M n (Nat.le_succ n)) v) 0 *
               M[Fin.last n][Fin.last n] := by
               exact foldl_det_sum_mul_right_zero
                 (permutationVectors n)
                 (fun v => detSign (R := R) v *
-                  detProduct (leadingPrefix M n (Nat.le_succ n)) v)
+                  detProduct (principalSubmatrix M n (Nat.le_succ n)) v)
                 M[Fin.last n][Fin.last n]
-    _ = det (leadingPrefix M n (Nat.le_succ n)) * M[Fin.last n][Fin.last n] := by
+    _ = det (principalSubmatrix M n (Nat.le_succ n)) * M[Fin.last n][Fin.last n] := by
         rfl
 
 /-- An integer upper-triangular matrix with strictly positive diagonal has
@@ -1039,26 +1039,26 @@ theorem det_upperTriangular_pos_diag
       have hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0 := by
         intro j hj
         exact hzero (Fin.last n) j hj
-      rw [det_eq_det_leadingPrefix_mul_last_of_last_row_zero M hrow]
+      rw [det_eq_det_principalSubmatrix_mul_last_of_last_row_zero M hrow]
       have hprefixZero :
           ∀ i j : Fin n, j.val < i.val →
-            (leadingPrefix M n (Nat.le_succ n))[i][j] = 0 := by
+            (principalSubmatrix M n (Nat.le_succ n))[i][j] = 0 := by
         intro i j hij
         let ii : Fin (n + 1) := ⟨i.val, by omega⟩
         let jj : Fin (n + 1) := ⟨j.val, by omega⟩
-        have hentry : (leadingPrefix M n (Nat.le_succ n))[i][j] = M[ii][jj] := by
-          simp [leadingPrefix, ofFn, ii, jj]
+        have hentry : (principalSubmatrix M n (Nat.le_succ n))[i][j] = M[ii][jj] := by
+          simp [principalSubmatrix, ofFn, ii, jj]
         rw [hentry]
         exact hzero ii jj hij
       have hprefixDiag :
-          ∀ i : Fin n, 0 < (leadingPrefix M n (Nat.le_succ n))[i][i] := by
+          ∀ i : Fin n, 0 < (principalSubmatrix M n (Nat.le_succ n))[i][i] := by
         intro i
         let ii : Fin (n + 1) := ⟨i.val, by omega⟩
-        have hentry : (leadingPrefix M n (Nat.le_succ n))[i][i] = M[ii][ii] := by
-          simp [leadingPrefix, ofFn, ii]
+        have hentry : (principalSubmatrix M n (Nat.le_succ n))[i][i] = M[ii][ii] := by
+          simp [principalSubmatrix, ofFn, ii]
         rw [hentry]
         exact hdiag ii
-      exact Int.mul_pos (ih (leadingPrefix M n (Nat.le_succ n)) hprefixZero hprefixDiag)
+      exact Int.mul_pos (ih (principalSubmatrix M n (Nat.le_succ n)) hprefixZero hprefixDiag)
         (hdiag (Fin.last n))
 
 /-- The determinant of an upper-triangular square matrix (entries below the
@@ -1078,31 +1078,31 @@ theorem det_upperTriangular_eq_finFoldl_diag
       have hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0 := by
         intro j hj
         exact hzero (Fin.last n) j hj
-      rw [det_eq_det_leadingPrefix_mul_last_of_last_row_zero M hrow]
+      rw [det_eq_det_principalSubmatrix_mul_last_of_last_row_zero M hrow]
       have hprefixZero :
           ∀ i j : Fin n, j.val < i.val →
-            (leadingPrefix M n (Nat.le_succ n))[i][j] = 0 := by
+            (principalSubmatrix M n (Nat.le_succ n))[i][j] = 0 := by
         intro i j hij
         let ii : Fin (n + 1) := ⟨i.val, by omega⟩
         let jj : Fin (n + 1) := ⟨j.val, by omega⟩
-        have hentry : (leadingPrefix M n (Nat.le_succ n))[i][j] = M[ii][jj] := by
-          simp [leadingPrefix, ofFn, ii, jj]
+        have hentry : (principalSubmatrix M n (Nat.le_succ n))[i][j] = M[ii][jj] := by
+          simp [principalSubmatrix, ofFn, ii, jj]
         rw [hentry]
         exact hzero ii jj hij
-      rw [ih (leadingPrefix M n (Nat.le_succ n)) hprefixZero]
+      rw [ih (principalSubmatrix M n (Nat.le_succ n)) hprefixZero]
       -- The (n+1)-length Fin.foldl over diagonals splits as the n-length foldl
       -- times the last diagonal entry.
       rw [Fin.foldl_succ_last]
       -- Rewrite the leading prefix diagonal entries as M[i.castSucc][i.castSucc].
       have hcongr :
           Fin.foldl n
-              (fun acc i => acc * (leadingPrefix M n (Nat.le_succ n))[i][i]) 1 =
+              (fun acc i => acc * (principalSubmatrix M n (Nat.le_succ n))[i][i]) 1 =
             Fin.foldl n (fun acc i => acc * M[i.castSucc][i.castSucc]) 1 := by
         rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl]
         apply foldl_acc_congr
         intro acc i _hmem
-        have hentry : (leadingPrefix M n (Nat.le_succ n))[i][i] = M[i.castSucc][i.castSucc] :=
-          by simp [leadingPrefix, ofFn, Fin.castSucc]
+        have hentry : (principalSubmatrix M n (Nat.le_succ n))[i][i] = M[i.castSucc][i.castSucc] :=
+          by simp [principalSubmatrix, ofFn, Fin.castSucc]
         rw [hentry]
       rw [hcongr]
 

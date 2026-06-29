@@ -510,7 +510,7 @@ and integer positive definiteness forces every dot against `v` to be zero.
 Trailing-block symmetry transports
 `state.matrix[sFin][i] = Vector.dotProduct v (b.row i) = 0` across the diagonal to
 `state.matrix[i][sFin] = 0`. -/
-private theorem leadingPrefix_gram_zero_pivot_column_zero
+private theorem principalSubmatrix_gram_zero_pivot_column_zero
     {n m : Nat} (b : Matrix Int n m) (s : Nat) (hs : s + 1 < n)
     (hquot : StepWitness b)
     (h_prefix_none :
@@ -831,19 +831,19 @@ the `(r + 1)` leading Gram prefix is `Nat.zero`. The proof translates the
 column-zero suffix from the closed row invariant on the full trajectory to the
 leading prefix via the no-pivot sync lemma, then derives `findPivot? = none` on
 the prefix, so the row-pivoted Bareiss loop records the same singular step. -/
-private theorem leadingPrefix_gram_bareiss_toNat_eq_zero
+private theorem principalSubmatrix_gram_bareiss_toNat_eq_zero
     {n m : Nat} (b : Matrix Int n m) (r : Nat) (hr : r < n)
     (hquot : StepWitness b)
     (s : Nat)
     (h_sing : (Matrix.noPivotLoop r
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).singularStep = some s) :
     (Matrix.bareiss
-      (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+      (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1)
         (Nat.succ_le_of_lt hr))).toNat = 0 := by
   let GM := Matrix.gramMatrix b
   let initGM := Matrix.noPivotInitialState GM
   let hK : r + 1 ≤ n := Nat.succ_le_of_lt hr
-  let LP := Matrix.leadingPrefix GM (r + 1) hK
+  let LP := Matrix.principalSubmatrix GM (r + 1) hK
   let initLP := Matrix.noPivotInitialState LP
   -- Step 1: s < r via noPivotLoop_singularStep_lt.
   have hsr : s < r := by
@@ -857,18 +857,18 @@ private theorem leadingPrefix_gram_bareiss_toNat_eq_zero
   have hsucc_n : s + 1 ≤ n := Nat.le_of_lt hs1n
   obtain ⟨h_full_none, h_full_step, h_full_zero⟩ :=
     noPivotLoop_prefix_state_at_singular GM r s hsucc_n h_sing
-  -- Step 3: column-zero on FULL via leadingPrefix_gram_zero_pivot_column_zero.
+  -- Step 3: column-zero on FULL via principalSubmatrix_gram_zero_pivot_column_zero.
   have h_full_col_zero :
       ∀ i : Fin n, s + 1 ≤ i.val →
         (Matrix.noPivotLoop s initGM).matrix[i][(⟨s, hsn⟩ : Fin n)] = 0 :=
-    leadingPrefix_gram_zero_pivot_column_zero
+    principalSubmatrix_gram_zero_pivot_column_zero
       (b := b) s hs1n hquot h_full_none h_full_zero
-  -- Step 4: sync — leadingPrefix (noPivotLoop s initGM).matrix (r+1) = (noPivotLoop s initLP).matrix.
+  -- Step 4: sync — principalSubmatrix (noPivotLoop s initGM).matrix (r+1) = (noPivotLoop s initLP).matrix.
   have h_sync :=
-    noPivotLoop_sync_leadingPrefix_aux (n := n) (K := r + 1) hK s
+    noPivotLoop_sync_principalSubmatrix_aux (n := n) (K := r + 1) hK s
       initGM initLP rfl rfl rfl rfl
       (by
-        show Matrix.leadingPrefix initGM.matrix (r + 1) hK = initLP.matrix
+        show Matrix.principalSubmatrix initGM.matrix (r + 1) hK = initLP.matrix
         rfl)
       (show s + initGM.step < r + 1 by
         change s + 0 < r + 1; omega)
@@ -885,11 +885,11 @@ private theorem leadingPrefix_gram_bareiss_toNat_eq_zero
     have h_LP_entry :
         (Matrix.noPivotLoop s initLP).matrix[i'][
           (⟨s, hs_lt_r1⟩ : Fin (r + 1))] =
-        (Matrix.leadingPrefix (Matrix.noPivotLoop s initGM).matrix (r + 1) hK)[i'][
+        (Matrix.principalSubmatrix (Matrix.noPivotLoop s initGM).matrix (r + 1) hK)[i'][
           (⟨s, hs_lt_r1⟩ : Fin (r + 1))] := by
       rw [← h_mat_sync]
     rw [h_LP_entry]
-    rw [Matrix.leadingPrefix_entry (Matrix.noPivotLoop s initGM).matrix (r + 1) hK i'
+    rw [Matrix.getElem_principalSubmatrix (Matrix.noPivotLoop s initGM).matrix (r + 1) hK i'
       (⟨s, hs_lt_r1⟩ : Fin (r + 1))]
     have hi_iN : s + 1 ≤ iN.val := hi'
     have h_col_zero_iN := h_full_col_zero iN hi_iN
@@ -912,12 +912,12 @@ private theorem leadingPrefix_gram_bareiss_toNat_eq_zero
     have h_LP_entry :
         (Matrix.noPivotLoop s initLP).matrix[(⟨s, hs_lt_r1⟩ : Fin (r + 1))][
           (⟨s, hs_lt_r1⟩ : Fin (r + 1))] =
-        (Matrix.leadingPrefix (Matrix.noPivotLoop s initGM).matrix (r + 1) hK)[
+        (Matrix.principalSubmatrix (Matrix.noPivotLoop s initGM).matrix (r + 1) hK)[
           (⟨s, hs_lt_r1⟩ : Fin (r + 1))][
           (⟨s, hs_lt_r1⟩ : Fin (r + 1))] := by
       rw [← h_mat_sync]
     rw [h_LP_entry]
-    rw [Matrix.leadingPrefix_entry (Matrix.noPivotLoop s initGM).matrix (r + 1) hK
+    rw [Matrix.getElem_principalSubmatrix (Matrix.noPivotLoop s initGM).matrix (r + 1) hK
       (⟨s, hs_lt_r1⟩ : Fin (r + 1)) (⟨s, hs_lt_r1⟩ : Fin (r + 1))]
     have h_idx_eq :
         (⟨s, Nat.lt_of_lt_of_le hs_lt_r1 hK⟩ : Fin n) =

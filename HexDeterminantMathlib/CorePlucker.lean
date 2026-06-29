@@ -1341,22 +1341,22 @@ private theorem M_k1_eq_matrixEquiv_borderedMinor_submatrix [CommRing R]
 
 /-- The interior `(k × k)` submatrix of the reindexed Bareiss bordered minor:
 deleting both row 0 and the last row (and similarly columns) leaves exactly
-`matrixEquiv (leadingPrefix source k _)`. -/
-private theorem M_interior_eq_matrixEquiv_leadingPrefix [CommRing R]
+`matrixEquiv (principalSubmatrix source k _)`. -/
+private theorem M_interior_eq_matrixEquiv_principalSubmatrix [CommRing R]
     (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
     (i j : Fin n) :
     (((matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)).submatrix
         (bareissDesnanotIndex k) (bareissDesnanotIndex k)).submatrix
         (Fin.succAbove (0 : Fin (k + 2)) ∘ (Fin.last k).succAbove)
         (Fin.succAbove (0 : Fin (k + 2)) ∘ (Fin.last k).succAbove)) =
-      matrixEquiv (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) := by
+      matrixEquiv (Hex.Matrix.principalSubmatrix source k (Nat.le_of_lt hk)) := by
   ext r c
   show matrixEquiv (Hex.Matrix.borderedMinor source (k + 1) hnext i j)
         (bareissDesnanotIndex k (Fin.succAbove (0 : Fin (k + 2))
           ((Fin.last k).succAbove r)))
         (bareissDesnanotIndex k (Fin.succAbove (0 : Fin (k + 2))
           ((Fin.last k).succAbove c))) =
-      matrixEquiv (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) r c
+      matrixEquiv (Hex.Matrix.principalSubmatrix source k (Nat.le_of_lt hk)) r c
   -- (last k).succAbove r = r.castSucc, then succAbove 0 of r.castSucc = r.castSucc.succ
   simp only [Fin.succAbove_last, Fin.succAbove_zero]
   -- Now use bareissDesnanotIndex_succ_lt with r.castSucc, since (r.castSucc).val = r.val < k
@@ -1371,7 +1371,7 @@ private theorem M_interior_eq_matrixEquiv_leadingPrefix [CommRing R]
   show (Hex.Matrix.borderedMinor source (k + 1) hnext i j)[
       (⟨r.val, by omega⟩ : Fin (k + 2))][
       (⟨c.val, by omega⟩ : Fin (k + 2))] = _
-  simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Hex.Matrix.leadingPrefix,
+  simp [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Hex.Matrix.principalSubmatrix,
     show r.val ≤ k from r.isLt.le, show c.val ≤ k from c.isLt.le]
 
 /-- After reindexing the `(k+2)` bordered minor by `bareissDesnanotIndex k`,
@@ -1396,14 +1396,14 @@ private theorem M11_eq_matrixEquiv_borderedMinor [CommRing R]
 
 /-- Desnanot-Jacobi specialised to a Bareiss bordered minor: the Mathlib
 determinant identity from `desnanot_jacobi_borderedMinor_reindex` translated
-back into Hex `borderedMinor`/`leadingPrefix` determinants. This produces the
+back into Hex `borderedMinor`/`principalSubmatrix` determinants. This produces the
 `hdesnanot` premise expected by `bareissExactDiv_borderedMinor_of_mul_eq` with
-`prevPivot` instantiated as `det (leadingPrefix source k _)`. -/
+`prevPivot` instantiated as `det (principalSubmatrix source k _)`. -/
 theorem desnanot_jacobi_borderedMinor [CommRing R]
     (source : Hex.Matrix R n n) (k : Nat) (hk : k < n) (hnext : k + 1 < n)
     (i j : Fin n) (hi : k < i.val) (hj : k < j.val) :
     Hex.Matrix.det (Hex.Matrix.borderedMinor source (k + 1) hnext i j) *
-        Hex.Matrix.det (Hex.Matrix.leadingPrefix source k (Nat.le_of_lt hk)) =
+        Hex.Matrix.det (Hex.Matrix.principalSubmatrix source k (Nat.le_of_lt hk)) =
       Hex.Matrix.det (Hex.Matrix.borderedMinor source k hk
           (⟨k, Nat.lt_trans hj j.isLt⟩ : Fin n)
           (⟨k, Nat.lt_trans hi i.isLt⟩ : Fin n)) *
@@ -1418,7 +1418,7 @@ theorem desnanot_jacobi_borderedMinor [CommRing R]
   dsimp only at hdj
   -- Identify each Mathlib determinant with a Hex determinant.
   rw [det_borderedMinor_bareissDesnanotIndex source k hnext i j] at hdj
-  rw [M_interior_eq_matrixEquiv_leadingPrefix source k hk hnext i j,
+  rw [M_interior_eq_matrixEquiv_principalSubmatrix source k hk hnext i j,
       ← det_eq] at hdj
   rw [M11_eq_matrixEquiv_borderedMinor source k hk hnext i j, ← det_eq] at hdj
   rw [M_kk_eq_matrixEquiv_borderedMinor_submatrix source k hk hnext i j,

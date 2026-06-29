@@ -641,12 +641,12 @@ private theorem scaledCoeffArrayLoop_diag_matches
           exact h_coeffs_processed i.val h_ilt i.isLt
 /-- The no-pivot Bareiss pass over the full Gram matrix records the same
 leading-prefix determinant as the public `gramDet` API at every vector slot. -/
-private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
+private theorem gramDetVecEntry_eq_principalSubmatrix_bareiss
     (b : Matrix Int n m) (hquot : StepWitness b) (r : Nat) (hr : r < n) :
     gramDetVecEntry (Matrix.bareissNoPivotData (Matrix.gramMatrix b))
         ⟨r + 1, Nat.succ_lt_succ hr⟩ =
       (Matrix.bareiss
-        (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+        (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1)
           (Nat.succ_le_of_lt hr))).toNat := by
   let GM := Matrix.gramMatrix b
   let init := Matrix.noPivotInitialState GM
@@ -655,7 +655,7 @@ private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
   by_cases h_prefix :
       (Matrix.noPivotLoop r init).singularStep = none
   · have hdiag :=
-      bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
+      bareissNoPivotData_diag_eq_principalSubmatrix_bareiss_of_prefix_nonsingular
         (b := b) r hr (by simpa [GM, init] using h_prefix)
     have h_step_r : (Matrix.noPivotLoop r init).step = r := by
       have h_room : init.step + r + 1 ≤ n := by
@@ -706,7 +706,7 @@ private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
           (data.matrix[i][i]).toNat := by
             simpa [data, GM, i] using h_entry_diag
       _ = (Matrix.bareiss
-            (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+            (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1)
               (Nat.succ_le_of_lt hr))).toNat := by
             exact congrArg Int.toNat (by simpa [data, GM, i] using hdiag)
   · rcases noPivotLoop_singular_inv (n := n) r init rfl with h_none | h_sing
@@ -730,9 +730,9 @@ private theorem gramDetVecEntry_eq_leadingPrefix_bareiss
         simp [gramDetVecEntry, data, hdata, hsr]
       have hright :
           (Matrix.bareiss
-            (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+            (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1)
               (Nat.succ_le_of_lt hr))).toNat = 0 :=
-        leadingPrefix_gram_bareiss_toNat_eq_zero
+        principalSubmatrix_gram_bareiss_toNat_eq_zero
           (b := b) r hr hquot k.val (by simpa [GM, init] using h_sing_r)
       rw [hright]
       simpa [data, GM] using hleft
@@ -757,11 +757,11 @@ theorem gramDetVecEntry_eq_gramDet
             ⟨r + 1, Nat.succ_lt_succ hr⟩ := by
               rfl
         _ = (Matrix.bareiss
-              (Matrix.leadingPrefix (Matrix.gramMatrix b) (r + 1)
+              (Matrix.principalSubmatrix (Matrix.gramMatrix b) (r + 1)
                 (Nat.succ_le_of_lt hr))).toNat :=
-              gramDetVecEntry_eq_leadingPrefix_bareiss (b := b) hquot r hr
+              gramDetVecEntry_eq_principalSubmatrix_bareiss (b := b) hquot r hr
         _ = gramDet b (r + 1) hk := by
-              simp [gramDet, GramSchmidt.leadingGramMatrixInt_eq_leadingPrefix_gram]
+              simp [gramDet, GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram]
 
 
 /-- The scaled-coefficient array loop writes the same diagonal determinant
@@ -832,12 +832,12 @@ private theorem scaledCoeffRows_diag_toNat_eq_gramDet
 scaled-coefficient loop: the diagonal slot is either the zero tail after an
 early singular no-pivot step, or the Bareiss determinant of the matching
 leading Gram prefix. -/
-private theorem scaledCoeffRows_diag_eq_zero_or_eq_leadingPrefix_bareiss
+private theorem scaledCoeffRows_diag_eq_zero_or_eq_principalSubmatrix_bareiss
     (b : Matrix Int n m) (i : Nat) (hi : i < n) :
     getArrayEntry (scaledCoeffRows b) i i = 0 ∨
       getArrayEntry (scaledCoeffRows b) i i =
         Matrix.bareiss
-          (Matrix.leadingPrefix (Matrix.gramMatrix b) (i + 1)
+          (Matrix.principalSubmatrix (Matrix.gramMatrix b) (i + 1)
             (Nat.succ_le_of_lt hi)) := by
   let iFin : Fin n := ⟨i, hi⟩
   have hdiag :=
@@ -873,7 +873,7 @@ private theorem scaledCoeffRows_diag_eq_zero_or_eq_leadingPrefix_bareiss
           coeffs := zeroRows n
           prevPivot := 1 }).coeffs i i =
         Matrix.bareiss
-          (Matrix.leadingPrefix (Matrix.gramMatrix b) (i + 1)
+          (Matrix.principalSubmatrix (Matrix.gramMatrix b) (i + 1)
             (Nat.succ_le_of_lt hi))
   rcases hdiag with ⟨h_sing, h_eq⟩ | ⟨s, h_sing, h_cases⟩
   · right
@@ -888,7 +888,7 @@ private theorem scaledCoeffRows_diag_eq_zero_or_eq_leadingPrefix_bareiss
       noPivotLoop_prefix_none_of_final_none i (n - i)
         (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl h_final
     have h_leading :=
-      bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
+      bareissNoPivotData_diag_eq_principalSubmatrix_bareiss_of_prefix_nonsingular
         (b := b) i hi h_prefix
     have h_eq_noPivot :
         getArrayEntry
@@ -920,7 +920,7 @@ private theorem scaledCoeffRows_diag_eq_zero_or_eq_leadingPrefix_bareiss
         noPivotLoop_prefix_none_of_final_singular_after i (n - i)
           (Matrix.noPivotInitialState (Matrix.gramMatrix b)) rfl h_final h_after
       have h_leading :=
-        bareissNoPivotData_diag_eq_leadingPrefix_bareiss_of_prefix_nonsingular
+        bareissNoPivotData_diag_eq_principalSubmatrix_bareiss_of_prefix_nonsingular
           (b := b) i hi h_prefix
       have h_eq_noPivot :
           getArrayEntry

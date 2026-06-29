@@ -1619,7 +1619,7 @@ The row-`s` column is cleared by combining the non-singular Schur≡Bareiss
 correspondence at fuel `s`
 (`getArrayEntry_scaledCoeffRowsSchur_eq_noPivotLoop_of_nonsing`) with the
 column-zero structural lemma at the singular step
-(`leadingPrefix_gram_zero_pivot_column_zero`). Strong
+(`principalSubmatrix_gram_zero_pivot_column_zero`). Strong
 induction on `j' ∈ (s, j]` then propagates the zeros via the Schur recurrence
 `rows[i'][j'] = rows[j'-1][j'-1] · gram[i'][j'] - schurSigma i' j'`. The
 diagonal factor `rows[j'-1][j'-1]` is zero by the row-`s` lemma when
@@ -1655,7 +1655,7 @@ theorem getArrayEntry_scaledCoeffRowsSchur_eq_zero_of_singularStep_lt
     · have hc_gt : s < c := Nat.lt_of_le_of_ne hcs (Ne.symm hcs_eq)
       have hs_succ_lt_n : s + 1 < n := Nat.lt_of_le_of_lt hc_gt hcn
       rw [h_corr_at_s.2 c hc_gt hcn]
-      exact leadingPrefix_gram_zero_pivot_column_zero
+      exact principalSubmatrix_gram_zero_pivot_column_zero
         b s hs_succ_lt_n hquot h_s_prefix_none h_s_diag_zero ⟨c, hcn⟩ hc_gt
   -- Strong induction on `j'` ∈ (s, j].
   suffices h_cascade : ∀ (j' : Nat), j' ≤ j → s < j' →
@@ -1899,17 +1899,17 @@ theorem scaledCoeffs_diag_toNat (b : Matrix Int n m) (hquot : StepWitness b)
 The diagonal slot is either the zero tail recorded after an earlier singular
 no-pivot step, or the Bareiss determinant of the corresponding leading Gram
 prefix. -/
-theorem scaledCoeffs_diag_eq_zero_or_eq_leadingPrefix_bareiss
+theorem scaledCoeffs_diag_eq_zero_or_eq_principalSubmatrix_bareiss
     (b : Matrix Int n m) (hquot : StepWitness b)
     (i : Nat) (hi : i < n) :
     GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ = 0 ∨
       GramSchmidt.entry (scaledCoeffs b) ⟨i, hi⟩ ⟨i, hi⟩ =
         Matrix.bareiss
-          (Matrix.leadingPrefix (Matrix.gramMatrix b) (i + 1)
+          (Matrix.principalSubmatrix (Matrix.gramMatrix b) (i + 1)
             (Nat.succ_le_of_lt hi)) := by
   rw [scaledCoeffs_entry_eq_getArrayEntry,
     getArrayEntry_scaledCoeffRowsSchur_eq b hquot]
-  exact scaledCoeffRows_diag_eq_zero_or_eq_leadingPrefix_bareiss (b := b) i hi
+  exact scaledCoeffRows_diag_eq_zero_or_eq_principalSubmatrix_bareiss (b := b) i hi
 
 /-- Int-valued diagonal identity for the scaled Gram-Schmidt coefficients: once
 the `(i, i)` slot is known nonnegative, it equals the Gram determinant

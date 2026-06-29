@@ -23,7 +23,7 @@ This module defines the determinant `det` of a dense square matrix as the
 `permutationVectors`-indexed sum of signed Leibniz terms, built from `detSign`
 (the inversion-parity sign of a permutation vector), `detProduct` (the unsigned
 diagonal product), and `detTerm` (their product). It records the small base
-cases `det_one_by_one`, `det_two_by_two`, and `det_leadingPrefix_zero`, and
+cases `det_one_by_one`, `det_two_by_two`, and `det_principalSubmatrix_zero`, and
 provides the reusable `foldl`-arithmetic toolkit (scalar factoring, additive
 splitting, permutation invariance, single-index scaling) plus the
 `Fin.castSucc`/`Fin.last` inversion-count lemmas used by the recursive
@@ -59,9 +59,9 @@ def det {R : Type u} [Lean.Grind.Ring R] {n : Nat} (M : Matrix R n n) : R :=
 
 /-- The determinant of the empty leading prefix is the Bareiss previous-pivot
 convention `1`. -/
-@[simp, grind =] theorem det_leadingPrefix_zero {R : Type u} [Lean.Grind.Ring R]
+@[simp, grind =] theorem det_principalSubmatrix_zero {R : Type u} [Lean.Grind.Ring R]
     (M : Matrix R n n) :
-    det (leadingPrefix M 0 (Nat.zero_le n)) = (1 : R) := by
+    det (principalSubmatrix M 0 (Nat.zero_le n)) = (1 : R) := by
   simp [det, detTerm, detSign, detProduct, permutationVectors, inversionCount]
   grind
 

@@ -851,13 +851,13 @@ theorem noPivotLoop_initial_step_eq_and_fuel_succ_le
 
 /-- Companion to `trailing_eq_at_step_local`: rewrite
 `BareissNoPivotInvariant.prevPivot_eq` with the step value supplied externally
-so the dependent `leadingPrefix` type matches the desired `s = state.step`
+so the dependent `principalSubmatrix` type matches the desired `s = state.step`
 substitution cleanly. -/
 theorem prevPivot_eq_at_step_local
     {n' : Nat} {M : Hex.Matrix Int n' n'} {state : Matrix.BareissState n'}
     (hinv : HexMatrixMathlib.BareissNoPivotInvariant M state)
     (s : Nat) (hs : s ≤ n') (hstep : s = state.step) :
-    state.prevPivot = Hex.Matrix.det (Hex.Matrix.leadingPrefix M s hs) := by
+    state.prevPivot = Hex.Matrix.det (Hex.Matrix.principalSubmatrix M s hs) := by
   subst hstep
   exact hinv.prevPivot_eq
 
@@ -950,7 +950,7 @@ def StepWitness.ofGram (b : Matrix Int n m) :
       ((augmentedGram b a).borderedMinor fuel hfuel_lt_naug iA kA).det *
         ((augmentedGram b a).borderedMinor fuel hfuel_lt_naug kA L).det =
     (bareissGramCanonicalCoeff b (fuel + 1) i)[a] *
-      ((augmentedGram b a).leadingPrefix fuel hfuel_le_naug).det
+      ((augmentedGram b a).principalSubmatrix fuel hfuel_le_naug).det
   rw [bareissGramCanonicalCoeff_eq_borderedMinor_aug b (fuel + 1) i a
         h_fuel_succ_le_i h_prefix_none_succ]
   -- Desnanot-Jacobi on the augmented matrix at level `fuel`.
