@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrix.Determinant.ColumnLinear
-import all HexMatrix.Determinant.ColumnLinear
+public import HexDeterminant.ColumnLinear
+import all HexDeterminant.ColumnLinear
 
 public section
 

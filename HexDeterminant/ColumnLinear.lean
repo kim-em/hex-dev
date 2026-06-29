@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrix.Determinant.Permutation
-import all HexMatrix.Determinant.Permutation
+public import HexDeterminant.Permutation
+import all HexDeterminant.Permutation
 
 public section
 

@@ -6,9 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrix.RREF.Pivot
-public import HexMatrix.RREF.Loop
-public import HexMatrix.RREF.Echelon
+public import HexRowReduce.RREF.Pivot
+public import HexRowReduce.RREF.Loop
+public import HexRowReduce.RREF.Echelon
 
 public section
 

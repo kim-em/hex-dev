@@ -8,7 +8,7 @@ module
 
 public import Std
 public import Batteries.Data.Vector.Lemmas
-public import HexMatrix.RowEchelon
+public import HexRowReduce.RowEchelon
 
 public section
 

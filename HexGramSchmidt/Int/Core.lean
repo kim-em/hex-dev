@@ -7,8 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexGramSchmidt.Basic
-public import HexMatrix.Bareiss
-public import HexMatrix.Determinant
+public import HexBareiss.Bareiss
+public import HexDeterminant
 
 public section
 

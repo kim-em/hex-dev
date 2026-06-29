@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 
 import HexMatrix
+import HexDeterminant
+import HexBareiss
 import Hex.BenchOracle.Flint
 import Lean.Data.Json
 import LeanBench

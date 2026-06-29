@@ -10,9 +10,13 @@ public import Std
 public import Init.Grind.Ring.Field
 public import Batteries.Data.Fin.Fold
 public import Batteries.Data.List.Lemmas
+public import Batteries.Data.List.Pairwise
+public import Batteries.Data.List.Perm
 public import Batteries.Data.Vector.Lemmas
-public import HexMatrix.Determinant.Enumeration
-public import HexMatrix.RowEchelon
+public import HexDeterminant.Enumeration
+public import HexMatrix.Elementary
+public import HexMatrix.DotProduct
+public import HexMatrix.MatrixAlgebra
 public import HexMatrix.Submatrix
 
 public section

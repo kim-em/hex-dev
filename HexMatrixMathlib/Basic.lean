@@ -9,7 +9,7 @@ module
 public import Mathlib.LinearAlgebra.Matrix.Reindex
 public import Mathlib.LinearAlgebra.Matrix.Swap
 public import Mathlib.LinearAlgebra.Matrix.Transvection
-public import HexMatrix.RowEchelon
+public import HexRowReduce.RowEchelon
 
 public section
 

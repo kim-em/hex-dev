@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrix.RREF.Loop
-import all HexMatrix.RREF.Loop
+public import HexRowReduce.RREF.Loop
+import all HexRowReduce.RREF.Loop
 
 public section
 

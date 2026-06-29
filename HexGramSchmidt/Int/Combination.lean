@@ -541,7 +541,7 @@ private theorem gramMatrix_symm (b : Matrix Int n m) (a c : Fin n) :
 with the border row index taken to be `j` and the border column index taken
 to be `i`. This is the definitional equation between
 `GramSchmidt.scaledCoeffMatrix` and the bordered-minor machinery in
-`HexMatrix.Bareiss`. -/
+`HexBareiss.Bareiss`. -/
 theorem scaledCoeffMatrix_eq_borderedMinor
     (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) :
     GramSchmidt.scaledCoeffMatrix b i j hji =

@@ -7,10 +7,10 @@ Authors: Kim Morrison
 import VersoManual
 
 import HexMatrix.Basic
-import HexMatrix.Determinant
-import HexMatrix.RowEchelon
-import HexMatrix.RREF
-import HexMatrix.Bareiss
+import HexDeterminant
+import HexRowReduce.RowEchelon
+import HexRowReduce.RREF
+import HexBareiss.Bareiss
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

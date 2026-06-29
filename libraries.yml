@@ -106,6 +106,21 @@ libraries:
           description: Deterministic tridiagonal integer matrices for row-pivoted Bareiss determinant scaling without arbitrary coefficient blow-up.
         - name: leibniz-small-determinant
           description: Small structured integer matrices where the generic Leibniz determinant remains practical for Bareiss cross-checking.
+  HexRowReduce:
+    deps: [HexMatrix]
+    mathlib: false
+    done_through: 7
+    status: active
+  HexDeterminant:
+    deps: [HexMatrix]
+    mathlib: false
+    done_through: 7
+    status: active
+  HexBareiss:
+    deps: [HexDeterminant, HexMatrix]
+    mathlib: false
+    done_through: 7
+    status: active
 
   # ---------- Depth 1 ----------
   HexModArith:
@@ -122,7 +137,7 @@ libraries:
         - name: montgomery-hot-loop
           description: Montgomery conversion, Montgomery-form multiplication chains, and conversion back on the shared small odd prime modulus.
   HexGramSchmidt:
-    deps: [HexMatrix]
+    deps: [HexRowReduce, HexDeterminant, HexBareiss]
     mathlib: false
     done_through: 7
     status: active
@@ -173,7 +188,7 @@ libraries:
 
   # ---------- Depth 2 ----------
   HexLLL:
-    deps: [HexGramSchmidt]
+    deps: [HexGramSchmidt, HexMatrix]
     mathlib: false
     done_through: 7
     status: active
@@ -243,7 +258,7 @@ libraries:
 
   # ---------- Factoring pipeline ----------
   HexBerlekamp:
-    deps: [HexPolyFp, HexMatrix, HexGFqRing]
+    deps: [HexPolyFp, HexMatrix, HexRowReduce, HexGFqRing]
     mathlib: false
     done_through: 3
     status: active
@@ -342,7 +357,7 @@ libraries:
         - name: euclidean-bridge-transport
           description: Polynomial Fibonacci quotient-chain fixtures over `Rat` carried through the executable `DensePoly.gcd`/`DensePoly.xgcd` plus the dense-to-Mathlib bridge.
   HexMatrixMathlib:
-    deps: [HexMatrix]
+    deps: [HexRowReduce, HexDeterminant, HexBareiss]
     mathlib: true
     done_through: 5
     status: active

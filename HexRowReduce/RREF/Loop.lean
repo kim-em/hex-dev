@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrix.RREF.Pivot
-import all HexMatrix.RREF.Pivot
+public import HexRowReduce.RREF.Pivot
+import all HexRowReduce.RREF.Pivot
 
 public section
 

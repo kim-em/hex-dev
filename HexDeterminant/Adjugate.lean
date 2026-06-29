@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrix.Determinant.Selection
-import all HexMatrix.Determinant.Selection
+public import HexDeterminant.Selection
+import all HexDeterminant.Selection
 
 public section
 
