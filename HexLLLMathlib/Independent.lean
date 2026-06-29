@@ -331,8 +331,8 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
       have hpairs_at : ∀ (i : Fin n), k < i.val →
           pairs.get i = ((s.ν.get i).get kFin, (s.ν.get i).get km1) := by
         intro i hi
-        show (Vector.ofFn _).get i = _
-        rw [Vector.get_ofFn]
+        show (Vector.ofFn _)[i.1] = _
+        rw [Vector.getElem_ofFn]
         exact dif_pos hi
       have hkm1_ne_kFin : km1 ≠ kFin := by
         intro h; rw [h] at hkm1_lt_k; omega

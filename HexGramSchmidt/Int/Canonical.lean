@@ -141,10 +141,7 @@ private theorem rowCombination_bareiss_coeff_update
   have h_rhs :
       (Vector.ofFn fun j : Fin m => x * (M.transpose * c)[j] - y * (M.transpose * d)[j])[jf] =
         x * (M.transpose * c)[jf] - y * (M.transpose * d)[jf] := by
-    change (Vector.ofFn fun j : Fin m =>
-      x * (M.transpose * c)[j] - y * (M.transpose * d)[j]).get jf =
-        x * (M.transpose * c)[jf] - y * (M.transpose * d)[jf]
-    rw [Vector.get_ofFn]
+    simp
   rw [h_rhs]
   repeat rw [Matrix.mulVec_getElem]
   exact dot_bareiss_row_update_right x y ((Matrix.transpose M).row jf) c d

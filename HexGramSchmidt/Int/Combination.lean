@@ -1866,7 +1866,7 @@ theorem gramDetVec_eq_gramDet (b : Matrix Int n m) (hquot : StepWitness b)
   rcases k with _ | r
   · show (gramDetVec b).get ⟨0, _⟩ = gramDet b 0 hk
     have h_one : (gramDetVec b).get ⟨0, Nat.zero_lt_succ n⟩ = 1 := by
-      simp [gramDetVec, data, gramDetVecFromScaledCoeffRows]
+      simp [gramDetVec, data, gramDetVecFromScaledCoeffRows, Vector.get, Vector.toArray_ofFn]
     rw [show (gramDetVec b).get ⟨0, Nat.lt_succ_of_le hk⟩
           = (gramDetVec b).get ⟨0, Nat.zero_lt_succ n⟩ from rfl, h_one]
     exact (gramDet_zero b).symm
@@ -1875,7 +1875,7 @@ theorem gramDetVec_eq_gramDet (b : Matrix Int n m) (hquot : StepWitness b)
     have hget :
         (gramDetVec b).get ⟨r + 1, Nat.succ_lt_succ hr⟩ =
           (getArrayEntry (scaledCoeffRowsSchur b) r r).toNat := by
-      simp [gramDetVec, data, gramDetVecFromScaledCoeffRows]
+      simp [gramDetVec, data, gramDetVecFromScaledCoeffRows, Vector.get, Vector.toArray_ofFn]
     rw [hget, getArrayEntry_scaledCoeffRowsSchur_eq b hquot]
     exact scaledCoeffRows_diag_toNat_eq_gramDet (b := b) hquot r hr
 
@@ -1891,7 +1891,7 @@ theorem scaledCoeffs_diag_toNat (b : Matrix Int n m) (hquot : StepWitness b)
   have hpack :
       (gramDetVec b).get ⟨i + 1, Nat.succ_lt_succ hi⟩ =
         (getArrayEntry (scaledCoeffRowsSchur b) i i).toNat := by
-    simp [gramDetVec, data, gramDetVecFromScaledCoeffRows]
+    simp [gramDetVec, data, gramDetVecFromScaledCoeffRows, Vector.get, Vector.toArray_ofFn]
   rw [← hpack]
   exact gramDetVec_eq_gramDet (b := b) hquot (i + 1) (Nat.succ_le_of_lt hi)
 

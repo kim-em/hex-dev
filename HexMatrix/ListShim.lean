@@ -40,16 +40,6 @@ theorem pairwise_lt_finRange (n : Nat) : Pairwise (· < ·) (finRange n) := by
 theorem nodup_finRange (n : Nat) : (finRange n).Nodup :=
   (pairwise_lt_finRange n).imp Fin.ne_of_lt
 
-/-- Reproduced from `Batteries.Data.List.Pairwise`; remove if migrated up to lean4. -/
-theorem pairwise_iff_get {α} {R : α → α → Prop} {l : List α} :
-    Pairwise R l ↔ ∀ (i j) (_hij : i < j), R (get l i) (get l j) := by
-  rw [pairwise_iff_getElem]
-  constructor <;> intro h
-  · intros i j h'
-    exact h _ _ _ _ h'
-  · intros i j hi hj h'
-    exact h ⟨i, hi⟩ ⟨j, hj⟩ h'
-
 /-- Reproduced from `Batteries.Data.List.Perm`; remove if migrated up to lean4.
 The Batteries original has no `[DecidableEq α]`; we match that signature and use
 `classical` in the proof, since core lacks the `Subperm` API Batteries uses. -/
@@ -94,12 +84,3 @@ theorem nodup_subset_length_le {α} [DecidableEq α] {l₁ l₂ : List α}
     simp only [length_cons]; omega
 
 end List
-
-namespace Vector
-
-/-- Reproduced from `Batteries.Data.Vector.Lemmas`; remove if migrated up to lean4.
-Core has `Vector.getElem_ofFn`, but not this `.get`-phrased form. -/
-@[simp] theorem get_ofFn (f : Fin n → α) (i : Fin n) : (ofFn f).get i = f i :=
-  getElem_ofFn _
-
-end Vector
