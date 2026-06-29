@@ -27,6 +27,8 @@ universe u
 @[expose]
 abbrev Matrix (R : Type u) (n m : Nat) := Vector (Vector R m) n
 
+end Hex
+
 namespace Vector
 
 /-- Dot product of two vectors. -/
@@ -50,6 +52,8 @@ def unit [Zero R] [One R] (i : Fin n) : Vector R n :=
   simp [unit]
 
 end Vector
+
+namespace Hex
 
 namespace Matrix
 
@@ -162,13 +166,13 @@ instance [OfNat R 0] [OfNat R 1] : One (Matrix R n n) where
 @[expose]
 def mulVec [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (v : Vector R m) :
     Vector R n :=
-  Vector.ofFn fun i => Hex.Vector.dotProduct (row M i) v
+  Vector.ofFn fun i => (row M i).dotProduct v
 
 /-- Multiply two matrices. -/
 @[expose]
 def mul [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (N : Matrix R m k) :
     Matrix R n k :=
-  ofFn fun i j => Hex.Vector.dotProduct (row M i) (col N j)
+  ofFn fun i j => (row M i).dotProduct (col N j)
 
 instance [Mul R] [Add R] [OfNat R 0] : HMul (Matrix R n m) (Vector R m) (Vector R n) where
   hMul := mulVec
@@ -185,15 +189,15 @@ instance [Mul R] [Add R] [OfNat R 0] : Mul (Matrix R n n) where
 /-- Entry characterization for matrix-vector multiplication. -/
 @[grind =] theorem getElem_mulVec [Mul R] [Add R] [OfNat R 0]
     (M : Matrix R n m) (v : Vector R m) (i : Fin n) :
-    (M * v)[i] = Hex.Vector.dotProduct (row M i) v := by
-  show (mulVec M v)[i] = Hex.Vector.dotProduct (row M i) v
+    (M * v)[i] = (row M i).dotProduct v := by
+  show (mulVec M v)[i] = (row M i).dotProduct v
   simp [mulVec]
 
 /-- Entry characterization for matrix multiplication. -/
 @[grind =] theorem getElem_mul [Mul R] [Add R] [OfNat R 0]
     (M : Matrix R n m) (N : Matrix R m k) (i : Fin n) (j : Fin k) :
-    (M * N)[i][j] = Hex.Vector.dotProduct (row M i) (col N j) := by
-  show (mul M N)[i][j] = Hex.Vector.dotProduct (row M i) (col N j)
+    (M * N)[i][j] = (row M i).dotProduct (col N j) := by
+  show (mul M N)[i][j] = (row M i).dotProduct (col N j)
   rw [mul, getElem_ofFn]
 
 /-- The identity matrix entry function: `1[i][j] = 1` if `i = j`, else `0`. -/

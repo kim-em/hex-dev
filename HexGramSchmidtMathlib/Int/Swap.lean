@@ -37,14 +37,14 @@ private theorem intCast_rat_injective_int_eq {a b : Int} (h : (a : Rat) = (b : R
 
 /-- The rational dot product is additive in its left argument. -/
 theorem dot_add_left_rat {m' : Nat} (u v w : Vector Rat m') :
-    Vector.dotProduct (u + v) w = Vector.dotProduct u w + Vector.dotProduct v w := by
+    (u + v).dotProduct w = u.dotProduct w + v.dotProduct w := by
   rw [dot_comm_rat (u := u + v) (v := w), dot_add_right_rat (u := w) (v := u) (w := v),
     dot_comm_rat (u := w) (v := u), dot_comm_rat (u := w) (v := v)]
 
 /-- The rational dot product is homogeneous in its left argument: a scalar
 factors out. -/
 theorem dot_smul_left_rat {m' : Nat} (s : Rat) (u v : Vector Rat m') :
-    Vector.dotProduct (s • u) v = s * Vector.dotProduct u v := by
+    (s • u).dotProduct v = s * u.dotProduct v := by
   rw [dot_comm_rat (u := s • u) (v := v), dot_smul_right_rat (s := s) (u := v) (v := u),
     dot_comm_rat (u := v) (v := u)]
 
@@ -52,11 +52,11 @@ theorem dot_smul_left_rat {m' : Nat} (s : Rat) (u v : Vector Rat m') :
 splits as `‖curr‖² + μ² · ‖prev‖²`. -/
 theorem normSq_add_smul_orthogonal_rat {m' : Nat}
     (curr prev : Vector Rat m') (μ : Rat)
-    (horth : Vector.dotProduct curr prev = 0) :
-    Vector.normSq (curr + μ • prev) =
-      Vector.normSq curr + μ ^ 2 * Vector.normSq prev := by
-  show Vector.dotProduct (curr + μ • prev) (curr + μ • prev) =
-    Vector.dotProduct curr curr + μ ^ 2 * Vector.dotProduct prev prev
+    (horth : curr.dotProduct prev = 0) :
+    (curr + μ • prev).normSq =
+      curr.normSq + μ ^ 2 * prev.normSq := by
+  show (curr + μ • prev).dotProduct (curr + μ • prev) =
+    curr.dotProduct curr + μ ^ 2 * prev.dotProduct prev
   rw [dot_add_left_rat (u := curr) (v := μ • prev) (w := curr + μ • prev),
     dot_add_right_rat (u := curr) (v := curr) (w := μ • prev),
     dot_add_right_rat (u := μ • prev) (v := curr) (w := μ • prev),
@@ -64,7 +64,7 @@ theorem normSq_add_smul_orthogonal_rat {m' : Nat}
     dot_smul_left_rat (s := μ) (u := prev) (v := curr),
     dot_smul_left_rat (s := μ) (u := prev) (v := μ • prev),
     dot_smul_right_rat (s := μ) (u := prev) (v := prev)]
-  have horth_swap : Vector.dotProduct prev curr = 0 := by
+  have horth_swap : prev.dotProduct curr = 0 := by
     rw [dot_comm_rat]; exact horth
   rw [horth, horth_swap]
   grind
@@ -140,8 +140,8 @@ theorem gramDet_rowSwap_adjacent_pivot_product
   let prev : Vector Rat m := (basis b).row km1
   let curr : Vector Rat m := (basis b).row k
   let G : Rat := gramSchmidtNormProduct b km1.val hkm1_le_n
-  let Nkm1 : Rat := Vector.normSq prev
-  let Nk : Rat := Vector.normSq curr
+  let Nkm1 : Rat := prev.normSq
+  let Nk : Rat := curr.normSq
   -- Rational expressions for each Gram determinant we touch.
   have hdkm1_rat : (gramDet b km1.val hkm1_le_n : Rat) = G :=
     gramDet_eq_prod_normSq_uncond b km1.val hkm1_le_n
@@ -162,7 +162,7 @@ theorem gramDet_rowSwap_adjacent_pivot_product
     rw [h_succ, hgnp_k_eq,
         gramSchmidtNormProduct_succ b km1.val hkm1_succ_le]
   -- Basis orthogonality between curr and prev.
-  have horth : Vector.dotProduct curr prev = 0 :=
+  have horth : curr.dotProduct prev = 0 :=
     basis_orthogonal b k.val km1.val k.isLt km1.isLt (by omega)
   -- New basis row at km1 of the swapped matrix is `curr + μ • prev`.
   have hbasis_swap :
@@ -180,8 +180,8 @@ theorem gramDet_rowSwap_adjacent_pivot_product
       gramDet_subst_val (Matrix.rowSwap b km1 k) _ _ _ _ hkm1
     rw [← hgd_eq, h_succ,
         gramSchmidtNormProduct_rowSwap_below b km1 k hkm1k]
-    show G * Vector.normSq ((basis (Matrix.rowSwap b km1 k)).row
-        ⟨km1.val, km1.isLt⟩) = G * (Nk + μ ^ 2 * Nkm1)
+    show G * ((basis (Matrix.rowSwap b km1 k)).row
+        ⟨km1.val, km1.isLt⟩).normSq = G * (Nk + μ ^ 2 * Nkm1)
     have hbasis_row :
         (basis (Matrix.rowSwap b km1 k)).row ⟨km1.val, km1.isLt⟩ =
           curr + μ • prev := hbasis_swap
@@ -274,14 +274,14 @@ zero, both sides vanish (orthogonality + the `if`-branch in
 `coeffs_lower_projection`). -/
 theorem dot_basis_castRow_eq_coeffs_mul_normSq
     (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
-    Vector.dotProduct ((basis b).row ⟨j, Nat.lt_trans hj hi⟩)
+    ((basis b).row ⟨j, Nat.lt_trans hj hi⟩).dotProduct
         (Vector.map (fun x : Int => (x : Rat)) (b.row ⟨i, hi⟩)) =
       GramSchmidt.entry (coeffs b) ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ *
-        Vector.normSq ((basis b).row ⟨j, Nat.lt_trans hj hi⟩) := by
+        ((basis b).row ⟨j, Nat.lt_trans hj hi⟩).normSq := by
   have hjlt : j < n := Nat.lt_trans hj hi
   -- Expand `castIntRow b i` via `basis_decomposition`.
   have hrow := castIntRow_decomposition b i hi
-  show Vector.dotProduct ((basis b).row ⟨j, hjlt⟩) (castIntRow b ⟨i, hi⟩) = _
+  show ((basis b).row ⟨j, hjlt⟩).dotProduct (castIntRow b ⟨i, hi⟩) = _
   rw [hrow, dot_add_right_rat]
   -- First term: `dot basis[j] basis[i] = 0` by orthogonality (j ≠ i).
   rw [basis_orthogonal b j i hjlt hi (Nat.ne_of_lt hj), Rat.zero_add]
@@ -291,7 +291,7 @@ theorem dot_basis_castRow_eq_coeffs_mul_normSq
   have h_zero_term : ∀ q : Fin i, q.val ≠ j →
       GramSchmidt.entry (coeffs b) ⟨i, hi⟩
             ⟨q.val, Nat.lt_trans q.isLt hi⟩ *
-          Vector.dotProduct ((basis b).row ⟨j, hjlt⟩)
+          ((basis b).row ⟨j, hjlt⟩).dotProduct
             ((basis b).row ⟨q.val, Nat.lt_trans q.isLt hi⟩) = 0 := by
     intro q hqj
     have hq_lt_n : q.val < n := Nat.lt_trans q.isLt hi
@@ -405,8 +405,8 @@ with `q < k`, and the relevant `(basis b).row q` agrees with `(basis b').row q`
 for `q < km1`. -/
 theorem dot_basis_rowSwap_curr_prev_eq_normSq
     (b : Matrix Int n m) (km1 k : Fin n) (hkm1 : km1.val + 1 = k.val) :
-    Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row km1) =
-      Vector.normSq ((basis (Matrix.rowSwap b km1 k)).row k) := by
+    ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct ((basis b).row km1) =
+      ((basis (Matrix.rowSwap b km1 k)).row k).normSq := by
   have hkm1k : km1.val < k.val := by omega
   -- Row equality: (rowSwap b km1 k).row k = b.row km1.
   have hrow_eq : (Matrix.rowSwap b km1 k).row k = b.row km1 := by
@@ -418,7 +418,7 @@ theorem dot_basis_rowSwap_curr_prev_eq_normSq
     simp
   -- prefixCombination of b at km1 vanishes against u_k.
   have hpfx_b_zero :
-      Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+      ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
           (GramSchmidt.prefixCombination (coeffs b) (basis b) km1.val km1.isLt) = 0 := by
     apply dot_prefixCombination_right_eq_zero
     intro q
@@ -433,7 +433,7 @@ theorem dot_basis_rowSwap_curr_prev_eq_normSq
       (Nat.ne_of_gt hq_lt_k)
   -- prefixCombination of b' at k vanishes against u_k.
   have hpfx_b'_zero :
-      Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+      ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
           (GramSchmidt.prefixCombination (coeffs (Matrix.rowSwap b km1 k))
             (basis (Matrix.rowSwap b km1 k)) k.val k.isLt) = 0 := by
     apply dot_prefixCombination_right_eq_zero
@@ -444,20 +444,20 @@ theorem dot_basis_rowSwap_curr_prev_eq_normSq
       (Nat.ne_of_gt hq_lt_k)
   -- dot u_k (cast b.row km1) = dot u_k (basis b.row km1)
   have hdot_cast_b_km1 :
-      Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+      ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
           (Vector.map (fun x : Int => (x : Rat)) (b.row km1)) =
-      Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row km1) := by
+      ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct ((basis b).row km1) := by
     have hdec := basis_decomposition b km1.val km1.isLt
-    show Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+    show ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
         (Vector.map (fun x : Int => (x : Rat)) (b.row ⟨km1.val, km1.isLt⟩)) = _
     rw [hdec, dot_add_right_rat, hpfx_b_zero, Rat.add_zero]
   -- dot u_k (cast b'.row k) = ||u_k||²
   have hdot_cast_b'_k :
-      Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+      ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
           (Vector.map (fun x : Int => (x : Rat)) ((Matrix.rowSwap b km1 k).row k)) =
-      Vector.normSq ((basis (Matrix.rowSwap b km1 k)).row k) := by
+      ((basis (Matrix.rowSwap b km1 k)).row k).normSq := by
     have hdec := basis_decomposition (Matrix.rowSwap b km1 k) k.val k.isLt
-    show Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+    show ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
         (Vector.map (fun x : Int => (x : Rat)) ((Matrix.rowSwap b km1 k).row ⟨k.val, k.isLt⟩)) = _
     rw [hdec, dot_add_right_rat, hpfx_b'_zero, Rat.add_zero]
     rfl
@@ -484,9 +484,9 @@ b'-side Cramer formula `c'[i][k] * ||u_k||² = dot u_k (cast b.row i)`. -/
 theorem dot_basis_rowSwap_curr_castRow_eq
     (b : Matrix Int n m) (km1 k : Fin n) (hkm1 : km1.val + 1 = k.val)
     (i : Fin n) (hki : k.val < i.val) :
-    Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+    ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
         (Vector.map (fun x : Int => (x : Rat)) (b.row i)) =
-      Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row km1) *
+      ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct ((basis b).row km1) *
         (GramSchmidt.entry (coeffs b) i ⟨km1.val, Nat.lt_trans (Nat.lt_of_succ_le
           (le_of_eq hkm1)) k.isLt⟩ -
          GramSchmidt.entry (coeffs b) k ⟨km1.val, Nat.lt_trans (Nat.lt_of_succ_le
@@ -496,15 +496,15 @@ theorem dot_basis_rowSwap_curr_castRow_eq
   have hkm1_lt_i : km1.val < i.val := by omega
   have hkm1_lt_n : km1.val < n := Nat.lt_trans hkm1k k.isLt
   -- The dot product `D = dot u_k prev`.
-  set D : Rat := Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row km1) with hD_def
+  set D : Rat := ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct ((basis b).row km1) with hD_def
   -- Step A: dot u_k cast b.row i = dot u_k basis b.row i + dot u_k prefixCombination(b, i)
   have hdec_b_i := basis_decomposition b i.val i.isLt
-  show Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+  show ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
       (Vector.map (fun x : Int => (x : Rat)) (b.row ⟨i.val, i.isLt⟩)) = _
   rw [hdec_b_i, dot_add_right_rat]
   -- dot u_k basis b.row i = 0 (basis b.row i = basis b'.row i and orthogonality).
   have hdot_basis_i :
-      Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row ⟨i.val, i.isLt⟩) = 0 := by
+      ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct ((basis b).row ⟨i.val, i.isLt⟩) = 0 := by
     have hbasis_eq : (basis b).row ⟨i.val, i.isLt⟩ =
         (basis (Matrix.rowSwap b km1 k)).row ⟨i.val, i.isLt⟩ :=
       (basis_rowSwap_of_after b km1 k ⟨i.val, i.isLt⟩ hkm1 hki).symm
@@ -520,7 +520,7 @@ theorem dot_basis_rowSwap_curr_castRow_eq
   set f : Fin i.val → Rat := fun q =>
     GramSchmidt.entry (coeffs b) ⟨i.val, i.isLt⟩
         ⟨q.val, Nat.lt_trans q.isLt i.isLt⟩ *
-      Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+      ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
         ((basis b).row ⟨q.val, Nat.lt_trans q.isLt i.isLt⟩) with hf_def
   -- For q ≠ km1, k: f q = 0.
   have h_zero : ∀ q : Fin i.val, q.val ≠ km1.val → q.val ≠ k.val → f q = 0 := by
@@ -536,7 +536,7 @@ theorem dot_basis_rowSwap_curr_castRow_eq
         have h_gt_k : k.val < q.val := by omega
         exact (basis_rowSwap_of_after b km1 k ⟨q.val, hq_lt_n⟩ hkm1 h_gt_k).symm
     show GramSchmidt.entry (coeffs b) ⟨i.val, i.isLt⟩ _ *
-        Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+        ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
           ((basis b).row ⟨q.val, Nat.lt_trans q.isLt i.isLt⟩) = 0
     rw [hbasis_eq_q]
     rw [basis_orthogonal (Matrix.rowSwap b km1 k) k.val q.val k.isLt hq_lt_n
@@ -551,12 +551,12 @@ theorem dot_basis_rowSwap_curr_castRow_eq
       (fun (acc : Rat) (q : Fin i.val) =>
         acc + GramSchmidt.entry (coeffs b) ⟨i.val, i.isLt⟩
               ⟨q.val, Nat.lt_trans q.isLt i.isLt⟩ *
-            Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+            ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
               ((basis b).row ⟨q.val, Nat.lt_trans q.isLt i.isLt⟩)) 0 = _
   rw [show (fun (acc : Rat) (q : Fin i.val) =>
         acc + GramSchmidt.entry (coeffs b) ⟨i.val, i.isLt⟩
               ⟨q.val, Nat.lt_trans q.isLt i.isLt⟩ *
-            Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+            ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
               ((basis b).row ⟨q.val, Nat.lt_trans q.isLt i.isLt⟩)) =
        (fun (acc : Rat) (q : Fin i.val) => acc + f q) from rfl]
   rw [hfoldl_eq]
@@ -570,20 +570,20 @@ theorem dot_basis_rowSwap_curr_castRow_eq
       (basis (Matrix.rowSwap b km1 k)).row km1 = (basis b).row k + μ • (basis b).row km1 :=
     basis_rowSwap_adjacent_prev b km1 k hkm1
   have hdot_swap_zero :
-      Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+      ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
         ((basis (Matrix.rowSwap b km1 k)).row km1) = 0 :=
     basis_orthogonal (Matrix.rowSwap b km1 k) k.val km1.val k.isLt km1.isLt
       (fun h => Nat.lt_irrefl km1.val (h ▸ hkm1k))
   -- Expand the orthogonality via the basis swap.
   have hdot_curr :
-      Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k) ((basis b).row k) = -μ * D := by
+      ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct ((basis b).row k) = -μ * D := by
     have h := hdot_swap_zero
     rw [hbasis_swap] at h
     rw [dot_add_right_rat, dot_smul_right_rat] at h
     -- h : dot u_k curr + μ * (dot u_k prev) = 0
     -- i.e., dot u_k curr + μ * D = 0
     -- ⟹ dot u_k curr = -μ * D
-    have hD_eq : Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+    have hD_eq : ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
         ((basis b).row km1) = D := rfl
     rw [hD_eq] at h
     linarith
@@ -592,10 +592,10 @@ theorem dot_basis_rowSwap_curr_castRow_eq
   have hf_km1 : f ⟨km1.val, hkm1_lt_i⟩ =
       GramSchmidt.entry (coeffs b) i ⟨km1.val, hkm1_lt_n⟩ * D := by
     show GramSchmidt.entry (coeffs b) ⟨i.val, i.isLt⟩ ⟨km1.val, _⟩ *
-        Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+        ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
           ((basis b).row ⟨km1.val, _⟩) = _
     show GramSchmidt.entry (coeffs b) ⟨i.val, i.isLt⟩ ⟨km1.val, hkm1_lt_n⟩ *
-        Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+        ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
           ((basis b).row ⟨km1.val, hkm1_lt_n⟩) =
         GramSchmidt.entry (coeffs b) i ⟨km1.val, hkm1_lt_n⟩ * D
     have hi_eq : (⟨i.val, i.isLt⟩ : Fin n) = i := Fin.ext rfl
@@ -604,7 +604,7 @@ theorem dot_basis_rowSwap_curr_castRow_eq
   have hf_k : f ⟨k.val, hki⟩ =
       GramSchmidt.entry (coeffs b) i k * (-μ * D) := by
     show GramSchmidt.entry (coeffs b) ⟨i.val, i.isLt⟩ ⟨k.val, _⟩ *
-        Vector.dotProduct ((basis (Matrix.rowSwap b km1 k)).row k)
+        ((basis (Matrix.rowSwap b km1 k)).row k).dotProduct
           ((basis b).row ⟨k.val, _⟩) = _
     have hi_eq : (⟨i.val, i.isLt⟩ : Fin n) = i := Fin.ext rfl
     have hk_eq : (⟨k.val, Nat.lt_trans hki i.isLt⟩ : Fin n) = k := Fin.ext rfl
@@ -734,9 +734,9 @@ theorem gramDet_pos_of_upperTriangular_pos_diag
           intro c hc
           simp [Matrix.row, Matrix.takeRows, Matrix.ofFn, jFin, jj]
         have hdot :
-            Vector.dotProduct (Matrix.row (Matrix.takeRows M (r + 1) hk) iFin)
+            (Matrix.row (Matrix.takeRows M (r + 1) hk) iFin).dotProduct
                 (Matrix.row (Matrix.takeRows M (r + 1) hk) jFin) =
-              Vector.dotProduct (Matrix.row M ii) (Matrix.row M jj) := by
+              (Matrix.row M ii).dotProduct (Matrix.row M jj) := by
           rw [hrow_i, hrow_j]
         simpa [Matrix.gramMatrix, Matrix.principalSubmatrix, Matrix.ofFn, iFin, jFin, ii, jj]
           using hdot

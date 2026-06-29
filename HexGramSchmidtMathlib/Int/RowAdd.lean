@@ -37,8 +37,8 @@ private theorem foldl_dot_comm_int {n' : Nat} (xs : List (Fin n'))
 
 /-- The dot product of integer vectors is commutative. -/
 private theorem dot_comm_int {n' : Nat} (u v : Vector Int n') :
-    Vector.dotProduct u v = Vector.dotProduct v u := by
-  simpa [Hex.Vector.dotProduct] using
+    u.dotProduct v = v.dotProduct u := by
+  simpa [Vector.dotProduct] using
     foldl_dot_comm_int (xs := List.finRange n') (u := u) (v := v)
       (accU := 0) (accV := 0) rfl
 
@@ -83,17 +83,17 @@ private theorem foldl_dot_rowAdd_at {n' m' : Nat}
 so dot with `w` distributes over the sum. -/
 private theorem dot_rowAdd_row_at_left {n' m' : Nat}
     (M : Matrix Int n' m') (src dst : Fin n') (c : Int) (w : Vector Int m') :
-    Vector.dotProduct ((Matrix.rowAdd M src dst c)[dst]) w =
-      Vector.dotProduct M[dst] w + c * Vector.dotProduct M[src] w := by
-  simp only [Hex.Vector.dotProduct]
+    ((Matrix.rowAdd M src dst c)[dst]).dotProduct w =
+      M[dst].dotProduct w + c * M[src].dotProduct w := by
+  simp only [Vector.dotProduct]
   exact foldl_dot_rowAdd_at M src dst c w (List.finRange m')
     0 0 0 (by show (0 : Int) = 0 + c * 0; grind)
 
 /-- Symmetric form: dot product on the right with the modified row. -/
 private theorem dot_rowAdd_row_at_right {n' m' : Nat}
     (M : Matrix Int n' m') (src dst : Fin n') (c : Int) (w : Vector Int m') :
-    Vector.dotProduct w ((Matrix.rowAdd M src dst c)[dst]) =
-      Vector.dotProduct w M[dst] + c * Vector.dotProduct w M[src] := by
+    w.dotProduct ((Matrix.rowAdd M src dst c)[dst]) =
+      w.dotProduct M[dst] + c * w.dotProduct M[src] := by
   rw [dot_comm_int w, dot_rowAdd_row_at_left, dot_comm_int w M[dst], dot_comm_int w M[src]]
 
 /-- Determinant-level pivot identity for scaled Gram-Schmidt coefficients under
@@ -113,9 +113,9 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
   let last : Fin t := ⟨j.val, Nat.lt_succ_self j.val⟩
   let M := GramSchmidt.leadingGramMatrixInt b t ht
   let oldCol : Fin t → Int := fun p =>
-    Vector.dotProduct (b.row (GramSchmidt.liftFinLE p ht)) (b.row k)
+    (b.row (GramSchmidt.liftFinLE p ht)).dotProduct (b.row k)
   let gramCol : Fin t → Int := fun p =>
-    Vector.dotProduct (b.row (GramSchmidt.liftFinLE p ht)) (b.row j)
+    (b.row (GramSchmidt.liftFinLE p ht)).dotProduct (b.row j)
   have hnew :
       GramSchmidt.scaledCoeffMatrix (Matrix.rowAdd b j k c) k j hjk =
         Matrix.setCol M last (fun p => oldCol p + c * gramCol p) := by
@@ -139,11 +139,11 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
         Vector.getElem_ofFn, hqNat, if_true]
       rw [if_pos (rfl : (⟨j.val, Nat.lt_succ_self j.val⟩ : Fin t) = last)]
       simp only [Matrix.row]
-      change Vector.dotProduct ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht])
+      change ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht]).dotProduct
           ((Matrix.rowAdd b j k c)[k]) =
         oldCol p + c * gramCol p
       rw [hp_row]
-      change Vector.dotProduct (b.row (GramSchmidt.liftFinLE p ht))
+      change (b.row (GramSchmidt.liftFinLE p ht)).dotProduct
           ((Matrix.rowAdd b j k c)[k]) =
         oldCol p + c * gramCol p
       exact dot_rowAdd_row_at_right b j k c (b.row (GramSchmidt.liftFinLE p ht))
@@ -279,14 +279,14 @@ private theorem leadingGramMatrixInt_rowAdd_entry_inside
   -- The Gram matrix entry as a dot product of integer rows.
   have hM_entry : ∀ (a b' : Fin t),
       (GramSchmidt.leadingGramMatrixInt b t ht)[a][b'] =
-        Vector.dotProduct (b[GramSchmidt.liftFinLE a ht]) (b[GramSchmidt.liftFinLE b' ht]) := by
+        (b[GramSchmidt.liftFinLE a ht]).dotProduct (b[GramSchmidt.liftFinLE b' ht]) := by
     intro a b'
     simp [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row,
       Vector.getElem_ofFn]
   -- LHS is a dot product over `Matrix.rowAdd b j k c` rows.
   have hLHS :
       (GramSchmidt.leadingGramMatrixInt (Matrix.rowAdd b j k c) t ht)[p][q] =
-        Vector.dotProduct ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht])
+        ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE p ht]).dotProduct
           ((Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE q ht]) := by
     simp [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row,
       Vector.getElem_ofFn]
@@ -331,12 +331,12 @@ private theorem leadingGramMatrixInt_rowAdd_entry_inside
         congrArg (Matrix.rowAdd b j k c).get hqn_k
       rw [hrowAdd_p, hrowAdd_q, dot_rowAdd_row_at_left b j k c ((Matrix.rowAdd b j k c)[k])]
       have hrec_k :
-          Vector.dotProduct b[k] ((Matrix.rowAdd b j k c)[k]) =
-            Vector.dotProduct b[k] b[k] + c * Vector.dotProduct b[k] b[j] :=
+          b[k].dotProduct ((Matrix.rowAdd b j k c)[k]) =
+            b[k].dotProduct b[k] + c * b[k].dotProduct b[j] :=
         dot_rowAdd_row_at_right b j k c b[k]
       have hrec_j :
-          Vector.dotProduct b[j] ((Matrix.rowAdd b j k c)[k]) =
-            Vector.dotProduct b[j] b[k] + c * Vector.dotProduct b[j] b[j] :=
+          b[j].dotProduct ((Matrix.rowAdd b j k c)[k]) =
+            b[j].dotProduct b[k] + c * b[j].dotProduct b[j] :=
         dot_rowAdd_row_at_right b j k c b[j]
       rw [hrec_k, hrec_j]
       simp only [if_pos hpk]
@@ -344,7 +344,7 @@ private theorem leadingGramMatrixInt_rowAdd_entry_inside
       have hb_q : b[GramSchmidt.liftFinLE q ht] = b[k] :=
         congrArg b.get hqn_k
       rw [hbjt_lift, hbkt_lift, hb_q]
-      have hsym : Vector.dotProduct b[j] b[k] = Vector.dotProduct b[k] b[j] := dot_comm_int _ _
+      have hsym : b[j].dotProduct b[k] = b[k].dotProduct b[j] := dot_comm_int _ _
       rw [hsym]
     · -- p ≠ kt, q = kt
       have hpn_ne : (GramSchmidt.liftFinLE p ht).val ≠ k.val :=

@@ -42,7 +42,7 @@ def liftFinLE (i : Fin k) (hk : k ≤ n) : Fin n :=
 @[expose]
 def leadingGramMatrixInt (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) : Matrix Int k k :=
   Matrix.ofFn fun i j =>
-    Vector.dotProduct (b.row (liftFinLE i hk)) (b.row (liftFinLE j hk))
+    (b.row (liftFinLE i hk)).dotProduct (b.row (liftFinLE j hk))
 
 /-- The Gram-Schmidt leading Gram matrix is the leading prefix of the full
 Gram matrix. This is the shape equation between the public `gramDet` API and
@@ -62,7 +62,7 @@ theorem leadingGramMatrixInt_eq_principalSubmatrix_gram
 @[expose]
 def leadingGramMatrixRat (b : Matrix Rat n m) (k : Nat) (hk : k ≤ n) : Matrix Rat k k :=
   Matrix.ofFn fun i j =>
-    Vector.dotProduct (b.row (liftFinLE i hk)) (b.row (liftFinLE j hk))
+    (b.row (liftFinLE i hk)).dotProduct (b.row (liftFinLE j hk))
 
 /-- Determinant matrix used by the integral `scaledCoeffs` entry formula:
 take the leading `j + 1` Gram matrix and replace its last column by the inner
@@ -74,10 +74,10 @@ def scaledCoeffMatrix (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) :
   Matrix.ofFn fun p q =>
     let p' := liftFinLE p hk
     if q.val = j.val then
-      Vector.dotProduct (b.row p') (b.row i)
+      (b.row p').dotProduct (b.row i)
     else
       let q' := liftFinLE q hk
-      Vector.dotProduct (b.row p') (b.row q')
+      (b.row p').dotProduct (b.row q')
 
 end GramSchmidt
 
@@ -110,7 +110,7 @@ noncomputable def gramSchmidtNormProduct (b : Matrix Int n m) (k : Nat) (hk : k 
   (List.finRange k).foldl
     (fun acc j =>
       let jn : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
-      acc * Vector.normSq ((basis b).row jn))
+      acc * ((basis b).row jn).normSq)
     1
 
 /-- Read a diagonal entry from a Bareiss elimination matrix as a natural
@@ -179,7 +179,7 @@ def zeroRows (n : Nat) : Array (Array Int) :=
 def gramRows (b : Matrix Int n m) : Array (Array Int) :=
   Array.ofFn fun i : Fin n =>
     Array.ofFn fun j : Fin n =>
-      Vector.dotProduct (b.row i) (b.row j)
+      (b.row i).dotProduct (b.row j)
 
 /-- Reading entry `(i, j)` of `gramRows b` recovers the Gram matrix entry
 `(gramMatrix b)[i][j]`. -/
