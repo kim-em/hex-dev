@@ -9,7 +9,12 @@ The split repos published from `hex-dev`, in dependency order, are:
 
 - `hex-test-kit` (shared conformance/bench helpers; source: `Hex/`)
 - `hex-matrix`
-- `hex-matrix-mathlib`, `hex-gram-schmidt`
+- `hex-row-reduce`, `hex-determinant`
+- `hex-bareiss`
+- `hex-matrix-mathlib`
+- `hex-row-reduce-mathlib`, `hex-determinant-mathlib`
+- `hex-bareiss-mathlib`
+- `hex-gram-schmidt`
 - `hex-gram-schmidt-mathlib`, `hex-lll`
 - `hex-lll-mathlib`
 
