@@ -32,11 +32,6 @@ structure Matrix (R : Type u) (n m : Nat) where
   data : Vector (Vector R m) n
 deriving DecidableEq, BEq
 
-/-- Show a matrix through its row data, so `#eval`/`Repr` output is unchanged by
-the move from the former `abbrev` and never exposes the `data` projection name. -/
-instance {R : Type u} {n m : Nat} [Repr R] : Repr (Hex.Matrix R n m) where
-  reprPrec M prec := reprPrec M.data prec
-
 end Hex
 
 namespace Vector
@@ -346,21 +341,21 @@ def mapRows (M : Matrix R n m) (f : Vector R m → Vector R m') : Matrix R n m' 
 @[simp, grind =] theorem rows_mapRows (M : Matrix R n m) (f : Vector R m → Vector R m') :
     (M.mapRows f).rows = M.rows.map f := by cases M; rfl
 
-/-- Scalar multiplication of a matrix, entrywise. Matches the action the former
-`abbrev` inherited from `Vector` (`c • x = c * x` on entries), so `c • M` keeps
-its previous meaning under the structure. -/
-instance [Mul R] : SMul R (Matrix R n m) where
-  smul c M := M.mapRows fun row => row.map fun x => c * x
+/-- Scalar action on a matrix, delegated to the row data. The single sanctioned
+`SMul` instance for matrices: the Mathlib bridge layer reuses it rather than
+declaring its own, so there is no overlapping instance. Matches the action the
+former `abbrev` inherited from `Vector`, so `c • M` keeps its previous meaning. -/
+instance {S : Type v} [SMul S R] : SMul S (Matrix R n m) where
+  smul c M := ofRows (c • M.data)
 
-@[simp, grind =] theorem rows_smul [Mul R] (c : R) (M : Matrix R n m) :
-    (c • M).rows = M.rows.map fun row => row.map fun x => c * x := by
-  simp only [HSMul.hSMul, SMul.smul, rows_mapRows]
+@[simp, grind =] theorem rows_smul {S : Type v} [SMul S R] (c : S) (M : Matrix R n m) :
+    (c • M).rows = c • M.rows := rfl
 
-/-- Scalar multiplication pushes through a nested entry read. -/
-@[simp, grind =] theorem smul_getElem [Mul R] (c : R) (M : Matrix R n m)
-    (i : Fin n) (j : Fin m) : (c • M)[i][j] = c * M[i][j] := by
+/-- Scalar action pushes through a nested entry read. -/
+@[simp, grind =] theorem smul_getElem {S : Type v} [SMul S R] (c : S) (M : Matrix R n m)
+    (i : Fin n) (j : Fin m) : (c • M)[i][j] = c • M[i][j] := by
   simp only [getElem_eq_getRow, getRow, rows_smul, Fin.getElem_fin,
-    Vector.getElem_map]
+    Vector.getElem_smul]
 
 end Matrix
 end Hex
