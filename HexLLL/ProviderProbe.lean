@@ -15,13 +15,15 @@ Executable probe entry point for the `hex-lll` external reduction provider.
 
 This module defines a small `main` driver that checks the optional native LLL
 provider against an expected `absent`/`present` state.  It compares
-`LLLProvider.providerAvailable` to the argument, and when the provider is
-expected to be absent it additionally confirms that `LLLProvider.providerReduce`
+`Hex.Internal.LLLProvider.providerAvailable` to the argument, and when the provider is
+expected to be absent it additionally confirms that `Hex.Internal.LLLProvider.providerReduce`
 reports `.error` rather than succeeding.  The driver returns process exit codes
 (`0` on agreement, `1`/`2` on mismatch or misuse) for use as a CI check.
 -/
 
 namespace Hex
+
+open Hex.Internal
 namespace LLLProviderProbe
 
 @[expose]
