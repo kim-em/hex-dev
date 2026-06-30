@@ -1027,7 +1027,7 @@ theorem checkPowChainLinearIncrementalQuotientWitnesses_of_steps
   intro k hk
   exact hsteps k (List.mem_range.mp hk)
 
-private def primeTwo : Hex.Nat.Prime 2 := by
+private theorem primeTwo : Hex.Nat.Prime 2 := by
   refine ⟨by decide, ?_⟩
   intro m hm
   have hmle : m ≤ 2 := Nat.le_of_dvd (by decide : 0 < 2) hm

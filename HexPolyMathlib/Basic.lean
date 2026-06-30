@@ -254,7 +254,7 @@ of `toPolynomial p` agrees with the `n`th coefficient of the dense polynomial `p
 theorem coeff_toPolynomial [Semiring R] [DecidableEq R] (p : Hex.DensePoly R) (n : Nat) :
     (toPolynomial p).coeff n = p.coeff n := by
   unfold toPolynomial
-  rw [Polynomial.finset_sum_coeff]
+  rw [Polynomial.finsetSum_coeff]
   by_cases hn : n < p.size
   · simp [Polynomial.coeff_monomial, hn]
   · have hcoeff := Hex.DensePoly.coeff_eq_zero_of_size_le p (Nat.le_of_not_gt hn)

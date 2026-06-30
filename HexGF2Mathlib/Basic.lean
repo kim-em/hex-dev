@@ -212,7 +212,7 @@ theorem toFpPoly_one :
 /-- A packed coefficient bit `coeffOfFp a` holds at most one set bit. -/
 private theorem coeffOfFp_toNat_lt (a : Hex.ZMod64 2) : (coeffOfFp a).toNat < 2 := by
   unfold coeffOfFp
-  by_cases h : a = Hex.ZMod64.zero <;> simp [h] <;> decide
+  by_cases h : a = Hex.ZMod64.zero <;> simp [h]
 
 /-- The low bit of a packed coefficient records whether the source coefficient
 is nonzero. -/
@@ -278,7 +278,7 @@ private theorem packWord_foldl_testBit (p : Hex.FpPoly 2) (wordIdx : Nat) :
       simp [hbn, Nat.lt_succ_of_lt hbn, h1]
     · subst hbn
       rw [Nat.sub_self, coeffOfFp_testBit_zero]
-      simp [Nat.lt_succ_self]
+      simp
     · have h1 : ¬ (b < n) := by omega
       have h2 : ¬ (b < n + 1) := by omega
       have h4 : (coeffOfFp (p.coeff (64 * wordIdx + n))).toNat.testBit (b - n) = false := by
@@ -357,7 +357,8 @@ theorem toFpPoly_add (p q : Hex.GF2Poly) :
   intro i
   rw [Hex.DensePoly.coeff_add_semiring (toFpPoly p) (toFpPoly q) i,
     coeff_toFpPoly, coeff_toFpPoly, coeff_toFpPoly, Hex.GF2Poly.coeff_add_eq_bne]
-  cases p.coeff i <;> cases q.coeff i <;> (try simp) <;> grind
+  cases p.coeff i <;> cases q.coeff i <;> (try simp)
+  grind
 
 /-- The `ZMod64 2` indicator of a bit, as a canonical residue. -/
 private theorem chi_eq_ofNat (b : Bool) :
@@ -371,7 +372,7 @@ private theorem chi_mul (b c : Bool) :
       (if b then (1 : Hex.ZMod64 2) else 0) * (if c then 1 else 0) := by
   rw [chi_eq_ofNat b, chi_eq_ofNat c, chi_eq_ofNat (b && c)]
   apply Hex.ZMod64.ext_toNat
-  simp only [Hex.ZMod64.toNat_mul, Hex.ZMod64.toNat_ofNat]
+  simp only [Hex.ZMod64.toNat_ofNat]
   cases b <;> cases c <;> decide
 
 /-- Indicators add by the `XOR` of the bits (`ZMod64 2` addition is `XOR` on
@@ -381,7 +382,7 @@ private theorem chi_xor (b c : Bool) :
       (if b then (1 : Hex.ZMod64 2) else 0) + (if c then 1 else 0) := by
   rw [chi_eq_ofNat b, chi_eq_ofNat c, chi_eq_ofNat (b != c)]
   apply Hex.ZMod64.ext_toNat
-  simp only [Hex.ZMod64.toNat_add, Hex.ZMod64.toNat_ofNat]
+  simp only [Hex.ZMod64.toNat_ofNat]
   cases b <;> cases c <;> decide
 
 /-- `ZMod64 2` is an additive monoid with `0` on the right. -/

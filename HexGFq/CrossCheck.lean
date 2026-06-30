@@ -116,7 +116,7 @@ private def poly2ToWord (f : FpPoly 2) (n : Nat) : UInt64 :=
 
 /-- `primeTwo` is the primality witness for 2, used to build the prime-modulus
 instance for the binary base field. -/
-private def primeTwo : Hex.Nat.Prime 2 := by
+private theorem primeTwo : Hex.Nat.Prime 2 := by
   refine ⟨by decide, ?_⟩
   intro m hm
   have hmle : m ≤ 2 := Nat.le_of_dvd (by decide : 0 < 2) hm
