@@ -58,6 +58,21 @@ extraction.
 *certify a fast unverified reducer*, not *run a verified exact reducer*, and
 *not* steer — steering only pays off when bit-width, not swap count, dominates.
 
+> **Caveat — the structured "Lean steered" curves are fallback artifacts
+> ([#8491](https://github.com/kim-em/hex-dev/issues/8491)).** On all four
+> structured families the float-steered Gram-Schmidt **never certifies**: the
+> candidate fails `lllReducedCheck (δ, 11/20)` on every steered rung
+> (`certified=0, fellBack=1`), so the default `lll` falls back to `lllNative`.
+> The plotted "Lean steered" time is therefore *failed steered attempt + full
+> exact reduction*, which is why it is always ≥ native and why the knapsack
+> n=40 point spikes (that seed's failed attempt thrashed longer). The precise
+> statement is not "steering backfires" but **"steering certifies only on
+> near-orthogonal / width-bound bases; on structured bases it never certifies."**
+> Why certification fails there, and how the structured steered curves should be
+> presented (drop / relabel / smooth), is under investigation in #8491; the
+> `runStructuredSteeredCertifyGuard` bench target pins this state so a fix is
+> noticed. The ×-figures above are the as-measured fallback costs.
+
 ## Per-family plots
 
 ### ajtai — the worst case
