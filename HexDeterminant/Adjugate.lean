@@ -8,6 +8,8 @@ module
 
 public import HexDeterminant.Gram
 import all HexDeterminant.Gram
+public import HexMatrix.Basic
+import all HexMatrix.Basic
 
 public section
 
