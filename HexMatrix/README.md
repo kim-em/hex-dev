@@ -37,7 +37,7 @@ def B : Matrix Int 3 2 := Matrix.ofFn fun i j => (i * j : Int)
 -- Elementary row operations are pure data transforms.
 #eval Matrix.rowSwap A 0 1
 #eval Matrix.rowScale A 0 5
-#eval (1 : Matrix Int 3 3)         -- the 3×3 identity
+#eval Matrix.identity (R := Int) 3 -- the 3×3 identity
 ```
 
 # Functionality
