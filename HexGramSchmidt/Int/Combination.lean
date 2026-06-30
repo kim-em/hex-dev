@@ -1174,7 +1174,7 @@ private theorem schurSigma_foldl_eq
     rw [Matrix.noPivotLoop_regular_branch 0
         (Matrix.noPivotInitialState (Matrix.gramMatrix b)) hDone hpivot]
     simp [Matrix.noPivotLoop_zero_fuel, Matrix.noPivotInitialState]
-    simp [Matrix.stepMatrix, Matrix.exactDiv, Matrix.ofFn, h0a, hp_out_pos,
+    simp [Matrix.stepMatrix_eq_ofFn, Matrix.exactDiv, Matrix.ofFn, h0a, hp_out_pos,
       h_rows_a0, h_rows_p0]
     grind
   | succ q' ih =>
