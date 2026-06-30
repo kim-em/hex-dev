@@ -1089,7 +1089,7 @@ private theorem schurSigma_noPivotCorrection_succ
   exact exactDiv_bareissCorrection_succ_algebra
     denom pivot gram entry row col hdenom h_step_dvd
 
-set_option maxHeartbeats 1000000 in
+set_option maxHeartbeats 400000 in
 /-- The σ-chain Bareiss correction invariant.  At step `q < p_out` of the
 σ-update fold for position `(a, p_out)`, the cumulative fold value equals
 the algebraic closed form `matrix_q[q][q] * gram - matrix_(q+1)[a][p_out]`.
@@ -1343,17 +1343,16 @@ private theorem schurSigma_foldl_eq
       simp only [h_step_q'_succ]
       rfl
     -- Symmetry of matrix_(q'+1) at (q'+1, p_out).
-    have h_sym_pivot_row :
-        (Matrix.noPivotLoop (q' + 1) state₀).matrix[
-          (⟨q' + 1, hq'_succ_n⟩ : Fin n)][(⟨p_out, hp_out_n⟩ : Fin n)] =
-          (Matrix.noPivotLoop (q' + 1) state₀).matrix[
-            (⟨p_out, hp_out_n⟩ : Fin n)][(⟨q' + 1, hq'_succ_n⟩ : Fin n)] := by
-      apply noPivotLoop_matrix_symm_preserve (q' + 1) state₀
-      · intro x y _ _
-        simp [state₀, Matrix.noPivotInitialState]
-        exact gramMatrix_symm (b := b) x y
-      · rw [h_step_q'_succ]; exact Nat.le_refl _
-      · rw [h_step_q'_succ]; exact Nat.le_of_lt hq'_succ_lt
+    -- Built by application (not by re-elaborating the written-out nested-getElem
+    -- type, which whnf-reduces the `noPivotLoop` term and is very slow).
+    have h_sym_pivot_row :=
+      noPivotLoop_matrix_symm_preserve (q' + 1) state₀
+        (fun x y _ _ => by
+          simp only [state₀, Matrix.noPivotInitialState]
+          exact gramMatrix_symm (b := b) x y)
+        (⟨q' + 1, hq'_succ_n⟩ : Fin n) (⟨p_out, hp_out_n⟩ : Fin n)
+        (by rw [h_step_q'_succ]; exact Nat.le_refl _)
+        (by rw [h_step_q'_succ]; exact Nat.le_of_lt hq'_succ_lt)
     -- Matrix-level Bareiss divisibility at fuel q'+1: prevPivot ∣ numerator.
     have hpivot_q'_succ :
         (Matrix.noPivotLoop (q' + 1) state₀).matrix[

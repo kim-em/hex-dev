@@ -345,7 +345,10 @@ private theorem noPivotLoop_singularStep_none_of_succ
     rw [hpersist, hsing] at h_no_sing
     nomatch h_no_sing
 
-set_option maxHeartbeats 1000000 in
+-- Encapsulation makes the nested entry reads and the canonical-coefficient
+-- rewrites over the recursive `noPivotLoop` term defeq-heavy here; a modest
+-- bump (down from the original 1000000) covers it.
+set_option maxHeartbeats 400000 in
 /-- Combined invariant relating the no-pivot Bareiss trajectory on the
 augmented matrix to the trajectory on `gramMatrix b`.  Under `fuel + 1 ≤ n`
 and a non-singular prefix on the Gram side, the augmented loop tracks the
