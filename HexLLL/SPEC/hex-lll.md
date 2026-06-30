@@ -3,7 +3,7 @@
 `hex-lll` is the recombination primitive used by
 `hex-berlekamp-zassenhaus`: BZ encodes the lifted local factors of an
 integer polynomial as a lattice basis, runs `lll`, and reads off
-candidate `Z[x]` factors from the short vectors. The Phase 1 surface
+candidate `Z[x]` factors from the short vectors. The public surface
 must be self-contained — usable from BZ without any `sorry`-blocked
 constructors — and must include a short-vector recovery entry point
 described under "Short-vector recovery for downstream consumers"
@@ -237,40 +237,28 @@ def lllAux (s : LLLState n m) (k : Nat) (δ : Rat)
 
 /-- Initial `LLLState` constructor: builds the integer state directly
     from a basis matrix and discharges `ν_eq`/`d_eq` by composing the
-    existing `hex-gram-schmidt` lemmas
-    `GramSchmidt.Int.gramDetVec_eq_gramDet` and
-    `GramSchmidt.Int.scaledCoeffs_eq` (suitably massaged through the
+    `hex-gram-schmidt` lemmas `GramSchmidt.Int.gramDetVec_eq_gramDet`
+    and `GramSchmidt.Int.scaledCoeffs_eq` (suitably massaged through the
     `Rat` casts in their statements). -/
 def LLLState.ofBasis (b : Matrix Int n m) (hind : b.independent) :
     LLLState n m :=
   { b
     ν := GramSchmidt.Int.scaledCoeffs b
     d := GramSchmidt.Int.gramDetVec b
-    ν_eq := by
-      -- combine GramSchmidt.Int.scaledCoeffs_eq with
-      -- GramSchmidt.Int.gramDetVec_eq_gramDet
-      sorry
-    d_eq := by
-      -- direct from GramSchmidt.Int.gramDetVec_eq_gramDet
-      sorry }
+    ν_eq := by …   -- from scaledCoeffs_eq and gramDetVec_eq_gramDet
+    d_eq := by … } -- from gramDetVec_eq_gramDet
 
 def lll (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) : Matrix Int n m :=
   lllAux (LLLState.ofBasis b hind) 1 δ hδ hδ' (by omega) (by omega)
 ```
 
-The `scaledCoeffs_eq` and `gramDetVec_eq_gramDet` lemmas referenced
-above already exist in `hex-gram-schmidt` (`HexGramSchmidt/Int.lean`).
-They are currently `sorry`'d, but that is acceptable here: the
-obligation of `LLLState.ofBasis` at Phase 1 is to be a named,
-type-correct constructor that names its witness lemmas in proof
-position. The two `sorry`s above are discharged as part of Phase 5
-work in `hex-gram-schmidt` / `hex-lll`, not as part of getting `lll`
-to a usable shape. What changes from the previous SPEC is that the
-constructor lives in `hex-lll` rather than as inline anonymous
-`sorry, sorry` proof fields in the body of `lll`. Treating the
-constructor itself as deferrable is incompatible with `hex-lll`
-being on the BZ critical path.
+The `ν_eq` and `d_eq` fields are discharged from the `hex-gram-schmidt`
+lemmas `GramSchmidt.Int.scaledCoeffs_eq` and
+`GramSchmidt.Int.gramDetVec_eq_gramDet`. `LLLState.ofBasis` is a total
+constructor with no deferred proof obligation: `hex-lll` is on the
+`hex-berlekamp-zassenhaus` critical path, so its public surface must be
+usable without any `sorry`.
 
 ### Approximation-steered default reducer
 
@@ -937,7 +925,7 @@ termination is still guaranteed but the log bound degenerates; the
 integer bound #swaps <= D_initial - 1 applies instead.)
 
 **Lean formalization strategy for termination:** The executable loop
-does not use in-place well-founded recursion. `HexLLL/Basic.lean` is
+does not use in-place well-founded recursion. The executable layer is
 Mathlib-free, so its `decreasing_by` block cannot import the
 Mathlib-side swap strict-decrease lemmas (`gramDet_pos`,
 `gramDet_adjacentSwap_pivot`, and

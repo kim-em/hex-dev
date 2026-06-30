@@ -160,6 +160,31 @@ is `(δ, 11/20)`-reduced, spans the same lattice, and satisfies the
 short-vector bound, together with the certificate soundness theorem
 `certCheck_sound`.
 
+# Trust boundary
+
+The kernel proofs trust none of the acceleration machinery. The capstone
+theorems reduce to the ordinary Lean axioms `propext`, `Classical.choice`, and
+`Quot.sound` (and Mathlib, for the `hex-lll-mathlib` results); there is no
+`sorry`, no `axiom`, and no `native_decide` anywhere in the libraries. Concretely:
+
+- **External provider.** The optional reducer is reached through an
+  `@[extern] opaque` hook. Its output is never trusted: it is certified by the
+  integer-arithmetic checker `certCheck` before use, and an absent or rejected
+  candidate falls back to the native reducer. A wrong or adversarial provider
+  cannot produce a wrong result, only a fallback.
+- **Steered reducer.** The floating-point Gram-Schmidt approximation only
+  chooses which exact integer row operation to apply; the floats never enter a
+  proof, so the output spans the same lattice by construction, and the result is
+  certified at `(δ, 11/20)` before it is returned.
+- **Diagnostics.** The provider, checker, and steered tallies record decision
+  counts via `@[implemented_by]` side effects in compiled code only. They are
+  definitionally identity in the logic; no theorem depends on them.
+- **Execution vs. checking.** Compiled execution may call the C FFI shim
+  (`dlopen`); kernel proof checking calls none of it.
+
+The requested-parameter, precision, and dispatch-calibration constants are
+performance tuning only and are outside the trusted story; none affects soundness.
+
 # Contributing
 
 Development happens in the [`hex-dev`](https://github.com/kim-em/hex-dev)
