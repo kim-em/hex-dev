@@ -42,7 +42,7 @@ theorem getElem_rowSwap (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
       if r = j then M[i][k] else if r = i then M[j][k] else M[r][k] := by
   rw [rowSwap]
   by_cases hri : r = i <;> by_cases hrj : r = j <;>
-    simp_all [getRow, rows_swap, Vector.getElem_swap, Fin.getElem_fin, Fin.ext_iff]
+    simp_all [getRow, rows_swap, Fin.getElem_fin, Fin.ext_iff]
 
 /-- Row `i` of `rowSwap M i j` is the original row `j`. -/
 @[simp, grind =] theorem row_rowSwap_left (M : Matrix R n m) (i j : Fin n) :
@@ -101,7 +101,7 @@ theorem getElem_rowScale [Mul R] (M : Matrix R n m) (i r : Fin n) (c : R) (k : F
       if r = i then c * M[i][k] else M[r][k] := by
   rw [rowScale]
   simp only [getElem_eq_getRow, getRow, rows_modify, Vector.getElem_modify,
-    Vector.getElem_map, Fin.getElem_fin, Fin.ext_iff]
+    Fin.getElem_fin, Fin.ext_iff]
   grind
 
 /-- Row `i` of `rowScale M i c` is the pointwise scalar multiple of row `i`. -/
@@ -142,7 +142,7 @@ theorem getElem_rowAdd [Mul R] [Add R]
       if r = dst then M[dst][k] + c * M[src][k] else M[r][k] := by
   rw [rowAdd]
   simp only [getElem_eq_getRow, getRow, rows_modify, Vector.getElem_modify,
-    Vector.getElem_ofFn, Fin.getElem_fin, Fin.ext_iff]
+    Fin.getElem_fin, Fin.ext_iff]
   grind
 
 /-- Source-row entries are unchanged by `rowAdd M src dst c` when `src ≠ dst`. -/

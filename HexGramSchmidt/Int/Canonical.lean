@@ -386,7 +386,7 @@ coefficient at `fuel + 1` collapses to the one at `fuel`. -/
     (hnext :
       (Matrix.noPivotLoop fuel
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 < n)
-    (hp :
+    (_hp :
       (Matrix.noPivotLoop fuel
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[
           (Matrix.noPivotLoop fuel
@@ -397,7 +397,7 @@ coefficient at `fuel + 1` collapses to the one at `fuel`. -/
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val) :
     bareissGramCanonicalCoeff b (fuel + 1) i =
       bareissGramCanonicalCoeff b fuel i := by
-  simp [bareissGramCanonicalCoeff, dif_pos hnext, if_neg hp, if_neg hi]
+  simp [bareissGramCanonicalCoeff, dif_pos hnext, if_neg hi]
 
 /-- Recursion equation: singular branch (zero diagonal). A zero pivot skips the
 update, so the canonical coefficient at `fuel + 1` collapses to the one at

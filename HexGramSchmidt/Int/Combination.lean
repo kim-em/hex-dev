@@ -398,7 +398,7 @@ theorem normSq_latticeVec_ge_min_basis_normSq
         · exact False.elim (h ⟨ii, hci⟩)
       have hv_zero : v = 0 := by
         rw [← hcv, hc_zero]
-        simp [Matrix.rowCombination, Hex.Matrix.getRow, Fin.getElem_fin]
+        simp [Matrix.rowCombination]
       exact False.elim (hv' hv_zero)
   rcases exists_highest_nonzero_coeff c hc_nonzero with ⟨k, hck, hzero_above⟩
   let d : Vector Rat n :=
@@ -464,7 +464,7 @@ theorem exists_top_index_normSq_le_of_memLattice
         · exact False.elim (h ⟨ii, hci⟩)
       have hv_zero : v = 0 := by
         rw [← hcv, hc_zero]
-        simp [Matrix.rowCombination, Hex.Matrix.getRow, Fin.getElem_fin]
+        simp [Matrix.rowCombination]
       exact False.elim (hv' hv_zero)
   rcases exists_highest_nonzero_coeff c hc_nonzero with ⟨k, hck, hzero_above⟩
   refine ⟨k, c, hcv, hck, hzero_above, ?_⟩
