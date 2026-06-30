@@ -629,7 +629,7 @@ theorem berlekampMatrix_mulVec_coeffVector_eq
 def fixedSpaceMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     Matrix (ZMod64 p) (basisSize f) (basisSize f) :=
   let Q := berlekampMatrix f hmonic
-  Matrix.ofFn fun i j => Q[i][j] - if i = j then 1 else 0
+  Matrix.ofFn fun i j => Q[(i, j)] - if i = j then 1 else 0
 
 /-- Convert a coefficient vector back to its polynomial representative. -/
 def vectorToPoly {n : Nat} (v : Vector (ZMod64 p) n) : FpPoly p :=
@@ -691,7 +691,7 @@ theorem isFixedSpaceKernelVector_iff_berlekampMatrix_mulVec_eq
   dsimp only [fixedSpaceMatrix]
   have hsub :
       Matrix.mulVec
-          (Matrix.ofFn fun i j => (berlekampMatrix f hmonic)[i][j] - if i = j then 1 else 0) v =
+          (Matrix.ofFn fun i j => (berlekampMatrix f hmonic)[(i, j)] - if i = j then 1 else 0) v =
         Matrix.mulVec (berlekampMatrix f hmonic) v - v :=
     Matrix.sub_identity_mulVec (berlekampMatrix f hmonic) v
   rw [hsub]
