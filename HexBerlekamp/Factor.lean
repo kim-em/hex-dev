@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
+import HexBasic
 import HexBerlekamp.Basic
 
 /-!
@@ -681,35 +682,6 @@ private theorem one_mul_poly
     (1 : FpPoly p) * a = a :=
   (DensePoly.mul_comm_poly (1 : FpPoly p) a).trans (DensePoly.mul_one_right_poly a)
 
-private theorem foldl_mul_left_factor
-    [ZMod64.PrimeModulus p]
-    (z a : FpPoly p) (xs : List (FpPoly p)) :
-    xs.foldl (fun acc factor => acc * factor) (z * a)
-      = z * xs.foldl (fun acc factor => acc * factor) a := by
-  induction xs generalizing a with
-  | nil => rfl
-  | cons b bs ih =>
-    have hcong : List.foldl (fun acc factor : FpPoly p => acc * factor) ((z * a) * b) bs
-        = List.foldl (fun acc factor => acc * factor) (z * (a * b)) bs := by
-      congr 1
-      exact DensePoly.mul_assoc_poly z a b
-    have hih : List.foldl (fun acc factor : FpPoly p => acc * factor) (z * (a * b)) bs
-        = z * List.foldl (fun acc factor => acc * factor) (a * b) bs := ih (a * b)
-    show List.foldl (fun acc factor => acc * factor) (z * a * b) bs
-        = z * List.foldl (fun acc factor => acc * factor) (a * b) bs
-    exact hcong.trans hih
-
-private theorem foldl_mul_eq_mul_foldl
-    [ZMod64.PrimeModulus p]
-    (z : FpPoly p) (xs : List (FpPoly p)) :
-    xs.foldl (fun acc factor => acc * factor) z
-      = z * xs.foldl (fun acc factor => acc * factor) 1 := by
-  have h1 : xs.foldl (fun acc factor => acc * factor) z
-      = xs.foldl (fun acc factor => acc * factor) (z * 1) := by
-    congr 1
-    exact (DensePoly.mul_one_right_poly z).symm
-  exact h1.trans (foldl_mul_left_factor z 1 xs)
-
 /--
 Cons-expansion for `factorProduct`: pulling the head factor out of the running
 product. Useful for downstream proofs that reason about `factorProduct` without
@@ -722,7 +694,7 @@ theorem factorProduct_cons
   show xs.foldl (fun acc factor => acc * factor) (1 * x)
     = x * xs.foldl (fun acc factor => acc * factor) 1
   rw [one_mul_poly x]
-  exact foldl_mul_eq_mul_foldl x xs
+  exact List.foldl_mul_eq_mul_foldl xs id x
 
 /-- `factorProduct` distributes over list append. -/
 private theorem factorProduct_append
