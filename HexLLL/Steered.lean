@@ -20,6 +20,8 @@ the candidate at `(δ, 11/20)` and falls back to `lllNative` on failure.
 
 namespace Hex
 
+open Hex.Internal
+
 /-! ## Approximation-steered native reducer
 
 The steered reducer drives the *exact* integer row operations of the native
@@ -396,6 +398,8 @@ approximation. -/
     Matrix.memLattice (steeredReduce b δ) v ↔ Matrix.memLattice b v := by
   unfold steeredReduce; grind
 
+namespace Internal
+
 /-- Outcome of one steered reduction: the steered candidate certified at
 `(δ, 11/20)`, or the run fell back to the exact `lllNative`. -/
 inductive SteeredOutcome where
@@ -480,6 +484,8 @@ at n ≥ 30; random-bounded steered at n ≥ 30 (n=30 included); bz-recombinatio
 @[expose]
 def steerWins (_b : Matrix Int n m) : Bool :=
   decide (n ≥ steerDimThreshold)
+
+end Internal
 
 /-- Approximation-steered native reducer with certified output. When `steerWins`
 holds it runs the steered loop (exact integer row operations driven by an

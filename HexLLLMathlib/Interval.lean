@@ -40,7 +40,7 @@ The proof has three layers:
 
 namespace HexLLLMathlib
 
-open Hex
+open Hex Hex.Internal
 
 /-! ### Rounding helpers -/
 
@@ -898,11 +898,11 @@ theorem lllReducedInterval_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
     Hex.lllReducedInterval b δ η = true →
       Hex.isLLLReduced b δ η ∧ Hex.Matrix.independent b := by
   intro h
-  have hS : (0 : Int) < (2 : Int) ^ Hex.intervalPrec := pow_pos (by norm_num) _
-  have hSQ : (0 : Rat) < (((2 : Int) ^ Hex.intervalPrec : Int) : Rat) := by
+  have hS : (0 : Int) < (2 : Int) ^ Hex.Internal.intervalPrec := pow_pos (by norm_num) _
+  have hSQ : (0 : Rat) < (((2 : Int) ^ Hex.Internal.intervalPrec : Int) : Rat) := by
     exact_mod_cast hS
   simp only [Hex.lllReducedInterval] at h
-  set S : Int := (2 : Int) ^ Hex.intervalPrec with hSdef
+  set S : Int := (2 : Int) ^ Hex.Internal.intervalPrec with hSdef
   set g : Array (Array Int) := (Matrix.gramMatrix b).toArray.map Vector.toArray
     with hgdef
   rcases hpass : IntervalGS.pass S g n with _ | ⟨mus, bstars⟩

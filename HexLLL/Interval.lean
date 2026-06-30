@@ -16,7 +16,7 @@ closed integer-mantissa intervals at a shared power-of-two scale, used by
 the enclosure reducedness checker. Mathlib-free; no floating point.
 -/
 
-namespace Hex
+namespace Hex.Internal
 
 /-! ### Fixed-precision dyadic interval kernel
 
@@ -196,4 +196,4 @@ def lovaszOK (S : Int) (δ : Rat) (mus : Array (Array Ival))
 
 end IntervalGS
 
-end Hex
+end Hex.Internal

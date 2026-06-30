@@ -1257,13 +1257,13 @@ def runCertifiedCheckerHarshCubic65Checksum : Unit → IO Int :=
   runCertifiedCheckerChecksum certifiedHarshCubic65Ref (fun _ => prepHarshCubicInput 65)
 
 /-- Observable for the reducedness-decision tally: run the certified checker
-once on every rung of both ladders, then read `Hex.checkerTally`. Fails if
+once on every rung of both ladders, then read `Hex.Internal.checkerTally`. Fails if
 any interval pass reached indecision (`exactFallback ≠ 0`); the
 size-predictor split between interval-accepted and exact-primary is pinned
 by the expected hash. The returned value encodes the tally as
 `(interval · 65537 + exactPrimary) · 65537 + exactFallback`. -/
 def runCertifiedCheckerIntervalTally : Unit → IO Int := fun _ => do
-  Hex.resetCheckerTally
+  Hex.Internal.resetCheckerTally
   let targets : List (Unit → IO Int) :=
     [runCertifiedCheckerRandomBounded30Checksum,
      runCertifiedCheckerRandomBounded45Checksum,
@@ -1286,7 +1286,7 @@ def runCertifiedCheckerIntervalTally : Unit → IO Int := fun _ => do
      runCertifiedCheckerHarshCubic65Checksum]
   for t in targets do
     discard <| t ()
-  let tally ← Hex.checkerTally
+  let tally ← Hex.Internal.checkerTally
   if tally.exactFallback != 0 then
     throw <| IO.userError
       s!"interval reducedness checker reached indecision: {repr tally}"
