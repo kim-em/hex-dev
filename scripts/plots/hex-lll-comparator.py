@@ -81,6 +81,15 @@ DEFAULT_KNAPSACK = next((g for g in sorted(ROOT.glob("reports/bench-results/hex-
                     if "floor" not in g.name), _KNAPSACK_CANON)
 DEFAULT_KNAPSACK_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-knapsack.svg"
 
+# Existing families regenerated as single consolidated idle-carica runs; prefer
+# the newest commit-named export, fall back to the legacy split exports.
+DEFAULT_RANDOM_FRESH = next((g for g in sorted(ROOT.glob("reports/bench-results/hex-lll-random-bounded-*.json"))
+                     if not any(s in g.name for s in ("floor","steered","bottom"))),
+                     DEFAULT_RANDOM_CONSOLIDATED)
+DEFAULT_HARSH_FRESH = next((g for g in sorted(ROOT.glob("reports/bench-results/hex-lll-harsh-cubic-*.json"))
+                     if not any(s in g.name for s in ("floor","steered"))),
+                     DEFAULT_HARSH_CONSOLIDATED)
+
 
 LEAN_RANDOM = re.compile(r"runNativeFirstShortVectorRandomBoundedNormSq([0-9]+)$")
 LEAN_STEERED_RANDOM = re.compile(r"runFirstShortVectorRandomBoundedNormSq([0-9]+)$")
@@ -175,14 +184,13 @@ FAMILIES = {
         fpll_pattern=FPLLL_RANDOM,
         certified_pattern=CERTIFIED_RANDOM,
         isabelle_certified_pattern=ISABELLE_CERTIFIED_RANDOM,
-        fpll_path=DEFAULT_RANDOM_CONSOLIDATED,
-        certified_path=DEFAULT_CERTIFIED,
-        isabelle_certified_path=DEFAULT_ISABELLE_CERTIFIED_RANDOM,
+        fpll_path=DEFAULT_RANDOM_FRESH,
+        certified_path=DEFAULT_RANDOM_FRESH,
+        isabelle_certified_path=DEFAULT_RANDOM_FRESH,
         output=DEFAULT_RANDOM_OUTPUT,
         title="HexLLL random-bounded comparator runtime",
         xlabel="random-bounded dimension n",
-        consolidated_path=DEFAULT_RANDOM_CONSOLIDATED,
-        bottom_consistency=True,
+        consolidated_path=DEFAULT_RANDOM_FRESH,
     ),
     "harsh-cubic": FamilyConfig(
         lean_pattern=LEAN_HARSH,
@@ -191,13 +199,13 @@ FAMILIES = {
         fpll_pattern=FPLLL_HARSH,
         certified_pattern=CERTIFIED_HARSH,
         isabelle_certified_pattern=ISABELLE_CERTIFIED_HARSH,
-        fpll_path=DEFAULT_HARSH_CONSOLIDATED,
-        certified_path=DEFAULT_CERTIFIED_HARSH,
-        isabelle_certified_path=DEFAULT_ISABELLE_CERTIFIED_HARSH,
+        fpll_path=DEFAULT_HARSH_FRESH,
+        certified_path=DEFAULT_HARSH_FRESH,
+        isabelle_certified_path=DEFAULT_HARSH_FRESH,
         output=DEFAULT_HARSH_OUTPUT,
         title="HexLLL harsh-cubic comparator runtime",
         xlabel="harsh-cubic dimension n",
-        consolidated_path=DEFAULT_HARSH_CONSOLIDATED,
+        consolidated_path=DEFAULT_HARSH_FRESH,
     ),
     "ajtai": FamilyConfig(
         lean_pattern=LEAN_AJTAI,
