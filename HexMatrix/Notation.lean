@@ -44,7 +44,10 @@ macro_rules
   | `(#m[$[$[$rows],*];*]) => do
     let nRows := rows.size
     let nCols := if h : 0 < nRows then rows[0].size else 0
-    let rowVecs ← rows.mapM fun row => do
+    let rowVecs ← rows.zipIdx.mapM fun (row, i) => do
+      unless row.size = nCols do
+        Macro.throwErrorAt (mkNullNode (row.map (·.raw)))
+          s!"ragged matrix literal: row {i + 1} has {row.size} entries, but row 1 has {nCols}"
       let elems : Syntax.TSepArray `term "," := .ofElems row
       `(#v[$elems,*])
     let rowsSep : Syntax.TSepArray `term "," := .ofElems rowVecs

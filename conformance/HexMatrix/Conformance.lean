@@ -91,6 +91,10 @@ private def spanVec : Vector Rat 3 :=
 #guard baseInt * (Matrix.identity (R := Int) 2) = baseInt
 #guard Matrix.transpose (Matrix.transpose baseInt) = baseInt
 
+-- `#m[...]` literal notation agrees with the `ofFn` fixtures.
+#guard (#m[1, 2; 3, 4] : Matrix Int 2 2) = baseInt
+#guard (#m[0, 2, 1; 3, 0, 4; 5, 6, 0] : Matrix Int 3 3) = pivotInt
+
 /-- info: ⎡ 1 3 ⎤
 ⎣ 2 4 ⎦ -/
 #guard_msgs in #eval Matrix.transpose baseInt
