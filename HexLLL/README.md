@@ -140,10 +140,9 @@ the per-vector length factor is about `5.7%` larger per dimension: modest in
 low dimension, real in high. Tightening `η` back toward `1/2` would require a
 stricter certified checker (higher working precision, tighter requested
 margins, or enforcing exact `|μ| ≤ 1/2`), trading run time and a higher
-fallback rate for a better constant. The requested-parameter and precision
-constants the dispatch uses (`requestedEta = 107/200`, `requestedDelta`,
-`intervalPrec = 128`, `dispatchFactor`, `steerDimThreshold`) are documented in
-full at their definitions; none of them affects soundness.
+fallback rate for a better constant. The dispatch's requested-parameter and
+precision constants are internal tuning, documented at their definitions; none
+of them affects soundness.
 
 The end-to-end guarantees of `lll` are proved in
 [`hex-lll-mathlib`](https://github.com/kim-em/hex-lll-mathlib): that its output
