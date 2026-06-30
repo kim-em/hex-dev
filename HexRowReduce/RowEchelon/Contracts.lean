@@ -49,16 +49,18 @@ structure IsEchelonForm [Mul R] [Add R] [OfNat R 0] [OfNat R 1]
   rank_le_m : D.rank ≤ m
   pivotCols_sorted : ∀ i j, i < j → D.pivotCols.get i < D.pivotCols.get j
   below_pivot_zero : ∀ (i : Fin D.rank) (j : Fin n),
-      i.val < j.val → D.echelon[j][D.pivotCols.get i] = 0
-  zero_row : ∀ (i : Fin n), D.rank ≤ i.val → D.echelon[i] = 0
+      i.val < j.val → D.echelon[(j, D.pivotCols.get i)] = 0
+  zero_row : ∀ (i : Fin n), D.rank ≤ i.val → D.echelon.getRow i = 0
 
 /-- RREF-specific conditions on top of `IsEchelonForm`. -/
 structure IsRowReduced [Mul R] [Add R] [OfNat R 0] [OfNat R 1]
     (M : Matrix R n m) (D : RowEchelonData R n m)
     : Prop extends IsEchelonForm M D where
-  pivot_one : ∀ (i : Fin D.rank), D.echelon[i][D.pivotCols.get i] = 1
+  pivot_one : ∀ (i : Fin D.rank),
+    D.echelon[((⟨i.val, Nat.lt_of_lt_of_le i.isLt rank_le_n⟩ : Fin n),
+      D.pivotCols.get i)] = 1
   above_pivot_zero : ∀ (i : Fin D.rank) (j : Fin n),
-      j.val < i.val → D.echelon[j][D.pivotCols.get i] = 0
+      j.val < i.val → D.echelon[(j, D.pivotCols.get i)] = 0
 
 namespace IsEchelonForm
 
@@ -75,7 +77,7 @@ proof-facing contract needed by span solving: without it, the pivot-column
 division in `spanCoeffs` can divide by zero. -/
 @[expose]
 def HasNonzeroPivots (E : IsEchelonForm M D) : Prop :=
-  ∀ i : Fin D.rank, D.echelon[E.pivotRow i][D.pivotCols.get i] ≠ 0
+  ∀ i : Fin D.rank, D.echelon[(E.pivotRow i, D.pivotCols.get i)] ≠ 0
 
 /-- The square row-transform has a right inverse. -/
 theorem transform_mul_inv (E : IsEchelonForm M D) :

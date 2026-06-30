@@ -99,7 +99,7 @@ def echelonCoeffs [Lean.Grind.Field R] (E : IsEchelonForm M D)
     if h : i.val < D.rank then
       let pi : Fin D.rank := ⟨i.val, h⟩
       v[D.pivotCols.get pi] /
-        D.echelon[(IsEchelonForm.pivotRow E pi)][D.pivotCols.get pi]
+        D.echelon[((IsEchelonForm.pivotRow E pi), D.pivotCols.get pi)]
     else
       0
 
@@ -160,7 +160,7 @@ theorem hasNonzeroPivots [Lean.Grind.Field R]
     E.toIsEchelonForm.HasNonzeroPivots := by
   intro i
   have hpivot :
-      D.echelon[E.toIsEchelonForm.pivotRow i][D.pivotCols.get i] = 1 := by
+      D.echelon[(E.toIsEchelonForm.pivotRow i, D.pivotCols.get i)] = 1 := by
     simpa [IsEchelonForm.pivotRow] using E.pivot_one i
   intro hzero
   exact (show (0 : R) ≠ 1 from Lean.Grind.Field.zero_ne_one) (hzero.symm.trans hpivot)
@@ -235,53 +235,37 @@ theorem rowCombination_single {R : Type u} [Lean.Grind.CommRing R]
     {n m : Nat} (M : Matrix R n m) (i : Fin n) :
     rowCombination M (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0) =
       row M i := by
-  ext j hj
+  apply Vector.ext
+  intro j hj
   let jf : Fin m := ⟨j, hj⟩
-  change
-    (rowCombination M (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0))[jf] =
-      (row M i)[jf]
-  unfold rowCombination
-  change (Matrix.mulVec (Matrix.transpose M)
-      (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0))[jf] =
+  show (rowCombination M (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0))[jf] =
     (row M i)[jf]
-  unfold Matrix.mulVec Matrix.row Vector.dotProduct Matrix.transpose
-    Matrix.col
-  change (Vector.ofFn fun j : Fin m =>
-      (List.finRange n).foldl
-        (fun acc l => acc + (Vector.ofFn fun j : Fin m => Vector.ofFn fun i : Fin n => M[i][j])[j][l] *
-          (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0)[l]) 0)[jf.1] =
-    M[i][jf]
-  rw [Vector.getElem_ofFn]
-  change
-    (List.finRange n).foldl
-        (fun acc l => acc +
-          (Vector.ofFn fun j : Fin m => Vector.ofFn fun i : Fin n => M[i][j])[jf][l] *
-          (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0)[l]) 0 =
-      M[i][jf]
+  rw [rowCombination, getElem_mulVec, getElem_row]
+  simp only [Vector.dotProduct]
   have hbody :
       (List.finRange n).foldl
-          (fun acc l => acc +
-            (Vector.ofFn fun j : Fin m => Vector.ofFn fun i : Fin n => M[i][j])[jf][l] *
+          (fun acc l => acc + (row (Matrix.transpose M) jf)[l] *
             (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0)[l]) 0 =
         (List.finRange n).foldl
-          (fun acc l => acc + (if i = l then (1 : R) else 0) * M[l][jf]) 0 := by
+          (fun acc l => acc + (if i = l then (1 : R) else 0) * M[(l, jf)]) 0 := by
     apply foldl_sum_congr
     intro l _hl
+    simp only [getElem_row, getElem_transpose, Vector.getElem_ofFn]
     by_cases hil : i = l
     · simp [hil, Lean.Grind.CommSemiring.mul_comm]
     · rw [if_neg hil]
       grind
   rw [hbody]
   have hpick := foldl_indicator_mul_unique (R := R) (List.finRange n) i
-    (fun l : Fin n => M[l][jf]) (List.mem_finRange i) (List.nodup_finRange n) 0
-  have hzero : (0 : R) + M[i][jf] = M[i][jf] := by grind
+    (fun l : Fin n => M[(l, jf)]) (List.mem_finRange i) (List.nodup_finRange n) 0
+  have hzero : (0 : R) + M[(i, jf)] = M[(i, jf)] := by grind
   exact hpick.trans hzero
 
 /-- In an RREF, a pivot column is a standard basis vector: its entry in row `i`
 is `1` when `i` is the pivot row of `p` and `0` otherwise. -/
 private theorem pivot_column_entry [Lean.Grind.Field R] (E : IsRowReduced M D)
     (p : Fin D.rank) (i : Fin n) :
-    D.echelon[i][D.pivotCols.get p] =
+    D.echelon[(i, D.pivotCols.get p)] =
       if E.toIsEchelonForm.pivotRow p = i then 1 else 0 := by
   by_cases hi : i.val < D.rank
   · let q : Fin D.rank := ⟨i.val, hi⟩
@@ -316,7 +300,8 @@ private theorem pivot_column_entry [Lean.Grind.Field R] (E : IsRowReduced M D)
       exact p.isLt
     rw [if_neg hrow_ne]
     have hzero := E.toIsEchelonForm.zero_row i (by omega)
-    simpa using congrArg (fun row => row[D.pivotCols.get p]) hzero
+    rw [(getRow_getElem D.echelon i (D.pivotCols.get p)).symm, hzero]
+    simp
 
 /-- Reading a row combination of the echelon rows off at pivot column `p` recovers
 exactly the coefficient applied to the pivot row of `p`, since that column is a
@@ -329,11 +314,11 @@ private theorem rowCombination_pivotCoeff [Lean.Grind.Field R] (E : IsRowReduced
   simp [HMul.hMul, Matrix.mulVec, Matrix.row, Vector.dotProduct,
     Matrix.transpose, Matrix.col]
   change (List.finRange n).foldl
-      (fun acc i => acc + D.echelon[i][D.pivotCols.get p] * c[i]) 0 =
+      (fun acc i => acc + D.echelon[(i, D.pivotCols.get p)] * c[i]) 0 =
     c[E.toIsEchelonForm.pivotRow p]
   calc
     (List.finRange n).foldl
-        (fun acc i => acc + D.echelon[i][D.pivotCols.get p] * c[i]) 0 =
+        (fun acc i => acc + D.echelon[(i, D.pivotCols.get p)] * c[i]) 0 =
         (List.finRange n).foldl
           (fun acc i =>
             acc + (if E.toIsEchelonForm.pivotRow p = i then (1 : R) else 0) * c[i]) 0 := by
@@ -363,9 +348,9 @@ private theorem rowCombination_eq_of_coeffs_eq_on_rank [Lean.Grind.Field R]
   simp [HMul.hMul, Matrix.mulVec, Matrix.row, Vector.dotProduct,
     Matrix.transpose, Matrix.col]
   change (List.finRange n).foldl
-      (fun acc i => acc + D.echelon[i][jj] * c[i]) 0 =
+      (fun acc i => acc + D.echelon[(i, jj)] * c[i]) 0 =
     (List.finRange n).foldl
-      (fun acc i => acc + D.echelon[i][jj] * d[i]) 0
+      (fun acc i => acc + D.echelon[(i, jj)] * d[i]) 0
   apply foldl_sum_congr
   intro i _hi
   by_cases hirank : i.val < D.rank
@@ -377,8 +362,9 @@ private theorem rowCombination_eq_of_coeffs_eq_on_rank [Lean.Grind.Field R]
       simpa [hirow] using hcoeff r
     rw [hci]
   · have hrow := E.toIsEchelonForm.zero_row i (by omega)
-    have hentry : D.echelon[i][jj] = 0 := by
-      simpa using congrArg (fun row => row[jj]) hrow
+    have hentry : D.echelon[(i, jj)] = 0 := by
+      rw [(getRow_getElem D.echelon i jj).symm, hrow]
+      simp
     rw [hentry]
     have hleft : (0 : R) * c[i] = 0 := by grind
     have hright : (0 : R) * d[i] = 0 := by grind
@@ -401,12 +387,12 @@ private theorem rowCombination_echelonCoeffs_of_rowCombination [Lean.Grind.Field
     simp [IsEchelonForm.pivotRow]
   simp [IsEchelonForm.echelonCoeffs, hi, hpi]
   change (rowCombination D.echelon c)[D.pivotCols.get i] /
-      D.echelon[E.toIsEchelonForm.pivotRow i][D.pivotCols.get i] =
+      D.echelon[(E.toIsEchelonForm.pivotRow i, D.pivotCols.get i)] =
     c[E.toIsEchelonForm.pivotRow i]
   have hpivot := rowCombination_pivotCoeff E c i
   rw [hpivot]
   have hpivotOne :
-      D.echelon[E.toIsEchelonForm.pivotRow i][D.pivotCols.get i] = 1 := by
+      D.echelon[(E.toIsEchelonForm.pivotRow i, D.pivotCols.get i)] = 1 := by
     simpa [IsEchelonForm.pivotRow] using E.pivot_one i
   rw [hpivotOne]
   grind
