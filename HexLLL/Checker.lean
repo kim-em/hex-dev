@@ -19,6 +19,10 @@ fixed-precision `lllReducedInterval`, their cost-predicted dispatch
 
 namespace Hex
 
+open Hex.Internal
+
+namespace Internal
+
 /-- Working precision (bits) of the interval reducedness checker. The
 inequalities being certified carry slack by design: the dispatch requests a
 `(requestedDelta δ, requestedEta)`-reduced basis but certifies it against the
@@ -31,6 +35,8 @@ the documented input families, keeping every enclosure at a small, predictable
 arithmetic cost. -/
 @[expose]
 def intervalPrec : Nat := 128
+
+end Internal
 
 /-- Fixed-precision interval reducedness checker. Computes enclosures of
 the Gram-Schmidt data of `b` from its exact integer Gram matrix and accepts
@@ -99,6 +105,8 @@ def lllReducedInt (b : Matrix Int n m) (δ η : Rat) : Bool :=
       else
         true
   independent && sizeReduced && lovasz
+
+namespace Internal
 
 /-- Outcome of one certified-dispatch reducedness decision: decided by the
 interval checker, decided by the exact checker because the size predictor
@@ -199,6 +207,8 @@ timing deterministic. -/
 def intervalWins (b : Matrix Int n m) : Bool :=
   let bits := maxDiagBits b
   decide (n * bits ≥ dispatchFactor * (intervalPrec + bits))
+
+end Internal
 
 /-- Reducedness clause of the certified dispatch. The size predictor
 `intervalWins` picks the checker expected to be faster on this input: the

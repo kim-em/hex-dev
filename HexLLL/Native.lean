@@ -19,6 +19,8 @@ trusted exact reducer at the classical `η = 1/2`.
 
 namespace Hex
 
+namespace Internal
+
 /-- Integer-only state for later LLL reduction steps. The proof-facing fields
 connect the stored Gram determinants and scaled coefficients to the executable
 Gram-Schmidt integer data for `b`. -/
@@ -335,7 +337,7 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
     by_cases hk0 : 0 < k
     · rw [dif_pos hk0]
       simpa [GramSchmidt.Int.adjacentSwap] using
-        Matrix.rowSwap_memLattice_iff s.b (GramSchmidt.prevRow ⟨k, hk⟩ hk0) ⟨k, hk⟩ v
+        rowSwap_memLattice_iff s.b (GramSchmidt.prevRow ⟨k, hk⟩ hk0) ⟨k, hk⟩ v
     · rw [dif_neg hk0]
   · rw [dif_neg hk]
 
@@ -348,7 +350,7 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
       s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
   · rw [dif_pos hreduce]
     have hne : j ≠ k := fun h => Nat.lt_irrefl j.val (h ▸ hjk)
-    exact Matrix.rowAdd_memLattice_iff s.b hne _ v
+    exact rowAdd_memLattice_iff s.b hne _ v
   · rw [dif_neg hreduce]
 
 /-- `sizeReduce_foldl_memLattice_iff` states that folding size-reduction column
@@ -540,6 +542,10 @@ def lllAux (s : LLLState n m) (k : Nat) (δ : Rat)
     Matrix Int n m :=
   lllLoop s k δ hδ hδ' hk hkn (lllFuel s)
 
+end Internal
+
+open Hex.Internal
+
 /-- Native (non-dispatched) executable LLL entry point. Builds the canonical
 integer state via `LLLState.ofBasisUnchecked` and dispatches to `lllAux`.
 This is the body the public `lll` runs by default; its output achieves the
@@ -551,10 +557,14 @@ def lllNative (b : Matrix Int n m) (δ : Rat)
     Matrix Int n m :=
   lllAux (LLLState.ofBasisUnchecked b) 1 δ hδ hδ' (Nat.le_refl 1) hn
 
+namespace Internal
+
 /-- `121/400 < δ` implies `1/4 < δ`: relays the public `lll` (`η = 11/20`)
 precondition through to the native body (`η = 1/2`). -/
 theorem one_quarter_lt_of_eta_eleven_twentieths {δ : Rat}
     (hδ : (121 / 400 : Rat) < δ) : (1 / 4 : Rat) < δ := by
   grind
+
+end Internal
 
 end Hex

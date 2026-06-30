@@ -36,7 +36,17 @@ def B : Matrix Int 3 3 := Matrix.ofFn fun i j =>
   | 2, 0 => 3 | 2, 1 => 5 | 2, 2 => 6
   | _, _ => 0
 
--- Reduce the basis at the factor δ = 3/4; read off the shortest vector.
+-- The verified entry point. Given a proof `hind : B.independent`, `lll` returns
+-- a `(δ, 11/20)`-reduced basis of the same lattice and `lll.firstShortVector`
+-- reads off its provably short first row. The short-vector guarantee itself is
+-- the theorem `lll_first_row_norm_sq_le_unconditional` in `hex-lll-mathlib`.
+#check @lll.firstShortVector
+#check @lll
+
+-- To run the reducer on data without supplying an independence proof, use the
+-- proof-free variants. They run the steered reducer directly (the body of
+-- `lll`'s native path, skipping the provider dispatch) and carry no exported
+-- short-vector theorem unless you separately prove `B.independent`.
 #eval lll.firstShortVectorUnchecked B (3 / 4) (by decide +kernel) (by decide +kernel) (by decide)
 #eval lll.shortVectorsUnchecked B (3 / 4) (by decide +kernel) (by decide +kernel) (by decide)
 
@@ -71,22 +81,25 @@ matter which one runs. `lll` dispatches through them in order:
 The surface, by group:
 
 - `lll`, `lll.firstShortVector`, and `lll.shortVectors`: the public reducer,
-  the shortest reduced row, and the ordered reduced rows. `firstShortVector`
-  is the short-vector entry point for downstream consumers such as
+  its provably short first reduced row, and the ordered reduced rows.
+  `firstShortVector` is the short-vector entry point for downstream consumers such as
   [`hex-berlekamp-zassenhaus`](https://github.com/kim-em/hex-berlekamp-zassenhaus).
 - `lllNative`: the exact integer reducer at the classical `η = 1/2`, with the
   tighter short-vector constant; call it directly to get the classical
   guarantee. `lllSteered` exposes the steered reducer on its own.
 - `lll.firstShortVectorUnchecked` and `lll.shortVectorsUnchecked`: proof-free
   variants of the entry points for callers without an independence proof.
-- `LLLState` with `sizeReduce` and `swapStep`: the integer state and its step
-  operations, with `LLLState.potential` and the noncomputable Gram-Schmidt
-  projection `LLLState.gramSchmidtCoeff`.
 - `lllReducedInt`, `lllReducedInterval`, and `lllReducedCheck`: the exact,
   fixed-precision, and dispatched reducedness oracles; `certCheck` is the
   integer certificate checker for an external reducer's output.
 - `Matrix.memLattice`, `Matrix.independent`, and `Vector.normSq` for stating
   and checking the inputs and guarantees.
+
+Everything else lives under the `Hex.Internal` namespace and is not part of the
+supported API: the integer state `LLLState` and its step/loop machinery, the
+`SteeredState` float-steering reducer, the fixed-precision interval checker
+kernel, the external-provider plumbing, and the dispatch-tuning and diagnostics
+constants. `open Hex` brings only the surface above into scope.
 
 # Verification
 
@@ -149,6 +162,31 @@ The end-to-end guarantees of `lll` are proved in
 is `(δ, 11/20)`-reduced, spans the same lattice, and satisfies the
 short-vector bound, together with the certificate soundness theorem
 `certCheck_sound`.
+
+# Trust boundary
+
+The kernel proofs trust none of the acceleration machinery. The capstone
+theorems reduce to the ordinary Lean axioms `propext`, `Classical.choice`, and
+`Quot.sound` (and Mathlib, for the `hex-lll-mathlib` results); there is no
+`sorry`, no `axiom`, and no `native_decide` anywhere in the libraries. Concretely:
+
+- **External provider.** The optional reducer is reached through an
+  `@[extern] opaque` hook. Its output is never trusted: it is certified by the
+  integer-arithmetic checker `certCheck` before use, and an absent or rejected
+  candidate falls back to the native reducer. A wrong or adversarial provider
+  cannot produce a wrong result, only a fallback.
+- **Steered reducer.** The floating-point Gram-Schmidt approximation only
+  chooses which exact integer row operation to apply; the floats never enter a
+  proof, so the output spans the same lattice by construction, and the result is
+  certified at `(δ, 11/20)` before it is returned.
+- **Diagnostics.** The provider, checker, and steered tallies record decision
+  counts via `@[implemented_by]` side effects in compiled code only. They are
+  definitionally identity in the logic; no theorem depends on them.
+- **Execution vs. checking.** Compiled execution may call the C FFI shim
+  (`dlopen`); kernel proof checking calls none of it.
+
+The requested-parameter, precision, and dispatch-calibration constants are
+performance tuning only and are outside the trusted story; none affects soundness.
 
 # Contributing
 

@@ -150,14 +150,14 @@ def runIsabelleHarshCubicNormSq65 : Unit → IO Int := fun _ => do
 
 /-- Fallback-rate diagnostic for the steered native reducer: run
 `firstShortVectorUnchecked` (i.e. `lllSteered`) once on every rung of both
-ladders, then read `Hex.steeredTally`. Fails if any steered candidate failed
+ladders, then read `Hex.Internal.steeredTally`. Fails if any steered candidate failed
 certification and fell back to the exact reducer (`fellBack ≠ 0`) — a fallback
 inside the ladder would make the steered medians dishonest. Only rungs the
-`Hex.steerWins` predictor routes to steering (n ≥ 30) bump the tally; the
+`Hex.Internal.steerWins` predictor routes to steering (n ≥ 30) bump the tally; the
 smaller rungs run `lllNative` directly. The returned value encodes the tally
 as `certified · 65537 + fellBack`. -/
 def runSteeredFallbackTally : Unit → IO Int := fun _ => do
-  Hex.resetSteeredTally
+  Hex.Internal.resetSteeredTally
   let targets : List (Unit → IO Int) :=
     [runFirstShortVectorRandomBoundedNormSq30,
      runFirstShortVectorRandomBoundedNormSq45,
@@ -180,7 +180,7 @@ def runSteeredFallbackTally : Unit → IO Int := fun _ => do
      runFirstShortVectorHarshCubicNormSq65]
   for t in targets do
     discard <| t ()
-  let tally ← Hex.steeredTally
+  let tally ← Hex.Internal.steeredTally
   if tally.fellBack != 0 then
     throw <| IO.userError
       s!"steered reducer fell back to the exact reducer on a bench rung: {repr tally}"
@@ -860,7 +860,7 @@ setup_fixed_benchmark runCertifiedCheckerIntervalTally where {
 
 /- Fallback-rate diagnostic: the steered reducer certified on every steered rung
 of both ladders (`fellBack = 0`). The pinned hash records the `certified` count
-(16 = the rungs `Hex.steerWins` routes to steering under the unified `n ≥ 30`
+(16 = the rungs `Hex.Internal.steerWins` routes to steering under the unified `n ≥ 30`
 floor: harsh-cubic n ≥ 30 — 8 rungs — and random-bounded n ≥ 30 — 8 rungs,
 n=30 now included after the `(δ + 3)/4` steering-margin fix); a fallback would
 flip `fellBack` nonzero and throw before the hash is reached. -/

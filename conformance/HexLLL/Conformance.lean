@@ -21,11 +21,11 @@ Covered operations:
 - `Hex.lll.firstShortVector`
 - `Hex.lll.shortVectors`
 - `Hex.certCheck`
-- `Hex.LLLState.sizeReduceColumn`
-- `Hex.LLLState.sizeReduce`
-- `Hex.LLLState.swapStep`
-- `Hex.LLLState.gramSchmidtCoeff`
-- `Hex.LLLState.potential`
+- `Hex.Internal.LLLState.sizeReduceColumn`
+- `Hex.Internal.LLLState.sizeReduce`
+- `Hex.Internal.LLLState.swapStep`
+- `Hex.Internal.LLLState.gramSchmidtCoeff`
+- `Hex.Internal.LLLState.potential`
 
 Covered properties:
 - committed row-combination witnesses satisfy lattice membership.
@@ -61,6 +61,8 @@ Covered edge cases:
 
 namespace Hex
 namespace LLLConformance
+
+open Hex.Internal
 
 private def identity8 : Matrix Int 8 8 := Matrix.identity 8
 

@@ -20,7 +20,9 @@ product.
 
 namespace Hex
 
-namespace Matrix
+namespace Internal
+
+open Hex.Matrix
 
 /-- Horner evaluation of an integer digit list at base `P`. -/
 @[expose]
@@ -339,6 +341,12 @@ theorem mulEqCert_iff {M : Matrix Int n n} {A C : Matrix Int n m} :
         (Nat.le_trans (natAbs_le_maxAbs C ⟨i, hi⟩ ⟨j, hjm⟩) (by omega))
   · intro h i _
     rw [h]
+
+end Internal
+
+namespace Matrix
+
+open Hex.Internal
 
 /-- Executable same-lattice certificate: two integer transforms that multiply
 the bases into each other. Each product equality is verified by the packed

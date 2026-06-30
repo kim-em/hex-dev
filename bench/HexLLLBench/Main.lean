@@ -67,7 +67,7 @@ Informational external comparator:
   candidate production plus the executable checker. Companion
   checker-only targets cache one candidate after warmup and re-run
   only `certCheck`, giving the checker's cost share. Public-dispatch
-  smoke targets guard that, when an `fplll-ffi` provider is
+  verify targets check that, when an `fplll-ffi` provider is
   intentionally loaded via `HEX_FPLLL_FFI_LIB`, the dispatch tally
   records at least one accepted candidate.
 

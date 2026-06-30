@@ -20,6 +20,8 @@ the candidate at `(δ, 11/20)` and falls back to `lllNative` on failure.
 
 namespace Hex
 
+open Hex.Internal
+
 /-! ## Approximation-steered native reducer
 
 The steered reducer drives the *exact* integer row operations of the native
@@ -33,6 +35,8 @@ certified post hoc at `(δ, 11/20)`; on certification failure the public `lll`
 falls back to the exact `d`/`ν` reducer `lllNative`. The steered path therefore
 materializes no exact Gram-Schmidt state — exact `d`/`ν` data appears only in the
 fallback. -/
+
+namespace Internal
 
 /-- Untrusted floating-point Gram-Schmidt state steering the native reducer.
 `b` is the exact integer basis (the only proof-relevant field). `mu[i][j]` (for
@@ -279,7 +283,7 @@ member of the old one. -/
   · rw [if_pos hr]
   · rw [if_neg hr]
     have hne : j ≠ k := fun h => Nat.lt_irrefl j.val (h ▸ hjk)
-    exact Matrix.rowAdd_memLattice_iff s.b hne _ v
+    exact rowAdd_memLattice_iff s.b hne _ v
 
 /-- Folding `reduceColumn` over a list of source columns preserves the lattice:
 each step adds an integer multiple of one row to row `k`, so by induction the
@@ -321,7 +325,7 @@ membership of `v`) is unchanged. -/
     by_cases hk0 : 0 < k
     · rw [dif_pos hk0]
       simpa [GramSchmidt.Int.adjacentSwap] using
-        Matrix.rowSwap_memLattice_iff s.b (GramSchmidt.prevRow ⟨k, hk⟩ hk0) ⟨k, hk⟩ v
+        rowSwap_memLattice_iff s.b (GramSchmidt.prevRow ⟨k, hk⟩ hk0) ⟨k, hk⟩ v
     · rw [dif_neg hk0]
   · rw [dif_neg hk]
 
@@ -395,6 +399,7 @@ approximation. -/
     (b : Matrix Int n m) (δ : Rat) (v : Vector Int m) :
     Matrix.memLattice (steeredReduce b δ) v ↔ Matrix.memLattice b v := by
   unfold steeredReduce; grind
+
 
 /-- Outcome of one steered reduction: the steered candidate certified at
 `(δ, 11/20)`, or the run fell back to the exact `lllNative`. -/
@@ -480,6 +485,8 @@ at n ≥ 30; random-bounded steered at n ≥ 30 (n=30 included); bz-recombinatio
 @[expose]
 def steerWins (_b : Matrix Int n m) : Bool :=
   decide (n ≥ steerDimThreshold)
+
+end Internal
 
 /-- Approximation-steered native reducer with certified output. When `steerWins`
 holds it runs the steered loop (exact integer row operations driven by an

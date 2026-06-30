@@ -21,6 +21,8 @@ downstream consumers.
 
 namespace Hex
 
+open Hex.Internal
+
 /-- Top-level LLL entry point. Dispatches first to the certified-external path:
 if `LLLProvider.providerAvailable ()` is true and the candidate passes
 `certCheck B B' U V δ (11/20)`, the certified `B'` is returned; otherwise the
@@ -47,9 +49,11 @@ def lll.firstShortVectorUnchecked (b : Matrix Int n m) (δ : Rat)
     Vector Int m :=
   (lllSteered b δ hδ hδ' hn)[0]
 
-/-- The first row of the reduced basis (shortest vector under the LLL
-guarantee). Canonical short-vector entry point for downstream callers
-such as `hex-berlekamp-zassenhaus` recombination. -/
+/-- The first row of the reduced basis: a provably short vector, bounded by the
+LLL approximation factor relative to any nonzero lattice vector (see
+`lll_first_row_norm_sq_le_unconditional`), not necessarily the shortest lattice
+vector. Canonical short-vector entry point for downstream callers such as
+`hex-berlekamp-zassenhaus` recombination. -/
 @[expose]
 def lll.firstShortVector (b : Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)

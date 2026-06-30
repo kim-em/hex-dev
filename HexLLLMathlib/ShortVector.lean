@@ -53,7 +53,7 @@ theorem lll_mem_latticeSubmodule_iff
 
 /-- Classical Mathlib-Euclidean LLL short-vector bound on `Hex.lllNative` at
 `η = 1/2`. Combines `Hex.lllNative_isLLLReduced` with the conditional
-Euclidean bound `reduced_first_row_norm_sq_le_of_mem_latticeSubmodule` at
+Euclidean bound `reduced_first_row_norm_sq_le` at
 `η = 1/2`. -/
 theorem lllNative_first_row_norm_sq_le_unconditional
     (b : Hex.Matrix Int n m) (δ : Rat)
@@ -71,7 +71,7 @@ theorem lllNative_first_row_norm_sq_le_unconditional
     Hex.lllNative_independent b δ hδ hδ' hn hind
   have hx_lll : x ∈ latticeSubmodule (Hex.lllNative b δ hδ hδ' hn) :=
     (lllNative_mem_latticeSubmodule_iff b δ hδ hδ' hn x).mpr hx
-  have hbnd := reduced_first_row_norm_sq_le_of_mem_latticeSubmodule
+  have hbnd := reduced_first_row_norm_sq_le
     (Hex.lllNative b δ hδ hδ' hn) δ (1 / 2) (by grind) (by grind) hδ' hn hind'
     hred x hx_lll hx0
   -- Rewrite `(1/2) * (1/2)` as `1/4` in the bound's denominator.
@@ -81,7 +81,7 @@ theorem lllNative_first_row_norm_sq_le_unconditional
 
 /-- **Unconditional Mathlib-Euclidean LLL short-vector bound on `Hex.lll` at
 `η = 11/20`.** Combines `Hex.lll_isLLLReduced` (η = 11/20) with the
-conditional Euclidean bound `reduced_first_row_norm_sq_le_of_mem_latticeSubmodule`
+conditional Euclidean bound `reduced_first_row_norm_sq_le`
 at `η = 11/20`. -/
 theorem lll_first_row_norm_sq_le_unconditional
     (b : Hex.Matrix Int n m) (δ : Rat)
@@ -102,7 +102,7 @@ theorem lll_first_row_norm_sq_le_unconditional
   have hδη : (11 / 20 : Rat) * (11 / 20) < δ := by
     have : (11 / 20 : Rat) * (11 / 20) = 121 / 400 := by grind
     grind
-  have hbnd := reduced_first_row_norm_sq_le_of_mem_latticeSubmodule
+  have hbnd := reduced_first_row_norm_sq_le
     (Hex.lll b δ hδ hδ' hn hind) δ (11 / 20) (by grind) hδη hδ' hn hind'
     hred x hx_lll hx0
   have hηη : (11 / 20 : Rat) * (11 / 20) = 121 / 400 := by grind

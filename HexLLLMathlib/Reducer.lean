@@ -30,6 +30,8 @@ private theorem vector_get_eq_getElem {α : Type*} {n : ℕ} (v : Vector α n) (
 
 namespace Hex
 
+open Hex.Internal
+
 namespace Matrix
 
 /-- The identity matrix is independent: every executable leading Gram
@@ -39,7 +41,7 @@ recombination input with all-zero lift coefficients. -/
 theorem identity_independent {n : Nat} : (Matrix.identity (R := Int) n).independent := by
   exact GramSchmidt.Int.independent_identity
 
-theorem gramMatrix_takeRows_eq_principalSubmatrix {n : Nat} (M : Matrix Int n n) (k : Nat)
+private theorem gramMatrix_takeRows_eq_principalSubmatrix {n : Nat} (M : Matrix Int n n) (k : Nat)
     (hk : k ≤ n) :
     gramMatrix (takeRows M k hk) = principalSubmatrix (gramMatrix M) k hk := by
   apply Vector.ext
@@ -65,7 +67,7 @@ theorem gramMatrix_takeRows_eq_principalSubmatrix {n : Nat} (M : Matrix Int n n)
   simpa [gramMatrix, principalSubmatrix, ofFn, iFin, jFin, ii, jj] using
     hdot
 
-theorem independent_of_upperTriangular_pos_diag {n : Nat}
+private theorem independent_of_upperTriangular_pos_diag {n : Nat}
     (M : Matrix Int n n)
     (hzero : ∀ i j : Fin n, j.val < i.val -> M[i][j] = 0)
     (hdiag : ∀ i : Fin n, 0 < M[i][i]) : M.independent := by
@@ -77,7 +79,7 @@ theorem independent_of_upperTriangular_pos_diag {n : Nat}
 
 end Matrix
 
-namespace LLLState
+namespace Internal.LLLState
 
 /-- Size reduction preserves the executable Gram-determinant independence
 predicate.  This public theorem lives in the Mathlib-side library so the
@@ -263,7 +265,7 @@ private theorem swapStep_b_eq (s : LLLState n m) (k : Nat) (hk : k < n) (hk0 : 0
   unfold swapStep
   rw [dif_pos hk, dif_pos hk0]
 
-theorem swapStep_valid (s : LLLState n m) (k : Nat)
+private theorem swapStep_valid (s : LLLState n m) (k : Nat)
     (hind : s.b.independent) (hvalid : s.Valid) :
     (s.swapStep k).Valid := by
   unfold swapStep
@@ -794,7 +796,7 @@ theorem swapStep_coeffs_below (s : LLLState n m) (k : Nat) (hk : k < n)
   simpa [GramSchmidt.Int.adjacentSwap, GramSchmidt.entry, Matrix.row,
     kFin, km1] using hcoeff
 
-end LLLState
+end Internal.LLLState
 
 /-- The prefix `δ`-LLL-reduced predicate: the first `k` Gram-Schmidt rows
 satisfy size reduction (for all `i < k`, `j < i`) and the adjacent Lovász
@@ -919,7 +921,7 @@ theorem prefixLLLReduced_to_isLLLReduced (b : Matrix Int n m) (δ : Rat)
   · intro i hi
     exact h.2 i hi hi
 
-namespace LLLState
+namespace Internal.LLLState
 
 /-- `swapStep s k` preserves the prefix LLL-reduced predicate, with the
 prefix shrunk by one (clamped below by `1` to stay in the trivially-true
@@ -2313,7 +2315,7 @@ theorem lllLoop_independent
         exact ih ((s.sizeReduce k).swapStep k) (max (k - 1) 1)
           (Nat.le_max_right (k - 1) 1) hk'n hsS_valid hsS_ind
 
-end LLLState
+end Internal.LLLState
 
 /-! ### Capstones
 
@@ -2412,10 +2414,10 @@ theorem lllSteered_memLattice_iff (b : Matrix Int n m) (δ : Rat)
     (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (v : Vector Int m) :
     Matrix.memLattice (Hex.lllSteered b δ hδ hδ' hn) v ↔ Matrix.memLattice b v := by
   unfold Hex.lllSteered
-  simp only [Hex.withRecordSteeredOutcome]
+  simp only [Hex.Internal.withRecordSteeredOutcome]
   split
   · split
-    · exact Hex.steeredReduce_memLattice_iff b δ v
+    · exact Hex.Internal.steeredReduce_memLattice_iff b δ v
     · exact lllNative_memLattice_iff b δ hδ hδ' hn v
   · exact lllNative_memLattice_iff b δ hδ hδ' hn v
 
@@ -2426,10 +2428,10 @@ theorem lllSteered_isLLLReduced (b : Matrix Int n m) (δ : Rat)
     (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
     isLLLReduced (Hex.lllSteered b δ hδ hδ' hn) δ (11 / 20) := by
   have hnative : isLLLReduced (Hex.lllNative b δ hδ hδ' hn) δ (11 / 20) :=
-    Hex.isLLLReduced.mono_η _ (by grind) (by grind)
+    Hex.Internal.isLLLReduced.mono_η _ (by grind) (by grind)
       (lllNative_isLLLReduced b δ hδ hδ' hn hind)
   unfold Hex.lllSteered
-  simp only [Hex.withRecordSteeredOutcome]
+  simp only [Hex.Internal.withRecordSteeredOutcome]
   split
   · split
     · rename_i h
@@ -2442,7 +2444,7 @@ theorem lllSteered_independent (b : Matrix Int n m) (δ : Rat)
     (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
     (Hex.lllSteered b δ hδ hδ' hn).independent := by
   unfold Hex.lllSteered
-  simp only [Hex.withRecordSteeredOutcome]
+  simp only [Hex.Internal.withRecordSteeredOutcome]
   split
   · split
     · rename_i h
@@ -2462,7 +2464,7 @@ theorem lll_isLLLReduced (b : Matrix Int n m) (δ : Rat)
   cases hd : LLLProvider.dispatch b δ with
   | none =>
       exact lllSteered_isLLLReduced b δ
-        (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
+        (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
   | some B' =>
       exact (dispatch_some_property hd).2.2
 
@@ -2475,7 +2477,7 @@ theorem lll_memLattice_iff (b : Matrix Int n m) (δ : Rat)
   cases hd : LLLProvider.dispatch b δ with
   | none =>
       exact lllSteered_memLattice_iff b δ
-        (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn v
+        (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn v
   | some B' =>
       exact ((dispatch_some_property hd).1 v).symm
 
@@ -2488,7 +2490,7 @@ theorem lll_independent (b : Matrix Int n m) (δ : Rat)
   cases hd : LLLProvider.dispatch b δ with
   | none =>
       exact lllSteered_independent b δ
-        (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
+        (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
   | some B' =>
       exact (dispatch_some_property hd).2.1
 
