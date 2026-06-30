@@ -236,34 +236,34 @@ theorem mul_assoc_vec [Lean.Grind.Ring R]
   change
     (List.finRange k).foldl
         (fun acc l =>
-          acc + (List.finRange m).foldl (fun acc j => acc + A[ii][j] * B[j][l]) 0 *
+          acc + (List.finRange m).foldl (fun acc j => acc + A[(ii, j)] * B[(j, l)]) 0 *
             v[l]) 0 =
       (List.finRange m).foldl
         (fun acc j =>
-          acc + A[ii][j] *
-            (List.finRange k).foldl (fun acc l => acc + B[j][l] * v[l]) 0) 0
+          acc + A[(ii, j)] *
+            (List.finRange k).foldl (fun acc l => acc + B[(j, l)] * v[l]) 0) 0
   calc
     (List.finRange k).foldl
         (fun acc l =>
-          acc + (List.finRange m).foldl (fun acc j => acc + A[ii][j] * B[j][l]) 0 *
+          acc + (List.finRange m).foldl (fun acc j => acc + A[(ii, j)] * B[(j, l)]) 0 *
             v[l]) 0 =
         (List.finRange k).foldl
           (fun acc l =>
             acc + (List.finRange m).foldl
-              (fun acc j => acc + A[ii][j] * B[j][l] * v[l]) 0) 0 := by
+              (fun acc j => acc + A[(ii, j)] * B[(j, l)] * v[l]) 0) 0 := by
           apply foldl_sum_congr
           intro l _hl
           rw [foldl_sum_mul_right]
           grind
     _ = (List.finRange m).foldl
         (fun acc j =>
-          acc + A[ii][j] *
-            (List.finRange k).foldl (fun acc l => acc + B[j][l] * v[l]) 0) 0 := by
+          acc + A[(ii, j)] *
+            (List.finRange k).foldl (fun acc l => acc + B[(j, l)] * v[l]) 0) 0 := by
           rw [foldl_sum_comm]
           apply foldl_sum_congr
           intro j _hj
           rw [foldl_sum_mul_left]
-          have hzero : A[ii][j] * (0 : R) = 0 := by grind
+          have hzero : A[(ii, j)] * (0 : R) = 0 := by grind
           rw [hzero]
           apply foldl_sum_congr
           intro l _hl
@@ -276,13 +276,13 @@ theorem transpose_mul_of_mul_comm [Lean.Grind.CommRing R]
   ext i hi j hj
   let ii : Fin k := ⟨i, hi⟩
   let jj : Fin n := ⟨j, hj⟩
-  change (Matrix.transpose (A * B))[ii][jj] = (Matrix.transpose B * Matrix.transpose A)[ii][jj]
+  change (Matrix.transpose (A * B))[(ii, jj)] = (Matrix.transpose B * Matrix.transpose A)[(ii, jj)]
   rw [getElem_transpose]
-  change (A * B)[jj][ii] = (Matrix.transpose B * Matrix.transpose A)[ii][jj]
+  change (A * B)[(jj, ii)] = (Matrix.transpose B * Matrix.transpose A)[(ii, jj)]
   simp [HMul.hMul, mul, row, col, transpose, Vector.dotProduct, ofFn]
   change
-    (List.finRange m).foldl (fun acc l => acc + A[jj][l] * B[l][ii]) 0 =
-      (List.finRange m).foldl (fun acc l => acc + B[l][ii] * A[jj][l]) 0
+    (List.finRange m).foldl (fun acc l => acc + A[(jj, l)] * B[(l, ii)]) 0 =
+      (List.finRange m).foldl (fun acc l => acc + B[(l, ii)] * A[(jj, l)]) 0
   apply foldl_sum_congr
   intro l _hl
   rw [Lean.Grind.CommSemiring.mul_comm]
@@ -294,11 +294,11 @@ theorem transpose_mul_of_mul_comm [Lean.Grind.CommRing R]
   let ii : Fin n := ⟨i, hi⟩
   simp [HMul.hMul, mulVec, row, Vector.dotProduct]
   change (List.finRange n).foldl
-      (fun acc j => acc + (Matrix.identity (R := R) n)[ii][j] * v[j]) 0 =
+      (fun acc j => acc + (Matrix.identity (R := R) n)[(ii, j)] * v[j]) 0 =
     v[ii]
   calc
     (List.finRange n).foldl
-        (fun acc j => acc + (Matrix.identity (R := R) n)[ii][j] * v[j]) 0 =
+        (fun acc j => acc + (Matrix.identity (R := R) n)[(ii, j)] * v[j]) 0 =
         (List.finRange n).foldl
           (fun acc j => acc + (if ii = j then (1 : R) else 0) * v[j]) 0 := by
           apply foldl_sum_congr
@@ -315,23 +315,22 @@ theorem transpose_mul_of_mul_comm [Lean.Grind.CommRing R]
   ext i hi j hj
   let ii : Fin n := ⟨i, hi⟩
   let jj : Fin m := ⟨j, hj⟩
-  change ((Matrix.identity (R := R) n) * M)[ii][jj] = M[ii][jj]
+  change ((Matrix.identity (R := R) n) * M)[(ii, jj)] = M[(ii, jj)]
   simp [HMul.hMul, mul, row, col, Vector.dotProduct]
-  simp [ofFn]
   change
     (List.finRange n).foldl
-        (fun acc l => acc + (Matrix.identity (R := R) n)[ii][l] * M[l][jj]) 0 =
-      M[ii][jj]
+        (fun acc l => acc + (Matrix.identity (R := R) n)[(ii, l)] * M[(l, jj)]) 0 =
+      M[(ii, jj)]
   calc
     (List.finRange n).foldl
-        (fun acc l => acc + (Matrix.identity (R := R) n)[ii][l] * M[l][jj]) 0 =
+        (fun acc l => acc + (Matrix.identity (R := R) n)[(ii, l)] * M[(l, jj)]) 0 =
         (List.finRange n).foldl
-          (fun acc l => acc + (if ii = l then (1 : R) else 0) * M[l][jj]) 0 := by
+          (fun acc l => acc + (if ii = l then (1 : R) else 0) * M[(l, jj)]) 0 := by
           apply foldl_sum_congr
           intro l _hl
           rw [getElem_identity]
-    _ = M[ii][jj] := by
-          rw [foldl_indicator_mul_unique (List.finRange n) ii (fun l => M[l][jj])
+    _ = M[(ii, jj)] := by
+          rw [foldl_indicator_mul_unique (List.finRange n) ii (fun l => M[(l, jj)])
             (List.mem_finRange _) (List.nodup_finRange n) 0]
           grind
 
@@ -341,24 +340,23 @@ theorem transpose_mul_of_mul_comm [Lean.Grind.CommRing R]
   ext i hi j hj
   let ii : Fin n := ⟨i, hi⟩
   let jj : Fin m := ⟨j, hj⟩
-  change (M * (Matrix.identity (R := R) m))[ii][jj] = M[ii][jj]
+  change (M * (Matrix.identity (R := R) m))[(ii, jj)] = M[(ii, jj)]
   simp [HMul.hMul, mul, row, col, Vector.dotProduct]
-  simp [ofFn]
   change
     (List.finRange m).foldl
-        (fun acc l => acc + M[ii][l] * (Matrix.identity (R := R) m)[l][jj]) 0 =
-      M[ii][jj]
+        (fun acc l => acc + M[(ii, l)] * (Matrix.identity (R := R) m)[(l, jj)]) 0 =
+      M[(ii, jj)]
   calc
     (List.finRange m).foldl
-        (fun acc l => acc + M[ii][l] * (Matrix.identity (R := R) m)[l][jj]) 0 =
+        (fun acc l => acc + M[(ii, l)] * (Matrix.identity (R := R) m)[(l, jj)]) 0 =
         (List.finRange m).foldl
-          (fun acc l => acc + (if jj = l then (1 : R) else 0) * M[ii][l]) 0 := by
+          (fun acc l => acc + (if jj = l then (1 : R) else 0) * M[(ii, l)]) 0 := by
           apply foldl_sum_congr
           intro l _hl
           rw [getElem_identity]
           split <;> grind
-    _ = M[ii][jj] := by
-          rw [foldl_indicator_mul_unique (List.finRange m) jj (fun l => M[ii][l])
+    _ = M[(ii, jj)] := by
+          rw [foldl_indicator_mul_unique (List.finRange m) jj (fun l => M[(ii, l)])
             (List.mem_finRange _) (List.nodup_finRange m) 0]
           grind
 
@@ -369,7 +367,7 @@ theorem mul_assoc [Lean.Grind.Ring R]
   ext i hi j hj
   let ii : Fin n := ⟨i, hi⟩
   let jj : Fin l := ⟨j, hj⟩
-  change ((A * B) * C)[ii][jj] = (A * (B * C))[ii][jj]
+  change ((A * B) * C)[(ii, jj)] = (A * (B * C))[(ii, jj)]
   simpa [HMul.hMul, mulVec, mul, row, col, Vector.dotProduct, ofFn] using
     congrArg (fun v => v[ii]) (mul_assoc_vec A B (col C jj))
 
@@ -379,7 +377,7 @@ theorem mul_assoc [Lean.Grind.Ring R]
   ext i hi
   let ii : Fin n := ⟨i, hi⟩
   simp [HMul.hMul, mulVec, row, Vector.dotProduct]
-  change (List.finRange m).foldl (fun acc j => acc + A[ii][j] * (0 : R)) 0 = 0
+  change (List.finRange m).foldl (fun acc j => acc + A[(ii, j)] * (0 : R)) 0 = 0
   apply foldl_add_eq_acc_ring
   intro j _hj
   grind
@@ -390,40 +388,40 @@ theorem mul_assoc [Lean.Grind.Ring R]
   ext i hi
   let ii : Fin n := ⟨i, hi⟩
   simp [HMul.hMul, mulVec, row, Vector.dotProduct]
-  change (List.finRange m).foldl (fun acc j => acc + (0 : Matrix R n m)[ii][j] * v[j]) 0 = 0
+  change (List.finRange m).foldl (fun acc j => acc + (0 : Matrix R n m)[(ii, j)] * v[j]) 0 = 0
   apply foldl_add_eq_acc_ring
   intro j _hj
-  change (Matrix.zero n m : Matrix R n m)[ii][j] * v[j] = 0
+  change (Matrix.zero n m : Matrix R n m)[(ii, j)] * v[j] = 0
   simpa [Matrix.zero, ofFn] using Lean.Grind.Semiring.zero_mul v[j]
 
 /-- Multiplication by `Q - I`, expressed entrywise, is `Q * v - v`. -/
 theorem sub_identity_mulVec [Lean.Grind.Ring R] (Q : Matrix R n n) (v : Vector R n) :
     mulVec (R := R) (n := n) (m := n)
-        (ofFn fun i j => Q[i][j] - if i = j then 1 else 0) v =
+        (ofFn fun i j => Q[(i, j)] - if i = j then 1 else 0) v =
       mulVec (R := R) (n := n) (m := n) Q v - v := by
   ext i hi
   let ii : Fin n := ⟨i, hi⟩
   simp [mulVec, row, Vector.dotProduct, ofFn]
   change
     (List.finRange n).foldl
-        (fun acc j => acc + (Q[ii][j] - if ii = j then 1 else 0) * v[j]) 0 =
-      (List.finRange n).foldl (fun acc j => acc + Q[ii][j] * v[j]) 0 - v[ii]
+        (fun acc j => acc + (Q[(ii, j)] - if ii = j then 1 else 0) * v[j]) 0 =
+      (List.finRange n).foldl (fun acc j => acc + Q[(ii, j)] * v[j]) 0 - v[ii]
   calc
     (List.finRange n).foldl
-        (fun acc j => acc + (Q[ii][j] - if ii = j then 1 else 0) * v[j]) 0 =
+        (fun acc j => acc + (Q[(ii, j)] - if ii = j then 1 else 0) * v[j]) 0 =
         (List.finRange n).foldl
-          (fun acc j => acc + (Q[ii][j] * v[j] - (if ii = j then 1 else 0) * v[j]))
+          (fun acc j => acc + (Q[(ii, j)] * v[j] - (if ii = j then 1 else 0) * v[j]))
           ((0 : R) - 0) := by
           have hzero : (0 : R) - 0 = 0 := by grind
           rw [hzero]
           apply foldl_sum_congr
           intro j _hj
           grind
-    _ = (List.finRange n).foldl (fun acc j => acc + Q[ii][j] * v[j]) 0 -
+    _ = (List.finRange n).foldl (fun acc j => acc + Q[(ii, j)] * v[j]) 0 -
           (List.finRange n).foldl
             (fun acc j => acc + (if ii = j then 1 else 0) * v[j]) 0 := by
           rw [foldl_sum_sub]
-    _ = (List.finRange n).foldl (fun acc j => acc + Q[ii][j] * v[j]) 0 - v[ii] := by
+    _ = (List.finRange n).foldl (fun acc j => acc + Q[(ii, j)] * v[j]) 0 - v[ii] := by
           rw [foldl_indicator_mul_unique (List.finRange n) ii (fun j => v[j])
             (List.mem_finRange _) (List.nodup_finRange n) 0]
           grind

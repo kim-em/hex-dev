@@ -28,30 +28,30 @@ def principalSubmatrix (M : Matrix R n n) (k : Nat) (hk : k ≤ n) : Matrix R k 
   ofFn fun i j =>
     let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
     let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
-    M[ii][jj]
+    M[(ii, jj)]
 
 /-- The first `k` rows of a matrix, retaining all source columns. -/
 @[expose]
 def takeRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) : Matrix R k m :=
   ofFn fun i j =>
     let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
-    M[ii][j]
+    M[(ii, j)]
 
 /-- Entry formula for the `k × k` principal submatrix. -/
 @[grind =] theorem getElem_principalSubmatrix (M : Matrix R n n) (k : Nat) (hk : k ≤ n)
     (i j : Fin k) :
-    (principalSubmatrix M k hk)[i][j] =
+    (principalSubmatrix M k hk)[(i, j)] =
       (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
        let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
-       M[ii][jj]) := by
+       M[(ii, jj)]) := by
   simp [principalSubmatrix, ofFn]
 
 /-- Entry formula for the first-`k`-rows slice. -/
 @[grind =] theorem getElem_takeRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n)
     (i : Fin k) (j : Fin m) :
-    (takeRows M k hk)[i][j] =
+    (takeRows M k hk)[(i, j)] =
       (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
-       M[ii][j]) := by
+       M[(ii, j)]) := by
   simp [takeRows, ofFn]
 
 /-- The leading principal `k × k` submatrix of the identity is the identity. -/
@@ -59,8 +59,8 @@ def takeRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) : Matrix R k m :=
     (k : Nat) (hk : k ≤ n) :
     principalSubmatrix (Matrix.identity (R := R) n) k hk = (Matrix.identity (R := R) k) := by
   ext i hi j hj
-  show (principalSubmatrix (Matrix.identity (R := R) n) k hk)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)] =
-    (Matrix.identity (R := R) k)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)]
+  show (principalSubmatrix (Matrix.identity (R := R) n) k hk)[((⟨i, hi⟩ : Fin k), (⟨j, hj⟩ : Fin k))] =
+    (Matrix.identity (R := R) k)[((⟨i, hi⟩ : Fin k), (⟨j, hj⟩ : Fin k))]
   rw [getElem_principalSubmatrix, getElem_identity (i := (⟨i, Nat.lt_of_lt_of_le hi hk⟩ : Fin n)),
     getElem_identity (i := (⟨i, hi⟩ : Fin k))]
   by_cases hij : (⟨i, hi⟩ : Fin k) = ⟨j, hj⟩
