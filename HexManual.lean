@@ -24,6 +24,9 @@ import HexManual.Chapters.HexConway
 import HexManual.Chapters.HexGFq
 import HexManual.Chapters.HexGF2
 import HexManual.Chapters.HexMatrix
+import HexManual.Chapters.HexDeterminant
+import HexManual.Chapters.HexRowReduce
+import HexManual.Chapters.HexBareiss
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -86,3 +89,9 @@ documentation phase of the development plan.
 {include 0 HexManual.Chapters.HexGF2}
 
 {include 0 HexManual.Chapters.HexMatrix}
+
+{include 0 HexManual.Chapters.HexDeterminant}
+
+{include 0 HexManual.Chapters.HexRowReduce}
+
+{include 0 HexManual.Chapters.HexBareiss}
