@@ -32,6 +32,11 @@ structure Matrix (R : Type u) (n m : Nat) where
   data : Vector (Vector R m) n
 deriving DecidableEq, BEq
 
+/-- Show a matrix through its row data, so `#eval`/`Repr` output is unchanged by
+the move from the former `abbrev` and never exposes the `data` projection name. -/
+instance {R : Type u} {n m : Nat} [Repr R] : Repr (Hex.Matrix R n m) where
+  reprPrec M prec := reprPrec M.data prec
+
 end Hex
 
 namespace Vector

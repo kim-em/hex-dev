@@ -80,7 +80,7 @@ private def vectorNats {n : Nat} (v : Vector (ZMod64 5) n) : List Nat :=
   v.toArray.toList.map ZMod64.toNat
 
 private def matrixNats {n m : Nat} (M : Matrix (ZMod64 5) n m) : List (List Nat) :=
-  M.toArray.toList.map vectorNats
+  M.rows.toArray.toList.map vectorNats
 
 private def splitSummary (result : Option (Berlekamp.SplitResult 5)) :
     Option (Nat × List Nat × List Nat) :=
@@ -192,7 +192,7 @@ set_option maxRecDepth 2048 in
   let F := Berlekamp.fixedSpaceMatrix reducibleQuad reducibleQuad_monic
   (List.finRange (Berlekamp.basisSize reducibleQuad)).all fun i =>
     (List.finRange (Berlekamp.basisSize reducibleQuad)).all fun j =>
-      F[i][j] == Q[i][j] - if i = j then 1 else 0
+      F[(i, j)] == Q[(i, j)] - if i = j then 1 else 0
 
 #guard Berlekamp.properDivisors 6 = [1, 2, 3]
 #guard Berlekamp.maximalProperDivisors 6 = [2, 3]
@@ -305,7 +305,7 @@ example : Berlekamp.rabinTest irreducibleQuad irreducibleQuad_monic = true :=
   let F := Berlekamp.fixedSpaceMatrix bigPoly bigPoly_monic
   (List.finRange (Berlekamp.basisSize bigPoly)).all fun i =>
     (List.finRange (Berlekamp.basisSize bigPoly)).all fun j =>
-      F[i][j] == Q[i][j] - if i = j then 1 else 0
+      F[(i, j)] == Q[(i, j)] - if i = j then 1 else 0
 
 -- `X^5 - X` has degree `5 < 8 = deg bigPoly`, so the reduction is the identity
 -- and the result is just `-X + X^5 = 4X + X^5` over `F_5`.
