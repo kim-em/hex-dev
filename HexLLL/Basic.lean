@@ -75,7 +75,7 @@ def packRow (K : Nat) (v : Vector Int m) : Int :=
 /-- Maximum absolute value of the entries of an integer matrix. -/
 @[expose]
 def maxAbs (M : Matrix Int n m) : Nat :=
-  M.toList.foldl
+  M.rows.toList.foldl
     (fun acc row => Nat.max acc (row.toList.foldl (fun a x => Nat.max a x.natAbs) 0))
     0
 
@@ -132,8 +132,8 @@ private theorem le_foldl_max {α : Type} (f : α → Nat) (l : List α) (acc : N
 /-- Every entry of an integer matrix is bounded by the `maxAbs` scan. -/
 theorem natAbs_le_maxAbs (M : Matrix Int n m) (i : Fin n) (j : Fin m) :
     M[i][j].natAbs ≤ maxAbs M := by
-  have hrow : M[i] ∈ M.toList := by
-    have h : M.toList[i.val]'(by simp) = M[i] := by simp
+  have hrow : M[i] ∈ M.rows.toList := by
+    have h : M.rows.toList[i.val]'(by simp) = M[i] := by simp [Hex.Matrix.getRow, Fin.getElem_fin]
     rw [← h]
     exact List.getElem_mem _
   have hentry : M[i][j] ∈ M[i].toList := by
@@ -146,7 +146,7 @@ theorem natAbs_le_maxAbs (M : Matrix Int n m) (i : Fin n) (j : Fin m) :
   have houter :=
     le_foldl_max
       (fun row : Vector Int m => row.toList.foldl (fun a x => Nat.max a x.natAbs) 0)
-      M.toList 0 hrow
+      M.rows.toList 0 hrow
   exact Nat.le_trans hinner houter
 
 /-- Packing is linear over a coefficient-times-row update. -/
@@ -365,6 +365,7 @@ theorem mulEqCert_iff {M : Matrix Int n n} {A C : Matrix Int n m} :
   simp only [packWidth, List.all_eq_true, beq_iff_eq, dotProduct_packRow]
   constructor
   · intro h
+    apply Hex.Matrix.ext
     apply Vector.ext
     intro i hi
     have hi' := h ⟨i, hi⟩ (List.mem_finRange _)
@@ -939,7 +940,7 @@ Soundness (`lllReducedInterval_sound`, HexLLLMathlib) entails
 @[expose]
 def lllReducedInterval (b : Matrix Int n m) (δ η : Rat) : Bool :=
   let S : Int := (2 : Int) ^ intervalPrec
-  let g := (Matrix.gramMatrix b).toArray.map Vector.toArray
+  let g := (Matrix.gramMatrix b).rows.toArray.map Vector.toArray
   match IntervalGS.pass S g n with
   | none => false
   | some (mus, bstars) =>
@@ -976,7 +977,7 @@ def lllReducedInt (b : Matrix Int n m) (δ η : Rat) : Bool :=
       (List.finRange i.val).all fun j =>
         let iFin : Fin n := i
         let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt i.isLt⟩
-        let νij : Int := (ν.get iFin).get jFin
+        let νij : Int := (ν.getRow iFin).get jFin
         let dj1 : Nat := d.get ⟨j.val + 1, Nat.succ_lt_succ
           (Nat.lt_trans j.isLt i.isLt)⟩
         decide ((η.den * νij.natAbs : Int) ≤ η.num * (dj1 : Int))
@@ -988,7 +989,7 @@ def lllReducedInt (b : Matrix Int n m) (δ η : Rat) : Bool :=
         let di : Nat := d.get ⟨i.val, Nat.lt_succ_of_lt i.isLt⟩
         let di1 : Nat := d.get ⟨i.val + 1, Nat.succ_lt_succ i.isLt⟩
         let di2 : Nat := d.get ⟨i.val + 2, Nat.succ_lt_succ hi⟩
-        let B : Int := (ν.get ip1Fin).get iFin
+        let B : Int := (ν.getRow ip1Fin).get iFin
         decide
           (δ.den * ((di2 : Int) * (di : Int) + B ^ 2) ≥
             δ.num * (di1 : Int) ^ 2)
@@ -1146,8 +1147,8 @@ structure Valid (s : LLLState n m) : Prop where
   /-- Each below-diagonal `ν` entry equals the executable scaled Gram-Schmidt
   coefficient of `s.b`. -/
   ν_eq : ∀ i j, (hi : i < n) → (hj : j < n) → j < i →
-      (s.ν.get ⟨i, hi⟩).get ⟨j, hj⟩ =
-        ((GramSchmidt.Int.scaledCoeffs s.b).get ⟨i, hi⟩).get ⟨j, hj⟩
+      (s.ν.getRow ⟨i, hi⟩).get ⟨j, hj⟩ =
+        ((GramSchmidt.Int.scaledCoeffs s.b).getRow ⟨i, hi⟩).get ⟨j, hj⟩
   /-- Each `d` entry equals the corresponding leading Gram determinant of
   `s.b`. -/
   d_eq : ∀ i, (hi : i < n + 1) →
@@ -1262,7 +1263,7 @@ theorem foldl_finRange_set_outerSubMul_get_eq
 @[expose]
 def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
     LLLState n m :=
-  let νjk := (s.ν.get k).get j
+  let νjk := (s.ν.getRow k).get j
   let dj1 := s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
   if hreduce : 2 * Int.natAbs νjk > dj1 then
     let r := nearestQuotient νjk dj1
@@ -1271,11 +1272,11 @@ def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
       (List.finRange j.val).foldl
         (fun row l =>
           let lFin : Fin n := ⟨l.val, Nat.lt_trans l.isLt j.isLt⟩
-          row.set lFin ((s.ν.get k).get lFin - r * (s.ν.get j).get lFin))
-        (s.ν.get k)
-    let rowK := rowK.set j ((s.ν.get k).get j - r * Int.ofNat dj1)
+          row.set lFin ((s.ν.getRow k).get lFin - r * (s.ν.getRow j).get lFin))
+        (s.ν.getRow k)
+    let rowK := rowK.set j ((s.ν.getRow k).get j - r * Int.ofNat dj1)
     let ν' : Matrix Int n n :=
-      s.ν.set k rowK
+      s.ν.setRow k rowK
     { b := b'
       ν := ν'
       d := s.d }
@@ -1302,7 +1303,7 @@ private theorem sizeReduceColumn_d (s : LLLState n m) (j k : Fin n)
     (hjk : j.val < k.val) :
     (s.sizeReduceColumn j k hjk).d = s.d := by
   unfold sizeReduceColumn
-  by_cases hreduce : 2 * Int.natAbs ((s.ν.get k).get j) >
+  by_cases hreduce : 2 * Int.natAbs ((s.ν.getRow k).get j) >
       s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
   · simp [hreduce]
   · simp [hreduce]
@@ -1314,11 +1315,11 @@ private theorem sizeReduceColumn_basis (s : LLLState n m) (j k : Fin n)
     GramSchmidt.Int.basis (s.sizeReduceColumn j k hjk).b =
       GramSchmidt.Int.basis s.b := by
   unfold sizeReduceColumn
-  by_cases hreduce : 2 * Int.natAbs ((s.ν.get k).get j) >
+  by_cases hreduce : 2 * Int.natAbs ((s.ν.getRow k).get j) >
       s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
   · simp only [hreduce]
     exact GramSchmidt.Int.basis_sizeReduce s.b j k hjk
-      (nearestQuotient ((s.ν.get k).get j)
+      (nearestQuotient ((s.ν.getRow k).get j)
         (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩))
   · simp [hreduce]
 
@@ -1364,7 +1365,7 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
     if hk0 : 0 < k then
       let kFin : Fin n := ⟨k, hk⟩
       let km1 : Fin n := GramSchmidt.prevRow kFin hk0
-      let B := (s.ν.get kFin).get km1
+      let B := (s.ν.getRow kFin).get km1
       let dkPrev := s.d.get ⟨km1.val, Nat.lt_succ_of_lt km1.isLt⟩
       let dk := s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩
       let dkNext := s.d.get ⟨k + 1, Nat.succ_lt_succ hk⟩
@@ -1380,8 +1381,8 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
               let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt km1.isLt⟩
               row.set jFin (source.get jFin))
             row
-        s.ν.modify km1 (setPrefixFrom (s.ν.get kFin))
-          |>.modify kFin (setPrefixFrom (s.ν.get km1))
+        s.ν.modify km1 (setPrefixFrom (s.ν.getRow kFin))
+          |>.modify kFin (setPrefixFrom (s.ν.getRow km1))
       let νPivot := setEntry νRowsSwapped kFin km1 B
       -- Hoist (oldNu[i].kFin, oldNu[i].km1) reads out of the foldl lambda
       -- so the closure does not hold a reference to s.ν across iterations.
@@ -1391,7 +1392,7 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
       -- COW'ing the row on every iteration.
       let pairs : Vector (Int × Int) n :=
         Vector.ofFn fun i =>
-          if _ : k < i.val then ((s.ν.get i).get kFin, (s.ν.get i).get km1)
+          if _ : k < i.val then ((s.ν.getRow i).get kFin, (s.ν.getRow i).get km1)
           else (0, 0)
       let ν' : Matrix Int n n :=
         (List.finRange n).foldl
@@ -1521,7 +1522,7 @@ private theorem rowAdd_memLattice_iff
     (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) (v : Vector Int m) :
     Matrix.memLattice (s.sizeReduceColumn j k hjk).b v ↔ Matrix.memLattice s.b v := by
   unfold sizeReduceColumn
-  by_cases hreduce : 2 * Int.natAbs ((s.ν.get k).get j) >
+  by_cases hreduce : 2 * Int.natAbs ((s.ν.getRow k).get j) >
       s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
   · rw [dif_pos hreduce]
     have hne : j ≠ k := fun h => Nat.lt_irrefl j.val (h ▸ hjk)
@@ -1560,8 +1561,8 @@ representation for its basis. -/
 theorem swapStep_ν_eq
     (s : LLLState n m) (k : Nat) (hvalid : (s.swapStep k).Valid)
     (i j : Nat) (hi : i < n) (hj : j < n) (hji : j < i) :
-    ((s.swapStep k).ν.get ⟨i, hi⟩).get ⟨j, hj⟩ =
-      ((GramSchmidt.Int.scaledCoeffs (s.swapStep k).b).get ⟨i, hi⟩).get ⟨j, hj⟩ := by
+    ((s.swapStep k).ν.getRow ⟨i, hi⟩).get ⟨j, hj⟩ =
+      ((GramSchmidt.Int.scaledCoeffs (s.swapStep k).b).getRow ⟨i, hi⟩).get ⟨j, hj⟩ := by
   simpa using hvalid.ν_eq i j hi hj hji
 
 /-- The updated swap state still packages the intended Gram-determinant
@@ -1579,7 +1580,7 @@ the stored integer data. -/
 @[expose]
 noncomputable def gramSchmidtCoeff (s : LLLState n m) (i j : Nat)
     (hi : i < n) (hj : j < n) : Rat :=
-  (((s.ν.get ⟨i, hi⟩).get ⟨j, hj⟩ : Int) : Rat) / (s.d.get ⟨j + 1, Nat.succ_lt_succ hj⟩ : Rat)
+  (((s.ν.getRow ⟨i, hi⟩).get ⟨j, hj⟩ : Int) : Rat) / (s.d.get ⟨j + 1, Nat.succ_lt_succ hj⟩ : Rat)
 
 /-- The multiplicative potential used by the LLL termination argument:
 `d₁ * ... * dₙ₋₁`. -/
@@ -1652,7 +1653,7 @@ def lllLoop (s : LLLState n m) (k : Nat) (δ : Rat)
           ⟨k - 1, Nat.lt_trans hkm1lt (Nat.lt_succ_self n)⟩
         let dk := sReduced.d.get ⟨k, Nat.lt_succ_of_lt hlt⟩
         let dkNext := sReduced.d.get ⟨k + 1, Nat.succ_lt_succ hlt⟩
-        let B := (sReduced.ν.get kFin).get km1Fin
+        let B := (sReduced.ν.getRow kFin).get km1Fin
         let lovaszLhs : Int :=
           Int.ofNat δ.den * (Int.ofNat dkNext * Int.ofNat dkPrev + B ^ 2)
         let lovaszRhs : Int :=
@@ -1692,7 +1693,7 @@ def lllLoop (s : LLLState n m) (k : Nat) (δ : Rat)
                   (Nat.lt_of_le_of_lt (Nat.sub_le k 1)
                     (Nat.lt_of_le_of_ne hkn hdone))
                   (Nat.lt_succ_self n)⟩) +
-              ((s.sizeReduce k).ν.get ⟨k, Nat.lt_of_le_of_ne hkn hdone⟩).get
+              ((s.sizeReduce k).ν.getRow ⟨k, Nat.lt_of_le_of_ne hkn hdone⟩).get
                 ⟨k - 1, Nat.lt_of_le_of_lt (Nat.sub_le k 1)
                   (Nat.lt_of_le_of_ne hkn hdone)⟩ ^ 2) ≥
           δ.num * (Int.ofNat ((s.sizeReduce k).d.get
@@ -1771,7 +1772,7 @@ never depends on the rounded value. -/
 Cholesky pass over the exact Gram entries `⟨b_i, b_j⟩`. -/
 @[expose]
 def init (b : Matrix Int n m) : SteeredState n m :=
-  let rows := b.toArray
+  let rows := b.rows.toArray
   let (mu, bb) := Id.run do
     let mut mu : Array (Array Float) := Array.replicate n (Array.replicate 0 0.0)
     let mut bb : Array Float := Array.replicate n 0.0
@@ -1802,7 +1803,7 @@ drift-control step: each working row's coefficients are recomputed from the exac
 integer basis, so float error never accumulates across the run. -/
 @[expose]
 def refreshRow (s : SteeredState n m) (k : Nat) : SteeredState n m :=
-  let rows := s.b.toArray
+  let rows := s.b.rows.toArray
   let (muk, bk) := Id.run do
     let mut c : Array Float := Array.replicate (k + 1) 0.0
     let mut muk : Array Float := Array.replicate k 0.0
@@ -1939,7 +1940,7 @@ def finalSweep (s : SteeredState n m) : SteeredState n m :=
 Computed from the exact basis only (no Gram-determinant state). -/
 @[expose]
 def fuel (b : Matrix Int n m) : Nat :=
-  let rows := b.toArray
+  let rows := b.rows.toArray
   Id.run do
     let mut s := 0
     for i in [0:n] do
@@ -2473,7 +2474,7 @@ def requestedDelta (δ : Rat) : Rat := min (δ + 1 / 100) ((δ + 1) / 2)
 the external provider expects. -/
 @[expose]
 def matrixToEntries (B : Hex.Matrix Int n m) : Array String :=
-  B.toArray.flatMap (fun row => row.toArray.map toString)
+  B.rows.toArray.flatMap (fun row => row.toArray.map toString)
 
 /-- Reshape a flat row-major `Array Int` of length `rows * cols` into a
 `Matrix Int rows cols`. Returns `none` on length mismatch. -/
@@ -2481,7 +2482,7 @@ def matrixToEntries (B : Hex.Matrix Int n m) : Array String :=
 def matrixFromArray (rows cols : Nat) (a : Array Int) :
     Option (Hex.Matrix Int rows cols) :=
   if h : a.size = rows * cols then
-    some (Vector.ofFn fun i =>
+    some (Hex.Matrix.ofRows (Vector.ofFn fun i =>
       Vector.ofFn fun j =>
         a[i.val * cols + j.val]'(by
           have hi : i.val + 1 ≤ rows := Nat.succ_le_of_lt i.isLt
@@ -2493,7 +2494,7 @@ def matrixFromArray (rows cols : Nat) (a : Array Int) :
             exact Nat.add_lt_add_left hjlt _
           have h3 : i.val * cols + j.val < rows * cols :=
             Nat.lt_of_lt_of_le h2 h1
-          rw [h]; exact h3))
+          rw [h]; exact h3)))
   else
     none
 
@@ -2601,7 +2602,7 @@ classical precondition `1/4 < δ` flows to the exact fallback. -/
 def lll.firstShortVectorUnchecked (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
     Vector Int m :=
-  (lllSteered b δ hδ hδ' hn)[0]
+  (lllSteered b δ hδ hδ' hn).getRow ⟨0, hn⟩
 
 /-- The first row of the reduced basis (shortest vector under the LLL
 guarantee). Canonical short-vector entry point for downstream callers
@@ -2611,7 +2612,7 @@ def lll.firstShortVector (b : Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent) :
     Vector Int m :=
-  (lll b δ hδ hδ' hn hind)[0]
+  (lll b δ hδ hδ' hn hind).getRow ⟨0, hn⟩
 
 /-- Proof-free executable variant of `lll.shortVectors`. Runs the
 approximation-steered reducer with certified output (`lllSteered`). -/
@@ -2619,7 +2620,7 @@ approximation-steered reducer with certified output (`lllSteered`). -/
 def lll.shortVectorsUnchecked (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
     Array (Vector Int m) :=
-  (lllSteered b δ hδ hδ' hn).toArray
+  (lllSteered b δ hδ hδ' hn).rows.toArray
 
 /-- The full reduced basis viewed as an ordered array of candidate short
 vectors. -/
@@ -2628,6 +2629,6 @@ def lll.shortVectors (b : Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent) :
     Array (Vector Int m) :=
-  (lll b δ hδ hδ' hn hind).toArray
+  (lll b δ hδ hδ' hn hind).rows.toArray
 
 end Hex
