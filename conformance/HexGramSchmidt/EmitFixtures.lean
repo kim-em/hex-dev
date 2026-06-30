@@ -60,7 +60,7 @@ private def vecToInts {n : Nat} (v : Vector Int n) : List Int :=
   v.toArray.toList
 
 private def matToInts {n m : Nat} (b : Matrix Int n m) : List (List Int) :=
-  b.toArray.toList.map vecToInts
+  b.rows.toArray.toList.map vecToInts
 
 private def natVecToInts {n : Nat} (v : Vector Nat n) : List Int :=
   v.toArray.toList.map (fun x => Int.ofNat x)
