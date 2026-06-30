@@ -91,10 +91,17 @@ steady; steered hits a fallback pathology at n=40 (708 ms) while the certified
 path stays cheap (10 ms @ n=48). This family also drives the planted-vector
 success-vs-density chart (`reports/figures/hex-lll-knapsack-success.svg`).
 
-### random-bounded & harsh-cubic
-Comparator plots: `reports/figures/hex-lll-comparator-{random-bounded,harsh-cubic}.svg`.
-`harsh-cubic` is the one family where steering wins (it tracks fpLLL), and is the
-README headline.
+### random-bounded & harsh-cubic — where steering wins
+![harsh-cubic](reports/figures/hex-lll-comparator-harsh-cubic.svg)
+
+The two families where the basis is near-orthogonal (`random-bounded`) or the
+cost is bit-width-bound (`harsh-cubic`) are exactly where steering pays off. On
+`harsh-cubic`, Lean steered stays near fpLLL's slope (69 ms @ n=65) while the
+exact reducers blow up (native 602 ms, Isabelle 909 ms) — this is the README
+headline. On `random-bounded` (to n=180) steering is ~2.5× faster than native
+(1712 ms vs 4357 ms), since the approximate Gram-Schmidt suffices when the swap
+count is low. Steering helps precisely when bit-width, not swap count, dominates
+— the clean inverse of the four structured families above.
 
 See [reports/hex-lll-performance.md](reports/hex-lll-performance.md) for the
 audit report (ratios, per-call overhead, concerns) and
