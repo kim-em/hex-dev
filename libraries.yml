@@ -214,6 +214,8 @@ libraries:
           description: "LCG-generated random integer bases, |entry| <= 30, n in {30, 60, 120, 240}; must include a committed seed where >= 1 Lovasz swap fires."
         - name: harsh-cubic
           description: "Entry bit-length ~ 3.3 * n at n in {15, 30, 45} (verified-Isabelle paper regime); exercises bigint operand-size drift."
+        - name: ajtai
+          description: "Ajtai-style worst-case lower-triangular bases (faithful port of fplll gen_trg / latticegen t, alpha 1.2); diagonal D_i in [2, 2^floor((2d-i)^1.2)], off-diagonals |.| < D_i/2. Drives the Theta(d^2 log B) swap count - the iteration-count scaling axis the near-orthogonal families leave unmeasured."
   HexPolyFp:
     deps: [HexPoly, HexModArith]
     mathlib: false
