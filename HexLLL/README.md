@@ -151,6 +151,28 @@ is `(δ, 11/20)`-reduced, spans the same lattice, and satisfies the
 short-vector bound, together with the certificate soundness theorem
 `certCheck_sound`.
 
+# Performance
+
+HexLLL is benchmarked against the verified Isabelle `LLL_Basis_Reduction`
+extraction and the unverified floating-point `fplll`, across input families
+chosen to stress different parts of the algorithm. The headline result, on
+inputs whose entry bit-length grows with the dimension (`harsh-cubic`):
+
+![HexLLL harsh-cubic comparator](reports/figures/hex-lll-comparator-harsh-cubic.svg)
+
+The exact-integer reducers (Lean native, verified Isabelle native) climb
+super-quintically as the operands widen, while the **steered default tracks
+`fplll`'s near-cubic slope** — it drives the same exact, certified row
+operations from cheap approximate Gram-Schmidt data. So the verified output is
+obtained at close to unverified floating-point speed on this family.
+
+The worst-case story is the opposite and just as informative: on the swap-bound
+`ajtai` family, steering *cannot* help (the iteration count is intrinsic) and
+the right architecture is to **certify a fast unverified reducer** rather than
+run a verified exact one. See **[PERFORMANCE.md](PERFORMANCE.md)** for all six
+input families, the six-curve methodology, the per-family discussion, and the
+asymptotic fits.
+
 # Contributing
 
 Development happens in the [`hex-dev`](https://github.com/kim-em/hex-dev)
