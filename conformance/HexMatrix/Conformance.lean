@@ -91,29 +91,33 @@ private def spanVec : Vector Rat 3 :=
 #guard baseInt * (Matrix.identity (R := Int) 2) = baseInt
 #guard Matrix.transpose (Matrix.transpose baseInt) = baseInt
 
-/-- info: { toArray := #[{ toArray := #[1, 3], size_toArray := _ }, { toArray := #[2, 4], size_toArray := _ }],
-  size_toArray := _ } -/
+-- `#m[...]` literal notation agrees with the `ofFn` fixtures.
+#guard (#m[1, 2; 3, 4] : Matrix Int 2 2) = baseInt
+#guard (#m[0, 2, 1; 3, 0, 4; 5, 6, 0] : Matrix Int 3 3) = pivotInt
+
+/-- info: ⎡ 1 3 ⎤
+⎣ 2 4 ⎦ -/
 #guard_msgs in #eval Matrix.transpose baseInt
 
 /-- info: { toArray := #[17, 39], size_toArray := _ } -/
 #guard_msgs in #eval Matrix.mulVec baseInt vecInt
 
-/-- info: { toArray := #[{ toArray := #[7, 10], size_toArray := _ }, { toArray := #[15, 22], size_toArray := _ }],
-  size_toArray := _ } -/
+/-- info: ⎡  7 10 ⎤
+⎣ 15 22 ⎦ -/
 #guard_msgs in #eval baseInt * baseInt
 
-/-- info: { toArray := #[{ toArray := #[3, 4], size_toArray := _ }, { toArray := #[1, 2], size_toArray := _ }],
-  size_toArray := _ } -/
+/-- info: ⎡ 3 4 ⎤
+⎣ 1 2 ⎦ -/
 #guard_msgs in #eval Matrix.rowSwap baseInt ⟨0, by decide⟩ ⟨1, by decide⟩
 
-/-- info: { toArray := #[{ toArray := #[0, 2, 1], size_toArray := _ }, { toArray := #[-6, 0, -8], size_toArray := _ },
-               { toArray := #[5, 6, 0], size_toArray := _ }],
-  size_toArray := _ } -/
+/-- info: ⎡  0 2  1 ⎤
+⎢ -6 0 -8 ⎥
+⎣  5 6  0 ⎦ -/
 #guard_msgs in #eval Matrix.rowScale pivotInt ⟨1, by decide⟩ (-2)
 
-/-- info: { toArray := #[{ toArray := #[0, 2, 1], size_toArray := _ }, { toArray := #[3, 0, 4], size_toArray := _ },
-               { toArray := #[5, 12, 3], size_toArray := _ }],
-  size_toArray := _ } -/
+/-- info: ⎡ 0  2 1 ⎤
+⎢ 3  0 4 ⎥
+⎣ 5 12 3 ⎦ -/
 #guard_msgs in #eval Matrix.rowAdd pivotInt ⟨0, by decide⟩ ⟨2, by decide⟩ 3
 
 #guard Matrix.rowSwap (Matrix.rowSwap baseInt ⟨0, by decide⟩ ⟨1, by decide⟩)
