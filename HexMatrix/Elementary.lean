@@ -92,7 +92,7 @@ uniquely referenced both the outer vector and the row itself are updated in
 place: `Vector.map` reuses the freed row's backing store. -/
 @[expose]
 def rowScale [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) : Matrix R n m :=
-  M.modify i fun row => row.map fun x => c * x
+  M.modifyRow i fun row => row.map fun x => c * x
 
 /-- Read an entry of `rowScale M i c` by cases on the row index: row `i`
 returns `c * M[i][k]`, any other row is unchanged. -/
@@ -100,7 +100,7 @@ theorem getElem_rowScale [Mul R] (M : Matrix R n m) (i r : Fin n) (c : R) (k : F
     (rowScale M i c)[r][k] =
       if r = i then c * M[i][k] else M[r][k] := by
   rw [rowScale]
-  simp only [getElem_eq_getRow, getRow, rows_modify, Vector.getElem_modify,
+  simp only [getElem_eq_getRow, getRow, rows_modifyRow, Vector.getElem_modify,
     Fin.getElem_fin, Fin.ext_iff]
   grind
 
@@ -132,7 +132,7 @@ built fresh, since every entry of it changes. -/
 @[expose]
 def rowAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin n) (c : R) : Matrix R n m :=
   let rsrc := getRow M src
-  M.modify dst fun rdst => Vector.ofFn fun k => rdst[k] + c * rsrc[k]
+  M.modifyRow dst fun rdst => Vector.ofFn fun k => rdst[k] + c * rsrc[k]
 
 /-- Read an entry of `rowAdd M src dst c` by cases on the row index: row `dst`
 returns `M[dst][k] + c * M[src][k]`, any other row is unchanged. -/
@@ -141,7 +141,7 @@ theorem getElem_rowAdd [Mul R] [Add R]
     (rowAdd M src dst c)[r][k] =
       if r = dst then M[dst][k] + c * M[src][k] else M[r][k] := by
   rw [rowAdd]
-  simp only [getElem_eq_getRow, getRow, rows_modify, Vector.getElem_modify,
+  simp only [getElem_eq_getRow, getRow, rows_modifyRow, Vector.getElem_modify,
     Fin.getElem_fin, Fin.ext_iff]
   grind
 
@@ -187,7 +187,7 @@ characterization for callers that reason about the result as a `set`. -/
 theorem rowScale_eq_set [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) :
     rowScale M i c = setRow M i (Vector.ofFn fun k => c * M[i][k]) := by
   apply ext
-  simp only [rowScale, rows_modify, rows_setRow]
+  simp only [rowScale, rows_modifyRow, rows_setRow]
   rw [Vector.modify_eq_set _ _ _ i.isLt]
   congr 1
   apply Vector.ext
@@ -201,7 +201,7 @@ theorem rowAdd_eq_set [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin n) (c : 
     rowAdd M src dst c =
       setRow M dst (Vector.ofFn fun k => M[dst][k] + c * M[src][k]) := by
   apply ext
-  simp only [rowAdd, rows_modify, rows_setRow]
+  simp only [rowAdd, rows_modifyRow, rows_setRow]
   rw [Vector.modify_eq_set _ _ _ dst.isLt]
   congr 1
 

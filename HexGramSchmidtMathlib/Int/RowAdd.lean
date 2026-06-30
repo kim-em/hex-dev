@@ -128,7 +128,7 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
     by_cases hqj : qf.val = j.val
     · have hqNat : qf.val = j.val := hqj
       have hq_last : qf = last := Fin.ext hqj
-      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.setCol,
+      simp only [GramSchmidt.scaledCoeffMatrix, Hex.Matrix.getElem_setCol,
         Hex.Matrix.getElem_ofFn, hqNat, if_true]
       rw [if_pos hq_last]
       simp only [Matrix.row]
@@ -150,7 +150,7 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
           (Matrix.rowAdd b j k c)[GramSchmidt.liftFinLE qf ht] =
             b[GramSchmidt.liftFinLE qf ht] :=
         rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE qf ht) c hq_ne_k
-      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.setCol,
+      simp only [GramSchmidt.scaledCoeffMatrix, Hex.Matrix.getElem_setCol,
         Hex.Matrix.getElem_ofFn, if_neg hqNat]
       rw [if_neg hq_ne_last]
       simp only [Matrix.row, ← Hex.Matrix.getElem_eq_getRow]
@@ -165,14 +165,14 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
     by_cases hqj : qf.val = j.val
     · have hqNat : qf.val = j.val := hqj
       have hq_last : qf = last := Fin.ext hqj
-      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.setCol,
+      simp only [GramSchmidt.scaledCoeffMatrix, Hex.Matrix.getElem_setCol,
         Hex.Matrix.getElem_ofFn, hqNat, if_true]
       rw [if_pos hq_last]
     · have hq_ne_last : qf ≠ last := by
         intro h
         exact hqj (congrArg Fin.val h)
       have hqNat : qf.val ≠ j.val := hqj
-      simp only [GramSchmidt.scaledCoeffMatrix, Matrix.setCol,
+      simp only [GramSchmidt.scaledCoeffMatrix, Hex.Matrix.getElem_setCol,
         Hex.Matrix.getElem_ofFn, if_neg hqNat]
       rw [if_neg hq_ne_last]
       dsimp [M, GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row]
@@ -187,10 +187,10 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
         show (qf : Nat) = (j : Nat)
         have hval := congrArg Fin.val hq_last
         simpa [last] using hval
-      simp only [M, gramCol, GramSchmidt.leadingGramMatrixInt, Matrix.setCol,
+      simp only [M, gramCol, GramSchmidt.leadingGramMatrixInt, Hex.Matrix.getElem_setCol,
         Hex.Matrix.getElem_ofFn, Hex.Matrix.getElem_pair_eq_nested]
       rw [if_pos hq_last, hq_lift]
-    · simp only [M, gramCol, GramSchmidt.leadingGramMatrixInt, Matrix.setCol,
+    · simp only [M, gramCol, GramSchmidt.leadingGramMatrixInt, Hex.Matrix.getElem_setCol,
         Hex.Matrix.getElem_ofFn, Hex.Matrix.getElem_pair_eq_nested]
       rw [if_neg hq_last]
   calc

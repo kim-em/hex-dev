@@ -35,6 +35,14 @@ uniquely referenced: each uses its argument linearly and goes through
 `Vector.swap` / `Vector.modify` / `Vector.map`, which reuse the backing store
 rather than copying it.
 
+**Indexed row/column mutation.** `modifyRow` updates one row in place;
+`setCol` and the per-entry `modifyCol` update one column entry per row. The
+column operations share an in-place engine, `mapRowsIdx`, which threads the
+matrix through a `Fin.foldl` of per-row `Vector.modify`s — no intermediate index
+list is allocated, and each row's single-entry update reuses the freed row slot.
+This replaces the former `ofFn`-rebuild form of `setCol`, which read and
+reallocated every entry to change one column.
+
 **Key properties:**
 - identity matrices act as left and right multiplicative identities
 - `transpose` is involutive

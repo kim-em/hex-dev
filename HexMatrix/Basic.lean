@@ -186,30 +186,6 @@ theorem setRow_row_ne (M : Matrix R n m) (dst r : Fin n) (v : Vector R m)
   simp only [getRow, rows_setRow]
   exact Vector.getElem_set_ne (xs := M.rows) (x := v) dst.isLt r.isLt hval
 
-/-- Replace column `dst` of `M` with the entry function `v`. -/
-@[expose]
-def setCol (M : Matrix R n m) (dst : Fin m) (v : Fin n → R) : Matrix R n m :=
-  ofFn fun r c => if c = dst then v r else M[(r, c)]
-
-/-- Entrywise characterization of `setCol`: the destination column is read from
-the replacement function and every other column is read from `M`. -/
-@[grind =] theorem getElem_setCol (M : Matrix R n m) (dst : Fin m) (v : Fin n → R)
-    (r : Fin n) (c : Fin m) :
-    (setCol M dst v)[r][c] = if c = dst then v r else M[r][c] := by
-  simp [setCol, ofFn]
-
-/-- Replacing a column by itself leaves the matrix unchanged. -/
-@[simp] theorem setCol_self (M : Matrix R n m) (dst : Fin m) :
-    setCol M dst (fun r => M[r][dst]) = M := by
-  ext r hr c hc
-  change (setCol M dst (fun r => M[r][dst]))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin m)] =
-    M[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin m)]
-  rw [getElem_setCol]
-  by_cases hc' : (⟨c, hc⟩ : Fin m) = dst
-  · rw [if_pos hc']
-    exact congrArg (fun c' : Fin m => M[(⟨r, hr⟩ : Fin n)][c']) hc'.symm
-  · rw [if_neg hc']
-
 /-- The transpose of a dense matrix. -/
 @[expose]
 def transpose (M : Matrix R n m) : Matrix R m n :=
@@ -340,7 +316,7 @@ instance [Mul R] [Add R] [OfNat R 0] : Mul (Matrix R n n) where
 so when `M` is uniquely referenced the row is owned and `Vector.modify` updates
 the backing store without copying. -/
 @[expose, inline]
-def modify (M : Matrix R n m) (i : Nat) (f : Vector R m → Vector R m) : Matrix R n m :=
+def modifyRow (M : Matrix R n m) (i : Nat) (f : Vector R m → Vector R m) : Matrix R n m :=
   match M with
   | ⟨d⟩ => ⟨d.modify i f⟩
 
@@ -357,21 +333,21 @@ def mapRows (M : Matrix R n m) (f : Vector R m → Vector R m') : Matrix R n m' 
   match M with
   | ⟨d⟩ => ⟨d.map f⟩
 
-@[simp, grind =] theorem rows_modify (M : Matrix R n m) (i : Nat)
-    (f : Vector R m → Vector R m) : (modify M i f).rows = M.rows.modify i f := by
+@[simp, grind =] theorem rows_modifyRow (M : Matrix R n m) (i : Nat)
+    (f : Vector R m → Vector R m) : (modifyRow M i f).rows = M.rows.modify i f := by
   cases M; rfl
 
-/-- Row `i` of `modify M i f` is `f` applied to the old row `i`. -/
-@[simp, grind =] theorem getRow_modify_self (M : Matrix R n m) (i : Fin n)
-    (f : Vector R m → Vector R m) : getRow (modify M i.val f) i = f (getRow M i) := by
-  simp only [getRow, rows_modify, Fin.getElem_fin]
+/-- Row `i` of `modifyRow M i f` is `f` applied to the old row `i`. -/
+@[simp, grind =] theorem getRow_modifyRow_self (M : Matrix R n m) (i : Fin n)
+    (f : Vector R m → Vector R m) : getRow (modifyRow M i.val f) i = f (getRow M i) := by
+  simp only [getRow, rows_modifyRow, Fin.getElem_fin]
   rw [Vector.getElem_modify_self i.isLt]
 
-/-- Rows other than `i` are unchanged by `modify M i f`. -/
-@[simp, grind =] theorem getRow_modify_ne (M : Matrix R n m) (i : Nat)
+/-- Rows other than `i` are unchanged by `modifyRow M i f`. -/
+@[simp, grind =] theorem getRow_modifyRow_ne (M : Matrix R n m) (i : Nat)
     (f : Vector R m → Vector R m) (j : Fin n) (h : i ≠ j.val) :
-    getRow (modify M i f) j = getRow M j := by
-  simp only [getRow, rows_modify, Fin.getElem_fin]
+    getRow (modifyRow M i f) j = getRow M j := by
+  simp only [getRow, rows_modifyRow, Fin.getElem_fin]
   rw [Vector.getElem_modify_of_ne j.isLt h]
 
 @[simp, grind =] theorem rows_swap (M : Matrix R n m) (i j : Nat) (hi : i < n) (hj : j < n) :
@@ -379,6 +355,88 @@ def mapRows (M : Matrix R n m) (f : Vector R m → Vector R m') : Matrix R n m' 
 
 @[simp, grind =] theorem rows_mapRows (M : Matrix R n m) (f : Vector R m → Vector R m') :
     (M.mapRows f).rows = M.rows.map f := by cases M; rfl
+
+/-- In-place indexed row map: replace row `i` by `f i (row i)` for every `i`,
+threading `M` through a `Fin.foldl` of per-row `modifyRow`s. No intermediate
+index list is allocated, and each row update is in place when `M` is uniquely
+referenced (`Vector.modify` frees the row slot before applying `f`). This is the
+shared engine for the in-place column and diagonal scatters (`setCol`,
+`modifyCol`). -/
+@[expose, inline]
+def mapRowsIdx (M : Matrix R n m) (f : Fin n → Vector R m → Vector R m) : Matrix R n m :=
+  Fin.foldl n (fun M i => M.modifyRow i.val (f i)) M
+
+/-- The row data of `mapRowsIdx` is the corresponding `Fin.foldl` of `Vector.modify`s. -/
+theorem rows_mapRowsIdx (M : Matrix R n m) (f : Fin n → Vector R m → Vector R m) :
+    (mapRowsIdx M f).rows = Fin.foldl n (fun d i => d.modify i.val (f i)) M.rows := by
+  unfold mapRowsIdx
+  rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl]
+  generalize List.finRange n = xs
+  induction xs generalizing M with
+  | nil => rfl
+  | cons x xs ih => simp only [List.foldl_cons]; rw [ih (M.modifyRow x.val (f x)), rows_modifyRow]
+
+/-- Row `r` of `mapRowsIdx M f` is `f r` applied to the original row `r`. -/
+@[simp, grind =] theorem getRow_mapRowsIdx (M : Matrix R n m)
+    (f : Fin n → Vector R m → Vector R m) (r : Fin n) :
+    getRow (mapRowsIdx M f) r = f r (getRow M r) := by
+  simp only [getRow, rows_mapRowsIdx, Fin.getElem_fin]
+  rw [Vector.getElem_finFoldl_modify]
+
+/-- Entry `(r, c)` of `mapRowsIdx M f` reads from the updated row `f r (row r)`. -/
+@[grind =] theorem getElem_mapRowsIdx (M : Matrix R n m)
+    (f : Fin n → Vector R m → Vector R m) (r : Fin n) (c : Fin m) :
+    (mapRowsIdx M f)[r][c] = (f r (getRow M r))[c] := by
+  rw [getElem_eq_getRow, getRow_mapRowsIdx]
+
+/-- Replace column `dst` of `M` with the entry function `v`. In-place via
+`mapRowsIdx`: each row's single `dst` entry is set, reusing the freed row slot,
+rather than rebuilding the whole matrix with `ofFn`. -/
+@[expose]
+def setCol (M : Matrix R n m) (dst : Fin m) (v : Fin n → R) : Matrix R n m :=
+  mapRowsIdx M fun i row => row.set dst.val (v i) dst.isLt
+
+/-- Entrywise characterization of `setCol`: the destination column is read from
+the replacement function and every other column is read from `M`. -/
+@[grind =] theorem getElem_setCol (M : Matrix R n m) (dst : Fin m) (v : Fin n → R)
+    (r : Fin n) (c : Fin m) :
+    (setCol M dst v)[r][c] = if c = dst then v r else M[r][c] := by
+  rw [setCol, getElem_mapRowsIdx]
+  simp only [Vector.getElem_set, getElem_eq_getRow, Fin.getElem_fin, Fin.ext_iff]
+  grind
+
+/-- Replacing a column by itself leaves the matrix unchanged. -/
+@[simp] theorem setCol_self (M : Matrix R n m) (dst : Fin m) :
+    setCol M dst (fun r => M[r][dst]) = M := by
+  ext r hr c hc
+  change (setCol M dst (fun r => M[r][dst]))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin m)] =
+    M[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin m)]
+  rw [getElem_setCol]
+  by_cases hc' : (⟨c, hc⟩ : Fin m) = dst
+  · rw [if_pos hc']
+    exact congrArg (fun c' : Fin m => M[(⟨r, hr⟩ : Fin n)][c']) hc'.symm
+  · rw [if_neg hc']
+
+/-- In-place per-entry column modify: replace each entry `M[i][dst]` by
+`g i M[i][dst]`, every other column unchanged. In-place via `mapRowsIdx`,
+analogous to `setCol`. -/
+@[expose]
+def modifyCol (M : Matrix R n m) (dst : Fin m) (g : Fin n → R → R) : Matrix R n m :=
+  mapRowsIdx M fun i row => row.modify dst.val (g i)
+
+/-- Entrywise characterization of `modifyCol`. -/
+@[grind =] theorem getElem_modifyCol (M : Matrix R n m) (dst : Fin m) (g : Fin n → R → R)
+    (r : Fin n) (c : Fin m) :
+    (modifyCol M dst g)[r][c] = if c = dst then g r (M[r][dst]) else M[r][c] := by
+  rw [modifyCol, getElem_mapRowsIdx]
+  simp only [Vector.getElem_modify, getElem_eq_getRow, Fin.getElem_fin, Fin.ext_iff]
+  grind
+
+/-- Entries outside column `dst` are unchanged by `modifyCol`. -/
+theorem getElem_modifyCol_of_ne (M : Matrix R n m) (dst : Fin m) (g : Fin n → R → R)
+    (r : Fin n) {c : Fin m} (h : c ≠ dst) :
+    (modifyCol M dst g)[r][c] = M[r][c] := by
+  rw [getElem_modifyCol, if_neg h]
 
 /-- Scalar action on a matrix, delegated to the row data. The single sanctioned
 `SMul` instance for matrices: the Mathlib bridge layer reuses it rather than

@@ -267,12 +267,12 @@ private theorem foldl_modify_matrix_getRow
     (base : Hex.Matrix Int n n) (upd : Fin n → Vector Int n → Vector Int n) (l : Fin n) :
     (xs.foldl
         (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
-          if k < i.val then ν.modify i.val (upd i) else ν) base).getRow l =
+          if k < i.val then ν.modifyRow i.val (upd i) else ν) base).getRow l =
       if (l ∈ xs ∧ k < l.val) then upd l (base.getRow l) else base.getRow l := by
   have key : ∀ (acc : Hex.Matrix Int n n),
       (xs.foldl
           (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
-            if k < i.val then ν.modify i.val (upd i) else ν) acc).rows =
+            if k < i.val then ν.modifyRow i.val (upd i) else ν) acc).rows =
         xs.foldl
           (fun (a : Vector (Vector Int n) n) (i : Fin n) =>
             if k < i.val then a.modify i.val (upd i) else a) acc.rows := by
@@ -283,7 +283,7 @@ private theorem foldl_modify_matrix_getRow
     | cons x xs ih =>
       simp only [List.foldl_cons]
       by_cases hkx : k < x.val
-      · rw [if_pos hkx, if_pos hkx, ih (acc.modify x.val (upd x)), Hex.Matrix.rows_modify]
+      · rw [if_pos hkx, if_pos hkx, ih (acc.modifyRow x.val (upd x)), Hex.Matrix.rows_modifyRow]
       · rw [if_neg hkx, if_neg hkx, ih acc]
   unfold Hex.Matrix.getRow
   rw [key base]
@@ -380,9 +380,9 @@ private theorem swapStep_valid (s : LLLState n m) (k : Nat)
         -- Define the abbreviations for the inner foldl base, so we can use
         -- per-row characterization lemmas without copying expressions.
         set νRowsSwapped : Hex.Matrix Int n n :=
-          (s.ν.modify km1.val (setPrefix (s.ν.getRow kFin) · km1)).modify kFin.val
+          (s.ν.modifyRow km1.val (setPrefix (s.ν.getRow kFin) · km1)).modifyRow kFin.val
             (setPrefix (s.ν.getRow km1) · km1) with hνRows_def
-        set νPivot : Hex.Matrix Int n n := νRowsSwapped.modify kFin.val (·.set km1 B)
+        set νPivot : Hex.Matrix Int n n := νRowsSwapped.modifyRow kFin.val (·.set km1 B)
           with hνPivot_def
         -- Unfold the goal to expose the ν' foldl, then apply
         -- `foldl_modify_rows_get`.
@@ -390,14 +390,14 @@ private theorem swapStep_valid (s : LLLState n m) (k : Nat)
           (((List.finRange n).foldl
               (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
                 if _ : k < i.val then
-                  ν.modify i.val (upd i)
+                  ν.modifyRow i.val (upd i)
                 else ν)
               νPivot).getRow iFin).get jFin =
             ((GramSchmidt.Int.scaledCoeffs b').getRow iFin).get jFin
         have hν'_get :
             ((List.finRange n).foldl
                 (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
-                  if k < i.val then ν.modify i.val (upd i) else ν)
+                  if k < i.val then ν.modifyRow i.val (upd i) else ν)
                 νPivot).getRow iFin =
               if k < iFin.val then upd iFin (νPivot.getRow iFin) else νPivot.getRow iFin := by
           have := foldl_modify_matrix_getRow (n := n) k
@@ -407,9 +407,9 @@ private theorem swapStep_valid (s : LLLState n m) (k : Nat)
         -- Bridge `if _ : ...` (`dite`) to `if ...` (`ite`).
         have hbody_eq :
             (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
-                if _ : k < i.val then ν.modify i.val (upd i) else ν) =
+                if _ : k < i.val then ν.modifyRow i.val (upd i) else ν) =
               (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
-                if k < i.val then ν.modify i.val (upd i) else ν) := by
+                if k < i.val then ν.modifyRow i.val (upd i) else ν) := by
           funext ν i
           split <;> rfl
         rw [hbody_eq, hν'_get]
@@ -418,25 +418,25 @@ private theorem swapStep_valid (s : LLLState n m) (k : Nat)
             ∀ (l : Fin n), l.val ≠ km1.val → l.val ≠ kFin.val →
               νRowsSwapped.getRow l = s.ν.getRow l := by
           intro l hl_km1 hl_kFin
-          rw [hνRows_def, Hex.Matrix.getRow_modify_ne _ kFin.val _ l (fun h => hl_kFin h.symm),
-            Hex.Matrix.getRow_modify_ne _ km1.val _ l (fun h => hl_km1 h.symm)]
+          rw [hνRows_def, Hex.Matrix.getRow_modifyRow_ne _ kFin.val _ l (fun h => hl_kFin h.symm),
+            Hex.Matrix.getRow_modifyRow_ne _ km1.val _ l (fun h => hl_km1 h.symm)]
         have hνRows_get_km1 : νRowsSwapped.getRow km1 = setPrefix (s.ν.getRow kFin) (s.ν.getRow km1) km1 := by
-          rw [hνRows_def, Hex.Matrix.getRow_modify_ne _ kFin.val _ km1 (fun h => hkm1_val_ne_kFin h.symm)]
-          exact Hex.Matrix.getRow_modify_self _ km1 _
+          rw [hνRows_def, Hex.Matrix.getRow_modifyRow_ne _ kFin.val _ km1 (fun h => hkm1_val_ne_kFin h.symm)]
+          exact Hex.Matrix.getRow_modifyRow_self _ km1 _
         have hνRows_get_kFin :
             νRowsSwapped.getRow kFin = setPrefix (s.ν.getRow km1) (s.ν.getRow kFin) km1 := by
-          rw [hνRows_def, Hex.Matrix.getRow_modify_self _ kFin _,
-            Hex.Matrix.getRow_modify_ne _ km1.val _ kFin hkm1_val_ne_kFin]
+          rw [hνRows_def, Hex.Matrix.getRow_modifyRow_self _ kFin _,
+            Hex.Matrix.getRow_modifyRow_ne _ km1.val _ kFin hkm1_val_ne_kFin]
         -- Evaluate νPivot.get.
         have hνPivot_get_ne :
             ∀ (l : Fin n), l.val ≠ kFin.val → νPivot.getRow l = νRowsSwapped.getRow l := by
           intro l hl_kFin
           rw [hνPivot_def]
-          exact Hex.Matrix.getRow_modify_ne _ kFin.val _ l (fun h => hl_kFin h.symm)
+          exact Hex.Matrix.getRow_modifyRow_ne _ kFin.val _ l (fun h => hl_kFin h.symm)
         have hνPivot_get_kFin :
             νPivot.getRow kFin = (νRowsSwapped.getRow kFin).set km1.val B hkm1_lt_n := by
           rw [hνPivot_def]
-          exact Hex.Matrix.getRow_modify_self _ kFin _
+          exact Hex.Matrix.getRow_modifyRow_self _ kFin _
         -- Cache the `Valid` bridge from ν entries to scaledCoeffs.
         have hν_eq := hvalid.ν_eq
         -- Now case analysis on iFin's position.
