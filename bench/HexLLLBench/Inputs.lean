@@ -245,6 +245,103 @@ def prepHarshCubicInput (n : Nat) : FirstShortVectorInput :=
     hn := by
       exact Nat.le_max_right n 1 }
 
+/-! ### Ajtai-style worst-case family (fplll `gen_trg` port)
+
+This is the lower-triangular worst-case family that drives LLL toward its
+`Θ(d² log B)` swap bound (Nguyen-Stehlé, *LLL on the Average*, ANTS-VII 2006).
+It is a faithful port of fplll's `gen_trg` (`latticegen t <d> <alpha>`,
+`fplll/nr/matrix.cpp`), not the (nonexistent in fplll 5.5.0) `gen_ajtai`:
+
+  for each column `i`: `bits_i = floor((2d - i)^alpha)`, the diagonal
+  `D_i` is uniform in `[2, 2^bits_i]`, and each below-diagonal entry in
+  column `i` is uniform in `(-D_i/2, D_i/2)`; the upper triangle is zero.
+
+Entry-for-entry equality with fplll is impossible (fplll draws from GMP's
+generator; we draw from the committed POSIX LCG), so fidelity is structural:
+same orientation, same `bits_i` diagonal bit-length profile, and the same
+`|off| < D_i/2` envelope. `scripts/dev/validate_latticegen.py` checks this. -/
+
+/-- Floor of the integer `k`-th root of `n` (largest `r` with `r^k ≤ n`),
+by binary search over a bit-length-bounded window. Mathlib-free. -/
+def natIRootGo (k n : Nat) : Nat → Nat → Nat → Nat
+  | _,  lo, 0 => lo
+  | hi, lo, fuel + 1 =>
+      if hi ≤ lo then lo
+      else
+        let mid := (lo + hi + 1) / 2
+        if mid ^ k ≤ n then natIRootGo k n hi mid fuel
+        else natIRootGo k n (mid - 1) lo fuel
+
+/-- `natIRoot k n = ⌊n^(1/k)⌋`. -/
+def natIRoot (k n : Nat) : Nat :=
+  if k = 0 then 0
+  else
+    let hi := 2 ^ (Nat.log2 (n + 1) / k + 1)
+    natIRootGo k n hi 0 (Nat.log2 (n + 1) + 2)
+
+/-- Diagonal bit-length `⌊(2d - i)^1.2⌋` (alpha = 6/5), matching fplll
+`gen_trg`'s `(int)pow(2d - i, alpha)` to within floating-point rounding. -/
+def ajtaiBits (d i : Nat) : Nat := natIRoot 5 ((2 * d - i) ^ 6)
+
+/-- A `bits`-wide pseudo-random natural in `[0, 2^bits)`, built by
+concatenating 31-bit LCG draws so the Ajtai-style entries can actually span
+`~2^bits` (the project LCG alone only yields 31-bit values). -/
+def wideRandom (seed bits : Nat) : Nat :=
+  let chunks := (bits + 30) / 31
+  let raw := (List.range chunks).foldl
+    (fun acc k => acc * 2147483648 + lcgIterate seed (k + 1) % 2147483648) 0
+  if bits = 0 then 0 else raw % (2 ^ bits)
+
+/-- Committed seed for the Ajtai-style family. -/
+def ajtaiSeed : Nat := 1000003
+
+/-- Diagonal `D_i ∈ [2, 2^bits_i]` for column `i` (fplll `randm(2^bits−1)+2`). -/
+def ajtaiDiag (d col : Nat) : Nat :=
+  let bits := ajtaiBits d col
+  wideRandom (ajtaiSeed + 1000003 * (col + 1)) bits % (2 ^ bits - 1) + 2
+
+/-- Below-diagonal entry `(row, col)`, `row > col`: uniform in `(−D_col/2, D_col/2)`. -/
+def ajtaiOff (d row col : Nat) : Int :=
+  let bound := ajtaiDiag d col / 2
+  let bits := ajtaiBits d col
+  let mag := wideRandom (ajtaiSeed + 7919 * (col * d + row + 1)) bits % bound
+  if lcgIterate (ajtaiSeed + 104729) (col * d + row + 1) % 2 = 1 then
+    -Int.ofNat mag
+  else
+    Int.ofNat mag
+
+/-- Lower-triangular Ajtai-style worst-case basis (fplll `gen_trg`, alpha 1.2). -/
+def ajtaiBasis (d : Nat) : Matrix Int d d :=
+  Matrix.ofFn fun i j =>
+    if j.val > i.val then
+      0
+    else if i = j then
+      Int.ofNat (ajtaiDiag d j.val)
+    else
+      ajtaiOff d i.val j.val
+
+/-- Parametric Ajtai-style input family. The scientific ladder is calibrated so
+verified Isabelle native stays under the ~10 s ceiling at its top rung. -/
+def prepAjtaiInput (n : Nat) : FirstShortVectorInput :=
+  let rows := max n 1
+  let basis := ajtaiBasis rows
+  { rows := rows
+    cols := rows
+    basis := basis
+    hn := by
+      exact Nat.le_max_right n 1 }
+
+/-- The Ajtai-style diagonal bit-length profile `bits_i = ⌊(2d - i)^1.2⌋` is
+strictly decreasing in `i`; this steep super-geometric profile is the
+structural cause of the family's worst-case `Θ(d² log B)` swap count. -/
+def ajtaiProfileSteep (d : Nat) : Bool :=
+  (List.range (d - 1)).all fun i => ajtaiBits d (i + 1) < ajtaiBits d i
+
+-- Structural evidence the family exercises the swap branch: the diagonal
+-- profile is steeply decreasing (a plain comment, not a doc-comment, since
+-- `#guard` is a command and cannot carry a docstring).
+#guard ajtaiProfileSteep 8
+
 def getCachedInput (ref : IO.Ref (Option FirstShortVectorInput))
     (mk : Unit → FirstShortVectorInput) : IO FirstShortVectorInput := do
   match (← ref.get) with
