@@ -114,7 +114,7 @@ theorem det_eq_foldl_laplace_last_row
         apply foldl_acc_congr
         intro acc col _hmem
         rw [cofactor_transpose]
-        simp [Matrix.transpose, Matrix.col]
+        simp [Matrix.transpose, Matrix.col, getRow, Fin.getElem_fin]
 
 /-- Column permutation that preserves the relative order of every column except
 `col`, which is moved to the final position. -/

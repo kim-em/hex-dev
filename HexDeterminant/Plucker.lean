@@ -94,7 +94,7 @@ def mMatrix {R : Type u} {n : Nat}
     Matrix R (n + 1) (n + 1) :=
   ofFn fun i j =>
     if hj : j.val < n then
-      B[skipIndex p i][(⟨j.val, hj⟩ : Fin n)]
+      B[(skipIndex p i, (⟨j.val, hj⟩ : Fin n))]
     else
       v[skipIndex p i]
 
@@ -133,7 +133,7 @@ def mDet {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
 def nMatrix {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val) :
     Matrix R n n :=
-  ofFn fun i j => B[skipIndex2 p q hpq i][j]
+  ofFn fun i j => B[(skipIndex2 p q hpq i, j)]
 
 /-- Entry `(i, j)` of the two-row-deleted minor `nMatrix B p q hpq` is the source
 entry `B[skipIndex2 p q hpq i][j]`. -/
@@ -888,7 +888,7 @@ def twoColMatrix {R : Type u} {n : Nat}
     Matrix R (n + 2) (n + 2) :=
   ofFn fun i j =>
     if hj : j.val < n then
-      B[i][(⟨j.val, hj⟩ : Fin n)]
+      B[(i, (⟨j.val, hj⟩ : Fin n))]
     else if hju : j.val = n then
       u[i]
     else

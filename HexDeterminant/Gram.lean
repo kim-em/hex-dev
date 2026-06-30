@@ -639,6 +639,7 @@ theorem columnTupleCoeff_reconstructInjTuple
   unfold columnTupleCoeff detProduct
   apply foldl_det_product_congr
   intro i _hmem
+  simp only [getElem_pair_eq_nested]
   rw [getElem_columnTupleMatrix]
   exact congrArg (fun col : Fin m => A[i][col])
     (getElem_reconstructInjTuple sel perm i)
