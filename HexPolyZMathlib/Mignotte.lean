@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyZMathlib.Basic
-import Mathlib.Analysis.Polynomial.MahlerMeasure
-import Mathlib.NumberTheory.MahlerMeasure
+module
+
+public import HexPolyZMathlib.Basic
+public import Mathlib.Analysis.Polynomial.MahlerMeasure
+public import Mathlib.NumberTheory.MahlerMeasure
+
+public section
 
 /-!
 Mignotte-bound infrastructure for integer polynomials.

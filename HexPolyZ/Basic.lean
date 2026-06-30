@@ -57,15 +57,18 @@ instance : DensePoly.ZeroSubNegLaw Rat where
 namespace ZPoly
 
 /-- Coefficientwise congruence modulo `m`. -/
+@[expose]
 def congr (f g : ZPoly) (m : Nat) : Prop :=
   ∀ i, (f.coeff i - g.coeff i) % (m : Int) = 0
 
 /-- Two integer polynomials are coprime mod `p` when they admit a Bezout
 combination congruent to `1` modulo `p`. -/
+@[expose]
 def coprimeModP (f g : ZPoly) (p : Nat) : Prop :=
   ∃ s t : ZPoly, congr (s * f + t * g) 1 p
 
 /-- The nonnegative gcd of the coefficients of `f`. -/
+@[expose]
 def content (f : ZPoly) : Int :=
   DensePoly.content f
 
@@ -106,6 +109,7 @@ the trivial dilation. -/
   rw [coeff_dilate, Int.one_pow, Int.one_mul]
 
 /-- A `ZPoly` is primitive when its content is `1`. -/
+@[expose]
 def Primitive (f : ZPoly) : Prop :=
   content f = 1
 

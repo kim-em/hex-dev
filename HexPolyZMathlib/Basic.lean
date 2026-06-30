@@ -4,15 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyMathlib.Basic
-import HexHensel.Basic
-import HexModArithMathlib
-import Mathlib.Algebra.Polynomial.Degree.Units
-import Mathlib.Algebra.Ring.Int.Units
-import Mathlib.Data.ZMod.Basic
-import Mathlib.RingTheory.Polynomial.Content
-import Mathlib.Algebra.GCDMonoid.Nat
-import HexPolyZ
+module
+
+public import HexPolyMathlib.Basic
+public import HexHensel.Basic
+public import HexModArithMathlib
+public import Mathlib.Algebra.Polynomial.Degree.Units
+public import Mathlib.Algebra.Ring.Int.Units
+public import Mathlib.Data.ZMod.Basic
+public import Mathlib.RingTheory.Polynomial.Content
+public import Mathlib.Algebra.GCDMonoid.Nat
+public import HexPolyZ
+
+public section
 
 /-!
 Correspondence definitions between `Hex.ZPoly` and Mathlib's `Polynomial ℤ`.

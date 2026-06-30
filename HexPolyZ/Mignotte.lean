@@ -25,6 +25,7 @@ namespace Hex
 namespace ZPoly
 
 /-- Executable binomial coefficients for the Mignotte bound. -/
+@[expose]
 def binom (n k : Nat) : Nat :=
   if n < k then
     0

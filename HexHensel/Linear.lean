@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexHensel.Basic
+module
+
+public import HexHensel.Basic
+
+public section
 
 /-!
 Executable single-step linear Hensel lifting.
@@ -1334,6 +1338,7 @@ preserves `acc.g`'s degree) and is exactly what makes the per-step degree
 obligation `LinearLiftStepDegreeInvariant` provable from the invariant alone:
 without it the admissible constant case `acc.g = 1` satisfies every other
 component yet has degree `0`, so no strict degree drop is available. -/
+@[expose]
 def LinearLiftLoopInvariant
     (p current : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (s t : FpPoly p) (acc : LinearLiftResult) : Prop :=

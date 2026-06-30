@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexHenselMathlib.Basic
-import HexPolyMathlib.Basic
-import Mathlib.Algebra.Polynomial.Degree.IsMonicOfDegree
-import Mathlib.Algebra.Field.ZMod
+module
+
+public import HexHenselMathlib.Basic
+public import HexPolyMathlib.Basic
+public import Mathlib.Algebra.Polynomial.Degree.IsMonicOfDegree
+public import Mathlib.Algebra.Field.ZMod
+
+public section
 
 /-!
 Mathlib-facing correctness and uniqueness theorem surface for executable
