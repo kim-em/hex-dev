@@ -57,7 +57,7 @@ private theorem rowReduceCanonicalInvariant_pivot_step
     let target : Fin n := ⟨state.row, hRow⟩
     let swappedEchelon := rowSwap state.echelon target pivot
     let swappedTransform := rowSwap state.transform target pivot
-    let pivotVal := swappedEchelon[(target, colFin)]
+    let pivotVal := swappedEchelon[target][colFin]
     let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
     let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
     let eliminated := eliminateColumn scaledEchelon scaledTransform target colFin
@@ -78,7 +78,7 @@ private theorem rowReduceCanonicalInvariant_pivot_step
     findPivot?_some_ge state.echelon colFin hpivot
   -- The pivot column is nonzero.
   have hpivotVal_ne : pivotVal ≠ 0 := by
-    have hentry : pivotVal = state.echelon[(pivot, colFin)] := by
+    have hentry : pivotVal = state.echelon[pivot][colFin] := by
       simpa [pivotVal, swappedEchelon] using
         getElem_rowSwap_target_pivot state.echelon target pivot colFin
     rw [hentry]
@@ -86,9 +86,9 @@ private theorem rowReduceCanonicalInvariant_pivot_step
   -- Step A: for each OLD pivot index `i`, canonical column is preserved by
   -- the rowSwap → rowScale → eliminateColumn chain at column `state.pivots[i]`.
   have hold : ∀ (i : Nat) (hi : i < state.pivots.length) (hin : i < n),
-      eliminated.1[((⟨i, hin⟩ : Fin n), state.pivots[i])] = 1 ∧
+      eliminated.1[(⟨i, hin⟩ : Fin n)][state.pivots[i]] = 1 ∧
       ∀ r : Fin n, r.val ≠ i →
-        eliminated.1[(r, state.pivots[i])] = 0 := by
+        eliminated.1[r][state.pivots[i]] = 0 := by
     intro i hi hin
     let pivotRow : Fin n := ⟨i, hin⟩
     have hi_lt_row : i < state.row := hpivots_lt_row i hi
@@ -102,46 +102,46 @@ private theorem rowReduceCanonicalInvariant_pivot_step
       omega
     -- Original canonical at oldCol = state.pivots[i].
     have hOne₀ :
-        state.echelon[(pivotRow, state.pivots[i])] = 1 :=
+        state.echelon[pivotRow][state.pivots[i]] = 1 :=
       hcanon.pivot_entry_one i hi hin
     have hZero₀ :
         ∀ r : Fin n, r.val ≠ i →
-          state.echelon[(r, state.pivots[i])] = 0 :=
+          state.echelon[r][state.pivots[i]] = 0 :=
       hcanon.other_entry_zero i hi
     have hZero₀_fin :
         ∀ r : Fin n, r ≠ pivotRow →
-          state.echelon[(r, state.pivots[i])] = 0 := by
+          state.echelon[r][state.pivots[i]] = 0 := by
       intro r hr
       apply hZero₀ r
       intro hval
       apply hr
       apply Fin.ext
       exact hval
-    have hTarget₀ : state.echelon[(target, state.pivots[i])] = 0 :=
+    have hTarget₀ : state.echelon[target][state.pivots[i]] = 0 :=
       hZero₀_fin target hpivotRow_ne_target.symm
-    have hPivot₀ : state.echelon[(pivot, state.pivots[i])] = 0 :=
+    have hPivot₀ : state.echelon[pivot][state.pivots[i]] = 0 :=
       hZero₀_fin pivot hpivotRow_ne_pivot.symm
     -- After rowSwap.
     have hSwap :=
       rowSwap_preserve_canonical_column state.echelon pivotRow target pivot
         state.pivots[i] hTarget₀ hPivot₀ hpivotRow_ne_target hpivotRow_ne_pivot
         hOne₀ hZero₀_fin
-    have hSwap_one : swappedEchelon[(pivotRow, state.pivots[i])] = 1 := hSwap.1
+    have hSwap_one : swappedEchelon[pivotRow][state.pivots[i]] = 1 := hSwap.1
     have hSwap_zero :
-        ∀ r : Fin n, r ≠ pivotRow → swappedEchelon[(r, state.pivots[i])] = 0 :=
+        ∀ r : Fin n, r ≠ pivotRow → swappedEchelon[r][state.pivots[i]] = 0 :=
       hSwap.2
-    have hTarget₁ : swappedEchelon[(target, state.pivots[i])] = 0 :=
+    have hTarget₁ : swappedEchelon[target][state.pivots[i]] = 0 :=
       hSwap_zero target hpivotRow_ne_target.symm
     -- After rowScale.
     have hScale :=
       rowScale_preserve_canonical_column swappedEchelon pivotRow target
         state.pivots[i] pivotVal⁻¹ hTarget₁ hpivotRow_ne_target hSwap_one
         hSwap_zero
-    have hScale_one : scaledEchelon[(pivotRow, state.pivots[i])] = 1 := hScale.1
+    have hScale_one : scaledEchelon[pivotRow][state.pivots[i]] = 1 := hScale.1
     have hScale_zero :
-        ∀ r : Fin n, r ≠ pivotRow → scaledEchelon[(r, state.pivots[i])] = 0 :=
+        ∀ r : Fin n, r ≠ pivotRow → scaledEchelon[r][state.pivots[i]] = 0 :=
       hScale.2
-    have hTarget₂ : scaledEchelon[(target, state.pivots[i])] = 0 :=
+    have hTarget₂ : scaledEchelon[target][state.pivots[i]] = 0 :=
       hScale_zero target hpivotRow_ne_target.symm
     -- After eliminateColumn.
     have hElim :=
@@ -157,23 +157,23 @@ private theorem rowReduceCanonicalInvariant_pivot_step
   -- Step B: for the NEW pivot at column colFin, the canonical property holds
   -- with pivot row = target.
   have hnew :
-      eliminated.1[(target, colFin)] = 1 ∧
-      ∀ r : Fin n, r ≠ target → eliminated.1[(r, colFin)] = 0 := by
+      eliminated.1[target][colFin] = 1 ∧
+      ∀ r : Fin n, r ≠ target → eliminated.1[r][colFin] = 0 := by
     -- After rowScale, target's entry in colFin is 1.
-    have hScaled_pivot : scaledEchelon[(target, colFin)] = 1 := by
-      have hEntry : scaledEchelon[(target, colFin)] = pivotVal⁻¹ * pivotVal := by
+    have hScaled_pivot : scaledEchelon[target][colFin] = 1 := by
+      have hEntry : scaledEchelon[target][colFin] = pivotVal⁻¹ * pivotVal := by
         simpa [scaledEchelon, pivotVal] using
           getElem_rowScale swappedEchelon target target pivotVal⁻¹ colFin
       rw [hEntry]
       exact Lean.Grind.Field.inv_mul_cancel hpivotVal_ne
     -- eliminateColumn_pivotRow: target's row is unchanged at colFin.
-    have hElim_pivot : eliminated.1[(target, colFin)] = 1 := by
+    have hElim_pivot : eliminated.1[target][colFin] = 1 := by
       have := eliminateColumn_pivotRow scaledEchelon scaledTransform target colFin colFin
-      change eliminated.1[(target, colFin)] = scaledEchelon[(target, colFin)] at this
+      change eliminated.1[target][colFin] = scaledEchelon[target][colFin] at this
       rw [this, hScaled_pivot]
     -- eliminateColumn_zero: every other row is 0 at colFin.
     have hElim_zero :
-        ∀ r : Fin n, r ≠ target → eliminated.1[(r, colFin)] = 0 := by
+        ∀ r : Fin n, r ≠ target → eliminated.1[r][colFin] = 0 := by
       intro r hr
       exact eliminateColumn_zero scaledEchelon scaledTransform target colFin
         hScaled_pivot r hr
@@ -263,7 +263,7 @@ private theorem rowReduceLoop_shape :
               let target : Fin n := ⟨state.row, hRow⟩
               let swappedEchelon := rowSwap state.echelon target pivot
               let swappedTransform := rowSwap state.transform target pivot
-              let pivotVal := swappedEchelon[(target, colFin)]
+              let pivotVal := swappedEchelon[target][colFin]
               let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
               let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
               let eliminated := eliminateColumn scaledEchelon scaledTransform target colFin
@@ -346,7 +346,7 @@ private theorem rowReduceLoop_canonical :
               let target : Fin n := ⟨state.row, hRow⟩
               let swappedEchelon := rowSwap state.echelon target pivot
               let swappedTransform := rowSwap state.transform target pivot
-              let pivotVal := swappedEchelon[(target, colFin)]
+              let pivotVal := swappedEchelon[target][colFin]
               let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
               let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
               let eliminated := eliminateColumn scaledEchelon scaledTransform target colFin
@@ -397,8 +397,8 @@ zero-column property. -/
 private theorem rowSwap_zero_column_preserve {M : Matrix R n m}
     (i j : Fin n) (k : Fin m) {start : Nat}
     (hi : start ≤ i.val) (hj : start ≤ j.val)
-    (h : ∀ r : Fin n, start ≤ r.val → M[(r, k)] = 0) :
-    ∀ r : Fin n, start ≤ r.val → (rowSwap M i j)[(r, k)] = 0 := by
+    (h : ∀ r : Fin n, start ≤ r.val → M[r][k] = 0) :
+    ∀ r : Fin n, start ≤ r.val → (rowSwap M i j)[r][k] = 0 := by
   intro r hr
   rw [getElem_rowSwap]
   by_cases hrj : r = j
@@ -414,8 +414,8 @@ omit [DecidableEq R] in
 and any other row is unchanged. -/
 private theorem rowScale_zero_column_preserve {M : Matrix R n m}
     (i : Fin n) (c : R) (k : Fin m) {start : Nat}
-    (h : ∀ r : Fin n, start ≤ r.val → M[(r, k)] = 0) :
-    ∀ r : Fin n, start ≤ r.val → (rowScale M i c)[(r, k)] = 0 := by
+    (h : ∀ r : Fin n, start ≤ r.val → M[r][k] = 0) :
+    ∀ r : Fin n, start ≤ r.val → (rowScale M i c)[r][k] = 0 := by
   intro r hr
   rw [getElem_rowScale]
   by_cases hri : r = i
@@ -429,15 +429,15 @@ row's entry at column `k`, provided the pivot row is zero at column `k`. -/
 private theorem eliminateColumn_foldl_other_column
     (pivotRow : Fin n) (col : Fin m) (k : Fin m) :
     ∀ (xs : List (Fin n)) (s : Matrix R n m × Matrix R n n) (r : Fin n),
-      s.1[(pivotRow, k)] = 0 →
+      s.1[pivotRow][k] = 0 →
       (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
         if _h : j = pivotRow then state
         else
-          let coeff := -state.1[(j, col)]
+          let coeff := -state.1[j][col]
           if coeff = 0 then state
           else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
-        s).1[(r, k)]
-        = s.1[(r, k)] := by
+        s).1[r][k]
+        = s.1[r][k] := by
   intro xs
   induction xs with
   | nil => intro s r _; rfl
@@ -447,9 +447,9 @@ private theorem eliminateColumn_foldl_other_column
       have hstep_pivot :
           (if _h : x = pivotRow then s
             else
-              let coeff := -s.1[(x, col)]
+              let coeff := -s.1[x][col]
               if coeff = 0 then s
-              else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).1[(pivotRow, k)]
+              else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).1[pivotRow][k]
             = 0 := by
         rw [eliminateColumn_step_pivotRow_unchanged s pivotRow x col k]
         exact hs
@@ -457,7 +457,7 @@ private theorem eliminateColumn_foldl_other_column
       by_cases hxp : x = pivotRow
       · rw [dif_pos hxp]
       · rw [dif_neg hxp]
-        by_cases hcoeff : -s.1[(x, col)] = 0
+        by_cases hcoeff : -s.1[x][col] = 0
         · rw [if_pos hcoeff]
         · rw [if_neg hcoeff]
           by_cases hrx : r = x
@@ -471,8 +471,8 @@ pivot row is zero at column `k`. -/
 private theorem eliminateColumn_other_column
     (M : Matrix R n m) (T : Matrix R n n)
     (pivotRow : Fin n) (col : Fin m) (k : Fin m)
-    (hpivot : M[(pivotRow, k)] = 0) (r : Fin n) :
-    (eliminateColumn M T pivotRow col).1[(r, k)] = M[(r, k)] := by
+    (hpivot : M[pivotRow][k] = 0) (r : Fin n) :
+    (eliminateColumn M T pivotRow col).1[r][k] = M[r][k] := by
   unfold eliminateColumn
   exact eliminateColumn_foldl_other_column pivotRow col k (List.finRange n) (M, T) r hpivot
 
@@ -482,7 +482,7 @@ row at or below `state.row`. -/
 private structure RowReduceNoPivotZero (col : Nat) (state : RowReduceState R n m) : Prop where
   zero_unrecorded :
     ∀ (c : Fin m), c.val < col → c ∉ state.pivots →
-      ∀ (r : Fin n), state.row ≤ r.val → state.echelon[(r, c)] = 0
+      ∀ (r : Fin n), state.row ≤ r.val → state.echelon[r][c] = 0
 
 omit [DecidableEq R] in
 /-- `rowReduceNoPivotZero_initial`: the initial RREF state satisfies the
@@ -555,7 +555,7 @@ private theorem rowReduceLoop_no_pivot_zero :
               let target : Fin n := ⟨state.row, hRow⟩
               let swappedEchelon := rowSwap state.echelon target pivot
               let swappedTransform := rowSwap state.transform target pivot
-              let pivotVal := swappedEchelon[(target, colFin)]
+              let pivotVal := swappedEchelon[target][colFin]
               let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
               let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
               let eliminated := eliminateColumn scaledEchelon scaledTransform target colFin
@@ -587,26 +587,26 @@ private theorem rowReduceLoop_no_pivot_zero :
                   · exact hold
                   · exact absurd (Fin.ext heq : c = colFin) hcne_colFin
                 have hzero_state :
-                    ∀ s : Fin n, state.row ≤ s.val → state.echelon[(s, c)] = 0 :=
+                    ∀ s : Fin n, state.row ≤ s.val → state.echelon[s][c] = 0 :=
                   fun s hs => h.zero_unrecorded c hclt_col hcnot_old s hs
                 have hzero_swap :
-                    ∀ s : Fin n, state.row ≤ s.val → swappedEchelon[(s, c)] = 0 :=
+                    ∀ s : Fin n, state.row ≤ s.val → swappedEchelon[s][c] = 0 :=
                   rowSwap_zero_column_preserve (M := state.echelon)
                     target pivot c (start := state.row)
                     (Nat.le_of_eq htarget_val.symm) hpivot_ge hzero_state
                 have hzero_scaled :
-                    ∀ s : Fin n, state.row ≤ s.val → scaledEchelon[(s, c)] = 0 :=
+                    ∀ s : Fin n, state.row ≤ s.val → scaledEchelon[s][c] = 0 :=
                   rowScale_zero_column_preserve (M := swappedEchelon)
                     target pivotVal⁻¹ c (start := state.row) hzero_swap
-                have hzero_pivot_at_c : scaledEchelon[(target, c)] = 0 :=
+                have hzero_pivot_at_c : scaledEchelon[target][c] = 0 :=
                   hzero_scaled target (Nat.le_of_eq htarget_val.symm)
-                have hzero_elim : eliminated.1[(r, c)] = scaledEchelon[(r, c)] :=
+                have hzero_elim : eliminated.1[r][c] = scaledEchelon[r][c] :=
                   eliminateColumn_other_column scaledEchelon scaledTransform target colFin c
                     hzero_pivot_at_c r
                 have hr_old : state.row ≤ r.val := by
                   have : state.row + 1 ≤ r.val := hr
                   omega
-                show eliminated.1[(r, c)] = 0
+                show eliminated.1[r][c] = 0
                 rw [hzero_elim]
                 exact hzero_scaled r hr_old
               simpa [hpivot, colFin, target, swappedEchelon, swappedTransform,
@@ -654,7 +654,7 @@ private theorem rowReduceLoop_left_inverse_preserve (col fuel : Nat)
               let target : Fin n := ⟨state.row, hRow⟩
               let swappedEchelon := rowSwap state.echelon target pivot
               let swappedTransform := rowSwap state.transform target pivot
-              let pivotVal := swappedEchelon[(target, colFin)]
+              let pivotVal := swappedEchelon[target][colFin]
               let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
               let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
               let eliminated := eliminateColumn scaledEchelon scaledTransform target colFin
@@ -668,7 +668,7 @@ private theorem rowReduceLoop_left_inverse_preserve (col fuel : Nat)
                 rowSwap_left_inverse_preserve state.transform target pivot h
               have hpivotVal : pivotVal ≠ 0 := by
                 have hpivotNonzero := findPivot?_some_nonzero state.echelon colFin hpivot
-                have hentry : pivotVal = state.echelon[(pivot, colFin)] := by
+                have hentry : pivotVal = state.echelon[pivot][colFin] := by
                   simpa [pivotVal, swappedEchelon] using
                     (getElem_rowSwap_target_pivot state.echelon target pivot colFin)
                 simpa [hentry] using hpivotNonzero
@@ -706,7 +706,7 @@ private theorem rowReduceLoop_right_inverse_preserve (col fuel : Nat)
               let target : Fin n := ⟨state.row, hRow⟩
               let swappedEchelon := rowSwap state.echelon target pivot
               let swappedTransform := rowSwap state.transform target pivot
-              let pivotVal := swappedEchelon[(target, colFin)]
+              let pivotVal := swappedEchelon[target][colFin]
               let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
               let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
               let eliminated := eliminateColumn scaledEchelon scaledTransform target colFin
@@ -720,7 +720,7 @@ private theorem rowReduceLoop_right_inverse_preserve (col fuel : Nat)
                 rowSwap_right_inverse_preserve state.transform target pivot h
               have hpivotVal : pivotVal ≠ 0 := by
                 have hpivotNonzero := findPivot?_some_nonzero state.echelon colFin hpivot
-                have hentry : pivotVal = state.echelon[(pivot, colFin)] := by
+                have hentry : pivotVal = state.echelon[pivot][colFin] := by
                   simpa [pivotVal, swappedEchelon] using
                     (getElem_rowSwap_target_pivot state.echelon target pivot colFin)
                 simpa [hentry] using hpivotNonzero
@@ -767,7 +767,7 @@ private theorem rowReduceLoop_transform_preserve (M : Matrix R n m) :
               have hswap : swappedTransform * M = swappedEchelon := by
                 simpa [swappedTransform, swappedEchelon] using
                   rowSwap_transform_mul_preserve target pivot h
-              let pivotVal := swappedEchelon[(target, colFin)]
+              let pivotVal := swappedEchelon[target][colFin]
               let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
               let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
               have hscale : scaledTransform * M = scaledEchelon := by
@@ -896,9 +896,10 @@ theorem rowReduce_isRowReduced (M : Matrix R n m) : IsRowReduced M (rowReduce M)
     have hentry := hcanon.pivot_entry_one i.val hi_lt_len hin
     have hcol_eq : (rowReduce M).pivotCols.get i = final.pivots[i.val] :=
       Fin.ext (hpivotCol_get i hi_lt_len)
-    have hech : (rowReduce M).echelon[((⟨i.val, hin⟩ : Fin n), (rowReduce M).pivotCols.get i)] =
-        final.echelon[((⟨i.val, hin⟩ : Fin n), final.pivots[i.val])] := by
+    have hech : (rowReduce M).echelon[i][(rowReduce M).pivotCols.get i] =
+        final.echelon[(⟨i.val, hin⟩ : Fin n)][final.pivots[i.val]] := by
       simp only [hechelon_eq, hcol_eq]
+      rfl
     rw [hech]
     exact hentry
   case apz =>
@@ -907,8 +908,8 @@ theorem rowReduce_isRowReduced (M : Matrix R n m) : IsRowReduced M (rowReduce M)
     have hentry := hcanon.other_entry_zero i.val hi_lt_len j (Nat.ne_of_lt hji)
     have hcol_eq : (rowReduce M).pivotCols.get i = final.pivots[i.val] :=
       Fin.ext (hpivotCol_get i hi_lt_len)
-    have hech : (rowReduce M).echelon[(j, (rowReduce M).pivotCols.get i)] =
-        final.echelon[(j, final.pivots[i.val])] := by
+    have hech : (rowReduce M).echelon[j][(rowReduce M).pivotCols.get i] =
+        final.echelon[j][final.pivots[i.val]] := by
       simp only [hcol_eq, hechelon_eq]
     rw [hech]
     exact hentry
@@ -918,8 +919,8 @@ theorem rowReduce_isRowReduced (M : Matrix R n m) : IsRowReduced M (rowReduce M)
     have hentry := hcanon.other_entry_zero i.val hi_lt_len j (Nat.ne_of_gt hij)
     have hcol_eq : (rowReduce M).pivotCols.get i = final.pivots[i.val] :=
       Fin.ext (hpivotCol_get i hi_lt_len)
-    have hech : (rowReduce M).echelon[(j, (rowReduce M).pivotCols.get i)] =
-        final.echelon[(j, final.pivots[i.val])] := by
+    have hech : (rowReduce M).echelon[j][(rowReduce M).pivotCols.get i] =
+        final.echelon[j][final.pivots[i.val]] := by
       simp only [hcol_eq, hechelon_eq]
     rw [hech]
     exact hentry
@@ -933,13 +934,13 @@ theorem rowReduce_isRowReduced (M : Matrix R n m) : IsRowReduced M (rowReduce M)
     ext c hc
     rw [Vector.getElem_zero c hc]
     let cFin : Fin m := ⟨c, hc⟩
-    show final.echelon[(i, cFin)] = 0
+    show final.echelon[i][cFin] = 0
     by_cases hmem : cFin ∈ final.pivots
     · obtain ⟨k, hk_lt, hk_eq⟩ := List.mem_iff_getElem.mp hmem
       have hi_ne_k : i.val ≠ k := by omega
       have hentry := hcanon.other_entry_zero k hk_lt i hi_ne_k
-      have heq : final.echelon[(i, cFin)] = final.echelon[(i, final.pivots[k]'hk_lt)] :=
-        congrArg (fun x : Fin m => final.echelon[(i, x)]) hk_eq.symm
+      have heq : final.echelon[i][cFin] = final.echelon[i][final.pivots[k]'hk_lt] :=
+        congrArg (fun x : Fin m => final.echelon[i][x]) hk_eq.symm
       rw [heq]
       exact hentry
     · exact hno_pivot.zero_unrecorded cFin cFin.isLt hmem i hrow_le_i

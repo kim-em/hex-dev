@@ -95,12 +95,12 @@ private def transposePermutationValues {n : Nat}
     (perm : Vector (Fin n) n) (i j : Fin n) : Vector (Fin n) n :=
   Vector.ofFn fun r => perm[finTranspose i j r]
 
-/-- Entrywise read of a row swap: `(rowSwap M i j)[(r, k)]` reads from row `i`
+/-- Entrywise read of a row swap: `(rowSwap M i j)[r][k]` reads from row `i`
 when `r = j`, from row `j` when `r = i`, and from row `r` otherwise. -/
 private theorem rowSwap_get {R : Type u} {n m : Nat}
     (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
-    (rowSwap M i j)[(r, k)] =
-      if r = j then M[(i, k)] else if r = i then M[(j, k)] else M[(r, k)] :=
+    (rowSwap M i j)[r][k] =
+      if r = j then M[i][k] else if r = i then M[j][k] else M[r][k] :=
   getElem_rowSwap M i j r k
 
 /-- For distinct `i, j`, reading row `r` of `rowSwap M i j` is the same as
@@ -108,7 +108,7 @@ reading row `finTranspose i j r` of `M`, identifying the swap with the
 transposition. -/
 private theorem rowSwap_get_finTranspose {R : Type u} {n m : Nat}
     (M : Matrix R n m) (i j r : Fin n) (h : i ≠ j) (k : Fin m) :
-    (rowSwap M i j)[(r, k)] = M[(finTranspose i j r, k)] := by
+    (rowSwap M i j)[r][k] = M[finTranspose i j r][k] := by
   rw [rowSwap_get]
   by_cases hrj : r = j
   · subst r
@@ -117,7 +117,7 @@ private theorem rowSwap_get_finTranspose {R : Type u} {n m : Nat}
     · subst r
       simp [finTranspose, hrj]
     · rw [if_neg hrj, if_neg hri]
-      exact congrArg (fun row => M[(row, k)]) (finTranspose_of_ne i j r hri hrj).symm
+      exact congrArg (fun row => M[row][k]) (finTranspose_of_ne i j r hri hrj).symm
 
 /-- The `r`-th entry of `transposePermutationValues perm i j` is
 `perm[finTranspose i j r]`, unfolding the definition. -/
@@ -920,7 +920,7 @@ private theorem finRange_map_perm_get_perm {n : Nat}
 
 private theorem detProduct_colPermute_vector {R : Type u} [Lean.Grind.CommRing R]
     {n : Nat} (M : Matrix R n n) (sigma tau : Vector (Fin n) n) :
-    detProduct (ofFn fun r c => M[(r, sigma[c])]) tau =
+    detProduct (ofFn fun r c => M[r][sigma[c]]) tau =
       detProduct M (composePermutationValues sigma tau) := by
   unfold detProduct
   apply foldl_det_product_congr
@@ -935,25 +935,25 @@ private theorem detProduct_transpose_inversePermutationValues {R : Type u}
   unfold detProduct
   calc
     (List.finRange n).foldl
-        (fun acc r => acc * M.transpose[(r, perm[r])]) 1 =
+        (fun acc r => acc * M.transpose[r][perm[r]]) 1 =
       (List.finRange n).foldl
-        (fun acc r => acc * M[(perm[r], r)]) 1 := by
+        (fun acc r => acc * M[perm[r]][r]) 1 := by
         apply foldl_det_product_congr
         intro r _hmem
         simp [Matrix.transpose, Matrix.col]
     _ =
       ((List.finRange n).map fun r => perm[r]).foldl
-        (fun acc c => acc * M[(c, (inversePermutationValues perm hnodup)[c])]) 1 := by
+        (fun acc c => acc * M[c][(inversePermutationValues perm hnodup)[c]]) 1 := by
         simp only [List.foldl_map]
         apply foldl_det_product_congr
         intro r _hmem
-        exact congrArg (fun c => M[(perm[r], c)])
+        exact congrArg (fun c => M[perm[r]][c])
           (inversePermutationValues_get_index perm hnodup r).symm
     _ =
       (List.finRange n).foldl
-        (fun acc c => acc * M[(c, (inversePermutationValues perm hnodup)[c])]) 1 := by
+        (fun acc c => acc * M[c][(inversePermutationValues perm hnodup)[c]]) 1 := by
         exact foldl_det_product_perm
-          (fun c => M[(c, (inversePermutationValues perm hnodup)[c])])
+          (fun c => M[c][(inversePermutationValues perm hnodup)[c]])
           (finRange_map_perm_get_perm perm hnodup) 1
 
 private theorem swapPermutationValues_eq {n : Nat}
@@ -1097,32 +1097,32 @@ private theorem detProduct_rowSwap_transposeValues {R : Type u}
   unfold detProduct
   calc
     (List.finRange n).foldl
-        (fun acc r => acc * (rowSwap M i j)[(r, perm[r])]) 1 =
+        (fun acc r => acc * (rowSwap M i j)[r][perm[r]]) 1 =
       (List.finRange n).foldl
-        (fun acc r => acc * M[(finTranspose i j r, perm[r])]) 1 := by
+        (fun acc r => acc * M[finTranspose i j r][perm[r]]) 1 := by
         apply foldl_det_product_congr
         intro r _hmem
         exact rowSwap_get_finTranspose M i j r h perm[r]
     _ =
       ((List.finRange n).map (finTranspose i j)).foldl
-        (fun acc r => acc * M[(r, perm[finTranspose i j r])]) 1 := by
+        (fun acc r => acc * M[r][perm[finTranspose i j r]]) 1 := by
         simp only [List.foldl_map]
         apply foldl_det_product_congr
         intro r _hmem
-        exact congrArg (fun k => M[(finTranspose i j r, k)])
+        exact congrArg (fun k => M[finTranspose i j r][k])
           (vector_get_fin_congr perm (finTranspose_involutive i j r).symm)
     _ =
       (List.finRange n).foldl
-        (fun acc r => acc * M[(r, perm[finTranspose i j r])]) 1 := by
+        (fun acc r => acc * M[r][perm[finTranspose i j r]]) 1 := by
         exact foldl_det_product_perm
-          (fun r => M[(r, perm[finTranspose i j r])])
+          (fun r => M[r][perm[finTranspose i j r]])
           (finRange_map_finTranspose_perm i j) 1
     _ =
       (List.finRange n).foldl
-        (fun acc r => acc * M[(r, (transposePermutationValues perm i j)[r])]) 1 := by
+        (fun acc r => acc * M[r][(transposePermutationValues perm i j)[r]]) 1 := by
         apply foldl_det_product_congr
         intro r _hmem
-        exact congrArg (fun k => M[(r, k)])
+        exact congrArg (fun k => M[r][k])
           (transposePermutationValues_get perm i j r).symm
 
 private theorem detSign_transposeValues {R : Type u}

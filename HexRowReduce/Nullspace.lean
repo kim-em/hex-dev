@@ -127,20 +127,20 @@ def nullspaceMatrix [Lean.Grind.Ring R] (E : IsRowReduced M D) :
     else
       match pivotIndex? D j with
       | some i =>
-          -D.echelon[((IsEchelonForm.pivotRow E.toIsEchelonForm i), freeCols.get k)]
+          -D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i, freeCols.get k)]
       | none => 0
 
 /-- In the `k`th nullspace-matrix column, the row for its own free column is `1`. -/
 @[grind =] theorem nullspaceMatrix_free [Lean.Grind.Ring R] (E : IsRowReduced M D)
     (k : Fin (m - D.rank)) :
-    E.nullspaceMatrix[(E.toIsEchelonForm.freeCols.get k, k)] = 1 := by
+    E.nullspaceMatrix[E.toIsEchelonForm.freeCols.get k][k] = 1 := by
   unfold nullspaceMatrix Matrix.ofFn
   simp
 
 /-- In the `k`th nullspace-matrix column, every other free-column row is `0`. -/
 @[grind =] theorem nullspaceMatrix_free_ne [Lean.Grind.Ring R] (E : IsRowReduced M D)
     {k l : Fin (m - D.rank)} (hkl : k ≠ l) :
-    E.nullspaceMatrix[(E.toIsEchelonForm.freeCols.get l, k)] = 0 := by
+    E.nullspaceMatrix[E.toIsEchelonForm.freeCols.get l][k] = 0 := by
   unfold nullspaceMatrix Matrix.ofFn
   have hne : E.toIsEchelonForm.freeCols.get l ≠ E.toIsEchelonForm.freeCols.get k := by
     intro h
@@ -151,8 +151,8 @@ def nullspaceMatrix [Lean.Grind.Ring R] (E : IsRowReduced M D) :
 the matching pivot row and free column. -/
 @[grind =] theorem nullspaceMatrix_pivot [Lean.Grind.Ring R] (E : IsRowReduced M D)
     (i : Fin D.rank) (k : Fin (m - D.rank)) :
-    E.nullspaceMatrix[(D.pivotCols.get i, k)] =
-      -(D.echelon[((IsEchelonForm.pivotRow E.toIsEchelonForm i), E.toIsEchelonForm.freeCols.get k)]) := by
+    E.nullspaceMatrix[D.pivotCols.get i][k] =
+      -(D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i)][E.toIsEchelonForm.freeCols.get k]) := by
   unfold nullspaceMatrix Matrix.ofFn
   simp [E.toIsEchelonForm.pivotCols_disjoint_freeCols i k,
     pivotIndex?_pivot E.toIsEchelonForm i]
@@ -188,7 +188,7 @@ the matching pivot row and free column. -/
 @[grind =] theorem nullspace_get_pivot [Lean.Grind.Ring R] (E : IsRowReduced M D)
     (i : Fin D.rank) (k : Fin (m - D.rank)) :
     (E.nullspace.get k)[D.pivotCols.get i] =
-      -(D.echelon[((IsEchelonForm.pivotRow E.toIsEchelonForm i), E.toIsEchelonForm.freeCols.get k)]) := by
+      -(D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i)][E.toIsEchelonForm.freeCols.get k]) := by
   rw [nullspace_get]
   simpa [Matrix.col] using nullspaceMatrix_pivot E i k
 
@@ -336,7 +336,7 @@ private theorem nullspace_echelon_sound {R : Type u} [Lean.Grind.Ring R] {n m : 
   · let ri : Fin D.rank := ⟨r, hrow⟩
     let free := E.toIsEchelonForm.freeCols.get k
     let pivot := D.pivotCols.get ri
-    let coeff := D.echelon[(row, free)]
+    let coeff := D.echelon[row][free]
     have hrowEq : row = E.toIsEchelonForm.pivotRow ri := by
       apply Fin.ext
       rfl
@@ -346,35 +346,35 @@ private theorem nullspace_echelon_sound {R : Type u} [Lean.Grind.Ring R] {n m : 
     unfold Matrix.mulVec Matrix.row Vector.dotProduct
     rw [Vector.getElem_ofFn hr, Vector.getElem_zero r hr]
     change (List.finRange m).foldl
-        (fun acc j => acc + D.echelon[(row, j)] * (E.nullspace.get k)[j]) 0 = 0
+        (fun acc j => acc + D.echelon[row][j] * (E.nullspace.get k)[j]) 0 = 0
     have hpivotTerm :
-        D.echelon[(row, pivot)] * (E.nullspace.get k)[pivot] = -coeff := by
-      have hpone : D.echelon[(row, pivot)] = 1 := by
+        D.echelon[row][pivot] * (E.nullspace.get k)[pivot] = -coeff := by
+      have hpone : D.echelon[row][pivot] = 1 := by
         simpa [row, ri, pivot, IsEchelonForm.pivotRow] using E.pivot_one ri
       have hnp := nullspace_get_pivot E ri k
       rw [hpone, hnp]
       have hcoeff :
-          D.echelon[((IsEchelonForm.pivotRow E.toIsEchelonForm ri), free)] = coeff := by
+          D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm ri)][free] = coeff := by
         simp [free, coeff, row, ri, IsEchelonForm.pivotRow]
       change (1 : R) *
-          (-D.echelon[((IsEchelonForm.pivotRow E.toIsEchelonForm ri), free)]) = -coeff
+          (-D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm ri)][free]) = -coeff
       rw [hcoeff]
       grind
     have hfreeTerm :
-        D.echelon[(row, free)] * (E.nullspace.get k)[free] = coeff := by
+        D.echelon[row][free] * (E.nullspace.get k)[free] = coeff := by
       have hnf := nullspace_get_free E k
       rw [hnf]
       grind
     have hzero :
         ∀ j ∈ List.finRange m, j ≠ pivot → j ≠ free →
-          D.echelon[(row, j)] * (E.nullspace.get k)[j] = 0 := by
+          D.echelon[row][j] * (E.nullspace.get k)[j] = 0 := by
       intro j _ hjp hjf
       rcases E.toIsEchelonForm.colPartition j with ⟨i, hi⟩ | ⟨l, hl⟩
       · have hij : i ≠ ri := by
           intro hir
           subst i
           exact hjp hi.symm
-        have hpivotZero : D.echelon[(row, D.pivotCols.get i)] = 0 := by
+        have hpivotZero : D.echelon[row][D.pivotCols.get i] = 0 := by
           have hval : i.val ≠ ri.val := by
             intro h
             exact hij (Fin.ext h)
@@ -399,12 +399,12 @@ private theorem nullspace_echelon_sound {R : Type u} [Lean.Grind.Ring R] {n m : 
         rw [← hl, hfreeZero]
         grind
     have hsum := foldl_two_nonzero (R := R) (xs := List.finRange m) pivot free
-      (fun j => D.echelon[(row, j)] * (E.nullspace.get k)[j]) (-coeff) coeff
+      (fun j => D.echelon[row][j] * (E.nullspace.get k)[j]) (-coeff) coeff
       hpivotFree (List.mem_finRange pivot) (List.mem_finRange free)
       (List.nodup_finRange m) hpivotTerm hfreeTerm hzero
     calc
       (List.finRange m).foldl
-          (fun acc j => acc + D.echelon[(row, j)] * (E.nullspace.get k)[j]) 0 =
+          (fun acc j => acc + D.echelon[row][j] * (E.nullspace.get k)[j]) 0 =
           -coeff + coeff := by
             simpa only using hsum
       _ = 0 := by grind
@@ -414,17 +414,17 @@ private theorem nullspace_echelon_sound {R : Type u} [Lean.Grind.Ring R] {n m : 
     unfold Matrix.mulVec Matrix.row Vector.dotProduct
     rw [Vector.getElem_ofFn hr, Vector.getElem_zero r hr]
     change (List.finRange m).foldl
-        (fun acc j => acc + D.echelon[(row, j)] * (E.nullspace.get k)[j]) 0 = 0
+        (fun acc j => acc + D.echelon[row][j] * (E.nullspace.get k)[j]) 0 = 0
     have hzero :
-        ∀ j ∈ List.finRange m, D.echelon[(row, j)] * (E.nullspace.get k)[j] = 0 := by
+        ∀ j ∈ List.finRange m, D.echelon[row][j] * (E.nullspace.get k)[j] = 0 := by
       intro j _
-      have hentry : D.echelon[(row, j)] = 0 := by
-        rw [(getRow_getElem D.echelon row j).symm, hzeroRow]
-        simp
+      have hentry : D.echelon[row][j] = 0 := by
+        have hrowGet := congrArg (fun v => v[j]) hzeroRow
+        simpa using hrowGet
       rw [hentry]
       grind
     simpa only using foldl_add_eq_acc_ring_echelon (List.finRange m)
-      (fun j => D.echelon[(row, j)] * (E.nullspace.get k)[j]) 0 hzero
+      (fun j => D.echelon[row][j] * (E.nullspace.get k)[j]) 0 hzero
 
 /-- Every basis vector returned by `nullspace` lies in the nullspace of `M`. -/
 theorem nullspace_sound {R : Type u} [Lean.Grind.Ring R] {n m : Nat}
@@ -556,7 +556,7 @@ indices match. This is the indicator characterization used to extract
 private theorem pivot_column_entry_pivotRow {R : Type u} [Lean.Grind.Field R]
     {n m : Nat} {M : Matrix R n m} {D : RowEchelonData R n m} (E : IsRowReduced M D)
     (i i' : Fin D.rank) :
-    D.echelon[(E.toIsEchelonForm.pivotRow i, D.pivotCols.get i')] =
+    D.echelon[E.toIsEchelonForm.pivotRow i][D.pivotCols.get i'] =
       if i' = i then (1 : R) else 0 := by
   have h := pivot_column_entry E i' (E.toIsEchelonForm.pivotRow i)
   by_cases hii : i' = i
@@ -584,12 +584,12 @@ private theorem freeSum_eq_neg_pivot {R : Type u} [Lean.Grind.Field R] {n m : Na
       (List.finRange (m - D.rank)).foldl
         (fun acc k =>
           acc +
-            D.echelon[(E.toIsEchelonForm.pivotRow i, E.toIsEchelonForm.freeCols.get k)] *
+            D.echelon[E.toIsEchelonForm.pivotRow i][E.toIsEchelonForm.freeCols.get k] *
               v[E.toIsEchelonForm.freeCols.get k]) 0 = 0 := by
   -- Expand `(D.echelon * v)[pivotRow i] = 0` into a foldl over `Fin m`.
   have hZero : (List.finRange m).foldl
       (fun acc l =>
-        acc + D.echelon[(E.toIsEchelonForm.pivotRow i, l)] * v[l]) 0 = 0 := by
+        acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0 = 0 := by
     have hentry := congrArg (fun w => w[(E.toIsEchelonForm.pivotRow i).val]'
       (E.toIsEchelonForm.pivotRow i).isLt) hEchelon
     -- `hentry : (D.echelon * v)[pivotRow i] = (0 : Vector R n)[pivotRow i]`
@@ -607,23 +607,23 @@ private theorem freeSum_eq_neg_pivot {R : Type u} [Lean.Grind.Field R] {n m : Na
   have hperm := finRange_perm_pivot_free (M := M) (D := D) E.toIsEchelonForm
   have hSplit :
       (List.finRange m).foldl
-          (fun acc l => acc + D.echelon[(E.toIsEchelonForm.pivotRow i, l)] * v[l]) 0 =
+          (fun acc l => acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0 =
         D.pivotCols.toList.foldl
-            (fun acc l => acc + D.echelon[(E.toIsEchelonForm.pivotRow i, l)] * v[l]) 0 +
+            (fun acc l => acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0 +
         E.toIsEchelonForm.freeColsList.foldl
-            (fun acc l => acc + D.echelon[(E.toIsEchelonForm.pivotRow i, l)] * v[l]) 0 := by
+            (fun acc l => acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0 := by
     rw [foldl_sum_perm_local
-      (f := fun l => D.echelon[(E.toIsEchelonForm.pivotRow i, l)] * v[l]) hperm]
+      (f := fun l => D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) hperm]
     rw [List.foldl_append]
     rw [foldl_sum_start (R := R)
       (xs := E.toIsEchelonForm.freeColsList)
-      (f := fun l => D.echelon[(E.toIsEchelonForm.pivotRow i, l)] * v[l])
+      (f := fun l => D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l])
       (acc := D.pivotCols.toList.foldl
-        (fun acc l => acc + D.echelon[(E.toIsEchelonForm.pivotRow i, l)] * v[l]) 0)]
+        (fun acc l => acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0)]
   -- Pivot half: convert to fold over Fin D.rank, use indicator structure.
   have hPivotPart :
       D.pivotCols.toList.foldl
-          (fun acc l => acc + D.echelon[(E.toIsEchelonForm.pivotRow i, l)] * v[l]) 0 =
+          (fun acc l => acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0 =
         v[D.pivotCols.get i] := by
     have hList : D.pivotCols.toList =
         (List.finRange D.rank).map fun i' => D.pivotCols.get i' := by
@@ -633,7 +633,7 @@ private theorem freeSum_eq_neg_pivot {R : Type u} [Lean.Grind.Field R] {n m : Na
     have hrewrite :
         (List.finRange D.rank).foldl
             (fun acc i' =>
-              acc + D.echelon[(E.toIsEchelonForm.pivotRow i, D.pivotCols.get i')] *
+              acc + D.echelon[E.toIsEchelonForm.pivotRow i][D.pivotCols.get i'] *
                 v[D.pivotCols.get i']) 0 =
           (List.finRange D.rank).foldl
             (fun acc i' =>
@@ -655,11 +655,11 @@ private theorem freeSum_eq_neg_pivot {R : Type u} [Lean.Grind.Field R] {n m : Na
   -- Free half: convert to fold over Fin (m - D.rank).
   have hFreePart :
       E.toIsEchelonForm.freeColsList.foldl
-          (fun acc l => acc + D.echelon[(E.toIsEchelonForm.pivotRow i, l)] * v[l]) 0 =
+          (fun acc l => acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0 =
         (List.finRange (m - D.rank)).foldl
           (fun acc k =>
             acc +
-              D.echelon[(E.toIsEchelonForm.pivotRow i, E.toIsEchelonForm.freeCols.get k)] *
+              D.echelon[E.toIsEchelonForm.pivotRow i][E.toIsEchelonForm.freeCols.get k] *
                 v[E.toIsEchelonForm.freeCols.get k]) 0 := by
     have hList : E.toIsEchelonForm.freeColsList =
         (List.finRange (m - D.rank)).map fun k => E.toIsEchelonForm.freeCols.get k := by
@@ -715,7 +715,7 @@ theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
     change
       (List.finRange (m - D.rank)).foldl
           (fun acc k =>
-            acc + E.nullspaceMatrix[(jj, k)] *
+            acc + E.nullspaceMatrix[jj][k] *
               (Vector.ofFn (fun k => v[E.toIsEchelonForm.freeCols.get k]) :
                 Vector R (m - D.rank))[k]) 0 = v[jj]
     rcases E.toIsEchelonForm.colPartition jj with ⟨i, hi⟩ | ⟨l, hl⟩
@@ -725,14 +725,14 @@ theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
       have hRowEq :
           (List.finRange (m - D.rank)).foldl
               (fun acc k =>
-                acc + E.nullspaceMatrix[(D.pivotCols.get i, k)] *
+                acc + E.nullspaceMatrix[D.pivotCols.get i][k] *
                   (Vector.ofFn (fun k => v[E.toIsEchelonForm.freeCols.get k]) :
                     Vector R (m - D.rank))[k]) 0 =
             (List.finRange (m - D.rank)).foldl
               (fun acc k =>
                 acc +
-                  -(D.echelon[(E.toIsEchelonForm.pivotRow i, 
-                      E.toIsEchelonForm.freeCols.get k)] *
+                  -(D.echelon[E.toIsEchelonForm.pivotRow i][
+                      E.toIsEchelonForm.freeCols.get k] *
                     v[E.toIsEchelonForm.freeCols.get k])) 0 := by
         apply foldl_sum_congr
         intro k _hk
@@ -744,19 +744,19 @@ theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
           (List.finRange (m - D.rank)).foldl
               (fun acc k =>
                 acc +
-                  -(D.echelon[(E.toIsEchelonForm.pivotRow i, 
-                      E.toIsEchelonForm.freeCols.get k)] *
+                  -(D.echelon[E.toIsEchelonForm.pivotRow i][
+                      E.toIsEchelonForm.freeCols.get k] *
                     v[E.toIsEchelonForm.freeCols.get k])) 0 =
             -((List.finRange (m - D.rank)).foldl
                 (fun acc k =>
                   acc +
-                    D.echelon[(E.toIsEchelonForm.pivotRow i, 
-                      E.toIsEchelonForm.freeCols.get k)] *
+                    D.echelon[E.toIsEchelonForm.pivotRow i][
+                      E.toIsEchelonForm.freeCols.get k] *
                       v[E.toIsEchelonForm.freeCols.get k]) 0) := by
         have hmul := foldl_sum_mul_left_local
           (xs := List.finRange (m - D.rank))
           (f := fun k =>
-            D.echelon[(E.toIsEchelonForm.pivotRow i, E.toIsEchelonForm.freeCols.get k)] *
+            D.echelon[E.toIsEchelonForm.pivotRow i][E.toIsEchelonForm.freeCols.get k] *
               v[E.toIsEchelonForm.freeCols.get k])
           (c := (-1 : R)) (acc := 0)
         have hzero : ((-1 : R)) * 0 = 0 := by grind
@@ -765,15 +765,15 @@ theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
             (List.finRange (m - D.rank)).foldl
                 (fun acc k =>
                   acc +
-                    -(D.echelon[(E.toIsEchelonForm.pivotRow i, 
-                        E.toIsEchelonForm.freeCols.get k)] *
+                    -(D.echelon[E.toIsEchelonForm.pivotRow i][
+                        E.toIsEchelonForm.freeCols.get k] *
                       v[E.toIsEchelonForm.freeCols.get k])) 0 =
               (List.finRange (m - D.rank)).foldl
                 (fun acc k =>
                   acc +
                     ((-1 : R) *
-                      (D.echelon[(E.toIsEchelonForm.pivotRow i, 
-                          E.toIsEchelonForm.freeCols.get k)] *
+                      (D.echelon[E.toIsEchelonForm.pivotRow i][
+                          E.toIsEchelonForm.freeCols.get k] *
                         v[E.toIsEchelonForm.freeCols.get k]))) 0 := by
           apply foldl_sum_congr
           intro k _hk
@@ -785,8 +785,8 @@ theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
           (List.finRange (m - D.rank)).foldl
               (fun acc k =>
                 acc +
-                  D.echelon[(E.toIsEchelonForm.pivotRow i, 
-                    E.toIsEchelonForm.freeCols.get k)] *
+                  D.echelon[E.toIsEchelonForm.pivotRow i][
+                    E.toIsEchelonForm.freeCols.get k] *
                     v[E.toIsEchelonForm.freeCols.get k]) 0 =
             -v[D.pivotCols.get i] := by
         have h := hFree
@@ -798,7 +798,7 @@ theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
       have hcongr :
           (List.finRange (m - D.rank)).foldl
               (fun acc k =>
-                acc + E.nullspaceMatrix[(E.toIsEchelonForm.freeCols.get l, k)] *
+                acc + E.nullspaceMatrix[E.toIsEchelonForm.freeCols.get l][k] *
                   (Vector.ofFn (fun k => v[E.toIsEchelonForm.freeCols.get k]) :
                     Vector R (m - D.rank))[k]) 0 =
             (List.finRange (m - D.rank)).foldl

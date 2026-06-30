@@ -98,6 +98,10 @@ noncomputable instance : GetElem (Matrix R n m) Nat (Vector R m) (fun _ i => i <
 reduction lemmas fire on it in proofs). -/
 @[simp, grind =] theorem getElem_eq_getRow (M : Matrix R n m) (i : Fin n) : M[i] = getRow M i := rfl
 
+/-- `Nat`-indexed row access normalizes to `getRow`. -/
+@[simp, grind =] theorem getElem_nat_eq_getRow (M : Matrix R n m) (i : Nat) (h : i < n) :
+    M[i]'h = getRow M ⟨i, h⟩ := rfl
+
 /-- `getRow` on `ofRows` reduces to the underlying vector. -/
 @[simp, grind =] theorem getRow_ofRows (v : Vector (Vector R m) n) (i : Fin n) :
     getRow (ofRows v) i = v[i] := rfl

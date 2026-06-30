@@ -121,24 +121,24 @@ row/column entry. -/
 theorem detProduct_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n) :
     detProduct M (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n)) =
-      detProduct (principalSubmatrix M n (Nat.le_succ n)) v * M[(Fin.last n, Fin.last n)] := by
+      detProduct (principalSubmatrix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n] := by
   unfold detProduct
   rw [← Fin.foldl_eq_finRange_foldl, ← Fin.foldl_eq_finRange_foldl, Fin.foldl_succ_last]
   have hfold :
       Fin.foldl n
           (fun acc i =>
             acc *
-              M[(i.castSucc, 
-                (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[i.castSucc])]) 1 =
+              M[i.castSucc][
+                (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[i.castSucc]]) 1 =
         Fin.foldl n
-          (fun acc i => acc * (principalSubmatrix M n (Nat.le_succ n))[(i, v[i])]) 1 := by
+          (fun acc i => acc * (principalSubmatrix M n (Nat.le_succ n))[i][v[i]]) 1 := by
     congr
     funext acc i
     have hget :
         (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[i.castSucc] =
           (v[i]).castSucc := by
       simpa using insertAt_last_get_castSucc (Fin.last n) (v.map Fin.castSucc) i
-    simp [principalSubmatrix, ofFn, hget, getElem_rows, Fin.getElem_fin]
+    simp [principalSubmatrix, ofFn, hget]
   have hlast :
       (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[Fin.last n] =
         Fin.last n := by
@@ -152,7 +152,7 @@ theorem detTerm_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n) :
     detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n)) =
       detSign (R := R) v *
-        (detProduct (principalSubmatrix M n (Nat.le_succ n)) v * M[(Fin.last n, Fin.last n)]) := by
+        (detProduct (principalSubmatrix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n]) := by
   unfold detTerm
   rw [detSign_insertAt_last, detProduct_insertAt_last]
 
@@ -261,13 +261,13 @@ the product over the `deleteRowCol` minor. -/
 private theorem detProduct_insertAt_general {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n) (i : Fin (n + 1)) :
     detProduct M (insertAt (Fin.last n) (v.map Fin.castSucc) i) =
-      M[(i, Fin.last n)] * detProduct (deleteRowCol M i (Fin.last n)) v := by
+      M[i][Fin.last n] * detProduct (deleteRowCol M i (Fin.last n)) v := by
   unfold detProduct
   rw [foldl_finRange_succ_factor_skipIndex i
-    (fun r => M[(r, (insertAt (Fin.last n) (v.map Fin.castSucc) i)[r])])]
+    (fun r => M[r][(insertAt (Fin.last n) (v.map Fin.castSucc) i)[r]])]
   congr 1
-  · -- M[(i, (insertAt ... i)[i])] = M[(i, Fin.last n)]
-    congr 2
+  · -- M[i][(insertAt ... i)[i]] = M[i][Fin.last n]
+    congr 1
     exact insertAt_get_self _ _ _
   · apply foldl_det_product_congr
     intro r' _hmem
@@ -286,7 +286,7 @@ private theorem detTerm_insertAt_general {R : Type u} [Lean.Grind.CommRing R] {n
     (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n) (i : Fin (n + 1)) :
     detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i) =
       cofactorSign (R := R) i (Fin.last n) *
-        (M[(i, Fin.last n)] * detTerm (deleteRowCol M i (Fin.last n)) v) := by
+        (M[i][Fin.last n] * detTerm (deleteRowCol M i (Fin.last n)) v) := by
   unfold detTerm
   rw [detSign_insertAt_general, detProduct_insertAt_general, cofactorSign_last_eq_pow]
   grind
@@ -295,12 +295,12 @@ private theorem detProduct_insertAt_not_last_zero
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n)
     (i : Fin (n + 1)) (hi : i ≠ Fin.last n)
-    (hrow : ∀ j : Fin (n + 1), j.val < n → M[(Fin.last n, j)] = 0) :
+    (hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0) :
     detProduct M (insertAt (Fin.last n) (v.map Fin.castSucc) i) = 0 := by
   unfold detProduct
   apply foldl_det_product_zero_of_mem
     (List.finRange (n + 1)) (Fin.last n)
-    (fun r => M[(r, (insertAt (Fin.last n) (v.map Fin.castSucc) i)[r])]) 1
+    (fun r => M[r][(insertAt (Fin.last n) (v.map Fin.castSucc) i)[r]]) 1
     (List.mem_finRange (Fin.last n))
   have hiVal : i.val < n := by
     have hne : i.val ≠ n := by
@@ -317,7 +317,7 @@ private theorem detTerm_insertAt_not_last_zero
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n)
     (i : Fin (n + 1)) (hi : i ≠ Fin.last n)
-    (hrow : ∀ j : Fin (n + 1), j.val < n → M[(Fin.last n, j)] = 0) :
+    (hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0) :
     detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i) = 0 := by
   unfold detTerm
   rw [detProduct_insertAt_not_last_zero M v i hi hrow]
@@ -326,12 +326,12 @@ private theorem detTerm_insertAt_not_last_zero
 private theorem foldl_detTerm_last_row_insertions
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (v : Vector (Fin n) n) (z : R)
-    (hrow : ∀ j : Fin (n + 1), j.val < n → M[(Fin.last n, j)] = 0) :
+    (hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0) :
     (List.finRange (n + 1)).foldl
         (fun acc i =>
           acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) z =
       z + detSign (R := R) v *
-        (detProduct (principalSubmatrix M n (Nat.le_succ n)) v * M[(Fin.last n, Fin.last n)]) := by
+        (detProduct (principalSubmatrix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n]) := by
   rw [← Fin.foldl_eq_finRange_foldl, Fin.foldl_succ_last]
   have hprefix :
       Fin.foldl n
@@ -365,8 +365,8 @@ lemmas. -/
 theorem det_eq_principalSubmatrix_mul_last
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1))
-    (hrow : ∀ j : Fin (n + 1), j.val < n → M[(Fin.last n, j)] = 0) :
-    det M = det (principalSubmatrix M n (Nat.le_succ n)) * M[(Fin.last n, Fin.last n)] := by
+    (hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0) :
+    det M = det (principalSubmatrix M n (Nat.le_succ n)) * M[Fin.last n][Fin.last n] := by
   unfold det
   rw [show permutationVectors (n + 1) =
       List.flatMap
@@ -394,26 +394,26 @@ theorem det_eq_principalSubmatrix_mul_last
         (fun acc v =>
           acc + detSign (R := R) v *
             (detProduct (principalSubmatrix M n (Nat.le_succ n)) v *
-              M[(Fin.last n, Fin.last n)])) 0 := by
+              M[Fin.last n][Fin.last n])) 0 := by
         apply foldl_acc_congr
         intro acc v _hmem
         exact foldl_detTerm_last_row_insertions M v acc hrow
     _ =
       (permutationVectors n).foldl
           (fun acc v => acc + detTerm (principalSubmatrix M n (Nat.le_succ n)) v) 0 *
-        M[(Fin.last n, Fin.last n)] := by
+        M[Fin.last n][Fin.last n] := by
         unfold detTerm
         calc
           (permutationVectors n).foldl
               (fun acc v =>
                 acc + detSign (R := R) v *
                   (detProduct (principalSubmatrix M n (Nat.le_succ n)) v *
-                    M[(Fin.last n, Fin.last n)])) 0 =
+                    M[Fin.last n][Fin.last n])) 0 =
             (permutationVectors n).foldl
               (fun acc v =>
                 acc + (detSign (R := R) v *
                   detProduct (principalSubmatrix M n (Nat.le_succ n)) v) *
-                    M[(Fin.last n, Fin.last n)]) 0 := by
+                    M[Fin.last n][Fin.last n]) 0 := by
               apply foldl_det_sum_congr
               intro v _hmem
               grind
@@ -422,13 +422,13 @@ theorem det_eq_principalSubmatrix_mul_last
                 (fun acc v =>
                   acc + detSign (R := R) v *
                     detProduct (principalSubmatrix M n (Nat.le_succ n)) v) 0 *
-              M[(Fin.last n, Fin.last n)] := by
+              M[Fin.last n][Fin.last n] := by
               exact foldl_det_sum_mul_right_zero
                 (permutationVectors n)
                 (fun v => detSign (R := R) v *
                   detProduct (principalSubmatrix M n (Nat.le_succ n)) v)
-                M[(Fin.last n, Fin.last n)]
-    _ = det (principalSubmatrix M n (Nat.le_succ n)) * M[(Fin.last n, Fin.last n)] := by
+                M[Fin.last n][Fin.last n]
+    _ = det (principalSubmatrix M n (Nat.le_succ n)) * M[Fin.last n][Fin.last n] := by
         rfl
 
 end Matrix
