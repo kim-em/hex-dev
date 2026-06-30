@@ -638,7 +638,7 @@ private theorem freeSum_eq_neg_pivot {R : Type u} [Lean.Grind.Field R] {n m : Na
           (List.finRange D.rank).foldl
             (fun acc i' =>
               acc + (if i = i' then (1 : R) else 0) * v[D.pivotCols.get i']) 0 := by
-      apply foldl_sum_congr
+      apply List.foldl_add_congr
       intro i' _hi'
       have h := pivot_column_entry_pivotRow E i i'
       rw [h]
@@ -734,7 +734,7 @@ theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
                   -(D.echelon[E.toIsEchelonForm.pivotRow i][
                       E.toIsEchelonForm.freeCols.get k] *
                     v[E.toIsEchelonForm.freeCols.get k])) 0 := by
-        apply foldl_sum_congr
+        apply List.foldl_add_congr
         intro k _hk
         rw [nullspaceMatrix_pivot E i k, hcEntry k]
         grind
@@ -775,7 +775,7 @@ theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
                       (D.echelon[E.toIsEchelonForm.pivotRow i][
                           E.toIsEchelonForm.freeCols.get k] *
                         v[E.toIsEchelonForm.freeCols.get k]))) 0 := by
-          apply foldl_sum_congr
+          apply List.foldl_add_congr
           intro k _hk
           grind
         rw [h1, ← hmul]
@@ -805,7 +805,7 @@ theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
               (fun acc k =>
                 acc + (if l = k then (1 : R) else 0) *
                   v[E.toIsEchelonForm.freeCols.get k]) 0 := by
-        apply foldl_sum_congr
+        apply List.foldl_add_congr
         intro k _hk
         rw [hcEntry k]
         by_cases hkl : k = l
