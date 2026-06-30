@@ -62,7 +62,7 @@ in place when `M` is uniquely owned, avoiding the forced row copy that
 `set i (… set j …)` triggers via a `lean_inc` on the borrowed row. -/
 @[expose]
 def setEntry (M : Matrix Int n n) (i j : Fin n) (x : Int) : Matrix Int n n :=
-  M.modify i (·.set j x)
+  M.modifyRow i (·.set j x)
 
 /-- `foldl_set_outerSubMul_get_eq` evaluates the entry at `l` of the fold that
 overwrites each index in `xs` with `outerK.get · - r * outerJ.get ·`, giving the
@@ -276,13 +276,13 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
               let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt km1.isLt⟩
               row.set jFin (source.get jFin))
             row
-        s.ν.modify km1 (setPrefixFrom (s.ν.getRow kFin))
-          |>.modify kFin (setPrefixFrom (s.ν.getRow km1))
+        s.ν.modifyRow km1 (setPrefixFrom (s.ν.getRow kFin))
+          |>.modifyRow kFin (setPrefixFrom (s.ν.getRow km1))
       let νPivot := setEntry νRowsSwapped kFin km1 B
       -- Hoist (oldNu[i].kFin, oldNu[i].km1) reads out of the foldl lambda
       -- so the closure does not hold a reference to s.ν across iterations.
       -- With s.ν kept alive only for this precompute, the row-level rc on
-      -- post-pivot rows drops to 1 by the time `ν.modify i` runs, letting
+      -- post-pivot rows drops to 1 by the time `ν.modifyRow i` runs, letting
       -- the two-`set` body inside the modify mutate in place instead of
       -- COW'ing the row on every iteration.
       let pairs : Vector (Int × Int) n :=
@@ -296,7 +296,7 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
               let (a, b) := pairs.get i
               let prev := (Int.ofNat dkPrev * a + B * b) / Int.ofNat dk
               let curr := (Int.ofNat dkNext * b - B * a) / Int.ofNat dk
-              ν.modify i fun row =>
+              ν.modifyRow i fun row =>
                 row.set km1 prev
                   |>.set kFin curr
             else
