@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBasic
-import HexBerlekamp.Basic
+module
+
+public import HexBasic
+public import HexBerlekamp.Basic
+
+public section
 
 /-!
 Executable Berlekamp split-step factoring for `hex-berlekamp`.
@@ -33,10 +37,12 @@ structure Factorization (p : Nat) [ZMod64.Bounds p] where
   factors : List (FpPoly p)
 
 /-- Multiply a list of `F_p[x]` factors in stored order, starting from `1`. -/
+@[expose]
 def factorProduct (factors : List (FpPoly p)) : FpPoly p :=
   factors.foldl (fun acc factor => acc * factor) 1
 
 /-- Product of the factors returned by a `Factorization`. -/
+@[expose]
 def Factorization.product (result : Factorization p) : FpPoly p :=
   factorProduct result.factors
 
@@ -49,6 +55,7 @@ def Factorization.product (result : Factorization p) : FpPoly p :=
   rfl
 
 /-- The gcd candidate attached to one field constant `c`. -/
+@[expose]
 def splitFactorAt (f witness : FpPoly p) (c : ZMod64 p) : FpPoly p :=
   DensePoly.gcd f (witness - FpPoly.C c)
 
@@ -1449,7 +1456,7 @@ theorem berlekampFactor_factors_ne_zero
     subst hg
     intro h
     subst h
-    have hlead_zero : DensePoly.leadingCoeff (0 : FpPoly p) = 0 := rfl
+    have hlead_zero : DensePoly.leadingCoeff (0 : FpPoly p) = 0 := DensePoly.leadingCoeff_zero
     unfold DensePoly.Monic at hmonic
     rw [hlead_zero] at hmonic
     exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hmonic.symm
@@ -1507,7 +1514,7 @@ theorem kernelWitnessSplit?_none_of_berlekampFactor_factors
       ∀ w ∈ (fixedSpaceKernel f hmonic).toList, kernelWitnessSplit? g w = none := by
   have hf_ne : f ≠ 0 := by
     intro h
-    have hlead_zero : DensePoly.leadingCoeff (0 : FpPoly p) = 0 := rfl
+    have hlead_zero : DensePoly.leadingCoeff (0 : FpPoly p) = 0 := DensePoly.leadingCoeff_zero
     unfold DensePoly.Monic at hmonic
     rw [h, hlead_zero] at hmonic
     exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hmonic.symm

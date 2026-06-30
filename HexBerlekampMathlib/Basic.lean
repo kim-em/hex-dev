@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekamp.Factor
-import HexBerlekamp.Irreducibility
-import HexBerlekamp.RabinSoundness
-import HexModArithMathlib
-import HexPolyMathlib
-import Mathlib.FieldTheory.Finite.Extension
-import Mathlib.FieldTheory.Finite.GaloisField
+module
+
+public import HexBerlekamp.Factor
+public import HexBerlekamp.Irreducibility
+public import HexBerlekamp.RabinSoundness
+public import HexModArithMathlib
+public import HexPolyMathlib
+public import Mathlib.FieldTheory.Finite.Extension
+public import Mathlib.FieldTheory.Finite.GaloisField
+
+public section
 
 /-!
 Mathlib-facing correctness surface for `HexBerlekamp`.
