@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBasic
-import HexPolyZ.Basic
+module
+
+public import HexBasic
+public import HexPolyZ.Basic
+
+public section
 
 /-!
 Executable Mignotte-bound helpers for `hex-poly-z`.
@@ -394,16 +398,19 @@ private theorem sqrtAux_full_fuel_sq_le
   simpa [hself] using hsq
 
 /-- The squared Euclidean norm of the coefficient vector of `f`. -/
+@[expose]
 def coeffNormSq (f : ZPoly) : Nat :=
   (List.range f.size).foldl (fun acc i => acc + (f.coeff i).natAbs ^ 2) 0
 
 /-- A conservative natural-number upper bound on the Euclidean norm of the
 coefficient vector of `f`. -/
+@[expose]
 def coeffL2NormBound (f : ZPoly) : Nat :=
   ceilSqrt (coeffNormSq f)
 
 /-- The executable Mignotte bound for the `j`-th coefficient of a degree-`k`
 factor of `f`, using the conservative `coeffL2NormBound`. -/
+@[expose]
 def mignotteCoeffBound (f : ZPoly) (k j : Nat) : Nat :=
   binom k j * coeffL2NormBound f
 
@@ -415,6 +422,7 @@ It takes the maximum of the executable Mignotte coefficient bounds over every
 candidate factor degree up to `f.degree?.getD 0` and every coefficient index up
 to that degree.
 -/
+@[expose]
 def defaultFactorCoeffBound (f : ZPoly) : Nat :=
   let degreeBound := f.degree?.getD 0
   (List.range (degreeBound + 1)).foldl

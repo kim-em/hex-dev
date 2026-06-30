@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyMathlib.Basic
-import Mathlib.Algebra.Polynomial.FieldDivision
+module
+
+public import HexPolyMathlib.Basic
+public import Mathlib.Algebra.Polynomial.FieldDivision
+
+public section
 
 /-!
 Euclidean-algorithm correspondence for `HexPolyMathlib`.
