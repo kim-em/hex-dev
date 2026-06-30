@@ -96,13 +96,18 @@ jobs:
       # more precise than the olean-count check above.
       - name: Assert Mathlib will not rebuild (lake build --no-build)
         run: lake build --no-build Mathlib
-      # Single-source the build target set so the publish step emits cache
-      # mappings for exactly what was built. The repo's only @[default_target]
-      # is HexManual, so a bare `lake build --no-build -o` would publish only
-      # the manual's closure and miss the bench/library/bridge targets.
-      - name: Define the hex-dev build target set
+      # Two target sets. HEX_LIB_TARGETS are the libraries we cache: their oleans
+      # are the expensive elaboration and they restore cleanly. Executables are
+      # deliberately NOT cached -- the artifact cache restores an exe's module
+      # outputs but not its linked `bin/` binary, so a restored exe looks
+      # up-to-date yet cannot run (which broke bench verify on restore runs). By
+      # never publishing them, exes always link fresh against the restored libs,
+      # which is cheap. The HO-1 bridge (HexBerlekampZassenhausMathlib) is a
+      # library and lives in HEX_LIB_TARGETS.
+      - name: Define the hex-dev cache + build target sets
         run: |
-          echo "HEX_BUILD_TARGETS=hexarith_bench hexpoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexberlekamp_bench hexbz_bench hexconway_bench hexmatrix_bench hexdeterminant_bench hexbareiss_bench hexgramschmidt_bench hexlll_bench HexMatrix HexRowReduce HexDeterminant HexBareiss HexGramSchmidt HexLLL hexlll_provider_probe HexMatrixMathlib HexGramSchmidtMathlib HexLLLMathlib" >> "$GITHUB_ENV"
+          echo "HEX_LIB_TARGETS=HexBasic HexArith HexPoly HexModArith HexGF2 HexPolyZ HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexBerlekampZassenhaus HexMatrix HexRowReduce HexDeterminant HexBareiss HexGramSchmidt HexLLL HexMatrixMathlib HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib" >> "$GITHUB_ENV"
+          echo "HEX_EXE_TARGETS=hexarith_bench hexpoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexberlekamp_bench hexbz_bench hexconway_bench hexmatrix_bench hexdeterminant_bench hexbareiss_bench hexgramschmidt_bench hexlll_bench hexlll_provider_probe" >> "$GITHUB_ENV"
       - name: Build hex (Mathlib must NOT rebuild from source)
         # Build the bench-exes here, not in the `Bench verify` step.
         # Otherwise the first `lake exe X_bench list` in that step
@@ -110,9 +115,7 @@ jobs:
         # heaviest one) and the wallclock breakdown would conflate
         # build time with verify time. Bench verify itself is fast
         # since lean-bench's verify path runs in-process.
-        run: lake build ${HEX_BUILD_TARGETS}
-      - name: Build HO-1 Mathlib bridge
-        run: lake build HexBerlekampZassenhausMathlib
+        run: lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS}
       # Publish hex-dev's oleans on a trusted main push so later builds (and any
       # consumer) restore them. Skips silently without the upload key.
       - name: Publish hex-dev oleans to the Lake cache (main only)
@@ -135,10 +138,10 @@ jobs:
             echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
           } > "$CFG"
           export LAKE_CONFIG="$CFG"
-          # Emit mappings for exactly the targets built above (plus the HO-1
-          # bridge), not the bare default target.
-          lake build --no-build -o .lake/outputs.jsonl \
-            ${HEX_BUILD_TARGETS} HexBerlekampZassenhausMathlib
+          # Emit mappings for the libraries only (HEX_LIB_TARGETS). Executables
+          # are excluded on purpose: their linked binaries don't survive a cache
+          # restore, so they must always link fresh.
+          lake build --no-build -o .lake/outputs.jsonl ${HEX_LIB_TARGETS}
           echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
           lake cache put .lake/outputs.jsonl --service hex-r2 --repo kim-em/hex-dev
       - name: Bench verify (smoke gate per SPEC/benchmarking.md §CI integration)
