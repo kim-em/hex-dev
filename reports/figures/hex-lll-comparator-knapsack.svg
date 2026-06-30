@@ -1241,8 +1241,7 @@ z
     </g>
    </g>
    <g id="line2d_85">
-    <path d="M 88.984091 209.840247
-L 188.654545 181.488876
+    <path d="M 188.654545 181.488876
 L 288.325 155.073303
 L 387.995455 138.50078
 L 487.665909 124.658315
@@ -1255,7 +1254,6 @@ z
 " style="stroke: #2ca02c; stroke-linejoin: miter"/>
     </defs>
     <g clip-path="url(#p2a4e53d04e)">
-     <use xlink:href="#ma559d3018c" x="88.984091" y="209.840247" style="fill: #2ca02c; stroke: #2ca02c; stroke-linejoin: miter"/>
      <use xlink:href="#ma559d3018c" x="188.654545" y="181.488876" style="fill: #2ca02c; stroke: #2ca02c; stroke-linejoin: miter"/>
      <use xlink:href="#ma559d3018c" x="288.325" y="155.073303" style="fill: #2ca02c; stroke: #2ca02c; stroke-linejoin: miter"/>
      <use xlink:href="#ma559d3018c" x="387.995455" y="138.50078" style="fill: #2ca02c; stroke: #2ca02c; stroke-linejoin: miter"/>

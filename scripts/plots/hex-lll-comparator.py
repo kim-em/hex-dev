@@ -343,12 +343,22 @@ def load_floor_ms(path: Path) -> float:
     return 0.0
 
 
+FLOOR_DOMINATED_MARGIN = 0.15
+
+
 def subtract_request_floor(series: Series, floor_ms: float) -> Series:
     """Subtract the measured per-request floor from the Isabelle-certified
     series and relabel it so the legend marks the adjustment. The floor is
-    measured in the same run, so it is a true lower bound under every rung;
-    the nonpositive guard is a safety net that should never fire."""
-    kept = [(x, y - floor_ms) for x, y in zip(series.xs, series.ys) if y - floor_ms > 0]
+    measured in the same run, so it is a true lower bound under every rung.
+
+    A rung whose raw time is within `FLOOR_DOMINATED_MARGIN` of the pure floor
+    is *floor-dominated*: the marginal reduction cost is below the floor's own
+    measurement noise, so the subtracted value is an artifact (e.g. ajtai d=8,
+    raw 21.2 ms vs a 21.1 ms floor -> 0.1 ms). Those points are dropped rather
+    than plotted as near-zero, so the curve begins where the reduction cost
+    rises clearly above the floor."""
+    threshold = floor_ms * (1.0 + FLOOR_DOMINATED_MARGIN)
+    kept = [(x, y - floor_ms) for x, y in zip(series.xs, series.ys) if y > threshold]
     return Series(
         label=ISABELLE_CERTIFIED_ADJUSTED_LABEL,
         xs=[x for x, _ in kept],
