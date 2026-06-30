@@ -157,6 +157,13 @@ repos:
     oracles: [lll_fpylll.py, lll_fpylll_bench_driver.py, common.py, __init__.py, setup_fplll_ffi.sh, setup_lll_isabelle.sh, patches]
     pins: [hex-gram-schmidt, hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]
     lakefile: lean
+    # user-facing performance doc (HexLLL/PERFORMANCE.md -> repo-root PERFORMANCE.md)
+    performance: true
+    # tight explicit figure allow-list (no broad globs); add per new family
+    figures:
+      - hex-lll-comparator-random-bounded.svg
+      - hex-lll-comparator-harsh-cubic.svg
+      - hex-lll-comparator-ajtai.svg
 
   - repo: kim-em/hex-lll-mathlib
     lib: HexLLLMathlib
