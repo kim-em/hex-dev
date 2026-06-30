@@ -14,6 +14,9 @@ correspondences build on this base in `HexRowReduceMathlib`,
 ```lean
 def matrixEquiv : Hex.Matrix R n m ≃ Matrix (Fin n) (Fin m) R
 ```
+Its forward map is `fun M i j => M[(i, j)]` — built on the public entry API, not
+on the (now-opaque) backing representation, so the equivalence is unaffected by a
+representation change.
 
 **Row operations correspond to Mathlib transvections / elementary matrices:**
 Our `rowAdd M i j c` is left-multiplication by `Matrix.transvection i j c`; our
