@@ -195,6 +195,30 @@ theorem foldl_add_mul_left_zero (xs : List α) (c : R) (f : α → R) :
   have hzero : c * 0 = 0 := by grind
   simpa [hzero] using foldl_add_mul_left xs c f 0
 
+/-- Factor a right scalar out of an additive fold-sum (right distributivity,
+no commutativity needed). -/
+theorem foldl_add_mul_right (xs : List α) (f : α → R) (c z : R) :
+    xs.foldl (fun acc x => acc + f x) z * c =
+      xs.foldl (fun acc x => acc + f x * c) (z * c) := by
+  induction xs generalizing z with
+  | nil => rfl
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    rw [ih (z := z + f x), show (z + f x) * c = z * c + f x * c by grind]
+
+/-! ### Negation and subtraction -/
+
+/-- Negation distributes through an additive fold-sum. -/
+theorem foldl_add_neg (xs : List α) (f : α → R) (z : R) :
+    xs.foldl (fun acc x => acc + -f x) (-z) =
+      -xs.foldl (fun acc x => acc + f x) z := by
+  induction xs generalizing z with
+  | nil => rfl
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    rw [show -z + -f x = -(z + f x) by grind]
+    exact ih (z + f x)
+
 /-! ### Additivity -/
 
 /-- An additive fold-sum of a pointwise sum splits into two folds, distributing
@@ -212,6 +236,15 @@ theorem foldl_add_add_start (xs : List α) (f g : α → R) (a b : R) :
       _ = xs.foldl (fun acc x => acc + f x) (a + f x)
             + xs.foldl (fun acc x => acc + g x) (b + g x) := ih (a + f x) (b + g x)
 
+/-- An additive fold-sum of a pointwise sum splits into two folds, given a
+splitting of the starting accumulator. -/
+theorem foldl_add_add_of_acc (xs : List α) (f g : α → R) (acc accF accG : R)
+    (h : acc = accF + accG) :
+    xs.foldl (fun acc x => acc + (f x + g x)) acc =
+      xs.foldl (fun acc x => acc + f x) accF + xs.foldl (fun acc x => acc + g x) accG := by
+  subst h
+  exact foldl_add_add_start xs f g accF accG
+
 /-- An additive fold-sum of a pointwise sum from `0` splits into the sum of the
 two separate folds from `0`. -/
 theorem foldl_add_add (xs : List α) (f g : α → R) :
@@ -221,6 +254,27 @@ theorem foldl_add_add (xs : List α) (f g : α → R) :
       = xs.foldl (fun acc x => acc + (f x + g x)) ((0 : R) + 0) := by congr 1; grind
     _ = xs.foldl (fun acc x => acc + f x) 0 + xs.foldl (fun acc x => acc + g x) 0 :=
         foldl_add_add_start xs f g 0 0
+
+/-- An additive fold-sum of a pointwise difference splits into the difference
+of the two fold-sums, distributing the starting accumulator. -/
+theorem foldl_add_sub (xs : List α) (f g : α → R) (a b : R) :
+    xs.foldl (fun acc x => acc + (f x - g x)) (a - b) =
+      xs.foldl (fun acc x => acc + f x) a - xs.foldl (fun acc x => acc + g x) b := by
+  rw [show a - b = a + -b by grind]
+  calc xs.foldl (fun acc x => acc + (f x - g x)) (a + -b)
+      = xs.foldl (fun acc x => acc + (f x + -g x)) (a + -b) := by
+        apply foldl_add_congr; intro x _; grind
+    _ = xs.foldl (fun acc x => acc + f x) a - xs.foldl (fun acc x => acc + g x) b := by
+        rw [foldl_add_add_start xs f (fun x => -g x) a (-b), foldl_add_neg xs g b]
+        grind
+
+/-- An additive fold-sum of a pointwise difference from `0` splits into the
+difference of the two fold-sums from `0`. -/
+theorem foldl_add_sub_zero (xs : List α) (f g : α → R) :
+    xs.foldl (fun acc x => acc + (f x - g x)) 0 =
+      xs.foldl (fun acc x => acc + f x) 0 - xs.foldl (fun acc x => acc + g x) 0 := by
+  have h := foldl_add_sub xs f g 0 0
+  rwa [show (0 : R) - 0 = 0 by grind] at h
 
 /-! ### Fubini -/
 
