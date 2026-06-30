@@ -342,6 +342,116 @@ def ajtaiProfileSteep (d : Nat) : Bool :=
 -- `#guard` is a command and cannot carry a docstring).
 #guard ajtaiProfileSteep 8
 
+/-! ### q-ary (LWE/SIS) family (fplll `gen_qary` port)
+
+Faithful port of fplll's `gen_qary` (`latticegen q <d> <k> <b>`): the `d × d`
+block matrix `[[I_{d-k}, H], [0, q·I_k]]` with `H` uniform mod `q` and
+`q = 2^(b-1) + rand(b-1)` (fplll `gen_q`; not required prime for the `b` flag).
+The unreduced basis is a step profile (a plateau at `q` over a plateau at `1`)
+LLL must smooth into the characteristic Z-shape, concentrating swaps in the
+transition band — a distinct stress from a triangular near-orthogonal basis. -/
+def qarySeed : Nat := 2000003
+
+/-- fplll `gen_q`: `q = 2^(b-1) + rand(b-1)`, a random `b`-bit modulus. -/
+def qaryModulus (b : Nat) : Nat := 2 ^ (b - 1) + wideRandom qarySeed (b - 1)
+
+/-- Modulus bit-length for the q-ary family. -/
+def qaryBits : Nat := 30
+
+/-- q-ary basis `[[I_{d-k}, H], [0, q·I_k]]`, `H` uniform mod `q`. -/
+def qaryBasis (d k b : Nat) : Matrix Int d d :=
+  let q := qaryModulus b
+  Matrix.ofFn fun i j =>
+    if i.val < d - k then
+      if j.val < d - k then (if i = j then 1 else 0)
+      else Int.ofNat (wideRandom (qarySeed + 1009 * (i.val * d + j.val + 1)) b % q)
+    else
+      if i = j then Int.ofNat q else 0
+
+/-- Parametric q-ary input family (square `d × d`, `k = d / 2`). -/
+def prepQaryInput (n : Nat) : FirstShortVectorInput :=
+  let rows := max n 1
+  { rows := rows
+    cols := rows
+    basis := qaryBasis rows (rows / 2) qaryBits
+    hn := by exact Nat.le_max_right n 1 }
+
+#guard qaryModulus 8 ≥ 128 && qaryModulus 8 < 256
+
+/-! ### NTRU family (fplll `gen_ntrulike` port)
+
+Faithful port of fplll's `gen_ntrulike` (`latticegen n <2d> <b>`): the `2d × 2d`
+block matrix `[[I, Rot(h)], [0, q·I]]` where `Rot(h)` is the circulant of a
+vector `h` uniform mod `q` with `h[0]` fixed so `h(1) ≡ 0 mod q`. The planted
+dense structure plus the q-block give a profile distinct from the other
+families. (latticegen's flavor uses a uniform `h`, not a genuine NTRU key.) -/
+def ntruSeed : Nat := 3000017
+def ntruBits : Nat := 30
+def ntruModulus : Nat := 2 ^ (ntruBits - 1) + wideRandom ntruSeed (ntruBits - 1)
+
+/-- `h[i]` (uniform mod q for `i ≥ 1`; `h[0] = (−Σ_{i≥1} h[i]) mod q`, so
+`h(1) = Σ_i h[i] ≡ 0 mod q`). -/
+def ntruH (d i : Nat) : Nat :=
+  let q := ntruModulus
+  if i = 0 then
+    let s := (List.range (d - 1)).foldl
+      (fun acc t => (acc + wideRandom (ntruSeed + 4001 * (t + 1)) ntruBits % q) % q) 0
+    (q - s) % q
+  else
+    wideRandom (ntruSeed + 4001 * i) ntruBits % q
+
+/-- NTRU-like basis `[[I, Rot(h)], [0, q·I]]` on `2d × 2d`. -/
+def ntruBasis (d : Nat) : Matrix Int (2 * d) (2 * d) :=
+  let q := ntruModulus
+  Matrix.ofFn fun i j =>
+    let r := i.val
+    let c := j.val
+    if r < d then
+      if c < d then (if r = c then 1 else 0)
+      else Int.ofNat (ntruH d ((c - r) % d))
+    else
+      if c < d then 0 else (if r = c then Int.ofNat q else 0)
+
+/-- Parametric NTRU input family (dimension `2n`). -/
+def prepNtruInput (n : Nat) : FirstShortVectorInput :=
+  let d := max n 1
+  { rows := 2 * d
+    cols := 2 * d
+    basis := ntruBasis d
+    hn := by have h := Nat.le_max_right n 1; omega }
+
+-- The planted property `h(1) ≡ 0 mod q` (the row sum of `Rot(h)` is `0 mod q`).
+#guard (let q := ntruModulus; (List.range 4).foldl (fun a i => (a + ntruH 4 i) % q) 0 == 0)
+
+/-! ### knapsack / integer-relation family (fplll `gen_intrel` port)
+
+Faithful port of fplll's `gen_intrel` (`latticegen r <d> <b>`): the **rectangular**
+`d × (d+1)` matrix whose row `i` is `[rand_b, e_{i+1}]` (a random `b`-bit weight
+in column 0, then the `i`-th canonical unit vector). This is the only family with
+`cols ≠ rows`, so it exercises the `m > n` Gram construction in `ofBasis`. -/
+def knapsackSeed : Nat := 4000037
+
+/-- Weight bit-length at dimension `n`, targeting density `d = n / b ≈ 0.9`. -/
+def knapsackBits (n : Nat) : Nat := (n * 10) / 9 + 1
+
+/-- Rectangular `d × (d+1)` integer-relation basis (fplll `gen_intrel`). -/
+def knapsackBasis (d b : Nat) : Matrix Int d (d + 1) :=
+  Matrix.ofFn fun i j =>
+    if j.val = 0 then Int.ofNat (wideRandom (knapsackSeed + 5003 * (i.val + 1)) b)
+    else if j.val = i.val + 1 then 1
+    else 0
+
+/-- Parametric knapsack input family (rectangular `n × (n+1)`). -/
+def prepKnapsackInput (n : Nat) : FirstShortVectorInput :=
+  let rows := max n 1
+  { rows := rows
+    cols := rows + 1
+    basis := knapsackBasis rows (knapsackBits rows)
+    hn := by exact Nat.le_max_right n 1 }
+
+-- density d = n/b ≈ 0.9 (b = ⌈10n/9⌉ + 1), and the basis is rectangular n×(n+1).
+#guard knapsackBits 9 == 11
+
 def getCachedInput (ref : IO.Ref (Option FirstShortVectorInput))
     (mk : Unit → FirstShortVectorInput) : IO FirstShortVectorInput := do
   match (← ref.get) with
