@@ -31,7 +31,7 @@ variable {R : Type u} {n m : Nat}
       (matrixEquiv M).submatrix (Fin.castLE hk) (Fin.castLE hk) := by
   ext i j
   simp only [matrixEquiv_apply, Hex.Matrix.getElem_principalSubmatrix, Matrix.submatrix_apply,
-    Fin.castLE, Fin.castLT]
+    Fin.castLE]
 
 /-- The first-`k`-rows slice is the submatrix reindexing rows by `Fin.castLE`. -/
 @[simp, grind =] theorem matrixEquiv_takeRows (M : Hex.Matrix R n m) (k : Nat)
@@ -40,6 +40,6 @@ variable {R : Type u} {n m : Nat}
       (matrixEquiv M).submatrix (Fin.castLE hk) id := by
   ext i j
   simp only [matrixEquiv_apply, Hex.Matrix.getElem_takeRows, Matrix.submatrix_apply,
-    Fin.castLE, Fin.castLT, id_eq]
+    Fin.castLE, id_eq]
 
 end HexMatrixMathlib
