@@ -4,16 +4,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2.Basic
-import HexGF2.Clmul
-import HexGF2.CommonIrreducibility
-import HexGF2.CrossCheck
-import HexGF2.Euclid
-import HexGF2.Field
-import HexGF2.Irreducibility
-import HexGF2.Multiply
-import HexGF2.RabinSoundness
-import HexGF2.Smoke
+module
+
+public import HexGF2.Basic
+public import HexGF2.Clmul
+public import HexGF2.CommonIrreducibility
+public import HexGF2.CrossCheck
+public import HexGF2.Euclid
+public import HexGF2.Field
+public import HexGF2.Irreducibility
+public import HexGF2.Multiply
+public import HexGF2.RabinSoundness
+public import HexGF2.Smoke
+
+public section
 
 /-!
 The `HexGF2` library exposes the packed `GF(2)` polynomial core:

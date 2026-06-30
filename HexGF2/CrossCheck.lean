@@ -4,7 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2.Clmul
+module
+
+public meta import HexGF2.Clmul
+public import HexGF2.Clmul
+
+public section
 
 /-!
 Extern-vs-pure-Lean cross-check for `Hex.clmul`.

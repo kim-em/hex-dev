@@ -4,8 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2.CommonIrreducibility
-import HexGF2.Field
+module
+
+public import HexGF2.CommonIrreducibility
+public import HexGF2.Field
+-- `#guard` checks below evaluate at elaboration time, so the field
+-- instances and `ofUInt64Monic` must be available as `meta` imports.
+public meta import HexGF2.Field
+public meta import HexGF2.Euclid
+
+public section
 
 /-!
 Executable `#guard` checks for the single-word `GF2n` wrapper path.

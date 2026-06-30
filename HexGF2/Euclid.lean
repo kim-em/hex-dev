@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2.Multiply
+module
+
+public import HexGF2.Multiply
+
+public section
 
 /-!
 Executable Euclidean-algorithm operations for packed `GF2Poly`.
@@ -18,7 +22,8 @@ namespace Hex
 namespace GF2Poly
 
 /-- Tail-recursive long division for packed `GF(2)` polynomials. -/
-private def divModAux (q : GF2Poly) (fuel : Nat) (quot rem : GF2Poly) :
+@[expose]
+def divModAux (q : GF2Poly) (fuel : Nat) (quot rem : GF2Poly) :
     GF2Poly × GF2Poly :=
   match fuel with
   | 0 => (quot, rem)
@@ -37,14 +42,17 @@ private def divModAux (q : GF2Poly) (fuel : Nat) (quot rem : GF2Poly) :
         | _, _ => (quot, rem)
 
 /-- Polynomial long division over `GF(2)`. Division by `0` returns `(0, p)`. -/
+@[expose]
 def divMod (p q : GF2Poly) : GF2Poly × GF2Poly :=
   divModAux q (p.degree + 1) 0 p
 
 /-- Quotient from polynomial long division over `GF(2)`. -/
+@[expose]
 def div (p q : GF2Poly) : GF2Poly :=
   (divMod p q).1
 
 /-- Remainder from polynomial long division over `GF(2)`. -/
+@[expose]
 def mod (p q : GF2Poly) : GF2Poly :=
   (divMod p q).2
 
@@ -60,10 +68,12 @@ instance : Dvd GF2Poly where
 
 /-- Polynomial irreducibility over `GF(2)` phrased in terms of nontrivial
 factorizations inside the packed `GF2Poly` execution model. -/
+@[expose]
 def Irreducible (f : GF2Poly) : Prop :=
   f ≠ 0 ∧ ∀ a b : GF2Poly, a * b = f → a.degree = 0 ∨ b.degree = 0
 
 /-- Bitmask for coefficients of degree `< n` inside one `UInt64` word. -/
+@[expose]
 def lowerMask (n : Nat) : UInt64 :=
   if n < 64 then
     ((1 : UInt64) <<< n.toUInt64) - 1
@@ -72,15 +82,18 @@ def lowerMask (n : Nat) : UInt64 :=
 
 /-- Build the monic degree-`n` polynomial `x^n + lower`, truncating `lower` to
 degrees `< n` as required by the packed `GF(2^n)` modulus convention. -/
+@[expose]
 def ofUInt64Monic (lower : UInt64) (n : Nat) : GF2Poly :=
   monomial n + ofUInt64 (lower &&& lowerMask n)
 
 /-- Reduce a packed polynomial modulo a single-word extension modulus and read
 back the low canonical word. -/
+@[expose]
 def packedReduceWord (n : Nat) (irr : UInt64) (p : GF2Poly) : UInt64 :=
   (((p % ofUInt64Monic irr n).toWords).getD 0 0) &&& lowerMask n
 
 /-- Repackage a word as a canonical representative below `2^n`. -/
+@[expose]
 def canonicalWordLT (n : Nat) (hn64 : n < 64) (w : UInt64) : UInt64 :=
   UInt64.ofNatLT (w.toNat % 2 ^ n) <| by
     exact Nat.lt_of_lt_of_le (Nat.mod_lt _ (by
@@ -276,7 +289,8 @@ structure XGCDResult where
 
 /-- Tail-recursive extended Euclidean algorithm over packed `GF(2)`
 polynomials. -/
-private def xgcdAux
+@[expose]
+def xgcdAux
     (r₀ s₀ t₀ r₁ s₁ t₁ : GF2Poly) (fuel : Nat) : XGCDResult :=
   match fuel with
   | 0 => { gcd := r₀, left := s₀, right := t₀ }
@@ -291,15 +305,18 @@ private def xgcdAux
 
 /-- Extended gcd for packed `GF(2)` polynomials, returning the gcd together
 with Bezout coefficients. -/
+@[expose]
 def xgcd (p q : GF2Poly) : XGCDResult :=
   xgcdAux p 1 0 q 0 1 (p.degree + q.degree + 2)
 
 /-- The single-word xgcd inverse candidate reduced modulo the packed
 irreducible modulus. -/
+@[expose]
 def packedInvWord (n : Nat) (irr w : UInt64) : UInt64 :=
   packedReduceWord n irr ((xgcd (ofUInt64 w) (ofUInt64Monic irr n)).left)
 
 /-- Polynomial gcd over packed `GF(2)`. -/
+@[expose]
 def gcd (p q : GF2Poly) : GF2Poly :=
   (xgcd p q).gcd
 
@@ -1048,11 +1065,9 @@ private theorem one_mod_eq_one_of_degree_pos {f : GF2Poly} (hfdegree : 0 < f.deg
     simpa [degree, hfd] using hfdegree
   change (divMod 1 f).2 = 1
   unfold divMod
-  change (divModAux f 1 0 1).2 = 1
+  rw [degree_one]
   simp only [divModAux]
-  have hone_degree : (1 : GF2Poly).degree? = some 0 := by
-    rfl
-  rw [hone_degree, hfd]
+  rw [degree?_one, hfd]
   simp [hfzeroFalse, hfdpos]
 
 /-- The Bezout identity for `xgcd` gives a congruence between the left inverse
