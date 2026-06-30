@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexBasic
 public import HexLLL.Lattice
 
 public section
@@ -65,29 +66,6 @@ def mulEqCert (M : Matrix Int n n) (A C : Matrix Int n m) : Bool :=
   (List.finRange n).all fun i =>
     (row M i).dotProduct packs == packRow K (row C i)
 
-/-- `foldl_max_le_init` shows that the initial accumulator is bounded by the
-running `Nat.max` scan used to compute entrywise absolute-value bounds. -/
-private theorem foldl_max_le_init {α : Type} (f : α → Nat) (l : List α) (acc : Nat) :
-    acc ≤ l.foldl (fun a x => Nat.max a (f x)) acc := by
-  induction l generalizing acc with
-  | nil => simp
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      exact Nat.le_trans (Nat.le_max_left acc (f x)) (ih (Nat.max acc (f x)))
-
-/-- `le_foldl_max` bounds any listed value by the completed `Nat.max` scan used
-to justify `maxAbs` matrix entry bounds. -/
-private theorem le_foldl_max {α : Type} (f : α → Nat) (l : List α) (acc : Nat)
-    {x : α} (hx : x ∈ l) :
-    f x ≤ l.foldl (fun a x => Nat.max a (f x)) acc := by
-  induction l generalizing acc with
-  | nil => cases hx
-  | cons y ys ih =>
-      simp only [List.foldl_cons]
-      rcases List.mem_cons.mp hx with rfl | hmem
-      · exact Nat.le_trans (Nat.le_max_right acc (f x))
-          (foldl_max_le_init f ys (Nat.max acc (f x)))
-      · exact ih (Nat.max acc (f y)) hmem
 
 /-- Every entry of an integer matrix is bounded by the `maxAbs` scan. -/
 theorem natAbs_le_maxAbs (M : Matrix Int n m) (i : Fin n) (j : Fin m) :
@@ -102,11 +80,12 @@ theorem natAbs_le_maxAbs (M : Matrix Int n m) (i : Fin n) (j : Fin m) :
     exact List.getElem_mem _
   have hinner : M[i][j].natAbs ≤
       M[i].toList.foldl (fun a x => Nat.max a x.natAbs) 0 :=
-    le_foldl_max (fun x => x.natAbs) _ 0 hentry
+    List.le_foldl_max_of_mem _ (fun x => x.natAbs) (init := 0) hentry
   have houter :=
-    le_foldl_max
+    List.le_foldl_max_of_mem
+      M.toList
       (fun row : Vector Int m => row.toList.foldl (fun a x => Nat.max a x.natAbs) 0)
-      M.toList 0 hrow
+      (init := 0) hrow
   exact Nat.le_trans hinner houter
 
 /-- Packing is linear over a coefficient-times-row update. -/

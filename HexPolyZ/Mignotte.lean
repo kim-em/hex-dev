@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
+import HexBasic
 import HexPolyZ.Basic
 
 /-!
@@ -602,36 +603,6 @@ theorem mignotteCoeffBound_eq_zero_of_lt (f : ZPoly) (k j : Nat) (h : k < j) :
     mignotteCoeffBound f k j = 0 := by
   simp [mignotteCoeffBound, binom_eq_zero_of_lt h]
 
-/-- A maximizing natural-number `foldl` only increases (or preserves) its
-accumulator, so the initial value bounds the fold result. -/
-private theorem le_foldl_max_left {α : Type} (xs : List α) (g : α → Nat) (init : Nat) :
-    init ≤ xs.foldl (fun acc x => max acc (g x)) init := by
-  induction xs generalizing init with
-  | nil =>
-      simp
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      exact Nat.le_trans (Nat.le_max_left init (g x)) (ih (max init (g x)))
-
-/-- For a maximizing natural-number `foldl`, the value `g x` at any member index
-`x ∈ xs` is bounded by the fold result. -/
-private theorem le_foldl_max_of_mem {α : Type} (xs : List α) (g : α → Nat)
-    {x : α} {init : Nat} (hx : x ∈ xs) :
-    g x ≤ xs.foldl (fun acc y => max acc (g y)) init := by
-  induction xs generalizing init with
-  | nil =>
-      cases hx
-  | cons y ys ih =>
-      simp only [List.mem_cons] at hx
-      simp only [List.foldl_cons]
-      cases hx with
-      | inl h =>
-          rw [h]
-          exact Nat.le_trans (Nat.le_max_right init (g y))
-            (le_foldl_max_left ys g (max init (g y)))
-      | inr h =>
-          exact ih h
-
 /-- The inner `max`-fold over `j ∈ range (k+1)` dominates each
 `mignotteCoeffBound f k j` at an in-range index, by `le_foldl_max_of_mem`. -/
 private theorem mignotteCoeffBound_le_degree_innerFold
@@ -640,7 +611,7 @@ private theorem mignotteCoeffBound_le_degree_innerFold
       (List.range (k + 1)).foldl
         (fun acc j => max acc (mignotteCoeffBound f k j))
         init := by
-  exact le_foldl_max_of_mem (List.range (k + 1))
+  exact List.le_foldl_max_of_mem (List.range (k + 1))
     (fun j => mignotteCoeffBound f k j)
     (List.mem_range.mpr (Nat.lt_succ_of_le hj))
 
@@ -662,7 +633,7 @@ private theorem defaultFactorCoeffBound_outerFold_preserves
   | cons k ks ih =>
       simp only [List.foldl_cons]
       exact Nat.le_trans
-        (le_foldl_max_left (List.range (k + 1))
+        (List.le_foldl_max_self (List.range (k + 1))
           (fun j => mignotteCoeffBound f k j) init)
         (ih ((List.range (k + 1)).foldl
           (fun acc j => max acc (mignotteCoeffBound f k j)) init))
@@ -759,34 +730,6 @@ theorem defaultFactorCoeffBound_le (f : ZPoly) {B : Nat}
   exact outer (List.range (f.degree?.getD 0 + 1)) 0 (Nat.zero_le _)
     (fun k hk j hj => h k (Nat.lt_succ_iff.mp (List.mem_range.mp hk)) j hj)
 
-/-- An additive natural-number `foldl` only increases (or preserves) its
-accumulator. -/
-private theorem le_foldl_add_self {α : Type} (xs : List α) (g : α → Nat)
-    (init : Nat) :
-    init ≤ xs.foldl (fun acc y => acc + g y) init := by
-  induction xs generalizing init with
-  | nil => simp
-  | cons y ys ih =>
-      simp only [List.foldl_cons]
-      exact Nat.le_trans (Nat.le_add_right init (g y)) (ih (init + g y))
-
-/-- For an additive natural-number `foldl`, each summand at a member index is
-bounded by the result. -/
-private theorem le_foldl_add_of_mem {α : Type} (xs : List α) (g : α → Nat)
-    {x : α} {init : Nat} (hx : x ∈ xs) :
-    g x ≤ xs.foldl (fun acc y => acc + g y) init := by
-  induction xs generalizing init with
-  | nil => cases hx
-  | cons head tail ih =>
-      simp only [List.mem_cons] at hx
-      simp only [List.foldl_cons]
-      cases hx with
-      | inl h =>
-          subst h
-          exact Nat.le_trans (Nat.le_add_left (g x) init)
-            (le_foldl_add_self tail g (init + g x))
-      | inr h => exact ih h
-
 /-- The ceiling square root is positive on positive inputs. -/
 private theorem ceilSqrt_pos_of_pos {n : Nat} (hn : 0 < n) :
     0 < ceilSqrt n := by
@@ -814,7 +757,7 @@ theorem coeffNormSq_pos_of_ne_zero {f : ZPoly} (hf : f ≠ 0) :
     rw [Nat.pow_two]; exact Nat.mul_pos hnatabs hnatabs
   unfold coeffNormSq
   exact Nat.lt_of_lt_of_le hsq_pos
-    (le_foldl_add_of_mem (List.range f.size)
+    (List.le_foldl_add_of_mem (List.range f.size)
       (fun i => (f.coeff i).natAbs ^ 2) hi_mem)
 
 /-- A nonzero integer polynomial has positive conservative Euclidean

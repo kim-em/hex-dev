@@ -177,13 +177,6 @@ private theorem normalizeWords_getElem! (words : Array UInt64) (i : Nat) :
   simp only [getElem!_eq_getD]
   exact normalizeWords_get?_getD words i
 
-/-- `foldl_keep` collapses a fold whose step ignores every input element. -/
-private theorem foldl_keep {α β : Type} (xs : List β) (acc : α) :
-    xs.foldl (fun acc _ => acc) acc = acc := by
-  induction xs generalizing acc with
-  | nil => simp
-  | cons _ xs ih => simp [ih]
-
 /-- `Array.setIfInBounds_getElem!` says setting an index to its current unchecked value is a no-op. -/
 private theorem Array.setIfInBounds_getElem! (xs : Array UInt64) (idx : Nat) :
     xs.setIfInBounds idx xs[idx]! = xs := by
@@ -2225,7 +2218,7 @@ private theorem coeffWords_mulWords_common_left
     have hzsize : zs.size = 0 := by
       simpa [Array.isEmpty] using hzs
     simp only [hzs, hzsize, List.range_zero, List.foldl_nil, Bool.or_true, ↓reduceIte]
-    rw [foldl_keep, coeffWords_replicate_zero, coeffWords_empty]
+    rw [List.foldl_const_step, coeffWords_replicate_zero, coeffWords_empty]
   · by_cases hxs : xs.isEmpty
     · have hcommon :=
         foldl_mulWords_range_extend_left_coeff xs zs
