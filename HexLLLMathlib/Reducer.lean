@@ -79,7 +79,7 @@ private theorem independent_of_upperTriangular_pos_diag {n : Nat}
 
 end Matrix
 
-namespace LLLState
+namespace Internal.LLLState
 
 /-- Size reduction preserves the executable Gram-determinant independence
 predicate.  This public theorem lives in the Mathlib-side library so the
@@ -796,7 +796,7 @@ theorem swapStep_coeffs_below (s : LLLState n m) (k : Nat) (hk : k < n)
   simpa [GramSchmidt.Int.adjacentSwap, GramSchmidt.entry, Matrix.row,
     kFin, km1] using hcoeff
 
-end LLLState
+end Internal.LLLState
 
 /-- The prefix `δ`-LLL-reduced predicate: the first `k` Gram-Schmidt rows
 satisfy size reduction (for all `i < k`, `j < i`) and the adjacent Lovász
@@ -921,7 +921,7 @@ theorem prefixLLLReduced_to_isLLLReduced (b : Matrix Int n m) (δ : Rat)
   · intro i hi
     exact h.2 i hi hi
 
-namespace LLLState
+namespace Internal.LLLState
 
 /-- `swapStep s k` preserves the prefix LLL-reduced predicate, with the
 prefix shrunk by one (clamped below by `1` to stay in the trivially-true
@@ -2315,7 +2315,7 @@ theorem lllLoop_independent
         exact ih ((s.sizeReduce k).swapStep k) (max (k - 1) 1)
           (Nat.le_max_right (k - 1) 1) hk'n hsS_valid hsS_ind
 
-end LLLState
+end Internal.LLLState
 
 /-! ### Capstones
 
@@ -2464,7 +2464,7 @@ theorem lll_isLLLReduced (b : Matrix Int n m) (δ : Rat)
   cases hd : LLLProvider.dispatch b δ with
   | none =>
       exact lllSteered_isLLLReduced b δ
-        (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
+        (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
   | some B' =>
       exact (dispatch_some_property hd).2.2
 
@@ -2477,7 +2477,7 @@ theorem lll_memLattice_iff (b : Matrix Int n m) (δ : Rat)
   cases hd : LLLProvider.dispatch b δ with
   | none =>
       exact lllSteered_memLattice_iff b δ
-        (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn v
+        (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn v
   | some B' =>
       exact ((dispatch_some_property hd).1 v).symm
 
@@ -2490,7 +2490,7 @@ theorem lll_independent (b : Matrix Int n m) (δ : Rat)
   cases hd : LLLProvider.dispatch b δ with
   | none =>
       exact lllSteered_independent b δ
-        (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
+        (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
   | some B' =>
       exact (dispatch_some_property hd).2.1
 

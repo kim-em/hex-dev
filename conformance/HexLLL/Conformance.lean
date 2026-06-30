@@ -21,11 +21,11 @@ Covered operations:
 - `Hex.lll.firstShortVector`
 - `Hex.lll.shortVectors`
 - `Hex.certCheck`
-- `Hex.LLLState.sizeReduceColumn`
-- `Hex.LLLState.sizeReduce`
-- `Hex.LLLState.swapStep`
-- `Hex.LLLState.gramSchmidtCoeff`
-- `Hex.LLLState.potential`
+- `Hex.Internal.LLLState.sizeReduceColumn`
+- `Hex.Internal.LLLState.sizeReduce`
+- `Hex.Internal.LLLState.swapStep`
+- `Hex.Internal.LLLState.gramSchmidtCoeff`
+- `Hex.Internal.LLLState.potential`
 
 Covered properties:
 - committed row-combination witnesses satisfy lattice membership.
