@@ -90,6 +90,13 @@ jobs:
           lake cache get --service hex-public --repo kim-em/hex-dev \
             || echo "::warning::lake cache miss for this revision; building from source"
           echo "LAKE_NO_CACHE=true" >> "$GITHUB_ENV"
+      # With the cache env now active, assert the entire Mathlib graph is already
+      # up to date. `--no-build` reports stale targets and exits non-zero instead
+      # of building them, so this fails loudly (never silently rebuilds) if the
+      # cache wiring ever invalidates the prebuilt Mathlib oleans. Stronger and
+      # more precise than the olean-count check above.
+      - name: Assert Mathlib will not rebuild (lake build --no-build)
+        run: lake build --no-build Mathlib
       - name: Build conformance + emit-fixture targets
         run: |
           lake build \
