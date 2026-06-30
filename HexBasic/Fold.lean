@@ -259,6 +259,14 @@ theorem foldl_add_sub (xs : List α) (f g : α → R) (a b : R) :
         rw [foldl_add_add_start xs f (fun x => -g x) a (-b), foldl_add_neg xs g b]
         grind
 
+/-- An additive fold-sum of a pointwise difference from `0` splits into the
+difference of the two fold-sums from `0`. -/
+theorem foldl_add_sub_zero (xs : List α) (f g : α → R) :
+    xs.foldl (fun acc x => acc + (f x - g x)) 0 =
+      xs.foldl (fun acc x => acc + f x) 0 - xs.foldl (fun acc x => acc + g x) 0 := by
+  have h := foldl_add_sub xs f g 0 0
+  rwa [show (0 : R) - 0 = 0 by grind] at h
+
 /-! ### Fubini -/
 
 /-- Sum-swap (Fubini) for nested additive fold-sums. -/
