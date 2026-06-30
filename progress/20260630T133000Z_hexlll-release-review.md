@@ -45,9 +45,35 @@ jobs; bench green):
 
 Left alone per Kim: `@[inline]` consistency (needs care).
 
+## Adversarial review (Codex) + follow-ups
+
+Codex reviewed cold (ran `#print axioms`: capstones reduce to
+propext/Classical.choice/Quot.sound; no sorry/axiom/native_decide). Findings
+were all honest-disclosure/docstring, no soundness holes. Applied:
+- isLLLReduced docstring (μ²≤η² vs |μ|≤η), "shortest"→"short" overclaim,
+  unchecked-variant README wording, SPEC headline (unconditional capstone).
+- SPEC made timeless (dropped the ofBasis sorry block + phase/impl-state talk).
+- Added a Trust boundary section to the HexLLL README.
+
+## Hex.Internal namespace move
+
+Public API a `open Hex` user sees is now smaller. Moved to `Hex.Internal`
+(build green incl. bench/conformance/BZ): the interval kernel (`Ival`,
+`IntervalGS`), dispatch calibration/predictors (`intervalPrec`,
+`dispatchFactor`, `maxDiagBits`, `intervalWins`, `steerDimThreshold`,
+`steerWins`), and all checker/steered instrumentation+tallies. HexLLLMathlib
+is our own bridge, so its proof references were just requalified to
+`Hex.Internal.*` (a namespace move changes names, not visibility).
+
+Still public-but-internal (candidates for a follow-up if an even smaller
+surface is wanted): native-loop internals (`lllLoop`/`lllAux`/`lllFuel`/
+`ofBasisUnchecked`/`sizeReduceColumn`/…), steered machinery (`SteeredState`,
+`steeredReduce`, `fuel`, `fRound`), `Hex.LLLProvider.*` (already
+sub-namespaced), Certificate packing helpers, and Reduced.lean helper lemmas.
+
 ## Next step
 
-Open the polish PR. Adversarial second review (Codex) requested.
+Decide whether to push the remaining internals into Hex.Internal too. Open PR.
 
 ## Blockers
 
