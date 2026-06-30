@@ -177,9 +177,7 @@
     structure; consumers construct and read it through its API (`ofFn`,
     `ofRows`, `getRow`, `rows`, and entry access `M[(i, j)]`) and never
     its backing store, so a later switch (e.g. to a flat
-    `Vector R (n*m)`) stays invisible. Change such a type by
-    expand-contract: add the full API and its lemmas first, convert every
-    consumer, then swap the representation last.
+    `Vector R (n*m)`) stays invisible.
 
 ## Lakefile
 
