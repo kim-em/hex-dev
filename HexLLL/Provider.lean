@@ -269,7 +269,7 @@ def requestedDelta (δ : Rat) : Rat := min (δ + 1 / 100) ((δ + 1) / 2)
 the external provider expects. -/
 @[expose]
 def matrixToEntries (B : Hex.Matrix Int n m) : Array String :=
-  B.toArray.flatMap (fun row => row.toArray.map toString)
+  B.rows.toArray.flatMap (fun row => row.toArray.map toString)
 
 /-- Reshape a flat row-major `Array Int` of length `rows * cols` into a
 `Matrix Int rows cols`. Returns `none` on length mismatch. -/
@@ -277,7 +277,7 @@ def matrixToEntries (B : Hex.Matrix Int n m) : Array String :=
 def matrixFromArray (rows cols : Nat) (a : Array Int) :
     Option (Hex.Matrix Int rows cols) :=
   if h : a.size = rows * cols then
-    some (Vector.ofFn fun i =>
+    some (Hex.Matrix.ofRows (Vector.ofFn fun i =>
       Vector.ofFn fun j =>
         a[i.val * cols + j.val]'(by
           have hi : i.val + 1 ≤ rows := Nat.succ_le_of_lt i.isLt
@@ -289,7 +289,7 @@ def matrixFromArray (rows cols : Nat) (a : Array Int) :
             exact Nat.add_lt_add_left hjlt _
           have h3 : i.val * cols + j.val < rows * cols :=
             Nat.lt_of_lt_of_le h2 h1
-          rw [h]; exact h3))
+          rw [h]; exact h3)))
   else
     none
 

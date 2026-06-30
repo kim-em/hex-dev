@@ -174,14 +174,12 @@ theorem mul_adjugate {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
     M * adjugate M = det M • Matrix.identity (n + 1) := by
   ext i hi j hj
-  have hid : ((Matrix.identity (n + 1))[i]'hi)[j]'hj
+  have hid : ((Matrix.identity (n + 1))[(⟨i, hi⟩ : Fin (n + 1))])[(⟨j, hj⟩ : Fin (n + 1))]
       = if (⟨i, hi⟩ : Fin (n + 1)) = ⟨j, hj⟩ then (1 : R) else 0 := by
     simp [Matrix.identity, ofFn]
   show (M * adjugate M)[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))] =
     (det M • Matrix.identity (n + 1))[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))]
-  rw [mul_adjugate_apply]
-  simp only [Vector.getElem_smul, Fin.getElem_fin]
-  rw [hid]
+  rw [mul_adjugate_apply, Matrix.smul_getElem, hid]
   clear hid
   by_cases h : (⟨i, hi⟩ : Fin (n + 1)) = ⟨j, hj⟩
   · rw [if_pos h, if_pos h]; show det M = det M * 1; grind
