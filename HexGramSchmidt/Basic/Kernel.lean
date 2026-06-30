@@ -517,7 +517,7 @@ private theorem basisRows_head (b : Matrix Rat n m) (hn : 0 < n) :
 @[expose]
 def coeffMatrix (rows basis : Matrix Rat n m) : Matrix Rat n n :=
   Matrix.ofFn fun i j =>
-    if hlt : j.val < i.val then
+    if _hlt : j.val < i.val then
       projectionCoeff (rows.getRow i) (basis.getRow j)
     else if i = j then
       1
