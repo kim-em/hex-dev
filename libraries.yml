@@ -267,7 +267,7 @@ libraries:
 
   # ---------- Factoring pipeline ----------
   HexBerlekamp:
-    deps: [HexPolyFp, HexMatrix, HexRowReduce, HexGFqRing]
+    deps: [HexPolyFp, HexMatrix, HexRowReduce, HexGFqRing, HexBasic]
     mathlib: false
     done_through: 3
     status: active
@@ -289,7 +289,7 @@ libraries:
         - name: distinct-degree-factorization
           description: Deterministic dense monic F_5 polynomials with mixed low-degree factor structure for distinct-degree factorization.
   HexHensel:
-    deps: [HexPolyFp, HexPolyZ]
+    deps: [HexPolyFp, HexPolyZ, HexBasic]
     mathlib: false
     done_through: 7
     status: active
