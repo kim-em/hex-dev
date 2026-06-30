@@ -622,7 +622,7 @@ def runDispatchedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO I
   -- Track whether `certCheck` itself accepted, not merely whether the payload
   -- was shape-valid: `tryReduce`'s `accepted` tally counts shape validation,
   -- so guarding on it would pass even if certification rejected and we fell
-  -- back to native. The smoke target must fail iff the certified path does.
+  -- back to native. The verify target must fail iff the certified path does.
   let (reduced, certified) ← match candidate? with
     | some cand =>
         let flat := #[0, Int.ofNat input.rows, Int.ofNat input.cols, 1]

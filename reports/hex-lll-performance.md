@@ -147,7 +147,7 @@ lake exe hexlll_bench verify
 ```
 
 At current worktree commit `924910079376c876da2e2fe9d94915505dd477e4`,
-the smoke verifier succeeds for all 52 registered HexLLL benchmarks, including
+the bench verify step succeeds for all 52 registered HexLLL benchmarks, including
 the densified Isabelle ladder added after the scientific run below.
 
 Current scientific rerun for the five formerly inconclusive parametric
@@ -814,7 +814,7 @@ integer arithmetic.
 
 - **The verified Isabelle certified-LLL series has only one committed point
   per family.** This is sufficient for the five-way plot legend and the
-  bottom/shared-rung smoke verdict above, but it does not yet provide a
+  bottom/shared-rung fast-check verdict above, but it does not yet provide a
   full-ladder certified-vs-certified trend. The native `verified Isabelle LLL`
   gate is closed on both headline families: random-bounded `n = 180` is Lean
   `4.76 s` vs Isabelle `7.55 s`, ratio `0.6304`, and harsh-cubic `n = 65` is

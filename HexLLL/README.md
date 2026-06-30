@@ -36,7 +36,15 @@ def B : Matrix Int 3 3 := Matrix.ofFn fun i j =>
   | 2, 0 => 3 | 2, 1 => 5 | 2, 2 => 6
   | _, _ => 0
 
--- Reduce the basis at the factor δ = 3/4; read off the shortest vector.
+-- The verified entry point. Given a proof `hind : B.independent`, `lll` returns
+-- a `(δ, 11/20)`-reduced basis of the same lattice and `lll.firstShortVector`
+-- reads off its provably short first row. The short-vector guarantee itself is
+-- the theorem `lll_first_row_norm_sq_le_unconditional` in `hex-lll-mathlib`.
+#check @lll.firstShortVector
+#check @lll
+
+-- To run the reducer on data without supplying an independence proof, use the
+-- proof-free variants; they execute the same certified reducer.
 #eval lll.firstShortVectorUnchecked B (3 / 4) (by decide +kernel) (by decide +kernel) (by decide)
 #eval lll.shortVectorsUnchecked B (3 / 4) (by decide +kernel) (by decide +kernel) (by decide)
 

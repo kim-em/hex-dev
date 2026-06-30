@@ -39,7 +39,7 @@ recombination input with all-zero lift coefficients. -/
 theorem identity_independent {n : Nat} : (Matrix.identity (R := Int) n).independent := by
   exact GramSchmidt.Int.independent_identity
 
-theorem gramMatrix_takeRows_eq_principalSubmatrix {n : Nat} (M : Matrix Int n n) (k : Nat)
+private theorem gramMatrix_takeRows_eq_principalSubmatrix {n : Nat} (M : Matrix Int n n) (k : Nat)
     (hk : k ≤ n) :
     gramMatrix (takeRows M k hk) = principalSubmatrix (gramMatrix M) k hk := by
   apply Vector.ext
@@ -65,7 +65,7 @@ theorem gramMatrix_takeRows_eq_principalSubmatrix {n : Nat} (M : Matrix Int n n)
   simpa [gramMatrix, principalSubmatrix, ofFn, iFin, jFin, ii, jj] using
     hdot
 
-theorem independent_of_upperTriangular_pos_diag {n : Nat}
+private theorem independent_of_upperTriangular_pos_diag {n : Nat}
     (M : Matrix Int n n)
     (hzero : ∀ i j : Fin n, j.val < i.val -> M[i][j] = 0)
     (hdiag : ∀ i : Fin n, 0 < M[i][i]) : M.independent := by
@@ -263,7 +263,7 @@ private theorem swapStep_b_eq (s : LLLState n m) (k : Nat) (hk : k < n) (hk0 : 0
   unfold swapStep
   rw [dif_pos hk, dif_pos hk0]
 
-theorem swapStep_valid (s : LLLState n m) (k : Nat)
+private theorem swapStep_valid (s : LLLState n m) (k : Nat)
     (hind : s.b.independent) (hvalid : s.Valid) :
     (s.swapStep k).Valid := by
   unfold swapStep

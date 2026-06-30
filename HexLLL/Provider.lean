@@ -71,6 +71,7 @@ inductive Outcome where
   | accepted
 deriving Repr, BEq
 
+/-- Increment the diagnostic counter matching `outcome`. -/
 @[expose]
 def bump (d : Diagnostics) : Outcome → Diagnostics
   | .absent => { d with absent := d.absent + 1 }
@@ -103,17 +104,6 @@ surface type. -/
 def recordOutcome (outcome : Outcome) : IO Unit :=
   diagnosticsRef.modify (fun d => bump d outcome)
 
-@[expose]
-def intNat? (x : Int) : Option Nat :=
-  if 0 ≤ x then
-    some x.toNat
-  else
-    none
-
-@[expose]
-def slice [Inhabited α] (xs : Array α) (start len : Nat) : Array α :=
-  (List.range len).foldl (fun acc i => acc.push xs[start + i]!) #[]
-
 /-- Decode the external reducer's flat integer response into a structured
 `Candidate`. The decoder checks the status word, row/column headers, inverse
 flag, and total payload length before slicing out the reduced basis,
@@ -128,9 +118,9 @@ def validateFlat (rows cols : Nat) (withInverse : Bool) (flat : Array Int) :
   let inverseHeader ← flat[3]?
   if status != 0 then
     none
-  let rowsSeen ← intNat? rowsHeader
-  let colsSeen ← intNat? colsHeader
-  let inverseSeen ← intNat? inverseHeader
+  let rowsSeen ← rowsHeader.toNat?
+  let colsSeen ← colsHeader.toNat?
+  let inverseSeen ← inverseHeader.toNat?
   if rowsSeen != rows || colsSeen != cols then
     none
   let hasInverse ←
@@ -146,11 +136,12 @@ def validateFlat (rows cols : Nat) (withInverse : Bool) (flat : Array Int) :
   let expectedLen := 4 + basisLen + transformLen + inverseLen
   if flat.size != expectedLen then
     none
-  let reduced := slice flat 4 basisLen
-  let transform := slice flat (4 + basisLen) transformLen
+  let reduced := flat.extract 4 (4 + basisLen)
+  let transform := flat.extract (4 + basisLen) (4 + basisLen + transformLen)
   let inverse? :=
     if hasInverse then
-      some (slice flat (4 + basisLen + transformLen) transformLen)
+      some (flat.extract (4 + basisLen + transformLen)
+        (4 + basisLen + transformLen + transformLen))
     else
       none
   some { reduced, transform, inverse? }
