@@ -169,8 +169,9 @@ namespace HexRowReduceKernelRecipe
 -- M has rank 1 (second row twice the first), 3 columns.
 def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
 
--- The kernel basis, one vector per free column.
-#eval Matrix.nullspace M
+-- The kernel basis, one vector per free column. Collected as the rows of a
+-- matrix (`ofRows`) so it prints in copy-pasteable `#m[...]` form.
+#eval Matrix.ofRows (Matrix.nullspace M)
 
 -- The nullity is m - rank = 3 - 1 = 2.
 #guard (Matrix.nullspace M).toArray.size = 2
