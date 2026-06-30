@@ -28,7 +28,8 @@ A literal collects its rows into nested `#v[...]` vectors and feeds them to
 lengths are checked by the elaborator: a ragged literal fails to typecheck
 rather than silently building a malformed matrix.
 
-The `Repr` instance renders a matrix as a column-aligned grid under `#eval`.
+The `Repr` instance renders a matrix back in `#m[...]` notation under `#eval`,
+column-aligned and copy-pasteable as input.
 -/
 
 namespace Hex.Matrix
@@ -54,39 +55,34 @@ macro_rules
     `(let d := #v[$rowsSep,*];
       Hex.Matrix.ofFn (n := $(quote nRows)) (m := $(quote nCols)) fun i j => d[i][j])
 
-/-- Render `M` as a column-aligned grid of its entries, right-justified within
-each column. For example,
+/-- Render `M` in `#m[...]` notation, with entries right-justified per column so
+the columns line up. The output is copy-pasteable as input. For example,
 ```
-⎡  0 2  1 ⎤
-⎢ -6 0 -8 ⎥
-⎣  5 6  0 ⎦
+#m[ 0, 2,  1;
+   -6, 0, -8;
+    5, 6,  0]
 ```
 This is what the `Repr` instance shows under `#eval`. -/
 def render [Repr R] (M : Matrix R n m) : Std.Format :=
   let cells : List (List String) :=
-    M.toList.map fun row => row.toList.map fun x => (repr x).pretty
+    (List.finRange n).map fun i => (M.row i).toList.map fun x => (repr x).pretty
   let widths : List Nat :=
     (List.range m).map fun j => cells.foldl (fun w r => max w (r.getD j "").length) 0
   let pad : String → Nat → String := fun s w => String.ofList (List.replicate (w - s.length) ' ') ++ s
   let rowText : List String → String := fun r =>
-    " ".intercalate (((List.range m).zip widths).map fun (j, w) => pad (r.getD j "") w)
-  let n := cells.length
-  let decorate : Nat → String → String := fun i s =>
-    let (l, r) :=
-      if n = 1 then ("[", "]")
-      else if i = 0 then ("⎡", "⎤")
-      else if i + 1 = n then ("⎣", "⎦")
-      else ("⎢", "⎥")
-    l ++ " " ++ s ++ " " ++ r
-  Std.Format.text (String.intercalate "\n" (cells.zipIdx.map fun (r, i) => decorate i (rowText r)))
+    ", ".intercalate (((List.range m).zip widths).map fun (j, w) => pad (r.getD j "") w)
+  -- Continuation rows are indented by three spaces to sit under the first entry
+  -- (just past the `#m[` opener), keeping the columns aligned.
+  Std.Format.text ("#m[" ++ ";\n   ".intercalate (cells.map rowText) ++ "]")
 
-/-- Show matrices as column-aligned grids under `#eval`/`Repr`. Higher priority
-than the generic `Vector` instance so it wins for the nested-vector
-representation; plain (non-nested) vectors keep the default rendering. -/
+/-- Show matrices in copy-pasteable `#m[...]` notation under `#eval`/`Repr`.
+Higher priority than the generic `Vector` instance so it wins for the
+nested-vector representation; plain (non-nested) vectors keep the default
+rendering. -/
 instance (priority := high) [Repr R] : Repr (Matrix R n m) where
   reprPrec M _ := M.render
 
-/-- The grid rendering as a `String`. -/
+/-- The `#m[...]` rendering as a `String`. -/
 instance [Repr R] : ToString (Matrix R n m) where
   toString M := M.render.pretty
 

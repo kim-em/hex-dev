@@ -24,6 +24,16 @@ namespace Hex
 from `HexPoly`. -/
 abbrev ZPoly := DensePoly Int
 
+/-- `ZPoly` is a multiplicative monoid for `Std`, so the shared
+`List.foldl_mul_*` algebra and core's `List.foldl_assoc` apply to fold-products
+of integer polynomials. -/
+instance : Std.Associative (· * · : ZPoly → ZPoly → ZPoly) :=
+  ⟨DensePoly.mul_assoc_poly⟩
+
+instance : Std.LawfulIdentity (· * · : ZPoly → ZPoly → ZPoly) 1 where
+  left_id p := (DensePoly.mul_comm_poly 1 p).trans (DensePoly.mul_one_right_poly p)
+  right_id := DensePoly.mul_one_right_poly
+
 instance : DensePoly.AddZeroLaw Int where
   add_zero_zero := rfl
 

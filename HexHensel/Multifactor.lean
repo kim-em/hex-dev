@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexBasic
 public import HexHensel.Linear
 
 public section
@@ -213,20 +214,8 @@ theorem polyProduct_singleton (g : ZPoly) :
 left fold. -/
 theorem list_foldl_mul_eq_mul_foldl_one (g : ZPoly) (xs : List ZPoly) :
     xs.foldl (fun acc factor => acc * factor) g =
-      g * xs.foldl (fun acc factor => acc * factor) 1 := by
-  induction xs generalizing g with
-  | nil =>
-      simpa using (DensePoly.mul_one_right_poly (S := Int) g).symm
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [one_mul_zpoly]
-      calc
-        xs.foldl (fun acc factor => acc * factor) (g * x) =
-            (g * x) * xs.foldl (fun acc factor => acc * factor) 1 := ih (g * x)
-        _ = g * (x * xs.foldl (fun acc factor => acc * factor) 1) := by
-            rw [DensePoly.mul_assoc_poly (S := Int)]
-        _ = g * xs.foldl (fun acc factor => acc * factor) x := by
-            rw [ih x]
+      g * xs.foldl (fun acc factor => acc * factor) 1 :=
+  List.foldl_mul_eq_mul_foldl xs id g
 
 /-- Splitting `Array.polyProduct` across a singleton prepend: the head
 factors out as a left multiplication. Used to relate the multifactor
