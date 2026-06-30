@@ -119,6 +119,16 @@ a single library for Phase 7 bookkeeping (even if it draws on several):
 Phase 7 for an anchor library is not "done" until both its reference
 chapter *and* its anchored tutorials are complete.
 
+## Additional Phase 7 work: released-repo README
+
+Every library released as a split repo also carries a root `README.md`,
+authored here as `<L>/README.md` and published to the released repo's
+root by the sync. This is the short landing-page reference for the
+released package, distinct from the Verso chapter. Its required shape —
+intro, `Quickstart`, `Functionality`, `Verification`, `Contributing` —
+and its style rules are specified in [SPEC/readme.md](../SPEC/readme.md).
+The quickstart code must build-check against the monorepo.
+
 ## Exit criteria for library `L`
 
 - `L`'s reference chapter at `HexManual/Chapters/<L>.lean` exists and
@@ -128,7 +138,10 @@ chapter *and* its anchored tutorials are complete.
 - cross-references to deps resolve (if a chapter for a dep exists, the
   cross-reference goes to it; otherwise, a stub link is acceptable and
   resolves later);
-- any tutorials anchored to `L` (see table above) exist and build.
+- any tutorials anchored to `L` (see table above) exist and build;
+- if `L` is published as a split repo, `<L>/README.md` exists and
+  conforms to [SPEC/readme.md](../SPEC/readme.md), and its quickstart
+  code build-checks.
 
 Record completion by bumping `libraries.yml[L].done_through` to `7`.
 

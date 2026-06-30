@@ -4,7 +4,7 @@
 For each repo in scripts/release/released.yml (topological order), this:
   1. clones the repo's `main`,
   2. overwrites its *managed* paths from this monorepo (leaving lakefiles, CI,
-     toolchains, LICENSE, README, manifests untouched),
+     toolchains, LICENSE, manifests untouched),
   3. rewrites the root lakefile's cross-repo Hex pins to the commits synced
      this run,
   4. commits `chore: sync from hex-dev@<sha>` and pushes to `main`
@@ -77,9 +77,12 @@ def managed_paths(entry: dict) -> list[tuple[Path, Path, bool]]:
     for p in entry.get("paths") or []:
         src = REPO_ROOT / p["src"]
         out.append((src, Path(p["dest"]), src.is_dir()))
-    # conventional library source dir (minus its co-located SPEC/)
+    # conventional library source dir (minus its co-located SPEC/ and README.md)
     if not entry.get("paths"):
         out.append((REPO_ROOT / lib, Path(lib), True))
+    # root README, authored as <lib>/README.md, published to the repo root
+    if entry.get("readme", True):
+        out.append((REPO_ROOT / lib / "README.md", Path("README.md"), False))
     if entry.get("umbrella"):
         out.append((REPO_ROOT / f"{lib}.lean", Path(f"{lib}.lean"), False))
     if entry.get("spec"):
@@ -110,8 +113,9 @@ def apply_paths(entry: dict, clone: Path) -> list[str]:
             notes.append(f"  WARN missing source {src.relative_to(REPO_ROOT)} -> {dest_rel} (skipped)")
             continue
         if is_dir:
-            # the library source dir excludes its co-located SPEC/ subtree
-            excludes = ["SPEC/"] if dest_rel == Path(lib) else None
+            # the library source dir excludes its co-located SPEC/ subtree and
+            # its README.md (published separately to the repo root)
+            excludes = ["SPEC/", "README.md"] if dest_rel == Path(lib) else None
             rsync_dir(src, dest, excludes)
         else:
             copy_file(src, dest)

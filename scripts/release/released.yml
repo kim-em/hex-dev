@@ -3,7 +3,7 @@
 # `hex-dev` is the source of truth. The sync (scripts/release/sync_released.py,
 # driven by .github/workflows/sync-released.yml) regenerates each released repo
 # from this monorepo: it overwrites the repo's *managed* paths from here, leaves
-# everything else (root + sidecar lakefiles, CI, toolchains, LICENSE, README,
+# everything else (root + sidecar lakefiles, CI, toolchains, LICENSE,
 # manifests) untouched, rewrites the root lakefile's cross-repo Hex pins to the
 # commits just synced, and commits to the released repo's `main`.
 #
@@ -11,7 +11,8 @@
 # known before its downstream consumers are processed.
 #
 # Per-repo managed path conventions (resolved by the driver):
-#   <Lib>/            (minus <Lib>/SPEC/)   -> <Lib>/
+#   <Lib>/    (minus <Lib>/SPEC/ and <Lib>/README.md)  -> <Lib>/
+#   <Lib>/README.md   (unless readme: false)  -> README.md
 #   <Lib>.lean        (if umbrella: true)   -> <Lib>.lean
 #   <Lib>/SPEC/<spec>.md                    -> SPEC/<spec>.md
 #   bench/<Lib>/       (if bench: true)      -> bench/<Lib>/
