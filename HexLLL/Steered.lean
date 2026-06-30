@@ -36,6 +36,8 @@ falls back to the exact `d`/`ν` reducer `lllNative`. The steered path therefore
 materializes no exact Gram-Schmidt state — exact `d`/`ν` data appears only in the
 fallback. -/
 
+namespace Internal
+
 /-- Untrusted floating-point Gram-Schmidt state steering the native reducer.
 `b` is the exact integer basis (the only proof-relevant field). `mu[i][j]` (for
 `j < i`) approximates the Gram-Schmidt coefficient `μ[i][j]` and `bb[i]`
@@ -398,7 +400,6 @@ approximation. -/
     Matrix.memLattice (steeredReduce b δ) v ↔ Matrix.memLattice b v := by
   unfold steeredReduce; grind
 
-namespace Internal
 
 /-- Outcome of one steered reduction: the steered candidate certified at
 `(δ, 11/20)`, or the run fell back to the exact `lllNative`. -/

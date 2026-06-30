@@ -2417,7 +2417,7 @@ theorem lllSteered_memLattice_iff (b : Matrix Int n m) (δ : Rat)
   simp only [Hex.Internal.withRecordSteeredOutcome]
   split
   · split
-    · exact Hex.steeredReduce_memLattice_iff b δ v
+    · exact Hex.Internal.steeredReduce_memLattice_iff b δ v
     · exact lllNative_memLattice_iff b δ hδ hδ' hn v
   · exact lllNative_memLattice_iff b δ hδ hδ' hn v
 
@@ -2428,7 +2428,7 @@ theorem lllSteered_isLLLReduced (b : Matrix Int n m) (δ : Rat)
     (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
     isLLLReduced (Hex.lllSteered b δ hδ hδ' hn) δ (11 / 20) := by
   have hnative : isLLLReduced (Hex.lllNative b δ hδ hδ' hn) δ (11 / 20) :=
-    Hex.isLLLReduced.mono_η _ (by grind) (by grind)
+    Hex.Internal.isLLLReduced.mono_η _ (by grind) (by grind)
       (lllNative_isLLLReduced b δ hδ hδ' hn hind)
   unfold Hex.lllSteered
   simp only [Hex.Internal.withRecordSteeredOutcome]

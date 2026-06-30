@@ -282,12 +282,12 @@ private noncomputable def gsDot (b : Hex.Matrix Int n m) (i j : Fin n) : Rat :=
 
 /-- Exact squared Gram-Schmidt norm `‖b*_j‖²`. -/
 private noncomputable def nrm (b : Hex.Matrix Int n m) (j : Fin n) : Rat :=
-  Hex.LLLCore.basisNormSq (GramSchmidt.Int.basis b) j
+  Hex.Internal.LLLCore.basisNormSq (GramSchmidt.Int.basis b) j
 
 private theorem nrm_eq_dot (b : Hex.Matrix Int n m) (j : Fin n) :
     nrm b j = ((GramSchmidt.Int.basis b).row j).dotProduct
       ((GramSchmidt.Int.basis b).row j) := by
-  unfold nrm Hex.LLLCore.basisNormSq
+  unfold nrm Hex.Internal.LLLCore.basisNormSq
   rfl
 
 /-- Cast of an integer Gram entry as a rational dot product of cast rows. -/
@@ -984,14 +984,14 @@ theorem lllReducedInterval_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
           ((mus[i+1]!)[i]!)) (bstars[i]!)))).lo : Int) : Rat) := by
       exact_mod_cast hcmp
     have hchain := le_trans hlhs_hi (le_trans hQ hrhs_lo)
-    show δ * Hex.LLLCore.basisNormSq (GramSchmidt.Int.basis b)
+    show δ * Hex.Internal.LLLCore.basisNormSq (GramSchmidt.Int.basis b)
           ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩ ≤
-        Hex.LLLCore.basisNormSq (GramSchmidt.Int.basis b) ⟨i + 1, hi⟩ +
+        Hex.Internal.LLLCore.basisNormSq (GramSchmidt.Int.basis b) ⟨i + 1, hi⟩ +
           ((GramSchmidt.Int.coeffs b)[(⟨i + 1, hi⟩ : Fin n)][(⟨i,
             Nat.lt_trans (Nat.lt_succ_self i) hi⟩ : Fin n)]) *
           ((GramSchmidt.Int.coeffs b)[(⟨i + 1, hi⟩ : Fin n)][(⟨i,
             Nat.lt_trans (Nat.lt_succ_self i) hi⟩ : Fin n)]) *
-          Hex.LLLCore.basisNormSq (GramSchmidt.Int.basis b)
+          Hex.Internal.LLLCore.basisNormSq (GramSchmidt.Int.basis b)
             ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩
     have := (mul_le_mul_iff_of_pos_right hSQ).mp hchain
     exact this

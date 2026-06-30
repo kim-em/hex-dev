@@ -93,14 +93,14 @@ theorem lovasz_check_iff_isLLLReduced_pair
             Int.ofNat (s.d.get ⟨k - 1, hkm1ltN1⟩) +
           ((s.ν.get ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩) ^ 2) ≥
         δ.num * (Int.ofNat (s.d.get ⟨k, hkltN1⟩) ^ 2) ↔
-      δ * Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b)
+      δ * Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b)
             ⟨k - 1, hkm1lt⟩ ≤
-        Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b) ⟨k, hk⟩ +
+        Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b) ⟨k, hk⟩ +
           (((Hex.GramSchmidt.Int.coeffs s.b).get ⟨k, hk⟩).get
               ⟨k - 1, hkm1lt⟩) *
             (((Hex.GramSchmidt.Int.coeffs s.b).get ⟨k, hk⟩).get
               ⟨k - 1, hkm1lt⟩) *
-            Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b)
+            Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b)
               ⟨k - 1, hkm1lt⟩ := by
   intro hkm1lt hkm1ltN1 hkltN1 hkSuccLt
   -- Translate the d-field values to Gram determinants.
@@ -138,10 +138,10 @@ theorem lovasz_check_iff_isLLLReduced_pair
     Hex.GramSchmidt.Int.gramDet s.b (k - 1) (Nat.le_of_lt_succ hkm1ltN1)
       with hgd_km1_def
   set Nk : Rat :=
-    Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b) ⟨k, hk⟩
+    Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b) ⟨k, hk⟩
       with hNk_def
   set Nkm1 : Rat :=
-    Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b)
+    Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b)
         ⟨k - 1, hkm1lt⟩ with hNkm1_def
   set μ : Rat :=
     ((Hex.GramSchmidt.Int.coeffs s.b).get ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩

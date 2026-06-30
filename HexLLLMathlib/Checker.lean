@@ -201,14 +201,14 @@ private theorem lovasz_of_intCheck
           ((Hex.GramSchmidt.Int.data b).d.get
             ⟨i + 1, Nat.succ_lt_succ
               (Nat.lt_trans (Nat.lt_succ_self i) hi)⟩ : Int) ^ 2) :
-    δ * Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b)
+    δ * Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b)
         ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩ ≤
-      Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b) ⟨i + 1, hi⟩ +
+      Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b) ⟨i + 1, hi⟩ +
         (((Hex.GramSchmidt.Int.coeffs b).get ⟨i + 1, hi⟩).get
             ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩) *
           (((Hex.GramSchmidt.Int.coeffs b).get ⟨i + 1, hi⟩).get
             ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩) *
-          Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b)
+          Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b)
             ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩ := by
   have hi_lt : i < n := Nat.lt_trans (Nat.lt_succ_self i) hi
   have hi1_lt : i + 1 < n := hi
@@ -265,9 +265,9 @@ private theorem lovasz_of_intCheck
   have hgd_i1_ne : (gd_i1 : Rat) ≠ 0 := ne_of_gt hgd_i1_posR
   have hδden_pos : (0 : Rat) < (δ.den : Rat) := by exact_mod_cast δ.den_pos
   -- Basis norm identities.
-  set Ni : Rat := Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b) iFin
+  set Ni : Rat := Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b) iFin
     with hNi_def
-  set Ni1 : Rat := Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b) ip1Fin
+  set Ni1 : Rat := Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b) ip1Fin
     with hNi1_def
   have hNi_mul : (gd_i : Rat) * Ni = (gd_i1 : Rat) := by
     have hbn := Hex.GramSchmidt.Int.basis_normSq b hindep i hi_lt
