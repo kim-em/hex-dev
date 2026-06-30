@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 import HexGFq.Basic
+import HexGFqMathlib
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -200,12 +201,28 @@ a corrupted packed modulus would fail to typecheck rather than silently
 producing a non-field, so the irreducible-modulus guarantee is part of
 the library's compiled surface, not a runtime assertion.
 
+# The Mathlib correspondence
+%%%
+tag := "hex-gfq-mathlib"
+%%%
+
+Everything above is executable and Mathlib-free. `HexGFqMathlib`
+connects it to Mathlib: for prime `p`, the executable field
+{name}`Hex.GFq` is ring-isomorphic to Mathlib's `GaloisField p n`, with
+`p ^ n` elements.
+
+{docstring HexGFqMathlib.GFq.equivGaloisField}
+
+{docstring HexGFqMathlib.GFq.fintype_card_eq_pow}
+
+{docstring HexGFqMathlib.GFq.card_eq_galoisField_card}
+
 # Cross-references
 %%%
 tag := "hex-gfq-cross-references"
 %%%
 
-`HexGFq` is the aggregator of the finite-field constructor stack:
+`HexGFq` is the aggregator of the finite-field constructor libraries:
 
 * {ref "hex-conway"}[`HexConway`] supplies the committed Conway moduli
   and their {name}`Hex.Conway.SupportedEntry` witnesses; each
@@ -219,6 +236,6 @@ tag := "hex-gfq-cross-references"
   packed certificates discharge. (Its reference chapter is forthcoming;
   until it lands this dependency is named in prose.)
 
-`HexGFq` is Mathlib-free and has no paired `*Mathlib` correspondence layer
-of its own at this level; the Mathlib-side finite-field correspondence is
-maintained downstream over the libraries this one aggregates.
+`HexGFq` is Mathlib-free; its Mathlib correspondence
+({ref "hex-gfq-mathlib"}[above], via `HexGFqMathlib`) identifies the
+executable field with Mathlib's `GaloisField`.

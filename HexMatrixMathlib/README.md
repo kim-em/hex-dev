@@ -27,7 +27,7 @@ import HexMatrixMathlib
 
 open Hex HexMatrixMathlib
 
--- Every executable matrix has a Mathlib reading, entry for entry.
+-- Every executable matrix corresponds to a Mathlib matrix with the same entries.
 #check @matrixEquiv      -- Hex.Matrix R n m ≃ Matrix (Fin n) (Fin m) R
 #check @matrixEquiv_apply -- matrixEquiv M i j = M[i][j]
 
@@ -65,7 +65,8 @@ transfer lemmas (`matrixEquiv_add`, `matrixEquiv_mul`, `matrixEquiv_one`,
 `matrixEquiv_smul`, and the rest) let `simp` and `grind` rewrite between the
 two representations.
 
-The headline equivalence reads off entries:
+The headline equivalence sends each matrix to the Mathlib matrix with the
+same entries:
 
 ```lean
 def matrixEquiv : Hex.Matrix R n m ≃ Matrix (Fin n) (Fin m) R

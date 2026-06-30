@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexModArith
+import HexModArithMathlib
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -278,27 +278,54 @@ invertible, and Fermat's little theorem holds.
 
 {docstring Hex.ZMod64.pow_prime}
 
+# The Mathlib correspondence
+%%%
+tag := "hex-mod-arith-mathlib"
+%%%
+
+Everything above is executable and Mathlib-free. `HexModArithMathlib`
+connects it to Mathlib: every {name}`Hex.ZMod64` value corresponds to an
+element of Mathlib's `ZMod p`. The two transfer maps read a residue as a
+`ZMod p` class and back.
+
+{docstring HexModArithMathlib.ZMod64.toZMod}
+
+{docstring HexModArithMathlib.ZMod64.ofZMod}
+
+They are mutually inverse:
+
+{docstring HexModArithMathlib.ZMod64.ofZMod_toZMod}
+
+{docstring HexModArithMathlib.ZMod64.toZMod_ofZMod}
+
+`toZMod` preserves the ring operations: addition and multiplication
+transfer, as do negation, subtraction, the casts, and powers (each a
+`@[simp]` lemma):
+
+{docstring HexModArithMathlib.ZMod64.toZMod_add}
+
+{docstring HexModArithMathlib.ZMod64.toZMod_mul}
+
+The maps and laws bundle into a ring equivalence, so the `CommRing`
+theory of `ZMod p` transports to the executable type:
+
+{docstring HexModArithMathlib.ZMod64.equiv}
+
 # Cross-references
 %%%
 tag := "hex-mod-arith-cross-references"
 %%%
 
-`HexModArith` sits one level above `HexArith` and below the finite-field
-stack:
+`HexModArith` depends on `HexArith` and underpins the finite-field
+libraries:
 
 * `HexArith` supplies the machine-word Barrett and Montgomery kernels
   that the {ref "hex-mod-arith-hot-loop"}[hot-loop contexts] wrap. The
   `_root_.BarrettCtx` and `_root_.MontCtx` types referenced by
   {name}`Hex.BarrettCtx` and {name}`Hex.MontCtx` are the untyped
   `UInt64` kernels from that library.
-* `HexModArithMathlib` is the correspondence layer: it re-exports the
-  executable {name}`Hex.ZMod64` theory as theorems about Mathlib's
-  `ZMod p`, so the computational results in this chapter transfer to the
-  abstract setting. The Mathlib dependency lives entirely on that side
-  of the boundary; see
-  {ref "hex-mod-arith-mathlib"}[the HexModArithMathlib chapter].
-* The finite-field layer `HexGFqRing` and the prime-field polynomial
-  layer `HexPolyFp` consume `ZMod64 p` as their coefficient type,
+* The finite-field library `HexGFqRing` and the prime-field polynomial
+  library `HexPolyFp` consume `ZMod64 p` as their coefficient type,
   inheriting the ring structure and the
   {ref "hex-mod-arith-key-correctness"}[field facts] above for prime
   `p`.

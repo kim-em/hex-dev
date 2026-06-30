@@ -28,7 +28,8 @@ namespace HexMatrixMathlib
 
 universe u
 
-/-- Interpret a `Hex.Matrix` as a Mathlib `Matrix`. -/
+/-- The bijection between a `Hex.Matrix` and the Mathlib `Matrix` with the
+same entries. -/
 @[expose]
 def matrixEquiv : Hex.Matrix R n m ≃ Matrix (Fin n) (Fin m) R where
   toFun M := fun i j => M[(i, j)]
@@ -40,9 +41,8 @@ def matrixEquiv : Hex.Matrix R n m ≃ Matrix (Fin n) (Fin m) R where
     ext i j
     simp [Hex.Matrix.ofFn, Hex.Matrix.getRow, Fin.getElem_fin]
 
-/-- The Mathlib matrix produced by `matrixEquiv` reads off the executable
-matrix entrywise, so a caller can rewrite `matrixEquiv M i j` to the underlying
-`M[i][j]` without unfolding the equivalence. -/
+/-- `matrixEquiv M` has entry `M[i][j]` at `(i, j)`, so a caller can rewrite
+`matrixEquiv M i j` to `M[i][j]` without unfolding the equivalence. -/
 @[simp, grind =]
 theorem matrixEquiv_apply (M : Hex.Matrix R n m) (i : Fin n) (j : Fin m) :
     matrixEquiv M i j = M[i][j] :=
