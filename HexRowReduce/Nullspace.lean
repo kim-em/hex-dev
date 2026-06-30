@@ -193,35 +193,7 @@ the matching pivot row and free column. -/
   simpa [Matrix.col] using nullspaceMatrix_pivot E i k
 
 omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
-private theorem foldl_add_eq_acc_ring_echelon {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} (xs : List α) (f : α → R) (acc : R)
-    (hf : ∀ x ∈ xs, f x = 0) :
-    xs.foldl (fun acc x => acc + f x) acc = acc := by
-  induction xs generalizing acc with
-  | nil =>
-      simp only [List.foldl_nil]
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      have hx : f x = 0 := hf x (by simp)
-      have hxs : ∀ y ∈ xs, f y = 0 := fun y hy => hf y (List.mem_cons_of_mem _ hy)
-      rw [hx]
-      have hac : acc + (0 : R) = acc := by grind
-      rw [hac]
-      exact ih acc hxs
 
-omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
-private theorem foldl_sum_start {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} (xs : List α) (f : α → R) (acc : R) :
-    xs.foldl (fun acc x => acc + f x) acc =
-      acc + xs.foldl (fun acc x => acc + f x) 0 := by
-  induction xs generalizing acc with
-  | nil =>
-      simp
-      grind
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [ih (acc := acc + f x), ih (acc := (0 : R) + f x)]
-      grind
 
 omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
 private theorem foldl_one_nonzero {R : Type u} [Lean.Grind.Ring R]
@@ -245,7 +217,7 @@ private theorem foldl_one_nonzero {R : Type u} [Lean.Grind.Ring R]
             exact (List.nodup_cons.mp hnodup).1 hy
           exact hz y (List.mem_cons_of_mem _ hy) hya
         have h0x : (0 : R) + x = x := by grind
-        rw [h0x, foldl_add_eq_acc_ring_echelon zs f x hzero]
+        rw [h0x, List.foldl_add_eq_self zs f x hzero]
       · have hz0 : f z = 0 := hz z (by simp) hza
         rw [hz0]
         have haTail : a ∈ zs := by
@@ -288,7 +260,7 @@ private theorem foldl_two_nonzero {R : Type u} [Lean.Grind.Ring R]
             exact (List.nodup_cons.mp hnodup).1 ht
           exact hz t (List.mem_cons_of_mem _ ht) hta htb
         have h0x : (0 : R) + x = x := by grind
-        rw [h0x, foldl_sum_start zs f x, foldl_one_nonzero zs b f y hbTail hnodupTail hb hbOnly]
+        rw [h0x, List.foldl_add_eq_add_foldl zs f x, foldl_one_nonzero zs b f y hbTail hnodupTail hb hbOnly]
       · by_cases hzb : z = b
         · subst z
           rw [hb]
@@ -305,7 +277,7 @@ private theorem foldl_two_nonzero {R : Type u} [Lean.Grind.Ring R]
               exact (List.nodup_cons.mp hnodup).1 ht
             exact hz t (List.mem_cons_of_mem _ ht) hta htb
           have h0y : (0 : R) + y = y := by grind
-          rw [h0y, foldl_sum_start zs f y, foldl_one_nonzero zs a f x haTail hnodupTail ha haOnly]
+          rw [h0y, List.foldl_add_eq_add_foldl zs f y, foldl_one_nonzero zs a f x haTail hnodupTail ha haOnly]
           grind
         · have hz0 : f z = 0 := hz z (by simp) hza hzb
           rw [hz0]
@@ -423,7 +395,7 @@ private theorem nullspace_echelon_sound {R : Type u} [Lean.Grind.Ring R] {n m : 
         simpa using hrowGet
       rw [hentry]
       grind
-    simpa only using foldl_add_eq_acc_ring_echelon (List.finRange m)
+    simpa only using List.foldl_add_eq_self (List.finRange m)
       (fun j => D.echelon[row][j] * (E.nullspace.get k)[j]) 0 hzero
 
 /-- Every basis vector returned by `nullspace` lies in the nullspace of `M`. -/
@@ -461,34 +433,7 @@ private theorem vector_toList_eq_finRange_map_get {α : Type u} {n : Nat}
   · intro k _ _
     simp
 
-private theorem foldl_sum_mul_left_local {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} (xs : List α) (f : α → R) (c acc : R) :
-    c * xs.foldl (fun acc x => acc + f x) acc =
-      xs.foldl (fun acc x => acc + c * f x) (c * acc) := by
-  induction xs generalizing acc with
-  | nil =>
-      simp
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [ih (acc := acc + f x)]
-      have hdist : c * (acc + f x) = c * acc + c * f x := by grind
-      rw [hdist]
 
-private theorem foldl_sum_perm_local {R : Type u} [Lean.Grind.CommRing R]
-    {β : Type v} (f : β → R) {xs ys : List β} (hperm : xs.Perm ys) (z : R) :
-    xs.foldl (fun acc x => acc + f x) z =
-      ys.foldl (fun acc x => acc + f x) z := by
-  induction hperm generalizing z with
-  | nil => rfl
-  | cons _ _ ih =>
-      simp only [List.foldl_cons]
-      exact ih (z + _)
-  | swap x y xs =>
-      simp only [List.foldl_cons]
-      congr 1
-      grind
-  | trans _ _ ih₁ ih₂ =>
-      exact (ih₁ z).trans (ih₂ z)
 
 omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
 private theorem pivotCols_toList_nodup
@@ -612,13 +557,13 @@ private theorem freeSum_eq_neg_pivot {R : Type u} [Lean.Grind.Field R] {n m : Na
             (fun acc l => acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0 +
         E.toIsEchelonForm.freeColsList.foldl
             (fun acc l => acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0 := by
-    rw [foldl_sum_perm_local
+    rw [List.foldl_add_perm
       (f := fun l => D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) hperm]
     rw [List.foldl_append]
-    rw [foldl_sum_start (R := R)
+    rw [List.foldl_add_eq_add_foldl (R := R)
       (xs := E.toIsEchelonForm.freeColsList)
       (f := fun l => D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l])
-      (acc := D.pivotCols.toList.foldl
+      (z := D.pivotCols.toList.foldl
         (fun acc l => acc + D.echelon[E.toIsEchelonForm.pivotRow i][l] * v[l]) 0)]
   -- Pivot half: convert to fold over Fin D.rank, use indicator structure.
   have hPivotPart :
@@ -753,12 +698,12 @@ theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
                     D.echelon[E.toIsEchelonForm.pivotRow i][
                       E.toIsEchelonForm.freeCols.get k] *
                       v[E.toIsEchelonForm.freeCols.get k]) 0) := by
-        have hmul := foldl_sum_mul_left_local
+        have hmul := (List.foldl_add_mul_left
           (xs := List.finRange (m - D.rank))
           (f := fun k =>
             D.echelon[E.toIsEchelonForm.pivotRow i][E.toIsEchelonForm.freeCols.get k] *
               v[E.toIsEchelonForm.freeCols.get k])
-          (c := (-1 : R)) (acc := 0)
+          (c := (-1 : R)) (z := 0)).symm
         have hzero : ((-1 : R)) * 0 = 0 := by grind
         rw [hzero] at hmul
         have h1 :
