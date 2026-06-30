@@ -31,7 +31,7 @@ open Hex
 def M : Matrix Int 3 3 := Matrix.ofFn fun i j => (i + 2 * j : Int)
 
 #eval Matrix.bareiss M                       -- fraction-free determinant
-#eval Matrix.bareiss (1 : Matrix Int 4 4)    -- 1
+#eval Matrix.bareiss (Matrix.identity (R := Int) 4)    -- 1
 
 -- bareissData also records the row-swap count alongside the determinant.
 #eval (Matrix.bareissData M).det
