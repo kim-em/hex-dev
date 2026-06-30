@@ -132,23 +132,32 @@ def _lake_files(clone: Path, name_globs: list[str]) -> list[Path]:
     return sorted(out)
 
 
-def rewrite_pins(entry: dict, clone: Path, synced: dict[str, str]) -> list[str]:
+def rewrite_pins(entry: dict, clone: Path, synced: dict[str, str],
+                 dep_owner: dict[str, str]) -> list[str]:
     """Rewrite every synced-repo git pin across all lakefiles (root + the
     bench/ and conformance/ sub-projects pin upstream repos and hex-test-kit)."""
     notes: list[str] = []
+    match_owner = r'(?:kim-em|leanprover)'
     for lf in _lake_files(clone, ["lakefile.toml", "lakefile.lean"]):
         text = lf.read_text(encoding="utf-8")
         orig = text
         for dep, sha in synced.items():
-            url = re.escape(f"github.com/kim-em/{dep}.git")
-            # toml: `git = ".../<dep>.git"\n  rev = "..."`
+            # Match either owner so a pin still carrying the pre-transfer owner is
+            # found, and rewrite it to the owner released.yml declares for this
+            # dep (the single source of truth) — kim-em pre-cutover, leanprover
+            # after. That makes this a no-op until released.yml flips.
+            target = dep_owner.get(dep, "leanprover")
+            tail = re.escape(f"{dep}.git")
+            # toml: `git = "https://github.com/<owner>/<dep>.git"\n  rev = "..."`
             text, n1 = re.subn(
-                r'(git\s*=\s*"https://' + url + r'"\s*\n\s*rev\s*=\s*")[0-9a-f]{7,40}(")',
-                lambda m: m.group(1) + sha + m.group(2), text)
-            # lean: `".../<dep>.git" @ "<sha>"`
+                r'(git\s*=\s*"https://github\.com/)' + match_owner
+                + r'(/' + tail + r'"\s*\n\s*rev\s*=\s*")[0-9a-f]{7,40}(")',
+                lambda m, t=target, s=sha: m.group(1) + t + m.group(2) + s + m.group(3), text)
+            # lean: `"https://github.com/<owner>/<dep>.git" @ "<sha>"`
             text, n2 = re.subn(
-                r'("https://' + url + r'"\s*@\s*")[0-9a-f]{7,40}(")',
-                lambda m: m.group(1) + sha + m.group(2), text)
+                r'("https://github\.com/)' + match_owner
+                + r'(/' + tail + r'"\s*@\s*")[0-9a-f]{7,40}(")',
+                lambda m, t=target, s=sha: m.group(1) + t + m.group(2) + s + m.group(3), text)
             if n1 or n2:
                 notes.append(f"  pin {dep} -> {sha[:12]} ({lf.relative_to(clone)})")
         if text != orig:
@@ -156,14 +165,18 @@ def rewrite_pins(entry: dict, clone: Path, synced: dict[str, str]) -> list[str]:
     return notes
 
 
-def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str]) -> list[str]:
+def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
+                     dep_owner: dict[str, str]) -> list[str]:
     """Pin the synced SHAs in every lake-manifest.json (root + sub-projects), so
     Lake's lockfile points at the new revisions, not a stale checkout. Lake
     trusts the manifest, and the bench/ and conformance/ sub-projects keep their
     own manifests that otherwise pin the old hex-matrix."""
     notes: list[str] = []
     import json as _json
-    by_url = {f"github.com/kim-em/{dep}.git": dep for dep in synced}
+    # Match either owner so a manifest still carrying the pre-transfer URL is
+    # found; the url's owner is then rewritten to what released.yml declares.
+    by_url = {f"github.com/{o}/{dep}.git": dep
+              for o in ("kim-em", "leanprover") for dep in synced}
     for mf in _lake_files(clone, ["lake-manifest.json"]):
         doc = _json.loads(mf.read_text(encoding="utf-8"))
         changed = 0
@@ -171,6 +184,9 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str]) -> list[s
             url = pkg.get("url", "")
             for frag, dep in by_url.items():
                 if frag in url:
+                    target = dep_owner.get(dep, "leanprover")
+                    pkg["url"] = re.sub(r'(github\.com/)(?:kim-em|leanprover)(/)',
+                                        rf'\g<1>{target}\g<2>', url)
                     pkg["rev"] = synced[dep]
                     if pkg.get("inputRev") and len(pkg["inputRev"]) >= 7:
                         pkg["inputRev"] = synced[dep]
@@ -182,7 +198,8 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str]) -> list[s
 
 
 def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
-              synced: dict[str, str], baseline: dict[str, str], force: bool) -> bool:
+              synced: dict[str, str], baseline: dict[str, str], force: bool,
+              dep_owner: dict[str, str]) -> bool:
     """Sync one repo. Returns True if the baseline SHA changed (a push happened)."""
     repo = entry["repo"]
     short = repo.split("/")[-1]
@@ -204,9 +221,9 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
             print(msg + " Overriding (--force).")
         for line in apply_paths(entry, clone):
             print(line)
-        for line in rewrite_pins(entry, clone, synced):
+        for line in rewrite_pins(entry, clone, synced, dep_owner):
             print(line)
-        for line in rewrite_manifest(entry, clone, synced):
+        for line in rewrite_manifest(entry, clone, synced, dep_owner):
             print(line)
         status = run(["git", "status", "--porcelain"], cwd=clone, capture=True)
         if not status:
@@ -250,12 +267,16 @@ def main() -> int:
     baseline_doc = json.loads(args.baseline.read_text(encoding="utf-8")) if args.baseline.exists() else {}
     baseline = {k: v for k, v in baseline_doc.items() if not k.startswith("_")}
     source_sha = run(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, capture=True)
+    # Owner each dep is published under, per released.yml — the single source of
+    # truth the pin/manifest rewrites target (kim-em pre-cutover, leanprover after).
+    dep_owner = {e["repo"].split("/")[-1]: e["repo"].split("/")[0]
+                 for e in manifest["repos"]}
     synced: dict[str, str] = {}
     for entry in manifest["repos"]:
         if args.only and entry["repo"].split("/")[-1] != args.only:
             continue
         sync_repo(entry, source_sha, args.token, args.dry_run,
-                  synced, baseline, args.force)
+                  synced, baseline, args.force, dep_owner)
     # Advance the baseline to every processed repo's current HEAD (pushed, skipped,
     # or unchanged) so the next run's guard is accurate. Written on a real run only;
     # the workflow commits it to the release-sync-baseline branch.
