@@ -105,6 +105,11 @@ The executable matrices and their operations live in
 reduction, and Bareiss correspondences build on this base in their own bridge
 libraries.
 
+# Reference manual
+
+The Mathlib correspondence section of the hex reference manual covers this library at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-matrix-mathlib>.
+
 # Contributing
 
 Development happens in the [`hex-dev`](https://github.com/kim-em/hex-dev)

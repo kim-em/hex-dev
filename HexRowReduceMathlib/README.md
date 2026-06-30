@@ -94,6 +94,11 @@ theorem spanContains_iff_mem_span [Field R] [DecidableEq R]
 The executable row reduction itself lives in
 [`hex-row-reduce`](https://github.com/kim-em/hex-row-reduce).
 
+# Reference manual
+
+The hex reference manual covers this library and its computational base at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-row-reduce>.
+
 # Contributing
 
 Development happens in the [`hex-dev`](https://github.com/kim-em/hex-dev)

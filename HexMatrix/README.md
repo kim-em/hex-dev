@@ -69,6 +69,11 @@ The `Semiring` / `Ring` structure and the equivalence with Mathlib's
 `Matrix`, which let you transfer Mathlib's linear-algebra results, live in
 [`hex-matrix-mathlib`](https://github.com/kim-em/hex-matrix-mathlib).
 
+# Reference manual
+
+The hex reference manual covers this library at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-matrix>.
+
 # Contributing
 
 Development happens in the [`hex-dev`](https://github.com/kim-em/hex-dev)
