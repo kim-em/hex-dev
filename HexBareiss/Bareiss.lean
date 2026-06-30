@@ -718,13 +718,8 @@ private theorem findPivotArrayAux_matrixToRows (M : Matrix Int n n)
           simpa [getEntry] using
             getEntry_matrixToRows M (⟨start, hstart⟩ : Fin n) col
         rw [hentry]
-        by_cases hpivotNat : M[start][col.val] = 0
-        · have hpivot : M[(⟨start, hstart⟩ : Fin n)][col] = 0 := by
-            simpa using hpivotNat
-          simp [hpivot, getRow, Fin.getElem_fin, ih]
-        · have hpivot : M[(⟨start, hstart⟩ : Fin n)][col] ≠ 0 := by
-            simpa using hpivotNat
-          simp [hpivot, getRow, Fin.getElem_fin]
+        by_cases hpivot : M[(⟨start, hstart⟩ : Fin n)][col] = 0 <;>
+          simp_all [getRow, Fin.getElem_fin, ih]
       · simp [hstart]
 
 /-- `findPivotArray?_matrixToRows` identifies full array pivot search on
@@ -756,11 +751,8 @@ private theorem findPivotArrayAux_matches (rows : Array (Array Int))
               M[(⟨start, hstart⟩ : Fin n)][col] :=
           hentry ⟨start, hstart⟩
         rw [hentry_start]
-        by_cases hpivotNat : M[start][col.val] = 0
-        · have hpivot : M[(⟨start, hstart⟩ : Fin n)][col] = 0 := by
-            simpa using hpivotNat
-          simp [hpivot, getRow, Fin.getElem_fin, ih]
-        · simp [hpivotNat]
+        by_cases hpivot : M[(⟨start, hstart⟩ : Fin n)][col] = 0 <;>
+          simp_all [getRow, Fin.getElem_fin, ih]
       · simp [hstart]
 
 /-- `findPivotArray?_matches` shows full array pivot search agrees with
@@ -872,7 +864,7 @@ theorem rowsToMatrix_stepArray {n : Nat} (rows : Array (Array Int)) (k : Nat)
       getEntry rows a.val b.val = (rowsToMatrix rows n)[a][b] := by
     intro a b
     simp [rowsToMatrix, Matrix.ofFn]
-  simpa [rowsToMatrix, Matrix.ofFn] using
+  simpa [rowsToMatrix, Matrix.ofFn, getRow, Fin.getElem_fin] using
     getEntry_stepArray_matches rows (rowsToMatrix rows n) hentry k pivot prevPivot
       ⟨i, hi⟩ ⟨j, hj⟩
 
@@ -966,7 +958,7 @@ theorem pivotLoop_regular_branch_no_swap (fuel : Nat) (state : BareissState n)
           prevPivot := state.matrix[state.step][state.step]
           rowSwaps := state.rowSwaps
           singularStep := none } := by
-  simp [pivotLoop, hDone, hp]
+  simp_all [pivotLoop, hDone, getRow, Fin.getElem_fin]
 
 /-- If the current pivot is zero and pivot search finds no replacement row,
 the row-pivoted Bareiss loop records a singular step. -/
@@ -980,7 +972,7 @@ theorem pivotLoop_singular_branch_no_pivot (fuel : Nat) (state : BareissState n)
         (state.step + 1) = none) :
     pivotLoop (fuel + 1) state =
       { state with singularStep := some state.step } := by
-  simp [pivotLoop, hDone, hp0, hfind]
+  simp_all [pivotLoop, hDone]
 
 /-- If the current pivot is zero, pivot search finds a replacement row, and
 the swapped pivot is nonzero, one loop iteration swaps rows, applies
@@ -1015,7 +1007,7 @@ theorem pivotLoop_regular_branch_swap (fuel : Nat) (state : BareissState n)
               pivot)[state.step][state.step]
           rowSwaps := state.rowSwaps + 1
           singularStep := none } := by
-  simp [pivotLoop, hDone, hp0, hfind, hp]
+  simp_all [pivotLoop, hDone]
 
 /-- `bareissArrayState` runs the matrix-level Bareiss elimination via `pivotLoop`
 and repackages the reduced result as a `BareissArrayState`, storing the matrix
@@ -1111,7 +1103,7 @@ theorem noPivotLoop_singular_branch (fuel : Nat) (state : BareissState n)
     (hDone : state.step + 1 < n)
     (hp : state.matrix[state.step][state.step] = 0) :
     noPivotLoop (fuel + 1) state = { state with singularStep := some state.step } := by
-  simp [noPivotLoop, hDone, hp]
+  simp_all [noPivotLoop, hDone]
 
 /-- If the current no-pivot Bareiss pivot is nonzero, one loop iteration applies
 `stepMatrix`, advances the step, and recurses on the remaining fuel. -/
@@ -1127,7 +1119,7 @@ theorem noPivotLoop_regular_branch (fuel : Nat) (state : BareissState n)
           prevPivot := state.matrix[state.step][state.step]
           rowSwaps := state.rowSwaps
           singularStep := none } := by
-  simp [noPivotLoop, hDone, hp]
+  simp_all [noPivotLoop, hDone]
 
 /-- Entries in rows already processed, or in columns strictly before the current
 step, are unchanged by subsequent no-pivot loop iterations. -/
@@ -1465,7 +1457,8 @@ theorem bareiss_eq_noPivotLoop_last_of_no_singular {k : Nat}
   rw [bareiss_eq_bareissData_det, bareissData_eq_finish_pivotLoop, hpivot, h_full_nopivot]
   have hdet := BareissData.det_succ_eq (finish stateK) h_no_sing
   rw [hdet]
-  simp [finish, BareissData.sign, stateK, init, noPivotInitialState, noPivotLoop_rowSwaps]
+  simp [finish, BareissData.sign, stateK, init, noPivotInitialState, noPivotLoop_rowSwaps,
+    getRow, Fin.getElem_fin]
 
 end Matrix
 end Hex
