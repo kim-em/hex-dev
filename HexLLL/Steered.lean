@@ -283,7 +283,7 @@ member of the old one. -/
   · rw [if_pos hr]
   · rw [if_neg hr]
     have hne : j ≠ k := fun h => Nat.lt_irrefl j.val (h ▸ hjk)
-    exact Matrix.rowAdd_memLattice_iff s.b hne _ v
+    exact rowAdd_memLattice_iff s.b hne _ v
 
 /-- Folding `reduceColumn` over a list of source columns preserves the lattice:
 each step adds an integer multiple of one row to row `k`, so by induction the
@@ -325,7 +325,7 @@ membership of `v`) is unchanged. -/
     by_cases hk0 : 0 < k
     · rw [dif_pos hk0]
       simpa [GramSchmidt.Int.adjacentSwap] using
-        Matrix.rowSwap_memLattice_iff s.b (GramSchmidt.prevRow ⟨k, hk⟩ hk0) ⟨k, hk⟩ v
+        rowSwap_memLattice_iff s.b (GramSchmidt.prevRow ⟨k, hk⟩ hk0) ⟨k, hk⟩ v
     · rw [dif_neg hk0]
   · rw [dif_neg hk]
 

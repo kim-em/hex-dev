@@ -337,7 +337,7 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
     by_cases hk0 : 0 < k
     · rw [dif_pos hk0]
       simpa [GramSchmidt.Int.adjacentSwap] using
-        Matrix.rowSwap_memLattice_iff s.b (GramSchmidt.prevRow ⟨k, hk⟩ hk0) ⟨k, hk⟩ v
+        rowSwap_memLattice_iff s.b (GramSchmidt.prevRow ⟨k, hk⟩ hk0) ⟨k, hk⟩ v
     · rw [dif_neg hk0]
   · rw [dif_neg hk]
 
@@ -350,7 +350,7 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
       s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
   · rw [dif_pos hreduce]
     have hne : j ≠ k := fun h => Nat.lt_irrefl j.val (h ▸ hjk)
-    exact Matrix.rowAdd_memLattice_iff s.b hne _ v
+    exact rowAdd_memLattice_iff s.b hne _ v
   · rw [dif_neg hreduce]
 
 /-- `sizeReduce_foldl_memLattice_iff` states that folding size-reduction column
