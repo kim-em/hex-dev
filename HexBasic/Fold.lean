@@ -236,6 +236,15 @@ theorem foldl_add_add_start (xs : List α) (f g : α → R) (a b : R) :
       _ = xs.foldl (fun acc x => acc + f x) (a + f x)
             + xs.foldl (fun acc x => acc + g x) (b + g x) := ih (a + f x) (b + g x)
 
+/-- An additive fold-sum of a pointwise sum splits into two folds, given a
+splitting of the starting accumulator. -/
+theorem foldl_add_add_of_acc (xs : List α) (f g : α → R) (acc accF accG : R)
+    (h : acc = accF + accG) :
+    xs.foldl (fun acc x => acc + (f x + g x)) acc =
+      xs.foldl (fun acc x => acc + f x) accF + xs.foldl (fun acc x => acc + g x) accG := by
+  subst h
+  exact foldl_add_add_start xs f g accF accG
+
 /-- An additive fold-sum of a pointwise sum from `0` splits into the sum of the
 two separate folds from `0`. -/
 theorem foldl_add_add (xs : List α) (f g : α → R) :
