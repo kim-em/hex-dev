@@ -7,7 +7,10 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded PR runs, but let main runs finish: ci.yml's publish
+  # step only runs at the end, and main merges arrive faster than a cold
+  # build, so cancelling main would mean the Lake cache never publishes.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
