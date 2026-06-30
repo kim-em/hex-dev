@@ -14,6 +14,13 @@ Dense matrices over a coefficient type `R`.
 - Submatrix / leading-submatrix slicing and the Gram matrix
 - Generic over the coefficient type `R`
 
+**Entry vs row access.** `M[(i, j)]` is the O(1) entry accessor and the normal
+form for single entries. Row access `M[i]` is deliberately `noncomputable`: it
+exists only so proofs may speak of whole rows, while compiled code reads rows
+through the computable `getRow` and entries through `M[(i, j)]`. Any compiled
+definition that reaches for `M[i]` fails to compile, so a future flat backing
+representation never silently pays a per-entry row-materialization cost.
+
 This is the dense base of the matrix family. The row-reduction stack
 (`hex-row-reduce`), the Leibniz determinant theory (`hex-determinant`), and the
 executable Bareiss algorithm (`hex-bareiss`) build on it.
