@@ -6,18 +6,14 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexMatrix.Basic
-import HexDeterminant
-import HexRowReduce.RowEchelon
-import HexRowReduce
-import HexBareiss.Bareiss
+import HexMatrix
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
 set_option pp.rawOnError true
 
-#doc (Manual) "HexMatrix: dense linear algebra over Int" =>
+#doc (Manual) "HexMatrix: dense matrices and arithmetic" =>
 %%%
 tag := "hex-matrix"
 %%%
@@ -27,30 +23,32 @@ tag := "hex-matrix"
 tag := "hex-matrix-intro"
 %%%
 
-`HexMatrix` is the dense matrix core of the stack: the `Matrix` type and
-its arithmetic, a Leibniz determinant, the fraction-free Bareiss
-determinant algorithm over the integers, and the row-echelon and
-reduced-row-echelon transforms with their span and nullspace readers.
-Everything here is executable and exact — entries are honest `Int` (or,
-for the field-valued reductions, `Rat`) values, never floating point —
-so the algorithms double as both the computational engine the rest of
-the project calls and the reference semantics its correctness proofs are
-stated against.
+`HexMatrix` is the dense matrix core of the stack: the `Matrix` type,
+its constructors and readers, matrix and matrix-vector arithmetic, the
+elementary row and column operations, and the submatrix and Gram-matrix
+helpers. Everything here is executable and exact — entries are honest
+values of the coefficient type, never floating point — so the type
+doubles as both the computational engine the rest of the project calls
+and the reference representation its correctness proofs are stated
+against. The type is generic over the coefficient ring `R`; the
+integer- and rational-valued instances are the ones the rest of the
+stack uses.
 
 The library is deliberately small and self-contained: it has no library
-dependencies at all. Downstream, the integer Gram-Schmidt layer reads
-its matrices off this type, the lattice-reduction path manipulates
-bases as `Matrix Int` rows, and the factorization stack uses the Bareiss
-determinant where a fraction-free exact integer determinant is wanted.
-This chapter walks the type and its operations, then the two
-determinant routes (Leibniz and Bareiss), then the echelon transforms,
-and closes with a worked determinant example that is checked when the
+dependencies at all, building directly on Lean's `Vector`. The three
+algorithms that sit on top of it each live in their own sibling
+library: the Leibniz determinant in {ref "hex-determinant"}[HexDeterminant],
+the Gauss-Jordan row reduction in {ref "hex-row-reduce"}[HexRowReduce],
+and the fraction-free integer determinant in {ref "hex-bareiss"}[HexBareiss].
+This chapter walks the type, its arithmetic, and the elementary
+operations, and closes with a worked example that is checked when the
 chapter is built.
 
-`HexMatrix` is Mathlib-free. The theorems identifying its executable
-routines with the abstract Mathlib `Matrix` determinant live one
-boundary away in the forthcoming `HexMatrixMathlib` correspondence
-library; this chapter states where that boundary falls.
+`HexMatrix` is Mathlib-free. The `Semiring` / `Ring` structure on
+square matrices, the `One` instance, and the equivalence with Mathlib's
+abstract `Matrix` all live one boundary away in the forthcoming
+`HexMatrixMathlib` correspondence library; this chapter states where
+that boundary falls.
 
 # The dense matrix type
 %%%
@@ -77,8 +75,12 @@ row, column, and transpose readers are its inverses.
 
 {docstring Hex.Matrix.transpose_transpose}
 
-The all-zero and identity matrices are the additive and multiplicative
-units, exposed through the standard `Zero` and `One` instances.
+The all-zero matrix is the additive unit, exposed through the standard
+`Zero` instance; the identity is the function {name}`Hex.Matrix.identity`.
+There is deliberately no `One` instance here — that, with the rest of
+the multiplicative `Semiring` / `Ring` structure, lives in
+`HexMatrixMathlib`, so the Mathlib-free core stays free of the algebraic
+typeclasses.
 
 {docstring Hex.Matrix.zero}
 
@@ -111,94 +113,16 @@ the Bareiss recurrence.
 
 {docstring Hex.Matrix.principalSubmatrix}
 
-# The determinant
+# Elementary operations
 %%%
-tag := "hex-matrix-determinant"
-%%%
-
-The reference determinant is the Leibniz formula: a signed sum over all
-permutation vectors of the product of the selected entries. It is the
-definitional semantics — correct by construction, but factorially slow,
-so it serves as the specification the faster Bareiss route is checked
-against rather than the routine a caller invokes on a large matrix.
-
-{docstring Hex.Matrix.det}
-
-The classical row and column laws are all proved against this
-definition. Swapping two rows negates the determinant; scaling a row
-scales it; adding a multiple of one row to another leaves it unchanged;
-and the determinant is invariant under transpose.
-
-{docstring Hex.Matrix.det_identity}
-
-{docstring Hex.Matrix.det_rowSwap}
-
-{docstring Hex.Matrix.det_rowScale}
-
-{docstring Hex.Matrix.det_rowAdd}
-
-{docstring Hex.Matrix.det_transpose}
-
-{docstring Hex.Matrix.det_colSwap}
-
-# The Bareiss determinant
-%%%
-tag := "hex-matrix-bareiss"
-%%%
-
-For an actual integer determinant computation the library uses Bareiss
-elimination: a fraction-free Gaussian elimination in which every
-intermediate entry stays an exact integer because each update divides
-*exactly* by the previous pivot. It runs in cubic time and never leaves
-the integers, so it avoids both the factorial blow-up of the Leibniz
-sum and the denominators of ordinary Gaussian elimination.
-
-An elimination pass returns a small record: the terminal matrix, the
-number of row swaps performed during pivoting, and an optional record of
-the first step at which a zero pivot with no replacement row was found
-(the signal that the matrix is singular).
-
-{docstring Hex.Matrix.BareissData}
-
-The sign contributed by the row swaps and the encoded determinant are
-read off that record. A recorded singular step encodes determinant zero;
-otherwise the determinant is the last diagonal entry of the terminal
-matrix with the swap sign applied.
-
-{docstring Hex.Matrix.BareissData.sign}
-
-{docstring Hex.Matrix.BareissData.det}
-
-The public entry points run the row-pivoting elimination. {name}`Hex.Matrix.bareissData`
-returns the full record; {name}`Hex.Matrix.bareiss` returns just the
-integer determinant.
-
-{docstring Hex.Matrix.bareissData}
-
-{docstring Hex.Matrix.bareiss}
-
-This is where the computational/proof boundary falls. The Mathlib-free
-layer proves the internal structural facts about the elimination — for
-instance that the packaged record is exactly the structured pivot loop
-finished into determinant data — but it does *not* prove that the
-Bareiss determinant equals the Leibniz {name}`Hex.Matrix.det`. That
-identification is a correspondence theorem living in the forthcoming
-`HexMatrixMathlib` bridge. Within `HexMatrix` itself the agreement is
-pinned only as value-level conformance fixtures: a fixed bank of
-matrices on which `Hex.Matrix.bareiss M = Hex.Matrix.det M` is checked
-at build time.
-
-{docstring Hex.Matrix.bareissData_eq_finish_pivotLoop}
-
-# Row echelon and reduced row echelon
-%%%
-tag := "hex-matrix-echelon"
+tag := "hex-matrix-elementary"
 %%%
 
 The elementary row operations are the building blocks of the echelon
-transforms, and each carries the determinant law quoted above. They
-operate on a matrix over any ring; the reductions that follow specialize
-to a field, where division by a pivot is available.
+transforms, and each carries a determinant law (stated and proved in
+{ref "hex-determinant"}[HexDeterminant]). They operate on a matrix over
+any ring; the {ref "hex-row-reduce"}[HexRowReduce] reductions that use
+them specialize to a field, where division by a pivot is available.
 
 {docstring Hex.Matrix.rowSwap}
 
@@ -206,64 +130,25 @@ to a field, where division by a pivot is available.
 
 {docstring Hex.Matrix.rowAdd}
 
-An echelon computation returns its result packaged with a certificate of
-how it got there: the rank, the reduced matrix, the accumulated
-invertible row-operation transform `T` with `T * original = echelon`,
-and the pivot column of each row.
-
-{docstring Hex.Matrix.RowEchelonData}
-
-Two predicates capture what it means for such a record to be a genuine
-echelon or reduced-echelon form. {name}`Hex.Matrix.IsEchelonForm` bundles
-the conditions shared by any echelon form — the transform equation, the
-transform's invertibility, the rank bounds, and the staircase pivot
-structure. {name}`Hex.Matrix.IsRowReduced` extends it with the two
-reduced-form conditions: each pivot is one, and every entry above a
-pivot is zero.
-
-{name}`Hex.Matrix.IsEchelonForm` and {name}`Hex.Matrix.IsRowReduced` are those
-two predicates.
-
-The driver is Gauss-Jordan elimination, returning a
-{name}`Hex.Matrix.RowEchelonData` whose record satisfies the
-reduced-form contract.
-
-{docstring Hex.Matrix.rowReduce}
-
-{docstring Hex.Matrix.rowReduce_transform_mul}
-
-{docstring Hex.Matrix.rowReduce_isRowReduced}
-
-On top of the reduced form sit the linear-algebra readers a caller
-actually wants: membership in the row span with an explicit witness, the
-boolean span test, and a basis for the nullspace — each with a soundness
-theorem tying the executable answer back to the matrix.
-
-{docstring Hex.Matrix.spanCoeffs}
-
-{docstring Hex.Matrix.spanContains}
-
-{docstring Hex.Matrix.nullspace}
-
 # Worked example
 %%%
 tag := "hex-matrix-worked"
 %%%
 
 The block below builds the integer matrix with rows `(2, 0, 1)`,
-`(1, 3, 2)`, and `(0, 1, 1)`, whose determinant is `3`. Both determinant
-routes agree on it, and both agree with each other; the identity has
-determinant one, the determinant is invariant under transpose, and a
-matrix with a repeated-up-to-scale row is singular. Every `#guard` is
-checked when the chapter is built, so the outputs are guaranteed to
-match the executable implementation.
+`(1, 3, 2)`, and `(0, 1, 1)`, and reads a few core quantities off it:
+the squared norm of the first row is `2² + 0² + 1² = 5`, the dot product
+of the first two rows is `2·1 + 0·3 + 1·2 = 4`, and multiplying a vector
+by the identity returns it unchanged. Every `#guard` is checked when the
+chapter is built, so the outputs are guaranteed to match the executable
+implementation.
 
 ```lean
 open Hex Hex.Matrix
 
 namespace HexMatrixChapterExample
 
--- A = [[2, 0, 1], [1, 3, 2], [0, 1, 1]], det = 3.
+-- A = [[2, 0, 1], [1, 3, 2], [0, 1, 1]].
 private def A : Matrix Int 3 3 :=
   Matrix.ofFn fun i j =>
     match i.val, j.val with
@@ -272,30 +157,17 @@ private def A : Matrix Int 3 3 :=
     | 2, 0 => 0 | 2, 1 => 1 | 2, 2 => 1
     | _, _ => 0
 
--- The Leibniz determinant evaluates to 3.
-#guard Matrix.det A = 3
+-- The squared norm of the first row is 5.
+#guard Vector.normSq (Matrix.row A 0) = 5
 
--- The Bareiss determinant agrees with Leibniz.
-#guard Matrix.bareiss A = Matrix.det A
+-- The dot product of the first two rows is 4.
+#guard (Matrix.row A 0).dotProduct (Matrix.row A 1) = 4
 
--- The determinant is invariant under transpose.
-#guard Matrix.det (Matrix.transpose A) = 3
+-- The identity fixes every vector under mulVec.
+private def v : Vector Int 3 :=
+  Vector.ofFn fun i => (i.val + 1 : Int)
 
--- The identity has determinant one, both routes.
-#guard Matrix.det (Matrix.identity (R := Int) 3) = 1
-#guard Matrix.bareiss (Matrix.identity (R := Int) 3) = 1
-
--- S = [[1, 2], [2, 4]] has a dependent row pair,
--- so its determinant is zero.
-private def S : Matrix Int 2 2 :=
-  Matrix.ofFn fun i j =>
-    match i.val, j.val with
-    | 0, 0 => 1 | 0, 1 => 2
-    | 1, 0 => 2 | 1, 1 => 4
-    | _, _ => 0
-
-#guard Matrix.det S = 0
-#guard Matrix.bareiss S = 0
+#guard Matrix.mulVec (Matrix.identity (R := Int) 3) v = v
 
 end HexMatrixChapterExample
 ```
@@ -307,16 +179,16 @@ tag := "hex-matrix-cross-references"
 
 `HexMatrix` sits at the base of the linear-algebra stack:
 
-* It has no library dependencies — the matrix type, its arithmetic, both
-  determinant routes, and the echelon transforms are all built directly
-  on Lean's `Vector`, with no other `hex-*` library underneath.
+* It has no library dependencies — the matrix type, its arithmetic, and
+  the elementary operations are all built directly on Lean's `Vector`,
+  with no other `hex-*` library underneath.
+* {ref "hex-determinant"}[HexDeterminant], {ref "hex-row-reduce"}[HexRowReduce],
+  and {ref "hex-bareiss"}[HexBareiss] each build on this core: the
+  Leibniz determinant and its cofactor theory, the Gauss-Jordan row
+  reduction with its span and nullspace readers, and the fraction-free
+  integer determinant, respectively.
 * `HexMatrixMathlib` is the correspondence library carrying the
-  soundness theorems that relate these executable routines to Mathlib's
-  abstract `Matrix` API — in particular the identification of the
-  {name}`Hex.Matrix.bareiss` determinant with the Leibniz
-  {name}`Hex.Matrix.det` and with Mathlib's determinant. That chapter is
-  forthcoming; until it lands, the agreement between the two determinant
-  routes is exercised here only through the conformance fixtures
-  described in the {ref "hex-matrix-bareiss"}[Bareiss section]. The
-  Mathlib dependency lives entirely on that side of the boundary;
-  `HexMatrix` itself is Mathlib-free.
+  `Semiring` / `Ring` structure, the `One` instance, and the soundness
+  theorems that relate this executable representation to Mathlib's
+  abstract `Matrix` API. The Mathlib dependency lives entirely on that
+  side of the boundary; `HexMatrix` itself is Mathlib-free.
