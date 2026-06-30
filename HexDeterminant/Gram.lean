@@ -637,7 +637,7 @@ theorem columnTupleCoeff_reconstructInjTuple
     columnTupleCoeff A (reconstructInjTuple sel perm) =
       detProduct (columnTupleMatrix A (columnTupleVectorFn sel)) perm := by
   unfold columnTupleCoeff detProduct
-  apply foldl_det_product_congr
+  apply List.foldl_mul_congr
   intro i _hmem
   simp only [getElem_pair_eq_nested]
   rw [getElem_columnTupleMatrix]
@@ -998,7 +998,7 @@ theorem columnTupleExpansion_refold_selectedPerm
           (fun cols => Function.Injective (columnTupleVectorFn cols))).foldl
             (fun acc cols => acc + term cols) 0 := hfilter
     _ = reconstructed.foldl (fun acc cols => acc + term cols) 0 := by
-          exact foldl_det_sum_perm term hperm 0
+          exact List.foldl_add_perm term hperm 0
     _ = (((selectedColumnTuples n m).flatMap fun sel =>
           (permutationVectors n).map (reconstructInjTuple sel))).foldl
         (fun acc cols => acc + columnTupleExpansionTerm A cols) 0 := rfl
@@ -1027,13 +1027,13 @@ private theorem columnTupleExpansion_reconstruct_orbit_sum
         (fun acc perm => acc + columnTupleExpansionTerm A (reconstructInjTuple sel perm)) 0 =
       (permutationVectors n).foldl
         (fun acc perm => acc + detTerm minor perm * det minor) 0 := by
-        apply foldl_det_sum_congr
+        apply List.foldl_add_congr
         intro perm hperm
         exact columnTupleExpansionTerm_reconstructInjTuple A sel perm hperm
     _ =
       (permutationVectors n).foldl (fun acc perm => acc + detTerm minor perm) 0 *
         det minor := by
-        exact foldl_det_sum_mul_right_zero (permutationVectors n) (fun perm => detTerm minor perm)
+        exact List.foldl_add_mul_right_zero (permutationVectors n) (fun perm => detTerm minor perm)
           (det minor)
     _ = det minor ^ 2 := by
         unfold det
@@ -1046,10 +1046,10 @@ private theorem columnTupleExpansion_selectedPerm_collapse
       (fun acc cols => acc + columnTupleExpansionTerm A cols) 0 =
     (selectedColumnTuples n m).foldl
       (fun acc sel => acc + det (columnTupleMatrix A (columnTupleVectorFn sel)) ^ 2) 0 := by
-  rw [foldl_det_sum_flatMap]
-  apply foldl_acc_congr
+  rw [List.foldl_add_flatMap]
+  apply List.foldl_congr
   intro acc sel _hsel
-  rw [foldl_det_sum_start]
+  rw [List.foldl_add_eq_add_foldl]
   congr 1
   rw [foldl_det_sum_map, columnTupleExpansion_reconstruct_orbit_sum A sel]
 

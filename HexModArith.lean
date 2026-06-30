@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexModArith.Basic
-import HexModArith.HotLoop
-import HexModArith.Prime
-import HexModArith.Ring
-import HexModArith.Smoke
+module
+
+public import HexModArith.Basic
+public import HexModArith.HotLoop
+public import HexModArith.Prime
+public import HexModArith.Ring
+public import HexModArith.Smoke
+
+public section
 
 /-!
 The `HexModArith` library provides `UInt64`-backed modular arithmetic,

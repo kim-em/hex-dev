@@ -71,7 +71,7 @@ theorem det_setRow_eq_cofactorRowPairing
     det (setRow M row v) = cofactorRowPairing M row v := by
   rw [det_eq_foldl_laplace_row (setRow M row v) row]
   unfold cofactorRowPairing
-  apply foldl_acc_congr
+  apply List.foldl_congr
   intro acc col _hmem
   rw [show (setRow M row v)[row][col] = v[col] by
     rw [setRow_get_self]]
@@ -103,7 +103,7 @@ theorem foldl_alien_cofactor_eq_zero
           (fun acc k => acc + N[j][k] * cofactor N j k) 0 =
         (List.finRange (n + 1)).foldl
           (fun acc k => acc + M[i][k] * cofactor M j k) 0 := by
-    apply foldl_acc_congr
+    apply List.foldl_congr
     intro acc k _hmem
     have hentry : N[j][k] = M[i][k] := congrArg (fun row => row[k]) hNj
     have hcofk : cofactor N j k = cofactor M j k :=
@@ -155,7 +155,7 @@ theorem mul_adjugate_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
           (fun acc k => acc + M[i][k] * cofactor M j k) 0 := by
     rw [hmul]
     unfold Vector.dotProduct
-    apply foldl_acc_congr
+    apply List.foldl_congr
     intro acc k _hmem
     congr 1
     have hrow : (row M i)[k] = M[i][k] := rfl
@@ -204,7 +204,7 @@ theorem adjugate_mul_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       unfold Matrix.mul
       rw [getElem_ofFn]
       unfold Vector.dotProduct
-      apply foldl_acc_congr
+      apply List.foldl_congr
       intro acc k _hmem
       have hrow : (row (adjugate M) i)[k] = (adjugate M)[i][k] := rfl
       have hcol : (col M j)[k] = M[k][j] := by
@@ -218,7 +218,7 @@ theorem adjugate_mul_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       unfold Matrix.mul
       rw [getElem_ofFn]
       unfold Vector.dotProduct
-      apply foldl_acc_congr
+      apply List.foldl_congr
       intro acc k _hmem
       have hrow : (row M.transpose j)[k] = M[k][j] := by
         simp [row, transpose, col]
@@ -230,7 +230,7 @@ theorem adjugate_mul_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         rw [hcol', adjugate_get, cofactor_transpose]
       rw [hrow, hcol]
     rw [hleft, hright]
-    apply foldl_acc_congr
+    apply List.foldl_congr
     intro acc k _hmem
     rw [Lean.Grind.CommSemiring.mul_comm]
   rw [hentry, mul_adjugate_apply M.transpose j i, det_transpose M]
@@ -354,7 +354,7 @@ private theorem mul_eq_columnSumMatrix_transpose
   unfold Matrix.mul
   rw [getElem_ofFn]
   unfold Vector.dotProduct
-  apply foldl_det_sum_congr
+  apply List.foldl_add_congr
   intro k _
   simp only [getElem_pair_eq_nested]
   rw [getElem_row, getElem_col, getElem_transpose]
@@ -386,12 +386,12 @@ theorem det_mul
             (columnTupleCoeff N.transpose cols *
               det (columnTupleMatrix (Matrix.identity (R := R) n)
                 (columnTupleVectorFn cols)))) 0 := by
-    apply foldl_det_sum_congr
+    apply List.foldl_add_congr
     intro cols _
     rw [det_columnTupleMatrix_eq M (columnTupleVectorFn cols)]
     exact Lean.Grind.CommSemiring.mul_left_comm _ _ _
   rw [hbody_eq]
-  rw [foldl_det_sum_mul_left_zero
+  rw [List.foldl_add_mul_left_zero
         (columnTupleVectors n n)
         (det M)
         (fun cols => columnTupleCoeff N.transpose cols *
@@ -400,54 +400,6 @@ theorem det_mul
   rw [← det_columnSumMatrix_eq_sum_columnTuples
         (Matrix.identity (R := R) n) N.transpose]
   rw [← eq_columnSumMatrix_one_transpose N]
-
-/-- Foldl over a list whose body is identically zero leaves the seed
-unchanged. -/
-theorem foldl_add_zero_body {α : Type u} [Lean.Grind.CommRing α]
-    {β : Type v} (xs : List β) (z : α) (f : β → α)
-    (hall : ∀ y ∈ xs, f y = 0) :
-    xs.foldl (fun acc y => acc + f y) z = z := by
-  induction xs generalizing z with
-  | nil => rfl
-  | cons y ys ih =>
-      simp only [List.foldl_cons]
-      have hy : f y = 0 := hall y List.mem_cons_self
-      rw [hy]
-      have hzero : z + (0 : α) = z := by grind
-      rw [hzero]
-      exact ih z (fun w hw => hall w (List.mem_cons_of_mem _ hw))
-
-/-- Foldl over a `Nodup` list where the additive contribution is
-nonzero at exactly one matching element. -/
-theorem foldl_add_with_unique_match {α : Type u}
-    [Lean.Grind.CommRing α] {β : Type v} [DecidableEq β]
-    (xs : List β) (z : α) (q : β) (f : β → α)
-    (hmem : q ∈ xs) (hnodup : xs.Nodup) :
-    xs.foldl (fun acc x => acc + (if x = q then f x else (0 : α))) z = z + f q := by
-  induction xs generalizing z with
-  | nil => simp at hmem
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      by_cases hxq : x = q
-      · -- x = q. By nodup, q ∉ xs, so the remaining foldl preserves z + f x.
-        subst hxq
-        rw [if_pos rfl]
-        have hxs_nomem : x ∉ xs := (List.nodup_cons.mp hnodup).1
-        apply foldl_add_zero_body xs (z + f x)
-            (fun y => if y = x then f y else (0 : α))
-        intro y hy
-        have hyne : y ≠ x := fun heq => hxs_nomem (heq ▸ hy)
-        exact if_neg hyne
-      · -- x ≠ q. q still in xs; apply IH.
-        rw [if_neg hxq]
-        have hzero_step : z + (0 : α) = z := by grind
-        rw [hzero_step]
-        have hmem' : q ∈ xs := by
-          cases List.mem_cons.mp hmem with
-          | inl h => exact absurd h.symm hxq
-          | inr h => exact h
-        have hnodup' : xs.Nodup := (List.nodup_cons.mp hnodup).2
-        exact ih z hmem' hnodup'
 
 /-! ### Two-row replacement determinant Plucker kernel
 
@@ -470,7 +422,7 @@ private theorem mul_apply_foldl
   unfold Matrix.mul
   rw [getElem_ofFn]
   unfold Vector.dotProduct
-  apply foldl_acc_congr
+  apply List.foldl_congr
   intro acc l _hmem
   rw [getElem_row, getElem_col]
 
@@ -485,7 +437,7 @@ private theorem setRow_mul_adjugate_apply_row
       cofactorRowPairing M s ((setRow M r u)[i]) := by
   rw [mul_apply_foldl]
   unfold cofactorRowPairing
-  apply foldl_acc_congr
+  apply List.foldl_congr
   intro acc l _hmem
   rw [adjugate_get]
 
@@ -577,7 +529,7 @@ private theorem det_mul_cofactor_setRow_eq
             (fun acc l =>
               acc + if l = c then
                 det (setRow M r u) * cofactor M s l else 0) 0 := by
-      apply foldl_acc_congr
+      apply List.foldl_congr
       intro acc l _hmem
       congr 1
       rw [adjugate_mul_apply, adjugate_get]
@@ -589,7 +541,7 @@ private theorem det_mul_cofactor_setRow_eq
         grind
     rw [hcongr]
     have hmatch :=
-      foldl_add_with_unique_match (α := R) (List.finRange (n + 1)) (0 : R) c
+      List.foldl_add_single (R := R) (List.finRange (n + 1)) (0 : R) c
         (fun l => det (setRow M r u) * cofactor M s l)
         (List.mem_finRange c) (List.nodup_finRange (n + 1))
     rw [hmatch]
@@ -617,7 +569,7 @@ private theorem det_mul_cofactor_setRow_eq
                  (if i = s then
                     (adjugate (setRow M r u))[c][i] * det M
                   else 0))) 0 := by
-      apply foldl_acc_congr
+      apply List.foldl_congr
       intro acc i _hmem
       congr 1
       by_cases hir : i = r
@@ -631,13 +583,13 @@ private theorem det_mul_cofactor_setRow_eq
           rw [if_pos rfl, if_pos rfl, Lean.Grind.AddCommMonoid.zero_add]
         · rw [if_neg his, if_neg his, Lean.Grind.Semiring.mul_zero,
             Lean.Grind.AddCommMonoid.add_zero]
-    rw [hbody, foldl_det_sum_add_zero]
+    rw [hbody, List.foldl_add_add]
     have hr_extract :=
-      foldl_add_with_unique_match (α := R) (List.finRange (n + 1)) (0 : R) r
+      List.foldl_add_single (R := R) (List.finRange (n + 1)) (0 : R) r
         (fun i => (adjugate (setRow M r u))[c][i] * cofactorRowPairing M s u)
         (List.mem_finRange r) (List.nodup_finRange (n + 1))
     have hs_extract :=
-      foldl_add_with_unique_match (α := R) (List.finRange (n + 1)) (0 : R) s
+      List.foldl_add_single (R := R) (List.finRange (n + 1)) (0 : R) s
         (fun i => (adjugate (setRow M r u))[c][i] * det M)
         (List.mem_finRange s) (List.nodup_finRange (n + 1))
     rw [hr_extract, hs_extract]

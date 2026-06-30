@@ -22,7 +22,7 @@ Working from the per-permutation product `detProduct` and signed term
 duplicate-column/row vanishing lemmas (`det_eq_zero_of_col_eq`,
 `det_eq_zero_of_row_eq`) and `det_setCol_add_otherCols` (column operations
 preserve the determinant), plus the `columnSumMatrix` builder and the Fubini
-sum-swap `foldl_det_sum_swap` used by the Cauchy-Binet expansion.
+sum-swap `List.foldl_add_comm` used by the Cauchy-Binet expansion.
 -/
 
 namespace Hex
@@ -59,7 +59,7 @@ private theorem detProduct_setCol_add {R : Type u} [Lean.Grind.CommRing R]
             (setCol M dst v)[x][perm[x]] + (setCol M dst w)[x][perm[x]]
           else
             (setCol M dst v)[x][perm[x]]) 1 := by
-        apply foldl_det_product_congr
+        apply List.foldl_mul_congr
         intro x _hx
         rw [getElem_setCol, getElem_setCol, getElem_setCol]
         by_cases hxp : x = pivot
@@ -85,7 +85,7 @@ private theorem detProduct_setCol_add {R : Type u} [Lean.Grind.CommRing R]
             (setCol M dst v)[x][perm[x]] + (1 : R) * (setCol M dst w)[x][perm[x]]
           else
             (setCol M dst v)[x][perm[x]]) 1 := by
-        apply foldl_det_product_congr
+        apply List.foldl_mul_congr
         intro x _hx
         by_cases hxp : x = pivot
         · rw [if_pos hxp]
@@ -154,7 +154,7 @@ private theorem detProduct_setCol_smul {R : Type u} [Lean.Grind.CommRing R]
             c * (setCol M dst v)[x][perm[x]]
           else
             (setCol M dst v)[x][perm[x]]) 1 := by
-        apply foldl_det_product_congr
+        apply List.foldl_mul_congr
         intro x _hx
         rw [getElem_setCol, getElem_setCol]
         by_cases hxp : x = pivot
@@ -217,7 +217,7 @@ theorem det_setCol_add {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         (fun acc perm =>
           acc + (detTerm (setCol M dst v) perm +
             detTerm (setCol M dst w) perm)) 0 := by
-        apply foldl_det_sum_congr
+        apply List.foldl_add_congr
         intro perm hmem
         exact detTerm_setCol_add M dst v w perm (permutationVectors_nodup hmem)
     _ =
@@ -225,7 +225,7 @@ theorem det_setCol_add {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
           (fun acc perm => acc + detTerm (setCol M dst v) perm) 0 +
         (permutationVectors n).foldl
           (fun acc perm => acc + detTerm (setCol M dst w) perm) 0 := by
-        exact foldl_det_sum_add_zero
+        exact List.foldl_add_add
           (permutationVectors n)
           (detTerm (setCol M dst v))
           (detTerm (setCol M dst w))
@@ -241,13 +241,13 @@ theorem det_setCol_smul {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         (fun acc perm => acc + detTerm (setCol M dst (fun r => c * v r)) perm) 0 =
       (permutationVectors n).foldl
         (fun acc perm => acc + c * detTerm (setCol M dst v) perm) 0 := by
-        apply foldl_det_sum_congr
+        apply List.foldl_add_congr
         intro perm hmem
         exact detTerm_setCol_smul M dst c v perm (permutationVectors_nodup hmem)
     _ =
       c * (permutationVectors n).foldl
           (fun acc perm => acc + detTerm (setCol M dst v) perm) 0 := by
-        exact foldl_det_sum_mul_left_zero
+        exact List.foldl_add_mul_left_zero
           (permutationVectors n) c (detTerm (setCol M dst v))
 
 /-- The assembled determinant `det` vanishes when the replaced column is zero. -/
@@ -282,7 +282,7 @@ theorem det_setCol_sum_list {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
                 (0 + coeff x * source x r)) =
             fun r => coeff x * source x r + tail r := by
         funext r
-        rw [foldl_det_sum_start]
+        rw [List.foldl_add_eq_add_foldl]
         simp [tail]
         grind
       calc
@@ -305,7 +305,7 @@ theorem det_setCol_sum_list {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
           xs.foldl (fun acc x => acc + coeff x * det (setCol M dst (source x)))
             (0 + coeff x * det (setCol M dst (source x))) := by
             have hstart :=
-              (foldl_det_sum_start (R := R) xs
+              (List.foldl_add_eq_add_foldl (R := R) xs
                 (fun x => coeff x * det (setCol M dst (source x)))
                 (0 + coeff x * det (setCol M dst (source x)))).symm
             calc
@@ -490,50 +490,6 @@ Uses a list-based "left prefix" partial assignment, with a Fubini-style
 sum-swap to align the iteration order with `columnTupleVectors`.
 -/
 
-/-- Sum-swap (Fubini) for the standard determinant-style nested folds. -/
-theorem foldl_det_sum_swap {R : Type u} [Lean.Grind.CommRing R]
-    {β γ : Type v} (xs : List β) (ys : List γ) (f : β → γ → R) :
-    xs.foldl (fun acc x => acc + ys.foldl (fun acc' y => acc' + f x y) 0) 0 =
-      ys.foldl (fun acc y => acc + xs.foldl (fun acc' x => acc' + f x y) 0) 0 := by
-  induction xs with
-  | nil =>
-      simp only [List.foldl_nil]
-      exact (foldl_det_sum_zero ys 0).symm
-  | cons x xs ih =>
-      have hLHS :
-          (x :: xs).foldl
-              (fun acc x' => acc + ys.foldl (fun acc' y => acc' + f x' y) 0) 0 =
-            ys.foldl (fun acc' y => acc' + f x y) 0 +
-              xs.foldl
-                (fun acc x' => acc + ys.foldl (fun acc' y => acc' + f x' y) 0) 0 := by
-        simp only [List.foldl_cons]
-        rw [foldl_det_sum_start xs
-              (fun x' => ys.foldl (fun acc' y => acc' + f x' y) 0)
-              (0 + ys.foldl (fun acc' y => acc' + f x y) 0)]
-        grind
-      have hRHS :
-          ys.foldl
-              (fun acc y => acc + (x :: xs).foldl
-                (fun acc' x' => acc' + f x' y) 0) 0 =
-            ys.foldl (fun acc' y => acc' + f x y) 0 +
-              ys.foldl
-                (fun acc y => acc + xs.foldl
-                  (fun acc' x' => acc' + f x' y) 0) 0 := by
-        have hfun :
-            (fun (acc : R) y =>
-                acc + (x :: xs).foldl (fun acc' x' => acc' + f x' y) 0) =
-              (fun (acc : R) y =>
-                acc + (f x y + xs.foldl (fun acc' x' => acc' + f x' y) 0)) := by
-          funext acc y
-          congr 1
-          simp only [List.foldl_cons]
-          rw [foldl_det_sum_start xs (fun x' => f x' y) (0 + f x y)]
-          grind
-        rw [hfun]
-        exact foldl_det_sum_add_zero ys (fun y => f x y)
-          (fun y => xs.foldl (fun acc' x' => acc' + f x' y) 0)
-      rw [hLHS, hRHS, ih]
-
 private theorem foldl_det_sum_nested_start {R : Type u} [Lean.Grind.CommRing R]
     {β γ : Type v} (xs : List β) (ys : List γ) (f : β → γ → R) (z : R) :
     xs.foldl (fun acc x => ys.foldl (fun acc' y => acc' + f x y) acc) z =
@@ -545,9 +501,9 @@ private theorem foldl_det_sum_nested_start {R : Type u} [Lean.Grind.CommRing R]
       grind
   | cons x xs ih =>
       simp only [List.foldl_cons]
-      rw [foldl_det_sum_start ys (fun y => f x y) z,
+      rw [List.foldl_add_eq_add_foldl ys (fun y => f x y) z,
         ih (z + ys.foldl (fun acc' y => acc' + f x y) 0)]
-      rw [foldl_det_sum_start xs
+      rw [List.foldl_add_eq_add_foldl xs
         (fun x => ys.foldl (fun acc' y => acc' + f x y) 0)
         (0 + ys.foldl (fun acc' y => acc' + f x y) 0)]
       grind

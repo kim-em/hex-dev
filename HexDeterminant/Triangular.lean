@@ -99,7 +99,7 @@ theorem det_upperTriangular_eq_finFoldl_diag
               (fun acc i => acc * (principalSubmatrix M n (Nat.le_succ n))[i][i]) 1 =
             Fin.foldl n (fun acc i => acc * M[i.castSucc][i.castSucc]) 1 := by
         rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl]
-        apply foldl_acc_congr
+        apply List.foldl_congr
         intro acc i _hmem
         have hentry : (principalSubmatrix M n (Nat.le_succ n))[i][i] = M[i.castSucc][i.castSucc] :=
           by simp [principalSubmatrix, ofFn, Fin.castSucc, getRow, Fin.getElem_fin]
@@ -135,7 +135,7 @@ theorem det_lowerTriangular_eq_finFoldl_diag
     simp [transpose, col]
   -- Rewrite the foldl over `M.transpose[i][i]` to `M[i][i]`.
   rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl]
-  apply foldl_acc_congr
+  apply List.foldl_congr
   intro acc i _hmem
   rw [hdiag]
 

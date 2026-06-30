@@ -2682,6 +2682,18 @@ cancel multiplications by the unit polynomial through it. -/
   rw [coeff_mul, mulCoeffSum_eq_diagonal]
   exact fold_diagonal_one_right p n
 
+/-- `DensePoly S` is a multiplicative monoid: these `Std` instances let the
+shared `List.foldl_mul_*` algebra (and core's `List.foldl_assoc`) apply to
+fold-products of polynomials such as `FpPoly`/`ZPoly`. -/
+instance instAssociativeMulDensePoly {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] :
+    Std.Associative (· * · : DensePoly S → DensePoly S → DensePoly S) :=
+  ⟨mul_assoc_poly⟩
+
+instance instLawfulIdentityMulDensePoly {S : Type _} [Lean.Grind.CommRing S] [DecidableEq S] :
+    Std.LawfulIdentity (· * · : DensePoly S → DensePoly S → DensePoly S) 1 where
+  left_id p := (mul_comm_poly 1 p).trans (mul_one_right_poly p)
+  right_id := mul_one_right_poly
+
 /-- Product of two monomials: `xⁱ * cⱼ * xʲ = cᵢcⱼ * xⁱ⁺ʲ`. -/
 theorem monomial_mul_monomial {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S]

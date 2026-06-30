@@ -42,14 +42,14 @@ private theorem foldl_detTerm_insertions_eq
       (permutationVectors n).foldl
         (fun acc v => acc + cofactorSign (R := R) i (Fin.last n) *
           (M[i][Fin.last n] * detTerm (deleteRowCol M i (Fin.last n)) v)) 0 := by
-    apply foldl_det_sum_congr
+    apply List.foldl_add_congr
     intro v _hmem
     exact detTerm_insertAt_general M v i
   rw [hsumands]
-  rw [foldl_det_sum_mul_left_zero (permutationVectors n)
+  rw [List.foldl_add_mul_left_zero (permutationVectors n)
     (cofactorSign (R := R) i (Fin.last n))
     (fun v => M[i][Fin.last n] * detTerm (deleteRowCol M i (Fin.last n)) v)]
-  rw [foldl_det_sum_mul_left_zero (permutationVectors n) M[i][Fin.last n]
+  rw [List.foldl_add_mul_left_zero (permutationVectors n) M[i][Fin.last n]
     (fun v => detTerm (deleteRowCol M i (Fin.last n)) v)]
   show cofactorSign (R := R) i (Fin.last n) *
        (M[i][Fin.last n] * det (deleteRowCol M i (Fin.last n))) = _
@@ -70,7 +70,7 @@ theorem det_eq_foldl_laplace_last
           (List.finRange (n + 1)).map fun i =>
             insertAt (Fin.last n) (v.map Fin.castSucc) i)
         (permutationVectors n) from rfl]
-  rw [foldl_det_sum_flatMap]
+  rw [List.foldl_add_flatMap]
   have hmap :
       (permutationVectors n).foldl
         (fun acc v =>
@@ -82,15 +82,15 @@ theorem det_eq_foldl_laplace_last
           (List.finRange (n + 1)).foldl
             (fun acc i =>
               acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) acc) 0 := by
-    apply foldl_acc_congr
+    apply List.foldl_congr
     intro acc v _hmem
     simp only [List.foldl_map]
   rw [hmap]
   rw [foldl_det_sum_nested_zero (permutationVectors n) (List.finRange (n + 1))
     (fun v i => detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i))]
-  rw [foldl_det_sum_swap (permutationVectors n) (List.finRange (n + 1))
+  rw [List.foldl_add_comm (permutationVectors n) (List.finRange (n + 1))
     (fun v i => detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i))]
-  apply foldl_acc_congr
+  apply List.foldl_congr
   intro acc i _hmem
   congr 1
   exact foldl_detTerm_insertions_eq M i
@@ -111,7 +111,7 @@ theorem det_eq_foldl_laplace_last_row
     _ =
       (List.finRange (n + 1)).foldl
         (fun acc col => acc + M[Fin.last n][col] * cofactor M (Fin.last n) col) 0 := by
-        apply foldl_acc_congr
+        apply List.foldl_congr
         intro acc col _hmem
         rw [cofactor_transpose]
         simp [Matrix.transpose, Matrix.col, getRow, Fin.getElem_fin]
@@ -281,11 +281,11 @@ theorem det_eq_foldl_laplace_col
         (fun acc row =>
           acc + (-1 : R) ^ (n - col.val) *
             (C[row][Fin.last n] * cofactor C row (Fin.last n))) 0 := by
-        rw [foldl_det_sum_mul_left_zero]
+        rw [List.foldl_add_mul_left_zero]
     _ =
       (List.finRange (n + 1)).foldl
         (fun acc row => acc + M[row][col] * cofactor M row col) 0 := by
-        apply foldl_acc_congr
+        apply List.foldl_congr
         intro acc row _hmem
         congr 1
         unfold cofactor
@@ -327,7 +327,7 @@ theorem det_eq_foldl_laplace_row
     _ =
       (List.finRange (n + 1)).foldl
         (fun acc col => acc + M[row][col] * cofactor M row col) 0 := by
-        apply foldl_acc_congr
+        apply List.foldl_congr
         intro acc col _hmem
         rw [cofactor_transpose, getElem_transpose]
 

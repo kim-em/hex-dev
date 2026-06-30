@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyZ.Basic
-import HexPolyZ.Mignotte
+module
+
+public import HexPolyZ.Basic
+public import HexPolyZ.Mignotte
+
+public section
 
 /-!
 The `HexPolyZ` library specializes the generic dense polynomial library to

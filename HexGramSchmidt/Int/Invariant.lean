@@ -393,7 +393,7 @@ private theorem foldl_mul_distrib_int {α : Type v}
 
 /-- Expansion of the dot product against `rowCombination` over integers: the
 second argument's row combination distributes outside the sum, giving the
-Σ-over-rows form. Proved via the `Hex.Matrix.foldl_det_sum_swap` Fubini
+Σ-over-rows form. Proved via the `List.foldl_add_comm` Fubini
 identity. -/
 private theorem dot_rowCombination_right_eq
     {n m : Nat} (b : Matrix Int n m) (u : Vector Int m) (c : Vector Int n) :
@@ -430,7 +430,7 @@ private theorem dot_rowCombination_right_eq
   rw [h_distrib]
   -- Step 3: apply Fubini sum-swap.
   have h_swap :=
-    Matrix.foldl_det_sum_swap (R := Int)
+    List.foldl_add_comm (R := Int)
       (xs := List.finRange m) (ys := List.finRange n)
       (fun (j : Fin m) (k : Fin n) => u[j] * (b[k][j] * c[k]))
   rw [h_swap]

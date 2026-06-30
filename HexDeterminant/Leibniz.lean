@@ -83,72 +83,6 @@ closed form used by small cofactor expansions. -/
     inversionCount, List.finRange]
   grind
 
-/-- Congruence for the determinant-style left fold over a finite list. -/
-private theorem foldl_det_sum_congr {R : Type u} [Add R] {β : Type v}
-    (xs : List β) (f g : β → R) (z : R)
-    (h : ∀ x, x ∈ xs → f x = g x) :
-    xs.foldl (fun acc x => acc + f x) z =
-      xs.foldl (fun acc x => acc + g x) z := by
-  induction xs generalizing z with
-  | nil => rfl
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [h x (by simp)]
-      apply ih
-      intro y hy
-      exact h y (List.mem_cons_of_mem x hy)
-
-
-/-- A summing left fold is invariant under permuting the list. -/
-private theorem foldl_det_sum_perm {R : Type u} [Lean.Grind.CommRing R]
-    {β : Type v} (f : β → R) {xs ys : List β} (hperm : xs.Perm ys) (z : R) :
-    xs.foldl (fun acc x => acc + f x) z =
-      ys.foldl (fun acc x => acc + f x) z := by
-  induction hperm generalizing z with
-  | nil => rfl
-  | cons _ _ ih =>
-      simp only [List.foldl_cons]
-      exact ih (z + _)
-  | swap x y xs =>
-      simp only [List.foldl_cons]
-      congr 1
-      grind
-  | trans _ _ ih₁ ih₂ =>
-      exact (ih₁ z).trans (ih₂ z)
-
-/-- A product left fold is unchanged when its factor function is replaced by one
-agreeing on every list element. -/
-private theorem foldl_det_product_congr {R : Type u} [Mul R] {β : Type v}
-    (xs : List β) (f g : β → R) (z : R)
-    (h : ∀ x, x ∈ xs → f x = g x) :
-    xs.foldl (fun acc x => acc * f x) z =
-      xs.foldl (fun acc x => acc * g x) z := by
-  induction xs generalizing z with
-  | nil => rfl
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [h x (by simp)]
-      apply ih
-      intro y hy
-      exact h y (List.mem_cons_of_mem x hy)
-
-/-- A product left fold is invariant under permuting the list. -/
-private theorem foldl_det_product_perm {R : Type u} [Lean.Grind.CommRing R]
-    {β : Type v} (f : β → R) {xs ys : List β} (hperm : xs.Perm ys) (z : R) :
-    xs.foldl (fun acc x => acc * f x) z =
-      ys.foldl (fun acc x => acc * f x) z := by
-  induction hperm generalizing z with
-  | nil => rfl
-  | cons _ _ ih =>
-      simp only [List.foldl_cons]
-      exact ih (z * _)
-  | swap x y xs =>
-      simp only [List.foldl_cons]
-      congr 1
-      grind
-  | trans _ _ ih₁ ih₂ =>
-      exact (ih₁ z).trans (ih₂ z)
-
 
 /-- Mapping a duplicate-free list preserves duplicate-freeness when the function
 is injective on that list's elements. -/
@@ -170,119 +104,6 @@ private theorem list_nodup_map_on {α : Type u} {β : Type v}
       · exact list_nodup_map_on hnodup.2 (by
           intro a ha b hb hab
           exact hinj a (List.mem_cons_of_mem x ha) b (List.mem_cons_of_mem x hb) hab)
-
-/-- Factor a scalar out of a determinant-style finite left fold. -/
-private theorem foldl_det_sum_mul_left {R : Type u} [Lean.Grind.CommRing R] {β : Type v}
-    (xs : List β) (c : R) (f : β → R) (z : R) :
-    xs.foldl (fun acc x => acc + c * f x) (c * z) =
-      c * xs.foldl (fun acc x => acc + f x) z := by
-  induction xs generalizing z with
-  | nil => rfl
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [← show c * (z + f x) = c * z + c * f x by grind]
-      exact ih (z + f x)
-
-/-- Factor a scalar out of a determinant-style finite left fold from zero. -/
-private theorem foldl_det_sum_mul_left_zero {R : Type u} [Lean.Grind.CommRing R]
-    {β : Type v} (xs : List β) (c : R) (f : β → R) :
-    xs.foldl (fun acc x => acc + c * f x) 0 =
-      c * xs.foldl (fun acc x => acc + f x) 0 := by
-  have hzero : c * 0 = 0 := by grind
-  simpa [hzero] using (foldl_det_sum_mul_left (R := R) xs c f 0)
-
-/-- Factor a right multiplier out of a summing left fold started from zero. -/
-private theorem foldl_det_sum_mul_right_zero {R : Type u} [Lean.Grind.CommRing R]
-    {β : Type v} (xs : List β) (f : β → R) (c : R) :
-    xs.foldl (fun acc x => acc + f x * c) 0 =
-      xs.foldl (fun acc x => acc + f x) 0 * c := by
-  calc
-    xs.foldl (fun acc x => acc + f x * c) 0 =
-        xs.foldl (fun acc x => acc + c * f x) 0 := by
-          apply foldl_det_sum_congr
-          intro x _hmem
-          grind
-    _ = c * xs.foldl (fun acc x => acc + f x) 0 := by
-          exact foldl_det_sum_mul_left_zero xs c f
-    _ = xs.foldl (fun acc x => acc + f x) 0 * c := by
-          grind
-
-/-- A summing left fold of a sum of two functions splits into the two folds,
-distributing the starting accumulator. -/
-private theorem foldl_det_sum_add_start {R : Type u} [Lean.Grind.CommRing R]
-    {β : Type v} (xs : List β) (f g : β → R) (a b : R) :
-    xs.foldl (fun acc x => acc + (f x + g x)) (a + b) =
-      xs.foldl (fun acc x => acc + f x) a +
-        xs.foldl (fun acc x => acc + g x) b := by
-  induction xs generalizing a b with
-  | nil => rfl
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      calc
-        xs.foldl (fun acc x => acc + (f x + g x)) (a + b + (f x + g x)) =
-          xs.foldl (fun acc x => acc + (f x + g x)) ((a + f x) + (b + g x)) := by
-            congr 1
-            grind
-        _ =
-          xs.foldl (fun acc x => acc + f x) (a + f x) +
-            xs.foldl (fun acc x => acc + g x) (b + g x) := by
-            exact ih (a + f x) (b + g x)
-
-/-- A summing left fold of the pointwise sum `f x + g x` from `0` splits into the
-sum of the separate folds of `f` and of `g`, each from `0`. -/
-private theorem foldl_det_sum_add_zero {R : Type u} [Lean.Grind.CommRing R]
-    {β : Type v} (xs : List β) (f g : β → R) :
-    xs.foldl (fun acc x => acc + (f x + g x)) 0 =
-      xs.foldl (fun acc x => acc + f x) 0 +
-        xs.foldl (fun acc x => acc + g x) 0 := by
-  calc
-    xs.foldl (fun acc x => acc + (f x + g x)) 0 =
-      xs.foldl (fun acc x => acc + (f x + g x)) ((0 : R) + 0) := by
-        congr 1
-        grind
-    _ =
-      xs.foldl (fun acc x => acc + f x) 0 +
-        xs.foldl (fun acc x => acc + g x) 0 := by
-        exact foldl_det_sum_add_start xs f g 0 0
-
-/-- A summing left fold from a starting accumulator `z` equals `z` plus the same
-fold from `0`. -/
-private theorem foldl_det_sum_start {R : Type u} [Lean.Grind.CommRing R]
-    {β : Type v} (xs : List β) (f : β → R) (z : R) :
-    xs.foldl (fun acc x => acc + f x) z =
-      z + xs.foldl (fun acc x => acc + f x) 0 := by
-  induction xs generalizing z with
-  | nil =>
-      have hzero : z + (0 : R) = z := by grind
-      exact hzero.symm
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [ih (z + f x), ih (0 + f x)]
-      grind
-
-/-- A summing left fold over `xs.flatMap f` equals the fold over `xs` whose body
-folds each sublist `f x` into the accumulator. -/
-private theorem foldl_det_sum_flatMap {R : Type u} [Add R] {β γ : Type v}
-    (xs : List β) (f : β → List γ) (g : γ → R) (z : R) :
-    (xs.flatMap f).foldl (fun acc x => acc + g x) z =
-      xs.foldl (fun acc x => (f x).foldl (fun acc y => acc + g y) acc) z := by
-  induction xs generalizing z with
-  | nil => rfl
-  | cons x xs ih =>
-      simp only [List.flatMap_cons, List.foldl_append, List.foldl_cons]
-      exact ih ((f x).foldl (fun acc y => acc + g y) z)
-
-/-- A summing left fold whose body adds `0` returns the starting accumulator `z`
-unchanged. -/
-private theorem foldl_det_sum_zero {R : Type u} [Lean.Grind.CommRing R]
-    {β : Type v} (xs : List β) (z : R) :
-    xs.foldl (fun acc _ => acc + 0) z = z := by
-  induction xs generalizing z with
-  | nil => rfl
-  | cons _ xs ih =>
-      simp only [List.foldl_cons]
-      have hzero : z + (0 : R) = z := by grind
-      simpa [hzero] using ih z
 
 /-- If `a - b + c = 0` and `f x - g x + h x = 0` for every `x ∈ xs`, then the same
 combination of the three summing folds from `a`, `b`, `c` is `0`. -/
@@ -416,7 +237,7 @@ private theorem foldl_det_product_single_add {R : Type u}
           xs.foldl (fun acc x => acc * if x = i then f x + c * g x else f x)
               (z * (f i + c * g i)) =
             xs.foldl (fun acc x => acc * f x) (z * (f i + c * g i)) := by
-              apply foldl_det_product_congr
+              apply List.foldl_mul_congr
               intro y hy
               have hyi : y ≠ i := by
                 intro h
@@ -440,7 +261,7 @@ private theorem foldl_det_product_single_add {R : Type u}
             xs.foldl (fun acc x => acc * f x) (z * f i) +
               c * xs.foldl (fun acc x => acc * g x) (z * g i) := by
               congr 2
-              apply foldl_det_product_congr
+              apply List.foldl_mul_congr
               intro y hy
               exact (hagree y (List.mem_cons.mpr (Or.inr hy)) (by
                 intro h
