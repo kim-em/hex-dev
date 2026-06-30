@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexMatrix.Basic
+public import HexMatrix.Notation
 public import HexMatrix.Vector.Insert
 public import HexMatrix.DotProduct
 public import HexMatrix.MatrixAlgebra
