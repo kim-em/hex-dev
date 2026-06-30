@@ -61,9 +61,9 @@ DEFAULT_HARSH_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-harsh-cubic.sv
 
 # Ajtai-style family: all six curves come from one committed export. Prefer the
 # canonical (repeats>=3) export; fall back to the fast pilot export if present.
-_AJTAI_CANON = ROOT / "reports/bench-results/hex-lll-ajtai-1eebf39a.json"
-_AJTAI_FAST = ROOT / "reports/bench-results/hex-lll-ajtai-fast-1eebf39a.json"
-DEFAULT_AJTAI = _AJTAI_CANON if _AJTAI_CANON.exists() else _AJTAI_FAST
+DEFAULT_AJTAI = next((g for g in sorted(ROOT.glob("reports/bench-results/hex-lll-ajtai-*.json"))
+                     if "floor" not in g.name and "fast" not in g.name),
+                     ROOT / "reports/bench-results/hex-lll-ajtai-fast-1eebf39a.json")
 DEFAULT_AJTAI_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-ajtai.svg"
 
 _QARY_CANON = ROOT / "reports/bench-results/hex-lll-q-ary-CANON.json"
