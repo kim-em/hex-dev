@@ -24,18 +24,15 @@ tag := "hex-determinant-intro"
 %%%
 
 `HexDeterminant` is the determinant of a dense square matrix via the
-Leibniz formula, together with the cofactor and adjugate theory built on
-it. It depends only on the {ref "hex-matrix"}[HexMatrix] dense core and
-is generic over the coefficient ring; the row-operation, Laplace,
-Cauchy-Binet, and Plücker results hold over a commutative ring.
+Leibniz formula, with the cofactor and adjugate theory built on it. It
+depends only on {ref "hex-matrix"}[HexMatrix] and is generic over the
+coefficient ring; the row-operation, Laplace, Cauchy-Binet, and Plücker
+results hold over a commutative ring.
 
-The Leibniz determinant is the *definitional* semantics: correct by
-construction, but factorially slow, so it serves as the specification
-the faster {ref "hex-bareiss"}[HexBareiss] route is checked against
-rather than the routine a caller invokes on a large matrix. This chapter
-walks the definition, the elementary-operation laws, cofactor expansion,
-the adjugate identity, and the column-tuple and two-row identities, and
-closes with a worked example checked when the chapter is built.
+The Leibniz determinant is the definition: correct by construction but
+factorially slow, so it is the specification the faster
+{ref "hex-bareiss"}[HexBareiss] route is checked against, not the routine
+a caller runs on a large matrix.
 
 `HexDeterminant` is Mathlib-free. The identification of this determinant
 with Mathlib's `Matrix.det`, and with the executable Bareiss
@@ -179,15 +176,12 @@ end HexDeterminantChapterExample
 tag := "hex-determinant-cross-references"
 %%%
 
-`HexDeterminant` is the determinant layer of the linear-algebra stack:
+`HexDeterminant` depends only on {ref "hex-matrix"}[HexMatrix], using its
+matrix type, arithmetic, and elementary operations (whose determinant
+laws are proved here).
 
-* It depends only on {ref "hex-matrix"}[HexMatrix] — the matrix type,
-  its arithmetic, and the elementary operations whose determinant laws
-  are proved here.
 * {ref "hex-bareiss"}[HexBareiss] computes the same integer determinant
   fraction-free in cubic time, using this Leibniz `det` as its
   specification.
-* `HexDeterminantMathlib` is the correspondence library identifying this
-  executable determinant with Mathlib's `Matrix.det`. The Mathlib
-  dependency lives entirely on that side of the boundary;
-  `HexDeterminant` itself is Mathlib-free.
+* `HexDeterminantMathlib` identifies this executable determinant with
+  Mathlib's `Matrix.det`. `HexDeterminant` itself is Mathlib-free.
