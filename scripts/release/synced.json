@@ -1,10 +1,16 @@
 {
   "_comment": "Per-repo `main` HEAD that this monorepo's content corresponds to. The publish sync (sync_released.py) refuses to overwrite a released repo whose main has moved off this baseline (an uncoordinated commit). After a real sync the workflow uploads the advanced baseline as an artifact; commit it via a normal PR (main is a protected branch).",
-  "hex-test-kit": "597e6a3b68807ef0fdf23ba3f6ae31549124ce23",
-  "hex-matrix": "64db1edd0e35f9b22831f628942525a112812996",
-  "hex-matrix-mathlib": "3febf6e7b12e90a014c05da9d3a26482c28c9c7c",
-  "hex-gram-schmidt": "8f3b5b8cdb0ae24b777de59347c1fbdb82e4ef19",
-  "hex-gram-schmidt-mathlib": "d26c5a7baff35dca5f5b5774eeb2374ed66cb80b",
-  "hex-lll": "1c8956cf22ed2b854bd5b4dd42981080af995f4f",
-  "hex-lll-mathlib": "d85b942b96f0e80364cb8ad2a9b8a0235485bd12"
+  "hex-test-kit": "af49dc8131395afd44cb19297a55884882397c1b",
+  "hex-matrix": "93bc6617cbb4dab7dc04d18fc76b92090489b55e",
+  "hex-matrix-mathlib": "c3f2e2c60325363a793b75953d9d8753c07db724",
+  "hex-gram-schmidt": "dcf158c995e79c174babb05553a9e9f6e33d9a71",
+  "hex-gram-schmidt-mathlib": "cf78b246849fac334db5394781bc96e104b82f02",
+  "hex-lll": "23ae97ba78b631aac46b18b951946c2ddcb1f725",
+  "hex-lll-mathlib": "4c11579466a31ad7fa378940cba983e818d514ba",
+  "hex-determinant": "c3ea099dfe9577f86cc5d71be75d27dbac482a57",
+  "hex-bareiss": "188e02ff84a7d9ae6dfdc70bdf152f8a292c7157",
+  "hex-row-reduce-mathlib": "78518ad996edcf182b87456311820b07c2f20fbc",
+  "hex-determinant-mathlib": "70cbcb083dce96f38825a6c321ebb66db531d049",
+  "hex-bareiss-mathlib": "68751288e0607fa695b1cd7e2ac4880e3bf56c55",
+  "hex-row-reduce": "b8375fc58493dd97d8be846fe90a0eebfcb9441a"
 }
