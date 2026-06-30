@@ -66,6 +66,22 @@ _AJTAI_FAST = ROOT / "reports/bench-results/hex-lll-ajtai-fast-1eebf39a.json"
 DEFAULT_AJTAI = _AJTAI_CANON if _AJTAI_CANON.exists() else _AJTAI_FAST
 DEFAULT_AJTAI_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-ajtai.svg"
 
+_QARY_CANON = ROOT / "reports/bench-results/hex-lll-q-ary-CANON.json"
+DEFAULT_QARY = next((g for g in sorted(ROOT.glob("reports/bench-results/hex-lll-q-ary-*.json"))
+                    if "floor" not in g.name), _QARY_CANON)
+DEFAULT_QARY_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-q-ary.svg"
+
+_NTRU_CANON = ROOT / "reports/bench-results/hex-lll-ntru-CANON.json"
+DEFAULT_NTRU = next((g for g in sorted(ROOT.glob("reports/bench-results/hex-lll-ntru-*.json"))
+                    if "floor" not in g.name), _NTRU_CANON)
+DEFAULT_NTRU_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-ntru.svg"
+
+_KNAPSACK_CANON = ROOT / "reports/bench-results/hex-lll-knapsack-CANON.json"
+DEFAULT_KNAPSACK = next((g for g in sorted(ROOT.glob("reports/bench-results/hex-lll-knapsack-*.json"))
+                    if "floor" not in g.name), _KNAPSACK_CANON)
+DEFAULT_KNAPSACK_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-knapsack.svg"
+
+
 LEAN_RANDOM = re.compile(r"runNativeFirstShortVectorRandomBoundedNormSq([0-9]+)$")
 LEAN_STEERED_RANDOM = re.compile(r"runFirstShortVectorRandomBoundedNormSq([0-9]+)$")
 ISABELLE_RANDOM = re.compile(r"runIsabelleRandomBoundedNormSq([0-9]+)$")
@@ -99,6 +115,28 @@ FPLLL_AJTAI = re.compile(
 )
 CERTIFIED_AJTAI = re.compile(r"runCertifiedFirstShortVectorAjtai([0-9]+)Checksum$")
 ISABELLE_CERTIFIED_AJTAI = re.compile(r"runIsabelleCertifiedAjtaiNormSq([0-9]+)$")
+
+LEAN_QARY = re.compile(r"runNativeFirstShortVectorQaryNormSq([0-9]+)$")
+LEAN_STEERED_QARY = re.compile(r"runFirstShortVectorQaryNormSq([0-9]+)$")
+ISABELLE_QARY = re.compile(r"runIsabelleQaryNormSq([0-9]+)$")
+FPLLL_QARY = re.compile(r"run(?:FpLLL|Fpylll)FirstShortVectorQary([0-9]+)Checksum$")
+CERTIFIED_QARY = re.compile(r"runCertifiedFirstShortVectorQary([0-9]+)Checksum$")
+ISABELLE_CERTIFIED_QARY = re.compile(r"runIsabelleCertifiedQaryNormSq([0-9]+)$")
+
+LEAN_NTRU = re.compile(r"runNativeFirstShortVectorNtruNormSq([0-9]+)$")
+LEAN_STEERED_NTRU = re.compile(r"runFirstShortVectorNtruNormSq([0-9]+)$")
+ISABELLE_NTRU = re.compile(r"runIsabelleNtruNormSq([0-9]+)$")
+FPLLL_NTRU = re.compile(r"run(?:FpLLL|Fpylll)FirstShortVectorNtru([0-9]+)Checksum$")
+CERTIFIED_NTRU = re.compile(r"runCertifiedFirstShortVectorNtru([0-9]+)Checksum$")
+ISABELLE_CERTIFIED_NTRU = re.compile(r"runIsabelleCertifiedNtruNormSq([0-9]+)$")
+
+LEAN_KNAPSACK = re.compile(r"runNativeFirstShortVectorKnapsackNormSq([0-9]+)$")
+LEAN_STEERED_KNAPSACK = re.compile(r"runFirstShortVectorKnapsackNormSq([0-9]+)$")
+ISABELLE_KNAPSACK = re.compile(r"runIsabelleKnapsackNormSq([0-9]+)$")
+FPLLL_KNAPSACK = re.compile(r"run(?:FpLLL|Fpylll)FirstShortVectorKnapsack([0-9]+)Checksum$")
+CERTIFIED_KNAPSACK = re.compile(r"runCertifiedFirstShortVectorKnapsack([0-9]+)Checksum$")
+ISABELLE_CERTIFIED_KNAPSACK = re.compile(r"runIsabelleCertifiedKnapsackNormSq([0-9]+)$")
+
 
 
 @dataclass(frozen=True)
@@ -175,6 +213,51 @@ FAMILIES = {
         title="HexLLL Ajtai-style worst-case comparator runtime",
         xlabel="Ajtai-style dimension d",
         consolidated_path=DEFAULT_AJTAI,
+    ),
+    "q-ary": FamilyConfig(
+        lean_pattern=LEAN_QARY,
+        lean_steered_pattern=LEAN_STEERED_QARY,
+        isabelle_pattern=ISABELLE_QARY,
+        fpll_pattern=FPLLL_QARY,
+        certified_pattern=CERTIFIED_QARY,
+        isabelle_certified_pattern=ISABELLE_CERTIFIED_QARY,
+        fpll_path=DEFAULT_QARY,
+        certified_path=DEFAULT_QARY,
+        isabelle_certified_path=DEFAULT_QARY,
+        output=DEFAULT_QARY_OUTPUT,
+        title="HexLLL q-ary comparator runtime",
+        xlabel="q-ary dimension n",
+        consolidated_path=DEFAULT_QARY,
+    ),
+    "ntru": FamilyConfig(
+        lean_pattern=LEAN_NTRU,
+        lean_steered_pattern=LEAN_STEERED_NTRU,
+        isabelle_pattern=ISABELLE_NTRU,
+        fpll_pattern=FPLLL_NTRU,
+        certified_pattern=CERTIFIED_NTRU,
+        isabelle_certified_pattern=ISABELLE_CERTIFIED_NTRU,
+        fpll_path=DEFAULT_NTRU,
+        certified_path=DEFAULT_NTRU,
+        isabelle_certified_path=DEFAULT_NTRU,
+        output=DEFAULT_NTRU_OUTPUT,
+        title="HexLLL ntru comparator runtime",
+        xlabel="ntru dimension n",
+        consolidated_path=DEFAULT_NTRU,
+    ),
+    "knapsack": FamilyConfig(
+        lean_pattern=LEAN_KNAPSACK,
+        lean_steered_pattern=LEAN_STEERED_KNAPSACK,
+        isabelle_pattern=ISABELLE_KNAPSACK,
+        fpll_pattern=FPLLL_KNAPSACK,
+        certified_pattern=CERTIFIED_KNAPSACK,
+        isabelle_certified_pattern=ISABELLE_CERTIFIED_KNAPSACK,
+        fpll_path=DEFAULT_KNAPSACK,
+        certified_path=DEFAULT_KNAPSACK,
+        isabelle_certified_path=DEFAULT_KNAPSACK,
+        output=DEFAULT_KNAPSACK_OUTPUT,
+        title="HexLLL knapsack comparator runtime",
+        xlabel="knapsack dimension n",
+        consolidated_path=DEFAULT_KNAPSACK,
     ),
 }
 

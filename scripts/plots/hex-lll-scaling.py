@@ -53,6 +53,9 @@ DEFAULT_WINDOW = {
     "random-bounded": (120, 180),
     "harsh-cubic": (40, 55),
     "ajtai": (20, 32),
+    "q-ary": (32, 48),
+    "ntru": (16, 24),
+    "knapsack": (32, 48),
 }
 
 
