@@ -24,7 +24,6 @@ namespace Hex
 universe u
 
 /-- Dense `n × m` matrices over `R`, represented as vectors of rows. -/
-@[expose]
 abbrev Matrix (R : Type u) (n m : Nat) := Vector (Vector R m) n
 
 end Hex

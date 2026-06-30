@@ -900,7 +900,6 @@ satisfying `entry_eq_dot` — from supplying integer quotients. The kernel-shift
 counterexample (SPEC #6505: rows `(1,1), (1,0), (-1,-1)` at row 2 step 1)
 shows the restriction is necessary: distinct non-canonical witnesses produce
 numerators differing by `1`, which is not divisible by `prevPivot = 2`. -/
-@[expose]
 abbrev StepWitness.Cell
     (b : Matrix Int n m) (fuel : Nat)
     (hinv : BareissGramRowInvariant b
@@ -926,7 +925,6 @@ the canonical coefficient vectors.
 Concrete providers are constructed in `HexGramSchmidtMathlib`, where the
 Bareiss-Desnanot proof infrastructure on PSD Gram minors is available; the
 Mathlib-free layer only consumes this abstraction. -/
-@[expose]
 abbrev StepWitness (b : Matrix Int n m) : Type :=
   ∀ (fuel : Nat)
     (hinv : BareissGramRowInvariant b
