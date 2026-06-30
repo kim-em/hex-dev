@@ -241,6 +241,45 @@ instance [OfNat R 0] : Zero (Matrix R n m) where
 protected def identity (n : Nat) [OfNat R 0] [OfNat R 1] : Matrix R n n :=
   ofFn fun i j => if i = j then 1 else 0
 
+/-- Entrywise matrix addition. -/
+@[expose]
+protected def add [Add R] (A B : Matrix R n m) : Matrix R n m :=
+  ofFn fun i j => A[(i, j)] + B[(i, j)]
+
+instance [Add R] : Add (Matrix R n m) where
+  add := Matrix.add
+
+/-- Entrywise matrix negation. -/
+@[expose]
+protected def neg [Neg R] (A : Matrix R n m) : Matrix R n m :=
+  ofFn fun i j => -A[(i, j)]
+
+instance [Neg R] : Neg (Matrix R n m) where
+  neg := Matrix.neg
+
+/-- Entrywise matrix subtraction. -/
+@[expose]
+protected def sub [Sub R] (A B : Matrix R n m) : Matrix R n m :=
+  ofFn fun i j => A[(i, j)] - B[(i, j)]
+
+instance [Sub R] : Sub (Matrix R n m) where
+  sub := Matrix.sub
+
+/-- Entry access for matrix addition. -/
+@[grind =] theorem getElem_add [Add R] (A B : Matrix R n m) (i : Fin n) (j : Fin m) :
+    (A + B)[i][j] = A[i][j] + B[i][j] := by
+  simp [show A + B = Matrix.add A B from rfl, Matrix.add, ofFn]
+
+/-- Entry access for matrix negation. -/
+@[grind =] theorem getElem_neg [Neg R] (A : Matrix R n m) (i : Fin n) (j : Fin m) :
+    (-A)[i][j] = -A[i][j] := by
+  simp [show -A = Matrix.neg A from rfl, Matrix.neg, ofFn]
+
+/-- Entry access for matrix subtraction. -/
+@[grind =] theorem getElem_sub [Sub R] (A B : Matrix R n m) (i : Fin n) (j : Fin m) :
+    (A - B)[i][j] = A[i][j] - B[i][j] := by
+  simp [show A - B = Matrix.sub A B from rfl, Matrix.sub, ofFn]
+
 /-- Multiply a matrix by a column vector. -/
 @[expose]
 def mulVec [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (v : Vector R m) :
