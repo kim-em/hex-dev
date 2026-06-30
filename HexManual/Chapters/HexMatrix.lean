@@ -98,7 +98,7 @@ Multiplication by the identity is the identity, and matrix
 multiplication is associative — the algebraic facts the determinant and
 echelon proofs lean on.
 
-{docstring Hex.Matrix.one_mulVec}
+{docstring Hex.Matrix.identity_mulVec}
 
 {docstring Hex.Matrix.mul_assoc}
 
@@ -129,7 +129,7 @@ definition. Swapping two rows negates the determinant; scaling a row
 scales it; adding a multiple of one row to another leaves it unchanged;
 and the determinant is invariant under transpose.
 
-{docstring Hex.Matrix.det_one}
+{docstring Hex.Matrix.det_identity}
 
 {docstring Hex.Matrix.det_rowSwap}
 
@@ -282,8 +282,8 @@ private def A : Matrix Int 3 3 :=
 #guard Matrix.det (Matrix.transpose A) = 3
 
 -- The identity has determinant one, both routes.
-#guard Matrix.det (1 : Matrix Int 3 3) = 1
-#guard Matrix.bareiss (1 : Matrix Int 3 3) = 1
+#guard Matrix.det (Matrix.identity (R := Int) 3) = 1
+#guard Matrix.bareiss (Matrix.identity (R := Int) 3) = 1
 
 -- S = [[1, 2], [2, 4]] has a dependent row pair,
 -- so its determinant is zero.

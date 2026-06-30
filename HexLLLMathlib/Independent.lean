@@ -37,8 +37,8 @@ namespace Matrix
 determinant is positive. Used by Phase 4 benchmarks of
 `lll.firstShortVector`, where the identity basis is the degenerate BZ-style
 recombination input with all-zero lift coefficients. -/
-theorem identity_independent {n : Nat} : (1 : Matrix Int n n).independent := by
-  exact GramSchmidt.Int.independent_one
+theorem identity_independent {n : Nat} : (Matrix.identity (R := Int) n).independent := by
+  exact GramSchmidt.Int.independent_identity
 
 theorem gramMatrix_takeRows_eq_principalSubmatrix {n : Nat} (M : Matrix Int n n) (k : Nat)
     (hk : k ≤ n) :

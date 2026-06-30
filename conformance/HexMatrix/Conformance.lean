@@ -87,8 +87,8 @@ private def spanVec : Vector Rat 3 :=
 #guard vecInt.normSq = 61
 #guard spanVec.normSq = 14
 #guard Matrix.gramMatrix baseInt = baseGramInt
-#guard (1 : Matrix Int 2 2) * baseInt = baseInt
-#guard baseInt * (1 : Matrix Int 2 2) = baseInt
+#guard (Matrix.identity (R := Int) 2) * baseInt = baseInt
+#guard baseInt * (Matrix.identity (R := Int) 2) = baseInt
 #guard Matrix.transpose (Matrix.transpose baseInt) = baseInt
 
 /-- info: { toArray := #[{ toArray := #[1, 3], size_toArray := _ }, { toArray := #[2, 4], size_toArray := _ }],
@@ -129,6 +129,6 @@ private def bigInt : Matrix Int 6 6 :=
   Matrix.ofFn fun i j => (min i.val j.val + 1 : Int)
 
 #guard Matrix.transpose (Matrix.transpose bigInt) = bigInt
-#guard (1 : Matrix Int 6 6) * bigInt = bigInt
+#guard (Matrix.identity (R := Int) 6) * bigInt = bigInt
 
 end Matrix

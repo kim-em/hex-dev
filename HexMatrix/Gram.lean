@@ -91,7 +91,7 @@ private theorem foldl_dotProduct_unit_body {R : Type u} [Lean.Grind.CommRing R]
     {n : Nat} (xs : List (Fin n)) (i j : Fin n) (acc : R) :
     xs.foldl
         (fun acc l =>
-          acc + (unit (R := R) i)[l] * (unit (R := R) j)[l]) acc =
+          acc + (unit R i)[l] * (unit R j)[l]) acc =
       xs.foldl
         (fun acc l =>
           acc + (if i = l then (1 : R) else 0) * (if j = l then (1 : R) else 0)) acc := by
@@ -105,7 +105,7 @@ private theorem foldl_dotProduct_unit_body {R : Type u} [Lean.Grind.CommRing R]
 /-- Dot product of standard basis vectors. -/
 @[simp] theorem dotProduct_unit_unit {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (i j : Fin n) :
-    dotProduct (unit (R := R) i) (unit (R := R) j) = if i = j then 1 else 0 := by
+    dotProduct (unit R i) (unit R j) = if i = j then 1 else 0 := by
   unfold dotProduct
   rw [foldl_dotProduct_unit_body]
   by_cases hij : i = j
@@ -141,34 +141,34 @@ def gramMatrix [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) : Matrix R n n :=
   rw [gramMatrix, getElem_ofFn]
 
 /-- The Gram matrix of the identity is the identity. -/
-@[simp, grind =] theorem gramMatrix_one {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
-    gramMatrix (1 : Matrix R n n) = (1 : Matrix R n n) := by
+@[simp, grind =] theorem gramMatrix_identity {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
+    gramMatrix (Matrix.identity (R := R) n) = (Matrix.identity (R := R) n) := by
   ext i hi j hj
-  have hrow_i : (1 : Matrix R n n).row ⟨i, hi⟩ =
-      Vector.unit (R := R) ⟨i, hi⟩ := by
+  have hrow_i : (Matrix.identity (R := R) n).row ⟨i, hi⟩ =
+      Vector.unit R ⟨i, hi⟩ := by
     ext a ha
-    show ((1 : Matrix R n n).row ⟨i, hi⟩)[(⟨a, ha⟩ : Fin n)] =
-      (Vector.unit (R := R) ⟨i, hi⟩)[(⟨a, ha⟩ : Fin n)]
-    rw [Matrix.row, Hex.Matrix.getElem_one (i := (⟨i, hi⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n)),
+    show ((Matrix.identity (R := R) n).row ⟨i, hi⟩)[(⟨a, ha⟩ : Fin n)] =
+      (Vector.unit R ⟨i, hi⟩)[(⟨a, ha⟩ : Fin n)]
+    rw [Matrix.row, Hex.Matrix.getElem_identity (i := (⟨i, hi⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n)),
       Vector.getElem_unit (i := (⟨i, hi⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
     rfl
-  have hrow_j : (1 : Matrix R n n).row ⟨j, hj⟩ =
-      Vector.unit (R := R) ⟨j, hj⟩ := by
+  have hrow_j : (Matrix.identity (R := R) n).row ⟨j, hj⟩ =
+      Vector.unit R ⟨j, hj⟩ := by
     ext a ha
-    show ((1 : Matrix R n n).row ⟨j, hj⟩)[(⟨a, ha⟩ : Fin n)] =
-      (Vector.unit (R := R) ⟨j, hj⟩)[(⟨a, ha⟩ : Fin n)]
-    rw [Matrix.row, Hex.Matrix.getElem_one (i := (⟨j, hj⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n)),
+    show ((Matrix.identity (R := R) n).row ⟨j, hj⟩)[(⟨a, ha⟩ : Fin n)] =
+      (Vector.unit R ⟨j, hj⟩)[(⟨a, ha⟩ : Fin n)]
+    rw [Matrix.row, Hex.Matrix.getElem_identity (i := (⟨j, hj⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n)),
       Vector.getElem_unit (i := (⟨j, hj⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
     rfl
-  show (gramMatrix (1 : Matrix R n n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] =
-    (1 : Matrix R n n)[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)]
+  show (gramMatrix (Matrix.identity (R := R) n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] =
+    (Matrix.identity (R := R) n)[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)]
   have hgram :
-      (gramMatrix (1 : Matrix R n n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] =
-        ((1 : Matrix R n n).row ⟨i, hi⟩).dotProduct
-          ((1 : Matrix R n n).row ⟨j, hj⟩) := by
+      (gramMatrix (Matrix.identity (R := R) n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] =
+        ((Matrix.identity (R := R) n).row ⟨i, hi⟩).dotProduct
+          ((Matrix.identity (R := R) n).row ⟨j, hj⟩) := by
     unfold gramMatrix ofFn
     simp
-  rw [hgram, hrow_i, hrow_j, Vector.dotProduct_unit_unit, getElem_one]
+  rw [hgram, hrow_i, hrow_j, Vector.dotProduct_unit_unit, getElem_identity]
 
 end Matrix
 

@@ -317,14 +317,14 @@ private theorem det_columnTupleMatrix_eq
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (cols : Fin n → Fin n) :
     det (columnTupleMatrix M cols) =
-      det M * det (columnTupleMatrix (1 : Matrix R n n) cols) := by
+      det M * det (columnTupleMatrix (Matrix.identity (R := R) n) cols) := by
   by_cases hinj : Function.Injective cols
   · rw [det_columnTupleMatrix_of_injective M cols hinj,
-        det_columnTupleMatrix_of_injective (1 : Matrix R n n) cols hinj]
-    rw [det_one]
+        det_columnTupleMatrix_of_injective (Matrix.identity (R := R) n) cols hinj]
+    rw [det_identity]
     grind
   · rw [det_columnTupleMatrix_eq_zero_of_not_injective M cols hinj,
-        det_columnTupleMatrix_eq_zero_of_not_injective (1 : Matrix R n n) cols hinj]
+        det_columnTupleMatrix_eq_zero_of_not_injective (Matrix.identity (R := R) n) cols hinj]
     grind
 
 private theorem mul_eq_columnSumMatrix_transpose
@@ -356,9 +356,9 @@ private theorem mul_eq_columnSumMatrix_transpose
 private theorem eq_columnSumMatrix_one_transpose
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (N : Matrix R n n) :
-    N = columnSumMatrix (1 : Matrix R n n) N.transpose := by
-  rw [← mul_eq_columnSumMatrix_transpose (1 : Matrix R n n) N]
-  exact (one_mul N).symm
+    N = columnSumMatrix (Matrix.identity (R := R) n) N.transpose := by
+  rw [← mul_eq_columnSumMatrix_transpose (Matrix.identity (R := R) n) N]
+  exact (identity_mul N).symm
 
 /-- Determinant of a product of square matrices.
 
@@ -377,7 +377,7 @@ theorem det_mul
         (columnTupleVectors n n).foldl
           (fun acc cols => acc + det M *
             (columnTupleCoeff N.transpose cols *
-              det (columnTupleMatrix (1 : Matrix R n n)
+              det (columnTupleMatrix (Matrix.identity (R := R) n)
                 (columnTupleVectorFn cols)))) 0 := by
     apply foldl_det_sum_congr
     intro cols _
@@ -388,10 +388,10 @@ theorem det_mul
         (columnTupleVectors n n)
         (det M)
         (fun cols => columnTupleCoeff N.transpose cols *
-            det (columnTupleMatrix (1 : Matrix R n n)
+            det (columnTupleMatrix (Matrix.identity (R := R) n)
               (columnTupleVectorFn cols)))]
   rw [← det_columnSumMatrix_eq_sum_columnTuples
-        (1 : Matrix R n n) N.transpose]
+        (Matrix.identity (R := R) n) N.transpose]
   rw [← eq_columnSumMatrix_one_transpose N]
 
 /-- Foldl over a list whose body is identically zero leaves the seed

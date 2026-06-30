@@ -55,14 +55,14 @@ def takeRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) : Matrix R k m :=
   simp [takeRows, ofFn]
 
 /-- The leading principal `k × k` submatrix of the identity is the identity. -/
-@[simp, grind =] theorem principalSubmatrix_one {R : Type u} [OfNat R 0] [OfNat R 1] {n : Nat}
+@[simp, grind =] theorem principalSubmatrix_identity {R : Type u} [OfNat R 0] [OfNat R 1] {n : Nat}
     (k : Nat) (hk : k ≤ n) :
-    principalSubmatrix (1 : Matrix R n n) k hk = (1 : Matrix R k k) := by
+    principalSubmatrix (Matrix.identity (R := R) n) k hk = (Matrix.identity (R := R) k) := by
   ext i hi j hj
-  show (principalSubmatrix (1 : Matrix R n n) k hk)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)] =
-    (1 : Matrix R k k)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)]
-  rw [getElem_principalSubmatrix, getElem_one (i := (⟨i, Nat.lt_of_lt_of_le hi hk⟩ : Fin n)),
-    getElem_one (i := (⟨i, hi⟩ : Fin k))]
+  show (principalSubmatrix (Matrix.identity (R := R) n) k hk)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)] =
+    (Matrix.identity (R := R) k)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)]
+  rw [getElem_principalSubmatrix, getElem_identity (i := (⟨i, Nat.lt_of_lt_of_le hi hk⟩ : Fin n)),
+    getElem_identity (i := (⟨i, hi⟩ : Fin k))]
   by_cases hij : (⟨i, hi⟩ : Fin k) = ⟨j, hj⟩
   · have hval : i = j := Fin.val_eq_of_eq hij
     have hijn :

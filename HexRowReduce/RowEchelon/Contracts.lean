@@ -43,8 +43,8 @@ structure RowEchelonData (R : Type u) (n m : Nat) where
 structure IsEchelonForm [Mul R] [Add R] [OfNat R 0] [OfNat R 1]
     (M : Matrix R n m) (D : RowEchelonData R n m) : Prop where
   transform_mul : D.transform * M = D.echelon
-  transform_inv : ∃ Tinv : Matrix R n n, Tinv * D.transform = 1
-  transform_right_inv : ∃ Tinv : Matrix R n n, D.transform * Tinv = 1
+  transform_inv : ∃ Tinv : Matrix R n n, Tinv * D.transform = (Matrix.identity (R := R) n)
+  transform_right_inv : ∃ Tinv : Matrix R n n, D.transform * Tinv = (Matrix.identity (R := R) n)
   rank_le_n : D.rank ≤ n
   rank_le_m : D.rank ≤ m
   pivotCols_sorted : ∀ i j, i < j → D.pivotCols.get i < D.pivotCols.get j
@@ -79,7 +79,7 @@ def HasNonzeroPivots (E : IsEchelonForm M D) : Prop :=
 
 /-- The square row-transform has a right inverse. -/
 theorem transform_mul_inv (E : IsEchelonForm M D) :
-    ∃ Tinv : Matrix R n n, D.transform * Tinv = 1 := by
+    ∃ Tinv : Matrix R n n, D.transform * Tinv = (Matrix.identity (R := R) n) := by
   exact E.transform_right_inv
 
 private theorem pivotCols_pairwise (E : IsEchelonForm M D) :

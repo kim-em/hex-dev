@@ -683,10 +683,10 @@ theorem independent_of_det_positive (b : Matrix Int n m)
 
 /-- The identity matrix is independent: its Gram matrix is the identity, so
 every leading principal minor has determinant `1 > 0`. -/
-theorem independent_one {n : Nat} : independent (1 : Matrix Int n n) := by
-  exact independent_of_det_positive (1 : Matrix Int n n) (by
+theorem independent_identity {n : Nat} : independent (Matrix.identity (R := Int) n) := by
+  exact independent_of_det_positive (Matrix.identity (R := Int) n) (by
     intro k hk _
-    rw [Matrix.gramMatrix_one, Matrix.principalSubmatrix_one, Matrix.det_one]
+    rw [Matrix.gramMatrix_identity, Matrix.principalSubmatrix_identity, Matrix.det_identity]
     decide)
 
 

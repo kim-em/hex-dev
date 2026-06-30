@@ -16,7 +16,7 @@ Determinant of elementary row and column operations.
 
 Building on the permutation-vector structure in `HexDeterminant.Permutation`,
 this module reindexes the Leibniz sum to read off the determinant's reaction to
-the elementary operations: `det_one`, `det_rowSwap`, `det_rowScale`,
+the elementary operations: `det_identity`, `det_rowSwap`, `det_rowScale`,
 `det_rowAdd`, `det_transpose`, `cofactor_transpose`, and the column analogues
 `det_colPermute_vector`, `det_colSwap`, `det_colAdd`.
 -/
@@ -28,9 +28,9 @@ variable {α : Type u}
 
 private theorem detTerm_identity_insertAt_last {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (v : Vector (Fin n) n) :
-    detTerm (1 : Matrix R (n + 1) (n + 1))
+    detTerm (Matrix.identity (R := R) (n + 1))
       (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n)) =
-    detTerm (1 : Matrix R n n) v := by
+    detTerm (Matrix.identity (R := R) n) v := by
   unfold detTerm
   rw [detSign_insertAt_last, detProduct_identity_insertAt_last]
 
@@ -38,20 +38,20 @@ private theorem foldl_detTerm_identity_insertions {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (v : Vector (Fin n) n) (z : R) :
     (List.finRange (n + 1)).foldl
         (fun acc i =>
-          acc + detTerm (1 : Matrix R (n + 1) (n + 1))
+          acc + detTerm (Matrix.identity (R := R) (n + 1))
             (insertAt (Fin.last n) (v.map Fin.castSucc) i)) z =
-      z + detTerm (1 : Matrix R n n) v := by
+      z + detTerm (Matrix.identity (R := R) n) v := by
   rw [← Fin.foldl_eq_finRange_foldl, Fin.foldl_succ_last]
   have hprefix :
       Fin.foldl n
           (fun acc i =>
-            acc + detTerm (1 : Matrix R (n + 1) (n + 1))
+            acc + detTerm (Matrix.identity (R := R) (n + 1))
               (insertAt (Fin.last n) (v.map Fin.castSucc) i.castSucc)) z = z := by
     rw [Fin.foldl_eq_finRange_foldl]
     calc
       (List.finRange n).foldl
           (fun acc i =>
-            acc + detTerm (1 : Matrix R (n + 1) (n + 1))
+            acc + detTerm (Matrix.identity (R := R) (n + 1))
               (insertAt (Fin.last n) (v.map Fin.castSucc) i.castSucc)) z =
         (List.finRange n).foldl (fun acc (_i : Fin n) => acc + (0 : R)) z := by
           apply foldl_det_sum_congr
@@ -366,7 +366,7 @@ matrix: all non-identity terms vanish and the identity vector appears once. -/
 private theorem permutationVectors_identity_sum {R : Type u} [Lean.Grind.CommRing R]
     {n : Nat} :
     (permutationVectors n).foldl
-        (fun acc perm => acc + detTerm (1 : Matrix R n n) perm) 0 = 1 := by
+        (fun acc perm => acc + detTerm (Matrix.identity (R := R) n) perm) 0 = 1 := by
   induction n with
   | zero =>
       simp [permutationVectors, detTerm, detSign, detProduct, inversionCount]
@@ -873,7 +873,7 @@ private theorem permutationVectors_rowAdd_sum {R : Type u} [Lean.Grind.CommRing 
 permutation as its nonzero contribution. -/
 private theorem det_identity_leibniz {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
     (permutationVectors n).foldl
-        (fun acc perm => acc + detTerm (1 : Matrix R n n) perm) 0 = 1 := by
+        (fun acc perm => acc + detTerm (Matrix.identity (R := R) n) perm) 0 = 1 := by
   exact permutationVectors_identity_sum
 
 /-- Swapping two rows pairs each Leibniz summand with the corresponding
@@ -913,8 +913,8 @@ private theorem det_rowAdd_leibniz {R : Type u} [Lean.Grind.CommRing R] {n : Nat
 
 /-- The determinant of the identity matrix is one. -/
 @[grind =]
-theorem det_one {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
-    det (1 : Matrix R n n) = 1 := by
+theorem det_identity {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
+    det (Matrix.identity (R := R) n) = 1 := by
   simpa [det] using (det_identity_leibniz (R := R) (n := n))
 
 /-- Swapping two distinct rows negates the determinant. -/

@@ -110,7 +110,7 @@ private def emptyNullspace : Vector (Vector Rat 2) 0 :=
 #guard let D := Matrix.rowReduce zeroRat23; D.rank = 0
 #guard let D := Matrix.rowReduce zeroRat23; D.pivotCols = Vector.ofFn (fun i => nomatch i)
 #guard let D := Matrix.rowReduce fullRat22; D.rank = 2
-#guard let D := Matrix.rowReduce fullRat22; D.echelon = (1 : Matrix Rat 2 2)
+#guard let D := Matrix.rowReduce fullRat22; D.echelon = (Matrix.identity (R := Rat) 2)
 
 #guard Matrix.spanCoeffs dependentRat spanVec = some spanCoeffsWitness
 #guard Matrix.rowCombination dependentRat spanCoeffsWitness = spanVec
