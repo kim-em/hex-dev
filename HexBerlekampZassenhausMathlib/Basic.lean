@@ -5852,6 +5852,49 @@ theorem subsetsOfSizeWithComplement_liftedFactors_exists_unique_subset
   exact ⟨S, hsel, hrej, hprod, hcand,
     fun S' hS' => liftedSubsetSelectedList_injective hinj (hS'.symm.trans hsel)⟩
 
+/-- Matched-state generalisation of
+`subsetsOfSizeWithComplement_liftedFactors_exists_subset`, for the recursive
+size-ordered coverage walk: at an intermediate state whose running local-factor
+list matches a sub-universe `J` (`LiftedFactorListMatches d J localFactors`), a
+head-forced size-ordered split of the tail is the `(selected, rejected)` list
+partition of a subset `T ⊆ J` containing `J.min'`.  The rejected component is the
+selected list of `J \ T` (the natural form for the descent into `scaledRecombinationSmartAux`
+on the rest list), and the product / candidate identities specialise as before.
+
+This is the shape `#8413` consumes when walking
+`scaledRecombinationSmartAux`/`SizeLoop`/`CandLoop`, where the running
+`localFactors` is the matched list of the remaining indices `J`, not the full
+universe. -/
+theorem subsetsOfSizeWithComplement_liftedFactors_exists_subset_of_matches
+    (core : Hex.ZPoly) (d : Hex.LiftData)
+    {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
+    (hmatches : LiftedFactorListMatches d J localFactors) (hne : J.Nonempty)
+    {head : Hex.ZPoly} {tail : List Hex.ZPoly}
+    (hloc : localFactors = head :: tail)
+    {sc_sel sc_rest : List Hex.ZPoly} {k : Nat}
+    (hmem : (sc_sel, sc_rest) ∈ Hex.subsetsOfSizeWithComplement tail k) :
+    ∃ T : LiftedFactorSubset d,
+      T ⊆ J ∧ J.min' hne ∈ T ∧
+      head :: sc_sel = liftedSubsetSelectedList d T ∧
+      sc_rest = liftedSubsetSelectedList d (J \ T) ∧
+      Array.polyProduct (head :: sc_sel).toArray = liftedFactorProduct d T ∧
+      Hex.normalizeFactorSign (Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+            (Hex.centeredLiftPoly (Array.polyProduct (head :: sc_sel).toArray)
+              (d.p ^ d.k))))
+        = liftedRecoveryCandidate core d T := by
+  have hsplit : (sc_sel, sc_rest) ∈ Hex.subsetSplits tail :=
+    subsetsOfSizeWithComplement_mem_subsetSplits hmem
+  obtain ⟨mask, hmask_len, hsel, hrest⟩ := subsetSplits_mem_exists_mask hsplit
+  obtain ⟨T, hTJ, hmin, hTsel, hTrej⟩ :=
+    liftedSubsetSelectedList_eq_mask_partition_of_matches hmatches hne hloc mask hmask_len
+  have hsel_eq : head :: sc_sel = liftedSubsetSelectedList d T := by rw [hTsel, hsel]
+  refine ⟨T, hTJ, hmin, hsel_eq, ?_, ?_, ?_⟩
+  · rw [hTrej]; exact hrest
+  · rw [hsel_eq, polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct]
+  · unfold liftedRecoveryCandidate
+    rw [hsel_eq, polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct]
+
 /--
 On a monic core, the partition's lifted-recovery equality upgrades to the
 executable recombination-candidate equality consumed by the search recursion.
