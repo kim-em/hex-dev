@@ -442,8 +442,8 @@ theorem nullspace_sound {R : Type u} [Lean.Grind.Ring R] {n m : Nat}
       _ = 0 := hbEchelon
   rcases E.toIsEchelonForm.transform_inv with ⟨Tinv, hTinv⟩
   calc
-    M * b = (1 : Matrix R n n) * (M * b) := by
-      rw [Matrix.one_mulVec]
+    M * b = (Matrix.identity (R := R) n) * (M * b) := by
+      rw [Matrix.identity_mulVec]
     _ = (Tinv * D.transform) * (M * b) := by
       rw [hTinv]
     _ = Tinv * (D.transform * (M * b)) := by

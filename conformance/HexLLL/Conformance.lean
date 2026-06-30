@@ -62,7 +62,7 @@ Covered edge cases:
 namespace Hex
 namespace LLLConformance
 
-private def identity8 : Matrix Int 8 8 := 1
+private def identity8 : Matrix Int 8 8 := Matrix.identity 8
 
 private def zero8 : Matrix Int 8 8 := 0
 
@@ -339,7 +339,7 @@ private def independentCheck (b : Matrix Int n m) : Bool :=
 #guard match LLLProvider.certifyFlat certInput2 (3/4 : Rat) malformedFlat2 with
   | some _ => false
   | none => true
-#guard !certCheck etaBoundary2 etaBoundary2 1 1 (3/4 : Rat) (11/20 : Rat)
+#guard !certCheck etaBoundary2 etaBoundary2 (Matrix.identity (R := Int) 2) (Matrix.identity (R := Int) 2) (3/4 : Rat) (11/20 : Rat)
 
 private def stateOf (b : Matrix Int n m) : LLLState n m :=
   let gs := GramSchmidt.Int.data b

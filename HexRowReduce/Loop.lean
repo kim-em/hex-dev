@@ -39,7 +39,7 @@ omit [DecidableEq R] in
 invariant. -/
 private theorem rowReduceLoop_initial_canonical (M : Matrix R n m) :
     RowReduceCanonicalInvariant (R := R) (n := n) (m := m)
-      { row := 0, echelon := M, transform := 1, pivots := [] } where
+      { row := 0, echelon := M, transform := Matrix.identity n, pivots := [] } where
   pivot_entry_one := by intro i hi _; exact absurd hi (by simp)
   other_entry_zero := by intro i hi _ _; exact absurd hi (by simp)
 
@@ -291,7 +291,7 @@ private theorem rowReduceLoop_initial_shape (M : Matrix R n m) :
     RowReduceShapeInvariant (R := R) (n := n) (m := m) 0
       { row := 0
         echelon := M
-        transform := 1
+        transform := Matrix.identity n
         pivots := [] } where
   row_eq_length := rfl
   row_le_n := Nat.zero_le n
@@ -310,12 +310,12 @@ private theorem rowReduce_final_shape (M : Matrix R n m) :
       (rowReduceLoop 0 m
         { row := 0
           echelon := M
-          transform := 1
+          transform := Matrix.identity n
           pivots := [] }) := by
   simpa using rowReduceLoop_shape (R := R) (n := n) (m := m) m 0
     { row := 0
       echelon := M
-      transform := 1
+      transform := Matrix.identity n
       pivots := [] } (rowReduceLoop_initial_shape M)
 
 /-- The canonical-column invariant is preserved through `rowReduceLoop`. -/
@@ -384,10 +384,10 @@ private theorem rowReduce_final_canonical (M : Matrix R n m) :
       (rowReduceLoop 0 m
         { row := 0
           echelon := M
-          transform := 1
+          transform := Matrix.identity n
           pivots := [] }) := by
   exact rowReduceLoop_canonical (R := R) (n := n) (m := m) m 0
-    { row := 0, echelon := M, transform := 1, pivots := [] }
+    { row := 0, echelon := M, transform := Matrix.identity n, pivots := [] }
     (rowReduceLoop_initial_shape M) (rowReduceLoop_initial_canonical M)
 
 omit [DecidableEq R] in
@@ -491,7 +491,7 @@ private theorem rowReduceNoPivotZero_initial (M : Matrix R n m) :
     RowReduceNoPivotZero (R := R) (n := n) (m := m) 0
       { row := 0
         echelon := M
-        transform := 1
+        transform := Matrix.identity n
         pivots := [] } where
   zero_unrecorded := by
     intro c hc _ _ _
@@ -625,20 +625,20 @@ private theorem rowReduce_final_no_pivot_zero (M : Matrix R n m) :
       (rowReduceLoop 0 m
         { row := 0
           echelon := M
-          transform := 1
+          transform := Matrix.identity n
           pivots := [] }) := by
   simpa using rowReduceLoop_no_pivot_zero (R := R) (n := n) (m := m) m 0
     { row := 0
       echelon := M
-      transform := 1
+      transform := Matrix.identity n
       pivots := [] } (rowReduceNoPivotZero_initial M)
 
 /-- `rowReduceLoop` preserves existence of a left inverse for the transform. -/
 private theorem rowReduceLoop_left_inverse_preserve (col fuel : Nat)
     (state : RowReduceState R n m)
-    (h : ∃ Tinv : Matrix R n n, Tinv * state.transform = 1) :
+    (h : ∃ Tinv : Matrix R n n, Tinv * state.transform = (Matrix.identity (R := R) n)) :
     ∃ Tinv' : Matrix R n n,
-      Tinv' * (rowReduceLoop col fuel state).transform = 1 := by
+      Tinv' * (rowReduceLoop col fuel state).transform = (Matrix.identity (R := R) n) := by
   induction fuel generalizing col state with
   | zero =>
       simpa [rowReduceLoop] using h
@@ -664,7 +664,7 @@ private theorem rowReduceLoop_left_inverse_preserve (col fuel : Nat)
                   transform := eliminated.2
                   pivots := state.pivots.concat colFin }
               have hswap :
-                  ∃ Tinv : Matrix R n n, Tinv * swappedTransform = 1 :=
+                  ∃ Tinv : Matrix R n n, Tinv * swappedTransform = (Matrix.identity (R := R) n) :=
                 rowSwap_left_inverse_preserve state.transform target pivot h
               have hpivotVal : pivotVal ≠ 0 := by
                 have hpivotNonzero := findPivot?_some_nonzero state.echelon colFin hpivot
@@ -673,11 +673,11 @@ private theorem rowReduceLoop_left_inverse_preserve (col fuel : Nat)
                     (getElem_rowSwap_target_pivot state.echelon target pivot colFin)
                 simpa [hentry] using hpivotNonzero
               have hscale :
-                  ∃ Tinv : Matrix R n n, Tinv * scaledTransform = 1 :=
+                  ∃ Tinv : Matrix R n n, Tinv * scaledTransform = (Matrix.identity (R := R) n) :=
                 rowScale_left_inverse_preserve swappedTransform target
                   (show pivotVal⁻¹ ≠ 0 by grind) hswap
               have helim :
-                  ∃ Tinv : Matrix R n n, Tinv * eliminated.2 = 1 :=
+                  ∃ Tinv : Matrix R n n, Tinv * eliminated.2 = (Matrix.identity (R := R) n) :=
                 eliminateColumn_left_inverse_preserve scaledTransform scaledEchelon target colFin hscale
               simpa [rowReduceLoop, hRow, hCol, colFin, hpivot, target, swappedEchelon,
                 swappedTransform, pivotVal, scaledEchelon, scaledTransform, eliminated,
@@ -688,9 +688,9 @@ private theorem rowReduceLoop_left_inverse_preserve (col fuel : Nat)
 /-- `rowReduceLoop` preserves existence of a right inverse for the transform. -/
 private theorem rowReduceLoop_right_inverse_preserve (col fuel : Nat)
     (state : RowReduceState R n m)
-    (h : ∃ Tinv : Matrix R n n, state.transform * Tinv = 1) :
+    (h : ∃ Tinv : Matrix R n n, state.transform * Tinv = (Matrix.identity (R := R) n)) :
     ∃ Tinv' : Matrix R n n,
-      (rowReduceLoop col fuel state).transform * Tinv' = 1 := by
+      (rowReduceLoop col fuel state).transform * Tinv' = (Matrix.identity (R := R) n) := by
   induction fuel generalizing col state with
   | zero =>
       simpa [rowReduceLoop] using h
@@ -716,7 +716,7 @@ private theorem rowReduceLoop_right_inverse_preserve (col fuel : Nat)
                   transform := eliminated.2
                   pivots := state.pivots.concat colFin }
               have hswap :
-                  ∃ Tinv : Matrix R n n, swappedTransform * Tinv = 1 :=
+                  ∃ Tinv : Matrix R n n, swappedTransform * Tinv = (Matrix.identity (R := R) n) :=
                 rowSwap_right_inverse_preserve state.transform target pivot h
               have hpivotVal : pivotVal ≠ 0 := by
                 have hpivotNonzero := findPivot?_some_nonzero state.echelon colFin hpivot
@@ -725,11 +725,11 @@ private theorem rowReduceLoop_right_inverse_preserve (col fuel : Nat)
                     (getElem_rowSwap_target_pivot state.echelon target pivot colFin)
                 simpa [hentry] using hpivotNonzero
               have hscale :
-                  ∃ Tinv : Matrix R n n, scaledTransform * Tinv = 1 :=
+                  ∃ Tinv : Matrix R n n, scaledTransform * Tinv = (Matrix.identity (R := R) n) :=
                 rowScale_right_inverse_preserve swappedTransform target
                   (show pivotVal⁻¹ ≠ 0 by grind) hswap
               have helim :
-                  ∃ Tinv : Matrix R n n, eliminated.2 * Tinv = 1 :=
+                  ∃ Tinv : Matrix R n n, eliminated.2 * Tinv = (Matrix.identity (R := R) n) :=
                 eliminateColumn_right_inverse_preserve scaledTransform scaledEchelon target colFin hscale
               simpa [rowReduceLoop, hRow, hCol, colFin, hpivot, target, swappedEchelon,
                 swappedTransform, pivotVal, scaledEchelon, scaledTransform, eliminated,
@@ -796,7 +796,7 @@ def rowReduce (M : Matrix R n m) : RowEchelonData R n m :=
   let final := rowReduceLoop 0 m
     { row := 0
       echelon := M
-      transform := 1
+      transform := Matrix.identity n
       pivots := [] }
   { rank := final.pivots.length
     echelon := final.echelon
@@ -806,7 +806,7 @@ def rowReduce (M : Matrix R n m) : RowEchelonData R n m :=
 /-- Wrapper-level projection of the rank row bound from `rowReduce_isRowReduced M`. -/
 theorem rowReduce_rank_le_n (M : Matrix R n m) : (rowReduce M).rank ≤ n := by
   unfold rowReduce
-  change (rowReduceLoop 0 m { row := 0, echelon := M, transform := 1, pivots := [] }).pivots.length ≤ n
+  change (rowReduceLoop 0 m { row := 0, echelon := M, transform := Matrix.identity n, pivots := [] }).pivots.length ≤ n
   rw [← (rowReduce_final_shape M).row_eq_length]
   exact (rowReduce_final_shape M).row_le_n
 
@@ -823,7 +823,7 @@ theorem rowReduce_pivotCols_sorted (M : Matrix R n m) :
   let final := rowReduceLoop 0 m
     { row := 0
       echelon := M
-      transform := 1
+      transform := Matrix.identity n
       pivots := [] }
   have hshape : RowReduceShapeInvariant (R := R) (n := n) (m := m) m final := by
     simpa [final] using rowReduce_final_shape M
@@ -834,19 +834,19 @@ theorem rowReduce_pivotCols_sorted (M : Matrix R n m) :
 
 /-- Final `rowReduce` row transform has a left inverse. -/
 private theorem rowReduce_transform_left_inverse (M : Matrix R n m) :
-    ∃ Tinv : Matrix R n n, Tinv * (rowReduce M).transform = 1 := by
+    ∃ Tinv : Matrix R n n, Tinv * (rowReduce M).transform = (Matrix.identity (R := R) n) := by
   unfold rowReduce
   exact rowReduceLoop_left_inverse_preserve 0 m
-    { row := 0, echelon := M, transform := 1, pivots := [] }
-    ⟨1, by rw [one_mul]⟩
+    { row := 0, echelon := M, transform := Matrix.identity n, pivots := [] }
+    ⟨Matrix.identity n, by rw [identity_mul]⟩
 
 /-- Final `rowReduce` row transform has a right inverse. -/
 private theorem rowReduce_transform_right_inverse (M : Matrix R n m) :
-    ∃ Tinv : Matrix R n n, (rowReduce M).transform * Tinv = 1 := by
+    ∃ Tinv : Matrix R n n, (rowReduce M).transform * Tinv = (Matrix.identity (R := R) n) := by
   unfold rowReduce
   exact rowReduceLoop_right_inverse_preserve 0 m
-    { row := 0, echelon := M, transform := 1, pivots := [] }
-    ⟨1, by rw [one_mul]⟩
+    { row := 0, echelon := M, transform := Matrix.identity n, pivots := [] }
+    ⟨Matrix.identity n, by rw [identity_mul]⟩
 
 /-- Wrapper-level projection of the transform equation from `rowReduce_isRowReduced M`. -/
 theorem rowReduce_transform_mul (M : Matrix R n m) :
@@ -855,14 +855,14 @@ theorem rowReduce_transform_mul (M : Matrix R n m) :
   exact rowReduceLoop_transform_preserve M 0 m
     { row := 0
       echelon := M
-      transform := 1
+      transform := Matrix.identity n
       pivots := [] }
-    (by rw [Matrix.one_mul])
+    (by rw [Matrix.identity_mul])
 
 /-- The computed `rowReduce` data satisfies the `IsRowReduced` contract. -/
 theorem rowReduce_isRowReduced (M : Matrix R n m) : IsRowReduced M (rowReduce M) := by
   let final := rowReduceLoop 0 m
-    { row := 0, echelon := M, transform := 1, pivots := [] }
+    { row := 0, echelon := M, transform := Matrix.identity n, pivots := [] }
   have hcanon : RowReduceCanonicalInvariant (R := R) (n := n) (m := m) final := by
     simpa [final] using rowReduce_final_canonical M
   have hshape : RowReduceShapeInvariant (R := R) (n := n) (m := m) m final := by

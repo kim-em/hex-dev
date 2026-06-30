@@ -457,14 +457,14 @@ private theorem eliminateColumn_transform_preserve
 for the transform side. -/
 private theorem eliminateColumn_step_left_inverse_preserve
     (s : Matrix R n m × Matrix R n n) (pivotRow : Fin n) (col : Fin m)
-    (x : Fin n) (h : ∃ Tinv : Matrix R n n, Tinv * s.2 = 1) :
+    (x : Fin n) (h : ∃ Tinv : Matrix R n n, Tinv * s.2 = (Matrix.identity (R := R) n)) :
     ∃ Tinv' : Matrix R n n,
       Tinv' *
         (if _h : x = pivotRow then s
          else
            let coeff := -s.1[x][col]
            if coeff = 0 then s
-           else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).2 = 1 := by
+           else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).2 = (Matrix.identity (R := R) n) := by
   by_cases hx : x = pivotRow
   · rw [dif_pos hx]
     exact h
@@ -480,14 +480,14 @@ private theorem eliminateColumn_step_left_inverse_preserve
 for the transform side. -/
 private theorem eliminateColumn_step_right_inverse_preserve
     (s : Matrix R n m × Matrix R n n) (pivotRow : Fin n) (col : Fin m)
-    (x : Fin n) (h : ∃ Tinv : Matrix R n n, s.2 * Tinv = 1) :
+    (x : Fin n) (h : ∃ Tinv : Matrix R n n, s.2 * Tinv = (Matrix.identity (R := R) n)) :
     ∃ Tinv' : Matrix R n n,
       (if _h : x = pivotRow then s
        else
          let coeff := -s.1[x][col]
          if coeff = 0 then s
          else (rowAdd s.1 pivotRow x coeff, rowAdd s.2 pivotRow x coeff)).2 *
-        Tinv' = 1 := by
+        Tinv' = (Matrix.identity (R := R) n) := by
   by_cases hx : x = pivotRow
   · rw [dif_pos hx]
     exact h
@@ -504,7 +504,7 @@ transform side. -/
 private theorem eliminateColumn_foldl_left_inverse_preserve
     (pivotRow : Fin n) (col : Fin m) :
     ∀ (xs : List (Fin n)) (s : Matrix R n m × Matrix R n n),
-      (∃ Tinv : Matrix R n n, Tinv * s.2 = 1) →
+      (∃ Tinv : Matrix R n n, Tinv * s.2 = (Matrix.identity (R := R) n)) →
       ∃ Tinv' : Matrix R n n,
         Tinv' *
           (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
@@ -513,7 +513,7 @@ private theorem eliminateColumn_foldl_left_inverse_preserve
               let coeff := -state.1[j][col]
               if coeff = 0 then state
               else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
-            s).2 = 1 := by
+            s).2 = (Matrix.identity (R := R) n) := by
   intro xs
   induction xs with
   | nil =>
@@ -529,7 +529,7 @@ transform side. -/
 private theorem eliminateColumn_foldl_right_inverse_preserve
     (pivotRow : Fin n) (col : Fin m) :
     ∀ (xs : List (Fin n)) (s : Matrix R n m × Matrix R n n),
-      (∃ Tinv : Matrix R n n, s.2 * Tinv = 1) →
+      (∃ Tinv : Matrix R n n, s.2 * Tinv = (Matrix.identity (R := R) n)) →
       ∃ Tinv' : Matrix R n n,
         (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
           if _h : j = pivotRow then state
@@ -538,7 +538,7 @@ private theorem eliminateColumn_foldl_right_inverse_preserve
             if coeff = 0 then state
             else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
           s).2 *
-          Tinv' = 1 := by
+          Tinv' = (Matrix.identity (R := R) n) := by
   intro xs
   induction xs with
   | nil =>
@@ -553,9 +553,9 @@ private theorem eliminateColumn_foldl_right_inverse_preserve
 side. -/
 private theorem eliminateColumn_left_inverse_preserve
     (T : Matrix R n n) (E : Matrix R n m) (pivotRow : Fin n) (col : Fin m)
-    (h : ∃ Tinv : Matrix R n n, Tinv * T = 1) :
+    (h : ∃ Tinv : Matrix R n n, Tinv * T = (Matrix.identity (R := R) n)) :
     ∃ Tinv' : Matrix R n n,
-      Tinv' * (eliminateColumn E T pivotRow col).2 = 1 := by
+      Tinv' * (eliminateColumn E T pivotRow col).2 = (Matrix.identity (R := R) n) := by
   unfold eliminateColumn
   exact eliminateColumn_foldl_left_inverse_preserve pivotRow col (List.finRange n) (E, T) h
 
@@ -563,9 +563,9 @@ private theorem eliminateColumn_left_inverse_preserve
 side. -/
 private theorem eliminateColumn_right_inverse_preserve
     (T : Matrix R n n) (E : Matrix R n m) (pivotRow : Fin n) (col : Fin m)
-    (h : ∃ Tinv : Matrix R n n, T * Tinv = 1) :
+    (h : ∃ Tinv : Matrix R n n, T * Tinv = (Matrix.identity (R := R) n)) :
     ∃ Tinv' : Matrix R n n,
-      (eliminateColumn E T pivotRow col).2 * Tinv' = 1 := by
+      (eliminateColumn E T pivotRow col).2 * Tinv' = (Matrix.identity (R := R) n) := by
   unfold eliminateColumn
   exact eliminateColumn_foldl_right_inverse_preserve pivotRow col (List.finRange n) (E, T) h
 

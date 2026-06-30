@@ -498,12 +498,12 @@ private theorem foldl_det_product_zero_of_mem {R : Type u}
           | inr htail => exact htail
         exact ih (z * f x) htail
 
-/-- Entry `(i, j)` of the identity matrix `(1 : Matrix R n n)` is `1` when `i = j`
+/-- Entry `(i, j)` of the identity matrix `(Matrix.identity (R := R) n)` is `1` when `i = j`
 and `0` otherwise. -/
 private theorem identity_get {R : Type u} [OfNat R 0] [OfNat R 1] {n : Nat}
     (i j : Fin n) :
-    (1 : Matrix R n n)[i][j] = if i = j then 1 else 0 := by
-  change Matrix.identity[i][j] = if i = j then 1 else 0
+    (Matrix.identity (R := R) n)[i][j] = if i = j then 1 else 0 := by
+  change (Matrix.identity n)[i][j] = if i = j then 1 else 0
   simp [Matrix.identity, Matrix.ofFn]
 
 /-- `detProduct` of the identity matrix along `perm` is `0` whenever `perm` moves
@@ -511,15 +511,15 @@ some index, that is `perm[i] ≠ i`. -/
 private theorem detProduct_identity_zero {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (perm : Vector (Fin n) n)
     (i : Fin n) (h : perm[i] ≠ i) :
-    detProduct (1 : Matrix R n n) perm = 0 := by
+    detProduct (Matrix.identity (R := R) n) perm = 0 := by
   unfold detProduct
   have hsymm : i ≠ perm[i] := by
     intro hi
     exact h hi.symm
   exact foldl_det_product_zero_of_mem
-    (List.finRange n) i (fun r => (1 : Matrix R n n)[r][perm[r]]) 1
+    (List.finRange n) i (fun r => (Matrix.identity (R := R) n)[r][perm[r]]) 1
     (List.mem_finRange i) (by
-      change (1 : Matrix R n n)[i][perm[i]] = 0
+      change (Matrix.identity (R := R) n)[i][perm[i]] = 0
       rw [identity_get]
       rw [if_neg hsymm])
 
@@ -530,7 +530,7 @@ moved. -/
 private theorem detProduct_identity_insertAt_not_last_zero {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (v : Vector (Fin n) n)
     (i : Fin (n + 1)) (h : i ≠ Fin.last n) :
-    detProduct (1 : Matrix R (n + 1) (n + 1))
+    detProduct (Matrix.identity (R := R) (n + 1))
       (insertAt (Fin.last n) (v.map Fin.castSucc) i) = 0 := by
   apply detProduct_identity_zero
   exact by
@@ -542,18 +542,18 @@ private theorem detProduct_identity_insertAt_not_last_zero {R : Type u}
 `n`-identity along `v`. -/
 private theorem detProduct_identity_insertAt_last {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (v : Vector (Fin n) n) :
-    detProduct (1 : Matrix R (n + 1) (n + 1))
+    detProduct (Matrix.identity (R := R) (n + 1))
       (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n)) =
-    detProduct (1 : Matrix R n n) v := by
+    detProduct (Matrix.identity (R := R) n) v := by
   unfold detProduct
   rw [← Fin.foldl_eq_finRange_foldl, ← Fin.foldl_eq_finRange_foldl, Fin.foldl_succ_last]
   have hfold :
       Fin.foldl n
           (fun acc i =>
             acc *
-              (1 : Matrix R (n + 1) (n + 1))[i.castSucc][
+              (Matrix.identity (R := R) (n + 1))[i.castSucc][
                 (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[i.castSucc]]) 1 =
-      Fin.foldl n (fun acc i => acc * (1 : Matrix R n n)[i][v[i]]) 1 := by
+      Fin.foldl n (fun acc i => acc * (Matrix.identity (R := R) n)[i][v[i]]) 1 := by
     congr
     funext acc i
     rw [identity_get, identity_get]
@@ -564,7 +564,7 @@ private theorem detProduct_identity_insertAt_last {R : Type u}
     rw [hget]
     simp [Fin.ext_iff]
   have hlast :
-      (1 : Matrix R (n + 1) (n + 1))[Fin.last n][
+      (Matrix.identity (R := R) (n + 1))[Fin.last n][
         (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[Fin.last n]] = 1 := by
     rw [identity_get]
     have hself :

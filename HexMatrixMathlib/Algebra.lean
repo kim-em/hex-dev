@@ -34,7 +34,7 @@ variable {R : Type u} {n m : Nat}
     matrixEquiv (0 : Hex.Matrix R n m) = 0 := by
   ext i j
   rw [matrixEquiv_apply, Matrix.zero_apply]
-  show (Hex.Matrix.zero : Hex.Matrix R n m)[i][j] = 0
+  show (Hex.Matrix.zero n m : Hex.Matrix R n m)[i][j] = 0
   rw [Hex.Matrix.zero, Hex.Matrix.getElem_ofFn]
 
 @[simp, grind =] theorem matrixEquiv_add [Add R] (A B : Hex.Matrix R n m) :
@@ -61,10 +61,15 @@ variable {R : Type u} {n m : Nat}
 is the executable `ofFn`-based `Hex.Matrix.zero`, not the core `Vector`
 `replicate` zero. The additive tower, `Semiring`, and `matrixEquiv_zero` all
 share this zero; this `rfl` fails loudly if instance resolution ever drifts. -/
-example [Zero R] : (0 : Hex.Matrix R n m) = Hex.Matrix.zero := rfl
+example [Zero R] : (0 : Hex.Matrix R n m) = Hex.Matrix.zero n m := rfl
 
-/-- Regression guard: the canonical square-matrix one is the executable identity. -/
-example [Zero R] [One R] : (1 : Hex.Matrix R n n) = Hex.Matrix.identity := rfl
+/-- `1` on a square matrix is the identity matrix. The instance is here rather than
+in `HexMatrix` because the `Semiring`/`Ring` structures transported below need it,
+while `HexMatrix` states its own lemmas with `Matrix.identity`. -/
+instance instOne [OfNat R 0] [OfNat R 1] : One (Hex.Matrix R n n) := ⟨Hex.Matrix.identity n⟩
+
+/-- Regression guard: `1` on a square matrix is `Matrix.identity`. -/
+example [Zero R] [One R] : (1 : Hex.Matrix R n n) = Hex.Matrix.identity n := rfl
 
 /-! ### Additive instances and the additive equivalence -/
 
@@ -107,7 +112,9 @@ def matrixLinearEquiv [Semiring R] : Hex.Matrix R n m ≃ₗ[R] Matrix (Fin n) (
 @[simp, grind =] theorem matrixEquiv_one [Zero R] [One R] :
     matrixEquiv (1 : Hex.Matrix R n n) = 1 := by
   ext i j
-  rw [matrixEquiv_apply, Hex.Matrix.getElem_one, Matrix.one_apply]
+  rw [matrixEquiv_apply]
+  show (Hex.Matrix.identity n)[i][j] = _
+  rw [Hex.Matrix.getElem_identity, Matrix.one_apply]
 
 @[simp, grind =] theorem matrixEquiv_mul [Semiring R] (A B : Hex.Matrix R n n) :
     matrixEquiv (A * B) = matrixEquiv A * matrixEquiv B := by

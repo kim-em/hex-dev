@@ -52,7 +52,7 @@ private def pivotInt : Matrix Int 3 3 :=
     | 2, 1 => 6
     | _, _ => 0
 
-#guard Matrix.det (1 : Matrix Int 2 2) = 1
+#guard Matrix.det (Matrix.identity (R := Int) 2) = 1
 #guard Matrix.det zeroInt = 0
 #guard Matrix.det singularInt = 0
 #guard Matrix.det (Matrix.rowSwap pivotInt ⟨0, by decide⟩ ⟨1, by decide⟩) = -Matrix.det pivotInt
@@ -61,8 +61,8 @@ private def pivotInt : Matrix Int 3 3 :=
 
 /- Determinant row-operation proof-mode automation examples. -/
 
-example : Matrix.det (1 : Matrix Int 2 2) = 1 := by
-  grind
+example : Matrix.det (Matrix.identity (R := Int) 2) = 1 := by
+  exact Matrix.det_identity
 
 example (M : Matrix Int 3 3) (i j : Fin 3) (h : i ≠ j) :
     Matrix.det (Matrix.rowSwap M i j) = -Matrix.det M := by

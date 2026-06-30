@@ -55,7 +55,7 @@ forward transport at the candidate witness. -/
 theorem rowCombination_transformInv_transpose [Lean.Grind.CommRing R]
     {M : Matrix R n m} {D : RowEchelonData R n m}
     (E : IsEchelonForm M D) {Tinv : Matrix R n n}
-    (hTinv : Tinv * D.transform = 1) (c : Vector R n) :
+    (hTinv : Tinv * D.transform = (Matrix.identity (R := R) n)) (c : Vector R n) :
     rowCombination D.echelon (Matrix.transpose Tinv * c) = rowCombination M c := by
   have hcompose :
       Matrix.transpose D.transform * (Matrix.transpose Tinv * c) = c := by
@@ -66,11 +66,11 @@ theorem rowCombination_transformInv_transpose [Lean.Grind.CommRing R]
               (B := Matrix.transpose Tinv) (v := c)).symm
       _ = Matrix.transpose (Tinv * D.transform) * c := by
             rw [← Matrix.transpose_mul_of_mul_comm]
-      _ = Matrix.transpose (1 : Matrix R n n) * c := by
+      _ = Matrix.transpose (Matrix.identity (R := R) n) * c := by
             rw [hTinv]
-      _ = (1 : Matrix R n n) * c := by
-            rw [Matrix.transpose_one]
-      _ = c := Matrix.one_mulVec c
+      _ = (Matrix.identity (R := R) n) * c := by
+            rw [Matrix.transpose_identity]
+      _ = c := Matrix.identity_mulVec c
   have hforward := E.rowCombination_transform_transpose (e := Matrix.transpose Tinv * c)
   rw [hcompose] at hforward
   exact hforward.symm

@@ -43,12 +43,12 @@ def normSq [Mul R] [Add R] [OfNat R 0] (v : Vector R n) : R :=
 
 /-- The standard basis vector with value `1` at index `i` and `0` elsewhere. -/
 @[expose]
-def unit [Zero R] [One R] (i : Fin n) : Vector R n :=
+def unit (R : Type u) [Zero R] [One R] (i : Fin n) : Vector R n :=
   Vector.ofFn fun j => if i = j then One.one else Zero.zero
 
 /-- Entry formula for a standard basis vector. -/
 @[grind =] theorem getElem_unit [Zero R] [One R] (i j : Fin n) :
-    (unit (R := R) i)[j] = if i = j then One.one else Zero.zero := by
+    (unit R i)[j] = if i = j then One.one else Zero.zero := by
   simp [unit]
 
 end Vector
@@ -148,19 +148,16 @@ def transpose (M : Matrix R n m) : Matrix R m n :=
 
 /-- The all-zero matrix. -/
 @[expose]
-protected def zero [OfNat R 0] : Matrix R n m :=
+protected def zero (n m : Nat) [OfNat R 0] : Matrix R n m :=
   ofFn fun _ _ => 0
 
 instance [OfNat R 0] : Zero (Matrix R n m) where
-  zero := Matrix.zero
+  zero := Matrix.zero n m
 
 /-- The identity matrix. -/
 @[expose]
-protected def identity [OfNat R 0] [OfNat R 1] : Matrix R n n :=
+protected def identity (n : Nat) [OfNat R 0] [OfNat R 1] : Matrix R n n :=
   ofFn fun i j => if i = j then 1 else 0
-
-instance [OfNat R 0] [OfNat R 1] : One (Matrix R n n) where
-  one := Matrix.identity
 
 /-- Multiply a matrix by a column vector. -/
 @[expose]
@@ -200,18 +197,18 @@ instance [Mul R] [Add R] [OfNat R 0] : Mul (Matrix R n n) where
   show (mul M N)[i][j] = (row M i).dotProduct (col N j)
   rw [mul, getElem_ofFn]
 
-/-- The identity matrix entry function: `1[i][j] = 1` if `i = j`, else `0`. -/
-@[grind =] theorem getElem_one [OfNat R 0] [OfNat R 1] {n : Nat} (i j : Fin n) :
-    (1 : Matrix R n n)[i][j] = if i = j then (1 : R) else 0 := by
-  simp [show (1 : Matrix R n n) = Matrix.identity from rfl, Matrix.identity, ofFn]
+/-- The identity matrix entry function: `(identity n)[i][j] = 1` if `i = j`, else `0`. -/
+@[grind =] theorem getElem_identity [OfNat R 0] [OfNat R 1] {n : Nat} (i j : Fin n) :
+    (Matrix.identity (R := R) n)[i][j] = if i = j then (1 : R) else 0 := by
+  simp [Matrix.identity, ofFn]
 
 /-- The identity matrix is its own transpose. -/
-@[simp, grind =] theorem transpose_one [OfNat R 0] [OfNat R 1] {n : Nat} :
-    Matrix.transpose (1 : Matrix R n n) = (1 : Matrix R n n) := by
+@[simp, grind =] theorem transpose_identity [OfNat R 0] [OfNat R 1] {n : Nat} :
+    Matrix.transpose (Matrix.identity (R := R) n) = Matrix.identity n := by
   ext i hi j hj
-  show (Matrix.transpose (1 : Matrix R n n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] =
-    (1 : Matrix R n n)[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)]
-  rw [getElem_transpose, getElem_one, getElem_one]
+  show (Matrix.transpose (Matrix.identity (R := R) n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] =
+    (Matrix.identity (R := R) n)[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)]
+  rw [getElem_transpose, getElem_identity, getElem_identity]
   by_cases hij : (⟨i, hi⟩ : Fin n) = ⟨j, hj⟩
   · have hji : (⟨j, hj⟩ : Fin n) = ⟨i, hi⟩ := hij.symm
     rw [if_pos hij, if_pos hji]

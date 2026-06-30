@@ -1439,9 +1439,9 @@ private theorem memLattice_of_rowSwap_memLattice
     Matrix.memLattice (Matrix.rowSwap b i j) v → Matrix.memLattice b v := by
   intro hv
   rcases hv with ⟨c, hc⟩
-  let S : Matrix Int n n := Matrix.rowSwap (1 : Matrix Int n n) i j
+  let S : Matrix Int n n := Matrix.rowSwap (Matrix.identity (R := Int) n) i j
   have hrow : S * b = Matrix.rowSwap b i j := by
-    rw [Matrix.rowSwap_mul, Matrix.one_mul]
+    rw [Matrix.rowSwap_mul, Matrix.identity_mul]
   refine ⟨Matrix.transpose S * c, ?_⟩
   calc
     Matrix.rowCombination b (Matrix.transpose S * c)
@@ -1474,9 +1474,9 @@ private theorem memLattice_of_rowAdd_memLattice
     Matrix.memLattice (Matrix.rowAdd b src dst c) v → Matrix.memLattice b v := by
   intro hv
   rcases hv with ⟨w, hw⟩
-  let S : Matrix Int n n := Matrix.rowAdd (1 : Matrix Int n n) src dst c
+  let S : Matrix Int n n := Matrix.rowAdd (Matrix.identity (R := Int) n) src dst c
   have hrow : S * b = Matrix.rowAdd b src dst c := by
-    simp [S, Matrix.rowAdd_mul, Matrix.one_mul]
+    simp [S, Matrix.rowAdd_mul, Matrix.identity_mul]
   refine ⟨Matrix.transpose S * w, ?_⟩
   calc
     Matrix.rowCombination b (Matrix.transpose S * w)

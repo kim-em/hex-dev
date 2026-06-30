@@ -541,11 +541,11 @@ private theorem det_plucker_three_term_basisVec_of_lt_p1
     {R : Type u} [CommRing R] {n : Nat}
     (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
     (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) (hq1 : q.val < p1.val) :
-    Hex.Matrix.mDet B (Vector.unit (R := R) q) p1 *
+    Hex.Matrix.mDet B (Vector.unit R q) p1 *
         Hex.Matrix.nDet B p2 p3 h23 -
-      Hex.Matrix.mDet B (Vector.unit (R := R) q) p2 *
+      Hex.Matrix.mDet B (Vector.unit R q) p2 *
         Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
-      Hex.Matrix.mDet B (Vector.unit (R := R) q) p3 *
+      Hex.Matrix.mDet B (Vector.unit R q) p3 *
         Hex.Matrix.nDet B p1 p2 h12 = 0 := by
   have hq2 : q.val < p2.val := Nat.lt_trans hq1 h12
   have hq3 : q.val < p3.val := Nat.lt_trans hq2 h23
@@ -564,11 +564,11 @@ private theorem det_plucker_three_term_basisVec_of_between_p1_p2
     (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
     (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
     (h1q : p1.val < q.val) (hq2 : q.val < p2.val) :
-    Hex.Matrix.mDet B (Vector.unit (R := R) q) p1 *
+    Hex.Matrix.mDet B (Vector.unit R q) p1 *
         Hex.Matrix.nDet B p2 p3 h23 -
-      Hex.Matrix.mDet B (Vector.unit (R := R) q) p2 *
+      Hex.Matrix.mDet B (Vector.unit R q) p2 *
         Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
-      Hex.Matrix.mDet B (Vector.unit (R := R) q) p3 *
+      Hex.Matrix.mDet B (Vector.unit R q) p3 *
         Hex.Matrix.nDet B p1 p2 h12 = 0 := by
   have hq3 : q.val < p3.val := Nat.lt_trans hq2 h23
   have hraw :=
@@ -595,11 +595,11 @@ private theorem det_plucker_three_term_basisVec_of_between_p2_p3
     (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
     (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
     (h2q : p2.val < q.val) (hq3 : q.val < p3.val) :
-    Hex.Matrix.mDet B (Vector.unit (R := R) q) p1 *
+    Hex.Matrix.mDet B (Vector.unit R q) p1 *
         Hex.Matrix.nDet B p2 p3 h23 -
-      Hex.Matrix.mDet B (Vector.unit (R := R) q) p2 *
+      Hex.Matrix.mDet B (Vector.unit R q) p2 *
         Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
-      Hex.Matrix.mDet B (Vector.unit (R := R) q) p3 *
+      Hex.Matrix.mDet B (Vector.unit R q) p3 *
         Hex.Matrix.nDet B p1 p2 h12 = 0 := by
   have h1q : p1.val < q.val := Nat.lt_trans h12 h2q
   have hraw :=
@@ -625,11 +625,11 @@ private theorem det_plucker_three_term_basisVec_of_gt_p3
     {R : Type u} [CommRing R] {n : Nat}
     (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
     (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) (h3q : p3.val < q.val) :
-    Hex.Matrix.mDet B (Vector.unit (R := R) q) p1 *
+    Hex.Matrix.mDet B (Vector.unit R q) p1 *
         Hex.Matrix.nDet B p2 p3 h23 -
-      Hex.Matrix.mDet B (Vector.unit (R := R) q) p2 *
+      Hex.Matrix.mDet B (Vector.unit R q) p2 *
         Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
-      Hex.Matrix.mDet B (Vector.unit (R := R) q) p3 *
+      Hex.Matrix.mDet B (Vector.unit R q) p3 *
         Hex.Matrix.nDet B p1 p2 h12 = 0 := by
   have h1q : p1.val < q.val := Nat.lt_trans h12 (Nat.lt_trans h23 h3q)
   have h2q : p2.val < q.val := Nat.lt_trans h23 h3q
@@ -652,11 +652,11 @@ theorem det_plucker_three_term_basisVec_of_ne
     (B : Hex.Matrix R (n + 3) (n + 1)) (p1 p2 p3 q : Fin (n + 3))
     (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
     (hq1 : q ≠ p1) (hq2 : q ≠ p2) (hq3 : q ≠ p3) :
-    Hex.Matrix.mDet B (Vector.unit (R := R) q) p1 *
+    Hex.Matrix.mDet B (Vector.unit R q) p1 *
         Hex.Matrix.nDet B p2 p3 h23 -
-      Hex.Matrix.mDet B (Vector.unit (R := R) q) p2 *
+      Hex.Matrix.mDet B (Vector.unit R q) p2 *
         Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
-      Hex.Matrix.mDet B (Vector.unit (R := R) q) p3 *
+      Hex.Matrix.mDet B (Vector.unit R q) p3 *
         Hex.Matrix.nDet B p1 p2 h12 = 0 := by
   by_cases hlt1 : q.val < p1.val
   · exact det_plucker_three_term_basisVec_of_lt_p1 B p1 p2 p3 q h12 h23 hlt1
@@ -688,11 +688,11 @@ private theorem det_plucker_three_term_basisVec_of_eq_p1
     (B : Hex.Matrix R (n + 3) (n + 1))
     (p1 p2 p3 : Fin (n + 3))
     (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) :
-    Hex.Matrix.mDet B (Vector.unit (R := R) p1) p1 *
+    Hex.Matrix.mDet B (Vector.unit R p1) p1 *
         Hex.Matrix.nDet B p2 p3 h23 -
-      Hex.Matrix.mDet B (Vector.unit (R := R) p1) p2 *
+      Hex.Matrix.mDet B (Vector.unit R p1) p2 *
         Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
-      Hex.Matrix.mDet B (Vector.unit (R := R) p1) p3 *
+      Hex.Matrix.mDet B (Vector.unit R p1) p3 *
         Hex.Matrix.nDet B p1 p2 h12 = 0 := by
   rw [Hex.Matrix.mDet_unit_eq_zero_of_eq B p1,
     Hex.Matrix.mDet_unit_eq_signed_nDet_of_gt B p2 p1 h12,
@@ -704,11 +704,11 @@ private theorem det_plucker_three_term_basisVec_of_eq_p2
     (B : Hex.Matrix R (n + 3) (n + 1))
     (p1 p2 p3 : Fin (n + 3))
     (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) :
-    Hex.Matrix.mDet B (Vector.unit (R := R) p2) p1 *
+    Hex.Matrix.mDet B (Vector.unit R p2) p1 *
         Hex.Matrix.nDet B p2 p3 h23 -
-      Hex.Matrix.mDet B (Vector.unit (R := R) p2) p2 *
+      Hex.Matrix.mDet B (Vector.unit R p2) p2 *
         Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
-      Hex.Matrix.mDet B (Vector.unit (R := R) p2) p3 *
+      Hex.Matrix.mDet B (Vector.unit R p2) p3 *
         Hex.Matrix.nDet B p1 p2 h12 = 0 := by
   rw [Hex.Matrix.mDet_unit_eq_signed_nDet_of_lt B p1 p2 h12,
     Hex.Matrix.mDet_unit_eq_zero_of_eq B p2, Hex.Matrix.mDet_unit_eq_signed_nDet_of_gt B p3 p2 h23]
@@ -728,11 +728,11 @@ private theorem det_plucker_three_term_basisVec_of_eq_p3
     (B : Hex.Matrix R (n + 3) (n + 1))
     (p1 p2 p3 : Fin (n + 3))
     (h12 : p1.val < p2.val) (h23 : p2.val < p3.val) :
-    Hex.Matrix.mDet B (Vector.unit (R := R) p3) p1 *
+    Hex.Matrix.mDet B (Vector.unit R p3) p1 *
         Hex.Matrix.nDet B p2 p3 h23 -
-      Hex.Matrix.mDet B (Vector.unit (R := R) p3) p2 *
+      Hex.Matrix.mDet B (Vector.unit R p3) p2 *
         Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
-      Hex.Matrix.mDet B (Vector.unit (R := R) p3) p3 *
+      Hex.Matrix.mDet B (Vector.unit R p3) p3 *
         Hex.Matrix.nDet B p1 p2 h12 = 0 := by
   rw [Hex.Matrix.mDet_unit_eq_signed_nDet_of_lt B p1 p3 (Nat.lt_trans h12 h23),
     Hex.Matrix.mDet_unit_eq_signed_nDet_of_lt B p2 p3 h23, Hex.Matrix.mDet_unit_eq_zero_of_eq B p3]
@@ -809,11 +809,11 @@ private theorem det_plucker_three_term_of_basisVec
     (p1 p2 p3 : Fin (n + 3))
     (h12 : p1.val < p2.val) (h23 : p2.val < p3.val)
     (hbasis : ∀ q : Fin (n + 3),
-      Hex.Matrix.mDet B (Vector.unit (R := R) q) p1 *
+      Hex.Matrix.mDet B (Vector.unit R q) p1 *
           Hex.Matrix.nDet B p2 p3 h23 -
-        Hex.Matrix.mDet B (Vector.unit (R := R) q) p2 *
+        Hex.Matrix.mDet B (Vector.unit R q) p2 *
           Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
-        Hex.Matrix.mDet B (Vector.unit (R := R) q) p3 *
+        Hex.Matrix.mDet B (Vector.unit R q) p3 *
           Hex.Matrix.nDet B p1 p2 h12 = 0) :
     Hex.Matrix.mDet B v p1 * Hex.Matrix.nDet B p2 p3 h23 -
       Hex.Matrix.mDet B v p2 * Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23) +
@@ -821,21 +821,21 @@ private theorem det_plucker_three_term_of_basisVec
   rw [Hex.Matrix.mDet_eq_sum_unit B v p1, Hex.Matrix.mDet_eq_sum_unit B v p2,
     Hex.Matrix.mDet_eq_sum_unit B v p3]
   rw [← foldl_det_sum_mul_right_zero (List.finRange (n + 3))
-      (fun q => v[q] * Hex.Matrix.mDet B (Vector.unit (R := R) q) p1)
+      (fun q => v[q] * Hex.Matrix.mDet B (Vector.unit R q) p1)
       (Hex.Matrix.nDet B p2 p3 h23)]
   rw [← foldl_det_sum_mul_right_zero (List.finRange (n + 3))
-      (fun q => v[q] * Hex.Matrix.mDet B (Vector.unit (R := R) q) p2)
+      (fun q => v[q] * Hex.Matrix.mDet B (Vector.unit R q) p2)
       (Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23))]
   rw [← foldl_det_sum_mul_right_zero (List.finRange (n + 3))
-      (fun q => v[q] * Hex.Matrix.mDet B (Vector.unit (R := R) q) p3)
+      (fun q => v[q] * Hex.Matrix.mDet B (Vector.unit R q) p3)
       (Hex.Matrix.nDet B p1 p2 h12)]
   apply foldl_det_sum_sub_add_zero_of_body_zero
       (List.finRange (n + 3))
-      (fun q => v[q] * Hex.Matrix.mDet B (Vector.unit (R := R) q) p1 *
+      (fun q => v[q] * Hex.Matrix.mDet B (Vector.unit R q) p1 *
         Hex.Matrix.nDet B p2 p3 h23)
-      (fun q => v[q] * Hex.Matrix.mDet B (Vector.unit (R := R) q) p2 *
+      (fun q => v[q] * Hex.Matrix.mDet B (Vector.unit R q) p2 *
         Hex.Matrix.nDet B p1 p3 (Nat.lt_trans h12 h23))
-      (fun q => v[q] * Hex.Matrix.mDet B (Vector.unit (R := R) q) p3 *
+      (fun q => v[q] * Hex.Matrix.mDet B (Vector.unit R q) p3 *
         Hex.Matrix.nDet B p1 p2 h12)
       0 0 0
   · ring
