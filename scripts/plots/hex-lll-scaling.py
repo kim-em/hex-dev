@@ -168,21 +168,26 @@ def report(family: str, lo: int, hi: int) -> str:
             "nanoseconds; `× fpLLL` is the constant-factor gap to the fastest method.",
         ]
     else:
-        fastest_at_hi = min(ys[hi] for *_, ys in rows)
+        # The ratio column needs a rung every curve reaches; a curve that hit
+        # its per-call ceiling stops early, so use the largest rung common to
+        # all series (<= hi) rather than assuming every series reaches hi.
+        common = set.intersection(*[set(ys) for *_, ys in rows])
+        in_window = [r for r in common if lo <= r <= hi]
+        ref = max(in_window) if in_window else hi
+        fastest_at_ref = min(ys[ref] for *_, ys in rows if ref in ys)
         out += [
-            "| method | exponent p | R² | median @ n=%d | × fastest @ n=%d |" % (hi, hi),
+            "| method | exponent p | R² | median @ n=%d | × fastest @ n=%d |" % (ref, ref),
             "|---|---:|---:|---:|---:|",
         ]
         for label, p, r2, _, ys in rows:
-            out.append(
-                f"| {label} | {p:.2f} | {r2:.4f} | {ys[hi]:.1f} ms "
-                f"| {ys[hi] / fastest_at_hi:.1f}× |"
-            )
+            cell = f"{ys[ref]:.1f} ms" if ref in ys else "— (capped)"
+            ratio = f"{ys[ref] / fastest_at_ref:.1f}×" if ref in ys else "—"
+            out.append(f"| {label} | {p:.2f} | {r2:.4f} | {cell} | {ratio} |")
         out += [
             "",
             f"Exponents span {spread:.2f} (no shared complexity): the curves fan "
             "out, so a single constant does not describe the gaps and the ratio is "
-            "the observed one at `n=%d`, growing with `n`." % hi,
+            "the observed one at `n=%d`, growing with `n`." % ref,
         ]
     return "\n".join(out)
 
