@@ -75,7 +75,6 @@ structure F7 where
 
 namespace F7
 
-@[expose]
 def ofNat (n : Nat) : F7 :=
   { val := ⟨n % 7, Nat.mod_lt n (by decide)⟩ }
 
