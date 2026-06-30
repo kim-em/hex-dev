@@ -1466,4 +1466,474 @@ setup_fixed_benchmark runIsabelleCertifiedHarshCubicNormSq65 where {
     warmupFirstIter := true
   }
 
+
+-- BEGIN Ajtai family targets (generated)
+/-! ## Ajtai-style worst-case `lll.firstShortVector` targets. -/
+
+initialize ajtaiInput8Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorAjtaiNormSq8 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput ajtaiInput8Ref (fun _ => prepAjtaiInput 8))
+
+def runNativeFirstShortVectorAjtaiNormSq8 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput ajtaiInput8Ref (fun _ => prepAjtaiInput 8))
+
+def runIsabelleAjtaiNormSq8 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "ajtai-8" (← getCachedInput ajtaiInput8Ref (fun _ => prepAjtaiInput 8))
+
+def runIsabelleCertifiedAjtaiNormSq8 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "ajtai-8" (← getCachedInput ajtaiInput8Ref (fun _ => prepAjtaiInput 8))
+
+def runFpLLLFirstShortVectorAjtai8Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput ajtaiInput8Ref (fun _ => prepAjtaiInput 8))
+
+def runCertifiedFirstShortVectorAjtai8Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput ajtaiInput8Ref (fun _ => prepAjtaiInput 8))
+
+setup_fixed_benchmark runFirstShortVectorAjtaiNormSq8 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq8 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runIsabelleAjtaiNormSq8 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedAjtaiNormSq8 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorAjtai8Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorAjtai8Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize ajtaiInput12Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorAjtaiNormSq12 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput ajtaiInput12Ref (fun _ => prepAjtaiInput 12))
+
+def runNativeFirstShortVectorAjtaiNormSq12 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput ajtaiInput12Ref (fun _ => prepAjtaiInput 12))
+
+def runIsabelleAjtaiNormSq12 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "ajtai-12" (← getCachedInput ajtaiInput12Ref (fun _ => prepAjtaiInput 12))
+
+def runIsabelleCertifiedAjtaiNormSq12 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "ajtai-12" (← getCachedInput ajtaiInput12Ref (fun _ => prepAjtaiInput 12))
+
+def runFpLLLFirstShortVectorAjtai12Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput ajtaiInput12Ref (fun _ => prepAjtaiInput 12))
+
+def runCertifiedFirstShortVectorAjtai12Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput ajtaiInput12Ref (fun _ => prepAjtaiInput 12))
+
+setup_fixed_benchmark runFirstShortVectorAjtaiNormSq12 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq12 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runIsabelleAjtaiNormSq12 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedAjtaiNormSq12 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorAjtai12Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorAjtai12Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize ajtaiInput16Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorAjtaiNormSq16 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput ajtaiInput16Ref (fun _ => prepAjtaiInput 16))
+
+def runNativeFirstShortVectorAjtaiNormSq16 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput ajtaiInput16Ref (fun _ => prepAjtaiInput 16))
+
+def runIsabelleAjtaiNormSq16 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "ajtai-16" (← getCachedInput ajtaiInput16Ref (fun _ => prepAjtaiInput 16))
+
+def runIsabelleCertifiedAjtaiNormSq16 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "ajtai-16" (← getCachedInput ajtaiInput16Ref (fun _ => prepAjtaiInput 16))
+
+def runFpLLLFirstShortVectorAjtai16Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput ajtaiInput16Ref (fun _ => prepAjtaiInput 16))
+
+def runCertifiedFirstShortVectorAjtai16Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput ajtaiInput16Ref (fun _ => prepAjtaiInput 16))
+
+setup_fixed_benchmark runFirstShortVectorAjtaiNormSq16 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq16 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runIsabelleAjtaiNormSq16 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedAjtaiNormSq16 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorAjtai16Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorAjtai16Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize ajtaiInput20Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorAjtaiNormSq20 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput ajtaiInput20Ref (fun _ => prepAjtaiInput 20))
+
+def runNativeFirstShortVectorAjtaiNormSq20 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput ajtaiInput20Ref (fun _ => prepAjtaiInput 20))
+
+def runIsabelleAjtaiNormSq20 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "ajtai-20" (← getCachedInput ajtaiInput20Ref (fun _ => prepAjtaiInput 20))
+
+def runIsabelleCertifiedAjtaiNormSq20 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "ajtai-20" (← getCachedInput ajtaiInput20Ref (fun _ => prepAjtaiInput 20))
+
+def runFpLLLFirstShortVectorAjtai20Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput ajtaiInput20Ref (fun _ => prepAjtaiInput 20))
+
+def runCertifiedFirstShortVectorAjtai20Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput ajtaiInput20Ref (fun _ => prepAjtaiInput 20))
+
+setup_fixed_benchmark runFirstShortVectorAjtaiNormSq20 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq20 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runIsabelleAjtaiNormSq20 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedAjtaiNormSq20 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorAjtai20Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorAjtai20Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize ajtaiInput24Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorAjtaiNormSq24 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput ajtaiInput24Ref (fun _ => prepAjtaiInput 24))
+
+def runNativeFirstShortVectorAjtaiNormSq24 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput ajtaiInput24Ref (fun _ => prepAjtaiInput 24))
+
+def runIsabelleAjtaiNormSq24 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "ajtai-24" (← getCachedInput ajtaiInput24Ref (fun _ => prepAjtaiInput 24))
+
+def runIsabelleCertifiedAjtaiNormSq24 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "ajtai-24" (← getCachedInput ajtaiInput24Ref (fun _ => prepAjtaiInput 24))
+
+def runFpLLLFirstShortVectorAjtai24Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput ajtaiInput24Ref (fun _ => prepAjtaiInput 24))
+
+def runCertifiedFirstShortVectorAjtai24Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput ajtaiInput24Ref (fun _ => prepAjtaiInput 24))
+
+setup_fixed_benchmark runFirstShortVectorAjtaiNormSq24 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq24 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runIsabelleAjtaiNormSq24 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedAjtaiNormSq24 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorAjtai24Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorAjtai24Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize ajtaiInput28Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorAjtaiNormSq28 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput ajtaiInput28Ref (fun _ => prepAjtaiInput 28))
+
+def runNativeFirstShortVectorAjtaiNormSq28 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput ajtaiInput28Ref (fun _ => prepAjtaiInput 28))
+
+def runIsabelleAjtaiNormSq28 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "ajtai-28" (← getCachedInput ajtaiInput28Ref (fun _ => prepAjtaiInput 28))
+
+def runIsabelleCertifiedAjtaiNormSq28 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "ajtai-28" (← getCachedInput ajtaiInput28Ref (fun _ => prepAjtaiInput 28))
+
+def runFpLLLFirstShortVectorAjtai28Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput ajtaiInput28Ref (fun _ => prepAjtaiInput 28))
+
+def runCertifiedFirstShortVectorAjtai28Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput ajtaiInput28Ref (fun _ => prepAjtaiInput 28))
+
+setup_fixed_benchmark runFirstShortVectorAjtaiNormSq28 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq28 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runIsabelleAjtaiNormSq28 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedAjtaiNormSq28 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorAjtai28Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorAjtai28Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize ajtaiInput32Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorAjtaiNormSq32 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput ajtaiInput32Ref (fun _ => prepAjtaiInput 32))
+
+def runNativeFirstShortVectorAjtaiNormSq32 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput ajtaiInput32Ref (fun _ => prepAjtaiInput 32))
+
+def runIsabelleAjtaiNormSq32 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "ajtai-32" (← getCachedInput ajtaiInput32Ref (fun _ => prepAjtaiInput 32))
+
+def runIsabelleCertifiedAjtaiNormSq32 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "ajtai-32" (← getCachedInput ajtaiInput32Ref (fun _ => prepAjtaiInput 32))
+
+def runFpLLLFirstShortVectorAjtai32Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput ajtaiInput32Ref (fun _ => prepAjtaiInput 32))
+
+def runCertifiedFirstShortVectorAjtai32Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput ajtaiInput32Ref (fun _ => prepAjtaiInput 32))
+
+setup_fixed_benchmark runFirstShortVectorAjtaiNormSq32 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq32 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runIsabelleAjtaiNormSq32 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedAjtaiNormSq32 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorAjtai32Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorAjtai32Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize ajtaiInput36Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorAjtaiNormSq36 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput ajtaiInput36Ref (fun _ => prepAjtaiInput 36))
+
+def runNativeFirstShortVectorAjtaiNormSq36 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput ajtaiInput36Ref (fun _ => prepAjtaiInput 36))
+
+def runIsabelleAjtaiNormSq36 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "ajtai-36" (← getCachedInput ajtaiInput36Ref (fun _ => prepAjtaiInput 36))
+
+def runIsabelleCertifiedAjtaiNormSq36 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "ajtai-36" (← getCachedInput ajtaiInput36Ref (fun _ => prepAjtaiInput 36))
+
+def runFpLLLFirstShortVectorAjtai36Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput ajtaiInput36Ref (fun _ => prepAjtaiInput 36))
+
+def runCertifiedFirstShortVectorAjtai36Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput ajtaiInput36Ref (fun _ => prepAjtaiInput 36))
+
+setup_fixed_benchmark runFirstShortVectorAjtaiNormSq36 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq36 where {
+    repeats := 3
+    maxSecondsPerCall := 90.0
+  }
+
+setup_fixed_benchmark runIsabelleAjtaiNormSq36 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedAjtaiNormSq36 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorAjtai36Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorAjtai36Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+-- END Ajtai family targets
+
 end Hex.LLLBench
