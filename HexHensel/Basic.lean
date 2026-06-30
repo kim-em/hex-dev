@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyFp
-import HexPolyZ
+module
+
+public import HexPolyFp
+public import HexPolyZ
+
+public section
 
 /-!
 Core conversion operations for executable Hensel lifting.
@@ -36,6 +40,7 @@ congruent to `z`. Used coefficientwise by `modP` and `reduceModPow` to land
 integer coefficients in the standard representative window before transport
 to `FpPoly` or back into `ZPoly`.
 -/
+@[expose]
 def intModNat (z : Int) (m : Nat) : Nat :=
   Int.toNat (z % Int.ofNat m)
 
