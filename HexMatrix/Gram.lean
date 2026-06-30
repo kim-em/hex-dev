@@ -137,7 +137,7 @@ def gramMatrix [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) : Matrix R n n :=
 /-- Entry characterization for the Gram matrix of the rows of a dense matrix. -/
 @[grind =] theorem getElem_gramMatrix [Mul R] [Add R] [OfNat R 0]
     (M : Matrix R n m) (i j : Fin n) :
-    (gramMatrix M)[(i, j)] = (row M i).dotProduct (row M j) := by
+    (gramMatrix M)[i][j] = (row M i).dotProduct (row M j) := by
   rw [gramMatrix, getElem_ofFn]
 
 /-- The Gram matrix of the identity is the identity. -/
