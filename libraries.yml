@@ -216,6 +216,12 @@ libraries:
           description: "Entry bit-length ~ 3.3 * n at n in {15, 30, 45} (verified-Isabelle paper regime); exercises bigint operand-size drift."
         - name: ajtai
           description: "Ajtai-style worst-case lower-triangular bases (faithful port of fplll gen_trg / latticegen t, alpha 1.2); diagonal D_i in [2, 2^floor((2d-i)^1.2)], off-diagonals |.| < D_i/2. Drives the Theta(d^2 log B) swap count - the iteration-count scaling axis the near-orthogonal families leave unmeasured."
+        - name: q-ary
+          description: "q-ary LWE/SIS bases [[I,H],[0,qI]] (fplll gen_qary / latticegen q), H uniform mod q=2^(b-1)+rand; the step profile LLL smooths into the characteristic Z-shape."
+        - name: ntru
+          description: "NTRU-like bases [[I,Rot(h)],[0,qI]] on 2d x 2d (fplll gen_ntrulike / latticegen n), circulant h with h(1)=0 mod q; planted dense structure plus q-block."
+        - name: knapsack
+          description: "Rectangular d x (d+1) integer-relation bases (fplll gen_intrel / latticegen r), row i = [rand_b, e_{i+1}]; the only family with cols != rows, exercising the m>n ofBasis path. Also drives the success-vs-density recovery chart."
   HexPolyFp:
     deps: [HexPoly, HexModArith]
     mathlib: false

@@ -164,6 +164,10 @@ repos:
       - hex-lll-comparator-random-bounded.svg
       - hex-lll-comparator-harsh-cubic.svg
       - hex-lll-comparator-ajtai.svg
+      - hex-lll-comparator-q-ary.svg
+      - hex-lll-comparator-ntru.svg
+      - hex-lll-comparator-knapsack.svg
+      - hex-lll-knapsack-success.svg
 
   - repo: kim-em/hex-lll-mathlib
     lib: HexLLLMathlib

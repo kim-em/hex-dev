@@ -373,6 +373,23 @@ cross-referenced as `phase4.input_families` in [`libraries.yml`](https://github.
   GMP, the Lean port from the committed LCG via `wideRandom`):
   `scripts/dev/validate_latticegen.py` checks both satisfy the same
   lower-triangular / `bits_i` / `|off| < D_i/2` envelope.
+- **`q-ary`** — LWE/SIS bases `[[I_{d-k}, H], [0, q·I_k]]` (faithful
+  port of fplll's `gen_qary` / `latticegen q`), `H` uniform mod
+  `q = 2^(b-1) + rand(b-1)`. The unreduced basis is a step profile (a
+  plateau at `q` over a plateau at `1`) LLL must smooth into the
+  characteristic Z-shape, concentrating swaps in the transition band —
+  the realistic cryptographic regime, distinct from a triangular basis.
+- **`ntru`** — NTRU-like bases `[[I, Rot(h)], [0, q·I]]` on `2d × 2d`
+  (faithful port of fplll's `gen_ntrulike` / `latticegen n`), with
+  `Rot(h)` the circulant of `h` uniform mod `q` and `h[0]` fixed so
+  `h(1) ≡ 0 mod q` (checked by `#guard`). Planted dense structure plus
+  the q-block.
+- **`knapsack`** — the **rectangular** `d × (d+1)` integer-relation
+  basis (faithful port of fplll's `gen_intrel` / `latticegen r`), row
+  `i` = `[rand_b, e_{i+1}]`. The only family with `cols ≠ rows`, so it
+  exercises the `m > n` Gram construction in `ofBasis` that every square
+  family leaves untested. It also drives the success-vs-density recovery
+  chart (planted-vector recovery vs density `d = n/b`).
 
 **At least one family must demonstrably exercise the swap branch of
 the LLL outer loop.** For `bz-recombination`, `harsh-cubic`, and
