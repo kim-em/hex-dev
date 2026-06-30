@@ -207,7 +207,9 @@ theorem findPivotAux_eq_zero_of_none (M : Matrix Int n n) (col : Fin n)
             · exact hzero
             · have hzeroNat : ¬ M[start][col.val] = 0 := by
                 simpa using hzero
-              simp [findPivotAux, hlt, hzero] at hfind
+              simp only [findPivotAux, hlt, dif_pos, getRow, Fin.getElem_fin] at hfind
+              rw [if_neg (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
+              simp at hfind
           have hiFin : i = (⟨start, hlt⟩ : Fin n) := Fin.ext hi
           rw [hiFin]
           exact hentry
@@ -216,11 +218,14 @@ theorem findPivotAux_eq_zero_of_none (M : Matrix Int n n) (col : Fin n)
             · exact hzero
             · have hzeroNat : ¬ M[start][col.val] = 0 := by
                 simpa using hzero
-              simp [findPivotAux, hlt, hzero] at hfind
+              simp only [findPivotAux, hlt, dif_pos, getRow, Fin.getElem_fin] at hfind
+              rw [if_neg (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
+              simp at hfind
           have hnext : findPivotAux M col (start + 1) fuel = none := by
             have hentryNat : M[start][col.val] = 0 := by
               simpa using hentry
-            simp [findPivotAux, hlt, hentry] at hfind
+            simp only [findPivotAux, hlt, dif_pos, getRow, Fin.getElem_fin] at hfind
+            rw [if_pos (by simpa [getRow, Fin.getElem_fin] using hentry)] at hfind
             exact hfind
           have hstart' : start + 1 ≤ i.val := by omega
           have hfuel' : i.val < start + 1 + fuel := by omega
@@ -254,9 +259,8 @@ theorem findPivotAux_eq_none_of_zero (M : Matrix Int n n) (col : Fin n)
           hzero ⟨start, hstart⟩ (Nat.le_refl _)
             (show (⟨start, hstart⟩ : Fin n).val < start + (fuel + 1) by
               simp)
-        have hentryNat : M[start][col.val] = 0 := by
-          simpa using hentry
-        simp [findPivotAux, hstart, hentryNat]
+        simp only [findPivotAux, hstart, dif_pos, getRow, Fin.getElem_fin]
+        rw [if_pos (by simpa [getRow, Fin.getElem_fin] using hentry)]
         apply ih
         intro i hle hlt
         exact hzero i (by omega) (by omega)
@@ -292,13 +296,12 @@ theorem findPivotAux_some_ne_zero (M : Matrix Int n n) (col : Fin n)
   | succ fuel ih =>
       by_cases hlt : start < n
       · by_cases hzero : M[(⟨start, hlt⟩ : Fin n)][col] = 0
-        · have hzeroNat : M[start][col.val] = 0 := by
-            simpa using hzero
-          simp [findPivotAux, hlt, hzero] at hfind
+        · simp only [findPivotAux, hlt, dif_pos, getRow, Fin.getElem_fin] at hfind
+          rw [if_pos (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
           exact ih (start + 1) hfind
-        · have hzeroNat : ¬ M[start][col.val] = 0 := by
-            simpa using hzero
-          simp [findPivotAux, hlt, hzero] at hfind
+        · simp only [findPivotAux, hlt, dif_pos, getRow, Fin.getElem_fin] at hfind
+          rw [if_neg (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
+          simp only [Option.some.injEq] at hfind
           subst hfind
           exact hzero
       · simp [findPivotAux, hlt] at hfind
@@ -515,7 +518,8 @@ original matrix. -/
 theorem rowsToMatrix_matrixToRows (M : Matrix Int n n) :
     rowsToMatrix (matrixToRows M) n = M := by
   ext i hi j hj
-  simpa [rowsToMatrix, Matrix.ofFn] using getEntry_matrixToRows M ⟨i, hi⟩ ⟨j, hj⟩
+  simpa [rowsToMatrix, Matrix.ofFn, getRow, Fin.getElem_fin] using
+    getEntry_matrixToRows M ⟨i, hi⟩ ⟨j, hj⟩
 
 /-- `set!`-ing index `i` to `v` makes `(xs.set! i v)[i]!` return `v` when `i` is
 in bounds, the base case for tracking entries through the array row swap. -/
@@ -670,7 +674,7 @@ private theorem rowsToMatrix_swapRowsArray_matrixToRows (M : Matrix Int n n)
     rowsToMatrix (swapRowsArray (matrixToRows M) rowA.val rowB.val) n =
       rowSwap M rowA rowB := by
   ext i hi j hj
-  simpa [rowsToMatrix, Matrix.ofFn] using
+  simpa [rowsToMatrix, Matrix.ofFn, getRow, Fin.getElem_fin] using
     getEntry_swapRowsArray_matrixToRows M rowA rowB ⟨i, hi⟩ ⟨j, hj⟩
 
 /-- `findPivotArrayAux` searches the array-backed column `col` from `start` for
@@ -717,10 +721,10 @@ private theorem findPivotArrayAux_matrixToRows (M : Matrix Int n n)
         by_cases hpivotNat : M[start][col.val] = 0
         · have hpivot : M[(⟨start, hstart⟩ : Fin n)][col] = 0 := by
             simpa using hpivotNat
-          simp [hpivotNat, ih]
+          simp [hpivot, getRow, Fin.getElem_fin, ih]
         · have hpivot : M[(⟨start, hstart⟩ : Fin n)][col] ≠ 0 := by
             simpa using hpivotNat
-          simp [hpivotNat]
+          simp [hpivot, getRow, Fin.getElem_fin]
       · simp [hstart]
 
 /-- `findPivotArray?_matrixToRows` identifies full array pivot search on
@@ -755,7 +759,7 @@ private theorem findPivotArrayAux_matches (rows : Array (Array Int))
         by_cases hpivotNat : M[start][col.val] = 0
         · have hpivot : M[(⟨start, hstart⟩ : Fin n)][col] = 0 := by
             simpa using hpivotNat
-          simp [hpivotNat, ih]
+          simp [hpivot, getRow, Fin.getElem_fin, ih]
         · simp [hpivotNat]
       · simp [hstart]
 
