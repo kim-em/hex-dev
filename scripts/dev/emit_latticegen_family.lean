@@ -1,0 +1,24 @@
+/-
+Dev tool: emit the Lean-generated lattice basis for a family at given
+dimensions, one JSON object per line, for `validate_latticegen.py` to
+cross-check against fplll's `latticegen`. Run with:
+
+  lake env lean --run scripts/dev/emit_latticegen_family.lean ajtai 6 8 10 12
+-/
+import HexLLLBench.Inputs
+open Hex.LLLBench
+
+def basisFor (family : String) (d : Nat) : Option (String) :=
+  match family with
+  | "ajtai" => some (matrixHaskell (ajtaiBasis d))
+  | _ => none
+
+def main (args : List String) : IO Unit := do
+  match args with
+  | family :: dims =>
+    for s in dims do
+      let d := (s.toNat?).getD 0
+      match basisFor family d with
+      | some m => IO.println s!"\{\"family\":\"{family}\",\"d\":{d},\"basis\":{m}}"
+      | none => throw (IO.userError s!"unknown family {family}")
+  | _ => throw (IO.userError "usage: emit_latticegen_family <family> <d>...")
