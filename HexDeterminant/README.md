@@ -76,9 +76,8 @@ theorem det_eq_foldl_laplace_row (M : Matrix R (n + 1) (n + 1)) (row : Fin (n + 
 
 We prove the Cauchy-Binet column-tuple product formula (Gram form) as
 `det_gramMatrix_eq_sum_columnTuples`, the adjugate identity
-`(M * adjugate M)[i][j] = if i = j then det M else 0` as `mul_adjugate_apply`,
-and the three-term Plücker / Desnanot-Jacobi identity as
-`det_plucker_three_term_consecutive_top`.
+`M * adjugate M = det M • identity` as `mul_adjugate`, and the three-term
+Plücker / Desnanot-Jacobi identity as `det_plucker_three_term_consecutive_top`.
 
 The identification of this determinant with Mathlib's `Matrix.det`, and the
 correspondence with the executable Bareiss determinant
