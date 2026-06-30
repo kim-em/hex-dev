@@ -85,10 +85,35 @@ Per release:
 - The integration example committed under `Examples/Release<N>.lean`
   and exercised in CI.
 - A rendered copy of `HexManual` including every chapter for the
-  release's library set, with anchored tutorials linked from the
-  release entry point.
+  release's library set. The manual is continuously rendered and
+  published to GitHub Pages from `main` (see *Rendering and publishing
+  the manual* below); a release tags the snapshot live at the release
+  commit.
 - A short release notes entry listing the libraries, the user story,
   and the integration example.
+
+## Rendering and publishing the manual
+
+`HexManual` is a Verso document. `lake build HexManual` only *typechecks*
+it -- every `{docstring}`, `{ref}`, `#eval`/`leanOutput`, and `#guard` is
+checked as the chapters elaborate. To produce the browsable site, the
+`hexmanual` executable (`Main.lean`) renders it to static HTML:
+
+    lake exe hexmanual --output _out
+
+The multi-page site lands in `_out/html-multi`; open its `index.html`, or
+serve it with `python3 -m http.server -d _out/html-multi`.
+
+`.github/workflows/pages.yml` runs that render on every push to `main`
+(and on `workflow_dispatch`) and deploys the result to GitHub Pages at
+<https://kim-em.github.io/hex-dev/>. It does not run on pull requests:
+it is a publish step, not a merge gate (the chapters' content is checked
+whenever `lake build HexManual` elaborates them). Rendering needs the
+full Mathlib-backed build, so the job fetches the Mathlib cache exactly
+as `ci.yml` does.
+
+Publishing requires the repository's Pages source to be set to *GitHub
+Actions* once (Settings -> Pages -> Build and deployment -> Source).
 
 ## Published libraries
 
