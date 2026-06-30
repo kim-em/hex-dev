@@ -14,7 +14,7 @@ public section
 /-!
 Laplace (cofactor) expansion of the determinant.
 
-This module proves that `det` expands as a signed sum of `M[·][·] * cofactor`
+This module proves that `det` expands as a signed sum of `M[(·, ·)] * cofactor`
 along any fixed row or column. `det_eq_foldl_laplace_last` and
 `det_eq_foldl_laplace_last_row` handle the final column and final row, and
 `det_eq_foldl_laplace_col` / `det_eq_foldl_laplace_row` generalize to an
@@ -30,29 +30,29 @@ namespace Matrix
 variable {α : Type u}
 
 /-- Inner sum-over-permutations collapse: for any row `i`, the Leibniz terms whose
-permutation sends row `i` to the last column collapse to `M[i][last] * cofactor M i last`. -/
+permutation sends row `i` to the last column collapse to `M[(i, last)] * cofactor M i last`. -/
 private theorem foldl_detTerm_insertions_eq
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i : Fin (n + 1)) :
     (permutationVectors n).foldl
         (fun acc v => acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) 0 =
-      M[i][Fin.last n] * cofactor M i (Fin.last n) := by
+      M[(i, Fin.last n)] * cofactor M i (Fin.last n) := by
   have hsumands : (permutationVectors n).foldl
         (fun acc v => acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) 0 =
       (permutationVectors n).foldl
         (fun acc v => acc + cofactorSign (R := R) i (Fin.last n) *
-          (M[i][Fin.last n] * detTerm (deleteRowCol M i (Fin.last n)) v)) 0 := by
+          (M[(i, Fin.last n)] * detTerm (deleteRowCol M i (Fin.last n)) v)) 0 := by
     apply foldl_det_sum_congr
     intro v _hmem
     exact detTerm_insertAt_general M v i
   rw [hsumands]
   rw [foldl_det_sum_mul_left_zero (permutationVectors n)
     (cofactorSign (R := R) i (Fin.last n))
-    (fun v => M[i][Fin.last n] * detTerm (deleteRowCol M i (Fin.last n)) v)]
-  rw [foldl_det_sum_mul_left_zero (permutationVectors n) M[i][Fin.last n]
+    (fun v => M[(i, Fin.last n)] * detTerm (deleteRowCol M i (Fin.last n)) v)]
+  rw [foldl_det_sum_mul_left_zero (permutationVectors n) M[(i, Fin.last n)]
     (fun v => detTerm (deleteRowCol M i (Fin.last n)) v)]
   show cofactorSign (R := R) i (Fin.last n) *
-       (M[i][Fin.last n] * det (deleteRowCol M i (Fin.last n))) = _
+       (M[(i, Fin.last n)] * det (deleteRowCol M i (Fin.last n))) = _
   unfold cofactor
   grind
 
@@ -62,7 +62,7 @@ theorem det_eq_foldl_laplace_last
     (M : Matrix R (n + 1) (n + 1)) :
     det M =
       (List.finRange (n + 1)).foldl
-        (fun acc row => acc + M[row][Fin.last n] * cofactor M row (Fin.last n)) 0 := by
+        (fun acc row => acc + M[(row, Fin.last n)] * cofactor M row (Fin.last n)) 0 := by
   unfold det
   rw [show permutationVectors (n + 1) =
       List.flatMap
@@ -101,16 +101,16 @@ theorem det_eq_foldl_laplace_last_row
     (M : Matrix R (n + 1) (n + 1)) :
     det M =
       (List.finRange (n + 1)).foldl
-        (fun acc col => acc + M[Fin.last n][col] * cofactor M (Fin.last n) col) 0 := by
+        (fun acc col => acc + M[(Fin.last n, col)] * cofactor M (Fin.last n) col) 0 := by
   calc
     det M = det M.transpose := (det_transpose M).symm
     _ =
       (List.finRange (n + 1)).foldl
-        (fun acc col => acc + M.transpose[col][Fin.last n] *
+        (fun acc col => acc + M.transpose[(col, Fin.last n)] *
           cofactor M.transpose col (Fin.last n)) 0 := det_eq_foldl_laplace_last M.transpose
     _ =
       (List.finRange (n + 1)).foldl
-        (fun acc col => acc + M[Fin.last n][col] * cofactor M (Fin.last n) col) 0 := by
+        (fun acc col => acc + M[(Fin.last n, col)] * cofactor M (Fin.last n) col) 0 := by
         apply foldl_acc_congr
         intro acc col _hmem
         rw [cofactor_transpose]
@@ -254,9 +254,9 @@ theorem det_eq_foldl_laplace_col
     (M : Matrix R (n + 1) (n + 1)) (col : Fin (n + 1)) :
     det M =
       (List.finRange (n + 1)).foldl
-        (fun acc row => acc + M[row][col] * cofactor M row col) 0 := by
+        (fun acc row => acc + M[(row, col)] * cofactor M row col) 0 := by
   let sigma := moveColumnToLastValues col
-  let C : Matrix R (n + 1) (n + 1) := ofFn fun r c => M[r][sigma[c]]
+  let C : Matrix R (n + 1) (n + 1) := ofFn fun r c => M[(r, sigma[c])]
   have hsigma : sigma ∈ permutationVectors (n + 1) :=
     moveColumnToLastValues_mem_permutationVectors col
   have hdetC : det C = (-1 : R) ^ (n - col.val) * det M := by
@@ -274,39 +274,39 @@ theorem det_eq_foldl_laplace_col
     _ =
       (-1 : R) ^ (n - col.val) *
         (List.finRange (n + 1)).foldl
-          (fun acc row => acc + C[row][Fin.last n] * cofactor C row (Fin.last n)) 0 := by
+          (fun acc row => acc + C[(row, Fin.last n)] * cofactor C row (Fin.last n)) 0 := by
         rw [det_eq_foldl_laplace_last C]
     _ =
       (List.finRange (n + 1)).foldl
         (fun acc row =>
           acc + (-1 : R) ^ (n - col.val) *
-            (C[row][Fin.last n] * cofactor C row (Fin.last n))) 0 := by
+            (C[(row, Fin.last n)] * cofactor C row (Fin.last n))) 0 := by
         rw [foldl_det_sum_mul_left_zero]
     _ =
       (List.finRange (n + 1)).foldl
-        (fun acc row => acc + M[row][col] * cofactor M row col) 0 := by
+        (fun acc row => acc + M[(row, col)] * cofactor M row col) 0 := by
         apply foldl_acc_congr
         intro acc row _hmem
         congr 1
         unfold cofactor
-        have hClast : C[row][Fin.last n] = M[row][col] := by
-          rw [show C[row][Fin.last n] = M[row][sigma[Fin.last n]] by
+        have hClast : C[(row, Fin.last n)] = M[(row, col)] := by
+          rw [show C[(row, Fin.last n)] = M[(row, sigma[Fin.last n])] by
             simp [C, ofFn]]
-          exact congrArg (fun c => M[row][c]) (moveColumnToLastValues_last col)
+          exact congrArg (fun c => M[(row, c)]) (moveColumnToLastValues_last col)
         have hminor : deleteRowCol C row (Fin.last n) = deleteRowCol M row col := by
           ext i hi j hj
           let ii : Fin n := ⟨i, hi⟩
           let jj : Fin n := ⟨j, hj⟩
-          change (deleteRowCol C row (Fin.last n))[ii][jj] =
-            (deleteRowCol M row col)[ii][jj]
+          change (deleteRowCol C row (Fin.last n))[(ii, jj)] =
+            (deleteRowCol M row col)[(ii, jj)]
           rw [getElem_deleteRowCol, getElem_deleteRowCol]
-          rw [show C[skipIndex row ii][skipIndex (Fin.last n) jj] =
-              C[skipIndex row ii][jj.castSucc] by
-            exact congrArg (fun c => C[skipIndex row ii][c]) (skipIndex_last jj)]
-          rw [show C[skipIndex row ii][jj.castSucc] =
-              M[skipIndex row ii][sigma[jj.castSucc]] by
+          rw [show C[(skipIndex row ii, skipIndex (Fin.last n) jj)] =
+              C[(skipIndex row ii, jj.castSucc)] by
+            exact congrArg (fun c => C[(skipIndex row ii, c)]) (skipIndex_last jj)]
+          rw [show C[(skipIndex row ii, jj.castSucc)] =
+              M[(skipIndex row ii, sigma[jj.castSucc])] by
             simp [C, ofFn]]
-          exact congrArg (fun c => M[skipIndex row ii][c])
+          exact congrArg (fun c => M[(skipIndex row ii, c)])
             (moveColumnToLastValues_castSucc col jj)
         rw [hClast, hminor, cofactorSign_col_eq (R := R) row col]
         grind
@@ -317,16 +317,16 @@ theorem det_eq_foldl_laplace_row
     (M : Matrix R (n + 1) (n + 1)) (row : Fin (n + 1)) :
     det M =
       (List.finRange (n + 1)).foldl
-        (fun acc col => acc + M[row][col] * cofactor M row col) 0 := by
+        (fun acc col => acc + M[(row, col)] * cofactor M row col) 0 := by
   calc
     det M = det M.transpose := (det_transpose M).symm
     _ =
       (List.finRange (n + 1)).foldl
-        (fun acc col => acc + M.transpose[col][row] *
+        (fun acc col => acc + M.transpose[(col, row)] *
           cofactor M.transpose col row) 0 := det_eq_foldl_laplace_col M.transpose row
     _ =
       (List.finRange (n + 1)).foldl
-        (fun acc col => acc + M[row][col] * cofactor M row col) 0 := by
+        (fun acc col => acc + M[(row, col)] * cofactor M row col) 0 := by
         apply foldl_acc_congr
         intro acc col _hmem
         rw [cofactor_transpose, getElem_transpose]

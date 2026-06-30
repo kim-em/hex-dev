@@ -52,13 +52,13 @@ private theorem detProduct_setCol_add {R : Type u} [Lean.Grind.CommRing R]
   unfold detProduct
   calc
     (List.finRange n).foldl
-        (fun acc i => acc * (setCol M dst (fun r => v r + w r))[i][perm[i]]) 1 =
+        (fun acc i => acc * (setCol M dst (fun r => v r + w r))[(i, perm[i])]) 1 =
       (List.finRange n).foldl
         (fun acc x =>
           acc * if x = pivot then
-            (setCol M dst v)[x][perm[x]] + (setCol M dst w)[x][perm[x]]
+            (setCol M dst v)[(x, perm[x])] + (setCol M dst w)[(x, perm[x])]
           else
-            (setCol M dst v)[x][perm[x]]) 1 := by
+            (setCol M dst v)[(x, perm[x])]) 1 := by
         apply foldl_det_product_congr
         intro x _hx
         rw [getElem_setCol, getElem_setCol, getElem_setCol]
@@ -75,16 +75,16 @@ private theorem detProduct_setCol_add {R : Type u} [Lean.Grind.CommRing R]
             have hval : x.val = pivot.val := by
               rw [← hxidx, hperm, hpidx]
             exact hxp (Fin.ext hval)
-          change (if perm[x] = dst then v x + w x else M[x][perm[x]]) =
-            (if perm[x] = dst then v x else M[x][perm[x]])
+          change (if perm[x] = dst then v x + w x else M[(x, perm[x])]) =
+            (if perm[x] = dst then v x else M[(x, perm[x])])
           rw [if_neg hperm_ne, if_neg hperm_ne]
     _ =
       (List.finRange n).foldl
         (fun acc x =>
           acc * if x = pivot then
-            (setCol M dst v)[x][perm[x]] + (1 : R) * (setCol M dst w)[x][perm[x]]
+            (setCol M dst v)[(x, perm[x])] + (1 : R) * (setCol M dst w)[(x, perm[x])]
           else
-            (setCol M dst v)[x][perm[x]]) 1 := by
+            (setCol M dst v)[(x, perm[x])]) 1 := by
         apply foldl_det_product_congr
         intro x _hx
         by_cases hxp : x = pivot
@@ -93,14 +93,14 @@ private theorem detProduct_setCol_add {R : Type u} [Lean.Grind.CommRing R]
         · simp [hxp]
     _ =
       (List.finRange n).foldl
-          (fun acc x => acc * (setCol M dst v)[x][perm[x]]) 1 +
+          (fun acc x => acc * (setCol M dst v)[(x, perm[x])]) 1 +
         (1 : R) * (List.finRange n).foldl
-          (fun acc x => acc * (setCol M dst w)[x][perm[x]]) 1 := by
+          (fun acc x => acc * (setCol M dst w)[(x, perm[x])]) 1 := by
         exact
           foldl_det_product_single_add (R := R) (β := Fin n)
             (List.finRange n) pivot (1 : R)
-            (fun x => (setCol M dst v)[x][perm[x]])
-            (fun x => (setCol M dst w)[x][perm[x]])
+            (fun x => (setCol M dst v)[(x, perm[x])])
+            (fun x => (setCol M dst w)[(x, perm[x])])
             1 (List.mem_finRange pivot) (List.nodup_finRange n)
             (by
               intro x _hx hxp
@@ -113,17 +113,17 @@ private theorem detProduct_setCol_add {R : Type u} [Lean.Grind.CommRing R]
                 have hval : x.val = pivot.val := by
                   rw [← hxidx, hperm, hpidx]
                 exact hxp (Fin.ext hval)
-              change (setCol M dst w)[x][perm[x]] =
-                (setCol M dst v)[x][perm[x]]
+              change (setCol M dst w)[(x, perm[x])] =
+                (setCol M dst v)[(x, perm[x])]
               rw [getElem_setCol, getElem_setCol]
-              change (if perm[x] = dst then w x else M[x][perm[x]]) =
-                (if perm[x] = dst then v x else M[x][perm[x]])
+              change (if perm[x] = dst then w x else M[(x, perm[x])]) =
+                (if perm[x] = dst then v x else M[(x, perm[x])])
               rw [if_neg hperm_ne, if_neg hperm_ne])
     _ =
       (List.finRange n).foldl
-          (fun acc x => acc * (setCol M dst v)[x][perm[x]]) 1 +
+          (fun acc x => acc * (setCol M dst v)[(x, perm[x])]) 1 +
         (List.finRange n).foldl
-          (fun acc x => acc * (setCol M dst w)[x][perm[x]]) 1 := by
+          (fun acc x => acc * (setCol M dst w)[(x, perm[x])]) 1 := by
         grind
 
 /-- The per-permutation product `detProduct` is homogeneous in the replaced
@@ -147,13 +147,13 @@ private theorem detProduct_setCol_smul {R : Type u} [Lean.Grind.CommRing R]
   unfold detProduct
   calc
     (List.finRange n).foldl
-        (fun acc i => acc * (setCol M dst (fun r => c * v r))[i][perm[i]]) 1 =
+        (fun acc i => acc * (setCol M dst (fun r => c * v r))[(i, perm[i])]) 1 =
       (List.finRange n).foldl
         (fun acc x =>
           acc * if x = pivot then
-            c * (setCol M dst v)[x][perm[x]]
+            c * (setCol M dst v)[(x, perm[x])]
           else
-            (setCol M dst v)[x][perm[x]]) 1 := by
+            (setCol M dst v)[(x, perm[x])]) 1 := by
         apply foldl_det_product_congr
         intro x _hx
         rw [getElem_setCol, getElem_setCol]
@@ -170,16 +170,16 @@ private theorem detProduct_setCol_smul {R : Type u} [Lean.Grind.CommRing R]
             have hval : x.val = pivot.val := by
               rw [← hxidx, hperm, hpidx]
             exact hxp (Fin.ext hval)
-          change (if perm[x] = dst then c * v x else M[x][perm[x]]) =
-            (if perm[x] = dst then v x else M[x][perm[x]])
+          change (if perm[x] = dst then c * v x else M[(x, perm[x])]) =
+            (if perm[x] = dst then v x else M[(x, perm[x])])
           rw [if_neg hperm_ne, if_neg hperm_ne]
     _ =
       c * (List.finRange n).foldl
-          (fun acc x => acc * (setCol M dst v)[x][perm[x]]) 1 := by
+          (fun acc x => acc * (setCol M dst v)[(x, perm[x])]) 1 := by
         exact
           foldl_det_product_single_scale (R := R) (β := Fin n)
             (List.finRange n) pivot c
-            (fun x => (setCol M dst v)[x][perm[x]])
+            (fun x => (setCol M dst v)[(x, perm[x])])
             1 (List.mem_finRange pivot) (List.nodup_finRange n)
 
 /-- The signed Leibniz term `detTerm` is additive in the replaced column:
@@ -338,13 +338,13 @@ columns of `source` with coefficients from row `j` of `coeff`. -/
 def columnSumMatrix {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) : Matrix R n n :=
   ofFn fun r j =>
-    (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
+    (List.finRange m).foldl (fun acc k => acc + coeff[(j, k)] * source[(r, k)]) 0
 
 @[grind =] private theorem getElem_columnSumMatrix
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (r j : Fin n) :
-    (columnSumMatrix source coeff)[r][j] =
-      (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0 := by
+    (columnSumMatrix source coeff)[(r, j)] =
+      (List.finRange m).foldl (fun acc k => acc + coeff[(j, k)] * source[(r, k)]) 0 := by
   simp [columnSumMatrix, ofFn]
 
 private theorem setCol_columnSumMatrix_self
@@ -352,15 +352,15 @@ private theorem setCol_columnSumMatrix_self
     (source coeff : Matrix R n m) (dst : Fin n) :
     setCol (columnSumMatrix source coeff) dst
         (fun r => (List.finRange m).foldl
-          (fun acc k => acc + coeff[dst][k] * source[r][k]) 0) =
+          (fun acc k => acc + coeff[(dst, k)] * source[(r, k)]) 0) =
       columnSumMatrix source coeff := by
   ext r hr c hc
   change
     (setCol (columnSumMatrix source coeff) dst
         (fun r => (List.finRange m).foldl
-          (fun acc k => acc + coeff[dst][k] * source[r][k]) 0))[
-          (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
-      (columnSumMatrix source coeff)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+          (fun acc k => acc + coeff[(dst, k)] * source[(r, k)]) 0))[(
+          (⟨r, hr⟩ : Fin n), (⟨c, hc⟩ : Fin n))] =
+      (columnSumMatrix source coeff)[((⟨r, hr⟩ : Fin n), (⟨c, hc⟩ : Fin n))]
   rw [getElem_setCol]
   by_cases hcol : (⟨c, hc⟩ : Fin n) = dst
   · subst dst
@@ -374,12 +374,12 @@ private theorem det_columnSumMatrix_expand_column
     det (columnSumMatrix source coeff) =
       (List.finRange m).foldl
         (fun acc k =>
-          acc + coeff[dst][k] *
-            det (setCol (columnSumMatrix source coeff) dst (fun r => source[r][k]))) 0 := by
+          acc + coeff[(dst, k)] *
+            det (setCol (columnSumMatrix source coeff) dst (fun r => source[(r, k)]))) 0 := by
   have hsum :=
     det_setCol_sum_list
     (columnSumMatrix source coeff) dst (List.finRange m)
-    (fun k => coeff[dst][k]) (fun k r => source[r][k])
+    (fun k => coeff[(dst, k)]) (fun k r => source[(r, k)])
   have hself := setCol_columnSumMatrix_self source coeff dst
   rw [hself] at hsum
   exact hsum
@@ -391,31 +391,34 @@ private def columnChoiceMatrix {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) : Matrix R n n :=
   ofFn fun r c =>
     match choices c with
-    | some k => source[r][k]
-    | none => (List.finRange m).foldl (fun acc k => acc + coeff[c][k] * source[r][k]) 0
+    | some k => source[(r, k)]
+    | none => (List.finRange m).foldl (fun acc k => acc + coeff[(c, k)] * source[(r, k)]) 0
 
 @[grind =] private theorem getElem_columnChoiceMatrix
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) (r c : Fin n) :
-    (columnChoiceMatrix source coeff choices)[r][c] =
+    (columnChoiceMatrix source coeff choices)[(r, c)] =
       match choices c with
-      | some k => source[r][k]
-      | none => (List.finRange m).foldl (fun acc k => acc + coeff[c][k] * source[r][k]) 0 := by
+      | some k => source[(r, k)]
+      | none => (List.finRange m).foldl (fun acc k => acc + coeff[(c, k)] * source[(r, k)]) 0 := by
   simp [columnChoiceMatrix, ofFn]
 
 /-- A determinant with two equal rows is zero. -/
 theorem det_eq_zero_of_row_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (h : src ≠ dst)
-    (hrow : M[src] = M[dst]) :
+    (hrow : getRow M src = getRow M dst) :
     det M = 0 := by
   have hdup : rowAddDuplicate M src dst = M := by
     ext r hr c hc
-    change (rowAddDuplicate M src dst)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
-      M[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+    change (rowAddDuplicate M src dst)[((⟨r, hr⟩ : Fin n), (⟨c, hc⟩ : Fin n))] =
+      M[((⟨r, hr⟩ : Fin n), (⟨c, hc⟩ : Fin n))]
     rw [rowAddDuplicate_get]
     by_cases hdst : (⟨r, hr⟩ : Fin n) = dst
     · subst hdst
-      simpa using congrArg (fun row => row[(⟨c, hc⟩ : Fin n)]) hrow
+      have hc' := congrArg (fun row => row[(⟨c, hc⟩ : Fin n)]) hrow
+      rw [getRow_getElem, getRow_getElem] at hc'
+      rw [if_pos rfl]
+      exact hc'
     · simp [hdst]
   have hsum := permutationVectors_duplicateRow_sum M src dst h
   rw [hdup] at hsum
@@ -424,7 +427,7 @@ theorem det_eq_zero_of_row_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
 /-- A determinant with two equal columns is zero. -/
 theorem det_eq_zero_of_col_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (h : src ≠ dst)
-    (hcol : ∀ r : Fin n, M[r][src] = M[r][dst]) :
+    (hcol : ∀ r : Fin n, M[(r, src)] = M[(r, dst)]) :
     det M = 0 := by
   simpa [det] using permutationVectors_duplicateCol_sum M src dst h hcol
 
@@ -433,8 +436,8 @@ duplicate column, so the determinant is zero. -/
 theorem det_setCol_existing_col_eq_zero
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (dst src : Fin n) (hsrcdst : src ≠ dst) :
-    det (setCol M dst (fun r => M[r][src])) = 0 := by
-  apply det_eq_zero_of_col_eq (setCol M dst (fun r => M[r][src])) src dst hsrcdst
+    det (setCol M dst (fun r => M[(r, src)])) = 0 := by
+  apply det_eq_zero_of_col_eq (setCol M dst (fun r => M[(r, src)])) src dst hsrcdst
   intro r
   rw [getElem_setCol, getElem_setCol, if_neg hsrcdst, if_pos rfl]
 
@@ -446,30 +449,30 @@ theorem det_setCol_add_otherCols {R : Type u}
     (M : Matrix R n n) (dst : Fin n) (sources : List (Fin n)) (coeff : Fin n → R)
     (hsrc : ∀ s ∈ sources, s ≠ dst) :
     det (setCol M dst
-        (fun r => M[r][dst] +
-          sources.foldl (fun acc s => acc + coeff s * M[r][s]) 0)) = det M := by
-  rw [det_setCol_add M dst (fun r => M[r][dst])
-    (fun r => sources.foldl (fun acc s => acc + coeff s * M[r][s]) 0)]
+        (fun r => M[(r, dst)] +
+          sources.foldl (fun acc s => acc + coeff s * M[(r, s)]) 0)) = det M := by
+  rw [det_setCol_add M dst (fun r => M[(r, dst)])
+    (fun r => sources.foldl (fun acc s => acc + coeff s * M[(r, s)]) 0)]
   rw [setCol_self M dst]
   have hcomb : det (setCol M dst
-        (fun r => sources.foldl (fun acc s => acc + coeff s * M[r][s]) 0)) = 0 := by
-    rw [det_setCol_sum_list M dst sources coeff (fun s r => M[r][s])]
+        (fun r => sources.foldl (fun acc s => acc + coeff s * M[(r, s)]) 0)) = 0 := by
+    rw [det_setCol_sum_list M dst sources coeff (fun s r => M[(r, s)])]
     -- Show each summand is zero; we use the fact that the foldl over sources
     -- yields zero because each replaced det is zero.
-    have hzero_each : ∀ s ∈ sources, coeff s * det (setCol M dst (fun r => M[r][s])) = 0 := by
+    have hzero_each : ∀ s ∈ sources, coeff s * det (setCol M dst (fun r => M[(r, s)])) = 0 := by
       intro s hs
       have hne : s ≠ dst := hsrc s hs
       rw [det_setCol_existing_col_eq_zero M dst s hne]
       grind
     -- Foldl of a sum that is always zero adds nothing.
     have hfoldl : sources.foldl
-        (fun acc s => acc + coeff s * det (setCol M dst (fun r => M[r][s]))) 0 = 0 := by
+        (fun acc s => acc + coeff s * det (setCol M dst (fun r => M[(r, s)]))) 0 = 0 := by
       clear hzero_each
       induction sources with
       | nil => rfl
       | cons s ss ih =>
           simp only [List.foldl_cons]
-          have hs : coeff s * det (setCol M dst (fun r => M[r][s])) = 0 := by
+          have hs : coeff s * det (setCol M dst (fun r => M[(r, s)])) = 0 := by
             have hne : s ≠ dst := hsrc s (by simp)
             rw [det_setCol_existing_col_eq_zero M dst s hne]
             grind

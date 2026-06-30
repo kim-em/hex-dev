@@ -69,7 +69,7 @@ private theorem foldl_detTerm_identity_insertions {R : Type u}
 
 private theorem rowScale_get {R : Type u} [Mul R] {n m : Nat}
     (M : Matrix R n m) (i r : Fin n) (c : R) (k : Fin m) :
-    (rowScale M i c)[r][k] = if r = i then c * M[i][k] else M[r][k] :=
+    (rowScale M i c)[(r, k)] = if r = i then c * M[(i, k)] else M[(r, k)] :=
   getElem_rowScale M i r c k
 
 private theorem detProduct_rowScale {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
@@ -78,18 +78,18 @@ private theorem detProduct_rowScale {R : Type u} [Lean.Grind.CommRing R] {n : Na
   unfold detProduct
   calc
     (List.finRange n).foldl
-        (fun acc r => acc * (rowScale M i c)[r][perm[r]]) 1 =
+        (fun acc r => acc * (rowScale M i c)[(r, perm[r])]) 1 =
       (List.finRange n).foldl
-        (fun acc r => acc * if r = i then c * M[r][perm[r]] else M[r][perm[r]]) 1 := by
+        (fun acc r => acc * if r = i then c * M[(r, perm[r])] else M[(r, perm[r])]) 1 := by
         apply foldl_det_product_congr
         intro r _hmem
         by_cases h : r = i
         · subst r
           simpa using (rowScale_get M i i c perm[i])
         · simpa [h] using (rowScale_get M i r c perm[r])
-    _ = c * (List.finRange n).foldl (fun acc r => acc * M[r][perm[r]]) 1 := by
+    _ = c * (List.finRange n).foldl (fun acc r => acc * M[(r, perm[r])]) 1 := by
         exact foldl_det_product_single_scale
-          (List.finRange n) i c (fun r => M[r][perm[r]]) 1
+          (List.finRange n) i c (fun r => M[(r, perm[r])]) 1
           (List.mem_finRange i) (List.nodup_finRange n)
 
 
@@ -176,7 +176,7 @@ in a permutation leaves the product term `detProduct M perm` unchanged. -/
 private theorem detProduct_colDuplicate_swapValues {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n)
-    (hcol : ∀ r : Fin n, M[r][src] = M[r][dst])
+    (hcol : ∀ r : Fin n, M[(r, src)] = M[(r, dst)])
     (perm : Vector (Fin n) n) :
     detProduct M perm = detProduct M (swapPermutationValues perm src dst) := by
   unfold detProduct
@@ -187,30 +187,30 @@ private theorem detProduct_colDuplicate_swapValues {R : Type u}
       rw [swapPermutationValues_get]
       exact hsrc ▸ finTranspose_left src dst
     calc
-      M[r][perm[r]] = M[r][src] := congrArg (fun c => M[r][c]) hsrc
-      _ = M[r][dst] := hcol r
-      _ = M[r][(swapPermutationValues perm src dst)[r]] :=
-          (congrArg (fun c => M[r][c]) hswap).symm
+      M[(r, perm[r])] = M[(r, src)] := congrArg (fun c => M[(r, c)]) hsrc
+      _ = M[(r, dst)] := hcol r
+      _ = M[(r, (swapPermutationValues perm src dst)[r])] :=
+          (congrArg (fun c => M[(r, c)]) hswap).symm
   · by_cases hdst : perm[r] = dst
     · have hswap : (swapPermutationValues perm src dst)[r] = src := by
         rw [swapPermutationValues_get]
         exact hdst ▸ finTranspose_right src dst
       calc
-        M[r][perm[r]] = M[r][dst] := congrArg (fun c => M[r][c]) hdst
-        _ = M[r][src] := (hcol r).symm
-        _ = M[r][(swapPermutationValues perm src dst)[r]] :=
-            (congrArg (fun c => M[r][c]) hswap).symm
+        M[(r, perm[r])] = M[(r, dst)] := congrArg (fun c => M[(r, c)]) hdst
+        _ = M[(r, src)] := (hcol r).symm
+        _ = M[(r, (swapPermutationValues perm src dst)[r])] :=
+            (congrArg (fun c => M[(r, c)]) hswap).symm
     · have hswap : (swapPermutationValues perm src dst)[r] = perm[r] := by
         rw [swapPermutationValues_get]
         exact finTranspose_of_ne src dst perm[r] hsrc hdst
-      exact (congrArg (fun c => M[r][c]) hswap).symm
+      exact (congrArg (fun c => M[(r, c)]) hswap).symm
 
 /-- For a nodup permutation with `src ≠ dst` and equal columns `src`, `dst`,
 swapping those two values negates the signed determinant term `detTerm M perm`. -/
 private theorem detTerm_colDuplicate_swapValues {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) (h : src ≠ dst)
-    (hcol : ∀ r : Fin n, M[r][src] = M[r][dst])
+    (hcol : ∀ r : Fin n, M[(r, src)] = M[(r, dst)])
     (perm : Vector (Fin n) n) (hnodup : perm.toList.Nodup) :
     detTerm M perm = -detTerm M (swapPermutationValues perm src dst) := by
   unfold detTerm
@@ -221,21 +221,21 @@ private theorem detTerm_colDuplicate_swapValues {R : Type u}
 /-- `M` with column `dst` overwritten by a copy of column `src`. -/
 private def colAddDuplicate {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) : Matrix R n n :=
-  Matrix.ofFn fun r c => if c = dst then M[r][src] else M[r][c]
+  Matrix.ofFn fun r c => if c = dst then M[(r, src)] else M[(r, c)]
 
 /-- Entrywise value of `colAddDuplicate M src dst`: column `dst` reads from
 column `src`, every other column is left unchanged. -/
 private theorem colAddDuplicate_get {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst r c : Fin n) :
-    (colAddDuplicate M src dst)[r][c] = if c = dst then M[r][src] else M[r][c] := by
+    (colAddDuplicate M src dst)[(r, c)] = if c = dst then M[(r, src)] else M[(r, c)] := by
   simp [colAddDuplicate, Matrix.ofFn]
 
 /-- Entrywise value of `colAdd M src dst c`: column `dst` becomes
-`M[r][dst] + c · M[r][src]`, every other column is left unchanged. -/
+`M[(r, dst)] + c · M[(r, src)]`, every other column is left unchanged. -/
 private theorem colAdd_get {R : Type u} [Mul R] [Add R] {n : Nat}
     (M : Matrix R n n) (src dst r cidx : Fin n) (c : R) :
-    (colAdd M src dst c)[r][cidx] =
-      if cidx = dst then M[r][cidx] + c * M[r][src] else M[r][cidx] := by
+    (colAdd M src dst c)[(r, cidx)] =
+      if cidx = dst then M[(r, cidx)] + c * M[(r, src)] else M[(r, cidx)] := by
   exact getElem_colAdd M src dst c r cidx
 
 /-- For a nodup permutation, the product term of `colAdd M src dst c` splits as
@@ -259,13 +259,13 @@ private theorem detProduct_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
   unfold detProduct
   calc
     (List.finRange n).foldl
-        (fun acc i => acc * (colAdd M src dst c)[i][perm[i]]) 1 =
+        (fun acc i => acc * (colAdd M src dst c)[(i, perm[i])]) 1 =
       (List.finRange n).foldl
         (fun acc x =>
           acc * if x = pivot then
-            M[x][perm[x]] + c * (colAddDuplicate M src dst)[x][perm[x]]
+            M[(x, perm[x])] + c * (colAddDuplicate M src dst)[(x, perm[x])]
           else
-            M[x][perm[x]]) 1 := by
+            M[(x, perm[x])]) 1 := by
         apply foldl_det_product_congr
         intro x _hx
         rw [colAdd_get]
@@ -284,18 +284,18 @@ private theorem detProduct_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
             exact hxp (Fin.ext hval)
           rw [if_neg hperm_ne]
     _ =
-      (List.finRange n).foldl (fun acc x => acc * M[x][perm[x]]) 1 +
+      (List.finRange n).foldl (fun acc x => acc * M[(x, perm[x])]) 1 +
         c * (List.finRange n).foldl
-          (fun acc x => acc * (colAddDuplicate M src dst)[x][perm[x]]) 1 := by
+          (fun acc x => acc * (colAddDuplicate M src dst)[(x, perm[x])]) 1 := by
       exact
         foldl_det_product_single_add (R := R) (β := Fin n)
           (List.finRange n) pivot c
-          (fun x => M[x][perm[x]])
-          (fun x => (colAddDuplicate M src dst)[x][perm[x]])
+          (fun x => M[(x, perm[x])])
+          (fun x => (colAddDuplicate M src dst)[(x, perm[x])])
           1 (List.mem_finRange pivot) (List.nodup_finRange n)
           (by
             intro x _hx hxp
-            change (colAddDuplicate M src dst)[x][perm[x]] = M[x][perm[x]]
+            change (colAddDuplicate M src dst)[(x, perm[x])] = M[(x, perm[x])]
             rw [colAddDuplicate_get]
             have hperm_ne : perm[x] ≠ dst := by
               intro hperm
@@ -406,32 +406,26 @@ private theorem detTerm_rowScale {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
 `colAddDuplicate`). -/
 private def rowAddDuplicate {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) : Matrix R n n :=
-  M.set dst M[src]
+  setRow M dst (getRow M src)
 
 /-- Entrywise value of `rowAdd M src dst c`: row `dst` becomes
-`M[dst][k] + c · M[src][k]`, every other row is left unchanged. -/
+`M[(dst, k)] + c · M[(src, k)]`, every other row is left unchanged. -/
 private theorem rowAdd_get {R : Type u} [Mul R] [Add R] {n : Nat}
     (M : Matrix R n n) (src dst r : Fin n) (c : R) (k : Fin n) :
-    (rowAdd M src dst c)[r][k] =
-      if r = dst then M[dst][k] + c * M[src][k] else M[r][k] :=
+    (rowAdd M src dst c)[(r, k)] =
+      if r = dst then M[(dst, k)] + c * M[(src, k)] else M[(r, k)] :=
   getElem_rowAdd M src dst r c k
 
 /-- Entrywise value of `rowAddDuplicate M src dst`: row `dst` reads from row
 `src`, every other row is left unchanged. -/
 private theorem rowAddDuplicate_get {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst r : Fin n) (k : Fin n) :
-    (rowAddDuplicate M src dst)[r][k] =
-      if r = dst then M[src][k] else M[r][k] := by
+    (rowAddDuplicate M src dst)[(r, k)] =
+      if r = dst then M[(src, k)] else M[(r, k)] := by
+  rw [rowAddDuplicate, getElem_setRow]
   by_cases h : r = dst
-  · subst r
-    simp [rowAddDuplicate]
-  · simp [rowAddDuplicate, h]
-    have hval : dst.val ≠ r.val := by
-      intro hval
-      exact h (Fin.ext hval.symm)
-    have hrow : (M.set dst M[src])[r] = M[r] := by
-      exact (Vector.getElem_set_ne (xs := M) (x := M[src]) dst.isLt r.isLt hval)
-    simpa [rowAddDuplicate] using congrArg (fun row => row[k]) hrow
+  · simp [h, getRow, getElem_rows, Fin.getElem_fin]
+  · simp [h]
 
 /-- The product term of `rowAdd M src dst c` splits as
 `detProduct M perm + c · detProduct (rowAddDuplicate M src dst) perm`. -/
@@ -442,13 +436,13 @@ private theorem detProduct_rowAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
   unfold detProduct
   calc
     (List.finRange n).foldl
-        (fun acc r => acc * (rowAdd M src dst c)[r][perm[r]]) 1 =
+        (fun acc r => acc * (rowAdd M src dst c)[(r, perm[r])]) 1 =
       (List.finRange n).foldl
         (fun acc r =>
           acc * if r = dst then
-            M[r][perm[r]] + c * (rowAddDuplicate M src dst)[r][perm[r]]
+            M[(r, perm[r])] + c * (rowAddDuplicate M src dst)[(r, perm[r])]
           else
-            M[r][perm[r]]) 1 := by
+            M[(r, perm[r])]) 1 := by
         apply foldl_det_product_congr
         intro r _hmem
         by_cases h : r = dst
@@ -458,16 +452,16 @@ private theorem detProduct_rowAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         · rw [rowAdd_get, rowAddDuplicate_get]
           simp [h]
     _ =
-      (List.finRange n).foldl (fun acc r => acc * M[r][perm[r]]) 1 +
+      (List.finRange n).foldl (fun acc r => acc * M[(r, perm[r])]) 1 +
         c * (List.finRange n).foldl
-          (fun acc r => acc * (rowAddDuplicate M src dst)[r][perm[r]]) 1 := by
+          (fun acc r => acc * (rowAddDuplicate M src dst)[(r, perm[r])]) 1 := by
         exact foldl_det_product_single_add
           (List.finRange n) dst c
-          (fun r => M[r][perm[r]])
-          (fun r => (rowAddDuplicate M src dst)[r][perm[r]]) 1
+          (fun r => M[(r, perm[r])])
+          (fun r => (rowAddDuplicate M src dst)[(r, perm[r])]) 1
           (List.mem_finRange dst) (List.nodup_finRange n)
           (fun r _hmem hne => by
-            change (rowAddDuplicate M src dst)[r][perm[r]] = M[r][perm[r]]
+            change (rowAddDuplicate M src dst)[(r, perm[r])] = M[(r, perm[r])]
             rw [rowAddDuplicate_get]
             simp [hne])
 
@@ -530,16 +524,16 @@ private theorem rowSwap_rowAddDuplicate_eq {R : Type u} {n : Nat}
     rowSwap (rowAddDuplicate M src dst) src dst = rowAddDuplicate M src dst := by
   ext r hr k hk
   change
-    (rowSwap (rowAddDuplicate M src dst) src dst)[(⟨r, hr⟩ : Fin n)][(⟨k, hk⟩ : Fin n)] =
-      (rowAddDuplicate M src dst)[(⟨r, hr⟩ : Fin n)][(⟨k, hk⟩ : Fin n)]
+    (rowSwap (rowAddDuplicate M src dst) src dst)[((⟨r, hr⟩ : Fin n), (⟨k, hk⟩ : Fin n))] =
+      (rowAddDuplicate M src dst)[((⟨r, hr⟩ : Fin n), (⟨k, hk⟩ : Fin n))]
   rw [rowSwap_get]
   let fr : Fin n := ⟨r, hr⟩
   let fk : Fin n := ⟨k, hk⟩
   change
-    (if fr = dst then (rowAddDuplicate M src dst)[src][fk]
-      else if fr = src then (rowAddDuplicate M src dst)[dst][fk]
-      else (rowAddDuplicate M src dst)[fr][fk]) =
-      (rowAddDuplicate M src dst)[fr][fk]
+    (if fr = dst then (rowAddDuplicate M src dst)[(src, fk)]
+      else if fr = src then (rowAddDuplicate M src dst)[(dst, fk)]
+      else (rowAddDuplicate M src dst)[(fr, fk)]) =
+      (rowAddDuplicate M src dst)[(fr, fk)]
   by_cases hrd : fr = dst
   · rw [if_pos hrd]
     rw [rowAddDuplicate_get M src dst src fk, rowAddDuplicate_get M src dst fr fk]
@@ -708,7 +702,7 @@ private theorem permutationVectors_duplicateRow_sum {R : Type u} [Lean.Grind.Com
 
 private theorem permutationVectors_duplicateCol_sum {R : Type u} [Lean.Grind.CommRing R]
     {n : Nat} (M : Matrix R n n) (src dst : Fin n) (h : src ≠ dst)
-    (hcol : ∀ r : Fin n, M[r][src] = M[r][dst]) :
+    (hcol : ∀ r : Fin n, M[(r, src)] = M[(r, dst)]) :
     (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 = 0 := by
   let p : Vector (Fin n) n → Bool :=
     fun perm => perm.toList.idxOf src < perm.toList.idxOf dst
@@ -975,13 +969,13 @@ theorem cofactor_transpose {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
 theorem det_colPermute_vector {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (sigma : Vector (Fin n) n)
     (hsigma : sigma ∈ permutationVectors n) :
-    det ((ofFn fun r c => M[r][sigma[c]]) : Matrix R n n) =
+    det ((ofFn fun r c => M[(r, sigma[c])]) : Matrix R n n) =
       detSign (R := R) sigma * det M := by
   unfold det
   calc
     (permutationVectors n).foldl
         (fun acc tau =>
-          acc + detTerm ((ofFn fun r c => M[r][sigma[c]]) : Matrix R n n) tau) 0 =
+          acc + detTerm ((ofFn fun r c => M[(r, sigma[c])]) : Matrix R n n) tau) 0 =
       (permutationVectors n).foldl
         (fun acc tau =>
           acc + detSign (R := R) sigma *
@@ -1009,16 +1003,16 @@ theorem det_colPermute_vector {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
 /-- Swapping two columns negates determinant. -/
 theorem det_colSwap {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (i j : Fin n) (h : i ≠ j) :
-    det (ofFn fun r c => M[r][finTranspose i j c]) = -det M := by
-  let C : Matrix R n n := ofFn fun r c => M[r][finTranspose i j c]
+    det (ofFn fun r c => M[(r, finTranspose i j c)]) = -det M := by
+  let C : Matrix R n n := ofFn fun r c => M[(r, finTranspose i j c)]
   have htranspose : C.transpose = rowSwap M.transpose i j := by
     ext r hr c hc
     let rr : Fin n := ⟨r, hr⟩
     let cc : Fin n := ⟨c, hc⟩
-    change C.transpose[rr][cc] = (rowSwap M.transpose i j)[rr][cc]
+    change C.transpose[(rr, cc)] = (rowSwap M.transpose i j)[(rr, cc)]
     rw [rowSwap_get_finTranspose M.transpose i j rr h cc,
-      show C.transpose[rr][cc] = C[cc][rr] by simp [Matrix.transpose, Matrix.col],
-      show C[cc][rr] = M[cc][finTranspose i j rr] by simp [C, ofFn]]
+      show C.transpose[(rr, cc)] = C[(cc, rr)] by simp [Matrix.transpose, Matrix.col],
+      show C[(cc, rr)] = M[(cc, finTranspose i j rr)] by simp [C, ofFn]]
     simp [Matrix.transpose, Matrix.col]
   calc
     det C = det C.transpose := (det_transpose C).symm

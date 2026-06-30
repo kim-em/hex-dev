@@ -44,7 +44,7 @@ def detSign {R : Type u} [Lean.Grind.Ring R] {n : Nat} (perm : Vector (Fin n) n)
 @[expose]
 def detProduct {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (M : Matrix R n n) (perm : Vector (Fin n) n) : R :=
-  (List.finRange n).foldl (fun acc i => acc * M[i][perm[i]]) 1
+  (List.finRange n).foldl (fun acc i => acc * M[(i, perm[i])]) 1
 
 /-- The Leibniz summand associated to a permutation vector. -/
 @[expose]
@@ -69,18 +69,18 @@ convention `1`. -/
 This is the smallest non-empty determinant base case. -/
 @[simp, grind =] theorem det_one_by_one {R : Type u} [Lean.Grind.Ring R]
     (M : Matrix R 1 1) :
-    det M = M[0][0] := by
+    det M = M[(0, 0)] := by
   simp [det, detTerm, detSign, detProduct, permutationVectors, insertAt,
-    inversionCount, List.finRange]
+    inversionCount, List.finRange, getElem_rows, getElem_pair_nat, Fin.getElem_fin]
   grind
 
 /-- The determinant of a `2 × 2` matrix has the usual diagonal-minus-off-diagonal
 closed form used by small cofactor expansions. -/
 @[simp, grind =] theorem det_two_by_two {R : Type u} [Lean.Grind.CommRing R]
     (M : Matrix R 2 2) :
-    det M = M[0][0] * M[1][1] - M[1][0] * M[0][1] := by
+    det M = M[(0, 0)] * M[(1, 1)] - M[(1, 0)] * M[(0, 1)] := by
   simp [det, detTerm, detSign, detProduct, permutationVectors, insertAt,
-    inversionCount, List.finRange]
+    inversionCount, List.finRange, getElem_rows, getElem_pair_nat, Fin.getElem_fin]
   grind
 
 /-- Congruence for the determinant-style left fold over a finite list. -/
@@ -502,8 +502,8 @@ private theorem foldl_det_product_zero_of_mem {R : Type u}
 and `0` otherwise. -/
 private theorem identity_get {R : Type u} [OfNat R 0] [OfNat R 1] {n : Nat}
     (i j : Fin n) :
-    (Matrix.identity (R := R) n)[i][j] = if i = j then 1 else 0 := by
-  change (Matrix.identity n)[i][j] = if i = j then 1 else 0
+    (Matrix.identity (R := R) n)[(i, j)] = if i = j then 1 else 0 := by
+  change (Matrix.identity n)[(i, j)] = if i = j then 1 else 0
   simp [Matrix.identity, Matrix.ofFn]
 
 /-- `detProduct` of the identity matrix along `perm` is `0` whenever `perm` moves
@@ -517,9 +517,9 @@ private theorem detProduct_identity_zero {R : Type u}
     intro hi
     exact h hi.symm
   exact foldl_det_product_zero_of_mem
-    (List.finRange n) i (fun r => (Matrix.identity (R := R) n)[r][perm[r]]) 1
+    (List.finRange n) i (fun r => (Matrix.identity (R := R) n)[(r, perm[r])]) 1
     (List.mem_finRange i) (by
-      change (Matrix.identity (R := R) n)[i][perm[i]] = 0
+      change (Matrix.identity (R := R) n)[(i, perm[i])] = 0
       rw [identity_get]
       rw [if_neg hsymm])
 
@@ -551,9 +551,9 @@ private theorem detProduct_identity_insertAt_last {R : Type u}
       Fin.foldl n
           (fun acc i =>
             acc *
-              (Matrix.identity (R := R) (n + 1))[i.castSucc][
-                (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[i.castSucc]]) 1 =
-      Fin.foldl n (fun acc i => acc * (Matrix.identity (R := R) n)[i][v[i]]) 1 := by
+              (Matrix.identity (R := R) (n + 1))[(i.castSucc, 
+                (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[i.castSucc])]) 1 =
+      Fin.foldl n (fun acc i => acc * (Matrix.identity (R := R) n)[(i, v[i])]) 1 := by
     congr
     funext acc i
     rw [identity_get, identity_get]
@@ -564,8 +564,8 @@ private theorem detProduct_identity_insertAt_last {R : Type u}
     rw [hget]
     simp [Fin.ext_iff]
   have hlast :
-      (Matrix.identity (R := R) (n + 1))[Fin.last n][
-        (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[Fin.last n]] = 1 := by
+      (Matrix.identity (R := R) (n + 1))[(Fin.last n, 
+        (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[Fin.last n])] = 1 := by
     rw [identity_get]
     have hself :
         (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[Fin.last n] =

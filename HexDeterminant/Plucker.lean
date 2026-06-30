@@ -94,7 +94,7 @@ def mMatrix {R : Type u} {n : Nat}
     Matrix R (n + 1) (n + 1) :=
   ofFn fun i j =>
     if hj : j.val < n then
-      B[skipIndex p i][(⟨j.val, hj⟩ : Fin n)]
+      B[(skipIndex p i, (⟨j.val, hj⟩ : Fin n))]
     else
       v[skipIndex p i]
 
@@ -103,7 +103,7 @@ through the row-deletion map. -/
 theorem mMatrix_entry_lt {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (v : Vector R (n + 2)) (p : Fin (n + 2))
     (i : Fin (n + 1)) (j : Fin (n + 1)) (h : j.val < n) :
-    (mMatrix B v p)[i][j] = B[skipIndex p i][(⟨j.val, h⟩ : Fin n)] := by
+    (mMatrix B v p)[(i, j)] = B[(skipIndex p i, (⟨j.val, h⟩ : Fin n))] := by
   unfold mMatrix
   rw [getElem_ofFn]
   exact dif_pos h
@@ -113,7 +113,7 @@ deleted. -/
 theorem mMatrix_entry_last {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (v : Vector R (n + 2)) (p : Fin (n + 2))
     (i : Fin (n + 1)) :
-    (mMatrix B v p)[i][Fin.last n] = v[skipIndex p i] := by
+    (mMatrix B v p)[(i, Fin.last n)] = v[skipIndex p i] := by
   have h : ¬ (Fin.last n : Fin (n + 1)).val < n := by
     simp [Fin.last]
   unfold mMatrix
@@ -133,14 +133,14 @@ def mDet {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
 def nMatrix {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val) :
     Matrix R n n :=
-  ofFn fun i j => B[skipIndex2 p q hpq i][j]
+  ofFn fun i j => B[(skipIndex2 p q hpq i, j)]
 
 /-- Entry `(i, j)` of the two-row-deleted minor `nMatrix B p q hpq` is the source
-entry `B[skipIndex2 p q hpq i][j]`. -/
+entry `B[(skipIndex2 p q hpq i, j)]`. -/
 @[grind =] theorem getElem_nMatrix {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (p q : Fin (n + 2)) (hpq : p.val < q.val)
     (i : Fin n) (j : Fin n) :
-    (nMatrix B p q hpq)[i][j] = B[skipIndex2 p q hpq i][j] := by
+    (nMatrix B p q hpq)[(i, j)] = B[(skipIndex2 p q hpq i, j)] := by
   simp [nMatrix, ofFn]
 
 /-- The determinant of `nMatrix B p q hpq`: the `n × n` minor of `B`
@@ -209,7 +209,7 @@ private theorem rowMoveUp_row_of_lt {R : Type u} {n m : Nat}
       rw [rowMoveUp_succ, ih (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩) (by omega)]
       ext j hj
       let jj : Fin m := ⟨j, hj⟩
-      show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[i][jj] = M[i][jj]
+      show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[(i, jj)] = M[(i, jj)]
       rw [rowSwap_get]
       have h_ne_j : i ≠ ⟨src + k + 1, h⟩ := by
         intro heq; have := congrArg Fin.val heq; simp at this; omega
@@ -231,7 +231,7 @@ private theorem rowMoveUp_row_of_gt {R : Type u} {n m : Nat}
         (by omega)]
       ext j hj
       let jj : Fin m := ⟨j, hj⟩
-      show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[i][jj] = M[i][jj]
+      show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[(i, jj)] = M[(i, jj)]
       rw [rowSwap_get]
       have h_ne_j : i ≠ ⟨src + k + 1, h⟩ := by
         intro heq; have := congrArg Fin.val heq; simp at this; omega
@@ -253,9 +253,9 @@ private theorem rowMoveUp_row_eq_src {R : Type u} {n m : Nat}
       rw [rowMoveUp_succ, ih (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩) (by omega)]
       ext j hj
       let jj : Fin m := ⟨j, hj⟩
-      show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[
-          (⟨src + k, by omega⟩ : Fin n)][jj]
-          = M[(⟨src + (k + 1), h⟩ : Fin n)][jj]
+      show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[(
+          (⟨src + k, by omega⟩ : Fin n), jj)]
+          = M[((⟨src + (k + 1), h⟩ : Fin n), jj)]
       rw [rowSwap_get]
       have h_ne_j : (⟨src + k, by omega⟩ : Fin n) ≠ ⟨src + k + 1, h⟩ := by
         intro heq; have := congrArg Fin.val heq; simp at this
@@ -285,9 +285,9 @@ private theorem rowMoveUp_row_between {R : Type u} {n m : Nat}
           h_lt]
         ext j hj
         let jj : Fin m := ⟨j, hj⟩
-        show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[
-            (⟨i.val - 1, by have := i.isLt; omega⟩ : Fin n)][jj] =
-          M[(⟨i.val - 1, by have := i.isLt; omega⟩ : Fin n)][jj]
+        show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[(
+            (⟨i.val - 1, by have := i.isLt; omega⟩ : Fin n), jj)] =
+          M[((⟨i.val - 1, by have := i.isLt; omega⟩ : Fin n), jj)]
         rw [rowSwap_get]
         have h_ne_j :
             (⟨i.val - 1, by have := i.isLt; omega⟩ : Fin n)
@@ -306,8 +306,8 @@ private theorem rowMoveUp_row_between {R : Type u} {n m : Nat}
           (by omega) i h_gt]
         ext j hj
         let jj : Fin m := ⟨j, hj⟩
-        show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[i][jj] =
-          M[(⟨i.val - 1, by have := i.isLt; omega⟩ : Fin n)][jj]
+        show (rowSwap M ⟨src + k, by omega⟩ ⟨src + k + 1, h⟩)[(i, jj)] =
+          M[((⟨i.val - 1, by have := i.isLt; omega⟩ : Fin n), jj)]
         rw [rowSwap_get]
         have h_eq_j : i = (⟨src + k + 1, h⟩ : Fin n) := by
           apply Fin.ext; simp [hi_eq]
@@ -344,8 +344,8 @@ private theorem rowMoveUp_setRow_nMatrix_replace_first
   ext i hi j hj
   let ii : Fin n := ⟨i, hi⟩
   show (rowMoveUp (setRow (nMatrix B a b hab) s B[a]) a.val
-        (t.val - a.val - 2) hsk)[ii][(⟨j, hj⟩ : Fin n)] =
-    (nMatrix B b t hbt)[ii][(⟨j, hj⟩ : Fin n)]
+        (t.val - a.val - 2) hsk)[(ii, (⟨j, hj⟩ : Fin n))] =
+    (nMatrix B b t hbt)[(ii, (⟨j, hj⟩ : Fin n))]
   by_cases h_below : ii.val < a.val
   · -- Below the move interval: both rowMoveUp and setRow leave the row alone.
     have hii_ne_s : ii ≠ s := by
@@ -358,14 +358,14 @@ private theorem rowMoveUp_setRow_nMatrix_replace_first
           (t.val - a.val - 2) hsk ii h_below,
         setRow_row_ne (nMatrix B a b hab) s ii B[a] hii_ne_s]
     let jj : Fin n := ⟨j, hj⟩
-    show (nMatrix B a b hab)[ii][jj] = (nMatrix B b t hbt)[ii][jj]
+    show (nMatrix B a b hab)[(ii, jj)] = (nMatrix B b t hbt)[(ii, jj)]
     rw [getElem_nMatrix, getElem_nMatrix]
     have hii_lt_b : ii.val < b.val := Nat.lt_trans h_below hab
     have hidx : skipIndex2 a b hab ii = skipIndex2 b t hbt ii := by
       apply Fin.ext
       rw [skipIndex2_val_of_lt_p a b hab ii h_below,
           skipIndex2_val_of_lt_p b t hbt ii hii_lt_b]
-    exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+    exact congrArg (fun (x : Fin (n + 2)) => B[(x, jj)]) hidx
   · by_cases h_eq : ii.val = a.val
     · -- At the source of the move: the inserted row B[a] surfaces here.
       have h_row_eq :
@@ -387,14 +387,14 @@ private theorem rowMoveUp_setRow_nMatrix_replace_first
           _ = B[a] := setRow_get_self _ _ _
       rw [h_row_eq]
       let jj : Fin n := ⟨j, hj⟩
-      show B[a][jj] = (nMatrix B b t hbt)[ii][jj]
+      show B[(a, jj)] = (nMatrix B b t hbt)[(ii, jj)]
       rw [getElem_nMatrix]
       have hii_lt_b : ii.val < b.val := by rw [h_eq]; exact hab
       have hidx : skipIndex2 b t hbt ii = a := by
         apply Fin.ext
         rw [skipIndex2_val_of_lt_p b t hbt ii hii_lt_b]
         exact h_eq
-      exact (congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx).symm
+      exact (congrArg (fun (x : Fin (n + 2)) => B[(x, jj)]) hidx).symm
     · by_cases h_above : t.val - 2 < ii.val
       · -- Above the move interval: both rowMoveUp and setRow leave the row alone.
         have h_above' : a.val + (t.val - a.val - 2) < ii.val := by
@@ -408,7 +408,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_first
           rw [hs] at hv; omega
         rw [setRow_row_ne (nMatrix B a b hab) s ii B[a] hii_ne_s]
         let jj : Fin n := ⟨j, hj⟩
-        show (nMatrix B a b hab)[ii][jj] = (nMatrix B b t hbt)[ii][jj]
+        show (nMatrix B a b hab)[(ii, jj)] = (nMatrix B b t hbt)[(ii, jj)]
         rw [getElem_nMatrix, getElem_nMatrix]
         have h_not_lt_a : ¬ ii.val < a.val := h_below
         have h_not_between_lhs : ¬ ii.val + 1 < b.val := by omega
@@ -418,7 +418,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_first
           apply Fin.ext
           rw [skipIndex2_val_of_ge_q a b hab ii h_not_lt_a h_not_between_lhs,
               skipIndex2_val_of_ge_q b t hbt ii h_not_lt_b_rhs h_not_between_rhs]
-        exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+        exact congrArg (fun (x : Fin (n + 2)) => B[(x, jj)]) hidx
       · -- Inside the move interval (strictly): rows shift right by one.
         have h_lt_src : a.val < ii.val := by
           have h1 : ¬ ii.val < a.val := h_below
@@ -438,7 +438,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_first
           omega
         rw [setRow_row_ne (nMatrix B a b hab) s j_minus B[a] hj_ne_s]
         let jj : Fin n := ⟨j, hj⟩
-        show (nMatrix B a b hab)[j_minus][jj] = (nMatrix B b t hbt)[ii][jj]
+        show (nMatrix B a b hab)[(j_minus, jj)] = (nMatrix B b t hbt)[(ii, jj)]
         rw [getElem_nMatrix, getElem_nMatrix]
         have h_not_lt_a : ¬ j_minus.val < a.val := by
           show ¬ ii.val - 1 < a.val; omega
@@ -453,7 +453,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_first
                 skipIndex2_val_of_lt_p b t hbt ii h_lt_b_rhs]
             show ii.val - 1 + 1 = ii.val
             omega
-          exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+          exact congrArg (fun (x : Fin (n + 2)) => B[(x, jj)]) hidx
         · have h_not_between_lhs : ¬ j_minus.val + 1 < b.val := by
             show ¬ ii.val - 1 + 1 < b.val; omega
           have h_not_lt_b_rhs : ¬ ii.val < b.val := h_below_b
@@ -466,7 +466,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_first
                   h_between_rhs]
             show ii.val - 1 + 2 = ii.val + 1
             omega
-          exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+          exact congrArg (fun (x : Fin (n + 2)) => B[(x, jj)]) hidx
 
 /-- For `a < b < t`, replacing row `s` (with `s.val = t.val - 2`) of
 `nMatrix B a b hab` by `B[b]` and then sliding that row up to position
@@ -484,8 +484,8 @@ private theorem rowMoveUp_setRow_nMatrix_replace_second
   let ii : Fin n := ⟨i, hi⟩
   have hat : a.val < t.val := Nat.lt_trans hab hbt
   show (rowMoveUp (setRow (nMatrix B a b hab) s B[b]) (b.val - 1)
-        (t.val - b.val - 1) hsk)[ii][(⟨j, hj⟩ : Fin n)] =
-    (nMatrix B a t hat)[ii][(⟨j, hj⟩ : Fin n)]
+        (t.val - b.val - 1) hsk)[(ii, (⟨j, hj⟩ : Fin n))] =
+    (nMatrix B a t hat)[(ii, (⟨j, hj⟩ : Fin n))]
   by_cases h_below : ii.val < b.val - 1
   · -- Below the move interval.
     have hii_ne_s : ii ≠ s := by
@@ -496,21 +496,21 @@ private theorem rowMoveUp_setRow_nMatrix_replace_second
           (t.val - b.val - 1) hsk ii h_below,
         setRow_row_ne (nMatrix B a b hab) s ii B[b] hii_ne_s]
     let jj : Fin n := ⟨j, hj⟩
-    show (nMatrix B a b hab)[ii][jj] = (nMatrix B a t hat)[ii][jj]
+    show (nMatrix B a b hab)[(ii, jj)] = (nMatrix B a t hat)[(ii, jj)]
     rw [getElem_nMatrix, getElem_nMatrix]
     by_cases h_lt_a : ii.val < a.val
     · have hidx : skipIndex2 a b hab ii = skipIndex2 a t hat ii := by
         apply Fin.ext
         rw [skipIndex2_val_of_lt_p a b hab ii h_lt_a,
             skipIndex2_val_of_lt_p a t hat ii h_lt_a]
-      exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+      exact congrArg (fun (x : Fin (n + 2)) => B[(x, jj)]) hidx
     · have h_between_lhs : ii.val + 1 < b.val := by omega
       have h_between_rhs : ii.val + 1 < t.val := by omega
       have hidx : skipIndex2 a b hab ii = skipIndex2 a t hat ii := by
         apply Fin.ext
         rw [skipIndex2_val_of_between a b hab ii h_lt_a h_between_lhs,
             skipIndex2_val_of_between a t hat ii h_lt_a h_between_rhs]
-      exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+      exact congrArg (fun (x : Fin (n + 2)) => B[(x, jj)]) hidx
   · by_cases h_eq : ii.val = b.val - 1
     · -- At the source of the move: the inserted row B[b] surfaces here.
       have h_row_eq :
@@ -532,7 +532,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_second
           _ = B[b] := setRow_get_self _ _ _
       rw [h_row_eq]
       let jj : Fin n := ⟨j, hj⟩
-      show B[b][jj] = (nMatrix B a t hat)[ii][jj]
+      show B[(b, jj)] = (nMatrix B a t hat)[(ii, jj)]
       rw [getElem_nMatrix]
       have h_not_lt_a : ¬ ii.val < a.val := by
         have : a.val ≤ b.val - 1 := by omega
@@ -543,7 +543,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_second
         rw [skipIndex2_val_of_between a t hat ii h_not_lt_a h_between]
         show ii.val + 1 = b.val
         rw [h_eq]; omega
-      exact (congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx).symm
+      exact (congrArg (fun (x : Fin (n + 2)) => B[(x, jj)]) hidx).symm
     · by_cases h_above : t.val - 2 < ii.val
       · -- Above the move interval.
         have h_above' : b.val - 1 + (t.val - b.val - 1) < ii.val := by
@@ -557,7 +557,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_second
           rw [hs] at hv; omega
         rw [setRow_row_ne (nMatrix B a b hab) s ii B[b] hii_ne_s]
         let jj : Fin n := ⟨j, hj⟩
-        show (nMatrix B a b hab)[ii][jj] = (nMatrix B a t hat)[ii][jj]
+        show (nMatrix B a b hab)[(ii, jj)] = (nMatrix B a t hat)[(ii, jj)]
         rw [getElem_nMatrix, getElem_nMatrix]
         have h_not_lt_a : ¬ ii.val < a.val := by omega
         have h_not_between_lhs : ¬ ii.val + 1 < b.val := by omega
@@ -566,7 +566,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_second
           apply Fin.ext
           rw [skipIndex2_val_of_ge_q a b hab ii h_not_lt_a h_not_between_lhs,
               skipIndex2_val_of_ge_q a t hat ii h_not_lt_a h_not_between_rhs]
-        exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+        exact congrArg (fun (x : Fin (n + 2)) => B[(x, jj)]) hidx
       · -- Inside the move interval (strictly).
         have h_lt_src : b.val - 1 < ii.val := by
           have h1 : ¬ ii.val < b.val - 1 := h_below
@@ -586,7 +586,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_second
           omega
         rw [setRow_row_ne (nMatrix B a b hab) s j_minus B[b] hj_ne_s]
         let jj : Fin n := ⟨j, hj⟩
-        show (nMatrix B a b hab)[j_minus][jj] = (nMatrix B a t hat)[ii][jj]
+        show (nMatrix B a b hab)[(j_minus, jj)] = (nMatrix B a t hat)[(ii, jj)]
         rw [getElem_nMatrix, getElem_nMatrix]
         have h_not_lt_a_lhs : ¬ j_minus.val < a.val := by
           show ¬ ii.val - 1 < a.val
@@ -605,7 +605,7 @@ private theorem rowMoveUp_setRow_nMatrix_replace_second
                 h_between_rhs]
           show ii.val - 1 + 2 = ii.val + 1
           omega
-        exact congrArg (fun (x : Fin (n + 2)) => B[x][jj]) hidx
+        exact congrArg (fun (x : Fin (n + 2)) => B[(x, jj)]) hidx
 
 /-- For ordered rows `r0 < r1 < r2 < r3` of `B : Matrix R (n + 2) n`,
 replacing the `s2 = ⟨r2.val - 2, _⟩` row of `nMatrix B r0 r1 h01` by
@@ -743,8 +743,8 @@ private theorem rowMoveUp_setRow_of_gt {R : Type u} {n m : Nat}
     rowMoveUp (setRow M j v) src k h = setRow (rowMoveUp M src k h) j v := by
   ext i hi jcol hjcol
   let ii : Fin n := ⟨i, hi⟩
-  show (rowMoveUp (setRow M j v) src k h)[ii][(⟨jcol, hjcol⟩ : Fin m)] =
-    (setRow (rowMoveUp M src k h) j v)[ii][(⟨jcol, hjcol⟩ : Fin m)]
+  show (rowMoveUp (setRow M j v) src k h)[(ii, (⟨jcol, hjcol⟩ : Fin m))] =
+    (setRow (rowMoveUp M src k h) j v)[(ii, (⟨jcol, hjcol⟩ : Fin m))]
   by_cases h_eq_j : ii = j
   · -- ii = j: both sides evaluate to v
     have hii_gt : src + k < ii.val := by
@@ -888,7 +888,7 @@ def twoColMatrix {R : Type u} {n : Nat}
     Matrix R (n + 2) (n + 2) :=
   ofFn fun i j =>
     if hj : j.val < n then
-      B[i][(⟨j.val, hj⟩ : Fin n)]
+      B[(i, (⟨j.val, hj⟩ : Fin n))]
     else if hju : j.val = n then
       u[i]
     else
@@ -899,7 +899,7 @@ def twoColMatrix {R : Type u} {n : Nat}
 theorem twoColMatrix_entry_lt {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (u v : Vector R (n + 2))
     (i j : Fin (n + 2)) (h : j.val < n) :
-    (twoColMatrix B u v)[i][j] = B[i][(⟨j.val, h⟩ : Fin n)] := by
+    (twoColMatrix B u v)[(i, j)] = B[(i, (⟨j.val, h⟩ : Fin n))] := by
   unfold twoColMatrix
   rw [getElem_ofFn]
   exact dif_pos h
@@ -908,7 +908,7 @@ theorem twoColMatrix_entry_lt {R : Type u} {n : Nat}
 theorem twoColMatrix_entry_penultimate {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (u v : Vector R (n + 2))
     (i : Fin (n + 2)) :
-    (twoColMatrix B u v)[i][(⟨n, by omega⟩ : Fin (n + 2))] = u[i] := by
+    (twoColMatrix B u v)[(i, (⟨n, by omega⟩ : Fin (n + 2)))] = u[i] := by
   unfold twoColMatrix
   rw [getElem_ofFn]
   have hnlt : ¬ (⟨n, by omega⟩ : Fin (n + 2)).val < n := by
@@ -921,7 +921,7 @@ theorem twoColMatrix_entry_penultimate {R : Type u} {n : Nat}
 theorem twoColMatrix_entry_last {R : Type u} {n : Nat}
     (B : Matrix R (n + 2) n) (u v : Vector R (n + 2))
     (i : Fin (n + 2)) :
-    (twoColMatrix B u v)[i][Fin.last (n + 1)] = v[i] := by
+    (twoColMatrix B u v)[(i, Fin.last (n + 1))] = v[i] := by
   unfold twoColMatrix
   rw [getElem_ofFn]
   have hlast_lt : ¬ (Fin.last (n + 1) : Fin (n + 2)).val < n := by
@@ -945,8 +945,8 @@ theorem deleteRowCol_twoColMatrix_last_eq_mMatrix {R : Type u} {n : Nat}
   ext i hi j hj
   let ii : Fin (n + 1) := ⟨i, hi⟩
   let jj : Fin (n + 1) := ⟨j, hj⟩
-  change (deleteRowCol (twoColMatrix B u v) p (Fin.last (n + 1)))[ii][jj] =
-    (mMatrix B u p)[ii][jj]
+  change (deleteRowCol (twoColMatrix B u v) p (Fin.last (n + 1)))[(ii, jj)] =
+    (mMatrix B u p)[(ii, jj)]
   rw [getElem_deleteRowCol]
   have hcol :
       (skipIndex (Fin.last (n + 1)) jj).val = jj.val := by
@@ -975,17 +975,17 @@ theorem deleteRowCol_twoColMatrix_last_eq_mMatrix {R : Type u} {n : Nat}
       apply Fin.ext
       simp [Fin.last, hjn]
     calc
-      (twoColMatrix B u v)[skipIndex p ii][skipIndex (Fin.last (n + 1)) jj] =
-          (twoColMatrix B u v)[skipIndex p ii][(⟨n, by omega⟩ : Fin (n + 2))] := by
-            exact congrArg (fun c => (twoColMatrix B u v)[skipIndex p ii][c]) hskip_eq
+      (twoColMatrix B u v)[(skipIndex p ii, skipIndex (Fin.last (n + 1)) jj)] =
+          (twoColMatrix B u v)[(skipIndex p ii, (⟨n, by omega⟩ : Fin (n + 2)))] := by
+            exact congrArg (fun c => (twoColMatrix B u v)[(skipIndex p ii, c)]) hskip_eq
       _ = u[skipIndex p ii] := by
             exact twoColMatrix_entry_penultimate B u v (skipIndex p ii)
-      _ = (mMatrix B u p)[ii][jj] := by
+      _ = (mMatrix B u p)[(ii, jj)] := by
             calc
-              u[skipIndex p ii] = (mMatrix B u p)[ii][Fin.last n] := by
+              u[skipIndex p ii] = (mMatrix B u p)[(ii, Fin.last n)] := by
                 exact (mMatrix_entry_last B u p ii).symm
-              _ = (mMatrix B u p)[ii][jj] := by
-                exact (congrArg (fun c => (mMatrix B u p)[ii][c]) hjj_last).symm
+              _ = (mMatrix B u p)[(ii, jj)] := by
+                exact (congrArg (fun c => (mMatrix B u p)[(ii, c)]) hjj_last).symm
 
 /-- Laplace expansion of the two-column determinant along the final column,
 with the remaining minor identified as `mDet B u p`. -/
@@ -1012,9 +1012,9 @@ theorem mMatrix_eq_setCol_last {R : Type u} {n : Nat}
       setCol (mMatrix B w p) (Fin.last n)
         (fun i : Fin (n + 1) => v[skipIndex p i]) := by
   ext i hi j hj
-  change (mMatrix B v p)[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))] =
+  change (mMatrix B v p)[((⟨i, hi⟩ : Fin (n + 1)), (⟨j, hj⟩ : Fin (n + 1)))] =
     (setCol (mMatrix B w p) (Fin.last n)
-        (fun i : Fin (n + 1) => v[skipIndex p i]))[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))]
+        (fun i : Fin (n + 1) => v[skipIndex p i]))[((⟨i, hi⟩ : Fin (n + 1)), (⟨j, hj⟩ : Fin (n + 1)))]
   rw [getElem_setCol]
   by_cases hjlt : j < n
   · have hjne : (⟨j, hj⟩ : Fin (n + 1)) ≠ Fin.last n := by
@@ -1029,7 +1029,7 @@ theorem mMatrix_eq_setCol_last {R : Type u} {n : Nat}
       apply Fin.ext
       simp [Fin.last, hjeq]
     rw [if_pos hjlast]
-    show (mMatrix B v p)[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))] = v[skipIndex p (⟨i, hi⟩ : Fin (n + 1))]
+    show (mMatrix B v p)[((⟨i, hi⟩ : Fin (n + 1)), (⟨j, hj⟩ : Fin (n + 1)))] = v[skipIndex p (⟨i, hi⟩ : Fin (n + 1))]
     unfold mMatrix
     rw [getElem_ofFn]
     have hjnlt : ¬ (⟨j, hj⟩ : Fin (n + 1)).val < n := by
@@ -1236,12 +1236,12 @@ vector: if column `c` of `M` holds `1` at row `q` and `0` elsewhere, then
 theorem det_eq_signed_minor_of_col_basis
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (q c : Fin (n + 1))
-    (hcol : ∀ r : Fin (n + 1), M[r][c] = if r = q then (1 : R) else (0 : R)) :
+    (hcol : ∀ r : Fin (n + 1), M[(r, c)] = if r = q then (1 : R) else (0 : R)) :
     det M = cofactorSign q c * det (deleteRowCol M q c) := by
   rw [det_eq_foldl_laplace_col M c]
   -- Rewrite the body using hcol; only the q-th term survives.
   have hbody : ∀ acc row,
-      acc + M[row][c] * cofactor M row c =
+      acc + M[(row, c)] * cofactor M row c =
         acc + (if row = q then cofactor M q c else (0 : R)) := by
     intro acc row
     rw [hcol row]
@@ -1253,7 +1253,7 @@ theorem det_eq_signed_minor_of_col_basis
       grind
   have hfold :
       (List.finRange (n + 1)).foldl
-          (fun acc row => acc + M[row][c] * cofactor M row c) 0 =
+          (fun acc row => acc + M[(row, c)] * cofactor M row c) 0 =
         (List.finRange (n + 1)).foldl
           (fun acc row =>
             acc + (if row = q then cofactor M q c else (0 : R))) 0 := by
@@ -1281,8 +1281,8 @@ theorem deleteRowCol_mMatrix_at_q_minus_one_eq_nMatrix_of_lt
   let ii : Fin n := ⟨i, hi⟩
   let jj : Fin n := ⟨j, hj⟩
   change (deleteRowCol (mMatrix B v p)
-        (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)) (Fin.last n))[ii][jj] =
-    (nMatrix B p q hpq)[ii][jj]
+        (⟨q.val - 1, by have := q.isLt; omega⟩ : Fin (n + 1)) (Fin.last n))[(ii, jj)] =
+    (nMatrix B p q hpq)[(ii, jj)]
   rw [getElem_deleteRowCol, getElem_nMatrix]
   -- The column index: skipIndex (Fin.last n) jj = jj.castSucc; its val = jj.val < n.
   have hjj_castSucc : (skipIndex (Fin.last n) jj).val = jj.val := by
@@ -1373,8 +1373,8 @@ theorem deleteRowCol_mMatrix_at_q_eq_nMatrix_of_gt
   let ii : Fin n := ⟨i, hi⟩
   let jj : Fin n := ⟨j, hj⟩
   change (deleteRowCol (mMatrix B v p)
-        (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)) (Fin.last n))[ii][jj] =
-    (nMatrix B q p hqp)[ii][jj]
+        (⟨q.val, by have := p.isLt; omega⟩ : Fin (n + 1)) (Fin.last n))[(ii, jj)] =
+    (nMatrix B q p hqp)[(ii, jj)]
   rw [getElem_deleteRowCol, getElem_nMatrix]
   have hjj_castSucc : (skipIndex (Fin.last n) jj).val = jj.val := by
     show (skipIndex (Fin.last n) jj).val = jj.val
@@ -1410,7 +1410,7 @@ theorem mDet_unit_eq_signed_nDet_of_gt
   show (mMatrix B (Vector.unit R q) p).det =
       cofactorSign (R := R) r_q (Fin.last n) * nDet B q p hqp
   have hcol : ∀ r : Fin (n + 1),
-      (mMatrix B (Vector.unit R q) p)[r][Fin.last n] =
+      (mMatrix B (Vector.unit R q) p)[(r, Fin.last n)] =
         if r = r_q then (1 : R) else (0 : R) := by
     intro r
     rw [mMatrix_entry_last, getElem_unit_num]
@@ -1454,7 +1454,7 @@ theorem mDet_unit_eq_signed_nDet_of_lt
   show (mMatrix B (Vector.unit R q) p).det =
       cofactorSign (R := R) r_q (Fin.last n) * nDet B p q hpq
   have hcol : ∀ r : Fin (n + 1),
-      (mMatrix B (Vector.unit R q) p)[r][Fin.last n] =
+      (mMatrix B (Vector.unit R q) p)[(r, Fin.last n)] =
         if r = r_q then (1 : R) else (0 : R) := by
     intro r
     rw [mMatrix_entry_last, getElem_unit_num]

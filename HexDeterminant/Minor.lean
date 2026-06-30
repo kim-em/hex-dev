@@ -93,13 +93,13 @@ This normalizes bottom-right minors to leading prefixes. -/
 @[expose]
 def deleteRowCol {R : Type u} {n : Nat} (M : Matrix R (n + 1) (n + 1))
     (row col : Fin (n + 1)) : Matrix R n n :=
-  ofFn fun i j => M[skipIndex row i][skipIndex col j]
+  ofFn fun i j => M[(skipIndex row i, skipIndex col j)]
 
 /-- Entries of a deleted-row/deleted-column minor are the corresponding source
 entries at the skipped row and column indices. -/
 @[grind =] theorem getElem_deleteRowCol {R : Type u} {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row col : Fin (n + 1)) (i j : Fin n) :
-    (deleteRowCol M row col)[i][j] = M[skipIndex row i][skipIndex col j] := by
+    (deleteRowCol M row col)[(i, j)] = M[(skipIndex row i, skipIndex col j)] := by
   simp [deleteRowCol, ofFn]
 
 /-- Deleting the final row and final column gives the leading prefix.
@@ -111,10 +111,10 @@ This is the minor normalization used by bottom-right cofactor expansion. -/
   ext i hi j hj
   let ii : Fin n := ⟨i, hi⟩
   let jj : Fin n := ⟨j, hj⟩
-  change (deleteRowCol M (Fin.last n) (Fin.last n))[ii][jj] =
-    (principalSubmatrix M n (Nat.le_succ n))[ii][jj]
+  change (deleteRowCol M (Fin.last n) (Fin.last n))[(ii, jj)] =
+    (principalSubmatrix M n (Nat.le_succ n))[(ii, jj)]
   rw [getElem_deleteRowCol]
-  simp [principalSubmatrix, ofFn]
+  simp [principalSubmatrix, ofFn, getElem_rows, Fin.getElem_fin]
 
 /-- Deleting row `row` and column `col` after transposing is the transpose of
 the minor obtained by deleting row `col` and column `row` before transposing. -/
@@ -124,8 +124,8 @@ theorem deleteRowCol_transpose {R : Type u} {n : Nat}
   ext i hi j hj
   let ii : Fin n := ⟨i, hi⟩
   let jj : Fin n := ⟨j, hj⟩
-  change (deleteRowCol M.transpose row col)[ii][jj] =
-    (deleteRowCol M col row).transpose[ii][jj]
+  change (deleteRowCol M.transpose row col)[(ii, jj)] =
+    (deleteRowCol M col row).transpose[(ii, jj)]
   simp [deleteRowCol, ofFn, Matrix.transpose, Matrix.col]
 
 /-- The alternating sign used in signed cofactors. -/

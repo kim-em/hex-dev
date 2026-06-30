@@ -609,10 +609,10 @@ with the column index permuted by `perm`: entry `(r, c)` agrees with entry
     {R : Type u} {n m : Nat} (A : Matrix R n m)
     (sel : Vector (Fin m) n) (perm : Vector (Fin n) n)
     (r c : Fin n) :
-    (columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)))[r][c] =
-      (columnTupleMatrix A (columnTupleVectorFn sel))[r][perm[c]] := by
+    (columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)))[(r, c)] =
+      (columnTupleMatrix A (columnTupleVectorFn sel))[(r, perm[c])] := by
   rw [getElem_columnTupleMatrix, getElem_columnTupleMatrix]
-  exact congrArg (fun col : Fin m => A[r][col])
+  exact congrArg (fun col : Fin m => A[(r, col)])
     (getElem_reconstructInjTuple sel perm c)
 
 private theorem columnTupleMatrix_reconstructInjTuple_eq
@@ -622,11 +622,11 @@ private theorem columnTupleMatrix_reconstructInjTuple_eq
       columnTupleMatrix A (fun i => sel[perm[i]]) := by
   ext r hr c hc
   change
-    (columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)))[
-        (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
-      (columnTupleMatrix A (fun i => sel[perm[i]]))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
+    (columnTupleMatrix A (columnTupleVectorFn (reconstructInjTuple sel perm)))[(
+        (⟨r, hr⟩ : Fin n), (⟨c, hc⟩ : Fin n))] =
+      (columnTupleMatrix A (fun i => sel[perm[i]]))[((⟨r, hr⟩ : Fin n), (⟨c, hc⟩ : Fin n))]
   rw [getElem_columnTupleMatrix, getElem_columnTupleMatrix]
-  exact congrArg (fun col : Fin m => A[(⟨r, hr⟩ : Fin n)][col])
+  exact congrArg (fun col : Fin m => A[((⟨r, hr⟩ : Fin n), col)])
     (getElem_reconstructInjTuple sel perm (⟨c, hc⟩ : Fin n))
 
 /-- Reconstructing an injective tuple from a selected tuple and a permutation
@@ -640,7 +640,7 @@ theorem columnTupleCoeff_reconstructInjTuple
   apply foldl_det_product_congr
   intro i _hmem
   rw [getElem_columnTupleMatrix]
-  exact congrArg (fun col : Fin m => A[i][col])
+  exact congrArg (fun col : Fin m => A[(i, col)])
     (getElem_reconstructInjTuple sel perm i)
 
 /-- Counting how many entries of `List.finRange n` have value `< k`. -/
@@ -1162,9 +1162,9 @@ theorem columnTupleMatrix_takeRows_firstColumns_eq_principalSubmatrix
       principalSubmatrix M k hk := by
   ext i hi j hj
   change
-    (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn (firstColumns k n hk)))[
-        (⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)] =
-      (principalSubmatrix M k hk)[(⟨i, hi⟩ : Fin k)][(⟨j, hj⟩ : Fin k)]
+    (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn (firstColumns k n hk)))[(
+        (⟨i, hi⟩ : Fin k), (⟨j, hj⟩ : Fin k))] =
+      (principalSubmatrix M k hk)[((⟨i, hi⟩ : Fin k), (⟨j, hj⟩ : Fin k))]
   simp [columnTupleMatrix, takeRows, principalSubmatrix, columnTupleVectorFn, firstColumns, ofFn]
 
 /-- The Gram determinant of the first `k` rows of a positive-diagonal integer
@@ -1172,8 +1172,8 @@ upper-triangular matrix is strictly positive. The leading-principal minor
 provides a positive square term in the Cauchy-Binet expansion. -/
 theorem det_gramMatrix_takeRows_pos_of_upperTriangular_pos_diag
     {n : Nat} (M : Matrix Int n n)
-    (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0)
-    (hdiag : ∀ i : Fin n, 0 < M[i][i])
+    (hzero : ∀ i j : Fin n, j.val < i.val → M[(i, j)] = 0)
+    (hdiag : ∀ i : Fin n, 0 < M[(i, i)])
     (k : Nat) (hk : k ≤ n) :
     0 < det (gramMatrix (takeRows M k hk)) := by
   rw [det_gramMatrix_eq_sum_minors_sq (takeRows M k hk)]
@@ -1186,19 +1186,19 @@ theorem det_gramMatrix_takeRows_pos_of_upperTriangular_pos_diag
     dsimp [cols]
     rw [columnTupleMatrix_takeRows_firstColumns_eq_principalSubmatrix M k hk]
   have hprefixZero :
-      ∀ i j : Fin k, j.val < i.val → (principalSubmatrix M k hk)[i][j] = 0 := by
+      ∀ i j : Fin k, j.val < i.val → (principalSubmatrix M k hk)[(i, j)] = 0 := by
     intro i j hij
     let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
     let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
-    have hentry : (principalSubmatrix M k hk)[i][j] = M[ii][jj] := by
+    have hentry : (principalSubmatrix M k hk)[(i, j)] = M[(ii, jj)] := by
       simp [principalSubmatrix, ofFn, ii, jj]
     rw [hentry]
     exact hzero ii jj hij
   have hprefixDiag :
-      ∀ i : Fin k, 0 < (principalSubmatrix M k hk)[i][i] := by
+      ∀ i : Fin k, 0 < (principalSubmatrix M k hk)[(i, i)] := by
     intro i
     let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
-    have hentry : (principalSubmatrix M k hk)[i][i] = M[ii][ii] := by
+    have hentry : (principalSubmatrix M k hk)[(i, i)] = M[(ii, ii)] := by
       simp [principalSubmatrix, ofFn, ii]
     rw [hentry]
     exact hdiag ii

@@ -19,7 +19,7 @@ variable {α : Type u}
 /-! ### Adjugate matrix and `M * adjugate M = det M • 1`
 
 The local adjugate matrix is the transpose of the cofactor matrix. The
-defining property is `(M * adjugate M)[i][j] = det M * δᵢⱼ`, which we
+defining property is `(M * adjugate M)[(i, j)] = det M * δᵢⱼ`, which we
 prove entrywise via Laplace expansion. The off-diagonal case uses the
 "alien cofactor" identity: expanding row `i` against the cofactors of a
 different row `j` collapses to the determinant of a matrix with two
@@ -37,11 +37,11 @@ theorem deleteRowCol_setRow_self {R : Type u} {n : Nat}
   ext i hi j hj
   let ii : Fin n := ⟨i, hi⟩
   let jj : Fin n := ⟨j, hj⟩
-  change (deleteRowCol (setRow M dst v) dst col)[ii][jj] =
-    (deleteRowCol M dst col)[ii][jj]
+  change (deleteRowCol (setRow M dst v) dst col)[(ii, jj)] =
+    (deleteRowCol M dst col)[(ii, jj)]
   rw [getElem_deleteRowCol, getElem_deleteRowCol]
   have hne : skipIndex dst ii ≠ dst := skipIndex_ne dst ii
-  have hrow := setRow_row_ne M dst (skipIndex dst ii) v hne
+  have hrow := getRow_setRow_ne M dst (skipIndex dst ii) v hne
   exact congrArg (fun row => row[skipIndex col jj]) hrow
 
 /-- The cofactor expansion of `setRow M dst v` along the replaced row
@@ -73,15 +73,15 @@ theorem det_setRow_eq_cofactorRowPairing
   unfold cofactorRowPairing
   apply foldl_acc_congr
   intro acc col _hmem
-  rw [show (setRow M row v)[row][col] = v[col] by
-    rw [setRow_get_self]]
+  rw [show (setRow M row v)[(row, col)] = v[col] by
+    simp [getElem_setRow]]
   rw [cofactor_setRow_self M row col v]
 
 /-- Pairing the original row against its own cofactor row recovers `det M`. -/
 theorem cofactorRowPairing_self
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row : Fin (n + 1)) :
-    cofactorRowPairing M row M[row] = det M := by
+    cofactorRowPairing M row (getRow M row) = det M := by
   exact (det_eq_foldl_laplace_row M row).symm
 
 /-- The "alien cofactor" identity: expanding row `i` of `M` against the
@@ -91,23 +91,23 @@ theorem foldl_alien_cofactor_eq_zero
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) (hij : i ≠ j) :
     (List.finRange (n + 1)).foldl
-        (fun acc k => acc + M[i][k] * cofactor M j k) 0 = 0 := by
-  let N : Matrix R (n + 1) (n + 1) := setRow M j M[i]
-  have hNi : N[i] = M[i] := setRow_row_ne M j i M[i] hij
-  have hNj : N[j] = M[i] := setRow_get_self M j M[i]
-  have hrows : N[i] = N[j] := hNi.trans hNj.symm
+        (fun acc k => acc + M[(i, k)] * cofactor M j k) 0 = 0 := by
+  let N : Matrix R (n + 1) (n + 1) := setRow M j (getRow M i)
+  have hNi : (getRow N i) = (getRow M i) := getRow_setRow_ne M j i (getRow M i) hij
+  have hNj : (getRow N j) = (getRow M i) := getRow_setRow_self M j (getRow M i)
+  have hrows : (getRow N i) = (getRow N j) := hNi.trans hNj.symm
   have hdetN : det N = 0 := det_eq_zero_of_row_eq N i j hij hrows
   have hLaplace := det_eq_foldl_laplace_row N j
   have hcof :
       (List.finRange (n + 1)).foldl
-          (fun acc k => acc + N[j][k] * cofactor N j k) 0 =
+          (fun acc k => acc + N[(j, k)] * cofactor N j k) 0 =
         (List.finRange (n + 1)).foldl
-          (fun acc k => acc + M[i][k] * cofactor M j k) 0 := by
+          (fun acc k => acc + M[(i, k)] * cofactor M j k) 0 := by
     apply foldl_acc_congr
     intro acc k _hmem
-    have hentry : N[j][k] = M[i][k] := congrArg (fun row => row[k]) hNj
+    have hentry : N[(j, k)] = M[(i, k)] := congrArg (fun row => row[k]) hNj
     have hcofk : cofactor N j k = cofactor M j k :=
-      cofactor_setRow_self M j k M[i]
+      cofactor_setRow_self M j k (getRow M i)
     rw [hentry, hcofk]
   rw [hcof] at hLaplace
   exact hLaplace.symm.trans hdetN
@@ -116,7 +116,7 @@ theorem foldl_alien_cofactor_eq_zero
 theorem cofactorRowPairing_alien_eq_zero
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) (hij : i ≠ j) :
-    cofactorRowPairing M j M[i] = 0 := by
+    cofactorRowPairing M j (getRow M i) = 0 := by
   exact foldl_alien_cofactor_eq_zero M i j hij
 
 /-- The local adjugate matrix: entry `(i, j)` is the cofactor at row `j`,
@@ -130,7 +130,7 @@ def adjugate {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
 (the transpose of the cofactor matrix). -/
 @[grind =] theorem adjugate_get {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) :
-    (adjugate M)[i][j] = cofactor M j i := by
+    (adjugate M)[(i, j)] = cofactor M j i := by
   simp [adjugate, ofFn]
 
 /-- Entrywise version of `M * adjugate M = det M • 1`. On the diagonal
@@ -138,28 +138,28 @@ this is Laplace expansion of `det M`; off the diagonal it is the alien
 cofactor identity. -/
 theorem mul_adjugate_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) :
-    (M * adjugate M)[i][j] =
+    (M * adjugate M)[(i, j)] =
       if i = j then det M else 0 := by
   have hmul :
-      (M * adjugate M)[i][j] =
+      (M * adjugate M)[(i, j)] =
         (row M i).dotProduct (col (adjugate M) j) := by
-    change (Matrix.mul M (adjugate M))[i][j] = _
+    change (Matrix.mul M (adjugate M))[(i, j)] = _
     unfold Matrix.mul
     show
-      (ofFn fun i j => (row M i).dotProduct (col (adjugate M) j))[i][j] =
+      (ofFn fun i j => (row M i).dotProduct (col (adjugate M) j))[(i, j)] =
         _
     simp [ofFn]
   have hentry :
-      (M * adjugate M)[i][j] =
+      (M * adjugate M)[(i, j)] =
         (List.finRange (n + 1)).foldl
-          (fun acc k => acc + M[i][k] * cofactor M j k) 0 := by
+          (fun acc k => acc + M[(i, k)] * cofactor M j k) 0 := by
     rw [hmul]
     unfold Vector.dotProduct
     apply foldl_acc_congr
     intro acc k _hmem
     congr 1
-    have hrow : (row M i)[k] = M[i][k] := rfl
-    have hcol : (col (adjugate M) j)[k] = (adjugate M)[k][j] := by
+    have hrow : (row M i)[k] = M[(i, k)] := rfl
+    have hcol : (col (adjugate M) j)[k] = (adjugate M)[(k, j)] := by
       simp [col]
     rw [hrow, hcol, adjugate_get]
   by_cases hij : i = j
@@ -175,41 +175,41 @@ This is the transpose-side companion to `mul_adjugate_apply`; it is useful
 when cofactor identities are consumed columnwise rather than rowwise. -/
 theorem adjugate_mul_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) :
-    (adjugate M * M)[i][j] =
+    (adjugate M * M)[(i, j)] =
       if i = j then det M else 0 := by
   have hentry :
-      (adjugate M * M)[i][j] =
-        (M.transpose * adjugate M.transpose)[j][i] := by
+      (adjugate M * M)[(i, j)] =
+        (M.transpose * adjugate M.transpose)[(j, i)] := by
     have hleft :
-        (adjugate M * M)[i][j] =
+        (adjugate M * M)[(i, j)] =
           (List.finRange (n + 1)).foldl
-            (fun acc k => acc + cofactor M k i * M[k][j]) 0 := by
-      change (Matrix.mul (adjugate M) M)[i][j] = _
+            (fun acc k => acc + cofactor M k i * M[(k, j)]) 0 := by
+      change (Matrix.mul (adjugate M) M)[(i, j)] = _
       unfold Matrix.mul
       rw [getElem_ofFn]
       unfold Vector.dotProduct
       apply foldl_acc_congr
       intro acc k _hmem
-      have hrow : (row (adjugate M) i)[k] = (adjugate M)[i][k] := rfl
-      have hcol : (col M j)[k] = M[k][j] := by
+      have hrow : (row (adjugate M) i)[k] = (adjugate M)[(i, k)] := rfl
+      have hcol : (col M j)[k] = M[(k, j)] := by
         simp [col]
       rw [hrow, hcol, adjugate_get]
     have hright :
-        (M.transpose * adjugate M.transpose)[j][i] =
+        (M.transpose * adjugate M.transpose)[(j, i)] =
           (List.finRange (n + 1)).foldl
-            (fun acc k => acc + M[k][j] * cofactor M k i) 0 := by
-      change (Matrix.mul M.transpose (adjugate M.transpose))[j][i] = _
+            (fun acc k => acc + M[(k, j)] * cofactor M k i) 0 := by
+      change (Matrix.mul M.transpose (adjugate M.transpose))[(j, i)] = _
       unfold Matrix.mul
       rw [getElem_ofFn]
       unfold Vector.dotProduct
       apply foldl_acc_congr
       intro acc k _hmem
-      have hrow : (row M.transpose j)[k] = M[k][j] := by
+      have hrow : (row M.transpose j)[k] = M[(k, j)] := by
         simp [row, transpose, col]
       have hcol : (col (adjugate M.transpose) i)[k] =
           cofactor M k i := by
         have hcol' : (col (adjugate M.transpose) i)[k] =
-            (adjugate M.transpose)[k][i] := by
+            (adjugate M.transpose)[(k, i)] := by
           simp [col]
         rw [hcol', adjugate_get, cofactor_transpose]
       rw [hrow, hcol]
@@ -228,14 +228,14 @@ theorem adjugate_mul_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
 /-- Column-`0` view of `M * adjugate M`. -/
 theorem mul_adjugate_apply_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i : Fin (n + 1)) :
-    (M * adjugate M)[i][(0 : Fin (n + 1))] =
+    (M * adjugate M)[(i, (0 : Fin (n + 1)))] =
       if i = 0 then det M else 0 :=
   mul_adjugate_apply M i 0
 
 /-- Last-column view of `M * adjugate M`. -/
 theorem mul_adjugate_apply_last {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i : Fin (n + 1)) :
-    (M * adjugate M)[i][Fin.last n] =
+    (M * adjugate M)[(i, Fin.last n)] =
       if i = Fin.last n then det M else 0 :=
   mul_adjugate_apply M i (Fin.last n)
 
@@ -243,7 +243,7 @@ theorem mul_adjugate_apply_last {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
 theorem adjugate_eq_cofactorSign_mul_deleteRowCol
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) :
-    (adjugate M)[i][j] = cofactorSign j i * det (deleteRowCol M j i) := by
+    (adjugate M)[(i, j)] = cofactorSign j i * det (deleteRowCol M j i) := by
   rw [adjugate_get]
   rfl
 
@@ -252,7 +252,7 @@ obtained by deleting row `0` and column `0`. -/
 @[grind =] theorem adjugate_zero_zero
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
-    (adjugate M)[(0 : Fin (n + 1))][(0 : Fin (n + 1))] =
+    (adjugate M)[((0 : Fin (n + 1)), (0 : Fin (n + 1)))] =
       det (deleteRowCol M 0 0) := by
   rw [adjugate_get]
   exact cofactor_of_even M 0 0 (by simp)
@@ -262,7 +262,7 @@ the leading prefix minor obtained by deleting the last row and column. -/
 @[grind =] theorem adjugate_last_last
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
-    (adjugate M)[Fin.last n][Fin.last n] =
+    (adjugate M)[(Fin.last n, Fin.last n)] =
       det (principalSubmatrix M n (Nat.le_succ n)) := by
   rw [adjugate_get]
   exact cofactor_last_last M
@@ -291,15 +291,13 @@ private theorem ofFn_mem_permutationVectors {n : Nat}
 private theorem columnTupleMatrix_eq_ofFn_ofFn
     {R : Type u} {n : Nat} (M : Matrix R n n) (cols : Fin n → Fin n) :
     columnTupleMatrix M cols =
-      (ofFn fun r c => M[r][(Vector.ofFn cols)[c]] : Matrix R n n) := by
+      (ofFn fun r c => M[(r, (Vector.ofFn cols)[c])] : Matrix R n n) := by
   ext r hr c hc
-  show (columnTupleMatrix M cols)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
-    (ofFn (fun r c => M[r][(Vector.ofFn cols)[c]]) : Matrix R n n)[
-      (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [getElem_columnTupleMatrix]
-  unfold ofFn
-  rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
-  exact congrArg (fun col : Fin n => M[(⟨r, hr⟩ : Fin n)][col])
+  show (columnTupleMatrix M cols)[((⟨r, hr⟩ : Fin n), (⟨c, hc⟩ : Fin n))] =
+    (ofFn (fun r c => M[(r, (Vector.ofFn cols)[c])]) : Matrix R n n)[(
+      (⟨r, hr⟩ : Fin n), (⟨c, hc⟩ : Fin n))]
+  rw [getElem_columnTupleMatrix, getElem_ofFn]
+  exact congrArg (fun col : Fin n => M[((⟨r, hr⟩ : Fin n), col)])
     (vector_ofFn_getElem_fin cols (⟨c, hc⟩ : Fin n)).symm
 
 private theorem det_columnTupleMatrix_of_injective
@@ -334,22 +332,19 @@ private theorem mul_eq_columnSumMatrix_transpose
   ext r hr c hc
   let rr : Fin n := ⟨r, hr⟩
   let cc : Fin n := ⟨c, hc⟩
-  show (M * N)[rr][cc] = (columnSumMatrix M N.transpose)[rr][cc]
+  show (M * N)[(rr, cc)] = (columnSumMatrix M N.transpose)[(rr, cc)]
   rw [getElem_columnSumMatrix]
-  change (Matrix.mul M N)[rr][cc] = _
-  unfold Matrix.mul ofFn
-  rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
+  change (Matrix.mul M N)[(rr, cc)] = _
+  unfold Matrix.mul
+  rw [getElem_ofFn]
   unfold Vector.dotProduct
   apply foldl_det_sum_congr
   intro k _
-  have hrow : (row M rr)[k] = M[rr][k] := by simp [row]
-  have hcol : (col N cc)[k] = N[k][cc] := by
-    show (Vector.ofFn (fun i : Fin n => N[i][cc]))[k] = N[k][cc]
+  have hrow : (row M rr)[k] = M[(rr, k)] := getElem_row M rr k
+  have hcol : (col N cc)[k] = N[(k, cc)] := by
+    show (Vector.ofFn (fun i : Fin n => N[(i, cc)]))[k] = N[(k, cc)]
     exact vector_ofFn_getElem_fin _ k
-  have htrn : N.transpose[cc][k] = N[k][cc] := by
-    show (Vector.ofFn (fun j : Fin n => col N j))[cc][k] = N[k][cc]
-    rw [vector_ofFn_getElem_fin]
-    exact hcol
+  have htrn : N.transpose[(cc, k)] = N[(k, cc)] := getElem_transpose N cc k
   rw [hrow, hcol, htrn]
   exact Lean.Grind.CommSemiring.mul_comm _ _
 
@@ -452,14 +447,14 @@ adjugate identity, computed by expanding the `(c, s)` entry of
 `adjugate (setRow M r u) * (setRow M r u * adjugate M)` in two ways. -/
 
 /-- Entry formula for matrix multiplication: the `(i, j)` entry of `A * B`
-is the `foldl`-sum of `A[i][l] * B[l][j]` over `l`. -/
+is the `foldl`-sum of `A[(i, l)] * B[(l, j)]` over `l`. -/
 private theorem mul_apply_foldl
     {R : Type u} [Lean.Grind.CommRing R] {n m k : Nat}
     (A : Matrix R n m) (B : Matrix R m k) (i : Fin n) (j : Fin k) :
-    (A * B)[i][j] =
+    (A * B)[(i, j)] =
       (List.finRange m).foldl
-        (fun acc l => acc + A[i][l] * B[l][j]) 0 := by
-  change (Matrix.mul A B)[i][j] = _
+        (fun acc l => acc + A[(i, l)] * B[(l, j)]) 0 := by
+  change (Matrix.mul A B)[(i, j)] = _
   unfold Matrix.mul
   rw [getElem_ofFn]
   unfold Vector.dotProduct
@@ -474,13 +469,13 @@ private theorem setRow_mul_adjugate_apply_row
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (r : Fin (n + 1)) (u : Vector R (n + 1))
     (i s : Fin (n + 1)) :
-    (setRow M r u * adjugate M)[i][s] =
-      cofactorRowPairing M s ((setRow M r u)[i]) := by
+    (setRow M r u * adjugate M)[(i, s)] =
+      cofactorRowPairing M s ((getRow (setRow M r u) i)) := by
   rw [mul_apply_foldl]
   unfold cofactorRowPairing
   apply foldl_acc_congr
   intro acc l _hmem
-  rw [adjugate_get]
+  rw [adjugate_get, getRow_getElem]
 
 /-- The replaced row contributes the cofactor-row pairing of `u` against the
 `s`-row cofactors of the original matrix. -/
@@ -488,8 +483,8 @@ private theorem setRow_mul_adjugate_apply_self
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (r : Fin (n + 1)) (u : Vector R (n + 1))
     (s : Fin (n + 1)) :
-    (setRow M r u * adjugate M)[r][s] = cofactorRowPairing M s u := by
-  rw [setRow_mul_adjugate_apply_row, setRow_get_self]
+    (setRow M r u * adjugate M)[(r, s)] = cofactorRowPairing M s u := by
+  rw [setRow_mul_adjugate_apply_row, getRow_setRow_self]
 
 /-- Non-replaced rows of `setRow M r u * adjugate M` reproduce the
 `M * adjugate M` structure: `det M` on the diagonal, zero off-diagonal. -/
@@ -497,8 +492,8 @@ private theorem setRow_mul_adjugate_apply_ne
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (r : Fin (n + 1)) (u : Vector R (n + 1))
     (i s : Fin (n + 1)) (hir : i ≠ r) :
-    (setRow M r u * adjugate M)[i][s] = if i = s then det M else 0 := by
-  rw [setRow_mul_adjugate_apply_row, setRow_row_ne M r i u hir]
+    (setRow M r u * adjugate M)[(i, s)] = if i = s then det M else 0 := by
+  rw [setRow_mul_adjugate_apply_row, getRow_setRow_ne M r i u hir]
   by_cases his : i = s
   · subst his
     rw [if_pos rfl]
@@ -554,7 +549,7 @@ private theorem det_mul_cofactor_setRow_eq
   -- `adjugate_mul_apply` reduces the inner factor to `if c = l then det
   -- (setRow M r u) else 0`, and the remaining `foldl` extracts the `l = c` term.
   have hway1 :
-      (adjugate (setRow M r u) * (setRow M r u * adjugate M))[c][s] =
+      (adjugate (setRow M r u) * (setRow M r u * adjugate M))[(c, s)] =
         det (setRow M r u) * cofactor M s c := by
     rw [show adjugate (setRow M r u) * (setRow M r u * adjugate M) =
             (adjugate (setRow M r u) * setRow M r u) * adjugate M
@@ -564,8 +559,8 @@ private theorem det_mul_cofactor_setRow_eq
     have hcongr :
         (List.finRange (n + 1)).foldl
             (fun acc l =>
-              acc + (adjugate (setRow M r u) * setRow M r u)[c][l] *
-                (adjugate M)[l][s]) 0 =
+              acc + (adjugate (setRow M r u) * setRow M r u)[(c, l)] *
+                (adjugate M)[(l, s)]) 0 =
           (List.finRange (n + 1)).foldl
             (fun acc l =>
               acc + if l = c then
@@ -591,24 +586,24 @@ private theorem det_mul_cofactor_setRow_eq
   -- over `i`. Decompose the body via `setRow_mul_adjugate_apply_self` / `_ne`
   -- into two single-extract terms.
   have hway2 :
-      (adjugate (setRow M r u) * (setRow M r u * adjugate M))[c][s] =
+      (adjugate (setRow M r u) * (setRow M r u * adjugate M))[(c, s)] =
         cofactor M r c * cofactorRowPairing M s u +
           det M * cofactor (setRow M r u) s c := by
     rw [mul_apply_foldl (adjugate (setRow M r u)) (setRow M r u * adjugate M) c s]
     have hbody :
         (List.finRange (n + 1)).foldl
             (fun acc i =>
-              acc + (adjugate (setRow M r u))[c][i] *
-                (setRow M r u * adjugate M)[i][s]) 0 =
+              acc + (adjugate (setRow M r u))[(c, i)] *
+                (setRow M r u * adjugate M)[(i, s)]) 0 =
           (List.finRange (n + 1)).foldl
             (fun acc i =>
               acc +
                 ((if i = r then
-                    (adjugate (setRow M r u))[c][i] *
+                    (adjugate (setRow M r u))[(c, i)] *
                       cofactorRowPairing M s u
                   else 0) +
                  (if i = s then
-                    (adjugate (setRow M r u))[c][i] * det M
+                    (adjugate (setRow M r u))[(c, i)] * det M
                   else 0))) 0 := by
       apply foldl_acc_congr
       intro acc i _hmem
@@ -627,17 +622,17 @@ private theorem det_mul_cofactor_setRow_eq
     rw [hbody, foldl_det_sum_add_zero]
     have hr_extract :=
       foldl_add_with_unique_match (α := R) (List.finRange (n + 1)) (0 : R) r
-        (fun i => (adjugate (setRow M r u))[c][i] * cofactorRowPairing M s u)
+        (fun i => (adjugate (setRow M r u))[(c, i)] * cofactorRowPairing M s u)
         (List.mem_finRange r) (List.nodup_finRange (n + 1))
     have hs_extract :=
       foldl_add_with_unique_match (α := R) (List.finRange (n + 1)) (0 : R) s
-        (fun i => (adjugate (setRow M r u))[c][i] * det M)
+        (fun i => (adjugate (setRow M r u))[(c, i)] * det M)
         (List.mem_finRange s) (List.nodup_finRange (n + 1))
     rw [hr_extract, hs_extract]
     -- Beta-reduce the extracted lambdas.
     show (0 : R) +
-        (adjugate (setRow M r u))[c][r] * cofactorRowPairing M s u +
-        ((0 : R) + (adjugate (setRow M r u))[c][s] * det M) =
+        (adjugate (setRow M r u))[(c, r)] * cofactorRowPairing M s u +
+        ((0 : R) + (adjugate (setRow M r u))[(c, s)] * det M) =
         cofactor M r c * cofactorRowPairing M s u +
           det M * cofactor (setRow M r u) s c
     rw [adjugate_get (setRow M r u) c r, adjugate_get (setRow M r u) c s]
