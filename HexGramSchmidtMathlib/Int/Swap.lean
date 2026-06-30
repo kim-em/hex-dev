@@ -713,6 +713,7 @@ theorem gramDet_pos_of_upperTriangular_pos_diag
       have hlead :
           Matrix.gramMatrix (Matrix.takeRows M (r + 1) hk) =
             Matrix.principalSubmatrix (Matrix.gramMatrix M) (r + 1) hk := by
+        apply Hex.Matrix.ext
         apply Vector.ext
         intro i hi
         apply Vector.ext

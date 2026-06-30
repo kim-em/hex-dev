@@ -174,14 +174,12 @@ theorem mul_adjugate {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) :
     M * adjugate M = det M • Matrix.identity (n + 1) := by
   ext i hi j hj
-  have hid : ((Matrix.identity (n + 1))[i]'hi)[j]'hj
+  have hid : ((Matrix.identity (n + 1))[(⟨i, hi⟩ : Fin (n + 1))])[(⟨j, hj⟩ : Fin (n + 1))]
       = if (⟨i, hi⟩ : Fin (n + 1)) = ⟨j, hj⟩ then (1 : R) else 0 := by
     simp [Matrix.identity, ofFn]
   show (M * adjugate M)[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))] =
     (det M • Matrix.identity (n + 1))[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))]
-  rw [mul_adjugate_apply]
-  simp only [Vector.getElem_smul, Fin.getElem_fin]
-  rw [hid]
+  rw [mul_adjugate_apply, Matrix.smul_getElem, hid]
   clear hid
   by_cases h : (⟨i, hi⟩ : Fin (n + 1)) = ⟨j, hj⟩
   · rw [if_pos h, if_pos h]; show det M = det M * 1; grind
@@ -314,9 +312,7 @@ private theorem columnTupleMatrix_eq_ofFn_ofFn
   show (columnTupleMatrix M cols)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
     (ofFn (fun r c => M[r][(Vector.ofFn cols)[c]]) : Matrix R n n)[
       (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [getElem_columnTupleMatrix]
-  unfold ofFn
-  rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
+  rw [getElem_columnTupleMatrix, getElem_ofFn]
   exact congrArg (fun col : Fin n => M[(⟨r, hr⟩ : Fin n)][col])
     (vector_ofFn_getElem_fin cols (⟨c, hc⟩ : Fin n)).symm
 
@@ -355,20 +351,13 @@ private theorem mul_eq_columnSumMatrix_transpose
   show (M * N)[rr][cc] = (columnSumMatrix M N.transpose)[rr][cc]
   rw [getElem_columnSumMatrix]
   change (Matrix.mul M N)[rr][cc] = _
-  unfold Matrix.mul ofFn
-  rw [vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
+  unfold Matrix.mul
+  rw [getElem_ofFn]
   unfold Vector.dotProduct
   apply List.foldl_add_congr
   intro k _
-  have hrow : (row M rr)[k] = M[rr][k] := by simp [row]
-  have hcol : (col N cc)[k] = N[k][cc] := by
-    show (Vector.ofFn (fun i : Fin n => N[i][cc]))[k] = N[k][cc]
-    exact vector_ofFn_getElem_fin _ k
-  have htrn : N.transpose[cc][k] = N[k][cc] := by
-    show (Vector.ofFn (fun j : Fin n => col N j))[cc][k] = N[k][cc]
-    rw [vector_ofFn_getElem_fin]
-    exact hcol
-  rw [hrow, hcol, htrn]
+  simp only [getElem_pair_eq_nested]
+  rw [getElem_row, getElem_col, getElem_transpose]
   exact Lean.Grind.CommSemiring.mul_comm _ _
 
 private theorem eq_columnSumMatrix_one_transpose

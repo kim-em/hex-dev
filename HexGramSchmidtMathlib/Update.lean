@@ -122,6 +122,7 @@ private theorem leadingGramMatrixInt_rowSwap_outside
       GramSchmidt.leadingGramMatrixInt b t ht := by
   rw [GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram,
       GramSchmidt.leadingGramMatrixInt_eq_principalSubmatrix_gram]
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro p hp
   apply Vector.ext
@@ -187,6 +188,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
   let M : Matrix Int t t := Matrix.principalSubmatrix (Matrix.gramMatrix b) t ht
   show Matrix.principalSubmatrix (Matrix.gramMatrix (Matrix.rowSwap b km1 k)) t ht =
        (Matrix.rowSwap ((Matrix.rowSwap M km1' k').transpose) km1' k').transpose
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro p hp
   apply Vector.ext
@@ -236,7 +238,7 @@ private theorem leadingGramMatrixInt_rowSwap_inside
       · simp [hpk, hpkm1]
   have heq_get_swap : ∀ (r r' : Fin n), r = r' →
       (Matrix.rowSwap b km1 k)[r] = (Matrix.rowSwap b km1 k)[r'] := by
-    intros r r' h; exact congrArg (Matrix.rowSwap b km1 k).get h
+    intros r r' h; exact congrArg (Matrix.rowSwap b km1 k).getRow h
   by_cases hqk : qq = k'
   · simp only [if_pos hqk]
     rw [entry_after_outer_swap km1']

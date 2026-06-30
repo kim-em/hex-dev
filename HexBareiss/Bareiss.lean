@@ -59,7 +59,7 @@ def lastDiag? (M : Matrix Int n n) : Option Int :=
   | 0 => none
   | k + 1 =>
       let i : Fin (k + 1) := ⟨k, Nat.lt_succ_self k⟩
-      some M[i][i]
+      some M[(i, i)]
 
 /-- The determinant encoded by a Bareiss elimination result. -/
 @[expose]
@@ -149,7 +149,7 @@ def findPivotAux (M : Matrix Int n n) (col : Fin n) (start fuel : Nat) :
   | fuel + 1 =>
       if h : start < n then
         let i : Fin n := ⟨start, h⟩
-        if M[i][col] = 0 then
+        if M[(i, col)] = 0 then
           findPivotAux M col (start + 1) fuel
         else
           some i
@@ -207,7 +207,9 @@ theorem findPivotAux_eq_zero_of_none (M : Matrix Int n n) (col : Fin n)
             · exact hzero
             · have hzeroNat : ¬ M[start][col.val] = 0 := by
                 simpa using hzero
-              simp [findPivotAux, hlt, hzeroNat] at hfind
+              simp only [findPivotAux, hlt, dif_pos, getRow, Fin.getElem_fin] at hfind
+              rw [if_neg (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
+              simp at hfind
           have hiFin : i = (⟨start, hlt⟩ : Fin n) := Fin.ext hi
           rw [hiFin]
           exact hentry
@@ -216,11 +218,14 @@ theorem findPivotAux_eq_zero_of_none (M : Matrix Int n n) (col : Fin n)
             · exact hzero
             · have hzeroNat : ¬ M[start][col.val] = 0 := by
                 simpa using hzero
-              simp [findPivotAux, hlt, hzeroNat] at hfind
+              simp only [findPivotAux, hlt, dif_pos, getRow, Fin.getElem_fin] at hfind
+              rw [if_neg (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
+              simp at hfind
           have hnext : findPivotAux M col (start + 1) fuel = none := by
             have hentryNat : M[start][col.val] = 0 := by
               simpa using hentry
-            simp [findPivotAux, hlt, hentryNat] at hfind
+            simp only [findPivotAux, hlt, dif_pos, getRow, Fin.getElem_fin] at hfind
+            rw [if_pos (by simpa [getRow, Fin.getElem_fin] using hentry)] at hfind
             exact hfind
           have hstart' : start + 1 ≤ i.val := by omega
           have hfuel' : i.val < start + 1 + fuel := by omega
@@ -254,9 +259,8 @@ theorem findPivotAux_eq_none_of_zero (M : Matrix Int n n) (col : Fin n)
           hzero ⟨start, hstart⟩ (Nat.le_refl _)
             (show (⟨start, hstart⟩ : Fin n).val < start + (fuel + 1) by
               simp)
-        have hentryNat : M[start][col.val] = 0 := by
-          simpa using hentry
-        simp [findPivotAux, hstart, hentryNat]
+        simp only [findPivotAux, hstart, dif_pos, getRow, Fin.getElem_fin]
+        rw [if_pos (by simpa [getRow, Fin.getElem_fin] using hentry)]
         apply ih
         intro i hle hlt
         exact hzero i (by omega) (by omega)
@@ -292,13 +296,12 @@ theorem findPivotAux_some_ne_zero (M : Matrix Int n n) (col : Fin n)
   | succ fuel ih =>
       by_cases hlt : start < n
       · by_cases hzero : M[(⟨start, hlt⟩ : Fin n)][col] = 0
-        · have hzeroNat : M[start][col.val] = 0 := by
-            simpa using hzero
-          simp [findPivotAux, hlt, hzeroNat] at hfind
+        · simp only [findPivotAux, hlt, dif_pos, getRow, Fin.getElem_fin] at hfind
+          rw [if_pos (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
           exact ih (start + 1) hfind
-        · have hzeroNat : ¬ M[start][col.val] = 0 := by
-            simpa using hzero
-          simp [findPivotAux, hlt, hzeroNat] at hfind
+        · simp only [findPivotAux, hlt, dif_pos, getRow, Fin.getElem_fin] at hfind
+          rw [if_neg (by simpa [getRow, Fin.getElem_fin] using hzero)] at hfind
+          simp only [Option.some.injEq] at hfind
           subst hfind
           exact hzero
       · simp [findPivotAux, hlt] at hfind
@@ -322,11 +325,11 @@ def stepMatrix (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) :
     if hkij : k < i.val ∧ k < j.val then
       let colK : Fin n := ⟨k, Nat.lt_trans hkij.1 i.isLt⟩
       let rowK : Fin n := ⟨k, Nat.lt_trans hkij.2 j.isLt⟩
-      exactDiv (pivot * M[i][j] - M[i][colK] * M[rowK][j]) prevPivot
+      exactDiv (pivot * M[(i, j)] - M[(i, colK)] * M[(rowK, j)]) prevPivot
     else if hBelow : k < i.val ∧ j.val = k then
       0
     else
-      M[i][j]
+      M[(i, j)]
 
 /-- Outside the trailing update region and pivot column below the pivot,
 `stepMatrix` leaves entries unchanged. -/
@@ -490,7 +493,7 @@ def matrixToRows (M : Matrix Int n n) : Array (Array Int) :=
         if hcol : col < n then
           let i : Fin n := ⟨row, hrow⟩
           let j : Fin n := ⟨col, hcol⟩
-          M[i][j]
+          M[(i, j)]
         else
           0
       else
@@ -515,7 +518,8 @@ original matrix. -/
 theorem rowsToMatrix_matrixToRows (M : Matrix Int n n) :
     rowsToMatrix (matrixToRows M) n = M := by
   ext i hi j hj
-  simpa [rowsToMatrix, Matrix.ofFn] using getEntry_matrixToRows M ⟨i, hi⟩ ⟨j, hj⟩
+  simpa [rowsToMatrix, Matrix.ofFn, getRow, Fin.getElem_fin] using
+    getEntry_matrixToRows M ⟨i, hi⟩ ⟨j, hj⟩
 
 /-- `set!`-ing index `i` to `v` makes `(xs.set! i v)[i]!` return `v` when `i` is
 in bounds, the base case for tracking entries through the array row swap. -/
@@ -670,7 +674,7 @@ private theorem rowsToMatrix_swapRowsArray_matrixToRows (M : Matrix Int n n)
     rowsToMatrix (swapRowsArray (matrixToRows M) rowA.val rowB.val) n =
       rowSwap M rowA rowB := by
   ext i hi j hj
-  simpa [rowsToMatrix, Matrix.ofFn] using
+  simpa [rowsToMatrix, Matrix.ofFn, getRow, Fin.getElem_fin] using
     getEntry_swapRowsArray_matrixToRows M rowA rowB ⟨i, hi⟩ ⟨j, hj⟩
 
 /-- `findPivotArrayAux` searches the array-backed column `col` from `start` for
@@ -714,13 +718,8 @@ private theorem findPivotArrayAux_matrixToRows (M : Matrix Int n n)
           simpa [getEntry] using
             getEntry_matrixToRows M (⟨start, hstart⟩ : Fin n) col
         rw [hentry]
-        by_cases hpivotNat : M[start][col.val] = 0
-        · have hpivot : M[(⟨start, hstart⟩ : Fin n)][col] = 0 := by
-            simpa using hpivotNat
-          simp [hpivotNat, ih]
-        · have hpivot : M[(⟨start, hstart⟩ : Fin n)][col] ≠ 0 := by
-            simpa using hpivotNat
-          simp [hpivotNat]
+        by_cases hpivot : M[(⟨start, hstart⟩ : Fin n)][col] = 0 <;>
+          simp_all [getRow, Fin.getElem_fin, ih]
       · simp [hstart]
 
 /-- `findPivotArray?_matrixToRows` identifies full array pivot search on
@@ -752,11 +751,8 @@ private theorem findPivotArrayAux_matches (rows : Array (Array Int))
               M[(⟨start, hstart⟩ : Fin n)][col] :=
           hentry ⟨start, hstart⟩
         rw [hentry_start]
-        by_cases hpivotNat : M[start][col.val] = 0
-        · have hpivot : M[(⟨start, hstart⟩ : Fin n)][col] = 0 := by
-            simpa using hpivotNat
-          simp [hpivotNat, ih]
-        · simp [hpivotNat]
+        by_cases hpivot : M[(⟨start, hstart⟩ : Fin n)][col] = 0 <;>
+          simp_all [getRow, Fin.getElem_fin, ih]
       · simp [hstart]
 
 /-- `findPivotArray?_matches` shows full array pivot search agrees with
@@ -868,7 +864,7 @@ theorem rowsToMatrix_stepArray {n : Nat} (rows : Array (Array Int)) (k : Nat)
       getEntry rows a.val b.val = (rowsToMatrix rows n)[a][b] := by
     intro a b
     simp [rowsToMatrix, Matrix.ofFn]
-  simpa [rowsToMatrix, Matrix.ofFn] using
+  simpa [rowsToMatrix, Matrix.ofFn, getRow, Fin.getElem_fin] using
     getEntry_stepArray_matches rows (rowsToMatrix rows n) hentry k pivot prevPivot
       ⟨i, hi⟩ ⟨j, hj⟩
 
@@ -913,13 +909,13 @@ def pivotLoop (fuel : Nat) (state : BareissState n) : BareissState n :=
       if hDone : state.step + 1 < n then
         let k : Fin n := ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩
         let (M, swaps) :=
-          if state.matrix[k][k] = 0 then
+          if state.matrix[(k, k)] = 0 then
             match findPivot? state.matrix k (state.step + 1) with
             | some pivot => (rowSwap state.matrix k pivot, state.rowSwaps + 1)
             | none => (state.matrix, state.rowSwaps)
           else
             (state.matrix, state.rowSwaps)
-        let pivot := M[k][k]
+        let pivot := M[(k, k)]
         if hp : pivot = 0 then
           { state with matrix := M, rowSwaps := swaps, singularStep := some state.step }
         else
@@ -962,7 +958,7 @@ theorem pivotLoop_regular_branch_no_swap (fuel : Nat) (state : BareissState n)
           prevPivot := state.matrix[state.step][state.step]
           rowSwaps := state.rowSwaps
           singularStep := none } := by
-  simp [pivotLoop, hDone, hp]
+  simp_all [pivotLoop, hDone, getRow, Fin.getElem_fin]
 
 /-- If the current pivot is zero and pivot search finds no replacement row,
 the row-pivoted Bareiss loop records a singular step. -/
@@ -976,7 +972,7 @@ theorem pivotLoop_singular_branch_no_pivot (fuel : Nat) (state : BareissState n)
         (state.step + 1) = none) :
     pivotLoop (fuel + 1) state =
       { state with singularStep := some state.step } := by
-  simp [pivotLoop, hDone, hp0, hfind]
+  simp_all [pivotLoop, hDone]
 
 /-- If the current pivot is zero, pivot search finds a replacement row, and
 the swapped pivot is nonzero, one loop iteration swaps rows, applies
@@ -1011,7 +1007,7 @@ theorem pivotLoop_regular_branch_swap (fuel : Nat) (state : BareissState n)
               pivot)[state.step][state.step]
           rowSwaps := state.rowSwaps + 1
           singularStep := none } := by
-  simp [pivotLoop, hDone, hp0, hfind, hp]
+  simp_all [pivotLoop, hDone]
 
 /-- `bareissArrayState` runs the matrix-level Bareiss elimination via `pivotLoop`
 and repackages the reduced result as a `BareissArrayState`, storing the matrix
@@ -1072,7 +1068,7 @@ def noPivotLoop (fuel : Nat) (state : BareissState n) : BareissState n :=
   | fuel + 1 =>
       if hDone : state.step + 1 < n then
         let k : Fin n := ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hDone⟩
-        let pivot := state.matrix[k][k]
+        let pivot := state.matrix[(k, k)]
         if hp : pivot = 0 then
           { state with singularStep := some state.step }
         else
@@ -1107,7 +1103,7 @@ theorem noPivotLoop_singular_branch (fuel : Nat) (state : BareissState n)
     (hDone : state.step + 1 < n)
     (hp : state.matrix[state.step][state.step] = 0) :
     noPivotLoop (fuel + 1) state = { state with singularStep := some state.step } := by
-  simp [noPivotLoop, hDone, hp]
+  simp_all [noPivotLoop, hDone]
 
 /-- If the current no-pivot Bareiss pivot is nonzero, one loop iteration applies
 `stepMatrix`, advances the step, and recurses on the remaining fuel. -/
@@ -1123,7 +1119,7 @@ theorem noPivotLoop_regular_branch (fuel : Nat) (state : BareissState n)
           prevPivot := state.matrix[state.step][state.step]
           rowSwaps := state.rowSwaps
           singularStep := none } := by
-  simp [noPivotLoop, hDone, hp]
+  simp_all [noPivotLoop, hDone]
 
 /-- Entries in rows already processed, or in columns strictly before the current
 step, are unchanged by subsequent no-pivot loop iterations. -/
@@ -1461,7 +1457,8 @@ theorem bareiss_eq_noPivotLoop_last_of_no_singular {k : Nat}
   rw [bareiss_eq_bareissData_det, bareissData_eq_finish_pivotLoop, hpivot, h_full_nopivot]
   have hdet := BareissData.det_succ_eq (finish stateK) h_no_sing
   rw [hdet]
-  simp [finish, BareissData.sign, stateK, init, noPivotInitialState, noPivotLoop_rowSwaps]
+  simp [finish, BareissData.sign, stateK, init, noPivotInitialState, noPivotLoop_rowSwaps,
+    getRow, Fin.getElem_fin]
 
 end Matrix
 end Hex

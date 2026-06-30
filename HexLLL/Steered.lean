@@ -61,7 +61,7 @@ never depends on the rounded value. -/
 Cholesky pass over the exact Gram entries `⟨b_i, b_j⟩`. -/
 @[expose]
 def init (b : Matrix Int n m) : SteeredState n m :=
-  let rows := b.toArray
+  let rows := b.rows.toArray
   let (mu, bb) := Id.run do
     let mut mu : Array (Array Float) := Array.replicate n (Array.replicate 0 0.0)
     let mut bb : Array Float := Array.replicate n 0.0
@@ -92,7 +92,7 @@ drift-control step: each working row's coefficients are recomputed from the exac
 integer basis, so float error never accumulates across the run. -/
 @[expose]
 def refreshRow (s : SteeredState n m) (k : Nat) : SteeredState n m :=
-  let rows := s.b.toArray
+  let rows := s.b.rows.toArray
   let (muk, bk) := Id.run do
     let mut c : Array Float := Array.replicate (k + 1) 0.0
     let mut muk : Array Float := Array.replicate k 0.0
@@ -229,7 +229,7 @@ def finalSweep (s : SteeredState n m) : SteeredState n m :=
 Computed from the exact basis only (no Gram-determinant state). -/
 @[expose]
 def fuel (b : Matrix Int n m) : Nat :=
-  let rows := b.toArray
+  let rows := b.rows.toArray
   Id.run do
     let mut s := 0
     for i in [0:n] do

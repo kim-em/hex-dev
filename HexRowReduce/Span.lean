@@ -99,7 +99,7 @@ def echelonCoeffs [Lean.Grind.Field R] (E : IsEchelonForm M D)
     if h : i.val < D.rank then
       let pi : Fin D.rank := ⟨i.val, h⟩
       v[D.pivotCols.get pi] /
-        D.echelon[(IsEchelonForm.pivotRow E pi)][D.pivotCols.get pi]
+        D.echelon[(IsEchelonForm.pivotRow E pi, D.pivotCols.get pi)]
     else
       0
 

@@ -43,6 +43,7 @@ theorem borderedMinor_corner_eq_principalSubmatrix {R : Type u}
     (M : Hex.Matrix R n n) (k : Nat) (hk : k < n) :
     Hex.Matrix.borderedMinor M k hk ⟨k, hk⟩ ⟨k, hk⟩ =
       Hex.Matrix.principalSubmatrix M (k + 1) (Nat.succ_le_of_lt hk) := by
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro r _hr
   apply Vector.ext
@@ -425,6 +426,7 @@ private theorem principalSubmatrix_rowSwap_eq_of_le {R : Type u}
     (kFin pivot : Fin n) (hkF : k ≤ kFin.val) (hp : k ≤ pivot.val) :
     Hex.Matrix.principalSubmatrix (Hex.Matrix.rowSwap M kFin pivot) k hk =
       Hex.Matrix.principalSubmatrix M k hk := by
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro r hr
   apply Vector.ext
@@ -482,6 +484,7 @@ private theorem borderedMinor_rowSwap_source_row {R : Type u}
   -- equation reduces to a row equality on M (modulo the source row swap).
   -- For r = k, rr = i on LHS and rr = swap_idx i on RHS; the row equality
   -- is exactly `getElem_rowSwap`.
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro r _hr
   apply Vector.ext
@@ -508,11 +511,11 @@ private theorem borderedMinor_rowSwap_source_row {R : Type u}
       exact getElem_rowSwap_of_ne M kFin pivot ⟨r, hr_lt⟩ _ h_r_ne_kFin h_r_ne_pivot
   · by_cases hck : c < k
     · have hc_lt : c < n := Nat.lt_trans hck hk
-      simp only [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Vector.getElem_ofFn,
+      simp only [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Hex.Matrix.rows_ofRows, Vector.getElem_ofFn, Fin.getElem_fin,
         hrk, hck, dif_pos, dif_neg, not_false_iff]
       show (Hex.Matrix.rowSwap M kFin pivot)[i][(⟨c, hc_lt⟩ : Fin n)] = _
       exact getElem_rowSwap_swap_eq M kFin pivot i _
-    · simp only [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Vector.getElem_ofFn,
+    · simp only [Hex.Matrix.borderedMinor, Hex.Matrix.ofFn, Hex.Matrix.rows_ofRows, Vector.getElem_ofFn, Fin.getElem_fin,
         hrk, hck, dif_neg, not_false_iff]
       show (Hex.Matrix.rowSwap M kFin pivot)[i][j] = _
       exact getElem_rowSwap_swap_eq M kFin pivot i j
@@ -939,11 +942,12 @@ private theorem noPivotLoop_step_succ_ge
 private theorem principalSubmatrix_self {R : Type u} [Lean.Grind.Ring R]
     (M : Hex.Matrix R n n) (h : n ≤ n) :
     Hex.Matrix.principalSubmatrix M n h = M := by
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro i hi
   apply Vector.ext
   intro j hj
-  simp [Hex.Matrix.principalSubmatrix, Hex.Matrix.ofFn]
+  simp [Hex.Matrix.principalSubmatrix, Hex.Matrix.ofFn, Hex.Matrix.getRow, Fin.getElem_fin]
 
 /-- Helper: under the bordered-minor invariant, when the recurrence step
 equals `k`, the `(k, k)` entry of the working matrix equals `Hex.Matrix.det M`.

@@ -49,7 +49,7 @@ Soundness (`lllReducedInterval_sound`, HexLLLMathlib) entails
 @[expose]
 def lllReducedInterval (b : Matrix Int n m) (δ η : Rat) : Bool :=
   let S : Int := (2 : Int) ^ intervalPrec
-  let g := (Matrix.gramMatrix b).toArray.map Vector.toArray
+  let g := (Matrix.gramMatrix b).rows.toArray.map Vector.toArray
   match IntervalGS.pass S g n with
   | none => false
   | some (mus, bstars) =>
@@ -86,7 +86,7 @@ def lllReducedInt (b : Matrix Int n m) (δ η : Rat) : Bool :=
       (List.finRange i.val).all fun j =>
         let iFin : Fin n := i
         let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt i.isLt⟩
-        let νij : Int := (ν.get iFin).get jFin
+        let νij : Int := (ν.getRow iFin).get jFin
         let dj1 : Nat := d.get ⟨j.val + 1, Nat.succ_lt_succ
           (Nat.lt_trans j.isLt i.isLt)⟩
         decide ((η.den * νij.natAbs : Int) ≤ η.num * (dj1 : Int))
@@ -98,7 +98,7 @@ def lllReducedInt (b : Matrix Int n m) (δ η : Rat) : Bool :=
         let di : Nat := d.get ⟨i.val, Nat.lt_succ_of_lt i.isLt⟩
         let di1 : Nat := d.get ⟨i.val + 1, Nat.succ_lt_succ i.isLt⟩
         let di2 : Nat := d.get ⟨i.val + 2, Nat.succ_lt_succ hi⟩
-        let B : Int := (ν.get ip1Fin).get iFin
+        let B : Int := (ν.getRow ip1Fin).get iFin
         decide
           (δ.den * ((di2 : Int) * (di : Int) + B ^ 2) ≥
             δ.num * (di1 : Int) ^ 2)

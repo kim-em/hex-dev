@@ -21,10 +21,21 @@ helpers.
 -/
 namespace Hex
 
-universe u
+universe u v
 
-/-- Dense `n × m` matrices over `R`, represented as vectors of rows. -/
-abbrev Matrix (R : Type u) (n m : Nat) := Vector (Vector R m) n
+/-- Dense `n × m` matrices over `R`. Opaque one-field structure wrapping the row
+data; consumers go through `rows`/`getRow`/`ofRows`/`ofFn` and `M[i]` / `M[(i,j)]`,
+never the `data` projection, so the representation can change later. -/
+structure Matrix (R : Type u) (n m : Nat) where
+  ofRows ::
+  /-- Implementation detail — use `Matrix.rows`/`getRow`, never this projection. -/
+  data : Vector (Vector R m) n
+deriving DecidableEq, BEq
+
+/-- Show a matrix through its row data, so `#eval`/`Repr` output is unchanged by
+the move from the former `abbrev` and never exposes the `data` projection name. -/
+instance {R : Type u} {n m : Nat} [Repr R] : Repr (Hex.Matrix R n m) where
+  reprPrec M prec := reprPrec M.data prec
 
 end Hex
 
@@ -56,10 +67,79 @@ namespace Hex
 
 namespace Matrix
 
+variable {R : Type u} {n m k : Nat}
+
+/-- The rows of a matrix as a vector of row-vectors. The only sanctioned way to
+observe the row data. -/
+@[inline, expose] def rows (M : Matrix R n m) : Vector (Vector R m) n := M.data
+
+/-- The `i`-th row of a matrix. -/
+@[inline, expose] def getRow (M : Matrix R n m) (i : Fin n) : Vector R m := M.rows[i]
+
+/-- Entry access by a `Nat × Nat` index. -/
+instance : GetElem (Matrix R n m) (Nat × Nat) R (fun _ p => p.1 < n ∧ p.2 < m) where
+  getElem M p h := (M.rows[p.1]'h.1)[p.2]'h.2
+
+/-- Entry access by a `Fin n × Fin m` index. -/
+instance : GetElem (Matrix R n m) (Fin n × Fin m) R (fun _ _ => True) where
+  getElem M p _ := (M.rows[p.1])[p.2]
+
+/-- Row access `M[i]` for `i : Fin n`. **Deliberately `noncomputable`**: for a
+future flat (`Vector R (n*m)`) representation, materializing a whole row just to
+read it — and especially `M[i][j]` to read one entry — is the wrong cost model.
+This instance exists only so *proofs* may write `M[i]` / `M[i][j]`; executable
+code must use the computable `getRow` for rows and `M[(i, j)]` (O(1)) for single
+entries. Any compiled definition that reaches for `M[i]` will fail to compile,
+which is the intended guard. -/
+noncomputable instance : GetElem (Matrix R n m) (Fin n) (Vector R m) (fun _ _ => True) where
+  getElem M i _ := getRow M i
+
+/-- Row access by a `Nat` index. Also `noncomputable`; see the `Fin n` instance. -/
+noncomputable instance : GetElem (Matrix R n m) Nat (Vector R m) (fun _ i => i < n) where
+  getElem M i h := getRow M ⟨i, h⟩
+
+@[simp, grind =] theorem rows_ofRows (v : Vector (Vector R m) n) : (ofRows v).rows = v := rfl
+
+/-- Row access `M[i]` normalizes to the computable `getRow M i` (so `rows_*`
+reduction lemmas fire on it in proofs). -/
+@[simp, grind =] theorem getElem_eq_getRow (M : Matrix R n m) (i : Fin n) : M[i] = getRow M i := rfl
+
+/-- `Nat`-indexed row access normalizes to `getRow`. -/
+@[simp, grind =] theorem getElem_nat_eq_getRow (M : Matrix R n m) (i : Nat) (h : i < n) :
+    M[i]'h = getRow M ⟨i, h⟩ := rfl
+
+/-- `getRow` on `ofRows` reduces to the underlying vector. -/
+@[simp, grind =] theorem getRow_ofRows (v : Vector (Vector R m) n) (i : Fin n) :
+    getRow (ofRows v) i = v[i] := rfl
+
+/-- The pair entry access (computable, O(1)) agrees with the nested row-then-element
+form. The nested form is the simp-normal form the entry lemmas are stated in, so
+proofs about the computable `M[(i, j)]` line up with the `M[i][j]` lemmas. -/
+@[simp, grind =] theorem getElem_pair_eq_nested (M : Matrix R n m) (i : Fin n) (j : Fin m) :
+    M[(i, j)] = M[i][j] := rfl
+
+/-- `Nat`-pair entry access, normalized to the row lookup (concrete-index form). -/
+@[simp] theorem getElem_pair_nat (M : Matrix R n m) (p : Nat × Nat)
+    (h : p.1 < n ∧ p.2 < m) : M[p]'h = (M.rows[p.1]'h.1)[p.2]'h.2 := rfl
+
+/-- Two matrices are equal when their rows are equal. -/
+@[ext] theorem ext {M N : Matrix R n m} (h : M.rows = N.rows) : M = N := by
+  cases M; cases N; simp_all [rows]
+
+/-- Two matrices are equal when they agree entrywise. -/
+theorem ext_getElem {M N : Matrix R n m}
+    (h : ∀ (i : Fin n) (j : Fin m), M[i][j] = N[i][j]) : M = N := by
+  apply ext
+  apply Vector.ext
+  intro i hi
+  apply Vector.ext
+  intro j hj
+  exact h ⟨i, hi⟩ ⟨j, hj⟩
+
 /-- Build a matrix from an entry function. -/
 @[expose]
 def ofFn (f : Fin n → Fin m → R) : Matrix R n m :=
-  Vector.ofFn fun i => Vector.ofFn fun j => f i j
+  ofRows (Vector.ofFn fun i => Vector.ofFn fun j => f i j)
 
 /-- Entry access for a matrix built from an entry function. -/
 @[grind =] theorem getElem_ofFn (f : Fin n → Fin m → R) (i : Fin n) (j : Fin m) :
@@ -69,7 +149,7 @@ def ofFn (f : Fin n → Fin m → R) : Matrix R n m :=
 /-- The `i`-th row of a matrix. -/
 @[expose]
 def row (M : Matrix R n m) (i : Fin n) : Vector R m :=
-  M[i]
+  getRow M i
 
 /-- Entry access for a selected matrix row. -/
 @[grind =] theorem getElem_row (M : Matrix R n m) (i : Fin n) (j : Fin m) :
@@ -79,34 +159,42 @@ def row (M : Matrix R n m) (i : Fin n) : Vector R m :=
 /-- The `j`-th column of a matrix. -/
 @[expose]
 def col (M : Matrix R n m) (j : Fin m) : Vector R n :=
-  Vector.ofFn fun i => M[i][j]
+  Vector.ofFn fun i => M[(i, j)]
 
 /-- Entry access for a selected matrix column. -/
 @[grind =] theorem getElem_col (M : Matrix R n m) (j : Fin m) (i : Fin n) :
     (col M j)[i] = M[i][j] := by
   simp [col]
 
-/-- Replace row `dst` of `M` with the vector `v`. -/
+/-- Replace row `dst` of `M` with the vector `v`. Linear in `M`: destructuring
+consumes `M`, so the backing store is updated in place when `M` is unique. -/
 @[expose]
 def setRow (M : Matrix R n m) (dst : Fin n) (v : Vector R m) : Matrix R n m :=
-  M.set dst v
+  match M with
+  | ⟨d⟩ => ⟨d.set dst v⟩
+
+@[simp, grind =] theorem rows_setRow (M : Matrix R n m) (dst : Fin n) (v : Vector R m) :
+    (setRow M dst v).rows = M.rows.set dst v := by cases M; rfl
 
 /-- Reading back the replaced row `dst` of `setRow M dst v` yields `v`. -/
 @[grind =] theorem setRow_get_self (M : Matrix R n m) (dst : Fin n) (v : Vector R m) :
     (setRow M dst v)[dst] = v := by
-  simp [setRow]
+  show getRow (setRow M dst v) dst = v
+  simp [getRow]
 
 /-- Replacing row `dst` leaves every other row unchanged. -/
 theorem setRow_row_ne (M : Matrix R n m) (dst r : Fin n) (v : Vector R m)
     (h : r ≠ dst) :
     (setRow M dst v)[r] = M[r] := by
   have hval : dst.val ≠ r.val := fun hval => h (Fin.ext hval.symm)
-  exact Vector.getElem_set_ne (xs := M) (x := v) dst.isLt r.isLt hval
+  show getRow (setRow M dst v) r = getRow M r
+  simp only [getRow, rows_setRow]
+  exact Vector.getElem_set_ne (xs := M.rows) (x := v) dst.isLt r.isLt hval
 
 /-- Replace column `dst` of `M` with the entry function `v`. -/
 @[expose]
 def setCol (M : Matrix R n m) (dst : Fin m) (v : Fin n → R) : Matrix R n m :=
-  ofFn fun r c => if c = dst then v r else M[r][c]
+  ofFn fun r c => if c = dst then v r else M[(r, c)]
 
 /-- Entrywise characterization of `setCol`: the destination column is read from
 the replacement function and every other column is read from `M`. -/
@@ -130,7 +218,7 @@ the replacement function and every other column is read from `M`. -/
 /-- The transpose of a dense matrix. -/
 @[expose]
 def transpose (M : Matrix R n m) : Matrix R m n :=
-  Vector.ofFn fun j => col M j
+  ofRows (Vector.ofFn fun j => col M j)
 
 /-- Entry access for the transpose of a dense matrix. -/
 @[grind =] theorem getElem_transpose (M : Matrix R n m) (i : Fin m) (j : Fin n) :
@@ -213,6 +301,66 @@ instance [Mul R] [Add R] [OfNat R 0] : Mul (Matrix R n n) where
     rw [if_pos hij, if_pos hji]
   · have hji : (⟨j, hj⟩ : Fin n) ≠ ⟨i, hi⟩ := fun h => hij h.symm
     rw [if_neg hij, if_neg hji]
+
+/-- In-place modification of row `i`. Linear in `M`: destructuring consumes `M`,
+so when `M` is uniquely referenced the row is owned and `Vector.modify` updates
+the backing store without copying. -/
+@[expose, inline]
+def modify (M : Matrix R n m) (i : Nat) (f : Vector R m → Vector R m) : Matrix R n m :=
+  match M with
+  | ⟨d⟩ => ⟨d.modify i f⟩
+
+/-- Swap rows `i` and `j`, in place when `M` is uniquely referenced. -/
+@[expose, inline]
+def swap (M : Matrix R n m) (i j : Nat) (hi : i < n := by get_elem_tactic)
+    (hj : j < n := by get_elem_tactic) : Matrix R n m :=
+  match M with
+  | ⟨d⟩ => ⟨d.swap i j hi hj⟩
+
+/-- Map a function over every row, in place when `M` is uniquely referenced. -/
+@[expose, inline]
+def mapRows (M : Matrix R n m) (f : Vector R m → Vector R m') : Matrix R n m' :=
+  match M with
+  | ⟨d⟩ => ⟨d.map f⟩
+
+@[simp, grind =] theorem rows_modify (M : Matrix R n m) (i : Nat)
+    (f : Vector R m → Vector R m) : (modify M i f).rows = M.rows.modify i f := by
+  cases M; rfl
+
+/-- Row `i` of `modify M i f` is `f` applied to the old row `i`. -/
+@[simp, grind =] theorem getRow_modify_self (M : Matrix R n m) (i : Fin n)
+    (f : Vector R m → Vector R m) : getRow (modify M i.val f) i = f (getRow M i) := by
+  simp only [getRow, rows_modify, Fin.getElem_fin]
+  rw [Vector.getElem_modify_self i.isLt]
+
+/-- Rows other than `i` are unchanged by `modify M i f`. -/
+@[simp, grind =] theorem getRow_modify_ne (M : Matrix R n m) (i : Nat)
+    (f : Vector R m → Vector R m) (j : Fin n) (h : i ≠ j.val) :
+    getRow (modify M i f) j = getRow M j := by
+  simp only [getRow, rows_modify, Fin.getElem_fin]
+  rw [Vector.getElem_modify_of_ne j.isLt h]
+
+@[simp, grind =] theorem rows_swap (M : Matrix R n m) (i j : Nat) (hi : i < n) (hj : j < n) :
+    (M.swap i j hi hj).rows = M.rows.swap i j hi hj := by cases M; rfl
+
+@[simp, grind =] theorem rows_mapRows (M : Matrix R n m) (f : Vector R m → Vector R m') :
+    (M.mapRows f).rows = M.rows.map f := by cases M; rfl
+
+/-- Scalar multiplication of a matrix, entrywise. Matches the action the former
+`abbrev` inherited from `Vector` (`c • x = c * x` on entries), so `c • M` keeps
+its previous meaning under the structure. -/
+instance [Mul R] : SMul R (Matrix R n m) where
+  smul c M := M.mapRows fun row => row.map fun x => c * x
+
+@[simp, grind =] theorem rows_smul [Mul R] (c : R) (M : Matrix R n m) :
+    (c • M).rows = M.rows.map fun row => row.map fun x => c * x := by
+  simp only [HSMul.hSMul, SMul.smul, rows_mapRows]
+
+/-- Scalar multiplication pushes through a nested entry read. -/
+@[simp, grind =] theorem smul_getElem [Mul R] (c : R) (M : Matrix R n m)
+    (i : Fin n) (j : Fin m) : (c • M)[i][j] = c * M[i][j] := by
+  simp only [getElem_eq_getRow, getRow, rows_smul, Fin.getElem_fin,
+    Vector.getElem_map]
 
 end Matrix
 end Hex

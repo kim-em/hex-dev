@@ -46,4 +46,13 @@ theorem getElem_modify_of_ne {xs : Vector α n} {i j : Nat} {f : α → α}
     (xs.modify i f)[j] = xs[j] := by
   rw [getElem_modify hj, if_neg h]
 
+/-- `modify` agrees with the read-then-`set` form (value-level; `modify` avoids
+the copy this form would force). -/
+theorem modify_eq_set (xs : Vector α n) (i : Nat) (f : α → α) (h : i < n) :
+    xs.modify i f = xs.set i (f xs[i]) := by
+  apply Vector.ext
+  intro j hj
+  rw [getElem_modify hj, Vector.getElem_set]
+  grind
+
 end Vector

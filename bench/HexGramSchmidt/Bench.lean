@@ -158,7 +158,7 @@ def intMatrixChecksum (M : Matrix Int n n) : Int :=
   (List.finRange n).foldl
     (fun acc i =>
       (List.finRange n).foldl
-        (fun rowAcc j => rowAcc * 65_537 + M[i][j])
+        (fun rowAcc j => rowAcc * 65_537 + M[(i, j)])
         acc)
     0
 

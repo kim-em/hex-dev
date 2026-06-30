@@ -33,7 +33,7 @@ open Hex.Matrix
 private def lib : String := "HexDeterminant"
 
 private def matrixIntRows {n m : Nat} (M : Matrix Int n m) : List (List Int) :=
-  M.toList.map (fun row => row.toList)
+  M.rows.toList.map (fun row => row.toList)
 
 private def jsonInt (n : Int) : String := toString n
 

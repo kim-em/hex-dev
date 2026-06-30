@@ -44,7 +44,7 @@ def detSign {R : Type u} [Lean.Grind.Ring R] {n : Nat} (perm : Vector (Fin n) n)
 @[expose]
 def detProduct {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (M : Matrix R n n) (perm : Vector (Fin n) n) : R :=
-  (List.finRange n).foldl (fun acc i => acc * M[i][perm[i]]) 1
+  (List.finRange n).foldl (fun acc i => acc * M[(i, perm[i])]) 1
 
 /-- The Leibniz summand associated to a permutation vector. -/
 @[expose]
@@ -367,6 +367,7 @@ private theorem detProduct_identity_insertAt_last {R : Type u}
       (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n)) =
     detProduct (Matrix.identity (R := R) n) v := by
   unfold detProduct
+  simp only [getElem_pair_eq_nested]
   rw [← Fin.foldl_eq_finRange_foldl, ← Fin.foldl_eq_finRange_foldl, Fin.foldl_succ_last]
   have hfold :
       Fin.foldl n

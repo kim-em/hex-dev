@@ -36,7 +36,7 @@ variable {α : Type u}
 @[expose]
 def columnTupleMatrix {R : Type u} {n m : Nat}
     (A : Matrix R n m) (cols : Fin n → Fin m) : Matrix R n n :=
-  ofFn fun r c => A[r][cols c]
+  ofFn fun r c => A[(r, cols c)]
 
 /-- Entry `(r, c)` of the column-selected minor is the source entry
 `A[r][cols c]`. -/
@@ -80,14 +80,9 @@ theorem columnTupleMatrix_compose_perm_eq_colPermute
     (s : Vector (Fin m) n) (sigma : Vector (Fin n) n) :
     columnTupleMatrix A (fun i => s[sigma[i]]) =
       (ofFn fun r c => (columnTupleMatrix A (columnTupleVectorFn s))[r][sigma[c]]) := by
-  ext r hr c hc
-  change
-    (columnTupleMatrix A (fun i => s[sigma[i]]))[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
-      (ofFn fun r c =>
-        (columnTupleMatrix A (columnTupleVectorFn s))[r][sigma[c]])[
-          (⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
-  rw [getElem_columnTupleMatrix_compose_perm]
-  simp [Matrix.ofFn]
+  apply ext_getElem
+  intro r c
+  rw [getElem_columnTupleMatrix_compose_perm, getElem_ofFn]
 
 /-- Specialization of the generic column-permutation determinant sign theorem
 to selected-minor matrices. -/
@@ -196,7 +191,7 @@ private theorem columnTupleVectors_nodup {n m : Nat} :
 @[expose]
 def columnTupleCoeff {R : Type u} [Mul R] [OfNat R 1] {n m : Nat}
     (A : Matrix R n m) (cols : Vector (Fin m) n) : R :=
-  (List.finRange n).foldl (fun acc i => acc * A[i][cols[i]]) 1
+  (List.finRange n).foldl (fun acc i => acc * A[(i, cols[i])]) 1
 
 /-- The determinant summand associated to an ordered column tuple. -/
 @[expose]
@@ -239,16 +234,16 @@ private def columnSumMatrixWithPrefix
     (source coeff : Matrix R n m) (chosen : List (Fin m)) : Matrix R n n :=
   ofFn fun r j =>
     if h : j.val < chosen.length then
-      source[r][chosen[j.val]'h]
+      source[(r, chosen[j.val]'h)]
     else
-      (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
+      (List.finRange m).foldl (fun acc k => acc + coeff[(j, k)] * source[(r, k)]) 0
 
 @[grind =] private theorem getElem_columnSumMatrixWithPrefix
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (chosen : List (Fin m)) (r j : Fin n) :
     (columnSumMatrixWithPrefix source coeff chosen)[r][j] =
       if h : j.val < chosen.length then
-        source[r][chosen[j.val]'h]
+        source[(r, chosen[j.val]'h)]
       else
         (List.finRange m).foldl
           (fun acc k => acc + coeff[j][k] * source[r][k]) 0 := by
@@ -269,10 +264,10 @@ private def columnSumMatrixWithSuffix
     (source coeff : Matrix R n m) (chosen : List (Fin m)) : Matrix R n n :=
   ofFn fun r j =>
     if h : n - chosen.length ≤ j.val then
-      source[r][chosen[j.val - (n - chosen.length)]'(by
-        have : j.val < n := j.isLt; omega)]
+      source[(r, chosen[j.val - (n - chosen.length)]'(by
+        have : j.val < n := j.isLt; omega))]
     else
-      (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
+      (List.finRange m).foldl (fun acc k => acc + coeff[(j, k)] * source[(r, k)]) 0
 
 @[grind =] private theorem getElem_columnSumMatrixWithSuffix
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
@@ -295,6 +290,7 @@ private theorem columnSumMatrixWithSuffix_nil
       (columnSumMatrix source coeff)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
   rw [getElem_columnSumMatrixWithSuffix, getElem_columnSumMatrix,
     dif_neg (show ¬ n - ([] : List (Fin m)).length ≤ c by simp; omega)]
+  simp [getElem_pair_eq_nested]
 
 private theorem columnSumMatrixWithSuffix_eq
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
@@ -485,9 +481,9 @@ private def partialColumnTupleCoeff {R : Type u} [Mul R] [OfNat R 1] {n m : Nat}
     (coeff : Matrix R n m) (chosen : List (Fin m))
     (pref : Vector (Fin m) (n - chosen.length)) : R :=
   (List.finRange (n - chosen.length)).foldl
-    (fun acc i => acc * coeff[(⟨i.val, by
+    (fun acc i => acc * coeff[((⟨i.val, by
       have hi : i.val < n - chosen.length := i.isLt
-      omega⟩ : Fin n)][pref[i]]) 1
+      omega⟩ : Fin n), pref[i])]) 1
 
 private theorem partialColumnTupleCoeff_nil
     {R : Type u} [Mul R] [OfNat R 1] {n m : Nat}

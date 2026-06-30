@@ -102,7 +102,7 @@ theorem det_upperTriangular_eq_finFoldl_diag
         apply List.foldl_congr
         intro acc i _hmem
         have hentry : (principalSubmatrix M n (Nat.le_succ n))[i][i] = M[i.castSucc][i.castSucc] :=
-          by simp [principalSubmatrix, ofFn, Fin.castSucc]
+          by simp [principalSubmatrix, ofFn, Fin.castSucc, getRow, Fin.getElem_fin]
         rw [hentry]
       rw [hcongr]
 

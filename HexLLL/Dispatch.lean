@@ -47,7 +47,7 @@ classical precondition `1/4 < δ` flows to the exact fallback. -/
 def lll.firstShortVectorUnchecked (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
     Vector Int m :=
-  (lllSteered b δ hδ hδ' hn)[0]
+  (lllSteered b δ hδ hδ' hn).getRow ⟨0, hn⟩
 
 /-- The first row of the reduced basis: a provably short vector, bounded by the
 LLL approximation factor relative to any nonzero lattice vector (see
@@ -59,7 +59,7 @@ def lll.firstShortVector (b : Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent) :
     Vector Int m :=
-  (lll b δ hδ hδ' hn hind)[0]
+  (lll b δ hδ hδ' hn hind).getRow ⟨0, hn⟩
 
 /-- Proof-free executable variant of `lll.shortVectors`. Runs the
 approximation-steered reducer with certified output (`lllSteered`). -/
@@ -67,7 +67,7 @@ approximation-steered reducer with certified output (`lllSteered`). -/
 def lll.shortVectorsUnchecked (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
     Array (Vector Int m) :=
-  (lllSteered b δ hδ hδ' hn).toArray
+  (lllSteered b δ hδ hδ' hn).rows.toArray
 
 /-- The full reduced basis viewed as an ordered array of candidate short
 vectors. -/
@@ -76,6 +76,6 @@ def lll.shortVectors (b : Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent) :
     Array (Vector Int m) :=
-  (lll b δ hδ hδ' hn hind).toArray
+  (lll b δ hδ hδ' hn hind).rows.toArray
 
 end Hex

@@ -338,13 +338,13 @@ columns of `source` with coefficients from row `j` of `coeff`. -/
 def columnSumMatrix {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) : Matrix R n n :=
   ofFn fun r j =>
-    (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0
+    (List.finRange m).foldl (fun acc k => acc + coeff[(j, k)] * source[(r, k)]) 0
 
 @[grind =] private theorem getElem_columnSumMatrix
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (r j : Fin n) :
     (columnSumMatrix source coeff)[r][j] =
-      (List.finRange m).foldl (fun acc k => acc + coeff[j][k] * source[r][k]) 0 := by
+      (List.finRange m).foldl (fun acc k => acc + coeff[(j, k)] * source[(r, k)]) 0 := by
   simp [columnSumMatrix, ofFn]
 
 private theorem setCol_columnSumMatrix_self
@@ -391,16 +391,16 @@ private def columnChoiceMatrix {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) : Matrix R n n :=
   ofFn fun r c =>
     match choices c with
-    | some k => source[r][k]
-    | none => (List.finRange m).foldl (fun acc k => acc + coeff[c][k] * source[r][k]) 0
+    | some k => source[(r, k)]
+    | none => (List.finRange m).foldl (fun acc k => acc + coeff[(c, k)] * source[(r, k)]) 0
 
 @[grind =] private theorem getElem_columnChoiceMatrix
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
     (source coeff : Matrix R n m) (choices : Fin n → Option (Fin m)) (r c : Fin n) :
     (columnChoiceMatrix source coeff choices)[r][c] =
       match choices c with
-      | some k => source[r][k]
-      | none => (List.finRange m).foldl (fun acc k => acc + coeff[c][k] * source[r][k]) 0 := by
+      | some k => source[(r, k)]
+      | none => (List.finRange m).foldl (fun acc k => acc + coeff[(c, k)] * source[(r, k)]) 0 := by
   simp [columnChoiceMatrix, ofFn]
 
 /-- A determinant with two equal rows is zero. -/

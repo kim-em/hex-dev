@@ -127,7 +127,7 @@ def nullspaceMatrix [Lean.Grind.Ring R] (E : IsRowReduced M D) :
     else
       match pivotIndex? D j with
       | some i =>
-          -D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i)][freeCols.get k]
+          -D.echelon[(IsEchelonForm.pivotRow E.toIsEchelonForm i, freeCols.get k)]
       | none => 0
 
 /-- In the `k`th nullspace-matrix column, the row for its own free column is `1`. -/

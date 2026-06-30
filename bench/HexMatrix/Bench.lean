@@ -72,7 +72,7 @@ matrix product rather than the full matrix value. -/
 def checksum (M : Hex.Matrix Int n n) : Int :=
   (List.finRange n).foldl
     (fun acc i =>
-      (List.finRange n).foldl (fun rowAcc j => rowAcc + M[i][j]) acc)
+      (List.finRange n).foldl (fun rowAcc j => rowAcc + M[(i, j)]) acc)
     0
 
 /-- Benchmark target: multiply the prepared matrices and checksum the

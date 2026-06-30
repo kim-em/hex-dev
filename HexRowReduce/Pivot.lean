@@ -55,7 +55,7 @@ private def findPivotAux (M : Matrix R n m) (col : Fin m) (start fuel : Nat) :
   | fuel + 1 =>
       if h : start < n then
         let i : Fin n := ⟨start, h⟩
-        if M[i][col] = 0 then
+        if M[(i, col)] = 0 then
           findPivotAux M col (start + 1) fuel
         else
           some i
@@ -74,7 +74,7 @@ private def eliminateColumn (M : Matrix R n m) (T : Matrix R n n)
       if h : j = pivotRow then
         state
       else
-        let coeff := -state.1[j][col]
+        let coeff := -state.1[(j, col)]
         if coeff = 0 then
           state
         else
@@ -93,6 +93,7 @@ private theorem findPivotAux_some_ge (M : Matrix R n m) (col : Fin m) :
   | succ fuel ih =>
       intro i h
       unfold findPivotAux at h
+      simp only [getElem_pair_eq_nested] at h
       by_cases hstart : start < n
       · rw [dif_pos hstart] at h
         by_cases hzero : M[(⟨start, hstart⟩ : Fin n)][col] = 0
@@ -117,6 +118,7 @@ private theorem findPivotAux_some_nonzero (M : Matrix R n m) (col : Fin m) :
   | succ fuel ih =>
       intro i h
       unfold findPivotAux at h
+      simp only [getElem_pair_eq_nested] at h
       by_cases hstart : start < n
       · rw [dif_pos hstart] at h
         by_cases hzero : M[(⟨start, hstart⟩ : Fin n)][col] = 0
@@ -142,6 +144,7 @@ private theorem findPivotAux_some_above (M : Matrix R n m) (col : Fin m) :
   | succ fuel ih =>
       intro i h k hge hlt
       unfold findPivotAux at h
+      simp only [getElem_pair_eq_nested] at h
       by_cases hstart : start < n
       · rw [dif_pos hstart] at h
         by_cases hzero : M[(⟨start, hstart⟩ : Fin n)][col] = 0
@@ -182,6 +185,7 @@ private theorem findPivotAux_none (M : Matrix R n m) (col : Fin m) :
   | succ fuel ih =>
       intro h k hge hlt
       unfold findPivotAux at h
+      simp only [getElem_pair_eq_nested] at h
       by_cases hstart : start < n
       · rw [dif_pos hstart] at h
         by_cases hzero : M[(⟨start, hstart⟩ : Fin n)][col] = 0
@@ -302,7 +306,7 @@ private theorem eliminateColumn_foldl_pivotRow
       (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
         if _h : j = pivotRow then state
         else
-          let coeff := -state.1[j][col]
+          let coeff := -state.1[(j, col)]
           if coeff = 0 then state
           else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
         s).1[pivotRow][k]
@@ -324,7 +328,7 @@ private theorem eliminateColumn_foldl_outside
       (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
         if _h : j = pivotRow then state
         else
-          let coeff := -state.1[j][col]
+          let coeff := -state.1[(j, col)]
           if coeff = 0 then state
           else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
         s).1[r][col]
@@ -362,7 +366,7 @@ private theorem eliminateColumn_zero (M : Matrix R n m) (T : Matrix R n n)
       (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
         if _h : j = pivotRow then state
         else
-          let coeff := -state.1[j][col]
+          let coeff := -state.1[(j, col)]
           if coeff = 0 then state
           else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
         s).1[r][col] = 0 from
@@ -424,14 +428,14 @@ private theorem eliminateColumn_foldl_transform_preserve
       (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
         if _h : j = pivotRow then state
         else
-          let coeff := -state.1[j][col]
+          let coeff := -state.1[(j, col)]
           if coeff = 0 then state
           else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
         s).2 * M
         = (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
           if _h : j = pivotRow then state
           else
-            let coeff := -state.1[j][col]
+            let coeff := -state.1[(j, col)]
             if coeff = 0 then state
             else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
           s).1 := by
@@ -510,7 +514,7 @@ private theorem eliminateColumn_foldl_left_inverse_preserve
           (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
             if _h : j = pivotRow then state
             else
-              let coeff := -state.1[j][col]
+              let coeff := -state.1[(j, col)]
               if coeff = 0 then state
               else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
             s).2 = (Matrix.identity (R := R) n) := by
@@ -534,7 +538,7 @@ private theorem eliminateColumn_foldl_right_inverse_preserve
         (xs.foldl (fun (state : Matrix R n m × Matrix R n n) j =>
           if _h : j = pivotRow then state
           else
-            let coeff := -state.1[j][col]
+            let coeff := -state.1[(j, col)]
             if coeff = 0 then state
             else (rowAdd state.1 pivotRow j coeff, rowAdd state.2 pivotRow j coeff))
           s).2 *
@@ -721,7 +725,7 @@ def rowReduceLoop (col fuel : Nat) (state : RowReduceState R n m) : RowReduceSta
               let target : Fin n := ⟨state.row, hRow⟩
               let swappedEchelon := rowSwap state.echelon target pivot
               let swappedTransform := rowSwap state.transform target pivot
-              let pivotVal := swappedEchelon[target][colFin]
+              let pivotVal := swappedEchelon[(target, colFin)]
               let scaledEchelon := rowScale swappedEchelon target pivotVal⁻¹
               let scaledTransform := rowScale swappedTransform target pivotVal⁻¹
               let eliminated := eliminateColumn scaledEchelon scaledTransform target colFin

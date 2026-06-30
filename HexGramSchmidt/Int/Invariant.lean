@@ -61,7 +61,7 @@ private def bareissGramRowInvariant_noPivotLoop_initialAux
         Matrix.noPivotLoop elapsed
           (Matrix.noPivotInitialState (Matrix.gramMatrix b))
       by_cases hDone : state.step + 1 < n
-      · by_cases hp : state.matrix[state.step][state.step] = 0
+      · by_cases hp : state.matrix[(state.step, state.step)] = 0
         · rw [Matrix.noPivotLoop_singular_branch fuel state hDone hp]
           refine ⟨{ coeff := hinv.coeff
                     coeff_supp := ?_

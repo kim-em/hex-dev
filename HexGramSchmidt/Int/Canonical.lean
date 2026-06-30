@@ -222,8 +222,8 @@ def bareissGramRowInvariantStepCoeff
   let k : Fin n := ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hnext⟩
   Vector.ofFn fun a : Fin n =>
     Matrix.exactDiv
-      (state.matrix[k][k] * (hinv.coeff i)[a] -
-        state.matrix[i][k] * (hinv.coeff k)[a])
+      (state.matrix[(k, k)] * (hinv.coeff i)[a] -
+        state.matrix[(i, k)] * (hinv.coeff k)[a])
       state.prevPivot
 
 /-- Coefficient-level exact-division provenance for one regular Gram-row
@@ -239,8 +239,8 @@ structure BareissGramRegularStepQuotient
   coeff_num_eq_mul :
     let k : Fin n := ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hnext⟩
     ∀ a : Fin n,
-      state.matrix[k][k] * (hinv.coeff i)[a] -
-        state.matrix[i][k] * (hinv.coeff k)[a] =
+      state.matrix[(k, k)] * (hinv.coeff i)[a] -
+        state.matrix[(i, k)] * (hinv.coeff k)[a] =
           q a * state.prevPivot
 
 private theorem bareissGramRegularStepQuotient_stepCoeff_get
@@ -325,15 +325,15 @@ def bareissGramCanonicalCoeff (b : Matrix Int n m) :
     let state := Matrix.noPivotLoop fuel
       (Matrix.noPivotInitialState (Matrix.gramMatrix b))
     if hnext : state.step + 1 < n then
-      if state.matrix[state.step][state.step] = 0 then
+      if state.matrix[(state.step, state.step)] = 0 then
         bareissGramCanonicalCoeff b fuel i
       else if state.step + 1 ≤ i.val then
         let k : Fin n :=
           ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hnext⟩
         Vector.ofFn fun a : Fin n =>
           Matrix.exactDiv
-            (state.matrix[k][k] * (bareissGramCanonicalCoeff b fuel i)[a] -
-              state.matrix[i][k] * (bareissGramCanonicalCoeff b fuel k)[a])
+            (state.matrix[(k, k)] * (bareissGramCanonicalCoeff b fuel i)[a] -
+              state.matrix[(i, k)] * (bareissGramCanonicalCoeff b fuel k)[a])
             state.prevPivot
       else
         bareissGramCanonicalCoeff b fuel i
@@ -374,7 +374,9 @@ at `fuel + 1` to its explicit Bareiss exact-division update. -/
            (state.matrix[k][k] * (bareissGramCanonicalCoeff b fuel i)[a] -
              state.matrix[i][k] * (bareissGramCanonicalCoeff b fuel k)[a])
            state.prevPivot) := by
-  simp only [bareissGramCanonicalCoeff, dif_pos hnext, if_neg hp, if_pos hi]
+  simp [bareissGramCanonicalCoeff, dif_pos hnext, if_pos hi]
+  intro hc
+  exact absurd hc hp
 
 /-- Recursion equation: regular-branch processed-row case. An already-processed
 row (`i ≤ step`) keeps its previous coefficient vector, so the canonical
@@ -395,7 +397,7 @@ coefficient at `fuel + 1` collapses to the one at `fuel`. -/
         (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step + 1 ≤ i.val) :
     bareissGramCanonicalCoeff b (fuel + 1) i =
       bareissGramCanonicalCoeff b fuel i := by
-  simp only [bareissGramCanonicalCoeff, dif_pos hnext, if_neg hp, if_neg hi]
+  simp [bareissGramCanonicalCoeff, dif_pos hnext, if_neg hp, if_neg hi]
 
 /-- Recursion equation: singular branch (zero diagonal). A zero pivot skips the
 update, so the canonical coefficient at `fuel + 1` collapses to the one at
@@ -414,7 +416,9 @@ update, so the canonical coefficient at `fuel + 1` collapses to the one at
             (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step] = 0) :
     bareissGramCanonicalCoeff b (fuel + 1) i =
       bareissGramCanonicalCoeff b fuel i := by
-  simp only [bareissGramCanonicalCoeff, dif_pos hnext, if_pos hp]
+  simp [bareissGramCanonicalCoeff, dif_pos hnext]
+  intro hc
+  exact absurd hp hc
 
 /-- Recursion equation: done branch (no further work possible). Once the loop can
 take no further step (`¬ step + 1 < n`), the canonical coefficient at `fuel + 1`
@@ -697,6 +701,7 @@ theorem bareissGramRowInvariant_regular_step_coeff_canonical
         h_canon ⟨(Matrix.noPivotLoop elapsed
           (Matrix.noPivotInitialState (Matrix.gramMatrix b))).step,
           Nat.lt_trans (Nat.lt_succ_self _) hnext⟩]
+    simp only [Hex.Matrix.getElem_pair_eq_nested]
   · have hLHS :
         (bareissGramRowInvariant_regular_step hnext hp hinv hentry).coeff i =
           hinv.coeff i := by

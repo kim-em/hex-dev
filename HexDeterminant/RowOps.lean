@@ -221,7 +221,7 @@ private theorem detTerm_colDuplicate_swapValues {R : Type u}
 /-- `M` with column `dst` overwritten by a copy of column `src`. -/
 private def colAddDuplicate {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) : Matrix R n n :=
-  Matrix.ofFn fun r c => if c = dst then M[r][src] else M[r][c]
+  Matrix.ofFn fun r c => if c = dst then M[(r, src)] else M[(r, c)]
 
 /-- Entrywise value of `colAddDuplicate M src dst`: column `dst` reads from
 column `src`, every other column is left unchanged. -/
@@ -406,7 +406,7 @@ private theorem detTerm_rowScale {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
 `colAddDuplicate`). -/
 private def rowAddDuplicate {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst : Fin n) : Matrix R n n :=
-  M.set dst M[src]
+  setRow M dst (getRow M src)
 
 /-- Entrywise value of `rowAdd M src dst c`: row `dst` becomes
 `M[dst][k] + c · M[src][k]`, every other row is left unchanged. -/
@@ -422,16 +422,13 @@ private theorem rowAddDuplicate_get {R : Type u} {n : Nat}
     (M : Matrix R n n) (src dst r : Fin n) (k : Fin n) :
     (rowAddDuplicate M src dst)[r][k] =
       if r = dst then M[src][k] else M[r][k] := by
+  rw [rowAddDuplicate]
   by_cases h : r = dst
   · subst r
-    simp [rowAddDuplicate]
-  · simp [rowAddDuplicate, h]
-    have hval : dst.val ≠ r.val := by
-      intro hval
-      exact h (Fin.ext hval.symm)
-    have hrow : (M.set dst M[src])[r] = M[r] := by
-      exact (Vector.getElem_set_ne (xs := M) (x := M[src]) dst.isLt r.isLt hval)
-    simpa [rowAddDuplicate] using congrArg (fun row => row[k]) hrow
+    rw [setRow_get_self]
+    simp
+  · rw [setRow_row_ne M dst r (getRow M src) h]
+    simp [h]
 
 /-- The product term of `rowAdd M src dst c` splits as
 `detProduct M perm + c · detProduct (rowAddDuplicate M src dst) perm`. -/

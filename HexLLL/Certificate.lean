@@ -38,7 +38,7 @@ def packRow (K : Nat) (v : Vector Int m) : Int :=
 /-- Maximum absolute value of the entries of an integer matrix. -/
 @[expose]
 def maxAbs (M : Matrix Int n m) : Nat :=
-  M.toList.foldl
+  M.rows.toList.foldl
     (fun acc row => Nat.max acc (row.toList.foldl (fun a x => Nat.max a x.natAbs) 0))
     0
 
@@ -72,8 +72,9 @@ def mulEqCert (M : Matrix Int n n) (A C : Matrix Int n m) : Bool :=
 /-- Every entry of an integer matrix is bounded by the `maxAbs` scan. -/
 theorem natAbs_le_maxAbs (M : Matrix Int n m) (i : Fin n) (j : Fin m) :
     M[i][j].natAbs ≤ maxAbs M := by
-  have hrow : M[i] ∈ M.toList := by
-    have h : M.toList[i.val]'(by simp) = M[i] := by simp
+  have hrow : M[i] ∈ M.rows.toList := by
+    have h : M.rows.toList[i.val]'(by simp) = M[i] := by
+      simp [Hex.Matrix.getRow, Fin.getElem_fin]
     rw [← h]
     exact List.getElem_mem _
   have hentry : M[i][j] ∈ M[i].toList := by
@@ -85,7 +86,7 @@ theorem natAbs_le_maxAbs (M : Matrix Int n m) (i : Fin n) (j : Fin m) :
     List.le_foldl_max_of_mem _ (fun x => x.natAbs) (init := 0) hentry
   have houter :=
     List.le_foldl_max_of_mem
-      M.toList
+      M.rows.toList
       (fun row : Vector Int m => row.toList.foldl (fun a x => Nat.max a x.natAbs) 0)
       (init := 0) hrow
   exact Nat.le_trans hinner houter
@@ -306,6 +307,7 @@ theorem mulEqCert_iff {M : Matrix Int n n} {A C : Matrix Int n m} :
   simp only [packWidth, List.all_eq_true, beq_iff_eq, dotProduct_packRow]
   constructor
   · intro h
+    apply Hex.Matrix.ext
     apply Vector.ext
     intro i hi
     have hi' := h ⟨i, hi⟩ (List.mem_finRange _)

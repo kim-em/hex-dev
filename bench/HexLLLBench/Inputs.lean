@@ -208,7 +208,7 @@ def firstLovaszCheckForcesSwap (input : FirstShortVectorInput) : Bool :=
     let dkPrev := sReduced.d.get d0
     let dk := sReduced.d.get d1
     let dkNext := sReduced.d.get d2
-    let B := (sReduced.ν.get f1).get f0
+    let B := (sReduced.ν.getRow f1).get f0
     let lovaszLhs : Int := 4 * (Int.ofNat dkNext * Int.ofNat dkPrev + B ^ 2)
     let lovaszRhs : Int := 3 * (Int.ofNat dk ^ 2)
     lovaszLhs < lovaszRhs
@@ -569,7 +569,7 @@ projection is marked `noncomputable` for proof-layer signalling and cannot be
 used directly as an executable benchmark target. -/
 def runGramSchmidtCoeffChecksum (input : StateInput) : Int :=
   let q :=
-    (((input.state.ν.get input.k).get input.j : Int) : Rat) /
+    (((input.state.ν.getRow input.k).get input.j : Int) : Rat) /
       (input.state.d.get
         ⟨input.j.val + 1, Nat.succ_lt_succ input.j.isLt⟩ : Rat)
   q.num * 65_537 + Int.ofNat q.den

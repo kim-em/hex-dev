@@ -135,7 +135,7 @@ def checksumMonicPoly (f : FpPoly 5) : UInt64 :=
 
 /-- Stable checksum for square matrices over `F_5`. -/
 def checksumMatrix {n : Nat} (M : Matrix (ZMod64 5) n n) : UInt64 :=
-  M.toArray.foldl
+  M.rows.toArray.foldl
     (fun acc row =>
       mixHash acc <| row.toArray.foldl (fun rowAcc coeff => mixHash rowAcc (hash coeff)) 0)
     0
