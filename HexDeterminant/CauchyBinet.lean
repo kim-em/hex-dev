@@ -393,7 +393,7 @@ private theorem det_columnSumMatrixWithSuffix_expand
       (List.finRange m) (fun k => coeff[dst][k]) (fun k r => source[r][k])
   rw [hself] at hsum
   rw [hsum]
-  apply foldl_det_sum_congr
+  apply List.foldl_add_congr
   intro c _hc
   congr 2
   exact setCol_columnSumMatrixWithSuffix_extend source coeff chosen hk c
@@ -494,7 +494,7 @@ private theorem partialColumnTupleCoeff_nil
     (coeff : Matrix R n m) (cols : Vector (Fin m) n) :
     partialColumnTupleCoeff coeff [] cols = columnTupleCoeff coeff cols := by
   unfold partialColumnTupleCoeff columnTupleCoeff
-  apply foldl_det_product_congr
+  apply List.foldl_mul_congr
   intro i _hmem
   congr 2
 
@@ -514,7 +514,7 @@ private theorem partialColumnTupleCoeff_insertAt_last_fold
   rw [List.finRange_succ_last, List.foldl_append, List.foldl_cons, List.foldl_nil]
   congr 1
   · simp only [List.foldl_map]
-    apply foldl_det_product_congr
+    apply List.foldl_mul_congr
     intro i _hmem
     change
       coeff[(⟨i.val, by
@@ -620,10 +620,10 @@ private theorem columnTupleVectors_suffix_rhs_step
                       (assembleColumnsSuffix (c :: chosen) pref (by
                         have hcons : (c :: chosen).length = chosen.length + 1 := rfl
                         omega))))) 0) 0
-  rw [foldl_det_sum_flatMap]
+  rw [List.foldl_add_flatMap]
   simp only [List.foldl_map]
-  rw [foldl_det_sum_nested_zero, foldl_det_sum_swap]
-  apply foldl_det_sum_congr
+  rw [foldl_det_sum_nested_zero, List.foldl_add_comm]
+  apply List.foldl_add_congr
   intro c _hc
   have hfactor :
       (columnTupleVectors (n - (chosen.length + 1)) m).foldl
@@ -644,7 +644,7 @@ private theorem columnTupleVectors_suffix_rhs_step
                     (assembleColumnsSuffix (c :: chosen) pref (by
                       have hcons : (c :: chosen).length = chosen.length + 1 := rfl
                       omega))))) 0 := by
-    exact foldl_det_sum_mul_left_zero
+    exact List.foldl_add_mul_left_zero
       (columnTupleVectors (n - (chosen.length + 1)) m)
       (coeff[(⟨n - chosen.length - 1, by omega⟩ : Fin n)][c])
       (fun pref =>
@@ -674,7 +674,7 @@ private theorem columnTupleVectors_suffix_rhs_step
                     have hcons : (c :: chosen).length = chosen.length + 1 := rfl
                     omega))))) 0
   rw [← hfactor]
-  apply foldl_det_sum_congr
+  apply List.foldl_add_congr
   intro pref _hpref
   have hcast :
       (n - (chosen.length + 1)) + 1 = n - chosen.length := by
@@ -793,7 +793,7 @@ private theorem det_columnSumMatrixWithSuffix_eq_sum
       have hklt : chosen.length < n := by omega
       rw [det_columnSumMatrixWithSuffix_expand source coeff chosen hklt,
         columnTupleVectors_suffix_rhs_step_natural source coeff chosen hklt]
-      apply foldl_det_sum_congr
+      apply List.foldl_add_congr
       intro c _hc
       congr 2
       have hkcons : (c :: chosen).length ≤ n := by
@@ -818,7 +818,7 @@ theorem det_columnSumMatrix_eq_sum_columnTuples
             det (columnTupleMatrix source (columnTupleVectorFn cols))) 0 := by
   rw [← columnSumMatrixWithSuffix_nil source coeff,
     det_columnSumMatrixWithSuffix_eq_sum source coeff [] (by simp)]
-  apply foldl_det_sum_congr
+  apply List.foldl_add_congr
   intro cols _hcols
   have hcoeff : partialColumnTupleCoeff coeff [] cols = columnTupleCoeff coeff cols :=
     partialColumnTupleCoeff_nil coeff cols
@@ -850,7 +850,7 @@ theorem det_gramMatrix_eq_sum_columnTuples
       (columnSumMatrix A A)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
     rw [getElem_columnSumMatrix]
     simp [gramMatrix, ofFn, row, Vector.dotProduct]
-    apply foldl_det_sum_congr
+    apply List.foldl_add_congr
     intro k _hk
     exact Lean.Grind.CommSemiring.mul_comm A[(⟨r, hr⟩ : Fin n)][k] A[(⟨c, hc⟩ : Fin n)][k]
   rw [hgram]

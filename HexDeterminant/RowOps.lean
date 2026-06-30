@@ -54,7 +54,7 @@ private theorem foldl_detTerm_identity_insertions {R : Type u}
             acc + detTerm (Matrix.identity (R := R) (n + 1))
               (insertAt (Fin.last n) (v.map Fin.castSucc) i.castSucc)) z =
         (List.finRange n).foldl (fun acc (_i : Fin n) => acc + (0 : R)) z := by
-          apply foldl_det_sum_congr
+          apply List.foldl_add_congr
           intro i _hmem
           unfold detTerm
           rw [detProduct_identity_insertAt_not_last_zero (R := R) v i.castSucc (by
@@ -64,7 +64,7 @@ private theorem foldl_detTerm_identity_insertions {R : Type u}
             exact (Nat.ne_of_lt i.isLt) hval)]
           grind
       _ = z := by
-          exact foldl_det_sum_zero (List.finRange n) z
+          exact List.foldl_add_zero (List.finRange n) z
   rw [hprefix, detTerm_identity_insertAt_last]
 
 private theorem rowScale_get {R : Type u} [Mul R] {n m : Nat}
@@ -81,7 +81,7 @@ private theorem detProduct_rowScale {R : Type u} [Lean.Grind.CommRing R] {n : Na
         (fun acc r => acc * (rowScale M i c)[r][perm[r]]) 1 =
       (List.finRange n).foldl
         (fun acc r => acc * if r = i then c * M[r][perm[r]] else M[r][perm[r]]) 1 := by
-        apply foldl_det_product_congr
+        apply List.foldl_mul_congr
         intro r _hmem
         by_cases h : r = i
         · subst r
@@ -180,7 +180,7 @@ private theorem detProduct_colDuplicate_swapValues {R : Type u}
     (perm : Vector (Fin n) n) :
     detProduct M perm = detProduct M (swapPermutationValues perm src dst) := by
   unfold detProduct
-  apply foldl_det_product_congr
+  apply List.foldl_mul_congr
   intro r _hmem
   by_cases hsrc : perm[r] = src
   · have hswap : (swapPermutationValues perm src dst)[r] = dst := by
@@ -266,7 +266,7 @@ private theorem detProduct_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
             M[x][perm[x]] + c * (colAddDuplicate M src dst)[x][perm[x]]
           else
             M[x][perm[x]]) 1 := by
-        apply foldl_det_product_congr
+        apply List.foldl_mul_congr
         intro x _hx
         rw [colAdd_get]
         by_cases hxp : x = pivot
@@ -345,19 +345,19 @@ private theorem permutationVectors_transposeValues_neg_sum {R : Type u}
     _ =
       (permutationVectors n).foldl
         (fun acc perm => acc + -detTerm M perm) 0 := by
-        exact foldl_det_sum_perm
+        exact List.foldl_add_perm
           (fun perm => -detTerm M perm)
           (transposePermutationValues_map_permutationVectors_perm i j) 0
     _ =
       (permutationVectors n).foldl
         (fun acc perm => acc + (-1 : R) * detTerm M perm) 0 := by
-        apply foldl_det_sum_congr
+        apply List.foldl_add_congr
         intro perm _hmem
         grind
     _ =
       (-1 : R) *
         ((permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0) := by
-        exact foldl_det_sum_mul_left_zero (permutationVectors n) (-1 : R) (detTerm M)
+        exact List.foldl_add_mul_left_zero (permutationVectors n) (-1 : R) (detTerm M)
     _ = -((permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0) := by
         grind
 
@@ -373,7 +373,7 @@ private theorem permutationVectors_identity_sum {R : Type u} [Lean.Grind.CommRin
       grind
   | succ n ih =>
       simp only [permutationVectors]
-      rw [foldl_det_sum_flatMap]
+      rw [List.foldl_add_flatMap]
       simp only [List.foldl_map, foldl_detTerm_identity_insertions]
       exact ih
 
@@ -388,7 +388,7 @@ private theorem permutationVectors_rowSwap_sum {R : Type u} [Lean.Grind.CommRing
         (fun acc perm => acc + detTerm (rowSwap M i j) perm) 0 =
       (permutationVectors n).foldl
         (fun acc perm => acc + -detTerm M (transposePermutationValues perm i j)) 0 := by
-        apply foldl_det_sum_congr
+        apply List.foldl_add_congr
         intro perm hmem
         exact detTerm_rowSwap_transposeValues M i j h perm (permutationVectors_nodup hmem)
     _ = -((permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0) := by
@@ -449,7 +449,7 @@ private theorem detProduct_rowAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
             M[r][perm[r]] + c * (rowAddDuplicate M src dst)[r][perm[r]]
           else
             M[r][perm[r]]) 1 := by
-        apply foldl_det_product_congr
+        apply List.foldl_mul_congr
         intro r _hmem
         by_cases h : r = dst
         · subst r
@@ -679,7 +679,7 @@ private theorem permutationVectors_duplicateRow_sum {R : Type u} [Lean.Grind.Com
         (((permutationVectors n).filter p).map
             fun perm => transposePermutationValues perm src dst).foldl
           (fun acc perm => acc + term perm) 0 := by
-          exact (foldl_det_sum_perm term hperm 0).symm
+          exact (List.foldl_add_perm term hperm 0).symm
       _ =
         ((permutationVectors n).filter p).foldl
           (fun acc perm => acc + term (transposePermutationValues perm src dst)) 0 := by
@@ -693,18 +693,18 @@ private theorem permutationVectors_duplicateRow_sum {R : Type u} [Lean.Grind.Com
       ((permutationVectors n).filter p).foldl
           (fun acc perm =>
             acc + (term perm + term (transposePermutationValues perm src dst))) 0 := by
-        exact (foldl_det_sum_add_zero
+        exact (List.foldl_add_add
           ((permutationVectors n).filter p) term
           (fun perm => term (transposePermutationValues perm src dst))).symm
     _ = ((permutationVectors n).filter p).foldl (fun acc _ => acc + 0) 0 := by
-        apply foldl_det_sum_congr
+        apply List.foldl_add_congr
         intro perm hmem
         simp only [term]
         rw [detTerm_rowAddDuplicate_transposeValues M src dst h perm]
         · grind
         · exact permutationVectors_nodup (List.mem_filter.mp hmem).1
     _ = 0 := by
-        exact foldl_det_sum_zero ((permutationVectors n).filter p) 0
+        exact List.foldl_add_zero ((permutationVectors n).filter p) 0
 
 private theorem permutationVectors_duplicateCol_sum {R : Type u} [Lean.Grind.CommRing R]
     {n : Nat} (M : Matrix R n n) (src dst : Fin n) (h : src ≠ dst)
@@ -774,7 +774,7 @@ private theorem permutationVectors_duplicateCol_sum {R : Type u} [Lean.Grind.Com
         (((permutationVectors n).filter p).map
             fun perm => swapPermutationValues perm src dst).foldl
           (fun acc perm => acc + term perm) 0 := by
-          exact (foldl_det_sum_perm term hperm 0).symm
+          exact (List.foldl_add_perm term hperm 0).symm
       _ =
         ((permutationVectors n).filter p).foldl
           (fun acc perm => acc + term (swapPermutationValues perm src dst)) 0 := by
@@ -788,18 +788,18 @@ private theorem permutationVectors_duplicateCol_sum {R : Type u} [Lean.Grind.Com
       ((permutationVectors n).filter p).foldl
           (fun acc perm =>
             acc + (term perm + term (swapPermutationValues perm src dst))) 0 := by
-        exact (foldl_det_sum_add_zero
+        exact (List.foldl_add_add
           ((permutationVectors n).filter p) term
           (fun perm => term (swapPermutationValues perm src dst))).symm
     _ = ((permutationVectors n).filter p).foldl (fun acc _ => acc + 0) 0 := by
-        apply foldl_det_sum_congr
+        apply List.foldl_add_congr
         intro perm hmem
         simp only [term]
         rw [detTerm_colDuplicate_swapValues M src dst h hcol perm]
         · grind
         · exact permutationVectors_nodup (List.mem_filter.mp hmem).1
     _ = 0 := by
-        exact foldl_det_sum_zero ((permutationVectors n).filter p) 0
+        exact List.foldl_add_zero ((permutationVectors n).filter p) 0
 
 /-- The multilinear expansion of a column addition has zero total
 duplicate-column contribution, so the Leibniz sum is unchanged. -/
@@ -814,21 +814,21 @@ private theorem permutationVectors_colAdd_sum {R : Type u} [Lean.Grind.CommRing 
       (permutationVectors n).foldl
         (fun acc perm =>
           acc + (detTerm M perm + c * detTerm (colAddDuplicate M src dst) perm)) 0 := by
-        apply foldl_det_sum_congr
+        apply List.foldl_add_congr
         intro perm hmem
         exact detTerm_colAdd M src dst c perm (permutationVectors_nodup hmem)
     _ =
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 +
         (permutationVectors n).foldl
           (fun acc perm => acc + c * detTerm (colAddDuplicate M src dst) perm) 0 := by
-        exact foldl_det_sum_add_zero
+        exact List.foldl_add_add
           (permutationVectors n) (detTerm M)
           (fun perm => c * detTerm (colAddDuplicate M src dst) perm)
     _ =
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 +
         c * (permutationVectors n).foldl
           (fun acc perm => acc + detTerm (colAddDuplicate M src dst) perm) 0 := by
-        rw [foldl_det_sum_mul_left_zero]
+        rw [List.foldl_add_mul_left_zero]
     _ =
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 := by
         rw [permutationVectors_duplicateCol_sum (colAddDuplicate M src dst) src dst h]
@@ -850,20 +850,20 @@ private theorem permutationVectors_rowAdd_sum {R : Type u} [Lean.Grind.CommRing 
       (permutationVectors n).foldl
         (fun acc perm =>
           acc + (detTerm M perm + c * detTerm (rowAddDuplicate M src dst) perm)) 0 := by
-        apply foldl_det_sum_congr
+        apply List.foldl_add_congr
         intro perm _hmem
         exact detTerm_rowAdd M src dst c perm
     _ =
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 +
         (permutationVectors n).foldl
           (fun acc perm => acc + c * detTerm (rowAddDuplicate M src dst) perm) 0 := by
-        exact foldl_det_sum_add_zero
+        exact List.foldl_add_add
           (permutationVectors n) (detTerm M) (fun perm => c * detTerm (rowAddDuplicate M src dst) perm)
     _ =
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 +
         c * (permutationVectors n).foldl
           (fun acc perm => acc + detTerm (rowAddDuplicate M src dst) perm) 0 := by
-        rw [foldl_det_sum_mul_left_zero]
+        rw [List.foldl_add_mul_left_zero]
     _ =
       (permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0 := by
         rw [permutationVectors_duplicateRow_sum M src dst h]
@@ -896,11 +896,11 @@ private theorem det_rowScale_leibniz {R : Type u} [Lean.Grind.CommRing R] {n : N
         (fun acc perm => acc + detTerm (rowScale M i c) perm) 0 =
       (permutationVectors n).foldl
         (fun acc perm => acc + c * detTerm M perm) 0 := by
-        apply foldl_det_sum_congr
+        apply List.foldl_add_congr
         intro perm _hmem
         exact detTerm_rowScale M i c perm
     _ = c * ((permutationVectors n).foldl (fun acc perm => acc + detTerm M perm) 0) := by
-        exact foldl_det_sum_mul_left_zero (permutationVectors n) c (detTerm M)
+        exact List.foldl_add_mul_left_zero (permutationVectors n) c (detTerm M)
 
 /-- Adding a multiple of one row to a distinct row leaves the Leibniz sum
 unchanged; the extra multilinear contribution has two equal rows. -/
@@ -947,7 +947,7 @@ theorem det_transpose {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (permutationVectors n).foldl (fun acc perm => acc + detTerm M.transpose perm) 0 =
       (permutationVectors n).foldl
         (fun acc perm => acc + detTerm M (inversePermutationVector perm)) 0 := by
-        apply foldl_det_sum_congr
+        apply List.foldl_add_congr
         intro perm hmem
         have hnodup := permutationVectors_nodup hmem
         rw [inversePermutationVector_eq perm hnodup]
@@ -986,7 +986,7 @@ theorem det_colPermute_vector {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         (fun acc tau =>
           acc + detSign (R := R) sigma *
             detTerm M (composePermutationValues sigma tau)) 0 := by
-        apply foldl_det_sum_congr
+        apply List.foldl_add_congr
         intro tau htau
         unfold detTerm
         rw [detProduct_colPermute_vector]
@@ -997,7 +997,7 @@ theorem det_colPermute_vector {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       detSign (R := R) sigma *
         (permutationVectors n).foldl
           (fun acc tau => acc + detTerm M (composePermutationValues sigma tau)) 0 := by
-        exact foldl_det_sum_mul_left_zero
+        exact List.foldl_add_mul_left_zero
           (permutationVectors n) (detSign (R := R) sigma)
           (fun tau => detTerm M (composePermutationValues sigma tau))
     _ =

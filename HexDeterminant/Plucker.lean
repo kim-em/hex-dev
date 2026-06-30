@@ -997,7 +997,7 @@ theorem twoColDet_eq_sum_mDet {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
           acc + v[p] * (cofactorSign (R := R) p (Fin.last (n + 1)) * mDet B u p)) 0 := by
   unfold twoColDet
   rw [det_eq_foldl_laplace_last (twoColMatrix B u v)]
-  apply foldl_acc_congr
+  apply List.foldl_congr
   intro acc p _hmem
   rw [twoColMatrix_entry_last]
   unfold cofactor mDet
@@ -1152,7 +1152,7 @@ private theorem foldl_unit_weighted_single
         (fun acc p => acc + (Vector.unit R q)[p] * f p) 0 =
       f q := by
   have hfold :=
-    foldl_add_with_unique_match (α := R) (List.finRange (n + 2)) (0 : R) q
+    List.foldl_add_single (R := R) (List.finRange (n + 2)) (0 : R) q
       (fun p => (Vector.unit R q)[p] * f p)
       (List.mem_finRange q) (List.nodup_finRange (n + 2))
   have hcongr :
@@ -1161,7 +1161,7 @@ private theorem foldl_unit_weighted_single
         (List.finRange (n + 2)).foldl
           (fun acc p =>
             acc + if p = q then (Vector.unit R q)[p] * f p else 0) 0 := by
-    apply foldl_acc_congr
+    apply List.foldl_congr
     intro acc p _hmem
     by_cases hp : p = q
     · rw [if_pos hp]
@@ -1195,7 +1195,7 @@ theorem mDet_eq_sum_unit
             (fun acc q => acc + v[q] * (Vector.unit R q)[skipIndex p i]) 0 := by
     funext i
     have hfold :=
-      foldl_add_with_unique_match (α := R) (List.finRange (n + 2)) (0 : R)
+      List.foldl_add_single (R := R) (List.finRange (n + 2)) (0 : R)
         (skipIndex p i)
         (fun q => v[q] * (Vector.unit R q)[skipIndex p i])
         (List.mem_finRange (skipIndex p i)) (List.nodup_finRange (n + 2))
@@ -1206,7 +1206,7 @@ theorem mDet_eq_sum_unit
             (fun acc q =>
               acc + if q = skipIndex p i then
                 v[q] * (Vector.unit R q)[skipIndex p i] else 0) 0 := by
-      apply foldl_acc_congr
+      apply List.foldl_congr
       intro acc q _hmem
       by_cases hq : q = skipIndex p i
       · rw [if_pos hq]
@@ -1226,7 +1226,7 @@ theorem mDet_eq_sum_unit
         rw [getElem_unit_num, if_pos rfl]
         grind
   rw [hcol, det_setCol_sum_finRange]
-  apply foldl_acc_congr
+  apply List.foldl_congr
   intro acc q _hmem
   rw [← mMatrix_eq_setCol_last B (Vector.unit R q) v p]
 
@@ -1257,13 +1257,13 @@ theorem det_eq_signed_minor_of_col_basis
         (List.finRange (n + 1)).foldl
           (fun acc row =>
             acc + (if row = q then cofactor M q c else (0 : R))) 0 := by
-    apply foldl_acc_congr
+    apply List.foldl_congr
     intro acc row _hmem
     exact hbody acc row
   rw [hfold]
   have hmem : q ∈ List.finRange (n + 1) := List.mem_finRange q
   have hnodup : (List.finRange (n + 1)).Nodup := List.nodup_finRange (n + 1)
-  rw [foldl_add_with_unique_match (List.finRange (n + 1)) (0 : R) q
+  rw [List.foldl_add_single (List.finRange (n + 1)) (0 : R) q
         (fun _ => cofactor M q c) hmem hnodup]
   -- Now goal: 0 + cofactor M q c = cofactorSign q c * det (deleteRowCol M q c).
   rw [show (0 : R) + cofactor M q c = cofactor M q c by grind]
@@ -1577,7 +1577,7 @@ theorem twoColDet_eq_sum_unit_pairs
                 acc + u[a] * twoColDet B (Vector.unit R a)
                   (Vector.unit R b)) 0) 0 := by
   rw [twoColDet_eq_sum_mDet]
-  apply foldl_acc_congr
+  apply List.foldl_congr
   intro acc b _hmem
   rw [mDet_eq_sum_unit B u b]
   congr 2
@@ -1589,13 +1589,13 @@ theorem twoColDet_eq_sum_unit_pairs
         (fun acc a =>
           acc + cofactorSign (R := R) b (Fin.last (n + 1)) *
             (u[a] * mDet B (Vector.unit R a) b)) 0 := by
-        rw [foldl_det_sum_mul_left_zero]
+        rw [List.foldl_add_mul_left_zero]
     _ =
       (List.finRange (n + 2)).foldl
         (fun acc a =>
           acc + u[a] * twoColDet B (Vector.unit R a)
             (Vector.unit R b)) 0 := by
-        apply foldl_det_sum_congr
+        apply List.foldl_add_congr
         intro a _ha
         rw [twoColDet_unit_right B (Vector.unit R a) b]
         grind
@@ -1677,13 +1677,13 @@ private theorem det_plucker_three_term_of_unit
       mDet B v p2 * nDet B p1 p3 (Nat.lt_trans h12 h23) +
       mDet B v p3 * nDet B p1 p2 h12 = 0 := by
   rw [mDet_eq_sum_unit B v p1, mDet_eq_sum_unit B v p2, mDet_eq_sum_unit B v p3]
-  rw [← foldl_det_sum_mul_right_zero (List.finRange (n + 2))
+  rw [← List.foldl_add_mul_right_zero (List.finRange (n + 2))
       (fun q => v[q] * mDet B (Vector.unit R q) p1)
       (nDet B p2 p3 h23)]
-  rw [← foldl_det_sum_mul_right_zero (List.finRange (n + 2))
+  rw [← List.foldl_add_mul_right_zero (List.finRange (n + 2))
       (fun q => v[q] * mDet B (Vector.unit R q) p2)
       (nDet B p1 p3 (Nat.lt_trans h12 h23))]
-  rw [← foldl_det_sum_mul_right_zero (List.finRange (n + 2))
+  rw [← List.foldl_add_mul_right_zero (List.finRange (n + 2))
       (fun q => v[q] * mDet B (Vector.unit R q) p3)
       (nDet B p1 p2 h12)]
   apply foldl_det_sum_sub_add_zero
