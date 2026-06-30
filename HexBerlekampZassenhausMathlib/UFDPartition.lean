@@ -154,7 +154,7 @@ partition case. It is kept as the exact equality form because the exported
 lower-bound theorem below is the shape used by branch-level callers.
 -/
 theorem normalizedFactors_card_eq_length_of_irreducible_partition
-    {α : Type*} [CommMonoidWithZero α] [IsCancelMulZero α]
+    {α : Type*} [CommMonoidWithZero α]
     [NormalizationMonoid α] [UniqueFactorizationMonoid α]
     {f : α} (gs : List α)
     (hirr : ∀ g ∈ gs, Irreducible g)
@@ -185,7 +185,7 @@ associated to `f`, `f` cannot have more normalized irreducible factors than
 the emitted list.
 -/
 theorem normalizedFactors_card_le_length_of_irreducible_partition
-    {α : Type*} [CommMonoidWithZero α] [IsCancelMulZero α]
+    {α : Type*} [CommMonoidWithZero α]
     [NormalizationMonoid α] [UniqueFactorizationMonoid α]
     {f : α} (gs : List α)
     (hirr : ∀ g ∈ gs, Irreducible g)
@@ -206,7 +206,7 @@ Distinct normalized factors of a square-free `f` cannot share an emitted
 witness (associated normalized elements are equal), so the witness map is
 injective and the image cardinality bounds the list length. -/
 theorem normalizedFactors_card_le_length_of_coverage
-    {α : Type*} [CommMonoidWithZero α] [IsCancelMulZero α]
+    {α : Type*} [CommMonoidWithZero α]
     [NormalizationMonoid α] [UniqueFactorizationMonoid α]
     {f : α} (hf : f ≠ 0) (hsf : Squarefree f)
     (gs : List α)
@@ -271,7 +271,7 @@ abstract UFD factor multiset of a certified product by the concrete flattened
 list of factors.
 -/
 theorem normalizedFactors_list_prod_eq_of_irreducible
-    {α : Type*} [CommMonoidWithZero α] [IsCancelMulZero α]
+    {α : Type*} [CommMonoidWithZero α]
     [NormalizationMonoid α] [UniqueFactorizationMonoid α]
     (gs : List α) (hirr : ∀ g ∈ gs, Irreducible g) :
     normalizedFactors gs.prod = ((gs : Multiset α).map normalize) := by

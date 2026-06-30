@@ -195,8 +195,8 @@ def matrixRingEquiv [Semiring R] : Hex.Matrix R n n ≃+* Matrix (Fin n) (Fin n)
 
 instance instAlgebra [CommSemiring R] : Algebra R (Hex.Matrix R n n) :=
   Algebra.ofModule
-    (fun r A B => matrixEquiv.injective (by simp [smul_mul_assoc]))
-    (fun r A B => matrixEquiv.injective (by simp [mul_smul_comm]))
+    (fun r A B => matrixEquiv.injective (by simp))
+    (fun r A B => matrixEquiv.injective (by simp))
 
 /-- `matrixEquiv` as an `R`-algebra equivalence on square matrices. -/
 @[expose]

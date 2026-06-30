@@ -682,7 +682,7 @@ theorem mahlerMeasure_derivative_eq_natDegree_mul_of_roots_le_one
   have hsub : p.natDegree - 1 + 1 = p.natDegree :=
     Nat.sub_add_cancel hnatpos
   have hdeg_deriv : p.derivative.natDegree = p.natDegree - 1 :=
-    natDegree_eq_of_degree_eq_some (degree_derivative_eq p hnatpos)
+    natDegree_eq_of_degree_eq_some (degree_derivative hnatpos.ne')
   have hcast : ((p.natDegree - 1 : ℕ) : ℂ) + 1 = (p.natDegree : ℂ) := by
     rw [Nat.cast_sub hnatpos, Nat.cast_one]; ring
   have hlead_deriv : p.derivative.leadingCoeff =
@@ -821,7 +821,7 @@ theorem prod_max_one_norm_roots_derivative_le_of_mahlerMeasure_derivative_le
   have hsub : p.natDegree - 1 + 1 = p.natDegree :=
     Nat.sub_add_cancel hnatpos
   have hdeg_deriv : p.derivative.natDegree = p.natDegree - 1 :=
-    natDegree_eq_of_degree_eq_some (degree_derivative_eq p hnatpos)
+    natDegree_eq_of_degree_eq_some (degree_derivative hnatpos.ne')
   have hcast : ((p.natDegree - 1 : ℕ) : ℂ) + 1 = (p.natDegree : ℂ) := by
     rw [Nat.cast_sub hnatpos, Nat.cast_one]
     ring

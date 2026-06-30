@@ -55,7 +55,7 @@ private theorem rowAdd_row_at {R : Type u} [Mul R] [Add R] {n' m' : Nat}
     (M : Matrix R n' m') (src dst : Fin n') (c : R) :
     (Matrix.rowAdd M src dst c)[dst] =
       Vector.ofFn fun k => M[dst][k] + c * M[src][k] := by
-  simp [Matrix.rowAdd_eq_set, Hex.Matrix.getRow, Hex.Matrix.rows_setRow, Fin.getElem_fin, Hex.Matrix.getElem_pair_eq_nested]
+  simp [Matrix.rowAdd_eq_set, Hex.Matrix.getRow, Hex.Matrix.rows_setRow, Fin.getElem_fin]
 
 /-- Inductive helper for `dot_rowAdd_row_at_left`: distribution along a foldl. -/
 private theorem foldl_dot_rowAdd_at {n' m' : Nat}
@@ -236,8 +236,7 @@ theorem leadingGramMatrixInt_rowAdd_outside
       b[GramSchmidt.liftFinLE ⟨q, hq⟩ ht] :=
     rowAdd_row_eq_of_ne b j k (GramSchmidt.liftFinLE ⟨q, hq⟩ ht) c hq_ne
   simp only [GramSchmidt.leadingGramMatrixInt, Matrix.ofFn, Matrix.row,
-    Hex.Matrix.rows_ofRows, Hex.Matrix.getElem_eq_getRow, Vector.getElem_ofFn,
-    Fin.getElem_fin]
+    Hex.Matrix.rows_ofRows, Vector.getElem_ofFn]
   congr 1
 
 /-- Entry-level structural identity for the leading Gram matrix of

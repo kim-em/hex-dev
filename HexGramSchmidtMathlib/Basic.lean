@@ -100,7 +100,7 @@ theorem rowToEuclidean_inner (a b : Vector Rat m) :
     inner ℝ (rowToEuclidean a) (rowToEuclidean b) =
       ((Vector.dotProduct (u := a) (v := b) : Rat) : ℝ) := by
   rw [PiLp.inner_apply]
-  simp [rowToEuclidean, PiLp.toLp_apply, real_inner_eq_re_inner,
+  simp [rowToEuclidean, PiLp.toLp_apply,
     RCLike.inner_apply, mul_comm]
   rw [Vector.dotProduct, cast_foldl_dotProduct_rat]
   simp only [Rat.cast_zero, zero_add]
