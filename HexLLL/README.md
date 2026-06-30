@@ -4,12 +4,13 @@ Part of [`hex`](https://github.com/kim-em/hex-dev), a computer algebra
 library for Lean 4. The aim is fast executable code, fully verified, built
 with spec-driven development.
 
-`hex-lll` provides executable LLL reduction of an integer lattice basis,
-following Cohen's integer-only recurrence. It depends on
-[`hex-gram-schmidt`](https://github.com/kim-em/hex-gram-schmidt) for the
-integer Gram-Schmidt data the algorithm carries. See
-[`hex-lll-mathlib`](https://github.com/kim-em/hex-lll-mathlib) for the
-correspondence with Mathlib and the full reducedness and short-vector theory.
+`hex-lll` provides executable LLL reduction of an integer lattice basis:
+given a basis of a lattice in `ℤᵐ`, it returns a shorter, more orthogonal
+basis of the same lattice, with the first row a provably short vector. It
+depends on [`hex-gram-schmidt`](https://github.com/kim-em/hex-gram-schmidt)
+for the integer Gram-Schmidt data the algorithm carries, and is Mathlib-free.
+The correspondence with Mathlib and the full short-vector theory live in
+[`hex-lll-mathlib`](https://github.com/kim-em/hex-lll-mathlib).
 
 # Quickstart
 
@@ -40,24 +41,50 @@ def B : Matrix Int 3 3 := Matrix.ofFn fun i j =>
 #eval lll.shortVectorsUnchecked B (3 / 4) (by decide +kernel) (by decide +kernel) (by decide)
 
 -- The executable integer reducedness oracle.
-#eval lllReducedInt (1 : Matrix Int 3 3) (3 / 4) (1 / 2)   -- true
+#eval lllReducedInt (Matrix.identity 3) (3 / 4) (1 / 2)   -- true
 ```
 
 # Functionality
 
-- `lll`: LLL reduction of an integer basis at a rational factor `δ`, returning
-  a `(δ, 11/20)`-reduced basis of the same lattice;
-- `lll.firstShortVector` and `lll.shortVectors`: the shortest reduced row and
-  the ordered reduced rows, the short-vector entry points for downstream
-  consumers such as [`hex-berlekamp-zassenhaus`](https://github.com/kim-em/hex-berlekamp-zassenhaus);
-- `lllNative`: the exact integer `d`/`ν` reducer at the classical `η = 1/2`
-  bound, and proof-free `Unchecked` variants of the entry points;
-- `LLLState` with `sizeReduce` and `swapStep`: the integer state and its
-  step operations, with `LLLState.potential` and the noncomputable GS
-  projection `LLLState.gramSchmidtCoeff`;
-- `certCheck`: the integer certificate checker for an external reducer's
-  output, and `lllReducedInt` / `lllReducedInterval`, the exact and
-  fixed-precision reducedness oracles;
+The public entry point is `lll`, which reduces an integer basis at a
+rational factor `δ` and returns a `(δ, 11/20)`-reduced basis of the same
+lattice. Behind that one entry point are three reducers, each of which
+certifies its output to that same contract, so the result is correct no
+matter which one runs. `lll` dispatches through them in order:
+
+- **External provider** (`LLLProvider.dispatch`). If an optional external
+  reducer is registered in the process, probed through an `@[extern]` hook,
+  `lll` runs it and *certifies* the returned candidate with the integer-only
+  checker `certCheck`. An absent or rejected candidate falls through. The
+  provider is an independent package this library neither depends on nor
+  names in its build; it is acceleration only.
+- **Approximation-steered reducer** (`lllSteered`). This drives the exact
+  integer row operations from an untrusted floating-point Gram-Schmidt
+  approximation. The floats only choose which row operation to apply and
+  never enter a proof, so the output spans the same lattice by construction.
+  It certifies its own output at `(δ, 11/20)` and falls back to the exact
+  reducer when certification fails.
+- **Exact integer reducer** (`lllNative`). The trusted all-integer `d`/`ν`
+  reducer at the classical size-reduction bound `η = 1/2`. The bottom of the
+  chain: always correct, never approximate.
+
+The surface, by group:
+
+- `lll`, `lll.firstShortVector`, and `lll.shortVectors`: the public reducer,
+  the shortest reduced row, and the ordered reduced rows. `firstShortVector`
+  is the short-vector entry point for downstream consumers such as
+  [`hex-berlekamp-zassenhaus`](https://github.com/kim-em/hex-berlekamp-zassenhaus).
+- `lllNative`: the exact integer reducer at the classical `η = 1/2`, with the
+  tighter short-vector constant; call it directly to get the classical
+  guarantee. `lllSteered` exposes the steered reducer on its own.
+- `lll.firstShortVectorUnchecked` and `lll.shortVectorsUnchecked`: proof-free
+  variants of the entry points for callers without an independence proof.
+- `LLLState` with `sizeReduce` and `swapStep`: the integer state and its step
+  operations, with `LLLState.potential` and the noncomputable Gram-Schmidt
+  projection `LLLState.gramSchmidtCoeff`.
+- `lllReducedInt`, `lllReducedInterval`, and `lllReducedCheck`: the exact,
+  fixed-precision, and dispatched reducedness oracles; `certCheck` is the
+  integer certificate checker for an external reducer's output.
 - `Matrix.memLattice`, `Matrix.independent`, and `Vector.normSq` for stating
   and checking the inputs and guarantees.
 
@@ -69,8 +96,8 @@ size-reduction hypothesis, and the same-lattice half of the external
 certificate.
 
 The short-vector bound, `short_vector_bound_of_size_bound`: a reduced,
-independent basis has a first row no longer than `(1/(δ − η²))^(n-1)` times
-any nonzero lattice vector.
+independent basis has a first row whose squared norm is at most
+`(1 / (δ − η²))^(n-1)` times that of any nonzero lattice vector.
 
 ```lean
 theorem short_vector_bound_of_size_bound (b : Matrix Int n m) {δ η : Rat}
@@ -82,7 +109,7 @@ theorem short_vector_bound_of_size_bound (b : Matrix Int n m) {δ η : Rat}
         ((v.normSq : Int) : Rat)
 ```
 
-The certificate's same-lattice clause, `Matrix.sameLatticeCert_sound`: when the
+The certificate's same-lattice clause, `sameLatticeCert_sound`: when the
 integer transforms check out, the input and candidate span the same lattice.
 
 ```lean
@@ -91,10 +118,37 @@ theorem sameLatticeCert_sound {B B' : Matrix Int n m} {U V : Matrix Int n n} :
       ∀ v, B.memLattice v ↔ B'.memLattice v
 ```
 
+**The size-reduction bound `η` and its constants.** The public `lll`
+certifies its output `(δ, 11/20)`-reduced: every Gram-Schmidt coefficient
+satisfies `|μ| ≤ 11/20`. Two numbers in `lll`'s signature follow from that
+`η = 11/20`. The precondition is `121/400 < δ`, because `121/400 = (11/20)² =
+η²` and the bound is well-defined only when `η² < δ`; and the short-vector
+constant is `1/(δ − 121/400)`.
+
+Why `11/20` and not the classical `1/2`? Because `11/20` is the bound every
+one of the three reducers can guarantee uniformly. A floating-point or
+external reducer cannot be forced to land exactly `|μ| ≤ 1/2`, so the public
+contract is stated at the slightly looser `11/20`, which all paths certify.
+The exact `lllNative` keeps the classical `η = 1/2` (precondition `1/4 < δ`,
+constant `1/(δ − 1/4)`); call it directly when you want that contract.
+
+Is the looser bound a concern? It is an honest weakening of the formal
+constant, and the weakening compounds with dimension, so it is worth being
+precise about. At `δ = 3/4` the squared-norm constant goes from
+`1/(δ − 1/4) = 2` for `lllNative` to `1/(δ − 121/400) ≈ 2.235` for `lll`, so
+the per-vector length factor is about `5.7%` larger per dimension: modest in
+low dimension, real in high. Tightening `η` back toward `1/2` would require a
+stricter certified checker (higher working precision, tighter requested
+margins, or enforcing exact `|μ| ≤ 1/2`), trading run time and a higher
+fallback rate for a better constant. The requested-parameter and precision
+constants the dispatch uses (`requestedEta = 107/200`, `requestedDelta`,
+`intervalPrec = 128`, `dispatchFactor`, `steerDimThreshold`) are documented in
+full at their definitions; none of them affects soundness.
+
 The end-to-end guarantees of `lll` are proved in
 [`hex-lll-mathlib`](https://github.com/kim-em/hex-lll-mathlib): that its output
-is `(δ, 11/20)`-reduced, spans the same lattice, and satisfies the short-vector
-bound `lll_short_vector`, together with the certificate soundness theorem
+is `(δ, 11/20)`-reduced, spans the same lattice, and satisfies the
+short-vector bound, together with the certificate soundness theorem
 `certCheck_sound`.
 
 # Contributing
