@@ -88,6 +88,7 @@ verified LLL gives confidence in attack results.
 - [Lean 4 stdlib inventory](lean4-stdlib-inventory.md)
 - [Libraries](Libraries/) (DAG + per-library docs)
 - [Tutorials](tutorials.md)
+- [Released-repo READMEs](readme.md)
 - [Testing](testing.md)
 - [Benchmarking](benchmarking.md)
 - [CI](CI.md)
