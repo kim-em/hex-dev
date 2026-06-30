@@ -89,14 +89,17 @@ The surface, by group:
   guarantee. `lllSteered` exposes the steered reducer on its own.
 - `lll.firstShortVectorUnchecked` and `lll.shortVectorsUnchecked`: proof-free
   variants of the entry points for callers without an independence proof.
-- `LLLState` with `sizeReduce` and `swapStep`: the integer state and its step
-  operations, with `LLLState.potential` and the noncomputable Gram-Schmidt
-  projection `LLLState.gramSchmidtCoeff`.
 - `lllReducedInt`, `lllReducedInterval`, and `lllReducedCheck`: the exact,
   fixed-precision, and dispatched reducedness oracles; `certCheck` is the
   integer certificate checker for an external reducer's output.
 - `Matrix.memLattice`, `Matrix.independent`, and `Vector.normSq` for stating
   and checking the inputs and guarantees.
+
+Everything else lives under the `Hex.Internal` namespace and is not part of the
+supported API: the integer state `LLLState` and its step/loop machinery, the
+`SteeredState` float-steering reducer, the fixed-precision interval checker
+kernel, the external-provider plumbing, and the dispatch-tuning and diagnostics
+constants. `open Hex` brings only the surface above into scope.
 
 # Verification
 
