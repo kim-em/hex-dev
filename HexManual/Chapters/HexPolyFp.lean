@@ -23,17 +23,17 @@ tag := "hex-poly-fp"
 tag := "hex-poly-fp-intro"
 %%%
 
-`HexPolyFp` specializes the executable dense-polynomial layer to the
+`HexPolyFp` specializes the executable dense polynomials to the
 prime-field candidate `Hex.ZMod64 p`. Where {ref "hex-poly"}[`HexPoly`]
 is generic over any coefficient type with a `Zero` and a `DecidableEq`,
 `HexPolyFp` fixes the coefficients to machine-word residues modulo a
 prime `p` and adds the operations that only make sense over `` `Fₚ` ``:
 modular exponentiation and composition in `` `Fₚ[x] / (f)` ``, the
 Frobenius-power maps `X ↦ X^(pᵏ)`, square-free (Yun) decomposition, and
-the quotient-by-modulus surface that becomes a field exactly when the
+the quotient by a modulus, which becomes a field exactly when the
 modulus is irreducible.
 
-The core type {name}`Hex.FpPoly` is a thin `abbrev` over
+{name}`Hex.FpPoly` is a thin `abbrev` over
 {name}`Hex.DensePoly`, so the entire constructor, arithmetic, and
 Euclidean API documented in the {ref "hex-poly"}[`HexPoly` chapter] is
 available unchanged; this chapter covers only what the prime-field
@@ -42,7 +42,7 @@ specialization adds on top. `HexPolyFp` is Mathlib-free; it depends on
 {ref "hex-mod-arith"}[`HexModArith`] for the `ZMod64 p` coefficient
 arithmetic. See {ref "hex-poly-fp-cross-references"}[Cross-references].
 
-# Core type
+# The prime-field polynomial type
 %%%
 tag := "hex-poly-fp-core-type"
 %%%
@@ -55,10 +55,10 @@ that `p` fits in a machine word, so arithmetic stays in the fast path.
 
 Because {name}`Hex.FpPoly` unfolds to {name}`Hex.DensePoly`, the
 `HexPolyFp` namespace re-exports the constructors and queries a caller
-needs at the specialized type — {name}`Hex.FpPoly.ofCoeffs` builds a
+needs for the specialized type. {name}`Hex.FpPoly.ofCoeffs` builds a
 polynomial from a coefficient array, {name}`Hex.FpPoly.X` is the
 indeterminate, and {name}`Hex.FpPoly.modByMonic` reduces modulo a monic
-divisor. The irreducibility predicate the field surface is gated on is
+divisor. The irreducibility predicate that gates the field operations is
 also stated here.
 
 {docstring Hex.FpPoly.Irreducible}
@@ -71,7 +71,7 @@ tag := "hex-poly-fp-operations"
 The headline operations all work in the quotient ring
 `` `Fₚ[x] / (f)` `` for a monic modulus `f`. Modular exponentiation
 raises a base to a power and reduces, and modular composition
-substitutes one polynomial into another and reduces — both by
+substitutes one polynomial into another and reduces. Both use
 Horner-style loops that re-reduce at every step, so intermediate
 results never grow past the modulus degree.
 
@@ -99,13 +99,13 @@ their multiplicities; the two record types name those pieces.
 {docstring Hex.FpPoly.squareFreeDecomposition}
 
 The inverse operation reassembles a polynomial from a decomposition by
-raising each factor to its multiplicity and multiplying — useful both
-as documentation of the record's meaning and as the reconstruction side
-of the correctness laws below.
+raising each factor to its multiplicity and multiplying. It documents
+the record's meaning and is the reconstruction side of the correctness
+laws below.
 
 {docstring Hex.FpPoly.weightedProduct}
 
-# The quotient-by-modulus surface
+# The quotient by a modulus
 %%%
 tag := "hex-poly-fp-quotient"
 %%%
@@ -117,9 +117,9 @@ degree below the modulus, together with a proof of that bound.
 {docstring Hex.FpPoly.Quotient}
 
 The quotient is unconditionally a commutative ring. It becomes a
-*field* only when `g` is irreducible — and `HexPolyFp` parametrizes
+*field* only when `g` is irreducible, and `HexPolyFp` parametrizes
 over that fact rather than deciding it. There is no unconditional
-`Field` instance; instead the field-promoting axioms are theorems that
+`Field` instance; instead the field-promoting laws are theorems that
 take `FpPoly.Irreducible g` as an explicit hypothesis. A downstream
 caller supplies an irreducibility witness (in practice a checkable
 Rabin certificate from `HexBerlekamp`), and only then are inverses
@@ -137,9 +137,8 @@ linear modulus `x + 3`, then exercises modular exponentiation,
 Frobenius, composition, weighted products, and square-free
 decomposition. The helper `coeffNats` reads a polynomial back as a list
 of natural-number coefficients. Each `#guard` is checked when the
-chapter is built, so the expected coefficient lists are guaranteed to
-match what the executable implementation produces — these values are
-the same ones pinned by the library's conformance suite.
+chapter is built. These values are the same ones pinned by the
+library's conformance suite.
 
 ```lean
 open Hex Hex.FpPoly
@@ -285,8 +284,8 @@ tag := "hex-poly-fp-key-correctness"
 The executable operations are pinned to their mathematical meaning.
 Modular composition agrees with the spelled-out "compose then take the
 remainder" definition, and the Frobenius iterate reduces to the
-absolute monomial it represents — the identity Rabin's irreducibility
-test relies on.
+absolute monomial it represents. That last identity is the one Rabin's
+irreducibility test relies on.
 
 {docstring Hex.FpPoly.composeModMonic_eq_mod}
 
@@ -318,20 +317,20 @@ reducible modulus (where a nonzero zero-divisor has no inverse).
 tag := "hex-poly-fp-cross-references"
 %%%
 
-`HexPolyFp` sits one level above the base polynomial layer and supplies
-the prime-field specialization the finite-field stack is built on:
+`HexPolyFp` builds on the generic dense polynomials and supplies
+the prime-field specialization the finite-field libraries use:
 
-* {ref "hex-poly"}[`HexPoly`] is the generic dense-polynomial layer.
+* {ref "hex-poly"}[`HexPoly`] is the generic dense-polynomial library.
   {name}`Hex.FpPoly` is an `abbrev` over {name}`Hex.DensePoly`, so every
   constructor, arithmetic, evaluation, and Euclidean operation
   documented in that chapter is inherited at the specialized type; the
   concrete `DivModLaws`/`GcdLaws` the generic Euclidean laws are stated
   under are discharged here for `ZMod64 p`.
 * {ref "hex-mod-arith"}[`HexModArith`] supplies the `ZMod64 p`
-  coefficient arithmetic — the machine-word modular add, multiply, and
+  coefficient arithmetic: the machine-word modular add, multiply, and
   inverse that every operation in this chapter ultimately calls, along
   with the `ZMod64.Bounds`/`ZMod64.PrimeModulus` instances the
-  prime-field surface requires.
+  prime-field operations require.
 
 Downstream, the finite-field libraries consume `HexPolyFp` directly:
 `HexGFqRing` builds the quotient ring `` `Fₚ[x] / (g)` `` and
