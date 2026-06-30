@@ -157,7 +157,32 @@ So `hex-gf2` → `HexGF2`, `hex-lll` → `HexLLL`, `hex-lll-mathlib`
 lower-case; `fp` is "F_p" with `p` variable, lower-case.)
 
 Extend this table when adding libraries whose names involve further
-acronyms. Do not silently introduce a mixed-case spelling.
+acronyms. Do not silently introduce a mixed-case spelling. An acronym of
+four or more letters is not carried as a name segment at all: spell it
+out, following the lean4 naming guide (`RREF` → `RowReduce` /
+`IsRowReduced` / `rowReduce`, like `Json`). The acronyms above are all
+three letters or fewer.
+
+### Lemma and operation naming
+
+- **Entry-access lemmas use the `getElem_<op>` form.** Name a lemma for
+  the head symbol of its left-hand side. When the left-hand side is
+  `(op …)[…] = …` the head is `getElem`, so the lemma is `getElem_<op>`
+  (`getElem_row`, `getElem_transpose`, `getElem_rowSwap`, `getElem_modify`),
+  usually tagged `@[grind =]`; trailing qualifiers ride along
+  (`getElem_rowSwap_of_ne`). Reserve the `_getElem` *suffix* for lemmas
+  where `getElem` is not the head (`ext_getElem`, `getD_getElem`).
+
+- **Vector operations live in the root `Vector` namespace.** `dotProduct`,
+  `normSq`, `unit`, `modify`, and their lemmas attach to Lean core's
+  `Vector`, not a `Hex.Vector` or `Matrix.Vector` namespace — additions to
+  an existing type live in that type's namespace.
+
+- **State a lemma at its weakest typeclass.** Prove an algebraic lemma over
+  the weakest class that admits it (e.g. dot-product additivity over a
+  general ring), but keep a stronger class exactly where the statement is
+  false without it (the multiplicative right-argument lemmas genuinely need
+  commutativity).
 
 ### Process vocabulary stops at the issue boundary
 
@@ -210,6 +235,12 @@ to CI in [Phase0.md §6](Phase0.md).
 or imported (directly or transitively) by `Foo.lean`. Any PR that adds
 a new module under `Foo/` must also update `Foo.lean` (or chain the
 import through an existing intermediate module).
+
+### Module organization
+
+Give each module one subject and name it for its contents; do not keep
+re-export shell modules whose only job is to import others. Every file
+opens with a module docstring, placed immediately after `public section`.
 
 ---
 

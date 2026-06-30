@@ -321,10 +321,16 @@ subsection. Default oracle assignments:
   oracle.
 - `hex-poly`, `hex-poly-z`, `hex-poly-fp` — `python-flint` primary
   for univariate polynomial arithmetic.
-- `hex-matrix`, `hex-gram-schmidt` (released — oracle conformance runs in their own repos) — `python-flint` exact
-  (`fmpz_mat` / `fmpq_mat`); numpy/scipy float for well-conditioned
-  float-level cross-checks; `fpylll`'s `GSO.Mat` for Gram-Schmidt
-  size-reduction parity.
+- `hex-matrix` (released — conformance runs in its own repo) — no
+  external oracle; the dense base (arithmetic, row/column ops, transpose,
+  slicing) is checked by property `#guard`s (structural layer).
+- `hex-row-reduce`, `hex-determinant`, `hex-bareiss` (released — oracle
+  conformance runs in their own repos) — `python-flint` exact
+  (`fmpz_mat`: rank / RREF / nullspace, determinant, Bareiss determinant).
+- `hex-gram-schmidt` (released — oracle conformance runs in its own repo)
+  — `python-flint` exact (`fmpq_mat`); numpy/scipy float for
+  well-conditioned float-level cross-checks; `fpylll`'s `GSO.Mat` for
+  Gram-Schmidt size-reduction parity.
 - `hex-gf2`, `hex-gfq-ring`, `hex-gfq-field`, `hex-gfq` —
   `python-flint` (`nmod_poly`, `fq_nmod`, `fq_default`); `cypari2`
   as a secondary independent finite-field oracle when independence

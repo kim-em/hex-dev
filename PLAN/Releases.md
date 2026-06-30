@@ -89,3 +89,74 @@ Per release:
   release entry point.
 - A short release notes entry listing the libraries, the user story,
   and the integration example.
+
+## Published libraries
+
+"Release" above means a milestone. Separately, several libraries are
+*published* as standalone repositories under `kim-em/`, so they can be
+used without the whole monorepo. `hex-dev` is the single source of
+truth: all development happens here, and a workflow regenerates each
+published repo from this tree. A published repo is a mirror — never
+hand-edit one; change it here and let the sync publish.
+
+### The published set
+
+In dependency order (`scripts/release/released.yml`):
+
+`hex-test-kit`, `hex-matrix`, `hex-row-reduce`, `hex-determinant`,
+`hex-bareiss`, `hex-matrix-mathlib`, `hex-row-reduce-mathlib`,
+`hex-determinant-mathlib`, `hex-bareiss-mathlib`, `hex-gram-schmidt`,
+`hex-gram-schmidt-mathlib`, `hex-lll`, `hex-lll-mathlib`.
+
+This is the current set, not a permanent one; more sublibraries may be
+published later. The computational repos are Mathlib-free; the
+`*-mathlib` repos are the bridge layers.
+
+### Uniform per-library layout
+
+Every library uses the same layout, so publishing is a near-mechanical
+copy:
+
+- `HexX/` — source plus the `HexX.lean` umbrella.
+- `HexX/SPEC/hex-x.md` — the library's SPEC.
+- `bench/HexX/Bench.lean` — bench driver.
+- `conformance/HexX/{Conformance,EmitFixtures}.lean` — conformance drivers.
+- `conformance-fixtures/HexX/*.jsonl`, `scripts/oracle/<lib>_*.py`.
+
+The bench and conformance drivers stay in the root Lake package (via
+`srcDir`), not in sub-packages: a sub-package would re-resolve and
+duplicate the whole Mathlib checkout.
+
+### The publish mechanism
+
+Four pieces, under `scripts/release/` and `.github/workflows/`:
+
+- `released.yml` — a per-repo manifest: which paths to copy, which
+  oracles to ship, and which upstream repos to pin, in dependency order.
+- `sync_released.py` — the driver. For each repo it clones `main`,
+  overwrites the managed paths from this tree, rewrites the cross-repo
+  Lake revisions, and commits to `main`. `--dry-run` prints the planned
+  changes without pushing; run it first.
+- `synced.json` — the baseline seed (see below).
+- `sync-released.yml` — a manual workflow (`workflow_dispatch`, dry by
+  default). One dispatch drives the whole publish.
+
+Rewriting the cross-repo revisions touches **every** lakefile and
+`lake-manifest.json` in a repo — the root and the `bench/` and
+`conformance/` sub-projects — updating both `rev` and `inputRev`. Lake
+trusts the manifest, so a stale lockfile would otherwise rebuild against
+the old revision.
+
+### Baseline and the uncoordinated-commit guard
+
+The sync records, per repo, the `main` commit this monorepo was last
+synced from. If a published repo's `main` has moved off that baseline,
+the sync refuses to overwrite it — it reports the divergence and skips
+(`--force` overrides) — so an out-of-band commit is never silently lost.
+
+Reconciling means re-seeding: bring that library's content here up to
+the published `main`, rebuild the whole graph green, then re-run the
+sync. The baseline lives on the unprotected `release-sync-baseline`
+branch, which the workflow reads and advances on every real run;
+`scripts/release/synced.json` is the seed used before that branch
+exists.
