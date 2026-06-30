@@ -4,7 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexModArith.Basic
+module
+
+public meta import HexModArith.Basic
+public import HexModArith.Basic
+
+public section
 
 /-!
 Executable `#guard` / `#eval` checks for the default `ZMod64` multiplication path.
