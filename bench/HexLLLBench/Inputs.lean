@@ -13,6 +13,8 @@ public section
 
 namespace Hex.LLLBench
 
+open Hex.Internal
+
 /-- Row-major deterministic fixture for one integer basis. -/
 structure IntBasisInput where
   rows : Nat

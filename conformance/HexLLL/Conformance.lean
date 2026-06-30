@@ -62,6 +62,8 @@ Covered edge cases:
 namespace Hex
 namespace LLLConformance
 
+open Hex.Internal
+
 private def identity8 : Matrix Int 8 8 := Matrix.identity 8
 
 private def zero8 : Matrix Int 8 8 := 0

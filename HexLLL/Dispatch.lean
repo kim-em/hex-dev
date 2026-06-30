@@ -21,6 +21,8 @@ downstream consumers.
 
 namespace Hex
 
+open Hex.Internal
+
 /-- Top-level LLL entry point. Dispatches first to the certified-external path:
 if `LLLProvider.providerAvailable ()` is true and the candidate passes
 `certCheck B B' U V δ (11/20)`, the certified `B'` is returned; otherwise the

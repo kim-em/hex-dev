@@ -30,6 +30,8 @@ private theorem vector_get_eq_getElem {α : Type*} {n : ℕ} (v : Vector α n) (
 
 namespace Hex
 
+open Hex.Internal
+
 namespace Matrix
 
 /-- The identity matrix is independent: every executable leading Gram
