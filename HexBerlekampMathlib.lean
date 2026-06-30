@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampMathlib.Basic
+module
+
+public import HexBerlekampMathlib.Basic
+
+public section
 
 /-!
 The `HexBerlekampMathlib` library contains the Mathlib-facing correctness

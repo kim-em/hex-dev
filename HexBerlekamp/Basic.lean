@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMatrix
-import HexRowReduce
-import HexPolyFp
+module
+
+public import HexMatrix
+public import HexRowReduce
+public import HexPolyFp
+
+public section
 
 /-!
 Executable Berlekamp-matrix support for `hex-berlekamp`.
@@ -24,6 +28,7 @@ namespace Berlekamp
 variable {p : Nat} [ZMod64.Bounds p]
 
 /-- The basis size used for the Berlekamp matrix of `f`. -/
+@[expose]
 def basisSize (f : FpPoly p) : Nat :=
   f.degree?.getD 0
 
@@ -42,6 +47,7 @@ private theorem basisSize_eq_size_sub_one (f : FpPoly p)
   simp [Nat.ne_of_gt h]
 
 /-- Read a polynomial's first `degree f` coefficients as a vector. -/
+@[expose]
 def coeffVector (f g : FpPoly p) : Vector (ZMod64 p) (basisSize f) :=
   Vector.ofFn fun i => g.coeff i.val
 
@@ -84,7 +90,8 @@ Iteratively build the array of Berlekamp-matrix column polynomials
 Each step costs one polynomial product and one monic reduction, both
 quadratic in `n`, so the array of `n` columns is built in `O(n^3)` total.
 -/
-private def berlekampColumnPolys (f : FpPoly p) (hmonic : DensePoly.Monic f)
+@[expose]
+def berlekampColumnPolys (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (frobX : FpPoly p) : Nat → FpPoly p → Array (FpPoly p) → Array (FpPoly p)
   | 0, _, acc => acc
   | k + 1, current, acc =>
@@ -632,6 +639,7 @@ def fixedSpaceMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f) :
   Matrix.ofFn fun i j => Q[i][j] - if i = j then 1 else 0
 
 /-- Convert a coefficient vector back to its polynomial representative. -/
+@[expose]
 def vectorToPoly {n : Nat} (v : Vector (ZMod64 p) n) : FpPoly p :=
   FpPoly.ofCoeffs v.toArray
 
@@ -647,6 +655,7 @@ theorem coeffVector_vectorToPoly (f : FpPoly p) (v : Vector (ZMod64 p) (basisSiz
 The fixed-space kernel of `Q_f - I`, reusing `HexMatrix.nullspace` instead of a
 Berlekamp-local linear-algebra implementation.
 -/
+@[expose]
 def fixedSpaceKernelVectors (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [inst : Lean.Grind.Field (ZMod64 p)] :
     Vector (Vector (ZMod64 p) (basisSize f))
@@ -654,6 +663,7 @@ def fixedSpaceKernelVectors (f : FpPoly p) (hmonic : DensePoly.Monic f)
   Matrix.nullspace (fixedSpaceMatrix f hmonic)
 
 /-- The fixed-space kernel basis converted back to polynomial representatives. -/
+@[expose]
 def fixedSpaceKernel (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [inst : Lean.Grind.Field (ZMod64 p)] :
     Vector (FpPoly p)
