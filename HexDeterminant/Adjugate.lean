@@ -8,8 +8,6 @@ module
 
 public import HexDeterminant.Gram
 import all HexDeterminant.Gram
-public import HexMatrix.Basic
-import all HexMatrix.Basic
 
 public section
 
@@ -170,24 +168,6 @@ theorem mul_adjugate_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     exact (det_eq_foldl_laplace_row M i).symm
   · rw [hentry, if_neg hij]
     exact foldl_alien_cofactor_eq_zero M i j hij
-
-/-- The adjugate identity `M * adjugate M = det M • 1`. -/
-theorem mul_adjugate {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
-    (M : Matrix R (n + 1) (n + 1)) :
-    M * adjugate M = det M • (1 : Matrix R (n + 1) (n + 1)) := by
-  ext i hi j hj
-  have hone : ((1 : Matrix R (n + 1) (n + 1))[i]'hi)[j]'hj
-      = if (⟨i, hi⟩ : Fin (n + 1)) = ⟨j, hj⟩ then (1 : R) else 0 := by
-    simpa [Fin.getElem_fin] using getElem_one (R := R) (n := n + 1) ⟨i, hi⟩ ⟨j, hj⟩
-  show (M * adjugate M)[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))] =
-    (det M • (1 : Matrix R (n + 1) (n + 1)))[(⟨i, hi⟩ : Fin (n + 1))][(⟨j, hj⟩ : Fin (n + 1))]
-  rw [mul_adjugate_apply]
-  simp only [Vector.getElem_smul, Fin.getElem_fin]
-  rw [hone]
-  clear hone
-  by_cases h : (⟨i, hi⟩ : Fin (n + 1)) = ⟨j, hj⟩
-  · rw [if_pos h, if_pos h]; show det M = det M * 1; grind
-  · rw [if_neg h, if_neg h]; show (0 : R) = det M * 0; grind
 
 /-- Entrywise version of `adjugate M * M = det M • 1`.
 
