@@ -97,6 +97,11 @@ theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
 The executable Gram-Schmidt algorithm and its own algebraic API live in
 [`hex-gram-schmidt`](https://github.com/kim-em/hex-gram-schmidt).
 
+# Reference manual
+
+The hex reference manual covers this library and its computational base at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-gram-schmidt>.
+
 # Contributing
 
 Development happens in the [`hex-dev`](https://github.com/kim-em/hex-dev)

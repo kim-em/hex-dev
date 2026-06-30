@@ -188,6 +188,11 @@ theorems reduce to the ordinary Lean axioms `propext`, `Classical.choice`, and
 The requested-parameter, precision, and dispatch-calibration constants are
 performance tuning only and are outside the trusted story; none affects soundness.
 
+# Reference manual
+
+The hex reference manual covers this library at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-lll>.
+
 # Contributing
 
 Development happens in the [`hex-dev`](https://github.com/kim-em/hex-dev)

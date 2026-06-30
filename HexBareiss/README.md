@@ -84,6 +84,11 @@ The correspondence of the Bareiss determinant with the Leibniz
 invariant, is proven in
 [`hex-bareiss-mathlib`](https://github.com/kim-em/hex-bareiss-mathlib), not here.
 
+# Reference manual
+
+The hex reference manual covers this library at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-bareiss>.
+
 # Contributing
 
 Development happens in the [`hex-dev`](https://github.com/kim-em/hex-dev)

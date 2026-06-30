@@ -119,6 +119,11 @@ algebra:
 The executable algorithm, the rational short-vector bound, and the reducedness
 theory live in [`hex-lll`](https://github.com/kim-em/hex-lll).
 
+# Reference manual
+
+The hex reference manual covers this library and its computational base at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-lll>.
+
 # Contributing
 
 Development happens in the [`hex-dev`](https://github.com/kim-em/hex-dev)

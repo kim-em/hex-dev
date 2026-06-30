@@ -95,6 +95,11 @@ live in [`hex-determinant`](https://github.com/kim-em/hex-determinant); the
 `bareiss = det` headline theorems live in
 [`hex-bareiss-mathlib`](https://github.com/kim-em/hex-bareiss-mathlib).
 
+# Reference manual
+
+The hex reference manual covers this library and its computational base at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-determinant>.
+
 # Contributing
 
 Development happens in the [`hex-dev`](https://github.com/kim-em/hex-dev)
