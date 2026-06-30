@@ -224,37 +224,36 @@ theorem mul_assoc [Lean.Grind.Ring R]
   change (Matrix.zero n m : Matrix R n m)[ii][j] * v[j] = 0
   simpa [Matrix.zero, ofFn] using Lean.Grind.Semiring.zero_mul v[j]
 
-/-- Multiplication by `Q - I`, expressed entrywise, is `Q * v - v`. -/
-theorem sub_identity_mulVec [Lean.Grind.Ring R] (Q : Matrix R n n) (v : Vector R n) :
-    mulVec (R := R) (n := n) (m := n)
-        (ofFn fun i j => Q[i][j] - if i = j then 1 else 0) v =
-      mulVec (R := R) (n := n) (m := n) Q v - v := by
+/-- Matrix-vector multiplication distributes over matrix subtraction. -/
+@[grind =] theorem sub_mulVec [Lean.Grind.Ring R] (A B : Matrix R n m) (v : Vector R m) :
+    (A - B) * v = A * v - B * v := by
   ext i hi
   let ii : Fin n := ⟨i, hi⟩
-  simp [mulVec, row, Vector.dotProduct, ofFn]
+  simp [HMul.hMul, mulVec, row, Vector.dotProduct]
   change
-    (List.finRange n).foldl
-        (fun acc j => acc + (Q[ii][j] - if ii = j then 1 else 0) * v[j]) 0 =
-      (List.finRange n).foldl (fun acc j => acc + Q[ii][j] * v[j]) 0 - v[ii]
+    (List.finRange m).foldl (fun acc j => acc + (A - B)[ii][j] * v[j]) 0 =
+      (List.finRange m).foldl (fun acc j => acc + A[ii][j] * v[j]) 0 -
+        (List.finRange m).foldl (fun acc j => acc + B[ii][j] * v[j]) 0
   calc
-    (List.finRange n).foldl
-        (fun acc j => acc + (Q[ii][j] - if ii = j then 1 else 0) * v[j]) 0 =
-        (List.finRange n).foldl
-          (fun acc j => acc + (Q[ii][j] * v[j] - (if ii = j then 1 else 0) * v[j]))
+    (List.finRange m).foldl (fun acc j => acc + (A - B)[ii][j] * v[j]) 0 =
+        (List.finRange m).foldl
+          (fun acc j => acc + (A[ii][j] * v[j] - B[ii][j] * v[j]))
           ((0 : R) - 0) := by
           have hzero : (0 : R) - 0 = 0 := by grind
           rw [hzero]
           apply List.foldl_add_congr
           intro j _hj
-          grind
-    _ = (List.finRange n).foldl (fun acc j => acc + Q[ii][j] * v[j]) 0 -
-          (List.finRange n).foldl
-            (fun acc j => acc + (if ii = j then 1 else 0) * v[j]) 0 := by
+          rw [getElem_sub]
+          have hdist : ∀ a b c : R, (a - b) * c = a * c - b * c := fun a b c => by grind
+          exact hdist _ _ _
+    _ = (List.finRange m).foldl (fun acc j => acc + A[ii][j] * v[j]) 0 -
+          (List.finRange m).foldl (fun acc j => acc + B[ii][j] * v[j]) 0 := by
           rw [List.foldl_add_sub]
-    _ = (List.finRange n).foldl (fun acc j => acc + Q[ii][j] * v[j]) 0 - v[ii] := by
-          rw [foldl_indicator_mul_unique (List.finRange n) ii (fun j => v[j])
-            (List.mem_finRange _) (List.nodup_finRange n) 0]
-          grind
+
+/-- Multiplication by `Q - I` is `Q * v - v`. -/
+theorem sub_identity_mulVec [Lean.Grind.Ring R] (Q : Matrix R n n) (v : Vector R n) :
+    (Q - Matrix.identity n) * v = Q * v - v := by
+  rw [sub_mulVec, identity_mulVec]
 
 end Matrix
 

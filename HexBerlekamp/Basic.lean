@@ -635,8 +635,7 @@ theorem berlekampMatrix_mulVec_coeffVector_eq
 /-- The fixed-space matrix `Q_f - I` used in Berlekamp's kernel computation. -/
 def fixedSpaceMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     Matrix (ZMod64 p) (basisSize f) (basisSize f) :=
-  let Q := berlekampMatrix f hmonic
-  Matrix.ofFn fun i j => Q[(i, j)] - if i = j then 1 else 0
+  berlekampMatrix f hmonic - Matrix.identity (basisSize f)
 
 /-- Convert a coefficient vector back to its polynomial representative. -/
 @[expose]
@@ -699,13 +698,10 @@ theorem isFixedSpaceKernelVector_iff_berlekampMatrix_mulVec_eq
       Matrix.mulVec (berlekampMatrix f hmonic) v = v := by
   unfold IsFixedSpaceKernelVector
   dsimp only [fixedSpaceMatrix]
-  have hsub :
-      Matrix.mulVec
-          (Matrix.ofFn fun i j => (berlekampMatrix f hmonic)[(i, j)] - if i = j then 1 else 0) v =
-        Matrix.mulVec (berlekampMatrix f hmonic) v - v :=
-    Matrix.sub_identity_mulVec (berlekampMatrix f hmonic) v
-  rw [hsub]
-  exact vector_sub_eq_zero_iff_eq (Matrix.mulVec (berlekampMatrix f hmonic) v) v
+  show (berlekampMatrix f hmonic - Matrix.identity (basisSize f)) * v = 0 ↔
+    berlekampMatrix f hmonic * v = v
+  rw [Matrix.sub_identity_mulVec]
+  exact vector_sub_eq_zero_iff_eq (berlekampMatrix f hmonic * v) v
 
 /-- Polynomial-level executable Berlekamp kernel condition, by reading the
 representative in the quotient basis used by `fixedSpaceMatrix`. -/
