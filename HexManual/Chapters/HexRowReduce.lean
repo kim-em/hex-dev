@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexRowReduce
+import HexRowReduceMathlib
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -139,6 +139,156 @@ private def v : Vector Rat 3 := Vector.ofFn fun j => j + 1
 #guard Matrix.spanContains M v = true
 
 end HexRowReduceChapterExample
+```
+
+# Recipes
+%%%
+tag := "hex-row-reduce-recipes"
+%%%
+
+Task-oriented how-tos for the things callers reach for most. Each
+executable recipe shows the idiomatic call and its result; where a
+Mathlib correspondence theorem exists, a companion recipe then shows how
+to *prove* the matching Mathlib fact by running the executable.
+
+## How to find a basis for the kernel of a matrix
+%%%
+tag := "hex-row-reduce-recipe-kernel"
+%%%
+
+You have a matrix over a field and want a basis for its kernel — the
+vectors `x` with `M * x = 0`. Build the matrix with the `#m[...]`
+literal and read the basis off {name}`Hex.Matrix.nullspace`, which
+returns one vector per free (non-pivot) column.
+
+```lean (name := kernelBasis)
+open Hex Hex.Matrix
+
+namespace HexRowReduceKernelRecipe
+
+-- M has rank 1 (second row twice the first), 3 columns.
+def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
+
+-- The kernel basis, one vector per free column.
+#eval Matrix.nullspace M
+
+-- The nullity is m - rank = 3 - 1 = 2.
+#guard (Matrix.nullspace M).toArray.size = 2
+
+end HexRowReduceKernelRecipe
+```
+```leanOutput kernelBasis
+#m[-2, 1, 0;
+   -3, 0, 1]
+```
+
+Each row is a basis vector: the kernel is spanned by
+`(-2, 1, 0)` and `(-3, 0, 1)`. The result is a genuine basis, not just a
+spanning set — every returned vector is annihilated by `M`
+({name}`Hex.Matrix.nullspace_sound`), and every `x` with `M * x = 0` is
+a combination of them ({name}`Hex.Matrix.nullspace_complete`).
+
+## How to prove a fact about the Mathlib kernel by running Hex
+%%%
+tag := "hex-row-reduce-recipe-kernel-proof"
+%%%
+
+Everything above is purely executable: `#eval` runs the `Hex.Matrix`
+routines and reads back concrete numbers. *This recipe crosses into
+Mathlib.* The `HexRowReduceMathlib` bridge proves the executable rank,
+span, and nullspace agree with Mathlib's noncomputable `Matrix.rank`,
+`Submodule.span`, and `LinearMap.ker`, so you can settle a Mathlib goal
+by running the executable and rewriting through a correspondence
+theorem.
+
+For the rank, {name}`HexMatrixMathlib.rank_eq` says the computed
+{name}`Hex.Matrix.RowEchelonData.rank` equals `Matrix.rank (matrixEquiv M)`.
+Rewriting with it turns a goal about the noncomputable Mathlib rank into
+one about the executable rank, which the kernel evaluates directly.
+
+```lean
+open Hex Hex.Matrix HexMatrixMathlib
+
+namespace HexRowReduceKernelProof
+
+def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
+
+theorem rank_eq_one :
+    _root_.Matrix.rank (matrixEquiv M) = 1 := by
+  rw [← rank_eq (rowReduce_isRowReduced M)]
+  decide +kernel
+
+end HexRowReduceKernelProof
+```
+
+`decide +kernel` runs the row reduction in the kernel and checks the
+result. It is kernel-honest: the proof depends only on `propext`,
+`Classical.choice`, and `Quot.sound`, never the compiler-trusting
+`native_decide` (banned project-wide). For the kernel as a subspace, the
+same pattern uses {name}`HexMatrixMathlib.nullspace_span_eq_ker`, whose
+right-hand side is exactly the Mathlib `LinearMap.ker` of `M`'s
+`mulVecLin`.
+
+If a matrix is large enough that kernel reduction stalls, `decide_cbv`
+is a drop-in fallback — also kernel-honest, but roughly forty times
+slower on the matrices measured here.
+
+## How to test whether a vector is in the row span
+%%%
+tag := "hex-row-reduce-recipe-span"
+%%%
+
+You have a matrix and a vector and want to know whether the vector is a
+linear combination of the rows. {name}`Hex.Matrix.spanContains` is the
+decidable test; {name}`Hex.Matrix.spanCoeffs` returns the witnessing
+coefficients when the answer is yes.
+
+```lean (name := spanTest)
+open Hex Hex.Matrix
+
+namespace HexRowReduceSpanRecipe
+
+def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
+
+-- (1, 2, 3) is the first row, so it is in the row span.
+#eval Matrix.spanContains M #v[1, 2, 3]
+
+-- A vector off the rows' line is not.
+#guard Matrix.spanContains M #v[1, 0, 0] = false
+
+end HexRowReduceSpanRecipe
+```
+```leanOutput spanTest
+true
+```
+
+## How to prove row-span membership in Mathlib by running Hex
+%%%
+tag := "hex-row-reduce-recipe-span-proof"
+%%%
+
+The Mathlib-side companion, like the kernel proof above, crosses into
+Mathlib. {name}`HexMatrixMathlib.spanContains_iff_mem_span` turns the
+executable {name}`Hex.Matrix.spanContains` test into membership in
+Mathlib's `Submodule.span` of the rows, so a `Submodule.span` goal falls
+to the same run-and-rewrite move.
+
+```lean
+open Hex Hex.Matrix HexMatrixMathlib
+
+namespace HexRowReduceSpanProof
+
+def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
+def v : Vector Rat 3 := #v[1, 2, 3]
+
+theorem v_mem_span :
+    vectorEquiv v ∈ Submodule.span Rat
+      (Set.range (_root_.Matrix.row (matrixEquiv M))) := by
+  rw [← spanContains_iff_mem_span
+        (rowReduce_isRowReduced M)]
+  decide +kernel
+
+end HexRowReduceSpanProof
 ```
 
 # Cross-references
