@@ -43,7 +43,8 @@ integer matrix is its leading input row cast into `Rat`. -/
 theorem basis_zero (b : Matrix Int n m) (hn : 0 < n) :
     (basis b).row ⟨0, hn⟩ =
       Vector.map (fun x : Int => (x : Rat)) (b.row ⟨0, hn⟩) := by
-  simpa [basis, GramSchmidt.basisMatrix, GramSchmidt.castIntMatrix, Matrix.row] using
+  simpa [basis, GramSchmidt.basisMatrix, GramSchmidt.castIntMatrix, Matrix.row,
+    Hex.Matrix.getRow, Fin.getElem_fin] using
     GramSchmidt.basisRows_head (b := GramSchmidt.castIntMatrix b) hn
 
 /-- Distinct Gram-Schmidt basis rows of an integer matrix (taken in `Rat`) are
@@ -63,7 +64,7 @@ theorem basis_decomposition (b : Matrix Int n m) (i : Nat) (hi : i < n) :
       (basis b).row ⟨i, hi⟩ +
         GramSchmidt.prefixCombination (coeffs b) (basis b) i hi := by
   simpa [basis, coeffs, GramSchmidt.castIntMatrix, GramSchmidt.Rat.basis,
-    GramSchmidt.Rat.coeffs, Matrix.row] using
+    GramSchmidt.Rat.coeffs, Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin] using
       GramSchmidt.Rat.basis_decomposition (b := GramSchmidt.castIntMatrix b) i hi
 
 /-- The coefficient matrix of an integer input has unit diagonal: each row
@@ -85,45 +86,33 @@ theorem coeffs_upper (b : Matrix Int n m)
     exact (Nat.ne_of_lt hij) (congrArg Fin.val h)
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn, hnot_lt, hne]
 
+private theorem getElem_castIntMatrix (b : Matrix Int n m) (r : Fin n) (k : Fin m) :
+    (GramSchmidt.castIntMatrix b)[r][k] = (b[r][k] : Rat) := by
+  simp [GramSchmidt.castIntMatrix, Hex.Matrix.getRow, Fin.getElem_fin]
+
 private theorem castIntMatrix_rowAdd (b : Matrix Int n m) (src dst : Fin n) (c : Int) :
     GramSchmidt.castIntMatrix (Matrix.rowAdd b src dst c) =
       Matrix.rowAdd (GramSchmidt.castIntMatrix b) src dst (c : Rat) := by
-  apply Vector.ext
-  intro row hrow
-  apply Vector.ext
-  intro col hcol
-  by_cases hdst : row = dst.val
-  · subst row
-    simp [GramSchmidt.castIntMatrix, Matrix.rowAdd_eq_set, Vector.getElem_set_self]
-  · have hne : dst.val ≠ row := by
-      intro h
-      exact hdst h.symm
-    simp [GramSchmidt.castIntMatrix, Matrix.rowAdd_eq_set, Vector.getElem_set_ne, hne]
+  apply Hex.Matrix.ext_getElem
+  intro r k
+  rw [getElem_castIntMatrix, Matrix.getElem_rowAdd, Matrix.getElem_rowAdd,
+    getElem_castIntMatrix, getElem_castIntMatrix]
+  by_cases hdst : r = dst
+  · simp only [hdst, if_true]
+    push_cast
+    rfl
+  · simp only [hdst, if_false, getElem_castIntMatrix]
 
 private theorem castIntMatrix_rowSwap (b : Matrix Int n m) (i j : Fin n) :
     GramSchmidt.castIntMatrix (Matrix.rowSwap b i j) =
       Matrix.rowSwap (GramSchmidt.castIntMatrix b) i j := by
-  apply Vector.ext
-  intro row hrow
-  apply Vector.ext
-  intro col hcol
-  let r : Fin n := ⟨row, hrow⟩
-  let c : Fin m := ⟨col, hcol⟩
-  calc
-    (GramSchmidt.castIntMatrix (Matrix.rowSwap b i j))[r][c]
-        = ((Matrix.rowSwap b i j)[r][c] : Rat) := by
-          simp [GramSchmidt.castIntMatrix]
-    _ = (Matrix.rowSwap (GramSchmidt.castIntMatrix b) i j)[r][c] := by
-          rw [Matrix.getElem_rowSwap (M := b) (i := i) (j := j) (r := r) (k := c)]
-          rw [Matrix.getElem_rowSwap (M := GramSchmidt.castIntMatrix b)
-            (i := i) (j := j) (r := r) (k := c)]
-          by_cases hrj : r = j
-          · simp [hrj, GramSchmidt.castIntMatrix]
-          · by_cases hri : r = i
-            · by_cases hij : i = j
-              · simp [hri, hij, GramSchmidt.castIntMatrix]
-              · simp [hri, hij, GramSchmidt.castIntMatrix]
-            · simp [hrj, hri, GramSchmidt.castIntMatrix]
+  apply Hex.Matrix.ext_getElem
+  intro r k
+  rw [getElem_castIntMatrix, Matrix.getElem_rowSwap, Matrix.getElem_rowSwap,
+    getElem_castIntMatrix, getElem_castIntMatrix, getElem_castIntMatrix]
+  by_cases hrj : r = j
+  · simp [hrj]
+  · by_cases hri : r = i <;> simp [hrj, hri] <;> split <;> rfl
 
 /-- The integer Gram-Schmidt basis is invariant under adding an integer
 multiple of an earlier row to a later row. -/
