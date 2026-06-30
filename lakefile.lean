@@ -68,6 +68,8 @@ extern_lib hexlllffi (pkg) := do
 
 lean_lib Hex where
 
+lean_lib HexBasic where
+
 lean_lib HexArith where
   precompileModules := true
   moreLinkArgs := #[

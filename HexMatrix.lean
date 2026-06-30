@@ -8,7 +8,6 @@ module
 
 public import HexMatrix.Basic
 public import HexMatrix.Vector.Insert
-public import HexMatrix.Vector.Modify
 public import HexMatrix.DotProduct
 public import HexMatrix.MatrixAlgebra
 public import HexMatrix.Elementary

@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrix.Basic
+public import Std
 
 public section
 

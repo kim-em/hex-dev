@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrix.ListShim
+public import HexBasic
 
 public section
 

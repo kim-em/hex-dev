@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexMatrix.Basic
-public import HexMatrix.Vector.Modify
+public import HexBasic.Vector.Modify
 
 public section
 
