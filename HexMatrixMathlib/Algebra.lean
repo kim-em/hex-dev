@@ -37,17 +37,11 @@ Mathlib tower transported along `matrixEquiv` has executable operations. -/
 instance instAdd [Add R] : Add (Hex.Matrix R n m) := ⟨fun A B => ⟨A.data + B.data⟩⟩
 instance instNeg [Neg R] : Neg (Hex.Matrix R n m) := ⟨fun A => ⟨-A.data⟩⟩
 instance instSub [Sub R] : Sub (Hex.Matrix R n m) := ⟨fun A B => ⟨A.data - B.data⟩⟩
-instance instSMul {S : Type*} [SMul S R] : SMul S (Hex.Matrix R n m) :=
-  ⟨fun c A => ⟨c • A.data⟩⟩
-
 @[simp] theorem rows_add [Add R] (A B : Hex.Matrix R n m) :
     (A + B).rows = A.rows + B.rows := rfl
 @[simp] theorem rows_neg [Neg R] (A : Hex.Matrix R n m) : (-A).rows = -A.rows := rfl
 @[simp] theorem rows_sub [Sub R] (A B : Hex.Matrix R n m) :
     (A - B).rows = A.rows - B.rows := rfl
-@[simp] theorem rows_smul {S : Type*} [SMul S R] (c : S) (A : Hex.Matrix R n m) :
-    (c • A).rows = c • A.rows := rfl
-
 /-! ### Preservation of the additive operations -/
 
 @[simp, grind =] theorem matrixEquiv_zero [Zero R] :
