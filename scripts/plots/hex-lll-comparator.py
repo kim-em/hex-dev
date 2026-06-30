@@ -59,6 +59,13 @@ DEFAULT_ISABELLE_CERTIFIED_HARSH = (
 DEFAULT_RANDOM_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-random-bounded.svg"
 DEFAULT_HARSH_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-harsh-cubic.svg"
 
+# Ajtai-style family: all six curves come from one committed export. Prefer the
+# canonical (repeats>=3) export; fall back to the fast pilot export if present.
+_AJTAI_CANON = ROOT / "reports/bench-results/hex-lll-ajtai-1eebf39a.json"
+_AJTAI_FAST = ROOT / "reports/bench-results/hex-lll-ajtai-fast-1eebf39a.json"
+DEFAULT_AJTAI = _AJTAI_CANON if _AJTAI_CANON.exists() else _AJTAI_FAST
+DEFAULT_AJTAI_OUTPUT = ROOT / "reports/figures/hex-lll-comparator-ajtai.svg"
+
 LEAN_RANDOM = re.compile(r"runNativeFirstShortVectorRandomBoundedNormSq([0-9]+)$")
 LEAN_STEERED_RANDOM = re.compile(r"runFirstShortVectorRandomBoundedNormSq([0-9]+)$")
 ISABELLE_RANDOM = re.compile(r"runIsabelleRandomBoundedNormSq([0-9]+)$")
@@ -83,6 +90,15 @@ CERTIFIED_HARSH = re.compile(
 ISABELLE_CERTIFIED_HARSH = re.compile(
     r"runIsabelleCertifiedHarshCubicNormSq([0-9]+)$"
 )
+
+LEAN_AJTAI = re.compile(r"runNativeFirstShortVectorAjtaiNormSq([0-9]+)$")
+LEAN_STEERED_AJTAI = re.compile(r"runFirstShortVectorAjtaiNormSq([0-9]+)$")
+ISABELLE_AJTAI = re.compile(r"runIsabelleAjtaiNormSq([0-9]+)$")
+FPLLL_AJTAI = re.compile(
+    r"run(?:FpLLL|Fpylll)FirstShortVectorAjtai([0-9]+)Checksum$"
+)
+CERTIFIED_AJTAI = re.compile(r"runCertifiedFirstShortVectorAjtai([0-9]+)Checksum$")
+ISABELLE_CERTIFIED_AJTAI = re.compile(r"runIsabelleCertifiedAjtaiNormSq([0-9]+)$")
 
 
 @dataclass(frozen=True)
@@ -145,6 +161,21 @@ FAMILIES = {
         xlabel="harsh-cubic dimension n",
         consolidated_path=DEFAULT_HARSH_CONSOLIDATED,
     ),
+    "ajtai": FamilyConfig(
+        lean_pattern=LEAN_AJTAI,
+        lean_steered_pattern=LEAN_STEERED_AJTAI,
+        isabelle_pattern=ISABELLE_AJTAI,
+        fpll_pattern=FPLLL_AJTAI,
+        certified_pattern=CERTIFIED_AJTAI,
+        isabelle_certified_pattern=ISABELLE_CERTIFIED_AJTAI,
+        fpll_path=DEFAULT_AJTAI,
+        certified_path=DEFAULT_AJTAI,
+        isabelle_certified_path=DEFAULT_AJTAI,
+        output=DEFAULT_AJTAI_OUTPUT,
+        title="HexLLL Ajtai-style worst-case comparator runtime",
+        xlabel="Ajtai-style dimension d",
+        consolidated_path=DEFAULT_AJTAI,
+    ),
 }
 
 
@@ -196,7 +227,10 @@ def collect_series(results: list[dict], pattern: re.Pattern[str], label: str) ->
     values: dict[int, float] = {}
     for result in results:
         match = pattern.search(result["function"])
-        if match:
+        # A null median is a per-call-cap hit (the reducer exceeded
+        # max-seconds-per-call at that rung): the curve legitimately stops at
+        # its ceiling, so drop the point rather than plot a bogus value.
+        if match and result.get("median_nanos") is not None:
             values[int(match.group(1))] = median_ms(result)
     if not values:
         raise ValueError(f"no results found for {label}")
@@ -206,11 +240,16 @@ def collect_series(results: list[dict], pattern: re.Pattern[str], label: str) ->
 
 def load_floor_ms(path: Path) -> float:
     """Read the measured Isabelle-certified per-request floor (median ms) from
-    the committed `runIsabelleCertifiedProcessFloorNormSq` benchmark export."""
+    the committed `runIsabelleCertifiedProcessFloorNormSq` benchmark export.
+    Returns 0.0 (no adjustment) when the export or the floor row is absent, so a
+    family that did not measure the floor still plots."""
+    if not path or not Path(path).exists():
+        return 0.0
     for result in load_results(path):
-        if ISABELLE_FLOOR_PATTERN.search(result["function"]):
+        if ISABELLE_FLOOR_PATTERN.search(result["function"]) \
+                and result.get("median_nanos") is not None:
             return median_ms(result)
-    raise ValueError(f"no floor benchmark row found in {path}")
+    return 0.0
 
 
 def subtract_request_floor(series: Series, floor_ms: float) -> Series:

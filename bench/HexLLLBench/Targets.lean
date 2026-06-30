@@ -1492,12 +1492,16 @@ def runCertifiedFirstShortVectorAjtai8Checksum : Unit → IO Int := fun _ => do
 
 setup_fixed_benchmark runFirstShortVectorAjtaiNormSq8 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq8 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runIsabelleAjtaiNormSq8 where {
@@ -1550,12 +1554,16 @@ def runCertifiedFirstShortVectorAjtai12Checksum : Unit → IO Int := fun _ => do
 
 setup_fixed_benchmark runFirstShortVectorAjtaiNormSq12 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq12 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runIsabelleAjtaiNormSq12 where {
@@ -1608,12 +1616,16 @@ def runCertifiedFirstShortVectorAjtai16Checksum : Unit → IO Int := fun _ => do
 
 setup_fixed_benchmark runFirstShortVectorAjtaiNormSq16 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq16 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runIsabelleAjtaiNormSq16 where {
@@ -1666,12 +1678,16 @@ def runCertifiedFirstShortVectorAjtai20Checksum : Unit → IO Int := fun _ => do
 
 setup_fixed_benchmark runFirstShortVectorAjtaiNormSq20 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq20 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runIsabelleAjtaiNormSq20 where {
@@ -1724,12 +1740,16 @@ def runCertifiedFirstShortVectorAjtai24Checksum : Unit → IO Int := fun _ => do
 
 setup_fixed_benchmark runFirstShortVectorAjtaiNormSq24 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq24 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runIsabelleAjtaiNormSq24 where {
@@ -1782,12 +1802,16 @@ def runCertifiedFirstShortVectorAjtai28Checksum : Unit → IO Int := fun _ => do
 
 setup_fixed_benchmark runFirstShortVectorAjtaiNormSq28 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq28 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runIsabelleAjtaiNormSq28 where {
@@ -1840,12 +1864,16 @@ def runCertifiedFirstShortVectorAjtai32Checksum : Unit → IO Int := fun _ => do
 
 setup_fixed_benchmark runFirstShortVectorAjtaiNormSq32 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq32 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runIsabelleAjtaiNormSq32 where {
@@ -1898,12 +1926,16 @@ def runCertifiedFirstShortVectorAjtai36Checksum : Unit → IO Int := fun _ => do
 
 setup_fixed_benchmark runFirstShortVectorAjtaiNormSq36 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runNativeFirstShortVectorAjtaiNormSq36 where {
     repeats := 3
+    minTotalSeconds := 1.0
     maxSecondsPerCall := 90.0
+    warmupFirstIter := true
   }
 
 setup_fixed_benchmark runIsabelleAjtaiNormSq36 where {

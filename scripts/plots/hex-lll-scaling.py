@@ -52,6 +52,7 @@ _spec.loader.exec_module(cmp)
 DEFAULT_WINDOW = {
     "random-bounded": (120, 180),
     "harsh-cubic": (40, 55),
+    "ajtai": (20, 32),
 }
 
 

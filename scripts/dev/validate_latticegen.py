@@ -3,14 +3,16 @@
 
 Entry-for-entry equality is impossible (fplll draws from GMP's generator, the
 Lean ports from a committed POSIX LCG), so this checks the *structural
-envelope* both must satisfy, and that the deterministic part (the diagonal
-bit-length profile) is identical. Writes golden metadata for provenance.
+envelope* both must satisfy. The deterministic diagonal bit-length profile is
+compared per generator: fplll uses a float `(int)pow(2d-i, 1.2)`, the Lean port
+an exact integer `floor((2d-i)^(6/5))`; the two agree to within 1 bit at
+exact-power boundaries (e.g. 32^1.2 = 64), and that <=1-bit tolerance is an
+explicit asserted invariant. Writes golden metadata for provenance.
 
 Covers the Ajtai-style family (fplll `gen_trg`, `latticegen t`).
 
 The Lean cross-check reads pre-emitted matrices from
-`scripts/dev/.lean-ajtai-matrices.jsonl` (decoupled from `lake` to avoid
-build-lock contention). Regenerate that file with:
+`scripts/dev/.lean-ajtai-matrices.jsonl` (decoupled from `lake`). Regenerate:
   lake env lean --run scripts/dev/emit_latticegen_family.lean ajtai 6 8 10 12 16 20 \
     > scripts/dev/.lean-ajtai-matrices.jsonl
 If absent, only the latticegen reference envelope is validated.
@@ -31,8 +33,19 @@ SEED = 1
 DIMS = [6, 8, 10, 12, 16, 20]
 GOLDEN = ROOT / "scripts/dev/latticegen-golden.json"
 
-def bits_profile(d: int, alpha: float = ALPHA) -> list[int]:
-    return [int((2 * d - i) ** alpha) for i in range(d)]   # fplll gen_trg (int)pow(2d-i, alpha)
+def _iroot(k: int, n: int) -> int:
+    r = int(round(n ** (1.0 / k))) if n > 0 else 0
+    while r > 0 and r ** k > n:
+        r -= 1
+    while (r + 1) ** k <= n:
+        r += 1
+    return r
+
+def bits_float(d: int) -> list[int]:
+    return [int((2 * d - i) ** ALPHA) for i in range(d)]          # fplll (int)pow
+
+def bits_exact(d: int) -> list[int]:
+    return [_iroot(5, (2 * d - i) ** 6) for i in range(d)]        # Lean ajtaiBits
 
 def parse_matrix(text: str) -> list[list[int]]:
     rows = []
@@ -42,10 +55,7 @@ def parse_matrix(text: str) -> list[list[int]]:
             rows.append([int(x) for x in nums])
     return rows
 
-def check_envelope(name: str, d: int, M: list[list[int]]) -> list[int]:
-    """Lower-triangular; upper entries 0; |off[i][j]| < diag[j]/2; diag bitlen
-    <= bits_i. Returns the diagonal bit-lengths. Raises on violation."""
-    prof = bits_profile(d)
+def check_envelope(name: str, d: int, M: list[list[int]], prof: list[int]) -> list[int]:
     assert len(M) == d and all(len(r) == d for r in M), f"{name} d={d}: not {d}x{d}"
     diag_bitlens = []
     for i in range(d):
@@ -86,22 +96,27 @@ def main() -> int:
     if not lean:
         print("note: no Lean matrices file; validating latticegen reference only.")
     golden = {"provenance": {"tool": "fplll latticegen t", "alpha": ALPHA, "seed": SEED,
-                             "note": "structural envelope only; entries differ (GMP vs LCG RNG)"},
+                             "note": "structural envelope only; entries differ (GMP vs LCG RNG); "
+                                     "fplll float bits vs Lean exact bits agree to within 1 bit"},
               "ajtai": {}}
     for d in DIMS:
-        prof = bits_profile(d)
-        ref_bl = check_envelope("latticegen", d, run_latticegen(d))
-        entry = {"bits_profile": prof, "latticegen_diag_bitlens": ref_bl}
+        pf, pe = bits_float(d), bits_exact(d)
+        # the two profiles must agree to within 1 bit (the documented tolerance)
+        for i in range(d):
+            assert abs(pf[i] - pe[i]) <= 1, f"d={d}: bits profiles differ by >1 at {i}: {pf[i]} vs {pe[i]}"
+        ref_bl = check_envelope("latticegen", d, run_latticegen(d), pf)
+        entry = {"bits_float": pf, "bits_exact": pe, "latticegen_diag_bitlens": ref_bl}
+        tag = "latticegen"
         if d in lean:
-            entry["lean_diag_bitlens"] = check_envelope("lean", d, lean[d])
+            entry["lean_diag_bitlens"] = check_envelope("lean", d, lean[d], pe)
             entry["lean_row0"] = lean[d][0]
+            tag = "lean+latticegen"
         golden["ajtai"][str(d)] = entry
-        tag = "lean+latticegen" if d in lean else "latticegen"
-        print(f"d={d:3d}  OK ({tag})  bits_profile={prof}")
+        print(f"d={d:3d}  OK ({tag})  bits_float={pf}")
     if not check_only:
         GOLDEN.write_text(json.dumps(golden, indent=2) + "\n")
         print(f"wrote golden metadata -> {GOLDEN.relative_to(ROOT)}")
-    print("validate_latticegen: structural envelope holds.")
+    print("validate_latticegen: structural envelope holds (<=1-bit profile tolerance).")
     return 0
 
 if __name__ == "__main__":
