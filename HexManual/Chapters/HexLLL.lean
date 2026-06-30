@@ -73,7 +73,7 @@ the Lovász condition at each adjacent pair, controlled by the parameter
 Reducedness in this squared-coefficient form relaxes monotonically as the
 size bound `η` grows.
 
-{docstring Hex.isLLLReduced.mono_η}
+{docstring Hex.Internal.isLLLReduced.mono_η}
 
 The payoff theorem is the short-vector bound: in a reduced basis the first
 row is within an explicit `δ`/`η`-dependent factor of the shortest nonzero
@@ -123,23 +123,23 @@ tag := "hex-lll-reduction"
 %%%
 
 The reducer carries two pieces of state. The proof-facing
-{name}`Hex.LLLState` holds the exact integer basis together with the scaled
-Gram-Schmidt data, and a separate {name}`Hex.LLLState.Valid` predicate ties
+{name}`Hex.Internal.LLLState` holds the exact integer basis together with the scaled
+Gram-Schmidt data, and a separate {name}`Hex.Internal.LLLState.Valid` predicate ties
 that data back to the `GramSchmidt.Int` representation — keeping the state
 updates purely computational while letting the Mathlib layer reason about
 them.
 
-{docstring Hex.LLLState}
+{docstring Hex.Internal.LLLState}
 
-{docstring Hex.LLLState.Valid}
+{docstring Hex.Internal.LLLState.Valid}
 
 The hot path runs over a floating-point state instead. Its integer basis is
 the only proof-relevant field; the `Float` Gram-Schmidt approximations
 steer the swap trajectory but never enter a proof.
 
-{docstring Hex.SteeredState}
+{docstring Hex.Internal.SteeredState}
 
-{docstring Hex.steeredReduce}
+{docstring Hex.Internal.steeredReduce}
 
 `steeredReduce` is a heuristic with no standalone guarantee, so it is never
 returned raw. {name}`Hex.lllSteered` runs it, checks the candidate with
@@ -171,19 +171,19 @@ variant that drops the independence hypothesis for quick experimentation.
 tag := "hex-lll-dispatch"
 %%%
 
-When an external `fpLLL` provider is linked in, {name}`Hex.LLLProvider.dispatch`
+When an external `fpLLL` provider is linked in, {name}`Hex.Internal.LLLProvider.dispatch`
 asks it for a reduced basis and validates the answer with {name}`Hex.certCheck`
 before trusting it. A rejected or absent provider yields `none`, and the
 caller falls through to the native path — so the foreign reducer is a
 performance accelerator that can never compromise correctness.
 
-{docstring Hex.LLLProvider.dispatch}
+{docstring Hex.Internal.LLLProvider.dispatch}
 
 An accepted dispatch result comes with the integer transforms witnessing
 its certificate, the single fact the certified-dispatch path of
 {name}`Hex.lll` depends on.
 
-{docstring Hex.LLLProvider.dispatch_some_certCheck}
+{docstring Hex.Internal.LLLProvider.dispatch_some_certCheck}
 
 # Worked example
 %%%
@@ -198,7 +198,7 @@ the chapter is built, so the outputs are guaranteed to match the executable
 implementation.
 
 ```lean
-open Hex Hex.Matrix
+open Hex Hex.Matrix Hex.Internal
 
 namespace HexLLLChapterExample
 

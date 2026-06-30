@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexMatrix.ListShim
+public import HexBasic
 
 public section
 
@@ -295,6 +295,37 @@ instance [Mul R] [Add R] [OfNat R 0] : Mul (Matrix R n n) where
     rw [if_pos hij, if_pos hji]
   · have hji : (⟨j, hj⟩ : Fin n) ≠ ⟨i, hi⟩ := fun h => hij h.symm
     rw [if_neg hij, if_neg hji]
+
+/-- In-place modification of row `i`. Linear in `M`: destructuring consumes `M`,
+so when `M` is uniquely referenced the row is owned and `Vector.modify` updates
+the backing store without copying. -/
+@[expose, inline]
+def modify (M : Matrix R n m) (i : Nat) (f : Vector R m → Vector R m) : Matrix R n m :=
+  match M with
+  | ⟨d⟩ => ⟨d.modify i f⟩
+
+/-- Swap rows `i` and `j`, in place when `M` is uniquely referenced. -/
+@[expose, inline]
+def swap (M : Matrix R n m) (i j : Nat) (hi : i < n := by get_elem_tactic)
+    (hj : j < n := by get_elem_tactic) : Matrix R n m :=
+  match M with
+  | ⟨d⟩ => ⟨d.swap i j hi hj⟩
+
+/-- Map a function over every row, in place when `M` is uniquely referenced. -/
+@[expose, inline]
+def mapRows (M : Matrix R n m) (f : Vector R m → Vector R m') : Matrix R n m' :=
+  match M with
+  | ⟨d⟩ => ⟨d.map f⟩
+
+@[simp, grind =] theorem rows_modify (M : Matrix R n m) (i : Nat)
+    (f : Vector R m → Vector R m) : (modify M i f).rows = M.rows.modify i f := by
+  cases M; rfl
+
+@[simp, grind =] theorem rows_swap (M : Matrix R n m) (i j : Nat) (hi : i < n) (hj : j < n) :
+    (M.swap i j hi hj).rows = M.rows.swap i j hi hj := by cases M; rfl
+
+@[simp, grind =] theorem rows_mapRows (M : Matrix R n m) (f : Vector R m → Vector R m') :
+    (M.mapRows f).rows = M.rows.map f := by cases M; rfl
 
 end Matrix
 end Hex

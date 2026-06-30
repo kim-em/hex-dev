@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
+import HexBasic
 import HexGF2.Basic
 import Std.Tactic.BVDecide
 
@@ -104,23 +105,15 @@ theorem pureClmul_xor_left (x y z : UInt64) :
   unfold pureClmul
   simpa using foldl_clmul_xor_left (List.range 64) (0, 0) (0, 0) x y z
 
-/-- Folding with a step that discards the list element and returns the
-accumulator unchanged yields the initial accumulator. -/
-private theorem foldl_keep {α β : Type} (xs : List β) (acc : α) :
-    xs.foldl (fun acc _ => acc) acc = acc := by
-  induction xs generalizing acc with
-  | nil => simp
-  | cons _ xs ih => simp [ih]
-
 /-- The pure carry-less multiplier returns zero when the left word is zero. -/
 @[simp, grind =]
 theorem pureClmul_zero_left (x : UInt64) : pureClmul 0 x = (0, 0) := by
-  simp [pureClmul, clmulAccumulateBit_zero_left, foldl_keep]
+  simp [pureClmul, clmulAccumulateBit_zero_left, List.foldl_const_step]
 
 /-- The pure carry-less multiplier returns zero when the right word is zero. -/
 @[simp, grind =]
 theorem pureClmul_zero_right (x : UInt64) : pureClmul x 0 = (0, 0) := by
-  simp [pureClmul, foldl_keep]
+  simp [pureClmul, List.foldl_const_step]
 
 /-- Bit `bit` of the one-hot word `1 <<< hot` is set exactly when `hot = bit`. -/
 private theorem oneHotWord_bit {hot bit : Nat} (hhot : hot < 64) (hbit : bit < 64) :

@@ -72,7 +72,6 @@ def IsReduced (f : FpPoly p) (g : FpPoly p) : Prop :=
   ∃ h : FpPoly p, g = reduceMod f h
 
 /-- Executable quotient elements represented by canonical reduced polynomials. -/
-@[expose]
 abbrev PolyQuotient (f : FpPoly p) (_hf : 0 < FpPoly.degree f) :=
   { g : FpPoly p // IsReduced f g }
 

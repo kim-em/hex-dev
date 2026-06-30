@@ -18,71 +18,6 @@ universe u v
 
 namespace Vector
 
-/-- Two fold-sums agree when their summand functions agree pointwise on the index list. -/
-private theorem foldl_sum_congr_aux {R : Type u} [Add R]
-    {α : Type v} (xs : List α) (f g : α → R) (acc : R)
-    (h : ∀ x ∈ xs, f x = g x) :
-    xs.foldl (fun acc x => acc + f x) acc =
-      xs.foldl (fun acc x => acc + g x) acc := by
-  induction xs generalizing acc with
-  | nil =>
-      rfl
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      have hx : f x = g x := h x (by simp)
-      have hxs : ∀ y ∈ xs, f y = g y := fun y hy => h y (List.mem_cons_of_mem _ hy)
-      rw [hx]
-      exact ih (acc + g x) hxs
-
-/-- Left multiplication by `c` distributes through a fold-sum. -/
-private theorem foldl_sum_mul_left_aux {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} (xs : List α) (f : α → R) (c acc : R) :
-    c * xs.foldl (fun acc x => acc + f x) acc =
-    xs.foldl (fun acc x => acc + c * f x) (c * acc) := by
-  induction xs generalizing acc with
-  | nil =>
-      simp
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [ih (acc := acc + f x)]
-      have hdist : c * (acc + f x) = c * acc + c * f x := by
-        grind
-      rw [hdist]
-
-/-- The fold-sum of a pointwise sum splits into the sum of fold-sums. -/
-private theorem foldl_sum_add_aux {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} (xs : List α) (f g : α → R) (acc accF accG : R)
-    (h : acc = accF + accG) :
-    xs.foldl (fun acc x => acc + (f x + g x)) acc =
-    xs.foldl (fun acc x => acc + f x) accF +
-    xs.foldl (fun acc x => acc + g x) accG := by
-  induction xs generalizing acc accF accG with
-  | nil =>
-      simp only [List.foldl_nil]
-      exact h
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      apply ih (acc := acc + (f x + g x)) (accF := accF + f x) (accG := accG + g x)
-      rw [h]
-      grind
-
-/-- The fold-sum of a pointwise difference splits into the difference of fold-sums. -/
-private theorem foldl_sum_sub_aux {R : Type u} [Lean.Grind.Ring R]
-    {α : Type v} (xs : List α) (f g : α → R) (acc accF accG : R)
-    (h : acc = accF - accG) :
-    xs.foldl (fun acc x => acc + (f x - g x)) acc =
-    xs.foldl (fun acc x => acc + f x) accF -
-    xs.foldl (fun acc x => acc + g x) accG := by
-  induction xs generalizing acc accF accG with
-  | nil =>
-      simp only [List.foldl_nil]
-      exact h
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      apply ih (acc := acc + (f x - g x)) (accF := accF + f x) (accG := accG + g x)
-      rw [h]
-      grind
-
 /-- Dot product is additive in its left argument. -/
 theorem dotProduct_add_left {R : Type u} [Lean.Grind.Ring R]
     (u v w : Vector R n) :
@@ -92,11 +27,10 @@ theorem dotProduct_add_left {R : Type u} [Lean.Grind.Ring R]
         (fun acc i => acc + (u + v)[i] * w[i]) 0 =
       (List.finRange n).foldl
         (fun acc i => acc + (u[i] * w[i] + v[i] * w[i])) 0 from ?_]
-  · rw [foldl_sum_add_aux (xs := List.finRange n)
+  · rw [List.foldl_add_add (xs := List.finRange n)
         (f := fun i => u[i] * w[i])
-        (g := fun i => v[i] * w[i])
-        (acc := 0) (accF := 0) (accG := 0) (h := by grind)]
-  · apply foldl_sum_congr_aux
+        (g := fun i => v[i] * w[i])]
+  · apply List.foldl_add_congr
     intro i _
     have hentry : (u + v)[i] = u[i] + v[i] := by
       change (u + v)[i.val] = u[i.val] + v[i.val]
@@ -109,12 +43,12 @@ theorem dotProduct_smul_left {R : Type u} [Lean.Grind.Ring R]
     (c : R) (u w : Vector R n) :
     dotProduct (c • u) w = c * dotProduct u w := by
   unfold dotProduct
-  rw [foldl_sum_mul_left_aux (xs := List.finRange n)
-        (f := fun i => u[i] * w[i]) (c := c) (acc := 0)]
+  rw [← List.foldl_add_mul_left (xs := List.finRange n)
+        (f := fun i => u[i] * w[i]) (c := c)]
   have hzero : c * (0 : R) = 0 := by
     grind
   rw [hzero]
-  apply foldl_sum_congr_aux
+  apply List.foldl_add_congr
   intro i _
   -- `getElem_smul` rewrites the entry to `c • u[i]`, which is defeq to `c * u[i]`
   -- for the scalar action on the coefficient ring.
@@ -128,7 +62,7 @@ theorem dotProduct_comm {R : Type u} [Lean.Grind.CommRing R]
     (u v : Vector R n) :
     dotProduct u v = dotProduct v u := by
   unfold dotProduct
-  apply foldl_sum_congr_aux
+  apply List.foldl_add_congr
   intro i _
   grind
 
@@ -141,11 +75,10 @@ theorem dotProduct_add_right {R : Type u} [Lean.Grind.Ring R]
         (fun acc i => acc + u[i] * (v + w)[i]) 0 =
       (List.finRange n).foldl
         (fun acc i => acc + (u[i] * v[i] + u[i] * w[i])) 0 from ?_]
-  · rw [foldl_sum_add_aux (xs := List.finRange n)
+  · rw [List.foldl_add_add (xs := List.finRange n)
         (f := fun i => u[i] * v[i])
-        (g := fun i => u[i] * w[i])
-        (acc := 0) (accF := 0) (accG := 0) (h := by grind)]
-  · apply foldl_sum_congr_aux
+        (g := fun i => u[i] * w[i])]
+  · apply List.foldl_add_congr
     intro i _
     have hentry : (v + w)[i] = v[i] + w[i] := by
       change (v + w)[i.val] = v[i.val] + w[i.val]
@@ -185,11 +118,10 @@ theorem dotProduct_sub_right {R : Type u} [Lean.Grind.Ring R]
         (fun acc i => acc + u[i] * (v - w)[i]) 0 =
       (List.finRange n).foldl
         (fun acc i => acc + (u[i] * v[i] - u[i] * w[i])) 0 from ?_]
-  · rw [foldl_sum_sub_aux (xs := List.finRange n)
+  · rw [List.foldl_add_sub_zero (xs := List.finRange n)
         (f := fun i => u[i] * v[i])
-        (g := fun i => u[i] * w[i])
-        (acc := 0) (accF := 0) (accG := 0) (h := by grind)]
-  · apply foldl_sum_congr_aux
+        (g := fun i => u[i] * w[i])]
+  · apply List.foldl_add_congr
     intro i _
     have hentry : (v - w)[i] = v[i] - w[i] := by
       change (v - w)[i.val] = v[i.val] - w[i.val]

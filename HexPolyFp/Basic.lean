@@ -862,7 +862,6 @@ instance instGcdLawsZMod64Fp [PrimeModulus p] : DensePoly.GcdLaws (ZMod64 p) whe
 end ZMod64
 
 /-- Executable dense polynomials over the prime-field candidate `ZMod64 p`. -/
-@[expose]
 abbrev FpPoly (p : Nat) [ZMod64.Bounds p] := DensePoly (ZMod64 p)
 
 namespace FpPoly

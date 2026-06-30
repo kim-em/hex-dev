@@ -6,12 +6,16 @@ Connects hex-lll to Mathlib's linear algebra:
 
 ## Headline correctness theorem
 
-`reduced_first_row_norm_sq_le_of_mem_latticeSubmodule`: the Euclidean
-short-vector bound for the public `lll`, stated with Mathlib's
-`EuclideanSpace` norm and `Submodule ℤ` membership. For a `(δ, 11/20)`-reduced
-output and any nonzero lattice vector `x`,
+`lll_first_row_norm_sq_le_unconditional`: the Euclidean short-vector bound for
+the public `lll`, stated with Mathlib's `EuclideanSpace` norm and `Submodule ℤ`
+membership. For any nonzero lattice vector `x`,
 
     ‖row 0 of (lll b δ …)‖² ≤ (1/(δ − 121/400))^(n-1) · ‖x‖² .
+
+It needs no reducedness hypothesis on the output (the `lll` post-condition is
+discharged internally); it is built from the conditional bridge lemma
+`reduced_first_row_norm_sq_le`, the same bound for a basis already known to be
+`(δ, 11/20)`-reduced.
 
 The theorem holds regardless of which path the dispatched `lll` took (native
 or certified external), since both establish the `(δ, 11/20)`-reduced and
