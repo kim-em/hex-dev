@@ -845,22 +845,22 @@ private theorem pass_spec (b : Hex.Matrix Int n m) {S : Int} (hS : 0 < S)
 
 private theorem g_entries (b : Hex.Matrix Int n m) (i : Nat) (hi : i < n)
     (j : Nat) (hj : j < n) :
-    ((((Matrix.gramMatrix b).toArray.map Vector.toArray))[i]!)[j]! =
+    ((((Matrix.gramMatrix b).rows.toArray.map Vector.toArray))[i]!)[j]! =
       (b.row ⟨i, hi⟩).dotProduct (b.row ⟨j, hj⟩) := by
-  have hi1 : i < ((Matrix.gramMatrix b).toArray.map Vector.toArray).size := by
+  have hi1 : i < ((Matrix.gramMatrix b).rows.toArray.map Vector.toArray).size := by
     rw [Array.size_map, Vector.size_toArray]
     exact hi
-  have hi2 : i < (Matrix.gramMatrix b).toArray.size := by
+  have hi2 : i < (Matrix.gramMatrix b).rows.toArray.size := by
     rw [Vector.size_toArray]
     exact hi
-  rw [getElem!_pos ((Matrix.gramMatrix b).toArray.map Vector.toArray) i hi1,
+  rw [getElem!_pos ((Matrix.gramMatrix b).rows.toArray.map Vector.toArray) i hi1,
     Array.getElem_map]
-  have hj1 : j < ((Matrix.gramMatrix b).toArray[i]'hi2).toArray.size := by
+  have hj1 : j < ((Matrix.gramMatrix b).rows.toArray[i]'hi2).toArray.size := by
     rw [Vector.size_toArray]
     exact hj
-  rw [getElem!_pos (((Matrix.gramMatrix b).toArray[i]'hi2).toArray) j hj1]
+  rw [getElem!_pos (((Matrix.gramMatrix b).rows.toArray[i]'hi2).toArray) j hj1]
   simp only [Vector.getElem_toArray]
-  simpa using Hex.Matrix.getElem_gramMatrix b ⟨i, hi⟩ ⟨j, hj⟩
+  simpa [Hex.Matrix.getRow, Fin.getElem_fin] using Hex.Matrix.getElem_gramMatrix b ⟨i, hi⟩ ⟨j, hj⟩
 
 /-! ### Positivity of the Gram-determinant product -/
 
@@ -903,7 +903,7 @@ theorem lllReducedInterval_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
     exact_mod_cast hS
   simp only [Hex.lllReducedInterval] at h
   set S : Int := (2 : Int) ^ Hex.Internal.intervalPrec with hSdef
-  set g : Array (Array Int) := (Matrix.gramMatrix b).toArray.map Vector.toArray
+  set g : Array (Array Int) := (Matrix.gramMatrix b).rows.toArray.map Vector.toArray
     with hgdef
   rcases hpass : IntervalGS.pass S g n with _ | ⟨mus, bstars⟩
   · rw [hpass] at h

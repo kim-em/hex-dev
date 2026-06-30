@@ -327,6 +327,19 @@ def mapRows (M : Matrix R n m) (f : Vector R m → Vector R m') : Matrix R n m' 
     (f : Vector R m → Vector R m) : (modify M i f).rows = M.rows.modify i f := by
   cases M; rfl
 
+/-- Row `i` of `modify M i f` is `f` applied to the old row `i`. -/
+@[simp, grind =] theorem getRow_modify_self (M : Matrix R n m) (i : Fin n)
+    (f : Vector R m → Vector R m) : getRow (modify M i.val f) i = f (getRow M i) := by
+  simp only [getRow, rows_modify, Fin.getElem_fin]
+  rw [Vector.getElem_modify_self i.isLt]
+
+/-- Rows other than `i` are unchanged by `modify M i f`. -/
+@[simp, grind =] theorem getRow_modify_ne (M : Matrix R n m) (i : Nat)
+    (f : Vector R m → Vector R m) (j : Fin n) (h : i ≠ j.val) :
+    getRow (modify M i f) j = getRow M j := by
+  simp only [getRow, rows_modify, Fin.getElem_fin]
+  rw [Vector.getElem_modify_of_ne j.isLt h]
+
 @[simp, grind =] theorem rows_swap (M : Matrix R n m) (i j : Nat) (hi : i < n) (hj : j < n) :
     (M.swap i j hi hj).rows = M.rows.swap i j hi hj := by cases M; rfl
 

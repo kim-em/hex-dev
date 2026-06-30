@@ -65,7 +65,7 @@ the columns line up. The output is copy-pasteable as input. For example,
 This is what the `Repr` instance shows under `#eval`. -/
 def render [Repr R] (M : Matrix R n m) : Std.Format :=
   let cells : List (List String) :=
-    M.toList.map fun row => row.toList.map fun x => (repr x).pretty
+    M.rows.toList.map fun row => row.toList.map fun x => (repr x).pretty
   let widths : List Nat :=
     (List.range m).map fun j => cells.foldl (fun w r => max w (r.getD j "").length) 0
   let pad : String → Nat → String := fun s w => String.ofList (List.replicate (w - s.length) ' ') ++ s

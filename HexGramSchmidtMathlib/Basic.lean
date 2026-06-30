@@ -69,7 +69,7 @@ theorem rowToEuclidean_smul (c : Rat) (row : Vector Rat m) :
 /-- Cast an integer dense matrix into the rational matrix space of `HexGramSchmidt`. -/
 @[expose]
 def castIntMatrix (b : Matrix Int n m) : Matrix Rat n m :=
-  Vector.map (fun row => Vector.map (fun x : Int => (x : Rat)) row) b
+  Hex.Matrix.ofRows (b.rows.map (fun row => row.map (fun x : Int => (x : Rat))))
 
 /-- The row family fed to Mathlib's `gramSchmidt` for a rational matrix. -/
 @[expose]
