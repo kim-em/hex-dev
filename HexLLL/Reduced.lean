@@ -30,7 +30,9 @@ end LLLCore
 
 /-- A basis is `(δ, η)`-LLL-reduced when it is size-reduced with bound `η`
 (`|μ| ≤ η` for every below-diagonal entry of the Gram-Schmidt coefficient
-matrix) and satisfies the Lovasz condition at every adjacent pair. -/
+matrix) and satisfies the Lovasz condition at every adjacent pair. The
+size-reduction clause is stored in squared form `μ² ≤ η²`, which is equivalent
+to `|μ| ≤ η` exactly when `η ≥ 0`; every consumer supplies `1/2 ≤ η`. -/
 @[expose]
 def isLLLReduced (b : Matrix Int n m) (δ η : Rat) : Prop :=
   let basis := GramSchmidt.Int.basis b

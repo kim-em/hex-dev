@@ -44,7 +44,9 @@ def B : Matrix Int 3 3 := Matrix.ofFn fun i j =>
 #check @lll
 
 -- To run the reducer on data without supplying an independence proof, use the
--- proof-free variants; they execute the same certified reducer.
+-- proof-free variants. They run the steered reducer directly (the body of
+-- `lll`'s native path, skipping the provider dispatch) and carry no exported
+-- short-vector theorem unless you separately prove `B.independent`.
 #eval lll.firstShortVectorUnchecked B (3 / 4) (by decide +kernel) (by decide +kernel) (by decide)
 #eval lll.shortVectorsUnchecked B (3 / 4) (by decide +kernel) (by decide +kernel) (by decide)
 
@@ -79,8 +81,8 @@ matter which one runs. `lll` dispatches through them in order:
 The surface, by group:
 
 - `lll`, `lll.firstShortVector`, and `lll.shortVectors`: the public reducer,
-  the shortest reduced row, and the ordered reduced rows. `firstShortVector`
-  is the short-vector entry point for downstream consumers such as
+  its provably short first reduced row, and the ordered reduced rows.
+  `firstShortVector` is the short-vector entry point for downstream consumers such as
   [`hex-berlekamp-zassenhaus`](https://github.com/kim-em/hex-berlekamp-zassenhaus).
 - `lllNative`: the exact integer reducer at the classical `η = 1/2`, with the
   tighter short-vector constant; call it directly to get the classical
