@@ -361,13 +361,26 @@ cross-referenced as `phase4.input_families` in [`libraries.yml`](https://github.
   This exercises bigint operand-size drift in both `LLLState.ofBasis`
   and the swap path; entry sizes grow with `n`, so total input
   size is cubic in `n`.
+- **`ajtai`** — Ajtai-style worst-case lower-triangular bases, a
+  faithful port of fplll's `gen_trg` (`latticegen t <d> 1.2`): per
+  column `i`, `bits_i = ⌊(2d − i)^1.2⌋`, the diagonal `D_i` is uniform
+  in `[2, 2^bits_i]`, and below-diagonal entries are uniform in
+  `(−D_i/2, D_i/2)`. The steeply decreasing diagonal profile drives the
+  `Θ(d² log B)` swap count (Nguyen–Stehlé, *LLL on the Average*,
+  ANTS-VII 2006) — the **iteration-count** scaling axis the
+  near-orthogonal `random-bounded` and `harsh-cubic` families leave
+  unmeasured. Fidelity is structural, not entry-exact (fplll draws from
+  GMP, the Lean port from the committed LCG via `wideRandom`):
+  `scripts/dev/validate_latticegen.py` checks both satisfy the same
+  lower-triangular / `bits_i` / `|off| < D_i/2` envelope.
 
 **At least one family must demonstrably exercise the swap branch of
-the LLL outer loop.** For `bz-recombination` and `harsh-cubic` this
-is automatic; for `random-bounded` the family must include at least
-one committed seed where ≥ 1 Lovász swap fires, recorded in the
-bench module as a fixed fixture so the swap-firing property is
-verifiable from the SPEC alone.
+the LLL outer loop.** For `bz-recombination`, `harsh-cubic`, and
+`ajtai` this is automatic (the Ajtai diagonal is steeply decreasing by
+construction, checked by the `ajtaiProfileSteep` `#guard`); for
+`random-bounded` the family must include at least one committed seed
+where ≥ 1 Lovász swap fires, recorded in the bench module as a fixed
+fixture so the swap-firing property is verifiable from the SPEC alone.
 
 **Best-case inputs are not sole Phase-4 evidence.** Per
 [SPEC/benchmarking.md §Anti-patterns](https://github.com/kim-em/hex-dev/blob/main/SPEC/benchmarking.md#anti-patterns),
