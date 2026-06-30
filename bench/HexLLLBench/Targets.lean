@@ -1968,4 +1968,950 @@ setup_fixed_benchmark runCertifiedFirstShortVectorAjtai36Checksum where {
 
 -- END Ajtai family targets
 
+
+-- BEGIN Qary family targets (generated)
+/-! ## qary `lll.firstShortVector` targets. -/
+
+initialize qaryInput16Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorQaryNormSq16 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput qaryInput16Ref (fun _ => prepQaryInput 16))
+
+def runNativeFirstShortVectorQaryNormSq16 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput qaryInput16Ref (fun _ => prepQaryInput 16))
+
+def runIsabelleQaryNormSq16 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "qary-16" (← getCachedInput qaryInput16Ref (fun _ => prepQaryInput 16))
+
+def runIsabelleCertifiedQaryNormSq16 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "qary-16" (← getCachedInput qaryInput16Ref (fun _ => prepQaryInput 16))
+
+def runFpLLLFirstShortVectorQary16Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput qaryInput16Ref (fun _ => prepQaryInput 16))
+
+def runCertifiedFirstShortVectorQary16Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput qaryInput16Ref (fun _ => prepQaryInput 16))
+
+setup_fixed_benchmark runFirstShortVectorQaryNormSq16 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorQaryNormSq16 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleQaryNormSq16 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedQaryNormSq16 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorQary16Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorQary16Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize qaryInput24Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorQaryNormSq24 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput qaryInput24Ref (fun _ => prepQaryInput 24))
+
+def runNativeFirstShortVectorQaryNormSq24 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput qaryInput24Ref (fun _ => prepQaryInput 24))
+
+def runIsabelleQaryNormSq24 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "qary-24" (← getCachedInput qaryInput24Ref (fun _ => prepQaryInput 24))
+
+def runIsabelleCertifiedQaryNormSq24 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "qary-24" (← getCachedInput qaryInput24Ref (fun _ => prepQaryInput 24))
+
+def runFpLLLFirstShortVectorQary24Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput qaryInput24Ref (fun _ => prepQaryInput 24))
+
+def runCertifiedFirstShortVectorQary24Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput qaryInput24Ref (fun _ => prepQaryInput 24))
+
+setup_fixed_benchmark runFirstShortVectorQaryNormSq24 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorQaryNormSq24 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleQaryNormSq24 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedQaryNormSq24 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorQary24Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorQary24Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize qaryInput32Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorQaryNormSq32 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput qaryInput32Ref (fun _ => prepQaryInput 32))
+
+def runNativeFirstShortVectorQaryNormSq32 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput qaryInput32Ref (fun _ => prepQaryInput 32))
+
+def runIsabelleQaryNormSq32 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "qary-32" (← getCachedInput qaryInput32Ref (fun _ => prepQaryInput 32))
+
+def runIsabelleCertifiedQaryNormSq32 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "qary-32" (← getCachedInput qaryInput32Ref (fun _ => prepQaryInput 32))
+
+def runFpLLLFirstShortVectorQary32Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput qaryInput32Ref (fun _ => prepQaryInput 32))
+
+def runCertifiedFirstShortVectorQary32Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput qaryInput32Ref (fun _ => prepQaryInput 32))
+
+setup_fixed_benchmark runFirstShortVectorQaryNormSq32 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorQaryNormSq32 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleQaryNormSq32 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedQaryNormSq32 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorQary32Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorQary32Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize qaryInput40Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorQaryNormSq40 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput qaryInput40Ref (fun _ => prepQaryInput 40))
+
+def runNativeFirstShortVectorQaryNormSq40 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput qaryInput40Ref (fun _ => prepQaryInput 40))
+
+def runIsabelleQaryNormSq40 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "qary-40" (← getCachedInput qaryInput40Ref (fun _ => prepQaryInput 40))
+
+def runIsabelleCertifiedQaryNormSq40 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "qary-40" (← getCachedInput qaryInput40Ref (fun _ => prepQaryInput 40))
+
+def runFpLLLFirstShortVectorQary40Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput qaryInput40Ref (fun _ => prepQaryInput 40))
+
+def runCertifiedFirstShortVectorQary40Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput qaryInput40Ref (fun _ => prepQaryInput 40))
+
+setup_fixed_benchmark runFirstShortVectorQaryNormSq40 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorQaryNormSq40 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleQaryNormSq40 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedQaryNormSq40 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorQary40Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorQary40Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize qaryInput48Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorQaryNormSq48 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput qaryInput48Ref (fun _ => prepQaryInput 48))
+
+def runNativeFirstShortVectorQaryNormSq48 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput qaryInput48Ref (fun _ => prepQaryInput 48))
+
+def runIsabelleQaryNormSq48 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "qary-48" (← getCachedInput qaryInput48Ref (fun _ => prepQaryInput 48))
+
+def runIsabelleCertifiedQaryNormSq48 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "qary-48" (← getCachedInput qaryInput48Ref (fun _ => prepQaryInput 48))
+
+def runFpLLLFirstShortVectorQary48Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput qaryInput48Ref (fun _ => prepQaryInput 48))
+
+def runCertifiedFirstShortVectorQary48Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput qaryInput48Ref (fun _ => prepQaryInput 48))
+
+setup_fixed_benchmark runFirstShortVectorQaryNormSq48 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorQaryNormSq48 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleQaryNormSq48 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedQaryNormSq48 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorQary48Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorQary48Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+-- END Qary family targets
+
+-- BEGIN Ntru family targets (generated)
+/-! ## ntru `lll.firstShortVector` targets. -/
+
+initialize ntruInput8Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorNtruNormSq8 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput ntruInput8Ref (fun _ => prepNtruInput 8))
+
+def runNativeFirstShortVectorNtruNormSq8 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput ntruInput8Ref (fun _ => prepNtruInput 8))
+
+def runIsabelleNtruNormSq8 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "ntru-8" (← getCachedInput ntruInput8Ref (fun _ => prepNtruInput 8))
+
+def runIsabelleCertifiedNtruNormSq8 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "ntru-8" (← getCachedInput ntruInput8Ref (fun _ => prepNtruInput 8))
+
+def runFpLLLFirstShortVectorNtru8Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput ntruInput8Ref (fun _ => prepNtruInput 8))
+
+def runCertifiedFirstShortVectorNtru8Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput ntruInput8Ref (fun _ => prepNtruInput 8))
+
+setup_fixed_benchmark runFirstShortVectorNtruNormSq8 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorNtruNormSq8 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleNtruNormSq8 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedNtruNormSq8 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorNtru8Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorNtru8Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize ntruInput12Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorNtruNormSq12 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput ntruInput12Ref (fun _ => prepNtruInput 12))
+
+def runNativeFirstShortVectorNtruNormSq12 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput ntruInput12Ref (fun _ => prepNtruInput 12))
+
+def runIsabelleNtruNormSq12 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "ntru-12" (← getCachedInput ntruInput12Ref (fun _ => prepNtruInput 12))
+
+def runIsabelleCertifiedNtruNormSq12 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "ntru-12" (← getCachedInput ntruInput12Ref (fun _ => prepNtruInput 12))
+
+def runFpLLLFirstShortVectorNtru12Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput ntruInput12Ref (fun _ => prepNtruInput 12))
+
+def runCertifiedFirstShortVectorNtru12Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput ntruInput12Ref (fun _ => prepNtruInput 12))
+
+setup_fixed_benchmark runFirstShortVectorNtruNormSq12 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorNtruNormSq12 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleNtruNormSq12 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedNtruNormSq12 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorNtru12Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorNtru12Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize ntruInput16Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorNtruNormSq16 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput ntruInput16Ref (fun _ => prepNtruInput 16))
+
+def runNativeFirstShortVectorNtruNormSq16 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput ntruInput16Ref (fun _ => prepNtruInput 16))
+
+def runIsabelleNtruNormSq16 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "ntru-16" (← getCachedInput ntruInput16Ref (fun _ => prepNtruInput 16))
+
+def runIsabelleCertifiedNtruNormSq16 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "ntru-16" (← getCachedInput ntruInput16Ref (fun _ => prepNtruInput 16))
+
+def runFpLLLFirstShortVectorNtru16Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput ntruInput16Ref (fun _ => prepNtruInput 16))
+
+def runCertifiedFirstShortVectorNtru16Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput ntruInput16Ref (fun _ => prepNtruInput 16))
+
+setup_fixed_benchmark runFirstShortVectorNtruNormSq16 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorNtruNormSq16 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleNtruNormSq16 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedNtruNormSq16 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorNtru16Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorNtru16Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize ntruInput20Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorNtruNormSq20 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput ntruInput20Ref (fun _ => prepNtruInput 20))
+
+def runNativeFirstShortVectorNtruNormSq20 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput ntruInput20Ref (fun _ => prepNtruInput 20))
+
+def runIsabelleNtruNormSq20 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "ntru-20" (← getCachedInput ntruInput20Ref (fun _ => prepNtruInput 20))
+
+def runIsabelleCertifiedNtruNormSq20 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "ntru-20" (← getCachedInput ntruInput20Ref (fun _ => prepNtruInput 20))
+
+def runFpLLLFirstShortVectorNtru20Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput ntruInput20Ref (fun _ => prepNtruInput 20))
+
+def runCertifiedFirstShortVectorNtru20Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput ntruInput20Ref (fun _ => prepNtruInput 20))
+
+setup_fixed_benchmark runFirstShortVectorNtruNormSq20 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorNtruNormSq20 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleNtruNormSq20 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedNtruNormSq20 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorNtru20Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorNtru20Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize ntruInput24Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorNtruNormSq24 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput ntruInput24Ref (fun _ => prepNtruInput 24))
+
+def runNativeFirstShortVectorNtruNormSq24 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput ntruInput24Ref (fun _ => prepNtruInput 24))
+
+def runIsabelleNtruNormSq24 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "ntru-24" (← getCachedInput ntruInput24Ref (fun _ => prepNtruInput 24))
+
+def runIsabelleCertifiedNtruNormSq24 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "ntru-24" (← getCachedInput ntruInput24Ref (fun _ => prepNtruInput 24))
+
+def runFpLLLFirstShortVectorNtru24Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput ntruInput24Ref (fun _ => prepNtruInput 24))
+
+def runCertifiedFirstShortVectorNtru24Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput ntruInput24Ref (fun _ => prepNtruInput 24))
+
+setup_fixed_benchmark runFirstShortVectorNtruNormSq24 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorNtruNormSq24 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleNtruNormSq24 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedNtruNormSq24 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorNtru24Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorNtru24Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+-- END Ntru family targets
+
+-- BEGIN Knapsack family targets (generated)
+/-! ## knapsack `lll.firstShortVector` targets. -/
+
+initialize knapsackInput16Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorKnapsackNormSq16 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput knapsackInput16Ref (fun _ => prepKnapsackInput 16))
+
+def runNativeFirstShortVectorKnapsackNormSq16 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput knapsackInput16Ref (fun _ => prepKnapsackInput 16))
+
+def runIsabelleKnapsackNormSq16 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "knapsack-16" (← getCachedInput knapsackInput16Ref (fun _ => prepKnapsackInput 16))
+
+def runIsabelleCertifiedKnapsackNormSq16 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "knapsack-16" (← getCachedInput knapsackInput16Ref (fun _ => prepKnapsackInput 16))
+
+def runFpLLLFirstShortVectorKnapsack16Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput knapsackInput16Ref (fun _ => prepKnapsackInput 16))
+
+def runCertifiedFirstShortVectorKnapsack16Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput knapsackInput16Ref (fun _ => prepKnapsackInput 16))
+
+setup_fixed_benchmark runFirstShortVectorKnapsackNormSq16 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorKnapsackNormSq16 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleKnapsackNormSq16 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedKnapsackNormSq16 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorKnapsack16Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorKnapsack16Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize knapsackInput24Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorKnapsackNormSq24 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput knapsackInput24Ref (fun _ => prepKnapsackInput 24))
+
+def runNativeFirstShortVectorKnapsackNormSq24 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput knapsackInput24Ref (fun _ => prepKnapsackInput 24))
+
+def runIsabelleKnapsackNormSq24 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "knapsack-24" (← getCachedInput knapsackInput24Ref (fun _ => prepKnapsackInput 24))
+
+def runIsabelleCertifiedKnapsackNormSq24 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "knapsack-24" (← getCachedInput knapsackInput24Ref (fun _ => prepKnapsackInput 24))
+
+def runFpLLLFirstShortVectorKnapsack24Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput knapsackInput24Ref (fun _ => prepKnapsackInput 24))
+
+def runCertifiedFirstShortVectorKnapsack24Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput knapsackInput24Ref (fun _ => prepKnapsackInput 24))
+
+setup_fixed_benchmark runFirstShortVectorKnapsackNormSq24 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorKnapsackNormSq24 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleKnapsackNormSq24 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedKnapsackNormSq24 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorKnapsack24Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorKnapsack24Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize knapsackInput32Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorKnapsackNormSq32 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput knapsackInput32Ref (fun _ => prepKnapsackInput 32))
+
+def runNativeFirstShortVectorKnapsackNormSq32 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput knapsackInput32Ref (fun _ => prepKnapsackInput 32))
+
+def runIsabelleKnapsackNormSq32 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "knapsack-32" (← getCachedInput knapsackInput32Ref (fun _ => prepKnapsackInput 32))
+
+def runIsabelleCertifiedKnapsackNormSq32 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "knapsack-32" (← getCachedInput knapsackInput32Ref (fun _ => prepKnapsackInput 32))
+
+def runFpLLLFirstShortVectorKnapsack32Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput knapsackInput32Ref (fun _ => prepKnapsackInput 32))
+
+def runCertifiedFirstShortVectorKnapsack32Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput knapsackInput32Ref (fun _ => prepKnapsackInput 32))
+
+setup_fixed_benchmark runFirstShortVectorKnapsackNormSq32 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorKnapsackNormSq32 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleKnapsackNormSq32 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedKnapsackNormSq32 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorKnapsack32Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorKnapsack32Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize knapsackInput40Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorKnapsackNormSq40 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput knapsackInput40Ref (fun _ => prepKnapsackInput 40))
+
+def runNativeFirstShortVectorKnapsackNormSq40 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput knapsackInput40Ref (fun _ => prepKnapsackInput 40))
+
+def runIsabelleKnapsackNormSq40 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "knapsack-40" (← getCachedInput knapsackInput40Ref (fun _ => prepKnapsackInput 40))
+
+def runIsabelleCertifiedKnapsackNormSq40 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "knapsack-40" (← getCachedInput knapsackInput40Ref (fun _ => prepKnapsackInput 40))
+
+def runFpLLLFirstShortVectorKnapsack40Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput knapsackInput40Ref (fun _ => prepKnapsackInput 40))
+
+def runCertifiedFirstShortVectorKnapsack40Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput knapsackInput40Ref (fun _ => prepKnapsackInput 40))
+
+setup_fixed_benchmark runFirstShortVectorKnapsackNormSq40 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorKnapsackNormSq40 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleKnapsackNormSq40 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedKnapsackNormSq40 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorKnapsack40Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorKnapsack40Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+initialize knapsackInput48Ref : IO.Ref (Option FirstShortVectorInput) ← IO.mkRef none
+
+def runFirstShortVectorKnapsackNormSq48 : Unit → IO Int := fun _ => do
+  return runFirstShortVectorNormSq (← getCachedInput knapsackInput48Ref (fun _ => prepKnapsackInput 48))
+
+def runNativeFirstShortVectorKnapsackNormSq48 : Unit → IO Int := fun _ => do
+  return runNativeFirstShortVectorNormSq (← getCachedInput knapsackInput48Ref (fun _ => prepKnapsackInput 48))
+
+def runIsabelleKnapsackNormSq48 : Unit → IO Int := fun _ => do
+  runIsabelleShortVectorNormSq "knapsack-48" (← getCachedInput knapsackInput48Ref (fun _ => prepKnapsackInput 48))
+
+def runIsabelleCertifiedKnapsackNormSq48 : Unit → IO Int := fun _ => do
+  runIsabelleCertifiedShortVectorNormSq "knapsack-48" (← getCachedInput knapsackInput48Ref (fun _ => prepKnapsackInput 48))
+
+def runFpLLLFirstShortVectorKnapsack48Checksum : Unit → IO Int := fun _ => do
+  runFpLLLFirstShortVectorChecksum (← getCachedInput knapsackInput48Ref (fun _ => prepKnapsackInput 48))
+
+def runCertifiedFirstShortVectorKnapsack48Checksum : Unit → IO Int := fun _ => do
+  runCertifiedFirstShortVectorChecksum (← getCachedInput knapsackInput48Ref (fun _ => prepKnapsackInput 48))
+
+setup_fixed_benchmark runFirstShortVectorKnapsackNormSq48 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runNativeFirstShortVectorKnapsackNormSq48 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleKnapsackNormSq48 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runIsabelleCertifiedKnapsackNormSq48 where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 90.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runFpLLLFirstShortVectorKnapsack48Checksum where {
+    repeats := 5
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+setup_fixed_benchmark runCertifiedFirstShortVectorKnapsack48Checksum where {
+    repeats := 3
+    minTotalSeconds := 1.0
+    maxSecondsPerCall := 30.0
+    warmupFirstIter := true
+  }
+
+-- END Knapsack family targets
+
 end Hex.LLLBench
