@@ -93,6 +93,23 @@ theorem foldl_mul_congr [Mul R] (xs : List α) (f g : α → R) (z : R)
     xs.foldl (fun acc x => acc * f x) z = xs.foldl (fun acc x => acc * g x) z :=
   foldl_congr xs _ _ z fun acc x hx => by rw [h x hx]
 
+/-- Pull the running accumulator out of a multiplicative fold-product, taking
+the product from a `1` start. Stated for any associative multiplication with a
+two-sided unit, so it applies to monoids that are not `Grind` rings (e.g. the
+executable polynomial types). -/
+theorem foldl_mul_eq_mul_foldl {M : Type u} [Mul M] [One M]
+    [Std.Associative (· * · : M → M → M)] [Std.LawfulIdentity (· * · : M → M → M) 1]
+    (xs : List α) (f : α → M) (z : M) :
+    xs.foldl (fun acc x => acc * f x) z = z * xs.foldl (fun acc x => acc * f x) 1 :=
+  calc xs.foldl (fun acc x => acc * f x) z
+      = (xs.map f).foldl (· * ·) z :=
+        (List.foldl_map (l := xs) (f := f) (g := (· * ·)) (init := z)).symm
+    _ = (xs.map f).foldl (· * ·) (z * 1) := by
+        rw [show z * 1 = z from Std.LawfulRightIdentity.right_id z]
+    _ = z * (xs.map f).foldl (· * ·) 1 := List.foldl_assoc
+    _ = z * xs.foldl (fun acc x => acc * f x) 1 := by
+        rw [List.foldl_map (l := xs) (f := f) (g := (· * ·)) (init := 1)]
+
 /-! ### Constant step -/
 
 /-- Folding with a step that discards the element and returns the accumulator
@@ -144,19 +161,6 @@ theorem foldl_add_eq_add_foldl (xs : List α) (f : α → R) (z : R) :
     _ = z + (xs.map f).foldl (· + ·) 0 := List.foldl_assoc
     _ = z + xs.foldl (fun acc x => acc + f x) 0 := by
         rw [List.foldl_map (l := xs) (f := f) (g := (· + ·)) (init := 0)]
-
-/-- Pull the running accumulator out of a multiplicative fold-product, taking
-the product from a `1` start. -/
-theorem foldl_mul_eq_mul_foldl (xs : List α) (f : α → R) (z : R) :
-    xs.foldl (fun acc x => acc * f x) z
-      = z * xs.foldl (fun acc x => acc * f x) 1 :=
-  calc xs.foldl (fun acc x => acc * f x) z
-      = (xs.map f).foldl (· * ·) z :=
-        (List.foldl_map (l := xs) (f := f) (g := (· * ·)) (init := z)).symm
-    _ = (xs.map f).foldl (· * ·) (z * 1) := by rw [Lean.Grind.Semiring.mul_one]
-    _ = z * (xs.map f).foldl (· * ·) 1 := List.foldl_assoc
-    _ = z * xs.foldl (fun acc x => acc * f x) 1 := by
-        rw [List.foldl_map (l := xs) (f := f) (g := (· * ·)) (init := 1)]
 
 /-! ### All-zero collapse -/
 
