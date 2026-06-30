@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 import HexPoly.Euclid
+import HexPolyMathlib
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -331,19 +332,50 @@ hypothesis, again discharged downstream.
 
 {docstring Hex.DensePoly.xgcd_bezout}
 
+# The Mathlib correspondence
+%%%
+tag := "hex-poly-mathlib"
+%%%
+
+Everything above is executable and Mathlib-free. `HexPolyMathlib`
+connects it to Mathlib: every {name}`Hex.DensePoly` corresponds to a
+Mathlib `Polynomial` with the same coefficients. The two transfer maps
+go each way.
+
+{docstring HexPolyMathlib.toPolynomial}
+
+{docstring HexPolyMathlib.ofPolynomial}
+
+They are mutually inverse:
+
+{docstring HexPolyMathlib.toPolynomial_ofPolynomial}
+
+{docstring HexPolyMathlib.ofPolynomial_toPolynomial}
+
+`toPolynomial` is a degree-preserving ring homomorphism; addition,
+multiplication, and the degree transfer:
+
+{docstring HexPolyMathlib.toPolynomial_add}
+
+{docstring HexPolyMathlib.toPolynomial_mul}
+
+{docstring HexPolyMathlib.natDegree_toPolynomial}
+
+The maps and laws bundle into a ring equivalence, and divisibility
+transfers through it:
+
+{docstring HexPolyMathlib.equiv}
+
+{docstring HexPolyMathlib.toPolynomial_dvd_iff}
+
 # Cross-references
 %%%
 tag := "hex-poly-cross-references"
 %%%
 
 `HexPoly` is dependency-free and sits below the rest of the polynomial
-stack:
+libraries:
 
-* `HexPolyMathlib` is the correspondence library: it re-exports the
-  executable {name}`Hex.DensePoly` theory as theorems about Mathlib's
-  `Polynomial`, so the computational results in this chapter transfer to
-  the abstract setting. The Mathlib dependency lives entirely on that
-  side of the boundary; `HexPoly` itself imports only `Std`.
 * `HexPolyZ` specializes the coefficient type to `Int` and adds the
   integer-specific layer (content, primitive parts), and `HexPolyFp`
   specializes to the prime fields `ZMod64 p`, supplying the concrete

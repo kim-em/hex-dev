@@ -156,10 +156,10 @@ to *prove* the matching Mathlib fact by running the executable.
 tag := "hex-row-reduce-recipe-kernel"
 %%%
 
-You have a matrix over a field and want a basis for its kernel — the
+You have a matrix over a field and want a basis for its kernel: the
 vectors `x` with `M * x = 0`. Build the matrix with the `#m[...]`
-literal and read the basis off {name}`Hex.Matrix.nullspace`, which
-returns one vector per free (non-pivot) column.
+literal; {name}`Hex.Matrix.nullspaceBasisMatrix` returns the basis as
+the columns of a matrix, one column per free (non-pivot) column of `M`.
 
 ```lean (name := kernelBasis)
 open Hex Hex.Matrix
@@ -169,8 +169,8 @@ namespace HexRowReduceKernelRecipe
 -- M has rank 1 (second row twice the first), 3 columns.
 def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
 
--- The kernel basis, one vector per free column.
-#eval Matrix.nullspace M
+-- The kernel basis, as the columns of a matrix.
+#eval Matrix.nullspaceBasisMatrix M
 
 -- The nullity is m - rank = 3 - 1 = 2.
 #guard (Matrix.nullspace M).toArray.size = 2
@@ -178,15 +178,16 @@ def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
 end HexRowReduceKernelRecipe
 ```
 ```leanOutput kernelBasis
-#m[-2, 1, 0;
-   -3, 0, 1]
+#m[-2, -3;
+    1,  0;
+    0,  1]
 ```
 
-Each row is a basis vector: the kernel is spanned by
-`(-2, 1, 0)` and `(-3, 0, 1)`. The result is a genuine basis, not just a
-spanning set — every returned vector is annihilated by `M`
-({name}`Hex.Matrix.nullspace_sound`), and every `x` with `M * x = 0` is
-a combination of them ({name}`Hex.Matrix.nullspace_complete`).
+Each column is a basis vector: the kernel is spanned by `(-2, 1, 0)` and
+`(-3, 0, 1)`. It is a genuine basis, not just a spanning set:
+{name}`Hex.Matrix.nullspace_sound` says each vector is annihilated by
+`M`, and {name}`Hex.Matrix.nullspace_complete` that every `x` with
+`M * x = 0` is a combination of them.
 
 ## How to prove a fact about the Mathlib kernel by running Hex
 %%%

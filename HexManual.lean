@@ -6,27 +6,25 @@ Authors: Kim Morrison
 
 import VersoManual
 
+-- Released libraries (dependency order).
+import HexManual.Chapters.HexMatrix
+import HexManual.Chapters.HexRowReduce
+import HexManual.Chapters.HexDeterminant
+import HexManual.Chapters.HexBareiss
+import HexManual.Chapters.HexGramSchmidt
+import HexManual.Chapters.HexLLL
+-- Unreleased libraries (dependency order).
 import HexManual.Chapters.HexArith
-import HexManual.Chapters.HexGFqRing
-import HexManual.Chapters.HexGFqField
-import HexManual.Chapters.HexGFqMathlib
-import HexManual.Chapters.HexHensel
-import HexManual.Chapters.HexHenselMathlib
 import HexManual.Chapters.HexModArith
-import HexManual.Chapters.HexModArithMathlib
 import HexManual.Chapters.HexPoly
 import HexManual.Chapters.HexPolyZ
 import HexManual.Chapters.HexPolyFp
-import HexManual.Chapters.HexPolyMathlib
-import HexManual.Chapters.HexGramSchmidt
-import HexManual.Chapters.HexLLL
+import HexManual.Chapters.HexGF2
+import HexManual.Chapters.HexHensel
+import HexManual.Chapters.HexGFqRing
+import HexManual.Chapters.HexGFqField
 import HexManual.Chapters.HexConway
 import HexManual.Chapters.HexGFq
-import HexManual.Chapters.HexGF2
-import HexManual.Chapters.HexMatrix
-import HexManual.Chapters.HexDeterminant
-import HexManual.Chapters.HexRowReduce
-import HexManual.Chapters.HexBareiss
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -36,8 +34,8 @@ set_option pp.rawOnError true
 /-!
 The `HexManual` Verso aggregator. Each per-library reference chapter
 lives at `HexManual/Chapters/<LibraryName>.lean` and is included
-below. As additional libraries clear Phase 6 their chapters get
-added to this aggregator.
+below. Chapters are ordered as a topological sort of the library
+dependency DAG, released libraries first.
 -/
 
 #doc (Manual) "Hex" =>
@@ -46,29 +44,26 @@ authors := ["The hex project"]
 shortTitle := "hex"
 %%%
 
-`hex` is a Mathlib-free executable computational algebra stack
-covering finite fields, polynomial factorization, and lattice
-reduction, together with a separately maintained Mathlib-side
-correspondence layer that re-exports the executable theory as theorems
-about the corresponding Mathlib structures. This manual collects per-library
-reference chapters for the libraries that have reached the
-documentation phase of the development plan.
+`hex` is executable, verified computer algebra for Lean 4: finite
+fields, polynomial factorization, and lattice reduction. The
+computational core is Mathlib-free; each chapter documents one library
+and, where there is one, its correspondence with Mathlib.
+
+{include 0 HexManual.Chapters.HexMatrix}
+
+{include 0 HexManual.Chapters.HexRowReduce}
+
+{include 0 HexManual.Chapters.HexDeterminant}
+
+{include 0 HexManual.Chapters.HexBareiss}
+
+{include 0 HexManual.Chapters.HexGramSchmidt}
+
+{include 0 HexManual.Chapters.HexLLL}
 
 {include 0 HexManual.Chapters.HexArith}
 
-{include 0 HexManual.Chapters.HexGFqRing}
-
-{include 0 HexManual.Chapters.HexGFqField}
-
-{include 0 HexManual.Chapters.HexGFqMathlib}
-
-{include 0 HexManual.Chapters.HexHensel}
-
-{include 0 HexManual.Chapters.HexHenselMathlib}
-
 {include 0 HexManual.Chapters.HexModArith}
-
-{include 0 HexManual.Chapters.HexModArithMathlib}
 
 {include 0 HexManual.Chapters.HexPoly}
 
@@ -76,22 +71,15 @@ documentation phase of the development plan.
 
 {include 0 HexManual.Chapters.HexPolyFp}
 
-{include 0 HexManual.Chapters.HexPolyMathlib}
+{include 0 HexManual.Chapters.HexGF2}
 
-{include 0 HexManual.Chapters.HexGramSchmidt}
+{include 0 HexManual.Chapters.HexHensel}
 
-{include 0 HexManual.Chapters.HexLLL}
+{include 0 HexManual.Chapters.HexGFqRing}
+
+{include 0 HexManual.Chapters.HexGFqField}
 
 {include 0 HexManual.Chapters.HexConway}
 
 {include 0 HexManual.Chapters.HexGFq}
 
-{include 0 HexManual.Chapters.HexGF2}
-
-{include 0 HexManual.Chapters.HexMatrix}
-
-{include 0 HexManual.Chapters.HexDeterminant}
-
-{include 0 HexManual.Chapters.HexRowReduce}
-
-{include 0 HexManual.Chapters.HexBareiss}

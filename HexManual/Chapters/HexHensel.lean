@@ -8,6 +8,7 @@ import VersoManual
 
 import HexHensel.Multifactor
 import HexHensel.QuadraticMultifactor
+import HexHenselMathlib
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -174,25 +175,38 @@ shape the factorization pipeline relies on.
 
 {docstring Hex.ZPoly.multifactorLiftQuadratic_each_monic}
 
+# The Mathlib correspondence
+%%%
+tag := "hex-hensel-mathlib"
+%%%
+
+Everything above is executable and Mathlib-free. `HexHenselMathlib`
+proves it correct against Mathlib's `Polynomial`: the factorization the
+executable routine lifts is genuine modulo `p ^ k`, it extends the input
+factorization mod `p`, it preserves degrees, and it is unique among
+coprime monic lifts with the same reduction mod `p`.
+
+{docstring HexHenselMathlib.hensel_correct}
+
+{docstring HexHenselMathlib.hensel_extends}
+
+{docstring HexHenselMathlib.hensel_degree}
+
+{docstring HexHenselMathlib.hensel_unique}
+
 # Cross-references
 %%%
 tag := "hex-hensel-cross-references"
 %%%
 
 `HexHensel` sits above the polynomial representation layers and below
-the integer-factorization stack:
+the integer-factorization libraries:
 
 * {ref "hex-poly-z"}[HexPolyZ] supplies the integer polynomial type
   `Hex.ZPoly`, the coefficientwise congruence predicate the lift
   invariants are stated against, and the executable Mignotte bound that
   fixes the target precision `k`. `HexPolyFp` supplies the prime-field
   type `Hex.FpPoly p` and the mod-`p` Bezout witnesses that seed a lift.
-* `HexHenselMathlib` is the correspondence layer: it re-exports the
-  executable lift theory as theorems about Mathlib structures and proves
-  the lift-uniqueness companion (linear-vs-quadratic agreement after
-  canonicalisation). As with the rest of the stack, the Mathlib
-  dependency lives entirely on that side of the boundary; `HexHensel`
-  itself is Mathlib-free.
 * Downstream, the integer Berlekamp–Zassenhaus factorization pipeline
   consumes {name}`Hex.ZPoly.multifactorLiftQuadratic` to lift its
   mod-`p` factorizations to working precision.
