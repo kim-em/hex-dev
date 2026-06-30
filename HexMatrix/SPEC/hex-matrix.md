@@ -1,9 +1,12 @@
 # hex-matrix (foundation, no dependencies)
 
-Dense matrices as `Vector (Vector R m) n`.
+Dense matrices over a coefficient type `R`.
 
 **Contents:**
-- `Matrix R n m` := `Vector (Vector R m) n` (uses stdlib `Vector`)
+- `Matrix R n m`, an encapsulated dense matrix type. Consumers go through
+  its API — `ofFn`, `ofRows`, `getRow`, `rows`, and entry access
+  `M[(i, j)]` (the normal form for entries) — so the backing representation
+  stays private and can change.
 - Matrix-vector multiplication, matrix-matrix multiplication
 - Dot product, norm squared (for `R = Int` and `R = Rat`)
 - Row operations (swap, scale, add multiple of one row to another) and the
@@ -20,7 +23,10 @@ column analogues `colAdd` / `colAddRight` are pure data transforms on the dense
 representation. Their algebraic identities (involutivity of `rowSwap`,
 multiplicative behaviour `rowSwap_mul` / `rowScale_mul` / `rowAdd_mul`, and the
 inverse-preservation lemmas) live here and are reused by row reduction and by
-the determinant row-operation laws.
+the determinant row-operation laws. They update the matrix in place when it is
+uniquely referenced: each uses its argument linearly and goes through
+`Vector.swap` / `Vector.modify` / `Vector.map`, which reuse the backing store
+rather than copying it.
 
 **Key properties:**
 - identity matrices act as left and right multiplicative identities

@@ -1,7 +1,10 @@
 # Design principles
 
 1. **Many small libraries** in a single monorepo, each its own Lake
-   library target.
+   library target. Split a large library along its dependency seams into
+   one-subject units — the matrix stack is `hex-matrix` (dense base) with
+   `hex-row-reduce`, `hex-determinant`, and `hex-bareiss` on top — and
+   give each computational library a matching `*-mathlib` bridge.
 
 2. **No Mathlib in the computational core.** Every library that computes
    something is Mathlib-free. Where full correctness requires results
@@ -20,12 +23,29 @@
    Mathlib-free library, regardless of which file the issue happens
    to name.
 
+   A Mathlib-free library also depends only on Lean core and other
+   Mathlib-free Hex libraries — not on Batteries. Where it needs a
+   Batteries lemma, it reproduces that lemma in a small Mathlib-free
+   shim, keeping the upstream name and signature, marked for removal
+   once the lemma lands in Lean core.
+
+   Mathlib *typeclass instances* on an executable type — algebraic
+   structures like `Ring` or `Module` — also live in the `*-mathlib`
+   bridge, transported along the equivalence so the operations stay the
+   executable ones.
+
 3. **Performant by default.** Dense array-backed representations, `UInt64`
    coefficients for `F_p`, Barrett/Montgomery reduction for modular
    arithmetic. New GMP `@[extern]` primitives where Lean's runtime
    doesn't yet expose what we need (notably extended GCD for big
    integers). FLINT is used for conformance testing, not as a runtime
    dependency.
+
+   Hot data transforms use their container linearly, so the compiler
+   mutates the backing store in place: prefer `Vector.swap` /
+   `Vector.modify` / `Vector.map`, which reuse a uniquely-owned buffer,
+   over reading with `getElem` and writing back with `set`, which forces
+   a copy.
 
 4. **Lean algorithms from the start.** All algorithms are implemented and
    run in Lean natively, and the native algorithm is always the default and
@@ -150,6 +170,16 @@
    be *established* by the gates first and *certified* by the proofs
    last. This does not relax principle 7 (no data-level scaffolding) or
    the no-`axiom` rule; it orders the work, it does not lower the bar.
+
+10. **Encapsulate representations.** Expose a core datatype as an opaque
+    type with an API, not as a transparent alias, so its representation
+    can change without touching consumers. `Hex.Matrix` is a one-field
+    structure; consumers construct and read it through its API (`ofFn`,
+    `ofRows`, `getRow`, `rows`, and entry access `M[(i, j)]`) and never
+    its backing store, so a later switch (e.g. to a flat
+    `Vector R (n*m)`) stays invisible. Change such a type by
+    expand-contract: add the full API and its lemmas first, convert every
+    consumer, then swap the representation last.
 
 ## Lakefile
 

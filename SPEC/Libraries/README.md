@@ -2,7 +2,10 @@
 
 - **hex-arith** — extended GCD, Barrett/Montgomery reduction, binomial coefficients, Fermat's little theorem
 - **hex-poly** — dense `Array`-backed polynomial representation
-- **hex-matrix** — dense matrices as `Vector (Vector R m) n`, RREF, Bareiss determinant, span, nullspace
+- **hex-matrix** — dense matrices, matrix/vector arithmetic, elementary row and column operations, submatrix slicing, the Gram matrix
+- **hex-row-reduce** — row reduction (RREF), rank, span, nullspace
+- **hex-determinant** — the Leibniz determinant and its cofactor/Cauchy-Binet/Plücker theory
+- **hex-bareiss** — the fraction-free Bareiss determinant algorithm
 - **hex-gram-schmidt** — Gram-Schmidt orthogonalization, GS coefficients, Gram determinants, update formulas under row operations
 - **hex-mod-arith** — `ZMod64 p`: `UInt64`-backed arithmetic in `Z/pZ`
 - **hex-poly-fp** — polynomials over `F_p`, Frobenius map, square-free decomposition, lazy reduction for small p
@@ -25,7 +28,10 @@ proving correspondence with Mathlib's mathematical definitions):
 
 - **hex-mod-arith-mathlib** — `ZMod64 p ≃+* ZMod p`
 - **hex-poly-mathlib** — `DensePoly R ≃+* Polynomial R`
-- **hex-matrix-mathlib** — matrix equivalence, `det` agreement, rank = `Matrix.rank`, nullspace = `LinearMap.ker`, row ops = transvections
+- **hex-matrix-mathlib** — matrix equivalence, row ops = transvections, and the Mathlib algebra tower transported onto our matrix type
+- **hex-row-reduce-mathlib** — rank = `Matrix.rank`, nullspace = `LinearMap.ker`, span agreement
+- **hex-determinant-mathlib** — `det` agreement with `Matrix.det`, plus the Plücker / Desnanot-Jacobi assembly
+- **hex-bareiss-mathlib** — Bareiss determinant = `Matrix.det`, via the bordered-minor invariant
 - **hex-gram-schmidt-mathlib** — `GramSchmidt.Int.basis` = Mathlib's `gramSchmidt`
 - **hex-poly-z-mathlib** — `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
 - **hex-roots-mathlib** — Pellet on circles (built from `circleIntegral`) + Mahler/Mignotte separation bound; correctness of refinement and `isolate`
@@ -45,9 +51,12 @@ Each library with its immediate dependencies:
 - **hex-arith** — (none)
 - **hex-poly** — (none)
 - **hex-matrix** — (none)
+- **hex-row-reduce** — hex-matrix
+- **hex-determinant** — hex-matrix
+- **hex-bareiss** — hex-determinant, hex-matrix
 - **hex-mod-arith** — hex-arith
-- **hex-gram-schmidt** — hex-matrix
-- **hex-lll** — hex-gram-schmidt
+- **hex-gram-schmidt** — hex-row-reduce, hex-determinant, hex-bareiss
+- **hex-lll** — hex-gram-schmidt, hex-matrix
 - **hex-poly-fp** — hex-poly, hex-mod-arith
 - **hex-poly-z** — hex-poly
 - **hex-roots** — hex-poly-z
@@ -71,8 +80,11 @@ Mathlib bridge libraries (each also depends on Mathlib):
 - **hex-resultant-mathlib** — hex-resultant, hex-poly-mathlib
 - **hex-number-field-mathlib** — hex-number-field, hex-resultant-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-roots-mathlib, hex-poly-z-mathlib
 - **hex-matrix-mathlib** — hex-matrix
-- **hex-gram-schmidt-mathlib** — hex-gram-schmidt
-- **hex-lll-mathlib** — hex-lll
+- **hex-row-reduce-mathlib** — hex-row-reduce, hex-matrix-mathlib
+- **hex-determinant-mathlib** — hex-determinant, hex-bareiss, hex-matrix-mathlib
+- **hex-bareiss-mathlib** — hex-determinant-mathlib
+- **hex-gram-schmidt-mathlib** — hex-gram-schmidt, hex-bareiss-mathlib
+- **hex-lll-mathlib** — hex-lll, hex-gram-schmidt-mathlib, hex-row-reduce-mathlib
 - **hex-berlekamp-mathlib** — hex-berlekamp, hex-poly-mathlib, hex-mod-arith-mathlib
 - **hex-hensel-mathlib** — hex-hensel, hex-poly-mathlib
 - **hex-gf2-mathlib** — hex-gf2, hex-poly-fp, hex-gfq-field
@@ -88,6 +100,13 @@ hex-berlekamp-zassenhaus` is part of the production graph, not an
 optional optimisation edge.
 
 ## Library DAG
+
+The matrix family splits internally: `hex-matrix` is the dense base;
+`hex-row-reduce`, `hex-determinant`, and `hex-bareiss` build on it
+(`hex-bareiss` also on `hex-determinant`); `hex-gram-schmidt` uses all
+three; and `hex-lll` builds on `hex-gram-schmidt`. Each has a matching
+`*-mathlib` bridge of the same shape. In the diagram below, `hex-matrix`
+stands for that whole family.
 
 Three independent roots: hex-poly, hex-arith, hex-matrix.
 
@@ -120,9 +139,18 @@ hex-gfq-field   hex-conway   hex-gf2
 
 ## Index
 
+Libraries marked **(released)** are published as standalone repositories;
+see [PLAN/Releases.md §Published libraries](../../PLAN/Releases.md#published-libraries).
+
 - [hex-arith.md](hex-arith.md) — extended GCD, Barrett/Montgomery reduction, binomial coefficients, Fermat's little theorem
-- [hex-matrix](https://github.com/kim-em/hex-matrix/blob/main/SPEC/hex-matrix.md) (released) — dense matrices, RREF, Bareiss determinant, span, nullspace
-- [hex-matrix-mathlib](https://github.com/kim-em/hex-matrix-mathlib/blob/main/SPEC/hex-matrix-mathlib.md) (released) — matrix equivalence with Mathlib, determinant/rank/nullspace correspondence
+- [hex-matrix](https://github.com/kim-em/hex-matrix/blob/main/SPEC/hex-matrix.md) (released) — dense matrices, arithmetic, elementary row/column operations, submatrix slicing, the Gram matrix
+- [hex-row-reduce](https://github.com/kim-em/hex-row-reduce/blob/main/SPEC/hex-row-reduce.md) (released) — row reduction, rank, span, nullspace
+- [hex-determinant](https://github.com/kim-em/hex-determinant/blob/main/SPEC/hex-determinant.md) (released) — Leibniz determinant and cofactor/Cauchy-Binet/Plücker theory
+- [hex-bareiss](https://github.com/kim-em/hex-bareiss/blob/main/SPEC/hex-bareiss.md) (released) — fraction-free Bareiss determinant algorithm
+- [hex-matrix-mathlib](https://github.com/kim-em/hex-matrix-mathlib/blob/main/SPEC/hex-matrix-mathlib.md) (released) — matrix equivalence, row operations as transvections, transported algebra tower
+- [hex-row-reduce-mathlib](https://github.com/kim-em/hex-row-reduce-mathlib/blob/main/SPEC/hex-row-reduce-mathlib.md) (released) — rank/nullspace/span correspondence
+- [hex-determinant-mathlib](https://github.com/kim-em/hex-determinant-mathlib/blob/main/SPEC/hex-determinant-mathlib.md) (released) — `det` agreement with `Matrix.det`
+- [hex-bareiss-mathlib](https://github.com/kim-em/hex-bareiss-mathlib/blob/main/SPEC/hex-bareiss-mathlib.md) (released) — Bareiss determinant correctness
 - [hex-mod-arith.md](hex-mod-arith.md) — `ZMod64 p`: `UInt64`-backed arithmetic in `Z/pZ`
 - [hex-mod-arith-mathlib.md](hex-mod-arith-mathlib.md) — `ZMod64 p ≃+* ZMod p`
 - [hex-poly.md](hex-poly.md) — dense polynomial library, operations, GCD, CRT
