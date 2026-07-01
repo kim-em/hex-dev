@@ -99,9 +99,20 @@ split-count-vs-budget bound.
 
 - `scaledRecombinationSmart{Aux,SizeLoop,CandLoop}_budget_le` (returned budget ≤
   input) and `..._budget_zero` (budget 0 ⇒ `(none,0)`) in the executable file.
-- `smartAux_none_budget_zero` and `smartAux_covers_of_bound` (Mathlib layer):
-  the two headline helper *statements*, compiling with `sorry` bodies. Fuel
-  hypothesis `budget + 3 * J.card + 1 ≤ fuel`.
+- `smartAux_none_budget_zero` (Mathlib layer): 4 of 5 cases FILLED — `target=1`
+  (`simp`), `budget=0` (`omega`), `fuel=0` (adequacy `omega` contradiction),
+  `localFactors=[]` (unreachable via the `hJ_ne` argument copied from
+  `covers_of_bound`, using `LiftedFactorListMatches.length_eq_card` for `J.card=0`).
+  Only the `head :: tail` case remains `sorry` — it must delegate to a
+  `SizeLoop` completeness theorem (needs the mutual block).
+- `smartAux_covers_of_bound` (Mathlib layer): statement compiles, body `sorry`.
+- Fuel hypothesis `budget + 3 * J.card + 1 ≤ fuel`.
+
+NEXT: convert `smartAux_none_budget_zero` into a `mutual` block with
+`smartSizeLoop_none_budget_zero` and `smartCandLoop_none_budget_zero` (statements
+in the fill plan below), and have the `head :: tail` case derive `S_cov` via
+`hpartition.cover_at_min` (J nonempty from `head::tail` matching) and call the
+size-loop theorem. Preserve the 4 filled Aux cases verbatim.
 
 ## Fill plan for the two `sorry` helpers (execute in one coherent pass)
 
