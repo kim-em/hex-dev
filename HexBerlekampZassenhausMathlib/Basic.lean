@@ -18177,10 +18177,27 @@ private theorem smartCandLoop_none_budget_zero
             · -- Aux returned `(none, ab)`: candidate is `f_cov`, so `ab = 0`
               rename_i ab haux
               sorry
-          · -- exactQuotient? = none: candidate does not divide, recurse on `rest`
-            sorry
-        · -- candidate not recorded: recurse on `rest`
-          sorry
+          · -- exactQuotient? = none: candidate doesn't divide, so `split ≠ scovSplit`
+            rcases List.mem_cons.mp hscov_mem with hsplit_eq | hscov_rest
+            · -- split = scovSplit would make the candidate `f_cov`, which divides
+              sorry
+            · exact smartCandLoop_none_budget_zero B' hcore_lc_le hvalid hcore_ne
+                hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+                hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+                htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
+                hf_cov_irr hf_cov_dvd_target hS_cov_J hJ_ne hmin_in_S_cov hS_cov_rep
+                (fun s hs => hsplits_enum s (List.mem_cons_of_mem _ hs)) hscov_rest
+                (by omega) h
+        · -- candidate not recorded: so `split ≠ scovSplit` (`f_cov` is recorded)
+          rcases List.mem_cons.mp hscov_mem with hsplit_eq | hscov_rest
+          · sorry
+          · exact smartCandLoop_none_budget_zero B' hcore_lc_le hvalid hcore_ne
+              hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+              hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+              htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
+              hf_cov_irr hf_cov_dvd_target hS_cov_J hJ_ne hmin_in_S_cov hS_cov_rep
+              (fun s hs => hsplits_enum s (List.mem_cons_of_mem _ hs)) hscov_rest
+              (by omega) h
 termination_by fuel
 
 end
