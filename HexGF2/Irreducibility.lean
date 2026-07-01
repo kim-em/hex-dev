@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2.Euclid
+module
+
+public import HexGF2.Euclid
+
+public section
 
 /-!
 Executable Rabin-style irreducibility certificate checker for packed `GF(2)`
@@ -26,8 +30,9 @@ namespace GF2Poly
 /-- Decidable equality on packed `GF(2)` polynomials, derived from the
 underlying `Array UInt64` representation. The `wf` field is a `Prop`, so
 its proofs are irrelevant for the structural comparison. -/
+@[expose]
 instance instDecidableEq : DecidableEq GF2Poly := fun p q =>
-  match decEq p.words q.words with
+  match decEq p.words.toList q.words.toList with
   | isTrue hw =>
       match Nat.decEq p.degree q.degree with
       | isTrue hd =>
@@ -42,11 +47,13 @@ instance instDecidableEq : DecidableEq GF2Poly := fun p q =>
 
 /-- Boolean equality on packed `GF(2)` polynomials, computed by `decide`
 on the decidable propositional equality. -/
+@[expose]
 instance instBEq : BEq GF2Poly where
   beq p q := decide (p = q)
 
 /-- `instBEq` is lawful: its boolean equality agrees with propositional
 equality in both directions, via `of_decide_eq_true` and `decide_eq_true`. -/
+@[expose]
 instance instLawfulBEq : LawfulBEq GF2Poly where
   eq_of_beq := by
     intro a b h
@@ -56,11 +63,13 @@ instance instLawfulBEq : LawfulBEq GF2Poly where
     exact decide_eq_true rfl
 
 /-- Square a polynomial modulo `f`. -/
+@[expose]
 def sqMod (f g : GF2Poly) : GF2Poly :=
   (g * g) % f
 
 /-- Iterated squaring `k` times starting from `X mod f`, computing
 `X^(2^k) mod f` over the packed `GF(2)` representation. -/
+@[expose]
 def xpow2kMod (f : GF2Poly) : Nat → GF2Poly
   | 0 => monomial 1 % f
   | k + 1 => sqMod f (xpow2kMod f k)
@@ -76,20 +85,24 @@ remainder modulo `f`. -/
 
 /-- The polynomial `X^(2^k) - X` reduced modulo `f`. Since the packed
 representation is over characteristic two, subtraction collapses to addition. -/
+@[expose]
 def frobeniusDiffMod (f : GF2Poly) (k : Nat) : GF2Poly :=
   xpow2kMod f k + monomial 1 % f
 
 /-- Positive divisors of `n` strictly below `n`, listed in ascending order. -/
+@[expose]
 def properDivisors (n : Nat) : List Nat :=
   ((List.range (n - 1)).map Nat.succ).filter fun d => n % d = 0
 
 /-- The maximal proper divisors of `n`: those proper divisors not strictly
 below any other proper divisor of `n`. -/
+@[expose]
 def maximalProperDivisors (n : Nat) : List Nat :=
   let ds := properDivisors n
   ds.filter fun d => !(ds.any fun e => d < e && e % d = 0)
 
 /-- `true` exactly when `g` is a nonzero constant polynomial. -/
+@[expose]
 def isUnitPolynomial (g : GF2Poly) : Bool :=
   match g.degree? with
   | some 0 => true
@@ -97,14 +110,17 @@ def isUnitPolynomial (g : GF2Poly) : Bool :=
 
 /-- The divisibility leg of Rabin's criterion: `f` divides `X^(2^n) - X`,
 with `n = deg(f)`, exactly when the reduced remainder vanishes. -/
+@[expose]
 def rabinDividesTest (f : GF2Poly) : Bool :=
   (frobeniusDiffMod f f.degree).isZero
 
 /-- The gcd leg of Rabin's criterion at a single maximal proper divisor `d`. -/
+@[expose]
 def rabinCoprimeTest (f : GF2Poly) (d : Nat) : Bool :=
   isUnitPolynomial (gcd f (frobeniusDiffMod f d))
 
 /-- Per-divisor Rabin gcd outcomes for downstream factorization use. -/
+@[expose]
 def rabinWitnesses (f : GF2Poly) : List (Nat × Bool) :=
   (maximalProperDivisors f.degree).map fun d => (d, rabinCoprimeTest f d)
 
@@ -121,6 +137,7 @@ coprime test over every maximal proper divisor. -/
 /-- Rabin's executable irreducibility test: `f` must be nonconstant, divide
 `X^(2^n) - X`, and be coprime to `X^(2^d) - X` for every maximal proper
 divisor `d` of `n = deg(f)`. -/
+@[expose]
 def rabinTest (f : GF2Poly) : Bool :=
   decide (0 < f.degree) &&
     rabinDividesTest f &&
@@ -153,6 +170,7 @@ namespace IrreducibilityCertificate
 variable (cert : IrreducibilityCertificate)
 
 /-- Read the certified `X^(2^k) mod f` witness, if present. -/
+@[expose]
 def powWitness? (k : Nat) : Option GF2Poly :=
   cert.powChain[k]?
 
@@ -161,6 +179,7 @@ def powWitness? (k : Nat) : Option GF2Poly :=
     cert.powWitness? k = cert.powChain[k]? := rfl
 
 /-- Read the Bezout witness for the `i`-th maximal proper divisor, if present. -/
+@[expose]
 def bezoutWitness? (i : Nat) : Option RabinBezoutWitness :=
   cert.bezout[i]?
 
@@ -173,18 +192,21 @@ end IrreducibilityCertificate
 /-- The Rabin difference polynomial represented by a certificate pow-chain
 entry. Equivalently `powWitness + (X mod f)` since char 2 collapses
 subtraction to addition. -/
+@[expose]
 def certifiedFrobeniusDiffMod (f powWitness : GF2Poly) : GF2Poly :=
   powWitness + monomial 1 % f
 
 /-- Check that a certificate's pow chain matches the executable iteration
 `xpow2kMod`. The first entry must equal `X mod f`, and each subsequent entry
 must equal the squaring step `sqMod f` of the previous. -/
+@[expose]
 def checkPowChain (f : GF2Poly) (cert : IrreducibilityCertificate) : Bool :=
   cert.powChain.size == cert.n + 1 &&
     (List.range (cert.n + 1)).all fun k =>
       cert.powChain[k]? == some (xpow2kMod f k)
 
 /-- Check one Bezout witness for a Rabin maximal-proper-divisor leg. -/
+@[expose]
 def checkRabinBezoutWitness (f : GF2Poly) (cert : IrreducibilityCertificate)
     (i d : Nat) : Bool :=
   match cert.powChain[d]?, cert.bezout[i]? with
@@ -194,6 +216,7 @@ def checkRabinBezoutWitness (f : GF2Poly) (cert : IrreducibilityCertificate)
   | _, _ => false
 
 /-- Check all Bezout witnesses against `maximalProperDivisors cert.n`. -/
+@[expose]
 def checkRabinBezoutWitnesses (f : GF2Poly)
     (cert : IrreducibilityCertificate) : Bool :=
   let divisors := maximalProperDivisors cert.n
@@ -209,6 +232,7 @@ identity for the maximal proper divisors of `n`.
 
 Consumer-facing soundness target: `checkIrreducibilityCertificate_imp_irreducible`
 in `HexGF2/RabinSoundness.lean` lifts a `true` outcome to `GF2Poly.Irreducible f`. -/
+@[expose]
 def checkIrreducibilityCertificate (f : GF2Poly)
     (cert : IrreducibilityCertificate) : Bool :=
   decide (0 < cert.n) &&
@@ -225,6 +249,7 @@ squarings during kernel reduction, where `checkPowChain` recomputes
 `xpow2kMod f k` from scratch for each `k` and is `O(n^2)`. The linear
 form is intended for kernel-reducible `decide` checks on certificates
 whose modulus has degree comparable to a few machine words. -/
+@[expose]
 def checkPowChainLinear (f : GF2Poly) (cert : IrreducibilityCertificate) : Bool :=
   cert.powChain.size == cert.n + 1 &&
     (cert.powChain[0]? == some (monomial 1 % f)) &&
@@ -238,6 +263,7 @@ difference is that it uses `checkPowChainLinear` for the pow-chain leg.
 
 Consumer-facing soundness target: `checkIrreducibilityCertificateLinear_imp_irreducible`
 in `HexGF2/RabinSoundness.lean` lifts a `true` outcome to `GF2Poly.Irreducible f`. -/
+@[expose]
 def checkIrreducibilityCertificateLinear (f : GF2Poly)
     (cert : IrreducibilityCertificate) : Bool :=
   decide (0 < cert.n) &&
@@ -264,11 +290,9 @@ private theorem one_ne_zero_gf2poly : (1 : GF2Poly) ≠ 0 := by
   have hbad : toWords (1 : GF2Poly) ≠ toWords (0 : GF2Poly) := by decide
   exact hbad hwords
 
-private theorem one_degree_eq_zero : (1 : GF2Poly).degree = 0 := by
-  decide
+private theorem one_degree_eq_zero : (1 : GF2Poly).degree = 0 := degree_one
 
-private theorem one_degree?_eq_some_zero : (1 : GF2Poly).degree? = some 0 := by
-  decide
+private theorem one_degree?_eq_some_zero : (1 : GF2Poly).degree? = some 0 := degree?_one
 
 private theorem isUnitPolynomial_of_dvd_one {g : GF2Poly}
     (hdiv : g ∣ (1 : GF2Poly)) :

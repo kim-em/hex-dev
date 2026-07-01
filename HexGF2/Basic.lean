@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Std
+module
+
+public import Std
+
+public section
 
 /-!
 Core packed polynomial definitions for `hex-gf2`.
@@ -17,6 +21,7 @@ namespace Hex
 
 /-- Packed-word normalization for `GF2Poly`: either the polynomial is zero, or
 its highest stored word is nonzero. -/
+@[expose]
 def GF2PolyNormalized (words : Array UInt64) : Prop :=
   words.size = 0 ∨ words.back? ≠ some (0 : UInt64)
 
@@ -39,7 +44,8 @@ theorem ext_words {p q : GF2Poly} (h : p.words = q.words) : p = q := by
   simp
 
 /-- Remove trailing zero words without disturbing the lower-degree prefix. -/
-private def trimTrailingZeroWordsList : List UInt64 → List UInt64
+@[expose]
+def trimTrailingZeroWordsList : List UInt64 → List UInt64
   | [] => []
   | w :: ws =>
       let trimmed := trimTrailingZeroWordsList ws
@@ -111,10 +117,12 @@ private theorem trimTrailingZeroWordsList_getD (ws : List UInt64) (i : Nat) :
             simpa [trimTrailingZeroWordsList, hdrop, List.getD] using ih i
 
 /-- Normalize a word array by discarding trailing zero words. -/
+@[expose]
 def normalizeWords (words : Array UInt64) : Array UInt64 :=
   (trimTrailingZeroWordsList words.toList).toArray
 
 /-- Packed-word coefficient lookup before wrapping the array as a `GF2Poly`. -/
+@[expose]
 def coeffWords (words : Array UInt64) (n : Nat) : Bool :=
   let word := words[n / 64]?.getD 0
   (((word >>> (n % 64).toUInt64) &&& 1) != 0)
@@ -130,10 +138,12 @@ def coeffWords (words : Array UInt64) (n : Nat) : Bool :=
     coeffWords (normalizeWords words) n = coeffWords words n := by
   rw [coeffWords, coeffWords, normalizeWords_get?_getD]
 
-private def wordBitIsSet (w : UInt64) (i : Nat) : Bool :=
+@[expose]
+def wordBitIsSet (w : UInt64) (i : Nat) : Bool :=
   (((w >>> i.toUInt64) &&& 1) != 0)
 
-private def highestSetBitBelow? (fuel : Nat) (w : UInt64) : Option Nat :=
+@[expose]
+def highestSetBitBelow? (fuel : Nat) (w : UInt64) : Option Nat :=
   match fuel with
   | 0 => none
   | fuel' + 1 =>
@@ -143,6 +153,7 @@ private def highestSetBitBelow? (fuel : Nat) (w : UInt64) : Option Nat :=
         highestSetBitBelow? fuel' w
 
 /-- The index of the highest set bit in a machine word, if any. -/
+@[expose]
 def highestSetBit? (w : UInt64) : Option Nat :=
   highestSetBitBelow? 64 w
 
@@ -454,6 +465,7 @@ theorem oneHotWord_ne_zero {bit : Nat} (hbit : bit < 64) :
   simp at hset
 
 /-- Build a normalized packed polynomial from a raw word array. -/
+@[expose]
 def ofWords (words : Array UInt64) : GF2Poly :=
   let normalizedWords := normalizeWords words
   { words := normalizedWords
@@ -467,6 +479,7 @@ def ofWords (words : Array UInt64) : GF2Poly :=
   rfl
 
 /-- The zero polynomial. -/
+@[expose]
 def zero : GF2Poly :=
   ofWords #[]
 
@@ -479,6 +492,7 @@ instance : Zero GF2Poly where
   rfl
 
 /-- The constant polynomial `1`. -/
+@[expose]
 def one : GF2Poly :=
   ofWords #[1]
 
@@ -486,6 +500,7 @@ instance : One GF2Poly where
   one := one
 
 /-- Build a packed polynomial from a single machine word. -/
+@[expose]
 def ofUInt64 (w : UInt64) : GF2Poly :=
   ofWords #[w]
 
@@ -505,28 +520,34 @@ representation. -/
   simp [ofWords, normalizeWords, trimTrailingZeroWordsList, hw]
 
 /-- The monomial `x^n`. -/
+@[expose]
 def monomial (n : Nat) : GF2Poly :=
   let wordIdx := n / 64
   let bitIdx := n % 64
   ofWords <| (Array.replicate wordIdx (0 : UInt64)).push ((1 : UInt64) <<< bitIdx.toUInt64)
 
 /-- The stored packed words. -/
+@[expose]
 def toWords (p : GF2Poly) : Array UInt64 :=
   p.words
 
 /-- Number of stored machine words. -/
+@[expose]
 def wordCount (p : GF2Poly) : Nat :=
   p.words.size
 
 /-- `true` exactly when the polynomial is zero. -/
+@[expose]
 def isZero (p : GF2Poly) : Bool :=
   p.words.isEmpty
 
 /-- Proposition-level zero predicate used by the packed quotient wrappers. -/
+@[expose]
 def IsZero (p : GF2Poly) : Prop :=
   p.isZero = true
 
 /-- The coefficient of `x^n`. -/
+@[expose]
 def coeff (p : GF2Poly) (n : Nat) : Bool :=
   coeffWords p.words n
 
@@ -591,8 +612,15 @@ theorem ofUInt64_injective : Function.Injective ofUInt64 := by
           (Nat.pow_le_pow_right (by decide : 0 < 2) hge)]
 
 /-- The degree of a nonzero polynomial, if any. -/
+@[expose]
 def degree? (p : GF2Poly) : Option Nat :=
-  match p.words.back? with
+  -- Inline `Array.back?` as explicit indexing: the core `Array.back?` body is
+  -- not exposed to a downstream module's `decide`, so leaving it here stalls
+  -- kernel-side certificate reduction (`HexGF2/CommonIrreducibility.lean`).
+  -- Fixed upstream by https://github.com/leanprover/lean4/pull/14231
+  -- ("fix: expose `Array.back`, `back!`, and `back?`"); once we are on a
+  -- toolchain that includes it, this can revert to `p.words.back?`.
+  match p.words[p.words.size - 1]? with
   | none => none
   | some last =>
       match highestSetBit? last with
@@ -600,6 +628,7 @@ def degree? (p : GF2Poly) : Option Nat :=
       | some bitIdx => some (64 * (p.words.size - 1) + bitIdx)
 
 /-- The degree of a polynomial, defaulting to `0` for the zero polynomial. -/
+@[expose]
 def degree (p : GF2Poly) : Nat :=
   p.degree?.getD 0
 
@@ -639,7 +668,8 @@ theorem degree?_eq_none_of_isZero {p : GF2Poly} (h : p.isZero = true) :
     p.degree? = none := by
   have hp : p = 0 := eq_zero_of_isZero h
   subst hp
-  rfl
+  have hw : (0 : GF2Poly).words = #[] := rfl
+  simp [degree?, hw]
 
 /-- A successful degree search certifies the polynomial is not `isZero`. -/
 theorem isZero_false_of_degree?_eq_some {p : GF2Poly} {d : Nat}
@@ -677,6 +707,7 @@ theorem degree?_eq_some_highestSetBit {p : GF2Poly} {d : Nat}
         highestSetBit? last = some bit ∧
         d = 64 * (p.words.size - 1) + bit := by
   unfold degree? at h
+  rw [← Array.back?_eq_getElem?] at h
   cases hback : p.words.back? with
   | none =>
       simp [hback] at h
@@ -735,6 +766,7 @@ theorem degree?_isSome_of_isZero_false {p : GF2Poly}
             subst hzero
             exact hlast hback
       obtain ⟨bit, hbit⟩ := highestSetBit?_isSome_of_ne_zero hlast_ne
+      rw [Array.back?_eq_getElem?] at hback
       exact ⟨64 * (p.words.size - 1) + bit, by simp [degree?, hback, hbit]⟩
 
 /-- A successful `degree?` computation points at a set global coefficient. -/
@@ -931,60 +963,107 @@ theorem ext_coeff {p q : GF2Poly}
 
 /-- The zero polynomial has no degree witness. -/
 @[simp, grind =] theorem degree?_zero : (0 : GF2Poly).degree? = none := by
-  rfl
+  simp [degree?, words_zero]
 
 /-- The default-`0` degree of the zero polynomial is `0`. -/
 @[simp, grind =] theorem degree_zero : (0 : GF2Poly).degree = 0 := by
+  simp [degree, degree?_zero]
+
+/-- The in-place worker: fold over the shorter array's indices, XOR-ing each of
+its words into the accumulator (the longer array). Index `i` is read (`a[i]!`)
+before being written, and each index is written exactly once, so position `i`
+ends up as the original `acc[i]` XOR `short[i]`. -/
+@[expose, inline]
+def xorWordsAux (short acc : Array UInt64) : Array UInt64 :=
+  (List.range short.size).foldl
+    (fun a i => a.setIfInBounds i (a[i]! ^^^ short[i]!)) acc
+
+@[simp] theorem xorWordsAux_empty (acc : Array UInt64) :
+    xorWordsAux #[] acc = acc := by
   rfl
 
-/-- Word-wise XOR of packed coefficient arrays. -/
+/-- Word-wise XOR of packed coefficient arrays: copy the longer array and XOR
+the shorter array's words into its matching prefix in place. This does strictly
+less work than rebuilding `max` entries (only the `min`-prefix is touched, in
+place; the longer tail is left as-is) and, unlike `Array.ofFn`, reduces under
+`decide`. -/
+@[expose, inline]
 def xorWords (xs ys : Array UInt64) : Array UInt64 :=
-  Array.ofFn fun i : Fin (max xs.size ys.size) => xs.getD i.1 0 ^^^ ys.getD i.1 0
+  if xs.size ≤ ys.size then xorWordsAux xs ys else xorWordsAux ys xs
 
-/-- Raw XOR output has one word for every word position present in either
-input. -/
-@[simp, grind =] theorem xorWords_size (xs ys : Array UInt64) :
-    (xorWords xs ys).size = max xs.size ys.size := by
-  simp [xorWords]
+/-- The XOR fold preserves the accumulator's size. -/
+theorem xorWordsFold_size (short : Array UInt64) (m : Nat) (acc : Array UInt64) :
+    ((List.range m).foldl
+        (fun a i => a.setIfInBounds i (a[i]! ^^^ short[i]!)) acc).size = acc.size := by
+  induction m generalizing acc with
+  | zero => simp
+  | succ m ih =>
+      rw [List.range_succ, List.foldl_append, List.foldl_cons, List.foldl_nil,
+        Array.size_setIfInBounds, ih]
 
-/-- In-bounds `getD` from an `Array.ofFn` recovers the function value. -/
-theorem Array.getD_ofFn_lt {α : Type u} {n : Nat}
-    (f : Fin n → α) {i : Nat} (hi : i < n) (d : α) :
-    (Array.ofFn f).getD i d = f ⟨i, hi⟩ := by
-  simp [Array.getD, hi]
-
-/-- Out-of-bounds `getD` from an `Array.ofFn` returns the default value. -/
-theorem Array.getD_ofFn_ge {α : Type u} [Inhabited α] {n : Nat}
-    (f : Fin n → α) {i : Nat} (hi : n ≤ i) :
-    (Array.ofFn f).getD i default = default := by
-  simp [Array.getD, Nat.not_lt.mpr hi]
-
-/-- Raw XOR word lookup agrees with defaulted lookup from the two inputs. -/
-theorem xorWords_getD (xs ys : Array UInt64) (i : Nat) :
-    (xorWords xs ys).getD i 0 = xs.getD i 0 ^^^ ys.getD i 0 := by
-  by_cases hi : i < max xs.size ys.size
-  · simpa [xorWords] using
-      (Array.getD_ofFn_lt
-        (fun i : Fin (max xs.size ys.size) => xs.getD i.1 0 ^^^ ys.getD i.1 0)
-        hi 0)
-  · have hge : max xs.size ys.size ≤ i := Nat.le_of_not_gt hi
-    have hxs : xs.size ≤ i := Nat.le_trans (Nat.le_max_left xs.size ys.size) hge
-    have hys : ys.size ≤ i := Nat.le_trans (Nat.le_max_right xs.size ys.size) hge
-    simp [xorWords, Array.getD, Nat.not_lt.mpr hxs, Nat.not_lt.mpr hys]
+/-- Elementwise characterization of the XOR fold over `List.range m`: in-range
+positions are XOR-updated against the original accumulator; the rest unchanged. -/
+theorem xorWordsFold_getElem? (short : Array UInt64) (m : Nat) (acc : Array UInt64) (j : Nat) :
+    ((List.range m).foldl
+        (fun a i => a.setIfInBounds i (a[i]! ^^^ short[i]!)) acc)[j]? =
+      if j < m ∧ j < acc.size then some (acc[j]! ^^^ short[j]!) else acc[j]? := by
+  induction m generalizing acc j with
+  | zero => simp
+  | succ m ih =>
+      rw [List.range_succ, List.foldl_append, List.foldl_cons, List.foldl_nil]
+      have hmm : ((List.range m).foldl
+          (fun a i => a.setIfInBounds i (a[i]! ^^^ short[i]!)) acc)[m]! = acc[m]! := by
+        have hq : ((List.range m).foldl
+            (fun a i => a.setIfInBounds i (a[i]! ^^^ short[i]!)) acc)[m]? = acc[m]? := by
+          rw [ih]; simp
+        rw [Array.getElem!_eq_getD, Array.getElem!_eq_getD,
+          Array.getD_eq_getD_getElem?, Array.getD_eq_getD_getElem?, hq]
+      rw [Array.getElem?_setIfInBounds, xorWordsFold_size, ih, hmm]
+      by_cases hjm : j = m
+      · subst hjm
+        by_cases hj : j < acc.size <;> simp [hj]
+      · have hmj : m ≠ j := fun h => hjm h.symm
+        by_cases hj : j < acc.size <;> by_cases hjlt : j < m <;>
+          simp [hmj, hj, hjlt, Nat.lt_succ_iff] <;> omega
 
 /-- Optional raw XOR word lookup agrees with optional lookup from the two
 inputs. -/
 theorem xorWords_get?_getD (xs ys : Array UInt64) (i : Nat) :
     ((xorWords xs ys)[i]?).getD 0 = (xs[i]?).getD 0 ^^^ (ys[i]?).getD 0 := by
-  by_cases hi : i < max xs.size ys.size
-  · by_cases hxs : i < xs.size <;> by_cases hys : i < ys.size <;>
-      simp [xorWords, hi, hxs, hys, Array.getD]
-  · have hge : max xs.size ys.size ≤ i := Nat.le_of_not_gt hi
-    have hxs : xs.size ≤ i := Nat.le_trans (Nat.le_max_left xs.size ys.size) hge
-    have hys : ys.size ≤ i := Nat.le_trans (Nat.le_max_right xs.size ys.size) hge
-    simp [xorWords, hi, Nat.not_lt.mpr hxs, Nat.not_lt.mpr hys]
+  have key : ∀ short acc : Array UInt64, short.size ≤ acc.size → ∀ k : Nat,
+      ((xorWordsAux short acc)[k]?).getD 0 = (short[k]?).getD 0 ^^^ (acc[k]?).getD 0 := by
+    intro short acc hle k
+    rw [xorWordsAux, xorWordsFold_getElem?]
+    by_cases hks : k < short.size
+    · have hka : k < acc.size := Nat.lt_of_lt_of_le hks hle
+      simp [hks, hka, UInt64.xor_comm]
+    · have hsnone : short[k]? = none := by
+        rw [Array.getElem?_eq_none_iff]; omega
+      simp [hks]
+  unfold xorWords
+  by_cases h : xs.size ≤ ys.size
+  · rw [if_pos h, key xs ys h i, UInt64.xor_comm]
+  · rw [if_neg h, key ys xs (Nat.le_of_lt (Nat.lt_of_not_le h)) i, UInt64.xor_comm]
+
+/-- Raw XOR output has one word for every word position present in either
+input. -/
+@[simp, grind =] theorem xorWords_size (xs ys : Array UInt64) :
+    (xorWords xs ys).size = max xs.size ys.size := by
+  unfold xorWords xorWordsAux
+  by_cases h : xs.size ≤ ys.size <;>
+    simp [h, xorWordsFold_size, Nat.max_def] <;> omega
+
+/-- Raw XOR word lookup agrees with defaulted lookup from the two inputs. -/
+theorem xorWords_getD (xs ys : Array UInt64) (i : Nat) :
+    (xorWords xs ys).getD i 0 = xs.getD i 0 ^^^ ys.getD i 0 := by
+  have h := xorWords_get?_getD xs ys i
+  have hgetD (as : Array UInt64) : as.getD i 0 = (as[i]?).getD 0 := by
+    by_cases hi : i < as.size <;> simp [Array.getD, hi]
+  rw [hgetD (xorWords xs ys), hgetD xs, hgetD ys]
+  exact h
 
 /-- Addition in `F_2[x]` is coefficientwise XOR. -/
+@[expose]
 def add (p q : GF2Poly) : GF2Poly :=
   ofWords (xorWords p.words q.words)
 
@@ -1111,9 +1190,13 @@ theorem normalizeWords_replicate_zero (n : Nat) :
 theorem xorWords_self (xs : Array UInt64) :
     xorWords xs xs = Array.replicate xs.size (0 : UInt64) := by
   apply Array.ext
-  · simp [xorWords]
-  · intro i _ _
-    simp [xorWords]
+  · simp [xorWords_size]
+  · intro i hi₁ _hi₂
+    have h := xorWords_get?_getD xs xs i
+    have hsome : (xorWords xs xs)[i]? = some (xorWords xs xs)[i] := by
+      exact Array.getElem?_eq_getElem hi₁
+    rw [hsome] at h
+    simpa using h
 
 /-- Every element of `F_2[x]` is its own additive inverse: `p + p = 0`. -/
 @[simp, grind =] theorem add_self (p : GF2Poly) :
@@ -1184,6 +1267,7 @@ theorem add_assoc (p q r : GF2Poly) :
   cases p.coeff n <;> cases q.coeff n <;> rfl
 
 /-- Shift a normalized word list left by `bitShift ∈ [1, 63]`. -/
+@[expose]
 def shiftLeftBitsList (bitShift : Nat) (carry : UInt64) : List UInt64 → List UInt64
   | [] =>
       if carry = 0 then [] else [carry]
@@ -1657,7 +1741,8 @@ theorem coeffWords_replicate_append_shiftLeftBitsList_lt
 
 /-- Shift packed words right by `bitShift ∈ [1, 63]`, reading the input from
 high degree to low degree. -/
-private def shiftRightBitsRevList (bitShift : Nat) (carry : UInt64) :
+@[expose]
+def shiftRightBitsRevList (bitShift : Nat) (carry : UInt64) :
     List UInt64 → List UInt64
   | [] => []
   | w :: ws =>
@@ -1666,6 +1751,7 @@ private def shiftRightBitsRevList (bitShift : Nat) (carry : UInt64) :
       out :: shiftRightBitsRevList bitShift nextCarry ws
 
 /-- Multiply by `x^k`. -/
+@[expose]
 def shiftLeft (p : GF2Poly) (k : Nat) : GF2Poly :=
   let wordShift := k / 64
   let bitShift := k % 64
@@ -1677,6 +1763,7 @@ def shiftLeft (p : GF2Poly) (k : Nat) : GF2Poly :=
   ofWords <| (Array.replicate wordShift (0 : UInt64)) ++ shiftedBits
 
 /-- Divide by `x^k`, discarding the remainder. -/
+@[expose]
 def shiftRight (p : GF2Poly) (k : Nat) : GF2Poly :=
   let wordShift := k / 64
   let bitShift := k % 64
@@ -1689,6 +1776,7 @@ def shiftRight (p : GF2Poly) (k : Nat) : GF2Poly :=
   ofWords shiftedBits
 
 /-- Alias for multiplication by a power of `x`. -/
+@[expose]
 def mulXk (p : GF2Poly) (k : Nat) : GF2Poly :=
   shiftLeft p k
 
@@ -1779,6 +1867,7 @@ theorem coeff_monomial_ne {n m : Nat} (h : m ≠ n) :
   have hne : ((1 : UInt64) <<< (n % 64).toUInt64) ≠ 0 :=
     oneHotWord_ne_zero hbit
   unfold monomial degree?
+  rw [← Array.back?_eq_getElem?]
   simp [ofWords, normalizeWords,
     trimTrailingZeroWordsList_replicate_zero_append_nonzero (n / 64) hne,
     highestSetBit?_oneHot hbit]
@@ -1787,6 +1876,31 @@ theorem coeff_monomial_ne {n m : Nat} (h : m ≠ n) :
 /-- The default-`0` degree of the monomial `x^n` is `n`. -/
 @[simp, grind =] theorem degree_monomial (n : Nat) : (monomial n).degree = n :=
   degree_eq_of_degree?_eq_some (degree?_monomial n)
+
+/-- The unit polynomial `1` has degree witness `0`. Proved through the
+single-word coefficient API rather than by kernel reduction, since the
+`UInt64` bit search in `degree?` does not reduce definitionally under the
+module system. -/
+@[simp, grind =] theorem degree?_one : (1 : GF2Poly).degree? = some 0 := by
+  have h1 : (1 : GF2Poly) = ofUInt64 1 := rfl
+  rw [h1]
+  apply degree?_eq_some_of_coeff_eq_true_of_forall_gt_false
+  · rw [coeff_ofUInt64_eq_testBit 1 (by decide : 0 < 64)]
+    decide
+  · intro m hm
+    by_cases hm64 : m < 64
+    · rw [coeff_ofUInt64_eq_testBit 1 hm64]
+      have h1n : (1 : UInt64).toNat = 1 := by decide
+      rw [h1n]
+      have hmne : m ≠ 0 := by omega
+      cases h : Nat.testBit 1 m with
+      | false => rfl
+      | true => exact absurd (Nat.testBit_one_eq_true_iff_self_eq_zero.mp h) hmne
+    · exact coeff_ofUInt64_eq_false_of_ge_64 1 (by omega)
+
+/-- The unit polynomial `1` has degree `0`. -/
+@[simp, grind =] theorem degree_one : (1 : GF2Poly).degree = 0 :=
+  degree_eq_of_degree?_eq_some degree?_one
 
 /-- The monomial `x^n` is never the zero polynomial. -/
 @[simp, grind =] theorem isZero_monomial_eq_false (n : Nat) :
@@ -1951,6 +2065,7 @@ theorem division_step_degree_lt {rem q : GF2Poly} {rd qd : Nat}
 
 /-- Alias for exact division by a power of `x` when the low coefficients vanish;
 otherwise this drops the discarded remainder. -/
+@[expose]
 def divXk (p : GF2Poly) (k : Nat) : GF2Poly :=
   shiftRight p k
 
@@ -1972,7 +2087,7 @@ theorem wordCount_add_le (p q : GF2Poly) :
       rfl
     _ ≤ (xorWords p.words q.words).size := wordCount_ofWords_le _
     _ = max p.wordCount q.wordCount := by
-      simp [xorWords, wordCount]
+      simp [xorWords_size, wordCount]
 
 /-- The monomial `x^n` stores at most the one word containing its bit. -/
 theorem wordCount_monomial_le (n : Nat) :
