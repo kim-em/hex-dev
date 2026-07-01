@@ -18,8 +18,8 @@ public section
 Mathlib-side correctness of the executable LLL reducers. The per-step
 `Valid`/independence preservation, the potential strict-decrease and fuel
 sufficiency, and the loop-invariant induction culminate in the reducedness,
-lattice, and rational short-vector capstones for `Hex.lllNative`,
-`Hex.lllSteered`, and `Hex.lll`.
+lattice, and rational short-vector capstones for `Hex.lllNative` and
+`Hex.lll`.
 -/
 
 /-- `Vector.get` is definitionally `getElem` at the index value, so this is `rfl`.
@@ -2438,61 +2438,10 @@ theorem dispatch_some_property {b : Matrix Int n m} {δ : Rat}
   obtain ⟨U, V, hcheck⟩ := LLLProvider.dispatch_some_certCheck h
   exact HexLLLMathlib.certCheck_sound hcheck
 
-/-- The steered reducer preserves the generated lattice: the certified candidate
-preserves it by construction (`steeredReduce_memLattice_iff`), the skip and
-fallback paths by `lllNative_memLattice_iff`. -/
-theorem lllSteered_memLattice_iff (b : Matrix Int n m) (δ : Rat)
-    (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (v : Vector Int m) :
-    Matrix.memLattice (Hex.lllSteered b δ hδ hδ' hn) v ↔ Matrix.memLattice b v := by
-  unfold Hex.lllSteered
-  simp only [Hex.Internal.withRecordSteeredOutcome]
-  split
-  · split
-    · split
-      · exact Hex.Internal.steeredReduce_memLattice_iff b δ v
-      · exact lllNative_memLattice_iff b δ hδ hδ' hn v
-    · exact lllNative_memLattice_iff b δ hδ hδ' hn v
-  · exact lllNative_memLattice_iff b δ hδ hδ' hn v
-
-/-- The steered reducer produces a `(δ, 11/20)`-reduced basis: on the small-input
-and fallback paths from `lllNative_isLLLReduced` (`η = 1/2`) lifted by
-`isLLLReduced.mono_η`, on the steered acceptance path from `lllReducedCheck_sound`. -/
-theorem lllSteered_isLLLReduced (b : Matrix Int n m) (δ : Rat)
-    (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
-    isLLLReduced (Hex.lllSteered b δ hδ hδ' hn) δ (11 / 20) := by
-  have hnative : isLLLReduced (Hex.lllNative b δ hδ hδ' hn) δ (11 / 20) :=
-    Hex.Internal.isLLLReduced.mono_η _ (by grind) (by grind)
-      (lllNative_isLLLReduced b δ hδ hδ' hn hind)
-  unfold Hex.lllSteered
-  simp only [Hex.Internal.withRecordSteeredOutcome]
-  split
-  · split
-    · split
-      · rename_i h
-        exact (HexLLLMathlib.lllReducedCheck_sound _ δ (11 / 20) h).1
-      · exact hnative
-    · exact hnative
-  · exact hnative
-
-/-- Independence is preserved by the steered reducer. -/
-theorem lllSteered_independent (b : Matrix Int n m) (δ : Rat)
-    (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
-    (Hex.lllSteered b δ hδ hδ' hn).independent := by
-  unfold Hex.lllSteered
-  simp only [Hex.Internal.withRecordSteeredOutcome]
-  split
-  · split
-    · split
-      · rename_i h
-        exact (HexLLLMathlib.lllReducedCheck_sound _ δ (11 / 20) h).2
-      · exact lllNative_independent b δ hδ hδ' hn hind
-    · exact lllNative_independent b δ hδ hδ' hn hind
-  · exact lllNative_independent b δ hδ hδ' hn hind
-
 /-- The public LLL `lll` produces a `(δ, 11/20)`-LLL-reduced matrix. On the
-steered fallback path this follows from `lllSteered_isLLLReduced`. On the
-certified-dispatch path it follows from `certCheck_sound` via
-`dispatch_some_property`. -/
+native path this is `lllNative_isLLLReduced` (`η = 1/2`) lifted to `η = 11/20`
+by `isLLLReduced.mono_η`. On the certified-dispatch path it follows from
+`certCheck_sound` via `dispatch_some_property`. -/
 theorem lll_isLLLReduced (b : Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent) :
@@ -2500,8 +2449,9 @@ theorem lll_isLLLReduced (b : Matrix Int n m) (δ : Rat)
   unfold lll
   cases hd : LLLProvider.dispatch b δ with
   | none =>
-      exact lllSteered_isLLLReduced b δ
-        (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
+      exact Hex.Internal.isLLLReduced.mono_η _ (by grind) (by grind)
+        (lllNative_isLLLReduced b δ
+          (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind)
   | some B' =>
       exact (dispatch_some_property hd).2.2
 
@@ -2513,7 +2463,7 @@ theorem lll_memLattice_iff (b : Matrix Int n m) (δ : Rat)
   unfold lll
   cases hd : LLLProvider.dispatch b δ with
   | none =>
-      exact lllSteered_memLattice_iff b δ
+      exact lllNative_memLattice_iff b δ
         (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn v
   | some B' =>
       exact ((dispatch_some_property hd).1 v).symm
@@ -2526,7 +2476,7 @@ theorem lll_independent (b : Matrix Int n m) (δ : Rat)
   unfold lll
   cases hd : LLLProvider.dispatch b δ with
   | none =>
-      exact lllSteered_independent b δ
+      exact lllNative_independent b δ
         (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
   | some B' =>
       exact (dispatch_some_property hd).2.1

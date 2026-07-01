@@ -44,7 +44,7 @@ def B : Matrix Int 3 3 := Matrix.ofFn fun i j =>
 #check @lll
 
 -- To run the reducer on data without supplying an independence proof, use the
--- proof-free variants. They run the steered reducer directly (the body of
+-- proof-free variants. They run the exact `lllNative` directly (the body of
 -- `lll`'s native path, skipping the provider dispatch) and carry no exported
 -- short-vector theorem unless you separately prove `B.independent`.
 #eval lll.firstShortVectorUnchecked B (3 / 4) (by decide +kernel) (by decide +kernel) (by decide)
@@ -58,8 +58,8 @@ def B : Matrix Int 3 3 := Matrix.ofFn fun i j =>
 
 The public entry point is `lll`, which reduces an integer basis at a
 rational factor `δ` and returns a `(δ, 11/20)`-reduced basis of the same
-lattice. Behind that one entry point are three reducers, each of which
-certifies its output to that same contract, so the result is correct no
+lattice. Behind that one entry point are two reducers, each of which
+produces output correct to that same contract, so the result is correct no
 matter which one runs. `lll` dispatches through them in order:
 
 - **External provider** (`LLLProvider.dispatch`). If an optional external
@@ -68,15 +68,9 @@ matter which one runs. `lll` dispatches through them in order:
   checker `certCheck`. An absent or rejected candidate falls through. The
   provider is an independent package this library neither depends on nor
   names in its build; it is acceleration only.
-- **Approximation-steered reducer** (`lllSteered`). This drives the exact
-  integer row operations from an untrusted floating-point Gram-Schmidt
-  approximation. The floats only choose which row operation to apply and
-  never enter a proof, so the output spans the same lattice by construction.
-  It certifies its own output at `(δ, 11/20)` and falls back to the exact
-  reducer when certification fails.
 - **Exact integer reducer** (`lllNative`). The trusted all-integer `d`/`ν`
-  reducer at the classical size-reduction bound `η = 1/2`. The bottom of the
-  chain: always correct, never approximate.
+  reducer at the classical size-reduction bound `η = 1/2`. The native path:
+  always correct, never approximate.
 
 The surface, by group:
 
@@ -86,7 +80,7 @@ The surface, by group:
   [`hex-berlekamp-zassenhaus`](https://github.com/kim-em/hex-berlekamp-zassenhaus).
 - `lllNative`: the exact integer reducer at the classical `η = 1/2`, with the
   tighter short-vector constant; call it directly to get the classical
-  guarantee. `lllSteered` exposes the steered reducer on its own.
+  guarantee.
 - `lll.firstShortVectorUnchecked` and `lll.shortVectorsUnchecked`: proof-free
   variants of the entry points for callers without an independence proof.
 - `lllReducedInt`, `lllReducedInterval`, and `lllReducedCheck`: the exact,
@@ -97,9 +91,9 @@ The surface, by group:
 
 Everything else lives under the `Hex.Internal` namespace and is not part of the
 supported API: the integer state `LLLState` and its step/loop machinery, the
-`SteeredState` float-steering reducer, the fixed-precision interval checker
-kernel, the external-provider plumbing, and the dispatch-tuning and diagnostics
-constants. `open Hex` brings only the surface above into scope.
+fixed-precision interval checker kernel, the external-provider plumbing, and the
+dispatch-tuning and diagnostics constants. `open Hex` brings only the surface
+above into scope.
 
 # Verification
 
@@ -138,12 +132,15 @@ satisfies `|μ| ≤ 11/20`. Two numbers in `lll`'s signature follow from that
 η²` and the bound is well-defined only when `η² < δ`; and the short-vector
 constant is `1/(δ − 121/400)`.
 
-Why `11/20` and not the classical `1/2`? Because `11/20` is the bound every
-one of the three reducers can guarantee uniformly. A floating-point or
-external reducer cannot be forced to land exactly `|μ| ≤ 1/2`, so the public
-contract is stated at the slightly looser `11/20`, which all paths certify.
-The exact `lllNative` keeps the classical `η = 1/2` (precondition `1/4 < δ`,
-constant `1/(δ − 1/4)`); call it directly when you want that contract.
+Why `11/20` and not the classical `1/2`? Solely because of the external
+provider. The exact `lllNative` already lands at `|μ| ≤ 1/2`, so on its own it
+gives the tighter `1/4 < δ` contract. But a black-box external reducer cannot
+be forced to land exactly `|μ| ≤ 1/2` (fplll's default size-reduction target
+sits slightly above `1/2`), so the certified-dispatch path accepts its
+candidate at the looser `11/20`. That is the only reason the public contract is
+stated at `11/20` rather than `1/2`. The exact `lllNative` keeps the classical
+`η = 1/2` (precondition `1/4 < δ`, constant `1/(δ − 1/4)`); call it directly
+when you want that contract.
 
 Is the looser bound a concern? It is an honest weakening of the formal
 constant, and the weakening compounds with dimension, so it is worth being
@@ -175,11 +172,7 @@ theorems reduce to the ordinary Lean axioms `propext`, `Classical.choice`, and
   integer-arithmetic checker `certCheck` before use, and an absent or rejected
   candidate falls back to the native reducer. A wrong or adversarial provider
   cannot produce a wrong result, only a fallback.
-- **Steered reducer.** The floating-point Gram-Schmidt approximation only
-  chooses which exact integer row operation to apply; the floats never enter a
-  proof, so the output spans the same lattice by construction, and the result is
-  certified at `(δ, 11/20)` before it is returned.
-- **Diagnostics.** The provider, checker, and steered tallies record decision
+- **Diagnostics.** The provider and checker tallies record decision
   counts via `@[implemented_by]` side effects in compiled code only. They are
   definitionally identity in the logic; no theorem depends on them.
 - **Execution vs. checking.** Compiled execution may call the C FFI shim

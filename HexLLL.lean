@@ -12,7 +12,6 @@ public import HexLLL.Reduced
 public import HexLLL.Interval
 public import HexLLL.Checker
 public import HexLLL.Native
-public import HexLLL.Steered
 public import HexLLL.Provider
 public import HexLLL.Dispatch
 

@@ -260,65 +260,34 @@ constructor with no deferred proof obligation: `hex-lll` is on the
 `hex-berlekamp-zassenhaus` critical path, so its public surface must be
 usable without any `sorry`.
 
-### Approximation-steered default reducer
+### Native default reducer
 
-The default native reducer is **steered by untrusted approximate Gram-Schmidt
-data**. It maintains a floating-point (or fixed-width dyadic) approximation of
-the Gram-Schmidt coefficients `μ[i][j]` and squared orthogonal norms
-`‖b*_i‖²`, and uses that approximation alone to choose its row operations: the
-integer size-reduction rounding coefficients and the Lovász swap decisions are
-read off the approximation. No property of the approximation enters any proof —
-a poor approximation can only produce a slow or insufficiently reduced run,
-never an incorrect lattice.
+The native reducer `lllNative` is the **exact all-integer `d`/`ν` reducer**. It
+carries the exact Gram-determinant vector `d` and scaled coefficients `ν` of the
+`LLLState` representation and drives the standard LLL outer loop — integer
+size-reduction and adjacent Lovász swaps — from that exact data alone. Every
+basis mutation is one of the proven-lattice-preserving exact integer row
+operations (`GramSchmidt.Int.sizeReduce`, the size-reduction row combination,
+and `GramSchmidt.Int.adjacentSwap`, the adjacent row swap), so the generated
+lattice of the output equals that of the input **by construction**, and the loop
+terminates by fuel. Its size-reduction step produces exact `|μ| ≤ 1/2`, so
+`lllNative` carries the classical `η = 1/2` contract (precondition `1/4 < δ`,
+short-vector constant `1/(δ − 1/4)`).
 
-Every basis mutation is one of the exact integer row operations drawn from the
-proven-lattice-preserving set (`GramSchmidt.Int.sizeReduce`, the size-reduction
-row combination, and `GramSchmidt.Int.adjacentSwap`, the adjacent row swap). The
-generated lattice of the output therefore equals that of the input **by
-construction** — no transform certificate is computed or needed — and the loop
-terminates by fuel, exactly as the exact `d`/`ν` reducer does.
+The public `lll` keeps exactly two paths, both satisfying the same
+`(δ, 11/20)` post-condition:
 
-The steered path **materializes no exact Gram-Schmidt state**: it carries the
-exact integer basis together with the untrusted approximation, and recomputes a
-working row's coefficients from the exact integer Gram entries `⟨b_i, b_j⟩` of
-the current basis when it needs to bound floating-point drift. The exact `d`/`ν`
-Gram-determinant and scaled-coefficient data of the `LLLState` representation
-appears only on the fallback path.
-
-The steered output is **certified post hoc** at the public `(δ, 11/20)` bound by
-the reducedness checker (*Certified external dispatch*). On certification
-success the steered basis is returned; on failure the reducer falls back to the
-exact `d`/`ν` reducer `lllNative`, whose `η = 1/2` size-reduction contract is
-unchanged. A deterministic input-size dispatch may route the smallest inputs —
-those for which the exact reducer is already cheaper than the steered loop plus
-its certification — directly to `lllNative`; like every other dispatch in this
-library it is a function of the input alone and both branches satisfy the same
-post-condition.
-
-Above that dimension floor the reducer additionally consults a **conditioning
-test** before committing to the steered loop. The `Float64` Gram-Schmidt is only
-accurate when the basis's Gram-Schmidt dynamic range fits the 53-bit mantissa;
-on bases whose range far exceeds it (the structured worst-case families —
-ajtai/q-ary/ntru/knapsack — with a `q·I` block or a steep diagonal-bit profile)
-the initial approximate squared norms suffer catastrophic cancellation and some
-come out **non-positive**, which is impossible for a genuine `‖b*_i‖² > 0`. A
-non-positive initial approximate norm is a cheap, `O(n)`, deterministic signature
-that the float steering is numerically unusable on this basis, so the reducer
-skips the steered attempt and runs `lllNative` directly rather than wasting the
-full steered loop before an all-but-certain certification failure. This is an
-empirically-calibrated routing heuristic, not a soundness property: a candidate
-that did slip through would still be certified, and any basis routed here still
-gets an exact reduction. The near-orthogonal (`random-bounded`) and width-bound
-(`harsh-cubic`) families produce no non-positive norm on any committed rung and
-continue to steer. Like every dispatch here it is a function of the input alone
-(the float pass is deterministic) and does not affect the output contract — it
-only avoids wasted work.
+1. the **certified external-candidate** dispatch (provider → `certCheck`, see
+   *Certified external dispatch*), and
+2. the **exact** `lllNative`, run directly when no provider candidate certifies.
 
 Both pinned `η` values are unchanged: `lllNative` retains `η = 1/2` and the
 public `lll` retains `η = 11/20`. The public `lll` contract — same lattice,
 `isLLLReduced (lll …) δ (11/20)`, and the `lll_short_vector` bound — holds
-verbatim whether the result comes from the steered path, its exact fallback, or
-the certified external candidate.
+verbatim whether the result comes from the certified external candidate or the
+exact native path. The `11/20` loosening exists **solely** because a black-box
+external reducer cannot be forced to `|μ| ≤ 1/2` exactly; the native path lands
+at `1/2` and is the direct `1/4 < δ` entry point.
 
 ### Short-vector recovery for downstream consumers
 
@@ -475,35 +444,31 @@ classification below is mirrored as structured metadata in
   [§Headline reports — Comparator ratios](https://github.com/kim-em/hex-dev/blob/main/SPEC/benchmarking.md#headline-reports)
   apply.
 
-  **Headline comparator plot — six curves.** The per-family plots at
+  **Headline comparator plot — five curves.** The per-family plots at
   `reports/figures/hex-lll-comparator-<family>.svg`, generated by
   `scripts/plots/hex-lll-comparator.py` and embedded in
-  `reports/hex-lll-performance.md`, draw six log-y wall-time-per-call
+  `reports/hex-lll-performance.md`, draw five log-y wall-time-per-call
   curves across the family's eligible range:
 
   1. **fpLLL** — the raw floating-point reducer alone (unverified).
   2. **Lean native LLL** — the exact integer `d`/`ν` algorithm (`lllNative`),
-     which the steered default demotes to its certification fallback. Data comes
-     from the `runNativeFirstShortVector*` bench targets.
+     the in-tree default reducer. Data comes from the `runNativeFirstShortVector*`
+     (equivalently `runFirstShortVector*`) bench targets.
   3. **verified Isabelle native LLL** — the `LLL_Basis_Reduction` extraction.
-  4. **Lean steered** — the default native path: exact integer row operations
-     steered by an untrusted approximate Gram-Schmidt, certified post hoc at
-     `(δ, 11/20)`. Data comes from the `runFirstShortVector*` bench targets.
-  5. **Lean certified** — fpLLL candidate production plus the Lean verified
+  4. **Lean certified** — fpLLL candidate production plus the Lean verified
      checker (`certCheck`); the certified external-dispatch path. Data comes
      from the `runCertified*` bench targets.
-  6. **verified Isabelle certified-LLL** — fpLLL candidate production plus the
+  5. **verified Isabelle certified-LLL** — fpLLL candidate production plus the
      Isabelle verified checker (the `svp_certified` JAR 2020 §7 configuration
      of the Zenodo 2636367 extraction).
 
-  Curves 1–4 compare the reducers — the exact integer algorithm, the Isabelle
-  extraction, and the steered default that drives the same exact row operations
-  from approximate data; curves 5–6 are the apples-to-apples verification
-  comparison — the *same* fpLLL output certified by the Lean checker versus the
-  Isabelle checker — which is the yardstick for the `verified Isabelle
-  certified-LLL` gating goal. A comparator with fewer than two committed data
-  points on a family is listed in §Concerns rather than dropped from the plot
-  silently.
+  Curves 1–3 compare the reducers — the raw floating-point reducer, the exact
+  Lean integer algorithm, and the Isabelle extraction; curves 4–5 are the
+  apples-to-apples verification comparison — the *same* fpLLL output certified by
+  the Lean checker versus the Isabelle checker — which is the yardstick for the
+  `verified Isabelle certified-LLL` gating goal. A comparator with fewer than two
+  committed data points on a family is listed in §Concerns rather than dropped
+  from the plot silently.
 
 ### `LLLState.ofBasis` is its own bench target
 
