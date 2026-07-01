@@ -4,6 +4,10 @@ The Verso reference manual for the `hex` project. Each per-library
 reference chapter lives in `Chapters/`; `HexManual.lean` is the aggregator
 that includes them.
 
+Prose in the chapters follows [SPEC/writing-style.md](../SPEC/writing-style.md):
+plain, literal, mathematician-facing language, with a list of banned
+jargon words. Read it before editing a chapter.
+
 `lake build HexManual` *typechecks* the manual: every `{docstring}`,
 `{ref}`, `#eval`/`leanOutput`, and `#guard` in the chapters is checked as
 they elaborate. It does not produce a website.

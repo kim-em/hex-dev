@@ -265,7 +265,7 @@ tag := "hex-arith-cross-references"
   the {ref "hex-arith-wide"}[`Nat`-level laws] above are the
   specification those bindings are proved against; the library's meaning
   does not depend on the native code being linked.
-* The arithmetic here has no single Mathlib bridge of its own; the
-  Mathlib correspondences live in the consuming libraries' `*Mathlib`
+* The arithmetic here has no Mathlib correspondence library of its own.
+  The Mathlib correspondences live in the consuming libraries' `*Mathlib`
   counterparts. `HexArith` itself imports only `Std` and never depends
   on Mathlib.

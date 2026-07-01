@@ -16,8 +16,8 @@ public import HexRowReduce.Api
 public section
 
 /-!
-The `HexRowReduce` library: the executable row-reduction stack over the
-`HexMatrix` dense core. It re-exports the elementary-operation algebra and
+The `HexRowReduce` library: executable row reduction for the dense
+matrices of `HexMatrix`. It re-exports the elementary-operation algebra and
 echelon contracts (`RowEchelon`), the pivot search and column elimination
 (`Pivot`), the `rowReduce` loop and its correctness (`Loop`), and the row-span
 and nullspace APIs (`Span`, `Nullspace`, `Api`).

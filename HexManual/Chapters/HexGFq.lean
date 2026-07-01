@@ -230,8 +230,7 @@ tag := "hex-gfq-cross-references"
   delegates to it.
 * `HexGF2` provides the single-word packed field `GF2n` backing
   {name}`Hex.GF2q`, together with the `GF2Poly.Irreducible` predicate the
-  packed certificates discharge. (Its reference chapter is forthcoming;
-  until it lands this dependency is named in prose.)
+  packed certificates discharge.
 
 `HexGFq` is Mathlib-free; its Mathlib correspondence
 ({ref "hex-gfq-mathlib"}[above], via `HexGFqMathlib`) identifies the
