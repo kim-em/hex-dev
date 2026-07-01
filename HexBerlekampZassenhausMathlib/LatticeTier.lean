@@ -248,10 +248,20 @@ theorem latticeArm3_bhksSingleAllOnes_irreducible
       rw [hfalse] at hbhks
       exact absurd hbhks (by simp)
     omega
-  -- Exactly one normalized factor of a square-free (hence radical) polynomial
-  -- means it is irreducible.  Standard `UniqueFactorizationMonoid` bookkeeping;
-  -- easy, deferred per hardest-first.
-  sorry
+  -- Exactly one normalized factor means `core` is associated to an irreducible,
+  -- hence irreducible.
+  obtain ⟨p, hp⟩ := Multiset.card_eq_one.mp hcard
+  have hne : HexPolyZMathlib.toPolynomial core ≠ 0 := by
+    have hpos : 0 < (HexPolyZMathlib.toPolynomial core).natDegree := by
+      rw [HexPolyMathlib.natDegree_toPolynomial core]; exact Nat.pos_of_ne_zero hdeg_ne
+    intro h; rw [h, Polynomial.natDegree_zero] at hpos; exact absurd hpos (lt_irrefl 0)
+  have hp_irr : Irreducible p :=
+    UniqueFactorizationMonoid.irreducible_of_normalized_factor p
+      (by rw [hp]; exact Multiset.mem_singleton_self p)
+  have hassoc : Associated p (HexPolyZMathlib.toPolynomial core) := by
+    have hprod := UniqueFactorizationMonoid.prod_normalizedFactors hne
+    rwa [hp, Multiset.prod_singleton] at hprod
+  exact hassoc.irreducible_iff.mp hp_irr
 
 /--
 **#8417 (lattice-tier irreducibility, at adequate precision).**  Every factor the
