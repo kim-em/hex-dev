@@ -34,14 +34,16 @@
 
 ## Current frontier
 
-Fix committed to `main`. Next: re-run `sync-released` (dry then real)
-to republish, then bump the `hex` aggregate pins to the new released
-HEADs, `lake update`, build `HexAll` green, and expand its README to
-the full post-split closure.
+Done end to end. The dedup fix is on `main` (e2aecad9) and was
+republished by a real `sync-released` run (14 repos, from
+`hex-dev@e2aecad9`, baseline advanced). The `kim-em/hex` aggregate was
+bumped to the new released HEADs (`lake update` also moved it to
+v4.32.0-rc1), its README now lists the full 13-library closure, and its
+`HexAll` build is green both locally and on the aggregate's CI.
 
 ## Next step
 
-Dispatch the sync, then land the aggregate pin bump + README.
+Nothing outstanding for this line of work.
 
 ## Blockers
 
