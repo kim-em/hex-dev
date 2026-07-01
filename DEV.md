@@ -210,17 +210,20 @@ re-scoped from scratch and is naturally part of the lattice cluster below (a fas
   — both concern the lattice tier and the deleted BHKS substrate; coordinate them.
   Largely independent of the classical core; sequence after Track 2.
 
-### Dispatch readiness (what to start a session on, today)
-- **Start now, in parallel:** **#8412** (foundation, no deps) and **#8382**
-  (independent perf). Both shovel-ready and self-contained; substrate verified present.
-- **Start right after #8412 lands:** **#8413** (the core proof). Shovel-ready but
-  gated on #8412 — don't start it cold.
-- **Downstream, do not start cold:** **#8417** (the hard van Hoeij-method proof; off
-  the critical path, sequence after the classical core) and **#8414** (assembly; last
-  step by construction).
+### Dispatch readiness (what to start a session on) — updated 2026-07
+- **Done:** #8412, #8413 (classical irreducibility, **axiom-clean** — verified via
+  `#print axioms`), #8382 (perf). The hard core of the headline is closed.
+- **Start now:** **#8414** — assemble the headline. Classical (#8413) + trial
+  substrate have landed; this issue composes the classical core through
+  `reassemblePolynomialFactors`, restates the trial arm, and case-splits. It cannot
+  *close* the `sorry` until #8417 lands (lattice arm), but the classical/trial arms
+  and the assembly scaffold are ready to build now.
+- **Start now (independent, hard):** **#8417** — verify the van Hoeij/CLD method (the
+  lone hard branch). Off the critical path; reuses #8413's coverage/minimality
+  machinery (see the issue's "Reusable from #8413" note).
 - **Do NOT start as written:** **#8395** — its body still points at the BHKS
-  substrate deleted in #8411; needs a ground-up rewrite first (re-scope onto whatever
-  #8417's route produces).
+  substrate deleted in #8411; needs a ground-up rewrite first (naturally paired with
+  #8417's lattice route).
 
 ---
 
@@ -256,6 +259,14 @@ re-scoped from scratch and is naturally part of the lattice cluster below (a fas
   `h_raw` primitivity hypotheses collapsed to just `f ≠ 0` (the self-certifying
   product reconstruction makes primitivity derivable). Headline irreducibility stays a
   `sorry` (no regression). Easy-input blow-up removed (deg-22: 781.8 ms → 82.75 ms).
+- **#8382:** classical-tier constant-factor arithmetic speedups (shape-preserving).
+- **#8412, #8413 → #8498:** the classical route to the headline. #8412 identified the
+  executable candidate with its subset; #8413 proved the classical recombination
+  returns irreducible factors (`classicalCoreFactorsWithBound_factor_irreducible`) —
+  **axiom-clean** (`#print axioms` → only `propext`/`Classical.choice`/`Quot.sound`).
+  The year-long blocker (via the lattice route) is closed via the classical tier
+  (`dilate` coordinate, Mignotte precision). Remaining for the headline: #8414
+  assembly + #8417 lattice branch.
 - **#8411 (reroute):** deleted the ~28k-line BHKS lattice irreducibility apparatus —
   off the classical route and a repeated trap for agents. Re-homed the headline proof
   to the classical tier (`dilate` coordinate, Mignotte precision, sign-guarded
