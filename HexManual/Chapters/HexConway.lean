@@ -25,7 +25,7 @@ tag := "hex-conway-intro"
 
 A *Conway polynomial* `C(p, n)` is the canonical irreducible degree-`n`
 polynomial over the prime field `𝔽_p` used to give a standard,
-compatible presentation of the finite field `𝔽_{pⁿ}`. The full story
+compatible presentation of the finite field `𝔽_{pⁿ}`. The full treatment
 of Conway polynomials has three tiers: a Tier 1 lookup of committed
 table entries, Tier 2 proofs that those entries satisfy the Conway
 compatibility conditions across the subfield lattice, and Tier 3
@@ -35,12 +35,12 @@ executable Tier 1 library: it exposes the imported
 Conway table as a lookup, keeping the baseline lookup separate from the
 later compatibility and search work.
 
-`HexConway` is Mathlib-free; it depends only on `HexBerlekamp` (for the
+`HexConway` is Mathlib-free. It depends only on `HexBerlekamp` (for the
 Rabin irreducibility checker that certifies each committed entry) and
 the prime-field polynomial library it reaches through it. Each supported
 `(p, n)` pair commits a named polynomial literal, a machine-checked
 irreducibility proof, and a {name}`Hex.Conway.SupportedEntry` witness
-packaging the lookup together with its proof; see
+packaging the lookup together with its proof. See
 {ref "hex-conway-cross-references"}[Cross-references].
 
 # The lookup
@@ -50,7 +50,7 @@ tag := "hex-conway-lookup"
 
 The committed data is a raw coefficient table, stored ascending by
 degree and keyed on the pair `(p, n)`. It returns `none` on any pair
-outside the committed slice.
+outside the committed table.
 
 {docstring Hex.Conway.luebeckConwayCoeffs?}
 
@@ -62,7 +62,7 @@ through the normalizing constructor.
 
 The main entry point composes the two: it looks up the coefficient
 list and, on a hit, builds the polynomial. The supported coverage is
-`p ∈ {2, 3, 5, 7, 11, 13}` and `n ∈ {1, …, 6}`; every other pair
+`p ∈ {2, 3, 5, 7, 11, 13}` and `n ∈ {1, …, 6}`. Every other pair
 returns `none` rather than triggering Tier 2 compatibility checks or
 Tier 3 search.
 
@@ -91,9 +91,9 @@ named `supportedEntry_p_n` (for example {name}`Hex.Conway.supportedEntry_2_3`).
 tag := "hex-conway-worked"
 %%%
 
-The block below exercises the lookup on the supported pair `(2, 3)` (the
+The block below runs the lookup on the supported pair `(2, 3)` (the
 Conway polynomial `C(2, 3) = 1 + x + x³` over `𝔽₂`) and on two
-unsupported pairs. Each `#guard` is checked when the chapter builds.
+unsupported pairs.
 
 ```lean
 open Hex Hex.Conway
@@ -153,16 +153,16 @@ tag := "hex-conway-cross-references"
 
 `HexConway` is near the top of the finite-field portion of the DAG:
 
-* `HexBerlekamp` is the direct dependency: its Rabin irreducibility
-  test, and the soundness theorem `rabinTest_imp_irreducible` lifting a
-  passing certificate to {name}`Hex.FpPoly.Irreducible`, is what
-  certifies every committed entry in the
+* `HexBerlekamp` is the direct dependency. Its Rabin irreducibility
+  test and the soundness theorem `rabinTest_imp_irreducible` (lifting a
+  passing certificate to {name}`Hex.FpPoly.Irreducible`) certify every
+  committed entry in the
   {ref "hex-conway-correctness"}[correctness section]. The prime-field
   polynomial type {name}`Hex.FpPoly` and its arithmetic are reached
   transitively through it.
 * The Tier 2 compatibility proofs (Conway conditions across the
   subfield lattice) and Tier 3 search live in separate libraries above
-  this one; this chapter documents only the Tier 1 committed lookup.
-* `HexConway` is Mathlib-free and never depends on Mathlib; the Mathlib
-  correspondence for the finite-field theory it draws on flows through
-  the higher layers' `*Mathlib` counterparts, not through this library.
+  this one. This chapter documents only the Tier 1 committed lookup.
+* `HexConway` is Mathlib-free and never depends on Mathlib. The Mathlib
+  correspondence proofs for the finite-field theory it draws on live in
+  the higher layers' `*Mathlib` counterparts, not in this library.

@@ -35,22 +35,22 @@ Its first row is a provably short lattice vector, which is what the
 the BHKS van Hoeij recombination step in `hex-berlekamp-zassenhaus`
 reconstructs true factors from short vectors of a knapsack lattice.
 
-On adversarial worst-case input the payoff of the design is stark. These are the
+On adversarial worst-case input the reducers diverge sharply in cost. These are the
 five benchmarked reducers on fplll's Ajtai-style `gen_trg` bases, whose steeply
 decreasing profile forces a `Θ(d² log B)` swap count:
 
 ![HexLLL reducers on Ajtai-style worst-case bases](https://kim-em.github.io/hex-dev/figures/hex-lll-comparator-ajtai.svg)
 
 The exact integer reducers (Lean's `lllNative` and the verified Isabelle
-extraction) blow up `~d⁷`, while the certified path — an `fpLLL` candidate
-checked by a verified Lean checker — stays cheap, near raw floating-point speed.
-The {ref "hex-lll-performance"}[performance comparison] below walks through every
+extraction) blow up `~d⁷`. The certified path (an `fpLLL` candidate
+checked by a verified Lean checker) stays cheap, near raw floating-point speed.
+The {ref "hex-lll-performance"}[performance comparison] below describes every
 curve and all six input families.
 
 The library splits computation from proof. The public reducer can
-accelerate through an optional external `fpLLL` provider — fast, untrusted
-numerics — but no proof depends on those numerics being correct. Every
-external candidate is fed through a verified integer checker; only a basis
+accelerate through an optional external `fpLLL` provider (fast, untrusted
+numerics), but no proof depends on those numerics being correct. Every
+external candidate is fed through a verified integer checker. Only a basis
 the checker accepts is returned, and the checker's soundness theorem
 (proved on the Mathlib side) turns that acceptance into the mathematical
 guarantee. When no external candidate certifies, the exact all-integer
@@ -68,7 +68,7 @@ tag := "hex-lll-predicates"
 %%%
 
 A lattice is the set of integer combinations of the basis rows. Membership
-and independence are the two structural predicates; both are propositions
+and independence are the two structural predicates. Both are propositions
 about the exact integer data, never about the numerics.
 
 {docstring Hex.Matrix.memLattice}
@@ -89,7 +89,7 @@ size bound `η` grows.
 
 {docstring Hex.Internal.isLLLReduced.mono_η}
 
-The payoff theorem is the short-vector bound: in a reduced basis the first
+The key theorem is the short-vector bound: in a reduced basis the first
 row is within an explicit `δ`/`η`-dependent factor of the shortest nonzero
 lattice vector. This is the property downstream callers actually rely on.
 
@@ -100,7 +100,7 @@ lattice vector. This is the property downstream callers actually rely on.
 tag := "hex-lll-checkers"
 %%%
 
-The predicates above mention rational Gram-Schmidt data; deciding them
+The predicates above mention rational Gram-Schmidt data. Deciding them
 directly would require rational (or interval) arithmetic. The checkers
 instead work over the scaled integer Gram-Schmidt representation (the
 leading Gram determinants `d` and the integer scaled coefficients `ν`),
@@ -110,7 +110,7 @@ clears denominators in both the size-reduced and Lovász clauses.
 {docstring Hex.lllReducedInt}
 
 For larger inputs an unverified fixed-precision interval pass is usually
-faster; the dispatching checker uses a size predictor to choose it, but
+faster. The dispatching checker uses a size predictor to choose it, but
 always keeps the exact integer checker as a mandatory fallback when the
 interval pass is indecisive, so completeness stays structural rather than
 numerical.
@@ -119,7 +119,7 @@ numerical.
 
 The same-lattice side of an external candidate is certified separately. A
 pair of integer transforms `U`, `V` witnessing `U·B = B'` and `V·B' = B`
-proves the two bases generate the same lattice; the certificate is a
+proves the two bases generate the same lattice. The certificate is a
 denominator-free `Bool` check with an overflow-safe packed-row comparison.
 
 {docstring Hex.Matrix.sameLatticeCert}
@@ -147,24 +147,24 @@ letting the Mathlib side reason about them.
 {docstring Hex.Internal.LLLState.Valid}
 
 The exact all-integer reducer {name}`Hex.lllNative` drives the standard LLL
-outer loop — integer size-reduction and adjacent Lovász swaps — from that exact
+outer loop (integer size-reduction and adjacent Lovász swaps) from that exact
 `d`/`ν` data alone. Its size-reduction step produces exact `|μ| ≤ 1/2`, so it
-carries the classical `η = 1/2` contract and is the direct `1/4 < δ` entry
+satisfies the classical `η = 1/2` bound and is the direct `1/4 < δ` entry
 point.
 
 {docstring Hex.lllNative}
 
 The public entry point hides all of this behind one signature. Given a
 basis with independent rows and `δ` in the classical range, it returns a
-reduced basis generating the same lattice; the short-vector and same-lattice
+reduced basis generating the same lattice. The short-vector and same-lattice
 post-conditions are identical on every internal path, so callers and proofs
 never see the dispatch.
 
 {docstring Hex.lll}
 
-The canonical consumer surface reads short vectors off the reduced basis.
-{name}`Hex.lll.firstShortVector` is the single short vector wanted by
-recombination; {name}`Hex.lll.shortVectors` exposes the whole reduced
+Two functions return the short vectors of the reduced basis.
+{name}`Hex.lll.firstShortVector` is the single short vector used by
+recombination. {name}`Hex.lll.shortVectors` returns the whole reduced
 basis as an ordered candidate list. Each has a proof-free `Unchecked`
 variant that drops the independence hypothesis for quick experimentation.
 
@@ -207,16 +207,17 @@ bit-length grows with the dimension:
 
 Each plot is log-scale wall-time per reduction against the family dimension:
 
-* `fpLLL` — the raw floating-point reducer, unverified; the speed baseline.
-* `Lean native` — `Hex.lllNative`, the exact all-integer `d`/`ν` reducer.
+* `fpLLL`: the raw floating-point reducer, unverified; the speed baseline.
+* `Lean native`: `Hex.lllNative`, the exact all-integer `d`/`ν` reducer.
   Correct by construction, but its exact arithmetic pays for wide operands and
   high swap counts.
-* `Lean certified` — an `fpLLL` candidate *checked* by the verified Lean checker
+* `Lean certified`: an `fpLLL` candidate *checked* by the verified Lean checker
   `Hex.certCheck`. It inherits floating-point speed and adds only a cheap
-  integer check, so it hugs the `fpLLL` curve while remaining fully verified.
-* `verified Isabelle native` — the Isabelle extraction's own reducer; the
+  integer check, so it stays close to the `fpLLL` curve while remaining fully
+  verified.
+* `verified Isabelle native`: the Isabelle extraction's own reducer; the
   independent verified point of comparison.
-* `verified Isabelle certified` — the *same* `fpLLL` candidate checked by the
+* `verified Isabelle certified`: the *same* `fpLLL` candidate checked by the
   Isabelle checker instead of the Lean one; the apples-to-apples yardstick for
   the Lean certified path.
 
@@ -225,19 +226,19 @@ Each plot is log-scale wall-time per reduction against the family dimension:
 Each family is a faithful port of an fplll generator, and stresses a different
 part of the algorithm:
 
-* `random-bounded` — near-orthogonal random bases; the easy baseline, few swaps.
-* `harsh-cubic` — entries of bit-length about `3.3·n`; exact-integer
+* `random-bounded`: near-orthogonal random bases; the easy baseline, few swaps.
+* `harsh-cubic`: entries of bit-length about `3.3·n`; exact-integer
   operand-width growth (shown above).
-* `ajtai` — fplll `gen_trg` worst-case triangular bases; the swap / iteration
+* `ajtai`: fplll `gen_trg` worst-case triangular bases; the swap / iteration
   count `Θ(d² log B)` (shown in the {ref "hex-lll-intro"}[introduction]).
-* `q-ary` — LWE/SIS bases `[[I, H], [0, qI]]`; the cryptographic Z-shape.
-* `ntru` — bases `[[I, Rot h], [0, qI]]`; a planted dense sublattice plus a
+* `q-ary`: LWE/SIS bases `[[I, H], [0, qI]]`; the cryptographic Z-shape.
+* `ntru`: bases `[[I, Rot h], [0, qI]]`; a planted dense sublattice plus a
   q-block.
-* `knapsack` — the rectangular `d × (d+1)` integer-relation form; the only
-  family with more columns than rows, exercising the `m > n` construction.
+* `knapsack`: the rectangular `d × (d+1)` integer-relation form; the only
+  family with more columns than rows, using the `m > n` construction.
 
 Across every family the exact reducers are correct but climb steeply on the hard
-bases, while `Lean certified` stays within about 1.2 to 2.5 times raw `fpLLL` —
+bases, while `Lean certified` stays within about 1.2 to 2.5 times raw `fpLLL`:
 verified output at close to floating-point cost.
 
 ## Selecting the certified versus native path
@@ -247,21 +248,21 @@ shim, and the *same* `Hex.lll` call picks its path by whether an external
 provider symbol is resolvable in the process:
 
 * set the environment variable `HEX_FPLLL_FFI_LIB` to a built fpLLL-ffi shared
-  library and `lll` takes the certified path — the shim `dlopen`s it,
+  library and `lll` takes the certified path: the shim `dlopen`s it,
   `providerAvailable` returns true, and the candidate is certified by
   `Hex.certCheck`;
 * leave it unset (or if certification ever fails) and `lll` runs the exact
   `Hex.lllNative` directly.
 
-Either way the returned basis satisfies the same `(δ, 11/20)`-reduced contract.
+Either way the returned basis is `(δ, 11/20)`-reduced.
 
 ## The size-reduction bound and its constants
 
 The public `Hex.lll` certifies its output `(δ, 11/20)`-reduced: every
 Gram-Schmidt coefficient satisfies `|μ| ≤ 11/20`. Two numbers in its signature
 follow from `η = 11/20`. The precondition is `121/400 < δ`, because
-`121/400 = (11/20)² = η²` and the bound is well-defined only when `η² < δ`; and
-the short-vector constant is `1/(δ − 121/400)`. So the `121/400` stands exactly
+`121/400 = (11/20)² = η²` and the bound is well-defined only when `η² < δ`. The
+short-vector constant is `1/(δ − 121/400)`. So the `121/400` stands exactly
 where the classical bound would put `1/4 = (1/2)²`.
 
 Why `11/20` rather than the classical `1/2`? Solely the external provider. The
@@ -292,10 +293,9 @@ tag := "hex-lll-worked"
 %%%
 
 The block reduces the rank-2 lattice with basis rows `(1, 12)` and
-`(0, 1)`. The skewed first row is far from orthogonal; reduction returns
+`(0, 1)`. The skewed first row is far from orthogonal. Reduction returns
 `(0, 1)`, `(1, 0)` (the two unit vectors), which generate the same
-lattice and are as short as possible. Each `#guard` is checked when the
-chapter builds.
+lattice and are as short as possible.
 
 ```lean
 open Hex Hex.Matrix Hex.Internal
@@ -375,8 +375,8 @@ proofs in `HexLLLMathlib`:
   the leading Gram determinants) on which both the
   {ref "hex-lll-predicates"}[reducedness predicates] and the
   {ref "hex-lll-checkers"}[integer checkers] are defined. Through it,
-  `HexLLL` rests transitively on the fraction-free integer determinant stack
-  (`HexBareiss`, `HexDeterminant`, `HexRowReduce`).
+  `HexLLL` rests transitively on the fraction-free integer determinant
+  libraries `HexBareiss`, `HexDeterminant`, and `HexRowReduce`.
 * `HexLLLMathlib` carries the soundness theorems. `lllReducedInt_sound`
   and `lllReducedCheck_sound` relate the integer checkers to
   {name}`Hex.isLLLReduced`, and `certCheck_sound` combines those with
