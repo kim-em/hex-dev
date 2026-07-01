@@ -35,6 +35,18 @@ Its first row is a provably short lattice vector, which is what the
 the BHKS van Hoeij recombination step in `hex-berlekamp-zassenhaus`
 reconstructs true factors from short vectors of a knapsack lattice.
 
+On adversarial worst-case input the payoff of the design is stark. These are the
+five benchmarked reducers on fplll's Ajtai-style `gen_trg` bases, whose steeply
+decreasing profile forces a `Θ(d² log B)` swap count:
+
+![HexLLL reducers on Ajtai-style worst-case bases](https://kim-em.github.io/hex-dev/figures/hex-lll-comparator-ajtai.svg)
+
+The exact integer reducers (Lean's `lllNative` and the verified Isabelle
+extraction) blow up `~d⁷`, while the certified path — an `fpLLL` candidate
+checked by a verified Lean checker — stays cheap, near raw floating-point speed.
+The {ref "hex-lll-performance"}[performance comparison] below walks through every
+curve and all six input families.
+
 The library splits computation from proof. The public reducer can
 accelerate through an optional external `fpLLL` provider — fast, untrusted
 numerics — but no proof depends on those numerics being correct. Every
@@ -178,6 +190,101 @@ its certificate, the single fact the certified-dispatch path of
 {name}`Hex.lll` depends on.
 
 {docstring Hex.Internal.LLLProvider.dispatch_some_certCheck}
+
+# Performance comparison
+%%%
+tag := "hex-lll-performance"
+%%%
+
+`HexLLL` is benchmarked against the verified Isabelle `LLL_Basis_Reduction`
+extraction and the unverified floating-point `fpLLL`, across six input families
+that each stress a different cost. Here is `harsh-cubic`, where the entry
+bit-length grows with the dimension:
+
+![HexLLL harsh-cubic comparator](https://kim-em.github.io/hex-dev/figures/hex-lll-comparator-harsh-cubic.svg)
+
+## The five curves
+
+Each plot is log-scale wall-time per reduction against the family dimension:
+
+* `fpLLL` — the raw floating-point reducer, unverified; the speed baseline.
+* `Lean native` — `Hex.lllNative`, the exact all-integer `d`/`ν` reducer.
+  Correct by construction, but its exact arithmetic pays for wide operands and
+  high swap counts.
+* `Lean certified` — an `fpLLL` candidate *checked* by the verified Lean checker
+  `Hex.certCheck`. It inherits floating-point speed and adds only a cheap
+  integer check, so it hugs the `fpLLL` curve while remaining fully verified.
+* `verified Isabelle native` — the Isabelle extraction's own reducer; the
+  independent verified point of comparison.
+* `verified Isabelle certified` — the *same* `fpLLL` candidate checked by the
+  Isabelle checker instead of the Lean one; the apples-to-apples yardstick for
+  the Lean certified path.
+
+## The six input families
+
+Each family is a faithful port of an fplll generator, and stresses a different
+part of the algorithm:
+
+* `random-bounded` — near-orthogonal random bases; the easy baseline, few swaps.
+* `harsh-cubic` — entries of bit-length about `3.3·n`; exact-integer
+  operand-width growth (shown above).
+* `ajtai` — fplll `gen_trg` worst-case triangular bases; the swap / iteration
+  count `Θ(d² log B)` (shown in the {ref "hex-lll-intro"}[introduction]).
+* `q-ary` — LWE/SIS bases `[[I, H], [0, qI]]`; the cryptographic Z-shape.
+* `ntru` — bases `[[I, Rot h], [0, qI]]`; a planted dense sublattice plus a
+  q-block.
+* `knapsack` — the rectangular `d × (d+1)` integer-relation form; the only
+  family with more columns than rows, exercising the `m > n` construction.
+
+Across every family the exact reducers are correct but climb steeply on the hard
+bases, while `Lean certified` stays within about 1.2 to 2.5 times raw `fpLLL` —
+verified output at close to floating-point cost.
+
+## Selecting the certified versus native path
+
+This is a runtime choice, not a Lean import. `HexLLL` always builds its FFI
+shim, and the *same* `Hex.lll` call picks its path by whether an external
+provider symbol is resolvable in the process:
+
+* set the environment variable `HEX_FPLLL_FFI_LIB` to a built fpLLL-ffi shared
+  library and `lll` takes the certified path — the shim `dlopen`s it,
+  `providerAvailable` returns true, and the candidate is certified by
+  `Hex.certCheck`;
+* leave it unset (or if certification ever fails) and `lll` runs the exact
+  `Hex.lllNative` directly.
+
+Either way the returned basis satisfies the same `(δ, 11/20)`-reduced contract.
+
+## The size-reduction bound and its constants
+
+The public `Hex.lll` certifies its output `(δ, 11/20)`-reduced: every
+Gram-Schmidt coefficient satisfies `|μ| ≤ 11/20`. Two numbers in its signature
+follow from `η = 11/20`. The precondition is `121/400 < δ`, because
+`121/400 = (11/20)² = η²` and the bound is well-defined only when `η² < δ`; and
+the short-vector constant is `1/(δ − 121/400)`. So the `121/400` stands exactly
+where the classical bound would put `1/4 = (1/2)²`.
+
+Why `11/20` rather than the classical `1/2`? Solely the external provider. The
+exact `Hex.lllNative` already lands at `|μ| ≤ 1/2`, but a black-box reducer
+cannot be forced to exactly `1/2` (fpLLL's default size-reduction target sits
+slightly above it), so the certified path accepts its candidate at the looser
+`11/20`. When you want the tighter guarantee, call `Hex.lllNative` directly: its
+short-vector theorem `lllNative_short_vector` carries the precondition
+`1/4 < δ` and the strictly better constant `1/(δ − 1/4)`.
+
+## The other families
+
+The remaining comparator plots, for reference:
+
+![ajtai](https://kim-em.github.io/hex-dev/figures/hex-lll-comparator-ajtai.svg)
+
+![q-ary](https://kim-em.github.io/hex-dev/figures/hex-lll-comparator-q-ary.svg)
+
+![ntru](https://kim-em.github.io/hex-dev/figures/hex-lll-comparator-ntru.svg)
+
+![knapsack](https://kim-em.github.io/hex-dev/figures/hex-lll-comparator-knapsack.svg)
+
+![random-bounded](https://kim-em.github.io/hex-dev/figures/hex-lll-comparator-random-bounded.svg)
 
 # Worked example
 %%%
