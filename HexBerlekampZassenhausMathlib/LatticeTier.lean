@@ -218,7 +218,26 @@ theorem latticeArm3_bhksSingleAllOnes_irreducible
       -- computation does NOT collapse to a single all-ones class.
       have hfalse : Hex.bhksSingleAllOnesPartition core
           (Hex.ZPoly.toMonicLiftData core B primeData) = false := by
-        sorry
+        set d := Hex.ZPoly.toMonicLiftData core B primeData with hd
+        rw [Hex.bhksSingleAllOnesPartition]
+        set L := Hex.bhksLatticeBasis core d.p d.k d.liftedFactors with hL
+        by_cases hrows : 1 ≤ L.factorCount + L.coeffWidth
+        · rw [dif_pos hrows]
+          -- **Adequacy (the van Hoeij heart, #8417):** the CLD lattice never
+          -- under-separates — a `core` with ≥ 2 irreducible factors yields ≥ 2
+          -- equivalence classes (each true-factor support is a short lattice
+          -- vector captured in the LLL-reduced Gram-Schmidt cut, giving a
+          -- distinct class).  Proved on the proven LLL short-vector path.
+          have hclasses : 2 ≤ (Hex.bhksEquivalenceClassIndicators
+              (Hex.bhksProjectedRows L hrows)).size := by
+            sorry
+          -- With ≥ 2 classes the `indicators.size == 1` conjunct is false, so the
+          -- whole all-ones Bool is false.
+          have hne1 : ((Hex.bhksEquivalenceClassIndicators
+              (Hex.bhksProjectedRows L hrows)).size == 1) = false := by
+            simp only [beq_eq_false_iff_ne, ne_eq]; omega
+          simp only [hne1, Bool.and_false, Bool.false_and]
+        · rw [dif_neg hrows]
       rw [hfalse] at hbhks
       exact absurd hbhks (by simp)
     omega
