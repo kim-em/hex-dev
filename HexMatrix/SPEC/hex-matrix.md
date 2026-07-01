@@ -14,6 +14,13 @@ Dense matrices over a coefficient type `R`.
 - Submatrix / leading-submatrix slicing and the Gram matrix
 - Generic over the coefficient type `R`
 
+**Entry vs row access.** `M[(i, j)]` is the O(1) entry accessor and the normal
+form for single entries. Row access `M[i]` is deliberately `noncomputable`: it
+exists only so proofs may speak of whole rows, while compiled code reads rows
+through the computable `getRow` and entries through `M[(i, j)]`. Any compiled
+definition that reaches for `M[i]` fails to compile, so a future flat backing
+representation never silently pays a per-entry row-materialization cost.
+
 This is the dense base of the matrix family. The row-reduction stack
 (`hex-row-reduce`), the Leibniz determinant theory (`hex-determinant`), and the
 executable Bareiss algorithm (`hex-bareiss`) build on it.
@@ -27,6 +34,14 @@ the determinant row-operation laws. They update the matrix in place when it is
 uniquely referenced: each uses its argument linearly and goes through
 `Vector.swap` / `Vector.modify` / `Vector.map`, which reuse the backing store
 rather than copying it.
+
+**Indexed row/column mutation.** `modifyRow` updates one row in place;
+`setCol` and the per-entry `modifyCol` update one column entry per row. The
+column operations share an in-place engine, `mapRowsIdx`, which threads the
+matrix through a `Fin.foldl` of per-row `Vector.modify`s — no intermediate index
+list is allocated, and each row's single-entry update reuses the freed row slot.
+This replaces the former `ofFn`-rebuild form of `setCol`, which read and
+reallocated every entry to change one column.
 
 **Key properties:**
 - identity matrices act as left and right multiplicative identities

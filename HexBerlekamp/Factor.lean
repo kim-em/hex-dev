@@ -4,7 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekamp.Basic
+module
+
+public import HexBasic
+public import HexBerlekamp.Basic
+
+public section
 
 /-!
 Executable Berlekamp split-step factoring for `hex-berlekamp`.
@@ -32,10 +37,12 @@ structure Factorization (p : Nat) [ZMod64.Bounds p] where
   factors : List (FpPoly p)
 
 /-- Multiply a list of `F_p[x]` factors in stored order, starting from `1`. -/
+@[expose]
 def factorProduct (factors : List (FpPoly p)) : FpPoly p :=
   factors.foldl (fun acc factor => acc * factor) 1
 
 /-- Product of the factors returned by a `Factorization`. -/
+@[expose]
 def Factorization.product (result : Factorization p) : FpPoly p :=
   factorProduct result.factors
 
@@ -48,6 +55,7 @@ def Factorization.product (result : Factorization p) : FpPoly p :=
   rfl
 
 /-- The gcd candidate attached to one field constant `c`. -/
+@[expose]
 def splitFactorAt (f witness : FpPoly p) (c : ZMod64 p) : FpPoly p :=
   DensePoly.gcd f (witness - FpPoly.C c)
 
@@ -681,35 +689,6 @@ private theorem one_mul_poly
     (1 : FpPoly p) * a = a :=
   (DensePoly.mul_comm_poly (1 : FpPoly p) a).trans (DensePoly.mul_one_right_poly a)
 
-private theorem foldl_mul_left_factor
-    [ZMod64.PrimeModulus p]
-    (z a : FpPoly p) (xs : List (FpPoly p)) :
-    xs.foldl (fun acc factor => acc * factor) (z * a)
-      = z * xs.foldl (fun acc factor => acc * factor) a := by
-  induction xs generalizing a with
-  | nil => rfl
-  | cons b bs ih =>
-    have hcong : List.foldl (fun acc factor : FpPoly p => acc * factor) ((z * a) * b) bs
-        = List.foldl (fun acc factor => acc * factor) (z * (a * b)) bs := by
-      congr 1
-      exact DensePoly.mul_assoc_poly z a b
-    have hih : List.foldl (fun acc factor : FpPoly p => acc * factor) (z * (a * b)) bs
-        = z * List.foldl (fun acc factor => acc * factor) (a * b) bs := ih (a * b)
-    show List.foldl (fun acc factor => acc * factor) (z * a * b) bs
-        = z * List.foldl (fun acc factor => acc * factor) (a * b) bs
-    exact hcong.trans hih
-
-private theorem foldl_mul_eq_mul_foldl
-    [ZMod64.PrimeModulus p]
-    (z : FpPoly p) (xs : List (FpPoly p)) :
-    xs.foldl (fun acc factor => acc * factor) z
-      = z * xs.foldl (fun acc factor => acc * factor) 1 := by
-  have h1 : xs.foldl (fun acc factor => acc * factor) z
-      = xs.foldl (fun acc factor => acc * factor) (z * 1) := by
-    congr 1
-    exact (DensePoly.mul_one_right_poly z).symm
-  exact h1.trans (foldl_mul_left_factor z 1 xs)
-
 /--
 Cons-expansion for `factorProduct`: pulling the head factor out of the running
 product. Useful for downstream proofs that reason about `factorProduct` without
@@ -722,7 +701,7 @@ theorem factorProduct_cons
   show xs.foldl (fun acc factor => acc * factor) (1 * x)
     = x * xs.foldl (fun acc factor => acc * factor) 1
   rw [one_mul_poly x]
-  exact foldl_mul_eq_mul_foldl x xs
+  exact List.foldl_mul_eq_mul_foldl xs id x
 
 /-- `factorProduct` distributes over list append. -/
 private theorem factorProduct_append
@@ -1477,7 +1456,7 @@ theorem berlekampFactor_factors_ne_zero
     subst hg
     intro h
     subst h
-    have hlead_zero : DensePoly.leadingCoeff (0 : FpPoly p) = 0 := rfl
+    have hlead_zero : DensePoly.leadingCoeff (0 : FpPoly p) = 0 := DensePoly.leadingCoeff_zero
     unfold DensePoly.Monic at hmonic
     rw [hlead_zero] at hmonic
     exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hmonic.symm
@@ -1535,7 +1514,7 @@ theorem kernelWitnessSplit?_none_of_berlekampFactor_factors
       ∀ w ∈ (fixedSpaceKernel f hmonic).toList, kernelWitnessSplit? g w = none := by
   have hf_ne : f ≠ 0 := by
     intro h
-    have hlead_zero : DensePoly.leadingCoeff (0 : FpPoly p) = 0 := rfl
+    have hlead_zero : DensePoly.leadingCoeff (0 : FpPoly p) = 0 := DensePoly.leadingCoeff_zero
     unfold DensePoly.Monic at hmonic
     rw [h, hlead_zero] at hmonic
     exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hmonic.symm

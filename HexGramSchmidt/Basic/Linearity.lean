@@ -595,13 +595,15 @@ private theorem basisMatrix_rowAdd
     (b : Matrix Rat n m) (src dst : Fin n) (c : Rat) (h : src.val < dst.val) :
     basisMatrix (Matrix.rowAdd b src dst c) = basisMatrix b := by
   unfold basisMatrix
-  have hsrc_toList : b.toList[src.val]! = b[src] := by simp
-  have hdst_toList : b.toList[dst.val]! = b[dst] := by simp
+  have hsrc_toList : b.rows.toList[src.val]! = b[src] := by
+    simp [Hex.Matrix.getRow, Fin.getElem_fin]
+  have hdst_toList : b.rows.toList[dst.val]! = b[dst] := by
+    simp [Hex.Matrix.getRow, Fin.getElem_fin]
   have htoList :
-      (Matrix.rowAdd b src dst c).toList =
-        b.toList.set dst.val
-          (b.toList[dst.val]! + c • b.toList[src.val]!) := by
-    rw [Matrix.rowAdd_eq_set]
+      (Matrix.rowAdd b src dst c).rows.toList =
+        b.rows.toList.set dst.val
+          (b.rows.toList[dst.val]! + c • b.rows.toList[src.val]!) := by
+    rw [Matrix.rowAdd_eq_set, Matrix.rows_setRow]
     rw [Vector.toList_set]
     congr 1
     rw [hsrc_toList, hdst_toList]
@@ -609,7 +611,7 @@ private theorem basisMatrix_rowAdd
     intro idx hidx
     rw [Vector.getElem_ofFn, Vector.getElem_add, Vector.getElem_smul]
     rfl
-  rw [htoList, basisRows_set_rowAdd b.toList src.val dst.val c h
+  rw [htoList, basisRows_set_rowAdd b.rows.toList src.val dst.val c h
     (by rw [Vector.length_toList]; exact dst.isLt)]
 
 /-- `rowSwap_toList_get!_of_lt`: reading `toList`/`get!` at an index `t` strictly
@@ -617,7 +619,7 @@ below both swapped positions `km1 < k` returns the same row as before the swap. 
 private theorem rowSwap_toList_get!_of_lt
     (b : Matrix Rat n m) (km1 k : Fin n) (t : Nat)
     (hkm1k : km1.val < k.val) (ht : t < km1.val) :
-    (Matrix.rowSwap b km1 k).toList[t]! = b.toList[t]! := by
+    (Matrix.rowSwap b km1 k).rows.toList[t]! = b.rows.toList[t]! := by
   have ht_n : t < n := Nat.lt_trans ht km1.isLt
   let r : Fin n := ⟨t, ht_n⟩
   have hrk : r ≠ k := by
@@ -631,16 +633,16 @@ private theorem rowSwap_toList_get!_of_lt
     change t = km1.val at hval
     omega
   have hleft :
-      (Matrix.rowSwap b km1 k).toList[t]! = (Matrix.rowSwap b km1 k).row r := by
+      (Matrix.rowSwap b km1 k).rows.toList[t]! = (Matrix.rowSwap b km1 k).row r := by
     have hget :
-        (Matrix.rowSwap b km1 k).toList[t]! =
-          (Matrix.rowSwap b km1 k).toList[t]'(by simp [ht_n]) :=
+        (Matrix.rowSwap b km1 k).rows.toList[t]! =
+          (Matrix.rowSwap b km1 k).rows.toList[t]'(by simp [ht_n]) :=
       getElem!_pos _ t (by simp [ht_n])
-    simpa [Matrix.row, Vector.getElem_toList, r] using hget
-  have hright : b.toList[t]! = b.row r := by
-    have hget : b.toList[t]! = b.toList[t]'(by simp [ht_n]) :=
+    simpa [Matrix.row, Vector.getElem_toList, r, Hex.Matrix.getRow, Fin.getElem_fin] using hget
+  have hright : b.rows.toList[t]! = b.row r := by
+    have hget : b.rows.toList[t]! = b.rows.toList[t]'(by simp [ht_n]) :=
       getElem!_pos _ t (by simp [ht_n])
-    simpa [Matrix.row, Vector.getElem_toList, r] using hget
+    simpa [Matrix.row, Vector.getElem_toList, r, Hex.Matrix.getRow, Fin.getElem_fin] using hget
   rw [hleft, hright]
   apply Vector.ext
   intro idx hidx
@@ -653,13 +655,13 @@ private theorem rowSwap_toList_get!_of_lt
 reads back the original row stored at the upper index `k`. -/
 private theorem rowSwap_toList_get!_left
     (b : Matrix Rat n m) (km1 k : Fin n) (hkm1k : km1.val ≠ k.val) :
-    (Matrix.rowSwap b km1 k).toList[km1.val]! = b.toList[k.val]! := by
+    (Matrix.rowSwap b km1 k).rows.toList[km1.val]! = b.rows.toList[k.val]! := by
   have hleft :
-      (Matrix.rowSwap b km1 k).toList[km1.val]! =
+      (Matrix.rowSwap b km1 k).rows.toList[km1.val]! =
         (Matrix.rowSwap b km1 k).row km1 := by
-    simp [Matrix.row]
-  have hright : b.toList[k.val]! = b.row k := by
-    simp [Matrix.row]
+    simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
+  have hright : b.rows.toList[k.val]! = b.row k := by
+    simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
   rw [hleft, hright]
   have hne : km1 ≠ k := by
     intro h
@@ -675,13 +677,13 @@ private theorem rowSwap_toList_get!_left
 reads back the original row stored at the lower index `km1`. -/
 private theorem rowSwap_toList_get!_right
     (b : Matrix Rat n m) (km1 k : Fin n) :
-    (Matrix.rowSwap b km1 k).toList[k.val]! = b.toList[km1.val]! := by
+    (Matrix.rowSwap b km1 k).rows.toList[k.val]! = b.rows.toList[km1.val]! := by
   have hleft :
-      (Matrix.rowSwap b km1 k).toList[k.val]! =
+      (Matrix.rowSwap b km1 k).rows.toList[k.val]! =
         (Matrix.rowSwap b km1 k).row k := by
-    simp [Matrix.row]
-  have hright : b.toList[km1.val]! = b.row km1 := by
-    simp [Matrix.row]
+    simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
+  have hright : b.rows.toList[km1.val]! = b.row km1 := by
+    simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
   rw [hleft, hright]
   apply Vector.ext
   intro idx hidx
@@ -695,7 +697,7 @@ above both swapped positions `km1 < k` returns the same row as before the swap. 
 private theorem rowSwap_toList_get!_of_gt
     (b : Matrix Rat n m) (km1 k : Fin n) (t : Nat)
     (hkm1k : km1.val < k.val) (ht_lt_n : t < n) (ht : k.val < t) :
-    (Matrix.rowSwap b km1 k).toList[t]! = b.toList[t]! := by
+    (Matrix.rowSwap b km1 k).rows.toList[t]! = b.rows.toList[t]! := by
   let r : Fin n := ⟨t, ht_lt_n⟩
   have hrk : r ≠ k := by
     intro h
@@ -708,16 +710,16 @@ private theorem rowSwap_toList_get!_of_gt
     change t = km1.val at hval
     omega
   have hleft :
-      (Matrix.rowSwap b km1 k).toList[t]! = (Matrix.rowSwap b km1 k).row r := by
+      (Matrix.rowSwap b km1 k).rows.toList[t]! = (Matrix.rowSwap b km1 k).row r := by
     have hget :
-        (Matrix.rowSwap b km1 k).toList[t]! =
-          (Matrix.rowSwap b km1 k).toList[t]'(by simp [ht_lt_n]) :=
+        (Matrix.rowSwap b km1 k).rows.toList[t]! =
+          (Matrix.rowSwap b km1 k).rows.toList[t]'(by simp [ht_lt_n]) :=
       getElem!_pos _ t (by simp [ht_lt_n])
-    simpa [Matrix.row, Vector.getElem_toList, r] using hget
-  have hright : b.toList[t]! = b.row r := by
-    have hget : b.toList[t]! = b.toList[t]'(by simp [ht_lt_n]) :=
+    simpa [Matrix.row, Vector.getElem_toList, r, Hex.Matrix.getRow, Fin.getElem_fin] using hget
+  have hright : b.rows.toList[t]! = b.row r := by
+    have hget : b.rows.toList[t]! = b.rows.toList[t]'(by simp [ht_lt_n]) :=
       getElem!_pos _ t (by simp [ht_lt_n])
-    simpa [Matrix.row, Vector.getElem_toList, r] using hget
+    simpa [Matrix.row, Vector.getElem_toList, r, Hex.Matrix.getRow, Fin.getElem_fin] using hget
   rw [hleft, hright]
   apply Vector.ext
   intro idx hidx
@@ -750,28 +752,28 @@ private theorem basisMatrix_rowSwap_adjacent_prev
   rw [basisMatrix_row_eq_basisRows_get!, basisMatrix_row_eq_basisRows_get!,
     basisMatrix_row_eq_basisRows_get!]
   have hswap_row :
-      (Matrix.rowSwap b km1 k).toList[km1.val]! = b.toList[k.val]! := by
+      (Matrix.rowSwap b km1 k).rows.toList[km1.val]! = b.rows.toList[k.val]! := by
     apply rowSwap_toList_get!_left
     omega
   have hprefix :
-      ((basisRows (Matrix.rowSwap b km1 k).toList).take km1.val) =
-        ((basisRows b.toList).take km1.val) := by
+      ((basisRows (Matrix.rowSwap b km1 k).rows.toList).take km1.val) =
+        ((basisRows b.rows.toList).take km1.val) := by
     apply basisRows_take_eq
     · simp
     · intro t ht
       exact rowSwap_toList_get!_of_lt b km1 k t (by omega) ht
     · simp
-  have hlen_swap : (Matrix.rowSwap b km1 k).toList.length = b.toList.length := by simp
-  have hkm1_lt_len : km1.val < b.toList.length := by simp [km1.isLt]
-  have hkm1_lt_swap : km1.val < (Matrix.rowSwap b km1 k).toList.length := by
+  have hlen_swap : (Matrix.rowSwap b km1 k).rows.toList.length = b.rows.toList.length := by simp
+  have hkm1_lt_len : km1.val < b.rows.toList.length := by simp [km1.isLt]
+  have hkm1_lt_swap : km1.val < (Matrix.rowSwap b km1 k).rows.toList.length := by
     rw [hlen_swap]; exact hkm1_lt_len
   rw [basisRows_get!_eq_reduceAgainstBasis_take
-        (Matrix.rowSwap b km1 k).toList km1.val hkm1_lt_swap,
+        (Matrix.rowSwap b km1 k).rows.toList km1.val hkm1_lt_swap,
       hprefix, hswap_row]
   have hreduce :=
     reduceAgainstBasis_basisRows_take_source_adjacent
-      (rows := b.toList) (km1 := km1.val) (k := k.val) hkm1 (by simp [k.isLt])
-  simpa [Matrix.row] using hreduce
+      (rows := b.rows.toList) (km1 := km1.val) (k := k.val) hkm1 (by simp [k.isLt])
+  simpa [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin] using hreduce
 
 /-- `basisMatrix_rowSwap_adjacent_curr`: after an adjacent swap (`km1 + 1 = k`),
 the new `basisMatrix` row at `k` is the original orthogonal row at `km1` minus
@@ -795,23 +797,23 @@ private theorem basisMatrix_rowSwap_adjacent_curr
     prev - projectionCoeff (b.row km1) swappedPrev • swappedPrev
   rw [basisMatrix_row_eq_basisRows_get!]
   have hkm1k : km1.val < k.val := by omega
-  have hk_lt_swap_len : k.val < (Matrix.rowSwap b km1 k).toList.length := by
+  have hk_lt_swap_len : k.val < (Matrix.rowSwap b km1 k).rows.toList.length := by
     simp [k.isLt]
-  have hkm1_lt_b_len : km1.val < b.toList.length := by simp [km1.isLt]
+  have hkm1_lt_b_len : km1.val < b.rows.toList.length := by simp [km1.isLt]
   rw [basisRows_get!_eq_reduceAgainstBasis_take
-        (Matrix.rowSwap b km1 k).toList k.val hk_lt_swap_len]
+        (Matrix.rowSwap b km1 k).rows.toList k.val hk_lt_swap_len]
   -- Replace the swapped source row at index k with the original row at km1.
   have hswap_row :
-      (Matrix.rowSwap b km1 k).toList[k.val]! = b.toList[km1.val]! :=
+      (Matrix.rowSwap b km1 k).rows.toList[k.val]! = b.rows.toList[km1.val]! :=
     rowSwap_toList_get!_right b km1 k
   -- Decompose the prefix of length k = km1 + 1.
   have hkm1_lt_swap_basis :
-      km1.val < (basisRows (Matrix.rowSwap b km1 k).toList).length := by
+      km1.val < (basisRows (Matrix.rowSwap b km1 k).rows.toList).length := by
     simp [basisRows_length, km1.isLt]
   have htake_succ :
-      (basisRows (Matrix.rowSwap b km1 k).toList).take k.val =
-        (basisRows (Matrix.rowSwap b km1 k).toList).take km1.val ++
-          [(basisRows (Matrix.rowSwap b km1 k).toList)[km1.val]!] := by
+      (basisRows (Matrix.rowSwap b km1 k).rows.toList).take k.val =
+        (basisRows (Matrix.rowSwap b km1 k).rows.toList).take km1.val ++
+          [(basisRows (Matrix.rowSwap b km1 k).rows.toList)[km1.val]!] := by
     rw [show k.val = km1.val + 1 from hkm1.symm,
       List.take_succ_eq_append_getElem hkm1_lt_swap_basis]
     congr 1
@@ -819,8 +821,8 @@ private theorem basisMatrix_rowSwap_adjacent_curr
       List.getElem?_eq_getElem hkm1_lt_swap_basis]
   -- The first km1 entries of `basisRows` agree before and after the swap.
   have hprefix :
-      (basisRows (Matrix.rowSwap b km1 k).toList).take km1.val =
-        (basisRows b.toList).take km1.val := by
+      (basisRows (Matrix.rowSwap b km1 k).rows.toList).take km1.val =
+        (basisRows b.rows.toList).take km1.val := by
     apply basisRows_take_eq
     · simp
     · intro t ht
@@ -828,26 +830,26 @@ private theorem basisMatrix_rowSwap_adjacent_curr
     · simp
   -- The km1-th entry of `basisRows` after the swap is `swappedPrev`.
   have hkm1_entry :
-      (basisRows (Matrix.rowSwap b km1 k).toList)[km1.val]! = swappedPrev := by
+      (basisRows (Matrix.rowSwap b km1 k).rows.toList)[km1.val]! = swappedPrev := by
     have hraw :=
       basisMatrix_rowSwap_adjacent_prev (b := b) (km1 := km1) (k := k) hkm1
     have hlhs :
-        (basisRows (Matrix.rowSwap b km1 k).toList)[km1.val]! =
+        (basisRows (Matrix.rowSwap b km1 k).rows.toList)[km1.val]! =
           (basisMatrix (Matrix.rowSwap b km1 k)).row km1 := by
       simp [basisMatrix, Matrix.row]
     rw [hlhs, hraw]
   rw [hswap_row, htake_succ, hprefix, hkm1_entry]
   -- Now apply `reduceAgainstBasis_append` to split off `swappedPrev`.
   have hreduce_split :
-      reduceAgainstBasis (((basisRows b.toList).take km1.val ++ [swappedPrev]).reverse)
-          b.toList[km1.val]! =
-        reduceAgainstBasis ((basisRows b.toList).take km1.val).reverse
-          (subtractProjection b.toList[km1.val]! swappedPrev) := by
+      reduceAgainstBasis (((basisRows b.rows.toList).take km1.val ++ [swappedPrev]).reverse)
+          b.rows.toList[km1.val]! =
+        reduceAgainstBasis ((basisRows b.rows.toList).take km1.val).reverse
+          (subtractProjection b.rows.toList[km1.val]! swappedPrev) := by
     rw [List.reverse_append, reduceAgainstBasis_append]
     rfl
   rw [hreduce_split]
   -- Expand `subtractProjection` into row + (-proj) • swappedPrev and use linearity.
-  have hsource_row : b.toList[km1.val]! = b.row km1 := by simp [Matrix.row]
+  have hsource_row : b.rows.toList[km1.val]! = b.row km1 := by simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
   rw [hsource_row]
   have hsubP : ∀ u : Vector Rat m, subtractProjection (b.row km1) u =
       (b.row km1) + (- projectionCoeff (b.row km1) u) • u := by
@@ -863,20 +865,20 @@ private theorem basisMatrix_rowSwap_adjacent_curr
   rw [hsubP swappedPrev, reduceAgainstBasis_add_left, reduceAgainstBasis_smul_left]
   -- Compute the (b.row km1) reduction → `prev`.
   have hreduce_row :
-      reduceAgainstBasis ((basisRows b.toList).take km1.val).reverse (b.row km1) =
+      reduceAgainstBasis ((basisRows b.rows.toList).take km1.val).reverse (b.row km1) =
         prev := by
     have hrec :=
-      basisRows_get!_eq_reduceAgainstBasis_take b.toList km1.val hkm1_lt_b_len
+      basisRows_get!_eq_reduceAgainstBasis_take b.rows.toList km1.val hkm1_lt_b_len
     have hbasis_km1 :
-        (basisRows b.toList)[km1.val]! = (basisMatrix b).row km1 := by
+        (basisRows b.rows.toList)[km1.val]! = (basisMatrix b).row km1 := by
       exact (basisMatrix_row_eq_basisRows_get! (b := b) km1.val km1.isLt).symm
-    have hsrc_row : b.toList[km1.val]! = b.row km1 := by simp [Matrix.row]
+    have hsrc_row : b.rows.toList[km1.val]! = b.row km1 := by simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
     change reduceAgainstBasis _ (b.row km1) = (basisMatrix b).row km1
     rw [← hbasis_km1, hrec, hsrc_row]
   -- Show that `swappedPrev` is orthogonal to every row of `basisRows.take km1`,
   -- so the reduction is the identity on it.
   have hreduce_sP :
-      reduceAgainstBasis ((basisRows b.toList).take km1.val).reverse swappedPrev =
+      reduceAgainstBasis ((basisRows b.rows.toList).take km1.val).reverse swappedPrev =
         swappedPrev := by
     apply reduceAgainstBasis_eq_self
     intro other hother
@@ -884,35 +886,35 @@ private theorem basisMatrix_rowSwap_adjacent_curr
     rw [List.mem_iff_getElem] at hother
     obtain ⟨idx, hidx, hget⟩ := hother
     have htake_len :
-        ((basisRows b.toList).take km1.val).length = km1.val := by
+        ((basisRows b.rows.toList).take km1.val).length = km1.val := by
       rw [List.length_take]
       simp [basisRows_length]
     have hidx_km1 : idx < km1.val := by
       rw [htake_len] at hidx
       exact hidx
-    have hidx_basis_len : idx < (basisRows b.toList).length := by
+    have hidx_basis_len : idx < (basisRows b.rows.toList).length := by
       simp only [basisRows_length, Vector.length_toList]
       omega
     have hother_get :
-        other = (basisRows b.toList)[idx]! := by
+        other = (basisRows b.rows.toList)[idx]! := by
       rw [← hget, List.getElem_take]
       simp [hidx_basis_len]
     rw [hother_get]
     -- dot swappedPrev (basisRows[idx]) = dot curr (basisRows[idx]) + mu * dot prev (basisRows[idx])
     -- Both inner products vanish by pairwise orthogonality.
     have hcurr_orth :
-        curr.dotProduct (basisRows b.toList)[idx]! = 0 := by
+        curr.dotProduct (basisRows b.rows.toList)[idx]! = 0 := by
       change ((basisMatrix b).row k).dotProduct _ = 0
       rw [basisMatrix_row_eq_basisRows_get!]
-      exact basisRows_get!_dot_eq_zero_of_list b.toList k.val idx
+      exact basisRows_get!_dot_eq_zero_of_list b.rows.toList k.val idx
         (by simp [k.isLt])
         (by simp only [Vector.length_toList]; omega)
         (by omega)
     have hprev_orth :
-        prev.dotProduct (basisRows b.toList)[idx]! = 0 := by
+        prev.dotProduct (basisRows b.rows.toList)[idx]! = 0 := by
       change ((basisMatrix b).row km1).dotProduct _ = 0
       rw [basisMatrix_row_eq_basisRows_get!]
-      exact basisRows_get!_dot_eq_zero_of_list b.toList km1.val idx
+      exact basisRows_get!_dot_eq_zero_of_list b.rows.toList km1.val idx
         (by simp [km1.isLt])
         (by simp only [Vector.length_toList]; omega)
         (by omega)
@@ -947,7 +949,7 @@ private def prefixSumByRow (row : Vector Rat m) (basis : Matrix Rat n m)
 matrix shape naturally paired with `prefixSumByRow`. -/
 private def strictPrefixRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) :
     Matrix R k m :=
-  Vector.ofFn fun j => M.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
+  Hex.Matrix.ofRows (Vector.ofFn fun j => M.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)
 
 /-- Extend coefficients on a strict prefix by a zero coefficient on the new
 last row of the inclusive prefix. -/
@@ -966,10 +968,10 @@ private def projectionCoeffVector (row : Vector Rat m) (basis : Matrix Rat n m)
   Vector.ofFn fun j =>
     projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)
 
-private theorem rowCombination_prefixRows_extendStrictPrefixCoeff
+private theorem vecMul_prefixRows_extendStrictPrefixCoeff
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) (c : Vector Rat i) :
-    Matrix.rowCombination (prefixRows M i hi) (extendStrictPrefixCoeff c) =
-      Matrix.rowCombination (strictPrefixRows M i (Nat.le_of_lt hi)) c := by
+    Matrix.vecMul (extendStrictPrefixCoeff c) (prefixRows M i hi) =
+      Matrix.vecMul c (strictPrefixRows M i (Nat.le_of_lt hi)) := by
   apply Vector.ext
   intro idx hidx
   let idxFin : Fin m := ⟨idx, hidx⟩
@@ -1006,16 +1008,16 @@ private theorem rowCombination_prefixRows_extendStrictPrefixCoeff
   simp [extendStrictPrefixCoeff, hlast_not_lt]
   grind
 
-private theorem rowCombination_add_rat
+private theorem vecMul_add_rat
     (M : Matrix Rat n m) (c d : Vector Rat n) :
-    Matrix.rowCombination M (c + d) =
-      Matrix.rowCombination M c + Matrix.rowCombination M d := by
+    Matrix.vecMul (c + d) M =
+      Matrix.vecMul c M + Matrix.vecMul d M := by
   apply Vector.ext
   intro idx hidx
   let idxFin : Fin m := ⟨idx, hidx⟩
   change (Matrix.mulVec (Matrix.transpose M) (c + d))[idxFin] =
-    (Matrix.rowCombination M c + Matrix.rowCombination M d)[idxFin]
-  simp [Matrix.rowCombination, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
+    (Matrix.vecMul c M + Matrix.vecMul d M)[idxFin]
+  simp [Matrix.vecMul, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
     Matrix.row, Vector.dotProduct, Vector.getElem_add]
   have hfold :
       ∀ xs : List (Fin n), ∀ accC accD : Rat,
@@ -1045,16 +1047,16 @@ private theorem rowCombination_add_rat
   rw [show (0 : Rat) + 0 = 0 by grind] at h
   exact h
 
-private theorem rowCombination_smul_rat
+private theorem vecMul_smul_rat
     (M : Matrix Rat n m) (a : Rat) (c : Vector Rat n) :
-    Matrix.rowCombination M (a • c) =
-      a • Matrix.rowCombination M c := by
+    Matrix.vecMul (a • c) M =
+      a • Matrix.vecMul c M := by
   apply Vector.ext
   intro idx hidx
   let idxFin : Fin m := ⟨idx, hidx⟩
   change (Matrix.mulVec (Matrix.transpose M) (a • c))[idxFin] =
-    (a • Matrix.rowCombination M c)[idxFin]
-  simp [Matrix.rowCombination, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
+    (a • Matrix.vecMul c M)[idxFin]
+  simp [Matrix.vecMul, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
     Matrix.row, Vector.dotProduct, Vector.getElem_smul]
   have hfold :
       ∀ xs : List (Fin n), ∀ acc : Rat,
@@ -1088,7 +1090,7 @@ private theorem prefixSpan_add
   rcases hu with ⟨cu, hcu⟩
   rcases hv with ⟨cv, hcv⟩
   refine ⟨cu + cv, ?_⟩
-  rw [rowCombination_add_rat, hcu, hcv]
+  rw [vecMul_add_rat, hcu, hcv]
 
 /-- `prefixSpan_smul` says the rational prefix row-span is closed under scalar multiplication. -/
 private theorem prefixSpan_smul
@@ -1097,7 +1099,7 @@ private theorem prefixSpan_smul
     prefixSpan M i hi (a • u) := by
   rcases hu with ⟨cu, hcu⟩
   refine ⟨a • cu, ?_⟩
-  rw [rowCombination_smul_rat, hcu]
+  rw [vecMul_smul_rat, hcu]
 
 /-- `prefixSpan_sub` says the rational prefix row-span is closed under vector subtraction. -/
 private theorem prefixSpan_sub
@@ -1216,9 +1218,9 @@ private theorem foldl_indicator_mul_unique_rat
         rw [hacc]
         exact ih hitail (List.nodup_cons.mp hnodup).2 acc
 
-private theorem rowCombination_prefixRows_unitCoeff
+private theorem vecMul_prefixRows_unitCoeff
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) (j : Fin (i + 1)) :
-    Matrix.rowCombination (prefixRows M i hi) (unitCoeff j) =
+    Matrix.vecMul (unitCoeff j) (prefixRows M i hi) =
       (prefixRows M i hi).row j := by
   apply Vector.ext
   intro idx hidx
@@ -1240,11 +1242,11 @@ private theorem rowCombination_prefixRows_unitCoeff
 private theorem prefixSpan_row
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) (j : Fin (i + 1)) :
     prefixSpan M i hi ((prefixRows M i hi).row j) := by
-  exact ⟨unitCoeff j, rowCombination_prefixRows_unitCoeff M i hi j⟩
+  exact ⟨unitCoeff j, vecMul_prefixRows_unitCoeff M i hi j⟩
 
-private theorem rowCombination_eq_foldl_rows
+private theorem vecMul_eq_foldl_rows
     (M : Matrix Rat n m) (c : Vector Rat n) :
-    Matrix.rowCombination M c =
+    Matrix.vecMul c M =
       (List.finRange n).foldl (fun acc j => acc + c[j] • M.row j) 0 := by
   apply Vector.ext
   intro idx hidx
@@ -1287,7 +1289,7 @@ private theorem dot_eq_zero_of_prefixSpan
     (horth : ∀ j : Fin (i + 1), u.dotProduct ((prefixRows M i hi).row j) = 0) :
     u.dotProduct v = 0 := by
   rcases hspan with ⟨c, hc⟩
-  rw [← hc, rowCombination_eq_foldl_rows]
+  rw [← hc, vecMul_eq_foldl_rows]
   have hfold :
       ∀ xs : List (Fin (i + 1)), ∀ acc : Vector Rat m,
         u.dotProduct acc = 0 →
@@ -1527,13 +1529,13 @@ private theorem foldl_orthogonal_weighted_normSq_ge
 /-- Orthogonal row-combination lower bound. If the rows of `rows` are pairwise
 orthogonal and the coefficient at `k` has square at least `1`, then the squared
 norm of the whole row combination is at least the squared norm of row `k`. -/
-theorem rowCombination_normSq_ge_of_orthogonal_coeff_sq_ge_one
+theorem vecMul_normSq_ge_of_orthogonal_coeff_sq_ge_one
     (rows : Matrix Rat n m) (coeffs : Vector Rat n) (k : Fin n)
     (horth : ∀ i j : Fin n, i ≠ j →
       (rows.row i).dotProduct (rows.row j) = 0)
     (hcoeff : 1 ≤ coeffs[k] * coeffs[k]) :
-    (rows.row k).normSq ≤ (Matrix.rowCombination rows coeffs).normSq := by
-  rw [rowCombination_eq_foldl_rows, foldl_orthogonal_expansion_normSq_zero rows coeffs horth]
+    (rows.row k).normSq ≤ (Matrix.vecMul coeffs rows).normSq := by
+  rw [vecMul_eq_foldl_rows, foldl_orthogonal_expansion_normSq_zero rows coeffs horth]
   exact foldl_orthogonal_weighted_normSq_ge (xs := List.finRange n)
     (rows := rows) (coeffs := coeffs) k (by simp) hcoeff
 
@@ -1668,12 +1670,12 @@ private theorem prefixSpan_zero
     grind
   simpa [hzero] using hz
 
-/-- `prefixSpan_rowCombination` states that any row combination of prefix rows already in another prefix span remains in that prefix span. -/
-private theorem prefixSpan_rowCombination
+/-- `prefixSpan_vecMul` states that any row combination of prefix rows already in another prefix span remains in that prefix span. -/
+private theorem prefixSpan_vecMul
     (A B : Matrix Rat n m) (i : Nat) (hi : i < n) (c : Vector Rat (i + 1))
     (hrows : ∀ j : Fin (i + 1), prefixSpan B i hi ((prefixRows A i hi).row j)) :
-    prefixSpan B i hi (Matrix.rowCombination (prefixRows A i hi) c) := by
-  rw [rowCombination_eq_foldl_rows]
+    prefixSpan B i hi (Matrix.vecMul c (prefixRows A i hi)) := by
+  rw [vecMul_eq_foldl_rows]
   have hfold :
       ∀ xs : List (Fin (i + 1)), ∀ acc : Vector Rat m,
         prefixSpan B i hi acc →
@@ -1698,6 +1700,7 @@ private theorem strictPrefixRows_succ_eq_prefixRows
     (M : Matrix Rat n m) (i : Nat) (hi : i + 1 < n) :
     strictPrefixRows M (i + 1) (Nat.le_of_lt hi) =
       prefixRows M i (Nat.lt_of_succ_lt hi) := by
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro row hrow
   apply Vector.ext
@@ -1711,7 +1714,7 @@ private theorem prefixSpan_mono_succ
     prefixSpan M (i + 1) hi v := by
   rcases hv with ⟨c, hc⟩
   refine ⟨extendStrictPrefixCoeff c, ?_⟩
-  rw [rowCombination_prefixRows_extendStrictPrefixCoeff,
+  rw [vecMul_prefixRows_extendStrictPrefixCoeff,
     strictPrefixRows_succ_eq_prefixRows (hi := hi)]
   exact hc
 
@@ -1788,7 +1791,7 @@ private theorem prefixSpan_rowSwap_adjacent_at_or_after
   · intro hv
     rcases hv with ⟨c, hc⟩
     have hspan :=
-      prefixSpan_rowCombination
+      prefixSpan_vecMul
         (A := Matrix.rowSwap b km1 k) (B := b) (i := i) (hi := hi) c
         (by
           intro j
@@ -1799,7 +1802,7 @@ private theorem prefixSpan_rowSwap_adjacent_at_or_after
   · intro hv
     rcases hv with ⟨c, hc⟩
     have hspan :=
-      prefixSpan_rowCombination
+      prefixSpan_vecMul
         (A := b) (B := Matrix.rowSwap b km1 k) (i := i) (hi := hi) c
         (by
           intro j
@@ -1812,15 +1815,15 @@ private theorem prefixSpan_rowSwap_adjacent_at_or_after
           simpa [hswap_swap] using hrowspan)
     rwa [hc] at hspan
 
-private theorem prefixSpan_strictPrefix_rowCombination
+private theorem prefixSpan_strictPrefix_vecMul
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) (c : Vector Rat i) :
     prefixSpan M i hi
-      (Matrix.rowCombination (strictPrefixRows M i (Nat.le_of_lt hi)) c) := by
+      (Matrix.vecMul c (strictPrefixRows M i (Nat.le_of_lt hi))) := by
   cases i with
   | zero =>
       have hcomb :
-          Matrix.rowCombination (strictPrefixRows M 0 (Nat.le_of_lt hi)) c = 0 := by
-        rw [rowCombination_eq_foldl_rows]
+          Matrix.vecMul c (strictPrefixRows M 0 (Nat.le_of_lt hi)) = 0 := by
+        rw [vecMul_eq_foldl_rows]
         simp
       simpa [hcomb] using prefixSpan_zero M 0 hi
   | succ k =>
@@ -1828,8 +1831,8 @@ private theorem prefixSpan_strictPrefix_rowCombination
       rw [strictPrefixRows_succ_eq_prefixRows (M := M) (i := k) (hi := hi)]
       have hspan :
           prefixSpan M k hk
-            (Matrix.rowCombination (prefixRows M k hk) c) := by
-        apply prefixSpan_rowCombination
+            (Matrix.vecMul c (prefixRows M k hk)) := by
+        apply prefixSpan_vecMul
         intro row
         have hself :=
           prefixSpan_matrix_row M (⟨row.val, Nat.lt_trans row.isLt hi⟩ : Fin n)
@@ -1851,8 +1854,8 @@ private theorem prefixSpan_strictRowCombination
     (hrows : ∀ j : Fin i,
       prefixSpan B i hi ((strictPrefixRows A i (Nat.le_of_lt hi)).row j)) :
     prefixSpan B i hi
-      (Matrix.rowCombination (strictPrefixRows A i (Nat.le_of_lt hi)) c) := by
-  rw [rowCombination_eq_foldl_rows]
+      (Matrix.vecMul c (strictPrefixRows A i (Nat.le_of_lt hi))) := by
+  rw [vecMul_eq_foldl_rows]
   have hfold :
       ∀ xs : List (Fin i), ∀ acc : Vector Rat m,
         prefixSpan B i hi acc →
@@ -1873,7 +1876,7 @@ private theorem prefixSpan_strictRowCombination
           (prefixSpan_smul B i hi c[j] (hrows j))
   exact hfold (List.finRange i) 0 (prefixSpan_zero B i hi)
 
-private theorem foldl_projectionCoeff_rowCombination_comm
+private theorem foldl_projectionCoeff_vecMul_comm
     (xs : List (Fin k)) (row : Vector Rat m) (basis : Matrix Rat n m)
     (hk : k ≤ n) (idx : Fin m) (acc : Rat) :
     xs.foldl
@@ -1944,10 +1947,9 @@ private theorem foldl_projectionCombination_getElem
 
 /-- `prefixSumByRow` is an executable row combination of the first `k` rows of
 the basis matrix. -/
-private theorem rowCombination_strictPrefixRows_projectionCoeffVector
+private theorem vecMul_strictPrefixRows_projectionCoeffVector
     (row : Vector Rat m) (basis : Matrix Rat n m) (k : Nat) (hk : k ≤ n) :
-    Matrix.rowCombination (strictPrefixRows basis k hk)
-        (projectionCoeffVector row basis k hk) =
+    Matrix.vecMul (projectionCoeffVector row basis k hk) (strictPrefixRows basis k hk) =
       prefixSumByRow row basis k hk := by
   apply Vector.ext
   intro idx hidx
@@ -1980,7 +1982,7 @@ private theorem rowCombination_strictPrefixRows_projectionCoeffVector
           foldl_projectionCombination_getElem
             (xs := List.finRange k) (row := row) (basis := basis) (hk := hk)
             (idx := idxFin) (acc := 0)]
-  simpa [Matrix.row] using foldl_projectionCoeff_rowCombination_comm
+  simpa [Matrix.row] using foldl_projectionCoeff_vecMul_comm
     (xs := List.finRange k) (row := row) (basis := basis) (hk := hk)
     (idx := idxFin) (acc := 0)
 
@@ -2018,27 +2020,27 @@ private theorem prefixCombination_eq_prefixSumByRow
   rw [hentry]
 
 /-- `prefixSumByRow` with row free equals `projectionCombination` over the
-first `i` rows of `basisRows b.toList`. -/
+first `i` rows of `basisRows b.rows.toList`. -/
 private theorem prefixSumByRow_eq_projectionCombination
     (b : Matrix Rat n m) (row : Vector Rat m) (i : Nat) (hi : i ≤ n) :
     prefixSumByRow row (basisMatrix b) i hi =
-      projectionCombination row ((basisRows b.toList).take i) 0 := by
-  have hlen : (basisRows b.toList).length = n := by simp [basisRows_length]
+      projectionCombination row ((basisRows b.rows.toList).take i) 0 := by
+  have hlen : (basisRows b.rows.toList).length = n := by simp [basisRows_length]
   induction i with
   | zero =>
       simp [prefixSumByRow, projectionCombination]
   | succ k ih =>
       have hk_lt : k < n := Nat.lt_of_succ_le hi
-      have hkrows : k < (basisRows b.toList).length := by rw [hlen]; exact hk_lt
+      have hkrows : k < (basisRows b.rows.toList).length := by rw [hlen]; exact hk_lt
       rw [prefixSumByRow_succ, ih (Nat.le_of_succ_le hi)]
-      have htake : (basisRows b.toList).take (k + 1) =
-          (basisRows b.toList).take k ++ [(basisRows b.toList)[k]!] := by
+      have htake : (basisRows b.rows.toList).take (k + 1) =
+          (basisRows b.rows.toList).take k ++ [(basisRows b.rows.toList)[k]!] := by
         rw [List.take_succ_eq_append_getElem hkrows]
         congr 1
         simp [List.getElem!_eq_getElem?_getD,
           List.getElem?_eq_getElem hkrows]
       rw [htake, projectionCombination_append, projectionCombination_singleton]
-      have hbasisrow : (basisMatrix b).row ⟨k, hk_lt⟩ = (basisRows b.toList)[k]! := by
+      have hbasisrow : (basisMatrix b).row ⟨k, hk_lt⟩ = (basisRows b.rows.toList)[k]! := by
         rw [basisMatrix_row_eq_basisRows_get!]
       rw [hbasisrow]
 
@@ -2047,10 +2049,9 @@ earlier generated basis rows. -/
 private theorem prefixCombination_eq_strictPrefixRowCombination
     (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
     prefixCombination (coeffMatrix b (basisMatrix b)) (basisMatrix b) i hi =
-      Matrix.rowCombination (strictPrefixRows (basisMatrix b) i (Nat.le_of_lt hi))
-        (projectionCoeffVector (b.row ⟨i, hi⟩) (basisMatrix b) i (Nat.le_of_lt hi)) := by
+      Matrix.vecMul (projectionCoeffVector (b.row ⟨i, hi⟩) (basisMatrix b) i (Nat.le_of_lt hi)) (strictPrefixRows (basisMatrix b) i (Nat.le_of_lt hi)) := by
   rw [prefixCombination_eq_prefixSumByRow]
-  exact (rowCombination_strictPrefixRows_projectionCoeffVector
+  exact (vecMul_strictPrefixRows_projectionCoeffVector
     (row := b.row ⟨i, hi⟩) (basis := basisMatrix b) (k := i)
     (hk := Nat.le_of_lt hi)).symm
 
@@ -2061,13 +2062,13 @@ private theorem basisMatrix_reconstruction_invariant
     b.row ⟨i, hi⟩ =
       (basisMatrix b).row ⟨i, hi⟩ +
         prefixCombination (coeffMatrix b (basisMatrix b)) (basisMatrix b) i hi := by
-  have hilen : i < b.toList.length := by simpa using hi
-  have htoList_get : b.toList[i]! = b.row ⟨i, hi⟩ := by
+  have hilen : i < b.rows.toList.length := by simpa using hi
+  have htoList_get : b.rows.toList[i]! = b.row ⟨i, hi⟩ := by
     simp [Matrix.row, List.getElem!_eq_getElem?_getD,
-      List.getElem?_eq_getElem hilen, Vector.getElem_toList]
+      List.getElem?_eq_getElem hilen, Vector.getElem_toList, Hex.Matrix.getRow, Fin.getElem_fin]
   have hreduce_forward :=
     basisRows_get!_eq_reduceAgainstBasis_forward
-      (rows := b.toList) (k := i) hilen
+      (rows := b.rows.toList) (k := i) hilen
   rw [htoList_get] at hreduce_forward
   rw [hreduce_forward, ← basisMatrix_row_eq_basisRows_get! b i hi]
   congr 1

@@ -56,6 +56,7 @@ theorem leadingGramMatrixInt_det_nonneg
   have hgram :
       GramSchmidt.leadingGramMatrixInt b t ht =
         Matrix.gramMatrix rowPrefix := by
+    apply Hex.Matrix.ext
     apply Vector.ext
     intro i hi
     apply Vector.ext
@@ -116,7 +117,7 @@ private theorem detSign_intCast {k : Nat} (perm : Vector (Fin k) k) :
 
 /-- The cast of an Int matrix to a Rat matrix by entry-wise Int.cast. -/
 private def castIntDetMatrix {k : Nat} (M : Matrix Int k k) : Matrix Rat k k :=
-  Matrix.ofFn fun i j => ((M[i][j] : Int) : Rat)
+  Matrix.ofFn fun i j => ((M[(i, j)] : Int) : Rat)
 
 @[simp] private theorem castIntDetMatrix_get {k : Nat}
     (M : Matrix Int k k) (i j : Fin k) :
@@ -142,11 +143,11 @@ private theorem detProduct_intCast {k : Nat}
       Matrix.detProduct (castIntDetMatrix M) perm := by
   unfold Matrix.detProduct
   rw [foldl_intCast_mul_aux (xs := List.finRange k)
-    (f := fun i => M[i][perm[i]]) (acc := 1)]
+    (f := fun i => M[(i, perm[i])]) (acc := 1)]
   rw [show ((1 : Int) : Rat) = (1 : Rat) from rfl]
   apply foldl_mul_congr_simple
   intro i _hi
-  rw [castIntDetMatrix_get]
+  simp [castIntDetMatrix, Matrix.ofFn, Hex.Matrix.getRow, Fin.getElem_fin]
 
 private theorem detTerm_intCast {k : Nat}
     (M : Matrix Int k k) (perm : Vector (Fin k) k) :
@@ -362,7 +363,7 @@ private def castIntRow (b : Matrix Int n m) (i : Fin n) : Vector Rat m :=
 
 /-- Cast an Int matrix to the Rat matrix whose rows are `castIntRow`. -/
 private def castIntMatrixRat (b : Matrix Int n m) : Matrix Rat n m :=
-  Vector.map (fun row => Vector.map (fun x : Int => (x : Rat)) row) b
+  Hex.Matrix.ofRows (b.rows.map (fun row => row.map (fun x : Int => (x : Rat))))
 
 /-- Coefficients of the projection of row `i` onto the Gram-Schmidt prefix
 `0, ..., j`, indexed by that prefix. -/
@@ -378,8 +379,7 @@ written in the orthogonal basis rows. -/
 private noncomputable def basisPrefixProjection
     (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < n) :
     Vector Rat m :=
-  Matrix.rowCombination (GramSchmidt.prefixRows (basis b) j hj)
-    (projectionCoeffPrefix b i j hi hj)
+  Matrix.vecMul (projectionCoeffPrefix b i j hi hj) (GramSchmidt.prefixRows (basis b) j hj)
 
 private theorem basisPrefixProjection_mem_basisSpan
     (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < n) :
@@ -408,14 +408,13 @@ private noncomputable def originalProjectionCoords
 as the Gram-Schmidt prefix coefficients. -/
 private theorem originalProjectionCoords_spec
     (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < n) :
-    Matrix.rowCombination (GramSchmidt.prefixRows (castIntMatrixRat b) j hj)
-        (originalProjectionCoords b i j hi hj) =
+    Matrix.vecMul (originalProjectionCoords b i j hi hj) (GramSchmidt.prefixRows (castIntMatrixRat b) j hj) =
       basisPrefixProjection b i j hi hj := by
   exact Classical.choose_spec (basisPrefixProjection_mem_originalSpan b i j hi hj)
 
-private theorem rowCombination_eq_foldl_rows_rat
+private theorem vecMul_eq_foldl_rows_rat
     (M : Matrix Rat n m) (c : Vector Rat n) :
-    Matrix.rowCombination M c =
+    Matrix.vecMul c M =
       (List.finRange n).foldl (fun acc j => acc + c[j] • M.row j) 0 := by
   apply Vector.ext
   intro idx hidx
@@ -451,12 +450,12 @@ private theorem rowCombination_eq_foldl_rows_rat
         grind
   exact hfold (List.finRange n) 0 0 (by simp [Vector.getElem_zero])
 
-private theorem dot_rowCombination_right_rat
+private theorem dot_vecMul_right_rat
     (u : Vector Rat m) (M : Matrix Rat n m) (c : Vector Rat n) :
-    u.dotProduct (Matrix.rowCombination M c) =
+    u.dotProduct (Matrix.vecMul c M) =
       (List.finRange n).foldl
         (fun acc j => acc + c[j] * u.dotProduct (M.row j)) 0 := by
-  rw [rowCombination_eq_foldl_rows_rat]
+  rw [vecMul_eq_foldl_rows_rat]
   have hgen :
       ∀ xs : List (Fin n), ∀ acc : Vector Rat m,
         u.dotProduct (xs.foldl (fun acc j => acc + c[j] • M.row j) acc) =
@@ -495,10 +494,11 @@ private theorem originalProjectionCoords_dot_eq
                 ⟨p.val, Nat.lt_of_lt_of_le p.isLt (Nat.succ_le_of_lt hj)⟩)
               (castIntRow b
                 ⟨q.val, Nat.lt_of_lt_of_le q.isLt (Nat.succ_le_of_lt hj)⟩)) 0 := by
-  rw [← originalProjectionCoords_spec b i j hi hj, dot_rowCombination_right_rat]
+  rw [← originalProjectionCoords_spec b i j hi hj, dot_vecMul_right_rat]
   apply foldl_sum_congr_simple
   intro q _hq
-  simp [GramSchmidt.prefixRows, Matrix.row, castIntMatrixRat, castIntRow]
+  simp [GramSchmidt.prefixRows, Matrix.row, castIntMatrixRat, castIntRow,
+    Hex.Matrix.getRow, Fin.getElem_fin]
 
 /-- Auxiliary matrix `M_final` whose `(i, j)` entry is the rational inner
 product `⟨b_i, b*_j⟩` between the cast integer row `b_i` and the
@@ -630,6 +630,7 @@ private theorem progressMatrix_get_ge (b : Matrix Int n m) (k : Nat) (hk : k ≤
 private theorem progressMatrix_full_eq_auxMatrix (b : Matrix Int n m)
     (k : Nat) (hk : k ≤ n) :
     progressMatrix b k hk k = auxMatrix b k hk := by
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro i hi
   apply Vector.ext
@@ -679,6 +680,7 @@ private theorem progressMatrix_succ_eq_colReplace
             (fun acc src =>
               acc + progressMatrixCoeff b k hk s hs src *
                 (progressMatrix b k hk s)[i][src]) 0) := by
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro i hi
   apply Vector.ext
@@ -897,20 +899,7 @@ private theorem scaledCoeffMatrix_replacementColumn_solve
         (basisPrefixProjection b i j hi (Nat.lt_trans hj hi))
   rw [hsys]
   unfold Matrix.mulVec Matrix.row
-  have hleft :
-      (Vector.ofFn fun i' : Fin (j + 1) =>
-          Vector.dotProduct
-            (castIntDetMatrix
-              (GramSchmidt.leadingGramMatrixInt b (j + 1)
-                (Nat.succ_le_of_lt (Nat.lt_trans hj hi))))[i']
-            (originalProjectionCoords b i j hi (Nat.lt_trans hj hi)))[p] =
-        Vector.dotProduct
-          (castIntDetMatrix
-            (GramSchmidt.leadingGramMatrixInt b (j + 1)
-              (Nat.succ_le_of_lt (Nat.lt_trans hj hi))))[p]
-          (originalProjectionCoords b i j hi (Nat.lt_trans hj hi)) := by
-    simp [Vector.getElem_ofFn]
-  rw [hleft]
+  simp only [Vector.getElem_ofFn, Fin.getElem_fin]
   change
     (List.finRange (j + 1)).foldl
       (fun acc q =>
@@ -947,6 +936,7 @@ private theorem progressMatrix_zero_eq_castIntDetMatrix (b : Matrix Int n m)
     (k : Nat) (hk : k ≤ n) :
     progressMatrix b k hk 0 =
       castIntDetMatrix (GramSchmidt.leadingGramMatrixInt b k hk) := by
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro i hi
   apply Vector.ext
@@ -1151,7 +1141,7 @@ private theorem dot_castIntRow_castIntRow_eq
     (i := (j + 1) + d) (hi := hi) (u := castIntRow b ⟨p, hp⟩)]
   -- RHS unfold and expand basisPrefixProjection.
   unfold basisPrefixProjection
-  rw [dot_rowCombination_right_rat]
+  rw [dot_vecMul_right_rat]
   -- Define a Nat-indexed body shared by both sides.
   let body : ∀ (k : Nat), k < n → Rat := fun k hk =>
     GramSchmidt.entry (coeffs b) ⟨(j + 1) + d, hi⟩ ⟨k, hk⟩ *
@@ -1271,7 +1261,7 @@ private theorem dot_basis_basisPrefixProjection_eq_coeff_mul_normSq
         ((basis b).row ⟨j, Nat.lt_trans hj hi⟩).normSq := by
   have hjlt : j < n := Nat.lt_trans hj hi
   unfold basisPrefixProjection
-  rw [dot_rowCombination_right_rat]
+  rw [dot_vecMul_right_rat]
   -- Isolate the q = ⟨j, lt_succ_self j⟩ term in the foldl.
   rw [foldl_finRange_succ_isolate_last j _ ?_]
   · -- Last term: projectionCoeffPrefix[⟨j, _⟩] * dot basis[j] basis[j].
@@ -1305,7 +1295,7 @@ private theorem dot_basis_basisPrefixProjection_eq_origProjCoords_mul_normSq
       (originalProjectionCoords b i j hi (Nat.lt_trans hj hi))[Fin.last j] *
         ((basis b).row ⟨j, Nat.lt_trans hj hi⟩).normSq := by
   have hjlt : j < n := Nat.lt_trans hj hi
-  rw [← originalProjectionCoords_spec b i j hi hjlt, dot_rowCombination_right_rat,
+  rw [← originalProjectionCoords_spec b i j hi hjlt, dot_vecMul_right_rat,
     foldl_finRange_succ_isolate_last j _ ?_]
   · -- Last term: origProjCoords[⟨j, _⟩] * dot basis[j] (cast b row j).
     -- castIntMatrixRat b row at ⟨j, _⟩ = castIntRow b ⟨j, _⟩.
@@ -1313,7 +1303,7 @@ private theorem dot_basis_basisPrefixProjection_eq_origProjCoords_mul_normSq
         (GramSchmidt.prefixRows (castIntMatrixRat b) j hjlt).row (Fin.last j) =
           castIntRow b ⟨j, hjlt⟩ := by
       simp [GramSchmidt.prefixRows, Matrix.row, Vector.getElem_ofFn,
-        castIntMatrixRat, castIntRow, Fin.last]
+        castIntMatrixRat, castIntRow, Fin.last, Hex.Matrix.getRow, Fin.getElem_fin]
     rw [hrow]
     -- dot basis[j] castIntRow b j = dot basis[j] (basis[j] + prefixComb) = normSq + 0.
     rw [castIntRow_decomposition b j hjlt, dot_add_right_rat]
@@ -1340,7 +1330,7 @@ private theorem dot_basis_basisPrefixProjection_eq_origProjCoords_mul_normSq
         (GramSchmidt.prefixRows (castIntMatrixRat b) j hjlt).row q =
           castIntRow b ⟨q.val, hq_lt_n⟩ := by
       simp [GramSchmidt.prefixRows, Matrix.row, Vector.getElem_ofFn,
-        castIntMatrixRat, castIntRow]
+        castIntMatrixRat, castIntRow, Hex.Matrix.getRow, Fin.getElem_fin]
     rw [hrow, dot_comm_rat, dot_castIntRow_basis_eq_zero_of_lt b q.val j hq_lt_n hjlt hqval]
     grind
 

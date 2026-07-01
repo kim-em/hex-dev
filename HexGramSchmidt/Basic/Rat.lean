@@ -156,44 +156,44 @@ theorem basis_rowSwap_adjacent_prev (b : Matrix Rat n m) (km1 k : Fin n)
 private theorem projectionCoeff_row_later_basis_eq_zero
     (b : Matrix Rat n m) (src col : Fin n) (hsrccol : src.val < col.val) :
     GramSchmidt.projectionCoeff (b.row src) ((basis b).row col) = 0 := by
-  have hsrc_toList : b.toList[src.val]! = b.row src := by simp [Matrix.row]
+  have hsrc_toList : b.rows.toList[src.val]! = b.row src := by simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
   have hbasis_col :
-      (basis b).row col = (GramSchmidt.basisRows b.toList)[col.val]! := by
+      (basis b).row col = (GramSchmidt.basisRows b.rows.toList)[col.val]! := by
     simpa [basis] using
       GramSchmidt.basisMatrix_row_eq_basisRows_get! (b := b) col.val col.isLt
   have hreduce :
       GramSchmidt.reduceAgainstBasis
-          ((GramSchmidt.basisRows b.toList).take col.val).reverse (b.row src) = 0 := by
+          ((GramSchmidt.basisRows b.rows.toList).take col.val).reverse (b.row src) = 0 := by
     have key :=
       GramSchmidt.reduceAgainstBasis_basisRows_take_source_eq_zero
-        (rows := b.toList) (j := src.val) (k := col.val) hsrccol
+        (rows := b.rows.toList) (j := src.val) (k := col.val) hsrccol
         (by simp [Vector.length_toList, Nat.le_of_lt col.isLt])
     rw [hsrc_toList] at key
     exact key
   have hproj :=
     GramSchmidt.projectionCoeff_reduceAgainstBasis_eq
-      (basisRev := ((GramSchmidt.basisRows b.toList).take col.val).reverse)
+      (basisRev := ((GramSchmidt.basisRows b.rows.toList).take col.val).reverse)
       (row := b.row src) (basisRow := (basis b).row col)
       (by
         intro other hother
         rw [List.mem_reverse] at hother
         rw [List.mem_iff_getElem] at hother
         obtain ⟨idx, hidx, hget⟩ := hother
-        have htake_len : ((GramSchmidt.basisRows b.toList).take col.val).length = col.val := by
+        have htake_len : ((GramSchmidt.basisRows b.rows.toList).take col.val).length = col.val := by
           rw [List.length_take]
-          have hbasis_len : (GramSchmidt.basisRows b.toList).length = n := by
+          have hbasis_len : (GramSchmidt.basisRows b.rows.toList).length = n := by
             simp [GramSchmidt.basisRows_length]
           omega
         have hidx_col : idx < col.val := by
           rw [htake_len] at hidx
           exact hidx
-        have hbasis_len : (GramSchmidt.basisRows b.toList).length = n := by
+        have hbasis_len : (GramSchmidt.basisRows b.rows.toList).length = n := by
           simp [GramSchmidt.basisRows_length]
-        have hidx_basis : idx < (GramSchmidt.basisRows b.toList).length := by
+        have hidx_basis : idx < (GramSchmidt.basisRows b.rows.toList).length := by
           rw [hbasis_len]
           exact Nat.lt_trans hidx_col col.isLt
         have hother_get :
-            other = (GramSchmidt.basisRows b.toList)[idx]! := by
+            other = (GramSchmidt.basisRows b.rows.toList)[idx]! := by
           rw [← hget, List.getElem_take]
           simp [hidx_basis]
         rw [hother_get, hbasis_col]
@@ -224,46 +224,46 @@ private theorem projectionCoeff_row_basis_self_eq_one
     (b : Matrix Rat n m) (src : Fin n)
     (hnorm : ((basis b).row src).dotProduct ((basis b).row src) ≠ 0) :
     GramSchmidt.projectionCoeff (b.row src) ((basis b).row src) = 1 := by
-  have hsrc_toList : b.toList[src.val]! = b.row src := by simp [Matrix.row]
+  have hsrc_toList : b.rows.toList[src.val]! = b.row src := by simp [Matrix.row, Hex.Matrix.getRow, Fin.getElem_fin]
   have hbasis_src :
-      (basis b).row src = (GramSchmidt.basisRows b.toList)[src.val]! := by
+      (basis b).row src = (GramSchmidt.basisRows b.rows.toList)[src.val]! := by
     simpa [basis] using
       GramSchmidt.basisMatrix_row_eq_basisRows_get! (b := b) src.val src.isLt
   have hreduce :
       GramSchmidt.reduceAgainstBasis
-          ((GramSchmidt.basisRows b.toList).take src.val).reverse (b.row src) =
+          ((GramSchmidt.basisRows b.rows.toList).take src.val).reverse (b.row src) =
         (basis b).row src := by
     have hbasis :=
       GramSchmidt.basisRows_get!_eq_reduceAgainstBasis_take
-        (rows := b.toList) (k := src.val) (by
+        (rows := b.rows.toList) (k := src.val) (by
           simp [Vector.length_toList])
     have key := hbasis.symm
     rw [hsrc_toList, ← hbasis_src] at key
     exact key
   have hproj :=
     GramSchmidt.projectionCoeff_reduceAgainstBasis_eq
-      (basisRev := ((GramSchmidt.basisRows b.toList).take src.val).reverse)
+      (basisRev := ((GramSchmidt.basisRows b.rows.toList).take src.val).reverse)
       (row := b.row src) (basisRow := (basis b).row src)
       (by
         intro other hother
         rw [List.mem_reverse] at hother
         rw [List.mem_iff_getElem] at hother
         obtain ⟨idx, hidx, hget⟩ := hother
-        have htake_len : ((GramSchmidt.basisRows b.toList).take src.val).length = src.val := by
+        have htake_len : ((GramSchmidt.basisRows b.rows.toList).take src.val).length = src.val := by
           rw [List.length_take]
-          have hbasis_len : (GramSchmidt.basisRows b.toList).length = n := by
+          have hbasis_len : (GramSchmidt.basisRows b.rows.toList).length = n := by
             simp [GramSchmidt.basisRows_length]
           omega
         have hidx_src : idx < src.val := by
           rw [htake_len] at hidx
           exact hidx
-        have hbasis_len : (GramSchmidt.basisRows b.toList).length = n := by
+        have hbasis_len : (GramSchmidt.basisRows b.rows.toList).length = n := by
           simp [GramSchmidt.basisRows_length]
-        have hidx_basis : idx < (GramSchmidt.basisRows b.toList).length := by
+        have hidx_basis : idx < (GramSchmidt.basisRows b.rows.toList).length := by
           rw [hbasis_len]
           exact Nat.lt_trans hidx_src src.isLt
         have hother_get :
-            other = (GramSchmidt.basisRows b.toList)[idx]! := by
+            other = (GramSchmidt.basisRows b.rows.toList)[idx]! := by
           rw [← hget, List.getElem_take]
           simp [hidx_basis]
         rw [hother_get, hbasis_src]
@@ -539,16 +539,14 @@ theorem coeffs_rowAdd_lower (b : Matrix Rat n m) (col src dst : Fin n)
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn,
     hcolsrc, Nat.lt_trans hcolsrc hsrcdst]
   rw [hbasis]
-  rw [Matrix.rowAdd_eq_set]
-  simp [Vector.getElem_set_self]
-  have hvec :
-      (Vector.ofFn fun k : Fin m => b[dst.val][k.val] + c * b[src.val][k.val]) =
-        b[dst.val] + c • b[src.val] := by
+  have hrow : (b.rowAdd src dst c).getRow dst = b.getRow dst + c • b.getRow src := by
+    show Matrix.row (b.rowAdd src dst c) dst = _
+    rw [Matrix.row_rowAdd_dst]
     apply Vector.ext
     intro idx hidx
     simp [Vector.getElem_add, Vector.getElem_smul]
     rfl
-  rw [hvec, GramSchmidt.projectionCoeff_add_left, GramSchmidt.projectionCoeff_smul_left]
+  rw [hrow, GramSchmidt.projectionCoeff_add_left, GramSchmidt.projectionCoeff_smul_left]
 
 /-- Under `rowAdd b src dst c` with `src < dst`, the pivot coefficient in the
 destination row increases by `c` when the source basis row has nonzero norm. -/
@@ -563,20 +561,17 @@ theorem coeffs_rowAdd_pivot (b : Matrix Rat n m) (src dst : Fin n)
       GramSchmidt.projectionCoeff (b.row src) ((basis b).row src) = 1 := by
     exact projectionCoeff_row_basis_self_eq_one (b := b) (src := src) hnorm
   have hself_get :
-      GramSchmidt.projectionCoeff b[src.val] (basis b)[src.val] = 1 := by
-    simpa [Matrix.row] using hself
+      GramSchmidt.projectionCoeff (b.getRow src) ((basis b).getRow src) = 1 := hself
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn, hsrcdst]
   rw [hbasis]
-  rw [Matrix.rowAdd_eq_set]
-  simp [Vector.getElem_set_self]
-  have hvec :
-      (Vector.ofFn fun k : Fin m => b[dst.val][k.val] + c * b[src.val][k.val]) =
-        b[dst.val] + c • b[src.val] := by
+  have hrow : (b.rowAdd src dst c).getRow dst = b.getRow dst + c • b.getRow src := by
+    show Matrix.row (b.rowAdd src dst c) dst = _
+    rw [Matrix.row_rowAdd_dst]
     apply Vector.ext
     intro idx hidx
     simp [Vector.getElem_add, Vector.getElem_smul]
     rfl
-  rw [hvec]
+  rw [hrow]
   rw [GramSchmidt.projectionCoeff_add_left, GramSchmidt.projectionCoeff_smul_left,
     hself_get]
   grind
@@ -593,20 +588,17 @@ theorem coeffs_rowAdd_above_pivot (b : Matrix Rat n m) (src col dst : Fin n)
   have hzero := projectionCoeff_row_later_basis_eq_zero (b := b) (src := src) (col := col)
     hsrccol
   have hzero_get :
-      GramSchmidt.projectionCoeff b[src.val] (basis b)[col.val] = 0 := by
-    simpa [Matrix.row] using hzero
+      GramSchmidt.projectionCoeff (b.getRow src) ((basis b).getRow col) = 0 := hzero
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn, hcoldst]
   rw [hbasis]
-  rw [Matrix.rowAdd_eq_set]
-  simp [Vector.getElem_set_self]
-  have hvec :
-      (Vector.ofFn fun k : Fin m => b[dst.val][k.val] + c * b[src.val][k.val]) =
-        b[dst.val] + c • b[src.val] := by
+  have hrow : (b.rowAdd src dst c).getRow dst = b.getRow dst + c • b.getRow src := by
+    show Matrix.row (b.rowAdd src dst c) dst = _
+    rw [Matrix.row_rowAdd_dst]
     apply Vector.ext
     intro idx hidx
     simp [Vector.getElem_add, Vector.getElem_smul]
     rfl
-  rw [hvec]
+  rw [hrow]
   rw [GramSchmidt.projectionCoeff_add_left, GramSchmidt.projectionCoeff_smul_left,
     hzero_get]
   grind
@@ -625,17 +617,8 @@ theorem coeffs_rowAdd_other_row (b : Matrix Rat n m) (src dst : Fin n) (c : Rat)
   by_cases hlt : colFin.val < row.val
   · simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn, hlt]
     rw [hbasis]
-    rw [Matrix.rowAdd_eq_set]
-    have hval : dst.val ≠ row.val := by
-      intro h
-      exact hrow (Fin.ext h.symm)
-    change
-      GramSchmidt.projectionCoeff
-          ((Vector.set b dst.val (Vector.ofFn fun k => b[dst][k] + c * b[src][k])
-            dst.isLt)[row.val])
-          (basis b)[colFin.val] =
-        GramSchmidt.projectionCoeff b[row.val] (basis b)[colFin.val]
-    rw [Vector.getElem_set_ne dst.isLt row.isLt hval]
+    rw [show (Matrix.rowAdd b src dst c).getRow row = b.getRow row from
+      Matrix.row_rowAdd_of_ne b src c hrow]
   · simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn, hlt]
 
 /-- Orthogonalization preserves the row space of each prefix: the first `i + 1`
@@ -733,8 +716,8 @@ theorem basis_span (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
               have hdec_col := congrArg (fun v : Vector Rat m => v[col]) hdec
               simp [Vector.getElem_add, Vector.getElem_smul, pc, last, hjlast,
                 GramSchmidt.prefixRows, Matrix.row] at hdec_col ⊢
-              change (basis b)[k + 1][col] =
-                b[k + 1][col] +
+              change ((basis b).getRow ⟨k + 1, hi⟩)[col] =
+                (b.getRow ⟨k + 1, hi⟩)[col] +
                   (-1 : Rat) * (prefixCombination (coeffs b) (basis b) (k + 1) hi)[col]
               rw [hdec_col]
               grind
@@ -759,7 +742,7 @@ theorem basis_span (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
               GramSchmidt.prefixCombination (coeffs b) (basis b) (k + 1) hi
             have hpc : GramSchmidt.prefixSpan (basis b) (k + 1) hi pc := by
               have hraw :=
-                GramSchmidt.prefixSpan_strictPrefix_rowCombination
+                GramSchmidt.prefixSpan_strictPrefix_vecMul
                   (M := basis b) (i := k + 1) (hi := hi)
                   (c := GramSchmidt.projectionCoeffVector (b.row last) (basis b)
                     (k + 1) (Nat.le_of_lt hi))
@@ -784,13 +767,13 @@ theorem basis_span (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
   · intro hv
     rcases hv with ⟨c, hc⟩
     have hspan :=
-      GramSchmidt.prefixSpan_rowCombination (A := basis b) (B := b)
+      GramSchmidt.prefixSpan_vecMul (A := basis b) (B := b)
         (i := i) (hi := hi) c (hmembersAll i hi).1
     rwa [hc] at hspan
   · intro hv
     rcases hv with ⟨c, hc⟩
     have hspan :=
-      GramSchmidt.prefixSpan_rowCombination (A := b) (B := basis b)
+      GramSchmidt.prefixSpan_vecMul (A := b) (B := basis b)
         (i := i) (hi := hi) c (hmembersAll i hi).2
     rwa [hc] at hspan
 
@@ -803,18 +786,16 @@ private theorem basis_row_sub_basis_row_prefixSpan_pred
   refine ⟨GramSchmidt.projectionCoeffVector (b.row ⟨p + 1, hi⟩) (basis b)
       (p + 1) (Nat.le_of_lt hi), ?_⟩
   change
-    Matrix.rowCombination (GramSchmidt.prefixRows (basis b) p hp)
-        (GramSchmidt.projectionCoeffVector (b.row ⟨p + 1, hi⟩) (basis b)
-          (p + 1) (Nat.le_of_lt hi)) =
+    Matrix.vecMul (GramSchmidt.projectionCoeffVector (b.row ⟨p + 1, hi⟩) (basis b)
+          (p + 1) (Nat.le_of_lt hi)) (GramSchmidt.prefixRows (basis b) p hp) =
       b.row ⟨p + 1, hi⟩ - (basis b).row ⟨p + 1, hi⟩
   rw [← GramSchmidt.strictPrefixRows_succ_eq_prefixRows
     (M := basis b) (i := p) (hi := hi)]
   have hpc :
       GramSchmidt.prefixCombination (coeffs b) (basis b) (p + 1) hi =
-        Matrix.rowCombination (GramSchmidt.strictPrefixRows (basis b) (p + 1)
-            (Nat.le_of_lt hi))
-          (GramSchmidt.projectionCoeffVector (b.row ⟨p + 1, hi⟩) (basis b)
-            (p + 1) (Nat.le_of_lt hi)) := by
+        Matrix.vecMul (GramSchmidt.projectionCoeffVector (b.row ⟨p + 1, hi⟩) (basis b)
+            (p + 1) (Nat.le_of_lt hi)) (GramSchmidt.strictPrefixRows (basis b) (p + 1)
+            (Nat.le_of_lt hi)) := by
     simpa [basis, coeffs] using
       GramSchmidt.prefixCombination_eq_strictPrefixRowCombination
         (b := b) (i := p + 1) (hi := hi)

@@ -29,7 +29,7 @@ open Hex
 def M : Matrix Int 3 3 := Matrix.ofFn fun i j => if i = j then (2 : Int) else 1
 
 #eval Matrix.det M                       -- 4, via the Leibniz formula
-#eval Matrix.det (1 : Matrix Int 4 4)    -- 1
+#eval Matrix.det (Matrix.identity (R := Int) 4)    -- 1
 
 -- The determinant tracks elementary row operations.
 #eval Matrix.det (Matrix.rowSwap M 0 1)  -- -4, negated
@@ -83,6 +83,11 @@ The identification of this determinant with Mathlib's `Matrix.det`, and the
 correspondence with the executable Bareiss determinant
 ([`hex-bareiss`](https://github.com/kim-em/hex-bareiss)), live in the Mathlib
 bridge layers.
+
+# Reference manual
+
+The hex reference manual covers this library at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-determinant>.
 
 # Contributing
 

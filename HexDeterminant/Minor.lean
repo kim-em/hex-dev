@@ -93,7 +93,7 @@ This normalizes bottom-right minors to leading prefixes. -/
 @[expose]
 def deleteRowCol {R : Type u} {n : Nat} (M : Matrix R (n + 1) (n + 1))
     (row col : Fin (n + 1)) : Matrix R n n :=
-  ofFn fun i j => M[skipIndex row i][skipIndex col j]
+  ofFn fun i j => M[(skipIndex row i, skipIndex col j)]
 
 /-- Entries of a deleted-row/deleted-column minor are the corresponding source
 entries at the skipped row and column indices. -/
@@ -114,7 +114,7 @@ This is the minor normalization used by bottom-right cofactor expansion. -/
   change (deleteRowCol M (Fin.last n) (Fin.last n))[ii][jj] =
     (principalSubmatrix M n (Nat.le_succ n))[ii][jj]
   rw [getElem_deleteRowCol]
-  simp [principalSubmatrix, ofFn]
+  simp [principalSubmatrix, ofFn, getRow, Fin.getElem_fin]
 
 /-- Deleting row `row` and column `col` after transposing is the transpose of
 the minor obtained by deleting row `col` and column `row` before transposing. -/

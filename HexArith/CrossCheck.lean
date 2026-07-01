@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexArith.Barrett.Context
-import HexArith.Montgomery.Context
-import HexArith.ExtGcd
+module
+
+public import HexArith.Barrett.Context
+public import HexArith.Montgomery.Context
+public import HexArith.ExtGcd
+
+public section
 
 /-!
 Tier-G fast-vs-fast cross-checks for `HexArith` modular multiplication.

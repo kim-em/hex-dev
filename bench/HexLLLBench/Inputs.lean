@@ -13,6 +13,8 @@ public section
 
 namespace Hex.LLLBench
 
+open Hex.Internal
+
 /-- Row-major deterministic fixture for one integer basis. -/
 structure IntBasisInput where
   rows : Nat
@@ -177,9 +179,7 @@ def randomBoundedBasis (n seed : Nat) : Matrix Int n n :=
     else
       randomBoundedEntry (lcgIterate seed (i.val * n + j.val + 1))
 
-/-- Committed seed for the random-bounded family. The `#guard` below checks
-that after size-reducing row 1 against row 0, the first Lovasz comparison
-fails, so the next LLL outer-loop step performs a swap. -/
+/-- Committed seed for the random-bounded family. -/
 def randomBoundedSwapSeed : Nat := 8
 
 /-- Parametric random-bounded input family. The scientific ladder is densified
@@ -192,28 +192,6 @@ def prepRandomBoundedInput (n : Nat) : FirstShortVectorInput :=
     basis := basis
     hn := by
       exact Nat.le_max_right n 1 }
-
-/-- Check that the first Lovasz comparison fails after the first
-size-reduction pass, forcing at least one swap in the subsequent LLL step. -/
-def firstLovaszCheckForcesSwap (input : FirstShortVectorInput) : Bool :=
-  if hrows : 2 < input.rows then
-    let sReduced := (LLLState.ofBasisUnchecked input.basis).sizeReduce 1
-    let f0 : Fin input.rows := ⟨0, by omega⟩
-    let f1 : Fin input.rows := ⟨1, by omega⟩
-    let d0 : Fin (input.rows + 1) := ⟨0, by omega⟩
-    let d1 : Fin (input.rows + 1) := ⟨1, by omega⟩
-    let d2 : Fin (input.rows + 1) := ⟨2, by omega⟩
-    let dkPrev := sReduced.d.get d0
-    let dk := sReduced.d.get d1
-    let dkNext := sReduced.d.get d2
-    let B := (sReduced.ν.get f1).get f0
-    let lovaszLhs : Int := 4 * (Int.ofNat dkNext * Int.ofNat dkPrev + B ^ 2)
-    let lovaszRhs : Int := 3 * (Int.ofNat dk ^ 2)
-    lovaszLhs < lovaszRhs
-  else
-    false
-
-#guard firstLovaszCheckForcesSwap (prepRandomBoundedInput 30)
 
 /-- Entry scale for the verified-Isabelle harsh-cubic regime, whose
 documented bit-length is approximately `3.3 * n`. -/
@@ -774,7 +752,7 @@ projection is marked `noncomputable` for proof-layer signalling and cannot be
 used directly as an executable benchmark target. -/
 def runGramSchmidtCoeffChecksum (input : StateInput) : Int :=
   let q :=
-    (((input.state.ν.get input.k).get input.j : Int) : Rat) /
+    (((input.state.ν.getRow input.k).get input.j : Int) : Rat) /
       (input.state.d.get
         ⟨input.j.val + 1, Nat.succ_lt_succ input.j.isLt⟩ : Rat)
   q.num * 65_537 + Int.ofNat q.den
@@ -829,7 +807,7 @@ def runDispatchedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO I
   -- Track whether `certCheck` itself accepted, not merely whether the payload
   -- was shape-valid: `tryReduce`'s `accepted` tally counts shape validation,
   -- so guarding on it would pass even if certification rejected and we fell
-  -- back to native. The smoke target must fail iff the certified path does.
+  -- back to native. The verify target must fail iff the certified path does.
   let (reduced, certified) ← match candidate? with
     | some cand =>
         let flat := #[0, Int.ofNat input.rows, Int.ofNat input.cols, 1]
@@ -845,8 +823,7 @@ def runDispatchedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO I
 
 /-- Benchmark comparator observable: squared norm of Lean's first LLL vector.
 The verified-Isabelle Haskell extraction reports the same scalar. Runs the
-default native path (`lll.firstShortVectorUnchecked`, the approximation-steered
-reducer with certified output). -/
+exact native path (`lll.firstShortVectorUnchecked`, i.e. `lllNative`). -/
 def runFirstShortVectorNormSq (input : FirstShortVectorInput) : Int :=
   Vector.normSq
     (lll.firstShortVectorUnchecked input.basis (3 / 4)
@@ -854,9 +831,8 @@ def runFirstShortVectorNormSq (input : FirstShortVectorInput) : Int :=
 
 /-- Benchmark comparator observable for the exact `d`/`ν` reducer: squared norm
 of the first vector of `lllNative` run directly. This is the
-fplll-independent exact integer reducer that the steered path demotes to its
-certification fallback; measuring it directly keeps the exact-native curve of
-the comparator plot independent of the steered default. -/
+fplll-independent exact integer reducer; measuring it directly gives the
+exact-native curve of the comparator plot. -/
 def runNativeFirstShortVectorNormSq (input : FirstShortVectorInput) : Int :=
   Vector.normSq
     ((lllNative input.basis (3 / 4) lllDeltaLower lllDeltaUpper input.hn).row
@@ -1221,7 +1197,7 @@ def runFpLLLFirstShortVectorHarshCubic65Checksum : Unit → IO Int := fun _ => d
     (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
 
 -- Exact `lllNative` ladder targets for the comparator's exact-native curve
--- (the steered default lives on the `runFirstShortVector*NormSq` targets).
+-- (the default `runFirstShortVector*NormSq` targets also run `lllNative`).
 /-- Exact native `runNativeFirstShortVectorNormSq` on the `random-bounded`
 fixture at the rung `n = 30`, returning the first short vector's squared norm
 for the exact-native ladder curve. -/
@@ -1464,13 +1440,13 @@ def runCertifiedCheckerHarshCubic65Checksum : Unit → IO Int :=
   runCertifiedCheckerChecksum certifiedHarshCubic65Ref (fun _ => prepHarshCubicInput 65)
 
 /-- Observable for the reducedness-decision tally: run the certified checker
-once on every rung of both ladders, then read `Hex.checkerTally`. Fails if
+once on every rung of both ladders, then read `Hex.Internal.checkerTally`. Fails if
 any interval pass reached indecision (`exactFallback ≠ 0`); the
 size-predictor split between interval-accepted and exact-primary is pinned
 by the expected hash. The returned value encodes the tally as
 `(interval · 65537 + exactPrimary) · 65537 + exactFallback`. -/
 def runCertifiedCheckerIntervalTally : Unit → IO Int := fun _ => do
-  Hex.resetCheckerTally
+  Hex.Internal.resetCheckerTally
   let targets : List (Unit → IO Int) :=
     [runCertifiedCheckerRandomBounded30Checksum,
      runCertifiedCheckerRandomBounded45Checksum,
@@ -1493,7 +1469,7 @@ def runCertifiedCheckerIntervalTally : Unit → IO Int := fun _ => do
      runCertifiedCheckerHarshCubic65Checksum]
   for t in targets do
     discard <| t ()
-  let tally ← Hex.checkerTally
+  let tally ← Hex.Internal.checkerTally
   if tally.exactFallback != 0 then
     throw <| IO.userError
       s!"interval reducedness checker reached indecision: {repr tally}"

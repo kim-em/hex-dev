@@ -72,21 +72,21 @@ private theorem sizeSq_of_intCheck
       ⟨j + 1, Nat.succ_lt_succ (Nat.lt_trans hji hi)⟩)
     (hint :
       ((η.den : Int) *
-          ((((Hex.GramSchmidt.Int.data b).ν.get ⟨i, hi⟩).get
+          ((((Hex.GramSchmidt.Int.data b).ν.getRow ⟨i, hi⟩).get
               ⟨j, Nat.lt_trans hji hi⟩).natAbs : Int)) ≤
         η.num *
           ((Hex.GramSchmidt.Int.data b).d.get
             ⟨j + 1, Nat.succ_lt_succ (Nat.lt_trans hji hi)⟩ : Int)) :
-    (((Hex.GramSchmidt.Int.coeffs b).get ⟨i, hi⟩).get
+    (((Hex.GramSchmidt.Int.coeffs b).getRow ⟨i, hi⟩).get
         ⟨j, Nat.lt_trans hji hi⟩) *
-      (((Hex.GramSchmidt.Int.coeffs b).get ⟨i, hi⟩).get
+      (((Hex.GramSchmidt.Int.coeffs b).getRow ⟨i, hi⟩).get
         ⟨j, Nat.lt_trans hji hi⟩) ≤ η * η := by
   -- Names for the integer slots.
-  set νij : Int := ((Hex.GramSchmidt.Int.data b).ν.get ⟨i, hi⟩).get
+  set νij : Int := ((Hex.GramSchmidt.Int.data b).ν.getRow ⟨i, hi⟩).get
       ⟨j, Nat.lt_trans hji hi⟩ with hνij_def
   set dj1 : Nat := (Hex.GramSchmidt.Int.data b).d.get
       ⟨j + 1, Nat.succ_lt_succ (Nat.lt_trans hji hi)⟩ with hdj1_def
-  set μ : Rat := ((Hex.GramSchmidt.Int.coeffs b).get ⟨i, hi⟩).get
+  set μ : Rat := ((Hex.GramSchmidt.Int.coeffs b).getRow ⟨i, hi⟩).get
       ⟨j, Nat.lt_trans hji hi⟩ with hμ_def
   -- Bridge ν[i][j] ↔ d[j+1] · μ via scaledCoeffs_eq.
   have hbridge :
@@ -195,20 +195,20 @@ private theorem lovasz_of_intCheck
               ((Hex.GramSchmidt.Int.data b).d.get
                 ⟨i, Nat.lt_succ_of_lt
                   (Nat.lt_trans (Nat.lt_succ_self i) hi)⟩ : Int) +
-            (((Hex.GramSchmidt.Int.data b).ν.get ⟨i + 1, hi⟩).get
+            (((Hex.GramSchmidt.Int.data b).ν.getRow ⟨i + 1, hi⟩).get
               ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩) ^ 2) ≥
         δ.num *
           ((Hex.GramSchmidt.Int.data b).d.get
             ⟨i + 1, Nat.succ_lt_succ
               (Nat.lt_trans (Nat.lt_succ_self i) hi)⟩ : Int) ^ 2) :
-    δ * Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b)
+    δ * Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b)
         ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩ ≤
-      Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b) ⟨i + 1, hi⟩ +
-        (((Hex.GramSchmidt.Int.coeffs b).get ⟨i + 1, hi⟩).get
+      Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b) ⟨i + 1, hi⟩ +
+        (((Hex.GramSchmidt.Int.coeffs b).getRow ⟨i + 1, hi⟩).get
             ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩) *
-          (((Hex.GramSchmidt.Int.coeffs b).get ⟨i + 1, hi⟩).get
+          (((Hex.GramSchmidt.Int.coeffs b).getRow ⟨i + 1, hi⟩).get
             ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩) *
-          Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b)
+          Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b)
             ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩ := by
   have hi_lt : i < n := Nat.lt_trans (Nat.lt_succ_self i) hi
   have hi1_lt : i + 1 < n := hi
@@ -265,9 +265,9 @@ private theorem lovasz_of_intCheck
   have hgd_i1_ne : (gd_i1 : Rat) ≠ 0 := ne_of_gt hgd_i1_posR
   have hδden_pos : (0 : Rat) < (δ.den : Rat) := by exact_mod_cast δ.den_pos
   -- Basis norm identities.
-  set Ni : Rat := Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b) iFin
+  set Ni : Rat := Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b) iFin
     with hNi_def
-  set Ni1 : Rat := Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b) ip1Fin
+  set Ni1 : Rat := Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis b) ip1Fin
     with hNi1_def
   have hNi_mul : (gd_i : Rat) * Ni = (gd_i1 : Rat) := by
     have hbn := Hex.GramSchmidt.Int.basis_normSq b hindep i hi_lt
@@ -282,9 +282,9 @@ private theorem lovasz_of_intCheck
       exact hbn
     rw [hNi1_val, mul_div_cancel₀ _ hgd_i1_ne]
   -- ν[i+1][i] = gd_i1 · μ via scaledCoeffs_eq.
-  set νB : Int := ((Hex.GramSchmidt.Int.data b).ν.get ip1Fin).get ⟨i, hi_lt⟩
+  set νB : Int := ((Hex.GramSchmidt.Int.data b).ν.getRow ip1Fin).get ⟨i, hi_lt⟩
     with hνB_def
-  set μ : Rat := ((Hex.GramSchmidt.Int.coeffs b).get ip1Fin).get ⟨i, hi_lt⟩
+  set μ : Rat := ((Hex.GramSchmidt.Int.coeffs b).getRow ip1Fin).get ⟨i, hi_lt⟩
     with hμ_def
   have hμ_bridge : (νB : Rat) = (gd_i1 : Rat) * μ := by
     have h := Hex.GramSchmidt.Int.scaledCoeffs_eq b (i + 1) i hi1_lt
@@ -321,7 +321,7 @@ private theorem lovasz_of_intCheck
         (((Hex.GramSchmidt.Int.data b).d.get ⟨i + 2, Nat.succ_lt_succ hi⟩ : Int) *
             ((Hex.GramSchmidt.Int.data b).d.get
                 ⟨i, Nat.lt_succ_of_lt hi_lt⟩ : Int) +
-          (((Hex.GramSchmidt.Int.data b).ν.get ip1Fin).get ⟨i, hi_lt⟩) ^ 2) : Rat) ≥
+          (((Hex.GramSchmidt.Int.data b).ν.getRow ip1Fin).get ⟨i, hi_lt⟩) ^ 2) : Rat) ≥
         ((δ.num *
           ((Hex.GramSchmidt.Int.data b).d.get
             ⟨i + 1, Nat.succ_lt_succ hi_lt⟩ : Int) ^ 2 : Int) : Rat) := by
@@ -383,7 +383,7 @@ theorem lllReducedInt_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
               ((Hex.GramSchmidt.Int.data b).d.get
                 ⟨i, Nat.lt_succ_of_lt
                   (Nat.lt_trans (Nat.lt_succ_self i) hi)⟩ : Int) +
-            (((Hex.GramSchmidt.Int.data b).ν.get ⟨i + 1, hi⟩).get
+            (((Hex.GramSchmidt.Int.data b).ν.getRow ⟨i + 1, hi⟩).get
               ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩) ^ 2) ≥
         δ.num *
           ((Hex.GramSchmidt.Int.data b).d.get
@@ -415,15 +415,15 @@ whichever side decided — the fixed-precision interval checker
 chosen by the size predictor, or the exact fallback after interval
 indecision (both via `lllReducedInt_sound` above) — acceptance entails
 the rational `isLLLReduced` predicate and independence. The predictor
-`Hex.intervalWins` only selects between sound checkers, so no hypothesis
+`Hex.Internal.intervalWins` only selects between sound checkers, so no hypothesis
 about it is needed. -/
 theorem lllReducedCheck_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
     Hex.lllReducedCheck b δ η = true →
       Hex.isLLLReduced b δ η ∧ Hex.Matrix.independent b := by
   intro hcheck
   unfold Hex.lllReducedCheck at hcheck
-  simp only [Hex.withRecordCheckerOutcome] at hcheck
-  by_cases hwin : Hex.intervalWins b = true
+  simp only [Hex.Internal.withRecordCheckerOutcome] at hcheck
+  by_cases hwin : Hex.Internal.intervalWins b = true
   · rw [if_pos hwin] at hcheck
     by_cases hint : Hex.lllReducedInterval b δ η = true
     · exact HexLLLMathlib.lllReducedInterval_sound b δ η hint

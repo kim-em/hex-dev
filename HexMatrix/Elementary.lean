@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexMatrix.Basic
-public import HexMatrix.Vector.Modify
+public import HexBasic.Vector.Modify
 
 public section
 
@@ -42,7 +42,7 @@ theorem getElem_rowSwap (M : Matrix R n m) (i j r : Fin n) (k : Fin m) :
       if r = j then M[i][k] else if r = i then M[j][k] else M[r][k] := by
   rw [rowSwap]
   by_cases hri : r = i <;> by_cases hrj : r = j <;>
-    simp_all [Fin.getElem_fin, Fin.ext_iff]
+    simp_all [getRow, rows_swap, Fin.getElem_fin, Fin.ext_iff]
 
 /-- Row `i` of `rowSwap M i j` is the original row `j`. -/
 @[simp, grind =] theorem row_rowSwap_left (M : Matrix R n m) (i j : Fin n) :
@@ -92,7 +92,7 @@ uniquely referenced both the outer vector and the row itself are updated in
 place: `Vector.map` reuses the freed row's backing store. -/
 @[expose]
 def rowScale [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) : Matrix R n m :=
-  M.modify i fun row => row.map fun x => c * x
+  M.modifyRow i fun row => row.map fun x => c * x
 
 /-- Read an entry of `rowScale M i c` by cases on the row index: row `i`
 returns `c * M[i][k]`, any other row is unchanged. -/
@@ -100,7 +100,8 @@ theorem getElem_rowScale [Mul R] (M : Matrix R n m) (i r : Fin n) (c : R) (k : F
     (rowScale M i c)[r][k] =
       if r = i then c * M[i][k] else M[r][k] := by
   rw [rowScale]
-  simp only [Fin.getElem_fin]
+  simp only [getElem_eq_getRow, getRow, rows_modifyRow, Vector.getElem_modify,
+    Fin.getElem_fin, Fin.ext_iff]
   grind
 
 /-- Row `i` of `rowScale M i c` is the pointwise scalar multiple of row `i`. -/
@@ -130,8 +131,8 @@ is the consuming `Vector.modify`, which updates the outer vector in place when
 built fresh, since every entry of it changes. -/
 @[expose]
 def rowAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin n) (c : R) : Matrix R n m :=
-  let rsrc := M[src]
-  M.modify dst fun rdst => Vector.ofFn fun k => rdst[k] + c * rsrc[k]
+  let rsrc := getRow M src
+  M.modifyRow dst fun rdst => Vector.ofFn fun k => rdst[k] + c * rsrc[k]
 
 /-- Read an entry of `rowAdd M src dst c` by cases on the row index: row `dst`
 returns `M[dst][k] + c * M[src][k]`, any other row is unchanged. -/
@@ -140,7 +141,8 @@ theorem getElem_rowAdd [Mul R] [Add R]
     (rowAdd M src dst c)[r][k] =
       if r = dst then M[dst][k] + c * M[src][k] else M[r][k] := by
   rw [rowAdd]
-  simp only [Fin.getElem_fin]
+  simp only [getElem_eq_getRow, getRow, rows_modifyRow, Vector.getElem_modify,
+    Fin.getElem_fin, Fin.ext_iff]
   grind
 
 /-- Source-row entries are unchanged by `rowAdd M src dst c` when `src ≠ dst`. -/
@@ -183,37 +185,25 @@ theorem row_rowAdd_of_ne [Mul R] [Add R]
 goes through `Vector.modify` for in-place update; this is the value-level
 characterization for callers that reason about the result as a `set`. -/
 theorem rowScale_eq_set [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) :
-    rowScale M i c = M.set i (Vector.ofFn fun k => c * M[i][k]) := by
+    rowScale M i c = setRow M i (Vector.ofFn fun k => c * M[i][k]) := by
+  apply ext
+  simp only [rowScale, rows_modifyRow, rows_setRow]
+  rw [Vector.modify_eq_set _ _ _ i.isLt]
+  congr 1
   apply Vector.ext
-  intro r hr
-  rw [rowScale, Vector.getElem_modify, Vector.getElem_set]
-  by_cases hri : r = (i : Nat)
-  · subst hri
-    rw [if_pos rfl, if_pos rfl]
-    apply Vector.ext
-    intro k hk
-    simp [Fin.getElem_fin]
-  · have h' : ¬ ((i : Nat) = r) := fun h => hri h.symm
-    rw [if_neg h', if_neg h']
+  intro k hk
+  simp [Fin.getElem_fin, getElem_eq_getRow, getRow]
 
 /-- `rowAdd` as a single `set` of the combined row. The executable definition
 goes through `Vector.modify` for in-place update; this is the value-level
 characterization for callers that reason about the result as a `set`. -/
 theorem rowAdd_eq_set [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin n) (c : R) :
     rowAdd M src dst c =
-      M.set dst (Vector.ofFn fun k => M[dst][k] + c * M[src][k]) := by
-  apply Vector.ext
-  intro r hr
-  simp only [rowAdd]
-  rw [Vector.getElem_modify, Vector.getElem_set]
-  by_cases hrd : r = (dst : Nat)
-  · subst hrd
-    rw [if_pos rfl, if_pos rfl]
-    apply Vector.ext
-    intro k hk
-    simp [Fin.getElem_fin]
-  · have h' : ¬ ((dst : Nat) = r) := fun h => hrd h.symm
-    rw [if_neg h', if_neg h']
+      setRow M dst (Vector.ofFn fun k => M[dst][k] + c * M[src][k]) := by
+  apply ext
+  simp only [rowAdd, rows_modifyRow, rows_setRow]
+  rw [Vector.modify_eq_set _ _ _ dst.isLt]
+  congr 1
 
 /-- Replace column `dst` by `col dst + c * col src`.
 
@@ -224,7 +214,7 @@ referenced, and each row's single-entry update is itself in place when that row
 vector is uniquely referenced. -/
 @[expose]
 def colAdd [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin m) (c : R) : Matrix R n m :=
-  M.map fun row => row.set dst (row[dst] + c * row[src])
+  M.mapRows fun row => row.set dst (row[dst] + c * row[src])
 
 /-- Replace column `dst` by `col dst + col src * c`.
 
@@ -233,7 +223,7 @@ whose right-multiplication wrapper is valid over a noncommutative ring. -/
 @[expose]
 def colAddRight [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin m) (c : R) :
     Matrix R n m :=
-  M.map fun row => row.set dst (row[dst] + row[src] * c)
+  M.mapRows fun row => row.set dst (row[dst] + row[src] * c)
 
 /-- Read an entry of `colAdd M src dst c` by cases on the column index:
 column `dst` returns `M[i][dst] + c * M[i][src]`, any other column is
@@ -243,7 +233,8 @@ theorem getElem_colAdd [Mul R] [Add R]
     (colAdd M src dst c)[i][j] =
       if j = dst then M[i][j] + c * M[i][src] else M[i][j] := by
   rw [colAdd]
-  simp only [Fin.getElem_fin, Vector.getElem_map]
+  simp only [getElem_eq_getRow, getRow, rows_mapRows, Vector.getElem_map,
+    Vector.getElem_set, Fin.getElem_fin, Fin.ext_iff]
   grind
 
 /-- Read an entry of `colAddRight M src dst c` by cases on the column index:
@@ -254,7 +245,8 @@ theorem getElem_colAddRight [Mul R] [Add R]
     (colAddRight M src dst c)[i][j] =
       if j = dst then M[i][j] + M[i][src] * c else M[i][j] := by
   rw [colAddRight]
-  simp only [Fin.getElem_fin, Vector.getElem_map]
+  simp only [getElem_eq_getRow, getRow, rows_mapRows, Vector.getElem_map,
+    Vector.getElem_set, Fin.getElem_fin, Fin.ext_iff]
   grind
 
 /-- Column `dst` of `colAdd M src dst c` is the pointwise column combination. -/

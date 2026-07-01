@@ -143,32 +143,16 @@ def gramMatrix [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) : Matrix R n n :=
 /-- The Gram matrix of the identity is the identity. -/
 @[simp, grind =] theorem gramMatrix_identity {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
     gramMatrix (Matrix.identity (R := R) n) = (Matrix.identity (R := R) n) := by
-  ext i hi j hj
-  have hrow_i : (Matrix.identity (R := R) n).row ⟨i, hi⟩ =
-      Vector.unit R ⟨i, hi⟩ := by
+  have hrow : ∀ i : Fin n, (Matrix.identity (R := R) n).row i = Vector.unit R i := by
+    intro i
     ext a ha
-    show ((Matrix.identity (R := R) n).row ⟨i, hi⟩)[(⟨a, ha⟩ : Fin n)] =
-      (Vector.unit R ⟨i, hi⟩)[(⟨a, ha⟩ : Fin n)]
-    rw [Matrix.row, Hex.Matrix.getElem_identity (i := (⟨i, hi⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n)),
-      Vector.getElem_unit (i := (⟨i, hi⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
+    show ((Matrix.identity (R := R) n).row i)[(⟨a, ha⟩ : Fin n)] =
+      (Vector.unit R i)[(⟨a, ha⟩ : Fin n)]
+    rw [getElem_row, getElem_identity, Vector.getElem_unit]
     rfl
-  have hrow_j : (Matrix.identity (R := R) n).row ⟨j, hj⟩ =
-      Vector.unit R ⟨j, hj⟩ := by
-    ext a ha
-    show ((Matrix.identity (R := R) n).row ⟨j, hj⟩)[(⟨a, ha⟩ : Fin n)] =
-      (Vector.unit R ⟨j, hj⟩)[(⟨a, ha⟩ : Fin n)]
-    rw [Matrix.row, Hex.Matrix.getElem_identity (i := (⟨j, hj⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n)),
-      Vector.getElem_unit (i := (⟨j, hj⟩ : Fin n)) (j := (⟨a, ha⟩ : Fin n))]
-    rfl
-  show (gramMatrix (Matrix.identity (R := R) n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] =
-    (Matrix.identity (R := R) n)[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)]
-  have hgram :
-      (gramMatrix (Matrix.identity (R := R) n))[(⟨i, hi⟩ : Fin n)][(⟨j, hj⟩ : Fin n)] =
-        ((Matrix.identity (R := R) n).row ⟨i, hi⟩).dotProduct
-          ((Matrix.identity (R := R) n).row ⟨j, hj⟩) := by
-    unfold gramMatrix ofFn
-    simp
-  rw [hgram, hrow_i, hrow_j, Vector.dotProduct_unit_unit, getElem_identity]
+  apply ext_getElem
+  intro i j
+  rw [getElem_gramMatrix, hrow, hrow, Vector.dotProduct_unit_unit, getElem_identity]
 
 end Matrix
 

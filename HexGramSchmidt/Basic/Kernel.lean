@@ -391,8 +391,8 @@ def basisRows (rows : List (Vector Rat m)) : List (Vector Rat m) :=
 /-- Rebuild a matrix from its row list after Gram-Schmidt orthogonalization. -/
 @[expose]
 def basisMatrix (b : Matrix Rat n m) : Matrix Rat n m :=
-  let rows := basisRows b.toList
-  Vector.ofFn fun i => rows[i.val]!
+  let rows := basisRows b.rows.toList
+  Hex.Matrix.ofRows (Vector.ofFn fun i => rows[i.val]!)
 
 /-- `basisRowsAux basisRev pending` begins with `basisRev.reverse` as a prefix. -/
 private theorem basisRowsAux_reverse_prefix (basisRev pending : List (Vector Rat m)) :
@@ -467,23 +467,23 @@ private theorem basisRows_pairwise (rows : List (Vector Rat m)) :
   simpa [basisRows] using
     basisRowsAux_pairwise ([] : List (Vector Rat m)) rows (by simp)
 
-/-- Row `i` of `basisMatrix b` is the `i`-th entry of `basisRows b.toList`. -/
+/-- Row `i` of `basisMatrix b` is the `i`-th entry of `basisRows b.rows.toList`. -/
 private theorem basisMatrix_row_eq_basisRows_get!
     (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
-    (basisMatrix b).row ⟨i, hi⟩ = (basisRows b.toList)[i]! := by
+    (basisMatrix b).row ⟨i, hi⟩ = (basisRows b.rows.toList)[i]! := by
   simp [basisMatrix, Matrix.row]
 
-/-- Distinct rows of `basisRows b.toList` have dot product zero. -/
+/-- Distinct rows of `basisRows b.rows.toList` have dot product zero. -/
 private theorem basisRows_get!_dot_eq_zero
     (b : Matrix Rat n m) (i j : Nat) (hi : i < n) (hj : j < n) (hij : i ≠ j) :
-    (basisRows b.toList)[i]!.dotProduct (basisRows b.toList)[j]! = 0 := by
-  let rows := basisRows b.toList
+    (basisRows b.rows.toList)[i]!.dotProduct (basisRows b.rows.toList)[j]! = 0 := by
+  let rows := basisRows b.rows.toList
   have hlen : rows.length = n := by
     simp [rows, basisRows_length]
   have hirows : i < rows.length := by simpa [hlen] using hi
   have hjrows : j < rows.length := by simpa [hlen] using hj
   have hpair : rows.Pairwise (fun x y => x.dotProduct y = 0 ∧ y.dotProduct x = 0) := by
-    simpa [rows] using basisRows_pairwise (rows := b.toList)
+    simpa [rows] using basisRows_pairwise (rows := b.rows.toList)
   have hget_i : rows[i]! = rows[i] := by simp [hirows]
   have hget_j : rows[j]! = rows[j] := by simp [hjrows]
   by_cases hlt : i < j
@@ -499,25 +499,26 @@ private theorem basisRows_get!_dot_eq_zero
     exact hrel.2
 
 private theorem basisRows_head (b : Matrix Rat n m) (hn : 0 < n) :
-    (basisRows b.toList)[0]! = b[0] := by
-  have hlen : b.toList.length = n := by simp
-  cases hrows : b.toList with
+    (basisRows b.rows.toList)[0]! = b[0] := by
+  have hlen : b.rows.toList.length = n := by simp
+  cases hrows : b.rows.toList with
   | nil =>
       simp [hrows] at hlen
       omega
   | cons row rows =>
       have hrow : row = b[0] := by
-        have hget := Vector.getElem_toList (xs := b) (i := 0) (h := by simpa [hlen] using hn)
-        simpa [hrows] using hget
-      simpa [basisRows, basisRowsAux, reduceAgainstBasis, hrows, hrow] using
-        basisRowsAux_singleton_head (row := b[0]) (rows := rows)
+        have hget := Vector.getElem_toList (xs := b.rows) (i := 0) (h := by simpa [hlen] using hn)
+        simpa [hrows, Hex.Matrix.getRow, Fin.getElem_fin] using hget
+      simpa [basisRows, basisRowsAux, reduceAgainstBasis, hrows, hrow,
+        Hex.Matrix.getRow, Fin.getElem_fin] using
+        basisRowsAux_singleton_head (row := b.getRow ⟨0, hn⟩) (rows := rows)
 
 /-- Gram-Schmidt coefficient matrix for an already-cast rational input. -/
 @[expose]
 def coeffMatrix (rows basis : Matrix Rat n m) : Matrix Rat n n :=
   Matrix.ofFn fun i j =>
-    if hlt : j.val < i.val then
-      projectionCoeff rows[i] basis[j]
+    if _hlt : j.val < i.val then
+      projectionCoeff (rows.getRow i) (basis.getRow j)
     else if i = j then
       1
     else
@@ -532,7 +533,7 @@ def entry (M : Matrix R n m) (i : Fin n) (j : Fin m) : R :=
 Gram-Schmidt. -/
 @[expose]
 def castIntMatrix (b : Matrix Int n m) : Matrix Rat n m :=
-  Vector.map (fun row => Vector.map (fun x : Int => (x : Rat)) row) b
+  Hex.Matrix.ofRows (Vector.map (fun row => Vector.map (fun x : Int => (x : Rat)) row) b.rows)
 
 /-- The prefix combination term used in the decomposition theorem shape. -/
 @[expose]
@@ -547,12 +548,13 @@ def prefixCombination (coeffs : Matrix Rat n n) (basis : Matrix Rat n m) (i : Na
 /-- The row-prefix matrix containing rows `0` through `i`. -/
 @[expose]
 def prefixRows (M : Matrix R n m) (i : Nat) (hi : i < n) : Matrix R (i + 1) m :=
-  Vector.ofFn fun j => M.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt hi)⟩
+  Hex.Matrix.ofRows
+    (Vector.ofFn fun j => M.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt hi)⟩)
 
 /-- Executable row-span membership in the first `i + 1` rows of a matrix. -/
 @[expose]
 def prefixSpan (M : Matrix Rat n m) (i : Nat) (hi : i < n) (v : Vector Rat m) : Prop :=
-  ∃ c : Vector Rat (i + 1), Matrix.rowCombination (prefixRows M i hi) c = v
+  ∃ c : Vector Rat (i + 1), Matrix.vecMul c (prefixRows M i hi) = v
 
 private theorem entry_ofFn (f : Fin n → Fin m → R) (i : Fin n) (j : Fin m) :
     entry (Matrix.ofFn f) i j = f i j := by

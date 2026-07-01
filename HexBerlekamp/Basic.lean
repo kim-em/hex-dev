@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMatrix
-import HexRowReduce
-import HexPolyFp
+module
+
+public import HexMatrix
+public import HexRowReduce
+public import HexPolyFp
+
+public section
 
 /-!
 Executable Berlekamp-matrix support for `hex-berlekamp`.
@@ -24,6 +28,7 @@ namespace Berlekamp
 variable {p : Nat} [ZMod64.Bounds p]
 
 /-- The basis size used for the Berlekamp matrix of `f`. -/
+@[expose]
 def basisSize (f : FpPoly p) : Nat :=
   f.degree?.getD 0
 
@@ -42,6 +47,7 @@ private theorem basisSize_eq_size_sub_one (f : FpPoly p)
   simp [Nat.ne_of_gt h]
 
 /-- Read a polynomial's first `degree f` coefficients as a vector. -/
+@[expose]
 def coeffVector (f g : FpPoly p) : Vector (ZMod64 p) (basisSize f) :=
   Vector.ofFn fun i => g.coeff i.val
 
@@ -84,7 +90,8 @@ Iteratively build the array of Berlekamp-matrix column polynomials
 Each step costs one polynomial product and one monic reduction, both
 quadratic in `n`, so the array of `n` columns is built in `O(n^3)` total.
 -/
-private def berlekampColumnPolys (f : FpPoly p) (hmonic : DensePoly.Monic f)
+@[expose]
+def berlekampColumnPolys (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (frobX : FpPoly p) : Nat → FpPoly p → Array (FpPoly p) → Array (FpPoly p)
   | 0, _, acc => acc
   | k + 1, current, acc =>
@@ -625,13 +632,37 @@ theorem berlekampMatrix_mulVec_coeffVector_eq
   rw [← coeffVector_matrixActionPolySum_eq_mulVec f hmonic w,
     matrixActionPolySum_eq_linearPow_mod f hmonic w hw]
 
-/-- The fixed-space matrix `Q_f - I` used in Berlekamp's kernel computation. -/
+/-- The fixed-space matrix `Q_f - I` used in Berlekamp's kernel computation.
+Built in place: only the diagonal of `Q_f` is decremented, via `mapRowsIdx`
+setting one entry per row, rather than rebuilding the whole matrix with `ofFn`. -/
 def fixedSpaceMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     Matrix (ZMod64 p) (basisSize f) (basisSize f) :=
   let Q := berlekampMatrix f hmonic
-  Matrix.ofFn fun i j => Q[i][j] - if i = j then 1 else 0
+  Q.mapRowsIdx fun i row => row.modify i.val fun x => x - 1
+
+/-- Entrywise characterization of `fixedSpaceMatrix`: it is `Q_f` with `1`
+subtracted on the diagonal. -/
+@[grind =] theorem getElem_fixedSpaceMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (i j : Fin (basisSize f)) :
+    (fixedSpaceMatrix f hmonic)[i][j] =
+      (berlekampMatrix f hmonic)[i][j] - if i = j then 1 else 0 := by
+  unfold fixedSpaceMatrix
+  rw [Matrix.getElem_mapRowsIdx]
+  simp only [Vector.getElem_modify, Matrix.getElem_eq_getRow, Matrix.getRow, Fin.getElem_fin,
+    Fin.ext_iff]
+  grind
+
+/-- `fixedSpaceMatrix` agrees with the `Q_f - I` matrix-subtraction form; lets the
+`sub_identity_mulVec` algebra apply to the in-place definition. -/
+theorem fixedSpaceMatrix_eq_sub (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    fixedSpaceMatrix f hmonic =
+      berlekampMatrix f hmonic - Matrix.identity (basisSize f) := by
+  apply Matrix.ext_getElem
+  intro i j
+  rw [getElem_fixedSpaceMatrix, Matrix.getElem_sub, Matrix.getElem_identity]
 
 /-- Convert a coefficient vector back to its polynomial representative. -/
+@[expose]
 def vectorToPoly {n : Nat} (v : Vector (ZMod64 p) n) : FpPoly p :=
   FpPoly.ofCoeffs v.toArray
 
@@ -647,6 +678,7 @@ theorem coeffVector_vectorToPoly (f : FpPoly p) (v : Vector (ZMod64 p) (basisSiz
 The fixed-space kernel of `Q_f - I`, reusing `HexMatrix.nullspace` instead of a
 Berlekamp-local linear-algebra implementation.
 -/
+@[expose]
 def fixedSpaceKernelVectors (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [inst : Lean.Grind.Field (ZMod64 p)] :
     Vector (Vector (ZMod64 p) (basisSize f))
@@ -654,6 +686,7 @@ def fixedSpaceKernelVectors (f : FpPoly p) (hmonic : DensePoly.Monic f)
   Matrix.nullspace (fixedSpaceMatrix f hmonic)
 
 /-- The fixed-space kernel basis converted back to polynomial representatives. -/
+@[expose]
 def fixedSpaceKernel (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [inst : Lean.Grind.Field (ZMod64 p)] :
     Vector (FpPoly p)
@@ -688,14 +721,11 @@ theorem isFixedSpaceKernelVector_iff_berlekampMatrix_mulVec_eq
     IsFixedSpaceKernelVector f hmonic v ↔
       Matrix.mulVec (berlekampMatrix f hmonic) v = v := by
   unfold IsFixedSpaceKernelVector
-  dsimp only [fixedSpaceMatrix]
-  have hsub :
-      Matrix.mulVec
-          (Matrix.ofFn fun i j => (berlekampMatrix f hmonic)[i][j] - if i = j then 1 else 0) v =
-        Matrix.mulVec (berlekampMatrix f hmonic) v - v :=
-    Matrix.sub_identity_mulVec (berlekampMatrix f hmonic) v
-  rw [hsub]
-  exact vector_sub_eq_zero_iff_eq (Matrix.mulVec (berlekampMatrix f hmonic) v) v
+  rw [fixedSpaceMatrix_eq_sub]
+  show (berlekampMatrix f hmonic - Matrix.identity (basisSize f)) * v = 0 ↔
+    berlekampMatrix f hmonic * v = v
+  rw [Matrix.sub_identity_mulVec]
+  exact vector_sub_eq_zero_iff_eq (berlekampMatrix f hmonic * v) v
 
 /-- Polynomial-level executable Berlekamp kernel condition, by reading the
 representative in the quotient basis used by `fixedSpaceMatrix`. -/

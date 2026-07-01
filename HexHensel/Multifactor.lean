@@ -4,7 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexHensel.Linear
+module
+
+public import HexBasic
+public import HexHensel.Linear
+
+public section
 
 /-!
 Executable multifactor Hensel lifting surface.
@@ -17,6 +22,7 @@ reducing the problem to the binary Hensel lift.
 namespace Array
 
 /-- Ordered product of integer polynomial factors, using left-fold order. -/
+@[expose]
 def polyProduct (factors : Array Hex.ZPoly) : Hex.ZPoly :=
   factors.foldl (· * ·) 1
 
@@ -96,6 +102,7 @@ complementary product `Array.polyProduct rest.toArray` via `henselLift`, and
 recurses with `lifted.h` as the new target on `rest`. The singleton case
 returns the input reduced modulo `p^k`; the empty case returns the empty
 array. -/
+@[expose]
 def multifactorLiftList
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) : List ZPoly → Array ZPoly
@@ -112,6 +119,7 @@ def multifactorLiftList
 Lift an ordered array of factors from congruence modulo `p` to congruence
 modulo `p^k`.
 -/
+@[expose]
 def multifactorLift
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (factors : Array ZPoly) : Array ZPoly :=
@@ -159,6 +167,7 @@ needs the linear-path lifted factors modulo `p^k` should obtain them via
 the two paths under the Mathlib `Polynomial.map (Int.castRingHom (ZMod (p^k)))`
 canonicalisation.
 -/
+@[expose]
 def MultifactorLiftInvariant
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) : List ZPoly → Prop
@@ -205,20 +214,8 @@ theorem polyProduct_singleton (g : ZPoly) :
 left fold. -/
 theorem list_foldl_mul_eq_mul_foldl_one (g : ZPoly) (xs : List ZPoly) :
     xs.foldl (fun acc factor => acc * factor) g =
-      g * xs.foldl (fun acc factor => acc * factor) 1 := by
-  induction xs generalizing g with
-  | nil =>
-      simpa using (DensePoly.mul_one_right_poly (S := Int) g).symm
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [one_mul_zpoly]
-      calc
-        xs.foldl (fun acc factor => acc * factor) (g * x) =
-            (g * x) * xs.foldl (fun acc factor => acc * factor) 1 := ih (g * x)
-        _ = g * (x * xs.foldl (fun acc factor => acc * factor) 1) := by
-            rw [DensePoly.mul_assoc_poly (S := Int)]
-        _ = g * xs.foldl (fun acc factor => acc * factor) x := by
-            rw [ih x]
+      g * xs.foldl (fun acc factor => acc * factor) 1 :=
+  List.foldl_mul_eq_mul_foldl xs id g
 
 /-- Splitting `Array.polyProduct` across a singleton prepend: the head
 factors out as a left multiplication. Used to relate the multifactor

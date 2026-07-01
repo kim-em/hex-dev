@@ -29,10 +29,10 @@ facts over `ZMod64 p`. -/
 class PrimeModulus (p : Nat) : Prop where
   prime : Hex.Nat.Prime p
 
+omit [Bounds p] in
 /-- Build the prime-modulus typeclass witness from an explicit project-local
 primality proof. -/
-@[expose, reducible]
-def primeModulusOfPrime (hp : Hex.Nat.Prime p) : PrimeModulus p :=
+theorem primeModulusOfPrime (hp : Hex.Nat.Prime p) : PrimeModulus p :=
   ⟨hp⟩
 
 private theorem eq_zero_of_dvd_modulus {a : ZMod64 p} (h : p ∣ a.toNat) : a = 0 := by

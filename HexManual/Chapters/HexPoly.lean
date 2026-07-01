@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 import HexPoly.Euclid
+import HexPolyMathlib
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -23,24 +24,23 @@ tag := "hex-poly"
 tag := "hex-poly-intro"
 %%%
 
-`HexPoly` is the executable dense-polynomial layer of the stack. A
-polynomial is stored as an `Array` of coefficients in ascending degree
-order — index `i` holds the coefficient of `xⁱ` — carrying a single
-structural invariant: the array has no trailing zeros. This
-*normalized* representation is what makes structural equality coincide
-with semantic equality, so two `HexPoly` polynomials are equal as Lean
-values exactly when they are equal as polynomials.
+`HexPoly` stores an executable dense polynomial as an `Array` of
+coefficients in ascending degree order: index `i` holds the
+coefficient of `xⁱ`. The array carries a single structural invariant:
+no trailing zeros. This *normalized* representation makes structural
+equality coincide with semantic equality, so two `HexPoly` polynomials
+are equal as Lean values exactly when they are equal as polynomials.
 
-The core type {name}`Hex.DensePoly` is generic over any coefficient
-type `R` with a `Zero` and a `DecidableEq`; the arithmetic, evaluation,
-and Euclidean layers add the further operations (`Add`, `Mul`, `Sub`,
-`Div`) they each need. `HexPoly` is Mathlib-free and dependency-free:
-it sits at the base of the polynomial portion of the DAG. The integer
-layer `HexPolyZ`, the prime-field layer `HexPolyFp`, and through them
-the factorization and finite-field libraries all consume this
-representation; see {ref "hex-poly-cross-references"}[Cross-references].
+{name}`Hex.DensePoly` is generic over any coefficient type `R` with a
+`Zero` and a `DecidableEq`; the arithmetic, evaluation, and Euclidean
+parts add the further operations (`Add`, `Mul`, `Sub`, `Div`) they each
+need. `HexPoly` is Mathlib-free and depends on no other `hex` library.
+The integer library `HexPolyZ`, the prime-field library `HexPolyFp`,
+and through them the factorization and finite-field libraries all
+consume this representation; see
+{ref "hex-poly-cross-references"}[Cross-references].
 
-# Core types
+# Dense polynomial type
 %%%
 tag := "hex-poly-core-types"
 %%%
@@ -91,11 +91,11 @@ scalar is zero; a monomial collapses likewise.
 tag := "hex-poly-queries"
 %%%
 
-The query surface reads back the data a caller needs without exposing
-the array invariant. {name}`Hex.DensePoly.size` is the stored
-coefficient count — one more than the degree for a nonzero polynomial,
-and `0` for the zero polynomial — and {name}`Hex.DensePoly.degree?`
-turns that into an optional degree.
+These queries read back the data a caller needs without exposing the
+array invariant. {name}`Hex.DensePoly.size` is the stored coefficient
+count: one more than the degree for a nonzero polynomial, and `0` for
+the zero polynomial. {name}`Hex.DensePoly.degree?` turns that into an
+optional degree.
 
 {docstring Hex.DensePoly.size}
 
@@ -144,7 +144,7 @@ and `Mul` instances on {name}`Hex.DensePoly` dispatch to these, so
 {docstring Hex.DensePoly.mul}
 
 Evaluation, composition, and the formal derivative complete the
-operation surface. Evaluation and composition both use Horner's method.
+operations. Evaluation and composition both use Horner's method.
 
 {docstring Hex.DensePoly.eval}
 
@@ -173,8 +173,7 @@ tag := "hex-poly-worked-arithmetic"
 The block below works over `DensePoly Int`. It builds a quadratic and a
 monomial, then exercises the constructors, addition, multiplication,
 evaluation, and the derivative. Each `#guard` is checked when the
-chapter is built, so the expected coefficient lists are guaranteed to
-match what the executable implementation produces.
+chapter builds.
 
 ```lean
 open Hex Hex.DensePoly
@@ -212,7 +211,7 @@ private def b : DensePoly Int := monomial 1 1
 end HexPolyChapterArith
 ```
 
-# The Euclidean layer
+# Euclidean operations
 %%%
 tag := "hex-poly-euclid"
 %%%
@@ -228,7 +227,7 @@ leading coefficient and the monic predicate.
 {docstring Hex.DensePoly.monic_iff_leadingCoeff_eq_one}
 
 Division has two flavours. {name}`Hex.DensePoly.divModMonic` divides by
-a monic divisor over any commutative ring — no division of coefficients
+a monic divisor over any commutative ring; no division of coefficients
 is needed because the leading coefficient is `1`.
 {name}`Hex.DensePoly.divMod` is the field version: it scales by the
 inverse of the divisor's leading coefficient and so requires a `Div` on
@@ -298,9 +297,9 @@ tag := "hex-poly-key-correctness"
 %%%
 
 The Euclidean operators are pinned down by a small set of laws. The
-quotient–remainder identity reconstructs the dividend, and the
-remainder has strictly smaller degree than a positive-degree divisor —
-together these are the defining properties of Euclidean division. They
+quotient-remainder identity reconstructs the dividend, and the
+remainder has strictly smaller degree than a positive-degree divisor.
+Together these are the defining properties of Euclidean division. They
 are stated under the `DivModLaws` hypothesis bundling the per-field
 proof obligations, which `HexPolyFp` discharges for the concrete prime
 fields.
@@ -319,7 +318,7 @@ divides its dividend exactly when the remainder is zero.
 {docstring Hex.DensePoly.mod_eq_zero_of_dvd}
 
 The gcd divides both arguments and is divisible by every common
-divisor — its universal property — and the extended coefficients
+divisor (its universal property), and the extended coefficients
 satisfy the Bezout identity. These are bundled under the `GcdLaws`
 hypothesis, again discharged downstream.
 
@@ -331,21 +330,51 @@ hypothesis, again discharged downstream.
 
 {docstring Hex.DensePoly.xgcd_bezout}
 
+# The Mathlib correspondence
+%%%
+tag := "hex-poly-mathlib"
+%%%
+
+Everything above is executable and Mathlib-free. `HexPolyMathlib`
+connects it to Mathlib: every {name}`Hex.DensePoly` corresponds to a
+Mathlib `Polynomial` with the same coefficients. The two transfer maps
+go each way.
+
+{docstring HexPolyMathlib.toPolynomial}
+
+{docstring HexPolyMathlib.ofPolynomial}
+
+They are mutually inverse:
+
+{docstring HexPolyMathlib.toPolynomial_ofPolynomial}
+
+{docstring HexPolyMathlib.ofPolynomial_toPolynomial}
+
+`toPolynomial` is a degree-preserving ring homomorphism; addition,
+multiplication, and the degree transfer:
+
+{docstring HexPolyMathlib.toPolynomial_add}
+
+{docstring HexPolyMathlib.toPolynomial_mul}
+
+{docstring HexPolyMathlib.natDegree_toPolynomial}
+
+The maps and laws bundle into a ring equivalence, and divisibility
+transfers through it:
+
+{docstring HexPolyMathlib.equiv}
+
+{docstring HexPolyMathlib.toPolynomial_dvd_iff}
+
 # Cross-references
 %%%
 tag := "hex-poly-cross-references"
 %%%
 
-`HexPoly` is dependency-free and sits below the rest of the polynomial
-stack:
+`HexPoly` depends on no other `hex` library. Downstream of it:
 
-* `HexPolyMathlib` is the correspondence library: it re-exports the
-  executable {name}`Hex.DensePoly` theory as theorems about Mathlib's
-  `Polynomial`, so the computational results in this chapter transfer to
-  the abstract setting. The Mathlib dependency lives entirely on that
-  side of the boundary; `HexPoly` itself imports only `Std`.
 * `HexPolyZ` specializes the coefficient type to `Int` and adds the
-  integer-specific layer (content, primitive parts), and `HexPolyFp`
+  integer-specific theory (content, primitive parts), and `HexPolyFp`
   specializes to the prime fields `ZMod64 p`, supplying the concrete
   `DivModLaws` and `GcdLaws` instances that turn the
   {ref "hex-poly-key-correctness"}[Euclidean laws] above into usable

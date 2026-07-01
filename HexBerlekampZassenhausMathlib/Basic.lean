@@ -5683,6 +5683,218 @@ theorem eq_recombinationCandidate_of_lc_one
 
 end liftedRecoveryCandidate
 
+/-- Every list is the all-unselected split of itself: `([], xs) ∈ subsetSplits xs`. -/
+theorem subsetSplits_nil_left_mem (xs : List Hex.ZPoly) :
+    (([], xs) : List Hex.ZPoly × List Hex.ZPoly) ∈ Hex.subsetSplits xs := by
+  induction xs with
+  | nil => exact Hex.subsetSplits_nil_mem
+  | cons x xs ih => exact Hex.subsetSplits_cons_right_mem ih
+
+/-- Membership bridge between the two recombination enumerators: every
+`(selected, rest)` partition the size-ordered enumerator
+`subsetsOfSizeWithComplement` produces is also an (order-preserving) member of
+the full `subsetSplits` enumeration.  Both enumerators range over exactly the
+order-preserving partitions of the list; only their visitation order differs.
+This lets the size-ordered (smart) search reuse the `subsetSplits` subset
+machinery. -/
+theorem subsetsOfSizeWithComplement_mem_subsetSplits
+    {xs sel rest : List Hex.ZPoly} {k : Nat}
+    (h : (sel, rest) ∈ Hex.subsetsOfSizeWithComplement xs k) :
+    (sel, rest) ∈ Hex.subsetSplits xs := by
+  induction xs generalizing sel rest k with
+  | nil =>
+      cases k with
+      | zero =>
+          rw [show Hex.subsetsOfSizeWithComplement ([] : List Hex.ZPoly) 0 = [([], [])]
+            from rfl] at h
+          simp only [List.mem_singleton, Prod.mk.injEq] at h
+          obtain ⟨rfl, rfl⟩ := h
+          exact Hex.subsetSplits_nil_mem
+      | succ k =>
+          rw [show Hex.subsetsOfSizeWithComplement ([] : List Hex.ZPoly) (k + 1) = []
+            from rfl] at h
+          simp at h
+  | cons x xs ih =>
+      cases k with
+      | zero =>
+          rw [show Hex.subsetsOfSizeWithComplement (x :: xs) 0 = [([], x :: xs)]
+            from rfl] at h
+          simp only [List.mem_singleton, Prod.mk.injEq] at h
+          obtain ⟨rfl, rfl⟩ := h
+          exact subsetSplits_nil_left_mem (x :: xs)
+      | succ k =>
+          rw [show Hex.subsetsOfSizeWithComplement (x :: xs) (k + 1) =
+              (Hex.subsetsOfSizeWithComplement xs k).map (fun sc => (x :: sc.1, sc.2)) ++
+                (Hex.subsetsOfSizeWithComplement xs (k + 1)).map
+                  (fun sc => (sc.1, x :: sc.2)) from rfl] at h
+          rcases List.mem_append.mp h with hleft | hright
+          · rcases List.mem_map.mp hleft with ⟨⟨a, b⟩, hmem, heq⟩
+            simp only [Prod.mk.injEq] at heq
+            obtain ⟨rfl, rfl⟩ := heq
+            exact Hex.subsetSplits_cons_left_mem (ih hmem)
+          · rcases List.mem_map.mp hright with ⟨⟨a, b⟩, hmem, heq⟩
+            simp only [Prod.mk.injEq] at heq
+            obtain ⟨rfl, rfl⟩ := heq
+            exact Hex.subsetSplits_cons_right_mem (ih hmem)
+
+/-- The head-forced size-ordered split lies in `subsetSplitsWithFirst`: this is
+the executable enumeration shape the size-ordered search actually iterates (the
+head lifted factor forced into the selected component, the tail partitioned by
+`subsetsOfSizeWithComplement`). -/
+theorem subsetsOfSizeWithComplement_cons_mem_subsetSplitsWithFirst
+    {head : Hex.ZPoly} {tail sc_sel sc_rest : List Hex.ZPoly} {k : Nat}
+    (h : (sc_sel, sc_rest) ∈ Hex.subsetsOfSizeWithComplement tail k) :
+    (head :: sc_sel, sc_rest) ∈ Hex.subsetSplitsWithFirst (head :: tail) := by
+  unfold Hex.subsetSplitsWithFirst
+  exact List.mem_map.mpr
+    ⟨(sc_sel, sc_rest), subsetsOfSizeWithComplement_mem_subsetSplits h, rfl⟩
+
+/-- Identify a split produced by the size-ordered (smart) recombination
+enumerator with a lifted-factor subset.
+
+At the top level the smart search forces the head lifted factor into the
+selected component and partitions the remaining tail by
+`subsetsOfSizeWithComplement`.  Every such split `(head :: sc_sel, sc_rest)` is
+the `(selected, rejected)` list partition of a lifted-factor subset `S`: its
+selected sublist is `liftedSubsetSelectedList d S`, hence its product is the
+proof-side `liftedFactorProduct d S`, and the executable scaled candidate built
+from the selected product (the candidate `scaledRecombinationSmartCandLoop`
+forms, with `coreLc = leadingCoeff core` and `modulus = d.p ^ d.k`) is exactly
+the proof-side `liftedRecoveryCandidate core d S`.
+
+Existence of the identifying subset needs no distinctness hypothesis — the
+subset is recovered from the mask over the matched *index* list, which is
+intrinsically `Nodup`.  Distinctness of the lifted factors is what pins the
+subset *uniquely*; that is supplied separately by
+`subsetsOfSizeWithComplement_liftedFactors_exists_unique_subset`. -/
+theorem subsetsOfSizeWithComplement_liftedFactors_exists_subset
+    (core : Hex.ZPoly) (d : Hex.LiftData)
+    {head : Hex.ZPoly} {tail : List Hex.ZPoly}
+    (hloc : d.liftedFactors.toList = head :: tail)
+    {sc_sel sc_rest : List Hex.ZPoly} {k : Nat}
+    (hmem : (sc_sel, sc_rest) ∈ Hex.subsetsOfSizeWithComplement tail k) :
+    ∃ S : LiftedFactorSubset d,
+      head :: sc_sel = liftedSubsetSelectedList d S ∧
+      sc_rest = liftedSubsetRejectedList d S ∧
+      Array.polyProduct (head :: sc_sel).toArray = liftedFactorProduct d S ∧
+      Hex.normalizeFactorSign (Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+            (Hex.centeredLiftPoly (Array.polyProduct (head :: sc_sel).toArray)
+              (d.p ^ d.k))))
+        = liftedRecoveryCandidate core d S := by
+  classical
+  have hpos : 0 < d.liftedFactors.size := by
+    rw [← Array.length_toList, hloc]; simp
+  haveI : Nonempty (LiftedFactorIndex d) := ⟨⟨0, hpos⟩⟩
+  have hne : (Finset.univ : LiftedFactorSubset d).Nonempty := Finset.univ_nonempty
+  -- A Boolean mask over the tail, from the `subsetSplits` enumeration.
+  have hsplit : (sc_sel, sc_rest) ∈ Hex.subsetSplits tail :=
+    subsetsOfSizeWithComplement_mem_subsetSplits hmem
+  obtain ⟨mask, hmask_len, hsel, hrest⟩ := subsetSplits_mem_exists_mask hsplit
+  -- Recover the subset from the mask, matched against the full universe of indices.
+  obtain ⟨T, -, -, hTsel, hTrej⟩ :=
+    liftedSubsetSelectedList_eq_mask_partition_of_matches
+      (LiftedFactorListMatches.univ d) hne hloc mask hmask_len
+  have hsel_eq : head :: sc_sel = liftedSubsetSelectedList d T := by rw [hTsel, hsel]
+  refine ⟨T, hsel_eq, ?_, ?_, ?_⟩
+  · rw [liftedSubsetRejectedList_eq_liftedSubsetSelectedList_sdiff, hTrej]; exact hrest
+  · rw [hsel_eq, polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct]
+  · unfold liftedRecoveryCandidate
+    rw [hsel_eq, polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct]
+
+/-- The selected-list map of a lifted-factor subset determines the subset when
+the lifted factors are distinct: `liftedSubsetSelectedList d` is injective in
+`S` whenever `liftedFactor d` is injective.  This is the distinctness step the
+`RecoveredScaledSearch.covers` completeness argument relies on, discharged for
+`toMonicLiftData core B primeData` (squarefree `core`) by the existing
+mod-`p`-nodup lifted-factor injectivity lemmas. -/
+theorem liftedSubsetSelectedList_injective
+    {d : Hex.LiftData} (hinj : Function.Injective (liftedFactor d))
+    {S S' : LiftedFactorSubset d}
+    (h : liftedSubsetSelectedList d S = liftedSubsetSelectedList d S') :
+    S = S' := by
+  rw [liftedSubsetSelectedList_eq_filter_map, liftedSubsetSelectedList_eq_filter_map] at h
+  have hfilter := List.map_injective_iff.mpr hinj h
+  ext i
+  have hi : i ∈ (List.finRange d.liftedFactors.size).filter (fun j => decide (j ∈ S)) ↔
+      i ∈ (List.finRange d.liftedFactors.size).filter (fun j => decide (j ∈ S')) := by
+    rw [hfilter]
+  simpa only [List.mem_filter, List.mem_finRange, true_and, decide_eq_true_eq] using hi
+
+/-- Full identification of a size-ordered (smart) enumerator split with its
+lifted-factor subset: when the lifted factors are distinct the subset `S` is
+*unique*, so the executable candidate the search forms is identified with the
+single proof-side `liftedRecoveryCandidate core d S`.
+
+This packages `subsetsOfSizeWithComplement_liftedFactors_exists_subset` with the
+distinctness-driven uniqueness, taking `Function.Injective (liftedFactor d)` as
+an explicit hypothesis (the same one `RecoveredScaledSearch.covers` carries). -/
+theorem subsetsOfSizeWithComplement_liftedFactors_exists_unique_subset
+    (core : Hex.ZPoly) (d : Hex.LiftData)
+    (hinj : Function.Injective (liftedFactor d))
+    {head : Hex.ZPoly} {tail : List Hex.ZPoly}
+    (hloc : d.liftedFactors.toList = head :: tail)
+    {sc_sel sc_rest : List Hex.ZPoly} {k : Nat}
+    (hmem : (sc_sel, sc_rest) ∈ Hex.subsetsOfSizeWithComplement tail k) :
+    ∃ S : LiftedFactorSubset d,
+      head :: sc_sel = liftedSubsetSelectedList d S ∧
+      sc_rest = liftedSubsetRejectedList d S ∧
+      Array.polyProduct (head :: sc_sel).toArray = liftedFactorProduct d S ∧
+      Hex.normalizeFactorSign (Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+            (Hex.centeredLiftPoly (Array.polyProduct (head :: sc_sel).toArray)
+              (d.p ^ d.k))))
+        = liftedRecoveryCandidate core d S ∧
+      ∀ S' : LiftedFactorSubset d,
+        head :: sc_sel = liftedSubsetSelectedList d S' → S' = S := by
+  obtain ⟨S, hsel, hrej, hprod, hcand⟩ :=
+    subsetsOfSizeWithComplement_liftedFactors_exists_subset core d hloc hmem
+  exact ⟨S, hsel, hrej, hprod, hcand,
+    fun S' hS' => liftedSubsetSelectedList_injective hinj (hS'.symm.trans hsel)⟩
+
+/-- Matched-state generalisation of
+`subsetsOfSizeWithComplement_liftedFactors_exists_subset`, for the recursive
+size-ordered coverage walk: at an intermediate state whose running local-factor
+list matches a sub-universe `J` (`LiftedFactorListMatches d J localFactors`), a
+head-forced size-ordered split of the tail is the `(selected, rejected)` list
+partition of a subset `T ⊆ J` containing `J.min'`.  The rejected component is the
+selected list of `J \ T` (the natural form for the descent into `scaledRecombinationSmartAux`
+on the rest list), and the product / candidate identities specialise as before.
+
+This is the shape `#8413` consumes when walking
+`scaledRecombinationSmartAux`/`SizeLoop`/`CandLoop`, where the running
+`localFactors` is the matched list of the remaining indices `J`, not the full
+universe. -/
+theorem subsetsOfSizeWithComplement_liftedFactors_exists_subset_of_matches
+    (core : Hex.ZPoly) (d : Hex.LiftData)
+    {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
+    (hmatches : LiftedFactorListMatches d J localFactors) (hne : J.Nonempty)
+    {head : Hex.ZPoly} {tail : List Hex.ZPoly}
+    (hloc : localFactors = head :: tail)
+    {sc_sel sc_rest : List Hex.ZPoly} {k : Nat}
+    (hmem : (sc_sel, sc_rest) ∈ Hex.subsetsOfSizeWithComplement tail k) :
+    ∃ T : LiftedFactorSubset d,
+      T ⊆ J ∧ J.min' hne ∈ T ∧
+      head :: sc_sel = liftedSubsetSelectedList d T ∧
+      sc_rest = liftedSubsetSelectedList d (J \ T) ∧
+      Array.polyProduct (head :: sc_sel).toArray = liftedFactorProduct d T ∧
+      Hex.normalizeFactorSign (Hex.ZPoly.primitivePart
+          (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core)
+            (Hex.centeredLiftPoly (Array.polyProduct (head :: sc_sel).toArray)
+              (d.p ^ d.k))))
+        = liftedRecoveryCandidate core d T := by
+  have hsplit : (sc_sel, sc_rest) ∈ Hex.subsetSplits tail :=
+    subsetsOfSizeWithComplement_mem_subsetSplits hmem
+  obtain ⟨mask, hmask_len, hsel, hrest⟩ := subsetSplits_mem_exists_mask hsplit
+  obtain ⟨T, hTJ, hmin, hTsel, hTrej⟩ :=
+    liftedSubsetSelectedList_eq_mask_partition_of_matches hmatches hne hloc mask hmask_len
+  have hsel_eq : head :: sc_sel = liftedSubsetSelectedList d T := by rw [hTsel, hsel]
+  refine ⟨T, hTJ, hmin, hsel_eq, ?_, ?_, ?_⟩
+  · rw [hTrej]; exact hrest
+  · rw [hsel_eq, polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct]
+  · unfold liftedRecoveryCandidate
+    rw [hsel_eq, polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct]
+
 /--
 On a monic core, the partition's lifted-recovery equality upgrades to the
 executable recombination-candidate equality consumed by the search recursion.

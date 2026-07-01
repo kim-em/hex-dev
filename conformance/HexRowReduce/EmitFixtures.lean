@@ -36,11 +36,11 @@ open Hex.Matrix
 private def lib : String := "HexRowReduce"
 
 private def matrixIntRows {n m : Nat} (M : Matrix Int n m) : List (List Int) :=
-  M.toList.map (fun row => row.toList)
+  M.rows.toList.map (fun row => row.toList)
 
 /-- Lift an integer matrix to a rational matrix entrywise. -/
 private def intToRat {n m : Nat} (M : Matrix Int n m) : Matrix Rat n m :=
-  M.map (fun row => row.map (fun x => ((x : Int) : Rat)))
+  Hex.Matrix.ofRows (M.rows.map (fun row => row.map (fun x => ((x : Int) : Rat))))
 
 private def jsonInt (n : Int) : String := toString n
 private def jsonNat (n : Nat) : String := toString n
@@ -61,7 +61,7 @@ private def ratArrayValue (xs : Array Rat) : String := Id.run do
 private def ratMatrixValue {n m : Nat} (M : Matrix Rat n m) : String := Id.run do
   let mut out := "["
   let mut first := true
-  for row in M.toArray do
+  for row in M.rows.toArray do
     if first then first := false else out := out.push ','
     out := out ++ ratArrayValue row.toArray
   out.push ']'

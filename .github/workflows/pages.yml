@@ -1,0 +1,62 @@
+name: Pages
+
+# Renders HexManual to static HTML and publishes it to GitHub Pages.
+#
+# Push-to-main only (plus manual dispatch), deliberately omitting the
+# `pull_request:` trigger the gating workflows use (SPEC/CI.md "Triggers").
+# This is a publish step, not a check: a pull request cannot deploy, and
+# rendering is a full Mathlib-backed build (~20 min), so running it on every
+# PR commit would duplicate that cost for no added safety. Manual content
+# errors -- broken cross-references, missing docstrings, non-compiling
+# example blocks -- already fail when `lake build HexManual` elaborates the
+# chapters; the manual gains a dedicated PR gate the day it is added to
+# ci.yml's build list. Use `workflow_dispatch` to render a branch on demand.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: sudo apt-get install -y libgmp-dev libntl-dev pkg-config
+      - name: Set up Lean toolchain (no build)
+        uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          build: false
+          use-mathlib-cache: false
+      - name: Fetch Mathlib cache
+        run: lake exe cache get
+      - name: Verify Mathlib cache populated (hard fail on miss)
+        run: bash scripts/ci/check_no_mathlib_rebuild.sh
+      - name: Configure Lean shared library path
+        run: |
+          toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
+          echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" \
+            >> "$GITHUB_ENV"
+      - name: Render the manual
+        run: lake exe hexmanual --output _out
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _out/html-multi
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

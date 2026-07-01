@@ -23,29 +23,26 @@ tag := "hex-arith"
 tag := "hex-arith-intro"
 %%%
 
-`HexArith` is the base of the stack: a dependency-free, Mathlib-free
-layer collecting the low-level arithmetic the rest of the project is
-built on. It sits at the bottom of the DAG (`deps: []`), so every
-modular-arithmetic, polynomial, and finite-field library above it
-consumes these routines transitively.
+`HexArith` is the low-level arithmetic the rest of the project is built
+on. It has no dependencies, and everything above it (modular arithmetic,
+polynomials, finite fields) uses these routines transitively.
 
-Four pieces make up the layer. The wide-word `UInt64` operations give
-a two-word view of machine arithmetic — full products and
-add/subtract-with-carry — so that higher layers can build multi-word
-modular reduction without leaving native-word code. On top of them sit
-two single-word modular reducers, {name}`barrettReduce` (Barrett) and
-{name}`redc` (Montgomery), each paired with a `Nat`-level model that
-states the arithmetic abstractly before the machine-word encoding is
-pinned down. Alongside the reducers, {name}`HexArith.extGcd` provides
-the extended Euclidean algorithm in three flavours (`Nat`, GMP-backed
-`Int`, and `UInt64`), and {name}`Hex.Nat.isPrimeTrial` is a
-self-contained trial-division primality test that produces a primality
-witness without `native_decide` or a hardcoded prime list.
+It has four pieces. The wide-word `UInt64` operations give a two-word
+view of machine arithmetic (full products and add/subtract-with-carry),
+so higher libraries can build multi-word modular reduction in
+native-word code. Two single-word modular reducers,
+{name}`barrettReduce` (Barrett) and {name}`redc` (Montgomery), each come
+with a `Nat`-level model stating the arithmetic before the machine-word
+encoding is pinned down. {name}`HexArith.extGcd` is the extended
+Euclidean algorithm in three flavours (`Nat`, GMP-backed `Int`, and
+`UInt64`), and {name}`Hex.Nat.isPrimeTrial` is a trial-division
+primality test that produces a primality witness without `native_decide`
+or a hardcoded prime list.
 
-The computational surface is entirely executable. Some of the
-wide-word operations carry an `@[extern]` C implementation for speed,
-but each is defined by a Lean model that the C code is proved to match,
-so the library has a meaning independent of the native binding; see
+Everything here is executable. Some wide-word operations carry an
+`@[extern]` C implementation for speed, but each is defined by a Lean
+model the C code is proved to match, so the library has a meaning
+independent of the native binding; see
 {ref "hex-arith-cross-references"}[Cross-references].
 
 # Wide-word `UInt64` operations
@@ -53,10 +50,10 @@ so the library has a meaning independent of the native binding; see
 tag := "hex-arith-wide"
 %%%
 
-The wide-word layer treats a `UInt64` as a digit in radix `R = 2^64`.
-{name}`UInt64.word` names that radix, and the two structural facts
-below — every word is below the radix, and `ofNat` reduces modulo it —
-are the bridge between machine words and `Nat` reasoning.
+These operations treat a `UInt64` as a digit in radix `R = 2^64`.
+{name}`UInt64.word` names that radix, and the two structural facts below
+(every word is below the radix, and `ofNat` reduces modulo it) connect
+machine words to `Nat` reasoning.
 
 {docstring UInt64.word}
 
@@ -110,8 +107,8 @@ respective namespaces.
 {docstring HexArith.extGcd}
 
 The combined correctness theorem packages both halves of the
-specification — the gcd projection and the Bezout identity — for
-callers that destructure the returned triple.
+specification (the gcd projection and the Bezout identity) for callers
+that destructure the returned triple.
 
 {docstring HexArith.extGcd_spec}
 
@@ -131,8 +128,8 @@ multiply-and-shift and at most one corrective subtraction. The
 {docstring barrettReduceNat}
 
 The reciprocal approximates the true quotient from below, never
-overshooting by more than one — these two bounds are what make the
-single corrective subtraction sufficient.
+overshooting by more than one; these two bounds make the single
+corrective subtraction sufficient.
 
 {docstring barrettQuotient_le_div}
 
@@ -145,8 +142,8 @@ and to land in the canonical interval `[0, p)`.
 
 {docstring barrettReduceNat_lt}
 
-The executable `UInt64` layer packages the modulus and its reciprocal
-in a {name}`BarrettCtx` built by {name}`BarrettCtx.mk`, which checks the
+The executable side packages the modulus and its reciprocal in a
+{name}`BarrettCtx` built by {name}`BarrettCtx.mk`, which checks the
 small-modulus side conditions once so they need not be re-proved at
 each call.
 
@@ -170,7 +167,7 @@ tag := "hex-arith-montgomery"
 
 Montgomery reduction is the alternative single-word reducer used when
 many modular multiplications share one odd modulus. It works in the
-Montgomery domain — residues scaled by `R` — where reduction becomes a
+Montgomery domain (residues scaled by `R`), where reduction becomes a
 multiply-add-shift with no trial division at all. As with Barrett, a
 `Nat`-level model states the computation before the machine-word
 encoding.
@@ -185,7 +182,7 @@ modulus below the radix.
 
 {docstring redcNat_lt}
 
-The executable layer carries the machine-word Montgomery parameters in
+The executable side carries the machine-word Montgomery parameters in
 a {name}`MontCtx`; {name}`redc` consumes a two-word product `(Thi, Tlo)`
 and returns one reduced residue, proved to match the `Nat` model and to
 stay canonical.
@@ -203,12 +200,12 @@ stay canonical.
 tag := "hex-arith-prime"
 %%%
 
-The number-theory layer supplies a self-contained primality test. It
-checks no integer in `[2, n)` divides `n`, and its soundness theorem
-lifts a `true` result to the project-local {name}`Hex.Nat.Prime`
-predicate — a primality witness produced without `native_decide` or a
-fixed prime table, so downstream prime searches can certify candidates
-beyond any precomputed list.
+`HexArith` supplies a self-contained primality test. It checks that no
+integer in `[2, n)` divides `n`, and its soundness theorem lifts a
+`true` result to the project-local {name}`Hex.Nat.Prime` predicate: a
+primality witness produced without `native_decide` or a fixed prime
+table, so downstream prime searches can certify candidates beyond any
+precomputed list.
 
 {docstring Hex.Nat.Prime}
 
@@ -257,19 +254,18 @@ end HexArithChapter
 tag := "hex-arith-cross-references"
 %%%
 
-`HexArith` is dependency-free and sits at the base of the DAG:
+`HexArith` has no dependencies:
 
 * `HexModArith` is the immediate consumer: it builds the user-facing
-  modular-arithmetic API (modular multiplication, exponentiation) on
-  top of the Barrett and Montgomery reducers documented here. The
-  polynomial and finite-field libraries reach these routines
-  transitively through it.
+  modular-arithmetic API (modular multiplication, exponentiation) on the
+  Barrett and Montgomery reducers documented here. The polynomial and
+  finite-field libraries reach these routines transitively through it.
 * The wide-word multiply and carry primitives are `@[extern]`-backed by
-  the C sources in `HexArith/ffi/` (`wide_arith.c`, `mpz_gcdext.c`),
-  and the {ref "hex-arith-wide"}[`Nat`-level laws] above are the
-  specification those bindings are proved against — the library's
-  meaning does not depend on the native code being linked.
-* The Mathlib correspondence for the arithmetic in this chapter is not
-  a single bridge library but flows through the higher layers'
-  `*Mathlib` counterparts; `HexArith` itself imports only `Std` and
-  never depends on Mathlib.
+  the C sources in `HexArith/ffi/` (`wide_arith.c`, `mpz_gcdext.c`), and
+  the {ref "hex-arith-wide"}[`Nat`-level laws] above are the
+  specification those bindings are proved against; the library's meaning
+  does not depend on the native code being linked.
+* The arithmetic here has no Mathlib correspondence library of its own.
+  The Mathlib correspondences live in the consuming libraries' `*Mathlib`
+  counterparts. `HexArith` itself imports only `Std` and never depends
+  on Mathlib.

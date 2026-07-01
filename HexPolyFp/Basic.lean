@@ -862,7 +862,6 @@ instance instGcdLawsZMod64Fp [PrimeModulus p] : DensePoly.GcdLaws (ZMod64 p) whe
 end ZMod64
 
 /-- Executable dense polynomials over the prime-field candidate `ZMod64 p`. -/
-@[expose]
 abbrev FpPoly (p : Nat) [ZMod64.Bounds p] := DensePoly (ZMod64 p)
 
 namespace FpPoly
@@ -2620,6 +2619,18 @@ theorem mul_assoc (f g h : FpPoly p) :
     _ = (List.range (n + 1)).foldl
         (fun acc i => acc + mulCoeffTerm f (g * h) n i) 0 := by
             exact (fold_mulCoeff_assoc_right_expand f g h n).symm
+
+/-- `FpPoly p` is a multiplicative monoid for `Std`, so the shared
+`List.foldl_mul_*` algebra and core's `List.foldl_assoc` apply to fold-products
+of `FpPoly`. -/
+instance instAssociativeMul {p : Nat} [ZMod64.Bounds p] :
+    Std.Associative (· * · : FpPoly p → FpPoly p → FpPoly p) :=
+  ⟨mul_assoc⟩
+
+instance instLawfulIdentityMul {p : Nat} [ZMod64.Bounds p] :
+    Std.LawfulIdentity (· * · : FpPoly p → FpPoly p → FpPoly p) 1 where
+  left_id := one_mul
+  right_id := mul_one
 
 /-- Scalar scaling distributes over polynomial addition. Lets callers move a
 scalar across a sum, for example when normalizing a linear combination. -/

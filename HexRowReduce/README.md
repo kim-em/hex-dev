@@ -86,6 +86,11 @@ theorem nullspace_complete [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n 
 The identification with Mathlib's linear-algebra theory lives in
 [`hex-row-reduce-mathlib`](https://github.com/kim-em/hex-row-reduce-mathlib).
 
+# Reference manual
+
+The hex reference manual covers this library at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-row-reduce>.
+
 # Contributing
 
 Development happens in the [`hex-dev`](https://github.com/kim-em/hex-dev)

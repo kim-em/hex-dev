@@ -3,7 +3,7 @@
 `hex-lll` is the recombination primitive used by
 `hex-berlekamp-zassenhaus`: BZ encodes the lifted local factors of an
 integer polynomial as a lattice basis, runs `lll`, and reads off
-candidate `Z[x]` factors from the short vectors. The Phase 1 surface
+candidate `Z[x]` factors from the short vectors. The public surface
 must be self-contained — usable from BZ without any `sorry`-blocked
 constructors — and must include a short-vector recovery entry point
 described under "Short-vector recovery for downstream consumers"
@@ -237,81 +237,57 @@ def lllAux (s : LLLState n m) (k : Nat) (δ : Rat)
 
 /-- Initial `LLLState` constructor: builds the integer state directly
     from a basis matrix and discharges `ν_eq`/`d_eq` by composing the
-    existing `hex-gram-schmidt` lemmas
-    `GramSchmidt.Int.gramDetVec_eq_gramDet` and
-    `GramSchmidt.Int.scaledCoeffs_eq` (suitably massaged through the
+    `hex-gram-schmidt` lemmas `GramSchmidt.Int.gramDetVec_eq_gramDet`
+    and `GramSchmidt.Int.scaledCoeffs_eq` (suitably massaged through the
     `Rat` casts in their statements). -/
 def LLLState.ofBasis (b : Matrix Int n m) (hind : b.independent) :
     LLLState n m :=
   { b
     ν := GramSchmidt.Int.scaledCoeffs b
     d := GramSchmidt.Int.gramDetVec b
-    ν_eq := by
-      -- combine GramSchmidt.Int.scaledCoeffs_eq with
-      -- GramSchmidt.Int.gramDetVec_eq_gramDet
-      sorry
-    d_eq := by
-      -- direct from GramSchmidt.Int.gramDetVec_eq_gramDet
-      sorry }
+    ν_eq := by …   -- from scaledCoeffs_eq and gramDetVec_eq_gramDet
+    d_eq := by … } -- from gramDetVec_eq_gramDet
 
 def lll (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) : Matrix Int n m :=
   lllAux (LLLState.ofBasis b hind) 1 δ hδ hδ' (by omega) (by omega)
 ```
 
-The `scaledCoeffs_eq` and `gramDetVec_eq_gramDet` lemmas referenced
-above already exist in `hex-gram-schmidt` (`HexGramSchmidt/Int.lean`).
-They are currently `sorry`'d, but that is acceptable here: the
-obligation of `LLLState.ofBasis` at Phase 1 is to be a named,
-type-correct constructor that names its witness lemmas in proof
-position. The two `sorry`s above are discharged as part of Phase 5
-work in `hex-gram-schmidt` / `hex-lll`, not as part of getting `lll`
-to a usable shape. What changes from the previous SPEC is that the
-constructor lives in `hex-lll` rather than as inline anonymous
-`sorry, sorry` proof fields in the body of `lll`. Treating the
-constructor itself as deferrable is incompatible with `hex-lll`
-being on the BZ critical path.
+The `ν_eq` and `d_eq` fields are discharged from the `hex-gram-schmidt`
+lemmas `GramSchmidt.Int.scaledCoeffs_eq` and
+`GramSchmidt.Int.gramDetVec_eq_gramDet`. `LLLState.ofBasis` is a total
+constructor with no deferred proof obligation: `hex-lll` is on the
+`hex-berlekamp-zassenhaus` critical path, so its public surface must be
+usable without any `sorry`.
 
-### Approximation-steered default reducer
+### Native default reducer
 
-The default native reducer is **steered by untrusted approximate Gram-Schmidt
-data**. It maintains a floating-point (or fixed-width dyadic) approximation of
-the Gram-Schmidt coefficients `μ[i][j]` and squared orthogonal norms
-`‖b*_i‖²`, and uses that approximation alone to choose its row operations: the
-integer size-reduction rounding coefficients and the Lovász swap decisions are
-read off the approximation. No property of the approximation enters any proof —
-a poor approximation can only produce a slow or insufficiently reduced run,
-never an incorrect lattice.
+The native reducer `lllNative` is the **exact all-integer `d`/`ν` reducer**. It
+carries the exact Gram-determinant vector `d` and scaled coefficients `ν` of the
+`LLLState` representation and drives the standard LLL outer loop — integer
+size-reduction and adjacent Lovász swaps — from that exact data alone. Every
+basis mutation is one of the proven-lattice-preserving exact integer row
+operations (`GramSchmidt.Int.sizeReduce`, the size-reduction row combination,
+and `GramSchmidt.Int.adjacentSwap`, the adjacent row swap), so the generated
+lattice of the output equals that of the input **by construction**, and the loop
+terminates by fuel. Its size-reduction step produces exact `|μ| ≤ 1/2`, so
+`lllNative` carries the classical `η = 1/2` contract (precondition `1/4 < δ`,
+short-vector constant `1/(δ − 1/4)`).
 
-Every basis mutation is one of the exact integer row operations drawn from the
-proven-lattice-preserving set (`GramSchmidt.Int.sizeReduce`, the size-reduction
-row combination, and `GramSchmidt.Int.adjacentSwap`, the adjacent row swap). The
-generated lattice of the output therefore equals that of the input **by
-construction** — no transform certificate is computed or needed — and the loop
-terminates by fuel, exactly as the exact `d`/`ν` reducer does.
+The public `lll` keeps exactly two paths, both satisfying the same
+`(δ, 11/20)` post-condition:
 
-The steered path **materializes no exact Gram-Schmidt state**: it carries the
-exact integer basis together with the untrusted approximation, and recomputes a
-working row's coefficients from the exact integer Gram entries `⟨b_i, b_j⟩` of
-the current basis when it needs to bound floating-point drift. The exact `d`/`ν`
-Gram-determinant and scaled-coefficient data of the `LLLState` representation
-appears only on the fallback path.
-
-The steered output is **certified post hoc** at the public `(δ, 11/20)` bound by
-the reducedness checker (*Certified external dispatch*). On certification
-success the steered basis is returned; on failure the reducer falls back to the
-exact `d`/`ν` reducer `lllNative`, whose `η = 1/2` size-reduction contract is
-unchanged. A deterministic input-size dispatch may route the smallest inputs —
-those for which the exact reducer is already cheaper than the steered loop plus
-its certification — directly to `lllNative`; like every other dispatch in this
-library it is a function of the input alone and both branches satisfy the same
-post-condition.
+1. the **certified external-candidate** dispatch (provider → `certCheck`, see
+   *Certified external dispatch*), and
+2. the **exact** `lllNative`, run directly when no provider candidate certifies.
 
 Both pinned `η` values are unchanged: `lllNative` retains `η = 1/2` and the
 public `lll` retains `η = 11/20`. The public `lll` contract — same lattice,
 `isLLLReduced (lll …) δ (11/20)`, and the `lll_short_vector` bound — holds
-verbatim whether the result comes from the steered path, its exact fallback, or
-the certified external candidate.
+verbatim whether the result comes from the certified external candidate or the
+exact native path. The `11/20` loosening exists **solely** because a black-box
+external reducer cannot be forced to `|μ| ≤ 1/2` exactly; the native path lands
+at `1/2` and is the direct `1/4 < δ` entry point.
 
 ### Short-vector recovery for downstream consumers
 
@@ -498,38 +474,34 @@ classification below is mirrored as structured metadata in
   [§Headline reports — Comparator ratios](https://github.com/kim-em/hex-dev/blob/main/SPEC/benchmarking.md#headline-reports)
   apply.
 
-  **Headline comparator plot — six curves.** The per-family plots at
+  **Headline comparator plot — five curves.** The per-family plots at
   `reports/figures/hex-lll-comparator-<family>.svg`, generated by
   `scripts/plots/hex-lll-comparator.py` and embedded in
-  `reports/hex-lll-performance.md`, draw six log-y wall-time-per-call
+  `reports/hex-lll-performance.md`, draw five log-y wall-time-per-call
   curves across the family's eligible range:
 
   1. **fpLLL** — the raw floating-point reducer alone (unverified).
   2. **Lean native LLL** — the exact integer `d`/`ν` algorithm (`lllNative`),
-     which the steered default demotes to its certification fallback. Data comes
-     from the `runNativeFirstShortVector*` bench targets.
+     the in-tree default reducer. Data comes from the `runNativeFirstShortVector*`
+     (equivalently `runFirstShortVector*`) bench targets.
   3. **verified Isabelle native LLL** — the `LLL_Basis_Reduction` extraction.
-  4. **Lean steered** — the default native path: exact integer row operations
-     steered by an untrusted approximate Gram-Schmidt, certified post hoc at
-     `(δ, 11/20)`. Data comes from the `runFirstShortVector*` bench targets.
-  5. **Lean certified** — fpLLL candidate production plus the Lean verified
+  4. **Lean certified** — fpLLL candidate production plus the Lean verified
      checker (`certCheck`); the certified external-dispatch path. Data comes
      from the `runCertified*` bench targets.
-  6. **verified Isabelle certified-LLL** — fpLLL candidate production plus the
+  5. **verified Isabelle certified-LLL** — fpLLL candidate production plus the
      Isabelle verified checker (the `svp_certified` JAR 2020 §7 configuration
      of the Zenodo 2636367 extraction).
 
-  Curves 1–4 compare the reducers — the exact integer algorithm, the Isabelle
-  extraction, and the steered default that drives the same exact row operations
-  from approximate data; curves 5–6 are the apples-to-apples verification
-  comparison — the *same* fpLLL output certified by the Lean checker versus the
-  Isabelle checker — which is the yardstick for the `verified Isabelle
-  certified-LLL` gating goal. A comparator with fewer than two committed data
-  points on a family is listed in §Concerns rather than dropped from the plot
-  silently. A curve whose reducer exceeds its per-call wall-time cap at a rung
-  (a `null` median in the export) simply stops at that ceiling: per-curve
-  x-ranges differ, so the verified Isabelle curves end where the worst case
-  outgrows the cap while the cheap fpLLL/certified curves continue.
+  Curves 1–3 compare the reducers — the raw floating-point reducer, the exact
+  Lean integer algorithm, and the Isabelle extraction; curves 4–5 are the
+  apples-to-apples verification comparison — the *same* fpLLL output certified by
+  the Lean checker versus the Isabelle checker — which is the yardstick for the
+  `verified Isabelle certified-LLL` gating goal. A comparator with fewer than two
+  committed data points on a family is listed in §Concerns rather than dropped
+  from the plot silently. A curve whose reducer exceeds its per-call wall-time cap
+  at a rung (a `null` median in the export) simply stops at that ceiling:
+  per-curve x-ranges differ, so the verified Isabelle curves end where the worst
+  case outgrows the cap while the cheap fpLLL/certified curves continue.
 
   **Per-call floor calibration.** The `verified Isabelle certified-LLL` curve
   carries a fixed per-request process floor (a fresh `svp_certified` fork plus
@@ -553,11 +525,12 @@ classification below is mirrored as structured metadata in
   never pollute the wall-time harness.
 
   **Headline-SVG selection rule.** The README `# Performance` section embeds one
-  figure. The harsh-cubic steered-escape plot is the default headline *unless* a
-  family shows verified Lean and fpLLL on the same asymptotic slope over ≥ 3
-  overlapping rungs while verified Isabelle provably diverges; such a family
-  (e.g. `ajtai`) is then promoted. The rule is fixed in advance so the choice is
-  not post-hoc cherry-picking.
+  figure. The default headline is the `harsh-cubic` plot, where the exact
+  reducers climb super-quintically as operands widen while the certified path
+  (fpLLL candidate + Lean `certCheck`) stays near fpLLL's slope; a worst-case
+  family (e.g. `ajtai`) may be promoted when it shows the certified path holding
+  flat while the exact reducers provably diverge over ≥ 3 overlapping rungs. The
+  rule is fixed in advance so the choice is not post-hoc cherry-picking.
 
 ### `LLLState.ofBasis` is its own bench target
 
@@ -998,7 +971,7 @@ termination is still guaranteed but the log bound degenerates; the
 integer bound #swaps <= D_initial - 1 applies instead.)
 
 **Lean formalization strategy for termination:** The executable loop
-does not use in-place well-founded recursion. `HexLLL/Basic.lean` is
+does not use in-place well-founded recursion. The executable layer is
 Mathlib-free, so its `decreasing_by` block cannot import the
 Mathlib-side swap strict-decrease lemmas (`gramDet_pos`,
 `gramDet_adjacentSwap_pivot`, and

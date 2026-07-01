@@ -18,8 +18,8 @@ public section
 Mathlib-side correctness of the executable LLL reducers. The per-step
 `Valid`/independence preservation, the potential strict-decrease and fuel
 sufficiency, and the loop-invariant induction culminate in the reducedness,
-lattice, and rational short-vector capstones for `Hex.lllNative`,
-`Hex.lllSteered`, and `Hex.lll`.
+lattice, and rational short-vector capstones for `Hex.lllNative` and
+`Hex.lll`.
 -/
 
 /-- `Vector.get` is definitionally `getElem` at the index value, so this is `rfl`.
@@ -30,6 +30,8 @@ private theorem vector_get_eq_getElem {α : Type*} {n : ℕ} (v : Vector α n) (
 
 namespace Hex
 
+open Hex.Internal
+
 namespace Matrix
 
 /-- The identity matrix is independent: every executable leading Gram
@@ -39,9 +41,10 @@ recombination input with all-zero lift coefficients. -/
 theorem identity_independent {n : Nat} : (Matrix.identity (R := Int) n).independent := by
   exact GramSchmidt.Int.independent_identity
 
-theorem gramMatrix_takeRows_eq_principalSubmatrix {n : Nat} (M : Matrix Int n n) (k : Nat)
+private theorem gramMatrix_takeRows_eq_principalSubmatrix {n : Nat} (M : Matrix Int n n) (k : Nat)
     (hk : k ≤ n) :
     gramMatrix (takeRows M k hk) = principalSubmatrix (gramMatrix M) k hk := by
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro i hi
   apply Vector.ext
@@ -65,7 +68,7 @@ theorem gramMatrix_takeRows_eq_principalSubmatrix {n : Nat} (M : Matrix Int n n)
   simpa [gramMatrix, principalSubmatrix, ofFn, iFin, jFin, ii, jj] using
     hdot
 
-theorem independent_of_upperTriangular_pos_diag {n : Nat}
+private theorem independent_of_upperTriangular_pos_diag {n : Nat}
     (M : Matrix Int n n)
     (hzero : ∀ i j : Fin n, j.val < i.val -> M[i][j] = 0)
     (hdiag : ∀ i : Fin n, 0 < M[i][i]) : M.independent := by
@@ -77,7 +80,7 @@ theorem independent_of_upperTriangular_pos_diag {n : Nat}
 
 end Matrix
 
-namespace LLLState
+namespace Internal.LLLState
 
 /-- Size reduction preserves the executable Gram-determinant independence
 predicate.  This public theorem lives in the Mathlib-side library so the
@@ -257,13 +260,43 @@ private theorem foldl_modify_rows_get
           · exact fun h => List.mem_cons.mpr (Or.inr h)
         simp only [hl_cons_iff]
 
+/-- Matrix-row version of `foldl_modify_rows_get`: folding row-`modify`s over a
+matrix and reading row `l` is the same as the single conditional update. -/
+private theorem foldl_modify_matrix_getRow
+    (k : Nat) (xs : List (Fin n)) (hnd : xs.Nodup)
+    (base : Hex.Matrix Int n n) (upd : Fin n → Vector Int n → Vector Int n) (l : Fin n) :
+    (xs.foldl
+        (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
+          if k < i.val then ν.modifyRow i.val (upd i) else ν) base).getRow l =
+      if (l ∈ xs ∧ k < l.val) then upd l (base.getRow l) else base.getRow l := by
+  have key : ∀ (acc : Hex.Matrix Int n n),
+      (xs.foldl
+          (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
+            if k < i.val then ν.modifyRow i.val (upd i) else ν) acc).rows =
+        xs.foldl
+          (fun (a : Vector (Vector Int n) n) (i : Fin n) =>
+            if k < i.val then a.modify i.val (upd i) else a) acc.rows := by
+    intro acc
+    clear hnd
+    induction xs generalizing acc with
+    | nil => rfl
+    | cons x xs ih =>
+      simp only [List.foldl_cons]
+      by_cases hkx : k < x.val
+      · rw [if_pos hkx, if_pos hkx, ih (acc.modifyRow x.val (upd x)), Hex.Matrix.rows_modifyRow]
+      · rw [if_neg hkx, if_neg hkx, ih acc]
+  unfold Hex.Matrix.getRow
+  rw [key base]
+  simpa [Vector.get, Fin.getElem_fin] using
+    foldl_modify_rows_get k xs hnd base.rows upd l
+
 /-- Field projections through `swapStep`'s `0 < k < n` branch. -/
 private theorem swapStep_b_eq (s : LLLState n m) (k : Nat) (hk : k < n) (hk0 : 0 < k) :
     (s.swapStep k).b = GramSchmidt.Int.adjacentSwap s.b ⟨k, hk⟩ hk0 := by
   unfold swapStep
   rw [dif_pos hk, dif_pos hk0]
 
-theorem swapStep_valid (s : LLLState n m) (k : Nat)
+private theorem swapStep_valid (s : LLLState n m) (k : Nat)
     (hind : s.b.independent) (hvalid : s.Valid) :
     (s.swapStep k).Valid := by
   unfold swapStep
@@ -284,7 +317,7 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
       have hdk_ne_zero :
           GramSchmidt.Int.gramDet s.b k (Nat.le_of_lt hk) ≠ 0 := Nat.pos_iff_ne_zero.mp hdk_pos
       -- Common shorthand for the per-state quantities.
-      set B : Int := (s.ν.get kFin).get km1 with hB_def
+      set B : Int := (s.ν.getRow kFin).get km1 with hB_def
       set dkPrev : Nat := s.d.get ⟨km1.val, Nat.lt_succ_of_lt km1.isLt⟩ with hdkPrev_def
       set dk : Nat := s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩ with hdk_def
       set dkNext : Nat := s.d.get ⟨k + 1, Nat.succ_lt_succ hk⟩ with hdkNext_def
@@ -314,11 +347,11 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
       have hkm1_le_n : km1.val ≤ n := Nat.le_of_lt km1.isLt
       -- Pre-compute the "upd" function used in the outer foldl, so we can apply
       -- `foldl_modify_rows_get`. The body matches the foldl in `swapStep`,
-      -- which destructures `pairs.get i = ((s.ν.get i).get kFin, (s.ν.get i).get km1)`
+      -- which destructures `pairs.get i = ((s.ν.getRow i).get kFin, (s.ν.getRow i).get km1)`
       -- in the `k < i.val` branch (see `hpairs_at` below).
       let pairs : Vector (Int × Int) n :=
         Vector.ofFn fun i =>
-          if _ : k < i.val then ((s.ν.get i).get kFin, (s.ν.get i).get km1)
+          if _ : k < i.val then ((s.ν.getRow i).get kFin, (s.ν.getRow i).get km1)
           else (0, 0)
       let upd : Fin n → Vector Int n → Vector Int n :=
         fun i row =>
@@ -328,7 +361,7 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
             (Int.ofNat dkNext * (pairs.get i).2 - B * (pairs.get i).1) / Int.ofNat dk
           (row.set km1 prev).set kFin curr
       have hpairs_at : ∀ (i : Fin n), k < i.val →
-          pairs.get i = ((s.ν.get i).get kFin, (s.ν.get i).get km1) := by
+          pairs.get i = ((s.ν.getRow i).get kFin, (s.ν.getRow i).get km1) := by
         intro i hi
         show (Vector.ofFn _)[i.1] = _
         rw [Vector.getElem_ofFn]
@@ -347,9 +380,9 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
         -- Define the abbreviations for the inner foldl base, so we can use
         -- per-row characterization lemmas without copying expressions.
         set νRowsSwapped : Hex.Matrix Int n n :=
-          (s.ν.modify km1.val (setPrefix (s.ν.get kFin) · km1)).modify kFin.val
-            (setPrefix (s.ν.get km1) · km1) with hνRows_def
-        set νPivot : Hex.Matrix Int n n := νRowsSwapped.modify kFin.val (·.set km1 B)
+          (s.ν.modifyRow km1.val (setPrefix (s.ν.getRow kFin) · km1)).modifyRow kFin.val
+            (setPrefix (s.ν.getRow km1) · km1) with hνRows_def
+        set νPivot : Hex.Matrix Int n n := νRowsSwapped.modifyRow kFin.val (·.set km1 B)
           with hνPivot_def
         -- Unfold the goal to expose the ν' foldl, then apply
         -- `foldl_modify_rows_get`.
@@ -357,58 +390,58 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
           (((List.finRange n).foldl
               (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
                 if _ : k < i.val then
-                  ν.modify i.val (upd i)
+                  ν.modifyRow i.val (upd i)
                 else ν)
-              νPivot).get iFin).get jFin =
-            ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin
+              νPivot).getRow iFin).get jFin =
+            ((GramSchmidt.Int.scaledCoeffs b').getRow iFin).get jFin
         have hν'_get :
             ((List.finRange n).foldl
                 (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
-                  if k < i.val then ν.modify i.val (upd i) else ν)
-                νPivot).get iFin =
-              if k < iFin.val then upd iFin (νPivot.get iFin) else νPivot.get iFin := by
-          have := foldl_modify_rows_get (n := n) (α := Vector Int n) k
+                  if k < i.val then ν.modifyRow i.val (upd i) else ν)
+                νPivot).getRow iFin =
+              if k < iFin.val then upd iFin (νPivot.getRow iFin) else νPivot.getRow iFin := by
+          have := foldl_modify_matrix_getRow (n := n) k
             (List.finRange n) (List.nodup_finRange n) νPivot upd iFin
           simp [List.mem_finRange] at this
           exact this
         -- Bridge `if _ : ...` (`dite`) to `if ...` (`ite`).
         have hbody_eq :
             (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
-                if _ : k < i.val then ν.modify i.val (upd i) else ν) =
+                if _ : k < i.val then ν.modifyRow i.val (upd i) else ν) =
               (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
-                if k < i.val then ν.modify i.val (upd i) else ν) := by
+                if k < i.val then ν.modifyRow i.val (upd i) else ν) := by
           funext ν i
           split <;> rfl
         rw [hbody_eq, hν'_get]
-        -- Helper: evaluate νRowsSwapped.get at a given row.
+        -- Helper: evaluate νRowsSwapped.getRow at a given row.
         have hνRows_get_ne :
             ∀ (l : Fin n), l.val ≠ km1.val → l.val ≠ kFin.val →
-              νRowsSwapped.get l = s.ν.get l := by
+              νRowsSwapped.getRow l = s.ν.getRow l := by
           intro l hl_km1 hl_kFin
-          rw [hνRows_def, vector_modify_get_ne _ kFin.val _ l (fun h => hl_kFin h.symm),
-            vector_modify_get_ne _ km1.val _ l (fun h => hl_km1 h.symm)]
-        have hνRows_get_km1 : νRowsSwapped.get km1 = setPrefix (s.ν.get kFin) (s.ν.get km1) km1 := by
-          rw [hνRows_def, vector_modify_get_ne _ kFin.val _ km1 (fun h => hkm1_val_ne_kFin h.symm)]
-          exact vector_modify_get_self _ km1 _
+          rw [hνRows_def, Hex.Matrix.getRow_modifyRow_ne _ kFin.val _ l (fun h => hl_kFin h.symm),
+            Hex.Matrix.getRow_modifyRow_ne _ km1.val _ l (fun h => hl_km1 h.symm)]
+        have hνRows_get_km1 : νRowsSwapped.getRow km1 = setPrefix (s.ν.getRow kFin) (s.ν.getRow km1) km1 := by
+          rw [hνRows_def, Hex.Matrix.getRow_modifyRow_ne _ kFin.val _ km1 (fun h => hkm1_val_ne_kFin h.symm)]
+          exact Hex.Matrix.getRow_modifyRow_self _ km1 _
         have hνRows_get_kFin :
-            νRowsSwapped.get kFin = setPrefix (s.ν.get km1) (s.ν.get kFin) km1 := by
-          rw [hνRows_def, vector_modify_get_self _ kFin _,
-            vector_modify_get_ne _ km1.val _ kFin hkm1_val_ne_kFin]
+            νRowsSwapped.getRow kFin = setPrefix (s.ν.getRow km1) (s.ν.getRow kFin) km1 := by
+          rw [hνRows_def, Hex.Matrix.getRow_modifyRow_self _ kFin _,
+            Hex.Matrix.getRow_modifyRow_ne _ km1.val _ kFin hkm1_val_ne_kFin]
         -- Evaluate νPivot.get.
         have hνPivot_get_ne :
-            ∀ (l : Fin n), l.val ≠ kFin.val → νPivot.get l = νRowsSwapped.get l := by
+            ∀ (l : Fin n), l.val ≠ kFin.val → νPivot.getRow l = νRowsSwapped.getRow l := by
           intro l hl_kFin
           rw [hνPivot_def]
-          exact vector_modify_get_ne _ kFin.val _ l (fun h => hl_kFin h.symm)
+          exact Hex.Matrix.getRow_modifyRow_ne _ kFin.val _ l (fun h => hl_kFin h.symm)
         have hνPivot_get_kFin :
-            νPivot.get kFin = (νRowsSwapped.get kFin).set km1.val B hkm1_lt_n := by
+            νPivot.getRow kFin = (νRowsSwapped.getRow kFin).set km1.val B hkm1_lt_n := by
           rw [hνPivot_def]
-          exact vector_modify_get_self _ kFin _
+          exact Hex.Matrix.getRow_modifyRow_self _ kFin _
         -- Cache the `Valid` bridge from ν entries to scaledCoeffs.
         have hν_eq := hvalid.ν_eq
         -- Now case analysis on iFin's position.
         by_cases hki : k < iFin.val
-        · -- Case D: k < iFin.val. ν' = upd iFin (νPivot.get iFin) and iFin ≠ km1, ≠ kFin.
+        · -- Case D: k < iFin.val. ν' = upd iFin (νPivot.getRow iFin) and iFin ≠ km1, ≠ kFin.
           rw [if_pos hki]
           have hi_ne_km1 : iFin.val ≠ km1.val := by
             have : iFin.val > km1.val := by omega
@@ -417,35 +450,35 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
             have : iFin.val > kFin.val := hki
             omega
           rw [hνPivot_get_ne iFin hi_ne_kFin, hνRows_get_ne iFin hi_ne_km1 hi_ne_kFin]
-          -- Now LHS = (upd iFin (s.ν.get iFin)).get jFin. Unfold `upd` to expose
+          -- Now LHS = (upd iFin (s.ν.getRow iFin)).get jFin. Unfold `upd` to expose
           -- the `pairs.get iFin` reference, then substitute it with its explicit
           -- value (valid since `k < iFin.val` in this branch).
           show ((let prev := (Int.ofNat dkPrev * (pairs.get iFin).1 +
                               B * (pairs.get iFin).2) / Int.ofNat dk
                  let curr := (Int.ofNat dkNext * (pairs.get iFin).2 -
                               B * (pairs.get iFin).1) / Int.ofNat dk
-                 ((s.ν.get iFin).set km1 prev).set kFin curr).get jFin) =
-            ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin
-          rw [show pairs.get iFin = ((s.ν.get iFin).get kFin, (s.ν.get iFin).get km1)
+                 ((s.ν.getRow iFin).set km1 prev).set kFin curr).get jFin) =
+            ((GramSchmidt.Int.scaledCoeffs b').getRow iFin).get jFin
+          rw [show pairs.get iFin = ((s.ν.getRow iFin).get kFin, (s.ν.getRow iFin).get km1)
               from hpairs_at iFin hki]
-          show ((((s.ν.get iFin).set km1.val
-                ((Int.ofNat dkPrev * (s.ν.get iFin).get kFin +
-                    B * (s.ν.get iFin).get km1) /
+          show ((((s.ν.getRow iFin).set km1.val
+                ((Int.ofNat dkPrev * (s.ν.getRow iFin).get kFin +
+                    B * (s.ν.getRow iFin).get km1) /
                   Int.ofNat dk) hkm1_lt_n).set kFin.val
-              ((Int.ofNat dkNext * (s.ν.get iFin).get km1 -
-                  B * (s.ν.get iFin).get kFin) /
+              ((Int.ofNat dkNext * (s.ν.getRow iFin).get km1 -
+                  B * (s.ν.getRow iFin).get kFin) /
                 Int.ofNat dk) hk).get jFin) =
-            ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin
-          -- Bridge `s.ν.get iFin .get k(Fin/m1)` to `scaledCoeffs s.b ...` for the
+            ((GramSchmidt.Int.scaledCoeffs b').getRow iFin).get jFin
+          -- Bridge `s.ν.getRow iFin .get k(Fin/m1)` to `scaledCoeffs s.b ...` for the
           -- two pivot columns used by the formulas.
           have hν_at_kFin :
-              (s.ν.get iFin).get kFin =
+              (s.ν.getRow iFin).get kFin =
                 GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) iFin kFin := by
             have := hν_eq iFin.val kFin.val iFin.isLt kFin.isLt
               (by rw [hkFinVal]; exact hki)
             simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using this
           have hν_at_km1 :
-              (s.ν.get iFin).get km1 =
+              (s.ν.getRow iFin).get km1 =
                 GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) iFin km1 := by
             have hkm1_lt_i : km1.val < iFin.val := by omega
             have := hν_eq iFin.val km1.val iFin.isLt km1.isLt hkm1_lt_i
@@ -453,7 +486,7 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
           by_cases hjk : jFin.val = kFin.val
           · -- D2: jFin = kFin. Outer .set kFin curr_i applies.
             rw [show jFin = kFin from Fin.eq_of_val_eq hjk]
-            show ((((s.ν.get iFin).set km1.val _ hkm1_lt_n).set kFin.val _ hk).get kFin) = _
+            show ((((s.ν.getRow iFin).set km1.val _ hkm1_lt_n).set kFin.val _ hk).get kFin) = _
             rw [show ∀ (xs : Vector Int n) (x : Int),
                       (xs.set kFin.val x hk).get kFin = x from
                   fun xs x => Vector.getElem_set_self hk]
@@ -470,11 +503,11 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
             · -- D1: jFin = km1. Outer .set kFin doesn't affect km1; inner .set km1 prev_i applies.
               rw [show jFin = km1 from Fin.eq_of_val_eq hjkm1]
               have hkFin_ne_km1 : kFin.val ≠ km1.val := fun h => hkm1_val_ne_kFin h.symm
-              show ((((s.ν.get iFin).set km1.val _ hkm1_lt_n).set kFin.val _ hk).get km1) = _
-              rw [show ((((s.ν.get iFin).set km1.val _ hkm1_lt_n).set kFin.val _ hk).get km1) =
-                    (((s.ν.get iFin).set km1.val _ hkm1_lt_n).get km1) from
+              show ((((s.ν.getRow iFin).set km1.val _ hkm1_lt_n).set kFin.val _ hk).get km1) = _
+              rw [show ((((s.ν.getRow iFin).set km1.val _ hkm1_lt_n).set kFin.val _ hk).get km1) =
+                    (((s.ν.getRow iFin).set km1.val _ hkm1_lt_n).get km1) from
                   Vector.getElem_set_ne (h := hkFin_ne_km1) _ km1.isLt]
-              rw [show (((s.ν.get iFin).set km1.val _ hkm1_lt_n).get km1) = _ from
+              rw [show (((s.ν.getRow iFin).set km1.val _ hkm1_lt_n).get km1) = _ from
                   Vector.getElem_set_self hkm1_lt_n]
               rw [hdkPrev_eq, hdk_eq, hB_eq, hν_at_kFin, hν_at_km1]
               have hsc := GramSchmidt.Int.scaledCoeffs_adjacentSwap_above_prev s.b kFin hk0
@@ -489,11 +522,11 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
             · -- D3: jFin ≠ km1, ≠ kFin. Both .sets miss jFin.
               have hkFin_ne_jFin : kFin.val ≠ jFin.val := fun h => hjk h.symm
               have hkm1_ne_jFin : km1.val ≠ jFin.val := fun h => hjkm1 h.symm
-              show ((((s.ν.get iFin).set km1.val _ hkm1_lt_n).set kFin.val _ hk).get jFin) = _
-              rw [show ((((s.ν.get iFin).set km1.val _ hkm1_lt_n).set kFin.val _ hk).get jFin) =
-                    (((s.ν.get iFin).set km1.val _ hkm1_lt_n).get jFin) from
+              show ((((s.ν.getRow iFin).set km1.val _ hkm1_lt_n).set kFin.val _ hk).get jFin) = _
+              rw [show ((((s.ν.getRow iFin).set km1.val _ hkm1_lt_n).set kFin.val _ hk).get jFin) =
+                    (((s.ν.getRow iFin).set km1.val _ hkm1_lt_n).get jFin) from
                   Vector.getElem_set_ne (h := hkFin_ne_jFin) _ jFin.isLt]
-              rw [show (((s.ν.get iFin).set km1.val _ hkm1_lt_n).get jFin) = _ from
+              rw [show (((s.ν.getRow iFin).set km1.val _ hkm1_lt_n).get jFin) = _ from
                   Vector.getElem_set_ne (h := hkm1_ne_jFin) _ jFin.isLt]
               have hν := hν_eq iFin.val jFin.val iFin.isLt jFin.isLt hjiFin
               by_cases hj_lt_km1 : jFin.val < km1.val
@@ -501,10 +534,10 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
                 have hsc :=
                   GramSchmidt.Int.scaledCoeffs_adjacentSwap_above_low s.b kFin hk0 iFin jFin
                     hki (by rw [hkFinVal]; omega)
-                show (s.ν.get iFin)[jFin.val] = _
-                calc (s.ν.get iFin)[jFin.val]
-                    = ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin := hν
-                  _ = ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin := by
+                show (s.ν.getRow iFin)[jFin.val] = _
+                calc (s.ν.getRow iFin)[jFin.val]
+                    = ((GramSchmidt.Int.scaledCoeffs s.b).getRow iFin).get jFin := hν
+                  _ = ((GramSchmidt.Int.scaledCoeffs b').getRow iFin).get jFin := by
                         simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using hsc.symm
               · -- jFin above kFin.
                 have hj_gt_k : kFin.val < jFin.val := by
@@ -512,10 +545,10 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
                 have hsc :=
                   GramSchmidt.Int.scaledCoeffs_adjacentSwap_above_high s.b kFin hk0 iFin jFin
                     hki hj_gt_k hjiFin
-                show (s.ν.get iFin)[jFin.val] = _
-                calc (s.ν.get iFin)[jFin.val]
-                    = ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin := hν
-                  _ = ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin := by
+                show (s.ν.getRow iFin)[jFin.val] = _
+                calc (s.ν.getRow iFin)[jFin.val]
+                    = ((GramSchmidt.Int.scaledCoeffs s.b).getRow iFin).get jFin := hν
+                  _ = ((GramSchmidt.Int.scaledCoeffs b').getRow iFin).get jFin := by
                         simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using hsc.symm
         · -- Cases A/B/C: iFin.val ≤ k.
           rw [if_neg hki]
@@ -529,14 +562,14 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
             · -- C1: jFin = km1. The .set km1 B applies.
               have hj_eq : jFin = km1 := Fin.eq_of_val_eq hj_eq_km1
               rw [hj_eq,
-                show ((νRowsSwapped.get kFin).set km1.val B hkm1_lt_n).get km1 = B from
+                show ((νRowsSwapped.getRow kFin).set km1.val B hkm1_lt_n).get km1 = B from
                     Vector.getElem_set_self km1.isLt]
               -- B = scaledCoeffs b' kFin km1 via hB_eq + scaledCoeffs_adjacentSwap_pivot.
               have hsc := GramSchmidt.Int.scaledCoeffs_adjacentSwap_pivot s.b kFin hk0
-              show B = ((GramSchmidt.Int.scaledCoeffs b').get kFin).get km1
+              show B = ((GramSchmidt.Int.scaledCoeffs b').getRow kFin).get km1
               calc B = GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) kFin km1 := hB_eq
-                _ = ((GramSchmidt.Int.scaledCoeffs s.b).get kFin).get km1 := rfl
-                _ = ((GramSchmidt.Int.scaledCoeffs b').get kFin).get km1 := by
+                _ = ((GramSchmidt.Int.scaledCoeffs s.b).getRow kFin).get km1 := rfl
+                _ = ((GramSchmidt.Int.scaledCoeffs b').getRow kFin).get km1 := by
                       have := hsc
                       simp [GramSchmidt.entry, Matrix.row] at this
                       exact this.symm
@@ -548,20 +581,20 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
                 omega
               have hj_succ_lt_k : jFin.val + 1 < k := by omega
               have hj_ne_km1 : km1.val ≠ jFin.val := fun h => hj_eq_km1 h.symm
-              rw [show ((νRowsSwapped.get kFin).set km1.val B hkm1_lt_n).get jFin = _ from
+              rw [show ((νRowsSwapped.getRow kFin).set km1.val B hkm1_lt_n).get jFin = _ from
                     Vector.getElem_set_ne (h := hj_ne_km1) _ jFin.isLt]
               rw [hνRows_get_kFin]
-              change (setPrefix (s.ν.get km1) (s.ν.get kFin) km1).get jFin = _
+              change (setPrefix (s.ν.getRow km1) (s.ν.getRow kFin) km1).get jFin = _
               rw [setPrefix_get_lt jFin hj_lt_km1]
               have hν := hν_eq km1.val jFin.val km1.isLt jFin.isLt hj_lt_km1
               have hsc :=
                 GramSchmidt.Int.scaledCoeffs_adjacentSwap_lower_curr s.b kFin hk0 jFin
                   (by rw [hkFinVal]; exact hj_succ_lt_k)
-              show (s.ν.get km1).get jFin =
-                ((GramSchmidt.Int.scaledCoeffs b').get kFin).get jFin
-              calc (s.ν.get km1).get jFin
-                  = ((GramSchmidt.Int.scaledCoeffs s.b).get km1).get jFin := hν
-                _ = ((GramSchmidt.Int.scaledCoeffs b').get kFin).get jFin := by
+              show (s.ν.getRow km1).get jFin =
+                ((GramSchmidt.Int.scaledCoeffs b').getRow kFin).get jFin
+              calc (s.ν.getRow km1).get jFin
+                  = ((GramSchmidt.Int.scaledCoeffs s.b).getRow km1).get jFin := hν
+                _ = ((GramSchmidt.Int.scaledCoeffs b').getRow kFin).get jFin := by
                       simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using hsc.symm
           · -- iFin.val < k.
             have hi_lt_k : iFin.val < kFin.val := lt_of_le_of_ne hki hi_eq_k
@@ -582,12 +615,12 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
                 GramSchmidt.Int.scaledCoeffs_adjacentSwap_lower_prev s.b kFin hk0 jFin
                   (by rw [hkFinVal]; exact hj_succ_lt_k)
               -- The lemma uses `GramSchmidt.entry`, which is `(M.row _)[_]`;
-              -- our goal uses `(M.get _).get _`. Bridge via simp.
-              show (s.ν.get kFin).get jFin =
-                ((GramSchmidt.Int.scaledCoeffs b').get km1).get jFin
-              calc (s.ν.get kFin).get jFin
-                  = ((GramSchmidt.Int.scaledCoeffs s.b).get kFin).get jFin := hν
-                _ = ((GramSchmidt.Int.scaledCoeffs b').get km1).get jFin := by
+              -- our goal uses `(M.getRow _).get _`. Bridge via simp.
+              show (s.ν.getRow kFin).get jFin =
+                ((GramSchmidt.Int.scaledCoeffs b').getRow km1).get jFin
+              calc (s.ν.getRow kFin).get jFin
+                  = ((GramSchmidt.Int.scaledCoeffs s.b).getRow kFin).get jFin := hν
+                _ = ((GramSchmidt.Int.scaledCoeffs b').getRow km1).get jFin := by
                       simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using hsc.symm
             · -- Case A: iFin.val < km1.val.
               have hi_lt_km1 : iFin.val < km1.val := by omega
@@ -595,18 +628,18 @@ theorem swapStep_valid (s : LLLState n m) (k : Nat)
               have hi_ne_kFin : iFin.val ≠ kFin.val := by
                 rw [hkFinVal]; omega
               rw [hνPivot_get_ne iFin hi_ne_kFin, hνRows_get_ne iFin hi_ne_km1 hi_ne_kFin]
-              -- LHS = (s.ν.get iFin).get jFin. Bridge through Valid then
+              -- LHS = (s.ν.getRow iFin).get jFin. Bridge through Valid then
               -- scaledCoeffs_adjacentSwap_before.
               have hν := hν_eq iFin.val jFin.val iFin.isLt jFin.isLt hjiFin
               have hsc :=
                 GramSchmidt.Int.scaledCoeffs_adjacentSwap_before s.b kFin hk0 iFin jFin
                   (by rw [hkFinVal]; omega) hjiFin
               -- The goal is `(s.ν[iFin])[jFin] = scaledCoeffs b' [iFin][jFin]`.
-              show (s.ν.get iFin).get jFin =
-                ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin
-              calc (s.ν.get iFin).get jFin
-                  = ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin := hν
-                _ = ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin := hsc.symm
+              show (s.ν.getRow iFin).get jFin =
+                ((GramSchmidt.Int.scaledCoeffs b').getRow iFin).get jFin
+              calc (s.ν.getRow iFin).get jFin
+                  = ((GramSchmidt.Int.scaledCoeffs s.b).getRow iFin).get jFin := hν
+                _ = ((GramSchmidt.Int.scaledCoeffs b').getRow iFin).get jFin := hsc.symm
       · -- d_eq: case-split on whether i = k.
         intro i hi
         change
@@ -794,7 +827,7 @@ theorem swapStep_coeffs_below (s : LLLState n m) (k : Nat) (hk : k < n)
   simpa [GramSchmidt.Int.adjacentSwap, GramSchmidt.entry, Matrix.row,
     kFin, km1] using hcoeff
 
-end LLLState
+end Internal.LLLState
 
 /-- The prefix `δ`-LLL-reduced predicate: the first `k` Gram-Schmidt rows
 satisfy size reduction (for all `i < k`, `j < i`) and the adjacent Lovász
@@ -919,7 +952,7 @@ theorem prefixLLLReduced_to_isLLLReduced (b : Matrix Int n m) (δ : Rat)
   · intro i hi
     exact h.2 i hi hi
 
-namespace LLLState
+namespace Internal.LLLState
 
 /-- `swapStep s k` preserves the prefix LLL-reduced predicate, with the
 prefix shrunk by one (clamped below by `1` to stay in the trivially-true
@@ -1001,11 +1034,11 @@ and the Gram-determinants are unchanged (`gramDet_sizeReduce`). -/
 /-- Field projection: `sizeReduceColumn`'s `.b` field under the reducing branch. -/
 private theorem sizeReduceColumn_b_reduce (s : LLLState n m) (j k : Fin n)
     (hjk : j.val < k.val)
-    (hreduce : 2 * Int.natAbs ((s.ν.get k).get j) >
+    (hreduce : 2 * Int.natAbs ((s.ν.getRow k).get j) >
       s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩) :
     (s.sizeReduceColumn j k hjk).b =
       GramSchmidt.Int.sizeReduce s.b j k
-        (nearestQuotient ((s.ν.get k).get j)
+        (nearestQuotient ((s.ν.getRow k).get j)
           (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)) := by
   unfold sizeReduceColumn; rw [dif_pos hreduce]
 
@@ -1015,7 +1048,7 @@ private theorem sizeReduceColumn_d_eq (s : LLLState n m) (j k : Fin n)
     (s.sizeReduceColumn j k hjk).d = s.d := by
   unfold sizeReduceColumn
   by_cases hreduce :
-      2 * Int.natAbs ((s.ν.get k).get j) >
+      2 * Int.natAbs ((s.ν.getRow k).get j) >
         s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
   · rw [dif_pos hreduce]
   · rw [dif_neg hreduce]
@@ -1026,17 +1059,17 @@ the integer nearest quotient `r` as an explicit parameter so callers can
 keep it opaque. -/
 private theorem sizeReduceColumn_ν_get_k (s : LLLState n m) (j k : Fin n)
     (hjk : j.val < k.val)
-    (hreduce : 2 * Int.natAbs ((s.ν.get k).get j) >
+    (hreduce : 2 * Int.natAbs ((s.ν.getRow k).get j) >
       s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)
     (r : Int)
-    (hr : r = nearestQuotient ((s.ν.get k).get j)
+    (hr : r = nearestQuotient ((s.ν.getRow k).get j)
       (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)) :
-    (s.sizeReduceColumn j k hjk).ν.get k =
+    (s.sizeReduceColumn j k hjk).ν.getRow k =
       ((List.finRange j.val).foldl
         (fun (row : Vector Int n) (l : Fin j.val) =>
           let lFin : Fin n := ⟨l.val, Nat.lt_trans l.isLt j.isLt⟩
-          row.set lFin ((s.ν.get k).get lFin - r * (s.ν.get j).get lFin))
-        (s.ν.get k)).set j ((s.ν.get k).get j -
+          row.set lFin ((s.ν.getRow k).get lFin - r * (s.ν.getRow j).get lFin))
+        (s.ν.getRow k)).set j ((s.ν.getRow k).get j -
           r * Int.ofNat (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)) := by
   subst hr
   unfold sizeReduceColumn; rw [dif_pos hreduce]
@@ -1046,10 +1079,10 @@ private theorem sizeReduceColumn_ν_get_k (s : LLLState n m) (j k : Fin n)
 under the reducing branch (unchanged). -/
 private theorem sizeReduceColumn_ν_get_ne (s : LLLState n m) (j k : Fin n)
     (hjk : j.val < k.val)
-    (hreduce : 2 * Int.natAbs ((s.ν.get k).get j) >
+    (hreduce : 2 * Int.natAbs ((s.ν.getRow k).get j) >
       s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)
     (i : Fin n) (hi : i ≠ k) :
-    (s.sizeReduceColumn j k hjk).ν.get i = s.ν.get i := by
+    (s.sizeReduceColumn j k hjk).ν.getRow i = s.ν.getRow i := by
   unfold sizeReduceColumn; rw [dif_pos hreduce]
   exact Vector.getElem_set_ne k.isLt i.isLt (fun h => hi (Fin.eq_of_val_eq h.symm))
 
@@ -1058,12 +1091,12 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
     (hjk : j.val < k.val) (hvalid : s.Valid) :
     (s.sizeReduceColumn j k hjk).Valid := by
   by_cases hreduce :
-      2 * Int.natAbs ((s.ν.get k).get j) >
+      2 * Int.natAbs ((s.ν.getRow k).get j) >
         s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
   · -- The reducing branch.  Let r be the integer nearest quotient.
     -- Bridges from Valid to the Mathlib-side scaledCoeffs/gramDet.
     have hν_at : ∀ (i : Fin n) (j' : Fin n), j'.val < i.val →
-        (s.ν.get i).get j' =
+        (s.ν.getRow i).get j' =
           GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) i j' := by
       intro i j' hj'i
       have := hvalid.ν_eq i.val j'.val i.isLt j'.isLt hj'i
@@ -1072,7 +1105,7 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
         s.d.get ⟨i, hi⟩ =
           GramSchmidt.Int.gramDet s.b i (Nat.le_of_lt_succ hi) :=
       hvalid.d_eq
-    set r : Int := nearestQuotient ((s.ν.get k).get j)
+    set r : Int := nearestQuotient ((s.ν.getRow k).get j)
       (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩) with hr_def
     set b' : Matrix Int n m := GramSchmidt.Int.sizeReduce s.b j k r with hb'_def
     -- The b/d projections.
@@ -1086,8 +1119,8 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
       set iFin : Fin n := ⟨iVal, hi⟩
       set jFin : Fin n := ⟨jVal, hj'⟩
       have hji' : jFin.val < iFin.val := hji
-      show ((s.sizeReduceColumn j k hjk).ν.get iFin).get jFin =
-        ((GramSchmidt.Int.scaledCoeffs (s.sizeReduceColumn j k hjk).b).get iFin).get jFin
+      show ((s.sizeReduceColumn j k hjk).ν.getRow iFin).get jFin =
+        ((GramSchmidt.Int.scaledCoeffs (s.sizeReduceColumn j k hjk).b).getRow iFin).get jFin
       rw [hb_eq]
       by_cases hi_k : iFin = k
       · -- Case iFin = k.
@@ -1110,8 +1143,8 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
           have hsc := GramSchmidt.Int.scaledCoeffs_sizeReduce_pivot s.b jFin iFin hjk r
           -- hsc : entry (scaledCoeffs b') iFin jFin =
           --       entry (scaledCoeffs s.b) iFin jFin - r * Int.ofNat (gramDet s.b (jFin+1))
-          have hsc' : ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin =
-              ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin -
+          have hsc' : ((GramSchmidt.Int.scaledCoeffs b').getRow iFin).get jFin =
+              ((GramSchmidt.Int.scaledCoeffs s.b).getRow iFin).get jFin -
                 r * Int.ofNat (GramSchmidt.Int.gramDet s.b (jFin.val + 1)
                   (Nat.succ_le_of_lt jFin.isLt)) := by
             simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using hsc
@@ -1124,15 +1157,15 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
                   (fun h => hj_eq (Fin.eq_of_val_eq h).symm)]
           -- Use foldl_finRange_set_outerSubMul_get_eq to compute rowK_inner[jFin].
           rw [LLLState.foldl_finRange_set_outerSubMul_get_eq j.val
-              (Nat.le_of_lt j.isLt) (s.ν.get iFin) (s.ν.get iFin) (s.ν.get j) r jFin]
+              (Nat.le_of_lt j.isLt) (s.ν.getRow iFin) (s.ν.getRow iFin) (s.ν.getRow j) r jFin]
           by_cases hjlt : jFin.val < j.val
           · -- Below pivot.
             rw [if_pos hjlt, hν_at iFin jFin hji', hν_at j jFin hjlt]
             have hsc :=
               GramSchmidt.Int.scaledCoeffs_sizeReduce_lower s.b jFin j iFin hjlt hjk r
-            have hsc' : ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin =
-                ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin -
-                  r * ((GramSchmidt.Int.scaledCoeffs s.b).get j).get jFin := by
+            have hsc' : ((GramSchmidt.Int.scaledCoeffs b').getRow iFin).get jFin =
+                ((GramSchmidt.Int.scaledCoeffs s.b).getRow iFin).get jFin -
+                  r * ((GramSchmidt.Int.scaledCoeffs s.b).getRow j).get jFin := by
               simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using hsc
             rw [hsc']
             rfl
@@ -1146,8 +1179,8 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
             have hsc :=
               GramSchmidt.Int.scaledCoeffs_sizeReduce_above_pivot s.b j iFin hjk r jFin
                 hjlt' hjlt_k
-            have hsc' : ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin =
-                ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin := by
+            have hsc' : ((GramSchmidt.Int.scaledCoeffs b').getRow iFin).get jFin =
+                ((GramSchmidt.Int.scaledCoeffs s.b).getRow iFin).get jFin := by
               simpa [GramSchmidt.entry, Matrix.row, vector_get_eq_getElem] using hsc
             rw [hsc']
             rfl
@@ -1156,8 +1189,8 @@ theorem sizeReduceColumn_valid (s : LLLState n m) (j k : Fin n)
         have hsc :=
           GramSchmidt.Int.scaledCoeffs_sizeReduce_other_row s.b j k hjk r iFin hi_k
         -- hsc : (scaledCoeffs b').row iFin = (scaledCoeffs s.b).row iFin
-        have hsc' : ((GramSchmidt.Int.scaledCoeffs b').get iFin).get jFin =
-            ((GramSchmidt.Int.scaledCoeffs s.b).get iFin).get jFin := by
+        have hsc' : ((GramSchmidt.Int.scaledCoeffs b').getRow iFin).get jFin =
+            ((GramSchmidt.Int.scaledCoeffs s.b).getRow iFin).get jFin := by
           have hrow := hsc
           rw [Matrix.row, Matrix.row] at hrow
           exact congrArg (fun v : Vector Int n => v.get jFin) hrow
@@ -1248,7 +1281,7 @@ private theorem sizeReduceColumn_b_gramDet (s : LLLState n m) (j k : Fin n)
       GramSchmidt.Int.gramDet s.b t ht := by
   unfold sizeReduceColumn
   by_cases hreduce :
-      2 * Int.natAbs ((s.ν.get k).get j) >
+      2 * Int.natAbs ((s.ν.getRow k).get j) >
         s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
   · rw [dif_pos hreduce]
     exact GramSchmidt.Int.gramDet_sizeReduce s.b j k hjk _ t ht
@@ -1266,10 +1299,10 @@ integer `ν[k][j]` satisfies `2 * |ν[k][j]| ≤ d[j+1]`. -/
 private theorem sizeReduceColumn_ν_pivot_bound (s : LLLState n m) (j k : Fin n)
     (hjk : j.val < k.val)
     (hdpos : 0 < s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩) :
-    2 * Int.natAbs (((s.sizeReduceColumn j k hjk).ν.get k).get j) ≤
+    2 * Int.natAbs (((s.sizeReduceColumn j k hjk).ν.getRow k).get j) ≤
       s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩ := by
   by_cases hreduce :
-      2 * Int.natAbs ((s.ν.get k).get j) >
+      2 * Int.natAbs ((s.ν.getRow k).get j) >
         s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
   · rw [sizeReduceColumn_ν_get_k s j k hjk hreduce _ rfl]
     rw [show ∀ (xs : Vector Int n) (x : Int),
@@ -1285,9 +1318,9 @@ private theorem sizeReduceColumn_ν_pivot_bound (s : LLLState n m) (j k : Fin n)
 the pivot `j`. -/
 private theorem sizeReduceColumn_ν_get_above_pivot (s : LLLState n m)
     (j k : Fin n) (hjk : j.val < k.val) (l : Fin n) (hjl : j.val < l.val) :
-    ((s.sizeReduceColumn j k hjk).ν.get k).get l = (s.ν.get k).get l := by
+    ((s.sizeReduceColumn j k hjk).ν.getRow k).get l = (s.ν.getRow k).get l := by
   by_cases hreduce :
-      2 * Int.natAbs ((s.ν.get k).get j) >
+      2 * Int.natAbs ((s.ν.getRow k).get j) >
         s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
   · rw [sizeReduceColumn_ν_get_k s j k hjk hreduce _ rfl]
     have hj_ne_l : j.val ≠ l.val := Nat.ne_of_lt hjl
@@ -1295,7 +1328,7 @@ private theorem sizeReduceColumn_ν_get_above_pivot (s : LLLState n m)
             (xs.set j.val x j.isLt).get l = xs.get l from
           fun xs x => Vector.getElem_set_ne j.isLt l.isLt hj_ne_l]
     rw [LLLState.foldl_finRange_set_outerSubMul_get_eq j.val
-        (Nat.le_of_lt j.isLt) (s.ν.get k) (s.ν.get k) (s.ν.get j) _ l]
+        (Nat.le_of_lt j.isLt) (s.ν.getRow k) (s.ν.getRow k) (s.ν.getRow j) _ l]
     rw [if_neg (Nat.not_lt.mpr (Nat.le_of_lt hjl))]
   · have h_eq : s.sizeReduceColumn j k hjk = s := by
       unfold sizeReduceColumn; rw [dif_neg hreduce]
@@ -1317,7 +1350,7 @@ private theorem sizeReduce_foldl_preserves_ν_above {n m : Nat}
           (fun state j =>
             let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
             state.sizeReduceColumn jFin ⟨k, hk⟩ j.isLt)
-          s').ν.get ⟨k, hk⟩).get e = (s'.ν.get ⟨k, hk⟩).get e := by
+          s').ν.getRow ⟨k, hk⟩).get e = (s'.ν.getRow ⟨k, hk⟩).get e := by
   intro xs
   induction xs with
   | nil => intros; rfl
@@ -1361,7 +1394,7 @@ private theorem sizeReduce_foldl_size_reduced {n m : Nat}
                   (fun state j =>
                     let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
                     state.sizeReduceColumn jFin ⟨k, hk⟩ j.isLt)
-                  s').ν.get ⟨k, hk⟩).get
+                  s').ν.getRow ⟨k, hk⟩).get
                 ⟨e.val, Nat.lt_trans e.isLt hk⟩) ≤
             s'.d.get ⟨e.val + 1, Nat.succ_lt_succ (Nat.lt_trans e.isLt hk)⟩ := by
   intro xs
@@ -1396,7 +1429,7 @@ private theorem sizeReduce_foldl_size_reduced {n m : Nat}
         sizeReduce_foldl_preserves_ν_above k hk
           (⟨e.val, Nat.lt_trans e.isLt hk⟩ : Fin n) js
           s'' hj_gt_js
-      show 2 * Int.natAbs ((((js.foldl _ s'').ν.get ⟨k, hk⟩).get _)) ≤ _
+      show 2 * Int.natAbs ((((js.foldl _ s'').ν.getRow ⟨k, hk⟩).get _)) ≤ _
       rw [hpres]
       exact hpivot
     · -- e ∈ js: apply IH (with d preserved through the head step).
@@ -1429,7 +1462,7 @@ theorem sizeReduce_ν_bound (s : LLLState n m) (k : Nat) (hk : k < n)
     ∀ (j : Nat) (hj : j < k),
       let kFin : Fin n := ⟨k, hk⟩
       let jFin : Fin n := ⟨j, Nat.lt_trans hj hk⟩
-      2 * Int.natAbs (((s.sizeReduce k).ν.get kFin).get jFin) ≤
+      2 * Int.natAbs (((s.sizeReduce k).ν.getRow kFin).get jFin) ≤
         s.d.get ⟨j + 1, Nat.succ_lt_succ (Nat.lt_trans hj hk)⟩ := by
   intro j hj
   unfold sizeReduce
@@ -1477,7 +1510,7 @@ theorem sizeReduce_size_reduced (s : LLLState n m) (k : Nat) (hk : k < n)
   -- Cast hν_bound to Rat as `|2 * ν'| ≤ d[j+1]`.
   set kFin : Fin n := ⟨k, hk⟩
   set jFin : Fin n := ⟨j, hjn⟩
-  set ν' : Int := ((s.sizeReduce k).ν.get kFin).get jFin with hν'_def
+  set ν' : Int := ((s.sizeReduce k).ν.getRow kFin).get jFin with hν'_def
   set d_jp1 : Nat := s.d.get ⟨j + 1, Nat.succ_lt_succ hjn⟩ with hd_jp1_def
   set μ : Rat := GramSchmidt.entry (GramSchmidt.Int.coeffs (s.sizeReduce k).b)
     kFin jFin with hμ_def
@@ -1491,7 +1524,7 @@ theorem sizeReduce_size_reduced (s : LLLState n m) (k : Nat) (hk : k < n)
   -- ν' bridges to μ via scaledCoeffs_eq + Valid.
   have hν'_bridge : (ν' : Rat) = (d_jp1 : Rat) * μ := by
     have hν_at : ν' =
-        ((GramSchmidt.Int.scaledCoeffs (s.sizeReduce k).b).get kFin).get jFin :=
+        ((GramSchmidt.Int.scaledCoeffs (s.sizeReduce k).b).getRow kFin).get jFin :=
       hvalid'.ν_eq kFin.val jFin.val kFin.isLt jFin.isLt hj
     have hd_eq_rat : (d_jp1 : Rat) =
         ((GramSchmidt.Int.gramDet (s.sizeReduce k).b (j+1) hjsuc : Nat) : Rat) := by
@@ -1571,7 +1604,7 @@ theorem swapStep_d_pivot (s : LLLState n m) (k : Nat) (hk : k < n) (hk0 : 0 < k)
       Int.toNat
         ((Int.ofNat (s.d.get ⟨k + 1, Nat.succ_lt_succ hk⟩) *
               Int.ofNat (s.d.get ⟨k - 1, Nat.lt_succ_of_lt hkm1lt⟩) +
-            ((s.ν.get ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩) ^ 2) /
+            ((s.ν.getRow ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩) ^ 2) /
           Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩)) := by
   intro _hkm1lt
   unfold swapStep
@@ -1674,7 +1707,7 @@ theorem swapStep_potential_lt (s : LLLState n m) (k : Nat)
           (Int.ofNat (s.d.get ⟨k + 1, Nat.succ_lt_succ hk⟩) *
               Int.ofNat (s.d.get ⟨k - 1,
                 Nat.lt_succ_of_lt (Nat.lt_of_le_of_lt (Nat.sub_le k 1) hk)⟩) +
-            ((s.ν.get ⟨k, hk⟩).get
+            ((s.ν.getRow ⟨k, hk⟩).get
                 ⟨k - 1, Nat.lt_of_le_of_lt (Nat.sub_le k 1) hk⟩) ^ 2) <
         δnum * (Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩)) ^ 2) :
     (s.swapStep k).potential < s.potential := by
@@ -1726,7 +1759,7 @@ theorem swapStep_potential_lt (s : LLLState n m) (k : Nat)
   have hsq_lt :
       Int.ofNat (s.d.get ⟨k + 1, Nat.succ_lt_succ hk⟩) *
             Int.ofNat (s.d.get ⟨k - 1, Nat.lt_succ_of_lt hkm1lt⟩) +
-          ((s.ν.get kFin).get ⟨k - 1, hkm1lt⟩) ^ 2 <
+          ((s.ν.getRow kFin).get ⟨k - 1, hkm1lt⟩) ^ 2 <
       (Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩)) ^ 2 := by
     have hsq_nn : (0 : Int) ≤ (Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩)) ^ 2 :=
       sq_nonneg _
@@ -1744,7 +1777,7 @@ theorem swapStep_potential_lt (s : LLLState n m) (k : Nat)
     have := hvalid'.d_eq k (Nat.lt_succ_of_lt hk)
     simpa [swapStep_b_eq s k hk hk0] using this
   have hB_via_valid :
-      ((s.ν.get kFin).get ⟨k - 1, hkm1lt⟩ : Int) =
+      ((s.ν.getRow kFin).get ⟨k - 1, hkm1lt⟩ : Int) =
         GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) kFin km1 := by
     have h := hvalid.ν_eq kFin.val km1.val kFin.isLt km1.isLt
       (by show k - 1 < k; omega)
@@ -1759,7 +1792,7 @@ theorem swapStep_potential_lt (s : LLLState n m) (k : Nat)
         (Int.ofNat (s.d.get ⟨k, Nat.lt_succ_of_lt hk⟩)) =
       Int.ofNat (s.d.get ⟨k + 1, Nat.succ_lt_succ hk⟩) *
             Int.ofNat (s.d.get ⟨k - 1, Nat.lt_succ_of_lt hkm1lt⟩) +
-          ((s.ν.get kFin).get ⟨k - 1, hkm1lt⟩) ^ 2 := by
+          ((s.ν.getRow kFin).get ⟨k - 1, hkm1lt⟩) ^ 2 := by
     -- Restate hprod with the unfolded `km1` and `kFin` to match our shapes.
     have hprod' :
         ((GramSchmidt.Int.gramDet (Matrix.rowSwap s.b km1 kFin) k
@@ -1771,9 +1804,9 @@ theorem swapStep_potential_lt (s : LLLState n m) (k : Nat)
     -- Normalize all Int.ofNat to Nat.cast for uniform rewriting.
     show ((s.swapStep k).d.get _ : Nat) * ((s.d.get _ : Nat) : Int) =
       ((s.d.get _ : Nat) : Int) * ((s.d.get _ : Nat) : Int) +
-        ((s.ν.get kFin).get _) ^ 2
+        ((s.ν.getRow kFin).get _) ^ 2
     rw [hdk_eq, hdkPrev_eq, hdkNext_eq]
-    rw [show ((s.ν.get kFin).get ⟨k - 1, hkm1lt⟩ : Int) =
+    rw [show ((s.ν.getRow kFin).get ⟨k - 1, hkm1lt⟩ : Int) =
         GramSchmidt.entry (GramSchmidt.Int.scaledCoeffs s.b) kFin km1 from
         hB_via_valid]
     rw [hswap_d_at_k]
@@ -1906,7 +1939,7 @@ private def lllLoopBody (s : LLLState n m) (k : Nat) (δ : Rat)
       (Nat.lt_of_le_of_lt (Nat.sub_le k 1) hlt) (Nat.lt_succ_self n)⟩
   let dk := sReduced.d.get ⟨k, Nat.lt_succ_of_lt hlt⟩
   let dkNext := sReduced.d.get ⟨k + 1, Nat.succ_lt_succ hlt⟩
-  let B := (sReduced.ν.get kFin).get km1Fin
+  let B := (sReduced.ν.getRow kFin).get km1Fin
   let lovaszLhs : Int :=
     Int.ofNat δ.den * (Int.ofNat dkNext * Int.ofNat dkPrev + B ^ 2)
   let lovaszRhs : Int := δ.num * (Int.ofNat dk ^ 2)
@@ -2089,7 +2122,7 @@ private theorem sizeReduceColumn_coeffs_row_of_ne (s : LLLState n m) (j k : Fin 
       (GramSchmidt.Int.coeffs s.b).row i := by
   unfold sizeReduceColumn
   by_cases hreduce :
-      2 * Int.natAbs ((s.ν.get k).get j) >
+      2 * Int.natAbs ((s.ν.getRow k).get j) >
         s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩
   · rw [dif_pos hreduce]
     exact GramSchmidt.Int.coeffs_sizeReduce_other_row s.b j k hjk _ i hik
@@ -2313,7 +2346,7 @@ theorem lllLoop_independent
         exact ih ((s.sizeReduce k).swapStep k) (max (k - 1) 1)
           (Nat.le_max_right (k - 1) 1) hk'n hsS_valid hsS_ind
 
-end LLLState
+end Internal.LLLState
 
 /-! ### Capstones
 
@@ -2405,55 +2438,10 @@ theorem dispatch_some_property {b : Matrix Int n m} {δ : Rat}
   obtain ⟨U, V, hcheck⟩ := LLLProvider.dispatch_some_certCheck h
   exact HexLLLMathlib.certCheck_sound hcheck
 
-/-- The steered reducer preserves the generated lattice: the certified candidate
-preserves it by construction (`steeredReduce_memLattice_iff`), the fallback by
-`lllNative_memLattice_iff`. -/
-theorem lllSteered_memLattice_iff (b : Matrix Int n m) (δ : Rat)
-    (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (v : Vector Int m) :
-    Matrix.memLattice (Hex.lllSteered b δ hδ hδ' hn) v ↔ Matrix.memLattice b v := by
-  unfold Hex.lllSteered
-  simp only [Hex.withRecordSteeredOutcome]
-  split
-  · split
-    · exact Hex.steeredReduce_memLattice_iff b δ v
-    · exact lllNative_memLattice_iff b δ hδ hδ' hn v
-  · exact lllNative_memLattice_iff b δ hδ hδ' hn v
-
-/-- The steered reducer produces a `(δ, 11/20)`-reduced basis: on the small-input
-and fallback paths from `lllNative_isLLLReduced` (`η = 1/2`) lifted by
-`isLLLReduced.mono_η`, on the steered acceptance path from `lllReducedCheck_sound`. -/
-theorem lllSteered_isLLLReduced (b : Matrix Int n m) (δ : Rat)
-    (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
-    isLLLReduced (Hex.lllSteered b δ hδ hδ' hn) δ (11 / 20) := by
-  have hnative : isLLLReduced (Hex.lllNative b δ hδ hδ' hn) δ (11 / 20) :=
-    Hex.isLLLReduced.mono_η _ (by grind) (by grind)
-      (lllNative_isLLLReduced b δ hδ hδ' hn hind)
-  unfold Hex.lllSteered
-  simp only [Hex.withRecordSteeredOutcome]
-  split
-  · split
-    · rename_i h
-      exact (HexLLLMathlib.lllReducedCheck_sound _ δ (11 / 20) h).1
-    · exact hnative
-  · exact hnative
-
-/-- Independence is preserved by the steered reducer. -/
-theorem lllSteered_independent (b : Matrix Int n m) (δ : Rat)
-    (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
-    (Hex.lllSteered b δ hδ hδ' hn).independent := by
-  unfold Hex.lllSteered
-  simp only [Hex.withRecordSteeredOutcome]
-  split
-  · split
-    · rename_i h
-      exact (HexLLLMathlib.lllReducedCheck_sound _ δ (11 / 20) h).2
-    · exact lllNative_independent b δ hδ hδ' hn hind
-  · exact lllNative_independent b δ hδ hδ' hn hind
-
 /-- The public LLL `lll` produces a `(δ, 11/20)`-LLL-reduced matrix. On the
-steered fallback path this follows from `lllSteered_isLLLReduced`. On the
-certified-dispatch path it follows from `certCheck_sound` via
-`dispatch_some_property`. -/
+native path this is `lllNative_isLLLReduced` (`η = 1/2`) lifted to `η = 11/20`
+by `isLLLReduced.mono_η`. On the certified-dispatch path it follows from
+`certCheck_sound` via `dispatch_some_property`. -/
 theorem lll_isLLLReduced (b : Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent) :
@@ -2461,8 +2449,9 @@ theorem lll_isLLLReduced (b : Matrix Int n m) (δ : Rat)
   unfold lll
   cases hd : LLLProvider.dispatch b δ with
   | none =>
-      exact lllSteered_isLLLReduced b δ
-        (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
+      exact Hex.Internal.isLLLReduced.mono_η _ (by grind) (by grind)
+        (lllNative_isLLLReduced b δ
+          (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind)
   | some B' =>
       exact (dispatch_some_property hd).2.2
 
@@ -2474,8 +2463,8 @@ theorem lll_memLattice_iff (b : Matrix Int n m) (δ : Rat)
   unfold lll
   cases hd : LLLProvider.dispatch b δ with
   | none =>
-      exact lllSteered_memLattice_iff b δ
-        (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn v
+      exact lllNative_memLattice_iff b δ
+        (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn v
   | some B' =>
       exact ((dispatch_some_property hd).1 v).symm
 
@@ -2487,8 +2476,8 @@ theorem lll_independent (b : Matrix Int n m) (δ : Rat)
   unfold lll
   cases hd : LLLProvider.dispatch b δ with
   | none =>
-      exact lllSteered_independent b δ
-        (Hex.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
+      exact lllNative_independent b δ
+        (Hex.Internal.one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn hind
   | some B' =>
       exact (dispatch_some_property hd).2.1
 

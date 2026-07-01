@@ -27,14 +27,14 @@ data. Lives on the Mathlib side because the diagonal Gram-determinant
 identification (`gramDetVec_eq_gramDet`) consumes a `StepWitness b`, which is
 supplied by `StepWitness.ofGram`. -/
 theorem LLLState.ofBasis_valid (b : Hex.Matrix Int n m) (hind : b.independent) :
-    (Hex.LLLState.ofBasis b hind).Valid := by
+    (Hex.Internal.LLLState.ofBasis b hind).Valid := by
   let gs := Hex.GramSchmidt.Int.data b
   constructor
   · intro i j hi hj hji
-    simp [Hex.LLLState.ofBasis, Hex.LLLState.ofBasisUnchecked,
+    simp [Hex.Internal.LLLState.ofBasis, Hex.Internal.LLLState.ofBasisUnchecked,
       Hex.GramSchmidt.Int.scaledCoeffs]
   · intro i hi
-    simpa [Hex.LLLState.ofBasis, Hex.LLLState.ofBasisUnchecked,
+    simpa [Hex.Internal.LLLState.ofBasis, Hex.Internal.LLLState.ofBasisUnchecked,
       Hex.GramSchmidt.Int.gramDetVec, gs] using
       Hex.GramSchmidt.Int.gramDetVec_eq_gramDet b
         (Hex.GramSchmidt.Int.StepWitness.ofGram b) i (Nat.le_of_lt_succ hi)
@@ -42,11 +42,11 @@ theorem LLLState.ofBasis_valid (b : Hex.Matrix Int n m) (hind : b.independent) :
 /-- Mathlib-side correspondence from the executable LLL state scaled-coefficient
 certificate to the rational Gram-Schmidt coefficient relation. -/
 theorem lllState_ν_eq_coeffs
-    (s : Hex.LLLState n m) (hvalid : s.Valid)
+    (s : Hex.Internal.LLLState n m) (hvalid : s.Valid)
     (i j : Nat) (hi : i < n) (hj : j < n) (hji : j < i) :
-    (((s.ν.get ⟨i, hi⟩).get ⟨j, hj⟩ : Int) : Rat) =
+    (((s.ν.getRow ⟨i, hi⟩).get ⟨j, hj⟩ : Int) : Rat) =
       (s.d.get ⟨j + 1, Nat.succ_lt_succ hj⟩ : Rat) *
-        (((Hex.GramSchmidt.Int.coeffs s.b).get ⟨i, hi⟩).get ⟨j, hj⟩) := by
+        (((Hex.GramSchmidt.Int.coeffs s.b).getRow ⟨i, hi⟩).get ⟨j, hj⟩) := by
   have hν := hvalid.ν_eq i j hi hj hji
   have hd :
       s.d.get ⟨j + 1, Nat.succ_lt_succ hj⟩ =
@@ -60,7 +60,7 @@ theorem lllState_ν_eq_coeffs
 
 /-- Integer Lovász check ↔ rational Lovász condition at pair `(k - 1, k)`.
 
-`Hex.lllLoop` dispatches on the integer comparison
+`Hex.Internal.lllLoop` dispatches on the integer comparison
 
 ```
 δ.den * (d[k+1] * d[k-1] + ν[k][k-1]²) ≥ δ.num * d[k]²
@@ -79,7 +79,7 @@ predicate at that position. This bridges the loop's executable check to the
 specification side of `isLLLReduced` so the loop-invariant proof can read off
 "the loop advances ⇒ Lovász holds at this pair." -/
 theorem lovasz_check_iff_isLLLReduced_pair
-    (s : Hex.LLLState n m) (k : Nat) (hk : k < n) (hk0 : 0 < k)
+    (s : Hex.Internal.LLLState n m) (k : Nat) (hk : k < n) (hk0 : 0 < k)
     (hvalid : s.Valid) (hind : s.b.independent)
     {δ : Rat} (_hδ : (1 : Rat) / 4 < δ) (_hδ' : δ ≤ 1) :
     have hkm1lt : k - 1 < n :=
@@ -91,16 +91,16 @@ theorem lovasz_check_iff_isLLLReduced_pair
     Int.ofNat δ.den *
         (Int.ofNat (s.d.get ⟨k + 1, hkSuccLt⟩) *
             Int.ofNat (s.d.get ⟨k - 1, hkm1ltN1⟩) +
-          ((s.ν.get ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩) ^ 2) ≥
+          ((s.ν.getRow ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩) ^ 2) ≥
         δ.num * (Int.ofNat (s.d.get ⟨k, hkltN1⟩) ^ 2) ↔
-      δ * Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b)
+      δ * Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b)
             ⟨k - 1, hkm1lt⟩ ≤
-        Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b) ⟨k, hk⟩ +
-          (((Hex.GramSchmidt.Int.coeffs s.b).get ⟨k, hk⟩).get
+        Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b) ⟨k, hk⟩ +
+          (((Hex.GramSchmidt.Int.coeffs s.b).getRow ⟨k, hk⟩).get
               ⟨k - 1, hkm1lt⟩) *
-            (((Hex.GramSchmidt.Int.coeffs s.b).get ⟨k, hk⟩).get
+            (((Hex.GramSchmidt.Int.coeffs s.b).getRow ⟨k, hk⟩).get
               ⟨k - 1, hkm1lt⟩) *
-            Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b)
+            Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b)
               ⟨k - 1, hkm1lt⟩ := by
   intro hkm1lt hkm1ltN1 hkltN1 hkSuccLt
   -- Translate the d-field values to Gram determinants.
@@ -117,9 +117,9 @@ theorem lovasz_check_iff_isLLLReduced_pair
   have hkm1ltK : k - 1 < k := Nat.sub_lt hk0 Nat.zero_lt_one
   have hsubAdd : k - 1 + 1 = k := Nat.sub_add_cancel hk0
   have hν :
-      (((s.ν.get ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩ : Int) : Rat) =
+      (((s.ν.getRow ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩ : Int) : Rat) =
         (s.d.get ⟨k, hkltN1⟩ : Rat) *
-          (((Hex.GramSchmidt.Int.coeffs s.b).get ⟨k, hk⟩).get
+          (((Hex.GramSchmidt.Int.coeffs s.b).getRow ⟨k, hk⟩).get
             ⟨k - 1, hkm1lt⟩) := by
     have h := lllState_ν_eq_coeffs s hvalid k (k - 1) hk hkm1lt hkm1ltK
     have hidx :
@@ -138,13 +138,13 @@ theorem lovasz_check_iff_isLLLReduced_pair
     Hex.GramSchmidt.Int.gramDet s.b (k - 1) (Nat.le_of_lt_succ hkm1ltN1)
       with hgd_km1_def
   set Nk : Rat :=
-    Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b) ⟨k, hk⟩
+    Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b) ⟨k, hk⟩
       with hNk_def
   set Nkm1 : Rat :=
-    Hex.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b)
+    Hex.Internal.LLLCore.basisNormSq (Hex.GramSchmidt.Int.basis s.b)
         ⟨k - 1, hkm1lt⟩ with hNkm1_def
   set μ : Rat :=
-    ((Hex.GramSchmidt.Int.coeffs s.b).get ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩
+    ((Hex.GramSchmidt.Int.coeffs s.b).getRow ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩
       with hμ_def
   -- Positivity of the Gram determinants.
   have hgd_k_pos_nat : 0 < gd_k :=
@@ -196,16 +196,16 @@ theorem lovasz_check_iff_isLLLReduced_pair
   have hδmul : δ * (δ.den : Rat) = (δ.num : Rat) := Rat.mul_den_eq_num δ
   -- Cast B = ν[k][k-1] = gd_k * μ (over Rat).
   have hB_cast :
-      (((s.ν.get ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩ : Int) : Rat) =
+      (((s.ν.getRow ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩ : Int) : Rat) =
         (gd_k : Rat) * μ := by
     rw [hν, hdk_eq]
   have hB_sq :
-      ((((s.ν.get ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩ : Int)) ^ 2 : Rat) =
+      ((((s.ν.getRow ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩ : Int)) ^ 2 : Rat) =
         (gd_k : Rat) ^ 2 * μ ^ 2 := by
-    have hsq : (((((s.ν.get ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩ : Int)) : Rat)) ^ 2 =
+    have hsq : (((((s.ν.getRow ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩ : Int)) : Rat)) ^ 2 =
         ((gd_k : Rat) * μ) ^ 2 := by rw [hB_cast]
-    rw [show ((((s.ν.get ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩ : Int)) ^ 2 : Rat) =
-          (((((s.ν.get ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩ : Int)) : Rat)) ^ 2 from by
+    rw [show ((((s.ν.getRow ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩ : Int)) ^ 2 : Rat) =
+          (((((s.ν.getRow ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩ : Int)) : Rat)) ^ 2 from by
         rfl, hsq]; ring
   -- Convert the integer inequality to an equivalent Rat inequality with all
   -- `Int.ofNat`/`Int → Rat` casts normalised to direct `Nat → Rat` casts.
@@ -213,7 +213,7 @@ theorem lovasz_check_iff_isLLLReduced_pair
       (Int.ofNat δ.den *
           (Int.ofNat (s.d.get ⟨k + 1, hkSuccLt⟩) *
               Int.ofNat (s.d.get ⟨k - 1, hkm1ltN1⟩) +
-            ((s.ν.get ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩) ^ 2) ≥
+            ((s.ν.getRow ⟨k, hk⟩).get ⟨k - 1, hkm1lt⟩) ^ 2) ≥
         δ.num * (Int.ofNat (s.d.get ⟨k, hkltN1⟩) ^ 2)) ↔
       ((δ.den : Rat) *
           ((gd_k1 : Rat) * (gd_km1 : Rat) +

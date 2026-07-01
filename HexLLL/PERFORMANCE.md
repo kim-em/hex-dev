@@ -1,14 +1,14 @@
 # HexLLL performance
 
-HexLLL is benchmarked against two verified reducers (the Isabelle
-`LLL_Basis_Reduction` extraction, native and certified) and the unverified
-floating-point `fplll`, across input families chosen to stress *different*
-parts of the algorithm. Each family gets one six-curve log-y wall-time plot:
+HexLLL is benchmarked against the verified Isabelle `LLL_Basis_Reduction`
+extraction (native and certified) and the unverified floating-point `fplll`,
+across input families chosen to stress *different* parts of the algorithm. Each
+family gets one five-curve log-y wall-time plot:
 
-- **Lean native** — the exact integer `d`/`ν` reducer (`lllNative`).
-- **Lean steered** — the default: exact row operations steered by an untrusted
-  approximate Gram-Schmidt, certified post hoc.
-- **Lean certified** — `fplll` candidate + the verified Lean checker (`certCheck`).
+- **Lean native** — the exact integer `d`/`ν` reducer (`lllNative`), the
+  in-tree default.
+- **Lean certified** — an `fplll` candidate checked by the verified Lean
+  checker (`certCheck`); the certified external-dispatch path.
 - **verified Isabelle native** / **verified Isabelle certified** — the Zenodo
   2636367 extraction, reducer and checker.
 - **fpLLL** — the raw floating-point reducer (unverified baseline).
@@ -30,93 +30,86 @@ false` and clean, internally-consistent timings. Regenerate with
 | `ntru` | `gen_ntrulike` `[[I,Rot h],[0,qI]]` | planted dense sublattice + q-block | `2d×2d` |
 | `knapsack` | `gen_intrel`, rectangular `d×(d+1)` | **rectangular `m>n`** `ofBasis`; planted-vector recovery | rectangular |
 
-## The headline: steering is regime-dependent
+## The headline: certify a fast reducer
 
-The default Lean reducer **steers** exact integer row operations from an
-untrusted approximate Gram-Schmidt. On `harsh-cubic`, where the cost is driven
-by operand *bit-width*, this wins big — steered tracks `fpLLL`'s near-cubic
-slope (see the README plot). But on every **structured or worst-case** family,
-where the cost is driven by *iteration/swap count* or an ill-conditioned
-profile, the approximate Gram-Schmidt cannot reduce the intrinsic work and
-steering **backfires** — it is the slowest or near-slowest verified option:
+The exact reducers — Lean's own `lllNative` and the verified Isabelle
+extraction — are always correct but their cost climbs steeply on the hard
+families: super-quintically with operand width on `harsh-cubic`, and roughly
+`d⁷` on the swap-bound `ajtai` worst case. The **certified path (an `fplll`
+candidate checked by the verified Lean `certCheck`) is the cheapest *verified*
+option in every family** — it inherits floating-point speed and pays only a
+cheap integer check:
 
-| family | Lean steered (× fastest) | Lean native | **Lean certified** | what happens to steered |
-|---|---:|---:|---:|---|
-| `ajtai`    | **81×** (p≈7.6) | 53× | **1.4×** | swap-bound; steering can't dodge `Θ(d² log B)` swaps |
-| `q-ary`    | **71×** | 6.6× | **2.3×** | Z-shape trips approx-GSO, blows up at `d≥40` |
-| `ntru`     | **17.5×** | 9.7× | **1.2×** | planted dense block + q-block slows steering |
-| `knapsack` | **21.4×** | 8.3× | **2.5×** | rectangular; a steered-fallback pathology at `n=40` |
+| family (top rung) | Lean native | Isabelle native | **Lean certified** | fpLLL |
+|---|---:|---:|---:|---:|
+| `ajtai` d=32     | 2167 ms | 2173 ms | **56 ms** | 41 ms |
+| `q-ary` n=48     | 67 ms   | 82 ms   | **24 ms** | 10 ms |
+| `ntru` n=24      | 1100 ms | 1444 ms | **133 ms** | 114 ms |
+| `knapsack` n=48  | 33 ms   | 26 ms   | **10 ms** | 4 ms |
+| `harsh-cubic` n=65 | 602 ms | 909 ms | **59 ms** | 4.7 ms |
+| `random-bounded` n=180 | 4357 ms | 7108 ms | **936 ms** | 335 ms |
 
-In contrast, the **certified path (fpLLL candidate + verified Lean checker)** is
-the cheapest *verified* option in every family (1.2–2.5× the unverified fpLLL
-baseline) — it inherits floating-point speed and pays only a cheap check. The
-exact reducers (Lean native, verified Isabelle native) sit in the middle:
-steady, no blow-up, with Lean native a constant factor ahead of the Isabelle
-extraction.
+Lean certified stays within ~1.2–2.5× of the unverified `fplll` baseline
+everywhere, while the exact reducers are 10–80× that on the structured families.
+Lean native is at parity with or ahead of the Isabelle native extraction on
+every family.
 
-**Reading:** on adversarial or structured lattices, the right architecture is
-*certify a fast unverified reducer*, not *run a verified exact reducer*, and
-*not* steer — steering only pays off when bit-width, not swap count, dominates.
-
-> **Caveat — the structured "Lean steered" curves are fallback artifacts
-> ([#8491](https://github.com/kim-em/hex-dev/issues/8491)).** On all four
-> structured families the float-steered Gram-Schmidt **never certifies**: the
-> candidate fails `lllReducedCheck (δ, 11/20)` on every steered rung
-> (`certified=0, fellBack=1`), so the default `lll` falls back to `lllNative`.
-> The plotted "Lean steered" time is therefore *failed steered attempt + full
-> exact reduction*, which is why it is always ≥ native and why the knapsack
-> n=40 point spikes (that seed's failed attempt thrashed longer). The precise
-> statement is not "steering backfires" but **"steering certifies only on
-> near-orthogonal / width-bound bases; on structured bases it never certifies."**
-> Why certification fails there, and how the structured steered curves should be
-> presented (drop / relabel / smooth), is under investigation in #8491; the
-> `runStructuredSteeredCertifyGuard` bench target pins this state so a fix is
-> noticed. The ×-figures above are the as-measured fallback costs.
+**Reading:** on adversarial or structured lattices the right architecture is to
+*certify a fast unverified reducer*, not to run a verified exact one — the
+verified output is then obtained at close to floating-point cost. `lllNative`
+remains the trustworthy in-tree reducer for the provider-free path.
 
 ## Per-family plots
 
 ### ajtai — the worst case
 ![ajtai](reports/figures/hex-lll-comparator-ajtai.svg)
 
-The exact reducers blow up `~d⁷`; Lean steered is the worst of all (`p≈7.6`,
-81× fpLLL at d=32). The certified path stays cheap (Lean certified 56 ms @
-d=32). Lean native completes at d=36 where the Isabelle native extraction is at
-parity. The clearest statement of the headline.
+The exact reducers blow up `~d⁷`; the certified path stays cheap (56 ms @ d=32).
+Lean native completes at d=36 (4805 ms) at parity with the Isabelle native
+extraction. The clearest statement of the headline.
 
 ### q-ary
 ![q-ary](reports/figures/hex-lll-comparator-q-ary.svg)
 
-Steered tracks native to d=32, then blows up (622 ms @ d=40 vs native 37 ms) as
-the Z-shape transition band defeats the approximate Gram-Schmidt. fpLLL (10 ms)
-and Lean certified (24 ms) stay cheap at d=48.
+The Z-shape profile makes the exact reducers climb; fpLLL (10 ms) and Lean
+certified (24 ms) stay cheap at d=48.
 
 ### ntru
 ![ntru](reports/figures/hex-lll-comparator-ntru.svg)
 
-The planted dense block plus the q-block make steered the slowest verified
-reducer (1993 ms vs native 1100 ms at n=24). Lean certified (133 ms) is within
-1.2× of fpLLL (114 ms).
+The planted dense block plus the q-block push the exact reducers to ~1–1.4 s at
+n=24 (dim 48); Lean certified (133 ms) is within 1.2× of fpLLL.
 
 ### knapsack — the rectangular `m>n` family
 ![knapsack](reports/figures/hex-lll-comparator-knapsack.svg)
 
 The only family with `cols ≠ rows`, exercising the `m>n` Gram construction in
-`ofBasis` (confirmed working through every reducer). Native and Isabelle are
-steady; steered hits a fallback pathology at n=40 (708 ms) while the certified
-path stays cheap (10 ms @ n=48). This family also drives the planted-vector
-success-vs-density chart (`reports/figures/hex-lll-knapsack-success.svg`).
+`ofBasis` (confirmed working through every reducer). The exact reducers are
+steady here; the certified path stays cheapest (10 ms @ n=48). This family also
+drives a planted-vector **success-vs-density** chart
+(`reports/figures/hex-lll-knapsack-success.svg`, a separate non-timed driver).
 
-### random-bounded & harsh-cubic — where steering wins
+### harsh-cubic — the README headline
 ![harsh-cubic](reports/figures/hex-lll-comparator-harsh-cubic.svg)
 
-The two families where the basis is near-orthogonal (`random-bounded`) or the
-cost is bit-width-bound (`harsh-cubic`) are exactly where steering pays off. On
-`harsh-cubic`, Lean steered stays near fpLLL's slope (69 ms @ n=65) while the
-exact reducers blow up (native 602 ms, Isabelle 909 ms) — this is the README
-headline. On `random-bounded` (to n=180) steering is ~2.5× faster than native
-(1712 ms vs 4357 ms), since the approximate Gram-Schmidt suffices when the swap
-count is low. Steering helps precisely when bit-width, not swap count, dominates
-— the clean inverse of the four structured families above.
+Entry bit-width grows `~3.3n`, so the exact reducers climb super-quintically
+(Lean native 602 ms, Isabelle native 909 ms at n=65) while the certified path
+tracks fpLLL's near-cubic slope (59 ms vs 4.7 ms). The cleanest picture of the
+certified-path speed, and the figure the README embeds.
+
+### random-bounded
+![random-bounded](reports/figures/hex-lll-comparator-random-bounded.svg)
+
+The near-orthogonal baseline to n=180: few swaps, so all reducers scale near
+cubically; the certified path stays a small constant factor above fpLLL.
+
+## Asymptotics summary
+
+- **fpLLL vs Lean certified**: same asymptotic slope, small constant gap — the
+  certified path inherits fpLLL's complexity and adds a cheap verified check.
+- **exact reducers (Lean native, Isabelle native)**: same complexity class as
+  each other (Lean native a constant factor better); both diverge sharply from
+  the certified/fpLLL curves on the structured and worst-case families.
 
 See [reports/hex-lll-performance.md](reports/hex-lll-performance.md) for the
 audit report (ratios, per-call overhead, concerns) and

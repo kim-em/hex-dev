@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexBasic
 public import HexLLL.Lattice
 
 public section
@@ -19,7 +20,9 @@ product.
 
 namespace Hex
 
-namespace Matrix
+namespace Internal
+
+open Hex.Matrix
 
 /-- Horner evaluation of an integer digit list at base `P`. -/
 @[expose]
@@ -35,7 +38,7 @@ def packRow (K : Nat) (v : Vector Int m) : Int :=
 /-- Maximum absolute value of the entries of an integer matrix. -/
 @[expose]
 def maxAbs (M : Matrix Int n m) : Nat :=
-  M.toList.foldl
+  M.rows.toList.foldl
     (fun acc row => Nat.max acc (row.toList.foldl (fun a x => Nat.max a x.natAbs) 0))
     0
 
@@ -65,35 +68,13 @@ def mulEqCert (M : Matrix Int n n) (A C : Matrix Int n m) : Bool :=
   (List.finRange n).all fun i =>
     (row M i).dotProduct packs == packRow K (row C i)
 
-/-- `foldl_max_le_init` shows that the initial accumulator is bounded by the
-running `Nat.max` scan used to compute entrywise absolute-value bounds. -/
-private theorem foldl_max_le_init {α : Type} (f : α → Nat) (l : List α) (acc : Nat) :
-    acc ≤ l.foldl (fun a x => Nat.max a (f x)) acc := by
-  induction l generalizing acc with
-  | nil => simp
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      exact Nat.le_trans (Nat.le_max_left acc (f x)) (ih (Nat.max acc (f x)))
-
-/-- `le_foldl_max` bounds any listed value by the completed `Nat.max` scan used
-to justify `maxAbs` matrix entry bounds. -/
-private theorem le_foldl_max {α : Type} (f : α → Nat) (l : List α) (acc : Nat)
-    {x : α} (hx : x ∈ l) :
-    f x ≤ l.foldl (fun a x => Nat.max a (f x)) acc := by
-  induction l generalizing acc with
-  | nil => cases hx
-  | cons y ys ih =>
-      simp only [List.foldl_cons]
-      rcases List.mem_cons.mp hx with rfl | hmem
-      · exact Nat.le_trans (Nat.le_max_right acc (f x))
-          (foldl_max_le_init f ys (Nat.max acc (f x)))
-      · exact ih (Nat.max acc (f y)) hmem
 
 /-- Every entry of an integer matrix is bounded by the `maxAbs` scan. -/
 theorem natAbs_le_maxAbs (M : Matrix Int n m) (i : Fin n) (j : Fin m) :
     M[i][j].natAbs ≤ maxAbs M := by
-  have hrow : M[i] ∈ M.toList := by
-    have h : M.toList[i.val]'(by simp) = M[i] := by simp
+  have hrow : M[i] ∈ M.rows.toList := by
+    have h : M.rows.toList[i.val]'(by simp) = M[i] := by
+      simp [Hex.Matrix.getRow, Fin.getElem_fin]
     rw [← h]
     exact List.getElem_mem _
   have hentry : M[i][j] ∈ M[i].toList := by
@@ -102,11 +83,12 @@ theorem natAbs_le_maxAbs (M : Matrix Int n m) (i : Fin n) (j : Fin m) :
     exact List.getElem_mem _
   have hinner : M[i][j].natAbs ≤
       M[i].toList.foldl (fun a x => Nat.max a x.natAbs) 0 :=
-    le_foldl_max (fun x => x.natAbs) _ 0 hentry
+    List.le_foldl_max_of_mem _ (fun x => x.natAbs) (init := 0) hentry
   have houter :=
-    le_foldl_max
+    List.le_foldl_max_of_mem
+      M.rows.toList
       (fun row : Vector Int m => row.toList.foldl (fun a x => Nat.max a x.natAbs) 0)
-      M.toList 0 hrow
+      (init := 0) hrow
   exact Nat.le_trans hinner houter
 
 /-- Packing is linear over a coefficient-times-row update. -/
@@ -325,6 +307,7 @@ theorem mulEqCert_iff {M : Matrix Int n n} {A C : Matrix Int n m} :
   simp only [packWidth, List.all_eq_true, beq_iff_eq, dotProduct_packRow]
   constructor
   · intro h
+    apply Hex.Matrix.ext
     apply Vector.ext
     intro i hi
     have hi' := h ⟨i, hi⟩ (List.mem_finRange _)
@@ -360,6 +343,12 @@ theorem mulEqCert_iff {M : Matrix Int n n} {A C : Matrix Int n m} :
         (Nat.le_trans (natAbs_le_maxAbs C ⟨i, hi⟩ ⟨j, hjm⟩) (by omega))
   · intro h i _
     rw [h]
+
+end Internal
+
+namespace Matrix
+
+open Hex.Internal
 
 /-- Executable same-lattice certificate: two integer transforms that multiply
 the bases into each other. Each product equality is verified by the packed

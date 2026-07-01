@@ -25,19 +25,19 @@ import HexMatrix
 
 open Hex
 
--- Build integer matrices from an entry function.
+-- Build a matrix from an entry function, or write one out explicitly.
 def A : Matrix Int 2 3 := Matrix.ofFn fun i j => (i + j : Int)
-def B : Matrix Int 3 2 := Matrix.ofFn fun i j => (i * j : Int)
+def B : Matrix Int 3 2 := #m[1, 2; 3, 4; 5, 6]
 
 #eval A * B                        -- 2×2 matrix product
 #eval Matrix.transpose A           -- 3×2 transpose
 #eval Matrix.gramMatrix A          -- A * Aᵀ
 #eval Matrix.mulVec A (Vector.ofFn fun j => (j + 1 : Int))
 
--- Elementary row operations are pure data transforms.
+-- Elementary row operations.
 #eval Matrix.rowSwap A 0 1
 #eval Matrix.rowScale A 0 5
-#eval (1 : Matrix Int 3 3)         -- the 3×3 identity
+#eval Matrix.identity (R := Int) 3 -- the 3×3 identity
 ```
 
 # Functionality
@@ -68,6 +68,11 @@ and inverse-preservation lemmas for the elementary operations.
 The `Semiring` / `Ring` structure and the equivalence with Mathlib's
 `Matrix`, which let you transfer Mathlib's linear-algebra results, live in
 [`hex-matrix-mathlib`](https://github.com/kim-em/hex-matrix-mathlib).
+
+# Reference manual
+
+The hex reference manual covers this library at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-matrix>.
 
 # Contributing
 

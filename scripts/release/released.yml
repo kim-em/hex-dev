@@ -23,6 +23,18 @@
 # lakefile (matched by their github URL); `lakefile` is that file's format.
 
 repos:
+  - repo: kim-em/hex-basic
+    lib: HexBasic
+    umbrella: true
+    readme: false        # README is authored in the released repo, not managed
+    spec: null
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: []
+    lakefile: toml
+
   - repo: kim-em/hex-test-kit
     lib: Hex
     umbrella: false        # released HexTestKit.lean umbrella is fixed

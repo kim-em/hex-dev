@@ -433,6 +433,7 @@ private theorem principalSubmatrix_stepMatrix_eq
     (k : Nat) (pivot prevPivot : Int) :
     Matrix.principalSubmatrix (Matrix.stepMatrix M k pivot prevPivot) K hK =
       Matrix.stepMatrix (Matrix.principalSubmatrix M K hK) k pivot prevPivot := by
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro i hi
   apply Vector.ext
@@ -558,6 +559,7 @@ private theorem borderedMinor_stepMatrix_eq
     (k_step : Nat) (hkstep : k_step < k) (pivot prevPivot : Int) :
     Matrix.borderedMinor (Matrix.stepMatrix M k_step pivot prevPivot) k hk row col =
       Matrix.stepMatrix (Matrix.borderedMinor M k hk row col) k_step pivot prevPivot := by
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro i hi
   apply Vector.ext

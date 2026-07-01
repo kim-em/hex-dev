@@ -14,7 +14,7 @@ public section
 The optional external LLL provider. `lll` probes an `@[extern]` hook for
 an independent native reducer, marshals the basis, and certifies the
 returned candidate with `certCheck`; absence or rejection falls through
-to the steered/native path. The provider is acceleration only.
+to the exact `lllNative` path. The provider is acceleration only.
 -/
 
 namespace Hex
@@ -28,7 +28,7 @@ is present, or a returned candidate fails validation, callers fall back to the
 verified native reducer `lllNative`. The provider is acceleration only and is
 never part of the trusted path — every candidate it returns is checked before
 use. See `SPEC/hex-lll.md` for the dispatch and certification details. -/
-namespace LLLProvider
+namespace Internal.LLLProvider
 
 @[extern "lean_hexlll_provider_available"]
 opaque providerAvailable : Unit → Bool
@@ -71,6 +71,7 @@ inductive Outcome where
   | accepted
 deriving Repr, BEq
 
+/-- Increment the diagnostic counter matching `outcome`. -/
 @[expose]
 def bump (d : Diagnostics) : Outcome → Diagnostics
   | .absent => { d with absent := d.absent + 1 }
@@ -103,17 +104,6 @@ surface type. -/
 def recordOutcome (outcome : Outcome) : IO Unit :=
   diagnosticsRef.modify (fun d => bump d outcome)
 
-@[expose]
-def intNat? (x : Int) : Option Nat :=
-  if 0 ≤ x then
-    some x.toNat
-  else
-    none
-
-@[expose]
-def slice [Inhabited α] (xs : Array α) (start len : Nat) : Array α :=
-  (List.range len).foldl (fun acc i => acc.push xs[start + i]!) #[]
-
 /-- Decode the external reducer's flat integer response into a structured
 `Candidate`. The decoder checks the status word, row/column headers, inverse
 flag, and total payload length before slicing out the reduced basis,
@@ -128,9 +118,9 @@ def validateFlat (rows cols : Nat) (withInverse : Bool) (flat : Array Int) :
   let inverseHeader ← flat[3]?
   if status != 0 then
     none
-  let rowsSeen ← intNat? rowsHeader
-  let colsSeen ← intNat? colsHeader
-  let inverseSeen ← intNat? inverseHeader
+  let rowsSeen ← rowsHeader.toNat?
+  let colsSeen ← colsHeader.toNat?
+  let inverseSeen ← inverseHeader.toNat?
   if rowsSeen != rows || colsSeen != cols then
     none
   let hasInverse ←
@@ -146,11 +136,12 @@ def validateFlat (rows cols : Nat) (withInverse : Bool) (flat : Array Int) :
   let expectedLen := 4 + basisLen + transformLen + inverseLen
   if flat.size != expectedLen then
     none
-  let reduced := slice flat 4 basisLen
-  let transform := slice flat (4 + basisLen) transformLen
+  let reduced := flat.extract 4 (4 + basisLen)
+  let transform := flat.extract (4 + basisLen) (4 + basisLen + transformLen)
   let inverse? :=
     if hasInverse then
-      some (slice flat (4 + basisLen + transformLen) transformLen)
+      some (flat.extract (4 + basisLen + transformLen)
+        (4 + basisLen + transformLen + transformLen))
     else
       none
   some { reduced, transform, inverse? }
@@ -278,7 +269,7 @@ def requestedDelta (δ : Rat) : Rat := min (δ + 1 / 100) ((δ + 1) / 2)
 the external provider expects. -/
 @[expose]
 def matrixToEntries (B : Hex.Matrix Int n m) : Array String :=
-  B.toArray.flatMap (fun row => row.toArray.map toString)
+  B.rows.toArray.flatMap (fun row => row.toArray.map toString)
 
 /-- Reshape a flat row-major `Array Int` of length `rows * cols` into a
 `Matrix Int rows cols`. Returns `none` on length mismatch. -/
@@ -286,7 +277,7 @@ def matrixToEntries (B : Hex.Matrix Int n m) : Array String :=
 def matrixFromArray (rows cols : Nat) (a : Array Int) :
     Option (Hex.Matrix Int rows cols) :=
   if h : a.size = rows * cols then
-    some (Vector.ofFn fun i =>
+    some (Hex.Matrix.ofRows (Vector.ofFn fun i =>
       Vector.ofFn fun j =>
         a[i.val * cols + j.val]'(by
           have hi : i.val + 1 ≤ rows := Nat.succ_le_of_lt i.isLt
@@ -298,7 +289,7 @@ def matrixFromArray (rows cols : Nat) (a : Array Int) :
             exact Nat.add_lt_add_left hjlt _
           have h3 : i.val * cols + j.val < rows * cols :=
             Nat.lt_of_lt_of_le h2 h1
-          rw [h]; exact h3))
+          rw [h]; exact h3)))
   else
     none
 
@@ -380,6 +371,6 @@ theorem dispatch_some_certCheck {B : Hex.Matrix Int n m} {δ : Rat}
   rw [← heq]
   exact triple.2.2.2
 
-end LLLProvider
+end Internal.LLLProvider
 
 end Hex

@@ -40,7 +40,7 @@ The proof has three layers:
 
 namespace HexLLLMathlib
 
-open Hex
+open Hex Hex.Internal
 
 /-! ### Rounding helpers -/
 
@@ -282,12 +282,12 @@ private noncomputable def gsDot (b : Hex.Matrix Int n m) (i j : Fin n) : Rat :=
 
 /-- Exact squared Gram-Schmidt norm `‖b*_j‖²`. -/
 private noncomputable def nrm (b : Hex.Matrix Int n m) (j : Fin n) : Rat :=
-  Hex.LLLCore.basisNormSq (GramSchmidt.Int.basis b) j
+  Hex.Internal.LLLCore.basisNormSq (GramSchmidt.Int.basis b) j
 
 private theorem nrm_eq_dot (b : Hex.Matrix Int n m) (j : Fin n) :
     nrm b j = ((GramSchmidt.Int.basis b).row j).dotProduct
       ((GramSchmidt.Int.basis b).row j) := by
-  unfold nrm Hex.LLLCore.basisNormSq
+  unfold nrm Hex.Internal.LLLCore.basisNormSq
   rfl
 
 /-- Cast of an integer Gram entry as a rational dot product of cast rows. -/
@@ -845,22 +845,22 @@ private theorem pass_spec (b : Hex.Matrix Int n m) {S : Int} (hS : 0 < S)
 
 private theorem g_entries (b : Hex.Matrix Int n m) (i : Nat) (hi : i < n)
     (j : Nat) (hj : j < n) :
-    ((((Matrix.gramMatrix b).toArray.map Vector.toArray))[i]!)[j]! =
+    ((((Matrix.gramMatrix b).rows.toArray.map Vector.toArray))[i]!)[j]! =
       (b.row ⟨i, hi⟩).dotProduct (b.row ⟨j, hj⟩) := by
-  have hi1 : i < ((Matrix.gramMatrix b).toArray.map Vector.toArray).size := by
+  have hi1 : i < ((Matrix.gramMatrix b).rows.toArray.map Vector.toArray).size := by
     rw [Array.size_map, Vector.size_toArray]
     exact hi
-  have hi2 : i < (Matrix.gramMatrix b).toArray.size := by
+  have hi2 : i < (Matrix.gramMatrix b).rows.toArray.size := by
     rw [Vector.size_toArray]
     exact hi
-  rw [getElem!_pos ((Matrix.gramMatrix b).toArray.map Vector.toArray) i hi1,
+  rw [getElem!_pos ((Matrix.gramMatrix b).rows.toArray.map Vector.toArray) i hi1,
     Array.getElem_map]
-  have hj1 : j < ((Matrix.gramMatrix b).toArray[i]'hi2).toArray.size := by
+  have hj1 : j < ((Matrix.gramMatrix b).rows.toArray[i]'hi2).toArray.size := by
     rw [Vector.size_toArray]
     exact hj
-  rw [getElem!_pos (((Matrix.gramMatrix b).toArray[i]'hi2).toArray) j hj1]
+  rw [getElem!_pos (((Matrix.gramMatrix b).rows.toArray[i]'hi2).toArray) j hj1]
   simp only [Vector.getElem_toArray]
-  simpa using Hex.Matrix.getElem_gramMatrix b ⟨i, hi⟩ ⟨j, hj⟩
+  simpa [Hex.Matrix.getRow, Fin.getElem_fin] using Hex.Matrix.getElem_gramMatrix b ⟨i, hi⟩ ⟨j, hj⟩
 
 /-! ### Positivity of the Gram-determinant product -/
 
@@ -898,12 +898,12 @@ theorem lllReducedInterval_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
     Hex.lllReducedInterval b δ η = true →
       Hex.isLLLReduced b δ η ∧ Hex.Matrix.independent b := by
   intro h
-  have hS : (0 : Int) < (2 : Int) ^ Hex.intervalPrec := pow_pos (by norm_num) _
-  have hSQ : (0 : Rat) < (((2 : Int) ^ Hex.intervalPrec : Int) : Rat) := by
+  have hS : (0 : Int) < (2 : Int) ^ Hex.Internal.intervalPrec := pow_pos (by norm_num) _
+  have hSQ : (0 : Rat) < (((2 : Int) ^ Hex.Internal.intervalPrec : Int) : Rat) := by
     exact_mod_cast hS
   simp only [Hex.lllReducedInterval] at h
-  set S : Int := (2 : Int) ^ Hex.intervalPrec with hSdef
-  set g : Array (Array Int) := (Matrix.gramMatrix b).toArray.map Vector.toArray
+  set S : Int := (2 : Int) ^ Hex.Internal.intervalPrec with hSdef
+  set g : Array (Array Int) := (Matrix.gramMatrix b).rows.toArray.map Vector.toArray
     with hgdef
   rcases hpass : IntervalGS.pass S g n with _ | ⟨mus, bstars⟩
   · rw [hpass] at h
@@ -984,14 +984,14 @@ theorem lllReducedInterval_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
           ((mus[i+1]!)[i]!)) (bstars[i]!)))).lo : Int) : Rat) := by
       exact_mod_cast hcmp
     have hchain := le_trans hlhs_hi (le_trans hQ hrhs_lo)
-    show δ * Hex.LLLCore.basisNormSq (GramSchmidt.Int.basis b)
+    show δ * Hex.Internal.LLLCore.basisNormSq (GramSchmidt.Int.basis b)
           ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩ ≤
-        Hex.LLLCore.basisNormSq (GramSchmidt.Int.basis b) ⟨i + 1, hi⟩ +
+        Hex.Internal.LLLCore.basisNormSq (GramSchmidt.Int.basis b) ⟨i + 1, hi⟩ +
           ((GramSchmidt.Int.coeffs b)[(⟨i + 1, hi⟩ : Fin n)][(⟨i,
             Nat.lt_trans (Nat.lt_succ_self i) hi⟩ : Fin n)]) *
           ((GramSchmidt.Int.coeffs b)[(⟨i + 1, hi⟩ : Fin n)][(⟨i,
             Nat.lt_trans (Nat.lt_succ_self i) hi⟩ : Fin n)]) *
-          Hex.LLLCore.basisNormSq (GramSchmidt.Int.basis b)
+          Hex.Internal.LLLCore.basisNormSq (GramSchmidt.Int.basis b)
             ⟨i, Nat.lt_trans (Nat.lt_succ_self i) hi⟩
     have := (mul_le_mul_iff_of_pos_right hSQ).mp hchain
     exact this

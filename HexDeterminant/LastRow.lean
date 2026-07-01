@@ -123,6 +123,7 @@ theorem detProduct_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     detProduct M (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n)) =
       detProduct (principalSubmatrix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n] := by
   unfold detProduct
+  simp only [getElem_pair_eq_nested]
   rw [← Fin.foldl_eq_finRange_foldl, ← Fin.foldl_eq_finRange_foldl, Fin.foldl_succ_last]
   have hfold :
       Fin.foldl n
@@ -138,7 +139,7 @@ theorem detProduct_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
         (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[i.castSucc] =
           (v[i]).castSucc := by
       simpa using insertAt_last_get_castSucc (Fin.last n) (v.map Fin.castSucc) i
-    simp [principalSubmatrix, ofFn, hget]
+    simp [principalSubmatrix, ofFn, hget, getRow, Fin.getElem_fin]
   have hlast :
       (insertAt (Fin.last n) (v.map Fin.castSucc) (Fin.last n))[Fin.last n] =
         Fin.last n := by
@@ -249,7 +250,7 @@ private theorem foldl_finRange_succ_factor_skipIndex {R : Type u} [Lean.Grind.Co
     {n : Nat} (i : Fin (n + 1)) (f : Fin (n + 1) → R) :
     (List.finRange (n + 1)).foldl (fun acc r => acc * f r) 1 =
       f i * (List.finRange n).foldl (fun acc r' => acc * f (skipIndex i r')) 1 := by
-  rw [foldl_det_product_perm f (list_finRange_succ_perm_skipIndex i) 1]
+  rw [List.foldl_mul_perm f (list_finRange_succ_perm_skipIndex i) 1]
   show (i :: (List.finRange n).map (skipIndex i)).foldl (fun acc r => acc * f r) 1 = _
   simp only [List.foldl_cons]
   rw [show (1 : R) * f i = f i * 1 from by grind,
@@ -263,13 +264,14 @@ private theorem detProduct_insertAt_general {R : Type u} [Lean.Grind.CommRing R]
     detProduct M (insertAt (Fin.last n) (v.map Fin.castSucc) i) =
       M[i][Fin.last n] * detProduct (deleteRowCol M i (Fin.last n)) v := by
   unfold detProduct
+  simp only [getElem_pair_eq_nested]
   rw [foldl_finRange_succ_factor_skipIndex i
     (fun r => M[r][(insertAt (Fin.last n) (v.map Fin.castSucc) i)[r]])]
   congr 1
   · -- M[i][(insertAt ... i)[i]] = M[i][Fin.last n]
     congr 1
     exact insertAt_get_self _ _ _
-  · apply foldl_det_product_congr
+  · apply List.foldl_mul_congr
     intro r' _hmem
     -- Identify the column index of each side with `(v[r']).castSucc`.
     have hLHS_col :
@@ -298,6 +300,7 @@ private theorem detProduct_insertAt_not_last_zero
     (hrow : ∀ j : Fin (n + 1), j.val < n → M[Fin.last n][j] = 0) :
     detProduct M (insertAt (Fin.last n) (v.map Fin.castSucc) i) = 0 := by
   unfold detProduct
+  simp only [getElem_pair_eq_nested]
   apply foldl_det_product_zero_of_mem
     (List.finRange (n + 1)) (Fin.last n)
     (fun r => M[r][(insertAt (Fin.last n) (v.map Fin.castSucc) i)[r]]) 1
@@ -345,7 +348,7 @@ private theorem foldl_detTerm_last_row_insertions
             acc + detTerm M
               (insertAt (Fin.last n) (v.map Fin.castSucc) i.castSucc)) z =
         (List.finRange n).foldl (fun acc (_i : Fin n) => acc + (0 : R)) z := by
-          apply foldl_det_sum_congr
+          apply List.foldl_add_congr
           intro i _hmem
           rw [detTerm_insertAt_not_last_zero M v i.castSucc
             (by
@@ -355,7 +358,7 @@ private theorem foldl_detTerm_last_row_insertions
               exact (Nat.ne_of_lt i.isLt) hval)
             hrow]
       _ = z := by
-          exact foldl_det_sum_zero (List.finRange n) z
+          exact List.foldl_add_zero (List.finRange n) z
   rw [hprefix, detTerm_insertAt_last]
 
 /-- If the last row is zero before the diagonal entry, the determinant
@@ -374,7 +377,7 @@ theorem det_eq_principalSubmatrix_mul_last
           (List.finRange (n + 1)).map fun i =>
             insertAt (Fin.last n) (v.map Fin.castSucc) i)
         (permutationVectors n) by rfl]
-  rw [foldl_det_sum_flatMap]
+  rw [List.foldl_add_flatMap]
   calc
     (permutationVectors n).foldl
         (fun acc v =>
@@ -386,7 +389,7 @@ theorem det_eq_principalSubmatrix_mul_last
           (List.finRange (n + 1)).foldl
             (fun acc i =>
               acc + detTerm M (insertAt (Fin.last n) (v.map Fin.castSucc) i)) acc) 0 := by
-        apply foldl_acc_congr
+        apply List.foldl_congr
         intro acc v _hmem
         simp only [List.foldl_map]
     _ =
@@ -395,7 +398,7 @@ theorem det_eq_principalSubmatrix_mul_last
           acc + detSign (R := R) v *
             (detProduct (principalSubmatrix M n (Nat.le_succ n)) v *
               M[Fin.last n][Fin.last n])) 0 := by
-        apply foldl_acc_congr
+        apply List.foldl_congr
         intro acc v _hmem
         exact foldl_detTerm_last_row_insertions M v acc hrow
     _ =
@@ -414,7 +417,7 @@ theorem det_eq_principalSubmatrix_mul_last
                 acc + (detSign (R := R) v *
                   detProduct (principalSubmatrix M n (Nat.le_succ n)) v) *
                     M[Fin.last n][Fin.last n]) 0 := by
-              apply foldl_det_sum_congr
+              apply List.foldl_add_congr
               intro v _hmem
               grind
           _ =
@@ -423,7 +426,7 @@ theorem det_eq_principalSubmatrix_mul_last
                   acc + detSign (R := R) v *
                     detProduct (principalSubmatrix M n (Nat.le_succ n)) v) 0 *
               M[Fin.last n][Fin.last n] := by
-              exact foldl_det_sum_mul_right_zero
+              exact List.foldl_add_mul_right_zero
                 (permutationVectors n)
                 (fun v => detSign (R := R) v *
                   detProduct (principalSubmatrix M n (Nat.le_succ n)) v)

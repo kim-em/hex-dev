@@ -4,12 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekamp.Irreducibility
-import HexBerlekamp.Factor
-import HexPolyFp.Compose
-import HexPolyFp.Quotient
-import HexPolyFp.QuotientFrobenius
-import HexArith.Nat.Pow
+module
+
+public import HexBerlekamp.Irreducibility
+public import HexBerlekamp.Factor
+public import HexPolyFp.Compose
+public import HexPolyFp.Quotient
+public import HexPolyFp.QuotientFrobenius
+public import HexArith.Nat.Pow
+
+public section
 
 /-!
 Project-side soundness of `Berlekamp.rabinTest` against
@@ -37,6 +41,7 @@ The polynomial `X^(p^k) - X` viewed inside the executable `FpPoly p` model.
 Used to phrase the absolute (not modular) divisibility leg `f ∣ X^(p^n) - X`
 underlying Rabin's test.
 -/
+@[expose]
 def xPowSubX (k : Nat) : FpPoly p :=
   DensePoly.monomial (p ^ k) (1 : ZMod64 p) - FpPoly.X
 
@@ -3063,9 +3068,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
     have hlead : f.leadingCoeff = 1 := hmonic
     rw [hzero] at hlead
     have hlead_zero : (0 : FpPoly p).leadingCoeff = 0 := by
-      change (0 : FpPoly p).coeffs.back?.getD 0 = 0
-      have hcoeffs : (0 : FpPoly p).coeffs = #[] := rfl
-      rw [hcoeffs]; rfl
+      exact DensePoly.leadingCoeff_zero
     rw [hlead_zero] at hlead
     exact zmod64_one_ne_zero_local hlead.symm
   refine ⟨hf_ne_zero, ?_⟩
@@ -3786,9 +3789,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd
     have hlead : f.leadingCoeff = 1 := hmonic
     rw [hzero] at hlead
     have hlead_zero : (0 : FpPoly p).leadingCoeff = 0 := by
-      change (0 : FpPoly p).coeffs.back?.getD 0 = 0
-      have hcoeffs : (0 : FpPoly p).coeffs = #[] := rfl
-      rw [hcoeffs]; rfl
+      exact DensePoly.leadingCoeff_zero
     rw [hlead_zero] at hlead
     exact zmod64_one_ne_zero_local hlead.symm
   have hg_ne_zero : g ≠ 0 := by
@@ -3796,9 +3797,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree_of_dvd
     have hlead : g.leadingCoeff = 1 := hg_monic
     rw [hzero] at hlead
     have hlead_zero : (0 : FpPoly p).leadingCoeff = 0 := by
-      change (0 : FpPoly p).coeffs.back?.getD 0 = 0
-      have hcoeffs : (0 : FpPoly p).coeffs = #[] := rfl
-      rw [hcoeffs]; rfl
+      exact DensePoly.leadingCoeff_zero
     rw [hlead_zero] at hlead
     exact zmod64_one_ne_zero_local hlead.symm
   refine ⟨hg_ne_zero, ?_⟩

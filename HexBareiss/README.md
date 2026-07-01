@@ -31,7 +31,7 @@ open Hex
 def M : Matrix Int 3 3 := Matrix.ofFn fun i j => (i + 2 * j : Int)
 
 #eval Matrix.bareiss M                       -- fraction-free determinant
-#eval Matrix.bareiss (1 : Matrix Int 4 4)    -- 1
+#eval Matrix.bareiss (Matrix.identity (R := Int) 4)    -- 1
 
 -- bareissData also records the row-swap count alongside the determinant.
 #eval (Matrix.bareissData M).det
@@ -83,6 +83,11 @@ The correspondence of the Bareiss determinant with the Leibniz
 [`det`](https://github.com/kim-em/hex-determinant), via the Desnanot-Jacobi
 invariant, is proven in
 [`hex-bareiss-mathlib`](https://github.com/kim-em/hex-bareiss-mathlib), not here.
+
+# Reference manual
+
+The hex reference manual covers this library at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-bareiss>.
 
 # Contributing
 

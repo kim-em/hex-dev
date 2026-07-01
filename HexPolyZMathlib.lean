@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyZMathlib.Basic
-import HexPolyZMathlib.Mignotte
-import HexPolyZMathlib.RobinsonForm
+module
+
+public import HexPolyZMathlib.Basic
+public import HexPolyZMathlib.Mignotte
+public import HexPolyZMathlib.RobinsonForm
+
+public section
 
 /-!
 The `HexPolyZMathlib` library identifies executable integer dense polynomials

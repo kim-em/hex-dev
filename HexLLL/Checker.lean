@@ -19,6 +19,10 @@ fixed-precision `lllReducedInterval`, their cost-predicted dispatch
 
 namespace Hex
 
+open Hex.Internal
+
+namespace Internal
+
 /-- Working precision (bits) of the interval reducedness checker. The
 inequalities being certified carry slack by design: the dispatch requests a
 `(requestedDelta δ, requestedEta)`-reduced basis but certifies it against the
@@ -32,6 +36,8 @@ arithmetic cost. -/
 @[expose]
 def intervalPrec : Nat := 128
 
+end Internal
+
 /-- Fixed-precision interval reducedness checker. Computes enclosures of
 the Gram-Schmidt data of `b` from its exact integer Gram matrix and accepts
 only when every independence, size-reduction, and Lovász inequality is
@@ -43,7 +49,7 @@ Soundness (`lllReducedInterval_sound`, HexLLLMathlib) entails
 @[expose]
 def lllReducedInterval (b : Matrix Int n m) (δ η : Rat) : Bool :=
   let S : Int := (2 : Int) ^ intervalPrec
-  let g := (Matrix.gramMatrix b).toArray.map Vector.toArray
+  let g := (Matrix.gramMatrix b).rows.toArray.map Vector.toArray
   match IntervalGS.pass S g n with
   | none => false
   | some (mus, bstars) =>
@@ -80,7 +86,7 @@ def lllReducedInt (b : Matrix Int n m) (δ η : Rat) : Bool :=
       (List.finRange i.val).all fun j =>
         let iFin : Fin n := i
         let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt i.isLt⟩
-        let νij : Int := (ν.get iFin).get jFin
+        let νij : Int := (ν.getRow iFin).get jFin
         let dj1 : Nat := d.get ⟨j.val + 1, Nat.succ_lt_succ
           (Nat.lt_trans j.isLt i.isLt)⟩
         decide ((η.den * νij.natAbs : Int) ≤ η.num * (dj1 : Int))
@@ -92,13 +98,15 @@ def lllReducedInt (b : Matrix Int n m) (δ η : Rat) : Bool :=
         let di : Nat := d.get ⟨i.val, Nat.lt_succ_of_lt i.isLt⟩
         let di1 : Nat := d.get ⟨i.val + 1, Nat.succ_lt_succ i.isLt⟩
         let di2 : Nat := d.get ⟨i.val + 2, Nat.succ_lt_succ hi⟩
-        let B : Int := (ν.get ip1Fin).get iFin
+        let B : Int := (ν.getRow ip1Fin).get iFin
         decide
           (δ.den * ((di2 : Int) * (di : Int) + B ^ 2) ≥
             δ.num * (di1 : Int) ^ 2)
       else
         true
   independent && sizeReduced && lovasz
+
+namespace Internal
 
 /-- Outcome of one certified-dispatch reducedness decision: decided by the
 interval checker, decided by the exact checker because the size predictor
@@ -199,6 +207,8 @@ timing deterministic. -/
 def intervalWins (b : Matrix Int n m) : Bool :=
   let bits := maxDiagBits b
   decide (n * bits ≥ dispatchFactor * (intervalPrec + bits))
+
+end Internal
 
 /-- Reducedness clause of the certified dispatch. The size predictor
 `intervalWins` picks the checker expected to be faster on this input: the

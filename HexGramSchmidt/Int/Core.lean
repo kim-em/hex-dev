@@ -51,6 +51,7 @@ theorem leadingGramMatrixInt_eq_principalSubmatrix_gram
     (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
     leadingGramMatrixInt b k hk =
       Matrix.principalSubmatrix (Matrix.gramMatrix b) k hk := by
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro i hi
   apply Vector.ext
@@ -88,7 +89,7 @@ predicate without making `hex-gram-schmidt` depend on the downstream LLL
 library. -/
 @[expose]
 def memLattice (b : Matrix Int n m) (v : Vector Int m) : Prop :=
-  ∃ c : Vector Int n, Matrix.rowCombination b c = v
+  ∃ c : Vector Int n, Matrix.vecMul c b = v
 
 /-- The `k`-th Gram determinant: the determinant of the `k × k` leading
 principal Gram matrix of the integer input. -/
@@ -118,7 +119,7 @@ determinant value. -/
 @[expose]
 def bareissDiagNat (data : Matrix.BareissData n) (r : Nat) (hr : r < n) : Nat :=
   let i : Fin n := ⟨r, hr⟩
-  ((data.matrix.get i).get i).toNat
+  (data.matrix[(i, i)]).toNat
 
 /-- Read the `k`-th leading-principal determinant from one no-pivot Bareiss
 elimination pass over the full Gram matrix. This helper is only used for Gram
@@ -199,11 +200,12 @@ def rowsToMatrix (rows : Array (Array Int)) (n : Nat) : Matrix Int n n :=
 nested-array packaging. -/
 private theorem rowsToMatrix_gramRows (b : Matrix Int n m) :
     rowsToMatrix (gramRows b) n = Matrix.gramMatrix b := by
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro i hi
   apply Vector.ext
   intro j hj
-  simpa [rowsToMatrix, Matrix.ofFn] using
+  simpa [rowsToMatrix, Matrix.ofFn, Hex.Matrix.getRow, Fin.getElem_fin] using
     getArrayEntry_gramRows b (⟨i, hi⟩ : Fin n) (⟨j, hj⟩ : Fin n)
 
 /-- Write `value` into entry `(row, col)` of a row-major nested array. -/
@@ -964,6 +966,7 @@ private theorem rowsToMatrix_stepScaledRows_eq
     (hrowsize : ∀ (a : Nat), a < n → rows[a]!.size = n) :
     rowsToMatrix (stepScaledRows rows n k pivot prevPivot) n =
       Matrix.stepMatrix (rowsToMatrix rows n) k pivot prevPivot := by
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro i hi
   apply Vector.ext
@@ -972,7 +975,7 @@ private theorem rowsToMatrix_stepScaledRows_eq
       getArrayEntry rows a.val b.val = (rowsToMatrix rows n)[a][b] := by
     intro a b
     simp [rowsToMatrix, Matrix.ofFn]
-  simpa [rowsToMatrix, Matrix.ofFn] using
+  simpa [rowsToMatrix, Matrix.ofFn, Hex.Matrix.getRow, Fin.getElem_fin] using
     getArrayEntry_stepScaledRows_matches_stepMatrix rows (rowsToMatrix rows n)
       k pivot prevPivot hentry hsize hrowsize ⟨i, hi⟩ ⟨j, hj⟩
 

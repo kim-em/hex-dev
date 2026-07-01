@@ -8,6 +8,7 @@ import VersoManual
 
 import HexHensel.Multifactor
 import HexHensel.QuadraticMultifactor
+import HexHenselMathlib
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -24,25 +25,24 @@ tag := "hex-hensel"
 tag := "hex-hensel-intro"
 %%%
 
-`HexHensel` is the executable Hensel-lifting layer of the stack. Hensel
-lifting is the engine that turns a factorization known only modulo a
-prime `p` into a factorization modulo a prime power `p^k`: given
-`f ≡ g · h (mod p)` together with a Bezout certificate
-`s · g + t · h ≡ 1 (mod p)`, it refines `g` and `h` step by step until
-they multiply to `f` modulo `p^k`, with the precision `k` chosen large
-enough (via a Mignotte bound) that the lifted factors coincide with the
-true integer factors. This is the bridge between the prime-field
-factorization in {ref "hex-poly-z"}[HexPolyZ]'s prime-field sibling
-`HexPolyFp` and the integer factorization pipelines built on top.
+`HexHensel` does executable Hensel lifting. Hensel lifting turns a
+factorization known only modulo a prime `p` into a factorization modulo
+a prime power `p^k`: given `f ≡ g · h (mod p)` together with a Bezout
+certificate `s · g + t · h ≡ 1 (mod p)`, it refines `g` and `h` step by
+step until they multiply to `f` modulo `p^k`. The precision `k` is
+chosen large enough (via a Mignotte bound) that the lifted factors
+coincide with the true integer factors. This connects the prime-field
+factorization in `HexPolyFp` to the integer factorization pipelines
+built on top of it.
 
-The library connects the integer polynomial surface
-({ref "hex-poly-z"}[HexPolyZ], `Hex.ZPoly`) with the prime-field
-polynomial surface (`HexPolyFp`, `Hex.FpPoly p`). It exposes
-coefficientwise reduction modulo powers of `p`, the linear and quadratic
-single-step corrections, the iterative {name}`Hex.ZPoly.henselLift`
-wrapper, and the ordered multifactor lift API consumed by the
-factorization stack. It is Mathlib-free and depends only on `HexPolyFp`
-and `HexPolyZ`; see {ref "hex-hensel-cross-references"}[Cross-references].
+The library connects integer polynomials
+({ref "hex-poly-z"}[HexPolyZ], `Hex.ZPoly`) with prime-field
+polynomials (`HexPolyFp`, `Hex.FpPoly p`). It provides coefficientwise
+reduction modulo powers of `p`, the linear and quadratic single-step
+corrections, the iterative {name}`Hex.ZPoly.henselLift` wrapper, and the
+ordered multifactor lift API the factorization pipeline consumes. It is
+Mathlib-free and depends only on `HexPolyFp` and `HexPolyZ`; see
+{ref "hex-hensel-cross-references"}[Cross-references].
 
 # Coefficientwise reduction
 %%%
@@ -59,9 +59,9 @@ is the squaring-step specialization that reduces modulo `m^2`.
 
 {docstring Hex.QuadraticLiftResult.reduceModSquare}
 
-The reduced polynomial is congruent to the original modulo the modulus —
-the property every later step relies on to preserve the factorization
-relation across reductions.
+The reduced polynomial is congruent to the original modulo the modulus.
+Every later step relies on this to preserve the factorization relation
+across reductions.
 
 {docstring Hex.ZPoly.congr_reduceModPow}
 
@@ -134,7 +134,7 @@ factors simultaneously, not just a single split. The multifactor API
 does this by a sequential binary split tree: at each node it lifts the
 first factor against the product of the rest, then recurses. There are
 linear and quadratic-doubling versions; the quadratic one is the
-production path because of its `O(log k)` precision growth.
+production path, because of its `O(log k)` precision growth.
 
 {docstring Hex.ZPoly.multifactorLift}
 
@@ -160,39 +160,52 @@ package.
 {docstring Hex.ZPoly.multifactorLiftQuadratic_spec}
 
 The quadratic doubling loop is verified against an explicit loop
-invariant: the three facts a caller must maintain across one doubling —
-product congruence, Bezout congruence, and monicity of the leading
-factor — are exactly the preconditions the doubling step consumes.
+invariant: the three facts a caller must maintain across one doubling
+(product congruence, Bezout congruence, and monicity of the leading
+factor) are exactly the preconditions the doubling step consumes.
 
 {docstring Hex.ZPoly.QuadraticLiftLoopInvariant}
 
 {docstring Hex.ZPoly.quadraticLiftLoopInvariant_step}
 
 Monicity of the leading factor is preserved by the whole quadratic
-multifactor lift, so a monic input yields monic lifted factors — the
+multifactor lift, so a monic input yields monic lifted factors, the
 shape the factorization pipeline relies on.
 
 {docstring Hex.ZPoly.multifactorLiftQuadratic_each_monic}
+
+# The Mathlib correspondence
+%%%
+tag := "hex-hensel-mathlib"
+%%%
+
+Everything above is executable and Mathlib-free. `HexHenselMathlib`
+proves it correct against Mathlib's `Polynomial`: the factorization the
+executable routine lifts is genuine modulo `p ^ k`, it extends the input
+factorization mod `p`, it preserves degrees, and it is unique among
+coprime monic lifts with the same reduction mod `p`.
+
+{docstring HexHenselMathlib.hensel_correct}
+
+{docstring HexHenselMathlib.hensel_extends}
+
+{docstring HexHenselMathlib.hensel_degree}
+
+{docstring HexHenselMathlib.hensel_unique}
 
 # Cross-references
 %%%
 tag := "hex-hensel-cross-references"
 %%%
 
-`HexHensel` sits above the polynomial representation layers and below
-the integer-factorization stack:
+`HexHensel` depends on the polynomial representation libraries, and the
+integer-factorization libraries depend on it:
 
 * {ref "hex-poly-z"}[HexPolyZ] supplies the integer polynomial type
   `Hex.ZPoly`, the coefficientwise congruence predicate the lift
   invariants are stated against, and the executable Mignotte bound that
   fixes the target precision `k`. `HexPolyFp` supplies the prime-field
   type `Hex.FpPoly p` and the mod-`p` Bezout witnesses that seed a lift.
-* `HexHenselMathlib` is the correspondence layer: it re-exports the
-  executable lift theory as theorems about Mathlib structures and proves
-  the lift-uniqueness companion (linear-vs-quadratic agreement after
-  canonicalisation). As with the rest of the stack, the Mathlib
-  dependency lives entirely on that side of the boundary; `HexHensel`
-  itself is Mathlib-free.
 * Downstream, the integer Berlekamp–Zassenhaus factorization pipeline
   consumes {name}`Hex.ZPoly.multifactorLiftQuadratic` to lift its
   mod-`p` factorizations to working precision.

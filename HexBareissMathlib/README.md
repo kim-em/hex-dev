@@ -81,6 +81,11 @@ The executable algorithm itself lives in
 [`hex-bareiss`](https://github.com/kim-em/hex-bareiss); these theorems are on
 that Mathlib-free library's forbidden list and live here by design.
 
+# Reference manual
+
+The hex reference manual covers this library and its computational base at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-bareiss>.
+
 # Contributing
 
 Development happens in the [`hex-dev`](https://github.com/kim-em/hex-dev)

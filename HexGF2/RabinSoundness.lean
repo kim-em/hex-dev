@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2.Field
+module
+
+public import HexGF2.Field
+
+public section
 
 /-!
 Project-side soundness of `GF2Poly.rabinTest` against

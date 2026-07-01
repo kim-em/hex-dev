@@ -23,28 +23,28 @@ tag := "hex-gfq-ring"
 tag := "hex-gfq-ring-intro"
 %%%
 
-`HexGFqRing` is the canonical executable quotient-ring layer for
-`Fₚ[x] / (f)` over a fixed nonconstant polynomial modulus `f` of type
-{name}`Hex.FpPoly`. Elements are reduced polynomial representatives —
-{name}`Hex.FpPoly` values of degree strictly below
-{name}`Hex.FpPoly.degree` of `f` — and every ring operation normalizes
-through {name}`Hex.GFqRing.reduceMod`, so equality of quotient elements
-coincides with equality of canonical representatives.
+`HexGFqRing` is the executable quotient ring `Fₚ[x] / (f)` over a fixed
+nonconstant polynomial modulus `f` of type {name}`Hex.FpPoly`. Elements
+are reduced polynomial representatives: {name}`Hex.FpPoly` values of
+degree strictly below {name}`Hex.FpPoly.degree` of `f`. Every ring
+operation normalizes through {name}`Hex.GFqRing.reduceMod`, so equality
+of quotient elements coincides with equality of canonical
+representatives.
 
 The modulus `f` is not required to be irreducible: when `f` is reducible
 the quotient is still a ring, used downstream wherever a fixed-modulus
 polynomial ring is needed. When `f` is irreducible, the same underlying
-representation supports a field structure, supplied by the `HexGFqField`
-layer; see {ref "hex-gfq-ring-cross-references"}[Cross-references] below.
+representation supports a field structure, supplied by `HexGFqField`;
+see {ref "hex-gfq-ring-cross-references"}[Cross-references] below.
 
-# Core types
+# Quotient types
 %%%
 tag := "hex-gfq-ring-core-types"
 %%%
 
-The two primitive notions are {name}`Hex.GFqRing.reduceMod` — canonical
-remainder modulo `f` — and {name}`Hex.GFqRing.PolyQuotient` — the
-subtype of reduced representatives.
+The two primitive notions are {name}`Hex.GFqRing.reduceMod` (canonical
+remainder modulo `f`) and {name}`Hex.GFqRing.PolyQuotient` (the subtype
+of reduced representatives).
 
 {docstring Hex.GFqRing.reduceMod}
 
@@ -52,9 +52,9 @@ subtype of reduced representatives.
 
 {docstring Hex.GFqRing.PolyQuotient}
 
-Two further definitions complete the user-facing surface: the smart
-constructor {name}`Hex.GFqRing.ofPoly` and the projection
-{name}`Hex.GFqRing.repr`. Callers never manage reduction by hand —
+Two further definitions are the main entry points: the smart constructor
+{name}`Hex.GFqRing.ofPoly` and the projection
+{name}`Hex.GFqRing.repr`. Callers never manage reduction by hand:
 `ofPoly` runs the canonical reduction and `repr` reads back the stored
 representative.
 
@@ -88,7 +88,7 @@ corresponding operations on representatives and re-reduce the result.
 
 Exponentiation uses square-and-multiply on the exponent bits, costing
 `O(log n)` quotient-ring multiplications. The natural and integer
-scalar maps below use the same binary-decomposition shape — the
+scalar maps below use the same binary-decomposition shape; the
 textbook `n + 1 ↦ pred + 1` recursion is forbidden in this library
 because its cost would be linear in the scalar.
 
@@ -115,8 +115,7 @@ The reduction rule for this quotient is `x⁴ ≡ -2 ≡ 3 (mod 5)`. The
 example below builds the modulus, three reduced representatives `a`,
 `b`, and `x`, then exercises addition, multiplication, negation,
 subtraction, and exponentiation. Each `#guard` is checked when the
-chapter is built, so the expected coefficient lists are guaranteed
-to match what the executable implementation produces.
+chapter is built.
 
 ```lean
 open Hex Hex.GFqRing
@@ -205,11 +204,10 @@ end HexGFqRingChapterExample
 tag := "hex-gfq-ring-key-correctness"
 %%%
 
-The library's exit criterion at the proof layer is a small set of
-laws connecting representatives to canonical reduction. The first two
-establish that the representation is canonical: a quotient element is
-exactly its reduced representative, and that representative has
-degree strictly below the modulus.
+A small set of laws connects representatives to canonical reduction.
+The first two establish that the representation is canonical: a quotient
+element is exactly its reduced representative, and that representative
+has degree strictly below the modulus.
 
 {docstring Hex.GFqRing.repr_ofPoly}
 
@@ -224,7 +222,7 @@ reduced is a no-op, and the modulus reduces to zero:
 
 Reduction commutes with addition and multiplication in the strong
 sense that reducing either operand before combining does not change
-the final canonical representative — the laws that justify lifting
+the final canonical representative. These laws justify lifting
 addition and multiplication to the quotient.
 
 {docstring Hex.GFqRing.reduceMod_add_reduceMod_congr}
@@ -242,12 +240,12 @@ downstream proof automation. Its existence is the prerequisite that promotes
 tag := "hex-gfq-ring-cross-references"
 %%%
 
-`HexGFqRing` sits between an upstream polynomial-arithmetic dependency
-and a downstream finite-field caller:
+`HexGFqRing` depends on a polynomial-arithmetic library, and a
+finite-field library depends on it:
 
 * `HexPolyFp` provides the `Hex.FpPoly` representation that
   {name}`Hex.GFqRing.reduceMod` operates on, together with the
-  `Hex.DensePoly.divMod` and `Hex.DensePoly.mod` surface from which
+  `Hex.DensePoly.divMod` and `Hex.DensePoly.mod` operations from which
   `reduceMod` is built. The univariate polynomial division laws
   packaged there are what make the canonical-representative invariant
   meaningful.
@@ -265,7 +263,7 @@ and a downstream finite-field caller:
 tag := "hex-gfq-ring-no-mathlib-correspondence"
 %%%
 
-Some `hex-*` libraries pair the computational layer with a `*Mathlib`
+Some `hex-*` libraries pair the executable library with a `*Mathlib`
 correspondence library that re-exports the executable API as theorems
 about the corresponding Mathlib structures. `HexGFqRing` has *no* such
 correspondence library: there is no `HexGFqRingMathlib`, and the

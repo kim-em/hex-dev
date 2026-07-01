@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexHensel.Multifactor
-import HexHensel.Quadratic
+module
+
+public import HexHensel.Multifactor
+public import HexHensel.Quadratic
+
+public section
 
 /-!
 Quadratic multifactor Hensel lifting.
@@ -83,6 +87,7 @@ complementary product `Array.polyProduct rest.toArray` via
 `rest`. The singleton case returns the input reduced modulo `p^k`; the
 empty case returns the empty array. Mirrors `multifactorLiftList` in
 `HexHensel.Multifactor` but uses the quadratic doubling primitive. -/
+@[expose]
 def multifactorLiftQuadraticList
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) : List ZPoly → Array ZPoly
@@ -104,6 +109,7 @@ Lifts an ordered array of factors of `f` from congruence modulo `p` to
 congruence modulo `p^k` using the doubling step `quadraticHenselStep`
 inside the same sequential split tree as `multifactorLift`.
 -/
+@[expose]
 def multifactorLiftQuadratic
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) (factors : Array ZPoly) : Array ZPoly :=
@@ -577,6 +583,7 @@ followed by the recursive precondition for the lifted complement:
 The base cases impose the trivial obligations: `congr 1 f (p ^ k)` for the
 empty list (vacuous product) and no preconditions for a singleton.
 -/
+@[expose]
 def QuadraticMultifactorLiftInvariant
     (p k : Nat) [ZMod64.Bounds p]
     (f : ZPoly) : List ZPoly → Prop
@@ -744,14 +751,14 @@ theorem monic_of_congr_mul_monic_monic
     intro hg_zero
     have hlead : Hex.DensePoly.leadingCoeff g = (0 : Int) := by
       rw [hg_zero]
-      rfl
+      simp
     rw [hg_monic] at hlead
     omega
   have hf_ne_zero : f ≠ 0 := by
     intro hf_zero
     have hlead : Hex.DensePoly.leadingCoeff f = (0 : Int) := by
       rw [hf_zero]
-      rfl
+      simp
     rw [hf_monic] at hlead
     omega
   have hg_pos : 0 < g.size := Hex.ZPoly.size_pos_of_ne_zero g hg_ne_zero
@@ -928,7 +935,7 @@ theorem henselLiftQuadratic_h_monic
     have hf_ne_zero : f ≠ 0 := by
       intro hf_z
       have hlead : DensePoly.leadingCoeff f = (0 : Int) := by
-        rw [hf_z]; rfl
+        rw [hf_z]; simp
       rw [hf_monic] at hlead
       omega
     have hf_pos : 0 < f.size := ZPoly.size_pos_of_ne_zero f hf_ne_zero

@@ -19,18 +19,24 @@ nonzero lattice vector.
 
 namespace Hex
 
-namespace LLLCore
+namespace Internal.LLLCore
 
 /-- Recover the squared norm of a Gram-Schmidt basis vector. -/
 @[expose]
 def basisNormSq (basis : Matrix Rat n m) (i : Fin n) : Rat :=
   (basis.row i).normSq
 
-end LLLCore
+
+
+end Internal.LLLCore
+
+open Hex.Internal
 
 /-- A basis is `(δ, η)`-LLL-reduced when it is size-reduced with bound `η`
 (`|μ| ≤ η` for every below-diagonal entry of the Gram-Schmidt coefficient
-matrix) and satisfies the Lovasz condition at every adjacent pair. -/
+matrix) and satisfies the Lovasz condition at every adjacent pair. The
+size-reduction clause is stored in squared form `μ² ≤ η²`, which is equivalent
+to `|μ| ≤ η` exactly when `η ≥ 0`; every consumer supplies `1/2 ≤ η`. -/
 @[expose]
 def isLLLReduced (b : Matrix Int n m) (δ η : Rat) : Prop :=
   let basis := GramSchmidt.Int.basis b
@@ -47,7 +53,7 @@ def isLLLReduced (b : Matrix Int n m) (δ η : Rat) : Prop :=
       δ * LLLCore.basisNormSq basis iFin ≤
         LLLCore.basisNormSq basis ip1Fin + μ * μ * LLLCore.basisNormSq basis iFin
 
-namespace LLLCore
+namespace Internal.LLLCore
 
 /-- `ratMulSelfNonneg` states that a rational square `x * x` is nonnegative, the
 per-entry fact underlying every sum-of-squares norm bound in this file. -/
@@ -249,7 +255,7 @@ private theorem ratPow_le_pow_of_one_le {α : Rat} (hα : 1 ≤ α) :
         subst hi'
         exact Rat.le_refl
 
-end LLLCore
+end Internal.LLLCore
 
 /-- LLL short-vector core inequality, parameterized by the size-reduction bound
 `η`. For a `(δ, η)`-LLL-reduced basis with `1/2 ≤ η`, `η² < δ ≤ 1`, the
@@ -315,6 +321,8 @@ theorem short_vector_bound_of_size_bound (b : Matrix Int n m) {δ η : Rat}
     _ ≤ (1 / (δ - η * η)) ^ (n - 1) * ((v.normSq : Int) : Rat) :=
         Rat.mul_le_mul_of_nonneg_left hi_norm hαpow_nn
 
+namespace Internal
+
 /-- Monotonicity of the size-reduction bound: a `(δ, η₁)`-LLL-reduced basis
 is also `(δ, η₂)`-LLL-reduced for any `η₂ ≥ η₁ ≥ 0`. The Lovász side is
 unchanged; the size-reduced side relaxes since `|μ| ≤ η₁ ≤ η₂` (in squared
@@ -329,5 +337,7 @@ theorem isLLLReduced.mono_η (b : Matrix Int n m) {δ η₁ η₂ : Rat}
   have hsq1 : η₁ * η₁ ≤ η₁ * η₂ := Rat.mul_le_mul_of_nonneg_left hle hη₁
   have hsq2 : η₁ * η₂ ≤ η₂ * η₂ := Rat.mul_le_mul_of_nonneg_right hle hη₂
   exact Rat.le_trans (hsize i j hi hji) (Rat.le_trans hsq1 hsq2)
+
+end Internal
 
 end Hex

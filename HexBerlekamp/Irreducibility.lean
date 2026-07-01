@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekamp.Basic
+module
+
+public import HexBerlekamp.Basic
+
+public section
 
 /-!
 Executable irreducibility tests for `hex-berlekamp`.
@@ -18,9 +22,17 @@ namespace Hex
 
 namespace Berlekamp
 
+/-- `Bounds 2` for the `FpPoly 2`-specialized pow-chain witness checkers below.
+Previously this was supplied implicitly by a private instance in
+`HexPolyFp.SquareFree` that leaked through typeclass resolution under the
+pre-module import semantics; the module system hides private instances, so the
+`p = 2` checkers declare it locally. -/
+instance : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
+
 variable {p : Nat} [ZMod64.Bounds p]
 
 /-- `X^(p^k) - X` reduced modulo `f`. -/
+@[expose]
 def frobeniusDiffMod (f : FpPoly p) (hmonic : DensePoly.Monic f) (k : Nat) :
     FpPoly p :=
   FpPoly.frobeniusXPowMod f hmonic k - FpPoly.modByMonic f FpPoly.X hmonic
@@ -31,6 +43,7 @@ Positive divisors of `n` below `n`, listed in ascending order.
 These are the candidates from which Rabin's test extracts the maximal proper
 divisors.
 -/
+@[expose]
 def properDivisors (n : Nat) : List Nat :=
   ((List.range (n - 1)).map Nat.succ).filter fun d => n % d = 0
 
@@ -38,11 +51,13 @@ def properDivisors (n : Nat) : List Nat :=
 The maximal proper divisors of `n`, i.e. those proper divisors not strictly
 below any other proper divisor of `n`.
 -/
+@[expose]
 def maximalProperDivisors (n : Nat) : List Nat :=
   let ds := properDivisors n
   ds.filter fun d => !(ds.any fun e => d < e && e % d = 0)
 
 /-- `true` exactly when `g` is a nonzero constant polynomial. -/
+@[expose]
 def isUnitPolynomial (g : FpPoly p) : Bool :=
   match g.degree? with
   | some 0 => true
@@ -61,6 +76,7 @@ def berlekampRankTest (f : FpPoly p) (hmonic : DensePoly.Monic f)
 The divisibility leg of Rabin's criterion: `f` divides `X^(p^n) - X`, with
 `n = deg(f)`, exactly when the reduced remainder vanishes.
 -/
+@[expose]
 def rabinDividesTest (f : FpPoly p) (hmonic : DensePoly.Monic f) : Bool :=
   let n := basisSize f
   (frobeniusDiffMod f hmonic n).isZero
@@ -69,6 +85,7 @@ def rabinDividesTest (f : FpPoly p) (hmonic : DensePoly.Monic f) : Bool :=
 The gcd leg of Rabin's criterion at a single maximal proper divisor `d` of
 `deg(f)`.
 -/
+@[expose]
 def rabinCoprimeTest (f : FpPoly p) (hmonic : DensePoly.Monic f) (d : Nat) : Bool :=
   isUnitPolynomial (DensePoly.gcd f (frobeniusDiffMod f hmonic d))
 
@@ -76,6 +93,7 @@ def rabinCoprimeTest (f : FpPoly p) (hmonic : DensePoly.Monic f) (d : Nat) : Boo
 Record the per-divisor Rabin gcd checks so downstream factorization code can
 see which maximal proper divisor rejected a candidate polynomial.
 -/
+@[expose]
 def rabinWitnesses (f : FpPoly p) (hmonic : DensePoly.Monic f) : List (Nat × Bool) :=
   let n := basisSize f
   (maximalProperDivisors n).map fun d => (d, rabinCoprimeTest f hmonic d)
@@ -219,6 +237,7 @@ Rabin's executable irreducibility test: `f` must be nonconstant, divide
 `X^(p^n) - X`, and be coprime to `X^(p^d) - X` for every maximal proper
 divisor `d` of `n = deg(f)`.
 -/
+@[expose]
 def rabinTest (f : FpPoly p) (hmonic : DensePoly.Monic f) : Bool :=
   let n := basisSize f
   decide (0 < n) &&
@@ -988,7 +1007,7 @@ private theorem checkPowChainLinearIncrementalQuotientWitnessStep_zero_bool_pilo
   · rfl
   · decide
   · decide
-  · rfl
+  · simp
 
 /--
 Quotient-witness form of the incremental pow-chain check: validates the
@@ -1027,7 +1046,7 @@ theorem checkPowChainLinearIncrementalQuotientWitnesses_of_steps
   intro k hk
   exact hsteps k (List.mem_range.mp hk)
 
-private def primeTwo : Hex.Nat.Prime 2 := by
+private theorem primeTwo : Hex.Nat.Prime 2 := by
   refine ⟨by decide, ?_⟩
   intro m hm
   have hmle : m ≤ 2 := Nat.le_of_dvd (by decide : 0 < 2) hm

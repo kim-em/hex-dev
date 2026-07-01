@@ -4,8 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexHensel.Multifactor
-import HexHensel.QuadraticMultifactor
+module
+
+public meta import HexHensel.Multifactor
+public meta import HexHensel.QuadraticMultifactor
+public import HexHensel.Multifactor
+public import HexHensel.QuadraticMultifactor
+
+public section
 
 /-!
 Linear-vs-quadratic multifactor Hensel lift cross-check at

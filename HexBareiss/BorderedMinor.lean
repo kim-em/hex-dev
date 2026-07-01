@@ -38,7 +38,7 @@ def borderedMinor (M : Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
         ⟨c.val, Nat.lt_trans hc hk⟩
       else
         j
-    M[rr][cc]
+    M[(rr, cc)]
 
 /-- Interior-block case of the bordered-minor entry formula. -/
 @[grind =] theorem borderedMinor_entry_lt_lt (M : Matrix R n n) (k : Nat) (hk : k < n)
@@ -46,7 +46,7 @@ def borderedMinor (M : Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
     (borderedMinor M k hk i j)[r][c] =
       (let rr : Fin n := ⟨r.val, Nat.lt_trans hr hk⟩
        let cc : Fin n := ⟨c.val, Nat.lt_trans hc hk⟩
-       M[rr][cc]) := by
+       M[(rr, cc)]) := by
   simp [borderedMinor, ofFn, hr, hc]
 
 /-- Border-column case of the bordered-minor entry formula. -/

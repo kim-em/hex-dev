@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPoly
+module
+
+public import HexPoly
+
+public section
 
 /-!
 Core `ZPoly` definitions for `hex-poly-z`.
@@ -19,6 +23,16 @@ namespace Hex
 /-- Integer polynomials represented by the dense normalized coefficient type
 from `HexPoly`. -/
 abbrev ZPoly := DensePoly Int
+
+/-- `ZPoly` is a multiplicative monoid for `Std`, so the shared
+`List.foldl_mul_*` algebra and core's `List.foldl_assoc` apply to fold-products
+of integer polynomials. -/
+instance : Std.Associative (· * · : ZPoly → ZPoly → ZPoly) :=
+  ⟨DensePoly.mul_assoc_poly⟩
+
+instance : Std.LawfulIdentity (· * · : ZPoly → ZPoly → ZPoly) 1 where
+  left_id p := (DensePoly.mul_comm_poly 1 p).trans (DensePoly.mul_one_right_poly p)
+  right_id := DensePoly.mul_one_right_poly
 
 instance : DensePoly.AddZeroLaw Int where
   add_zero_zero := rfl
@@ -43,15 +57,18 @@ instance : DensePoly.ZeroSubNegLaw Rat where
 namespace ZPoly
 
 /-- Coefficientwise congruence modulo `m`. -/
+@[expose]
 def congr (f g : ZPoly) (m : Nat) : Prop :=
   ∀ i, (f.coeff i - g.coeff i) % (m : Int) = 0
 
 /-- Two integer polynomials are coprime mod `p` when they admit a Bezout
 combination congruent to `1` modulo `p`. -/
+@[expose]
 def coprimeModP (f g : ZPoly) (p : Nat) : Prop :=
   ∃ s t : ZPoly, congr (s * f + t * g) 1 p
 
 /-- The nonnegative gcd of the coefficients of `f`. -/
+@[expose]
 def content (f : ZPoly) : Int :=
   DensePoly.content f
 
@@ -92,10 +109,12 @@ the trivial dilation. -/
   rw [coeff_dilate, Int.one_pow, Int.one_mul]
 
 /-- A `ZPoly` is primitive when its content is `1`. -/
+@[expose]
 def Primitive (f : ZPoly) : Prop :=
   content f = 1
 
 /-- A `ZPoly` is a unit iff it is the constant polynomial `1` or `-1`. -/
+@[expose]
 def IsUnit (f : ZPoly) : Prop :=
   f = DensePoly.C 1 ∨ f = DensePoly.C (-1)
 
@@ -341,7 +360,8 @@ private def ratCoeffToIntWithDen (den : Nat) (coeff : Rat) : Int :=
 
 /-- Negate `f` when its leading coefficient is negative, normalizing a primitive part to
 have nonnegative leading sign. -/
-private def normalizePrimitiveSign (f : ZPoly) : ZPoly :=
+@[expose]
+def normalizePrimitiveSign (f : ZPoly) : ZPoly :=
   if DensePoly.leadingCoeff f < 0 then
     DensePoly.scale (-1 : Int) f
   else
@@ -1042,12 +1062,12 @@ theorem leadingCoeff_mul_pos_of_pos (p q : ZPoly)
   have hp_ne : p ≠ 0 := by
     intro hp_zero
     rw [hp_zero] at hp_pos
-    change 0 < (0 : Int) at hp_pos
+    rw [DensePoly.leadingCoeff_zero] at hp_pos
     omega
   have hq_ne : q ≠ 0 := by
     intro hq_zero
     rw [hq_zero] at hq_pos
-    change 0 < (0 : Int) at hq_pos
+    rw [DensePoly.leadingCoeff_zero] at hq_pos
     omega
   rw [leadingCoeff_mul_of_nonzero p q hp_ne hq_ne]
   exact Int.mul_pos hp_pos hq_pos
@@ -1167,10 +1187,7 @@ theorem leadingCoeff_scale_of_nonzero (c : Int) (p : ZPoly) (hc : c ≠ 0) :
       rw [DensePoly.coeff_zero]
       exact DensePoly.coeff_eq_zero_of_size_le p (by omega)
     rw [hpzero]
-    change (DensePoly.scale c (0 : ZPoly)).leadingCoeff = c * (0 : Int)
-    have hleft : (DensePoly.scale c (0 : ZPoly)).leadingCoeff = 0 := by
-      rfl
-    rw [hleft, Int.mul_zero]
+    simp
 
 private theorem shift_size_of_nonzero_core (k : Nat) {p : ZPoly} (hp : p ≠ 0) :
     (DensePoly.shift k p).size = k + p.size := by

@@ -27,7 +27,7 @@ import HexMatrixMathlib
 
 open Hex HexMatrixMathlib
 
--- Every executable matrix has a Mathlib reading, entry for entry.
+-- Every executable matrix corresponds to a Mathlib matrix with the same entries.
 #check @matrixEquiv      -- Hex.Matrix R n m ≃ Matrix (Fin n) (Fin m) R
 #check @matrixEquiv_apply -- matrixEquiv M i j = M[i][j]
 
@@ -65,7 +65,8 @@ transfer lemmas (`matrixEquiv_add`, `matrixEquiv_mul`, `matrixEquiv_one`,
 `matrixEquiv_smul`, and the rest) let `simp` and `grind` rewrite between the
 two representations.
 
-The headline equivalence reads off entries:
+The headline equivalence sends each matrix to the Mathlib matrix with the
+same entries:
 
 ```lean
 def matrixEquiv : Hex.Matrix R n m ≃ Matrix (Fin n) (Fin m) R
@@ -103,6 +104,11 @@ The executable matrices and their operations live in
 [`hex-matrix`](https://github.com/kim-em/hex-matrix). The determinant, row
 reduction, and Bareiss correspondences build on this base in their own bridge
 libraries.
+
+# Reference manual
+
+The Mathlib correspondence section of the hex reference manual covers this library at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-matrix-mathlib>.
 
 # Contributing
 

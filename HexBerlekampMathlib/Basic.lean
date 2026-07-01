@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekamp.Factor
-import HexBerlekamp.Irreducibility
-import HexBerlekamp.RabinSoundness
-import HexModArithMathlib
-import HexPolyMathlib
-import Mathlib.FieldTheory.Finite.Extension
-import Mathlib.FieldTheory.Finite.GaloisField
+module
+
+public import HexBerlekamp.Factor
+public import HexBerlekamp.Irreducibility
+public import HexBerlekamp.RabinSoundness
+public import HexModArithMathlib
+public import HexPolyMathlib
+public import Mathlib.FieldTheory.Finite.Extension
+public import Mathlib.FieldTheory.Finite.GaloisField
+
+public section
 
 /-!
 Mathlib-facing correctness surface for `HexBerlekamp`.
@@ -46,7 +50,7 @@ the standalone form of `coeff_toMathlibPolynomial` available before the ring
 equivalence is assembled. -/
 theorem coeff_fpPolyToPolynomial (f : Hex.FpPoly p) (n : Nat) :
     (fpPolyToPolynomial f).coeff n = HexModArithMathlib.ZMod64.toZMod (f.coeff n) := by
-  rw [fpPolyToPolynomial, Polynomial.finset_sum_coeff]
+  rw [fpPolyToPolynomial, Polynomial.finsetSum_coeff]
   simp only [Polynomial.coeff_monomial]
   rw [Finset.sum_ite_eq' (Finset.range f.size) n
     (fun i => HexModArithMathlib.ZMod64.toZMod (f.coeff i))]
@@ -222,7 +226,7 @@ theorem fpPolyEquiv_symm_apply (f : Polynomial (ZMod p)) :
 theorem coeff_toMathlibPolynomial (f : Hex.FpPoly p) (n : Nat) :
     (toMathlibPolynomial f).coeff n = HexModArithMathlib.ZMod64.toZMod (f.coeff n) := by
   show (fpPolyToPolynomial f).coeff n = HexModArithMathlib.ZMod64.toZMod (f.coeff n)
-  rw [fpPolyToPolynomial, Polynomial.finset_sum_coeff]
+  rw [fpPolyToPolynomial, Polynomial.finsetSum_coeff]
   simp only [Polynomial.coeff_monomial]
   rw [Finset.sum_ite_eq' (Finset.range f.size) n
     (fun i => HexModArithMathlib.ZMod64.toZMod (f.coeff i))]

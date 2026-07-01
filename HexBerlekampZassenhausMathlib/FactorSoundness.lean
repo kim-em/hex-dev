@@ -256,7 +256,7 @@ Uniqueness specialised against the default executable factorization, so callers
 only provide the competing product, irreducibility, sign-normalization, and
 nonconstant-factor facts, plus that the input is nonzero. The default
 factorization's own well-formedness is supplied by
-`factor_irreducible_of_nonUnit` and forthcoming sibling lemmas.
+`factor_irreducible_of_nonUnit` and its sibling lemmas.
 -/
 theorem factor_unique_of_product
     (f : Hex.ZPoly) (φ : Hex.Factorization) (hf_ne : f ≠ 0)

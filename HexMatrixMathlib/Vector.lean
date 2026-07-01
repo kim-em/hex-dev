@@ -41,8 +41,8 @@ def vectorEquiv : Vector R n ≃ (Fin n → R) where
     funext i
     simp
 
-/-- `vectorEquiv` reads off the executable vector entrywise, so a caller can
-rewrite `vectorEquiv v i` to the underlying `v[i]` without unfolding it. -/
+/-- `vectorEquiv v` has entry `v[i]` at `i`, so a caller can rewrite
+`vectorEquiv v i` to `v[i]` without unfolding it. -/
 @[simp, grind =] theorem vectorEquiv_apply (v : Vector R n) (i : Fin n) :
     vectorEquiv v i = v[i] :=
   rfl

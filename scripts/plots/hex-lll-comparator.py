@@ -92,7 +92,6 @@ DEFAULT_HARSH_FRESH = next((g for g in sorted(ROOT.glob("reports/bench-results/h
 
 
 LEAN_RANDOM = re.compile(r"runNativeFirstShortVectorRandomBoundedNormSq([0-9]+)$")
-LEAN_STEERED_RANDOM = re.compile(r"runFirstShortVectorRandomBoundedNormSq([0-9]+)$")
 ISABELLE_RANDOM = re.compile(r"runIsabelleRandomBoundedNormSq([0-9]+)$")
 FPLLL_RANDOM = re.compile(
     r"run(?:FpLLL|Fpylll)FirstShortVectorRandomBounded([0-9]+)Checksum$"
@@ -104,7 +103,6 @@ ISABELLE_CERTIFIED_RANDOM = re.compile(
     r"runIsabelleCertifiedRandomBoundedNormSq([0-9]+)$"
 )
 LEAN_HARSH = re.compile(r"runNativeFirstShortVectorHarshCubicNormSq([0-9]+)$")
-LEAN_STEERED_HARSH = re.compile(r"runFirstShortVectorHarshCubicNormSq([0-9]+)$")
 ISABELLE_HARSH = re.compile(r"runIsabelleHarshCubicNormSq([0-9]+)$")
 FPLLL_HARSH = re.compile(
     r"run(?:FpLLL|Fpylll)FirstShortVectorHarshCubic([0-9]+)Checksum$"
@@ -117,7 +115,6 @@ ISABELLE_CERTIFIED_HARSH = re.compile(
 )
 
 LEAN_AJTAI = re.compile(r"runNativeFirstShortVectorAjtaiNormSq([0-9]+)$")
-LEAN_STEERED_AJTAI = re.compile(r"runFirstShortVectorAjtaiNormSq([0-9]+)$")
 ISABELLE_AJTAI = re.compile(r"runIsabelleAjtaiNormSq([0-9]+)$")
 FPLLL_AJTAI = re.compile(
     r"run(?:FpLLL|Fpylll)FirstShortVectorAjtai([0-9]+)Checksum$"
@@ -126,21 +123,18 @@ CERTIFIED_AJTAI = re.compile(r"runCertifiedFirstShortVectorAjtai([0-9]+)Checksum
 ISABELLE_CERTIFIED_AJTAI = re.compile(r"runIsabelleCertifiedAjtaiNormSq([0-9]+)$")
 
 LEAN_QARY = re.compile(r"runNativeFirstShortVectorQaryNormSq([0-9]+)$")
-LEAN_STEERED_QARY = re.compile(r"runFirstShortVectorQaryNormSq([0-9]+)$")
 ISABELLE_QARY = re.compile(r"runIsabelleQaryNormSq([0-9]+)$")
 FPLLL_QARY = re.compile(r"run(?:FpLLL|Fpylll)FirstShortVectorQary([0-9]+)Checksum$")
 CERTIFIED_QARY = re.compile(r"runCertifiedFirstShortVectorQary([0-9]+)Checksum$")
 ISABELLE_CERTIFIED_QARY = re.compile(r"runIsabelleCertifiedQaryNormSq([0-9]+)$")
 
 LEAN_NTRU = re.compile(r"runNativeFirstShortVectorNtruNormSq([0-9]+)$")
-LEAN_STEERED_NTRU = re.compile(r"runFirstShortVectorNtruNormSq([0-9]+)$")
 ISABELLE_NTRU = re.compile(r"runIsabelleNtruNormSq([0-9]+)$")
 FPLLL_NTRU = re.compile(r"run(?:FpLLL|Fpylll)FirstShortVectorNtru([0-9]+)Checksum$")
 CERTIFIED_NTRU = re.compile(r"runCertifiedFirstShortVectorNtru([0-9]+)Checksum$")
 ISABELLE_CERTIFIED_NTRU = re.compile(r"runIsabelleCertifiedNtruNormSq([0-9]+)$")
 
 LEAN_KNAPSACK = re.compile(r"runNativeFirstShortVectorKnapsackNormSq([0-9]+)$")
-LEAN_STEERED_KNAPSACK = re.compile(r"runFirstShortVectorKnapsackNormSq([0-9]+)$")
 ISABELLE_KNAPSACK = re.compile(r"runIsabelleKnapsackNormSq([0-9]+)$")
 FPLLL_KNAPSACK = re.compile(r"run(?:FpLLL|Fpylll)FirstShortVectorKnapsack([0-9]+)Checksum$")
 CERTIFIED_KNAPSACK = re.compile(r"runCertifiedFirstShortVectorKnapsack([0-9]+)Checksum$")
@@ -158,7 +152,6 @@ class Series:
 @dataclass(frozen=True)
 class FamilyConfig:
     lean_pattern: re.Pattern[str]
-    lean_steered_pattern: re.Pattern[str]
     isabelle_pattern: re.Pattern[str]
     fpll_pattern: re.Pattern[str]
     certified_pattern: re.Pattern[str]
@@ -179,7 +172,6 @@ class FamilyConfig:
 FAMILIES = {
     "random-bounded": FamilyConfig(
         lean_pattern=LEAN_RANDOM,
-        lean_steered_pattern=LEAN_STEERED_RANDOM,
         isabelle_pattern=ISABELLE_RANDOM,
         fpll_pattern=FPLLL_RANDOM,
         certified_pattern=CERTIFIED_RANDOM,
@@ -194,7 +186,6 @@ FAMILIES = {
     ),
     "harsh-cubic": FamilyConfig(
         lean_pattern=LEAN_HARSH,
-        lean_steered_pattern=LEAN_STEERED_HARSH,
         isabelle_pattern=ISABELLE_HARSH,
         fpll_pattern=FPLLL_HARSH,
         certified_pattern=CERTIFIED_HARSH,
@@ -209,7 +200,6 @@ FAMILIES = {
     ),
     "ajtai": FamilyConfig(
         lean_pattern=LEAN_AJTAI,
-        lean_steered_pattern=LEAN_STEERED_AJTAI,
         isabelle_pattern=ISABELLE_AJTAI,
         fpll_pattern=FPLLL_AJTAI,
         certified_pattern=CERTIFIED_AJTAI,
@@ -224,7 +214,6 @@ FAMILIES = {
     ),
     "q-ary": FamilyConfig(
         lean_pattern=LEAN_QARY,
-        lean_steered_pattern=LEAN_STEERED_QARY,
         isabelle_pattern=ISABELLE_QARY,
         fpll_pattern=FPLLL_QARY,
         certified_pattern=CERTIFIED_QARY,
@@ -239,7 +228,6 @@ FAMILIES = {
     ),
     "ntru": FamilyConfig(
         lean_pattern=LEAN_NTRU,
-        lean_steered_pattern=LEAN_STEERED_NTRU,
         isabelle_pattern=ISABELLE_NTRU,
         fpll_pattern=FPLLL_NTRU,
         certified_pattern=CERTIFIED_NTRU,
@@ -254,7 +242,6 @@ FAMILIES = {
     ),
     "knapsack": FamilyConfig(
         lean_pattern=LEAN_KNAPSACK,
-        lean_steered_pattern=LEAN_STEERED_KNAPSACK,
         isabelle_pattern=ISABELLE_KNAPSACK,
         fpll_pattern=FPLLL_KNAPSACK,
         certified_pattern=CERTIFIED_KNAPSACK,
@@ -291,7 +278,6 @@ ISABELLE_CERTIFIED_ADJUSTED_LABEL = "Isabelle certified (adjusted)"
 # whether or not the certified curves are present in a given figure.
 STYLE_BY_LABEL = {
     "Lean native": {"marker": "o", "linewidth": 2.0},
-    "Lean steered": {"marker": "P", "linewidth": 2.0, "markersize": 7.0},
     "Isabelle native": {"marker": "s", "linewidth": 2.0},
     "Lean certified": {"marker": "D", "linewidth": 2.0, "markersize": 6.5},
     ISABELLE_CERTIFIED_ADJUSTED_LABEL: {
@@ -482,15 +468,14 @@ def main() -> None:
 
     cons = load_results(cons_path)
     lean = collect_series(cons, config.lean_pattern, "Lean native")
-    steered = collect_series(cons, config.lean_steered_pattern, "Lean steered")
     isabelle = collect_series(cons, config.isabelle_pattern, "Isabelle native")
     fpll = collect_series(cons, config.fpll_pattern, "fpLLL via fplll-ffi")
 
     # Legend follows plot order; order the series slowest-to-fastest at large
-    # n (Isabelle native, Lean native, Isabelle certified, Lean steered, Lean
-    # certified, fpLLL) so the legend reads top-to-bottom like the stacked
-    # curves. `Lean native` is the exact d/ν reducer; `Lean steered` is the
-    # approximation-steered default with post-hoc certification.
+    # n (Isabelle native, Lean native, Isabelle certified, Lean certified, fpLLL)
+    # so the legend reads top-to-bottom like the stacked curves. `Lean native`
+    # is the exact d/ν reducer (`lllNative`); `Lean certified` is an fpLLL
+    # candidate checked by the verified Lean `certCheck`.
     series = [isabelle, lean]
     floor_ms = None
     if config.include_certified:
@@ -510,9 +495,7 @@ def main() -> None:
             ),
             floor_ms,
         )
-        series += [isabelle_certified, steered, certified]
-    else:
-        series.append(steered)
+        series += [isabelle_certified, certified]
     series.append(fpll)
 
     if config.bottom_consistency:

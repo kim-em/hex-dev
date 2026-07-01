@@ -270,19 +270,6 @@ These determinant-agnostic helpers about folds, `Nodup`, and `insertAt`
 support the enumeration completeness and duplicate-freeness proofs below,
 and are reused by the Leibniz determinant layer downstream. -/
 
-/-- Two left folds agree when their step functions agree on every list
-element. -/
-private theorem foldl_acc_congr {α : Type u} {β : Type v}
-    (xs : List β) (f g : α → β → α) (z : α)
-    (h : ∀ acc x, x ∈ xs → f acc x = g acc x) :
-    xs.foldl f z = xs.foldl g z := by
-  induction xs generalizing z with
-  | nil => rfl
-  | cons x xs ih =>
-      simp only [List.foldl_cons]
-      rw [h z x (by simp)]
-      exact ih (g z x) (fun acc y hy => h acc y (List.mem_cons_of_mem x hy))
-
 /-- Mapping a duplicate-free list by an injective function preserves
 duplicate-freeness. -/
 private theorem list_nodup_map_of_injective {α : Type u} {β : Type v}
@@ -579,7 +566,7 @@ private theorem foldCount_finRange_ge {n : Nat} (i : Fin (n + 1)) :
               (fun acc y => acc + if i.val ≤ y.val then 1 else 0) 0 =
               (List.finRange (n + 1)).foldl
                 (fun (acc : Nat) (_y : Fin (n + 1)) => acc) 0 := by
-                exact foldl_acc_congr (List.finRange (n + 1))
+                exact List.foldl_congr (List.finRange (n + 1))
                   (fun (acc : Nat) (y : Fin (n + 1)) =>
                     acc + if i.val ≤ y.val then 1 else 0)
                   (fun (acc : Nat) (_y : Fin (n + 1)) => acc) 0 hfalse

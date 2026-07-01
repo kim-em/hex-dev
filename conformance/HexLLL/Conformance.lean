@@ -21,11 +21,11 @@ Covered operations:
 - `Hex.lll.firstShortVector`
 - `Hex.lll.shortVectors`
 - `Hex.certCheck`
-- `Hex.LLLState.sizeReduceColumn`
-- `Hex.LLLState.sizeReduce`
-- `Hex.LLLState.swapStep`
-- `Hex.LLLState.gramSchmidtCoeff`
-- `Hex.LLLState.potential`
+- `Hex.Internal.LLLState.sizeReduceColumn`
+- `Hex.Internal.LLLState.sizeReduce`
+- `Hex.Internal.LLLState.swapStep`
+- `Hex.Internal.LLLState.gramSchmidtCoeff`
+- `Hex.Internal.LLLState.potential`
 
 Covered properties:
 - committed row-combination witnesses satisfy lattice membership.
@@ -61,6 +61,8 @@ Covered edge cases:
 
 namespace Hex
 namespace LLLConformance
+
+open Hex.Internal
 
 private def identity8 : Matrix Int 8 8 := Matrix.identity 8
 
@@ -397,30 +399,30 @@ example (hδ : (121 / 400 : Rat) < 3 / 4) (hδ' : (3 / 4 : Rat) ≤ 1)
 example (hδ : (121 / 400 : Rat) < 3 / 4) (hδ' : (3 / 4 : Rat) ≤ 1)
     (hind : bzStyleBasis.independent) :
     lll.shortVectors bzStyleBasis (3 / 4) hδ hδ' (by decide) hind =
-      (lll bzStyleBasis (3 / 4) hδ hδ' (by decide) hind).toArray := by
+      (lll bzStyleBasis (3 / 4) hδ hδ' (by decide) hind).rows.toArray := by
   rfl
 
 example :
     identityState.gramSchmidtCoeff 1 0 (by decide) (by decide) =
-      (((identityState.ν.get f1_8).get f0_8 : Int) : Rat) / (identityState.d.get f1_9 : Rat) := by
+      (((identityState.ν.getRow f1_8).get f0_8 : Int) : Rat) / (identityState.d.get f1_9 : Rat) := by
   rfl
 
 example :
     unreducedState.gramSchmidtCoeff 1 0 (by decide) (by decide) =
-      (((unreducedState.ν.get f1_8).get f0_8 : Int) : Rat) /
+      (((unreducedState.ν.getRow f1_8).get f0_8 : Int) : Rat) /
         (unreducedState.d.get f1_9 : Rat) := by
   rfl
 
 example :
     typicalState.gramSchmidtCoeff 2 1 (by decide) (by decide) =
-      (((typicalState.ν.get f2_8).get f1_8 : Int) : Rat) / (typicalState.d.get f2_9 : Rat) := by
+      (((typicalState.ν.getRow f2_8).get f1_8 : Int) : Rat) / (typicalState.d.get f2_9 : Rat) := by
   rfl
 
-#guard (((identityState.ν.get f1_8).get f0_8 : Int) : Rat) /
+#guard (((identityState.ν.getRow f1_8).get f0_8 : Int) : Rat) /
   (identityState.d.get f1_9 : Rat) = 0
-#guard (((unreducedState.ν.get f1_8).get f0_8 : Int) : Rat) /
+#guard (((unreducedState.ν.getRow f1_8).get f0_8 : Int) : Rat) /
   (unreducedState.d.get f1_9 : Rat) = 3
-#guard (((typicalState.ν.get f2_8).get f1_8 : Int) : Rat) /
+#guard (((typicalState.ν.getRow f2_8).get f1_8 : Int) : Rat) /
   (typicalState.d.get f2_9 : Rat) = ((1 : Rat) / 3)
 
 private def sizeReducedUnreduced : LLLState 8 8 :=
@@ -430,7 +432,7 @@ private def sizeReducedUnreduced : LLLState 8 8 :=
 #guard Matrix.row sizeReducedUnreduced.b f1_8 =
   (Vector.ofFn fun i => if i.val = 1 then 1 else 0)
 #guard sizeReducedUnreduced.d = unreducedState.d
-#guard (sizeReducedUnreduced.ν.get f1_8).get f0_8 = 0
+#guard (sizeReducedUnreduced.ν.getRow f1_8).get f0_8 = 0
 
 private def unchangedIdentityColumn : LLLState 8 8 :=
   identityState.sizeReduceColumn f0_8 f1_8 (by decide)
@@ -475,7 +477,7 @@ private def swappedFirstTypical : LLLState 8 8 :=
 #guard (swappedFirstTypical.d.get f2_9) = 3
 #guard (swappedFirstTypical.d.get f3_9) = 4
 #guard (swappedFirstTypical.d.get f8_9) = 4
-#guard (swappedFirstTypical.ν.get f1_8).get f0_8 = 1
+#guard (swappedFirstTypical.ν.getRow f1_8).get f0_8 = 1
 #guard swappedFirstTypical.potential = 6144
 
 private def swappedSecondTypical : LLLState 8 8 :=
@@ -489,7 +491,7 @@ private def swappedSecondTypical : LLLState 8 8 :=
 #guard (swappedSecondTypical.d.get f2_9) = 3
 #guard (swappedSecondTypical.d.get f3_9) = 4
 #guard (swappedSecondTypical.d.get f8_9) = 4
-#guard (swappedSecondTypical.ν.get f2_8).get f1_8 = 1
+#guard (swappedSecondTypical.ν.getRow f2_8).get f1_8 = 1
 #guard swappedSecondTypical.potential = 6144
 
 private def swappedHighTypical : LLLState 8 8 :=

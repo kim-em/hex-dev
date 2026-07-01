@@ -56,12 +56,8 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
             Vector.dotProduct
               (castIntRow b ⟨p.val, Nat.lt_of_lt_of_le p.isLt hjsuc⟩)
               (castIntRow b ⟨i, hi⟩)) := by
-    apply Vector.ext
-    intro r hr
-    apply Vector.ext
-    intro c hc
-    let pp : Fin (j + 1) := ⟨r, hr⟩
-    let cc : Fin (j + 1) := ⟨c, hc⟩
+    apply Hex.Matrix.ext_getElem
+    intro pp cc
     change
       (castIntDetMatrix
           (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, hjlt⟩ hj))[pp][cc] =
@@ -122,18 +118,7 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
             (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))
           (originalProjectionCoords b i j hi hjlt))[p] = _
     unfold Matrix.mulVec Matrix.row
-    have hleft :
-        (Vector.ofFn fun i' : Fin (j + 1) =>
-            Vector.dotProduct
-              (castIntDetMatrix
-                (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))[i']
-              (originalProjectionCoords b i j hi hjlt))[p] =
-          Vector.dotProduct
-            (castIntDetMatrix
-              (GramSchmidt.leadingGramMatrixInt b (j + 1) hjsuc))[p]
-            (originalProjectionCoords b i j hi hjlt) := by
-      simp [Vector.getElem_ofFn]
-    rw [hleft]
+    simp only [Vector.getElem_ofFn, Fin.getElem_fin]
     unfold Vector.dotProduct
     apply foldl_sum_congr_simple
     intro q _hq
@@ -279,7 +264,7 @@ def augmentedGram (b : Matrix Int n m) (a : Fin n) :
   Matrix.ofFn fun i j : Fin (n + 1) =>
     if hi : i.val < n then
       if hj : j.val < n then
-        (Matrix.gramMatrix b)[(⟨i.val, hi⟩ : Fin n)][(⟨j.val, hj⟩ : Fin n)]
+        (Matrix.gramMatrix b)[((⟨i.val, hi⟩ : Fin n), (⟨j.val, hj⟩ : Fin n))]
       else
         if i.val = a.val then (1 : Int) else 0
     else
@@ -360,6 +345,10 @@ private theorem noPivotLoop_singularStep_none_of_succ
     rw [hpersist, hsing] at h_no_sing
     nomatch h_no_sing
 
+-- Encapsulation makes the nested entry reads and the canonical-coefficient
+-- rewrites over the recursive `noPivotLoop` term defeq-heavy here; a modest
+-- bump (down from the original 1000000) covers it.
+set_option maxHeartbeats 400000 in
 /-- Combined invariant relating the no-pivot Bareiss trajectory on the
 augmented matrix to the trajectory on `gramMatrix b`.  Under `fuel + 1 ≤ n`
 and a non-singular prefix on the Gram side, the augmented loop tracks the
@@ -918,6 +907,7 @@ def StepWitness.ofGram (b : Matrix Int n m) :
   -- Substitute the row-invariant's coefficients by canonical via h_canon.
   rw [h_canon i, h_canon k_let]
   -- Bridge state.matrix entries to stateA entries via the upper-block bridge.
+  simp only [Hex.Matrix.getElem_pair_eq_nested]
   rw [show state.matrix[k_let][k_let] = stateA.matrix[kA][kA] from
       (h_block_A k_let k_let).symm]
   rw [show state.matrix[i][k_let] = stateA.matrix[iA][kA] from

@@ -1,0 +1,28 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+import VersoManual
+import HexManual
+
+open Verso.Genre Manual
+
+/--
+Render configuration for the `HexManual` Verso site: multi-page HTML only
+(no single-page or TeX output), with a navigation depth of two so each
+chapter and its top-level sections get their own pages.
+-/
+def config : RenderConfig where
+  emitTeX := false
+  emitHtmlSingle := .no
+  emitHtmlMulti := .immediately
+  htmlDepth := 2
+
+/--
+Entry point for the `hexmanual` executable. Renders the `HexManual` document
+to static HTML. Pass `--output <dir>` to choose the destination (defaults to
+`_out`); the browsable site lands in `<dir>/html-multi`.
+-/
+def main := manualMain (%doc HexManual) (config := config)

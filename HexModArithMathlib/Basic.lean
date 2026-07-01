@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Mathlib.Data.ZMod.Basic
-import HexModArith
+module
+
+public import Mathlib.Data.ZMod.Basic
+public import HexModArith
+
+public section
 
 /-!
 Correspondence definitions between `Hex.ZMod64` and Mathlib's `ZMod`.
@@ -27,10 +31,12 @@ variable {p : Nat} [Hex.ZMod64.Bounds p]
 instance : NeZero p := ⟨Nat.ne_of_gt (Hex.ZMod64.Bounds.pPos (p := p))⟩
 
 /-- Interpret an executable `ZMod64` residue as a Mathlib `ZMod` class. -/
+@[expose]
 def toZMod (a : Hex.ZMod64 p) : ZMod p :=
   (a.toNat : ZMod p)
 
 /-- Rebuild an executable `ZMod64` residue from a Mathlib `ZMod` class. -/
+@[expose]
 def ofZMod (a : ZMod p) : Hex.ZMod64 p :=
   Hex.ZMod64.ofNat p a.val
 
@@ -204,6 +210,7 @@ theorem toZMod_pow (a : Hex.ZMod64 p) (n : Nat) :
       rw [Nat.cast_pow]
 
 /-- The executable `ZMod64` representation is ring-equivalent to Mathlib's `ZMod`. -/
+@[expose]
 def equiv : Hex.ZMod64 p ≃+* ZMod p where
   toFun := toZMod
   invFun := ofZMod

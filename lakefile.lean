@@ -68,6 +68,8 @@ extern_lib hexlllffi (pkg) := do
 
 lean_lib Hex where
 
+lean_lib HexBasic where
+
 lean_lib HexArith where
   precompileModules := true
   moreLinkArgs := #[
@@ -105,20 +107,28 @@ lean_lib HexGFq where
 
 lean_lib HexBerlekampZassenhaus where
 
+@[default_target]
 lean_lib HexPolyMathlib where
 
+@[default_target]
 lean_lib HexModArithMathlib where
 
+@[default_target]
 lean_lib HexPolyZMathlib where
 
+@[default_target]
 lean_lib HexBerlekampMathlib where
 
+@[default_target]
 lean_lib HexHenselMathlib where
 
+@[default_target]
 lean_lib HexGF2Mathlib where
 
+@[default_target]
 lean_lib HexGFqMathlib where
 
+@[default_target]
 lean_lib HexBerlekampZassenhausMathlib where
 
 lean_lib HexMatrix where
@@ -144,16 +154,22 @@ lean_lib HexLLL where
     else
       #["-ldl"]
 
+@[default_target]
 lean_lib HexMatrixMathlib where
 
+@[default_target]
 lean_lib HexRowReduceMathlib where
 
+@[default_target]
 lean_lib HexDeterminantMathlib where
 
+@[default_target]
 lean_lib HexBareissMathlib where
 
+@[default_target]
 lean_lib HexGramSchmidtMathlib where
 
+@[default_target]
 lean_lib HexLLLMathlib where
 
 lean_exe hexlll_provider_probe where
@@ -329,3 +345,9 @@ lean_exe hexconway_bench where
 
 @[default_target]
 lean_lib HexManual where
+
+-- Renders `HexManual` to static HTML (see `Main.lean`). Not a
+-- `default_target`: the site is built explicitly by the Pages workflow
+-- (`.github/workflows/pages.yml`) and on demand via `lake exe hexmanual`.
+lean_exe hexmanual where
+  root := `Main

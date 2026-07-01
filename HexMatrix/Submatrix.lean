@@ -28,14 +28,14 @@ def principalSubmatrix (M : Matrix R n n) (k : Nat) (hk : k ≤ n) : Matrix R k 
   ofFn fun i j =>
     let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
     let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
-    M[ii][jj]
+    M[(ii, jj)]
 
 /-- The first `k` rows of a matrix, retaining all source columns. -/
 @[expose]
 def takeRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) : Matrix R k m :=
   ofFn fun i j =>
     let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
-    M[ii][j]
+    M[(ii, j)]
 
 /-- Entry formula for the `k × k` principal submatrix. -/
 @[grind =] theorem getElem_principalSubmatrix (M : Matrix R n n) (k : Nat) (hk : k ≤ n)

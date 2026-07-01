@@ -5003,7 +5003,8 @@ theorem bhksRowsArrayToMatrix_row {m n : Nat} (rows : Array (Vector Int m))
 
 set_option linter.unnecessarySimpa false in
 theorem bhksRowsArrayToMatrix_toArray {m n : Nat} (B : Matrix Int n m) :
-    bhksRowsArrayToMatrix n B.toArray = B := by
+    bhksRowsArrayToMatrix n B.rows.toArray = B := by
+  apply Hex.Matrix.ext
   apply Vector.ext
   intro i hi
   apply Vector.ext
@@ -5106,7 +5107,7 @@ def bhksProjectedRowsTrace (L : BhksLatticeBasis)
 theorem bhksProjectedRowsTrace_reducedMatrix_eq
     (L : BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth) :
     (bhksProjectedRowsTrace L hrows).reducedMatrix =
-      lllSteered L.basis (3 / 4) lll_delta_lower lll_delta_upper hrows := by
+      lllNative L.basis (3 / 4) lll_delta_lower lll_delta_upper hrows := by
   simp [bhksProjectedRowsTrace, lll.shortVectorsUnchecked, bhksRowsArrayToMatrix_toArray]
 
 /--
@@ -5233,21 +5234,21 @@ private def bhksGuardBasis : BhksLatticeBasis :=
 
 #guard bhksGuardBasis.factorCount = 2
 #guard bhksGuardBasis.coeffWidth = 2
-#guard bhksGuardBasis.basis[0][0] = 1
-#guard bhksGuardBasis.basis[0][1] = 0
-#guard bhksGuardBasis.basis[0][2] = (bhksGuardBasis.cldRows.getD 0 #[]).getD 0 0
-#guard bhksGuardBasis.basis[0][3] = (bhksGuardBasis.cldRows.getD 0 #[]).getD 1 0
-#guard bhksGuardBasis.basis[0][2] ≠ bhksGuardFactors[0].coeff 0
-#guard bhksGuardBasis.basis[1][0] = 0
-#guard bhksGuardBasis.basis[1][1] = 1
-#guard bhksGuardBasis.basis[2][0] = 0
-#guard bhksGuardBasis.basis[2][2] =
+#guard bhksGuardBasis.basis[(0, 0)] = 1
+#guard bhksGuardBasis.basis[(0, 1)] = 0
+#guard bhksGuardBasis.basis[(0, 2)] = (bhksGuardBasis.cldRows.getD 0 #[]).getD 0 0
+#guard bhksGuardBasis.basis[(0, 3)] = (bhksGuardBasis.cldRows.getD 0 #[]).getD 1 0
+#guard bhksGuardBasis.basis[(0, 2)] ≠ bhksGuardFactors[0].coeff 0
+#guard bhksGuardBasis.basis[(1, 0)] = 0
+#guard bhksGuardBasis.basis[(1, 1)] = 1
+#guard bhksGuardBasis.basis[(2, 0)] = 0
+#guard bhksGuardBasis.basis[(2, 2)] =
   Int.ofNat (5 ^ (2 - bhksGuardBasis.cutThresholds.getD 0 0))
-#guard bhksGuardBasis.basis[3][3] =
+#guard bhksGuardBasis.basis[(3, 3)] =
   Int.ofNat (5 ^ (2 - bhksGuardBasis.cutThresholds.getD 1 0))
 #guard bhksCutRadiusSq4 bhksGuardBasis = 16
-#guard bhksProjectIndicator 2 2 bhksGuardBasis.basis[0] = #[1, 0]
-#guard (bhksProjectIndicator 2 2 bhksGuardBasis.basis[0]).size = bhksGuardBasis.factorCount
+#guard bhksProjectIndicator 2 2 (bhksGuardBasis.basis.getRow ⟨0, by decide⟩) = #[1, 0]
+#guard (bhksProjectIndicator 2 2 (bhksGuardBasis.basis.getRow ⟨0, by decide⟩)).size = bhksGuardBasis.factorCount
 
 /--
 Lift the projected integer rows of `L` into a rational row-basis matrix
@@ -5292,7 +5293,7 @@ def bhksEquivalenceClassIndicators (L : BhksProjectedRows) : Array (Array Int) :
   let r := L.factorCount
   let M : Matrix Rat n r := bhksProjectedRowsAsRatMatrix L.projectedRows n r
   let D := Matrix.rowReduce M
-  let echelonRows : Array (Array Rat) := D.echelon.toArray.map (·.toArray)
+  let echelonRows : Array (Array Rat) := D.echelon.rows.toArray.map (·.toArray)
   let groups : List (List Nat) :=
     ((List.range r).foldl
         (fun acc j =>

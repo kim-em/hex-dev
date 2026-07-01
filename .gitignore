@@ -10,3 +10,4 @@ conformance-failures/*.json
 .pod/
 sessions/
 scripts/dev/.lean-ajtai-matrices.jsonl
+_out/

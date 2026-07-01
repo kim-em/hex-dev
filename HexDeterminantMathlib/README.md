@@ -46,8 +46,7 @@ The proof-facing API connects the executable determinant to Mathlib:
 - the permutation-sign bridge: `PermutationVector.toPerm`,
   `PermutationVector.equivs`, and `detSign_eq_permSign`, matching Hex's
   inversion-count sign to `Equiv.Perm.sign`;
-- submatrix transport: `matrixEquiv_principalSubmatrix`,
-  `matrixEquiv_borderedMinor`, and their determinant forms
+- submatrix transport: `matrixEquiv_borderedMinor` and the determinant forms
   `det_principalSubmatrix_eq_submatrix_det` and
   `det_borderedMinor_eq_submatrix_det`;
 - the Plücker three-term identity `det_plucker_three_term` and the
@@ -94,6 +93,11 @@ The Leibniz determinant and its cofactor, adjugate, and Cauchy-Binet theory
 live in [`hex-determinant`](https://github.com/kim-em/hex-determinant); the
 `bareiss = det` headline theorems live in
 [`hex-bareiss-mathlib`](https://github.com/kim-em/hex-bareiss-mathlib).
+
+# Reference manual
+
+The hex reference manual covers this library and its computational base at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-determinant>.
 
 # Contributing
 

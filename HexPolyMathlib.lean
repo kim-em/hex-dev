@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyMathlib.Basic
-import HexPolyMathlib.Euclid
+module
+
+public import HexPolyMathlib.Basic
+public import HexPolyMathlib.Euclid
+
+public section
 
 /-!
 The `HexPolyMathlib` library identifies the executable `HexPoly` core with

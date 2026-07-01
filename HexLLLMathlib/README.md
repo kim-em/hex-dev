@@ -45,7 +45,9 @@ open HexLLLMathlib
 Every result builds without `sorry`.
 
 **The short-vector guarantee.** For an independent basis `b`, any factor
-`δ` with `121/400 < δ ≤ 1`, and any nonzero lattice vector `x`, the first row
+`δ` with `121/400 < δ ≤ 1` (`121/400 = (11/20)²`, the public size-reduction
+bound; see [`hex-lll`](https://github.com/kim-em/hex-lll) for why `11/20`), and
+any nonzero lattice vector `x`, the first row
 of `Hex.lll b δ …` has squared Euclidean norm at most
 `(1 / (δ − 121/400))^(n−1)` times that of `x`:
 
@@ -116,6 +118,11 @@ algebra:
 
 The executable algorithm, the rational short-vector bound, and the reducedness
 theory live in [`hex-lll`](https://github.com/kim-em/hex-lll).
+
+# Reference manual
+
+The hex reference manual covers this library and its computational base at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-lll>.
 
 # Contributing
 
