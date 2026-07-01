@@ -7156,4 +7156,150 @@ theorem classicalCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
   intro g hg
   exact (Hex.ZPoly.Irreducible_iff_polynomialIrreducible g).mpr (hirr g hg)
 
+/-- **Classical residual-arm reassembly discharger (Mathlib-side).**
+
+When the classical small-`r` tier returns a recombination of the classical core
+factors of `(normalizeForFactor f).squareFreeCore` at the public bound
+`B := Hex.ZPoly.defaultFactorCoeffBound f`, the reassembly is
+expansion-complete.  The size-ordered classical analog of
+`reassemblyExpansionComplete_exhaustiveIntegerTrial_of_ne_zero`: it composes the
+public-bound classical-core irreducibility wrapper
+`classicalCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible` (#8510),
+the polyProduct / normalizeFactorSign / degree-positivity structural companions
+(#8511, `classicalCoreFactorsWithBound_{polyProduct,normalizeFactorSign,degree_pos}`),
+and the non-monic expansion-complete surface
+`reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_pos_lc`.
+Per-factor positive leading coefficient follows from the sign-normalisation
+identity and irreducibility; the fuel bound from the per-factor `factorPower`
+size lower bound and `size_le_of_dvd_nonzero`.  Consumed by the classical
+residual arm of `factorClassicalFactorsWithBound_factor_irreducible` (#8414). -/
+theorem reassemblyExpansionComplete_classicalCore_of_ne_zero
+    (f : Hex.ZPoly) (hf : f ≠ 0) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
+      = some primeData)
+    (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    {cf : Array Hex.ZPoly}
+    (hclassical : Hex.classicalCoreFactorsWithBound
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.defaultFactorCoeffBound f) primeData = some cf) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) cf := by
+  classical
+  have hcore_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
+  have hcore_deg : 0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 :=
+    Nat.pos_of_ne_zero hdeg_ne
+  have hirr : ∀ q ∈ cf.toList, Hex.ZPoly.Irreducible q :=
+    classicalCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
+      f hf primeData hselected hdeg_ne hclassical
+  have hprod :
+      Array.polyProduct cf = (Hex.normalizeForFactor f).squareFreeCore :=
+    Hex.classicalCoreFactorsWithBound_polyProduct _ _ _ hclassical
+  have hnorm : ∀ q ∈ cf.toList, Hex.normalizeFactorSign q = q :=
+    Hex.classicalCoreFactorsWithBound_normalizeFactorSign _ _ _ hcore_pos hclassical
+  have hdegree : ∀ q ∈ cf.toList, 0 < q.degree?.getD 0 :=
+    Hex.classicalCoreFactorsWithBound_degree_pos _ _ _ hcore_deg hclassical
+  -- Per-factor positive leading coefficient from `normalizeFactorSign q = q`
+  -- and irreducibility (hence `q ≠ 0`).
+  have hpos_lc : ∀ q ∈ cf.toList, 0 < Hex.DensePoly.leadingCoeff q := by
+    intro q hq
+    have hq_ne : q ≠ 0 := (hirr q hq).not_zero
+    have hq_norm := hnorm q hq
+    have hq_nonneg : 0 ≤ Hex.DensePoly.leadingCoeff q := by
+      by_contra hlt
+      have hlt' : Hex.DensePoly.leadingCoeff q < 0 := lt_of_not_ge hlt
+      unfold Hex.normalizeFactorSign at hq_norm
+      rw [if_pos hlt'] at hq_norm
+      apply hq_ne
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      have hcoeff :
+          (Hex.DensePoly.scale (-1 : Int) q).coeff n = q.coeff n := by
+        rw [hq_norm]
+      rw [Hex.DensePoly.coeff_scale (R := Int) (-1) q n
+        (by decide : (-1 : Int) * 0 = 0)] at hcoeff
+      rw [Hex.DensePoly.coeff_zero]
+      omega
+    have hq_lc_ne : Hex.DensePoly.leadingCoeff q ≠ 0 :=
+      Hex.ZPoly.leadingCoeff_ne_zero_of_ne_zero q hq_ne
+    omega
+  refine IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_pos_lc
+    f hf cf hirr hprod hnorm hpos_lc hdegree ?_
+  -- Fuel bound.
+  intro exponents hlen hdecomp
+  have hsize_ge : ∀ q ∈ cf.toList, 2 ≤ q.size := by
+    intro q hq
+    have hq_ne : q ≠ 0 := (hirr q hq).not_zero
+    have hq_size_pos : 0 < q.size := Hex.ZPoly.size_pos_of_ne_zero q hq_ne
+    have hq_deg := hdegree q hq
+    have hq_deg_eq : q.degree?.getD 0 = q.size - 1 := by
+      unfold Hex.DensePoly.degree?
+      simp [Nat.ne_of_gt hq_size_pos]
+    omega
+  have hrp_ne_zero : (Hex.normalizeForFactor f).repeatedPart ≠ 0 :=
+    Hex.repeatedPart_ne_zero_of_ne_zero f hf
+  have dvd_foldl_one_of_mem :
+      ∀ (x : Hex.ZPoly) (xs : List Hex.ZPoly),
+        x ∈ xs → x ∣ xs.foldl (· * ·) (1 : Hex.ZPoly) := by
+    intro x xs
+    induction xs with
+    | nil =>
+        intro hmem
+        exact absurd hmem List.not_mem_nil
+    | cons y ys ih =>
+        intro hmem
+        rcases List.mem_cons.mp hmem with rfl | hin
+        · rw [List.foldl_cons, Hex.ZPoly.one_mul_zpoly,
+              Hex.ZPoly.list_foldl_mul_eq_mul_foldl_one]
+          exact ⟨ys.foldl (· * ·) 1, rfl⟩
+        · rw [List.foldl_cons, Hex.ZPoly.one_mul_zpoly,
+              Hex.ZPoly.list_foldl_mul_eq_mul_foldl_one y ys]
+          obtain ⟨k, hk⟩ := ih hin
+          refine ⟨y * k, ?_⟩
+          rw [hk, ← Hex.DensePoly.mul_assoc_poly (S := Int),
+              Hex.DensePoly.mul_comm_poly (S := Int) y x,
+              Hex.DensePoly.mul_assoc_poly (S := Int)]
+  have factorPower_size_lb :
+      ∀ (q : Hex.ZPoly) (e : Nat),
+        2 ≤ q.size → e + 1 ≤ (Hex.Factorization.factorPower q e).size := by
+    intro q e hq_size
+    induction e with
+    | zero =>
+        show 1 ≤ (1 : Hex.ZPoly).size
+        rfl
+    | succ n ih =>
+        rw [Hex.Factorization.factorPower_succ]
+        have hprev_size_pos :
+            0 < (Hex.Factorization.factorPower q n).size := by omega
+        have hq_size_pos : 0 < q.size := by omega
+        have hmul_size :
+            (Hex.Factorization.factorPower q n * q).size =
+              (Hex.Factorization.factorPower q n).size + q.size - 1 :=
+          Hex.ZPoly.mul_size_eq_top_succ_of_nonzero _ _ hprev_size_pos hq_size_pos
+        omega
+  intro qe hqe_mem
+  have hq_mem : qe.1 ∈ cf.toList := List.of_mem_zip hqe_mem |>.1
+  have hq_size := hsize_ge qe.1 hq_mem
+  have hfp_size_lb :
+      qe.2 + 1 ≤ (Hex.Factorization.factorPower qe.1 qe.2).size :=
+    factorPower_size_lb qe.1 qe.2 hq_size
+  have hfp_ne_zero : Hex.Factorization.factorPower qe.1 qe.2 ≠ 0 := by
+    intro hzero
+    rw [hzero] at hfp_size_lb
+    have h0 : (0 : Hex.ZPoly).size = 0 := rfl
+    omega
+  have hfp_mem :
+      Hex.Factorization.factorPower qe.1 qe.2 ∈
+        ((cf.toList.zip exponents).map
+          (fun qe' => Hex.Factorization.factorPower qe'.1 qe'.2)) :=
+    List.mem_map.mpr ⟨qe, hqe_mem, rfl⟩
+  have hfp_dvd_rp :
+      Hex.Factorization.factorPower qe.1 qe.2 ∣
+        (Hex.normalizeForFactor f).repeatedPart := by
+    rw [hdecomp]
+    exact dvd_foldl_one_of_mem _ _ hfp_mem
+  have hfp_size_le :
+      (Hex.Factorization.factorPower qe.1 qe.2).size ≤
+        (Hex.normalizeForFactor f).repeatedPart.size :=
+    Hex.ZPoly.size_le_of_dvd_nonzero hfp_ne_zero hrp_ne_zero hfp_dvd_rp
+  omega
+
 end HexBerlekampZassenhausMathlib
