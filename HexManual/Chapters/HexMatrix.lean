@@ -23,9 +23,9 @@ tag := "hex-matrix"
 tag := "hex-matrix-intro"
 %%%
 
-Released as [hex-matrix](https://github.com/kim-em/hex-matrix), with the
+Released as [hex-matrix](https://github.com/leanprover/hex-matrix), with the
 Mathlib correspondence in
-[hex-matrix-mathlib](https://github.com/kim-em/hex-matrix-mathlib).
+[hex-matrix-mathlib](https://github.com/leanprover/hex-matrix-mathlib).
 
 `Hex.Matrix R n m` is an `n × m` matrix over `R`.
 

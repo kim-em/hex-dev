@@ -23,9 +23,9 @@ tag := "hex-row-reduce"
 tag := "hex-row-reduce-intro"
 %%%
 
-Released as [hex-row-reduce](https://github.com/kim-em/hex-row-reduce),
+Released as [hex-row-reduce](https://github.com/leanprover/hex-row-reduce),
 with the Mathlib correspondence in
-[hex-row-reduce-mathlib](https://github.com/kim-em/hex-row-reduce-mathlib).
+[hex-row-reduce-mathlib](https://github.com/leanprover/hex-row-reduce-mathlib).
 
 `HexRowReduce` does Gauss-Jordan reduction of a matrix over a field to
 reduced row echelon form, and computes the row span and nullspace from

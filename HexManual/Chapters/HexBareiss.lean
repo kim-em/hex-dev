@@ -23,9 +23,9 @@ tag := "hex-bareiss"
 tag := "hex-bareiss-intro"
 %%%
 
-Released as [hex-bareiss](https://github.com/kim-em/hex-bareiss), with
+Released as [hex-bareiss](https://github.com/leanprover/hex-bareiss), with
 the Mathlib correspondence in
-[hex-bareiss-mathlib](https://github.com/kim-em/hex-bareiss-mathlib).
+[hex-bareiss-mathlib](https://github.com/leanprover/hex-bareiss-mathlib).
 
 `HexBareiss` is the executable fraction-free Bareiss determinant of a
 dense integer matrix: a Gaussian elimination in which every intermediate

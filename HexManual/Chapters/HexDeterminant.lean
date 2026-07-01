@@ -23,9 +23,9 @@ tag := "hex-determinant"
 tag := "hex-determinant-intro"
 %%%
 
-Released as [hex-determinant](https://github.com/kim-em/hex-determinant),
+Released as [hex-determinant](https://github.com/leanprover/hex-determinant),
 with the Mathlib correspondence in
-[hex-determinant-mathlib](https://github.com/kim-em/hex-determinant-mathlib).
+[hex-determinant-mathlib](https://github.com/leanprover/hex-determinant-mathlib).
 
 `HexDeterminant` is the determinant of a dense square matrix via the
 Leibniz formula, with the cofactor and adjugate theory built on it. It

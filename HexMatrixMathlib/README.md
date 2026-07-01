@@ -5,11 +5,11 @@ library for Lean 4. The aim is fast executable code, fully verified, built
 with spec-driven development.
 
 `hex-matrix-mathlib` is the Mathlib bridge for
-[`hex-matrix`](https://github.com/kim-em/hex-matrix). It identifies the
+[`hex-matrix`](https://github.com/leanprover/hex-matrix). It identifies the
 executable dense matrices with Mathlib's function-based `Matrix`, so that
 Mathlib's linear-algebra results transfer to the computable representation.
 This library depends on Mathlib and on
-[`hex-matrix`](https://github.com/kim-em/hex-matrix).
+[`hex-matrix`](https://github.com/leanprover/hex-matrix).
 
 # Quickstart
 
@@ -18,7 +18,7 @@ Add to your `lakefile.toml`:
 ```toml
 [[require]]
 name = "hex-matrix-mathlib"
-git = "https://github.com/kim-em/hex-matrix-mathlib.git"
+git = "https://github.com/leanprover/hex-matrix-mathlib.git"
 rev = "main"
 ```
 
@@ -101,7 +101,7 @@ theorem vectorEquiv_mulVec [Semiring R] (M : Hex.Matrix R n m) (v : Vector R m) 
 ```
 
 The executable matrices and their operations live in
-[`hex-matrix`](https://github.com/kim-em/hex-matrix). The determinant, row
+[`hex-matrix`](https://github.com/leanprover/hex-matrix). The determinant, row
 reduction, and Bareiss correspondences build on this base in their own bridge
 libraries.
 

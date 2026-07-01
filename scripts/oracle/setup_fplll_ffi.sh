@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build `kim-em/fplll-ffi` and print the path to its `libfplllffi` shared
+# Build `leanprover/fplll` and print the path to its `libfplllffi` shared
 # library — the FFI shim that exports `lean_fplll_lll_reduce`, the symbol the
 # HexLLL provider hook (`HexLLL/ffi/lean_hexlll_provider.c`) resolves at
 # runtime via `dlsym(RTLD_DEFAULT, ...)`.
@@ -11,7 +11,7 @@
 # Honoured overrides:
 #
 #   HEX_FPLLL_FFI_REF    — git ref to check out (default: pinned hash below).
-#   HEX_FPLLL_FFI_REPO   — repo URL (default: https://github.com/kim-em/fplll-ffi).
+#   HEX_FPLLL_FFI_REPO   — repo URL (default: https://github.com/leanprover/fplll).
 #   HEX_ORACLE_CACHE     — cache root (default: <repo>/.cache/oracles).
 #
 # The build uses the toolchain pinned by `fplll-ffi/lean-toolchain` via `elan`,
@@ -26,7 +26,7 @@ default_ref="main"
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cache_root="${HEX_ORACLE_CACHE:-${repo_root}/.cache/oracles}/fplll-ffi"
 src_dir="${cache_root}/src"
-repo_url="${HEX_FPLLL_FFI_REPO:-https://github.com/kim-em/fplll-ffi}"
+repo_url="${HEX_FPLLL_FFI_REPO:-https://github.com/leanprover/fplll}"
 ref="${HEX_FPLLL_FFI_REF:-${default_ref}}"
 
 mkdir -p "${cache_root}"

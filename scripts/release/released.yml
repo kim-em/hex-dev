@@ -23,7 +23,7 @@
 # lakefile (matched by their github URL); `lakefile` is that file's format.
 
 repos:
-  - repo: kim-em/hex-basic
+  - repo: leanprover/hex-basic
     lib: HexBasic
     umbrella: true
     readme: false        # README is authored in the released repo, not managed
@@ -35,7 +35,7 @@ repos:
     pins: []
     lakefile: toml
 
-  - repo: kim-em/hex-test-kit
+  - repo: leanprover/hex-test-kit
     lib: Hex
     umbrella: false        # released HexTestKit.lean umbrella is fixed
     paths:                 # explicit: only the shared helper source
@@ -48,7 +48,7 @@ repos:
     pins: []
     lakefile: toml
 
-  - repo: kim-em/hex-matrix
+  - repo: leanprover/hex-matrix
     lib: HexMatrix
     umbrella: true
     spec: hex-matrix
@@ -59,7 +59,7 @@ repos:
     pins: []
     lakefile: toml
 
-  - repo: kim-em/hex-row-reduce
+  - repo: leanprover/hex-row-reduce
     lib: HexRowReduce
     umbrella: true
     spec: hex-row-reduce
@@ -70,7 +70,7 @@ repos:
     pins: [hex-matrix]
     lakefile: toml
 
-  - repo: kim-em/hex-determinant
+  - repo: leanprover/hex-determinant
     lib: HexDeterminant
     umbrella: true
     spec: hex-determinant
@@ -81,7 +81,7 @@ repos:
     pins: [hex-matrix]
     lakefile: toml
 
-  - repo: kim-em/hex-bareiss
+  - repo: leanprover/hex-bareiss
     lib: HexBareiss
     umbrella: true
     spec: hex-bareiss
@@ -92,7 +92,7 @@ repos:
     pins: [hex-determinant, hex-matrix]
     lakefile: toml
 
-  - repo: kim-em/hex-matrix-mathlib
+  - repo: leanprover/hex-matrix-mathlib
     lib: HexMatrixMathlib
     umbrella: true
     spec: hex-matrix-mathlib
@@ -103,7 +103,7 @@ repos:
     pins: [hex-matrix]
     lakefile: toml
 
-  - repo: kim-em/hex-row-reduce-mathlib
+  - repo: leanprover/hex-row-reduce-mathlib
     lib: HexRowReduceMathlib
     umbrella: true
     spec: hex-row-reduce-mathlib
@@ -114,7 +114,7 @@ repos:
     pins: [hex-row-reduce, hex-matrix-mathlib, hex-matrix]
     lakefile: toml
 
-  - repo: kim-em/hex-determinant-mathlib
+  - repo: leanprover/hex-determinant-mathlib
     lib: HexDeterminantMathlib
     umbrella: true
     spec: hex-determinant-mathlib
@@ -125,7 +125,7 @@ repos:
     pins: [hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-matrix]
     lakefile: toml
 
-  - repo: kim-em/hex-bareiss-mathlib
+  - repo: leanprover/hex-bareiss-mathlib
     lib: HexBareissMathlib
     umbrella: true
     spec: hex-bareiss-mathlib
@@ -136,7 +136,7 @@ repos:
     pins: [hex-determinant-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-matrix]
     lakefile: toml
 
-  - repo: kim-em/hex-gram-schmidt
+  - repo: leanprover/hex-gram-schmidt
     lib: HexGramSchmidt
     umbrella: true
     spec: hex-gram-schmidt
@@ -147,7 +147,7 @@ repos:
     pins: [hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]
     lakefile: toml
 
-  - repo: kim-em/hex-gram-schmidt-mathlib
+  - repo: leanprover/hex-gram-schmidt-mathlib
     lib: HexGramSchmidtMathlib
     umbrella: true
     spec: hex-gram-schmidt-mathlib
@@ -158,7 +158,7 @@ repos:
     pins: [hex-gram-schmidt, hex-bareiss-mathlib, hex-determinant-mathlib, hex-matrix-mathlib, hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]
     lakefile: toml
 
-  - repo: kim-em/hex-lll
+  - repo: leanprover/hex-lll
     lib: HexLLL
     umbrella: true
     spec: hex-lll
@@ -170,7 +170,7 @@ repos:
     pins: [hex-gram-schmidt, hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]
     lakefile: lean
 
-  - repo: kim-em/hex-lll-mathlib
+  - repo: leanprover/hex-lll-mathlib
     lib: HexLLLMathlib
     umbrella: true
     spec: hex-lll-mathlib

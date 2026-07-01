@@ -5,11 +5,11 @@ library for Lean 4. The aim is fast executable code, fully verified, built
 with spec-driven development.
 
 `hex-gram-schmidt-mathlib` is the Mathlib bridge for
-[`hex-gram-schmidt`](https://github.com/kim-em/hex-gram-schmidt). It
+[`hex-gram-schmidt`](https://github.com/leanprover/hex-gram-schmidt). It
 identifies the executable dense-matrix Gram-Schmidt basis with Mathlib's
 `InnerProductSpace.gramSchmidt`, and the fraction-free integer
 coefficients with Bareiss determinants. It depends on
-[`hex-gram-schmidt`](https://github.com/kim-em/hex-gram-schmidt) and on
+[`hex-gram-schmidt`](https://github.com/leanprover/hex-gram-schmidt) and on
 Mathlib.
 
 # Quickstart
@@ -19,7 +19,7 @@ Add to your `lakefile.toml`:
 ```toml
 [[require]]
 name = "hex-gram-schmidt-mathlib"
-git = "https://github.com/kim-em/hex-gram-schmidt-mathlib.git"
+git = "https://github.com/leanprover/hex-gram-schmidt-mathlib.git"
 rev = "main"
 ```
 
@@ -53,7 +53,7 @@ The proof-facing API splits into two parts.
 - The integer determinantal layer: `gramDet_eq_prod_normSq`,
   `scaledCoeffs_eq_scaledCoeffMatrix_bareiss`, and `scaledCoeffs_eq`,
   relating the leading Gram determinants and the scaled coefficients to
-  Bareiss determinants of the [`hex-matrix`](https://github.com/kim-em/hex-matrix)
+  Bareiss determinants of the [`hex-matrix`](https://github.com/leanprover/hex-matrix)
   Gram matrices.
 
 # Verification
@@ -95,7 +95,7 @@ theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
 ```
 
 The executable Gram-Schmidt algorithm and its own algebraic API live in
-[`hex-gram-schmidt`](https://github.com/kim-em/hex-gram-schmidt).
+[`hex-gram-schmidt`](https://github.com/leanprover/hex-gram-schmidt).
 
 # Reference manual
 

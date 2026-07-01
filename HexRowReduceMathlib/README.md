@@ -5,11 +5,11 @@ library for Lean 4. The aim is fast executable code, fully verified, built
 with spec-driven development.
 
 `hex-row-reduce-mathlib` is the Mathlib bridge for
-[`hex-row-reduce`](https://github.com/kim-em/hex-row-reduce). It proves that
+[`hex-row-reduce`](https://github.com/leanprover/hex-row-reduce). It proves that
 the executable row reduction, rank, row span, and nullspace agree with
 Mathlib's noncomputable linear-algebra definitions. It depends on
-[`hex-row-reduce`](https://github.com/kim-em/hex-row-reduce),
-[`hex-matrix-mathlib`](https://github.com/kim-em/hex-matrix-mathlib), and
+[`hex-row-reduce`](https://github.com/leanprover/hex-row-reduce),
+[`hex-matrix-mathlib`](https://github.com/leanprover/hex-matrix-mathlib), and
 Mathlib.
 
 # Quickstart
@@ -19,7 +19,7 @@ Add to your `lakefile.toml`:
 ```toml
 [[require]]
 name = "hex-row-reduce-mathlib"
-git = "https://github.com/kim-em/hex-row-reduce-mathlib.git"
+git = "https://github.com/leanprover/hex-row-reduce-mathlib.git"
 rev = "main"
 ```
 
@@ -92,7 +92,7 @@ theorem spanContains_iff_mem_span [Field R] [DecidableEq R]
 ```
 
 The executable row reduction itself lives in
-[`hex-row-reduce`](https://github.com/kim-em/hex-row-reduce).
+[`hex-row-reduce`](https://github.com/leanprover/hex-row-reduce).
 
 # Reference manual
 

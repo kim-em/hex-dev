@@ -7,10 +7,10 @@ with spec-driven development.
 `hex-lll` provides executable LLL reduction of an integer lattice basis:
 given a basis of a lattice in `ℤᵐ`, it returns a shorter, more orthogonal
 basis of the same lattice, with the first row a provably short vector. It
-depends on [`hex-gram-schmidt`](https://github.com/kim-em/hex-gram-schmidt)
+depends on [`hex-gram-schmidt`](https://github.com/leanprover/hex-gram-schmidt)
 for the integer Gram-Schmidt data the algorithm carries, and is Mathlib-free.
 The correspondence with Mathlib and the full short-vector theory live in
-[`hex-lll-mathlib`](https://github.com/kim-em/hex-lll-mathlib).
+[`hex-lll-mathlib`](https://github.com/leanprover/hex-lll-mathlib).
 
 # Quickstart
 
@@ -19,7 +19,7 @@ Add to your `lakefile.toml`:
 ```toml
 [[require]]
 name = "hex-lll"
-git = "https://github.com/kim-em/hex-lll.git"
+git = "https://github.com/leanprover/hex-lll.git"
 rev = "main"
 ```
 
@@ -77,7 +77,7 @@ The surface, by group:
 - `lll`, `lll.firstShortVector`, and `lll.shortVectors`: the public reducer,
   its provably short first reduced row, and the ordered reduced rows.
   `firstShortVector` is the short-vector entry point for downstream consumers such as
-  [`hex-berlekamp-zassenhaus`](https://github.com/kim-em/hex-berlekamp-zassenhaus).
+  [`hex-berlekamp-zassenhaus`](https://github.com/leanprover/hex-berlekamp-zassenhaus).
 - `lllNative`: the exact integer reducer at the classical `η = 1/2`, with the
   tighter short-vector constant; call it directly to get the classical
   guarantee.
@@ -155,7 +155,7 @@ precision constants are internal tuning, documented at their definitions; none
 of them affects soundness.
 
 The end-to-end guarantees of `lll` are proved in
-[`hex-lll-mathlib`](https://github.com/kim-em/hex-lll-mathlib): that its output
+[`hex-lll-mathlib`](https://github.com/leanprover/hex-lll-mathlib): that its output
 is `(δ, 11/20)`-reduced, spans the same lattice, and satisfies the
 short-vector bound, together with the certificate soundness theorem
 `certCheck_sound`.

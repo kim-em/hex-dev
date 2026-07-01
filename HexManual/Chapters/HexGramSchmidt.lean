@@ -24,9 +24,9 @@ tag := "hex-gram-schmidt-intro"
 %%%
 
 Released as
-[hex-gram-schmidt](https://github.com/kim-em/hex-gram-schmidt), with the
+[hex-gram-schmidt](https://github.com/leanprover/hex-gram-schmidt), with the
 Mathlib correspondence in
-[hex-gram-schmidt-mathlib](https://github.com/kim-em/hex-gram-schmidt-mathlib).
+[hex-gram-schmidt-mathlib](https://github.com/leanprover/hex-gram-schmidt-mathlib).
 
 `HexGramSchmidt` orthogonalizes the rows of a matrix by Gram-Schmidt:
 from each row it subtracts the projection onto the earlier rows, and

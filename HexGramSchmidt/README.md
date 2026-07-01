@@ -8,12 +8,12 @@ with spec-driven development.
 integer and rational matrices: the orthogonal basis, the triangular
 coefficient matrix, the leading Gram determinants, and the update formulas
 under lattice row operations. The integer construction is fraction-free,
-running over [`hex-matrix`](https://github.com/kim-em/hex-matrix) and the
-Bareiss determinant from [`hex-bareiss`](https://github.com/kim-em/hex-bareiss);
-[`hex-determinant`](https://github.com/kim-em/hex-determinant) and
-[`hex-row-reduce`](https://github.com/kim-em/hex-row-reduce) complete the
+running over [`hex-matrix`](https://github.com/leanprover/hex-matrix) and the
+Bareiss determinant from [`hex-bareiss`](https://github.com/leanprover/hex-bareiss);
+[`hex-determinant`](https://github.com/leanprover/hex-determinant) and
+[`hex-row-reduce`](https://github.com/leanprover/hex-row-reduce) complete the
 matrix toolkit it builds on. See
-[`hex-gram-schmidt-mathlib`](https://github.com/kim-em/hex-gram-schmidt-mathlib)
+[`hex-gram-schmidt-mathlib`](https://github.com/leanprover/hex-gram-schmidt-mathlib)
 for the correspondence with Mathlib's `gramSchmidt`.
 
 # Quickstart
@@ -23,7 +23,7 @@ Add to your `lakefile.toml`:
 ```toml
 [[require]]
 name = "hex-gram-schmidt"
-git = "https://github.com/kim-em/hex-gram-schmidt.git"
+git = "https://github.com/leanprover/hex-gram-schmidt.git"
 rev = "main"
 ```
 
@@ -94,7 +94,7 @@ bounds every nonzero lattice vector below by a basis norm.
 
 Facts that equate a Hex computational output with the Leibniz `det` of a
 matrix go through Bareiss-Desnanot integrality, so they live in
-[`hex-gram-schmidt-mathlib`](https://github.com/kim-em/hex-gram-schmidt-mathlib),
+[`hex-gram-schmidt-mathlib`](https://github.com/leanprover/hex-gram-schmidt-mathlib),
 along with the correspondence between `GramSchmidt.Int.basis` and Mathlib's
 `gramSchmidt`.
 
