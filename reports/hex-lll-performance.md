@@ -464,21 +464,20 @@ Architectural asymmetries for this ratio:
 - Hex checks reducedness with `lllReducedInt`; Isabelle confirms reducedness by
   re-running the verified LLL reducer inside `test_certified`.
 
-The random-bounded plot shows six labelled series across the full committed
-ladder: Lean native, Lean steered, Isabelle native, Lean certified, Isabelle
-certified (adjusted), and fpLLL via fplll-ffi. **Lean native** is the exact
-`d`/`ν` reducer (`lllNative`); **Lean steered** is the default native path, the
-approximation-steered reducer that drives exact integer row operations from an
-untrusted floating-point Gram–Schmidt and certifies its own output at
-`(δ, 11/20)`. The steered curve sits below exact native across the whole ladder
-(2.5× faster at `n = 180`) and above the certified path, which only checks an
-fpLLL candidate rather than reducing the basis itself. A single `n ≥ 30`
-dispatch routes every rung from `n = 30` up to the steered path, so the steered
-curve is smooth to the bottom rung (`n = 30` at 4.4 ms, where the exact reducer
-would cost ~14 ms); below that floor the exact reducer runs directly. The fpLLL series is the
-in-process `fplll-ffi` shim called at the dispatch's requested reduction
-parameters with transform production — the exact reducer call the production
-dispatch makes.
+The random-bounded plot shows five labelled series across the full committed
+ladder: Lean native, Isabelle native, Lean certified, Isabelle certified
+(adjusted), and fpLLL via fplll-ffi. **Lean native** is the exact `d`/`ν`
+reducer (`lllNative`), the sole in-tree reducer and the public `lll`'s native
+path; the certified path only checks an fpLLL candidate rather than reducing the
+basis itself. The fpLLL series is the in-process `fplll-ffi` shim called at the
+dispatch's requested reduction parameters with transform production — the exact
+reducer call the production dispatch makes.
+
+(The earlier approximation-steered reducer was removed in
+[#8500](https://github.com/kim-em/hex-dev/issues/8500); the comparator is now
+provider-vs-native. The per-family SVG figures and their plot script are
+regenerated without the "Lean steered" series on
+`feat/hexlll-perf-restore-extend`.)
 
 ![Random-bounded comparator runtime plot](figures/hex-lll-comparator-random-bounded.svg)
 
@@ -494,15 +493,11 @@ subtraction — including harsh-cubic `n = 15`, whose certified work is only
 hardcoded constant; the ratio tables above and the scaling fits keep the raw
 medians.
 
-The harsh-cubic plot shows the same six series, and this is the family where the
-steered curve matters most. The exact `d`/`ν` reducers ride the `~n^5.6` slope
-of their Θ(n⁴)-bit Gram-determinant state, while **Lean steered leaves that
-complexity class** (`p ≈ 2.73`, 6.0× ahead of exact native at `n = 55`) and
-lands within `~1.1×` of the Lean-certified curve. Both certified curves and the
-steered curve carry the crossover story on this family, so all are plotted —
-the earlier figure omitted the certified curves on harsh-cubic; they are now
-shown alongside the steered native path they are closest to. The Lean-certified
-curve now runs the full `15..65` schedule (from
+The harsh-cubic plot shows the same five series, and this is the family where
+the certified path's lead matters most. The exact `d`/`ν` reducer rides the
+`~n^5.6` slope of its Θ(n⁴)-bit Gram-determinant state, while the certified path
+— which only checks an fpLLL candidate — stays in a much lower complexity class.
+The Lean-certified curve now runs the full `15..65` schedule (from
 `hex-lll-certified-harsh-extended-1e6679ff.json`), matching the native and
 Isabelle-certified curves rung for rung; it widens its lead over exact native
 across the new top rungs (`0.090×` at `n = 65`).
@@ -519,13 +514,12 @@ medians.
 For the asymptotic scaling of these curves — fitted exponents and constant
 factors per method, with reproduction steps — see
 [hex-lll-scaling.md](hex-lll-scaling.md). In brief: on random-bounded the
-exact-native, steered, certified, and fpLLL methods are all near-`n³` and differ
-by constant factors (Lean steered 2.5× faster than exact native, Lean certified
-faster still); on harsh-cubic the exact native reducers (`~n^5.6`) fan out from
-the steered default (`~n^2.73`), the certified path (`~n^2.79`), and fpLLL
-(`~n^2.8` for the in-process shim at the production-requested parameters) —
-the steered reducer is the one that moved the native curve out of the
-`~n^5.6` class.
+exact-native, certified, and fpLLL methods are all near-`n³` and differ by
+constant factors (Lean certified faster than exact native); on harsh-cubic the
+exact native reducer (`~n^5.6`) fans out from the certified path (`~n^2.79`) and
+fpLLL (`~n^2.8` for the in-process shim at the production-requested parameters)
+— the certified external-candidate path is what stays out of the `~n^5.6`
+class.
 
 ### Per-call comparator overhead
 

@@ -148,44 +148,6 @@ def runIsabelleHarshCubicNormSq65 : Unit → IO Int := fun _ => do
   runIsabelleShortVectorNormSq "harsh-cubic-65"
     (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
 
-/-- Fallback-rate diagnostic for the steered native reducer: run
-`firstShortVectorUnchecked` (i.e. `lllSteered`) once on every rung of both
-ladders, then read `Hex.Internal.steeredTally`. Fails if any steered candidate failed
-certification and fell back to the exact reducer (`fellBack ≠ 0`) — a fallback
-inside the ladder would make the steered medians dishonest. Only rungs the
-`Hex.Internal.steerWins` predictor routes to steering (n ≥ 30) bump the tally; the
-smaller rungs run `lllNative` directly. The returned value encodes the tally
-as `certified · 65537 + fellBack`. -/
-def runSteeredFallbackTally : Unit → IO Int := fun _ => do
-  Hex.Internal.resetSteeredTally
-  let targets : List (Unit → IO Int) :=
-    [runFirstShortVectorRandomBoundedNormSq30,
-     runFirstShortVectorRandomBoundedNormSq45,
-     runFirstShortVectorRandomBoundedNormSq60,
-     runFirstShortVectorRandomBoundedNormSq75,
-     runFirstShortVectorRandomBoundedNormSq90,
-     runFirstShortVectorRandomBoundedNormSq120,
-     runFirstShortVectorRandomBoundedNormSq150,
-     runFirstShortVectorRandomBoundedNormSq180,
-     runFirstShortVectorHarshCubicNormSq15,
-     runFirstShortVectorHarshCubicNormSq20,
-     runFirstShortVectorHarshCubicNormSq25,
-     runFirstShortVectorHarshCubicNormSq30,
-     runFirstShortVectorHarshCubicNormSq35,
-     runFirstShortVectorHarshCubicNormSq40,
-     runFirstShortVectorHarshCubicNormSq45,
-     runFirstShortVectorHarshCubicNormSq50,
-     runFirstShortVectorHarshCubicNormSq55,
-     runFirstShortVectorHarshCubicNormSq60,
-     runFirstShortVectorHarshCubicNormSq65]
-  for t in targets do
-    discard <| t ()
-  let tally ← Hex.Internal.steeredTally
-  if tally.fellBack != 0 then
-    throw <| IO.userError
-      s!"steered reducer fell back to the exact reducer on a bench rung: {repr tally}"
-  return Int.ofNat tally.certified * 65537 + Int.ofNat tally.fellBack
-
 /-- Isabelle-certified per-request process floor: time a trivial 2×2 request
 through `svp_certified`. The median is the fixed fork+startup overhead the
 comparator plot subtracts from the Isabelle-certified curve, so the
@@ -856,18 +818,6 @@ setup_fixed_benchmark runCertifiedCheckerIntervalTally where {
     repeats := 1
     maxSecondsPerCall := 120.0
     expectedHash := some (Hashable.hash (((9 * 65537 + 10) * 65537 : Int)))
-  }
-
-/- Fallback-rate diagnostic: the steered reducer certified on every steered rung
-of both ladders (`fellBack = 0`). The pinned hash records the `certified` count
-(16 = the rungs `Hex.Internal.steerWins` routes to steering under the unified `n ≥ 30`
-floor: harsh-cubic n ≥ 30 — 8 rungs — and random-bounded n ≥ 30 — 8 rungs,
-n=30 now included after the `(δ + 3)/4` steering-margin fix); a fallback would
-flip `fellBack` nonzero and throw before the hash is reached. -/
-setup_fixed_benchmark runSteeredFallbackTally where {
-    repeats := 1
-    maxSecondsPerCall := 120.0
-    expectedHash := some (Hashable.hash ((16 * 65537 : Int)))
   }
 
 /- Complexity derivation: random-bounded inputs have square dimension `n` and

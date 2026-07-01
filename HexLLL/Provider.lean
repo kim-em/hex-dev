@@ -14,7 +14,7 @@ public section
 The optional external LLL provider. `lll` probes an `@[extern]` hook for
 an independent native reducer, marshals the basis, and certifies the
 returned candidate with `certCheck`; absence or rejection falls through
-to the steered/native path. The provider is acceleration only.
+to the exact `lllNative` path. The provider is acceleration only.
 -/
 
 namespace Hex
