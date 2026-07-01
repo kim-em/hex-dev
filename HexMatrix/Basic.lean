@@ -36,10 +36,25 @@ end Hex
 
 namespace Vector
 
-/-- Dot product of two vectors. -/
+/-- Dot product of two vectors.
+
+This `List.finRange` form is the reference definition the entry lemmas reason
+about; compiled code runs the allocation-free `Fin.foldl` loop `dotProductImpl`
+via the `@[csimp]` below. -/
 @[expose]
 def dotProduct [Mul R] [Add R] [OfNat R 0] (u v : Vector R n) : R :=
   (List.finRange n).foldl (fun acc i => acc + u[i] * v[i]) 0
+
+/-- Allocation-free implementation of `dotProduct`: a `Fin.foldl` loop that never
+materializes the `List.finRange n` index list. Swapped in for compiled code by the
+`@[csimp]` lemma; `dotProduct` remains the reference form for proofs. -/
+@[expose]
+def dotProductImpl [Mul R] [Add R] [OfNat R 0] (u v : Vector R n) : R :=
+  Fin.foldl n (fun acc i => acc + u[i] * v[i]) 0
+
+@[csimp] theorem dotProduct_eq_impl : @dotProduct = @dotProductImpl := by
+  funext R n iMul iAdd iZero u v
+  rw [dotProduct, dotProductImpl, Fin.foldl_eq_finRange_foldl]
 
 /-- Squared Euclidean norm of a vector. -/
 @[expose]
@@ -262,11 +277,43 @@ def mulVec [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (v : Vector R m) :
     Vector R n :=
   Vector.ofFn fun i => (row M i).dotProduct v
 
-/-- Multiply two matrices. -/
+/-- The `j`-th row of `transpose M` is the `j`-th column of `M`. -/
+@[simp, grind =] theorem row_transpose (M : Matrix R n m) (j : Fin m) :
+    row (transpose M) j = col M j := by
+  simp only [row, transpose, getRow_ofRows]
+  grind
+
+/--
+Multiply two matrices, using the naive algorithm.
+
+This reads each column `col N j` and is the reference definition the entry lemmas
+reason about. Compiled code runs `mulImpl`, which transposes `N` once (via the
+`@[csimp]` below) so each column is materialized a single time instead of being
+rebuilt for every row of `M`.
+
+We intend to provide Strassen-Winograd with a customizable algorithm for small sizes later.
+-/
 @[expose]
 def mul [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (N : Matrix R m k) :
     Matrix R n k :=
   ofFn fun i j => (row M i).dotProduct (col N j)
+
+/-- Cache-friendly implementation of `mul`: transpose `N` once (turning its columns
+into contiguous rows), then take row-by-row dot products, so each column is built a
+single time rather than once per row of `M`. Swapped in for compiled code by the
+`@[csimp]` lemma; `mul` stays the column-based reference form for proofs. -/
+@[expose]
+def mulImpl [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (N : Matrix R m k) :
+    Matrix R n k :=
+  let Nt := N.transpose
+  ofFn fun i j => (row M i).dotProduct (row Nt j)
+
+@[csimp] theorem mul_eq_mulImpl : @mul = @mulImpl := by
+  funext R n m k iMul iAdd iZero M N
+  apply ext_getElem
+  intro i j
+  simp only [mul, mulImpl, getElem_ofFn, row, transpose, getRow_ofRows]
+  grind
 
 instance [Mul R] [Add R] [OfNat R 0] : HMul (Matrix R n m) (Vector R m) (Vector R n) where
   hMul := mulVec
@@ -286,6 +333,24 @@ instance [Mul R] [Add R] [OfNat R 0] : Mul (Matrix R n n) where
     (M * v)[i] = (row M i).dotProduct v := by
   show (mulVec M v)[i] = (row M i).dotProduct v
   simp [mulVec]
+
+/-- Multiply a row vector by a matrix, `v * M`. Equal to `transpose M * v`; the
+`j`-th entry is `∑ i, M[i][j] * v[i]`, the combination of the rows of `M` with
+coefficients `v`. -/
+@[expose]
+def vecMul [Mul R] [Add R] [OfNat R 0] (v : Vector R n) (M : Matrix R n m) :
+    Vector R m :=
+  transpose M * v
+
+instance [Mul R] [Add R] [OfNat R 0] : HMul (Vector R n) (Matrix R n m) (Vector R m) where
+  hMul := vecMul
+
+/-- Entry characterization for vector-matrix multiplication. -/
+@[grind =] theorem getElem_vecMul [Mul R] [Add R] [OfNat R 0]
+    (v : Vector R n) (M : Matrix R n m) (j : Fin m) :
+    (v * M)[j] = (col M j).dotProduct v := by
+  show (transpose M * v)[j] = (col M j).dotProduct v
+  rw [getElem_mulVec, row_transpose]
 
 /-- Entry characterization for matrix multiplication. -/
 @[grind =] theorem getElem_mul [Mul R] [Add R] [OfNat R 0]

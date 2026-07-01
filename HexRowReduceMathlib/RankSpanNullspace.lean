@@ -29,16 +29,16 @@ universe u
 
 variable {R : Type u} {n m : Nat}
 
-/-- The executable row combination `Hex.Matrix.rowCombination M c` (the linear
+/-- The executable row combination `Hex.Matrix.vecMul c M` (the linear
 combination of the rows of `M` with coefficients `c`) transports under
 `vectorEquiv` to Mathlib's `Fintype.linearCombination` over the rows of
 `matrixEquiv M`. This identifies the computed row span with Mathlib's span. -/
-theorem vectorEquiv_rowCombination [CommRing R] (M : Hex.Matrix R n m) (c : Vector R n) :
-    vectorEquiv (Hex.Matrix.rowCombination M c) =
+theorem vectorEquiv_vecMul [CommRing R] (M : Hex.Matrix R n m) (c : Vector R n) :
+    vectorEquiv (Hex.Matrix.vecMul c M) =
       Fintype.linearCombination R (_root_.Matrix.row (matrixEquiv M)) (vectorEquiv c) := by
   funext j
   simp only [vectorEquiv_apply]
-  unfold Hex.Matrix.rowCombination
+  unfold Hex.Matrix.vecMul
   change (Hex.Matrix.mulVec (Hex.Matrix.transpose M) c)[j.val] =
     (Fintype.linearCombination R (_root_.Matrix.row (matrixEquiv M)) (vectorEquiv c)) j
   unfold Hex.Matrix.mulVec Hex.Matrix.row Vector.dotProduct Hex.Matrix.transpose
@@ -90,7 +90,7 @@ theorem spanCoeffs_eq_linearCombination [Field R] [DecidableEq R]
   · rename_i hrow
     injection h with hc
     subst c
-    exact (congrArg vectorEquiv hrow.symm).trans (vectorEquiv_rowCombination M _)
+    exact (congrArg vectorEquiv hrow.symm).trans (vectorEquiv_vecMul M _)
   · contradiction
 
 /-- The executable span-membership test `spanContains` is correct: it returns
@@ -106,12 +106,12 @@ theorem spanContains_iff_mem_span [Field R] [DecidableEq R]
   · intro h
     rcases (E.spanContains_iff v).mp h with ⟨c, hc⟩
     exact ⟨vectorEquiv c, by
-      rw [← vectorEquiv_rowCombination M c, hc]⟩
+      rw [← vectorEquiv_vecMul M c, hc]⟩
   · rintro ⟨c, hc⟩
     apply (E.spanContains_iff v).mpr
     refine ⟨vectorEquiv.symm c, ?_⟩
     apply Equiv.injective vectorEquiv
-    rw [vectorEquiv_rowCombination M (vectorEquiv.symm c)]
+    rw [vectorEquiv_vecMul M (vectorEquiv.symm c)]
     simpa using hc
 
 /-- Every row of the computed echelon form lies in the row span of the original
@@ -125,10 +125,10 @@ theorem rowReduce_echelon_row_mem_span [Field R] [DecidableEq R]
   rw [← Fintype.range_linearCombination]
   let e : Vector R n := Vector.ofFn fun p : Fin n => if i = p then (1 : R) else 0
   refine ⟨vectorEquiv (Hex.Matrix.transpose D.transform * e), ?_⟩
-  rw [← vectorEquiv_rowCombination M (Hex.Matrix.transpose D.transform * e)]
-  have htransport := E.toIsEchelonForm.rowCombination_transform_transpose (e := e)
-  have hsingle : Hex.Matrix.rowCombination D.echelon e = Hex.Matrix.row D.echelon i := by
-    simpa [e] using Hex.Matrix.IsRowReduced.rowCombination_single (M := D.echelon) i
+  rw [← vectorEquiv_vecMul M (Hex.Matrix.transpose D.transform * e)]
+  have htransport := E.toIsEchelonForm.vecMul_transform_transpose (e := e)
+  have hsingle : Hex.Matrix.vecMul e D.echelon = Hex.Matrix.row D.echelon i := by
+    simpa [e] using Hex.Matrix.IsRowReduced.vecMul_single (M := D.echelon) i
   rw [htransport, hsingle]
 
 /-- Converse direction: any vector in the row span of `M` is realised as an
@@ -138,13 +138,13 @@ theorem rowReduce_mem_span_echelon_of_mem_span [Field R] [DecidableEq R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRowReduced M D) {v : Fin m → R} :
     v ∈ Submodule.span R (Set.range (_root_.Matrix.row (matrixEquiv M))) →
-      ∃ c : Vector R n, Hex.Matrix.rowCombination D.echelon c = vectorEquiv.symm v := by
+      ∃ c : Vector R n, Hex.Matrix.vecMul c D.echelon = vectorEquiv.symm v := by
   intro hv
   have hcontains :
       E.toIsEchelonForm.spanContains (vectorEquiv.symm v) = true := by
     rw [spanContains_iff_mem_span E]
     simpa using hv
-  exact E.toIsEchelonForm.exists_rowCombination_echelon_of_M
+  exact E.toIsEchelonForm.exists_vecMul_echelon_of_M
     ((E.spanContains_iff (vectorEquiv.symm v)).mp hcontains)
 
 /-- Each computed nullspace basis vector lies in the kernel of `M` (viewed as

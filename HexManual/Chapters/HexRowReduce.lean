@@ -23,20 +23,23 @@ tag := "hex-row-reduce"
 tag := "hex-row-reduce-intro"
 %%%
 
+Released as [hex-row-reduce](https://github.com/kim-em/hex-row-reduce),
+with the Mathlib correspondence in
+[hex-row-reduce-mathlib](https://github.com/kim-em/hex-row-reduce-mathlib).
+
 `HexRowReduce` does Gauss-Jordan reduction of a matrix over a field to
 reduced row echelon form, and computes the row span and nullspace from
 it. It depends only on {ref "hex-matrix"}[HexMatrix].
 
 The reduction returns a certificate, not just a reduced matrix: the rank,
 the reduced form, an invertible transform `T` with `T * original =
-echelon`, and the pivot columns. The span and nullspace readers are
-derived from it, each with a soundness theorem (and the nullspace basis
-with a completeness theorem) relating the executable answer to the
-matrix.
+echelon`, and the pivot columns. The span and nullspace operations are
+computed from it, each proved correct for the original matrix `M` by a
+soundness theorem (the nullspace basis also has a completeness theorem).
 
-`HexRowReduce` is Mathlib-free. `HexRowReduceMathlib` relates its rank,
-span, and nullspace to Mathlib's linear algebra; the proof recipes below
-use it.
+`HexRowReduce` is Mathlib-free. `HexRowReduceMathlib` identifies its rank,
+span, and nullspace with their Mathlib analogues `Matrix.rank`,
+`Submodule.span`, and `LinearMap.ker`. The proof recipes below use it.
 
 # The echelon certificate
 %%%
@@ -44,9 +47,9 @@ tag := "hex-row-reduce-echelon"
 %%%
 
 The elementary row operations ({name}`Hex.Matrix.rowSwap`,
-{name}`Hex.Matrix.rowScale`, {name}`Hex.Matrix.rowAdd`) are documented
-with {ref "hex-matrix"}[HexMatrix]; the reductions here compose them over
-a field.
+{name}`Hex.Matrix.rowScale`, {name}`Hex.Matrix.rowAdd`) are documented in
+{ref "hex-matrix"}[HexMatrix]. The reductions here compose them over a
+field.
 
 An echelon computation returns a certificate of how it reduced: the
 rank, the reduced matrix, an invertible transform `T` with
@@ -84,18 +87,22 @@ the result.
 tag := "hex-row-reduce-span"
 %%%
 
-The reduced form gives the readers a caller wants: the linear
+From the reduced form we compute what a caller wants: the linear
 combination of the rows, row-span membership with an explicit witness,
-the boolean span test, and a nullspace basis. Each has a soundness
-theorem; the nullspace basis also has a completeness theorem.
+the Boolean span test, and a nullspace basis. Each has a soundness
+theorem. The nullspace basis also has a completeness theorem.
 
-{docstring Hex.Matrix.rowCombination}
+{docstring Hex.Matrix.vecMul}
 
 {docstring Hex.Matrix.spanCoeffs}
 
 {docstring Hex.Matrix.spanCoeffs_sound}
 
+{docstring Hex.Matrix.spanCoeffs_eq_none_iff}
+
 {docstring Hex.Matrix.spanContains}
+
+{docstring Hex.Matrix.spanContains_iff}
 
 {docstring Hex.Matrix.nullspace}
 
@@ -104,36 +111,6 @@ theorem; the nullspace basis also has a completeness theorem.
 {docstring Hex.Matrix.nullspace_sound}
 
 {docstring Hex.Matrix.nullspace_complete}
-
-# Worked example
-%%%
-tag := "hex-row-reduce-worked"
-%%%
-
-The block builds the `2 × 3` rational matrix with rows `(1, 2, 3)` and
-`(2, 4, 6)`. The second row is twice the first, so the rank is `1`, and
-`(1, 2, 3)` (the first row) lies in the row span. Each `#guard` is
-checked when the chapter builds.
-
-```lean
-open Hex Hex.Matrix
-
-namespace HexRowReduceChapterExample
-
--- M = [[1,2,3],[2,4,6]], rank 1 (rows dependent).
-private def M : Matrix Rat 2 3 :=
-  Matrix.ofFn fun i j => (i + 1) * (j + 1)
-
--- The reduction reports rank 1.
-#guard (Matrix.rowReduce M).rank = 1
-
--- (1, 2, 3) is the first row, hence in the row span.
-private def v : Vector Rat 3 := Vector.ofFn fun j => j + 1
-
-#guard Matrix.spanContains M v = true
-
-end HexRowReduceChapterExample
-```
 
 # Recipes
 %%%
@@ -163,6 +140,9 @@ namespace HexRowReduceKernelRecipe
 -- M has rank 1 (second row twice the first), 3 columns.
 def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
 
+-- The reduction reports rank 1, so nullity is 3 - 1 = 2.
+#guard (Matrix.rowReduce M).rank = 1
+
 -- The kernel basis, as the columns of a matrix.
 #eval Matrix.nullspaceBasisMatrix M
 
@@ -190,7 +170,7 @@ tag := "hex-row-reduce-recipe-kernel-proof"
 
 Everything above is purely executable: `#eval` runs the `Hex.Matrix`
 routines and reads back concrete numbers. *This recipe crosses into
-Mathlib.* The `HexRowReduceMathlib` bridge proves the executable rank,
+Mathlib.* `HexRowReduceMathlib` proves the executable rank,
 span, and nullspace agree with Mathlib's noncomputable `Matrix.rank`,
 `Submodule.span`, and `LinearMap.ker`, so you can settle a Mathlib goal
 by running the executable and rewriting through a correspondence
@@ -206,11 +186,12 @@ open Hex Hex.Matrix HexMatrixMathlib
 
 namespace HexRowReduceKernelProof
 
-def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
+def A : _root_.Matrix (Fin 2) (Fin 3) Rat :=
+  !![1, 2, 3; 2, 4, 6]
 
-theorem rank_eq_one :
-    _root_.Matrix.rank (matrixEquiv M) = 1 := by
-  rw [← rank_eq (rowReduce_isRowReduced M)]
+theorem rank_eq_one : A.rank = 1 := by
+  rw [← matrixEquiv.apply_symm_apply A,
+      ← rank_eq (rowReduce_isRowReduced _)]
   decide +kernel
 
 end HexRowReduceKernelProof
@@ -223,10 +204,6 @@ result. It is kernel-honest: the proof depends only on `propext`,
 same pattern uses {name}`HexMatrixMathlib.nullspace_span_eq_ker`, whose
 right-hand side is exactly the Mathlib `LinearMap.ker` of `M`'s
 `mulVecLin`.
-
-If a matrix is large enough that kernel reduction stalls, `decide_cbv`
-is a drop-in fallback: also kernel-honest, but roughly forty times
-slower on the matrices measured here.
 
 ## How to test whether a vector is in the row span
 %%%
@@ -273,14 +250,16 @@ open Hex Hex.Matrix HexMatrixMathlib
 
 namespace HexRowReduceSpanProof
 
-def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
-def v : Vector Rat 3 := #v[1, 2, 3]
+def A : _root_.Matrix (Fin 2) (Fin 3) Rat :=
+  !![1, 2, 3; 2, 4, 6]
+def w : Fin 3 → Rat := ![1, 2, 3]
 
-theorem v_mem_span :
-    vectorEquiv v ∈ Submodule.span Rat
-      (Set.range (_root_.Matrix.row (matrixEquiv M))) := by
-  rw [← spanContains_iff_mem_span
-        (rowReduce_isRowReduced M)]
+theorem w_mem_span :
+    w ∈ Submodule.span Rat (Set.range A.row) := by
+  rw [← matrixEquiv.apply_symm_apply A,
+      ← vectorEquiv.apply_symm_apply w,
+      ← spanContains_iff_mem_span
+          (rowReduce_isRowReduced (matrixEquiv.symm A)) _]
   decide +kernel
 
 end HexRowReduceSpanProof

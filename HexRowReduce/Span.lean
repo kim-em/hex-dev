@@ -32,12 +32,12 @@ variable {R : Type u} {n m : Nat}
 namespace IsEchelonForm
 
 /-- Row combinations transport forward along the echelon transform. -/
-theorem rowCombination_transform_transpose [Lean.Grind.CommRing R]
+theorem vecMul_transform_transpose [Lean.Grind.CommRing R]
     {M : Matrix R n m} {D : RowEchelonData R n m}
     (E : IsEchelonForm M D) (e : Vector R n) :
-    rowCombination M (Matrix.transpose D.transform * e) =
-      rowCombination D.echelon e := by
-  unfold rowCombination
+    vecMul (Matrix.transpose D.transform * e) M =
+      vecMul e D.echelon := by
+  unfold vecMul
   calc
     Matrix.transpose M * (Matrix.transpose D.transform * e) =
         (Matrix.transpose M * Matrix.transpose D.transform) * e := by
@@ -52,11 +52,11 @@ theorem rowCombination_transform_transpose [Lean.Grind.CommRing R]
 yields a `D.echelon`-row-combination witness `Matrix.transpose Tinv * c`,
 where `Tinv` is any left inverse of `D.transform`. The proof reuses the
 forward transport at the candidate witness. -/
-theorem rowCombination_transformInv_transpose [Lean.Grind.CommRing R]
+theorem vecMul_transformInv_transpose [Lean.Grind.CommRing R]
     {M : Matrix R n m} {D : RowEchelonData R n m}
     (E : IsEchelonForm M D) {Tinv : Matrix R n n}
     (hTinv : Tinv * D.transform = (Matrix.identity (R := R) n)) (c : Vector R n) :
-    rowCombination D.echelon (Matrix.transpose Tinv * c) = rowCombination M c := by
+    vecMul (Matrix.transpose Tinv * c) D.echelon = vecMul c M := by
   have hcompose :
       Matrix.transpose D.transform * (Matrix.transpose Tinv * c) = c := by
     calc
@@ -71,22 +71,22 @@ theorem rowCombination_transformInv_transpose [Lean.Grind.CommRing R]
       _ = (Matrix.identity (R := R) n) * c := by
             rw [Matrix.transpose_identity]
       _ = c := Matrix.identity_mulVec c
-  have hforward := E.rowCombination_transform_transpose (e := Matrix.transpose Tinv * c)
+  have hforward := E.vecMul_transform_transpose (e := Matrix.transpose Tinv * c)
   rw [hcompose] at hforward
   exact hforward.symm
 
 /-- Existential converse transport: any `v` in the row span of `M` is also in
 the row span of `D.echelon`, with an explicit witness produced from a left
 inverse of `D.transform`. -/
-theorem exists_rowCombination_echelon_of_M [Lean.Grind.CommRing R]
+theorem exists_vecMul_echelon_of_M [Lean.Grind.CommRing R]
     {M : Matrix R n m} {D : RowEchelonData R n m}
     (E : IsEchelonForm M D) {v : Vector R m}
-    (h : ∃ c : Vector R n, rowCombination M c = v) :
-    ∃ d : Vector R n, rowCombination D.echelon d = v := by
+    (h : ∃ c : Vector R n, vecMul c M = v) :
+    ∃ d : Vector R n, vecMul d D.echelon = v := by
   rcases h with ⟨c, hc⟩
   rcases E.transform_inv with ⟨Tinv, hTinv⟩
   refine ⟨Matrix.transpose Tinv * c, ?_⟩
-  rw [E.rowCombination_transformInv_transpose hTinv c, hc]
+  rw [E.vecMul_transformInv_transpose hTinv c, hc]
 
 variable [Mul R] [Add R] [OfNat R 0] [OfNat R 1]
 variable {M : Matrix R n m} {D : RowEchelonData R n m}
@@ -108,7 +108,7 @@ def echelonCoeffs [Lean.Grind.Field R] (E : IsEchelonForm M D)
 def spanCoeffs [Lean.Grind.Field R] [DecidableEq R] (E : IsEchelonForm M D)
     (v : Vector R m) : Option (Vector R n) :=
   let coeffs := Matrix.transpose D.transform * E.echelonCoeffs v
-  if rowCombination M coeffs = v then
+  if vecMul coeffs M = v then
     some coeffs
   else
     none
@@ -127,7 +127,7 @@ def spanContains [Lean.Grind.Field R] [DecidableEq R] (E : IsEchelonForm M D)
 /-- `spanCoeffs` returns coefficients whose row combination equals `v`. -/
 theorem spanCoeffs_sound [Lean.Grind.Field R] [DecidableEq R]
     (E : IsEchelonForm M D) (v : Vector R m) (c : Vector R n) :
-    E.spanCoeffs v = some c → rowCombination M c = v := by
+    E.spanCoeffs v = some c → vecMul c M = v := by
   intro h
   unfold spanCoeffs at h
   dsimp only at h
@@ -141,7 +141,7 @@ theorem spanCoeffs_sound [Lean.Grind.Field R] [DecidableEq R]
 /-- If `spanContains` succeeds, the vector is in the row span. -/
 theorem spanContains_sound [Lean.Grind.Field R] [DecidableEq R]
     (E : IsEchelonForm M D) (v : Vector R m) :
-    E.spanContains v = true → ∃ c : Vector R n, rowCombination M c = v := by
+    E.spanContains v = true → ∃ c : Vector R n, vecMul c M = v := by
   intro h
   unfold spanContains at h
   cases hCoeffs : E.spanCoeffs v with
@@ -200,16 +200,16 @@ private theorem foldl_indicator_mul_unique {R : Type u} [Lean.Grind.Ring R]
 /-- A row-combination vector with a single coefficient `1` at row `i`
 and zero elsewhere selects exactly row `i` of the matrix. This packages
 the singleton-row case used by span and RREF arguments. -/
-theorem rowCombination_single {R : Type u} [Lean.Grind.CommRing R]
+theorem vecMul_single {R : Type u} [Lean.Grind.CommRing R]
     {n m : Nat} (M : Matrix R n m) (i : Fin n) :
-    rowCombination M (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0) =
+    vecMul (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0) M =
       row M i := by
   ext j hj
   let jf : Fin m := ⟨j, hj⟩
   change
-    (rowCombination M (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0))[jf] =
+    (vecMul (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0) M)[jf] =
       (row M i)[jf]
-  unfold rowCombination
+  unfold vecMul
   change (Matrix.mulVec (Matrix.transpose M)
       (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0))[jf] =
     (row M i)[jf]
@@ -290,11 +290,11 @@ private theorem pivot_column_entry [Lean.Grind.Field R] (E : IsRowReduced M D)
 /-- Reading a row combination of the echelon rows off at pivot column `p` recovers
 exactly the coefficient applied to the pivot row of `p`, since that column is a
 standard basis vector. -/
-private theorem rowCombination_pivotCoeff [Lean.Grind.Field R] (E : IsRowReduced M D)
+private theorem vecMul_pivotCoeff [Lean.Grind.Field R] (E : IsRowReduced M D)
     (c : Vector R n) (p : Fin D.rank) :
-    (rowCombination D.echelon c)[D.pivotCols.get p] =
+    (vecMul c D.echelon)[D.pivotCols.get p] =
       c[E.toIsEchelonForm.pivotRow p] := by
-  unfold rowCombination
+  unfold vecMul
   simp [HMul.hMul, Matrix.mulVec, Matrix.row, Vector.dotProduct,
     Matrix.transpose, Matrix.col]
   change (List.finRange n).foldl
@@ -321,14 +321,14 @@ private theorem rowCombination_pivotCoeff [Lean.Grind.Field R] (E : IsRowReduced
 /-- Two coefficient vectors that agree on every pivot row yield the same row
 combination of the echelon rows, because the non-pivot rows are zero rows and
 contribute nothing. -/
-private theorem rowCombination_eq_of_coeffs_eq_on_rank [Lean.Grind.Field R]
+private theorem vecMul_eq_of_coeffs_eq_on_rank [Lean.Grind.Field R]
     (E : IsRowReduced M D) {c d : Vector R n}
     (hcoeff : ∀ i : Fin D.rank,
       c[E.toIsEchelonForm.pivotRow i] = d[E.toIsEchelonForm.pivotRow i]) :
-    rowCombination D.echelon c = rowCombination D.echelon d := by
+    vecMul c D.echelon = vecMul d D.echelon := by
   ext j hj
   let jj : Fin m := ⟨j, hj⟩
-  unfold rowCombination
+  unfold vecMul
   simp [HMul.hMul, Matrix.mulVec, Matrix.row, Vector.dotProduct,
     Matrix.transpose, Matrix.col]
   change (List.finRange n).foldl
@@ -356,23 +356,23 @@ private theorem rowCombination_eq_of_coeffs_eq_on_rank [Lean.Grind.Field R]
 /-- For any vector in the row span of the echelon matrix, the coefficients recovered
 by `echelonCoeffs` reproduce it, so `echelonCoeffs` is a right inverse to row
 combination on the span. -/
-private theorem rowCombination_echelonCoeffs_of_rowCombination [Lean.Grind.Field R]
+private theorem vecMul_echelonCoeffs_of_vecMul [Lean.Grind.Field R]
     (E : IsRowReduced M D) {v : Vector R m}
-    (h : ∃ c : Vector R n, rowCombination D.echelon c = v) :
-    rowCombination D.echelon (E.toIsEchelonForm.echelonCoeffs v) = v := by
+    (h : ∃ c : Vector R n, vecMul c D.echelon = v) :
+    vecMul (E.toIsEchelonForm.echelonCoeffs v) D.echelon = v := by
   rcases h with ⟨c, hc⟩
   rw [← hc]
-  apply rowCombination_eq_of_coeffs_eq_on_rank E
+  apply vecMul_eq_of_coeffs_eq_on_rank E
   intro i
   have hi : (E.toIsEchelonForm.pivotRow i).val < D.rank := i.isLt
   have hpi : (⟨(E.toIsEchelonForm.pivotRow i).val, hi⟩ : Fin D.rank) = i := by
     apply Fin.ext
     simp [IsEchelonForm.pivotRow]
   simp [IsEchelonForm.echelonCoeffs, hi, hpi]
-  change (rowCombination D.echelon c)[D.pivotCols.get i] /
+  change (vecMul c D.echelon)[D.pivotCols.get i] /
       D.echelon[E.toIsEchelonForm.pivotRow i][D.pivotCols.get i] =
     c[E.toIsEchelonForm.pivotRow i]
-  have hpivot := rowCombination_pivotCoeff E c i
+  have hpivot := vecMul_pivotCoeff E c i
   rw [hpivot]
   have hpivotOne :
       D.echelon[E.toIsEchelonForm.pivotRow i][D.pivotCols.get i] = 1 := by
@@ -384,21 +384,20 @@ private theorem rowCombination_echelonCoeffs_of_rowCombination [Lean.Grind.Field
 `spanCoeffs` API. -/
 theorem spanCoeffs_complete [Lean.Grind.Field R] [DecidableEq R]
     (E : IsRowReduced M D) (v : Vector R m) :
-    (∃ c : Vector R n, rowCombination M c = v) →
+    (∃ c : Vector R n, vecMul c M = v) →
       (E.toIsEchelonForm.spanCoeffs v).isSome := by
   intro h
   unfold IsEchelonForm.spanCoeffs
   dsimp only
   have hechelon :
-      ∃ d : Vector R n, rowCombination D.echelon d = v :=
-    E.toIsEchelonForm.exists_rowCombination_echelon_of_M h
+      ∃ d : Vector R n, vecMul d D.echelon = v :=
+    E.toIsEchelonForm.exists_vecMul_echelon_of_M h
   have hreconstruct :
-      rowCombination D.echelon (E.toIsEchelonForm.echelonCoeffs v) = v :=
-    rowCombination_echelonCoeffs_of_rowCombination E hechelon
+      vecMul (E.toIsEchelonForm.echelonCoeffs v) D.echelon = v :=
+    vecMul_echelonCoeffs_of_vecMul E hechelon
   have htransport :
-      rowCombination M
-          (Matrix.transpose D.transform * E.toIsEchelonForm.echelonCoeffs v) = v := by
-    rw [E.toIsEchelonForm.rowCombination_transform_transpose]
+      vecMul (Matrix.transpose D.transform * E.toIsEchelonForm.echelonCoeffs v) M = v := by
+    rw [E.toIsEchelonForm.vecMul_transform_transpose]
     exact hreconstruct
   simp [htransport]
 
@@ -406,7 +405,7 @@ theorem spanCoeffs_complete [Lean.Grind.Field R] [DecidableEq R]
 theorem spanContains_iff [Lean.Grind.Field R] [DecidableEq R]
     (E : IsRowReduced M D) (v : Vector R m) :
     E.toIsEchelonForm.spanContains v = true ↔
-      ∃ c : Vector R n, rowCombination M c = v := by
+      ∃ c : Vector R n, vecMul c M = v := by
   constructor
   · exact E.toIsEchelonForm.spanContains_sound v
   · intro h

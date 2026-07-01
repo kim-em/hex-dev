@@ -185,13 +185,13 @@ private theorem noPivotLoop_initial_gram_bareiss_step_dvd
   have hq := hquot fuel hinv h_canon h_prefix_none hnext hp i hi
   have h_step_le_i : state.step ≤ i.val := Nat.le_trans (Nat.le_succ _) hi
   have h_step_le_k : state.step ≤ k.val := Nat.le_refl _
-  refine ⟨(Matrix.rowCombination b (Vector.ofFn hq.q)).dotProduct (b.row j), ?_⟩
+  refine ⟨(Matrix.vecMul (Vector.ofFn hq.q) b).dotProduct (b.row j), ?_⟩
   rw [hinv.entry_eq_dot i j h_step_le_i, hinv.entry_eq_dot k j h_step_le_k]
   rw [← dot_bareiss_row_update_left state.matrix[k][k] state.matrix[i][k]
-        (Matrix.rowCombination b (hinv.coeff i))
-        (Matrix.rowCombination b (hinv.coeff k))
+        (Matrix.vecMul (hinv.coeff i) b)
+        (Matrix.vecMul (hinv.coeff k) b)
         (b.row j)]
-  rw [← rowCombination_bareiss_coeff_update b
+  rw [← vecMul_bareiss_coeff_update b
         state.matrix[k][k] state.matrix[i][k] (hinv.coeff i) (hinv.coeff k)]
   have h_q_eq_num :
       (Vector.ofFn fun a : Fin n =>
@@ -202,7 +202,7 @@ private theorem noPivotLoop_initial_gram_bareiss_step_dvd
     intro a ha
     rw [Vector.getElem_ofFn, Vector.getElem_ofFn]
     exact hq.coeff_num_eq_mul ⟨a, ha⟩
-  rw [h_q_eq_num, dot_rowCombination_mul_right_int b hq.q state.prevPivot (b.row j)]
+  rw [h_q_eq_num, dot_vecMul_mul_right_int b hq.q state.prevPivot (b.row j)]
   exact Int.mul_comm _ _
 
 /-- Row-vector consumer for an initial no-pivot Gram pass.  A single supported
@@ -220,14 +220,14 @@ private theorem noPivotLoop_initial_gram_exists_rowVec
     ∃ v : Vector Int m,
       (∃ c : Vector Int n,
         (∀ k : Fin n, i.val < k.val → c[k] = 0) ∧
-          v = Matrix.rowCombination b c) ∧
+          v = Matrix.vecMul c b) ∧
         ∀ j : Fin n,
           (Matrix.noPivotLoop fuel
             (Matrix.noPivotInitialState (Matrix.gramMatrix b))).matrix[i][j] =
             v.dotProduct (b.row j) := by
   let hinv :=
     bareissGramRowInvariant_noPivotLoop_initial b fuel hquot
-  refine ⟨Matrix.rowCombination b (hinv.coeff i), ?_, ?_⟩
+  refine ⟨Matrix.vecMul (hinv.coeff i) b, ?_, ?_⟩
   · exact ⟨hinv.coeff i, fun k hik => hinv.coeff_supp i k hi hik, rfl⟩
   · intro j
     exact hinv.entry_eq_dot i j hi
@@ -365,11 +365,11 @@ private theorem foldl_add_pointwise_eq_int {α : Type v}
       rw [hx]
       exact ih (acc + g x) hxs
 
-/-- Entry-level formula for `rowCombination` over integers: the `j`th entry is
+/-- Entry-level formula for `vecMul` over integers: the `j`th entry is
 the sum over `k` of `b[k][j] * c[k]`. -/
-private theorem getElem_rowCombination_int
+private theorem getElem_vecMul_int
     {n m : Nat} (b : Matrix Int n m) (c : Vector Int n) (j : Fin m) :
-    (Matrix.rowCombination b c)[j] =
+    (Matrix.vecMul c b)[j] =
       (List.finRange n).foldl (fun acc k => acc + b[k][j] * c[k]) 0 := by
   show (Matrix.transpose b * c)[j] = _
   rw [Matrix.getElem_mulVec]
@@ -391,25 +391,25 @@ private theorem foldl_mul_distrib_int {α : Type v}
       have : x * (acc + f y) = x * acc + x * f y := by grind
       rw [this]
 
-/-- Expansion of the dot product against `rowCombination` over integers: the
+/-- Expansion of the dot product against `vecMul` over integers: the
 second argument's row combination distributes outside the sum, giving the
 Σ-over-rows form. Proved via the `List.foldl_add_comm` Fubini
 identity. -/
-private theorem dot_rowCombination_right_eq
+private theorem dot_vecMul_right_eq
     {n m : Nat} (b : Matrix Int n m) (u : Vector Int m) (c : Vector Int n) :
-    u.dotProduct (Matrix.rowCombination b c) =
+    u.dotProduct (Matrix.vecMul c b) =
       (List.finRange n).foldl
         (fun acc k => acc + c[k] * u.dotProduct (b.row k)) 0 := by
-  -- Step 1: rewrite each (rowComb b c)[j] entry using getElem_rowCombination_int.
+  -- Step 1: rewrite each (rowComb b c)[j] entry using getElem_vecMul_int.
   have h_lhs :
-      u.dotProduct (Matrix.rowCombination b c) =
+      u.dotProduct (Matrix.vecMul c b) =
         (List.finRange m).foldl
           (fun accj j => accj + u[j] *
             (List.finRange n).foldl (fun acck k => acck + b[k][j] * c[k]) 0) 0 := by
     unfold Vector.dotProduct
     apply foldl_add_pointwise_eq_int
     intro j _hj
-    rw [getElem_rowCombination_int (b := b) (c := c) j]
+    rw [getElem_vecMul_int (b := b) (c := c) j]
   rw [h_lhs]
   -- Step 2: distribute u[j] over the inner sum so the body has shape (acc + f j k).
   have h_distrib :
@@ -506,7 +506,7 @@ The argument: by the closed row-vector consumer, the represented pivot row has
 integer support on indices `≤ s` and inner product zero against `b.row k` for
 every `k.val ≤ s` (those matrix entries are either the zero pivot itself or
 zeros left by earlier regular elimination steps). Linearity of dot against
-`rowCombination` over the supported indices then gives `v.dotProduct v = 0`,
+`vecMul` over the supported indices then gives `v.dotProduct v = 0`,
 and integer positive definiteness forces every dot against `v` to be zero.
 Trailing-block symmetry transports
 `state.matrix[sFin][i] = v.dotProduct (b.row i) = 0` across the diagonal to
@@ -567,14 +567,14 @@ private theorem principalSubmatrix_gram_zero_pivot_column_zero
       exact noPivotLoop_matrix_processed_col_eq_zero s
         (Matrix.noPivotInitialState (Matrix.gramMatrix b)) h_prefix_none
         k.val h_init_step_le h_k_lt_result k rfl sFin h_k_lt_sFin
-  -- `v.dotProduct v = 0`: every term in the rowCombination expansion is zero.
+  -- `v.dotProduct v = 0`: every term in the vecMul is expansion zero.
   have h_dot_self_zero : v.dotProduct v = 0 := by
     have h_expand_aux :
-        v.dotProduct (Matrix.rowCombination b c) =
+        v.dotProduct (Matrix.vecMul c b) =
           (List.finRange n).foldl
             (fun acc k => acc + c[k] * v.dotProduct (b.row k))
             0 :=
-      dot_rowCombination_right_eq b v c
+      dot_vecMul_right_eq b v c
     rw [← hv_def] at h_expand_aux
     rw [h_expand_aux]
     apply foldl_add_zero

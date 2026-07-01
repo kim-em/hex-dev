@@ -22,7 +22,7 @@ the leading Gram determinants (`gramDetVecEntry_eq_gramDet`,
 singular step, and the lower-triangle slots capture the corresponding Bareiss
 target-column values. It exposes the determinant base case `gramDet_zero`, the
 lower-triangularity of the public matrix (`scaledCoeffs_upper`), and the
-lattice-norm helper `rowCombination_coeffs_apply_eq_of_zero_above` giving the
+lattice-norm helper `vecMul_coeffs_apply_eq_of_zero_above` giving the
 top Gram-Schmidt coordinate of a row combination when the later integer
 coefficients vanish.
 -/
@@ -1052,11 +1052,10 @@ This is the top Gram-Schmidt coordinate specialization consumed by the lattice
 norm lower bound: rows below `k` contribute zero by upper-triangularity,
 row `k` contributes one by the diagonal lemma, and rows above `k` contribute
 zero because the corresponding integer coefficient vanishes. -/
-theorem rowCombination_coeffs_apply_eq_of_zero_above
+theorem vecMul_coeffs_apply_eq_of_zero_above
     (b : Matrix Int n m) (c : Vector Int n) (k : Fin n)
     (hzero_above : ∀ j : Fin n, k.val < j.val → c[j] = 0) :
-    (Matrix.rowCombination (coeffs b)
-        (Vector.map (fun x : Int => (x : Rat)) c))[k]
+    (Matrix.vecMul (Vector.map (fun x : Int => (x : Rat)) c) (coeffs b))[k]
       = ((c[k] : Int) : Rat) := by
   let castc : Vector Rat n := Vector.map (fun x : Int => (x : Rat)) c
   have hcastc_get : ∀ i : Fin n, castc[i] = ((c[i] : Int) : Rat) := by
@@ -1068,12 +1067,11 @@ theorem rowCombination_coeffs_apply_eq_of_zero_above
   let liftj : Fin (k.val + 1) → Fin n := fun j =>
     ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩
   rw [show
-      (Matrix.rowCombination (coeffs b)
-          (Vector.map (fun x : Int => (x : Rat)) c))[k]
-        = (Matrix.rowCombination (coeffs b) castc)[k] from rfl]
+      (Matrix.vecMul (Vector.map (fun x : Int => (x : Rat)) c) (coeffs b))[k]
+        = (Matrix.vecMul castc (coeffs b))[k] from rfl]
   -- Step 1: rewrite the row-combination entry as a fold over the `k`-th column.
   have hcol :
-      (Matrix.rowCombination (coeffs b) castc)[k]
+      (Matrix.vecMul castc (coeffs b))[k]
         = (List.finRange n).foldl
             (fun acc i => acc + (coeffs b)[i][k] * castc[i]) 0 := by
     show ((coeffs b).transpose * castc)[k] = _

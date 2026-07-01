@@ -968,10 +968,10 @@ private def projectionCoeffVector (row : Vector Rat m) (basis : Matrix Rat n m)
   Vector.ofFn fun j =>
     projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)
 
-private theorem rowCombination_prefixRows_extendStrictPrefixCoeff
+private theorem vecMul_prefixRows_extendStrictPrefixCoeff
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) (c : Vector Rat i) :
-    Matrix.rowCombination (prefixRows M i hi) (extendStrictPrefixCoeff c) =
-      Matrix.rowCombination (strictPrefixRows M i (Nat.le_of_lt hi)) c := by
+    Matrix.vecMul (extendStrictPrefixCoeff c) (prefixRows M i hi) =
+      Matrix.vecMul c (strictPrefixRows M i (Nat.le_of_lt hi)) := by
   apply Vector.ext
   intro idx hidx
   let idxFin : Fin m := ⟨idx, hidx⟩
@@ -1008,16 +1008,16 @@ private theorem rowCombination_prefixRows_extendStrictPrefixCoeff
   simp [extendStrictPrefixCoeff, hlast_not_lt]
   grind
 
-private theorem rowCombination_add_rat
+private theorem vecMul_add_rat
     (M : Matrix Rat n m) (c d : Vector Rat n) :
-    Matrix.rowCombination M (c + d) =
-      Matrix.rowCombination M c + Matrix.rowCombination M d := by
+    Matrix.vecMul (c + d) M =
+      Matrix.vecMul c M + Matrix.vecMul d M := by
   apply Vector.ext
   intro idx hidx
   let idxFin : Fin m := ⟨idx, hidx⟩
   change (Matrix.mulVec (Matrix.transpose M) (c + d))[idxFin] =
-    (Matrix.rowCombination M c + Matrix.rowCombination M d)[idxFin]
-  simp [Matrix.rowCombination, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
+    (Matrix.vecMul c M + Matrix.vecMul d M)[idxFin]
+  simp [Matrix.vecMul, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
     Matrix.row, Vector.dotProduct, Vector.getElem_add]
   have hfold :
       ∀ xs : List (Fin n), ∀ accC accD : Rat,
@@ -1047,16 +1047,16 @@ private theorem rowCombination_add_rat
   rw [show (0 : Rat) + 0 = 0 by grind] at h
   exact h
 
-private theorem rowCombination_smul_rat
+private theorem vecMul_smul_rat
     (M : Matrix Rat n m) (a : Rat) (c : Vector Rat n) :
-    Matrix.rowCombination M (a • c) =
-      a • Matrix.rowCombination M c := by
+    Matrix.vecMul (a • c) M =
+      a • Matrix.vecMul c M := by
   apply Vector.ext
   intro idx hidx
   let idxFin : Fin m := ⟨idx, hidx⟩
   change (Matrix.mulVec (Matrix.transpose M) (a • c))[idxFin] =
-    (a • Matrix.rowCombination M c)[idxFin]
-  simp [Matrix.rowCombination, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
+    (a • Matrix.vecMul c M)[idxFin]
+  simp [Matrix.vecMul, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
     Matrix.row, Vector.dotProduct, Vector.getElem_smul]
   have hfold :
       ∀ xs : List (Fin n), ∀ acc : Rat,
@@ -1090,7 +1090,7 @@ private theorem prefixSpan_add
   rcases hu with ⟨cu, hcu⟩
   rcases hv with ⟨cv, hcv⟩
   refine ⟨cu + cv, ?_⟩
-  rw [rowCombination_add_rat, hcu, hcv]
+  rw [vecMul_add_rat, hcu, hcv]
 
 /-- `prefixSpan_smul` says the rational prefix row-span is closed under scalar multiplication. -/
 private theorem prefixSpan_smul
@@ -1099,7 +1099,7 @@ private theorem prefixSpan_smul
     prefixSpan M i hi (a • u) := by
   rcases hu with ⟨cu, hcu⟩
   refine ⟨a • cu, ?_⟩
-  rw [rowCombination_smul_rat, hcu]
+  rw [vecMul_smul_rat, hcu]
 
 /-- `prefixSpan_sub` says the rational prefix row-span is closed under vector subtraction. -/
 private theorem prefixSpan_sub
@@ -1218,9 +1218,9 @@ private theorem foldl_indicator_mul_unique_rat
         rw [hacc]
         exact ih hitail (List.nodup_cons.mp hnodup).2 acc
 
-private theorem rowCombination_prefixRows_unitCoeff
+private theorem vecMul_prefixRows_unitCoeff
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) (j : Fin (i + 1)) :
-    Matrix.rowCombination (prefixRows M i hi) (unitCoeff j) =
+    Matrix.vecMul (unitCoeff j) (prefixRows M i hi) =
       (prefixRows M i hi).row j := by
   apply Vector.ext
   intro idx hidx
@@ -1242,11 +1242,11 @@ private theorem rowCombination_prefixRows_unitCoeff
 private theorem prefixSpan_row
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) (j : Fin (i + 1)) :
     prefixSpan M i hi ((prefixRows M i hi).row j) := by
-  exact ⟨unitCoeff j, rowCombination_prefixRows_unitCoeff M i hi j⟩
+  exact ⟨unitCoeff j, vecMul_prefixRows_unitCoeff M i hi j⟩
 
-private theorem rowCombination_eq_foldl_rows
+private theorem vecMul_eq_foldl_rows
     (M : Matrix Rat n m) (c : Vector Rat n) :
-    Matrix.rowCombination M c =
+    Matrix.vecMul c M =
       (List.finRange n).foldl (fun acc j => acc + c[j] • M.row j) 0 := by
   apply Vector.ext
   intro idx hidx
@@ -1289,7 +1289,7 @@ private theorem dot_eq_zero_of_prefixSpan
     (horth : ∀ j : Fin (i + 1), u.dotProduct ((prefixRows M i hi).row j) = 0) :
     u.dotProduct v = 0 := by
   rcases hspan with ⟨c, hc⟩
-  rw [← hc, rowCombination_eq_foldl_rows]
+  rw [← hc, vecMul_eq_foldl_rows]
   have hfold :
       ∀ xs : List (Fin (i + 1)), ∀ acc : Vector Rat m,
         u.dotProduct acc = 0 →
@@ -1529,13 +1529,13 @@ private theorem foldl_orthogonal_weighted_normSq_ge
 /-- Orthogonal row-combination lower bound. If the rows of `rows` are pairwise
 orthogonal and the coefficient at `k` has square at least `1`, then the squared
 norm of the whole row combination is at least the squared norm of row `k`. -/
-theorem rowCombination_normSq_ge_of_orthogonal_coeff_sq_ge_one
+theorem vecMul_normSq_ge_of_orthogonal_coeff_sq_ge_one
     (rows : Matrix Rat n m) (coeffs : Vector Rat n) (k : Fin n)
     (horth : ∀ i j : Fin n, i ≠ j →
       (rows.row i).dotProduct (rows.row j) = 0)
     (hcoeff : 1 ≤ coeffs[k] * coeffs[k]) :
-    (rows.row k).normSq ≤ (Matrix.rowCombination rows coeffs).normSq := by
-  rw [rowCombination_eq_foldl_rows, foldl_orthogonal_expansion_normSq_zero rows coeffs horth]
+    (rows.row k).normSq ≤ (Matrix.vecMul coeffs rows).normSq := by
+  rw [vecMul_eq_foldl_rows, foldl_orthogonal_expansion_normSq_zero rows coeffs horth]
   exact foldl_orthogonal_weighted_normSq_ge (xs := List.finRange n)
     (rows := rows) (coeffs := coeffs) k (by simp) hcoeff
 
@@ -1670,12 +1670,12 @@ private theorem prefixSpan_zero
     grind
   simpa [hzero] using hz
 
-/-- `prefixSpan_rowCombination` states that any row combination of prefix rows already in another prefix span remains in that prefix span. -/
-private theorem prefixSpan_rowCombination
+/-- `prefixSpan_vecMul` states that any row combination of prefix rows already in another prefix span remains in that prefix span. -/
+private theorem prefixSpan_vecMul
     (A B : Matrix Rat n m) (i : Nat) (hi : i < n) (c : Vector Rat (i + 1))
     (hrows : ∀ j : Fin (i + 1), prefixSpan B i hi ((prefixRows A i hi).row j)) :
-    prefixSpan B i hi (Matrix.rowCombination (prefixRows A i hi) c) := by
-  rw [rowCombination_eq_foldl_rows]
+    prefixSpan B i hi (Matrix.vecMul c (prefixRows A i hi)) := by
+  rw [vecMul_eq_foldl_rows]
   have hfold :
       ∀ xs : List (Fin (i + 1)), ∀ acc : Vector Rat m,
         prefixSpan B i hi acc →
@@ -1714,7 +1714,7 @@ private theorem prefixSpan_mono_succ
     prefixSpan M (i + 1) hi v := by
   rcases hv with ⟨c, hc⟩
   refine ⟨extendStrictPrefixCoeff c, ?_⟩
-  rw [rowCombination_prefixRows_extendStrictPrefixCoeff,
+  rw [vecMul_prefixRows_extendStrictPrefixCoeff,
     strictPrefixRows_succ_eq_prefixRows (hi := hi)]
   exact hc
 
@@ -1791,7 +1791,7 @@ private theorem prefixSpan_rowSwap_adjacent_at_or_after
   · intro hv
     rcases hv with ⟨c, hc⟩
     have hspan :=
-      prefixSpan_rowCombination
+      prefixSpan_vecMul
         (A := Matrix.rowSwap b km1 k) (B := b) (i := i) (hi := hi) c
         (by
           intro j
@@ -1802,7 +1802,7 @@ private theorem prefixSpan_rowSwap_adjacent_at_or_after
   · intro hv
     rcases hv with ⟨c, hc⟩
     have hspan :=
-      prefixSpan_rowCombination
+      prefixSpan_vecMul
         (A := b) (B := Matrix.rowSwap b km1 k) (i := i) (hi := hi) c
         (by
           intro j
@@ -1815,15 +1815,15 @@ private theorem prefixSpan_rowSwap_adjacent_at_or_after
           simpa [hswap_swap] using hrowspan)
     rwa [hc] at hspan
 
-private theorem prefixSpan_strictPrefix_rowCombination
+private theorem prefixSpan_strictPrefix_vecMul
     (M : Matrix Rat n m) (i : Nat) (hi : i < n) (c : Vector Rat i) :
     prefixSpan M i hi
-      (Matrix.rowCombination (strictPrefixRows M i (Nat.le_of_lt hi)) c) := by
+      (Matrix.vecMul c (strictPrefixRows M i (Nat.le_of_lt hi))) := by
   cases i with
   | zero =>
       have hcomb :
-          Matrix.rowCombination (strictPrefixRows M 0 (Nat.le_of_lt hi)) c = 0 := by
-        rw [rowCombination_eq_foldl_rows]
+          Matrix.vecMul c (strictPrefixRows M 0 (Nat.le_of_lt hi)) = 0 := by
+        rw [vecMul_eq_foldl_rows]
         simp
       simpa [hcomb] using prefixSpan_zero M 0 hi
   | succ k =>
@@ -1831,8 +1831,8 @@ private theorem prefixSpan_strictPrefix_rowCombination
       rw [strictPrefixRows_succ_eq_prefixRows (M := M) (i := k) (hi := hi)]
       have hspan :
           prefixSpan M k hk
-            (Matrix.rowCombination (prefixRows M k hk) c) := by
-        apply prefixSpan_rowCombination
+            (Matrix.vecMul c (prefixRows M k hk)) := by
+        apply prefixSpan_vecMul
         intro row
         have hself :=
           prefixSpan_matrix_row M (⟨row.val, Nat.lt_trans row.isLt hi⟩ : Fin n)
@@ -1854,8 +1854,8 @@ private theorem prefixSpan_strictRowCombination
     (hrows : ∀ j : Fin i,
       prefixSpan B i hi ((strictPrefixRows A i (Nat.le_of_lt hi)).row j)) :
     prefixSpan B i hi
-      (Matrix.rowCombination (strictPrefixRows A i (Nat.le_of_lt hi)) c) := by
-  rw [rowCombination_eq_foldl_rows]
+      (Matrix.vecMul c (strictPrefixRows A i (Nat.le_of_lt hi))) := by
+  rw [vecMul_eq_foldl_rows]
   have hfold :
       ∀ xs : List (Fin i), ∀ acc : Vector Rat m,
         prefixSpan B i hi acc →
@@ -1876,7 +1876,7 @@ private theorem prefixSpan_strictRowCombination
           (prefixSpan_smul B i hi c[j] (hrows j))
   exact hfold (List.finRange i) 0 (prefixSpan_zero B i hi)
 
-private theorem foldl_projectionCoeff_rowCombination_comm
+private theorem foldl_projectionCoeff_vecMul_comm
     (xs : List (Fin k)) (row : Vector Rat m) (basis : Matrix Rat n m)
     (hk : k ≤ n) (idx : Fin m) (acc : Rat) :
     xs.foldl
@@ -1947,10 +1947,9 @@ private theorem foldl_projectionCombination_getElem
 
 /-- `prefixSumByRow` is an executable row combination of the first `k` rows of
 the basis matrix. -/
-private theorem rowCombination_strictPrefixRows_projectionCoeffVector
+private theorem vecMul_strictPrefixRows_projectionCoeffVector
     (row : Vector Rat m) (basis : Matrix Rat n m) (k : Nat) (hk : k ≤ n) :
-    Matrix.rowCombination (strictPrefixRows basis k hk)
-        (projectionCoeffVector row basis k hk) =
+    Matrix.vecMul (projectionCoeffVector row basis k hk) (strictPrefixRows basis k hk) =
       prefixSumByRow row basis k hk := by
   apply Vector.ext
   intro idx hidx
@@ -1983,7 +1982,7 @@ private theorem rowCombination_strictPrefixRows_projectionCoeffVector
           foldl_projectionCombination_getElem
             (xs := List.finRange k) (row := row) (basis := basis) (hk := hk)
             (idx := idxFin) (acc := 0)]
-  simpa [Matrix.row] using foldl_projectionCoeff_rowCombination_comm
+  simpa [Matrix.row] using foldl_projectionCoeff_vecMul_comm
     (xs := List.finRange k) (row := row) (basis := basis) (hk := hk)
     (idx := idxFin) (acc := 0)
 
@@ -2050,10 +2049,9 @@ earlier generated basis rows. -/
 private theorem prefixCombination_eq_strictPrefixRowCombination
     (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
     prefixCombination (coeffMatrix b (basisMatrix b)) (basisMatrix b) i hi =
-      Matrix.rowCombination (strictPrefixRows (basisMatrix b) i (Nat.le_of_lt hi))
-        (projectionCoeffVector (b.row ⟨i, hi⟩) (basisMatrix b) i (Nat.le_of_lt hi)) := by
+      Matrix.vecMul (projectionCoeffVector (b.row ⟨i, hi⟩) (basisMatrix b) i (Nat.le_of_lt hi)) (strictPrefixRows (basisMatrix b) i (Nat.le_of_lt hi)) := by
   rw [prefixCombination_eq_prefixSumByRow]
-  exact (rowCombination_strictPrefixRows_projectionCoeffVector
+  exact (vecMul_strictPrefixRows_projectionCoeffVector
     (row := b.row ⟨i, hi⟩) (basis := basisMatrix b) (k := i)
     (hk := Nat.le_of_lt hi)).symm
 
