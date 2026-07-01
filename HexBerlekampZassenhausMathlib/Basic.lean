@@ -17926,6 +17926,98 @@ theorem RecoveredScaledSearch.covers
     hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
     htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches hfuel
 
+/-!
+### Size-ordered (smart) recombination coverage (#8413)
+
+The classical tier runs `Hex.scaledRecombinationSmart`, the size-ordered
+budgeted search, not `Hex.scaledRecombinationSearchMod`.  These theorems are the
+smart analogue of `RecoveredScaledSearch.covers_of_bound`.  Because the smart
+search threads a candidate `budget` that can abandon a factorable sub-target,
+the coverage statement is conditional on the search returning `some`, and rests
+on a `trustworthy-none` completeness fact: with adequate fuel the only way any
+sub-search declines is by exhausting its budget (`b = 0`), which propagates.
+
+Fuel adequacy is `budget + 3 * J.card + 1 ≤ fuel`, maintained across peels; the
+wrapper's `fuel = budget + (r+1)(2r+3)` (`Hex.scaledRecombinationSmart`) meets it
+at the top.  See `progress/20260701T002411Z_issue-8413-smart-coverage.md`.
+-/
+
+/-- Trustworthy-none completeness for the size-ordered search: with adequate
+fuel, a `none` return can only come from budget exhaustion (`b = 0`).  The
+witness is `cover_at_min`: if `J` is nonempty its minimum lies in some true
+support `S_cov` whose candidate divides `target`, so the search either peels it
+(returning `some`) or exhausts its budget reaching it.  Proved mutually with the
+size/candidate loops by induction on `fuel`. -/
+private theorem smartAux_none_budget_zero
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly, g ∣ core → ∀ i, (g.coeff i).natAbs ≤ B')
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    ∀ {target : Hex.ZPoly} {J : LiftedFactorSubset d}
+      {localFactors : List Hex.ZPoly} {budget fuel b : Nat},
+      Hex.ZPoly.Primitive target →
+      0 < Hex.DensePoly.leadingCoeff target →
+      target ∣ core →
+      LiftedFactorSubsetPartition core d J target →
+      LiftedFactorListMatches d J localFactors →
+      budget + 3 * J.card + 1 ≤ fuel →
+      Hex.scaledRecombinationSmartAux (Hex.DensePoly.leadingCoeff core)
+          target (d.p ^ d.k) localFactors budget fuel = (none, b) →
+      b = 0 := by
+  sorry
+
+/-- Conditional coverage for the size-ordered search: when it returns `some
+result`, every irreducible factor of `target` is an associate of some emitted
+factor.  The smart analogue of `RecoveredScaledSearch.covers_of_bound`, proved by
+`fuel` induction: the peeled subset is exactly the `cover_at_min` true support
+`S_cov` (containment gives `S_cov ⊆ T`; a coarser `T` would leave `S_cov`'s
+recursion declining with budget `0` by `smartAux_none_budget_zero`, propagating
+to overall `none`), so the emitted head is the irreducible `cover_at_min` factor
+and the tail covers the quotient by induction. -/
+private theorem smartAux_covers_of_bound
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly, g ∣ core → ∀ i, (g.coeff i).natAbs ≤ B')
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    ∀ {target : Hex.ZPoly} {J : LiftedFactorSubset d}
+      {localFactors : List Hex.ZPoly} {budget fuel : Nat}
+      {result : List Hex.ZPoly} {b : Nat},
+      Hex.ZPoly.Primitive target →
+      0 < Hex.DensePoly.leadingCoeff target →
+      target ∣ core →
+      LiftedFactorSubsetPartition core d J target →
+      LiftedFactorListMatches d J localFactors →
+      budget + 3 * J.card + 1 ≤ fuel →
+      Hex.scaledRecombinationSmartAux (Hex.DensePoly.leadingCoeff core)
+          target (d.p ^ d.k) localFactors budget fuel = (some result, b) →
+      ∀ factor : Hex.ZPoly,
+        Irreducible (HexPolyZMathlib.toPolynomial factor) →
+        factor ∣ target →
+        ∃ emitted ∈ result,
+          Associated (HexPolyZMathlib.toPolynomial emitted)
+            (HexPolyZMathlib.toPolynomial factor) := by
+  sorry
+
 /--
 Abstract-bound variant of
 `recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition`:
