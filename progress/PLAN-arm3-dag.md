@@ -127,3 +127,24 @@ needed. Proceed with the geometry using the `choosePrimeData?` partition
 (`liftedFactorSubsetPartition_of_choosePrimeData`, Basic.lean:20335) or the
 toMonicPrimeData? complete version, reconciled via the monic relationship.
 Grinding arm-3 `hfalse` geometry top-down, hardest sub-lemma first.
+
+## CURRENT FRONTIER (2am session): `hclasses` — the adequacy
+arm-3 `hfalse` is reduced (Bool part proved) to ONE statement `hclasses`:
+`2 ≤ (bhksEquivalenceClassIndicators (bhksProjectedRows L hrows)).size`, given
+`2 ≤ card(normalizedFactors (toPolynomial core))` (reducible) + `hprec`.
+This is "the CLD lattice never under-separates". DAG to prove it:
+- (a) reducible ⟹ ≥2 distinct disjoint nonempty true-factor supports S,T
+      (partition machinery: liftedTrueSupports + LiftedFactorSubsetPartition
+      cover/pairwise_disjoint; tractable, coordinate-reconciled per the empirical
+      finding above).
+- (b) each true support S is a SHORT lattice vector of `bhksLatticeBasis` in
+      `latticeSubmodule` (indicator ⊕ reduced CLD tail; short by the proven
+      `Hex.BHKS.abs_cldCoeffs_le_bhksCoeffBound` + a true-factor CLD witness).
+      [greenfield: needs the CLD witness = exact integer coeff of f·g'/g.]
+- (c) short lattice vectors captured in the reduced Gram-Schmidt cut
+      (Klüners Lemma 1, from GramSchmidt.Int.exists_top_index_normSq_le_of_memLattice
+      + teleBound + my bhksLatticeBasis_lllNative_first_row_short). [greenfield]
+- (d) distinct captured supports ⟹ distinct equivalence classes in
+      `bhksEquivalenceClassIndicators` (rational row-reduce signature). [greenfield]
+Hardest = (b)+(c) (CLD bound + Klüners Lemma 1); attack those first per Kim.
+Everything above `hclasses` is PROVED and connected to the capstone.
