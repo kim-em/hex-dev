@@ -5331,7 +5331,7 @@ private def bhksNoProgressProjectedRows : BhksProjectedRows :=
 #guard bhksEquivalenceClassIndicators bhksNoProgressProjectedRows =
   #[#[1, 0, 0], #[0, 1, 0], #[0, 0, 1]]
 
-private def liftModulus (d : LiftData) : Nat :=
+def liftModulus (d : LiftData) : Nat :=
   d.p ^ d.k
 
 def centeredLiftPoly (f : ZPoly) (m : Nat) : ZPoly :=
@@ -7950,6 +7950,239 @@ theorem scaledRecombinationSmartCandLoop_product
                       exact exactQuotient?_product hquot
         · -- cand not recorded: recurse on the rest
           exact scaledRecombinationSmartCandLoop_product _ _ _ _ _ _ _ _ h
+termination_by fuel
+end
+
+mutual
+/-- Budget monotonicity for the size-ordered classical recombination search: the
+returned budget never exceeds the input budget. Each candidate the search examines
+decrements the running budget and sub-searches only consume more, so the budget
+threads monotonically downward. The three loops share the conclusion and are
+proved together by structural recursion on `fuel`.
+
+This underlies the "budget-exhausted `none` propagates" fact the coverage proof
+for `scaledRecombinationSmart` relies on: once the running budget reaches `0`,
+every subsequent loop returns `(none, 0)`, so a returned budget of `0` is the
+only way an inner sub-search can decline for a budget reason. -/
+theorem scaledRecombinationSmartAux_budget_le
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
+    (budget fuel : Nat) (res : Option (List ZPoly)) (b : Nat)
+    (h : scaledRecombinationSmartAux coreLc target modulus localFactors budget fuel
+        = (res, b)) :
+    b ≤ budget := by
+  unfold scaledRecombinationSmartAux at h
+  split at h
+  · -- target = 1: (some [], budget)
+    simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
+  · split at h
+    · -- budget = 0: (none, 0)
+      simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
+    · split at h
+      · -- fuel = 0: (none, budget)
+        simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
+      · split at h
+        · -- localFactors = []: (none, budget)
+          simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
+        · exact scaledRecombinationSmartSizeLoop_budget_le _ _ _ _ _ _ _ _ _ _ h
+termination_by fuel
+
+theorem scaledRecombinationSmartSizeLoop_budget_le
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (head : ZPoly) (tail : List ZPoly)
+    (sizes : List Nat) (budget fuel : Nat) (res : Option (List ZPoly)) (b : Nat)
+    (h : scaledRecombinationSmartSizeLoop coreLc target modulus head tail sizes budget fuel
+        = (res, b)) :
+    b ≤ budget := by
+  unfold scaledRecombinationSmartSizeLoop at h
+  split at h
+  · -- sizes = []: (none, budget)
+    simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
+  · split at h
+    · -- budget = 0: (none, 0)
+      simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
+    · split at h
+      · -- fuel = 0: (none, budget)
+        simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
+      · simp only [] at h
+        split at h
+        · -- CandLoop returned (some res, b): (some res, b)
+          rename_i res' bres hcand
+          simp only [Prod.mk.injEq] at h
+          obtain ⟨_, hb⟩ := h
+          subst hb
+          exact scaledRecombinationSmartCandLoop_budget_le _ _ _ _ _ _ _ _ hcand
+        · -- CandLoop returned (none, bres): recurse on the next size class at budget bres
+          rename_i bres hcand
+          have hcl := scaledRecombinationSmartCandLoop_budget_le _ _ _ _ _ _ _ _ hcand
+          have hsl := scaledRecombinationSmartSizeLoop_budget_le _ _ _ _ _ _ _ _ _ _ h
+          omega
+termination_by fuel
+
+theorem scaledRecombinationSmartCandLoop_budget_le
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (splits : List (List ZPoly × List ZPoly)) (budget fuel : Nat)
+    (res : Option (List ZPoly)) (b : Nat)
+    (h : scaledRecombinationSmartCandLoop coreLc target modulus splits budget fuel
+        = (res, b)) :
+    b ≤ budget := by
+  unfold scaledRecombinationSmartCandLoop at h
+  split at h
+  · -- splits = []: (none, budget)
+    simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
+  · rename_i split rest
+    split at h
+    · -- budget = 0: (none, 0)
+      simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
+    · split at h
+      · -- fuel = 0: (none, budget)
+        simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
+      · rename_i fuel'
+        simp only [] at h
+        split at h
+        · -- shouldRecord the candidate
+          cases hquot : exactQuotient? target
+              (normalizeFactorSign (ZPoly.primitivePart
+                (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
+          | none =>
+              simp only [hquot] at h
+              have hrec := scaledRecombinationSmartCandLoop_budget_le _ _ _ _ _ _ _ _ h
+              omega
+          | some quotient =>
+              simp only [hquot] at h
+              cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
+                  (budget - 1) fuel' with
+              | mk ores ob =>
+                  cases ores with
+                  | none =>
+                      simp only [haux] at h
+                      have haux_le := scaledRecombinationSmartAux_budget_le _ _ _ _ _ _ _ _ haux
+                      have hrec := scaledRecombinationSmartCandLoop_budget_le _ _ _ _ _ _ _ _ h
+                      omega
+                  | some sub =>
+                      simp only [haux] at h
+                      simp only [Prod.mk.injEq] at h
+                      obtain ⟨_, hb⟩ := h
+                      subst hb
+                      have haux_le := scaledRecombinationSmartAux_budget_le _ _ _ _ _ _ _ _ haux
+                      omega
+        · -- candidate not recorded: recurse on the rest at budget - 1
+          have hrec := scaledRecombinationSmartCandLoop_budget_le _ _ _ _ _ _ _ _ h
+          omega
+termination_by fuel
+end
+
+/-- Once the running budget is exhausted the candidate loop declines immediately:
+with `budget = 0` it returns `(none, 0)` for any split list and fuel. The
+size-ordered coverage proof uses this together with budget monotonicity to
+propagate a budget-exhausted `none` up through the enclosing loops. -/
+theorem scaledRecombinationSmartCandLoop_budget_zero
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (splits : List (List ZPoly × List ZPoly)) (fuel : Nat) :
+    scaledRecombinationSmartCandLoop coreLc target modulus splits 0 fuel = (none, 0) := by
+  unfold scaledRecombinationSmartCandLoop
+  cases splits with
+  | nil => rfl
+  | cons split rest => rfl
+
+/-- Budget-exhausted decline for the size loop: with `budget = 0` it returns
+`(none, 0)` for any size list and fuel. -/
+theorem scaledRecombinationSmartSizeLoop_budget_zero
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (head : ZPoly) (tail : List ZPoly)
+    (sizes : List Nat) (fuel : Nat) :
+    scaledRecombinationSmartSizeLoop coreLc target modulus head tail sizes 0 fuel = (none, 0) := by
+  unfold scaledRecombinationSmartSizeLoop
+  cases sizes with
+  | nil => rfl
+  | cons d ds => rfl
+
+mutual
+/-- Every factor emitted by the size-ordered recombination search is a recorded
+polynomial factor: it is added only at the `shouldRecordPolynomialFactor` gate.
+Shared conclusion across the three loops, proved by structural recursion on
+`fuel`. Used by the classical-tier irreducibility wiring (the recorded factors
+are non-unit non-zero). -/
+theorem scaledRecombinationSmartAux_shouldRecord
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
+    (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
+    (h : scaledRecombinationSmartAux coreLc target modulus localFactors budget fuel
+        = (some factors, b)) :
+    ∀ g ∈ factors, shouldRecordPolynomialFactor g = true := by
+  unfold scaledRecombinationSmartAux at h
+  split at h
+  · simp only [Prod.mk.injEq, Option.some.injEq] at h
+    obtain ⟨hf, _⟩ := h; subst hf; intro g hg; simp at hg
+  · split at h
+    · simp at h
+    · split at h
+      · simp at h
+      · split at h
+        · simp at h
+        · exact scaledRecombinationSmartSizeLoop_shouldRecord _ _ _ _ _ _ _ _ _ _ h
+termination_by fuel
+
+theorem scaledRecombinationSmartSizeLoop_shouldRecord
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (head : ZPoly) (tail : List ZPoly)
+    (sizes : List Nat) (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
+    (h : scaledRecombinationSmartSizeLoop coreLc target modulus head tail sizes budget fuel
+        = (some factors, b)) :
+    ∀ g ∈ factors, shouldRecordPolynomialFactor g = true := by
+  unfold scaledRecombinationSmartSizeLoop at h
+  split at h
+  · simp at h
+  · split at h
+    · simp at h
+    · split at h
+      · simp at h
+      · simp only [] at h
+        split at h
+        · rename_i res bres hcand
+          simp only [Prod.mk.injEq, Option.some.injEq] at h
+          obtain ⟨hres, _⟩ := h; subst hres
+          exact scaledRecombinationSmartCandLoop_shouldRecord _ _ _ _ _ _ _ _ hcand
+        · exact scaledRecombinationSmartSizeLoop_shouldRecord _ _ _ _ _ _ _ _ _ _ h
+termination_by fuel
+
+theorem scaledRecombinationSmartCandLoop_shouldRecord
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (splits : List (List ZPoly × List ZPoly)) (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
+    (h : scaledRecombinationSmartCandLoop coreLc target modulus splits budget fuel
+        = (some factors, b)) :
+    ∀ g ∈ factors, shouldRecordPolynomialFactor g = true := by
+  unfold scaledRecombinationSmartCandLoop at h
+  split at h
+  · simp at h
+  · rename_i split rest
+    split at h
+    · simp at h
+    · split at h
+      · simp at h
+      · rename_i fuel'
+        simp only [] at h
+        split at h
+        · rename_i hrecord
+          cases hquot : exactQuotient? target
+              (normalizeFactorSign (ZPoly.primitivePart
+                (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
+          | none =>
+              simp only [hquot] at h
+              exact scaledRecombinationSmartCandLoop_shouldRecord _ _ _ _ _ _ _ _ h
+          | some quotient =>
+              simp only [hquot] at h
+              cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
+                  (budget - 1) fuel' with
+              | mk ores ob =>
+                  cases ores with
+                  | none =>
+                      simp only [haux] at h
+                      exact scaledRecombinationSmartCandLoop_shouldRecord _ _ _ _ _ _ _ _ h
+                  | some sub =>
+                      simp only [haux] at h
+                      simp only [Prod.mk.injEq, Option.some.injEq] at h
+                      obtain ⟨hfac, _⟩ := h; subst hfac
+                      intro g hg
+                      rcases List.mem_cons.mp hg with hg_eq | hg_sub
+                      · subst hg_eq; exact hrecord
+                      · exact scaledRecombinationSmartAux_shouldRecord _ _ _ _ _ _ _ _ haux g hg_sub
+        · exact scaledRecombinationSmartCandLoop_shouldRecord _ _ _ _ _ _ _ _ h
 termination_by fuel
 end
 
