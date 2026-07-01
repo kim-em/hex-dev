@@ -15,7 +15,7 @@ public section
 Pivot search and column elimination for the `hex-matrix` RREF loop.
 
 This module supplies the executable building blocks of Gauss-Jordan
-elimination and their entrywise lemmas. It defines `rowCombination`, the
+elimination and their entrywise lemmas. It defines the
 `RowReduceState` carrier, the pivot search `findPivot?` (with the `_some_ge`,
 `_some_nonzero`, `_some_above`, `_none` characterizations) and the
 column-clearing `eliminateColumn`, proving the latter zeros non-pivot rows,
@@ -30,12 +30,6 @@ namespace Hex
 universe u
 namespace Matrix
 variable {R : Type u} {n m : Nat}
-
-/-- A linear combination of the rows of `M`, using coefficients `c`. -/
-@[expose]
-def rowCombination [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (c : Vector R n) :
-    Vector R m :=
-  Matrix.transpose M * c
 
 structure RowReduceState (R : Type u) (n m : Nat) where
   row : Nat

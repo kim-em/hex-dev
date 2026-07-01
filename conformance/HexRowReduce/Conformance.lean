@@ -16,7 +16,7 @@ via the `hexrowreduce_emit_fixtures` stream)
 Mode: always
 Covered operations:
 - row reduction and span APIs (`rowReduce`, `rowReduce_rank`, `spanCoeffs`,
-  `rowCombination`, `spanContains`)
+  `vecMul`, `spanContains`)
 - nullspace basis extraction (`nullspace`, `nullspaceBasisMatrix`)
 Covered properties:
 - `rowReduce` returns data whose transform matrix multiplies the input to the
@@ -113,7 +113,7 @@ private def emptyNullspace : Vector (Vector Rat 2) 0 :=
 #guard let D := Matrix.rowReduce fullRat22; D.echelon = (Matrix.identity (R := Rat) 2)
 
 #guard Matrix.spanCoeffs dependentRat spanVec = some spanCoeffsWitness
-#guard Matrix.rowCombination dependentRat spanCoeffsWitness = spanVec
+#guard Matrix.vecMul spanCoeffsWitness dependentRat = spanVec
 #guard Matrix.spanContains dependentRat spanVec
 #guard Matrix.spanCoeffs dependentRat offSpanVec = none
 #guard !(Matrix.spanContains dependentRat offSpanVec)
@@ -130,7 +130,7 @@ private def emptyNullspace : Vector (Vector Rat 2) 0 :=
 section RowReduceWrapperAutomation
 
 example (M : Matrix Rat n m) (v : Vector Rat m) (c : Vector Rat n) :
-    Matrix.spanCoeffs M v = some c → Matrix.rowCombination M c = v := by
+    Matrix.spanCoeffs M v = some c → Matrix.vecMul c M = v := by
   exact Matrix.spanCoeffs_sound M v c
 
 example (M : Matrix Rat n m) (v : Vector Rat m) :
@@ -139,7 +139,7 @@ example (M : Matrix Rat n m) (v : Vector Rat m) :
 
 example (M : Matrix Rat n m) (v : Vector Rat m) :
     Matrix.spanContains M v = true →
-      ∃ c : Vector Rat n, Matrix.rowCombination M c = v := by
+      ∃ c : Vector Rat n, Matrix.vecMul c M = v := by
   exact (Matrix.spanContains_iff M v).mp
 
 example (M : Matrix Rat n m) (k : Fin (m - Matrix.rowReduce_rank M)) :

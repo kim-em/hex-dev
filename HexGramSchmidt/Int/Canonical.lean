@@ -18,7 +18,7 @@ namespace GramSchmidt.Int
 /-- Row-vector interpretation of the trailing block during a no-pivot Bareiss
 pass over a Gram matrix.  Each active trailing row carries an explicit integer
 coefficient vector `coeff i` such that the represented row is
-`Matrix.rowCombination b (coeff i)`, supported at coordinates `≤ i.val`, and
+`Matrix.vecMul (coeff i) b`, supported at coordinates `≤ i.val`, and
 each matrix entry in that trailing row is its inner product against the
 corresponding original row. -/
 structure BareissGramRowInvariant (b : Matrix Int n m)
@@ -28,7 +28,7 @@ structure BareissGramRowInvariant (b : Matrix Int n m)
     (coeff i)[k] = 0
   entry_eq_dot : ∀ i j : Fin n, state.step ≤ i.val →
     state.matrix[i][j] =
-      (Matrix.rowCombination b (coeff i)).dotProduct (b.row j)
+      (Matrix.vecMul (coeff i) b).dotProduct (b.row j)
 
 /-- The initial no-pivot Gram state satisfies the row-coefficient invariant
 with each row represented by the standard basis vector `eᵢ`. -/
@@ -47,10 +47,9 @@ def bareissGramRowInvariant_initial (b : Matrix Int n m) :
     · simp [h]
   · intro i j _hi
     have hsingle :
-        Matrix.rowCombination b
-            (Vector.ofFn fun k : Fin n => if i = k then (1 : Int) else 0) =
+        Matrix.vecMul (Vector.ofFn fun k : Fin n => if i = k then (1 : Int) else 0) b =
           b.row i :=
-      Matrix.IsRowReduced.rowCombination_single (M := b) i
+      Matrix.IsRowReduced.vecMul_single (M := b) i
     rw [hsingle]
     simp [Matrix.noPivotInitialState, Matrix.gramMatrix, Matrix.ofFn, Vector.dotProduct]
 
@@ -124,20 +123,20 @@ private theorem dot_bareiss_row_update_right
       (fun a : Fin m => w[a])
       0 0
 
-/-- `rowCombination_bareiss_coeff_update` shows that row combinations respect the Bareiss coefficient update used by the Gram-row invariant. -/
-private theorem rowCombination_bareiss_coeff_update
+/-- `vecMul_bareiss_coeff_update` shows that row combinations respect the Bareiss coefficient update used by the Gram-row invariant. -/
+private theorem vecMul_bareiss_coeff_update
     (M : Matrix Int n m) (x y : Int) (c d : Vector Int n) :
-    Matrix.rowCombination M (Vector.ofFn fun a : Fin n => x * c[a] - y * d[a]) =
+    Matrix.vecMul (Vector.ofFn fun a : Fin n => x * c[a] - y * d[a]) M =
       Vector.ofFn fun j : Fin m =>
-        x * (Matrix.rowCombination M c)[j] - y * (Matrix.rowCombination M d)[j] := by
+        x * (Matrix.vecMul c M)[j] - y * (Matrix.vecMul d M)[j] := by
   apply Vector.ext
   intro j hj
   let jf : Fin m := ⟨j, hj⟩
   show
-      (Matrix.rowCombination M (Vector.ofFn fun a : Fin n => x * c[a] - y * d[a]))[jf] =
+      (Matrix.vecMul (Vector.ofFn fun a : Fin n => x * c[a] - y * d[a]) M)[jf] =
         (Vector.ofFn fun j : Fin m =>
-          x * (Matrix.rowCombination M c)[j] - y * (Matrix.rowCombination M d)[j])[jf]
-  unfold Matrix.rowCombination
+          x * (Matrix.vecMul c M)[j] - y * (Matrix.vecMul d M)[j])[jf]
+  unfold Matrix.vecMul
   have h_rhs :
       (Vector.ofFn fun j : Fin m => x * (M.transpose * c)[j] - y * (M.transpose * d)[j])[jf] =
         x * (M.transpose * c)[jf] - y * (M.transpose * d)[jf] := by
@@ -169,25 +168,24 @@ private theorem vector_exactDiv_eq_of_eq_mul_right
   let af : Fin n := ⟨a, ha⟩
   simp [exactDiv_eq_of_eq_mul_right hdenom (hnum af), af]
 
-/-- `rowCombination_exactDiv_eq_of_eq_mul_right` replaces exact-divided coefficients by their quotient vector inside a row combination. -/
-private theorem rowCombination_exactDiv_eq_of_eq_mul_right
+/-- `vecMul_exactDiv_eq_of_eq_mul_right` replaces exact-divided coefficients by their quotient vector inside a row combination. -/
+private theorem vecMul_exactDiv_eq_of_eq_mul_right
     (M : Matrix Int n m) {denom : Int} (hdenom : denom ≠ 0)
     (num q : Fin n → Int) (hnum : ∀ a : Fin n, num a = q a * denom) :
-    Matrix.rowCombination M (Vector.ofFn fun a : Fin n => Matrix.exactDiv (num a) denom) =
-      Matrix.rowCombination M (Vector.ofFn q) := by
+    Matrix.vecMul (Vector.ofFn fun a : Fin n => Matrix.exactDiv (num a) denom) M =
+      Matrix.vecMul (Vector.ofFn q) M := by
   rw [vector_exactDiv_eq_of_eq_mul_right hdenom num q hnum]
 
-/-- `dot_rowCombination_exactDiv_eq_of_eq_mul_right` carries exact-division quotient recovery through a row combination and final dot product. -/
-private theorem dot_rowCombination_exactDiv_eq_of_eq_mul_right
+/-- `dot_vecMul_exactDiv_eq_of_eq_mul_right` carries exact-division quotient recovery through a row combination and final dot product. -/
+private theorem dot_vecMul_exactDiv_eq_of_eq_mul_right
     (M : Matrix Int n m) {denom : Int} (hdenom : denom ≠ 0)
     (num q : Fin n → Int) (hnum : ∀ a : Fin n, num a = q a * denom)
     (w : Vector Int m) :
     Vector.dotProduct
-        (Matrix.rowCombination M
-          (Vector.ofFn fun a : Fin n => Matrix.exactDiv (num a) denom))
+        (Matrix.vecMul (Vector.ofFn fun a : Fin n => Matrix.exactDiv (num a) denom) M)
         w =
-      (Matrix.rowCombination M (Vector.ofFn q)).dotProduct w := by
-  rw [rowCombination_exactDiv_eq_of_eq_mul_right M hdenom num q hnum]
+      (Matrix.vecMul (Vector.ofFn q) M).dotProduct w := by
+  rw [vecMul_exactDiv_eq_of_eq_mul_right M hdenom num q hnum]
 
 /-- Project the explicit coefficient witness for the row at index `i`. -/
 private def bareissGramRowInvariantCoeff
@@ -208,8 +206,8 @@ private theorem bareissGramRowInvariantCoeff_support
 private theorem bareissGramRowInvariantCoeff_row
     {b : Matrix Int n m} {state : Matrix.BareissState n}
     (hinv : BareissGramRowInvariant b state) (i : Fin n) :
-    Matrix.rowCombination b (bareissGramRowInvariantCoeff hinv i) =
-      Matrix.rowCombination b (hinv.coeff i) := rfl
+    Matrix.vecMul (bareissGramRowInvariantCoeff hinv i) b =
+      Matrix.vecMul (hinv.coeff i) b := rfl
 
 /-- Coefficient witness produced by one regular Bareiss step on the row at
 index `i`.  The functional shape mirrors the row update on the matrix side. -/
@@ -268,14 +266,14 @@ private theorem bareissGramRegularStepQuotient_stepCoeff_eq
     bareissGramRegularStepQuotient_stepCoeff_get
       (hinv := hinv) (hnext := hnext) (i := i) (hi := hi) hprev hq af
 
-private theorem rowCombination_bareissGramRegularStepQuotient
+private theorem vecMul_bareissGramRegularStepQuotient
     {b : Matrix Int n m} {state : Matrix.BareissState n}
     {hinv : BareissGramRowInvariant b state}
     {hnext : state.step + 1 < n} {i : Fin n} {hi : state.step + 1 ≤ i.val}
     (hprev : state.prevPivot ≠ 0)
     (hq : BareissGramRegularStepQuotient hinv hnext i hi) :
-    Matrix.rowCombination b (bareissGramRowInvariantStepCoeff hinv hnext i hi) =
-      Matrix.rowCombination b (Vector.ofFn hq.q) := by
+    Matrix.vecMul (bareissGramRowInvariantStepCoeff hinv hnext i hi) b =
+      Matrix.vecMul (Vector.ofFn hq.q) b := by
   rw [bareissGramRegularStepQuotient_stepCoeff_eq hprev hq]
 
 theorem bareissGramRowInvariantStepCoeff_support
@@ -468,15 +466,15 @@ theorem bareissGramRowInvariant_coeff_transport
   cases h
   rfl
 
-/-- Right-scalar linearity of the dot product against a `rowCombination` whose
+/-- Right-scalar linearity of the dot product against a `vecMul` whose
 coefficient vector is multiplied pointwise by a constant on the right.  Used
 to factor the Bareiss exact-division denominator out of a quotient-backed row
 combination. -/
-private theorem dot_rowCombination_mul_right_int
+private theorem dot_vecMul_mul_right_int
     (b : Matrix Int n m) (f : Fin n → Int) (s : Int) (w : Vector Int m) :
     Vector.dotProduct
-        (Matrix.rowCombination b (Vector.ofFn fun a : Fin n => f a * s)) w =
-      (Matrix.rowCombination b (Vector.ofFn f)).dotProduct w * s := by
+        (Matrix.vecMul (Vector.ofFn fun a : Fin n => f a * s) b) w =
+      (Matrix.vecMul (Vector.ofFn f) b).dotProduct w * s := by
   have h_eq_input :
       (Vector.ofFn fun a : Fin n => f a * s) =
         Vector.ofFn fun a : Fin n =>
@@ -485,10 +483,10 @@ private theorem dot_rowCombination_mul_right_int
     intro a ha
     simp only [Vector.getElem_ofFn]
     grind
-  rw [h_eq_input, rowCombination_bareiss_coeff_update b s 0 (Vector.ofFn f) (Vector.ofFn f)]
+  rw [h_eq_input, vecMul_bareiss_coeff_update b s 0 (Vector.ofFn f) (Vector.ofFn f)]
   rw [dot_bareiss_row_update_left s 0
-    (Matrix.rowCombination b (Vector.ofFn f))
-    (Matrix.rowCombination b (Vector.ofFn f)) w]
+    (Matrix.vecMul (Vector.ofFn f) b)
+    (Matrix.vecMul (Vector.ofFn f) b) w]
   grind
 
 /-- Row-entry algebra for one regular Gram-row Bareiss step.  Consuming the
@@ -511,8 +509,7 @@ private theorem bareissGramRegularStep_entry_eq_dot
     (Matrix.stepMatrix state.matrix state.step
         state.matrix[state.step][state.step] state.prevPivot)[i][j] =
       Vector.dotProduct
-        (Matrix.rowCombination b
-          (bareissGramRowInvariantStepCoeff hinv hnext i hi))
+        (Matrix.vecMul (bareissGramRowInvariantStepCoeff hinv hnext i hi) b)
         (b.row j) := by
   let k : Fin n := ⟨state.step, Nat.lt_trans (Nat.lt_succ_self state.step) hnext⟩
   have hk_val : k.val = state.step := rfl
@@ -527,17 +524,16 @@ private theorem bareissGramRegularStep_entry_eq_dot
   -- Claim A: the dot product of the "numerator-side" row combination is lhsNum.
   have h_dot_num :
       Vector.dotProduct
-          (Matrix.rowCombination b
-            (Vector.ofFn fun a : Fin n =>
+          (Matrix.vecMul (Vector.ofFn fun a : Fin n =>
               state.matrix[k][k] * (hinv.coeff i)[a] -
-                state.matrix[i][k] * (hinv.coeff k)[a]))
+                state.matrix[i][k] * (hinv.coeff k)[a]) b)
           (b.row j) = lhsNum := by
-    rw [rowCombination_bareiss_coeff_update b
+    rw [vecMul_bareiss_coeff_update b
       state.matrix[k][k] state.matrix[i][k] (hinv.coeff i) (hinv.coeff k)]
     rw [dot_bareiss_row_update_left
       state.matrix[k][k] state.matrix[i][k]
-      (Matrix.rowCombination b (hinv.coeff i))
-      (Matrix.rowCombination b (hinv.coeff k))
+      (Matrix.vecMul (hinv.coeff i) b)
+      (Matrix.vecMul (hinv.coeff k) b)
       (b.row j)]
     rw [← hinv.entry_eq_dot i j h_step_le_i,
         ← hinv.entry_eq_dot k j h_step_le_k]
@@ -545,13 +541,12 @@ private theorem bareissGramRegularStep_entry_eq_dot
   -- `exactDiv lhsNum prevPivot`.
   have h_dot_step :
       Vector.dotProduct
-          (Matrix.rowCombination b
-            (bareissGramRowInvariantStepCoeff hinv hnext i hi))
+          (Matrix.vecMul (bareissGramRowInvariantStepCoeff hinv hnext i hi) b)
           (b.row j) = Matrix.exactDiv lhsNum state.prevPivot := by
-    rw [rowCombination_bareissGramRegularStepQuotient hprev hq]
+    rw [vecMul_bareissGramRegularStepQuotient hprev hq]
     refine (exactDiv_eq_of_eq_mul_right hprev ?_).symm
     have h_dot_mul :=
-      dot_rowCombination_mul_right_int b hq.q state.prevPivot (b.row j)
+      dot_vecMul_mul_right_int b hq.q state.prevPivot (b.row j)
     rw [← h_dot_mul]
     have h_q_eq_num :
         (Vector.ofFn fun a : Fin n => hq.q a * state.prevPivot) =
@@ -615,8 +610,7 @@ def bareissGramRowInvariant_regular_step
         (Matrix.stepMatrix state.matrix state.step
             state.matrix[state.step][state.step] state.prevPivot)[i][j] =
           Vector.dotProduct
-            (Matrix.rowCombination b
-              (bareissGramRowInvariantStepCoeff hinv hnext i hi))
+            (Matrix.vecMul (bareissGramRowInvariantStepCoeff hinv hnext i hi) b)
             (b.row j)) :
     BareissGramRowInvariant b
       { step := state.step + 1
@@ -678,8 +672,7 @@ theorem bareissGramRowInvariant_regular_step_coeff_canonical
           (Matrix.noPivotLoop elapsed
             (Matrix.noPivotInitialState (Matrix.gramMatrix b))).prevPivot)[i][j] =
           Vector.dotProduct
-            (Matrix.rowCombination b
-              (bareissGramRowInvariantStepCoeff hinv hnext i hi))
+            (Matrix.vecMul (bareissGramRowInvariantStepCoeff hinv hnext i hi) b)
             (b.row j))
     (i : Fin n) :
     (bareissGramRowInvariant_regular_step hnext hp hinv hentry).coeff i =
@@ -876,8 +869,7 @@ private theorem bareissGramInitialRegularStep_entry_eq_dot
         (Matrix.noPivotLoop fuel
           (Matrix.noPivotInitialState (Matrix.gramMatrix b))).prevPivot)[i][j] =
       Vector.dotProduct
-        (Matrix.rowCombination b
-          (bareissGramRowInvariantStepCoeff hinv hnext i hi))
+        (Matrix.vecMul (bareissGramRowInvariantStepCoeff hinv hnext i hi) b)
         (b.row j) := by
   let state :=
     Matrix.noPivotLoop fuel
