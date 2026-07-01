@@ -23,30 +23,32 @@ tag := "hex-lll"
 tag := "hex-lll-intro"
 %%%
 
-`HexLLL` is the executable lattice-reduction layer of the stack. Given an
-integer basis — the rows of a {name}`Hex.Matrix` over `Int` — it produces a
-new basis generating the *same* integer lattice but made of short, nearly
-orthogonal vectors, the LLL guarantee. Its first row is a provably short
-lattice vector, which is the service the
+Released as [hex-lll](https://github.com/leanprover/hex-lll), with the
+Mathlib correspondence in
+[hex-lll-mathlib](https://github.com/leanprover/hex-lll-mathlib).
+
+`HexLLL` reduces an integer lattice basis. Given the rows of a
+{name}`Hex.Matrix` over `Int`, it produces a new basis for the same
+lattice made of short, nearly orthogonal vectors (the LLL guarantee).
+Its first row is a provably short lattice vector, which is what the
 {ref "hex-lll-cross-references"}[downstream factorization path] consumes:
 the BHKS van Hoeij recombination step in `hex-berlekamp-zassenhaus`
 reconstructs true factors from short vectors of a knapsack lattice.
 
-The library is built around a strict computational/proof split. The
-reduction itself runs through fast, untrusted numerics (a floating-point
-steering pass, and optionally an external `fpLLL` provider), but no proof
-ever depends on those numerics being correct. Instead every reduced basis
-is fed through a *verified integer checker*; only a basis the checker
-accepts is returned, and the checker's soundness theorem — proved on the
-Mathlib side — turns that acceptance into the real mathematical guarantee.
-This chapter follows that arc: first the predicates that *define* a reduced
-basis, then the integer checkers that *decide* them, then the reduction
-{ref "hex-lll-reduction"}[entry points] that produce candidates, and
-finally the {ref "hex-lll-dispatch"}[certified dispatch] that ties the two
-together.
+The library splits computation from proof. The public reducer can
+accelerate through an optional external `fpLLL` provider — fast, untrusted
+numerics — but no proof depends on those numerics being correct. Every
+external candidate is fed through a verified integer checker; only a basis
+the checker accepts is returned, and the checker's soundness theorem
+(proved on the Mathlib side) turns that acceptance into the mathematical
+guarantee. When no external candidate certifies, the exact all-integer
+reducer `lllNative` runs directly, and its guarantee is proved outright.
 
-`HexLLL` is Mathlib-free and depends only on {ref "hex-lll-cross-references"}[`HexGramSchmidt`] for the
-Gram-Schmidt machinery underlying both the predicates and the checkers.
+`HexLLL` is Mathlib-free. It takes the Gram-Schmidt machinery underlying
+both the predicates and the checkers from
+{ref "hex-lll-cross-references"}[`HexGramSchmidt`], which computes the
+leading integer Gram determinants by fraction-free (Bareiss) elimination and
+so rests in turn on `HexBareiss`, `HexDeterminant`, and `HexRowReduce`.
 
 # Lattices and reducedness
 %%%
@@ -88,9 +90,9 @@ tag := "hex-lll-checkers"
 
 The predicates above mention rational Gram-Schmidt data; deciding them
 directly would require rational (or interval) arithmetic. The checkers
-instead work over the *scaled integer* Gram-Schmidt representation — the
-leading Gram determinants `d` and the integer scaled coefficients `ν` — so
-a `Bool` answer needs only exact integer comparisons. The base checker
+instead work over the scaled integer Gram-Schmidt representation (the
+leading Gram determinants `d` and the integer scaled coefficients `ν`),
+so a `Bool` answer needs only exact integer comparisons. The base checker
 clears denominators in both the size-reduced and Lovász clauses.
 
 {docstring Hex.lllReducedInt}
@@ -122,31 +124,23 @@ with the reducedness checker.
 tag := "hex-lll-reduction"
 %%%
 
-The reducer carries two pieces of state. The proof-facing
-{name}`Hex.Internal.LLLState` holds the exact integer basis together with the scaled
-Gram-Schmidt data, and a separate {name}`Hex.Internal.LLLState.Valid` predicate ties
-that data back to the `GramSchmidt.Int` representation — keeping the state
-updates purely computational while letting the Mathlib layer reason about
-them.
+The reducer state is the proof-facing {name}`Hex.Internal.LLLState`, which holds
+the exact integer basis together with the scaled Gram-Schmidt data, and a
+separate {name}`Hex.Internal.LLLState.Valid` predicate relates that data to the
+`GramSchmidt.Int` representation, keeping the state updates computational while
+letting the Mathlib side reason about them.
 
 {docstring Hex.Internal.LLLState}
 
 {docstring Hex.Internal.LLLState.Valid}
 
-The hot path runs over a floating-point state instead. Its integer basis is
-the only proof-relevant field; the `Float` Gram-Schmidt approximations
-steer the swap trajectory but never enter a proof.
+The exact all-integer reducer {name}`Hex.lllNative` drives the standard LLL
+outer loop — integer size-reduction and adjacent Lovász swaps — from that exact
+`d`/`ν` data alone. Its size-reduction step produces exact `|μ| ≤ 1/2`, so it
+carries the classical `η = 1/2` contract and is the direct `1/4 < δ` entry
+point.
 
-{docstring Hex.Internal.SteeredState}
-
-{docstring Hex.Internal.steeredReduce}
-
-`steeredReduce` is a heuristic with no standalone guarantee, so it is never
-returned raw. {name}`Hex.lllSteered` runs it, checks the candidate with
-{name}`Hex.lllReducedCheck`, and falls back to the exact integer reducer if
-the check fails — so its output is always certified `(δ, 11/20)`-reduced.
-
-{docstring Hex.lllSteered}
+{docstring Hex.lllNative}
 
 The public entry point hides all of this behind one signature. Given a
 basis with independent rows and `δ` in the classical range, it returns a
@@ -174,8 +168,8 @@ tag := "hex-lll-dispatch"
 When an external `fpLLL` provider is linked in, {name}`Hex.Internal.LLLProvider.dispatch`
 asks it for a reduced basis and validates the answer with {name}`Hex.certCheck`
 before trusting it. A rejected or absent provider yields `none`, and the
-caller falls through to the native path — so the foreign reducer is a
-performance accelerator that can never compromise correctness.
+caller falls through to the native path, so the foreign reducer can speed
+things up but can never compromise correctness.
 
 {docstring Hex.Internal.LLLProvider.dispatch}
 
@@ -190,12 +184,11 @@ its certificate, the single fact the certified-dispatch path of
 tag := "hex-lll-worked"
 %%%
 
-The block below reduces the rank-2 lattice with basis rows `(1, 12)` and
+The block reduces the rank-2 lattice with basis rows `(1, 12)` and
 `(0, 1)`. The skewed first row is far from orthogonal; reduction returns
-the basis `(0, 1)`, `(1, 0)` — the two unit vectors, which generate the
-same lattice and are as short as possible. Every `#guard` is checked when
-the chapter is built, so the outputs are guaranteed to match the executable
-implementation.
+`(0, 1)`, `(1, 0)` (the two unit vectors), which generate the same
+lattice and are as short as possible. Each `#guard` is checked when the
+chapter builds.
 
 ```lean
 open Hex Hex.Matrix Hex.Internal
@@ -238,11 +231,15 @@ private def V : Matrix Int 2 2 :=
     | 1, 0 => 1
     | _, _ => 0
 
+-- The δ = 3/4 preconditions for the exact reducer.
+private theorem hlo : (1 / 4 : Rat) < 3 / 4 := by grind
+private theorem hhi : (3 / 4 : Rat) ≤ 1 := by grind
+
 -- Reduction turns the skewed basis into R.
-#guard steeredReduce B (3 / 4) = R
+#guard lllNative B (3 / 4) hlo hhi (by decide) = R
 
 -- Its first row is a shortest lattice vector.
-#guard ((steeredReduce B (3 / 4)).row
+#guard ((lllNative B (3 / 4) hlo hhi (by decide)).row
           ⟨0, by decide⟩).toArray = #[0, 1]
 
 -- The verified checker rejects the input basis
@@ -263,19 +260,19 @@ end HexLLLChapterExample
 tag := "hex-lll-cross-references"
 %%%
 
-`HexLLL` sits one layer above the Gram-Schmidt machinery and one boundary
-away from its correctness proofs:
+`HexLLL`'s substantive dependency is `HexGramSchmidt`, with its correctness
+proofs in `HexLLLMathlib`:
 
-* `HexGramSchmidt` supplies the integer Gram-Schmidt representation —
-  {name}`Hex.GramSchmidt.Int.independent`, the scaled coefficients, and the
-  leading Gram determinants — on which both the {ref "hex-lll-predicates"}[reducedness
-  predicates] and the {ref "hex-lll-checkers"}[integer checkers] are
-  defined. `HexLLL` is its only direct dependency.
-* `HexLLLMathlib` is the correspondence library carrying the soundness
-  theorems. `lllReducedInt_sound` and `lllReducedCheck_sound` bridge the
-  integer checkers to {name}`Hex.isLLLReduced`, and `certCheck_sound`
-  combines those with {name}`Hex.Matrix.sameLatticeCert_sound` into the
-  property triple (same lattice, independence, reducedness) that the
-  certified-dispatch path of {name}`Hex.lll` relies on. The Mathlib
-  dependency lives entirely on that side of the boundary; `HexLLL` itself
-  is Mathlib-free.
+* `HexGramSchmidt` supplies the integer Gram-Schmidt representation
+  ({name}`Hex.GramSchmidt.Int.independent`, the scaled coefficients, and
+  the leading Gram determinants) on which both the
+  {ref "hex-lll-predicates"}[reducedness predicates] and the
+  {ref "hex-lll-checkers"}[integer checkers] are defined. Through it,
+  `HexLLL` rests transitively on the fraction-free integer determinant stack
+  (`HexBareiss`, `HexDeterminant`, `HexRowReduce`).
+* `HexLLLMathlib` carries the soundness theorems. `lllReducedInt_sound`
+  and `lllReducedCheck_sound` relate the integer checkers to
+  {name}`Hex.isLLLReduced`, and `certCheck_sound` combines those with
+  {name}`Hex.Matrix.sameLatticeCert_sound` into the property triple (same
+  lattice, independence, reducedness) that the certified-dispatch path of
+  {name}`Hex.lll` relies on. `HexLLL` itself is Mathlib-free.

@@ -554,7 +554,7 @@ def prefixRows (M : Matrix R n m) (i : Nat) (hi : i < n) : Matrix R (i + 1) m :=
 /-- Executable row-span membership in the first `i + 1` rows of a matrix. -/
 @[expose]
 def prefixSpan (M : Matrix Rat n m) (i : Nat) (hi : i < n) (v : Vector Rat m) : Prop :=
-  ∃ c : Vector Rat (i + 1), Matrix.rowCombination (prefixRows M i hi) c = v
+  ∃ c : Vector Rat (i + 1), Matrix.vecMul c (prefixRows M i hi) = v
 
 private theorem entry_ofFn (f : Fin n → Fin m → R) (i : Fin n) (j : Fin m) :
     entry (Matrix.ofFn f) i j = f i j := by

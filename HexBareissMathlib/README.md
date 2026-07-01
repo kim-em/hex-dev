@@ -5,12 +5,12 @@ library for Lean 4. The aim is fast executable code, fully verified, built
 with spec-driven development.
 
 `hex-bareiss-mathlib` is the Mathlib bridge for
-[`hex-bareiss`](https://github.com/kim-em/hex-bareiss). It proves the
+[`hex-bareiss`](https://github.com/leanprover/hex-bareiss). It proves the
 row-pivoted Bareiss determinant correct, both against Mathlib's `Matrix.det`
 and against the executable Leibniz determinant from
-[`hex-determinant`](https://github.com/kim-em/hex-determinant). It depends on
-[`hex-bareiss`](https://github.com/kim-em/hex-bareiss),
-[`hex-determinant-mathlib`](https://github.com/kim-em/hex-determinant-mathlib),
+[`hex-determinant`](https://github.com/leanprover/hex-determinant). It depends on
+[`hex-bareiss`](https://github.com/leanprover/hex-bareiss),
+[`hex-determinant-mathlib`](https://github.com/leanprover/hex-determinant-mathlib),
 and Mathlib.
 
 # Quickstart
@@ -20,7 +20,7 @@ Add to your `lakefile.toml`:
 ```toml
 [[require]]
 name = "hex-bareiss-mathlib"
-git = "https://github.com/kim-em/hex-bareiss-mathlib.git"
+git = "https://github.com/leanprover/hex-bareiss-mathlib.git"
 rev = "main"
 ```
 
@@ -78,7 +78,7 @@ theorem bareiss_eq_mathlib_det (M : Hex.Matrix Int n n) :
 ```
 
 The executable algorithm itself lives in
-[`hex-bareiss`](https://github.com/kim-em/hex-bareiss); these theorems are on
+[`hex-bareiss`](https://github.com/leanprover/hex-bareiss); these theorems are on
 that Mathlib-free library's forbidden list and live here by design.
 
 # Reference manual

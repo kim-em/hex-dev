@@ -260,46 +260,34 @@ constructor with no deferred proof obligation: `hex-lll` is on the
 `hex-berlekamp-zassenhaus` critical path, so its public surface must be
 usable without any `sorry`.
 
-### Approximation-steered default reducer
+### Native default reducer
 
-The default native reducer is **steered by untrusted approximate Gram-Schmidt
-data**. It maintains a floating-point (or fixed-width dyadic) approximation of
-the Gram-Schmidt coefficients `μ[i][j]` and squared orthogonal norms
-`‖b*_i‖²`, and uses that approximation alone to choose its row operations: the
-integer size-reduction rounding coefficients and the Lovász swap decisions are
-read off the approximation. No property of the approximation enters any proof —
-a poor approximation can only produce a slow or insufficiently reduced run,
-never an incorrect lattice.
+The native reducer `lllNative` is the **exact all-integer `d`/`ν` reducer**. It
+carries the exact Gram-determinant vector `d` and scaled coefficients `ν` of the
+`LLLState` representation and drives the standard LLL outer loop — integer
+size-reduction and adjacent Lovász swaps — from that exact data alone. Every
+basis mutation is one of the proven-lattice-preserving exact integer row
+operations (`GramSchmidt.Int.sizeReduce`, the size-reduction row combination,
+and `GramSchmidt.Int.adjacentSwap`, the adjacent row swap), so the generated
+lattice of the output equals that of the input **by construction**, and the loop
+terminates by fuel. Its size-reduction step produces exact `|μ| ≤ 1/2`, so
+`lllNative` carries the classical `η = 1/2` contract (precondition `1/4 < δ`,
+short-vector constant `1/(δ − 1/4)`).
 
-Every basis mutation is one of the exact integer row operations drawn from the
-proven-lattice-preserving set (`GramSchmidt.Int.sizeReduce`, the size-reduction
-row combination, and `GramSchmidt.Int.adjacentSwap`, the adjacent row swap). The
-generated lattice of the output therefore equals that of the input **by
-construction** — no transform certificate is computed or needed — and the loop
-terminates by fuel, exactly as the exact `d`/`ν` reducer does.
+The public `lll` keeps exactly two paths, both satisfying the same
+`(δ, 11/20)` post-condition:
 
-The steered path **materializes no exact Gram-Schmidt state**: it carries the
-exact integer basis together with the untrusted approximation, and recomputes a
-working row's coefficients from the exact integer Gram entries `⟨b_i, b_j⟩` of
-the current basis when it needs to bound floating-point drift. The exact `d`/`ν`
-Gram-determinant and scaled-coefficient data of the `LLLState` representation
-appears only on the fallback path.
-
-The steered output is **certified post hoc** at the public `(δ, 11/20)` bound by
-the reducedness checker (*Certified external dispatch*). On certification
-success the steered basis is returned; on failure the reducer falls back to the
-exact `d`/`ν` reducer `lllNative`, whose `η = 1/2` size-reduction contract is
-unchanged. A deterministic input-size dispatch may route the smallest inputs —
-those for which the exact reducer is already cheaper than the steered loop plus
-its certification — directly to `lllNative`; like every other dispatch in this
-library it is a function of the input alone and both branches satisfy the same
-post-condition.
+1. the **certified external-candidate** dispatch (provider → `certCheck`, see
+   *Certified external dispatch*), and
+2. the **exact** `lllNative`, run directly when no provider candidate certifies.
 
 Both pinned `η` values are unchanged: `lllNative` retains `η = 1/2` and the
 public `lll` retains `η = 11/20`. The public `lll` contract — same lattice,
 `isLLLReduced (lll …) δ (11/20)`, and the `lll_short_vector` bound — holds
-verbatim whether the result comes from the steered path, its exact fallback, or
-the certified external candidate.
+verbatim whether the result comes from the certified external candidate or the
+exact native path. The `11/20` loosening exists **solely** because a black-box
+external reducer cannot be forced to `|μ| ≤ 1/2` exactly; the native path lands
+at `1/2` and is the direct `1/4 < δ` entry point.
 
 ### Short-vector recovery for downstream consumers
 
@@ -349,13 +337,43 @@ cross-referenced as `phase4.input_families` in [`libraries.yml`](https://github.
   This exercises bigint operand-size drift in both `LLLState.ofBasis`
   and the swap path; entry sizes grow with `n`, so total input
   size is cubic in `n`.
+- **`ajtai`** — Ajtai-style worst-case lower-triangular bases, a
+  faithful port of fplll's `gen_trg` (`latticegen t <d> 1.2`): per
+  column `i`, `bits_i = ⌊(2d − i)^1.2⌋`, the diagonal `D_i` is uniform
+  in `[2, 2^bits_i]`, and below-diagonal entries are uniform in
+  `(−D_i/2, D_i/2)`. The steeply decreasing diagonal profile drives the
+  `Θ(d² log B)` swap count (Nguyen–Stehlé, *LLL on the Average*,
+  ANTS-VII 2006) — the **iteration-count** scaling axis the
+  near-orthogonal `random-bounded` and `harsh-cubic` families leave
+  unmeasured. Fidelity is structural, not entry-exact (fplll draws from
+  GMP, the Lean port from the committed LCG via `wideRandom`):
+  `scripts/dev/validate_latticegen.py` checks both satisfy the same
+  lower-triangular / `bits_i` / `|off| < D_i/2` envelope.
+- **`q-ary`** — LWE/SIS bases `[[I_{d-k}, H], [0, q·I_k]]` (faithful
+  port of fplll's `gen_qary` / `latticegen q`), `H` uniform mod
+  `q = 2^(b-1) + rand(b-1)`. The unreduced basis is a step profile (a
+  plateau at `q` over a plateau at `1`) LLL must smooth into the
+  characteristic Z-shape, concentrating swaps in the transition band —
+  the realistic cryptographic regime, distinct from a triangular basis.
+- **`ntru`** — NTRU-like bases `[[I, Rot(h)], [0, q·I]]` on `2d × 2d`
+  (faithful port of fplll's `gen_ntrulike` / `latticegen n`), with
+  `Rot(h)` the circulant of `h` uniform mod `q` and `h[0]` fixed so
+  `h(1) ≡ 0 mod q` (checked by `#guard`). Planted dense structure plus
+  the q-block.
+- **`knapsack`** — the **rectangular** `d × (d+1)` integer-relation
+  basis (faithful port of fplll's `gen_intrel` / `latticegen r`), row
+  `i` = `[rand_b, e_{i+1}]`. The only family with `cols ≠ rows`, so it
+  exercises the `m > n` Gram construction in `ofBasis` that every square
+  family leaves untested. It also drives the success-vs-density recovery
+  chart (planted-vector recovery vs density `d = n/b`).
 
 **At least one family must demonstrably exercise the swap branch of
-the LLL outer loop.** For `bz-recombination` and `harsh-cubic` this
-is automatic; for `random-bounded` the family must include at least
-one committed seed where ≥ 1 Lovász swap fires, recorded in the
-bench module as a fixed fixture so the swap-firing property is
-verifiable from the SPEC alone.
+the LLL outer loop.** For `bz-recombination`, `harsh-cubic`, and
+`ajtai` this is automatic (the Ajtai diagonal is steeply decreasing by
+construction, checked by the `ajtaiProfileSteep` `#guard`); for
+`random-bounded` the family must include at least one committed seed
+where ≥ 1 Lovász swap fires, recorded in the bench module as a fixed
+fixture so the swap-firing property is verifiable from the SPEC alone.
 
 **Best-case inputs are not sole Phase-4 evidence.** Per
 [SPEC/benchmarking.md §Anti-patterns](https://github.com/kim-em/hex-dev/blob/main/SPEC/benchmarking.md#anti-patterns),
@@ -456,35 +474,72 @@ classification below is mirrored as structured metadata in
   [§Headline reports — Comparator ratios](https://github.com/kim-em/hex-dev/blob/main/SPEC/benchmarking.md#headline-reports)
   apply.
 
-  **Headline comparator plot — six curves.** The per-family plots at
+  **Headline comparator plot — five curves.** The per-family plots at
   `reports/figures/hex-lll-comparator-<family>.svg`, generated by
   `scripts/plots/hex-lll-comparator.py` and embedded in
-  `reports/hex-lll-performance.md`, draw six log-y wall-time-per-call
+  `reports/hex-lll-performance.md`, draw five log-y wall-time-per-call
   curves across the family's eligible range:
 
   1. **fpLLL** — the raw floating-point reducer alone (unverified).
   2. **Lean native LLL** — the exact integer `d`/`ν` algorithm (`lllNative`),
-     which the steered default demotes to its certification fallback. Data comes
-     from the `runNativeFirstShortVector*` bench targets.
+     the in-tree default reducer. Data comes from the `runNativeFirstShortVector*`
+     (equivalently `runFirstShortVector*`) bench targets.
   3. **verified Isabelle native LLL** — the `LLL_Basis_Reduction` extraction.
-  4. **Lean steered** — the default native path: exact integer row operations
-     steered by an untrusted approximate Gram-Schmidt, certified post hoc at
-     `(δ, 11/20)`. Data comes from the `runFirstShortVector*` bench targets.
-  5. **Lean certified** — fpLLL candidate production plus the Lean verified
+  4. **Lean certified** — fpLLL candidate production plus the Lean verified
      checker (`certCheck`); the certified external-dispatch path. Data comes
      from the `runCertified*` bench targets.
-  6. **verified Isabelle certified-LLL** — fpLLL candidate production plus the
+  5. **verified Isabelle certified-LLL** — fpLLL candidate production plus the
      Isabelle verified checker (the `svp_certified` JAR 2020 §7 configuration
      of the Zenodo 2636367 extraction).
 
-  Curves 1–4 compare the reducers — the exact integer algorithm, the Isabelle
-  extraction, and the steered default that drives the same exact row operations
-  from approximate data; curves 5–6 are the apples-to-apples verification
-  comparison — the *same* fpLLL output certified by the Lean checker versus the
-  Isabelle checker — which is the yardstick for the `verified Isabelle
-  certified-LLL` gating goal. A comparator with fewer than two committed data
-  points on a family is listed in §Concerns rather than dropped from the plot
-  silently.
+  Curves 1–3 compare the reducers — the raw floating-point reducer, the exact
+  Lean integer algorithm, and the Isabelle extraction; curves 4–5 are the
+  apples-to-apples verification comparison — the *same* fpLLL output certified by
+  the Lean checker versus the Isabelle checker — which is the yardstick for the
+  `verified Isabelle certified-LLL` gating goal. A comparator with fewer than two
+  committed data points on a family is listed in §Concerns rather than dropped
+  from the plot silently. A curve whose reducer exceeds its per-call wall-time cap
+  at a rung (a `null` median in the export) simply stops at that ceiling:
+  per-curve x-ranges differ, so the verified Isabelle curves end where the worst
+  case outgrows the cap while the cheap fpLLL/certified curves continue.
+
+  **Per-call floor calibration.** The `svp_certified` comparator runs as a
+  *persistent* subprocess (one per `lake exe hexlll_bench run`, looping on
+  stdin), so its per-request cost is not a fork: it is a fixed round-trip floor
+  — request marshalling plus the per-request fplll candidate production and
+  Isabelle check — independent of `n`. That floor is ~21 ms on carica in the
+  committed exports. It is measured once per run by the
+  `runIsabelleCertifiedProcessFloorNormSq` target (a trivial 2×2 request) and
+  subtracted from the `verified Isabelle certified-LLL` curve by
+  `subtract_request_floor`, so the plotted value is the marginal reduction cost,
+  not the fixed per-request overhead. Each family's floor is resolved per family
+  (`default_floor_path`, commit-matched to the data export); a run that has no
+  floor export plots the curve unadjusted and leaves it labelled `Isabelle
+  certified` (never mislabelled as adjusted). Rungs whose raw time is within
+  15% of the floor are *floor-dominated* — the subtracted value is within the
+  floor's own measurement noise — and are dropped, so the adjusted curve begins
+  where the reduction cost rises clearly above the floor.
+
+  **Success-vs-density plot (knapsack only).** The `knapsack` family also
+  commits a second chart type at
+  `reports/figures/hex-lll-knapsack-success.svg`, generated by
+  `scripts/plots/hex-lll-knapsack-success.py`: planted-vector **recovery rate**
+  versus lattice density `d = n / b` per reducer, over a fixed-`n` sweep across
+  many committed seeds. This is the only family whose interesting signal is
+  solution *quality* (a phase transition), not wall time; the Lagarias–Odlyzko
+  `0.646` and CJLOSS `0.940` constants are drawn as annotated **reference
+  density lines with citations**, not as guaranteed thresholds (the guarantee
+  holds only when the embedding matches the literature setup). The recovery
+  sweep runs in a separate non-timed driver so its many-seed membership checks
+  never pollute the wall-time harness.
+
+  **Headline-SVG selection rule.** The README `# Performance` section embeds one
+  figure. The default headline is the `harsh-cubic` plot, where the exact
+  reducers climb super-quintically as operands widen while the certified path
+  (fpLLL candidate + Lean `certCheck`) stays near fpLLL's slope; a worst-case
+  family (e.g. `ajtai`) may be promoted when it shows the certified path holding
+  flat while the exact reducers provably diverge over ≥ 3 overlapping rungs. The
+  rule is fixed in advance so the choice is not post-hoc cherry-picking.
 
 ### `LLLState.ofBasis` is its own bench target
 

@@ -5107,7 +5107,7 @@ def bhksProjectedRowsTrace (L : BhksLatticeBasis)
 theorem bhksProjectedRowsTrace_reducedMatrix_eq
     (L : BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth) :
     (bhksProjectedRowsTrace L hrows).reducedMatrix =
-      lllSteered L.basis (3 / 4) lll_delta_lower lll_delta_upper hrows := by
+      lllNative L.basis (3 / 4) lll_delta_lower lll_delta_upper hrows := by
   simp [bhksProjectedRowsTrace, lll.shortVectorsUnchecked, bhksRowsArrayToMatrix_toArray]
 
 /--

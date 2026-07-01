@@ -179,9 +179,7 @@ def randomBoundedBasis (n seed : Nat) : Matrix Int n n :=
     else
       randomBoundedEntry (lcgIterate seed (i.val * n + j.val + 1))
 
-/-- Committed seed for the random-bounded family. The `#guard` below checks
-that after size-reducing row 1 against row 0, the first Lovasz comparison
-fails, so the next LLL outer-loop step performs a swap. -/
+/-- Committed seed for the random-bounded family. -/
 def randomBoundedSwapSeed : Nat := 8
 
 /-- Parametric random-bounded input family. The scientific ladder is densified
@@ -194,28 +192,6 @@ def prepRandomBoundedInput (n : Nat) : FirstShortVectorInput :=
     basis := basis
     hn := by
       exact Nat.le_max_right n 1 }
-
-/-- Check that the first Lovasz comparison fails after the first
-size-reduction pass, forcing at least one swap in the subsequent LLL step. -/
-def firstLovaszCheckForcesSwap (input : FirstShortVectorInput) : Bool :=
-  if hrows : 2 < input.rows then
-    let sReduced := (LLLState.ofBasisUnchecked input.basis).sizeReduce 1
-    let f0 : Fin input.rows := ⟨0, by omega⟩
-    let f1 : Fin input.rows := ⟨1, by omega⟩
-    let d0 : Fin (input.rows + 1) := ⟨0, by omega⟩
-    let d1 : Fin (input.rows + 1) := ⟨1, by omega⟩
-    let d2 : Fin (input.rows + 1) := ⟨2, by omega⟩
-    let dkPrev := sReduced.d.get d0
-    let dk := sReduced.d.get d1
-    let dkNext := sReduced.d.get d2
-    let B := (sReduced.ν.getRow f1).get f0
-    let lovaszLhs : Int := 4 * (Int.ofNat dkNext * Int.ofNat dkPrev + B ^ 2)
-    let lovaszRhs : Int := 3 * (Int.ofNat dk ^ 2)
-    lovaszLhs < lovaszRhs
-  else
-    false
-
-#guard firstLovaszCheckForcesSwap (prepRandomBoundedInput 30)
 
 /-- Entry scale for the verified-Isabelle harsh-cubic regime, whose
 documented bit-length is approximately `3.3 * n`. -/
@@ -246,6 +222,213 @@ def prepHarshCubicInput (n : Nat) : FirstShortVectorInput :=
     basis := basis
     hn := by
       exact Nat.le_max_right n 1 }
+
+/-! ### Ajtai-style worst-case family (fplll `gen_trg` port)
+
+This is the lower-triangular worst-case family that drives LLL toward its
+`Θ(d² log B)` swap bound (Nguyen-Stehlé, *LLL on the Average*, ANTS-VII 2006).
+It is a faithful port of fplll's `gen_trg` (`latticegen t <d> <alpha>`,
+`fplll/nr/matrix.cpp`), not the (nonexistent in fplll 5.5.0) `gen_ajtai`:
+
+  for each column `i`: `bits_i = floor((2d - i)^alpha)`, the diagonal
+  `D_i` is uniform in `[2, 2^bits_i]`, and each below-diagonal entry in
+  column `i` is uniform in `(-D_i/2, D_i/2)`; the upper triangle is zero.
+
+Entry-for-entry equality with fplll is impossible (fplll draws from GMP's
+generator; we draw from the committed POSIX LCG), so fidelity is structural:
+same orientation, same `bits_i` diagonal bit-length profile, and the same
+`|off| < D_i/2` envelope. `scripts/dev/validate_latticegen.py` checks this. -/
+
+/-- Floor of the integer `k`-th root of `n` (largest `r` with `r^k ≤ n`),
+by binary search over a bit-length-bounded window. Mathlib-free. -/
+def natIRootGo (k n : Nat) : Nat → Nat → Nat → Nat
+  | _,  lo, 0 => lo
+  | hi, lo, fuel + 1 =>
+      if hi ≤ lo then lo
+      else
+        let mid := (lo + hi + 1) / 2
+        if mid ^ k ≤ n then natIRootGo k n hi mid fuel
+        else natIRootGo k n (mid - 1) lo fuel
+
+/-- `natIRoot k n = ⌊n^(1/k)⌋`. -/
+def natIRoot (k n : Nat) : Nat :=
+  if k = 0 then 0
+  else
+    let hi := 2 ^ (Nat.log2 (n + 1) / k + 1)
+    natIRootGo k n hi 0 (Nat.log2 (n + 1) + 2)
+
+/-- Diagonal bit-length `⌊(2d - i)^1.2⌋` (alpha = 6/5), matching fplll
+`gen_trg`'s `(int)pow(2d - i, alpha)` to within floating-point rounding. -/
+def ajtaiBits (d i : Nat) : Nat := natIRoot 5 ((2 * d - i) ^ 6)
+
+/-- A `bits`-wide pseudo-random natural in `[0, 2^bits)`, built by
+concatenating 31-bit LCG draws so the Ajtai-style entries can actually span
+`~2^bits` (the project LCG alone only yields 31-bit values). -/
+def wideRandom (seed bits : Nat) : Nat :=
+  let chunks := (bits + 30) / 31
+  let raw := (List.range chunks).foldl
+    (fun acc k => acc * 2147483648 + lcgIterate seed (k + 1) % 2147483648) 0
+  if bits = 0 then 0 else raw % (2 ^ bits)
+
+/-- Committed seed for the Ajtai-style family. -/
+def ajtaiSeed : Nat := 1000003
+
+/-- Diagonal `D_i ∈ [2, 2^bits_i]` for column `i` (fplll `randm(2^bits−1)+2`). -/
+def ajtaiDiag (d col : Nat) : Nat :=
+  let bits := ajtaiBits d col
+  wideRandom (ajtaiSeed + 1000003 * (col + 1)) bits % (2 ^ bits - 1) + 2
+
+/-- Below-diagonal entry `(row, col)`, `row > col`: uniform in `(−D_col/2, D_col/2)`. -/
+def ajtaiOff (d row col : Nat) : Int :=
+  let bound := ajtaiDiag d col / 2
+  let bits := ajtaiBits d col
+  let mag := wideRandom (ajtaiSeed + 7919 * (col * d + row + 1)) bits % bound
+  if lcgIterate (ajtaiSeed + 104729) (col * d + row + 1) % 2 = 1 then
+    -Int.ofNat mag
+  else
+    Int.ofNat mag
+
+/-- Lower-triangular Ajtai-style worst-case basis (fplll `gen_trg`, alpha 1.2). -/
+def ajtaiBasis (d : Nat) : Matrix Int d d :=
+  Matrix.ofFn fun i j =>
+    if j.val > i.val then
+      0
+    else if i = j then
+      Int.ofNat (ajtaiDiag d j.val)
+    else
+      ajtaiOff d i.val j.val
+
+/-- Parametric Ajtai-style input family. The scientific ladder is calibrated so
+verified Isabelle native stays under the ~10 s ceiling at its top rung. -/
+def prepAjtaiInput (n : Nat) : FirstShortVectorInput :=
+  let rows := max n 1
+  let basis := ajtaiBasis rows
+  { rows := rows
+    cols := rows
+    basis := basis
+    hn := by
+      exact Nat.le_max_right n 1 }
+
+/-- The Ajtai-style diagonal bit-length profile `bits_i = ⌊(2d - i)^1.2⌋` is
+strictly decreasing in `i`; this steep super-geometric profile is the
+structural cause of the family's worst-case `Θ(d² log B)` swap count. -/
+def ajtaiProfileSteep (d : Nat) : Bool :=
+  (List.range (d - 1)).all fun i => ajtaiBits d (i + 1) < ajtaiBits d i
+
+-- Structural evidence the family exercises the swap branch: the diagonal
+-- profile is steeply decreasing (a plain comment, not a doc-comment, since
+-- `#guard` is a command and cannot carry a docstring).
+#guard ajtaiProfileSteep 8
+
+/-! ### q-ary (LWE/SIS) family (fplll `gen_qary` port)
+
+Faithful port of fplll's `gen_qary` (`latticegen q <d> <k> <b>`): the `d × d`
+block matrix `[[I_{d-k}, H], [0, q·I_k]]` with `H` uniform mod `q` and
+`q = 2^(b-1) + rand(b-1)` (fplll `gen_q`; not required prime for the `b` flag).
+The unreduced basis is a step profile (a plateau at `q` over a plateau at `1`)
+LLL must smooth into the characteristic Z-shape, concentrating swaps in the
+transition band — a distinct stress from a triangular near-orthogonal basis. -/
+def qarySeed : Nat := 2000003
+
+/-- fplll `gen_q`: `q = 2^(b-1) + rand(b-1)`, a random `b`-bit modulus. -/
+def qaryModulus (b : Nat) : Nat := 2 ^ (b - 1) + wideRandom qarySeed (b - 1)
+
+/-- Modulus bit-length for the q-ary family. -/
+def qaryBits : Nat := 30
+
+/-- q-ary basis `[[I_{d-k}, H], [0, q·I_k]]`, `H` uniform mod `q`. -/
+def qaryBasis (d k b : Nat) : Matrix Int d d :=
+  let q := qaryModulus b
+  Matrix.ofFn fun i j =>
+    if i.val < d - k then
+      if j.val < d - k then (if i = j then 1 else 0)
+      else Int.ofNat (wideRandom (qarySeed + 1009 * (i.val * d + j.val + 1)) b % q)
+    else
+      if i = j then Int.ofNat q else 0
+
+/-- Parametric q-ary input family (square `d × d`, `k = d / 2`). -/
+def prepQaryInput (n : Nat) : FirstShortVectorInput :=
+  let rows := max n 1
+  { rows := rows
+    cols := rows
+    basis := qaryBasis rows (rows / 2) qaryBits
+    hn := by exact Nat.le_max_right n 1 }
+
+#guard qaryModulus 8 ≥ 128 && qaryModulus 8 < 256
+
+/-! ### NTRU family (fplll `gen_ntrulike` port)
+
+Faithful port of fplll's `gen_ntrulike` (`latticegen n <2d> <b>`): the `2d × 2d`
+block matrix `[[I, Rot(h)], [0, q·I]]` where `Rot(h)` is the circulant of a
+vector `h` uniform mod `q` with `h[0]` fixed so `h(1) ≡ 0 mod q`. The planted
+dense structure plus the q-block give a profile distinct from the other
+families. (latticegen's flavor uses a uniform `h`, not a genuine NTRU key.) -/
+def ntruSeed : Nat := 3000017
+def ntruBits : Nat := 30
+def ntruModulus : Nat := 2 ^ (ntruBits - 1) + wideRandom ntruSeed (ntruBits - 1)
+
+/-- `h[i]` (uniform mod q for `i ≥ 1`; `h[0] = (−Σ_{i≥1} h[i]) mod q`, so
+`h(1) = Σ_i h[i] ≡ 0 mod q`). -/
+def ntruH (d i : Nat) : Nat :=
+  let q := ntruModulus
+  if i = 0 then
+    let s := (List.range (d - 1)).foldl
+      (fun acc t => (acc + wideRandom (ntruSeed + 4001 * (t + 1)) ntruBits % q) % q) 0
+    (q - s) % q
+  else
+    wideRandom (ntruSeed + 4001 * i) ntruBits % q
+
+/-- NTRU-like basis `[[I, Rot(h)], [0, q·I]]` on `2d × 2d`. -/
+def ntruBasis (d : Nat) : Matrix Int (2 * d) (2 * d) :=
+  let q := ntruModulus
+  Matrix.ofFn fun i j =>
+    let r := i.val
+    let c := j.val
+    if r < d then
+      if c < d then (if r = c then 1 else 0)
+      else Int.ofNat (ntruH d ((c - r) % d))
+    else
+      if c < d then 0 else (if r = c then Int.ofNat q else 0)
+
+/-- Parametric NTRU input family (dimension `2n`). -/
+def prepNtruInput (n : Nat) : FirstShortVectorInput :=
+  let d := max n 1
+  { rows := 2 * d
+    cols := 2 * d
+    basis := ntruBasis d
+    hn := by have h := Nat.le_max_right n 1; omega }
+
+-- The planted property `h(1) ≡ 0 mod q` (the row sum of `Rot(h)` is `0 mod q`).
+#guard (let q := ntruModulus; (List.range 4).foldl (fun a i => (a + ntruH 4 i) % q) 0 == 0)
+
+/-! ### knapsack / integer-relation family (fplll `gen_intrel` port)
+
+Faithful port of fplll's `gen_intrel` (`latticegen r <d> <b>`): the **rectangular**
+`d × (d+1)` matrix whose row `i` is `[rand_b, e_{i+1}]` (a random `b`-bit weight
+in column 0, then the `i`-th canonical unit vector). This is the only family with
+`cols ≠ rows`, so it exercises the `m > n` Gram construction in `ofBasis`. -/
+def knapsackSeed : Nat := 4000037
+
+/-- Weight bit-length at dimension `n`, targeting density `d = n / b ≈ 0.9`. -/
+def knapsackBits (n : Nat) : Nat := (n * 10) / 9 + 1
+
+/-- Rectangular `d × (d+1)` integer-relation basis (fplll `gen_intrel`). -/
+def knapsackBasis (d b : Nat) : Matrix Int d (d + 1) :=
+  Matrix.ofFn fun i j =>
+    if j.val = 0 then Int.ofNat (wideRandom (knapsackSeed + 5003 * (i.val + 1)) b)
+    else if j.val = i.val + 1 then 1
+    else 0
+
+/-- Parametric knapsack input family (rectangular `n × (n+1)`). -/
+def prepKnapsackInput (n : Nat) : FirstShortVectorInput :=
+  let rows := max n 1
+  { rows := rows
+    cols := rows + 1
+    basis := knapsackBasis rows (knapsackBits rows)
+    hn := by exact Nat.le_max_right n 1 }
+
+-- density d = n/b ≈ 0.9 (b = ⌈10n/9⌉ + 1), and the basis is rectangular n×(n+1).
+#guard knapsackBits 9 == 11
 
 def getCachedInput (ref : IO.Ref (Option FirstShortVectorInput))
     (mk : Unit → FirstShortVectorInput) : IO FirstShortVectorInput := do
@@ -640,8 +823,7 @@ def runDispatchedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO I
 
 /-- Benchmark comparator observable: squared norm of Lean's first LLL vector.
 The verified-Isabelle Haskell extraction reports the same scalar. Runs the
-default native path (`lll.firstShortVectorUnchecked`, the approximation-steered
-reducer with certified output). -/
+exact native path (`lll.firstShortVectorUnchecked`, i.e. `lllNative`). -/
 def runFirstShortVectorNormSq (input : FirstShortVectorInput) : Int :=
   Vector.normSq
     (lll.firstShortVectorUnchecked input.basis (3 / 4)
@@ -649,9 +831,8 @@ def runFirstShortVectorNormSq (input : FirstShortVectorInput) : Int :=
 
 /-- Benchmark comparator observable for the exact `d`/`ν` reducer: squared norm
 of the first vector of `lllNative` run directly. This is the
-fplll-independent exact integer reducer that the steered path demotes to its
-certification fallback; measuring it directly keeps the exact-native curve of
-the comparator plot independent of the steered default. -/
+fplll-independent exact integer reducer; measuring it directly gives the
+exact-native curve of the comparator plot. -/
 def runNativeFirstShortVectorNormSq (input : FirstShortVectorInput) : Int :=
   Vector.normSq
     ((lllNative input.basis (3 / 4) lllDeltaLower lllDeltaUpper input.hn).row
@@ -1016,7 +1197,7 @@ def runFpLLLFirstShortVectorHarshCubic65Checksum : Unit → IO Int := fun _ => d
     (← getCachedInput harshCubicInput65Ref (fun _ => prepHarshCubicInput 65))
 
 -- Exact `lllNative` ladder targets for the comparator's exact-native curve
--- (the steered default lives on the `runFirstShortVector*NormSq` targets).
+-- (the default `runFirstShortVector*NormSq` targets also run `lllNative`).
 /-- Exact native `runNativeFirstShortVectorNormSq` on the `random-bounded`
 fixture at the rung `n = 30`, returning the first short vector's squared norm
 for the exact-native ladder curve. -/

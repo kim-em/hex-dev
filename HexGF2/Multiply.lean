@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2.Basic
-import HexGF2.Clmul
+module
+
+public import HexGF2.Basic
+public import HexGF2.Clmul
+
+public section
 
 /-!
 Packed `GF2Poly` multiplication.
@@ -19,7 +23,8 @@ namespace Hex
 namespace GF2Poly
 
 /-- XOR a 128-bit carry-less product into adjacent result words. -/
-private def xorClmulAt (acc : Array UInt64) (idx : Nat) (x y : UInt64) : Array UInt64 :=
+@[expose]
+def xorClmulAt (acc : Array UInt64) (idx : Nat) (x y : UInt64) : Array UInt64 :=
   let (hi, lo) := clmul x y
   let acc := acc.set! idx (acc[idx]! ^^^ lo)
   acc.set! (idx + 1) (acc[idx + 1]! ^^^ hi)
@@ -2170,7 +2175,8 @@ private theorem foldl_mulWords_monomial_source_oob
       · simpa [foldl_xorClmulAt_size] using hacc
 
 /-- Raw packed-word multiplication before trailing zero normalization. -/
-private def mulWords (xs ys : Array UInt64) : Array UInt64 :=
+@[expose]
+def mulWords (xs ys : Array UInt64) : Array UInt64 :=
   if xs.isEmpty || ys.isEmpty then
     #[]
   else
@@ -2761,7 +2767,8 @@ private theorem coeffWords_monomial_mulWords_source
     foldl_xorClmulAt_monomial_left_prefix_after_source xs
       (m := xs.size) (k := k) (source := source) (by omega) (by omega) hsource
 
-private def clmulCoeffAt (idx : Nat) (x y : UInt64) (n : Nat) : Bool :=
+@[expose]
+def clmulCoeffAt (idx : Nat) (x y : UInt64) (n : Nat) : Bool :=
   if n / 64 = idx then
     (((clmul x y).2 >>> (n % 64).toUInt64) &&& 1) != 0
   else if n / 64 = idx + 1 then
@@ -2773,7 +2780,8 @@ private def clmulCoeffAt (idx : Nat) (x y : UInt64) (n : Nat) : Bool :=
 folding `!=` from `false`, so it is `true` exactly when an odd number of
 entries are `true`. The carryless-multiplication proofs reduce each output
 coefficient to such an XOR fold over a list of partial-product bits. -/
-private def xorBoolList (bits : List Bool) : Bool :=
+@[expose]
+def xorBoolList (bits : List Bool) : Bool :=
   bits.foldl (fun acc bit => acc != bit) false
 
 private theorem Bool.bne_assoc (a b c : Bool) :
@@ -3068,13 +3076,15 @@ private theorem xorBoolList_sourceTriples_assoc
   exact xorBoolList_wordTriples_assoc xs.size ys.size zs.size term
 
 /-- XOR a list of machine words as the word-level analogue of `xorBoolList`. -/
-private def xorWordList : List UInt64 → UInt64
+@[expose]
+def xorWordList : List UInt64 → UInt64
   | [] => 0
   | word :: words => word ^^^ xorWordList words
 
 /-- The raw word contribution of a single `clmul x y` placed at word offset
 `idx`, projected to result word slot `slot`. -/
-private def clmulWordAt (idx : Nat) (x y : UInt64) (slot : Nat) : UInt64 :=
+@[expose]
+def clmulWordAt (idx : Nat) (x y : UInt64) (slot : Nat) : UInt64 :=
   if slot = idx then
     (clmul x y).2
   else if slot = idx + 1 then
@@ -3482,7 +3492,8 @@ private theorem clmulCoeffAt_mulWords_right_contrib
 raw product `(xs * ys) * zs`.  The outer product contributes a word slot and a
 `zs` source word; each such intermediate word is expanded back to the
 `xs`/`ys` source pair contributions that created it. -/
-private def leftAssocSourceTripleContribs
+@[expose]
+def leftAssocSourceTripleContribs
     (xs ys zs : Array UInt64) (n : Nat) : List Bool :=
   List.flatMap
     (fun slot =>
@@ -3501,7 +3512,8 @@ private def leftAssocSourceTripleContribs
 raw product `xs * (ys * zs)`.  The outer product contributes an `xs` source
 word and an intermediate word slot; each intermediate word is expanded back to
 the `ys`/`zs` source pair contributions that created it. -/
-private def rightAssocSourceTripleContribs
+@[expose]
+def rightAssocSourceTripleContribs
     (xs ys zs : Array UInt64) (n : Nat) : List Bool :=
   List.flatMap
     (fun i =>
@@ -3518,21 +3530,24 @@ private def rightAssocSourceTripleContribs
 
 /-- Contributions from one fixed source triple `(i,j,k)` to the left-associated
 word product, varying only the intermediate `(xs * ys)` result slot. -/
-private def leftAssocFixedTripleContribs
+@[expose]
+def leftAssocFixedTripleContribs
     (i j k : Nat) (x y z : UInt64) (n slotBound : Nat) : List Bool :=
   (List.range slotBound).map
     (fun slot => clmulCoeffAt (slot + k) (clmulWordAt (i + j) x y slot) z n)
 
 /-- Contributions from one fixed source triple `(i,j,k)` to the right-associated
 word product, varying only the intermediate `(ys * zs)` result slot. -/
-private def rightAssocFixedTripleContribs
+@[expose]
+def rightAssocFixedTripleContribs
     (i j k : Nat) (x y z : UInt64) (n slotBound : Nat) : List Bool :=
   (List.range slotBound).map
     (fun slot => clmulCoeffAt (i + slot) x (clmulWordAt (j + k) y z slot) n)
 
 /-- The selected bit of one machine word, using the same projection shape as
 the existing coefficient lemmas. -/
-private def wordBitAt (word : UInt64) (bit : Nat) : Bool :=
+@[expose]
+def wordBitAt (word : UInt64) (bit : Nat) : Bool :=
   (((word >>> bit.toUInt64) &&& 1) != 0)
 
 private theorem wordBitAt_getElem!_eq_coeff
@@ -3547,7 +3562,8 @@ private theorem wordBitAt_getElem!_eq_coeff
   simp [coeff, coeffWords, wordBitAt, hdiv, hmod, default]
 
 /-- The one-hot contribution of a selected source bit of a word. -/
-private def oneHotBitWord (word : UInt64) (bit : Nat) : UInt64 :=
+@[expose]
+def oneHotBitWord (word : UInt64) (bit : Nat) : UInt64 :=
   if wordBitAt word bit then
     (1 : UInt64) <<< bit.toUInt64
   else
@@ -3825,7 +3841,8 @@ private theorem clmul_oneHot_source_high
 
 /-- Source bit-pair contribution for the coefficient of total bit index
 `total` in one word-word carry-less product. -/
-private def clmulSourcePairCoeff (x y : UInt64) (total : Nat) : Bool :=
+@[expose]
+def clmulSourcePairCoeff (x y : UInt64) (total : Nat) : Bool :=
   xorBoolList
     (List.flatMap
       (fun b =>
@@ -3959,7 +3976,8 @@ private theorem clmulCoeffAt_sourcePairCoeff
 
 /-- Source bit-triple contribution for the coefficient of total bit index
 `total` in a three-word carry-less product. -/
-private def clmulSourceTripleCoeff (x y z : UInt64) (total : Nat) : Bool :=
+@[expose]
+def clmulSourceTripleCoeff (x y z : UInt64) (total : Nat) : Bool :=
   xorBoolList
     (List.flatMap
       (fun a =>
@@ -6339,6 +6357,7 @@ private theorem coeffWords_mulWords_assoc
 
 /-- Multiplication in `F_2[x]` via carry-less word products and XOR
 accumulation. -/
+@[expose]
 def mul (p q : GF2Poly) : GF2Poly :=
   ofWords (mulWords p.words q.words)
 

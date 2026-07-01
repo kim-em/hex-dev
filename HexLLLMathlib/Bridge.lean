@@ -36,13 +36,13 @@ theorem mem_latticeSubmodule_iff (b : Hex.Matrix Int n m) (v : Vector Int m) :
   · rintro ⟨c, hc⟩
     refine ⟨HexMatrixMathlib.vectorEquiv.symm c,
       HexMatrixMathlib.vectorEquiv.injective ?_⟩
-    rw [HexMatrixMathlib.vectorEquiv_rowCombination,
+    rw [HexMatrixMathlib.vectorEquiv_vecMul,
       Fintype.linearCombination_apply, Equiv.apply_symm_apply]
     refine (Finset.sum_congr rfl fun i _ => ?_).trans hc
     rw [HexMatrixMathlib.matrixEquiv_row]
   · rintro ⟨c, hc⟩
     refine ⟨HexMatrixMathlib.vectorEquiv c, ?_⟩
-    have hr := HexMatrixMathlib.vectorEquiv_rowCombination b c
+    have hr := HexMatrixMathlib.vectorEquiv_vecMul b c
     rw [hc, Fintype.linearCombination_apply] at hr
     rw [hr]
     refine Finset.sum_congr rfl fun i _ => ?_
@@ -73,7 +73,7 @@ theorem prefixSubmodule_le_latticeSubmodule (b : Hex.Matrix Int n m) (t : Nat) :
   rintro _ ⟨i, rfl⟩
   exact row_mem_latticeSubmodule b i.1
 
-private theorem rowCombination_mem_prefixSubmodule (b : Hex.Matrix Int n m)
+private theorem vecMul_mem_prefixSubmodule (b : Hex.Matrix Int n m)
     (c : Fin n → ℤ) (t : Nat) (hc : ∀ i : Fin n, t ≤ i.val → c i = 0) :
     (Fintype.linearCombination ℤ
         (fun i : Fin n => HexMatrixMathlib.vectorEquiv (Hex.Matrix.row b i))) c ∈
@@ -86,20 +86,20 @@ private theorem rowCombination_mem_prefixSubmodule (b : Hex.Matrix Int n m)
   · have hci : c i = 0 := hc i (Nat.le_of_not_gt hit)
     simp [hci]
 
-theorem rowCombination_mem_prefixSubmodule_of_vector (b : Hex.Matrix Int n m)
+theorem vecMul_mem_prefixSubmodule_of_vector (b : Hex.Matrix Int n m)
     (c : Vector Int n) (t : Nat) (hc : ∀ i : Fin n, t ≤ i.val → c[i] = 0) :
-    HexMatrixMathlib.vectorEquiv (Hex.Matrix.rowCombination b c) ∈ prefixSubmodule b t := by
-  rw [HexMatrixMathlib.vectorEquiv_rowCombination]
-  exact rowCombination_mem_prefixSubmodule b (HexMatrixMathlib.vectorEquiv c) t
+    HexMatrixMathlib.vectorEquiv (Hex.Matrix.vecMul c b) ∈ prefixSubmodule b t := by
+  rw [HexMatrixMathlib.vectorEquiv_vecMul]
+  exact vecMul_mem_prefixSubmodule b (HexMatrixMathlib.vectorEquiv c) t
     (fun i hi => by simpa [HexMatrixMathlib.vectorEquiv] using hc i hi)
 
 private theorem prefixRowCombination_memLattice (b : Hex.Matrix Int n m)
     (c : Vector Int n) (t : Nat) (hc : ∀ i : Fin n, t ≤ i.val → c[i] = 0) :
-    Hex.Matrix.memLattice b (Hex.Matrix.rowCombination b c) := by
+    Hex.Matrix.memLattice b (Hex.Matrix.vecMul c b) := by
   apply (mem_latticeSubmodule_iff b _).mp
   simpa using
     prefixSubmodule_le_latticeSubmodule b t
-      (rowCombination_mem_prefixSubmodule_of_vector b c t hc)
+      (vecMul_mem_prefixSubmodule_of_vector b c t hc)
 
 /-- View an executable integer row as a vector in Mathlib's standard Euclidean
 space on `Fin m`. -/

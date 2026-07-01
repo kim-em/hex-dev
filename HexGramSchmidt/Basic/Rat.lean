@@ -742,7 +742,7 @@ theorem basis_span (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
               GramSchmidt.prefixCombination (coeffs b) (basis b) (k + 1) hi
             have hpc : GramSchmidt.prefixSpan (basis b) (k + 1) hi pc := by
               have hraw :=
-                GramSchmidt.prefixSpan_strictPrefix_rowCombination
+                GramSchmidt.prefixSpan_strictPrefix_vecMul
                   (M := basis b) (i := k + 1) (hi := hi)
                   (c := GramSchmidt.projectionCoeffVector (b.row last) (basis b)
                     (k + 1) (Nat.le_of_lt hi))
@@ -767,13 +767,13 @@ theorem basis_span (b : Matrix Rat n m) (i : Nat) (hi : i < n) :
   · intro hv
     rcases hv with ⟨c, hc⟩
     have hspan :=
-      GramSchmidt.prefixSpan_rowCombination (A := basis b) (B := b)
+      GramSchmidt.prefixSpan_vecMul (A := basis b) (B := b)
         (i := i) (hi := hi) c (hmembersAll i hi).1
     rwa [hc] at hspan
   · intro hv
     rcases hv with ⟨c, hc⟩
     have hspan :=
-      GramSchmidt.prefixSpan_rowCombination (A := b) (B := basis b)
+      GramSchmidt.prefixSpan_vecMul (A := b) (B := basis b)
         (i := i) (hi := hi) c (hmembersAll i hi).2
     rwa [hc] at hspan
 
@@ -786,18 +786,16 @@ private theorem basis_row_sub_basis_row_prefixSpan_pred
   refine ⟨GramSchmidt.projectionCoeffVector (b.row ⟨p + 1, hi⟩) (basis b)
       (p + 1) (Nat.le_of_lt hi), ?_⟩
   change
-    Matrix.rowCombination (GramSchmidt.prefixRows (basis b) p hp)
-        (GramSchmidt.projectionCoeffVector (b.row ⟨p + 1, hi⟩) (basis b)
-          (p + 1) (Nat.le_of_lt hi)) =
+    Matrix.vecMul (GramSchmidt.projectionCoeffVector (b.row ⟨p + 1, hi⟩) (basis b)
+          (p + 1) (Nat.le_of_lt hi)) (GramSchmidt.prefixRows (basis b) p hp) =
       b.row ⟨p + 1, hi⟩ - (basis b).row ⟨p + 1, hi⟩
   rw [← GramSchmidt.strictPrefixRows_succ_eq_prefixRows
     (M := basis b) (i := p) (hi := hi)]
   have hpc :
       GramSchmidt.prefixCombination (coeffs b) (basis b) (p + 1) hi =
-        Matrix.rowCombination (GramSchmidt.strictPrefixRows (basis b) (p + 1)
-            (Nat.le_of_lt hi))
-          (GramSchmidt.projectionCoeffVector (b.row ⟨p + 1, hi⟩) (basis b)
-            (p + 1) (Nat.le_of_lt hi)) := by
+        Matrix.vecMul (GramSchmidt.projectionCoeffVector (b.row ⟨p + 1, hi⟩) (basis b)
+            (p + 1) (Nat.le_of_lt hi)) (GramSchmidt.strictPrefixRows (basis b) (p + 1)
+            (Nat.le_of_lt hi)) := by
     simpa [basis, coeffs] using
       GramSchmidt.prefixCombination_eq_strictPrefixRowCombination
         (b := b) (i := p + 1) (hi := hi)

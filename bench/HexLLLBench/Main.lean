@@ -52,7 +52,7 @@ Informational external comparator:
   after an opportunistic `dlopen` of `HEX_FPLLL_FFI_LIB`, mirroring
   the Isabelle binary-path override. The shim is built by
   `scripts/oracle/setup_fplll_ffi.sh` (clone+lake build of
-  `kim-em/fplll-ffi`), keeping hex free of any Lake dependency on
+  `leanprover/fplll`), keeping hex free of any Lake dependency on
   it. The comparator is classified informational in
   `SPEC/Libraries/hex-lll.md` because fpLLL's floating-point
   Gram-Schmidt implementation (Nguyen-Stehle) bypasses the

@@ -317,19 +317,66 @@ theorem findPivot?_some_ne_zero (M : Matrix Int n n) (col : Fin n)
   findPivotAux_some_ne_zero M col start (n - start) hfind
 
 /-- Apply one Bareiss update step to the trailing submatrix strictly below and
-to the right of the current pivot. -/
+to the right of the current pivot.
+
+Built in place: rows at or above the pivot (`i ≤ k`) are left untouched, and only
+the rows below the pivot are rebuilt, via `mapRowsIdx` threading the matrix
+through per-row `Vector.modify`s. The pivot row is read once into `pivotRow`
+before the scatter (it is never mutated, since only rows `i > k` change), so the
+update reuses the outer vector and the finished prefix rows rather than
+reallocating the whole `n × n` matrix as a fresh `ofFn`. -/
 @[expose]
 def stepMatrix (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) :
     Matrix Int n n :=
-  Matrix.ofFn fun i j =>
-    if hkij : k < i.val ∧ k < j.val then
-      let colK : Fin n := ⟨k, Nat.lt_trans hkij.1 i.isLt⟩
-      let rowK : Fin n := ⟨k, Nat.lt_trans hkij.2 j.isLt⟩
-      exactDiv (pivot * M[(i, j)] - M[(i, colK)] * M[(rowK, j)]) prevPivot
-    else if hBelow : k < i.val ∧ j.val = k then
-      0
-    else
-      M[(i, j)]
+  if hk : k < n then
+    let pivotRow := Matrix.getRow M ⟨k, hk⟩
+    M.mapRowsIdx fun i row =>
+      if k < i.val then
+        let mik := row[k]'hk
+        Fin.foldl n (fun r j =>
+          r.modify j.val fun x =>
+            if k < j.val then
+              exactDiv (pivot * x - mik * pivotRow[j]) prevPivot
+            else if j.val = k then
+              0
+            else
+              x) row
+      else
+        row
+  else
+    M
+
+/-- The in-place `stepMatrix` agrees entrywise with the `ofFn` form it replaces;
+lets the existing entry lemmas reduce through the same body. -/
+theorem stepMatrix_eq_ofFn (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) :
+    stepMatrix M k pivot prevPivot =
+      Matrix.ofFn fun i j =>
+        if hkij : k < i.val ∧ k < j.val then
+          let colK : Fin n := ⟨k, Nat.lt_trans hkij.1 i.isLt⟩
+          let rowK : Fin n := ⟨k, Nat.lt_trans hkij.2 j.isLt⟩
+          exactDiv (pivot * M[(i, j)] - M[(i, colK)] * M[(rowK, j)]) prevPivot
+        else if k < i.val ∧ j.val = k then
+          0
+        else
+          M[(i, j)] := by
+  apply Matrix.ext_getElem
+  intro i j
+  rw [Matrix.getElem_ofFn]
+  unfold stepMatrix
+  by_cases hk : k < n
+  · rw [dif_pos hk, Matrix.getElem_mapRowsIdx]
+    by_cases hi : k < i.val
+    · simp only [hi, if_pos, Vector.getElem_finFoldl_modify, Matrix.getElem_pair_eq_nested,
+        Matrix.getElem_eq_getRow, Matrix.getRow, Fin.getElem_fin]
+      grind
+    · simp only [hi, Matrix.getElem_pair_eq_nested, Matrix.getElem_eq_getRow,
+        Matrix.getRow, Fin.getElem_fin]
+      grind
+  · rw [dif_neg hk]
+    have hik : ¬ k < i.val := fun h => hk (Nat.lt_trans h i.isLt)
+    simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_eq_getRow, Matrix.getRow,
+      Fin.getElem_fin]
+    grind
 
 /-- Outside the trailing update region and pivot column below the pivot,
 `stepMatrix` leaves entries unchanged. -/
@@ -339,7 +386,7 @@ theorem stepMatrix_eq_of_not_update
     (htrail : ¬ (k < i.val ∧ k < j.val))
     (hcol : ¬ (k < i.val ∧ j.val = k)) :
     (stepMatrix M k pivot prevPivot)[i][j] = M[i][j] := by
-  simp [stepMatrix, Matrix.ofFn, htrail, hcol]
+  rw [stepMatrix_eq_ofFn]; simp [Matrix.ofFn, htrail, hcol]
 
 /-- `stepMatrix` preserves diagonal entries whose index is at or before the
 current pivot step. -/
@@ -360,7 +407,7 @@ theorem stepMatrix_pivot_col_below
     (M : Matrix Int n n) (k : Nat) (pivot prevPivot : Int) (i colK : Fin n)
     (hi : k < i.val) (hcolK : colK.val = k) :
     (stepMatrix M k pivot prevPivot)[i][colK] = 0 := by
-  simp [stepMatrix, Matrix.ofFn, hi, hcolK]
+  rw [stepMatrix_eq_ofFn]; simp [Matrix.ofFn, hi, hcolK]
 
 /-- Entry formula for the trailing block updated by one Bareiss step. -/
 -- @[grind]-excluded: `let`-wrapped RHS (`let colK := …; let rowK := …`) is
@@ -372,7 +419,7 @@ theorem stepMatrix_update_eq
       (let colK : Fin n := ⟨k, Nat.lt_trans hi i.isLt⟩
        let rowK : Fin n := ⟨k, Nat.lt_trans hj j.isLt⟩
        exactDiv (pivot * M[i][j] - M[i][colK] * M[rowK][j]) prevPivot) := by
-  simp [stepMatrix, Matrix.ofFn, hi, hj]
+  rw [stepMatrix_eq_ofFn]; simp [Matrix.ofFn, hi, hj]
 
 /-- If the current matrix entries already match bordered minors and exact
 division evaluates to the next bordered minor, then one `stepMatrix` update

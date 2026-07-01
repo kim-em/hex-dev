@@ -23,25 +23,24 @@ tag := "hex-mod-arith"
 tag := "hex-mod-arith-intro"
 %%%
 
-`HexModArith` is the modular-arithmetic layer of the stack: arithmetic
-in `ℤ/pℤ` carried out on `UInt64`-backed coefficients. A residue is a
-single machine word holding the standard representative in `[0, p)`,
-bundled with a proof that the word is reduced. There is one residue
-type, {name}`Hex.ZMod64`, parametrised by the modulus `p`; the Barrett
-and Montgomery hot-loop routines are opt-in *operations* on that type,
-not parallel residue types.
+`HexModArith` does modular arithmetic in `ℤ/pℤ` on `UInt64`-backed
+coefficients. A residue is a single machine word holding the standard
+representative in `[0, p)`, bundled with a proof that the word is
+reduced. There is one residue type, {name}`Hex.ZMod64`, parametrised by
+the modulus `p`; the Barrett and Montgomery hot-loop routines are opt-in
+*operations* on that type, not parallel residue types.
 
 The modulus carries a side condition: it must be positive and fit in a
 machine word. That condition is packaged as the typeclass
 {name}`Hex.ZMod64.Bounds`, which every `ZMod64 p` value and operation
 takes as an instance argument. `HexModArith` is Mathlib-free; it depends
 only on `HexArith`, from which it borrows the Barrett and Montgomery
-machine-word kernels. It underpins the finite-field and prime-field
-polynomial layers (`HexGFqRing`, `HexPolyFp`, and beyond), which read
-their coefficient arithmetic off this representation; see
+machine-word kernels. The finite-field and prime-field polynomial
+libraries (`HexGFqRing`, `HexPolyFp`, and beyond) read their coefficient
+arithmetic off this representation; see
 {ref "hex-mod-arith-cross-references"}[Cross-references].
 
-# Core types
+# The residue type
 %%%
 tag := "hex-mod-arith-core-types"
 %%%
@@ -81,8 +80,8 @@ residue of `3`.
 {docstring Hex.ZMod64.ofNat}
 
 Its defining property is that the representative of `ofNat p n` is `n`
-reduced modulo `p` — the bridge every coefficient computation rewrites
-across.
+reduced modulo `p`. Every coefficient computation rewrites across this
+identity.
 
 {docstring Hex.ZMod64.toNat_ofNat}
 
@@ -95,8 +94,8 @@ The ring operations add, subtract, negate, and multiply residues,
 re-reducing each result so the output is again a standard
 representative. The standard `Add`, `Sub`, `Neg`, and `Mul` instances on
 {name}`Hex.ZMod64` dispatch to these, so `a + b`, `a - b`, `-a`, and
-`a * b` work directly, and a `Lean.Grind.CommRing` instance exposes the
-whole surface to the `grind` tactic.
+`a * b` work directly, and a `Lean.Grind.CommRing` instance lets the
+`grind` tactic reason about them.
 
 {docstring Hex.ZMod64.add}
 
@@ -121,9 +120,7 @@ tag := "hex-mod-arith-worked-ring"
 
 The block below works in `ZMod64 7`. After supplying the `Bounds 7`
 instance it builds two residues and exercises the constructors and the
-ring operations. Each `#guard` is checked when the chapter builds, so
-the expected representatives are guaranteed to match what the executable
-implementation produces.
+ring operations. Each `#guard` is checked when the chapter builds.
 
 ```lean
 open Hex Hex.ZMod64
@@ -169,7 +166,7 @@ values.
 
 Barrett reduction replaces the per-multiply division by a fixed-shift
 multiply. The context is built from the small modulus, and its
-multiplication agrees on the nose with the ordinary product.
+multiplication agrees with the ordinary product.
 
 {docstring Hex.BarrettCtx}
 
@@ -178,8 +175,8 @@ multiplication agrees on the nose with the ordinary product.
 {docstring Hex.BarrettCtx.mulMod_eq_mul}
 
 Montgomery multiplication works in a transformed domain. Values are
-first mapped to Montgomery form — a distinct type {name}`Hex.MontResidue`
-so the representation cannot be confused with a standard residue — then
+first mapped to Montgomery form (a distinct type {name}`Hex.MontResidue`,
+so the representation cannot be confused with a standard residue), then
 multiplied repeatedly without leaving the domain, and converted back
 once at the end.
 
@@ -194,7 +191,7 @@ once at the end.
 {docstring Hex.MontCtx.fromMont}
 
 Entering Montgomery form, multiplying there, and leaving again computes
-exactly the ordinary product — the correctness statement that licenses
+exactly the ordinary product. This correctness statement licenses
 swapping the hot loop in for the default multiply.
 
 {docstring Hex.MontCtx.fromMont_mulMont_toMont}
@@ -268,8 +265,8 @@ its two-sided inverse.
 {docstring Hex.ZMod64.inv_mul_eq_one_of_coprime}
 
 Over a prime modulus the residues form a field. Under the
-{name}`Hex.ZMod64.PrimeModulus` assumption — equivalently a proof that
-`p` is prime — there are no zero divisors, every nonzero residue is
+{name}`Hex.ZMod64.PrimeModulus` assumption (equivalently, a proof that
+`p` is prime) there are no zero divisors, every nonzero residue is
 invertible, and Fermat's little theorem holds.
 
 {docstring Hex.ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero}

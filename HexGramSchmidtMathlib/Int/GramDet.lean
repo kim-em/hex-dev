@@ -379,8 +379,7 @@ written in the orthogonal basis rows. -/
 private noncomputable def basisPrefixProjection
     (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < n) :
     Vector Rat m :=
-  Matrix.rowCombination (GramSchmidt.prefixRows (basis b) j hj)
-    (projectionCoeffPrefix b i j hi hj)
+  Matrix.vecMul (projectionCoeffPrefix b i j hi hj) (GramSchmidt.prefixRows (basis b) j hj)
 
 private theorem basisPrefixProjection_mem_basisSpan
     (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < n) :
@@ -409,14 +408,13 @@ private noncomputable def originalProjectionCoords
 as the Gram-Schmidt prefix coefficients. -/
 private theorem originalProjectionCoords_spec
     (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < n) :
-    Matrix.rowCombination (GramSchmidt.prefixRows (castIntMatrixRat b) j hj)
-        (originalProjectionCoords b i j hi hj) =
+    Matrix.vecMul (originalProjectionCoords b i j hi hj) (GramSchmidt.prefixRows (castIntMatrixRat b) j hj) =
       basisPrefixProjection b i j hi hj := by
   exact Classical.choose_spec (basisPrefixProjection_mem_originalSpan b i j hi hj)
 
-private theorem rowCombination_eq_foldl_rows_rat
+private theorem vecMul_eq_foldl_rows_rat
     (M : Matrix Rat n m) (c : Vector Rat n) :
-    Matrix.rowCombination M c =
+    Matrix.vecMul c M =
       (List.finRange n).foldl (fun acc j => acc + c[j] • M.row j) 0 := by
   apply Vector.ext
   intro idx hidx
@@ -452,12 +450,12 @@ private theorem rowCombination_eq_foldl_rows_rat
         grind
   exact hfold (List.finRange n) 0 0 (by simp [Vector.getElem_zero])
 
-private theorem dot_rowCombination_right_rat
+private theorem dot_vecMul_right_rat
     (u : Vector Rat m) (M : Matrix Rat n m) (c : Vector Rat n) :
-    u.dotProduct (Matrix.rowCombination M c) =
+    u.dotProduct (Matrix.vecMul c M) =
       (List.finRange n).foldl
         (fun acc j => acc + c[j] * u.dotProduct (M.row j)) 0 := by
-  rw [rowCombination_eq_foldl_rows_rat]
+  rw [vecMul_eq_foldl_rows_rat]
   have hgen :
       ∀ xs : List (Fin n), ∀ acc : Vector Rat m,
         u.dotProduct (xs.foldl (fun acc j => acc + c[j] • M.row j) acc) =
@@ -496,7 +494,7 @@ private theorem originalProjectionCoords_dot_eq
                 ⟨p.val, Nat.lt_of_lt_of_le p.isLt (Nat.succ_le_of_lt hj)⟩)
               (castIntRow b
                 ⟨q.val, Nat.lt_of_lt_of_le q.isLt (Nat.succ_le_of_lt hj)⟩)) 0 := by
-  rw [← originalProjectionCoords_spec b i j hi hj, dot_rowCombination_right_rat]
+  rw [← originalProjectionCoords_spec b i j hi hj, dot_vecMul_right_rat]
   apply foldl_sum_congr_simple
   intro q _hq
   simp [GramSchmidt.prefixRows, Matrix.row, castIntMatrixRat, castIntRow,
@@ -1143,7 +1141,7 @@ private theorem dot_castIntRow_castIntRow_eq
     (i := (j + 1) + d) (hi := hi) (u := castIntRow b ⟨p, hp⟩)]
   -- RHS unfold and expand basisPrefixProjection.
   unfold basisPrefixProjection
-  rw [dot_rowCombination_right_rat]
+  rw [dot_vecMul_right_rat]
   -- Define a Nat-indexed body shared by both sides.
   let body : ∀ (k : Nat), k < n → Rat := fun k hk =>
     GramSchmidt.entry (coeffs b) ⟨(j + 1) + d, hi⟩ ⟨k, hk⟩ *
@@ -1263,7 +1261,7 @@ private theorem dot_basis_basisPrefixProjection_eq_coeff_mul_normSq
         ((basis b).row ⟨j, Nat.lt_trans hj hi⟩).normSq := by
   have hjlt : j < n := Nat.lt_trans hj hi
   unfold basisPrefixProjection
-  rw [dot_rowCombination_right_rat]
+  rw [dot_vecMul_right_rat]
   -- Isolate the q = ⟨j, lt_succ_self j⟩ term in the foldl.
   rw [foldl_finRange_succ_isolate_last j _ ?_]
   · -- Last term: projectionCoeffPrefix[⟨j, _⟩] * dot basis[j] basis[j].
@@ -1297,7 +1295,7 @@ private theorem dot_basis_basisPrefixProjection_eq_origProjCoords_mul_normSq
       (originalProjectionCoords b i j hi (Nat.lt_trans hj hi))[Fin.last j] *
         ((basis b).row ⟨j, Nat.lt_trans hj hi⟩).normSq := by
   have hjlt : j < n := Nat.lt_trans hj hi
-  rw [← originalProjectionCoords_spec b i j hi hjlt, dot_rowCombination_right_rat,
+  rw [← originalProjectionCoords_spec b i j hi hjlt, dot_vecMul_right_rat,
     foldl_finRange_succ_isolate_last j _ ?_]
   · -- Last term: origProjCoords[⟨j, _⟩] * dot basis[j] (cast b row j).
     -- castIntMatrixRat b row at ⟨j, _⟩ = castIntRow b ⟨j, _⟩.

@@ -7,10 +7,10 @@ with spec-driven development.
 `hex-lll` provides executable LLL reduction of an integer lattice basis:
 given a basis of a lattice in `ℤᵐ`, it returns a shorter, more orthogonal
 basis of the same lattice, with the first row a provably short vector. It
-depends on [`hex-gram-schmidt`](https://github.com/kim-em/hex-gram-schmidt)
+depends on [`hex-gram-schmidt`](https://github.com/leanprover/hex-gram-schmidt)
 for the integer Gram-Schmidt data the algorithm carries, and is Mathlib-free.
 The correspondence with Mathlib and the full short-vector theory live in
-[`hex-lll-mathlib`](https://github.com/kim-em/hex-lll-mathlib).
+[`hex-lll-mathlib`](https://github.com/leanprover/hex-lll-mathlib).
 
 # Quickstart
 
@@ -19,7 +19,7 @@ Add to your `lakefile.toml`:
 ```toml
 [[require]]
 name = "hex-lll"
-git = "https://github.com/kim-em/hex-lll.git"
+git = "https://github.com/leanprover/hex-lll.git"
 rev = "main"
 ```
 
@@ -44,7 +44,7 @@ def B : Matrix Int 3 3 := Matrix.ofFn fun i j =>
 #check @lll
 
 -- To run the reducer on data without supplying an independence proof, use the
--- proof-free variants. They run the steered reducer directly (the body of
+-- proof-free variants. They run the exact `lllNative` directly (the body of
 -- `lll`'s native path, skipping the provider dispatch) and carry no exported
 -- short-vector theorem unless you separately prove `B.independent`.
 #eval lll.firstShortVectorUnchecked B (3 / 4) (by decide +kernel) (by decide +kernel) (by decide)
@@ -58,8 +58,8 @@ def B : Matrix Int 3 3 := Matrix.ofFn fun i j =>
 
 The public entry point is `lll`, which reduces an integer basis at a
 rational factor `δ` and returns a `(δ, 11/20)`-reduced basis of the same
-lattice. Behind that one entry point are three reducers, each of which
-certifies its output to that same contract, so the result is correct no
+lattice. Behind that one entry point are two reducers, each of which
+produces output correct to that same contract, so the result is correct no
 matter which one runs. `lll` dispatches through them in order:
 
 - **External provider** (`LLLProvider.dispatch`). If an optional external
@@ -68,25 +68,19 @@ matter which one runs. `lll` dispatches through them in order:
   checker `certCheck`. An absent or rejected candidate falls through. The
   provider is an independent package this library neither depends on nor
   names in its build; it is acceleration only.
-- **Approximation-steered reducer** (`lllSteered`). This drives the exact
-  integer row operations from an untrusted floating-point Gram-Schmidt
-  approximation. The floats only choose which row operation to apply and
-  never enter a proof, so the output spans the same lattice by construction.
-  It certifies its own output at `(δ, 11/20)` and falls back to the exact
-  reducer when certification fails.
 - **Exact integer reducer** (`lllNative`). The trusted all-integer `d`/`ν`
-  reducer at the classical size-reduction bound `η = 1/2`. The bottom of the
-  chain: always correct, never approximate.
+  reducer at the classical size-reduction bound `η = 1/2`. The native path:
+  always correct, never approximate.
 
 The surface, by group:
 
 - `lll`, `lll.firstShortVector`, and `lll.shortVectors`: the public reducer,
   its provably short first reduced row, and the ordered reduced rows.
   `firstShortVector` is the short-vector entry point for downstream consumers such as
-  [`hex-berlekamp-zassenhaus`](https://github.com/kim-em/hex-berlekamp-zassenhaus).
+  [`hex-berlekamp-zassenhaus`](https://github.com/leanprover/hex-berlekamp-zassenhaus).
 - `lllNative`: the exact integer reducer at the classical `η = 1/2`, with the
   tighter short-vector constant; call it directly to get the classical
-  guarantee. `lllSteered` exposes the steered reducer on its own.
+  guarantee.
 - `lll.firstShortVectorUnchecked` and `lll.shortVectorsUnchecked`: proof-free
   variants of the entry points for callers without an independence proof.
 - `lllReducedInt`, `lllReducedInterval`, and `lllReducedCheck`: the exact,
@@ -97,9 +91,9 @@ The surface, by group:
 
 Everything else lives under the `Hex.Internal` namespace and is not part of the
 supported API: the integer state `LLLState` and its step/loop machinery, the
-`SteeredState` float-steering reducer, the fixed-precision interval checker
-kernel, the external-provider plumbing, and the dispatch-tuning and diagnostics
-constants. `open Hex` brings only the surface above into scope.
+fixed-precision interval checker kernel, the external-provider plumbing, and the
+dispatch-tuning and diagnostics constants. `open Hex` brings only the surface
+above into scope.
 
 # Verification
 
@@ -138,12 +132,15 @@ satisfies `|μ| ≤ 11/20`. Two numbers in `lll`'s signature follow from that
 η²` and the bound is well-defined only when `η² < δ`; and the short-vector
 constant is `1/(δ − 121/400)`.
 
-Why `11/20` and not the classical `1/2`? Because `11/20` is the bound every
-one of the three reducers can guarantee uniformly. A floating-point or
-external reducer cannot be forced to land exactly `|μ| ≤ 1/2`, so the public
-contract is stated at the slightly looser `11/20`, which all paths certify.
-The exact `lllNative` keeps the classical `η = 1/2` (precondition `1/4 < δ`,
-constant `1/(δ − 1/4)`); call it directly when you want that contract.
+Why `11/20` and not the classical `1/2`? Solely because of the external
+provider. The exact `lllNative` already lands at `|μ| ≤ 1/2`, so on its own it
+gives the tighter `1/4 < δ` contract. But a black-box external reducer cannot
+be forced to land exactly `|μ| ≤ 1/2` (fplll's default size-reduction target
+sits slightly above `1/2`), so the certified-dispatch path accepts its
+candidate at the looser `11/20`. That is the only reason the public contract is
+stated at `11/20` rather than `1/2`. The exact `lllNative` keeps the classical
+`η = 1/2` (precondition `1/4 < δ`, constant `1/(δ − 1/4)`); call it directly
+when you want that contract.
 
 Is the looser bound a concern? It is an honest weakening of the formal
 constant, and the weakening compounds with dimension, so it is worth being
@@ -158,10 +155,31 @@ precision constants are internal tuning, documented at their definitions; none
 of them affects soundness.
 
 The end-to-end guarantees of `lll` are proved in
-[`hex-lll-mathlib`](https://github.com/kim-em/hex-lll-mathlib): that its output
+[`hex-lll-mathlib`](https://github.com/leanprover/hex-lll-mathlib): that its output
 is `(δ, 11/20)`-reduced, spans the same lattice, and satisfies the
 short-vector bound, together with the certificate soundness theorem
 `certCheck_sound`.
+
+# Performance
+
+HexLLL is benchmarked against the verified Isabelle `LLL_Basis_Reduction`
+extraction and the unverified floating-point `fplll`, across input families
+chosen to stress different parts of the algorithm. The headline result, on
+inputs whose entry bit-length grows with the dimension (`harsh-cubic`):
+
+![HexLLL harsh-cubic comparator](reports/figures/hex-lll-comparator-harsh-cubic.svg)
+
+The exact-integer reducers (`lllNative`, verified Isabelle native) climb
+super-quintically as the operands widen, while the **certified path — an `fplll`
+candidate checked by the verified Lean `certCheck` — stays close to `fplll`'s
+own near-cubic speed**. So on this family the verified output is obtained at
+close to unverified floating-point cost, by certifying a fast external reducer
+rather than running an exact one.
+
+The worst-case families tell the same story more sharply: on the swap-bound
+`ajtai` family the exact reducers blow up ~`d⁷` while the certified path stays
+cheap. See **[PERFORMANCE.md](PERFORMANCE.md)** for all six input families, the
+methodology, the per-family discussion, and the asymptotic fits.
 
 # Trust boundary
 
@@ -175,11 +193,7 @@ theorems reduce to the ordinary Lean axioms `propext`, `Classical.choice`, and
   integer-arithmetic checker `certCheck` before use, and an absent or rejected
   candidate falls back to the native reducer. A wrong or adversarial provider
   cannot produce a wrong result, only a fallback.
-- **Steered reducer.** The floating-point Gram-Schmidt approximation only
-  chooses which exact integer row operation to apply; the floats never enter a
-  proof, so the output spans the same lattice by construction, and the result is
-  certified at `(δ, 11/20)` before it is returned.
-- **Diagnostics.** The provider, checker, and steered tallies record decision
+- **Diagnostics.** The provider and checker tallies record decision
   counts via `@[implemented_by]` side effects in compiled code only. They are
   definitionally identity in the logic; no theorem depends on them.
 - **Execution vs. checking.** Compiled execution may call the C FFI shim

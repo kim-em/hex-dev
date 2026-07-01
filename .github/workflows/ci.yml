@@ -4,29 +4,54 @@ on:
   push:
     branches: [main]
   pull_request:
+  # workflow_dispatch is useful for ad-hoc conformance/oracle runs; the
+  # conformance work now lives in this single job (see below), so keep it.
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # Cancel superseded PR runs, but let main runs finish: ci.yml's publish
+  # Cancel superseded PR runs, but let main runs finish: the publish
   # step only runs at the end, and main merges arrive faster than a cold
   # build, so cancelling main would mean the Lake cache never publishes.
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+# One ubuntu job (SPEC/CI.md § Job-count budget). The build graph is
+# elaborated once here; the two independent verification tails (bench
+# verify and the conformance/oracle suite) then run concurrently as
+# in-job `background:` steps, so a single runner does the work that used
+# to duplicate the whole hex build across two workflows.
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Force `shell: bash` on every run step so they all run under
+    # `bash --noprofile --norc -eo pipefail` (an unspecified Linux run step is
+    # only `bash -e`, without `pipefail`). The fail-closed sentinel logic below
+    # relies on a failed command in a pipeline aborting the step before the
+    # success `touch`.
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # --- Structural + source lints ---
       - run: python3 scripts/check_copyright_headers.py
       - run: python3 scripts/check_dag.py
       - run: python3 scripts/check_phase4.py
       - name: Lint benches are Mathlib-free (SPEC/benchmarking.md §Mathlib-free benches)
         run: python3 scripts/ci/check_benches_mathlib_free.py
-      - run: sudo apt-get install -y libgmp-dev libntl-dev pkg-config
-      - name: Install Python bench comparator dependencies
-        run: python3 -m pip install --user python-flint
+      - name: Verify conformance matrix invariant
+        run: python3 scripts/conformance_targets.py --check
+      # --- System + Python deps (union of the bench comparator and the oracles) ---
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev libntl-dev pkg-config libpari-dev pari-gp
+      - name: Install Python dependencies (bench comparator + oracles)
+        run: |
+          python3 -m pip install --user \
+            python-flint cypari2 conway-polynomials
       - name: Set up Lean toolchain (no build)
         uses: leanprover/lean-action@v1
         with:
@@ -92,30 +117,46 @@ jobs:
       # With the cache env now active, assert the entire Mathlib graph is already
       # up to date. `--no-build` reports stale targets and exits non-zero instead
       # of building them, so this fails loudly (never silently rebuilds) if the
-      # cache wiring ever invalidates the prebuilt Mathlib oleans. Stronger and
-      # more precise than the olean-count check above.
+      # cache wiring ever invalidates the prebuilt Mathlib oleans.
       - name: Assert Mathlib will not rebuild (lake build --no-build)
         run: lake build --no-build Mathlib
       # Two target sets. HEX_LIB_TARGETS are the libraries we cache: their oleans
       # are the expensive elaboration and they restore cleanly. Executables are
       # deliberately NOT cached -- the artifact cache restores an exe's module
       # outputs but not its linked `bin/` binary, so a restored exe looks
-      # up-to-date yet cannot run (which broke bench verify on restore runs). By
-      # never publishing them, exes always link fresh against the restored libs,
-      # which is cheap. The HO-1 bridge (HexBerlekampZassenhausMathlib) is a
-      # library and lives in HEX_LIB_TARGETS.
+      # up-to-date yet cannot run. By never publishing them, exes always link
+      # fresh against the restored libs, which is cheap.
       - name: Define the hex-dev cache + build target sets
         run: |
           echo "HEX_LIB_TARGETS=HexBasic HexArith HexPoly HexModArith HexGF2 HexPolyZ HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexBerlekampZassenhaus HexMatrix HexRowReduce HexDeterminant HexBareiss HexGramSchmidt HexLLL HexMatrixMathlib HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib" >> "$GITHUB_ENV"
           echo "HEX_EXE_TARGETS=hexarith_bench hexpoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexberlekamp_bench hexbz_bench hexconway_bench hexmatrix_bench hexdeterminant_bench hexbareiss_bench hexgramschmidt_bench hexlll_bench hexlll_provider_probe" >> "$GITHUB_ENV"
-      - name: Build hex (Mathlib must NOT rebuild from source)
-        # Build the bench-exes here, not in the `Bench verify` step.
-        # Otherwise the first `lake exe X_bench list` in that step
-        # would pay the bench-exe's first compile (~6 min for the
-        # heaviest one) and the wallclock breakdown would conflate
-        # build time with verify time. Bench verify itself is fast
-        # since lean-bench's verify path runs in-process.
+      # Shared build. The libraries, bench exes, conformance #guard drivers, and
+      # emit-fixture exes are all elaborated here so the two verification tails
+      # below only *run* things, never rebuild them -- which is what lets the
+      # previously-separate conformance workflow reuse this job's build instead
+      # of recompiling the whole graph a second time. Kept as two sequential
+      # `lake build` invocations (matching the two former workflows) rather than
+      # one: a single invocation lets Lake parallelize the Mathlib-heavy library
+      # compiles, the exe links, and the conformance/fixture builds all at once,
+      # whose combined memory peak exhausts the runner. Sequential invocations
+      # share `.lake/build` (no recompilation) but cap the peak at whichever
+      # single invocation is largest, each of which is known to fit.
+      - name: Build hex libraries + bench exes
         run: lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS}
+      - name: Build conformance + emit-fixture targets
+        run: |
+          lake build \
+            HexConformance \
+            hexpoly_emit_fixtures hexpolyfp_emit_fixtures \
+            hexberlekamp_emit_fixtures \
+            hexbz_emit_fixtures hexpolyz_emit_fixtures \
+            hexgf2_emit_fixtures hexgfq_emit_fixtures \
+            hexgfqring_emit_fixtures hexgfqfield_emit_fixtures \
+            hexhensel_emit_fixtures \
+            hexconway_emit_fixtures \
+            hexrowreduce_emit_fixtures hexdeterminant_emit_fixtures \
+            hexbareiss_emit_fixtures hexgramschmidt_emit_fixtures \
+            hexlll_emit_fixtures
       # Publish hex-dev's oleans on a trusted main push so later builds (and any
       # consumer) restore them. Skips silently without the upload key.
       - name: Publish hex-dev oleans to the Lake cache (main only)
@@ -138,29 +179,55 @@ jobs:
             echo "revisionEndpoint = \"$S3_REVISION_ENDPOINT\""
           } > "$CFG"
           export LAKE_CONFIG="$CFG"
-          # Emit mappings for the libraries only (HEX_LIB_TARGETS). Executables
-          # are excluded on purpose: their linked binaries don't survive a cache
-          # restore, so they must always link fresh.
           lake build --no-build -o .lake/outputs.jsonl ${HEX_LIB_TARGETS}
           echo "mapping entries: $(wc -l < .lake/outputs.jsonl)"
           lake cache put .lake/outputs.jsonl --service hex-r2 --repo kim-em/hex-dev
+      # --- Parallel verification tails (single job, in-job parallel steps) ---
+      # Both tails only read the already-built .lake/build; they write to
+      # disjoint outputs, so they are safe to run concurrently. Each touches a
+      # sentinel file as its final action *only* on success (the runner shell is
+      # `bash -eo pipefail`, so any earlier failure exits before the touch). The
+      # gate step after `wait-all:` then fails the job unless BOTH sentinels
+      # exist -- a fail-closed backstop on top of `wait-all:`'s own failure
+      # propagation, so gating never depends on background-step exit codes.
+      # (`shell: bash` is set job-wide, so these run under `-eo pipefail`.)
       - name: Bench verify (smoke gate per SPEC/benchmarking.md §CI integration)
+        id: bench
+        background: true
         env:
-          # Hard cap enforced per SPEC/benchmarking.md §CI integration
-          # "Time budget". The verify step includes the large fixed
-          # comparator smoke rung for hexgf2_bench; 360 s leaves a narrow
-          # variance buffer while still flagging per-spawn-overhead
-          # regressions.
+          # Hard cap per SPEC/benchmarking.md §CI integration "Time budget".
           BENCH_VERIFY_HARD_CAP_SECONDS: "360"
         run: |
-          # hexmatrix_bench (dense multiplication fixtures) and
-          # hexbareiss_bench (the large fixed FLINT comparator ladder) and
-          # hexgramschmidt_bench / hexlll_bench stay build-only to keep this
-          # step inside the time budget; hexdeterminant_bench (Leibniz, n ≤ 8)
-          # is cheap and is smoke-verified here.
           bash scripts/ci/check_bench_verify_budget.sh \
             hexarith_bench hexpoly_bench hexpolyz_bench \
             hexpolyfp_bench hexmodarith_bench \
             hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
             hexhensel_bench hexberlekamp_bench hexbz_bench \
             hexconway_bench hexdeterminant_bench
+          touch "$RUNNER_TEMP/bench.ok"
+      - name: Conformance oracles + BZ gates
+        id: conformance
+        background: true
+        run: |
+          bash scripts/ci/run_oracles.sh
+          # Deterministic anti-regression gate: a recombination blow-up,
+          # unexpected tier downgrade, or unexpected decline/fallback fails the
+          # merge even though it would still factor correctly.
+          python3 scripts/oracle/bz_trace_gate.py
+          # Catastrophic (order-of-magnitude) slow-downs trip this generous cap.
+          timeout 180 lake exe hexbz_emit_fixtures > /dev/null
+          touch "$RUNNER_TEMP/conformance.ok"
+      - wait-all:
+      - name: Gate on parallel verification results (fail-closed)
+        run: |
+          rc=0
+          [ -f "$RUNNER_TEMP/bench.ok" ] || { echo "::error::Bench verify did not complete successfully"; rc=1; }
+          [ -f "$RUNNER_TEMP/conformance.ok" ] || { echo "::error::Conformance/oracles did not complete successfully"; rc=1; }
+          exit $rc
+      - name: Upload failure records
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-failures
+          path: conformance-failures/*.json
+          if-no-files-found: ignore

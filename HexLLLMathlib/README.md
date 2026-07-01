@@ -5,7 +5,7 @@ library for Lean 4. The aim is fast executable code, fully verified, built
 with spec-driven development.
 
 `hex-lll-mathlib` is the Mathlib bridge for
-[`hex-lll`](https://github.com/kim-em/hex-lll). Its headline result is the LLL
+[`hex-lll`](https://github.com/leanprover/hex-lll). Its headline result is the LLL
 short-vector guarantee, stated in Mathlib's Euclidean norm: for an independent
 integer basis, the executable `Hex.lll` returns a first row that is short
 relative to *every* nonzero lattice vector, and so in particular relative to
@@ -13,7 +13,7 @@ the actual shortest one. To state it the bridge models the integer row lattice
 of an executable `Hex.Matrix` as a `Submodule ℤ`, identifies that submodule
 with the executable `Hex.Matrix.memLattice` predicate, and transports the
 executable squared-norm bound into `EuclideanSpace`. It depends on
-[`hex-lll`](https://github.com/kim-em/hex-lll) and Mathlib.
+[`hex-lll`](https://github.com/leanprover/hex-lll) and Mathlib.
 
 # Quickstart
 
@@ -22,7 +22,7 @@ Add to your `lakefile.toml`:
 ```toml
 [[require]]
 name = "hex-lll-mathlib"
-git = "https://github.com/kim-em/hex-lll-mathlib.git"
+git = "https://github.com/leanprover/hex-lll-mathlib.git"
 rev = "main"
 ```
 
@@ -46,7 +46,7 @@ Every result builds without `sorry`.
 
 **The short-vector guarantee.** For an independent basis `b`, any factor
 `δ` with `121/400 < δ ≤ 1` (`121/400 = (11/20)²`, the public size-reduction
-bound; see [`hex-lll`](https://github.com/kim-em/hex-lll) for why `11/20`), and
+bound; see [`hex-lll`](https://github.com/leanprover/hex-lll) for why `11/20`), and
 any nonzero lattice vector `x`, the first row
 of `Hex.lll b δ …` has squared Euclidean norm at most
 `(1 / (δ − 121/400))^(n−1)` times that of `x`:
@@ -117,7 +117,7 @@ algebra:
   property from acceptance of the executable Bool checkers.
 
 The executable algorithm, the rational short-vector bound, and the reducedness
-theory live in [`hex-lll`](https://github.com/kim-em/hex-lll).
+theory live in [`hex-lll`](https://github.com/leanprover/hex-lll).
 
 # Reference manual
 

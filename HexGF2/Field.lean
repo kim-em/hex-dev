@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2.Irreducibility
+module
+
+public import HexGF2.Irreducibility
+
+public section
 
 /-!
 Single-word extension-field wrappers for `hex-gf2`.
@@ -43,6 +47,7 @@ theorem coeff_eq_false_of_reduced_bound_le {p : GF2Poly} {bound n : Nat}
 
 /-- Bounded coefficient vector used as a finite-index code for reduced packed
 polynomials. -/
+@[expose]
 def reducedCoeffVector (bound : Nat) (p : GF2Poly) : Fin bound → Bool :=
   fun i => p.coeff i
 
@@ -65,6 +70,7 @@ namespace Internal
 
 /-- Internal Boolean coefficient values used to build finite coefficient-list
 enumerations for packed quotient proofs. -/
+@[expose]
 def boolCoeffValues : List Bool :=
   [false, true]
 
@@ -130,6 +136,7 @@ private theorem nodup_flatMap_of_disjoint
 
 /-- Internal enumeration of all Boolean coefficient lists of length `d`,
 ordered lexicographically by the head coefficient. -/
+@[expose]
 def coeffBoolLists : Nat → List (List Bool)
   | 0 => [[]]
   | d + 1 =>
@@ -244,6 +251,7 @@ theorem coeffBoolLists_nodup (d : Nat) :
 
 /-- Internal builder for the finite-enumeration proof: interpret `bs[i]` as
 the coefficient of `x^(start + i)` in a packed `GF2Poly`. -/
+@[expose]
 def ofBoolListFrom (start : Nat) : List Bool → GF2Poly
   | [] => 0
   | b :: bs =>
@@ -251,6 +259,7 @@ def ofBoolListFrom (start : Nat) : List Bool → GF2Poly
 
 /-- Internal builder for the finite-enumeration proof: interpret `bs[i]` as
 the coefficient of `x^i` in a packed `GF2Poly`. -/
+@[expose]
 def ofBoolList (bs : List Bool) : GF2Poly :=
   ofBoolListFrom 0 bs
 
@@ -402,32 +411,38 @@ private theorem eq_of_val_eq {a b : GF2n n irr hn hn64 hirr}
   rfl
 
 /-- The packed irreducible modulus polynomial defining this extension field. -/
+@[expose]
 def modulus : GF2Poly :=
   GF2Poly.ofUInt64Monic irr n
 
 /-- The low-word mask selecting canonical representatives of degree `< n`. -/
+@[expose]
 def mask : UInt64 :=
   GF2Poly.lowerMask n
 
 /-- Convert a machine word into its packed polynomial representative. -/
+@[expose]
 def toPolyWord (w : UInt64) : GF2Poly :=
   GF2Poly.ofUInt64 w
 
 /-- Convert a `UInt64 × UInt64` carry-less product into a packed polynomial. -/
+@[expose]
 def toPolyWide (hi lo : UInt64) : GF2Poly :=
   GF2Poly.ofWords #[lo, hi]
 
 /-- Reduce a packed polynomial modulo the fixed irreducible and read back the
 single-word representative. -/
+@[expose]
 def reducePoly (p : GF2Poly) : UInt64 :=
   GF2Poly.packedReduceWord n irr p
 
 /-- Repackage a word as a canonical representative below `2^n`. -/
-private def canonicalWord (w : UInt64) : UInt64 :=
+@[expose]
+def canonicalWord (w : UInt64) : UInt64 :=
   GF2Poly.canonicalWordLT n hn64 w
 
 /-- Canonical words are bounded by the extension degree. -/
-private theorem canonicalWord_lt (w : UInt64) :
+theorem canonicalWord_lt (w : UInt64) :
     (canonicalWord (n := n) (hn64 := hn64) w).toNat < 2 ^ n := by
   unfold canonicalWord
   simp [GF2Poly.canonicalWordLT]
@@ -438,16 +453,19 @@ private theorem canonicalWord_lt (w : UInt64) :
 
 /-- Canonical constructor from a raw word by reduction modulo the field
 modulus. -/
+@[expose]
 def reduce (w : UInt64) : GF2n n irr hn hn64 hirr :=
   ⟨canonicalWord (n := n) (reducePoly (n := n) (irr := irr) (toPolyWord w)),
     canonicalWord_lt (hn64 := hn64) _⟩
 
 /-- Canonical constructor from a packed 128-bit carry-less product. -/
+@[expose]
 def reduceWide (hi lo : UInt64) : GF2n n irr hn hn64 hirr :=
   ⟨canonicalWord (n := n) (reducePoly (n := n) (irr := irr) (toPolyWide hi lo)),
     canonicalWord_lt (hn64 := hn64) _⟩
 
 /-- Natural-number literals in characteristic two reduce to their parity. -/
+@[expose]
 def natCast (k : Nat) : GF2n n irr hn hn64 hirr :=
   if k % 2 = 0 then
     ⟨0, by
@@ -457,15 +475,18 @@ def natCast (k : Nat) : GF2n n irr hn hn64 hirr :=
     reduce 1
 
 /-- Canonical additive identity. -/
+@[expose]
 def zero : GF2n n irr hn hn64 hirr :=
   ⟨0, by
     show 0 < 2 ^ n
     exact Nat.pow_pos (by decide : 0 < 2)⟩
 
+@[expose]
 instance : Zero (GF2n n irr hn hn64 hirr) where
   zero := zero
 
 /-- Canonical multiplicative identity. -/
+@[expose]
 def one : GF2n n irr hn hn64 hirr :=
   reduce 1
 
@@ -475,11 +496,13 @@ instance : One (GF2n n irr hn hn64 hirr) where
 instance : NatCast (GF2n n irr hn hn64 hirr) where
   natCast := natCast
 
+@[expose]
 instance (k : Nat) : OfNat (GF2n n irr hn hn64 hirr) k where
   ofNat := natCast k
 
 /-- Addition in characteristic two is word-wise XOR followed by canonical
 reduction. -/
+@[expose]
 def add (a b : GF2n n irr hn hn64 hirr) : GF2n n irr hn hn64 hirr :=
   reduce (a.val ^^^ b.val)
 
@@ -487,6 +510,7 @@ instance : Add (GF2n n irr hn hn64 hirr) where
   add := add
 
 /-- Negation is the identity in characteristic two. -/
+@[expose]
 def neg (a : GF2n n irr hn hn64 hirr) : GF2n n irr hn hn64 hirr :=
   a
 
@@ -494,6 +518,7 @@ instance : Neg (GF2n n irr hn hn64 hirr) where
   neg := neg
 
 /-- Subtraction coincides with addition in characteristic two. -/
+@[expose]
 def sub (a b : GF2n n irr hn hn64 hirr) : GF2n n irr hn hn64 hirr :=
   add a b
 
@@ -502,6 +527,7 @@ instance : Sub (GF2n n irr hn hn64 hirr) where
 
 /-- Natural scalar multiplication in characteristic two depends only on the
 parity of the scalar. -/
+@[expose]
 def nsmul (k : Nat) (a : GF2n n irr hn hn64 hirr) : GF2n n irr hn hn64 hirr :=
   if k % 2 = 0 then 0 else a
 
@@ -510,6 +536,7 @@ instance : SMul Nat (GF2n n irr hn hn64 hirr) where
 
 /-- Multiplication uses the carry-less word primitive followed by reduction
 modulo the packed irreducible. -/
+@[expose]
 def mul (a b : GF2n n irr hn hn64 hirr) : GF2n n irr hn hn64 hirr :=
   let (hi, lo) := clmul a.val b.val
   reduceWide hi lo
@@ -518,6 +545,7 @@ instance : Mul (GF2n n irr hn hn64 hirr) where
   mul := mul
 
 /-- Natural power in `GF(2^n)` by repeated squaring. -/
+@[expose]
 def pow (a : GF2n n irr hn hn64 hirr) (k : Nat) : GF2n n irr hn hn64 hirr :=
   let rec go (acc base : GF2n n irr hn hn64 hirr) (k : Nat) : GF2n n irr hn hn64 hirr :=
     if hk : k = 0 then
@@ -541,6 +569,7 @@ instance : Pow (GF2n n irr hn hn64 hirr) Nat where
 
 /-- Integer literals also reduce to parity because `-1 = 1` in characteristic
 two. -/
+@[expose]
 def intCast (k : Int) : GF2n n irr hn hn64 hirr :=
   natCast k.natAbs
 
@@ -548,6 +577,7 @@ instance : IntCast (GF2n n irr hn hn64 hirr) where
   intCast := intCast
 
 /-- Integer scalar multiplication depends only on parity as well. -/
+@[expose]
 def zsmul (k : Int) (a : GF2n n irr hn hn64 hirr) : GF2n n irr hn hn64 hirr :=
   if k.natAbs % 2 = 0 then 0 else a
 
@@ -556,11 +586,13 @@ instance : SMul Int (GF2n n irr hn hn64 hirr) where
 
 /-- The extended Euclidean witness supplies an inverse candidate modulo the
 packed irreducible. -/
-private def invWord (w : UInt64) : UInt64 :=
+@[expose]
+def invWord (w : UInt64) : UInt64 :=
   GF2Poly.packedInvWord n irr w
 
 /-- Inversion follows the packed extended-GCD path and uses the usual junk
 value `0⁻¹ = 0`. -/
+@[expose]
 def inv (a : GF2n n irr hn hn64 hirr) : GF2n n irr hn hn64 hirr :=
   if a.val == 0 then
     0
@@ -572,6 +604,7 @@ instance : Inv (GF2n n irr hn hn64 hirr) where
   inv := inv
 
 /-- Division is multiplication by the inverse candidate. -/
+@[expose]
 def div (a b : GF2n n irr hn hn64 hirr) : GF2n n irr hn hn64 hirr :=
   a * b⁻¹
 
@@ -579,6 +612,7 @@ instance : Div (GF2n n irr hn hn64 hirr) where
   div := div
 
 /-- Integer exponentiation uses inversion for negative exponents. -/
+@[expose]
 def zpow (a : GF2n n irr hn hn64 hirr) : Int → GF2n n irr hn hn64 hirr
   | .ofNat k => a ^ k
   | .negSucc k => (a ^ (k + 1))⁻¹
@@ -595,7 +629,7 @@ instance : HPow (GF2n n irr hn hn64 hirr) Int (GF2n n irr hn hn64 hirr) where
 inversion total). -/
 @[simp, grind =] theorem inv_zero : (0 : GF2n n irr hn hn64 hirr)⁻¹ = 0 := by
   have hzeroVal : (0 : GF2n n irr hn hn64 hirr).val = 0 := by
-    simp [OfNat.ofNat, natCast]
+    simp [OfNat.ofNat, natCast, zero]
   apply eq_of_val_eq
   simp [Inv.inv, inv, hzeroVal]
 
@@ -660,6 +694,7 @@ instance instDecidableEq : DecidableEq (GF2nPoly f hirr) := fun a b =>
 
 /-- Finite-index coefficient code for the reduced representative of a packed
 quotient-field element. -/
+@[expose]
 def coeffVector (a : GF2nPoly f hirr) : Fin f.degree → Bool :=
   GF2Poly.reducedCoeffVector f.degree a.val
 
@@ -671,14 +706,16 @@ theorem eq_of_coeffVector_eq {a b : GF2nPoly f hirr}
   exact GF2Poly.eq_of_reducedCoeffVector_eq a.val_reduced b.val_reduced hcoeff
 
 /-- The defining irreducible modulus polynomial of the packed quotient field. -/
+@[expose]
 def modulus : GF2Poly :=
   f
 
 /-- Zero is a reduced representative modulo any packed irreducible. -/
-private theorem zero_reduced : (0 : GF2Poly).IsZero ∨ (0 : GF2Poly).degree < f.degree := by
+theorem zero_reduced : (0 : GF2Poly).IsZero ∨ (0 : GF2Poly).degree < f.degree := by
   exact Or.inl rfl
 
 /-- Reduce a packed polynomial to its canonical residue class modulo `f`. -/
+@[expose]
 def reducePoly (p : GF2Poly) : GF2nPoly f hirr :=
   let r := p % modulus (f := f)
   if hzero : r.isZero = true then
@@ -863,9 +900,11 @@ private theorem dvd_of_mod_eq_zero {p f : GF2Poly} (h : p % f = 0) :
   exact hspec.symm.trans (GF2Poly.mul_comm q f)
 
 /-- Canonical additive identity. -/
+@[expose]
 def zero : GF2nPoly f hirr :=
   ⟨0, zero_reduced (f := f)⟩
 
+@[expose]
 instance : Zero (GF2nPoly f hirr) where
   zero := zero
 
@@ -940,6 +979,7 @@ private theorem length_filter_ne_eq_pred_of_mem_nodup
 Evaluate a Boolean coefficient list as a quotient expression in the class of
 `X`. The list is low-coefficient first: `bs[i]` is the coefficient of `X^i`.
 -/
+@[expose]
 def boolListExpression (bs : List Bool) : GF2nPoly f hirr :=
   reducePoly (f := f) (hirr := hirr) (GF2Poly.Internal.ofBoolList bs)
 
@@ -955,6 +995,7 @@ theorem boolListExpression_val_eq_mod (bs : List Bool) :
 `GF2[X]/(f)`, obtained by reducing every length-`f.degree` Boolean coefficient
 list. This is exposed for finite-field cardinality, root-count, and Rabin
 soundness consumers. -/
+@[expose]
 def elements : List (GF2nPoly f hirr) :=
   (GF2Poly.Internal.coeffBoolLists f.degree).map
     (boolListExpression (f := f) (hirr := hirr))
@@ -1072,6 +1113,7 @@ theorem elements_card :
 
 /-- The nonzero packed quotient-field elements, as a duplicate-free sublist of
 `elements`. -/
+@[expose]
 def nonzeroElements : List (GF2nPoly f hirr) :=
   (elements (f := f) (hirr := hirr)).filter (fun a => decide (a ≠ 0))
 
@@ -1096,10 +1138,12 @@ theorem nonzeroElements_card :
   rw [elements_card]
 
 /-- The quotient class of `X` modulo the packed irreducible `f`. -/
+@[expose]
 def X : GF2nPoly f hirr :=
   reducePoly (GF2Poly.monomial 1)
 
 /-- Canonical multiplicative identity. -/
+@[expose]
 def one : GF2nPoly f hirr :=
   reducePoly 1
 
@@ -1107,17 +1151,20 @@ instance : One (GF2nPoly f hirr) where
   one := one
 
 /-- Natural-number literals reduce to parity in characteristic two. -/
+@[expose]
 def natCast (k : Nat) : GF2nPoly f hirr :=
   if k % 2 = 0 then zero else one
 
 instance : NatCast (GF2nPoly f hirr) where
   natCast := natCast
 
+@[expose]
 instance (k : Nat) : OfNat (GF2nPoly f hirr) k where
   ofNat := natCast k
 
 /-- Addition in characteristic two is XOR on representatives, followed by
 canonical reduction modulo `f`. -/
+@[expose]
 def add (a b : GF2nPoly f hirr) : GF2nPoly f hirr :=
   reducePoly (a.val + b.val)
 
@@ -1135,6 +1182,7 @@ theorem reducePoly_add_eq (p q : GF2Poly) :
   exact (mod_add_mod_eq_mod_add p q f).symm
 
 /-- Negation is the identity in characteristic two. -/
+@[expose]
 def neg (a : GF2nPoly f hirr) : GF2nPoly f hirr :=
   a
 
@@ -1142,6 +1190,7 @@ instance : Neg (GF2nPoly f hirr) where
   neg := neg
 
 /-- Subtraction coincides with addition in characteristic two. -/
+@[expose]
 def sub (a b : GF2nPoly f hirr) : GF2nPoly f hirr :=
   add a b
 
@@ -1149,6 +1198,7 @@ instance : Sub (GF2nPoly f hirr) where
   sub := sub
 
 /-- Natural scalar multiplication depends only on parity. -/
+@[expose]
 def nsmul (k : Nat) (a : GF2nPoly f hirr) : GF2nPoly f hirr :=
   if k % 2 = 0 then 0 else a
 
@@ -1157,6 +1207,7 @@ instance : SMul Nat (GF2nPoly f hirr) where
 
 /-- Multiplication uses packed `GF2Poly` multiplication followed by reduction
 modulo the irreducible defining polynomial. -/
+@[expose]
 def mul (a b : GF2nPoly f hirr) : GF2nPoly f hirr :=
   reducePoly (a.val * b.val)
 
@@ -1174,6 +1225,7 @@ theorem reducePoly_mul_eq (p q : GF2Poly) :
   exact (mod_mul_mod_eq_mod_mul p q f).symm
 
 /-- Natural power in the packed quotient field by repeated squaring. -/
+@[expose]
 def pow (a : GF2nPoly f hirr) (k : Nat) : GF2nPoly f hirr :=
   let rec go (acc base : GF2nPoly f hirr) (k : Nat) : GF2nPoly f hirr :=
     if hk : k = 0 then
@@ -1197,6 +1249,7 @@ instance : Pow (GF2nPoly f hirr) Nat where
 
 /-- Iterated Frobenius squaring in the packed quotient, starting from a
 specified quotient element. -/
+@[expose]
 def frobeniusIter (a : GF2nPoly f hirr) : Nat → GF2nPoly f hirr
   | 0 => a
   | k + 1 => frobeniusIter a k * frobeniusIter a k
@@ -1251,6 +1304,7 @@ theorem quotient_X_frobeniusIter_eq_reduce_xpow2kMod (k : Nat) :
                 rfl
 
 /-- Integer literals reduce to parity. -/
+@[expose]
 def intCast (k : Int) : GF2nPoly f hirr :=
   natCast k.natAbs
 
@@ -1258,6 +1312,7 @@ instance : IntCast (GF2nPoly f hirr) where
   intCast := intCast
 
 /-- Integer scalar multiplication depends only on parity. -/
+@[expose]
 def zsmul (k : Int) (a : GF2nPoly f hirr) : GF2nPoly f hirr :=
   if k.natAbs % 2 = 0 then 0 else a
 
@@ -1266,11 +1321,13 @@ instance : SMul Int (GF2nPoly f hirr) where
 
 /-- The extended Euclidean witness supplies an inverse candidate modulo the
 packed irreducible. -/
-private def invPoly (p : GF2Poly) : GF2Poly :=
+@[expose]
+def invPoly (p : GF2Poly) : GF2Poly :=
   (GF2Poly.xgcd p (modulus (f := f))).left
 
 /-- Inversion follows the packed extended-GCD path and uses the usual junk
 value `0⁻¹ = 0`. -/
+@[expose]
 def inv (a : GF2nPoly f hirr) : GF2nPoly f hirr :=
   if a.val.isZero then
     0
@@ -1281,6 +1338,7 @@ instance : Inv (GF2nPoly f hirr) where
   inv := inv
 
 /-- Division is multiplication by the inverse candidate. -/
+@[expose]
 def div (a b : GF2nPoly f hirr) : GF2nPoly f hirr :=
   a * b⁻¹
 
@@ -1288,6 +1346,7 @@ instance : Div (GF2nPoly f hirr) where
   div := div
 
 /-- Integer exponentiation uses inversion for negative exponents. -/
+@[expose]
 def zpow (a : GF2nPoly f hirr) : Int → GF2nPoly f hirr
   | .ofNat k => a ^ k
   | .negSucc k => (a ^ (k + 1))⁻¹
@@ -1377,7 +1436,8 @@ defining irreducible. -/
 
 /-- The value of the additive identity is the zero polynomial. -/
 @[simp, grind =] theorem zero_val :
-    (0 : GF2nPoly f hirr).val = (0 : GF2Poly) := rfl
+    (0 : GF2nPoly f hirr).val = (0 : GF2Poly) := by
+  simp [OfNat.ofNat, natCast, zero]
 
 example (a b : GF2nPoly f hirr) :
     ((a * b) + 1).val = ((a.val * b.val) % f + (1 : GF2Poly) % f) % f := by
@@ -1513,6 +1573,7 @@ The list `[c₀, c₁, ...]` denotes `c₀ + β * (c₁ + β * (...))`. This
 proof-facing evaluator is separate from executable packed polynomial
 evaluation; it is used by quotient-field root-count arguments.
 -/
+@[expose]
 def evalCoeffList : List (GF2nPoly f hirr) → GF2nPoly f hirr → GF2nPoly f hirr
   | [], _ => 0
   | c :: cs, β => c + β * evalCoeffList cs β
@@ -1540,6 +1601,7 @@ If `P` is represented by `cs`, this list represents the quotient
 `(P(T) + P(α)) / (T + α)` in characteristic two. Its length is one less
 than the input list, which is the measure used by root-count induction.
 -/
+@[expose]
 def dividedDifferenceCoeffs :
     List (GF2nPoly f hirr) → GF2nPoly f hirr → List (GF2nPoly f hirr)
   | [], _ => []
@@ -1583,14 +1645,15 @@ def dividedDifferenceCoeffs :
 /-- Internal root-count helper: evaluate the divided difference of a
 quotient-coefficient polynomial between the base point `α` and target point
 `β`. -/
+@[expose]
 def dividedDifference
     (cs : List (GF2nPoly f hirr)) (α β : GF2nPoly f hirr) : GF2nPoly f hirr :=
   evalCoeffList (dividedDifferenceCoeffs cs α) β
 
 /-- The divided difference of an empty coefficient list is zero. -/
 @[simp, grind =] theorem dividedDifference_nil (α β : GF2nPoly f hirr) :
-    dividedDifference ([] : List (GF2nPoly f hirr)) α β = 0 :=
-  rfl
+    dividedDifference ([] : List (GF2nPoly f hirr)) α β = 0 := by
+  simp [dividedDifference, dividedDifferenceCoeffs, evalCoeffList]
 
 /-- The divided difference of a nonconstant list satisfies the synthetic
 recurrence used by the root-count induction. -/
@@ -1598,8 +1661,8 @@ recurrence used by the root-count induction. -/
     (c d : GF2nPoly f hirr) (cs : List (GF2nPoly f hirr))
     (α β : GF2nPoly f hirr) :
     dividedDifference (c :: d :: cs) α β =
-      evalCoeffList (d :: cs) α + β * dividedDifference (d :: cs) α β :=
-  rfl
+      evalCoeffList (d :: cs) α + β * dividedDifference (d :: cs) α β := by
+  simp [dividedDifference, dividedDifferenceCoeffs, evalCoeffList]
 
 private theorem add_self_right (a b : GF2nPoly f hirr) :
     a + (b + a) = b := by
@@ -1930,6 +1993,7 @@ This predicate gives the syntactic degree bound consumed by the root-count
 theorem: a list satisfying it represents a polynomial of degree strictly below
 the list length, with actual degree exactly `length - 1`.
 -/
+@[expose]
 def coeffListTopNonzero : List (GF2nPoly f hirr) → Prop
   | cs => ∃ c, cs.getLast? = some c ∧ c ≠ 0
 
@@ -1966,6 +2030,7 @@ private theorem coeffListTopNonzero_dividedDifferenceCoeffs
 
 /-- Internal root-count helper: roots of a quotient-coefficient polynomial
 inside the canonical quotient enumeration. -/
+@[expose]
 def rootsOfCoeffList (cs : List (GF2nPoly f hirr)) : List (GF2nPoly f hirr) :=
   (elements (f := f) (hirr := hirr)).filter
     (fun β => decide (evalCoeffList cs β = 0))
@@ -2229,6 +2294,7 @@ namespace Internal
 /-- Internal proof-facing linear natural powers in the packed quotient field.
 This variant has simple recursion equations; executable exponentiation remains
 the `Pow` instance above. -/
+@[expose]
 def linearPow (a : GF2nPoly f hirr) : Nat → GF2nPoly f hirr
   | 0 => 1
   | n + 1 => linearPow a n * a
@@ -2321,6 +2387,7 @@ theorem one_ne_zero (hf_pos : 0 < f.degree) :
 For `0 < k`, the list is low-to-high with nonzero coefficients exactly at
 degrees `1` and `2^k`. The `k = 0` list intentionally evaluates to zero,
 matching `T + T`; root-count callers use the positive-`k` theorem below. -/
+@[expose]
 def frobeniusFixedCoeffList (k : Nat) : List (GF2nPoly f hirr) :=
   if k = 0 then
     [0]
@@ -2556,6 +2623,7 @@ namespace Internal
 
 /-- Internal proof-facing product of a list of packed quotient elements
 (right fold), used with the canonical nonzero quotient enumeration. -/
+@[expose]
 def listProd (xs : List (GF2nPoly f hirr)) : GF2nPoly f hirr :=
   xs.foldr (· * ·) 1
 

@@ -44,9 +44,9 @@ private theorem foldl_int_dot_cast {n' : Nat}
       rw [this, hpush]
 
 /-- Entry expansion of an integer row combination at a fixed output column. -/
-private theorem rowCombination_int_getElem
+private theorem vecMul_int_getElem
     (b : Matrix Int n m) (c : Vector Int n) (col : Fin m) :
-    (Matrix.rowCombination b c)[col] =
+    (Matrix.vecMul c b)[col] =
       (List.finRange n).foldl
         (fun (acc : Int) (i : Fin n) => acc + b[i][col] * c[i]) 0 := by
   show (Matrix.transpose b * c)[col] = _
@@ -57,11 +57,9 @@ private theorem rowCombination_int_getElem
 /-- Entry expansion of the cast prefix row combination. The `(j + 1)`-row prefix
 of `castIntMatrix b` combined with `prefixCoeffsCast c k` reads out as a sum of
 the cast integer products through index `k`. -/
-private theorem rowCombination_prefix_castIntMatrix_getElem
+private theorem vecMul_prefix_castIntMatrix_getElem
     (b : Matrix Int n m) (c : Vector Int n) (k : Fin n) (col : Fin m) :
-    (Matrix.rowCombination
-        (GramSchmidt.prefixRows (castIntMatrix b) k.val k.isLt)
-        (prefixCoeffsCast c k))[col] =
+    (Matrix.vecMul (prefixCoeffsCast c k) (GramSchmidt.prefixRows (castIntMatrix b) k.val k.isLt))[col] =
       (List.finRange (k.val + 1)).foldl
         (fun (acc : Rat) (j : Fin (k.val + 1)) =>
           let jn : Fin n :=
@@ -78,25 +76,21 @@ private theorem rowCombination_prefix_castIntMatrix_getElem
 vector has all entries above index `k` equal to zero, the cast of the integer
 row combination is the row combination of the first `k.val + 1` cast rows with
 the prefix coefficient vector `prefixCoeffsCast c k`. -/
-private theorem cast_rowCombination_eq
+private theorem cast_vecMul_eq
     (b : Matrix Int n m) (c : Vector Int n) (k : Fin n)
     (hzero : ∀ j : Fin n, k.val < j.val → c[j] = 0) :
-    Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c) =
-      Matrix.rowCombination
-        (GramSchmidt.prefixRows (castIntMatrix b) k.val k.isLt)
-        (prefixCoeffsCast c k) := by
+    Vector.map (fun x : Int => (x : Rat)) (Matrix.vecMul c b) =
+      Matrix.vecMul (prefixCoeffsCast c k) (GramSchmidt.prefixRows (castIntMatrix b) k.val k.isLt) := by
   apply Vector.ext
   intro col hcol
   let cf : Fin m := ⟨col, hcol⟩
   have hLHS :
-      (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c))[cf] =
-        ((Matrix.rowCombination b c)[cf] : Rat) :=
+      (Vector.map (fun x : Int => (x : Rat)) (Matrix.vecMul c b))[cf] =
+        ((Matrix.vecMul c b)[cf] : Rat) :=
     Vector.getElem_map _ _
-  change (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c))[cf]
-      = (Matrix.rowCombination
-          (GramSchmidt.prefixRows (castIntMatrix b) k.val k.isLt)
-          (prefixCoeffsCast c k))[cf]
-  rw [hLHS, rowCombination_int_getElem b c cf, rowCombination_prefix_castIntMatrix_getElem b c k cf]
+  change (Vector.map (fun x : Int => (x : Rat)) (Matrix.vecMul c b))[cf]
+      = (Matrix.vecMul (prefixCoeffsCast c k) (GramSchmidt.prefixRows (castIntMatrix b) k.val k.isLt))[cf]
+  rw [hLHS, vecMul_int_getElem b c cf, vecMul_prefix_castIntMatrix_getElem b c k cf]
   -- LHS: cast of an integer foldl; RHS: a rational foldl over `finRange (k+1)`.
   -- First, push the cast through the integer foldl, getting a rational foldl
   -- over `finRange n` whose later terms vanish; then truncate to `k + 1`.
@@ -131,32 +125,31 @@ private theorem prefixSpan_castIntMatrix
     (b : Matrix Int n m) (c : Vector Int n) (k : Fin n)
     (hzero : ∀ j : Fin n, k.val < j.val → c[j] = 0) :
     GramSchmidt.prefixSpan (castIntMatrix b) k.val k.isLt
-      (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c)) :=
-  ⟨prefixCoeffsCast c k, (cast_rowCombination_eq b c k hzero).symm⟩
+      (Vector.map (fun x : Int => (x : Rat)) (Matrix.vecMul c b)) :=
+  ⟨prefixCoeffsCast c k, (cast_vecMul_eq b c k hzero).symm⟩
 
 /-- Transport of `prefixSpan_castIntMatrix` through
 `basis_span`: the cast integer row combination also lies in the prefix span of
 the first `k.val + 1` Gram-Schmidt basis rows. -/
-theorem prefixSpan_basis_of_rowCombination
+theorem prefixSpan_basis_of_vecMul
     (b : Matrix Int n m) (c : Vector Int n) (k : Fin n)
     (hzero : ∀ j : Fin n, k.val < j.val → c[j] = 0) :
     GramSchmidt.prefixSpan (basis b) k.val k.isLt
-      (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c)) :=
+      (Vector.map (fun x : Int => (x : Rat)) (Matrix.vecMul c b)) :=
   (basis_span b k.val k.isLt _).mpr
     (prefixSpan_castIntMatrix b c k hzero)
 
 /-- Package the prefix-span witness together with the recovered top
 Gram-Schmidt coordinate for a lattice row combination whose integer
 coefficients vanish above `k`. -/
-theorem prefixSpan_basis_and_coeffs_apply_eq_of_rowCombination
+theorem prefixSpan_basis_and_coeffs_apply_eq_of_vecMul
     (b : Matrix Int n m) (c : Vector Int n) (k : Fin n)
     (hzero : ∀ j : Fin n, k.val < j.val → c[j] = 0) :
     GramSchmidt.prefixSpan (basis b) k.val k.isLt
-        (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c)) ∧
-      (Matrix.rowCombination (coeffs b)
-          (Vector.map (fun x : Int => (x : Rat)) c))[k] = (c[k] : Rat) :=
-  ⟨prefixSpan_basis_of_rowCombination b c k hzero,
-    rowCombination_coeffs_apply_eq_of_zero_above b c k hzero⟩
+        (Vector.map (fun x : Int => (x : Rat)) (Matrix.vecMul c b)) ∧
+      (Matrix.vecMul (Vector.map (fun x : Int => (x : Rat)) c) (coeffs b))[k] = (c[k] : Rat) :=
+  ⟨prefixSpan_basis_of_vecMul b c k hzero,
+    vecMul_coeffs_apply_eq_of_zero_above b c k hzero⟩
 
 /-- The coefficient matrix reconstructs the cast integer input rows from the
 Gram-Schmidt basis rows: `coeffs b * basis b` collapses to the cast input
@@ -262,34 +255,29 @@ Gram-Schmidt basis rows: `coeffs b * basis b` collapses to the cast input
 
 /-- Integer row combinations reconstruct through the Gram-Schmidt basis after
 first combining the Gram-Schmidt coefficient rows. -/
-theorem rowCombination_basis_coeffs_reconstruction
+theorem vecMul_basis_coeffs_reconstruction
     (b : Matrix Int n m) (c : Vector Int n) :
-    Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c) =
-      Matrix.rowCombination (basis b)
-        (Matrix.rowCombination (coeffs b)
-          (Vector.map (fun x : Int => (x : Rat)) c)) := by
+    Vector.map (fun x : Int => (x : Rat)) (Matrix.vecMul c b) =
+      Matrix.vecMul (Matrix.vecMul (Vector.map (fun x : Int => (x : Rat)) c) (coeffs b)) (basis b) := by
   have hcoeff : coeffs b * basis b = castIntMatrix b :=
     coeffs_mul_basis_eq_castIntMatrix b
   apply Vector.ext
   intro j hj
   let jj : Fin m := ⟨j, hj⟩
-  change (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c))[jj] =
-    (Matrix.rowCombination (basis b)
-      (Matrix.rowCombination (coeffs b)
-        (Vector.map (fun x : Int => (x : Rat)) c)))[jj]
+  change (Vector.map (fun x : Int => (x : Rat)) (Matrix.vecMul c b))[jj] =
+    (Matrix.vecMul (Matrix.vecMul (Vector.map (fun x : Int => (x : Rat)) c) (coeffs b)) (basis b))[jj]
   have hmap :
-      (Vector.map (fun x : Int => (x : Rat)) (Matrix.rowCombination b c))[jj] =
-        ((Matrix.rowCombination b c)[jj] : Rat) :=
+      (Vector.map (fun x : Int => (x : Rat)) (Matrix.vecMul c b))[jj] =
+        ((Matrix.vecMul c b)[jj] : Rat) :=
     Vector.getElem_map _ _
-  rw [hmap, rowCombination_int_getElem b c jj]
+  rw [hmap, vecMul_int_getElem b c jj]
   rw [foldl_int_dot_cast (List.finRange n)
     (fun i : Fin n => b[i][jj]) (fun i : Fin n => c[i]) 0]
   have hleft :
       (List.finRange n).foldl
         (fun acc i => acc + ((b[i][jj] : Int) : Rat) *
           ((c[i] : Int) : Rat)) ((0 : Int) : Rat) =
-      (Matrix.rowCombination (castIntMatrix b)
-        (Vector.map (fun x : Int => (x : Rat)) c))[jj] := by
+      (Matrix.vecMul (Vector.map (fun x : Int => (x : Rat)) c) (castIntMatrix b))[jj] := by
     rw [show ((0 : Int) : Rat) = 0 by norm_cast]
     show _ = (Matrix.transpose (castIntMatrix b) *
         Vector.map (fun x : Int => (x : Rat)) c)[jj]
@@ -398,16 +386,16 @@ theorem normSq_latticeVec_ge_min_basis_normSq
         · exact False.elim (h ⟨ii, hci⟩)
       have hv_zero : v = 0 := by
         rw [← hcv, hc_zero]
-        simp [Matrix.rowCombination]
+        simp [Matrix.vecMul]
       exact False.elim (hv' hv_zero)
   rcases exists_highest_nonzero_coeff c hc_nonzero with ⟨k, hck, hzero_above⟩
   let d : Vector Rat n :=
-    Matrix.rowCombination (coeffs b) (Vector.map (fun x : Int => (x : Rat)) c)
+    Matrix.vecMul (Vector.map (fun x : Int => (x : Rat)) c) (coeffs b)
   have hcoeff_sq : (1 : Rat) ≤ d[k] * d[k] := by
     have htop :
         d[k] = (c[k] : Rat) := by
       dsimp [d]
-      exact rowCombination_coeffs_apply_eq_of_zero_above b c k hzero_above
+      exact vecMul_coeffs_apply_eq_of_zero_above b c k hzero_above
     rw [htop]
     exact GramSchmidt.one_le_intCast_mul_self_of_ne_zero c[k] hck
   refine ⟨k, ?_⟩
@@ -419,17 +407,17 @@ theorem normSq_latticeVec_ge_min_basis_normSq
       exact hij (Fin.ext hval))
   have hle :
       ((basis b).row k).normSq ≤
-        (Matrix.rowCombination (basis b) d).normSq :=
-    GramSchmidt.rowCombination_normSq_ge_of_orthogonal_coeff_sq_ge_one
+        (Matrix.vecMul d (basis b)).normSq :=
+    GramSchmidt.vecMul_normSq_ge_of_orthogonal_coeff_sq_ge_one
       (rows := basis b) (coeffs := d) (k := k) horth hcoeff_sq
   have hrec :
       Vector.map (fun x : Int => (x : Rat)) v =
-        Matrix.rowCombination (basis b) d := by
+        Matrix.vecMul d (basis b) := by
     rw [← hcv]
     dsimp [d]
-    exact rowCombination_basis_coeffs_reconstruction b c
+    exact vecMul_basis_coeffs_reconstruction b c
   have hnorm :
-      (Matrix.rowCombination (basis b) d).normSq =
+      (Matrix.vecMul d (basis b)).normSq =
         ((v.normSq : Int) : Rat) := by
     rw [← hrec, normSq_map_intCast]
   rw [← hnorm]
@@ -447,7 +435,7 @@ theorem exists_top_index_normSq_le_of_memLattice
     (b : Matrix Int n m) (_hli : independent b)
     (v : Vector Int m) (hv : memLattice b v) (hv' : v ≠ 0) :
     ∃ (k : Fin n) (c : Vector Int n),
-      Matrix.rowCombination b c = v ∧
+      Matrix.vecMul c b = v ∧
       c[k] ≠ 0 ∧
       (∀ j : Fin n, k.val < j.val → c[j] = 0) ∧
       ((basis b).row k).normSq ≤ ((v.normSq : Int) : Rat) := by
@@ -464,16 +452,16 @@ theorem exists_top_index_normSq_le_of_memLattice
         · exact False.elim (h ⟨ii, hci⟩)
       have hv_zero : v = 0 := by
         rw [← hcv, hc_zero]
-        simp [Matrix.rowCombination]
+        simp [Matrix.vecMul]
       exact False.elim (hv' hv_zero)
   rcases exists_highest_nonzero_coeff c hc_nonzero with ⟨k, hck, hzero_above⟩
   refine ⟨k, c, hcv, hck, hzero_above, ?_⟩
   let d : Vector Rat n :=
-    Matrix.rowCombination (coeffs b) (Vector.map (fun x : Int => (x : Rat)) c)
+    Matrix.vecMul (Vector.map (fun x : Int => (x : Rat)) c) (coeffs b)
   have hcoeff_sq : (1 : Rat) ≤ d[k] * d[k] := by
     have htop : d[k] = (c[k] : Rat) := by
       dsimp [d]
-      exact rowCombination_coeffs_apply_eq_of_zero_above b c k hzero_above
+      exact vecMul_coeffs_apply_eq_of_zero_above b c k hzero_above
     rw [htop]
     exact GramSchmidt.one_le_intCast_mul_self_of_ne_zero c[k] hck
   have horth : ∀ i j : Fin n, i ≠ j →
@@ -484,17 +472,17 @@ theorem exists_top_index_normSq_le_of_memLattice
       exact hij (Fin.ext hval))
   have hle :
       ((basis b).row k).normSq ≤
-        (Matrix.rowCombination (basis b) d).normSq :=
-    GramSchmidt.rowCombination_normSq_ge_of_orthogonal_coeff_sq_ge_one
+        (Matrix.vecMul d (basis b)).normSq :=
+    GramSchmidt.vecMul_normSq_ge_of_orthogonal_coeff_sq_ge_one
       (rows := basis b) (coeffs := d) (k := k) horth hcoeff_sq
   have hrec :
       Vector.map (fun x : Int => (x : Rat)) v =
-        Matrix.rowCombination (basis b) d := by
+        Matrix.vecMul d (basis b) := by
     rw [← hcv]
     dsimp [d]
-    exact rowCombination_basis_coeffs_reconstruction b c
+    exact vecMul_basis_coeffs_reconstruction b c
   have hnorm :
-      (Matrix.rowCombination (basis b) d).normSq =
+      (Matrix.vecMul d (basis b)).normSq =
         ((v.normSq : Int) : Rat) := by
     rw [← hrec, normSq_map_intCast]
   rw [← hnorm]
@@ -1174,7 +1162,7 @@ private theorem schurSigma_foldl_eq
     rw [Matrix.noPivotLoop_regular_branch 0
         (Matrix.noPivotInitialState (Matrix.gramMatrix b)) hDone hpivot]
     simp [Matrix.noPivotLoop_zero_fuel, Matrix.noPivotInitialState]
-    simp [Matrix.stepMatrix, Matrix.exactDiv, Matrix.ofFn, h0a, hp_out_pos,
+    simp [Matrix.stepMatrix_eq_ofFn, Matrix.exactDiv, Matrix.ofFn, h0a, hp_out_pos,
       h_rows_a0, h_rows_p0]
     grind
   | succ q' ih =>

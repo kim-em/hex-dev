@@ -15,7 +15,7 @@ Add to your `lakefile.toml`:
 ```toml
 [[require]]
 name = "hex-test-kit"
-git = "https://github.com/kim-em/hex-test-kit.git"
+git = "https://github.com/leanprover/hex-test-kit.git"
 rev = "main"
 ```
 

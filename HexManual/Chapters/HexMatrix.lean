@@ -23,6 +23,10 @@ tag := "hex-matrix"
 tag := "hex-matrix-intro"
 %%%
 
+Released as [hex-matrix](https://github.com/leanprover/hex-matrix), with the
+Mathlib correspondence in
+[hex-matrix-mathlib](https://github.com/leanprover/hex-matrix-mathlib).
+
 `Hex.Matrix R n m` is an `n × m` matrix over `R`.
 
 This library has the type, its arithmetic (the dot product, matrix-vector
@@ -72,12 +76,14 @@ matrix-matrix, both written `*`.
 
 The identity is a left and right unit, and multiplication is associative.
 
-{docstring Hex.Matrix.identity_mulVec}
+{docstring Hex.Matrix.identity_mul}
+
+{docstring Hex.Matrix.mul_identity}
 
 {docstring Hex.Matrix.mul_assoc}
 
-The squared norm of a vector, the Gram matrix of the rows, and the
-leading principal submatrices the Bareiss recurrence uses:
+The Gram matrix of the rows and the leading principal submatrices used by
+the Bareiss recurrence:
 
 {docstring Hex.Matrix.gramMatrix}
 
@@ -89,7 +95,7 @@ tag := "hex-matrix-elementary"
 %%%
 
 The elementary row operations work over any ring. Each has a determinant
-law, proved in {ref "hex-determinant"}[HexDeterminant];
+law, proved in {ref "hex-determinant"}[HexDeterminant].
 {ref "hex-row-reduce"}[HexRowReduce] uses them for Gauss-Jordan reduction
 over a field.
 

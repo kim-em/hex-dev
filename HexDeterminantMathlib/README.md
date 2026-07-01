@@ -5,10 +5,10 @@ library for Lean 4. The aim is fast executable code, fully verified, built
 with spec-driven development.
 
 `hex-determinant-mathlib` is the Mathlib bridge for
-[`hex-determinant`](https://github.com/kim-em/hex-determinant). It identifies
+[`hex-determinant`](https://github.com/leanprover/hex-determinant). It identifies
 the executable Leibniz determinant with Mathlib's `Matrix.det`, so Mathlib's
 determinant theory transfers to the executable matrices. This library depends
-on [`hex-determinant`](https://github.com/kim-em/hex-determinant) and on
+on [`hex-determinant`](https://github.com/leanprover/hex-determinant) and on
 Mathlib.
 
 # Quickstart
@@ -18,7 +18,7 @@ Add to your `lakefile.toml`:
 ```toml
 [[require]]
 name = "hex-determinant-mathlib"
-git = "https://github.com/kim-em/hex-determinant-mathlib.git"
+git = "https://github.com/leanprover/hex-determinant-mathlib.git"
 rev = "main"
 ```
 
@@ -46,8 +46,7 @@ The proof-facing API connects the executable determinant to Mathlib:
 - the permutation-sign bridge: `PermutationVector.toPerm`,
   `PermutationVector.equivs`, and `detSign_eq_permSign`, matching Hex's
   inversion-count sign to `Equiv.Perm.sign`;
-- submatrix transport: `matrixEquiv_principalSubmatrix`,
-  `matrixEquiv_borderedMinor`, and their determinant forms
+- submatrix transport: `matrixEquiv_borderedMinor` and the determinant forms
   `det_principalSubmatrix_eq_submatrix_det` and
   `det_borderedMinor_eq_submatrix_det`;
 - the Plücker three-term identity `det_plucker_three_term` and the
@@ -91,9 +90,9 @@ theorem desnanot_jacobi {R : Type*} [CommRing R] {n : ℕ}
 ```
 
 The Leibniz determinant and its cofactor, adjugate, and Cauchy-Binet theory
-live in [`hex-determinant`](https://github.com/kim-em/hex-determinant); the
+live in [`hex-determinant`](https://github.com/leanprover/hex-determinant); the
 `bareiss = det` headline theorems live in
-[`hex-bareiss-mathlib`](https://github.com/kim-em/hex-bareiss-mathlib).
+[`hex-bareiss-mathlib`](https://github.com/leanprover/hex-bareiss-mathlib).
 
 # Reference manual
 

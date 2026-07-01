@@ -36,7 +36,7 @@ def spanCoeffs [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) (v : Vect
 @[grind =>]
 theorem spanCoeffs_sound [Lean.Grind.Field R] [DecidableEq R]
     (M : Matrix R n m) (v : Vector R m) (c : Vector R n) :
-    spanCoeffs M v = some c → rowCombination M c = v := by
+    spanCoeffs M v = some c → vecMul c M = v := by
   intro h
   exact (rowReduce_isRowReduced M).toIsEchelonForm.spanCoeffs_sound v c h
 
@@ -58,9 +58,18 @@ def spanContains [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m) (v : Ve
 @[grind =]
 theorem spanContains_iff [Lean.Grind.Field R] [DecidableEq R]
     (M : Matrix R n m) (v : Vector R m) :
-    spanContains M v = true ↔ ∃ c : Vector R n, rowCombination M c = v := by
+    spanContains M v = true ↔ ∃ c : Vector R n, vecMul c M = v := by
   unfold spanContains
   simpa using (rowReduce_isRowReduced M).spanContains_iff v
+
+/-- `spanCoeffs` returns `none` exactly when `v` is in no row combination of `M`,
+so a `none` result certifies that `v` is not in the row span. -/
+@[grind =]
+theorem spanCoeffs_eq_none_iff [Lean.Grind.Field R] [DecidableEq R]
+    (M : Matrix R n m) (v : Vector R m) :
+    spanCoeffs M v = none ↔ ¬ ∃ c : Vector R n, vecMul c M = v := by
+  rw [← spanContains_iff, spanContains_eq_isSome]
+  cases spanCoeffs M v <;> simp
 
 /-- The rank returned by `rowReduce`. -/
 @[expose]

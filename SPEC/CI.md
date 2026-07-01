@@ -61,29 +61,39 @@ finished" on a now-superseded commit is not worth keeping.
 
 ## Job-count budget
 
-**Each workflow run uses exactly one ubuntu job.** The CI workflow
-also has one macOS job (the dyld cross-check). No other parallelism.
+**Each workflow runs in exactly one ubuntu job, and the project uses
+exactly one workflow (`ci.yml`).** Parallelism *within* that job is
+allowed only through GitHub Actions' in-job parallel steps (`background:`
+plus `wait-all:`): they run on the same runner, so they never raise the
+number of runners a PR holds — which is the quantity the shared
+~20-runner cap actually constrains. Extra jobs, `needs:` fan-out, and
+`strategy.matrix` remain forbidden.
 
 Concretely:
 
-- `ci.yml`: one `build` ubuntu job (DAG checks, hex `lake build`,
-  the `HexBerlekampZassenhausMathlib` bridge build required by
-  the HO-1 correctness chain, per-library `bench verify` smoke gate per
-  [SPEC/benchmarking.md §CI integration](benchmarking.md), plus the
-  structural and timing lints named there) and one `build-macos`
-  macOS job (hex `lake build` only — the dyld cross-check).
-  **Bench verify runs on ubuntu, not macOS**: the macOS job exists
-  for symbol-resolution coverage, not benchmarking, and macOS runners
-  are 10× the cost and a fraction of the concurrency. Per
-  [SPEC/benchmarking.md §CI integration](benchmarking.md), `verify`
-  is a smoke gate (does the bench module compile and run?), not a
-  timing measurement; timing-relevant runs live on a separate
-  scheduled workflow on dedicated hardware.
-- `conformance.yml`: one ubuntu job that runs the full conformance
-  matrix and every oracle (FLINT, PARI, fpLLL, Conway) sequentially
-  inside that single runner.
-- Future workflows: one ubuntu job, period. If a second runner is
-  genuinely needed (e.g. a separate macOS bench cross-check), state
+- `ci.yml`: one `build` ubuntu job. It runs the structural and source
+  lints, then elaborates the hex graph **once** (`lake build` of the
+  libraries, the bench exes, the conformance `#guard` drivers, and the
+  emit-fixture exes — including the `HexBerlekampZassenhausMathlib`
+  bridge required by the HO-1 correctness chain). It then runs the two
+  independent verification tails concurrently as `background:` steps: the
+  per-library `bench verify` smoke gate per
+  [SPEC/benchmarking.md §CI integration](benchmarking.md), and the
+  conformance/oracle suite (FLINT, PARI, Conway) with the BZ gates. A
+  `wait-all:` joins them and a fail-closed sentinel step fails the job
+  unless both tails signalled success.
+  **Bench verify runs on ubuntu**: per
+  [SPEC/benchmarking.md §CI integration](benchmarking.md), `verify` is a
+  smoke gate (does the bench module compile and run?), not a timing
+  measurement; timing-relevant runs live on a separate scheduled
+  workflow on dedicated hardware.
+- Conformance used to be a second workflow (`conformance.yml`). It was
+  folded into this job because a separate workflow re-elaborated the
+  entire hex graph on a second runner — pure duplicated compute. Sharing
+  one build between the two tails removes that duplication while keeping
+  the runner count at one.
+- Future work: extend this one job. If a second runner is genuinely
+  needed (e.g. a macOS dyld cross-check — not currently present), state
   the reason in a workflow-level comment.
 
 **Do not introduce matrices.** GitHub-hosted Actions on a personal
@@ -191,17 +201,16 @@ Anti-patterns:
 
 ## Branch protection
 
-`main` requires every status check produced by `ci.yml` and
-`conformance.yml` to pass before merge. The pod auto-merger
+`main` requires the status check produced by `ci.yml` to pass before
+merge. The pod auto-merger
 (`gh pr merge --auto`) respects branch protection, so this is the
 mechanism that gates merges on CI.
 
 Required contexts (kept in sync with the actual job names in the
 workflow files):
 
-- `build` (from `ci.yml`)
-- `build-macos` (from `ci.yml`)
-- `conformance` (from `conformance.yml`)
+- `build` (from `ci.yml`) — the single job, covering the build, the
+  bench-verify tail, and the conformance/oracle tail.
 
 `required_status_checks.strict` is `false`. With `strict: true`,
 every merge to `main` flips every other open PR to `BEHIND` and
@@ -240,9 +249,9 @@ self-hosted runners explicitly rather than drifting toward them.
 
 To add a new conformance check, oracle, benchmark, or build target:
 
-1. **Default**: extend the script of the existing single job in the
-   workflow that already covers this kind of work (`conformance.yml`
-   for conformance/oracle, `ci.yml` for build/check/benchmark).
+1. **Default**: extend the script of the single `build` job in
+   `ci.yml`. Conformance/oracle work goes in the conformance tail,
+   build/check/benchmark work in the build phase or the bench tail.
 2. Add any new system dependency to the existing apt/brew step.
 3. Add any new Python or Lean dependency to the existing install
    step.

@@ -234,7 +234,14 @@ instance zeroSubNegLaw_of_ring {S : Type u} [Lean.Grind.Ring S] : ZeroSubNegLaw 
     intro a
     grind
 
-/-- Schoolbook dense polynomial multiplication by direct coefficient convolution. -/
+/-- Schoolbook dense polynomial multiplication by direct coefficient convolution.
+
+The inner `j`-loop reads the loop-invariant coefficient `p.coeff i` from a single
+`let`-bound value (`pi`) instead of re-projecting it on every `(i, j)` step, so
+the compiled inner loop performs one bounds-checked coefficient read per `i`
+rather than per `(i, j)`. The `let` is a zeta reduction away from the bare
+convolution, so it does not change the value, the `coeff_mul` spec, or any
+proof. -/
 @[expose]
 def mul [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
   if p.isZero || q.isZero then 0 else
@@ -242,10 +249,11 @@ def mul [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
     let coeffs :=
       (List.range p.size).foldl
         (fun acc i =>
+          let pi := p.coeff i
           (List.range q.size).foldl
             (fun acc j =>
               let k := i + j
-              acc.set! k ((acc[k]?).getD (Zero.zero : R) + p.coeff i * q.coeff j))
+              acc.set! k ((acc[k]?).getD (Zero.zero : R) + pi * q.coeff j))
             acc)
         (Array.replicate size (Zero.zero : R))
     ofCoeffs coeffs

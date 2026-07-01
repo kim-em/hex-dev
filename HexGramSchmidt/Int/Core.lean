@@ -89,7 +89,7 @@ predicate without making `hex-gram-schmidt` depend on the downstream LLL
 library. -/
 @[expose]
 def memLattice (b : Matrix Int n m) (v : Vector Int m) : Prop :=
-  ∃ c : Vector Int n, Matrix.rowCombination b c = v
+  ∃ c : Vector Int n, Matrix.vecMul c b = v
 
 /-- The `k`-th Gram determinant: the determinant of the `k × k` leading
 principal Gram matrix of the integer input. -/

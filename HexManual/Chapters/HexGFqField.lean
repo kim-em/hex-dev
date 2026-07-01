@@ -24,25 +24,24 @@ tag := "hex-gfq-field"
 tag := "hex-gfq-field-intro"
 %%%
 
-`HexGFqField` is the executable finite-field layer: it constructs the
-field `GF(pⁿ) = Fₚ[x] / (f)` for a prime `p` and an irreducible degree-`n`
-modulus `f` of type {name}`Hex.FpPoly`. It sits directly on top of the
-quotient-ring layer documented in
+`HexGFqField` constructs the field `GF(pⁿ) = Fₚ[x] / (f)` for a prime `p`
+and an irreducible degree-`n` modulus `f` of type {name}`Hex.FpPoly`. It
+builds on the quotient ring documented in
 {ref "hex-gfq-ring"}[the `HexGFqRing` chapter]: the field element type
-{name}`Hex.GFqField.FiniteField` is a thin wrapper carrying a single
+{name}`Hex.GFqField.FiniteField` wraps a single
 {name}`Hex.GFqRing.PolyQuotient` value, and every operation delegates to
 quotient-ring arithmetic and re-reduces, so the canonical-representative
-invariant from `HexGFqRing` is inherited unchanged.
+invariant from `HexGFqRing` carries over unchanged.
 
-What the field layer adds over the ring is the structure that only
-exists when the modulus is irreducible: multiplicative inverses (via the
-polynomial extended GCD), division, integer powers, and the Frobenius
-endomorphism `a ↦ aᵖ`. Irreducibility is not assumed informally — it is
-a hypothesis {name}`Hex.FpPoly.Irreducible` carried in the type of every
-field element, and in practice it is discharged by a checkable Rabin
-certificate from {ref "hex-gfq-field-cross-references"}[`HexBerlekamp`].
+What the field adds over the ring is the structure that only exists when
+the modulus is irreducible: multiplicative inverses (via the polynomial
+extended GCD), division, integer powers, and the Frobenius endomorphism
+`a ↦ aᵖ`. Irreducibility is a hypothesis
+{name}`Hex.FpPoly.Irreducible` carried in the type of every field
+element, discharged in practice by a checkable Rabin certificate from
+{ref "hex-gfq-field-cross-references"}[`HexBerlekamp`].
 
-# Core type and constructors
+# Field type and constructors
 %%%
 tag := "hex-gfq-field-core-type"
 %%%
@@ -59,7 +58,7 @@ Callers build elements through two smart constructors and read them back
 through one projection. {name}`Hex.GFqField.ofQuotient` wraps an existing
 quotient residue, {name}`Hex.GFqField.ofPoly` reduces a raw polynomial
 into the field, and {name}`Hex.GFqField.repr` recovers the canonical
-representative — always of degree strictly below the modulus.
+representative, always of degree strictly below the modulus.
 
 {docstring Hex.GFqField.ofQuotient}
 
@@ -115,9 +114,9 @@ inverse, and Frobenius is the `p`-th power map.
 
 The standard typeclass instances `Zero`, `One`, `Add`, `Mul`, `Neg`,
 `Sub`, `Pow`, `Inv`, and `Div` on {name}`Hex.GFqField.FiniteField` are
-backed by these operations, so ordinary field notation —
-`x + y`, `x * y`, `-x`, `x - y`, `x ^ n`, `x⁻¹`, and `x / y` — works
-over a `FiniteField` out of the box.
+backed by these operations, so ordinary field notation
+(`x + y`, `x * y`, `-x`, `x - y`, `x ^ n`, `x⁻¹`, and `x / y`) works
+over a `FiniteField`.
 
 ## Worked example: GF(5⁴) as F₅ modulo x⁴ + 2
 %%%
@@ -126,16 +125,15 @@ tag := "hex-gfq-field-worked-example"
 
 The example below builds the same modulus `x⁴ + 2` used in the
 {ref "hex-gfq-ring-worked-example"}[`HexGFqRing` worked example], whose
-reduction rule is `x⁴ ≡ -2 ≡ 3 (mod 5)`, but now exercises the *field*
-surface: inverses, division, and Frobenius alongside the ring
+reduction rule is `x⁴ ≡ -2 ≡ 3 (mod 5)`, but now exercises the field
+operations: inverses, division, and Frobenius alongside the ring
 operations. Irreducibility of the modulus is discharged by a Rabin
 {name}`Hex.Berlekamp.IrreducibilityCertificate`, whose pow chain and
 Bézout witness are checked by the kernel-reducible
 {name}`Hex.Berlekamp.checkIrreducibilityCertificateLinear` and routed to
 {name}`Hex.FpPoly.Irreducible` through
 {name}`Hex.Berlekamp.rabinTest_imp_irreducible`. Each `#guard` is checked
-when the chapter is built, so the expected coefficient lists match what
-the executable implementation produces.
+when the chapter builds.
 
 ```lean
 open Hex Hex.GFqField
@@ -294,7 +292,7 @@ extended-GCD inverse is a genuine two-sided multiplicative inverse.
 {docstring Hex.GFqField.inv_mul_cancel}
 
 Division is definitionally multiplication by the inverse, and the field
-is nontrivial — `0 ≠ 1` — which is where irreducibility (hence a
+is nontrivial (`0 ≠ 1`), which is where irreducibility (hence a
 positive-degree modulus) is used.
 
 {docstring Hex.GFqField.div_eq_mul_inv}
@@ -334,7 +332,7 @@ finite-field-valued callers downstream:
   worked example above.
 
 Downstream, `HexConway` builds Conway polynomials and canonical GF(pⁿ)
-constructions on top of this field layer, reaching `HexGFqRing`
+constructions on top of this field, reaching `HexGFqRing`
 transitively through `HexGFqField`.
 
 ## No Mathlib correspondence library
@@ -344,7 +342,7 @@ tag := "hex-gfq-field-no-mathlib-correspondence"
 
 Like {ref "hex-gfq-ring-no-mathlib-correspondence"}[`HexGFqRing`],
 `HexGFqField` is a purely computational library with *no* paired
-`*Mathlib` correspondence layer: there is no `HexGFqFieldMathlib`, and
+`*Mathlib` correspondence: there is no `HexGFqFieldMathlib`, and
 this chapter therefore carries no "computational vs. Mathlib
 correspondence" cross-reference. The canonical mathematical home of
 GF(pⁿ) is Mathlib's `GaloisField` / `AdjoinRoot` construction; a

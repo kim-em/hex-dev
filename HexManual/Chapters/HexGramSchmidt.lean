@@ -23,34 +23,34 @@ tag := "hex-gram-schmidt"
 tag := "hex-gram-schmidt-intro"
 %%%
 
-`HexGramSchmidt` is the Gram-Schmidt orthogonalization layer of the
-stack. Given a matrix whose rows are the input vectors, it produces the
-orthogonal basis obtained by subtracting from each row its projection
-onto the earlier rows, together with the lower-unitriangular matrix of
-projection coefficients that reconstructs the input. The whole surface
-is phrased over the dense {name}`Hex.Matrix` representation: operations
-take and return *whole matrices* (`basis b : Matrix Rat n m`,
-`coeffs b : Matrix Rat n n`) rather than indexed single-entry
-functions, and rows are addressed by `Nat` indices with explicit bounds
-rather than `Fin`.
+Released as
+[hex-gram-schmidt](https://github.com/leanprover/hex-gram-schmidt), with the
+Mathlib correspondence in
+[hex-gram-schmidt-mathlib](https://github.com/leanprover/hex-gram-schmidt-mathlib).
 
-The library carries two parallel surfaces. The `Hex.GramSchmidt.Rat`
-namespace orthogonalizes a rational matrix directly; the
-`Hex.GramSchmidt.Int` namespace casts an integer matrix into `Rat`
-before orthogonalizing, and adds the determinant-driven *integral*
-surface — the leading Gram determinants and the integer scaled
-coefficient matrix — that downstream lattice code uses to stay in exact
-arithmetic. The orthogonal basis and the rational coefficient matrix
-involve genuine division, so {name}`Hex.GramSchmidt.Rat.basis` and
-{name}`Hex.GramSchmidt.Rat.coeffs` are `noncomputable`; the
-determinant surface {name}`Hex.GramSchmidt.Int.gramDet` and
-{name}`Hex.GramSchmidt.Int.scaledCoeffs` is computable and drives the
+`HexGramSchmidt` orthogonalizes the rows of a matrix by Gram-Schmidt:
+from each row it subtracts the projection onto the earlier rows, and
+returns the orthogonal basis together with the lower-unitriangular matrix
+of projection coefficients that reconstructs the input. Everything is
+phrased over {name}`Hex.Matrix`: operations take and return whole
+matrices (`basis b : Matrix Rat n m`, `coeffs b : Matrix Rat n n`), and
+rows are addressed by `Nat` indices with explicit bounds rather than
+`Fin`.
+
+The library has two namespaces. `Hex.GramSchmidt.Rat` orthogonalizes a
+rational matrix directly. `Hex.GramSchmidt.Int` casts an integer matrix
+to `Rat` first, and adds computable integer data (the leading Gram
+determinants and the integer scaled coefficient matrix) that lattice
+code uses to stay in exact arithmetic. The orthogonal basis and rational
+coefficients involve division, so {name}`Hex.GramSchmidt.Rat.basis` and
+{name}`Hex.GramSchmidt.Rat.coeffs` are `noncomputable`; the determinant
+operations ({name}`Hex.GramSchmidt.Int.gramDet`,
+{name}`Hex.GramSchmidt.Int.scaledCoeffs`) are computable and drive the
 worked examples below.
 
-`HexGramSchmidt` is Mathlib-free and depends only on `HexMatrix`. It is
-a dependency of `HexLLL`, supplying the orthogonalization and the
-exact-update formulas that lattice reduction needs, but it is logically
-independent of LLL; see
+`HexGramSchmidt` is Mathlib-free and depends only on `HexMatrix`. `HexLLL`
+uses it for orthogonalization and the exact-update formulas, but it is
+logically independent of LLL; see
 {ref "hex-gram-schmidt-cross-references"}[Cross-references].
 
 # Core operations
@@ -74,11 +74,11 @@ integer one casting its input into `Rat` first.
 
 Because the basis and coefficient matrices divide, they are
 `noncomputable` and are documented here by signature. The integer
-surface adds two *computable* operations that stay in exact arithmetic.
+namespace adds two *computable* operations that stay in exact arithmetic.
 The leading Gram determinants are the determinants of the leading
-principal Gram minors `B Bᵀ` — these are the squared volumes of the
-prefix sublattices — and the scaled coefficient matrix clears the
-denominators of the rational coefficients against them.
+principal Gram minors `B Bᵀ` (the squared volumes of the prefix
+sublattices); the scaled coefficient matrix clears the denominators of
+the rational coefficients against them.
 
 {docstring Hex.GramSchmidt.Int.gramDet}
 
@@ -166,7 +166,7 @@ integer input (the latter taken in `Rat`).
 
 The basis and coefficient matrices together factor the input. Each
 input row equals its orthogonalized basis row plus the
-coefficient-weighted combination of the earlier basis rows — the
+coefficient-weighted combination of the earlier basis rows: the
 triangular factorization `b = coeffs · basis`, stated row by row.
 
 {docstring Hex.GramSchmidt.Rat.basis_decomposition}
@@ -190,20 +190,20 @@ tag := "hex-gram-schmidt-updates"
 
 Lattice reduction modifies the input by elementary row operations and
 needs to know how the Gram-Schmidt data changes. `HexGramSchmidt`
-packages the two operations LLL uses — size reduction and adjacent swap
-— and states the resulting update formulas. The executable row
-operations themselves live in `HexMatrix`; this layer supplies the
-`HexGramSchmidt`-level API for reasoning about them.
+packages the two operations LLL uses (size reduction and adjacent swap)
+and states the resulting update formulas. The row operations themselves
+live in `HexMatrix`; `HexGramSchmidt` supplies the API for reasoning
+about their effect on the Gram-Schmidt data.
 
 {docstring Hex.GramSchmidt.Int.sizeReduce}
 
 {docstring Hex.GramSchmidt.Int.adjacentSwap}
 
 Size reduction subtracts an integer multiple of an earlier row from a
-later one. This is a unimodular operation that preserves the orthogonal
-profile, so it leaves the entire Gram-Schmidt basis unchanged — LLL can
+later one. This unimodular operation preserves the orthogonal profile,
+so it leaves the entire Gram-Schmidt basis unchanged: LLL can
 size-reduce freely without disturbing the orthogonalized vectors or the
-Gram determinants that the swap step depends on.
+Gram determinants the swap step depends on.
 
 {docstring Hex.GramSchmidt.Int.basis_sizeReduce}
 
@@ -222,22 +222,17 @@ Gram-Schmidt.
 tag := "hex-gram-schmidt-cross-references"
 %%%
 
-`HexGramSchmidt` sits one level above `HexMatrix` and below the lattice
-layer:
+`HexGramSchmidt` depends only on `HexMatrix` and underpins `HexLLL`:
 
-* `HexMatrix` supplies the dense {name}`Hex.Matrix` representation and
-  the row operations (`rowAdd`, `rowSwap`) that the
+* `HexMatrix` supplies the {name}`Hex.Matrix` representation and the row
+  operations (`rowAdd`, `rowSwap`) that the
   {ref "hex-gram-schmidt-updates"}[update formulas] reason about. The
-  orthogonalization in this chapter is built entirely on that
-  representation.
-* `HexGramSchmidtMathlib` is the correspondence library: it re-exports
-  this executable theory as theorems about Mathlib's `LinearMap` and
-  `Matrix` Gram-Schmidt, so the computational results here transfer to
-  the abstract setting. The Mathlib dependency lives entirely on that
-  side of the boundary; `HexGramSchmidt` itself imports only `HexMatrix`
-  and `Std`.
-* `HexLLL` consumes the {ref "hex-gram-schmidt-core"}[integral surface]
-  — the Gram determinants and scaled coefficients — and the
+  orthogonalization here is built entirely on that representation.
+* `HexGramSchmidtMathlib` re-exports this executable theory as theorems
+  about Mathlib's `LinearMap` and `Matrix` Gram-Schmidt. `HexGramSchmidt`
+  itself imports only `HexMatrix` and `Std`.
+* `HexLLL` consumes the {ref "hex-gram-schmidt-core"}[integer data]
+  (the Gram determinants and scaled coefficients) and the
   {ref "hex-gram-schmidt-updates"}[exact update formulas] to drive
   lattice reduction in integer arithmetic. `HexGramSchmidt` is logically
   independent of LLL: it states the orthogonalization and its updates
