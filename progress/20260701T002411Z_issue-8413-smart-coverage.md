@@ -95,7 +95,42 @@ so the top call satisfies it; every recursive call preserves it. `omega` closes
 each step given `_budget_le` (`b ≤ budget`, landed in #8498) and the per-size
 split-count-vs-budget bound.
 
-## Status: completeness chain PROVEN; 3 sorries left
+## Status: completeness AND coverage PROVEN; only top-level wiring left
+
+Both headline theorems are now **sorry-free**:
+- `smartAux_none_budget_zero` (+ SizeLoop/CandLoop) — trustworthy-none completeness.
+- `smartAux_covers_of_bound` (+ SizeLoop/CandLoop) — conditional coverage. The
+  coverage mutual block mirrors completeness: CandLoop peel derives `T = S_cov`
+  (reusing the completeness case-1 machinery), then `factor ∣ f_cov` (emitted
+  head) / `factor ∣ quotient` (Aux-coverage recursion); SizeLoop delegates at
+  `k = dsize` with `hk_le` from `List.pairwise_lt_range` sortedness of the size
+  range, or a budget-0 contradiction at `S_cov`'s size.
+
+**Remaining: the top-level wiring only.** Prove `classicalCoreFactorsWithBound
+core B primeData = some cf → toMonicPrimeData? core = some primeData → (core ≠ 0,
+primitive, squarefree, deg ≥ 1) → ∀ g ∈ cf, Irreducible (toPolynomial g)`:
+- Unfold `classicalCoreFactorsWithBound` (`Basic.lean:8906`); `B=0` returns
+  `#[core]` (check whether the caller excludes it or core is forced irreducible);
+  else it runs `scaledRecombinationSmart (lc core) core (liftModulus liftData)
+  liftData.liftedFactors.toList` with `liftData = toMonicLiftData core
+  (exhaustiveLiftBound core B) primeData`, accepting only when
+  `¬ budgetExhausted`.
+- Bridge `liftModulus liftData = liftData.p ^ liftData.k` (liftModulus is a
+  `private def`; may need a public accessor or the defeq).
+- Get the substrate for the coverage call on `target = core, J = univ`: partition
+  `LiftedFactorSubsetPartition core d univ core`, `LiftedFactorListMatches d univ
+  d.liftedFactors.toList`, and the bundle (`hd_liftedFactor_monic`, `_inj`,
+  `_natDegree_pos`, precision `2·B' < p^k`) from `toMonicPrimeData?` producers
+  (search `*_of_toMonicPrimeData*` / `toMonicLiftData_*`). Fuel adequacy from the
+  wrapper's `budget + (r+1)(2r+3)` ≥ `budget + smartFuelBound r`.
+- Then irreducibility: coverage + product (`scaledRecombinationSmartAux_product`)
+  + `core` squarefree ⇒ `#result = #normalizedFactors` ⇒
+  `UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card` (mirror
+  `exhaustiveCoreFactorsWithBound_factor_irreducible_of_count`, 16770). Coverage
+  gives `#result ≥ #normalizedFactors` (distinct primes ↦ distinct emitted, since
+  squarefree); product+nonunit gives `≤` (`UFDPartition.length_le_...`).
+
+## (historical) Status: completeness chain PROVEN; 3 sorries left
 
 The trustworthy-none completeness mutual block is **done**:
 `smartAux_none_budget_zero`, `smartSizeLoop_none_budget_zero`,
