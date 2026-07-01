@@ -7018,4 +7018,39 @@ theorem classicalCoreFactorsWithBound_factor_irreducible_of_bound
       rw [List.toList_toArray] at hg
       exact hirr g hg
 
+/-- **#8413 (classical-tier irreducibility, natural-bound form).**  The precision
+side condition of `classicalCoreFactorsWithBound_factor_irreducible_of_bound` is
+discharged from the natural hypothesis `defaultFactorCoeffBound core ≤ B` (which
+also gives `B ≠ 0`, since a positive-degree core has a positive Mignotte bound):
+`exhaustiveLiftBound core B` dominates `B` and hence `defaultFactorCoeffBound
+core`, so `precisionForCoeffBound_spec` supplies the Mignotte precision.  In
+particular this applies with `B = defaultFactorCoeffBound core` (`le_refl`). -/
+theorem classicalCoreFactorsWithBound_factor_irreducible
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    {cf : Array Hex.ZPoly}
+    (hclassical : Hex.classicalCoreFactorsWithBound core B primeData = some cf)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hbound_le : Hex.ZPoly.defaultFactorCoeffBound core ≤ B) :
+    ∀ g ∈ cf.toList, Irreducible (HexPolyZMathlib.toPolynomial g) := by
+  have hdfb_pos : 0 < Hex.ZPoly.defaultFactorCoeffBound core :=
+    Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hcore_ne
+  have hB_ne : B ≠ 0 := by omega
+  have hp2 : 2 ≤ primeData.p :=
+    (Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected).two_le
+  have hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core <
+      primeData.p ^
+        Hex.precisionForCoeffBound (Hex.ZPoly.exhaustiveLiftBound core B) primeData.p := by
+    have hle : Hex.ZPoly.defaultFactorCoeffBound core ≤ Hex.ZPoly.exhaustiveLiftBound core B :=
+      le_trans hbound_le (Hex.ZPoly.le_exhaustiveLiftBound core B)
+    have hspec := Hex.precisionForCoeffBound_spec hp2 (Hex.ZPoly.exhaustiveLiftBound core B)
+    omega
+  exact classicalCoreFactorsWithBound_factor_irreducible_of_bound core B primeData
+    hclassical hselected hcore_ne hcore_primitive hcore_lc_pos hcore_sqfree hcore_pos
+    hB_ne hprecision
+
 end HexBerlekampZassenhausMathlib
