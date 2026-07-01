@@ -17964,6 +17964,32 @@ private theorem smartFuelBound_le_smartLoopFuelBound {m n : Nat} (h : m + 1 ≤ 
     smartFuelBound m ≤ smartLoopFuelBound n := by
   unfold smartFuelBound smartLoopFuelBound; nlinarith [h, m.zero_le, n.zero_le]
 
+/-- Every size-`k` split from `subsetsOfSizeWithComplement` has a length-`k`
+selected component. -/
+private theorem subsetsOfSizeWithComplement_fst_length {α : Type} :
+    ∀ (xs : List α) (k : Nat) {sc : List α × List α},
+      sc ∈ Hex.subsetsOfSizeWithComplement xs k → sc.1.length = k
+  | xs, 0, sc, hmem => by
+      simp only [Hex.subsetsOfSizeWithComplement, List.mem_singleton] at hmem
+      subst hmem; rfl
+  | [], _ + 1, sc, hmem => by
+      simp only [Hex.subsetsOfSizeWithComplement, List.not_mem_nil] at hmem
+  | x :: xs, k + 1, sc, hmem => by
+      simp only [Hex.subsetsOfSizeWithComplement, List.mem_append, List.mem_map] at hmem
+      rcases hmem with ⟨sc', hsc'_mem, rfl⟩ | ⟨sc', hsc'_mem, rfl⟩
+      · have := subsetsOfSizeWithComplement_fst_length xs k hsc'_mem
+        simpa using this
+      · have := subsetsOfSizeWithComplement_fst_length xs (k + 1) hsc'_mem
+        simpa using this
+
+/-- The selected list of a lifted-factor subset has length equal to the subset's
+cardinality. -/
+private theorem liftedSubsetSelectedList_length (d : Hex.LiftData)
+    (S : LiftedFactorSubset d) :
+    (liftedSubsetSelectedList d S).length = S.card :=
+  LiftedFactorListMatches.length_eq_card
+    ((LiftedFactorListMatches_iff_eq_liftedSubsetSelectedList d S _).mpr rfl)
+
 mutual
 
 /-- Trustworthy-none completeness for the size-ordered search: with adequate
