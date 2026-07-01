@@ -1,5 +1,25 @@
 # Issue #8413: the classical recombination search returns irreducible factors
 
+## ✅ COMPLETE — the theorem is proven end to end
+
+`IntReductionMod.classicalCoreFactorsWithBound_factor_irreducible_of_bound` is
+proven sorry-free: `classicalCoreFactorsWithBound core B primeData = some cf →
+toMonicPrimeData? core = some primeData → (core ≠ 0, primitive, squarefree,
+deg ≥ 1, B ≠ 0) → 2 * defaultFactorCoeffBound core < p^(precisionForCoeffBound
+(exhaustiveLiftBound core B) p) → ∀ g ∈ cf.toList, Irreducible (toPolynomial g)`.
+The `hprecision` hypothesis is threaded exactly as in the exhaustive-tier
+`…_of_bound` theorems (the codebase convention); everything else is discharged
+from `toMonicPrimeData?` and the core side conditions. The full CI-gated
+`HexBerlekampZassenhausMathlib` build is green (3732 jobs, 0 errors).
+
+Proof chain (all landed on this branch, sorry-free):
+completeness `smartAux_none_budget_zero` → coverage `smartAux_covers_of_bound`
+→ public `RecoveredSmartSearch.covers`/`.trustworthyNone` → counting
+`smartCore_factor_irreducible_of_covers_of_squarefree` → top-level assembly.
+
+---
+
+
 ## Accomplished
 
 Validated the premise of #8413 in depth and landed the first foundational
