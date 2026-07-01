@@ -17974,7 +17974,23 @@ private theorem smartAux_none_budget_zero
       Hex.scaledRecombinationSmartAux (Hex.DensePoly.leadingCoeff core)
           target (d.p ^ d.k) localFactors budget fuel = (none, b) →
       b = 0 := by
-  sorry
+  intro target J localFactors budget fuel b htarget_primitive htarget_lc_pos
+    htarget_dvd_core hpartition hmatches hfuel h
+  unfold Hex.scaledRecombinationSmartAux at h
+  split at h
+  · -- target = 1: returns (some [], budget), contradicting (none, b)
+    simp at h
+  · split at h
+    · -- budget = 0: returns (none, 0)
+      simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
+    · split at h
+      · -- fuel = 0: excluded by fuel adequacy `budget + 3*J.card + 1 ≤ fuel`
+        exfalso; omega
+      · split at h
+        · -- localFactors = []: forces `J` empty, hence `target = 1`, contradiction
+          sorry
+        · -- head :: tail: delegate to the size-loop completeness (mutual)
+          sorry
 
 /-- Conditional coverage for the size-ordered search: when it returns `some
 result`, every irreducible factor of `target` is an associate of some emitted
