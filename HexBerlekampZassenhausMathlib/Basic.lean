@@ -17946,12 +17946,12 @@ at the top.  See `progress/20260701T002411Z_issue-8413-smart-coverage.md`.
 The wrapper `Hex.scaledRecombinationSmart` passes `budget + smartFuelBound r`
 (its `(r+1)(2r+3)` term). Quadratic because the size loop's per-level overhead
 sums to `O(r²)` over the peel recursion. -/
-private def smartFuelBound (n : Nat) : Nat := (n + 1) * (2 * n + 3)
+def smartFuelBound (n : Nat) : Nat := (n + 1) * (2 * n + 3)
 
 /-- Fuel budget for the size/candidate loops at `n` remaining lifted factors;
 one `smartFuelBound` step smaller so the `Aux → SizeLoop → CandLoop → Aux` cycle
 stays adequate. -/
-private def smartLoopFuelBound (n : Nat) : Nat := n * (2 * n + 1)
+def smartLoopFuelBound (n : Nat) : Nat := n * (2 * n + 1)
 
 private theorem smartFuelBound_pos (n : Nat) : 0 < smartFuelBound n := by
   unfold smartFuelBound; positivity

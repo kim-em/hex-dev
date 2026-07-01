@@ -5331,7 +5331,7 @@ private def bhksNoProgressProjectedRows : BhksProjectedRows :=
 #guard bhksEquivalenceClassIndicators bhksNoProgressProjectedRows =
   #[#[1, 0, 0], #[0, 1, 0], #[0, 0, 1]]
 
-private def liftModulus (d : LiftData) : Nat :=
+def liftModulus (d : LiftData) : Nat :=
   d.p ^ d.k
 
 def centeredLiftPoly (f : ZPoly) (m : Nat) : ZPoly :=
