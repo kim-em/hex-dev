@@ -113,13 +113,28 @@ Remaining `sorry`s (besides the pre-existing project one at line ~239):
    k+1) plus the S→mask direction (mirror `liftedSubsetSelectedList_eq_mask_partition_of_matches`
    in reverse, or reuse `liftedSubsetSplit_mem_subsetSplitsWithFirst_of_matches`
    at 4610 + a size decomposition). Once proven, completeness is fully sorry-free.
-2. `smartAux_covers_of_bound` — conditional coverage (backward): from `= (some
-   result, b)`, structural peel-extraction gives `result = cand(T) :: sub` with
-   `Aux(quotient) = (some sub, _)`; show `T = S_cov` (containment + if `|S_cov| <
-   |T|` then `S_cov`'s size-`|S_cov|` CandLoop returned `none` ⇒ completeness ⇒
-   budget 0 ⇒ propagates ⇒ overall `none`, contra `some`); then `cand(T)=f_cov`
-   irreducible, recurse via `liftedFactorSubsetPartition_transport` +
-   `sdiff_of_subset`, mirroring `covers_of_bound` (17628).
+2. `smartAux_covers_of_bound` — conditional coverage. **Skeleton landed**: the
+   Aux half is fully proved (target=1 unit-contra, some≠none contras, head::tail
+   delegates); `smartSizeLoop_covers_of_bound` / `smartCandLoop_covers_of_bound`
+   are the two remaining `sorry`s in a mutual block. Fill plan (minimality is the
+   crux — thread it as extra hypotheses):
+   - **CandLoop coverage**: add params `k : Nat` and `hk_le : k ≤ S_cov.card - 1`,
+     with `hsplits_enum` over `subsetsOfSizeWithComplement tail k`. In the peel
+     case (`shouldRecord` + `exactQuotient? = some` + `Aux = some sub`): identify
+     `T` via #8412 (size `k`), `cand(T) ∣ target` ⇒ containment `S_cov ⊆ T`,
+     `|T| = k+1 ≤ S_cov.card` (from `hk_le`) and `≥ S_cov.card` ⇒ `T = S_cov`,
+     `cand(T) = f_cov`, `quotient = quotient_scov` (reuse CandLoop-completeness
+     case-1 machinery verbatim). Then `result = f_cov :: sub`; coverage: `factor ∣
+     target = f_cov * quotient`, prime ⇒ `factor ∣ f_cov` (assoc `f_cov`, emitted
+     head) or `factor ∣ quotient` (Aux coverage on `sub`, IH). Other loop cases
+     recurse on `rest` (with `hk_le`, `hsplits_enum` restricted).
+   - **SizeLoop coverage**: add `hsorted : List.Sorted (·≤·) sizes` so the head
+     `dsize ≤ S_cov.card-1` (via `hcontains`). At `(some res, cb)` from CandLoop:
+     delegate to CandLoop coverage with `k := dsize`, `hk_le` from `hsorted` +
+     `hcontains`. At `(none, cb)`: if `dsize = S_cov.card-1`, CandLoop
+     completeness ⇒ `cb=0` ⇒ `budget_zero` ⇒ `(none,0)` contra `some`; else recurse
+     on `ds`. Aux passes `hsorted := List.sorted_lt_range.le`-style for
+     `List.range`.
 
 Then the top-level wiring: `classicalCoreFactorsWithBound … = some cf → … →
 ∀ g ∈ cf, Irreducible (toPolynomial g)` via coverage + squarefree counting +
