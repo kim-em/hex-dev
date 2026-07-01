@@ -18152,7 +18152,35 @@ private theorem smartCandLoop_none_budget_zero
     (h : Hex.scaledRecombinationSmartCandLoop (Hex.DensePoly.leadingCoeff core)
         target (d.p ^ d.k) splits budget fuel = (none, b)) :
     b = 0 := by
-  sorry
+  unfold Hex.scaledRecombinationSmartCandLoop at h
+  split at h
+  · -- splits = []: `S_cov`'s split cannot be a member
+    simp only [List.not_mem_nil] at hscov_mem
+  · rename_i split rest
+    split at h
+    · -- budget = 0: returns (none, 0)
+      simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
+    · rename_i hbudget_ne
+      split at h
+      · -- fuel = 0: `budget + smartLoopFuelBound J.card ≤ 0` forces `budget = 0`
+        simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
+      · rename_i fuel'
+        simp only [] at h
+        split at h
+        · -- candidate is recorded
+          split at h
+          · -- exactQuotient? = some quotient (candidate divides `target`)
+            rename_i quotient hquot
+            split at h
+            · -- Aux returned `some`: contradicts the `none` result
+              simp at h
+            · -- Aux returned `(none, ab)`: candidate is `f_cov`, so `ab = 0`
+              rename_i ab haux
+              sorry
+          · -- exactQuotient? = none: candidate does not divide, recurse on `rest`
+            sorry
+        · -- candidate not recorded: recurse on `rest`
+          sorry
 termination_by fuel
 
 end
