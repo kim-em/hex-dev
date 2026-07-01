@@ -18646,8 +18646,9 @@ private theorem smartCandLoop_covers_of_bound
     (hJ_ne : J.Nonempty)
     (hmin_in_S_cov : J.min' hJ_ne ∈ S_cov)
     (hS_cov_rep : RepresentsIntegerFactorAtLift core d f_cov S_cov)
+    {k : Nat} (hk_le : k ≤ S_cov.card - 1)
     (hsplits_enum : ∀ split ∈ splits,
-      split ∈ (Hex.subsetsOfSizeWithComplement tail (S_cov.card - 1)).map
+      split ∈ (Hex.subsetsOfSizeWithComplement tail k).map
         (fun sc => (head :: sc.1, sc.2)))
     (hfuel : budget + smartLoopFuelBound J.card ≤ fuel)
     (h : Hex.scaledRecombinationSmartCandLoop (Hex.DensePoly.leadingCoeff core)
@@ -18658,7 +18659,48 @@ private theorem smartCandLoop_covers_of_bound
       ∃ emitted ∈ result,
         Associated (HexPolyZMathlib.toPolynomial emitted)
           (HexPolyZMathlib.toPolynomial factor) := by
-  sorry
+  intro factor hfactor_irr hfactor_dvd
+  unfold Hex.scaledRecombinationSmartCandLoop at h
+  split at h
+  · simp at h
+  · rename_i split rest
+    split at h
+    · simp at h
+    · rename_i hbudget_ne
+      split at h
+      · simp at h
+      · rename_i fuel'
+        simp only [] at h
+        split at h
+        · -- candidate recorded
+          split at h
+          · -- exactQuotient? = some: candidate divides — the peel case
+            rename_i quotient hquot
+            split at h
+            · -- Aux = (some sub, ab): PEEL
+              rename_i ab haux
+              sorry
+            · -- Aux = (none, ab): forces budget 0, contradicting `some`
+              rename_i ab haux
+              sorry
+          · -- exactQuotient? = none: recurse on `rest`
+            rename_i hquot_none
+            exact smartCandLoop_covers_of_bound B' hcore_lc_le hvalid hcore_ne
+              hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+              hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+              htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
+              hf_cov_irr hf_cov_dvd_target hS_cov_J hJ_ne hmin_in_S_cov hS_cov_rep
+              hk_le (fun s hs => hsplits_enum s (List.mem_cons_of_mem _ hs))
+              (by omega) h factor hfactor_irr hfactor_dvd
+        · -- candidate not recorded: recurse on `rest`
+          rename_i hrecord_false
+          exact smartCandLoop_covers_of_bound B' hcore_lc_le hvalid hcore_ne
+            hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+            hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+            htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
+            hf_cov_irr hf_cov_dvd_target hS_cov_J hJ_ne hmin_in_S_cov hS_cov_rep
+            hk_le (fun s hs => hsplits_enum s (List.mem_cons_of_mem _ hs))
+            (by omega) h factor hfactor_irr hfactor_dvd
 termination_by fuel
 
 end
