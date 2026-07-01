@@ -2439,8 +2439,8 @@ theorem dispatch_some_property {b : Matrix Int n m} {δ : Rat}
   exact HexLLLMathlib.certCheck_sound hcheck
 
 /-- The steered reducer preserves the generated lattice: the certified candidate
-preserves it by construction (`steeredReduce_memLattice_iff`), the fallback by
-`lllNative_memLattice_iff`. -/
+preserves it by construction (`steeredReduce_memLattice_iff`), the skip and
+fallback paths by `lllNative_memLattice_iff`. -/
 theorem lllSteered_memLattice_iff (b : Matrix Int n m) (δ : Rat)
     (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (v : Vector Int m) :
     Matrix.memLattice (Hex.lllSteered b δ hδ hδ' hn) v ↔ Matrix.memLattice b v := by
@@ -2448,7 +2448,9 @@ theorem lllSteered_memLattice_iff (b : Matrix Int n m) (δ : Rat)
   simp only [Hex.Internal.withRecordSteeredOutcome]
   split
   · split
-    · exact Hex.Internal.steeredReduce_memLattice_iff b δ v
+    · split
+      · exact Hex.Internal.steeredReduce_memLattice_iff b δ v
+      · exact lllNative_memLattice_iff b δ hδ hδ' hn v
     · exact lllNative_memLattice_iff b δ hδ hδ' hn v
   · exact lllNative_memLattice_iff b δ hδ hδ' hn v
 
@@ -2465,8 +2467,10 @@ theorem lllSteered_isLLLReduced (b : Matrix Int n m) (δ : Rat)
   simp only [Hex.Internal.withRecordSteeredOutcome]
   split
   · split
-    · rename_i h
-      exact (HexLLLMathlib.lllReducedCheck_sound _ δ (11 / 20) h).1
+    · split
+      · rename_i h
+        exact (HexLLLMathlib.lllReducedCheck_sound _ δ (11 / 20) h).1
+      · exact hnative
     · exact hnative
   · exact hnative
 
@@ -2478,8 +2482,10 @@ theorem lllSteered_independent (b : Matrix Int n m) (δ : Rat)
   simp only [Hex.Internal.withRecordSteeredOutcome]
   split
   · split
-    · rename_i h
-      exact (HexLLLMathlib.lllReducedCheck_sound _ δ (11 / 20) h).2
+    · split
+      · rename_i h
+        exact (HexLLLMathlib.lllReducedCheck_sound _ δ (11 / 20) h).2
+      · exact lllNative_independent b δ hδ hδ' hn hind
     · exact lllNative_independent b δ hδ hδ' hn hind
   · exact lllNative_independent b δ hδ hδ' hn hind
 

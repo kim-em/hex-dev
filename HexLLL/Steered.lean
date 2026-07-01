@@ -86,6 +86,32 @@ def init (b : Matrix Int n m) : SteeredState n m :=
 the float `mu`/`bb` approximation and copies `b` through unchanged. -/
 @[simp, grind =] theorem init_b (b : Matrix Int n m) : (init b).b = b := rfl
 
+/-- Conditioning test on the float Gram-Schmidt: `true` when every approximate
+squared norm `bb[i] ≈ ‖b*_i‖²` came out strictly positive.
+
+A genuine Gram-Schmidt squared norm is strictly positive (the rows are
+independent), so a non-positive `bb[i]` is a definitive signature that `Float64`
+catastrophic cancellation has corrupted the approximation on this basis: the
+initial `bb[i]` is formed by subtracting `Σ μ² · c` from `⟨b_i, b_i⟩`, and when
+the true `‖b*_i‖²` is many mantissa bits smaller than those terms the difference
+loses all significance and can even go negative. Steering from such a corrupted
+approximation makes wrong swap and size-reduction decisions, so the exact-integer
+candidate almost always misses `(δ, 11/20)`-certification and the whole steered
+attempt is wasted before falling back to the exact reducer.
+
+This is an empirically-calibrated routing heuristic, not a theorem: soundness
+never depends on it (a candidate that does slip through still certifies, and any
+basis routed here still gets an exact reduction). The four structured worst-case
+families (ajtai / q-ary / ntru / knapsack) have a Gram-Schmidt dynamic range far
+exceeding the 53-bit mantissa and produce many non-positive `bb[i]` (13+ of 32 on
+the smallest steered rungs), all of which fail certification; the near-orthogonal
+random-bounded and width-bound harsh-cubic families produce none across every
+committed rung and seed, and all certify. Reading the signs is `O(n)` on the
+`init` the steered path already builds. -/
+@[expose]
+def wellConditioned (s : SteeredState n m) : Bool :=
+  s.bb.all fun x => decide (0.0 < x)
+
 /-- Recompute `mu` row `k` and `bb[k]` from the exact Gram entries `⟨b_k, b_j⟩`
 and the stored approximation of rows `< k`. The basis is unchanged. This is the
 drift-control step: each working row's coefficients are recomputed from the exact
@@ -255,12 +281,19 @@ costs ~5% on random-bounded n=45). A stricter `δsteer` does not monotonically
 help robustness or cost, because it steers a different swap trajectory through
 different float-rounding boundaries. -/
 @[expose]
-def steeredReduce (b : Matrix Int n m) (δ : Rat) : Matrix Int n m :=
-  let s0 := SteeredState.init b
+def steeredReduceFrom (s0 : SteeredState n m) (δ : Rat) : Matrix Int n m :=
   let δf : Float := Float.ofInt δ.num / Float.ofNat δ.den
   let δsteer : Float := (δf + 2.0) / 3.0
-  let s := SteeredState.loop δsteer 16 s0 1 0 (SteeredState.fuel b)
+  let s := SteeredState.loop δsteer 16 s0 1 0 (SteeredState.fuel s0.b)
   (SteeredState.finalSweep s).b
+
+/-- Run the approximation-steered reducer by building the float GSO once with
+`init` and driving the loop and final sweep from it. `lllSteered` builds the same
+initial state, inspects its conditioning, and calls `steeredReduceFrom` directly
+to avoid a second `init`. -/
+@[expose]
+def steeredReduce (b : Matrix Int n m) (δ : Rat) : Matrix Int n m :=
+  steeredReduceFrom (SteeredState.init b) δ
 
 /-! ### Lattice preservation of the steered reducer
 
@@ -390,6 +423,14 @@ membership of `v` is unchanged. -/
 
 end SteeredState
 
+/-- Running the steered loop and final sweep from any initial state preserves the
+lattice: both `loop` and `finalSweep` are lattice-preserving, so the output spans
+the same integer lattice as `s0.b`, independent of the float approximation. -/
+@[grind =] theorem steeredReduceFrom_memLattice_iff
+    (s0 : SteeredState n m) (δ : Rat) (v : Vector Int m) :
+    Matrix.memLattice (steeredReduceFrom s0 δ) v ↔ Matrix.memLattice s0.b v := by
+  unfold steeredReduceFrom; grind
+
 /-- The complete steered reducer preserves the lattice: `init`, `loop`, and
 `finalSweep` are each lattice-preserving, so the steered output basis spans the
 same integer lattice as the input `b` and membership of `v` is unchanged. This is
@@ -402,18 +443,26 @@ approximation. -/
 
 
 /-- Outcome of one steered reduction: the steered candidate certified at
-`(δ, 11/20)`, or the run fell back to the exact `lllNative`. -/
+`(δ, 11/20)`; the run attempted steering but the candidate failed certification,
+so it fell back to the exact `lllNative`; or the conditioning test predicted the
+float GSO was degenerate and the run skipped straight to `lllNative` without
+attempting (and wasting) a steered reduction. -/
 inductive SteeredOutcome where
   | certified
   | fellBack
+  | skipped
 deriving Repr, BEq
 
 /-- Fallback-rate diagnostic for the steered reducer. `fellBack = 0` across a
-bench ladder confirms the steered path certified every rung, so the measured
-medians are honest (no exact-reducer time mixed in). -/
+bench ladder confirms the steered path certified every rung it attempted, so the
+measured medians are honest (no exact-reducer time mixed in). `skipped` counts the
+rungs the conditioning test routed straight to the exact reducer without a wasted
+steered attempt; on the ill-conditioned structured families these previously
+showed up as `fellBack`. -/
 structure SteeredTally where
   certified : Nat := 0
   fellBack : Nat := 0
+  skipped : Nat := 0
 deriving Repr, BEq, Inhabited
 
 initialize steeredTallyRef : IO.Ref SteeredTally ← IO.mkRef {}
@@ -433,6 +482,7 @@ def steeredTally : IO SteeredTally := steeredTallyRef.get
 private def bumpSteered (t : SteeredTally) : SteeredOutcome → SteeredTally
   | .certified => { t with certified := t.certified + 1 }
   | .fellBack => { t with fellBack := t.fellBack + 1 }
+  | .skipped => { t with skipped := t.skipped + 1 }
 
 /-- Side-effecting tally bump callable from pure code; definitionally the
 continuation `k`. Mirrors `withRecordCheckerOutcome`. -/
@@ -489,21 +539,30 @@ def steerWins (_b : Matrix Int n m) : Bool :=
 end Internal
 
 /-- Approximation-steered native reducer with certified output. When `steerWins`
-holds it runs the steered loop (exact integer row operations driven by an
-untrusted float Gram-Schmidt), certifies the candidate at the public `(δ, 11/20)`
-bound via `lllReducedCheck`, and falls back to the exact `lllNative` on
-certification failure; otherwise it runs `lllNative` directly. The output is
-therefore always a `(δ, 11/20)`-reduced basis of the same lattice as `b`; the
-exact `d`/`ν` state is materialized only on the small-input and fallback paths. -/
+holds it builds the float Gram-Schmidt with `init` and consults its conditioning:
+if the approximation is numerically usable (`wellConditioned`) it runs the steered
+loop from that state (exact integer row operations driven by the untrusted float
+Gram-Schmidt), certifies the candidate at the public `(δ, 11/20)` bound via
+`lllReducedCheck`, and falls back to the exact `lllNative` on certification
+failure. If the float GSO is degenerate (a non-positive approximate squared norm,
+the signature of the structured worst-case families) it skips the predicted-futile
+steered attempt and runs `lllNative` directly; below the dimension floor it also runs
+`lllNative` directly. The output is therefore always a `(δ, 11/20)`-reduced basis
+of the same lattice as `b`; the exact `d`/`ν` state is materialized only on the
+small-input, skip, and fallback paths. -/
 @[expose]
 def lllSteered (b : Matrix Int n m) (δ : Rat)
     (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) : Matrix Int n m :=
   if steerWins b then
-    let candidate := steeredReduce b δ
-    if lllReducedCheck candidate δ (11 / 20) then
-      withRecordSteeredOutcome .certified candidate
+    let s0 := SteeredState.init b
+    if s0.wellConditioned then
+      let candidate := steeredReduceFrom s0 δ
+      if lllReducedCheck candidate δ (11 / 20) then
+        withRecordSteeredOutcome .certified candidate
+      else
+        withRecordSteeredOutcome .fellBack (lllNative b δ hδ hδ' hn)
     else
-      withRecordSteeredOutcome .fellBack (lllNative b δ hδ hδ' hn)
+      withRecordSteeredOutcome .skipped (lllNative b δ hδ hδ' hn)
   else
     lllNative b δ hδ hδ' hn
 
