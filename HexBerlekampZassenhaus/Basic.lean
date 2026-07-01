@@ -8186,6 +8186,227 @@ theorem scaledRecombinationSmartCandLoop_shouldRecord
 termination_by fuel
 end
 
+mutual
+/-- Every factor emitted by the size-ordered recombination search is fixed by
+`normalizeFactorSign`: each recorded candidate is `normalizeFactorSign …` by
+construction, so `normalizeFactorSign_idem` closes it. Shared conclusion across
+the three loops, proved by structural recursion on `fuel`. Sibling of
+`scaledRecombinationSmartAux_shouldRecord`; consumed by the classical-tier
+completeness wiring. -/
+theorem scaledRecombinationSmartAux_normalizeFactorSign
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
+    (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
+    (h : scaledRecombinationSmartAux coreLc target modulus localFactors budget fuel
+        = (some factors, b)) :
+    ∀ g ∈ factors, normalizeFactorSign g = g := by
+  unfold scaledRecombinationSmartAux at h
+  split at h
+  · simp only [Prod.mk.injEq, Option.some.injEq] at h
+    obtain ⟨hf, _⟩ := h; subst hf; intro g hg; simp at hg
+  · split at h
+    · simp at h
+    · split at h
+      · simp at h
+      · split at h
+        · simp at h
+        · exact scaledRecombinationSmartSizeLoop_normalizeFactorSign _ _ _ _ _ _ _ _ _ _ h
+termination_by fuel
+
+theorem scaledRecombinationSmartSizeLoop_normalizeFactorSign
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (head : ZPoly) (tail : List ZPoly)
+    (sizes : List Nat) (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
+    (h : scaledRecombinationSmartSizeLoop coreLc target modulus head tail sizes budget fuel
+        = (some factors, b)) :
+    ∀ g ∈ factors, normalizeFactorSign g = g := by
+  unfold scaledRecombinationSmartSizeLoop at h
+  split at h
+  · simp at h
+  · split at h
+    · simp at h
+    · split at h
+      · simp at h
+      · simp only [] at h
+        split at h
+        · rename_i res bres hcand
+          simp only [Prod.mk.injEq, Option.some.injEq] at h
+          obtain ⟨hres, _⟩ := h; subst hres
+          exact scaledRecombinationSmartCandLoop_normalizeFactorSign _ _ _ _ _ _ _ _ hcand
+        · exact scaledRecombinationSmartSizeLoop_normalizeFactorSign _ _ _ _ _ _ _ _ _ _ h
+termination_by fuel
+
+theorem scaledRecombinationSmartCandLoop_normalizeFactorSign
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (splits : List (List ZPoly × List ZPoly)) (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
+    (h : scaledRecombinationSmartCandLoop coreLc target modulus splits budget fuel
+        = (some factors, b)) :
+    ∀ g ∈ factors, normalizeFactorSign g = g := by
+  unfold scaledRecombinationSmartCandLoop at h
+  split at h
+  · simp at h
+  · rename_i split rest
+    split at h
+    · simp at h
+    · split at h
+      · simp at h
+      · rename_i fuel'
+        simp only [] at h
+        split at h
+        · rename_i hrecord
+          cases hquot : exactQuotient? target
+              (normalizeFactorSign (ZPoly.primitivePart
+                (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
+          | none =>
+              simp only [hquot] at h
+              exact scaledRecombinationSmartCandLoop_normalizeFactorSign _ _ _ _ _ _ _ _ h
+          | some quotient =>
+              simp only [hquot] at h
+              cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
+                  (budget - 1) fuel' with
+              | mk ores ob =>
+                  cases ores with
+                  | none =>
+                      simp only [haux] at h
+                      exact scaledRecombinationSmartCandLoop_normalizeFactorSign _ _ _ _ _ _ _ _ h
+                  | some sub =>
+                      simp only [haux] at h
+                      simp only [Prod.mk.injEq, Option.some.injEq] at h
+                      obtain ⟨hfac, _⟩ := h; subst hfac
+                      intro g hg
+                      rcases List.mem_cons.mp hg with hg_eq | hg_sub
+                      · subst hg_eq
+                        exact normalizeFactorSign_idem
+                          (ZPoly.primitivePart (ZPoly.dilate coreLc
+                            (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))
+                      · exact scaledRecombinationSmartAux_normalizeFactorSign _ _ _ _ _ _ _ _ haux g hg_sub
+        · exact scaledRecombinationSmartCandLoop_normalizeFactorSign _ _ _ _ _ _ _ _ h
+termination_by fuel
+end
+
+mutual
+/-- Every factor emitted by the size-ordered recombination search is primitive:
+each recorded candidate is `normalizeFactorSign (primitivePart …)`, and the
+`shouldRecordPolynomialFactor` gate forces the candidate nonzero, hence the inner
+`primitivePart` argument has nonzero content, so the candidate is primitive.
+Shared conclusion across the three loops, proved by structural recursion on
+`fuel`. Consumed by the classical-tier completeness wiring (positive degree
+via `degree_pos_of_primitive_norm_record`). -/
+theorem scaledRecombinationSmartAux_primitive
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
+    (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
+    (h : scaledRecombinationSmartAux coreLc target modulus localFactors budget fuel
+        = (some factors, b)) :
+    ∀ g ∈ factors, ZPoly.Primitive g := by
+  unfold scaledRecombinationSmartAux at h
+  split at h
+  · simp only [Prod.mk.injEq, Option.some.injEq] at h
+    obtain ⟨hf, _⟩ := h; subst hf; intro g hg; simp at hg
+  · split at h
+    · simp at h
+    · split at h
+      · simp at h
+      · split at h
+        · simp at h
+        · exact scaledRecombinationSmartSizeLoop_primitive _ _ _ _ _ _ _ _ _ _ h
+termination_by fuel
+
+theorem scaledRecombinationSmartSizeLoop_primitive
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (head : ZPoly) (tail : List ZPoly)
+    (sizes : List Nat) (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
+    (h : scaledRecombinationSmartSizeLoop coreLc target modulus head tail sizes budget fuel
+        = (some factors, b)) :
+    ∀ g ∈ factors, ZPoly.Primitive g := by
+  unfold scaledRecombinationSmartSizeLoop at h
+  split at h
+  · simp at h
+  · split at h
+    · simp at h
+    · split at h
+      · simp at h
+      · simp only [] at h
+        split at h
+        · rename_i res bres hcand
+          simp only [Prod.mk.injEq, Option.some.injEq] at h
+          obtain ⟨hres, _⟩ := h; subst hres
+          exact scaledRecombinationSmartCandLoop_primitive _ _ _ _ _ _ _ _ hcand
+        · exact scaledRecombinationSmartSizeLoop_primitive _ _ _ _ _ _ _ _ _ _ h
+termination_by fuel
+
+theorem scaledRecombinationSmartCandLoop_primitive
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (splits : List (List ZPoly × List ZPoly)) (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
+    (h : scaledRecombinationSmartCandLoop coreLc target modulus splits budget fuel
+        = (some factors, b)) :
+    ∀ g ∈ factors, ZPoly.Primitive g := by
+  unfold scaledRecombinationSmartCandLoop at h
+  split at h
+  · simp at h
+  · rename_i split rest
+    split at h
+    · simp at h
+    · split at h
+      · simp at h
+      · rename_i fuel'
+        simp only [] at h
+        split at h
+        · rename_i hrecord
+          cases hquot : exactQuotient? target
+              (normalizeFactorSign (ZPoly.primitivePart
+                (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
+          | none =>
+              simp only [hquot] at h
+              exact scaledRecombinationSmartCandLoop_primitive _ _ _ _ _ _ _ _ h
+          | some quotient =>
+              simp only [hquot] at h
+              cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
+                  (budget - 1) fuel' with
+              | mk ores ob =>
+                  cases ores with
+                  | none =>
+                      simp only [haux] at h
+                      exact scaledRecombinationSmartCandLoop_primitive _ _ _ _ _ _ _ _ h
+                  | some sub =>
+                      simp only [haux] at h
+                      simp only [Prod.mk.injEq, Option.some.injEq] at h
+                      obtain ⟨hfac, _⟩ := h; subst hfac
+                      intro g hg
+                      rcases List.mem_cons.mp hg with hg_eq | hg_sub
+                      · subst hg_eq
+                        have hcand_ne :
+                            normalizeFactorSign (ZPoly.primitivePart
+                                (ZPoly.dilate coreLc
+                                  (centeredLiftPoly
+                                    (Array.polyProduct split.1.toArray) modulus))) ≠ 0 := by
+                          unfold shouldRecordPolynomialFactor at hrecord
+                          simp at hrecord
+                          exact hrecord.1.1
+                        have hpp_ne :
+                            ZPoly.primitivePart
+                                (ZPoly.dilate coreLc
+                                  (centeredLiftPoly
+                                    (Array.polyProduct split.1.toArray) modulus)) ≠ 0 := by
+                          intro hpp
+                          apply hcand_ne
+                          rw [hpp]
+                          unfold normalizeFactorSign
+                          rw [if_neg
+                            (by decide : ¬ DensePoly.leadingCoeff (0 : ZPoly) < 0)]
+                        have hcontent_ne :
+                            ZPoly.content
+                                (ZPoly.dilate coreLc
+                                  (centeredLiftPoly
+                                    (Array.polyProduct split.1.toArray) modulus)) ≠ 0 := by
+                          intro hcontent
+                          apply hpp_ne
+                          show DensePoly.primitivePart _ = 0
+                          exact DensePoly.primitivePart_eq_zero_of_content_eq_zero _
+                            (by simpa [ZPoly.content] using hcontent)
+                        exact normalizeFactorSign_primitive _
+                          (ZPoly.primitivePart_primitive _ hcontent_ne)
+                      · exact scaledRecombinationSmartAux_primitive _ _ _ _ _ _ _ _ haux g hg_sub
+        · exact scaledRecombinationSmartCandLoop_primitive _ _ _ _ _ _ _ _ h
+termination_by fuel
+end
+
 /-- Exhaustive recombination of the lifted local factors stored in `d`,
 using the *scaled* candidate shape parameterised by the integer leading
 coefficient `coreLc`.  Returns the recovered integer factors as an array
@@ -14193,6 +14414,124 @@ theorem degree_pos_of_primitive_norm_record
       rfl
     unfold shouldRecordPolynomialFactor at hq_record
     simp [hq_one] at hq_record
+
+/-- Structural case-split for the size-ordered classical recombination core.
+Every `some cf` result of `classicalCoreFactorsWithBound` is either the
+short-circuit singleton `#[core]` (the `B = 0`, budget-`none`, and empty-result
+arms all return `#[core]`) or the array of a nonempty recombination result, in
+which case the product reconstructs `core` and each factor is
+`normalizeFactorSign`-fixed, primitive, and recorded. The trio
+`classicalCoreFactorsWithBound_{polyProduct,normalizeFactorSign,degree_pos}`
+below are thin consumers, mirroring the exhaustive-tier structural trio. -/
+private theorem classicalCoreFactorsWithBound_spec
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    {cf : Array ZPoly}
+    (h : classicalCoreFactorsWithBound core B primeData = some cf) :
+    cf = #[core] ∨
+      (Array.polyProduct cf = core ∧
+        (∀ g ∈ cf.toList, normalizeFactorSign g = g) ∧
+        (∀ g ∈ cf.toList, ZPoly.Primitive g) ∧
+        (∀ g ∈ cf.toList, shouldRecordPolynomialFactor g = true)) := by
+  by_cases hB : B = 0
+  · left
+    rw [classicalCoreFactorsWithBound, if_pos hB] at h
+    exact (Option.some.inj h).symm
+  · rw [classicalCoreFactorsWithBound, if_neg hB] at h
+    simp only [scaledRecombinationSmart] at h
+    generalize hld : ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData
+      = liftData at h
+    cases haux : scaledRecombinationSmartAux (DensePoly.leadingCoeff core) core
+        (liftModulus liftData) liftData.liftedFactors.toList
+        defaultSubsetBudget
+        (defaultSubsetBudget + (liftData.liftedFactors.toList.length + 1) *
+          (2 * liftData.liftedFactors.toList.length + 3)) with
+    | mk res remaining =>
+      rw [haux] at h
+      cases res with
+      | none =>
+        left
+        by_cases hrem : remaining = 0
+        · subst hrem; simp at h
+        · simp only [Option.isNone_none, Bool.true_and] at h
+          rw [if_neg (by simp [hrem])] at h
+          exact (Option.some.inj h).symm
+      | some factors =>
+        simp only [Option.isNone_some, Bool.false_and, Bool.false_eq_true, if_false] at h
+        by_cases hemp : factors.isEmpty = true
+        · left
+          rw [if_pos hemp] at h
+          exact (Option.some.inj h).symm
+        · right
+          rw [if_neg hemp] at h
+          obtain rfl := (Option.some.inj h).symm
+          refine ⟨scaledRecombinationSmartAux_product _ _ _ _ _ _ _ _ haux, ?_, ?_, ?_⟩
+          · intro g hg
+            rw [List.toList_toArray] at hg
+            exact scaledRecombinationSmartAux_normalizeFactorSign _ _ _ _ _ _ _ _ haux g hg
+          · intro g hg
+            rw [List.toList_toArray] at hg
+            exact scaledRecombinationSmartAux_primitive _ _ _ _ _ _ _ _ haux g hg
+          · intro g hg
+            rw [List.toList_toArray] at hg
+            exact scaledRecombinationSmartAux_shouldRecord _ _ _ _ _ _ _ _ haux g hg
+
+/-- PolyProduct identity for the size-ordered classical recombination core:
+every emitted factor array multiplies back to `core`. Mirror of
+`exhaustiveIntegerTrialCoreFactorsWithBound_polyProduct`; the `B = 0`,
+budget-`none`, and empty-result arms return the singleton `#[core]` (product
+`core`), and the nonempty recombination arm reuses
+`scaledRecombinationSmartAux_product`. -/
+theorem classicalCoreFactorsWithBound_polyProduct
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    {cf : Array ZPoly}
+    (h : classicalCoreFactorsWithBound core B primeData = some cf) :
+    Array.polyProduct cf = core := by
+  rcases classicalCoreFactorsWithBound_spec core B primeData h with hsing | ⟨hprod, _⟩
+  · rw [hsing]; exact ZPoly.polyProduct_singleton core
+  · exact hprod
+
+/-- Each factor emitted by the size-ordered classical recombination core is
+fixed by `normalizeFactorSign`, provided `core` has positive leading
+coefficient. Mirror of
+`exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign`: the smart
+candidates are `normalizeFactorSign …` by construction (so fixed), and the
+singleton short-circuit is `core`, fixed by its positive leading coefficient. -/
+theorem classicalCoreFactorsWithBound_normalizeFactorSign
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    (hcore_pos : 0 < DensePoly.leadingCoeff core)
+    {cf : Array ZPoly}
+    (h : classicalCoreFactorsWithBound core B primeData = some cf) :
+    ∀ factor ∈ cf.toList, normalizeFactorSign factor = factor := by
+  rcases classicalCoreFactorsWithBound_spec core B primeData h with hsing | ⟨_, hnorm, _⟩
+  · intro factor hmem
+    rw [hsing] at hmem
+    have hfactor : factor = core := by simpa using hmem
+    rw [hfactor]
+    exact normalizeFactorSign_eq_self_of_leadingCoeff_nonneg core (by omega)
+  · exact hnorm
+
+/-- Each factor emitted by the size-ordered classical recombination core has
+positive `degree?`, provided `core` itself has positive degree. Classical analog
+of `exhaustiveIntegerTrialCoreFactorsWithBound_degree_pos`: the recombination
+factors are primitive and `normalizeFactorSign`-fixed with `shouldRecord = true`
+(all supplied by `classicalCoreFactorsWithBound_spec`), so
+`degree_pos_of_primitive_norm_record` applies; the singleton short-circuit is
+`core`, whose positive degree is the sole hypothesis. -/
+theorem classicalCoreFactorsWithBound_degree_pos
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    (hcore_deg : 0 < core.degree?.getD 0)
+    {cf : Array ZPoly}
+    (h : classicalCoreFactorsWithBound core B primeData = some cf) :
+    ∀ factor ∈ cf.toList, 0 < factor.degree?.getD 0 := by
+  rcases classicalCoreFactorsWithBound_spec core B primeData h with
+    hsing | ⟨_, hnorm, hprim, hrecord⟩
+  · intro factor hmem
+    rw [hsing] at hmem
+    have hfactor : factor = core := by simpa using hmem
+    rw [hfactor]; exact hcore_deg
+  · intro factor hmem
+    exact degree_pos_of_primitive_norm_record factor
+      (hprim factor hmem) (hnorm factor hmem) (hrecord factor hmem)
 
 /-- Weakened-conclusion sibling of `exhaustiveCoreFactorsWithBound_degree_pos`:
 every emitted factor of the exhaustive recombination wrapper has positive
