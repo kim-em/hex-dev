@@ -295,6 +295,25 @@ its certification — directly to `lllNative`; like every other dispatch in this
 library it is a function of the input alone and both branches satisfy the same
 post-condition.
 
+Above that dimension floor the reducer additionally consults a **conditioning
+test** before committing to the steered loop. The `Float64` Gram-Schmidt is only
+accurate when the basis's Gram-Schmidt dynamic range fits the 53-bit mantissa;
+on bases whose range far exceeds it (the structured worst-case families —
+ajtai/q-ary/ntru/knapsack — with a `q·I` block or a steep diagonal-bit profile)
+the initial approximate squared norms suffer catastrophic cancellation and some
+come out **non-positive**, which is impossible for a genuine `‖b*_i‖² > 0`. A
+non-positive initial approximate norm is a cheap, `O(n)`, deterministic signature
+that the float steering is numerically unusable on this basis, so the reducer
+skips the steered attempt and runs `lllNative` directly rather than wasting the
+full steered loop before an all-but-certain certification failure. This is an
+empirically-calibrated routing heuristic, not a soundness property: a candidate
+that did slip through would still be certified, and any basis routed here still
+gets an exact reduction. The near-orthogonal (`random-bounded`) and width-bound
+(`harsh-cubic`) families produce no non-positive norm on any committed rung and
+continue to steer. Like every dispatch here it is a function of the input alone
+(the float pass is deterministic) and does not affect the output contract — it
+only avoids wasted work.
+
 Both pinned `η` values are unchanged: `lllNative` retains `η = 1/2` and the
 public `lll` retains `η = 11/20`. The public `lll` contract — same lattice,
 `isLLLReduced (lll …) δ (11/20)`, and the `lll_short_vector` bound — holds
