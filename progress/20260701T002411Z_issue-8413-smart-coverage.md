@@ -95,7 +95,37 @@ so the top call satisfies it; every recursive call preserves it. `omega` closes
 each step given `_budget_le` (`b ≤ budget`, landed in #8498) and the per-size
 split-count-vs-budget bound.
 
-## Landed so far on this branch
+## Status: completeness chain PROVEN; 3 sorries left
+
+The trustworthy-none completeness mutual block is **done**:
+`smartAux_none_budget_zero`, `smartSizeLoop_none_budget_zero`,
+`smartCandLoop_none_budget_zero` all compile sorry-free (quadratic fuel bounds
+`smartFuelBound`/`smartLoopFuelBound`; CandLoop's core case proves `T = S_cov`
+via containment `coverAtMin_representingSubset_subset_...` + uniqueness + equal
+cardinality, then Aux-decline ⇒ budget 0 ⇒ `budget_zero` propagation).
+
+Remaining `sorry`s (besides the pre-existing project one at line ~239):
+1. `liftedSubsetSplit_mem_subsetsOfSizeWithComplement_of_matches` — the ONE
+   isolated substrate gap: `S ⊆ J` with `min ∈ S` has its `(selected, rejected)`
+   split enumerated by `subsetsOfSizeWithComplement tail (S.card-1)` (converse of
+   #8412). Prove via a `mask_split_mem_subsetsOfSizeWithComplement` induction
+   (b=true → first append branch, b=false → `[([],xs)]` at k=0 / second branch at
+   k+1) plus the S→mask direction (mirror `liftedSubsetSelectedList_eq_mask_partition_of_matches`
+   in reverse, or reuse `liftedSubsetSplit_mem_subsetSplitsWithFirst_of_matches`
+   at 4610 + a size decomposition). Once proven, completeness is fully sorry-free.
+2. `smartAux_covers_of_bound` — conditional coverage (backward): from `= (some
+   result, b)`, structural peel-extraction gives `result = cand(T) :: sub` with
+   `Aux(quotient) = (some sub, _)`; show `T = S_cov` (containment + if `|S_cov| <
+   |T|` then `S_cov`'s size-`|S_cov|` CandLoop returned `none` ⇒ completeness ⇒
+   budget 0 ⇒ propagates ⇒ overall `none`, contra `some`); then `cand(T)=f_cov`
+   irreducible, recurse via `liftedFactorSubsetPartition_transport` +
+   `sdiff_of_subset`, mirroring `covers_of_bound` (17628).
+
+Then the top-level wiring: `classicalCoreFactorsWithBound … = some cf → … →
+∀ g ∈ cf, Irreducible (toPolynomial g)` via coverage + squarefree counting +
+`UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card`.
+
+## Executable substrate on this branch
 
 - `scaledRecombinationSmart{Aux,SizeLoop,CandLoop}_budget_le` (returned budget ≤
   input) and `..._budget_zero` (budget 0 ⇒ `(none,0)`) in the executable file.
