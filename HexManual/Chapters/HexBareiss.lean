@@ -29,13 +29,9 @@ entry stays an exact integer because each update divides *exactly* by
 the previous pivot. It runs in cubic time and never leaves the integers,
 so it avoids both the factorial blow-up of the Leibniz
 {ref "hex-determinant"}[determinant] and the denominators of ordinary
-Gaussian elimination. It builds on the {ref "hex-matrix"}[HexMatrix]
-dense core and the {ref "hex-determinant"}[HexDeterminant] Leibniz
-determinant (the specification it is checked against).
-
-This chapter walks the elimination record, the public entry points, and
-the structural theorems the Mathlib-free layer proves, and closes with a
-worked example checked when the chapter is built.
+Gaussian elimination. It builds on {ref "hex-matrix"}[HexMatrix] and the
+{ref "hex-determinant"}[HexDeterminant] Leibniz determinant (the
+specification it is checked against).
 
 `HexBareiss` is Mathlib-free. The theorem identifying the Bareiss
 determinant with the Leibniz determinant, via the Desnanot-Jacobi
@@ -93,17 +89,16 @@ correctness development relies on.
 tag := "hex-bareiss-theorems"
 %%%
 
-This is where the computational/proof boundary falls. The Mathlib-free
-layer proves the internal structural facts about the elimination — that
-the packaged record is exactly the structured pivot loop finished into
-determinant data, and that the public {name}`Hex.Matrix.bareiss` value
-agrees with the determinant encoded by {name}`Hex.Matrix.bareissData` —
-but it does *not* prove that the Bareiss determinant equals the Leibniz
-{name}`Hex.Matrix.det`. That identification is a correspondence theorem
-living in the forthcoming `HexBareissMathlib` bridge. Within `HexBareiss`
-itself the agreement is pinned only as value-level conformance fixtures:
-a fixed bank of matrices on which `Hex.Matrix.bareiss M = Hex.Matrix.det M`
-is checked at build time.
+`HexBareiss` proves the structural facts about the elimination: that the
+packaged record is exactly the structured pivot
+loop finished into determinant data, and that the public
+{name}`Hex.Matrix.bareiss` value agrees with the determinant encoded by
+{name}`Hex.Matrix.bareissData`. It does not prove that the Bareiss
+determinant equals the Leibniz {name}`Hex.Matrix.det`; that
+identification is in `HexBareissMathlib`. Within `HexBareiss` itself the
+agreement is pinned as value-level conformance fixtures: a fixed bank of
+matrices on which `Hex.Matrix.bareiss M = Hex.Matrix.det M` is checked at
+build time.
 
 {docstring Hex.Matrix.bareissData_eq_finish_pivotLoop}
 
@@ -162,13 +157,11 @@ end HexBareissChapterExample
 tag := "hex-bareiss-cross-references"
 %%%
 
-`HexBareiss` is the fast integer-determinant layer of the stack:
+`HexBareiss` is the fast route to an exact integer determinant.
 
 * It depends on {ref "hex-matrix"}[HexMatrix] for the matrix type and on
   {ref "hex-determinant"}[HexDeterminant] for the Leibniz `det` it uses
   as its specification.
-* `HexBareissMathlib` is the correspondence library proving the Bareiss
-  determinant equals the Leibniz determinant (and hence Mathlib's
-  determinant), via the Desnanot-Jacobi invariant. The Mathlib
-  dependency lives entirely on that side of the boundary; `HexBareiss`
-  itself is Mathlib-free.
+* `HexBareissMathlib` proves the Bareiss determinant equals the Leibniz
+  determinant (and hence Mathlib's), via the Desnanot-Jacobi invariant.
+  `HexBareiss` itself is Mathlib-free.
