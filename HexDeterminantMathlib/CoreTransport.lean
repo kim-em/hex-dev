@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexMatrixMathlib.Basic
+public import HexMatrixMathlib.Submatrix
 public import HexDeterminantMathlib.DesnanotJacobi
 public import HexBareiss.Bareiss
 public import HexDeterminant
@@ -287,16 +288,6 @@ theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
             exact (List.sum_toFinset term (PermutationVector.equivs_nodup n)).symm
   rw [hhex, det_apply_row, equivs_toFinset]
 
-/-- `matrixEquiv` sends Hex leading prefixes to Mathlib submatrices. -/
-theorem matrixEquiv_principalSubmatrix
-    (M : Hex.Matrix R n n) (k : Nat) (hk : k ≤ n) :
-    matrixEquiv (Hex.Matrix.principalSubmatrix M k hk) =
-      (matrixEquiv M).submatrix
-        (fun r : Fin k => ⟨r.val, Nat.lt_of_lt_of_le r.isLt hk⟩)
-        (fun c : Fin k => ⟨c.val, Nat.lt_of_lt_of_le c.isLt hk⟩) := by
-  ext r c
-  simp [Hex.Matrix.principalSubmatrix, Hex.Matrix.ofFn]
-
 /-- `matrixEquiv` sends Hex bordered Bareiss minors to Mathlib submatrices. -/
 theorem matrixEquiv_borderedMinor
     (M : Hex.Matrix R n n) (k : Nat) (hk : k < n) (i j : Fin n) :
@@ -318,6 +309,7 @@ theorem det_principalSubmatrix_eq_submatrix_det [CommRing R]
           (fun r : Fin k => ⟨r.val, Nat.lt_of_lt_of_le r.isLt hk⟩)
           (fun c : Fin k => ⟨c.val, Nat.lt_of_lt_of_le c.isLt hk⟩)) := by
   rw [det_eq, matrixEquiv_principalSubmatrix]
+  rfl
 
 /-- Determinant form of `matrixEquiv_borderedMinor`. -/
 theorem det_borderedMinor_eq_submatrix_det [CommRing R]

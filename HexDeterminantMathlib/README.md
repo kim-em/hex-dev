@@ -46,8 +46,7 @@ The proof-facing API connects the executable determinant to Mathlib:
 - the permutation-sign bridge: `PermutationVector.toPerm`,
   `PermutationVector.equivs`, and `detSign_eq_permSign`, matching Hex's
   inversion-count sign to `Equiv.Perm.sign`;
-- submatrix transport: `matrixEquiv_principalSubmatrix`,
-  `matrixEquiv_borderedMinor`, and their determinant forms
+- submatrix transport: `matrixEquiv_borderedMinor` and the determinant forms
   `det_principalSubmatrix_eq_submatrix_det` and
   `det_borderedMinor_eq_submatrix_det`;
 - the Plücker three-term identity `det_plucker_three_term` and the
