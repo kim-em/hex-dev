@@ -8,9 +8,14 @@ cross-check against fplll's `latticegen`. Run with:
 import HexLLLBench.Inputs
 open Hex.LLLBench
 
+/-- The basis a family's `prepXInput` builds at parameter `d`, as a JSON matrix
+string. Mirrors the bench prep conventions so the fixture is the real input. -/
 def basisFor (family : String) (d : Nat) : Option (String) :=
   match family with
-  | "ajtai" => some (matrixHaskell (ajtaiBasis d))
+  | "ajtai"    => some (matrixHaskell (ajtaiBasis d))
+  | "q-ary"    => some (matrixHaskell (qaryBasis d (d / 2) qaryBits))
+  | "ntru"     => some (matrixHaskell (ntruBasis d))
+  | "knapsack" => some (matrixHaskell (knapsackBasis d (knapsackBits d)))
   | _ => none
 
 def main (args : List String) : IO Unit := do

@@ -503,13 +503,22 @@ classification below is mirrored as structured metadata in
   per-curve x-ranges differ, so the verified Isabelle curves end where the worst
   case outgrows the cap while the cheap fpLLL/certified curves continue.
 
-  **Per-call floor calibration.** The `verified Isabelle certified-LLL` curve
-  carries a fixed per-request process floor (a fresh `svp_certified` fork plus
-  GHC start-up, ~35 ms on carica). It is measured once per run by the
+  **Per-call floor calibration.** The `svp_certified` comparator runs as a
+  *persistent* subprocess (one per `lake exe hexlll_bench run`, looping on
+  stdin), so its per-request cost is not a fork: it is a fixed round-trip floor
+  — request marshalling plus the per-request fplll candidate production and
+  Isabelle check — independent of `n`. That floor is ~21 ms on carica in the
+  committed exports. It is measured once per run by the
   `runIsabelleCertifiedProcessFloorNormSq` target (a trivial 2×2 request) and
-  subtracted from that curve by `subtract_request_floor`, so the plotted value
-  is the marginal reduction cost, not the fork overhead. A run that omits the
-  floor target plots the curve unadjusted (the floor loader returns 0).
+  subtracted from the `verified Isabelle certified-LLL` curve by
+  `subtract_request_floor`, so the plotted value is the marginal reduction cost,
+  not the fixed per-request overhead. Each family's floor is resolved per family
+  (`default_floor_path`, commit-matched to the data export); a run that has no
+  floor export plots the curve unadjusted and leaves it labelled `Isabelle
+  certified` (never mislabelled as adjusted). Rungs whose raw time is within
+  15% of the floor are *floor-dominated* — the subtracted value is within the
+  floor's own measurement noise — and are dropped, so the adjusted curve begins
+  where the reduction cost rises clearly above the floor.
 
   **Success-vs-density plot (knapsack only).** The `knapsack` family also
   commits a second chart type at

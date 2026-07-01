@@ -487,11 +487,13 @@ request, which Hex's in-process `fplll-ffi` path avoids. The floor is the
 committed `runIsabelleCertifiedProcessFloorNormSq` benchmark (a trivial 2×2
 request, so its median is the floor with negligible `n`-dependent work),
 measured in the **same run** as the harsh-cubic ladder (~19.9 ms on `carica`)
-so it is a true lower bound under every rung and every point survives the
-subtraction — including harsh-cubic `n = 15`, whose certified work is only
-~2.4 ms above the floor. The plot reads that measured value rather than a
-hardcoded constant; the ratio tables above and the scaling fits keep the raw
-medians.
+so it is a true lower bound under every rung. The comparator drops rungs whose
+raw time is within 15% of the floor (*floor-dominated*: the subtracted value is
+within the floor's own measurement noise), so bottom rungs such as harsh-cubic
+`n = 15` — whose certified work is only ~2.4 ms above a ~20 ms floor — are
+omitted from the adjusted curve rather than plotted near-zero. The plot reads
+that measured value rather than a hardcoded constant; the ratio tables above and
+the scaling fits keep the raw medians.
 
 The harsh-cubic plot shows the same five series, and this is the family where
 the certified path's lead matters most. The exact `d`/`ν` reducer rides the

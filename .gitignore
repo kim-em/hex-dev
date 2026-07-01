@@ -9,5 +9,4 @@ conformance-failures/*.json
 # Machine-local pod session state, not project knowledge.
 .pod/
 sessions/
-scripts/dev/.lean-ajtai-matrices.jsonl
 _out/

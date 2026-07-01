@@ -42,7 +42,7 @@ cheap integer check:
 
 | family (top rung) | Lean native | Isabelle native | **Lean certified** | fpLLL |
 |---|---:|---:|---:|---:|
-| `ajtai` d=32     | 2167 ms | 2173 ms | **56 ms** | 41 ms |
+| `ajtai` d=36     | 4805 ms | 5167 ms | **97 ms** | 73 ms |
 | `q-ary` n=48     | 67 ms   | 82 ms   | **24 ms** | 10 ms |
 | `ntru` n=24      | 1100 ms | 1444 ms | **133 ms** | 114 ms |
 | `knapsack` n=48  | 33 ms   | 26 ms   | **10 ms** | 4 ms |
@@ -64,9 +64,10 @@ remains the trustworthy in-tree reducer for the provider-free path.
 ### ajtai — the worst case
 ![ajtai](reports/figures/hex-lll-comparator-ajtai.svg)
 
-The exact reducers blow up `~d⁷`; the certified path stays cheap (56 ms @ d=32).
-Lean native completes at d=36 (4805 ms) at parity with the Isabelle native
-extraction. The clearest statement of the headline.
+The exact reducers blow up `~d⁷` — Lean native reaches 4805 ms at d=36, at
+parity with the Isabelle native extraction (5167 ms) — while the certified path
+stays cheap (97 ms at d=36, ~1.3× fpLLL). The clearest statement of the
+headline.
 
 ### q-ary
 ![q-ary](reports/figures/hex-lll-comparator-q-ary.svg)

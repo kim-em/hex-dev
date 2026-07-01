@@ -260,16 +260,13 @@ FAMILIES = {
 # Per-request floor of the Isabelle-certified pipeline: the fixed fork +
 # startup cost of one `svp_certified` request, which Hex's in-process
 # fplll-ffi path avoids. It is measured — not hardcoded — by the committed
-# `runIsabelleCertifiedProcessFloorNormSq` benchmark (a trivial 2x2 request,
-# so its median is the floor with negligible n-dependent work) and read from
-# the export below. The plotted Isabelle-certified curve subtracts this
-# measured floor so its rungs show n-dependent work rather than the process
-# tax; the committed ratio tables keep the raw medians. The floor is measured
-# in the same run as the harsh-cubic ladder, so it is a true lower bound under
-# every rung — every point survives the subtraction.
-DEFAULT_ISABELLE_FLOOR = (
-    ROOT / "reports/bench-results/hex-lll-isabelle-certified-harsh-211b9957.json"
-)
+# `runIsabelleCertifiedProcessFloorNormSq` benchmark (a trivial 2x2 request, so
+# its median is the floor with negligible n-dependent work). The plotted
+# Isabelle-certified curve subtracts this measured floor so its rungs show
+# n-dependent work rather than the process tax; the committed ratio tables keep
+# the raw medians. Each family's floor is measured in its own run and resolved
+# per family by `default_floor_path` (commit-matched to the data export), so
+# there is no hardcoded default file to go stale.
 ISABELLE_FLOOR_PATTERN = re.compile(r"runIsabelleCertifiedProcessFloorNormSq$")
 ISABELLE_CERTIFIED_ADJUSTED_LABEL = "Isabelle certified (adjusted)"
 
@@ -315,6 +312,25 @@ def collect_series(results: list[dict], pattern: re.Pattern[str], label: str) ->
     return Series(label=label, xs=xs, ys=[values[x] for x in xs])
 
 
+def default_floor_path(family: str, data_path: Path | None = None) -> Path | None:
+    """The per-family Isabelle-certified process-floor export, or None if the
+    family has not measured one. Used when `--isabelle-floor` is not given so
+    each family subtracts its own floor rather than a hardcoded file. Prefers the
+    floor whose commit suffix matches the chosen data export (`data_path`), so a
+    stale floor from an earlier run is never picked; falls back to the
+    most-recently-modified floor for the family."""
+    hits = list(ROOT.glob(f"reports/bench-results/hex-lll-{family}-floor-*.json"))
+    if not hits:
+        return None
+    if data_path is not None:
+        m = re.search(r"-([0-9a-f]+)\.json$", data_path.name)
+        if m:
+            match = ROOT / f"reports/bench-results/hex-lll-{family}-floor-{m.group(1)}.json"
+            if match in hits:
+                return match
+    return max(hits, key=lambda p: p.stat().st_mtime)
+
+
 def load_floor_ms(path: Path) -> float:
     """Read the measured Isabelle-certified per-request floor (median ms) from
     the committed `runIsabelleCertifiedProcessFloorNormSq` benchmark export.
@@ -342,7 +358,13 @@ def subtract_request_floor(series: Series, floor_ms: float) -> Series:
     measurement noise, so the subtracted value is an artifact (e.g. ajtai d=8,
     raw 21.2 ms vs a 21.1 ms floor -> 0.1 ms). Those points are dropped rather
     than plotted as near-zero, so the curve begins where the reduction cost
-    rises clearly above the floor."""
+    rises clearly above the floor.
+
+    When no floor was measured (`floor_ms <= 0`) the series is returned
+    unchanged and keeps its plain `Isabelle certified` label — an unadjusted
+    curve is never mislabelled as adjusted."""
+    if floor_ms <= 0:
+        return series
     threshold = floor_ms * (1.0 + FLOOR_DOMINATED_MARGIN)
     kept = [(x, y - floor_ms) for x, y in zip(series.xs, series.ys) if y > threshold]
     return Series(
@@ -445,8 +467,9 @@ def main() -> None:
     parser.add_argument(
         "--isabelle-floor",
         type=Path,
-        default=DEFAULT_ISABELLE_FLOOR,
-        help="Measured Isabelle-certified per-request floor export.",
+        default=None,
+        help="Measured Isabelle-certified per-request floor export. Defaults to "
+        "the family's own newest hex-lll-<family>-floor-*.json.",
     )
     parser.add_argument(
         "--certified",
@@ -486,7 +509,10 @@ def main() -> None:
         isabelle_certified_results = load_results(
             args.isabelle_certified or config.isabelle_certified_path
         )
-        floor_ms = load_floor_ms(args.isabelle_floor)
+        floor_path = args.isabelle_floor or default_floor_path(
+            args.family, config.consolidated_path
+        )
+        floor_ms = load_floor_ms(floor_path) if floor_path else 0.0
         isabelle_certified = subtract_request_floor(
             collect_series(
                 isabelle_certified_results,
