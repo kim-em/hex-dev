@@ -54,8 +54,8 @@ the first step at which a zero pivot with no replacement row was found
 {docstring Hex.Matrix.BareissData}
 
 The sign contributed by the row swaps and the encoded determinant are
-read off that record. A recorded singular step encodes determinant zero;
-otherwise the determinant is the last diagonal entry of the terminal
+read off that record. A recorded singular step encodes determinant zero.
+Otherwise the determinant is the last diagonal entry of the terminal
 matrix with the swap sign applied.
 
 {docstring Hex.Matrix.BareissData.sign}
@@ -68,7 +68,7 @@ tag := "hex-bareiss-entry"
 %%%
 
 The public entry points run the row-pivoting elimination.
-{name}`Hex.Matrix.bareissData` returns the full record;
+{name}`Hex.Matrix.bareissData` returns the full record.
 {name}`Hex.Matrix.bareiss` returns just the integer determinant. The
 no-pivot variants skip the pivot search, for inputs whose leading pivots
 are already nonzero.
@@ -83,8 +83,8 @@ are already nonzero.
 
 The division at each step is `Int.divExact` (a GMP-backed
 `mpz_divexact`), which is always exact and carries its divisibility
-proof; the bordered minors track the elimination invariant the
-correctness development relies on.
+proof. The bordered minors are the intermediate determinants the
+correctness proof uses as its elimination invariant.
 
 {docstring Hex.Matrix.borderedMinor}
 
@@ -94,15 +94,14 @@ tag := "hex-bareiss-theorems"
 %%%
 
 `HexBareiss` proves the structural facts about the elimination: that the
-packaged record is exactly the structured pivot
-loop finished into determinant data, and that the public
-{name}`Hex.Matrix.bareiss` value agrees with the determinant encoded by
-{name}`Hex.Matrix.bareissData`. It does not prove that the Bareiss
-determinant equals the Leibniz {name}`Hex.Matrix.det`; that
+packaged record is the pivot loop's final state packaged as determinant
+data, and that the public {name}`Hex.Matrix.bareiss` value agrees with
+the determinant encoded by {name}`Hex.Matrix.bareissData`. It does not prove that the Bareiss
+determinant equals the Leibniz {name}`Hex.Matrix.det`. That
 identification is in `HexBareissMathlib`. Within `HexBareiss` itself the
-agreement is pinned as value-level conformance fixtures: a fixed bank of
-matrices on which `Hex.Matrix.bareiss M = Hex.Matrix.det M` is checked at
-build time.
+agreement is checked at build time by value-level conformance fixtures: a
+fixed bank of matrices on which `Hex.Matrix.bareiss M = Hex.Matrix.det M`
+is verified.
 
 {docstring Hex.Matrix.bareissData_eq_finish_pivotLoop}
 
@@ -117,7 +116,7 @@ The block below builds the integer matrix with rows `(2, 0, 1)`,
 `(1, 3, 2)`, and `(0, 1, 1)`, whose determinant is `3`. The Bareiss
 route agrees with the Leibniz {ref "hex-determinant"}[determinant] on it,
 the identity has determinant one, and a matrix with a dependent row pair
-is singular. Every `#guard` is checked when the chapter is built.
+is singular.
 
 ```lean
 open Hex Hex.Matrix

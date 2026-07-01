@@ -32,12 +32,12 @@ equality coincide with semantic equality, so two `HexPoly` polynomials
 are equal as Lean values exactly when they are equal as polynomials.
 
 {name}`Hex.DensePoly` is generic over any coefficient type `R` with a
-`Zero` and a `DecidableEq`; the arithmetic, evaluation, and Euclidean
-parts add the further operations (`Add`, `Mul`, `Sub`, `Div`) they each
-need. `HexPoly` is Mathlib-free and depends on no other `hex` library.
+`Zero` and a `DecidableEq`. The arithmetic, evaluation, and Euclidean
+operations require the further structure (`Add`, `Mul`, `Sub`, `Div`)
+that each one needs. `HexPoly` is Mathlib-free and depends on no other `hex` library.
 The integer library `HexPolyZ`, the prime-field library `HexPolyFp`,
 and through them the factorization and finite-field libraries all
-consume this representation; see
+consume this representation. See
 {ref "hex-poly-cross-references"}[Cross-references].
 
 # Dense polynomial type
@@ -55,7 +55,7 @@ predicate.
 
 Because the invariant pins down a unique array for each polynomial
 value, `HexPoly` derives a `DecidableEq` on {name}`Hex.DensePoly` and
-proves the preferred extensionality principle: two normalized
+proves the extensionality principle: two normalized
 polynomials are equal as soon as their coefficient functions agree.
 
 {docstring Hex.DensePoly.ext_coeff}
@@ -66,7 +66,7 @@ tag := "hex-poly-constructors"
 %%%
 
 Every constructor routes through normalization so the no-trailing-zeros
-invariant holds by construction; callers never trim by hand. The
+invariant holds by construction. Callers never trim by hand. The
 primitive normalizer drops trailing zeros from a raw array, and
 {name}`Hex.DensePoly.ofCoeffs` wraps it to build a polynomial.
 
@@ -153,7 +153,7 @@ operations. Evaluation and composition both use Horner's method.
 {docstring Hex.DensePoly.derivative}
 
 Each operation comes with a characterising coefficient law. These are
-the lemmas downstream proofs rewrite with; the zero-absorption side
+the lemmas downstream proofs rewrite with. The zero-absorption side
 conditions (`hzero`) are discharged automatically over any semiring,
 via the `*_semiring`/`*_ring` specializations.
 
@@ -171,9 +171,8 @@ tag := "hex-poly-worked-arithmetic"
 %%%
 
 The block below works over `DensePoly Int`. It builds a quadratic and a
-monomial, then exercises the constructors, addition, multiplication,
-evaluation, and the derivative. Each `#guard` is checked when the
-chapter builds.
+monomial, then computes their sum and product, an evaluation, and a
+derivative.
 
 ```lean
 open Hex Hex.DensePoly
@@ -227,7 +226,7 @@ leading coefficient and the monic predicate.
 {docstring Hex.DensePoly.monic_iff_leadingCoeff_eq_one}
 
 Division has two flavours. {name}`Hex.DensePoly.divModMonic` divides by
-a monic divisor over any commutative ring; no division of coefficients
+a monic divisor over any commutative ring. No division of coefficients
 is needed because the leading coefficient is `1`.
 {name}`Hex.DensePoly.divMod` is the field version: it scales by the
 inverse of the divisor's leading coefficient and so requires a `Div` on
@@ -258,8 +257,7 @@ tag := "hex-poly-worked-euclid"
 
 This block works over `DensePoly Rat`. It divides `x² - 1` by `x - 1`,
 reads off the quotient and remainder, checks the Euclidean
-reconstruction, and computes a gcd. As before, every `#guard` is
-verified at build time.
+reconstruction, and computes a gcd.
 
 ```lean
 open Hex Hex.DensePoly
@@ -350,7 +348,7 @@ They are mutually inverse:
 
 {docstring HexPolyMathlib.ofPolynomial_toPolynomial}
 
-`toPolynomial` is a degree-preserving ring homomorphism; addition,
+`toPolynomial` is a degree-preserving ring homomorphism. Addition,
 multiplication, and the degree transfer:
 
 {docstring HexPolyMathlib.toPolynomial_add}
@@ -378,6 +376,6 @@ tag := "hex-poly-cross-references"
   specializes to the prime fields `ZMod64 p`, supplying the concrete
   `DivModLaws` and `GcdLaws` instances that turn the
   {ref "hex-poly-key-correctness"}[Euclidean laws] above into usable
-  facts. The finite-field and factorization libraries
-  (`HexGFqRing`, `HexBerlekamp`, and beyond) reach this representation
-  transitively through `HexPolyFp`.
+  facts. The finite-field and factorization libraries, including `HexGFqRing`
+  and `HexBerlekamp`, reach this representation transitively through
+  `HexPolyFp`.

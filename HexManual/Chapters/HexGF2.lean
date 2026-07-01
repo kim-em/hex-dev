@@ -43,8 +43,8 @@ irreducibility test.
 
 `HexGF2` is Mathlib-free and depends only on
 {ref "hex-poly"}[`HexPoly`], the generic dense-polynomial library, which
-supply the shared polynomial vocabulary the packed representation is
-checked against; see {ref "hex-gf2-cross-references"}[Cross-references].
+supplies the shared polynomial vocabulary the packed representation is
+checked against. See {ref "hex-gf2-cross-references"}[Cross-references].
 
 # The packed word representation
 %%%
@@ -104,7 +104,7 @@ and the compiled path merely runs faster.
 Lifting the word-level product to packed polynomials gives
 {name}`Hex.GF2Poly.mul` (the `*` of the `Mul GF2Poly` instance). Its
 correctness is stated as the carry-less convolution coefficient law,
-the reference specification `HexGF2Mathlib` is checked against.
+which `HexGF2Mathlib` is checked against.
 
 {docstring Hex.GF2Poly.coeff_mul_diagonal}
 
@@ -153,9 +153,8 @@ square-and-multiply exponentiation {name}`Hex.GF2n.pow`.
 tag := "hex-gf2-worked"
 %%%
 
-The first block exercises the packed operations: the bit accessors,
-XOR addition, the shift, and a gcd. Each `#guard` is checked when the
-chapter is built.
+The first block runs the packed operations: the bit accessors, XOR
+addition, the shift, and a gcd.
 
 ```lean
 open Hex Hex.GF2Poly
@@ -192,7 +191,7 @@ The second block works inside the AES field `GF(2⁸)`, presented by the
 Rijndael modulus `x⁸ + x⁴ + x³ + x + 1` (the word `0x1B` above the
 leading `x⁸`). The irreducibility of that modulus is the committed
 theorem {name}`Hex.GF2Poly.aes_modulus_irreducible`, so the field type
-typechecks; the byte `0x53` and its inverse `0xCA` are the standard AES
+typechecks. The byte `0x53` and its inverse `0xCA` are the standard AES
 worked pair.
 
 ```lean
@@ -261,6 +260,6 @@ Where `HexGF2` fits in the executable DAG:
   it (the packed characteristic-two entries of the `GFq` constructors),
   which reuse its `GF2n`/`GF2nPoly` wrappers and committed
   irreducibility certificates.
-* `HexGF2` is Mathlib-free; the Mathlib correspondence for the `GF(2ⁿ)`
-  field theory flows through the `*Mathlib` counterparts of the
-  libraries that build on it, not through this library.
+* `HexGF2` is Mathlib-free. The Mathlib correspondence for the `GF(2ⁿ)`
+  field theory is provided by the `*Mathlib` counterparts of the
+  libraries that build on it, not by this library.

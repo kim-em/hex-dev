@@ -34,8 +34,8 @@ representatives.
 The modulus `f` is not required to be irreducible: when `f` is reducible
 the quotient is still a ring, used downstream wherever a fixed-modulus
 polynomial ring is needed. When `f` is irreducible, the same underlying
-representation supports a field structure, supplied by `HexGFqField`;
-see {ref "hex-gfq-ring-cross-references"}[Cross-references] below.
+representation supports a field structure, supplied by `HexGFqField`.
+See {ref "hex-gfq-ring-cross-references"}[Cross-references] below.
 
 # Quotient types
 %%%
@@ -88,7 +88,7 @@ corresponding operations on representatives and re-reduce the result.
 
 Exponentiation uses square-and-multiply on the exponent bits, costing
 `O(log n)` quotient-ring multiplications. The natural and integer
-scalar maps below use the same binary-decomposition shape; the
+scalar maps below use the same binary-decomposition shape. The
 textbook `n + 1 ↦ pred + 1` recursion is forbidden in this library
 because its cost would be linear in the scalar.
 
@@ -113,9 +113,8 @@ tag := "hex-gfq-ring-worked-example"
 
 The reduction rule for this quotient is `x⁴ ≡ -2 ≡ 3 (mod 5)`. The
 example below builds the modulus, three reduced representatives `a`,
-`b`, and `x`, then exercises addition, multiplication, negation,
-subtraction, and exponentiation. Each `#guard` is checked when the
-chapter is built.
+`b`, and `x`, then runs addition, multiplication, negation,
+subtraction, and exponentiation.
 
 ```lean
 open Hex Hex.GFqRing
@@ -232,8 +231,7 @@ addition and multiplication to the quotient.
 The full ring axioms over canonical representatives are bundled into
 the `Lean.Grind.CommRing` instance on
 {name}`Hex.GFqRing.PolyQuotient`, which is the entry point for
-downstream proof automation. Its existence is the prerequisite that promotes
-`HexGFqRing` to a Phase 6 grind-clean state.
+downstream proof automation.
 
 # Cross-references
 %%%
@@ -247,8 +245,8 @@ finite-field library depends on it:
   {name}`Hex.GFqRing.reduceMod` operates on, together with the
   `Hex.DensePoly.divMod` and `Hex.DensePoly.mod` operations from which
   `reduceMod` is built. The univariate polynomial division laws
-  packaged there are what make the canonical-representative invariant
-  meaningful.
+  packaged there are what justify the canonical-representative
+  invariant.
 * `HexGFqField` specializes the same quotient to an irreducible
   modulus and adds the field structure. The `FiniteField` type in
   `HexGFqField` is a thin wrapper carrying a
@@ -272,7 +270,7 @@ correspondence" cross-reference that future chapters will include for
 libraries that have one.
 
 For `HexGFqRing` the canonical mathematical home of the quotient is
-Mathlib's `AdjoinRoot` or `Polynomial.quotient` construction; a
+Mathlib's `AdjoinRoot` or `Polynomial.quotient` construction. A
 correspondence between {name}`Hex.GFqRing.PolyQuotient` and those
 constructions is deferred to a downstream library if and when a
 Mathlib-valued caller needs it.

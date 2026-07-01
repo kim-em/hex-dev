@@ -33,11 +33,11 @@ congruence* predicate used by Hensel lifting, and a conservative
 executable *Mignotte coefficient bound* on the coefficients of any
 integer factor.
 
-The library is Mathlib-free and depends only on `HexPoly`; `HexHensel`
+The library is Mathlib-free and depends only on `HexPoly`. `HexHensel`
 and the integer-factorization libraries consume it in turn. The
 mathematical justification of the Mignotte bound, that these executable
 quantities really do bound the coefficients of a factor, is proved in
-`HexPolyZMathlib`; see
+`HexPolyZMathlib`. See
 {ref "hex-poly-z-cross-references"}[Cross-references].
 
 # Integer polynomial type
@@ -90,8 +90,7 @@ tag := "hex-poly-z-worked-content"
 %%%
 
 The block below builds `f = 2 + 4x + 6x²`, reads off its content and
-primitive part, and checks the reconstruction law and a dilation. Each
-`#guard` is checked when the chapter builds.
+primitive part, and checks the reconstruction law and a dilation.
 
 ```lean
 open Hex Hex.DensePoly
@@ -181,8 +180,8 @@ norm is replaced by a conservative integer ceiling-square-root
 overestimate, so every bound here is an upper bound on the true
 quantity.
 
-The pieces are an executable binomial coefficient and the integer
-square-root bracket.
+The pieces are an executable binomial coefficient and an integer
+ceiling square root.
 
 {docstring Hex.ZPoly.binom}
 
@@ -209,8 +208,7 @@ tag := "hex-poly-z-worked-mignotte"
 
 The block below works over `g = 1 + x + x² + x³ + x⁴`, computes its
 coefficient-norm bound, some binomial coefficients, a single Mignotte
-bound, and the uniform default bound. Every `#guard` is checked when
-the chapter is built.
+bound, and the uniform default bound.
 
 ```lean
 open Hex Hex.DensePoly
@@ -246,9 +244,8 @@ tag := "hex-poly-z-key-correctness"
 %%%
 
 Two facts pin down the bound for downstream callers. First, the
-conservative norm bound overestimates by at most a factor of two in
-square: a genuine but not wasteful overapproximation of the exact
-Euclidean norm.
+conservative norm bound's square is at most twice the exact squared norm:
+a bounded overestimate of the Euclidean norm.
 
 {docstring Hex.ZPoly.coeffL2NormBound_sq_le_two_mul_coeffNormSq}
 
@@ -262,8 +259,8 @@ factors.
 {docstring Hex.ZPoly.coeffL2NormBound_le_defaultFactorCoeffBound}
 
 Finally, the uniform bound is strictly positive on any nonzero
-polynomial: the fact the factorization driver needs to know its
-precision modulus is nontrivial.
+polynomial, which the factorization driver needs to set a valid
+precision modulus.
 
 {docstring Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero}
 
@@ -279,13 +276,13 @@ integer-factorization libraries:
   this one specializes. The constructors, arithmetic, and Euclidean
   operations used throughout this chapter (`ofCoeffs`, `scale`, the
   rational division underlying `primitiveSquareFreeDecomposition`) are
-  documented there; `HexPolyZ` only fixes the coefficient type to
+  documented there. `HexPolyZ` only fixes the coefficient type to
   `Int` and adds the content, congruence, and Mignotte operations.
 * `HexPolyZMathlib` is the correspondence library: it identifies
   {name}`Hex.ZPoly` with Mathlib's `Polynomial ℤ` and proves the
   Mignotte bound as a theorem about the Mahler measure of the
   corresponding `Polynomial ℤ`. The executable quantities in this
-  chapter are the computational shadow of that theorem; the Mathlib
+  chapter compute the bound that theorem proves valid. The Mathlib
   dependency lives entirely there, never inside `HexPolyZ` itself.
 * `HexHensel` consumes the congruence predicate and the
   `defaultFactorCoeffBound` to drive the Hensel-lifting and

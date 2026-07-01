@@ -41,7 +41,7 @@ polynomials (`HexPolyFp`, `Hex.FpPoly p`). It provides coefficientwise
 reduction modulo powers of `p`, the linear and quadratic single-step
 corrections, the iterative {name}`Hex.ZPoly.henselLift` wrapper, and the
 ordered multifactor lift API the factorization pipeline consumes. It is
-Mathlib-free and depends only on `HexPolyFp` and `HexPolyZ`; see
+Mathlib-free and depends only on `HexPolyFp` and `HexPolyZ`. See
 {ref "hex-hensel-cross-references"}[Cross-references].
 
 # Coefficientwise reduction
@@ -73,7 +73,6 @@ tag := "hex-hensel-worked-reduction"
 The block below reduces the coefficients of `100 - 3x + 50x²`. Modulo
 `7² = 49` the coefficients become `2, 46, 1`; modulo `5² = 25` they
 become `0, 22, 0`, and the trailing zero is trimmed by normalization.
-Each `#guard` is checked when the chapter is built.
 
 ```lean
 open Hex Hex.DensePoly Hex.QuadraticLiftResult
@@ -111,7 +110,7 @@ The linear step returns the corrected pair of factors.
 {docstring Hex.ZPoly.linearHenselStep}
 
 The quadratic step doubles the modulus and so must carry the Bezout
-witnesses forward alongside the factors; its result bundles all four.
+witnesses forward alongside the factors. Its result bundles all four.
 
 {name}`Hex.QuadraticLiftResult` packages the updated leading factor `g`
 (monic), the complementary factor `h`, and the updated Bezout witnesses
@@ -133,8 +132,8 @@ Factorization pipelines need to lift an *ordered list* of mod-`p`
 factors simultaneously, not just a single split. The multifactor API
 does this by a sequential binary split tree: at each node it lifts the
 first factor against the product of the rest, then recurses. There are
-linear and quadratic-doubling versions; the quadratic one is the
-production path, because of its `O(log k)` precision growth.
+linear and quadratic-doubling versions. The factorization pipeline uses
+the quadratic one, because of its `O(log k)` precision growth.
 
 {docstring Hex.ZPoly.multifactorLift}
 
@@ -151,9 +150,8 @@ iterative single-split wrapper:
 
 {docstring Hex.ZPoly.henselLift_spec}
 
-The multifactor lifters carry the same product-congruence guarantee,
-threaded through the recursive split tree by a per-node invariant
-package.
+The multifactor lifters carry the same product-congruence guarantee. The
+proof maintains it at each node of the recursive split.
 
 {docstring Hex.ZPoly.multifactorLift_spec}
 
@@ -162,15 +160,15 @@ package.
 The quadratic doubling loop is verified against an explicit loop
 invariant: the three facts a caller must maintain across one doubling
 (product congruence, Bezout congruence, and monicity of the leading
-factor) are exactly the preconditions the doubling step consumes.
+factor) are exactly the preconditions the doubling step requires.
 
 {docstring Hex.ZPoly.QuadraticLiftLoopInvariant}
 
 {docstring Hex.ZPoly.quadraticLiftLoopInvariant_step}
 
 Monicity of the leading factor is preserved by the whole quadratic
-multifactor lift, so a monic input yields monic lifted factors, the
-shape the factorization pipeline relies on.
+multifactor lift, so a monic input yields monic lifted factors, which
+the factorization pipeline requires.
 
 {docstring Hex.ZPoly.multifactorLiftQuadratic_each_monic}
 

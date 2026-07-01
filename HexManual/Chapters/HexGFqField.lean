@@ -57,7 +57,7 @@ structure is only available where it is justified.
 Callers build elements through two smart constructors and read them back
 through one projection. {name}`Hex.GFqField.ofQuotient` wraps an existing
 quotient residue, {name}`Hex.GFqField.ofPoly` reduces a raw polynomial
-into the field, and {name}`Hex.GFqField.repr` recovers the canonical
+modulo the modulus, and {name}`Hex.GFqField.repr` recovers the canonical
 representative, always of degree strictly below the modulus.
 
 {docstring Hex.GFqField.ofQuotient}
@@ -77,9 +77,9 @@ quotient residues.
 tag := "hex-gfq-field-operations"
 %%%
 
-The ring operations re-use the quotient-ring path directly: each wraps
-the corresponding {name}`Hex.GFqRing.PolyQuotient` operation and rewraps
-the reduced result.
+The ring operations delegate to the quotient ring: each wraps the
+corresponding {name}`Hex.GFqRing.PolyQuotient` operation and rewraps the
+reduced result.
 
 {docstring Hex.GFqField.add}
 
@@ -102,7 +102,7 @@ elements directly.
 The operations that need irreducibility come next. Inversion runs the
 polynomial extended GCD on the representative and the modulus, then
 normalizes the Bézout coefficient by the constant unit factor of the
-gcd; irreducibility is exactly what forces that gcd to be a nonzero
+gcd. Irreducibility is exactly what forces that gcd to be a nonzero
 constant for any nonzero element. Division is multiplication by the
 inverse, and Frobenius is the `p`-th power map.
 
@@ -125,15 +125,14 @@ tag := "hex-gfq-field-worked-example"
 
 The example below builds the same modulus `x⁴ + 2` used in the
 {ref "hex-gfq-ring-worked-example"}[`HexGFqRing` worked example], whose
-reduction rule is `x⁴ ≡ -2 ≡ 3 (mod 5)`, but now exercises the field
+reduction rule is `x⁴ ≡ -2 ≡ 3 (mod 5)`, but now runs the field
 operations: inverses, division, and Frobenius alongside the ring
 operations. Irreducibility of the modulus is discharged by a Rabin
 {name}`Hex.Berlekamp.IrreducibilityCertificate`, whose pow chain and
 Bézout witness are checked by the kernel-reducible
 {name}`Hex.Berlekamp.checkIrreducibilityCertificateLinear` and routed to
 {name}`Hex.FpPoly.Irreducible` through
-{name}`Hex.Berlekamp.rabinTest_imp_irreducible`. Each `#guard` is checked
-when the chapter builds.
+{name}`Hex.Berlekamp.rabinTest_imp_irreducible`.
 
 ```lean
 open Hex Hex.GFqField
@@ -300,7 +299,7 @@ positive-degree modulus) is used.
 {docstring Hex.GFqField.zero_ne_one}
 
 The Frobenius endomorphism is definitionally the `p`-th power map, the
-form the rest of the finite-field theory consumes.
+form downstream code uses.
 
 {docstring Hex.GFqField.frob_eq_pow}
 
@@ -345,7 +344,7 @@ Like {ref "hex-gfq-ring-no-mathlib-correspondence"}[`HexGFqRing`],
 `*Mathlib` correspondence: there is no `HexGFqFieldMathlib`, and
 this chapter therefore carries no "computational vs. Mathlib
 correspondence" cross-reference. The canonical mathematical home of
-GF(pⁿ) is Mathlib's `GaloisField` / `AdjoinRoot` construction; a
+GF(pⁿ) is Mathlib's `GaloisField` / `AdjoinRoot` construction. A
 correspondence between {name}`Hex.GFqField.FiniteField` and those
 structures is deferred to a downstream library if and when a
 Mathlib-valued caller needs it.
