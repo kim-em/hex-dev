@@ -52,7 +52,7 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   `dite` over `Array.getInternal`. Leave such lemmas as plain `@[simp]`.
   Plain *def*-headed LHSs (`coeff`, `size`, `support`) and `Option.getD`
   LHSs are fine. A second, softer rejection: a lemma whose **conclusion is
-  wrapped in a `let`** (e.g. `redc_m_spec` in `HexArith/Montgomery/Redc.lean`:
+  wrapped in a `let`** (e.g. `montgomeryReduce_m_spec` in `HexArith/Montgomery/Redc.lean`:
   `let m := Tlo * ctx.p'; m.toNat = …`) is not a bare `Eq`, so `grind =`
   refuses it with `invalid E-matching equality theorem, conclusion must be an
   equality` even though it "looks like a literal equation." Leave such lemmas

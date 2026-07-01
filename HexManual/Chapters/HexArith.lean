@@ -31,7 +31,7 @@ It has four pieces. The wide-word `UInt64` operations give a two-word
 view of machine arithmetic (full products and add/subtract-with-carry),
 so higher libraries can build multi-word modular reduction in
 native-word code. Two single-word modular reducers,
-{name}`barrettReduce` (Barrett) and {name}`redc` (Montgomery), each come
+{name}`barrettReduce` and {name}`montgomeryReduce`, each come
 with a `Nat`-level model stating the arithmetic before the machine-word
 encoding is pinned down. {name}`HexArith.extGcd` is the extended
 Euclidean algorithm in three flavours (`Nat`, GMP-backed `Int`, and
@@ -188,28 +188,28 @@ multiply-add-shift with no trial division at all. As with Barrett, a
 `Nat`-level model states the computation before the machine-word
 encoding.
 
-{docstring redcNat}
+{docstring montgomeryReduceNat}
 
 The model is proved to compute the reduced residue exactly and to land
 below the modulus, given the precomputed inverse word `p'` and an odd
 modulus below the radix.
 
-{docstring redcNat_eq_mod}
+{docstring montgomeryReduceNat_eq_mod}
 
-{docstring redcNat_lt}
+{docstring montgomeryReduceNat_lt}
 
 The executable side carries the machine-word Montgomery parameters in
-a {name}`MontCtx`. {name}`redc` consumes a two-word product `(Thi, Tlo)`
+a {name}`MontCtx`. {name}`montgomeryReduce` consumes a two-word product `(Thi, Tlo)`
 and returns one reduced residue, proved to match the `Nat` model and to
 stay canonical.
 
 {docstring MontCtx}
 
-{docstring redc}
+{docstring montgomeryReduce}
 
-{docstring toNat_redc}
+{docstring toNat_montgomeryReduce}
 
-{docstring redc_lt}
+{docstring montgomeryReduce_lt}
 
 # Trial-division primality
 %%%

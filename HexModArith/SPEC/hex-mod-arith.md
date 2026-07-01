@@ -99,7 +99,7 @@ the C body, in order of simplicity:
    per modulus (lifted from `MontCtx` in `hex-arith`) when
    `p % 2 = 1`. ~10 cycles per multiply with values stored in
    Montgomery form internally; `ZMod64.mul` exposes standard form,
-   so this strategy adds two `redc`s per call to amortize.
+   so this strategy adds two `montgomeryReduce`s per call to amortize.
 
 The Phase-1 deliverable is the strategy-1 reference body plus the
 `@[extern]` wiring; later phases may swap the body for a
