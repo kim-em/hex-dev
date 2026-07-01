@@ -23,6 +23,10 @@ tag := "hex-bareiss"
 tag := "hex-bareiss-intro"
 %%%
 
+Released as [hex-bareiss](https://github.com/kim-em/hex-bareiss), with
+the Mathlib correspondence in
+[hex-bareiss-mathlib](https://github.com/kim-em/hex-bareiss-mathlib).
+
 `HexBareiss` is the executable fraction-free Bareiss determinant of a
 dense integer matrix: a Gaussian elimination in which every intermediate
 entry stays an exact integer because each update divides *exactly* by
@@ -35,7 +39,7 @@ specification it is checked against).
 
 `HexBareiss` is Mathlib-free. The theorem identifying the Bareiss
 determinant with the Leibniz determinant, via the Desnanot-Jacobi
-invariant, lives in the forthcoming `HexBareissMathlib` bridge.
+invariant, lives in `HexBareissMathlib`.
 
 # The elimination record
 %%%

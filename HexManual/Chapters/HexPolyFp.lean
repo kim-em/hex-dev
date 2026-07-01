@@ -79,8 +79,8 @@ results never grow past the modulus degree.
 
 {docstring Hex.FpPoly.composeModMonic}
 
-The Frobenius-power maps are the engine of finite-field irreducibility
-and factorization tests. {name}`Hex.FpPoly.frobeniusXMod` computes the
+The finite-field irreducibility and factorization tests are built on the
+Frobenius-power maps. {name}`Hex.FpPoly.frobeniusXMod` computes the
 basic generator `X^p mod f`, and {name}`Hex.FpPoly.frobeniusXPowMod`
 iterates it to `X^(pᵏ) mod f` for arbitrary `k`.
 

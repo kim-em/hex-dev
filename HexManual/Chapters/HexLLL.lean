@@ -23,6 +23,10 @@ tag := "hex-lll"
 tag := "hex-lll-intro"
 %%%
 
+Released as [hex-lll](https://github.com/kim-em/hex-lll), with the
+Mathlib correspondence in
+[hex-lll-mathlib](https://github.com/kim-em/hex-lll-mathlib).
+
 `HexLLL` reduces an integer lattice basis. Given the rows of a
 {name}`Hex.Matrix` over `Int`, it produces a new basis for the same
 lattice made of short, nearly orthogonal vectors (the LLL guarantee).
@@ -119,8 +123,8 @@ tag := "hex-lll-reduction"
 
 The reducer carries two pieces of state. The proof-facing
 {name}`Hex.Internal.LLLState` holds the exact integer basis together with the scaled
-Gram-Schmidt data, and a separate {name}`Hex.Internal.LLLState.Valid` predicate ties
-that data back to the `GramSchmidt.Int` representation, keeping the state
+Gram-Schmidt data, and a separate {name}`Hex.Internal.LLLState.Valid` predicate relates
+that data to the `GramSchmidt.Int` representation, keeping the state
 updates computational while letting the Mathlib side reason about them.
 
 {docstring Hex.Internal.LLLState}
