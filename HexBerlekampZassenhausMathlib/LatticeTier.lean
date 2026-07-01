@@ -403,18 +403,40 @@ theorem factorLatticeFactorsWithBound_factor_irreducible
     (hmem : raw ∈ cf.toList)
     (hrec : Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
     Hex.ZPoly.Irreducible raw := by
+  have hcore_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
+  have hcore_prim := IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
   rw [Hex.factorLatticeFactorsWithBound] at hcf
   by_cases hdeg0 : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-  · -- Constant square-free core: reassembly of `#[squareFreeCore]` (X-powers + unit).
-    sorry
+  · -- Constant square-free core: X-power factors are irreducible; the core is the
+    -- unit `1` (excluded by the recorded-factor filter `hrec`).
+    rw [if_pos hdeg0] at hcf
+    obtain rfl := Option.some.inj hcf
+    have hcomplete := Hex.reassemblyExpansionComplete_constant_of_ne_zero f hf hdeg0
+    rcases Hex.reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
+        _ _ raw hcomplete hmem with hx | hcore
+    · exact Hex.xPowerFactorArray_irreducible _ raw hx
+    · exfalso
+      have hraw_one : raw = 1 := by
+        have hraw_core : raw = (Hex.normalizeForFactor f).squareFreeCore := by simpa using hcore
+        rw [hraw_core, Hex.squareFreeCore_eq_one_of_constant_of_ne_zero f hf hdeg0]
+      rw [hraw_one, Hex.normalizeFactorSign_one, Hex.shouldRecordPolynomialFactor_one] at hrec
+      exact absurd hrec (by decide)
   · rw [if_neg hdeg0] at hcf
     by_cases hB0 : Hex.factorFastPrecisionCap f = 0
     · rw [if_pos hB0] at hcf; exact absurd hcf.symm (Option.some_ne_none cf)
     · rw [if_neg hB0] at hcf
       cases hquad : Hex.quadraticIntegerRootFactors? (Hex.normalizeForFactor f).squareFreeCore with
-      | some qf =>
-        -- Quadratic integer-root split: roots are linear, irreducible.
-        rw [hquad] at hcf; sorry
+      | some coreFactors =>
+        -- Quadratic integer-root split: the roots are linear factors, irreducible.
+        simp only [hquad] at hcf
+        obtain rfl := Option.some.inj hcf
+        refine Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+          _ _ ?_ ?_ hmem
+        · exact IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
+            f hf hquad
+        · intro factor hfmem
+          exact Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive
+            hcore_pos hcore_prim hquad hfmem
       | none =>
         rw [hquad] at hcf
         cases hchoose : Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore with
