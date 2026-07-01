@@ -632,10 +632,34 @@ theorem berlekampMatrix_mulVec_coeffVector_eq
   rw [← coeffVector_matrixActionPolySum_eq_mulVec f hmonic w,
     matrixActionPolySum_eq_linearPow_mod f hmonic w hw]
 
-/-- The fixed-space matrix `Q_f - I` used in Berlekamp's kernel computation. -/
+/-- The fixed-space matrix `Q_f - I` used in Berlekamp's kernel computation.
+Built in place: only the diagonal of `Q_f` is decremented, via `mapRowsIdx`
+setting one entry per row, rather than rebuilding the whole matrix with `ofFn`. -/
 def fixedSpaceMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     Matrix (ZMod64 p) (basisSize f) (basisSize f) :=
-  berlekampMatrix f hmonic - Matrix.identity (basisSize f)
+  let Q := berlekampMatrix f hmonic
+  Q.mapRowsIdx fun i row => row.modify i.val fun x => x - 1
+
+/-- Entrywise characterization of `fixedSpaceMatrix`: it is `Q_f` with `1`
+subtracted on the diagonal. -/
+@[grind =] theorem getElem_fixedSpaceMatrix (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (i j : Fin (basisSize f)) :
+    (fixedSpaceMatrix f hmonic)[i][j] =
+      (berlekampMatrix f hmonic)[i][j] - if i = j then 1 else 0 := by
+  unfold fixedSpaceMatrix
+  rw [Matrix.getElem_mapRowsIdx]
+  simp only [Vector.getElem_modify, Matrix.getElem_eq_getRow, Matrix.getRow, Fin.getElem_fin,
+    Fin.ext_iff]
+  grind
+
+/-- `fixedSpaceMatrix` agrees with the `Q_f - I` matrix-subtraction form; lets the
+`sub_identity_mulVec` algebra apply to the in-place definition. -/
+theorem fixedSpaceMatrix_eq_sub (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    fixedSpaceMatrix f hmonic =
+      berlekampMatrix f hmonic - Matrix.identity (basisSize f) := by
+  apply Matrix.ext_getElem
+  intro i j
+  rw [getElem_fixedSpaceMatrix, Matrix.getElem_sub, Matrix.getElem_identity]
 
 /-- Convert a coefficient vector back to its polynomial representative. -/
 @[expose]
@@ -697,7 +721,7 @@ theorem isFixedSpaceKernelVector_iff_berlekampMatrix_mulVec_eq
     IsFixedSpaceKernelVector f hmonic v ↔
       Matrix.mulVec (berlekampMatrix f hmonic) v = v := by
   unfold IsFixedSpaceKernelVector
-  dsimp only [fixedSpaceMatrix]
+  rw [fixedSpaceMatrix_eq_sub]
   show (berlekampMatrix f hmonic - Matrix.identity (basisSize f)) * v = 0 ↔
     berlekampMatrix f hmonic * v = v
   rw [Matrix.sub_identity_mulVec]
