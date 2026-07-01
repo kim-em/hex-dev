@@ -806,6 +806,31 @@ runtime dispatch. Inclusive Hex cost was led by `Hex.lll.firstShortVector`,
 entry bit-length grows with `n`, so the dominant constant lands in exact
 integer arithmetic.
 
+### Worst-case and structured families (`ajtai`, `q-ary`, `ntru`, `knapsack`)
+
+Four faithful fplll-generator ports add adversarial and structured coverage
+(clean idle-`carica` data, `git_dirty=false`; five-curve plots at
+`reports/figures/hex-lll-comparator-{ajtai,q-ary,ntru,knapsack}.svg`):
+
+- **`ajtai`** — fplll `gen_trg` (`latticegen t <d> 1.2`), a steeply decreasing
+  triangular diagonal that drives the `Θ(d² log B)` swap count. The exact
+  reducers blow up `~d⁷` (Lean native 4805 ms, Isabelle native 5167 ms at
+  d=36) while the certified path stays cheap (97 ms).
+- **`q-ary`** — fplll `gen_qary` `[[I,H],[0,qI]]`, the LWE/SIS Z-shape. At n=48
+  the exact reducers reach 67–82 ms; fpLLL 10 ms, Lean certified 24 ms.
+- **`ntru`** — fplll `gen_ntrulike` `[[I,Rot h],[0,qI]]` on `2d×2d`. At n=24 the
+  exact reducers reach 1.1–1.4 s; Lean certified 133 ms, ~1.2× fpLLL.
+- **`knapsack`** — fplll `gen_intrel`, the rectangular `d×(d+1)` integer-relation
+  form (the only `cols≠rows` family, exercising the `m>n` `ofBasis` path). At
+  n=48 the exact reducers are 26–33 ms; Lean certified 10 ms.
+
+Across all four, the exact reducers are correct but diverge on the hard bases
+while the certified path (fpLLL candidate + verified Lean `certCheck`) stays
+within ~1.2–2.5× of raw fpLLL. The generators are structurally validated by
+`scripts/dev/validate_latticegen.py` (ajtai additionally cross-checked against
+`latticegen`). Full per-family discussion and the asymptotic fits:
+[HexLLL/PERFORMANCE.md](../HexLLL/PERFORMANCE.md).
+
 ## Concerns
 
 - **The verified Isabelle certified-LLL series has only one committed point
