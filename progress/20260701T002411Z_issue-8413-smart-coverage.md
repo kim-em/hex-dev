@@ -106,7 +106,63 @@ Both headline theorems are now **sorry-free**:
   `k = dsize` with `hk_le` from `List.pairwise_lt_range` sortedness of the size
   range, or a budget-0 contradiction at `S_cov`'s size.
 
-**Remaining: the top-level wiring only.** Prove `classicalCoreFactorsWithBound
+## Reusable infrastructure now landed (all sorry-free)
+
+- `RecoveredSmartSearch.covers` / `.trustworthyNone` (Basic.lean) — public
+  wrappers of coverage/completeness at `defaultFactorCoeffBound core`.
+- `smartCore_factor_irreducible_of_covers_of_squarefree` (Basic.lean) — the
+  counting theorem: coverage + squarefree + product + recorded ⇒ each emitted
+  irreducible (via `UFDPartition.{length_le,normalizedFactors_card_le_length_of_coverage,
+  irreducible_of_partition_card_eq_normalizedFactors_card}`).
+- `scaledRecombinationSmart{Aux,SizeLoop,CandLoop}_shouldRecord` (exec) — every
+  emitted factor passes `shouldRecordPolynomialFactor`.
+
+## Exact wiring recipe (all substrate identified)
+
+Live in `IntReductionMod.lean`. For `B ≠ 0` (add as hyp; classical tier uses
+`defaultFactorCoeffBound f > 0`), unfold `classicalCoreFactorsWithBound`;
+`d := toMonicLiftData core (exhaustiveLiftBound core B) primeData`.
+- **Instantiate coverage at** `B' := defaultFactorCoeffBound (toMonic core).monic`
+  by calling `smartAux_covers_of_bound` directly (abstract-B'), NOT
+  `RecoveredSmartSearch.covers`, so the bound matches the precision substrate.
+  `hprecision := IntReductionMod.exhaustiveLiftBound_monic_precision core
+  (exhaustiveLiftBound core B... wait: the B fed to precision is
+  `exhaustiveLiftBound core B`? No — d.k = precisionForCoeffBound
+  (exhaustiveLiftBound core B) p, so use `exhaustiveLiftBound_monic_precision core
+  B primeData.p hp2` which already targets that exponent)`. `hp2 : 2 ≤ primeData.p`
+  from `toMonicPrimeData?_prime`.
+  Still need `hcore_lc_le`/`hvalid` for this B': via
+  `defaultFactorCoeffBound core ≤ defaultFactorCoeffBound (toMonic core).monic`
+  (find/prove this bridge) applied to `defaultFactorCoeffBound_{valid,
+  leadingCoeff_natAbs_le}`.
+- **Partition**: `liftedFactorSubsetPartition_of_toMonicPrimeData_complete core
+  (exhaustiveLiftBound core B) primeData hselected …core facts…
+  (exhaustiveLiftBound_monic_precision …)` — gives
+  `LiftedFactorSubsetPartition core d univ core`. (Note the `B` arg to `_complete`
+  is `exhaustiveLiftBound core B`.)
+- **Bundle**: `toMonicLiftData_liftedFactor_{monic,natDegree_pos,injective}_of_monicPrimeData`;
+  `hd_modulus` from `2 ≤ p^k`.
+- **Matches**: `LiftedFactorListMatches.univ d`; **`J = univ`**, `univ.card =
+  d.liftedFactors.size = localFactors.length = r`.
+- **Fuel**: the wrapper `scaledRecombinationSmart` calls Aux at fuel
+  `budget + (r+1)(2r+3)`; `smartFuelBound r = (r+1)(2r+3)`, so
+  `budget + smartFuelBound univ.card ≤ fuel` holds with equality.
+- **liftModulus**: `liftModulus d = d.p ^ d.k` (private def; may need a public
+  accessor added in the exec file, or restate coverage's modulus as
+  `liftModulus d`).
+- Unfold `scaledRecombinationSmart`; the `budgetExhausted` guard makes `res=none`
+  (with the accepted `¬budgetExhausted`) impossible by `trustworthyNone`
+  (`remaining≠0` vs `=0`); `res=some factors` ⇒ apply coverage + product
+  (`scaledRecombinationSmartAux_product`) + `_shouldRecord` +
+  `smartCore_factor_irreducible_of_covers_of_squarefree`. `factors.isEmpty` ⇒
+  product `1 = core` contradicts deg≥1, so `cf = factors.toArray`.
+- **Template**: mirror the exhaustive wiring at `IntReductionMod.lean:4483`
+  (`factor_exhaustive_branch_entry_irreducible_..._of_bound`) which uses exactly
+  this `defaultFactorCoeffBound` + `hprecision` pattern.
+
+## (historical) Remaining: the top-level wiring only
+
+**Prove `classicalCoreFactorsWithBound
 core B primeData = some cf → toMonicPrimeData? core = some primeData → (core ≠ 0,
 primitive, squarefree, deg ≥ 1) → ∀ g ∈ cf, Irreducible (toPolynomial g)`:
 - Unfold `classicalCoreFactorsWithBound` (`Basic.lean:8906`); `B=0` returns
