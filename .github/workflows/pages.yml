@@ -18,7 +18,10 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # A render takes ~20 min. Let an in-flight publish finish and queue the
+  # next push behind it, rather than cancelling it: cancelling on every
+  # push left the published site several commits behind `main` on busy days.
+  cancel-in-progress: false
 
 permissions:
   contents: read
