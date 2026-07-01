@@ -160,6 +160,27 @@ is `(δ, 11/20)`-reduced, spans the same lattice, and satisfies the
 short-vector bound, together with the certificate soundness theorem
 `certCheck_sound`.
 
+# Performance
+
+HexLLL is benchmarked against the verified Isabelle `LLL_Basis_Reduction`
+extraction and the unverified floating-point `fplll`, across input families
+chosen to stress different parts of the algorithm. The headline result, on
+inputs whose entry bit-length grows with the dimension (`harsh-cubic`):
+
+![HexLLL harsh-cubic comparator](reports/figures/hex-lll-comparator-harsh-cubic.svg)
+
+The exact-integer reducers (`lllNative`, verified Isabelle native) climb
+super-quintically as the operands widen, while the **certified path — an `fplll`
+candidate checked by the verified Lean `certCheck` — stays close to `fplll`'s
+own near-cubic speed**. So on this family the verified output is obtained at
+close to unverified floating-point cost, by certifying a fast external reducer
+rather than running an exact one.
+
+The worst-case families tell the same story more sharply: on the swap-bound
+`ajtai` family the exact reducers blow up ~`d⁷` while the certified path stays
+cheap. See **[PERFORMANCE.md](PERFORMANCE.md)** for all six input families, the
+methodology, the per-family discussion, and the asymptotic fits.
+
 # Trust boundary
 
 The kernel proofs trust none of the acceleration machinery. The capstone

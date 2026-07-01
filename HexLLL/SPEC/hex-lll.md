@@ -337,13 +337,43 @@ cross-referenced as `phase4.input_families` in [`libraries.yml`](https://github.
   This exercises bigint operand-size drift in both `LLLState.ofBasis`
   and the swap path; entry sizes grow with `n`, so total input
   size is cubic in `n`.
+- **`ajtai`** — Ajtai-style worst-case lower-triangular bases, a
+  faithful port of fplll's `gen_trg` (`latticegen t <d> 1.2`): per
+  column `i`, `bits_i = ⌊(2d − i)^1.2⌋`, the diagonal `D_i` is uniform
+  in `[2, 2^bits_i]`, and below-diagonal entries are uniform in
+  `(−D_i/2, D_i/2)`. The steeply decreasing diagonal profile drives the
+  `Θ(d² log B)` swap count (Nguyen–Stehlé, *LLL on the Average*,
+  ANTS-VII 2006) — the **iteration-count** scaling axis the
+  near-orthogonal `random-bounded` and `harsh-cubic` families leave
+  unmeasured. Fidelity is structural, not entry-exact (fplll draws from
+  GMP, the Lean port from the committed LCG via `wideRandom`):
+  `scripts/dev/validate_latticegen.py` checks both satisfy the same
+  lower-triangular / `bits_i` / `|off| < D_i/2` envelope.
+- **`q-ary`** — LWE/SIS bases `[[I_{d-k}, H], [0, q·I_k]]` (faithful
+  port of fplll's `gen_qary` / `latticegen q`), `H` uniform mod
+  `q = 2^(b-1) + rand(b-1)`. The unreduced basis is a step profile (a
+  plateau at `q` over a plateau at `1`) LLL must smooth into the
+  characteristic Z-shape, concentrating swaps in the transition band —
+  the realistic cryptographic regime, distinct from a triangular basis.
+- **`ntru`** — NTRU-like bases `[[I, Rot(h)], [0, q·I]]` on `2d × 2d`
+  (faithful port of fplll's `gen_ntrulike` / `latticegen n`), with
+  `Rot(h)` the circulant of `h` uniform mod `q` and `h[0]` fixed so
+  `h(1) ≡ 0 mod q` (checked by `#guard`). Planted dense structure plus
+  the q-block.
+- **`knapsack`** — the **rectangular** `d × (d+1)` integer-relation
+  basis (faithful port of fplll's `gen_intrel` / `latticegen r`), row
+  `i` = `[rand_b, e_{i+1}]`. The only family with `cols ≠ rows`, so it
+  exercises the `m > n` Gram construction in `ofBasis` that every square
+  family leaves untested. It also drives the success-vs-density recovery
+  chart (planted-vector recovery vs density `d = n/b`).
 
 **At least one family must demonstrably exercise the swap branch of
-the LLL outer loop.** For `bz-recombination` and `harsh-cubic` this
-is automatic; for `random-bounded` the family must include at least
-one committed seed where ≥ 1 Lovász swap fires, recorded in the
-bench module as a fixed fixture so the swap-firing property is
-verifiable from the SPEC alone.
+the LLL outer loop.** For `bz-recombination`, `harsh-cubic`, and
+`ajtai` this is automatic (the Ajtai diagonal is steeply decreasing by
+construction, checked by the `ajtaiProfileSteep` `#guard`); for
+`random-bounded` the family must include at least one committed seed
+where ≥ 1 Lovász swap fires, recorded in the bench module as a fixed
+fixture so the swap-firing property is verifiable from the SPEC alone.
 
 **Best-case inputs are not sole Phase-4 evidence.** Per
 [SPEC/benchmarking.md §Anti-patterns](https://github.com/kim-em/hex-dev/blob/main/SPEC/benchmarking.md#anti-patterns),
@@ -468,7 +498,48 @@ classification below is mirrored as structured metadata in
   the Lean checker versus the Isabelle checker — which is the yardstick for the
   `verified Isabelle certified-LLL` gating goal. A comparator with fewer than two
   committed data points on a family is listed in §Concerns rather than dropped
-  from the plot silently.
+  from the plot silently. A curve whose reducer exceeds its per-call wall-time cap
+  at a rung (a `null` median in the export) simply stops at that ceiling:
+  per-curve x-ranges differ, so the verified Isabelle curves end where the worst
+  case outgrows the cap while the cheap fpLLL/certified curves continue.
+
+  **Per-call floor calibration.** The `svp_certified` comparator runs as a
+  *persistent* subprocess (one per `lake exe hexlll_bench run`, looping on
+  stdin), so its per-request cost is not a fork: it is a fixed round-trip floor
+  — request marshalling plus the per-request fplll candidate production and
+  Isabelle check — independent of `n`. That floor is ~21 ms on carica in the
+  committed exports. It is measured once per run by the
+  `runIsabelleCertifiedProcessFloorNormSq` target (a trivial 2×2 request) and
+  subtracted from the `verified Isabelle certified-LLL` curve by
+  `subtract_request_floor`, so the plotted value is the marginal reduction cost,
+  not the fixed per-request overhead. Each family's floor is resolved per family
+  (`default_floor_path`, commit-matched to the data export); a run that has no
+  floor export plots the curve unadjusted and leaves it labelled `Isabelle
+  certified` (never mislabelled as adjusted). Rungs whose raw time is within
+  15% of the floor are *floor-dominated* — the subtracted value is within the
+  floor's own measurement noise — and are dropped, so the adjusted curve begins
+  where the reduction cost rises clearly above the floor.
+
+  **Success-vs-density plot (knapsack only).** The `knapsack` family also
+  commits a second chart type at
+  `reports/figures/hex-lll-knapsack-success.svg`, generated by
+  `scripts/plots/hex-lll-knapsack-success.py`: planted-vector **recovery rate**
+  versus lattice density `d = n / b` per reducer, over a fixed-`n` sweep across
+  many committed seeds. This is the only family whose interesting signal is
+  solution *quality* (a phase transition), not wall time; the Lagarias–Odlyzko
+  `0.646` and CJLOSS `0.940` constants are drawn as annotated **reference
+  density lines with citations**, not as guaranteed thresholds (the guarantee
+  holds only when the embedding matches the literature setup). The recovery
+  sweep runs in a separate non-timed driver so its many-seed membership checks
+  never pollute the wall-time harness.
+
+  **Headline-SVG selection rule.** The README `# Performance` section embeds one
+  figure. The default headline is the `harsh-cubic` plot, where the exact
+  reducers climb super-quintically as operands widen while the certified path
+  (fpLLL candidate + Lean `certCheck`) stays near fpLLL's slope; a worst-case
+  family (e.g. `ajtai`) may be promoted when it shows the certified path holding
+  flat while the exact reducers provably diverge over ≥ 3 overlapping rungs. The
+  rule is fixed in advance so the choice is not post-hoc cherry-picking.
 
 ### `LLLState.ofBasis` is its own bench target
 

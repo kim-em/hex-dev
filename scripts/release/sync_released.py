@@ -83,6 +83,15 @@ def managed_paths(entry: dict) -> list[tuple[Path, Path, bool]]:
     # root README, authored as <lib>/README.md, published to the repo root
     if entry.get("readme", True):
         out.append((REPO_ROOT / lib / "README.md", Path("README.md"), False))
+    # root PERFORMANCE.md, authored as <lib>/PERFORMANCE.md, published to root
+    # (mirrors README so its relative figure links resolve identically)
+    if entry.get("performance"):
+        out.append((REPO_ROOT / lib / "PERFORMANCE.md", Path("PERFORMANCE.md"), False))
+    # committed comparator/scaling figures: an explicit, tight allow-list (never
+    # a broad glob) so stale or volatile artifacts are never published silently
+    for fig in entry.get("figures") or []:
+        out.append((REPO_ROOT / "reports" / "figures" / fig,
+                    Path("reports") / "figures" / fig, False))
     if entry.get("umbrella"):
         out.append((REPO_ROOT / f"{lib}.lean", Path(f"{lib}.lean"), False))
     if entry.get("spec"):
