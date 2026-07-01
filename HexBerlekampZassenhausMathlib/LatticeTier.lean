@@ -201,7 +201,14 @@ theorem latticeArm3_bhksSingleAllOnes_irreducible
     -- Easy `UniqueFactorizationMonoid` bookkeeping; deferred per hardest-first.
     have hge : 1 ≤ (UniqueFactorizationMonoid.normalizedFactors
         (HexPolyZMathlib.toPolynomial core)).card := by
-      sorry
+      have hpos : 0 < (HexPolyZMathlib.toPolynomial core).natDegree := by
+        rw [HexPolyMathlib.natDegree_toPolynomial core]; exact Nat.pos_of_ne_zero hdeg_ne
+      have hne : HexPolyZMathlib.toPolynomial core ≠ 0 := by
+        intro h; rw [h, Polynomial.natDegree_zero] at hpos; exact absurd hpos (lt_irrefl 0)
+      have hnu : ¬ IsUnit (HexPolyZMathlib.toPolynomial core) :=
+        not_isUnit_of_natDegree_pos_of_isReduced _ hpos
+      exact Multiset.card_pos.mpr
+        ((UniqueFactorizationMonoid.normalizedFactors_pos _ hne).mpr hnu).ne'
     -- The deep van Hoeij adequacy: `core` has AT MOST one irreducible factor.
     -- Contrapositive: if `core` had ≥ 2 irreducible factors it would factor as a
     -- proper product, yielding a proper nonempty true-factor support, hence a
