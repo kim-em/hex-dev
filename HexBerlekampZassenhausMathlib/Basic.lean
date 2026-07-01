@@ -18911,6 +18911,54 @@ termination_by fuel
 
 end
 
+/-- Bound-parameterized public conditional coverage for the size-ordered
+classical recombination search: the same statement as `RecoveredSmartSearch.covers`
+but with the abstract coefficient bound `B'` surfaced as a parameter, together
+with its leading-coefficient bound and all-divisors validity.  This exposes the
+private `smartAux_covers_of_bound` so callers whose lift precision is controlled
+by a *different* bound than `defaultFactorCoeffBound core` (for instance a factor
+of a larger `f` bounded by `defaultFactorCoeffBound f` via Mignotte) can still
+use coverage.  `RecoveredSmartSearch.covers` is the `B' = defaultFactorCoeffBound
+core` specialization. -/
+theorem RecoveredSmartSearch.covers_of_bound
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly, g ∣ core → ∀ i, (g.coeff i).natAbs ≤ B')
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    ∀ {target : Hex.ZPoly} {J : LiftedFactorSubset d}
+      {localFactors : List Hex.ZPoly} {budget fuel : Nat}
+      {result : List Hex.ZPoly} {b : Nat},
+      Hex.ZPoly.Primitive target →
+      0 < Hex.DensePoly.leadingCoeff target →
+      target ∣ core →
+      LiftedFactorSubsetPartition core d J target →
+      LiftedFactorListMatches d J localFactors →
+      budget + smartFuelBound J.card ≤ fuel →
+      Hex.scaledRecombinationSmartAux (Hex.DensePoly.leadingCoeff core)
+          target (d.p ^ d.k) localFactors budget fuel = (some result, b) →
+      ∀ factor : Hex.ZPoly,
+        Irreducible (HexPolyZMathlib.toPolynomial factor) →
+        factor ∣ target →
+        ∃ emitted ∈ result,
+          Associated (HexPolyZMathlib.toPolynomial emitted)
+            (HexPolyZMathlib.toPolynomial factor) := by
+  intro target J localFactors budget fuel result b htarget_primitive htarget_lc_pos
+    htarget_dvd_core hpartition hmatches hfuel h
+  exact smartAux_covers_of_bound B' hcore_lc_le hvalid hcore_ne hcore_primitive
+    hcore_lc_pos hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
+    hd_liftedFactor_inj hprecision htarget_primitive htarget_lc_pos htarget_dvd_core
+    hpartition hmatches hfuel h
+
 /-- Public conditional coverage for the size-ordered classical recombination
 search (smart analogue of `RecoveredScaledSearch.covers`): when the search
 returns `some result`, every irreducible factor of `target` is an associate of
@@ -18947,12 +18995,50 @@ theorem RecoveredSmartSearch.covers
             (HexPolyZMathlib.toPolynomial factor) := by
   intro target J localFactors budget fuel result b htarget_primitive htarget_lc_pos
     htarget_dvd_core hpartition hmatches hfuel h
-  exact smartAux_covers_of_bound (Hex.ZPoly.defaultFactorCoeffBound core)
+  exact RecoveredSmartSearch.covers_of_bound (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne)
     (defaultFactorCoeffBound_valid core hcore_ne) hcore_ne hcore_primitive hcore_lc_pos
     hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hd_liftedFactor_inj
     hprecision htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
     hfuel h
+
+/-- Bound-parameterized public trustworthy-none completeness: the same statement
+as `RecoveredSmartSearch.trustworthyNone` but with the abstract coefficient bound
+`B'` surfaced as a parameter, exposing the private `smartAux_none_budget_zero`.
+`RecoveredSmartSearch.trustworthyNone` is the `B' = defaultFactorCoeffBound core`
+specialization. -/
+theorem RecoveredSmartSearch.trustworthyNone_of_bound
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly, g ∣ core → ∀ i, (g.coeff i).natAbs ≤ B')
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    ∀ {target : Hex.ZPoly} {J : LiftedFactorSubset d}
+      {localFactors : List Hex.ZPoly} {budget fuel b : Nat},
+      Hex.ZPoly.Primitive target →
+      0 < Hex.DensePoly.leadingCoeff target →
+      target ∣ core →
+      LiftedFactorSubsetPartition core d J target →
+      LiftedFactorListMatches d J localFactors →
+      budget + smartFuelBound J.card ≤ fuel →
+      Hex.scaledRecombinationSmartAux (Hex.DensePoly.leadingCoeff core)
+          target (d.p ^ d.k) localFactors budget fuel = (none, b) →
+      b = 0 := by
+  intro target J localFactors budget fuel b htarget_primitive htarget_lc_pos
+    htarget_dvd_core hpartition hmatches hfuel h
+  exact smartAux_none_budget_zero B' hcore_lc_le hvalid hcore_ne hcore_primitive
+    hcore_lc_pos hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos
+    hd_liftedFactor_inj hprecision htarget_primitive htarget_lc_pos htarget_dvd_core
+    hpartition hmatches hfuel h
 
 /-- Public trustworthy-none completeness: with adequate fuel a `none` return of
 the size-ordered search can only come from budget exhaustion (`b = 0`). -/
@@ -18981,7 +19067,8 @@ theorem RecoveredSmartSearch.trustworthyNone
       b = 0 := by
   intro target J localFactors budget fuel b htarget_primitive htarget_lc_pos
     htarget_dvd_core hpartition hmatches hfuel h
-  exact smartAux_none_budget_zero (Hex.ZPoly.defaultFactorCoeffBound core)
+  exact RecoveredSmartSearch.trustworthyNone_of_bound
+    (Hex.ZPoly.defaultFactorCoeffBound core)
     (defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne)
     (defaultFactorCoeffBound_valid core hcore_ne) hcore_ne hcore_primitive hcore_lc_pos
     hd_modulus hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hd_liftedFactor_inj

@@ -6887,14 +6887,19 @@ classical recombination search returns is irreducible: when
 primitive, square-free, positive-degree `core` selected by `toMonicPrimeData?`,
 each entry of `cf` is irreducible over `ℤ`.
 
-The precision hypothesis (`2 * defaultFactorCoeffBound core < …`) is threaded as
-in the exhaustive-tier `…_of_bound` theorems; every other input is discharged
-from `toMonicPrimeData?` and the core side conditions.  Coverage
-(`RecoveredSmartSearch.covers`) + product reconstruction + the
-`shouldRecord` gate + the square-free counting
+The coefficient bound is surfaced as an abstract parameter `B'` (mirroring the
+exhaustive-tier `…_of_bound` shape): the caller supplies the leading-coefficient
+bound `(leadingCoeff core).natAbs ≤ B'`, the all-divisors validity
+`∀ g ∣ core, ∀ i, |g.coeff i| ≤ B'`, and the precision `2 * B' < …`.  This lets a
+factor of a *larger* polynomial `f` (with `core ∣ f`) be handled at
+`B' = defaultFactorCoeffBound f` via Mignotte, without a
+`defaultFactorCoeffBound core ≤ defaultFactorCoeffBound f` monotonicity lemma.
+Every other input is discharged from `toMonicPrimeData?` and the core side
+conditions.  Coverage (`RecoveredSmartSearch.covers_of_bound`) + product
+reconstruction + the `shouldRecord` gate + the square-free counting
 (`smartCore_factor_irreducible_of_covers_of_squarefree`) give irreducibility;
-`trustworthyNone` rules out the accepted-`none` branch. -/
-theorem classicalCoreFactorsWithBound_factor_irreducible_of_bound
+`trustworthyNone_of_bound` rules out the accepted-`none` branch. -/
+theorem classicalCoreFactorsWithBound_factor_irreducible_of_validBound
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     {cf : Array Hex.ZPoly}
     (hclassical : Hex.classicalCoreFactorsWithBound core B primeData = some cf)
@@ -6905,7 +6910,10 @@ theorem classicalCoreFactorsWithBound_factor_irreducible_of_bound
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
     (hcore_pos : 0 < core.degree?.getD 0)
     (hB_ne : B ≠ 0)
-    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core <
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly, g ∣ core → ∀ i, (g.coeff i).natAbs ≤ B')
+    (hprecision : 2 * B' <
       primeData.p ^
         Hex.precisionForCoeffBound (Hex.ZPoly.exhaustiveLiftBound core B) primeData.p) :
     ∀ g ∈ cf.toList, Irreducible (HexPolyZMathlib.toPolynomial g) := by
@@ -6935,7 +6943,7 @@ theorem classicalCoreFactorsWithBound_factor_irreducible_of_bound
     unfold Hex.ZPoly.toMonicLiftData; exact Hex.henselLiftData_k _ _ _
   have hd_modulus : 2 ≤ (Hex.ZPoly.toMonicLiftData core LB primeData).p ^
       (Hex.ZPoly.toMonicLiftData core LB primeData).k := by rw [hp_eq, hk_eq]; exact hmodulus
-  have hprecision_dk : 2 * Hex.ZPoly.defaultFactorCoeffBound core <
+  have hprecision_dk : 2 * B' <
       (Hex.ZPoly.toMonicLiftData core LB primeData).p ^
         (Hex.ZPoly.toMonicLiftData core LB primeData).k := by
     rw [hp_eq, hk_eq]; exact hprecision
@@ -6990,13 +6998,15 @@ theorem classicalCoreFactorsWithBound_factor_irreducible_of_bound
       by_cases hrem : remaining = 0
       · subst hrem; simp at hclassical
       · exact absurd
-          (RecoveredSmartSearch.trustworthyNone hcore_ne hcore_primitive hcore_lc_pos
+          (RecoveredSmartSearch.trustworthyNone_of_bound B' hcore_lc_le hvalid
+            hcore_ne hcore_primitive hcore_lc_pos
             hd_modulus hlf_monic hlf_natdeg hlf_inj hprecision_dk hcore_primitive
             hcore_lc_pos hcore_dvd hpartition hmatches hfuel_adeq haux) hrem
     | some factors =>
       simp only [Option.isNone_some, Bool.false_and, Bool.false_eq_true, if_false]
         at hclassical
-      have hcover := RecoveredSmartSearch.covers hcore_ne hcore_primitive hcore_lc_pos
+      have hcover := RecoveredSmartSearch.covers_of_bound B' hcore_lc_le hvalid
+        hcore_ne hcore_primitive hcore_lc_pos
         hd_modulus hlf_monic hlf_natdeg hlf_inj hprecision_dk hcore_primitive hcore_lc_pos
         hcore_dvd hpartition hmatches hfuel_adeq haux
       have hprod := Hex.scaledRecombinationSmartAux_product _ _ _ _ _ _ _ _ haux
@@ -7017,6 +7027,35 @@ theorem classicalCoreFactorsWithBound_factor_irreducible_of_bound
       intro g hg
       rw [List.toList_toArray] at hg
       exact hirr g hg
+
+/-- **#8413 (classical-tier irreducibility, default-bound form).**  The
+`B' = defaultFactorCoeffBound core` specialization of
+`classicalCoreFactorsWithBound_factor_irreducible_of_validBound`: the abstract
+leading-coefficient and all-divisors bound hypotheses are discharged from
+`defaultFactorCoeffBound_leadingCoeff_natAbs_le` and `defaultFactorCoeffBound_valid`,
+so the only precision side condition is
+`2 * defaultFactorCoeffBound core < …`, threaded as in the exhaustive-tier
+`…_of_bound` theorems. -/
+theorem classicalCoreFactorsWithBound_factor_irreducible_of_bound
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    {cf : Array Hex.ZPoly}
+    (hclassical : Hex.classicalCoreFactorsWithBound core B primeData = some cf)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hB_ne : B ≠ 0)
+    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core <
+      primeData.p ^
+        Hex.precisionForCoeffBound (Hex.ZPoly.exhaustiveLiftBound core B) primeData.p) :
+    ∀ g ∈ cf.toList, Irreducible (HexPolyZMathlib.toPolynomial g) :=
+  classicalCoreFactorsWithBound_factor_irreducible_of_validBound core B primeData
+    hclassical hselected hcore_ne hcore_primitive hcore_lc_pos hcore_sqfree hcore_pos
+    hB_ne (Hex.ZPoly.defaultFactorCoeffBound core)
+    (defaultFactorCoeffBound_leadingCoeff_natAbs_le hcore_ne)
+    (defaultFactorCoeffBound_valid core hcore_ne) hprecision
 
 /-- **#8413 (classical-tier irreducibility, natural-bound form).**  The precision
 side condition of `classicalCoreFactorsWithBound_factor_irreducible_of_bound` is
@@ -7052,5 +7091,69 @@ theorem classicalCoreFactorsWithBound_factor_irreducible
   exact classicalCoreFactorsWithBound_factor_irreducible_of_bound core B primeData
     hclassical hselected hcore_ne hcore_primitive hcore_lc_pos hcore_sqfree hcore_pos
     hB_ne hprecision
+
+/-- **#8510 (classical residual-arm specialization).**  Every factor the
+size-ordered classical recombination search returns for the square-free core of
+`normalizeForFactor f` at the hybrid search bound `B = defaultFactorCoeffBound f`
+is irreducible in the executable `Hex.ZPoly` sense.
+
+This is the classical analogue of the exhaustive-tier default-bound block: the
+search runs at `defaultFactorCoeffBound f`, but the *coefficient* bound is set to
+`B' = defaultFactorCoeffBound f` (not `defaultFactorCoeffBound core`, for which no
+monotonicity lemma exists).  Validity is sound because
+`core = (normalizeForFactor f).squareFreeCore ∣ f`, so every divisor of `core` is
+a divisor of `f`, bounded by `defaultFactorCoeffBound f` via Mignotte
+(`defaultFactorCoeffBound_valid f ∘ zpoly_dvd_trans ∘ squareFreeCore_dvd_self`),
+and the lift modulus exceeds `2 * defaultFactorCoeffBound f`
+(`exhaustiveLiftBound_precision`).  The `Polynomial ℤ` irreducibility from
+`classicalCoreFactorsWithBound_factor_irreducible_of_validBound` is transported
+back to `Hex.ZPoly.Irreducible` per factor.  Consumed (with the
+completeness-structural lemmas of #8511) by the classical residual arm of #8414. -/
+theorem classicalCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
+      = some primeData)
+    (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    {cf : Array Hex.ZPoly}
+    (hclassical : Hex.classicalCoreFactorsWithBound
+      (Hex.normalizeForFactor f).squareFreeCore
+      (Hex.ZPoly.defaultFactorCoeffBound f) primeData = some cf) :
+    ∀ g ∈ cf.toList, Hex.ZPoly.Irreducible g := by
+  set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
+  have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
+    Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+  have hcore_ne : core ≠ 0 := zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  have hcore_primitive : Hex.ZPoly.Primitive core :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
+  have hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core) :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf_ne
+  have hcore_pos : 0 < core.degree?.getD 0 := Nat.pos_of_ne_zero hdeg_ne
+  have hp2 : 2 ≤ primeData.p :=
+    (Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected).two_le
+  have hcore_dvd_f : core ∣ f := Hex.squareFreeCore_dvd_self f hf_ne
+  have hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤
+      Hex.ZPoly.defaultFactorCoeffBound f := by
+    have hsize_pos : 0 < core.size := Hex.ZPoly.size_pos_of_ne_zero core hcore_ne
+    rw [Hex.DensePoly.leadingCoeff_eq_coeff_last _ hsize_pos]
+    exact defaultFactorCoeffBound_valid f hf_ne core hcore_dvd_f (core.size - 1)
+  have hvalid : ∀ g : Hex.ZPoly, g ∣ core → ∀ i,
+      (g.coeff i).natAbs ≤ Hex.ZPoly.defaultFactorCoeffBound f := by
+    intro g hg i
+    exact defaultFactorCoeffBound_valid f hf_ne g (zpoly_dvd_trans hg hcore_dvd_f) i
+  have hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound f <
+      primeData.p ^
+        Hex.precisionForCoeffBound
+          (Hex.ZPoly.exhaustiveLiftBound core (Hex.ZPoly.defaultFactorCoeffBound f))
+          primeData.p :=
+    IntReductionMod.exhaustiveLiftBound_precision core
+      (Hex.ZPoly.defaultFactorCoeffBound f) primeData.p hp2
+  have hB_ne : Hex.ZPoly.defaultFactorCoeffBound f ≠ 0 :=
+    (Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hf_ne).ne'
+  have hirr := classicalCoreFactorsWithBound_factor_irreducible_of_validBound core
+    (Hex.ZPoly.defaultFactorCoeffBound f) primeData hclassical hselected hcore_ne
+    hcore_primitive hcore_lc_pos hcore_sqfree hcore_pos hB_ne
+    (Hex.ZPoly.defaultFactorCoeffBound f) hcore_lc_le hvalid hprecision
+  intro g hg
+  exact (Hex.ZPoly.Irreducible_iff_polynomialIrreducible g).mpr (hirr g hg)
 
 end HexBerlekampZassenhausMathlib
