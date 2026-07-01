@@ -18165,6 +18165,35 @@ private theorem smartCandLoop_none_budget_zero
       · -- fuel = 0: `budget + smartLoopFuelBound J.card ≤ 0` forces `budget = 0`
         simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
       · rename_i fuel'
+        -- Shared facts: `f_cov = cand(S_cov)` is recorded and divides `target`.
+        have hrec_eq : liftedRecoveryCandidate core d S_cov = f_cov :=
+          hpartition.liftedRecoveryCandidate_eq hf_cov_irr hf_cov_dvd_target hS_cov_J
+            hS_cov_rep
+        have hcand_scov_eq :
+            Hex.normalizeFactorSign (Hex.ZPoly.primitivePart (Hex.ZPoly.dilate
+              (Hex.DensePoly.leadingCoeff core) (Hex.centeredLiftPoly
+                (Array.polyProduct (liftedSubsetSelectedList d S_cov).toArray)
+                (d.p ^ d.k)))) = liftedRecoveryCandidate core d S_cov := by
+          unfold liftedRecoveryCandidate
+          rw [polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct]
+        obtain ⟨hf_cov_primitive, hf_cov_lc_pos⟩ :=
+          representsIntegerFactorAtLift_primitive_of_bound B' hcore_lc_le hcore_ne
+            hcore_primitive hcore_lc_pos hd_liftedFactor_monic hpartition hf_cov_irr
+            hf_cov_dvd_target htarget_dvd_core hS_cov_J hS_cov_rep hprecision
+        have hf_cov_natDeg_pos :
+            0 < (HexPolyZMathlib.toPolynomial f_cov).natDegree := by
+          rw [← hrec_eq, natDegree_toPolynomial_liftedRecoveryCandidate_eq_sum_of_bound
+            B' hcore_lc_pos hcore_lc_le hd_liftedFactor_monic hprecision S_cov]
+          exact Finset.sum_pos (fun i _ => hd_liftedFactor_natDegree_pos i)
+            ⟨J.min' hJ_ne, hmin_in_S_cov⟩
+        have hf_cov_degree_pos : 0 < f_cov.degree?.getD 0 := by
+          rw [← HexPolyMathlib.natDegree_toPolynomial]; exact hf_cov_natDeg_pos
+        obtain ⟨quotient_scov, hquot_scov, hmul_scov⟩ :=
+          exactQuotient?_liftedRecoveryCandidate_eq_some_of_eq_factor_of_primitive_pos_lc
+            hrec_eq hf_cov_lc_pos hf_cov_degree_pos hf_cov_dvd_target
+        have hrecord_scov : Hex.shouldRecordPolynomialFactor
+            (liftedRecoveryCandidate core d S_cov) = true :=
+          shouldRecord_liftedRecoveryCandidate_of_eq_factor hrec_eq hf_cov_irr
         simp only [] at h
         split at h
         · -- candidate is recorded
@@ -18178,9 +18207,14 @@ private theorem smartCandLoop_none_budget_zero
               rename_i ab haux
               sorry
           · -- exactQuotient? = none: candidate doesn't divide, so `split ≠ scovSplit`
+            rename_i hquot_none
             rcases List.mem_cons.mp hscov_mem with hsplit_eq | hscov_rest
-            · -- split = scovSplit would make the candidate `f_cov`, which divides
-              sorry
+            · -- split = scovSplit: candidate is `f_cov`, which divides — contradiction
+              exfalso
+              have hsplit1 : split.1 = liftedSubsetSelectedList d S_cov := by
+                rw [← hsplit_eq]
+              rw [hsplit1, hcand_scov_eq, hquot_scov] at hquot_none
+              exact absurd hquot_none (Option.some_ne_none _)
             · exact smartCandLoop_none_budget_zero B' hcore_lc_le hvalid hcore_ne
                 hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
                 hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
@@ -18189,8 +18223,14 @@ private theorem smartCandLoop_none_budget_zero
                 (fun s hs => hsplits_enum s (List.mem_cons_of_mem _ hs)) hscov_rest
                 (by omega) h
         · -- candidate not recorded: so `split ≠ scovSplit` (`f_cov` is recorded)
+          rename_i hrecord_false
           rcases List.mem_cons.mp hscov_mem with hsplit_eq | hscov_rest
-          · sorry
+          · -- split = scovSplit: candidate is `f_cov`, which is recorded — contradiction
+            exfalso
+            have hsplit1 : split.1 = liftedSubsetSelectedList d S_cov := by
+              rw [← hsplit_eq]
+            rw [hsplit1, hcand_scov_eq] at hrecord_false
+            simp [hrecord_scov] at hrecord_false
           · exact smartCandLoop_none_budget_zero B' hcore_lc_le hvalid hcore_ne
               hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
               hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
