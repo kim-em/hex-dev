@@ -44,9 +44,11 @@ the checker accepts is returned, and the checker's soundness theorem
 guarantee. When no external candidate certifies, the exact all-integer
 reducer `lllNative` runs directly, and its guarantee is proved outright.
 
-`HexLLL` is Mathlib-free and depends only on
-{ref "hex-lll-cross-references"}[`HexGramSchmidt`] for the Gram-Schmidt
-machinery underlying both the predicates and the checkers.
+`HexLLL` is Mathlib-free. It takes the Gram-Schmidt machinery underlying
+both the predicates and the checkers from
+{ref "hex-lll-cross-references"}[`HexGramSchmidt`], which computes the
+leading integer Gram determinants by fraction-free (Bareiss) elimination and
+so rests in turn on `HexBareiss`, `HexDeterminant`, and `HexRowReduce`.
 
 # Lattices and reducedness
 %%%
@@ -258,15 +260,16 @@ end HexLLLChapterExample
 tag := "hex-lll-cross-references"
 %%%
 
-`HexLLL` depends only on `HexGramSchmidt`, with its correctness proofs in
-`HexLLLMathlib`:
+`HexLLL`'s substantive dependency is `HexGramSchmidt`, with its correctness
+proofs in `HexLLLMathlib`:
 
 * `HexGramSchmidt` supplies the integer Gram-Schmidt representation
   ({name}`Hex.GramSchmidt.Int.independent`, the scaled coefficients, and
   the leading Gram determinants) on which both the
   {ref "hex-lll-predicates"}[reducedness predicates] and the
-  {ref "hex-lll-checkers"}[integer checkers] are defined. It is `HexLLL`'s
-  only direct dependency.
+  {ref "hex-lll-checkers"}[integer checkers] are defined. Through it,
+  `HexLLL` rests transitively on the fraction-free integer determinant stack
+  (`HexBareiss`, `HexDeterminant`, `HexRowReduce`).
 * `HexLLLMathlib` carries the soundness theorems. `lllReducedInt_sound`
   and `lllReducedCheck_sound` relate the integer checkers to
   {name}`Hex.isLLLReduced`, and `certCheck_sound` combines those with
