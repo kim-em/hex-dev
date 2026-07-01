@@ -17942,6 +17942,28 @@ wrapper's `fuel = budget + (r+1)(2r+3)` (`Hex.scaledRecombinationSmart`) meets i
 at the top.  See `progress/20260701T002411Z_issue-8413-smart-coverage.md`.
 -/
 
+/-- Fuel budget for the size-ordered search at `n` remaining lifted factors.
+The wrapper `Hex.scaledRecombinationSmart` passes `budget + smartFuelBound r`
+(its `(r+1)(2r+3)` term). Quadratic because the size loop's per-level overhead
+sums to `O(r²)` over the peel recursion. -/
+private def smartFuelBound (n : Nat) : Nat := (n + 1) * (2 * n + 3)
+
+/-- Fuel budget for the size/candidate loops at `n` remaining lifted factors;
+one `smartFuelBound` step smaller so the `Aux → SizeLoop → CandLoop → Aux` cycle
+stays adequate. -/
+private def smartLoopFuelBound (n : Nat) : Nat := n * (2 * n + 1)
+
+private theorem smartFuelBound_pos (n : Nat) : 0 < smartFuelBound n := by
+  unfold smartFuelBound; positivity
+
+private theorem smartLoopFuelBound_add_succ_le (n : Nat) :
+    smartLoopFuelBound n + n + 1 ≤ smartFuelBound n := by
+  unfold smartLoopFuelBound smartFuelBound; nlinarith [n.zero_le]
+
+private theorem smartFuelBound_le_smartLoopFuelBound {m n : Nat} (h : m + 1 ≤ n) :
+    smartFuelBound m ≤ smartLoopFuelBound n := by
+  unfold smartFuelBound smartLoopFuelBound; nlinarith [h, m.zero_le, n.zero_le]
+
 mutual
 
 /-- Trustworthy-none completeness for the size-ordered search: with adequate
@@ -17972,7 +17994,7 @@ private theorem smartAux_none_budget_zero
     (htarget_dvd_core : target ∣ core)
     (hpartition : LiftedFactorSubsetPartition core d J target)
     (hmatches : LiftedFactorListMatches d J localFactors)
-    (hfuel : budget + 3 * J.card + 1 ≤ fuel)
+    (hfuel : budget + smartFuelBound J.card ≤ fuel)
     (h : Hex.scaledRecombinationSmartAux (Hex.DensePoly.leadingCoeff core)
         target (d.p ^ d.k) localFactors budget fuel = (none, b)) :
     b = 0 := by
@@ -17985,8 +18007,8 @@ private theorem smartAux_none_budget_zero
     · -- budget = 0: returns (none, 0)
       simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
     · split at h
-      · -- fuel = 0: excluded by fuel adequacy `budget + 3*J.card + 1 ≤ fuel`
-        exfalso; omega
+      · -- fuel = 0: excluded by positive fuel adequacy
+        exfalso; have := smartFuelBound_pos J.card; omega
       · split at h
         · -- localFactors = []: forces `J` empty, hence `target = 1`, contradiction
           exfalso
@@ -18041,7 +18063,9 @@ private theorem smartAux_none_budget_zero
           · -- hcontains : (S_cov.card - 1) ∈ List.range (tail.length + 1)
             rw [List.mem_range]; omega
           · -- fuel adequacy for the size loop
-            simp only [List.length_range]; omega
+            simp only [List.length_range]
+            have hb := smartLoopFuelBound_add_succ_le J.card
+            omega
 termination_by fuel
 
 /-- Size-loop half of trustworthy-none completeness: with `S_cov`'s size still in
@@ -18078,7 +18102,7 @@ private theorem smartSizeLoop_none_budget_zero
     (hmin_in_S_cov : J.min' hJ_ne ∈ S_cov)
     (hS_cov_rep : RepresentsIntegerFactorAtLift core d f_cov S_cov)
     (hcontains : (S_cov.card - 1) ∈ sizes)
-    (hfuel : budget + 2 * J.card + sizes.length ≤ fuel)
+    (hfuel : budget + smartLoopFuelBound J.card + sizes.length ≤ fuel)
     (h : Hex.scaledRecombinationSmartSizeLoop (Hex.DensePoly.leadingCoeff core)
         target (d.p ^ d.k) head tail sizes budget fuel = (none, b)) :
     b = 0 := by
@@ -18124,7 +18148,7 @@ private theorem smartCandLoop_none_budget_zero
         (fun sc => (head :: sc.1, sc.2)))
     (hscov_mem : (liftedSubsetSelectedList d S_cov,
         liftedSubsetSelectedList d (J \ S_cov)) ∈ splits)
-    (hfuel : budget + 2 * J.card ≤ fuel)
+    (hfuel : budget + smartLoopFuelBound J.card ≤ fuel)
     (h : Hex.scaledRecombinationSmartCandLoop (Hex.DensePoly.leadingCoeff core)
         target (d.p ^ d.k) splits budget fuel = (none, b)) :
     b = 0 := by
@@ -18164,7 +18188,7 @@ private theorem smartAux_covers_of_bound
       target ∣ core →
       LiftedFactorSubsetPartition core d J target →
       LiftedFactorListMatches d J localFactors →
-      budget + 3 * J.card + 1 ≤ fuel →
+      budget + smartFuelBound J.card ≤ fuel →
       Hex.scaledRecombinationSmartAux (Hex.DensePoly.leadingCoeff core)
           target (d.p ^ d.k) localFactors budget fuel = (some result, b) →
       ∀ factor : Hex.ZPoly,
