@@ -17980,7 +17980,8 @@ private theorem smartAux_none_budget_zero
   split at h
   · -- target = 1: returns (some [], budget), contradicting (none, b)
     simp at h
-  · split at h
+  · rename_i htarget_ne_one
+    split at h
     · -- budget = 0: returns (none, 0)
       simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
     · split at h
@@ -17988,7 +17989,37 @@ private theorem smartAux_none_budget_zero
         exfalso; omega
       · split at h
         · -- localFactors = []: forces `J` empty, hence `target = 1`, contradiction
-          sorry
+          exfalso
+          -- `J` is empty from the matched list length.
+          have hJcard : J.card = 0 := by
+            have := LiftedFactorListMatches.length_eq_card hmatches
+            simpa using this.symm
+          have hJ_empty : J = ∅ := Finset.card_eq_zero.mp hJcard
+          -- but `target ≠ 1` forces an irreducible divisor with a representing
+          -- subset `S ⊆ J = ∅`, contradicting `not_represents_empty`.
+          have htarget_poly_ne : HexPolyZMathlib.toPolynomial target ≠ 0 := by
+            intro hzero
+            apply zpoly_ne_zero_of_pos_lc htarget_lc_pos
+            apply HexPolyZMathlib.equiv.injective
+            show HexPolyZMathlib.toPolynomial target = HexPolyZMathlib.toPolynomial 0
+            rw [HexPolyZMathlib.toPolynomial_zero]
+            exact hzero
+          have htarget_poly_nonunit :
+              ¬ IsUnit (HexPolyZMathlib.toPolynomial target) := fun hunit =>
+            htarget_ne_one
+              (zpoly_eq_one_of_toPolynomial_isUnit_of_pos_lc htarget_lc_pos hunit)
+          obtain ⟨g, hg_irr_toPoly, hg_dvd_target, hg_norm_sign⟩ :=
+            exists_signNormalized_irreducible_factor htarget_poly_nonunit
+              htarget_poly_ne
+          obtain ⟨S, hSJ, hSrep⟩ :=
+            hpartition.exists_subset hg_norm_sign hg_irr_toPoly hg_dvd_target
+          have hS_empty : S = ∅ := by
+            rw [hJ_empty] at hSJ; exact Finset.subset_empty.mp hSJ
+          have hg_dvd_core : g ∣ core := zpoly_dvd_trans hg_dvd_target htarget_dvd_core
+          apply not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core_of_bound
+            B' (hvalid g hg_dvd_core) hcore_ne hcore_primitive hcore_lc_pos
+            hcore_lc_le hd_modulus hpartition hg_dvd_target hg_irr_toPoly hprecision
+          rw [← hS_empty]; exact hSrep
         · -- head :: tail: delegate to the size-loop completeness (mutual)
           sorry
 
