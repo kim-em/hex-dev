@@ -18988,6 +18988,76 @@ theorem RecoveredSmartSearch.trustworthyNone
     hprecision htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
     hfuel h
 
+/-- Coverage + squarefreeness ⇒ each emitted factor is irreducible.  When the
+recorded `result` multiplies back to a square-free `core` and every irreducible
+factor of `core` is an associate of some emitted factor, the emitted list has
+exactly `normalizedFactors.card` entries (coverage gives `≥`, the product gives
+`≤`), so each entry is irreducible by the UFD partition lemma. -/
+theorem smartCore_factor_irreducible_of_covers_of_squarefree
+    {core : Hex.ZPoly} {result : List Hex.ZPoly}
+    (hcore_ne : core ≠ 0)
+    (hsqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
+    (hprod : Array.polyProduct result.toArray = core)
+    (hrecord : ∀ g ∈ result, Hex.shouldRecordPolynomialFactor g = true)
+    (hcover : ∀ factor : Hex.ZPoly,
+      Irreducible (HexPolyZMathlib.toPolynomial factor) → factor ∣ core →
+      ∃ emitted ∈ result, Associated (HexPolyZMathlib.toPolynomial emitted)
+        (HexPolyZMathlib.toPolynomial factor)) :
+    ∀ g ∈ result, Irreducible (HexPolyZMathlib.toPolynomial g) := by
+  set f := HexPolyZMathlib.toPolynomial core with hf_def
+  have hf_ne : f ≠ 0 := by
+    intro hzero; apply hcore_ne; apply HexPolyZMathlib.equiv.injective
+    simpa [hf_def] using hzero
+  set gs : List (Polynomial ℤ) := result.map HexPolyZMathlib.toPolynomial with hgs_def
+  have hprod' : Associated gs.prod f := by
+    have hp_poly : (result.map HexPolyZMathlib.toPolynomial).prod =
+        HexPolyZMathlib.toPolynomial core := by
+      rw [← polyProduct_toPolynomial, hprod]
+    rw [hgs_def, hp_poly, hf_def]
+  have hne_all : ∀ g ∈ gs, g ≠ 0 := by
+    intro g hg; rw [hgs_def, List.mem_map] at hg
+    obtain ⟨factor, hfactor_mem, hg_eq⟩ := hg; rw [← hg_eq]
+    exact (toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
+      (hrecord factor hfactor_mem)).1
+  have hnonunit_all : ∀ g ∈ gs, ¬ IsUnit g := by
+    intro g hg; rw [hgs_def, List.mem_map] at hg
+    obtain ⟨factor, hfactor_mem, hg_eq⟩ := hg; rw [← hg_eq]
+    exact (toPolynomial_ne_zero_and_not_isUnit_of_shouldRecord
+      (hrecord factor hfactor_mem)).2
+  have hcover_gs : ∀ q ∈ UniqueFactorizationMonoid.normalizedFactors f,
+      ∃ g ∈ gs, Associated g q := by
+    intro q hq
+    have hq_irr : Irreducible q :=
+      UniqueFactorizationMonoid.irreducible_of_normalized_factor q hq
+    have hq_dvd : q ∣ f := UniqueFactorizationMonoid.dvd_of_mem_normalizedFactors hq
+    have htoPoly : HexPolyZMathlib.toPolynomial (HexPolyZMathlib.ofPolynomial q) = q :=
+      HexPolyZMathlib.toPolynomial_ofPolynomial q
+    have hfactor_irr :
+        Irreducible (HexPolyZMathlib.toPolynomial (HexPolyZMathlib.ofPolynomial q)) := by
+      rw [htoPoly]; exact hq_irr
+    have hfactor_dvd : HexPolyZMathlib.ofPolynomial q ∣ core := by
+      rcases hq_dvd with ⟨r, hr⟩
+      refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
+      apply HexPolyZMathlib.equiv.injective
+      simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
+        HexPolyZMathlib.toPolynomial_ofPolynomial]
+      exact hr
+    obtain ⟨emitted, hemitted_mem, hemitted_assoc⟩ := hcover _ hfactor_irr hfactor_dvd
+    refine ⟨HexPolyZMathlib.toPolynomial emitted, ?_, ?_⟩
+    · rw [hgs_def, List.mem_map]; exact ⟨emitted, hemitted_mem, rfl⟩
+    · rw [htoPoly] at hemitted_assoc; exact hemitted_assoc
+  have hcard_le : gs.length ≤ (UniqueFactorizationMonoid.normalizedFactors f).card :=
+    UFDPartition.length_le_normalizedFactors_card hf_ne gs hne_all hnonunit_all hprod'
+  have hcard_ge : (UniqueFactorizationMonoid.normalizedFactors f).card ≤ gs.length :=
+    UFDPartition.normalizedFactors_card_le_length_of_coverage hf_ne hsqfree gs hcover_gs
+  have hcount : gs.length = (UniqueFactorizationMonoid.normalizedFactors f).card :=
+    le_antisymm hcard_le hcard_ge
+  intro g hg_mem
+  have hpoly_mem : HexPolyZMathlib.toPolynomial g ∈ gs := by
+    rw [hgs_def, List.mem_map]; exact ⟨g, hg_mem, rfl⟩
+  exact UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card hf_ne gs
+    hne_all hnonunit_all hprod' hcount _ hpoly_mem
+
 /--
 Abstract-bound variant of
 `recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPartition`:
