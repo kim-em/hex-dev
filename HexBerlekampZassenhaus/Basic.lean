@@ -8094,6 +8094,98 @@ theorem scaledRecombinationSmartSizeLoop_budget_zero
   | nil => rfl
   | cons d ds => rfl
 
+mutual
+/-- Every factor emitted by the size-ordered recombination search is a recorded
+polynomial factor: it is added only at the `shouldRecordPolynomialFactor` gate.
+Shared conclusion across the three loops, proved by structural recursion on
+`fuel`. Used by the classical-tier irreducibility wiring (the recorded factors
+are non-unit non-zero). -/
+theorem scaledRecombinationSmartAux_shouldRecord
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
+    (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
+    (h : scaledRecombinationSmartAux coreLc target modulus localFactors budget fuel
+        = (some factors, b)) :
+    ∀ g ∈ factors, shouldRecordPolynomialFactor g = true := by
+  unfold scaledRecombinationSmartAux at h
+  split at h
+  · simp only [Prod.mk.injEq, Option.some.injEq] at h
+    obtain ⟨hf, _⟩ := h; subst hf; intro g hg; simp at hg
+  · split at h
+    · simp at h
+    · split at h
+      · simp at h
+      · split at h
+        · simp at h
+        · exact scaledRecombinationSmartSizeLoop_shouldRecord _ _ _ _ _ _ _ _ _ _ h
+termination_by fuel
+
+theorem scaledRecombinationSmartSizeLoop_shouldRecord
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (head : ZPoly) (tail : List ZPoly)
+    (sizes : List Nat) (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
+    (h : scaledRecombinationSmartSizeLoop coreLc target modulus head tail sizes budget fuel
+        = (some factors, b)) :
+    ∀ g ∈ factors, shouldRecordPolynomialFactor g = true := by
+  unfold scaledRecombinationSmartSizeLoop at h
+  split at h
+  · simp at h
+  · split at h
+    · simp at h
+    · split at h
+      · simp at h
+      · simp only [] at h
+        split at h
+        · rename_i res bres hcand
+          simp only [Prod.mk.injEq, Option.some.injEq] at h
+          obtain ⟨hres, _⟩ := h; subst hres
+          exact scaledRecombinationSmartCandLoop_shouldRecord _ _ _ _ _ _ _ _ hcand
+        · exact scaledRecombinationSmartSizeLoop_shouldRecord _ _ _ _ _ _ _ _ _ _ h
+termination_by fuel
+
+theorem scaledRecombinationSmartCandLoop_shouldRecord
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (splits : List (List ZPoly × List ZPoly)) (budget fuel : Nat) (factors : List ZPoly) (b : Nat)
+    (h : scaledRecombinationSmartCandLoop coreLc target modulus splits budget fuel
+        = (some factors, b)) :
+    ∀ g ∈ factors, shouldRecordPolynomialFactor g = true := by
+  unfold scaledRecombinationSmartCandLoop at h
+  split at h
+  · simp at h
+  · rename_i split rest
+    split at h
+    · simp at h
+    · split at h
+      · simp at h
+      · rename_i fuel'
+        simp only [] at h
+        split at h
+        · rename_i hrecord
+          cases hquot : exactQuotient? target
+              (normalizeFactorSign (ZPoly.primitivePart
+                (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
+          | none =>
+              simp only [hquot] at h
+              exact scaledRecombinationSmartCandLoop_shouldRecord _ _ _ _ _ _ _ _ h
+          | some quotient =>
+              simp only [hquot] at h
+              cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
+                  (budget - 1) fuel' with
+              | mk ores ob =>
+                  cases ores with
+                  | none =>
+                      simp only [haux] at h
+                      exact scaledRecombinationSmartCandLoop_shouldRecord _ _ _ _ _ _ _ _ h
+                  | some sub =>
+                      simp only [haux] at h
+                      simp only [Prod.mk.injEq, Option.some.injEq] at h
+                      obtain ⟨hfac, _⟩ := h; subst hfac
+                      intro g hg
+                      rcases List.mem_cons.mp hg with hg_eq | hg_sub
+                      · subst hg_eq; exact hrecord
+                      · exact scaledRecombinationSmartAux_shouldRecord _ _ _ _ _ _ _ _ haux g hg_sub
+        · exact scaledRecombinationSmartCandLoop_shouldRecord _ _ _ _ _ _ _ _ h
+termination_by fuel
+end
+
 /-- Exhaustive recombination of the lifted local factors stored in `d`,
 using the *scaled* candidate shape parameterised by the integer leading
 coefficient `coreLc`.  Returns the recovered integer factors as an array
