@@ -10118,6 +10118,36 @@ theorem factorHybrid_eq_factorizationOfFactors (f : ZPoly) :
       | none =>
           simp only [Option.map_none]; exact htrial
 
+/-- Every raw factor of the cost-based hybrid comes from one of its three
+dispatch branches: the classical tier's certified output, the CLD lattice
+tier's certified output, or the `factorSlowTrial` totality backstop. This is
+the hybrid analogue of `factorWithBound_entry_mem_raw_source`; it exposes the
+branch source without leaking the private `factorizationOfFactors` guard, so
+the Mathlib-side irreducibility assembly can case-split over the branches. -/
+theorem factorHybridFactors_mem_source (f : ZPoly) {raw : ZPoly}
+    (hmem : raw ∈ (factorHybridFactors f).toList) :
+    (∃ cf, factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
+        some cf ∧ raw ∈ cf.toList) ∨
+      (∃ cf, factorLatticeFactorsWithBound f (factorFastPrecisionCap f) =
+        some cf ∧ raw ∈ cf.toList) ∨
+      raw ∈ (factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)).toList := by
+  unfold factorHybridFactors at hmem
+  rcases Option.eq_none_or_eq_some
+      (factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)) with hcf | ⟨cf, hcf⟩
+  · simp only [hcf] at hmem
+    rcases Option.eq_none_or_eq_some
+        (factorLatticeFactorsWithBound f (factorFastPrecisionCap f)) with hl | ⟨cf, hl⟩
+    · simp only [hl] at hmem
+      exact Or.inr (Or.inr hmem)
+    · simp only [hl] at hmem
+      rcases Classical.em (Factorization.product (factorizationOfFactors f cf) = f) with hp | hp
+      · rw [if_pos hp] at hmem; exact Or.inr (Or.inl ⟨cf, hl, hmem⟩)
+      · rw [if_neg hp] at hmem; exact Or.inr (Or.inr hmem)
+  · simp only [hcf] at hmem
+    rcases Classical.em (Factorization.product (factorizationOfFactors f cf) = f) with hp | hp
+    · rw [if_pos hp] at hmem; exact Or.inl ⟨cf, hcf, hmem⟩
+    · rw [if_neg hp] at hmem; exact Or.inr (Or.inr hmem)
+
 /-- Smoke-test driver for the core-coordinate fast recovery: select the good
 prime exactly as the fast path does, then run `coreRecover?` against the
 `coreLiftData` (`monicTarget`) lift at the public precision cap.  Used by the
@@ -10581,6 +10611,14 @@ theorem factor_scalar (f : ZPoly) :
     (factor 0).scalar = 0 := by
   rw [factor_eq_factorizationOfFactors]
   exact factorizationOfFactors_scalar_zero (factorHybridFactors 0)
+
+/-- The default factorization of `0` records no polynomial factors: the
+square-free core of `0` is the unit `1`, so every reassembled raw factor is
+dropped by the `shouldRecordPolynomialFactor` filter.  This lets the capstone
+`factor_irreducible_of_nonUnit` discharge the degenerate `f = 0` case
+vacuously, without a nonzero hypothesis. -/
+theorem factor_zero_factors : (factor (0 : ZPoly)).factors = #[] := by
+  decide
 
 theorem factor_scalar_of_leadingCoeff_neg
     {f : ZPoly} (hf : f ≠ 0) (hneg : DensePoly.leadingCoeff f < 0) :

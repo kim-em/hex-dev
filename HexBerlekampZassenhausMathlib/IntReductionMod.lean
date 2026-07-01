@@ -7302,4 +7302,175 @@ theorem reassemblyExpansionComplete_classicalCore_of_ne_zero
     Hex.ZPoly.size_le_of_dvd_nonzero hfp_ne_zero hrp_ne_zero hfp_dvd_rp
   omega
 
+/-- **Trial-branch raw-factor irreducibility (hybrid guard form).**
+
+Restatement of `factorSlowTrialFactorsWithBound_factor_irreducible_of_fast_none`
+for the cost-based hybrid, where the trial arm fires as the totality backstop
+rather than off `factorFast … = none`.  Because the deg-0 (constant-core)
+short-circuit is now reachable, the raw output can contain the unit `1`, so the
+statement carries the `shouldRecordPolynomialFactor` guard that excludes it.  The
+two positive-degree arms reuse the quadratic and exhaustive integer-trial
+completeness/irreducibility content. -/
+theorem factorSlowTrialFactorsWithBound_factor_irreducible
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    {raw : Hex.ZPoly}
+    (hmem : raw ∈ (Hex.factorSlowTrialFactorsWithBound f
+      (Hex.ZPoly.defaultFactorCoeffBound f)).toList)
+    (hrec : Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
+    Hex.ZPoly.Irreducible raw := by
+  have hcore_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
+  have hcore_prim :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
+  simp only [Hex.factorSlowTrialFactorsWithBound] at hmem
+  by_cases hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  · rw [if_pos hdeg] at hmem
+    have hcomplete := Hex.reassemblyExpansionComplete_constant_of_ne_zero f hf hdeg
+    rcases Hex.reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
+        _ _ raw hcomplete hmem with hx | hcore
+    · exact Hex.xPowerFactorArray_irreducible _ raw hx
+    · exfalso
+      have hraw_one : raw = 1 := by
+        have hraw_core : raw = (Hex.normalizeForFactor f).squareFreeCore := by
+          simpa using hcore
+        rw [hraw_core, Hex.squareFreeCore_eq_one_of_constant_of_ne_zero f hf hdeg]
+      rw [hraw_one, Hex.normalizeFactorSign_one, Hex.shouldRecordPolynomialFactor_one] at hrec
+      exact absurd hrec (by decide)
+  · rw [if_neg hdeg] at hmem
+    cases hquad :
+        Hex.quadraticIntegerRootFactors? (Hex.normalizeForFactor f).squareFreeCore with
+    | some coreFactors =>
+        simp only [hquad] at hmem
+        refine Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+          _ _ ?_ ?_ hmem
+        · exact IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
+            f hf hquad
+        · intro factor hfmem
+          exact Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive
+            hcore_pos hcore_prim hquad hfmem
+    | none =>
+        simp only [hquad] at hmem
+        refine Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+          _ _ ?_ ?_ hmem
+        · exact reassemblyExpansionComplete_exhaustiveIntegerTrial_of_ne_zero f hf
+        · exact
+            exhaustiveIntegerTrialCoreFactorsWithBound_normalizeForFactor_factor_irreducible_at_default
+              f hf
+
+/-- **Classical-branch raw-factor irreducibility.**
+
+Every raw factor of the classical tier's output `factorClassicalFactorsWithBound
+f (defaultFactorCoeffBound f)` that passes the recorded-factor filter is
+irreducible.  Case-split over the branch: deg-0 constant short-circuit, quadratic
+integer-root short-circuit, and the size-ordered recombination residual.
+
+The residual arm composes the bound-parameterized classical core irreducibility
+`classicalCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible` (#8510) with
+the reassembly-completeness discharger
+`reassemblyExpansionComplete_classicalCore_of_ne_zero` (#8511) through the lift
+`reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible`.
+The bound is handled at `defaultFactorCoeffBound f` directly (validity from
+`core ∣ f`, precision from `exhaustiveLiftBound_precision`), so no
+`defaultFactorCoeffBound core ≤ defaultFactorCoeffBound f` monotonicity is needed. -/
+theorem factorClassicalFactorsWithBound_factor_irreducible
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    {cf : Array Hex.ZPoly}
+    (hcf : Hex.factorClassicalFactorsWithBound f
+      (Hex.ZPoly.defaultFactorCoeffBound f) = some cf)
+    {raw : Hex.ZPoly}
+    (hmem : raw ∈ cf.toList)
+    (hrec : Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
+    Hex.ZPoly.Irreducible raw := by
+  have hcore_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
+  have hcore_prim :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
+  simp only [Hex.factorClassicalFactorsWithBound] at hcf
+  by_cases hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  · rw [if_pos hdeg] at hcf
+    obtain rfl := Option.some.inj hcf
+    have hcomplete := Hex.reassemblyExpansionComplete_constant_of_ne_zero f hf hdeg
+    rcases Hex.reassemblePolynomialFactors_mem_xPower_or_core_of_expansionComplete
+        _ _ raw hcomplete hmem with hx | hcore
+    · exact Hex.xPowerFactorArray_irreducible _ raw hx
+    · exfalso
+      have hraw_one : raw = 1 := by
+        have hraw_core : raw = (Hex.normalizeForFactor f).squareFreeCore := by
+          simpa using hcore
+        rw [hraw_core, Hex.squareFreeCore_eq_one_of_constant_of_ne_zero f hf hdeg]
+      rw [hraw_one, Hex.normalizeFactorSign_one, Hex.shouldRecordPolynomialFactor_one] at hrec
+      exact absurd hrec (by decide)
+  · rw [if_neg hdeg] at hcf
+    cases hquad :
+        Hex.quadraticIntegerRootFactors? (Hex.normalizeForFactor f).squareFreeCore with
+    | some coreFactors =>
+        simp only [hquad] at hcf
+        obtain rfl := Option.some.inj hcf
+        refine Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+          _ _ ?_ ?_ hmem
+        · exact IntReductionMod.reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
+            f hf hquad
+        · intro factor hfmem
+          exact Hex.quadraticIntegerRootFactors?_factor_irreducible_of_primitive
+            hcore_pos hcore_prim hquad hfmem
+    | none =>
+        simp only [hquad] at hcf
+        cases hsel :
+            Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore with
+        | none => simp [hsel] at hcf
+        | some primeData =>
+            simp only [hsel, Option.bind_some] at hcf
+            cases hcore :
+                Hex.classicalCoreFactorsWithBound (Hex.normalizeForFactor f).squareFreeCore
+                  (Hex.ZPoly.defaultFactorCoeffBound f) primeData with
+            | none => simp [hcore] at hcf
+            | some coreFactors =>
+                simp only [hcore, Option.map_some] at hcf
+                obtain rfl := Option.some.inj hcf
+                -- Residual arm: the size-ordered classical recombination core.
+                -- Per-factor irreducibility from #8510, reassembly completeness
+                -- from #8511.
+                exact
+                  Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+                    _ _
+                    (reassemblyExpansionComplete_classicalCore_of_ne_zero
+                      f hf primeData hsel hdeg hcore)
+                    (classicalCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
+                      f hf primeData hsel hdeg hcore)
+                    hmem
+
+/-- **Lattice-branch raw-factor irreducibility (pending #8417).**
+
+The remaining expected blocker for `factor_irreducible_of_nonUnit`: every raw
+factor of the CLD lattice tier's output `factorLatticeFactorsWithBound f
+(factorFastPrecisionCap f)` that passes the recorded-factor filter is
+irreducible.  This holds once the van Hoeij/CLD method is verified to land on
+minimal (irreducible) subsets; see #8417. -/
+theorem factorLatticeFactorsWithBound_factor_irreducible
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    {cf : Array Hex.ZPoly}
+    (hcf : Hex.factorLatticeFactorsWithBound f
+      (Hex.factorFastPrecisionCap f) = some cf)
+    {raw : Hex.ZPoly}
+    (hmem : raw ∈ cf.toList)
+    (hrec : Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
+    Hex.ZPoly.Irreducible raw := by
+  sorry
+
+/-- **Hybrid raw-factor irreducibility assembly.**
+
+Every raw factor of `factorHybridFactors f` that passes the recorded-factor
+filter is irreducible, dispatched over the three tiers via
+`factorHybridFactors_mem_source`: classical, lattice (pending #8417), and the
+`factorSlowTrial` totality backstop. -/
+theorem factorHybridFactors_factor_irreducible
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    {raw : Hex.ZPoly}
+    (hmem : raw ∈ (Hex.factorHybridFactors f).toList)
+    (hrec : Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
+    Hex.ZPoly.Irreducible raw := by
+  rcases Hex.factorHybridFactors_mem_source f hmem with
+    ⟨cf, hcf, hraw⟩ | ⟨cf, hcf, hraw⟩ | htrial
+  · exact factorClassicalFactorsWithBound_factor_irreducible f hf hcf hraw hrec
+  · exact factorLatticeFactorsWithBound_factor_irreducible f hf hcf hraw hrec
+  · exact factorSlowTrialFactorsWithBound_factor_irreducible f hf htrial hrec
+
 end HexBerlekampZassenhausMathlib
