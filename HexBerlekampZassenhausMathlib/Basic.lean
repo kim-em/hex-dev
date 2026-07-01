@@ -18559,7 +18559,8 @@ private theorem smartAux_covers_of_bound
             htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
             hf_cov_irr hf_cov_dvd_target hS_cov_J hJ_ne hmin_in_S_cov hS_cov_rep
             (liftedSubsetSplit_mem_subsetsOfSizeWithComplement_of_matches hmatches
-              hJ_ne hS_cov_J hmin_in_S_cov) ?_ ?_ h factor hfactor_irr hfactor_dvd
+              hJ_ne hS_cov_J hmin_in_S_cov) List.pairwise_lt_range ?_ ?_ h factor
+            hfactor_irr hfactor_dvd
           · rw [List.mem_range]; omega
           · simp only [List.length_range]
             have hb := smartLoopFuelBound_add_succ_le J.card
@@ -18601,6 +18602,7 @@ private theorem smartSizeLoop_covers_of_bound
         liftedSubsetSelectedList d (J \ S_cov)) ∈
       (Hex.subsetsOfSizeWithComplement tail (S_cov.card - 1)).map
         (fun sc => (head :: sc.1, sc.2)))
+    (hsorted : List.Pairwise (· < ·) sizes)
     (hcontains : (S_cov.card - 1) ∈ sizes)
     (hfuel : budget + smartLoopFuelBound J.card + sizes.length ≤ fuel)
     (h : Hex.scaledRecombinationSmartSizeLoop (Hex.DensePoly.leadingCoeff core)
@@ -18611,7 +18613,59 @@ private theorem smartSizeLoop_covers_of_bound
       ∃ emitted ∈ result,
         Associated (HexPolyZMathlib.toPolynomial emitted)
           (HexPolyZMathlib.toPolynomial factor) := by
-  sorry
+  intro factor hfactor_irr hfactor_dvd
+  unfold Hex.scaledRecombinationSmartSizeLoop at h
+  split at h
+  · simp at h
+  · rename_i dsize ds
+    simp only [List.length_cons] at hfuel
+    split at h
+    · simp at h
+    · rename_i hbudget_ne
+      split at h
+      · simp at h
+      · rename_i fuel'
+        simp only [] at h
+        split at h
+        · -- CandLoop peeled at size `dsize`: delegate to candidate-loop coverage
+          rename_i res cb hcand
+          simp only [Prod.mk.injEq, Option.some.injEq] at h
+          obtain ⟨hres, _⟩ := h
+          subst hres
+          have hk_le : dsize ≤ S_cov.card - 1 := by
+            rcases List.mem_cons.mp hcontains with hh | ht
+            · omega
+            · exact le_of_lt ((List.pairwise_cons.mp hsorted).1 _ ht)
+          exact smartCandLoop_covers_of_bound B' hcore_lc_le hvalid hcore_ne
+            hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+            hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+            htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
+            hf_cov_irr hf_cov_dvd_target hS_cov_J hJ_ne hmin_in_S_cov hS_cov_rep
+            hk_le (fun s hs => hs) (by omega) hcand factor hfactor_irr hfactor_dvd
+        · -- CandLoop returned `(none, cb)`: recurse on `ds`
+          rename_i cb hcand
+          have hcb_le := Hex.scaledRecombinationSmartCandLoop_budget_le _ _ _ _ _ _ _ _ hcand
+          by_cases hd_eq : dsize = S_cov.card - 1
+          · subst hd_eq
+            have hcb : cb = 0 :=
+              smartCandLoop_none_budget_zero B' hcore_lc_le hvalid hcore_ne
+                hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+                hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+                htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
+                hf_cov_irr hf_cov_dvd_target hS_cov_J hJ_ne hmin_in_S_cov hS_cov_rep
+                (fun s hs => hs) hscov_enum (by omega) hcand
+            rw [hcb, Hex.scaledRecombinationSmartSizeLoop_budget_zero] at h
+            simp at h
+          · refine smartSizeLoop_covers_of_bound B' hcore_lc_le hvalid hcore_ne
+              hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+              hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+              htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
+              hf_cov_irr hf_cov_dvd_target hS_cov_J hJ_ne hmin_in_S_cov hS_cov_rep
+              hscov_enum (List.pairwise_cons.mp hsorted).2 ?_ (by omega) h factor
+              hfactor_irr hfactor_dvd
+            rcases List.mem_cons.mp hcontains with hh | ht
+            · exact absurd hh.symm hd_eq
+            · exact ht
 termination_by fuel
 
 /-- Candidate-loop half of conditional coverage. -/
