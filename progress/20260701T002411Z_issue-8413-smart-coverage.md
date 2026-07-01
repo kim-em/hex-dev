@@ -62,24 +62,68 @@ scaledRecombinationSmartAux ... = (res, b) → (hyps + fuel adequacy) →
   ∧ (res = some result → coverage result)  -- every irreducible factor covered
 ```
 
+Codex second-opinion (2026-07-01) confirmed: no accepted-path reducible
+counterexample under the full invariants (premise sound), and the crux is the
+`res = none → b = 0` half — budget monotonicity alone is insufficient; it must be
+proved *mutually* with accepted-path coverage. It also flagged that containment
+must be over the **remaining** supports of the running `target`, transported per
+peel by `liftedFactorSubsetPartition_transport`.
+
+## The fuel-adequacy invariant (resolved: `budget + 2 * J.card ≤ fuel`)
+
+The fuel decrements once per loop step. The apparent worry is that a `CandLoop`
+at size `d` must examine all `C(|tail|, d)` splits (exponential) before moving on
+— but the **budget** also decrements once per split examined, so the number of
+splits any single `CandLoop` examines is `≤ budget`. Crucially `SizeLoop` gives
+each size class a *fresh* fuel (its own `fuel` decremented only by the size
+index, not by prior `CandLoop` consumption). So the per-size fuel need is
+`≤ budget`, and the only extra fuel is the `≤ J.card` size-index overhead plus
+`≤ J.card` for the `Aux` recursion frames. The clean, maintained invariant is:
+
+```
+budget + 2 * J.card ≤ fuel
+```
+
+Maintenance across one peel of `S_cov` (worked out): with fuel consumed
+`|S_cov| + p* + 2` and budget consumed `E + p* + 1` (`E` = splits at smaller
+sizes, `p*` = position of `S_cov` at its size), the recursion gets
+`fuel_rec = fuel - |S_cov| - p* - 2` and `budget_rec = budget - E - p* - 1` over
+`J \ S_cov` with `2*(J.card - |S_cov|)` overhead; the inequality reduces to
+`|S_cov| + E ≥ 1`, true since `|S_cov| ≥ 1`. The wrapper's
+`fuel = budget + (r+1)(2r+3) ≥ budget + 2r = budget + 2 * J.card` (`J = univ`),
+so the top call satisfies it; every recursive call preserves it. `omega` closes
+each step given `_budget_le` (`b ≤ budget`, landed in #8498) and the per-size
+split-count-vs-budget bound.
+
 ## Remaining work (the bulk of the capstone; multi-session)
 
-1. **Step-execution subset identification through the 3 loops**: from a
+Recommended order (completeness first, since coverage consumes it):
+
+1. **Fuel-lockstep / reaching lemmas for `CandLoop`/`SizeLoop`**: under
+   `budget + 2 * card ≤ fuel`, a `none` return implies the loop exhausted its
+   splits/sizes (never fuel-limited) — so a dividing split `S_cov` present in the
+   list *was* examined and its recursive `Aux` was invoked. This is the
+   combinatorial "reaching" core; budget and fuel decrease in lockstep per
+   `CandLoop` step, so `budget ≤ fuel` is preserved and budget-exhaustion (not
+   fuel) is the only early termination.
+2. **Step-execution subset identification through the 3 loops**: from a
    `SizeLoop`/`CandLoop` success extract the peeled `T ⊆ J`, `min ∈ T`,
    `cand = liftedRecoveryCandidate core d T`, `cand ∣ target`, and the recursive
    `Aux` on `target / cand` over `J \ T`. Consumes #8412's
    `subsetsOfSizeWithComplement_liftedFactors_exists_subset_of_matches`.
-2. **The completeness + coverage mutual induction** (`res=none→b=0` ∧
-   `res=some→coverage`), mirroring `covers_of_bound` (Mathlib `Basic.lean:17628`)
-   and reusing its substrate verbatim (`cover_at_min`,
-   `liftedFactorSubsetPartition_transport`,
+3. **The completeness (`res=none→b=0`) mutual induction**, then the coverage
+   (`res=some→coverage`) mutual induction consuming completeness, mirroring
+   `covers_of_bound` (Mathlib `Basic.lean:17628`) and reusing its substrate
+   verbatim (`cover_at_min`, `liftedFactorSubsetPartition_transport`,
    `coverAtMin_representingSubset_subset_of_liftedRecoveryCandidate_dvd_of_bound`,
    `exactQuotient?_liftedRecoveryCandidate_eq_some_of_eq_factor_of_primitive_pos_lc`,
-   `representsIntegerFactorAtLift_primitive_of_bound`, etc.), plus the size-ordered
-   prefix argument (all splits before size `|S_cov|` miss an element of `S_cov`;
-   at size `|S_cov|`, `S_cov` is the unique divisor by containment).
-3. **Fuel adequacy discharge**: the wrapper passes
-   `fuel = budget + (r+1)(2r+3)` (`Basic.lean:7831`); show it never limits.
+   `representsIntegerFactorAtLift_primitive_of_bound`, ...). The peel `T = S_cov`
+   because containment gives `S_cov ⊆ T` and, if `|S_cov| < |T|`, `S_cov`'s
+   recursion at its own size returned `none` ⇒ (completeness) budget `0` ⇒
+   propagates ⇒ overall `none`, contradicting the accepted `some`.
+4. **Fuel adequacy discharge**: the wrapper passes
+   `fuel = budget + (r+1)(2r+3)` (`Basic.lean:7831`) ≥ `budget + 2 * r`, so the
+   invariant holds at the top.
 4. **Irreducibility wiring at `classicalCoreFactorsWithBound`**: coverage +
    `core` squarefree ⇒ `#result = #normalizedFactors(core)` ⇒ reuse
    `UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card` (the
