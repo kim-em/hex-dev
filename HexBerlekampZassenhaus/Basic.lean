@@ -8070,6 +8070,30 @@ theorem scaledRecombinationSmartCandLoop_budget_le
 termination_by fuel
 end
 
+/-- Once the running budget is exhausted the candidate loop declines immediately:
+with `budget = 0` it returns `(none, 0)` for any split list and fuel. The
+size-ordered coverage proof uses this together with budget monotonicity to
+propagate a budget-exhausted `none` up through the enclosing loops. -/
+theorem scaledRecombinationSmartCandLoop_budget_zero
+    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (splits : List (List ZPoly × List ZPoly)) (fuel : Nat) :
+    scaledRecombinationSmartCandLoop coreLc target modulus splits 0 fuel = (none, 0) := by
+  unfold scaledRecombinationSmartCandLoop
+  cases splits with
+  | nil => rfl
+  | cons split rest => rfl
+
+/-- Budget-exhausted decline for the size loop: with `budget = 0` it returns
+`(none, 0)` for any size list and fuel. -/
+theorem scaledRecombinationSmartSizeLoop_budget_zero
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (head : ZPoly) (tail : List ZPoly)
+    (sizes : List Nat) (fuel : Nat) :
+    scaledRecombinationSmartSizeLoop coreLc target modulus head tail sizes 0 fuel = (none, 0) := by
+  unfold scaledRecombinationSmartSizeLoop
+  cases sizes with
+  | nil => rfl
+  | cons d ds => rfl
+
 /-- Exhaustive recombination of the lifted local factors stored in `d`,
 using the *scaled* candidate shape parameterised by the integer leading
 coefficient `coreLc`.  Returns the recovered integer factors as an array
