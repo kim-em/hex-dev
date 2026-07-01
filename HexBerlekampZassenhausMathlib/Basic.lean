@@ -17990,6 +17990,48 @@ private theorem liftedSubsetSelectedList_length (d : Hex.LiftData)
   LiftedFactorListMatches.length_eq_card
     ((LiftedFactorListMatches_iff_eq_liftedSubsetSelectedList d S _).mpr rfl)
 
+/-- In a `subsetSplits` split, an empty selected component forces the rejected
+component to be the whole list. -/
+private theorem subsetSplits_snd_eq_of_fst_nil :
+    ∀ (xs : List Hex.ZPoly) {s : List Hex.ZPoly × List Hex.ZPoly},
+      s ∈ Hex.subsetSplits xs → s.1 = [] → s.2 = xs
+  | [], s, hmem, _ => by
+      simp only [Hex.subsetSplits, List.mem_singleton] at hmem; rw [hmem]
+  | f :: fs, s, hmem, hnil => by
+      simp only [Hex.subsetSplits, List.mem_append, List.mem_map] at hmem
+      rcases hmem with ⟨t, ht_mem, rfl⟩ | ⟨t, ht_mem, rfl⟩
+      · show f :: t.2 = f :: fs
+        rw [subsetSplits_snd_eq_of_fst_nil fs ht_mem hnil]
+      · exact absurd hnil (by simp)
+
+/-- Every `subsetSplits` member is a size-`|selected|` split from
+`subsetsOfSizeWithComplement`. -/
+private theorem subsetSplits_mem_subsetsOfSizeWithComplement :
+    ∀ (xs : List Hex.ZPoly) {s : List Hex.ZPoly × List Hex.ZPoly},
+      s ∈ Hex.subsetSplits xs → s ∈ Hex.subsetsOfSizeWithComplement xs s.1.length
+  | [], s, hmem => by
+      simp only [Hex.subsetSplits, List.mem_singleton] at hmem
+      subst hmem; simp [Hex.subsetsOfSizeWithComplement]
+  | f :: fs, s, hmem => by
+      simp only [Hex.subsetSplits, List.mem_append, List.mem_map] at hmem
+      rcases hmem with ⟨t, ht_mem, rfl⟩ | ⟨t, ht_mem, rfl⟩
+      · -- reject `f`: `s = (t.1, f :: t.2)`
+        have ht := subsetSplits_mem_subsetsOfSizeWithComplement fs ht_mem
+        rcases Nat.eq_zero_or_pos t.1.length with h0 | hpos
+        · rw [List.length_eq_zero_iff] at h0
+          have ht2 := subsetSplits_snd_eq_of_fst_nil fs ht_mem h0
+          simp only [h0, List.length_nil, Hex.subsetsOfSizeWithComplement,
+            List.mem_singleton, ht2]
+        · obtain ⟨m, hm⟩ := Nat.exists_eq_succ_of_ne_zero (Nat.pos_iff_ne_zero.mp hpos)
+          rw [hm] at ht
+          simp only [hm, Hex.subsetsOfSizeWithComplement, List.mem_append, List.mem_map]
+          exact Or.inr ⟨t, ht, rfl⟩
+      · -- select `f`: `s = (f :: t.1, t.2)`
+        have ht := subsetSplits_mem_subsetsOfSizeWithComplement fs ht_mem
+        simp only [List.length_cons, Hex.subsetsOfSizeWithComplement,
+          List.mem_append, List.mem_map]
+        exact Or.inl ⟨t, ht, rfl⟩
+
 /-- Completeness of the size enumeration: a subset `S ⊆ J` containing `J.min'`
 (so its selected list starts with `head`) has its `(selected, rejected)` split
 enumerated by `subsetsOfSizeWithComplement tail (S.card - 1)`.  The converse of
@@ -18003,7 +18045,18 @@ private theorem liftedSubsetSplit_mem_subsetsOfSizeWithComplement_of_matches
     (liftedSubsetSelectedList d S, liftedSubsetSelectedList d (J \ S)) ∈
       (Hex.subsetsOfSizeWithComplement tail (S.card - 1)).map
         (fun sc => (head :: sc.1, sc.2)) := by
-  sorry
+  have hmem := liftedSubsetSplit_mem_subsetSplitsWithFirst_of_matches hmatches hSJ hne hmin
+  rw [Hex.subsetSplitsWithFirst, List.mem_map] at hmem
+  obtain ⟨x, hx_mem, hx_eq⟩ := hmem
+  have hsel : head :: x.1 = liftedSubsetSelectedList d S :=
+    (Prod.mk.injEq .. ▸ hx_eq).1
+  have hx1_len : x.1.length = S.card - 1 := by
+    have hlen := congrArg List.length hsel
+    rw [liftedSubsetSelectedList_length] at hlen
+    simp only [List.length_cons] at hlen; omega
+  have hx_size := subsetSplits_mem_subsetsOfSizeWithComplement tail hx_mem
+  rw [hx1_len] at hx_size
+  exact List.mem_map.mpr ⟨x, hx_size, hx_eq⟩
 
 mutual
 
