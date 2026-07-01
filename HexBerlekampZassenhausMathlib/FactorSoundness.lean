@@ -308,6 +308,231 @@ theorem factor_unique_of_product_default
     (factor_entries_normalizeFactorSign f) hφ_nonconst
     (factor_entries_degree_pos f hf_ne) hirr
 
+set_option maxHeartbeats 1000000 in
+/--
+The executable irreducibility checker `Hex.ZPoly.isIrreducible` agrees with the
+`Hex.ZPoly.Irreducible` class.
+
+`isIrreducible` runs `factor` and checks the result is a single primitive factor
+of multiplicity 1 (with a `±1` scalar), so this is exactly the statement that the
+default factorization is a correct irreducible factorization.  The degree-0
+(constant) arm is the elementary-primality characterisation
+(`irreducible_C_of_isNatPrime` / `isNatPrime_natAbs_of_irreducible_C`); the
+positive-degree arm composes `factor_irreducible_of_nonUnit` (forward) with
+`factor_unique_of_product_default` (backward, which pins the factor count to the
+`normalizedFactors` cardinality).  It therefore inherits the lattice-tier `sorry`
+of `factor_irreducible_of_nonUnit` (#8417) and nothing else.
+-/
+theorem Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
+    Hex.ZPoly.isIrreducible f = true ↔ Hex.ZPoly.Irreducible f := by
+  rw [Hex.ZPoly.isIrreducible]
+  by_cases hf0 : f = 0
+  · subst hf0
+    rw [if_pos rfl]
+    exact ⟨fun h => absurd h (by decide), fun h => absurd rfl h.not_zero⟩
+  · rw [if_neg hf0]
+    by_cases hdeg : f.degree?.getD 0 = 0
+    · -- constant arm
+      rw [if_pos hdeg]
+      have hsize_pos : 0 < f.size := Hex.ZPoly.size_pos_of_ne_zero f hf0
+      have hsize1 : f.size = 1 := by
+        have hdeg_eq : f.degree?.getD 0 = f.size - 1 := by
+          unfold Hex.DensePoly.degree?
+          simp [Nat.ne_of_gt hsize_pos]
+        omega
+      have hfC : f = Hex.DensePoly.C (f.coeff 0) := Hex.ZPoly.eq_C_of_size_eq_one f hsize1
+      have hk_ne : f.coeff 0 ≠ 0 := by
+        intro h0
+        apply hf0
+        rw [hfC, h0]; rfl
+      constructor
+      · intro h
+        rw [hfC]
+        exact Hex.ZPoly.irreducible_C_of_isNatPrime h
+      · intro h
+        rw [hfC] at h
+        exact Hex.ZPoly.isNatPrime_natAbs_of_irreducible_C hk_ne h
+    · -- positive-degree arm
+      rw [if_neg hdeg]
+      set φ := Hex.factor f with hφ_def
+      have hprod : Hex.Factorization.product φ = f := Hex.factor_product f
+      have hfp1 : ∀ q : Hex.ZPoly, Hex.Factorization.factorPower q 1 = q := fun q => by
+        rw [show (1 : Nat) = 0 + 1 from rfl, Hex.Factorization.factorPower_succ,
+          Hex.Factorization.factorPower_zero, Hex.ZPoly.one_mul_zpoly]
+      rw [Hex.ZPoly.Irreducible_iff_polynomialIrreducible]
+      constructor
+      · -- forward: single factor + capstone irreducibility → Irreducible (toPolynomial f)
+        intro h
+        simp only [Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq] at h
+        obtain ⟨⟨hscalar, hsize⟩, hmatch⟩ := h
+        obtain ⟨entry, hentry_list⟩ :=
+          List.length_eq_one_iff.mp (by rw [Array.length_toList]; exact hsize)
+        have hentry_mem : entry ∈ φ.factors := by
+          rw [← Array.mem_toList_iff, hentry_list]; exact List.mem_singleton.mpr rfl
+        rw [hentry_list] at hmatch
+        have hmult1 : entry.2 = 1 := by simpa using hmatch
+        have hirr_entry : Hex.ZPoly.Irreducible entry.1 :=
+          factor_irreducible_of_nonUnit f entry hentry_mem
+        have hirr_P : Irreducible (HexPolyZMathlib.toPolynomial entry.1) :=
+          (Hex.ZPoly.Irreducible_iff_polynomialIrreducible entry.1).mp hirr_entry
+        -- product of a single (g, 1) entry is `C scalar * g`
+        have hfoldl : φ.product = Hex.DensePoly.C φ.scalar * entry.1 := by
+          rw [Hex.Factorization.product_eq_foldl_factorPower, ← Array.foldl_toList, hentry_list]
+          simp only [List.foldl_cons, List.foldl_nil, hmult1, hfp1]
+        have hf_eq : f = Hex.DensePoly.C φ.scalar * entry.1 := by rw [← hprod, hfoldl]
+        -- transport to `Polynomial ℤ`; the `±1` scalar is a unit
+        have hunit : IsUnit (Polynomial.C φ.scalar) := by
+          have : φ.scalar = 1 ∨ φ.scalar = -1 := by
+            rcases Int.natAbs_eq φ.scalar with he | he <;> omega
+          rcases this with h1 | h1 <;> rw [h1] <;> simp
+        have hPf : HexPolyZMathlib.toPolynomial f =
+            Polynomial.C φ.scalar * HexPolyZMathlib.toPolynomial entry.1 := by
+          rw [hf_eq, HexPolyZMathlib.toPolynomial_mul, HexPolyZMathlib.toPolynomial_C]
+        rw [hPf]
+        exact (irreducible_isUnit_mul hunit).mpr hirr_P
+      · -- backward: uniqueness pins the factor to a single one of multiplicity 1
+        intro hIrr
+        have hIrr_f : Hex.ZPoly.Irreducible f :=
+          (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).mpr hIrr
+        set g := Hex.normalizeFactorSign f with hg_def
+        set s : Int := if Hex.DensePoly.leadingCoeff f < 0 then -1 else 1 with hs_def
+        have hg_norm : Hex.normalizeFactorSign g = g := Hex.normalizeFactorSign_idem f
+        have hg_irr : Hex.ZPoly.Irreducible g :=
+          zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hIrr_f
+        have hCs_g : Hex.DensePoly.C s * g = f := by
+          rw [hg_def, hs_def, Hex.normalizeFactorSign]
+          by_cases hlc : Hex.DensePoly.leadingCoeff f < 0
+          · rw [if_pos hlc, if_pos hlc, Hex.ZPoly.C_mul_eq_scale, Hex.scale_neg_one_neg_one]
+          · rw [if_neg hlc, if_neg hlc, Hex.ZPoly.C_mul_eq_scale, Hex.densePoly_int_scale_one]
+        have hg_deg : 0 < g.degree?.getD 0 := by
+          have : g.size = f.size := by
+            rw [hg_def, Hex.normalizeFactorSign]
+            by_cases hlc : Hex.DensePoly.leadingCoeff f < 0
+            · rw [if_pos hlc]; exact Hex.ZPoly.scale_size_of_nonzero (-1) f (by norm_num)
+            · rw [if_neg hlc]
+          have hfsz : 0 < f.size := Hex.ZPoly.size_pos_of_ne_zero f hf0
+          have hgeq : g.degree?.getD 0 = g.size - 1 := by
+            unfold Hex.DensePoly.degree?; simp [Nat.ne_of_gt (this ▸ hfsz)]
+          have hfeq : f.degree?.getD 0 = f.size - 1 := by
+            unfold Hex.DensePoly.degree?; simp [Nat.ne_of_gt hfsz]
+          omega
+        set ψ : Hex.Factorization := { scalar := s, factors := #[(g, 1)] } with hψ_def
+        have hψ_prod : Hex.Factorization.product ψ = f := by
+          have hlist : ψ.factors.toList = [(g, 1)] := by simp [hψ_def]
+          rw [Hex.Factorization.product_eq_foldl_factorPower, ← Array.foldl_toList, hlist]
+          simp only [hψ_def, List.foldl_cons, List.foldl_nil, hfp1]
+          exact hCs_g
+        have hψ_norm : ∀ entry ∈ ψ.factors, Hex.normalizeFactorSign entry.1 = entry.1 := by
+          intro entry hmem
+          simp only [hψ_def, Array.mem_singleton] at hmem
+          rw [hmem]; exact hg_norm
+        have hψ_nonconst : ∀ entry ∈ ψ.factors, 0 < entry.1.degree?.getD 0 := by
+          intro entry hmem
+          simp only [hψ_def, Array.mem_singleton] at hmem
+          rw [hmem]; exact hg_deg
+        have hψ_irr : ∀ entry ∈ ψ.factors, Hex.ZPoly.Irreducible entry.1 := by
+          intro entry hmem
+          simp only [hψ_def, Array.mem_singleton] at hmem
+          rw [hmem]; exact hg_irr
+        obtain ⟨hscalar_eq, hmulti_eq⟩ :=
+          factor_unique_of_product_default f ψ hf0 hψ_prod hψ_norm hψ_nonconst hψ_irr
+        -- the ψ multiset is the singleton {g}; take cardinalities
+        have hψ_card : Multiset.card
+            (ψ.factors.toList.map (fun e => Multiset.replicate e.2 e.1)).sum = 1 := by
+          simp [hψ_def]
+        rw [hmulti_eq] at hψ_card
+        -- `card` of a sum of replicates is the sum of the multiplicities
+        have hcard_eq : ∀ L : List (Hex.ZPoly × Nat),
+            Multiset.card (L.map (fun e => Multiset.replicate e.2 e.1)).sum =
+              (L.map (fun e => e.2)).sum := by
+          intro L
+          induction L with
+          | nil => simp
+          | cons hd tl ih =>
+              simp only [List.map_cons, List.sum_cons, Multiset.card_add,
+                Multiset.card_replicate, ih]
+        have hcard_sum : (φ.factors.toList.map (fun e => e.2)).sum = 1 := by
+          rw [← hcard_eq φ.factors.toList]; exact hψ_card
+        -- every recorded multiplicity is positive
+        have hmult_pos : ∀ x ∈ φ.factors.toList.map (fun e => e.2), 1 ≤ x := by
+          intro x hx
+          rw [List.mem_map] at hx
+          obtain ⟨e, he_mem, he_eq⟩ := hx
+          rw [← he_eq]
+          exact Hex.factor_entry_multiplicity_pos f e he_mem
+        -- a list of positive naturals summing to `1` has length `1`
+        have list_length_le_sum : ∀ (L : List Nat), (∀ x ∈ L, 1 ≤ x) → L.length ≤ L.sum := by
+          intro L
+          induction L with
+          | nil => intro _; simp
+          | cons hd tl ih =>
+              intro hL
+              simp only [List.length_cons, List.sum_cons]
+              have h1 : 1 ≤ hd := hL hd (List.mem_cons.mpr (Or.inl rfl))
+              have h2 := ih (fun x hx => hL x (List.mem_cons.mpr (Or.inr hx)))
+              omega
+        have hlen1 : φ.factors.toList.length = 1 := by
+          have hle : (φ.factors.toList.map (fun e => e.2)).length ≤ 1 := by
+            rw [← hcard_sum]; exact list_length_le_sum _ hmult_pos
+          rw [List.length_map] at hle
+          have hge : 1 ≤ φ.factors.toList.length := by
+            rcases Nat.eq_zero_or_pos φ.factors.toList.length with h0 | hpos
+            · exfalso
+              have hnil : φ.factors.toList = [] := List.eq_nil_of_length_eq_zero h0
+              rw [hnil] at hcard_sum; simp at hcard_sum
+            · exact hpos
+          omega
+        obtain ⟨entry, hentry_list⟩ := List.length_eq_one_iff.mp hlen1
+        have hmult1 : entry.2 = 1 := by
+          rw [hentry_list] at hcard_sum; simpa using hcard_sum
+        have hsize1 : φ.factors.size = 1 := by rw [← Array.length_toList, hlen1]
+        have hs_val : s = 1 ∨ s = -1 := by rw [hs_def]; split_ifs <;> simp
+        have hscalar1 : φ.scalar.natAbs = 1 := by
+          have hφs : φ.scalar = s := by rw [← hscalar_eq, hψ_def]
+          rw [hφs]
+          rcases hs_val with h | h <;> simp [h]
+        -- assemble the Boolean check
+        simp only [hentry_list, Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq]
+        exact ⟨⟨hscalar1, hsize1⟩, by simpa using hmult1⟩
+
+instance Hex.ZPoly.instDecidableIrreducible (f : Hex.ZPoly) :
+    Decidable (Hex.ZPoly.Irreducible f) :=
+  decidable_of_iff _ (Hex.ZPoly.isIrreducible_iff f)
+
+/--
+The executable factorization predicate agrees with Mathlib irreducibility over
+`Polynomial ℤ`.
+-/
+@[simp, grind =]
+theorem irreducibleByFactorization_iff (f : Polynomial ℤ) :
+    irreducibleByFactorization f = true ↔ Irreducible f := by
+  rw [irreducibleByFactorization]
+  constructor
+  · intro h
+    have hhex :
+        Hex.ZPoly.Irreducible (HexPolyZMathlib.ofPolynomial f) :=
+      (Hex.ZPoly.isIrreducible_iff _).mp h
+    simpa [HexPolyZMathlib.toPolynomial_ofPolynomial] using
+      (Hex.ZPoly.Irreducible_iff_polynomialIrreducible
+        (HexPolyZMathlib.ofPolynomial f)).mp hhex
+  · intro h
+    exact (Hex.ZPoly.isIrreducible_iff _).mpr <|
+      (Hex.ZPoly.Irreducible_iff_polynomialIrreducible
+        (HexPolyZMathlib.ofPolynomial f)).mpr <| by
+          simpa [HexPolyZMathlib.toPolynomial_ofPolynomial] using h
+
+/--
+Mathlib irreducibility over `Polynomial ℤ` is decidable through the executable
+Berlekamp-Zassenhaus factorization surface.
+-/
+instance irreducibleDecidablePred :
+    DecidablePred (fun f : Polynomial ℤ => Irreducible f) :=
+  fun f =>
+    if h : irreducibleByFactorization f = true then
+      isTrue ((irreducibleByFactorization_iff f).mp h)
+    else
+      isFalse (fun hf => h ((irreducibleByFactorization_iff f).mpr hf))
+
 
 end
 

@@ -4048,14 +4048,14 @@ private theorem mem_repeatedPartFactorArray_ne_one
   · simp [hone] at h
   · exact hone
 
-private theorem normalizeFactorSign_eq_self_of_leadingCoeff_nonneg (g : ZPoly)
+theorem normalizeFactorSign_eq_self_of_leadingCoeff_nonneg (g : ZPoly)
     (h : 0 ≤ DensePoly.leadingCoeff g) :
     normalizeFactorSign g = g := by
   unfold normalizeFactorSign
   have hnot : ¬ DensePoly.leadingCoeff g < 0 := by omega
   rw [if_neg hnot]
 
-private theorem normalizeFactorSign_leadingCoeff_nonneg (g : ZPoly) :
+theorem normalizeFactorSign_leadingCoeff_nonneg (g : ZPoly) :
     0 ≤ DensePoly.leadingCoeff (normalizeFactorSign g) := by
   unfold normalizeFactorSign
   by_cases hlead : DensePoly.leadingCoeff g < 0
@@ -4070,7 +4070,7 @@ private theorem normalizeFactorSign_leadingCoeff_nonneg (g : ZPoly) :
   · rw [if_neg hlead]
     omega
 
-private theorem normalizeFactorSign_idem (g : ZPoly) :
+theorem normalizeFactorSign_idem (g : ZPoly) :
     normalizeFactorSign (normalizeFactorSign g) = normalizeFactorSign g :=
   normalizeFactorSign_eq_self_of_leadingCoeff_nonneg
     (normalizeFactorSign g) (normalizeFactorSign_leadingCoeff_nonneg g)
@@ -11246,7 +11246,7 @@ def isIrreducible (f : ZPoly) : Bool :=
 /-- A polynomial of dense size `1` is the constant polynomial of its zeroth
 coefficient. The trimming invariant on `DensePoly` forces the single stored
 coefficient to be nonzero, so `coeff 0` already names the unique stored entry. -/
-private theorem eq_C_of_size_eq_one (a : ZPoly) (hsize : a.size = 1) :
+theorem eq_C_of_size_eq_one (a : ZPoly) (hsize : a.size = 1) :
     a = DensePoly.C (a.coeff 0) := by
   apply DensePoly.ext_coeff
   intro n
@@ -11345,7 +11345,7 @@ private theorem zpoly_size_C_of_ne_zero {k : Int} (hk : k ≠ 0) :
 
 /-- A constant polynomial `DensePoly.C k` is `ZPoly.Irreducible` whenever
 `k.natAbs` is prime in the elementary `isNatPrime` sense. -/
-private theorem irreducible_C_of_isNatPrime
+theorem irreducible_C_of_isNatPrime
     {k : Int} (hp : isNatPrime k.natAbs = true) :
     ZPoly.Irreducible (DensePoly.C k) := by
   obtain ⟨hp2, hpno⟩ := (isNatPrime_iff k.natAbs).mp hp
@@ -11483,7 +11483,7 @@ private theorem irreducible_C_of_isNatPrime
 
 /-- An irreducible constant polynomial `DensePoly.C k` (for `k ≠ 0`) has
 `k.natAbs` prime in the elementary `isNatPrime` sense. -/
-private theorem isNatPrime_natAbs_of_irreducible_C
+theorem isNatPrime_natAbs_of_irreducible_C
     {k : Int} (hk_ne : k ≠ 0) (hirr : ZPoly.Irreducible (DensePoly.C k)) :
     isNatPrime k.natAbs = true := by
   rw [isNatPrime_iff]
@@ -13167,7 +13167,7 @@ private theorem recombineScaledExhaustive_product
     d.liftedFactors.toList factors hsearch]
 
 /-- Pointwise: scaling a `ZPoly` by the integer `1` is a no-op. -/
-private theorem densePoly_int_scale_one (p : ZPoly) :
+theorem densePoly_int_scale_one (p : ZPoly) :
     DensePoly.scale (1 : Int) p = p := by
   apply DensePoly.ext_coeff
   intro n
@@ -15838,7 +15838,7 @@ private theorem natAbs_coeff_scale_neg_one (p : ZPoly) (i : Nat) :
 
 /-- `scale (-1)` is an involution on `ZPoly`: applying it twice returns the
 original polynomial. -/
-private theorem scale_neg_one_neg_one (p : ZPoly) :
+theorem scale_neg_one_neg_one (p : ZPoly) :
     DensePoly.scale (-1 : Int) (DensePoly.scale (-1 : Int) p) = p := by
   apply DensePoly.ext_coeff
   intro n
