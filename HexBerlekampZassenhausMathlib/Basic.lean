@@ -17990,6 +17990,21 @@ private theorem liftedSubsetSelectedList_length (d : Hex.LiftData)
   LiftedFactorListMatches.length_eq_card
     ((LiftedFactorListMatches_iff_eq_liftedSubsetSelectedList d S _).mpr rfl)
 
+/-- Completeness of the size enumeration: a subset `S ⊆ J` containing `J.min'`
+(so its selected list starts with `head`) has its `(selected, rejected)` split
+enumerated by `subsetsOfSizeWithComplement tail (S.card - 1)`.  The converse of
+`subsetsOfSizeWithComplement_liftedFactors_exists_subset_of_matches`; needed so
+the size loop can invoke the candidate-loop completeness at `S_cov`'s size. -/
+private theorem liftedSubsetSplit_mem_subsetsOfSizeWithComplement_of_matches
+    {d : Hex.LiftData} {J S : LiftedFactorSubset d}
+    {head : Hex.ZPoly} {tail : List Hex.ZPoly}
+    (hmatches : LiftedFactorListMatches d J (head :: tail))
+    (hne : J.Nonempty) (hSJ : S ⊆ J) (hmin : J.min' hne ∈ S) :
+    (liftedSubsetSelectedList d S, liftedSubsetSelectedList d (J \ S)) ∈
+      (Hex.subsetsOfSizeWithComplement tail (S.card - 1)).map
+        (fun sc => (head :: sc.1, sc.2)) := by
+  sorry
+
 mutual
 
 /-- Trustworthy-none completeness for the size-ordered search: with adequate
@@ -18085,7 +18100,8 @@ private theorem smartAux_none_budget_zero
             hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
             htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
             hf_cov_irr hf_cov_dvd_target hS_cov_J hJ_ne hmin_in_S_cov hS_cov_rep
-            ?_ ?_ h
+            (liftedSubsetSplit_mem_subsetsOfSizeWithComplement_of_matches hmatches
+              hJ_ne hS_cov_J hmin_in_S_cov) ?_ ?_ h
           · -- hcontains : (S_cov.card - 1) ∈ List.range (tail.length + 1)
             rw [List.mem_range]; omega
           · -- fuel adequacy for the size loop
@@ -18127,12 +18143,58 @@ private theorem smartSizeLoop_none_budget_zero
     (hJ_ne : J.Nonempty)
     (hmin_in_S_cov : J.min' hJ_ne ∈ S_cov)
     (hS_cov_rep : RepresentsIntegerFactorAtLift core d f_cov S_cov)
+    (hscov_enum : (liftedSubsetSelectedList d S_cov,
+        liftedSubsetSelectedList d (J \ S_cov)) ∈
+      (Hex.subsetsOfSizeWithComplement tail (S_cov.card - 1)).map
+        (fun sc => (head :: sc.1, sc.2)))
     (hcontains : (S_cov.card - 1) ∈ sizes)
     (hfuel : budget + smartLoopFuelBound J.card + sizes.length ≤ fuel)
     (h : Hex.scaledRecombinationSmartSizeLoop (Hex.DensePoly.leadingCoeff core)
         target (d.p ^ d.k) head tail sizes budget fuel = (none, b)) :
     b = 0 := by
-  sorry
+  unfold Hex.scaledRecombinationSmartSizeLoop at h
+  split at h
+  · -- sizes = []: contradicts `hcontains`
+    simp only [List.not_mem_nil] at hcontains
+  · rename_i dsize ds
+    simp only [List.length_cons] at hfuel
+    split at h
+    · -- budget = 0: returns (none, 0)
+      simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
+    · rename_i hbudget_ne
+      split at h
+      · -- fuel = 0: `budget + … + sizes.length ≤ 0` forces `budget = 0`
+        simp only [Prod.mk.injEq] at h; obtain ⟨_, hb⟩ := h; omega
+      · rename_i fuel'
+        simp only [] at h
+        split at h
+        · -- CandLoop returned `some`: contradicts the `none` result
+          simp at h
+        · -- CandLoop returned `(none, cb)`
+          rename_i cb hcand
+          by_cases hd_eq : dsize = S_cov.card - 1
+          · -- at `S_cov`'s size: CandLoop completeness forces `cb = 0`, then budget-zero
+            subst hd_eq
+            have hcb : cb = 0 :=
+              smartCandLoop_none_budget_zero B' hcore_lc_le hvalid hcore_ne
+                hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+                hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+                htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
+                hf_cov_irr hf_cov_dvd_target hS_cov_J hJ_ne hmin_in_S_cov hS_cov_rep
+                (fun s hs => hs) hscov_enum (by omega) hcand
+            rw [hcb, Hex.scaledRecombinationSmartSizeLoop_budget_zero] at h
+            simp only [Prod.mk.injEq] at h; omega
+          · -- other size: recurse on `ds` (`S_cov`'s size is still in `ds`)
+            have hcb_le := Hex.scaledRecombinationSmartCandLoop_budget_le _ _ _ _ _ _ _ _ hcand
+            refine smartSizeLoop_none_budget_zero B' hcore_lc_le hvalid hcore_ne
+              hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+              hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+              htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
+              hf_cov_irr hf_cov_dvd_target hS_cov_J hJ_ne hmin_in_S_cov hS_cov_rep
+              hscov_enum ?_ (by omega) h
+            rcases List.mem_cons.mp hcontains with hh | ht
+            · exact absurd hh.symm hd_eq
+            · exact ht
 termination_by fuel
 
 /-- Candidate-loop half of trustworthy-none completeness: `S_cov`'s split is the
