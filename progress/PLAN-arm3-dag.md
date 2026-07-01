@@ -116,3 +116,14 @@ before completing L10 — it decides whether `latticeArm3` is provable as stated
 ## Already proven (this PR)
 - Basis independence + LLL first-row-short (the engine for L7).
 - Reduction skeleton (arm 1) + top-down structure.
+
+## UPDATE (2am autonomous session): prime-data "bug" is NOT a blocker
+Compiled #guard test: `factorLattice` on non-monic reducibles `2x^3+3x^2+3x+1`
+and `3x^3+x^2+6x+2` returns the correct 2 factors with correct product. So the
+`choosePrimeData? core` + `toMonicLiftData core B primeData` combination is
+reconciled (the dilate machinery in the recovery relates monic-core lifted
+factors back to core factors). The coordinate is handled; NO executable fix
+needed. Proceed with the geometry using the `choosePrimeData?` partition
+(`liftedFactorSubsetPartition_of_choosePrimeData`, Basic.lean:20335) or the
+toMonicPrimeData? complete version, reconciled via the monic relationship.
+Grinding arm-3 `hfalse` geometry top-down, hardest sub-lemma first.
