@@ -253,23 +253,23 @@ theorem mk_p_lt_R (p : UInt64) (hp : p % 2 = 1) :
 @[expose]
 def toMont (ctx : MontCtx p) (a : UInt64) : UInt64 :=
   let (hi, lo) := UInt64.mulFull a ctx.r2
-  redc ctx hi lo
+  montgomeryReduce ctx hi lo
 
 /-- Convert a Montgomery residue back to the standard representation. -/
 @[expose]
 def fromMont (ctx : MontCtx p) (a : UInt64) : UInt64 :=
-  redc ctx 0 a
+  montgomeryReduce ctx 0 a
 
 /-- Multiply two Montgomery residues, staying inside the Montgomery domain. -/
 @[expose]
 def mulMont (ctx : MontCtx p) (a b : UInt64) : UInt64 :=
   let (hi, lo) := UInt64.mulFull a b
-  redc ctx hi lo
+  montgomeryReduce ctx hi lo
 
 /--
 For reduced inputs `a, b < p`, the two-word product `a * b` (encoded as
 `lo + hi * word`) stays below `p * word`. This is the range precondition
-`redc` needs to behave as Montgomery reduction on the `mulMont` product.
+`montgomeryReduce` needs to behave as Montgomery reduction on the `mulMont` product.
 -/
 private theorem twoWordProduct_lt_p_word (ctx : MontCtx p) (a b : UInt64)
     (ha : a.toNat < p.toNat) (hb : b.toNat < p.toNat) :
@@ -286,42 +286,42 @@ private theorem twoWordProduct_lt_p_word (ctx : MontCtx p) (a b : UInt64)
     _ < p.toNat * UInt64.word := hp2_lt_pword
 
 /--
-Reducing the two-word product through `redc` produces the Montgomery
+Reducing the two-word product through `montgomeryReduce` produces the Montgomery
 representative: multiplying the result back by `word` recovers `a * b` modulo
 `p`. The `p * p' ≡ -1 (mod word)` hypothesis is the Montgomery inverse
 condition that makes the reduction exact.
 -/
-private theorem redc_mulFull_repr_word (ctx : MontCtx p) (a b : UInt64)
+private theorem montgomeryReduce_mulFull_repr_word (ctx : MontCtx p) (a b : UInt64)
     (hT :
       (UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word <
         p.toNat * UInt64.word)
     (hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1) :
-    (redc ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2).toNat *
+    (montgomeryReduce ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2).toNat *
         UInt64.word % p.toNat =
       (a.toNat * b.toNat) % p.toNat := by
-  rw [toNat_redc ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2 hT]
-  have hredc := redcNat_eq_mod ctx.p_pos ctx.p_lt_R hpp' hT
+  rw [toNat_montgomeryReduce ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2 hT]
+  have hmontgomeryReduce := montgomeryReduceNat_eq_mod ctx.p_pos ctx.p_lt_R hpp' hT
   calc
-    redcNat p.toNat ctx.p'.toNat
+    montgomeryReduceNat p.toNat ctx.p'.toNat
           ((UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word) *
         UInt64.word % p.toNat
         = ((UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat *
-            UInt64.word) % p.toNat := hredc
+            UInt64.word) % p.toNat := hmontgomeryReduce
     _ = (a.toNat * b.toNat) % p.toNat := by grind
 
 /--
-Reducing the two-word product through `redc` lands strictly below the modulus,
+Reducing the two-word product through `montgomeryReduce` lands strictly below the modulus,
 so `mulMont` returns an already-reduced residue with no extra conditional
 subtraction.
 -/
-private theorem redc_mulFull_lt (ctx : MontCtx p) (a b : UInt64)
+private theorem montgomeryReduce_mulFull_lt (ctx : MontCtx p) (a b : UInt64)
     (hT :
       (UInt64.mulFull a b).2.toNat + (UInt64.mulFull a b).1.toNat * UInt64.word <
         p.toNat * UInt64.word)
     (hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1) :
-    (redc ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2).toNat < p.toNat := by
-  rw [toNat_redc ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2 hT]
-  exact redcNat_lt ctx.p_pos ctx.p_lt_R hpp' hT
+    (montgomeryReduce ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2).toNat < p.toNat := by
+  rw [toNat_montgomeryReduce ctx (UInt64.mulFull a b).1 (UInt64.mulFull a b).2 hT]
+  exact montgomeryReduceNat_lt ctx.p_pos ctx.p_lt_R hpp' hT
 
 /--
 Multiplication by `word` is injective on residues modulo `p`: since `p` is odd
@@ -386,8 +386,8 @@ theorem fromMont_lt (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
   have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
     simpa [Nat.mul_comm] using ctx.p'_eq
   unfold fromMont
-  rw [toNat_redc ctx 0 a hT]
-  exact redcNat_lt ctx.p_pos ctx.p_lt_R hpp' hT
+  rw [toNat_montgomeryReduce ctx 0 a hT]
+  exact montgomeryReduceNat_lt ctx.p_pos ctx.p_lt_R hpp' hT
 
 /--
 `fromMont` removes one Montgomery radix factor from a reduced Montgomery
@@ -407,9 +407,9 @@ theorem fromMont_repr (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
   have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
     simpa [Nat.mul_comm] using ctx.p'_eq
   unfold fromMont
-  rw [toNat_redc ctx 0 a hT]
-  have hredc := redcNat_eq_mod ctx.p_pos ctx.p_lt_R hpp' hT
-  simpa [Nat.mod_eq_of_lt haNat] using hredc
+  rw [toNat_montgomeryReduce ctx 0 a hT]
+  have hmontgomeryReduce := montgomeryReduceNat_eq_mod ctx.p_pos ctx.p_lt_R hpp' hT
+  simpa [Nat.mod_eq_of_lt haNat] using hmontgomeryReduce
 
 /-- The `Nat` value of `toMont` is multiplication by the Montgomery radix. -/
 @[simp, grind =]
@@ -426,9 +426,9 @@ theorem toNat_toMont (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
   have hraw :
       (ctx.toMont a).toNat * UInt64.word % p.toNat =
         (a.toNat * ctx.r2.toNat) % p.toNat := by
-    simpa [toMont] using redc_mulFull_repr_word ctx a ctx.r2 hT hpp'
+    simpa [toMont] using montgomeryReduce_mulFull_repr_word ctx a ctx.r2 hT hpp'
   have hto_lt_nat : (ctx.toMont a).toNat < p.toNat := by
-    simpa [toMont] using redc_mulFull_lt ctx a ctx.r2 hT hpp'
+    simpa [toMont] using montgomeryReduce_mulFull_lt ctx a ctx.r2 hT hpp'
   apply cancel_word_mod_of_lt ctx
   · exact hto_lt_nat
   · exact Nat.mod_lt _ ctx.p_pos
@@ -470,7 +470,7 @@ private theorem mulMont_repr_word (ctx : MontCtx p) (a b : UInt64)
   have hT := twoWordProduct_lt_p_word ctx a b haNat hbNat
   have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
     simpa [Nat.mul_comm] using ctx.p'_eq
-  simpa [mulMont] using redc_mulFull_repr_word ctx a b hT hpp'
+  simpa [mulMont] using montgomeryReduce_mulFull_repr_word ctx a b hT hpp'
 
 /-- Montgomery conversion returns a canonical residue. -/
 @[grind =>]
@@ -485,7 +485,7 @@ theorem toMont_lt (ctx : MontCtx p) (a : UInt64) (ha : a < p) :
   have hT := twoWordProduct_lt_p_word ctx a ctx.r2 haNat hr2Nat
   have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
     simpa [Nat.mul_comm] using ctx.p'_eq
-  simpa [toMont] using redc_mulFull_lt ctx a ctx.r2 hT hpp'
+  simpa [toMont] using montgomeryReduce_mulFull_lt ctx a ctx.r2 hT hpp'
 
 /-- Montgomery multiplication returns a canonical residue. -/
 @[grind =>]
@@ -499,7 +499,7 @@ theorem mulMont_lt (ctx : MontCtx p) (a b : UInt64) (ha : a < p) (hb : b < p) :
   have hT := twoWordProduct_lt_p_word ctx a b haNat hbNat
   have hpp' : p.toNat * ctx.p'.toNat % UInt64.word = UInt64.word - 1 := by
     simpa [Nat.mul_comm] using ctx.p'_eq
-  simpa [mulMont] using redc_mulFull_lt ctx a b hT hpp'
+  simpa [mulMont] using montgomeryReduce_mulFull_lt ctx a b hT hpp'
 
 /-- Montgomery multiplication preserves the represented residue product. -/
 @[grind =]
