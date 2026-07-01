@@ -48,8 +48,8 @@ tag := "hex-row-reduce-echelon"
 
 The elementary row operations ({name}`Hex.Matrix.rowSwap`,
 {name}`Hex.Matrix.rowScale`, {name}`Hex.Matrix.rowAdd`) are documented in
-{ref "hex-matrix"}[HexMatrix]. The reductions here compose them over a
-field.
+{ref "hex-matrix"}[HexMatrix]. The Gauss-Jordan reduction in this chapter
+applies these operations to a matrix over a field.
 
 An echelon computation returns a certificate of how it reduced: the
 rank, the reduced matrix, an invertible transform `T` with
@@ -69,10 +69,10 @@ conditions: each pivot is one, and every entry above a pivot is zero.
 tag := "hex-row-reduce-driver"
 %%%
 
-The driver is Gauss-Jordan elimination, returning a
-{name}`Hex.Matrix.RowEchelonData` whose record satisfies the
-reduced-form contract, with the transform equation and the rank read off
-the result.
+The driver is Gauss-Jordan elimination. It returns a
+{name}`Hex.Matrix.RowEchelonData` satisfying
+{name}`Hex.Matrix.IsRowReduced`, with the transform equation and the rank
+read off the result.
 
 {docstring Hex.Matrix.rowReduce}
 
@@ -87,10 +87,10 @@ the result.
 tag := "hex-row-reduce-span"
 %%%
 
-From the reduced form we compute what a caller wants: the linear
-combination of the rows, row-span membership with an explicit witness,
-the Boolean span test, and a nullspace basis. Each has a soundness
-theorem. The nullspace basis also has a completeness theorem.
+From the reduced form we compute the linear combination of the rows,
+row-span membership with an explicit witness, the Boolean span test, and
+a nullspace basis. Each has a soundness theorem. The nullspace basis also
+has a completeness theorem.
 
 {docstring Hex.Matrix.vecMul}
 
@@ -117,10 +117,10 @@ theorem. The nullspace basis also has a completeness theorem.
 tag := "hex-row-reduce-recipes"
 %%%
 
-Task-oriented how-tos for the things callers reach for most. Each
-executable recipe shows the idiomatic call and its result; where a
-Mathlib correspondence theorem exists, a companion recipe then shows how
-to *prove* the matching Mathlib fact by running the executable.
+These are how-to recipes for common tasks. Each executable recipe shows
+the idiomatic call and its result. Where a Mathlib correspondence theorem
+exists, a companion recipe shows how to *prove* the matching Mathlib fact
+by running the executable.
 
 ## How to find a basis for the kernel of a matrix
 %%%
@@ -129,7 +129,7 @@ tag := "hex-row-reduce-recipe-kernel"
 
 You have a matrix over a field and want a basis for its kernel: the
 vectors `x` with `M * x = 0`. Build the matrix with the `#m[...]`
-literal; {name}`Hex.Matrix.nullspaceBasisMatrix` returns the basis as
+literal. {name}`Hex.Matrix.nullspaceBasisMatrix` returns the basis as
 the columns of a matrix, one column per free (non-pivot) column of `M`.
 
 ```lean (name := kernelBasis)
@@ -197,10 +197,10 @@ theorem rank_eq_one : A.rank = 1 := by
 end HexRowReduceKernelProof
 ```
 
-`decide +kernel` runs the row reduction in the kernel and checks the
-result. It is kernel-honest: the proof depends only on `propext`,
-`Classical.choice`, and `Quot.sound`, never the compiler-trusting
-`native_decide` (banned project-wide). For the kernel as a subspace, the
+`decide +kernel` runs the row reduction in Lean's kernel and checks the
+result. The proof depends only on `propext`, `Classical.choice`, and
+`Quot.sound`, never the compiler-trusting `native_decide` (banned
+project-wide). For the kernel as a subspace, the
 same pattern uses {name}`HexMatrixMathlib.nullspace_span_eq_ker`, whose
 right-hand side is exactly the Mathlib `LinearMap.ker` of `M`'s
 `mulVecLin`.
@@ -212,7 +212,7 @@ tag := "hex-row-reduce-recipe-span"
 
 You have a matrix and a vector and want to know whether the vector is a
 linear combination of the rows. {name}`Hex.Matrix.spanContains` is the
-decidable test; {name}`Hex.Matrix.spanCoeffs` returns the witnessing
+decidable test. {name}`Hex.Matrix.spanCoeffs` returns the witnessing
 coefficients when the answer is yes.
 
 ```lean (name := spanTest)
@@ -242,8 +242,8 @@ tag := "hex-row-reduce-recipe-span-proof"
 The Mathlib-side companion, like the kernel proof above, crosses into
 Mathlib. {name}`HexMatrixMathlib.spanContains_iff_mem_span` turns the
 executable {name}`Hex.Matrix.spanContains` test into membership in
-Mathlib's `Submodule.span` of the rows, so a `Submodule.span` goal falls
-to the same run-and-rewrite move.
+Mathlib's `Submodule.span` of the rows, so a `Submodule.span` goal is
+proved the same way: rewrite through this theorem, then `decide +kernel`.
 
 ```lean
 open Hex Hex.Matrix HexMatrixMathlib
@@ -274,8 +274,8 @@ tag := "hex-row-reduce-cross-references"
 matrix type, arithmetic, and elementary operations.
 
 * {ref "hex-determinant"}[HexDeterminant] and
-  {ref "hex-bareiss"}[HexBareiss] handle the determinant; row reduction
+  {ref "hex-bareiss"}[HexBareiss] handle the determinant. Row reduction
   is the separate field-valued route for rank, span, and nullspace.
 * `HexRowReduceMathlib` identifies the executable rank, span, and
-  nullspace with Mathlib's linear algebra. `HexRowReduce` is
-  Mathlib-free.
+  nullspace with their Mathlib analogues `Matrix.rank`, `Submodule.span`,
+  and `LinearMap.ker`. `HexRowReduce` is Mathlib-free.

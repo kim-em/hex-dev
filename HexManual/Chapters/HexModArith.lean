@@ -27,18 +27,17 @@ tag := "hex-mod-arith-intro"
 coefficients. A residue is a single machine word holding the standard
 representative in `[0, p)`, bundled with a proof that the word is
 reduced. There is one residue type, {name}`Hex.ZMod64`, parametrised by
-the modulus `p`; the Barrett and Montgomery hot-loop routines are opt-in
+the modulus `p`. The Barrett and Montgomery hot-loop routines are opt-in
 *operations* on that type, not parallel residue types.
 
 The modulus carries a side condition: it must be positive and fit in a
 machine word. That condition is packaged as the typeclass
 {name}`Hex.ZMod64.Bounds`, which every `ZMod64 p` value and operation
-takes as an instance argument. `HexModArith` is Mathlib-free; it depends
+takes as an instance argument. `HexModArith` is Mathlib-free. It depends
 only on `HexArith`, from which it borrows the Barrett and Montgomery
 machine-word kernels. The finite-field and prime-field polynomial
-libraries (`HexGFqRing`, `HexPolyFp`, and beyond) read their coefficient
-arithmetic off this representation; see
-{ref "hex-mod-arith-cross-references"}[Cross-references].
+libraries (`HexGFqRing`, `HexPolyFp`) use `ZMod64 p` as their coefficient
+type. See {ref "hex-mod-arith-cross-references"}[Cross-references].
 
 # The residue type
 %%%
@@ -106,7 +105,7 @@ representative. The standard `Add`, `Sub`, `Neg`, and `Mul` instances on
 {docstring Hex.ZMod64.mul}
 
 Exponentiation uses repeated squaring, and inversion runs the
-extended-GCD helper from `HexArith`; for an element coprime to the
+extended-GCD helper from `HexArith`. For an element coprime to the
 modulus the result is the modular inverse.
 
 {docstring Hex.ZMod64.pow}
@@ -119,8 +118,7 @@ tag := "hex-mod-arith-worked-ring"
 %%%
 
 The block below works in `ZMod64 7`. After supplying the `Bounds 7`
-instance it builds two residues and exercises the constructors and the
-ring operations. Each `#guard` is checked when the chapter builds.
+instance it builds two residues and runs the ring operations on them.
 
 ```lean
 open Hex Hex.ZMod64
@@ -282,8 +280,8 @@ tag := "hex-mod-arith-mathlib"
 
 Everything above is executable and Mathlib-free. `HexModArithMathlib`
 connects it to Mathlib: every {name}`Hex.ZMod64` value corresponds to an
-element of Mathlib's `ZMod p`. The two transfer maps read a residue as a
-`ZMod p` class and back.
+element of Mathlib's `ZMod p`. The two transfer maps convert a residue to a
+`ZMod p` element and back.
 
 {docstring HexModArithMathlib.ZMod64.toZMod}
 

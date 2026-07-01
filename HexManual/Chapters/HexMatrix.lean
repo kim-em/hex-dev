@@ -47,7 +47,8 @@ tag := "hex-matrix-core"
 %%%
 
 {name}`Hex.Matrix.ofFn` builds a matrix from an entry function
-`Fin n → Fin m → R`; `row`, `col`, and `transpose` read it back.
+`Fin n → Fin m → R`. `row` and `col` return its rows and columns, and
+`transpose` swaps them.
 
 {docstring Hex.Matrix.ofFn}
 
@@ -65,8 +66,8 @@ The zero and identity matrices:
 
 {docstring Hex.Matrix.identity}
 
-Multiplication is the row-by-column dot product, matrix-vector and
-matrix-matrix, both written `*`.
+Matrix-vector and matrix-matrix multiplication are both written `*`.
+Each product entry is a row-by-column dot product.
 
 {docstring Vector.dotProduct}
 
@@ -110,11 +111,10 @@ over a field.
 tag := "hex-matrix-worked"
 %%%
 
-The block builds an integer matrix with the `#m[...]` literal and reads
-three quantities off it: the squared norm of the first row
+The block builds an integer matrix with the `#m[...]` literal and checks
+three things about it: the squared norm of the first row
 (`2² + 0² + 1² = 5`), the dot product of the first two rows (`4`), and
-that the identity fixes a vector. Each `#guard` is checked when the
-chapter builds.
+that the identity fixes a vector.
 
 ```lean
 open Hex

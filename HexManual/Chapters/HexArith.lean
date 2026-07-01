@@ -39,10 +39,12 @@ Euclidean algorithm in three flavours (`Nat`, GMP-backed `Int`, and
 primality test that produces a primality witness without `native_decide`
 or a hardcoded prime list.
 
-Everything here is executable. Some wide-word operations carry an
-`@[extern]` C implementation for speed, but each is defined by a Lean
-model the C code is proved to match, so the library has a meaning
-independent of the native binding; see
+Everything here is executable. Some wide-word operations also carry an
+`@[extern]` C implementation for speed. The Lean definition is the
+meaning, and proofs and the kernel reduce it directly. `@[extern]` only
+redirects compiled code and the interpreter to the C version, which is
+*trusted* to match the Lean definition, never proved to. The `Nat`-level
+laws below are stated about the Lean definitions. See
 {ref "hex-arith-cross-references"}[Cross-references].
 
 # Wide-word `UInt64` operations
@@ -88,9 +90,8 @@ single-word range.
 {docstring UInt64.subBorrow_snd}
 
 These four operations are `@[extern]`-backed for speed, so they run
-through a C implementation in compiled code; their Lean models are what
-the manual's evaluated examples below avoid and what the laws above are
-stated against.
+through a C implementation in compiled code. The laws above are stated
+about their Lean definitions.
 
 # Extended GCD
 %%%
@@ -112,6 +113,21 @@ that destructure the returned triple.
 
 {docstring HexArith.extGcd_spec}
 
+The `Int` variant runs the same recurrence over `Int`, with the GMP
+`mpz_gcdext` extern as its trusted runtime replacement.
+
+{docstring HexArith.Int.extGcd}
+
+{docstring HexArith.Int.extGcd_spec}
+
+The `UInt64` variant interprets its word inputs by their natural values,
+returning the gcd as a word and the Bezout coefficients as signed
+integers.
+
+{docstring HexArith.UInt64.extGcd}
+
+{docstring HexArith.UInt64.extGcd_spec}
+
 # Barrett reduction
 %%%
 tag := "hex-arith-barrett"
@@ -121,14 +137,14 @@ Barrett reduction computes `T mod p` for a small modulus `p` using a
 single precomputed reciprocal, replacing the hardware division with one
 multiply-and-shift and at most one corrective subtraction. The
 `Nat`-level routine states the arithmetic abstractly over the radix
-{name}`barrettRadix`; the reciprocal is `pinv = floor(R / p)`.
+{name}`barrettRadix`. The reciprocal is `pinv = floor(R / p)`.
 
 {docstring barrettRadix}
 
 {docstring barrettReduceNat}
 
 The reciprocal approximates the true quotient from below, never
-overshooting by more than one; these two bounds make the single
+overshooting by more than one. These two bounds make the single
 corrective subtraction sufficient.
 
 {docstring barrettQuotient_le_div}
@@ -183,7 +199,7 @@ modulus below the radix.
 {docstring redcNat_lt}
 
 The executable side carries the machine-word Montgomery parameters in
-a {name}`MontCtx`; {name}`redc` consumes a two-word product `(Thi, Tlo)`
+a {name}`MontCtx`. {name}`redc` consumes a two-word product `(Thi, Tlo)`
 and returns one reduced residue, proved to match the `Nat` model and to
 stay canonical.
 
@@ -218,13 +234,12 @@ precomputed list.
 tag := "hex-arith-worked"
 %%%
 
-The block below exercises the pure (non-`@[extern]`) computational
-surface: the `Nat` extended GCD, the trial-division test, and the
-`Nat`-level Barrett reducer. Each `#guard` is checked when the chapter
-is built, so the expected outputs are guaranteed to match what the
-executable implementation produces. The wide-word operations are
-omitted here because their `@[extern]` C binding is not available to the
-manual's evaluator; they are documented by signature and law above.
+The block below runs the pure (non-`@[extern]`) operations: the `Nat`
+extended GCD, the trial-division test, and the `Nat`-level Barrett
+reducer. The wide-word operations are `@[extern]`: the interpreter runs
+their native C symbol rather than the Lean definition, and that symbol is
+not linked into the manual's evaluator, so `#eval` and `#guard` cannot
+run them. They are documented by signature and law above.
 
 ```lean
 open HexArith Hex.Nat
@@ -263,7 +278,7 @@ tag := "hex-arith-cross-references"
 * The wide-word multiply and carry primitives are `@[extern]`-backed by
   the C sources in `HexArith/ffi/` (`wide_arith.c`, `mpz_gcdext.c`), and
   the {ref "hex-arith-wide"}[`Nat`-level laws] above are the
-  specification those bindings are proved against; the library's meaning
+  specification those bindings are proved against. The library's meaning
   does not depend on the native code being linked.
 * The arithmetic here has no Mathlib correspondence library of its own.
   The Mathlib correspondences live in the consuming libraries' `*Mathlib`

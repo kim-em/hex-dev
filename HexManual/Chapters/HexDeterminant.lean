@@ -30,7 +30,7 @@ with the Mathlib correspondence in
 `HexDeterminant` is the determinant of a dense square matrix via the
 Leibniz formula, with the cofactor and adjugate theory built on it. It
 depends only on {ref "hex-matrix"}[HexMatrix] and is generic over the
-coefficient ring; the row-operation, Laplace, Cauchy-Binet, and Plücker
+coefficient ring. The row-operation, Laplace, Cauchy-Binet, and Plücker
 results hold over a commutative ring.
 
 The Leibniz determinant is the definition: correct by construction but
@@ -49,7 +49,7 @@ tag := "hex-determinant-leibniz"
 %%%
 
 The reference determinant is the Leibniz formula: a signed sum over all
-permutation vectors of the product of the selected entries.
+permutations of the product of the selected entries.
 
 {docstring Hex.Matrix.det}
 
@@ -71,7 +71,7 @@ transpose.
 
 {docstring Hex.Matrix.det_colSwap}
 
-The determinant is linear in each column separately; the additive law in
+The determinant is linear in each column separately. The additive law in
 one column is the building block for Laplace expansion.
 
 {docstring Hex.Matrix.det_setCol_add}
@@ -81,7 +81,7 @@ one column is the building block for Laplace expansion.
 tag := "hex-determinant-cofactor"
 %%%
 
-Deleting one row and one column gives a minor; the signed minor is a
+Deleting one row and one column gives a minor. The signed minor is a
 cofactor, and the determinant is the alternating sum of entries against
 their cofactors along any fixed row or column.
 
@@ -99,9 +99,9 @@ tag := "hex-determinant-adjugate"
 %%%
 
 The adjugate is the transpose of the cofactor matrix. Its defining
-identity, `M * adjugate M = det M • identity`, is the executable
-Cramer's-rule kernel: over a commutative ring it holds without any
-invertibility hypothesis.
+identity, `M * adjugate M = det M • identity`, is what Cramer's rule
+rests on. Over a commutative ring it holds without any invertibility
+hypothesis.
 
 {docstring Hex.Matrix.adjugate}
 
@@ -115,8 +115,8 @@ tag := "hex-determinant-identities"
 The determinant of a Gram matrix expands as a sum over column tuples
 (the Cauchy-Binet formula), and the three-term Plücker /
 Desnanot-Jacobi identity relates the determinants of a matrix and its
-bordered minors. The triangular-determinant law reads the determinant
-of an upper- or lower-triangular matrix off its diagonal.
+bordered minors. The triangular-determinant law gives the determinant of an upper- or
+lower-triangular matrix as the product of its diagonal entries.
 
 {docstring Hex.Matrix.det_gramMatrix_eq_sum_columnTuples}
 
@@ -133,7 +133,6 @@ The block below builds the integer matrix with rows `(2, 0, 1)`,
 `(1, 3, 2)`, and `(0, 1, 1)`, whose determinant is `3`. The identity has
 determinant one, the determinant is invariant under transpose, swapping
 two rows negates it, and a matrix with a dependent row pair is singular.
-Every `#guard` is checked when the chapter is built.
 
 ```lean
 open Hex Hex.Matrix

@@ -23,8 +23,8 @@ tag := "hex-poly-fp"
 tag := "hex-poly-fp-intro"
 %%%
 
-`HexPolyFp` specializes the executable dense polynomials to the
-prime-field candidate `Hex.ZMod64 p`. Where {ref "hex-poly"}[`HexPoly`]
+`HexPolyFp` specializes the executable dense polynomials to
+coefficients in `Hex.ZMod64 p`. Where {ref "hex-poly"}[`HexPoly`]
 is generic over any coefficient type with a `Zero` and a `DecidableEq`,
 `HexPolyFp` fixes the coefficients to machine-word residues modulo a
 prime `p` and adds the operations that only make sense over `` `Fₚ` ``:
@@ -36,8 +36,8 @@ modulus is irreducible.
 {name}`Hex.FpPoly` is a thin `abbrev` over
 {name}`Hex.DensePoly`, so the entire constructor, arithmetic, and
 Euclidean API documented in the {ref "hex-poly"}[`HexPoly` chapter] is
-available unchanged; this chapter covers only what the prime-field
-specialization adds on top. `HexPolyFp` is Mathlib-free; it depends on
+available unchanged. This chapter covers only what the prime-field
+specialization adds on top. `HexPolyFp` is Mathlib-free. It depends on
 {ref "hex-poly"}[`HexPoly`] for the representation and on
 {ref "hex-mod-arith"}[`HexModArith`] for the `ZMod64 p` coefficient
 arithmetic. See {ref "hex-poly-fp-cross-references"}[Cross-references].
@@ -58,8 +58,8 @@ Because {name}`Hex.FpPoly` unfolds to {name}`Hex.DensePoly`, the
 needs for the specialized type. {name}`Hex.FpPoly.ofCoeffs` builds a
 polynomial from a coefficient array, {name}`Hex.FpPoly.X` is the
 indeterminate, and {name}`Hex.FpPoly.modByMonic` reduces modulo a monic
-divisor. The irreducibility predicate that gates the field operations is
-also stated here.
+divisor. The irreducibility predicate the field operations require as a
+hypothesis is also stated here.
 
 {docstring Hex.FpPoly.Irreducible}
 
@@ -80,8 +80,8 @@ results never grow past the modulus degree.
 {docstring Hex.FpPoly.composeModMonic}
 
 The finite-field irreducibility and factorization tests are built on the
-Frobenius-power maps. {name}`Hex.FpPoly.frobeniusXMod` computes the
-basic generator `X^p mod f`, and {name}`Hex.FpPoly.frobeniusXPowMod`
+Frobenius-power maps. {name}`Hex.FpPoly.frobeniusXMod` computes
+`X^p mod f`, and {name}`Hex.FpPoly.frobeniusXPowMod`
 iterates it to `X^(pᵏ) mod f` for arbitrary `k`.
 
 {docstring Hex.FpPoly.frobeniusXMod}
@@ -90,7 +90,7 @@ iterates it to `X^(pᵏ) mod f` for arbitrary `k`.
 
 Square-free decomposition runs Yun's algorithm over `` `Fₚ` ``. The
 result bundles a scalar unit with a list of square-free factors and
-their multiplicities; the two record types name those pieces.
+their multiplicities. The two record types name those pieces.
 
 {docstring Hex.FpPoly.SquareFreeFactor}
 
@@ -99,9 +99,8 @@ their multiplicities; the two record types name those pieces.
 {docstring Hex.FpPoly.squareFreeDecomposition}
 
 The inverse operation reassembles a polynomial from a decomposition by
-raising each factor to its multiplicity and multiplying. It documents
-the record's meaning and is the reconstruction side of the correctness
-laws below.
+raising each factor to its multiplicity and multiplying. It is the
+reconstruction side of the correctness laws below.
 
 {docstring Hex.FpPoly.weightedProduct}
 
@@ -119,7 +118,7 @@ degree below the modulus, together with a proof of that bound.
 The quotient is unconditionally a commutative ring. It becomes a
 *field* only when `g` is irreducible, and `HexPolyFp` parametrizes
 over that fact rather than deciding it. There is no unconditional
-`Field` instance; instead the field-promoting laws are theorems that
+`Field` instance. Instead the field-promoting laws are theorems that
 take `FpPoly.Irreducible g` as an explicit hypothesis. A downstream
 caller supplies an irreducibility witness (in practice a checkable
 Rabin certificate from `HexBerlekamp`), and only then are inverses
@@ -133,11 +132,10 @@ tag := "hex-poly-fp-worked-example"
 
 The block below works over `FpPoly 5`. It fixes the monic quadratic
 modulus `x² + 2` (whose reduction rule is `x² ≡ -2 ≡ 3 (mod 5)`) and a
-linear modulus `x + 3`, then exercises modular exponentiation,
-Frobenius, composition, weighted products, and square-free
-decomposition. The helper `coeffNats` reads a polynomial back as a list
-of natural-number coefficients. Each `#guard` is checked when the
-chapter is built. These values are the same ones pinned by the
+linear modulus `x + 3`, then runs modular exponentiation, Frobenius,
+composition, weighted products, and square-free decomposition. The
+helper `coeffNats` converts a polynomial to a list of natural-number
+coefficients. The expected values are the same ones pinned by the
 library's conformance suite.
 
 ```lean
@@ -283,8 +281,8 @@ tag := "hex-poly-fp-key-correctness"
 
 The executable operations are pinned to their mathematical meaning.
 Modular composition agrees with the spelled-out "compose then take the
-remainder" definition, and the Frobenius iterate reduces to the
-absolute monomial it represents. That last identity is the one Rabin's
+remainder" definition, and the Frobenius iterate reduces to
+`X^(pᵏ) mod f`. That last identity is the one Rabin's
 irreducibility test relies on.
 
 {docstring Hex.FpPoly.composeModMonic_eq_mod}
@@ -323,7 +321,7 @@ the prime-field specialization the finite-field libraries use:
 * {ref "hex-poly"}[`HexPoly`] is the generic dense-polynomial library.
   {name}`Hex.FpPoly` is an `abbrev` over {name}`Hex.DensePoly`, so every
   constructor, arithmetic, evaluation, and Euclidean operation
-  documented in that chapter is inherited at the specialized type; the
+  documented in that chapter is inherited at the specialized type. The
   concrete `DivModLaws`/`GcdLaws` the generic Euclidean laws are stated
   under are discharged here for `ZMod64 p`.
 * {ref "hex-mod-arith"}[`HexModArith`] supplies the `ZMod64 p`
@@ -335,6 +333,6 @@ the prime-field specialization the finite-field libraries use:
 Downstream, the finite-field libraries consume `HexPolyFp` directly:
 `HexGFqRing` builds the quotient ring `` `Fₚ[x] / (g)` `` and
 {ref "hex-gfq-field"}[`HexGFqField`] promotes it to a field using the
-irreducibility-gated inverse laws documented above, with the
-{name}`Hex.FpPoly.Irreducible` witness produced by a checkable Rabin
-certificate from `HexBerlekamp`.
+inverse laws documented above, each conditioned on irreducibility of the
+modulus, with the {name}`Hex.FpPoly.Irreducible` witness produced by a
+checkable Rabin certificate from `HexBerlekamp`.
