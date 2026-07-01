@@ -24,31 +24,29 @@ tag := "hex-gfq"
 tag := "hex-gfq-intro"
 %%%
 
-`HexGFq` is the user-facing constructor layer for canonical finite
-fields: it packages the committed Conway-table entries of
+`HexGFq` packages the committed Conway-table entries of
 {ref "hex-conway"}[`HexConway`] as ready-to-use field types, so a caller
 who wants `GF(pⁿ)` for a supported pair `(p, n)` never has to supply a
-modulus or an irreducibility proof by hand. The library sits at the top
-of the finite-field portion of the DAG, over the executable field layer
-{ref "hex-gfq-field"}[`HexGFqField`], the Conway lookup `HexConway`, and
-the packed characteristic-two field `HexGF2`.
+modulus or an irreducibility proof by hand. It builds on the executable
+field {ref "hex-gfq-field"}[`HexGFqField`], the Conway lookup
+`HexConway`, and the packed characteristic-two field `HexGF2`.
 
-It exposes two parallel surfaces. The *generic* surface builds every
-field as the `HexGFqField` quotient `` `Fₚ[x] / (f)` `` with `f` the
-committed Conway modulus, and works for every committed `(p, n)`. The
-*packed* characteristic-two surface, for committed binary entries,
+It exposes two parallel families of constructors. The *generic* family
+builds every field as the `HexGFqField` quotient `` `Fₚ[x] / (f)` `` with
+`f` the committed Conway modulus, and works for every committed `(p, n)`.
+The *packed* characteristic-two family, for committed binary entries,
 instead routes through the single-word `HexGF2` representation, trading
-the generic quotient for machine-word arithmetic while certifying — at
-elaboration time — that the packed modulus is the same Conway
-polynomial. `HexGFq` is Mathlib-free; everything below typechecks against
-the executable libraries only.
+the generic quotient for machine-word arithmetic while certifying, at
+elaboration time, that the packed modulus is the same Conway polynomial.
+`HexGFq` is Mathlib-free; everything below typechecks against the
+executable libraries only.
 
 # The committed-entry mechanism
 %%%
 tag := "hex-gfq-committed"
 %%%
 
-The generic constructors need a {name}`Hex.Conway.SupportedEntry` — the
+The generic constructors need a {name}`Hex.Conway.SupportedEntry`, the
 `HexConway` witness bundling a Conway modulus with its primality and
 irreducibility proofs. Passing that witness explicitly everywhere is
 verbose, so `HexGFq` makes it available through instance synthesis with a
@@ -89,14 +87,14 @@ from the ambient instance:
 
 A family of `*_eq_gfq` lemmas characterises the `GFqC` spelling against
 the explicit `GFq` one, so a proof may always unfold the convenience
-layer back to the entry-explicit form. The modulus delegation is
+spelling back to the entry-explicit form. The modulus delegation is
 representative:
 
 {docstring Hex.GFqC.modulus_eq_gfq}
 
-Both surfaces carry the full executable field API — `repr`, the ring and
+Both families provide the full executable field API: `repr`, the ring and
 field operations, and the Frobenius endomorphism `a ↦ aᵖ` as the `p`-th
-power map:
+power map.
 
 {docstring Hex.GFq.frob}
 
@@ -119,7 +117,7 @@ A committed binary entry that also admits the packed view is recorded by
 the class {name}`Hex.Conway.PackedGF2Entry`. Its fields bundle the
 `HexConway` `SupportedEntry`, the packed lower-word modulus `lower`, the
 extension-degree bounds `0 < n < 64`, the certified irreducibility of the
-packed modulus, and — crucially — `conway_eq_packed`, the proof that the
+packed modulus, and (crucially) `conway_eq_packed`, the proof that the
 committed Conway polynomial *equals* the packed modulus viewed as an
 `FpPoly 2`. That equality is what lets the optimized field stand in for
 the canonical one without changing the mathematics. The committed
@@ -131,8 +129,8 @@ modulus. Words enter and leave through:
 
 {docstring Hex.GF2q.ofWord}
 
-and the bridge into the generic model — packing's correctness made
-executable — is:
+and the translation into the generic model (packing's correctness made
+executable) is:
 
 {docstring Hex.GF2q.toGFq}
 
@@ -142,12 +140,11 @@ tag := "hex-gfq-worked"
 %%%
 
 The committed pair `(2, 3)` gives `GF(8) = 𝔽₂[x] / (x³ + x + 1)`, the
-Conway field `C(2, 3)`. The block below picks up its field type two ways
-— the generic `GFqC 2 3` and the packed `GF2q 3` — then exercises the
-packed surface, where elements are machine words whose bits are the
+Conway field `C(2, 3)`. The block below picks up its field type two
+ways (the generic `GFqC 2 3` and the packed `GF2q 3`), then exercises the
+packed constructors, where elements are machine words whose bits are the
 polynomial coefficients (bit `i` is the coefficient of `xⁱ`). Each
-`#guard` is checked when the chapter is built, so the outputs match what
-the executable field produces.
+`#guard` is checked when the chapter builds.
 
 ```lean
 open Hex
@@ -186,10 +183,10 @@ tag := "hex-gfq-correctness"
 
 A finite field exists only when its modulus is irreducible, so every
 constructor in this library ultimately rests on an irreducibility proof.
-For the generic surface that proof is the `HexConway` entry's; for the
-packed surface it is a separate certificate over the `HexGF2`
+For the generic constructors that proof is the `HexConway` entry's; for
+the packed constructors it is a separate certificate over the `HexGF2`
 `GF2Poly.Irreducible` predicate, discharged by `decide` on a checkable
-certificate — never by `native_decide`. The degree-one case is small
+certificate, never by `native_decide`. The degree-one case is small
 enough to prove by exhausting the two monic linear polynomials over
 `𝔽₂`:
 
@@ -198,8 +195,8 @@ enough to prove by exhausting the two monic linear polynomials over
 Higher-degree committed entries are certified the same way through the
 `HexGF2` certificate checker. Because the check runs at elaboration time,
 a corrupted packed modulus would fail to typecheck rather than silently
-producing a non-field, so the irreducible-modulus guarantee is part of
-the library's compiled surface, not a runtime assertion.
+producing a non-field, so the irreducible-modulus guarantee is checked
+when the library compiles, not a runtime assertion.
 
 # The Mathlib correspondence
 %%%
