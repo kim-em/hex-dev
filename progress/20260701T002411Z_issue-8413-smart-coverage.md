@@ -95,7 +95,66 @@ so the top call satisfies it; every recursive call preserves it. `omega` closes
 each step given `_budget_le` (`b ≤ budget`, landed in #8498) and the per-size
 split-count-vs-budget bound.
 
-## Remaining work (the bulk of the capstone; multi-session)
+## Landed so far on this branch
+
+- `scaledRecombinationSmart{Aux,SizeLoop,CandLoop}_budget_le` (returned budget ≤
+  input) and `..._budget_zero` (budget 0 ⇒ `(none,0)`) in the executable file.
+- `smartAux_none_budget_zero` and `smartAux_covers_of_bound` (Mathlib layer):
+  the two headline helper *statements*, compiling with `sorry` bodies. Fuel
+  hypothesis `budget + 3 * J.card + 1 ≤ fuel`.
+
+## Fill plan for the two `sorry` helpers (execute in one coherent pass)
+
+Both are proved by a **mutual `fuel`-structural recursion** over the three exec
+loops (pattern: the existing `scaledRecombinationSmart*_budget_le` block). Write
+a `mutual … end` block of THREE completeness theorems, then a second block of
+THREE coverage theorems consuming completeness. Per-loop fuel hypotheses:
+`Aux: budget + 3*J.card + 1 ≤ fuel`; `SizeLoop: budget + 2*J.card + sizes.length ≤
+fuel`; `CandLoop: budget + 2*J.card ≤ fuel`. These discharge each recursion's
+adequacy by `omega` + `_budget_le`.
+
+Loop-level statements carry the `cover_at_min` witness explicitly (`f_cov`,
+`S_cov`, `hf_cov_irr`, `hf_cov_dvd_target`, `hS_cov_J`, `hmin_in_S_cov`,
+`hS_cov_rep`) plus, for the enumeration:
+- CandLoop: `k` (= `S_cov.card - 1`), `hsplits_enum : ∀ split ∈ splits, split ∈
+  (subsetsOfSizeWithComplement tail k).map (fun sc => (head :: sc.1, sc.2))`, and
+  `hscov_mem : scovSplit ∈ splits` where `scovSplit =
+  (liftedSubsetSelectedList d S_cov, liftedSubsetSelectedList d (J \ S_cov))`.
+- SizeLoop: `hcontains : (S_cov.card - 1) ∈ sizes` and `hsizes_suffix : sizes` a
+  suffix of `List.range (tail.length + 1)`.
+
+Completeness case analysis (`= (none, b) → b = 0`):
+- `Aux`: `target=1`→`some`, contradiction; `budget=0`→`(none,0)`, `b=0`;
+  `fuel=0`→adequacy `omega` contradiction; `localFactors=[]`→`J` empty (matches),
+  so `target=1` by the `hJ_ne` argument from `covers_of_bound` (uses
+  `not_represents_empty_of_irreducible_dvd_core_of_primitive_pos_lc_core_of_bound`),
+  contradiction; `head::tail`→derive `S_cov` via `cover_at_min`, delegate to
+  `SizeLoop` completeness with `hcontains`/`hsizes_suffix`.
+- `SizeLoop`: `sizes=[]`→`hcontains` gives `False`; `budget=0`→`(none,0)`;
+  `fuel=0`→adequacy `omega`; `d::ds`: if `CandLoop` returns `some`→contradiction
+  with `none`; if `(none, cb)`→ when `d = S_cov.card-1` delegate to `CandLoop`
+  completeness (gives `cb=0`, then `_budget_zero` ⇒ `b=0`); when `d ≠` recurse
+  `SizeLoop` on `ds` (`hcontains` still holds since `d < S_cov.card-1`).
+- `CandLoop`: `splits=[]`→`hscov_mem` gives `False`; `budget=0`→`(none,0)`;
+  `fuel=0`→adequacy; `split::rest`: if `split = scovSplit`, it records
+  (`shouldRecord_liftedRecoveryCandidate_of_eq_factor` via
+  `liftedRecoveryCandidate_eq`) and divides
+  (`exactQuotient?_liftedRecoveryCandidate_eq_some_of_eq_factor_of_primitive_pos_lc`),
+  so `Aux(quotient_Scov)` is called; by `Aux` completeness (recursion) its
+  `none` return has budget `0`, then `_budget_zero` ⇒ `b=0`; if `split ≠
+  scovSplit`, `split`'s subset `T ≠ S_cov` at the same size `k` does NOT divide
+  (containment `S_cov ⊆ T` + `|T| = |S_cov|` ⇒ `T = S_cov`, contra), so `CandLoop`
+  recurses on `rest` (`hscov_mem` still holds; drop `split` from `hsplits_enum`).
+
+Coverage (`= (some result, b) → coverage`): structural peel-extraction gives
+`result = cand(T) :: sub` with `Aux(quotient) = (some sub, _)`; show `T = S_cov`
+(containment `S_cov ⊆ T`; if `|S_cov| < |T|` then `SizeLoop` reached size
+`|S_cov|` with `CandLoop` returning `none`, whose `b` is `0` by the completeness
+argument above ⇒ propagates ⇒ overall `none`, contra `some`). Then `cand(T) =
+f_cov` is irreducible; recurse via `liftedFactorSubsetPartition_transport` +
+`LiftedFactorListMatches.sdiff_of_subset` exactly as `covers_of_bound`.
+
+## Remaining work after the two helpers
 
 Recommended order (completeness first, since coverage consumes it):
 
