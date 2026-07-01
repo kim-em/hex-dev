@@ -17942,6 +17942,8 @@ wrapper's `fuel = budget + (r+1)(2r+3)` (`Hex.scaledRecombinationSmart`) meets i
 at the top.  See `progress/20260701T002411Z_issue-8413-smart-coverage.md`.
 -/
 
+mutual
+
 /-- Trustworthy-none completeness for the size-ordered search: with adequate
 fuel, a `none` return can only come from budget exhaustion (`b = 0`).  The
 witness is `cover_at_min`: if `J` is nonempty its minimum lies in some true
@@ -17962,20 +17964,18 @@ private theorem smartAux_none_budget_zero
     (hd_liftedFactor_natDegree_pos :
       ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
     (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
-    (hprecision : 2 * B' < d.p ^ d.k) :
-    ∀ {target : Hex.ZPoly} {J : LiftedFactorSubset d}
-      {localFactors : List Hex.ZPoly} {budget fuel b : Nat},
-      Hex.ZPoly.Primitive target →
-      0 < Hex.DensePoly.leadingCoeff target →
-      target ∣ core →
-      LiftedFactorSubsetPartition core d J target →
-      LiftedFactorListMatches d J localFactors →
-      budget + 3 * J.card + 1 ≤ fuel →
-      Hex.scaledRecombinationSmartAux (Hex.DensePoly.leadingCoeff core)
-          target (d.p ^ d.k) localFactors budget fuel = (none, b) →
-      b = 0 := by
-  intro target J localFactors budget fuel b htarget_primitive htarget_lc_pos
-    htarget_dvd_core hpartition hmatches hfuel h
+    (hprecision : 2 * B' < d.p ^ d.k)
+    {target : Hex.ZPoly} {J : LiftedFactorSubset d}
+    {localFactors : List Hex.ZPoly} {budget fuel b : Nat}
+    (htarget_primitive : Hex.ZPoly.Primitive target)
+    (htarget_lc_pos : 0 < Hex.DensePoly.leadingCoeff target)
+    (htarget_dvd_core : target ∣ core)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hmatches : LiftedFactorListMatches d J localFactors)
+    (hfuel : budget + 3 * J.card + 1 ≤ fuel)
+    (h : Hex.scaledRecombinationSmartAux (Hex.DensePoly.leadingCoeff core)
+        target (d.p ^ d.k) localFactors budget fuel = (none, b)) :
+    b = 0 := by
   unfold Hex.scaledRecombinationSmartAux at h
   split at h
   · -- target = 1: returns (some [], budget), contradicting (none, b)
@@ -18020,8 +18020,118 @@ private theorem smartAux_none_budget_zero
             B' (hvalid g hg_dvd_core) hcore_ne hcore_primitive hcore_lc_pos
             hcore_lc_le hd_modulus hpartition hg_dvd_target hg_irr_toPoly hprecision
           rw [← hS_empty]; exact hSrep
-        · -- head :: tail: delegate to the size-loop completeness (mutual)
-          sorry
+        · -- head :: tail: derive `S_cov` via cover-at-min, delegate to size loop
+          rename_i head tail
+          have hlen : (head :: tail).length = J.card :=
+            LiftedFactorListMatches.length_eq_card hmatches
+          simp only [List.length_cons] at hlen
+          have hJ_ne : J.Nonempty := by
+            rw [← Finset.card_pos]; omega
+          obtain ⟨f_cov, S_cov, hf_cov_irr, hf_cov_dvd_target, hS_cov_J,
+              hmin_in_S_cov, hS_cov_rep⟩ := hpartition.cover_at_min hJ_ne
+          have hScov_card_pos : 0 < S_cov.card :=
+            Finset.card_pos.mpr ⟨_, hmin_in_S_cov⟩
+          have hScov_card_le : S_cov.card ≤ J.card := Finset.card_le_card hS_cov_J
+          refine smartSizeLoop_none_budget_zero B' hcore_lc_le hvalid hcore_ne
+            hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+            hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+            htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
+            hf_cov_irr hf_cov_dvd_target hS_cov_J hJ_ne hmin_in_S_cov hS_cov_rep
+            ?_ ?_ h
+          · -- hcontains : (S_cov.card - 1) ∈ List.range (tail.length + 1)
+            rw [List.mem_range]; omega
+          · -- fuel adequacy for the size loop
+            simp only [List.length_range]; omega
+termination_by fuel
+
+/-- Size-loop half of trustworthy-none completeness: with `S_cov`'s size still in
+the remaining `sizes`, a `none` return has budget `0`.  Delegates to the
+candidate loop at `S_cov`'s size and recurses on smaller sizes. -/
+private theorem smartSizeLoop_none_budget_zero
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly, g ∣ core → ∀ i, (g.coeff i).natAbs ≤ B')
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    (hprecision : 2 * B' < d.p ^ d.k)
+    {target : Hex.ZPoly} {J : LiftedFactorSubset d}
+    {head : Hex.ZPoly} {tail : List Hex.ZPoly}
+    {f_cov : Hex.ZPoly} {S_cov : LiftedFactorSubset d}
+    {sizes : List Nat} {budget fuel b : Nat}
+    (htarget_primitive : Hex.ZPoly.Primitive target)
+    (htarget_lc_pos : 0 < Hex.DensePoly.leadingCoeff target)
+    (htarget_dvd_core : target ∣ core)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hmatches : LiftedFactorListMatches d J (head :: tail))
+    (hf_cov_irr : Irreducible (HexPolyZMathlib.toPolynomial f_cov))
+    (hf_cov_dvd_target : f_cov ∣ target)
+    (hS_cov_J : S_cov ⊆ J)
+    (hJ_ne : J.Nonempty)
+    (hmin_in_S_cov : J.min' hJ_ne ∈ S_cov)
+    (hS_cov_rep : RepresentsIntegerFactorAtLift core d f_cov S_cov)
+    (hcontains : (S_cov.card - 1) ∈ sizes)
+    (hfuel : budget + 2 * J.card + sizes.length ≤ fuel)
+    (h : Hex.scaledRecombinationSmartSizeLoop (Hex.DensePoly.leadingCoeff core)
+        target (d.p ^ d.k) head tail sizes budget fuel = (none, b)) :
+    b = 0 := by
+  sorry
+termination_by fuel
+
+/-- Candidate-loop half of trustworthy-none completeness: `S_cov`'s split is the
+unique divider among the same-size `splits` (containment + equal cardinality), so
+a `none` return has budget `0` — either budget ran out before reaching it, or its
+recursive `Aux` declined and (by `smartAux_none_budget_zero`) with budget `0`. -/
+private theorem smartCandLoop_none_budget_zero
+    {core : Hex.ZPoly} {d : Hex.LiftData}
+    (B' : Nat)
+    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (hvalid : ∀ g : Hex.ZPoly, g ∣ core → ∀ i, (g.coeff i).natAbs ≤ B')
+    (hcore_ne : core ≠ 0)
+    (hcore_primitive : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hd_modulus : 2 ≤ d.p ^ d.k)
+    (hd_liftedFactor_monic :
+      ∀ i, Hex.DensePoly.Monic (liftedFactor d i))
+    (hd_liftedFactor_natDegree_pos :
+      ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
+    (hd_liftedFactor_inj : Function.Injective (liftedFactor d))
+    (hprecision : 2 * B' < d.p ^ d.k)
+    {target : Hex.ZPoly} {J : LiftedFactorSubset d}
+    {head : Hex.ZPoly} {tail : List Hex.ZPoly}
+    {f_cov : Hex.ZPoly} {S_cov : LiftedFactorSubset d}
+    {splits : List (List Hex.ZPoly × List Hex.ZPoly)} {budget fuel b : Nat}
+    (htarget_primitive : Hex.ZPoly.Primitive target)
+    (htarget_lc_pos : 0 < Hex.DensePoly.leadingCoeff target)
+    (htarget_dvd_core : target ∣ core)
+    (hpartition : LiftedFactorSubsetPartition core d J target)
+    (hmatches : LiftedFactorListMatches d J (head :: tail))
+    (hf_cov_irr : Irreducible (HexPolyZMathlib.toPolynomial f_cov))
+    (hf_cov_dvd_target : f_cov ∣ target)
+    (hS_cov_J : S_cov ⊆ J)
+    (hJ_ne : J.Nonempty)
+    (hmin_in_S_cov : J.min' hJ_ne ∈ S_cov)
+    (hS_cov_rep : RepresentsIntegerFactorAtLift core d f_cov S_cov)
+    (hsplits_enum : ∀ split ∈ splits,
+      split ∈ (Hex.subsetsOfSizeWithComplement tail (S_cov.card - 1)).map
+        (fun sc => (head :: sc.1, sc.2)))
+    (hscov_mem : (liftedSubsetSelectedList d S_cov,
+        liftedSubsetSelectedList d (J \ S_cov)) ∈ splits)
+    (hfuel : budget + 2 * J.card ≤ fuel)
+    (h : Hex.scaledRecombinationSmartCandLoop (Hex.DensePoly.leadingCoeff core)
+        target (d.p ^ d.k) splits budget fuel = (none, b)) :
+    b = 0 := by
+  sorry
+termination_by fuel
+
+end
 
 /-- Conditional coverage for the size-ordered search: when it returns `some
 result`, every irreducible factor of `target` is an associate of some emitted
