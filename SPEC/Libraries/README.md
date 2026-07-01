@@ -143,14 +143,14 @@ Libraries marked **(released)** are published as standalone repositories;
 see [PLAN/Releases.md §Published libraries](../../PLAN/Releases.md#published-libraries).
 
 - [hex-arith.md](hex-arith.md) — extended GCD, Barrett/Montgomery reduction, binomial coefficients, Fermat's little theorem
-- [hex-matrix](https://github.com/kim-em/hex-matrix/blob/main/SPEC/hex-matrix.md) (released) — dense matrices, arithmetic, elementary row/column operations, submatrix slicing, the Gram matrix
-- [hex-row-reduce](https://github.com/kim-em/hex-row-reduce/blob/main/SPEC/hex-row-reduce.md) (released) — row reduction, rank, span, nullspace
-- [hex-determinant](https://github.com/kim-em/hex-determinant/blob/main/SPEC/hex-determinant.md) (released) — Leibniz determinant and cofactor/Cauchy-Binet/Plücker theory
-- [hex-bareiss](https://github.com/kim-em/hex-bareiss/blob/main/SPEC/hex-bareiss.md) (released) — fraction-free Bareiss determinant algorithm
-- [hex-matrix-mathlib](https://github.com/kim-em/hex-matrix-mathlib/blob/main/SPEC/hex-matrix-mathlib.md) (released) — matrix equivalence, row operations as transvections, transported algebra tower
-- [hex-row-reduce-mathlib](https://github.com/kim-em/hex-row-reduce-mathlib/blob/main/SPEC/hex-row-reduce-mathlib.md) (released) — rank/nullspace/span correspondence
-- [hex-determinant-mathlib](https://github.com/kim-em/hex-determinant-mathlib/blob/main/SPEC/hex-determinant-mathlib.md) (released) — `det` agreement with `Matrix.det`
-- [hex-bareiss-mathlib](https://github.com/kim-em/hex-bareiss-mathlib/blob/main/SPEC/hex-bareiss-mathlib.md) (released) — Bareiss determinant correctness
+- [hex-matrix](https://github.com/leanprover/hex-matrix/blob/main/SPEC/hex-matrix.md) (released) — dense matrices, arithmetic, elementary row/column operations, submatrix slicing, the Gram matrix
+- [hex-row-reduce](https://github.com/leanprover/hex-row-reduce/blob/main/SPEC/hex-row-reduce.md) (released) — row reduction, rank, span, nullspace
+- [hex-determinant](https://github.com/leanprover/hex-determinant/blob/main/SPEC/hex-determinant.md) (released) — Leibniz determinant and cofactor/Cauchy-Binet/Plücker theory
+- [hex-bareiss](https://github.com/leanprover/hex-bareiss/blob/main/SPEC/hex-bareiss.md) (released) — fraction-free Bareiss determinant algorithm
+- [hex-matrix-mathlib](https://github.com/leanprover/hex-matrix-mathlib/blob/main/SPEC/hex-matrix-mathlib.md) (released) — matrix equivalence, row operations as transvections, transported algebra tower
+- [hex-row-reduce-mathlib](https://github.com/leanprover/hex-row-reduce-mathlib/blob/main/SPEC/hex-row-reduce-mathlib.md) (released) — rank/nullspace/span correspondence
+- [hex-determinant-mathlib](https://github.com/leanprover/hex-determinant-mathlib/blob/main/SPEC/hex-determinant-mathlib.md) (released) — `det` agreement with `Matrix.det`
+- [hex-bareiss-mathlib](https://github.com/leanprover/hex-bareiss-mathlib/blob/main/SPEC/hex-bareiss-mathlib.md) (released) — Bareiss determinant correctness
 - [hex-mod-arith.md](hex-mod-arith.md) — `ZMod64 p`: `UInt64`-backed arithmetic in `Z/pZ`
 - [hex-mod-arith-mathlib.md](hex-mod-arith-mathlib.md) — `ZMod64 p ≃+* ZMod p`
 - [hex-poly.md](hex-poly.md) — dense polynomial library, operations, GCD, CRT
@@ -175,9 +175,9 @@ see [PLAN/Releases.md §Published libraries](../../PLAN/Releases.md#published-li
 - [hex-gfq-field.md](hex-gfq-field.md) — field structure on top of the quotient ring when `f` is irreducible
 - [hex-gfq.md](hex-gfq.md) — convenience wrapper `GFq p n` and optimized `GF2q n` using Conway polynomials
 - [hex-gfq-mathlib.md](hex-gfq-mathlib.md) — finiteness/cardinality for quotient fields and `GFq p n ≃+* GaloisField p n`
-- [hex-gram-schmidt](https://github.com/kim-em/hex-gram-schmidt/blob/main/SPEC/hex-gram-schmidt.md) (released) — Gram-Schmidt orthogonalization, coefficients, Gram determinants
-- [hex-gram-schmidt-mathlib](https://github.com/kim-em/hex-gram-schmidt-mathlib/blob/main/SPEC/hex-gram-schmidt-mathlib.md) (released) — correspondence with Mathlib's `gramSchmidt`
-- [hex-lll](https://github.com/kim-em/hex-lll/blob/main/SPEC/hex-lll.md) (released) — LLL lattice basis reduction algorithm and proofs
-- [hex-lll-mathlib](https://github.com/kim-em/hex-lll-mathlib/blob/main/SPEC/hex-lll-mathlib.md) (released) — lattice = `Submodule Z`, short vector bound
+- [hex-gram-schmidt](https://github.com/leanprover/hex-gram-schmidt/blob/main/SPEC/hex-gram-schmidt.md) (released) — Gram-Schmidt orthogonalization, coefficients, Gram determinants
+- [hex-gram-schmidt-mathlib](https://github.com/leanprover/hex-gram-schmidt-mathlib/blob/main/SPEC/hex-gram-schmidt-mathlib.md) (released) — correspondence with Mathlib's `gramSchmidt`
+- [hex-lll](https://github.com/leanprover/hex-lll/blob/main/SPEC/hex-lll.md) (released) — LLL lattice basis reduction algorithm and proofs
+- [hex-lll-mathlib](https://github.com/leanprover/hex-lll-mathlib/blob/main/SPEC/hex-lll-mathlib.md) (released) — lattice = `Submodule Z`, short vector bound
 - [hex-berlekamp-zassenhaus.md](hex-berlekamp-zassenhaus.md) — complete factoring of `Z[x]`
 - [hex-berlekamp-zassenhaus-mathlib.md](hex-berlekamp-zassenhaus-mathlib.md) — unconditional factoring correctness

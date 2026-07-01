@@ -6,8 +6,8 @@ with spec-driven development.
 
 `hex-row-reduce` provides Gauss-Jordan row reduction to reduced row echelon
 form over a field, together with row-span and nullspace computations built on
-it. This library depends only on [`hex-matrix`](https://github.com/kim-em/hex-matrix).
-See [`hex-row-reduce-mathlib`](https://github.com/kim-em/hex-row-reduce-mathlib)
+it. This library depends only on [`hex-matrix`](https://github.com/leanprover/hex-matrix).
+See [`hex-row-reduce-mathlib`](https://github.com/leanprover/hex-row-reduce-mathlib)
 for the correspondence with Mathlib's types and theory.
 
 # Quickstart
@@ -17,7 +17,7 @@ Add to your `lakefile.toml`:
 ```toml
 [[require]]
 name = "hex-row-reduce"
-git = "https://github.com/kim-em/hex-row-reduce.git"
+git = "https://github.com/leanprover/hex-row-reduce.git"
 rev = "main"
 ```
 
@@ -84,7 +84,7 @@ theorem nullspace_complete [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n 
 ```
 
 The identification with Mathlib's linear-algebra theory lives in
-[`hex-row-reduce-mathlib`](https://github.com/kim-em/hex-row-reduce-mathlib).
+[`hex-row-reduce-mathlib`](https://github.com/leanprover/hex-row-reduce-mathlib).
 
 # Reference manual
 

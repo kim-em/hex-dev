@@ -6,9 +6,9 @@ with spec-driven development.
 
 `hex-bareiss` provides the executable fraction-free Bareiss determinant of a
 dense integer matrix, computed by Gaussian elimination with exact division.
-This library depends on [`hex-determinant`](https://github.com/kim-em/hex-determinant)
-and [`hex-matrix`](https://github.com/kim-em/hex-matrix). See
-[`hex-bareiss-mathlib`](https://github.com/kim-em/hex-bareiss-mathlib) for the
+This library depends on [`hex-determinant`](https://github.com/leanprover/hex-determinant)
+and [`hex-matrix`](https://github.com/leanprover/hex-matrix). See
+[`hex-bareiss-mathlib`](https://github.com/leanprover/hex-bareiss-mathlib) for the
 correspondence with the Leibniz determinant and Mathlib's theory.
 
 # Quickstart
@@ -18,7 +18,7 @@ Add to your `lakefile.toml`:
 ```toml
 [[require]]
 name = "hex-bareiss"
-git = "https://github.com/kim-em/hex-bareiss.git"
+git = "https://github.com/leanprover/hex-bareiss.git"
 rev = "main"
 ```
 
@@ -80,9 +80,9 @@ theorem bareiss_eq_noPivotLoop_last_of_no_singular {k : Nat}
 ```
 
 The correspondence of the Bareiss determinant with the Leibniz
-[`det`](https://github.com/kim-em/hex-determinant), via the Desnanot-Jacobi
+[`det`](https://github.com/leanprover/hex-determinant), via the Desnanot-Jacobi
 invariant, is proven in
-[`hex-bareiss-mathlib`](https://github.com/kim-em/hex-bareiss-mathlib), not here.
+[`hex-bareiss-mathlib`](https://github.com/leanprover/hex-bareiss-mathlib), not here.
 
 # Reference manual
 

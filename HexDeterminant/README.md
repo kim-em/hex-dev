@@ -6,8 +6,8 @@ with spec-driven development.
 
 `hex-determinant` provides the determinant of a dense square matrix via the
 Leibniz formula, together with the cofactor and adjugate theory. This library
-depends only on [`hex-matrix`](https://github.com/kim-em/hex-matrix). See
-[`hex-determinant-mathlib`](https://github.com/kim-em/hex-determinant-mathlib)
+depends only on [`hex-matrix`](https://github.com/leanprover/hex-matrix). See
+[`hex-determinant-mathlib`](https://github.com/leanprover/hex-determinant-mathlib)
 for the correspondence with Mathlib's types and theory.
 
 # Quickstart
@@ -17,7 +17,7 @@ Add to your `lakefile.toml`:
 ```toml
 [[require]]
 name = "hex-determinant"
-git = "https://github.com/kim-em/hex-determinant.git"
+git = "https://github.com/leanprover/hex-determinant.git"
 rev = "main"
 ```
 
@@ -81,7 +81,7 @@ Plücker / Desnanot-Jacobi identity as `det_plucker_three_term_consecutive_top`.
 
 The identification of this determinant with Mathlib's `Matrix.det`, and the
 correspondence with the executable Bareiss determinant
-([`hex-bareiss`](https://github.com/kim-em/hex-bareiss)), live in the Mathlib
+([`hex-bareiss`](https://github.com/leanprover/hex-bareiss)), live in the Mathlib
 bridge layers.
 
 # Reference manual

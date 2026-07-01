@@ -23,9 +23,9 @@ tag := "hex-lll"
 tag := "hex-lll-intro"
 %%%
 
-Released as [hex-lll](https://github.com/kim-em/hex-lll), with the
+Released as [hex-lll](https://github.com/leanprover/hex-lll), with the
 Mathlib correspondence in
-[hex-lll-mathlib](https://github.com/kim-em/hex-lll-mathlib).
+[hex-lll-mathlib](https://github.com/leanprover/hex-lll-mathlib).
 
 `HexLLL` reduces an integer lattice basis. Given the rows of a
 {name}`Hex.Matrix` over `Int`, it produces a new basis for the same

@@ -6,7 +6,7 @@ with spec-driven development.
 
 `hex-matrix` provides dense matrices, represented as `Vector (Vector R m) n`
 and generic over the coefficient type `R`. This library has no dependencies.
-See [`hex-matrix-mathlib`](https://github.com/kim-em/hex-matrix-mathlib) for
+See [`hex-matrix-mathlib`](https://github.com/leanprover/hex-matrix-mathlib) for
 the correspondence with Mathlib's types and theory.
 
 # Quickstart
@@ -16,7 +16,7 @@ Add to your `lakefile.toml`:
 ```toml
 [[require]]
 name = "hex-matrix"
-git = "https://github.com/kim-em/hex-matrix.git"
+git = "https://github.com/leanprover/hex-matrix.git"
 rev = "main"
 ```
 
@@ -52,9 +52,9 @@ Dense `n × m` matrices over an arbitrary coefficient type:
   and the column analogues `colAdd` / `colAddRight`;
 - submatrix / leading-submatrix slicing and the Gram matrix `M * Mᵀ`.
 
-Row reduction ([`hex-row-reduce`](https://github.com/kim-em/hex-row-reduce)),
-the Leibniz determinant ([`hex-determinant`](https://github.com/kim-em/hex-determinant)),
-and the Bareiss algorithm ([`hex-bareiss`](https://github.com/kim-em/hex-bareiss))
+Row reduction ([`hex-row-reduce`](https://github.com/leanprover/hex-row-reduce)),
+the Leibniz determinant ([`hex-determinant`](https://github.com/leanprover/hex-determinant)),
+and the Bareiss algorithm ([`hex-bareiss`](https://github.com/leanprover/hex-bareiss))
 build on it.
 
 # Verification
@@ -67,7 +67,7 @@ and inverse-preservation lemmas for the elementary operations.
 
 The `Semiring` / `Ring` structure and the equivalence with Mathlib's
 `Matrix`, which let you transfer Mathlib's linear-algebra results, live in
-[`hex-matrix-mathlib`](https://github.com/kim-em/hex-matrix-mathlib).
+[`hex-matrix-mathlib`](https://github.com/leanprover/hex-matrix-mathlib).
 
 # Reference manual
 
