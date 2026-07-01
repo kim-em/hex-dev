@@ -18223,6 +18223,7 @@ private theorem smartCandLoop_none_budget_zero
         simp only [] at h
         split at h
         · -- candidate is recorded
+          rename_i hrecord
           split at h
           · -- exactQuotient? = some quotient (candidate divides `target`)
             rename_i quotient hquot
@@ -18231,7 +18232,105 @@ private theorem smartCandLoop_none_budget_zero
               simp at h
             · -- Aux returned `(none, ab)`: candidate is `f_cov`, so `ab = 0`
               rename_i ab haux
-              sorry
+              -- Identify `split`'s subset `T`; its candidate divides, so `T = S_cov`.
+              have hsplit_in :
+                  split ∈ (Hex.subsetsOfSizeWithComplement tail (S_cov.card - 1)).map
+                    (fun sc => (head :: sc.1, sc.2)) :=
+                hsplits_enum split List.mem_cons_self
+              obtain ⟨sc, hsc_mem, hsc_eq⟩ := List.mem_map.mp hsplit_in
+              obtain ⟨T, hTJ, hmin_in_T, hTsel, hTrej, hTprod, hTcand⟩ :=
+                subsetsOfSizeWithComplement_liftedFactors_exists_subset_of_matches
+                  core d hmatches hJ_ne rfl hsc_mem
+              have hsplit1 : split.1 = head :: sc.1 := by rw [← hsc_eq]
+              have hsplit2 : split.2 = sc.2 := by rw [← hsc_eq]
+              rw [hsplit1, hTcand] at hrecord hquot
+              -- `T` has the same cardinality as `S_cov`, and `S_cov ⊆ T`, so `T = S_cov`.
+              have hsc1_len : sc.1.length = S_cov.card - 1 :=
+                subsetsOfSizeWithComplement_fst_length tail (S_cov.card - 1) hsc_mem
+              have hScov_pos : 0 < S_cov.card := Finset.card_pos.mpr ⟨_, hmin_in_S_cov⟩
+              have hT_card : T.card = S_cov.card := by
+                have hlen := congrArg List.length hTsel
+                rw [liftedSubsetSelectedList_length] at hlen
+                simp only [List.length_cons] at hlen
+                omega
+              have hcand_dvd_target : liftedRecoveryCandidate core d T ∣ target := by
+                refine ⟨quotient, ?_⟩
+                rw [Hex.DensePoly.mul_comm_poly (S := Int)]
+                exact (Hex.exactQuotient?_product hquot).symm
+              have hcand_dvd_core : liftedRecoveryCandidate core d T ∣ core :=
+                zpoly_dvd_trans hcand_dvd_target htarget_dvd_core
+              have hvalid'_T : ∀ g : Hex.ZPoly,
+                  HexPolyZMathlib.toPolynomial g ∈
+                    UniqueFactorizationMonoid.normalizedFactors
+                      (HexPolyZMathlib.toPolynomial (liftedRecoveryCandidate core d T)) →
+                  ∀ i, (g.coeff i).natAbs ≤ B' := by
+                intro g hg_mem
+                have hg_poly_dvd : HexPolyZMathlib.toPolynomial g ∣
+                    HexPolyZMathlib.toPolynomial (liftedRecoveryCandidate core d T) :=
+                  UniqueFactorizationMonoid.dvd_of_mem_normalizedFactors hg_mem
+                have hg_dvd_cand : g ∣ liftedRecoveryCandidate core d T := by
+                  rcases hg_poly_dvd with ⟨r, hr⟩
+                  refine ⟨HexPolyZMathlib.ofPolynomial r, ?_⟩
+                  apply HexPolyZMathlib.equiv.injective
+                  simp only [HexPolyZMathlib.equiv_apply, HexPolyZMathlib.toPolynomial_mul,
+                    HexPolyZMathlib.toPolynomial_ofPolynomial]
+                  exact hr
+                exact hvalid g (zpoly_dvd_trans hg_dvd_cand hcand_dvd_core)
+              obtain ⟨f', S', hf'_irr, hf'_dvd_target, hS'_J, hmin_in_S', hS'_rep, hS'_sub_T⟩ :=
+                coverAtMin_representingSubset_subset_of_liftedRecoveryCandidate_dvd_of_bound
+                  B' hcore_lc_le hvalid'_T hcore_ne hcore_primitive hcore_lc_pos
+                  hd_liftedFactor_monic hd_liftedFactor_natDegree_pos hprecision hpartition
+                  htarget_dvd_core hTJ hJ_ne hmin_in_T hrecord hquot
+              have hassoc : Associated (HexPolyZMathlib.toPolynomial f_cov)
+                  (HexPolyZMathlib.toPolynomial f') := by
+                by_contra hnot_assoc
+                exact (Finset.disjoint_left.mp
+                  (hpartition.pairwise_disjoint hf_cov_irr hf_cov_dvd_target hS_cov_J
+                    hS_cov_rep hf'_irr hf'_dvd_target hS'_J hS'_rep hnot_assoc)
+                  hmin_in_S_cov hmin_in_S')
+              have hSeq : S_cov = S' :=
+                hpartition.unique_up_to_associated hf_cov_irr hf_cov_dvd_target hS_cov_J
+                  hS_cov_rep hf'_irr hf'_dvd_target hS'_J hS'_rep hassoc
+              have hS_cov_sub_T : S_cov ⊆ T := hSeq ▸ hS'_sub_T
+              have hT_eq : T = S_cov :=
+                (Finset.eq_of_subset_of_card_le hS_cov_sub_T (by omega)).symm
+              -- With `T = S_cov`, `quotient = quotient_scov`, so `Aux` decline gives `ab = 0`.
+              rw [hT_eq] at hquot hTrej
+              rw [hquot_scov] at hquot
+              have hquot_eq_scov : quotient = quotient_scov := (Option.some.inj hquot).symm
+              subst quotient
+              have hquot_mul : quotient_scov * f_cov = target := by
+                rw [← hrec_eq]; exact hmul_scov
+              have hquot_dvd_target : quotient_scov ∣ target := ⟨f_cov, hquot_mul.symm⟩
+              have hquot_dvd_core : quotient_scov ∣ core :=
+                zpoly_dvd_trans hquot_dvd_target htarget_dvd_core
+              have hquot_primitive : Hex.ZPoly.Primitive quotient_scov :=
+                zpoly_primitive_of_dvd_primitive_basic htarget_primitive hquot_dvd_target
+              have hquot_lc_pos : 0 < Hex.DensePoly.leadingCoeff quotient_scov :=
+                zpoly_left_pos_lc_of_mul_eq_of_pos_lc hquot_mul hf_cov_lc_pos htarget_lc_pos
+              have hpartition_new :
+                  LiftedFactorSubsetPartition core d (J \ S_cov) quotient_scov :=
+                liftedFactorSubsetPartition_transport hpartition hquot_mul hS_cov_rep
+                  hS_cov_J hf_cov_irr hf_cov_dvd_target
+              have hsdiff_lt : (J \ S_cov).card < J.card := by
+                apply Finset.card_lt_card
+                rw [Finset.ssubset_iff_of_subset Finset.sdiff_subset]
+                exact ⟨J.min' hJ_ne, J.min'_mem hJ_ne,
+                  fun hc => (Finset.mem_sdiff.mp hc).2 hmin_in_S_cov⟩
+              rw [hsplit2, hTrej] at haux
+              have hab : ab = 0 := by
+                refine smartAux_none_budget_zero B' hcore_lc_le hvalid hcore_ne
+                  hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+                  hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+                  hquot_primitive hquot_lc_pos hquot_dvd_core hpartition_new
+                  LiftedFactorListMatches.sdiff_of_subset ?_ haux
+                -- fuel adequacy for the `quotient` recursion
+                have hbound := smartFuelBound_le_smartLoopFuelBound
+                  (m := (J \ S_cov).card) (n := J.card) (by omega)
+                omega
+              rw [hab] at h
+              rw [Hex.scaledRecombinationSmartCandLoop_budget_zero] at h
+              simp only [Prod.mk.injEq] at h; omega
           · -- exactQuotient? = none: candidate doesn't divide, so `split ≠ scovSplit`
             rename_i hquot_none
             rcases List.mem_cons.mp hscov_mem with hsplit_eq | hscov_rest
