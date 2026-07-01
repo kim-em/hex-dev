@@ -7437,40 +7437,4 @@ theorem factorClassicalFactorsWithBound_factor_irreducible
                       f hf primeData hsel hdeg hcore)
                     hmem
 
-/-- **Lattice-branch raw-factor irreducibility (pending #8417).**
-
-The remaining expected blocker for `factor_irreducible_of_nonUnit`: every raw
-factor of the CLD lattice tier's output `factorLatticeFactorsWithBound f
-(factorFastPrecisionCap f)` that passes the recorded-factor filter is
-irreducible.  This holds once the van Hoeij/CLD method is verified to land on
-minimal (irreducible) subsets; see #8417. -/
-theorem factorLatticeFactorsWithBound_factor_irreducible
-    (f : Hex.ZPoly) (hf : f ≠ 0)
-    {cf : Array Hex.ZPoly}
-    (hcf : Hex.factorLatticeFactorsWithBound f
-      (Hex.factorFastPrecisionCap f) = some cf)
-    {raw : Hex.ZPoly}
-    (hmem : raw ∈ cf.toList)
-    (hrec : Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
-    Hex.ZPoly.Irreducible raw := by
-  sorry
-
-/-- **Hybrid raw-factor irreducibility assembly.**
-
-Every raw factor of `factorHybridFactors f` that passes the recorded-factor
-filter is irreducible, dispatched over the three tiers via
-`factorHybridFactors_mem_source`: classical, lattice (pending #8417), and the
-`factorSlowTrial` totality backstop. -/
-theorem factorHybridFactors_factor_irreducible
-    (f : Hex.ZPoly) (hf : f ≠ 0)
-    {raw : Hex.ZPoly}
-    (hmem : raw ∈ (Hex.factorHybridFactors f).toList)
-    (hrec : Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
-    Hex.ZPoly.Irreducible raw := by
-  rcases Hex.factorHybridFactors_mem_source f hmem with
-    ⟨cf, hcf, hraw⟩ | ⟨cf, hcf, hraw⟩ | htrial
-  · exact factorClassicalFactorsWithBound_factor_irreducible f hf hcf hraw hrec
-  · exact factorLatticeFactorsWithBound_factor_irreducible f hf hcf hraw hrec
-  · exact factorSlowTrialFactorsWithBound_factor_irreducible f hf htrial hrec
-
 end HexBerlekampZassenhausMathlib

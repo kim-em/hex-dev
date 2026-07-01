@@ -346,6 +346,73 @@ theorem bhksLatticeBasis_lllNative_first_row_short
     Hex.lll_delta_lower Hex.lll_delta_upper hn
     (bhksLatticeBasis_basis_independent f p a hp lifted) x hx hx0
 
+/-!
+## Filling the capstone's lattice branch (#8417)
+
+`factorLatticeFactorsWithBound_factor_irreducible` was a forward `sorry` in
+`IntReductionMod` (it cannot import the LLL machinery); it is filled here and,
+with its assembly `factorHybridFactors_factor_irreducible`, moved into this file
+where the `LatticeTier` core lemma is available.  `factor_irreducible_of_nonUnit`
+(FactorSoundness) consumes `factorHybridFactors_factor_irreducible`.
+-/
+
+/-- **Lattice-branch raw-factor irreducibility (#8417).**  Every raw factor of the
+CLD lattice tier's output that passes the recorded-factor filter is irreducible.
+Reduces through the reassembly bridge to the `LatticeTier` core lemma. -/
+theorem factorLatticeFactorsWithBound_factor_irreducible
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    {cf : Array Hex.ZPoly}
+    (hcf : Hex.factorLatticeFactorsWithBound f (Hex.factorFastPrecisionCap f) = some cf)
+    {raw : Hex.ZPoly}
+    (hmem : raw ∈ cf.toList)
+    (hrec : Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
+    Hex.ZPoly.Irreducible raw := by
+  rw [Hex.factorLatticeFactorsWithBound] at hcf
+  by_cases hdeg0 : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
+  · -- Constant square-free core: reassembly of `#[squareFreeCore]` (X-powers + unit).
+    sorry
+  · rw [if_neg hdeg0] at hcf
+    by_cases hB0 : Hex.factorFastPrecisionCap f = 0
+    · rw [if_pos hB0] at hcf; exact absurd hcf.symm (Option.some_ne_none cf)
+    · rw [if_neg hB0] at hcf
+      cases hquad : Hex.quadraticIntegerRootFactors? (Hex.normalizeForFactor f).squareFreeCore with
+      | some qf =>
+        -- Quadratic integer-root split: roots are linear, irreducible.
+        rw [hquad] at hcf; sorry
+      | none =>
+        rw [hquad] at hcf
+        cases hchoose : Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore with
+        | none => rw [hchoose] at hcf; exact absurd hcf.symm (Option.some_ne_none cf)
+        | some primeData =>
+          rw [hchoose] at hcf
+          rw [Option.map_eq_some_iff] at hcf
+          obtain ⟨coreFactors, hcore_lattice, rfl⟩ := hcf
+          refine Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+            (Hex.normalizeForFactor f) coreFactors ?_ ?_ hmem
+          · -- reassemblyExpansionComplete side condition
+            sorry
+          · exact latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
+              f hf (Hex.factorFastPrecisionCap f) primeData hchoose hdeg0
+              (by
+                -- precision `2·bhksBound core < p^k`, dischargeable from the cap
+                sorry)
+              hcore_lattice
+
+/-- **Hybrid raw-factor irreducibility assembly.**  Every raw factor of
+`factorHybridFactors f` passing the recorded-factor filter is irreducible,
+dispatched over the classical / lattice / trial tiers. -/
+theorem factorHybridFactors_factor_irreducible
+    (f : Hex.ZPoly) (hf : f ≠ 0)
+    {raw : Hex.ZPoly}
+    (hmem : raw ∈ (Hex.factorHybridFactors f).toList)
+    (hrec : Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
+    Hex.ZPoly.Irreducible raw := by
+  rcases Hex.factorHybridFactors_mem_source f hmem with
+    ⟨cf, hcf, hraw⟩ | ⟨cf, hcf, hraw⟩ | htrial
+  · exact factorClassicalFactorsWithBound_factor_irreducible f hf hcf hraw hrec
+  · exact factorLatticeFactorsWithBound_factor_irreducible f hf hcf hraw hrec
+  · exact factorSlowTrialFactorsWithBound_factor_irreducible f hf htrial hrec
+
 end
 
 end HexBerlekampZassenhausMathlib

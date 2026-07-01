@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexBerlekampZassenhausMathlib.IntReductionMod
+import HexBerlekampZassenhausMathlib.LatticeTier
 
 /-!
 Public factorization soundness surface that needs the post-`IntReductionMod`
