@@ -23,7 +23,17 @@ irreducible in the executable `Hex.ZPoly` sense.
 -/
 theorem factor_irreducible_of_nonUnit (f : Hex.ZPoly) :
     ∀ entry ∈ (Hex.factor f).factors, Hex.ZPoly.Irreducible entry.1 := by
-  sorry
+  intro entry hentry
+  by_cases hf : f = 0
+  · subst hf
+    rw [Hex.factor_zero_factors] at hentry
+    simp at hentry
+  · have hmem : entry ∈ (Hex.factor f).factors.toList := Array.mem_toList_iff.mpr hentry
+    obtain ⟨raw, hraw_mem, hentry_eq⟩ := Hex.factor_entry_mem_raw_source f entry hmem
+    have hrec := Hex.factor_entry_shouldRecord f entry hmem
+    rw [hentry_eq] at hrec ⊢
+    exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
+      (factorHybridFactors_factor_irreducible f hf hraw_mem hrec)
 
 /--
 Every polynomial factor emitted by the default executable factorization is
