@@ -148,3 +148,24 @@ This is "the CLD lattice never under-separates". DAG to prove it:
       `bhksEquivalenceClassIndicators` (rational row-reduce signature). [greenfield]
 Hardest = (b)+(c) (CLD bound + Klüners Lemma 1); attack those first per Kim.
 Everything above `hclasses` is PROVED and connected to the capstone.
+
+## STATE after 2am session (4 sorries, all connected, build green, pushed)
+Capstone fully top-down connected. Proved: arm 1; basis LLL-independence +
+short-vector bound; arm-3 hge, card=1⇒Irreducible, Bool part; the constant &
+quadratic lattice-branch cases (mirroring classical). Remaining 4 sorries:
+1. `factorLatticeFactorsWithBound_factor_irreducible` reassemblyExpansionComplete
+   for the lattice core factors — needs a `latticeCoreFactorsWithBound` product
+   lemma (`polyProduct out = squareFreeCore`, grep: none yet) then a
+   reassembly-complete constructor. Note the general
+   `reassemblyExpansionComplete_of_irreducible_squarefree_cover` wants `hmonic`
+   (lattice core factors are NOT all monic) — so needs a non-monic constructor or
+   the singleton/split-specific ones per arm.
+2. Precision obligation: `2·bhksBound core < p^k` from `factorFastPrecisionCap f`
+   — needs `bhksBound core ≤ bhksBound f` (or ≤ cap) monotonicity; `core |
+   f` but coeffNormSq monotonicity not obvious — may need a real lemma or the
+   core lemma's hprec restated in terms of the cap's own bound.
+3. `hclasses` (arm-3 adequacy) — THE deep van Hoeij content. DAG above.
+4. `latticeArm2_fastCore_count` (arm-2 CLD count-equality) — deep, same CLD theory.
+Next: 1 and 2 are non-trivial wiring; 3 and 4 are the multi-week CLD/LLL geometry.
+Attack 3 (hclasses) top-down: build the true-factor-support → short-lattice-vector
+→ Klüners-Lemma-1 → distinct-class chain (b+c hardest).
