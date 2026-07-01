@@ -12,6 +12,19 @@ for the integer Gram-Schmidt data the algorithm carries, and is Mathlib-free.
 The correspondence with Mathlib and the full short-vector theory live in
 [`hex-lll-mathlib`](https://github.com/leanprover/hex-lll-mathlib).
 
+On adversarial worst-case input — fplll's Ajtai-style `gen_trg` bases, whose
+steeply decreasing profile forces a huge swap count — the exact integer
+reducers (Lean's `lllNative` and the verified Isabelle extraction) blow up
+`~d⁷`, while the **certified path** — an `fpLLL` candidate checked by the
+verified Lean `certCheck` — stays cheap, near raw floating-point speed:
+
+![HexLLL reducers on Ajtai-style worst-case bases](reports/figures/hex-lll-comparator-ajtai.svg)
+
+That is the design in one picture: get a verified result at close to unverified
+speed by *certifying a fast reducer* rather than running an exact one. See
+[Performance comparison](#performance-comparison) for what each curve is, the
+input families, and how to select the certified versus native path.
+
 # Quickstart
 
 Add to your `lakefile.toml`:
@@ -62,12 +75,14 @@ lattice. Behind that one entry point are two reducers, each of which
 produces output correct to that same contract, so the result is correct no
 matter which one runs. `lll` dispatches through them in order:
 
-- **External provider** (`LLLProvider.dispatch`). If an optional external
-  reducer is registered in the process, probed through an `@[extern]` hook,
-  `lll` runs it and *certifies* the returned candidate with the integer-only
-  checker `certCheck`. An absent or rejected candidate falls through. The
-  provider is an independent package this library neither depends on nor
-  names in its build; it is acceleration only.
+- **External provider** (`LLLProvider.dispatch`). If an external reducer is
+  reachable in the process — probed through an `@[extern]` hook, in practice by
+  setting `HEX_FPLLL_FFI_LIB` to a built fpLLL-ffi shared library (see
+  [Performance comparison](#performance-comparison)) — `lll` runs it and
+  *certifies* the returned candidate with the integer-only checker `certCheck`.
+  An absent or rejected candidate falls through. The provider is an independent
+  artifact this library neither depends on nor names in its build; it is
+  acceleration only, loaded at runtime.
 - **Exact integer reducer** (`lllNative`). The trusted all-integer `d`/`ν`
   reducer at the classical size-reduction bound `η = 1/2`. The native path:
   always correct, never approximate.
@@ -130,7 +145,8 @@ certifies its output `(δ, 11/20)`-reduced: every Gram-Schmidt coefficient
 satisfies `|μ| ≤ 11/20`. Two numbers in `lll`'s signature follow from that
 `η = 11/20`. The precondition is `121/400 < δ`, because `121/400 = (11/20)² =
 η²` and the bound is well-defined only when `η² < δ`; and the short-vector
-constant is `1/(δ − 121/400)`.
+constant is `1/(δ − 121/400)`. So the `121/400` in `lll`'s signature is just
+`η²` — it stands exactly where the classical bound would put `1/4 = (1/2)²`.
 
 Why `11/20` and not the classical `1/2`? Solely because of the external
 provider. The exact `lllNative` already lands at `|μ| ≤ 1/2`, so on its own it
@@ -138,9 +154,11 @@ gives the tighter `1/4 < δ` contract. But a black-box external reducer cannot
 be forced to land exactly `|μ| ≤ 1/2` (fplll's default size-reduction target
 sits slightly above `1/2`), so the certified-dispatch path accepts its
 candidate at the looser `11/20`. That is the only reason the public contract is
-stated at `11/20` rather than `1/2`. The exact `lllNative` keeps the classical
-`η = 1/2` (precondition `1/4 < δ`, constant `1/(δ − 1/4)`); call it directly
-when you want that contract.
+stated at `11/20` (so `η² = 121/400`) rather than `1/2` (so `η² = 1/4`). The
+exact `lllNative` keeps the classical `η = 1/2`, with the strictly better
+short-vector theorem `lllNative_short_vector` (precondition `1/4 < δ`, constant
+`1/(δ − 1/4)`): **call `lllNative` directly when you want that tighter
+guarantee**, rather than the public `lll`.
 
 Is the looser bound a concern? It is an honest weakening of the formal
 constant, and the weakening compounds with dimension, so it is worth being
@@ -160,26 +178,69 @@ is `(δ, 11/20)`-reduced, spans the same lattice, and satisfies the
 short-vector bound, together with the certificate soundness theorem
 `certCheck_sound`.
 
-# Performance
+# Performance comparison
 
 HexLLL is benchmarked against the verified Isabelle `LLL_Basis_Reduction`
-extraction and the unverified floating-point `fplll`, across input families
-chosen to stress different parts of the algorithm. The headline result, on
-inputs whose entry bit-length grows with the dimension (`harsh-cubic`):
+extraction and the unverified floating-point `fpLLL`, across input families
+chosen to stress different parts of the algorithm. Here is a second family,
+`harsh-cubic`, where the entry bit-length grows with the dimension:
 
 ![HexLLL harsh-cubic comparator](reports/figures/hex-lll-comparator-harsh-cubic.svg)
 
-The exact-integer reducers (`lllNative`, verified Isabelle native) climb
-super-quintically as the operands widen, while the **certified path — an `fplll`
-candidate checked by the verified Lean `certCheck` — stays close to `fplll`'s
-own near-cubic speed**. So on this family the verified output is obtained at
-close to unverified floating-point cost, by certifying a fast external reducer
-rather than running an exact one.
+**The five curves.** Each plot is log-scale wall-time per reduction against the
+family's dimension:
 
-The worst-case families tell the same story more sharply: on the swap-bound
-`ajtai` family the exact reducers blow up ~`d⁷` while the certified path stays
-cheap. See **[PERFORMANCE.md](PERFORMANCE.md)** for all six input families, the
-methodology, the per-family discussion, and the asymptotic fits.
+- **fpLLL** — the raw floating-point reducer, unverified. The speed baseline.
+- **Lean native** — `lllNative`, HexLLL's exact all-integer `d`/`ν` reducer.
+  Correct by construction, but its exact arithmetic pays for wide operands and
+  high swap counts.
+- **Lean certified** — an `fpLLL` candidate *checked* by the verified Lean
+  `certCheck`. Inherits floating-point speed and adds only a cheap integer
+  check, so it hugs the fpLLL curve while remaining fully verified.
+- **verified Isabelle native** — the Isabelle `LLL_Basis_Reduction` extraction's
+  own reducer; the independent verified point of comparison.
+- **verified Isabelle certified** — the *same* fpLLL candidate checked by the
+  Isabelle verified checker instead of the Lean one; the apples-to-apples
+  yardstick for the Lean certified path.
+
+**The input families.** Each stresses a different cost:
+
+- **`random-bounded`** — near-orthogonal random bases; the easy baseline (few
+  swaps).
+- **`harsh-cubic`** — entries `~2^{3.3n}`; stresses exact-integer operand-width
+  growth (above).
+- **`ajtai`** — fplll `gen_trg` worst-case triangular bases; stresses the swap
+  / iteration count (`Θ(d² log B)`) — the plot at the top of this README.
+- **`q-ary`** — LWE/SIS `[[I,H],[0,qI]]` bases; the cryptographic Z-shape.
+- **`ntru`** — `[[I,Rot h],[0,qI]]` bases; a planted dense sublattice plus a
+  q-block.
+- **`knapsack`** — the rectangular `d×(d+1)` integer-relation form; the only
+  `cols ≠ rows` family.
+
+Across every family the exact reducers are correct but climb steeply on the hard
+bases, while Lean certified stays within ~1.2–2.5× of raw fpLLL — verified
+output at close to floating-point cost.
+
+**Selecting the certified vs native path — a runtime choice, not an import.**
+`HexLLL` always builds its FFI shim, and the *same* `lll` call picks its path by
+whether an external provider symbol is resolvable in the process:
+
+- set the environment variable **`HEX_FPLLL_FFI_LIB`** to a built fpLLL-ffi
+  shared library and `lll` takes the **certified path** (the shim `dlopen`s it,
+  `Hex.providerAvailable` returns true, the candidate is certified by
+  `certCheck`);
+- leave it unset (or if certification ever failed) and `lll` runs the exact
+  **`lllNative`** directly.
+
+Either way the result satisfies the same `(δ, 11/20)`-reduced contract. To force
+the exact path unconditionally — and get the tighter `η = 1/2` guarantee
+(precondition `1/4 < δ`, constant `1/(δ − 1/4)`; see [Verification](#verification))
+— call `lllNative` directly.
+
+Full methodology, all six per-family plots, and the asymptotic fits are in the
+reference manual's
+[performance chapter](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-lll-performance)
+and in [PERFORMANCE.md](PERFORMANCE.md).
 
 # Trust boundary
 

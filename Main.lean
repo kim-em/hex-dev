@@ -19,6 +19,11 @@ def config : RenderConfig where
   emitHtmlSingle := .no
   emitHtmlMulti := .immediately
   htmlDepth := 2
+  -- Bundle the committed comparator figures into the site root (served at
+  -- `<pages>/figures/…`); the HexLLL performance chapter embeds them. A
+  -- directory copy so Verso's `copyRecursively` creates the `figures/` dir
+  -- (a nested file dest is not created and fails).
+  extraFiles := [("reports/figures", "figures")]
 
 /--
 Entry point for the `hexmanual` executable. Renders the `HexManual` document
