@@ -1,4 +1,10 @@
 /-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+/-
 Dev tool: emit the Lean-generated lattice basis for a family at given
 dimensions, one JSON object per line, for `validate_latticegen.py` to
 cross-check against fplll's `latticegen`. Run with:
