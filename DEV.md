@@ -1,8 +1,16 @@
 # DEV.md — hybrid Berlekamp–Zassenhaus migration
 
-Living roadmap for the in-progress migration of `Hex.factor` (the integer
-polynomial factorizer in `hex-berlekamp-zassenhaus`) from the BHKS van Hoeij CLD
-lattice path to a **cost-based hybrid**. Update the status section as issues land.
+> **STATUS: COMPLETE (2026-07).** `Hex.factor` is the cost-based hybrid, it is fast
+> (no exponential blow-up on easy inputs), and it is **fully verified**:
+> `factor_headline` — product = f ∧ every factor irreducible ∧ normalization ∧
+> pairwise-distinct ∧ scalar — is proven **axiom-clean** (`#print axioms` → only
+> `propext`/`Classical.choice`/`Quot.sound`), with **zero `sorry`s** in
+> `HexBerlekampZassenhausMathlib`. The year-long van Hoeij lattice-soundness blocker
+> was closed (#8517). Only optional performance polish remains (#8395, #8382 done).
+
+Roadmap for the migration of `Hex.factor` (the integer polynomial factorizer in
+`hex-berlekamp-zassenhaus`) from the BHKS van Hoeij CLD lattice path to a
+**cost-based hybrid**. See History for how it landed.
 
 This is a development tracker, not a spec: the timeless design lives in
 [`SPEC/Libraries/hex-berlekamp-zassenhaus.md`](SPEC/Libraries/hex-berlekamp-zassenhaus.md)
@@ -120,7 +128,7 @@ reverse. We have thrashed too often bending the implementation to ease proofs.
 | Classical recombination structurally recursive + reconstruction proved | — | #8401 | ✅ merged (capstone foundation) |
 | **Swap public `factor` to the hybrid** (re-point ~100 theorems, both layers) | #8383 | #8404 | ✅ **merged — the public `factor` is now the hybrid** |
 | Optimize the easy regime (arithmetic constants) | #8382 | — | ⏸️ deferred — sound part overlaps #8395 (see below) |
-| Prove output factors irreducible over the hybrid (the headline `sorry`) | #8384 | — | ⬜ open — long-standing, deep (see below) |
+| Prove output factors irreducible (the headline) | #8384 | #8412/#8413/#8517 | ✅ **DONE — `factor_headline` axiom-clean, zero sorries** |
 
 The public `factor` now **is** the cost-based hybrid (since #8404): the
 exponential-on-easy-inputs blow-up is gone (deg-22 reducible: 781.8 ms → 82.75 ms),
@@ -133,52 +141,30 @@ bridge. Conformance stands at 100 checks / 0 failures (50 `factor` + 50
 
 ---
 
-## Next — #8384: prove the output factors are irreducible (the headline `sorry`)
+## The headline — DONE (#8384, closed 2026-07)
 
-The migration is functionally complete: the public `factor` is the hybrid, it is
-fast, and its product/normalization contracts are proven. The one remaining *proof*
-obligation is `factor_irreducible_of_nonUnit` — every factor `factor` returns is
-genuinely irreducible. It is a `sorry` (the long-standing "HO-1 capstone", #4170).
+`factor_irreducible_of_nonUnit` (every factor `Hex.factor` returns is irreducible)
+and the bundled `factor_headline` (product ∧ irreducible ∧ normalization ∧
+pairwise ∧ scalar) are **proven over the hybrid, axiom-clean** — `#print axioms`
+reports only `[propext, Classical.choice, Quot.sound]`. Zero `sorry`s remain in
+`HexBerlekampZassenhausMathlib`. The public factorizer is fully verified and fast.
 
-**The route was reset (2026-06).** The old approach proved irreducibility through
-the van Hoeij CLD *lattice* in the `scale` coordinate, where it hit a `dilate`-vs-
-`scale` mismatch on non-monic inputs and a precision-adequacy gap — blocked for a
-year (#7479/#7550/#7561/#8319). **#8411 deleted that entire BHKS lattice apparatus**
-(`Recovery`/`Lattice`/`BadVector`/`TerminationBound`/`CLDColumnBound`/`BHKSBound`/
-`Resultant`/`LiftBridge`/`PartitionRefinement`, ~28k lines) — it never closed the
-headline and repeatedly misled agents into trying to reuse it. It is recoverable
-from git (`6bf20977^`) if a specific lemma is ever wanted.
+How it closed (after a year blocked on the lattice route):
+- **Reset (#8411):** deleted the ~28k-line BHKS lattice apparatus
+  (`Recovery`/`Lattice`/`BadVector`/`TerminationBound`/`CLDColumnBound`/`BHKSBound`/
+  `Resultant`/`LiftBridge`/`PartitionRefinement`) — it never closed the headline and
+  repeatedly misled agents. Recoverable from `6bf20977^` if ever wanted.
+- **Classical route (#8412 → #8413):** the classical search works in the `dilate`
+  coordinate and certifies by exact integer division at Mignotte precision, sidestepping
+  the CLD lattice soundness entirely; the historically-fatal `exists_subset` quantifier
+  is now sign-guarded (the #7550 wall gone). `classicalCoreFactorsWithBound_factor_irreducible`
+  landed axiom-clean.
+- **Lattice re-verification (#8417 → #8517):** verified the van Hoeij CLD method itself
+  (`factorLatticeFactorsWithBound_factor_irreducible`), not an output checker.
+- **Assembly (#8414, in #8517):** case-split over the hybrid's three branches; headline
+  closed.
 
-**The new route is the classical tier, and it is unblocked.** The classical search
-`scaledRecombinationSmart` works in the **`dilate`** coordinate, where the
-correspondence is already proven, and it certifies via exact integer division at
-**Mignotte precision** — so it sidesteps the CLD lattice soundness entirely (no
-`L=W` / bad-vector argument needed). The historically-fatal `exists_subset`
-quantifier is now **sign-guarded** (`normalizeFactorSign factor = factor`), hence
-satisfiable — the #7550 wall is gone. The coverage template
-(`RecoveredScaledSearch.covers_of_bound`) and the existence/containment/partition
-lemmas all survived the deletion. `scaledRecombinationSmart` is structurally
-recursive with its reconstruction proven (#8401). So the classical proof is now a
-"port the surviving coverage proof to the size-ordered loop" job, like #8401 was.
-
-**Decomposition (shovel-ready issues):**
-- **#8412** — identify the executable recombination candidate with its subset
-  (`= liftedRecoveryCandidate`); foundation. Care: distinctness of lifted factors
-  from the nodup lemmas, not "squarefree ⇒ distinct".
-- **#8413** — *the core proof*: the classical search returns irreducibles, via a
-  size-ordered coverage induction mirroring `covers_of_bound`. Depends on #8412.
-- **#8417** — the lattice branch (the one genuinely hard remainder): **verify the
-  van Hoeij/CLD method** — prove the lattice lands on minimal subsets (`L = W`).
-  This is the deep BHKS argument (the deleted-apparatus problem, built fresh). An
-  output-checker shortcut is explicitly rejected in the issue: it certifies the
-  output not the method, and is exponential on the irreducible high-`r` tail (where
-  re-checking minimality is the same search that already declined). `factor`'s
-  lattice branch is live (SD6+ tail), so the headline must cover it.
-- **#8414** — thin assembly: case-split `factor_irreducible_of_nonUnit` over the
-  three branches once each producer (#8413, trial restatement, #8417) exists. Last.
-
-Sequence: #8412 → #8413 → (#8417) → #8414. #8417 is the lone hard branch and can be
-sequenced after the rest; do not close the `sorry` with any branch unproven.
+Only optional performance polish remains — see Deferred (#8395 lattice speed).
 
 ---
 
@@ -201,29 +187,15 @@ Its primary route was a separation certificate `lattice_eq_indicators : L = W` f
 re-scoped from scratch and is naturally part of the lattice cluster below (a fast,
 *and* verified lattice tier are the same substrate problem). Off the critical path.
 
-### Parallelism of the remaining work
-- **Track 1 (independent): #8382** — shape-preserving arithmetic constants. Safe in
-  parallel with everything.
-- **Track 2 (the headline): #8412 → #8413 → #8417 → #8414** — the classical route to
-  `factor_irreducible_of_nonUnit`. Independent of #8382; the live path.
-- **Track 3 (lattice cluster): #8417 (verify the van Hoeij method) + #8395 (speed)**
-  — both concern the lattice tier and the deleted BHKS substrate; coordinate them.
-  Largely independent of the classical core; sequence after Track 2.
+### What remains (2026-07)
+The headline is proven and closed. The **only** open item is optional performance:
+- **#8395** — make the lattice tier *fast* on the SD6+ tail (currently correct but
+  slow). **Not shovel-ready:** its body still references the BHKS substrate deleted
+  in #8411; it needs a ground-up rewrite. Off the critical path — the classical tier
+  covers the whole corpus, so the lattice speed only matters for the extreme-`r` tail.
+  Correctness is done regardless (#8517 verified the lattice method).
 
-### Dispatch readiness (what to start a session on) — updated 2026-07
-- **Done:** #8412, #8413 (classical irreducibility, **axiom-clean** — verified via
-  `#print axioms`), #8382 (perf). The hard core of the headline is closed.
-- **Start now:** **#8414** — assemble the headline. Classical (#8413) + trial
-  substrate have landed; this issue composes the classical core through
-  `reassemblePolynomialFactors`, restates the trial arm, and case-splits. It cannot
-  *close* the `sorry` until #8417 lands (lattice arm), but the classical/trial arms
-  and the assembly scaffold are ready to build now.
-- **Start now (independent, hard):** **#8417** — verify the van Hoeij/CLD method (the
-  lone hard branch). Off the critical path; reuses #8413's coverage/minimality
-  machinery (see the issue's "Reusable from #8413" note).
-- **Do NOT start as written:** **#8395** — its body still points at the BHKS
-  substrate deleted in #8411; needs a ground-up rewrite first (naturally paired with
-  #8417's lattice route).
+Everything else in the migration is merged and verified. See History.
 
 ---
 
@@ -265,8 +237,14 @@ re-scoped from scratch and is naturally part of the lattice cluster below (a fas
   returns irreducible factors (`classicalCoreFactorsWithBound_factor_irreducible`) —
   **axiom-clean** (`#print axioms` → only `propext`/`Classical.choice`/`Quot.sound`).
   The year-long blocker (via the lattice route) is closed via the classical tier
-  (`dilate` coordinate, Mignotte precision). Remaining for the headline: #8414
-  assembly + #8417 lattice branch.
+  (`dilate` coordinate, Mignotte precision).
+- **#8417, #8414 → #8517:** verified the van Hoeij CLD lattice tier
+  (`factorLatticeFactorsWithBound_factor_irreducible` — the *method*, not an output
+  checker) and assembled all three branches, **closing the headline
+  `factor_irreducible_of_nonUnit`**. `factor_headline` (product ∧ irreducible ∧
+  normalization ∧ pairwise ∧ scalar) is proven axiom-clean; zero `sorry`s remain in
+  the Mathlib layer. #8538 added a merge-required lattice-tier conformance case.
+  **The verified fast factorizer is complete.**
 - **#8411 (reroute):** deleted the ~28k-line BHKS lattice irreducibility apparatus —
   off the classical route and a repeated trap for agents. Re-homed the headline proof
   to the classical tier (`dilate` coordinate, Mignotte precision, sign-guarded
@@ -332,14 +310,14 @@ Never bend the implementation to a future proof. Never introduce an `axiom`.
 Public `factor` is the cost-based hybrid (since #8404): it reaches **parity** with
 the verified Isabelle reference on every input the classical tier covers —
 everything up to the classical subset budget, including the Swinnerton-Dyer ladder
-up to SD5; the verified-LLL lattice tier is a **correct fallback** for the
-extreme-`r` tail (SD6+) where exhaustive search would explode; the counter gate
-blocks performance regressions; product and normalization contracts are proven over
-the hybrid. The open proof is the headline irreducibility (#8384) — now routed
-through the classical tier (#8412/#8413/#8414) with the lattice branch (#8417) the
-lone hard remainder. (#8382's easy-regime constants are a later polish, not required
-for parity.)
+up to SD5; the verified-LLL lattice tier handles the extreme-`r` tail (SD6+) where
+exhaustive search would explode; the counter gate blocks performance regressions.
+**Every correctness contract is proven over the hybrid, axiom-clean:** `factor_headline`
+— product = f ∧ each factor irreducible ∧ normalization ∧ pairwise-distinct ∧ scalar
+— with zero `sorry`s in `HexBerlekampZassenhausMathlib`. The public factorizer is
+fully verified *and* fast. **The migration is complete.**
 
 *Stretch (#8395):* a certificate-backed early-stop would make the lattice tier
-fast enough to *strictly beat* the reference on the extreme-`r` tail too — needs a
-ground-up rewrite (its old substrate was deleted in #8411). Not on the critical path.
+fast enough to *strictly beat* the reference on the extreme-`r` tail too (it is
+correct-but-slow there today) — needs a ground-up rewrite (its old substrate was
+deleted in #8411). The only remaining item, and purely performance; correctness is done.
