@@ -392,6 +392,41 @@ where the `LatticeTier` core lemma is available.  `factor_irreducible_of_nonUnit
 (FactorSoundness) consumes `factorHybridFactors_factor_irreducible`.
 -/
 
+/-- **Lattice-core reassembly completeness (#8520).**  When the lattice tier
+returns core factors for the square-free core of `normalizeForFactor f` at
+adequate precision, the reassembly is expansion-complete.  The lattice analog of
+`reassemblyExpansionComplete_classicalCore_of_ne_zero` (#8511): it composes the
+`LatticeTier` core irreducibility lemma
+`latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible`, the
+polyProduct / normalizeFactorSign / degree-positivity structural companions
+`Hex.latticeCoreFactorsWithBound_{polyProduct,normalizeFactorSign,degree_pos}`,
+and the sign-normalized expansion-complete surface
+`reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm`.
+Consumed by the lattice residual arm of
+`factorLatticeFactorsWithBound_factor_irreducible`. -/
+theorem reassemblyExpansionComplete_latticeCore_of_ne_zero
+    (f : Hex.ZPoly) (hf : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hchoose : Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore
+      = some primeData)
+    (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hprec : 2 * Hex.bhksBound (Hex.normalizeForFactor f).squareFreeCore <
+      primeData.p ^ (Hex.ZPoly.toMonicLiftData
+        (Hex.normalizeForFactor f).squareFreeCore B primeData).k)
+    {cf : Array Hex.ZPoly}
+    (hlattice : Hex.latticeCoreFactorsWithBound
+      (Hex.normalizeForFactor f).squareFreeCore B primeData = some cf) :
+    Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f) cf := by
+  have hcore_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
+  have hcore_deg : 0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 :=
+    Nat.pos_of_ne_zero hdeg_ne
+  exact IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm
+    f hf cf
+    (latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
+      f hf B primeData hchoose hdeg_ne hprec hlattice)
+    (Hex.latticeCoreFactorsWithBound_polyProduct _ _ _ hlattice)
+    (Hex.latticeCoreFactorsWithBound_normalizeFactorSign _ _ _ hcore_pos hlattice)
+    (Hex.latticeCoreFactorsWithBound_degree_pos _ _ _ hcore_deg hlattice)
+
 /-- **Lattice-branch raw-factor irreducibility (#8417).**  Every raw factor of the
 CLD lattice tier's output that passes the recorded-factor filter is irreducible.
 Reduces through the reassembly bridge to the `LatticeTier` core lemma. -/
@@ -447,8 +482,11 @@ theorem factorLatticeFactorsWithBound_factor_irreducible
           obtain ⟨coreFactors, hcore_lattice, rfl⟩ := hcf
           refine Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
             (Hex.normalizeForFactor f) coreFactors ?_ ?_ hmem
-          · -- reassemblyExpansionComplete side condition
-            sorry
+          · exact reassemblyExpansionComplete_latticeCore_of_ne_zero
+              f hf (Hex.factorFastPrecisionCap f) primeData hchoose hdeg0
+              (Hex.two_mul_bhksBound_squareFreeCore_lt_pow_cap_of_choosePrimeData
+                f primeData hchoose)
+              hcore_lattice
           · exact latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
               f hf (Hex.factorFastPrecisionCap f) primeData hchoose hdeg0
               (Hex.two_mul_bhksBound_squareFreeCore_lt_pow_cap_of_choosePrimeData
