@@ -1,0 +1,106 @@
+{
+ "generator": "scripts/plots/hex-berlekamp-zassenhaus-sd-flint.py",
+ "engine": "python-flint (fmpz_poly.factor), sympy 1.14.0 inputs",
+ "git_commit": "5ec8d8b57e5e0671351346dd9bf36b160b1b535b",
+ "timestamp_unix": 1782994528,
+ "results": [
+  {
+   "family": "ladder",
+   "param": 1,
+   "degree": 2,
+   "median_seconds_per_call": 3.065994187423371e-07,
+   "factor_count_with_multiplicity": 1
+  },
+  {
+   "family": "ladder",
+   "param": 2,
+   "degree": 4,
+   "median_seconds_per_call": 1.5654083256322338e-05,
+   "factor_count_with_multiplicity": 1
+  },
+  {
+   "family": "ladder",
+   "param": 3,
+   "degree": 8,
+   "median_seconds_per_call": 6.967456567963382e-05,
+   "factor_count_with_multiplicity": 1
+  },
+  {
+   "family": "ladder",
+   "param": 4,
+   "degree": 16,
+   "median_seconds_per_call": 0.00029246276858430065,
+   "factor_count_with_multiplicity": 1
+  },
+  {
+   "family": "ladder",
+   "param": 5,
+   "degree": 32,
+   "median_seconds_per_call": 0.001512591553364473,
+   "factor_count_with_multiplicity": 1
+  },
+  {
+   "family": "pair",
+   "param": 1,
+   "degree": 4,
+   "median_seconds_per_call": 1.5707024900279976e-05,
+   "factor_count_with_multiplicity": 2
+  },
+  {
+   "family": "pair",
+   "param": 2,
+   "degree": 8,
+   "median_seconds_per_call": 4.80088170036197e-05,
+   "factor_count_with_multiplicity": 2
+  },
+  {
+   "family": "pair",
+   "param": 3,
+   "degree": 16,
+   "median_seconds_per_call": 0.00018705276488617528,
+   "factor_count_with_multiplicity": 2
+  },
+  {
+   "family": "pair",
+   "param": 4,
+   "degree": 32,
+   "median_seconds_per_call": 0.0014058453789402847,
+   "factor_count_with_multiplicity": 2
+  },
+  {
+   "family": "pair",
+   "param": 5,
+   "degree": 64,
+   "median_seconds_per_call": 0.008388305985135958,
+   "factor_count_with_multiplicity": 2
+  },
+  {
+   "family": "blocks",
+   "param": 1,
+   "degree": 16,
+   "median_seconds_per_call": 0.00029293162015164853,
+   "factor_count_with_multiplicity": 1
+  },
+  {
+   "family": "blocks",
+   "param": 2,
+   "degree": 32,
+   "median_seconds_per_call": 0.0014015908200235572,
+   "factor_count_with_multiplicity": 2
+  },
+  {
+   "family": "blocks",
+   "param": 3,
+   "degree": 48,
+   "median_seconds_per_call": 0.0035937760439992417,
+   "factor_count_with_multiplicity": 3
+  },
+  {
+   "family": "blocks",
+   "param": 4,
+   "degree": 64,
+   "median_seconds_per_call": 0.007978048175573349,
+   "factor_count_with_multiplicity": 4
+  }
+ ]
+}

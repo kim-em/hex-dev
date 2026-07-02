@@ -46,6 +46,9 @@
 - `Hex.BerlekampZassenhausBench.runFactorAdvPhi15Checksum`: `n + 1`
 - `Hex.BerlekampZassenhausBench.runFactorFastSetupAdvPhi15Checksum`: `n + 1`
 - `Hex.BerlekampZassenhausBench.runAdvSwinnertonDyerSD3ModularSplitChecksum`: `n + 1`
+- `Hex.BerlekampZassenhausBench.runFactorAdvSwinnertonDyerLadderChecksum`: `2 ^ (2 ^ (k - 1))`
+- `Hex.BerlekampZassenhausBench.runFactorAdvSwinnertonDyerPairChecksum`: `2 ^ (2 ^ (k - 1))`
+- `Hex.BerlekampZassenhausBench.runFactorAdvSwinnertonDyerSD4BlocksChecksum`: `2 ^ (8 * m)`
 
 ## Comparator Ratios
 
@@ -482,6 +485,102 @@ comparator; their nanosecond timing scales reflect that the Lean
 target measures a subset of the BHKS pipeline (precision cap,
 local-factor profile, or modular split) rather than full
 factorisation.
+
+### Swinnerton-Dyer tier-crossover ladders
+
+Three one-parameter families over the public `factor`, registered as
+`runFactorAdvSwinnertonDyer{Ladder,Pair,SD4Blocks}Checksum` (all
+`scheduled-hardware`; the declared models are the classical tier's
+worst-case powerset candidate counts — `2^(2^(k-1))` for the ladder and
+pair families, `2^(8m)` for the block family — which over-bound the
+post-crossover lattice rungs, so top-rung verdicts are expected
+inconclusive and the scaling story lives in the figures). This is
+the tracked form of the benchmark data recorded on
+[PR #8537](https://github.com/kim-em/hex-dev/pull/8537) "perf:
+level-aware classical decline boundary".
+
+Sweep at commit `5ec8d8b5` (clean tree) on `carica`
+(Apple M2 Ultra, macOS), recorded `2026-07-02T12:13:46Z`:
+
+```sh
+Q=Hex.BerlekampZassenhausBench
+lake exe hexbz_bench run $Q.runFactorAdvSwinnertonDyerLadderChecksum \
+    --export-file …-sd-ladder.json          # and -sd-pair / -sd4-blocks
+HEX_BZ_ISABELLE=… lake exe hexbz_bench compare \
+    $Q.runIsabelleFactorBaselineChecksum \
+    $Q.runIsabelleAdvSwinnertonDyer{SD3,SD4,SD5,PairK2,PairK3,PairK4,SD4BlocksM3,SD4BlocksM4}Checksum \
+    --export-file …-sd-isabelle.json
+scripts/plots/hex-berlekamp-zassenhaus-sd-flint.py …-sd-flint.json
+scripts/plots/hex-berlekamp-zassenhaus-sd.py --sha 5ec8d8b5
+```
+
+Export artefacts (`reports/bench-results/hex-berlekamp-zassenhaus-5ec8d8b5-*`),
+SHA-256:
+
+| artefact | SHA-256 |
+|---|---|
+| `-sd-ladder.json` | `749d066524336a326455772481ec6961b2c8f562066ca9e4aa92e7353f716ea7` |
+| `-sd-pair.json` | `4fc95dfeeac7c10625994be6b6558a9a7fc935249319e7ddba7e8e2b4c058271` |
+| `-sd4-blocks.json` | `de56b9b6934909dd65d85b93f74ac73fbd898349eacdd8e5c3e294b88c648e9e` |
+| `-sd-isabelle.json` | `49417aa413e46b8ea547b3dec08d376d179ba223f7515468a9e68716b99c4464` |
+| `-sd-flint.json` | `f821b301009e9e564e63e63ccf245df7be2b391e72a34bd7778afb6dbfcf260b` |
+
+Figures (log-y median wall time per call; generator
+`scripts/plots/hex-berlekamp-zassenhaus-sd.py`):
+
+![SD ladder](figures/hex-berlekamp-zassenhaus-sd-ladder.svg)
+![SD pair ladder](figures/hex-berlekamp-zassenhaus-sd-pair.svg)
+![SD4 block ladder](figures/hex-berlekamp-zassenhaus-sd4-blocks.svg)
+
+Medians (hex from the parametric exports; Isabelle raw medians with
+the trivial-input round-trip baseline `5.325 ms` recorded in the same
+export; FLINT informational):
+
+| family / rung | deg | hex `factor` | Isabelle (raw) | FLINT | tier |
+|---|---:|---:|---:|---:|---|
+| `SD_k` k=1 | 2 | 0.036 ms | — | 0.0003 ms | quadratic |
+| `SD_k` k=2 | 4 | 0.135 ms | — | 0.016 ms | classical |
+| `SD_k` k=3 | 8 | 1.615 ms | 8.74 ms | 0.070 ms | classical |
+| `SD_k` k=4 | 16 | 17.01 ms | 9.78 ms | 0.293 ms | classical |
+| `SD_k` k=5 | 32 | 327.1 ms | 39.73 ms | 1.513 ms | classical |
+| pair k=1 | 4 | 0.205 ms | — | 0.016 ms | classical |
+| pair k=2 | 8 | 1.466 ms | 8.59 ms | 0.048 ms | classical |
+| pair k=3 | 16 | 24.83 ms | 9.82 ms | 0.187 ms | classical |
+| pair k=4 | 32 | 254.6 ms | 21.64 ms | 1.406 ms | classical |
+| pair k=5 | 64 | **15.92 s** | **> 120 s (killed)** | 8.388 ms | **lattice** |
+| blocks m=1 | 16 | 17.01 ms | 9.78 ms | 0.293 ms | classical |
+| blocks m=2 | 32 | 253.8 ms | 21.64 ms | 1.402 ms | classical |
+| blocks m=3 | 48 | 3.371 s | 385.8 ms | 3.594 ms | lattice |
+| blocks m=4 | 64 | 13.66 s | 4.336 s | 7.978 ms | lattice |
+
+Multiset agreement: ten table rows have Isabelle coverage over eight
+distinct comparator inputs (two duplications across families:
+blocks m=1 is `SD_4` itself, and blocks m=2 is pair k=4,
+`SD_4(x)·SD_4(x+1)`). On every one of those rows the hex parametric
+`result_hash` equals the corresponding Isabelle rung's
+`observed_hash` (canonical order-insensitive factor-multiset
+checksum) — `0xfd5a821e013bc945` (SD3), `0x36f82522fa530950`
+(SD4 = blocks m=1), `0xd79637486bd0e8f1` (SD5), `0x91a910093667deb`
+(pair k=2), `0xe662c5d3f8bd82a4` (pair k=3), `0x28afc4e530363597`
+(pair k=4 = blocks m=2), `0x6c60e1792f37236e` (blocks m=3),
+`0xbfade8ca2e42228c` (blocks m=4). These recorded hashes are the
+per-rung regression signal for future sweeps.
+
+Trend narrative. On the classical-tier range the verified Isabelle
+extraction is a small constant factor ahead of hex once past its
+per-request floor (overhead-adjusted hex/Isabelle ≈ 3.8 at SD4,
+≈ 9.5 at SD5, ≈ 8.9 at blocks m=3, ≈ 3.2 at blocks m=4 — hex loses
+ground on the pure certification ladder as `r` grows, consistent
+with the classical tier's full-powerset certification burn; an
+optimisation target, not a goal violation, since the BZ-level
+Isabelle comparator is informational for scaling and gating only via
+the canonical bottom rung). The pair family's `k = 5` rung is the qualitative crossover:
+the AFP implementation has no lattice tier and exceeded a 120 s cap
+(marked as a rising tail in the figure), while hex's hybrid declines
+classical at its level-aware boundary (206368 candidates) and the
+CLD lattice tier answers in 16.7 s. FLINT (van Hoeij) stays
+milliseconds everywhere and bounds what an unverified
+state-of-the-art implementation achieves.
 
 ### Fallback-probe scaling ladder (cascade-trigger family)
 
