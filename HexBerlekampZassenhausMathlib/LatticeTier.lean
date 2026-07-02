@@ -708,11 +708,11 @@ are stated below as explicit lemmas and then supplied to give the
 **unconditional** lattice-tier irreducibility theorem
 `latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible`.
 
-Both lemmas are the deep van Hoeij / CLD content; they are being proved on the
-**proven** LLL short-vector path (`HexLLLMathlib.lllNative_first_row_norm_sq_le_unconditional`
-and `lllNative_mem_latticeSubmodule_iff`), never by assumption.  Until each is
-discharged it carries a `sorry` (grep-able; no axiom), and the hardest one
-(arm-3 adequacy) is attacked first.
+Both lemmas are the deep van Hoeij / CLD content, proved on the **proven** LLL
+short-vector path through the `W ⊆ L'` assembly above: the count lower bound
+`normalizedFactors_card_le_bhksEquivalenceClassIndicators_size` supplies the
+arm-2 `≥` half (the `≤` half is the proven UFD partition bound) and, combined
+with reducibility, the arm-3 `≥ 2`-classes contradiction.
 -/
 
 /--
@@ -766,17 +766,20 @@ theorem latticeArm2_fastCore_count
 
 /--
 **Arm-3 deep obligation (van Hoeij single-all-ones adequacy).**  At adequate
-precision (`hprec`: `p^k > 2·bhksBound core`, the separation threshold), a single
-all-ones equivalence class of the CLD knapsack lattice certifies that `core`
-lands on exactly the minimal subsets (`L = W` with `W = ⟨(1,…,1)⟩`), hence `core`
-is irreducible.  This is the deep adequacy theorem (Klüners Thm 3), proved on the
-proven LLL short-vector path.
+precision (`hB_floor`: the coefficient bound clears the fast-core acceptance
+floor, hence the CLD column separation and both Mignotte recovery bounds), a
+single all-ones equivalence class of the CLD knapsack lattice certifies that
+`core` lands on exactly the minimal subsets (`L = W` with `W = ⟨(1,…,1)⟩`),
+hence `core` is irreducible.  This is the deep adequacy theorem (Klüners
+Thm 3), proved on the proven LLL short-vector path: were `core` reducible, its
+≥ 2 true-factor supports would survive the cut as ≥ 2 distinct equivalence
+classes, contradicting the single class.
 
-The precision hypothesis `hprec` is essential, not incidental: at precision below
-the BHKS separation threshold the lattice may not have separated the modular
-factors, so `bhksSingleAllOnesPartition` can report `true` on a *reducible* core
-(its own docstring warns callers to trust it only at `k ≥ bhksBound`).  The
-`factorLattice` call site supplies adequate precision via `factorFastPrecisionCap`.
+The precision hypothesis is essential, not incidental: at precision below the
+separation threshold the lattice may not have separated the modular factors,
+so `bhksSingleAllOnesPartition` could report `true` on a *reducible* core.
+The `factorLattice` call site supplies adequate precision via
+`factorFastPrecisionCap`, which contains the floor by construction.
 -/
 theorem latticeArm3_bhksSingleAllOnes_irreducible
     (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
@@ -883,10 +886,10 @@ theorem latticeArm3_bhksSingleAllOnes_irreducible
 **#8417 (lattice-tier irreducibility, at adequate precision).**  Every factor the
 van Hoeij CLD lattice tier `latticeCoreFactorsWithBound` returns for the
 square-free core of `normalizeForFactor f` is irreducible over `ℤ`, provided the
-precision is at least the BHKS separation threshold (`hprec`).  Arm 1 (small-mod
+precision clears the fast-core acceptance floor (`hB_floor`).  Arm 1 (small-mod
 singleton) is proved directly; arms 2/3 are the deep CLD obligations
 `latticeArm2_fastCore_count` / `latticeArm3_bhksSingleAllOnes_irreducible`.  The
-`factorLattice` call site supplies `hprec` via `factorFastPrecisionCap`.
+`factorLattice` call site supplies `hB_floor` via `factorFastPrecisionCap`.
 -/
 theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
     (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
