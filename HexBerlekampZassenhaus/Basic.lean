@@ -10180,17 +10180,155 @@ def bhksSingleAllOnesPartition (f : ZPoly) (d : LiftData) : Bool :=
   else
     false
 
+/-- Lattice-tier recombination loop: `factorFastCoreLoop` plus certificate-backed
+early termination (#8395).  The split path is byte-identical to the fast loop —
+below `floor` every step is skipped, and at/above `floor` a classified recovery
+success is accepted immediately.  The single change is the `.degenerate` arm: at
+`k ≥ floor` the loop re-examines the partition, and the single all-ones class is
+accepted as a **sound** irreducibility certificate (`some #[core]`) instead of
+advancing the schedule.  Soundness is not heuristic: at column-adequate precision
+(`fastCoreFloor core ≤ k`) the proven count lower bound forces a reducible core
+to exhibit ≥ 2 equivalence classes, so all-ones can only be reported for a
+genuinely irreducible core (`latticeArm3_bhksSingleAllOnes_irreducible` in the
+Mathlib layer consumes exactly the `⟨k, floor ≤ k, all-ones⟩` witness this loop
+produces).  Without the early stop the loop grinds the doubling schedule to the
+conservative BHKS cap on every irreducible input.
+
+Private: only `latticeCoreWithBound` (which passes `fastCoreFloorGate core`) is
+the semantically supported entry point; the bare `floor` parameter must not be
+set independently. -/
+private def latticeCoreLoop
+    (core : ZPoly) (B floor : Nat) (primeData : PrimeChoiceData) :
+    Nat → Nat → Option (Array ZPoly)
+  | _k, 0 => none
+  | k, fuel + 1 =>
+      if k < floor then
+        if k ≥ B then
+          none
+        else
+          latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
+      else
+        match bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
+        | .success factors =>
+          some factors
+        | .candidateFailure =>
+          if k ≥ B then
+            none
+          else
+            latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
+        | .productMismatch _ =>
+          if k ≥ B then
+            none
+          else
+            latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
+        | .degenerate =>
+          if bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core k primeData) then
+            some #[core]
+          else if k ≥ B then
+            none
+          else
+            latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
+
+/-- Lattice-tier core loop entry: `factorFastCoreWithBound` with certificate-backed
+early termination on the single all-ones partition (#8395).  Computes the CLD
+column-adequacy floor once (through the irreducible `fastCoreFloorGate`) and runs
+`latticeCoreLoop`. -/
+def latticeCoreWithBound
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) (k fuel : Nat) :
+    Option (Array ZPoly) :=
+  latticeCoreLoop core B (fastCoreFloorGate core) primeData k fuel
+
+/-- Structural spec for the lattice-tier loop: every success is either a fast-loop
+success (the split path is untouched) or the certificate-backed early stop — the
+singleton `#[core]` together with a concrete witness precision `k'` at/above the
+column-adequacy floor whose partition is the single all-ones class. -/
+private theorem latticeCoreLoop_some_spec
+    (core : ZPoly) (B floor : Nat) (primeData : PrimeChoiceData) :
+    ∀ fuel k cf,
+      latticeCoreLoop core B floor primeData k fuel = some cf →
+        factorFastCoreLoop core B floor primeData k fuel = some cf ∨
+          (cf = #[core] ∧ ∃ k', floor ≤ k' ∧
+            bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core k' primeData)
+              = true) := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro k cf h
+      simp [latticeCoreLoop] at h
+  | succ fuel ih =>
+      intro k cf h
+      rw [latticeCoreLoop] at h
+      rw [factorFastCoreLoop]
+      by_cases hfl : k < floor
+      · rw [if_pos hfl] at h ⊢
+        by_cases hk : k ≥ B
+        · simp [hk] at h
+        · rw [if_neg hk] at h ⊢
+          exact ih _ cf h
+      · rw [if_neg hfl] at h ⊢
+        cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
+        | success factors =>
+            rw [hclass] at h
+            exact Or.inl h
+        | candidateFailure =>
+            rw [hclass] at h
+            by_cases hk : k ≥ B
+            · simp [hk] at h
+            · rw [if_neg hk] at h ⊢
+              exact ih _ cf h
+        | productMismatch cands =>
+            rw [hclass] at h
+            by_cases hk : k ≥ B
+            · simp [hk] at h
+            · rw [if_neg hk] at h ⊢
+              exact ih _ cf h
+        | degenerate =>
+            rw [hclass] at h
+            by_cases hones :
+                bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core k primeData) = true
+            · rw [if_pos hones] at h
+              exact Or.inr ⟨(Option.some.inj h).symm,
+                k, Nat.le_of_not_lt hfl, hones⟩
+            · rw [if_neg hones] at h
+              by_cases hk : k ≥ B
+              · simp [hk] at h
+              · rw [if_neg hk] at h ⊢
+                exact ih _ cf h
+
+/-- Public structural spec for `latticeCoreWithBound`: a success is either a
+`factorFastCoreWithBound` success or the early irreducibility certificate — the
+singleton `#[core]` with a witness precision `k'` clearing `fastCoreFloor core`
+whose partition is the single all-ones class.  The witness pair is exactly the
+`hB_floor`/`hbhks` input of the Mathlib layer's
+`latticeArm3_bhksSingleAllOnes_irreducible`. -/
+theorem latticeCoreWithBound_some_spec
+    {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData} {k fuel : Nat}
+    {cf : Array ZPoly}
+    (h : latticeCoreWithBound core B primeData k fuel = some cf) :
+    factorFastCoreWithBound core B primeData k fuel = some cf ∨
+      (cf = #[core] ∧ ∃ k', fastCoreFloor core ≤ k' ∧
+        bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core k' primeData)
+          = true) := by
+  rw [latticeCoreWithBound, fastCoreFloorGate_eq] at h
+  rcases latticeCoreLoop_some_spec core B (fastCoreFloor core) primeData fuel k cf h with
+    hfast | hcert
+  · rw [factorFastCoreWithBound, fastCoreFloorGate_eq]
+    exact Or.inl hfast
+  · exact Or.inr hcert
+
 /-- Large-`r` lattice-tier core factorisation: the van Hoeij CLD recovery, plus
-**irreducibility certification at the cap**. When the recovery splits `core`, use
-its factors; when it declines (no split found), check the cap-precision partition:
-the single all-ones class means `core` is irreducible (`#[core]`), anything else
-is a genuine failure (`none`). -/
+**irreducibility certification**. When the recovery splits `core`, use its
+factors; when the loop's certificate-backed early stop fires (single all-ones
+partition at column-adequate precision, #8395), `core` is irreducible
+(`#[core]`); when the loop declines all the way to the cap, check the
+cap-precision partition once more: the single all-ones class means `core` is
+irreducible (`#[core]`), anything else is a genuine failure (`none`). -/
 def latticeCoreFactorsWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Option (Array ZPoly) :=
   if primeData.factorsModP.size ≤ 1 then
     some #[core]
   else
-    match factorFastCoreWithBound core B primeData
+    match latticeCoreWithBound core B primeData
         (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
     | some coreFactors => some coreFactors
     | none =>
@@ -14858,8 +14996,9 @@ theorem classicalCoreFactorsWithBound_degree_pos
 
 /-- Structural case-split for the van Hoeij lattice-tier core. Every `some cf`
 result of `latticeCoreFactorsWithBound` is either the singleton `#[core]` (the
-small-mod and all-ones certification arms) or a `factorFastCoreWithBound`
-success (the CLD-split arm). The trio
+small-mod arm, the loop's certificate-backed early stop, and the cap all-ones
+certification arm) or a `factorFastCoreWithBound` success (the CLD-split arm,
+via `latticeCoreWithBound_some_spec`). The trio
 `latticeCoreFactorsWithBound_{polyProduct,normalizeFactorSign,degree_pos}`
 below are thin consumers, mirroring the classical structural trio. -/
 private theorem latticeCoreFactorsWithBound_spec
@@ -14873,8 +15012,10 @@ private theorem latticeCoreFactorsWithBound_spec
   split at h
   · exact Or.inl (Option.some.inj h).symm
   · split at h
-    · rename_i coreFactors hfast
-      exact Or.inr ((Option.some.inj h) ▸ hfast)
+    · rename_i coreFactors hlattice
+      rcases latticeCoreWithBound_some_spec hlattice with hfast | ⟨hsing, _⟩
+      · exact Or.inr ((Option.some.inj h) ▸ hfast)
+      · exact Or.inl ((Option.some.inj h) ▸ hsing)
     · split at h
       · exact Or.inl (Option.some.inj h).symm
       · exact absurd h.symm (Option.some_ne_none cf)
