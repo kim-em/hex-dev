@@ -104,6 +104,11 @@
     "subsetCandidates": 206368,
     "tier": "lattice"
   },
+  "adv/swinnerton_dyer_sd6": {
+    "declined": true,
+    "subsetCandidates": 206368,
+    "tier": "lattice"
+  },
   "adv/trinomial": {
     "declined": false,
     "subsetCandidates": 2,
