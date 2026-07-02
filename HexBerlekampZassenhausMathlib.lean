@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexBerlekampZassenhausMathlib.Basic
+import HexBerlekampZassenhausMathlib.SignatureClasses
 import HexBerlekampZassenhausMathlib.UFDPartition
 import HexBerlekampZassenhausMathlib.IntReductionMod
 import HexBerlekampZassenhausMathlib.FactorSoundness
