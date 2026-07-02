@@ -71,14 +71,17 @@ merge-required through the public dispatcher:
   single all-ones class and the certificate-backed early stop (#8395)
   answers `some #[core]` without grinding to the `bhksBound` cap.
 
-Swinnerton-Dyer blocks split into factors of degree ≤ 2 modulo *every*
-prime, so the lifted-factor count is `r ≥ 32` no matter which prime the
-selector picks (at the selected primes, 29 and 19, all blocks are
-quadratic and `r = 32`), and the size-ordered classical search would
-need ΣC(31,≤15) ≈ 2³⁰ subset candidates to reach the 16-blocks — far
-past its level-aware budget (`levelAwareSubsetBudget 32
-defaultSubsetBudget = 206368`), so it provably declines and the hybrid
-falls through to the van Hoeij CLD lattice arm.  Both cases emit the
+Swinnerton-Dyer blocks split into factors of degree ≤ 2 modulo every
+admissible (squarefree-image) prime, so the lifted-factor count is
+`r ≥ 32` no matter which prime the selector picks (at the selected
+primes, 29 and 19, all blocks are quadratic and `r = 32`), and the
+size-ordered classical search would need ΣC(31,≤15) ≈ 2³⁰ subset
+candidates to reach its half-size frontier — for `sd5_pair` that is
+where the two 16-block factors live, and for `sd6` that is what
+exhausting all nontrivial subset products takes — far past its
+level-aware budget (`levelAwareSubsetBudget 32 defaultSubsetBudget =
+206368`), so it provably declines and the hybrid falls through to the
+van Hoeij CLD lattice arm.  Both cases emit the
 *hybrid* trace (`factorHybridTraced`) rather than the classical one,
 making the tier a merge requirement three ways: the emit helper itself
 errors unless the lattice tier answered, the committed-fixture
