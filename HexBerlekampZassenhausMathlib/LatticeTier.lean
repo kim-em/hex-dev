@@ -137,14 +137,19 @@ theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bh
           have hfl := Hex.defaultFactorCoeffBound_le_fastCoreFloor core
           omega
         exact fun g hg => hsingleton g hg (harm3_adequacy k' hk'_floor hk'_ne hk'_bhks)
-    · -- Arm 3: loop declined to the cap; all-ones certification at `B`.
+    · -- Arm 3: loop declined to the cap; all-ones certification at `B`, behind
+      -- the executable floor guard.
       rename_i hloop
       split at hlattice
-      · -- `bhksSingleAllOnesPartition = true`: output `#[core]`, core irreducible.
-        rename_i hbhks
-        obtain rfl := Option.some.inj hlattice
-        exact fun g hg => hsingleton g hg (harm3_adequacy B hB_floor hB_ne hbhks)
-      · -- `bhksSingleAllOnesPartition = false`: output `none`, contradiction.
+      · -- `fastCoreFloorGate core ≤ B`: the guarded all-ones check.
+        split at hlattice
+        · -- `bhksSingleAllOnesPartition = true`: output `#[core]`, core irreducible.
+          rename_i hbhks
+          obtain rfl := Option.some.inj hlattice
+          exact fun g hg => hsingleton g hg (harm3_adequacy B hB_floor hB_ne hbhks)
+        · -- `bhksSingleAllOnesPartition = false`: output `none`, contradiction.
+          exact absurd hlattice.symm (Option.some_ne_none cf)
+      · -- Guard rejected (`B` below the floor): output `none`, contradiction.
         exact absurd hlattice.symm (Option.some_ne_none cf)
 
 

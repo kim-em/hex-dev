@@ -10163,12 +10163,16 @@ def factorFast (f : ZPoly) : Option Factorization :=
 
 /-- The CLD recovery's equivalence-class partition at this precision is the single
 all-ones class — the signature of an *irreducible* input (all lifted mod-`p`
-factors form the one integer factor). At cap precision this certifies
-irreducibility; below the cap it may instead mean the lattice has not separated
-the factors yet, so callers must only trust it at `k ≥ bhksBound`. (`factorFast`
+factors form the one integer factor). At column-adequate precision
+(`fastCoreFloor core ≤ k`) this certifies irreducibility — the proven count
+lower bound forces a reducible core to exhibit ≥ 2 classes there
+(`latticeArm3_bhksSingleAllOnes_irreducible` in the Mathlib layer) — while
+below the floor it may instead mean the lattice has not separated the factors
+yet, so callers must only trust it at `k ≥ fastCoreFloor core`. (`factorFast`
 itself treats this partition as `degenerate` and declines, which is why it
-"misses" on Swinnerton-Dyer inputs; the lattice tier uses this predicate to turn
-the declined-but-certified case into a positive irreducibility verdict.) -/
+"misses" on Swinnerton-Dyer inputs; the lattice tier uses this predicate, both
+in `latticeCoreLoop`'s early stop and in the trailing cap check, to turn the
+declined-but-certified case into a positive irreducibility verdict.) -/
 def bhksSingleAllOnesPartition (f : ZPoly) (d : LiftData) : Bool :=
   -- Monic (`M2`) coordinate, matching `bhksRecoverClassified` (#8519).
   let L := bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors
@@ -10322,7 +10326,14 @@ factors; when the loop's certificate-backed early stop fires (single all-ones
 partition at column-adequate precision, #8395), `core` is irreducible
 (`#[core]`); when the loop declines all the way to the cap, check the
 cap-precision partition once more: the single all-ones class means `core` is
-irreducible (`#[core]`), anything else is a genuine failure (`none`). -/
+irreducible (`#[core]`), anything else is a genuine failure (`none`).
+
+Both certification arms are gated on the column-adequacy floor: the loop's
+early stop only examines the partition at `k ≥ fastCoreFloorGate core`, and the
+trailing cap check requires `fastCoreFloorGate core ≤ B` — below the floor the
+all-ones partition may merely mean the lattice has not separated the factors
+yet, so certifying there would be unsound.  The public `factorLattice` supplies
+`factorFastPrecisionCap`, which clears the floor by construction. -/
 def latticeCoreFactorsWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Option (Array ZPoly) :=
   if primeData.factorsModP.size ≤ 1 then
@@ -10332,8 +10343,11 @@ def latticeCoreFactorsWithBound
         (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
     | some coreFactors => some coreFactors
     | none =>
-        if bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core B primeData) then
-          some #[core]
+        if fastCoreFloorGate core ≤ B then
+          if bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core B primeData) then
+            some #[core]
+          else
+            none
         else
           none
 
@@ -15017,7 +15031,9 @@ private theorem latticeCoreFactorsWithBound_spec
       · exact Or.inr ((Option.some.inj h) ▸ hfast)
       · exact Or.inl ((Option.some.inj h) ▸ hsing)
     · split at h
-      · exact Or.inl (Option.some.inj h).symm
+      · split at h
+        · exact Or.inl (Option.some.inj h).symm
+        · exact absurd h.symm (Option.some_ne_none cf)
       · exact absurd h.symm (Option.some_ne_none cf)
 
 /-- PolyProduct identity for the van Hoeij lattice-tier core: every emitted
