@@ -149,6 +149,24 @@ def main (args : List String) : IO Unit := do
       timeLatticeCore "after  SD4   deg 16" sd4 afterLatticeCore
       timeLatticeCore "after  SD5   deg 32" sd5 afterLatticeCore
       timeLatticeCore "after  SD6   deg 64" sd6 afterLatticeCore
+  | ["hybrid"] =>
+      -- Which tier answers each input under the public dispatcher, and how
+      -- long the full hybrid takes end to end.
+      let timeHybrid (label : String) (ref : IO.Ref ZPoly) : IO Unit := do
+        let f ← ref.get
+        let t0 ← IO.monoNanosNow
+        let (φ, trace) ← IO.lazyPure (fun _ => factorHybridTraced f)
+        let t1 ← IO.monoNanosNow
+        IO.println s!"{label}: {(t1 - t0).toFloat / 1.0e6} ms \
+          (tier={trace.tier}, declined={trace.declined}, factors={φ.factors.size})"
+        (← IO.getStdout).flush
+      timeHybrid "hybrid reducible deg 4" quad
+      timeHybrid "hybrid SD2   deg  4" sd2
+      timeHybrid "hybrid Phi15 deg  8" phi15
+      timeHybrid "hybrid SD3   deg  8" sd3
+      timeHybrid "hybrid SD4   deg 16" sd4
+      timeHybrid "hybrid SD5   deg 32" sd5
+      timeHybrid "hybrid SD6   deg 64" sd6
   | _ =>
       timeLattice "reducible (x^2-2)(x^2-3) deg 4" quad
       timeLattice "SD2   deg  4" sd2
