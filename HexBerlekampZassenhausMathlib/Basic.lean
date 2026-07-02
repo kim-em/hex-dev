@@ -18000,6 +18000,324 @@ private theorem liftedSubsetSplit_mem_subsetsOfSizeWithComplement_of_matches
   rw [hx1_len] at hx_size
   exact List.mem_map.mpr ⟨x, hx_size, hx_eq⟩
 
+/-! ### Prefilter soundness for the classical candidate loop
+
+`Hex.scaledCandidatePrefilter` may reject a subset only when `exactQuotient?`
+provably fails on its candidate
+(`scaledCandidatePrefilter_eq_true_of_exactQuotient?_some`), so pruning never
+changes the accepted-candidate sequence of
+`Hex.scaledRecombinationSmartCandLoop` — the completeness apparatus below
+consumes this to dismiss the prefilter-rejected branch on the covering
+subset. -/
+
+/-- Reducing the argument mod `m` first does not change the centered
+representative. -/
+private theorem centeredModNat_emod_left (z : ℤ) (m : ℕ) :
+    Hex.centeredModNat (z % (m : ℤ)) m = Hex.centeredModNat z m := by
+  unfold Hex.centeredModNat
+  by_cases hm : m = 0
+  · simp [hm]
+  · rw [if_neg hm, if_neg hm]
+    have hz : z % (m : ℤ) % Int.ofNat m = z % Int.ofNat m := by
+      show z % (m : ℤ) % (m : ℤ) = z % (m : ℤ)
+      rw [Int.emod_emod]
+    rw [hz]
+
+/-- The running-reduction fold of `Hex.selectedProductResidue` computes the
+plain product mod `m`. -/
+private theorem foldl_mul_emod_eq (f : Hex.ZPoly → ℤ) (m : ℤ) (sel : List Hex.ZPoly) :
+    ∀ a : ℤ, sel.foldl (fun acc g => acc * f g % m) a % m = a * (sel.map f).prod % m := by
+  induction sel with
+  | nil => intro a; simp
+  | cons g tl ih =>
+      intro a
+      rw [List.foldl_cons, List.map_cons, List.prod_cons, ih (a * f g % m)]
+      conv_lhs => rw [Int.mul_emod, Int.emod_emod, ← Int.mul_emod]
+      rw [mul_assoc]
+
+/-- `Hex.selectedProductResidue` is the centered residue of the plain
+coefficient product. -/
+private theorem selectedProductResidue_eq_centeredModNat_prod
+    (f : Hex.ZPoly → ℤ) (sel : List Hex.ZPoly) (m : ℕ) :
+    Hex.selectedProductResidue f sel m =
+      Hex.centeredModNat ((sel.map f)).prod m := by
+  unfold Hex.selectedProductResidue
+  rw [← centeredModNat_emod_left
+      (sel.foldl (fun acc g => acc * f g % (m : ℤ)) 1) m,
+    foldl_mul_emod_eq f (m : ℤ) sel 1, one_mul, centeredModNat_emod_left]
+
+/-- `Hex.selectedDegreeSum` is the sum of the embedded factors' degrees. -/
+private theorem selectedDegreeSum_eq_sum (sel : List Hex.ZPoly) :
+    Hex.selectedDegreeSum sel =
+      (sel.map fun g => (HexPolyZMathlib.toPolynomial g).natDegree).sum := by
+  have haux : ∀ (l : List Hex.ZPoly) (a : ℕ),
+      l.foldl (fun n g => n + g.degree?.getD 0) a =
+        a + (l.map fun g => g.degree?.getD 0).sum := by
+    intro l
+    induction l with
+    | nil => intro a; simp
+    | cons g tl ih =>
+        intro a
+        rw [List.foldl_cons, ih, List.map_cons, List.sum_cons, Nat.add_assoc]
+  unfold Hex.selectedDegreeSum
+  rw [haux, Nat.zero_add]
+  simp [HexPolyMathlib.natDegree_toPolynomial]
+
+private theorem zpoly_leadingCoeff_zero :
+    Hex.DensePoly.leadingCoeff (0 : Hex.ZPoly) = 0 := by
+  rw [← HexPolyMathlib.leadingCoeff_toPolynomial, HexPolyMathlib.toPolynomial_zero,
+    Polynomial.leadingCoeff_zero]
+
+private theorem list_prod_ne_zero_poly (l : List (Polynomial ℤ))
+    (h : ∀ p ∈ l, p ≠ 0) : l.prod ≠ 0 := by
+  induction l with
+  | nil => simp
+  | cons p tl ih =>
+      rw [List.prod_cons]
+      exact mul_ne_zero (h p List.mem_cons_self)
+        (ih fun q hq => h q (List.mem_cons_of_mem _ hq))
+
+private theorem natDegree_list_prod_of_ne_zero (l : List (Polynomial ℤ))
+    (h : ∀ p ∈ l, p ≠ 0) :
+    l.prod.natDegree = (l.map Polynomial.natDegree).sum := by
+  induction l with
+  | nil => simp
+  | cons p tl ih =>
+      rw [List.prod_cons, List.map_cons, List.sum_cons,
+        Polynomial.natDegree_mul (h p List.mem_cons_self)
+          (list_prod_ne_zero_poly tl fun q hq => h q (List.mem_cons_of_mem _ hq)),
+        ih fun q hq => h q (List.mem_cons_of_mem _ hq)]
+
+private theorem leadingCoeff_list_prod_poly (l : List (Polynomial ℤ)) :
+    l.prod.leadingCoeff = (l.map Polynomial.leadingCoeff).prod := by
+  induction l with
+  | nil => simp
+  | cons p tl ih =>
+      rw [List.prod_cons, List.map_cons, List.prod_cons,
+        Polynomial.leadingCoeff_mul, ih]
+
+/-- The subset product's coefficient at the degree sum is the product of the
+factors' leading coefficients. Unconditional: when some factor is zero both
+sides vanish, and otherwise the coefficient sits at the product's degree. -/
+private theorem polyProduct_coeff_selectedDegreeSum (sel : List Hex.ZPoly) :
+    (Array.polyProduct sel.toArray).coeff (Hex.selectedDegreeSum sel) =
+      (sel.map Hex.DensePoly.leadingCoeff).prod := by
+  by_cases hz : ∃ g ∈ sel, g = 0
+  · obtain ⟨g, hg_mem, hg_eq⟩ := hz
+    have hP0 : Array.polyProduct sel.toArray = 0 := by
+      have hpoly : HexPolyZMathlib.toPolynomial (Array.polyProduct sel.toArray) = 0 := by
+        rw [polyProduct_toPolynomial]
+        refine List.prod_eq_zero ?_
+        exact List.mem_map.mpr
+          ⟨g, hg_mem, by rw [hg_eq, HexPolyZMathlib.toPolynomial_zero]⟩
+      rw [← HexPolyZMathlib.ofPolynomial_toPolynomial (Array.polyProduct sel.toArray),
+        hpoly, HexPolyZMathlib.ofPolynomial_zero]
+    have hlc0 : (0 : ℤ) ∈ sel.map Hex.DensePoly.leadingCoeff :=
+      List.mem_map.mpr ⟨g, hg_mem, by rw [hg_eq]; exact zpoly_leadingCoeff_zero⟩
+    rw [hP0, Hex.DensePoly.coeff_zero]
+    exact (List.prod_eq_zero hlc0).symm
+  · have hz' : ∀ g ∈ sel, g ≠ 0 := fun g hg hg0 => hz ⟨g, hg, hg0⟩
+    have hTg_ne : ∀ p ∈ sel.map HexPolyZMathlib.toPolynomial, p ≠ 0 := by
+      intro p hp hp0
+      obtain ⟨g, hg_mem, rfl⟩ := List.mem_map.mp hp
+      apply hz' g hg_mem
+      rw [← HexPolyZMathlib.ofPolynomial_toPolynomial g, hp0,
+        HexPolyZMathlib.ofPolynomial_zero]
+    have hdeg : (HexPolyZMathlib.toPolynomial (Array.polyProduct sel.toArray)).natDegree =
+        Hex.selectedDegreeSum sel := by
+      rw [polyProduct_toPolynomial]
+      rw [natDegree_list_prod_of_ne_zero _ hTg_ne, selectedDegreeSum_eq_sum,
+        List.map_map]
+      rfl
+    have hlead : (HexPolyZMathlib.toPolynomial (Array.polyProduct sel.toArray)).leadingCoeff =
+        (sel.map Hex.DensePoly.leadingCoeff).prod := by
+      rw [polyProduct_toPolynomial]
+      rw [leadingCoeff_list_prod_poly, List.map_map]
+      congr 1
+      exact List.map_congr_left fun g _ => HexPolyMathlib.leadingCoeff_toPolynomial g
+    calc (Array.polyProduct sel.toArray).coeff (Hex.selectedDegreeSum sel)
+        = (HexPolyZMathlib.toPolynomial (Array.polyProduct sel.toArray)).coeff
+            (Hex.selectedDegreeSum sel) :=
+          (HexPolyZMathlib.coeff_toPolynomial _ _).symm
+      _ = (HexPolyZMathlib.toPolynomial (Array.polyProduct sel.toArray)).leadingCoeff := by
+          rw [← hdeg, Polynomial.coeff_natDegree]
+      _ = (sel.map Hex.DensePoly.leadingCoeff).prod := hlead
+
+/-- **Prefilter soundness.** A subset whose candidate passes `exactQuotient?`
+also passes `Hex.scaledCandidatePrefilter`: the prefilter only rejects
+candidates that provably fail trial division, so pruning preserves the
+accepted-candidate sequence (and hence outputs, fixtures, and traces) of the
+classical candidate loop. -/
+theorem scaledCandidatePrefilter_eq_true_of_exactQuotient?_some
+    {coreLc : ℤ} {target : Hex.ZPoly} {modulus : ℕ} {sel : List Hex.ZPoly}
+    {quotient : Hex.ZPoly}
+    (hq : Hex.exactQuotient? target
+        (Hex.normalizeFactorSign (Hex.ZPoly.primitivePart (Hex.ZPoly.dilate coreLc
+          (Hex.centeredLiftPoly (Array.polyProduct sel.toArray) modulus)))) =
+        some quotient) :
+    Hex.scaledCandidatePrefilter coreLc target modulus sel = true := by
+  set P := Array.polyProduct sel.toArray with hP_def
+  set L := Hex.centeredLiftPoly P modulus with hL_def
+  set D := Hex.ZPoly.dilate coreLc L with hD_def
+  set pp := Hex.ZPoly.primitivePart D with hpp_def
+  set cand := Hex.normalizeFactorSign pp with hcand_def
+  have hprod : quotient * cand = target := Hex.exactQuotient?_product hq
+  have htarget_poly : HexPolyZMathlib.toPolynomial target =
+      HexPolyZMathlib.toPolynomial quotient * HexPolyZMathlib.toPolynomial cand := by
+    rw [← HexPolyZMathlib.toPolynomial_mul, hprod]
+  have hcoeff0 : target.coeff 0 = quotient.coeff 0 * cand.coeff 0 := by
+    have hc := congrArg (fun p => Polynomial.coeff p 0) htarget_poly
+    simpa only [HexPolyZMathlib.coeff_toPolynomial, Polynomial.mul_coeff_zero] using hc
+  have hcand0_dvd : cand.coeff 0 ∣ target.coeff 0 :=
+    ⟨quotient.coeff 0, by rw [hcoeff0, mul_comm]⟩
+  have hcand0 : cand.coeff 0 = pp.coeff 0 ∨ cand.coeff 0 = -pp.coeff 0 := by
+    rw [hcand_def]
+    unfold Hex.normalizeFactorSign
+    split
+    · right
+      rw [Hex.DensePoly.coeff_scale (R := Int) (-1) pp 0 (Int.mul_zero _), neg_one_mul]
+    · left; rfl
+  have hpp0_dvd : pp.coeff 0 ∣ target.coeff 0 := by
+    rcases hcand0 with h0 | h0
+    · rwa [h0] at hcand0_dvd
+    · have hpc : pp.coeff 0 = -cand.coeff 0 := by omega
+      rw [hpc]
+      exact neg_dvd.mpr hcand0_dvd
+  have hL_coeff : ∀ n, L.coeff n = Hex.centeredModNat (P.coeff n) modulus := by
+    intro n
+    rw [hL_def]
+    exact Hex.coeff_centeredLiftPoly P modulus n
+  have hlcres : Hex.selectedProductResidue Hex.DensePoly.leadingCoeff sel modulus =
+      Hex.centeredModNat ((sel.map Hex.DensePoly.leadingCoeff)).prod modulus :=
+    selectedProductResidue_eq_centeredModNat_prod _ sel modulus
+  have hL_coeff_top : L.coeff (Hex.selectedDegreeSum sel) =
+      Hex.selectedProductResidue Hex.DensePoly.leadingCoeff sel modulus := by
+    rw [hL_coeff, hP_def, polyProduct_coeff_selectedDegreeSum, ← hlcres]
+  have htrail : Hex.selectedProductResidue (fun g => g.coeff 0) sel modulus =
+      L.coeff 0 := by
+    have hP0 : P.coeff 0 = (sel.map fun g => g.coeff 0).prod := by
+      rw [← HexPolyZMathlib.coeff_toPolynomial, hP_def, polyProduct_toPolynomial,
+        Polynomial.coeff_zero_eq_eval_zero, Polynomial.eval_list_prod]
+      simp only [List.map_map]
+      congr 1
+      refine List.map_congr_left fun g _ => ?_
+      rw [Function.comp_apply, ← Polynomial.coeff_zero_eq_eval_zero,
+        HexPolyZMathlib.coeff_toPolynomial]
+    rw [selectedProductResidue_eq_centeredModNat_prod, hL_coeff 0, hP0]
+  have hD0 : D.coeff 0 = Hex.ZPoly.content D * pp.coeff 0 := by
+    conv_lhs => rw [← Hex.DensePoly.content_mul_primitivePart D]
+    exact Hex.DensePoly.coeff_scale (R := Int) _ _ 0 (Int.mul_zero _)
+  have hD0L : D.coeff 0 = L.coeff 0 := by
+    rw [hD_def, Hex.ZPoly.coeff_dilate]
+    simp
+  unfold Hex.scaledCandidatePrefilter
+  simp only [Bool.and_eq_true, Bool.or_eq_true, beq_iff_eq, decide_eq_true_eq]
+  refine ⟨?_, ?_⟩
+  · -- degree test
+    by_cases hcore0 : coreLc = 0
+    · exact Or.inl (Or.inl (Or.inl hcore0))
+    by_cases hlc0 : Hex.selectedProductResidue Hex.DensePoly.leadingCoeff sel modulus = 0
+    · exact Or.inl (Or.inl (Or.inr hlc0))
+    by_cases htarget0 : target = 0
+    · exact Or.inl (Or.inr htarget0)
+    refine Or.inr ?_
+    have hnd : ∀ p : Hex.ZPoly,
+        (HexPolyZMathlib.toPolynomial p).natDegree = p.degree?.getD 0 := fun p =>
+      HexPolyMathlib.natDegree_toPolynomial p
+    have hlcprod_ne : ((sel.map Hex.DensePoly.leadingCoeff)).prod ≠ 0 := by
+      intro h0
+      apply hlc0
+      rw [hlcres, h0, Hex.centeredModNat_zero]
+    have hg_ne : ∀ g ∈ sel, g ≠ 0 := by
+      intro g hg hg0
+      apply hlcprod_ne
+      refine List.prod_eq_zero (List.mem_map.mpr ⟨g, hg, ?_⟩)
+      rw [hg0]
+      exact zpoly_leadingCoeff_zero
+    have hTg_ne : ∀ p ∈ sel.map HexPolyZMathlib.toPolynomial, p ≠ 0 := by
+      intro p hp hp0
+      obtain ⟨g, hg, rfl⟩ := List.mem_map.mp hp
+      apply hg_ne g hg
+      rw [← HexPolyZMathlib.ofPolynomial_toPolynomial g, hp0,
+        HexPolyZMathlib.ofPolynomial_zero]
+    have hTP_deg : (HexPolyZMathlib.toPolynomial P).natDegree =
+        Hex.selectedDegreeSum sel := by
+      rw [hP_def, polyProduct_toPolynomial]
+      rw [natDegree_list_prod_of_ne_zero _ hTg_ne, selectedDegreeSum_eq_sum,
+        List.map_map]
+      rfl
+    have hTL_deg : (HexPolyZMathlib.toPolynomial L).natDegree =
+        Hex.selectedDegreeSum sel := by
+      apply le_antisymm
+      · apply Polynomial.natDegree_le_iff_coeff_eq_zero.mpr
+        intro N hN
+        rw [HexPolyZMathlib.coeff_toPolynomial, hL_coeff]
+        have hPN : P.coeff N = 0 := by
+          rw [← HexPolyZMathlib.coeff_toPolynomial]
+          exact Polynomial.coeff_eq_zero_of_natDegree_lt (hTP_deg ▸ hN)
+        rw [hPN, Hex.centeredModNat_zero]
+      · apply Polynomial.le_natDegree_of_ne_zero
+        rw [HexPolyZMathlib.coeff_toPolynomial, hL_coeff_top]
+        exact hlc0
+    have hDtop : D.coeff (Hex.selectedDegreeSum sel) =
+        coreLc ^ Hex.selectedDegreeSum sel * L.coeff (Hex.selectedDegreeSum sel) := by
+      rw [hD_def, Hex.ZPoly.coeff_dilate]
+    have hDtop_ne : D.coeff (Hex.selectedDegreeSum sel) ≠ 0 := by
+      rw [hDtop, hL_coeff_top]
+      exact mul_ne_zero (pow_ne_zero _ hcore0) hlc0
+    have hD_ne : D ≠ 0 := by
+      intro h0
+      apply hDtop_ne
+      rw [h0]
+      exact Hex.DensePoly.coeff_zero _
+    have hTD_deg : (HexPolyZMathlib.toPolynomial D).natDegree =
+        Hex.selectedDegreeSum sel := by
+      rw [hD_def, HexPolyZMathlib.natDegree_toPolynomial_dilate coreLc hcore0, hTL_deg]
+    have hcontent_ne : Hex.ZPoly.content D ≠ 0 :=
+      HexPolyZMathlib.content_ne_zero D hD_ne
+    have hTpp_deg : (HexPolyZMathlib.toPolynomial pp).natDegree =
+        Hex.selectedDegreeSum sel := by
+      have hCD := HexPolyZMathlib.toPolynomial_eq_C_content_mul_primitivePart D
+      have hnat := congrArg Polynomial.natDegree hCD
+      rw [hTD_deg, Polynomial.natDegree_C_mul hcontent_ne] at hnat
+      rw [hpp_def]
+      exact hnat.symm
+    have hsize : cand.size = pp.size := by
+      rw [hcand_def]
+      exact size_normalizeFactorSign_eq pp
+    have hcand_deg : cand.degree?.getD 0 = pp.degree?.getD 0 := by
+      simp only [Hex.DensePoly.degree?, hsize]
+    have hTC_deg : (HexPolyZMathlib.toPolynomial cand).natDegree =
+        Hex.selectedDegreeSum sel := by
+      rw [hnd, hcand_deg, ← hnd, hTpp_deg]
+    have hT_ne : HexPolyZMathlib.toPolynomial target ≠ 0 := by
+      intro h0
+      apply htarget0
+      rw [← HexPolyZMathlib.ofPolynomial_toPolynomial target, h0,
+        HexPolyZMathlib.ofPolynomial_zero]
+    have hTC_ne : HexPolyZMathlib.toPolynomial cand ≠ 0 := by
+      intro h0
+      apply hT_ne
+      rw [htarget_poly, h0, mul_zero]
+    have hTQ_ne : HexPolyZMathlib.toPolynomial quotient ≠ 0 := by
+      intro h0
+      apply hT_ne
+      rw [htarget_poly, h0, zero_mul]
+    have hT_deg := congrArg Polynomial.natDegree htarget_poly
+    rw [Polynomial.natDegree_mul hTQ_ne hTC_ne, hTC_deg, hnd] at hT_deg
+    omega
+  · -- trailing-coefficient test
+    apply Int.emod_eq_zero_of_dvd
+    have hdvd_content : Hex.ZPoly.content D ∣
+        coreLc ^ Hex.selectedDegreeSum sel *
+          Hex.selectedProductResidue Hex.DensePoly.leadingCoeff sel modulus := by
+      have hcd : Hex.ZPoly.content D ∣ D.coeff (Hex.selectedDegreeSum sel) :=
+        Hex.ZPoly.content_dvd_coeff D _
+      rwa [hD_def, Hex.ZPoly.coeff_dilate, hL_coeff, hP_def,
+        polyProduct_coeff_selectedDegreeSum, ← hlcres] at hcd
+    rw [htrail, ← hD0L, hD0]
+    exact mul_dvd_mul hdvd_content hpp0_dvd
+
 mutual
 
 /-- Trustworthy-none completeness for the size-ordered search: with adequate
@@ -18278,6 +18596,29 @@ private theorem smartCandLoop_none_budget_zero
             (liftedRecoveryCandidate core d S_cov) = true :=
           shouldRecord_liftedRecoveryCandidate_of_eq_factor hrec_eq hf_cov_irr
         simp only [] at h
+        -- Peel the prefilter guard: on the covering split it must pass
+        -- (`f_cov`'s candidate divides `target`), and elsewhere rejection
+        -- just recurses on the remaining splits.
+        by_cases hpre : Hex.scaledCandidatePrefilter (Hex.DensePoly.leadingCoeff core)
+            target (d.p ^ d.k) split.1 = true
+        swap
+        · rw [if_neg hpre] at h
+          rcases List.mem_cons.mp hscov_mem with hsplit_eq | hscov_rest
+          · -- split = scovSplit: its candidate divides, so the prefilter accepts
+            exfalso
+            have hsplit1 : split.1 = liftedSubsetSelectedList d S_cov := by
+              rw [← hsplit_eq]
+            rw [hsplit1] at hpre
+            exact hpre (scaledCandidatePrefilter_eq_true_of_exactQuotient?_some
+              (by rw [hcand_scov_eq]; exact hquot_scov))
+          · exact smartCandLoop_none_budget_zero B' hcore_lc_le hvalid hcore_ne
+              hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+              hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+              htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
+              hf_cov_irr hf_cov_dvd_target hS_cov_J hJ_ne hmin_in_S_cov hS_cov_rep
+              (fun s hs => hsplits_enum s (List.mem_cons_of_mem _ hs)) hscov_rest
+              (by omega) h
+        rw [if_pos hpre] at h
         split at h
         · -- candidate is recorded
           rename_i hrecord
@@ -18667,6 +19008,19 @@ private theorem smartCandLoop_covers_of_bound
       · simp at h
       · rename_i fuel'
         simp only [] at h
+        by_cases hpre : Hex.scaledCandidatePrefilter (Hex.DensePoly.leadingCoeff core)
+            target (d.p ^ d.k) split.1 = true
+        swap
+        · -- prefilter rejected the subset: recurse on `rest`
+          rw [if_neg hpre] at h
+          exact smartCandLoop_covers_of_bound B' hcore_lc_le hvalid hcore_ne
+            hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
+            hd_liftedFactor_natDegree_pos hd_liftedFactor_inj hprecision
+            htarget_primitive htarget_lc_pos htarget_dvd_core hpartition hmatches
+            hf_cov_irr hf_cov_dvd_target hS_cov_J hJ_ne hmin_in_S_cov hS_cov_rep
+            hk_le (fun s hs => hsplits_enum s (List.mem_cons_of_mem _ hs))
+            (by omega) h factor hfactor_irr hfactor_dvd
+        rw [if_pos hpre] at h
         split at h
         · -- candidate recorded
           rename_i hrecord
