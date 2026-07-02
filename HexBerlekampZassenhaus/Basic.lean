@@ -6714,7 +6714,13 @@ indicators by RREF, reconstructs every indicated candidate by centred lifting,
 and accepts only when the verified candidates multiply back to `f`.
 -/
 private def bhksRecoverClassified (f : ZPoly) (d : LiftData) : BhksRecoveryResult :=
-  let L := bhksLatticeBasis f d.p d.k d.liftedFactors
+  -- The CLD lattice runs in the monic (`M2`, `x ↦ x/ℓf`) coordinate: `d` is a
+  -- `toMonicLiftData`, so `d.liftedFactors` are Hensel factors of
+  -- `(ZPoly.toMonic f).monic`, and the CLD columns must be computed against
+  -- that same monic transform (for monic `f` this is `f` itself).  Building
+  -- them against `f` would mix coordinates and empty the columns of meaning
+  -- whenever `leadingCoeff f ≢ 1 (mod p)` (#8519).
+  let L := bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors
   if hrows : 1 ≤ L.factorCount + L.coeffWidth then
     let projected := bhksProjectedRows L hrows
     let indicators := bhksEquivalenceClassIndicators projected
@@ -6743,19 +6749,19 @@ unfold the private failure classifier used by the executable.
 -/
 theorem bhksRecover?_eq_some_of_checks
     (f : ZPoly) (d : LiftData) {candidates : Array ZPoly}
-    (hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
-      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth)
+    (hrows : 1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth)
     (hnondeg :
       bhksDegenerateIndicatorPartition
-          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
+          (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows
-              (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) = false)
+              (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)) = false)
     (hcand :
       bhksIndicatorCandidates? f d
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows
-              (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) =
+              (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)) =
         some candidates)
     (hprod : Array.polyProduct candidates = f) :
     bhksRecover? f d = some candidates := by
@@ -8591,20 +8597,45 @@ def cldCoeffFloor (core : ZPoly) : Nat :=
   let n := monicCore.degree?.getD 0
   2 * (List.range (n + 1)).foldl (fun acc j => max acc (bhksCoeffBound monicCore j)) 0
 
-/-- The CLD column-adequacy floor used solely as the fast-core loop's skip gate.
+/-- Acceptance floor for the fast-core loop: the CLD column-adequacy floor
+`cldCoeffFloor` joined with the Mignotte recovery bounds of the core and of its
+monic transform.  A success accepted at `k ≥ fastCoreFloor core` is both
+column-adequate and running at a Hensel modulus `p ^ precisionForCoeffBound k p`
+that clears twice both Mignotte bounds — which is what the lattice-tier
+count-equality and adequacy proofs consume (#8519): the toMonic partition
+producers need `2 * defaultFactorCoeffBound (toMonic core).monic < p ^ a`, and
+the true-support nonemptiness argument needs the same for `core` itself. -/
+def fastCoreFloor (core : ZPoly) : Nat :=
+  max (cldCoeffFloor core)
+    (max (ZPoly.defaultFactorCoeffBound core)
+      (ZPoly.defaultFactorCoeffBound (ZPoly.toMonic core).monic))
 
-Definitionally `cldCoeffFloor`, but marked `irreducible` so that `whnf` in
+theorem cldCoeffFloor_le_fastCoreFloor (core : ZPoly) :
+    cldCoeffFloor core ≤ fastCoreFloor core :=
+  Nat.le_max_left _ _
+
+theorem defaultFactorCoeffBound_le_fastCoreFloor (core : ZPoly) :
+    ZPoly.defaultFactorCoeffBound core ≤ fastCoreFloor core :=
+  Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_right _ _)
+
+theorem defaultFactorCoeffBound_toMonic_le_fastCoreFloor (core : ZPoly) :
+    ZPoly.defaultFactorCoeffBound (ZPoly.toMonic core).monic ≤ fastCoreFloor core :=
+  Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_right _ _)
+
+/-- The acceptance floor used solely as the fast-core loop's skip gate.
+
+Definitionally `fastCoreFloor`, but marked `irreducible` so that `whnf` in
 downstream proofs that case-split on a `factorFastCoreWithBound` application
-does not eagerly expand the (symbolic, structurally large) `cldCoeffFloor`
-computation while reducing the loop's head `if`.  The loop's behavioural
-unfolding lemma `factorFastCoreWithBound_unfold` re-exposes the plain
-`cldCoeffFloor` comparison, so proofs reason about the genuine floor. -/
-@[irreducible] def cldCoeffFloorGate (core : ZPoly) : Nat :=
-  cldCoeffFloor core
+does not eagerly expand the (symbolic, structurally large) floor computation
+while reducing the loop's head `if`.  The loop's behavioural unfolding lemma
+`factorFastCoreWithBound_unfold` re-exposes the plain `fastCoreFloor`
+comparison, so proofs reason about the genuine floor. -/
+@[irreducible] def fastCoreFloorGate (core : ZPoly) : Nat :=
+  fastCoreFloor core
 
-theorem cldCoeffFloorGate_eq (core : ZPoly) :
-    cldCoeffFloorGate core = cldCoeffFloor core := by
-  simp only [cldCoeffFloorGate]
+theorem fastCoreFloorGate_eq (core : ZPoly) :
+    fastCoreFloorGate core = fastCoreFloor core := by
+  simp only [fastCoreFloorGate]
 
 /-- Inner fast-core recombination loop, parameterised by a precomputed CLD
 column-adequacy `floor`.  Below `floor` a success cannot be accepted and every
@@ -8651,13 +8682,13 @@ private def factorFastCoreLoop
             factorFastCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
 
 /-- BHKS fast-core recombination loop.  Computes the CLD column-adequacy floor
-once (through the irreducible `cldCoeffFloorGate`, so `whnf` in downstream
+once (through the irreducible `fastCoreFloorGate`, so `whnf` in downstream
 proofs that case-split on this application does not eagerly expand the symbolic
 floor) and runs `factorFastCoreLoop`. -/
 def factorFastCoreWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) (k fuel : Nat) :
     Option (Array ZPoly) :=
-  factorFastCoreLoop core B (cldCoeffFloorGate core) primeData k fuel
+  factorFastCoreLoop core B (fastCoreFloorGate core) primeData k fuel
 
 /-- Behavioural unfolding for the optimized fast-core loop: the precision-floor
 short-circuit is propositionally equal to the original "recover at every step,
@@ -8670,7 +8701,7 @@ private theorem factorFastCoreWithBound_unfold
     factorFastCoreWithBound core B primeData k (fuel + 1) =
       match bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | .success factors =>
-        if k ≥ cldCoeffFloor core then
+        if k ≥ fastCoreFloor core then
           some factors
         else if k ≥ B then
           none
@@ -8692,19 +8723,19 @@ private theorem factorFastCoreWithBound_unfold
         else
           factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel := by
   have hrec : ∀ k',
-      factorFastCoreLoop core B (cldCoeffFloor core) primeData k' fuel =
+      factorFastCoreLoop core B (fastCoreFloor core) primeData k' fuel =
         factorFastCoreWithBound core B primeData k' fuel := by
     intro k'
-    rw [factorFastCoreWithBound, cldCoeffFloorGate_eq]
-  rw [factorFastCoreWithBound, cldCoeffFloorGate_eq, factorFastCoreLoop]
+    rw [factorFastCoreWithBound, fastCoreFloorGate_eq]
+  rw [factorFastCoreWithBound, fastCoreFloorGate_eq, factorFastCoreLoop]
   simp only [hrec]
-  by_cases hf : k < cldCoeffFloor core
+  by_cases hf : k < fastCoreFloor core
   · rw [if_pos hf]
-    have hfloor : ¬ k ≥ cldCoeffFloor core := Nat.not_le.mpr hf
+    have hfloor : ¬ k ≥ fastCoreFloor core := Nat.not_le.mpr hf
     cases bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) <;>
       simp only [hfloor, if_false]
   · rw [if_neg hf]
-    have hfloor : k ≥ cldCoeffFloor core := Nat.le_of_not_lt hf
+    have hfloor : k ≥ fastCoreFloor core := Nat.le_of_not_lt hf
     cases bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) <;>
       simp only [hfloor, if_true]
 
@@ -8857,7 +8888,7 @@ theorem cap_mem_henselPrecisionSchedule (B : Nat) :
 private theorem factorFastCoreWithBound_isSome_of_recovery_on_schedule
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {start fuel target : Nat} {factors : Array ZPoly}
-    (hfloor : cldCoeffFloor core ≤ target)
+    (hfloor : fastCoreFloor core ≤ target)
     (hmem : target ∈ henselPrecisionSchedule B start fuel)
     (hrecover :
       bhksRecover? core (ZPoly.toMonicLiftData core target primeData) = some factors) :
@@ -8869,7 +8900,7 @@ private theorem factorFastCoreWithBound_isSome_of_recovery_on_schedule
       rw [factorFastCoreWithBound_unfold]
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core start primeData) with
       | success xs =>
-          by_cases hstart : start ≥ cldCoeffFloor core
+          by_cases hstart : start ≥ fastCoreFloor core
           · simp [hstart]
           · by_cases hk : start ≥ B
             · exfalso
@@ -8977,7 +9008,7 @@ Mignotte/cap precision.
 theorem factorFastCoreWithBound_eq_some_of_recovery_on_schedule_of_no_prior_recovery
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {start fuel target : Nat} {factors : Array ZPoly}
-    (hfloor : cldCoeffFloor core ≤ target)
+    (hfloor : fastCoreFloor core ≤ target)
     (hmem : target ∈ henselPrecisionSchedule B start fuel)
     (hno :
       ∀ k, k ∈ henselPrecisionSchedule B start fuel → k ≠ target →
@@ -9098,7 +9129,7 @@ theorem factorFastCoreWithBound_eq_some_of_recovery_on_schedule_of_no_prior_reco
 private theorem factorFastCoreWithBound_ne_none_of_recovery_on_schedule
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {start fuel target : Nat} {factors : Array ZPoly}
-    (hfloor : cldCoeffFloor core ≤ target)
+    (hfloor : fastCoreFloor core ≤ target)
     (hmem : target ∈ henselPrecisionSchedule B start fuel)
     (hrecover :
       bhksRecover? core (ZPoly.toMonicLiftData core target primeData) = some factors) :
@@ -9543,7 +9574,16 @@ def factorSlowTrial (f : ZPoly) : Factorization :=
 
 Exposed publicly so the Mathlib-side layer can express per-branch
 irreducibility hypotheses for the assembled output theorem.  Internal callers
-still go through the `factorFast` wrapper. -/
+still go through the `factorFast` wrapper.
+
+Note (#8519): this standalone tier still selects its prime with
+`choosePrimeData?` on the core itself, while the shared recovery runs the CLD
+lattice in the monic (`toMonic`) coordinate.  For `leadingCoeff core ≢ 1
+(mod p)` the Hensel seeds then do not match the lift target, so this tier
+remains a verification-guarded, decline-only heuristic there (sound but
+incomplete); the hybrid pipeline's lattice tier
+(`factorLatticeFactorsWithBound`) selects `toMonicPrimeData?` and is the
+coordinate-coherent, proof-carrying path. -/
 def factorFastFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
@@ -9850,18 +9890,63 @@ against `f`'s `4`, and `bhksBound core > bhksBound f`), so a cap keyed on
 `f` can sit below the core's separation threshold (#8521).
 -/
 def factorFastPrecisionCap (f : ZPoly) : Nat :=
-  max (bhksBound (normalizeForFactor f).squareFreeCore)
-    (ZPoly.defaultFactorCoeffBound f)
+  let core := (normalizeForFactor f).squareFreeCore
+  max (max (bhksBound core) (cldCoeffFloor core))
+    (max (ZPoly.defaultFactorCoeffBound f)
+      (max (ZPoly.defaultFactorCoeffBound core)
+        (ZPoly.defaultFactorCoeffBound (ZPoly.toMonic core).monic)))
 
 theorem bhksBound_squareFreeCore_le_factorFastPrecisionCap (f : ZPoly) :
     bhksBound (normalizeForFactor f).squareFreeCore ≤ factorFastPrecisionCap f := by
   unfold factorFastPrecisionCap
-  exact Nat.le_max_left _ _
+  exact Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _)
+
+/-- The cap clears the CLD column-adequacy floor of the square-free core, so the
+lattice tier's cap-precision run is column-adequate by construction (#8519). -/
+theorem cldCoeffFloor_squareFreeCore_le_factorFastPrecisionCap (f : ZPoly) :
+    cldCoeffFloor (normalizeForFactor f).squareFreeCore ≤ factorFastPrecisionCap f := by
+  unfold factorFastPrecisionCap
+  exact Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_left _ _)
 
 theorem defaultFactorCoeffBound_le_factorFastPrecisionCap (f : ZPoly) :
     ZPoly.defaultFactorCoeffBound f ≤ factorFastPrecisionCap f := by
   unfold factorFastPrecisionCap
-  exact Nat.le_max_right _ _
+  exact Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_right _ _)
+
+/-- The public precision cap clears the whole fast-core acceptance floor, so
+the gated loop always has admissible precisions on its schedule (#8519). -/
+theorem fastCoreFloor_squareFreeCore_le_factorFastPrecisionCap (f : ZPoly) :
+    fastCoreFloor (normalizeForFactor f).squareFreeCore ≤ factorFastPrecisionCap f := by
+  unfold fastCoreFloor
+  refine Nat.max_le.mpr ⟨cldCoeffFloor_squareFreeCore_le_factorFastPrecisionCap f,
+    Nat.max_le.mpr ⟨?_, ?_⟩⟩
+  · unfold factorFastPrecisionCap
+    exact Nat.le_trans (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_right _ _))
+      (Nat.le_max_right _ _)
+  · unfold factorFastPrecisionCap
+    exact Nat.le_trans (Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_right _ _))
+      (Nat.le_max_right _ _)
+
+/-- The cap dominates the Mignotte bound of the square-free core itself, needed
+by the true-support nonemptiness argument at cap precision (#8519). -/
+theorem defaultFactorCoeffBound_squareFreeCore_le_factorFastPrecisionCap (f : ZPoly) :
+    ZPoly.defaultFactorCoeffBound (normalizeForFactor f).squareFreeCore ≤
+      factorFastPrecisionCap f := by
+  unfold factorFastPrecisionCap
+  exact Nat.le_trans (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_right _ _))
+    (Nat.le_max_right _ _)
+
+/-- The cap dominates the Mignotte bound of the monic transform of the
+square-free core, the `hbound` input of the toMonic partition producers
+(#8519). -/
+theorem defaultFactorCoeffBound_toMonic_squareFreeCore_le_factorFastPrecisionCap
+    (f : ZPoly) :
+    ZPoly.defaultFactorCoeffBound
+        (ZPoly.toMonic (normalizeForFactor f).squareFreeCore).monic ≤
+      factorFastPrecisionCap f := by
+  unfold factorFastPrecisionCap
+  exact Nat.le_trans (Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_right _ _))
+    (Nat.le_max_right _ _)
 
 /--
 At the public precision cap, the monic lift for the square-free core clears
@@ -9900,6 +9985,19 @@ theorem two_mul_bhksBound_squareFreeCore_lt_pow_cap_of_choosePrimeData
           (factorFastPrecisionCap f) primeData).k :=
   two_mul_bhksBound_squareFreeCore_lt_pow_cap f primeData
     (choosePrimeData?_prime _ primeData hchoose).two_le
+
+/-- Variant of `two_mul_bhksBound_squareFreeCore_lt_pow_cap` keyed on the
+lattice tier's monic-transform prime-selection witness (#8519). -/
+theorem two_mul_bhksBound_squareFreeCore_lt_pow_cap_of_toMonicPrimeData
+    (f : ZPoly) (primeData : PrimeChoiceData)
+    (hselected :
+      ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore = some primeData) :
+    2 * bhksBound (normalizeForFactor f).squareFreeCore <
+      primeData.p ^
+        (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
+          (factorFastPrecisionCap f) primeData).k :=
+  two_mul_bhksBound_squareFreeCore_lt_pow_cap f primeData
+    (ZPoly.toMonicPrimeData?_prime _ primeData hselected).two_le
 
 -- #8521 regression witness: for `f = (x¹⁸ - 1)(x¹⁹ - 1) = x³⁷ - x¹⁹ - x¹⁸ + 1`
 -- the square-free core `f / (x - 1)` has `bhksBound` exceeding the pre-fix cap
@@ -9947,7 +10045,8 @@ itself treats this partition as `degenerate` and declines, which is why it
 "misses" on Swinnerton-Dyer inputs; the lattice tier uses this predicate to turn
 the declined-but-certified case into a positive irreducibility verdict.) -/
 def bhksSingleAllOnesPartition (f : ZPoly) (d : LiftData) : Bool :=
-  let L := bhksLatticeBasis f d.p d.k d.liftedFactors
+  -- Monic (`M2`) coordinate, matching `bhksRecoverClassified` (#8519).
+  let L := bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors
   if hrows : 1 ≤ L.factorCount + L.coeffWidth then
     let projected := bhksProjectedRows L hrows
     let indicators := bhksEquivalenceClassIndicators projected
@@ -9988,7 +10087,13 @@ def factorLatticeFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :
     match quadraticIntegerRootFactors? normalized.squareFreeCore with
     | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
     | none =>
-        match choosePrimeData? normalized.squareFreeCore with
+        -- Select the prime on the monic transform (`toMonicPrimeData?`, as the
+        -- classical tier does): `latticeCoreFactorsWithBound` Hensel-lifts the
+        -- selected modular factors against `(ZPoly.toMonic core).monic`, so the
+        -- seeds must be that transform's mod-`p` factorisation.  Selecting on
+        -- `core` itself breaks the lift invariant whenever
+        -- `leadingCoeff core ≢ 1 (mod p)` (#8519).
+        match ZPoly.toMonicPrimeData? normalized.squareFreeCore with
         | none => none
         | some primeData =>
             (latticeCoreFactorsWithBound normalized.squareFreeCore B primeData).map
@@ -10313,7 +10418,7 @@ theorem factorFast_ne_none_of_core_recovery_on_schedule
     (f : ZPoly) (primeData : PrimeChoiceData)
     {target : Nat} {coreFactors : Array ZPoly}
     (hB_pos : 1 ≤ factorFastPrecisionCap f)
-    (hfloor : cldCoeffFloor (normalizeForFactor f).squareFreeCore ≤ target)
+    (hfloor : fastCoreFloor (normalizeForFactor f).squareFreeCore ≤ target)
     (hchoose :
       choosePrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
     (hmem :
@@ -13623,20 +13728,20 @@ private theorem bhksRecoverClassified_success_product
     (hrecover : bhksRecoverClassified f d = .success candidates) :
     Array.polyProduct candidates = f := by
   rw [bhksRecoverClassified] at hrecover
-  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
-      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
+  by_cases hrows : 1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth
   · rw [dif_pos hrows] at hrecover
     by_cases hdeg :
         bhksDegenerateIndicatorPartition
-          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
+          (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)
           (bhksEquivalenceClassIndicators
-            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
+            (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors)
               hrows)) = true
     · simp [hdeg] at hrecover
     · simp only [hdeg, Bool.false_eq_true, if_false] at hrecover
       cases hcand : bhksIndicatorCandidates? f d
           (bhksEquivalenceClassIndicators
-            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
+            (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors)
               hrows)) with
       | none => simp [hcand] at hrecover
       | some cands =>
@@ -13660,11 +13765,11 @@ private theorem bhksRecoverClassified_success_all_of_candidates
     (hrecover : bhksRecoverClassified f d = .success candidates) :
     ∀ factor ∈ candidates.toList, P factor := by
   rw [bhksRecoverClassified] at hrecover
-  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
-      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
+  by_cases hrows : 1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth
   · rw [dif_pos hrows] at hrecover
     let projected :=
-      bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows
+      bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows
     let indicators := bhksEquivalenceClassIndicators projected
     by_cases hdeg : bhksDegenerateIndicatorPartition projected indicators = true
     · simp [projected, indicators, hdeg] at hrecover
@@ -13707,11 +13812,11 @@ private theorem bhksRecoverClassified_success_dvd
     (hrecover : bhksRecoverClassified f d = .success candidates) :
     ∀ factor ∈ candidates.toList, factor ∣ f := by
   rw [bhksRecoverClassified] at hrecover
-  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
-      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
+  by_cases hrows : 1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth
   · rw [dif_pos hrows] at hrecover
     let projected :=
-      bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows
+      bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows
     let indicators := bhksEquivalenceClassIndicators projected
     by_cases hdeg : bhksDegenerateIndicatorPartition projected indicators = true
     · simp [projected, indicators, hdeg] at hrecover
@@ -13767,7 +13872,7 @@ theorem factorFastCoreWithBound_product
       rw [factorFastCoreWithBound_unfold] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
-          by_cases hfloor : k ≥ cldCoeffFloor core
+          by_cases hfloor : k ≥ fastCoreFloor core
           · simp [hclass, hfloor] at hfast
             cases hfast
             exact bhksRecoverClassified_success_product hclass
@@ -13801,32 +13906,32 @@ names `bhksRecoverClassified`; the public extractor
 private theorem bhksRecoverClassified_success_indicatorCandidates
     {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
     (hrecover : bhksRecoverClassified f d = .success candidates) :
-    ∃ hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
-        (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth,
+    ∃ hrows : 1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
+        (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth,
       bhksIndicatorCandidates? f d
           (bhksEquivalenceClassIndicators
-            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) =
+            (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)) =
         some candidates ∧
       bhksDegenerateIndicatorPartition
-          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
+          (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)
           (bhksEquivalenceClassIndicators
-            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)) =
+            (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)) =
         false := by
   rw [bhksRecoverClassified] at hrecover
-  by_cases hrows : 1 ≤ (bhksLatticeBasis f d.p d.k d.liftedFactors).factorCount +
-      (bhksLatticeBasis f d.p d.k d.liftedFactors).coeffWidth
+  by_cases hrows : 1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
+      (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth
   · rw [dif_pos hrows] at hrecover
     by_cases hdeg :
         bhksDegenerateIndicatorPartition
-          (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors) hrows)
+          (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors) hrows)
           (bhksEquivalenceClassIndicators
-            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
+            (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors)
               hrows)) = true
     · simp [hdeg] at hrecover
     · simp only [hdeg, Bool.false_eq_true, if_false] at hrecover
       cases hcand : bhksIndicatorCandidates? f d
           (bhksEquivalenceClassIndicators
-            (bhksProjectedRows (bhksLatticeBasis f d.p d.k d.liftedFactors)
+            (bhksProjectedRows (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors)
               hrows)) with
       | none => simp [hcand] at hrecover
       | some cands =>
@@ -14008,7 +14113,7 @@ private theorem factorFastCoreWithBound_some_classifiedSuccess
     ∀ k fuel coreFactors,
       factorFastCoreWithBound core B primeData k fuel = some coreFactors →
         ∃ k', bhksRecoverClassified core (ZPoly.toMonicLiftData core k' primeData) =
-          .success coreFactors ∧ cldCoeffFloor core ≤ k' := by
+          .success coreFactors ∧ fastCoreFloor core ≤ k' := by
   intro k fuel
   induction fuel generalizing k with
   | zero =>
@@ -14019,7 +14124,7 @@ private theorem factorFastCoreWithBound_some_classifiedSuccess
       rw [factorFastCoreWithBound_unfold] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
-          by_cases hfloor : k ≥ cldCoeffFloor core
+          by_cases hfloor : k ≥ fastCoreFloor core
           · simp [hclass, hfloor] at hfast
             cases hfast
             exact ⟨k, hclass, hfloor⟩
@@ -14058,18 +14163,18 @@ theorem factorFastCoreWithBound_some_indicatorCandidates
     (h : factorFastCoreWithBound core B primeData k fuel = some coreFactors) :
     ∃ k',
       ∃ hrows :
-        1 ≤ (bhksLatticeBasis core
+        1 ≤ (bhksLatticeBasis (ZPoly.toMonic core).monic
               (ZPoly.toMonicLiftData core k' primeData).p
               (ZPoly.toMonicLiftData core k' primeData).k
               (ZPoly.toMonicLiftData core k' primeData).liftedFactors).factorCount +
-            (bhksLatticeBasis core
+            (bhksLatticeBasis (ZPoly.toMonic core).monic
               (ZPoly.toMonicLiftData core k' primeData).p
               (ZPoly.toMonicLiftData core k' primeData).k
               (ZPoly.toMonicLiftData core k' primeData).liftedFactors).coeffWidth,
       bhksIndicatorCandidates? core (ZPoly.toMonicLiftData core k' primeData)
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows
-              (bhksLatticeBasis core
+              (bhksLatticeBasis (ZPoly.toMonic core).monic
                 (ZPoly.toMonicLiftData core k' primeData).p
                 (ZPoly.toMonicLiftData core k' primeData).k
                 (ZPoly.toMonicLiftData core k' primeData).liftedFactors)
@@ -14077,20 +14182,20 @@ theorem factorFastCoreWithBound_some_indicatorCandidates
         some coreFactors ∧
       bhksDegenerateIndicatorPartition
           (bhksProjectedRows
-            (bhksLatticeBasis core
+            (bhksLatticeBasis (ZPoly.toMonic core).monic
               (ZPoly.toMonicLiftData core k' primeData).p
               (ZPoly.toMonicLiftData core k' primeData).k
               (ZPoly.toMonicLiftData core k' primeData).liftedFactors)
             hrows)
           (bhksEquivalenceClassIndicators
             (bhksProjectedRows
-              (bhksLatticeBasis core
+              (bhksLatticeBasis (ZPoly.toMonic core).monic
                 (ZPoly.toMonicLiftData core k' primeData).p
                 (ZPoly.toMonicLiftData core k' primeData).k
                 (ZPoly.toMonicLiftData core k' primeData).liftedFactors)
               hrows)) =
         false ∧
-      Array.polyProduct coreFactors = core ∧ cldCoeffFloor core ≤ k' := by
+      Array.polyProduct coreFactors = core ∧ fastCoreFloor core ≤ k' := by
   obtain ⟨k', hsuccess, hfloor⟩ :=
     factorFastCoreWithBound_some_classifiedSuccess core B primeData k fuel coreFactors h
   obtain ⟨hrows, hcand, hdeg⟩ :=
@@ -14117,7 +14222,7 @@ private theorem factorFastCoreWithBound_some_all_of_recovery
       rw [factorFastCoreWithBound_unfold] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
-          by_cases hfloor : k ≥ cldCoeffFloor core
+          by_cases hfloor : k ≥ fastCoreFloor core
           · simp [hclass, hfloor] at hfast
             cases hfast
             exact hrecover hclass
@@ -14193,7 +14298,7 @@ theorem factorFastCoreWithBound_some_dvd
       rw [factorFastCoreWithBound_unfold] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
-          by_cases hfloor : k ≥ cldCoeffFloor core
+          by_cases hfloor : k ≥ fastCoreFloor core
           · simp [hclass, hfloor] at hfast
             cases hfast
             exact bhksRecoverClassified_success_dvd hclass
