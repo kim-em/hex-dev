@@ -54,6 +54,28 @@ verifies the named modular split:
 * `adv/phi15` — Φ₁₅, irreducible over ℤ, splits completely as eight
   linear factors over F₃₁ (heavy split, small admissible prime).
 
+Lattice-tier merge requirement
+------------------------------
+
+`adv/swinnerton_dyer_sd5_pair` — `SD₅(x)·SD₅(x+1)` (degree 64, the two
+true factors are the 32-blocks `SD₅(x)` and `SD₅(x+1)`) — is the one
+corpus case that **only the lattice tier can answer**.  Swinnerton-Dyer
+blocks split into factors of degree ≤ 2 modulo *every* prime, so the
+lifted-factor count is `r = 32` no matter which prime the selector
+picks, and the size-ordered classical search would need ΣC(31,≤15) ≈
+2³⁰ subset candidates to reach the 16-blocks — far past its
+level-aware budget (`levelAwareSubsetBudget 32 defaultSubsetBudget =
+206368`), so it provably declines and the hybrid falls through to the
+van Hoeij CLD lattice arm.  This case emits the *hybrid* trace
+(`factorHybridTraced`) rather than the classical one, so the committed
+baseline pins `tier = "lattice"` / `declined = true` /
+`subsetCandidates = 206368` as a merge requirement: a dispatch change,
+a lattice regression, or a precision-cap change that silently loses the
+tier fails `bz_trace_gate.py`.  There is deliberately no `#guard` twin
+in `Conformance.lean` — elaboration-time interpretation of the lattice
+run would cost minutes of build time; the compiled emit executable
+covers it in seconds.
+
 Cross-checked operation
 -----------------------
 
@@ -359,6 +381,61 @@ private def cases_adversarial : List Case :=
   , mk "adv/large_plus_distractors" #[-6, 5, -1, 0, 0, 6, -5, 1]
   , mk "adv/mignotte_swell" #[1, 0, -10000, 0, 2, 0, 0, 0, 1] ]          -- (x⁴-100x+1)(x⁴+100x+1)
 
+/-! ## Lattice-tier merge requirement
+
+See the module docstring §"Lattice-tier merge requirement".  The case is
+emitted through the public `factor` path (`factorHybridTraced`, whose `.1`
+is `factor`) so the pinned trace catches dispatch regressions, not just
+lattice ones. -/
+
+/-- `SD₅(x)·SD₅(x+1)`: the product of Swinnerton-Dyer SD₅ (the committed
+scheduled-corpus `adv/swinnerton_dyer_5` polynomial, minimal polynomial of
+√2+√3+√5+√7+√11) with its shift by one.  Degree 64, content 1, exactly two
+integer factors (the two 32-blocks); `r = 32` modulo every prime. -/
+private def cases_lattice : List PinnedCase :=
+  [ mkPinned "adv/swinnerton_dyer_sd5_pair"
+      #[11101827931906700692775396966400, -20149686329260169158205217177600,
+        -401485862864015096914747179663360,
+        542434245172328681950369347010560,
+        5012420864790130900370848844087296,
+        -3960296326489454660478287277457408,
+        -28871495437215984552457055575736320,
+        11815096040503473304118591431376896,
+        90368762389881951552993316215717888,
+        -13442597726530711239756206246461440,
+        -169318168569256976670002306583887872,
+        -5106043062269303041007476577140736,
+        203790362268099712418642466877997056,
+        31842327843847761548027667364708352,
+        -166334963114402183779967280242491392,
+        -41646299510886909758182690325004288,
+        95874293133421566632128940101033984,
+        31326757230671744837148463739961344,
+        -40187520195658809490187600727801856,
+        -15900390561260410792279551448449024,
+        12498575684329014278226171313364992,
+        5825581268692550371280448447840256,
+        -2916887831323939096164149638410240,
+        -1600596315332161707818522495549440,
+        511272707272924709604596704746752,
+        338023896633458155076239295324160,
+        -66207908947743815016914836967936,
+        -55807892326401711872028021776384, 5967370836164084103445688902528,
+        7288775394478910547448726589440, -290278430652522926846805232064,
+        -759046229065707375681704978432, -9985470465978726142566051647,
+        63320575321577635160023538080, 3616672133248706617687751600,
+        -4237357988791915834302206880, -406182697044518040602433480,
+        226959069964451393388035360, 30132996847158857667661456,
+        -9660637130776100972376608, -1659605660525774158311716,
+        321903767632358798247712, 70559426385456543819184,
+        -8139551415430337779488, -2350253717762252454136,
+        144958892545273337504, 61530513414120188304, -1377982586328124832,
+        -1260267322467469178, -10241566640720160, 19948369397622416,
+        666700176676640, -238675624057208, -13436639601312, 2076738859824,
+        166363635616, -12197577892, -1365630880, 39901712, 7273376, -10696,
+        -22816, -400, 32, 1]
+      29 (List.replicate 32 2) ]
+
 -- Metamorphic relations (checked without an external oracle): factoring a
 -- transformed input relates predictably to factoring the original.
 private def metamorphicBase : ZPoly := DensePoly.ofCoeffs #[6, 0, -5, 0, 1]  -- (x²-2)(x²-3)
@@ -392,6 +469,23 @@ private def emitPinnedCase (c : PinnedCase) : IO Unit := do
   emitResult lib c.id "factor" (factorValue (factor f))
   emitClassicalResult c.id f
 
+/-- Emit one fixture through the *hybrid* traced path: a single
+`factorHybridTraced` run supplies the `factor` result (its `.1` is the public
+`factor`) **and** the trace, so the trace gate pins the tier `factor` actually
+used (for `adv/swinnerton_dyer_sd5_pair`: `"lattice"`).  The `classicalFactor`
+record is derived from the same run — when the classical tier declined
+(`trace.declined`) it is `null` (an oracle skip, matching what a separate
+`factorClassicalTraced` run would return), and otherwise the hybrid answer *is*
+the certified classical answer.  This avoids paying the classical decline burn
+twice per emission. -/
+private def emitHybridTracedCase (c : PinnedCase) : IO Unit := do
+  let f := DensePoly.ofCoeffs c.coeffs
+  emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
+  let (φ, trace) := factorHybridTraced f
+  emitResult lib c.id "factor" (factorValue φ)
+  emitResult lib c.id "classicalFactor" (if trace.declined then "null" else factorValue φ)
+  emitResult lib c.id "trace" (traceValue trace)
+
 private def emitPinnedExpectedCase (c : PinnedExpectedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
   emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
@@ -410,3 +504,4 @@ def main : IO Unit := do
   for c in Hex.BZEmit.cases_content do Hex.BZEmit.emitExpectedCase c
   for c in Hex.BZEmit.cases_good_prime_regression do Hex.BZEmit.emitExpectedCase c
   for c in Hex.BZEmit.cases_adversarial do Hex.BZEmit.emitCase c
+  for c in Hex.BZEmit.cases_lattice do Hex.BZEmit.emitHybridTracedCase c

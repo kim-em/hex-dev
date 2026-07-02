@@ -99,6 +99,11 @@
     "subsetCandidates": 8,
     "tier": "classical"
   },
+  "adv/swinnerton_dyer_sd5_pair": {
+    "declined": true,
+    "subsetCandidates": 206368,
+    "tier": "lattice"
+  },
   "adv/trinomial": {
     "declined": false,
     "subsetCandidates": 2,
