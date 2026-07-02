@@ -9837,15 +9837,17 @@ theorem factorFastFactorsWithBound_branch_of_choosePrimeData?_some
 /--
 Precision cap used by the public fast path.
 
-The cap is the larger of the BHKS separation threshold bound and the
-Mignotte coefficient bound, so later termination proofs can use the same
-precision for both lattice separation and exact integer reconstruction.
+The cap is the larger of the square-free core's BHKS separation threshold
+bound and the original input's Mignotte coefficient bound.  The lattice and
+fast tiers run the van Hoeij/BHKS certificate on
+`(normalizeForFactor f).squareFreeCore`, so the BHKS side of the cap must be
+computed from that core rather than from the original input.
 -/
 def factorFastPrecisionCap (f : ZPoly) : Nat :=
-  max (bhksBound f) (ZPoly.defaultFactorCoeffBound f)
+  max (bhksBound (normalizeForFactor f).squareFreeCore) (ZPoly.defaultFactorCoeffBound f)
 
 theorem bhksBound_le_factorFastPrecisionCap (f : ZPoly) :
-    bhksBound f ≤ factorFastPrecisionCap f := by
+    bhksBound (normalizeForFactor f).squareFreeCore ≤ factorFastPrecisionCap f := by
   unfold factorFastPrecisionCap
   exact Nat.le_max_left _ _
 
@@ -9853,6 +9855,26 @@ theorem defaultFactorCoeffBound_le_factorFastPrecisionCap (f : ZPoly) :
     ZPoly.defaultFactorCoeffBound f ≤ factorFastPrecisionCap f := by
   unfold factorFastPrecisionCap
   exact Nat.le_max_right _ _
+
+theorem coreBhksPrecision_lt_factorFastPrecisionCap
+    (f : ZPoly) (primeData : PrimeChoiceData) (hp : 2 ≤ primeData.p) :
+    2 * bhksBound (normalizeForFactor f).squareFreeCore <
+      primeData.p ^
+        (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
+          (factorFastPrecisionCap f) primeData).k := by
+  have hspec :
+      2 * factorFastPrecisionCap f <
+        primeData.p ^ precisionForCoeffBound (factorFastPrecisionCap f) primeData.p :=
+    precisionForCoeffBound_spec hp (factorFastPrecisionCap f)
+  have hle :
+      2 * bhksBound (normalizeForFactor f).squareFreeCore ≤
+        2 * factorFastPrecisionCap f :=
+    Nat.mul_le_mul_left 2 (bhksBound_le_factorFastPrecisionCap f)
+  have hlt :
+      2 * bhksBound (normalizeForFactor f).squareFreeCore <
+        primeData.p ^ precisionForCoeffBound (factorFastPrecisionCap f) primeData.p :=
+    by omega
+  simpa [ZPoly.toMonicLiftData] using hlt
 
 def factorFastWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
   (factorFastFactorsWithBound f B).map (factorizationOfFactors f)
