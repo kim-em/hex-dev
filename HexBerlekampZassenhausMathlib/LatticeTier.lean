@@ -5,6 +5,9 @@ Authors: Kim Morrison
 -/
 
 import HexBerlekampZassenhausMathlib.IntReductionMod
+import HexBerlekampZassenhausMathlib.CLDColumnBound
+import HexBerlekampZassenhausMathlib.Recovery
+import HexBerlekampZassenhausMathlib.PartitionRefinement
 import HexGramSchmidtMathlib.Int.Swap
 import HexLLLMathlib.ShortVector
 
@@ -183,176 +186,6 @@ theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bh
       · -- `bhksSingleAllOnesPartition = false`: output `none`, contradiction.
         exact absurd hlattice.symm (Option.some_ne_none cf)
 
-/-!
-## Top-down attack on the deep BHKS content (#8417)
-
-The two remaining obligations of
-`latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bhks`
-are stated below as explicit lemmas and then supplied to give the
-**unconditional** lattice-tier irreducibility theorem
-`latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible`.
-
-Both lemmas are the deep van Hoeij / CLD content; they are being proved on the
-**proven** LLL short-vector path (`HexLLLMathlib.lllNative_first_row_norm_sq_le_unconditional`
-and `lllNative_mem_latticeSubmodule_iff`), never by assumption.  Until each is
-discharged it carries a `sorry` (grep-able; no axiom), and the hardest one
-(arm-3 adequacy) is attacked first.
--/
-
-/--
-**Arm-2 deep obligation (BHKS CLD count-equality).**  When the CLD recovery
-`factorFastCoreWithBound` splits `core`, the number of emitted factors equals the
-number of irreducible factors of `core` over `ℤ` — the count-equality that turns
-the fast-core coverage into per-factor irreducibility.  This is the CLD
-completeness half of the van Hoeij method (Klüners Thm 2/3: the reduced lattice
-short vectors are exactly the true-factor partition, so the recovery emits one
-factor per partition block).
--/
-theorem latticeArm2_fastCore_count
-    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
-    (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
-      = some primeData)
-    (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
-    (coreFactors : Array Hex.ZPoly)
-    (hfast : Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B primeData
-        (Hex.initialHenselPrecision B) (Hex.ZPoly.quadraticDoublingSteps B + 2)
-        = some coreFactors) :
-    (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length =
-      (UniqueFactorizationMonoid.normalizedFactors
-        (HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore)).card := by
-  sorry
-
-/--
-**Arm-3 deep obligation (van Hoeij single-all-ones adequacy).**  At adequate
-precision (`hprec`: `p^k > 2·bhksBound core`, the separation threshold), a single
-all-ones equivalence class of the CLD knapsack lattice certifies that `core`
-lands on exactly the minimal subsets (`L = W` with `W = ⟨(1,…,1)⟩`), hence `core`
-is irreducible.  This is the deep adequacy theorem (Klüners Thm 3), proved on the
-proven LLL short-vector path.
-
-The precision hypothesis `hprec` is essential, not incidental: at precision below
-the BHKS separation threshold the lattice may not have separated the modular
-factors, so `bhksSingleAllOnesPartition` can report `true` on a *reducible* core
-(its own docstring warns callers to trust it only at `k ≥ bhksBound`).  The
-`factorLattice` call site supplies adequate precision via `factorFastPrecisionCap`.
--/
-theorem latticeArm3_bhksSingleAllOnes_irreducible
-    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
-    (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
-      = some primeData)
-    (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
-    (hprec : 2 * Hex.bhksBound (Hex.normalizeForFactor f).squareFreeCore <
-      primeData.p ^ (Hex.ZPoly.toMonicLiftData
-        (Hex.normalizeForFactor f).squareFreeCore B primeData).k)
-    (hbhks : Hex.bhksSingleAllOnesPartition (Hex.normalizeForFactor f).squareFreeCore
-        (Hex.ZPoly.toMonicLiftData (Hex.normalizeForFactor f).squareFreeCore B primeData)
-        = true) :
-    Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore := by
-  set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
-  have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
-    Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
-  have hcore_ne : core ≠ 0 := zpoly_ne_zero_of_pos_lc hcore_lc_pos
-  have hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core) :=
-    IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf_ne
-  rw [Hex.ZPoly.Irreducible_iff_polynomialIrreducible]
-  -- The van Hoeij adequacy collapses to a factor count: at precision above the
-  -- BHKS separation threshold, a single all-ones equivalence class means `core`
-  -- has exactly one irreducible factor over ℤ.  This is the deep arm-3 heart
-  -- (the L1–L9 chain of `progress/PLAN-arm3-dag.md`); expanded next.
-  have hcard : (UniqueFactorizationMonoid.normalizedFactors
-      (HexPolyZMathlib.toPolynomial core)).card = 1 := by
-    -- `core` is a nonzero non-unit, so it has at least one irreducible factor.
-    -- Easy `UniqueFactorizationMonoid` bookkeeping; deferred per hardest-first.
-    have hge : 1 ≤ (UniqueFactorizationMonoid.normalizedFactors
-        (HexPolyZMathlib.toPolynomial core)).card := by
-      have hpos : 0 < (HexPolyZMathlib.toPolynomial core).natDegree := by
-        rw [HexPolyMathlib.natDegree_toPolynomial core]; exact Nat.pos_of_ne_zero hdeg_ne
-      have hne : HexPolyZMathlib.toPolynomial core ≠ 0 := by
-        intro h; rw [h, Polynomial.natDegree_zero] at hpos; exact absurd hpos (lt_irrefl 0)
-      have hnu : ¬ IsUnit (HexPolyZMathlib.toPolynomial core) :=
-        not_isUnit_of_natDegree_pos_of_isReduced _ hpos
-      exact Multiset.card_pos.mpr
-        ((UniqueFactorizationMonoid.normalizedFactors_pos _ hne).mpr hnu).ne'
-    -- The deep van Hoeij adequacy: `core` has AT MOST one irreducible factor.
-    -- Contrapositive: if `core` had ≥ 2 irreducible factors it would factor as a
-    -- proper product, yielding a proper nonempty true-factor support, hence a
-    -- short lattice vector, hence rank ≥ 2 in the LLL-reduced cut, contradicting
-    -- the single all-ones equivalence class `hbhks`.  This is the L5–L10 chain.
-    have hle : (UniqueFactorizationMonoid.normalizedFactors
-        (HexPolyZMathlib.toPolynomial core)).card ≤ 1 := by
-      by_contra hgt
-      have h2 : 2 ≤ (UniqueFactorizationMonoid.normalizedFactors
-          (HexPolyZMathlib.toPolynomial core)).card := Nat.lt_of_not_le hgt
-      -- The concrete lattice adequacy (the L5–L10 heart): if `core` has ≥ 2
-      -- irreducible factors then a proper factor's support gives a short lattice
-      -- vector making the LLL-reduced cut rank ≥ 2, so the equivalence-class
-      -- computation does NOT collapse to a single all-ones class.
-      have hfalse : Hex.bhksSingleAllOnesPartition core
-          (Hex.ZPoly.toMonicLiftData core B primeData) = false := by
-        set d := Hex.ZPoly.toMonicLiftData core B primeData with hd
-        rw [Hex.bhksSingleAllOnesPartition]
-        set L := Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic d.p d.k d.liftedFactors
-          with hL
-        by_cases hrows : 1 ≤ L.factorCount + L.coeffWidth
-        · rw [dif_pos hrows]
-          -- **Adequacy (the van Hoeij heart, #8417):** the CLD lattice never
-          -- under-separates — a `core` with ≥ 2 irreducible factors yields ≥ 2
-          -- equivalence classes (each true-factor support is a short lattice
-          -- vector captured in the LLL-reduced Gram-Schmidt cut, giving a
-          -- distinct class).  Proved on the proven LLL short-vector path.
-          have hclasses : 2 ≤ (Hex.bhksEquivalenceClassIndicators
-              (Hex.bhksProjectedRows L hrows)).size := by
-            sorry
-          -- With ≥ 2 classes the `indicators.size == 1` conjunct is false, so the
-          -- whole all-ones Bool is false.
-          have hne1 : ((Hex.bhksEquivalenceClassIndicators
-              (Hex.bhksProjectedRows L hrows)).size == 1) = false := by
-            simp only [beq_eq_false_iff_ne, ne_eq]; omega
-          simp only [hne1, Bool.and_false, Bool.false_and]
-        · rw [dif_neg hrows]
-      rw [hfalse] at hbhks
-      exact absurd hbhks (by simp)
-    omega
-  -- Exactly one normalized factor means `core` is associated to an irreducible,
-  -- hence irreducible.
-  obtain ⟨p, hp⟩ := Multiset.card_eq_one.mp hcard
-  have hne : HexPolyZMathlib.toPolynomial core ≠ 0 := by
-    have hpos : 0 < (HexPolyZMathlib.toPolynomial core).natDegree := by
-      rw [HexPolyMathlib.natDegree_toPolynomial core]; exact Nat.pos_of_ne_zero hdeg_ne
-    intro h; rw [h, Polynomial.natDegree_zero] at hpos; exact absurd hpos (lt_irrefl 0)
-  have hp_irr : Irreducible p :=
-    UniqueFactorizationMonoid.irreducible_of_normalized_factor p
-      (by rw [hp]; exact Multiset.mem_singleton_self p)
-  have hassoc : Associated p (HexPolyZMathlib.toPolynomial core) := by
-    have hprod := UniqueFactorizationMonoid.prod_normalizedFactors hne
-    rwa [hp, Multiset.prod_singleton] at hprod
-  exact hassoc.irreducible_iff.mp hp_irr
-
-/--
-**#8417 (lattice-tier irreducibility, at adequate precision).**  Every factor the
-van Hoeij CLD lattice tier `latticeCoreFactorsWithBound` returns for the
-square-free core of `normalizeForFactor f` is irreducible over `ℤ`, provided the
-precision is at least the BHKS separation threshold (`hprec`).  Arm 1 (small-mod
-singleton) is proved directly; arms 2/3 are the deep CLD obligations
-`latticeArm2_fastCore_count` / `latticeArm3_bhksSingleAllOnes_irreducible`.  The
-`factorLattice` call site supplies `hprec` via `factorFastPrecisionCap`.
--/
-theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
-    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
-    (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
-      = some primeData)
-    (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
-    (hprec : 2 * Hex.bhksBound (Hex.normalizeForFactor f).squareFreeCore <
-      primeData.p ^ (Hex.ZPoly.toMonicLiftData
-        (Hex.normalizeForFactor f).squareFreeCore B primeData).k)
-    {cf : Array Hex.ZPoly}
-    (hlattice : Hex.latticeCoreFactorsWithBound
-      (Hex.normalizeForFactor f).squareFreeCore B primeData = some cf) :
-    ∀ g ∈ cf.toList, Hex.ZPoly.Irreducible g :=
-  latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bhks
-    f hf_ne B primeData hselected hdeg_ne hlattice
-    (latticeArm2_fastCore_count f hf_ne B primeData hselected hdeg_ne)
-    (latticeArm3_bhksSingleAllOnes_irreducible f hf_ne B primeData hselected hdeg_ne hprec)
 
 /-!
 ## Lattice geometry: the BHKS basis is LLL-independent (arm-3 foundation)
@@ -447,6 +280,629 @@ theorem bhksLatticeBasis_lllNative_first_row_short
     Hex.lll_delta_lower Hex.lll_delta_upper hn
     (bhksLatticeBasis_basis_independent f p a hp lifted) x hx hx0
 
+
+/-!
+## The `W ⊆ L'` adequacy assembly (#8519)
+
+Both deep obligations reduce to the count lower bound
+`(normalizedFactors (toPolynomial core)).card ≤
+  (bhksEquivalenceClassIndicators …).size`: each irreducible factor of `core`
+yields a true lifted-factor support whose `0/1` indicator is the first block of
+a short vector of the monic-coordinate BHKS lattice
+(`BHKS.supportShortVectorData_of_recoveredLift`); the Gram-Schmidt
+prefix-survivor lemma places it in the projected row span (`W ⊆ L'`,
+`BHKS.cutProjectionHypotheses_of_shortVectors`), so the RREF signature classes
+refine the true-support partition
+(`BHKS.supportPartitionByMinColumn_length_le_bhksEquivalenceClassIndicators_size`),
+whose length the #8413 partition machinery identifies with the number of
+irreducible factors of `core`
+(`BHKS.supportPartitionByMinColumn_length_eq_normalizedFactors_card`).
+-/
+
+private theorem foldl_max_le_init (l : List Nat) (g : Nat → Nat) (acc : Nat) :
+    acc ≤ l.foldl (fun a j => max a (g j)) acc := by
+  induction l generalizing acc with
+  | nil => exact Nat.le_refl _
+  | cons x xs ih => exact Nat.le_trans (Nat.le_max_left _ _) (ih _)
+
+private theorem le_foldl_max {g : Nat → Nat} :
+    ∀ {l : List Nat} {j : Nat}, j ∈ l →
+      ∀ acc, g j ≤ l.foldl (fun a j => max a (g j)) acc := by
+  intro l
+  induction l with
+  | nil => intro j hj; cases hj
+  | cons x xs ih =>
+      intro j hj acc
+      rcases List.mem_cons.mp hj with rfl | hj'
+      · exact Nat.le_trans (Nat.le_max_right _ _) (foldl_max_le_init _ _ _)
+      · exact ih hj' _
+
+/-- Every CLD column bound of the monic transform is dominated by the CLD
+floor: `2 * bhksCoeffBound (toMonic core).monic j ≤ cldCoeffFloor core` for
+every `j` (out-of-range columns have bound `0`). -/
+theorem two_mul_bhksCoeffBound_toMonic_le_cldCoeffFloor (core : Hex.ZPoly) (j : Nat) :
+    2 * Hex.bhksCoeffBound (Hex.ZPoly.toMonic core).monic j ≤
+      Hex.cldCoeffFloor core := by
+  by_cases hj : j ≤ (Hex.ZPoly.toMonic core).monic.degree?.getD 0
+  · have hmem : j ∈ List.range ((Hex.ZPoly.toMonic core).monic.degree?.getD 0 + 1) :=
+      List.mem_range.mpr (by omega)
+    have hle := le_foldl_max
+      (g := fun j => Hex.bhksCoeffBound (Hex.ZPoly.toMonic core).monic j) hmem 0
+    simp only [Hex.cldCoeffFloor]
+    omega
+  · have hz : Hex.bhksCoeffBound (Hex.ZPoly.toMonic core).monic j = 0 := by
+      simp only [Hex.bhksCoeffBound, BHKS.hex_choose_eq,
+        Nat.choose_eq_zero_of_lt (show (Hex.ZPoly.toMonic core).monic.degree?.getD 0 - 1 < j by omega)]
+      simp
+    omega
+
+/-- Public restatement of the canonical-reduction absorption of
+`centeredLiftPoly`: centring the reduction equals centring the raw polynomial. -/
+theorem centeredLiftPoly_reduceModPow_absorb
+    (f : Hex.ZPoly) (p k : Nat) (hp : 0 < p) :
+    Hex.centeredLiftPoly (Hex.ZPoly.reduceModPow f p k) (p ^ k) =
+      Hex.centeredLiftPoly f (p ^ k) := by
+  have hpkpos : 0 < p ^ k := Nat.pow_pos hp
+  have hpkne : p ^ k ≠ 0 := Nat.ne_of_gt hpkpos
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.coeff_centeredLiftPoly, Hex.coeff_centeredLiftPoly,
+    Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpkpos]
+  unfold Hex.centeredModNat
+  rw [if_neg hpkne, if_neg hpkne, Int.emod_emod_of_dvd _ (dvd_refl _)]
+
+/-- The lifted-factor product over a singleton subset is the lifted factor. -/
+theorem liftedFactorProduct_singleton (d : Hex.LiftData) (i : LiftedFactorIndex d) :
+    liftedFactorProduct d ({i} : LiftedFactorSubset d) = liftedFactor d i := by
+  apply HexPolyZMathlib.equiv.injective
+  show HexPolyZMathlib.toPolynomial _ = HexPolyZMathlib.toPolynomial _
+  rw [toPolynomial_liftedFactorProduct, Finset.prod_singleton]
+
+/-- The ported `BHKS.supportProduct` of a coerced `Finset` support agrees with
+the `liftedFactorProduct` of that subset: both are the product of the selected
+lifted factors, in possibly different traversal orders. -/
+theorem supportProduct_coe_eq_liftedFactorProduct
+    (mPoly : Hex.ZPoly) (d : Hex.LiftData) (p a : Nat)
+    (S' : LiftedFactorSubset d) :
+    BHKS.supportProduct (Hex.bhksLatticeBasis mPoly p a d.liftedFactors)
+        (↑S' : Set (LiftedFactorIndex d)) =
+      liftedFactorProduct d S' := by
+  classical
+  apply HexPolyZMathlib.equiv.injective
+  show HexPolyZMathlib.toPolynomial _ = HexPolyZMathlib.toPolynomial _
+  rw [toPolynomial_liftedFactorProduct]
+  show HexPolyZMathlib.toPolynomial
+      (Array.polyProduct
+        ((((List.finRange d.liftedFactors.size).filter fun i =>
+            @decide (i ∈ (↑S' : Set (LiftedFactorIndex d)))
+              (Classical.propDecidable _)).map
+          fun i => d.liftedFactors.getD i.val 1).toArray)) =
+    ∏ i ∈ S', HexPolyZMathlib.toPolynomial (liftedFactor d i)
+  rw [polyProduct_toPolynomial, List.toList_toArray, List.map_map]
+  simp only [Function.comp_def]
+  rw [← List.prod_toFinset
+    (fun i : LiftedFactorIndex d => HexPolyZMathlib.toPolynomial
+      (d.liftedFactors.getD i.val 1))
+    ((List.nodup_finRange d.liftedFactors.size).filter _)]
+  refine Finset.prod_congr ?_ (fun i _ => ?_)
+  · ext i
+    simp only [List.mem_toFinset, List.mem_filter, List.mem_finRange, true_and,
+      decide_eq_true_eq, Finset.mem_coe]
+  · show HexPolyZMathlib.toPolynomial (d.liftedFactors.getD i.val 1) =
+      HexPolyZMathlib.toPolynomial (liftedFactor d i)
+    congr 1
+    unfold liftedFactor
+    simp [Array.getD, i.isLt]
+
+set_option maxHeartbeats 1000000 in
+/-- Package a `RecoveredAtLift` carrier as a `BHKS.RecoveredLift` certificate
+for the monic-coordinate BHKS lattice: the recovered `monicFactor` is an exact
+integer factor of the monic transform, recovered from the support product by
+the centred lift at Mignotte-adequate precision. -/
+noncomputable def recoveredLiftOfRecoveredAtLift
+    {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hprecision_m :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k)
+    {factor : Hex.ZPoly}
+    {S' : LiftedFactorSubset (Hex.ZPoly.toMonicLiftData core B primeData)}
+    (R : RecoveredAtLift core (Hex.ZPoly.toMonicLiftData core B primeData) factor S') :
+    BHKS.RecoveredLift
+      (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+        (Hex.ZPoly.toMonicLiftData core B primeData).p
+        (Hex.ZPoly.toMonicLiftData core B primeData).k
+        (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors)
+      (↑S' : Set (LiftedFactorIndex (Hex.ZPoly.toMonicLiftData core B primeData))) :=
+  { f := (Hex.ZPoly.toMonic core).monic
+    p := (Hex.ZPoly.toMonicLiftData core B primeData).p
+    a := (Hex.ZPoly.toMonicLiftData core B primeData).k
+    liftedFactors := (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors
+    basis_eq := rfl
+    factor := R.monicFactor
+    cofactor := R.monic_dvd.choose
+    factor_mul := R.monic_dvd.choose_spec.symm
+    recovered_eq := by
+      have hm_monic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
+        Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+      have hm_lc : Hex.DensePoly.leadingCoeff (Hex.ZPoly.toMonic core).monic = 1 :=
+        hm_monic
+      have hm_ne : (Hex.ZPoly.toMonic core).monic ≠ 0 :=
+        zpoly_ne_zero_of_pos_lc (by rw [hm_lc]; exact Int.zero_lt_one)
+      have hvalid : ∀ i, (R.monicFactor.coeff i).natAbs ≤
+          Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic := fun i =>
+        defaultFactorCoeffBound_valid (Hex.ZPoly.toMonic core).monic hm_ne
+          R.monicFactor R.monic_dvd i
+      have hcl : Hex.centeredLiftPoly
+          (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) S')
+          ((Hex.ZPoly.toMonicLiftData core B primeData).p ^
+            (Hex.ZPoly.toMonicLiftData core B primeData).k) = R.monicFactor := by
+        rw [← centeredLiftPoly_reduceModPow_absorb _ _ _
+          (Hex.ZPoly.toMonicLiftData core B primeData).p_pos, R.congr]
+        exact Hex.centeredLiftPoly_reduceModPow_eq_of_coeff_natAbs_le
+          R.monicFactor _ _ _ hvalid hprecision_m
+      show Hex.ZPoly.dilate
+          (Hex.DensePoly.leadingCoeff (Hex.ZPoly.toMonic core).monic)
+          (Hex.centeredLiftPoly
+            (BHKS.supportProduct
+              (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+                (Hex.ZPoly.toMonicLiftData core B primeData).p
+                (Hex.ZPoly.toMonicLiftData core B primeData).k
+                (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors)
+              (↑S' : Set (LiftedFactorIndex (Hex.ZPoly.toMonicLiftData core B primeData))))
+            ((Hex.ZPoly.toMonicLiftData core B primeData).p ^
+              (Hex.ZPoly.toMonicLiftData core B primeData).k)) = R.monicFactor
+      rw [supportProduct_coe_eq_liftedFactorProduct, hm_lc, Hex.ZPoly.dilate_one]
+      exact hcl }
+
+set_option maxHeartbeats 1000000 in
+/-- **The `W ⊆ L'` count lower bound (#8519).**  For a primitive square-free
+positive-degree `core` under the monic-transform prime selection at a
+coefficient bound `B` clearing the fast-core acceptance floor, the number of
+irreducible factors of `core` over `ℤ` is at most the number of executable
+BHKS equivalence classes of the monic-coordinate CLD lattice.
+
+This is the van Hoeij adequacy direction both LatticeTier obligations consume:
+each true-factor support survives the LLL/Gram-Schmidt cut as a distinct RREF
+signature class. -/
+theorem normalizedFactors_card_le_bhksEquivalenceClassIndicators_size
+    (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
+    (hB_floor : Hex.fastCoreFloor core ≤ B)
+    (hB_ne : B ≠ 0)
+    {L : Hex.BhksLatticeBasis}
+    (hL : L = Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+      (Hex.ZPoly.toMonicLiftData core B primeData).p
+      (Hex.ZPoly.toMonicLiftData core B primeData).k
+      (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors)
+    (hrows : 1 ≤ L.factorCount + L.coeffWidth) :
+    (UniqueFactorizationMonoid.normalizedFactors
+        (HexPolyZMathlib.toPolynomial core)).card ≤
+      (Hex.bhksEquivalenceClassIndicators (Hex.bhksProjectedRows L hrows)).size := by
+  subst hL
+  classical
+  have hcore_ne : core ≠ 0 := zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  have hp_prime : Hex.Nat.Prime primeData.p :=
+    Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+  have hp2 : 2 ≤ primeData.p := hp_prime.two_le
+  have hp1 : 1 < primeData.p := hp2
+  have hB1 : 1 ≤ B := Nat.one_le_iff_ne_zero.mpr hB_ne
+  have hprec_spec : 2 * B < primeData.p ^ Hex.precisionForCoeffBound B primeData.p :=
+    Hex.precisionForCoeffBound_spec hp2 B
+  have hprec_pos : 1 ≤ Hex.precisionForCoeffBound B primeData.p := by
+    by_contra hlt
+    have hzero : Hex.precisionForCoeffBound B primeData.p = 0 := by omega
+    rw [hzero, pow_zero] at hprec_spec
+    omega
+  have hk_eq : (Hex.ZPoly.toMonicLiftData core B primeData).k
+      = Hex.precisionForCoeffBound B primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData
+    exact Hex.henselLiftData_k _ _ _
+  have hp_eq : (Hex.ZPoly.toMonicLiftData core B primeData).p = primeData.p := by
+    unfold Hex.ZPoly.toMonicLiftData
+    exact Hex.henselLiftData_p _ _ _
+  have hm_monic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
+    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+  have hfloor_dfcb_m := Hex.defaultFactorCoeffBound_toMonic_le_fastCoreFloor core
+  have hfloor_dfcb := Hex.defaultFactorCoeffBound_le_fastCoreFloor core
+  have hfloor_cld := Hex.cldCoeffFloor_le_fastCoreFloor core
+  have hbound_monic :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        primeData.p ^ Hex.precisionForCoeffBound B primeData.p := by omega
+  have hprecision_m :
+      2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k := by
+    rw [hp_eq, hk_eq]; exact hbound_monic
+  have hprecision_core :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core <
+        (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k := by
+    rw [hp_eq, hk_eq]; omega
+  -- the #8413 partition of the lifted indices by true-factor supports
+  have hpartition : LiftedFactorSubsetPartition core
+      (Hex.ZPoly.toMonicLiftData core B primeData) Finset.univ core :=
+    liftedFactorSubsetPartition_of_toMonicPrimeData_complete core B primeData hselected
+      hcore_lc_pos hcore_pos hcore_prim hcore_sqfree hB_ne hbound_monic
+  -- per-factor Hensel facts
+  have hmonic_i := Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
+    core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+  have hdeg_i := Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
+    core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
+  -- the quadratic multifactor lift invariant and the full-product congruence
+  have hform : Hex.factorsModPBerlekampForm (Hex.ZPoly.toMonic core).monic primeData :=
+    Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form core primeData hselected
+  have hgood :
+      letI := primeData.bounds
+      Hex.isGoodPrime (Hex.ZPoly.toMonic core).monic primeData.p = true :=
+    Hex.ZPoly.toMonicPrimeData?_isGoodPrime core primeData hselected
+  have hinv :
+      letI := primeData.bounds
+      Hex.ZPoly.QuadraticMultifactorLiftInvariant
+        primeData.p (Hex.precisionForCoeffBound B primeData.p)
+        (Hex.ZPoly.toMonic core).monic
+        (primeData.factorsModP.map Hex.FpPoly.liftToZ).toList := by
+    letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
+    exact Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData
+      (Hex.ZPoly.toMonic core).monic (Hex.precisionForCoeffBound B primeData.p) primeData
+      hp_prime hp1 hprec_pos hm_monic
+      (factorsModP_monic_of_factorsModPBerlekampForm _ primeData hform)
+      (factorsModP_polyProduct_congr_of_factorsModPBerlekampForm _ primeData
+        hm_monic hform hgood)
+      (factorsModP_coprime_of_factorsModPBerlekampForm _ primeData hform hgood)
+      (factorsModP_ne_nil_of_factorsModPBerlekampForm _ primeData hform)
+  have hprod_univ : Hex.ZPoly.congr
+      (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData) Finset.univ)
+      (Hex.ZPoly.toMonic core).monic
+      (primeData.p ^ Hex.precisionForCoeffBound B primeData.p) := by
+    show Hex.ZPoly.congr
+      (liftedFactorProduct
+        (Hex.henselLiftData (Hex.ZPoly.toMonic core).monic
+          (Hex.precisionForCoeffBound B primeData.p) primeData) Finset.univ)
+      (Hex.ZPoly.toMonic core).monic
+      (primeData.p ^ Hex.precisionForCoeffBound B primeData.p)
+    exact henselLiftData_liftedFactorProduct_univ_congr_core _ _ _ hinv hp1 hprec_pos
+  -- per-index modular cofactor witnesses
+  have hfac_all : ∀ i : Fin (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors.size,
+      ∃ h : Hex.ZPoly,
+        Hex.DensePoly.Monic
+          ((Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors.getD i.val 1) ∧
+        0 < ((Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors.getD
+              i.val 1).degree?.getD 0 ∧
+        Hex.ZPoly.congr (Hex.ZPoly.toMonic core).monic
+          ((Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors.getD i.val 1 * h)
+          ((Hex.ZPoly.toMonicLiftData core B primeData).p ^
+            (Hex.ZPoly.toMonicLiftData core B primeData).k) := by
+    intro i
+    have hgetD : (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors.getD i.val 1
+        = liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData) i := by
+      unfold liftedFactor
+      simp [Array.getD, i.isLt]
+    refine ⟨liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData)
+      (Finset.univ \ {i}), ?_, ?_, ?_⟩
+    · rw [hgetD]; exact hmonic_i i
+    · rw [hgetD]
+      have h := hdeg_i i
+      rwa [HexPolyMathlib.natDegree_toPolynomial] at h
+    · rw [hgetD]
+      have hsplit := liftedFactorProduct_eq_mul_sdiff_of_subset
+        (Finset.subset_univ ({i} : LiftedFactorSubset
+          (Hex.ZPoly.toMonicLiftData core B primeData)))
+      rw [← liftedFactorProduct_singleton (Hex.ZPoly.toMonicLiftData core B primeData) i,
+        ← hsplit, hp_eq, hk_eq]
+      exact Hex.ZPoly.congr_symm _ _ _ hprod_univ
+  -- column separation and threshold admissibility at the lift precision
+  have hsep_all : ∀ j, 2 * Hex.bhksCoeffBound (Hex.ZPoly.toMonic core).monic j <
+      (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+        (Hex.ZPoly.toMonicLiftData core B primeData).k := by
+    intro j
+    have hcb := two_mul_bhksCoeffBound_toMonic_le_cldCoeffFloor core j
+    rw [hp_eq, hk_eq]
+    omega
+  have hthr_all : ∀ j,
+      Hex.bhksCoeffCutThreshold
+          (Hex.ZPoly.toMonicLiftData core B primeData).p
+          (Hex.ZPoly.toMonic core).monic j ≤
+        (Hex.ZPoly.toMonicLiftData core B primeData).k := by
+    intro j
+    have hcb := two_mul_bhksCoeffBound_toMonic_le_cldCoeffFloor core j
+    rw [hp_eq, hk_eq]
+    unfold Hex.bhksCoeffCutThreshold Hex.precisionForCoeffBound
+    have hpow := Hex.le_pow_ceilLogP hp2 (2 * B + 1)
+    exact Hex.ceilLogP_le_of_le_pow hp2 _ _ (by omega)
+  have hk1 : 1 < (Hex.ZPoly.toMonicLiftData core B primeData).p ^
+      (Hex.ZPoly.toMonicLiftData core B primeData).k := by
+    rw [hp_eq, hk_eq]
+    omega
+  -- independence of the BHKS basis
+  have hbasis := bhksLatticeBasis_basis_independent (Hex.ZPoly.toMonic core).monic
+    (Hex.ZPoly.toMonicLiftData core B primeData).p
+    (Hex.ZPoly.toMonicLiftData core B primeData).k
+    (by rw [hp_eq]; omega)
+    (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors
+  -- the cut inclusion W ⊆ L': every true support's indicator survives the cut
+  have hcut : BHKS.CutProjectionHypotheses
+      (Hex.bhksProjectedRows
+        (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+          (Hex.ZPoly.toMonicLiftData core B primeData).p
+          (Hex.ZPoly.toMonicLiftData core B primeData).k
+          (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors) hrows)
+      (liftedTrueSupports core (Hex.ZPoly.toMonicLiftData core B primeData)) := by
+    refine BHKS.cutProjectionHypotheses_of_shortVectors _ hrows hbasis _ (fun S => ?_)
+    have hmem := S.2
+    have hrep : RepresentsIntegerFactorAtLift core
+        (Hex.ZPoly.toMonicLiftData core B primeData)
+        hmem.choose hmem.choose_spec.choose :=
+      hmem.choose_spec.choose_spec.2.2.1
+    have hcast : (↑hmem.choose_spec.choose :
+        Set (LiftedFactorIndex (Hex.ZPoly.toMonicLiftData core B primeData))) = S.1 :=
+      hmem.choose_spec.choose_spec.2.2.2
+    rw [← hcast]
+    have R : RecoveredAtLift core (Hex.ZPoly.toMonicLiftData core B primeData)
+        hmem.choose hmem.choose_spec.choose := hrep.some
+    -- monicity of the recovered monic factor, through the exact centred lift
+    have hm_lc : Hex.DensePoly.leadingCoeff (Hex.ZPoly.toMonic core).monic = 1 :=
+      hm_monic
+    have hm_ne : (Hex.ZPoly.toMonic core).monic ≠ 0 :=
+      zpoly_ne_zero_of_pos_lc (by rw [hm_lc]; exact Int.zero_lt_one)
+    have hvalid : ∀ i, (R.monicFactor.coeff i).natAbs ≤
+        Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic := fun i =>
+      defaultFactorCoeffBound_valid (Hex.ZPoly.toMonic core).monic hm_ne
+        R.monicFactor R.monic_dvd i
+    have hcl : Hex.centeredLiftPoly
+        (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData)
+          hmem.choose_spec.choose)
+        ((Hex.ZPoly.toMonicLiftData core B primeData).p ^
+          (Hex.ZPoly.toMonicLiftData core B primeData).k) = R.monicFactor := by
+      rw [← centeredLiftPoly_reduceModPow_absorb _ _ _
+        (Hex.ZPoly.toMonicLiftData core B primeData).p_pos, R.congr]
+      exact Hex.centeredLiftPoly_reduceModPow_eq_of_coeff_natAbs_le
+        R.monicFactor _ _ _ hvalid hprecision_m
+    have hlfp_monic : Hex.DensePoly.Monic
+        (liftedFactorProduct (Hex.ZPoly.toMonicLiftData core B primeData)
+          hmem.choose_spec.choose) :=
+      liftedFactorProduct_monic _ _ (fun i _ => hmonic_i i)
+    have hmf_monic : (HexPolyMathlib.toPolynomial R.monicFactor).Monic := by
+      rw [← hcl]
+      exact HexHenselMathlib.toPolynomial_monic_of_dense_monic _
+        (monic_centeredLiftPoly_of_monic hlfp_monic (by omega))
+    exact BHKS.supportShortVectorData_of_recoveredLift
+      (recoveredLiftOfRecoveredAtLift hcore_lc_pos hcore_pos hprecision_m R)
+      hm_lc hmf_monic
+      (show (2 : Nat) ≤ (Hex.ZPoly.toMonicLiftData core B primeData).p by
+        rw [hp_eq]; exact hp2)
+      hk1 hsep_all hthr_all
+      (fun i _ => hfac_all i)
+  -- the count chain: factors = supports-partition length ≤ class count
+  have hlen := BHKS.supportPartitionByMinColumn_length_eq_normalizedFactors_card
+    hpartition hcore_ne hcore_prim hcore_lc_pos hprecision_core
+  have hle : (BHKS.supportPartitionByMinColumn
+      (liftedTrueSupports core (Hex.ZPoly.toMonicLiftData core B primeData))).length ≤
+      (Hex.bhksEquivalenceClassIndicators
+        (Hex.bhksProjectedRows
+          (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+            (Hex.ZPoly.toMonicLiftData core B primeData).p
+            (Hex.ZPoly.toMonicLiftData core B primeData).k
+            (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors) hrows)).size :=
+    BHKS.supportPartitionByMinColumn_length_le_bhksEquivalenceClassIndicators_size
+      (Hex.bhksProjectedRows
+        (Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+          (Hex.ZPoly.toMonicLiftData core B primeData).p
+          (Hex.ZPoly.toMonicLiftData core B primeData).k
+          (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors) hrows)
+      (liftedTrueSupports core (Hex.ZPoly.toMonicLiftData core B primeData)) hcut
+  omega
+
+/-!
+## Top-down attack on the deep BHKS content (#8417)
+
+The two remaining obligations of
+`latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bhks`
+are stated below as explicit lemmas and then supplied to give the
+**unconditional** lattice-tier irreducibility theorem
+`latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible`.
+
+Both lemmas are the deep van Hoeij / CLD content; they are being proved on the
+**proven** LLL short-vector path (`HexLLLMathlib.lllNative_first_row_norm_sq_le_unconditional`
+and `lllNative_mem_latticeSubmodule_iff`), never by assumption.  Until each is
+discharged it carries a `sorry` (grep-able; no axiom), and the hardest one
+(arm-3 adequacy) is attacked first.
+-/
+
+/--
+**Arm-2 deep obligation (BHKS CLD count-equality).**  When the CLD recovery
+`factorFastCoreWithBound` splits `core`, the number of emitted factors equals the
+number of irreducible factors of `core` over `ℤ` — the count-equality that turns
+the fast-core coverage into per-factor irreducibility.
+
+The `≤` half is the proven UFD partition bound
+(`factorFastCoreWithBound_some_factor_count_le`); the `≥` half is the van Hoeij
+`W ⊆ L'` adequacy: the acceptance gate guarantees the witness precision clears
+the fast-core floor, so every true-factor support survives the LLL/Gram-Schmidt
+cut as a distinct equivalence class, and one verified candidate is emitted per
+class (`bhksIndicatorCandidates?_size_eq`).
+-/
+theorem latticeArm2_fastCore_count
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
+      = some primeData)
+    (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (coreFactors : Array Hex.ZPoly)
+    (hfast : Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B primeData
+        (Hex.initialHenselPrecision B) (Hex.ZPoly.quadraticDoublingSteps B + 2)
+        = some coreFactors) :
+    (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length =
+      (UniqueFactorizationMonoid.normalizedFactors
+        (HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore)).card := by
+  set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
+  have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
+    Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+  have hcore_ne : core ≠ 0 := zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  have hcore_prim : Hex.ZPoly.Primitive core :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
+  have hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core) :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf_ne
+  -- the ≤ half: the emitted factors are nonunit divisors with product `core`
+  have hle := factorFastCoreWithBound_some_factor_count_le hcore_ne hfast
+  -- the ≥ half through the recovery-data extractor at the gated witness precision
+  obtain ⟨k', hrows, hcand, _hdegen, _hprod, hfloor⟩ :=
+    Hex.factorFastCoreWithBound_some_indicatorCandidates hfast
+  have hk_ne : k' ≠ 0 := by
+    have hpos := Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hcore_ne
+    have hfl := Hex.defaultFactorCoeffBound_le_fastCoreFloor core
+    omega
+  have hsize := Hex.bhksIndicatorCandidates?_size_eq hcand
+  have hge := normalizedFactors_card_le_bhksEquivalenceClassIndicators_size
+    core k' primeData hselected hcore_lc_pos (Nat.pos_of_ne_zero hdeg_ne)
+    hcore_prim hcore_sqfree hfloor hk_ne rfl hrows
+  rw [List.length_map, Array.length_toList] at hle ⊢
+  omega
+
+/--
+**Arm-3 deep obligation (van Hoeij single-all-ones adequacy).**  At adequate
+precision (`hprec`: `p^k > 2·bhksBound core`, the separation threshold), a single
+all-ones equivalence class of the CLD knapsack lattice certifies that `core`
+lands on exactly the minimal subsets (`L = W` with `W = ⟨(1,…,1)⟩`), hence `core`
+is irreducible.  This is the deep adequacy theorem (Klüners Thm 3), proved on the
+proven LLL short-vector path.
+
+The precision hypothesis `hprec` is essential, not incidental: at precision below
+the BHKS separation threshold the lattice may not have separated the modular
+factors, so `bhksSingleAllOnesPartition` can report `true` on a *reducible* core
+(its own docstring warns callers to trust it only at `k ≥ bhksBound`).  The
+`factorLattice` call site supplies adequate precision via `factorFastPrecisionCap`.
+-/
+theorem latticeArm3_bhksSingleAllOnes_irreducible
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
+      = some primeData)
+    (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hB_floor : Hex.fastCoreFloor (Hex.normalizeForFactor f).squareFreeCore ≤ B)
+    (hB_ne : B ≠ 0)
+    (hbhks : Hex.bhksSingleAllOnesPartition (Hex.normalizeForFactor f).squareFreeCore
+        (Hex.ZPoly.toMonicLiftData (Hex.normalizeForFactor f).squareFreeCore B primeData)
+        = true) :
+    Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore := by
+  set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
+  have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
+    Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+  have hcore_ne : core ≠ 0 := zpoly_ne_zero_of_pos_lc hcore_lc_pos
+  have hcore_prim : Hex.ZPoly.Primitive core :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
+  have hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core) :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf_ne
+  rw [Hex.ZPoly.Irreducible_iff_polynomialIrreducible]
+  -- The van Hoeij adequacy collapses to a factor count: at precision above the
+  -- BHKS separation threshold, a single all-ones equivalence class means `core`
+  -- has exactly one irreducible factor over ℤ.  This is the deep arm-3 heart
+  -- (the L1–L9 chain of `progress/PLAN-arm3-dag.md`); expanded next.
+  have hcard : (UniqueFactorizationMonoid.normalizedFactors
+      (HexPolyZMathlib.toPolynomial core)).card = 1 := by
+    -- `core` is a nonzero non-unit, so it has at least one irreducible factor.
+    -- Easy `UniqueFactorizationMonoid` bookkeeping; deferred per hardest-first.
+    have hge : 1 ≤ (UniqueFactorizationMonoid.normalizedFactors
+        (HexPolyZMathlib.toPolynomial core)).card := by
+      have hpos : 0 < (HexPolyZMathlib.toPolynomial core).natDegree := by
+        rw [HexPolyMathlib.natDegree_toPolynomial core]; exact Nat.pos_of_ne_zero hdeg_ne
+      have hne : HexPolyZMathlib.toPolynomial core ≠ 0 := by
+        intro h; rw [h, Polynomial.natDegree_zero] at hpos; exact absurd hpos (lt_irrefl 0)
+      have hnu : ¬ IsUnit (HexPolyZMathlib.toPolynomial core) :=
+        not_isUnit_of_natDegree_pos_of_isReduced _ hpos
+      exact Multiset.card_pos.mpr
+        ((UniqueFactorizationMonoid.normalizedFactors_pos _ hne).mpr hnu).ne'
+    -- The deep van Hoeij adequacy: `core` has AT MOST one irreducible factor.
+    -- Contrapositive: if `core` had ≥ 2 irreducible factors it would factor as a
+    -- proper product, yielding a proper nonempty true-factor support, hence a
+    -- short lattice vector, hence rank ≥ 2 in the LLL-reduced cut, contradicting
+    -- the single all-ones equivalence class `hbhks`.  This is the L5–L10 chain.
+    have hle : (UniqueFactorizationMonoid.normalizedFactors
+        (HexPolyZMathlib.toPolynomial core)).card ≤ 1 := by
+      by_contra hgt
+      have h2 : 2 ≤ (UniqueFactorizationMonoid.normalizedFactors
+          (HexPolyZMathlib.toPolynomial core)).card := Nat.lt_of_not_le hgt
+      -- The concrete lattice adequacy (the L5–L10 heart): if `core` has ≥ 2
+      -- irreducible factors then a proper factor's support gives a short lattice
+      -- vector making the LLL-reduced cut rank ≥ 2, so the equivalence-class
+      -- computation does NOT collapse to a single all-ones class.
+      have hfalse : Hex.bhksSingleAllOnesPartition core
+          (Hex.ZPoly.toMonicLiftData core B primeData) = false := by
+        set d := Hex.ZPoly.toMonicLiftData core B primeData with hd
+        rw [Hex.bhksSingleAllOnesPartition]
+        set L := Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic d.p d.k d.liftedFactors
+          with hL
+        by_cases hrows : 1 ≤ L.factorCount + L.coeffWidth
+        · rw [dif_pos hrows]
+          -- **Adequacy (the van Hoeij heart, #8417):** the CLD lattice never
+          -- under-separates — a `core` with ≥ 2 irreducible factors yields ≥ 2
+          -- equivalence classes (each true-factor support is a short lattice
+          -- vector captured in the LLL-reduced Gram-Schmidt cut, giving a
+          -- distinct class).  Proved on the proven LLL short-vector path.
+          have hclasses : 2 ≤ (Hex.bhksEquivalenceClassIndicators
+              (Hex.bhksProjectedRows L hrows)).size := by
+            have hL' : L = Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
+                (Hex.ZPoly.toMonicLiftData core B primeData).p
+                (Hex.ZPoly.toMonicLiftData core B primeData).k
+                (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors := by
+              rw [hL, hd]
+            have hge := normalizedFactors_card_le_bhksEquivalenceClassIndicators_size
+              core B primeData hselected hcore_lc_pos (Nat.pos_of_ne_zero hdeg_ne)
+              hcore_prim hcore_sqfree hB_floor hB_ne hL' hrows
+            omega
+          -- With ≥ 2 classes the `indicators.size == 1` conjunct is false, so the
+          -- whole all-ones Bool is false.
+          have hne1 : ((Hex.bhksEquivalenceClassIndicators
+              (Hex.bhksProjectedRows L hrows)).size == 1) = false := by
+            simp only [beq_eq_false_iff_ne, ne_eq]; omega
+          simp only [hne1, Bool.and_false, Bool.false_and]
+        · rw [dif_neg hrows]
+      rw [hfalse] at hbhks
+      exact absurd hbhks (by simp)
+    omega
+  -- Exactly one normalized factor means `core` is associated to an irreducible,
+  -- hence irreducible.
+  obtain ⟨p, hp⟩ := Multiset.card_eq_one.mp hcard
+  have hne : HexPolyZMathlib.toPolynomial core ≠ 0 := by
+    have hpos : 0 < (HexPolyZMathlib.toPolynomial core).natDegree := by
+      rw [HexPolyMathlib.natDegree_toPolynomial core]; exact Nat.pos_of_ne_zero hdeg_ne
+    intro h; rw [h, Polynomial.natDegree_zero] at hpos; exact absurd hpos (lt_irrefl 0)
+  have hp_irr : Irreducible p :=
+    UniqueFactorizationMonoid.irreducible_of_normalized_factor p
+      (by rw [hp]; exact Multiset.mem_singleton_self p)
+  have hassoc : Associated p (HexPolyZMathlib.toPolynomial core) := by
+    have hprod := UniqueFactorizationMonoid.prod_normalizedFactors hne
+    rwa [hp, Multiset.prod_singleton] at hprod
+  exact hassoc.irreducible_iff.mp hp_irr
+
+/--
+**#8417 (lattice-tier irreducibility, at adequate precision).**  Every factor the
+van Hoeij CLD lattice tier `latticeCoreFactorsWithBound` returns for the
+square-free core of `normalizeForFactor f` is irreducible over `ℤ`, provided the
+precision is at least the BHKS separation threshold (`hprec`).  Arm 1 (small-mod
+singleton) is proved directly; arms 2/3 are the deep CLD obligations
+`latticeArm2_fastCore_count` / `latticeArm3_bhksSingleAllOnes_irreducible`.  The
+`factorLattice` call site supplies `hprec` via `factorFastPrecisionCap`.
+-/
+theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
+      = some primeData)
+    (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hB_floor : Hex.fastCoreFloor (Hex.normalizeForFactor f).squareFreeCore ≤ B)
+    (hB_ne : B ≠ 0)
+    {cf : Array Hex.ZPoly}
+    (hlattice : Hex.latticeCoreFactorsWithBound
+      (Hex.normalizeForFactor f).squareFreeCore B primeData = some cf) :
+    ∀ g ∈ cf.toList, Hex.ZPoly.Irreducible g :=
+  latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bhks
+    f hf_ne B primeData hselected hdeg_ne hlattice
+    (latticeArm2_fastCore_count f hf_ne B primeData hselected hdeg_ne)
+    (latticeArm3_bhksSingleAllOnes_irreducible f hf_ne B primeData hselected hdeg_ne hB_floor hB_ne)
 /-!
 ## Filling the capstone's lattice branch (#8417)
 
@@ -479,9 +935,8 @@ theorem reassemblyExpansionComplete_latticeCore_of_ne_zero
     (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
       = some primeData)
     (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
-    (hprec : 2 * Hex.bhksBound (Hex.normalizeForFactor f).squareFreeCore <
-      primeData.p ^ (Hex.ZPoly.toMonicLiftData
-        (Hex.normalizeForFactor f).squareFreeCore B primeData).k)
+    (hB_floor : Hex.fastCoreFloor (Hex.normalizeForFactor f).squareFreeCore ≤ B)
+    (hB_ne : B ≠ 0)
     {cf : Array Hex.ZPoly}
     (hlattice : Hex.latticeCoreFactorsWithBound
       (Hex.normalizeForFactor f).squareFreeCore B primeData = some cf) :
@@ -492,7 +947,7 @@ theorem reassemblyExpansionComplete_latticeCore_of_ne_zero
   exact IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm
     f hf cf
     (latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
-      f hf B primeData hselected hdeg_ne hprec hlattice)
+      f hf B primeData hselected hdeg_ne hB_floor hB_ne hlattice)
     (Hex.latticeCoreFactorsWithBound_polyProduct _ _ _ hlattice)
     (Hex.latticeCoreFactorsWithBound_normalizeFactorSign _ _ _ hcore_pos hlattice)
     (Hex.latticeCoreFactorsWithBound_degree_pos _ _ _ hcore_deg hlattice)
@@ -554,13 +1009,11 @@ theorem factorLatticeFactorsWithBound_factor_irreducible
             (Hex.normalizeForFactor f) coreFactors ?_ ?_ hmem
           · exact reassemblyExpansionComplete_latticeCore_of_ne_zero
               f hf (Hex.factorFastPrecisionCap f) primeData hselected hdeg0
-              (Hex.two_mul_bhksBound_squareFreeCore_lt_pow_cap_of_toMonicPrimeData
-                f primeData hselected)
+              (Hex.fastCoreFloor_squareFreeCore_le_factorFastPrecisionCap f) hB0
               hcore_lattice
           · exact latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
               f hf (Hex.factorFastPrecisionCap f) primeData hselected hdeg0
-              (Hex.two_mul_bhksBound_squareFreeCore_lt_pow_cap_of_toMonicPrimeData
-                f primeData hselected)
+              (Hex.fastCoreFloor_squareFreeCore_le_factorFastPrecisionCap f) hB0
               hcore_lattice
 
 /-- **Hybrid raw-factor irreducibility assembly.**  Every raw factor of
