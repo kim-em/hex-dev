@@ -5,9 +5,15 @@ Authors: Kim Morrison
 -/
 
 import HexBerlekampZassenhausMathlib.Basic
+import HexBerlekampZassenhausMathlib.SignatureClasses
+import HexBerlekampZassenhausMathlib.Lattice
+import HexBerlekampZassenhausMathlib.CLDColumnBound
+import HexBerlekampZassenhausMathlib.Recovery
+import HexBerlekampZassenhausMathlib.PartitionRefinement
 import HexBerlekampZassenhausMathlib.UFDPartition
 import HexBerlekampZassenhausMathlib.IntReductionMod
 import HexBerlekampZassenhausMathlib.FactorSoundness
+import HexBerlekampZassenhausMathlib.LatticeTier
 
 /-!
 Root module for the Mathlib-side correspondence of the integer

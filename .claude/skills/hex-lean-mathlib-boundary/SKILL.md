@@ -6,6 +6,37 @@ allowed-tools: Bash, Read, Grep, Glob
 
 # Mathlib-free / Mathlib boundary in the hex Lean layers
 
+## Repo-generation caveat (read first)
+
+Parts of this skill describe an older incarnation of the BHKS Mathlib layer
+(files like `Recovery.lean`/`TerminationBound.lean`/`BadVector.lean` with the
+`SeparationHypotheses`/`BadVectorBridgeData` cluster). In the current tree
+those were deleted (6bf20977, #8411) and the surviving `W ⊆ L'` half was
+resurrected by #8519 into `SignatureClasses.lean`, `Lattice.lean`,
+`CLDColumnBound.lean`, `Recovery.lean`, `PartitionRefinement.lean` (namespace
+`HexBerlekampZassenhausMathlib.BHKS`), keyed on `Matrix.rowReduce`, `vecMul`,
+and `lllNative`. Key #8519 facts that supersede older notes below:
+
+- **The CLD lattice runs in the monic (`M2`) coordinate**:
+  `bhksRecoverClassified` / `bhksSingleAllOnesPartition` build
+  `bhksLatticeBasis (ZPoly.toMonic f).monic …`, and the lattice tier
+  (`factorLatticeFactorsWithBound`) selects `ZPoly.toMonicPrimeData?` — so the
+  toMonic partition producers (`liftedFactorSubsetPartition_of_toMonicPrimeData_complete`)
+  and the monic-regime short-vector producer
+  (`BHKS.supportShortVectorData_of_recoveredLift`, which needs
+  `leadingCoeff f = 1`) apply directly. The standalone fast tier
+  (`factorFastFactorsWithBound`) still selects `choosePrimeData?` and is a
+  verification-guarded, decline-only heuristic for `lc ≢ 1 (mod p)`.
+- **The fast-core acceptance floor is `fastCoreFloor`** (CLD column adequacy
+  `cldCoeffFloor` joined with both Mignotte bounds), so a
+  `factorFastCoreWithBound` success carries `fastCoreFloor core ≤ k'` — enough
+  for the partition machinery AND `hsep`/`hthr` at the witness precision. The
+  old "L'=W is cap-only" analysis (#7985-era) no longer applies to the
+  `W ⊆ L'` direction: `normalizedFactors_card_le_bhksEquivalenceClassIndicators_size`
+  (`LatticeTier.lean`) proves it at any floor-cleared precision.
+- The cap (`factorFastPrecisionCap`) dominates every floor component by
+  construction (`fastCoreFloor_squareFreeCore_le_factorFastPrecisionCap`).
+
 The executable types (`Hex.ZMod64 p`, `Hex.FpPoly p = Hex.DensePoly (ZMod64 p)`,
 `Hex.ZPoly = Hex.DensePoly Int`) carry **only `Lean.Grind` ring instances and a
 custom `Dvd`** — *not* Mathlib's `CommRing`/`Field`/`Monoid`/`AddGroup`
