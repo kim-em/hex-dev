@@ -451,9 +451,8 @@ theorem factorLatticeFactorsWithBound_factor_irreducible
             sorry
           · exact latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
               f hf (Hex.factorFastPrecisionCap f) primeData hchoose hdeg0
-              (by
-                -- precision `2·bhksBound core < p^k`, dischargeable from the cap
-                sorry)
+              (Hex.two_mul_bhksBound_squareFreeCore_lt_pow_cap_of_choosePrimeData
+                f primeData hchoose)
               hcore_lattice
 
 /-- **Hybrid raw-factor irreducibility assembly.**  Every raw factor of
