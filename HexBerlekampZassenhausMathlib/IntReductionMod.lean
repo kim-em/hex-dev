@@ -7102,9 +7102,11 @@ theorem classicalCoreFactorsWithBound_factor_irreducible_of_validBound
   simp only [Hex.scaledRecombinationSmart, ← hLB_def] at hclassical
   set localFactors := (Hex.ZPoly.toMonicLiftData core LB primeData).liftedFactors.toList
     with hlf_def
-  set fuel := Hex.defaultSubsetBudget + (localFactors.length + 1) * (2 * localFactors.length + 3)
+  set budget := Hex.levelAwareSubsetBudget localFactors.length Hex.defaultSubsetBudget
+    with hbudget_def
+  set fuel := budget + (localFactors.length + 1) * (2 * localFactors.length + 3)
     with hfuel_def
-  have hfuel_adeq : Hex.defaultSubsetBudget + smartFuelBound
+  have hfuel_adeq : budget + smartFuelBound
       (Finset.univ : LiftedFactorSubset
         (Hex.ZPoly.toMonicLiftData core LB primeData)).card ≤ fuel := by
     rw [hcard, hfuel_def]; simp only [smartFuelBound, le_refl]
@@ -7115,7 +7117,7 @@ theorem classicalCoreFactorsWithBound_factor_irreducible_of_validBound
   have hcore_dvd : core ∣ core := Hex.DensePoly.dvd_refl_poly core
   cases haux : Hex.scaledRecombinationSmartAux (Hex.DensePoly.leadingCoeff core) core
       (Hex.liftModulus (Hex.ZPoly.toMonicLiftData core LB primeData)) localFactors
-      Hex.defaultSubsetBudget fuel with
+      budget fuel with
   | mk res remaining =>
     rw [haux] at hclassical
     rw [hmod_bridge] at haux

@@ -7851,6 +7851,53 @@ dispatcher tightens this per input; standalone it is generous enough that the
 small-`r` corpus never trips it while still bounding the search. -/
 def defaultSubsetBudget : Nat := 262144
 
+/-- Level-aware effective candidate budget for the size-ordered classical
+recombination search (`scaledRecombinationSmart`).
+
+The search enumerates head-forced subsets of the `r - 1` non-head local factors
+by subset size `d = 0, 1, …, r - 1`, so size level `d` holds `C(r-1, d)`
+candidates. A level the search cannot finish certifies nothing: declining at
+the previous level boundary carries exactly the same "no factor with ≤ d
+non-head local factors" verdict as burning partway into level `d + 1`, so the
+effective budget stops at the last completable level boundary — the largest
+cumulative `∑_{d ≤ k} C(r-1, d)` that fits in `budget`. When every level fits
+(`2^(r-1) ≤ budget`, the small-`r` regime), the budget is returned unchanged,
+so searches that can complete — the whole conformance corpus — are untouched.
+
+`go` walks the levels structurally: `levels` counts the size levels left,
+`binom = C(r-1, d)` is maintained multiplicatively (the division is exact), and
+`acc` is the cumulative candidate count through level `d - 1`.
+
+The cap is applied once, at the `scaledRecombinationSmart` wrapper, from the
+top-level `r`. A recursive quotient search after a successful factor
+extraction inherits the remaining budget unaligned to its own (smaller) level
+boundaries, so a decline after at least one peel can still end mid-level —
+harmless for correctness (any exhaustion declines to the lattice tier) and
+bounded by the already-tightened top-level cap; re-aligning per recursion
+would churn `scaledRecombinationSmartAux` and its proof set for no verdict
+change. -/
+def levelAwareSubsetBudget (r budget : Nat) : Nat :=
+  go r 0 1 0
+where
+  go : Nat → Nat → Nat → Nat → Nat
+    | 0, _, _, _ => budget
+    | levels + 1, d, binom, acc =>
+        if budget < acc + binom then acc
+        else go levels (d + 1) (binom * (r - 1 - d) / (d + 1)) (acc + binom)
+
+-- Small `r` (every level fits within the budget): unchanged. `r = 19` is the
+-- boundary case, `2^18 = 262144` exactly; `r = 20` also completes exactly at
+-- the budget (`∑_{d ≤ 9} C(19, d) = 2^19 / 2 = 262144`).
+#guard levelAwareSubsetBudget 3 defaultSubsetBudget = defaultSubsetBudget
+#guard levelAwareSubsetBudget 19 defaultSubsetBudget = defaultSubsetBudget
+#guard levelAwareSubsetBudget 20 defaultSubsetBudget = defaultSubsetBudget
+-- High `r` (the hopeless-burn regime, #8530): the budget stops at the last
+-- completable level boundary. `r = 32` (SD5(x)·SD5(x+1)): levels 0–5 fit,
+-- `∑_{d ≤ 5} C(31, d) = 206368`; level 6 (`C(31, 6) = 736281`) does not.
+-- `r = 64` (SD6-shaped): levels 0–3 fit, `∑_{d ≤ 3} C(63, d) = 41728`.
+#guard levelAwareSubsetBudget 32 defaultSubsetBudget = 206368
+#guard levelAwareSubsetBudget 64 defaultSubsetBudget = 41728
+
 /-- Diagnostic counters for one classical recombination search. Consumed by the
 performance-conformance gate (the wider `FactorTrace` carries the per-`factor`
 counters).
@@ -7866,15 +7913,24 @@ structure RecombStats where
 deriving Repr, DecidableEq
 
 /-- Size-ordered scaled recombination with a candidate budget, returning the
-recovered factor list (on success within budget) and the candidate statistics. -/
+recovered factor list (on success within budget) and the candidate statistics.
+
+The supplied `budget` is first tightened to `levelAwareSubsetBudget r budget`
+(#8530): a search that cannot complete stops at the last subset-size level
+boundary it can finish instead of burning the rest of the budget partway into
+a level it cannot, since the partial level adds nothing to the declined
+verdict. Small-`r` searches (every level fits) see the budget unchanged. -/
 def scaledRecombinationSmart
     (coreLc : Int) (f : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
     (budget : Nat := defaultSubsetBudget) : Option (List ZPoly) × RecombStats :=
   let r := localFactors.length
+  let levelBudget := levelAwareSubsetBudget r budget
   let (res, remaining) :=
-    scaledRecombinationSmartAux coreLc f modulus localFactors budget
-      (budget + (r + 1) * (2 * r + 3))
-  (res, { candidatesTried := budget - remaining, budgetExhausted := res.isNone && remaining == 0 })
+    scaledRecombinationSmartAux coreLc f modulus localFactors levelBudget
+      (levelBudget + (r + 1) * (2 * r + 3))
+  (res,
+    { candidatesTried := levelBudget - remaining,
+      budgetExhausted := res.isNone && remaining == 0 })
 
 /-- A fully-split target recovers all linear factors, in `O(r²)` candidates. -/
 private def smartGuardFactors : List ZPoly :=
@@ -14708,8 +14764,9 @@ private theorem classicalCoreFactorsWithBound_spec
       = liftData at h
     cases haux : scaledRecombinationSmartAux (DensePoly.leadingCoeff core) core
         (liftModulus liftData) liftData.liftedFactors.toList
-        defaultSubsetBudget
-        (defaultSubsetBudget + (liftData.liftedFactors.toList.length + 1) *
+        (levelAwareSubsetBudget liftData.liftedFactors.toList.length defaultSubsetBudget)
+        (levelAwareSubsetBudget liftData.liftedFactors.toList.length defaultSubsetBudget +
+          (liftData.liftedFactors.toList.length + 1) *
           (2 * liftData.liftedFactors.toList.length + 3)) with
     | mk res remaining =>
       rw [haux] at h
