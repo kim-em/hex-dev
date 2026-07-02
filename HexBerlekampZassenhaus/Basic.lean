@@ -9574,7 +9574,16 @@ def factorSlowTrial (f : ZPoly) : Factorization :=
 
 Exposed publicly so the Mathlib-side layer can express per-branch
 irreducibility hypotheses for the assembled output theorem.  Internal callers
-still go through the `factorFast` wrapper. -/
+still go through the `factorFast` wrapper.
+
+Note (#8519): this standalone tier still selects its prime with
+`choosePrimeData?` on the core itself, while the shared recovery runs the CLD
+lattice in the monic (`toMonic`) coordinate.  For `leadingCoeff core ≢ 1
+(mod p)` the Hensel seeds then do not match the lift target, so this tier
+remains a verification-guarded, decline-only heuristic there (sound but
+incomplete); the hybrid pipeline's lattice tier
+(`factorLatticeFactorsWithBound`) selects `toMonicPrimeData?` and is the
+coordinate-coherent, proof-carrying path. -/
 def factorFastFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
