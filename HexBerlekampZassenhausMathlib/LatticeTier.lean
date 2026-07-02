@@ -56,9 +56,9 @@ theorem zpolyIrreducible_of_toMonicMonic_irreducible
     (hm_irr : Hex.ZPoly.Irreducible (Hex.ZPoly.toMonic core).monic) :
     Hex.ZPoly.Irreducible core := by
   have hdeg : 1 ≤ (Hex.ZPoly.toMonic core).degree := by
-    simpa using hcore_pos
+    simp only [Hex.ZPoly.toMonic_degree]; omega
   have hM_monic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
-    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos (by simpa using hcore_pos)
+    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos (by simp only [Hex.ZPoly.toMonic_degree]; omega)
   have hkey : Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) (Hex.ZPoly.toMonic core).monic
       = Hex.DensePoly.scale
           (Hex.DensePoly.leadingCoeff core ^ ((Hex.ZPoly.toMonic core).degree - 1)) core := by
@@ -93,10 +93,10 @@ theorem squareFreeCore_irreducible_of_toMonicSmallModSingletonBranch
   have hchoose : Hex.choosePrimeData? (Hex.ZPoly.toMonic core).monic = some primeData :=
     hselected
   have hM_monic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
-    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos (by simpa using hcore_pos)
+    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos (by simp only [Hex.ZPoly.toMonic_degree]; omega)
   have hm_deg : 0 < (Hex.ZPoly.toMonic core).monic.degree?.getD 0 := by
     rw [Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree core hcore_lc_pos
-      (by simpa using hcore_pos)]
+      (by simp only [Hex.ZPoly.toMonic_degree]; omega)]
     simpa using hcore_pos
   have hm_irr : Hex.ZPoly.Irreducible (Hex.ZPoly.toMonic core).monic :=
     IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP
