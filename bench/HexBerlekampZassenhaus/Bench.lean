@@ -108,6 +108,12 @@ Gating external comparator:
   verified-Isabelle pairs for the HO-2 adversarial singletons (one new
   registration per distinct singleton input not already covered by
   `runIsabelleFactorChecksum`).
+* `runFactorAdvSwinnertonDyer{Ladder,Pair,SD4Blocks}Checksum`: the
+  Swinnerton-Dyer tier-crossover ladders (`SD_k`, `SD_k(x)·SD_k(x+1)`,
+  `∏_{i<m} SD_4(x+i)`), the tracked form of #8537's benchmark data, with
+  `runIsabelleAdvSwinnertonDyer{SD4,SD5,PairK2,PairK3,PairK4,SD4BlocksM3,
+  SD4BlocksM4}Checksum` verified-Isabelle rungs. All `scheduled-hardware`;
+  figures at `reports/figures/hex-berlekamp-zassenhaus-sd-*.svg`.
 * `runIsabelleFallbackProbeN{11,12,13,15,18,22,24}Checksum`: per-rung
   verified-Isabelle pairs for the cascade-trigger fallback-probe schedule. The
   `expectedHash` field is `none` on these registrations to keep elaboration off
@@ -184,6 +190,77 @@ def advSwinnertonDyerSD3 : ZPoly :=
 /-- HO-2 cyclotomic `Phi_15` input. -/
 def advPhi15 : ZPoly :=
   DensePoly.ofCoeffs #[1, -1, 0, 1, -1, 1, 0, -1, 1]
+
+/-- Swinnerton-Dyer `SD_4` (minimal polynomial of `√2+√3+√5+√7`, degree 16). -/
+def advSwinnertonDyerSD4 : ZPoly :=
+  DensePoly.ofCoeffs #[46225, 0, -5596840, 0, 13950764, 0, -7453176, 0, 1513334, 0,
+    -141912, 0, 6476, 0, -136, 0, 1]
+
+/-- Swinnerton-Dyer `SD_5` (minimal polynomial of `√2+√3+√5+√7+√11`, degree 32). -/
+def advSwinnertonDyerSD5 : ZPoly :=
+  DensePoly.ofCoeffs #[2000989041197056, 0, -44660812492570624, 0, 183876928237731840, 0,
+    -255690851718529024, 0, 172580952324702208, 0, -65892492886671360, 0,
+    15459151516270592, 0, -2349014746136576, 0, 239210760462336, 0, -16665641517056, 0,
+    801918722048, 0, -26625650688, 0, 602397952, 0, -9028096, 0, 84864, 0, -448, 0, 1]
+
+/--
+The Swinnerton-Dyer ladder `SD_1 … SD_5`: `SD_k` is the minimal polynomial of
+`√2 + … + √p_k` (degree `2^k`), irreducible over `ℤ` but splitting into
+degree-≤ 2 local factors mod every prime, so the classical tier must enumerate
+its whole head-forced subset powerset (`2^(r-1)` candidates at `r = 2^(k-1)`)
+to certify irreducibility. Coefficients pinned from sympy
+`minimal_polynomial`; the `SD_3` entry is the existing HO-2 fixture.
+-/
+def advSwinnertonDyerLadder : Array ZPoly := #[
+  DensePoly.ofCoeffs #[-2, 0, 1],
+  DensePoly.ofCoeffs #[1, 0, -10, 0, 1],
+  advSwinnertonDyerSD3,
+  advSwinnertonDyerSD4,
+  advSwinnertonDyerSD5]
+
+#guard advSwinnertonDyerLadder.map (·.degree?.getD 0) = #[2, 4, 8, 16, 32]
+
+/-- `p(x + a)`: Taylor shift via composition with `x + a`. -/
+def shiftArg (p : ZPoly) (a : Int) : ZPoly :=
+  DensePoly.compose p (DensePoly.ofCoeffs #[a, 1])
+
+#guard shiftArg (DensePoly.ofCoeffs #[-2, 0, 1]) 1 = DensePoly.ofCoeffs #[-1, 2, 1]
+
+/--
+The tier-crossover pair ladder `SD_k(x) · SD_k(x+1)` (degree `2^(k+1)`, two
+`2^(k-1)`-blocks of local factors). The classical tier answers `k ≤ 4` within
+its subset budget; at `k = 5` reaching the 16-blocks needs `ΣC(31,≤15) ≈ 2^30`
+candidates, so classical declines at its level boundary and the CLD lattice
+tier answers. This is the family behind #8530/#8537.
+-/
+def advSwinnertonDyerPair (k : Nat) : ZPoly :=
+  let p := advSwinnertonDyerLadder.getD (k - 1) advSwinnertonDyerSD3
+  p * shiftArg p 1
+
+-- Constant coefficients of the derived products, pinned against the sympy
+-- reference expansion (2026-07-02) so a `compose`/`mul` regression cannot
+-- silently change the benchmark inputs.
+#guard (advSwinnertonDyerPair 1).coeff 0 = 2
+#guard (advSwinnertonDyerPair 2).coeff 0 = -8
+#guard (advSwinnertonDyerPair 3).coeff 0 = -40896
+#guard (advSwinnertonDyerPair 4).coeff 0 = 107460921600
+#guard (advSwinnertonDyerPair 5).coeff 0 = 11101827931906700692775396966400
+#guard (advSwinnertonDyerPair 5).degree?.getD 0 = 64
+
+/--
+The block-count ladder `∏_{i<m} SD_4(x+i)` (degree `16·m`, `m` blocks of eight
+quadratic local factors mod the chosen prime). The classical tier answers
+`m ≤ 2`; from `m = 3` the winning subsets sit past the classical tier's
+level-aware budget boundary (#8537), so it declines and the CLD lattice tier
+answers. The `m = 3` rung is the crossover measured in #8537's benchmark data.
+-/
+def advSwinnertonDyerSD4Blocks (m : Nat) : ZPoly :=
+  (List.range m).foldl (fun acc i => acc * shiftArg advSwinnertonDyerSD4 (Int.ofNat i)) 1
+
+#guard (advSwinnertonDyerSD4Blocks 2).coeff 0 = 107460921600
+#guard (advSwinnertonDyerSD4Blocks 3).coeff 0 = -1039528705604601600
+#guard (advSwinnertonDyerSD4Blocks 4).coeff 0 = -30893529063662744356454400
+#guard (advSwinnertonDyerSD4Blocks 4).degree?.getD 0 = 64
 
 /-- Prepared split input whose single parameter encodes degree and height. -/
 structure DegreeHeightInput where
@@ -481,6 +558,38 @@ def prepAdvSwinnertonDyerSD3 (_ : Nat) : ZPoly :=
 def prepAdvPhi15 (_ : Nat) : ZPoly :=
   advPhi15
 
+/-- Prep for the Swinnerton-Dyer ladder: parameter `k` selects `SD_k`. -/
+def prepAdvSwinnertonDyerLadder (k : Nat) : ZPoly :=
+  advSwinnertonDyerLadder.getD (k - 1) advSwinnertonDyerSD3
+
+/-- Prep for the pair ladder: parameter `k` selects `SD_k(x) · SD_k(x+1)`. -/
+def prepAdvSwinnertonDyerPair (k : Nat) : ZPoly :=
+  advSwinnertonDyerPair k
+
+/-- Prep for the block ladder: parameter `m` selects `∏_{i<m} SD_4(x+i)`. -/
+def prepAdvSwinnertonDyerSD4Blocks (m : Nat) : ZPoly :=
+  advSwinnertonDyerSD4Blocks m
+
+/--
+Ladder benchmark target: public factorization across the Swinnerton-Dyer
+ladder `SD_1 … SD_5`. Returns the canonical (order-insensitive) factor-multiset
+checksum so per-rung values can be checked offline against the
+`runIsabelleAdvSwinnertonDyer*` comparator rungs.
+-/
+@[noinline]
+def runFactorAdvSwinnertonDyerLadderChecksum (f : ZPoly) : UInt64 :=
+  checksumCanonicalLeanFactorization (factor f)
+
+/-- Ladder benchmark target: public factorization across `SD_k(x) · SD_k(x+1)`. -/
+@[noinline]
+def runFactorAdvSwinnertonDyerPairChecksum (f : ZPoly) : UInt64 :=
+  checksumCanonicalLeanFactorization (factor f)
+
+/-- Ladder benchmark target: public factorization across `∏_{i<m} SD_4(x+i)`. -/
+@[noinline]
+def runFactorAdvSwinnertonDyerSD4BlocksChecksum (f : ZPoly) : UInt64 :=
+  checksumCanonicalLeanFactorization (factor f)
+
 /-- Benchmark target: public combinator over the degree/height matrix. -/
 def runFactorDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
   checksumFactorization (factor input.poly)
@@ -746,6 +855,46 @@ def runIsabelleAdvPhi15Checksum : Unit → IO UInt64 := fun _ => do
 
 def runIsabelleAdvSwinnertonDyerSD3Checksum : Unit → IO UInt64 := fun _ => do
   let (scalar, factors) ← requestIsabelleBZFactorization advSwinnertonDyerSD3
+  return checksumCanonicalFactorization scalar factors
+
+/--
+Per-rung verified-Isabelle comparator targets for the Swinnerton-Dyer
+tier-crossover ladders (`runFactorAdvSwinnertonDyer{Ladder,Pair,SD4Blocks}Checksum`).
+One fixed registration per rung not already covered (`SD_1`–`SD_3` are covered
+by `runIsabelleFactorChecksum`/`runIsabelleAdvSwinnertonDyerSD3Checksum`;
+the pair rung `k = 4` and the block rung `m = 2` share one input).
+
+The pair rung `k = 5` (`SD_5(x)·SD_5(x+1)`) is deliberately absent: the AFP
+implementation has no lattice tier and its recombination exceeded a 120 s cap
+on the reference hardware (measured 2026-07-02), where hex's hybrid answers in
+~16 s. The headline report records it as the crossover, not as a rung.
+-/
+def runIsabelleAdvSwinnertonDyerSD4Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization advSwinnertonDyerSD4
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleAdvSwinnertonDyerSD5Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization advSwinnertonDyerSD5
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleAdvSwinnertonDyerPairK2Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (advSwinnertonDyerPair 2)
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleAdvSwinnertonDyerPairK3Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (advSwinnertonDyerPair 3)
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleAdvSwinnertonDyerPairK4Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (advSwinnertonDyerPair 4)
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleAdvSwinnertonDyerSD4BlocksM3Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (advSwinnertonDyerSD4Blocks 3)
+  return checksumCanonicalFactorization scalar factors
+
+def runIsabelleAdvSwinnertonDyerSD4BlocksM4Checksum : Unit → IO UInt64 := fun _ => do
+  let (scalar, factors) ← requestIsabelleBZFactorization (advSwinnertonDyerSD4Blocks 4)
   return checksumCanonicalFactorization scalar factors
 
 /--
@@ -1185,6 +1334,66 @@ setup_benchmark runAdvSwinnertonDyerSD3ModularSplitChecksum n => n + 1
     signalFloorMultiplier := 1.0
   }
 
+/-
+Swinnerton-Dyer tier-crossover ladders (#8537 benchmark data, made tracked).
+
+Three one-parameter families over the public `factor`, all
+`scheduled-hardware` (the top rungs are multi-second lattice-tier runs, far
+past the `verify` budget):
+
+* `runFactorAdvSwinnertonDyerLadderChecksum k` — `SD_k`, `k = 1..5`:
+  irreducible worst cases; the classical tier certifies by enumerating
+  `2^(2^(k-1)-1)` candidates.
+* `runFactorAdvSwinnertonDyerPairChecksum k` — `SD_k(x)·SD_k(x+1)`,
+  `k = 1..5`: classical answers `k ≤ 4`; `k = 5` declines at the level-aware
+  boundary (206368 candidates) and the CLD lattice tier answers.
+* `runFactorAdvSwinnertonDyerSD4BlocksChecksum m` — `∏_{i<m} SD_4(x+i)`,
+  `m = 1..4`: block-count crossover; classical answers `m ≤ 2`, lattice from
+  `m = 3`.
+
+The declared `k + 1` models are placeholders in the SD3-singleton style: a
+single textbook exponent is not meaningful across a tier crossover, and the
+scaling story lives in `reports/figures/hex-berlekamp-zassenhaus-sd-*.svg`
+(generated by `scripts/plots/hex-berlekamp-zassenhaus-sd.py` from the
+committed bench-results JSONL). Verdicts on these families are not
+merge-gating; the per-rung canonical checksums are the regression signal.
+-/
+setup_benchmark runFactorAdvSwinnertonDyerLadderChecksum k => k + 1
+  with prep := prepAdvSwinnertonDyerLadder
+  where {
+    paramFloor := 1
+    paramCeiling := 5
+    paramSchedule := .custom #[1, 2, 3, 4, 5]
+    maxSecondsPerCall := 30.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_benchmark runFactorAdvSwinnertonDyerPairChecksum k => k + 1
+  with prep := prepAdvSwinnertonDyerPair
+  where {
+    paramFloor := 1
+    paramCeiling := 5
+    paramSchedule := .custom #[1, 2, 3, 4, 5]
+    maxSecondsPerCall := 60.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_benchmark runFactorAdvSwinnertonDyerSD4BlocksChecksum m => m + 1
+  with prep := prepAdvSwinnertonDyerSD4Blocks
+  where {
+    paramFloor := 1
+    paramCeiling := 4
+    paramSchedule := .custom #[1, 2, 3, 4]
+    maxSecondsPerCall := 120.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    tags := #[scheduledHardwareTag]
+  }
+
 /- Fixed bottom-rung verified-Isabelle comparator pair. Both targets return the
 same canonical factor-multiset checksum for `(x^2 - 2)(x^2 - 3)`; scheduled runs use
 `compare runFactorIsabelleDomainChecksum runIsabelleFactorChecksum` to record
@@ -1442,6 +1651,53 @@ setup_fixed_benchmark runIsabellePrecisionLocalRung5Checksum where {
 setup_fixed_benchmark runIsabellePrecisionLocalRung6Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+-- Verified-Isabelle rungs for the Swinnerton-Dyer tier-crossover ladders.
+-- `expectedHash := none` per the fallback-probe precedent: computing the Lean
+-- reference checksum at elaboration time would run multi-second `factor`
+-- calls during compilation. Multiset agreement with the Lean rungs is checked
+-- offline in the headline report.
+setup_fixed_benchmark runIsabelleAdvSwinnertonDyerSD4Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleAdvSwinnertonDyerSD5Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleAdvSwinnertonDyerPairK2Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleAdvSwinnertonDyerPairK3Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleAdvSwinnertonDyerPairK4Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleAdvSwinnertonDyerSD4BlocksM3Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 60.0
+    tags := #[scheduledHardwareTag]
+  }
+
+setup_fixed_benchmark runIsabelleAdvSwinnertonDyerSD4BlocksM4Checksum where {
+    repeats := 3
+    maxSecondsPerCall := 120.0
     tags := #[scheduledHardwareTag]
   }
 
