@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import HexBerlekampZassenhausMathlib.Basic
 import HexBerlekampZassenhausMathlib.SignatureClasses
 import HexBerlekampZassenhausMathlib.Lattice
+import HexBerlekampZassenhausMathlib.CLDColumnBound
 import HexBerlekampZassenhausMathlib.UFDPartition
 import HexBerlekampZassenhausMathlib.IntReductionMod
 import HexBerlekampZassenhausMathlib.FactorSoundness
