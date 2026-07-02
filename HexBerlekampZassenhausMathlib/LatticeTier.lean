@@ -403,7 +403,12 @@ polyProduct / normalizeFactorSign / degree-positivity structural companions
 and the sign-normalized expansion-complete surface
 `reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm`.
 Consumed by the lattice residual arm of
-`factorLatticeFactorsWithBound_factor_irreducible`. -/
+`factorLatticeFactorsWithBound_factor_irreducible`.
+
+The only analytic dependency is the core irreducibility input, which inherits
+the two open BHKS obligations (`latticeArm2_fastCore_count`,
+`latticeArm3_bhksSingleAllOnes_irreducible`); the reassembly side itself is
+fully proved — no new assumption is introduced here. -/
 theorem reassemblyExpansionComplete_latticeCore_of_ne_zero
     (f : Hex.ZPoly) (hf : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hchoose : Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore
