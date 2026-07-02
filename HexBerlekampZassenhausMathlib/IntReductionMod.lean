@@ -2539,7 +2539,7 @@ the `repeatedPart` of `normalizeForFactor f` is exactly a
 and that factorPower is consumed completely by
 `Hex.expandRepeatedPartFactorArray` (deliverable 2). Consumed by the
 small-mod singleton arm umbrella
-`factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData`
+`factor_small_mod_singleton_branch_entry_irreducible_of_toMonicPrimeData`
 (#4564 / PR #4581) so callers can drop the explicit `hcomplete` premise
 once the eventual capstone wiring (#4170) lands.
 
@@ -2623,7 +2623,7 @@ routes through the non-monic array-level public surface
 no-tail-divisibility precondition discharged by
 `factorPower_cover_not_dvd_tail_of_irreducible_squarefree` (#4807).
 The singleton-arm umbrella
-`factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData`
+`factor_small_mod_singleton_branch_entry_irreducible_of_toMonicPrimeData`
 threads `hcomplete` from the caller, so the value of this sibling is in
 letting downstream dispatchers discharge `hcomplete` under a non-monic
 primitive `squareFreeCore` (e.g. the `2X + 3` residual from
@@ -3557,64 +3557,69 @@ theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
       (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf)
       hdescent hlifted_of_modP hinitial
 
-/--
-Branch-local substrate for the small-mod singleton arm, specialised to the
-square-free core produced by `Hex.normalizeForFactor`.
+/-- Descend irreducibility along the monic (`x ↦ x/ℓf`) transform: if the monic
+transform of a primitive positive-degree core is irreducible, so is the core.
+The dilation identity `dilate ℓf (toMonic core).monic = ℓf^(d-1) · core`
+identifies the two up to a positive constant, which `primitivePart` strips. -/
+theorem zpolyIrreducible_of_toMonicMonic_irreducible
+    (core : Hex.ZPoly)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
+    (hcore_pos : 0 < core.degree?.getD 0)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hm_irr : Hex.ZPoly.Irreducible (Hex.ZPoly.toMonic core).monic) :
+    Hex.ZPoly.Irreducible core := by
+  have hdeg : 1 ≤ (Hex.ZPoly.toMonic core).degree := by
+    simp only [Hex.ZPoly.toMonic_degree]; omega
+  have hM_monic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
+    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos (by simp only [Hex.ZPoly.toMonic_degree]; omega)
+  have hkey : Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) (Hex.ZPoly.toMonic core).monic
+      = Hex.DensePoly.scale
+          (Hex.DensePoly.leadingCoeff core ^ ((Hex.ZPoly.toMonic core).degree - 1)) core := by
+    have h := Hex.ZPoly.dilate_monic_toMonic core hdeg
+    rwa [Hex.ZPoly.C_mul_eq_scale] at h
+  have hrecover : Hex.ZPoly.primitivePart
+      (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) (Hex.ZPoly.toMonic core).monic)
+      = core := by
+    rw [hkey]
+    exact Hex.DensePoly.primitivePart_scale_of_primitive
+      (pow_pos hcore_lc_pos _) hcore_prim
+  rw [Hex.ZPoly.Irreducible_iff_polynomialIrreducible] at hm_irr ⊢
+  exact (irreducible_toPolynomial_dilate_iff
+    (ne_of_gt hcore_lc_pos) hM_monic hcore_prim hrecover).mpr hm_irr
 
-This is the capstone-facing package of side conditions required by
-`IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP`:
-the primitive Mathlib image of the normalised square-free core, the selected
-prime's leading-coefficient nonvanishing after reduction, and the executable
-`choosePrimeData?`/singleton-factor-count witnesses in the exact shape used by
-the fast singleton branch.
--/
-theorem smallModSingletonBranchPreconditions_of_choosePrimeData
-    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
-    (primeData : Hex.PrimeChoiceData)
-    (hchoose :
-      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
-        some primeData)
-    (hsmall : primeData.factorsModP.size ≤ 1) :
-    (HexPolyZMathlib.toPolynomial
-        (Hex.normalizeForFactor f).squareFreeCore).IsPrimitive ∧
-      (Int.castRingHom (ZMod primeData.p))
-          (HexPolyZMathlib.toPolynomial
-            (Hex.normalizeForFactor f).squareFreeCore).leadingCoeff ≠ 0 ∧
-      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
-        some primeData ∧
-      primeData.factorsModP.size ≤ 1 := by
-  exact ⟨
-    IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive
-      f hf_ne,
-    IntReductionMod.choosePrimeData?_leadingCoeff_castRingHom_ne_zero
-      (Hex.normalizeForFactor f).squareFreeCore primeData hchoose,
-    hchoose,
-    hsmall⟩
-
-/--
-Small-mod singleton irreducibility for the normalised square-free core, with
-all primitive, leading-coefficient, selected-prime, and singleton-count
-preconditions discharged from the executable branch state.
-
-This is the reusable bridge package consumed by the recorded-entry singleton
-umbrella below and by the `factor_irreducible_of_nonUnit` capstone path.
--/
-theorem squareFreeCore_irreducible_of_smallModSingletonBranch
-    (f : Hex.ZPoly) (hf_ne : f ≠ 0)
-    (primeData : Hex.PrimeChoiceData)
+/-- Small-mod singleton arm, keyed on the monic-transform prime selection
+`toMonicPrimeData?` (the selector shared by the fast, lattice, and slow modular
+tiers; #8519, #8533): a singleton mod-`p` factorisation of
+`(toMonic core).monic` certifies its irreducibility over `ℤ`, which descends to
+the primitive core along the dilation transform. -/
+theorem squareFreeCore_irreducible_of_toMonicSmallModSingletonBranch
+    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (primeData : Hex.PrimeChoiceData)
     (hcore_pos : 0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0)
-    (hchoose :
-      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
-        some primeData)
+    (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
+      = some primeData)
     (hsmall : primeData.factorsModP.size ≤ 1) :
     Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore := by
-  rcases smallModSingletonBranchPreconditions_of_choosePrimeData
-      f hf_ne primeData hchoose hsmall with
-    ⟨hprim, hlc_map_ne, hchoose', hsmall'⟩
-  exact
+  set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
+  have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
+    Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
+  have hcore_prim : Hex.ZPoly.Primitive core :=
+    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
+  have hchoose : Hex.choosePrimeData? (Hex.ZPoly.toMonic core).monic = some primeData :=
+    hselected
+  have hM_monic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
+    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos (by simp only [Hex.ZPoly.toMonic_degree]; omega)
+  have hm_deg : 0 < (Hex.ZPoly.toMonic core).monic.degree?.getD 0 := by
+    rw [Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree core hcore_lc_pos
+      (by simp only [Hex.ZPoly.toMonic_degree]; omega)]
+    simpa using hcore_pos
+  have hm_irr : Hex.ZPoly.Irreducible (Hex.ZPoly.toMonic core).monic :=
     IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP
-      (Hex.normalizeForFactor f).squareFreeCore primeData hchoose' hcore_pos hsmall'
-      hprim hlc_map_ne
+      (Hex.ZPoly.toMonic core).monic primeData hchoose hm_deg hsmall
+      (HexHenselMathlib.toPolynomial_monic_of_dense_monic _ hM_monic).isPrimitive
+      (IntReductionMod.choosePrimeData?_leadingCoeff_castRingHom_ne_zero
+        (Hex.ZPoly.toMonic core).monic primeData hchoose)
+  exact zpolyIrreducible_of_toMonicMonic_irreducible core hcore_lc_pos hcore_pos
+    hcore_prim hm_irr
 
 /-- **#4562 HO-1 base task — small-mod singleton arm umbrella.**
 
@@ -3622,7 +3627,8 @@ Per-branch HO-1 component for the small-mod singleton arm of the capstone
 `factor_irreducible_of_nonUnit` (#4170): every entry recorded by
 `Hex.factorWithBound f B` in this fast-path branch is `Hex.ZPoly.Irreducible`,
 given only `f ≠ 0`, the branch marker hypotheses, and the executable
-`choosePrimeData?` success witness `hchoose`. The reassembly
+`ZPoly.toMonicPrimeData?` success witness `hselected` (the monic-transform
+prime selection the fast dispatcher runs on; #8533). The reassembly
 expansion-complete side condition is discharged internally via
 `IntReductionMod.reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc`
 (#4956 / PR #4961), so the umbrella no longer requires an explicit
@@ -3633,13 +3639,9 @@ Composes:
   (`HexBerlekampZassenhaus/Basic.lean`) — the Mathlib-free branch-shape
   lemma identifying each recorded entry as the sign-normalisation of a raw
   factor in the singleton-core reassembly;
-* `IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP`
-  — the singleton-core irreducibility theorem from the chosen prime's
-  Berlekamp form;
-* the base dischargers from #4545
-  (`IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_isPrimitive`
-  and `IntReductionMod.choosePrimeData?_leadingCoeff_castRingHom_ne_zero`),
-  which produce `hprim` and `hlc_map_ne` from `f ≠ 0` and `hchoose`;
+* `squareFreeCore_irreducible_of_toMonicSmallModSingletonBranch` — the
+  singleton-core irreducibility theorem from the monic transform's
+  Berlekamp form, descended along the dilation transform (#8519);
 * `IntReductionMod.reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc`
   — the non-monic primitive singleton-arm `hcomplete` discharger from
   #4956 / PR #4961, producing the reassembly expansion-complete side
@@ -3658,7 +3660,7 @@ Composes:
 The slow-path exhaustive arm (#4561), the slow-path constant and quadratic
 sub-branches, and the fast BHKS arm (gated on #2567) are separate concerns
 and are out of scope here. -/
-theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
+theorem factor_small_mod_singleton_branch_entry_irreducible_of_toMonicPrimeData
     (f : Hex.ZPoly) (hf_ne : f ≠ 0)
     (B : Nat) (hB_pos : 1 ≤ B)
     (entry : Hex.ZPoly × Nat)
@@ -3671,21 +3673,21 @@ theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
         Hex.quadraticIntegerRootFactors?
           (Hex.normalizeForFactor f).squareFreeCore = none)
     (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList)
-    (hchoose :
-      Hex.choosePrimeData?
+    (hselected :
+      Hex.ZPoly.toMonicPrimeData?
         (Hex.normalizeForFactor f).squareFreeCore = some primeData) :
     Hex.ZPoly.Irreducible entry.1 := by
   -- Branch-shape lemma: entry is the sign-normalisation of a raw factor in
   -- the singleton-core reassembly.
   obtain ⟨raw, hraw_mem, hentry_eq⟩ :=
     Hex.factorWithBound_entry_mem_small_mod_singleton_raw f B entry
-      primeData hB_pos hdeg hchoose hsmall hquadratic hentry_mem
-  -- Singleton-core irreducibility from the chosen prime's Berlekamp form,
-  -- with `hprim` and `hlc_map_ne` discharged by the #4545 base lemmas.
+      primeData hB_pos hdeg hselected hsmall hquadratic hentry_mem
+  -- Singleton-core irreducibility from the monic transform's Berlekamp form,
+  -- descended along the dilation transform.
   have hcore_irr :
       Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore :=
-    squareFreeCore_irreducible_of_smallModSingletonBranch
-      f hf_ne primeData (Nat.pos_of_ne_zero hdeg) hchoose hsmall
+    squareFreeCore_irreducible_of_toMonicSmallModSingletonBranch
+      f hf_ne primeData (Nat.pos_of_ne_zero hdeg) hselected hsmall
   -- Discharge the reassembly expansion-complete side condition internally
   -- using the non-monic primitive singleton-arm discharger
   -- (#4956 / PR #4961).
@@ -3715,23 +3717,23 @@ theorem factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
   rw [hentry_eq]
   exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible hraw_irr
 
-/-- **#4605 HO-1 base task — `hchoose`-free small-mod singleton arm umbrella.**
+/-- **#4605 HO-1 base task — small-mod singleton arm umbrella.**
 
 Capstone-facing variant of
-`factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData`
-that takes no separate `hchoose` premise. The witness that `choosePrimeData?`
-selected a good prime is packed into the strengthened branch predicate
-`hsmall_chosen`, which is the **exact predicate** the post-#4605
+`factor_small_mod_singleton_branch_entry_irreducible_of_toMonicPrimeData`
+with the selection witness in premise position before the branch markers.
+The witness that `ZPoly.toMonicPrimeData?` selected a good prime for the
+monic transform is the **exact predicate** the post-#8533
 `factorFastFactorsWithBound` dispatcher tests when deciding whether to fire
-the singleton arm: `(choosePrimeData? sf).isSome ∧ size ≤ 1`. The dispatcher
-restriction guarantees that this conjunction is *necessary* (not just
-sufficient) for the singleton branch to fire — when `choosePrimeData?` returns
-`none` the fast path returns `none` and `factorWithBound` falls through to the
-slow exhaustive path, so the singleton branch-shape lemma's conclusion does
-not apply in that case.
+the singleton arm: `(ZPoly.toMonicPrimeData? sf).isSome ∧ size ≤ 1`. The
+dispatcher restriction guarantees that this conjunction is *necessary* (not
+just sufficient) for the singleton branch to fire — when
+`ZPoly.toMonicPrimeData?` returns `none` the fast path returns `none` and
+`factorWithBound` falls through to the slow exhaustive path, so the
+singleton branch-shape lemma's conclusion does not apply in that case.
 
 The reassembly expansion-complete side condition is discharged internally
-by the `_of_choosePrimeData` umbrella above (via
+by the `_of_toMonicPrimeData` umbrella above (via
 `IntReductionMod.reassemblyExpansionComplete_singleton_of_irreducible_of_pos_lc`,
 #4956 / PR #4961), so this wrapper does not require an explicit
 `hcomplete` premise either. -/
@@ -3742,8 +3744,8 @@ theorem factor_small_mod_singleton_branch_entry_irreducible
     (hdeg :
       (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
     (primeData : Hex.PrimeChoiceData)
-    (hchoose :
-      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+    (hselected :
+      Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore =
         some primeData)
     (hsmall : primeData.factorsModP.size ≤ 1)
     (hquadratic :
@@ -3752,9 +3754,9 @@ theorem factor_small_mod_singleton_branch_entry_irreducible
           (Hex.normalizeForFactor f).squareFreeCore = none)
     (hentry_mem : entry ∈ (Hex.factorWithBound f B).factors.toList) :
     Hex.ZPoly.Irreducible entry.1 :=
-  factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData
+  factor_small_mod_singleton_branch_entry_irreducible_of_toMonicPrimeData
     f hf_ne B hB_pos entry hdeg primeData hsmall hquadratic hentry_mem
-    hchoose
+    hselected
 
 /-- **Fast-path small-mod singleton arm — raw guarded irreducibility.**
 
@@ -3765,11 +3767,11 @@ branch (`primeData.factorsModP.size ≤ 1`) is `Hex.ZPoly.Irreducible`, in the
 guarded shape consumed by the default factor irreducibility capstone (#8068).
 
 Under the branch markers — `f ≠ 0`, `1 ≤ B`, positive square-free-core degree
-(`hdeg`), the chosen prime `hchoose`, the singleton count `hsmall`, and the
+(`hdeg`), the selected prime `hselected`, the singleton count `hsmall`, and the
 quadratic-dispatch guard `hquadratic` — the dispatcher returns
 `Hex.reassemblePolynomialFactors (Hex.normalizeForFactor f)
 #[(Hex.normalizeForFactor f).squareFreeCore]`. The square-free core is
-irreducible by `squareFreeCore_irreducible_of_smallModSingletonBranch`, so both
+irreducible by `squareFreeCore_irreducible_of_toMonicSmallModSingletonBranch`, so both
 the extracted `X`-power factors and the core entry of the reassembly are
 irreducible; the recorded-factor guard is therefore discharged for free (it is
 present only to compose with the constant arm, where the core is the unit `1`).
@@ -3784,8 +3786,8 @@ theorem factorFastFactorsWithBound_raw_guardedIrreducible_of_smallModSingleton
     (primeData : Hex.PrimeChoiceData)
     (hdeg :
       (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
-    (hchoose :
-      Hex.choosePrimeData? (Hex.normalizeForFactor f).squareFreeCore =
+    (hselected :
+      Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore =
         some primeData)
     (hsmall : primeData.factorsModP.size ≤ 1)
     (hquadratic :
@@ -3798,11 +3800,11 @@ theorem factorFastFactorsWithBound_raw_guardedIrreducible_of_smallModSingleton
       Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true →
         Hex.ZPoly.Irreducible raw := by
   intro raw hmem _hrecord
-  -- Singleton-core irreducibility from the chosen prime's Berlekamp form.
+  -- Singleton-core irreducibility from the monic transform's Berlekamp form.
   have hcore_irr :
       Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore :=
-    squareFreeCore_irreducible_of_smallModSingletonBranch
-      f hf_ne primeData (Nat.pos_of_ne_zero hdeg) hchoose hsmall
+    squareFreeCore_irreducible_of_toMonicSmallModSingletonBranch
+      f hf_ne primeData (Nat.pos_of_ne_zero hdeg) hselected hsmall
   -- Discharge the reassembly expansion-complete side condition internally.
   have hcomplete :
       Hex.reassemblyExpansionComplete (Hex.normalizeForFactor f)
@@ -3833,8 +3835,8 @@ theorem factorFastFactorsWithBound_raw_guardedIrreducible_of_smallModSingleton
   -- singleton-core reassembly (the surviving disjuncts (c)/(g)); the other
   -- branches contradict the markers. The private reassembly value is named
   -- only through the public branch theorem's conclusion, never directly.
-  rcases Hex.factorFastFactorsWithBound_branch_of_choosePrimeData?_some f B primeData
-      hchoose with
+  rcases Hex.factorFastFactorsWithBound_branch_of_toMonicPrimeData?_some f B primeData
+      hselected with
     ⟨_, hd0⟩ | ⟨_, _, hB0⟩ | ⟨hv, _⟩ | ⟨_, _, _, _, hns, _⟩ |
       ⟨_, _, _, hns, _⟩ | ⟨_, _, _, hBgt, hqs⟩ | ⟨hv, _⟩ |
       ⟨_, _, _, _, _, hns, _⟩ | ⟨_, _, _, _, hns, _⟩
@@ -3904,7 +3906,7 @@ Composes:
   irreducibility.
 
 Sibling arms: the small-mod singleton arm #4564
-(`factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData`)
+(`factor_small_mod_singleton_branch_entry_irreducible_of_toMonicPrimeData`)
 covers the `... ≠ 0` fast-path case with `factorsModP.size ≤ 1`; the slow
 exhaustive arm (#4561, in flight) covers the slow-path exhaustive case;
 the fast BHKS arm is gated on directive #2567. -/
@@ -4151,7 +4153,7 @@ branch-shape lemma differs (`_slow_quadratic_branch_raw` keys off
 Sibling arms: the fast-path constant arm #4565
 (`factor_constant_branch_entry_irreducible_of_choosePrimeData`); the fast-path
 small-mod singleton arm #4564
-(`factor_small_mod_singleton_branch_entry_irreducible_of_choosePrimeData`);
+(`factor_small_mod_singleton_branch_entry_irreducible_of_toMonicPrimeData`);
 the fast-path quadratic arm #4571
 (`factor_quadratic_branch_entry_irreducible_of_quadraticRoots`, above);
 the slow-path exhaustive arm #4561 (in flight); the fast BHKS arm gated on

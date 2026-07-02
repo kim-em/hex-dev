@@ -47,69 +47,6 @@ noncomputable section
 
 open Polynomial
 
-/-- Descend irreducibility along the monic (`x ↦ x/ℓf`) transform: if the monic
-transform of a primitive positive-degree core is irreducible, so is the core.
-The dilation identity `dilate ℓf (toMonic core).monic = ℓf^(d-1) · core`
-identifies the two up to a positive constant, which `primitivePart` strips. -/
-theorem zpolyIrreducible_of_toMonicMonic_irreducible
-    (core : Hex.ZPoly)
-    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hcore_pos : 0 < core.degree?.getD 0)
-    (hcore_prim : Hex.ZPoly.Primitive core)
-    (hm_irr : Hex.ZPoly.Irreducible (Hex.ZPoly.toMonic core).monic) :
-    Hex.ZPoly.Irreducible core := by
-  have hdeg : 1 ≤ (Hex.ZPoly.toMonic core).degree := by
-    simp only [Hex.ZPoly.toMonic_degree]; omega
-  have hM_monic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
-    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos (by simp only [Hex.ZPoly.toMonic_degree]; omega)
-  have hkey : Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) (Hex.ZPoly.toMonic core).monic
-      = Hex.DensePoly.scale
-          (Hex.DensePoly.leadingCoeff core ^ ((Hex.ZPoly.toMonic core).degree - 1)) core := by
-    have h := Hex.ZPoly.dilate_monic_toMonic core hdeg
-    rwa [Hex.ZPoly.C_mul_eq_scale] at h
-  have hrecover : Hex.ZPoly.primitivePart
-      (Hex.ZPoly.dilate (Hex.DensePoly.leadingCoeff core) (Hex.ZPoly.toMonic core).monic)
-      = core := by
-    rw [hkey]
-    exact Hex.DensePoly.primitivePart_scale_of_primitive
-      (pow_pos hcore_lc_pos _) hcore_prim
-  rw [Hex.ZPoly.Irreducible_iff_polynomialIrreducible] at hm_irr ⊢
-  exact (irreducible_toPolynomial_dilate_iff
-    (ne_of_gt hcore_lc_pos) hM_monic hcore_prim hrecover).mpr hm_irr
-
-/-- Small-mod singleton arm of the lattice tier, keyed on the monic-transform
-prime selection `toMonicPrimeData?`: a singleton mod-`p` factorisation of
-`(toMonic core).monic` certifies its irreducibility over `ℤ`, which descends to
-the primitive core along the dilation transform. -/
-theorem squareFreeCore_irreducible_of_toMonicSmallModSingletonBranch
-    (f : Hex.ZPoly) (hf_ne : f ≠ 0) (primeData : Hex.PrimeChoiceData)
-    (hcore_pos : 0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0)
-    (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
-      = some primeData)
-    (hsmall : primeData.factorsModP.size ≤ 1) :
-    Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore := by
-  set core := (Hex.normalizeForFactor f).squareFreeCore with hcore_def
-  have hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core :=
-    Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf_ne
-  have hcore_prim : Hex.ZPoly.Primitive core :=
-    IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf_ne
-  have hchoose : Hex.choosePrimeData? (Hex.ZPoly.toMonic core).monic = some primeData :=
-    hselected
-  have hM_monic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
-    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos (by simp only [Hex.ZPoly.toMonic_degree]; omega)
-  have hm_deg : 0 < (Hex.ZPoly.toMonic core).monic.degree?.getD 0 := by
-    rw [Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree core hcore_lc_pos
-      (by simp only [Hex.ZPoly.toMonic_degree]; omega)]
-    simpa using hcore_pos
-  have hm_irr : Hex.ZPoly.Irreducible (Hex.ZPoly.toMonic core).monic :=
-    IntReductionMod.squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP
-      (Hex.ZPoly.toMonic core).monic primeData hchoose hm_deg hsmall
-      (HexHenselMathlib.toPolynomial_monic_of_dense_monic _ hM_monic).isPrimitive
-      (IntReductionMod.choosePrimeData?_leadingCoeff_castRingHom_ne_zero
-        (Hex.ZPoly.toMonic core).monic primeData hchoose)
-  exact zpolyIrreducible_of_toMonicMonic_irreducible core hcore_lc_pos hcore_pos
-    hcore_prim hm_irr
-
 /--
 **#8417 (lattice-tier irreducibility, reduced form).**  Every factor the
 van Hoeij CLD lattice tier `Hex.latticeCoreFactorsWithBound` returns for the
