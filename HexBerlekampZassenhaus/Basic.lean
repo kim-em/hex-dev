@@ -14629,6 +14629,79 @@ theorem classicalCoreFactorsWithBound_degree_pos
     exact degree_pos_of_primitive_norm_record factor
       (hprim factor hmem) (hnorm factor hmem) (hrecord factor hmem)
 
+/-- Structural case-split for the van Hoeij lattice-tier core. Every `some cf`
+result of `latticeCoreFactorsWithBound` is either the singleton `#[core]` (the
+small-mod and all-ones certification arms) or a `factorFastCoreWithBound`
+success (the CLD-split arm). The trio
+`latticeCoreFactorsWithBound_{polyProduct,normalizeFactorSign,degree_pos}`
+below are thin consumers, mirroring the classical structural trio. -/
+private theorem latticeCoreFactorsWithBound_spec
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    {cf : Array ZPoly}
+    (h : latticeCoreFactorsWithBound core B primeData = some cf) :
+    cf = #[core] ∨
+      factorFastCoreWithBound core B primeData (initialHenselPrecision B)
+        (ZPoly.quadraticDoublingSteps B + 2) = some cf := by
+  rw [latticeCoreFactorsWithBound] at h
+  split at h
+  · exact Or.inl (Option.some.inj h).symm
+  · split at h
+    · rename_i coreFactors hfast
+      exact Or.inr ((Option.some.inj h) ▸ hfast)
+    · split at h
+      · exact Or.inl (Option.some.inj h).symm
+      · exact absurd h.symm (Option.some_ne_none cf)
+
+/-- PolyProduct identity for the van Hoeij lattice-tier core: every emitted
+factor array multiplies back to `core`. Mirror of
+`classicalCoreFactorsWithBound_polyProduct`; the singleton arms are immediate
+and the CLD-split arm reuses `factorFastCoreWithBound_product`. -/
+theorem latticeCoreFactorsWithBound_polyProduct
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    {cf : Array ZPoly}
+    (h : latticeCoreFactorsWithBound core B primeData = some cf) :
+    Array.polyProduct cf = core := by
+  rcases latticeCoreFactorsWithBound_spec core B primeData h with hsing | hfast
+  · rw [hsing]; exact ZPoly.polyProduct_singleton core
+  · exact factorFastCoreWithBound_product core B primeData _ _ cf hfast
+
+/-- Each factor emitted by the van Hoeij lattice-tier core is fixed by
+`normalizeFactorSign`, provided `core` has positive leading coefficient. Mirror
+of `classicalCoreFactorsWithBound_normalizeFactorSign`: the CLD-split factors
+are sign-normalized by construction, and the singleton arms are `core`, fixed
+by its positive leading coefficient. -/
+theorem latticeCoreFactorsWithBound_normalizeFactorSign
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    (hcore_pos : 0 < DensePoly.leadingCoeff core)
+    {cf : Array ZPoly}
+    (h : latticeCoreFactorsWithBound core B primeData = some cf) :
+    ∀ factor ∈ cf.toList, normalizeFactorSign factor = factor := by
+  rcases latticeCoreFactorsWithBound_spec core B primeData h with hsing | hfast
+  · intro factor hmem
+    rw [hsing] at hmem
+    have hfactor : factor = core := by simpa using hmem
+    rw [hfactor]
+    exact normalizeFactorSign_eq_self_of_leadingCoeff_nonneg core (by omega)
+  · exact factorFastCoreWithBound_some_normalizeFactorSign hfast
+
+/-- Each factor emitted by the van Hoeij lattice-tier core has positive
+`degree?`, provided `core` itself has positive degree. Mirror of
+`classicalCoreFactorsWithBound_degree_pos`: the CLD-split factors have positive
+degree by construction, and the singleton arms are `core`, whose positive
+degree is the sole hypothesis. -/
+theorem latticeCoreFactorsWithBound_degree_pos
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
+    (hcore_deg : 0 < core.degree?.getD 0)
+    {cf : Array ZPoly}
+    (h : latticeCoreFactorsWithBound core B primeData = some cf) :
+    ∀ factor ∈ cf.toList, 0 < factor.degree?.getD 0 := by
+  rcases latticeCoreFactorsWithBound_spec core B primeData h with hsing | hfast
+  · intro factor hmem
+    rw [hsing] at hmem
+    have hfactor : factor = core := by simpa using hmem
+    rw [hfactor]; exact hcore_deg
+  · exact factorFastCoreWithBound_some_degree_pos hfast
+
 /-- Weakened-conclusion sibling of `exhaustiveCoreFactorsWithBound_degree_pos`:
 every emitted factor of the exhaustive recombination wrapper has positive
 `degree?` when the input core is primitive with positive leading coefficient
