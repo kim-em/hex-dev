@@ -243,6 +243,10 @@ lean_exe hex_classical_spike where
   srcDir := "bench"
   root := `HexBench.ClassicalSpike
 
+lean_exe hex_lattice_spike where
+  srcDir := "bench"
+  root := `HexBench.LatticeSpike
+
 lean_exe hexarith_bench where
   srcDir := "bench"
   root := `HexArith.Bench
