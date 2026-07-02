@@ -7731,6 +7731,43 @@ def subsetsOfSizeWithComplement {α : Type} : List α → Nat → List (List α 
       (subsetsOfSizeWithComplement xs k).map (fun sc => (x :: sc.1, sc.2)) ++
       (subsetsOfSizeWithComplement xs (k + 1)).map (fun sc => (sc.1, x :: sc.2))
 
+/-- Sum of the degrees of a selected local-factor subset — the degree of the
+subset product whenever the leading coefficients do not cancel mod the lift
+modulus. -/
+def selectedDegreeSum (sel : List ZPoly) : Nat :=
+  sel.foldl (fun n g => n + g.degree?.getD 0) 0
+
+/-- Centered representative mod `m` of the product of one coefficient across a
+selected local-factor subset, computed with a running modular reduction so no
+intermediate value grows beyond `m`. Instantiated at the constant term and at
+the leading coefficient by `scaledCandidatePrefilter`. -/
+def selectedProductResidue (coeffOf : ZPoly → Int) (sel : List ZPoly) (m : Nat) : Int :=
+  centeredModNat (sel.foldl (fun acc g => acc * coeffOf g % (m : Int)) 1) m
+
+/-- Sound `O(subset size)` rejection test run before the classical candidate
+pipeline (`polyProduct` / `centeredLiftPoly` / `dilate` / `primitivePart` /
+`exactQuotient?`) forms the full subset product:
+
+* **degree test** — a candidate whose factor degrees sum beyond `target`'s
+  degree cannot divide it (guarded by `coreLc ≠ 0` and a nonvanishing
+  leading-coefficient residue, which pin the candidate's degree to `degSum`);
+* **trailing-coefficient test** — the candidate's constant term times the
+  dilation content divides `coreLc ^ degSum * lcRes * target(0)` over `ℤ`, so
+  the centered constant-term residue must divide that product.
+
+`false` is returned only when `exactQuotient? target candidate` provably fails
+(`scaledCandidatePrefilter_eq_true_of_exactQuotient?_some` in the Mathlib
+layer), so pruning never changes the accepted-candidate sequence — only the
+wall-clock cost of rejecting a non-factor subset. -/
+def scaledCandidatePrefilter
+    (coreLc : Int) (target : ZPoly) (modulus : Nat) (sel : List ZPoly) : Bool :=
+  let degSum := selectedDegreeSum sel
+  let lcRes := selectedProductResidue DensePoly.leadingCoeff sel modulus
+  let trailRes := selectedProductResidue (fun g => g.coeff 0) sel modulus
+  (coreLc == 0 || lcRes == 0 || decide (target = 0) ||
+      decide (degSum ≤ target.degree?.getD 0)) &&
+    coreLc ^ degSum * lcRes * target.coeff 0 % trailRes == 0
+
 mutual
 /-- Size-ordered scaled recombination search (the small-`r` classical tier).
 
@@ -7791,19 +7828,21 @@ def scaledRecombinationSmartCandLoop
       else match fuel with
         | 0 => (none, budget)
         | fuel + 1 =>
-            let candidate :=
-              normalizeFactorSign <| ZPoly.primitivePart <| ZPoly.dilate coreLc <|
-                centeredLiftPoly (Array.polyProduct split.1.toArray) modulus
             let budget' := budget - 1
-            if shouldRecordPolynomialFactor candidate then
-              match exactQuotient? target candidate with
-              | some quotient =>
-                  match scaledRecombinationSmartAux coreLc quotient modulus split.2
-                      budget' fuel with
-                  | (some sub, b) => (some (candidate :: sub), b)
-                  | (none, b) =>
-                      scaledRecombinationSmartCandLoop coreLc target modulus rest b fuel
-              | none => scaledRecombinationSmartCandLoop coreLc target modulus rest budget' fuel
+            if scaledCandidatePrefilter coreLc target modulus split.1 then
+              let candidate :=
+                normalizeFactorSign <| ZPoly.primitivePart <| ZPoly.dilate coreLc <|
+                  centeredLiftPoly (Array.polyProduct split.1.toArray) modulus
+              if shouldRecordPolynomialFactor candidate then
+                match exactQuotient? target candidate with
+                | some quotient =>
+                    match scaledRecombinationSmartAux coreLc quotient modulus split.2
+                        budget' fuel with
+                    | (some sub, b) => (some (candidate :: sub), b)
+                    | (none, b) =>
+                        scaledRecombinationSmartCandLoop coreLc target modulus rest b fuel
+                | none => scaledRecombinationSmartCandLoop coreLc target modulus rest budget' fuel
+              else scaledRecombinationSmartCandLoop coreLc target modulus rest budget' fuel
             else scaledRecombinationSmartCandLoop coreLc target modulus rest budget' fuel
 end
 
@@ -7929,32 +7968,36 @@ theorem scaledRecombinationSmartCandLoop_product
       · rename_i fuel'                        -- fuel = fuel' + 1
         simp only [] at h                     -- zeta-reduce `let candidate`/`let budget'`
         split at h
-        · -- shouldRecord the candidate
-          cases hquot : exactQuotient? target
-              (normalizeFactorSign (ZPoly.primitivePart
-                (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
-          | none =>
-              simp only [hquot] at h        -- exactQuotient? none ⇒ recurse on the rest
-              exact scaledRecombinationSmartCandLoop_product _ _ _ _ _ _ _ _ h
-          | some quotient =>
-              simp only [hquot] at h
-              cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
-                  (budget - 1) fuel' with
-              | mk ores ob =>
-                  cases ores with
-                  | none =>
-                      simp only [haux] at h  -- Aux declined ⇒ recurse on the rest
-                      exact scaledRecombinationSmartCandLoop_product _ _ _ _ _ _ _ _ h
-                  | some sub =>
-                      simp only [haux] at h
-                      simp only [Prod.mk.injEq, Option.some.injEq] at h
-                      obtain ⟨hfac, _⟩ := h
-                      subst hfac
-                      have hsub := scaledRecombinationSmartAux_product _ _ _ _ _ _ _ _ haux
-                      rw [ZPoly.polyProduct_cons_toArray, hsub,
-                        DensePoly.mul_comm_poly (S := Int)]
-                      exact exactQuotient?_product hquot
-        · -- cand not recorded: recurse on the rest
+        · -- prefilter passed: examine the candidate pipeline
+          split at h
+          · -- shouldRecord the candidate
+            cases hquot : exactQuotient? target
+                (normalizeFactorSign (ZPoly.primitivePart
+                  (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
+            | none =>
+                simp only [hquot] at h        -- exactQuotient? none ⇒ recurse on the rest
+                exact scaledRecombinationSmartCandLoop_product _ _ _ _ _ _ _ _ h
+            | some quotient =>
+                simp only [hquot] at h
+                cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
+                    (budget - 1) fuel' with
+                | mk ores ob =>
+                    cases ores with
+                    | none =>
+                        simp only [haux] at h  -- Aux declined ⇒ recurse on the rest
+                        exact scaledRecombinationSmartCandLoop_product _ _ _ _ _ _ _ _ h
+                    | some sub =>
+                        simp only [haux] at h
+                        simp only [Prod.mk.injEq, Option.some.injEq] at h
+                        obtain ⟨hfac, _⟩ := h
+                        subst hfac
+                        have hsub := scaledRecombinationSmartAux_product _ _ _ _ _ _ _ _ haux
+                        rw [ZPoly.polyProduct_cons_toArray, hsub,
+                          DensePoly.mul_comm_poly (S := Int)]
+                        exact exactQuotient?_product hquot
+          · -- cand not recorded: recurse on the rest
+            exact scaledRecombinationSmartCandLoop_product _ _ _ _ _ _ _ _ h
+        · -- prefilter rejected the subset: recurse on the rest
           exact scaledRecombinationSmartCandLoop_product _ _ _ _ _ _ _ _ h
 termination_by fuel
 end
@@ -8044,33 +8087,38 @@ theorem scaledRecombinationSmartCandLoop_budget_le
       · rename_i fuel'
         simp only [] at h
         split at h
-        · -- shouldRecord the candidate
-          cases hquot : exactQuotient? target
-              (normalizeFactorSign (ZPoly.primitivePart
-                (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
-          | none =>
-              simp only [hquot] at h
-              have hrec := scaledRecombinationSmartCandLoop_budget_le _ _ _ _ _ _ _ _ h
-              omega
-          | some quotient =>
-              simp only [hquot] at h
-              cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
-                  (budget - 1) fuel' with
-              | mk ores ob =>
-                  cases ores with
-                  | none =>
-                      simp only [haux] at h
-                      have haux_le := scaledRecombinationSmartAux_budget_le _ _ _ _ _ _ _ _ haux
-                      have hrec := scaledRecombinationSmartCandLoop_budget_le _ _ _ _ _ _ _ _ h
-                      omega
-                  | some sub =>
-                      simp only [haux] at h
-                      simp only [Prod.mk.injEq] at h
-                      obtain ⟨_, hb⟩ := h
-                      subst hb
-                      have haux_le := scaledRecombinationSmartAux_budget_le _ _ _ _ _ _ _ _ haux
-                      omega
-        · -- candidate not recorded: recurse on the rest at budget - 1
+        · -- prefilter passed: examine the candidate pipeline
+          split at h
+          · -- shouldRecord the candidate
+            cases hquot : exactQuotient? target
+                (normalizeFactorSign (ZPoly.primitivePart
+                  (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
+            | none =>
+                simp only [hquot] at h
+                have hrec := scaledRecombinationSmartCandLoop_budget_le _ _ _ _ _ _ _ _ h
+                omega
+            | some quotient =>
+                simp only [hquot] at h
+                cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
+                    (budget - 1) fuel' with
+                | mk ores ob =>
+                    cases ores with
+                    | none =>
+                        simp only [haux] at h
+                        have haux_le := scaledRecombinationSmartAux_budget_le _ _ _ _ _ _ _ _ haux
+                        have hrec := scaledRecombinationSmartCandLoop_budget_le _ _ _ _ _ _ _ _ h
+                        omega
+                    | some sub =>
+                        simp only [haux] at h
+                        simp only [Prod.mk.injEq] at h
+                        obtain ⟨_, hb⟩ := h
+                        subst hb
+                        have haux_le := scaledRecombinationSmartAux_budget_le _ _ _ _ _ _ _ _ haux
+                        omega
+          · -- candidate not recorded: recurse on the rest at budget - 1
+            have hrec := scaledRecombinationSmartCandLoop_budget_le _ _ _ _ _ _ _ _ h
+            omega
+        · -- prefilter rejected the subset: recurse on the rest at budget - 1
           have hrec := scaledRecombinationSmartCandLoop_budget_le _ _ _ _ _ _ _ _ h
           omega
 termination_by fuel
@@ -8164,31 +8212,35 @@ theorem scaledRecombinationSmartCandLoop_shouldRecord
       · rename_i fuel'
         simp only [] at h
         split at h
-        · rename_i hrecord
-          cases hquot : exactQuotient? target
-              (normalizeFactorSign (ZPoly.primitivePart
-                (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
-          | none =>
-              simp only [hquot] at h
-              exact scaledRecombinationSmartCandLoop_shouldRecord _ _ _ _ _ _ _ _ h
-          | some quotient =>
-              simp only [hquot] at h
-              cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
-                  (budget - 1) fuel' with
-              | mk ores ob =>
-                  cases ores with
-                  | none =>
-                      simp only [haux] at h
-                      exact scaledRecombinationSmartCandLoop_shouldRecord _ _ _ _ _ _ _ _ h
-                  | some sub =>
-                      simp only [haux] at h
-                      simp only [Prod.mk.injEq, Option.some.injEq] at h
-                      obtain ⟨hfac, _⟩ := h; subst hfac
-                      intro g hg
-                      rcases List.mem_cons.mp hg with hg_eq | hg_sub
-                      · subst hg_eq; exact hrecord
-                      · exact scaledRecombinationSmartAux_shouldRecord _ _ _ _ _ _ _ _ haux g hg_sub
-        · exact scaledRecombinationSmartCandLoop_shouldRecord _ _ _ _ _ _ _ _ h
+        · -- prefilter passed: examine the candidate pipeline
+          split at h
+          · rename_i hrecord
+            cases hquot : exactQuotient? target
+                (normalizeFactorSign (ZPoly.primitivePart
+                  (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
+            | none =>
+                simp only [hquot] at h
+                exact scaledRecombinationSmartCandLoop_shouldRecord _ _ _ _ _ _ _ _ h
+            | some quotient =>
+                simp only [hquot] at h
+                cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
+                    (budget - 1) fuel' with
+                | mk ores ob =>
+                    cases ores with
+                    | none =>
+                        simp only [haux] at h
+                        exact scaledRecombinationSmartCandLoop_shouldRecord _ _ _ _ _ _ _ _ h
+                    | some sub =>
+                        simp only [haux] at h
+                        simp only [Prod.mk.injEq, Option.some.injEq] at h
+                        obtain ⟨hfac, _⟩ := h; subst hfac
+                        intro g hg
+                        rcases List.mem_cons.mp hg with hg_eq | hg_sub
+                        · subst hg_eq; exact hrecord
+                        · exact scaledRecombinationSmartAux_shouldRecord _ _ _ _ _ _ _ _ haux g hg_sub
+          · exact scaledRecombinationSmartCandLoop_shouldRecord _ _ _ _ _ _ _ _ h
+        · -- prefilter rejected the subset: recurse on the rest
+          exact scaledRecombinationSmartCandLoop_shouldRecord _ _ _ _ _ _ _ _ h
 termination_by fuel
 end
 
@@ -8257,34 +8309,38 @@ theorem scaledRecombinationSmartCandLoop_normalizeFactorSign
       · rename_i fuel'
         simp only [] at h
         split at h
-        · rename_i hrecord
-          cases hquot : exactQuotient? target
-              (normalizeFactorSign (ZPoly.primitivePart
-                (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
-          | none =>
-              simp only [hquot] at h
-              exact scaledRecombinationSmartCandLoop_normalizeFactorSign _ _ _ _ _ _ _ _ h
-          | some quotient =>
-              simp only [hquot] at h
-              cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
-                  (budget - 1) fuel' with
-              | mk ores ob =>
-                  cases ores with
-                  | none =>
-                      simp only [haux] at h
-                      exact scaledRecombinationSmartCandLoop_normalizeFactorSign _ _ _ _ _ _ _ _ h
-                  | some sub =>
-                      simp only [haux] at h
-                      simp only [Prod.mk.injEq, Option.some.injEq] at h
-                      obtain ⟨hfac, _⟩ := h; subst hfac
-                      intro g hg
-                      rcases List.mem_cons.mp hg with hg_eq | hg_sub
-                      · subst hg_eq
-                        exact normalizeFactorSign_idem
-                          (ZPoly.primitivePart (ZPoly.dilate coreLc
-                            (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))
-                      · exact scaledRecombinationSmartAux_normalizeFactorSign _ _ _ _ _ _ _ _ haux g hg_sub
-        · exact scaledRecombinationSmartCandLoop_normalizeFactorSign _ _ _ _ _ _ _ _ h
+        · -- prefilter passed: examine the candidate pipeline
+          split at h
+          · rename_i hrecord
+            cases hquot : exactQuotient? target
+                (normalizeFactorSign (ZPoly.primitivePart
+                  (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
+            | none =>
+                simp only [hquot] at h
+                exact scaledRecombinationSmartCandLoop_normalizeFactorSign _ _ _ _ _ _ _ _ h
+            | some quotient =>
+                simp only [hquot] at h
+                cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
+                    (budget - 1) fuel' with
+                | mk ores ob =>
+                    cases ores with
+                    | none =>
+                        simp only [haux] at h
+                        exact scaledRecombinationSmartCandLoop_normalizeFactorSign _ _ _ _ _ _ _ _ h
+                    | some sub =>
+                        simp only [haux] at h
+                        simp only [Prod.mk.injEq, Option.some.injEq] at h
+                        obtain ⟨hfac, _⟩ := h; subst hfac
+                        intro g hg
+                        rcases List.mem_cons.mp hg with hg_eq | hg_sub
+                        · subst hg_eq
+                          exact normalizeFactorSign_idem
+                            (ZPoly.primitivePart (ZPoly.dilate coreLc
+                              (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))
+                        · exact scaledRecombinationSmartAux_normalizeFactorSign _ _ _ _ _ _ _ _ haux g hg_sub
+          · exact scaledRecombinationSmartCandLoop_normalizeFactorSign _ _ _ _ _ _ _ _ h
+        · -- prefilter rejected the subset: recurse on the rest
+          exact scaledRecombinationSmartCandLoop_normalizeFactorSign _ _ _ _ _ _ _ _ h
 termination_by fuel
 end
 
@@ -8354,62 +8410,66 @@ theorem scaledRecombinationSmartCandLoop_primitive
       · rename_i fuel'
         simp only [] at h
         split at h
-        · rename_i hrecord
-          cases hquot : exactQuotient? target
-              (normalizeFactorSign (ZPoly.primitivePart
-                (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
-          | none =>
-              simp only [hquot] at h
-              exact scaledRecombinationSmartCandLoop_primitive _ _ _ _ _ _ _ _ h
-          | some quotient =>
-              simp only [hquot] at h
-              cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
-                  (budget - 1) fuel' with
-              | mk ores ob =>
-                  cases ores with
-                  | none =>
-                      simp only [haux] at h
-                      exact scaledRecombinationSmartCandLoop_primitive _ _ _ _ _ _ _ _ h
-                  | some sub =>
-                      simp only [haux] at h
-                      simp only [Prod.mk.injEq, Option.some.injEq] at h
-                      obtain ⟨hfac, _⟩ := h; subst hfac
-                      intro g hg
-                      rcases List.mem_cons.mp hg with hg_eq | hg_sub
-                      · subst hg_eq
-                        have hcand_ne :
-                            normalizeFactorSign (ZPoly.primitivePart
-                                (ZPoly.dilate coreLc
-                                  (centeredLiftPoly
-                                    (Array.polyProduct split.1.toArray) modulus))) ≠ 0 := by
-                          unfold shouldRecordPolynomialFactor at hrecord
-                          simp at hrecord
-                          exact hrecord.1.1
-                        have hpp_ne :
-                            ZPoly.primitivePart
-                                (ZPoly.dilate coreLc
-                                  (centeredLiftPoly
-                                    (Array.polyProduct split.1.toArray) modulus)) ≠ 0 := by
-                          intro hpp
-                          apply hcand_ne
-                          rw [hpp]
-                          unfold normalizeFactorSign
-                          rw [if_neg
-                            (by decide : ¬ DensePoly.leadingCoeff (0 : ZPoly) < 0)]
-                        have hcontent_ne :
-                            ZPoly.content
-                                (ZPoly.dilate coreLc
-                                  (centeredLiftPoly
-                                    (Array.polyProduct split.1.toArray) modulus)) ≠ 0 := by
-                          intro hcontent
-                          apply hpp_ne
-                          show DensePoly.primitivePart _ = 0
-                          exact DensePoly.primitivePart_eq_zero_of_content_eq_zero _
-                            (by simpa [ZPoly.content] using hcontent)
-                        exact normalizeFactorSign_primitive _
-                          (ZPoly.primitivePart_primitive _ hcontent_ne)
-                      · exact scaledRecombinationSmartAux_primitive _ _ _ _ _ _ _ _ haux g hg_sub
-        · exact scaledRecombinationSmartCandLoop_primitive _ _ _ _ _ _ _ _ h
+        · -- prefilter passed: examine the candidate pipeline
+          split at h
+          · rename_i hrecord
+            cases hquot : exactQuotient? target
+                (normalizeFactorSign (ZPoly.primitivePart
+                  (ZPoly.dilate coreLc (centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
+            | none =>
+                simp only [hquot] at h
+                exact scaledRecombinationSmartCandLoop_primitive _ _ _ _ _ _ _ _ h
+            | some quotient =>
+                simp only [hquot] at h
+                cases haux : scaledRecombinationSmartAux coreLc quotient modulus split.2
+                    (budget - 1) fuel' with
+                | mk ores ob =>
+                    cases ores with
+                    | none =>
+                        simp only [haux] at h
+                        exact scaledRecombinationSmartCandLoop_primitive _ _ _ _ _ _ _ _ h
+                    | some sub =>
+                        simp only [haux] at h
+                        simp only [Prod.mk.injEq, Option.some.injEq] at h
+                        obtain ⟨hfac, _⟩ := h; subst hfac
+                        intro g hg
+                        rcases List.mem_cons.mp hg with hg_eq | hg_sub
+                        · subst hg_eq
+                          have hcand_ne :
+                              normalizeFactorSign (ZPoly.primitivePart
+                                  (ZPoly.dilate coreLc
+                                    (centeredLiftPoly
+                                      (Array.polyProduct split.1.toArray) modulus))) ≠ 0 := by
+                            unfold shouldRecordPolynomialFactor at hrecord
+                            simp at hrecord
+                            exact hrecord.1.1
+                          have hpp_ne :
+                              ZPoly.primitivePart
+                                  (ZPoly.dilate coreLc
+                                    (centeredLiftPoly
+                                      (Array.polyProduct split.1.toArray) modulus)) ≠ 0 := by
+                            intro hpp
+                            apply hcand_ne
+                            rw [hpp]
+                            unfold normalizeFactorSign
+                            rw [if_neg
+                              (by decide : ¬ DensePoly.leadingCoeff (0 : ZPoly) < 0)]
+                          have hcontent_ne :
+                              ZPoly.content
+                                  (ZPoly.dilate coreLc
+                                    (centeredLiftPoly
+                                      (Array.polyProduct split.1.toArray) modulus)) ≠ 0 := by
+                            intro hcontent
+                            apply hpp_ne
+                            show DensePoly.primitivePart _ = 0
+                            exact DensePoly.primitivePart_eq_zero_of_content_eq_zero _
+                              (by simpa [ZPoly.content] using hcontent)
+                          exact normalizeFactorSign_primitive _
+                            (ZPoly.primitivePart_primitive _ hcontent_ne)
+                        · exact scaledRecombinationSmartAux_primitive _ _ _ _ _ _ _ _ haux g hg_sub
+          · exact scaledRecombinationSmartCandLoop_primitive _ _ _ _ _ _ _ _ h
+        · -- prefilter rejected the subset: recurse on the rest
+          exact scaledRecombinationSmartCandLoop_primitive _ _ _ _ _ _ _ _ h
 termination_by fuel
 end
 
