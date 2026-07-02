@@ -23,17 +23,22 @@ Hensel seeds match the lift target; #8519) it has three arms:
    mod `p`, hence irreducible over `ℤ`.  **Proved unconditionally here** by
    reusing `squareFreeCore_irreducible_of_toMonicSmallModSingletonBranch`.
 
-2. `factorFastCoreWithBound … = some coreFactors` → those factors.  The CLD
-   recovery split `core`.  Irreducibility of the emitted factors is the BHKS
-   count-equality obligation, already isolated by
-   `factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count`; it is
-   threaded here as the `harm2_count` hypothesis.
+2. `latticeCoreWithBound … = some coreFactors` → those factors.  Via
+   `latticeCoreWithBound_some_spec` this is either a genuine CLD split (a
+   `factorFastCoreWithBound` success; irreducibility of the emitted factors is
+   the BHKS count-equality obligation, already isolated by
+   `factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count` and threaded
+   here as the `harm2_count` hypothesis), or the certificate-backed early stop
+   (#8395): `some #[core]` with a witness precision `k'` at/above the
+   column-adequacy floor whose partition is the single all-ones class,
+   discharged by the adequacy hypothesis at `k'`.
 
-3. `factorFastCoreWithBound = none` ∧ `bhksSingleAllOnesPartition core d = true`
+3. `latticeCoreWithBound = none` ∧ `bhksSingleAllOnesPartition core d = true`
    → `some #[core]`.  The single all-ones equivalence class of the CLD lattice
    at cap precision certifies that `core` lands on exactly the minimal subsets
    (`L = W`), i.e. `core` is irreducible.  This is the deep van Hoeij adequacy
-   theorem; it is threaded here as the `harm3_adequacy` hypothesis.
+   theorem; it is threaded here as the `harm3_adequacy` hypothesis (quantified
+   over the certification precision, so it also covers arm 2's early stop).
 
 The reduction below discharges arm 1 and reduces the whole tier to the two BHKS
 obligations, mirroring the fast-path `_of_count` convention and the classical
@@ -53,25 +58,34 @@ van Hoeij CLD lattice tier `Hex.latticeCoreFactorsWithBound` returns for the
 square-free core of `normalizeForFactor f` is irreducible, given the two BHKS
 obligations as hypotheses.
 
-The three arms of `latticeCoreFactorsWithBound` are discharged as follows:
+The arms of `latticeCoreFactorsWithBound` are discharged as follows:
 
 * the small-mod singleton arm (`factorsModP.size ≤ 1`, output `#[core]`) is
   proved unconditionally from `squareFreeCore_irreducible_of_toMonicSmallModSingletonBranch`;
-* the CLD-split arm (`factorFastCoreWithBound = some coreFactors`) is discharged
-  from the count-equality hypothesis `harm2_count` via
-  `factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count`;
-* the all-ones certification arm (`bhksSingleAllOnesPartition = true`, output
-  `#[core]`) is discharged from the adequacy hypothesis `harm3_adequacy`.
+* the loop-answer arm (`latticeCoreWithBound = some coreFactors`) splits via
+  `latticeCoreWithBound_some_spec` into the CLD-split case (a genuine
+  `factorFastCoreWithBound` success, discharged from the count-equality
+  hypothesis `harm2_count` via
+  `factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count`) and the
+  certificate-backed early stop (#8395: output `#[core]` with a witness
+  precision `k'` clearing the column-adequacy floor, discharged from the
+  adequacy hypothesis `harm3_adequacy` at `k'`);
+* the cap all-ones certification arm (`bhksSingleAllOnesPartition = true` at
+  `B`, output `#[core]`) is discharged from `harm3_adequacy` at `B`.
 
 `harm2_count` and `harm3_adequacy` are exactly the remaining deep BHKS content
 (the "lattice lands on minimal subsets" argument); every other side condition is
-discharged from `toMonicPrimeData?` and the square-free-core facts.
+discharged from `toMonicPrimeData?` and the square-free-core facts.  The
+adequacy hypothesis is quantified over the certification precision `B'` because
+the early stop certifies at the first adequate schedule point, not at the cap.
 -/
 theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bhks
     (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
       = some primeData)
     (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
+    (hB_floor : Hex.fastCoreFloor (Hex.normalizeForFactor f).squareFreeCore ≤ B)
+    (hB_ne : B ≠ 0)
     {cf : Array Hex.ZPoly}
     (hlattice : Hex.latticeCoreFactorsWithBound
       (Hex.normalizeForFactor f).squareFreeCore B primeData = some cf)
@@ -82,9 +96,10 @@ theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bh
       (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length =
         (UniqueFactorizationMonoid.normalizedFactors
           (HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore)).card)
-    (harm3_adequacy :
+    (harm3_adequacy : ∀ B' : Nat,
+      Hex.fastCoreFloor (Hex.normalizeForFactor f).squareFreeCore ≤ B' → B' ≠ 0 →
       Hex.bhksSingleAllOnesPartition (Hex.normalizeForFactor f).squareFreeCore
-          (Hex.ZPoly.toMonicLiftData (Hex.normalizeForFactor f).squareFreeCore B primeData)
+          (Hex.ZPoly.toMonicLiftData (Hex.normalizeForFactor f).squareFreeCore B' primeData)
           = true →
       Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore) :
     ∀ g ∈ cf.toList, Hex.ZPoly.Irreducible g := by
@@ -106,20 +121,29 @@ theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bh
     exact fun g hg => hsingleton g hg
       (squareFreeCore_irreducible_of_toMonicSmallModSingletonBranch f hf_ne primeData
         (Nat.pos_of_ne_zero hdeg_ne) hselected hsmall)
-  · -- Arms 2/3: CLD recovery.
+  · -- Arms 2/3: CLD recovery loop (with the certificate-backed early stop).
     split at hlattice
-    · -- Arm 2: CLD split. Reduce to the count-equality obligation.
-      rename_i coreFactors hfast
+    · -- Arm 2: the loop answered. Either a genuine CLD split (count-equality
+      -- obligation) or the early irreducibility certificate at a witness
+      -- precision `k'` (adequacy obligation at `k'`).
+      rename_i coreFactors hloop
       obtain rfl := Option.some.inj hlattice
-      exact factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count
-        hcore_ne hfast (harm2_count coreFactors hfast)
-    · -- Arm 3: no split; all-ones certification.
-      rename_i hfast
+      rcases Hex.latticeCoreWithBound_some_spec hloop with
+        hfast | ⟨rfl, k', hk'_floor, hk'_bhks⟩
+      · exact factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count
+          hcore_ne hfast (harm2_count coreFactors hfast)
+      · have hk'_ne : k' ≠ 0 := by
+          have hpos := Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hcore_ne
+          have hfl := Hex.defaultFactorCoeffBound_le_fastCoreFloor core
+          omega
+        exact fun g hg => hsingleton g hg (harm3_adequacy k' hk'_floor hk'_ne hk'_bhks)
+    · -- Arm 3: loop declined to the cap; all-ones certification at `B`.
+      rename_i hloop
       split at hlattice
       · -- `bhksSingleAllOnesPartition = true`: output `#[core]`, core irreducible.
         rename_i hbhks
         obtain rfl := Option.some.inj hlattice
-        exact fun g hg => hsingleton g hg (harm3_adequacy hbhks)
+        exact fun g hg => hsingleton g hg (harm3_adequacy B hB_floor hB_ne hbhks)
       · -- `bhksSingleAllOnesPartition = false`: output `none`, contradiction.
         exact absurd hlattice.symm (Option.some_ne_none cf)
 
@@ -840,9 +864,11 @@ theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
       (Hex.normalizeForFactor f).squareFreeCore B primeData = some cf) :
     ∀ g ∈ cf.toList, Hex.ZPoly.Irreducible g :=
   latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bhks
-    f hf_ne B primeData hselected hdeg_ne hlattice
+    f hf_ne B primeData hselected hdeg_ne hB_floor hB_ne hlattice
     (latticeArm2_fastCore_count f hf_ne B primeData hselected hdeg_ne)
-    (latticeArm3_bhksSingleAllOnes_irreducible f hf_ne B primeData hselected hdeg_ne hB_floor hB_ne)
+    (fun B' hB'_floor hB'_ne hbhks =>
+      latticeArm3_bhksSingleAllOnes_irreducible f hf_ne B' primeData hselected hdeg_ne
+        hB'_floor hB'_ne hbhks)
 /-!
 ## Filling the capstone's lattice branch (#8417)
 
