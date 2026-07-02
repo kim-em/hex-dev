@@ -64,6 +64,17 @@ def build_families() -> dict[str, dict[int, list[int]]]:
         for i in range(m):
             prod = Poly(expand(prod.as_expr() * shift(sd4, i).as_expr()), x)
         blocks[m] = prod
+    for k, p in ladder.items():
+        assert p.degree() == 2 ** k, (k, p.degree())
+    for k, p in pair.items():
+        assert p.degree() == 2 ** (k + 1), (k, p.degree())
+    for m, p in blocks.items():
+        assert p.degree() == 16 * m, (m, p.degree())
+    # Constant-coefficient pins only: this catches input-family drift (wrong
+    # shift, wrong product, wrong SD index) but not a hypothetical sympy
+    # change to interior coefficients. The Lean `#guard`s pin the same
+    # constants against the same sympy expansion, so the two sides fail
+    # together if either drifts.
     for (fam, param), pin in PINS.items():
         p = {"pair": pair, "blocks": blocks}[fam][param]
         got = int(p.all_coeffs()[-1])

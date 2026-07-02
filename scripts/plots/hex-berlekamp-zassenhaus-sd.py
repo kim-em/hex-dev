@@ -78,11 +78,19 @@ FAMILIES = {
 
 
 def newest(pattern: str) -> Path:
-    """Newest committed export matching the pattern (lexicographic on name)."""
+    """The unique committed export matching the pattern.
+
+    Refuses to guess between sweeps: once exports from more than one commit
+    match, an explicit `--sha` is required.
+    """
     matches = sorted(RESULTS.glob(pattern))
     if not matches:
         raise SystemExit(f"no bench export matches {pattern} under {RESULTS}")
-    return matches[-1]
+    if len(matches) > 1:
+        names = ", ".join(m.name for m in matches)
+        raise SystemExit(
+            f"multiple exports match {pattern} ({names}); pass an explicit --sha")
+    return matches[0]
 
 
 def load_hex_curve(path: Path) -> dict[int, float]:
@@ -106,7 +114,13 @@ def load_isabelle_rungs(path: Path) -> dict[str, dict[int, float]]:
         m = ISABELLE_RUNG.search(result["function"])
         if not m:
             continue
-        median_s = max(result["median_nanos"] / 1e9 - baseline_s, 1e-9)
+        raw_s = result["median_nanos"] / 1e9
+        if raw_s <= baseline_s:
+            print(f"warning: {result['function']} is baseline-limited "
+                  f"({raw_s * 1e3:.3f} ms <= baseline {baseline_s * 1e3:.3f} ms); "
+                  "dropping the rung rather than plotting an artificial point")
+            continue
+        median_s = raw_s - baseline_s
         if m.group("ladder"):
             rungs["ladder"][int(m.group("ladder"))] = median_s
         elif m.group("pair"):
@@ -114,8 +128,11 @@ def load_isabelle_rungs(path: Path) -> dict[str, dict[int, float]]:
         elif m.group("blocks"):
             k = int(m.group("blocks"))
             rungs["blocks"][k] = median_s
-    # The pair rung k = 4 and the block rung m = 2 share the input
-    # SD_4(x)·SD_4(x+1); reuse the measurement on the blocks curve.
+    # Duplicated inputs across families: the block rung m = 1 is SD_4 itself,
+    # and the block rung m = 2 is the pair rung k = 4 (SD_4(x)·SD_4(x+1)).
+    # Reuse those measurements on the blocks curve.
+    if 4 in rungs["ladder"] and 1 not in rungs["blocks"]:
+        rungs["blocks"][1] = rungs["ladder"][4]
     if 4 in rungs["pair"] and 2 not in rungs["blocks"]:
         rungs["blocks"][2] = rungs["pair"][4]
     return rungs
@@ -143,15 +160,18 @@ def draw(family: str, spec: dict, hex_curve: dict[int, float],
             xs = sorted(curve)
             ax.plot(xs, [curve[x] for x in xs], label=label, **style)
     for param, note in missing.items():
-        ax.annotate(f"Isabelle {note}", xy=(param, ax.get_ylim()[1]),
-                    xytext=(param - 1.6, ax.get_ylim()[1] * 0.25),
-                    fontsize=8, color="#d62728",
-                    arrowprops=dict(arrowstyle="->", color="#d62728", lw=0.8))
+        # An off-scale comparator rung: mark it with a rising dotted red tail
+        # from the last measured rung instead of a point.
+        last = max(isabelle)
+        ax.plot([last, param], [isabelle[last], ax.get_ylim()[1] * 2],
+                color="#d62728", linestyle=":", lw=1.0, clip_on=True)
+        ax.text(param - 0.08, ax.get_ylim()[1] * 0.30, f"Isabelle {note}",
+                ha="right", va="top", fontsize=8, color="#d62728")
     if spec["crossover"]:
         param, note = spec["crossover"]
         ax.axvline(param - 0.5, color="#2ca02c", linestyle=":", lw=1.2)
-        ax.text(param - 0.45, min(hex_curve.values()) * 1.5, note,
-                fontsize=8, color="#2ca02c", va="bottom")
+        ax.text(param - 0.58, min(hex_curve.values()) * 1.5, note,
+                fontsize=8, color="#2ca02c", va="bottom", ha="right")
     ax.set_yscale("log")
     ax.set_xticks(sorted(hex_curve))
     ax.set_xlabel(spec["xlabel"])

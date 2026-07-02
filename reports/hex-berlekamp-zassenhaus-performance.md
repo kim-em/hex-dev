@@ -550,15 +550,18 @@ export; FLINT informational):
 | blocks m=3 | 48 | 3.360 s | 406.0 ms | 3.664 ms | lattice |
 | blocks m=4 | 64 | 14.02 s | 4.610 s | 8.091 ms | lattice |
 
-Multiset agreement: on all nine rungs shared with an Isabelle
-registration, the hex parametric `result_hash` equals the Isabelle
-rung's `observed_hash` (canonical order-insensitive factor-multiset
-checksum) — `0xfd5a821e013bc945` (SD3), `0x36f82522fa530950` (SD4),
-`0xd79637486bd0e8f1` (SD5), `0x91a910093667deb` (pair k=2),
-`0xe662c5d3f8bd82a4` (pair k=3), `0x28afc4e530363597` (pair k=4 =
-blocks m=2), `0x6c60e1792f37236e` (blocks m=3), `0xbfade8ca2e42228c`
-(blocks m=4). These recorded hashes are the per-rung regression
-signal for future sweeps.
+Multiset agreement: ten table rows have Isabelle coverage over eight
+distinct comparator inputs (two duplications across families:
+blocks m=1 is `SD_4` itself, and blocks m=2 is pair k=4,
+`SD_4(x)·SD_4(x+1)`). On every one of those rows the hex parametric
+`result_hash` equals the corresponding Isabelle rung's
+`observed_hash` (canonical order-insensitive factor-multiset
+checksum) — `0xfd5a821e013bc945` (SD3), `0x36f82522fa530950`
+(SD4 = blocks m=1), `0xd79637486bd0e8f1` (SD5), `0x91a910093667deb`
+(pair k=2), `0xe662c5d3f8bd82a4` (pair k=3), `0x28afc4e530363597`
+(pair k=4 = blocks m=2), `0x6c60e1792f37236e` (blocks m=3),
+`0xbfade8ca2e42228c` (blocks m=4). These recorded hashes are the
+per-rung regression signal for future sweeps.
 
 Trend narrative. On the classical-tier range the verified Isabelle
 extraction is a small constant factor ahead of hex once past its

@@ -133,6 +133,9 @@ namespace BerlekampZassenhausBench
 
 open Lean (Json)
 
+/-- Default for the ladder preps' loud out-of-range panics (`#[…][i]!`). -/
+local instance : Inhabited ZPoly := ⟨0⟩
+
 private instance benchBoundsThirtyOne : ZMod64.Bounds 31 := ⟨by decide, by decide⟩
 
 instance : Hashable ZPoly where
@@ -234,7 +237,7 @@ candidates, so classical declines at its level boundary and the CLD lattice
 tier answers. This is the family behind #8530/#8537.
 -/
 def advSwinnertonDyerPair (k : Nat) : ZPoly :=
-  let p := advSwinnertonDyerLadder.getD (k - 1) advSwinnertonDyerSD3
+  let p := advSwinnertonDyerLadder[k - 1]!
   p * shiftArg p 1
 
 -- Constant coefficients of the derived products, pinned against the sympy
@@ -558,11 +561,14 @@ def prepAdvSwinnertonDyerSD3 (_ : Nat) : ZPoly :=
 def prepAdvPhi15 (_ : Nat) : ZPoly :=
   advPhi15
 
-/-- Prep for the Swinnerton-Dyer ladder: parameter `k` selects `SD_k`. -/
+/-- Prep for the Swinnerton-Dyer ladder: parameter `k` selects `SD_k`.
+Panics (rather than silently substituting a rung) outside the registered
+`k = 1..5` schedule. -/
 def prepAdvSwinnertonDyerLadder (k : Nat) : ZPoly :=
-  advSwinnertonDyerLadder.getD (k - 1) advSwinnertonDyerSD3
+  advSwinnertonDyerLadder[k - 1]!
 
-/-- Prep for the pair ladder: parameter `k` selects `SD_k(x) · SD_k(x+1)`. -/
+/-- Prep for the pair ladder: parameter `k` selects `SD_k(x) · SD_k(x+1)`.
+Panics outside the registered `k = 1..5` schedule. -/
 def prepAdvSwinnertonDyerPair (k : Nat) : ZPoly :=
   advSwinnertonDyerPair k
 
