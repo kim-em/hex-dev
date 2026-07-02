@@ -80,6 +80,11 @@ HO-2 adversarial singletons (each pinned at `paramSchedule := #[0]`):
   for SD3 at the conformance prime, keeping the worst-case recombination
   shape visible without running the full integer factorization (which exceeds
   the `verify` budget).
+* `runFactorLatticeAdvSwinnertonDyerSD3Checksum`,
+  `runFactorLatticeAdvSwinnertonDyerSD4Checksum`: full `factorLattice` on SD3
+  and SD4 — the lattice tier's certificate-backed early stop (#8395) makes the
+  complete lattice factorization of these extreme-`r` irreducibles affordable
+  in `verify` (SD3 ~5ms, SD4 ~55ms vs >120s at the pre-#8395 cap grind).
 
 Gating external comparator:
 
@@ -180,6 +185,14 @@ def advQuadSqrt2Sqrt3 : ZPoly :=
 /-- HO-2 Swinnerton-Dyer `SD_3` input. -/
 def advSwinnertonDyerSD3 : ZPoly :=
   DensePoly.ofCoeffs #[576, 0, -960, 0, 352, 0, -40, 0, 1]
+
+/-- Swinnerton-Dyer `SD_4` input (minimal polynomial of `√2+√3+√5+√7`),
+degree 16: irreducible over `ℤ`, splits into 16 linear factors mod every
+prime. -/
+def advSwinnertonDyerSD4 : ZPoly :=
+  DensePoly.ofCoeffs
+    #[46225, 0, -5596840, 0, 13950764, 0, -7453176, 0, 1513334, 0, -141912, 0,
+      6476, 0, -136, 0, 1]
 
 /-- HO-2 cyclotomic `Phi_15` input. -/
 def advPhi15 : ZPoly :=
@@ -465,6 +478,30 @@ eight local linear factors.
 def runAdvSwinnertonDyerSD3ModularSplitChecksum (f : ZPoly) : UInt64 :=
   checksumOptionNatArray (modularFactorDegreesAt? f 71)
 
+/--
+Singleton benchmark target: CLD lattice tier (`factorLattice`) on
+Swinnerton-Dyer `SD_3`.  The certificate-backed early stop (#8395) certifies
+irreducibility at the first column-adequate precision instead of grinding the
+doubling schedule to the BHKS cap, which is what makes the full lattice-tier
+factorization affordable inside the `verify` budget (pre-#8395: ~1.8s; with
+the early stop: ~5ms).
+-/
+@[noinline]
+def runFactorLatticeAdvSwinnertonDyerSD3Checksum (f : ZPoly) : UInt64 :=
+  checksumOptionFactorization (factorLattice f)
+
+/--
+Singleton benchmark target: CLD lattice tier (`factorLattice`) on
+Swinnerton-Dyer `SD_4` (degree 16, 16-way modular split).  Pre-#8395 this
+input exceeded 120s (the doubling schedule ground to the conservative BHKS
+precision cap); the early-stop separation certificate terminates at the
+column-adequacy floor (~55ms), keeping the extreme-`r` tail visible in
+`verify`.
+-/
+@[noinline]
+def runFactorLatticeAdvSwinnertonDyerSD4Checksum (f : ZPoly) : UInt64 :=
+  checksumOptionFactorization (factorLattice f)
+
 /-- Constant prep returning the `X^4 + 1` adversarial fixture for the pinned singleton schedule. -/
 def prepAdvX4Plus1 (_ : Nat) : ZPoly :=
   advX4Plus1
@@ -476,6 +513,10 @@ def prepAdvQuadSqrt2Sqrt3 (_ : Nat) : ZPoly :=
 /-- Constant prep returning the Swinnerton-Dyer `SD_3` adversarial fixture. -/
 def prepAdvSwinnertonDyerSD3 (_ : Nat) : ZPoly :=
   advSwinnertonDyerSD3
+
+/-- Constant prep returning the Swinnerton-Dyer `SD_4` adversarial fixture. -/
+def prepAdvSwinnertonDyerSD4 (_ : Nat) : ZPoly :=
+  advSwinnertonDyerSD4
 
 /-- Constant prep returning the cyclotomic `Phi_15` adversarial fixture. -/
 def prepAdvPhi15 (_ : Nat) : ZPoly :=
@@ -1181,6 +1222,34 @@ setup_benchmark runAdvSwinnertonDyerSD3ModularSplitChecksum n => n + 1
     paramCeiling := 0
     paramSchedule := .custom #[0]
     maxSecondsPerCall := 4.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Singleton lattice-tier target: full `factorLattice` on Swinnerton-Dyer
+`SD_3`, certifying irreducibility via the early-stop separation certificate
+(#8395).  The constant `n + 1` model is the pinned singleton bound. -/
+setup_benchmark runFactorLatticeAdvSwinnertonDyerSD3Checksum n => n + 1
+  with prep := prepAdvSwinnertonDyerSD3
+  where {
+    paramFloor := 0
+    paramCeiling := 0
+    paramSchedule := .custom #[0]
+    maxSecondsPerCall := 4.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Singleton lattice-tier target: full `factorLattice` on Swinnerton-Dyer
+`SD_4` (degree 16), the extreme-`r` tail case that exceeded 120s before the
+#8395 early stop.  The constant `n + 1` model is the pinned singleton bound. -/
+setup_benchmark runFactorLatticeAdvSwinnertonDyerSD4Checksum n => n + 1
+  with prep := prepAdvSwinnertonDyerSD4
+  where {
+    paramFloor := 0
+    paramCeiling := 0
+    paramSchedule := .custom #[0]
+    maxSecondsPerCall := 6.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
