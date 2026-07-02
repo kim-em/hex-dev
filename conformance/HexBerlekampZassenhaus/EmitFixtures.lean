@@ -67,11 +67,14 @@ picks, and the size-ordered classical search would need ΣC(31,≤15) ≈
 level-aware budget (`levelAwareSubsetBudget 32 defaultSubsetBudget =
 206368`), so it provably declines and the hybrid falls through to the
 van Hoeij CLD lattice arm.  This case emits the *hybrid* trace
-(`factorHybridTraced`) rather than the classical one, so the committed
-baseline pins `tier = "lattice"` / `declined = true` /
-`subsetCandidates = 206368` as a merge requirement: a dispatch change,
+(`factorHybridTraced`) rather than the classical one, making the tier a
+merge requirement three ways: the emit helper itself errors unless the
+lattice tier answered, the committed-fixture byte-diff pins the exact
+trace (`tier = "lattice"`, `declined = true`, `prime = 29`, `r = 32`,
+`subsetCandidates = 206368`), and the `bz_trace_gate.py` baseline pins
+tier/decline and upper-bounds the candidate count.  A dispatch change,
 a lattice regression, or a precision-cap change that silently loses the
-tier fails `bz_trace_gate.py`.  There is deliberately no `#guard` twin
+tier fails the merge.  There is deliberately no `#guard` twin
 in `Conformance.lean` — elaboration-time interpretation of the lattice
 run would cost minutes of build time; the compiled emit executable
 covers it in seconds.
@@ -469,21 +472,30 @@ private def emitPinnedCase (c : PinnedCase) : IO Unit := do
   emitResult lib c.id "factor" (factorValue (factor f))
   emitClassicalResult c.id f
 
-/-- Emit one fixture through the *hybrid* traced path: a single
-`factorHybridTraced` run supplies the `factor` result (its `.1` is the public
-`factor`) **and** the trace, so the trace gate pins the tier `factor` actually
-used (for `adv/swinnerton_dyer_sd5_pair`: `"lattice"`).  The `classicalFactor`
-record is derived from the same run — when the classical tier declined
-(`trace.declined`) it is `null` (an oracle skip, matching what a separate
-`factorClassicalTraced` run would return), and otherwise the hybrid answer *is*
-the certified classical answer.  This avoids paying the classical decline burn
-twice per emission. -/
+/-- Emit one lattice-sentinel fixture through the *hybrid* traced path: a
+single `factorHybridTraced` run supplies the `factor` result (its `.1` is the
+public `factor`) **and** the trace, so the committed trace pins the tier
+`factor` actually used.  The helper is sentinel-only: it errors out unless the
+classical tier declined and the lattice tier answered, which is the case's
+whole point — a case that stops routing to the lattice arm must not emit
+quietly.  (The merge still fails either way: a tier change also breaks the
+committed-fixture byte-diff and the `bz_trace_gate.py` baseline.)  Since the
+lattice tier answered, the classical tier returned `none`, so
+`classicalFactor` is `null` (an oracle skip) without paying the classical
+decline burn a second time.  The exact `prime` / `r` / `subsetCandidates`
+values are pinned by the committed-fixture byte-diff in
+`scripts/ci/run_oracles.sh`; the trace-gate baseline additionally pins
+tier/decline and upper-bounds `subsetCandidates`. -/
 private def emitHybridTracedCase (c : PinnedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
-  emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
   let (φ, trace) := factorHybridTraced f
+  unless trace.tier == "lattice" && trace.declined do
+    throw <| IO.userError
+      s!"emitHybridTracedCase {c.id}: expected the classical tier to decline and \
+        the lattice tier to answer, got tier={trace.tier}, declined={trace.declined}"
+  emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
   emitResult lib c.id "factor" (factorValue φ)
-  emitResult lib c.id "classicalFactor" (if trace.declined then "null" else factorValue φ)
+  emitResult lib c.id "classicalFactor" "null"
   emitResult lib c.id "trace" (traceValue trace)
 
 private def emitPinnedExpectedCase (c : PinnedExpectedCase) : IO Unit := do
