@@ -710,7 +710,7 @@ theorem two_mul_natAbs_sum_psiCut_period_le
 /-- The executable Pascal-recursion `Hex.Nat.choose` agrees with Mathlib's
 `Nat.choose`; needed because `Hex.bhksCoeffBound` elaborates `Nat.choose` to the
 executable shadow inside `namespace Hex`. -/
-private theorem hex_choose_eq (n k : Nat) : Hex.Nat.choose n k = Nat.choose n k := by
+theorem hex_choose_eq (n k : Nat) : Hex.Nat.choose n k = Nat.choose n k := by
   induction n generalizing k with
   | zero => cases k <;> simp
   | succ n ih => cases k with
