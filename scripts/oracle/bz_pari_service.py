@@ -18,7 +18,12 @@ import cypari2
 
 from factor_service_common import serve
 
-_pari = cypari2.Pari()
+# PARI's default 8 MB stack overflows on the largest corpus instances (e.g. the
+# degree-630 hoeij_F630, which factors in under a second with more headroom).
+# Start at 64 MiB and let PARI grow the stack lazily up to a 2 GiB ceiling, so
+# the comparison measures PARI's factoring, not an artificial memory limit. A
+# genuine over-cutoff instance is still killed by the orchestrator as a timeout.
+_pari = cypari2.Pari(size=1 << 26, sizemax=1 << 31)
 
 
 def factor_fn(coeffs):

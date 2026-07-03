@@ -151,11 +151,16 @@ alongside these under `reports/figures/`.
 | hex-classical-nodecline | 180 | 25 | 0 | 40.7 |
 | flint | 204 | 1 | 0 | 27.0 |
 | ntl | 204 | 1 | 0 | 12.5 |
+| pari&nbsp;† | 204 | 1 | 0 | 29.5 |
 | isabelle-bz | 184 | 21 | 0 | 18.0 |
 | isabelle-lll | 142 | 63 | 0 | 16.8 |
 
-The C-implementation ceiling (FLINT, NTL) solves 204/205, missing only
-`hoeij_S9` (Swinnerton-Dyer SD₉, degree 512) at the 10 s cutoff.
+† PARI/GP is measured in the companion record below (same corpus SHA and
+10 s cutoff); the plotter merges it into every chart newest-per-system,
+so its row sits in this table while its curve is added to every plot.
+
+The C-implementation ceiling (FLINT, NTL, PARI) solves 204/205, missing
+only `hoeij_S9` (Swinnerton-Dyer SD₉, degree 512) at the 10 s cutoff.
 
 **The verified-vs-verified headline is the point of the two Isabelle curves.**
 On the corpus as a whole the counts are close (hex-factor 180, isabelle-bz 184,
@@ -164,10 +169,10 @@ low-degree instances where exponential recombination is cheap. The interesting
 signal is where the reconstruction actually matters — the lattice-stress
 families, by maximum degree solved:
 
-| family | hex-lattice | isabelle-bz | isabelle-lll | flint |
-| --- | ---: | ---: | ---: | ---: |
-| swinnerton-dyer | **64** | 32 | 16 | 128 |
-| sd-products | **56** | 42 | 16 | 128 |
+| family | hex-lattice | isabelle-bz | isabelle-lll | flint | pari |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| swinnerton-dyer | **64** | 32 | 16 | 128 | 128 |
+| sd-products | **56** | 42 | 16 | 128 | 128 |
 
 On Swinnerton-Dyer, hex's van Hoeij CLD lattice tier reaches degree 64 —
 double the reach of verified exponential BZ (32) and four times that of verified
@@ -184,48 +189,109 @@ The `hex-classical-nodecline` curve runs the classical recombination to
 completion or cutoff with the level-aware early decline disabled, so its 25
 timeouts are the classical exponential wall made visible on the same charts (it
 never declines — 0 declined — it either completes correctly or times out).
-`hex-fast` (the proof-facing path) is the weakest hex tier here. PARI/GP is added
-by re-running with `--systems ...,pari` once `cypari2` is installed. Longer-cutoff
-(60 s / 300 s) sweeps record alongside this one, each carrying its own cutoff;
-the entire hoeij-zimmermann literature set (degrees ≥ 128) is unsolved by every
-system except FLINT at 10 s and is the natural target for those.
+`hex-fast` (the proof-facing path) is the weakest hex tier here. PARI/GP now has
+a curve on every chart (companion record below): it sits with FLINT and NTL at
+the C-implementation ceiling — 204/205 overall, reaching Swinnerton-Dyer and
+sd-products degree 128 (double hex-lattice's 64, and far past both verified
+Isabelle systems), and solving 9/10 of the hoeij-zimmermann literature set.
+Longer-cutoff (60 s / 300 s) sweeps record alongside this one, each carrying its
+own cutoff; the sole instance no system solves at 10 s is `hoeij_S9` (degree 512),
+and the hardest hoeij-zimmermann entries fall only to the three C libraries
+(FLINT, NTL, PARI) — the natural target for those longer sweeps.
+
+### carica, 10 s cutoff — PARI/GP addition (2026-07-03)
+
+- **Artifact:** `reports/bench-results/hexbz-factor-sweep-07b6363e-carica.json`
+  SHA-256 `b56a7748d0816432d6e15c5c47d1ae252ddfcbebce2893f7672d73ab06b9eb20`
+- **Command:**
+  `python3 scripts/bench/factor_sweep.py --systems pari --cutoff 10 --skip-unavailable`
+- **Corpus:** `bench/corpus/hexbz-factor-corpus.jsonl`
+  SHA-256 `02155334449b001b6cf86a3859e7f4fae5a812a2c6810935bebb73163d76e830` (205 instances) —
+  identical to the baseline, so the two records merge cleanly.
+- **Version:** PARI/GP 2.17.3 (via `cypari2` 2.2.4). The driver runs PARI with a
+  64 MiB→2 GiB auto-growing stack (`cypari2.Pari(size, sizemax)`) rather than the
+  8 MB default, which otherwise reports a stack-overflow error on the largest
+  instances (e.g. `hoeij_F630`, degree 630) instead of factoring; the 10 s
+  harness cutoff is unchanged.
+- **Env:** host carica, commit `07b6363e` (clean), arm64, 24 cores,
+  2026-07-03T06:31:46Z.
+- **Result:** 204/205 solved, one timeout (`hoeij_S9`, degree 512, ~15 s),
+  29.5 µs per-call overhead. Correctness evidence: PARI's factor-degree
+  multisets match `expectedFactorDegrees` on all 197 solved labelled instances
+  (the record's own cross-check, green). The seven solved instances without a
+  label are all hoeij-zimmermann literature polynomials; committed records
+  retain only factor counts (the degree multisets are dropped on serialization),
+  and PARI's factor counts agree with hex, FLINT, NTL and both verified Isabelle
+  systems on every one of the 1387 co-solved (system, instance) pairs carried in
+  the baseline. PARI is thus validated against the same `expectedFactorDegrees`
+  oracle as every other system, with factor-count corroboration where labels are
+  absent.
+
+**Only PARI was re-run.** The plotter takes the newest measurement of each
+system, guarded by a matching corpus SHA, so this record contributes PARI's
+curve to every chart while the other eight systems' curves carry over unchanged
+from the baseline record above. The expensive external comparators (FLINT, NTL,
+and especially the two Isabelle systems, whose setup rebuilds AFP session heaps)
+were **not** re-run — adding one comparator never requires re-measuring the
+others. See [Reproducing](#reproducing).
 
 ## Reproducing
+
+> **Run only the systems that changed — never the whole board.** The plotter
+> merges records **newest-per-system** (guarded by a matching corpus SHA), so
+> every chart is assembled from whichever record measured each system most
+> recently. To add a new comparator or refresh one that changed, run
+> `--systems <that-one>` and commit the small record next to the baseline; its
+> curve slots into every chart and the other systems carry over untouched. Do
+> **not** re-run the expensive external comparators to "add" one — re-running
+> FLINT/NTL/PARI wastes an afternoon and the two Isabelle setups rebuild AFP
+> session heaps (many minutes each) for no benefit. Full-board runs are for the
+> first-ever record on a host or a corpus change, not for incremental additions.
 
 ```
 # Regenerate the corpus (byte-identical) and confirm:
 python3 scripts/bench/gen_factor_corpus.py
 python3 scripts/bench/gen_factor_corpus.py --check
 
-# Run a sweep (all locally available systems), 10 s cutoff:
+# First-ever record on a host (or after a corpus change): run every available
+# system at the 10 s cutoff. This is the ONLY time you run the whole board.
 python3 scripts/bench/factor_sweep.py --cutoff 10 --skip-unavailable
 
 # Regenerate the charts (default: merge every committed record, newest-per-system):
 python3 scripts/plots/hexbz-cactus.py
 ```
 
-### Re-running only the Lean entries as they evolve
+### Adding or refreshing one system — the common case
 
 Each sweep writes a permanent, timestamped record naming every system and its
-version. The external comparators (FLINT, NTL, PARI, both Isabelle systems) are
-expensive to run and change rarely, so they do not need re-running when only hex
-changes. The workflow:
+version. Because the merge is newest-per-system, adding a comparator (e.g.
+bringing PARI onto the charts once `cypari2` is installed) or re-measuring the
+hex entries after a factor-path change is a **single-system** run against the
+same corpus at the same cutoff — the other curves come from the committed
+baseline automatically:
 
 ```
-# Re-measure just the hex entries against the same corpus, at the same cutoff:
+# Add one external comparator (PARI/GP shown; same shape for any single system):
+python3 scripts/bench/factor_sweep.py --systems pari --cutoff 10 --skip-unavailable
+
+# Re-measure just the hex entries as they evolve:
 python3 scripts/bench/factor_sweep.py \
     --systems hex-factor,hex-lattice,hex-fast,hex-classical-nodecline \
     --cutoff 10 --skip-unavailable
 
-# Regenerate charts: the fresh hex record wins for the hex curves, and each
-# external curve is carried over from the committed baseline it was last
-# measured in (newest measurement per system, guarded by a matching corpus SHA):
+# Regenerate charts: the fresh record wins for the systems it measured, and every
+# other curve carries over from the committed baseline it was last measured in
+# (newest measurement per system, guarded by a matching corpus SHA):
 python3 scripts/plots/hexbz-cactus.py
 ```
 
-The plotter prints a per-system provenance line (record timestamp and cutoff) so
-a mixed-time chart is honest about which curves are fresh; merging records over
-different corpora is refused. Keep the cutoff identical across the records you
-merge, or the solved-counts are not comparable (the subtitle flags a mixed
-cutoff). Commit the fresh hex record alongside the baseline; both coexist under
+A single-system record still cross-checks that system's factor-degree multisets
+against `expectedFactorDegrees` (present on 198/205 instances), which is the same
+oracle every other system was validated against — so a green single-system run is
+the differential-correctness check for the system you added, without re-running
+the rest. The plotter prints a per-system provenance line (record timestamp and
+cutoff) so a mixed-time chart is honest about which curves are fresh; merging
+records over different corpora is refused. Keep the cutoff identical across the
+records you merge, or the solved-counts are not comparable (the subtitle flags a
+mixed cutoff). Commit the fresh record alongside the baseline; both coexist under
 `reports/bench-results/`.

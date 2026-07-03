@@ -82,10 +82,28 @@ def _hex_service_argv(entry: str):
     return resolve
 
 
-def _python_service_argv(script: str):
+def _python_service_argv(script: str, probe: "str | None" = None):
+    """Resolve a Python service, or None if it cannot run in this environment.
+
+    ``probe`` names a module the service imports (e.g. ``cypari2``); it is
+    import-checked in a subprocess so a missing third-party dependency makes the
+    system cleanly *unavailable* (skipped under ``--skip-unavailable``) rather
+    than spawning a process that dies on import and records only errors -- which
+    would leave the cross-check vacuously green for a system that never answered.
+    """
     def resolve():
         path = ORACLE / script
-        return [sys.executable, str(path)] if path.exists() else None
+        if not path.exists():
+            return None
+        if probe is not None:
+            try:
+                r = subprocess.run([sys.executable, "-c", f"import {probe}"],
+                                   capture_output=True, timeout=60)
+            except Exception:
+                return None
+            if r.returncode != 0:
+                return None
+        return [sys.executable, str(path)]
     return resolve
 
 
@@ -120,14 +138,24 @@ def _flint_version() -> str:
         return "unknown"
 
 
+def _pari_version() -> str:
+    try:
+        import cypari2
+        from importlib.metadata import version
+        major, minor, patch = cypari2.Pari().version()
+        return f"PARI/GP {major}.{minor}.{patch} (cypari2 {version('cypari2')})"
+    except Exception:
+        return "unknown"
+
+
 SYSTEMS = {
     "hex-factor": SystemSpec("hex-factor", _hex_service_argv("factor"), _lean_toolchain),
     "hex-lattice": SystemSpec("hex-lattice", _hex_service_argv("factorLattice"), _lean_toolchain),
     "hex-fast": SystemSpec("hex-fast", _hex_service_argv("factorFast"), _lean_toolchain),
     "hex-classical-nodecline": SystemSpec(
         "hex-classical-nodecline", _hex_service_argv("factorClassicalNoDecline"), _lean_toolchain),
-    "flint": SystemSpec("flint", _python_service_argv("bz_flint_service.py"), _flint_version),
-    "pari": SystemSpec("pari", _python_service_argv("bz_pari_service.py"), lambda: "cypari2"),
+    "flint": SystemSpec("flint", _python_service_argv("bz_flint_service.py", "flint"), _flint_version),
+    "pari": SystemSpec("pari", _python_service_argv("bz_pari_service.py", "cypari2"), _pari_version),
     "ntl": SystemSpec("ntl", _setup_script_argv("setup_bz_ntl_driver.sh"), lambda: "NTL ZZXFactoring"),
     "isabelle-bz": SystemSpec(
         "isabelle-bz", _setup_script_argv("setup_bz_isabelle.sh"),
