@@ -33,36 +33,45 @@ namespace HexBerlekampZassenhausMathlib.IrreducibleCert
 
 open Lean Meta
 
-private unsafe def evalZPolyUnsafe (e : Expr) : MetaM (Option Hex.ZPoly) :=
-  return some (← evalExpr Hex.ZPoly (mkConst ``Hex.ZPoly) e)
+private unsafe def evalZPolyUnsafe (e : Expr) :
+    MetaM (Except String Hex.ZPoly) :=
+  try
+    return .ok (← evalExpr Hex.ZPoly (mkConst ``Hex.ZPoly) e)
+  catch ex =>
+    return .error (← ex.toMessageData.toString)
 
 @[implemented_by evalZPolyUnsafe]
-private opaque evalZPolyOpt (e : Expr) : MetaM (Option Hex.ZPoly)
+private opaque evalZPolyCore (e : Expr) : MetaM (Except String Hex.ZPoly)
 
 /-- Evaluate a closed `Hex.ZPoly` expression to its runtime value at
 elaboration time (compiled/interpreted evaluation, not kernel reduction). -/
 def evalZPoly (e : Expr) : MetaM Hex.ZPoly := do
-  let some f ← evalZPolyOpt e
-    | throwError "irreducible_cert: failed to evaluate the polynomial\
-        {indentExpr e}"
-  return f
+  match ← evalZPolyCore e with
+  | .ok f => return f
+  | .error msg =>
+      throwError "irreducible_cert: failed to evaluate the polynomial\
+          {indentExpr e}\n{msg}"
 
 private unsafe def evalCertificateUnsafe (e : Expr) :
-    MetaM (Option Hex.ZPolyIrreducibilityCertificate) :=
-  return some (← evalExpr Hex.ZPolyIrreducibilityCertificate
-    (mkConst ``Hex.ZPolyIrreducibilityCertificate) e)
+    MetaM (Except String Hex.ZPolyIrreducibilityCertificate) :=
+  try
+    return .ok (← evalExpr Hex.ZPolyIrreducibilityCertificate
+      (mkConst ``Hex.ZPolyIrreducibilityCertificate) e)
+  catch ex =>
+    return .error (← ex.toMessageData.toString)
 
 @[implemented_by evalCertificateUnsafe]
-private opaque evalCertificateOpt (e : Expr) :
-    MetaM (Option Hex.ZPolyIrreducibilityCertificate)
+private opaque evalCertificateCore (e : Expr) :
+    MetaM (Except String Hex.ZPolyIrreducibilityCertificate)
 
 /-- Evaluate a closed `Hex.ZPolyIrreducibilityCertificate` expression to its
 runtime value at elaboration time. Used by the reification round-trip tests. -/
 def evalCertificate (e : Expr) : MetaM Hex.ZPolyIrreducibilityCertificate := do
-  let some cert ← evalCertificateOpt e
-    | throwError "irreducible_cert: failed to evaluate the certificate\
-        {indentExpr e}"
-  return cert
+  match ← evalCertificateCore e with
+  | .ok cert => return cert
+  | .error msg =>
+      throwError "irreducible_cert: failed to evaluate the certificate\
+          {indentExpr e}\n{msg}"
 
 /--
 Match a goal of the form `Irreducible (HexPolyZMathlib.toPolynomial f)`
@@ -125,7 +134,9 @@ elab "irreducible_cert" : tactic => do
       fE certE CertReify.reflTrue CertReify.reflTrue CertReify.reflTrue
       CertReify.reflTrue
     unless ← isDefEq (← inferType proof) tgt do
-      throwError "irreducible_cert: internal error: proof type mismatch"
+      throwError "irreducible_cert: the certified statement\
+          {indentExpr (← inferType proof)}\
+          \nis not definitionally equal to the goal{indentExpr tgt}"
     goal.assign proof
   Elab.Tactic.replaceMainGoal []
 

@@ -35,9 +35,9 @@ def linearThree : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[3, 1]
 obstructs every proper factor degree at once. -/
 def cubicInert : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[-1, -1, 0, 1]
 
-/-- Reify the generated certificate, typecheck it, evaluate it back, and
-compare with the original; also confirm the evaluated copy still passes the
-kernel checker's compiled form. -/
+/-- Reify the generated certificate (and the polynomial itself), typecheck
+them, evaluate them back, and compare with the originals; also confirm the
+evaluated copy still passes the kernel checker's compiled form. -/
 private def roundTrips (f : Hex.ZPoly) : MetaM Bool := do
   match Hex.certifyIrreducible? f with
   | none => return false
@@ -45,8 +45,12 @@ private def roundTrips (f : Hex.ZPoly) : MetaM Bool := do
       let certE := CertReify.reifyCertificate cert
       Meta.check certE
       let cert' ← IrreducibleCert.evalCertificate certE
+      let fE ← CertReify.reifyZPoly f
+      Meta.check fE
+      let f' ← IrreducibleCert.evalZPoly fE
       return CertReify.certificateData cert == CertReify.certificateData cert'
-        && Hex.checkIrreducibleCertLinear f cert'
+        && f.toArray == f'.toArray
+        && Hex.checkIrreducibleCertLinear f' cert'
 
 run_meta do
   for (name, f) in [("quadTwo", quadTwo), ("quadOmega", quadOmega),
