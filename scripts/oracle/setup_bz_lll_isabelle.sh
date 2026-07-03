@@ -145,7 +145,11 @@ isabelle build "${afp_build_args[@]}" -o browser_info=false -o document=false \
   -b LLL_Factorization >/dev/null
 
 if [[ ! -f "${code_dir}/Hex_LLL.hs" ]]; then
-  isabelle build "${afp_build_args[@]}" -D "${build_dir}" \
+  # `-c` forces a clean rebuild of the export session: `export_code` only writes
+  # `code/` files while the theory actually builds, so a cached session (after a
+  # template change deleted `code_dir`) would otherwise be skipped and emit
+  # nothing.
+  isabelle build "${afp_build_args[@]}" -c -D "${build_dir}" \
     -o browser_info=false -o document=false Hex_LLL_Factor_Export >/dev/null
 fi
 
