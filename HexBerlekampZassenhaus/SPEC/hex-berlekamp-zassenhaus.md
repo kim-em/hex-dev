@@ -953,3 +953,25 @@ depend on this certifying capability rather than on kernel-evaluating
 Implementation tracked in
 https://github.com/kim-em/hex-dev/issues/8552; this section is the
 requirement that decision must satisfy.
+
+**Mod-`p` irreducibility (the Berlekamp layer).** The same discipline
+applies one level down, over `F_p`, but the mod-`p` case has a computable
+*complete* decision the `ℤ` case lacks: `Berlekamp.rabinTest`, with
+`rabinTest f hmonic = true ↔ Irreducible (toMathlibPolynomial f)`. So:
+
+- Mod-`p` irreducibility MUST be decided by a **computable** procedure
+  backed by `rabinTest` — never by the classical/noncomputable
+  `Classical.decPred` (which does not reduce in the kernel at all) and
+  never by kernel-running full Berlekamp factorization. A computable
+  `Decidable` instance (via `rabinTest` on the monic normalization, with
+  the degree/unit cases handled) is required so `decide +kernel` works
+  over `F_p`.
+- `rabinTest` itself *computes* the Frobenius power chain `x^(p^i) mod f`
+  in the kernel, so it too has a frontier (empirically ~degree 20). Up to
+  that degree, kernel-computing `rabinTest` is the acceptable decision;
+  beyond it, the certifying discipline above applies unchanged — verify a
+  precomputed `Berlekamp.IrreducibilityCertificate` (`checkIrreducibilityCertificate`,
+  soundness `= true → Irreducible`) rather than recompute the chain. These
+  mod-`p` certificates are exactly the `factorCerts` inside a
+  `ZPolyIrreducibilityCertificate`'s `PrimeFactorData`, so the mod-`p`
+  certifying path is the per-factor sub-component of the `ℤ` one.
