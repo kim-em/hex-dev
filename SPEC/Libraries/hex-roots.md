@@ -1,46 +1,97 @@
 # hex-roots (complex root isolation, depends on hex-poly-z)
 
 Certified isolation of complex roots of integer-coefficient
-polynomials. A "root isolation" is a Gaussian-dyadic centre and a
-dyadic-power-of-two radius together with a witness, dischargeable by
-`cbv_decide`, that the disc contains exactly one simple root (atom) or
-exactly `k` roots with multiplicity (cluster). Refinement combines
+polynomials. A root isolation is a square in the complex plane with
+Gaussian-dyadic centre and power-of-two half-width, together with a
+witness, dischargeable by `decide`, that the square's circumscribed
+disc contains exactly one simple root (an *atom*) or exactly `k` roots
+counted with multiplicity (a *cluster*). Refinement combines
 speculative Newton iteration (using `Dyadic.invAtPrec` from the Lean
-standard library) with subdivision-and-component-gluing as the
-bootstrap phase, following the hybrid algorithm of Becker–Sagraloff–
-Sharma–Yap, *J. Symbolic Computation* 86 (2018) 51–96 (arXiv:1509.06231;
-"BSSY" hereafter).
+standard library) with subdivision and component gluing as the
+fallback, following the hybrid algorithm of Becker, Sagraloff, Sharma,
+and Yap, *J. Symbolic Computation* 86 (2018) 51-96 (arXiv:1509.06231;
+"BSSY" below).
 
-## Witness arithmetic is exact
+## Exact witness arithmetic
 
-A `ZPoly` evaluated at a Gaussian-dyadic point `(a + b·i)` yields
-Taylor coefficients
+A `ZPoly` evaluated at a Gaussian-dyadic point `a + b·i` yields Taylor
+coefficients
 
 ```
 cₖ = Σ_{j ≥ k} binomial(j,k) · aⱼ · (a + b·i)^{j−k}
 ```
 
-each term an integer times a Gaussian-dyadic power, hence
-`cₖ ∈ Dyadic[i]` *exactly*. `|cₖ|² = (Re cₖ)² + (Im cₖ)²` is then an
-exact dyadic. Every witness in this library is a strict comparison
-between two exact dyadics — `Decidable` with no error budget. The
-Newton step itself uses `Dyadic.invAtPrec` and is approximate, but the
-witness re-check after Newton uses the new exact dyadic centre and is
-again exact. This eliminates an entire category of "interval
-arithmetic" infrastructure that one might naïvely expect.
+each term an integer times a Gaussian-dyadic power, so
+`cₖ ∈ Dyadic[i]` *exactly*.
 
-## Geometry: dyadic squares, circumscribed discs, squared radii
+The Pellet inequalities compare absolute values `|cₖ|` against sums of
+absolute values, and `|cₖ|` is irrational in general. The witnesses
+therefore replace each absolute value by an exact dyadic bound on the
+correct side:
 
-Subdivision works on dyadic squares (4-way clean partition); Pellet
-tests live on the **circumscribed disc** of each square. For a square
-of half-width `r = 2^{-prec}`, the circumscribed disc has radius `r·√2`.
-To keep all arithmetic dyadic, **every appearance of a radius in a
-witness is replaced by the squared form**. The `T_k`-inequality
-becomes `|cₖ|² · (r²·2)^k > S²` rather than `|cₖ|·(r·√2)^k > S`. The
-strong-witness `2·`-radius and `4·`-radius checks become `8r²` and
-`32r²` respectively. A single named lemma
-`circumscribed_radius_squared : (r·√2)² = 2·r²` is checked once;
-afterwards no `√2` appears.
+- lower bound `lo(c) := max(|Re c|, |Im c|)`, with
+  `lo(c) ≤ |c| ≤ √2 · lo(c)`;
+- upper bound `hi(c) := |Re c| + |Im c|`, with
+  `|c| ≤ hi(c) ≤ √2 · |c|`;
+- the factor `√2` in disc radii (below) is bounded by the dyadic
+  rationals `181/128 < √2 < 1449/1024`, each within `10⁻³` of `√2`.
+
+Every witness in this library is a strict comparison between two exact
+dyadics: `Decidable`, with no error budget and no interval-arithmetic
+infrastructure. The bounds cost slack: a witness holds only when the
+true Pellet inequality holds with a factor-2 margin (each side loses
+at most `√2`, plus the negligible slack from the rational `√2`
+bounds). Soundness is unaffected, since a witness implies the true
+inequality. The slack only tightens the isolation ratio a disc must
+reach before the witness fires, and it is carried through the
+completeness analysis in the Mathlib companion. The Newton step itself
+uses the approximate `Dyadic.invAtPrec`, but the witness re-check
+after Newton uses the new exact dyadic centre and is again exact.
+
+## Geometry: dyadic squares and circumscribed discs
+
+Subdivision works on dyadic squares (they partition cleanly 4-ways);
+Pellet tests run on the **circumscribed disc** of a square. For a
+square of half-width `2^{−prec}` the circumscribed disc has radius
+`2^{−prec} · √2`. In witnesses that radius appears only through its
+dyadic bounds `2^{−prec} · 181/128` and `2^{−prec} · 1449/1024`.
+
+`prec` is an `Int`, not a `Nat`: the initial square from the Cauchy
+bound has half-width `2^{−prec}` with `prec` negative whenever the
+root bound exceeds 1.
+
+Distances between centres are compared through their squares, which
+are exact dyadics. In particular "the discs of two squares intersect"
+is a single dyadic comparison: with radii `rᵢ = √2·2^{−pᵢ}`,
+
+```
+(r₁ + r₂)² = 2·4^{−p₁} + 2·4^{−p₂} + 4·2^{−p₁−p₂}
+```
+
+is exact, and so is the squared distance between the two
+Gaussian-dyadic centres.
+
+## Pellet witnesses
+
+```lean
+/-- Strong Pellet witness: with `(c₀, …, c_n)` the exact Taylor
+    coefficients of `p` at the centre of `s`, and `ρlo, ρhi` the dyadic
+    bounds on the circumscribed radius `2^{−s.prec}·√2`, the inequality
+
+      `lo(c_k) · ρlo^k > Σ_{i ≠ k} hi(c_i) · ρhi^i`
+
+    holds at the base radius and at 2 and 4 times the base radius.
+    Implies (Mathlib companion): `p` has exactly `k` roots, with
+    multiplicity, in each of the three discs. -/
+def witness (p : ZPoly) (s : DyadicSquare) (k : Nat) : Prop := …
+instance : Decidable (witness p s k) := …
+```
+
+The three-radius form is BSSY's condition for Newton readiness, and it
+makes an atom interchangeable with a one-square cluster (both carry
+the same witness shape). "No roots on the boundary circles" follows
+from the strict inequality and is exposed as a derived lemma in the
+Mathlib companion.
 
 ## Contents
 
@@ -50,345 +101,430 @@ namespace Hex
 structure DyadicSquare where
   re   : Dyadic
   im   : Dyadic
-  prec : Nat
-  -- half-width is 2^{-prec}; circumscribed disc has radius² = 2 · 4^{-prec}
+  prec : Int
+  -- half-width 2^{−prec}; circumscribed disc radius 2^{−prec}·√2
 
+/-- An atom: one square whose circumscribed disc contains exactly one
+    simple root. -/
 structure DyadicRootIsolation (p : ZPoly) where
   square  : DyadicSquare
-  witness : witness₁ p square    -- T_1 squared form on the circumscribed disc
+  witness : witness p square 1
 
+/-- A certified cluster: an edge-connected set of grid squares at a
+    common `prec`, whose enclosing disc contains exactly `k` roots
+    with multiplicity. Kept as a set of squares, never re-boxed into a
+    single square: re-boxing can return the parent square and stall
+    refinement (a root that sits on a grid line keeps its component
+    spanning that line at every depth, while the squares themselves
+    shrink). This is an *output* type; the refinement worklist holds
+    uncertified `Component` values. -/
 structure DyadicRootCluster (p : ZPoly) where
-  square  : DyadicSquare
-  k       : Nat                  -- ≥ 1
-  k_pos   : 0 < k
-  witness : witnessₖ p square k  -- strong T_k on disc, on 2·-radius, on 4·-radius
+  squares   : Array DyadicSquare     -- nonempty, common prec, edge-connected
+  k         : Nat
+  k_pos     : 0 < k
+  witness   : witness p (encSquare squares) k
 
-/-- p has only simple complex roots. Default-decidable via
-`Hex.HasOnlySimpleRoots.decide` (gcd(p, p') is a unit). The Mathlib
-companion proves equivalence with `Squarefree (toPolynomial p)`. -/
+/-- An uncertified component in the refinement worklist: an
+    edge-connected set of grid squares at a common `prec`, plus the
+    root count of its most recently certified ancestor. `candidateK`
+    only selects the order of the speculative Newton step; it is never
+    trusted, since every output is re-certified. -/
+structure Component where
+  squares    : Array DyadicSquare    -- nonempty, common prec, edge-connected
+  candidateK : Nat
+
+/-- The smallest square with power-of-two half-width and centre at the
+    component's bounding-box centre that contains every square of the
+    component. All witness tests run on its circumscribed disc. -/
+def encSquare (squares : Array DyadicSquare) : DyadicSquare := …
+
+/-- A complex ball with dyadic data, the output type of numerical
+    evaluation here and in hex-number-field. -/
+structure DyadicComplexBall where
+  re     : Dyadic
+  im     : Dyadic
+  radius : Dyadic
+
+/-- `p` has only simple complex roots. Decided by casting `p` and `p'`
+    to `DensePoly Rat` and testing whether HexPoly's Euclidean gcd is
+    constant. The Mathlib companion proves equivalence with
+    `Squarefree (toPolynomial p)`. -/
 def HasOnlySimpleRoots (p : ZPoly) : Prop := …
 instance : Decidable (HasOnlySimpleRoots p) := …
 ```
 
-Both `witness₁` and `witnessₖ` are `Decidable` Props built directly
-from dyadic comparisons; the structure-level `cbv_decide` on a fully-
-elaborated `DyadicRootIsolation p` value can prove the witness
-holds. The "no roots on the boundary circle" property of every
-isolation and cluster is implicit in the strict inequality and
-exposed as a derived lemma in the Mathlib companion.
-
 ## Operations
 
 ```lean
-namespace DyadicRootIsolation
-def refine1?  : DyadicRootIsolation p → Option (DyadicRootIsolation p)
-def refine?   : (target : Nat) → DyadicRootIsolation p → Option (DyadicRootIsolation p)
-end DyadicRootIsolation
+namespace Component
+/-- One subdivision round: split every square into 4 children one bit
+    finer, discard children whose disc certifiably contains no root
+    (the `T_0` test; a child whose `T_0` test fails to certify is
+    kept, which is always sound), and glue the survivors into
+    edge-connected components. Total: no certification is required
+    during refinement. -/
+def refine1 : Component → Array Component
 
-namespace DyadicRootCluster
-def refine1? : DyadicRootCluster p → Option (Array (DyadicRootCluster p ⊕ DyadicRootIsolation p))
-def cauchy   : (p : ZPoly) → DyadicRootCluster p
-def atomize  : (c : DyadicRootCluster p) → c.k = 1 → DyadicRootIsolation p
-end DyadicRootCluster
+/-- Try to certify the component as a cluster: a speculative Newton
+    recentring first, then the strong witness on the enclosing
+    square's disc, with `k = candidateK` first and then the remaining
+    `k ≤ deg p`. -/
+def certify? (p : ZPoly) : Component → Option (DyadicRootCluster p)
 
-/-- Refine every cluster in the worklist until each has prec ≥ target. -/
-def isolateAll? (target : Nat) (worklist : Array (DyadicRootCluster p)) :
+/-- The starting component: a single square centred at 0 covering the
+    Cauchy root bound, with `candidateK = deg p`. -/
+def cauchy (p : ZPoly) (h : 0 < p.degree?.getD 0) : Component
+end Component
+
+/-- Repackage a certified `k = 1` cluster as an atom. Total: the
+    cluster's witness already lives on the enclosing square's disc,
+    which is the atom's square. -/
+def DyadicRootCluster.atomize (c : DyadicRootCluster p) (h : c.k = 1) :
+    DyadicRootIsolation p
+
+/-- Refine to `target` precision: speculative Newton steps, falling
+    back to subdivision of the atom's square as a one-square
+    component. `none` only if certification has not reappeared by
+    `stopDepth p target` (see below). -/
+def DyadicRootIsolation.refineTo? (iso : DyadicRootIsolation p)
+    (target : Int) : Option (DyadicRootIsolation p)
+
+/-- Refine every component until certified at prec ≥ target, with the
+    certified discs pairwise disjoint (see "Separation of the output"
+    below). `none` only if this has not happened by
+    `stopDepth p target`. -/
+def isolateAll? (p : ZPoly) (target : Int) (worklist : Array Component) :
     Option (Array (DyadicRootCluster p))
 
-/-- All-atoms output for polynomials with no multiple roots. Implementation:
-    take target := max atom_prec (mahlerPrec p), then atomize. -/
-def isolate (p : ZPoly) (h : Hex.HasOnlySimpleRoots p) (atom_prec : Nat) :
+/-- All-atoms output for polynomials with only simple roots: run
+    `isolateAll?` from `Component.cauchy` with
+    `target := max atom_prec (separationDepth p)`, then `atomize`
+    every cluster. `none` if `isolateAll?` fails or (impossible for
+    squarefree `p`, proven in the companion) some cluster reports
+    `k ≥ 2`. -/
+def isolate (p : ZPoly) (h : Hex.HasOnlySimpleRoots p) (atom_prec : Int) :
     Option (Array (DyadicRootIsolation p))
 ```
 
-`refine1?` (both atom and cluster) tries a speculative Newton step
-first, then falls back to bisection on failure. Newton uses
-`Dyadic.invAtPrec` for the Gaussian inversion `1/c₁ = c̄₁ / |c₁|²`;
-**we explicitly use `invAtPrec` rather than a hypothetical
-`divAtPrec`** because both the real and imaginary components of
-`c̄₁ / |c₁|²` reuse the same real reciprocal `1/|c₁|²`, so a
-precomputed reciprocal beats two separate divisions. The new candidate
-disc is recertified by re-running the witness; on failure (witness
-fails for the candidate disc), bisection is the fallback.
+The speculative Newton step computes `x' = x − k · c₀/c₁` (with
+`k = 1` for atoms; the k-order step for clusters is BSSY §5), places a
+much smaller square at `x'`, and re-runs the witness. If the witness
+certifies, the step gains quadratic precision. If not, the result is
+discarded and subdivision proceeds. There is no a-priori "Newton
+ready" precondition. The Gaussian inversion `1/c₁ = c̄₁ / |c₁|²` uses
+`Dyadic.invAtPrec` for the single real reciprocal `1/|c₁|²`, which
+both the real and imaginary components reuse. That is why the
+implementation calls `invAtPrec` rather than two separate
+`Dyadic.divAtPrec` divisions.
 
-Bisection 4-way-partitions a square into sub-squares of one bit higher
-precision, runs the `T_0` (no-roots) and `T_1` / `T_k` (`k`-roots)
-tests on each sub-square's circumscribed disc, discards `T_0`-positive
-sub-squares, and glues the remaining undecided / positive sub-squares
-into edge-connected components (BSSY, §4). The cluster-level test
-runs on the disc circumscribing the connected-component square.
-
-`refine?` for a single isolation terminates by `target − iso.prec : Nat`
-(strictly decreasing). `isolateAll?` terminates by
+**Termination.** Termination is structural, with no analytic input.
+Write `gap(c) := stopDepth p target − prec(c)` for a component `c` in
+the worklist. One `refine1` round replaces a component of `s` squares
+at gap `g` by components at gap `g − 1` totalling at most `4s`
+squares, so the measure
 
 ```
-Φ(W) := Σ_{c ∈ W, c.prec < target} (4^(target − c.prec) − 1)
+Φ(worklist) := Σ_c (#squares of c) · 5^(gap c)
 ```
 
-which strictly decreases by at least 3 per `refine1?` step (a cluster
-at prec `p` is replaced by at most 4 children at prec `p+1`; the
-contribution changes from `4^(target−p) − 1` to at most
-`4 · (4^(target−p−1) − 1) = 4^(target−p) − 4`). `isolate` is a thin
-wrapper over `isolateAll?` and inherits termination.
+strictly decreases per round (`4s · 5^{g−1} < s · 5^g`). Newton steps
+only jump precision further. What is *not* structural is
+certification: `certify?` can fail at any single depth. The drivers
+therefore keep subdividing past `target`, attempting certification at
+each depth, and give up at
 
-`isolate` returns `none` only if some primitive `refine1?` step has
-returned `none`. The Mathlib companion proves: under
-`Hex.HasOnlySimpleRoots`, the result is always `some` and contains
-exactly the simple-root set of `p` as atoms refined to ≥ `atom_prec`.
+```
+stopDepth p target := max target (separationDepth p) + stopSlack
+```
 
-For polynomials with multiple roots, there is no `isolate` analog.
-Use `isolateAll?` directly; multiple-root clusters never atomise (the
-`T_1` witness fails identically because `c₁ → 0` near a multiple root)
-and surface in the output with their `k ≥ 2` field.
+with `stopSlack := 8`. The constant can be generous at almost no
+cost: each subdivision level *doubles* a component's isolation ratio
+(the
+disc radius halves while the distance to the other roots is fixed
+past `mahlerPrec`), and the witness fires once that ratio clears a
+fixed constant, so the analysis can only ever require a handful of
+extra levels, independent of the input. Overshooting costs a few
+extra subdivision rounds in the rare case certification had not
+already happened, and nothing else. The completeness analysis
+certifies the pinned value (or shows a smaller one suffices). A
+`none` from the drivers has one precise meaning: *a Pellet witness
+failed to appear at separation depth*. The Mathlib
+companion's completeness development
+([hex-roots-mathlib.md](hex-roots-mathlib.md)) is expected to prove
+this impossible for squarefree inputs. Until it does, the soundness
+theorems (which are conditional on a `some` result) are unaffected,
+and the conformance suite checks that `none` does not occur on the
+committed fixtures.
 
-## `mahlerPrec` — termination bound for atomisation
+**Separation of the output.** Certification alone does not prevent
+double-counting. A component whose squares contain no root (its
+`T_0` tests merely failed to certify at this depth) can still pass
+`certify?` with `k = 1` when its enclosing disc overlaps a
+neighbouring component and captures the neighbour's root. The driver
+therefore emits a set of certified clusters only when their witness
+discs are **pairwise disjoint** (one dyadic comparison per pair, as
+in the `SimpleRoot` intersection test); components violating the
+check keep subdividing. Disjoint discs count disjoint root sets, and
+the retained squares cover all roots, so the output `k` values add up
+to exactly the root count. This is the analogue of the separation
+condition in BSSY §4. Rootless components die on their own: once
+every square of such a component is `T_0`-certified empty, the
+component disappears from the worklist.
+
+Roots that sit exactly on a dyadic grid point are not a problem for
+atomization: the Newton step recentres the square on the root itself
+(the arithmetic is exact at Gaussian-dyadic points), after which the
+one-square witness certifies. Roots on a grid *line* keep a two-square
+or four-square component under pure subdivision. Newton recentring is
+what turns those into single-square atoms.
+
+For polynomials with multiple roots there is no `isolate` analogue.
+Use `isolateAll?` directly: a multiple root never atomizes (the `k = 1`
+witness requires `c₁` bounded away from 0, and `c₁ → 0` near a
+multiple root), so it appears in the output as a cluster with its
+`k ≥ 2` field.
+
+## `mahlerPrec`: separation precision
 
 ```lean
 def mahlerPrec (p : ZPoly) : Nat
 ```
 
-For squarefree `p ∈ ℤ[x]` of degree `n` with sup-norm `‖p‖∞`, the
-Mahler/Mignotte separation bound says
+For squarefree `p ∈ ℤ[x]` of degree `n`, the Mahler separation bound
+gives
 
 ```
-min_{i ≠ j} |αᵢ − αⱼ| ≥ √3 · n^{−(n+2)/2} · |disc p|^{1/2} · M(p)^{−(n−1)}
+sep(p) := min_{i ≠ j} |αᵢ − αⱼ| ≥ √3 · n^{−(n+2)/2} · |disc p|^{1/2} · M(p)^{−(n−1)}
 ```
 
-Combined with `|disc p| ≥ 1` (nonzero integer for squarefree `p`) and
-Landau's `M(p) ≤ √(n+1) · ‖p‖∞`, this gives a closed-form lower bound
-on root separation in terms of `n` and `‖p‖∞` only. `mahlerPrec`
-returns a `Nat` such that bisecting to half-width `2^{-mahlerPrec p}`
-suffices to separate any two distinct roots. Pure integer arithmetic;
-no discriminant computation at runtime (we only need the lower bound
-`|disc p| ≥ 1`, not `disc p` itself). The Mathlib companion proves
-correctness — see [hex-roots-mathlib.md](hex-roots-mathlib.md).
+Combined with `|disc p| ≥ 1` (the discriminant of a squarefree integer
+polynomial is a nonzero integer) and Landau's
+`M(p) ≤ √(n+1) · ‖p‖∞`, this bounds `sep(p)` from below in terms of
+`n` and `‖p‖∞` alone. `mahlerPrec p` is a `Nat` such that the
+circumscribed-disc radius at that precision is strictly below
+`sep(p)/4`:
 
-## `SimpleRoot` quotient and the `refine`/`out` threading pattern
+```
+2^{−mahlerPrec p} · 1449/1024 < sep(p) / 4
+```
 
-The Mathlib-free quotient type:
+The `/4` margin is what the `SimpleRoot` intersection test below
+needs. The computation is pure integer arithmetic on the closed-form
+bound (logarithms by repeated squaring). No discriminant is computed
+at runtime; only the constant lower bound `|disc p| ≥ 1` is used. The
+Mahler bound concerns *distinct* roots, so `mahlerPrec` is meaningful
+even for non-squarefree `p`: if `p_sf` is the squarefree part then
+`M(p_sf) ≤ M(p)` and `|disc p_sf| ≥ 1`, so the same closed form
+applies. The Mathlib companion proves correctness; see
+[hex-roots-mathlib.md](hex-roots-mathlib.md).
+
+```lean
+def separationDepth (p : ZPoly) : Nat := mahlerPrec p + sepSlack
+```
+
+with `sepSlack := 8`. `separationDepth` is the depth at which the
+completeness analysis says every Pellet witness certifies: past
+`mahlerPrec p`, each component's disc contains at most one distinct
+root, its isolation ratio doubles with every further level, and the
+witness fires once the ratio clears a fixed constant. The required
+number of extra levels is therefore an absolute constant,
+independent of `p`: the factor-2 witness slack costs one level, the
+enclosing square of a multi-square component at most two, the
+circumscribed `√2` one, and the isolation ratio the Pellet converse
+needs a couple more. Eight comfortably exceeds that count. The
+completeness analysis certifies it (overshoot costs only a few extra
+subdivision rounds on inputs where certification had not already
+happened). It is the depth bound used by `stopDepth` above.
+
+## `SimpleRoot`: identity of a root, up to isolation
 
 ```lean
 namespace Hex
-def SimpleRoot (p : ZPoly) := Quotient (DyadicRootIsolation.setoid p)
 
-/-- Two isolations are equivalent iff they isolate the same simple
-    root of `p`. Generated by direct disc containment; symmetric and
-    transitive closure. Decidable via the Mahler separation bound. -/
-instance DyadicRootIsolation.setoid (p : ZPoly) :
-    Setoid (DyadicRootIsolation p) := …
+/-- An isolation refined at least to separation precision. At this
+    precision the disc radius is below `sep(p)/4`, so two refined
+    isolations isolate the same root exactly when their discs
+    intersect. -/
+def RefinedIsolation (p : ZPoly) :=
+  {iso : DyadicRootIsolation p // (mahlerPrec p : Int) ≤ iso.square.prec}
 
-instance : DecidableEq (SimpleRoot p) := Quotient.decidableEq
+/-- The circumscribed discs intersect. A single exact dyadic
+    comparison (squared centre distance against squared radius sum). -/
+def Intersects (i₁ i₂ : RefinedIsolation p) : Prop := …
+instance : Decidable (Intersects i₁ i₂) := …
 
-namespace SimpleRoot
-def mk (iso : DyadicRootIsolation p) : SimpleRoot p := Quotient.mk _ iso
-end SimpleRoot
+/-- The identity of a simple root, independent of which isolation
+    witnessed it. -/
+def SimpleRoot (p : ZPoly) := Quot (Intersects (p := p))
+
+def SimpleRoot.mk (iso : RefinedIsolation p) : SimpleRoot p := Quot.mk _ iso
+
+/-- Boolean form of `Intersects`, used for equality tests on data
+    containing roots (see hex-number-field). -/
+def RefinedIsolation.sameRoot (i₁ i₂ : RefinedIsolation p) : Bool := …
+
 end Hex
 ```
 
-Decidability of the equivalence: refine both isolations to precision
-`mahlerPrec p`; then either one disc strictly contains the other (→
-equivalent) or the discs are disjoint (→ not equivalent). `mahlerPrec
-p` is finite for any `p ∈ ℤ[x]` — note that the Mahler bound on
-*distinct* roots applies even when `p` itself is not squarefree, since
-`p_sf | p` gives `M(p_sf) ≤ M(p)` and `|disc p_sf| ≥ 1`.
-
-### Computable `out` via canonicalisation
-
-```lean
-def SimpleRoot.out (s : SimpleRoot p) (prec : Nat) : DyadicRootIsolation p
-```
-
-The canonicalisation: refine the underlying iso to precision
-`max prec (mahlerPrec p + canonOverhead p)` (where `canonOverhead p`
-shifts away from dyadic boundaries — `log₂ ‖p‖∞ + 1` suffices, since
-real dyadic roots `a/2^k` of `p ∈ ℤ[x]` have `2^k | lc(p)` by the
-rational root theorem, hence `k ≤ log₂ ‖p‖∞`), then round each
-coordinate down to a multiple of `2^{−prec}`, then re-check the
-witness on the resulting (coarser) disc. The construction is
-deterministic on the equivalence class — different equivalent isos
-produce the same dyadic centre after canonicalisation, so `out` is
-well-defined as a `Quotient.lift`.
-
-### `refineTo`, `refine`, and the threading pattern
-
-For efficiency: if the underlying iso is already at precision ≥
-target, the canonicalisation's refinement loop should short-circuit.
-Two new operations support this:
-
-```lean
-def DyadicRootIsolation.refineTo (iso : DyadicRootIsolation p)
-    (target : Nat) : DyadicRootIsolation p :=
-  if iso.prec ≥ target then iso else <do refinement work>
-
-theorem refineTo_respects_equiv {iso₁ iso₂ : DyadicRootIsolation p} (target : Nat)
-    (h : iso₁ ≈ iso₂) : iso₁.refineTo target ≈ iso₂.refineTo target
-
-def SimpleRoot.refine (s : SimpleRoot p) (target : Nat) : SimpleRoot p :=
-  Quotient.map (·.refineTo target) refineTo_respects_equiv s
-```
-
-Key facts:
-
-- `s.refine target = s` *propositionally*, by `Quotient.sound` plus
-  `refineTo_respects_equiv`. Refining never changes the abstract
-  identity of the simple root.
-- The internal *computational* representative of `s.refine target`
-  is `iso.refineTo target`. When that's already at precision ≥
-  target, this is the identity (zero work).
-- `Quotient.lift_mk`'s definitional reduction guarantees that calls
-  to `s.out prec` operate on the underlying representative directly,
-  so when the rep has precision ≥ `mahlerPrec p + canonOverhead p`,
-  `out`'s canonicalisation is *just* a round-down + witness re-check
-  — no refinement loop.
-
-**Performance contract.** If the internal representative of `s` has
-precision ≥ `mahlerPrec p + canonOverhead p`, then `s.out prec` runs
-in `O(deg p · prec²)` bit operations regardless of `prec`. If the
-internal representative is below that threshold, `out` does
-refinement work that scales with the gap.
+Why the radius bound is part of the type: without it, a coarse
+isolation whose disc overlaps several fine isolations would relate
+distinct roots, and the quotient would collapse them. With every disc
+strictly smaller than `sep(p)/4`, two intersecting discs contain
+points within `sep(p)` of both roots, forcing the roots to coincide.
+That argument is semantic, so this library takes the quotient with
+`Quot` (which needs no equivalence proof) and provides no
+`DecidableEq (SimpleRoot p)`. The Mathlib companion proves that
+`Intersects` restricted to `RefinedIsolation` is an equivalence
+relation whose classes are exactly the simple roots, and hence that
+`sameRoot` decides equality in the quotient. Code in the Mathlib-free
+layer compares roots with `sameRoot` directly.
 
 ### The threading pattern
 
-`SimpleRoot` is a Quotient, so `s.refine t = s` propositionally.
-But the value Lean computes with is *the refined representative*.
-Code that holds a `SimpleRoot` and may call `out` repeatedly should
-refine once and thread the refined value forward:
+`SimpleRoot p` values carry no usable computational content in this
+layer (nothing lifts out of the `Quot` here). Numerical work happens
+on `RefinedIsolation` representatives, which are plain data. A
+function that repeatedly needs high-precision approximations of the
+same root should refine its representative once and pass the refined
+value forward:
 
 ```lean
--- DON'T: each `out` call re-does refinement
-def slow (s : SimpleRoot p) : Foo :=
-  let a := s.out 32
-  let b := s.out 64    -- re-refines if rep is small
-  ...
+-- DON'T: each use re-refines from the stored representative
+def slow (r : RefinedIsolation p) : Foo :=
+  let a := (r.1.refineTo? 32).map …
+  let b := (r.1.refineTo? 64).map …   -- repeats the work up to 32
+  …
 
--- DO: refine once, thread refined value forward
-def fast (s : SimpleRoot p) : SimpleRoot p × Foo :=
-  let s' := s.refine (mahlerPrec p + canonOverhead p)
-  let a := s'.out 32   -- cheap (rep is already refined)
-  let b := s'.out 64   -- cheap
-  (s', ...)            -- caller stores `s'` going forward
+-- DO: refine once, thread the refined representative forward
+def fast (r : RefinedIsolation p) : Option (RefinedIsolation p × Foo) := do
+  let r' ← r.refineTo? 64
+  …                                   -- both uses read r' directly
+  return (r', …)                      -- caller stores r' going forward
 ```
 
-Because `s' = s` propositionally, callers can transparently
-substitute the refined value wherever the original was used.
-Functions producing data that contains a `SimpleRoot` field (e.g.
-`AlgebraicNumber` in `hex-number-field`) should set that field to
-the refined value, so downstream consumers automatically benefit.
+`refineTo?` preserves the root (`sameRoot r r' = true`, proved
+meaningful in the companion), so callers can substitute the refined
+representative wherever the original was used. Structures that contain
+a representative (such as `AlgebraicNumber` in `hex-number-field`)
+should store the refined value on return, so downstream consumers
+inherit the precision.
 
-## Algorithm exposition
+## Differences from BSSY
 
-The library implements the BSSY hybrid `subdivide → glue → speculative
-Newton` loop, restricted to simple `T_1` witnesses for atoms and `T_k`
-witnesses for clusters. Specific differences from BSSY:
+- **No Graeffe iteration.** Deferred as a future optimisation. Without
+  it the `k`-root witness needs a wider isolation ratio around a
+  cluster before it certifies, which costs subdivision depth when
+  distinct roots lie very close together. For typical inputs the
+  difference is small.
+- **No squarefree preprocessing.** A multiple root fails the `k = 1`
+  witness at every radius, so it stays a `k ≥ 2` cluster and is
+  reported as such. Squarefree inputs atomize. Non-squarefree inputs
+  yield the multiple roots as clusters.
+- **Squares partition, discs test.** Squares partition the plane
+  without overlap; circumscribed discs overlap slightly, but the
+  `T_0` discard and the component gluing recover the exact root
+  distribution (BSSY §4).
+- **Speculative Newton.** No precondition is checked before a Newton
+  step; the step is taken and the witness re-run on the result.
+  Certification success is the only acceptance criterion.
 
-- **No Graeffe iteration.** Deferred as a future optimisation; without
-  it, `T_k` requires the disc to be `(2√2/3, 4/3)`-isolating, which is
-  brittle for very tight clusters but adequate for typical inputs.
-- **No squarefree preprocessing.** Honest multiple roots cannot satisfy
-  the `T_1` simplicity-implying inequality at any radius (because
-  `c₁ → 0`), so they correctly stay as `k ≥ 2` clusters. Squarefree
-  inputs atomise; non-squarefree inputs surface the multiple roots as
-  clusters.
-- **Squares for partition; circumscribed discs for tests.** Squares
-  4-way partition without overlap; circumscribed discs harmlessly
-  over-count, but discarding via `T_0` and component-gluing recovers
-  the exact root distribution. (BSSY §4.)
-- **Speculative Newton, then re-test.** No a priori `newtonReady`
-  precondition; we just take the Newton step and re-run the witness on
-  the result. If it certifies, we earned quadratic convergence; if
-  not, we fall back to bisection.
+## File organisation
 
-## Layered file organisation
-
-- `HexRoots/Basic.lean` — types: `DyadicSquare`, `DyadicRootIsolation`,
-  `DyadicRootCluster`, `Hex.HasOnlySimpleRoots`. Also defines the
-  setoid for the equivalence on `DyadicRootIsolation`, the quotient
-  `SimpleRoot p`, decidable equality, `mk`, and `out`.
-- `HexRoots/Refine.lean` — `DyadicRootIsolation.refineTo` (with
-  short-circuit), `refineTo_respects_equiv`, `SimpleRoot.refine`,
-  and the `s.refine target = s` lemma. The threading-pattern
-  guidance lives here as a docstring on `SimpleRoot.refine`.
-- `HexRoots/Taylor.lean` — exact Gaussian-dyadic Taylor expansion of
-  a `ZPoly` at a Gaussian-dyadic centre. Returns the array
-  `(c₀, c₁, ..., c_n) : Array (Dyadic × Dyadic)`.
-- `HexRoots/Pellet.lean` — `T_0`, `T_1`, `T_k` squared-form witness
-  predicates and their `Decidable` instances.
-- `HexRoots/MahlerPrec.lean` — the closed-form `mahlerPrec` function.
-- `HexRoots/Cauchy.lean` — `DyadicRootCluster.cauchy` constructor.
-- `HexRoots/Newton.lean` — speculative Newton step using
-  `Dyadic.invAtPrec`; `DyadicRootIsolation.refine1?` and `refine?`.
-- `HexRoots/Bisection.lean` — 4-way subdivision, component gluing,
-  `DyadicRootCluster.refine1?`.
-- `HexRoots/IsolateAll.lean` — `isolateAll?` driver and the `isolate`
-  convenience wrapper.
-- `HexRoots/Conformance.lean`, `HexRoots/Bench.lean`,
-  `HexRoots/EmitFixtures.lean` — the standard testing trio.
+- `HexRoots/Basic.lean`: `DyadicSquare`, `DyadicComplexBall`,
+  `DyadicRootIsolation`, `DyadicRootCluster`, `Component`,
+  `encSquare`, `Hex.HasOnlySimpleRoots`.
+- `HexRoots/Taylor.lean`: exact Gaussian-dyadic Taylor expansion of a
+  `ZPoly` at a Gaussian-dyadic centre, returning
+  `Array (Dyadic × Dyadic)`.
+- `HexRoots/Pellet.lean`: the dyadic bounds `lo`/`hi`, the rational
+  `√2` constants with their `decide`-checked defining inequalities,
+  the `witness` predicate and its `Decidable` instance.
+- `HexRoots/MahlerPrec.lean`: the closed-form `mahlerPrec` and
+  `separationDepth`.
+- `HexRoots/Cauchy.lean`: `Component.cauchy`.
+- `HexRoots/Newton.lean`: the speculative Newton step (atom and
+  k-order component forms) using `Dyadic.invAtPrec`.
+- `HexRoots/Bisection.lean`: 4-way subdivision, `T_0` discard,
+  component gluing: `Component.refine1` and `Component.certify?`.
+- `HexRoots/Refine.lean`: `DyadicRootIsolation.refineTo?`, the Φ
+  termination measure, `stopDepth`.
+- `HexRoots/IsolateAll.lean`: `isolateAll?`, `atomize`, `isolate`.
+- `HexRoots/SimpleRoot.lean`: `RefinedIsolation`, `Intersects`,
+  `SimpleRoot`, `sameRoot`; the threading-pattern guidance lives here
+  as a docstring.
+- `conformance/HexRoots/{Conformance,EmitFixtures}.lean` and
+  `bench/HexRoots/Bench.lean`: the conformance and bench drivers, in
+  the shared sub-projects.
 
 ## Conformance fixtures
 
 Per [SPEC/testing.md](../testing.md), fixtures are tiered into
-`core` / `ci` / `local`. **Adversarial deterministic families take
-precedence over random samples** because random small-coefficient
-polynomials are weak at exposing clustered-root pathologies.
+`core` / `ci` / `local`. Deterministic adversarial families matter
+more than random samples here, because random small-coefficient
+polynomials rarely have clustered roots.
 
 - *core* (Lean-only, runs on every push):
-  - Sanity polynomials with rational roots: `(x−1)(x−2)(x+3)`, `x³ − x`.
-  - Cyclotomic Φ_n for `n ∈ {5, 7, 12}` — roots are roots of unity.
-  - Chebyshev T_n for `n ∈ {5, 10}` — roots at known `cos((2k−1)π/(2n))`.
-  - Small Mignotte `xⁿ − (a·x − 1)²` for `n = 5`, `a = 100`.
-  - Multiple-root case `(x²+1)·(x−5)²` — verifies that the `k = 2`
-    cluster around `5` does not atomise.
+  - Polynomials with rational roots: `(x−1)(x−2)(x+3)`, `x³ − x`.
+  - Cyclotomic `Φ_n` for `n ∈ {5, 7, 12}`: roots are roots of unity.
+  - Chebyshev `T_n` for `n ∈ {5, 10}`: roots at known
+    `cos((2k−1)π/(2n))`.
+  - Small Mignotte `xⁿ − (a·x − 1)²` for `n = 5`, `a = 100`: one
+    close root pair.
+  - Multiple-root case `(x²+1)·(x−5)²`: checks that the `k = 2`
+    cluster around `5` does not atomize.
 - *ci* (CI, with external oracle when available):
-  - 50 degree-20 polynomials with deterministic seed `0xHEC0FFEE` and
-    coefficients in `[−10, 10]`. Expected outputs serialised from
-    a local oracle run during fixture emission.
+  - 50 degree-20 polynomials with deterministic seed `0xC0FFEE` and
+    coefficients in `[−10, 10]`. Expected outputs serialised from a
+    local oracle run during fixture emission.
 - *local* (developer-driven):
-  - MPSolve-driven adversarial families: Mignotte `(n, a)` for
-    `n ∈ {10, 20}` and `a ∈ {1000, 10⁶}`, Wilkinson 20, Bring
-    quintics, Smale-pathological products.
+  - Adversarial families cross-checked against MPSolve: Mignotte
+    `(n, a)` for `n ∈ {10, 20}` and `a ∈ {1000, 10⁶}`, the Wilkinson
+    polynomial of degree 20, and products of two Mignotte polynomials
+    with different parameters (close root pairs at two scales).
 
-External oracles (in role order): MPSolve (primary, Brew-installable);
-FLINT/Arb (secondary, for cases where MPSolve precision is suspect);
-SageMath (fallback).
+External oracles, in role order: MPSolve (primary), FLINT/Arb
+(secondary, for cases where MPSolve's precision is in doubt), SageMath
+(fallback).
 
 ## Complexity contract
 
-- `mahlerPrec p` runs in `O(n · log ‖p‖∞)` integer operations
-  (logarithm by repeated squaring on the closed-form bound).
-- One `T_k` witness check at squared half-width `2^{-prec}` costs
-  `O(n²)` exact-dyadic operations on coefficients of bit-length
-  `O(prec + n · log ‖p‖∞)`, i.e. `O(n²·B²)` bit operations
-  schoolbook.
+Write `n = deg p` and `B = prec + n · log ‖p‖∞` for the working
+bit-length at precision `prec`.
+
+- `mahlerPrec p` runs in `O(n · log ‖p‖∞)` integer operations.
+- One witness check costs `O(n²)` exact-dyadic operations (the Taylor
+  shift dominates) on `B`-bit values, so `O(n² · B²)` bit operations
+  with schoolbook arithmetic.
 - One Newton step costs the same order as one witness check, plus a
   single `Dyadic.invAtPrec` call.
 - `isolate` for degree `n`, well-separated roots, target precision
-  `prec`: heuristically `O(n³ · B²)` bit operations. For tight
-  clusters add a `log(1/separation)` factor, bounded by
-  `mahlerPrec p` in the worst case.
+  `prec`: heuristically `O(n³ · B²)` bit operations. Tight root
+  clusters add subdivision depth up to `O(mahlerPrec p)`.
 
 ## Time budgets (Phase 4 validation)
 
-These are rough first guesses, to be refined against MPSolve on the
-same fixtures during Phase 4:
+Rough first guesses, to be measured against MPSolve on the same
+fixtures during Phase 4:
 
-- Degree 10, prec 32: < 1 second.
-- Degree 50, prec 64: < 10 seconds.
-- Degree 100, prec 128: < 1 minute.
+- Degree 10, prec 32: under 1 second.
+- Degree 50, prec 64: under 10 seconds.
+- Degree 100, prec 128: under 1 minute.
 
 ## References
 
 - Becker, Sagraloff, Sharma, Yap. *A near-optimal subdivision
   algorithm for complex root isolation based on the Pellet test and
-  Newton iteration.* J. Symbolic Computation 86 (2018) 51–96.
-  arXiv:1509.06231. **The reference**; pseudocode for everything in
-  this library traces back to this paper.
+  Newton iteration.* J. Symbolic Computation 86 (2018) 51-96.
+  arXiv:1509.06231. The algorithm implemented here, with the
+  deviations listed above.
 - Imbach, Pan, Yap. *Implementation of a near-optimal complex root
   clustering algorithm (Ccluster).* ICMS 2018, LNCS 10931. The C/Arb
-  implementation paper, with the soft-Pellet filter optimisations.
+  implementation, including the soft-Pellet filter optimisations.
 - Pellet. *Sur un mode de séparation des racines des équations et la
-  formule de Lagrange.* Bull. Sci. Math. 5 (1881) — origin of `T_k`.
-- Mahler. *On some inequalities for polynomials in several variables.*
-  J. London Math. Soc. 37 (1962) — original separation bound.
-- Mignotte. *Some useful bounds.* Computer Algebra: Symbolic and
-  Algebraic Computation, 1982. Standard textbook simplification of
-  Mahler.
+  formule de Lagrange.* Bull. Sci. Math. 5 (1881). Origin of the
+  `T_k` test.
+- Mahler. *An inequality for the discriminant of a polynomial.*
+  Michigan Math. J. 11 (1964) 257-262. The separation bound.
+- Mignotte. *Some useful bounds.* In *Computer Algebra: Symbolic and
+  Algebraic Computation*, Springer, 1982. The textbook form of the
+  bound used by `mahlerPrec`.
