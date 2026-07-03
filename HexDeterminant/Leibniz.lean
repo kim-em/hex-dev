@@ -44,7 +44,7 @@ def detSign {R : Type u} [Lean.Grind.Ring R] {n : Nat} (perm : Vector (Fin n) n)
 @[expose]
 def detProduct {R : Type u} [Lean.Grind.Ring R] {n : Nat}
     (M : Matrix R n n) (perm : Vector (Fin n) n) : R :=
-  (List.finRange n).foldl (fun acc i => acc * M[(i, perm[i])]) 1
+  Fin.foldl n (fun acc i => acc * M[(i, perm[i])]) 1
 
 /-- The Leibniz summand associated to a permutation vector. -/
 @[expose]
@@ -70,8 +70,8 @@ This is the smallest non-empty determinant base case. -/
 @[simp, grind =] theorem det_one_by_one {R : Type u} [Lean.Grind.Ring R]
     (M : Matrix R 1 1) :
     det M = M[0][0] := by
-  simp [det, detTerm, detSign, detProduct, permutationVectors, insertAt,
-    inversionCount, List.finRange]
+  simp [det, detTerm, detSign, detProduct, Fin.foldl_eq_finRange_foldl,
+    permutationVectors, insertAt, inversionCount, List.finRange]
   grind
 
 /-- The determinant of a `2 × 2` matrix has the usual diagonal-minus-off-diagonal
@@ -79,8 +79,8 @@ closed form used by small cofactor expansions. -/
 @[simp, grind =] theorem det_two_by_two {R : Type u} [Lean.Grind.CommRing R]
     (M : Matrix R 2 2) :
     det M = M[0][0] * M[1][1] - M[1][0] * M[0][1] := by
-  simp [det, detTerm, detSign, detProduct, permutationVectors, insertAt,
-    inversionCount, List.finRange]
+  simp [det, detTerm, detSign, detProduct, Fin.foldl_eq_finRange_foldl,
+    permutationVectors, insertAt, inversionCount, List.finRange]
   grind
 
 
@@ -334,6 +334,7 @@ private theorem detProduct_identity_zero {R : Type u}
     (i : Fin n) (h : perm[i] ≠ i) :
     detProduct (Matrix.identity (R := R) n) perm = 0 := by
   unfold detProduct
+  rw [Fin.foldl_eq_finRange_foldl]
   have hsymm : i ≠ perm[i] := by
     intro hi
     exact h hi.symm
@@ -368,7 +369,7 @@ private theorem detProduct_identity_insertAt_last {R : Type u}
     detProduct (Matrix.identity (R := R) n) v := by
   unfold detProduct
   simp only [getElem_pair_eq_nested]
-  rw [← Fin.foldl_eq_finRange_foldl, ← Fin.foldl_eq_finRange_foldl, Fin.foldl_succ_last]
+  rw [Fin.foldl_succ_last]
   have hfold :
       Fin.foldl n
           (fun acc i =>

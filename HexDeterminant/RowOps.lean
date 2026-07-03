@@ -76,6 +76,7 @@ private theorem detProduct_rowScale {R : Type u} [Lean.Grind.CommRing R] {n : Na
     (M : Matrix R n n) (i : Fin n) (c : R) (perm : Vector (Fin n) n) :
     detProduct (rowScale M i c) perm = c * detProduct M perm := by
   unfold detProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   calc
     (List.finRange n).foldl
         (fun acc r => acc * (rowScale M i c)[r][perm[r]]) 1 =
@@ -180,6 +181,7 @@ private theorem detProduct_colDuplicate_swapValues {R : Type u}
     (perm : Vector (Fin n) n) :
     detProduct M perm = detProduct M (swapPermutationValues perm src dst) := by
   unfold detProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   apply List.foldl_mul_congr
   intro r _hmem
   by_cases hsrc : perm[r] = src
@@ -257,6 +259,7 @@ private theorem detProduct_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     change perm.toList[pivot.val]'(by simp [Vector.length_toList, pivot.isLt]) = dst
     simp [pivot] at hget ⊢
   unfold detProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   calc
     (List.finRange n).foldl
         (fun acc i => acc * (colAdd M src dst c)[i][perm[i]]) 1 =
@@ -437,6 +440,7 @@ private theorem detProduct_rowAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     detProduct (rowAdd M src dst c) perm =
       detProduct M perm + c * detProduct (rowAddDuplicate M src dst) perm := by
   unfold detProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   calc
     (List.finRange n).foldl
         (fun acc r => acc * (rowAdd M src dst c)[r][perm[r]]) 1 =

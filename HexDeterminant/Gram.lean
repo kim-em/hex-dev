@@ -637,6 +637,7 @@ theorem columnTupleCoeff_reconstructInjTuple
     columnTupleCoeff A (reconstructInjTuple sel perm) =
       detProduct (columnTupleMatrix A (columnTupleVectorFn sel)) perm := by
   unfold columnTupleCoeff detProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   apply List.foldl_mul_congr
   intro i _hmem
   simp only [getElem_pair_eq_nested]

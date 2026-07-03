@@ -191,7 +191,7 @@ private theorem columnTupleVectors_nodup {n m : Nat} :
 @[expose]
 def columnTupleCoeff {R : Type u} [Mul R] [OfNat R 1] {n m : Nat}
     (A : Matrix R n m) (cols : Vector (Fin m) n) : R :=
-  (List.finRange n).foldl (fun acc i => acc * A[(i, cols[i])]) 1
+  Fin.foldl n (fun acc i => acc * A[(i, cols[i])]) 1
 
 /-- The determinant summand associated to an ordered column tuple. -/
 @[expose]
@@ -236,7 +236,7 @@ private def columnSumMatrixWithPrefix
     if h : j.val < chosen.length then
       source[(r, chosen[j.val]'h)]
     else
-      (List.finRange m).foldl (fun acc k => acc + coeff[(j, k)] * source[(r, k)]) 0
+      Fin.foldl m (fun acc k => acc + coeff[(j, k)] * source[(r, k)]) 0
 
 @[grind =] private theorem getElem_columnSumMatrixWithPrefix
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
@@ -247,7 +247,7 @@ private def columnSumMatrixWithPrefix
       else
         (List.finRange m).foldl
           (fun acc k => acc + coeff[j][k] * source[r][k]) 0 := by
-  simp [columnSumMatrixWithPrefix, ofFn]
+  simp [columnSumMatrixWithPrefix, ofFn, Fin.foldl_eq_finRange_foldl]
 
 /-! ### Suffix-based partial assignment
 
@@ -267,7 +267,7 @@ private def columnSumMatrixWithSuffix
       source[(r, chosen[j.val - (n - chosen.length)]'(by
         have : j.val < n := j.isLt; omega))]
     else
-      (List.finRange m).foldl (fun acc k => acc + coeff[(j, k)] * source[(r, k)]) 0
+      Fin.foldl m (fun acc k => acc + coeff[(j, k)] * source[(r, k)]) 0
 
 @[grind =] private theorem getElem_columnSumMatrixWithSuffix
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
@@ -279,7 +279,7 @@ private def columnSumMatrixWithSuffix
       else
         (List.finRange m).foldl
           (fun acc k => acc + coeff[j][k] * source[r][k]) 0 := by
-  simp [columnSumMatrixWithSuffix, ofFn]
+  simp [columnSumMatrixWithSuffix, ofFn, Fin.foldl_eq_finRange_foldl]
 
 private theorem columnSumMatrixWithSuffix_nil
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
@@ -480,7 +480,7 @@ private theorem det_columnTupleMatrix_assembleColumnsSuffix_insertAt_last
 private def partialColumnTupleCoeff {R : Type u} [Mul R] [OfNat R 1] {n m : Nat}
     (coeff : Matrix R n m) (chosen : List (Fin m))
     (pref : Vector (Fin m) (n - chosen.length)) : R :=
-  (List.finRange (n - chosen.length)).foldl
+  Fin.foldl (n - chosen.length)
     (fun acc i => acc * coeff[((⟨i.val, by
       have hi : i.val < n - chosen.length := i.isLt
       omega⟩ : Fin n), pref[i])]) 1
@@ -490,6 +490,7 @@ private theorem partialColumnTupleCoeff_nil
     (coeff : Matrix R n m) (cols : Vector (Fin m) n) :
     partialColumnTupleCoeff coeff [] cols = columnTupleCoeff coeff cols := by
   unfold partialColumnTupleCoeff columnTupleCoeff
+  simp only [Fin.foldl_eq_finRange_foldl]
   apply List.foldl_mul_congr
   intro i _hmem
   congr 2
@@ -498,15 +499,16 @@ private theorem partialColumnTupleCoeff_insertAt_last_fold
     {R : Type u} [Mul R] [OfNat R 1] {n m rem : Nat}
     (coeff : Matrix R n m) (c : Fin m) (pref : Vector (Fin m) rem)
     (hrem : rem < n) :
-    (List.finRange (rem + 1)).foldl
+    Fin.foldl (rem + 1)
         (fun acc i => acc * coeff[(⟨i.val, by
           have hi : i.val < rem + 1 := i.isLt
           omega⟩ : Fin n)][(insertAt c pref (Fin.last rem))[i]]) 1 =
-      (List.finRange rem).foldl
+      Fin.foldl rem
           (fun acc i => acc * coeff[(⟨i.val, by
             have hi : i.val < rem := i.isLt
             omega⟩ : Fin n)][pref[i]]) 1 *
         coeff[(⟨rem, hrem⟩ : Fin n)][c] := by
+  simp only [Fin.foldl_eq_finRange_foldl]
   rw [List.finRange_succ_last, List.foldl_append, List.foldl_cons, List.foldl_nil]
   congr 1
   · simp only [List.foldl_map]
@@ -535,7 +537,7 @@ private theorem partialColumnTupleCoeff_vectorLengthCast
     (coeff : Matrix R n m) (chosen : List (Fin m))
     (hk : k = n - chosen.length) (hkn : k ≤ n) (v : Vector (Fin m) k) :
     partialColumnTupleCoeff coeff chosen (vectorLengthCast hk v) =
-    (List.finRange k).foldl
+    Fin.foldl k
       (fun acc (i : Fin k) => acc *
         coeff[(⟨i.val, Nat.lt_of_lt_of_le i.isLt hkn⟩ : Fin n)][v[i]]) 1 := by
   subst hk
@@ -747,6 +749,7 @@ private theorem partialColumnTupleCoeff_full
     partialColumnTupleCoeff coeff chosen pref = 1 := by
   subst n
   unfold partialColumnTupleCoeff
+  rw [Fin.foldl_eq_finRange_foldl]
   have hlist : List.finRange (chosen.length - chosen.length) = [] := by
     rw [Nat.sub_self]; rfl
   rw [hlist]

@@ -923,6 +923,7 @@ private theorem detProduct_colPermute_vector {R : Type u} [Lean.Grind.CommRing R
     detProduct (ofFn fun r c => M[r][sigma[c]]) tau =
       detProduct M (composePermutationValues sigma tau) := by
   unfold detProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   apply List.foldl_mul_congr
   intro r _hr
   simp [ofFn, composePermutationValues]
@@ -933,6 +934,7 @@ private theorem detProduct_transpose_inversePermutationValues {R : Type u}
     detProduct M.transpose perm =
       detProduct M (inversePermutationValues perm hnodup) := by
   unfold detProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   calc
     (List.finRange n).foldl
         (fun acc r => acc * M.transpose[r][perm[r]]) 1 =
@@ -1095,6 +1097,7 @@ private theorem detProduct_rowSwap_transposeValues {R : Type u}
     detProduct (rowSwap M i j) perm =
       detProduct M (transposePermutationValues perm i j) := by
   unfold detProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   calc
     (List.finRange n).foldl
         (fun acc r => acc * (rowSwap M i j)[r][perm[r]]) 1 =

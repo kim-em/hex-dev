@@ -124,7 +124,7 @@ theorem detProduct_insertAt_last {R : Type u} [Lean.Grind.Ring R] {n : Nat}
       detProduct (principalSubmatrix M n (Nat.le_succ n)) v * M[Fin.last n][Fin.last n] := by
   unfold detProduct
   simp only [getElem_pair_eq_nested]
-  rw [← Fin.foldl_eq_finRange_foldl, ← Fin.foldl_eq_finRange_foldl, Fin.foldl_succ_last]
+  rw [Fin.foldl_succ_last]
   have hfold :
       Fin.foldl n
           (fun acc i =>
@@ -264,7 +264,7 @@ private theorem detProduct_insertAt_general {R : Type u} [Lean.Grind.CommRing R]
     detProduct M (insertAt (Fin.last n) (v.map Fin.castSucc) i) =
       M[i][Fin.last n] * detProduct (deleteRowCol M i (Fin.last n)) v := by
   unfold detProduct
-  simp only [getElem_pair_eq_nested]
+  simp only [getElem_pair_eq_nested, Fin.foldl_eq_finRange_foldl]
   rw [foldl_finRange_succ_factor_skipIndex i
     (fun r => M[r][(insertAt (Fin.last n) (v.map Fin.castSucc) i)[r]])]
   congr 1
@@ -301,6 +301,7 @@ private theorem detProduct_insertAt_not_last_zero
     detProduct M (insertAt (Fin.last n) (v.map Fin.castSucc) i) = 0 := by
   unfold detProduct
   simp only [getElem_pair_eq_nested]
+  rw [Fin.foldl_eq_finRange_foldl]
   apply foldl_det_product_zero_of_mem
     (List.finRange (n + 1)) (Fin.last n)
     (fun r => M[r][(insertAt (Fin.last n) (v.map Fin.castSucc) i)[r]]) 1

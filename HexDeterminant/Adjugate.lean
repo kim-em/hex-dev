@@ -60,7 +60,7 @@ appears in Laplace expansion after replacing the expanded row. -/
 def cofactorRowPairing {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row : Fin (n + 1)) (v : Vector R (n + 1)) :
     R :=
-  (List.finRange (n + 1)).foldl
+  Fin.foldl (n + 1)
     (fun acc col => acc + v[col] * cofactor M row col) 0
 
 /-- Replacing row `row` by `v` makes the determinant the pairing of `v`
@@ -71,6 +71,7 @@ theorem det_setRow_eq_cofactorRowPairing
     det (setRow M row v) = cofactorRowPairing M row v := by
   rw [det_eq_foldl_laplace_row (setRow M row v) row]
   unfold cofactorRowPairing
+  rw [Fin.foldl_eq_finRange_foldl]
   apply List.foldl_congr
   intro acc col _hmem
   rw [show (setRow M row v)[row][col] = v[col] by
@@ -82,6 +83,7 @@ theorem cofactorRowPairing_self
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row : Fin (n + 1)) :
     cofactorRowPairing M row M[row] = det M := by
+  rw [cofactorRowPairing, Fin.foldl_eq_finRange_foldl]
   exact (det_eq_foldl_laplace_row M row).symm
 
 /-- The "alien cofactor" identity: expanding row `i` of `M` against the
@@ -90,8 +92,9 @@ characteristic vanishing identity that makes the adjugate work. -/
 theorem foldl_alien_cofactor_eq_zero
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i j : Fin (n + 1)) (hij : i ≠ j) :
-    (List.finRange (n + 1)).foldl
+    Fin.foldl (n + 1)
         (fun acc k => acc + M[i][k] * cofactor M j k) 0 = 0 := by
+  rw [Fin.foldl_eq_finRange_foldl]
   let N : Matrix R (n + 1) (n + 1) := setRow M j M[i]
   have hNi : N[i] = M[i] := setRow_row_ne M j i M[i] hij
   have hNj : N[j] = M[i] := setRow_get_self M j M[i]
@@ -167,7 +170,7 @@ theorem mul_adjugate_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
   · subst hij
     rw [hentry, if_pos rfl]
     exact (det_eq_foldl_laplace_row M i).symm
-  · rw [hentry, if_neg hij]
+  · rw [hentry, if_neg hij, ← Fin.foldl_eq_finRange_foldl]
     exact foldl_alien_cofactor_eq_zero M i j hij
 
 /-- The adjugate identity `M * adjugate M = det M • identity`. -/
@@ -442,6 +445,7 @@ private theorem setRow_mul_adjugate_apply_row
       cofactorRowPairing M s ((setRow M r u)[i]) := by
   rw [mul_apply_foldl]
   unfold cofactorRowPairing
+  rw [Fin.foldl_eq_finRange_foldl]
   apply List.foldl_congr
   intro acc l _hmem
   rw [adjugate_get]
@@ -655,11 +659,14 @@ theorem cofactorRowPairing_setRow_plucker
         cofactorRowPairing M a u * cofactorRowPairing M b v -
           cofactorRowPairing M b u * cofactorRowPairing M a v := by
     unfold cofactorRowPairing
+    simp only [Fin.foldl_eq_finRange_foldl]
     apply foldl_pairing_mul_sub
     · grind
     · intro c
-      exact det_mul_cofactor_setRow_eq M a b c u
-        (fun h => hab h.symm)
+      have h := det_mul_cofactor_setRow_eq M a b c u (fun h => hab h.symm)
+      rw [cofactorRowPairing, cofactorRowPairing, Fin.foldl_eq_finRange_foldl,
+        Fin.foldl_eq_finRange_foldl] at h
+      exact h
   rw [hpre]
   grind
 

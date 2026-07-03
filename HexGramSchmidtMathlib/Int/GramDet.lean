@@ -142,6 +142,7 @@ private theorem detProduct_intCast {k : Nat}
     ((Matrix.detProduct M perm : Int) : Rat) =
       Matrix.detProduct (castIntDetMatrix M) perm := by
   unfold Matrix.detProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   rw [foldl_intCast_mul_aux (xs := List.finRange k)
     (f := fun i => M[(i, perm[i])]) (acc := 1)]
   rw [show ((1 : Int) : Rat) = (1 : Rat) from rfl]
