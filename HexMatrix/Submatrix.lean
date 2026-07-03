@@ -46,6 +46,42 @@ def takeRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) : Matrix R k m :=
        M[ii][jj]) := by
   simp [principalSubmatrix, ofFn]
 
+/-- Row `i` of the `k × k` principal submatrix is row `i` of `M`, restricted to
+the first `k` columns. -/
+@[simp, grind =] theorem row_principalSubmatrix (M : Matrix R n n) (k : Nat) (hk : k ≤ n)
+    (i : Fin k) :
+    row (principalSubmatrix M k hk) i =
+      Vector.ofFn fun j : Fin k =>
+        (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
+         let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
+         M[ii][jj]) := by
+  ext j hj
+  show (row (principalSubmatrix M k hk) i)[(⟨j, hj⟩ : Fin k)] =
+    (Vector.ofFn fun j : Fin k =>
+      (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
+       let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
+       M[ii][jj]))[(⟨j, hj⟩ : Fin k)]
+  rw [getElem_row, getElem_principalSubmatrix]
+  simp
+
+/-- Column `j` of the `k × k` principal submatrix is column `j` of `M`,
+restricted to the first `k` rows. -/
+@[simp, grind =] theorem col_principalSubmatrix (M : Matrix R n n) (k : Nat) (hk : k ≤ n)
+    (j : Fin k) :
+    col (principalSubmatrix M k hk) j =
+      Vector.ofFn fun i : Fin k =>
+        (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
+         let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
+         M[ii][jj]) := by
+  ext i hi
+  show (col (principalSubmatrix M k hk) j)[(⟨i, hi⟩ : Fin k)] =
+    (Vector.ofFn fun i : Fin k =>
+      (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
+       let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
+       M[ii][jj]))[(⟨i, hi⟩ : Fin k)]
+  rw [getElem_col, getElem_principalSubmatrix]
+  simp
+
 /-- Entry formula for the first-`k`-rows slice. -/
 @[grind =] theorem getElem_takeRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n)
     (i : Fin k) (j : Fin m) :

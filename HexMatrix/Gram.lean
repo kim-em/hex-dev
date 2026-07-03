@@ -140,6 +140,27 @@ def gramMatrix [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) : Matrix R n n :=
     (gramMatrix M)[i][j] = (row M i).dotProduct (row M j) := by
   rw [gramMatrix, getElem_ofFn]
 
+/-- Row `i` of the Gram matrix pairs `row M i` against every row of `M`. -/
+@[simp, grind =] theorem row_gramMatrix [Mul R] [Add R] [OfNat R 0]
+    (M : Matrix R n m) (i : Fin n) :
+    row (gramMatrix M) i = Vector.ofFn fun j => (row M i).dotProduct (row M j) := by
+  ext j hj
+  show (row (gramMatrix M) i)[(⟨j, hj⟩ : Fin n)] =
+    (Vector.ofFn fun j => (row M i).dotProduct (row M j))[(⟨j, hj⟩ : Fin n)]
+  rw [getElem_row, getElem_gramMatrix]
+  simp
+
+/-- Column `j` of the Gram matrix pairs every row of `M` against `row M j`.
+The Gram matrix is symmetric, so this matches `row_gramMatrix`. -/
+@[simp, grind =] theorem col_gramMatrix [Mul R] [Add R] [OfNat R 0]
+    (M : Matrix R n m) (j : Fin n) :
+    col (gramMatrix M) j = Vector.ofFn fun i => (row M i).dotProduct (row M j) := by
+  ext i hi
+  show (col (gramMatrix M) j)[(⟨i, hi⟩ : Fin n)] =
+    (Vector.ofFn fun i => (row M i).dotProduct (row M j))[(⟨i, hi⟩ : Fin n)]
+  rw [getElem_col, getElem_gramMatrix]
+  simp
+
 /-- The Gram matrix of the identity is the identity. -/
 @[simp, grind =] theorem gramMatrix_identity {R : Type u} [Lean.Grind.CommRing R] {n : Nat} :
     gramMatrix (Matrix.identity (R := R) n) = (Matrix.identity (R := R) n) := by

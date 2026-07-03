@@ -205,6 +205,42 @@ theorem rowAdd_eq_set [Mul R] [Add R] (M : Matrix R n m) (src dst : Fin n) (c : 
   rw [Vector.modify_eq_set _ _ _ dst.isLt]
   congr 1
 
+/-- Column `k` of `rowSwap M i j` is column `k` of `M` with entries `i` and `j`
+exchanged. -/
+@[grind =] theorem col_rowSwap (M : Matrix R n m) (i j : Fin n) (k : Fin m) :
+    col (rowSwap M i j) k =
+      Vector.ofFn fun r => if r = j then M[i][k] else if r = i then M[j][k] else M[r][k] := by
+  ext r hr
+  show (col (rowSwap M i j) k)[(⟨r, hr⟩ : Fin n)] =
+    (Vector.ofFn fun r =>
+      if r = j then M[i][k] else if r = i then M[j][k] else M[r][k])[(⟨r, hr⟩ : Fin n)]
+  rw [getElem_col, getElem_rowSwap]
+  simp
+
+/-- Column `k` of `rowScale M i c` is column `k` of `M` with entry `i` scaled
+by `c`. -/
+@[grind =] theorem col_rowScale [Mul R] (M : Matrix R n m) (i : Fin n) (c : R) (k : Fin m) :
+    col (rowScale M i c) k =
+      Vector.ofFn fun r => if r = i then c * M[i][k] else M[r][k] := by
+  ext r hr
+  show (col (rowScale M i c) k)[(⟨r, hr⟩ : Fin n)] =
+    (Vector.ofFn fun r => if r = i then c * M[i][k] else M[r][k])[(⟨r, hr⟩ : Fin n)]
+  rw [getElem_col, getElem_rowScale]
+  simp
+
+/-- Column `k` of `rowAdd M src dst c` is column `k` of `M` with the `dst` entry
+replaced by `M[dst][k] + c * M[src][k]`. -/
+@[grind =] theorem col_rowAdd [Mul R] [Add R]
+    (M : Matrix R n m) (src dst : Fin n) (c : R) (k : Fin m) :
+    col (rowAdd M src dst c) k =
+      Vector.ofFn fun r => if r = dst then M[dst][k] + c * M[src][k] else M[r][k] := by
+  ext r hr
+  show (col (rowAdd M src dst c) k)[(⟨r, hr⟩ : Fin n)] =
+    (Vector.ofFn fun r =>
+      if r = dst then M[dst][k] + c * M[src][k] else M[r][k])[(⟨r, hr⟩ : Fin n)]
+  rw [getElem_col, getElem_rowAdd]
+  simp
+
 /-- Replace column `dst` by `col dst + c * col src`.
 
 Rather than rebuilding the whole matrix with `ofFn`, each row is mapped to its
@@ -323,6 +359,150 @@ theorem getElem_colAddRight_src_of_ne [Mul R] [Add R]
     (M : Matrix R n m) {src dst : Fin m} (c : R) (hsrcdst : src ≠ dst) :
     col (colAddRight M src dst c) src = col M src :=
   col_colAddRight_of_ne M src c hsrcdst
+
+/-- Row `i` of `colAdd M src dst c` is row `i` of `M` with the `dst` entry
+replaced by `M[i][dst] + c * M[i][src]`. -/
+@[grind =] theorem row_colAdd [Mul R] [Add R]
+    (M : Matrix R n m) (src dst : Fin m) (c : R) (i : Fin n) :
+    row (colAdd M src dst c) i =
+      Vector.ofFn fun j => if j = dst then M[i][j] + c * M[i][src] else M[i][j] := by
+  ext j hj
+  show (row (colAdd M src dst c) i)[(⟨j, hj⟩ : Fin m)] =
+    (Vector.ofFn fun j =>
+      if j = dst then M[i][j] + c * M[i][src] else M[i][j])[(⟨j, hj⟩ : Fin m)]
+  rw [getElem_row, getElem_colAdd]
+  simp
+
+/-- Row `i` of `colAddRight M src dst c` is row `i` of `M` with the `dst` entry
+replaced by `M[i][dst] + M[i][src] * c`. -/
+@[grind =] theorem row_colAddRight [Mul R] [Add R]
+    (M : Matrix R n m) (src dst : Fin m) (c : R) (i : Fin n) :
+    row (colAddRight M src dst c) i =
+      Vector.ofFn fun j => if j = dst then M[i][j] + M[i][src] * c else M[i][j] := by
+  ext j hj
+  show (row (colAddRight M src dst c) i)[(⟨j, hj⟩ : Fin m)] =
+    (Vector.ofFn fun j =>
+      if j = dst then M[i][j] + M[i][src] * c else M[i][j])[(⟨j, hj⟩ : Fin m)]
+  rw [getElem_row, getElem_colAddRight]
+  simp
+
+/-- Swap columns `i` and `j` in a dense matrix.
+
+The swap is done row by row via `mapRows`: each row's `i` and `j` entries are
+exchanged with `Vector.swap`, reusing the freed row slot when `M` is uniquely
+referenced. The column mirror of `rowSwap`. -/
+@[expose]
+def colSwap (M : Matrix R n m) (i j : Fin m) : Matrix R n m :=
+  M.mapRows fun row => row.swap i j
+
+/-- Read an entry of `colSwap M i j` by cases on the column index: column `j`
+returns the original column `i`, column `i` returns the original column `j`, and
+any other column is unchanged. -/
+@[grind =] theorem getElem_colSwap (M : Matrix R n m) (i j : Fin m) (r : Fin n) (c : Fin m) :
+    (colSwap M i j)[r][c] =
+      if c = j then M[r][i] else if c = i then M[r][j] else M[r][c] := by
+  rw [colSwap]
+  simp only [getElem_eq_getRow, getRow, rows_mapRows, Vector.getElem_map,
+    Vector.getElem_swap, Fin.getElem_fin, Fin.ext_iff]
+  grind
+
+/-- Column `i` of `colSwap M i j` is the original column `j`. -/
+@[simp, grind =] theorem col_colSwap_left (M : Matrix R n m) (i j : Fin m) :
+    col (colSwap M i j) i = col M j := by
+  ext r hr
+  show (col (colSwap M i j) i)[(⟨r, hr⟩ : Fin n)] = (col M j)[(⟨r, hr⟩ : Fin n)]
+  rw [getElem_col, getElem_col, getElem_colSwap]
+  by_cases hij : i = j <;> simp [hij]
+
+/-- Column `j` of `colSwap M i j` is the original column `i`. -/
+@[simp, grind =] theorem col_colSwap_right (M : Matrix R n m) (i j : Fin m) :
+    col (colSwap M i j) j = col M i := by
+  ext r hr
+  show (col (colSwap M i j) j)[(⟨r, hr⟩ : Fin n)] = (col M i)[(⟨r, hr⟩ : Fin n)]
+  rw [getElem_col, getElem_col, getElem_colSwap]
+  simp
+
+/-- Any column other than `i` and `j` is unchanged by `colSwap M i j`. -/
+theorem col_colSwap_of_ne (M : Matrix R n m) {i j c : Fin m}
+    (hci : c ≠ i) (hcj : c ≠ j) :
+    col (colSwap M i j) c = col M c := by
+  ext r hr
+  show (col (colSwap M i j) c)[(⟨r, hr⟩ : Fin n)] = (col M c)[(⟨r, hr⟩ : Fin n)]
+  rw [getElem_col, getElem_col, getElem_colSwap]
+  simp [hci, hcj]
+
+/-- Row `r` of `colSwap M i j` is row `r` of `M` with entries `i` and `j`
+exchanged. -/
+@[grind =] theorem row_colSwap (M : Matrix R n m) (i j : Fin m) (r : Fin n) :
+    row (colSwap M i j) r =
+      Vector.ofFn fun c => if c = j then M[r][i] else if c = i then M[r][j] else M[r][c] := by
+  ext c hc
+  show (row (colSwap M i j) r)[(⟨c, hc⟩ : Fin m)] =
+    (Vector.ofFn fun c =>
+      if c = j then M[r][i] else if c = i then M[r][j] else M[r][c])[(⟨c, hc⟩ : Fin m)]
+  rw [getElem_row, getElem_colSwap]
+  simp
+
+/-- Transposing a column swap is the corresponding row swap on the transpose.
+This is the bridge the determinant column laws route through. -/
+theorem transpose_colSwap (M : Matrix R n m) (i j : Fin m) :
+    transpose (colSwap M i j) = rowSwap (transpose M) i j := by
+  apply ext_getElem
+  intro a b
+  rw [getElem_transpose, getElem_colSwap, getElem_rowSwap]
+  simp only [getElem_transpose]
+
+/-- Scale column `j` by `c`.
+
+In-place per-entry column update via `modifyCol`: each row's single `j` entry is
+multiplied by `c`, reusing the freed row slot when `M` is uniquely referenced.
+The column mirror of `rowScale`. -/
+@[expose]
+def colScale [Mul R] (M : Matrix R n m) (j : Fin m) (c : R) : Matrix R n m :=
+  M.modifyCol j fun _ x => c * x
+
+/-- Read an entry of `colScale M j c` by cases on the column index: column `j`
+returns `c * M[r][j]`, any other column is unchanged. -/
+@[grind =] theorem getElem_colScale [Mul R] (M : Matrix R n m) (j : Fin m) (c : R)
+    (r : Fin n) (k : Fin m) :
+    (colScale M j c)[r][k] = if k = j then c * M[r][j] else M[r][k] := by
+  rw [colScale, getElem_modifyCol]
+
+/-- Column `j` of `colScale M j c` is the pointwise scalar multiple of column `j`. -/
+@[simp, grind =] theorem col_colScale_self [Mul R] (M : Matrix R n m) (j : Fin m) (c : R) :
+    col (colScale M j c) j = Vector.ofFn fun i => c * M[i][j] := by
+  ext i hi
+  show (col (colScale M j c) j)[(⟨i, hi⟩ : Fin n)] =
+    (Vector.ofFn fun i => c * M[i][j])[(⟨i, hi⟩ : Fin n)]
+  rw [getElem_col, getElem_colScale]
+  simp
+
+/-- Any column other than `j` is unchanged by `colScale M j c`. -/
+theorem col_colScale_of_ne [Mul R] (M : Matrix R n m) {j k : Fin m} (c : R) (hkj : k ≠ j) :
+    col (colScale M j c) k = col M k := by
+  ext i hi
+  show (col (colScale M j c) k)[(⟨i, hi⟩ : Fin n)] = (col M k)[(⟨i, hi⟩ : Fin n)]
+  rw [getElem_col, getElem_col, getElem_colScale]
+  simp [hkj]
+
+/-- Row `r` of `colScale M j c` is row `r` of `M` with entry `j` scaled by `c`. -/
+@[grind =] theorem row_colScale [Mul R] (M : Matrix R n m) (j : Fin m) (c : R) (r : Fin n) :
+    row (colScale M j c) r =
+      Vector.ofFn fun k => if k = j then c * M[r][j] else M[r][k] := by
+  ext k hk
+  show (row (colScale M j c) r)[(⟨k, hk⟩ : Fin m)] =
+    (Vector.ofFn fun k => if k = j then c * M[r][j] else M[r][k])[(⟨k, hk⟩ : Fin m)]
+  rw [getElem_row, getElem_colScale]
+  simp
+
+/-- Transposing a column scaling is the corresponding row scaling on the
+transpose. -/
+theorem transpose_colScale [Mul R] (M : Matrix R n m) (j : Fin m) (c : R) :
+    transpose (colScale M j c) = rowScale (transpose M) j c := by
+  apply ext_getElem
+  intro a b
+  rw [getElem_transpose, getElem_colScale, getElem_rowScale]
+  simp only [getElem_transpose]
 
 end Matrix
 

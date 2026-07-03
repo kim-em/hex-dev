@@ -76,14 +76,21 @@ def render [Repr R] (M : Matrix R n m) : Std.Format :=
   Std.Format.text ("#m[" ++ ";\n   ".intercalate (cells.map rowText) ++ "]")
 
 /-- Show matrices in copy-pasteable `#m[...]` notation under `#eval`/`Repr`.
-Higher priority than the generic `Vector` instance so it wins for the
-nested-vector representation; plain (non-nested) vectors keep the default
-rendering. -/
+Higher priority than the `#v[...]` vector instance below so a matrix renders as
+a grid rather than as a nested vector of vectors. -/
 instance (priority := high) [Repr R] : Repr (Matrix R n m) where
   reprPrec M _ := M.render
 
 /-- The `#m[...]` rendering as a `String`. -/
 instance [Repr R] : ToString (Matrix R n m) where
   toString M := M.render.pretty
+
+/-- Render a vector in copy-pasteable `#v[...]` notation under `#eval`/`Repr`,
+mirroring the `#m[...]` matrix rendering. Higher priority than the core
+`deriving Repr` instance, so a bare vector (for example a matrix row or an LLL
+short vector) prints as `#v[...]` and can be pasted straight back as input. -/
+instance (priority := high) reprVector [Repr R] : Repr (Vector R n) where
+  reprPrec v _ :=
+    Std.Format.text ("#v[" ++ ", ".intercalate (v.toList.map fun x => (repr x).pretty) ++ "]")
 
 end Hex.Matrix

@@ -1003,25 +1003,21 @@ theorem det_colPermute_vector {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         rw [permutationVectors_composePermutationValues_left_sum
           (R := R) sigma hsigma (fun tau => detTerm M tau)]
 
-/-- Swapping two columns negates determinant. -/
+/-- Swapping two distinct columns negates the determinant. The column mirror of
+`det_rowSwap`, proved by transposing to the row law. -/
+@[grind =]
 theorem det_colSwap {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (i j : Fin n) (h : i ≠ j) :
-    det (ofFn fun r c => M[r][finTranspose i j c]) = -det M := by
-  let C : Matrix R n n := ofFn fun r c => M[r][finTranspose i j c]
-  have htranspose : C.transpose = rowSwap M.transpose i j := by
-    ext r hr c hc
-    let rr : Fin n := ⟨r, hr⟩
-    let cc : Fin n := ⟨c, hc⟩
-    change C.transpose[rr][cc] = (rowSwap M.transpose i j)[rr][cc]
-    rw [rowSwap_get_finTranspose M.transpose i j rr h cc,
-      show C.transpose[rr][cc] = C[cc][rr] by simp [Matrix.transpose, Matrix.col],
-      show C[cc][rr] = M[cc][finTranspose i j rr] by simp [C, ofFn]]
-    simp [Matrix.transpose, Matrix.col]
-  calc
-    det C = det C.transpose := (det_transpose C).symm
-    _ = det (rowSwap M.transpose i j) := by rw [htranspose]
-    _ = -det M.transpose := det_rowSwap M.transpose i j h
-    _ = -det M := by rw [det_transpose M]
+    det (colSwap M i j) = -det M := by
+  rw [← det_transpose (colSwap M i j), transpose_colSwap, det_rowSwap _ _ _ h, det_transpose]
+
+/-- Scaling a column by `c` scales the determinant by `c`. The column mirror of
+`det_rowScale`. -/
+@[grind =]
+theorem det_colScale {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (j : Fin n) (c : R) :
+    det (colScale M j c) = c * det M := by
+  rw [← det_transpose (colScale M j c), transpose_colScale, det_rowScale, det_transpose]
 
 /-- Adding a multiple of one column to a distinct column preserves determinant. -/
 theorem det_colAdd {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
