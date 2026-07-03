@@ -902,3 +902,54 @@ Soundness split:
   `checkIrreducibleCert f cert = true → Irreducible f`. This follows
   from C1 (`factor` correctness) plus the certificate's per-prime
   degree-obstruction soundness.
+
+### Kernel-checked irreducibility MUST be certificate-verifying
+
+A trusted irreducibility decision — one whose proof term the Lean
+kernel checks, as opposed to compiled evaluation — MUST be **certifying**:
+the certificate is prepared by *compiled* code (outside the kernel), and
+the kernel verifies *only* the certificate. Concretely, an
+`Irreducible f` proof at non-trivial degree is required to reduce, in the
+kernel, to no more than
+
+- the factorization identity check (the returned factors multiply back to
+  `f`; plain `ℤ` polynomial arithmetic), and
+- `checkIrreducibleCert g cert = true` per irreducible factor `g`,
+  discharged against the existing soundness theorem
+  `checkIrreducibleCert f cert = true → Irreducible f`.
+
+The recombination itself — `factor` / `factorLattice` and the certificate
+construction — MUST NOT run in the kernel; it is compiled preparation.
+This is the Pratt-certificate discipline for polynomial irreducibility:
+finding the witness is expensive (compiled), checking it is cheap
+(kernel).
+
+Rationale (load-bearing, with `native_decide` banned): kernel evaluation
+of `factor` is a hard wall. Direct `decide +kernel` on `factor` is out of
+reach past roughly **degree 10–15** — sub-second to degree ~5, single-digit
+seconds through degree ~10, then over any practical timeout — because the
+kernel does the whole recombination; the family ordering mirrors the
+compiled cost (cyclotomics reach ~degree 28, Swinnerton-Dyer walls at
+degree 8). This frontier is measured by the kernel-factor diagnostic
+(`scripts/bench/kernel_factor_sweep.py`, `reports/hexbz-kernel-factor.md`).
+A `decide`-first irreducibility instance inherits exactly that wall — the
+current `Decidable (Hex.ZPoly.Irreducible f)`, which reduces
+`isIrreducible f = let φ := factor f; …` in the kernel, is only a
+small-degree fallback and MUST NOT be the path relied on for non-trivial
+inputs.
+
+Consequence for the decision surface: a plain `Decidable` instance
+consumed by `decide` / `decide +kernel` CANNOT satisfy this requirement,
+because `decide` reduces the instance *in the kernel*, so any generation
+inside it runs in the kernel. The certifying path is therefore a tactic
+(or equivalent elaboration-time preparation) that runs the compiled
+`factor` + certificate generator, reifies the certificate as a term, and
+emits the kernel-checked verification. Downstream specs that discharge
+`Irreducible`/`IsIrreducible` obligations by kernel checking
+(`SPEC/Libraries/hex-roots.md`, `SPEC/Libraries/hex-number-field.md`)
+depend on this certifying capability rather than on kernel-evaluating
+`factor`.
+
+Implementation tracked in
+https://github.com/kim-em/hex-dev/issues/8552; this section is the
+requirement that decision must satisfy.
