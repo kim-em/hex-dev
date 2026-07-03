@@ -782,10 +782,24 @@ def runFirstShortVectorChecksum (input : FirstShortVectorInput) : Int :=
     (lll.firstShortVectorUnchecked input.basis (3 / 4)
       lllDeltaLower lllDeltaUpper input.hn)
 
+/-- Explicitly install the fpLLL provider for the bench process from the shared
+library named by `HEX_FPLLL_FFI_LIB`, if that variable is set and non-empty.
+Idempotent: once a provider is active this is a cheap no-op, so the provider
+targets can call it lazily. This is the bench's opt-in replacement for the old
+implicit env read — the public `Hex.lll` surface no longer consults the
+environment; the bench does so explicitly here via `Hex.lll.loadProvider`. -/
+def ensureProviderLoaded : IO Unit := do
+  if ← lll.providerActive then
+    return
+  match ← IO.getEnv "HEX_FPLLL_FFI_LIB" with
+  | some path => if path != "" then discard <| lll.loadProvider path
+  | none => pure ()
+
 /-- Benchmark target: run the public dispatched LLL path and checksum the
 first row. If a real external provider is loaded, this target fails unless the
 certified dispatch accepts at least one candidate. -/
 def runDispatchedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO Int := do
+  ensureProviderLoaded
   LLLProvider.resetDiagnostics
   have hrows : 1 ≤ input.rows := input.hn
   let f0 : Fin input.rows := ⟨0, by omega⟩
@@ -1025,6 +1039,7 @@ certified path (`LLLProvider.certifyFlat`), so one FFI call covers both.
 Raises `IO.userError` if the provider is absent (no `HEX_FPLLL_FFI_LIB` /
 unresolved `lean_fplll_lll_reduce`) or returns an error from `libfplll`. -/
 def requestFpLLLFlat (input : FirstShortVectorInput) : IO (Array Int) := do
+  ensureProviderLoaded
   if !LLLProvider.providerAvailable () then
     throw <| IO.userError
       "fplll-ffi provider absent — set HEX_FPLLL_FFI_LIB to libfplllffi"

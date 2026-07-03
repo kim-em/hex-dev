@@ -455,11 +455,12 @@ classification below is mirrored as structured metadata in
 
   **Comparator-call protocol.** `fpLLL` is an in-process FFI call through
   `fplll-ffi` (one C++ call per request). The bench obtains `fplll-ffi` the
-  same way the certified dispatch resolves it at runtime, and with **no Lake
+  same way the certified dispatch installs it at runtime, and with **no Lake
   dependency** on it: a setup script builds the `fplll-ffi` shared library and
-  a path override (env var, mirroring the Isabelle binary-path overrides) makes
-  the bench `dlopen` it at start-up, after which the dispatch's `dlsym` probe
-  resolves the provider and the fpLLL comparator calls it directly. The two
+  the bench explicitly installs it via `Hex.lll.loadProvider`, reading the
+  library path from the `HEX_FPLLL_FFI_LIB` override (mirroring the Isabelle
+  binary-path overrides) at start-up, after which the dispatch and the fpLLL
+  comparator call the installed provider directly. The two
   Isabelle comparators (`verified Isabelle LLL` and `verified Isabelle certified-LLL`)
   are wired as persistent subprocesses per
   [SPEC/benchmarking.md §External comparators — Process call](https://github.com/kim-em/hex-dev/blob/main/SPEC/benchmarking.md#external-comparators):
@@ -690,16 +691,40 @@ depends only on `certCheck_sound`, and the checker internals are not relied on
 elsewhere.
 
 **Provider hook.** `lll` consults an `opaque @[extern]` hook that supplies a
-candidate when an external reducer is registered and signals absence
+candidate when an external reducer is installed and signals absence
 otherwise (governed by the *untrusted dispatch hooks* clause in
-[SPEC/SPEC.md §Project-wide proof policy](https://github.com/kim-em/hex-dev/blob/main/SPEC/SPEC.md#project-wide-proof-policy)). The hook is process-stable (availability is fixed
-at first probe and cached), returns only a candidate, and is queried for
+[SPEC/SPEC.md §Project-wide proof policy](https://github.com/kim-em/hex-dev/blob/main/SPEC/SPEC.md#project-wide-proof-policy)). The hook is queried for
 availability *before* any input marshalling, so the native path pays at most a
-single cached probe. The hook's C body probes for the provider's versioned
-public symbol at runtime; the provider is an independent package that this
-library neither depends on nor names in its build, and which has no knowledge
-of this library. The candidate's shape (dimensions, array lengths) is
-validated in Lean before use; a malformed candidate is a rejection.
+single slot read; it returns only a candidate. The provider is an independent
+artifact that this library neither depends on nor names in its build, and which
+has no knowledge of this library. The candidate's shape (dimensions, array
+lengths) is validated in Lean before use; a malformed candidate is a rejection.
+
+*Installation is an explicit Lean action, not an environment read.* A provider
+is installed into the process slot by the public loader `Hex.lll.loadProvider :
+System.FilePath → IO Bool`, which `dlopen`s the named shared library, resolves
+the provider's versioned public symbol from it, and points the hook at it;
+`Hex.lll.providerActive : IO Bool` reports whether a provider is currently
+installed. There is no `getenv` and no implicit `dlopen` on the `lll` path — the
+knob is a discoverable Lean function next to `lll`, and the loaded state is
+process-global (a pure `lll` cannot thread it per-call). For a provider *linked*
+into the process, a one-shot `dlsym(RTLD_DEFAULT, …)` probe on first
+availability query self-installs it with no loader call, so a future in-tree
+statically-linked adapter activates purely by being imported. The slot is
+process-stable in practice: `loadProvider` is a process-init action, and once a
+provider is installed availability stays fixed.
+
+*Why a runtime loader rather than a linked-in adapter.* The natural
+"import-to-register" design — a separate Lake package that statically links the
+provider and self-registers on import, dropping the `dlopen` entirely — is
+deliberately **not** used, because this library carries **no Lake dependency on
+fpLLL**: the fpLLL-ffi shim is built out of tree by
+`scripts/oracle/setup_fplll_ffi.sh` and reached only at runtime. A statically
+linked adapter would force fpLLL (a C++ library with GMP/MPFR) into every build
+and into merge-gating CI, contradicting that decision. The explicit loader keeps
+fpLLL out of the build while still making activation explicit, discoverable, and
+Lean-controlled; the static-symbol probe leaves the import-to-register door open
+for any provider that *is* linked in without reintroducing an environment read.
 
 **Reliability is empirical, soundness is not.** A candidate whose exact
 `|μ|` exceeds `11/20` is rejected and the native path runs; the `11/20` bound

@@ -217,12 +217,16 @@ tag := "hex-lll-dispatch"
 %%%
 
 By default `Hex.lll` runs the exact `Hex.lllNative`. To let it accelerate
-through the external `fpLLL` provider instead, point the environment
-variable `HEX_FPLLL_FFI_LIB` at a built fpLLL-ffi shared library before the
-process starts; leave it unset to stay on the native path. This is a runtime
-switch, not a matter of importing a different module — `HexLLL` always links
-its small provider shim, and the *same* `Hex.lll` call takes the certified
-path exactly when the provider library is resolvable.
+through the external `fpLLL` provider instead, call {name}`Hex.lll.loadProvider`
+with the path to a built fpLLL-ffi shared library
+(`scripts/oracle/setup_fplll_ffi.sh` builds one and prints its path); it
+`dlopen`s the library, installs it as the process provider, and returns `true`
+on success. {name}`Hex.lll.providerActive` reports whether one is installed.
+This is a runtime switch, not a matter of importing a different module —
+`HexLLL` always links its small provider shim, and the *same* `Hex.lll` call
+takes the certified path exactly when a provider is installed. Loading is an
+explicit, discoverable Lean action next to `lll`: there is no environment
+variable read on the `lll` path and no implicit `dlopen`.
 
 Either way the result is `(δ, 11/20)`-reduced. When the provider is in use,
 `Hex.lll` asks it for a reduced basis and re-checks the candidate with
@@ -231,6 +235,10 @@ or an absent provider, falls straight through to the native reducer. The
 foreign numerics can therefore speed things up but can never affect
 correctness: nothing the provider returns is trusted until the verified
 integer checker has accepted it.
+
+{docstring Hex.lll.loadProvider}
+
+{docstring Hex.lll.providerActive}
 
 # Performance comparison
 %%%

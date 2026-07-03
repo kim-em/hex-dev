@@ -76,8 +76,8 @@ produces output correct to that same contract, so the result is correct no
 matter which one runs. `lll` dispatches through them in order:
 
 - **External provider** (`LLLProvider.dispatch`). If an external reducer is
-  reachable in the process — probed through an `@[extern]` hook, in practice by
-  setting `HEX_FPLLL_FFI_LIB` to a built fpLLL-ffi shared library (see
+  installed in the process — via the explicit loader `Hex.lll.loadProvider`
+  pointed at a built fpLLL-ffi shared library (see
   [Performance comparison](#performance-comparison)) — `lll` runs it and
   *certifies* the returned candidate with the integer-only checker `certCheck`.
   An absent or rejected candidate falls through. The provider is an independent
@@ -223,16 +223,19 @@ output at close to floating-point cost.
 
 **Selecting the certified vs native path — a runtime choice, not an import.**
 `HexLLL` always builds its FFI shim, and the *same* `lll` call picks its path by
-whether an external provider symbol is resolvable in the process:
+whether an external provider is installed in the process:
 
-- set the environment variable **`HEX_FPLLL_FFI_LIB`** to a built fpLLL-ffi
-  shared library and `lll` takes the **certified path** (the shim `dlopen`s it,
-  `Hex.providerAvailable` returns true, the candidate is certified by
-  `certCheck`);
-- leave it unset (or if certification ever failed) and `lll` runs the exact
+- call **`Hex.lll.loadProvider path`** with the path to a built fpLLL-ffi shared
+  library (`scripts/oracle/setup_fplll_ffi.sh` builds one and prints its path);
+  it returns `true` on success, after which `lll` takes the **certified path**
+  (the candidate is certified by `certCheck`). `Hex.lll.providerActive : IO Bool`
+  reports whether a provider is currently installed;
+- load nothing (or if certification ever failed) and `lll` runs the exact
   **`lllNative`** directly.
 
-Either way the result satisfies the same `(δ, 11/20)`-reduced contract. To force
+Loading is an explicit, discoverable Lean action next to `lll` itself — there is
+no environment variable read on the `lll` path and no implicit `dlopen`. Either
+way the result satisfies the same `(δ, 11/20)`-reduced contract. To force
 the exact path unconditionally — and get the tighter `η = 1/2` guarantee
 (precondition `1/4 < δ`, constant `1/(δ − 1/4)`; see [Verification](#verification))
 — call `lllNative` directly.

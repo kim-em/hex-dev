@@ -21,9 +21,12 @@ namespace Hex
 
 /-! ## External LLL provider
 
-Optional runtime hook for an external reducer (e.g. fpLLL) loaded through the
-C FFI shim in `HexLLL/ffi/`. `providerAvailable` reports whether a provider is
-registered (driven by the `HEX_FPLLL_FFI_LIB` environment variable); when none
+Optional runtime hook for an external reducer (e.g. fpLLL) reached through the
+C FFI shim in `HexLLL/ffi/`. A provider is installed either by the explicit
+Lean loader `Hex.lll.loadProvider` (which `dlopen`s a named shared library) or,
+for a provider linked into the process, by a one-shot static-symbol probe;
+there is no environment-variable read and no implicit `dlopen`.
+`providerAvailable` reports whether a provider is currently installed; when none
 is present, or a returned candidate fails validation, callers fall back to the
 verified native reducer `lllNative`. The provider is acceleration only and is
 never part of the trusted path — every candidate it returns is checked before
@@ -37,6 +40,14 @@ opaque providerAvailable : Unit → Bool
 opaque providerReduce (rows cols : USize) (entries : @& Array String)
     (delta eta : Float) (method : UInt8) (withInverse : Bool) :
     Except String (Array Int)
+
+/-- Install the external provider from the shared library at `path`: `dlopen`
+the library, resolve `lean_fplll_lll_reduce` from it, and set the process
+provider slot. Returns `true` on success and `false` when the library cannot be
+loaded or the symbol is missing (the loader diagnostic is written to stderr).
+This is the raw FFI entry point behind the public `Hex.lll.loadProvider`. -/
+@[extern "lean_hexlll_load_provider"]
+opaque loadProviderImpl (path : @& String) : IO Bool
 
 /-- Decoded result returned by the external LLL provider.
 

@@ -38,6 +38,35 @@ def lll (b : Matrix Int n m) (δ : Rat)
   | some B' => B'
   | none => lllNative b δ (one_quarter_lt_of_eta_eleven_twentieths hδ) hδ' hn
 
+/-- Install an external LLL acceleration provider from the shared library at
+`path` for the rest of this process, returning whether the load succeeded.
+
+The library must export `lean_fplll_lll_reduce` (the fpLLL-ffi shim built by
+`scripts/oracle/setup_fplll_ffi.sh`); `loadProvider` `dlopen`s it, resolves that
+symbol, and points the dispatch at it. Once installed, a `lll` call whose
+provider candidate certifies under `Hex.certCheck` returns the accelerated
+basis; an absent provider, a load failure, or a rejected candidate all fall
+through to the exact `lllNative`. Loading is an explicit action — there is no
+environment-variable read and no implicit load — and the trust boundary is
+unchanged: every provider candidate is still checked before use.
+
+A later successful load replaces the current provider; a failed load leaves the
+existing state untouched and returns `false` (writing the `dlopen`/`dlsym`
+diagnostic to stderr) when the library cannot be loaded or does not export the
+expected symbol. -/
+@[expose]
+def lll.loadProvider (path : System.FilePath) : IO Bool :=
+  Internal.LLLProvider.loadProviderImpl path.toString
+
+/-- Whether an external LLL acceleration provider is currently installed in this
+process (via `Hex.lll.loadProvider` or a statically-linked provider symbol).
+When this is `false`, `lll` runs the exact `lllNative`; when it is `true`, `lll`
+attempts the certified external path first. Querying availability is
+side-effect-free apart from the one-shot static-symbol probe it may trigger. -/
+@[expose]
+def lll.providerActive : IO Bool :=
+  return Internal.LLLProvider.providerAvailable ()
+
 /-- Proof-free executable variant of `lll.firstShortVector`. Runs the exact
 `lllNative` reducer directly. -/
 @[expose]
