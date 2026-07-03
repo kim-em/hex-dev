@@ -2041,8 +2041,18 @@ This carries no soundness proof of its own; correctness rides entirely on the
 downstream `checkIrreducibleCert_sound`. Expensive Berlekamp/Rabin work runs
 here in compiled code; the kernel only replays the cheap `checkIrreducibleCert`
 reduction on the finished data.
+
+The generator declines non-primitive and constant inputs up front, mirroring
+the `IsPrimitive` / `0 < natDegree` side conditions of
+`checkIrreducibleCert_sound`. Without this guard the checker accepts vacuous
+certificates for inputs those side conditions exclude (e.g. an empty
+certificate for a constant, or a full certificate for the non-primitive
+`2·x² + 2`, reducible over `ℤ` as `2·(x² + 1)`), so guarding here keeps
+`certifyIrreducible? f = some _` an honest irreducibility signal: every side
+condition a consumer must discharge is already executable-checked.
 -/
 def certifyIrreducible? (f : ZPoly) : Option ZPolyIrreducibilityCertificate :=
+  if ZPoly.content f != 1 || f.degree?.getD 0 == 0 then none else
   let blocks := (smallPrimeCandidates.filterMap fun c => buildPrimeFactorData? f c).toArray
   match buildDegreeObstructions f blocks with
   | none => none

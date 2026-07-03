@@ -690,11 +690,23 @@ private def zCertRoundTrips (f : ZPoly) : Bool :=
 #guard zCertRoundTrips (zpoly #[2, 0, 1])
 #guard zCertRoundTrips (zpoly #[1, 1, 1])
 
+-- A degree-1 primitive is irreducible with no candidate factor degrees to
+-- obstruct: the generator emits the (valid) empty certificate.
+#guard zCertRoundTrips (zpoly #[3, 1])
+
 -- Reducible or non-admissible inputs yield no certificate: `x² - 1` splits into
 -- linear factors modulo every prime (degree-1 obstruction impossible), and
 -- `(x - 1)²` has no admissible prime at all.
 #guard (certifyIrreducible? (zpoly #[-1, 0, 1])).isNone
 #guard (certifyIrreducible? repeatedRootPoly).isNone
+
+-- Inputs excluded by `checkIrreducibleCert_sound`'s side conditions are
+-- declined up front: constants and zero (`natDegree = 0`) and non-primitive
+-- inputs (`2·x² + 2 = 2·(x² + 1)` is reducible over `ℤ` even though the checker
+-- would accept its mod-`p` certificate).
+#guard (certifyIrreducible? (zpoly #[7])).isNone
+#guard (certifyIrreducible? (0 : ZPoly)).isNone
+#guard (certifyIrreducible? (zpoly #[2, 0, 2])).isNone
 
 -- A cubic irreducible over `ℤ` with an inert prime (`x³ - x - 1` is irreducible
 -- modulo `3`): the single inert block obstructs every proper factor degree at
