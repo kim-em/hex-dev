@@ -247,6 +247,10 @@ lean_exe hex_lattice_spike where
   srcDir := "bench"
   root := `HexBench.LatticeSpike
 
+lean_exe hexbz_factor_service where
+  srcDir := "bench"
+  root := `HexBench.FactorService
+
 lean_exe hexarith_bench where
   srcDir := "bench"
   root := `HexArith.Bench
