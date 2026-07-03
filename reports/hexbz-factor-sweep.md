@@ -12,6 +12,14 @@ committed. See the
 addendum for how this sits beside the one-harness rule: the sweep is a
 comparator, not a parallel harness for hex-internal claims.
 
+> **Changing a hex factor path?** Re-measure the hex entries and refresh these
+> charts, then show them to the requester — the external comparators do not need
+> re-running (the plotter merges records newest-per-system). The exact commands
+> and when a full re-measure is required are in
+> [`HexBerlekampZassenhaus/SPEC/hex-berlekamp-zassenhaus.md` § Cross-system sweep
+> charts](../HexBerlekampZassenhaus/SPEC/hex-berlekamp-zassenhaus.md) and under
+> [Reproducing](#reproducing) below.
+
 ## Systems
 
 Every measured system runs as a warm persistent process speaking one line
