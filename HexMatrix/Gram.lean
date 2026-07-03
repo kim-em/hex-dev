@@ -106,7 +106,7 @@ private theorem foldl_dotProduct_unit_body {R : Type u} [Lean.Grind.CommRing R]
 @[simp] theorem dotProduct_unit_unit {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (i j : Fin n) :
     dotProduct (unit R i) (unit R j) = if i = j then 1 else 0 := by
-  simp only [dotProduct, Fin.foldl_eq_finRange_foldl]
+  simp only [dotProduct]
   rw [foldl_dotProduct_unit_body]
   by_cases hij : i = j
   · subst hij

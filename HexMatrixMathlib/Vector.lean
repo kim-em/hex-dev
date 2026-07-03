@@ -67,7 +67,6 @@ read through `vectorEquiv`. -/
 theorem dotProduct_eq [NonUnitalNonAssocSemiring R] (u v : Vector R n) :
     u.dotProduct v = dotProduct (vectorEquiv u) (vectorEquiv v) := by
   unfold Vector.dotProduct dotProduct
-  rw [Fin.foldl_eq_finRange_foldl]
   rw [foldl_finRange_eq_sum]
   rfl
 
@@ -95,7 +94,6 @@ theorem vectorEquiv_mulVec [Semiring R] (M : Hex.Matrix R n m) (v : Vector R m) 
   change (Hex.Matrix.mulVec M v)[i.val] = (matrixEquiv M).mulVec (vectorEquiv v) i
   unfold Hex.Matrix.mulVec Hex.Matrix.row Vector.dotProduct
   rw [Vector.getElem_ofFn i.isLt]
-  rw [Fin.foldl_eq_finRange_foldl]
   rw [foldl_finRange_eq_sum]
   unfold _root_.Matrix.mulVec dotProduct
   apply Finset.sum_congr rfl

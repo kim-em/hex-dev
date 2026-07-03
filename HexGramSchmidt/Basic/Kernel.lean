@@ -145,7 +145,6 @@ theorem dot_zero_of_dot_self_zero (row v : Vector Rat m)
     (hzero : v.dotProduct v = 0) :
     row.dotProduct v = 0 := by
   unfold Vector.dotProduct
-  rw [Fin.foldl_eq_finRange_foldl]
   induction List.finRange m with
   | nil =>
       simp
@@ -719,7 +718,6 @@ private theorem subtractProjection_zero_left (basisRow : Vector Rat m) :
     subtractProjection 0 basisRow = 0 := by
   have hdot : (0 : Vector Rat m).dotProduct basisRow = 0 := by
     unfold Vector.dotProduct
-    rw [Fin.foldl_eq_finRange_foldl]
     induction List.finRange m with
     | nil =>
         rfl

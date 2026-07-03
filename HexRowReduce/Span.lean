@@ -215,7 +215,6 @@ theorem vecMul_single {R : Type u} [Lean.Grind.CommRing R]
     (row M i)[jf]
   unfold Matrix.mulVec Matrix.row Vector.dotProduct Matrix.transpose
     Matrix.col
-  simp only [Fin.foldl_eq_finRange_foldl]
   change (Vector.ofFn fun j : Fin m =>
       (List.finRange n).foldl
         (fun acc l => acc + (Vector.ofFn fun j : Fin m => Vector.ofFn fun i : Fin n => M[i][j])[j][l] *
@@ -297,7 +296,7 @@ private theorem vecMul_pivotCoeff [Lean.Grind.Field R] (E : IsRowReduced M D)
       c[E.toIsEchelonForm.pivotRow p] := by
   unfold vecMul
   simp [HMul.hMul, Matrix.mulVec, Matrix.row, Vector.dotProduct,
-    Matrix.transpose, Matrix.col, Fin.foldl_eq_finRange_foldl]
+    Matrix.transpose, Matrix.col]
   change (List.finRange n).foldl
       (fun acc i => acc + D.echelon[i][D.pivotCols.get p] * c[i]) 0 =
     c[E.toIsEchelonForm.pivotRow p]
@@ -331,7 +330,7 @@ private theorem vecMul_eq_of_coeffs_eq_on_rank [Lean.Grind.Field R]
   let jj : Fin m := ⟨j, hj⟩
   unfold vecMul
   simp [HMul.hMul, Matrix.mulVec, Matrix.row, Vector.dotProduct,
-    Matrix.transpose, Matrix.col, Fin.foldl_eq_finRange_foldl]
+    Matrix.transpose, Matrix.col]
   change (List.finRange n).foldl
       (fun acc i => acc + D.echelon[i][jj] * c[i]) 0 =
     (List.finRange n).foldl

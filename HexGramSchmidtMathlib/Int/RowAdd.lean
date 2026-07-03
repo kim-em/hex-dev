@@ -83,7 +83,7 @@ private theorem dot_rowAdd_row_at_left {n' m' : Nat}
     (M : Matrix Int n' m') (src dst : Fin n') (c : Int) (w : Vector Int m') :
     ((Matrix.rowAdd M src dst c)[dst]).dotProduct w =
       M[dst].dotProduct w + c * M[src].dotProduct w := by
-  simp only [Vector.dotProduct, Fin.foldl_eq_finRange_foldl]
+  simp only [Vector.dotProduct]
   exact foldl_dot_rowAdd_at M src dst c w (List.finRange m')
     0 0 0 (by show (0 : Int) = 0 + c * 0; grind)
 

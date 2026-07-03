@@ -158,7 +158,6 @@ theorem mul_adjugate_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
           (fun acc k => acc + M[i][k] * cofactor M j k) 0 := by
     rw [hmul]
     unfold Vector.dotProduct
-    simp only [Fin.foldl_eq_finRange_foldl]
     apply List.foldl_congr
     intro acc k _hmem
     congr 1
@@ -208,7 +207,6 @@ theorem adjugate_mul_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       unfold Matrix.mul
       rw [getElem_ofFn]
       unfold Vector.dotProduct
-      simp only [Fin.foldl_eq_finRange_foldl]
       apply List.foldl_congr
       intro acc k _hmem
       have hrow : (row (adjugate M) i)[k] = (adjugate M)[i][k] := rfl
@@ -223,7 +221,6 @@ theorem adjugate_mul_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
       unfold Matrix.mul
       rw [getElem_ofFn]
       unfold Vector.dotProduct
-      simp only [Fin.foldl_eq_finRange_foldl]
       apply List.foldl_congr
       intro acc k _hmem
       have hrow : (row M.transpose j)[k] = M[k][j] := by
@@ -360,7 +357,6 @@ private theorem mul_eq_columnSumMatrix_transpose
   unfold Matrix.mul
   rw [getElem_ofFn]
   unfold Vector.dotProduct
-  simp only [Fin.foldl_eq_finRange_foldl]
   apply List.foldl_add_congr
   intro k _
   simp only [getElem_pair_eq_nested]
@@ -429,7 +425,6 @@ private theorem mul_apply_foldl
   unfold Matrix.mul
   rw [getElem_ofFn]
   unfold Vector.dotProduct
-  simp only [Fin.foldl_eq_finRange_foldl]
   apply List.foldl_congr
   intro acc l _hmem
   rw [getElem_row, getElem_col]

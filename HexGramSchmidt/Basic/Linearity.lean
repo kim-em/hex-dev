@@ -990,7 +990,7 @@ private theorem vecMul_prefixRows_extendStrictPrefixCoeff
                 (extendStrictPrefixCoeff c)[j])
           0 by
         unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Vector.dotProduct prefixRows
-        simp [Matrix.row, Fin.foldl_eq_finRange_foldl]]
+        simp [Matrix.row]]
   rw [show
       (Matrix.mulVec (Matrix.transpose (strictPrefixRows M i (Nat.le_of_lt hi)))
           c)[idxFin] =
@@ -1001,7 +1001,7 @@ private theorem vecMul_prefixRows_extendStrictPrefixCoeff
                 c[j])
           0 by
         unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Vector.dotProduct strictPrefixRows
-        simp [Matrix.row, Fin.foldl_eq_finRange_foldl]]
+        simp [Matrix.row]]
   rw [List.finRange_succ_last, List.foldl_append, List.foldl_map]
   simp only [List.foldl_cons, List.foldl_nil]
   have hlast_not_lt : ¬i < i := Nat.lt_irrefl i
@@ -1018,7 +1018,7 @@ private theorem vecMul_add_rat
   change (Matrix.mulVec (Matrix.transpose M) (c + d))[idxFin] =
     (Matrix.vecMul c M + Matrix.vecMul d M)[idxFin]
   simp [Matrix.vecMul, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
-    Matrix.row, Vector.dotProduct, Vector.getElem_add, Fin.foldl_eq_finRange_foldl]
+    Matrix.row, Vector.dotProduct, Vector.getElem_add]
   have hfold :
       ∀ xs : List (Fin n), ∀ accC accD : Rat,
         xs.foldl
@@ -1057,7 +1057,7 @@ private theorem vecMul_smul_rat
   change (Matrix.mulVec (Matrix.transpose M) (a • c))[idxFin] =
     (a • Matrix.vecMul c M)[idxFin]
   simp [Matrix.vecMul, HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
-    Matrix.row, Vector.dotProduct, Vector.getElem_smul, Fin.foldl_eq_finRange_foldl]
+    Matrix.row, Vector.dotProduct, Vector.getElem_smul]
   have hfold :
       ∀ xs : List (Fin n), ∀ acc : Rat,
         xs.foldl
@@ -1143,7 +1143,6 @@ private theorem dot_sub_right (a b c : Vector Rat m) :
 private theorem dot_zero_right (a : Vector Rat m) :
     a.dotProduct 0 = 0 := by
   unfold Vector.dotProduct
-  rw [Fin.foldl_eq_finRange_foldl]
   change (List.finRange m).foldl
       (fun acc i => acc + a[i] * (0 : Vector Rat m)[i]) 0 = 0
   induction List.finRange m with
@@ -1230,7 +1229,7 @@ private theorem vecMul_prefixRows_unitCoeff
     (Matrix.mulVec (Matrix.transpose (prefixRows M i hi)) (unitCoeff j))[idxFin] =
       ((prefixRows M i hi).row j)[idxFin]
   simp [HMul.hMul, Matrix.mulVec, Matrix.transpose, Matrix.col,
-    Matrix.row, Vector.dotProduct, unitCoeff, Fin.foldl_eq_finRange_foldl]
+    Matrix.row, Vector.dotProduct, unitCoeff]
   have h :=
     foldl_indicator_mul_unique_rat
       (xs := List.finRange (i + 1)) (i := j)
@@ -1260,7 +1259,7 @@ private theorem vecMul_eq_foldl_rows
           (fun acc j => acc + M[j.val][idxFin.val] * c[j])
           0 by
         unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Vector.dotProduct
-        simp [Fin.foldl_eq_finRange_foldl]]
+        simp]
   have hfold :
       ∀ xs : List (Fin n), ∀ accL : Rat, ∀ accR : Vector Rat m,
         accL = accR[idxFin] →
@@ -1969,7 +1968,7 @@ private theorem vecMul_strictPrefixRows_projectionCoeffVector
                 projectionCoeff row (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩))
           0 by
         unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Vector.dotProduct strictPrefixRows projectionCoeffVector
-        simp [Matrix.row, Fin.foldl_eq_finRange_foldl]]
+        simp [Matrix.row]]
   rw [show
       (prefixSumByRow row basis k hk)[idxFin] =
         (List.finRange k).foldl

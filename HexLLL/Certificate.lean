@@ -179,7 +179,6 @@ theorem dotProduct_packRow (K : Nat) (M : Matrix Int n n) (A : Matrix Int n m)
           (packRow K (Vector.replicate m (0 : Int))) := by
     rw [packRow_replicate_zero]
     unfold Vector.dotProduct
-    rw [Fin.foldl_eq_finRange_foldl]
     simp only [Fin.getElem_fin, Vector.getElem_ofFn]
   rw [hstart, foldl_dot_pack]
   congr 1
@@ -193,7 +192,6 @@ theorem dotProduct_packRow (K : Nat) (M : Matrix Int n n) (A : Matrix Int n m)
         ((Vector.replicate m (0 : Int))[(⟨j, hj⟩ : Fin m)]) := by
     simp only [getElem_row, getElem_mul]
     unfold Vector.dotProduct
-    rw [Fin.foldl_eq_finRange_foldl]
     simp only [getElem_col, getElem_row]
     simp only [Fin.getElem_fin, Vector.getElem_replicate]
   exact hentry.trans htarget.symm

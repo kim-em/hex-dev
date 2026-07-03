@@ -1077,7 +1077,7 @@ theorem vecMul_coeffs_apply_eq_of_zero_above
     show ((coeffs b).transpose * castc)[k] = _
     rw [Matrix.getElem_mulVec]
     show (((coeffs b).transpose).row k).dotProduct castc = _
-    rw [Vector.dotProduct, Fin.foldl_eq_finRange_foldl]
+    rw [Vector.dotProduct]
     show (List.finRange n).foldl
         (fun acc i =>
           acc + (((coeffs b).transpose).row k)[i] * castc[i]) 0 = _

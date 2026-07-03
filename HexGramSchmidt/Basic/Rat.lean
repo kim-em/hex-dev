@@ -206,7 +206,6 @@ private theorem projectionCoeff_row_later_basis_eq_zero
     · simp [GramSchmidt.projectionCoeff, hnorm]
     · have hdot : (0 : Vector Rat m).dotProduct ((basis b).row col) = 0 := by
         unfold Vector.dotProduct
-        rw [Fin.foldl_eq_finRange_foldl]
         induction List.finRange m with
         | nil => rfl
         | cons idx rest ih =>

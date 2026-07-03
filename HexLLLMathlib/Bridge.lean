@@ -127,7 +127,7 @@ private theorem norm_sq_intRowToEuclidean (row : Vector Int m) :
   rw [EuclideanSpace.real_norm_sq_eq]
   simp only [intRowToEuclidean, PiLp.toLp_apply]
   unfold Vector.normSq Vector.dotProduct
-  rw [Fin.foldl_eq_finRange_foldl, foldl_finRange_eq_sum]
+  rw [foldl_finRange_eq_sum]
   push_cast
   refine Finset.sum_congr rfl ?_
   intro i _

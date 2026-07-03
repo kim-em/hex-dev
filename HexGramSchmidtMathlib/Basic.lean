@@ -102,7 +102,7 @@ theorem rowToEuclidean_inner (a b : Vector Rat m) :
   rw [PiLp.inner_apply]
   simp [rowToEuclidean, PiLp.toLp_apply,
     RCLike.inner_apply, mul_comm]
-  rw [Vector.dotProduct, Fin.foldl_eq_finRange_foldl, cast_foldl_dotProduct_rat]
+  rw [Vector.dotProduct, cast_foldl_dotProduct_rat]
   simp only [Rat.cast_zero, zero_add]
   rw [← List.sum_toFinset _ (List.nodup_finRange m)]
   simp [List.toFinset_finRange]

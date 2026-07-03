@@ -184,7 +184,6 @@ private theorem det_intCast {k : Nat} (M : Matrix Int k k) :
 theorem dot_add_right_rat {m' : Nat} (u v w : Vector Rat m') :
     u.dotProduct (v + w) = u.dotProduct v + u.dotProduct w := by
   unfold Vector.dotProduct
-  simp only [Fin.foldl_eq_finRange_foldl]
   have h :
       ∀ (xs : List (Fin m')) (accV accW : Rat),
         xs.foldl (fun acc i => acc + u[i] * (v + w)[i]) (accV + accW) =
@@ -213,7 +212,6 @@ theorem dot_add_right_rat {m' : Nat} (u v w : Vector Rat m') :
 theorem dot_smul_right_rat {m' : Nat} (s : Rat) (u v : Vector Rat m') :
     u.dotProduct (s • v) = s * u.dotProduct v := by
   unfold Vector.dotProduct
-  simp only [Fin.foldl_eq_finRange_foldl]
   have h :
       ∀ (xs : List (Fin m')) (acc : Rat),
         xs.foldl (fun acc i => acc + u[i] * (s • v)[i]) (s * acc) =
@@ -241,7 +239,6 @@ theorem dot_smul_right_rat {m' : Nat} (s : Rat) (u v : Vector Rat m') :
 private theorem dot_zero_right_rat {m' : Nat} (u : Vector Rat m') :
     u.dotProduct (0 : Vector Rat m') = 0 := by
   unfold Vector.dotProduct
-  simp only [Fin.foldl_eq_finRange_foldl]
   have h : ∀ (xs : List (Fin m')) (acc : Rat),
       xs.foldl (fun acc i => acc + u[i] * (0 : Vector Rat m')[i]) acc = acc := by
     intro xs
@@ -276,7 +273,6 @@ private theorem foldl_sum_start_rat {α : Type v}
 private theorem dot_comm_rat {m' : Nat} (u v : Vector Rat m') :
     u.dotProduct v = v.dotProduct u := by
   unfold Vector.dotProduct
-  simp only [Fin.foldl_eq_finRange_foldl]
   have h : ∀ (xs : List (Fin m')) (accU accV : Rat),
       accU = accV →
         xs.foldl (fun acc i => acc + u[i] * v[i]) accU =
@@ -432,7 +428,7 @@ private theorem vecMul_eq_foldl_rows_rat
           (fun acc j => acc + M[j.val][idxFin.val] * c[j])
           0 by
         unfold Matrix.mulVec Matrix.transpose Matrix.col Matrix.row Vector.dotProduct
-        simp [Fin.foldl_eq_finRange_foldl]]
+        simp]
   have hfold :
       ∀ xs : List (Fin n), ∀ accL : Rat, ∀ accR : Vector Rat m,
         accL = accR[idxFin] →
@@ -856,7 +852,6 @@ private theorem dot_castIntRow_eq_cast_dot
     (castIntRow b i).dotProduct (castIntRow b j) =
       (((b.row i).dotProduct (b.row j) : Int) : Rat) := by
   unfold Vector.dotProduct
-  simp only [Fin.foldl_eq_finRange_foldl]
   rw [foldl_intCast_add_aux (xs := List.finRange m)
     (f := fun k : Fin m => (b.row i)[k] * (b.row j)[k]) (acc := 0)]
   rw [show ((0 : Int) : Rat) = (0 : Rat) from rfl]
@@ -906,7 +901,7 @@ private theorem scaledCoeffMatrix_replacementColumn_solve
   rw [hsys]
   unfold Matrix.mulVec Matrix.row
   simp only [Vector.getElem_ofFn, Fin.getElem_fin]
-  rw [Vector.dotProduct, Fin.foldl_eq_finRange_foldl]
+  rw [Vector.dotProduct]
   change
     (List.finRange (j + 1)).foldl
       (fun acc q =>

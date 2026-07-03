@@ -52,7 +52,7 @@ private theorem vecMul_int_getElem
   show (Matrix.transpose b * c)[col] = _
   rw [Matrix.getElem_mulVec]
   show ((Matrix.transpose b).row col).dotProduct c = _
-  simp [Vector.dotProduct, Fin.foldl_eq_finRange_foldl, Matrix.row, Matrix.transpose, Matrix.col, Hex.Matrix.getRow, Fin.getElem_fin]
+  simp [Vector.dotProduct, Matrix.row, Matrix.transpose, Matrix.col, Hex.Matrix.getRow, Fin.getElem_fin]
 
 /-- Entry expansion of the cast prefix row combination. The `(j + 1)`-row prefix
 of `castIntMatrix b` combined with `prefixCoeffsCast c k` reads out as a sum of
@@ -68,7 +68,7 @@ private theorem vecMul_prefix_castIntMatrix_getElem
   show (Matrix.transpose _ * _)[col] = _
   rw [Matrix.getElem_mulVec]
   show ((Matrix.transpose _).row col).dotProduct _ = _
-  simp [Vector.dotProduct, Fin.foldl_eq_finRange_foldl, GramSchmidt.prefixRows,
+  simp [Vector.dotProduct, GramSchmidt.prefixRows,
     castIntMatrix, prefixCoeffsCast, Matrix.row, Matrix.transpose, Matrix.col,
     Hex.Matrix.getRow, Fin.getElem_fin]
 
@@ -173,7 +173,6 @@ Gram-Schmidt basis rows: `coeffs b * basis b` collapses to the cast input
   show (coeffs b * basis b)[ii][jj] = (castIntMatrix b)[ii][jj]
   rw [Matrix.getElem_mul]
   unfold Vector.dotProduct
-  rw [Fin.foldl_eq_finRange_foldl]
   let f : Fin n → Rat := fun k => ((coeffs b).row ii)[k] * ((basis b).col jj)[k]
   have hzero : ∀ k : Fin n, i < k.val → f k = 0 := by
     intro k hk
@@ -283,7 +282,7 @@ theorem vecMul_basis_coeffs_reconstruction
     show _ = (Matrix.transpose (castIntMatrix b) *
         Vector.map (fun x : Int => (x : Rat)) c)[jj]
     rw [Matrix.getElem_mulVec]
-    simp [Vector.dotProduct, Fin.foldl_eq_finRange_foldl, Matrix.row, Matrix.transpose,
+    simp [Vector.dotProduct, Matrix.row, Matrix.transpose,
       Matrix.col, castIntMatrix, Hex.Matrix.getRow, Fin.getElem_fin]
   rw [hleft, ← hcoeff]
   change ((Matrix.transpose (coeffs b * basis b)) *

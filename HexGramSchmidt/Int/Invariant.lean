@@ -313,7 +313,6 @@ private theorem int_dot_eq_zero_of_dot_self_zero_left (u v : Vector Int m)
     (hzero : v.dotProduct v = 0) :
     v.dotProduct u = 0 := by
   unfold Vector.dotProduct
-  rw [Fin.foldl_eq_finRange_foldl]
   induction List.finRange m with
   | nil =>
       simp
@@ -375,7 +374,6 @@ private theorem getElem_vecMul_int
   show (Matrix.transpose b * c)[j] = _
   rw [Matrix.getElem_mulVec]
   unfold Vector.dotProduct
-  rw [Fin.foldl_eq_finRange_foldl]
   apply foldl_add_pointwise_eq_int
   intro k _hk
   simp [Matrix.transpose, Matrix.col, Matrix.row]
@@ -409,7 +407,6 @@ private theorem dot_vecMul_right_eq
           (fun accj j => accj + u[j] *
             (List.finRange n).foldl (fun acck k => acck + b[k][j] * c[k]) 0) 0 := by
     unfold Vector.dotProduct
-    rw [Fin.foldl_eq_finRange_foldl]
     apply foldl_add_pointwise_eq_int
     intro j _hj
     rw [getElem_vecMul_int (b := b) (c := c) j]
@@ -468,7 +465,6 @@ private theorem dot_vecMul_right_eq
       u.dotProduct (b.row k) =
         (List.finRange m).foldl (fun accj j => accj + u[j] * b[k][j]) 0 := by
     unfold Vector.dotProduct
-    rw [Fin.foldl_eq_finRange_foldl]
     apply foldl_add_pointwise_eq_int
     intro j _hj
     simp [Matrix.row]

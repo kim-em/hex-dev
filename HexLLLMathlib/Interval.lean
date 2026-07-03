@@ -265,7 +265,6 @@ private theorem foldl_finRange_eq_sum {R : Type*} [AddCommMonoid R] {k : Nat}
 private theorem dot_eq_sum {m' : Nat} (u v : Vector Rat m') :
     u.dotProduct v = ∑ k : Fin m', u[k] * v[k] := by
   unfold Vector.dotProduct
-  rw [Fin.foldl_eq_finRange_foldl]
   exact foldl_finRange_eq_sum _
 
 /-- The rational cast of a basis row of the integer input. -/
@@ -298,7 +297,7 @@ private theorem gram_cast (b : Hex.Matrix Int n m) (i j : Fin n) :
   rw [dot_eq_sum]
   rw [show (b.row i).dotProduct (b.row j) =
       ∑ k : Fin m, (b.row i)[k] * (b.row j)[k] from by
-        rw [Vector.dotProduct, Fin.foldl_eq_finRange_foldl]
+        rw [Vector.dotProduct]
         exact foldl_finRange_eq_sum _]
   push_cast
   refine Finset.sum_congr rfl fun k _ => ?_
