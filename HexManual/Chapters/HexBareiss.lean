@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexBareiss
+import HexBareissMathlib
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -38,8 +38,9 @@ Gaussian elimination. It builds on {ref "hex-matrix"}[HexMatrix] and the
 specification it is checked against).
 
 `HexBareiss` is Mathlib-free. The theorem identifying the Bareiss
-determinant with the Leibniz determinant, via the Desnanot-Jacobi
-invariant, lives in `HexBareissMathlib`.
+determinant with the Leibniz determinant (and hence with Mathlib's
+`Matrix.det`), via the Desnanot-Jacobi invariant, is the
+{ref "hex-bareiss-mathlib"}[last section].
 
 # The elimination record
 %%%
@@ -124,36 +125,44 @@ open Hex Hex.Matrix
 namespace HexBareissChapterExample
 
 -- A = [[2, 0, 1], [1, 3, 2], [0, 1, 1]], det = 3.
-private def A : Matrix Int 3 3 :=
-  Matrix.ofFn fun i j =>
-    match i.val, j.val with
-    | 0, 0 => 2 | 0, 1 => 0 | 0, 2 => 1
-    | 1, 0 => 1 | 1, 1 => 3 | 1, 2 => 2
-    | 2, 0 => 0 | 2, 1 => 1 | 2, 2 => 1
-    | _, _ => 0
+private def A : Hex.Matrix Int 3 3 := #m[2, 0, 1; 1, 3, 2; 0, 1, 1]
 
 -- The Bareiss determinant is 3, agreeing with Leibniz.
-#guard Matrix.bareiss A = 3
-#guard Matrix.bareiss A = Matrix.det A
+#guard bareiss A = 3
+#guard bareiss A = det A
 
 -- The packaged record reads off the same determinant.
-#guard (Matrix.bareissData A).det = 3
+#guard (bareissData A).det = 3
 
 -- The identity has determinant one.
-#guard Matrix.bareiss (Matrix.identity (R := Int) 3) = 1
+#guard bareiss (Hex.Matrix.identity (R := Int) 3) = 1
 
 -- S = [[1, 2], [2, 4]]: dependent rows, so singular.
-private def S : Matrix Int 2 2 :=
-  Matrix.ofFn fun i j =>
-    match i.val, j.val with
-    | 0, 0 => 1 | 0, 1 => 2
-    | 1, 0 => 2 | 1, 1 => 4
-    | _, _ => 0
+private def S : Hex.Matrix Int 2 2 := #m[1, 2; 2, 4]
 
-#guard Matrix.bareiss S = 0
+#guard bareiss S = 0
 
 end HexBareissChapterExample
 ```
+
+# The Mathlib correspondence
+%%%
+tag := "hex-bareiss-mathlib"
+%%%
+
+Everything above is executable and Mathlib-free. `HexBareissMathlib`
+connects it to Mathlib. Its headline theorem is that the fraction-free
+Bareiss determinant equals the Leibniz {ref "hex-determinant"}[determinant]
+on integer square matrices, so the cubic-time route and the
+specification agree outright.
+
+{docstring HexMatrixMathlib.bareiss_eq_det}
+
+Composed with the {ref "hex-determinant-mathlib"}[determinant
+correspondence], this also identifies the Bareiss determinant with
+Mathlib's `Matrix.det`.
+
+{docstring HexMatrixMathlib.bareissDet_eq_det}
 
 # Cross-references
 %%%

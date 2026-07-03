@@ -254,6 +254,11 @@ private theorem equivs_toFinset (n : Nat) :
   ext σ
   simp [PermutationVector.equivs_complete]
 
+/-- The executable Leibniz determinant `Hex.Matrix.det` agrees with Mathlib's
+`Matrix.det` of the corresponding Mathlib matrix `matrixEquiv M`. This is the
+bridge that lets a fact about `Matrix.det` be discharged by running the
+executable determinant, or the executable determinant be reasoned about with
+Mathlib's determinant theory. -/
 theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
     Hex.Matrix.det M = Matrix.det (matrixEquiv M) := by
   let term : Equiv.Perm (Fin n) → R := fun σ =>

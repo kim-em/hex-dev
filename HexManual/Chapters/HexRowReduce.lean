@@ -128,9 +128,9 @@ tag := "hex-row-reduce-recipe-kernel"
 %%%
 
 You have a matrix over a field and want a basis for its kernel: the
-vectors `x` with `M * x = 0`. Build the matrix with the `#m[...]`
-literal. {name}`Hex.Matrix.nullspaceBasisMatrix` returns the basis as
-the columns of a matrix, one column per free (non-pivot) column of `M`.
+vectors `x` with `M * x = 0`. {name}`Hex.Matrix.nullspaceBasisMatrix`
+returns the basis as the columns of a matrix, one column per free
+(non-pivot) column of `M`.
 
 ```lean (name := kernelBasis)
 open Hex Hex.Matrix

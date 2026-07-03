@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 import HexLLL.Basic
+import HexMatrix
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -109,18 +110,23 @@ clears denominators in both the size-reduced and Lovász clauses.
 
 {docstring Hex.lllReducedInt}
 
-For larger inputs an unverified fixed-precision interval pass is usually
-faster. The dispatching checker uses a size predictor to choose it, but
-always keeps the exact integer checker as a mandatory fallback when the
-interval pass is indecisive, so completeness stays structural rather than
-numerical.
+The exact integer checker is complete, but its operands grow with the
+input. For larger inputs an unverified fixed-precision interval pass over
+the same integer data is usually faster at deciding reducedness, so the
+dispatching checker uses a cheap size predictor to pick between the two,
+always keeping the exact integer checker as a mandatory fallback when the
+interval pass is indecisive; completeness therefore stays structural
+rather than numerical. This is a choice between two *checkers* for a
+basis already in hand, and is independent of how that basis was reduced.
 
 {docstring Hex.lllReducedCheck}
 
-The same-lattice side of an external candidate is certified separately. A
-pair of integer transforms `U`, `V` witnessing `U·B = B'` and `V·B' = B`
-proves the two bases generate the same lattice. The certificate is a
-denominator-free `Bool` check with an overflow-safe packed-row comparison.
+Reducedness is only half of what an external candidate needs. We certify
+separately that the external certificate applies to the original input
+lattice: a pair of integer transforms `U`, `V` witnessing `U·B = B'` and
+`V·B' = B` proves the two bases generate the same lattice. The
+certificate is a denominator-free `Bool` check with a packed-row
+comparison.
 
 {docstring Hex.Matrix.sameLatticeCert}
 
@@ -136,60 +142,95 @@ with the reducedness checker.
 tag := "hex-lll-reduction"
 %%%
 
-The reducer state is the proof-facing {name}`Hex.Internal.LLLState`, which holds
-the exact integer basis together with the scaled Gram-Schmidt data, and a
-separate {name}`Hex.Internal.LLLState.Valid` predicate relates that data to the
-`GramSchmidt.Int` representation, keeping the state updates computational while
-letting the Mathlib side reason about them.
-
-{docstring Hex.Internal.LLLState}
-
-{docstring Hex.Internal.LLLState.Valid}
-
 The exact all-integer reducer {name}`Hex.lllNative` drives the standard LLL
-outer loop (integer size-reduction and adjacent Lovász swaps) from that exact
-`d`/`ν` data alone. Its size-reduction step produces exact `|μ| ≤ 1/2`, so it
-satisfies the classical `η = 1/2` bound and is the direct `1/4 < δ` entry
-point.
+outer loop — integer size-reduction and adjacent Lovász swaps — directly on
+the exact `d`/`ν` Gram-Schmidt data. Its size-reduction step produces exact
+`|μ| ≤ 1/2`, so it satisfies the classical `η = 1/2` bound and is the direct
+`1/4 < δ` entry point.
 
 {docstring Hex.lllNative}
 
-The public entry point hides all of this behind one signature. Given a
-basis with independent rows and `δ` in the classical range, it returns a
-reduced basis generating the same lattice. The short-vector and same-lattice
-post-conditions are identical on every internal path, so callers and proofs
-never see the dispatch.
+The public entry point unifies two internal paths behind one signature.
+Given a basis with independent rows and `δ` in the classical range,
+{name}`Hex.lll` returns a reduced basis for the same lattice. It gets there
+either by running `lllNative` directly, or, when an external `fpLLL` provider
+is available at runtime, by certifying the provider's candidate with the
+verified checker and returning that instead (the
+{ref "hex-lll-dispatch"}[next section] describes the switch). Accepting a
+black-box candidate is what forces the slightly weaker `η = 11/20` bound
+described below; both paths meet the same short-vector and same-lattice
+post-conditions, so callers and proofs never see which one ran.
 
 {docstring Hex.lll}
 
-Two functions return the short vectors of the reduced basis.
+## The size-reduction bound and its constants
+%%%
+tag := "hex-lll-bound"
+%%%
+
+The public `Hex.lll` certifies its output `(δ, 11/20)`-reduced: every
+Gram-Schmidt coefficient satisfies `|μ| ≤ 11/20`. Two numbers in its signature
+follow from `η = 11/20`. The precondition is `121/400 < δ`, because
+`121/400 = (11/20)² = η²` and the bound is well-defined only when `η² < δ`. The
+short-vector constant is `1/(δ − 121/400)`. So the `121/400` stands exactly
+where the classical bound would put `1/4 = (1/2)²`.
+
+Why `11/20` rather than the classical `1/2`? Solely the external provider. The
+exact `Hex.lllNative` already lands at `|μ| ≤ 1/2`, but a black-box reducer
+cannot be forced to exactly `1/2` (fpLLL's default size-reduction target sits
+slightly above it), so the certified path accepts its candidate at the looser
+`11/20`. When you want the tighter guarantee, call `Hex.lllNative` directly: its
+short-vector theorem `lllNative_short_vector` carries the precondition
+`1/4 < δ` and the strictly better constant `1/(δ − 1/4)`.
+
+## Short vectors
+%%%
+tag := "hex-lll-short-vectors"
+%%%
+
+Two functions read the short vectors off the reduced basis.
 {name}`Hex.lll.firstShortVector` is the single short vector used by
 recombination. {name}`Hex.lll.shortVectors` returns the whole reduced
-basis as an ordered candidate list. Each has a proof-free `Unchecked`
-variant that drops the independence hypothesis for quick experimentation.
+basis as an ordered candidate list.
 
 {docstring Hex.lll.firstShortVector}
 
 {docstring Hex.lll.shortVectors}
+
+Each has an `Unchecked` variant. These call `lllNative` directly, so they
+take the tighter native precondition `1/4 < δ` and skip the provider
+dispatch and its certification. They also omit the `b.independent`
+hypothesis — and this is the key point: independence is a precondition of
+the *theorems* about the output, not of the *computation*. The reducer
+runs on any input; the `Unchecked` variants simply forgo the reduced-basis
+guarantees, so you get the reduced rows back without having to discharge an
+independence proof. That is what makes them convenient for quick
+experimentation.
+
+{docstring Hex.lll.firstShortVectorUnchecked}
+
+{docstring Hex.lll.shortVectorsUnchecked}
 
 # Certified external dispatch
 %%%
 tag := "hex-lll-dispatch"
 %%%
 
-When an external `fpLLL` provider is linked in, {name}`Hex.Internal.LLLProvider.dispatch`
-asks it for a reduced basis and validates the answer with {name}`Hex.certCheck`
-before trusting it. A rejected or absent provider yields `none`, and the
-caller falls through to the native path, so the foreign reducer can speed
-things up but can never compromise correctness.
+By default `Hex.lll` runs the exact `Hex.lllNative`. To let it accelerate
+through the external `fpLLL` provider instead, point the environment
+variable `HEX_FPLLL_FFI_LIB` at a built fpLLL-ffi shared library before the
+process starts; leave it unset to stay on the native path. This is a runtime
+switch, not a matter of importing a different module — `HexLLL` always links
+its small provider shim, and the *same* `Hex.lll` call takes the certified
+path exactly when the provider library is resolvable.
 
-{docstring Hex.Internal.LLLProvider.dispatch}
-
-An accepted dispatch result comes with the integer transforms witnessing
-its certificate, the single fact the certified-dispatch path of
-{name}`Hex.lll` depends on.
-
-{docstring Hex.Internal.LLLProvider.dispatch_some_certCheck}
+Either way the result is `(δ, 11/20)`-reduced. When the provider is in use,
+`Hex.lll` asks it for a reduced basis and re-checks the candidate with
+{name}`Hex.certCheck` before returning it; a candidate the checker rejects,
+or an absent provider, falls straight through to the native reducer. The
+foreign numerics can therefore speed things up but can never affect
+correctness: nothing the provider returns is trusted until the verified
+integer checker has accepted it.
 
 # Performance comparison
 %%%
@@ -239,39 +280,11 @@ part of the algorithm:
 
 Across every family the exact reducers are correct but climb steeply on the hard
 bases, while `Lean certified` stays within about 1.2 to 2.5 times raw `fpLLL`:
-verified output at close to floating-point cost.
-
-## Selecting the certified versus native path
-
-This is a runtime choice, not a Lean import. `HexLLL` always builds its FFI
-shim, and the *same* `Hex.lll` call picks its path by whether an external
-provider symbol is resolvable in the process:
-
-* set the environment variable `HEX_FPLLL_FFI_LIB` to a built fpLLL-ffi shared
-  library and `lll` takes the certified path: the shim `dlopen`s it,
-  `providerAvailable` returns true, and the candidate is certified by
-  `Hex.certCheck`;
-* leave it unset (or if certification ever fails) and `lll` runs the exact
-  `Hex.lllNative` directly.
-
-Either way the returned basis is `(δ, 11/20)`-reduced.
-
-## The size-reduction bound and its constants
-
-The public `Hex.lll` certifies its output `(δ, 11/20)`-reduced: every
-Gram-Schmidt coefficient satisfies `|μ| ≤ 11/20`. Two numbers in its signature
-follow from `η = 11/20`. The precondition is `121/400 < δ`, because
-`121/400 = (11/20)² = η²` and the bound is well-defined only when `η² < δ`. The
-short-vector constant is `1/(δ − 121/400)`. So the `121/400` stands exactly
-where the classical bound would put `1/4 = (1/2)²`.
-
-Why `11/20` rather than the classical `1/2`? Solely the external provider. The
-exact `Hex.lllNative` already lands at `|μ| ≤ 1/2`, but a black-box reducer
-cannot be forced to exactly `1/2` (fpLLL's default size-reduction target sits
-slightly above it), so the certified path accepts its candidate at the looser
-`11/20`. When you want the tighter guarantee, call `Hex.lllNative` directly: its
-short-vector theorem `lllNative_short_vector` carries the precondition
-`1/4 < δ` and the strictly better constant `1/(δ − 1/4)`.
+verified output at close to floating-point cost. Selecting the certified
+versus native path is the runtime switch described under
+{ref "hex-lll-dispatch"}[Certified external dispatch]; the `η = 11/20`
+constants both paths report are explained under
+{ref "hex-lll-bound"}[the size-reduction bound].
 
 ## The other families
 
@@ -298,45 +311,21 @@ The block reduces the rank-2 lattice with basis rows `(1, 12)` and
 lattice and are as short as possible.
 
 ```lean
-open Hex Hex.Matrix Hex.Internal
+open Hex Hex.Matrix
 
 namespace HexLLLChapterExample
 
 -- B = [[1, 12], [0, 1]]: a skewed basis.
-private def B : Matrix Int 2 2 :=
-  Matrix.ofFn fun i j =>
-    match i.val, j.val with
-    | 0, 0 => 1
-    | 0, 1 => 12
-    | 1, 1 => 1
-    | _, _ => 0
+private def B : Hex.Matrix Int 2 2 := #m[1, 12; 0, 1]
 
 -- R = [[0, 1], [1, 0]]: the reduced basis.
-private def R : Matrix Int 2 2 :=
-  Matrix.ofFn fun i j =>
-    match i.val, j.val with
-    | 0, 1 => 1
-    | 1, 0 => 1
-    | _, _ => 0
+private def R : Hex.Matrix Int 2 2 := #m[0, 1; 1, 0]
 
 -- U, V: the integer transforms witnessing that B
--- and R generate the same lattice (U·B = R,
--- V·R = B).
-private def U : Matrix Int 2 2 :=
-  Matrix.ofFn fun i j =>
-    match i.val, j.val with
-    | 0, 1 => 1
-    | 1, 0 => 1
-    | 1, 1 => -12
-    | _, _ => 0
+-- and R generate the same lattice (U·B = R, V·R = B).
+private def U : Hex.Matrix Int 2 2 := #m[0, 1; 1, -12]
 
-private def V : Matrix Int 2 2 :=
-  Matrix.ofFn fun i j =>
-    match i.val, j.val with
-    | 0, 0 => 12
-    | 0, 1 => 1
-    | 1, 0 => 1
-    | _, _ => 0
+private def V : Hex.Matrix Int 2 2 := #m[12, 1; 1, 0]
 
 -- The δ = 3/4 preconditions for the exact reducer.
 private theorem hlo : (1 / 4 : Rat) < 3 / 4 := by grind
@@ -346,8 +335,7 @@ private theorem hhi : (3 / 4 : Rat) ≤ 1 := by grind
 #guard lllNative B (3 / 4) hlo hhi (by decide) = R
 
 -- Its first row is a shortest lattice vector.
-#guard ((lllNative B (3 / 4) hlo hhi (by decide)).row
-          ⟨0, by decide⟩).toArray = #[0, 1]
+#guard (lllNative B (3 / 4) hlo hhi (by decide)).row ⟨0, by decide⟩ = #v[0, 1]
 
 -- The verified checker rejects the input basis
 -- (not size-reduced) and accepts the output.
@@ -361,6 +349,53 @@ private theorem hhi : (3 / 4 : Rat) ≤ 1 := by grind
 
 end HexLLLChapterExample
 ```
+
+## Recovering a minimal polynomial from a decimal
+
+A short vector of a well-chosen lattice recovers an integer relation among
+real numbers. The classic application is guessing the minimal polynomial
+of an algebraic number from a numerical approximation. Take the decimal
+`α = 1.220744…`, and suppose all we know is that it is a root of some monic
+integer polynomial of degree at most four — but not which one.
+
+Scale the powers `1, α, α², α³, α⁴` by `C = 10⁶` and round to integers. The
+lattice has one row per power: an identity block that remembers the
+coefficient, and a last column holding the scaled power. A combination
+`Σ aᵢ · rowᵢ` has last coordinate `≈ C · Σ aᵢ αⁱ`, which is tiny exactly
+when `Σ aᵢ αⁱ ≈ 0` — that is, when the `aᵢ` are the coefficients of a
+polynomial that `α` nearly satisfies. LLL finds the shortest such vector.
+
+```lean
+open Hex Hex.Matrix
+
+namespace HexLLLMinPoly
+
+-- One row per power of α: eᵢ in the first five columns,
+-- round(10⁶ · αⁱ) in the last, for i = 0..4.
+private def L : Hex.Matrix Int 5 6 :=
+  #m[1, 0, 0, 0, 0, 1000000;
+     0, 1, 0, 0, 0, 1220744;
+     0, 0, 1, 0, 0, 1490216;
+     0, 0, 0, 1, 0, 1819173;
+     0, 0, 0, 0, 1, 2220744]
+
+private theorem hlo : (1 / 4 : Rat) < 3 / 4 := by grind
+private theorem hhi : (3 / 4 : Rat) ≤ 1 := by grind
+
+-- The shortest reduced row reads off the coefficients
+-- (a₀, a₁, a₂, a₃, a₄) = (-1, -1, 0, 0, 1) with a zero
+-- last coordinate: the relation -1 - α + α⁴ = 0, i.e.
+-- the minimal polynomial x⁴ - x - 1.
+#guard (lllNative L (3 / 4) hlo hhi (by decide)).row ⟨0, by decide⟩ = #v[-1, -1, 0, 0, 1, 0]
+
+end HexLLLMinPoly
+```
+
+The last coordinate comes out exactly zero, not merely small: because
+`α⁴ = α + 1` holds exactly and `C` is an integer, the rounded scaled powers
+satisfy `round(C·α⁴) − round(C·α) − round(C) = 0` on the nose. So the
+recovered vector is a genuine lattice element, and its first five entries
+`(-1, -1, 0, 0, 1)` are the coefficients of `x⁴ − x − 1`.
 
 # Cross-references
 %%%

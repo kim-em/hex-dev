@@ -46,6 +46,9 @@ Mathlib's `Matrix`.
 tag := "hex-matrix-core"
 %%%
 
+This section is the definitions; the {ref "hex-matrix-lemmas"}[next
+section] collects the theorems about them.
+
 {name}`Hex.Matrix.ofFn` builds a matrix from an entry function
 `Fin n → Fin m → R`. `row` and `col` return its rows and columns, and
 `transpose` swaps them.
@@ -57,8 +60,6 @@ tag := "hex-matrix-core"
 {docstring Hex.Matrix.col}
 
 {docstring Hex.Matrix.transpose}
-
-{docstring Hex.Matrix.transpose_transpose}
 
 The zero and identity matrices:
 
@@ -75,14 +76,6 @@ Each product entry is a row-by-column dot product.
 
 {docstring Hex.Matrix.mul}
 
-The identity is a left and right unit, and multiplication is associative.
-
-{docstring Hex.Matrix.identity_mul}
-
-{docstring Hex.Matrix.mul_identity}
-
-{docstring Hex.Matrix.mul_assoc}
-
 The Gram matrix of the rows and the leading principal submatrices used by
 the Bareiss recurrence:
 
@@ -90,15 +83,62 @@ the Bareiss recurrence:
 
 {docstring Hex.Matrix.principalSubmatrix}
 
+# Entry, row, and column lemmas
+%%%
+tag := "hex-matrix-lemmas"
+%%%
+
+Every operation above carries a complete set of description lemmas: an
+entry lemma `getElem_…` fixing `M[i][j]`, and `row_…`/`col_…` lemmas
+fixing a whole row or column. This grid is kept total — `zero`,
+`identity`, `transpose`, `mulVec`, `vecMul`, `mul`, `gramMatrix`,
+`principalSubmatrix`, and every elementary operation each carry all
+three — so a proof can rewrite in whichever shape it needs. The lemmas
+below are representative rather than exhaustive.
+
+Transpose exchanges rows and columns, and is an involution:
+
+{docstring Hex.Matrix.getElem_transpose}
+
+{docstring Hex.Matrix.row_transpose}
+
+{docstring Hex.Matrix.transpose_transpose}
+
+Every product entry is a dot product: matrix-vector, vector-matrix, and
+matrix-matrix multiplication all read off {name}`Vector.dotProduct`.
+
+{docstring Hex.Matrix.getElem_mulVec}
+
+{docstring Hex.Matrix.getElem_vecMul}
+
+{docstring Hex.Matrix.getElem_mul}
+
+The identity entries are the Kronecker delta, the identity is a left and
+right unit, and multiplication is associative:
+
+{docstring Hex.Matrix.getElem_identity}
+
+{docstring Hex.Matrix.identity_mul}
+
+{docstring Hex.Matrix.mul_identity}
+
+{docstring Hex.Matrix.mul_assoc}
+
+The Gram matrix pairs the rows against one another:
+
+{docstring Hex.Matrix.getElem_gramMatrix}
+
 # Elementary operations
 %%%
 tag := "hex-matrix-elementary"
 %%%
 
-The elementary row operations work over any ring. Each has a determinant
-law, proved in {ref "hex-determinant"}[HexDeterminant].
-{ref "hex-row-reduce"}[HexRowReduce] uses them for Gauss-Jordan reduction
-over a field.
+The elementary operations work over any ring. Each row operation has a
+column mirror — `rowSwap`/`colSwap`, `rowScale`/`colScale`,
+`rowAdd`/`colAdd` — and each has a determinant law proved in
+{ref "hex-determinant"}[HexDeterminant].
+{ref "hex-row-reduce"}[HexRowReduce] uses the row operations for
+Gauss-Jordan reduction over a field.
 
 {docstring Hex.Matrix.rowSwap}
 
@@ -106,15 +146,20 @@ over a field.
 
 {docstring Hex.Matrix.rowAdd}
 
+{docstring Hex.Matrix.colSwap}
+
+{docstring Hex.Matrix.colScale}
+
 # Worked example
 %%%
 tag := "hex-matrix-worked"
 %%%
 
 The block builds an integer matrix with the `#m[...]` literal and checks
-three things about it: the squared norm of the first row
-(`2² + 0² + 1² = 5`), the dot product of the first two rows (`4`), and
-that the identity fixes a vector.
+the squared norm of the first row (`2² + 0² + 1² = 5`), the dot product
+of the first two rows (`4`), that the identity fixes a vector, and one
+elementary row operation: adding row `0` to row `2` (`rowAdd A 0 2 1`)
+replaces row `2 = (0, 1, 1)` with `(0, 1, 1) + (2, 0, 1) = (2, 1, 2)`.
 
 ```lean
 open Hex
@@ -130,6 +175,8 @@ def A : Matrix Int 3 3 := #m[2, 0, 1; 1, 3, 2; 0, 1, 1]
 def v : Vector Int 3 := #v[1, 2, 3]
 
 #guard (Matrix.identity (R := Int) 3).mulVec v = v
+
+#guard (Matrix.rowAdd A 0 2 1).row 2 = #v[2, 1, 2]
 
 end HexMatrixChapterExample
 ```
