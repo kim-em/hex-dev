@@ -117,7 +117,44 @@ alongside these under `reports/figures/`.
 
 ## Recorded sweeps
 
-<!-- SWEEP-RECORD-BLOCK -->
+### carica, 10 s cutoff (2026-07-03)
+
+- **Artifact:** `reports/bench-results/hexbz-factor-sweep-663e07e2-carica.json`
+  SHA-256 `c98c1fa185f7b3a8d1778413efeb58be907c5b05eba8193cc7426f3edb3e3dbb`
+- **Command:**
+  `python3 scripts/bench/factor_sweep.py --systems hex-factor,hex-lattice,hex-fast,hex-classical-nodecline,flint,ntl --cutoff 10 --skip-unavailable`
+- **Corpus:** `bench/corpus/hexbz-factor-corpus.jsonl`
+  SHA-256 `02155334449b001b6cf86a3859e7f4fae5a812a2c6810935bebb73163d76e830` (205 instances)
+- **Env:** host carica, commit `663e07e2` (clean), toolchain
+  `leanprover/lean4:v4.32.0-rc1`, arm64, 24 cores, 2026-07-03T01:35:14Z
+- **Cross-check:** all answering systems agree — hex's factor degree multisets
+  match FLINT and NTL on every instance all three solved (differential
+  correctness across 205 instances).
+
+| system | ok | timeout | declined | overhead (µs) |
+| --- | ---: | ---: | ---: | ---: |
+| hex-factor | 180 | 25 | 0 | 44.0 |
+| hex-lattice | 177 | 28 | 0 | 48.0 |
+| hex-fast | 114 | 76 | 15 | 49.5 |
+| hex-classical-nodecline | 180 | 25 | 0 | 42.4 |
+| flint | 204 | 1 | 0 | 17.2 |
+| ntl | 204 | 1 | 0 | 12.6 |
+
+The C-implementation ceiling (FLINT, NTL) solves 204/205, missing only
+`hoeij_S9` (Swinnerton-Dyer SD₉, degree 512) at the 10 s cutoff. hex's
+production `factor` solves 180; its 25 unsolved are high-degree cyclotomics
+(degree ≥ 100) that need a longer cutoff. The `hex-classical-nodecline` curve
+runs the classical recombination to completion or cutoff with the level-aware
+early decline disabled, so its 25 timeouts are the classical exponential wall
+made visible on the same charts (it never declines — 0 declined — it either
+completes correctly or times out). `hex-fast` (the proof-facing path) is the
+weakest hex tier here, declining 15 and timing out on 76.
+
+This local run covers the systems available on carica; PARI/GP and the two
+verified Isabelle/AFP factorizers (`isabelle-bz`, `isabelle-lll`) are added by
+re-running with those systems once their drivers are set up (the isabelle-lll
+build spike gates its inclusion — see above). Longer-cutoff (60 s / 300 s)
+sweeps record alongside this one, each carrying its own cutoff.
 
 ## Reproducing
 
