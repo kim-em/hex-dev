@@ -208,15 +208,24 @@ and the hardest hoeij-zimmermann entries fall only to the three C libraries
 - **Corpus:** `bench/corpus/hexbz-factor-corpus.jsonl`
   SHA-256 `02155334449b001b6cf86a3859e7f4fae5a812a2c6810935bebb73163d76e830` (205 instances) —
   identical to the baseline, so the two records merge cleanly.
-- **Version:** PARI/GP 2.17.3 (via `cypari2` 2.2.4).
+- **Version:** PARI/GP 2.17.3 (via `cypari2` 2.2.4). The driver runs PARI with a
+  64 MiB→2 GiB auto-growing stack (`cypari2.Pari(size, sizemax)`) rather than the
+  8 MB default, which otherwise reports a stack-overflow error on the largest
+  instances (e.g. `hoeij_F630`, degree 630) instead of factoring; the 10 s
+  harness cutoff is unchanged.
 - **Env:** host carica, commit `07b6363e` (clean), arm64, 24 cores,
   2026-07-03T06:31:46Z.
 - **Result:** 204/205 solved, one timeout (`hoeij_S9`, degree 512, ~15 s),
-  29.5 µs per-call overhead. PARI's factor-degree multisets match
-  `expectedFactorDegrees` on every solved labelled instance (record cross-check
-  green), and its factor counts agree with hex, FLINT, NTL and both verified
-  Isabelle systems on all 1387 co-solved (system, instance) pairs carried in the
-  baseline — the differential-correctness cross-check holds with PARI added.
+  29.5 µs per-call overhead. Correctness evidence: PARI's factor-degree
+  multisets match `expectedFactorDegrees` on all 197 solved labelled instances
+  (the record's own cross-check, green). The seven solved instances without a
+  label are all hoeij-zimmermann literature polynomials; committed records
+  retain only factor counts (the degree multisets are dropped on serialization),
+  and PARI's factor counts agree with hex, FLINT, NTL and both verified Isabelle
+  systems on every one of the 1387 co-solved (system, instance) pairs carried in
+  the baseline. PARI is thus validated against the same `expectedFactorDegrees`
+  oracle as every other system, with factor-count corroboration where labels are
+  absent.
 
 **Only PARI was re-run.** The plotter takes the newest measurement of each
 system, guarded by a matching corpus SHA, so this record contributes PARI's
