@@ -25,6 +25,8 @@ import HexManual.Chapters.HexGFqRing
 import HexManual.Chapters.HexGFqField
 import HexManual.Chapters.HexConway
 import HexManual.Chapters.HexGFq
+-- Tutorials (application-first capstone pages, see SPEC/tutorials.md).
+import HexManual.Tutorials.Coppersmith
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -82,4 +84,17 @@ and, where there is one, its correspondence with Mathlib.
 {include 0 HexManual.Chapters.HexConway}
 
 {include 0 HexManual.Chapters.HexGFq}
+
+# Tutorials
+%%%
+tag := "tutorials"
+%%%
+
+The reference chapters above document each library on its own terms. The
+tutorials here are application-first: each leads with a problem a reader
+already cares about and shows the libraries carrying a recognizable
+end-to-end workflow, with every code snippet checked as part of this
+build.
+
+{include 1 HexManual.Tutorials.Coppersmith}
 
