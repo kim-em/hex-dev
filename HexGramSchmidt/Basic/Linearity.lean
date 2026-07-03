@@ -935,11 +935,11 @@ private theorem basisMatrix_rowSwap_adjacent_curr
 
 /-- The "by-row" prefix sum: a row-indexed variant of `prefixCombination` that
 takes the projection row directly rather than reading it through a coefficient
-matrix. Defined via `foldl` over `List.finRange i` so the conversion to
+matrix. Defined via `Fin.foldl` so the conversion to
 `prefixCombination` is a pointwise function-level rewrite. -/
 private def prefixSumByRow (row : Vector Rat m) (basis : Matrix Rat n m)
     (i : Nat) (hi : i ≤ n) : Vector Rat m :=
-  (List.finRange i).foldl
+  Fin.foldl i
     (fun acc j =>
       let jn : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hi⟩
       acc + projectionCoeff row (basis.row jn) • basis.row jn)
@@ -1247,7 +1247,8 @@ private theorem prefixSpan_row
 private theorem vecMul_eq_foldl_rows
     (M : Matrix Rat n m) (c : Vector Rat n) :
     Matrix.vecMul c M =
-      (List.finRange n).foldl (fun acc j => acc + c[j] • M.row j) 0 := by
+      Fin.foldl n (fun acc j => acc + c[j] • M.row j) 0 := by
+  rw [Fin.foldl_eq_finRange_foldl]
   apply Vector.ext
   intro idx hidx
   let idxFin : Fin m := ⟨idx, hidx⟩
@@ -1289,7 +1290,7 @@ private theorem dot_eq_zero_of_prefixSpan
     (horth : ∀ j : Fin (i + 1), u.dotProduct ((prefixRows M i hi).row j) = 0) :
     u.dotProduct v = 0 := by
   rcases hspan with ⟨c, hc⟩
-  rw [← hc, vecMul_eq_foldl_rows]
+  rw [← hc, vecMul_eq_foldl_rows, Fin.foldl_eq_finRange_foldl]
   have hfold :
       ∀ xs : List (Fin (i + 1)), ∀ acc : Vector Rat m,
         u.dotProduct acc = 0 →
@@ -1402,15 +1403,16 @@ private theorem foldl_orthogonal_expansion_normSq
 
 /-- The `acc = 0` case of `foldl_orthogonal_expansion_normSq`: for pairwise
 orthogonal rows the squared norm of the full row combination equals the fold of
-`coeffs[i] * coeffs[i] * (rows.row i)`.normSq over `List.finRange n`. -/
+`coeffs[i] * coeffs[i] * (rows.row i)`.normSq over `Fin.foldl n`. -/
 private theorem foldl_orthogonal_expansion_normSq_zero
     (rows : Matrix Rat n m) (coeffs : Vector Rat n)
     (horth : ∀ i j : Fin n, i ≠ j →
       (rows.row i).dotProduct (rows.row j) = 0) :
     Vector.normSq
-        ((List.finRange n).foldl (fun acc i => acc + coeffs[i] • rows.row i) 0) =
-      (List.finRange n).foldl
+        (Fin.foldl n (fun acc i => acc + coeffs[i] • rows.row i) 0) =
+      Fin.foldl n
         (fun total i => total + coeffs[i] * coeffs[i] * (rows.row i).normSq) 0 := by
+  rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl]
   have hacc : ∀ i ∈ List.finRange n, (0 : Vector Rat m).dotProduct (rows.row i) = 0 := by
     intro i _hi
     rw [dot_comm_rat]
@@ -1535,7 +1537,8 @@ theorem vecMul_normSq_ge_of_orthogonal_coeff_sq_ge_one
       (rows.row i).dotProduct (rows.row j) = 0)
     (hcoeff : 1 ≤ coeffs[k] * coeffs[k]) :
     (rows.row k).normSq ≤ (Matrix.vecMul coeffs rows).normSq := by
-  rw [vecMul_eq_foldl_rows, foldl_orthogonal_expansion_normSq_zero rows coeffs horth]
+  rw [vecMul_eq_foldl_rows, foldl_orthogonal_expansion_normSq_zero rows coeffs horth,
+    Fin.foldl_eq_finRange_foldl]
   exact foldl_orthogonal_weighted_normSq_ge (xs := List.finRange n)
     (rows := rows) (coeffs := coeffs) k (by simp) hcoeff
 
@@ -1675,7 +1678,7 @@ private theorem prefixSpan_vecMul
     (A B : Matrix Rat n m) (i : Nat) (hi : i < n) (c : Vector Rat (i + 1))
     (hrows : ∀ j : Fin (i + 1), prefixSpan B i hi ((prefixRows A i hi).row j)) :
     prefixSpan B i hi (Matrix.vecMul c (prefixRows A i hi)) := by
-  rw [vecMul_eq_foldl_rows]
+  rw [vecMul_eq_foldl_rows, Fin.foldl_eq_finRange_foldl]
   have hfold :
       ∀ xs : List (Fin (i + 1)), ∀ acc : Vector Rat m,
         prefixSpan B i hi acc →
@@ -1855,7 +1858,7 @@ private theorem prefixSpan_strictRowCombination
       prefixSpan B i hi ((strictPrefixRows A i (Nat.le_of_lt hi)).row j)) :
     prefixSpan B i hi
       (Matrix.vecMul c (strictPrefixRows A i (Nat.le_of_lt hi))) := by
-  rw [vecMul_eq_foldl_rows]
+  rw [vecMul_eq_foldl_rows, Fin.foldl_eq_finRange_foldl]
   have hfold :
       ∀ xs : List (Fin i), ∀ acc : Vector Rat m,
         prefixSpan B i hi acc →
@@ -1978,6 +1981,7 @@ private theorem vecMul_strictPrefixRows_projectionCoeffVector
                 (basis.row ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩)[idxFin])
           0 by
         unfold prefixSumByRow
+        rw [Fin.foldl_eq_finRange_foldl]
         simpa [Vector.getElem_zero] using
           foldl_projectionCombination_getElem
             (xs := List.finRange k) (row := row) (basis := basis) (hk := hk)
@@ -1994,7 +1998,8 @@ private theorem prefixSumByRow_succ
         projectionCoeff row (basis.row ⟨k, Nat.lt_of_succ_le hk⟩) •
           basis.row ⟨k, Nat.lt_of_succ_le hk⟩ := by
   unfold prefixSumByRow
-  rw [List.finRange_succ_last, List.foldl_append, List.foldl_map]
+  rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl,
+    List.finRange_succ_last, List.foldl_append, List.foldl_map]
   simp only [List.foldl_cons, List.foldl_nil]
   rfl
 

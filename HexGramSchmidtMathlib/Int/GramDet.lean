@@ -301,6 +301,7 @@ private theorem dot_prefixCombination_right_rat
               u.dotProduct
                 (basisM.row ⟨j.val, Nat.lt_trans j.isLt hi⟩)) 0 := by
   unfold GramSchmidt.prefixCombination
+  rw [Fin.foldl_eq_finRange_foldl]
   have hgen :
       ∀ (xs : List (Fin i)) (acc : Vector Rat m),
         u.dotProduct
@@ -592,6 +593,7 @@ private theorem auxMatrix_det_eq_prod_normSq (b : Matrix Int n m)
   rw [Matrix.det_lowerTriangular_eq_foldl_diag (auxMatrix b k hk)
     (fun i j hij => auxMatrix_zero_above b k hk i j hij)]
   unfold gramSchmidtNormProduct
+  rw [Fin.foldl_eq_finRange_foldl]
   -- Both foldls are over `List.finRange k`. The diagonal of auxMatrix at i
   -- equals of.normSq (basis b) row at the lifted index.
   apply foldl_mul_congr_simple
@@ -1021,7 +1023,7 @@ theorem gramDet_pos (b : Matrix Int n m)
 
 /-- One-step extension of `gramSchmidtNormProduct`: appending the `k`-th
 factor multiplies the `k`-fold product by `((basis b).row ⟨k, _⟩)`..normSq
-This is a `List.finRange` cancellation lemma; positivity of the leading Gram
+This is a `Fin.foldl` cancellation lemma; positivity of the leading Gram
 determinant is handled separately by `gramDet_pos`. -/
 theorem gramSchmidtNormProduct_succ (b : Matrix Int n m)
     (k : Nat) (hk : k + 1 ≤ n) :
@@ -1029,7 +1031,8 @@ theorem gramSchmidtNormProduct_succ (b : Matrix Int n m)
       gramSchmidtNormProduct b k (Nat.le_of_succ_le hk) *
         ((basis b).row ⟨k, Nat.lt_of_succ_le hk⟩).normSq := by
   unfold gramSchmidtNormProduct
-  rw [List.finRange_succ_last, List.foldl_append, List.foldl_map]
+  rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl,
+    List.finRange_succ_last, List.foldl_append, List.foldl_map]
   simp only [List.foldl_cons, List.foldl_nil]
   rfl
 

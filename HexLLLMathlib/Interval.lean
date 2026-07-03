@@ -328,7 +328,7 @@ private theorem getElem_prefixCombination
         GramSchmidt.entry C ⟨i, hi⟩ ⟨k.val, Nat.lt_trans k.isLt hi⟩ *
           (B.row ⟨k.val, Nat.lt_trans k.isLt hi⟩)[l] := by
   unfold GramSchmidt.prefixCombination
-  rw [getElem_foldl_add_smul]
+  rw [Fin.foldl_eq_finRange_foldl, getElem_foldl_add_smul]
   have hz : (0 : Vector Rat m)[l] = 0 := by
     simp
   rw [hz, zero_add]

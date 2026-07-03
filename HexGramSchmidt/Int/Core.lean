@@ -108,7 +108,7 @@ def independent (b : Matrix Int n m) : Prop :=
 @[expose]
 noncomputable def gramSchmidtNormProduct (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :
     Rat :=
-  (List.finRange k).foldl
+  Fin.foldl k
     (fun acc j =>
       let jn : Fin n := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
       acc * ((basis b).row jn).normSq)

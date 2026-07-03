@@ -370,7 +370,8 @@ the sum over `k` of `b[k][j] * c[k]`. -/
 private theorem getElem_vecMul_int
     {n m : Nat} (b : Matrix Int n m) (c : Vector Int n) (j : Fin m) :
     (Matrix.vecMul c b)[j] =
-      (List.finRange n).foldl (fun acc k => acc + b[k][j] * c[k]) 0 := by
+      Fin.foldl n (fun acc k => acc + b[k][j] * c[k]) 0 := by
+  rw [Fin.foldl_eq_finRange_foldl]
   show (Matrix.transpose b * c)[j] = _
   rw [Matrix.getElem_mulVec]
   unfold Vector.dotProduct
@@ -398,8 +399,9 @@ identity. -/
 private theorem dot_vecMul_right_eq
     {n m : Nat} (b : Matrix Int n m) (u : Vector Int m) (c : Vector Int n) :
     u.dotProduct (Matrix.vecMul c b) =
-      (List.finRange n).foldl
+      Fin.foldl n
         (fun acc k => acc + c[k] * u.dotProduct (b.row k)) 0 := by
+  rw [Fin.foldl_eq_finRange_foldl]
   -- Step 1: rewrite each (rowComb b c)[j] entry using getElem_vecMul_int.
   have h_lhs :
       u.dotProduct (Matrix.vecMul c b) =
@@ -409,7 +411,7 @@ private theorem dot_vecMul_right_eq
     unfold Vector.dotProduct
     apply foldl_add_pointwise_eq_int
     intro j _hj
-    rw [getElem_vecMul_int (b := b) (c := c) j]
+    rw [getElem_vecMul_int (b := b) (c := c) j, Fin.foldl_eq_finRange_foldl]
   rw [h_lhs]
   -- Step 2: distribute u[j] over the inner sum so the body has shape (acc + f j k).
   have h_distrib :
@@ -573,8 +575,9 @@ private theorem principalSubmatrix_gram_zero_pivot_column_zero
         v.dotProduct (Matrix.vecMul c b) =
           (List.finRange n).foldl
             (fun acc k => acc + c[k] * v.dotProduct (b.row k))
-            0 :=
-      dot_vecMul_right_eq b v c
+            0 := by
+      have h := dot_vecMul_right_eq b v c
+      rwa [Fin.foldl_eq_finRange_foldl] at h
     rw [← hv_def] at h_expand_aux
     rw [h_expand_aux]
     apply foldl_add_zero

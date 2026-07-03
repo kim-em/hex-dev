@@ -180,7 +180,7 @@ private theorem rowToEuclidean_prefixCombination_eq_Iio_sum
           InnerProductSpace.gramSchmidt ℝ (ratRowFamily b) j := by
   classical
   unfold Hex.GramSchmidt.prefixCombination
-  rw [rowToEuclidean_foldl_linear]
+  rw [Fin.foldl_eq_finRange_foldl, rowToEuclidean_foldl_linear]
   simp only [rowToEuclidean_zero, zero_add]
   rw [← List.sum_toFinset _ (List.nodup_finRange i.val)]
   simpa [rat_coeffs_lower_projection_real, hprev, ratRowFamily] using

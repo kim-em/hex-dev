@@ -47,8 +47,9 @@ private theorem foldl_int_dot_cast {n' : Nat}
 private theorem vecMul_int_getElem
     (b : Matrix Int n m) (c : Vector Int n) (col : Fin m) :
     (Matrix.vecMul c b)[col] =
-      (List.finRange n).foldl
+      Fin.foldl n
         (fun (acc : Int) (i : Fin n) => acc + b[i][col] * c[i]) 0 := by
+  rw [Fin.foldl_eq_finRange_foldl]
   show (Matrix.transpose b * c)[col] = _
   rw [Matrix.getElem_mulVec]
   show ((Matrix.transpose b).row col).dotProduct c = _
@@ -60,11 +61,12 @@ the cast integer products through index `k`. -/
 private theorem vecMul_prefix_castIntMatrix_getElem
     (b : Matrix Int n m) (c : Vector Int n) (k : Fin n) (col : Fin m) :
     (Matrix.vecMul (prefixCoeffsCast c k) (GramSchmidt.prefixRows (castIntMatrix b) k.val k.isLt))[col] =
-      (List.finRange (k.val + 1)).foldl
+      Fin.foldl (k.val + 1)
         (fun (acc : Rat) (j : Fin (k.val + 1)) =>
           let jn : Fin n :=
             ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩
           acc + (b[jn][col] : Rat) * (c[jn] : Rat)) 0 := by
+  rw [Fin.foldl_eq_finRange_foldl]
   show (Matrix.transpose _ * _)[col] = _
   rw [Matrix.getElem_mulVec]
   show ((Matrix.transpose _).row col).dotProduct _ = _
@@ -90,7 +92,8 @@ private theorem cast_vecMul_eq
     Vector.getElem_map _ _
   change (Vector.map (fun x : Int => (x : Rat)) (Matrix.vecMul c b))[cf]
       = (Matrix.vecMul (prefixCoeffsCast c k) (GramSchmidt.prefixRows (castIntMatrix b) k.val k.isLt))[cf]
-  rw [hLHS, vecMul_int_getElem b c cf, vecMul_prefix_castIntMatrix_getElem b c k cf]
+  rw [hLHS, vecMul_int_getElem b c cf, vecMul_prefix_castIntMatrix_getElem b c k cf,
+    Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl]
   -- LHS: cast of an integer foldl; RHS: a rational foldl over `finRange (k+1)`.
   -- First, push the cast through the integer foldl, getting a rational foldl
   -- over `finRange n` whose later terms vanish; then truncate to `k + 1`.
@@ -107,6 +110,7 @@ private theorem cast_vecMul_eq
     grind
   have htrunc :=
     foldl_finRange_eq_prefix_of_zero_above (n := n) k f hfzero
+  rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl] at htrunc
   show (List.finRange n).foldl (fun acc i => acc + f i) ((0 : Int) : Rat) =
     (List.finRange (k.val + 1)).foldl
       (fun (acc : Rat) (j : Fin (k.val + 1)) =>
@@ -183,6 +187,7 @@ Gram-Schmidt basis rows: `coeffs b * basis b` collapses to the cast input
     rw [show ((coeffs b).row ii)[k] = 0 from hcoeff]
     grind
   have htrunc := foldl_finRange_eq_prefix_of_zero_above ii f hzero
+  rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl] at htrunc
   change (List.finRange n).foldl (fun acc k => acc + f k) 0 =
     (castIntMatrix b)[ii][jj]
   rw [htrunc, List.finRange_succ_last, List.foldl_append, List.foldl_map]
@@ -194,6 +199,7 @@ Gram-Schmidt basis rows: `coeffs b * basis b` collapses to the cast input
             Nat.lt_of_lt_of_le (Fin.castSucc x).isLt (Nat.succ_le_of_lt hi)⟩) 0 =
       (GramSchmidt.prefixCombination (coeffs b) (basis b) i hi)[jj] := by
     unfold GramSchmidt.prefixCombination GramSchmidt.entry
+    rw [Fin.foldl_eq_finRange_foldl]
     let lift : Fin i → Fin n := fun x => ⟨x.val, Nat.lt_trans x.isLt hi⟩
     have hfold :
         ∀ xs : List (Fin i), ∀ accR : Rat, ∀ accV : Vector Rat m,
@@ -270,7 +276,7 @@ theorem vecMul_basis_coeffs_reconstruction
       (Vector.map (fun x : Int => (x : Rat)) (Matrix.vecMul c b))[jj] =
         ((Matrix.vecMul c b)[jj] : Rat) :=
     Vector.getElem_map _ _
-  rw [hmap, vecMul_int_getElem b c jj]
+  rw [hmap, vecMul_int_getElem b c jj, Fin.foldl_eq_finRange_foldl]
   rw [foldl_int_dot_cast (List.finRange n)
     (fun i : Fin n => b[i][jj]) (fun i : Fin n => c[i]) 0]
   have hleft :

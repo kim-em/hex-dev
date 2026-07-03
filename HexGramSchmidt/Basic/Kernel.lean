@@ -540,7 +540,7 @@ def castIntMatrix (b : Matrix Int n m) : Matrix Rat n m :=
 @[expose]
 def prefixCombination (coeffs : Matrix Rat n n) (basis : Matrix Rat n m) (i : Nat) (hi : i < n) :
     Vector Rat m :=
-  (List.finRange i).foldl
+  Fin.foldl i
     (fun acc j =>
       let jn : Fin n := ⟨j.val, Nat.lt_trans j.isLt hi⟩
       acc + GramSchmidt.entry coeffs ⟨i, hi⟩ jn • basis.row jn)
