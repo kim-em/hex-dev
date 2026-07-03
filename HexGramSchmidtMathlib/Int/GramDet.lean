@@ -30,22 +30,6 @@ namespace Hex
 namespace GramSchmidt
 namespace Int
 
-/-- Bareiss agrees with the Leibniz determinant on the Cramer matrix used by
-the scaled-coefficient formula. -/
-private theorem scaledCoeffMatrix_bareiss_eq_det
-    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i) :
-    ((Matrix.bareiss
-        (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ hj) :
-          Int) : Rat) =
-      ((Matrix.det
-        (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ hj) :
-          Int) : Rat) :=
-  by exact_mod_cast
-    (HexMatrixMathlib.bareiss_eq_mathlib_det
-        (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ hj)).trans
-      (HexMatrixMathlib.det_eq
-        (GramSchmidt.scaledCoeffMatrix b ⟨i, hi⟩ ⟨j, Nat.lt_trans hj hi⟩ hj)).symm
-
 /-- Leading integer Gram determinants are nonnegative. -/
 theorem leadingGramMatrixInt_det_nonneg
     (b : Matrix Int n m) (t : Nat) (ht : t ≤ n) :
@@ -1184,44 +1168,6 @@ private theorem dot_castIntRow_castIntRow_eq
       rw [dot_castIntRow_basis_eq_zero_of_lt b p r hp hrn hpr]
       grind)
     ((j + 1) + d) hkdn (Nat.le_add_right (j + 1) d)
-
-private theorem dot_basisPrefixProjection_eq_castIntGram
-    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i)
-    (p : Fin (j + 1)) :
-    Vector.dotProduct
-        (castIntRow b
-          ⟨p.val, Nat.lt_of_lt_of_le p.isLt
-            (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩)
-        (basisPrefixProjection b i j hi (Nat.lt_trans hj hi)) =
-      ((Vector.dotProduct
-          (b.row
-            ⟨p.val, Nat.lt_of_lt_of_le p.isLt
-              (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩)
-          (b.row ⟨i, hi⟩) : Int) : Rat) := by
-  rw [← dot_castIntRow_eq_cast_dot b
-    (⟨p.val, Nat.lt_of_lt_of_le p.isLt
-      (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩ : Fin n)
-    (⟨i, hi⟩ : Fin n)]
-  exact
-    (dot_castIntRow_castIntRow_eq
-      b i j p.val hi hj (Nat.le_of_lt_succ p.isLt)
-      (Nat.lt_of_lt_of_le p.isLt
-        (Nat.succ_le_of_lt (Nat.lt_trans hj hi)))).symm
-
-private theorem scaledCoeffMatrix_replacementColumn_solve_intGram
-    (b : Matrix Int n m) (i j : Nat) (hi : i < n) (hj : j < i)
-    (p : Fin (j + 1)) :
-    (castIntDetMatrix
-        (GramSchmidt.leadingGramMatrixInt b (j + 1)
-          (Nat.succ_le_of_lt (Nat.lt_trans hj hi))) *
-        originalProjectionCoords b i j hi (Nat.lt_trans hj hi))[p] =
-      ((Vector.dotProduct
-          (b.row
-            ⟨p.val, Nat.lt_of_lt_of_le p.isLt
-              (Nat.succ_le_of_lt (Nat.lt_trans hj hi))⟩)
-          (b.row ⟨i, hi⟩) : Int) : Rat) := by
-  rw [scaledCoeffMatrix_replacementColumn_solve b i j hi hj p]
-  exact dot_basisPrefixProjection_eq_castIntGram b i j hi hj p
 
 /-- Isolate the last term in a `foldl` over `List.finRange (k + 1)` when every
 earlier term vanishes. -/

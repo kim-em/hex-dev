@@ -49,14 +49,6 @@ private theorem rowAdd_row_eq_of_ne {R : Type u} [Mul R] [Add R] {n' m' : Nat}
   rw [Matrix.rowAdd_eq_set]
   exact Hex.Matrix.setRow_row_ne M dst r _ (fun heq => hr (congrArg Fin.val heq))
 
-/-- The row of `Matrix.rowAdd M src dst c` at index `dst` is the entry-wise
-sum `M[dst] + c * M[src]`. -/
-private theorem rowAdd_row_at {R : Type u} [Mul R] [Add R] {n' m' : Nat}
-    (M : Matrix R n' m') (src dst : Fin n') (c : R) :
-    (Matrix.rowAdd M src dst c)[dst] =
-      Vector.ofFn fun k => M[dst][k] + c * M[src][k] := by
-  simp [Matrix.rowAdd_eq_set, Hex.Matrix.getRow, Hex.Matrix.rows_setRow, Fin.getElem_fin]
-
 /-- Inductive helper for `dot_rowAdd_row_at_left`: distribution along a foldl. -/
 private theorem foldl_dot_rowAdd_at {n' m' : Nat}
     (M : Matrix Int n' m') (src dst : Fin n') (c : Int) (w : Vector Int m')
@@ -188,10 +180,10 @@ theorem scaledCoeffMatrix_rowAdd_pivot_det
         have hval := congrArg Fin.val hq_last
         simpa [last] using hval
       simp only [M, gramCol, GramSchmidt.leadingGramMatrixInt, Hex.Matrix.getElem_setCol,
-        Hex.Matrix.getElem_ofFn, Hex.Matrix.getElem_pair_eq_nested]
+        Hex.Matrix.getElem_ofFn]
       rw [if_pos hq_last, hq_lift]
     · simp only [M, gramCol, GramSchmidt.leadingGramMatrixInt, Hex.Matrix.getElem_setCol,
-        Hex.Matrix.getElem_ofFn, Hex.Matrix.getElem_pair_eq_nested]
+        Hex.Matrix.getElem_ofFn]
       rw [if_neg hq_last]
   calc
     Matrix.det (GramSchmidt.scaledCoeffMatrix (Matrix.rowAdd b j k c) k j hjk)
