@@ -210,12 +210,13 @@ def intervalWins (b : Matrix Int n m) : Bool :=
 
 end Internal
 
-/-- Reducedness clause of the certified dispatch. The size predictor
-`intervalWins` picks the checker expected to be faster on this input: the
-fixed-precision interval pass (with the exact integer checker as the
-mandatory fallback on indecision, keeping completeness structural rather
-than numerical), or the exact checker directly. Records each decision in
-the checker tally, distinguishing all three outcomes. -/
+/-- Reducedness clause of the certified dispatch. On the same integer
+`d`/`ν` data, two checkers can decide reducedness: the exact integer
+checker `lllReducedInt`, always complete, and a faster fixed-precision
+interval pass. The size predictor `intervalWins` picks which to run first;
+when the interval pass is indecisive it falls back to the exact checker,
+so completeness stays structural rather than numerical. Records each
+decision in the checker tally, distinguishing all three outcomes. -/
 @[expose]
 def lllReducedCheck (b : Matrix Int n m) (δ η : Rat) : Bool :=
   if intervalWins b then

@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexDeterminant
+import HexDeterminantMathlib
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -38,10 +38,11 @@ factorially slow, so it is the specification the faster
 {ref "hex-bareiss"}[HexBareiss] route is checked against, not the routine
 a caller runs on a large matrix.
 
-`HexDeterminant` is Mathlib-free. The identification of this determinant
-with Mathlib's `Matrix.det`, and with the executable Bareiss
-determinant, lives in `HexDeterminantMathlib` and
-`HexBareissMathlib`.
+`HexDeterminant` is Mathlib-free. Its identification with Mathlib's
+`Matrix.det` is the {ref "hex-determinant-mathlib"}[last section]; the
+identification with the executable Bareiss determinant lives in
+`HexBareissMathlib` and is covered in the
+{ref "hex-bareiss"}[HexBareiss chapter].
 
 # The Leibniz determinant
 %%%
@@ -53,11 +54,10 @@ permutations of the product of the selected entries.
 
 {docstring Hex.Matrix.det}
 
-The classical row and column laws are all proved against this
-definition. The identity has determinant one; swapping two rows negates
-the determinant; scaling a row scales it; adding a multiple of one row
-to another leaves it unchanged; and the determinant is invariant under
-transpose.
+The classical row laws are all proved against this definition. The
+identity has determinant one; swapping two rows negates the determinant;
+scaling a row scales it; adding a multiple of one row to another leaves
+it unchanged; and the determinant is invariant under transpose.
 
 {docstring Hex.Matrix.det_identity}
 
@@ -68,6 +68,12 @@ transpose.
 {docstring Hex.Matrix.det_rowAdd}
 
 {docstring Hex.Matrix.det_transpose}
+
+Because the determinant is transpose-invariant, every row law has a
+column mirror, proved by transposing rather than by re-deriving anything:
+`det_colSwap`, `det_colScale`, and `det_colAdd` correspond to the three
+row operations, and `det_setRow_add` is the row mirror of the column
+linearity below.
 
 {docstring Hex.Matrix.det_colSwap}
 
@@ -140,39 +146,45 @@ open Hex Hex.Matrix
 namespace HexDeterminantChapterExample
 
 -- A = [[2, 0, 1], [1, 3, 2], [0, 1, 1]], det = 3.
-private def A : Matrix Int 3 3 :=
-  Matrix.ofFn fun i j =>
-    match i.val, j.val with
-    | 0, 0 => 2 | 0, 1 => 0 | 0, 2 => 1
-    | 1, 0 => 1 | 1, 1 => 3 | 1, 2 => 2
-    | 2, 0 => 0 | 2, 1 => 1 | 2, 2 => 1
-    | _, _ => 0
+private def A : Hex.Matrix Int 3 3 := #m[2, 0, 1; 1, 3, 2; 0, 1, 1]
 
 -- The Leibniz determinant evaluates to 3.
-#guard Matrix.det A = 3
+#guard det A = 3
 
 -- The determinant is invariant under transpose.
-#guard Matrix.det (Matrix.transpose A) = 3
+#guard det (transpose A) = 3
 
 -- Swapping two rows negates the determinant.
-#guard Matrix.det (Matrix.rowSwap A 0 1) = -3
+#guard det (rowSwap A 0 1) = -3
 
 -- The identity has determinant one.
-#guard Matrix.det (Matrix.identity (R := Int) 3) = 1
+#guard det (Hex.Matrix.identity (R := Int) 3) = 1
 
 -- S = [[1, 2], [2, 4]] has a dependent row pair,
 -- so its determinant is zero.
-private def S : Matrix Int 2 2 :=
-  Matrix.ofFn fun i j =>
-    match i.val, j.val with
-    | 0, 0 => 1 | 0, 1 => 2
-    | 1, 0 => 2 | 1, 1 => 4
-    | _, _ => 0
+private def S : Hex.Matrix Int 2 2 := #m[1, 2; 2, 4]
 
-#guard Matrix.det S = 0
+#guard det S = 0
 
 end HexDeterminantChapterExample
 ```
+
+# The Mathlib correspondence
+%%%
+tag := "hex-determinant-mathlib"
+%%%
+
+Everything above is executable and Mathlib-free. `HexDeterminantMathlib`
+connects it to Mathlib: the Leibniz determinant `Hex.Matrix.det` equals
+Mathlib's `Matrix.det` of the corresponding Mathlib matrix, transported
+through {name}`HexMatrixMathlib.matrixEquiv` (the same equivalence the
+{ref "hex-matrix-mathlib"}[HexMatrix chapter] introduces).
+
+{docstring HexMatrixMathlib.det_eq}
+
+So a fact about Mathlib's `Matrix.det` can be discharged by running the
+executable determinant, and a fact about the executable determinant can
+be proved with Mathlib's determinant theory.
 
 # Cross-references
 %%%

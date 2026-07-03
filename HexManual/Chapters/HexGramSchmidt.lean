@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexGramSchmidt
+import HexGramSchmidtMathlib
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -38,15 +38,17 @@ rows are addressed by `Nat` indices with explicit bounds rather than
 `Fin`.
 
 The library has two namespaces. `Hex.GramSchmidt.Rat` orthogonalizes a
-rational matrix directly. `Hex.GramSchmidt.Int` casts an integer matrix
-to `Rat` first, and adds computable integer data (the leading Gram
-determinants and the integer scaled coefficient matrix) that lattice
-code uses to stay in exact arithmetic. The orthogonal basis and rational
-coefficients involve division, so {name}`Hex.GramSchmidt.Rat.basis` and
-{name}`Hex.GramSchmidt.Rat.coeffs` are `noncomputable`. The determinant
-operations ({name}`Hex.GramSchmidt.Int.gramDet`,
-{name}`Hex.GramSchmidt.Int.scaledCoeffs`) are computable and drive the
-worked examples below.
+rational matrix directly. `Hex.GramSchmidt.Int` works on an integer
+matrix, and its *computable* operations — the leading Gram determinants
+and the integer scaled coefficient matrix — stay entirely in exact
+integer arithmetic. That is the whole point of the integer namespace:
+lattice code reads the exact `gramDet` and `scaledCoeffs` values and
+never leaves `Int`. The orthogonal basis and rational coefficients
+themselves involve division, which is usually a performance bottleneck,
+so {name}`Hex.GramSchmidt.Rat.basis` and {name}`Hex.GramSchmidt.Rat.coeffs`
+are `noncomputable`. The computable determinant operations
+({name}`Hex.GramSchmidt.Int.gramDet`,
+{name}`Hex.GramSchmidt.Int.scaledCoeffs`) drive the worked examples below.
 
 `HexGramSchmidt` is Mathlib-free and depends only on `HexMatrix`. `HexLLL`
 uses it for orthogonalization and the exact-update formulas. See
@@ -60,8 +62,9 @@ tag := "hex-gram-schmidt-core"
 The two fundamental constructions are the orthogonal basis and the
 coefficient matrix. The basis rows are mutually orthogonal. The
 coefficient matrix is lower-unitriangular and reconstructs the input as
-`coeffs · basis`. Both come in a rational and an integer flavour, the
-integer one casting its input into `Rat` first.
+`coeffs · basis`. Both come in a rational and an integer flavour; the
+integer flavour orthogonalizes over `Rat`, so like the rational one it is
+`noncomputable` and exists to state theorems, not to run.
 
 {docstring Hex.GramSchmidt.Rat.basis}
 
@@ -71,13 +74,15 @@ integer one casting its input into `Rat` first.
 
 {docstring Hex.GramSchmidt.Int.coeffs}
 
-The basis and coefficient matrices are `noncomputable` (their entries
-involve division), so they are documented here by signature. The integer
-namespace adds two *computable* operations that stay in exact arithmetic.
-The leading Gram determinants are the determinants of the leading
-principal Gram minors `B Bᵀ` (the squared volumes of the prefix
+Both matrices are `noncomputable`, because their entries involve
+division; they are stated by signature here, and their role is to be the
+subject of theorems rather than something you evaluate. What you actually
+compute with is the pair of exact-integer operations the integer
+namespace adds. The leading Gram determinants are the determinants of the
+leading principal Gram minors `B Bᵀ` (the squared volumes of the prefix
 sublattices). The scaled coefficient matrix clears the denominators of
-the rational coefficients against them.
+the rational coefficients against them, so every entry is again an
+integer.
 
 {docstring Hex.GramSchmidt.Int.gramDet}
 
@@ -93,59 +98,43 @@ tag := "hex-gram-schmidt-worked"
 %%%
 
 The block below works over the integer matrix with rows `(1,1,0)`,
-`(1,0,1)`, `(0,1,1)`. It reads off the leading Gram determinants and the
-scaled coefficient matrix, then applies a size-reduction row operation.
+`(1,0,1)`, `(0,1,1)`. It reads off the leading Gram determinants, prints
+the whole scaled coefficient matrix, and applies a size-reduction row
+operation. The `gramDet` bound is filled by its `by omega` autoparam, so
+the calls need no explicit proof.
 
-```lean
+```lean (name := gramWorked)
 open Hex Hex.GramSchmidt Hex.GramSchmidt.Int
 
 namespace HexGramSchmidtChapter
 
 -- A 3×3 integer matrix with rows
 --   (1,1,0), (1,0,1), (0,1,1).
-private def m : Matrix Int 3 3 :=
-  Matrix.ofFn fun i j =>
-    match i.val, j.val with
-    | 0, 0 => 1
-    | 0, 1 => 1
-    | 1, 0 => 1
-    | 1, 2 => 1
-    | 2, 1 => 1
-    | 2, 2 => 1
-    | _, _ => 0
-
-private abbrev i0 : Fin 3 := ⟨0, by decide⟩
-private abbrev i1 : Fin 3 := ⟨1, by decide⟩
-private abbrev i2 : Fin 3 := ⟨2, by decide⟩
+private def m : Hex.Matrix Int 3 3 := #m[1, 1, 0; 1, 0, 1; 0, 1, 1]
 
 -- Leading Gram determinants d_0 .. d_3. The empty
 -- prefix is 1 by convention; d_k is the determinant
 -- of the k×k leading Gram minor of the input.
-#guard gramDet m 0 (by decide) = 1
-#guard gramDet m 1 (by decide) = 2
-#guard gramDet m 2 (by decide) = 3
-#guard gramDet m 3 (by decide) = 4
+#guard gramDet m 0 = 1
+#guard gramDet m 1 = 2
+#guard gramDet m 2 = 3
+#guard gramDet m 3 = 4
 
--- scaledCoeffs stores d_{j+1} on the diagonal ...
-#guard entry (scaledCoeffs m) i0 i0 = 2
-#guard entry (scaledCoeffs m) i1 i1 = 3
-#guard entry (scaledCoeffs m) i2 i2 = 4
--- ... the integral coefficients d_{j+1} * μ_{i,j}
--- strictly below it ...
-#guard entry (scaledCoeffs m) i1 i0 = 1
-#guard entry (scaledCoeffs m) i2 i0 = 1
-#guard entry (scaledCoeffs m) i2 i1 = 1
--- ... and zeros above the diagonal.
-#guard entry (scaledCoeffs m) i0 i1 = 0
-#guard entry (scaledCoeffs m) i1 i2 = 0
+-- scaledCoeffs stores d_{j+1} on the diagonal, the
+-- integral coefficients d_{j+1}·μ_{i,j} strictly
+-- below it, and zeros above.
+#eval scaledCoeffs m
 
 -- Size-reducing row 2 against row 0 by 2 replaces
--- b[2] with b[2] - 2·b[0]; here entry (2,0) drops
--- to -2 and the diagonal entry (2,2) is untouched.
-#guard entry (sizeReduce m i0 i2 2) i2 i0 = -2
-#guard entry (sizeReduce m i0 i2 2) i2 i2 = 1
+-- b[2] = (0,1,1) with b[2] - 2·b[0] = (-2,-1,1).
+#guard (sizeReduce m 0 2 2).row 2 = #v[-2, -1, 1]
 
 end HexGramSchmidtChapter
+```
+```leanOutput gramWorked
+#m[2, 0, 0;
+   1, 3, 0;
+   1, 1, 4]
 ```
 
 # Key correctness theorems
@@ -212,6 +201,28 @@ Gram-Schmidt.
 {docstring Hex.GramSchmidt.Int.basis_adjacentSwap_prev}
 
 {docstring Hex.GramSchmidt.Int.basis_adjacentSwap_curr}
+
+# The Mathlib correspondence
+%%%
+tag := "hex-gram-schmidt-mathlib"
+%%%
+
+Everything above is executable and Mathlib-free. `HexGramSchmidtMathlib`
+connects it to Mathlib's real-valued Gram-Schmidt. The orthogonalized
+basis agrees, row by row, with Mathlib's `InnerProductSpace.gramSchmidt`
+after coercing the rows into a Euclidean space.
+
+{docstring Hex.GramSchmidtMathlib.int_basis_row_eq_gramSchmidt}
+
+The exact-integer data is tied back to that real picture too: the leading
+Gram determinant is the product of the squared Gram-Schmidt norms, and
+the integer scaled coefficient below the diagonal factors as
+`gramDet (j+1) · μ_{i,j}` — the identity that makes the coefficients
+integral.
+
+{docstring Hex.GramSchmidt.Int.gramDet_eq_prod_normSq}
+
+{docstring Hex.GramSchmidt.Int.scaledCoeffs_eq}
 
 # Cross-references
 %%%
