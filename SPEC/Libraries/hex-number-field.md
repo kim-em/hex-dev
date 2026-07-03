@@ -18,8 +18,8 @@ and directly useful when many operations happen in one fixed field.
 output of operations like `α + β`.
 
 The matrix dependencies (`hex-matrix`, `hex-row-reduce`) supply the
-dense ℚ-linear algebra used by `toAlgebraicNumber` and `commonField`
-(minimal-polynomial computation and change of basis).
+dense ℚ-linear algebra used by `toAlgebraicNumber` (the
+minimal-polynomial computation).
 
 ## Executable irreducibility
 
@@ -345,11 +345,22 @@ Implementation:
    shifts is a bounded loop.
 4. **Identify the root.** Run `HexRoots.isolate` on the chosen factor
    and locate the isolation whose disc meets the approximation ball.
-5. **Change of basis.** Express `α` and `β` in the basis
-   `{1, γ, γ², …, γ^(deg r − 1)}` by solving a
-   `(deg r) × (deg r)` ℚ-linear system (`hex-row-reduce`; fraction-
-   free elimination as in `hex-bareiss` is the expected
-   implementation).
+5. **Recover β, then α, as elements of ℚ(γ).** Work in the field
+   `QAdjoin r γ` (its `Field` instance is available, since `r`
+   passed the irreducibility check in step 4). Using HexPoly's
+   Euclidean algorithm over that field, compute
+
+   ```
+   g(y) := gcd( β.p(y), α.p(γ − c·y) )   in (QAdjoin r γ)[y]
+   ```
+
+   For a non-degenerate shift the two operands have exactly one
+   common root, `y = β`, so `g` is linear: `g(y) = y − B` with
+   `B : QAdjoin r γ`. Set `βIn := B` and `αIn := γ − c·βIn`. A gcd
+   of degree ≥ 2 is one more detector of a degenerate shift: restart
+   with the next `c`, in the same loop as step 3. (`DensePoly` over
+   `QAdjoin r γ` is the instantiation at work here; the coefficient
+   field supplies the `Div` that HexPoly's gcd needs.)
 
 The multiplicity test in step 3 is exactly the classical
 primitive-element condition: `γ = α + c·β` fails to generate
@@ -443,8 +454,9 @@ Per-operation costs, with `n = max(deg α.p, deg β.p)` and
     `≤ n²`): per the existing BZ complexity contract.
   - Numerical disambiguation: bounded by `mahlerPrec` of the chosen
     factor.
-  - Linear algebra: `O(n³)` ℚ-operations with fraction-free
-    elimination.
+  - Recovering β: one Euclidean gcd in `(QAdjoin r γ)[y]` on
+    operands of degree ≤ `n`, where each coefficient operation is
+    polynomial arithmetic mod `r`.
 - `1/α`: `O(deg α.p)` for the coefficient reversal, plus one disc
   transformation and witness re-check (one `O(n²)`-operation
   certification; see hex-roots.md).

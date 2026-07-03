@@ -112,12 +112,14 @@ structure DyadicRootIsolation (p : ZPoly) where
 
 /-- A certified cluster: an edge-connected set of grid squares at a
     common `prec`, whose enclosing disc contains exactly `k` roots
-    with multiplicity. Kept as a set of squares, never re-boxed into a
-    single square: re-boxing can return the parent square and stall
-    refinement (a root that sits on a grid line keeps its component
-    spanning that line at every depth, while the squares themselves
-    shrink). This is an *output* type; the refinement worklist holds
-    uncertified `Component` values. -/
+    with multiplicity. The component squares are the data that
+    *refinement* operates on; subdividing the enclosing square
+    instead would stall (it can equal the parent square when a root
+    sits on a grid line, even as the component squares themselves
+    shrink). The Pellet certificate, by contrast, is attached to the
+    circumscribed disc of `encSquare squares`. This is an *output*
+    type; the refinement worklist holds uncertified `Component`
+    values. -/
 structure DyadicRootCluster (p : ZPoly) where
   squares   : Array DyadicSquare     -- nonempty, common prec, edge-connected
   k         : Nat
@@ -237,15 +239,11 @@ each depth, and give up at
 stopDepth p target := max target (separationDepth p) + stopSlack
 ```
 
-with `stopSlack := 8`. The constant can be generous at almost no
-cost: each subdivision level *doubles* a component's isolation ratio
-(the
-disc radius halves while the distance to the other roots is fixed
-past `mahlerPrec`), and the witness fires once that ratio clears a
-fixed constant, so the analysis can only ever require a handful of
-extra levels, independent of the input. Overshooting costs a few
-extra subdivision rounds in the rare case certification had not
-already happened, and nothing else. The completeness analysis
+with `stopSlack := 8`. The degree-dependent part of the required
+depth lives inside `separationDepth` (below); `stopSlack` is only a
+fixed margin on top, and it can be generous at almost no cost:
+overshooting costs a few extra subdivision rounds in the rare case
+certification had not already happened, and nothing else. The completeness analysis
 certifies the pinned value (or shows a smaller one suffices). A
 `none` from the drivers has one precise meaning: *a Pellet witness
 failed to appear at separation depth*. The Mathlib
@@ -319,22 +317,29 @@ applies. The Mathlib companion proves correctness; see
 [hex-roots-mathlib.md](hex-roots-mathlib.md).
 
 ```lean
-def separationDepth (p : ZPoly) : Nat := mahlerPrec p + sepSlack
+def separationDepth (p : ZPoly) : Nat :=
+  mahlerPrec p + ceilLog2 (max 2 (p.degree?.getD 0)) + sepSlack
 ```
 
 with `sepSlack := 8`. `separationDepth` is the depth at which the
-completeness analysis says every Pellet witness certifies: past
-`mahlerPrec p`, each component's disc contains at most one distinct
-root, its isolation ratio doubles with every further level, and the
-witness fires once the ratio clears a fixed constant. The required
-number of extra levels is therefore an absolute constant,
-independent of `p`: the factor-2 witness slack costs one level, the
-enclosing square of a multi-square component at most two, the
-circumscribed `√2` one, and the isolation ratio the Pellet converse
-needs a couple more. Eight comfortably exceeds that count. The
-completeness analysis certifies it (overshoot costs only a few extra
+completeness analysis says every Pellet witness certifies. Past
+`mahlerPrec p` each component's disc contains at most one distinct
+root, and its isolation ratio doubles with every further level. How
+large a ratio the witness needs is *degree-dependent*: for a disc of
+radius `ρ` around a simple root at distance `d` from the other
+roots, the higher Taylor coefficients collect contributions from all
+`n − 1` remote roots, and the ratio of the right side of the `T_1`
+inequality to the left is bounded by `(1 + ρ/d)^{n−1} − 1`, so the
+witness needs `ρ/d` of order `1/n`. That is what the
+`ceilLog2 (deg p)` term buys, one doubling at a time. (This is the
+price of omitting Graeffe iteration; the fixed-ratio test Graeffe
+enables would make this term a constant.) The remaining `sepSlack`
+covers the fixed factors: one level for the factor-2 witness slack,
+at most two for the enclosing square of a multi-square component,
+one for the circumscribed `√2`, and margin. The completeness
+analysis certifies the formula; overshoot costs only extra
 subdivision rounds on inputs where certification had not already
-happened). It is the depth bound used by `stopDepth` above.
+happened. It is the depth bound used by `stopDepth` above.
 
 ## `SimpleRoot`: identity of a root, up to isolation
 
@@ -412,10 +417,11 @@ inherit the precision.
 ## Differences from BSSY
 
 - **No Graeffe iteration.** Deferred as a future optimisation. Without
-  it the `k`-root witness needs a wider isolation ratio around a
-  cluster before it certifies, which costs subdivision depth when
-  distinct roots lie very close together. For typical inputs the
-  difference is small.
+  it the witness needs an isolation ratio of order `deg p` before it
+  certifies (every remote root contributes to the higher Taylor
+  coefficients), which costs the `ceilLog2 (deg p)` term in
+  `separationDepth`. Graeffe iteration would let a fixed ratio
+  suffice and reduce that term to a constant.
 - **No squarefree preprocessing.** A multiple root fails the `k = 1`
   witness at every radius, so it stays a `k ≥ 2` cluster and is
   reported as such. Squarefree inputs atomize. Non-squarefree inputs

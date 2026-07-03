@@ -142,8 +142,8 @@ abstract existence: `resultant_eq_zero_iff_common_root`
 the numerical disambiguation (hex-roots-mathlib `sameRoot` semantics
 plus ball arithmetic bounds) shows the chosen factor is the one
 vanishing at `α + c·β`; the multiplicity-1 check plus the classical
-primitive-element argument shows `γ` generates, so the linear system
-of step 5 is solvable and its solution unique.
+primitive-element argument shows `γ` generates, so the step-5 gcd is
+linear and its unique root is `β`.
 `Field.exists_primitive_element` is used only as a guide. The
 correctness proof is about the computed `γ`, not an abstract one.
 

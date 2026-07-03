@@ -295,10 +295,13 @@ Soundness above never claims the drivers succeed. Completeness does,
 and it is the analytically hardest part:
 
 9. **Pellet converse with margin**: if the disc is
-   `(ρ₁, ρ₂)`-isolating with a ratio wide enough to absorb the
-   factor-2 witness slack, then the dyadic-bound witness holds. The
-   required ratio is a concrete constant derived from BSSY §2 plus the
-   slack analysis.
+   `(ρ₁, ρ₂)`-isolating with a wide enough ratio, then the
+   dyadic-bound witness holds. Without Graeffe iteration the required
+   ratio is *linear in `deg p`* (each remote root contributes to the
+   higher Taylor coefficients; the relevant bound is
+   `(1 + ρ/d)^{n−1} − 1`), times a fixed factor absorbing the
+   factor-2 witness slack. This is what `separationDepth`'s
+   `ceilLog2 (deg p)` term supplies.
 10. **Newton success**: on a sufficiently refined atom the speculative
     Newton step recertifies (via `ContractingWith` on the Newton map).
 11. **Certification by separation depth**: for squarefree `p`, at
