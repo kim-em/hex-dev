@@ -658,12 +658,13 @@ These `#guard`s exercise the *compiled* checker path (executable correctness of
 the generator output). The complementary *kernel* replay — reducing the checker
 on literal certificate data under `decide` — is demonstrated for the
 finite-field layer by `validQuadCert_linear_check` in
-`conformance/HexBerlekamp/Conformance.lean`, which discharges
-`checkIrreducibilityCertificateLinear` on a literal certificate. Replaying the
-integer checker `checkIrreducibleCert` in the kernel on generator output (via
-elaboration-time reification of the certificate as literal data, plus a
-kernel-reducible integer checker) is the `irreducible_cert` tactic deliverable
-tracked as #8566 (Part 2 of #8552). -/
+`conformance/HexBerlekamp/Conformance.lean`, and for the integer checker by
+the `irreducible_cert` tactic (#8566, Part 2 of #8552): the tactic reifies
+generator output as literal data at elaboration time and lets the kernel
+reduce `checkIrreducibleCertLinear`; its end-to-end tests live in
+`HexBerlekampZassenhausMathlib/IrreducibleCertTest.lean`. The `Linear`
+round-trip guards below pin the compiled form of exactly the check the kernel
+replays. -/
 
 /-- The Rabin certificate generator produces a certificate the executable
 checker accepts. -/
@@ -678,6 +679,14 @@ checker accepts. -/
 private def zCertRoundTrips (f : ZPoly) : Bool :=
   match certifyIrreducible? f with
   | some cert => checkIrreducibleCert f cert
+  | none => false
+
+/-- The integer certificate generator's output is accepted by the
+kernel-reducible checker as well; the `irreducible_cert` tactic replays
+exactly this check in the kernel. -/
+private def zCertRoundTripsLinear (f : ZPoly) : Bool :=
+  match certifyIrreducible? f with
+  | some cert => checkIrreducibleCertLinear f cert
   | none => false
 
 -- Rabin generator: irreducible monic `x² + 2` over `F₅` round-trips; the unit
@@ -712,6 +721,13 @@ private def zCertRoundTrips (f : ZPoly) : Bool :=
 -- modulo `3`): the single inert block obstructs every proper factor degree at
 -- once, so the generator scales past quadratics whenever a suitable prime exists.
 #guard zCertRoundTrips (zpoly #[-1, -1, 0, 1])
+
+-- The kernel-reducible checker accepts the same generator outputs (compiled
+-- form of the `irreducible_cert` kernel replay).
+#guard zCertRoundTripsLinear (zpoly #[2, 0, 1])
+#guard zCertRoundTripsLinear (zpoly #[1, 1, 1])
+#guard zCertRoundTripsLinear (zpoly #[3, 1])
+#guard zCertRoundTripsLinear (zpoly #[-1, -1, 0, 1])
 
 -- Design limitation, NOT a generator bug: the checker's per-prime degree-sum
 -- obstruction (`checkDegreeObstructions`) must rule out *every* candidate degree
