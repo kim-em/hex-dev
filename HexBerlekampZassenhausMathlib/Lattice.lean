@@ -29,9 +29,9 @@ namespace BHKS
 
 /--
 The reduced matrix stored in the BHKS projected-row trace generates the same
-integer row lattice as the original BHKS basis.  This is the proof-facing
-bridge from `lll.shortVectorsUnchecked`'s `.toArray` output back to the
-certified steered LLL lattice-preservation theorem.
+integer row lattice as the original BHKS basis.  This carries
+`lll.shortVectorsUnchecked`'s `.toArray` output back to the certified LLL
+lattice-preservation theorem `Hex.lllNative_memLattice_iff`.
 -/
 theorem traceReducedMatrix_memLattice_iff
     (L : Hex.BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth)
