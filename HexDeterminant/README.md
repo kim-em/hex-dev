@@ -65,14 +65,17 @@ theorem det_setCol_add (M : Matrix R n n) (dst : Fin n) (v w : Fin n → R) :
       det (setCol M dst v) + det (setCol M dst w)
 ```
 
-Laplace cofactor expansion along a row, `det_eq_foldl_laplace_row`:
+Laplace cofactor expansion along a row, `det_eq_finFoldl_laplace_row`:
 
 ```lean
-theorem det_eq_foldl_laplace_row (M : Matrix R (n + 1) (n + 1)) (row : Fin (n + 1)) :
+theorem det_eq_finFoldl_laplace_row (M : Matrix R (n + 1) (n + 1)) (row : Fin (n + 1)) :
     det M =
-      (List.finRange (n + 1)).foldl
+      Fin.foldl (n + 1)
         (fun acc col => acc + M[row][col] * cofactor M row col) 0
 ```
+
+The `List.finRange` reference form `det_eq_foldl_laplace_row` states the same
+expansion as a `List.foldl`, bridged by `Fin.foldl_eq_finRange_foldl`.
 
 We prove the Cauchy-Binet column-tuple product formula (Gram form) as
 `det_gramMatrix_eq_sum_columnTuples`, the adjugate identity
