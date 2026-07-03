@@ -49,6 +49,13 @@
 
 ## Comparator Ratios
 
+For the re-runnable, multi-system cross-implementation picture (hex against
+FLINT, NTL, PARI/GP, and both verified Isabelle/AFP factorizers over a
+multi-family corpus, with cactus and runtime-vs-degree charts), see the
+[factorization sweep report](hexbz-factor-sweep.md). That suite is explicitly
+not CI; it runs manually on dedicated hardware and its records are committed.
+This section covers the gating single-input comparator wired through lean-bench.
+
 The gating comparator is `verified Isabelle BZ (AFP
 Berlekamp_Zassenhaus; Haskell extraction of factor_int_poly via
 Factorization_External_Interface.thy)`, declared in
