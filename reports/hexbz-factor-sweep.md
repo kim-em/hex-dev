@@ -54,17 +54,19 @@ answers are correct where it terminates; where it does not, it times out. This
 makes the classical exponential wall visible on the same charts. Production
 `factor` and the CI-gated Mathlib proofs are untouched.
 
-### isabelle-lll build spike
+### isabelle-lll build spike — passed
 
-`isabelle-lll` is gated behind a build spike on carica (issue #8545). Before it
-contributes a curve, confirm that the AFP `LLL_Factorization` session builds and
-code-exports to Haskell here, and that the export theory
-`scripts/oracle/bz-lll-isabelle/Hex_LLL_Factor_Export.thy` composes the shared
-content + square-free front end with `LLL_factorization` (the expected combinator
-is `factorize_int_poly_generic LLL_factorization`; adjust against the AFP source
-if the release names the reconstruction hook differently). If the spike fails,
-`isabelle-lll` is dropped and the suite ships with the other systems; the
-verified-poly-vs-verified-poly framing softens accordingly.
+The build spike (issue #8545) is confirmed on carica: the AFP `LLL_Factorization`
+session builds and code-exports to Haskell, the export theory
+`scripts/oracle/bz-lll-isabelle/Hex_LLL_Factor_Export.thy` compiles, and the
+built `lll_isabelle` driver agrees with hex, FLINT, NTL and `isabelle-bz` on
+every cross-checked instance. The AFP bundles the verified direct-LLL
+reconstruction as `one_lattice_LLL_factorization :: int_poly_factorization_algorithm`
+(a `typedef` pairing the algorithm with its soundness proof), and
+`factorize_int_poly_generic` takes that bundle; the correct composition is
+`factorize_int_poly_generic one_lattice_LLL_factorization`, mirroring BZ's
+`factorize_int_poly_generic berlekamp_zassenhaus_factorization_algorithm`. Both
+Isabelle drivers contribute curves to the recorded sweep below.
 
 ## Methodology
 
@@ -119,42 +121,66 @@ alongside these under `reports/figures/`.
 
 ### carica, 10 s cutoff (2026-07-03)
 
-- **Artifact:** `reports/bench-results/hexbz-factor-sweep-663e07e2-carica.json`
-  SHA-256 `c98c1fa185f7b3a8d1778413efeb58be907c5b05eba8193cc7426f3edb3e3dbb`
+- **Artifact:** `reports/bench-results/hexbz-factor-sweep-cc203779-carica.json`
+  SHA-256 `33a1d9b4ddfc0c4ebfc277a0926780bc81a9528c5bbd8d35e003c8a303d5624d`
 - **Command:**
-  `python3 scripts/bench/factor_sweep.py --systems hex-factor,hex-lattice,hex-fast,hex-classical-nodecline,flint,ntl --cutoff 10 --skip-unavailable`
+  `python3 scripts/bench/factor_sweep.py --systems hex-factor,hex-lattice,hex-fast,hex-classical-nodecline,flint,ntl,isabelle-bz,isabelle-lll --cutoff 10 --skip-unavailable`
 - **Corpus:** `bench/corpus/hexbz-factor-corpus.jsonl`
   SHA-256 `02155334449b001b6cf86a3859e7f4fae5a812a2c6810935bebb73163d76e830` (205 instances)
-- **Env:** host carica, commit `663e07e2` (clean), toolchain
-  `leanprover/lean4:v4.32.0-rc1`, arm64, 24 cores, 2026-07-03T01:35:14Z
-- **Cross-check:** all answering systems agree — hex's factor degree multisets
-  match FLINT and NTL on every instance all three solved (differential
-  correctness across 205 instances).
+- **Env:** host carica, commit `cc203779` (clean), toolchain
+  `leanprover/lean4:v4.32.0-rc1`, arm64, 24 cores, 2026-07-03T03:56:45Z; AFP
+  release `afp-2026-05-29` for both Isabelle systems.
+- **Cross-check:** all eight answering systems agree — hex's factor degree
+  multisets match FLINT, NTL, verified Isabelle BZ and verified Isabelle LLL on
+  every instance any two solved (differential correctness across 205 instances,
+  five independent implementations).
 
 | system | ok | timeout | declined | overhead (µs) |
 | --- | ---: | ---: | ---: | ---: |
-| hex-factor | 180 | 25 | 0 | 44.0 |
-| hex-lattice | 177 | 28 | 0 | 48.0 |
-| hex-fast | 114 | 76 | 15 | 49.5 |
-| hex-classical-nodecline | 180 | 25 | 0 | 42.4 |
-| flint | 204 | 1 | 0 | 17.2 |
-| ntl | 204 | 1 | 0 | 12.6 |
+| hex-factor | 180 | 25 | 0 | 41.0 |
+| hex-lattice | 177 | 28 | 0 | 47.2 |
+| hex-fast | 116 | 72 | 17 | 46.7 |
+| hex-classical-nodecline | 180 | 25 | 0 | 40.7 |
+| flint | 204 | 1 | 0 | 27.0 |
+| ntl | 204 | 1 | 0 | 12.5 |
+| isabelle-bz | 184 | 21 | 0 | 18.0 |
+| isabelle-lll | 142 | 63 | 0 | 16.8 |
 
 The C-implementation ceiling (FLINT, NTL) solves 204/205, missing only
-`hoeij_S9` (Swinnerton-Dyer SD₉, degree 512) at the 10 s cutoff. hex's
-production `factor` solves 180; its 25 unsolved are high-degree cyclotomics
-(degree ≥ 100) that need a longer cutoff. The `hex-classical-nodecline` curve
-runs the classical recombination to completion or cutoff with the level-aware
-early decline disabled, so its 25 timeouts are the classical exponential wall
-made visible on the same charts (it never declines — 0 declined — it either
-completes correctly or times out). `hex-fast` (the proof-facing path) is the
-weakest hex tier here, declining 15 and timing out on 76.
+`hoeij_S9` (Swinnerton-Dyer SD₉, degree 512) at the 10 s cutoff.
 
-This local run covers the systems available on carica; PARI/GP and the two
-verified Isabelle/AFP factorizers (`isabelle-bz`, `isabelle-lll`) are added by
-re-running with those systems once their drivers are set up (the isabelle-lll
-build spike gates its inclusion — see above). Longer-cutoff (60 s / 300 s)
-sweeps record alongside this one, each carrying its own cutoff.
+**The verified-vs-verified headline is the point of the two Isabelle curves.**
+On the corpus as a whole the counts are close (hex-factor 180, isabelle-bz 184,
+hex-lattice 177, isabelle-lll 142), because the mixture is dominated by easy
+low-degree instances where exponential recombination is cheap. The interesting
+signal is where the reconstruction actually matters — the lattice-stress
+families, by maximum degree solved:
+
+| family | hex-lattice | isabelle-bz | isabelle-lll | flint |
+| --- | ---: | ---: | ---: | ---: |
+| swinnerton-dyer | **64** | 32 | 16 | 128 |
+| sd-products | **56** | 42 | 16 | 128 |
+
+On Swinnerton-Dyer, hex's van Hoeij CLD lattice tier reaches degree 64 —
+double the reach of verified exponential BZ (32) and four times that of verified
+direct-LLL (16). `isabelle-lll` (the full-degree direct-LLL lattice) is the
+slowest verified system on every hard family and across the corpus (142/205,
+63 timeouts), matching the literature: a full-degree lattice with large entries
+is notoriously slow in practice. hex's small knapsack lattice (dimension = number
+of modular factors) is the advantage this comparison isolates. On irreducible
+cyclotomics the picture inverts — exponential `isabelle-bz` confirms
+irreducibility fastest among the verified systems (reaching degree 1030) — an
+honest, family-dependent result.
+
+The `hex-classical-nodecline` curve runs the classical recombination to
+completion or cutoff with the level-aware early decline disabled, so its 25
+timeouts are the classical exponential wall made visible on the same charts (it
+never declines — 0 declined — it either completes correctly or times out).
+`hex-fast` (the proof-facing path) is the weakest hex tier here. PARI/GP is added
+by re-running with `--systems ...,pari` once `cypari2` is installed. Longer-cutoff
+(60 s / 300 s) sweeps record alongside this one, each carrying its own cutoff;
+the entire hoeij-zimmermann literature set (degrees ≥ 128) is unsolved by every
+system except FLINT at 10 s and is the natural target for those.
 
 ## Reproducing
 
