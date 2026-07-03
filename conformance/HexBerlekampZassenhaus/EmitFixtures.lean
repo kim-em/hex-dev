@@ -57,27 +57,42 @@ verifies the named modular split:
 Lattice-tier merge requirement
 ------------------------------
 
-`adv/swinnerton_dyer_sd5_pair` — `SD₅(x)·SD₅(x+1)` (degree 64, the two
-true factors are the 32-blocks `SD₅(x)` and `SD₅(x+1)`) — is the one
-corpus case that **only the lattice tier can answer**.  Swinnerton-Dyer
-blocks split into factors of degree ≤ 2 modulo *every* prime, so the
-lifted-factor count is `r = 32` no matter which prime the selector
-picks, and the size-ordered classical search would need ΣC(31,≤15) ≈
-2³⁰ subset candidates to reach the 16-blocks — far past its
+Two corpus cases can be answered **only by the lattice tier**, one per
+lattice answer arm, so together they make both answer paths
+merge-required through the public dispatcher:
+
+* `adv/swinnerton_dyer_sd5_pair` — `SD₅(x)·SD₅(x+1)` (degree 64, the
+  two true factors are the 32-blocks `SD₅(x)` and `SD₅(x+1)`) exercises
+  the **split** arm: CLD recovery separates the two 32-blocks at modest
+  precision.
+* `adv/swinnerton_dyer_sd6` — SD₆ (degree 64, minimal polynomial of
+  √2+√3+√5+√7+√11+√13, irreducible over ℤ) exercises the
+  **irreducibility-certification** arm: recovery converges to the
+  single all-ones class and the certificate-backed early stop (#8395)
+  answers `some #[core]` without grinding to the `bhksBound` cap.
+
+Swinnerton-Dyer blocks split into factors of degree ≤ 2 modulo every
+admissible (squarefree-image) prime, so the lifted-factor count is
+`r ≥ 32` no matter which prime the selector picks (at the selected
+primes, 29 and 19, all blocks are quadratic and `r = 32`), and the
+size-ordered classical search would need ΣC(31,≤15) ≈ 2³⁰ subset
+candidates to reach its half-size frontier — for `sd5_pair` that is
+where the two 16-block factors live, and for `sd6` that is what
+exhausting all nontrivial subset products takes — far past its
 level-aware budget (`levelAwareSubsetBudget 32 defaultSubsetBudget =
 206368`), so it provably declines and the hybrid falls through to the
-van Hoeij CLD lattice arm.  This case emits the *hybrid* trace
-(`factorHybridTraced`) rather than the classical one, making the tier a
-merge requirement three ways: the emit helper itself errors unless the
-lattice tier answered, the committed-fixture byte-diff pins the exact
-trace (`tier = "lattice"`, `declined = true`, `prime = 29`, `r = 32`,
-`subsetCandidates = 206368`), and the `bz_trace_gate.py` baseline pins
-tier/decline and upper-bounds the candidate count.  A dispatch change,
-a lattice regression, or a precision-cap change that silently loses the
-tier fails the merge.  There is deliberately no `#guard` twin
-in `Conformance.lean` — elaboration-time interpretation of the lattice
-run would cost minutes of build time; the compiled emit executable
-covers it in seconds.
+van Hoeij CLD lattice arm.  Both cases emit the
+*hybrid* trace (`factorHybridTraced`) rather than the classical one,
+making the tier a merge requirement three ways: the emit helper itself
+errors unless the lattice tier answered, the committed-fixture
+byte-diff pins the exact trace (`tier = "lattice"`, `declined = true`,
+the prime, `r = 32`, `subsetCandidates = 206368`), and the
+`bz_trace_gate.py` baseline pins tier/decline and upper-bounds the
+candidate count.  A dispatch change, a lattice regression, or a
+precision-cap change that silently loses the tier fails the merge.
+There is deliberately no `#guard` twin in `Conformance.lean` —
+elaboration-time interpretation of the lattice run would cost minutes
+of build time; the compiled emit executable covers it in seconds.
 
 Cross-checked operation
 -----------------------
@@ -386,15 +401,22 @@ private def cases_adversarial : List Case :=
 
 /-! ## Lattice-tier merge requirement
 
-See the module docstring §"Lattice-tier merge requirement".  The case is
+See the module docstring §"Lattice-tier merge requirement".  The cases are
 emitted through the public `factor` path (`factorHybridTraced`, whose `.1`
 is `factor`) so the pinned trace catches dispatch regressions, not just
 lattice ones. -/
 
-/-- `SD₅(x)·SD₅(x+1)`: the product of Swinnerton-Dyer SD₅ (the committed
-scheduled-corpus `adv/swinnerton_dyer_5` polynomial, minimal polynomial of
-√2+√3+√5+√7+√11) with its shift by one.  Degree 64, content 1, exactly two
-integer factors (the two 32-blocks); `r = 32` modulo every prime. -/
+/-- The two lattice-only cases, one per lattice answer arm:
+
+* `adv/swinnerton_dyer_sd5_pair` (split arm) — `SD₅(x)·SD₅(x+1)`, the
+  product of Swinnerton-Dyer SD₅ (the committed scheduled-corpus
+  `adv/swinnerton_dyer_5` polynomial, minimal polynomial of
+  √2+√3+√5+√7+√11) with its shift by one.  Degree 64, content 1, exactly
+  two integer factors (the two 32-blocks).
+* `adv/swinnerton_dyer_sd6` (certification arm) — Swinnerton-Dyer SD₆
+  (the committed bench `sd6` polynomial from
+  `bench/HexBench/LatticeSpike.lean`, minimal polynomial of
+  √2+√3+√5+√7+√11+√13).  Degree 64, content 1, irreducible over ℤ. -/
 private def cases_lattice : List PinnedCase :=
   [ mkPinned "adv/swinnerton_dyer_sd5_pair"
       #[11101827931906700692775396966400, -20149686329260169158205217177600,
@@ -437,7 +459,32 @@ private def cases_lattice : List PinnedCase :=
         666700176676640, -238675624057208, -13436639601312, 2076738859824,
         166363635616, -12197577892, -1365630880, 39901712, 7273376, -10696,
         -22816, -400, 32, 1]
-      29 (List.replicate 32 2) ]
+      29 (List.replicate 32 2)
+  , mkPinned "adv/swinnerton_dyer_sd6"
+      #[198828783273803025550632280753863681, 0,
+        -8316202966928528723117528333532208416, 0,
+        100392008259975194458539996111340080624, 0,
+        -511762449216265420619809586571618679392, 0,
+        1258829468814790188483900997578812102776, 0,
+        -1771080720430629161685158978892152599456, 0,
+        1585722240968892813653220405983168716752, 0,
+        -968316307427310602872375357706532108000, 0,
+        423140580409718469187953106123559340828, 0,
+        -137048942135190916858196960829292680864, 0,
+        33785494292069713784801456649105169648, 0,
+        -6471399892949448329687739464771529952, 0,
+        978878175154164215599705915851796296, 0,
+        -118444912349891951852181962142375200, 0,
+        11582497564629879101390954172990800, 0,
+        -922739669127277027441017551584608, 0,
+        60261059130667890854325275719238, 0, -3240853899326109989616514647392,
+        0, 143976257181996292530653998416, 0, -5292590468585153795497272608,
+        0, 161038437520893531719546696, 0, -4051269676739248306877664, 0,
+        84041236543621002233072, 0, -1431186296399427673760, 0,
+        19875965471079809820, 0, -223010452468129504, 0, 1995413247403984, 0,
+        -13981172308896, 0, 74737287288, 0, -293134944, 0, 792048, 0, -1312,
+        0, 1]
+      19 (List.replicate 32 2) ]
 
 -- Metamorphic relations (checked without an external oracle): factoring a
 -- transformed input relates predictably to factoring the original.
