@@ -70,9 +70,11 @@ static lean_obj_res lean_hexlll_except_error(const char *msg) {
    the `dlopen`/`dlsym` diagnostic is written to stderr so a caller sees why the
    library did not load (typically an unresolved transitive dep or a wrong
    path). Installing overrides a prior "absent" latch (state 1), so a load may
-   follow an earlier availability probe. */
-LEAN_EXPORT lean_obj_res lean_hexlll_load_provider(b_lean_obj_arg path, lean_obj_arg w) {
-    (void)w;
+   follow an earlier availability probe; a later successful load replaces the
+   current provider, and a failed load leaves the current state unchanged.
+   Bound to `IO Bool`: the world token is erased in the generated call (a single
+   object argument), and the return is an IO result carrying the boxed flag. */
+LEAN_EXPORT lean_obj_res lean_hexlll_load_provider(b_lean_obj_arg path) {
     const char *cpath = lean_string_cstr(path);
     void *handle = dlopen(cpath, RTLD_NOW | RTLD_GLOBAL);
     if (handle == NULL) {
@@ -86,6 +88,7 @@ LEAN_EXPORT lean_obj_res lean_hexlll_load_provider(b_lean_obj_arg path, lean_obj
         const char *err = dlerror();
         fprintf(stderr, "hexlll: dlsym(\"%s\", \"lean_fplll_lll_reduce\") failed: %s\n",
                 cpath, err != NULL ? err : "(no dlerror)");
+        dlclose(handle);
         return lean_io_result_mk_ok(lean_box(0));
     }
     atomic_store_explicit(&lean_hexlll_provider_ptr, (uintptr_t)sym, memory_order_release);
@@ -93,7 +96,7 @@ LEAN_EXPORT lean_obj_res lean_hexlll_load_provider(b_lean_obj_arg path, lean_obj
     return lean_io_result_mk_ok(lean_box(1));
 }
 
-LEAN_EXPORT uint8_t lean_hexlll_provider_available(uint8_t unit) {
+LEAN_EXPORT uint8_t lean_hexlll_provider_available(lean_obj_arg unit) {
     (void)unit;
     return lean_hexlll_resolve_provider() != NULL;
 }

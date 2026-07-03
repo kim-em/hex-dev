@@ -46,13 +46,14 @@ The library must export `lean_fplll_lll_reduce` (the fpLLL-ffi shim built by
 symbol, and points the dispatch at it. Once installed, a `lll` call whose
 provider candidate certifies under `Hex.certCheck` returns the accelerated
 basis; an absent provider, a load failure, or a rejected candidate all fall
-through to the exact `lllNative`. Loading is an explicit, idempotent action —
-there is no environment-variable read and no implicit load — and the trust
-boundary is unchanged: every provider candidate is still checked before use.
+through to the exact `lllNative`. Loading is an explicit action — there is no
+environment-variable read and no implicit load — and the trust boundary is
+unchanged: every provider candidate is still checked before use.
 
-Returns `false` (and writes the `dlopen`/`dlsym` diagnostic to stderr) when the
-library cannot be loaded or does not export the expected symbol; the process
-then keeps whatever provider state it had. -/
+A later successful load replaces the current provider; a failed load leaves the
+existing state untouched and returns `false` (writing the `dlopen`/`dlsym`
+diagnostic to stderr) when the library cannot be loaded or does not export the
+expected symbol. -/
 @[expose]
 def lll.loadProvider (path : System.FilePath) : IO Bool :=
   Internal.LLLProvider.loadProviderImpl path.toString
