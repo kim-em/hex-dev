@@ -1943,6 +1943,144 @@ def checkIrreducibleCert
   cert.perPrime.all (fun primeData => primeData.checkForPolynomial f) &&
     cert.checkDegreeObstructions f
 
+namespace PrimeFactorData
+
+/--
+Kernel-reducible counterpart of `checkCertAtFactor`.
+
+Identical metadata alignment checks, but the nested Rabin certificate is
+replayed through `Berlekamp.checkIrreducibilityCertificateLinearIncremental`,
+whose pow-chain validation costs `O(n · p)` kernel multiplications per factor
+instead of the `O(Σ p^k)` recomputation against the committed
+`FpPoly.frobeniusXPowMod`. The incremental comparison is preferred over
+`Berlekamp.checkIrreducibilityCertificateLinear` because certificate replay
+targets degrees where `p^n` overwhelms any kernel budget while `n · p` stays
+cheap.
+-/
+def checkCertAtFactorLinear
+    (d : PrimeFactorData) (degree : Nat) (factor : @FpPoly d.p d.bounds)
+    (cert : Berlekamp.IrreducibilityCertificate) : Bool :=
+  letI := d.bounds
+  decide (cert.p = d.p) &&
+    decide (cert.n = degree) &&
+    d.containsDegree cert.n &&
+    factor.degree? == some degree &&
+    if hmonic : factor.leadingCoeff = 1 then
+      Berlekamp.checkIrreducibilityCertificateLinearIncremental factor (by exact hmonic) cert
+    else
+      false
+
+/-- Kernel-reducible counterpart of `checkFactorCerts`, replaying each nested
+certificate through `checkCertAtFactorLinear`. -/
+def checkFactorCertsLinear (d : PrimeFactorData) : Bool :=
+  d.factorDegrees.size == d.factorCerts.size &&
+    d.factorDegrees.size == d.factorPolys.size &&
+    (d.factorDegrees.toList.zip (d.factorPolys.toList.zip d.factorCerts.toList)).all fun pair =>
+      checkCertAtFactorLinear d pair.1 pair.2.1 pair.2.2
+
+/-- Kernel-reducible counterpart of `checkForPolynomial`, replaying the nested
+certificates through `checkFactorCertsLinear`. -/
+def checkForPolynomialLinear (f : ZPoly) (d : PrimeFactorData) : Bool :=
+  letI := d.bounds
+  isGoodPrime f d.p &&
+    d.factorDegrees.all (fun degree => 0 < degree) &&
+    d.degreeSum == (ZPoly.modP d.p f).degree?.getD 0 &&
+    d.factorProduct == ZPoly.modP d.p f &&
+    d.checkFactorCertsLinear
+
+/--
+`checkCertAtFactorLinear` implies `checkCertAtFactor` once the block's prime
+is genuinely prime: the two differ only in the nested pow-chain replay, which
+`Berlekamp.checkIrreducibilityCertificate_of_linearIncremental` bridges.
+-/
+theorem checkCertAtFactor_of_linear
+    (d : PrimeFactorData) (degree : Nat) (factor : @FpPoly d.p d.bounds)
+    (cert : Berlekamp.IrreducibilityCertificate)
+    (hp : Hex.Nat.Prime d.p)
+    (hcheck : d.checkCertAtFactorLinear degree factor cert = true) :
+    d.checkCertAtFactor degree factor cert = true := by
+  letI := d.bounds
+  letI : ZMod64.PrimeModulus d.p := ZMod64.primeModulusOfPrime hp
+  unfold checkCertAtFactorLinear at hcheck
+  unfold checkCertAtFactor
+  simp only [Bool.and_eq_true] at hcheck ⊢
+  rcases hcheck with ⟨hmeta, htail⟩
+  refine ⟨hmeta, ?_⟩
+  by_cases hmonic : factor.leadingCoeff = 1
+  · rw [dif_pos hmonic] at htail ⊢
+    exact Berlekamp.checkIrreducibilityCertificate_of_linearIncremental
+      factor _ cert htail
+  · rw [dif_neg hmonic] at htail
+    simp at htail
+
+/-- `checkFactorCertsLinear` implies `checkFactorCerts` once the block's prime
+is genuinely prime. -/
+theorem checkFactorCerts_of_linear
+    (d : PrimeFactorData) (hp : Hex.Nat.Prime d.p)
+    (hcheck : d.checkFactorCertsLinear = true) :
+    d.checkFactorCerts = true := by
+  unfold checkFactorCertsLinear at hcheck
+  unfold checkFactorCerts
+  simp only [Bool.and_eq_true] at hcheck ⊢
+  rcases hcheck with ⟨hsizes, hall⟩
+  refine ⟨hsizes, ?_⟩
+  rw [List.all_eq_true] at hall ⊢
+  intro pair hmem
+  exact checkCertAtFactor_of_linear d pair.1 pair.2.1 pair.2.2 hp (hall pair hmem)
+
+/-- `checkForPolynomialLinear` implies `checkForPolynomial` once the block's
+prime is genuinely prime. -/
+theorem checkForPolynomial_of_linear
+    (f : ZPoly) (d : PrimeFactorData) (hp : Hex.Nat.Prime d.p)
+    (hcheck : d.checkForPolynomialLinear f = true) :
+    d.checkForPolynomial f = true := by
+  unfold checkForPolynomialLinear at hcheck
+  unfold checkForPolynomial
+  simp only [Bool.and_eq_true] at hcheck ⊢
+  rcases hcheck with ⟨hmeta, hcerts⟩
+  exact ⟨hmeta, checkFactorCerts_of_linear d hp hcerts⟩
+
+end PrimeFactorData
+
+/--
+Kernel-reducible counterpart of `checkIrreducibleCert`: the same surface
+checks, with every nested Rabin certificate replayed through the incremental
+pow-chain checker so `decide` can reduce a literal certificate without
+re-running the committed `FpPoly.frobeniusXPowMod` in the kernel.
+
+Consumers discharge this checker on literal certificate data and cross to the
+committed checker (hence to `checkIrreducibleCert`'s soundness theorem) via
+`checkIrreducibleCert_of_linear`.
+-/
+def checkIrreducibleCertLinear
+    (f : ZPoly) (cert : ZPolyIrreducibilityCertificate) : Bool :=
+  cert.perPrime.all (fun primeData => primeData.checkForPolynomialLinear f) &&
+    cert.checkDegreeObstructions f
+
+/--
+The kernel-reducible integer checker implies the committed one, given that
+every recorded block prime is genuinely prime. Primality feeds the pow-chain
+recurrence `X^(p^(k+1)) ≡ (X^(p^k))^p (mod f)` that identifies the incremental
+replay with the committed Frobenius routine.
+-/
+theorem checkIrreducibleCert_of_linear
+    (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
+    (hprime : ∀ primeData ∈ cert.perPrime.toList, Hex.Nat.Prime primeData.p)
+    (hcheck : checkIrreducibleCertLinear f cert = true) :
+    checkIrreducibleCert f cert = true := by
+  unfold checkIrreducibleCertLinear at hcheck
+  unfold checkIrreducibleCert
+  simp only [Bool.and_eq_true] at hcheck ⊢
+  rcases hcheck with ⟨hblocks, hobs⟩
+  refine ⟨?_, hobs⟩
+  rw [Array.all_eq_true] at hblocks ⊢
+  intro i hi
+  have hmem : cert.perPrime[i] ∈ cert.perPrime.toList := by
+    rw [List.mem_iff_getElem]
+    exact ⟨i, by simpa using hi, by simp⟩
+  exact PrimeFactorData.checkForPolynomial_of_linear f cert.perPrime[i]
+    (hprime cert.perPrime[i] hmem) (hblocks i hi)
+
 /--
 Rabin certificates for every modular factor at a prime block, aligned with the
 factor array. Fails (returns `none`) if any modular factor is non-monic or is
