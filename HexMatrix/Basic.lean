@@ -227,6 +227,30 @@ protected def zero (n m : Nat) [OfNat R 0] : Matrix R n m :=
 instance [OfNat R 0] : Zero (Matrix R n m) where
   zero := Matrix.zero n m
 
+/-- Every entry of the zero matrix is `0`. -/
+@[grind =] theorem getElem_zero [OfNat R 0] (i : Fin n) (j : Fin m) :
+    (0 : Matrix R n m)[i][j] = 0 := by
+  show (Matrix.zero n m)[i][j] = 0
+  simp [Matrix.zero, ofFn]
+
+/-- Every row of the zero matrix is the zero vector. -/
+@[simp, grind =] theorem row_zero [OfNat R 0] (i : Fin n) :
+    row (0 : Matrix R n m) i = Vector.ofFn fun _ => (0 : R) := by
+  ext j hj
+  show (row (0 : Matrix R n m) i)[(⟨j, hj⟩ : Fin m)] =
+    (Vector.ofFn fun _ => (0 : R))[(⟨j, hj⟩ : Fin m)]
+  rw [getElem_row, getElem_zero]
+  simp
+
+/-- Every column of the zero matrix is the zero vector. -/
+@[simp, grind =] theorem col_zero [OfNat R 0] (j : Fin m) :
+    col (0 : Matrix R n m) j = Vector.ofFn fun _ => (0 : R) := by
+  ext i hi
+  show (col (0 : Matrix R n m) j)[(⟨i, hi⟩ : Fin n)] =
+    (Vector.ofFn fun _ => (0 : R))[(⟨i, hi⟩ : Fin n)]
+  rw [getElem_col, getElem_zero]
+  simp
+
 /-- The identity matrix. -/
 @[expose]
 protected def identity (n : Nat) [OfNat R 0] [OfNat R 1] : Matrix R n n :=
@@ -282,6 +306,13 @@ def mulVec [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (v : Vector R m) :
     row (transpose M) j = col M j := by
   simp only [row, transpose, getRow_ofRows]
   grind
+
+/-- The `i`-th column of `transpose M` is the `i`-th row of `M`. -/
+@[simp, grind =] theorem col_transpose (M : Matrix R n m) (i : Fin n) :
+    col (transpose M) i = row M i := by
+  ext k hk
+  show (col (transpose M) i)[(⟨k, hk⟩ : Fin m)] = (row M i)[(⟨k, hk⟩ : Fin m)]
+  rw [getElem_col, getElem_transpose, getElem_row]
 
 /--
 Multiply two matrices, using the naive algorithm.
@@ -359,6 +390,28 @@ instance [Mul R] [Add R] [OfNat R 0] : HMul (Vector R n) (Matrix R n m) (Vector 
   show (mul M N)[i][j] = (row M i).dotProduct (col N j)
   rw [mul, getElem_ofFn]
 
+/-- Row `i` of `M * N` is the row of dot products of `row M i` against the
+columns of `N`. -/
+@[simp, grind =] theorem row_mul [Mul R] [Add R] [OfNat R 0]
+    (M : Matrix R n m) (N : Matrix R m k) (i : Fin n) :
+    row (M * N) i = Vector.ofFn fun j => (row M i).dotProduct (col N j) := by
+  ext j hj
+  show (row (M * N) i)[(⟨j, hj⟩ : Fin k)] =
+    (Vector.ofFn fun j => (row M i).dotProduct (col N j))[(⟨j, hj⟩ : Fin k)]
+  rw [getElem_row, getElem_mul]
+  simp
+
+/-- Column `j` of `M * N` is the column of dot products of the rows of `M`
+against `col N j`. -/
+@[simp, grind =] theorem col_mul [Mul R] [Add R] [OfNat R 0]
+    (M : Matrix R n m) (N : Matrix R m k) (j : Fin k) :
+    col (M * N) j = Vector.ofFn fun i => (row M i).dotProduct (col N j) := by
+  ext i hi
+  show (col (M * N) j)[(⟨i, hi⟩ : Fin n)] =
+    (Vector.ofFn fun i => (row M i).dotProduct (col N j))[(⟨i, hi⟩ : Fin n)]
+  rw [getElem_col, getElem_mul]
+  simp
+
 /-- The identity matrix entry function: `(identity n)[i][j] = 1` if `i = j`, else `0`. -/
 @[grind =] theorem getElem_identity [OfNat R 0] [OfNat R 1] {n : Nat} (i j : Fin n) :
     (Matrix.identity (R := R) n)[i][j] = if i = j then (1 : R) else 0 := by
@@ -376,6 +429,24 @@ instance [Mul R] [Add R] [OfNat R 0] : HMul (Vector R n) (Matrix R n m) (Vector 
     rw [if_pos hij, if_pos hji]
   · have hji : (⟨j, hj⟩ : Fin n) ≠ ⟨i, hi⟩ := fun h => hij h.symm
     rw [if_neg hij, if_neg hji]
+
+/-- Row `i` of the identity matrix has a `1` in position `i` and `0` elsewhere. -/
+@[simp, grind =] theorem row_identity [OfNat R 0] [OfNat R 1] {n : Nat} (i : Fin n) :
+    row (Matrix.identity (R := R) n) i = Vector.ofFn fun j => if i = j then (1 : R) else 0 := by
+  ext j hj
+  show (row (Matrix.identity (R := R) n) i)[(⟨j, hj⟩ : Fin n)] =
+    (Vector.ofFn fun j => if i = j then (1 : R) else 0)[(⟨j, hj⟩ : Fin n)]
+  rw [getElem_row, getElem_identity]
+  simp
+
+/-- Column `j` of the identity matrix has a `1` in position `j` and `0` elsewhere. -/
+@[simp, grind =] theorem col_identity [OfNat R 0] [OfNat R 1] {n : Nat} (j : Fin n) :
+    col (Matrix.identity (R := R) n) j = Vector.ofFn fun i => if i = j then (1 : R) else 0 := by
+  ext i hi
+  show (col (Matrix.identity (R := R) n) j)[(⟨i, hi⟩ : Fin n)] =
+    (Vector.ofFn fun i => if i = j then (1 : R) else 0)[(⟨i, hi⟩ : Fin n)]
+  rw [getElem_col, getElem_identity]
+  simp
 
 /-- In-place modification of row `i`. Linear in `M`: destructuring consumes `M`,
 so when `M` is uniquely referenced the row is owned and `Vector.modify` updates
@@ -481,6 +552,21 @@ the replacement function and every other column is read from `M`. -/
   · rw [if_pos hc']
     exact congrArg (fun c' : Fin m => M[(⟨r, hr⟩ : Fin n)][c']) hc'.symm
   · rw [if_neg hc']
+
+/-- Transposing a row replacement is a column replacement on the transpose:
+`setRow` on `M` corresponds to `setCol` on `Mᵀ`. This is the bridge the
+determinant row laws route through to reuse the column laws. -/
+theorem transpose_setRow (M : Matrix R n m) (dst : Fin n) (v : Vector R m) :
+    transpose (setRow M dst v) = setCol (transpose M) dst (fun a => v[a]) := by
+  apply ext_getElem
+  intro a b
+  rw [getElem_transpose, getElem_setCol]
+  by_cases hb : b = dst
+  · subst hb
+    rw [show (setRow M b v)[b] = v from setRow_get_self M b v]
+    simp
+  · rw [if_neg hb, show (setRow M dst v)[b] = M[b] from setRow_row_ne M dst b v hb,
+      getElem_transpose]
 
 /-- In-place per-entry column modify: replace each entry `M[i][dst]` by
 `g i M[i][dst]`, every other column unchanged. In-place via `mapRowsIdx`,

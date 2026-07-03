@@ -250,6 +250,17 @@ theorem det_setCol_smul {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
         exact List.foldl_add_mul_left_zero
           (permutationVectors n) c (detTerm (setCol M dst v))
 
+/-- Determinant linearity in one replaced row, additive form. The row mirror of
+`det_setCol_add`, proved by transposing to the column law. -/
+theorem det_setRow_add {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R n n) (dst : Fin n) (v w : Vector R n) :
+    det (setRow M dst (Vector.ofFn fun c => v[c] + w[c])) =
+      det (setRow M dst v) + det (setRow M dst w) := by
+  rw [← det_transpose (setRow M dst (Vector.ofFn fun c => v[c] + w[c])),
+    ← det_transpose (setRow M dst v), ← det_transpose (setRow M dst w),
+    transpose_setRow, transpose_setRow, transpose_setRow]
+  simpa using det_setCol_add (transpose M) dst (fun a => v[a]) (fun a => w[a])
+
 /-- The assembled determinant `det` vanishes when the replaced column is zero. -/
 private theorem det_setCol_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R n n) (dst : Fin n) :

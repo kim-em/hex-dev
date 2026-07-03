@@ -32,8 +32,9 @@ noncomputable def coeffs (b : Matrix Int n m) : Matrix Rat n n
 /-- The k-th Gram determinant: det of the k×k leading Gram submatrix.
     gramDet b 0 = 1 by convention. Returns Nat (always a positive integer
     for independent bases; an internal helper computes the Int determinant
-    and the public API wraps via .toNat). -/
-def gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) : Nat
+    and the public API wraps via .toNat). The bound defaults to `by omega`
+    so callers with concrete k, n can omit it. -/
+def gramDet (b : Matrix Int n m) (k : Nat) (hk : k ≤ n := by omega) : Nat
 
 /-- All Gram determinants as a vector.
     Computed incrementally (e.g. one Bareiss-style elimination pass

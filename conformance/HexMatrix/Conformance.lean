@@ -101,7 +101,7 @@ private def spanVec : Vector Rat 3 :=
 -/
 #guard_msgs (whitespace := normalized) in #eval Matrix.transpose baseInt
 
-/-- info: { toArray := #[17, 39], size_toArray := _ } -/
+/-- info: #v[17, 39] -/
 #guard_msgs in #eval Matrix.mulVec baseInt vecInt
 
 /-- info:
