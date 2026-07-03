@@ -253,11 +253,15 @@ def sweep_system(name: str, argv, instances, cutoff: float):
         request = {"coeffs": inst["coeffs"]}
         # First call decides the repeat policy and gives the degree multiset.
         reply, elapsed = service.call(request, cutoff)
-        status = classify(reply, elapsed)
-        if status == "timeout":
+        if reply is None:
+            # Distinguish a real timeout (process still alive, we kill it) from a
+            # process that died on its own (crash / EOF), which is an error.
+            dead = service.proc.poll() is not None
             service.respawn()
-            records.append(_record(name, inst, "timeout", None, None, None, None, None))
+            records.append(_record(name, inst, "error" if dead else "timeout",
+                                   None, None, None, None, None))
             continue
+        status = classify(reply, elapsed)
         degrees = degree_multiset(reply)
         factor_count = len(degrees) if degrees is not None else None
         # Median-of-5 only when the input is cheap (first call under 1 s).
@@ -267,6 +271,11 @@ def sweep_system(name: str, argv, instances, cutoff: float):
                 r2, e2 = service.call(request, cutoff)
                 if r2 is None:
                     service.respawn()
+                    break
+                # A repeat that disagrees with the first answer (non-ok, or a
+                # different factorization) is an anomaly: stop collecting timings
+                # rather than fold an inconsistent sample into the median.
+                if classify(r2, e2) != "ok" or degree_multiset(r2) != degrees:
                     break
                 times.append(e2)
         times = [t for t in times if t is not None]
@@ -402,10 +411,11 @@ def main():
         spec = SYSTEMS[name]
         argv = spec.resolve()
         if argv is None:
-            msg = f"[skip] {name}: service unavailable"
-            print(msg, file=sys.stderr)
             if not args.skip_unavailable:
-                print(f"       (use --skip-unavailable to ignore)", file=sys.stderr)
+                print(f"[fail] {name}: service unavailable; pass --skip-unavailable "
+                      f"to record a partial sweep instead", file=sys.stderr)
+                return 2
+            print(f"[skip] {name}: service unavailable", file=sys.stderr)
             continue
         versions[name] = spec.version()
         print(f"[run ] {name}: {argv[0].split('/')[-1]} ...", file=sys.stderr)

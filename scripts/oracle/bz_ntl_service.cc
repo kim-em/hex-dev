@@ -49,12 +49,20 @@ bool parse_coeffs(const std::string &line, ZZX &out) {
   long index = 0;
   std::string token;
   std::stringstream ss(payload);
+  // An empty array (`[]`) is the zero polynomial; a non-empty array must have a
+  // strict `[+-]?[0-9]+` integer in every comma-separated slot -- no empty
+  // tokens, trailing commas, or numeric garbage (matching the other services).
+  bool any = payload.find_first_not_of(" \t\r\n") != std::string::npos;
   while (std::getline(ss, token, ',')) {
-    // Trim surrounding whitespace.
     std::size_t a = token.find_first_not_of(" \t\r\n");
     std::size_t b = token.find_last_not_of(" \t\r\n");
-    if (a == std::string::npos) continue;  // tolerate a trailing empty split
+    if (a == std::string::npos) return false;  // empty slot -> malformed
     std::string digits = token.substr(a, b - a + 1);
+    std::size_t start = (digits[0] == '+' || digits[0] == '-') ? 1 : 0;
+    if (start == digits.size()) return false;
+    for (std::size_t i = start; i < digits.size(); ++i) {
+      if (!std::isdigit(static_cast<unsigned char>(digits[i]))) return false;
+    }
     ZZ value;
     std::istringstream vs(digits);
     vs >> value;
@@ -62,6 +70,7 @@ bool parse_coeffs(const std::string &line, ZZX &out) {
     NTL::SetCoeff(out, index, value);
     ++index;
   }
+  if (any && index == 0) return false;
   return true;
 }
 

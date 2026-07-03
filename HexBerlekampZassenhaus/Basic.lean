@@ -9679,6 +9679,12 @@ private def classicalGuardCubic : ZPoly := DensePoly.ofCoeffs #[-6, 11, -6, 1]
 -- The no-decline entry agrees with the production classical tier where both terminate.
 #guard ((factorClassicalNoDecline classicalGuardCubic).map Factorization.product) = some classicalGuardCubic
 #guard ((factorClassicalNoDecline classicalGuardCubic).map (·.factors.size)) = some 3
+-- A higher-`r` reducible (six linear factors): the no-decline enumeration must
+-- recover all six, never collapse to a wrong irreducible core.
+private def classicalGuardSextic : ZPoly := DensePoly.ofCoeffs #[720, -1764, 1624, -735, 175, -21, 1]
+#guard ((factorClassicalNoDecline classicalGuardSextic).map Factorization.product) = some classicalGuardSextic
+#guard ((factorClassicalNoDecline classicalGuardSextic).map (·.factors.size)) = some 6
+#guard ((factorClassical classicalGuardSextic).map (·.factors.size)) = some 6
 #guard ((factorClassical exhaustiveNonMonicQuadraticGuard).map Factorization.product)
   = some exhaustiveNonMonicQuadraticGuard
 

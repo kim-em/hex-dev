@@ -61,7 +61,10 @@ def serve(factor_fn: FactorFn) -> None:
             coeffs = request["coeffs"]
             if not isinstance(coeffs, list):
                 raise ValueError("coeffs must be an array")
-            coeffs = [int(c) for c in coeffs]
+            # Require JSON integers, matching the Lean service; reject bools,
+            # floats and numeric strings so all systems accept the same inputs.
+            if not all(type(c) is int for c in coeffs):
+                raise ValueError("coeffs must all be integers")
         except Exception as exc:  # noqa: BLE001 -- report any malformed request
             out.write(_error(f"expected JSON object with integer array field coeffs: {exc}") + "\n")
             out.flush()
