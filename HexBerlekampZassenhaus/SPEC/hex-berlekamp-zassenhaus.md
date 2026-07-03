@@ -818,6 +818,39 @@ Phase 4 declares one external comparator:
 
 The fpLLL/python-flint comparators that adjacent libraries declare are *informational only* at the BZ level.
 
+### Cross-system sweep charts — refresh after any factor-path change
+
+The multi-system comparison (hex vs FLINT, NTL, PARI, and both verified
+Isabelle/AFP factorizers) lives in
+[reports/hexbz-factor-sweep.md](../../reports/hexbz-factor-sweep.md), driven by
+`scripts/bench/factor_sweep.py` and charted by `scripts/plots/hexbz-cactus.py`
+into the committed SVGs under `reports/figures/hexbz-*.svg` (auto-published on
+the Verso manual). This is a re-runnable comparator sweep, **not CI** (see
+[SPEC/benchmarking.md § Cross-system comparator sweeps](../../SPEC/benchmarking.md)).
+
+**Standing expectation for any change to a public factor entry** (`factor`,
+`factorLattice`, `factorFast`, `factorClassicalNoDecline`, or the tiers beneath
+them) that could move performance: re-measure the hex entries and refresh the
+charts, then **show the updated charts to the requester**. The external
+comparators do *not* need re-running — the plotter merges records
+newest-per-system, so a fresh hex-only record plus the committed baseline gives
+correct charts:
+
+```
+# 1. Re-measure only the hex entries against the current corpus (same cutoff):
+python3 scripts/bench/factor_sweep.py \
+    --systems hex-factor,hex-lattice,hex-fast,hex-classical-nodecline \
+    --cutoff 10 --skip-unavailable
+# 2. Regenerate the charts (fresh hex curves win; external curves carried over):
+python3 scripts/plots/hexbz-cactus.py
+# 3. Commit the new record + regenerated SVGs; surface the charts to the requester.
+```
+
+If the corpus itself changed (`gen_factor_corpus.py`), the external systems
+*must* be re-measured too — the plotter refuses to merge records with mismatched
+`corpus_sha256`. Both Isabelle drivers and the NTL driver are cached on carica,
+so a full re-measure there is cheap after the first build.
+
 ## References
 
 - van Hoeij, *Factoring polynomials and the knapsack problem* (2002) "KP": https://www.math.fsu.edu/~hoeij/knapsack/paper/May16_2001/knapsack.pdf — original lattice + Lemma 2.6 (rounding error) + Lemma 2.8 (structural test).

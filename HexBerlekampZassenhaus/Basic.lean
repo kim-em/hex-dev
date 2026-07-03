@@ -9603,12 +9603,88 @@ def factorClassicalTracedWithBound (f : ZPoly) (B : Nat) : Option Factorization 
 def factorClassicalTraced (f : ZPoly) : Option Factorization × FactorTrace :=
   factorClassicalTracedWithBound f (ZPoly.defaultFactorCoeffBound f)
 
+/-- Subset-enumeration budget that runs the classical recombination search to
+completion for `r` lifted factors: `2 ^ r` exceeds the total subset count, so the
+search enumerates every subset and either splits or certifies irreducibility,
+with no early stop. -/
+def completionSubsetBudget (r : Nat) : Nat := 2 ^ r
+
+/-- `scaledRecombinationSmart` with the #8530 level-aware tightening removed: the
+supplied `budget` is used directly instead of `levelAwareSubsetBudget r budget`,
+so the search runs to the full budget rather than stopping at the last completable
+subset-size level. Reuses the same proven size/candidate loops; used only by the
+benchmark `factorClassicalNoDecline` entry to expose the classical exponential
+wall. Production `factor` (via `scaledRecombinationSmart`) is untouched. -/
+def scaledRecombinationFull
+    (coreLc : Int) (f : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
+    (budget : Nat) : Option (List ZPoly) × RecombStats :=
+  let r := localFactors.length
+  let (res, remaining) :=
+    scaledRecombinationSmartAux coreLc f modulus localFactors budget
+      (budget + (r + 1) * (2 * r + 3))
+  (res,
+    { candidatesTried := budget - remaining,
+      budgetExhausted := res.isNone && remaining == 0 })
+
+/-- Classical core factors run to completion: no level-aware tightening and no
+early decline. On full enumeration with no split, returns the irreducible core
+rather than declining; the only `none` comes from an upstream missing prime. Its
+answers therefore always agree with the production tier where both terminate. -/
+def classicalCoreFactorsToCompletion
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Option (Array ZPoly) :=
+  if B = 0 then
+    some #[core]
+  else
+    let liftData := ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData
+    let r := liftData.liftedFactors.size
+    let (res, _stats) :=
+      scaledRecombinationFull (DensePoly.leadingCoeff core) core
+        (liftModulus liftData) liftData.liftedFactors.toList (completionSubsetBudget r)
+    match res with
+    | some factors => some (if factors.isEmpty then #[core] else factors.toArray)
+    | none => some #[core]
+
+/-- Raw factor array for the no-decline classical tier; mirror of
+`factorClassicalFactorsWithBound` using `classicalCoreFactorsToCompletion`. -/
+def factorClassicalNoDeclineFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
+  let normalized := normalizeForFactor f
+  if normalized.squareFreeCore.degree?.getD 0 = 0 then
+    some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
+  else
+    match quadraticIntegerRootFactors? normalized.squareFreeCore with
+    | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
+    | none =>
+        (ZPoly.toMonicPrimeData? normalized.squareFreeCore).bind fun primeData =>
+          (classicalCoreFactorsToCompletion normalized.squareFreeCore B primeData).map fun coreFactors =>
+            reassemblePolynomialFactors normalized coreFactors
+
+def factorClassicalNoDeclineWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
+  (factorClassicalNoDeclineFactorsWithBound f B).map (factorizationOfFactors f)
+
+/-- Classical recombination run to completion or cutoff, with the #8530 level-
+aware early decline disabled. The `hexbz_factor_service --entry
+factorClassicalNoDecline` line uses this to make the classical exponential wall
+visible on the cross-system cactus charts: it runs the full subset enumeration
+(so its answers are correct where it terminates) instead of declining high-`r`
+cores to the lattice tier. Production `factor`/`factorClassical` are untouched. -/
+def factorClassicalNoDecline (f : ZPoly) : Option Factorization :=
+  factorClassicalNoDeclineWithBound f (ZPoly.defaultFactorCoeffBound f)
+
 -- (X-1)(X-2)(X-3): a reducible cubic (past the quadratic short-circuit) that the
 -- size-ordered recombination must split into three linear factors.
 private def classicalGuardCubic : ZPoly := DensePoly.ofCoeffs #[-6, 11, -6, 1]
 
 #guard ((factorClassical classicalGuardCubic).map Factorization.product) = some classicalGuardCubic
 #guard ((factorClassical classicalGuardCubic).map (·.factors.size)) = some 3
+-- The no-decline entry agrees with the production classical tier where both terminate.
+#guard ((factorClassicalNoDecline classicalGuardCubic).map Factorization.product) = some classicalGuardCubic
+#guard ((factorClassicalNoDecline classicalGuardCubic).map (·.factors.size)) = some 3
+-- A higher-`r` reducible (six linear factors): the no-decline enumeration must
+-- recover all six, never collapse to a wrong irreducible core.
+private def classicalGuardSextic : ZPoly := DensePoly.ofCoeffs #[720, -1764, 1624, -735, 175, -21, 1]
+#guard ((factorClassicalNoDecline classicalGuardSextic).map Factorization.product) = some classicalGuardSextic
+#guard ((factorClassicalNoDecline classicalGuardSextic).map (·.factors.size)) = some 6
+#guard ((factorClassical classicalGuardSextic).map (·.factors.size)) = some 6
 #guard ((factorClassical exhaustiveNonMonicQuadraticGuard).map Factorization.product)
   = some exhaustiveNonMonicQuadraticGuard
 

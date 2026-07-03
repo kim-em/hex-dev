@@ -469,7 +469,7 @@ libraries:
     done_through: 0
     status: planned
   HexNumberField:
-    deps: [HexPolyZ, HexRoots, HexResultant, HexBerlekampZassenhaus]
+    deps: [HexPolyZ, HexRoots, HexResultant, HexBerlekampZassenhaus, HexMatrix, HexRowReduce]
     mathlib: false
     done_through: 0
     status: planned
