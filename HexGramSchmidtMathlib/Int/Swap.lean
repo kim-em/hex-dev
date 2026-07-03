@@ -78,6 +78,7 @@ theorem gramSchmidtNormProduct_rowSwap_below
         (Nat.le_of_lt km1.isLt) =
       gramSchmidtNormProduct b km1.val (Nat.le_of_lt km1.isLt) := by
   unfold gramSchmidtNormProduct
+  rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl]
   apply foldl_mul_congr_simple
   intro j _hj
   have hj_lt_km1 : j.val < km1.val := j.isLt

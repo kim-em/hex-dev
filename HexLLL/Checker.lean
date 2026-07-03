@@ -194,7 +194,7 @@ negligible against either. A deterministic function of the input alone, so the
 dispatches that read it keep per-input timing deterministic. -/
 @[expose]
 def maxDiagBits (b : Matrix Int n m) : Nat :=
-  (List.finRange n).foldl
+  Fin.foldl n
     (fun acc i => max acc ((b.row i).normSq).natAbs.log2)
     0
 

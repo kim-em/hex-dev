@@ -820,6 +820,7 @@ private theorem det_plucker_three_term_of_basisVec
       Hex.Matrix.mDet B v p3 * Hex.Matrix.nDet B p1 p2 h12 = 0 := by
   rw [Hex.Matrix.mDet_eq_sum_unit B v p1, Hex.Matrix.mDet_eq_sum_unit B v p2,
     Hex.Matrix.mDet_eq_sum_unit B v p3]
+  simp only [Fin.foldl_eq_finRange_foldl]
   rw [← foldl_det_sum_mul_right_zero (List.finRange (n + 3))
       (fun q => v[q] * Hex.Matrix.mDet B (Vector.unit R q) p1)
       (Hex.Matrix.nDet B p2 p3 h23)]

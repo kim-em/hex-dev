@@ -43,8 +43,8 @@ theorem vectorEquiv_vecMul [CommRing R] (M : Hex.Matrix R n m) (c : Vector R n) 
     (Fintype.linearCombination R (_root_.Matrix.row (matrixEquiv M)) (vectorEquiv c)) j
   unfold Hex.Matrix.mulVec Hex.Matrix.row Vector.dotProduct Hex.Matrix.transpose
     Hex.Matrix.col
-  rw [Vector.getElem_ofFn j.isLt, foldl_finRange_eq_sum, Fintype.linearCombination_apply,
-    Finset.sum_apply]
+  rw [Vector.getElem_ofFn j.isLt, foldl_finRange_eq_sum,
+    Fintype.linearCombination_apply, Finset.sum_apply]
   apply Finset.sum_congr rfl
   intro i _
   simp only [vectorEquiv_apply, matrixEquiv_apply, _root_.Matrix.row_apply, Pi.smul_apply,

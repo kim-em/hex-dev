@@ -97,7 +97,7 @@ their cofactors along any fixed row or column.
 
 {docstring Hex.Matrix.cofactor}
 
-{docstring Hex.Matrix.det_eq_foldl_laplace_row}
+{docstring Hex.Matrix.det_eq_finFoldl_laplace_row}
 
 # The adjugate
 %%%
@@ -128,7 +128,7 @@ lower-triangular matrix as the product of its diagonal entries.
 
 {docstring Hex.Matrix.det_plucker_three_term_consecutive_top}
 
-{docstring Hex.Matrix.det_upperTriangular_eq_foldl_diag}
+{docstring Hex.Matrix.det_upperTriangular_eq_finFoldl_diag}
 
 # Worked example
 %%%

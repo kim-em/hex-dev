@@ -296,7 +296,9 @@ private theorem gram_cast (b : Hex.Matrix Int n m) (i j : Fin n) :
       (castRow b i).dotProduct (castRow b j) := by
   rw [dot_eq_sum]
   rw [show (b.row i).dotProduct (b.row j) =
-      ∑ k : Fin m, (b.row i)[k] * (b.row j)[k] from foldl_finRange_eq_sum _]
+      ∑ k : Fin m, (b.row i)[k] * (b.row j)[k] from by
+        rw [Vector.dotProduct]
+        exact foldl_finRange_eq_sum _]
   push_cast
   refine Finset.sum_congr rfl fun k _ => ?_
   unfold castRow
@@ -326,7 +328,7 @@ private theorem getElem_prefixCombination
         GramSchmidt.entry C ⟨i, hi⟩ ⟨k.val, Nat.lt_trans k.isLt hi⟩ *
           (B.row ⟨k.val, Nat.lt_trans k.isLt hi⟩)[l] := by
   unfold GramSchmidt.prefixCombination
-  rw [getElem_foldl_add_smul]
+  rw [Fin.foldl_eq_finRange_foldl, getElem_foldl_add_smul]
   have hz : (0 : Vector Rat m)[l] = 0 := by
     simp
   rw [hz, zero_add]

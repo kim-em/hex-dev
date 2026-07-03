@@ -978,10 +978,11 @@ private theorem foldl_add_eq_acc_rat_int {α : Type u}
 private theorem foldl_finRange_eq_prefix_of_zero_above_from
     {n : Nat} (k : Fin n) (f : Fin n → Rat) (acc : Rat)
     (hzero : ∀ j : Fin n, k.val < j.val → f j = 0) :
-    (List.finRange n).foldl (fun acc j => acc + f j) acc =
-      (List.finRange (k.val + 1)).foldl
+    Fin.foldl n (fun acc j => acc + f j) acc =
+      Fin.foldl (k.val + 1)
         (fun acc j =>
           acc + f ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩) acc := by
+  rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl]
   induction n generalizing acc with
   | zero =>
       exact Fin.elim0 k
@@ -1017,20 +1018,21 @@ private theorem foldl_finRange_eq_prefix_of_zero_above_from
 private theorem foldl_finRange_eq_prefix_of_zero_above
     {n : Nat} (k : Fin n) (f : Fin n → Rat)
     (hzero : ∀ j : Fin n, k.val < j.val → f j = 0) :
-    (List.finRange n).foldl (fun acc j => acc + f j) 0 =
-      (List.finRange (k.val + 1)).foldl
+    Fin.foldl n (fun acc j => acc + f j) 0 =
+      Fin.foldl (k.val + 1)
         (fun acc j =>
           acc + f ⟨j.val, Nat.lt_of_lt_of_le j.isLt (Nat.succ_le_of_lt k.isLt)⟩) 0 :=
   foldl_finRange_eq_prefix_of_zero_above_from k f 0 hzero
 
-/-- A `List.finRange (k + 1)` fold whose addend vanishes on every strict
+/-- A `Fin.foldl (k + 1)` fold whose addend vanishes on every strict
 predecessor of `k` reduces to the contribution at the last index. -/
 private theorem foldl_finRange_succ_eq_last_of_zero_below
     (k : Nat) (f : Fin (k + 1) → Rat) (acc : Rat)
     (hzero : ∀ j : Fin (k + 1), j.val < k → f j = 0) :
-    (List.finRange (k + 1)).foldl (fun acc j => acc + f j) acc =
+    Fin.foldl (k + 1) (fun acc j => acc + f j) acc =
       acc + f ⟨k, Nat.lt_succ_self k⟩ := by
-  rw [List.finRange_succ_last, List.foldl_append, List.foldl_map]
+  rw [Fin.foldl_eq_finRange_foldl,
+    List.finRange_succ_last, List.foldl_append, List.foldl_map]
   have hprefix :
       (List.finRange k).foldl
           (fun acc i => acc + f (Fin.castSucc i)) acc = acc := by
@@ -1077,6 +1079,7 @@ theorem vecMul_coeffs_apply_eq_of_zero_above
     show ((coeffs b).transpose * castc)[k] = _
     rw [Matrix.getElem_mulVec]
     show (((coeffs b).transpose).row k).dotProduct castc = _
+    rw [Vector.dotProduct]
     show (List.finRange n).foldl
         (fun acc i =>
           acc + (((coeffs b).transpose).row k)[i] * castc[i]) 0 = _
@@ -1095,8 +1098,9 @@ theorem vecMul_coeffs_apply_eq_of_zero_above
   have htrunc :
       (List.finRange n).foldl (fun acc j => acc + f j) 0
         = (List.finRange (k.val + 1)).foldl
-            (fun acc j => acc + f (liftj j)) 0 :=
-    foldl_finRange_eq_prefix_of_zero_above k f habove
+            (fun acc j => acc + f (liftj j)) 0 := by
+    have h := foldl_finRange_eq_prefix_of_zero_above k f habove
+    rwa [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl] at h
   show (List.finRange n).foldl (fun acc j => acc + f j) 0
       = ((c[k] : Int) : Rat)
   rw [htrunc]
@@ -1118,8 +1122,9 @@ theorem vecMul_coeffs_apply_eq_of_zero_above
     grind
   have hisolate :
       (List.finRange (k.val + 1)).foldl (fun acc j => acc + g j) 0
-        = 0 + g ⟨k.val, Nat.lt_succ_self k.val⟩ :=
-    foldl_finRange_succ_eq_last_of_zero_below k.val g 0 hbelow
+        = 0 + g ⟨k.val, Nat.lt_succ_self k.val⟩ := by
+    have h := foldl_finRange_succ_eq_last_of_zero_below k.val g 0 hbelow
+    rwa [Fin.foldl_eq_finRange_foldl] at h
   rw [hisolate]
   -- Step 4: evaluate `g` at the last index using `coeffs_diag`.
   change 0 + (coeffs b)[k][k] * castc[k] = ((c[k] : Int) : Rat)

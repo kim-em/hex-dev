@@ -992,11 +992,11 @@ with the remaining minor identified as `mDet B u p`. -/
 theorem twoColDet_eq_sum_mDet {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (B : Matrix R (n + 2) n) (u v : Vector R (n + 2)) :
     twoColDet B u v =
-      (List.finRange (n + 2)).foldl
+      Fin.foldl (n + 2)
         (fun acc p =>
           acc + v[p] * (cofactorSign (R := R) p (Fin.last (n + 1)) * mDet B u p)) 0 := by
   unfold twoColDet
-  rw [det_eq_foldl_laplace_last (twoColMatrix B u v)]
+  rw [det_eq_foldl_laplace_last (twoColMatrix B u v), Fin.foldl_eq_finRange_foldl]
   apply List.foldl_congr
   intro acc p _hmem
   rw [twoColMatrix_entry_last]
@@ -1184,8 +1184,9 @@ theorem mDet_eq_sum_unit
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (B : Matrix R (n + 2) n) (v : Vector R (n + 2)) (p : Fin (n + 2)) :
     mDet B v p =
-      (List.finRange (n + 2)).foldl
+      Fin.foldl (n + 2)
         (fun acc q => acc + v[q] * mDet B (Vector.unit R q) p) 0 := by
+  rw [Fin.foldl_eq_finRange_foldl]
   unfold mDet
   rw [mMatrix_eq_setCol_last B v v p]
   have hcol :
@@ -1512,7 +1513,7 @@ theorem twoColDet_unit_unit_of_lt
         (cofactorSign (R := R)
           (⟨a.val, by have := b.isLt; omega⟩ : Fin (n + 1)) (Fin.last n) *
           nDet B a b hab) := by
-  rw [twoColDet_eq_sum_mDet]
+  rw [twoColDet_eq_sum_mDet, Fin.foldl_eq_finRange_foldl]
   rw [foldl_unit_weighted_single (R := R) b
       (fun p => cofactorSign (R := R) p (Fin.last (n + 1)) *
         mDet B (Vector.unit R a) p)]
@@ -1529,7 +1530,7 @@ theorem twoColDet_unit_unit_of_gt
         (cofactorSign (R := R)
           (⟨a.val - 1, by have := a.isLt; omega⟩ : Fin (n + 1)) (Fin.last n) *
           nDet B b a hba) := by
-  rw [twoColDet_eq_sum_mDet]
+  rw [twoColDet_eq_sum_mDet, Fin.foldl_eq_finRange_foldl]
   rw [foldl_unit_weighted_single (R := R) b
       (fun p => cofactorSign (R := R) p (Fin.last (n + 1)) *
         mDet B (Vector.unit R a) p)]
@@ -1541,7 +1542,7 @@ theorem twoColDet_unit_unit_of_eq
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (B : Matrix R (n + 2) n) (a : Fin (n + 2)) :
     twoColDet B (Vector.unit R a) (Vector.unit R a) = 0 := by
-  rw [twoColDet_eq_sum_mDet]
+  rw [twoColDet_eq_sum_mDet, Fin.foldl_eq_finRange_foldl]
   rw [foldl_unit_weighted_single (R := R) a
       (fun p => cofactorSign (R := R) p (Fin.last (n + 1)) *
         mDet B (Vector.unit R a) p)]
@@ -1556,7 +1557,7 @@ theorem twoColDet_unit_right
     (B : Matrix R (n + 2) n) (u : Vector R (n + 2)) (b : Fin (n + 2)) :
     twoColDet B u (Vector.unit R b) =
       cofactorSign (R := R) b (Fin.last (n + 1)) * mDet B u b := by
-  rw [twoColDet_eq_sum_mDet]
+  rw [twoColDet_eq_sum_mDet, Fin.foldl_eq_finRange_foldl]
   rw [foldl_unit_weighted_single (R := R) b
       (fun p => cofactorSign (R := R) p (Fin.last (n + 1)) * mDet B u p)]
 
@@ -1569,17 +1570,18 @@ theorem twoColDet_eq_sum_unit_pairs
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (B : Matrix R (n + 2) n) (u v : Vector R (n + 2)) :
     twoColDet B u v =
-      (List.finRange (n + 2)).foldl
+      Fin.foldl (n + 2)
         (fun acc b =>
           acc + v[b] *
-            (List.finRange (n + 2)).foldl
+            Fin.foldl (n + 2)
               (fun acc a =>
                 acc + u[a] * twoColDet B (Vector.unit R a)
                   (Vector.unit R b)) 0) 0 := by
   rw [twoColDet_eq_sum_mDet]
+  simp only [Fin.foldl_eq_finRange_foldl]
   apply List.foldl_congr
   intro acc b _hmem
-  rw [mDet_eq_sum_unit B u b]
+  rw [mDet_eq_sum_unit B u b, Fin.foldl_eq_finRange_foldl]
   congr 2
   calc
     cofactorSign (R := R) b (Fin.last (n + 1)) *
@@ -1677,6 +1679,7 @@ private theorem det_plucker_three_term_of_unit
       mDet B v p2 * nDet B p1 p3 (Nat.lt_trans h12 h23) +
       mDet B v p3 * nDet B p1 p2 h12 = 0 := by
   rw [mDet_eq_sum_unit B v p1, mDet_eq_sum_unit B v p2, mDet_eq_sum_unit B v p3]
+  simp only [Fin.foldl_eq_finRange_foldl]
   rw [← List.foldl_add_mul_right_zero (List.finRange (n + 2))
       (fun q => v[q] * mDet B (Vector.unit R q) p1)
       (nDet B p2 p3 h23)]

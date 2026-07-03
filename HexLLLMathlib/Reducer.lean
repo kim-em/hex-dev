@@ -386,6 +386,7 @@ private theorem swapStep_valid (s : LLLState n m) (k : Nat)
           with hνPivot_def
         -- Unfold the goal to expose the ν' foldl, then apply
         -- `foldl_modify_rows_get`.
+        simp only [Fin.foldl_eq_finRange_foldl]
         change
           (((List.finRange n).foldl
               (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
@@ -1065,7 +1066,7 @@ private theorem sizeReduceColumn_ν_get_k (s : LLLState n m) (j k : Fin n)
     (hr : r = nearestQuotient ((s.ν.getRow k).get j)
       (s.d.get ⟨j.val + 1, Nat.succ_lt_succ j.isLt⟩)) :
     (s.sizeReduceColumn j k hjk).ν.getRow k =
-      ((List.finRange j.val).foldl
+      (Fin.foldl j.val
         (fun (row : Vector Int n) (l : Fin j.val) =>
           let lFin : Fin n := ⟨l.val, Nat.lt_trans l.isLt j.isLt⟩
           row.set lFin ((s.ν.getRow k).get lFin - r * (s.ν.getRow j).get lFin))
@@ -1218,8 +1219,8 @@ theorem sizeReduce_valid (s : LLLState n m) (k : Nat) (hvalid : s.Valid) :
             (fun state j =>
               let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
               state.sizeReduceColumn jFin ⟨k, hk⟩ j.isLt)
-            s').Valid from
-      h (List.finRange k).reverse s hvalid
+            s').Valid from by
+      simpa [Fin.foldr_eq_finRange_foldr] using h (List.finRange k).reverse s hvalid
     intro xs
     induction xs with
     | nil => intro s' hv; exact hv
@@ -1467,9 +1468,10 @@ theorem sizeReduce_ν_bound (s : LLLState n m) (k : Nat) (hk : k < n)
   intro j hj
   unfold sizeReduce
   rw [dif_pos hk]
-  exact sizeReduce_foldl_size_reduced k hk (List.finRange k).reverse
-    (pairwise_finRange_reverse_lt k)
-    s hvalid hind ⟨j, hj⟩ (List.mem_reverse.mpr (List.mem_finRange _))
+  simpa [Fin.foldr_eq_finRange_foldr] using
+    sizeReduce_foldl_size_reduced k hk (List.finRange k).reverse
+      (pairwise_finRange_reverse_lt k)
+      s hvalid hind ⟨j, hj⟩ (List.mem_reverse.mpr (List.mem_finRange _))
 
 /-- **The size-reduce size-reducedness theorem (Sub-issue A of #6576).**
 After `LLLState.sizeReduce s k`, the row `k` of the rational Gram-Schmidt
@@ -1850,6 +1852,7 @@ theorem swapStep_potential_lt (s : LLLState n m) (k : Nat)
     exact Vector.getElem_set_ne (Nat.lt_succ_of_lt hk) hi (fun h => hik h.symm)
   -- Step 5: apply the foldl strict-decrease helper.
   unfold potential
+  rw [Fin.foldl_eq_finRange_foldl, Fin.foldl_eq_finRange_foldl]
   have hkm1_lt_nsub : k - 1 < n - 1 := by omega
   let i₀ : Fin (n - 1) := ⟨k - 1, hkm1_lt_nsub⟩
   have hi₀_mem : i₀ ∈ List.finRange (n - 1) := List.mem_finRange _
@@ -2154,7 +2157,8 @@ theorem sizeReduce_coeffs_row_of_ne (s : LLLState n m) (k : Nat) (i : Fin n)
   by_cases hk : k < n
   · rw [dif_pos hk]
     have hik' : i ≠ ⟨k, hk⟩ := fun h => hik (by rw [h])
-    exact sizeReduce_foldl_coeffs_row_of_ne k hk i hik' (List.finRange k).reverse s
+    simpa [Fin.foldr_eq_finRange_foldr] using
+      sizeReduce_foldl_coeffs_row_of_ne k hk i hik' (List.finRange k).reverse s
   · rw [dif_neg hk]
 
 /-- Size reduction preserves `prefixLLLReduced` at the same prefix length: rows

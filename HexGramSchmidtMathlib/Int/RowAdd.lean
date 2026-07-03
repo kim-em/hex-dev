@@ -38,7 +38,7 @@ private theorem foldl_dot_comm_int {n' : Nat} (xs : List (Fin n'))
 /-- The dot product of integer vectors is commutative. -/
 private theorem dot_comm_int {n' : Nat} (u v : Vector Int n') :
     u.dotProduct v = v.dotProduct u := by
-  simpa [Vector.dotProduct] using
+  simpa [Vector.dotProduct, Fin.foldl_eq_finRange_foldl] using
     foldl_dot_comm_int (xs := List.finRange n') (u := u) (v := v)
       (accU := 0) (accV := 0) rfl
 

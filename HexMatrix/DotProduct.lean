@@ -22,7 +22,7 @@ namespace Vector
 theorem dotProduct_add_left {R : Type u} [Lean.Grind.Ring R]
     (u v w : Vector R n) :
     dotProduct (u + v) w = dotProduct u w + dotProduct v w := by
-  unfold dotProduct
+  simp only [dotProduct]
   rw [show (List.finRange n).foldl
         (fun acc i => acc + (u + v)[i] * w[i]) 0 =
       (List.finRange n).foldl
@@ -42,7 +42,7 @@ theorem dotProduct_add_left {R : Type u} [Lean.Grind.Ring R]
 theorem dotProduct_smul_left {R : Type u} [Lean.Grind.Ring R]
     (c : R) (u w : Vector R n) :
     dotProduct (c • u) w = c * dotProduct u w := by
-  unfold dotProduct
+  simp only [dotProduct]
   rw [← List.foldl_add_mul_left (xs := List.finRange n)
         (f := fun i => u[i] * w[i]) (c := c)]
   have hzero : c * (0 : R) = 0 := by
@@ -61,7 +61,7 @@ theorem dotProduct_smul_left {R : Type u} [Lean.Grind.Ring R]
 theorem dotProduct_comm {R : Type u} [Lean.Grind.CommRing R]
     (u v : Vector R n) :
     dotProduct u v = dotProduct v u := by
-  unfold dotProduct
+  simp only [dotProduct]
   apply List.foldl_add_congr
   intro i _
   grind
@@ -70,7 +70,7 @@ theorem dotProduct_comm {R : Type u} [Lean.Grind.CommRing R]
 theorem dotProduct_add_right {R : Type u} [Lean.Grind.Ring R]
     (u v w : Vector R n) :
     dotProduct u (v + w) = dotProduct u v + dotProduct u w := by
-  unfold dotProduct
+  simp only [dotProduct]
   rw [show (List.finRange n).foldl
         (fun acc i => acc + u[i] * (v + w)[i]) 0 =
       (List.finRange n).foldl
@@ -113,7 +113,7 @@ theorem dotProduct_sub_left {R : Type u} [Lean.Grind.Ring R]
 theorem dotProduct_sub_right {R : Type u} [Lean.Grind.Ring R]
     (u v w : Vector R n) :
     dotProduct u (v - w) = dotProduct u v - dotProduct u w := by
-  unfold dotProduct
+  simp only [dotProduct]
   rw [show (List.finRange n).foldl
         (fun acc i => acc + u[i] * (v - w)[i]) 0 =
       (List.finRange n).foldl

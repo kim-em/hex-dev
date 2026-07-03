@@ -80,7 +80,7 @@ private theorem dot_bareiss_row_update_left
     (Vector.ofFn fun a : Fin m => x * u[a] - y * v[a]).dotProduct w =
       x * u.dotProduct w - y * v.dotProduct w := by
   unfold Vector.dotProduct
-  simpa using
+  simpa [Fin.foldl_eq_finRange_foldl] using
     foldl_sum_bareiss_row_update
       (xs := List.finRange m) x y
       (fun a : Fin m => u[a])
@@ -115,7 +115,7 @@ private theorem dot_bareiss_row_update_right
     w.dotProduct (Vector.ofFn fun a : Fin m => x * u[a] - y * v[a]) =
       x * w.dotProduct u - y * w.dotProduct v := by
   unfold Vector.dotProduct
-  simpa using
+  simpa [Fin.foldl_eq_finRange_foldl] using
     foldl_sum_bareiss_row_update_right
       (xs := List.finRange m) x y
       (fun a : Fin m => u[a])

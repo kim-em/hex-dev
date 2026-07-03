@@ -17,8 +17,11 @@ Laplace (cofactor) expansion of the determinant.
 This module proves that `det` expands as a signed sum of `M[·][·] * cofactor`
 along any fixed row or column. `det_eq_foldl_laplace_last` and
 `det_eq_foldl_laplace_last_row` handle the final column and final row, and
-`det_eq_foldl_laplace_col` / `det_eq_foldl_laplace_row` generalize to an
-arbitrary column or row. The general case is reduced to the last-column case by
+`det_eq_finFoldl_laplace_col` / `det_eq_finFoldl_laplace_row` generalize to an
+arbitrary column or row, stated as a core `Fin.foldl` over the indices; the
+`det_eq_foldl_laplace_col` / `det_eq_foldl_laplace_row` reference forms state the
+same expansions as a `List.foldl` over `List.finRange`, bridged by
+`Fin.foldl_eq_finRange_foldl`. The general case is reduced to the last-column case by
 the column-move permutation `moveColumnToLastValues`, whose sign
 `(-1) ^ (n - col.val)` is computed via the inversion-count machinery and
 cancelled against the cofactor sign through `cofactorSign_col_eq`.
@@ -249,12 +252,13 @@ private theorem cofactorSign_col_eq
     _ = s * (if (row.val + n) % 2 = 0 then (1 : R) else -1) := rfl
 
 /-- Laplace expansion of the determinant along an arbitrary fixed column. -/
-theorem det_eq_foldl_laplace_col
+theorem det_eq_finFoldl_laplace_col
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (col : Fin (n + 1)) :
     det M =
-      (List.finRange (n + 1)).foldl
+      Fin.foldl (n + 1)
         (fun acc row => acc + M[row][col] * cofactor M row col) 0 := by
+  rw [Fin.foldl_eq_finRange_foldl]
   let sigma := moveColumnToLastValues col
   let C : Matrix R (n + 1) (n + 1) := ofFn fun r c => M[r][sigma[c]]
   have hsigma : sigma ∈ permutationVectors (n + 1) :=
@@ -311,13 +315,26 @@ theorem det_eq_foldl_laplace_col
         rw [hClast, hminor, cofactorSign_col_eq (R := R) row col]
         grind
 
-/-- Laplace expansion of the determinant along an arbitrary fixed row. -/
-theorem det_eq_foldl_laplace_row
+/-- Laplace expansion along a fixed column as a `List.foldl` over the row
+indices in `List.finRange`; the reference form of `det_eq_finFoldl_laplace_col`,
+bridged by `Fin.foldl_eq_finRange_foldl`. -/
+theorem det_eq_foldl_laplace_col
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (col : Fin (n + 1)) :
+    det M =
+      (List.finRange (n + 1)).foldl
+        (fun acc row => acc + M[row][col] * cofactor M row col) 0 := by
+  rw [det_eq_finFoldl_laplace_col, Fin.foldl_eq_finRange_foldl]
+
+/-- Laplace expansion of the determinant along an arbitrary fixed row,
+as a `Fin.foldl` over the column indices. -/
+theorem det_eq_finFoldl_laplace_row
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (row : Fin (n + 1)) :
     det M =
-      (List.finRange (n + 1)).foldl
+      Fin.foldl (n + 1)
         (fun acc col => acc + M[row][col] * cofactor M row col) 0 := by
+  rw [Fin.foldl_eq_finRange_foldl]
   calc
     det M = det M.transpose := (det_transpose M).symm
     _ =
@@ -330,6 +347,17 @@ theorem det_eq_foldl_laplace_row
         apply List.foldl_congr
         intro acc col _hmem
         rw [cofactor_transpose, getElem_transpose]
+
+/-- Laplace expansion along a fixed row as a `List.foldl` over the column
+indices in `List.finRange`; the reference form of `det_eq_finFoldl_laplace_row`,
+bridged by `Fin.foldl_eq_finRange_foldl`. -/
+theorem det_eq_foldl_laplace_row
+    {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) (row : Fin (n + 1)) :
+    det M =
+      (List.finRange (n + 1)).foldl
+        (fun acc col => acc + M[row][col] * cofactor M row col) 0 := by
+  rw [det_eq_finFoldl_laplace_row, Fin.foldl_eq_finRange_foldl]
 
 end Matrix
 end Hex

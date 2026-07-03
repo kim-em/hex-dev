@@ -297,7 +297,7 @@ private theorem coeffVector_matrixActionPolySum_eq_mulVec
         FpPoly.powModMonic (FpPoly.frobeniusXMod f hmonic) f hmonic j.val)
       0 i]
   rw [DensePoly.coeff_zero]
-  simp [HMul.hMul, Matrix.mulVec, Vector.dotProduct, Matrix.row, Vector.dotProduct]
+  simp [HMul.hMul, Matrix.mulVec, Vector.dotProduct, Matrix.row]
   apply foldl_add_congr
   intro j _hj
   show (DensePoly.C (w.coeff j.val) *

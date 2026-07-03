@@ -135,7 +135,8 @@ private theorem dot_self_eq_zero_get (v : Vector Rat m)
   have hmem : i ∈ List.finRange m := by
     simp
   exact foldl_dot_self_eq_zero_of_mem (xs := List.finRange m) (v := v)
-    (acc := 0) (by decide) (by simpa [Vector.dotProduct] using hzero) i hmem
+    (acc := 0) (by decide)
+    (by simpa [Vector.dotProduct, Fin.foldl_eq_finRange_foldl] using hzero) i hmem
 
 /-- Over `Rat`, a vector whose self-dot-product is zero is the zero vector, so
 its dot product with any other row also vanishes. Used to discharge the
@@ -180,7 +181,7 @@ private theorem foldl_dot_comm_rat (xs : List (Fin m)) (u v : Vector Rat m)
 /-- The rational dot product is commutative. -/
 private theorem dot_comm_rat (u v : Vector Rat m) :
     u.dotProduct v = v.dotProduct u := by
-  simpa [Vector.dotProduct] using
+  simpa [Vector.dotProduct, Fin.foldl_eq_finRange_foldl] using
     foldl_dot_comm_rat (xs := List.finRange m) (u := u) (v := v)
       (accU := 0) (accV := 0) rfl
 
@@ -539,7 +540,7 @@ def castIntMatrix (b : Matrix Int n m) : Matrix Rat n m :=
 @[expose]
 def prefixCombination (coeffs : Matrix Rat n n) (basis : Matrix Rat n m) (i : Nat) (hi : i < n) :
     Vector Rat m :=
-  (List.finRange i).foldl
+  Fin.foldl i
     (fun acc j =>
       let jn : Fin n := ⟨j.val, Nat.lt_trans j.isLt hi⟩
       acc + GramSchmidt.entry coeffs ⟨i, hi⟩ jn • basis.row jn)

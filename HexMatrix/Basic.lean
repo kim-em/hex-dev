@@ -39,8 +39,10 @@ namespace Vector
 /-- Dot product of two vectors.
 
 This `List.finRange` form is the reference definition the entry lemmas reason
-about; compiled code runs the allocation-free `Fin.foldl` loop `dotProductImpl`
-via the `@[csimp]` below. -/
+about; crucially it kernel-reduces, so `#guard`/`decide` checks over
+`dotProduct` (e.g. `memLattice` membership) stay evaluable — core `Fin.foldl`
+does not reduce in the kernel. Compiled code runs the allocation-free
+`Fin.foldl` loop `dotProductImpl` via the `@[csimp]` below. -/
 @[expose]
 def dotProduct [Mul R] [Add R] [OfNat R 0] (u v : Vector R n) : R :=
   (List.finRange n).foldl (fun acc i => acc + u[i] * v[i]) 0
