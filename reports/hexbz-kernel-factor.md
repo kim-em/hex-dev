@@ -37,8 +37,12 @@ is measured once and subtracted to report marginal kernel time. Limits:
 `maxHeartbeats 0` (disabled, so the wall-clock `--timeout` is the sole cutoff)
 and a raised `maxRecDepth`. Instances over the timeout are **censored** (status
 `timeout`), which on a frontier chart reads as the curve stopping. Each family is
-swept in ascending degree and abandoned after 3 consecutive censored points (the
-wall has been passed).
+swept in ascending degree. A **monotone** family (kernel cost rises with degree)
+is abandoned at the first cutoff-hit — everything above it only hammers the
+cutoff. The **non-monotone** families (`cyclotomic`, `cyclotomic-products`, whose
+kernel cost tracks the modular-factor count rather than degree — e.g. Φ₂₈
+finishes where Φ₂₂/Φ₂₄ time out) keep exploring, abandoned only after
+`--explore-stop-after` (default 3) consecutive censored points.
 
 Feasibility note: the `factor` call graph has **no `partial def`** (which would
 be kernel-opaque), and although it contains 15 well-founded recursions
@@ -48,7 +52,35 @@ practice. `UInt64`/`ZMod64` arithmetic reduces fine in the kernel (GMP-backed
 
 ## Frontier
 
-<!-- KERNEL-FACTOR-FRONTIER -->
+Canonical run on carica (commit `09a3f193`), 20 s wall timeout, import baseline
+0.41 s subtracted; record
+`reports/bench-results/hexbz-kernel-factor-canonical.json`. 60/93 instances
+kernel-checked; kernel reduction agreed with compiled `factor` on every solved
+instance.
+
+| family | highest degree kernel-checked | first censored degree | slowest solved |
+| --- | ---: | ---: | ---: |
+| cyclotomic | 28 | 22 | 17s |
+| chebyshev | 12 | 12 | 11s |
+| legendre | 12 | 10 | 16s |
+| laguerre | 11 | 12 | 13s |
+| random-products | 11 | 12 | 17s |
+| wilkinson | 8 | 10 | 9s |
+| swinnerton-dyer | 8 | 16 | 6s |
+| sd-products | 8 | 16 | 5s |
+| cyclotomic-products | 6 | 12 | 6s |
+| hoeij-zimmermann | — | 128 | 0s |
+
+Kernel `decide` on `factor` is a cliff: sub-second to degree ~5, single-digit
+seconds through degree ~10, then over the wall in the low-to-mid teens. **Trusted
+`decide`-checking of the factorization is viable to roughly degree 10–15 at a
+20–40 s budget**, and the exact timeout barely moves the frontier because the
+cost grows ~exponentially in the recombination work. The family ordering mirrors
+the compiled sweep: cyclotomics (few clean modular factors) reach degree 28;
+Swinnerton-Dyer (many degree-2 modular factors, heavy recombination) walls at
+degree 8. `cyclotomic`/`cyclotomic-products` are the non-monotone cases — cost
+tracks the modular-factor count, not degree, so cyclotomic finishes degree 28
+above censored degrees 22/24.
 
 ![Kernel evaluation frontier for Hex.factor](figures/hexbz-kernel-factor-frontier.svg)
 
@@ -58,8 +90,8 @@ practice. `UInt64`/`ZMod64` arithmetic reduces fine in the kernel (GMP-backed
 # Frontier probe (fast: low degree cap, tight timeout):
 python3 scripts/bench/kernel_factor_sweep.py --max-degree 24 --timeout 40
 
-# Canonical run (all families, ascending degree, early-stop at the wall):
-python3 scripts/bench/kernel_factor_sweep.py --timeout 30 --stop-family-after 3
+# Canonical run (all families, ascending degree, monotone families stop at the wall):
+python3 scripts/bench/kernel_factor_sweep.py --timeout 20
 
 # Chart:
 python3 scripts/plots/hexbz-kernel-frontier.py --record reports/bench-results/<record>.json

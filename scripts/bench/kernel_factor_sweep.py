@@ -54,6 +54,11 @@ HEX_SERVICE = ROOT / ".lake" / "build" / "bin" / "hexbz_factor_service"
 DEFAULT_MAX_REC_DEPTH = 100000
 DEFAULT_MAX_HEARTBEATS = 0
 
+# Families whose kernel cost is NOT monotone in degree, so a single cutoff-hit is
+# not the viability wall and the sweep must keep exploring higher degrees.
+# Cyclotomics reorder cost by the number of modular factors, not degree.
+NON_MONOTONE_FAMILIES = {"cyclotomic", "cyclotomic-products"}
+
 
 def lean_env():
     out = subprocess.run(["lake", "env", "printenv", "LEAN_PATH"],
@@ -161,8 +166,10 @@ def main():
     p.add_argument("--combined-only", action="store_true")
     p.add_argument("--max-rec-depth", type=int, default=DEFAULT_MAX_REC_DEPTH)
     p.add_argument("--max-heartbeats", type=int, default=DEFAULT_MAX_HEARTBEATS)
-    p.add_argument("--stop-family-after", type=int, default=3,
-                   help="stop a family after this many consecutive censored points")
+    p.add_argument("--explore-stop-after", type=int, default=3,
+                   help="for non-monotone families (cyclotomic*), stop after this "
+                        "many consecutive censored points; monotone families always "
+                        "stop at the first cutoff-hit")
     p.add_argument("--output", type=Path, default=None)
     args = p.parse_args()
 
@@ -202,7 +209,13 @@ def main():
     censored_streak = {}
     for inst in instances:
         fam = inst["family"]
-        if censored_streak.get(fam, 0) >= args.stop_family_after:
+        # Monotone families (kernel cost rises with degree) stop at the first
+        # cutoff-hit — everything above just hammers the cutoff. The non-monotone
+        # families keep exploring: cyclotomic cost tracks the modular-factor count,
+        # not degree (e.g. Phi_28 finishes where Phi_22/Phi_24 time out), so a
+        # single failure there is not the wall.
+        stop_after = args.explore_stop_after if fam in NON_MONOTONE_FAMILIES else 1
+        if censored_streak.get(fam, 0) >= stop_after:
             continue  # frontier passed for this family
         factorization = hex_factor(inst["coeffs"], service)
         if factorization is None:
