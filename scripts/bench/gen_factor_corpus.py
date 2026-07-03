@@ -47,6 +47,7 @@ from sympy import (
 ROOT = Path(__file__).resolve().parents[2]
 CORPUS_PATH = ROOT / "bench" / "corpus" / "hexbz-factor-corpus.jsonl"
 VENDOR_DIR = ROOT / "scripts" / "bench" / "vendor" / "hoeij"
+CONWAY_CACHE = ROOT / "scripts" / "oracle" / "luebeck_conway_cache.json"
 
 X = symbols("x")
 
@@ -444,6 +445,40 @@ def family_hoeij_zimmermann():
     return out
 
 
+def family_conway():
+    """Lifted Conway polynomials from Frank Lübeck's tables (issue #8557).
+
+    Each ``C_{p,n}`` is monic and irreducible over 𝔽_p. Its coefficients are
+    read from the committed cache (``scripts/oracle/luebeck_conway_cache.json``,
+    ascending order, non-negative representatives ``0..p-1``) and taken verbatim
+    as a monic integer polynomial. A monic integer polynomial irreducible modulo
+    a prime is irreducible over ℚ (its degree is preserved because it is monic),
+    so every lift is irreducible over ℤ — ``expectedFactorDegrees = [n]``. This
+    is the recombination worst case (like Swinnerton-Dyer), but the tables sweep
+    two axes at once: degree grows with n (small primes), coefficient height
+    grows with p (a lift has height up to p - 1, so high primes at low degree
+    load the height axis). The differential-correctness cross-check in
+    ``factor_sweep.py`` verifies the ``[n]`` labels against FLINT/NTL/PARI.
+    """
+    payload = json.loads(CONWAY_CACHE.read_text())
+    if payload.get("coefficient_order") != "ascending":
+        raise ValueError(f"{CONWAY_CACHE}: expected ascending coefficient_order")
+    out = []
+    for entry in sorted(payload["entries"], key=lambda e: (e["p"], e["n"])):
+        p, n, coeffs = entry["p"], entry["n"], [int(c) for c in entry["coeffs"]]
+        if len(coeffs) != n + 1 or coeffs[-1] != 1:
+            raise ValueError(f"cache entry ({p},{n}) is not monic degree n: {coeffs}")
+        out.append((
+            f"conway_p{p}_n{n}",
+            n,
+            coeffs,
+            f"Conway polynomial C_{{{p},{n}}} lifted from F_{p} "
+            f"(representatives 0..{p - 1}), Lübeck table; irreducible over Z",
+            [n],
+        ))
+    return out
+
+
 FAMILIES = [
     ("cyclotomic", family_cyclotomic),
     ("cyclotomic-products", family_cyclotomic_products),
@@ -455,6 +490,7 @@ FAMILIES = [
     ("wilkinson", family_wilkinson),
     ("random-products", family_random_products),
     ("hoeij-zimmermann", family_hoeij_zimmermann),
+    ("conway", family_conway),
 ]
 
 

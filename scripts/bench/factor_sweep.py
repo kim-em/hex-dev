@@ -64,6 +64,35 @@ HEX_SERVICE = ROOT / ".lake" / "build" / "bin" / "hexbz_factor_service"
 OVERHEAD_INPUT = {"coeffs": [-1, 1]}
 OVERHEAD_REPEATS = 21
 
+# Families whose difficulty rises (near-)monotonically with degree, so that once
+# a system has timed out on a run of successively harder instances the rest of
+# the family is hopeless too. When early termination is enabled (the default),
+# a system that times out on `--early-terminate-run` consecutive instances of
+# such a family (degree-ordered) skips the remaining higher-degree instances,
+# recording them as timeouts without running them (`early_terminated: true`).
+# Any solve resets the run counter.
+#
+# For a strictly monotonic family the run threshold triggers on the first few
+# higher-degree instances, so termination is result-preserving up to at most
+# `run - 1` extra timeouts, and the cactus/survival curves are unchanged.
+#
+# `conway` is included even though it is not strictly monotonic: a lifted Conway
+# polynomial's difficulty is non-monotonic in degree because the reducer's prime
+# choice varies (e.g. `factorFast` times out on C_{2,12} yet solves C_{2,16} in
+# milliseconds). The consecutive-run threshold (default 3) is what makes this
+# safe: an isolated prime-lucky solve resets the counter and survives, while the
+# genuinely hopeless tail — a long unbroken run of timeouts — is still cut off.
+# Pass `--no-early-terminate` for a full-fidelity measurement (as the committed
+# baseline record was collected).
+MONOTONIC_FAMILIES = frozenset({
+    "swinnerton-dyer", "sd-products", "hoeij-zimmermann", "conway",
+})
+
+# Consecutive-timeout run length that trips early termination within a monotonic
+# family. Chosen to ride over isolated non-monotonic solves (conway prime luck)
+# while still cutting the hopeless tail.
+DEFAULT_EARLY_TERMINATE_RUN = 3
+
 
 @dataclass(frozen=True)
 class SystemSpec:
@@ -271,13 +300,46 @@ def measure_overhead(service: Service, timeout: float) -> "int | None":
     return samples[len(samples) // 2]
 
 
-def sweep_system(name: str, argv, instances, cutoff: float):
-    """Sweep one system across all instances; returns (records, overhead_nanos)."""
+def _order_for_termination(instances):
+    """Return instances ordered so each family is contiguous and degree-
+    ascending (families in first-seen order), the layout the early-termination
+    run counter relies on. Self-contained so correctness does not depend on the
+    caller's ordering."""
+    family_order = {}
+    for inst in instances:
+        family_order.setdefault(inst["family"], len(family_order))
+    return sorted(instances, key=lambda r: (family_order[r["family"]], r["degree"], r["name"]))
+
+
+def sweep_system(name: str, argv, instances, cutoff: float, early_terminate_run=0):
+    """Sweep one system across all instances; returns (records, overhead_nanos).
+
+    When ``early_terminate_run > 0``, instances are reordered (family-contiguous,
+    degree-ascending) and a run of that many consecutive timeouts within a
+    ``MONOTONIC_FAMILIES`` family caps the family: its remaining higher-degree
+    instances are recorded as timeouts (``early_terminated``) without being run.
+    A solve resets the run counter. With early termination off, the caller's
+    order is preserved.
+    """
+    if early_terminate_run > 0:
+        instances = _order_for_termination(instances)
     cutoff_ns = int(cutoff * 1e9)
     service = Service(argv)
     overhead = measure_overhead(service, cutoff)
     records = []
+    current_family = None
+    timeout_run = 0
+    capped = False
     for inst in instances:
+        if inst["family"] != current_family:
+            current_family = inst["family"]
+            timeout_run = 0
+            capped = False
+        monotonic = early_terminate_run > 0 and inst["family"] in MONOTONIC_FAMILIES
+        if monotonic and capped:
+            records.append(_record(name, inst, "timeout", None, None, None, None,
+                                   None, early_terminated=True))
+            continue
         request = {"coeffs": inst["coeffs"]}
         # First call decides the repeat policy and gives the degree multiset.
         reply, elapsed = service.call(request, cutoff)
@@ -288,6 +350,10 @@ def sweep_system(name: str, argv, instances, cutoff: float):
             service.respawn()
             records.append(_record(name, inst, "error" if dead else "timeout",
                                    None, None, None, None, None))
+            if monotonic and not dead:
+                timeout_run += 1
+                if timeout_run >= early_terminate_run:
+                    capped = True
             continue
         status = classify(reply, elapsed)
         degrees = degree_multiset(reply)
@@ -312,12 +378,20 @@ def sweep_system(name: str, argv, instances, cutoff: float):
                                 min(times) if times else None,
                                 max(times) if times else None,
                                 factor_count, degrees))
+        if monotonic:
+            if status == "ok":
+                timeout_run = 0
+            elif status == "timeout":
+                timeout_run += 1
+                if timeout_run >= early_terminate_run:
+                    capped = True
     service.kill()
     return records, overhead
 
 
-def _record(system, inst, status, median, lo, hi, factor_count, degrees):
-    return {
+def _record(system, inst, status, median, lo, hi, factor_count, degrees,
+            early_terminated=False):
+    rec = {
         "system": system,
         "family": inst["family"],
         "name": inst["name"],
@@ -330,6 +404,9 @@ def _record(system, inst, status, median, lo, hi, factor_count, degrees):
         # kept for the cross-check pass; dropped before serialization
         "_degrees": degrees,
     }
+    if early_terminated:
+        rec["early_terminated"] = True
+    return rec
 
 
 def cross_check(records, instances):
@@ -418,7 +495,16 @@ def main():
     p.add_argument("--output", type=Path, default=None)
     p.add_argument("--skip-unavailable", action="store_true",
                    help="silently skip systems whose service cannot be spawned")
+    p.add_argument("--early-terminate-run", type=int, default=DEFAULT_EARLY_TERMINATE_RUN,
+                   help=f"stop a system on a monotonic family after this many consecutive "
+                        f"timeouts (default {DEFAULT_EARLY_TERMINATE_RUN}; families: "
+                        f"{', '.join(sorted(MONOTONIC_FAMILIES))})")
+    p.add_argument("--no-early-terminate", dest="early_terminate", action="store_false",
+                   help="run every instance in full (disable monotonic early termination)")
+    p.set_defaults(early_terminate=True)
     args = p.parse_args()
+
+    early_run = args.early_terminate_run if args.early_terminate else 0
 
     corpus_bytes = args.corpus.read_bytes()
     corpus_sha = hashlib.sha256(corpus_bytes).hexdigest()
@@ -448,12 +534,14 @@ def main():
         versions[name] = spec.version()
         print(f"[run ] {name}: {argv[0].split('/')[-1]} ...", file=sys.stderr)
         t0 = time.time()
-        records, overhead = sweep_system(name, argv, instances, args.cutoff)
+        records, overhead = sweep_system(name, argv, instances, args.cutoff, early_run)
         overheads[name] = overhead
         all_records.extend(records)
         solved = sum(1 for r in records if r["status"] == "ok")
+        skipped = sum(1 for r in records if r.get("early_terminated"))
+        skip_note = f", {skipped} early-terminated" if skipped else ""
         print(f"       {name}: {solved}/{len(records)} solved in {time.time()-t0:.1f}s "
-              f"(overhead {overhead} ns)", file=sys.stderr)
+              f"(overhead {overhead} ns{skip_note})", file=sys.stderr)
 
     mismatches = cross_check(all_records, instances)
 
@@ -468,6 +556,8 @@ def main():
             "overhead_repeats": OVERHEAD_REPEATS,
             "corpus_path": str(args.corpus.relative_to(ROOT)),
             "corpus_sha256": corpus_sha,
+            "early_terminate_run": early_run,
+            "early_terminate_families": sorted(MONOTONIC_FAMILIES) if early_run else [],
             "systems": requested,
             "system_versions": versions,
             "per_system_overhead_nanos": overheads,
