@@ -244,6 +244,54 @@ def rabinTest (f : FpPoly p) (hmonic : DensePoly.Monic f) : Bool :=
     rabinDividesTest f hmonic &&
     (rabinWitnesses f hmonic).all Prod.snd
 
+/--
+Bezout witness that `f` and the Rabin difference `X^(p^d) - X mod f` are
+coprime, computed by the extended Euclidean algorithm.
+
+The extended gcd returns `left₀ * f + right₀ * diff = g` with `g` a nonzero
+constant when the two are coprime; scaling both coefficients by `g⁻¹` (as its
+leading coefficient, i.e. its constant value) normalises the identity to
+`left * f + right * diff = 1`, which is exactly the equation
+`checkRabinBezoutWitness` verifies. This is compiled, never-in-kernel prep:
+a wrong witness simply makes the downstream check return `false`.
+-/
+def rabinBezoutWitness (f : FpPoly p) (hmonic : DensePoly.Monic f) (d : Nat) :
+    RabinBezoutWitness p :=
+  let diff := frobeniusDiffMod f hmonic d
+  let r := DensePoly.xgcd f diff
+  let cinv := (1 : ZMod64 p) / DensePoly.leadingCoeff r.gcd
+  { left := DensePoly.C cinv * r.left
+    right := DensePoly.C cinv * r.right }
+
+/--
+Assemble a Rabin irreducibility certificate for the monic polynomial `f`, when
+`rabinTest` accepts it.
+
+The pow chain records `X^(p^k) mod f` for `k = 0, …, deg f`, matching
+`checkPowChain`, and the Bezout array records one normalised
+`rabinBezoutWitness` per maximal proper divisor of `deg f`, in the same order
+as `maximalProperDivisors`, matching `checkRabinBezoutWitnesses`. Returns
+`none` when `f` fails Rabin's test.
+
+This is the *prep* half of the certifying-irreducibility pattern: the expensive
+Frobenius-chain and extended-gcd work runs in compiled code here, so the kernel
+only has to replay the cheap `checkIrreducibilityCertificate` reduction on the
+finished data. The generator carries no soundness proof of its own — a wrong
+certificate makes `checkIrreducibilityCertificate` return `false`, never a
+false pass.
+-/
+def buildIrreducibilityCertificate? (f : FpPoly p) (hmonic : DensePoly.Monic f) :
+    Option IrreducibilityCertificate :=
+  if rabinTest f hmonic then
+    let n := basisSize f
+    some
+      { p := p
+        n := n
+        powChain := (Array.range (n + 1)).map fun k => FpPoly.frobeniusXPowMod f hmonic k
+        bezout := ((maximalProperDivisors n).map fun d => rabinBezoutWitness f hmonic d).toArray }
+  else
+    none
+
 /-- `berlekampRankTest` succeeds exactly when the fixed-space matrix has rank
 `deg(f) - 1`, the Berlekamp rank criterion. -/
 theorem berlekampRankTest_spec (f : FpPoly p) (hmonic : DensePoly.Monic f)
