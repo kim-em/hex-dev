@@ -14,7 +14,15 @@ corpus JSONL, and emits, per family plus the combined mix-doctrine mixture:
 ``reports/figures/`` is auto-published through the Verso manual's ``extraFiles``.
 Charts regenerate deterministically from the committed JSON.
 
-Run: ``python3 scripts/plots/hexbz-cactus.py [--sweep <json>]``.
+Multiple records merge by **newest measurement per system** (guarded by a
+matching corpus SHA-256), so the Lean entries can be re-run as they evolve
+without re-running the expensive external comparators: record a fresh hex-only
+sweep, then regenerate charts and each external curve is carried over from the
+committed baseline it was last measured in.
+
+Run (default: merge every committed record, newest per system):
+``python3 scripts/plots/hexbz-cactus.py``
+or pin explicit records: ``python3 scripts/plots/hexbz-cactus.py --sweep a.json b.json``.
 """
 
 from __future__ import annotations
@@ -148,21 +156,71 @@ def plot_runtime_degree(results, systems, names, corpus, output, title, subtitle
     return True
 
 
+BENCH_RESULTS = ROOT / "reports" / "bench-results"
+
+
+def merge_reports(paths):
+    """Merge several sweep records, taking the NEWEST measurement of each system.
+
+    This is what lets the Lean entries be re-run cheaply without re-running the
+    expensive external comparators: point the plotter at the fresh hex-only record
+    plus the committed baseline, and each system's curve comes from whichever
+    record measured it most recently. All records must cover the same corpus
+    (matching `corpus_sha256`), since a system's solved-set is only comparable
+    against the same instances.
+
+    Returns (results, systems, provenance, cutoffs). `systems` is ordered by the
+    canonical STYLE order for a stable legend; `provenance[system]` is
+    (record filename, ISO timestamp, cutoff).
+    """
+    reports = [(pth, json.loads(pth.read_text())) for pth in paths]
+    shas = {r["config"]["corpus_sha256"] for _, r in reports}
+    if len(shas) > 1:
+        raise SystemExit(
+            "refusing to merge sweeps over different corpora (corpus_sha256 "
+            "mismatch); re-run the external systems against the current corpus")
+    chosen = {}  # system -> (ts, filename, iso, cutoff, results)
+    for pth, rep in reports:
+        ts = rep["env"].get("timestamp_unix_ms") or 0
+        iso = rep["env"].get("timestamp_iso")
+        cutoff = rep["config"]["cutoff_seconds"]
+        for system in rep["config"]["systems"]:
+            if system not in chosen or ts > chosen[system][0]:
+                sysres = [r for r in rep["results"] if r["system"] == system]
+                chosen[system] = (ts, pth.name, iso, cutoff, sysres)
+    results, provenance, cutoffs = [], {}, set()
+    for system, (_, fname, iso, cutoff, sysres) in chosen.items():
+        results.extend(sysres)
+        provenance[system] = (fname, iso, cutoff)
+        cutoffs.add(cutoff)
+    order = list(STYLE.keys())
+    systems = sorted(chosen, key=lambda s: order.index(s) if s in order else len(order))
+    return results, systems, provenance, cutoffs
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--sweep", type=Path, required=True, help="sweep JSON from factor_sweep.py")
+    p.add_argument("--sweep", type=Path, nargs="+", default=None,
+                   help="one or more sweep JSONs; when several are given (or by "
+                        "default, all committed records), the newest measurement "
+                        "of each system wins")
     p.add_argument("--outdir", type=Path, default=FIGURES)
     args = p.parse_args()
 
-    report = json.loads(args.sweep.read_text())
-    results = report["results"]
+    paths = args.sweep or sorted(BENCH_RESULTS.glob("hexbz-factor-sweep-*.json"))
+    if not paths:
+        raise SystemExit("no sweep records found")
+    results, systems, provenance, cutoffs = merge_reports(paths)
     corpus = load_corpus()
-    systems = report["config"]["systems"]
-    cutoff = report["config"]["cutoff_seconds"]
-    host = report["env"].get("hostname", "?")
-    subtitle = (f"cutoff {cutoff}s; host {host}; sweep "
-                f"{args.sweep.name}; declines and timeouts count as unsolved")
+    cutoff_str = (f"{next(iter(cutoffs))}s" if len(cutoffs) == 1
+                  else "mixed " + "/".join(f"{c}s" for c in sorted(cutoffs)))
+    if len(paths) == 1:
+        src = paths[0].name
+    else:
+        src = f"newest-per-system across {len(paths)} records"
+    subtitle = (f"cutoff {cutoff_str}; source {src}; "
+                f"declines and timeouts count as unsolved")
 
     families = sorted({corpus[r["name"]]["family"] for r in results if r["name"] in corpus})
     written = []
@@ -189,6 +247,10 @@ def main():
         except ValueError:
             print(path)
     print(f"{len(written)} figures written")
+    print("system provenance (newest measurement used):")
+    for system in systems:
+        fname, iso, cutoff = provenance[system]
+        print(f"  {system:26s} {iso}  {cutoff}s  {fname}")
 
 
 if __name__ == "__main__":

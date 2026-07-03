@@ -192,6 +192,32 @@ python3 scripts/bench/gen_factor_corpus.py --check
 # Run a sweep (all locally available systems), 10 s cutoff:
 python3 scripts/bench/factor_sweep.py --cutoff 10 --skip-unavailable
 
-# Regenerate the charts from a committed record:
-python3 scripts/plots/hexbz-cactus.py --sweep reports/bench-results/<record>.json
+# Regenerate the charts (default: merge every committed record, newest-per-system):
+python3 scripts/plots/hexbz-cactus.py
 ```
+
+### Re-running only the Lean entries as they evolve
+
+Each sweep writes a permanent, timestamped record naming every system and its
+version. The external comparators (FLINT, NTL, PARI, both Isabelle systems) are
+expensive to run and change rarely, so they do not need re-running when only hex
+changes. The workflow:
+
+```
+# Re-measure just the hex entries against the same corpus, at the same cutoff:
+python3 scripts/bench/factor_sweep.py \
+    --systems hex-factor,hex-lattice,hex-fast,hex-classical-nodecline \
+    --cutoff 10 --skip-unavailable
+
+# Regenerate charts: the fresh hex record wins for the hex curves, and each
+# external curve is carried over from the committed baseline it was last
+# measured in (newest measurement per system, guarded by a matching corpus SHA):
+python3 scripts/plots/hexbz-cactus.py
+```
+
+The plotter prints a per-system provenance line (record timestamp and cutoff) so
+a mixed-time chart is honest about which curves are fresh; merging records over
+different corpora is refused. Keep the cutoff identical across the records you
+merge, or the solved-counts are not comparable (the subtitle flags a mixed
+cutoff). Commit the fresh hex record alongside the baseline; both coexist under
+`reports/bench-results/`.
