@@ -120,6 +120,16 @@ def _flint_version() -> str:
         return "unknown"
 
 
+def _pari_version() -> str:
+    try:
+        import cypari2
+        from importlib.metadata import version
+        major, minor, patch = cypari2.Pari().version()
+        return f"PARI/GP {major}.{minor}.{patch} (cypari2 {version('cypari2')})"
+    except Exception:
+        return "unknown"
+
+
 SYSTEMS = {
     "hex-factor": SystemSpec("hex-factor", _hex_service_argv("factor"), _lean_toolchain),
     "hex-lattice": SystemSpec("hex-lattice", _hex_service_argv("factorLattice"), _lean_toolchain),
@@ -127,7 +137,7 @@ SYSTEMS = {
     "hex-classical-nodecline": SystemSpec(
         "hex-classical-nodecline", _hex_service_argv("factorClassicalNoDecline"), _lean_toolchain),
     "flint": SystemSpec("flint", _python_service_argv("bz_flint_service.py"), _flint_version),
-    "pari": SystemSpec("pari", _python_service_argv("bz_pari_service.py"), lambda: "cypari2"),
+    "pari": SystemSpec("pari", _python_service_argv("bz_pari_service.py"), _pari_version),
     "ntl": SystemSpec("ntl", _setup_script_argv("setup_bz_ntl_driver.sh"), lambda: "NTL ZZXFactoring"),
     "isabelle-bz": SystemSpec(
         "isabelle-bz", _setup_script_argv("setup_bz_isabelle.sh"),
