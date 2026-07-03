@@ -47,10 +47,12 @@ Informational external comparator:
 
 * `fpLLL via fplll-ffi`: in-process FFI registrations call `libfplll`
   through the `fplll-ffi` shim — one C++ call per request, no
-  subprocess. The shim's `lean_fplll_lll_reduce` symbol is resolved
-  by `HexLLL/ffi/lean_hexlll_provider.c` via `dlsym(RTLD_DEFAULT, ...)`
-  after an opportunistic `dlopen` of `HEX_FPLLL_FFI_LIB`, mirroring
-  the Isabelle binary-path override. The shim is built by
+  subprocess. The bench installs the shim explicitly via
+  `Hex.lll.loadProvider` (see `ensureProviderLoaded`), reading the
+  library path from `HEX_FPLLL_FFI_LIB` and `dlopen`ing it once;
+  `HexLLL/ffi/lean_hexlll_provider.c` then resolves
+  `lean_fplll_lll_reduce` from that handle. This mirrors the
+  Isabelle binary-path override. The shim is built by
   `scripts/oracle/setup_fplll_ffi.sh` (clone+lake build of
   `leanprover/fplll`), keeping hex free of any Lake dependency on
   it. The comparator is classified informational in
@@ -68,8 +70,9 @@ Informational external comparator:
   checker-only targets cache one candidate after warmup and re-run
   only `certCheck`, giving the checker's cost share. Public-dispatch
   verify targets check that, when an `fplll-ffi` provider is
-  intentionally loaded via `HEX_FPLLL_FFI_LIB`, the dispatch tally
-  records at least one accepted candidate.
+  intentionally installed via `Hex.lll.loadProvider` (path from
+  `HEX_FPLLL_FFI_LIB`), the dispatch tally records at least one
+  accepted candidate.
 
 External comparator:
 
@@ -146,12 +149,14 @@ benchmark, so each repeat starts with a cold `isabelleChildRef`; the
 process-call comparator registrations set `minTotalSeconds := 1.0`,
 forcing the fixed child to run enough inner iterations to amortize
 the one-time GHC start inside the child. For `fplll-ffi`, the
-per-process cost is the one-time `dlopen` performed lazily on the
-first probe via `HEX_FPLLL_FFI_LIB`.
+per-process cost is the one-time `dlopen` performed on the first
+`ensureProviderLoaded` call (`Hex.lll.loadProvider` with the path from
+`HEX_FPLLL_FFI_LIB`).
 
 **Driver path overrides.** `HEX_FPLLL_FFI_LIB` selects the
-`fplll-ffi` shared library that the bench `dlopen`s at start-up
-(see `HexLLL/ffi/lean_hexlll_provider.c`). The Isabelle binary path
+`fplll-ffi` shared library that the bench installs at start-up via
+`Hex.lll.loadProvider` (see `ensureProviderLoaded` and
+`HexLLL/ffi/lean_hexlll_provider.c`). The Isabelle binary path
 is controlled by `HEX_LLL_ISABELLE_SVP`; the Isabelle certified binary
 path is controlled by `HEX_LLL_ISABELLE_CERTIFIED_SVP`.
 
