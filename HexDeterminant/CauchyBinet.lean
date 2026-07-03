@@ -845,7 +845,7 @@ theorem det_gramMatrix_eq_sum_columnTuples
     change (gramMatrix A)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)] =
       (columnSumMatrix A A)[(⟨r, hr⟩ : Fin n)][(⟨c, hc⟩ : Fin n)]
     rw [getElem_columnSumMatrix]
-    simp [gramMatrix, ofFn, row, Vector.dotProduct]
+    simp [gramMatrix, ofFn, row, Vector.dotProduct, Fin.foldl_eq_finRange_foldl]
     apply List.foldl_add_congr
     intro k _hk
     exact Lean.Grind.CommSemiring.mul_comm A[(⟨r, hr⟩ : Fin n)][k] A[(⟨c, hc⟩ : Fin n)][k]

@@ -77,7 +77,7 @@ private theorem foldlNonneg {α : Type} (xs : List α) (f : α → Rat)
 its rational entries. -/
 theorem basisNormSq_nonneg (basis : Matrix Rat n m) (i : Fin n) :
     0 ≤ basisNormSq basis i := by
-  simp only [basisNormSq, Vector.normSq, Vector.dotProduct]
+  simp only [basisNormSq, Vector.normSq, Vector.dotProduct, Fin.foldl_eq_finRange_foldl]
   exact foldlNonneg (List.finRange m) (fun j => (basis.row i)[j] * (basis.row i)[j]) 0
     (by grind) (fun j => ratMulSelfNonneg ((basis.row i)[j]))
 

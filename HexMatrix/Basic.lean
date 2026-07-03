@@ -38,23 +38,12 @@ namespace Vector
 
 /-- Dot product of two vectors.
 
-This `List.finRange` form is the reference definition the entry lemmas reason
-about; compiled code runs the allocation-free `Fin.foldl` loop `dotProductImpl`
-via the `@[csimp]` below. -/
+Stated with core `Fin.foldl`, so compiled code runs the allocation-free index
+loop directly and never materializes a `List.finRange n`. Entry lemmas that
+reason over the `List.finRange` form bridge with `Fin.foldl_eq_finRange_foldl`. -/
 @[expose]
 def dotProduct [Mul R] [Add R] [OfNat R 0] (u v : Vector R n) : R :=
-  (List.finRange n).foldl (fun acc i => acc + u[i] * v[i]) 0
-
-/-- Allocation-free implementation of `dotProduct`: a `Fin.foldl` loop that never
-materializes the `List.finRange n` index list. Swapped in for compiled code by the
-`@[csimp]` lemma; `dotProduct` remains the reference form for proofs. -/
-@[expose]
-def dotProductImpl [Mul R] [Add R] [OfNat R 0] (u v : Vector R n) : R :=
   Fin.foldl n (fun acc i => acc + u[i] * v[i]) 0
-
-@[csimp] theorem dotProduct_eq_impl : @dotProduct = @dotProductImpl := by
-  funext R n iMul iAdd iZero u v
-  rw [dotProduct, dotProductImpl, Fin.foldl_eq_finRange_foldl]
 
 /-- Squared Euclidean norm of a vector. -/
 @[expose]

@@ -3202,6 +3202,7 @@ theorem irreducible_of_no_kernelWitnessSplit_squareFree
                     c_coeff[k.val]'k.isLt) 0 := by
           unfold Matrix.mulVec Vector.dotProduct Matrix.row
           rw [Vector.getElem_ofFn hi_fin]
+          rw [Fin.foldl_eq_finRange_foldl]
           rfl
         rw [hlhs] at hget
         rw [hrhs] at hget
@@ -3730,7 +3731,7 @@ private theorem exists_basis_nonconst_mod_g
                   ((Matrix.nullspaceBasisMatrix (fixedSpaceMatrix f hmonic))[i]'hi)[k.val]'k.isLt *
                     c_coeff[k.val]'k.isLt) 0 := by
           unfold Matrix.mulVec Vector.dotProduct Matrix.row
-          rw [Vector.getElem_ofFn hi]; rfl
+          rw [Vector.getElem_ofFn hi]; rw [Fin.foldl_eq_finRange_foldl]; rfl
         rw [hlhs, hrhs] at hget
         rw [← hget]
         apply foldl_add_congr_terms

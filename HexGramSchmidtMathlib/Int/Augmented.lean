@@ -120,6 +120,7 @@ private theorem scaledCoeffMatrix_det_eq_gramDet_mul_coeffs
     unfold Matrix.mulVec Matrix.row
     simp only [Vector.getElem_ofFn, Fin.getElem_fin]
     unfold Vector.dotProduct
+    rw [Fin.foldl_eq_finRange_foldl]
     apply foldl_sum_congr_simple
     intro q _hq
     grind

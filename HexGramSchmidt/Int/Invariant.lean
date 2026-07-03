@@ -305,7 +305,7 @@ private theorem int_dot_self_eq_zero_get (v : Vector Int m)
   have hmem : i ∈ List.finRange m := by simp
   exact foldl_int_dot_self_eq_zero_of_mem (xs := List.finRange m) (v := v)
     (acc := 0) (by decide)
-    (by simpa [Vector.dotProduct] using hzero) i hmem
+    (by simpa [Vector.dotProduct, Fin.foldl_eq_finRange_foldl] using hzero) i hmem
 
 /-- If `v : Vector Int m` has zero self-dot product, then any other integer
 vector dots it to zero from the left as well. -/
@@ -313,6 +313,7 @@ private theorem int_dot_eq_zero_of_dot_self_zero_left (u v : Vector Int m)
     (hzero : v.dotProduct v = 0) :
     v.dotProduct u = 0 := by
   unfold Vector.dotProduct
+  rw [Fin.foldl_eq_finRange_foldl]
   induction List.finRange m with
   | nil =>
       simp
@@ -344,7 +345,7 @@ private theorem foldl_dot_comm_int_local {n' : Nat} (xs : List (Fin n'))
 inside this file before the existing `dot_comm_int` declaration.) -/
 private theorem int_dot_comm_local {n' : Nat} (u v : Vector Int n') :
     u.dotProduct v = v.dotProduct u := by
-  simpa [Vector.dotProduct] using
+  simpa [Vector.dotProduct, Fin.foldl_eq_finRange_foldl] using
     foldl_dot_comm_int_local (xs := List.finRange n') (u := u) (v := v)
       (accU := 0) (accV := 0) rfl
 
@@ -374,6 +375,7 @@ private theorem getElem_vecMul_int
   show (Matrix.transpose b * c)[j] = _
   rw [Matrix.getElem_mulVec]
   unfold Vector.dotProduct
+  rw [Fin.foldl_eq_finRange_foldl]
   apply foldl_add_pointwise_eq_int
   intro k _hk
   simp [Matrix.transpose, Matrix.col, Matrix.row]
@@ -407,6 +409,7 @@ private theorem dot_vecMul_right_eq
           (fun accj j => accj + u[j] *
             (List.finRange n).foldl (fun acck k => acck + b[k][j] * c[k]) 0) 0 := by
     unfold Vector.dotProduct
+    rw [Fin.foldl_eq_finRange_foldl]
     apply foldl_add_pointwise_eq_int
     intro j _hj
     rw [getElem_vecMul_int (b := b) (c := c) j]
@@ -465,6 +468,7 @@ private theorem dot_vecMul_right_eq
       u.dotProduct (b.row k) =
         (List.finRange m).foldl (fun accj j => accj + u[j] * b[k][j]) 0 := by
     unfold Vector.dotProduct
+    rw [Fin.foldl_eq_finRange_foldl]
     apply foldl_add_pointwise_eq_int
     intro j _hj
     simp [Matrix.row]

@@ -135,7 +135,8 @@ private theorem dot_self_eq_zero_get (v : Vector Rat m)
   have hmem : i ∈ List.finRange m := by
     simp
   exact foldl_dot_self_eq_zero_of_mem (xs := List.finRange m) (v := v)
-    (acc := 0) (by decide) (by simpa [Vector.dotProduct] using hzero) i hmem
+    (acc := 0) (by decide)
+    (by simpa [Vector.dotProduct, Fin.foldl_eq_finRange_foldl] using hzero) i hmem
 
 /-- Over `Rat`, a vector whose self-dot-product is zero is the zero vector, so
 its dot product with any other row also vanishes. Used to discharge the
@@ -144,6 +145,7 @@ theorem dot_zero_of_dot_self_zero (row v : Vector Rat m)
     (hzero : v.dotProduct v = 0) :
     row.dotProduct v = 0 := by
   unfold Vector.dotProduct
+  rw [Fin.foldl_eq_finRange_foldl]
   induction List.finRange m with
   | nil =>
       simp
@@ -180,7 +182,7 @@ private theorem foldl_dot_comm_rat (xs : List (Fin m)) (u v : Vector Rat m)
 /-- The rational dot product is commutative. -/
 private theorem dot_comm_rat (u v : Vector Rat m) :
     u.dotProduct v = v.dotProduct u := by
-  simpa [Vector.dotProduct] using
+  simpa [Vector.dotProduct, Fin.foldl_eq_finRange_foldl] using
     foldl_dot_comm_rat (xs := List.finRange m) (u := u) (v := v)
       (accU := 0) (accV := 0) rfl
 
@@ -717,6 +719,7 @@ private theorem subtractProjection_zero_left (basisRow : Vector Rat m) :
     subtractProjection 0 basisRow = 0 := by
   have hdot : (0 : Vector Rat m).dotProduct basisRow = 0 := by
     unfold Vector.dotProduct
+    rw [Fin.foldl_eq_finRange_foldl]
     induction List.finRange m with
     | nil =>
         rfl

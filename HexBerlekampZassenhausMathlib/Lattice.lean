@@ -233,6 +233,7 @@ theorem vecMul_getElem_eq_sum {n m : Nat}
   show (Hex.Matrix.transpose M * c)[k] = _
   rw [Hex.Matrix.getElem_mulVec]
   unfold Vector.dotProduct
+  rw [Fin.foldl_eq_finRange_foldl]
   rw [finRange_foldl_add_eq_sum
     (g := fun i : Fin n => (Hex.Matrix.row (Hex.Matrix.transpose M) k)[i] * c[i])]
   refine Finset.sum_congr rfl ?_
@@ -734,6 +735,7 @@ def projFirst (r n : Nat) : (Fin (r + n) → ℤ) →ₗ[ℤ] (Fin r → ℤ) wh
 private theorem normSq_eq_sum {n : Nat} (v : Vector Int n) :
     Vector.normSq v = ∑ i : Fin n, v[i] ^ 2 := by
   unfold Vector.normSq Vector.dotProduct
+  rw [Fin.foldl_eq_finRange_foldl]
   rw [finRange_foldl_add_eq_sum (g := fun i => v[i] * v[i])]
   exact Finset.sum_congr rfl (fun i _ => by ring)
 

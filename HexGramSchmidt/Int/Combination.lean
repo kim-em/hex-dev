@@ -52,7 +52,7 @@ private theorem vecMul_int_getElem
   show (Matrix.transpose b * c)[col] = _
   rw [Matrix.getElem_mulVec]
   show ((Matrix.transpose b).row col).dotProduct c = _
-  simp [Vector.dotProduct, Matrix.row, Matrix.transpose, Matrix.col, Hex.Matrix.getRow, Fin.getElem_fin]
+  simp [Vector.dotProduct, Fin.foldl_eq_finRange_foldl, Matrix.row, Matrix.transpose, Matrix.col, Hex.Matrix.getRow, Fin.getElem_fin]
 
 /-- Entry expansion of the cast prefix row combination. The `(j + 1)`-row prefix
 of `castIntMatrix b` combined with `prefixCoeffsCast c k` reads out as a sum of
@@ -68,7 +68,7 @@ private theorem vecMul_prefix_castIntMatrix_getElem
   show (Matrix.transpose _ * _)[col] = _
   rw [Matrix.getElem_mulVec]
   show ((Matrix.transpose _).row col).dotProduct _ = _
-  simp [Vector.dotProduct, GramSchmidt.prefixRows,
+  simp [Vector.dotProduct, Fin.foldl_eq_finRange_foldl, GramSchmidt.prefixRows,
     castIntMatrix, prefixCoeffsCast, Matrix.row, Matrix.transpose, Matrix.col,
     Hex.Matrix.getRow, Fin.getElem_fin]
 
@@ -173,6 +173,7 @@ Gram-Schmidt basis rows: `coeffs b * basis b` collapses to the cast input
   show (coeffs b * basis b)[ii][jj] = (castIntMatrix b)[ii][jj]
   rw [Matrix.getElem_mul]
   unfold Vector.dotProduct
+  rw [Fin.foldl_eq_finRange_foldl]
   let f : Fin n → Rat := fun k => ((coeffs b).row ii)[k] * ((basis b).col jj)[k]
   have hzero : ∀ k : Fin n, i < k.val → f k = 0 := by
     intro k hk
@@ -282,7 +283,7 @@ theorem vecMul_basis_coeffs_reconstruction
     show _ = (Matrix.transpose (castIntMatrix b) *
         Vector.map (fun x : Int => (x : Rat)) c)[jj]
     rw [Matrix.getElem_mulVec]
-    simp [Vector.dotProduct, Matrix.row, Matrix.transpose,
+    simp [Vector.dotProduct, Fin.foldl_eq_finRange_foldl, Matrix.row, Matrix.transpose,
       Matrix.col, castIntMatrix, Hex.Matrix.getRow, Fin.getElem_fin]
   rw [hleft, ← hcoeff]
   change ((Matrix.transpose (coeffs b * basis b)) *
@@ -360,7 +361,7 @@ the normal form `((normSq v : Int) : Rat)`. -/
 @[simp, grind =] theorem normSq_map_intCast (v : Vector Int m) :
     (Vector.map (fun x : Int => (x : Rat)) v).normSq =
       ((v.normSq : Int) : Rat) := by
-  simpa [Vector.normSq, Vector.dotProduct]
+  simpa [Vector.normSq, Vector.dotProduct, Fin.foldl_eq_finRange_foldl]
     using (foldl_int_dot_cast (List.finRange m)
       (fun i : Fin m => v[i]) (fun i : Fin m => v[i]) 0).symm
 
@@ -505,7 +506,7 @@ private theorem foldl_dot_comm_int {n' : Nat} (xs : List (Fin n'))
 /-- The dot product of integer vectors is commutative. -/
 private theorem dot_comm_int {n' : Nat} (u v : Vector Int n') :
     u.dotProduct v = v.dotProduct u := by
-  simpa [Vector.dotProduct] using
+  simpa [Vector.dotProduct, Fin.foldl_eq_finRange_foldl] using
     foldl_dot_comm_int (xs := List.finRange n') (u := u) (v := v)
       (accU := 0) (accV := 0) rfl
 

@@ -317,6 +317,7 @@ private theorem nullspace_echelon_sound {R : Type u} [Lean.Grind.Ring R] {n m : 
     change (Matrix.mulVec D.echelon (E.nullspace.get k))[r] = (0 : Vector R n)[r]
     unfold Matrix.mulVec Matrix.row Vector.dotProduct
     rw [Vector.getElem_ofFn hr, Vector.getElem_zero r hr]
+    simp only [Fin.foldl_eq_finRange_foldl]
     change (List.finRange m).foldl
         (fun acc j => acc + D.echelon[row][j] * (E.nullspace.get k)[j]) 0 = 0
     have hpivotTerm :
@@ -385,6 +386,7 @@ private theorem nullspace_echelon_sound {R : Type u} [Lean.Grind.Ring R] {n m : 
     change (Matrix.mulVec D.echelon (E.nullspace.get k))[r] = (0 : Vector R n)[r]
     unfold Matrix.mulVec Matrix.row Vector.dotProduct
     rw [Vector.getElem_ofFn hr, Vector.getElem_zero r hr]
+    simp only [Fin.foldl_eq_finRange_foldl]
     change (List.finRange m).foldl
         (fun acc j => acc + D.echelon[row][j] * (E.nullspace.get k)[j]) 0 = 0
     have hzero :
@@ -544,6 +546,7 @@ private theorem freeSum_eq_neg_pivot {R : Type u} [Lean.Grind.Field R] {n m : Na
       (0 : Vector R n)[(E.toIsEchelonForm.pivotRow i).val]'
         (E.toIsEchelonForm.pivotRow i).isLt at hentry
     unfold Matrix.mulVec Matrix.row Vector.dotProduct at hentry
+    simp only [Fin.foldl_eq_finRange_foldl] at hentry
     rw [Vector.getElem_ofFn (E.toIsEchelonForm.pivotRow i).isLt] at hentry
     rw [Vector.getElem_zero (E.toIsEchelonForm.pivotRow i).val
       (E.toIsEchelonForm.pivotRow i).isLt] at hentry
@@ -657,6 +660,7 @@ theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
           Vector R (m - D.rank)))[jj.val]'jj.isLt = v[jj.val]'jj.isLt
     unfold Matrix.mulVec Matrix.row Vector.dotProduct
     rw [Vector.getElem_ofFn jj.isLt]
+    simp only [Fin.foldl_eq_finRange_foldl]
     change
       (List.finRange (m - D.rank)).foldl
           (fun acc k =>

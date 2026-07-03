@@ -179,6 +179,7 @@ theorem dotProduct_packRow (K : Nat) (M : Matrix Int n n) (A : Matrix Int n m)
           (packRow K (Vector.replicate m (0 : Int))) := by
     rw [packRow_replicate_zero]
     unfold Vector.dotProduct
+    rw [Fin.foldl_eq_finRange_foldl]
     simp only [Fin.getElem_fin, Vector.getElem_ofFn]
   rw [hstart, foldl_dot_pack]
   congr 1
@@ -192,6 +193,7 @@ theorem dotProduct_packRow (K : Nat) (M : Matrix Int n n) (A : Matrix Int n m)
         ((Vector.replicate m (0 : Int))[(⟨j, hj⟩ : Fin m)]) := by
     simp only [getElem_row, getElem_mul]
     unfold Vector.dotProduct
+    rw [Fin.foldl_eq_finRange_foldl]
     simp only [getElem_col, getElem_row]
     simp only [Fin.getElem_fin, Vector.getElem_replicate]
   exact hentry.trans htarget.symm
@@ -277,7 +279,7 @@ theorem natAbs_dotProduct_le (u v : Vector Int k) (Bu Bv : Nat)
     (hu : ∀ l : Fin k, u[l].natAbs ≤ Bu) (hv : ∀ l : Fin k, v[l].natAbs ≤ Bv) :
     (u.dotProduct v).natAbs ≤ k * (Bu * Bv) := by
   have h := foldl_dot_natAbs_le u v Bu Bv hu hv (List.finRange k) 0
-  simpa [Vector.dotProduct] using h
+  simpa [Vector.dotProduct, Fin.foldl_eq_finRange_foldl] using h
 
 /-- `two_mul_lt_width` turns a bound `x ≤ B` into the base-width inequality
 needed for balanced packing injectivity. -/

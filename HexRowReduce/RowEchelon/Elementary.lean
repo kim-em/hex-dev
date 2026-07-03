@@ -36,6 +36,7 @@ private theorem dotProduct_smul_ofFn_left [Lean.Grind.Ring R]
     (Vector.ofFn fun k => s * v[k]).dotProduct w =
     s * v.dotProduct w := by
   unfold Vector.dotProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   rw [← List.foldl_add_mul_left (xs := List.finRange m)
         (f := fun i => v[i] * w[i]) (c := s) (z := 0)]
   have hzero : s * (0 : R) = 0 := by grind
@@ -54,6 +55,7 @@ private theorem dotProduct_add_smul_ofFn_left [Lean.Grind.Ring R]
     (Vector.ofFn fun k => u[k] + s * v[k]).dotProduct w =
     u.dotProduct w + s * v.dotProduct w := by
   unfold Vector.dotProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   -- LHS body: (u[k] + s * v[k]) * w[k] = u[k] * w[k] + s * (v[k] * w[k])
   rw [show (List.finRange m).foldl
         (fun acc i => acc + (Vector.ofFn fun k => u[k] + s * v[k])[i] * w[i]) 0 =
@@ -83,6 +85,7 @@ private theorem dotProduct_add_smul_ofFn_right [Lean.Grind.CommRing R]
     u.dotProduct (Vector.ofFn fun k => v[k] + s * w[k]) =
     u.dotProduct v + s * u.dotProduct w := by
   unfold Vector.dotProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   rw [show (List.finRange m).foldl
         (fun acc i => acc + u[i] * (Vector.ofFn fun k => v[k] + s * w[k])[i]) 0 =
       (List.finRange m).foldl
@@ -108,6 +111,7 @@ private theorem dotProduct_add_smulRight_ofFn_right [Lean.Grind.Ring R]
     u.dotProduct (Vector.ofFn fun k => v[k] + w[k] * s) =
     u.dotProduct v + u.dotProduct w * s := by
   unfold Vector.dotProduct
+  simp only [Fin.foldl_eq_finRange_foldl]
   rw [show (List.finRange m).foldl
         (fun acc i => acc + u[i] * (Vector.ofFn fun k => v[k] + w[k] * s)[i]) 0 =
       (List.finRange m).foldl
