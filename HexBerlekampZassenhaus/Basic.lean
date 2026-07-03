@@ -1943,6 +1943,108 @@ def checkIrreducibleCert
   cert.perPrime.all (fun primeData => primeData.checkForPolynomial f) &&
     cert.checkDegreeObstructions f
 
+/--
+Rabin certificates for every modular factor at a prime block, aligned with the
+factor array. Fails (returns `none`) if any modular factor is non-monic or is
+not certified irreducible by `Berlekamp.buildIrreducibilityCertificate?`.
+-/
+private def buildFactorCerts? {p : Nat} [ZMod64.Bounds p]
+    (factors : Array (FpPoly p)) :
+    Option (Array Berlekamp.IrreducibilityCertificate) :=
+  factors.foldl
+    (fun acc g =>
+      match acc with
+      | none => none
+      | some arr =>
+        if hmonic : DensePoly.leadingCoeff g = 1 then
+          match Berlekamp.buildIrreducibilityCertificate? g hmonic with
+          | some cert => some (arr.push cert)
+          | none => none
+        else
+          none)
+    (some #[])
+
+/--
+Build one prime block for `f` at the small-prime candidate `c`: its recorded
+modular factors, their degrees, and one nested Rabin certificate per factor.
+
+The block is returned only when the prime is admissible, every modular factor
+is Rabin-certified, and the assembled block self-verifies against `f` through
+`PrimeFactorData.checkForPolynomial` (so a block that survives here is exactly
+one the kernel checker will accept). This requires the modular image of `f` to
+be monic at `c.p`, i.e. `leadingCoeff f ≡ 1 (mod c.p)`; otherwise the recorded
+monic factors cannot multiply back to `ZPoly.modP c.p f` and the block is
+rejected.
+-/
+private def buildPrimeFactorData? (f : ZPoly) (c : SmallPrimeCandidate) :
+    Option PrimeFactorData :=
+  letI := c.bounds
+  if isGoodPrime f c.p then
+    let factors := berlekampFactorsModP f c
+    match buildFactorCerts? factors with
+    | none => none
+    | some certs =>
+      let data : PrimeFactorData :=
+        { p := c.p
+          factorDegrees := factors.map fun g => g.degree?.getD 0
+          factorPolys := factors
+          factorCerts := certs }
+      if data.checkForPolynomial f then some data else none
+  else
+    none
+
+/--
+Choose, for each nontrivial candidate integer factor degree of `f`, a prime
+block whose recorded modular factor degrees have no subset summing to that
+degree — the multi-prime degree obstruction that rules out a genuine integer
+factor of that degree.
+
+Returns `none` if some candidate degree cannot be obstructed by any of the
+supplied blocks (which is what happens when `f` really does have an integer
+factor of that degree). This covers the Swinnerton-Dyer regime, where no single
+prime is inert but the obstructing prime varies with the target degree.
+-/
+private def buildDegreeObstructions (f : ZPoly) (blocks : Array PrimeFactorData) :
+    Option (Array DegreeObstruction) :=
+  (ZPolyIrreducibilityCertificate.candidateFactorDegrees f).foldl
+    (fun acc d =>
+      match acc with
+      | none => none
+      | some obs =>
+        match (List.range blocks.size).find? fun i =>
+          match blocks[i]? with
+          | some blk => !blk.hasSubsetDegree d
+          | none => false with
+        | some i => some (obs.push { targetDegree := d, primeIndex := i })
+        | none => none)
+    (some #[])
+
+/--
+Compiled certificate generator for irreducibility of `f` over `ℤ` — the *prep*
+half of the certifying-irreducibility pattern for integer polynomials.
+
+It selects admissible small primes, factors `f` modulo each with Berlekamp,
+attaches a nested Rabin certificate to every modular factor, and assembles the
+per-prime degree data plus the degree obstructions that rule out every
+nontrivial integer factor degree. The whole assembled certificate is checked
+with `checkIrreducibleCert` before being returned, so the generator never emits
+a certificate the kernel checker would reject: a `some` result is always a
+valid certificate, and anything that would not check yields `none`.
+
+This carries no soundness proof of its own; correctness rides entirely on the
+downstream `checkIrreducibleCert_sound`. Expensive Berlekamp/Rabin work runs
+here in compiled code; the kernel only replays the cheap `checkIrreducibleCert`
+reduction on the finished data.
+-/
+def certifyIrreducible? (f : ZPoly) : Option ZPolyIrreducibilityCertificate :=
+  let blocks := (smallPrimeCandidates.filterMap fun c => buildPrimeFactorData? f c).toArray
+  match buildDegreeObstructions f blocks with
+  | none => none
+  | some obstructions =>
+    let cert : ZPolyIrreducibilityCertificate :=
+      { perPrime := blocks, degreeObstructions := obstructions }
+    if checkIrreducibleCert f cert then some cert else none
+
 private structure PrimeChoiceDataScore where
   data : PrimeChoiceData
   factorCount : Nat

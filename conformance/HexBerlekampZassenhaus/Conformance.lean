@@ -645,5 +645,63 @@ recovered true factor.
 #guard !checkIrreducibleCert (zpoly #[2, 0, 1]) certMissingObstruction
 #guard !checkIrreducibleCert (zpoly #[1, -3, 2]) certValidQuad
 
+/-! ### Compiled certificate generators (#8552)
+
+The generators are the compiled *prep* half of certifying irreducibility. They
+carry no soundness proof; the round-trip guards below confirm that whatever they
+emit is accepted by the executable checkers (`Berlekamp.checkIrreducibilityCertificate`
+and `checkIrreducibleCert`), and that reducible / trivial inputs yield `none`.
+Correctness of an accepted certificate rides on the separately proved
+`checkIrreducibleCert_sound`. -/
+
+/-- The Rabin certificate generator produces a certificate the executable
+checker accepts. -/
+private def fpCertRoundTrips {p : Nat} [ZMod64.Bounds p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) : Bool :=
+  match Berlekamp.buildIrreducibilityCertificate? f hmonic with
+  | some cert => Berlekamp.checkIrreducibilityCertificate f hmonic cert
+  | none => false
+
+/-- The integer certificate generator produces a certificate the executable
+checker accepts. -/
+private def zCertRoundTrips (f : ZPoly) : Bool :=
+  match certifyIrreducible? f with
+  | some cert => checkIrreducibleCert f cert
+  | none => false
+
+-- Rabin generator: irreducible monic `x² + 2` over `F₅` round-trips; the unit
+-- polynomial (degree 0) fails Rabin's test, so no certificate is emitted.
+#guard fpCertRoundTrips irreducibleQuadFive irreducibleQuadFive_monic
+#guard (Berlekamp.buildIrreducibilityCertificate? unitPolyFive unitPolyFive_monic).isNone
+
+-- Integer generator: monic irreducibles with an admissible obstructing prime
+-- for each candidate degree round-trip through the executable checker.
+#guard zCertRoundTrips (zpoly #[2, 0, 1])
+#guard zCertRoundTrips (zpoly #[1, 1, 1])
+
+-- Reducible or non-admissible inputs yield no certificate: `x² - 1` splits into
+-- linear factors modulo every prime (degree-1 obstruction impossible), and
+-- `(x - 1)²` has no admissible prime at all.
+#guard (certifyIrreducible? (zpoly #[-1, 0, 1])).isNone
+#guard (certifyIrreducible? repeatedRootPoly).isNone
+
+-- A cubic irreducible over `ℤ` with an inert prime (`x³ - x - 1` is irreducible
+-- modulo `3`): the single inert block obstructs every proper factor degree at
+-- once, so the generator scales past quadratics whenever a suitable prime exists.
+#guard zCertRoundTrips (zpoly #[-1, -1, 0, 1])
+
+-- Design limitation, NOT a generator bug: the checker's per-prime degree-sum
+-- obstruction (`checkDegreeObstructions`) must rule out *every* candidate degree
+-- in `1 .. deg/2`, but degree `deg/2` is essentially never obstructable when the
+-- local factorization is "balanced". Swinnerton-Dyer `√2+√3+√5` factors as
+-- `[2,2,2,2]` / `[1×8]` at every prime (degrees 2 and 4 always reachable), and
+-- `Φ₁₅` never avoids a subset summing to 4. Both are irreducible over `ℤ` yet
+-- admit no certificate the current checker can accept, so the generator returns
+-- `none`. Certifying them needs a stronger obstruction than per-prime degree
+-- sums (a checker-design change with its own soundness proof, out of scope for a
+-- compiled generator).
+#guard (certifyIrreducible? swinnertonDyerSD3).isNone
+#guard (certifyIrreducible? phi15).isNone
+
 end BZConformance
 end Hex
