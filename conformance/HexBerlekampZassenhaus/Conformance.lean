@@ -663,7 +663,7 @@ finite-field layer by `validQuadCert_linear_check` in
 integer checker `checkIrreducibleCert` in the kernel on generator output (via
 elaboration-time reification of the certificate as literal data, plus a
 kernel-reducible integer checker) is the `irreducible_cert` tactic deliverable
-tracked separately as Part 2 of #8552. -/
+tracked as #8566 (Part 2 of #8552). -/
 
 /-- The Rabin certificate generator produces a certificate the executable
 checker accepts. -/
