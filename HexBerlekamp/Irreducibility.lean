@@ -1282,6 +1282,51 @@ theorem checkIrreducibilityCertificateLinearIncremental_rabinTest
         (checkPowChainLinearIncremental_spec f hmonic samePrimeCert hpowCheck)
         hdividesWitness hwitnesses
 
+/--
+The incremental kernel checker implies the committed checker: a certificate
+accepted by `checkIrreducibilityCertificateLinearIncremental` is accepted by
+`checkIrreducibilityCertificate`. This lets kernel-replayed certificates feed
+consumers stated over the committed checker without restating their soundness.
+-/
+theorem checkIrreducibilityCertificate_of_linearIncremental
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (cert : IrreducibilityCertificate)
+    (hcheck : checkIrreducibilityCertificateLinearIncremental f hmonic cert = true) :
+    checkIrreducibilityCertificate f hmonic cert = true := by
+  unfold checkIrreducibilityCertificateLinearIncremental at hcheck
+  cases hambient : cert.toAmbient? p with
+  | none => simp [hambient] at hcheck
+  | some samePrimeCert =>
+      have hparts :
+          (((0 < samePrimeCert.n ∧ samePrimeCert.n = basisSize f) ∧
+              checkPowChainLinearIncremental f hmonic samePrimeCert = true) ∧
+              samePrimeCert.powChain[samePrimeCert.n]? =
+                some (FpPoly.modByMonic f FpPoly.X hmonic)) ∧
+            checkRabinBezoutWitnesses f hmonic samePrimeCert = true := by
+        simpa [checkIrreducibilityCertificateLinearIncremental, hambient,
+          Bool.and_eq_true] using hcheck
+      rcases hparts with ⟨⟨⟨⟨hnpos, hn⟩, hpowCheck⟩, hdividesWitness⟩, hwitnesses⟩
+      have hsize : samePrimeCert.powChain.size = samePrimeCert.n + 1 := by
+        unfold checkPowChainLinearIncremental at hpowCheck
+        simp only [Bool.and_eq_true, beq_iff_eq] at hpowCheck
+        exact hpowCheck.1.1
+      have hspec :=
+        checkPowChainLinearIncremental_spec f hmonic samePrimeCert hpowCheck
+      have hpow : checkPowChain f hmonic samePrimeCert = true := by
+        unfold checkPowChain
+        simp only [Bool.and_eq_true, beq_iff_eq]
+        refine ⟨hsize, ?_⟩
+        rw [List.all_eq_true]
+        intro k hkmem
+        have hk : k ≤ samePrimeCert.n := by
+          rw [List.mem_range] at hkmem
+          omega
+        simpa using hspec k hk
+      simp only [checkIrreducibilityCertificate, hambient, Bool.and_eq_true,
+        decide_eq_true_eq, beq_iff_eq]
+      exact ⟨⟨⟨⟨hnpos, hn⟩, hpow⟩, hdividesWitness⟩, hwitnesses⟩
+
 end Berlekamp
 
 end Hex

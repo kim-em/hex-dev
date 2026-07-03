@@ -1353,6 +1353,58 @@ theorem checkIrreducibleCert_sound_zpoly
     (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).mpr
       (checkIrreducibleCert_sound f cert hprime hprim hpos hcert)
 
+/--
+Soundness of the kernel-reducible integer checker: a certificate accepted by
+`checkIrreducibleCertLinear` on literal data certifies irreducibility of the
+transported polynomial. The primality hypothesis feeds both the
+Linear→committed checker implication and the committed checker's own
+soundness theorem.
+-/
+theorem checkIrreducibleCertLinear_sound
+    (f : Hex.ZPoly) (cert : Hex.ZPolyIrreducibilityCertificate)
+    (hprime : ∀ primeData ∈ cert.perPrime.toList, Nat.Prime primeData.p)
+    (hprim : (HexPolyZMathlib.toPolynomial f).IsPrimitive)
+    (hpos : 0 < (HexPolyZMathlib.toPolynomial f).natDegree) :
+    Hex.checkIrreducibleCertLinear f cert = true →
+      Irreducible (HexPolyZMathlib.toPolynomial f) := by
+  intro hcert
+  refine checkIrreducibleCert_sound f cert hprime hprim hpos ?_
+  refine Hex.checkIrreducibleCert_of_linear f cert ?_ hcert
+  intro primeData hmem
+  exact ⟨(hprime primeData hmem).two_le,
+    fun m hm => (hprime primeData hmem).eq_one_or_self_of_dvd m hm⟩
+
+/--
+`checkIrreducibleCertLinear_sound` with every side condition stated as a
+kernel-decidable Boolean check: primality of the recorded primes, content one,
+and positive executable degree. This is the exact consumption shape of the
+`irreducible_cert` tactic: it applies this theorem to a reified literal
+certificate with an `Eq.refl true` proof in each hypothesis slot, so the whole
+obligation is discharged by kernel reduction on literal data.
+-/
+theorem irreducible_of_checkIrreducibleCertLinear
+    (f : Hex.ZPoly) (cert : Hex.ZPolyIrreducibilityCertificate)
+    (hprime : cert.perPrime.all (fun primeData => decide (Nat.Prime primeData.p)) = true)
+    (hcontent : decide (Hex.ZPoly.content f = 1) = true)
+    (hpos : decide (0 < f.degree?.getD 0) = true)
+    (hcert : Hex.checkIrreducibleCertLinear f cert = true) :
+    Irreducible (HexPolyZMathlib.toPolynomial f) := by
+  have hprime' : ∀ primeData ∈ cert.perPrime.toList, Nat.Prime primeData.p := by
+    rw [Array.all_eq_true] at hprime
+    intro primeData hmem
+    rw [List.mem_iff_getElem] at hmem
+    obtain ⟨i, hi, hget⟩ := hmem
+    have hiArray : i < cert.perPrime.size := by simpa using hi
+    have hdec := hprime i hiArray
+    rw [← hget]
+    simpa [Array.getElem_toList] using of_decide_eq_true hdec
+  have hcontent' : Hex.ZPoly.content f = 1 := of_decide_eq_true hcontent
+  have hdeg : (HexPolyZMathlib.toPolynomial f).natDegree = f.degree?.getD 0 :=
+    HexPolyMathlib.natDegree_toPolynomial f
+  exact checkIrreducibleCertLinear_sound f cert hprime'
+    (HexPolyZMathlib.isPrimitive_toPolynomial_of_primitive f hcontent')
+    (by rw [hdeg]; exact of_decide_eq_true hpos) hcert
+
 /-- Index type for the modular factors stored in executable prime-choice data. -/
 abbrev ModPFactorIndex (primeData : Hex.PrimeChoiceData) : Type :=
   Fin primeData.factorsModP.size

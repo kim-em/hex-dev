@@ -5,6 +5,9 @@ Authors: Kim Morrison
 -/
 
 import HexBerlekampZassenhausMathlib.Basic
+import HexBerlekampZassenhausMathlib.CertReify
+import HexBerlekampZassenhausMathlib.IrreducibleCert
+import HexBerlekampZassenhausMathlib.IrreducibleCertTest
 import HexBerlekampZassenhausMathlib.SignatureClasses
 import HexBerlekampZassenhausMathlib.Lattice
 import HexBerlekampZassenhausMathlib.CLDColumnBound
