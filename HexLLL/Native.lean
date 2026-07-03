@@ -110,7 +110,7 @@ when `l.val < jVal` and the original `base.get l` otherwise. -/
 theorem foldl_finRange_set_outerSubMul_get_eq
     {n : Nat} (jVal : Nat) (hjn : jVal ≤ n)
     (base outerK outerJ : Vector Int n) (r : Int) (l : Fin n) :
-    ((List.finRange jVal).foldl
+    (Fin.foldl jVal
         (fun (row : Vector Int n) (l' : Fin jVal) =>
           let lFin : Fin n := ⟨l'.val, Nat.lt_of_lt_of_le l'.isLt hjn⟩
           row.set lFin (outerK.get lFin - r * outerJ.get lFin))
@@ -119,6 +119,7 @@ theorem foldl_finRange_set_outerSubMul_get_eq
         outerK.get l - r * outerJ.get l
       else
         base.get l := by
+  rw [Fin.foldl_eq_finRange_foldl]
   let cast : Fin jVal → Fin n :=
     fun l' => ⟨l'.val, Nat.lt_of_lt_of_le l'.isLt hjn⟩
   show ((List.finRange jVal).foldl
@@ -164,7 +165,7 @@ def sizeReduceColumn (s : LLLState n m) (j k : Fin n) (hjk : j.val < k.val) :
     let r := nearestQuotient νjk dj1
     let b' := GramSchmidt.Int.sizeReduce s.b j k r
     let rowK :=
-      (List.finRange j.val).foldl
+      Fin.foldl j.val
         (fun row l =>
           let lFin : Fin n := ⟨l.val, Nat.lt_trans l.isLt j.isLt⟩
           row.set lFin ((s.ν.getRow k).get lFin - r * (s.ν.getRow j).get lFin))
@@ -184,8 +185,8 @@ scaled coefficients. -/
 def sizeReduce (s : LLLState n m) (k : Nat) : LLLState n m :=
   if hk : k < n then
     let kFin : Fin n := ⟨k, hk⟩
-    ((List.finRange k).reverse).foldl
-      (fun state j =>
+    Fin.foldr k
+      (fun j state =>
         let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt hk⟩
         LLLState.sizeReduceColumn state jFin kFin j.isLt)
       s
@@ -271,7 +272,7 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
         s.d.set k dk' (h := Nat.lt_succ_of_lt hk)
       let νRowsSwapped :=
         let setPrefixFrom (source : Vector Int n) (row : Vector Int n) : Vector Int n :=
-          (List.finRange km1.val).foldl
+          Fin.foldl km1.val
             (fun row j =>
               let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt km1.isLt⟩
               row.set jFin (source.get jFin))
@@ -290,7 +291,7 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
           if _ : k < i.val then ((s.ν.getRow i).get kFin, (s.ν.getRow i).get km1)
           else (0, 0)
       let ν' : Matrix Int n n :=
-        (List.finRange n).foldl
+        Fin.foldl n
           (fun ν i =>
             if _ : k < i.val then
               let (a, b) := pairs.get i
@@ -315,7 +316,7 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
     (s.sizeReduce k).d = s.d := by
   unfold sizeReduce
   by_cases hk : k < n
-  · simpa [hk] using
+  · simpa [hk, Fin.foldr_eq_finRange_foldr] using
       sizeReduce_foldl_d (s := s) (k := k) (hk := hk) (xs := (List.finRange k).reverse)
   · simp [hk]
 
@@ -324,7 +325,7 @@ def swapStep (s : LLLState n m) (k : Nat) : LLLState n m :=
     GramSchmidt.Int.basis (s.sizeReduce k).b = GramSchmidt.Int.basis s.b := by
   unfold sizeReduce
   by_cases hk : k < n
-  · simpa [hk] using
+  · simpa [hk, Fin.foldr_eq_finRange_foldr] using
       sizeReduce_foldl_basis (s := s) (k := k) (hk := hk) (xs := (List.finRange k).reverse)
   · simp [hk]
 
@@ -377,7 +378,8 @@ private theorem sizeReduce_foldl_memLattice_iff (s : LLLState n m) (k : Nat) (hk
   unfold sizeReduce
   by_cases hk : k < n
   · rw [dif_pos hk]
-    exact sizeReduce_foldl_memLattice_iff s k hk (List.finRange k).reverse v
+    simpa [Fin.foldr_eq_finRange_foldr] using
+      sizeReduce_foldl_memLattice_iff s k hk (List.finRange k).reverse v
   · rw [dif_neg hk]
 
 /-- The updated swap state still packages the intended scaled coefficient
@@ -410,7 +412,7 @@ noncomputable def gramSchmidtCoeff (s : LLLState n m) (i j : Nat)
 `d₁ * ... * dₙ₋₁`. -/
 @[expose]
 def potential (s : LLLState n m) : Nat :=
-  (List.finRange (n - 1)).foldl
+  Fin.foldl (n - 1)
     (fun acc i =>
       acc * s.d.get
         ⟨i.val + 1, Nat.succ_lt_succ (Nat.lt_of_lt_of_le i.isLt (Nat.sub_le n 1))⟩)
@@ -421,7 +423,7 @@ certificate. The product only ranges over `d₁, ..., dₙ₋₁`, so later
 termination proofs do not need to reason about `dₙ`. -/
 theorem potential_eq_gramDetProduct (s : LLLState n m) (hvalid : s.Valid) :
     s.potential =
-      (List.finRange (n - 1)).foldl
+      Fin.foldl (n - 1)
         (fun acc i =>
           acc * GramSchmidt.Int.gramDet s.b (i.val + 1)
             (Nat.succ_le_of_lt (Nat.lt_of_lt_of_le i.isLt (Nat.sub_le n 1))))
