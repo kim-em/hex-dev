@@ -846,10 +846,20 @@ python3 scripts/plots/hexbz-cactus.py
 # 3. Commit the new record + regenerated SVGs; surface the charts to the requester.
 ```
 
+The same newest-per-system merge covers **adding a new comparator**: to bring a
+system onto the charts (e.g. PARI once `cypari2` is installed), run
+`--systems <that-one>` alone and commit the small record — never re-run the
+whole board to "add" one system. Re-running the external comparators is wasteful,
+and the two Isabelle setups rebuild AFP session heaps (many minutes each) for no
+benefit. A single-system record still cross-checks that system against
+`expectedFactorDegrees`, the shared oracle every other system was validated
+against.
+
 If the corpus itself changed (`gen_factor_corpus.py`), the external systems
 *must* be re-measured too — the plotter refuses to merge records with mismatched
-`corpus_sha256`. Both Isabelle drivers and the NTL driver are cached on carica,
-so a full re-measure there is cheap after the first build.
+`corpus_sha256` — and only then is a full-board run correct. Both Isabelle
+drivers and the NTL driver are cached on carica, so that mandatory full
+re-measure is cheap after the first build.
 
 ## References
 
