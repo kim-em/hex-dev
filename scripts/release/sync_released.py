@@ -10,6 +10,11 @@ For each repo in scripts/release/released.yml (topological order), this:
   4. commits `chore: sync from hex-dev@<sha>` and pushes to `main`
      (unless --dry-run, which prints the planned changes and pin rewrites).
 
+A `pins_only` entry (the `leanprover/hex` aggregate) skips step 2 entirely: it
+manages no source from the monorepo, so the sync only re-pins it (steps 3-4) to
+the SHAs published this run. Listed last, after its upstreams, so its pins
+resolve to the freshly-pushed commits.
+
 Auth (non-dry-run): a token from --token or $RELEASED_SYNC_PAT is used as an
 `x-access-token` basic-auth credential for clone and push. Dry-run clones over
 public https and never pushes.
@@ -71,6 +76,11 @@ def managed_paths(entry: dict) -> list[tuple[Path, Path, bool]]:
 
     Sources are absolute monorepo paths; dest_rel is relative to the repo root.
     """
+    # Aggregate repos (e.g. leanprover/hex) manage no source from the monorepo:
+    # their umbrella lakefile, umbrella .lean and README live only in the released
+    # repo. The sync just rewrites their cross-repo pins + manifest.
+    if entry.get("pins_only"):
+        return []
     lib = entry["lib"]
     out: list[tuple[Path, Path, bool]] = []
     # explicit path list (e.g. hex-test-kit ships only `Hex/`)
@@ -115,6 +125,8 @@ def managed_paths(entry: dict) -> list[tuple[Path, Path, bool]]:
 
 def apply_paths(entry: dict, clone: Path) -> list[str]:
     notes: list[str] = []
+    if entry.get("pins_only"):
+        return notes
     lib = entry["lib"]
     for src, dest_rel, is_dir in managed_paths(entry):
         dest = clone / dest_rel
