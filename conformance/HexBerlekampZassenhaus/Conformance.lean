@@ -652,7 +652,18 @@ carry no soundness proof; the round-trip guards below confirm that whatever they
 emit is accepted by the executable checkers (`Berlekamp.checkIrreducibilityCertificate`
 and `checkIrreducibleCert`), and that reducible / trivial inputs yield `none`.
 Correctness of an accepted certificate rides on the separately proved
-`checkIrreducibleCert_sound`. -/
+`checkIrreducibleCert_sound`.
+
+These `#guard`s exercise the *compiled* checker path (executable correctness of
+the generator output). The complementary *kernel* replay — reducing the checker
+on literal certificate data under `decide` — is demonstrated for the
+finite-field layer by `validQuadCert_linear_check` in
+`conformance/HexBerlekamp/Conformance.lean`, which discharges
+`checkIrreducibilityCertificateLinear` on a literal certificate. Replaying the
+integer checker `checkIrreducibleCert` in the kernel on generator output (via
+elaboration-time reification of the certificate as literal data, plus a
+kernel-reducible integer checker) is the `irreducible_cert` tactic deliverable
+tracked separately as Part 2 of #8552. -/
 
 /-- The Rabin certificate generator produces a certificate the executable
 checker accepts. -/

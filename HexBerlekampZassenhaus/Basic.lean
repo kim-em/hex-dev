@@ -2000,9 +2000,15 @@ degree — the multi-prime degree obstruction that rules out a genuine integer
 factor of that degree.
 
 Returns `none` if some candidate degree cannot be obstructed by any of the
-supplied blocks (which is what happens when `f` really does have an integer
-factor of that degree). This covers the Swinnerton-Dyer regime, where no single
-prime is inert but the obstructing prime varies with the target degree.
+supplied blocks. That happens both when `f` really does have an integer factor
+of that degree, and — a genuine limitation of this per-prime degree-sum
+language — when a degree is un-obstructable because every prime's factorization
+admits a subset summing to it. The latter rules out the balanced half-degree
+cases (e.g. Swinnerton-Dyer `√2+√3+√5` and `Φ₁₅`, whose `deg/2` obstruction is
+never available): the checker cannot certify those irreducibles, so the
+generator declines them. It succeeds whenever each target degree has some
+admissible obstructing prime — in particular whenever `f` has an inert prime,
+whose single block obstructs every proper degree at once.
 -/
 private def buildDegreeObstructions (f : ZPoly) (blocks : Array PrimeFactorData) :
     Option (Array DegreeObstruction) :=
@@ -2041,8 +2047,18 @@ def certifyIrreducible? (f : ZPoly) : Option ZPolyIrreducibilityCertificate :=
   match buildDegreeObstructions f blocks with
   | none => none
   | some obstructions =>
+    -- Keep only the prime blocks an obstruction actually references (in
+    -- first-seen order) and reindex the obstructions against them, so the
+    -- certificate the kernel later checks carries no unused Rabin data.
+    let used : Array Nat :=
+      obstructions.foldl
+        (fun acc o => if acc.contains o.primeIndex then acc else acc.push o.primeIndex)
+        #[]
+    let perPrime := used.filterMap fun i => blocks[i]?
+    let obstructions' := obstructions.map fun o =>
+      { o with primeIndex := (used.findIdx? (· == o.primeIndex)).getD 0 }
     let cert : ZPolyIrreducibilityCertificate :=
-      { perPrime := blocks, degreeObstructions := obstructions }
+      { perPrime := perPrime, degreeObstructions := obstructions' }
     if checkIrreducibleCert f cert then some cert else none
 
 private structure PrimeChoiceDataScore where
