@@ -42,7 +42,15 @@ This `List.finRange` form is the reference definition the entry lemmas reason
 about; crucially it kernel-reduces, so `#guard`/`decide` checks over
 `dotProduct` (e.g. `memLattice` membership) stay evaluable — core `Fin.foldl`
 does not reduce in the kernel. Compiled code runs the allocation-free
-`Fin.foldl` loop `dotProductImpl` via the `@[csimp]` below. -/
+`Fin.foldl` loop `dotProductImpl` via the `@[csimp]` below.
+
+TODO: once https://github.com/leanprover/lean4/pull/14267 (make `Fin.foldl`
+reduce in the kernel) lands and this project's toolchain is bumped past it,
+collapse this reference/compiled split: define
+`dotProduct` directly as the native `Fin.foldl` loop and delete `dotProductImpl`
+and `dotProduct_eq_impl`. The native form will then kernel-reduce on its own, so
+the `memLattice` `decide` checks keep working without the `List.finRange`
+reference allocation. -/
 @[expose]
 def dotProduct [Mul R] [Add R] [OfNat R 0] (u v : Vector R n) : R :=
   (List.finRange n).foldl (fun acc i => acc + u[i] * v[i]) 0
