@@ -249,11 +249,83 @@ input[type='search']:focus {
   font-size: 1.1rem;
   font-weight: 500;
 }
+
+/* ===== Docstring blocks: distinguish declaration kinds ===== */
+/* Verso renders each 'pull the signature and docstring from the code' block as
+   a .namedocs box with a .label pill naming the kind ('def', 'theorem',
+   'structure', 'type class'). CSS cannot select on that text, so Theme.js tags
+   each box with a namedocs--<kind> class; the rules below colour the accent
+   stripe and the label pill from that class. */
+
+.namedocs--def {
+  border-left: 4px solid #40916c;
+  background: #f6faf7;
+}
+.namedocs--def > .label {
+  background: #2d6a4f;
+  border-color: #2d6a4f;
+  color: #fff;
+}
+
+.namedocs--theorem {
+  border-left: 4px solid #e76f51;
+  background: #fef7f2;
+}
+.namedocs--theorem > .label {
+  background: #c05630;
+  border-color: #c05630;
+  color: #fff;
+}
+
+.namedocs--structure {
+  border-left: 4px solid #74b49b;
+  background: #f7faf6;
+}
+.namedocs--structure > .label {
+  background: #74b49b;
+  border-color: #74b49b;
+  color: #fff;
+}
+
+.namedocs--type-class {
+  border-left: 4px solid #b08cc0;
+  background: #faf8fc;
+}
+.namedocs--type-class > .label {
+  background: #8a6a9a;
+  border-color: #8a6a9a;
+  color: #fff;
+}
+"
+
+/-- Client-side script that tags each docstring box with a `namedocs--<kind>`
+class read from its `.label` pill (`def`, `theorem`, `structure`, `type class`),
+so the CSS above can colour defs and theorems differently. Pure CSS cannot do
+this because the kind lives only in the label's text. -/
+def js : String :=
+"(function () {
+  function tagKinds() {
+    document.querySelectorAll('.namedocs').forEach(function (box) {
+      var label = box.querySelector(':scope > .label');
+      if (!label) return;
+      var kind = label.textContent.trim().toLowerCase().split(' ').join('-');
+      if (kind) box.classList.add('namedocs--' + kind);
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tagKinds);
+  } else {
+    tagKinds();
+  }
+})();
 "
 
 open Verso.Output in
-/-- The theme as a `<style>` element for `config.extraHead`. `escape := false`
-keeps CSS combinators like `>` and `:has(...)` intact. -/
-def head : Html := .tag "style" #[] (.text false css)
+/-- The theme's `<head>` contributions for `config.extraHead`: the stylesheet
+plus the kind-tagging script. `escape := false` keeps CSS combinators like `>`
+and `:has(...)` (and the script's `<`-free source) intact. -/
+def head : Array Html :=
+  #[.tag "style" #[] (.text false css),
+    .tag "script" #[] (.text false js)]
 
 end HexManual.Theme

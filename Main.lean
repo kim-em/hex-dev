@@ -20,9 +20,10 @@ def config : RenderConfig where
   emitHtmlSingle := .no
   emitHtmlMulti := .immediately
   htmlDepth := 2
-  -- Site-wide green/orange theme, injected as a `<style>` in every page's
-  -- `<head>` (see `HexManual/Theme.lean`).
-  extraHead := #[HexManual.Theme.head]
+  -- Site-wide green/orange theme (a `<style>` plus a small kind-tagging
+  -- `<script>`), injected into every page's `<head>` (see
+  -- `HexManual/Theme.lean`).
+  extraHead := HexManual.Theme.head
   -- Bundle the committed comparator figures into the site root (served at
   -- `<pages>/figures/…`); the HexLLL performance chapter embeds them. A
   -- directory copy so Verso's `copyRecursively` creates the `figures/` dir
