@@ -567,7 +567,7 @@ def pascal_to_spec_path(name: str) -> str:
     i = 0
     while i < len(tail):
         matched = None
-        for token in ("GF2", "GFq", "LLL", "Fp", "CRT", "Mathlib"):
+        for token in ("GF2", "GFq", "LLL", "Fp", "CRT", "RCF", "Mathlib"):
             if tail.startswith(token, i):
                 matched = token
                 break
@@ -586,6 +586,7 @@ def pascal_to_spec_path(name: str) -> str:
         "LLL": "lll",
         "Fp": "fp",
         "CRT": "crt",
+        "RCF": "rcf",
         "Mathlib": "mathlib",
         "Z": "z",
     }

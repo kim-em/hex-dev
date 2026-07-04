@@ -12,6 +12,8 @@
 - **hex-gf2**: packed bitwise polynomials over `F_2` (XOR + CLMUL), `GF(2^n)` elements
 - **hex-poly-z**: polynomials over `Z`, content/primitive part, Mignotte bound
 - **hex-roots**: certified complex root isolation for `Z[x]` via dyadic squares, Pellet tests, and speculative Newton iteration
+- **hex-real-roots**: certified real root isolation for `Z[x]`: Sturm-count witnesses, a Descartes bisection search with a proven-complete Sturm fallback
+- **hex-rcf**: the `rcf` tactic, a complete decision procedure for univariate real-closed-field sentences (Boolean combinations of polynomial inequalities under one `∀`/`∃` over `ℝ`); `mathlib: true`, soundness theorem in the same library
 - **hex-resultant**: polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - **hex-number-field**: `QAdjoin p x` (an element of `ℚ(α)`, indexed by a complex root of `p`) and the canonical `AlgebraicNumber` (an arbitrary algebraic number in `ℂ`)
 - **hex-berlekamp**: Berlekamp factoring and Rabin irreducibility test over `F_p`
@@ -36,6 +38,7 @@ with Mathlib's):
 - **hex-gram-schmidt-mathlib**: `GramSchmidt.Int.basis` = Mathlib's `gramSchmidt`
 - **hex-poly-z-mathlib**: `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
 - **hex-roots-mathlib**: Pellet's test on circles (built from `circleIntegral`), the Mahler separation bound, soundness of refinement and `isolate`
+- **hex-real-roots-mathlib**: Sturm's theorem (counting form over `Polynomial ℝ`), chain correspondence, soundness and completeness of `isolate?`
 - **hex-resultant-mathlib**: "resultant zero iff common root" (scope-limited; equality with `Polynomial.resultant` deferred)
 - **hex-number-field-mathlib**: `QAdjoin p x ≃+* AdjoinRoot pℚ`, canonicity of `AlgebraicNumber`, arithmetic correctness
 - **hex-berlekamp-mathlib**: `Decidable (Irreducible f)` for `Polynomial (ZMod p)`
@@ -61,6 +64,8 @@ Each library with its immediate dependencies:
 - **hex-poly-fp**: hex-poly, hex-mod-arith
 - **hex-poly-z**: hex-poly
 - **hex-roots**: hex-poly-z
+- **hex-real-roots**: hex-poly-z
+- **hex-rcf**: hex-real-roots, hex-real-roots-mathlib, hex-poly-z, hex-poly-z-mathlib (mathlib: true)
 - **hex-resultant**: hex-poly
 - **hex-number-field**: hex-poly-z, hex-roots, hex-resultant, hex-berlekamp-zassenhaus, hex-matrix, hex-row-reduce
 - **hex-berlekamp**: hex-poly-fp, hex-matrix, hex-gfq-ring
@@ -78,6 +83,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-poly-mathlib**: hex-poly
 - **hex-poly-z-mathlib**: hex-poly-z, hex-poly-mathlib
 - **hex-roots-mathlib**: hex-roots, hex-poly-z-mathlib
+- **hex-real-roots-mathlib**: hex-real-roots, hex-poly-z-mathlib
 - **hex-resultant-mathlib**: hex-resultant, hex-poly-mathlib
 - **hex-number-field-mathlib**: hex-number-field, hex-resultant-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-roots-mathlib, hex-poly-z-mathlib
 - **hex-matrix-mathlib**: hex-matrix
@@ -144,8 +150,8 @@ Libraries marked **(released)** are published as standalone
 repositories; see
 [PLAN/Releases.md §Published libraries](../../PLAN/Releases.md#published-libraries).
 SPEC files for libraries already under development live with the
-library source (`HexFoo/SPEC/hex-foo.md`); the six SPECs kept in this
-directory belong to planned libraries not yet started.
+library source (`HexFoo/SPEC/hex-foo.md`); the nine SPECs kept in
+this directory belong to planned libraries not yet started.
 
 - [hex-arith](../../HexArith/SPEC/hex-arith.md): extended GCD, Barrett/Montgomery reduction, binomial coefficients, Fermat's little theorem
 - [hex-matrix](https://github.com/leanprover/hex-matrix/blob/main/SPEC/hex-matrix.md) (released): dense matrices, arithmetic, elementary row/column operations, submatrix slicing, the Gram matrix
@@ -167,6 +173,9 @@ directory belong to planned libraries not yet started.
 - [hex-poly-z-mathlib](../../HexPolyZMathlib/SPEC/hex-poly-z-mathlib.md): Mignotte bound proof via Mathlib's Mahler measure
 - [hex-roots.md](hex-roots.md): certified complex root isolation for `Z[x]`
 - [hex-roots-mathlib.md](hex-roots-mathlib.md): Pellet's test on circles, the Mahler separation bound, soundness of refinement and `isolate`
+- [hex-real-roots.md](hex-real-roots.md): certified real root isolation for `Z[x]`, Sturm-count witnesses, Descartes search with Sturm fallback
+- [hex-real-roots-mathlib.md](hex-real-roots-mathlib.md): Sturm's theorem, chain correspondence, soundness and completeness of `isolate?`
+- [hex-rcf.md](hex-rcf.md): the `rcf` tactic for univariate real-closed-field sentences
 - [hex-resultant.md](hex-resultant.md): polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - [hex-resultant-mathlib.md](hex-resultant-mathlib.md): "resultant zero iff common root"; discriminant non-vanishing under squarefreeness
 - [hex-number-field.md](hex-number-field.md): `QAdjoin p x` and the canonical `AlgebraicNumber`
