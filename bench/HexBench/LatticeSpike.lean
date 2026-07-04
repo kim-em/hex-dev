@@ -155,7 +155,7 @@ def main (args : List String) : IO Unit := do
       let timeHybrid (label : String) (ref : IO.Ref ZPoly) : IO Unit := do
         let f ← ref.get
         let t0 ← IO.monoNanosNow
-        let (φ, trace) ← IO.lazyPure (fun _ => factorHybridTraced f)
+        let (φ, trace) ← IO.lazyPure (fun _ => factorTraced f)
         let t1 ← IO.monoNanosNow
         IO.println s!"{label}: {(t1 - t0).toFloat / 1.0e6} ms \
           (tier={trace.tier}, declined={trace.declined}, factors={φ.factors.size})"

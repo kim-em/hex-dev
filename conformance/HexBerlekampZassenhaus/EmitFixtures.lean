@@ -82,7 +82,7 @@ exhausting all nontrivial subset products takes — far past its
 level-aware budget (`levelAwareSubsetBudget 32 defaultSubsetBudget =
 206368`), so it provably declines and the hybrid falls through to the
 van Hoeij CLD lattice arm.  Both cases emit the
-*hybrid* trace (`factorHybridTraced`) rather than the classical one,
+*hybrid* trace (`factorTraced`) rather than the classical one,
 making the tier a merge requirement three ways: the emit helper itself
 errors unless the lattice tier answered, the committed-fixture
 byte-diff pins the exact trace (`tier = "lattice"`, `declined = true`,
@@ -402,7 +402,7 @@ private def cases_adversarial : List Case :=
 /-! ## Lattice-tier merge requirement
 
 See the module docstring §"Lattice-tier merge requirement".  The cases are
-emitted through the public `factor` path (`factorHybridTraced`, whose `.1`
+emitted through the public `factor` path (`factorTraced`, whose `.1`
 is `factor`) so the pinned trace catches dispatch regressions, not just
 lattice ones. -/
 
@@ -520,7 +520,7 @@ private def emitPinnedCase (c : PinnedCase) : IO Unit := do
   emitClassicalResult c.id f
 
 /-- Emit one lattice-sentinel fixture through the *hybrid* traced path: a
-single `factorHybridTraced` run supplies the `factor` result (its `.1` is the
+single `factorTraced` run supplies the `factor` result (its `.1` is the
 public `factor`) **and** the trace, so the committed trace pins the tier
 `factor` actually used.  The helper is sentinel-only: it errors out unless the
 classical tier declined and the lattice tier answered, which is the case's
@@ -535,7 +535,7 @@ values are pinned by the committed-fixture byte-diff in
 tier/decline and upper-bounds `subsetCandidates`. -/
 private def emitHybridTracedCase (c : PinnedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
-  let (φ, trace) := factorHybridTraced f
+  let (φ, trace) := factorTraced f
   unless trace.tier == "lattice" && trace.declined do
     throw <| IO.userError
       s!"emitHybridTracedCase {c.id}: expected the classical tier to decline and \

@@ -879,9 +879,9 @@ theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
 
 `factorLatticeFactorsWithBound_factor_irreducible` was a forward `sorry` in
 `IntReductionMod` (it cannot import the LLL machinery); it is filled here and,
-with its assembly `factorHybridFactors_factor_irreducible`, moved into this file
+with its assembly `factorFactors_factor_irreducible`, moved into this file
 where the `LatticeTier` core lemma is available.  `factor_irreducible_of_nonUnit`
-(FactorSoundness) consumes `factorHybridFactors_factor_irreducible`.
+(FactorSoundness) consumes `factorFactors_factor_irreducible`.
 -/
 
 /-- **Lattice-core reassembly completeness (#8520).**  When the lattice tier
@@ -988,15 +988,15 @@ theorem factorLatticeFactorsWithBound_factor_irreducible
               hcore_lattice
 
 /-- **Hybrid raw-factor irreducibility assembly.**  Every raw factor of
-`factorHybridFactors f` passing the recorded-factor filter is irreducible,
+`factorFactors f` passing the recorded-factor filter is irreducible,
 dispatched over the classical / lattice / trial tiers. -/
-theorem factorHybridFactors_factor_irreducible
+theorem factorFactors_factor_irreducible
     (f : Hex.ZPoly) (hf : f ≠ 0)
     {raw : Hex.ZPoly}
-    (hmem : raw ∈ (Hex.factorHybridFactors f).toList)
+    (hmem : raw ∈ (Hex.factorFactors f).toList)
     (hrec : Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
     Hex.ZPoly.Irreducible raw := by
-  rcases Hex.factorHybridFactors_mem_source f hmem with
+  rcases Hex.factorFactors_mem_source f hmem with
     ⟨cf, hcf, hraw⟩ | ⟨cf, hcf, hraw⟩ | htrial
   · exact factorClassicalFactorsWithBound_factor_irreducible f hf hcf hraw hrec
   · exact factorLatticeFactorsWithBound_factor_irreducible f hf hcf hraw hrec

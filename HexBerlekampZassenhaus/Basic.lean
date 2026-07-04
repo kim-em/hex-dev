@@ -10237,12 +10237,12 @@ a fallback was taken (the merge gate asserts this never happens unexpectedly).
 **Self-certifying.** Each non-backstop tier's `Factorization` is accepted only
 when it reconstructs the input (`Factorization.product φ = f`, decidable on
 `ZPoly`); on the (corpus-never) miss it falls through to the proven
-`factorTrial` backstop. This makes `Factorization.product (factorHybrid f) = f`
+`factorTrial` backstop. This makes `Factorization.product (factor f) = f`
 provable unconditionally without yet proving the classical recombination loop
 reconstructs (that, with per-factor irreducibility, is the separate re-proof
 step). The classical tier is correct on the whole conformance corpus, so the
 guard always passes there and the emitted factor/trace values are unchanged. -/
-def factorHybridTraced (f : ZPoly) : Factorization × FactorTrace :=
+def factorTraced (f : ZPoly) : Factorization × FactorTrace :=
   match factorClassicalTraced f with
   | (some φ, trace) =>
       if Factorization.product φ = f then (φ, trace)   -- classical answered, certified
@@ -10254,22 +10254,30 @@ def factorHybridTraced (f : ZPoly) : Factorization × FactorTrace :=
           else (factorTrial f, { trace with tier := "trial", declined := true })
       | none => (factorTrial f, { trace with tier := "trial" })  -- totality backstop
 
-/-- Cost-based hybrid factorisation: classical-first, lattice on decline, trial
-backstop. Total. Not yet the public `factor` (swap is a separate step). -/
-def factorHybrid (f : ZPoly) : Factorization :=
-  (factorHybridTraced f).1
+/--
+The public factorisation (SPEC *Hybrid dispatch*). There is no up-front tier
+selection: the classical tier runs first under a level-aware subset budget and
+its answer is accepted only when the packed product reconstructs `f`; on decline
+(budget exhaustion or no admissible prime) the CLD lattice tier runs at the
+lattice precision cap under the same self-certifying acceptance check; and any
+residual falls through to the `factorTrial` totality backstop, which is
+`choosePrimeData?`-independent and so makes `factor` unconditionally correct on
+every `ZPoly`. Total.
+-/
+def factor (f : ZPoly) : Factorization :=
+  (factorTraced f).1
 
 -- classical answers the corpus, including small/medium-r Swinnerton-Dyer / cyclotomic
 -- irreducibles, so no fallback is taken (the lattice/trial arms cover only the
 -- budget-exceeding tail and the no-prime case).
-#guard Factorization.product (factorHybrid (DensePoly.ofCoeffs #[6, 0, -5, 0, 1]))
+#guard Factorization.product (factor (DensePoly.ofCoeffs #[6, 0, -5, 0, 1]))
   = DensePoly.ofCoeffs #[6, 0, -5, 0, 1]                                      -- reducible
-#guard (factorHybridTraced (DensePoly.ofCoeffs #[6, 0, -5, 0, 1])).2.tier = "classical"
-#guard Factorization.product (factorHybrid (DensePoly.ofCoeffs #[1, 0, -10, 0, 1]))
+#guard (factorTraced (DensePoly.ofCoeffs #[6, 0, -5, 0, 1])).2.tier = "classical"
+#guard Factorization.product (factor (DensePoly.ofCoeffs #[1, 0, -10, 0, 1]))
   = DensePoly.ofCoeffs #[1, 0, -10, 0, 1]                                     -- SD2, irreducible
-#guard ((factorHybrid (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).factors.size) = 1
-#guard (factorHybridTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.tier = "classical"
-#guard (factorHybridTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.declined = false
+#guard ((factor (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).factors.size) = 1
+#guard (factorTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.tier = "classical"
+#guard (factorTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.declined = false
 
 /-- The classical traced tier's `Factorization` agrees with the raw classical
 factor array packed through `factorizationOfFactors f`. The traced variant only
@@ -10320,15 +10328,15 @@ theorem factorLattice_eq_map (f : ZPoly) :
         (factorizationOfFactors f) := rfl
 
 /-- Raw factor array assembled by the cost-based hybrid, the bridge counterpart
-of `factorHybridFactors`-consuming structural lemmas.
+of `factorFactors`-consuming structural lemmas.
 
 Each non-backstop tier (`factorClassicalFactorsWithBound` / lattice) is accepted
 only when its `factorizationOfFactors`-packed answer reconstructs `f` (the
 self-certifying guard mirrored here), and every fallback is the proven
 `factorTrial` backstop's raw array. The headline contract
-`factorHybrid f = factorizationOfFactors f (factorHybridFactors f)` is
-`factorHybrid_eq_factorizationOfFactors`. -/
-def factorHybridFactors (f : ZPoly) : Array ZPoly :=
+`factor f = factorizationOfFactors f (factorFactors f)` is
+`factor_eq_factorizationOfFactors`. -/
+def factorFactors (f : ZPoly) : Array ZPoly :=
   match factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) with
   | some cf =>
       if Factorization.product (factorizationOfFactors f cf) = f then cf
@@ -10341,17 +10349,17 @@ def factorHybridFactors (f : ZPoly) : Array ZPoly :=
       | none => factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
 
 /-- The cost-based hybrid factorisation is the `factorizationOfFactors`-packed
-form of its raw factor array `factorHybridFactors`. Every tier (classical /
+form of its raw factor array `factorFactors`. Every tier (classical /
 lattice / trial) assembles via `factorizationOfFactors f`, so this bridge lets
 the structural `factorizationOfFactors_entry_*` lemmas re-point every
 `factor`-level entry contract onto the hybrid. -/
-theorem factorHybrid_eq_factorizationOfFactors (f : ZPoly) :
-    factorHybrid f = factorizationOfFactors f (factorHybridFactors f) := by
+theorem factor_eq_factorizationOfFactors (f : ZPoly) :
+    factor f = factorizationOfFactors f (factorFactors f) := by
   have htrial : factorTrial f =
       factorizationOfFactors f
         (factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)) := by
     rw [factorTrial, factorTrialWithBound_eq_factorizationOfFactors]
-  unfold factorHybrid factorHybridTraced factorHybridFactors
+  unfold factor factorTraced factorFactors
   have hclassical :
       (factorClassicalTraced f).1 =
         (factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)).map
@@ -10388,14 +10396,14 @@ tier's certified output, or the `factorTrial` totality backstop. It
 exposes the branch source (mirroring `factor_entry_mem_raw_source` for the
 raw hybrid array) without leaking the private `factorizationOfFactors` guard, so
 the Mathlib-side irreducibility assembly can case-split over the branches. -/
-theorem factorHybridFactors_mem_source (f : ZPoly) {raw : ZPoly}
-    (hmem : raw ∈ (factorHybridFactors f).toList) :
+theorem factorFactors_mem_source (f : ZPoly) {raw : ZPoly}
+    (hmem : raw ∈ (factorFactors f).toList) :
     (∃ cf, factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
         some cf ∧ raw ∈ cf.toList) ∨
       (∃ cf, factorLatticeFactorsWithBound f (latticePrecisionCap f) =
         some cf ∧ raw ∈ cf.toList) ∨
       raw ∈ (factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)).toList := by
-  unfold factorHybridFactors at hmem
+  unfold factorFactors at hmem
   rcases Option.eq_none_or_eq_some
       (factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)) with hcf | ⟨cf, hcf⟩
   · simp only [hcf] at hmem
@@ -10472,27 +10480,6 @@ private def finitePrimeSearchNoneQuadratic : ZPoly :=
   match choosePrimeData? finitePrimeSearchNoneQuadratic with
   | none => false
   | some data => data.p == 29
-
-/--
-Factor with the hybrid combinator (SPEC *Hybrid dispatch*). There is no
-up-front tier selection: the classical tier runs first under a level-aware
-subset budget and its answer is accepted only when the packed product
-reconstructs `f`; on decline (budget exhaustion or no admissible prime) the
-CLD lattice tier runs at the lattice precision cap under the same
-self-certifying acceptance check; and any residual falls through to the
-`factorTrial` totality backstop, which is `choosePrimeData?`-independent
-and so makes `factor` unconditionally correct on every `ZPoly`.
--/
-def factor (f : ZPoly) : Factorization :=
-  factorHybrid f
-
-/-- The public factorisation is the `factorizationOfFactors`-packed form of the
-hybrid's raw factor array. This bridge re-points every `factor`-level entry
-contract onto the hybrid via the structural `factorizationOfFactors_entry_*`
-lemmas. -/
-theorem factor_eq_factorizationOfFactors (f : ZPoly) :
-    factor f = factorizationOfFactors f (factorHybridFactors f) :=
-  factorHybrid_eq_factorizationOfFactors f
 
 set_option maxHeartbeats 800000
 
@@ -10579,12 +10566,12 @@ theorem factor_scalar (f : ZPoly) :
       else
         ZPoly.content f := by
   rw [factor_eq_factorizationOfFactors]
-  exact factorizationOfFactors_scalar f (factorHybridFactors f)
+  exact factorizationOfFactors_scalar f (factorFactors f)
 
 @[simp, grind =] theorem factor_scalar_zero :
     (factor 0).scalar = 0 := by
   rw [factor_eq_factorizationOfFactors]
-  exact factorizationOfFactors_scalar_zero (factorHybridFactors 0)
+  exact factorizationOfFactors_scalar_zero (factorFactors 0)
 
 /-- The default factorization of `0` records no polynomial factors: the
 square-free core of `0` is the unit `1`, so every reassembled raw factor is
@@ -10598,18 +10585,18 @@ theorem factor_scalar_of_leadingCoeff_neg
     {f : ZPoly} (hf : f ≠ 0) (hneg : DensePoly.leadingCoeff f < 0) :
     (factor f).scalar = -ZPoly.content f := by
   rw [factor_eq_factorizationOfFactors]
-  exact factorizationOfFactors_scalar_of_leadingCoeff_neg (factorHybridFactors f) hf hneg
+  exact factorizationOfFactors_scalar_of_leadingCoeff_neg (factorFactors f) hf hneg
 
 theorem factor_scalar_of_leadingCoeff_pos
     {f : ZPoly} (hf : f ≠ 0) (hpos : 0 < DensePoly.leadingCoeff f) :
     (factor f).scalar = ZPoly.content f := by
   rw [factor_eq_factorizationOfFactors]
-  exact factorizationOfFactors_scalar_of_leadingCoeff_pos (factorHybridFactors f) hf hpos
+  exact factorizationOfFactors_scalar_of_leadingCoeff_pos (factorFactors f) hf hpos
 
 theorem factor_scalar_eq_zero_iff (f : ZPoly) :
     (factor f).scalar = 0 ↔ f = 0 := by
   rw [factor_eq_factorizationOfFactors]
-  exact factorizationOfFactors_scalar_eq_zero_iff f (factorHybridFactors f)
+  exact factorizationOfFactors_scalar_eq_zero_iff f (factorFactors f)
 
 /-- Every recorded entry of the default public factorization has positive
 multiplicity. -/
@@ -10618,7 +10605,7 @@ theorem factor_entry_multiplicity_pos
     (hmem : entry ∈ (factor f).factors.toList) :
     0 < entry.2 := by
   rw [factor_eq_factorizationOfFactors] at hmem
-  exact factorizationOfFactors_entry_multiplicity_pos f (factorHybridFactors f) entry hmem
+  exact factorizationOfFactors_entry_multiplicity_pos f (factorFactors f) entry hmem
 
 /-- Every recorded entry of the default public factorization is fixed by
 `normalizeFactorSign`. -/
@@ -10627,7 +10614,7 @@ theorem factor_entry_normalizeFactorSign_id
     (hmem : entry ∈ (factor f).factors.toList) :
     normalizeFactorSign entry.1 = entry.1 := by
   rw [factor_eq_factorizationOfFactors] at hmem
-  exact factorizationOfFactors_entry_normalizeFactorSign_id f (factorHybridFactors f) entry hmem
+  exact factorizationOfFactors_entry_normalizeFactorSign_id f (factorFactors f) entry hmem
 
 /-- Every recorded entry of the default public factorization has positive
 leading coefficient. -/
@@ -10636,7 +10623,7 @@ theorem factor_entry_leadingCoeff_pos
     (hmem : entry ∈ (factor f).factors.toList) :
     0 < DensePoly.leadingCoeff entry.1 := by
   rw [factor_eq_factorizationOfFactors] at hmem
-  exact factorizationOfFactors_entry_leadingCoeff_pos f (factorHybridFactors f) entry hmem
+  exact factorizationOfFactors_entry_leadingCoeff_pos f (factorFactors f) entry hmem
 
 /-- Every recorded entry of the default public factorization passes the
 `shouldRecordPolynomialFactor` filter. -/
@@ -10645,25 +10632,25 @@ theorem factor_entry_shouldRecord
     (hmem : entry ∈ (factor f).factors.toList) :
     shouldRecordPolynomialFactor entry.1 = true := by
   rw [factor_eq_factorizationOfFactors] at hmem
-  have hmem' : entry ∈ (collectFactorMultiplicities (factorHybridFactors f)).toList := by
+  have hmem' : entry ∈ (collectFactorMultiplicities (factorFactors f)).toList := by
     simpa only [factorizationOfFactors] using hmem
-  exact collectFactorMultiplicities_entry_shouldRecord (factorHybridFactors f) entry hmem'
+  exact collectFactorMultiplicities_entry_shouldRecord (factorFactors f) entry hmem'
 
 /-- Any recorded entry of the default public factorization comes from the
-hybrid's raw factor array `factorHybridFactors`, up to sign normalization. -/
+hybrid's raw factor array `factorFactors`, up to sign normalization. -/
 theorem factor_entry_mem_raw_source
     (f : ZPoly) (entry : ZPoly × Nat)
     (hmem : entry ∈ (factor f).factors.toList) :
-    ∃ raw ∈ (factorHybridFactors f).toList, entry.1 = normalizeFactorSign raw := by
+    ∃ raw ∈ (factorFactors f).toList, entry.1 = normalizeFactorSign raw := by
   rw [factor_eq_factorizationOfFactors] at hmem
-  exact factorizationOfFactors_entry_mem_normalized_raw f (factorHybridFactors f) entry hmem
+  exact factorizationOfFactors_entry_mem_normalized_raw f (factorFactors f) entry hmem
 
 /-- Every recorded entry of the default public factorization is primitive once
 every raw factor in the hybrid's raw factor array is primitive. -/
 theorem factor_entry_primitive_of_chosen_raw_primitive
     {f : ZPoly} {entry : ZPoly × Nat}
     (hmem : entry ∈ (factor f).factors.toList)
-    (h_raw : ∀ raw ∈ (factorHybridFactors f).toList, ZPoly.Primitive raw) :
+    (h_raw : ∀ raw ∈ (factorFactors f).toList, ZPoly.Primitive raw) :
     ZPoly.Primitive entry.1 := by
   obtain ⟨raw, hraw_mem, hentry_eq⟩ := factor_entry_mem_raw_source f entry hmem
   rw [hentry_eq]
@@ -10673,7 +10660,7 @@ theorem factor_entry_primitive_of_chosen_raw_primitive
 hybrid's raw factor array is primitive entrywise. -/
 theorem factor_entries_primitive
     (f : ZPoly)
-    (h_raw : ∀ raw ∈ (factorHybridFactors f).toList, ZPoly.Primitive raw) :
+    (h_raw : ∀ raw ∈ (factorFactors f).toList, ZPoly.Primitive raw) :
     ∀ entry ∈ (factor f).factors, ZPoly.Primitive entry.1 := by
   intro entry hentry
   exact factor_entry_primitive_of_chosen_raw_primitive
@@ -10685,7 +10672,7 @@ theorem factor_pairwise_first
     List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1)
       (factor f).factors.toList := by
   rw [factor_eq_factorizationOfFactors]
-  exact factorizationOfFactors_pairwise_first f (factorHybridFactors f)
+  exact factorizationOfFactors_pairwise_first f (factorFactors f)
 
 private def quadraticSquareRegression : ZPoly :=
   let q : ZPoly := DensePoly.ofCoeffs #[-1, 0, 1]
@@ -18933,16 +18920,15 @@ theorem factorTrial_product (f : ZPoly) :
     Factorization.product (factorTrial f) = f := by
   exact factorTrialWithBound_product f (ZPoly.defaultFactorCoeffBound f)
 
-/-- Product preservation for the cost-based hybrid. Holds unconditionally: each
-non-backstop tier's result is accepted only when it reconstructs `f` (the
-self-certifying guard in `factorHybridTraced`), and every fallback is the proven
-`factorTrial` backstop. This is the headline contract the public `factor`
-swap inherits, established without proving the classical recombination loop
-reconstructs (that, with per-factor irreducibility, is the still-blocked re-proof
-capstone #8384). -/
-theorem factorHybrid_product (f : ZPoly) :
-    Factorization.product (factorHybrid f) = f := by
-  unfold factorHybrid factorHybridTraced
+/-- Product contract for the public total factorization entry point. Holds
+unconditionally: each non-backstop tier's result is accepted only when it
+reconstructs `f` (the self-certifying guard in `factorTraced`), and every
+fallback is the proven `factorTrial` backstop. Established without proving the
+classical recombination loop reconstructs (that, with per-factor irreducibility,
+is the still-blocked re-proof capstone #8384). -/
+theorem factor_product (f : ZPoly) :
+    Factorization.product (factor f) = f := by
+  unfold factor factorTraced
   rcases hcl : factorClassicalTraced f with ⟨cres, trace⟩
   cases cres with
   | some φ =>
@@ -18956,12 +18942,6 @@ theorem factorHybrid_product (f : ZPoly) :
           · simp [hp]
           · simp only [hp, if_false]; exact factorTrial_product f
       | none => exact factorTrial_product f
-
-/-- Product contract for the public total factorization entry point: the
-self-certifying hybrid always reconstructs its input. -/
-theorem factor_product (f : ZPoly) :
-    Factorization.product (factor f) = f :=
-  factorHybrid_product f
 
 /-- Every recorded entry of the default factorization of a nonzero `f` is
 primitive, with no raw-source hypothesis. The hybrid's `factorizationOfFactors`
@@ -18977,17 +18957,17 @@ theorem factor_entries_primitive_of_ne_zero
   have hfiltered_prod :
       DensePoly.C (signedContentScalar f) *
         Array.polyProduct
-          (filteredNormalizedFactors (factorHybridFactors f).toList).toArray = f := by
+          (filteredNormalizedFactors (factorFactors f).toList).toArray = f := by
     have hp := factor_product f
     rw [factor_eq_factorizationOfFactors, factorizationOfFactors_product] at hp
     exact hp
   have hprim :
       ZPoly.Primitive
         (Array.polyProduct
-          (filteredNormalizedFactors (factorHybridFactors f).toList).toArray) :=
+          (filteredNormalizedFactors (factorFactors f).toList).toArray) :=
     primitive_of_signedContentScalar_mul_eq f _ hf hfiltered_prod
   have hmem_filtered :
-      ∀ g ∈ (filteredNormalizedFactors (factorHybridFactors f).toList).toArray.toList,
+      ∀ g ∈ (filteredNormalizedFactors (factorFactors f).toList).toArray.toList,
         ZPoly.Primitive g :=
     polyProduct_mem_primitive_of_primitive _ hprim
   -- The entry lies in the filtered list (it equals a sign-normalized raw factor
@@ -18997,7 +18977,7 @@ theorem factor_entries_primitive_of_ne_zero
     have := factor_entry_shouldRecord f entry hmem
     rwa [hentry_eq] at this
   have hentry_in :
-      entry.1 ∈ (filteredNormalizedFactors (factorHybridFactors f).toList).toArray.toList := by
+      entry.1 ∈ (filteredNormalizedFactors (factorFactors f).toList).toArray.toList := by
     rw [List.toList_toArray, hentry_eq]
     unfold filteredNormalizedFactors
     rw [List.mem_filterMap]
