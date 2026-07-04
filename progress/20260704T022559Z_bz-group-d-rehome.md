@@ -32,22 +32,44 @@ classical -> lattice -> trial via `factorClassicalFactorsWithBound` /
 Matches the live re-homing in issues #8369 (D1 -> factorLattice totality) and
 #8370 (D2 -> hybrid backstop-unreachability), which stay open.
 
+Also reconciled the Groups A/B/C correctness narrative and the Historical
+note with the current hybrid (second commit):
+
+- Historical note (was lines 40-46): it described the pre-hybrid impl as
+  "current" (lattice-first precision-cap dispatch named factorFast /
+  factorSlowModular). Rewritten as an Implementation note: `factor =
+  factorHybrid` (classical-first / lattice-on-decline / trial backstop),
+  with factorFast/factorSlowModular noted as the surviving proof-facing
+  defs behind Group A/B.
+- Naming note (Proof obligations preamble): corrected the false equations
+  "`factorSlow` is `factorClassical`" and "`factorFast` is `factorLattice`".
+  Confirmed in code they are distinct defs: `factorFast` (Basic.lean:10488)
+  is the CLD fast core without the cert arm; `factorLattice` (10727) adds
+  the #8395 all-ones certifying arm; `factorClassical` (9811) is the
+  budgeted size-ordered tier, distinct from the exhaustive `factorSlowModular`
+  (9760). Re-stated with abstract `factorSlow`/`factorFast` names mapped to
+  the concrete tier family.
+- C1 sketch: was `factor = (factorFastWithBound).getD (factorSlowWithBound)`;
+  now `factor = factorHybrid` three-branch case analysis, matching the
+  bridge headline `factor_headline` (FactorSoundness.lean:205) assembled via
+  `factorHybridFactors_factor_irreducible`.
+- Precision-schedule termination bullet + cap rationale: `factorFast`/
+  `factorSlow` two-path fallback -> CLD tier / `factorSlowTrial` backstop;
+  HO-4 -> D1.
+
 ## Current frontier
 
-Group D is now internally consistent and consistent with the timeless
-design section.
+The BZ SPEC's factor-path vocabulary (dispatch, tiers, Groups A-D, naming
+note, Historical note) is now uniformly the cost-based hybrid.
 
 ## Next step
 
-Separate follow-up (NOT in this PR, deliberately out of scope): the Groups
-A/B/C conditional-correctness narrative and the "Historical note" (lines
-41-46, 551-573, 597-628) still use `factorFast`/`factorSlowModular` as the
-implementation-naming convention. The code has since split `factorFast`
-(proof-facing standalone tier) from `factorLattice` (production), so
-line 573 "`factorFast` is the lattice tier `factorLattice`" and the
-Historical note's "dispatches by a precision cap" are themselves drifting.
-Reconciling them touches the correctness-side SPEC and needs the exact
-factorFast-vs-factorLattice relation confirmed in code first.
+Out of scope, flagged for a possible follow-up: (1) the code docstring on
+`factor` (Basic.lean:11144) still describes the old three-tier
+`factorFast -> factorSlowModular -> factorSlowTrial` combinator; (2) the
+SPEC's "Cost-based hybrid dispatch" pseudocode (~351-364) shows a
+`dispatchTier` cost estimate, whereas the impl is classical-first-then-
+lattice (no cost estimate). Both are separate logical units.
 
 ## Blockers
 
