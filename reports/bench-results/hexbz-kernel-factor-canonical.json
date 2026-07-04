@@ -1,0 +1,770 @@
+{
+  "env": {
+    "lean_toolchain": "leanprover/lean4:v4.32.0-rc1",
+    "os": "darwin",
+    "arch": "arm64",
+    "cpu_cores": 24,
+    "hostname": "carica",
+    "exe_name": "kernel_factor_sweep",
+    "git_commit": "09a3f1939cee3246dfa13ebb42c9038504b68021",
+    "git_dirty": true,
+    "timestamp_unix_ms": 1783071394124,
+    "timestamp_iso": "2026-07-03T09:36:34Z"
+  },
+  "config": {
+    "mode": "kernel-factor",
+    "proposition": "Hex.factor f = <compiled Factorization> by decide +kernel",
+    "timeout_seconds": 20.0,
+    "max_rec_depth": 100000,
+    "max_heartbeats": 0,
+    "import_baseline_nanos": 406591459,
+    "corpus_path": "bench/corpus/hexbz-factor-corpus.jsonl",
+    "corpus_sha256": "02155334449b001b6cf86a3859e7f4fae5a812a2c6810935bebb73163d76e830"
+  },
+  "results": [
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_T3",
+      "degree": 3,
+      "status": "ok",
+      "total_nanos": 541111583,
+      "kernel_nanos": 134520124
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_U3",
+      "degree": 3,
+      "status": "ok",
+      "total_nanos": 498601542,
+      "kernel_nanos": 92010083
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_T4",
+      "degree": 4,
+      "status": "ok",
+      "total_nanos": 587366875,
+      "kernel_nanos": 180775416
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_U4",
+      "degree": 4,
+      "status": "ok",
+      "total_nanos": 1163818416,
+      "kernel_nanos": 757226957
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_T5",
+      "degree": 5,
+      "status": "ok",
+      "total_nanos": 611298958,
+      "kernel_nanos": 204707499
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_U5",
+      "degree": 5,
+      "status": "ok",
+      "total_nanos": 1149460375,
+      "kernel_nanos": 742868916
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_T6",
+      "degree": 6,
+      "status": "ok",
+      "total_nanos": 2543822333,
+      "kernel_nanos": 2137230874
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_U6",
+      "degree": 6,
+      "status": "ok",
+      "total_nanos": 2717745583,
+      "kernel_nanos": 2311154124
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_T7",
+      "degree": 7,
+      "status": "ok",
+      "total_nanos": 2779963959,
+      "kernel_nanos": 2373372500
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_U7",
+      "degree": 7,
+      "status": "ok",
+      "total_nanos": 1522899916,
+      "kernel_nanos": 1116308457
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_T8",
+      "degree": 8,
+      "status": "ok",
+      "total_nanos": 1199160708,
+      "kernel_nanos": 792569249
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_U8",
+      "degree": 8,
+      "status": "ok",
+      "total_nanos": 8982624625,
+      "kernel_nanos": 8576033166
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_T9",
+      "degree": 9,
+      "status": "ok",
+      "total_nanos": 3347266750,
+      "kernel_nanos": 2940675291
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_U9",
+      "degree": 9,
+      "status": "ok",
+      "total_nanos": 4833953125,
+      "kernel_nanos": 4427361666
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_T10",
+      "degree": 10,
+      "status": "ok",
+      "total_nanos": 11751992875,
+      "kernel_nanos": 11345401416
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_U10",
+      "degree": 10,
+      "status": "ok",
+      "total_nanos": 11419162667,
+      "kernel_nanos": 11012571208
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_T12",
+      "degree": 12,
+      "status": "ok",
+      "total_nanos": 10293334167,
+      "kernel_nanos": 9886742708
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_U12",
+      "degree": 12,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_T15",
+      "degree": 15,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "chebyshev",
+      "name": "chebyshev_U15",
+      "degree": 15,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "cyclotomic",
+      "name": "cyclo_phi5",
+      "degree": 4,
+      "status": "ok",
+      "total_nanos": 632984375,
+      "kernel_nanos": 226392916
+    },
+    {
+      "family": "cyclotomic",
+      "name": "cyclo_phi7",
+      "degree": 6,
+      "status": "ok",
+      "total_nanos": 813671750,
+      "kernel_nanos": 407080291
+    },
+    {
+      "family": "cyclotomic",
+      "name": "cyclo_phi15",
+      "degree": 8,
+      "status": "ok",
+      "total_nanos": 2867328125,
+      "kernel_nanos": 2460736666
+    },
+    {
+      "family": "cyclotomic",
+      "name": "cyclo_phi11",
+      "degree": 10,
+      "status": "ok",
+      "total_nanos": 5535020208,
+      "kernel_nanos": 5128428749
+    },
+    {
+      "family": "cyclotomic",
+      "name": "cyclo_phi13",
+      "degree": 12,
+      "status": "ok",
+      "total_nanos": 16952438167,
+      "kernel_nanos": 16545846708
+    },
+    {
+      "family": "cyclotomic",
+      "name": "cyclo_phi17",
+      "degree": 16,
+      "status": "ok",
+      "total_nanos": 3641647833,
+      "kernel_nanos": 3235056374
+    },
+    {
+      "family": "cyclotomic",
+      "name": "cyclo_phi19",
+      "degree": 18,
+      "status": "ok",
+      "total_nanos": 5346505125,
+      "kernel_nanos": 4939913666
+    },
+    {
+      "family": "cyclotomic",
+      "name": "cyclo_phi25",
+      "degree": 20,
+      "status": "ok",
+      "total_nanos": 6237470917,
+      "kernel_nanos": 5830879458
+    },
+    {
+      "family": "cyclotomic",
+      "name": "cyclo_phi23",
+      "degree": 22,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "cyclotomic",
+      "name": "cyclo_phi35",
+      "degree": 24,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "cyclotomic",
+      "name": "cyclo_phi29",
+      "degree": 28,
+      "status": "ok",
+      "total_nanos": 14270435792,
+      "kernel_nanos": 13863844333
+    },
+    {
+      "family": "cyclotomic",
+      "name": "cyclo_phi64",
+      "degree": 32,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "cyclotomic",
+      "name": "cyclo_phi37",
+      "degree": 36,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "cyclotomic",
+      "name": "cyclo_phi41",
+      "degree": 40,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "cyclotomic-products",
+      "name": "xpow6_minus1",
+      "degree": 6,
+      "status": "ok",
+      "total_nanos": 6219993250,
+      "kernel_nanos": 5813401791
+    },
+    {
+      "family": "cyclotomic-products",
+      "name": "xpow12_minus1",
+      "degree": 12,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "cyclotomic-products",
+      "name": "xpow15_minus1",
+      "degree": 15,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "cyclotomic-products",
+      "name": "cyclo_phi12_x_phi13",
+      "degree": 16,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "hoeij-zimmermann",
+      "name": "hoeij_S7",
+      "degree": 128,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "hoeij-zimmermann",
+      "name": "hoeij_M12_f132",
+      "degree": 132,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "hoeij-zimmermann",
+      "name": "hoeij_F190",
+      "degree": 190,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "laguerre",
+      "name": "laguerre_L3",
+      "degree": 3,
+      "status": "ok",
+      "total_nanos": 562708166,
+      "kernel_nanos": 156116707
+    },
+    {
+      "family": "laguerre",
+      "name": "laguerre_L4",
+      "degree": 4,
+      "status": "ok",
+      "total_nanos": 1155577917,
+      "kernel_nanos": 748986458
+    },
+    {
+      "family": "laguerre",
+      "name": "laguerre_L5",
+      "degree": 5,
+      "status": "ok",
+      "total_nanos": 2099737000,
+      "kernel_nanos": 1693145541
+    },
+    {
+      "family": "laguerre",
+      "name": "laguerre_L6",
+      "degree": 6,
+      "status": "ok",
+      "total_nanos": 2806309916,
+      "kernel_nanos": 2399718457
+    },
+    {
+      "family": "laguerre",
+      "name": "laguerre_L7",
+      "degree": 7,
+      "status": "ok",
+      "total_nanos": 5791027875,
+      "kernel_nanos": 5384436416
+    },
+    {
+      "family": "laguerre",
+      "name": "laguerre_L8",
+      "degree": 8,
+      "status": "ok",
+      "total_nanos": 5576338125,
+      "kernel_nanos": 5169746666
+    },
+    {
+      "family": "laguerre",
+      "name": "laguerre_L9",
+      "degree": 9,
+      "status": "ok",
+      "total_nanos": 3457990292,
+      "kernel_nanos": 3051398833
+    },
+    {
+      "family": "laguerre",
+      "name": "laguerre_L10",
+      "degree": 10,
+      "status": "ok",
+      "total_nanos": 13103917166,
+      "kernel_nanos": 12697325707
+    },
+    {
+      "family": "laguerre",
+      "name": "laguerre_L11",
+      "degree": 11,
+      "status": "ok",
+      "total_nanos": 6917944834,
+      "kernel_nanos": 6511353375
+    },
+    {
+      "family": "laguerre",
+      "name": "laguerre_L12",
+      "degree": 12,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "laguerre",
+      "name": "laguerre_L13",
+      "degree": 13,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "laguerre",
+      "name": "laguerre_L14",
+      "degree": 14,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "legendre",
+      "name": "legendre_P3",
+      "degree": 3,
+      "status": "ok",
+      "total_nanos": 623541625,
+      "kernel_nanos": 216950166
+    },
+    {
+      "family": "legendre",
+      "name": "legendre_P4",
+      "degree": 4,
+      "status": "ok",
+      "total_nanos": 648189000,
+      "kernel_nanos": 241597541
+    },
+    {
+      "family": "legendre",
+      "name": "legendre_P5",
+      "degree": 5,
+      "status": "ok",
+      "total_nanos": 1618588417,
+      "kernel_nanos": 1211996958
+    },
+    {
+      "family": "legendre",
+      "name": "legendre_P6",
+      "degree": 6,
+      "status": "ok",
+      "total_nanos": 2800972666,
+      "kernel_nanos": 2394381207
+    },
+    {
+      "family": "legendre",
+      "name": "legendre_P7",
+      "degree": 7,
+      "status": "ok",
+      "total_nanos": 1936453708,
+      "kernel_nanos": 1529862249
+    },
+    {
+      "family": "legendre",
+      "name": "legendre_P8",
+      "degree": 8,
+      "status": "ok",
+      "total_nanos": 9174155875,
+      "kernel_nanos": 8767564416
+    },
+    {
+      "family": "legendre",
+      "name": "legendre_P9",
+      "degree": 9,
+      "status": "ok",
+      "total_nanos": 9846179667,
+      "kernel_nanos": 9439588208
+    },
+    {
+      "family": "legendre",
+      "name": "legendre_P10",
+      "degree": 10,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "legendre",
+      "name": "legendre_P12",
+      "degree": 12,
+      "status": "ok",
+      "total_nanos": 16849518125,
+      "kernel_nanos": 16442926666
+    },
+    {
+      "family": "legendre",
+      "name": "legendre_P14",
+      "degree": 14,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "legendre",
+      "name": "legendre_P16",
+      "degree": 16,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "legendre",
+      "name": "legendre_P18",
+      "degree": 18,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "random-products",
+      "name": "randprod_26",
+      "degree": 6,
+      "status": "ok",
+      "total_nanos": 3962278833,
+      "kernel_nanos": 3555687374
+    },
+    {
+      "family": "random-products",
+      "name": "randprod_22",
+      "degree": 9,
+      "status": "ok",
+      "total_nanos": 11028862166,
+      "kernel_nanos": 10622270707
+    },
+    {
+      "family": "random-products",
+      "name": "randprod_23",
+      "degree": 9,
+      "status": "ok",
+      "total_nanos": 14049854542,
+      "kernel_nanos": 13643263083
+    },
+    {
+      "family": "random-products",
+      "name": "randprod_25",
+      "degree": 9,
+      "status": "ok",
+      "total_nanos": 11401999458,
+      "kernel_nanos": 10995407999
+    },
+    {
+      "family": "random-products",
+      "name": "randprod_07",
+      "degree": 10,
+      "status": "ok",
+      "total_nanos": 11247003125,
+      "kernel_nanos": 10840411666
+    },
+    {
+      "family": "random-products",
+      "name": "randprod_13",
+      "degree": 11,
+      "status": "ok",
+      "total_nanos": 17018260709,
+      "kernel_nanos": 16611669250
+    },
+    {
+      "family": "random-products",
+      "name": "randprod_09",
+      "degree": 12,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "random-products",
+      "name": "randprod_14",
+      "degree": 12,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "random-products",
+      "name": "randprod_04",
+      "degree": 13,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "sd-products",
+      "name": "sd2_x_phi12",
+      "degree": 8,
+      "status": "ok",
+      "total_nanos": 3859404291,
+      "kernel_nanos": 3452812832
+    },
+    {
+      "family": "sd-products",
+      "name": "sd2_x_sd2shift1",
+      "degree": 8,
+      "status": "ok",
+      "total_nanos": 5188801625,
+      "kernel_nanos": 4782210166
+    },
+    {
+      "family": "sd-products",
+      "name": "sd3_x_phi15",
+      "degree": 16,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "sd-products",
+      "name": "sd3_x_phi24",
+      "degree": 16,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "sd-products",
+      "name": "sd3_x_sd3shift1",
+      "degree": 16,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "swinnerton-dyer",
+      "name": "sd2",
+      "degree": 4,
+      "status": "ok",
+      "total_nanos": 818808625,
+      "kernel_nanos": 412217166
+    },
+    {
+      "family": "swinnerton-dyer",
+      "name": "sd2_shift1",
+      "degree": 4,
+      "status": "ok",
+      "total_nanos": 770685791,
+      "kernel_nanos": 364094332
+    },
+    {
+      "family": "swinnerton-dyer",
+      "name": "sd3",
+      "degree": 8,
+      "status": "ok",
+      "total_nanos": 6418997042,
+      "kernel_nanos": 6012405583
+    },
+    {
+      "family": "swinnerton-dyer",
+      "name": "sd3_shift1",
+      "degree": 8,
+      "status": "ok",
+      "total_nanos": 6424341666,
+      "kernel_nanos": 6017750207
+    },
+    {
+      "family": "swinnerton-dyer",
+      "name": "sd3_shift2",
+      "degree": 8,
+      "status": "ok",
+      "total_nanos": 6405292375,
+      "kernel_nanos": 5998700916
+    },
+    {
+      "family": "swinnerton-dyer",
+      "name": "sd4",
+      "degree": 16,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "swinnerton-dyer",
+      "name": "sd4_shift1",
+      "degree": 16,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "swinnerton-dyer",
+      "name": "sd4_shift3",
+      "degree": 16,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "wilkinson",
+      "name": "wilkinson_4",
+      "degree": 4,
+      "status": "ok",
+      "total_nanos": 1668334500,
+      "kernel_nanos": 1261743041
+    },
+    {
+      "family": "wilkinson",
+      "name": "wilkinson_6",
+      "degree": 6,
+      "status": "ok",
+      "total_nanos": 4072581917,
+      "kernel_nanos": 3665990458
+    },
+    {
+      "family": "wilkinson",
+      "name": "wilkinson_8",
+      "degree": 8,
+      "status": "ok",
+      "total_nanos": 9612708458,
+      "kernel_nanos": 9206116999
+    },
+    {
+      "family": "wilkinson",
+      "name": "wilkinson_10",
+      "degree": 10,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "wilkinson",
+      "name": "wilkinson_12",
+      "degree": 12,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    },
+    {
+      "family": "wilkinson",
+      "name": "wilkinson_14",
+      "degree": 14,
+      "status": "timeout",
+      "total_nanos": null,
+      "kernel_nanos": null
+    }
+  ]
+}
