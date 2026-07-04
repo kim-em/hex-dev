@@ -63,28 +63,6 @@ and, where there is one, its correspondence with Mathlib.
 
 {include 0 HexManual.Chapters.HexLLL}
 
-{include 0 HexManual.Chapters.HexArith}
-
-{include 0 HexManual.Chapters.HexModArith}
-
-{include 0 HexManual.Chapters.HexPoly}
-
-{include 0 HexManual.Chapters.HexPolyZ}
-
-{include 0 HexManual.Chapters.HexPolyFp}
-
-{include 0 HexManual.Chapters.HexGF2}
-
-{include 0 HexManual.Chapters.HexHensel}
-
-{include 0 HexManual.Chapters.HexGFqRing}
-
-{include 0 HexManual.Chapters.HexGFqField}
-
-{include 0 HexManual.Chapters.HexConway}
-
-{include 0 HexManual.Chapters.HexGFq}
-
 # Tutorials
 %%%
 tag := "tutorials"
@@ -96,5 +74,37 @@ already cares about and shows the libraries carrying a recognizable
 end-to-end workflow, with every code snippet checked as part of this
 build.
 
-{include 1 HexManual.Tutorials.Coppersmith}
+{include 2 HexManual.Tutorials.Coppersmith}
+
+# Draft sections for unreleased libraries
+%%%
+tag := "unreleased"
+%%%
+
+These libraries are still incubating in the
+[`hex-dev`](https://github.com/kim-em/hex-dev) monorepo and have not been
+split out for release yet, so their APIs may still change. They are grouped
+here to keep the reference chapters above focused on the released libraries.
+
+{include 2 HexManual.Chapters.HexArith}
+
+{include 2 HexManual.Chapters.HexModArith}
+
+{include 2 HexManual.Chapters.HexPoly}
+
+{include 2 HexManual.Chapters.HexPolyZ}
+
+{include 2 HexManual.Chapters.HexPolyFp}
+
+{include 2 HexManual.Chapters.HexGF2}
+
+{include 2 HexManual.Chapters.HexHensel}
+
+{include 2 HexManual.Chapters.HexGFqRing}
+
+{include 2 HexManual.Chapters.HexGFqField}
+
+{include 2 HexManual.Chapters.HexConway}
+
+{include 2 HexManual.Chapters.HexGFq}
 
