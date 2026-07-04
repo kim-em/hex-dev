@@ -46,7 +46,6 @@ FIGURES = ROOT / "reports" / "figures"
 STYLE = {
     "hex-factor": ("#1f77b4", "o", "hex (factor)"),
     "hex-lattice": ("#2ca02c", "s", "hex (lattice / van Hoeij CLD)"),
-    "hex-fast": ("#17becf", "D", "hex (fast)"),
     "hex-classical-nodecline": ("#d62728", "x", "hex (classical, no decline)"),
     "flint": ("#9467bd", "^", "FLINT"),
     "ntl": ("#8c564b", "v", "NTL"),
