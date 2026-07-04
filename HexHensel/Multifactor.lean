@@ -36,6 +36,7 @@ namespace ZPoly
 Extended gcd witnesses scaled so their Bezout combination is monic when the
 raw Euclidean gcd is a nonzero constant unit.
 -/
+@[expose]
 def normalizedXGCD
     (p : Nat) [ZMod64.Bounds p]
     (g h : ZPoly) : DensePoly.XGCDResult (ZMod64 p) :=

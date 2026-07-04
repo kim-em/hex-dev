@@ -155,6 +155,7 @@ private theorem sum_ite_diagonal_eq_range_succ (f g : Hex.FpPoly p) (n : Nat) :
 The executable finite-field polynomial representation is ring-equivalent to
 Mathlib polynomials over `ZMod p`.
 -/
+@[expose]
 def fpPolyEquiv : Hex.FpPoly p ≃+* Polynomial (ZMod p) where
   toFun := fpPolyToPolynomial
   invFun := polynomialToFpPoly
@@ -209,6 +210,7 @@ def fpPolyEquiv : Hex.FpPoly p ≃+* Polynomial (ZMod p) where
     exact HexModArithMathlib.ZMod64.toZMod_add _ _
 
 /-- Interpret an executable `FpPoly p` as a Mathlib polynomial over `ZMod p`. -/
+@[expose]
 def toMathlibPolynomial (f : Hex.FpPoly p) : Polynomial (ZMod p) :=
   fpPolyEquiv f
 

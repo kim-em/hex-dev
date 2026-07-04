@@ -612,6 +612,7 @@ Consumed by `quadraticMultifactorLiftInvariant_of_factorsModP`: the
 per-split `gcd = 1` lifts via `normalizedXGCD_liftToZ_bezout_congr_of_gcd_eq_one`
 into the Bezout half of `QuadraticLiftLoopInvariant`.
 -/
+@[expose]
 def QuadraticMultifactorCoprimeSplits
     (p : Nat) [ZMod64.Bounds p] : List (FpPoly p) → Prop
   | [] => True

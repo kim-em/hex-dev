@@ -4,8 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhausMathlib.Lattice
-import HexBerlekampZassenhausMathlib.SignatureClasses
+module
+
+public import HexBerlekampZassenhausMathlib.Lattice
+public import HexBerlekampZassenhausMathlib.SignatureClasses
+
+public section
+set_option backward.proofsInPublic true
+set_option backward.privateInPublic true
 
 /-!
 Executable class-count semantics for the BHKS equivalence-class indicators

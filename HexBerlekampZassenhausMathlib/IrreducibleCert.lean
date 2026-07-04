@@ -4,8 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhausMathlib.Basic
-import HexBerlekampZassenhausMathlib.CertReify
+module
+
+public meta import HexBerlekampZassenhausMathlib.CertReify
+public import HexBerlekampZassenhausMathlib.Basic
+public import HexBerlekampZassenhausMathlib.CertReify
+
+public section
+set_option backward.proofsInPublic true
+set_option backward.privateInPublic true
 
 /-!
 The `irreducible_cert` tactic: certifying irreducibility for integer
@@ -33,7 +40,7 @@ namespace HexBerlekampZassenhausMathlib.IrreducibleCert
 
 open Lean Meta
 
-private unsafe def evalZPolyUnsafe (e : Expr) :
+private meta unsafe def evalZPolyUnsafe (e : Expr) :
     MetaM (Except String Hex.ZPoly) :=
   try
     return .ok (← evalExpr Hex.ZPoly (mkConst ``Hex.ZPoly) e)
@@ -41,18 +48,18 @@ private unsafe def evalZPolyUnsafe (e : Expr) :
     return .error (← ex.toMessageData.toString)
 
 @[implemented_by evalZPolyUnsafe]
-private opaque evalZPolyCore (e : Expr) : MetaM (Except String Hex.ZPoly)
+private meta opaque evalZPolyCore (e : Expr) : MetaM (Except String Hex.ZPoly)
 
 /-- Evaluate a closed `Hex.ZPoly` expression to its runtime value at
 elaboration time (compiled/interpreted evaluation, not kernel reduction). -/
-def evalZPoly (e : Expr) : MetaM Hex.ZPoly := do
+meta def evalZPoly (e : Expr) : MetaM Hex.ZPoly := do
   match ← evalZPolyCore e with
   | .ok f => return f
   | .error msg =>
       throwError "irreducible_cert: failed to evaluate the polynomial\
           {indentExpr e}\n{msg}"
 
-private unsafe def evalCertificateUnsafe (e : Expr) :
+private meta unsafe def evalCertificateUnsafe (e : Expr) :
     MetaM (Except String Hex.ZPolyIrreducibilityCertificate) :=
   try
     return .ok (← evalExpr Hex.ZPolyIrreducibilityCertificate
@@ -61,12 +68,12 @@ private unsafe def evalCertificateUnsafe (e : Expr) :
     return .error (← ex.toMessageData.toString)
 
 @[implemented_by evalCertificateUnsafe]
-private opaque evalCertificateCore (e : Expr) :
+private meta opaque evalCertificateCore (e : Expr) :
     MetaM (Except String Hex.ZPolyIrreducibilityCertificate)
 
 /-- Evaluate a closed `Hex.ZPolyIrreducibilityCertificate` expression to its
 runtime value at elaboration time. Used by the reification round-trip tests. -/
-def evalCertificate (e : Expr) : MetaM Hex.ZPolyIrreducibilityCertificate := do
+meta def evalCertificate (e : Expr) : MetaM Hex.ZPolyIrreducibilityCertificate := do
   match ← evalCertificateCore e with
   | .ok cert => return cert
   | .error msg =>
@@ -77,7 +84,7 @@ def evalCertificate (e : Expr) : MetaM Hex.ZPolyIrreducibilityCertificate := do
 Match a goal of the form `Irreducible (HexPolyZMathlib.toPolynomial f)`
 (or the unfolded `HexPolyMathlib.toPolynomial` at `R = ℤ`) and return `f`.
 -/
-private def matchIrreducibleGoal (tgt : Expr) : MetaM (Option Expr) := do
+private meta def matchIrreducibleGoal (tgt : Expr) : MetaM (Option Expr) := do
   let tgt ← whnfR tgt
   let_expr Irreducible _M _inst arg := tgt | return none
   if arg.getAppFn.isConstOf ``HexPolyZMathlib.toPolynomial &&

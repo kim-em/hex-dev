@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhaus
-import Lean
+module
+
+public import HexBerlekampZassenhaus
+public import Lean
+
+public section
 
 /-!
 Elaboration-time reification of `Hex.ZPolyIrreducibilityCertificate` values as

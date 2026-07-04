@@ -4,9 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhausMathlib.Basic
-import HexBerlekampZassenhausMathlib.SignatureClasses
-import HexLLLMathlib.ShortVector
+module
+
+public import HexBerlekampZassenhausMathlib.Basic
+public import HexBerlekampZassenhausMathlib.SignatureClasses
+public import HexLLLMathlib.ShortVector
+
+public section
+set_option backward.proofsInPublic true
+set_option backward.privateInPublic true
 
 /-!
 BHKS lattice-side objects for the van Hoeij `W ⊆ L'` adequacy (#8519).
@@ -48,6 +54,7 @@ def projectedRowsIntMatrix (L : Hex.BhksProjectedRows) :
   fun i j => (L.projectedRows.getD i.val #[]).getD j.val 0
 
 /-- The projected rational rows of the executable BHKS cut as a Mathlib matrix. -/
+@[expose]
 def projectedRowsRatMatrix (L : Hex.BhksProjectedRows) :
     Matrix (Fin L.projectedRows.size) (Fin L.factorCount) ℚ :=
   fun i j => ((L.projectedRows.getD i.val #[]).getD j.val 0 : ℚ)
@@ -56,6 +63,7 @@ def projectedRowsRatMatrix (L : Hex.BhksProjectedRows) :
 The integer row span represented by the executable projected BHKS rows.  This
 is the proof-facing `L' <= Z^r`.
 -/
+@[expose]
 def projectedRowSpanInt (L : Hex.BhksProjectedRows) :
     Submodule ℤ (Fin L.factorCount → ℤ) :=
   Submodule.span ℤ (Set.range fun i : Fin L.projectedRows.size =>
@@ -65,16 +73,19 @@ def projectedRowSpanInt (L : Hex.BhksProjectedRows) :
 The rational row space represented by the same executable projected rows.  This
 is the row-space input used by the RREF equivalence-class stage.
 -/
+@[expose]
 def projectedRowSpaceRat (L : Hex.BhksProjectedRows) :
     Submodule ℚ (Fin L.factorCount → ℚ) :=
   Submodule.span ℚ (Set.range fun i : Fin L.projectedRows.size =>
     Matrix.row (projectedRowsRatMatrix L) i)
 
 /-- Cast an integer vector over the lifted-factor indices to a rational vector. -/
+@[expose]
 def intVectorToRat {r : Nat} (v : Fin r → ℤ) : Fin r → ℚ :=
   fun i => (v i : ℚ)
 
 /-- A `0/1` indicator vector for a support of lifted factor indices. -/
+@[expose]
 def indicatorVector {r : Nat} (S : Set (Fin r)) : Fin r → ℤ :=
   by
     classical
@@ -156,6 +167,7 @@ rather than the raw array size so it remains well-typed for abstract
 `BhksLatticeBasis` values; `TrueFactorLift.basis_eq` ties these together for
 the executable basis.
 -/
+@[expose]
 def supportProduct (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L) :
     Hex.ZPoly :=
   by
@@ -171,6 +183,7 @@ pre-indicator column-`j` entry of the true-factor CLD vector; the centering
 (`psiCut`) and indicator weighting are layered on top by the tight-column work
 (`#7651`).
 -/
+@[expose]
 def supportCldSum (L : Hex.BhksLatticeBasis) (S : LiftedFactorSupport L)
     (f : Hex.ZPoly) (p a : Nat) : Hex.ZPoly :=
   by
@@ -269,6 +282,7 @@ This holds definitionally for `Hex.bhksLatticeBasis` (see
 `bhksLatticeBasis_blockForm`) and is the only fact the canonical coordinate
 producers need about the basis.
 -/
+@[expose]
 def BhksBlockForm (L : Hex.BhksLatticeBasis) : Prop :=
   L.basis =
     Hex.Matrix.ofFn
@@ -372,12 +386,14 @@ theorem precision_eq
 
 end RecoveredLift
 
+@[expose]
 def supportEquivalent {r : Nat} (trueSupports : Set (Set (Fin r)))
     (j k : Fin r) : Prop :=
   ∀ S ∈ trueSupports, (j ∈ S ↔ k ∈ S)
 
 /-- Nat-indexed form of `supportEquivalent`, convenient for filtering
 `List.range r` while retaining proof irrelevance for the bounds. -/
+@[expose]
 def supportEquivalentAt {r : Nat} (trueSupports : Set (Set (Fin r)))
     (j k : Nat) : Prop :=
   ∃ (hj : j < r) (hk : k < r),
@@ -418,6 +434,7 @@ theorem supportEquivalentAt_trans {r : Nat}
 
 /-- Minimum representatives of support-equivalence classes, emitted in
 ascending column order. -/
+@[expose]
 def supportRepresentativeColumns {r : Nat}
     (trueSupports : Set (Set (Fin r))) : List Nat :=
   by
@@ -437,12 +454,14 @@ def supportClassMembers {r : Nat}
       (fun j => decide (supportEquivalentAt trueSupports j rep))
 
 /-- Canonical partition of columns by true-support membership signatures. -/
+@[expose]
 def supportPartitionByMinColumn {r : Nat}
     (trueSupports : Set (Set (Fin r))) : List (List Nat) :=
   (supportRepresentativeColumns trueSupports).map
     (fun rep => supportClassMembers trueSupports rep)
 
 /-- The executable indicator-array shape for a finite Nat-indexed class. -/
+@[expose]
 def classIndicatorArray (r : Nat) (members : List Nat) : Array Int :=
   ((List.range r).map (fun i => if i ∈ members then (1 : Int) else 0)).toArray
 
@@ -722,6 +741,7 @@ stores the projected rows.
 -/
 
 /-- Projection onto the first `r` coordinates as a `ℤ`-linear map. -/
+@[expose]
 def projFirst (r n : Nat) : (Fin (r + n) → ℤ) →ₗ[ℤ] (Fin r → ℤ) where
   toFun w := fun i => w (Fin.castAdd n i)
   map_add' a b := by funext i; simp

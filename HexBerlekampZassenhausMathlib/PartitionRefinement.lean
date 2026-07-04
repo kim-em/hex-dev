@@ -4,8 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhausMathlib.Recovery
-import HexBerlekampZassenhausMathlib.Basic
+module
+
+public import HexBerlekampZassenhausMathlib.Recovery
+public import HexBerlekampZassenhausMathlib.Basic
+
+public section
+set_option backward.proofsInPublic true
+set_option backward.privateInPublic true
 
 /-!
 Support-partition counting for the BHKS class-count lower bound (#8519).

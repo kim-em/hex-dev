@@ -4,15 +4,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhaus
-import HexBerlekampMathlib.Basic
-import HexBerlekampZassenhausMathlib.UFDPartition
-import HexHenselMathlib.Correctness
-import HexPolyZMathlib.Basic
-import HexPolyZMathlib.Mignotte
-import Mathlib.RingTheory.Coprime.Lemmas
-import Mathlib.RingTheory.Polynomial.UniqueFactorization
-import Mathlib.RingTheory.PrincipalIdealDomain
+module
+
+public import HexBerlekampZassenhaus
+public import HexBerlekampMathlib.Basic
+public import HexBerlekampZassenhausMathlib.UFDPartition
+public import HexHenselMathlib.Correctness
+public import HexPolyZMathlib.Basic
+public import HexPolyZMathlib.Mignotte
+public import Mathlib.RingTheory.Coprime.Lemmas
+public import Mathlib.RingTheory.Polynomial.UniqueFactorization
+public import Mathlib.RingTheory.PrincipalIdealDomain
+
+public section
+set_option backward.proofsInPublic true
+set_option backward.privateInPublic true
 
 /-!
 Mathlib-facing correctness surface for `HexBerlekampZassenhaus`.
@@ -158,6 +164,7 @@ Executable irreducibility predicate for transported integer polynomials.
 The checker delegates to the Mathlib-free `Hex.ZPoly` executable predicate
 after transporting the Mathlib polynomial into the project representation.
 -/
+@[expose]
 def irreducibleByFactorization (f : Polynomial ℤ) : Bool :=
   Hex.ZPoly.isIrreducible (HexPolyZMathlib.ofPolynomial f)
 
@@ -1300,6 +1307,7 @@ The monic modular image used for subset partition statements. This mirrors the
 executable prime-choice normalization: zero stays zero, and nonzero inputs are
 scaled by the inverse of their leading coefficient.
 -/
+@[expose]
 def monicModPImage {p : Nat} [Hex.ZMod64.Bounds p] (f : Hex.FpPoly p) : Hex.FpPoly p :=
   if f.isZero then
     0
@@ -2055,6 +2063,7 @@ abbrev LiftedFactorSubset (d : Hex.LiftData) : Type :=
   Finset (LiftedFactorIndex d)
 
 /-- The lifted local factor at an executable `LiftData` index. -/
+@[expose]
 def liftedFactor (d : Hex.LiftData) (i : LiftedFactorIndex d) : Hex.ZPoly :=
   d.liftedFactors[i]
 
@@ -2063,6 +2072,7 @@ def liftedFactorProduct (d : Hex.LiftData) (S : LiftedFactorSubset d) : Hex.ZPol
   S.toList.foldl (fun acc i => acc * liftedFactor d i) 1
 
 /-- Transport a modular-factor index to the corresponding lifted-factor index. -/
+@[expose]
 def liftedIndexOfModPIndex
     (primeData : Hex.PrimeChoiceData) (d : Hex.LiftData)
     (hsize : d.liftedFactors.size = primeData.factorsModP.size)
@@ -2208,6 +2218,7 @@ leading-coefficient dilation has primitive part equal to the integer factor.
 The public predicate is proof-only; helper lemmas can unpack the underlying
 `RecoveredAtLift` witness when they need the monic-coordinate data.
 -/
+@[expose]
 def RepresentsIntegerFactorAtLift
     (core : Hex.ZPoly) (d : Hex.LiftData) (factor : Hex.ZPoly)
     (S : LiftedFactorSubset d) : Prop :=
@@ -3766,6 +3777,7 @@ The accompanying partition lemmas specialize to the full lifted-index universe
 `J = Finset.univ`; proper recursive rest partitions keep their remaining-index
 guard outside this support family.
 -/
+@[expose]
 def liftedTrueSupports (core : Hex.ZPoly) (d : Hex.LiftData) :
     Set (Set (LiftedFactorIndex d)) :=
   fun U =>
@@ -17335,6 +17347,7 @@ at the top.  See `progress/20260701T002411Z_issue-8413-smart-coverage.md`.
 The wrapper `Hex.scaledRecombinationSmart` passes `budget + smartFuelBound r`
 (its `(r+1)(2r+3)` term). Quadratic because the size loop's per-level overhead
 sums to `O(r²)` over the peel recursion. -/
+@[expose]
 def smartFuelBound (n : Nat) : Nat := (n + 1) * (2 * n + 3)
 
 /-- Fuel budget for the size/candidate loops at `n` remaining lifted factors;
@@ -19758,9 +19771,18 @@ theorem exists_factor_of_modPIndex
           @monicModPImage primeData.p primeData.bounds
               (@Hex.ZPoly.modP primeData.p primeData.bounds g) = 0 := by
         unfold monicModPImage
-        simp [hzero]
+        rw [if_pos hzero]
       rw [hmonic_zero]
-      exact dvd_zero _
+      have hz : HexBerlekampMathlib.toMathlibPolynomial
+          (0 : Hex.FpPoly primeData.p) = 0 := by
+        apply Polynomial.ext
+        intro n
+        rw [Polynomial.coeff_zero, HexBerlekampMathlib.coeff_toMathlibPolynomial,
+          Hex.DensePoly.coeff_eq_zero_of_size_le _
+            (show (0 : Hex.FpPoly primeData.p).size ≤ n by simp)]
+        exact HexModArithMathlib.ZMod64.toZMod_zero
+      rw [hz]
+      exact dvd_zero (f i)
     · have hnz :
           (@Hex.ZPoly.modP primeData.p primeData.bounds g).isZero = false := by
         cases h :

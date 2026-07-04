@@ -73,12 +73,14 @@ def extractXPower (f : ZPoly) : XPowerData :=
   { power := split.1, core := DensePoly.ofCoeffs split.2.toArray }
 
 /-- The integer leading coefficient reduced to the candidate prime field. -/
+@[expose]
 def leadingCoeffModP (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : ZMod64 p :=
   ZMod64.ofNat p (intModNat (DensePoly.leadingCoeff f) p)
 
 end ZPoly
 
 /-- The candidate prime does not divide the integer leading coefficient. -/
+@[expose]
 def leadingCoeffAdmissible (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Prop :=
   ZPoly.leadingCoeffModP f p ≠ 0
 
@@ -1858,6 +1860,7 @@ def degreeSum (d : PrimeFactorData) : Nat :=
   d.factorDegrees.toList.foldl (fun acc n => acc + n) 0
 
 /-- Ordered product of the recorded modular factors for one prime. -/
+@[expose]
 def factorProduct (d : PrimeFactorData) : @FpPoly d.p d.bounds :=
   letI := d.bounds
   d.factorPolys.foldl (· * ·) 1
@@ -1866,6 +1869,7 @@ def factorProduct (d : PrimeFactorData) : @FpPoly d.p d.bounds :=
 def containsDegree (d : PrimeFactorData) (n : Nat) : Bool :=
   d.factorDegrees.toList.any fun degree => degree == n
 
+@[expose]
 def hasSubsetDegreeAux : List Nat → Nat → Bool
   | [], target => target == 0
   | degree :: degrees, target =>
@@ -1875,6 +1879,7 @@ def hasSubsetDegreeAux : List Nat → Nat → Bool
 /--
 Does some subset of this prime block's modular factor degrees sum to `target`?
 -/
+@[expose]
 def hasSubsetDegree (d : PrimeFactorData) (target : Nat) : Bool :=
   hasSubsetDegreeAux d.factorDegrees.toList target
 
@@ -1882,6 +1887,7 @@ def hasSubsetDegree (d : PrimeFactorData) (target : Nat) : Bool :=
 Check one nested finite-field irreducibility certificate against its degree slot
 and the concrete modular factor occupying that slot.
 -/
+@[expose]
 def checkCertAtFactor
     (d : PrimeFactorData) (degree : Nat) (factor : @FpPoly d.p d.bounds)
     (cert : Berlekamp.IrreducibilityCertificate) : Bool :=
@@ -1899,6 +1905,7 @@ def checkCertAtFactor
 Check that nested certificates match the enclosing prime, degree array, and
 concrete modular factor array.
 -/
+@[expose]
 def checkFactorCerts (d : PrimeFactorData) : Bool :=
   d.factorDegrees.size == d.factorCerts.size &&
     d.factorDegrees.size == d.factorPolys.size &&
@@ -1906,6 +1913,7 @@ def checkFactorCerts (d : PrimeFactorData) : Bool :=
       checkCertAtFactor d pair.1 pair.2.1 pair.2.2
 
 /-- Check one prime block against the integer polynomial being certified. -/
+@[expose]
 def checkForPolynomial (f : ZPoly) (d : PrimeFactorData) : Bool :=
   letI := d.bounds
   isGoodPrime f d.p &&
@@ -1919,10 +1927,12 @@ end PrimeFactorData
 namespace ZPolyIrreducibilityCertificate
 
 /-- Nontrivial integer factor degrees that must be ruled out for `f`. -/
+@[expose]
 def candidateFactorDegrees (f : ZPoly) : List Nat :=
   (List.range ((f.degree?.getD 0) / 2)).map fun i => i + 1
 
 /-- Look up a per-prime block by the index stored in an obstruction. -/
+@[expose]
 def primeDataAt? (cert : ZPolyIrreducibilityCertificate) (idx : Nat) :
     Option PrimeFactorData :=
   match cert.perPrime.toList.drop idx with
@@ -1940,6 +1950,7 @@ The target must be one of the nontrivial candidate degrees for `f`, and the
 referenced prime block must have no subset of modular factor degrees summing to
 that target.
 -/
+@[expose]
 def checkForCertificate
     (f : ZPoly) (cert : ZPolyIrreducibilityCertificate)
     (obs : DegreeObstruction) : Bool :=
@@ -1953,6 +1964,7 @@ end DegreeObstruction
 namespace ZPolyIrreducibilityCertificate
 
 /-- Does the obstruction array contain a valid obstruction for `targetDegree`? -/
+@[expose]
 def hasObstructionFor (f : ZPoly)
     (cert : ZPolyIrreducibilityCertificate) (targetDegree : Nat) : Bool :=
   cert.degreeObstructions.toList.any fun obs =>
@@ -2599,6 +2611,7 @@ tie-breaking is preserved. If the prefix exhausts without selecting any prime,
 the search folds over the fixed extended prime list through `499`, covering
 every odd prime in the SPEC hot-path interval `[3, 500]`.
 -/
+@[expose]
 def choosePrimeData? (f : ZPoly) : Option PrimeChoiceData :=
   match smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
   | some score => some score.data
@@ -2802,6 +2815,7 @@ instance required by `Berlekamp.berlekampFactor` is constructed explicitly
 from `hprime`, so callers can match it against any field instance built from
 the same prime witness via proof irrelevance of `ZMod64.PrimeModulus`.
 -/
+@[expose]
 def factorsModPBerlekampForm
     (f : ZPoly) (data : PrimeChoiceData) : Prop :=
   letI := data.bounds
@@ -3093,6 +3107,7 @@ def bhksBound (f : ZPoly) : Nat :=
   1 + n * 4 ^ (n * n) * (sumSquared + 1) ^ n * (Nat.log2 (sumSquared + 1)) ^ n
 
 /-- Integer coefficient bound `B_j` used by the BHKS all-coefficients CLD lattice. -/
+@[expose]
 def bhksCoeffBound (f : ZPoly) (j : Nat) : Nat :=
   let n := f.degree?.getD 0
   Nat.choose (n - 1) j * n * ZPoly.coeffL2NormBound f
@@ -3112,6 +3127,7 @@ For `1 < p`, `ceilLogP p target` searches for the least visible exponent
 whose `p`-power is at least `target`. The degenerate `p ≤ 1` case returns
 zero because the BHKS fast path is only used with admissible primes.
 -/
+@[expose]
 def ceilLogP (p target : Nat) : Nat :=
   if p ≤ 1 then
     0
@@ -3119,6 +3135,7 @@ def ceilLogP (p target : Nat) : Nat :=
     ceilLogPAux p target (target + 1) 0 1
 
 /-- Per-coordinate BHKS precision threshold `ell_j := ceil_log_p (2 * B_j + 1)`. -/
+@[expose]
 def bhksCoeffCutThreshold (p : Nat) (f : ZPoly) (j : Nat) : Nat :=
   ceilLogP p (2 * bhksCoeffBound f j + 1)
 
@@ -3131,6 +3148,7 @@ are different — `B` is a magnitude on integer coefficients, `a` is the
 small exponent on the Hensel modulus `p^a` — and must not be conflated.
 See SPEC/Libraries/hex-berlekamp-zassenhaus.md §"Slow path".
 -/
+@[expose]
 def precisionForCoeffBound (B p : Nat) : Nat :=
   ceilLogP p (2 * B + 1)
 
@@ -3270,6 +3288,7 @@ theorem precisionForCoeffBound_spec {p : Nat} (hp : 2 ≤ p) (B : Nat) :
 /-- Enumerate every way to partition a list of polynomials into a `(selected,
 unselected)` pair while preserving the original order in each component.  Used
 by the exhaustive recombination search to drive the slow path. -/
+@[expose]
 def subsetSplits : List ZPoly → List (List ZPoly × List ZPoly)
   | [] => [([], [])]
   | factor :: factors =>
@@ -3282,6 +3301,7 @@ into the `selected` component.  This is what the recombination search actually
 iterates over, since the head of the remaining local factors must end up in
 some recovered factor and tracking that explicitly avoids enumerating the same
 subset twice through different traversal orders. -/
+@[expose]
 def subsetSplitsWithFirst : List ZPoly → List (List ZPoly × List ZPoly)
   | [] => []
   | factor :: factors =>
@@ -3579,6 +3599,7 @@ The repeated-part expansion fully consumed the normalization residual, so
 `reassemblePolynomialFactors` uses its expanded branch rather than the
 non-decomposed repeated-part fallback.
 -/
+@[expose]
 def reassemblyExpansionComplete
     (d : FactorNormalizationData) (coreFactors : Array ZPoly) : Prop :=
   (expandRepeatedPartFactorArray d.repeatedPart coreFactors).2 = 1
@@ -4806,6 +4827,7 @@ def exhaustiveIntegerTrialCoreFactorsWithBound
   else
     (split.1 ++ peel.1).push peel.2
 
+@[expose]
 def centeredModNat (z : Int) (m : Nat) : Int :=
   if m = 0 then
     z
@@ -4875,6 +4897,7 @@ theorem centeredModNat_emod_eq_of_natAbs_le
       omega
 
 /-- Centred residue modulo `p^b`, the `mod^±` operation in the BHKS cut. -/
+@[expose]
 def centeredResiduePow (p b : Nat) (x : Int) : Int :=
   centeredModNat x (p ^ b)
 
@@ -4907,6 +4930,7 @@ Exposed (rather than private) so the BHKS bridge layer can state the
 congruence linking the executable quotient to the exact integer CLD
 coefficient.
 -/
+@[expose]
 def cldQuotientMod (f g : ZPoly) (p a : Nat) : ZPoly :=
   let numerator := ZPoly.reduceModPow (f * DensePoly.derivative g) p a
   let quotient := (DensePoly.divMod numerator g).1
@@ -5113,6 +5137,7 @@ theorem cldQuotientMod_divMod_reconstruction (f g : ZPoly) (p a : Nat)
   ZPoly.divMod_reconstruction_of_monic _ g hg
 
 /-- Per-coordinate BHKS cut thresholds for the all-coefficients CLD lattice. -/
+@[expose]
 def bhksCutThresholds (f : ZPoly) (p : Nat) : Array Nat :=
   let n := f.degree?.getD 0
   (List.range n).map (fun j => bhksCoeffCutThreshold p f j) |>.toArray
@@ -5160,6 +5185,7 @@ structure BhksProjectedRows where
   reducedRowCount : Nat
   projectedRows : Array (Array Int)
 
+@[expose]
 def bhksLatticeEntry
     (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
     (i j : Fin (r + n)) : Int :=
@@ -5184,6 +5210,7 @@ Build the BHKS all-coefficients CLD row-basis matrix
 The diagonal exponent uses natural subtraction; callers that need the exact
 BHKS hypotheses should lift to a precision `a` satisfying every `l_j ≤ a`.
 -/
+@[expose]
 def bhksLatticeBasis (f : ZPoly) (p a : Nat) (liftedFactors : Array ZPoly) :
     BhksLatticeBasis :=
   let r := liftedFactors.size
@@ -5268,9 +5295,11 @@ theorem bhksLatticeEntry_bottomRight_diag_pos
   exact Int.ofNat_lt.mpr hpos
 
 /-- Four times the squared BHKS cut radius, `4 * (r + n * (r / 2)^2)`. -/
+@[expose]
 def bhksCutRadiusSq4 (L : BhksLatticeBasis) : Nat :=
   4 * L.factorCount + L.coeffWidth * L.factorCount * L.factorCount
 
+@[expose]
 def bhksWithinGramSchmidtCut (L : BhksLatticeBasis)
     (dets : Vector Nat (L.factorCount + L.coeffWidth + 1))
     (i : Fin (L.factorCount + L.coeffWidth)) : Bool :=
@@ -5282,6 +5311,7 @@ def bhksWithinGramSchmidtCut (L : BhksLatticeBasis)
   else
     4 * ((d1 : Rat) / (d0 : Rat)) ≤ (bhksCutRadiusSq4 L : Rat)
 
+@[expose]
 def bhksProjectIndicator (r n : Nat) (v : Vector Int (r + n)) : Array Int :=
   (List.range r).map
     (fun j =>
@@ -5334,6 +5364,7 @@ the fold runs in increasing index order, the accumulator ends at
 contiguous prefix `b_0 … b_t` in original order — including earlier rows whose
 own Gram-Schmidt norm exceeds the radius.
 -/
+@[expose]
 def bhksCutPrefixCount
     (L : BhksLatticeBasis)
     (reduced : Matrix Int (L.factorCount + L.coeffWidth)
@@ -5345,6 +5376,7 @@ def bhksCutPrefixCount
       if bhksWithinGramSchmidtCut L dets i then i.val + 1 else acc)
     0
 
+@[expose]
 def bhksCutProjectReducedRows
     (L : BhksLatticeBasis)
     (reduced : Matrix Int (L.factorCount + L.coeffWidth)
@@ -5396,6 +5428,7 @@ structure BhksProjectedRowsTrace (L : BhksLatticeBasis) where
   projectedRetainedRows : Array (Array Int)
   projectedRows : Array (Array Int)
 
+@[expose]
 def bhksProjectedRowsTrace (L : BhksLatticeBasis)
     (hrows : 1 ≤ L.factorCount + L.coeffWidth) : BhksProjectedRowsTrace L :=
   let reducedRows :=
@@ -5425,6 +5458,7 @@ integer leading Gram determinant vector as `d_{i+1}/d_i`.
 The result is the executable `L'` row data consumed by the later RREF /
 equivalence-class recovery stage.
 -/
+@[expose]
 def bhksProjectedRows (L : BhksLatticeBasis)
     (hrows : 1 ≤ L.factorCount + L.coeffWidth) : BhksProjectedRows :=
   let reducedRows :=
@@ -5562,6 +5596,7 @@ sized `n × r`, with `n := L.projectedRows.size` and `r := L.factorCount`.
 The matrix is the input to BHKS Lemma 3.3 RREF-based equivalence-class
 identification.
 -/
+@[expose]
 def bhksProjectedRowsAsRatMatrix
     (rows : Array (Array Int)) (n r : Nat) : Matrix Rat n r :=
   Matrix.ofFn fun i j =>
@@ -5571,6 +5606,7 @@ private def bhksColumnSignature
     (echelonRows : Array (Array Rat)) (j : Nat) : Array Rat :=
   echelonRows.map (·.getD j 0)
 
+@[expose]
 def bhksInsertSignatureClass
     (sig : Array Rat) (j : Nat) :
     List (Array Rat × List Nat) → List (Array Rat × List Nat)
@@ -5594,6 +5630,7 @@ Algorithm 8). Each equivalence class produces one compact `0/1` indicator
 of length `r`. Classes are emitted in the order they are first observed by
 ascending column index.
 -/
+@[expose]
 def bhksEquivalenceClassIndicators (L : BhksProjectedRows) : Array (Array Int) :=
   let n := L.projectedRows.size
   let r := L.factorCount
@@ -5637,6 +5674,7 @@ private def bhksNoProgressProjectedRows : BhksProjectedRows :=
 #guard bhksEquivalenceClassIndicators bhksNoProgressProjectedRows =
   #[#[1, 0, 0], #[0, 1, 0], #[0, 0, 1]]
 
+@[expose]
 def liftModulus (d : LiftData) : Nat :=
   d.p ^ d.k
 
@@ -5682,6 +5720,7 @@ theorem centeredLiftPoly_eq_of_reduceModPow_eq
 flipping sign so the leading coefficient is non-negative.  Used by
 `bhksIndicatorCandidate?` to produce a canonical witness from the centred
 lift of a scaled lifted-factor product. -/
+@[expose]
 def normalizeCandidateFactor (candidate : ZPoly) : ZPoly :=
   let primitive := ZPoly.primitivePart candidate
   if DensePoly.leadingCoeff primitive < 0 then
@@ -7943,6 +7982,7 @@ def recombinationSearch (f : ZPoly) (localFactors : List ZPoly) : Option (List Z
 forced into the candidate, the centred-lift result is normalised and checked
 against `shouldRecordPolynomialFactor`, and a successful `exactQuotient?`
 divides the search down to the remaining local factors and quotient. -/
+@[expose]
 def recombinationSearchModAux
     (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly) :
     Nat → Option (List ZPoly)
@@ -7993,6 +8033,7 @@ collapse recovers the original unscaled `recombinationSearchModAux` candidate
 shape; for primitive non-monic cores this yields the primitive integer factor of
 `core` whose `RepresentsIntegerFactorAtLift` certificate drives the recursive
 coverage chain. -/
+@[expose]
 def scaledRecombinationSearchModAux
     (coreLc : Int) (target : ZPoly) (modulus : Nat) (localFactors : List ZPoly) :
     Nat → Option (List ZPoly)
@@ -8031,6 +8072,7 @@ def scaledRecombinationSearchMod
 /-- Size-`k` sublists of `xs`, each paired with its complement, order preserved
 in both components. The size-class building block of the size-ordered classical
 recombination search. -/
+@[expose]
 def subsetsOfSizeWithComplement {α : Type} : List α → Nat → List (List α × List α)
   | xs, 0 => [([], xs)]
   | [], _ + 1 => []
@@ -8041,6 +8083,7 @@ def subsetsOfSizeWithComplement {α : Type} : List α → Nat → List (List α 
 /-- Sum of the degrees of a selected local-factor subset — the degree of the
 subset product whenever the leading coefficients do not cancel mod the lift
 modulus. -/
+@[expose]
 def selectedDegreeSum (sel : List ZPoly) : Nat :=
   sel.foldl (fun n g => n + g.degree?.getD 0) 0
 
@@ -8048,6 +8091,7 @@ def selectedDegreeSum (sel : List ZPoly) : Nat :=
 selected local-factor subset, computed with a running modular reduction so no
 intermediate value grows beyond `m`. Instantiated at the constant term and at
 the leading coefficient by `scaledCandidatePrefilter`. -/
+@[expose]
 def selectedProductResidue (coeffOf : ZPoly → Int) (sel : List ZPoly) (m : Nat) : Int :=
   centeredModNat (sel.foldl (fun acc g => acc * coeffOf g % (m : Int)) 1) m
 
@@ -8066,6 +8110,7 @@ pipeline (`polyProduct` / `centeredLiftPoly` / `dilate` / `primitivePart` /
 (`scaledCandidatePrefilter_eq_true_of_exactQuotient?_some` in the Mathlib
 layer), so pruning never changes the accepted-candidate sequence — only the
 wall-clock cost of rejecting a non-factor subset. -/
+@[expose]
 def scaledCandidatePrefilter
     (coreLc : Int) (target : ZPoly) (modulus : Nat) (sel : List ZPoly) : Bool :=
   let degSum := selectedDegreeSum sel
@@ -8094,6 +8139,7 @@ true recursion depth (`budget + (r+1)(2r+3)`: along any descent path the
 budget-decrementing steps are ≤ `budget` since `budget` threads monotonically, and
 the dispatch steps are ≤ `r·(2r+3)`), so it never cuts the search off early — the
 result is identical to the unfuelled search. -/
+@[expose]
 def scaledRecombinationSmartAux
     (coreLc : Int) (target : ZPoly) (modulus : Nat)
     (localFactors : List ZPoly) (budget : Nat) (fuel : Nat) : Option (List ZPoly) × Nat :=
@@ -8108,6 +8154,7 @@ def scaledRecombinationSmartAux
             scaledRecombinationSmartSizeLoop coreLc target modulus head tail
               (List.range (tail.length + 1)) budget fuel
 
+@[expose]
 def scaledRecombinationSmartSizeLoop
     (coreLc : Int) (target : ZPoly) (modulus : Nat) (head : ZPoly) (tail : List ZPoly)
     (sizes : List Nat) (budget : Nat) (fuel : Nat) : Option (List ZPoly) × Nat :=
@@ -8124,6 +8171,7 @@ def scaledRecombinationSmartSizeLoop
             | (none, b) =>
                 scaledRecombinationSmartSizeLoop coreLc target modulus head tail ds b fuel
 
+@[expose]
 def scaledRecombinationSmartCandLoop
     (coreLc : Int) (target : ZPoly) (modulus : Nat)
     (splits : List (List ZPoly × List ZPoly)) (budget : Nat) (fuel : Nat) :
@@ -8227,6 +8275,7 @@ The supplied `budget` is first tightened to `levelAwareSubsetBudget r budget`
 boundary it can finish instead of burning the rest of the budget partway into
 a level it cannot, since the partial level adds nothing to the declined
 verdict. Small-`r` searches (every level fits) see the budget unchanged. -/
+@[expose]
 def scaledRecombinationSmart
     (coreLc : Int) (f : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
     (budget : Nat := defaultSubsetBudget) : Option (List ZPoly) × RecombStats :=
@@ -8871,6 +8920,7 @@ integer core.  The exhaustive slow path still recombines against the original
 primitive core, but the lift stage sees the monic polynomial required by the
 Hensel pipeline.
 -/
+@[expose]
 def toMonicLiftData
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : LiftData :=
   henselLiftData (toMonic core).monic
@@ -8897,6 +8947,7 @@ divide `core` directly with no dilation.  It is monic over ℤ when
 `gcd(leadingCoeff core, p ^ k) = 1` and `core` is nonconstant
 (`monicTarget_monic`).
 -/
+@[expose]
 def monicTarget (core : ZPoly) (p k : Nat) : ZPoly :=
   reduceModPow (DensePoly.scale (leadingCoeffInverse core p k) core) p k
 
@@ -8908,6 +8959,7 @@ leading-coefficient-normalised `monicTarget` rather than the `x ↦ x/ℓf` dila
 `(toMonic core).monic`.  The lifted factors therefore divide `core` in
 `(ℤ/p^a)[x]` directly, and the CLD lattice runs over `core`'s own coordinate.
 -/
+@[expose]
 def coreLiftData
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : LiftData :=
   henselLiftData (monicTarget core primeData.p (precisionForCoeffBound B primeData.p))
@@ -9015,6 +9067,7 @@ BHKS coefficient bound of the monic transform `(toMonic core).monic`: then
 `2·bhksCoeffBound (toMonic core).monic j < p ^ (precisionForCoeffBound k p)`
 holds for every coordinate `j`.  The floor is independent of the prime.
 -/
+@[expose]
 def cldCoeffFloor (core : ZPoly) : Nat :=
   let monicCore := (ZPoly.toMonic core).monic
   let n := monicCore.degree?.getD 0
@@ -9602,6 +9655,7 @@ modular factor data is the Berlekamp-form mod-`p` factorisation of
 `(toMonic core).monic`, the polynomial that `toMonicLiftData` passes to
 `henselLiftData`, so the Hensel seeds match the lift target (#8519, #8533).
 -/
+@[expose]
 def toMonicPrimeData? (core : ZPoly) : Option PrimeChoiceData :=
   choosePrimeData? (toMonic core).monic
 
@@ -9658,6 +9712,7 @@ subset recombination via `scaledRecombinationSmart`. Returns `none` when the sub
 before the search completes — an *untrustworthy* "no split" that the cost-based
 dispatcher routes to the lattice tier rather than reporting as irreducible. A
 genuine irreducible core (search completed within budget) returns `some #[core]`. -/
+@[expose]
 def classicalCoreFactorsWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Option (Array ZPoly) :=
   if B = 0 then
@@ -9676,6 +9731,7 @@ def classicalCoreFactorsWithBound
 
 /-- Raw factor array for the classical small-`r` tier. Declines (`none`) on no
 admissible prime or subset-budget exhaustion. -/
+@[expose]
 def factorClassicalFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
@@ -9856,6 +9912,7 @@ constant/quadratic-root short-circuits as the classical tier; the residual
 exhaustive branch dispatches to the standalone integer trial-division core
 (`exhaustiveIntegerTrialCoreFactorsWithBound`). This is the trial-division
 tier of the three-tier `factor` combinator (SPEC PR #6580). -/
+@[expose]
 def factorTrialFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
@@ -10041,6 +10098,7 @@ CLD path would treat this partition as `degenerate` and decline, which is why
 such a path "misses" on Swinnerton-Dyer inputs; the lattice tier uses this predicate, both
 in `latticeCoreLoop`'s early stop and in the trailing cap check, to turn the
 declined-but-certified case into a positive irreducibility verdict.) -/
+@[expose]
 def bhksSingleAllOnesPartition (f : ZPoly) (d : LiftData) : Bool :=
   -- Monic (`M2`) coordinate, matching `bhksRecoverClassified` (#8519).
   let L := bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors
@@ -10202,6 +10260,7 @@ trailing cap check requires `bhksRecoveryFloorGate core ≤ B` — below the flo
 all-ones partition may merely mean the lattice has not separated the factors
 yet, so certifying there would be unsound.  The public `factorLattice` supplies
 `latticePrecisionCap`, which clears the floor by construction. -/
+@[expose]
 def latticeCoreFactorsWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Option (Array ZPoly) :=
   if primeData.factorsModP.size ≤ 1 then
@@ -10813,6 +10872,7 @@ Constants are checked by integer primality. Positive-degree polynomials are
 checked from the returned `Factorization`: the scalar must be a unit and there
 must be exactly one polynomial factor with multiplicity one.
 -/
+@[expose]
 def isIrreducible (f : ZPoly) : Bool :=
   if f = 0 then
     false
