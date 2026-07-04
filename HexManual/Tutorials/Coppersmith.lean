@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 import HexLLL.Basic
+import HexBerlekampZassenhaus.Basic
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -166,23 +167,161 @@ private def recover : Option Int := Id.run do
 end TutorialCoppersmith
 ```
 
+# Scaling up: a real modulus and a factored root
+%%%
+tag := "tutorial-coppersmith-factor"
+%%%
+
+The toy scanned a two-digit code. A real secret is far too large to scan
+for, so the recovery has to change in two places. This page runs the same
+attack against a genuine 2048-bit RSA modulus, with an unknown field of
+about 400 bits, and makes both changes.
+
+First, the lattice grows. In place of the four-row single-shift basis we
+take the nine polynomials `N^(2-j)·xⁱ·f(x)ʲ` for `i, j ∈ {0, 1, 2}`: the
+multiples of `N²`, of `N·f`, and of `f²`, each shifted by `1`, `x`, and
+`x²`. These extra shift polynomials push the recoverable bound up from
+about `N^(1/6)` toward `N^(1/3)`, comfortably covering the 400-bit secret.
+
+Second, the root search changes. The reduced short vector is again a
+polynomial `g` with `x₀` as an integer root, but `x₀` is now a 120-digit
+number and `g` has degree eight; no bounded scan can find the root.
+Instead we factor `g` over the integers with {name}`Hex.factor`, the
+project's Berlekamp-Zassenhaus factorizer, and read the secret straight
+off the linear factor `x - x₀`. Factoring a degree-eight integer
+polynomial, even with its very large coefficients, is instant; the lattice
+reduction is the only real cost.
+
+```lean
+open Hex
+
+namespace TutorialCoppersmithFactor
+
+-- A 2048-bit RSA modulus N = p * q, with p and q the primes
+-- just below 2^1024. Exponent e = 3, no padding.
+private def p : Int := 2 ^ 1024 - 105
+private def q : Int := 2 ^ 1024 - 179
+private def N : Int := p * q
+
+-- The known 1202-bit template a and unknown 400-bit secret
+-- x0 give c = (a + x0)^3 mod N. The attacker sees only the
+-- public data N, a, c, and the bound X.
+private def a  : Int := 3 ^ 758
+private def x0 : Int := 2 ^ 399 + 271828182
+private def X  : Int := 2 ^ 400
+private def c  : Int := (a + x0) ^ 3 % N
+
+private def centerMod (n z : Int) : Int :=
+  let r := ((z % n) + n) % n
+  if 2 * r > n then r - n else r
+
+-- Little-endian polynomials: coefficient k is the x^k term.
+private abbrev Poly := Array Int
+
+private def mul (u v : Poly) : Poly := Id.run do
+  if u.isEmpty || v.isEmpty then return #[]
+  let n := u.size + v.size - 1
+  let mut r : Poly := Array.replicate n 0
+  for i in [0:u.size] do
+    for j in [0:v.size] do
+      r := r.set! (i + j)
+        (r.getD (i + j) 0 + u.getD i 0 * v.getD j 0)
+  return r
+
+private def scale (s : Int) (u : Poly) : Poly :=
+  u.map (· * s)
+private def shift (i : Nat) (u : Poly) : Poly :=
+  Array.replicate i 0 ++ u
+private def pow (u : Poly) : Nat → Poly
+  | 0 => #[1]
+  | n + 1 => mul (pow u n) u
+
+-- f(x) = (a + x)^3 - c, reduced mod N to small coeffs.
+private def f : Poly :=
+  #[centerMod N (a ^ 3 - c), centerMod N (3 * a ^ 2),
+    centerMod N (3 * a), 1]
+
+-- Nine rows N^(2-j) * x^i * f(x)^j (j, i in 0,1,2), col k
+-- scaled by X^k. Each vanishes at x0 mod N^2; added shift
+-- polynomials push the bound from ~N^(1/6) toward N^(1/3),
+-- covering a 400-bit root.
+private def rows : Array Poly := Id.run do
+  let mut rs : Array Poly := #[]
+  for j in [0:3] do
+    let fj := pow f j
+    for i in [0:3] do
+      let row := scale (N ^ (2 - j)) (shift i fj)
+      rs := rs.push
+        ((Array.range 9).map fun k => row.getD k 0 * X ^ k)
+  return rs
+
+private def B : Matrix Int 9 9 :=
+  Matrix.ofFn fun i j => (rows.getD i.val #[]).getD j.val 0
+
+private def reduced : Matrix Int 9 9 :=
+  lllNative B (3 / 4) (by grind) (by grind) (by decide)
+
+-- De-scale a reduced row: column k divides by X^k.
+private def descale (r : Vector Int 9) : Poly :=
+  (Array.range 9).map fun k => r.toArray.getD k 0 / X ^ k
+
+-- The shortest nonzero reduced row, as polynomial g.
+private def g : Poly := Id.run do
+  let mut best : Poly := #[]
+  let mut norm : Int := -1
+  for r in reduced.rows.toArray do
+    let v := r.toArray
+    if v.all (· == 0) then continue
+    let nrm : Int :=
+      v.foldl (fun s x => s + (x.natAbs : Int)) 0
+    if norm < 0 || nrm < norm then
+      norm := nrm
+      best := descale r
+  return best
+
+-- Factor g over Z with Berlekamp-Zassenhaus. The secret is
+-- the root of its linear factor x - x0. Scanning x below
+-- X ~ 2^400 is hopeless; factoring degree-8 g is instant.
+private def recovered : Option Int := Id.run do
+  for (fac, _) in (factor (DensePoly.ofCoeffs g)).factors do
+    let cs := fac.toArray
+    if cs.size == 2 then
+      let c0 := cs.getD 0 0
+      let c1 := cs.getD 1 0
+      if c1 != 0 && c0 % c1 == 0 then
+        let r := -c0 / c1
+        if 0 ≤ r && r < X && (a + r) ^ 3 % N == c then
+          return some r
+  return none
+
+-- The modulus is 2048 bits; the secret is about 400 bits.
+#guard N > 2 ^ 2047 && N < 2 ^ 2048
+#guard x0 > 2 ^ 399
+
+-- LLL reduces the basis; factoring g gives back x0.
+#guard lllReducedInt reduced (3 / 4) (1 / 2) == true
+#guard recovered == some x0
+
+end TutorialCoppersmithFactor
+```
+
 # Toy versus real
 %%%
 tag := "tutorial-coppersmith-boundary"
 %%%
 
-This instance is deliberately small and honest about it. The modulus is
-tiny, the lattice is the minimal single-shift construction, and the final
-root search is a bounded scan rather than an integer factorization of `g`.
-The single-shift lattice recovers roots only up to about `N^(1/6)`, well
-short of the `N^(1/3)` that the full method reaches; the chosen `x₀` sits
-comfortably inside that margin.
+This tutorial is deliberately staged. The first instance is a minimal
+single-shift lattice with a tiny modulus and a bounded root scan; it
+recovers roots only up to about `N^(1/6)`. The second keeps the same
+skeleton but uses a real 2048-bit modulus, a nine-row lattice that reaches
+about `N^(1/4)`, and Berlekamp-Zassenhaus factorization in place of the
+scan. Both still assume the attacker knows a bound `X` on the secret and
+work with a single polynomial in one unknown.
 
-A real attack differs in degree, not in kind. It adds many shift
-polynomials `xⁱ·f(x)ʲ` to enlarge the lattice and push the recoverable
-bound toward `N^(1/3)`, extracts the integer root of `g` by factoring over
-the integers (for which `hex-poly-z` is the project's tool) rather than
-scanning, and appears in settings such as stereotyped-message recovery,
-partial key exposure, and the Boneh-Durfee attack on small RSA private
-exponents. The computational heart, encode the constraint as a lattice and
-reduce it, is exactly what ran above.
+A production attack pushes the same idea further. It adds still more shift
+polynomials `xⁱ·f(x)ʲ` to drive the recoverable bound the rest of the way
+to `N^(1/3)`, and moves to multivariate lattices for settings such as
+stereotyped-message recovery, partial key exposure, and the Boneh-Durfee
+attack on small RSA private exponents. The computational heart, encode the
+constraint as a lattice and reduce it, then read the root off the result,
+is exactly what ran above.
