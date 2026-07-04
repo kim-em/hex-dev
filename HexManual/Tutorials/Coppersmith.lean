@@ -122,43 +122,32 @@ private def a2 : Int := centerMod N (3 * a)
 -- The Coppersmith lattice, one polynomial per row,
 -- degree-j column scaled by X^j.
 private def B : Matrix Int 4 4 :=
-  Matrix.ofFn fun i j =>
-    match i.val, j.val with
-    | 0, 0 => N
-    | 1, 1 => N * X
-    | 2, 2 => N * X * X
-    | 3, 0 => a0
-    | 3, 1 => a1 * X
-    | 3, 2 => a2 * X * X
-    | 3, 3 => X * X * X
-    | _, _ => 0
-
-private theorem hlo : (1 / 4 : Rat) < 3 / 4 := by grind
-private theorem hhi : (3 / 4 : Rat) ≤ 1 := by grind
+  #m[N,   0,      0,          0;
+     0,   N * X,  0,          0;
+     0,   0,      N * X * X,  0;
+     a0,  a1 * X, a2 * X * X, X * X * X]
 
 -- LLL-reduce at delta = 3/4.
 private def reduced : Matrix Int 4 4 :=
-  lllNative B (3 / 4) hlo hhi (by decide)
+  lllNative B (3 / 4) (by grind) (by grind) (by decide)
 
 -- De-scale a reduced row to integer coefficients.
-private def descale (r : Array Int) : Option (Array Int) :=
-  Id.run do
-    let mut g : Array Int := #[]
-    let mut xp : Int := 1
-    for k in [0:4] do
-      if r[k]! % xp != 0 then return none
-      g := g.push (r[k]! / xp)
-      xp := xp * X
-    return some g
+private def descale (r : Vector Int 4) :
+    Option (Vector Int 4) :=
+  if r[1] % X == 0 && r[2] % (X * X) == 0
+      && r[3] % (X * X * X) == 0 then
+    some #v[r[0], r[1] / X,
+            r[2] / (X * X), r[3] / (X * X * X)]
+  else
+    none
 
 -- Horner evaluation of a degree-3 integer polynomial.
-private def evalPoly (g : Array Int) (x : Int) : Int :=
-  ((g[3]! * x + g[2]!) * x + g[1]!) * x + g[0]!
+private def evalPoly (g : Vector Int 4) (x : Int) : Int :=
+  ((g[3] * x + g[2]) * x + g[1]) * x + g[0]
 
 -- Scan reduced rows for an integer root that reproduces c.
 private def recover : Option Int := Id.run do
-  let rows := reduced.rows.toArray.map (·.toArray)
-  for row in rows do
+  for row in reduced.rows.toArray do
     match descale row with
     | none => pure ()
     | some g =>
@@ -167,10 +156,6 @@ private def recover : Option Int := Id.run do
         if evalPoly g xi == 0 && (a + xi) ^ 3 % N == c then
           return some xi
   return none
-
--- The ciphertext really wraps mod N, not a raw cube.
-#guard (a + 42) ^ 3 % N == c
-#guard (a + 42) ^ 3 != c
 
 -- LLL actually reduced the basis.
 #guard lllReducedInt reduced (3 / 4) (1 / 2) == true
