@@ -6531,10 +6531,8 @@ private theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
   have hlead : Hex.DensePoly.leadingCoeff f = (1 : Int) := h
   rcases Nat.eq_zero_or_pos f.coeffs.size with hcs_zero | hcs_pos
   · exfalso
-    have hback_none : f.coeffs.back? = none := by
-      rw [Array.back?_eq_getElem?]; simp [hcs_zero]
     have hlc_zero : Hex.DensePoly.leadingCoeff f = (0 : Int) := by
-      unfold Hex.DensePoly.leadingCoeff; rw [hback_none]; rfl
+      simp [Hex.DensePoly.leadingCoeff, hcs_zero, Array.getD] <;> rfl
     rw [hlc_zero] at hlead
     exact absurd hlead (by decide)
   · exact hcs_pos
@@ -11225,10 +11223,8 @@ private theorem zpoly_size_pos_of_pos_lc {f : Hex.ZPoly}
     (hpos : 0 < Hex.DensePoly.leadingCoeff f) : 0 < f.size := by
   rcases Nat.eq_zero_or_pos f.coeffs.size with hcs_zero | hcs_pos
   · exfalso
-    have hback_none : f.coeffs.back? = none := by
-      rw [Array.back?_eq_getElem?]; simp [hcs_zero]
     have hlc_zero : Hex.DensePoly.leadingCoeff f = (0 : Int) := by
-      unfold Hex.DensePoly.leadingCoeff; rw [hback_none]; rfl
+      simp [Hex.DensePoly.leadingCoeff, hcs_zero, Array.getD] <;> rfl
     rw [hlc_zero] at hpos
     omega
   · exact hcs_pos

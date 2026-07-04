@@ -714,12 +714,7 @@ private theorem unitPolynomial_dvd_any
       have hidx : u.coeffs.size - 1 < u.coeffs.size := by
         simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
       have hlead_eq : u.leadingCoeff = u.coeff (u.size - 1) := by
-        unfold DensePoly.leadingCoeff DensePoly.coeff
-        change u.coeffs.back?.getD (0 : ZMod64 p) =
-          u.coeffs.getD (u.coeffs.size - 1) (Zero.zero : ZMod64 p)
-        rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?,
-          Array.getElem?_eq_getElem hidx]
-        rfl
+        simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
       have hlead_ne : u.leadingCoeff ≠ (Zero.zero : ZMod64 p) := by
         rw [hlead_eq]
         exact DensePoly.coeff_last_ne_zero_of_pos_size u hpos

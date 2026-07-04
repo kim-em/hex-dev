@@ -431,9 +431,7 @@ private theorem coeff_last_eq_leadingCoeff (f : ZPoly) (hpos : 0 < f.size) :
   | mk coeffs normalized =>
       have hcoeffs : 0 < coeffs.size := by simpa [DensePoly.size] using hpos
       have hidx : coeffs.size - 1 < coeffs.size := Nat.sub_one_lt (Nat.ne_of_gt hcoeffs)
-      change coeffs.getD (coeffs.size - 1) 0 = coeffs.back?.getD 0
-      rw [Array.back?_eq_getElem?, Array.getElem?_eq_getElem hidx]
-      exact (Array.getElem_eq_getD 0).symm
+      simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
 
 /-- `monic_of_coeff_eq_one_and_high_coeff_zero` builds monicity from a coefficient equal to one with all higher coefficients zero. -/
 private theorem monic_of_coeff_eq_one_and_high_coeff_zero
@@ -478,8 +476,8 @@ private theorem leadingCoeff_zero_mod_base
     have hlead : f.leadingCoeff = 0 := by
       cases f with
       | mk coeffs normalized =>
-          simp [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
-          simp [hsize]
+          simp only [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
+          simp [hsize, Array.getD] <;> rfl
     simp [hlead]
 
 /-- `canonicalMod_congr_self` says canonical reduction differs from the original integer by a multiple of the modulus. -/
@@ -712,8 +710,8 @@ private theorem monic_size_pos (q : ZPoly) (hmonic : DensePoly.Monic q) :
     have hlead : q.leadingCoeff = 0 := by
       cases q with
       | mk coeffs normalized =>
-          simp [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
-          simp [hsize]
+          simp only [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
+          simp [hsize, Array.getD] <;> rfl
     have hlead_one : q.leadingCoeff = 1 :=
       DensePoly.leadingCoeff_eq_one_of_monic hmonic
     rw [hlead] at hlead_one
@@ -2161,8 +2159,8 @@ private theorem addModSquare_monic_of_high_remainder_zero
       have hlead : g.leadingCoeff = 0 := by
         cases g with
         | mk coeffs normalized =>
-            simp [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
-            simp [hsize]
+            simp only [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
+            simp [hsize, Array.getD] <;> rfl
       have hmonicLead : g.leadingCoeff = 1 :=
         DensePoly.leadingCoeff_eq_one_of_monic hmonic
       rw [hlead] at hmonicLead

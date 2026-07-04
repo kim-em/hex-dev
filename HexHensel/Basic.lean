@@ -68,11 +68,13 @@ private theorem intModNat_eq_of_congr {a b : Int} {m : Nat} (h : (a - b) % (m : 
   simp [intModNat, hmod]
 
 /-- Reduce the coefficients of an integer polynomial modulo `p`. -/
+@[expose]
 def modP (p : Nat) [ZMod64.Bounds p] (f : ZPoly) : FpPoly p :=
   FpPoly.ofCoeffs <|
     (List.range f.size).map (fun i => ZMod64.ofNat p (intModNat (f.coeff i) p)) |>.toArray
 
 /-- Reduce each coefficient to its canonical representative modulo `p^k`. -/
+@[expose]
 def reduceModPow (f : ZPoly) (p k : Nat) : ZPoly :=
   DensePoly.ofCoeffs <|
     (List.range f.size).map (fun i => Int.ofNat (intModNat (f.coeff i) (p ^ k))) |>.toArray

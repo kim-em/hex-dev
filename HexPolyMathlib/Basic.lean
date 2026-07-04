@@ -527,13 +527,7 @@ theorem leadingCoeff_toPolynomial [Semiring R] [DecidableEq R]
       simp [Hex.DensePoly.degree?, hsize]
     rw [hdegree_some, Option.getD_some]
     show p.coeff (p.size - 1) = p.leadingCoeff
-    unfold Hex.DensePoly.coeff Hex.DensePoly.leadingCoeff
-    have hidx : p.coeffs.size - 1 < p.coeffs.size := by
-      have hs : p.size = p.coeffs.size := rfl
-      omega
-    rw [Array.back?_eq_getElem?, Array.getElem?_eq_getElem hidx, Option.getD_some,
-      show p.size = p.coeffs.size from rfl]
-    exact (Array.getElem_eq_getD (Zero.zero : R)).symm
+    simp [Hex.DensePoly.leadingCoeff, Hex.DensePoly.coeff, Hex.DensePoly.size]
 
 /-- `toPolynomial` preserves divisibility: a divisibility in the executable
 representation transfers to the corresponding Mathlib polynomials. -/

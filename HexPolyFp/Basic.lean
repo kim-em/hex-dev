@@ -104,11 +104,7 @@ private theorem divMod_spec_core [PrimeModulus p] (f g : DensePoly (ZMod64 p)) :
     have hidx : g.coeffs.size - 1 < g.coeffs.size := by
       simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hgpos
     have hlead_eq : g.leadingCoeff = g.coeff (g.size - 1) := by
-      unfold DensePoly.leadingCoeff DensePoly.coeff
-      change g.coeffs.back?.getD (0 : ZMod64 p) =
-        g.coeffs.getD (g.coeffs.size - 1) (Zero.zero : ZMod64 p)
-      rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hidx]
-      rfl
+      simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
     have hlead_ne : g.leadingCoeff ≠ (Zero.zero : ZMod64 p) := by
       rw [hlead_eq]
       exact DensePoly.coeff_last_ne_zero_of_pos_size g hgpos
@@ -196,10 +192,7 @@ private theorem divMod_remainder_degree_lt_core
     unfold lead DensePoly.leadingCoeff DensePoly.coeff
     have hidx : m.coeffs.size - 1 < m.coeffs.size := by
       simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos_size
-    change m.coeffs.back?.getD (0 : ZMod64 p) =
-      m.coeffs.getD (m.coeffs.size - 1) (Zero.zero : ZMod64 p)
-    rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hidx]
-    rfl
+    simp [DensePoly.size]
   have hlead_ne : lead ≠ (Zero.zero : ZMod64 p) := by
     rw [hlead_eq]
     exact DensePoly.coeff_last_ne_zero_of_pos_size m hpos_size
@@ -581,11 +574,7 @@ private theorem mod_eq_mod_of_congr_not_pos_degree
       have hidx : m.coeffs.size - 1 < m.coeffs.size := by
         simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
       have hlead_eq : m.leadingCoeff = m.coeff (m.size - 1) := by
-        unfold DensePoly.leadingCoeff DensePoly.coeff
-        change m.coeffs.back?.getD (0 : ZMod64 p) =
-          m.coeffs.getD (m.coeffs.size - 1) (Zero.zero : ZMod64 p)
-        rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hidx]
-        rfl
+        simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
       have hcoeff_ne := DensePoly.coeff_last_ne_zero_of_pos_size m hpos
       rw [hlead_eq]
       exact hcoeff_ne
@@ -710,12 +699,7 @@ private theorem cancel_lead_at_pos_size_core [PrimeModulus p]
   have hidx : m.coeffs.size - 1 < m.coeffs.size := by
     simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hsize
   have hlead_eq : m.leadingCoeff = m.coeff (m.size - 1) := by
-    unfold DensePoly.leadingCoeff DensePoly.coeff
-    change m.coeffs.back?.getD (0 : ZMod64 p) =
-      m.coeffs.getD (m.coeffs.size - 1) (Zero.zero : ZMod64 p)
-    rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?,
-        Array.getElem?_eq_getElem hidx]
-    rfl
+    simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
   have hlead_ne : m.leadingCoeff ≠ (Zero.zero : ZMod64 p) := by
     rw [hlead_eq]
     exact DensePoly.coeff_last_ne_zero_of_pos_size m hsize
@@ -2904,11 +2888,7 @@ coefficient when they need to compute or rewrite it. -/
 theorem leadingCoeff_eq_coeff_pred
     (f : FpPoly p) (hpos : 0 < f.size) :
     DensePoly.leadingCoeff f = f.coeff (f.size - 1) := by
-  unfold DensePoly.leadingCoeff DensePoly.coeff
-  rw [Array.back?_eq_getElem?]
-  have hidx : f.coeffs.size - 1 < f.coeffs.size := by
-    simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
-  simp [Array.getD, DensePoly.size, hidx]
+  simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
 
 /-- A polynomial of positive degree has a nonzero leading coefficient. The
 nondegeneracy fact that justifies inverting the leading coefficient during

@@ -32,7 +32,12 @@ variable {R : Type u} [Zero R] [DecidableEq R]
 /-- The leading coefficient, or `0` for the zero polynomial. -/
 @[expose]
 def leadingCoeff (p : DensePoly R) : R :=
-  p.coeffs.back?.getD 0
+  -- Written as `getD (size - 1)` rather than the more natural `back?.getD 0`
+  -- because `Array.back?` does not reduce in the kernel under the module
+  -- system (lean4 Array.back? reducibility issue), which would break the
+  -- `decide`/`rfl` defeq proofs downstream. Revert to `coeffs.back?.getD 0`
+  -- once the upstream fix lands.
+  p.coeffs.getD (p.coeffs.size - 1) (Zero.zero : R)
 
 /-- The zero polynomial has leading coefficient `0`. Registered as a `simp`
 normal form so callers reasoning about `leadingCoeff` discharge the zero case
@@ -40,7 +45,7 @@ automatically. -/
 @[simp, grind =] theorem leadingCoeff_zero : (0 : DensePoly R).leadingCoeff = 0 := by
   unfold leadingCoeff
   rw [show (DensePoly.coeffs (0 : DensePoly R)) = #[] from rfl]
-  simp
+  rfl
 
 /-- The constant polynomial `1`. -/
 instance [One R] : One (DensePoly R) where
@@ -54,10 +59,10 @@ lets callers read the leading coefficient off any constant. -/
   · rw [hc]
     unfold leadingCoeff
     rw [coeffs_C_zero]
-    simp
+    rfl
   · unfold leadingCoeff
     rw [coeffs_C_of_ne_zero hc]
-    simp
+    rfl
 
 /-- The constant polynomial `1` has leading coefficient `1`, hence is monic.
 Specialises `leadingCoeff_C` and feeds the monicity facts about `1` that the
@@ -84,13 +89,7 @@ theorem monic_iff_leadingCoeff_eq_one [One R] {p : DensePoly R} :
 at the last stored index. -/
 theorem leadingCoeff_eq_coeff_last (p : DensePoly R) (hpos : 0 < p.size) :
     p.leadingCoeff = p.coeff (p.size - 1) := by
-  unfold leadingCoeff coeff
-  change p.coeffs.back?.getD (Zero.zero : R) =
-    p.coeffs.getD (p.coeffs.size - 1) (Zero.zero : R)
-  rw [Array.back?_eq_getElem?]
-  have hidx : p.coeffs.size - 1 < p.coeffs.size := by
-    simpa [size] using Nat.sub_one_lt_of_lt hpos
-  rw [Array.getD_eq_getD_getElem?]
+  simp only [leadingCoeff, coeff, size]
 
 /-- The leading coefficient of a nonzero normalized dense polynomial is nonzero. -/
 theorem leadingCoeff_ne_zero_of_pos_size (p : DensePoly R) (hpos : 0 < p.size) :
@@ -860,12 +859,7 @@ theorem divModArray_remainder_degree_lt_of_pos_degree [Sub R] [Mul R]
     have hlead : q.toArray.getD qDegree (Zero.zero : R) = q.leadingCoeff := by
       unfold leadingCoeff toArray
       dsimp [qDegree]
-      change q.coeffs.getD (q.coeffs.size - 1) (Zero.zero : R) =
-        q.coeffs.back?.getD (Zero.zero : R)
-      have hidx : q.coeffs.size - 1 < q.coeffs.size := by
-        simpa [size] using Nat.sub_one_lt_of_lt hqpos
-      rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hidx, Array.back?_eq_getElem?,
-        Array.getElem?_eq_getElem hidx]
+      simp [size]
     have hzero_start :
         ∀ i, qDegree + p.size ≤ i → p.toArray.getD i (Zero.zero : R) = (Zero.zero : R) := by
       intro i hi
@@ -1002,12 +996,8 @@ theorem divMod_remainder_eq_zero_of_degree_zero_core [One R] [Add R] [Sub R] [Mu
   have hlead : q.toArray.getD qDegree (Zero.zero : R) = q.leadingCoeff := by
     unfold leadingCoeff toArray
     rw [hqDegree_zero]
-    change q.coeffs.getD 0 (Zero.zero : R) = q.coeffs.back?.getD (Zero.zero : R)
-    rw [Array.getD_eq_getD_getElem?]
-    have hidx : 0 < q.coeffs.size := by omega
-    rw [Array.getElem?_eq_getElem hidx, Array.back?_eq_getElem?]
     have hlast : q.coeffs.size - 1 = 0 := by omega
-    rw [hlast, Array.getElem?_eq_getElem hidx]
+    rw [hlast]
   have hzero_start :
       ∀ i, qDegree + p.size ≤ i → p.toArray.getD i (Zero.zero : R) = (Zero.zero : R) := by
     intro i hi
@@ -3485,13 +3475,7 @@ theorem divModArray_reconstruction {S : Type _}
       simpa [toArray, size] using hraw
     have hlead : q.toArray.getD (q.size - 1) (Zero.zero : S) = q.leadingCoeff := by
       unfold leadingCoeff toArray
-      change q.coeffs.getD (q.coeffs.size - 1) (Zero.zero : S) =
-        q.coeffs.back?.getD (Zero.zero : S)
-      have hcoeffpos : 0 < q.coeffs.size := by simpa [size] using hqpos
-      have hidx : q.coeffs.size - 1 < q.coeffs.size :=
-        Nat.sub_one_lt_of_lt hcoeffpos
-      rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hidx,
-        Array.back?_eq_getElem?, Array.getElem?_eq_getElem hidx]
+      simp [size]
     have hcancel_array :
         ∀ a, a - scaleLead a * q.toArray.getD (q.size - 1) (Zero.zero : S) =
           (Zero.zero : S) := by

@@ -4,12 +4,32 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexArith.Nat.Prime
-import HexBerlekamp.Factor
-import HexBerlekamp.Irreducibility
-import HexHensel.Multifactor
-import HexHensel.QuadraticMultifactor
-import HexLLL.Basic
+module
+
+public meta import HexArith.Nat.Prime
+public meta import HexBerlekamp.Factor
+public meta import HexBerlekamp.Irreducibility
+public meta import HexHensel.Basic
+public meta import HexHensel.Multifactor
+public meta import HexHensel.QuadraticMultifactor
+public meta import HexMatrix.Basic
+public meta import HexPolyZ.Mignotte
+public meta import HexLLL.Basic
+public import HexArith.Nat.Prime
+public import HexBerlekamp.Factor
+public import HexBerlekamp.Irreducibility
+public import HexHensel.Multifactor
+public import HexHensel.QuadraticMultifactor
+public import HexLLL.Basic
+-- Needed so `decide`/`rfl` over `DensePoly`/`Array` equality reduces in the
+-- kernel: the core `Array.instDecidableEq` delegates its nonempty case to the
+-- non-`@[expose]` `Array.instDecidableEqImpl`, which is otherwise opaque under
+-- the module system. Drop once that impl is exposed upstream (lean4).
+import all Init.Data.Array.DecidableEq
+
+public section
+set_option backward.proofsInPublic true
+set_option backward.privateInPublic true
 
 /-!
 Executable data records for the Berlekamp-Zassenhaus factorization pipeline.
@@ -23,6 +43,7 @@ namespace Hex
 namespace ZPoly
 
 /-- The integer polynomial `X`. -/
+@[expose]
 def X : ZPoly :=
   DensePoly.monomial 1 1
 
@@ -68,11 +89,13 @@ Executable test that a field-polynomial gcd is a unit.
 any nonzero constant associate of `1`.  In normalized dense representation,
 nonzero constants are exactly the polynomials with one stored coefficient.
 -/
+@[expose]
 def gcdIsUnit {R : Type u} [Zero R] [DecidableEq R]
     (g : DensePoly R) : Bool :=
   g.size == 1
 
 /-- The modular image is square-free according to the executable gcd-unit criterion. -/
+@[expose]
 def squareFreeModP (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Prop :=
   let fModP := ZPoly.modP p f
   gcdIsUnit (DensePoly.gcd fModP (DensePoly.derivative fModP)) = true
@@ -94,7 +117,7 @@ private theorem bounds_two : ZMod64.Bounds 2 := by
   constructor <;> decide
 
 /-- The `ZMod64.Bounds` instance witness for `p = 3`. -/
-private theorem bounds_three : ZMod64.Bounds 3 := by
+theorem bounds_three : ZMod64.Bounds 3 := by
   constructor <;> decide
 
 /-- The `ZMod64.Bounds` instance witness for `p = 5`. -/
@@ -678,6 +701,7 @@ dividing by its leading coefficient.  `monicModularImage f = scale c⁻¹ f`
 where `c = leadingCoeff f`; the zero branch is a placeholder used to keep
 the function total.
 -/
+@[expose]
 def monicModularImage {p : Nat} [ZMod64.Bounds p] (f : FpPoly p) : FpPoly p :=
   if f.isZero then
     0
@@ -1223,9 +1247,7 @@ theorem isGoodPrime_modP_isZero_false
       apply hadm
       have hcoeffs_zero : f.coeffs.size = 0 := by simpa [DensePoly.size] using hsize_zero
       have hlead : DensePoly.leadingCoeff f = 0 := by
-        unfold DensePoly.leadingCoeff
-        rw [Array.back?_eq_getElem?]
-        simp [hcoeffs_zero]
+        simp [DensePoly.leadingCoeff, hcoeffs_zero, Array.getD] <;> rfl
       unfold ZPoly.leadingCoeffModP
       rw [hlead]
       show (ZMod64.ofNat p (ZPoly.intModNat 0 p) : ZMod64 p) = 0
@@ -1258,9 +1280,7 @@ theorem leadingCoeffAdmissible_size_pos
     apply hadm
     have hcoeffs_zero : f.coeffs.size = 0 := by simpa [DensePoly.size] using hsize_zero
     have hlead : DensePoly.leadingCoeff f = 0 := by
-      unfold DensePoly.leadingCoeff
-      rw [Array.back?_eq_getElem?]
-      simp [hcoeffs_zero]
+      simp [DensePoly.leadingCoeff, hcoeffs_zero, Array.getD] <;> rfl
     unfold ZPoly.leadingCoeffModP
     rw [hlead]
     show (ZMod64.ofNat p (ZPoly.intModNat 0 p) : ZMod64 p) = 0
@@ -1424,10 +1444,12 @@ structure ToMonicData where
 
 namespace ToMonicData
 
+@[expose]
 private def transformedCoeffs (core : ZPoly) (degree : Nat) : Array Int :=
   ((List.range degree).map fun i =>
       core.coeff i * (DensePoly.leadingCoeff core) ^ (degree - 1 - i)).toArray.push 1
 
+@[expose]
 private def transformedCore (core : ZPoly) (degree : Nat) : ZPoly :=
   { coeffs := transformedCoeffs core degree
     normalized := by
@@ -1465,6 +1487,7 @@ theorem transformedCore_monic (core : ZPoly) (degree : Nat) :
 end ToMonicData
 
 /-- Build the `ToMonicData` packet for a core by the integer scaling transform. -/
+@[expose]
 def toMonic (core : ZPoly) : ToMonicData :=
   let degree := core.degree?.getD 0
   { core
@@ -1551,11 +1574,13 @@ deriving DecidableEq
 
 namespace Factorization
 
+@[expose]
 private def polyPow (f : ZPoly) : Nat → ZPoly
   | 0 => 1
   | n + 1 => polyPow f n * f
 
 /-- Public wrapper for the polynomial power used by `Factorization.product`. -/
+@[expose]
 def factorPower (f : ZPoly) (n : Nat) : ZPoly :=
   polyPow f n
 
@@ -1566,6 +1591,7 @@ def factorPower (f : ZPoly) (n : Nat) : ZPoly :=
     factorPower f (n + 1) = factorPower f n * f := rfl
 
 /-- Expand multiplicity pairs into the ordered polynomial product. -/
+@[expose]
 def product (φ : Factorization) : ZPoly :=
   φ.factors.foldl (fun acc factor => acc * polyPow factor.1 factor.2) (DensePoly.C φ.scalar)
 
@@ -1586,6 +1612,7 @@ theorem product_eq_foldl_factorPower (φ : Factorization) :
 end Factorization
 
 /-- Compute the normalization data required before the square-free pipeline. -/
+@[expose]
 def normalizeForFactor (f : ZPoly) : FactorNormalizationData :=
   let primitive := ZPoly.primitivePart f
   let xData := ZPoly.extractXPower primitive
@@ -1603,15 +1630,18 @@ private def contentFactorArray (content : Int) : Array ZPoly :=
   else
     #[DensePoly.C content]
 
+@[expose]
 private def xPowerFactorArray (power : Nat) : Array ZPoly :=
   (List.replicate power ZPoly.X).toArray
 
+@[expose]
 private def repeatedPartFactorArray (repeatedPart : ZPoly) : Array ZPoly :=
   if repeatedPart = 1 then
     #[]
   else
     #[repeatedPart]
 
+@[expose]
 private def signedContentScalar (f : ZPoly) : Int :=
   if f = 0 then
     0
@@ -1623,6 +1653,7 @@ private def signedContentScalar (f : ZPoly) : Int :=
 /-- Normalize a polynomial factor's sign by negating it whenever the leading
 coefficient is negative.  The result has nonnegative leading coefficient and is
 associated to the input over `ℤ`. -/
+@[expose]
 def normalizeFactorSign (f : ZPoly) : ZPoly :=
   if DensePoly.leadingCoeff f < 0 then
     DensePoly.scale (-1 : Int) f
@@ -1633,6 +1664,7 @@ def normalizeFactorSign (f : ZPoly) : ZPoly :=
 when it is not zero and not a unit (`±1`).  Exposed publicly so that
 Mathlib-side lemmas can transport the predicate into `¬ IsUnit` over
 `Polynomial ℤ`. -/
+@[expose]
 def shouldRecordPolynomialFactor (f : ZPoly) : Bool :=
   f ≠ 0 && f ≠ 1 && f ≠ DensePoly.C (-1)
 
@@ -1644,6 +1676,7 @@ private def bumpFactorMultiplicity (f : ZPoly) : List (ZPoly × Nat) → List (Z
       else
         entry :: bumpFactorMultiplicity f entries
 
+@[expose]
 private def collectFactorMultiplicities (factors : Array ZPoly) : Array (ZPoly × Nat) :=
   factors.toList.foldl
     (fun acc factor =>
@@ -1655,6 +1688,7 @@ private def collectFactorMultiplicities (factors : Array ZPoly) : Array (ZPoly �
     []
   |>.reverse.toArray
 
+@[expose]
 private def polynomialNormalizationPrefixFactors (d : FactorNormalizationData) : Array ZPoly :=
   xPowerFactorArray d.xPower ++ repeatedPartFactorArray d.repeatedPart
 
@@ -1674,6 +1708,7 @@ Exact-division check on integer polynomials: returns the quotient when
 `quot * candidate = target` exactly, and rejects unit candidates so iterated
 calls cannot loop forever on `±1`.
 -/
+@[expose]
 def exactQuotient? (target candidate : ZPoly) : Option ZPoly :=
   if candidate.isZero || candidate = 1 then
     none
@@ -1740,6 +1775,7 @@ Compute `(emitted, residual)` where each candidate factor `q` from
 `q^k` exactly divides the running repeated-part. The fuel is the source
 size, which dominates any irreducible's multiplicity in `repeatedPart`.
 -/
+@[expose]
 private def expandRepeatedPartFactorArray (rp : ZPoly) (coreFactors : Array ZPoly) :
     Array ZPoly × ZPoly :=
   expandRepeatedPartFactorsAux coreFactors.toList rp (rp.size + 1)
@@ -1753,6 +1789,7 @@ for higher-multiplicity inputs. Falls back to the un-expanded
 fully consume `repeatedPart` (e.g. when the BZ pipeline emitted the raw
 square-free core as a single core factor).
 -/
+@[expose]
 private def reassemblePolynomialFactors
     (d : FactorNormalizationData) (coreFactors : Array ZPoly) : Array ZPoly :=
   let (expanded, residual) := expandRepeatedPartFactorArray d.repeatedPart coreFactors
@@ -1761,6 +1798,7 @@ private def reassemblePolynomialFactors
   else
     polynomialNormalizationPrefixFactors d ++ coreFactors
 
+@[expose]
 private def factorizationOfFactors (f : ZPoly) (factors : Array ZPoly) : Factorization :=
   { scalar := signedContentScalar f
     factors := collectFactorMultiplicities factors }
@@ -2958,6 +2996,7 @@ theorem choosePrimeData?_berlekampFactor_factors_length_le_one_of_small
 Lift the chosen modular factors to the requested precision for integer
 recombination.
 -/
+@[expose]
 def henselLiftData (f : ZPoly) (B : Nat) (d : PrimeChoiceData) : LiftData :=
   letI := d.bounds
   let factors := d.factorsModP.map (fun factor => FpPoly.liftToZ factor)
@@ -3713,6 +3752,7 @@ private theorem collectFactorMultiplicities_eq_foldl (factors : Array ZPoly) :
     collectFactorMultiplicities factors =
       (factors.toList.foldl collectFactorStep []).reverse.toArray := rfl
 
+@[expose]
 private def filteredNormalizedFactors (factors : List ZPoly) : List ZPoly :=
   factors.filterMap fun f =>
     let f := normalizeFactorSign f
@@ -4329,7 +4369,7 @@ theorem normalizeFactorSign_leadingCoeff_nonneg (g : ZPoly) :
     have hg_ne : g ≠ 0 := by
       intro hzero
       rw [hzero] at hlead
-      change (0 : Int) < 0 at hlead
+      rw [DensePoly.leadingCoeff_zero] at hlead
       omega
     rw [ZPoly.leadingCoeff_scale_of_nonzero (-1 : Int) g (by decide)]
     omega
@@ -5600,6 +5640,7 @@ private def bhksNoProgressProjectedRows : BhksProjectedRows :=
 def liftModulus (d : LiftData) : Nat :=
   d.p ^ d.k
 
+@[expose]
 def centeredLiftPoly (f : ZPoly) (m : Nat) : ZPoly :=
   DensePoly.ofCoeffs <| f.toArray.map fun coeff => centeredModNat coeff m
 
@@ -8775,7 +8816,7 @@ theorem scaledRecombinationSmartCandLoop_primitive
                             rw [hpp]
                             unfold normalizeFactorSign
                             rw [if_neg
-                              (by decide : ¬ DensePoly.leadingCoeff (0 : ZPoly) < 0)]
+                              (by simp : ¬ DensePoly.leadingCoeff (0 : ZPoly) < 0)]
                           have hcontent_ne :
                               ZPoly.content
                                   (ZPoly.dilate coreLc
@@ -9673,6 +9714,7 @@ deriving Repr, DecidableEq
 agrees with `factorClassicalWithBound f B`; the trace exposes the prime, the
 lifted-factor count `r`, the recombination candidate count, and whether the tier
 declined (budget exhausted / no admissible prime). -/
+@[expose]
 def factorClassicalTracedWithBound (f : ZPoly) (B : Nat) : Option Factorization × FactorTrace :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
@@ -9711,6 +9753,7 @@ def factorClassicalTracedWithBound (f : ZPoly) (B : Nat) : Option Factorization 
                 (some (factorizationOfFactors f (reassemblePolynomialFactors normalized coreFactors)), trace)
 
 /-- Classical-tier factorisation with trace, at the default Mignotte bound. -/
+@[expose]
 def factorClassicalTraced (f : ZPoly) : Option Factorization × FactorTrace :=
   factorClassicalTracedWithBound f (ZPoly.defaultFactorCoeffBound f)
 
@@ -9828,6 +9871,7 @@ def factorTrialFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
 #guard factorTrialFactorsWithBound exhaustiveNonMonicQuadraticGuard 4 =
   #[exhaustiveNonMonicQuadraticGuard]
 
+@[expose]
 def factorTrialWithBound (f : ZPoly) (B : Nat) : Factorization :=
   factorizationOfFactors f (factorTrialFactorsWithBound f B)
 
@@ -10178,6 +10222,7 @@ def latticeCoreFactorsWithBound
 /-- Raw factor array for the large-`r` lattice tier: the CLD lattice recovery,
 certifying irreducibility at the cap so that Swinnerton-Dyer / high-`r`
 irreducibles return `some #[f]` instead of `none`. -/
+@[expose]
 def factorLatticeFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
@@ -10200,12 +10245,14 @@ def factorLatticeFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :
             (latticeCoreFactorsWithBound normalized.squareFreeCore B primeData).map
               fun coreFactors => reassemblePolynomialFactors normalized coreFactors
 
+@[expose]
 def factorLatticeWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
   (factorLatticeFactorsWithBound f B).map (factorizationOfFactors f)
 
 /-- Van Hoeij CLD lattice tier (large-`r`) at the full BHKS precision cap.
 Certifies irreducibility (unlike a cap-free CLD path), so it returns `some` on
 Swinnerton-Dyer and cyclotomic high-`r` irreducibles. -/
+@[expose]
 def factorLattice (f : ZPoly) : Option Factorization :=
   factorLatticeWithBound f (latticePrecisionCap f)
 
@@ -10242,6 +10289,7 @@ provable unconditionally without yet proving the classical recombination loop
 reconstructs (that, with per-factor irreducibility, is the separate re-proof
 step). The classical tier is correct on the whole conformance corpus, so the
 guard always passes there and the emitted factor/trace values are unchanged. -/
+@[expose]
 def factorTraced (f : ZPoly) : Factorization × FactorTrace :=
   match factorClassicalTraced f with
   | (some φ, trace) =>
@@ -10264,6 +10312,7 @@ residual falls through to the `factorTrial` totality backstop, which is
 `choosePrimeData?`-independent and so makes `factor` unconditionally correct on
 every `ZPoly`. Total.
 -/
+@[expose]
 def factor (f : ZPoly) : Factorization :=
   (factorTraced f).1
 
@@ -11930,7 +11979,7 @@ private theorem normalizeForFactor_reassembles_signedContentScalar
       (normalizeForFactor f).squareFreeCore * (normalizeForFactor f).repeatedPart ≠ 0 := by
     intro hzero
     rw [hzero] at hA_pos
-    have hl0 : DensePoly.leadingCoeff (0 : ZPoly) = 0 := rfl
+    have hl0 : DensePoly.leadingCoeff (0 : ZPoly) = 0 := by simp
     rw [hl0] at hA_pos
     omega
   have hB_leading :
@@ -12493,7 +12542,7 @@ private theorem scaledRecombinationSearchModAux_primitive
                         rw [hpp]
                         unfold normalizeFactorSign
                         rw [if_neg
-                          (by decide : ¬ DensePoly.leadingCoeff (0 : ZPoly) < 0)]
+                          (by simp : ¬ DensePoly.leadingCoeff (0 : ZPoly) < 0)]
                       have hcontent_ne :
                           ZPoly.content
                               (ZPoly.dilate coreLc
@@ -13686,7 +13735,7 @@ private theorem polyProduct_toArray_monic_factors_monic_of_pos_lc :
         intro h0
         rw [h0] at hhead_pos
         change (0 : Int) < DensePoly.leadingCoeff (0 : ZPoly) at hhead_pos
-        have hzero : DensePoly.leadingCoeff (0 : ZPoly) = 0 := by decide
+        have hzero : DensePoly.leadingCoeff (0 : ZPoly) = 0 := by simp
         rw [hzero] at hhead_pos
         exact absurd hhead_pos (by decide)
       have hrest_lc_pos : 0 < DensePoly.leadingCoeff (Array.polyProduct rest.toArray) :=
@@ -13695,7 +13744,7 @@ private theorem polyProduct_toArray_monic_factors_monic_of_pos_lc :
         intro h0
         rw [h0] at hrest_lc_pos
         change (0 : Int) < DensePoly.leadingCoeff (0 : ZPoly) at hrest_lc_pos
-        have hzero : DensePoly.leadingCoeff (0 : ZPoly) = 0 := by decide
+        have hzero : DensePoly.leadingCoeff (0 : ZPoly) = 0 := by simp
         rw [hzero] at hrest_lc_pos
         exact absurd hrest_lc_pos (by decide)
       have hprod_eq :
@@ -14417,7 +14466,7 @@ private theorem mem_trialDivisionCandidatesOfDegree_of_bounded
   have hp_ne : p ≠ 0 := by
     intro hzero
     rw [hzero] at hlc
-    change 0 < (0 : Int) at hlc
+    rw [DensePoly.leadingCoeff_zero] at hlc
     omega
   have hp_size_pos : 0 < p.size := ZPoly.size_pos_of_ne_zero p hp_ne
   have hdeg_size : p.degree?.getD 0 = p.size - 1 := by
@@ -14836,12 +14885,12 @@ private theorem trialDivisionPeelAux_residual_leadingCoeff_pos
               have htarget_ne : target ≠ 0 := by
                 intro hz
                 rw [hz] at htarget_pos
-                change 0 < (0 : Int) at htarget_pos
+                rw [DensePoly.leadingCoeff_zero] at htarget_pos
                 omega
               have hc_ne : c ≠ 0 := by
                 intro hz
                 rw [hz] at hc_pos
-                change 0 < (0 : Int) at hc_pos
+                rw [DensePoly.leadingCoeff_zero] at hc_pos
                 omega
               have hq_ne : q ≠ 0 := by
                 intro hz
@@ -14946,12 +14995,12 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign
   have hcore_ne : core ≠ 0 := by
     intro hz
     rw [hz] at hcore_pos
-    change 0 < (0 : Int) at hcore_pos
+    rw [DensePoly.leadingCoeff_zero] at hcore_pos
     omega
   have hsplit1_ne : Array.polyProduct split.1 ≠ 0 := by
     intro hz
     rw [hz] at hsplit_lc_pos
-    change 0 < (0 : Int) at hsplit_lc_pos
+    rw [DensePoly.leadingCoeff_zero] at hsplit_lc_pos
     omega
   have hsplit2_ne : split.2 ≠ 0 := by
     intro hz
@@ -15054,12 +15103,12 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_shouldRecord
   have hcore_ne : core ≠ 0 := by
     intro hz
     rw [hz] at hcore_pos
-    change 0 < (0 : Int) at hcore_pos
+    rw [DensePoly.leadingCoeff_zero] at hcore_pos
     omega
   have hsplit1_ne : Array.polyProduct split.1 ≠ 0 := by
     intro hz
     rw [hz] at hsplit_lc_pos
-    change 0 < (0 : Int) at hsplit_lc_pos
+    rw [DensePoly.leadingCoeff_zero] at hsplit_lc_pos
     omega
   have hsplit2_ne : split.2 ≠ 0 := by
     intro hz
@@ -15130,7 +15179,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_shouldRecord
       have hpeel_ne_zero : peel.2 ≠ 0 := by
         intro hz
         rw [hz] at hpeel_res_pos
-        change 0 < (0 : Int) at hpeel_res_pos
+        rw [DensePoly.leadingCoeff_zero] at hpeel_res_pos
         omega
       have hpeel_ne_neg_one : peel.2 ≠ DensePoly.C (-1 : Int) := by
         intro hneg
@@ -15409,7 +15458,7 @@ private theorem trialDivisionPeel_residual_irreducible
   change trialDivisionPeelAux target candidates = (factors, residual) at hsplit
   have htarget_ne : target ≠ 0 := by
     intro h; rw [h] at htarget_pos
-    change 0 < (0 : Int) at htarget_pos; omega
+    rw [DensePoly.leadingCoeff_zero] at htarget_pos; omega
   have hcand_pos_lc : ∀ c ∈ candidates, 0 < DensePoly.leadingCoeff c :=
     fun c hc => (mem_trialDivisionCandidatesUpTo hc).2.1
   have hcand_pos_deg : ∀ c ∈ candidates, 0 < c.degree?.getD 0 :=
@@ -15423,7 +15472,7 @@ private theorem trialDivisionPeel_residual_irreducible
       htarget_pos hcand_pos_lc factors residual hsplit
   have hres_ne_zero : residual ≠ 0 := by
     intro hzero; rw [hzero] at hres_lc_pos
-    change 0 < (0 : Int) at hres_lc_pos; omega
+    rw [DensePoly.leadingCoeff_zero] at hres_lc_pos; omega
   have hres_dvd_target : residual ∣ target :=
     trialDivisionPeelAux_residual_dvd_target target candidates factors residual hsplit
   have hres_dvd_core : residual ∣ core :=
@@ -15528,7 +15577,7 @@ private theorem trialDivisionPeel_residual_irreducible
     have hq_size_pos : 0 < q.size := hq_size_eq ▸ hsm_size_pos
     have hq_ne_zero : q ≠ 0 := by
       intro hz; rw [hz] at hq_lc_pos
-      change 0 < (0 : Int) at hq_lc_pos; omega
+      rw [DensePoly.leadingCoeff_zero] at hq_lc_pos; omega
     have hq_dvd_res : q ∣ residual := ZPoly_dvd_trans hq_dvd_small hsm_dvd
     have hq_dvd_core : q ∣ core := ZPoly_dvd_trans hq_dvd_res hres_dvd_core
     have hq_bound : ∀ i, (q.coeff i).natAbs ≤ B := by
@@ -15694,7 +15743,7 @@ private theorem trialDivisionPeel_factor_irreducible
   change trialDivisionPeelAux target candidates = (factors, residual) at hsplit
   have htarget_ne : target ≠ 0 := by
     intro h; rw [h] at htarget_pos
-    change 0 < (0 : Int) at htarget_pos; omega
+    rw [DensePoly.leadingCoeff_zero] at htarget_pos; omega
   have hcand_pos_lc : ∀ c ∈ candidates, 0 < DensePoly.leadingCoeff c :=
     fun c hc => (mem_trialDivisionCandidatesUpTo hc).2.1
   have hcand_pos_deg : ∀ c ∈ candidates, 0 < c.degree?.getD 0 :=
@@ -15708,7 +15757,7 @@ private theorem trialDivisionPeel_factor_irreducible
       htarget_pos hcand_pos_lc factors residual hsplit
   have hres_ne_zero : residual ≠ 0 := by
     intro hzero; rw [hzero] at hres_lc_pos
-    change 0 < (0 : Int) at hres_lc_pos; omega
+    rw [DensePoly.leadingCoeff_zero] at hres_lc_pos; omega
   have hprod : residual * Array.polyProduct factors = target :=
     trialDivisionPeelAux_product target candidates factors residual hsplit
   have hfactor_mem_cand : factor ∈ candidates :=
@@ -15723,7 +15772,7 @@ private theorem trialDivisionPeel_factor_irreducible
   have hfactor_pos_lc : 0 < DensePoly.leadingCoeff factor := hcand_pos_lc factor hfactor_mem_cand
   have hfactor_ne_zero : factor ≠ 0 := by
     intro h; rw [h] at hfactor_pos_lc
-    change 0 < (0 : Int) at hfactor_pos_lc; omega
+    rw [DensePoly.leadingCoeff_zero] at hfactor_pos_lc; omega
   have hfactor_size_pos : 0 < factor.size :=
     ZPoly.size_pos_of_ne_zero factor hfactor_ne_zero
   have hfactor_size_eq : factor.size = factor.degree?.getD 0 + 1 := by
@@ -15825,7 +15874,7 @@ private theorem trialDivisionPeel_factor_irreducible
     have hq_size_pos : 0 < q.size := hq_size_eq ▸ hsm_size_pos
     have hq_ne_zero : q ≠ 0 := by
       intro hz; rw [hz] at hq_lc_pos
-      change 0 < (0 : Int) at hq_lc_pos; omega
+      rw [DensePoly.leadingCoeff_zero] at hq_lc_pos; omega
     have hq_dvd_factor : q ∣ factor := ZPoly_dvd_trans hq_dvd_small hsm_dvd
     have hq_dvd_target : q ∣ target := ZPoly_dvd_trans hq_dvd_factor hfactor_dvd_target
     have hq_dvd_core : q ∣ core := ZPoly_dvd_trans hq_dvd_target htarget_dvd
@@ -16089,7 +16138,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_degree_pos
   let peel := trialDivisionPeelAux split.2 candidates
   have hcore_ne : core ≠ 0 := by
     intro hz; rw [hz] at hcore_pos
-    change 0 < (0 : Int) at hcore_pos; omega
+    rw [DensePoly.leadingCoeff_zero] at hcore_pos; omega
   have hsplit_prod : split.2 * Array.polyProduct split.1 = core :=
     splitIntegerRootFactorsAux_product core roots roots.length split.1 split.2 rfl
   have hsplit2_dvd_core : split.2 ∣ core :=
@@ -16100,7 +16149,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_degree_pos
       roots.length split.1 split.2 rfl
   have hsplit1_ne : Array.polyProduct split.1 ≠ 0 := by
     intro hz; rw [hz] at hsplit_lc_pos
-    change 0 < (0 : Int) at hsplit_lc_pos; omega
+    rw [DensePoly.leadingCoeff_zero] at hsplit_lc_pos; omega
   have hsplit2_ne : split.2 ≠ 0 := by
     intro hz; apply hcore_ne
     rw [← hsplit_prod, hz]; exact DensePoly.zero_mul _
@@ -16169,7 +16218,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_degree_pos
       rw [hfac_eq]
       have hres_ne : peel.2 ≠ 0 := by
         intro hz; rw [hz] at hpeel_res_pos
-        change 0 < (0 : Int) at hpeel_res_pos; omega
+        rw [DensePoly.leadingCoeff_zero] at hpeel_res_pos; omega
       have hres_size_pos : 0 < peel.2.size :=
         ZPoly.size_pos_of_ne_zero peel.2 hres_ne
       have hres_dvd_split2 : peel.2 ∣ split.2 :=
@@ -16228,7 +16277,7 @@ theorem exhaustiveIntegerTrialCoreFactorsWithBound_factor_irreducible
       roots.length split.1 split.2 rfl
   have hsplit1_ne : Array.polyProduct split.1 ≠ 0 := by
     intro hz; rw [hz] at hsplit_lc_pos
-    change 0 < (0 : Int) at hsplit_lc_pos; omega
+    rw [DensePoly.leadingCoeff_zero] at hsplit_lc_pos; omega
   have hsplit2_ne : split.2 ≠ 0 := by
     intro hz; apply hcore_ne
     rw [← hsplit_prod, hz]; exact DensePoly.zero_mul _
@@ -16429,7 +16478,7 @@ theorem quadraticIntegerRootFactors?_normalizeFactorSign
               have hsplit_poly_ne : Array.polyProduct split.1 ≠ 0 := by
                 intro hzero
                 rw [hzero] at hsplit_lc_pos
-                change 0 < (0 : Int) at hsplit_lc_pos
+                rw [DensePoly.leadingCoeff_zero] at hsplit_lc_pos
                 omega
               have hres_ne : split.2 ≠ 0 := by
                 intro hzero
@@ -16437,7 +16486,7 @@ theorem quadraticIntegerRootFactors?_normalizeFactorSign
                   rw [← hsplit_prod, hzero]
                   exact DensePoly.zero_mul _
                 rw [hcore_zero] at hcore_pos
-                change 0 < (0 : Int) at hcore_pos
+                rw [DensePoly.leadingCoeff_zero] at hcore_pos
                 omega
               have hlc :
                   DensePoly.leadingCoeff core =
@@ -16503,7 +16552,7 @@ theorem quadraticIntegerRootFactors?_shouldRecord
               have hsplit_poly_ne : Array.polyProduct split.1 ≠ 0 := by
                 intro hzero
                 rw [hzero] at hsplit_lc_pos
-                change 0 < (0 : Int) at hsplit_lc_pos
+                rw [DensePoly.leadingCoeff_zero] at hsplit_lc_pos
                 omega
               have hres_ne : split.2 ≠ 0 := by
                 intro hzero
@@ -16511,7 +16560,7 @@ theorem quadraticIntegerRootFactors?_shouldRecord
                   rw [← hsplit_prod, hzero]
                   exact DensePoly.zero_mul _
                 rw [hcore_zero] at hcore_pos
-                change 0 < (0 : Int) at hcore_pos
+                rw [DensePoly.leadingCoeff_zero] at hcore_pos
                 omega
               have hres_ne_one : split.2 ≠ 1 := hres_one
               have hres_ne_neg_one : split.2 ≠ DensePoly.C (-1 : Int) := by
@@ -16525,7 +16574,7 @@ theorem quadraticIntegerRootFactors?_shouldRecord
                     split.2 (Array.polyProduct split.1) hres_ne hsplit_poly_ne
                 rw [hneg_one] at hlc
                 have hneg_lc :
-                    DensePoly.leadingCoeff (DensePoly.C (-1 : Int)) = -1 := by decide
+                    DensePoly.leadingCoeff (DensePoly.C (-1 : Int)) = -1 := by simp
                 rw [hneg_lc] at hlc
                 have hcore_neg : DensePoly.leadingCoeff core < 0 := by
                   rw [hlc]
@@ -16637,12 +16686,12 @@ private theorem quadraticIntegerRootFactors?_residual_irreducible
           have hsplit_poly_ne : Array.polyProduct split.1 ≠ 0 := by
             intro hzero
             rw [hzero] at hsplit_lc_pos
-            change 0 < (0 : Int) at hsplit_lc_pos
+            rw [DensePoly.leadingCoeff_zero] at hsplit_lc_pos
             omega
           have hcore_ne : core ≠ 0 := by
             intro hzero
             rw [hzero] at hcore_pos
-            change 0 < (0 : Int) at hcore_pos
+            rw [DensePoly.leadingCoeff_zero] at hcore_pos
             omega
           -- factor = split.2 from hres. Need: Irreducible split.2.
           rw [hres]
@@ -16956,12 +17005,12 @@ theorem quadraticIntegerRootFactors?_factor_size_eq_two
             have hsplit_poly_ne : Array.polyProduct split.1 ≠ 0 := by
               intro hzero
               rw [hzero] at hsplit_lc_pos
-              change 0 < (0 : Int) at hsplit_lc_pos
+              rw [DensePoly.leadingCoeff_zero] at hsplit_lc_pos
               omega
             have hcore_ne : core ≠ 0 := by
               intro hzero
               rw [hzero] at hcore_pos
-              change 0 < (0 : Int) at hcore_pos
+              rw [DensePoly.leadingCoeff_zero] at hcore_pos
               omega
             have hres_ne_zero : split.2 ≠ 0 := by
               intro hzero
@@ -17234,7 +17283,7 @@ theorem quadraticIntegerRootFactors?_pairwise_not_associated
   have hcore_ne : core ≠ 0 := by
     intro hz
     rw [hz] at hcore_lc_pos
-    change 0 < (0 : Int) at hcore_lc_pos
+    rw [DensePoly.leadingCoeff_zero] at hcore_lc_pos
     omega
   -- Acknowledge the primitivity hypothesis (kept in the signature for
   -- symmetry with the `_factor_irreducible_of_primitive` wrapper; the
@@ -17280,7 +17329,7 @@ theorem quadraticIntegerRootFactors?_pairwise_not_associated
           have hpoly_ne : Array.polyProduct split.1 ≠ 0 := by
             intro hz
             rw [hz] at hpoly_lc_pos
-            change 0 < (0 : Int) at hpoly_lc_pos
+            rw [DensePoly.leadingCoeff_zero] at hpoly_lc_pos
             omega
           have hres_ne : split.2 ≠ 0 := by
             intro hz
@@ -17445,12 +17494,12 @@ theorem quadraticIntegerRootFactors?_degree_pos_of_primitive
             have hpoly_ne : Array.polyProduct split.1 ≠ 0 := by
               intro hz
               rw [hz] at hpoly_lc_pos
-              change 0 < (0 : Int) at hpoly_lc_pos
+              rw [DensePoly.leadingCoeff_zero] at hpoly_lc_pos
               omega
             have hcore_ne : core ≠ 0 := by
               intro hz
               rw [hz] at hcore_pos
-              change 0 < (0 : Int) at hcore_pos
+              rw [DensePoly.leadingCoeff_zero] at hcore_pos
               omega
             have hres_ne : split.2 ≠ 0 := by
               intro hz
@@ -17581,7 +17630,7 @@ private theorem repeatedPart_ne_C_neg_one_of_ne_zero (f : ZPoly) (hf : f ≠ 0) 
   intro h
   have hpos := repeatedPart_leadingCoeff_pos_of_ne_zero f hf
   rw [h] at hpos
-  have hneg : DensePoly.leadingCoeff (DensePoly.C (-1 : Int)) = -1 := by decide
+  have hneg : DensePoly.leadingCoeff (DensePoly.C (-1 : Int)) = -1 := by simp
   rw [hneg] at hpos
   omega
 

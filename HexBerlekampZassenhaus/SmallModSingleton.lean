@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhaus.Basic
-import HexBerlekamp.RabinSoundness
+module
+
+public import HexBerlekampZassenhaus.Basic
+public import HexBerlekamp.RabinSoundness
+
+public section
 
 /-!
 Small-mod singleton Berlekamp irreducibility wrapper.

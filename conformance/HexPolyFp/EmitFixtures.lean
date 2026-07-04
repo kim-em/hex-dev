@@ -113,8 +113,7 @@ private theorem randomMonicPoly_monic
     (p : Nat) [ZMod64.Bounds p] (h : 2 ≤ p) (seed deg : Nat) :
     DensePoly.Monic (randomMonicPoly p h seed deg) := by
   unfold DensePoly.Monic DensePoly.leadingCoeff randomMonicPoly
-  simp [monicArray_back?]
-  rfl
+  simp [monicArray, Array.getElem_push] <;> rfl
 
 /-! ## Coefficient ↔ Int conversion -/
 

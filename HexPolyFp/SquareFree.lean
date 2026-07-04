@@ -1147,11 +1147,7 @@ theorem fpPoly_leadingCoeff_ne_zero_of_isZero_false
       Nat.pos_iff_ne_zero] using hzero
   have hlast := DensePoly.coeff_last_ne_zero_of_pos_size f hpos
   have hlead : DensePoly.leadingCoeff f = f.coeff (f.size - 1) := by
-    unfold DensePoly.leadingCoeff DensePoly.coeff
-    rw [Array.back?_eq_getElem?]
-    have hidx : f.coeffs.size - 1 < f.coeffs.size := by
-      simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
-    simp [Array.getD, DensePoly.size, hidx]
+    simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
   rw [hlead]
   exact hlast
 
@@ -2485,11 +2481,7 @@ private theorem squareFreeContributionReachable_of_monic
       have hlead : DensePoly.leadingCoeff f = f.coeff 0 := by
         have hlead_last :
             DensePoly.leadingCoeff f = f.coeff (f.size - 1) := by
-          unfold DensePoly.leadingCoeff DensePoly.coeff
-          rw [Array.back?_eq_getElem?]
-          have hidx : f.coeffs.size - 1 < f.coeffs.size := by
-            simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
-          simp [Array.getD, DensePoly.size, hidx]
+          simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
         simpa [hsize] using hlead_last
       change f.coeff 0 = (DensePoly.C (1 : ZMod64 p)).coeff 0
       rw [← hlead, hmonic]
@@ -4978,12 +4970,7 @@ private theorem normalizeMonic_squareFreeContributionReachable
           have hlead : DensePoly.leadingCoeff f = f.coeff 0 := by
             have hlead_last :
                 DensePoly.leadingCoeff f = f.coeff (f.size - 1) := by
-              unfold DensePoly.leadingCoeff DensePoly.coeff
-              rw [Array.back?_eq_getElem?]
-              have hpos : 0 < f.size := size_pos_of_isZero_false f hzero
-              have hidx : f.coeffs.size - 1 < f.coeffs.size := by
-                simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
-              simp [Array.getD, DensePoly.size, hidx]
+              simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
             simpa [hf_size] using hlead_last
           rw [← hlead]
           have h := zmod64_mul_inv_eq_one_of_prime_ne_zero hp hlead_ne
@@ -5224,11 +5211,7 @@ private theorem constant_nonzero_dvd
     | zero =>
         have hlead : unit = g.coeff 0 := by
           have hlead_last : DensePoly.leadingCoeff g = g.coeff (g.size - 1) := by
-            unfold DensePoly.leadingCoeff DensePoly.coeff
-            rw [Array.back?_eq_getElem?]
-            have hidx : g.coeffs.size - 1 < g.coeffs.size := by
-              simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hg_pos
-            simp [Array.getD, DensePoly.size, hidx]
+            simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
           simpa [unit, hg_size] using hlead_last
         rw [← hlead]
         exact (DensePoly.coeff_C unit 0).symm

@@ -141,8 +141,9 @@ theorem monicModulusFive_monic (degree : Nat) : DensePoly.Monic (monicModulusFiv
   unfold monicModulusFive DensePoly.Monic DensePoly.leadingCoeff DensePoly.monomial
   by_cases h : (1 : ZMod64 5) = 0
   · exact False.elim (one_ne_zero_five h)
-  · change ((Array.replicate degree (0 : ZMod64 5)).push 1).back?.getD 0 = 1
-    simp
+  · have h' : ¬ ((1 : ZMod64 5) = Zero.zero) := h
+    simp only [dif_neg h']
+    simp [Array.getElem_push] <;> rfl
 
 /-- Deterministic monic modulus of degree `degree` over the large benchmark prime. -/
 def monicModulusLarge (degree : Nat) : FpPoly 65537 :=
@@ -161,9 +162,7 @@ def monicModulusLarge (degree : Nat) : FpPoly 65537 :=
 theorem monicModulusLarge_monic (degree : Nat) :
     DensePoly.Monic (monicModulusLarge degree) := by
   unfold monicModulusLarge DensePoly.Monic DensePoly.leadingCoeff
-  change (((Array.range degree).map fun i => coeffValueLarge degree i 503).push
-    (1 : ZMod64 65537)).back?.getD 0 = 1
-  simp
+  simp [Array.getElem_push] <;> rfl
 
 /-- Deterministic linear square-free factor. -/
 def linearFactor (i : Nat) : FpPoly 5 :=

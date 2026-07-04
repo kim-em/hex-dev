@@ -4,7 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhaus.Basic
+module
+
+public meta import HexBerlekampZassenhaus.Basic
+public import HexBerlekampZassenhaus.Basic
+
+public section
 
 /-!
 BHKS fast-path vs slow-backstop cross-check for `HexBerlekampZassenhaus`.
