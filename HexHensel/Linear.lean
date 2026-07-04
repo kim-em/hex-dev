@@ -1445,9 +1445,7 @@ private theorem coeff_last_eq_leadingCoeff (f : ZPoly) (hpos : 0 < f.size) :
   | mk coeffs normalized =>
       have hcoeffs : 0 < coeffs.size := by simpa [DensePoly.size] using hpos
       have hidx : coeffs.size - 1 < coeffs.size := Nat.sub_one_lt (Nat.ne_of_gt hcoeffs)
-      change coeffs.getD (coeffs.size - 1) 0 = coeffs.back?.getD 0
-      rw [Array.back?_eq_getElem?, Array.getElem?_eq_getElem hidx]
-      exact (Array.getElem_eq_getD 0).symm
+      simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
 
 /-- A monic polynomial is nonempty: its `size` is positive. A zero-size `f` would
 have leading coefficient `0`, contradicting `leadingCoeff = 1`. This rules out the
@@ -1460,8 +1458,8 @@ private theorem monic_size_pos (f : ZPoly) (hmonic : DensePoly.Monic f) :
     have hlead : f.leadingCoeff = 0 := by
       cases f with
       | mk coeffs normalized =>
-          simp [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
-          simp [hsize]
+          simp only [DensePoly.leadingCoeff, DensePoly.size] at hsize ⊢
+          simp [hsize, Array.getD] <;> rfl
     have hlead_one : f.leadingCoeff = 1 :=
       DensePoly.leadingCoeff_eq_one_of_monic hmonic
     rw [hlead] at hlead_one

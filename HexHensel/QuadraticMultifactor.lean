@@ -51,6 +51,7 @@ and `⌊log₂ (k - 1)⌋ + 1` otherwise, the least `n` with `k ≤ 2 ^ n`.
 The bound `k ≤ 2 ^ quadraticDoublingSteps k` is what
 `henselLiftQuadratic_spec` consumes to descend from the loop modulus
 `p ^ (2 ^ quadraticDoublingSteps k)` back to the requested `p ^ k`. -/
+@[expose]
 def quadraticDoublingSteps (k : Nat) : Nat :=
   if k ≤ 1 then 0 else (k - 1).log2 + 1
 

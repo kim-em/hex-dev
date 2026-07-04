@@ -73,6 +73,7 @@ def content (f : ZPoly) : Int :=
   DensePoly.content f
 
 /-- Divide every coefficient by the content to obtain a primitive polynomial. -/
+@[expose]
 def primitivePart (f : ZPoly) : ZPoly :=
   DensePoly.primitivePart f
 
@@ -85,6 +86,7 @@ monic factor `g` of the transform to `g(c · X)`, an integer multiple of the
 corresponding factor of `core`. Composing with `primitivePart` recovers the
 primitive integer factor of `core`. This is *not* the same as `DensePoly.scale`,
 which multiplies the whole polynomial by a constant. -/
+@[expose]
 def dilate (c : Int) (p : ZPoly) : ZPoly :=
   DensePoly.ofCoeffs <| ((List.range p.size).map fun i => c ^ i * p.coeff i).toArray
 
@@ -601,6 +603,7 @@ structure PrimitiveSquareFreeDecomposition where
   repeatedPart : ZPoly
 
 /-- Square-free over `Rat[x]`, up to the executable rational gcd's unit factor. -/
+@[expose]
 def SquareFreeRat (f : ZPoly) : Prop :=
   (DensePoly.gcd (toRatPoly f) (DensePoly.derivative (toRatPoly f))).size ≤ 1
 
@@ -608,6 +611,7 @@ def SquareFreeRat (f : ZPoly) : Prop :=
 Compute the primitive square-free normalization data needed by the integer
 factorization pipeline.
 -/
+@[expose]
 def primitiveSquareFreeDecomposition (f : ZPoly) : PrimitiveSquareFreeDecomposition :=
   let primitive := primitivePart f
   if primitive.isZero then
@@ -1986,11 +1990,7 @@ private theorem rat_leadingCoeff_ne_zero_of_pos_size (p : DensePoly Rat) (hpos :
   have hidx : p.coeffs.size - 1 < p.coeffs.size := by
     simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hpos
   have hlead_eq : p.leadingCoeff = p.coeff (p.size - 1) := by
-    unfold DensePoly.leadingCoeff DensePoly.coeff
-    change p.coeffs.back?.getD (0 : Rat) =
-      p.coeffs.getD (p.coeffs.size - 1) (Zero.zero : Rat)
-    rw [Array.back?_eq_getElem?, Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hidx]
-    rfl
+    simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
   rw [hlead_eq]
   exact DensePoly.coeff_last_ne_zero_of_pos_size p hpos
 
@@ -2716,7 +2716,7 @@ private instance ratDivModLaws : DensePoly.DivModLaws Rat where
       have hq' : q % m = q + m * rq := rat_eq_add_mul_of_sub_eq_mul hq
       exact rat_mul_left_remainder_delta p q m rp rq hp' hq'⟩
 
-private instance ratGcdLaws : DensePoly.GcdLaws Rat where
+instance ratGcdLaws : DensePoly.GcdLaws Rat where
   gcd_dvd_left := by
     intro f g
     exact DensePoly.gcd_dvd_left_of_divModLaws
