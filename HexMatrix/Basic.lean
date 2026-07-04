@@ -45,8 +45,8 @@ does not reduce in the kernel. Compiled code runs the allocation-free
 `Fin.foldl` loop `dotProductImpl` via the `@[csimp]` below.
 
 TODO: once https://github.com/leanprover/lean4/pull/14267 (make `Fin.foldl`
-structurally recursive so it reduces in the kernel) lands and this project's
-toolchain is bumped past it, collapse this reference/compiled split: define
+reduce in the kernel) lands and this project's toolchain is bumped past it,
+collapse this reference/compiled split: define
 `dotProduct` directly as the native `Fin.foldl` loop and delete `dotProductImpl`
 and `dotProduct_eq_impl`. The native form will then kernel-reduce on its own, so
 the `memLattice` `decide` checks keep working without the `List.finRange`
