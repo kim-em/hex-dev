@@ -285,7 +285,7 @@ Never bend the implementation to a future proof. Never introduce an `axiom`.
   — hybrid (self-certifying): `factorHybrid` / `factorHybridTraced`,
     `factorHybrid_product`, `factorHybridFactors`;
   — public entry (now the hybrid, since #8404): `factor` / `factor?`. The old
-    cap-based `factorWithBound` / `factorFast` remain as proof-facing combinators.
+    cap-based `factorFast` remains as a proof-facing combinator.
 - **Reused tiers:** `HexBerlekamp/` (mod-`p` Berlekamp), `HexHensel/` (lift),
   `HexLLL/` (van Hoeij short vectors), `HexPoly*/` (arithmetic).
 - **Conformance:** `HexBerlekampZassenhaus/EmitFixtures.lean`,

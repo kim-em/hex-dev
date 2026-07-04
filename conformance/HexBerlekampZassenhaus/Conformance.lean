@@ -20,7 +20,7 @@ Covered operations:
 - `henselLiftData`
 - `bhksRecover?`, `recombinationSearch`, `factorSlowTrial`,
   `factorSlowModular`, and `factorFast`
-- `factorWithBound` and `factor`
+- `factor`
 - `PrimeFactorData.degreeSum`, `PrimeFactorData.factorProduct`,
   `PrimeFactorData.containsDegree`, `PrimeFactorData.hasSubsetDegree`,
   `PrimeFactorData.checkFactorCerts`, `PrimeFactorData.checkForPolynomial`,
@@ -547,16 +547,6 @@ recovered true factor.
   match factorFast (linear 3) with
   | some φ => Factorization.product φ = linear 3
   | none => false
-
-#guard
-  let factors := factorWithBound (linear 3) 4
-  Factorization.product factors = linear 3
-#guard
-  let factors := factorWithBound repeatedRootPoly 4
-  Factorization.product factors = repeatedRootPoly
-#guard
-  let factors := factorWithBound cubicLinear123 4
-  Factorization.product factors = cubicLinear123
 #guard
   let factors := factor monomialWithContent
   Factorization.product factors = monomialWithContent
