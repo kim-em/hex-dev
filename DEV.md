@@ -281,7 +281,7 @@ Never bend the implementation to a future proof. Never introduce an `axiom`.
   — classical tier: `scaledRecombinationSmart` (+ `subsetsOfSizeWithComplement`,
     `RecombStats`), `factorClassical` (+ `…WithBound`, `classicalCoreFactorsWithBound`);
   — lattice tier: `factorLattice` (+ `bhksSingleAllOnesPartition`) over the
-    `bhks*` / `factorFastCore*` machinery;
+    `bhks*` machinery (basis, recovery loop, floor);
   — hybrid (self-certifying): `factor` / `factorTraced`,
     `factor_product`, `factorFactors`;
   — public entry (now the hybrid, since #8404): `factor` / `factor?`.
