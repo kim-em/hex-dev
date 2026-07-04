@@ -95,9 +95,7 @@ def monicPoly (degree salt : Nat) : FpPoly 5 :=
 /-- Generated monic polynomials have leading coefficient one. -/
 theorem monicPoly_monic (degree salt : Nat) : DensePoly.Monic (monicPoly degree salt) := by
   unfold monicPoly DensePoly.Monic DensePoly.leadingCoeff
-  change (((Array.range degree).map fun i => coeffValue degree i salt).push
-    (1 : ZMod64 5)).back?.getD 0 = 1
-  simp
+  simp [Array.getElem_push] <;> rfl
 
 /-- Stable checksum for polynomial-valued benchmark results. -/
 def checksumPoly (f : FpPoly 5) : UInt64 :=

@@ -199,7 +199,7 @@ def monicDivisor (degree : Nat) : DensePoly F7 :=
 
 /-- Generated monomial divisors are monic by construction. -/
 theorem monicDivisor_monic (degree : Nat) : DensePoly.Monic (monicDivisor degree) := by
-  simp [monicDivisor, DensePoly.Monic, DensePoly.leadingCoeff]
+  simp [monicDivisor, DensePoly.Monic, DensePoly.leadingCoeff, Array.getElem_push] <;> rfl
 
 /-- Stable bounded observable for polynomial-valued benchmark results. -/
 def checksum [Hashable R] [Zero R] [DecidableEq R] (p : DensePoly R) : UInt64 :=

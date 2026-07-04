@@ -249,11 +249,7 @@ private def mkMonicAux {p : Nat} [ZMod64.Bounds p]
         exact h1ne0 (Option.some.inj hback) }
   ⟨f, by
     show f.leadingCoeff = 1
-    show f.coeffs.back?.getD 0 = 1
-    have hlast : f.coeffs.back? = some 1 := by
-      simp [f, coeffs]
-    rw [hlast]
-    rfl⟩
+    simp [DensePoly.leadingCoeff, f, coeffs, Array.getElem_push] <;> rfl⟩
 
 /-- Wrap a list of `Nat` coefficients as a monic `FpPoly p`. -/
 private def mkMonic {p : Nat} [ZMod64.Bounds p]
