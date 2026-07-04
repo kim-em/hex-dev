@@ -6,7 +6,7 @@ Connects hex-lll to Mathlib's linear algebra:
 
 ## Headline correctness theorem
 
-`lll_first_row_norm_sq_le_unconditional`: the Euclidean short-vector bound for
+`lll_first_row_norm_sq_le`: the Euclidean short-vector bound for
 the public `lll`, stated with Mathlib's `EuclideanSpace` norm and `Submodule ℤ`
 membership. For any nonzero lattice vector `x`,
 

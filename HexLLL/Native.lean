@@ -430,23 +430,22 @@ theorem potential_eq_gramDetProduct (s : LLLState n m) (hvalid : s.Valid) :
         1 := by
   simp [potential, hvalid.d_eq]
 
-/-- Proof-free executable `LLLState` constructor. Mathlib-free callers that
-only need executable output (benchmarks, fixture emitters, BHKS projected-row
-computation) can use this directly without manufacturing a `b.independent`
-proof. The proof-carrying `ofBasis` is a thin wrapper. -/
+/-- Initial `LLLState` constructor: build the integer state directly from a
+basis matrix. The `ν` field is the integral scaled Gram-Schmidt coefficient
+matrix and the `d` field is the leading Gram-determinant vector.
+
+Takes no independence hypothesis: the construction is purely executable, and the
+resulting state is even `Valid` unconditionally (see
+`HexLLLMathlib.LLLState.ofBasis_valid`). `b.independent` enters only in the
+theorems about the reducer's *output* (`lllNative_isLLLReduced` and the
+short-vector bounds), never in building the state. Mathlib-free callers
+(benchmarks, fixture emitters, BHKS projected-row computation) use it directly. -/
 @[expose]
-def ofBasisUnchecked (b : Matrix Int n m) : LLLState n m :=
+def ofBasis (b : Matrix Int n m) : LLLState n m :=
   let gs := GramSchmidt.Int.data b
   { b
     ν := gs.ν
     d := gs.d }
-
-/-- Initial `LLLState` constructor: build the integer state directly from a
-basis matrix. The `ν` field is the integral scaled Gram-Schmidt coefficient
-matrix and the `d` field is the leading Gram-determinant vector. -/
-@[expose]
-def ofBasis (b : Matrix Int n m) (_hind : b.independent) : LLLState n m :=
-  ofBasisUnchecked b
 
 end LLLState
 
@@ -549,7 +548,7 @@ end Internal
 open Hex.Internal
 
 /-- Native (non-dispatched) executable LLL entry point. Builds the canonical
-integer state via `LLLState.ofBasisUnchecked` and dispatches to `lllAux`.
+integer state via `LLLState.ofBasis` and dispatches to `lllAux`.
 This is the body the public `lll` runs by default; its output achieves the
 classical size-reduction bound `|μ| ≤ 1/2` (η = 1/2), so its short-vector
 guarantee uses `α = 1/(δ − 1/4)` with the classical precondition `1/4 < δ`. -/
@@ -557,7 +556,7 @@ guarantee uses `α = 1/(δ − 1/4)` with the classical precondition `1/4 < δ`.
 def lllNative (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
     Matrix Int n m :=
-  lllAux (LLLState.ofBasisUnchecked b) 1 δ hδ hδ' (Nat.le_refl 1) hn
+  lllAux (LLLState.ofBasis b) 1 δ hδ hδ' (Nat.le_refl 1) hn
 
 namespace Internal
 

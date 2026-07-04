@@ -67,17 +67,19 @@ side-effect-free apart from the one-shot static-symbol probe it may trigger. -/
 def lll.providerActive : IO Bool :=
   return Internal.LLLProvider.providerAvailable ()
 
-/-- Proof-free executable variant of `lll.firstShortVector`. Runs the exact
-`lllNative` reducer directly. -/
+/-- First row of `lllNative`'s output: the `lll.firstShortVector` counterpart on
+the exact native path. It never consults an external provider and takes no
+`b.independent` hypothesis, so Mathlib-free callers can use it directly; its
+short-vector guarantee is `lllNative_first_row_norm_sq_le` at `η = 1/2`. -/
 @[expose]
-def lll.firstShortVectorUnchecked (b : Matrix Int n m) (δ : Rat)
+def lllNative.firstShortVector (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
     Vector Int m :=
   (lllNative b δ hδ hδ' hn).getRow ⟨0, hn⟩
 
 /-- The first row of the reduced basis: a provably short vector, bounded by the
 LLL approximation factor relative to any nonzero lattice vector (see
-`lll_first_row_norm_sq_le_unconditional`), not necessarily the shortest lattice
+`lll_first_row_norm_sq_le`), not necessarily the shortest lattice
 vector. Canonical short-vector entry point for downstream callers such as
 `hex-berlekamp-zassenhaus` recombination. -/
 @[expose]
@@ -87,10 +89,11 @@ def lll.firstShortVector (b : Matrix Int n m) (δ : Rat)
     Vector Int m :=
   (lll b δ hδ hδ' hn hind).getRow ⟨0, hn⟩
 
-/-- Proof-free executable variant of `lll.shortVectors`. Runs the exact
-`lllNative` reducer directly. -/
+/-- Full `lllNative` output as an ordered array of candidate short vectors: the
+`lll.shortVectors` counterpart on the exact native path, forgoing the external
+provider and the `b.independent` hypothesis. -/
 @[expose]
-def lll.shortVectorsUnchecked (b : Matrix Int n m) (δ : Rat)
+def lllNative.shortVectors (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
     Array (Vector Int m) :=
   (lllNative b δ hδ hδ' hn).rows.toArray

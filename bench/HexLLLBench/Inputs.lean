@@ -35,7 +35,7 @@ instance : Hashable StateInput where
   hash input :=
     hash (input.rows, input.cols, input.j.val, input.k.val)
 
-/-- Matrix input for benchmarking `LLLState.ofBasisUnchecked` itself. -/
+/-- Matrix input for benchmarking `LLLState.ofBasis` itself. -/
 structure OfBasisInput where
   rows : Nat
   cols : Nat
@@ -48,7 +48,7 @@ instance : Hashable OfBasisInput where
   hash input :=
     hash (input.rows, input.cols, input.j.val, input.k.val)
 
-/-- Prepared basis for `lll.firstShortVectorUnchecked` benchmarks. -/
+/-- Prepared basis for `lllNative.firstShortVector` benchmarks. -/
 structure FirstShortVectorInput where
   rows : Nat
   cols : Nat
@@ -96,7 +96,7 @@ def generatedBasis (rows salt : Nat) : Matrix Int rows rows :=
 
 /-- Build the executable LLL state for a deterministic matrix. -/
 def stateOf (b : Matrix Int n m) : LLLState n m :=
-  LLLState.ofBasisUnchecked b
+  LLLState.ofBasis b
 
 /-- Per-parameter fixture: a prepared `(n + 3) x (n + 3)` LLL state. -/
 def prepStateInput (n : Nat) : StateInput :=
@@ -586,7 +586,7 @@ def ofBasisRandomBoundedBasis (rows salt : Nat) : Matrix Int rows rows :=
 def ofBasisHarshCubicBasis (rows salt : Nat) : Matrix Int rows rows :=
   Matrix.ofFn fun i j => ofBasisHarshCubicEntry rows i.val j.val salt
 
-/-- General constructor for an `LLLState.ofBasisUnchecked` benchmark fixture.
+/-- General constructor for an `LLLState.ofBasis` benchmark fixture.
 The benchmark parameter maps to `rows = n + 3`, so the final two row indices
 are always available for the result checksum. -/
 def prepOfBasisInput (n cols : Nat) (basis : Matrix Int (n + 3) cols) :
@@ -715,7 +715,7 @@ def ofBasisHarshCubicComplexity (n : Nat) : Nat :=
 
 /-- Benchmark target: construct the initial integer LLL state for a basis. -/
 def runOfBasisChecksum (input : OfBasisInput) : Int :=
-  let s := LLLState.ofBasisUnchecked input.basis
+  let s := LLLState.ofBasis input.basis
   stateUpdateChecksum s input.j input.k
 
 /-- Benchmark target for the BZ recombination input family. -/
@@ -779,7 +779,7 @@ private theorem lllCertifiedDeltaLower : (121 / 400 : Rat) < 3 / 4 := by
 /-- Benchmark target: run LLL on one prepared basis and checksum the first row. -/
 def runFirstShortVectorChecksum (input : FirstShortVectorInput) : Int :=
   intVectorChecksum
-    (lll.firstShortVectorUnchecked input.basis (3 / 4)
+    (lllNative.firstShortVector input.basis (3 / 4)
       lllDeltaLower lllDeltaUpper input.hn)
 
 /-- Explicitly install the fpLLL provider for the bench process from the shared
@@ -837,10 +837,10 @@ def runDispatchedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO I
 
 /-- Benchmark comparator observable: squared norm of Lean's first LLL vector.
 The verified-Isabelle Haskell extraction reports the same scalar. Runs the
-exact native path (`lll.firstShortVectorUnchecked`, i.e. `lllNative`). -/
+exact native path (`lllNative.firstShortVector`, i.e. `lllNative`). -/
 def runFirstShortVectorNormSq (input : FirstShortVectorInput) : Int :=
   Vector.normSq
-    (lll.firstShortVectorUnchecked input.basis (3 / 4)
+    (lllNative.firstShortVector input.basis (3 / 4)
       lllDeltaLower lllDeltaUpper input.hn)
 
 /-- Benchmark comparator observable for the exact `d`/`ν` reducer: squared norm

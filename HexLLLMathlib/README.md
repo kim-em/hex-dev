@@ -32,7 +32,7 @@ import HexLLLMathlib
 open HexLLLMathlib
 
 -- The headline: the reduced first row is short relative to any lattice vector.
-#check @lll_first_row_norm_sq_le_unconditional
+#check @lll_first_row_norm_sq_le
 
 -- The executable row lattice as a Mathlib `Submodule ℤ`, and `Hex.lll`
 -- preserving it.
@@ -52,7 +52,7 @@ of `Hex.lll b δ …` has squared Euclidean norm at most
 `(1 / (δ − 121/400))^(n−1)` times that of `x`:
 
 ```lean
-theorem lll_first_row_norm_sq_le_unconditional
+theorem lll_first_row_norm_sq_le
     (b : Hex.Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent)
@@ -78,7 +78,7 @@ the native and certified-external paths establish the same `(δ, 11/20)`-reduced
 and same-lattice post-condition the bound consumes. The native entry
 `Hex.lllNative` carries the stronger classical statement at the tighter base
 `1/(δ − 1/4)` (length factor `(1 / (δ − 1/4))^((n−1)/2)`, the classical LLL
-bound) in `lllNative_first_row_norm_sq_le_unconditional`.
+bound) in `lllNative_first_row_norm_sq_le`.
 
 **Lattice preservation.** `Hex.lll` and `Hex.lllNative` leave the generated
 submodule unchanged:
@@ -107,8 +107,8 @@ algebra:
   squared norm. Together with `HexMatrixMathlib.vectorEquiv` (the bijection
   `Vector Int m ≃ (Fin m → ℤ)`) these turn the executable rational bound into
   the Euclidean statement above.
-- the short-vector capstones `lll_first_row_norm_sq_le_unconditional` and
-  `lllNative_first_row_norm_sq_le_unconditional`, and the lattice-preservation
+- the short-vector capstones `lll_first_row_norm_sq_le` and
+  `lllNative_first_row_norm_sq_le`, and the lattice-preservation
   transfer lemmas `lll_mem_latticeSubmodule_iff` and
   `lllNative_mem_latticeSubmodule_iff`.
 - the checker soundness theorems `lllReducedInt_sound`,

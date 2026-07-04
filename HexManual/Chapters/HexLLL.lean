@@ -197,19 +197,20 @@ basis as an ordered candidate list.
 
 {docstring Hex.lll.shortVectors}
 
-Each has an `Unchecked` variant. These call `lllNative` directly, so they
-take the tighter native precondition `1/4 < δ` and skip the provider
-dispatch and its certification. They also omit the `b.independent`
-hypothesis — and this is the key point: independence is a precondition of
-the *theorems* about the output, not of the *computation*. The reducer
-runs on any input; the `Unchecked` variants simply forgo the reduced-basis
-guarantees, so you get the reduced rows back without having to discharge an
-independence proof. That is what makes them convenient for quick
+Each has a counterpart under the {name}`Hex.lllNative` namespace.
+{name}`Hex.lllNative.firstShortVector` and {name}`Hex.lllNative.shortVectors`
+call `lllNative` directly, so they take the tighter native precondition
+`1/4 < δ` and skip the provider dispatch and its certification. They also omit
+the `b.independent` hypothesis — and this is the key point: independence is a
+precondition of the *theorems* about the output, not of the *computation*. The
+reducer runs on any input; the native-namespace variants simply forgo the
+reduced-basis guarantees, so you get the reduced rows back without having to
+discharge an independence proof. That is what makes them convenient for quick
 experimentation.
 
-{docstring Hex.lll.firstShortVectorUnchecked}
+{docstring Hex.lllNative.firstShortVector}
 
-{docstring Hex.lll.shortVectorsUnchecked}
+{docstring Hex.lllNative.shortVectors}
 
 # Certified external dispatch
 %%%

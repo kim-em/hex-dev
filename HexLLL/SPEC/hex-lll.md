@@ -100,7 +100,7 @@ theorem lllNative_short_vector (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hli : b.independent)
     (v : Vector Int m) :
     b.memLattice v → v ≠ 0 →
-    (lllNative b δ hδ hδ' hn hli).row 0 |>.normSq ≤ (1/(δ - 1/4))^(n-1) * v.normSq
+    (lllNative b δ hδ hδ' hn).row 0 |>.normSq ≤ (1/(δ - 1/4))^(n-1) * v.normSq
 ```
 
 The classical bound and the wide `δ > 1/4` range live on `lllNative`: at
@@ -240,7 +240,7 @@ def lllAux (s : LLLState n m) (k : Nat) (δ : Rat)
     `hex-gram-schmidt` lemmas `GramSchmidt.Int.gramDetVec_eq_gramDet`
     and `GramSchmidt.Int.scaledCoeffs_eq` (suitably massaged through the
     `Rat` casts in their statements). -/
-def LLLState.ofBasis (b : Matrix Int n m) (hind : b.independent) :
+def LLLState.ofBasis (b : Matrix Int n m) :
     LLLState n m :=
   { b
     ν := GramSchmidt.Int.scaledCoeffs b
@@ -250,7 +250,7 @@ def LLLState.ofBasis (b : Matrix Int n m) (hind : b.independent) :
 
 def lll (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) : Matrix Int n m :=
-  lllAux (LLLState.ofBasis b hind) 1 δ hδ hδ' (by omega) (by omega)
+  lllAux (LLLState.ofBasis b) 1 δ hδ hδ' (by omega) (by omega)
 ```
 
 The `ν_eq` and `d_eq` fields are discharged from the `hex-gram-schmidt`

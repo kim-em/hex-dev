@@ -159,7 +159,7 @@ theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bh
 The van Hoeij knapsack basis `[I_r | Ã ; 0 | diag(p^(a-l_j))]` is upper-triangular
 with strictly positive diagonal (1's in the `I_r` block, `p^(a-l_j)` in the
 `D` block), so its rows are LLL-independent.  This is the entry gate to the
-proven LLL short-vector bound `HexLLLMathlib.lllNative_first_row_norm_sq_le_unconditional`.
+proven LLL short-vector bound `HexLLLMathlib.lllNative_first_row_norm_sq_le`.
 -/
 
 /-- The BHKS knapsack lattice basis is upper-triangular: below-diagonal entries
@@ -219,7 +219,7 @@ theorem bhksLatticeBasis_basis_independent
 lattice is a short vector: its squared Euclidean norm is bounded by the LLL
 approximation factor `(1/(δ-1/4))^(n-1)` (at `δ = 3/4`) times the squared norm
 of *any* nonzero lattice vector.  This is the direct application of the proven
-`HexLLLMathlib.lllNative_first_row_norm_sq_le_unconditional` to the BHKS basis,
+`HexLLLMathlib.lllNative_first_row_norm_sq_le` to the BHKS basis,
 using `bhksLatticeBasis_basis_independent`.  It is the concrete "the LLL-reduced
 basis contains a short vector" fact that the van Hoeij adequacy argument feeds:
 the true-factor `0-1` indicator vectors are short lattice vectors, so the reduced
@@ -241,7 +241,7 @@ theorem bhksLatticeBasis_lllNative_first_row_short
           (((Hex.bhksLatticeBasis f p a lifted).factorCount
             + (Hex.bhksLatticeBasis f p a lifted).coeffWidth) - 1) : Rat) : ℝ) *
         ‖HexLLLMathlib.intVectorToEuclidean x‖ ^ 2 :=
-  HexLLLMathlib.lllNative_first_row_norm_sq_le_unconditional
+  HexLLLMathlib.lllNative_first_row_norm_sq_le
     (Hex.bhksLatticeBasis f p a lifted).basis (3 / 4)
     Hex.lll_delta_lower Hex.lll_delta_upper hn
     (bhksLatticeBasis_basis_independent f p a hp lifted) x hx hx0

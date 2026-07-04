@@ -52,7 +52,7 @@ def B : Matrix Int 3 3 := Matrix.ofFn fun i j =>
 -- The verified entry point. Given a proof `hind : B.independent`, `lll` returns
 -- a `(δ, 11/20)`-reduced basis of the same lattice and `lll.firstShortVector`
 -- reads off its provably short first row. The short-vector guarantee itself is
--- the theorem `lll_first_row_norm_sq_le_unconditional` in `hex-lll-mathlib`.
+-- the theorem `lll_first_row_norm_sq_le` in `hex-lll-mathlib`.
 #check @lll.firstShortVector
 #check @lll
 
@@ -60,8 +60,8 @@ def B : Matrix Int 3 3 := Matrix.ofFn fun i j =>
 -- proof-free variants. They run the exact `lllNative` directly (the body of
 -- `lll`'s native path, skipping the provider dispatch) and carry no exported
 -- short-vector theorem unless you separately prove `B.independent`.
-#eval lll.firstShortVectorUnchecked B (3 / 4) (by decide +kernel) (by decide +kernel) (by decide)
-#eval lll.shortVectorsUnchecked B (3 / 4) (by decide +kernel) (by decide +kernel) (by decide)
+#eval lllNative.firstShortVector B (3 / 4) (by decide +kernel) (by decide +kernel) (by decide)
+#eval lllNative.shortVectors B (3 / 4) (by decide +kernel) (by decide +kernel) (by decide)
 
 -- The executable integer reducedness oracle.
 #eval lllReducedInt (Matrix.identity 3) (3 / 4) (1 / 2)   -- true
@@ -96,7 +96,7 @@ The surface, by group:
 - `lllNative`: the exact integer reducer at the classical `η = 1/2`, with the
   tighter short-vector constant; call it directly to get the classical
   guarantee.
-- `lll.firstShortVectorUnchecked` and `lll.shortVectorsUnchecked`: proof-free
+- `lllNative.firstShortVector` and `lllNative.shortVectors`: proof-free
   variants of the entry points for callers without an independence proof.
 - `lllReducedInt`, `lllReducedInterval`, and `lllReducedCheck`: the exact,
   fixed-precision, and dispatched reducedness oracles; `certCheck` is the
