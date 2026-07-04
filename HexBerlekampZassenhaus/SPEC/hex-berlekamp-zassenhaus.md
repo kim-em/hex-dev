@@ -902,3 +902,47 @@ Soundness split:
   `checkIrreducibleCert f cert = true → Irreducible f`. This follows
   from C1 (`factor` correctness) plus the certificate's per-prime
   degree-obstruction soundness.
+
+### Kernel-checked irreducibility MUST be certificate-verifying
+
+A trusted irreducibility decision — one the kernel checks, rather than
+compiled evaluation — MUST verify a certificate the kernel did not build.
+The certificate is prepared by *compiled* code; the kernel checks only
+
+- the factorization identity (the factors multiply back to `f`, over `ℤ`), and
+- `checkIrreducibleCert g cert = true` for each factor `g`, against the
+  soundness theorem `checkIrreducibleCert f cert = true → Irreducible f`.
+
+`factor` / `factorLattice` and the certificate construction MUST NOT run in
+the kernel — that is compiled preparation. (Pratt certificates for
+irreducibility: the witness is expensive to find, cheap to check.)
+
+Why (`native_decide` is banned): kernel reduction of the recombination is
+exponential, so kernel-running `factor` terminates only up to small degree.
+Any decision whose Boolean predicate calls `factor` inherits that wall and
+is at most a small-degree fallback — in particular a plain `Decidable`
+instance consumed by `decide` cannot satisfy this requirement, since
+`decide` reduces the instance in the kernel. The certifying path is
+therefore a tactic (or other elaboration-time preparation) that runs
+compiled `factor` + certificate generation, reifies the certificate, and
+emits the kernel check. A re-runnable benchmark SHOULD measure the frontier
+— the degree at which kernel `decide` on `factor` stops terminating within
+a fixed budget. Downstream specs that kernel-check `Irreducible` /
+`IsIrreducible` obligations (`SPEC/Libraries/hex-roots.md`,
+`SPEC/Libraries/hex-number-field.md`) depend on this.
+
+**Mod-`p` (Berlekamp layer).** Over `F_p` there is a computable *complete*
+decision `ℤ` lacks: `rabinTest`, with
+`rabinTest f hmonic = true ↔ Irreducible (toMathlibPolynomial f)`.
+
+- Mod-`p` irreducibility MUST be decided by a computable `rabinTest`-backed
+  `Decidable` instance (Rabin on the monic normalization, degree/unit cases
+  handled), so `decide +kernel` works over `F_p` — never a
+  noncomputable/classical instance, never kernel-run Berlekamp factorization.
+- `rabinTest` computes the Frobenius chain `x^(p^i) mod f` in the kernel, so
+  it too has a frontier — further out than full factorization (no
+  recombination) but still bounded. Below it, kernel-compute `rabinTest`;
+  above it, verify a precomputed `Berlekamp.IrreducibilityCertificate`
+  (`checkIrreducibilityCertificate`) instead. These are the `factorCerts` of
+  a `ZPolyIrreducibilityCertificate`'s `PrimeFactorData` — the per-factor
+  case of the `ℤ` certificate.
