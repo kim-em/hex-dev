@@ -14,7 +14,6 @@ Systems (``--systems`` selects a comma-separated subset; default: all):
 
     hex-factor               hexbz_factor_service --entry factor
     hex-lattice              hexbz_factor_service --entry factorLattice
-    hex-fast                 hexbz_factor_service --entry factorFast
     hex-classical-nodecline  hexbz_factor_service --entry factorClassicalNoDecline
     flint                    bz_flint_service.py
     pari                     bz_pari_service.py
@@ -78,7 +77,7 @@ OVERHEAD_REPEATS = 21
 #
 # `conway` is included even though it is not strictly monotonic: a lifted Conway
 # polynomial's difficulty is non-monotonic in degree because the reducer's prime
-# choice varies (e.g. `factorFast` times out on C_{2,12} yet solves C_{2,16} in
+# choice varies (e.g. `hex-lattice` times out on C_{2,12} yet solves C_{2,16} in
 # milliseconds). The consecutive-run threshold (default 3) is what makes this
 # safe: an isolated prime-lucky solve resets the counter and survives, while the
 # genuinely hopeless tail — a long unbroken run of timeouts — is still cut off.
@@ -180,7 +179,6 @@ def _pari_version() -> str:
 SYSTEMS = {
     "hex-factor": SystemSpec("hex-factor", _hex_service_argv("factor"), _lean_toolchain),
     "hex-lattice": SystemSpec("hex-lattice", _hex_service_argv("factorLattice"), _lean_toolchain),
-    "hex-fast": SystemSpec("hex-fast", _hex_service_argv("factorFast"), _lean_toolchain),
     "hex-classical-nodecline": SystemSpec(
         "hex-classical-nodecline", _hex_service_argv("factorClassicalNoDecline"), _lean_toolchain),
     "flint": SystemSpec("flint", _python_service_argv("bz_flint_service.py", "flint"), _flint_version),
