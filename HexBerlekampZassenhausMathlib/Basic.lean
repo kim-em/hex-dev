@@ -16455,11 +16455,11 @@ in `HexBerlekampZassenhaus/Basic.lean` with the `toPolynomial` map.
 The remaining count-equality hypothesis is the open obligation of
 #4022 — once supplied, this lemma feeds directly into
 `HexBerlekampZassenhausMathlib.UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card`. -/
-theorem factorFastCoreWithBound_some_factor_irreducible_of_count
+theorem bhksRecoveryCoreWithBound_some_factor_irreducible_of_count
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
     (hcore_ne : core ≠ 0)
-    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (h : Hex.bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors)
     (hcount :
       (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length =
         (UniqueFactorizationMonoid.normalizedFactors
@@ -16476,7 +16476,7 @@ theorem factorFastCoreWithBound_some_factor_irreducible_of_count
     coreFactors.toList.map HexPolyZMathlib.toPolynomial with hgs_def
   have hprod : Associated gs.prod f := by
     have hp_core : Array.polyProduct coreFactors = core :=
-      Hex.factorFastCoreWithBound_product core B primeData k fuel coreFactors h
+      Hex.bhksRecoveryCoreWithBound_product core B primeData k fuel coreFactors h
     have hp_poly :
         (coreFactors.toList.map HexPolyZMathlib.toPolynomial).prod =
           HexPolyZMathlib.toPolynomial core := by
@@ -16484,11 +16484,11 @@ theorem factorFastCoreWithBound_some_factor_irreducible_of_count
     rw [hgs_def, hp_poly, hf_def]
   have hdvd_all :
       ∀ factor ∈ coreFactors.toList, factor ∣ core :=
-    Hex.factorFastCoreWithBound_some_dvd core B primeData k fuel coreFactors h
+    Hex.bhksRecoveryCoreWithBound_some_dvd core B primeData k fuel coreFactors h
   have hrecord_all :
       ∀ factor ∈ coreFactors.toList,
         Hex.shouldRecordPolynomialFactor factor = true :=
-    Hex.factorFastCoreWithBound_some_shouldRecord h
+    Hex.bhksRecoveryCoreWithBound_some_shouldRecord h
   have hne_all : ∀ g ∈ gs, g ≠ 0 := by
     intro g hg
     rw [hgs_def, List.mem_map] at hg
@@ -16519,11 +16519,11 @@ theorem factorFastCoreWithBound_some_factor_irreducible_of_count
 The emitted factor list consists of non-zero non-units whose product is
 associated to `core`, so the abstract UFD partition bound applies after
 transporting the executable factors to `Polynomial ℤ`. -/
-theorem factorFastCoreWithBound_some_factor_count_le
+theorem bhksRecoveryCoreWithBound_some_factor_count_le
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
     (hcore_ne : core ≠ 0)
-    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors) :
+    (h : Hex.bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors) :
     (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length ≤
       (UniqueFactorizationMonoid.normalizedFactors
         (HexPolyZMathlib.toPolynomial core)).card := by
@@ -16537,7 +16537,7 @@ theorem factorFastCoreWithBound_some_factor_count_le
     coreFactors.toList.map HexPolyZMathlib.toPolynomial with hgs_def
   have hprod : Associated gs.prod f := by
     have hp_core : Array.polyProduct coreFactors = core :=
-      Hex.factorFastCoreWithBound_product core B primeData k fuel coreFactors h
+      Hex.bhksRecoveryCoreWithBound_product core B primeData k fuel coreFactors h
     have hp_poly :
         (coreFactors.toList.map HexPolyZMathlib.toPolynomial).prod =
           HexPolyZMathlib.toPolynomial core := by
@@ -16546,7 +16546,7 @@ theorem factorFastCoreWithBound_some_factor_count_le
   have hrecord_all :
       ∀ factor ∈ coreFactors.toList,
         Hex.shouldRecordPolynomialFactor factor = true :=
-    Hex.factorFastCoreWithBound_some_shouldRecord h
+    Hex.bhksRecoveryCoreWithBound_some_shouldRecord h
   have hne_all : ∀ g ∈ gs, g ≠ 0 := by
     intro g hg
     rw [hgs_def, List.mem_map] at hg
@@ -16574,11 +16574,11 @@ The remaining BHKS/B8 work is to derive the `hirr` hypothesis from the
 equivalence-class partition-refinement argument for the concrete success
 state.  Once supplied, the abstract UFD partition theorem gives the reverse
 count inequality needed to pair with
-`factorFastCoreWithBound_some_factor_count_le`. -/
-theorem factorFastCoreWithBound_some_factor_count_ge_of_irreducible
+`bhksRecoveryCoreWithBound_some_factor_count_le`. -/
+theorem bhksRecoveryCoreWithBound_some_factor_count_ge_of_irreducible
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
-    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (h : Hex.bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors)
     (hirr :
       ∀ factor ∈ coreFactors.toList,
         Irreducible (HexPolyZMathlib.toPolynomial factor)) :
@@ -16590,7 +16590,7 @@ theorem factorFastCoreWithBound_some_factor_count_ge_of_irreducible
     coreFactors.toList.map HexPolyZMathlib.toPolynomial with hgs_def
   have hprod : Associated gs.prod f := by
     have hp_core : Array.polyProduct coreFactors = core :=
-      Hex.factorFastCoreWithBound_product core B primeData k fuel coreFactors h
+      Hex.bhksRecoveryCoreWithBound_product core B primeData k fuel coreFactors h
     have hp_poly :
         (coreFactors.toList.map HexPolyZMathlib.toPolynomial).prod =
           HexPolyZMathlib.toPolynomial core := by
@@ -16608,11 +16608,11 @@ theorem factorFastCoreWithBound_some_factor_count_ge_of_irreducible
 
 /-- Cardinality equality for a successful BHKS fast-core branch once the
 BHKS/B8 proof has certified every emitted candidate irreducible. -/
-theorem factorFastCoreWithBound_some_factor_count_eq_of_irreducible
+theorem bhksRecoveryCoreWithBound_some_factor_count_eq_of_irreducible
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
     (hcore_ne : core ≠ 0)
-    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (h : Hex.bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors)
     (hirr :
       ∀ factor ∈ coreFactors.toList,
         Irreducible (HexPolyZMathlib.toPolynomial factor)) :
@@ -16620,12 +16620,12 @@ theorem factorFastCoreWithBound_some_factor_count_eq_of_irreducible
       (UniqueFactorizationMonoid.normalizedFactors
         (HexPolyZMathlib.toPolynomial core)).card := by
   apply le_antisymm
-  · exact factorFastCoreWithBound_some_factor_count_le hcore_ne h
-  · exact factorFastCoreWithBound_some_factor_count_ge_of_irreducible h hirr
+  · exact bhksRecoveryCoreWithBound_some_factor_count_le hcore_ne h
+  · exact bhksRecoveryCoreWithBound_some_factor_count_ge_of_irreducible h hirr
 
 /-- Branch-local fast-core success irreducibility, expressed in the Mathlib-free
 `Hex.ZPoly.Irreducible` predicate. This is the `Hex.ZPoly` transport of
-`factorFastCoreWithBound_some_factor_irreducible_of_count`, obtained by
+`bhksRecoveryCoreWithBound_some_factor_irreducible_of_count`, obtained by
 composing that scaffold with the existing
 `Hex.ZPoly.Irreducible_iff_polynomialIrreducible` equivalence.
 
@@ -16633,11 +16633,11 @@ The remaining count-equality hypothesis is the residual #4030 obligation; once
 supplied, this lemma yields fast-core branch irreducibility directly in the
 executable `Hex.ZPoly` form needed by callers that do not import Mathlib's
 `Polynomial` model. -/
-theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count
+theorem bhksRecoveryCoreWithBound_some_factor_zpolyIrreducible_of_count
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array Hex.ZPoly}
     (hcore_ne : core ≠ 0)
-    (h : Hex.factorFastCoreWithBound core B primeData k fuel = some coreFactors)
+    (h : Hex.bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors)
     (hcount :
       (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length =
         (UniqueFactorizationMonoid.normalizedFactors
@@ -16646,7 +16646,7 @@ theorem factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count
   intro factor hfactor_mem
   exact
     (Hex.ZPoly.Irreducible_iff_polynomialIrreducible factor).mpr
-      (factorFastCoreWithBound_some_factor_irreducible_of_count
+      (bhksRecoveryCoreWithBound_some_factor_irreducible_of_count
         hcore_ne h hcount factor hfactor_mem)
 
 /--

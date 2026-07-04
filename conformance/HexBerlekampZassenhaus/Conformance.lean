@@ -18,7 +18,7 @@ Covered operations:
 - `normalizeForFactor`, `normalizationPrefixFactors`, and
   `reassembleNormalizedFactors`
 - `henselLiftData`
-- `bhksRecover?`, `recombinationSearch`, `factorSlowTrial`,
+- `bhksRecover?`, `recombinationSearch`, `factorTrial`,
   and `factorClassicalNoDecline`
 - `factor`
 - `PrimeFactorData.degreeSum`, `PrimeFactorData.factorProduct`,
@@ -525,9 +525,9 @@ recovered true factor.
   | none => false
 
 #guard
-  Factorization.product (factorSlowTrial liftedTarget3) = liftedTarget3
+  Factorization.product (factorTrial liftedTarget3) = liftedTarget3
 #guard
-  let φ := factorSlowTrial quadSqrt2Sqrt3
+  let φ := factorTrial quadSqrt2Sqrt3
   Factorization.product φ = quadSqrt2Sqrt3 &&
     sameFactorCoeffSet (factorizationCoeffSummary φ)
       (factorCoeffSummary quadSqrt2Sqrt3ExpectedFactors |>.map fun coeffs =>

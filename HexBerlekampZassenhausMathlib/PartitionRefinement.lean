@@ -211,7 +211,7 @@ This composes the lifted-support partition count
 (`supportPartitionByMinColumn_length_eq_liftedTrueSupports_ncard`) with the
 support-to-factor bijection (`liftedTrueSupports.ncard_eq_normalizedFactors_card`),
 exposing exactly the `hpartition` hypothesis consumed by
-`factorFastCoreWithBound_some_factor_zpolyIrreducible`.
+`bhksRecoveryCoreWithBound_some_factor_zpolyIrreducible`.
 -/
 theorem supportPartitionByMinColumn_length_eq_normalizedFactors_card
     {core : Hex.ZPoly} {d : Hex.LiftData}
