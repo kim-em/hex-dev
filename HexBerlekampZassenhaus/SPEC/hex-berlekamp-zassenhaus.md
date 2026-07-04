@@ -27,25 +27,25 @@ factors:
   modular reduction; the unconditional totality backstop, reached only
   when no admissible prime exists.
 
-The public combinator `factor` estimates the recombination cost from
-the modular factorisation and dispatches: `factorClassical` for small
-estimated cost, `factorLattice` for large `r`, `factorTrial` as the
-final backstop. All three return canonical factorisations; the tiers
+The public combinator `factor` runs `factorClassical` first under a
+budget read off the modular factorisation, `factorLattice` when the
+classical tier declines (large `r`), and `factorTrial` as the final
+backstop. All three return canonical factorisations; the tiers
 are result-equivalent, differing only in cost. The classical tier wins
 the *constant-factor* race against the reference on easy inputs; the
 lattice tier wins *asymptotically* on hard (high-`r`) inputs. No
 `axiom` declarations are introduced in this library or its Mathlib
 bridge; every theorem has a real proof.
 
-> **Implementation note.** Public `factor` is the cost-based hybrid
-> `factorHybrid` (classical tier first, CLD lattice tier on decline,
-> integer-trial backstop last). It replaces the earlier lattice-first
-> precision-cap dispatch, which was exponential on easy reducible inputs
-> (a low-cap lattice attempt missed, then fell through to exhaustive
-> recombination). The code still carries the standalone `factorFast` (a
-> proof-facing CLD tier without the irreducibility-certifying cap arm)
-> and `factorSlowModular` (the exhaustive modular tier) as the concrete
-> realisations the Group A/B obligations below are written against.
+> **Implementation note.** Public `factor` is the hybrid (classical tier
+> first, CLD lattice tier on decline, integer-trial backstop last). It
+> replaces the earlier lattice-first precision-cap dispatch, which was
+> exponential on easy reducible inputs (a low-cap lattice attempt missed,
+> then fell through to exhaustive recombination). `factor` is the design's
+> only public combinator: the pre-hybrid standalone tiers (`factorFast`,
+> `factorSlowModular`) and the bounded combinator `factorWithBound` are
+> legacy, scheduled for deletion via dispatched directives; until those
+> land, the code carries them as dead weight, not as SPEC surface.
 
 The public API accepts arbitrary input polynomials and normalizes
 internally: extract content, remove powers of `X`, and reduce to the
@@ -72,21 +72,22 @@ def factor          (f : ZPoly) : Factorization
 `factorClassical` and `factorLattice` are the two recombination tiers,
 both `Option`-valued because both require an admissible prime;
 `factorTrial` is the total trial-division backstop; `factor` is the
-public cost-based combinator. Each tier also exposes a bounded variant
+public hybrid combinator. Each tier also exposes a bounded variant
 `…WithBound f B` parameterised by a Mignotte coefficient bound `B`
-(used by the precision/conformance tests); `factor` runs the tiers at
-`ZPoly.defaultFactorCoeffBound f`.
+(used by the precision/conformance tests); `factor` runs the classical
+tier at `ZPoly.defaultFactorCoeffBound f` and the lattice tier at its
+own precision cap (see *Precision schedule*).
 
-The dispatch is **by estimated recombination cost, not by a precision
-cap** (see *Cost-based hybrid dispatch* below). The estimate is read
-off the modular factorisation: the lifted-factor count `r`, the
-degree distribution of the modular factors, the coefficient height /
-Mignotte precision, the expected size-ordered subset count, and the
-CLD lattice dimension. When the estimated classical cost is small,
-`factor` runs `factorClassical`; when `r` is large, it runs
-`factorLattice`; when no admissible prime exists, it runs
-`factorTrial`. The combinator is unconditionally correct because the
-final backstop is `choosePrimeData?`-independent.
+The dispatch is **classical-first with budgeted decline, not a
+precision-cap race** (see *Hybrid dispatch* below). `factor` runs
+`factorClassical` under a level-aware subset budget read off the
+modular factorisation (the lifted-factor count `r` and the degree
+distribution of the modular factors). Exhausting the budget is an
+untrustworthy "no split": the classical tier declines rather than
+claiming irreducibility, and `factorLattice` takes over. When no
+admissible prime exists, or the lattice tier misses too, `factorTrial`
+finishes. The combinator is unconditionally correct because the final
+backstop is `choosePrimeData?`-independent.
 
 **Output convention: the `Factorization` record.**
 
@@ -260,13 +261,13 @@ matches the verified Isabelle/AFP `Berlekamp_Zassenhaus` reference
 `berlekamp_zassenhaus_main` then runs `finite_field_factorization_int p f`
 once). It does not *exhaustively* minimise the modular-factor count
 across all candidate primes — that classical Zassenhaus heuristic costs
-one modular factorisation per candidate prime (≈95 per call here). But
-because `r` drives the cost-based dispatch (§*Cost-based hybrid
-dispatch*), when the first suitable prime yields an `r` **near the
-classical/lattice threshold**, the dispatcher may factor at one or two
-further admissible primes and keep the smallest `r` — a bounded retry,
-not a full sweep. On inputs comfortably inside the small-`r` regime,
-first-suitable factors `f mod p` exactly once.
+one modular factorisation per candidate prime (≈95 per call here). No
+per-prime `r` minimisation is needed: `r` drives the classical tier's
+subset budget (§*Hybrid dispatch*), so a first-suitable prime with
+unusually large `r` costs only a budgeted classical attempt before the
+lattice tier — polynomial in `r` — takes over. On inputs comfortably
+inside the small-`r` regime, first-suitable factors `f mod p` exactly
+once.
 
 **Explicit pipeline records:**
 ```lean
@@ -297,9 +298,8 @@ def bhksBound (f : ZPoly) : Nat
 ```
 
 `bhksBound` is the BHKS component of the lattice tier's precision cap
-`factorFastPrecisionCap` (keyed on the square-free core); it is the
-integer-arithmetic upper bound on BHKS Theorem 5.2's threshold (see
-*Precision schedule* below).
+(keyed on the square-free core); it is the integer-arithmetic upper
+bound on BHKS Theorem 5.2's threshold (see *Precision schedule* below).
 
 `choosePrimeData?` is `Option`-valued. The executable searches a
 **bounded hot-path candidate set** `HotPathCandidates`, fixed in
@@ -343,46 +343,43 @@ inside `choosePrimeData?` would cascade through every consumer of
 `PrimeChoiceData` (the `ZMod64.Bounds`-indexed fields prevent
 holding a non-ZMod64-backed `PrimeChoiceData`).
 
-### Cost-based hybrid dispatch
+### Hybrid dispatch: classical-first with budgeted decline
 
 **Load-bearing invariant: the dispatch always terminates in a
 `choosePrimeData?`-independent backstop.** This is what makes `factor`
-unconditionally correct on every `ZPoly`. The combinator chooses a
-recombination tier from the modular factorisation, then falls back if
-the chosen `Option`-tier returns `none`:
+unconditionally correct on every `ZPoly`. The combinator runs the
+classical tier first, accepts a tier's answer only when it reconstructs
+`f`, and falls through on decline:
 
 ```lean
 def factor (f : ZPoly) : Factorization :=
-  match choosePrimeData? f with
-  | none => factorTrial f                       -- no admissible prime: total backstop
-  | some d =>
-    let tier := dispatchTier f d                 -- cost estimate from `d`
-    match (if tier = .lattice then factorLattice f else factorClassical f) with
-    | some r => r
-    | none =>
-      -- the chosen tier missed (precision/lattice failure): try the
-      -- other recombination tier, then the unconditional trial backstop
-      match (if tier = .lattice then factorClassical f else factorLattice f) with
-      | some r => r
-      | none => factorTrial f
+  match factorClassical f with   -- level-aware subset budget inside
+  | some φ => if φ.product = f then φ else factorTrial f
+  | none =>                      -- classical declined (budget) or no admissible prime
+    match factorLattice f with   -- CLD at the lattice precision cap
+    | some φ => if φ.product = f then φ else factorTrial f
+    | none => factorTrial f      -- total, prime-independent backstop
 ```
 
-`dispatchTier f d` estimates the classical recombination cost from the
-lifted-factor count `r`, the modular factors' degree distribution, the
-coefficient height / Mignotte precision, the expected size-ordered
-subset count, and the CLD lattice dimension; near the threshold it may
-re-run `choosePrimeData?` at another admissible prime that yields a
-smaller `r` (`r` depends on the prime, not on `f` alone). Small
-estimated cost → `factorClassical`; large `r` → `factorLattice`.
+(In the implementation each tier produces a raw factor array packed via
+`factorizationOfFactors f`; the acceptance guard is
+`Factorization.product (factorizationOfFactors f cf) = f`, so every
+accepted answer is self-certifying at the dispatch boundary.)
+
+There is no up-front tier selection. The cost control lives inside the
+classical tier: it runs under a **level-aware subset budget** derived
+from the lifted-factor count `r` and the degree distribution of the
+modular factors. On small/medium-`r` inputs the classical tier answers
+cheaply; on high-`r` inputs it exhausts the budget quickly and declines,
+and the CLD lattice tier does the work.
 
 - **`factorClassical`** — Hensel lift + *size-ordered* subset
-  recombination with factor removal, under a **hard subset budget**
-  (a cap on candidate subsets tried, derived from the cost estimate).
-  Same algorithm class as the verified reference; the win is the
-  arithmetic constant. Returns `none` only when `choosePrimeData? f =
-  none` (which the outer `match` already handles) or when its subset
-  budget is exceeded — in which case the budget was mis-estimated and
-  `factorLattice` takes over.
+  recombination with factor removal, under the level-aware **hard subset
+  budget** (a cap on candidate subsets tried, read off the modular
+  factorisation). Same algorithm class as the verified reference; the
+  win is the arithmetic constant. Returns `none` when no admissible
+  prime exists or when its subset budget is exceeded — a decline, not an
+  irreducibility claim — and `factorLattice` takes over.
 - **`factorLattice`** — van Hoeij CLD lattice recombination; polynomial
   in `r`. Used when `r` is large enough that the classical subset
   search would exceed its budget (e.g. Swinnerton-Dyer inputs). May
@@ -422,9 +419,9 @@ No silent suite-shrinking, and no silent tier-downgrade.
 Three recombination tiers, all with full Mathlib-bridge proofs:
 
 - **`factorClassical : ZPoly → Option Factorization`.** Size-ordered subset recombination with factor removal, under a hard subset budget. Same algorithm class as the verified reference. **Unconditional correctness when it returns `some`:** the output is the irreducible factorisation of `f`. Returns `none` only on budget exhaustion or no admissible prime.
-- **`factorLattice : ZPoly → Option Factorization`.** Van Hoeij CLD at the full BHKS precision cap (`factorFastPrecisionCap f := max (bhksBound core) (defaultFactorCoeffBound f)` where `core := (normalizeForFactor f).squareFreeCore`; the BHKS component is keyed on the square-free core the CLD pipeline actually lifts, not on `f` — a core can have larger coefficient norm than `f`, e.g. `f = (x¹⁸−1)(x¹⁹−1)`, so `bhksBound f` can undershoot the core's separation threshold). **Conditional correctness:** `factorLattice f = some φ ⟹ φ is the irreducible factorisation of f`. May return `none`.
+- **`factorLattice : ZPoly → Option Factorization`.** Van Hoeij CLD at the full BHKS precision cap (`max (bhksBound core) (defaultFactorCoeffBound f)` where `core := (normalizeForFactor f).squareFreeCore`; the BHKS component is keyed on the square-free core the CLD pipeline actually lifts, not on `f` — a core can have larger coefficient norm than `f`, e.g. `f = (x¹⁸−1)(x¹⁹−1)`, so `bhksBound f` can undershoot the core's separation threshold). **Conditional correctness:** `factorLattice f = some φ ⟹ φ is the irreducible factorisation of f`. May return `none`.
 - **`factorTrial : ZPoly → Factorization`.** Exhaustive integer trial division. **Unconditional correctness:** `factorTrial f = irreducibleFactorisationOf f`.
-- **`factor : ZPoly → Factorization`.** The cost-based combinator (above): dispatch by estimated recombination cost, fall back to the other tier, then to `factorTrial`. Unconditionally correct.
+- **`factor : ZPoly → Factorization`.** The hybrid combinator (above): classical first, lattice on decline, `factorTrial` as the total backstop. Unconditionally correct.
 
 No axioms. BHKS Theorem 5.2 ("for precision exceeding a paper-stated
 bound, `factorLattice` always returns `some`") is a leaf theorem of
@@ -474,9 +471,9 @@ No BHKS termination theorem is needed: the loop is finite by subset enumeration,
 
 ## Large-r recombination: van Hoeij CLD lattice
 
-`factorLattice` — the tier the cost-based combinator selects when the
-lifted-factor count `r` is large enough that `factorClassical`'s
-size-ordered subset search would exceed its budget. It is **polynomial
+`factorLattice` — the tier the hybrid combinator falls through to when
+the lifted-factor count `r` is large enough that `factorClassical`'s
+size-ordered subset search exceeds its budget and declines. It is **polynomial
 in `r`** (the classical reference, and `factorClassical`, are `O(2^r)`
 there), so it is the asymptotically-correct path on the extreme-`r` tail
 — e.g. Swinnerton-Dyer inputs, which split into many small factors mod
@@ -550,8 +547,8 @@ The `bhksBound : ZPoly → Nat` helper is one of HO-1's deliverables. A safe exp
 
 Termination of the doubling loop:
 
-- If the loop reaches a state where every equivalence-class candidate verifies via exact division and `∏ candidates = f` (up to `lc(f)` and content), `factorFast` returns `some gs`. This is the success path; conditional correctness applies. **In practice, the BHKS algorithm exits via this `L' = W` certificate at precision much lower than the BHKS-bound cap** (BHKS §4.4 explicitly: "a practical implementation should not use the precision bound … because the equations could already be sufficient for smaller values of `ℓ`"); the cap is a theoretical guarantee, not a usual exit condition.
-- If the loop reaches the precision cap without satisfying that condition, the CLD tier returns `none`. The hybrid combinator `factor` then falls through to the `factorSlowTrial` backstop. **The CLD fast tier makes no irreducibility claim on its own**; verified irreducibility is the property of `factor` (via the combinator) or the unconditional trial backstop. D1 will prove the `none` branch is unreachable given a good prime, but the existence of the branch makes `factor` correct without needing D1 first.
+- If the loop reaches a state where every equivalence-class candidate verifies via exact division and `∏ candidates = f` (up to `lc(f)` and content), the CLD tier returns `some gs`. This is the success path; conditional correctness applies. **In practice, the BHKS algorithm exits via this `L' = W` certificate at precision much lower than the BHKS-bound cap** (BHKS §4.4 explicitly: "a practical implementation should not use the precision bound … because the equations could already be sufficient for smaller values of `ℓ`"); the cap is a theoretical guarantee, not a usual exit condition.
+- If the loop reaches the precision cap without satisfying that condition, the CLD tier returns `none`. The hybrid combinator `factor` then falls through to the `factorTrial` backstop. **The CLD fast tier makes no irreducibility claim on its own**; verified irreducibility is the property of `factor` (via the combinator) or the unconditional trial backstop. D1 will prove the `none` branch is unreachable given a good prime, but the existence of the branch makes `factor` correct without needing D1 first.
 
 An additive-coefficient lattice that decodes short vectors as `Σ λ_i g_i (mod p^a)` candidate polynomials is *not* van Hoeij and is not admissible.
 
@@ -570,18 +567,17 @@ An additive-coefficient lattice that decodes short vectors as `Σ λ_i g_i (mod 
 
 ## Proof obligations (for `hex-berlekamp-zassenhaus-mathlib`)
 
-Four groups. **Naming:** the obligations below use the abstract names
-`factorSlow` (the recombination/trial path, unconditionally correct) and
-`factorFast` (the CLD lattice path, conditionally correct); the
-mathematical content is independent of which concrete tier realises each.
-The cost-based hybrid `factor = factorHybrid` runs, in order, the
-classical recombination tier `factorClassical` (Group A math, budgeted so
-it may decline), the CLD tier `factorLattice` (Group B — the
-irreducibility-certifying refinement of the standalone `factorFast`), and
-the unconditional `factorSlowTrial` backstop (Group A). So Group A gives
-the recombination/trial path's unconditional correctness; Group B gives
-the CLD path's conditional correctness; Group C gives `factor`'s
-correctness via the combinator (and the tier-equivalence /
+Four groups. **Naming:** the obligation bodies below use the historical
+names `factorSlow` (the exhaustive-recombination math, unconditionally
+correct) and `factorFast` (the CLD lattice math, conditionally correct);
+the mathematical content is independent of which concrete tier realises
+each. In the hybrid, Group A's math is carried by `factorClassical`
+(budgeted, so it may decline) and by the unconditional `factorTrial`
+backstop; Group B's is carried by `factorLattice` (realized by
+`factorLatticeFactorsWithBound_factor_irreducible` in the bridge). So
+Group A gives the recombination/trial path's unconditional correctness;
+Group B gives the CLD path's conditional correctness; Group C gives
+`factor`'s correctness via the combinator (and the tier-equivalence /
 dispatch-soundness contracts above); Group D is the non-blocking leaf
 performance theorem. No axioms.
 
@@ -632,25 +628,15 @@ B9. **Conditional correctness of `factorFast`.** `factorFast f = some gs ⟹ gs 
 ### Group C — combined `factor` correctness (drives the public API)
 
 C1. **`factor` unconditional correctness.** `factor f = irreducibleFactorisationOf f`.
-    *Sketch:* `factor f = factorHybrid f` dispatches classical-first: try `factorClassical` at the default Mignotte bound; on its decline try `factorLattice` at the BHKS cap; otherwise the `factorSlowTrial` backstop. Case analysis on the three branches, using each tier's correctness from *Recombination tiers* above — a product-checked `some` from `factorClassical` (Group A) or `factorLattice` (Group B) is the irreducible factorisation, and the `factorSlowTrial` branch is unconditionally the irreducible factorisation (Group A, via A4/A5). Each tier is entered at its own precision, so no single bound drives the whole combinator. This is the headline correctness theorem (`factor_headline` in the bridge), assembled over the hybrid's three branches; the standalone `factorFast` is off `factor`'s correctness path, its conditional-correctness theorem being a separate Group B obligation (B9 above).
+    *Sketch:* `factor` dispatches classical-first: try `factorClassical` at the default Mignotte bound; on its decline try `factorLattice` at the lattice precision cap; otherwise the `factorTrial` backstop. Case analysis on the three branches, using each tier's correctness from *Recombination tiers* above — a product-checked `some` from `factorClassical` (Group A) or `factorLattice` (Group B) is the irreducible factorisation, and the `factorTrial` branch is unconditionally the irreducible factorisation (Group A, via A4/A5). Each tier is entered at its own precision, so no single bound drives the whole combinator. This is the headline correctness theorem (`factor_headline` in the bridge), assembled over the hybrid's three branches.
 
-C2. **Public-API contracts** (`factor_product_of_bound`, `checkIrreducibleCert_sound`, `Hex.ZPoly.isIrreducible_iff`, and the `Decidable (Hex.ZPoly.Irreducible f)` instance it backs) follow from C1. Like C1 itself, these are bridge-side and are stated in `hex-berlekamp-zassenhaus-mathlib` (the Mathlib-free library provides only the `Irreducible` class and the `isIrreducible` checker — see the §`Mathlib-free Hex.ZPoly.Irreducible class`).
-
-The conditional correctness contract `factor_product_of_bound`:
-```lean
-theorem factor_product_of_bound (f : ZPoly) (B : Nat)
-    (hB : ∀ g : ZPoly, g ∣ f → ∀ i, |g.coeff i| ≤ B) :
-    Factorization.product (factorWithBound f B) = f
-```
-follows from C1 specialised to the bound-aware variant. (Old
-`Array.foldl`-based formulation superseded by `Factorization.product`
-per the new output-convention section above.)
+C2. **Public-API contracts** (`checkIrreducibleCert_sound`, `Hex.ZPoly.isIrreducible_iff`, and the `Decidable (Hex.ZPoly.Irreducible f)` instance it backs) follow from C1. Like C1 itself, these are bridge-side and are stated in `hex-berlekamp-zassenhaus-mathlib` (the Mathlib-free library provides only the `Irreducible` class and the `isIrreducible` checker — see the §`Mathlib-free Hex.ZPoly.Irreducible class`). Product preservation needs no separate bound-aware contract: it is clause 1 of the headline theorem, and the dispatch's acceptance guard makes it self-certifying per tier.
 
 ### Group D — leaf performance theorem (BHKS Theorem 5.2; not on the correctness critical path)
 
-Required deliverable; structurally a leaf — no other proof obligation, public-API contract, `Decidable` instance, or theorem statement in the bridge depends on D1 or D2. Both are stated against the cost-based hybrid (see *Cost-based hybrid dispatch* above): D1 is the CLD lattice tier's completeness (`factorLattice f ≠ none` given a good prime), D2 the tight characterisation of the inputs that reach the `factorTrial` backstop.
+Required deliverable; structurally a leaf — no other proof obligation, public-API contract, `Decidable` instance, or theorem statement in the bridge depends on D1 or D2. Both are stated against the hybrid (see *Hybrid dispatch* above): D1 is the CLD lattice tier's completeness (`factorLattice f ≠ none` given a good prime), D2 the tight characterisation of the inputs that reach the `factorTrial` backstop.
 
-D1. **The lattice tier succeeds when a good prime exists on the core: `toMonicPrimeData? (normalizeForFactor f).squareFreeCore ≠ none → factorLattice f ≠ none`.** The antecedent is keyed on `toMonicPrimeData?` of the square-free core — the monic-transform prime the CLD pipeline actually Hensel-lifts against — and the theorem is about the implementation as written, with cap `factorFastPrecisionCap f` (keyed on the core, per *Precision schedule* below), not `bhksBound f`. BHKS Theorem 5.2 supplies the precision/recombination half, conditional on a good prime being available. The unconditional `factorLattice f ≠ none` is **false** against the implementation — `HexBerlekampZassenhaus/Basic.lean` ships `finitePrimeSearchNoneQuadratic` and the `1 + L·X` family as witnesses where the hot-path prime search exhausts its bounded candidate set. This is by design; the unconditional safety net is the cost-based combinator's `factorTrial` backstop (per *Cost-based hybrid dispatch* above), not inside any modular tier. D2 below pins down exactly which inputs reach that backstop.
+D1. **The lattice tier succeeds when a good prime exists on the core: `toMonicPrimeData? (normalizeForFactor f).squareFreeCore ≠ none → factorLattice f ≠ none`.** The antecedent is keyed on `toMonicPrimeData?` of the square-free core — the monic-transform prime the CLD pipeline actually Hensel-lifts against — and the theorem is about the implementation as written, with the lattice tier's precision cap (keyed on the core, per *Precision schedule* below), not `bhksBound f`. BHKS Theorem 5.2 supplies the precision/recombination half, conditional on a good prime being available. The unconditional `factorLattice f ≠ none` is **false** against the implementation — `HexBerlekampZassenhaus/Basic.lean` ships `finitePrimeSearchNoneQuadratic` and the `1 + L·X` family as witnesses where the hot-path prime search exhausts its bounded candidate set. This is by design; the unconditional safety net is the hybrid combinator's `factorTrial` backstop (per *Hybrid dispatch* above), not inside any modular tier. D2 below pins down exactly which inputs reach that backstop.
 
     **Pathway:**
 
@@ -659,7 +645,7 @@ D1. **The lattice tier succeeds when a good prime exists on the core: `toMonicPr
     3. **BHKS Theorem 5.2 (eq. 5.3 termination).** At precision satisfying `v^ℓ > c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`, the bad-vector lower bound from step 2 exceeds the LLL-cut radius `B'` from B4, so `L' \ W = ∅`. Combined with B6 (`W ⊆ L'`): `L' = W`. Read BHKS §5 (lines around eq. 5.3 and the proof following).
     4. **`bhksBound f` is a sound upper bound for the BHKS threshold.** Show that the integer-arithmetic `bhksBound f` (from the precision schedule) is `≥ ⌈log_v of the BHKS threshold⌉`. Step-by-step bounding of each factor: `n` direct; `(2C)^(n²) ≤ 4^(n²)` for `C ≥ 2` (which `hex-lll` uses); `‖f‖₂^(2n−1) ≤ (sumSquared f + 1)^n`; `(log ‖f‖₂)^n ≤ (log2 (sumSquared f + 1))^n`.
     5. **Forward verification at precision ≥ Mignotte.** The BHKS bound dominates Mignotte for every `n ≥ 2` (a one-line inequality), so any precision sufficient for separation is also sufficient for reconstruction. With `L' = W` from step 3 and precision ≥ Mignotte: B7 produces exactly the irreducible-factor indicators (Lemma 3.3), A2 gives exact integer-coefficient lifts of each `g_{w_C}`, and exact division of `f` succeeds for every candidate. So the algorithm exits via `some _`, not `none`, given a good prime is available.
-    6. **Final theorem.** `theorem factorLattice_ne_none_of_goodPrime : ∀ f : ZPoly, toMonicPrimeData? (normalizeForFactor f).squareFreeCore ≠ none → factorLattice f ≠ none`. Internal proof structure is the chain above; the implementation-level statement is on the bounded raw tier, `factorLatticeFactorsWithBound f (factorFastPrecisionCap f) ≠ none`, with `factorLattice f ≠ none` as the `Factorization`-level corollary.
+    6. **Final theorem.** `theorem factorLattice_ne_none_of_goodPrime : ∀ f : ZPoly, toMonicPrimeData? (normalizeForFactor f).squareFreeCore ≠ none → factorLattice f ≠ none`. Internal proof structure is the chain above; the implementation-level statement is on the bounded raw tier at the lattice precision cap, `factorLatticeFactorsWithBound f cap ≠ none`, with `factorLattice f ≠ none` as the `Factorization`-level corollary.
 
     The bridge file gets one new theorem (`factorLattice_ne_none_of_goodPrime`) and a small handful of supporting lemmas (resultant Hadamard bound, BHKS Lemma 3.2, BHKS Theorem 5.2 instantiated at the core's `bhksBound`, BHKS-bound-dominates-Mignotte). Existing theorem statements (A1–A5, B1–B9, C1–C2) are unchanged.
 
@@ -677,7 +663,7 @@ D2. **Tight characterisation of trial-backstop inputs.** Statement shape:
 
     Equivalently, `|lc(f) · disc(f)| ≥ ∏ HotPathCandidates`, an astronomically large lower bound that no realistic polynomial reaches. (`HotPathCandidates` is the SPEC-fixed set defined in the algorithmic-architecture clause above.)
 
-    `factorTrial` is reached only when no admissible hot-path prime exists, i.e. `choosePrimeData? f = none` (both modular tiers rest on the same hot-path candidate set, so neither `factorClassical` nor `factorLattice` has a prime to lift when there isn't one). Given a good prime, D1 makes `factorLattice` succeed and the classical tier's completeness makes `factorClassical` succeed, so whichever tier the cost-based dispatch selects resolves in a modular tier and never falls through. So D2 is the tight delineation of inputs that hit the trial backstop: any `f` with `|lc(f) · disc(f)| < ∏ HotPathCandidates` is provably handled by `factorClassical` or `factorLattice`, runs at `ZMod64` speed, and never touches `factorTrial`.
+    `factorTrial` is reached only when no admissible hot-path prime exists, i.e. `choosePrimeData? f = none` (both modular tiers rest on the same hot-path candidate set, so neither `factorClassical` nor `factorLattice` has a prime to lift when there isn't one). Given a good prime, D1 makes `factorLattice` succeed on classical decline, so the classical-first dispatch resolves in a modular tier and never falls through. So D2 is the tight delineation of inputs that hit the trial backstop: any `f` with `|lc(f) · disc(f)| < ∏ HotPathCandidates` is provably handled by `factorClassical` or `factorLattice`, runs at `ZMod64` speed, and never touches `factorTrial`.
 
     **Pathway:**
 
@@ -725,7 +711,7 @@ that there is no clean theorem boundary):
   factorisation; the cost-based dispatch therefore cannot change the
   result, only the cost.
 - **Dispatch soundness.** `factor f` equals the canonical factorisation
-  for every `f`, independent of which tier `dispatchTier` selects and of
+  for every `f`, independent of which tier answers and of
   any fallback taken.
 - **Fallback semantics.** The trial backstop is a *correctness* backstop,
   not a silent recovery for a buggy tier: a tier returning `some` must be
@@ -837,7 +823,7 @@ the Verso manual). This is a re-runnable comparator sweep, **not CI** (see
 [SPEC/benchmarking.md § Cross-system comparator sweeps](../../SPEC/benchmarking.md)).
 
 **Standing expectation for any change to a public factor entry** (`factor`,
-`factorLattice`, `factorFast`, `factorClassicalNoDecline`, or the tiers beneath
+`factorLattice`, `factorClassicalNoDecline`, or the tiers beneath
 them) that could move performance: re-measure the hex entries and refresh the
 charts, then **show the updated charts to the requester**. The external
 comparators do *not* need re-running — the plotter merges records
@@ -847,7 +833,7 @@ correct charts:
 ```
 # 1. Re-measure only the hex entries against the current corpus (same cutoff):
 python3 scripts/bench/factor_sweep.py \
-    --systems hex-factor,hex-lattice,hex-fast,hex-classical-nodecline \
+    --systems hex-factor,hex-lattice,hex-classical-nodecline \
     --cutoff 10 --skip-unavailable
 # 2. Regenerate the charts (fresh hex curves win; external curves carried over):
 python3 scripts/plots/hexbz-cactus.py
