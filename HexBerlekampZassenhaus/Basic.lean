@@ -9602,40 +9602,6 @@ theorem toMonicPrimeData?_factorsModP_berlekamp_form
 
 end ZPoly
 
-def exhaustiveCoreFactorsWithBound
-    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Array ZPoly :=
-  if B = 0 then
-    #[core]
-  else
-    let liftData := ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData
-    let factors :=
-      recombineScaledExhaustive (DensePoly.leadingCoeff core) core liftData
-    if factors.isEmpty then
-      #[core]
-    else
-      factors
-
-/-- Option-returning prime-data witness for the `cldGuardF` executable
-guard. `cldGuardF` is selected so `choosePrimeData?` succeeds; the
-`#guard` below asserts the success and ties the guard expectation to the
-unwrapped value, exercising the `Option`-propagating boundary per #5831
-(HO-5d-1b) instead of routing through total `choosePrimeData`. -/
-private def exhaustiveMonicCoreGuardPrimeData? : Option PrimeChoiceData :=
-  choosePrimeData? cldGuardF
-
-#guard
-  match exhaustiveMonicCoreGuardPrimeData? with
-  | none => false
-  | some primeData =>
-      exhaustiveCoreFactorsWithBound cldGuardF 4 primeData =
-        let liftData :=
-          henselLiftData cldGuardF
-            (precisionForCoeffBound (ZPoly.exhaustiveLiftBound cldGuardF 4) primeData.p)
-            primeData
-        let factors := recombineScaledExhaustive (DensePoly.leadingCoeff cldGuardF)
-          cldGuardF liftData
-        if factors.isEmpty then #[cldGuardF] else factors
-
 private def exhaustiveNonMonicQuadraticGuard : ZPoly :=
   DensePoly.ofCoeffs #[1, 0, 2]
 
@@ -9644,130 +9610,10 @@ private def exhaustiveNonMonicQuadraticGuard : ZPoly :=
 
 #guard quadraticIntegerRootFactors? exhaustiveNonMonicQuadraticGuard = none
 
-#guard
-  match ZPoly.toMonicPrimeData? exhaustiveNonMonicQuadraticGuard with
-  | none => false
-  | some primeData =>
-      (exhaustiveCoreFactorsWithBound exhaustiveNonMonicQuadraticGuard 4
-            primeData).toList.all fun factor => normalizeFactorSign factor == factor
-
-/-- Option-returning slow-path raw factor array. Returns `some` exactly
-when `ZPoly.toMonicPrimeData?` succeeds on the normalized square-free core,
-mirroring `factorLatticeFactorsWithBound`'s `none`-on-no-good-prime
-contract. Provides the Option-propagating boundary recommended by #5831
-(HO-5d-1b) for the slow exhaustive raw-factor path. -/
-def exhaustiveSlowRawFactorsWithBound? (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
-  (ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore).map fun primeData =>
-    reassemblePolynomialFactors (normalizeForFactor f)
-      (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B primeData)
-
-/-- Characterize the raw exhaustive slow factor array from an explicit
-`toMonicPrimeData?` success witness. -/
-theorem exhaustiveSlowRawFactorsWithBound?_eq_some
-    (f : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
-    (hchoose :
-      ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore = some primeData) :
-    exhaustiveSlowRawFactorsWithBound? f B =
-      some (reassemblePolynomialFactors (normalizeForFactor f)
-        (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-          primeData)) := by
-  unfold exhaustiveSlowRawFactorsWithBound?
-  rw [hchoose]
-  rfl
-
-/-- Raw factor array produced by the modular slow recombination branch.
-
-Exposed publicly so the Mathlib-side layer can express per-branch
-irreducibility hypotheses for the assembled output theorem.  Internal callers
-go through the `factorSlowModular` wrapper. This path returns `none` when no
-admissible modular prime is available. -/
-def factorSlowModularFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
-  let normalized := normalizeForFactor f
-  if normalized.squareFreeCore.degree?.getD 0 = 0 then
-    some (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
-  else
-    match quadraticIntegerRootFactors? normalized.squareFreeCore with
-    | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
-    | none =>
-        (ZPoly.toMonicPrimeData? normalized.squareFreeCore).map fun primeData =>
-          reassemblePolynomialFactors normalized
-            (exhaustiveCoreFactorsWithBound normalized.squareFreeCore B primeData)
-
-#guard factorSlowModularFactorsWithBound exhaustiveNonMonicQuadraticGuard 4 =
-  some #[exhaustiveNonMonicQuadraticGuard]
-
 set_option maxHeartbeats 800000
 
-/-- Classify the raw slow-path factor array by the dispatch branch that emitted
-it. The final recorded `Factorization` entries still pass through
-`collectFactorMultiplicities`; use `factorizationOfFactors_entry_mem_normalized_raw`
-or `factor_entry_mem_raw_source` for that layer. -/
-theorem factorSlowModularFactorsWithBound_branch
-    (f : ZPoly) (B : Nat) :
-    (factorSlowModularFactorsWithBound f B = some (
-        reassemblePolynomialFactors (normalizeForFactor f)
-          #[(normalizeForFactor f).squareFreeCore]) ∧
-      (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) ∨
-    (∃ coreFactors : Array ZPoly,
-      factorSlowModularFactorsWithBound f B = some
-        (reassemblePolynomialFactors (normalizeForFactor f) coreFactors) ∧
-      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
-      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore =
-        some coreFactors) ∨
-    (∃ primeData : PrimeChoiceData,
-      factorSlowModularFactorsWithBound f B = some (
-        reassemblePolynomialFactors (normalizeForFactor f)
-          (exhaustiveCoreFactorsWithBound
-            (normalizeForFactor f).squareFreeCore B primeData)) ∧
-      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
-      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none ∧
-      ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore = some primeData) ∨
-    (factorSlowModularFactorsWithBound f B = none ∧
-      (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0 ∧
-      quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none ∧
-      ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore = none) := by
-  unfold factorSlowModularFactorsWithBound
-  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-  · left
-    constructor
-    · simp only [hdeg, if_true]
-    · exact hdeg
-  · right
-    cases hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
-    | some coreFactors =>
-        left
-        refine ⟨coreFactors, ?_, hdeg, rfl⟩
-        simp only [hdeg, hquad, if_false]
-    | none =>
-        cases hchoose : ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore with
-        | some primeData =>
-            right; left
-            refine ⟨primeData, ?_, hdeg, rfl, rfl⟩
-            simp only [hdeg, hquad, hchoose, if_false, Option.map_some]
-        | none =>
-            right; right
-            refine ⟨?_, hdeg, rfl, rfl⟩
-            simp only [hdeg, hquad, hchoose, if_false, Option.map_none]
-
-def factorSlowModularWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
-  (factorSlowModularFactorsWithBound f B).map (factorizationOfFactors f)
-
-/--
-Factor using the modular recombination path at the default Mignotte
-coefficient bound. This is the middle tier of the three-tier BZ API and
-returns `none` when no admissible modular prime is available.
--/
-def factorSlowModular (f : ZPoly) : Option Factorization :=
-  factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f)
-
-@[simp, grind =] theorem factorSlowModular_eq_factorSlowModularWithBound_default
-    (f : ZPoly) :
-    factorSlowModular f =
-      factorSlowModularWithBound f (ZPoly.defaultFactorCoeffBound f) := rfl
-
-/-- Classical-tier core factorisation (the small-`r` tier): mirror of
-`exhaustiveCoreFactorsWithBound` routed through the size-ordered
-`scaledRecombinationSmart`. Returns `none` when the subset budget is exhausted
+/-- Classical-tier core factorisation (the small-`r` tier): size-ordered
+subset recombination via `scaledRecombinationSmart`. Returns `none` when the subset budget is exhausted
 before the search completes — an *untrustworthy* "no split" that the cost-based
 dispatcher routes to the lattice tier rather than reporting as irreducible. A
 genuine irreducible core (search completed within budget) returns `some #[core]`. -/
@@ -9787,9 +9633,8 @@ def classicalCoreFactorsWithBound
       | some factors => some (if factors.isEmpty then #[core] else factors.toArray)
       | none => some #[core]
 
-/-- Raw factor array for the classical small-`r` tier; mirror of
-`factorSlowModularFactorsWithBound`. Declines (`none`) on no admissible prime or
-subset-budget exhaustion. -/
+/-- Raw factor array for the classical small-`r` tier. Declines (`none`) on no
+admissible prime or subset-budget exhaustion. -/
 def factorClassicalFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly) :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
@@ -9963,12 +9808,11 @@ private def classicalGuardSextic : ZPoly := DensePoly.ofCoeffs #[720, -1764, 162
 
 /-- Raw factor array produced by the integer trial-division slow path.
 
-Mirrors `factorSlowModularFactorsWithBound`'s constant/quadratic-root short-circuits
-so the deg-0 core and integer-root cases are handled up front; the residual
+Handles the deg-0 core and integer-root cases up front via the same
+constant/quadratic-root short-circuits as the classical tier; the residual
 exhaustive branch dispatches to the standalone integer trial-division core
-(`exhaustiveIntegerTrialCoreFactorsWithBound`) instead of the modular
-recombination one. This is the trial-division tier of the three-tier
-`factor` combinator (SPEC PR #6580). -/
+(`exhaustiveIntegerTrialCoreFactorsWithBound`). This is the trial-division
+tier of the three-tier `factor` combinator (SPEC PR #6580). -/
 def factorSlowTrialFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
@@ -9995,16 +9839,6 @@ theorem factorSlowTrialWithBound_eq_factorizationOfFactors
       factorizationOfFactors f (factorSlowTrialFactorsWithBound f B) := rfl
 
 /--
-Raw factor array produced by the bounded slow backstop. The modular slow path
-is tried first; when no admissible modular prime is available, the integer
-trial-division tier supplies the factors.
--/
-def factorSlowFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
-  match factorSlowModularFactorsWithBound f B with
-  | some rawFactors => rawFactors
-  | none => factorSlowTrialFactorsWithBound f B
-
-/--
 Factor using the integer trial-division path at the default Mignotte
 coefficient bound. This is the trial-division tier of the three-tier
 `factor` combinator (SPEC PR #6580).
@@ -10012,8 +9846,8 @@ coefficient bound. This is the trial-division tier of the three-tier
 def factorSlowTrial (f : ZPoly) : Factorization :=
   factorSlowTrialWithBound f (ZPoly.defaultFactorCoeffBound f)
 
-#guard factorSlowModular exhaustiveNonMonicQuadraticGuard =
-  some (factorSlowTrial exhaustiveNonMonicQuadraticGuard)
+#guard factorSlowTrial exhaustiveNonMonicQuadraticGuard =
+  factorizationOfFactors exhaustiveNonMonicQuadraticGuard #[exhaustiveNonMonicQuadraticGuard]
 
 /--
 Precision cap used by the public fast path.
@@ -10853,29 +10687,6 @@ theorem factor_pairwise_first
   rw [factor_eq_factorizationOfFactors]
   exact factorizationOfFactors_pairwise_first f (factorHybridFactors f)
 
-/-- Membership in an explicit-witness exhaustive slow raw array splits into
-normalization-prefix factors and exhaustive square-free-core factors. -/
-theorem exhaustiveSlowRawFactorsWithBound_mem_normalization_or_core
-    (f factor : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
-    {rawFactors : Array ZPoly}
-    (hchoose :
-      ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore = some primeData)
-    (hraw : exhaustiveSlowRawFactorsWithBound? f B = some rawFactors)
-    (hmem : factor ∈ rawFactors.toList) :
-    factor ∈ (polynomialNormalizationPrefixFactors (normalizeForFactor f)).toList ∨
-      factor ∈
-        (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-          primeData).toList := by
-  unfold exhaustiveSlowRawFactorsWithBound? at hraw
-  rw [hchoose] at hraw
-  have hraw_eq := Option.some.inj hraw
-  rw [← hraw_eq] at hmem
-  exact reassemblePolynomialFactors_mem_normalization_or_core
-    (normalizeForFactor f)
-    (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-      primeData)
-    factor hmem
-
 private def quadraticSquareRegression : ZPoly :=
   let q : ZPoly := DensePoly.ofCoeffs #[-1, 0, 1]
   q * q
@@ -10901,14 +10712,6 @@ private def nonMonicCubicRegression : ZPoly :=
 
 #guard (factor nonMonicCubicRegression).factors.size = 3
 #guard Factorization.product (factor nonMonicCubicRegression) = nonMonicCubicRegression
-
--- The slow modular path recombines the cubic into three factors at the default
--- bound; in particular it does not return the uninformative `#[core]`.
-#guard
-  (match factorSlowModularFactorsWithBound nonMonicCubicRegression
-      (ZPoly.defaultFactorCoeffBound nonMonicCubicRegression) with
-    | some fs => fs.size = 3
-    | none => false)
 
 /-- Non-monic quadratic with two integer roots, `2(X-1)(X+1) = 2X²-2`:
 content `2`, primitive part `(X-1)(X+1)`, so `factor` records two factors. -/
@@ -12962,10 +12765,8 @@ private theorem scaledRecombinationSearchMod_eq_recombinationSearchMod_of_one
 /-- Executable collapse: `recombineScaledExhaustive 1 = recombineExhaustive`.
 
 The scaled and unscaled exhaustive recombination wrappers agree when the
-scaling coefficient is `1` (i.e., for monic cores).  Used by the Mathlib-side
-`exhaustiveCoreFactorsWithBound_mem_of_recombinationSearchMod_some` to translate
-an unscaled search witness into the scaled executable call site introduced by
-the swap. -/
+scaling coefficient is `1` (i.e., for monic cores), translating an unscaled
+search witness into the scaled executable call site introduced by the swap. -/
 theorem recombineScaledExhaustive_eq_recombineExhaustive_of_one
     (f : ZPoly) (d : LiftData) :
     recombineScaledExhaustive 1 f d = recombineExhaustive f d := by
@@ -13249,61 +13050,6 @@ theorem recombineScaledExhaustive_eq_of_scaledRecombinationSearchMod_some
     recombineScaledExhaustive coreLc f d = factors.toArray := by
   unfold recombineScaledExhaustive
   rw [h]
-
-theorem exhaustiveCoreFactorsWithBound_normalizeFactorSign
-    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
-    (hcore : normalizeFactorSign core = core) :
-    ∀ factor ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
-      normalizeFactorSign factor = factor := by
-  rw [exhaustiveCoreFactorsWithBound]
-  by_cases hB : B = 0
-  · simp [hB, hcore]
-  · simp only [hB, if_false]
-    by_cases hempty :
-        (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)).isEmpty
-    · simp [hempty, hcore]
-    · simp only [hempty]
-      exact recombineScaledExhaustive_normalizeFactorSign (DensePoly.leadingCoeff core) core
-        (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)
-
-theorem exhaustiveCoreFactorsWithBound_shouldRecord
-    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
-    (hcore : shouldRecordPolynomialFactor core = true) :
-    ∀ factor ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
-      shouldRecordPolynomialFactor factor = true := by
-  rw [exhaustiveCoreFactorsWithBound]
-  by_cases hB : B = 0
-  · simp [hB, hcore]
-  · simp only [hB, if_false]
-    by_cases hempty :
-        (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)).isEmpty
-    · simp [hempty, hcore]
-    · simp only [hempty]
-      exact recombineScaledExhaustive_shouldRecord (DensePoly.leadingCoeff core) core
-        (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)
-
-/-- Every emitted factor of the exhaustive recombination wrapper is
-primitive when the input core is primitive. The two `#[core]` short-circuit
-branches return the input itself; the genuine recombination branch
-dispatches to `recombineScaledExhaustive_primitive`. -/
-theorem exhaustiveCoreFactorsWithBound_primitive
-    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
-    (hcore_primitive : ZPoly.Primitive core) :
-    ∀ factor ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
-      ZPoly.Primitive factor := by
-  rw [exhaustiveCoreFactorsWithBound]
-  by_cases hB : B = 0
-  · simp [hB, hcore_primitive]
-  · simp only [hB, if_false]
-    by_cases hempty :
-        (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)).isEmpty
-    · simp [hempty, hcore_primitive]
-    · simp only [hempty]
-      exact recombineScaledExhaustive_primitive (DensePoly.leadingCoeff core) core
-        (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)
 
 private theorem bhksRecoverClassified_success_product
     {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
@@ -13904,41 +13650,6 @@ theorem factorFastCoreWithBound_some_dvd
           · simp [hclass, hk] at hfast
             exact ih _ coreFactors hfast
 
-/-- The exhaustive recombination wrapper preserves the polynomial product
-unconditionally: every branch returns either `#[core]` (singleton, trivially
-multiplying to `core`) or the result of a successful
-`scaledRecombinationSearchMod` call (`recombineScaledExhaustive_product`). -/
-theorem exhaustiveCoreFactorsWithBound_product
-    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
-    Array.polyProduct (exhaustiveCoreFactorsWithBound core B primeData) = core := by
-  rw [exhaustiveCoreFactorsWithBound]
-  by_cases hB : B = 0
-  · simp [hB, Array.polyProduct]
-  · simp only [hB, if_false]
-    by_cases hempty :
-        (recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-            (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)).isEmpty
-    · simp [hempty, Array.polyProduct]
-    · simp only [hempty]
-      cases hsearch : scaledRecombinationSearchMod (DensePoly.leadingCoeff core) core
-          (liftModulus
-            (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData))
-          (ZPoly.toMonicLiftData core
-            (ZPoly.exhaustiveLiftBound core B) primeData).liftedFactors.toList with
-      | none =>
-          have hnil :
-              recombineScaledExhaustive (DensePoly.leadingCoeff core) core
-                (ZPoly.toMonicLiftData core
-                  (ZPoly.exhaustiveLiftBound core B) primeData) = #[] := by
-            rw [recombineScaledExhaustive]
-            simp [hsearch]
-          rw [hnil] at hempty
-          simp at hempty
-      | some xs =>
-          exact recombineScaledExhaustive_product (DensePoly.leadingCoeff core) core
-            (ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData)
-            xs hsearch
-
 /-- The leading coefficient of an `Array.polyProduct` over a list of polynomials
 with strictly positive leading coefficients is strictly positive. Chains
 `ZPoly.leadingCoeff_mul_pos_of_pos` through the foldl unfold given by
@@ -14042,106 +13753,6 @@ private theorem polyProduct_toArray_monic_factors_monic_of_pos_lc :
       rcases hq with hh | hr
       · rw [hh]; exact hhead_monic
       · exact ih hrest_monic hrest_pos q hr
-
-/-- Every emitted factor of the exhaustive recombination wrapper is monic when
-the input core is monic with positive degree. The product chain
-(`exhaustiveCoreFactorsWithBound_product` together with the executable
-sign-normalisation and `shouldRecord` invariants
-`exhaustiveCoreFactorsWithBound_normalizeFactorSign` /
-`exhaustiveCoreFactorsWithBound_shouldRecord`) forces each emitted factor's
-leading coefficient to be a positive integer dividing `1`, hence itself `1`. -/
-theorem exhaustiveCoreFactorsWithBound_monic
-    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
-    (hcore_monic : DensePoly.Monic core)
-    (hcore_record : shouldRecordPolynomialFactor core = true) :
-    ∀ factor ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
-      DensePoly.Monic factor := by
-  have hcore_norm : normalizeFactorSign core = core :=
-    normalizeFactorSign_eq_self_of_leadingCoeff_nonneg core
-      (by rw [show DensePoly.leadingCoeff core = 1 from hcore_monic]; decide)
-  have hprod :
-      Array.polyProduct (exhaustiveCoreFactorsWithBound core B primeData) = core :=
-    exhaustiveCoreFactorsWithBound_product core B primeData
-  have hprod_monic :
-      DensePoly.Monic (Array.polyProduct
-        (exhaustiveCoreFactorsWithBound core B primeData)) := by
-    rw [hprod]; exact hcore_monic
-  -- Transport to the list-level helper.
-  have hprod_monic' :
-      DensePoly.Monic (Array.polyProduct
-        (exhaustiveCoreFactorsWithBound core B primeData).toList.toArray) := by
-    rw [Array.toArray_toList]; exact hprod_monic
-  have hemit_norm :=
-    exhaustiveCoreFactorsWithBound_normalizeFactorSign core B primeData hcore_norm
-  have hemit_record :=
-    exhaustiveCoreFactorsWithBound_shouldRecord core B primeData hcore_record
-  have hpos :
-      ∀ q ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
-        0 < DensePoly.leadingCoeff q := by
-    intro q hq
-    have hq_norm : normalizeFactorSign q = q := hemit_norm q hq
-    have hq_record : shouldRecordPolynomialFactor q = true := hemit_record q hq
-    have hq_ne : q ≠ 0 := by
-      unfold shouldRecordPolynomialFactor at hq_record
-      simp at hq_record
-      exact hq_record.1.1
-    have hq_lc_nonneg : 0 ≤ DensePoly.leadingCoeff q := by
-      rw [← hq_norm]
-      exact normalizeFactorSign_leadingCoeff_nonneg q
-    have hq_lc_ne : DensePoly.leadingCoeff q ≠ 0 :=
-      ZPoly.leadingCoeff_ne_zero_of_ne_zero q hq_ne
-    omega
-  exact polyProduct_toArray_monic_factors_monic_of_pos_lc
-    (exhaustiveCoreFactorsWithBound core B primeData).toList hprod_monic' hpos
-
-/-- Every emitted factor of the exhaustive recombination wrapper has positive
-`degree?` when the input core is monic and `shouldRecord = true`. A monic
-polynomial of `degree? = 0` is the constant `1`, which is excluded by
-`shouldRecord`, so every emitted factor has positive degree. -/
-theorem exhaustiveCoreFactorsWithBound_degree_pos
-    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
-    (hcore_monic : DensePoly.Monic core)
-    (hcore_record : shouldRecordPolynomialFactor core = true) :
-    ∀ factor ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
-      0 < factor.degree?.getD 0 := by
-  intro q hq
-  have hq_monic : DensePoly.Monic q :=
-    exhaustiveCoreFactorsWithBound_monic core B primeData hcore_monic hcore_record q hq
-  have hemit_record :=
-    exhaustiveCoreFactorsWithBound_shouldRecord core B primeData hcore_record
-  have hq_record : shouldRecordPolynomialFactor q = true := hemit_record q hq
-  -- shouldRecord excludes `q = 1`. A monic `q` with `degree? = 0` is `1`.
-  rcases Nat.eq_zero_or_pos (q.degree?.getD 0) with hdeg_eq | hpos
-  case inr => exact hpos
-  case inl =>
-    exfalso
-    have hq_ne : q ≠ 0 := by
-      intro h0
-      have hlc1 : DensePoly.leadingCoeff q = 1 := hq_monic
-      rw [h0] at hlc1
-      have hlc0 : DensePoly.leadingCoeff (0 : ZPoly) = 0 := by decide
-      omega
-    have hq_size_pos : 0 < q.size := ZPoly.size_pos_of_ne_zero q hq_ne
-    have hdeg_unfold : q.degree?.getD 0 =
-        (if q.size = 0 then 0 else q.size - 1) := by
-      unfold DensePoly.degree?
-      by_cases h : q.size = 0 <;> simp [h]
-    rw [hdeg_unfold] at hdeg_eq
-    have hsize_eq : q.size = 1 := by
-      by_cases h : q.size = 0
-      · omega
-      · split at hdeg_eq <;> omega
-    have hq_eq_C : q = DensePoly.C (q.coeff 0) := ZPoly.eq_C_of_size_eq_one q hsize_eq
-    have hq_lc : DensePoly.leadingCoeff q = q.coeff 0 := by
-      rw [DensePoly.leadingCoeff_eq_coeff_last q hq_size_pos]
-      congr 1; omega
-    have hq_lc1 : DensePoly.leadingCoeff q = 1 := hq_monic
-    have hq_coeff0 : q.coeff 0 = 1 := by rw [← hq_lc]; exact hq_lc1
-    have hq_one : q = 1 := by
-      rw [hq_eq_C, hq_coeff0]
-      rfl
-    unfold shouldRecordPolynomialFactor at hq_record
-    simp [hq_one] at hq_record
 
 /-- A primitive, sign-normalized `ZPoly` that passes `shouldRecordPolynomialFactor`
 has positive `degree?`. A size-`1` such polynomial combines `Primitive q`
@@ -14394,28 +14005,6 @@ theorem latticeCoreFactorsWithBound_degree_pos
     have hfactor : factor = core := by simpa using hmem
     rw [hfactor]; exact hcore_deg
   · exact factorFastCoreWithBound_some_degree_pos hfast
-
-/-- Weakened-conclusion sibling of `exhaustiveCoreFactorsWithBound_degree_pos`:
-every emitted factor of the exhaustive recombination wrapper has positive
-`degree?` when the input core is primitive with positive leading coefficient
-and `shouldRecord = true`. A size-`1` emitted factor combines
-`Primitive q` (forcing `|q.coeff 0| = 1`) with `normalizeFactorSign q = q`
-(forcing `q.coeff 0 ≥ 0`) to conclude `q = 1`, which is excluded by
-`shouldRecord`. -/
-theorem exhaustiveCoreFactorsWithBound_degree_pos_of_primitive_pos_lc_core
-    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
-    (hcore_primitive : ZPoly.Primitive core)
-    (hcore_lc_pos : 0 < DensePoly.leadingCoeff core)
-    (hcore_record : shouldRecordPolynomialFactor core = true) :
-    ∀ factor ∈ (exhaustiveCoreFactorsWithBound core B primeData).toList,
-      0 < factor.degree?.getD 0 := by
-  intro q hq
-  have hcore_norm : normalizeFactorSign core = core :=
-    normalizeFactorSign_eq_self_of_leadingCoeff_nonneg core (by omega)
-  exact degree_pos_of_primitive_norm_record q
-    (exhaustiveCoreFactorsWithBound_primitive core B primeData hcore_primitive q hq)
-    (exhaustiveCoreFactorsWithBound_normalizeFactorSign core B primeData hcore_norm q hq)
-    (exhaustiveCoreFactorsWithBound_shouldRecord core B primeData hcore_record q hq)
 
 private theorem polyProduct_push (factors : Array ZPoly) (factor : ZPoly) :
     Array.polyProduct (factors.push factor) =
@@ -17965,50 +17554,6 @@ theorem quadraticIntegerRootFactors?_degree_pos_of_primitive
   · rw [if_neg hdeg] at hquad
     contradiction
 
-private theorem factorSlowModularFactorsWithBound_polyProduct_of_some
-    {f : ZPoly} {B : Nat} {factors : Array ZPoly}
-    (hraw : factorSlowModularFactorsWithBound f B = some factors) :
-    DensePoly.C (signedContentScalar f) *
-      Array.polyProduct factors = f := by
-  unfold factorSlowModularFactorsWithBound at hraw
-  by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-  · simp only [hdeg, if_true] at hraw
-    rw [← Option.some.inj hraw]
-    exact reassemblePolynomialFactors_product_eq_input f
-      #[(normalizeForFactor f).squareFreeCore] (by simp [Array.polyProduct])
-  · simp only [hdeg, if_false] at hraw
-    cases hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
-    | some coreFactors =>
-        simp only [hquad, Option.some.injEq] at hraw
-        rw [← hraw]
-        exact reassemblePolynomialFactors_product_eq_input f coreFactors
-          (quadraticIntegerRootFactors?_product hquad)
-    | none =>
-        simp only [hquad] at hraw
-        cases hchoose : ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore with
-        | none =>
-            simp [hchoose] at hraw
-        | some primeData =>
-            simp only [hchoose, Option.map_some, Option.some.injEq] at hraw
-            rw [← hraw]
-            exact reassemblePolynomialFactors_product_eq_input f
-              (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-                primeData)
-              (exhaustiveCoreFactorsWithBound_product
-                (normalizeForFactor f).squareFreeCore B primeData)
-
-private theorem factorSlowModular_product_of_all_recorded_normalized
-    {f : ZPoly} {B : Nat} {factors : Array ZPoly}
-    (hraw : factorSlowModularFactorsWithBound f B = some factors)
-    (hnormalized :
-      ∀ factor ∈ factors.toList, normalizeFactorSign factor = factor)
-    (hrecorded :
-      ∀ factor ∈ factors.toList, shouldRecordPolynomialFactor factor = true) :
-    Factorization.product (factorizationOfFactors f factors) = f :=
-  factorizationOfFactors_product_of_raw_product_of_all_recorded_normalized
-    f factors (factorSlowModularFactorsWithBound_polyProduct_of_some hraw)
-    hnormalized hrecorded
-
 theorem extractXPower_core_ne_zero_of_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     (ZPoly.extractXPower (ZPoly.primitivePart f)).core ≠ 0 :=
   ZPoly.ne_zero_of_primitive _ (extractXPower_core_primitive_of_ne_zero f hf)
@@ -19193,133 +18738,6 @@ private theorem polyProduct_filteredNormalizedFactors_append_one_of_all_recorded
     Array.polyProduct factors
   rw [filteredNormalizedFactors_append_one_of_all_recorded_normalized
     factors.toList hnormalized hrecorded]
-
-private theorem factorSlowModular_product_of_constant_branch
-    (f : ZPoly) (B : Nat) {rawFactors : Array ZPoly}
-    (hraw : factorSlowModularFactorsWithBound f B = some rawFactors)
-    (hf : f ≠ 0)
-    (hbranch : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) :
-    Factorization.product (factorizationOfFactors f rawFactors) = f := by
-  unfold factorSlowModularFactorsWithBound at hraw
-  rw [if_pos hbranch] at hraw
-  rw [← Option.some.inj hraw]
-  have hcore_one := squareFreeCore_eq_one_of_constant_of_ne_zero f hf hbranch
-  rw [hcore_one]
-  apply factorizationOfFactors_product_of_filtered_product
-  · exact reassemblePolynomialFactors_product_eq_input f #[1] (by
-      rw [ZPoly.polyProduct_singleton]
-      exact hcore_one.symm)
-  · rw [reassemblePolynomialFactors_singleton_one_eq]
-    rw [polyProduct_filteredNormalizedFactors_append_one_of_all_recorded_normalized,
-      ZPoly.polyProduct_append, ZPoly.polyProduct_singleton]
-    exact (DensePoly.mul_one_right_poly (S := Int) _).symm
-    · intro factor hmem
-      exact polynomialNormalizationPrefixFactors_normalizeFactorSign_of_ne_zero
-        f hf factor hmem
-    · intro factor hmem
-      exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
-        f hf factor hmem
-
-private theorem factorSlowModular_product_of_quadratic_branch
-    (f : ZPoly) (B : Nat) {rawFactors : Array ZPoly}
-    (hraw : factorSlowModularFactorsWithBound f B = some rawFactors)
-    (hf : f ≠ 0)
-    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
-    (coreFactors : Array ZPoly)
-    (hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore =
-      some coreFactors) :
-    Factorization.product (factorizationOfFactors f rawFactors) = f := by
-  have hraw0 := hraw
-  unfold factorSlowModularFactorsWithBound at hraw
-  rw [if_neg hdeg, hquad] at hraw
-  have hraw_eq := Option.some.inj hraw
-  rw [← hraw_eq]
-  apply factorSlowModular_product_of_all_recorded_normalized
-  · simpa [hraw_eq] using hraw0
-  ·
-    intro factor hmem
-    refine reassemblePolynomialFactors_normalizeFactorSign_of_ne_zero f hf
-      coreFactors ?_ factor hmem
-    intro c hc
-    exact quadraticIntegerRootFactors?_normalizeFactorSign
-      (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad c hc
-  ·
-    intro factor hmem
-    refine reassemblePolynomialFactors_shouldRecord_of_ne_zero f hf
-      coreFactors ?_ factor hmem
-    intro c hc
-    exact quadraticIntegerRootFactors?_shouldRecord
-      (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad c hc
-
-private theorem factorSlowModular_product_of_exhaustive_branch
-    (f : ZPoly) (B : Nat) {rawFactors : Array ZPoly}
-    (hraw : factorSlowModularFactorsWithBound f B = some rawFactors)
-    (hf : f ≠ 0)
-    (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
-    (hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none)
-    (primeData : PrimeChoiceData)
-    (hchoose : ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore = some primeData) :
-    Factorization.product (factorizationOfFactors f rawFactors) = f := by
-  have hraw0 := hraw
-  unfold factorSlowModularFactorsWithBound at hraw
-  rw [if_neg hdeg, hquad, hchoose] at hraw
-  have hraw_eq := Option.some.inj hraw
-  rw [← hraw_eq]
-  apply factorSlowModular_product_of_all_recorded_normalized
-  · simpa [hraw_eq] using hraw0
-  ·
-    intro factor hmem
-    refine reassemblePolynomialFactors_normalizeFactorSign_of_ne_zero f hf
-      (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-        primeData)
-      ?_ factor hmem
-    intro c hc
-    exact exhaustiveCoreFactorsWithBound_normalizeFactorSign
-      (normalizeForFactor f).squareFreeCore B primeData
-      (squareFreeCore_normalizeFactorSign_of_ne_zero f hf) c hc
-  ·
-    intro factor hmem
-    refine reassemblePolynomialFactors_shouldRecord_of_ne_zero f hf
-      (exhaustiveCoreFactorsWithBound (normalizeForFactor f).squareFreeCore B
-        primeData)
-      ?_ factor hmem
-    intro c hc
-    exact exhaustiveCoreFactorsWithBound_shouldRecord
-      (normalizeForFactor f).squareFreeCore B primeData
-      (squareFreeCore_shouldRecord_of_degree_pos f hf hdeg) c hc
-
-private theorem factorSlowModularWithBound_product_of_some
-    {f : ZPoly} {B : Nat} {φ : Factorization}
-    (h : factorSlowModularWithBound f B = some φ) :
-    Factorization.product φ = f := by
-  unfold factorSlowModularWithBound at h
-  cases hraw : factorSlowModularFactorsWithBound f B with
-  | none =>
-      rw [hraw] at h
-      simp at h
-  | some rawFactors =>
-      rw [hraw] at h
-      change some (factorizationOfFactors f rawFactors) = some φ at h
-      rw [← Option.some.inj h]
-      by_cases hf : f = 0
-      · subst f
-        exact factorizationOfFactors_product_of_zero rawFactors
-      · by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-        · exact factorSlowModular_product_of_constant_branch f B hraw hf hdeg
-        · cases hquad :
-            quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
-          | some coreFactors =>
-              exact factorSlowModular_product_of_quadratic_branch
-                f B hraw hf hdeg coreFactors hquad
-          | none =>
-              cases hchoose : ZPoly.toMonicPrimeData? (normalizeForFactor f).squareFreeCore with
-              | none =>
-                  unfold factorSlowModularFactorsWithBound at hraw
-                  rw [if_neg hdeg, hquad, hchoose] at hraw
-                  contradiction
-              | some primeData =>
-                  exact factorSlowModular_product_of_exhaustive_branch
-                    f B hraw hf hdeg hquad primeData hchoose
 
 theorem factorSlowTrialFactorsWithBound_polyProduct
     (f : ZPoly) (B : Nat) :

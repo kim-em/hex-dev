@@ -19,7 +19,7 @@ Covered operations:
   `reassembleNormalizedFactors`
 - `henselLiftData`
 - `bhksRecover?`, `recombinationSearch`, `factorSlowTrial`,
-  and `factorSlowModular`
+  and `factorClassicalNoDecline`
 - `factor`
 - `PrimeFactorData.degreeSum`, `PrimeFactorData.factorProduct`,
   `PrimeFactorData.containsDegree`, `PrimeFactorData.hasSubsetDegree`,
@@ -532,11 +532,11 @@ recovered true factor.
     sameFactorCoeffSet (factorizationCoeffSummary φ)
       (factorCoeffSummary quadSqrt2Sqrt3ExpectedFactors |>.map fun coeffs =>
         (coeffs, 1))
--- The exhaustive *modular* recombination backstop (subset-product search, as
--- opposed to `factorSlowTrial`'s integer trial division) recovers the same
--- quadratic buckets `X^2 - 2`, `X^2 - 3` on the adversarial subset-product case.
+-- Size-ordered full classical recombination (the complete subset-product search,
+-- with the level-aware early decline disabled) recovers the same quadratic
+-- buckets `X^2 - 2`, `X^2 - 3` on the adversarial subset-product case.
 #guard
-  match factorSlowModular quadSqrt2Sqrt3 with
+  match factorClassicalNoDecline quadSqrt2Sqrt3 with
   | some φ =>
       Factorization.product φ = quadSqrt2Sqrt3 &&
         sameFactorCoeffSet (factorizationCoeffSummary φ)
@@ -583,13 +583,13 @@ recovered true factor.
 
 -- Heavy (8-way split) adversarial backstop cases: `swinnertonDyerSD3` and
 -- `phi15` each split into eight linear factors over their small admissible
--- prime yet are irreducible over `ℤ`.  The exhaustive *modular* recombination
+-- prime yet are irreducible over `ℤ`.  Size-ordered full classical recombination
 -- must reject every one of the `2^8` proper subset products and fall back to
 -- the single irreducible input. This is the genuine worst case for "no
 -- spurious recombination," dual to the `quadSqrt2Sqrt3` / `x4Plus1` guards
 -- above.
 #guard
-  match factorSlowModular swinnertonDyerSD3 with
+  match factorClassicalNoDecline swinnertonDyerSD3 with
   | some φ =>
       Factorization.product φ = swinnertonDyerSD3 &&
         sameFactorCoeffSet (factorizationCoeffSummary φ)
@@ -601,7 +601,7 @@ recovered true factor.
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[swinnertonDyerSD3] |>.map fun coeffs => (coeffs, 1))
 #guard
-  match factorSlowModular phi15 with
+  match factorClassicalNoDecline phi15 with
   | some φ =>
       Factorization.product φ = phi15 &&
         sameFactorCoeffSet (factorizationCoeffSummary φ)
