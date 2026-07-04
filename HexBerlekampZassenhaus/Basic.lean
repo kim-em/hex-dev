@@ -9523,7 +9523,7 @@ private theorem bhksRecoveryCoreWithBound_ne_none_of_recovery_on_schedule
   rw [hnone] at hsome
   simp at hsome
 
-private def factorFastCoreGuardPrimeData : PrimeChoiceData :=
+private def bhksRecoveryGuardPrimeData : PrimeChoiceData :=
   letI := bounds_five
   let c : SmallPrimeCandidate :=
     { p := 5, bounds := bounds_five, prime := prime_five }
@@ -9531,7 +9531,7 @@ private def factorFastCoreGuardPrimeData : PrimeChoiceData :=
     fModP := ZPoly.modP 5 cldGuardF
     factorsModP := berlekampFactorsModP cldGuardF c }
 
-#guard bhksRecoveryCoreWithBound cldGuardF 1 factorFastCoreGuardPrimeData
+#guard bhksRecoveryCoreWithBound cldGuardF 1 bhksRecoveryGuardPrimeData
     (initialHenselPrecision 1) (ZPoly.quadraticDoublingSteps 1 + 2) =
   none
 
@@ -9539,14 +9539,14 @@ private def factorFastCoreGuardPrimeData : PrimeChoiceData :=
 -- `cldCoeffFloor cldGuardF = 32` cannot be accepted: the schedule reaches the
 -- cap `B` while every success is still below the floor, so the loop reports
 -- `none`.
-#guard bhksRecoveryCoreWithBound cldGuardF 4 factorFastCoreGuardPrimeData
+#guard bhksRecoveryCoreWithBound cldGuardF 4 bhksRecoveryGuardPrimeData
     (initialHenselPrecision 4) (ZPoly.quadraticDoublingSteps 4 + 2) =
   none
 
 -- At a bound that reaches the floor the first gated success is accepted: for
 -- `cldGuardF` this is schedule index `k = 32` (lift precision `liftData.k = 3`,
 -- modulus `5 ^ 3 = 125`), recovering the same factors.
-#guard bhksRecoveryCoreWithBound cldGuardF 32 factorFastCoreGuardPrimeData
+#guard bhksRecoveryCoreWithBound cldGuardF 32 bhksRecoveryGuardPrimeData
     (initialHenselPrecision 32) (ZPoly.quadraticDoublingSteps 32 + 2) =
   some bhksGuardFactors
 
