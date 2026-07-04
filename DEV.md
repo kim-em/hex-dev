@@ -64,7 +64,7 @@ The dispatch is **classical-first** (not an up-front cost estimator), and
 **self-certifying**:
 
 ```
-def factorHybrid f :=                              -- (factorHybridTraced f).1
+def factor f :=                              -- (factorTraced f).1
   match factorClassical f with
   | some φ => if Factorization.product φ = f then φ      -- certified classical answer
               else factorTrial f                          -- (corpus-never) miss → backstop
@@ -124,7 +124,7 @@ reverse. We have thrashed too often bending the implementation to ease proofs.
 | Adversarial corpus + metamorphic relations | #8378 | #8387 | ✅ merged |
 | Merge-blocking conformance + counter + wall-clock gate (+ budget soundness) | #8379 | #8390 | ✅ merged |
 | CLD lattice tier: certify irreducibility (Swinnerton-Dyer / high-`r`) | #8380 | #8393 | ✅ merged (correctness); speed = #8395 stretch |
-| Cost-based hybrid dispatch (classical-first, self-certifying) | #8381 | #8397, #8398 | ✅ merged (`factorHybrid` + `factorHybrid_product`) |
+| Cost-based hybrid dispatch (classical-first, self-certifying) | #8381 | #8397, #8398 | ✅ merged (`factor` + `factor_product`) |
 | Classical recombination structurally recursive + reconstruction proved | — | #8401 | ✅ merged (capstone foundation) |
 | **Swap public `factor` to the hybrid** (re-point ~100 theorems, both layers) | #8383 | #8404 | ✅ **merged — the public `factor` is now the hybrid** |
 | Optimize the easy regime (arithmetic constants) | #8382 | — | ⏸️ deferred — sound part overlaps #8395 (see below) |
@@ -134,7 +134,7 @@ The public `factor` now **is** the cost-based hybrid (since #8404): the
 exponential-on-easy-inputs blow-up is gone (deg-22 reducible: 781.8 ms → 82.75 ms),
 product preservation holds over the hybrid, and the unconditional per-factor
 contracts (normalization, primitivity from `f ≠ 0`, pairwise-distinct, scalar)
-re-point through the `factorHybrid f = factorizationOfFactors f (factorHybridFactors f)`
+re-point through the `factor f = factorizationOfFactors f (factorFactors f)`
 bridge. Conformance stands at 100 checks / 0 failures (50 `factor` + 50
 `factorClassical`); heavy high-`r` cases (SD4/SD5/Φ₁₀₅) are staged in
 `conformance-fixtures/HexBerlekampZassenhaus/bz-scheduled.jsonl`.
@@ -217,16 +217,16 @@ Everything else in the migration is merged and verified. See History.
   it is the **correct fallback** for the extreme-`r` tail; speed is #8395. The
   classical tier already covers everything up to its budget (incl. SD2–SD5) fast, so
   the practical goal is **parity** with Isabelle, lattice as the safety net.
-- **#8381 → #8397:** `factorHybrid`/`factorHybridTraced` — classical-first dispatch,
+- **#8381 → #8397:** `factor`/`factorTraced` — classical-first dispatch,
   lattice on decline, trial backstop, traced. (Chose classical-first over the
   directive's up-front cost estimator: classical declines cheaply, lattice grinds.)
-- **#8398:** self-certifying hybrid + `factorHybrid_product` (product preservation
+- **#8398:** self-certifying hybrid + `factor_product` (product preservation
   proven unconditionally, no public swap).
 - **#8401:** `scaledRecombinationSmart*` made structurally recursive (drop `partial`,
   explicit `fuel`, behavior-identical) + reconstruction proved — the classical-tier
   capstone foundation (steps 1-2).
 - **#8383 → #8404:** swapped the public `factor`/`factor?` to the hybrid; added
-  `factorHybridFactors` + the `factor f = factorizationOfFactors f (factorHybridFactors f)`
+  `factorFactors` + the `factor f = factorizationOfFactors f (factorFactors f)`
   bridge; re-pointed ~100 `factor`-level theorems across both layers. The conditional
   `h_raw` primitivity hypotheses collapsed to just `f ≠ 0` (the self-certifying
   product reconstruction makes primitivity derivable). Headline irreducibility stays a
@@ -282,8 +282,8 @@ Never bend the implementation to a future proof. Never introduce an `axiom`.
     `RecombStats`), `factorClassical` (+ `…WithBound`, `classicalCoreFactorsWithBound`);
   — lattice tier: `factorLattice` (+ `bhksSingleAllOnesPartition`) over the
     `bhks*` / `factorFastCore*` machinery;
-  — hybrid (self-certifying): `factorHybrid` / `factorHybridTraced`,
-    `factorHybrid_product`, `factorHybridFactors`;
+  — hybrid (self-certifying): `factor` / `factorTraced`,
+    `factor_product`, `factorFactors`;
   — public entry (now the hybrid, since #8404): `factor` / `factor?`.
 - **Reused tiers:** `HexBerlekamp/` (mod-`p` Berlekamp), `HexHensel/` (lift),
   `HexLLL/` (van Hoeij short vectors), `HexPoly*/` (arithmetic).

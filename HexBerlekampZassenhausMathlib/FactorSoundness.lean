@@ -34,7 +34,7 @@ theorem factor_irreducible_of_nonUnit (f : Hex.ZPoly) :
     have hrec := Hex.factor_entry_shouldRecord f entry hmem
     rw [hentry_eq] at hrec ⊢
     exact zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
-      (factorHybridFactors_factor_irreducible f hf hraw_mem hrec)
+      (factorFactors_factor_irreducible f hf hraw_mem hrec)
 
 /--
 Every polynomial factor emitted by the default executable factorization is
