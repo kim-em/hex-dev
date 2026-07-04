@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhaus.Basic
+public import HexBerlekampZassenhaus.ProductProofs
 public import HexBerlekamp.RabinSoundness
 
 public section

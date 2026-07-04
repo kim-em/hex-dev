@@ -12,7 +12,22 @@ public import HexBerlekampZassenhausMathlib.IrreducibleCert
 -- check, so the kernel must reduce `checkIrreducibleCertLinear` (and its
 -- Berlekamp pow-chain replay) plus the `Array`/`DensePoly` `==` comparisons.
 -- Expose those executable checker bodies and the efficient `Array` DecidableEq.
-import all HexBerlekampZassenhaus.Basic
+import all HexBerlekampZassenhaus.PrimeSelection
+import all HexBerlekampZassenhaus.Records
+import all HexBerlekampZassenhaus.Certificate
+import all HexBerlekampZassenhaus.ChoosePrimeData
+import all HexBerlekampZassenhaus.ReassemblyProofs
+import all HexBerlekampZassenhaus.Lattice
+import all HexBerlekampZassenhaus.BhksCandidates
+import all HexBerlekampZassenhaus.BhksRecover
+import all HexBerlekampZassenhaus.Recombination
+import all HexBerlekampZassenhaus.FactorEntryPoints
+import all HexBerlekampZassenhaus.IrreducibleCore
+import all HexBerlekampZassenhaus.RecombineProofs
+import all HexBerlekampZassenhaus.TrialProofs
+import all HexBerlekampZassenhaus.QuadraticRootProofs
+import all HexBerlekampZassenhaus.PrimitivityProofs
+import all HexBerlekampZassenhaus.ProductProofs
 import all HexBerlekamp.Irreducibility
 import all Init.Data.Array.DecidableEq
 
