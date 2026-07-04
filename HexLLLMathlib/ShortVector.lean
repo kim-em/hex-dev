@@ -13,10 +13,12 @@ public import HexLLL.Basic
 public section
 
 /-!
-The headline Mathlib capstones: the unconditional Euclidean short-vector
-bounds `lll_first_row_norm_sq_le_unconditional` (at `η = 11/20`) and
-`lllNative_first_row_norm_sq_le_unconditional` (classical `η = 1/2`), and the
-submodule lattice-preservation transfers `lll_mem_latticeSubmodule_iff` and
+The headline Mathlib capstones: the Euclidean short-vector bounds on the
+algorithm outputs, `lll_first_row_norm_sq_le` (at `η = 11/20`) and
+`lllNative_first_row_norm_sq_le` (classical `η = 1/2`). Unlike the conditional
+`reduced_first_row_norm_sq_le`, these discharge the `isLLLReduced` hypothesis
+internally, so they apply directly to `Hex.lll` / `Hex.lllNative`. Also here are
+the submodule lattice-preservation transfers `lll_mem_latticeSubmodule_iff` and
 `lllNative_mem_latticeSubmodule_iff`.
 -/
 
@@ -55,7 +57,7 @@ theorem lll_mem_latticeSubmodule_iff
 `η = 1/2`. Combines `Hex.lllNative_isLLLReduced` with the conditional
 Euclidean bound `reduced_first_row_norm_sq_le` at
 `η = 1/2`. -/
-theorem lllNative_first_row_norm_sq_le_unconditional
+theorem lllNative_first_row_norm_sq_le
     (b : Hex.Matrix Int n m) (δ : Rat)
     (hδ : (1 : Rat) / 4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent)
@@ -79,11 +81,11 @@ theorem lllNative_first_row_norm_sq_le_unconditional
   rw [hηη] at hbnd
   exact hbnd
 
-/-- **Unconditional Mathlib-Euclidean LLL short-vector bound on `Hex.lll` at
-`η = 11/20`.** Combines `Hex.lll_isLLLReduced` (η = 11/20) with the
-conditional Euclidean bound `reduced_first_row_norm_sq_le`
-at `η = 11/20`. -/
-theorem lll_first_row_norm_sq_le_unconditional
+/-- **Mathlib-Euclidean LLL short-vector bound on `Hex.lll` at `η = 11/20`.**
+Combines `Hex.lll_isLLLReduced` (η = 11/20) with the conditional Euclidean bound
+`reduced_first_row_norm_sq_le` at `η = 11/20`, discharging its `isLLLReduced`
+hypothesis so the bound holds for the raw `Hex.lll` output. -/
+theorem lll_first_row_norm_sq_le
     (b : Hex.Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent)

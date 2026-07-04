@@ -26,15 +26,15 @@ namespace HexLLLMathlib
 data. Lives on the Mathlib side because the diagonal Gram-determinant
 identification (`gramDetVec_eq_gramDet`) consumes a `StepWitness b`, which is
 supplied by `StepWitness.ofGram`. -/
-theorem LLLState.ofBasis_valid (b : Hex.Matrix Int n m) (hind : b.independent) :
-    (Hex.Internal.LLLState.ofBasis b hind).Valid := by
+theorem LLLState.ofBasis_valid (b : Hex.Matrix Int n m) :
+    (Hex.Internal.LLLState.ofBasis b).Valid := by
   let gs := Hex.GramSchmidt.Int.data b
   constructor
   · intro i j hi hj hji
-    simp [Hex.Internal.LLLState.ofBasis, Hex.Internal.LLLState.ofBasisUnchecked,
+    simp [Hex.Internal.LLLState.ofBasis,
       Hex.GramSchmidt.Int.scaledCoeffs]
   · intro i hi
-    simpa [Hex.Internal.LLLState.ofBasis, Hex.Internal.LLLState.ofBasisUnchecked,
+    simpa [Hex.Internal.LLLState.ofBasis,
       Hex.GramSchmidt.Int.gramDetVec, gs] using
       Hex.GramSchmidt.Int.gramDetVec_eq_gramDet b
         (Hex.GramSchmidt.Int.StepWitness.ofGram b) i (Nat.le_of_lt_succ hi)

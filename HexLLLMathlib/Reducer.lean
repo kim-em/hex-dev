@@ -1900,7 +1900,7 @@ recursion on a `fuel` argument, with `fuel = 0` returning the current
 basis as a pipeline-unreachable fallback (per SPEC §8).  This section
 proves the fallback unreachable for valid input: the bound
 `lllFuel s = (s.potential + 1) * (n + 1)` is sufficient for the loop
-started at `k = 1` on `s = ofBasis b hind`.
+started at `k = 1` on `s = ofBasis b`.
 
 The argument tracks the lexicographic measure
 `s.potential * (n + 1) + (n - k)`:
@@ -2371,12 +2371,12 @@ induction (`lllLoop_isLLLReduced_of_fuel_gt_measure`). -/
 theorem lllNative_isLLLReduced (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
     isLLLReduced (lllNative b δ hδ hδ' hn) δ (1 / 2) := by
-  show isLLLReduced (lllLoop (LLLState.ofBasisUnchecked b) 1 δ hδ hδ'
-    (Nat.le_refl 1) hn (lllFuel (LLLState.ofBasisUnchecked b))) δ (1 / 2)
-  set s := LLLState.ofBasisUnchecked b with hs_def
+  show isLLLReduced (lllLoop (LLLState.ofBasis b) 1 δ hδ hδ'
+    (Nat.le_refl 1) hn (lllFuel (LLLState.ofBasis b))) δ (1 / 2)
+  set s := LLLState.ofBasis b with hs_def
   have hs_valid : s.Valid := by
-    show (LLLState.ofBasis b hind).Valid
-    exact HexLLLMathlib.LLLState.ofBasis_valid b hind
+    show (LLLState.ofBasis b).Valid
+    exact HexLLLMathlib.LLLState.ofBasis_valid b
   have hs_ind : s.b.independent := hind
   have hs_pre : prefixLLLReduced s.b 1 δ := prefixLLLReduced_one s.b δ
   apply LLLState.lllLoop_isLLLReduced_of_fuel_gt_measure δ hδ hδ' (lllFuel s) s 1
@@ -2390,19 +2390,18 @@ theorem lllNative_memLattice_iff (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (v : Vector Int m) :
     Matrix.memLattice (lllNative b δ hδ hδ' hn) v ↔ Matrix.memLattice b v := by
-  show Matrix.memLattice (lllLoop (LLLState.ofBasisUnchecked b) 1 δ hδ hδ'
-    (Nat.le_refl 1) hn (lllFuel (LLLState.ofBasisUnchecked b))) v ↔ _
+  show Matrix.memLattice (lllLoop (LLLState.ofBasis b) 1 δ hδ hδ'
+    (Nat.le_refl 1) hn (lllFuel (LLLState.ofBasis b))) v ↔ _
   exact lllLoop_memLattice_iff _ 1 δ hδ hδ' (Nat.le_refl 1) hn _ v
 
 /-- Independence is preserved by `Hex.lllNative`. -/
 theorem lllNative_independent (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
     (lllNative b δ hδ hδ' hn).independent := by
-  have hs_valid : (LLLState.ofBasisUnchecked b).Valid := by
-    show (LLLState.ofBasis b hind).Valid
-    exact HexLLLMathlib.LLLState.ofBasis_valid b hind
-  show (lllLoop (LLLState.ofBasisUnchecked b) 1 δ hδ hδ'
-    (Nat.le_refl 1) hn (lllFuel (LLLState.ofBasisUnchecked b))).independent
+  have hs_valid : (LLLState.ofBasis b).Valid :=
+    HexLLLMathlib.LLLState.ofBasis_valid b
+  show (lllLoop (LLLState.ofBasis b) 1 δ hδ hδ'
+    (Nat.le_refl 1) hn (lllFuel (LLLState.ofBasis b))).independent
   exact LLLState.lllLoop_independent δ hδ hδ' _ _ 1
     (Nat.le_refl 1) hn hs_valid hind
 

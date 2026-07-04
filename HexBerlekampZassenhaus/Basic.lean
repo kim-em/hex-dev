@@ -5359,7 +5359,7 @@ structure BhksProjectedRowsTrace (L : BhksLatticeBasis) where
 def bhksProjectedRowsTrace (L : BhksLatticeBasis)
     (hrows : 1 ≤ L.factorCount + L.coeffWidth) : BhksProjectedRowsTrace L :=
   let reducedRows :=
-    lll.shortVectorsUnchecked L.basis (3 / 4) lll_delta_lower lll_delta_upper hrows
+    lllNative.shortVectors L.basis (3 / 4) lll_delta_lower lll_delta_upper hrows
   let reducedMatrix :=
     bhksRowsArrayToMatrix (L.factorCount + L.coeffWidth) reducedRows
   let retainedIndices := bhksRetainedRowIndices L reducedMatrix
@@ -5374,7 +5374,7 @@ theorem bhksProjectedRowsTrace_reducedMatrix_eq
     (L : BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth) :
     (bhksProjectedRowsTrace L hrows).reducedMatrix =
       lllNative L.basis (3 / 4) lll_delta_lower lll_delta_upper hrows := by
-  simp [bhksProjectedRowsTrace, lll.shortVectorsUnchecked, bhksRowsArrayToMatrix_toArray]
+  simp [bhksProjectedRowsTrace, lllNative.shortVectors, bhksRowsArrayToMatrix_toArray]
 
 /--
 Run LLL on a BHKS row-basis lattice, discard rows whose Gram-Schmidt squared
@@ -5388,7 +5388,7 @@ equivalence-class recovery stage.
 def bhksProjectedRows (L : BhksLatticeBasis)
     (hrows : 1 ≤ L.factorCount + L.coeffWidth) : BhksProjectedRows :=
   let reducedRows :=
-    lll.shortVectorsUnchecked L.basis (3 / 4) lll_delta_lower lll_delta_upper hrows
+    lllNative.shortVectors L.basis (3 / 4) lll_delta_lower lll_delta_upper hrows
   let reducedBasis :=
     bhksRowsArrayToMatrix (L.factorCount + L.coeffWidth) reducedRows
   { factorCount := L.factorCount
