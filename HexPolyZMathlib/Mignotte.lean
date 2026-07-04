@@ -41,6 +41,7 @@ private theorem range_foldl_add_eq_finset_sum_nat (g : Nat → Nat) (m : Nat) :
       rw [ih, Finset.sum_range_succ]
 
 /-- The Euclidean norm of the coefficient vector of an integer polynomial. -/
+@[expose]
 def l2norm (f : Polynomial ℤ) : ℝ :=
   Real.sqrt (∑ i ∈ f.support, (f.coeff i : ℝ) ^ 2)
 

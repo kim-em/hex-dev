@@ -4,17 +4,23 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhausMathlib.Basic
-import HexBerlekampMathlib.Basic
-import Mathlib.Data.ZMod.Basic
-import Mathlib.RingTheory.Polynomial.Content
-import Mathlib.Algebra.Polynomial.Degree.Lemmas
-import Mathlib.Algebra.Polynomial.Eval.Degree
-import Mathlib.Algebra.Polynomial.Eval.Irreducible
-import Mathlib.FieldTheory.Separable
-import Mathlib.FieldTheory.Perfect
-import Mathlib.RingTheory.Polynomial.Radical
-import Mathlib.RingTheory.Polynomial.GaussLemma
+module
+
+public import HexBerlekampZassenhausMathlib.Basic
+public import HexBerlekampMathlib.Basic
+public import Mathlib.Data.ZMod.Basic
+public import Mathlib.RingTheory.Polynomial.Content
+public import Mathlib.Algebra.Polynomial.Degree.Lemmas
+public import Mathlib.Algebra.Polynomial.Eval.Degree
+public import Mathlib.Algebra.Polynomial.Eval.Irreducible
+public import Mathlib.FieldTheory.Separable
+public import Mathlib.FieldTheory.Perfect
+public import Mathlib.RingTheory.Polynomial.Radical
+public import Mathlib.RingTheory.Polynomial.GaussLemma
+
+public section
+set_option backward.proofsInPublic true
+set_option backward.privateInPublic true
 
 /-!
 Reduction-mod-`p` irreducibility lemma for primitive integer polynomials, used

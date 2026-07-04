@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhausMathlib.IntReductionMod
-import HexBerlekampZassenhausMathlib.LatticeTier
+module
+
+public import HexBerlekampZassenhausMathlib.IntReductionMod
+public import HexBerlekampZassenhausMathlib.LatticeTier
+
+public section
 
 /-!
 Public factorization soundness surface that needs the post-`IntReductionMod`

@@ -4,7 +4,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhausMathlib.IrreducibleCert
+module
+
+public meta import HexBerlekampZassenhausMathlib.IrreducibleCert
+public import HexBerlekampZassenhausMathlib.IrreducibleCert
+-- The `irreducible_cert` proofs attach `Eq.refl true` for each certificate
+-- check, so the kernel must reduce `checkIrreducibleCertLinear` (and its
+-- Berlekamp pow-chain replay) plus the `Array`/`DensePoly` `==` comparisons.
+-- Expose those executable checker bodies and the efficient `Array` DecidableEq.
+import all HexBerlekampZassenhaus.Basic
+import all HexBerlekamp.Irreducibility
+import all Init.Data.Array.DecidableEq
+
+public section
+set_option backward.proofsInPublic true
+set_option backward.privateInPublic true
 
 /-!
 End-to-end tests for certificate reification and the `irreducible_cert`
@@ -38,7 +52,7 @@ def cubicInert : Hex.ZPoly := Hex.DensePoly.ofCoeffs #[-1, -1, 0, 1]
 /-- Reify the generated certificate (and the polynomial itself), typecheck
 them, evaluate them back, and compare with the originals; also confirm the
 evaluated copy still passes the kernel checker's compiled form. -/
-private def roundTrips (f : Hex.ZPoly) : MetaM Bool := do
+private meta def roundTrips (f : Hex.ZPoly) : MetaM Bool := do
   match Hex.certifyIrreducible? f with
   | none => return false
   | some cert => do

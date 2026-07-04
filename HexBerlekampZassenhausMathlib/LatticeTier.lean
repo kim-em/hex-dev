@@ -4,12 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhausMathlib.IntReductionMod
-import HexBerlekampZassenhausMathlib.CLDColumnBound
-import HexBerlekampZassenhausMathlib.Recovery
-import HexBerlekampZassenhausMathlib.PartitionRefinement
-import HexGramSchmidtMathlib.Int.Swap
-import HexLLLMathlib.ShortVector
+module
+
+public import HexBerlekampZassenhausMathlib.IntReductionMod
+public import HexBerlekampZassenhausMathlib.CLDColumnBound
+public import HexBerlekampZassenhausMathlib.Recovery
+public import HexBerlekampZassenhausMathlib.PartitionRefinement
+public import HexGramSchmidtMathlib.Int.Swap
+public import HexLLLMathlib.ShortVector
+
+public section
+set_option backward.proofsInPublic true
+set_option backward.privateInPublic true
 
 /-!
 # Irreducibility of the van Hoeij / CLD lattice tier (#8417)

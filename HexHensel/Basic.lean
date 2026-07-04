@@ -268,6 +268,7 @@ namespace FpPoly
 variable {p : Nat} [ZMod64.Bounds p]
 
 /-- Lift `F_p` coefficients to their standard nonnegative integer representatives. -/
+@[expose]
 def liftToZ (f : FpPoly p) : ZPoly :=
   DensePoly.ofCoeffs <|
     (List.range f.size).map (fun i => Int.ofNat (f.coeff i).toNat) |>.toArray

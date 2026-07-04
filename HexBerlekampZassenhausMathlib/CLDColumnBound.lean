@@ -4,14 +4,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhaus
-import HexBerlekampZassenhausMathlib.Lattice
-import HexHenselMathlib.Correctness
-import HexPolyZMathlib.Mignotte
-import HexPolyZMathlib.RobinsonForm
-import Mathlib.Algebra.Polynomial.FieldDivision
-import Mathlib.Algebra.BigOperators.Ring.Multiset
-import Mathlib.Data.Nat.Choose.Bounds
+module
+
+public import HexBerlekampZassenhaus
+public import HexBerlekampZassenhausMathlib.Lattice
+public import HexHenselMathlib.Correctness
+public import HexPolyZMathlib.Mignotte
+public import HexPolyZMathlib.RobinsonForm
+public import Mathlib.Algebra.Polynomial.FieldDivision
+public import Mathlib.Algebra.BigOperators.Ring.Multiset
+public import Mathlib.Data.Nat.Choose.Bounds
+
+public section
+set_option backward.proofsInPublic true
+set_option backward.privateInPublic true
 
 /-!
 BHKS CLD-column coefficient bounds (van Hoeij `W ⊆ L'` analytics, #8519).
