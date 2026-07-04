@@ -3757,7 +3757,7 @@ The divisor coefficient bound is discharged directly by
 `defaultFactorCoeffBound_valid` applied to the (nonzero) square-free core.
 This is the natural specialisation for callers that have already routed
 through the core's intrinsic Mignotte data; the public slow-trial dispatch
-in `Hex.factorSlowTrialFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)`
+in `Hex.factorTrialFactorsWithBound f (Hex.ZPoly.defaultFactorCoeffBound f)`
 uses the outer bound `Hex.ZPoly.defaultFactorCoeffBound f`, which requires
 an additional `(Hex.normalizeForFactor f).squareFreeCore ∣ f` divisibility
 chain (tracked separately) to discharge against this wrapper's `hbound`. -/
@@ -3974,7 +3974,7 @@ theorem fastCoreReassemblyComplete_of_coreIrreducible
     (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
     {expectedFactors : Array Hex.ZPoly}
     (hcore :
-      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B
+      Hex.bhksRecoveryCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B
         primeData (Hex.initialHenselPrecision B)
         (Hex.ZPoly.quadraticDoublingSteps B + 2) =
           some expectedFactors)
@@ -3984,18 +3984,18 @@ theorem fastCoreReassemblyComplete_of_coreIrreducible
       Array.polyProduct expectedFactors =
         (Hex.normalizeForFactor f).squareFreeCore := by
     simpa using
-      Hex.factorFastCoreWithBound_product
+      Hex.bhksRecoveryCoreWithBound_product
         (Hex.normalizeForFactor f).squareFreeCore B primeData
         (Hex.initialHenselPrecision B) (Hex.ZPoly.quadraticDoublingSteps B + 2)
         expectedFactors hcore
   have hnorm :
       ∀ q ∈ expectedFactors.toList, Hex.normalizeFactorSign q = q := by
     intro q hq
-    exact Hex.factorFastCoreWithBound_some_normalizeFactorSign hcore q hq
+    exact Hex.bhksRecoveryCoreWithBound_some_normalizeFactorSign hcore q hq
   have hdegree :
       ∀ q ∈ expectedFactors.toList, 0 < q.degree?.getD 0 := by
     intro q hq
-    exact Hex.factorFastCoreWithBound_some_degree_pos hcore q hq
+    exact Hex.bhksRecoveryCoreWithBound_some_degree_pos hcore q hq
   have hpos_lc :
       ∀ q ∈ expectedFactors.toList, 0 < Hex.DensePoly.leadingCoeff q := by
     intro q hq
@@ -4378,17 +4378,17 @@ short-circuit is reachable, the raw output can contain the unit `1`, so the
 statement carries the `shouldRecordPolynomialFactor` guard that excludes it.  The
 two positive-degree arms reuse the quadratic and exhaustive integer-trial
 completeness/irreducibility content. -/
-theorem factorSlowTrialFactorsWithBound_factor_irreducible
+theorem factorTrialFactorsWithBound_factor_irreducible
     (f : Hex.ZPoly) (hf : f ≠ 0)
     {raw : Hex.ZPoly}
-    (hmem : raw ∈ (Hex.factorSlowTrialFactorsWithBound f
+    (hmem : raw ∈ (Hex.factorTrialFactorsWithBound f
       (Hex.ZPoly.defaultFactorCoeffBound f)).toList)
     (hrec : Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
     Hex.ZPoly.Irreducible raw := by
   have hcore_pos := Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf
   have hcore_prim :=
     IntReductionMod.normalizeForFactor_squareFreeCore_primitive_of_ne_zero f hf
-  simp only [Hex.factorSlowTrialFactorsWithBound] at hmem
+  simp only [Hex.factorTrialFactorsWithBound] at hmem
   by_cases hdeg : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
   · rw [if_pos hdeg] at hmem
     have hcomplete := Hex.reassemblyExpansionComplete_constant_of_ne_zero f hf hdeg

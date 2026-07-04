@@ -25,9 +25,9 @@ Hensel seeds match the lift target; #8519) it has three arms:
 
 2. `latticeCoreWithBound … = some coreFactors` → those factors.  Via
    `latticeCoreWithBound_some_spec` this is either a genuine CLD split (a
-   `factorFastCoreWithBound` success; irreducibility of the emitted factors is
+   `bhksRecoveryCoreWithBound` success; irreducibility of the emitted factors is
    the BHKS count-equality obligation, already isolated by
-   `factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count` and threaded
+   `bhksRecoveryCoreWithBound_some_factor_zpolyIrreducible_of_count` and threaded
    here as the `harm2_count` hypothesis), or the certificate-backed early stop
    (#8395): `some #[core]` with a witness precision `k'` at/above the
    column-adequacy floor whose partition is the single all-ones class,
@@ -64,9 +64,9 @@ The arms of `latticeCoreFactorsWithBound` are discharged as follows:
   proved unconditionally from `squareFreeCore_irreducible_of_toMonicSmallModSingletonBranch`;
 * the loop-answer arm (`latticeCoreWithBound = some coreFactors`) splits via
   `latticeCoreWithBound_some_spec` into the CLD-split case (a genuine
-  `factorFastCoreWithBound` success, discharged from the count-equality
+  `bhksRecoveryCoreWithBound` success, discharged from the count-equality
   hypothesis `harm2_count` via
-  `factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count`) and the
+  `bhksRecoveryCoreWithBound_some_factor_zpolyIrreducible_of_count`) and the
   certificate-backed early stop (#8395: output `#[core]` with a witness
   precision `k'` clearing the column-adequacy floor, discharged from the
   adequacy hypothesis `harm3_adequacy` at `k'`);
@@ -84,20 +84,20 @@ theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bh
     (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
       = some primeData)
     (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
-    (hB_floor : Hex.fastCoreFloor (Hex.normalizeForFactor f).squareFreeCore ≤ B)
+    (hB_floor : Hex.bhksRecoveryFloor (Hex.normalizeForFactor f).squareFreeCore ≤ B)
     (hB_ne : B ≠ 0)
     {cf : Array Hex.ZPoly}
     (hlattice : Hex.latticeCoreFactorsWithBound
       (Hex.normalizeForFactor f).squareFreeCore B primeData = some cf)
     (harm2_count : ∀ coreFactors : Array Hex.ZPoly,
-      Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B primeData
+      Hex.bhksRecoveryCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B primeData
           (Hex.initialHenselPrecision B) (Hex.ZPoly.quadraticDoublingSteps B + 2)
           = some coreFactors →
       (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length =
         (UniqueFactorizationMonoid.normalizedFactors
           (HexPolyZMathlib.toPolynomial (Hex.normalizeForFactor f).squareFreeCore)).card)
     (harm3_adequacy : ∀ B' : Nat,
-      Hex.fastCoreFloor (Hex.normalizeForFactor f).squareFreeCore ≤ B' → B' ≠ 0 →
+      Hex.bhksRecoveryFloor (Hex.normalizeForFactor f).squareFreeCore ≤ B' → B' ≠ 0 →
       Hex.bhksSingleAllOnesPartition (Hex.normalizeForFactor f).squareFreeCore
           (Hex.ZPoly.toMonicLiftData (Hex.normalizeForFactor f).squareFreeCore B' primeData)
           = true →
@@ -130,18 +130,18 @@ theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible_of_bh
       obtain rfl := Option.some.inj hlattice
       rcases Hex.latticeCoreWithBound_some_spec hloop with
         hfast | ⟨rfl, k', hk'_floor, hk'_bhks⟩
-      · exact factorFastCoreWithBound_some_factor_zpolyIrreducible_of_count
+      · exact bhksRecoveryCoreWithBound_some_factor_zpolyIrreducible_of_count
           hcore_ne hfast (harm2_count coreFactors hfast)
       · have hk'_ne : k' ≠ 0 := by
           have hpos := Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hcore_ne
-          have hfl := Hex.defaultFactorCoeffBound_le_fastCoreFloor core
+          have hfl := Hex.defaultFactorCoeffBound_le_bhksRecoveryFloor core
           omega
         exact fun g hg => hsingleton g hg (harm3_adequacy k' hk'_floor hk'_ne hk'_bhks)
     · -- Arm 3: loop declined to the cap; all-ones certification at `B`, behind
       -- the executable floor guard.
       rename_i hloop
       split at hlattice
-      · -- `fastCoreFloorGate core ≤ B`: the guarded all-ones check.
+      · -- `bhksRecoveryFloorGate core ≤ B`: the guarded all-ones check.
         split at hlattice
         · -- `bhksSingleAllOnesPartition = true`: output `#[core]`, core irreducible.
           rename_i hbhks
@@ -440,7 +440,7 @@ theorem normalizedFactors_card_le_bhksEquivalenceClassIndicators_size
     (hcore_pos : 0 < core.degree?.getD 0)
     (hcore_prim : Hex.ZPoly.Primitive core)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
-    (hB_floor : Hex.fastCoreFloor core ≤ B)
+    (hB_floor : Hex.bhksRecoveryFloor core ≤ B)
     (hB_ne : B ≠ 0)
     {L : Hex.BhksLatticeBasis}
     (hL : L = Hex.bhksLatticeBasis (Hex.ZPoly.toMonic core).monic
@@ -475,9 +475,9 @@ theorem normalizedFactors_card_le_bhksEquivalenceClassIndicators_size
     exact Hex.henselLiftData_p _ _ _
   have hm_monic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
     Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
-  have hfloor_dfcb_m := Hex.defaultFactorCoeffBound_toMonic_le_fastCoreFloor core
-  have hfloor_dfcb := Hex.defaultFactorCoeffBound_le_fastCoreFloor core
-  have hfloor_cld := Hex.cldCoeffFloor_le_fastCoreFloor core
+  have hfloor_dfcb_m := Hex.defaultFactorCoeffBound_toMonic_le_bhksRecoveryFloor core
+  have hfloor_dfcb := Hex.defaultFactorCoeffBound_le_bhksRecoveryFloor core
+  have hfloor_cld := Hex.cldCoeffFloor_le_bhksRecoveryFloor core
   have hbound_monic :
       2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
         primeData.p ^ Hex.precisionForCoeffBound B primeData.p := by omega
@@ -683,12 +683,12 @@ with reducibility, the arm-3 `≥ 2`-classes contradiction.
 
 /--
 **Arm-2 deep obligation (BHKS CLD count-equality).**  When the CLD recovery
-`factorFastCoreWithBound` splits `core`, the number of emitted factors equals the
+`bhksRecoveryCoreWithBound` splits `core`, the number of emitted factors equals the
 number of irreducible factors of `core` over `ℤ` — the count-equality that turns
 the fast-core coverage into per-factor irreducibility.
 
 The `≤` half is the proven UFD partition bound
-(`factorFastCoreWithBound_some_factor_count_le`); the `≥` half is the van Hoeij
+(`bhksRecoveryCoreWithBound_some_factor_count_le`); the `≥` half is the van Hoeij
 `W ⊆ L'` adequacy: the acceptance gate guarantees the witness precision clears
 the fast-core floor, so every true-factor support survives the LLL/Gram-Schmidt
 cut as a distinct equivalence class, and one verified candidate is emitted per
@@ -700,7 +700,7 @@ theorem latticeArm2_fastCore_count
       = some primeData)
     (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
     (coreFactors : Array Hex.ZPoly)
-    (hfast : Hex.factorFastCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B primeData
+    (hfast : Hex.bhksRecoveryCoreWithBound (Hex.normalizeForFactor f).squareFreeCore B primeData
         (Hex.initialHenselPrecision B) (Hex.ZPoly.quadraticDoublingSteps B + 2)
         = some coreFactors) :
     (coreFactors.toList.map HexPolyZMathlib.toPolynomial).length =
@@ -715,13 +715,13 @@ theorem latticeArm2_fastCore_count
   have hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core) :=
     IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf_ne
   -- the ≤ half: the emitted factors are nonunit divisors with product `core`
-  have hle := factorFastCoreWithBound_some_factor_count_le hcore_ne hfast
+  have hle := bhksRecoveryCoreWithBound_some_factor_count_le hcore_ne hfast
   -- the ≥ half through the recovery-data extractor at the gated witness precision
   obtain ⟨k', hrows, hcand, _hdegen, _hprod, hfloor⟩ :=
-    Hex.factorFastCoreWithBound_some_indicatorCandidates hfast
+    Hex.bhksRecoveryCoreWithBound_some_indicatorCandidates hfast
   have hk_ne : k' ≠ 0 := by
     have hpos := Hex.ZPoly.defaultFactorCoeffBound_pos_of_ne_zero hcore_ne
-    have hfl := Hex.defaultFactorCoeffBound_le_fastCoreFloor core
+    have hfl := Hex.defaultFactorCoeffBound_le_bhksRecoveryFloor core
     omega
   have hsize := Hex.bhksIndicatorCandidates?_size_eq hcand
   have hge := normalizedFactors_card_le_bhksEquivalenceClassIndicators_size
@@ -745,14 +745,14 @@ The precision hypothesis is essential, not incidental: at precision below the
 separation threshold the lattice may not have separated the modular factors,
 so `bhksSingleAllOnesPartition` could report `true` on a *reducible* core.
 The `factorLattice` call site supplies adequate precision via
-`factorFastPrecisionCap`, which contains the floor by construction.
+`latticePrecisionCap`, which contains the floor by construction.
 -/
 theorem latticeArm3_bhksSingleAllOnes_irreducible
     (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
       = some primeData)
     (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
-    (hB_floor : Hex.fastCoreFloor (Hex.normalizeForFactor f).squareFreeCore ≤ B)
+    (hB_floor : Hex.bhksRecoveryFloor (Hex.normalizeForFactor f).squareFreeCore ≤ B)
     (hB_ne : B ≠ 0)
     (hbhks : Hex.bhksSingleAllOnesPartition (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.toMonicLiftData (Hex.normalizeForFactor f).squareFreeCore B primeData)
@@ -855,14 +855,14 @@ square-free core of `normalizeForFactor f` is irreducible over `ℤ`, provided t
 precision clears the fast-core acceptance floor (`hB_floor`).  Arm 1 (small-mod
 singleton) is proved directly; arms 2/3 are the deep CLD obligations
 `latticeArm2_fastCore_count` / `latticeArm3_bhksSingleAllOnes_irreducible`.  The
-`factorLattice` call site supplies `hB_floor` via `factorFastPrecisionCap`.
+`factorLattice` call site supplies `hB_floor` via `latticePrecisionCap`.
 -/
 theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
     (f : Hex.ZPoly) (hf_ne : f ≠ 0) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
       = some primeData)
     (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
-    (hB_floor : Hex.fastCoreFloor (Hex.normalizeForFactor f).squareFreeCore ≤ B)
+    (hB_floor : Hex.bhksRecoveryFloor (Hex.normalizeForFactor f).squareFreeCore ≤ B)
     (hB_ne : B ≠ 0)
     {cf : Array Hex.ZPoly}
     (hlattice : Hex.latticeCoreFactorsWithBound
@@ -906,7 +906,7 @@ theorem reassemblyExpansionComplete_latticeCore_of_ne_zero
     (hselected : Hex.ZPoly.toMonicPrimeData? (Hex.normalizeForFactor f).squareFreeCore
       = some primeData)
     (hdeg_ne : (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
-    (hB_floor : Hex.fastCoreFloor (Hex.normalizeForFactor f).squareFreeCore ≤ B)
+    (hB_floor : Hex.bhksRecoveryFloor (Hex.normalizeForFactor f).squareFreeCore ≤ B)
     (hB_ne : B ≠ 0)
     {cf : Array Hex.ZPoly}
     (hlattice : Hex.latticeCoreFactorsWithBound
@@ -929,7 +929,7 @@ Reduces through the reassembly bridge to the `LatticeTier` core lemma. -/
 theorem factorLatticeFactorsWithBound_factor_irreducible
     (f : Hex.ZPoly) (hf : f ≠ 0)
     {cf : Array Hex.ZPoly}
-    (hcf : Hex.factorLatticeFactorsWithBound f (Hex.factorFastPrecisionCap f) = some cf)
+    (hcf : Hex.factorLatticeFactorsWithBound f (Hex.latticePrecisionCap f) = some cf)
     {raw : Hex.ZPoly}
     (hmem : raw ∈ cf.toList)
     (hrec : Hex.shouldRecordPolynomialFactor (Hex.normalizeFactorSign raw) = true) :
@@ -953,7 +953,7 @@ theorem factorLatticeFactorsWithBound_factor_irreducible
       rw [hraw_one, Hex.normalizeFactorSign_one, Hex.shouldRecordPolynomialFactor_one] at hrec
       exact absurd hrec (by decide)
   · rw [if_neg hdeg0] at hcf
-    by_cases hB0 : Hex.factorFastPrecisionCap f = 0
+    by_cases hB0 : Hex.latticePrecisionCap f = 0
     · rw [if_pos hB0] at hcf; exact absurd hcf.symm (Option.some_ne_none cf)
     · rw [if_neg hB0] at hcf
       cases hquad : Hex.quadraticIntegerRootFactors? (Hex.normalizeForFactor f).squareFreeCore with
@@ -979,12 +979,12 @@ theorem factorLatticeFactorsWithBound_factor_irreducible
           refine Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
             (Hex.normalizeForFactor f) coreFactors ?_ ?_ hmem
           · exact reassemblyExpansionComplete_latticeCore_of_ne_zero
-              f hf (Hex.factorFastPrecisionCap f) primeData hselected hdeg0
-              (Hex.fastCoreFloor_squareFreeCore_le_factorFastPrecisionCap f) hB0
+              f hf (Hex.latticePrecisionCap f) primeData hselected hdeg0
+              (Hex.bhksRecoveryFloor_squareFreeCore_le_latticePrecisionCap f) hB0
               hcore_lattice
           · exact latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
-              f hf (Hex.factorFastPrecisionCap f) primeData hselected hdeg0
-              (Hex.fastCoreFloor_squareFreeCore_le_factorFastPrecisionCap f) hB0
+              f hf (Hex.latticePrecisionCap f) primeData hselected hdeg0
+              (Hex.bhksRecoveryFloor_squareFreeCore_le_latticePrecisionCap f) hB0
               hcore_lattice
 
 /-- **Hybrid raw-factor irreducibility assembly.**  Every raw factor of
@@ -1000,7 +1000,7 @@ theorem factorHybridFactors_factor_irreducible
     ⟨cf, hcf, hraw⟩ | ⟨cf, hcf, hraw⟩ | htrial
   · exact factorClassicalFactorsWithBound_factor_irreducible f hf hcf hraw hrec
   · exact factorLatticeFactorsWithBound_factor_irreducible f hf hcf hraw hrec
-  · exact factorSlowTrialFactorsWithBound_factor_irreducible f hf htrial hrec
+  · exact factorTrialFactorsWithBound_factor_irreducible f hf htrial hrec
 
 end
 

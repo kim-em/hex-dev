@@ -391,7 +391,7 @@ while the full lattice factorization remains too expensive for the `verify`
 budget.
 -/
 def checksumFastPathSetup (f : ZPoly) (p : Nat) : UInt64 :=
-  mixHash (hash (factorFastPrecisionCap f)) (checksumOptionNatArray (modularFactorDegreesAt? f p))
+  mixHash (hash (latticePrecisionCap f)) (checksumOptionNatArray (modularFactorDegreesAt? f p))
 
 /-- Benchmark target: public fast-with-slow-fallback factorization. -/
 def runFactorChecksum (f : ZPoly) : UInt64 :=
@@ -404,7 +404,7 @@ def runFactorFallbackProbeChecksum (f : ZPoly) : UInt64 :=
 
 /-- Benchmark target: public exhaustive slow backstop. -/
 def runFactorSlowChecksum (f : ZPoly) : UInt64 :=
-  checksumFactorization (factorSlowTrial f)
+  checksumFactorization (factorTrial f)
 
 /-- Shared-domain compare target: public factorization on deterministic splits. -/
 def runFactorCompareChecksum (f : ZPoly) : UInt64 :=
@@ -412,7 +412,7 @@ def runFactorCompareChecksum (f : ZPoly) : UInt64 :=
 
 /-- Shared-domain compare target: exhaustive slow factorization on deterministic splits. -/
 def runFactorSlowCompareChecksum (f : ZPoly) : UInt64 :=
-  checksumFactorization (factorSlowTrial f)
+  checksumFactorization (factorTrial f)
 
 /-- Singleton benchmark target: public factorization on `X^4 + 1`. -/
 @[noinline]
@@ -498,7 +498,7 @@ def runFactorDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
 
 /-- Benchmark target: bounded slow-path diagnostic over small degree/height cases. -/
 def runFactorSlowDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
-  checksumFactorization (factorSlowTrial input.poly)
+  checksumFactorization (factorTrial input.poly)
 
 /--
 Benchmark target: `verify`-budget-safe fast-path setup over encoded degree,
@@ -511,7 +511,7 @@ def runFastPathPrecisionLocalChecksum (input : PrecisionLocalInput) : UInt64 :=
   mixHash (hash input.precision) <|
     mixHash (hash input.localFactorCount) <|
       mixHash (checksumZPolyArray lifted) <|
-        mixHash (hash (factorFastPrecisionCap input.poly)) (checksumOptionNatArray splitProfile)
+        mixHash (hash (latticePrecisionCap input.poly)) (checksumOptionNatArray splitProfile)
 
 initialize isabelleBZBinaryRef : IO.Ref (Option String) ← IO.mkRef none
 

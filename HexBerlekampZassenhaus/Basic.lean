@@ -8981,43 +8981,43 @@ def cldCoeffFloor (core : ZPoly) : Nat :=
 
 /-- Acceptance floor for the fast-core loop: the CLD column-adequacy floor
 `cldCoeffFloor` joined with the Mignotte recovery bounds of the core and of its
-monic transform.  A success accepted at `k ≥ fastCoreFloor core` is both
+monic transform.  A success accepted at `k ≥ bhksRecoveryFloor core` is both
 column-adequate and running at a Hensel modulus `p ^ precisionForCoeffBound k p`
 that clears twice both Mignotte bounds — which is what the lattice-tier
 count-equality and adequacy proofs consume (#8519): the toMonic partition
 producers need `2 * defaultFactorCoeffBound (toMonic core).monic < p ^ a`, and
 the true-support nonemptiness argument needs the same for `core` itself. -/
-def fastCoreFloor (core : ZPoly) : Nat :=
+def bhksRecoveryFloor (core : ZPoly) : Nat :=
   max (cldCoeffFloor core)
     (max (ZPoly.defaultFactorCoeffBound core)
       (ZPoly.defaultFactorCoeffBound (ZPoly.toMonic core).monic))
 
-theorem cldCoeffFloor_le_fastCoreFloor (core : ZPoly) :
-    cldCoeffFloor core ≤ fastCoreFloor core :=
+theorem cldCoeffFloor_le_bhksRecoveryFloor (core : ZPoly) :
+    cldCoeffFloor core ≤ bhksRecoveryFloor core :=
   Nat.le_max_left _ _
 
-theorem defaultFactorCoeffBound_le_fastCoreFloor (core : ZPoly) :
-    ZPoly.defaultFactorCoeffBound core ≤ fastCoreFloor core :=
+theorem defaultFactorCoeffBound_le_bhksRecoveryFloor (core : ZPoly) :
+    ZPoly.defaultFactorCoeffBound core ≤ bhksRecoveryFloor core :=
   Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_right _ _)
 
-theorem defaultFactorCoeffBound_toMonic_le_fastCoreFloor (core : ZPoly) :
-    ZPoly.defaultFactorCoeffBound (ZPoly.toMonic core).monic ≤ fastCoreFloor core :=
+theorem defaultFactorCoeffBound_toMonic_le_bhksRecoveryFloor (core : ZPoly) :
+    ZPoly.defaultFactorCoeffBound (ZPoly.toMonic core).monic ≤ bhksRecoveryFloor core :=
   Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_right _ _)
 
 /-- The acceptance floor used solely as the fast-core loop's skip gate.
 
-Definitionally `fastCoreFloor`, but marked `irreducible` so that `whnf` in
-downstream proofs that case-split on a `factorFastCoreWithBound` application
+Definitionally `bhksRecoveryFloor`, but marked `irreducible` so that `whnf` in
+downstream proofs that case-split on a `bhksRecoveryCoreWithBound` application
 does not eagerly expand the (symbolic, structurally large) floor computation
 while reducing the loop's head `if`.  The loop's behavioural unfolding lemma
-`factorFastCoreWithBound_unfold` re-exposes the plain `fastCoreFloor`
+`bhksRecoveryCoreWithBound_unfold` re-exposes the plain `bhksRecoveryFloor`
 comparison, so proofs reason about the genuine floor. -/
-@[irreducible] def fastCoreFloorGate (core : ZPoly) : Nat :=
-  fastCoreFloor core
+@[irreducible] def bhksRecoveryFloorGate (core : ZPoly) : Nat :=
+  bhksRecoveryFloor core
 
-theorem fastCoreFloorGate_eq (core : ZPoly) :
-    fastCoreFloorGate core = fastCoreFloor core := by
-  simp only [fastCoreFloorGate]
+theorem bhksRecoveryFloorGate_eq (core : ZPoly) :
+    bhksRecoveryFloorGate core = bhksRecoveryFloor core := by
+  simp only [bhksRecoveryFloorGate]
 
 /-- Inner fast-core recombination loop, parameterised by a precomputed CLD
 column-adequacy `floor`.  Below `floor` a success cannot be accepted and every
@@ -9027,13 +9027,13 @@ and the loop steps straight to the next scheduled precision.  At/above `floor`
 a success is column-adequate and accepted immediately.
 
 `floor` is threaded as a parameter so the (structurally large, degree-
-exponential) `cldCoeffFloor` is evaluated once by `factorFastCoreWithBound`
+exponential) `cldCoeffFloor` is evaluated once by `bhksRecoveryCoreWithBound`
 rather than re-evaluated at every doubling step.
 
-Private: only `factorFastCoreWithBound` (which passes `cldCoeffFloorGate core`)
+Private: only `bhksRecoveryCoreWithBound` (which passes `cldCoeffFloorGate core`)
 is the semantically supported entry point; the bare `floor` parameter must not
 be set independently. -/
-private def factorFastCoreLoop
+private def bhksRecoveryLoop
     (core : ZPoly) (B floor : Nat) (primeData : PrimeChoiceData) :
     Nat → Nat → Option (Array ZPoly)
   | _k, 0 => none
@@ -9042,7 +9042,7 @@ private def factorFastCoreLoop
         if k ≥ B then
           none
         else
-          factorFastCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
+          bhksRecoveryLoop core B floor primeData (nextHenselPrecision k B) fuel
       else
         match bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
         | .success factors =>
@@ -9051,26 +9051,26 @@ private def factorFastCoreLoop
           if k ≥ B then
             none
           else
-            factorFastCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
+            bhksRecoveryLoop core B floor primeData (nextHenselPrecision k B) fuel
         | .productMismatch _ =>
           if k ≥ B then
             none
           else
-            factorFastCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
+            bhksRecoveryLoop core B floor primeData (nextHenselPrecision k B) fuel
         | .degenerate =>
           if k ≥ B then
             none
           else
-            factorFastCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
+            bhksRecoveryLoop core B floor primeData (nextHenselPrecision k B) fuel
 
 /-- BHKS fast-core recombination loop.  Computes the CLD column-adequacy floor
-once (through the irreducible `fastCoreFloorGate`, so `whnf` in downstream
+once (through the irreducible `bhksRecoveryFloorGate`, so `whnf` in downstream
 proofs that case-split on this application does not eagerly expand the symbolic
-floor) and runs `factorFastCoreLoop`. -/
-def factorFastCoreWithBound
+floor) and runs `bhksRecoveryLoop`. -/
+def bhksRecoveryCoreWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) (k fuel : Nat) :
     Option (Array ZPoly) :=
-  factorFastCoreLoop core B (fastCoreFloorGate core) primeData k fuel
+  bhksRecoveryLoop core B (bhksRecoveryFloorGate core) primeData k fuel
 
 /-- Behavioural unfolding for the optimized fast-core loop: the precision-floor
 short-circuit is propositionally equal to the original "recover at every step,
@@ -9078,46 +9078,46 @@ accept only at the floor" body.  Below the floor every recovery class steps to
 the next precision, and at/above the floor a success is column-adequate; both
 match the gated form, so this lemma lets the recovery-on-schedule proofs reason
 about the loop exactly as before. -/
-private theorem factorFastCoreWithBound_unfold
+private theorem bhksRecoveryCoreWithBound_unfold
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) (k fuel : Nat) :
-    factorFastCoreWithBound core B primeData k (fuel + 1) =
+    bhksRecoveryCoreWithBound core B primeData k (fuel + 1) =
       match bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | .success factors =>
-        if k ≥ fastCoreFloor core then
+        if k ≥ bhksRecoveryFloor core then
           some factors
         else if k ≥ B then
           none
         else
-          factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel
+          bhksRecoveryCoreWithBound core B primeData (nextHenselPrecision k B) fuel
       | .candidateFailure =>
         if k ≥ B then
           none
         else
-          factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel
+          bhksRecoveryCoreWithBound core B primeData (nextHenselPrecision k B) fuel
       | .productMismatch _ =>
         if k ≥ B then
           none
         else
-          factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel
+          bhksRecoveryCoreWithBound core B primeData (nextHenselPrecision k B) fuel
       | .degenerate =>
         if k ≥ B then
           none
         else
-          factorFastCoreWithBound core B primeData (nextHenselPrecision k B) fuel := by
+          bhksRecoveryCoreWithBound core B primeData (nextHenselPrecision k B) fuel := by
   have hrec : ∀ k',
-      factorFastCoreLoop core B (fastCoreFloor core) primeData k' fuel =
-        factorFastCoreWithBound core B primeData k' fuel := by
+      bhksRecoveryLoop core B (bhksRecoveryFloor core) primeData k' fuel =
+        bhksRecoveryCoreWithBound core B primeData k' fuel := by
     intro k'
-    rw [factorFastCoreWithBound, fastCoreFloorGate_eq]
-  rw [factorFastCoreWithBound, fastCoreFloorGate_eq, factorFastCoreLoop]
+    rw [bhksRecoveryCoreWithBound, bhksRecoveryFloorGate_eq]
+  rw [bhksRecoveryCoreWithBound, bhksRecoveryFloorGate_eq, bhksRecoveryLoop]
   simp only [hrec]
-  by_cases hf : k < fastCoreFloor core
+  by_cases hf : k < bhksRecoveryFloor core
   · rw [if_pos hf]
-    have hfloor : ¬ k ≥ fastCoreFloor core := Nat.not_le.mpr hf
+    have hfloor : ¬ k ≥ bhksRecoveryFloor core := Nat.not_le.mpr hf
     cases bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) <;>
       simp only [hfloor, if_false]
   · rw [if_neg hf]
-    have hfloor : k ≥ fastCoreFloor core := Nat.le_of_not_lt hf
+    have hfloor : k ≥ bhksRecoveryFloor core := Nat.le_of_not_lt hf
     cases bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) <;>
       simp only [hfloor, if_true]
 
@@ -9267,22 +9267,22 @@ theorem cap_mem_henselPrecisionSchedule (B : Nat) :
               omega
     exact henselPrecisionSchedule_mem_cap _ _ hinit_pos hinit_le hbound
 
-private theorem factorFastCoreWithBound_isSome_of_recovery_on_schedule
+private theorem bhksRecoveryCoreWithBound_isSome_of_recovery_on_schedule
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {start fuel target : Nat} {factors : Array ZPoly}
-    (hfloor : fastCoreFloor core ≤ target)
+    (hfloor : bhksRecoveryFloor core ≤ target)
     (hmem : target ∈ henselPrecisionSchedule B start fuel)
     (hrecover :
       bhksRecover? core (ZPoly.toMonicLiftData core target primeData) = some factors) :
-    (factorFastCoreWithBound core B primeData start fuel).isSome := by
+    (bhksRecoveryCoreWithBound core B primeData start fuel).isSome := by
   induction fuel generalizing start with
   | zero =>
       simp [henselPrecisionSchedule] at hmem
   | succ fuel ih =>
-      rw [factorFastCoreWithBound_unfold]
+      rw [bhksRecoveryCoreWithBound_unfold]
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core start primeData) with
       | success xs =>
-          by_cases hstart : start ≥ fastCoreFloor core
+          by_cases hstart : start ≥ bhksRecoveryFloor core
           · simp [hstart]
           · by_cases hk : start ≥ B
             · exfalso
@@ -9387,22 +9387,22 @@ This is the executable-loop determinism skeleton.  The BHKS precision theorem
 supplies the `hno` premise by ruling out successful recovery below the
 Mignotte/cap precision.
 -/
-theorem factorFastCoreWithBound_eq_some_of_recovery_on_schedule_of_no_prior_recovery
+theorem bhksRecoveryCoreWithBound_eq_some_of_recovery_on_schedule_of_no_prior_recovery
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {start fuel target : Nat} {factors : Array ZPoly}
-    (hfloor : fastCoreFloor core ≤ target)
+    (hfloor : bhksRecoveryFloor core ≤ target)
     (hmem : target ∈ henselPrecisionSchedule B start fuel)
     (hno :
       ∀ k, k ∈ henselPrecisionSchedule B start fuel → k ≠ target →
         bhksRecover? core (ZPoly.toMonicLiftData core k primeData) = none)
     (hrecover :
       bhksRecover? core (ZPoly.toMonicLiftData core target primeData) = some factors) :
-    factorFastCoreWithBound core B primeData start fuel = some factors := by
+    bhksRecoveryCoreWithBound core B primeData start fuel = some factors := by
   induction fuel generalizing start with
   | zero =>
       simp [henselPrecisionSchedule] at hmem
   | succ fuel ih =>
-      rw [factorFastCoreWithBound_unfold]
+      rw [bhksRecoveryCoreWithBound_unfold]
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core start primeData) with
       | success xs =>
           by_cases htarget : start = target
@@ -9508,17 +9508,17 @@ theorem factorFastCoreWithBound_eq_some_of_recovery_on_schedule_of_no_prior_reco
               simp [henselPrecisionSchedule, hk, hk_mem]
             exact hno k hk_schedule hk_ne
 
-private theorem factorFastCoreWithBound_ne_none_of_recovery_on_schedule
+private theorem bhksRecoveryCoreWithBound_ne_none_of_recovery_on_schedule
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {start fuel target : Nat} {factors : Array ZPoly}
-    (hfloor : fastCoreFloor core ≤ target)
+    (hfloor : bhksRecoveryFloor core ≤ target)
     (hmem : target ∈ henselPrecisionSchedule B start fuel)
     (hrecover :
       bhksRecover? core (ZPoly.toMonicLiftData core target primeData) = some factors) :
-    factorFastCoreWithBound core B primeData start fuel ≠ none := by
+    bhksRecoveryCoreWithBound core B primeData start fuel ≠ none := by
   intro hnone
   have hsome :=
-    factorFastCoreWithBound_isSome_of_recovery_on_schedule
+    bhksRecoveryCoreWithBound_isSome_of_recovery_on_schedule
       core B primeData hfloor hmem hrecover
   rw [hnone] at hsome
   simp at hsome
@@ -9531,7 +9531,7 @@ private def factorFastCoreGuardPrimeData : PrimeChoiceData :=
     fModP := ZPoly.modP 5 cldGuardF
     factorsModP := berlekampFactorsModP cldGuardF c }
 
-#guard factorFastCoreWithBound cldGuardF 1 factorFastCoreGuardPrimeData
+#guard bhksRecoveryCoreWithBound cldGuardF 1 factorFastCoreGuardPrimeData
     (initialHenselPrecision 1) (ZPoly.quadraticDoublingSteps 1 + 2) =
   none
 
@@ -9539,14 +9539,14 @@ private def factorFastCoreGuardPrimeData : PrimeChoiceData :=
 -- `cldCoeffFloor cldGuardF = 32` cannot be accepted: the schedule reaches the
 -- cap `B` while every success is still below the floor, so the loop reports
 -- `none`.
-#guard factorFastCoreWithBound cldGuardF 4 factorFastCoreGuardPrimeData
+#guard bhksRecoveryCoreWithBound cldGuardF 4 factorFastCoreGuardPrimeData
     (initialHenselPrecision 4) (ZPoly.quadraticDoublingSteps 4 + 2) =
   none
 
 -- At a bound that reaches the floor the first gated success is accepted: for
 -- `cldGuardF` this is schedule index `k = 32` (lift precision `liftData.k = 3`,
 -- modulus `5 ^ 3 = 125`), recovering the same factors.
-#guard factorFastCoreWithBound cldGuardF 32 factorFastCoreGuardPrimeData
+#guard bhksRecoveryCoreWithBound cldGuardF 32 factorFastCoreGuardPrimeData
     (initialHenselPrecision 32) (ZPoly.quadraticDoublingSteps 32 + 2) =
   some bhksGuardFactors
 
@@ -9813,7 +9813,7 @@ constant/quadratic-root short-circuits as the classical tier; the residual
 exhaustive branch dispatches to the standalone integer trial-division core
 (`exhaustiveIntegerTrialCoreFactorsWithBound`). This is the trial-division
 tier of the three-tier `factor` combinator (SPEC PR #6580). -/
-def factorSlowTrialFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
+def factorTrialFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   let normalized := normalizeForFactor f
   if normalized.squareFreeCore.degree?.getD 0 = 0 then
     reassemblePolynomialFactors normalized #[normalized.squareFreeCore]
@@ -9825,28 +9825,28 @@ def factorSlowTrialFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
           exhaustiveIntegerTrialCoreFactorsWithBound normalized.squareFreeCore B
         reassemblePolynomialFactors normalized coreFactors
 
-#guard factorSlowTrialFactorsWithBound exhaustiveNonMonicQuadraticGuard 4 =
+#guard factorTrialFactorsWithBound exhaustiveNonMonicQuadraticGuard 4 =
   #[exhaustiveNonMonicQuadraticGuard]
 
-def factorSlowTrialWithBound (f : ZPoly) (B : Nat) : Factorization :=
-  factorizationOfFactors f (factorSlowTrialFactorsWithBound f B)
+def factorTrialWithBound (f : ZPoly) (B : Nat) : Factorization :=
+  factorizationOfFactors f (factorTrialFactorsWithBound f B)
 
 /-- Characterise the bounded integer trial-division slow wrapper as the raw
 factor array packed into the public `Factorization` representation. -/
-theorem factorSlowTrialWithBound_eq_factorizationOfFactors
+theorem factorTrialWithBound_eq_factorizationOfFactors
     (f : ZPoly) (B : Nat) :
-    factorSlowTrialWithBound f B =
-      factorizationOfFactors f (factorSlowTrialFactorsWithBound f B) := rfl
+    factorTrialWithBound f B =
+      factorizationOfFactors f (factorTrialFactorsWithBound f B) := rfl
 
 /--
 Factor using the integer trial-division path at the default Mignotte
 coefficient bound. This is the trial-division tier of the three-tier
 `factor` combinator (SPEC PR #6580).
 -/
-def factorSlowTrial (f : ZPoly) : Factorization :=
-  factorSlowTrialWithBound f (ZPoly.defaultFactorCoeffBound f)
+def factorTrial (f : ZPoly) : Factorization :=
+  factorTrialWithBound f (ZPoly.defaultFactorCoeffBound f)
 
-#guard factorSlowTrial exhaustiveNonMonicQuadraticGuard =
+#guard factorTrial exhaustiveNonMonicQuadraticGuard =
   factorizationOfFactors exhaustiveNonMonicQuadraticGuard #[exhaustiveNonMonicQuadraticGuard]
 
 /--
@@ -9864,62 +9864,62 @@ The BHKS component is computed from `(normalizeForFactor f).squareFreeCore`
 against `f`'s `4`, and `bhksBound core > bhksBound f`), so a cap keyed on
 `f` can sit below the core's separation threshold (#8521).
 -/
-def factorFastPrecisionCap (f : ZPoly) : Nat :=
+def latticePrecisionCap (f : ZPoly) : Nat :=
   let core := (normalizeForFactor f).squareFreeCore
   max (max (bhksBound core) (cldCoeffFloor core))
     (max (ZPoly.defaultFactorCoeffBound f)
       (max (ZPoly.defaultFactorCoeffBound core)
         (ZPoly.defaultFactorCoeffBound (ZPoly.toMonic core).monic)))
 
-theorem bhksBound_squareFreeCore_le_factorFastPrecisionCap (f : ZPoly) :
-    bhksBound (normalizeForFactor f).squareFreeCore ≤ factorFastPrecisionCap f := by
-  unfold factorFastPrecisionCap
+theorem bhksBound_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
+    bhksBound (normalizeForFactor f).squareFreeCore ≤ latticePrecisionCap f := by
+  unfold latticePrecisionCap
   exact Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_left _ _)
 
 /-- The cap clears the CLD column-adequacy floor of the square-free core, so the
 lattice tier's cap-precision run is column-adequate by construction (#8519). -/
-theorem cldCoeffFloor_squareFreeCore_le_factorFastPrecisionCap (f : ZPoly) :
-    cldCoeffFloor (normalizeForFactor f).squareFreeCore ≤ factorFastPrecisionCap f := by
-  unfold factorFastPrecisionCap
+theorem cldCoeffFloor_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
+    cldCoeffFloor (normalizeForFactor f).squareFreeCore ≤ latticePrecisionCap f := by
+  unfold latticePrecisionCap
   exact Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_left _ _)
 
-theorem defaultFactorCoeffBound_le_factorFastPrecisionCap (f : ZPoly) :
-    ZPoly.defaultFactorCoeffBound f ≤ factorFastPrecisionCap f := by
-  unfold factorFastPrecisionCap
+theorem defaultFactorCoeffBound_le_latticePrecisionCap (f : ZPoly) :
+    ZPoly.defaultFactorCoeffBound f ≤ latticePrecisionCap f := by
+  unfold latticePrecisionCap
   exact Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_right _ _)
 
 /-- The public precision cap clears the whole fast-core acceptance floor, so
 the gated loop always has admissible precisions on its schedule (#8519). -/
-theorem fastCoreFloor_squareFreeCore_le_factorFastPrecisionCap (f : ZPoly) :
-    fastCoreFloor (normalizeForFactor f).squareFreeCore ≤ factorFastPrecisionCap f := by
-  unfold fastCoreFloor
-  refine Nat.max_le.mpr ⟨cldCoeffFloor_squareFreeCore_le_factorFastPrecisionCap f,
+theorem bhksRecoveryFloor_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
+    bhksRecoveryFloor (normalizeForFactor f).squareFreeCore ≤ latticePrecisionCap f := by
+  unfold bhksRecoveryFloor
+  refine Nat.max_le.mpr ⟨cldCoeffFloor_squareFreeCore_le_latticePrecisionCap f,
     Nat.max_le.mpr ⟨?_, ?_⟩⟩
-  · unfold factorFastPrecisionCap
+  · unfold latticePrecisionCap
     exact Nat.le_trans (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_right _ _))
       (Nat.le_max_right _ _)
-  · unfold factorFastPrecisionCap
+  · unfold latticePrecisionCap
     exact Nat.le_trans (Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_right _ _))
       (Nat.le_max_right _ _)
 
 /-- The cap dominates the Mignotte bound of the square-free core itself, needed
 by the true-support nonemptiness argument at cap precision (#8519). -/
-theorem defaultFactorCoeffBound_squareFreeCore_le_factorFastPrecisionCap (f : ZPoly) :
+theorem defaultFactorCoeffBound_squareFreeCore_le_latticePrecisionCap (f : ZPoly) :
     ZPoly.defaultFactorCoeffBound (normalizeForFactor f).squareFreeCore ≤
-      factorFastPrecisionCap f := by
-  unfold factorFastPrecisionCap
+      latticePrecisionCap f := by
+  unfold latticePrecisionCap
   exact Nat.le_trans (Nat.le_trans (Nat.le_max_left _ _) (Nat.le_max_right _ _))
     (Nat.le_max_right _ _)
 
 /-- The cap dominates the Mignotte bound of the monic transform of the
 square-free core, the `hbound` input of the toMonic partition producers
 (#8519). -/
-theorem defaultFactorCoeffBound_toMonic_squareFreeCore_le_factorFastPrecisionCap
+theorem defaultFactorCoeffBound_toMonic_squareFreeCore_le_latticePrecisionCap
     (f : ZPoly) :
     ZPoly.defaultFactorCoeffBound
         (ZPoly.toMonic (normalizeForFactor f).squareFreeCore).monic ≤
-      factorFastPrecisionCap f := by
-  unfold factorFastPrecisionCap
+      latticePrecisionCap f := by
+  unfold latticePrecisionCap
   exact Nat.le_trans (Nat.le_trans (Nat.le_max_right _ _) (Nat.le_max_right _ _))
     (Nat.le_max_right _ _)
 
@@ -9935,16 +9935,16 @@ theorem two_mul_bhksBound_squareFreeCore_lt_pow_cap
     2 * bhksBound (normalizeForFactor f).squareFreeCore <
       primeData.p ^
         (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
-          (factorFastPrecisionCap f) primeData).k := by
+          (latticePrecisionCap f) primeData).k := by
   have hk :
       (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
-          (factorFastPrecisionCap f) primeData).k =
-        precisionForCoeffBound (factorFastPrecisionCap f) primeData.p := by
+          (latticePrecisionCap f) primeData).k =
+        precisionForCoeffBound (latticePrecisionCap f) primeData.p := by
     unfold ZPoly.toMonicLiftData
     exact henselLiftData_k _ _ _
   rw [hk]
-  have hle := bhksBound_squareFreeCore_le_factorFastPrecisionCap f
-  have hspec := precisionForCoeffBound_spec hp (factorFastPrecisionCap f)
+  have hle := bhksBound_squareFreeCore_le_latticePrecisionCap f
+  have hspec := precisionForCoeffBound_spec hp (latticePrecisionCap f)
   omega
 
 /-- Variant of `two_mul_bhksBound_squareFreeCore_lt_pow_cap` keyed on the
@@ -9957,7 +9957,7 @@ theorem two_mul_bhksBound_squareFreeCore_lt_pow_cap_of_choosePrimeData
     2 * bhksBound (normalizeForFactor f).squareFreeCore <
       primeData.p ^
         (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
-          (factorFastPrecisionCap f) primeData).k :=
+          (latticePrecisionCap f) primeData).k :=
   two_mul_bhksBound_squareFreeCore_lt_pow_cap f primeData
     (choosePrimeData?_prime _ primeData hchoose).two_le
 
@@ -9970,7 +9970,7 @@ theorem two_mul_bhksBound_squareFreeCore_lt_pow_cap_of_toMonicPrimeData
     2 * bhksBound (normalizeForFactor f).squareFreeCore <
       primeData.p ^
         (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
-          (factorFastPrecisionCap f) primeData).k :=
+          (latticePrecisionCap f) primeData).k :=
   two_mul_bhksBound_squareFreeCore_lt_pow_cap f primeData
     (ZPoly.toMonicPrimeData?_prime _ primeData hselected).two_le
 
@@ -9988,11 +9988,11 @@ theorem two_mul_bhksBound_squareFreeCore_lt_pow_cap_of_toMonicPrimeData
 /-- The CLD recovery's equivalence-class partition at this precision is the single
 all-ones class — the signature of an *irreducible* input (all lifted mod-`p`
 factors form the one integer factor). At column-adequate precision
-(`fastCoreFloor core ≤ k`) this certifies irreducibility — the proven count
+(`bhksRecoveryFloor core ≤ k`) this certifies irreducibility — the proven count
 lower bound forces a reducible core to exhibit ≥ 2 classes there
 (`latticeArm3_bhksSingleAllOnes_irreducible` in the Mathlib layer) — while
 below the floor it may instead mean the lattice has not separated the factors
-yet, so callers must only trust it at `k ≥ fastCoreFloor core`. (A cap-free
+yet, so callers must only trust it at `k ≥ bhksRecoveryFloor core`. (A cap-free
 CLD path would treat this partition as `degenerate` and decline, which is why
 such a path "misses" on Swinnerton-Dyer inputs; the lattice tier uses this predicate, both
 in `latticeCoreLoop`'s early stop and in the trailing cap check, to turn the
@@ -10008,21 +10008,21 @@ def bhksSingleAllOnesPartition (f : ZPoly) (d : LiftData) : Bool :=
   else
     false
 
-/-- Lattice-tier recombination loop: `factorFastCoreLoop` plus certificate-backed
+/-- Lattice-tier recombination loop: `bhksRecoveryLoop` plus certificate-backed
 early termination (#8395).  The split path is byte-identical to the fast loop —
 below `floor` every step is skipped, and at/above `floor` a classified recovery
 success is accepted immediately.  The single change is the `.degenerate` arm: at
 `k ≥ floor` the loop re-examines the partition, and the single all-ones class is
 accepted as a **sound** irreducibility certificate (`some #[core]`) instead of
 advancing the schedule.  Soundness is not heuristic: at column-adequate precision
-(`fastCoreFloor core ≤ k`) the proven count lower bound forces a reducible core
+(`bhksRecoveryFloor core ≤ k`) the proven count lower bound forces a reducible core
 to exhibit ≥ 2 equivalence classes, so all-ones can only be reported for a
 genuinely irreducible core (`latticeArm3_bhksSingleAllOnes_irreducible` in the
 Mathlib layer consumes exactly the `⟨k, floor ≤ k, all-ones⟩` witness this loop
 produces).  Without the early stop the loop grinds the doubling schedule to the
 conservative BHKS cap on every irreducible input.
 
-Private: only `latticeCoreWithBound` (which passes `fastCoreFloorGate core`) is
+Private: only `latticeCoreWithBound` (which passes `bhksRecoveryFloorGate core`) is
 the semantically supported entry point; the bare `floor` parameter must not be
 set independently. -/
 private def latticeCoreLoop
@@ -10057,14 +10057,14 @@ private def latticeCoreLoop
           else
             latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
 
-/-- Lattice-tier core loop entry: `factorFastCoreWithBound` with certificate-backed
+/-- Lattice-tier core loop entry: `bhksRecoveryCoreWithBound` with certificate-backed
 early termination on the single all-ones partition (#8395).  Computes the CLD
-column-adequacy floor once (through the irreducible `fastCoreFloorGate`) and runs
+column-adequacy floor once (through the irreducible `bhksRecoveryFloorGate`) and runs
 `latticeCoreLoop`. -/
 def latticeCoreWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) (k fuel : Nat) :
     Option (Array ZPoly) :=
-  latticeCoreLoop core B (fastCoreFloorGate core) primeData k fuel
+  latticeCoreLoop core B (bhksRecoveryFloorGate core) primeData k fuel
 
 /-- Structural spec for the lattice-tier loop: every success is either a fast-loop
 success (the split path is untouched) or the certificate-backed early stop — the
@@ -10074,7 +10074,7 @@ private theorem latticeCoreLoop_some_spec
     (core : ZPoly) (B floor : Nat) (primeData : PrimeChoiceData) :
     ∀ fuel k cf,
       latticeCoreLoop core B floor primeData k fuel = some cf →
-        factorFastCoreLoop core B floor primeData k fuel = some cf ∨
+        bhksRecoveryLoop core B floor primeData k fuel = some cf ∨
           (cf = #[core] ∧ ∃ k', floor ≤ k' ∧
             bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core k' primeData)
               = true) := by
@@ -10086,7 +10086,7 @@ private theorem latticeCoreLoop_some_spec
   | succ fuel ih =>
       intro k cf h
       rw [latticeCoreLoop] at h
-      rw [factorFastCoreLoop]
+      rw [bhksRecoveryLoop]
       by_cases hfl : k < floor
       · rw [if_pos hfl] at h ⊢
         by_cases hk : k ≥ B
@@ -10124,8 +10124,8 @@ private theorem latticeCoreLoop_some_spec
                 exact ih _ cf h
 
 /-- Public structural spec for `latticeCoreWithBound`: a success is either a
-`factorFastCoreWithBound` success or the early irreducibility certificate — the
-singleton `#[core]` with a witness precision `k'` clearing `fastCoreFloor core`
+`bhksRecoveryCoreWithBound` success or the early irreducibility certificate — the
+singleton `#[core]` with a witness precision `k'` clearing `bhksRecoveryFloor core`
 whose partition is the single all-ones class.  The witness pair is exactly the
 `hB_floor`/`hbhks` input of the Mathlib layer's
 `latticeArm3_bhksSingleAllOnes_irreducible`. -/
@@ -10133,14 +10133,14 @@ theorem latticeCoreWithBound_some_spec
     {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData} {k fuel : Nat}
     {cf : Array ZPoly}
     (h : latticeCoreWithBound core B primeData k fuel = some cf) :
-    factorFastCoreWithBound core B primeData k fuel = some cf ∨
-      (cf = #[core] ∧ ∃ k', fastCoreFloor core ≤ k' ∧
+    bhksRecoveryCoreWithBound core B primeData k fuel = some cf ∨
+      (cf = #[core] ∧ ∃ k', bhksRecoveryFloor core ≤ k' ∧
         bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core k' primeData)
           = true) := by
-  rw [latticeCoreWithBound, fastCoreFloorGate_eq] at h
-  rcases latticeCoreLoop_some_spec core B (fastCoreFloor core) primeData fuel k cf h with
+  rw [latticeCoreWithBound, bhksRecoveryFloorGate_eq] at h
+  rcases latticeCoreLoop_some_spec core B (bhksRecoveryFloor core) primeData fuel k cf h with
     hfast | hcert
-  · rw [factorFastCoreWithBound, fastCoreFloorGate_eq]
+  · rw [bhksRecoveryCoreWithBound, bhksRecoveryFloorGate_eq]
     exact Or.inl hfast
   · exact Or.inr hcert
 
@@ -10153,11 +10153,11 @@ cap-precision partition once more: the single all-ones class means `core` is
 irreducible (`#[core]`), anything else is a genuine failure (`none`).
 
 Both certification arms are gated on the column-adequacy floor: the loop's
-early stop only examines the partition at `k ≥ fastCoreFloorGate core`, and the
-trailing cap check requires `fastCoreFloorGate core ≤ B` — below the floor the
+early stop only examines the partition at `k ≥ bhksRecoveryFloorGate core`, and the
+trailing cap check requires `bhksRecoveryFloorGate core ≤ B` — below the floor the
 all-ones partition may merely mean the lattice has not separated the factors
 yet, so certifying there would be unsound.  The public `factorLattice` supplies
-`factorFastPrecisionCap`, which clears the floor by construction. -/
+`latticePrecisionCap`, which clears the floor by construction. -/
 def latticeCoreFactorsWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Option (Array ZPoly) :=
   if primeData.factorsModP.size ≤ 1 then
@@ -10167,7 +10167,7 @@ def latticeCoreFactorsWithBound
         (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
     | some coreFactors => some coreFactors
     | none =>
-        if fastCoreFloorGate core ≤ B then
+        if bhksRecoveryFloorGate core ≤ B then
           if bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core B primeData) then
             some #[core]
           else
@@ -10207,7 +10207,7 @@ def factorLatticeWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
 Certifies irreducibility (unlike a cap-free CLD path), so it returns `some` on
 Swinnerton-Dyer and cyclotomic high-`r` irreducibles. -/
 def factorLattice (f : ZPoly) : Option Factorization :=
-  factorLatticeWithBound f (factorFastPrecisionCap f)
+  factorLatticeWithBound f (latticePrecisionCap f)
 
 -- Swinnerton-Dyer SD2 and Φ₁₅: irreducible over ℤ but split mod p; a cap-free
 -- CLD path misses, `factorLattice` certifies them as single irreducible factors.
@@ -10237,7 +10237,7 @@ a fallback was taken (the merge gate asserts this never happens unexpectedly).
 **Self-certifying.** Each non-backstop tier's `Factorization` is accepted only
 when it reconstructs the input (`Factorization.product φ = f`, decidable on
 `ZPoly`); on the (corpus-never) miss it falls through to the proven
-`factorSlowTrial` backstop. This makes `Factorization.product (factorHybrid f) = f`
+`factorTrial` backstop. This makes `Factorization.product (factorHybrid f) = f`
 provable unconditionally without yet proving the classical recombination loop
 reconstructs (that, with per-factor irreducibility, is the separate re-proof
 step). The classical tier is correct on the whole conformance corpus, so the
@@ -10246,13 +10246,13 @@ def factorHybridTraced (f : ZPoly) : Factorization × FactorTrace :=
   match factorClassicalTraced f with
   | (some φ, trace) =>
       if Factorization.product φ = f then (φ, trace)   -- classical answered, certified
-      else (factorSlowTrial f, { trace with tier := "trial", declined := true })
+      else (factorTrial f, { trace with tier := "trial", declined := true })
   | (none, trace) =>
       match factorLattice f with
       | some φ =>
           if Factorization.product φ = f then (φ, { trace with tier := "lattice" })
-          else (factorSlowTrial f, { trace with tier := "trial", declined := true })
-      | none => (factorSlowTrial f, { trace with tier := "trial" })  -- totality backstop
+          else (factorTrial f, { trace with tier := "trial", declined := true })
+      | none => (factorTrial f, { trace with tier := "trial" })  -- totality backstop
 
 /-- Cost-based hybrid factorisation: classical-first, lattice on decline, trial
 backstop. Total. Not yet the public `factor` (swap is a separate step). -/
@@ -10316,7 +10316,7 @@ theorem factorClassicalTracedWithBound_fst (f : ZPoly) (B : Nat) :
 through `factorizationOfFactors f`. -/
 theorem factorLattice_eq_map (f : ZPoly) :
     factorLattice f =
-      (factorLatticeFactorsWithBound f (factorFastPrecisionCap f)).map
+      (factorLatticeFactorsWithBound f (latticePrecisionCap f)).map
         (factorizationOfFactors f) := rfl
 
 /-- Raw factor array assembled by the cost-based hybrid, the bridge counterpart
@@ -10325,20 +10325,20 @@ of `factorHybridFactors`-consuming structural lemmas.
 Each non-backstop tier (`factorClassicalFactorsWithBound` / lattice) is accepted
 only when its `factorizationOfFactors`-packed answer reconstructs `f` (the
 self-certifying guard mirrored here), and every fallback is the proven
-`factorSlowTrial` backstop's raw array. The headline contract
+`factorTrial` backstop's raw array. The headline contract
 `factorHybrid f = factorizationOfFactors f (factorHybridFactors f)` is
 `factorHybrid_eq_factorizationOfFactors`. -/
 def factorHybridFactors (f : ZPoly) : Array ZPoly :=
   match factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) with
   | some cf =>
       if Factorization.product (factorizationOfFactors f cf) = f then cf
-      else factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
+      else factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
   | none =>
-      match factorLatticeFactorsWithBound f (factorFastPrecisionCap f) with
+      match factorLatticeFactorsWithBound f (latticePrecisionCap f) with
       | some cf =>
           if Factorization.product (factorizationOfFactors f cf) = f then cf
-          else factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
-      | none => factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
+          else factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
+      | none => factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)
 
 /-- The cost-based hybrid factorisation is the `factorizationOfFactors`-packed
 form of its raw factor array `factorHybridFactors`. Every tier (classical /
@@ -10347,10 +10347,10 @@ the structural `factorizationOfFactors_entry_*` lemmas re-point every
 `factor`-level entry contract onto the hybrid. -/
 theorem factorHybrid_eq_factorizationOfFactors (f : ZPoly) :
     factorHybrid f = factorizationOfFactors f (factorHybridFactors f) := by
-  have htrial : factorSlowTrial f =
+  have htrial : factorTrial f =
       factorizationOfFactors f
-        (factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)) := by
-    rw [factorSlowTrial, factorSlowTrialWithBound_eq_factorizationOfFactors]
+        (factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)) := by
+    rw [factorTrial, factorTrialWithBound_eq_factorizationOfFactors]
   unfold factorHybrid factorHybridTraced factorHybridFactors
   have hclassical :
       (factorClassicalTraced f).1 =
@@ -10373,7 +10373,7 @@ theorem factorHybrid_eq_factorizationOfFactors (f : ZPoly) :
       subst hclassical
       simp only
       rw [factorLattice_eq_map]
-      cases hl : factorLatticeFactorsWithBound f (factorFastPrecisionCap f) with
+      cases hl : factorLatticeFactorsWithBound f (latticePrecisionCap f) with
       | some cf =>
           simp only [Option.map_some]
           by_cases hp : Factorization.product (factorizationOfFactors f cf) = f
@@ -10384,7 +10384,7 @@ theorem factorHybrid_eq_factorizationOfFactors (f : ZPoly) :
 
 /-- Every raw factor of the cost-based hybrid comes from one of its three
 dispatch branches: the classical tier's certified output, the CLD lattice
-tier's certified output, or the `factorSlowTrial` totality backstop. It
+tier's certified output, or the `factorTrial` totality backstop. It
 exposes the branch source (mirroring `factor_entry_mem_raw_source` for the
 raw hybrid array) without leaking the private `factorizationOfFactors` guard, so
 the Mathlib-side irreducibility assembly can case-split over the branches. -/
@@ -10392,15 +10392,15 @@ theorem factorHybridFactors_mem_source (f : ZPoly) {raw : ZPoly}
     (hmem : raw ∈ (factorHybridFactors f).toList) :
     (∃ cf, factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) =
         some cf ∧ raw ∈ cf.toList) ∨
-      (∃ cf, factorLatticeFactorsWithBound f (factorFastPrecisionCap f) =
+      (∃ cf, factorLatticeFactorsWithBound f (latticePrecisionCap f) =
         some cf ∧ raw ∈ cf.toList) ∨
-      raw ∈ (factorSlowTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)).toList := by
+      raw ∈ (factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)).toList := by
   unfold factorHybridFactors at hmem
   rcases Option.eq_none_or_eq_some
       (factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)) with hcf | ⟨cf, hcf⟩
   · simp only [hcf] at hmem
     rcases Option.eq_none_or_eq_some
-        (factorLatticeFactorsWithBound f (factorFastPrecisionCap f)) with hl | ⟨cf, hl⟩
+        (factorLatticeFactorsWithBound f (latticePrecisionCap f)) with hl | ⟨cf, hl⟩
     · simp only [hl] at hmem
       exact Or.inr (Or.inr hmem)
     · simp only [hl] at hmem
@@ -10420,7 +10420,7 @@ multi-factor inputs; nothing in the production path routes through it (the
 production `latticeCoreLoop` still consumes `bhksRecover?`). -/
 private def coreRecoverSmoke? (c : ZPoly) : Option (Array ZPoly) :=
   match choosePrimeData? c with
-  | some pd => coreRecover? c (ZPoly.coreLiftData c (factorFastPrecisionCap c) pd)
+  | some pd => coreRecover? c (ZPoly.coreLiftData c (latticePrecisionCap c) pd)
   | none => none
 
 -- `(2x+1)(x⁴+1)`: recovers the two integer factors in `core`'s own coordinate.
@@ -10480,7 +10480,7 @@ subset budget and its answer is accepted only when the packed product
 reconstructs `f`; on decline (budget exhaustion or no admissible prime) the
 CLD lattice tier runs at the lattice precision cap under the same
 self-certifying acceptance check; and any residual falls through to the
-`factorSlowTrial` totality backstop, which is `choosePrimeData?`-independent
+`factorTrial` totality backstop, which is `choosePrimeData?`-independent
 and so makes `factor` unconditionally correct on every `ZPoly`.
 -/
 def factor (f : ZPoly) : Factorization :=
@@ -13185,22 +13185,22 @@ private theorem bhksRecover?_product
 /-- A successful fixed-precision BHKS fast-recombination loop preserves the
 polynomial product: every success branch comes from the classified BHKS
 recovery success case, which already certifies `Array.polyProduct = core`. -/
-theorem factorFastCoreWithBound_product
+theorem bhksRecoveryCoreWithBound_product
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
     ∀ k fuel coreFactors,
-      factorFastCoreWithBound core B primeData k fuel = some coreFactors →
+      bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors →
         Array.polyProduct coreFactors = core := by
   intro k fuel
   induction fuel generalizing k with
   | zero =>
       intro coreFactors hfast
-      simp [factorFastCoreWithBound, factorFastCoreLoop] at hfast
+      simp [bhksRecoveryCoreWithBound, bhksRecoveryLoop] at hfast
   | succ fuel ih =>
       intro coreFactors hfast
-      rw [factorFastCoreWithBound_unfold] at hfast
+      rw [bhksRecoveryCoreWithBound_unfold] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
-          by_cases hfloor : k ≥ fastCoreFloor core
+          by_cases hfloor : k ≥ bhksRecoveryFloor core
           · simp [hclass, hfloor] at hfast
             cases hfast
             exact bhksRecoverClassified_success_product hclass
@@ -13229,7 +13229,7 @@ reconstruction: there is a positive-dimension witness `hrows` for which the
 equivalence-class indicator candidates reconstruct exactly to `candidates`, and
 the chosen indicator partition is non-degenerate. Private because the conclusion
 names `bhksRecoverClassified`; the public extractor
-`factorFastCoreWithBound_some_indicatorCandidates` re-exposes this in
+`bhksRecoveryCoreWithBound_some_indicatorCandidates` re-exposes this in
 `bhksRecoverClassified`-free form. -/
 private theorem bhksRecoverClassified_success_indicatorCandidates
     {f : ZPoly} {d : LiftData} {candidates : Array ZPoly}
@@ -13431,28 +13431,28 @@ private theorem bhksRecoverClassifiedCore_success_indicatorCandidates
 /-- A successful fast-recombination loop is witnessed by a concrete precision
 schedule index `k'` at which the classified BHKS recovery succeeds. This retains
 the successful `toMonicLiftData` precision that the per-factor success lemmas
-(`factorFastCoreWithBound_some_dvd`, `_shouldRecord`, …) discard, so proof-facing
+(`bhksRecoveryCoreWithBound_some_dvd`, `_shouldRecord`, …) discard, so proof-facing
 callers can reconstruct the underlying recovery data and indicator candidates.
 Private because the conclusion names `bhksRecoverClassified`; the public extractor
-`factorFastCoreWithBound_some_indicatorCandidates` re-exposes the recovery data in
+`bhksRecoveryCoreWithBound_some_indicatorCandidates` re-exposes the recovery data in
 `bhksRecoverClassified`-free form. -/
-private theorem factorFastCoreWithBound_some_classifiedSuccess
+private theorem bhksRecoveryCoreWithBound_some_classifiedSuccess
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
     ∀ k fuel coreFactors,
-      factorFastCoreWithBound core B primeData k fuel = some coreFactors →
+      bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors →
         ∃ k', bhksRecoverClassified core (ZPoly.toMonicLiftData core k' primeData) =
-          .success coreFactors ∧ fastCoreFloor core ≤ k' := by
+          .success coreFactors ∧ bhksRecoveryFloor core ≤ k' := by
   intro k fuel
   induction fuel generalizing k with
   | zero =>
       intro coreFactors hfast
-      simp [factorFastCoreWithBound, factorFastCoreLoop] at hfast
+      simp [bhksRecoveryCoreWithBound, bhksRecoveryLoop] at hfast
   | succ fuel ih =>
       intro coreFactors hfast
-      rw [factorFastCoreWithBound_unfold] at hfast
+      rw [bhksRecoveryCoreWithBound_unfold] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
-          by_cases hfloor : k ≥ fastCoreFloor core
+          by_cases hfloor : k ≥ bhksRecoveryFloor core
           · simp [hclass, hfloor] at hfast
             cases hfast
             exact ⟨k, hclass, hfloor⟩
@@ -13478,17 +13478,17 @@ private theorem factorFastCoreWithBound_some_classifiedSuccess
 
 /-- Proof-facing recovery-data extractor for the fast-recombination loop, stated
 without reference to the private `bhksRecoverClassified`. A successful
-`factorFastCoreWithBound` call is witnessed by a concrete precision-schedule index
+`bhksRecoveryCoreWithBound` call is witnessed by a concrete precision-schedule index
 `k'`: at the `toMonicLiftData` for that precision there is a positive-dimension
 witness `hrows` whose equivalence-class indicator candidates reconstruct exactly
 to `coreFactors`, the indicator partition is non-degenerate, and the candidates
 multiply back to `core`. This is the bridge-side entry point used to rebuild the
 forward-recovery package (and hence the selected support/subset witnesses) that
 the per-factor success lemmas discard. -/
-theorem factorFastCoreWithBound_some_indicatorCandidates
+theorem bhksRecoveryCoreWithBound_some_indicatorCandidates
     {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array ZPoly}
-    (h : factorFastCoreWithBound core B primeData k fuel = some coreFactors) :
+    (h : bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors) :
     ∃ k',
       ∃ hrows :
         1 ≤ (bhksLatticeBasis (ZPoly.toMonic core).monic
@@ -13523,14 +13523,14 @@ theorem factorFastCoreWithBound_some_indicatorCandidates
                 (ZPoly.toMonicLiftData core k' primeData).liftedFactors)
               hrows)) =
         false ∧
-      Array.polyProduct coreFactors = core ∧ fastCoreFloor core ≤ k' := by
+      Array.polyProduct coreFactors = core ∧ bhksRecoveryFloor core ≤ k' := by
   obtain ⟨k', hsuccess, hfloor⟩ :=
-    factorFastCoreWithBound_some_classifiedSuccess core B primeData k fuel coreFactors h
+    bhksRecoveryCoreWithBound_some_classifiedSuccess core B primeData k fuel coreFactors h
   obtain ⟨hrows, hcand, hdeg⟩ :=
     bhksRecoverClassified_success_indicatorCandidates hsuccess
   exact ⟨k', hrows, hcand, hdeg, bhksRecoverClassified_success_product hsuccess, hfloor⟩
 
-private theorem factorFastCoreWithBound_some_all_of_recovery
+private theorem bhksRecoveryCoreWithBound_some_all_of_recovery
     (P : ZPoly → Prop)
     (hrecover :
       ∀ {core : ZPoly} {d : LiftData} {candidates : Array ZPoly},
@@ -13538,19 +13538,19 @@ private theorem factorFastCoreWithBound_some_all_of_recovery
           ∀ factor ∈ candidates.toList, P factor)
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
     ∀ k fuel coreFactors,
-      factorFastCoreWithBound core B primeData k fuel = some coreFactors →
+      bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors →
         ∀ factor ∈ coreFactors.toList, P factor := by
   intro k fuel
   induction fuel generalizing k with
   | zero =>
       intro coreFactors hfast
-      simp [factorFastCoreWithBound, factorFastCoreLoop] at hfast
+      simp [bhksRecoveryCoreWithBound, bhksRecoveryLoop] at hfast
   | succ fuel ih =>
       intro coreFactors hfast
-      rw [factorFastCoreWithBound_unfold] at hfast
+      rw [bhksRecoveryCoreWithBound_unfold] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
-          by_cases hfloor : k ≥ fastCoreFloor core
+          by_cases hfloor : k ≥ bhksRecoveryFloor core
           · simp [hclass, hfloor] at hfast
             cases hfast
             exact hrecover hclass
@@ -13574,32 +13574,32 @@ private theorem factorFastCoreWithBound_some_all_of_recovery
           · simp [hclass, hk] at hfast
             exact ih _ coreFactors hfast
 
-theorem factorFastCoreWithBound_some_normalizeFactorSign
+theorem bhksRecoveryCoreWithBound_some_normalizeFactorSign
     {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array ZPoly}
-    (h : factorFastCoreWithBound core B primeData k fuel = some coreFactors) :
+    (h : bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors) :
     ∀ factor ∈ coreFactors.toList, normalizeFactorSign factor = factor :=
-  factorFastCoreWithBound_some_all_of_recovery
+  bhksRecoveryCoreWithBound_some_all_of_recovery
     (fun factor => normalizeFactorSign factor = factor)
     (fun hrecover => bhksRecoverClassified_success_normalizeFactorSign hrecover)
     core B primeData k fuel coreFactors h
 
-theorem factorFastCoreWithBound_some_shouldRecord
+theorem bhksRecoveryCoreWithBound_some_shouldRecord
     {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array ZPoly}
-    (h : factorFastCoreWithBound core B primeData k fuel = some coreFactors) :
+    (h : bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors) :
     ∀ factor ∈ coreFactors.toList, shouldRecordPolynomialFactor factor = true :=
-  factorFastCoreWithBound_some_all_of_recovery
+  bhksRecoveryCoreWithBound_some_all_of_recovery
     (fun factor => shouldRecordPolynomialFactor factor = true)
     (fun hrecover => bhksRecoverClassified_success_shouldRecord hrecover)
     core B primeData k fuel coreFactors h
 
-theorem factorFastCoreWithBound_some_degree_pos
+theorem bhksRecoveryCoreWithBound_some_degree_pos
     {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData}
     {k fuel : Nat} {coreFactors : Array ZPoly}
-    (h : factorFastCoreWithBound core B primeData k fuel = some coreFactors) :
+    (h : bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors) :
     ∀ factor ∈ coreFactors.toList, 0 < factor.degree?.getD 0 :=
-  factorFastCoreWithBound_some_all_of_recovery
+  bhksRecoveryCoreWithBound_some_all_of_recovery
     (fun factor => 0 < factor.degree?.getD 0)
     (fun hrecover =>
       bhksRecoverClassified_success_all_of_candidates
@@ -13611,22 +13611,22 @@ theorem factorFastCoreWithBound_some_degree_pos
 input core. The success branch is the only branch that exits with
 `some coreFactors`, and `bhksRecoverClassified_success_dvd` certifies
 divisibility for each candidate at that exit. -/
-theorem factorFastCoreWithBound_some_dvd
+theorem bhksRecoveryCoreWithBound_some_dvd
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
     ∀ k fuel coreFactors,
-      factorFastCoreWithBound core B primeData k fuel = some coreFactors →
+      bhksRecoveryCoreWithBound core B primeData k fuel = some coreFactors →
         ∀ factor ∈ coreFactors.toList, factor ∣ core := by
   intro k fuel
   induction fuel generalizing k with
   | zero =>
       intro coreFactors hfast
-      simp [factorFastCoreWithBound, factorFastCoreLoop] at hfast
+      simp [bhksRecoveryCoreWithBound, bhksRecoveryLoop] at hfast
   | succ fuel ih =>
       intro coreFactors hfast
-      rw [factorFastCoreWithBound_unfold] at hfast
+      rw [bhksRecoveryCoreWithBound_unfold] at hfast
       cases hclass : bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
       | success xs =>
-          by_cases hfloor : k ≥ fastCoreFloor core
+          by_cases hfloor : k ≥ bhksRecoveryFloor core
           · simp [hclass, hfloor] at hfast
             cases hfast
             exact bhksRecoverClassified_success_dvd hclass
@@ -13931,7 +13931,7 @@ theorem classicalCoreFactorsWithBound_degree_pos
 /-- Structural case-split for the van Hoeij lattice-tier core. Every `some cf`
 result of `latticeCoreFactorsWithBound` is either the singleton `#[core]` (the
 small-mod arm, the loop's certificate-backed early stop, and the cap all-ones
-certification arm) or a `factorFastCoreWithBound` success (the CLD-split arm,
+certification arm) or a `bhksRecoveryCoreWithBound` success (the CLD-split arm,
 via `latticeCoreWithBound_some_spec`). The trio
 `latticeCoreFactorsWithBound_{polyProduct,normalizeFactorSign,degree_pos}`
 below are thin consumers, mirroring the classical structural trio. -/
@@ -13940,7 +13940,7 @@ private theorem latticeCoreFactorsWithBound_spec
     {cf : Array ZPoly}
     (h : latticeCoreFactorsWithBound core B primeData = some cf) :
     cf = #[core] ∨
-      factorFastCoreWithBound core B primeData (initialHenselPrecision B)
+      bhksRecoveryCoreWithBound core B primeData (initialHenselPrecision B)
         (ZPoly.quadraticDoublingSteps B + 2) = some cf := by
   rw [latticeCoreFactorsWithBound] at h
   split at h
@@ -13959,7 +13959,7 @@ private theorem latticeCoreFactorsWithBound_spec
 /-- PolyProduct identity for the van Hoeij lattice-tier core: every emitted
 factor array multiplies back to `core`. Mirror of
 `classicalCoreFactorsWithBound_polyProduct`; the singleton arms are immediate
-and the CLD-split arm reuses `factorFastCoreWithBound_product`. -/
+and the CLD-split arm reuses `bhksRecoveryCoreWithBound_product`. -/
 theorem latticeCoreFactorsWithBound_polyProduct
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData)
     {cf : Array ZPoly}
@@ -13967,7 +13967,7 @@ theorem latticeCoreFactorsWithBound_polyProduct
     Array.polyProduct cf = core := by
   rcases latticeCoreFactorsWithBound_spec core B primeData h with hsing | hfast
   · rw [hsing]; exact ZPoly.polyProduct_singleton core
-  · exact factorFastCoreWithBound_product core B primeData _ _ cf hfast
+  · exact bhksRecoveryCoreWithBound_product core B primeData _ _ cf hfast
 
 /-- Each factor emitted by the van Hoeij lattice-tier core is fixed by
 `normalizeFactorSign`, provided `core` has positive leading coefficient. Mirror
@@ -13986,7 +13986,7 @@ theorem latticeCoreFactorsWithBound_normalizeFactorSign
     have hfactor : factor = core := by simpa using hmem
     rw [hfactor]
     exact normalizeFactorSign_eq_self_of_leadingCoeff_nonneg core (by omega)
-  · exact factorFastCoreWithBound_some_normalizeFactorSign hfast
+  · exact bhksRecoveryCoreWithBound_some_normalizeFactorSign hfast
 
 /-- Each factor emitted by the van Hoeij lattice-tier core has positive
 `degree?`, provided `core` itself has positive degree. Mirror of
@@ -14004,7 +14004,7 @@ theorem latticeCoreFactorsWithBound_degree_pos
     rw [hsing] at hmem
     have hfactor : factor = core := by simpa using hmem
     rw [hfactor]; exact hcore_deg
-  · exact factorFastCoreWithBound_some_degree_pos hfast
+  · exact bhksRecoveryCoreWithBound_some_degree_pos hfast
 
 private theorem polyProduct_push (factors : Array ZPoly) (factor : ZPoly) :
     Array.polyProduct (factors.push factor) =
@@ -18739,11 +18739,11 @@ private theorem polyProduct_filteredNormalizedFactors_append_one_of_all_recorded
   rw [filteredNormalizedFactors_append_one_of_all_recorded_normalized
     factors.toList hnormalized hrecorded]
 
-theorem factorSlowTrialFactorsWithBound_polyProduct
+theorem factorTrialFactorsWithBound_polyProduct
     (f : ZPoly) (B : Nat) :
     DensePoly.C (signedContentScalar f) *
-      Array.polyProduct (factorSlowTrialFactorsWithBound f B) = f := by
-  unfold factorSlowTrialFactorsWithBound
+      Array.polyProduct (factorTrialFactorsWithBound f B) = f := by
+  unfold factorTrialFactorsWithBound
   by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
   · simp only [hdeg, if_true]
     exact reassemblePolynomialFactors_product_eq_input f
@@ -18816,27 +18816,27 @@ private theorem primitive_of_signedContentScalar_mul_eq
   · show ZPoly.content P = 1
     omega
 
-private theorem factorSlowTrialWithBound_product_of_all_recorded_normalized
+private theorem factorTrialWithBound_product_of_all_recorded_normalized
     (f : ZPoly) (B : Nat)
     (hnormalized :
-      ∀ factor ∈ (factorSlowTrialFactorsWithBound f B).toList,
+      ∀ factor ∈ (factorTrialFactorsWithBound f B).toList,
         normalizeFactorSign factor = factor)
     (hrecorded :
-      ∀ factor ∈ (factorSlowTrialFactorsWithBound f B).toList,
+      ∀ factor ∈ (factorTrialFactorsWithBound f B).toList,
         shouldRecordPolynomialFactor factor = true) :
-    Factorization.product (factorSlowTrialWithBound f B) = f := by
-  unfold factorSlowTrialWithBound
+    Factorization.product (factorTrialWithBound f B) = f := by
+  unfold factorTrialWithBound
   exact
     factorizationOfFactors_product_of_raw_product_of_all_recorded_normalized
-      f (factorSlowTrialFactorsWithBound f B)
-      (factorSlowTrialFactorsWithBound_polyProduct f B) hnormalized hrecorded
+      f (factorTrialFactorsWithBound f B)
+      (factorTrialFactorsWithBound_polyProduct f B) hnormalized hrecorded
 
-private theorem factorSlowTrialWithBound_product_of_constant_branch
+private theorem factorTrialWithBound_product_of_constant_branch
     (f : ZPoly) (B : Nat)
     (hf : f ≠ 0)
     (hbranch : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0) :
-    Factorization.product (factorSlowTrialWithBound f B) = f := by
-  unfold factorSlowTrialWithBound factorSlowTrialFactorsWithBound
+    Factorization.product (factorTrialWithBound f B) = f := by
+  unfold factorTrialWithBound factorTrialFactorsWithBound
   rw [if_pos hbranch]
   have hcore_one := squareFreeCore_eq_one_of_constant_of_ne_zero f hf hbranch
   rw [hcore_one]
@@ -18855,16 +18855,16 @@ private theorem factorSlowTrialWithBound_product_of_constant_branch
       exact polynomialNormalizationPrefixFactors_shouldRecord_of_ne_zero
         f hf factor hmem
 
-private theorem factorSlowTrialWithBound_product_of_quadratic_branch
+private theorem factorTrialWithBound_product_of_quadratic_branch
     (f : ZPoly) (B : Nat)
     (hf : f ≠ 0)
     (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
     (coreFactors : Array ZPoly)
     (hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore =
       some coreFactors) :
-    Factorization.product (factorSlowTrialWithBound f B) = f := by
-  apply factorSlowTrialWithBound_product_of_all_recorded_normalized
-  · unfold factorSlowTrialFactorsWithBound
+    Factorization.product (factorTrialWithBound f B) = f := by
+  apply factorTrialWithBound_product_of_all_recorded_normalized
+  · unfold factorTrialFactorsWithBound
     rw [if_neg hdeg, hquad]
     intro factor hmem
     refine reassemblePolynomialFactors_normalizeFactorSign_of_ne_zero f hf
@@ -18872,7 +18872,7 @@ private theorem factorSlowTrialWithBound_product_of_quadratic_branch
     intro c hc
     exact quadraticIntegerRootFactors?_normalizeFactorSign
       (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad c hc
-  · unfold factorSlowTrialFactorsWithBound
+  · unfold factorTrialFactorsWithBound
     rw [if_neg hdeg, hquad]
     intro factor hmem
     refine reassemblePolynomialFactors_shouldRecord_of_ne_zero f hf
@@ -18881,14 +18881,14 @@ private theorem factorSlowTrialWithBound_product_of_quadratic_branch
     exact quadraticIntegerRootFactors?_shouldRecord
       (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) hquad c hc
 
-private theorem factorSlowTrialWithBound_product_of_trial_branch
+private theorem factorTrialWithBound_product_of_trial_branch
     (f : ZPoly) (B : Nat)
     (hf : f ≠ 0)
     (hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 ≠ 0)
     (hquad : quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore = none) :
-    Factorization.product (factorSlowTrialWithBound f B) = f := by
-  apply factorSlowTrialWithBound_product_of_all_recorded_normalized
-  · unfold factorSlowTrialFactorsWithBound
+    Factorization.product (factorTrialWithBound f B) = f := by
+  apply factorTrialWithBound_product_of_all_recorded_normalized
+  · unfold factorTrialFactorsWithBound
     rw [if_neg hdeg, hquad]
     intro factor hmem
     refine reassemblePolynomialFactors_normalizeFactorSign_of_ne_zero f hf
@@ -18899,7 +18899,7 @@ private theorem factorSlowTrialWithBound_product_of_trial_branch
     exact exhaustiveIntegerTrialCoreFactorsWithBound_normalizeFactorSign
       (normalizeForFactor f).squareFreeCore B
       (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) c hc
-  · unfold factorSlowTrialFactorsWithBound
+  · unfold factorTrialFactorsWithBound
     rw [if_neg hdeg, hquad]
     intro factor hmem
     refine reassemblePolynomialFactors_shouldRecord_of_ne_zero f hf
@@ -18911,32 +18911,32 @@ private theorem factorSlowTrialWithBound_product_of_trial_branch
       (normalizeForFactor f).squareFreeCore B
       (squareFreeCore_leadingCoeff_pos_of_ne_zero f hf) c hc
 
-theorem factorSlowTrialWithBound_product (f : ZPoly) (B : Nat) :
-    Factorization.product (factorSlowTrialWithBound f B) = f := by
+theorem factorTrialWithBound_product (f : ZPoly) (B : Nat) :
+    Factorization.product (factorTrialWithBound f B) = f := by
   by_cases hf : f = 0
   · subst f
-    unfold factorSlowTrialWithBound
-    exact factorizationOfFactors_product_of_zero (factorSlowTrialFactorsWithBound 0 B)
+    unfold factorTrialWithBound
+    exact factorizationOfFactors_product_of_zero (factorTrialFactorsWithBound 0 B)
   · by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
-    · exact factorSlowTrialWithBound_product_of_constant_branch f B hf hdeg
+    · exact factorTrialWithBound_product_of_constant_branch f B hf hdeg
     · cases hquad :
         quadraticIntegerRootFactors? (normalizeForFactor f).squareFreeCore with
       | some coreFactors =>
-          exact factorSlowTrialWithBound_product_of_quadratic_branch
+          exact factorTrialWithBound_product_of_quadratic_branch
             f B hf hdeg coreFactors hquad
       | none =>
-          exact factorSlowTrialWithBound_product_of_trial_branch
+          exact factorTrialWithBound_product_of_trial_branch
             f B hf hdeg hquad
 
 /-- Product contract for the public trial-division slow-path entry point. -/
-theorem factorSlowTrial_product (f : ZPoly) :
-    Factorization.product (factorSlowTrial f) = f := by
-  exact factorSlowTrialWithBound_product f (ZPoly.defaultFactorCoeffBound f)
+theorem factorTrial_product (f : ZPoly) :
+    Factorization.product (factorTrial f) = f := by
+  exact factorTrialWithBound_product f (ZPoly.defaultFactorCoeffBound f)
 
 /-- Product preservation for the cost-based hybrid. Holds unconditionally: each
 non-backstop tier's result is accepted only when it reconstructs `f` (the
 self-certifying guard in `factorHybridTraced`), and every fallback is the proven
-`factorSlowTrial` backstop. This is the headline contract the public `factor`
+`factorTrial` backstop. This is the headline contract the public `factor`
 swap inherits, established without proving the classical recombination loop
 reconstructs (that, with per-factor irreducibility, is the still-blocked re-proof
 capstone #8384). -/
@@ -18948,14 +18948,14 @@ theorem factorHybrid_product (f : ZPoly) :
   | some φ =>
       by_cases hp : Factorization.product φ = f
       · simp [hp]
-      · simp only [hp, if_false]; exact factorSlowTrial_product f
+      · simp only [hp, if_false]; exact factorTrial_product f
   | none =>
       cases hl : factorLattice f with
       | some φ =>
           by_cases hp : Factorization.product φ = f
           · simp [hp]
-          · simp only [hp, if_false]; exact factorSlowTrial_product f
-      | none => exact factorSlowTrial_product f
+          · simp only [hp, if_false]; exact factorTrial_product f
+      | none => exact factorTrial_product f
 
 /-- Product contract for the public total factorization entry point: the
 self-certifying hybrid always reconstructs its input. -/

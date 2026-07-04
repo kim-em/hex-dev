@@ -30,7 +30,7 @@ def latticeSink (r : Option Factorization) : UInt64 :=
   | none => 0xffffffffffffffff
 
 /-- Faithful reconstruction of the **pre-#8395** lattice-tier core: grind
-`factorFastCoreWithBound` to the cap `B`, then a single trailing all-ones
+`bhksRecoveryCoreWithBound` to the cap `B`, then a single trailing all-ones
 check at cap precision.  Used by the `before` mode to measure the
 before/after ratio on the same build; the surrounding normalization and
 reassembly (µs, identical on both paths) are excluded on both sides. -/
@@ -39,7 +39,7 @@ def beforeLatticeCore (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) :
   if primeData.factorsModP.size ≤ 1 then
     some #[core]
   else
-    match factorFastCoreWithBound core B primeData
+    match bhksRecoveryCoreWithBound core B primeData
         (initialHenselPrecision B) (ZPoly.quadraticDoublingSteps B + 2) with
     | some coreFactors => some coreFactors
     | none =>
@@ -72,7 +72,7 @@ def timeLatticeCore (label : String) (ref : IO.Ref ZPoly)
   let out ← IO.getStdout
   let f ← ref.get
   let core := (normalizeForFactor f).squareFreeCore
-  let cap := factorFastPrecisionCap f
+  let cap := latticePrecisionCap f
   match ZPoly.toMonicPrimeData? core with
   | none => IO.println s!"{label}: no admissible prime"
   | some primeData =>

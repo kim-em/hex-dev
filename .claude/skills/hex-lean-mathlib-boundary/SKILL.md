@@ -27,15 +27,15 @@ and `lllNative`. Key #8519 facts that supersede older notes below:
   `leadingCoeff f = 1`) apply directly. The standalone fast tier
   (`factorFastFactorsWithBound`) still selects `choosePrimeData?` and is a
   verification-guarded, decline-only heuristic for `lc ≢ 1 (mod p)`.
-- **The fast-core acceptance floor is `fastCoreFloor`** (CLD column adequacy
+- **The fast-core acceptance floor is `bhksRecoveryFloor`** (CLD column adequacy
   `cldCoeffFloor` joined with both Mignotte bounds), so a
-  `factorFastCoreWithBound` success carries `fastCoreFloor core ≤ k'` — enough
+  `bhksRecoveryCoreWithBound` success carries `bhksRecoveryFloor core ≤ k'` — enough
   for the partition machinery AND `hsep`/`hthr` at the witness precision. The
   old "L'=W is cap-only" analysis (#7985-era) no longer applies to the
   `W ⊆ L'` direction: `normalizedFactors_card_le_bhksEquivalenceClassIndicators_size`
   (`LatticeTier.lean`) proves it at any floor-cleared precision.
-- The cap (`factorFastPrecisionCap`) dominates every floor component by
-  construction (`fastCoreFloor_squareFreeCore_le_factorFastPrecisionCap`).
+- The cap (`latticePrecisionCap`) dominates every floor component by
+  construction (`bhksRecoveryFloor_squareFreeCore_le_latticePrecisionCap`).
 
 The executable types (`Hex.ZMod64 p`, `Hex.FpPoly p = Hex.DensePoly (ZMod64 p)`,
 `Hex.ZPoly = Hex.DensePoly Int`) carry **only `Lean.Grind` ring instances and a
@@ -441,7 +441,7 @@ early-return; reassembly is a power of `X`, the unit core fails the guard via
 `factorFastFactorsWithBound_raw_guardedIrreducible_of_recoveredLift` (BHKS
 core-success, routing through the #8058 capstone). Slow producers
 (`slowModularRaw_irreducible_of_fast_none`,
-`factorSlowTrialFactorsWithBound_factor_irreducible_of_fast_none`) keep their
+`factorTrialFactorsWithBound_factor_irreducible_of_fast_none`) keep their
 *unguarded* statements — `fast = none` forces `degree ≠ 0`, so there is no unit
 core — and imply the guarded form by `fun raw hmem _ => producer raw hmem`. Note
 this guarded contract is the fast-path counterpart to the `normalizeFactorSign`
@@ -502,7 +502,7 @@ The slow-path raw irreducibility (`slowModularRaw_irreducible_of_fast_none`,
 `exhaustiveCoreFactorsWithBound` at `exhaustiveLiftBound` — one deterministic
 array, so `hraw : … = some rawFactors` pins it directly and the irreducibility
 producer applies at that one precision. **Do not assume the fast path is the same
-shape.** `factorFastCoreWithBound` is a *schedule loop* (`Basic.lean:6935`): it
+shape.** `bhksRecoveryCoreWithBound` is a *schedule loop* (`Basic.lean:6935`): it
 starts at `Hex.initialHenselPrecision a`, walks `henselPrecisionSchedule`, and
 returns the array of the **first** precision where `bhksRecoverClassified`
 returns `.success`. A `ForwardRecoveryInputs` package sits at the cap `target`
@@ -517,13 +517,13 @@ Consequences for any fast-BHKS irreducibility / `h_raw` work:
   executable run, where `start = initialHenselPrecision a ≠ target = cap`. Use
   the decoupled `…_of_forwardInputs_on_schedule` wrappers
   (`PartitionRefinement.lean`, #7666): the count argument routes through
-  `factorFastCoreWithBound_some_factor_count_eq_of_cut`, whose loop-result params
+  `bhksRecoveryCoreWithBound_some_factor_count_eq_of_cut`, whose loop-result params
   (`k`,`fuel`) and cut-precision param (`L`) are already independent.
-- Those decoupled wrappers still take `h : factorFastCoreWithBound core B
+- Those decoupled wrappers still take `h : bhksRecoveryCoreWithBound core B
   primeData start fuel = some hinputs.expectedFactors` as a hypothesis. Producing
   that `h` for the real `start = initialHenselPrecision a` is the **scheduled-loop
   determinism obligation** (loop's first success returns the cap recovery). It is
-  *not* derivable from the cap package: `factorFastCoreWithBound_isSome_of_
+  *not* derivable from the cap package: `bhksRecoveryCoreWithBound_isSome_of_
   recovery_on_schedule` (`Basic.lean:7105`) proves existence, not factor
   identity, and `bhksRecoverClassified_success_*` (`Basic.lean:11238-11322`) give
   product/dvd/sign for any success but neither irreducibility nor equality to the
@@ -538,8 +538,8 @@ Consequences for any fast-BHKS irreducibility / `h_raw` work:
 `precisionForCoeffBound` is applied **twice** on the public fast path, so the
 CLD lattice runs at a precision far below the BHKS column-adequacy threshold.
 The public caller computes `a := precisionForCoeffBound B primeData.p`
-(`Basic.lean:7699/7714`, `B = factorFastPrecisionCap core`) and passes `a` as
-`factorFastCoreWithBound`'s coefficient-bound parameter; the loop then feeds the
+(`Basic.lean:7699/7714`, `B = latticePrecisionCap core`) and passes `a` as
+`bhksRecoveryCoreWithBound`'s coefficient-bound parameter; the loop then feeds the
 schedule variable `k` into `toMonicLiftData core k primeData`, which applies
 `precisionForCoeffBound` **again** (`:7001`, `(henselLiftData _ B _).k = B`).
 Net: the lattice's actual exponent is
@@ -555,7 +555,7 @@ empirically (true factor coefficients are tiny) but certifies nothing about
 column-adequacy. **Consequence:** no acceptance gate against the current
 `liftData.k` (the #7928 plan) can supply hsep/hthr — it would only flip fixtures
 `some → none`. Verify with a pure-integer `#eval` scratch (`bhksCoeffBound`,
-`precisionForCoeffBound`, `henselPrecisionSchedule`, `factorFastPrecisionCap` all
+`precisionForCoeffBound`, `henselPrecisionSchedule`, `latticePrecisionCap` all
 run under `lake env lean`, no extern). The real fix is a precision-*schedule*
 correction (drop the double `precisionForCoeffBound`), which is soundness-
 sensitive and touches the CI-gated determinism cluster — not a cheap gate.
@@ -566,20 +566,20 @@ clears the CLD floor; as of #7928 it did not.
 ### Resolved by #7938 (schedule) + #7951 (gate); the gate cascade is large
 
 #7938 dropped the double `precisionForCoeffBound` so the schedule now iterates
-*coefficient bounds* `k` up to the cap `factorFastPrecisionCap f` (single
+*coefficient bounds* `k` up to the cap `latticePrecisionCap f` (single
 conversion inside `toMonicLiftData`). #7951 then added the acceptance gate:
-`factorFastCoreWithBound`'s `.success` branch accepts only when
+`bhksRecoveryCoreWithBound`'s `.success` branch accepts only when
 `k ≥ cldCoeffFloor core = 2·max_j bhksCoeffBound (toMonic core).monic j`, else
 continues the schedule. Post-#7951, `success → k ≥ cldCoeffFloor core` (hence
 `hsep` via `precisionForCoeffBound_spec`) *is* derivable — that is the premise
 #7945's hsep/hthr proofs consume. Verify the floor numerically with a
-pure-integer `#eval` (`cldCoeffFloor`, `factorFastPrecisionCap`, the schedule)
+pure-integer `#eval` (`cldCoeffFloor`, `latticePrecisionCap`, the schedule)
 under `lake env lean` — for `cldGuardF` floor`=32`, cap`=50803201`, first gated
 success at `k=32`/`liftData.k=3` (`2·bhksCoeffBound=32 < 5^3=125`).
 
 Two traps when touching the gate:
 
-- **Adding an acceptance condition to `factorFastCoreWithBound` cascades through
+- **Adding an acceptance condition to `bhksRecoveryCoreWithBound` cascades through
   the entire CI-gated capstone chain, not just the obvious determinism lemmas.**
   Every wrapper whose conclusion asserts `factorFast … ≠ none` / `= some …`
   needs the new side condition threaded as an *open hypothesis* (like `hno`):
@@ -588,14 +588,14 @@ Two traps when touching the gate:
   `Recovery.lean` chain — the `_internalCapPositive*` variants and all ~18
   `factorFast_terminates*` capstones (which route through `factorFast_terminates`
   → `…_internalCapPositiveAndPrimeLowerBound`). Size it up front by grepping the
-  `hB_pos`/`one_le_factorFastPrecisionCap f`/`hchoose` arg chain (~30 lemmas);
+  `hB_pos`/`one_le_latticePrecisionCap f`/`hchoose` arg chain (~30 lemmas);
   do **not** regex-replace on `f primeData` (it appears pervasively in
   hypothesis *types* like `CanonicalRecoveryTailInputs f primeData …`, so a blind
   sed corrupts signatures — target exact call lines). The success→*property*
   lemmas (`_product`, `_dvd`, `_some_all_of_recovery`, `_some_classifiedSuccess`)
   stay signature-stable; they only need a `by_cases hfloor` in the `.success`
   case. Discharging the floor side condition needs
-  `cldCoeffFloor core ≤ factorFastPrecisionCap f` (a `toMonic` coefficient-norm
+  `cldCoeffFloor core ≤ latticePrecisionCap f` (a `toMonic` coefficient-norm
   vs `bhksBound`-slack analysis with no existing infra) — thread it, don't try
   to prove it inline.
 - **Reducing the gate `ite` on a `k ≥ cldCoeffFloor core` condition in a
@@ -610,7 +610,7 @@ Two traps when touching the gate:
 A "success ⟹ recovery package / `EquivalenceClassRecoveryHypotheses` /
 `ForwardRecoveryInputs` producer" directive (the #7917 prerequisite) looks like
 a thin assembly after #7980 landed hsep/hthr, but is **not** constructible.
-`factorFastCoreWithBound_some_indicatorCandidates` (`Basic.lean:11785`) already
+`bhksRecoveryCoreWithBound_some_indicatorCandidates` (`Basic.lean:11785`) already
 gives `k'`, `hrows`, `hcandidates`, non-degeneracy, and product=core from loop
 success with no extra hypotheses — so `hcandidates`/`hsize` are free. The whole
 deliverable collapses to the single field `hindicators`
@@ -620,14 +620,14 @@ trueSupports`), whose only route
 `Recovery.lean:572`) demands `lattice_eq_indicators` = the BHKS Lemma 3.3
 equality `L'=W`. That needs `SeparationHypotheses.no_projected_not_indicator`
 (bad-vector exclusion), whose **only** producer
-(`no_projected_not_indicator_of_factorFastPrecisionCap_le`,
-`TerminationBound.lean:508`) requires precision `≥ factorFastPrecisionCap` **and**
+(`no_projected_not_indicator_of_latticePrecisionCap_le`,
+`TerminationBound.lean:508`) requires precision `≥ latticePrecisionCap` **and**
 the still-open `BadVectorBridgeData` (BHKS Lemma 3.2 resultant divisibility).
 Crucially: the #7951 gate forces only `k' ≥ cldCoeffFloor core`, which feeds
 **only** the CLD column adequacy (`cut`/hsep/hthr, in `CLDColumnBound.lean`) —
 `cldCoeffFloor` appears in **zero** lines of `BadVector.lean`/`Lattice.lean`/
 `TerminationBound.lean`, all of which key the exclusion on
-`factorFastPrecisionCap … ≤ a`. And floor ≪ cap by orders of magnitude
+`latticePrecisionCap … ≤ a`. And floor ≪ cap by orders of magnitude
 (`cldGuardF`: floor=32, cap=50803201, both pure-integer `#eval`-checkable), so
 the cap producer cannot fire at the first-success precision. The `on_schedule`
 `hno` route is *worse than hard — it is false*: the gated loop returns at the
@@ -643,7 +643,7 @@ thin producer. (#7985 skipped on exactly this.)
 
 **#7938 fixed only the *cap*, not the success precision — the trap persists
 (#7945).** #7938 removed the *caller-side* double `precisionForCoeffBound` (the
-public path now passes the raw cap `B = factorFastPrecisionCap core`), so the
+public path now passes the raw cap `B = latticePrecisionCap core`), so the
 *cap* schedule entry is now adequate (cldGuardF: `liftData.k = 12` at `k = cap =
 50803201`). But the per-iteration lift still applies `precisionForCoeffBound` to
 the **schedule variable** `k` (`toMonicLiftData core k primeData` ⟹ `liftData.k
@@ -1330,7 +1330,7 @@ non-monic restatement before a non-monic consumer can use it.
 ### "Package the recovery witnesses into `TrueFactorLift`" is the centered/raw trap
 
 A directive asking you to derive a `TrueFactorLift` family (the hypothesis of
-`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_lift`,
+`bhksRecoveryCoreWithBound_some_factor_zpolyIrreducible_of_lift`,
 `PartitionRefinement.lean`) from `RepresentsIntegerFactorAtLift` recovery
 witnesses is **not** a packaging step — it asks for a witness recovery cannot
 provide. `TrueFactorLift.support_product_eq` needs the **raw** integer product
@@ -1384,7 +1384,7 @@ vector (`periodAdjustedVector`, `CLDColumnBound.lean`) — packaged as a
 #7872) plus `two_mul_natAbs_sum_psiCut_period_le` (#7869), and
 `cutProjectionHypotheses_of_shortVectors` (the existing `SupportShortVectorData`
 consumer) carries it to the fast-disjunct endpoint
-(`factorFastCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift`). Two
+(`bhksRecoveryCoreWithBound_some_factor_zpolyIrreducible_of_recoveredLift`). Two
 load-bearing facts the earlier "skip" advice missed: (a) the period lemma's
 *proof* gives `2|d| < T.card+1`, i.e. `≤ T.card` over ℤ — the tight column bound,
 fitting the exact radius `4r+n·r²` (its stated `≤ T.card+1` was weaker than
