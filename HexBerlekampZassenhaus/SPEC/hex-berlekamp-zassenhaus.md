@@ -294,9 +294,10 @@ def henselLiftData (f : ZPoly) (B : Nat) (d : PrimeChoiceData) : LiftData
 def bhksBound (f : ZPoly) : Nat
 ```
 
-`bhksBound` is the precision cap used by `factorFast`'s doubling
-loop; it is the integer-arithmetic upper bound on BHKS Theorem 5.2's
-threshold (see *Precision schedule* below).
+`bhksBound` is the BHKS component of the lattice tier's precision cap
+`factorFastPrecisionCap` (keyed on the square-free core); it is the
+integer-arithmetic upper bound on BHKS Theorem 5.2's threshold (see
+*Precision schedule* below).
 
 `choosePrimeData?` is `Option`-valued. The executable searches a
 **bounded hot-path candidate set** `HotPathCandidates`, fixed in
@@ -307,7 +308,7 @@ SPEC as
 i.e. every prime in the closed range `[3, 500]` (`p = 2` is
 excluded by `isGoodPrime`). This set has 95 elements; their
 primorial `∏ HotPathCandidates ≈ 10^203`, which is the lower
-bound D2 below uses to characterise `factorSlowTrial` inputs.
+bound D2 below uses to characterise `factorTrial` inputs.
 
 The cap of 500 balances two constraints: the primorial must be large
 enough that no realistic polynomial reaches the lower bound (so the
@@ -640,9 +641,9 @@ per the new output-convention section above.)
 
 ### Group D — leaf performance theorem (BHKS Theorem 5.2; not on the correctness critical path)
 
-Required deliverable; structurally a leaf — no other proof obligation, public-API contract, `Decidable` instance, or theorem statement in the bridge depends on D1 or D2.
+Required deliverable; structurally a leaf — no other proof obligation, public-API contract, `Decidable` instance, or theorem statement in the bridge depends on D1 or D2. Both are stated against the cost-based hybrid (see *Cost-based hybrid dispatch* above): D1 is the CLD lattice tier's completeness (`factorLattice f ≠ none` given a good prime), D2 the tight characterisation of the inputs that reach the `factorTrial` backstop.
 
-D1. **`factorFast` succeeds when the prime search succeeds: `choosePrimeData? f ≠ none → factorFast f ≠ none`.** The theorem is about the implementation as written, with cap = `bhksBound f`. BHKS Theorem 5.2 supplies the precision/recombination half, conditional on a good prime being available. The unconditional `factorFast f ≠ none` is **false** against the implementation — `HexBerlekampZassenhaus/Basic.lean` ships `finitePrimeSearchNoneQuadratic` and the `1 + L·X` family as witnesses where `choosePrimeData?` exhausts its bounded hot-path candidate set. This is by design; the unconditional safety net is the three-tier `factor` combinator (`factorFast → factorSlowModular → factorSlowTrial`, per the algorithmic-architecture clause above), not inside `factorFast`. D2 below pins down exactly which inputs reach the trial backstop.
+D1. **The lattice tier succeeds when a good prime exists on the core: `toMonicPrimeData? (normalizeForFactor f).squareFreeCore ≠ none → factorLattice f ≠ none`.** The antecedent is keyed on `toMonicPrimeData?` of the square-free core — the monic-transform prime the CLD pipeline actually Hensel-lifts against — and the theorem is about the implementation as written, with cap `factorFastPrecisionCap f` (keyed on the core, per *Precision schedule* below), not `bhksBound f`. BHKS Theorem 5.2 supplies the precision/recombination half, conditional on a good prime being available. The unconditional `factorLattice f ≠ none` is **false** against the implementation — `HexBerlekampZassenhaus/Basic.lean` ships `finitePrimeSearchNoneQuadratic` and the `1 + L·X` family as witnesses where the hot-path prime search exhausts its bounded candidate set. This is by design; the unconditional safety net is the cost-based combinator's `factorTrial` backstop (per *Cost-based hybrid dispatch* above), not inside any modular tier. D2 below pins down exactly which inputs reach that backstop.
 
     **Pathway:**
 
@@ -651,9 +652,9 @@ D1. **`factorFast` succeeds when the prime search succeeds: `choosePrimeData? f 
     3. **BHKS Theorem 5.2 (eq. 5.3 termination).** At precision satisfying `v^ℓ > c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`, the bad-vector lower bound from step 2 exceeds the LLL-cut radius `B'` from B4, so `L' \ W = ∅`. Combined with B6 (`W ⊆ L'`): `L' = W`. Read BHKS §5 (lines around eq. 5.3 and the proof following).
     4. **`bhksBound f` is a sound upper bound for the BHKS threshold.** Show that the integer-arithmetic `bhksBound f` (from the precision schedule) is `≥ ⌈log_v of the BHKS threshold⌉`. Step-by-step bounding of each factor: `n` direct; `(2C)^(n²) ≤ 4^(n²)` for `C ≥ 2` (which `hex-lll` uses); `‖f‖₂^(2n−1) ≤ (sumSquared f + 1)^n`; `(log ‖f‖₂)^n ≤ (log2 (sumSquared f + 1))^n`.
     5. **Forward verification at precision ≥ Mignotte.** The BHKS bound dominates Mignotte for every `n ≥ 2` (a one-line inequality), so any precision sufficient for separation is also sufficient for reconstruction. With `L' = W` from step 3 and precision ≥ Mignotte: B7 produces exactly the irreducible-factor indicators (Lemma 3.3), A2 gives exact integer-coefficient lifts of each `g_{w_C}`, and exact division of `f` succeeds for every candidate. So the algorithm exits via `some _`, not `none`, given a good prime is available.
-    6. **Final theorem.** `theorem factorFast_terminates_of_choosePrimeData : ∀ f : ZPoly, choosePrimeData? f ≠ none → factorFast f ≠ none`. Internal proof structure is the chain above.
+    6. **Final theorem.** `theorem factorLattice_ne_none_of_goodPrime : ∀ f : ZPoly, toMonicPrimeData? (normalizeForFactor f).squareFreeCore ≠ none → factorLattice f ≠ none`. Internal proof structure is the chain above; the implementation-level statement is on the bounded raw tier, `factorLatticeFactorsWithBound f (factorFastPrecisionCap f) ≠ none`, with `factorLattice f ≠ none` as the `Factorization`-level corollary.
 
-    The bridge file gets one new theorem (`factorFast_terminates_of_choosePrimeData`) and a small handful of supporting lemmas (resultant Hadamard bound, BHKS Lemma 3.2, BHKS Theorem 5.2 instantiated at `bhksBound f`, BHKS-bound-dominates-Mignotte). Existing theorem statements (A1–A5, B1–B9, C1–C2) are unchanged.
+    The bridge file gets one new theorem (`factorLattice_ne_none_of_goodPrime`) and a small handful of supporting lemmas (resultant Hadamard bound, BHKS Lemma 3.2, BHKS Theorem 5.2 instantiated at the core's `bhksBound`, BHKS-bound-dominates-Mignotte). Existing theorem statements (A1–A5, B1–B9, C1–C2) are unchanged.
 
     *Reading list:* BHKS §3.2 (Lemma 3.2 / "bad vector"), §5 (Theorem 5.2 termination + eq. 5.3 explicit bound, lines around `c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`); §4.4 (why the algorithm exits early in practice via the L'=W certificate); Hadamard's inequality in `Mathlib.LinearAlgebra.Matrix.Determinant`; resultant infrastructure in Mathlib4 (port from Mathlib3 if absent).
 
@@ -669,7 +670,7 @@ D2. **Tight characterisation of trial-backstop inputs.** Statement shape:
 
     Equivalently, `|lc(f) · disc(f)| ≥ ∏ HotPathCandidates`, an astronomically large lower bound that no realistic polynomial reaches. (`HotPathCandidates` is the SPEC-fixed set defined in the algorithmic-architecture clause above.)
 
-    `factorSlowTrial` is reached exactly when `choosePrimeData? f = none` (both `factorFast` and `factorSlowModular` need a good prime; both return `none` when there isn't one). So D2 is the tight delineation of inputs that hit the trial backstop: any `f` with `|lc(f) · disc(f)| < ∏ HotPathCandidates` is provably handled by `factorFast` or `factorSlowModular`, runs at `ZMod64` speed, and never touches `factorSlowTrial`.
+    `factorTrial` is reached only when no admissible hot-path prime exists, i.e. `choosePrimeData? f = none` (both modular tiers rest on the same hot-path candidate set, so neither `factorClassical` nor `factorLattice` has a prime to lift when there isn't one). Given a good prime, D1 makes `factorLattice` succeed and the classical tier's completeness makes `factorClassical` succeed, so whichever tier the cost-based dispatch selects resolves in a modular tier and never falls through. So D2 is the tight delineation of inputs that hit the trial backstop: any `f` with `|lc(f) · disc(f)| < ∏ HotPathCandidates` is provably handled by `factorClassical` or `factorLattice`, runs at `ZMod64` speed, and never touches `factorTrial`.
 
     **Pathway:**
 
