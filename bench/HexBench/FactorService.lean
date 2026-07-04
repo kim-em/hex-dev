@@ -26,7 +26,6 @@ The `--entry` flag selects which library entry answers each request:
 
 * `factor` — the production cost-based hybrid (`Hex.factor`); never declines.
 * `factorLattice` — the van Hoeij CLD lattice tier (`Hex.factorLattice`).
-* `factorFast` — the proof-facing fast path (`Hex.factorFast`).
 * `factorClassicalNoDecline` — classical recombination run to completion or
   cutoff (`Hex.factorClassicalNoDecline`), exposing the classical exponential
   wall.
@@ -45,14 +44,12 @@ namespace HexBench.FactorService
 inductive Entry where
   | factor
   | factorLattice
-  | factorFast
   | factorClassicalNoDecline
 deriving Repr, DecidableEq
 
 def Entry.ofString? : String → Option Entry
   | "factor" => some .factor
   | "factorLattice" => some .factorLattice
-  | "factorFast" => some .factorFast
   | "factorClassicalNoDecline" => some .factorClassicalNoDecline
   | _ => none
 
@@ -61,7 +58,6 @@ production `factor` never declines (it wraps its total `Factorization`). -/
 def Entry.run : Entry → ZPoly → Option Factorization
   | .factor, f => some (Hex.factor f)
   | .factorLattice, f => Hex.factorLattice f
-  | .factorFast, f => Hex.factorFast f
   | .factorClassicalNoDecline, f => Hex.factorClassicalNoDecline f
 
 /-- Parse a request line into its ascending coefficient list. -/
@@ -129,7 +125,7 @@ def main (args : List String) : IO Unit := do
   match Entry.ofString? entryName with
   | none =>
       throw <| IO.userError
-        s!"unknown --entry {entryName}; expected factor|factorLattice|factorFast|factorClassicalNoDecline"
+        s!"unknown --entry {entryName}; expected factor|factorLattice|factorClassicalNoDecline"
   | some entry => runLoop entry
 
 end HexBench.FactorService

@@ -19,7 +19,7 @@ Covered operations:
   `reassembleNormalizedFactors`
 - `henselLiftData`
 - `bhksRecover?`, `recombinationSearch`, `factorSlowTrial`,
-  `factorSlowModular`, and `factorFast`
+  and `factorSlowModular`
 - `factor`
 - `PrimeFactorData.degreeSum`, `PrimeFactorData.factorProduct`,
   `PrimeFactorData.containsDegree`, `PrimeFactorData.hasSubsetDegree`,
@@ -542,10 +542,6 @@ recovered true factor.
         sameFactorCoeffSet (factorizationCoeffSummary φ)
           (factorCoeffSummary quadSqrt2Sqrt3ExpectedFactors |>.map fun coeffs =>
             (coeffs, 1))
-  | none => false
-#guard
-  match factorFast (linear 3) with
-  | some φ => Factorization.product φ = linear 3
   | none => false
 #guard
   let factors := factor monomialWithContent
