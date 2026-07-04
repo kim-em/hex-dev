@@ -349,35 +349,32 @@ publication-quality cross-implementation picture, because such a sweep
 makes no hex-internal claim — it measures several independent factorizers
 under one protocol and plots them side by side.
 
-The Berlekamp–Zassenhaus factorization suite
-(`scripts/bench/factor_sweep.py`, issue #8545) is the reference instance.
-Its rules:
+A comparator sweep (the Berlekamp–Zassenhaus factorization comparison is
+the motivating case) MUST obey:
 
-- **Explicitly not CI.** No workflow under `.github/workflows/` runs it;
-  the single-job rule is untouched. Sweeps run manually on dedicated
-  hardware (carica) and their durable records are committed under
-  `reports/bench-results/hexbz-factor-sweep-<gitsha>-<host>.json`.
-- **Uniform warm-process protocol.** Every measured system — hex
-  (`hexbz_factor_service`, one `--entry` per curve), FLINT, NTL, PARI/GP,
-  and both verified Isabelle/AFP factorizers (`Berlekamp_Zassenhaus` and
-  `LLL_Factorization`) — runs as a persistent process speaking the same
-  `{"coeffs":[…]}` → `{"ok":…}` line protocol as the existing Isabelle
-  comparator. Per-call protocol overhead is measured on a trivial input
-  and recorded next to each sweep, per the external-comparator
-  overhead clause above.
+- **Not CI.** No workflow under `.github/workflows/` runs it; the
+  single-job rule is untouched. Sweeps run manually on dedicated hardware,
+  and their durable records are committed under `reports/bench-results/`,
+  named by git commit and host.
+- **Uniform warm-process protocol.** Every measured system — hex (running
+  as a warm process, one entry point per curve) and each external
+  comparator (e.g. FLINT, NTL, PARI/GP, and verified Isabelle/AFP
+  factorizers) — speaks one JSON line protocol: request `{"coeffs":[…]}`,
+  reply `{"ok":…}`. Per-call protocol overhead is measured on a trivial
+  input and recorded with each sweep, per the external-comparator overhead
+  clause above.
 - **Differential correctness.** A sweep cross-checks factor degree
-  multisets against the corpus `expectedFactorDegrees` and pairwise
-  across every system that answered; a mismatch fails the sweep. The
-  sweep therefore doubles as a differential-correctness test of hex
-  against the other implementations.
+  multisets against the corpus's expected factor degrees and pairwise
+  across every system that answered; a mismatch fails the sweep, so the
+  sweep doubles as a differential-correctness test of hex against the
+  others.
 - **Cactus-plot convention.** Per system, sort its solved instances by
-  median runtime and plot cumulative time (log y) against the number of
-  instances solved (x); a curve ends at that system's solved count.
-  Declines and timeouts are both "unsolved" and deliberately not
-  distinguished. One SVG per polynomial family plus one combined balanced
-  mixture (the corpus `combined` flag caps every family at an equal count
-  so no family dominates). Charts regenerate deterministically from the
-  committed record; every number in the sweep report traces to a
+  median runtime and plot cumulative time (log y) against instances solved
+  (x); a curve ends at that system's solved count. Declines and timeouts
+  are both "unsolved", not distinguished. One chart per polynomial family
+  plus one balanced combined mixture (each family capped at an equal count
+  so none dominates). Charts regenerate deterministically from the
+  committed record, and every number in the sweep report traces to a
   SHA-256-pinned artifact per [§Artefact traceability](#artefact-traceability).
 
 ### Comparator classification: `gating` vs `informational`
