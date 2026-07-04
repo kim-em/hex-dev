@@ -54,12 +54,17 @@ Stated for `Polynomial ℝ`, with no reference to Hex types.
 
 ```lean
 /-- A generalised Sturm chain for `p`: the sign axioms that the
-    counting argument actually uses. `p` heads the chain, the second
-    element behaves like `p'` at roots of `p` (same sign on the
-    right, opposite on the left), consecutive elements have no common
-    zero, an interior element flanked at one of its zeros has
-    oppositely signed neighbours there, and the last element has
-    constant sign. -/
+    counting argument actually uses, as explicit fields.
+
+    - the chain is nonempty and its head is `p`;
+    - at every real root `r` of `p`, the second element is nonzero,
+      and `p * chain[1]` is negative on a punctured left
+      neighbourhood of `r` and positive on a punctured right
+      neighbourhood;
+    - consecutive elements have no common real zero;
+    - whenever an interior element vanishes at a point, its two
+      neighbours are nonzero there and have opposite signs;
+    - the last element is nonzero and has no real zero. -/
 structure IsSturmChain (p : Polynomial ℝ) (chain : List (Polynomial ℝ)) : Prop
 
 /-- Zero-skipping sign variations of the chain at a point. -/
@@ -133,8 +138,8 @@ theorem rootCount_eq_card_roots (p : ZPoly) (hp : SquareFreeRat p) :
 ## Isolation semantics
 
 Everything below consumes only the decidable fields of the output
-structures, so it holds for any `RealRootIsolations p` value, no
-matter which engine produced it.
+structures plus the `SquareFreeRat p` hypothesis, so it holds for any
+`RealRootIsolations p` value, no matter which engine produced it.
 
 ```lean
 /-- The witness means what it says: exactly one real root in the
@@ -164,10 +169,12 @@ theorem rootBound_bounds_roots (p : ZPoly) :
   -- via Polynomial.IsRoot.norm_lt_cauchyBound and the power-of-two
   -- rounding.
 
-theorem sepPrec_lt_sep (p : ZPoly) (hp : SquareFreeRat p) :
-    (2 : ℝ)^(−(Hex.sepPrec p : ℤ)) < sep p / 4
-  -- sep p := the minimum distance between distinct complex roots.
-  -- Mahler's bound with |disc p| ≥ 1 and Landau's inequality.
+theorem sepPrec_separates (p : ZPoly) (hp : SquareFreeRat p) :
+    ∀ z₁ z₂ : ℂ, (toPolyℂ p).IsRoot z₁ → (toPolyℂ p).IsRoot z₂ →
+      z₁ ≠ z₂ → (2 : ℝ)^(−(Hex.sepPrec p : ℤ)) < ‖z₁ − z₂‖ / 4
+  -- Pairwise, hence vacuous for degree ≤ 1, where no consumer needs
+  -- it. Mahler's bound with |disc p| ≥ 1 and Landau's inequality.
+  -- toPolyℂ is the ℂ-cast analogue of toPolyℝ.
 ```
 
 The separation development is the same closed form as
@@ -191,8 +198,9 @@ theorem isolate?_isSome (p : ZPoly) (hp : SquareFreeRat p) :
     (Hex.isolate? p).isSome
 ```
 
-Note this argument needs only that distinct **real** roots are at
-least `sep(p)` apart, which is immediate from `sepPrec_lt_sep`. Exact
+Note this argument needs only the real-pair instances of
+`sepPrec_separates` (distinct real roots are at least
+`4 · 2^{−sepPrec p}` apart). Exact
 counts are what make the real-gap quantity sufficient. The Descartes
 engine's variation counts are also disturbed by nearby non-real
 roots, which is why its termination statement (deferred, below) needs
@@ -272,7 +280,7 @@ HexRealRootsMathlib/
   SturmTheorem.lean    -- the counting theorem and the line form
   ChainCorrespond.lean -- sturmChain_isSturmChain, sturmVarAt_eq,
                           squareFreeRat_iff, sturmCount_eq_card_roots
-  Separation.lean      -- sepPrec_lt_sep (until hosted in
+  Separation.lean      -- sepPrec_separates (until hosted in
                           hex-poly-z-mathlib), rootBound_bounds_roots
   Isolations.lean      -- exists_unique_root, isolates
   Drivers.lean         -- isolateSturm?_isSome, isolate?_isSome,

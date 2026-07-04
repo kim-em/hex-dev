@@ -32,10 +32,11 @@ quotient-by-overlap identity of a root.
 
 A `ZPoly` evaluated at a dyadic point by Horner's rule yields an
 exact `Dyadic` value, so the sign of `p(x)` at dyadic `x` is exact.
-Every quantity in this library is an integer or a dyadic computed
-exactly: no floats, no rationals, no interval arithmetic. Every
-witness is an equality or comparison between integer counts, and is
-`Decidable`.
+Every witness is an equality or comparison between integer counts,
+and is `Decidable`: no floats, no interval arithmetic, no error
+budget. The one rational computation in the library is hex-poly-z's
+`SquareFreeRat` test in the drivers; witnesses never contain
+rational data.
 
 **Sign variations.** For a list of exact values, `signVar` counts the
 sign changes of the nonzero entries, skipping zeros: the variation
@@ -67,10 +68,22 @@ the next chain element with the correct sign. Coefficients stay in
 pseudo-remainder scheme allows.
 
 The last chain element is a nonzero constant exactly when `p` is
-squarefree. The drivers do not take a squarefreeness hypothesis. They
-test `Hex.ZPoly.SquareFreeRat` (already in hex-poly-z) and return
-`none` on non-squarefree input. Callers with non-squarefree input use
-`Hex.ZPoly.squareFreeCore` first.
+squarefree (of positive degree).
+
+**Input contract.** The drivers do not take hypotheses; they classify
+every input explicitly:
+
+- `p = 0`: `none`. (`SquareFreeRat 0` holds vacuously through the
+  gcd size test, so the drivers check `p ≠ 0` separately.)
+- `p` a nonzero constant: `some` with an empty isolation array,
+  matching `rootCount p = 0`.
+- `p` of positive degree, not `SquareFreeRat`: `none`. Callers use
+  `Hex.ZPoly.squareFreeCore` first.
+- `p` of positive degree and squarefree: complete isolation.
+
+`sturmChain`, `rootBound`, `sepPrec`, and `isolationDepth` are total
+functions. For `deg p ≤ 0` they return the empty chain, `1`, `0`,
+and `depthSlack` respectively, and no theorem reads those values.
 
 ## Sturm counts
 
@@ -123,13 +136,13 @@ structure RealRootIsolation (p : ZPoly) where
 
 /-- A complete isolation run: pairwise-disjoint isolations, in
     increasing order, one per real root of `p`. Both invariants are
-    decidable data, so the structure certifies itself no matter which
-    engine produced it. -/
+    decidable data, so for squarefree `p` the structure certifies
+    itself no matter which engine produced it. -/
 structure RealRootIsolations (p : ZPoly) where
   isolations : Array (RealRootIsolation p)
-  ordered    : ∀ i : Fin (isolations.size − 1),
+  ordered    : ∀ i j : Fin isolations.size, i < j →
                  isolations[i].interval.upper ≤
-                   isolations[i.val + 1].interval.lower
+                   isolations[j].interval.lower
   complete   : isolations.size = rootCount p
 
 end Hex
@@ -140,8 +153,9 @@ that touch at an endpoint are still disjoint as sets. `complete` is
 the completeness certificate: `count_one` puts exactly one root in
 each interval, the intervals are disjoint, and there are exactly
 `rootCount p` of them, so every real root is captured. The companion
-turns these three decidable facts into the semantic statement. No
-theorem about either search engine is involved.
+turns these three decidable facts, under `SquareFreeRat p`, into the
+semantic statement. No theorem about either search engine is
+involved.
 
 ## Bounds and depths
 
@@ -151,11 +165,13 @@ theorem about either search engine is involved.
     `(−rootBound p, rootBound p]`. Integer arithmetic only. -/
 def rootBound (p : ZPoly) : Dyadic
 
-/-- Separation precision: `2^{−sepPrec p}` is below `sep(p)/4`, where
-    `sep(p)` is the minimum distance between distinct complex roots.
-    Closed-form integer arithmetic from the Mahler bound, using
-    `|disc p| ≥ 1` for squarefree `p` and Landau's inequality, never
-    the discriminant value itself. The same closed form as hex-roots'
+/-- Separation precision: for any two distinct complex roots
+    `z₁ ≠ z₂` of `p`, `2^{−sepPrec p} < ‖z₁ − z₂‖ / 4`. The contract
+    is pairwise, so it is vacuous when `p` has fewer than two roots
+    (degree ≤ 1), which is exactly when nothing needs it. Closed-form
+    integer arithmetic from the Mahler bound, using `|disc p| ≥ 1`
+    for squarefree `p` and Landau's inequality, never the
+    discriminant value itself. The same closed form as hex-roots'
     `mahlerPrec`. -/
 def sepPrec (p : ZPoly) : Nat
 
@@ -167,11 +183,10 @@ def isolationDepth (p : ZPoly) : Nat :=
 ```
 
 with `depthSlack := 8`. `sepPrec` bounds the distance between *all*
-pairs of distinct complex roots, which serves both engines: real-root
-gaps are at least `sep(p)`, which is what the Sturm engine's
-termination proof uses, and the Descartes engine's classical
-termination analysis needs the complex pairs too (see "Termination"
-below). The depth is a stopping bound, not a refinement target, so
+pairs of distinct complex roots, which serves both engines: the Sturm
+engine's termination proof needs the bound only for real pairs, and
+the Descartes engine's classical termination analysis needs the
+complex pairs too (see "Termination" below). The depth is a stopping bound, not a refinement target, so
 `depthSlack` can be generous at almost no cost: both engines stop
 subdividing an interval the moment its count resolves.
 
@@ -265,8 +280,9 @@ is required. What the depth budget *suffices for* differs:
   (`isolateSturm?_isSome`).
 - **Descartes engine.** The classical termination analysis (the
   Obreshkoff two-circle theorem; Krandick-Mehlhorn 2006) shows that
-  once an interval's width is below a constant multiple of `sep(p)`,
-  its variation count is `0` or `1`: the two-circle region around a
+  once an interval's width is below a constant multiple of `sep(p)`
+  (the minimum distance between distinct complex roots), its
+  variation count is `0` or `1`: the two-circle region around a
   short interval is too small to hold two roots, and it cannot hold a
   single non-real root because it is symmetric about the real axis
   and non-real roots arrive in conjugate pairs. So
@@ -304,7 +320,12 @@ end Hex.RealRootIsolation
 
 Because the witness is a count, refinement has no endpoint case
 analysis: a root exactly at the midpoint `m` lands in the left half
-`(a, m]` by the half-open convention, and the counts say so.
+`(a, m]` by the half-open convention, and the counts say so. The
+width-halving guarantee is the companion theorem
+`refine1_isolates_same`, conditional on squarefree `p`. On data that
+violates the isolation semantics the fallback branch returns the
+input unchanged and `refineTo` stops when its fuel runs out; neither
+function can loop.
 
 ## `SimpleRealRoot`: identity of a root, up to isolation
 
@@ -359,8 +380,8 @@ re-refine from a stored coarse representative. See
 ## Design choices not taken
 
 - **A single engine.** Sturm alone is provably complete but pays a
-  full chain evaluation per bisection node; Descartes alone is fast
-  but its termination proof needs the unformalized two-circle
+  full chain evaluation per bisection node. Descartes alone is fast,
+  but its termination proof needs the unformalised two-circle
   theorem. Running Descartes inside Sturm certificates takes the
   speed of one and the theorems of the other, at the cost of one
   extra (cheap) certification per emitted root.

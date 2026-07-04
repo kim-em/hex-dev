@@ -4,12 +4,14 @@ A Lean tactic, `rcf`, deciding the univariate fragment of
 real-closed-field arithmetic: Boolean combinations of polynomial
 (in)equalities in one real variable under a single quantifier over
 `ℝ` or over a half-open dyadic interval. The procedure is complete on
-this fragment: `isolate?` is total on squarefree input by
-`isolate?_isSome` from
-[hex-real-roots-mathlib](hex-real-roots-mathlib.md), so every
-in-fragment sentence is decided, and every `true` verdict becomes a
-kernel-checked proof. On a `false` verdict the tactic fails with a
-message naming a witness cell. It never proves a negation.
+this fragment in the following sense: `isolate?` succeeds on
+squarefree input by `isolate?_isSome` from
+[hex-real-roots-mathlib](hex-real-roots-mathlib.md), so the compiled
+search reaches a verdict on every in-fragment sentence, and every
+`true` verdict becomes a kernel-checked proof. On a `false` verdict
+the tactic fails with a message naming a witness cell. It never
+proves a negation: no theorem turns a `false` verdict into a proof,
+so only the `true` direction is trusted.
 
 This is the user-facing payoff of the real-root machinery: neither
 `polyrith` nor `nlinarith` is complete on this fragment, and `decide`
@@ -176,9 +178,11 @@ a proof that `Sentence.toProp` of it is definitionally the goal.
      `gⱼ` divides `P`, so it has at most one root in `Iᵢ`, and its
      Sturm count decides whether that root exists, which happens
      exactly when `pⱼ` and `P` share the root `rᵢ`. When
-     `pⱼ(rᵢ) ≠ 0`, its sign at `rᵢ` equals its sign on the adjacent
-     open cells (both, and they agree: `pⱼ` has no root in
-     `(rᵢ₋₁, rᵢ₊₁)` in that case).
+     `pⱼ(rᵢ) ≠ 0`, its sign at `rᵢ` equals its sign on the two
+     adjacent open cells, which always exist (a gap or a tail on
+     each side) and agree: in that case `pⱼ` has no root anywhere
+     strictly between the neighbouring `P`-roots (taking `±∞` at the
+     ends).
 
 7. **Evaluate.** Substitute each cell's signs into the atoms, fold
    the Boolean structure: one truth value per cell.
@@ -187,8 +191,15 @@ a proof that `Sentence.toProp` of it is definitionally the goal.
    - `forallReal`: every cell true. `existsReal`: some cell true.
    - `forallIoc a b`: every cell whose semantics meets `(a, b]`
      true; `existsIoc`: some such cell true. Step 4 made "meets
-     `(a, b]`" decidable from the interval data: every root cell is
-     inside or outside, and open cells are compared endpoint-wise.
+     `(a, b]`" decidable, case by case: root cell `i` meets `(a, b]`
+     iff `a < rᵢ ∧ rᵢ ≤ b`, where the endpoint tests identify
+     `rᵢ = a` and `rᵢ = b` exactly and otherwise the separated
+     interval lies strictly inside or strictly outside; the gap
+     `(rᵢ, rᵢ₊₁)` meets `(a, b]` iff `rᵢ < b ∧ a < rᵢ₊₁`;
+     `tailLeft` iff `a < r₁`; `tailRight` iff `rₖ < b`; each
+     conjunct decided by the same endpoint-test and
+     interval-position analysis. With no roots at all, the single
+     cell `ℝ` always meets `(a, b]`.
 
 9. **Reflect.** `decide s = true` closes the goal through
    `decide_sound` (below). `false` produces the witness-cell failure
@@ -205,8 +216,12 @@ of `irreducible_cert` (hex-berlekamp-zassenhaus), the tactic:
 
 - runs the search compiled, collecting a `Certificate`: the Sturm
   chain of `P` with the quotient of each pseudo-division step, the
-  separated isolations, the gcds `gⱼ` with their Bézout-style check
-  data, the test points, and the sign matrix;
+  separated isolations, the test points, the sign matrix, and for
+  each root-cell test the gcd `gⱼ` (primitive, positive leading
+  coefficient) with three multiplication-checkable witnesses:
+  quotients for `gⱼ ∣ pⱼ` and `gⱼ ∣ P`, and a denominator-cleared
+  Bézout identity `u·pⱼ + v·P = c·gⱼ` with `u, v ∈ ℤ[x]` and a
+  nonzero `c : ℤ`;
 - emits a proof of `Sentence.check s cert = true` by kernel
   reduction, where `check` only *replays*: it verifies each chain
   step by one polynomial multiply-subtract against the provided
@@ -247,7 +262,10 @@ tying the two together.
 - **Sign matrix.** On open cells: sign constancy from
   root-containment (roots of `pⱼ` are roots of `P`) plus the exact
   test-point evaluation. On root cells: the `gⱼ` count argument of
-  step 6, through `sturmCount_eq_card_roots` applied to `gⱼ`.
+  step 6. The divisibility witnesses give that every root of `gⱼ` is
+  a common root of `pⱼ` and `P`, the Bézout identity gives the
+  converse, and `gⱼ` is squarefree because it divides the squarefree
+  `P`, which is what lets `sturmCount_eq_card_roots` apply to it.
 - **Boolean and quantifier steps.** The per-cell fold computes
   `Formula.toProp` at every point of the cell (signs determine
   atoms), and the quantifier step lifts cell-wise truth to `ℝ` or to
