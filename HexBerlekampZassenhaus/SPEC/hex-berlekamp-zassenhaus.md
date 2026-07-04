@@ -37,16 +37,6 @@ lattice tier wins *asymptotically* on hard (high-`r`) inputs. No
 `axiom` declarations are introduced in this library or its Mathlib
 bridge; every theorem has a real proof.
 
-> **Implementation note.** Public `factor` is the hybrid (classical tier
-> first, CLD lattice tier on decline, integer-trial backstop last). It
-> replaces the earlier lattice-first precision-cap dispatch, which was
-> exponential on easy reducible inputs (a low-cap lattice attempt missed,
-> then fell through to exhaustive recombination). `factor` is the design's
-> only public combinator: the pre-hybrid standalone tiers (`factorFast`,
-> `factorSlowModular`) and the bounded combinator `factorWithBound` are
-> legacy, scheduled for deletion via dispatched directives; until those
-> land, the code carries them as dead weight, not as SPEC surface.
-
 The public API accepts arbitrary input polynomials and normalizes
 internally: extract content, remove powers of `X`, and reduce to the
 primitive square-free case — then make that square-free core monic via
@@ -284,7 +274,7 @@ structure LiftData where
 
 `LiftData` is the pipeline's shared "we have factors mod `p^k`"
 record: it is the output of the Hensel-lift stage and the input to
-recombination. The fast-path recombination needs additional internal
+recombination. The lattice-tier recombination needs additional internal
 metadata (the CLD lattice basis, surviving short vectors, equivalence
 classes, candidate factors); these live in dedicated internal helper
 records inside the recombination implementation, rather than expanding
@@ -361,10 +351,10 @@ def factor (f : ZPoly) : Factorization :=
     | none => factorTrial f      -- total, prime-independent backstop
 ```
 
-(In the implementation each tier produces a raw factor array packed via
-`factorizationOfFactors f`; the acceptance guard is
-`Factorization.product (factorizationOfFactors f cf) = f`, so every
-accepted answer is self-certifying at the dispatch boundary.)
+(Each tier produces a raw factor array; the combinator packs it into a
+`Factorization` and accepts it only when the packed product reconstructs
+`f`, so every accepted answer is self-certifying at the dispatch
+boundary.)
 
 There is no up-front tier selection. The cost control lives inside the
 classical tier: it runs under a **level-aware subset budget** derived
@@ -456,9 +446,9 @@ Setting `a := defaultFactorCoeffBound f` makes `p^a` astronomically
 large (e.g. `3^1008` for Φ_11) and renders Hensel lifting
 intractable on inputs the algorithm could in principle solve.
 
-### Slow-path correctness sketch (in-bridge proof)
+### Exhaustive-recombination correctness sketch (in-bridge proof)
 
-Goal: `∀ f, factorSlow f = irreducibleFactorisationOf f` (up to ordering and units).
+Goal: for every `f`, a completed exhaustive subset recombination returns `irreducibleFactorisationOf f` (up to ordering and units).
 
 Argument:
 
@@ -541,14 +531,14 @@ where `Ã[i, j] := Ψ^a_{ℓ_j}([x^j] Φ(g_i))` for `i ∈ {1,…,r}, j ∈ {0,�
 
 ### Precision schedule
 
-Pinned: start at `a = 4`, double on lattice/verification failure, cap at `bhksBound core` for `core := (normalizeForFactor f).squareFreeCore` — the polynomial the pipeline actually lifts and separates. The papers have a single polynomial, but the executable normalizes first, and the square-free core's coefficient norm can *exceed* `f`'s (Mignotte divisor growth; witness `f = (x¹⁸−1)(x¹⁹−1)`, whose core `f/(x−1)` has `coeffNormSq 36` against `f`'s `4` and a strictly larger `bhksBound`), so keying the cap on `f` would undershoot the core's separation threshold. `bhksBound` is a Lean-computable integer upper bound for the BHKS Theorem 5.2 threshold `c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`; an explicit choice is given below. The cap is the BHKS bound rather than the Mignotte coefficient bound because BHKS dominates Mignotte for every `n ≥ 2` (BHKS §5.3 explicitly: "an annoying extra factor of `n` … coming from a resultant upper bound"); a smaller cap would leave the CLD tier's `none` reachable on inputs the algorithm could in principle solve. The constant `4` start is what the current pipeline already does and continues to work.
+Pinned: start at `a = 4`, double on lattice/verification failure, cap at `bhksBound core` for `core := (normalizeForFactor f).squareFreeCore` — the polynomial the pipeline actually lifts and separates. The papers have a single polynomial, but the executable normalizes first, and the square-free core's coefficient norm can *exceed* `f`'s (Mignotte divisor growth; witness `f = (x¹⁸−1)(x¹⁹−1)`, whose core `f/(x−1)` has `coeffNormSq 36` against `f`'s `4` and a strictly larger `bhksBound`), so keying the cap on `f` would undershoot the core's separation threshold. `bhksBound` is a Lean-computable integer upper bound for the BHKS Theorem 5.2 threshold `c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`; an explicit choice is given below. The cap is the BHKS bound rather than the Mignotte coefficient bound because BHKS dominates Mignotte for every `n ≥ 2` (BHKS §5.3 explicitly: "an annoying extra factor of `n` … coming from a resultant upper bound"); a smaller cap would leave the CLD tier's `none` reachable on inputs the algorithm could in principle solve. The constant `4` start is pinned.
 
-The `bhksBound : ZPoly → Nat` helper is one of HO-1's deliverables. A safe explicit choice (sound integer upper bound for BHKS eq. 5.3): `bhksBound f := 1 + n · 4^(n²) · (sumSquared f + 1)^n · (log2 (sumSquared f + 1))^n` where `n := deg f` and `sumSquared f := Σ |a_i|²`. Pure `Nat` arithmetic; the upper-bound argument is straightforward (each factor of (5.3) bounded by the corresponding piece of `bhksBound`).
+The `bhksBound : ZPoly → Nat` helper is SPEC-pinned. A safe explicit choice (sound integer upper bound for BHKS eq. 5.3): `bhksBound f := 1 + n · 4^(n²) · (sumSquared f + 1)^n · (log2 (sumSquared f + 1))^n` where `n := deg f` and `sumSquared f := Σ |a_i|²`. Pure `Nat` arithmetic; the upper-bound argument is straightforward (each factor of (5.3) bounded by the corresponding piece of `bhksBound`).
 
 Termination of the doubling loop:
 
 - If the loop reaches a state where every equivalence-class candidate verifies via exact division and `∏ candidates = f` (up to `lc(f)` and content), the CLD tier returns `some gs`. This is the success path; conditional correctness applies. **In practice, the BHKS algorithm exits via this `L' = W` certificate at precision much lower than the BHKS-bound cap** (BHKS §4.4 explicitly: "a practical implementation should not use the precision bound … because the equations could already be sufficient for smaller values of `ℓ`"); the cap is a theoretical guarantee, not a usual exit condition.
-- If the loop reaches the precision cap without satisfying that condition, the CLD tier returns `none`. The hybrid combinator `factor` then falls through to the `factorTrial` backstop. **The CLD fast tier makes no irreducibility claim on its own**; verified irreducibility is the property of `factor` (via the combinator) or the unconditional trial backstop. D1 will prove the `none` branch is unreachable given a good prime, but the existence of the branch makes `factor` correct without needing D1 first.
+- If the loop reaches the precision cap without satisfying that condition, the CLD tier returns `none`. The hybrid combinator `factor` then falls through to the `factorTrial` backstop. **A recombination-exit `some` makes no irreducibility claim on its own**; verified irreducibility is the property of `factor` (via the combinator), the cap-precision certificate exit, or the unconditional trial backstop. D1 will prove the `none` branch is unreachable given a good prime, but the existence of the branch makes `factor` correct without needing D1 first.
 
 An additive-coefficient lattice that decodes short vectors as `Σ λ_i g_i (mod p^a)` candidate polynomials is *not* van Hoeij and is not admissible.
 
@@ -563,43 +553,37 @@ An additive-coefficient lattice that decodes short vectors as `Σ λ_i g_i (mod 
 7. **Coefficients of `g` (rather than CLD coefficients of `g_i`) in the lattice is the LLL82 algorithm, not van Hoeij.** Lattice dimension becomes `O(N)` not `O(r)`; entries grow exponentially.
 8. **The identity block `I_r` on the first `r` columns enforces the 0/1 structure.** Without it LLL recovers some short vector but not indicators. Don't omit or rescale.
 9. **If `dim(L') = dim(L)` after step 4, LLL has not made progress.** Remedy: lift more, not retry. (Manifests as `L'` having no nontrivial equivalence classes.)
-10. **Hensel-precision start is constant 4, not Landau–Mignotte.** Mignotte is a possible cap only for the slow path; the fast path's cap is `bhksBound f`.
+10. **Hensel-precision start is constant 4, not Landau–Mignotte.** Mignotte is a possible cap only for the classical tier; the lattice tier's cap is the BHKS bound on the square-free core.
 
 ## Proof obligations (for `hex-berlekamp-zassenhaus-mathlib`)
 
-Four groups. **Naming:** the obligation bodies below use the historical
-names `factorSlow` (the exhaustive-recombination math, unconditionally
-correct) and `factorFast` (the CLD lattice math, conditionally correct);
-the mathematical content is independent of which concrete tier realises
-each. In the hybrid, Group A's math is carried by `factorClassical`
-(budgeted, so it may decline) and by the unconditional `factorTrial`
-backstop; Group B's is carried by `factorLattice` (realized by
-`factorLatticeFactorsWithBound_factor_irreducible` in the bridge). So
-Group A gives the recombination/trial path's unconditional correctness;
-Group B gives the CLD path's conditional correctness; Group C gives
-`factor`'s correctness via the combinator (and the tier-equivalence /
-dispatch-soundness contracts above); Group D is the non-blocking leaf
-performance theorem. No axioms.
+Four groups. Group A gives the exhaustive-recombination mathematics
+(Hensel + Mignotte + UFD) backing `factorClassical`'s `some`-case
+correctness and, via direct divisor enumeration, the unconditional
+`factorTrial` backstop; Group B gives `factorLattice`'s conditional
+correctness; Group C gives `factor`'s correctness via the combinator
+(and the tier-equivalence / dispatch-soundness contracts above);
+Group D is the non-blocking leaf performance theorem. No axioms.
 
-### Group A — slow-path correctness (gives full mathematical guarantee for `factorSlow`)
+### Group A — exhaustive-recombination correctness (backs `factorClassical` and `factorTrial`)
 
 A1. **Hensel-correspondence subset bijection (squarefree case).** For `f ∈ ℤ[x]` squarefree primitive, `p` an admissible prime, `g_1, …, g_r ∈ (ℤ/p^a)[x]` the Hensel-lifted mod-`p` factorisation: every irreducible integer factor `g | f` over ℤ has a unique subset `S ⊆ {1, …, r}` with `g ≡ ∏_{i ∈ S} g_i (mod p^a)`.
     *Sketch:* `g mod p` factorises into a unique subset of `{g_i mod p}` (irreducible mod-`p` decomposition), and Hensel's lemma uniquely lifts that subset to mod `p^a`. Mathlib's `hensels_lemma` covers the analytic version; the explicit subset-correspondence form needs a small wrapper. Read BHKS §3 + Mathlib `Mathlib.NumberTheory.Padics.Hensel` before attempting.
 
 A2. **Mignotte recoverability (modulus form).** Let `B := defaultFactorCoeffBound f`. At precision `a` such that `p^a > 2 B`, the centred-residue lift in `(−p^a/2, p^a/2]` of `(∏_{i ∈ S} g_i mod p^a)` exactly recovers `g`'s integer coefficients.
-    *Sketch:* Mignotte's bound (the existing executable `defaultFactorCoeffBound` in [HexPolyZ/Mignotte.lean](../../HexPolyZ/Mignotte.lean), which Mathlib-side `mignotte_bound` in [HexPolyZMathlib/Mignotte.lean](../../HexPolyZMathlib/Mignotte.lean) already establishes via Landau) gives `|coeff(g, j)| ≤ B`; the centred residue is then unique. Implementation note: `factorSlow` uses exponent `a := B` as a sufficient choice because `p ≥ 3` ⟹ `p^a ≥ 3^B > 2B`; this is a corollary, not the abstract statement.
+    *Sketch:* Mignotte's bound (the existing executable `defaultFactorCoeffBound` in [HexPolyZ/Mignotte.lean](../../HexPolyZ/Mignotte.lean), which Mathlib-side `mignotte_bound` in [HexPolyZMathlib/Mignotte.lean](../../HexPolyZMathlib/Mignotte.lean) already establishes via Landau) gives `|coeff(g, j)| ≤ B`; the centred residue is then unique. The executable may use exponent `a := B` as a sufficient choice because `p ≥ 3` ⟹ `p^a ≥ 3^B > 2B`; this is a corollary, not the abstract statement.
 
 A3. **Exhaustive search soundness and completeness (squarefree case).** The exhaustive subset enumeration on `(henselLift f a)` returns the irreducible-factor list of squarefree primitive `f`.
     *Sketch:* Soundness: every accepted candidate passes exact division. Completeness: A1+A2 say every irreducible factor `g` corresponds to a subset `S` whose product reconstructs to `g`'s exact coefficients; the enumeration tries every subset; therefore `g` is found. Uniqueness: `Polynomial.UniqueFactorizationMonoid` over `Int` (Mathlib).
 
-A4. **Squarefree-core correctness.** For squarefree primitive `f`, `factorSlow f = irreducibleFactorisationOf f`. Follows from A1+A2+A3.
+A4. **Squarefree-core correctness.** For squarefree primitive `f`, a completed exhaustive subset recombination returns `irreducibleFactorisationOf f`. Follows from A1+A2+A3. A `factorClassical` search that completes within budget *is* an exhaustive search, so this gives the classical tier's `some`-case correctness; `factorTrial` reaches the same conclusion unconditionally by direct Mignotte-bounded divisor enumeration (no Hensel machinery; UFD gives uniqueness).
 
-A5. **Normalisation + reassembly bridges A4 to arbitrary input.** `factor f` (and `factorSlow f`) handle non-squarefree, non-primitive inputs by routing through `normalizeForFactor` and `reassembleNormalizedFactors`. The existing sorry'd theorems `normalizeForFactor_reassembles`, `reassembleNormalizedFactors_product`, `normalizedConstantFactors_product` (in [HexBerlekampZassenhaus/Basic.lean](../../HexBerlekampZassenhaus/Basic.lean)) must all be discharged; combined with A4, they yield `factorSlow f = irreducibleFactorisationOf f` for arbitrary `f`.
+A5. **Normalisation + reassembly extend A4 to arbitrary input.** `factor` handles non-squarefree, non-primitive inputs by routing through `normalizeForFactor` and `reassembleNormalizedFactors`. The reassembly obligations `normalizeForFactor_reassembles`, `reassembleNormalizedFactors_product`, `normalizedConstantFactors_product` combine with A4 to yield `irreducibleFactorisationOf f` for arbitrary `f`.
     *Sketch:* `normalizeForFactor` decomposes `f = content · X^k · h · h_repeated` where `h` is squarefree primitive. Each piece's irreducible factorisation is either standard (constants, X-powers) or given by A4 (squarefree primitive `h`); reassembly is multiplicative bookkeeping. Mathlib has `Polynomial.UniqueFactorizationMonoid` over `Int`; the GCD-based squarefree-core extraction is standard.
 
-### Group B — fast-path conditional correctness (`factorFast f = some gs ⟹ gs is the irreducible factorisation of f`)
+### Group B — lattice-tier conditional correctness (`factorLattice f = some gs ⟹ gs is the irreducible factorisation of f`)
 
-The fast path is allowed to return `none`; we only prove correctness conditional on `some` output. BHKS Theorem 5.2 (existence of a precision at which `none` is impossible) is *not* a Group B obligation — it's Group D.
+The lattice tier is allowed to return `none`; we only prove correctness conditional on `some` output. BHKS Theorem 5.2 (existence of a precision at which `none` is impossible) is *not* a Group B obligation — it's Group D.
 
 B1. **CLD additivity.** `Φ(g · h) = Φ(g) + Φ(h)` whenever `gh | f` in `(ℤ/p^a)[x]`. The identity is `(gh)'/(gh) = g'/g + h'/h`; no coprimality hypothesis. (BHKS Lemma 3.1.) Routine.
 
@@ -622,13 +606,13 @@ B7. **Equivalence-class identification given `L' = W` (BHKS Lemma 3.3).** When `
 B8. **Verification certifies `L' = W` (BHKS Lemma 3.4) — the load-bearing obligation.** Given B6 (so `W ⊆ L'`): if for every equivalence-class candidate `w_C` the reconstructed `g_{w_C}` divides `f` exactly in ℤ[x] and `∏_C g_{w_C} = f` (up to `lc(f)` and content), then `L' = W` and the `g_{w_C}` are exactly the irreducible factors of `f`.
     *Sketch:* The classes refine (or equal) the irreducible-factor partition because every class union must be an integer-factor support (else its product wouldn't lift to a true integer divisor). Pathway: import `Polynomial.UniqueFactorizationMonoid` over `Int` from Mathlib for uniqueness-of-factorisation; use `Polynomial.Gauss` infrastructure for content/primitivity; the verified divisibility witnesses + uniqueness give the irreducibility conclusion. This is the theorem that *justifies the algorithm's stopping criterion*; B7 alone is too weak. **Read BHKS Lemma 3.4 in §3 before attempting.**
 
-B9. **Conditional correctness of `factorFast`.** `factorFast f = some gs ⟹ gs is the irreducible factorisation of f` (up to associates and ordering).
-    *Sketch:* `factorFast` returns `some gs` only when (i) every candidate verified via exact division and (ii) `∏ gs = f`. By B8, conditions (i) + (ii) together imply `L' = W` and `gs = irreducible factors of f`. This is the headline theorem; the proof is one application of B8 to the algorithm's terminating state.
+B9. **Conditional correctness of `factorLattice`.** `factorLattice f = some gs ⟹ gs is the irreducible factorisation of f` (up to associates and ordering).
+    *Sketch:* the tier has two `some` exits. Recombination exit: `some gs` is returned only when (i) every candidate verified via exact division and (ii) `∏ gs = f`; by B8, (i) + (ii) together imply `L' = W` and `gs = irreducible factors of f`. Certificate exit: at cap precision the single all-ones equivalence class certifies the core irreducible (the forward count bound B6-side plus the class partition give exactly one factor), so `some #[core]` is correct. This is the tier's headline theorem; the proof is one application of B8 per exit.
 
 ### Group C — combined `factor` correctness (drives the public API)
 
 C1. **`factor` unconditional correctness.** `factor f = irreducibleFactorisationOf f`.
-    *Sketch:* `factor` dispatches classical-first: try `factorClassical` at the default Mignotte bound; on its decline try `factorLattice` at the lattice precision cap; otherwise the `factorTrial` backstop. Case analysis on the three branches, using each tier's correctness from *Recombination tiers* above — a product-checked `some` from `factorClassical` (Group A) or `factorLattice` (Group B) is the irreducible factorisation, and the `factorTrial` branch is unconditionally the irreducible factorisation (Group A, via A4/A5). Each tier is entered at its own precision, so no single bound drives the whole combinator. This is the headline correctness theorem (`factor_headline` in the bridge), assembled over the hybrid's three branches.
+    *Sketch:* `factor` dispatches classical-first: try `factorClassical` at the default Mignotte bound; on its decline try `factorLattice` at the lattice precision cap; otherwise the `factorTrial` backstop. Case analysis on the three branches, using each tier's correctness from *Recombination tiers* above — a product-checked `some` from `factorClassical` (Group A) or `factorLattice` (Group B) is the irreducible factorisation, and the `factorTrial` branch is unconditionally the irreducible factorisation (Group A, via A4/A5). Each tier is entered at its own precision, so no single bound drives the whole combinator. This is the headline correctness theorem, assembled over the hybrid's three branches.
 
 C2. **Public-API contracts** (`checkIrreducibleCert_sound`, `Hex.ZPoly.isIrreducible_iff`, and the `Decidable (Hex.ZPoly.Irreducible f)` instance it backs) follow from C1. Like C1 itself, these are bridge-side and are stated in `hex-berlekamp-zassenhaus-mathlib` (the Mathlib-free library provides only the `Irreducible` class and the `isIrreducible` checker — see the §`Mathlib-free Hex.ZPoly.Irreducible class`). Product preservation needs no separate bound-aware contract: it is clause 1 of the headline theorem, and the dispatch's acceptance guard makes it self-certifying per tier.
 
@@ -636,7 +620,7 @@ C2. **Public-API contracts** (`checkIrreducibleCert_sound`, `Hex.ZPoly.isIrreduc
 
 Required deliverable; structurally a leaf — no other proof obligation, public-API contract, `Decidable` instance, or theorem statement in the bridge depends on D1 or D2. Both are stated against the hybrid (see *Hybrid dispatch* above): D1 is the CLD lattice tier's completeness (`factorLattice f ≠ none` given a good prime), D2 the tight characterisation of the inputs that reach the `factorTrial` backstop.
 
-D1. **The lattice tier succeeds when a good prime exists on the core: `toMonicPrimeData? (normalizeForFactor f).squareFreeCore ≠ none → factorLattice f ≠ none`.** The antecedent is keyed on `toMonicPrimeData?` of the square-free core — the monic-transform prime the CLD pipeline actually Hensel-lifts against — and the theorem is about the implementation as written, with the lattice tier's precision cap (keyed on the core, per *Precision schedule* below), not `bhksBound f`. BHKS Theorem 5.2 supplies the precision/recombination half, conditional on a good prime being available. The unconditional `factorLattice f ≠ none` is **false** against the implementation — `HexBerlekampZassenhaus/Basic.lean` ships `finitePrimeSearchNoneQuadratic` and the `1 + L·X` family as witnesses where the hot-path prime search exhausts its bounded candidate set. This is by design; the unconditional safety net is the hybrid combinator's `factorTrial` backstop (per *Hybrid dispatch* above), not inside any modular tier. D2 below pins down exactly which inputs reach that backstop.
+D1. **The lattice tier succeeds when a good prime exists on the core: `toMonicPrimeData? (normalizeForFactor f).squareFreeCore ≠ none → factorLattice f ≠ none`.** The antecedent is keyed on `toMonicPrimeData?` of the square-free core — the monic-transform prime the CLD pipeline actually Hensel-lifts against — and the theorem is about the implementation as written, with the lattice tier's precision cap (keyed on the core, per *Precision schedule* below), not `bhksBound f`. BHKS Theorem 5.2 supplies the precision/recombination half, conditional on a good prime being available. The unconditional `factorLattice f ≠ none` is **false**: the `1 + L·X` family witnesses inputs where the hot-path prime search exhausts its bounded candidate set (the library keeps executable regression witnesses for this). This is by design; the unconditional safety net is the hybrid combinator's `factorTrial` backstop (per *Hybrid dispatch* above), not inside any modular tier. D2 below pins down exactly which inputs reach that backstop.
 
     **Pathway:**
 
@@ -858,7 +842,7 @@ re-measure is cheap after the first build.
 ## References
 
 - van Hoeij, *Factoring polynomials and the knapsack problem* (2002) "KP": https://www.math.fsu.edu/~hoeij/knapsack/paper/May16_2001/knapsack.pdf — original lattice + Lemma 2.6 (rounding error) + Lemma 2.8 (structural test).
-- Belabas, van Hoeij, Klüners, Steel, *Factoring polynomials over global fields* (2009) "BHKS": https://www.math.u-bordeaux.fr/~kbelabas/research/factor-2008.pdf — pinned variant. CLD §3.1.1; lattice §5.2 eq. 5.1; bound Lemma 5.1; rounding Lemma 5.2; norm bound Cor. 5.2; cut soundness Lemma 5.7 (the GS-only "cut", *not* the full LLL-reduction theorem); equivalence-class Lemma 3.3; verification (`L' = W` certified by exact division) Lemma 3.4; separation/termination Theorem 5.2 with explicit threshold eq. 5.3 (`v^ℓ > c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`) — formalised in HO-4 as obligation D1, not relied on by the rest of the project; §4.4 on why practical implementations exit early via the L'=W certificate; §5.3 for the resultant-based proof structure.
+- Belabas, van Hoeij, Klüners, Steel, *Factoring polynomials over global fields* (2009) "BHKS": https://www.math.u-bordeaux.fr/~kbelabas/research/factor-2008.pdf — pinned variant. CLD §3.1.1; lattice §5.2 eq. 5.1; bound Lemma 5.1; rounding Lemma 5.2; norm bound Cor. 5.2; cut soundness Lemma 5.7 (the GS-only "cut", *not* the full LLL-reduction theorem); equivalence-class Lemma 3.3; verification (`L' = W` certified by exact division) Lemma 3.4; separation/termination Theorem 5.2 with explicit threshold eq. 5.3 (`v^ℓ > c · n · (2C)^(n²) · ‖f‖₂^(2n−1) · (log ‖f‖₂)^n`) — obligation D1, not relied on by the rest of the project; §4.4 on why practical implementations exit early via the L'=W certificate; §5.3 for the resultant-based proof structure.
 - Hart, van Hoeij, Novocin, *Practical polynomial factoring in polynomial time* (2011) "HHN": https://wrap.warwick.ac.uk/id/eprint/43600/1/WRAP_Hart_0584144-ma-270913-poly_factor.pdf — referenced for completeness; incremental-column refinements are *not* used.
 
 ## Certificate structures for Z[x] irreducibility
