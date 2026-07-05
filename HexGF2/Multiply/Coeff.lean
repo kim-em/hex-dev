@@ -10,6 +10,7 @@ public import HexGF2.Basic
 public import HexGF2.Clmul
 public import HexGF2.Multiply.MulWords
 import all HexGF2.Multiply.WordBits
+import all HexGF2.Multiply.WordFold
 import all HexGF2.Multiply.MulWords
 
 public section
@@ -18,8 +19,7 @@ set_option backward.privateInPublic true
 
 /-!
 Coefficient-level scaffolding: `clmulCoeffAt`, `xorBoolList`,
-`xorWordList`, `clmulWordAt`, and the word-array-to-coefficient
-contribution lemmas.
+`xorWordList`, `clmulWordAt`, and the word-array-to-coefficient lemmas.
 -/
 namespace Hex
 namespace GF2Poly

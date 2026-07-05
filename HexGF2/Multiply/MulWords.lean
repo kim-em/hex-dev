@@ -8,16 +8,17 @@ module
 
 public import HexGF2.Basic
 public import HexGF2.Clmul
-public import HexGF2.Multiply.WordBits
+public import HexGF2.Multiply.WordFold
 import all HexGF2.Multiply.WordBits
+import all HexGF2.Multiply.WordFold
 
 public section
 set_option backward.proofsInPublic true
 set_option backward.privateInPublic true
 
 /-!
-Raw packed-word multiplication `mulWords` and its
-`coeffWords_mulWords` coefficient lemmas.
+Raw packed-word multiplication `mulWords` and its `coeffWords_mulWords`
+coefficient lemmas.
 -/
 namespace Hex
 namespace GF2Poly

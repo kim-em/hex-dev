@@ -10,8 +10,10 @@ public import HexGF2.Basic
 public import HexGF2.Clmul
 public import HexGF2.Multiply.Assoc
 import all HexGF2.Multiply.WordBits
+import all HexGF2.Multiply.WordFold
 import all HexGF2.Multiply.MulWords
 import all HexGF2.Multiply.Coeff
+import all HexGF2.Multiply.SourceTriple
 import all HexGF2.Multiply.Assoc
 
 public section
