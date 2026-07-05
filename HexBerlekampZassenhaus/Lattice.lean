@@ -745,19 +745,14 @@ def bhksRowsArrayToMatrix {m : Nat} (n : Nat) (rows : Array (Vector Int m)) :
     Matrix Int n m :=
   Matrix.ofFn fun i j => (rows.getD i.val (Vector.ofFn fun _ => 0))[j]
 
-set_option linter.unnecessarySimpa false in
 theorem bhksRowsArrayToMatrix_row {m n : Nat} (rows : Array (Vector Int m))
     (i : Fin n) :
     Matrix.row (bhksRowsArrayToMatrix n rows) i =
       rows.getD i.val (Vector.ofFn fun _ => 0) := by
   apply Vector.ext
   intro j hj
-  simpa [bhksRowsArrayToMatrix, Matrix.row, Matrix.ofFn] using
-    (show (Matrix.ofFn fun i j => (rows.getD i.val (Vector.ofFn fun _ => 0))[j])
-        [i][⟨j, hj⟩] = (rows.getD i.val (Vector.ofFn fun _ => 0))[⟨j, hj⟩] by
-      rfl)
+  simp [bhksRowsArrayToMatrix, Matrix.row, Matrix.ofFn]
 
-set_option linter.unnecessarySimpa false in
 theorem bhksRowsArrayToMatrix_toArray {m n : Nat} (B : Matrix Int n m) :
     bhksRowsArrayToMatrix n B.rows.toArray = B := by
   apply Hex.Matrix.ext
@@ -765,10 +760,7 @@ theorem bhksRowsArrayToMatrix_toArray {m n : Nat} (B : Matrix Int n m) :
   intro i hi
   apply Vector.ext
   intro j hj
-  simpa [bhksRowsArrayToMatrix, Matrix.ofFn, Vector.get] using
-    (show (Matrix.ofFn fun i j => B[i][j])[⟨i, hi⟩][⟨j, hj⟩] =
-        B[⟨i, hi⟩][⟨j, hj⟩] by
-      rfl)
+  simp [bhksRowsArrayToMatrix, Matrix.ofFn]
 
 theorem lll_delta_lower : (1 / 4 : Rat) < 3 / 4 := by
   grind
