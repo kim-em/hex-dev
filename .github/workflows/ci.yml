@@ -37,6 +37,8 @@ jobs:
           fetch-depth: 0
       # --- Structural + source lints ---
       - run: python3 scripts/check_copyright_headers.py
+      - name: Lint Lean file line counts (SPEC/CI.md §Source-file lints)
+        run: python3 scripts/check_file_line_counts.py
       - run: python3 scripts/check_dag.py
       - run: python3 scripts/check_phase4.py
       - name: Lint benches are Mathlib-free (SPEC/benchmarking.md §Mathlib-free benches)

@@ -6,7 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyZ.Basic
+public import HexPolyZ.Core
+public import HexPolyZ.Rational
+public import HexPolyZ.Decomposition
 public import HexPolyZ.Mignotte
 
 public section

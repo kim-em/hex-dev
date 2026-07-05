@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexConway.Basic
+import HexConway
 
 /-!
 Core conformance checks for the Tier 1 committed Conway-polynomial lookup

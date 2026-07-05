@@ -138,6 +138,21 @@ requires a non-empty `Authors:` line, so additional contributors may be
 named. Run `python3 scripts/check_copyright_headers.py --fix` to add the
 header to any new file.
 
+Tracked `.lean` files are also line-count limited.
+`scripts/check_file_line_counts.py`, run as a step in the single `build`
+job, enforces two rules:
+
+* **Absolute cap.** No tracked `.lean` file (except `lakefile.lean`) may
+  exceed 3000 lines. Oversized files are hard to review and slow to
+  elaborate; split them into dependency-ordered submodules under a
+  same-named subdirectory (keeping a meaningfully-named public leaf), or,
+  for a `Basic.lean`-style aggregate, into content-named siblings.
+* **New-file budget.** A change may not *add* a new `.lean` file already
+  over 2000 lines. Existing files between 2000 and 3000 lines are
+  grandfathered; new files must start well under the absolute cap. This
+  rule diffs against the merge base, so it applies in pull-request context
+  and is skipped when no base is available.
+
 ## Mathlib cache is mandatory
 
 Hex depends transitively on Mathlib (see `lakefile.lean`). Every

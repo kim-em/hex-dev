@@ -4,7 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexConway.Basic
+import HexConway.Table
+import HexConway.Certificates
+import HexConway.Api
 
 /-!
 `HexConway` starts the Conway-polynomial database with the Tier 1 imported

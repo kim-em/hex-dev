@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyFp.Basic
+public import HexPolyFp.Degree
 public import HexPolyFp.SquareFree
 public import HexPolyFp.QuotientFrobenius
 
