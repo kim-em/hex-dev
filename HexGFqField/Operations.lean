@@ -23,8 +23,6 @@ namespace Hex
 
 namespace GFqField
 
-set_option linter.unusedSectionVars false
-
 variable {p : Nat} [ZMod64.Bounds p] {hp : Hex.Nat.Prime p}
 
 /-- Natural-number literals reuse the quotient-ring cast and then rewrap the
@@ -99,7 +97,130 @@ def zsmul {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f
 
 section InverseInternals
 
-variable [ZMod64.PrimeModulus p]
+-- These helpers are modulus-agnostic (they use the `hp : Hex.Nat.Prime p`
+-- hypothesis where primality is needed, not the `ZMod64.PrimeModulus` instance),
+-- so they precede the `variable [ZMod64.PrimeModulus p]` that the inverse
+-- machinery below relies on.
+
+/-- Nonzero field elements have nonzero quotient representatives. This connects
+field-level hypotheses to the quotient-level helper lemmas. -/
+private theorem toQuotient_ne_zero
+    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
+    {x : FiniteField f hf hp hirr} (hx : x ≠ zero f hf hp hirr) :
+    x.toQuotient ≠ (0 : GFqRing.PolyQuotient f hf) := by
+  intro hq
+  apply hx
+  exact GFqField.ext hq
+
+/-- A nonzero `ZMod64 p` scalar is coprime to prime `p`, supplying the unit
+fact needed for constant-scaling inverses. -/
+private theorem zmod64_coprime_of_prime_ne_zero
+    (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
+    Nat.Coprime a.toNat p := by
+  rw [Nat.Coprime]
+  have hnot_dvd : ¬ p ∣ a.toNat := by
+    intro hdiv
+    rcases hdiv with ⟨k, hk⟩
+    have ha_pos : 0 < a.toNat := by
+      by_cases hnat : a.toNat = 0
+      · exfalso
+        apply ha
+        apply ZMod64.ext
+        apply UInt64.toNat_inj.mp
+        exact hnat
+      · exact Nat.pos_of_ne_zero hnat
+    have hk_pos : 0 < k := by
+      cases k with
+      | zero =>
+          exfalso
+          have : a.toNat = 0 := by simpa using hk
+          omega
+      | succ k => exact Nat.succ_pos k
+    have hle : p ≤ a.toNat := by
+      rw [hk]
+      simpa [Nat.mul_comm] using Nat.le_mul_of_pos_left p hk_pos
+    exact (Nat.not_le_of_gt a.toNat_lt) hle
+  have hgcd_dvd_p : Nat.gcd a.toNat p ∣ p := Nat.gcd_dvd_right a.toNat p
+  rcases hp.2 (Nat.gcd a.toNat p) hgcd_dvd_p with hgcd | hgcd
+  · exact hgcd
+  · exfalso
+    apply hnot_dvd
+    rcases Nat.gcd_dvd_left a.toNat p with ⟨k, hk⟩
+    rw [hgcd] at hk
+    exact ⟨k, hk⟩
+
+/-- Scaling the unit polynomial by `c` is the constant polynomial `C c`, the base
+case for relating scalar multiplication to constant-polynomial multiplication. -/
+private theorem scale_one_poly (c : ZMod64 p) :
+    DensePoly.scale c (1 : FpPoly p) = DensePoly.C c := by
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero : c * (0 : ZMod64 p) = 0 := by grind
+  rw [DensePoly.coeff_scale _ _ _ hzero]
+  change c * (DensePoly.C (1 : ZMod64 p)).coeff n = (DensePoly.C c).coeff n
+  rw [DensePoly.coeff_C, DensePoly.coeff_C]
+  cases n with
+  | zero => grind
+  | succ n => exact hzero
+
+/-- Scaling a constant polynomial multiplies its constant coefficient, providing
+the coefficient-level normalization for constant factors. -/
+private theorem scale_C (c d : ZMod64 p) :
+    DensePoly.scale c (DensePoly.C d : FpPoly p) = DensePoly.C (c * d) := by
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero : c * (0 : ZMod64 p) = 0 := by grind
+  rw [DensePoly.coeff_scale _ _ _ hzero, DensePoly.coeff_C, DensePoly.coeff_C]
+  cases n with
+  | zero => rfl
+  | succ n => exact hzero
+
+/-- A polynomial with degree exactly zero is its constant coefficient polynomial,
+identifying degree-zero xgcd gcd witnesses as constants. -/
+private theorem eq_C_of_degree_eq_zero
+    (g : FpPoly p) (hdeg : g.degree? = some 0) :
+    g = DensePoly.C (g.coeff 0) := by
+  have hsize : g.size = 1 := by
+    unfold DensePoly.degree? at hdeg
+    by_cases hzero : g.size = 0
+    · simp [hzero] at hdeg
+    · have hpred : g.size - 1 = 0 := by
+        simpa [hzero] using hdeg
+      omega
+  apply DensePoly.ext_coeff
+  intro n
+  rw [DensePoly.coeff_C]
+  by_cases hn : n = 0
+  · simp [hn]
+  · have hle : g.size ≤ n := by omega
+    rw [DensePoly.coeff_eq_zero_of_size_le g hle]
+    simp [hn]
+
+/-- A degree-zero polynomial has nonzero constant coefficient, supplying the
+nonzero scalar needed to invert a constant xgcd gcd witness. -/
+private theorem coeff_zero_ne_zero_of_degree_eq_zero
+    (g : FpPoly p) (hdeg : g.degree? = some 0) :
+    g.coeff 0 ≠ 0 := by
+  have hsize : g.size = 1 := by
+    unfold DensePoly.degree? at hdeg
+    by_cases hzero : g.size = 0
+    · simp [hzero] at hdeg
+    · have hpred : g.size - 1 = 0 := by
+        simpa [hzero] using hdeg
+      omega
+  have h := DensePoly.coeff_last_ne_zero_of_pos_size g (by omega)
+  simp only [hsize] at h
+  exact h
+
+/-- Polynomial divisibility is transitive, chaining xgcd divisibility facts into
+the downstream inverse-soundness argument. -/
+private theorem dvd_trans_poly {a b c : FpPoly p} (hab : a ∣ b) (hbc : b ∣ c) :
+    a ∣ c := by
+  rcases hab with ⟨u, hu⟩
+  rcases hbc with ⟨v, hv⟩
+  refine ⟨u * v, ?_⟩
+  rw [hv, hu]
+  exact DensePoly.mul_assoc_poly a u v
 
 /-- The inverse polynomial representative for a quotient element.
 
@@ -112,6 +233,74 @@ def invPoly {f : FpPoly p} {hf : 0 < FpPoly.degree f}
   let r := DensePoly.xgcd (GFqRing.repr x) f
   let unitInv : ZMod64 p := (r.gcd.coeff 0)⁻¹
   DensePoly.scale unitInv r.left
+
+/-- A nonzero `ZMod64 p` scalar multiplies with its inverse to one, turning the
+coprimality fact into the scalar cancellation used below. -/
+private theorem zmod64_mul_inv_eq_one_of_prime_ne_zero
+    (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
+    a * a⁻¹ = 1 := by
+  have hcop := zmod64_coprime_of_prime_ne_zero hp ha
+  have hinv : (a⁻¹ * a).toNat = (1 : ZMod64 p).toNat := by
+    exact ZMod64.inv_mul_eq_one (p := p) a hcop
+  have hcomm : a * a⁻¹ = a⁻¹ * a := by grind
+  rw [hcomm]
+  apply ZMod64.ext
+  apply UInt64.toNat_inj.mp
+  simpa [ZMod64.toNat_eq_val] using hinv
+
+/-- Left multiplication by a constant polynomial agrees with `DensePoly.scale`,
+allowing inverse soundness proofs to move between the two forms. -/
+private theorem C_mul_eq_scale (c : ZMod64 p) (f : FpPoly p) :
+    DensePoly.C c * f = DensePoly.scale c f := by
+  have hscale := FpPoly.scale_mul_left c (1 : FpPoly p) f
+  rw [FpPoly.one_mul, scale_one_poly] at hscale
+  exact hscale.symm
+
+/-- A nonzero constant polynomial times its inverse constant is one, giving the
+polynomial-level cancellation used in divisibility reversal. -/
+private theorem C_mul_C_inv_of_ne_zero
+    (hp : Hex.Nat.Prime p) {c : ZMod64 p} (hc : c ≠ 0) :
+    (DensePoly.C c : FpPoly p) * DensePoly.C c⁻¹ = 1 := by
+  rw [C_mul_eq_scale, scale_C, zmod64_mul_inv_eq_one_of_prime_ne_zero hp hc]
+  rfl
+
+/-- Scaling a nonzero constant polynomial by the inverse scalar yields one,
+supporting the normalized xgcd gcd witness. -/
+private theorem scale_inv_C_eq_one_of_ne_zero
+    (hp : Hex.Nat.Prime p) {c : ZMod64 p} (hc : c ≠ 0) :
+    DensePoly.scale c⁻¹ (DensePoly.C c : FpPoly p) = 1 := by
+  rw [scale_C]
+  have hmul : c⁻¹ * c = 1 := by
+    have hright := zmod64_mul_inv_eq_one_of_prime_ne_zero hp hc
+    have hcomm : c⁻¹ * c = c * c⁻¹ := by grind
+    rw [hcomm]
+    exact hright
+  rw [hmul]
+  rfl
+
+/-- If multiplying `g` by a degree-zero factor gives `f`, then `f` divides `g`
+by cancelling the nonzero constant factor. -/
+private theorem dvd_left_of_mul_const_right_eq
+    (hp : Hex.Nat.Prime p) {g r f : FpPoly p}
+    (hfg : g * r = f) (hrdeg : r.degree? = some 0) :
+    f ∣ g := by
+  let c := r.coeff 0
+  have hrC : r = DensePoly.C c := eq_C_of_degree_eq_zero r hrdeg
+  have hc : c ≠ 0 := coeff_zero_ne_zero_of_degree_eq_zero r hrdeg
+  refine ⟨DensePoly.C c⁻¹, ?_⟩
+  have hfgC : g * DensePoly.C c = f := by
+    rw [← hfg, hrC]
+  calc
+    g = g * (1 : FpPoly p) := by rw [FpPoly.mul_one]
+    _ = g * (DensePoly.C c * DensePoly.C c⁻¹) := by
+      rw [C_mul_C_inv_of_ne_zero hp hc]
+    _ = (g * DensePoly.C c) * DensePoly.C c⁻¹ := by
+      exact (DensePoly.mul_assoc_poly g (DensePoly.C c) (DensePoly.C c⁻¹)).symm
+    _ = f * DensePoly.C c⁻¹ := by
+      rw [hfgC]
+
+-- The extended-gcd / inverse machinery below needs `ZMod64 p` to be a field.
+variable [ZMod64.PrimeModulus p]
 
 /-- The extended-gcd output gives the unscaled Bezout identity for the reduced
 representative and the modulus. -/
@@ -192,16 +381,6 @@ private theorem reduceMod_repr_mul_invPoly_eq_scaled_gcd
           (DensePoly.xgcd (GFqRing.repr x) f).gcd) := by
           rw [scaled_xgcd_repr_bezout x]
 
-/-- Nonzero field elements have nonzero quotient representatives. This connects
-field-level hypotheses to the quotient-level helper lemmas. -/
-private theorem toQuotient_ne_zero
-    {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
-    {x : FiniteField f hf hp hirr} (hx : x ≠ zero f hf hp hirr) :
-    x.toQuotient ≠ (0 : GFqRing.PolyQuotient f hf) := by
-  intro hq
-  apply hx
-  exact GFqField.ext hq
-
 /-- The xgcd gcd witness divides the nonzero field representative. -/
 private theorem xgcd_repr_gcd_dvd_repr
     {f : FpPoly p} {hf : 0 < FpPoly.degree f}
@@ -217,181 +396,6 @@ private theorem xgcd_repr_gcd_dvd_modulus
     (DensePoly.xgcd (GFqRing.repr x) f).gcd ∣ f := by
   simpa [← DensePoly.gcd_eq_xgcd_gcd]
     using DensePoly.gcd_dvd_right (GFqRing.repr x) f
-
-/-- A nonzero `ZMod64 p` scalar is coprime to prime `p`, supplying the unit
-fact needed for constant-scaling inverses. -/
-private theorem zmod64_coprime_of_prime_ne_zero
-    (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
-    Nat.Coprime a.toNat p := by
-  rw [Nat.Coprime]
-  have hnot_dvd : ¬ p ∣ a.toNat := by
-    intro hdiv
-    rcases hdiv with ⟨k, hk⟩
-    have ha_pos : 0 < a.toNat := by
-      by_cases hnat : a.toNat = 0
-      · exfalso
-        apply ha
-        apply ZMod64.ext
-        apply UInt64.toNat_inj.mp
-        exact hnat
-      · exact Nat.pos_of_ne_zero hnat
-    have hk_pos : 0 < k := by
-      cases k with
-      | zero =>
-          exfalso
-          have : a.toNat = 0 := by simpa using hk
-          omega
-      | succ k => exact Nat.succ_pos k
-    have hle : p ≤ a.toNat := by
-      rw [hk]
-      simpa [Nat.mul_comm] using Nat.le_mul_of_pos_left p hk_pos
-    exact (Nat.not_le_of_gt a.toNat_lt) hle
-  have hgcd_dvd_p : Nat.gcd a.toNat p ∣ p := Nat.gcd_dvd_right a.toNat p
-  rcases hp.2 (Nat.gcd a.toNat p) hgcd_dvd_p with hgcd | hgcd
-  · exact hgcd
-  · exfalso
-    apply hnot_dvd
-    rcases Nat.gcd_dvd_left a.toNat p with ⟨k, hk⟩
-    rw [hgcd] at hk
-    exact ⟨k, hk⟩
-
-/-- A nonzero `ZMod64 p` scalar multiplies with its inverse to one, turning the
-coprimality fact into the scalar cancellation used below. -/
-private theorem zmod64_mul_inv_eq_one_of_prime_ne_zero
-    (hp : Hex.Nat.Prime p) {a : ZMod64 p} (ha : a ≠ 0) :
-    a * a⁻¹ = 1 := by
-  have hcop := zmod64_coprime_of_prime_ne_zero hp ha
-  have hinv : (a⁻¹ * a).toNat = (1 : ZMod64 p).toNat := by
-    exact ZMod64.inv_mul_eq_one (p := p) a hcop
-  have hcomm : a * a⁻¹ = a⁻¹ * a := by grind
-  rw [hcomm]
-  apply ZMod64.ext
-  apply UInt64.toNat_inj.mp
-  simpa [ZMod64.toNat_eq_val] using hinv
-
-/-- Scaling the unit polynomial by `c` is the constant polynomial `C c`, the base
-case for relating scalar multiplication to constant-polynomial multiplication. -/
-private theorem scale_one_poly (c : ZMod64 p) :
-    DensePoly.scale c (1 : FpPoly p) = DensePoly.C c := by
-  apply DensePoly.ext_coeff
-  intro n
-  have hzero : c * (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_scale _ _ _ hzero]
-  change c * (DensePoly.C (1 : ZMod64 p)).coeff n = (DensePoly.C c).coeff n
-  rw [DensePoly.coeff_C, DensePoly.coeff_C]
-  cases n with
-  | zero => grind
-  | succ n => exact hzero
-
-/-- Left multiplication by a constant polynomial agrees with `DensePoly.scale`,
-allowing inverse soundness proofs to move between the two forms. -/
-private theorem C_mul_eq_scale (c : ZMod64 p) (f : FpPoly p) :
-    DensePoly.C c * f = DensePoly.scale c f := by
-  have hscale := FpPoly.scale_mul_left c (1 : FpPoly p) f
-  rw [FpPoly.one_mul, scale_one_poly] at hscale
-  exact hscale.symm
-
-/-- Scaling a constant polynomial multiplies its constant coefficient, providing
-the coefficient-level normalization for constant factors. -/
-private theorem scale_C (c d : ZMod64 p) :
-    DensePoly.scale c (DensePoly.C d : FpPoly p) = DensePoly.C (c * d) := by
-  apply DensePoly.ext_coeff
-  intro n
-  have hzero : c * (0 : ZMod64 p) = 0 := by grind
-  rw [DensePoly.coeff_scale _ _ _ hzero, DensePoly.coeff_C, DensePoly.coeff_C]
-  cases n with
-  | zero => rfl
-  | succ n => exact hzero
-
-/-- A nonzero constant polynomial times its inverse constant is one, giving the
-polynomial-level cancellation used in divisibility reversal. -/
-private theorem C_mul_C_inv_of_ne_zero
-    (hp : Hex.Nat.Prime p) {c : ZMod64 p} (hc : c ≠ 0) :
-    (DensePoly.C c : FpPoly p) * DensePoly.C c⁻¹ = 1 := by
-  rw [C_mul_eq_scale, scale_C, zmod64_mul_inv_eq_one_of_prime_ne_zero hp hc]
-  rfl
-
-/-- Scaling a nonzero constant polynomial by the inverse scalar yields one,
-supporting the normalized xgcd gcd witness. -/
-private theorem scale_inv_C_eq_one_of_ne_zero
-    (hp : Hex.Nat.Prime p) {c : ZMod64 p} (hc : c ≠ 0) :
-    DensePoly.scale c⁻¹ (DensePoly.C c : FpPoly p) = 1 := by
-  rw [scale_C]
-  have hmul : c⁻¹ * c = 1 := by
-    have hright := zmod64_mul_inv_eq_one_of_prime_ne_zero hp hc
-    have hcomm : c⁻¹ * c = c * c⁻¹ := by grind
-    rw [hcomm]
-    exact hright
-  rw [hmul]
-  rfl
-
-/-- A polynomial with degree exactly zero is its constant coefficient polynomial,
-identifying degree-zero xgcd gcd witnesses as constants. -/
-private theorem eq_C_of_degree_eq_zero
-    (g : FpPoly p) (hdeg : g.degree? = some 0) :
-    g = DensePoly.C (g.coeff 0) := by
-  have hsize : g.size = 1 := by
-    unfold DensePoly.degree? at hdeg
-    by_cases hzero : g.size = 0
-    · simp [hzero] at hdeg
-    · have hpred : g.size - 1 = 0 := by
-        simpa [hzero] using hdeg
-      omega
-  apply DensePoly.ext_coeff
-  intro n
-  rw [DensePoly.coeff_C]
-  by_cases hn : n = 0
-  · simp [hn]
-  · have hle : g.size ≤ n := by omega
-    rw [DensePoly.coeff_eq_zero_of_size_le g hle]
-    simp [hn]
-
-/-- A degree-zero polynomial has nonzero constant coefficient, supplying the
-nonzero scalar needed to invert a constant xgcd gcd witness. -/
-private theorem coeff_zero_ne_zero_of_degree_eq_zero
-    (g : FpPoly p) (hdeg : g.degree? = some 0) :
-    g.coeff 0 ≠ 0 := by
-  have hsize : g.size = 1 := by
-    unfold DensePoly.degree? at hdeg
-    by_cases hzero : g.size = 0
-    · simp [hzero] at hdeg
-    · have hpred : g.size - 1 = 0 := by
-        simpa [hzero] using hdeg
-      omega
-  have h := DensePoly.coeff_last_ne_zero_of_pos_size g (by omega)
-  simp only [hsize] at h
-  exact h
-
-/-- Polynomial divisibility is transitive, chaining xgcd divisibility facts into
-the downstream inverse-soundness argument. -/
-private theorem dvd_trans_poly {a b c : FpPoly p} (hab : a ∣ b) (hbc : b ∣ c) :
-    a ∣ c := by
-  rcases hab with ⟨u, hu⟩
-  rcases hbc with ⟨v, hv⟩
-  refine ⟨u * v, ?_⟩
-  rw [hv, hu]
-  exact DensePoly.mul_assoc_poly a u v
-
-/-- If multiplying `g` by a degree-zero factor gives `f`, then `f` divides `g`
-by cancelling the nonzero constant factor. -/
-private theorem dvd_left_of_mul_const_right_eq
-    (hp : Hex.Nat.Prime p) {g r f : FpPoly p}
-    (hfg : g * r = f) (hrdeg : r.degree? = some 0) :
-    f ∣ g := by
-  let c := r.coeff 0
-  have hrC : r = DensePoly.C c := eq_C_of_degree_eq_zero r hrdeg
-  have hc : c ≠ 0 := coeff_zero_ne_zero_of_degree_eq_zero r hrdeg
-  refine ⟨DensePoly.C c⁻¹, ?_⟩
-  have hfgC : g * DensePoly.C c = f := by
-    rw [← hfg, hrC]
-  calc
-    g = g * (1 : FpPoly p) := by rw [FpPoly.mul_one]
-    _ = g * (DensePoly.C c * DensePoly.C c⁻¹) := by
-      rw [C_mul_C_inv_of_ne_zero hp hc]
-    _ = (g * DensePoly.C c) * DensePoly.C c⁻¹ := by
-      exact (DensePoly.mul_assoc_poly g (DensePoly.C c) (DensePoly.C c⁻¹)).symm
-    _ = f * DensePoly.C c⁻¹ := by
-      rw [hfgC]
 
 /-- For a nonzero residue class modulo irreducible `f`, the xgcd gcd witness
 is a constant polynomial. -/
