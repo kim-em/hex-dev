@@ -119,12 +119,10 @@ structure ToMonicData where
 
 namespace ToMonicData
 
-@[expose]
 private def transformedCoeffs (core : ZPoly) (degree : Nat) : Array Int :=
   ((List.range degree).map fun i =>
       core.coeff i * (DensePoly.leadingCoeff core) ^ (degree - 1 - i)).toArray.push 1
 
-@[expose]
 private def transformedCore (core : ZPoly) (degree : Nat) : ZPoly :=
   { coeffs := transformedCoeffs core degree
     normalized := by
@@ -249,7 +247,6 @@ deriving DecidableEq
 
 namespace Factorization
 
-@[expose]
 private def polyPow (f : ZPoly) : Nat → ZPoly
   | 0 => 1
   | n + 1 => polyPow f n * f
@@ -305,18 +302,15 @@ private def contentFactorArray (content : Int) : Array ZPoly :=
   else
     #[DensePoly.C content]
 
-@[expose]
 private def xPowerFactorArray (power : Nat) : Array ZPoly :=
   (List.replicate power ZPoly.X).toArray
 
-@[expose]
 private def repeatedPartFactorArray (repeatedPart : ZPoly) : Array ZPoly :=
   if repeatedPart = 1 then
     #[]
   else
     #[repeatedPart]
 
-@[expose]
 private def signedContentScalar (f : ZPoly) : Int :=
   if f = 0 then
     0
@@ -351,7 +345,6 @@ private def bumpFactorMultiplicity (f : ZPoly) : List (ZPoly × Nat) → List (Z
       else
         entry :: bumpFactorMultiplicity f entries
 
-@[expose]
 private def collectFactorMultiplicities (factors : Array ZPoly) : Array (ZPoly × Nat) :=
   factors.toList.foldl
     (fun acc factor =>
@@ -363,7 +356,6 @@ private def collectFactorMultiplicities (factors : Array ZPoly) : Array (ZPoly �
     []
   |>.reverse.toArray
 
-@[expose]
 private def polynomialNormalizationPrefixFactors (d : FactorNormalizationData) : Array ZPoly :=
   xPowerFactorArray d.xPower ++ repeatedPartFactorArray d.repeatedPart
 
@@ -450,7 +442,6 @@ Compute `(emitted, residual)` where each candidate factor `q` from
 `q^k` exactly divides the running repeated-part. The fuel is the source
 size, which dominates any irreducible's multiplicity in `repeatedPart`.
 -/
-@[expose]
 private def expandRepeatedPartFactorArray (rp : ZPoly) (coreFactors : Array ZPoly) :
     Array ZPoly × ZPoly :=
   expandRepeatedPartFactorsAux coreFactors.toList rp (rp.size + 1)
