@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""Derive the list of libraries whose ``Hex*/Conformance.lean`` module
-is imported from the matching root ``Hex*.lean``.
+"""Derive the list of libraries whose ``conformance/Hex*/Conformance.lean``
+module is built by the ``HexConformance`` ``lean_lib`` in ``lakefile.lean``.
 
-Used by ``.github/workflows/conformance.yml`` to build the conformance
-matrix dynamically instead of hand-listing targets.  The list is
-recomputed every CI run, so new ``Hex*/Conformance.lean`` files land in
-the matrix automatically.
+Used to build the conformance matrix dynamically instead of hand-listing
+targets.  The list is recomputed every CI run, so new
+``conformance/Hex*/Conformance.lean`` files land in the matrix
+automatically once they are added to the ``HexConformance`` globs.
 
 Default output is one library name per line on stdout.  ``--json``
 emits a JSON array suitable for a GitHub Actions matrix include.
 ``--space-separated`` emits a single space-joined line, which feeds
-the consolidated single-job ``conformance.yml`` workflow's
-``lake build`` invocation.  ``--check`` performs the consistency
-check without printing the list and exits non-zero on drift between
-``Hex*/Conformance.lean`` files and root-module imports.
+the consolidated single-job conformance ``lake build`` invocation.
+``--check`` performs the consistency check without printing the list
+and exits non-zero on drift between ``conformance/Hex*/Conformance.lean``
+files and the ``HexConformance`` globs.
 
 Stdlib only; runs from the repository root regardless of the working
 directory the user invokes it from.
@@ -82,8 +82,8 @@ def diagnose(root: Path) -> tuple[list[str], list[str], list[str]]:
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "List libraries whose Hex*/Conformance.lean module is "
-            "imported from the matching root Hex*.lean.  Used to derive "
+            "List libraries whose conformance/Hex*/Conformance.lean module "
+            "is built by the HexConformance lean_lib globs.  Used to derive "
             "the conformance CI matrix."
         )
     )
@@ -104,15 +104,15 @@ def main() -> int:
         "--check",
         action="store_true",
         help=(
-            "verify root-imports and Conformance.lean files are in sync; "
-            "do not print the matrix; exit non-zero on drift"
+            "verify the HexConformance globs and Conformance.lean files "
+            "are in sync; do not print the matrix; exit non-zero on drift"
         ),
     )
     parser.add_argument(
         "--no-warn-orphan-imports",
         action="store_true",
         help=(
-            "suppress warnings about root files that import a "
+            "suppress warnings about HexConformance globs that name a "
             "Conformance module without a backing source file "
             "(such drift makes lake build fail anyway)"
         ),

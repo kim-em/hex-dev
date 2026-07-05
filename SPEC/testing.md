@@ -34,7 +34,8 @@ fully serialised input, and the oracle (if any) in the failure report.
 ## Per-library module contract
 
 Every library `HexFoo` at `done_through ≥ 2` MUST provide
-`HexFoo/Conformance.lean`, re-exported from `HexFoo.lean`. This module
+`conformance/HexFoo/Conformance.lean` (module `HexFoo.Conformance`),
+built via the `HexConformance` `lean_lib` (`lakefile.lean`). This module
 is the `core` profile for `HexFoo`. It MUST:
 
 1. **Open with a docstring** declaring the library-specific
@@ -116,6 +117,53 @@ is the `core` profile for `HexFoo`. It MUST:
    are useful but not a substitute: they cannot detect a
    wrong-asymptotic intermediate stage that the entry point would
    exercise at realistic input sizes.
+
+## Where cross-check content lives
+
+Verification content — bulk `#guard` sweeps, randomized or LCG-driven
+fixture streams, heavy concrete-instance `decide`, extern-vs-pure and
+fast-vs-fast agreement checks — is *testing* code, not library
+implementation. A reader scanning `HexFoo/` should see the
+implementation, not the code that exercises it. So all such content
+lives under the `conformance/` sub-project, never in the library source
+tree.
+
+Each library has up to three conformance-tree modules:
+
+- `conformance/HexFoo/Conformance.lean` (module `HexFoo.Conformance`) —
+  the `core` profile, specified above. Every library at
+  `done_through ≥ 2` has one.
+- `conformance/HexFoo/CrossCheck.lean` (module `HexFoo.CrossCheck`) —
+  the heavier cross-check sweeps: representation-correspondence
+  campaigns, fast-vs-fast agreement over deterministic input streams,
+  extern-vs-pure-Lean agreement, and similar bulk verification that is
+  too large to sit inside the `core` module. Optional; present only
+  where a library needs it.
+- `conformance/HexFoo/FastCheck.lean` (module `HexFoo.FastCheck`) —
+  `#eval` / `#guard` checks that must elaborate against an extern-backed
+  or otherwise compiled path (so the checked value comes from the native
+  implementation, not a reference reduction). Optional.
+
+All three build together: they are listed in the `HexConformance`
+`lean_lib` globs (`lakefile.lean`), which the CI build elaborates via
+its `lake build HexConformance` step, so their `#guard`s run on every
+CI build, on the same critical path as the core profile. Relocating a check into `conformance/` therefore changes only
+*where the code lives and how it is labelled*, never *what runs or
+when*. Making these checks fast while they stay on that path is separate
+performance work, not a reason to move them off it.
+
+Small, *illustrative* `#guard` / `example ... := by decide` assertions
+that document one declaration's contract at its definition site may
+remain inline in a library module. The line is content, not count: a
+handful of assertions pinning the behaviour of the function defined just
+above them is documentation and stays; a module that is predominantly
+assertions — dozens of `#guard`s, generated fixtures, or heavy
+concrete-instance verification — is a test module and belongs under
+`conformance/`.
+
+Name these modules `CrossCheck` and `FastCheck`. Do not name a
+verification module `Smoke` (or otherwise use the word "smoke"); it is
+on the repository style guide's banned-vocabulary list.
 
 ## Oracle discipline
 
@@ -245,9 +293,12 @@ MUST NOT appear in any `Conformance.lean`:
   [SPEC.md](SPEC.md#project-wide-proof-policy)). Restated here because
   conformance checks on large fixtures are a common temptation.
 
-- **Conformance modules not reached by `lake build HexFoo`.** Every
-  `Conformance.lean` MUST be imported from the library's root module
-  so that `lake build HexFoo` elaborates its `#guard`s.
+- **Conformance-tree modules not reached by the CI build.** Every
+  `conformance/HexFoo/{Conformance,CrossCheck,FastCheck}.lean` MUST be
+  listed in the `HexConformance` `lean_lib` globs (`lakefile.lean`) so
+  the CI build's `lake build HexConformance` step elaborates its
+  `#guard`s. A verification module that no target builds is dead: its
+  assertions never run.
 
 - **Ceremonial API-still-elaborates `example`s.** An `example` whose
   proof reduces entirely to a `sorry`'d declaration produces no
@@ -394,7 +445,7 @@ The conformance workflow MUST:
 - Run on `push` to `main` and on `pull_request`. Not
   `workflow_dispatch`-only.
 - Always run the `core` profile. Any elaboration error in
-  `HexFoo/Conformance.lean` fails the job.
+  `conformance/HexFoo/Conformance.lean` fails the job.
 - Run the `ci` profile for libraries whose oracle mode is `always`
   or `if_available`. For `if_available`, a missing oracle counts as
   skipped, not failed; the job summary records which oracles were
@@ -402,15 +453,16 @@ The conformance workflow MUST:
 - For oracle mode `always`, a missing oracle fails the job.
 - Keep the `local` profile gated behind `workflow_dispatch`.
 
-Separately, the default `lake build` MUST elaborate every
-`HexFoo/Conformance.lean` as part of the ordinary library build, so
-even the minimal CI job (no oracle) catches broken `#guard`s.
+Separately, the CI build's `lake build HexConformance` step MUST
+elaborate every `conformance/HexFoo/Conformance.lean` (and any
+`CrossCheck` / `FastCheck` sibling) via the `HexConformance`
+`lean_lib`, so even the minimal CI job (no oracle) catches broken
+`#guard`s.
 
-When the workflow's matrix is derived (e.g. via
-`scripts/conformance_targets.py`), ensuring the new library appears
-amounts to importing `Hex<X>.Conformance` from `Hex<X>.lean`. When
-the matrix is hand-listed, the same PR that lands `Conformance.lean`
-MUST update the matrix.
+Landing a new conformance-tree module therefore means adding it to the
+`HexConformance` globs in `lakefile.lean`. When the oracle workflow's
+matrix is hand-listed, the same PR that lands `Conformance.lean` MUST
+also update that matrix.
 
 ## Infrastructure contract
 
