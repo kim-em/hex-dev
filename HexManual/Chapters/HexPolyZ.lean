@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexPolyZ.Basic
+import HexPolyZ.Decomposition
 import HexPolyZ.Mignotte
 
 open Verso.Genre Manual

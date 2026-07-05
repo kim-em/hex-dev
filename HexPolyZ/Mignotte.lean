@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBasic
-public import HexPolyZ.Basic
+public import HexPolyZ.Decomposition
 
 public section
 
