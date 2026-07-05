@@ -36,9 +36,7 @@ end FpPoly
 
 namespace GFqRing
 
-set_option linter.unusedSectionVars false
-
-variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+variable {p : Nat} [ZMod64.Bounds p]
 
 /-- Canonical remainder reduction modulo `f`, using the existing division surface. -/
 @[expose]
@@ -127,6 +125,10 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} : DecidableEq (PolyQuotient f
     exact hx ((eq_zero_iff_repr_eq_zero x).2 hrepr)
   · intro hx hzero
     exact hx ((eq_zero_iff_repr_eq_zero x).1 hzero)
+
+-- The remaining `reduceMod` algebra rests on `DensePoly` division laws that
+-- require `ZMod64 p` to be a field, so from here the modulus must be prime.
+variable [ZMod64.PrimeModulus p]
 
 /-- Canonical representatives have degree strictly below the modulus. -/
 @[simp] theorem degree_repr_lt_degree {f : FpPoly p} {hf : 0 < FpPoly.degree f}
