@@ -791,7 +791,6 @@ private theorem collectFactorMultiplicities_eq_foldl (factors : Array ZPoly) :
     collectFactorMultiplicities factors =
       (factors.toList.foldl collectFactorStep []).reverse.toArray := rfl
 
-@[expose]
 private def filteredNormalizedFactors (factors : List ZPoly) : List ZPoly :=
   factors.filterMap fun f =>
     let f := normalizeFactorSign f

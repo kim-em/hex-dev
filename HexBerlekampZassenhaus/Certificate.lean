@@ -50,7 +50,6 @@ for higher-multiplicity inputs. Falls back to the un-expanded
 fully consume `repeatedPart` (e.g. when the BZ pipeline emitted the raw
 square-free core as a single core factor).
 -/
-@[expose]
 private def reassemblePolynomialFactors
     (d : FactorNormalizationData) (coreFactors : Array ZPoly) : Array ZPoly :=
   let (expanded, residual) := expandRepeatedPartFactorArray d.repeatedPart coreFactors
@@ -59,7 +58,6 @@ private def reassemblePolynomialFactors
   else
     polynomialNormalizationPrefixFactors d ++ coreFactors
 
-@[expose]
 private def factorizationOfFactors (f : ZPoly) (factors : Array ZPoly) : Factorization :=
   { scalar := signedContentScalar f
     factors := collectFactorMultiplicities factors }
