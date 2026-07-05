@@ -104,7 +104,7 @@ theorem normalize_lt (p n : Nat) [Bounds p] : normalize p n < p :=
 /--
 Build a reduced residue by taking the Nat representative mod `p`.
 
-The bound `p ≤ 2^64` ensures the reduced representative is stored faithfully in
+The bound `p < 2^64` ensures the reduced representative is stored faithfully in
 the backing `UInt64`.
 -/
 @[expose]
