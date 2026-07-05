@@ -301,9 +301,6 @@ def mulImpl [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
         (Array.replicate size (Zero.zero : R))
     ofCoeffs coeffs
 
-instance [Add R] [Mul R] : Mul (DensePoly R) where
-  mul := mul
-
 /-- One inner schoolbook multiplication step, projected to coefficient `n`. -/
 @[expose]
 def mulCoeffStep [Add R] [Mul R] (p q : DensePoly R) (n i : Nat) (acc : R) (j : Nat) : R :=
@@ -713,13 +710,6 @@ private theorem coeff_mul_spec [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
       simp only [List.length_replicate]
       omega
 
-/-- Characterising coefficient law for multiplication: each coefficient of `p * q` is computed by
-the same nested schoolbook fold as the executable multiplication loop. -/
-theorem coeff_mul [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
-    (p * q).coeff n = mulCoeffSum p q n := by
-  change (mul p q).coeff n = mulCoeffSum p q n
-  exact coeff_mul_spec p q n
-
 /-- The specification `mul` and the `Array`-loop `mulImpl` compute the same
 polynomial: both sides perform the same coefficient additions in the same
 order, so no algebraic laws on `R` are needed. -/
@@ -737,6 +727,16 @@ specification. -/
 theorem mul_eq_impl : @mul = @mulImpl := by
   funext R _ _ _ _ p q
   exact mul_eq_mulImpl p q
+
+instance [Add R] [Mul R] : Mul (DensePoly R) where
+  mul := mul
+
+/-- Characterising coefficient law for multiplication: each coefficient of `p * q` is computed by
+the same nested schoolbook fold as the executable multiplication loop. -/
+theorem coeff_mul [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
+    (p * q).coeff n = mulCoeffSum p q n := by
+  change (mul p q).coeff n = mulCoeffSum p q n
+  exact coeff_mul_spec p q n
 
 /-- A product stores at most `p.size + q.size - 1` coefficients. -/
 theorem size_mul_le [Add R] [Mul R] (p q : DensePoly R) :

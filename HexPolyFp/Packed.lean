@@ -23,8 +23,9 @@ on the monic-division / Frobenius hot path.
 The arithmetic stays overflow-safe: `ZMod64.Bounds p` only gives `p ≤ 2^64`, so
 `p` may exceed `2^32` and naive `UInt64` `(a*b) % p` would wrap mod `2^64`. The
 word helpers `ZMod64.mulWord` / `ZMod64.subWord` reconstruct residues and reuse
-the multi-branch `ZMod64.mul` / `ZMod64.sub` (the former extern-backed by a
-`__uint128_t` widening multiply), so the packed kernel equals the reference for
+`ZMod64.mul` / `ZMod64.sub` (the former extern-backed by a `__uint128_t`
+widening multiply, the latter compiled to the multi-branch division-free
+`subImpl` via `@[csimp]`), so the packed kernel equals the reference for
 *every* `Bounds p`.
 
 `modByMonicPacked_eq` is the value-correspondence theorem; a later `@[csimp]`

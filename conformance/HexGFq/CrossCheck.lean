@@ -331,7 +331,7 @@ private def genericN16Quotients : Array (FpPoly 2) :=
   ]
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 0 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step0_check :
@@ -352,7 +352,7 @@ private theorem genericN16_step0_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 1 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step1_check :
@@ -373,7 +373,7 @@ private theorem genericN16_step1_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 2 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step2_check :
@@ -394,7 +394,7 @@ private theorem genericN16_step2_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 3 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step3_check :
@@ -415,7 +415,7 @@ private theorem genericN16_step3_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 4 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step4_check :
@@ -436,7 +436,7 @@ private theorem genericN16_step4_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 5 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step5_check :
@@ -457,7 +457,7 @@ private theorem genericN16_step5_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 6 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step6_check :
@@ -478,7 +478,7 @@ private theorem genericN16_step6_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 7 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step7_check :
@@ -499,7 +499,7 @@ private theorem genericN16_step7_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 8 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step8_check :
@@ -520,7 +520,7 @@ private theorem genericN16_step8_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 9 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step9_check :
@@ -541,7 +541,7 @@ private theorem genericN16_step9_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 10 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step10_check :
@@ -562,7 +562,7 @@ private theorem genericN16_step10_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 11 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step11_check :
@@ -583,7 +583,7 @@ private theorem genericN16_step11_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 12 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step12_check :
@@ -604,7 +604,7 @@ private theorem genericN16_step12_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 13 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step13_check :
@@ -625,7 +625,7 @@ private theorem genericN16_step13_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 14 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step14_check :
@@ -646,7 +646,7 @@ private theorem genericN16_step14_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 15 of the degree-16 power chain passes the quotient-witness check against
 `genericN16Mod` using `genericN16Quotients`. -/
 private theorem genericN16_step15_check :
@@ -667,7 +667,7 @@ private theorem genericN16_step15_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- `genericN16Quotients` supplies valid incremental quotient witnesses for every
 step of the degree-16 power chain against `genericN16Mod`. -/
 private theorem genericN16QuotientWitnesses_check :
@@ -713,7 +713,7 @@ private theorem genericN16PowChain_check :
     genericN16Quotients genericN16QuotientWitnesses_check
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- `genericN16Mod` passes the Rabin-Bezout witness check at each maximal proper
 divisor degree. -/
 private theorem genericN16_bezout :
@@ -757,7 +757,7 @@ private theorem genericN16_finalEntry :
   rw [genericN16Mod_modByMonic_X, polyP2_zero_one_eq_X]
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- `genericN16Cert` passes the linear-incremental irreducibility-certificate check
 for the degree-16 packed modulus `0x100B`. -/
 private theorem genericN16Cert_check :
@@ -990,7 +990,7 @@ private def packedCert : GF2Poly.IrreducibilityCertificate :=
       let xg := GF2Poly.xgcd packedModulus diff
       #[{ left := xg.left, right := xg.right }] }
 
-set_option maxHeartbeats 5000000 in
+set_option maxHeartbeats 1000000 in
 set_option maxRecDepth 8192 in
 /-- `packedCert` passes the `GF2Poly` irreducibility-certificate check for
 `packedModulus`. -/
@@ -1134,7 +1134,7 @@ private theorem polyP2_size_le_32 {arr : Array Nat} (h : arr.size ≤ 32) :
     (polyP2 #[0, 1]) (polyP2 #[0, 0, 1]) (polyP2 #[]) genericMod = true
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 0 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step0_check :
@@ -1155,7 +1155,7 @@ private theorem genericN32_step0_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 1 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step1_check :
@@ -1176,7 +1176,7 @@ private theorem genericN32_step1_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 2 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step2_check :
@@ -1197,7 +1197,7 @@ private theorem genericN32_step2_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 3 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step3_check :
@@ -1218,7 +1218,7 @@ private theorem genericN32_step3_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 4 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step4_check :
@@ -1239,7 +1239,7 @@ private theorem genericN32_step4_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 5 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step5_check :
@@ -1260,7 +1260,7 @@ private theorem genericN32_step5_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 6 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step6_check :
@@ -1281,7 +1281,7 @@ private theorem genericN32_step6_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 7 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step7_check :
@@ -1302,7 +1302,7 @@ private theorem genericN32_step7_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 8 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step8_check :
@@ -1323,7 +1323,7 @@ private theorem genericN32_step8_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 9 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step9_check :
@@ -1344,7 +1344,7 @@ private theorem genericN32_step9_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 10 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step10_check :
@@ -1365,7 +1365,7 @@ private theorem genericN32_step10_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 11 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step11_check :
@@ -1386,7 +1386,7 @@ private theorem genericN32_step11_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 12 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step12_check :
@@ -1407,7 +1407,7 @@ private theorem genericN32_step12_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 13 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step13_check :
@@ -1428,7 +1428,7 @@ private theorem genericN32_step13_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 14 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step14_check :
@@ -1449,7 +1449,7 @@ private theorem genericN32_step14_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 15 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step15_check :
@@ -1470,7 +1470,7 @@ private theorem genericN32_step15_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 16 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step16_check :
@@ -1491,7 +1491,7 @@ private theorem genericN32_step16_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 17 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step17_check :
@@ -1512,7 +1512,7 @@ private theorem genericN32_step17_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 18 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step18_check :
@@ -1533,7 +1533,7 @@ private theorem genericN32_step18_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 19 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step19_check :
@@ -1554,7 +1554,7 @@ private theorem genericN32_step19_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 20 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step20_check :
@@ -1575,7 +1575,7 @@ private theorem genericN32_step20_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 21 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step21_check :
@@ -1596,7 +1596,7 @@ private theorem genericN32_step21_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 22 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step22_check :
@@ -1617,7 +1617,7 @@ private theorem genericN32_step22_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 23 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step23_check :
@@ -1638,7 +1638,7 @@ private theorem genericN32_step23_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 24 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step24_check :
@@ -1659,7 +1659,7 @@ private theorem genericN32_step24_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 25 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step25_check :
@@ -1680,7 +1680,7 @@ private theorem genericN32_step25_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 26 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step26_check :
@@ -1701,7 +1701,7 @@ private theorem genericN32_step26_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 27 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step27_check :
@@ -1722,7 +1722,7 @@ private theorem genericN32_step27_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 28 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step28_check :
@@ -1743,7 +1743,7 @@ private theorem genericN32_step28_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 29 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step29_check :
@@ -1764,7 +1764,7 @@ private theorem genericN32_step29_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 30 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step30_check :
@@ -1785,7 +1785,7 @@ private theorem genericN32_step30_check :
     decide
 
 set_option maxRecDepth 65536 in
-set_option maxHeartbeats 10000000 in
+set_option maxHeartbeats 1000000 in
 /-- Step 31 of the degree-32 power chain passes the quotient-witness check against
 `genericMod` using `genericN32Quotients`. -/
 private theorem genericN32_step31_check :

@@ -547,36 +547,6 @@ def inv (a : ZMod64 p) : ZMod64 p :=
   let (_, s, _) := HexArith.Int.extGcd (Int.ofNat a.toNat) (Int.ofNat p)
   ofNat p (Int.toNat (s % Int.ofNat p))
 
-instance : Zero (ZMod64 p) where
-  zero := ZMod64.zero
-
-instance : One (ZMod64 p) where
-  one := ZMod64.one
-
-instance : Add (ZMod64 p) where
-  add := ZMod64.add
-
-instance : Sub (ZMod64 p) where
-  sub := ZMod64.sub
-
-instance : Mul (ZMod64 p) where
-  mul := ZMod64.mul
-
-instance : Pow (ZMod64 p) Nat where
-  pow := ZMod64.pow
-
-instance : Inv (ZMod64 p) where
-  inv := ZMod64.inv
-
-/-- The canonical representative of the zero residue is `0`. -/
-@[simp, grind =] theorem toNat_zero : (ZMod64.zero : ZMod64 p).toNat = 0 := by
-  rw [ZMod64.zero, toNat_ofNat]
-  exact Nat.zero_mod _
-
-/-- The canonical representative of the one residue is `1 % p`. -/
-@[simp, grind =] theorem toNat_one : (ZMod64.one : ZMod64 p).toNat = 1 % p := by
-  rw [ZMod64.one, toNat_ofNat]
-
 /-- Addition agrees with addition of canonical representatives modulo `p`. -/
 @[simp, grind =] theorem toNat_add (a b : ZMod64 p) :
     (add a b).toNat = (a.toNat + b.toNat) % p :=
@@ -640,15 +610,6 @@ implementation while kernel reduction sees the one-line specification. -/
   funext p _ a b
   exact ext_toNat (by rw [toNat_add, toNat_addImpl])
 
-/-- Addition is the residue built from the sum of canonical representatives. -/
-theorem add_eq_ofNat (a b : ZMod64 p) :
-    add a b = ofNat p (a.toNat + b.toNat) :=
-  rfl
-
-/-- Operator-level form of `add_eq_ofNat`. -/
-theorem add_op_eq_ofNat (a b : ZMod64 p) :
-    a + b = ofNat p (a.toNat + b.toNat) := by
-  exact add_eq_ofNat a b
 
 /-- Subtraction agrees with modular subtraction of canonical representatives. -/
 @[simp, grind =] theorem toNat_sub (a b : ZMod64 p) :
@@ -702,6 +663,47 @@ implementation while kernel reduction sees the one-line specification. -/
 @[csimp] theorem sub_eq_impl : @sub = @subImpl := by
   funext p _ a b
   exact ext_toNat (by rw [toNat_sub, toNat_subImpl])
+
+
+instance : Zero (ZMod64 p) where
+  zero := ZMod64.zero
+
+instance : One (ZMod64 p) where
+  one := ZMod64.one
+
+instance : Add (ZMod64 p) where
+  add := ZMod64.add
+
+instance : Sub (ZMod64 p) where
+  sub := ZMod64.sub
+
+instance : Mul (ZMod64 p) where
+  mul := ZMod64.mul
+
+instance : Pow (ZMod64 p) Nat where
+  pow := ZMod64.pow
+
+instance : Inv (ZMod64 p) where
+  inv := ZMod64.inv
+
+/-- The canonical representative of the zero residue is `0`. -/
+@[simp, grind =] theorem toNat_zero : (ZMod64.zero : ZMod64 p).toNat = 0 := by
+  rw [ZMod64.zero, toNat_ofNat]
+  exact Nat.zero_mod _
+
+/-- The canonical representative of the one residue is `1 % p`. -/
+@[simp, grind =] theorem toNat_one : (ZMod64.one : ZMod64 p).toNat = 1 % p := by
+  rw [ZMod64.one, toNat_ofNat]
+
+/-- Addition is the residue built from the sum of canonical representatives. -/
+theorem add_eq_ofNat (a b : ZMod64 p) :
+    add a b = ofNat p (a.toNat + b.toNat) :=
+  rfl
+
+/-- Operator-level form of `add_eq_ofNat`. -/
+theorem add_op_eq_ofNat (a b : ZMod64 p) :
+    a + b = ofNat p (a.toNat + b.toNat) := by
+  exact add_eq_ofNat a b
 
 /-- Subtraction is the residue built from the modular difference of representatives. -/
 theorem sub_eq_ofNat (a b : ZMod64 p) :
