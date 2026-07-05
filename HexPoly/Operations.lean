@@ -234,7 +234,50 @@ instance zeroSubNegLaw_of_ring {S : Type u} [Lean.Grind.Ring S] : ZeroSubNegLaw 
     intro a
     grind
 
+omit [Zero R] [DecidableEq R] in
+/-- One row of the schoolbook convolution: add `c` times each entry of `qs`
+into the corresponding entry of `acc`, dropping contributions past the end of
+`acc` (matching the dropped out-of-bounds `Array.set!` writes of `mulImpl`). -/
+@[expose]
+def mulRow [Add R] [Mul R] (c : R) : List R → List R → List R
+  | acc, [] => acc
+  | [], _ :: _ => []
+  | a :: acc, q :: qs => (a + c * q) :: mulRow c acc qs
+
+omit [Zero R] [DecidableEq R] in
+/-- All rows of the schoolbook convolution: for each coefficient of `ps` in
+ascending-degree order, add its scaled copy of `qs` into the accumulator at the
+matching offset. The accumulator entry at the current offset is final once its
+row is applied, so each step emits one finished coefficient and recurses on the
+tail. Additions reach each accumulator entry in exactly the order of the
+`Array`-based `mulImpl` loop, which is what makes `mul_eq_impl` provable
+without any algebraic laws on `R`. -/
+@[expose]
+def mulRows [Add R] [Mul R] (qs : List R) : List R → List R → List R
+  | [], acc => acc
+  | _ :: _, [] => []
+  | c :: ps, a :: acc =>
+      match qs with
+      | [] => a :: mulRows qs ps acc
+      | q :: qs' => (a + c * q) :: mulRows qs ps (mulRow c acc qs')
+
 /-- Schoolbook dense polynomial multiplication by direct coefficient convolution.
+
+This definition is the kernel-reduction-friendly specification: the accumulator
+is a plain list walked head-first, so reducing a concrete product costs one
+cons-step per `(i, j)` coefficient pair instead of an O(size) list traversal
+per `Array` access. Compiled code instead runs the in-place `Array` loop
+`mulImpl`, registered by the `@[csimp]` proof `mul_eq_impl`. -/
+@[expose]
+def mul [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
+  if p.isZero || q.isZero then 0 else
+    let size := p.size + q.size - 1
+    ofCoeffs (mulRows q.toArray.toList p.toArray.toList
+      (List.replicate size (Zero.zero : R))).toArray
+
+/-- Runtime implementation of `mul`: the same schoolbook convolution computed
+by in-place `Array` writes (value-equal to `mul` by `mul_eq_impl`, registered
+`@[csimp]`).
 
 The inner `j`-loop reads the loop-invariant coefficient `p.coeff i` from a single
 `let`-bound value (`pi`) instead of re-projecting it on every `(i, j)` step, so
@@ -243,7 +286,7 @@ rather than per `(i, j)`. The `let` is a zeta reduction away from the bare
 convolution, so it does not change the value, the `coeff_mul` spec, or any
 proof. -/
 @[expose]
-def mul [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
+def mulImpl [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
   if p.isZero || q.isZero then 0 else
     let size := p.size + q.size - 1
     let coeffs :=
@@ -257,9 +300,6 @@ def mul [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
             acc)
         (Array.replicate size (Zero.zero : R))
     ofCoeffs coeffs
-
-instance [Add R] [Mul R] : Mul (DensePoly R) where
-  mul := mul
 
 /-- One inner schoolbook multiplication step, projected to coefficient `n`. -/
 @[expose]
@@ -380,12 +420,11 @@ private theorem list_foldl_ignore (xs : List Nat) (init : R) :
   | cons _ xs ih =>
       simpa using ih init
 
-/-- Characterising coefficient law for multiplication: each coefficient of `p * q` is computed by
-the same nested schoolbook fold as the executable multiplication loop. -/
-theorem coeff_mul [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
-    (p * q).coeff n = mulCoeffSum p q n := by
-  change (mul p q).coeff n = mulCoeffSum p q n
-  unfold mul
+/-- The array-loop `mulImpl` computes each coefficient by the schoolbook fold
+`mulCoeffSum`; the workhorse behind `coeff_mul` and `mul_eq_impl`. -/
+private theorem coeff_mulImpl [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
+    (mulImpl p q).coeff n = mulCoeffSum p q n := by
+  unfold mulImpl
   by_cases hzero : p.isZero || q.isZero
   · rw [if_pos hzero]
     by_cases hp : p.isZero
@@ -416,6 +455,300 @@ theorem coeff_mul [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
           have hi' : i < p.size := by simpa using List.mem_range.mp hi
           omega)
     simpa [mulCoeffSum, size, Array.getD] using hfold
+
+omit [Zero R] [DecidableEq R] in
+/-- A row scaled from the empty coefficient list adds nothing, so `mulRows`
+with no `q`-coefficients returns the accumulator unchanged. -/
+private theorem mulRows_nil [Add R] [Mul R] (ps acc : List R) :
+    mulRows ([] : List R) ps acc = acc := by
+  induction ps generalizing acc with
+  | nil => rfl
+  | cons x ps ih =>
+      cases acc with
+      | nil => rfl
+      | cons a acc =>
+          show a :: mulRows [] ps acc = a :: acc
+          rw [ih]
+
+omit [Zero R] [DecidableEq R] in
+/-- `mulRow` writes into existing accumulator entries only, so it preserves
+the accumulator length. -/
+private theorem mulRow_length [Add R] [Mul R] (c : R) (acc qs : List R) :
+    (mulRow c acc qs).length = acc.length := by
+  induction acc generalizing qs with
+  | nil => cases qs <;> rfl
+  | cons a acc ih =>
+      cases qs with
+      | nil => rfl
+      | cons q qs => simpa [mulRow] using ih qs
+
+omit [Zero R] [DecidableEq R] in
+/-- `mulRows` freezes or rewrites accumulator entries but never appends, so it
+preserves the accumulator length. -/
+private theorem mulRows_length [Add R] [Mul R] (qs ps acc : List R) :
+    (mulRows qs ps acc).length = acc.length := by
+  induction ps generalizing acc with
+  | nil => rfl
+  | cons x ps ih =>
+      cases acc with
+      | nil => cases qs <;> rfl
+      | cons a acc =>
+          cases qs with
+          | nil => simpa [mulRows] using ih acc
+          | cons q qs' => simp [mulRows, ih, mulRow_length]
+
+omit [DecidableEq R] in
+/-- Default-indexed read after one `mulRow`: index `n` gains the term
+`c * qs.getD n` exactly when both the accumulator and the row still have an
+entry there. -/
+private theorem mulRow_getD [Add R] [Mul R] (c : R) (acc qs : List R) (n : Nat) :
+    (mulRow c acc qs).getD n (Zero.zero : R) =
+      if n < acc.length ∧ n < qs.length
+      then acc.getD n (Zero.zero : R) + c * qs.getD n (Zero.zero : R)
+      else acc.getD n (Zero.zero : R) := by
+  induction acc generalizing qs n with
+  | nil =>
+      cases qs with
+      | nil => simp [mulRow]
+      | cons q qs => simp [mulRow]
+  | cons a acc ih =>
+      cases qs with
+      | nil => simp [mulRow]
+      | cons q qs =>
+          cases n with
+          | zero => simp [mulRow]
+          | succ m => simpa [mulRow] using ih qs m
+
+/-- The inner schoolbook fold over `j < m` at row `i` adds exactly the single
+matching term `p.coeff i * q.coeff (n - i)` when the target index `n` is
+reachable from row `i` within `m` columns, and nothing otherwise. -/
+private theorem foldl_mulCoeffStep_range [Add R] [Mul R]
+    (p q : DensePoly R) (n i : Nat) (c : R) (m : Nat) :
+    (List.range m).foldl (mulCoeffStep p q n i) c =
+      if i ≤ n ∧ n - i < m then c + p.coeff i * q.coeff (n - i) else c := by
+  induction m with
+  | zero =>
+      rw [List.range_zero, List.foldl_nil, if_neg (by omega)]
+  | succ m ih =>
+      rw [List.range_succ, List.foldl_append, List.foldl_cons, List.foldl_nil, ih]
+      unfold mulCoeffStep
+      by_cases hlast : i + m = n
+      · rw [if_neg (by omega : ¬(i ≤ n ∧ n - i < m)), if_pos hlast,
+          if_pos (by omega : i ≤ n ∧ n - i < m + 1),
+          show m = n - i by omega]
+      · rw [if_neg hlast]
+        by_cases h : i ≤ n ∧ n - i < m
+        · rw [if_pos h, if_pos (by omega : i ≤ n ∧ n - i < m + 1)]
+        · rw [if_neg h, if_neg (by omega : ¬(i ≤ n ∧ n - i < m + 1))]
+
+omit [Zero R] [DecidableEq R] in
+/-- Folds over the same list with pointwise-equal step functions agree. -/
+private theorem list_foldl_congr {α : Type}
+    (f g : R → α → R) (xs : List α) (init : R)
+    (h : ∀ acc a, a ∈ xs → f acc a = g acc a) :
+    xs.foldl f init = xs.foldl g init := by
+  induction xs generalizing init with
+  | nil => rfl
+  | cons a xs ih =>
+      rw [List.foldl_cons, List.foldl_cons, h init a (by simp)]
+      exact ih _ fun acc b hb => h acc b (by simp [hb])
+
+omit [DecidableEq R] in
+/-- Reading a replicated zero list with default zero gives zero at every index. -/
+private theorem list_getD_replicate (k n : Nat) :
+    (List.replicate k (Zero.zero : R)).getD n (Zero.zero : R) = (Zero.zero : R) := by
+  induction k generalizing n with
+  | zero => rfl
+  | succ k ih =>
+      cases n with
+      | zero => rfl
+      | succ m => simpa [List.replicate_succ] using ih m
+
+omit [DecidableEq R] in
+/-- Default-indexed reads agree across `List.toArray`. -/
+private theorem toArray_getD_eq_getD (l : List R) (n : Nat) :
+    l.toArray.getD n (Zero.zero : R) = l.getD n (Zero.zero : R) := by
+  rw [Array.getD_eq_getD_getElem?, List.getElem?_toArray]
+  rfl
+
+/-- `mulCoeffSum` collapsed to a single fold over the row index, with each
+row's inner fold replaced by its closed form from `foldl_mulCoeffStep_range`. -/
+private theorem mulCoeffSum_eq_singleFold [Add R] [Mul R]
+    (p q : DensePoly R) (n : Nat) :
+    mulCoeffSum p q n =
+      (List.range p.size).foldl
+        (fun c i =>
+          if i ≤ n ∧ n - i < q.size
+          then c + p.coeff i * q.coeff (n - i)
+          else c)
+        (Zero.zero : R) := by
+  unfold mulCoeffSum
+  exact list_foldl_congr _ _ _ _
+    fun acc i _ => foldl_mulCoeffStep_range p q n i acc q.size
+
+omit [DecidableEq R] in
+/-- Default-indexed read of the full `mulRows` accumulator: index `n` collects
+the terms `ps.getD i * qs.getD (n - i)` for each reachable row `i`, in
+ascending row order, exactly as the `Array` loop of `mulImpl` does. The bound
+hypothesis mirrors the in-bounds invariant of the `Array` accumulator. -/
+private theorem mulRows_getD [Add R] [Mul R] (qs ps acc : List R) (n : Nat)
+    (hbound : ∀ i, i < ps.length → ∀ j, j < qs.length → i + j < acc.length) :
+    (mulRows qs ps acc).getD n (Zero.zero : R) =
+      (List.range ps.length).foldl
+        (fun c i =>
+          if i ≤ n ∧ n - i < qs.length
+          then c + ps.getD i (Zero.zero : R) * qs.getD (n - i) (Zero.zero : R)
+          else c)
+        (acc.getD n (Zero.zero : R)) := by
+  induction ps generalizing acc n with
+  | nil => rfl
+  | cons x ps ih =>
+      cases acc with
+      | nil =>
+          cases qs with
+          | nil =>
+              show (List.getD [] n (Zero.zero : R)) = _
+              rw [list_foldl_congr _ (fun (c : R) (_ : Nat) => c) _ _
+                  (fun c i _ => if_neg (by simp)),
+                list_foldl_ignore]
+          | cons q qs' =>
+              exact absurd (hbound 0 (by simp) 0 (by simp)) (by simp)
+      | cons a acc =>
+          cases qs with
+          | nil =>
+              rw [mulRows_nil,
+                list_foldl_congr _ (fun (c : R) (_ : Nat) => c) _ _
+                  (fun c i _ => if_neg (by simp)),
+                list_foldl_ignore]
+          | cons q qs' =>
+              show ((a + x * q) :: mulRows (q :: qs') ps (mulRow x acc qs')).getD n
+                  (Zero.zero : R) = _
+              simp only [List.length_cons]
+              rw [List.range_succ_eq_map, List.foldl_cons, List.foldl_map]
+              cases n with
+              | zero =>
+                  rw [List.getD_cons_zero,
+                    if_pos ⟨Nat.le_refl 0, by simp⟩,
+                    list_foldl_congr _ (fun (c : R) (_ : Nat) => c) _ _
+                      (fun c i _ => if_neg (by omega)),
+                    list_foldl_ignore,
+                    List.getD_cons_zero, List.getD_cons_zero, List.getD_cons_zero]
+              | succ m =>
+                  rw [List.getD_cons_succ]
+                  have hlen : m < qs'.length → m < acc.length := by
+                    intro hm
+                    have := hbound 0 (by simp) (m + 1) (by simpa using Nat.succ_lt_succ hm)
+                    simpa using this
+                  have hbound' : ∀ i, i < ps.length →
+                      ∀ j, j < (q :: qs').length → i + j < (mulRow x acc qs').length := by
+                    intro i hi j hj
+                    rw [mulRow_length]
+                    have := hbound (i + 1) (by simpa using Nat.succ_lt_succ hi) j hj
+                    simp only [List.length_cons] at this
+                    omega
+                  rw [ih (mulRow x acc qs') m hbound']
+                  have hinit : (mulRow x acc qs').getD m (Zero.zero : R) =
+                      if 0 ≤ m + 1 ∧ m + 1 - 0 < (q :: qs').length
+                      then (a :: acc).getD (m + 1) (Zero.zero : R) +
+                        (x :: ps).getD 0 (Zero.zero : R) *
+                          (q :: qs').getD (m + 1 - 0) (Zero.zero : R)
+                      else (a :: acc).getD (m + 1) (Zero.zero : R) := by
+                    rw [mulRow_getD]
+                    by_cases hq : m < qs'.length
+                    · rw [if_pos ⟨hlen hq, hq⟩, if_pos ⟨Nat.zero_le _, by simpa using Nat.succ_lt_succ hq⟩]
+                      rw [List.getD_cons_succ, List.getD_cons_zero, Nat.sub_zero,
+                        List.getD_cons_succ]
+                    · rw [if_neg (fun h => hq h.2),
+                        if_neg (by simpa [Nat.succ_lt_succ_iff] using hq),
+                        List.getD_cons_succ]
+                  rw [hinit]
+                  exact list_foldl_congr _ _ _ _ fun c i _ => by
+                    simp only [Nat.succ_eq_add_one, List.getD_cons_succ,
+                      Nat.add_sub_add_right, Nat.add_le_add_iff_right,
+                      List.length_cons]
+
+/-- Reading a stored coefficient list with default zero agrees with `DensePoly.coeff`. -/
+theorem toArray_toList_getD_eq_coeff (p : DensePoly R) (n : Nat) :
+    p.toArray.toList.getD n (Zero.zero : R) = p.coeff n := by
+  unfold toArray coeff
+  rw [Array.getD_eq_getD_getElem?]
+  change p.coeffs.toList[n]?.getD (Zero.zero : R) =
+    p.coeffs[n]?.getD (Zero.zero : R)
+  rw [Array.getElem?_toList]
+
+/-- The list-walking specification `mul` satisfies the same coefficient law as
+the `Array` loop: both fold the schoolbook terms into each output coefficient
+in the identical order captured by `mulCoeffSum`. -/
+private theorem coeff_mul_spec [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
+    (mul p q).coeff n = mulCoeffSum p q n := by
+  unfold mul
+  by_cases hzero : p.isZero || q.isZero
+  · rw [if_pos hzero]
+    by_cases hp : p.isZero
+    · have hpsize : p.size = 0 := (DensePoly.isZero_eq_true_iff p).1 (by simpa using hp)
+      rw [show (0 : DensePoly R).coeff n = (Zero.zero : R) by
+        exact coeff_eq_zero_of_size_le (0 : DensePoly R) (by simp)]
+      simp [mulCoeffSum, hpsize]
+    · have hq : q.isZero = true := by
+        cases hq' : q.isZero <;> simp [hp, hq'] at hzero ⊢
+      have hqsize : q.size = 0 := (DensePoly.isZero_eq_true_iff q).1 hq
+      rw [show (0 : DensePoly R).coeff n = (Zero.zero : R) by
+        exact coeff_eq_zero_of_size_le (0 : DensePoly R) (by simp)]
+      simp [mulCoeffSum, hqsize, list_foldl_ignore]
+  · rw [if_neg hzero]
+    have hp_not : p.isZero = false := by
+      cases hp : p.isZero <;> cases hq : q.isZero <;> simp [hp, hq] at hzero ⊢
+    have hq_not : q.isZero = false := by
+      cases hp : p.isZero <;> cases hq : q.isZero <;> simp [hp, hq] at hzero ⊢
+    have hp_pos : 0 < p.size := (DensePoly.isZero_eq_false_iff p).1 hp_not
+    have hq_pos : 0 < q.size := (DensePoly.isZero_eq_false_iff q).1 hq_not
+    rw [coeff_ofCoeffs, toArray_getD_eq_getD, mulRows_getD, mulCoeffSum_eq_singleFold]
+    · simp only [toArray_toList_getD_eq_coeff, Array.length_toList, toArray_size,
+        list_getD_replicate]
+    · intro i hi j hj
+      simp only [Array.length_toList, toArray_size] at hi hj
+      simp only [List.length_replicate]
+      omega
+
+/-- The specification `mul` and the `Array`-loop `mulImpl` compute the same
+polynomial: both sides perform the same coefficient additions in the same
+order, so no algebraic laws on `R` are needed. -/
+theorem mul_eq_mulImpl [Add R] [Mul R] (p q : DensePoly R) :
+    mul p q = mulImpl p q := by
+  apply ext_coeff
+  intro n
+  rw [coeff_mul_spec, coeff_mulImpl]
+
+/-- Register the `Array`-loop `mulImpl` as the compiled implementation of
+`mul`. As with `trimTrailingZeros_eq_impl`, the `@[csimp]` swap is backed by a
+proof, so the runtime loop is verified equal to the kernel-facing
+specification. -/
+@[csimp]
+theorem mul_eq_impl : @mul = @mulImpl := by
+  funext R _ _ _ _ p q
+  exact mul_eq_mulImpl p q
+
+instance [Add R] [Mul R] : Mul (DensePoly R) where
+  mul := mul
+
+/-- Characterising coefficient law for multiplication: each coefficient of `p * q` is computed by
+the same nested schoolbook fold as the executable multiplication loop. -/
+theorem coeff_mul [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
+    (p * q).coeff n = mulCoeffSum p q n := by
+  change (mul p q).coeff n = mulCoeffSum p q n
+  exact coeff_mul_spec p q n
+
+/-- A product stores at most `p.size + q.size - 1` coefficients. -/
+theorem size_mul_le [Add R] [Mul R] (p q : DensePoly R) :
+    (p * q).size ≤ p.size + q.size - 1 := by
+  change (mul p q).size ≤ p.size + q.size - 1
+  unfold mul
+  by_cases hzero : p.isZero || q.isZero
+  · rw [if_pos hzero, size_zero]
+    exact Nat.zero_le _
+  · rw [if_neg hzero]
+    refine Nat.le_trans (size_ofCoeffs_le _) ?_
+    simp [mulRows_length]
 
 /-- Evaluate a polynomial using Horner's method. -/
 @[expose]
@@ -652,15 +985,6 @@ theorem composeCoeffPowerSumFrom_range_eq_upTo [One R] [Add R] [Mul R]
       congr 1
       simpa [Function.comp_def, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm]
         using composeCoeffPowerSumFrom_range_eq_upTo coeff q n (base + 1)
-
-/-- Reading a stored coefficient list with default zero agrees with `DensePoly.coeff`. -/
-theorem toArray_toList_getD_eq_coeff (p : DensePoly R) (n : Nat) :
-    p.toArray.toList.getD n (Zero.zero : R) = p.coeff n := by
-  unfold toArray coeff
-  rw [Array.getD_eq_getD_getElem?]
-  change p.coeffs.toList[n]?.getD (Zero.zero : R) =
-    p.coeffs[n]?.getD (Zero.zero : R)
-  rw [Array.getElem?_toList]
 
 omit [DecidableEq R] in
 /-- List extensionality through default-indexed reads: two lists of equal length that agree
