@@ -796,14 +796,11 @@ theorem mul_inv_cancel
       (1 : GFqRing.PolyQuotient f hf) = GFqRing.one f hf := by
     change GFqRing.natCast f hf 1 = GFqRing.one f hf
     rfl
-  set_option linter.unnecessarySimpa false in
   have hmulReduce :
       GFqRing.reduceMod f
           (GFqRing.repr x.toQuotient * GFqRing.reduceMod f (invPoly x.toQuotient)) =
         GFqRing.reduceMod f (GFqRing.repr x.toQuotient * invPoly x.toQuotient) := by
-    simpa [hxrepr] using
-      (GFqRing.reduceMod_mul_reduceMod f (GFqRing.repr x.toQuotient)
-        (invPoly x.toQuotient)).symm
+    simp
   apply GFqField.ext
   apply GFqRing.ext
   calc
