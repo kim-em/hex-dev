@@ -31,7 +31,7 @@ namespace Hex.GF2Bench
 
 private instance boundsTwo : ZMod64.Bounds 2 where
   pPos := by decide
-  pLeR := by decide
+  pLtR := by decide
 
 instance {p : Nat} [ZMod64.Bounds p] : Hashable (ZMod64 p) where
   hash a := hash a.toNat

@@ -504,10 +504,10 @@ structure SmallPrimeCandidate where
 
 /-- Build a `SmallPrimeCandidate` from a trial-division primality witness and a word-size bound on `p`. -/
 private def smallPrimeCandidateOfTrial (p : Nat)
-    (hprime : Hex.Nat.isPrimeTrial p = true) (hbound : p ≤ UInt64.word) :
+    (hprime : Hex.Nat.isPrimeTrial p = true) (hbound : p < UInt64.word) :
     SmallPrimeCandidate :=
   let prime := Hex.Nat.isPrimeTrial_isPrime hprime
-  { p, bounds := { pPos := prime.pos, pLeR := hbound }, prime }
+  { p, bounds := { pPos := prime.pos, pLtR := hbound }, prime }
 
 /-- A scored admissible small-prime candidate for default prime selection. -/
 structure PrimeCandidateScore where

@@ -83,15 +83,12 @@ private theorem neg_nonzero_lt (a : ZMod64 p) {hpLt : p < UInt64.word}
 /-- The additive inverse represented by the complementary residue mod `p`. -/
 @[expose]
 def neg (a : ZMod64 p) : ZMod64 p := by
-  by_cases hp : p = UInt64.word
-  · refine ⟨-a.val, ?_⟩
-    simpa [hp, UInt64.size, UInt64.word] using (UInt64.toNat_lt_size (-a.val))
-  · have hpLt : p < UInt64.word := Nat.lt_of_le_of_ne (Bounds.pLeR (p := p)) hp
-    let c64 := complementWord p hpLt
-    by_cases hzero : a.val = 0
-    · refine ⟨0, ?_⟩
-      simp [Bounds.pPos (p := p)]
-    · exact ⟨-a.val - c64, by simpa [c64] using neg_nonzero_lt a hzero⟩
+  have hpLt : p < UInt64.word := Bounds.pLtR (p := p)
+  let c64 := complementWord p hpLt
+  by_cases hzero : a.val = 0
+  · refine ⟨0, ?_⟩
+    simp [Bounds.pPos (p := p)]
+  · exact ⟨-a.val - c64, by simpa [c64] using neg_nonzero_lt a hzero⟩
 
 /-- Natural-number literals in `ZMod64`. -/
 @[expose]
@@ -169,31 +166,25 @@ theorem natCast_op_eq_ofNat (n : Nat) :
 /-- Negation takes the complementary representative modulo `p`. -/
 @[simp, grind =] theorem toNat_neg (a : ZMod64 p) : (neg a).toNat = (p - a.toNat) % p := by
   unfold neg
-  by_cases hp : p = UInt64.word
-  · rw [dif_pos hp]
-    change (-a.val).toNat = (p - a.toNat) % p
-    rw [UInt64.toNat_neg]
-    simp [toNat_eq_val, hp, UInt64.word]
-  · have hpLt : p < UInt64.word := Nat.lt_of_le_of_ne (Bounds.pLeR (p := p)) hp
-    rw [dif_neg hp]
-    by_cases hzero : a.val = 0
-    · rw [dif_pos hzero]
-      change (0 : UInt64).toNat = (p - a.toNat) % p
-      have htoNat : a.toNat = 0 := by simp [toNat_eq_val, hzero]
-      have hval : a.val.toNat = 0 := by simpa [toNat_eq_val] using htoNat
-      simp [toNat_eq_val, hval]
-    · rw [dif_neg hzero]
-      change (-a.val - complementWord p hpLt).toNat = (p - a.toNat) % p
-      rw [neg_nonzero_toNat a hzero]
-      have hzeroNat : a.toNat ≠ 0 := by
-        intro h
-        apply hzero
-        apply UInt64.toNat_inj.mp
-        simpa [toNat_eq_val] using h
-      have hlt : p - a.toNat < p := by
-        have ha : a.toNat < p := a.isLt
-        omega
-      rw [Nat.mod_eq_of_lt hlt]
+  have hpLt : p < UInt64.word := Bounds.pLtR (p := p)
+  by_cases hzero : a.val = 0
+  · rw [dif_pos hzero]
+    change (0 : UInt64).toNat = (p - a.toNat) % p
+    have htoNat : a.toNat = 0 := by simp [toNat_eq_val, hzero]
+    have hval : a.val.toNat = 0 := by simpa [toNat_eq_val] using htoNat
+    simp [toNat_eq_val, hval]
+  · rw [dif_neg hzero]
+    change (-a.val - complementWord p hpLt).toNat = (p - a.toNat) % p
+    rw [neg_nonzero_toNat a hzero]
+    have hzeroNat : a.toNat ≠ 0 := by
+      intro h
+      apply hzero
+      apply UInt64.toNat_inj.mp
+      simpa [toNat_eq_val] using h
+    have hlt : p - a.toNat < p := by
+      have ha : a.toNat < p := a.isLt
+      omega
+    rw [Nat.mod_eq_of_lt hlt]
 
 /-- Negation is the residue built from the complementary representative. -/
 theorem neg_eq_ofNat (a : ZMod64 p) :

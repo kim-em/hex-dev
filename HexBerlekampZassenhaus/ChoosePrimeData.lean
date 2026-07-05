@@ -323,9 +323,9 @@ the fixed `smallPrimeCandidates` list with explicit primality and
 private def mkExtendedSmallPrimeCandidate? (p : Nat) :
     Option SmallPrimeCandidate :=
   if hprime : Hex.Nat.isPrimeTrial p = true then
-    if hbound : p ≤ UInt64.word then
+    if hbound : p < UInt64.word then
       let prime := Hex.Nat.isPrimeTrial_isPrime hprime
-      let bounds : ZMod64.Bounds p := { pPos := prime.pos, pLeR := hbound }
+      let bounds : ZMod64.Bounds p := { pPos := prime.pos, pLtR := hbound }
       some { p, bounds, prime }
     else
       none

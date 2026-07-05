@@ -25,12 +25,14 @@ namespace Hex
 
 namespace ZMod64
 
-/-- `ZMod64 p` is only valid when `p` is positive and fits in one machine word. -/
+/-- `ZMod64 p` is only valid when `p` is positive and strictly below the
+machine-word size `2^64`, so every residue and the modulus itself fit in a
+`UInt64`. -/
 class Bounds (p : Nat) : Prop where
   /-- The modulus is positive. -/
   pPos : 0 < p
-  /-- The modulus fits in one machine word. -/
-  pLeR : p ≤ UInt64.word
+  /-- The modulus is strictly below the machine-word size `2^64`. -/
+  pLtR : p < UInt64.word
 
 end ZMod64
 
@@ -109,14 +111,14 @@ the backing `UInt64`.
 def ofNat (p n : Nat) [Bounds p] : ZMod64 p := by
   let reduced := normalize p n
   have hred : reduced < p := normalize_lt p n
-  have hword : reduced < UInt64.word := Nat.lt_of_lt_of_le hred (Bounds.pLeR (p := p))
+  have hword : reduced < UInt64.word := Nat.lt_trans hred (Bounds.pLtR (p := p))
   refine ⟨UInt64.ofNatLT reduced hword, ?_⟩
   simpa [reduced, UInt64.toNat_ofNatLT] using hred
 
 /-- The Nat representative of `ofNat p n` is `n` reduced modulo `p`. -/
 @[simp, grind =] theorem toNat_ofNat (n : Nat) : (ofNat p n).toNat = n % p := by
   have hred : n % p < p := Nat.mod_lt _ (Bounds.pPos (p := p))
-  have hword : n % p < UInt64.word := Nat.lt_of_lt_of_le hred (Bounds.pLeR (p := p))
+  have hword : n % p < UInt64.word := Nat.lt_trans hred (Bounds.pLtR (p := p))
   simp [ofNat, normalize, UInt64.toNat_ofNatLT]
 
 /-- The stored word of `ofNat p n`, viewed as a Nat, is `n` reduced modulo `p`. -/
@@ -257,7 +259,7 @@ private theorem add_carry_toNat (a b : ZMod64 p) {hpLt : p < UInt64.word}
     ((a.val + b.val) + complementWord p hpLt).toNat = a.toNat + b.toNat - p := by
   have ha : a.toNat < p := a.isLt
   have hb : b.toNat < p := b.isLt
-  have hpLe : p ≤ UInt64.word := Bounds.pLeR (p := p)
+  have hpLe : p ≤ UInt64.word := Nat.le_of_lt (Bounds.pLtR (p := p))
   have hsum_lt : a.toNat + b.toNat - UInt64.word < UInt64.word := by omega
   have hsum_toNat : (a.val + b.val).toNat = a.toNat + b.toNat - UInt64.word := by
     rw [UInt64.toNat_add]
@@ -464,18 +466,15 @@ correction step when `p < 2^64`, avoiding any division. Value-equal to `add`
 -/
 @[expose]
 def addImpl (a b : ZMod64 p) : ZMod64 p := by
-  by_cases hp : p = UInt64.word
-  · refine ⟨a.val + b.val, ?_⟩
-    simpa [hp, UInt64.size, UInt64.word] using (UInt64.toNat_lt_size (a.val + b.val))
-  · have hpLt : p < UInt64.word := Nat.lt_of_le_of_ne (Bounds.pLeR (p := p)) hp
-    let p64 := modulusWord p hpLt
-    let c64 := complementWord p hpLt
-    let sum := a.val + b.val
-    by_cases hcarry : UInt64.word ≤ a.toNat + b.toNat
-    · exact ⟨sum + c64, by simpa [sum, c64] using add_carry_lt a b hcarry⟩
-    · by_cases hreduce : p64 ≤ sum
-      · exact ⟨sum - p64, by simpa [sum, p64] using add_noCarry_reduce_lt a b hcarry hreduce⟩
-      · exact ⟨sum, by simpa [sum] using add_noCarry_noReduce_lt a b hcarry hreduce⟩
+  have hpLt : p < UInt64.word := Bounds.pLtR (p := p)
+  let p64 := modulusWord p hpLt
+  let c64 := complementWord p hpLt
+  let sum := a.val + b.val
+  by_cases hcarry : UInt64.word ≤ a.toNat + b.toNat
+  · exact ⟨sum + c64, by simpa [sum, c64] using add_carry_lt a b hcarry⟩
+  · by_cases hreduce : p64 ≤ sum
+    · exact ⟨sum - p64, by simpa [sum, p64] using add_noCarry_reduce_lt a b hcarry hreduce⟩
+    · exact ⟨sum, by simpa [sum] using add_noCarry_noReduce_lt a b hcarry hreduce⟩
 
 /--
 Subtract two residues: the residue of `a.toNat + (p - b.toNat)`, the canonical
@@ -495,15 +494,12 @@ complement-word correction on borrow, avoiding any division. Value-equal to
 -/
 @[expose]
 def subImpl (a b : ZMod64 p) : ZMod64 p := by
-  by_cases hp : p = UInt64.word
-  · refine ⟨a.val - b.val, ?_⟩
-    simpa [hp, UInt64.size, UInt64.word] using (UInt64.toNat_lt_size (a.val - b.val))
-  · have hpLt : p < UInt64.word := Nat.lt_of_le_of_ne (Bounds.pLeR (p := p)) hp
-    let c64 := complementWord p hpLt
-    let diff := a.val - b.val
-    by_cases hba : b.val ≤ a.val
-    · exact ⟨diff, by simpa [diff] using sub_noBorrow_lt a b hba⟩
-    · exact ⟨diff - c64, by simpa [diff, c64] using sub_borrow_lt a b hba⟩
+  have hpLt : p < UInt64.word := Bounds.pLtR (p := p)
+  let c64 := complementWord p hpLt
+  let diff := a.val - b.val
+  by_cases hba : b.val ≤ a.val
+  · exact ⟨diff, by simpa [diff] using sub_noBorrow_lt a b hba⟩
+  · exact ⟨diff - c64, by simpa [diff, c64] using sub_borrow_lt a b hba⟩
 
 /--
 Multiply two reduced residues and reduce the product mod `p`.
@@ -557,51 +553,47 @@ the branch analysis is delegated to the carry/reduce case lemmas. -/
 private theorem toNat_addImpl (a b : ZMod64 p) :
     (addImpl a b).toNat = (a.toNat + b.toNat) % p := by
   unfold addImpl
-  by_cases hp : p = UInt64.word
-  · rw [dif_pos hp]
-    simp [toNat_eq_val, UInt64.toNat_add, hp, UInt64.word]
-  · have hpLt : p < UInt64.word := Nat.lt_of_le_of_ne (Bounds.pLeR (p := p)) hp
-    rw [dif_neg hp]
-    by_cases hcarry : UInt64.word ≤ a.toNat + b.toNat
-    · rw [dif_pos hcarry]
-      change ((a.val + b.val) + complementWord p hpLt).toNat = (a.toNat + b.toNat) % p
-      rw [add_carry_toNat a b hcarry]
+  have hpLt : p < UInt64.word := Bounds.pLtR (p := p)
+  by_cases hcarry : UInt64.word ≤ a.toNat + b.toNat
+  · rw [dif_pos hcarry]
+    change ((a.val + b.val) + complementWord p hpLt).toNat = (a.toNat + b.toNat) % p
+    rw [add_carry_toNat a b hcarry]
+    have ha : a.toNat < p := a.isLt
+    have hb : b.toNat < p := b.isLt
+    have hpSum : p ≤ a.toNat + b.toNat := by omega
+    have hlt : a.toNat + b.toNat - p < p := by omega
+    rw [Nat.mod_eq_sub_mod hpSum, Nat.mod_eq_of_lt hlt]
+  · rw [dif_neg hcarry]
+    let p64 := modulusWord p hpLt
+    let sum := a.val + b.val
+    by_cases hreduce : p64 ≤ sum
+    · rw [dif_pos hreduce]
+      change ((a.val + b.val) - modulusWord p hpLt).toNat = (a.toNat + b.toNat) % p
+      rw [add_noCarry_reduce_toNat a b hcarry hreduce]
       have ha : a.toNat < p := a.isLt
       have hb : b.toNat < p := b.isLt
-      have hpSum : p ≤ a.toNat + b.toNat := by omega
+      have hsum_lt : a.toNat + b.toNat < UInt64.word := by omega
+      have hsum_toNat : (a.val + b.val).toNat = a.toNat + b.toNat := by
+        rw [UInt64.toNat_add]
+        simpa [toNat_eq_val, UInt64.word] using
+          (by rw [Nat.mod_eq_of_lt hsum_lt] :
+            (a.toNat + b.toNat) % UInt64.word = a.toNat + b.toNat)
+      have hreduceNat : p ≤ a.toNat + b.toNat := by
+        have := UInt64.le_iff_toNat_le.mp hreduce
+        simpa [p64, sum, hsum_toNat, modulusWord, UInt64.toNat_ofNatLT] using this
       have hlt : a.toNat + b.toNat - p < p := by omega
-      rw [Nat.mod_eq_sub_mod hpSum, Nat.mod_eq_of_lt hlt]
-    · rw [dif_neg hcarry]
-      let p64 := modulusWord p hpLt
-      let sum := a.val + b.val
-      by_cases hreduce : p64 ≤ sum
-      · rw [dif_pos hreduce]
-        change ((a.val + b.val) - modulusWord p hpLt).toNat = (a.toNat + b.toNat) % p
-        rw [add_noCarry_reduce_toNat a b hcarry hreduce]
-        have ha : a.toNat < p := a.isLt
-        have hb : b.toNat < p := b.isLt
-        have hsum_lt : a.toNat + b.toNat < UInt64.word := by omega
-        have hsum_toNat : (a.val + b.val).toNat = a.toNat + b.toNat := by
-          rw [UInt64.toNat_add]
-          simpa [toNat_eq_val, UInt64.word] using
-            (by rw [Nat.mod_eq_of_lt hsum_lt] :
-              (a.toNat + b.toNat) % UInt64.word = a.toNat + b.toNat)
-        have hreduceNat : p ≤ a.toNat + b.toNat := by
-          have := UInt64.le_iff_toNat_le.mp hreduce
-          simpa [p64, sum, hsum_toNat, modulusWord, UInt64.toNat_ofNatLT] using this
-        have hlt : a.toNat + b.toNat - p < p := by omega
-        rw [Nat.mod_eq_sub_mod hreduceNat, Nat.mod_eq_of_lt hlt]
-      · rw [dif_neg hreduce]
-        change (a.val + b.val).toNat = (a.toNat + b.toNat) % p
-        rw [add_noCarry_noReduce_toNat a b hcarry hreduce]
-        have hnot : ¬ p ≤ a.toNat + b.toNat := by
-          intro hpSum
-          apply hreduce
-          apply UInt64.le_iff_toNat_le.mpr
-          have hsum_toNat := add_noCarry_noReduce_toNat (p := p) a b hcarry hreduce
-          change (modulusWord p hpLt).toNat ≤ (a.val + b.val).toNat
-          simpa [modulusWord, UInt64.toNat_ofNatLT, hsum_toNat] using hpSum
-        rw [Nat.mod_eq_of_lt (by omega)]
+      rw [Nat.mod_eq_sub_mod hreduceNat, Nat.mod_eq_of_lt hlt]
+    · rw [dif_neg hreduce]
+      change (a.val + b.val).toNat = (a.toNat + b.toNat) % p
+      rw [add_noCarry_noReduce_toNat a b hcarry hreduce]
+      have hnot : ¬ p ≤ a.toNat + b.toNat := by
+        intro hpSum
+        apply hreduce
+        apply UInt64.le_iff_toNat_le.mpr
+        have hsum_toNat := add_noCarry_noReduce_toNat (p := p) a b hcarry hreduce
+        change (modulusWord p hpLt).toNat ≤ (a.val + b.val).toNat
+        simpa [modulusWord, UInt64.toNat_ofNatLT, hsum_toNat] using hpSum
+      rw [Nat.mod_eq_of_lt (by omega)]
 
 /-- The kernel-facing `add` and the runtime `addImpl` compute the same residue.
 Registered `@[csimp]`, so compiled code runs the division-free machine-word
@@ -621,41 +613,35 @@ the branch analysis is delegated to the borrow case lemmas. -/
 private theorem toNat_subImpl (a b : ZMod64 p) :
     (subImpl a b).toNat = (a.toNat + (p - b.toNat)) % p := by
   unfold subImpl
-  by_cases hp : p = UInt64.word
-  · rw [dif_pos hp]
+  have hpLt : p < UInt64.word := Bounds.pLtR (p := p)
+  let c64 := complementWord p hpLt
+  let diff := a.val - b.val
+  by_cases hba : b.val ≤ a.val
+  · rw [dif_pos hba]
     change (a.val - b.val).toNat = (a.toNat + (p - b.toNat)) % p
-    rw [UInt64.toNat_sub]
-    simp [toNat_eq_val, hp, UInt64.word, Nat.add_comm]
-  · have hpLt : p < UInt64.word := Nat.lt_of_le_of_ne (Bounds.pLeR (p := p)) hp
-    rw [dif_neg hp]
-    let c64 := complementWord p hpLt
-    let diff := a.val - b.val
-    by_cases hba : b.val ≤ a.val
-    · rw [dif_pos hba]
-      change (a.val - b.val).toNat = (a.toNat + (p - b.toNat)) % p
-      rw [sub_noBorrow_toNat a b hba]
-      have hbaNat : b.toNat ≤ a.toNat := by
-        simpa [toNat_eq_val] using UInt64.le_iff_toNat_le.mp hba
-      have hbLe : b.toNat ≤ p := Nat.le_of_lt b.isLt
-      have ha : a.toNat < p := a.isLt
-      have hge : p ≤ a.toNat + (p - b.toNat) := by omega
-      have hlt : a.toNat + (p - b.toNat) - p < p := by omega
-      rw [Nat.mod_eq_sub_mod hge, Nat.mod_eq_of_lt hlt]
-      omega
-    · rw [dif_neg hba]
-      change ((a.val - b.val) - complementWord p hpLt).toNat =
-        (a.toNat + (p - b.toNat)) % p
-      rw [sub_borrow_toNat a b hba]
-      have hbaNat : ¬ b.toNat ≤ a.toNat := by
-        intro h
-        apply hba
-        apply UInt64.le_iff_toNat_le.mpr
-        simpa [toNat_eq_val] using h
-      have hbLe : b.toNat ≤ p := Nat.le_of_lt b.isLt
-      have ha : a.toNat < p := a.isLt
-      have hlt : a.toNat + (p - b.toNat) < p := by omega
-      rw [Nat.mod_eq_of_lt hlt]
-      omega
+    rw [sub_noBorrow_toNat a b hba]
+    have hbaNat : b.toNat ≤ a.toNat := by
+      simpa [toNat_eq_val] using UInt64.le_iff_toNat_le.mp hba
+    have hbLe : b.toNat ≤ p := Nat.le_of_lt b.isLt
+    have ha : a.toNat < p := a.isLt
+    have hge : p ≤ a.toNat + (p - b.toNat) := by omega
+    have hlt : a.toNat + (p - b.toNat) - p < p := by omega
+    rw [Nat.mod_eq_sub_mod hge, Nat.mod_eq_of_lt hlt]
+    omega
+  · rw [dif_neg hba]
+    change ((a.val - b.val) - complementWord p hpLt).toNat =
+      (a.toNat + (p - b.toNat)) % p
+    rw [sub_borrow_toNat a b hba]
+    have hbaNat : ¬ b.toNat ≤ a.toNat := by
+      intro h
+      apply hba
+      apply UInt64.le_iff_toNat_le.mpr
+      simpa [toNat_eq_val] using h
+    have hbLe : b.toNat ≤ p := Nat.le_of_lt b.isLt
+    have ha : a.toNat < p := a.isLt
+    have hlt : a.toNat + (p - b.toNat) < p := by omega
+    rw [Nat.mod_eq_of_lt hlt]
+    omega
 
 /-- The kernel-facing `sub` and the runtime `subImpl` compute the same residue.
 Registered `@[csimp]`, so compiled code runs the division-free machine-word
