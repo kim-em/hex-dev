@@ -193,8 +193,10 @@
     reduction), while the `@[csimp]` proof redirects each occurrence
     that reaches code generation to the `*Impl`, so the slow reference
     body is never emitted as dead compiled code. Proof-mode and kernel
-    `decide` uses still see the public specification. Characterising
-    lemmas stay on the public name. Precedents: `DensePoly.trimTrailingZeros`, `DensePoly.mul`,
+    `decide` uses still see the public specification. Spec-level views
+    without a runtime twin (e.g. `DensePoly.toList`) are likewise
+    `noncomputable`, so runtime code cannot silently round-trip through
+    them. Characterising lemmas stay on the public name. Precedents: `DensePoly.trimTrailingZeros`, `DensePoly.mul`,
     `ZMod64.add`/`sub`, `Matrix.mul`, `Vector.dotProduct`.
 
 ## Lakefile
