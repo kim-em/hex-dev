@@ -13,7 +13,7 @@ types.
 `Z/pZ` only when `p` is positive and fits in a single machine word. -/
 class ZMod64.Bounds (p : Nat) : Prop where
   pPos : 0 < p
-  pLeR : p ≤ UInt64.word        -- = 2^64
+  pLtR : p < UInt64.word        -- = 2^64
 
 structure ZMod64 (p : Nat) [Bounds p] where
   val  : UInt64
@@ -23,9 +23,11 @@ structure ZMod64 (p : Nat) [Bounds p] where
 The bounds live in a typeclass that callers provide once per
 modulus, e.g. `instance : ZMod64.Bounds 7 := ⟨by decide, by decide⟩`.
 Every operation takes `[Bounds p]` implicitly; nothing is threaded
-through call sites. `p > 2^64` is rejected at the type boundary
-because no `Bounds p` instance exists for it — and a `UInt64` cannot
-faithfully represent residues in `[2^64, p)` anyway.
+through call sites. `p ≥ 2^64` is rejected at the type boundary
+because no `Bounds p` instance exists for it — a `UInt64` cannot hold
+the modulus itself, let alone residues above it, and excluding the
+word modulus `2^64` keeps `add`/`sub`/`neg` free of a per-call
+special case.
 
 Mathlib's `Fact` is unavailable to `hex-mod-arith` (it is a
 computational library, not a Mathlib bridge). The project-local
@@ -123,7 +125,7 @@ bits while performing the same square-and-multiply recurrence on
 bit length instead of repeatedly dividing a shrinking arbitrary-
 precision `Nat` by two. The runtime result must agree with the
 logical body for every bounded modulus, including the degenerate
-modulus `1` and the word modulus `2^64`.
+modulus `1`.
 
 ## Hot-loop optimization (opt-in)
 
