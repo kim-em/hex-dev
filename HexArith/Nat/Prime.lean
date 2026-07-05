@@ -26,7 +26,7 @@ namespace Nat
 Binomial coefficients on natural numbers, defined by the Pascal recursion.
 -/
 @[expose]
-def choose : Nat -> Nat -> Nat
+noncomputable def choose : Nat -> Nat -> Nat
   | _, 0 => 1
   | 0, _ + 1 => 0
   | n + 1, k + 1 => choose n k + choose n (k + 1)

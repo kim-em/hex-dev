@@ -187,9 +187,15 @@
     with this, the public name carries the kernel-friendly
     specification and the optimized body moves to a `*Impl` twin
     registered by a proved `@[csimp]` equality (never
-    `@[implemented_by]`, which is unverified). Characterising lemmas
-    stay on the public name. Precedents: `DensePoly.trimTrailingZeros`,
-    `DensePoly.mul`, `ZMod64.add`/`sub`.
+    `@[implemented_by]`, which is unverified). Mark the specification
+    `noncomputable`: the kernel still reduces its body for `decide`
+    (`noncomputable` suppresses only code generation, not kernel
+    reduction), while the `@[csimp]` proof redirects each occurrence
+    that reaches code generation to the `*Impl`, so the slow reference
+    body is never emitted as dead compiled code. Proof-mode and kernel
+    `decide` uses still see the public specification. Characterising
+    lemmas stay on the public name. Precedents: `DensePoly.trimTrailingZeros`, `DensePoly.mul`,
+    `ZMod64.add`/`sub`, `Matrix.mul`, `Vector.dotProduct`.
 
 ## Lakefile
 

@@ -150,7 +150,7 @@ uses the value-equal `trimTrailingZerosImpl` (proved by `trimTrailingZeros_eq_im
 registered `@[csimp]`), which pops trailing zeros off the array in place instead of
 round-tripping through `coeffs.toList`. -/
 @[expose]
-def trimTrailingZeros (coeffs : Array R) : Array R :=
+noncomputable def trimTrailingZeros (coeffs : Array R) : Array R :=
   (trimTrailingZerosList coeffs.toList).toArray
 
 omit [Zero R] [DecidableEq R] in

@@ -564,7 +564,7 @@ the final `(quotient, remainder)` pair. The compiled runtime uses the value-equa
 `divModArrayAuxImpl` (proved by `divModArrayAux_eq_impl`, registered `@[csimp]`), which
 tracks the working degree instead of rescanning. -/
 @[expose]
-def divModArrayAux [Sub R] [Mul R]
+noncomputable def divModArrayAux [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R)
     (fuel : Nat) (quot rem : Array R) : Array R × Array R :=
   match fuel with

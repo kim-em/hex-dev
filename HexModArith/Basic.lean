@@ -456,7 +456,7 @@ computation. Compiled code instead runs the branchy machine-word `addImpl`,
 registered by the `@[csimp]` proof `add_eq_impl`.
 -/
 @[expose]
-def add (a b : ZMod64 p) : ZMod64 p :=
+noncomputable def add (a b : ZMod64 p) : ZMod64 p :=
   ofNat p (a.toNat + b.toNat)
 
 /--
@@ -484,7 +484,7 @@ Like `add`, this is the kernel-reduction-friendly specification; compiled code
 runs the branchy machine-word `subImpl` via the `@[csimp]` proof `sub_eq_impl`.
 -/
 @[expose]
-def sub (a b : ZMod64 p) : ZMod64 p :=
+noncomputable def sub (a b : ZMod64 p) : ZMod64 p :=
   ofNat p (a.toNat + (p - b.toNat))
 
 /--
