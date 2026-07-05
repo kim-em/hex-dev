@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexConway.Basic
+import HexConway
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

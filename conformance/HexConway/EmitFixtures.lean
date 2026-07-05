@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import Hex.Conformance.Emit
-import HexConway.Basic
+import HexConway
 
 /-!
 JSONL emit driver for the `hex-conway` oracle.
