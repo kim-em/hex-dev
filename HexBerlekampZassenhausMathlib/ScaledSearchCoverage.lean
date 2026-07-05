@@ -1463,7 +1463,7 @@ theorem RecoveredScaledSearch.prefixNone_of_bound
 /-- Algorithm-side packaging for the BHKS fast-core success branch in
 the form needed by UFD arguments over `Polynomial ℤ`.  Combines the
 existing product, divisibility, and `shouldRecord` invariants exposed
-in `HexBerlekampZassenhaus/Basic.lean` with the `toPolynomial` map.
+in `HexBerlekampZassenhaus` with the `toPolynomial` map.
 The remaining count-equality hypothesis is the open obligation of
 #4022 — once supplied, this lemma feeds directly into
 `HexBerlekampZassenhausMathlib.UFDPartition.irreducible_of_partition_card_eq_normalizedFactors_card`. -/

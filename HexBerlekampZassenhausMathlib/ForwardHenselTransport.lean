@@ -2211,7 +2211,7 @@ theorem recombinationSearchModAux_isSome_of_liftedSubset_factor_dvd_of_matches
 /--
 Proof-facing package for a first successful recombination split.
 
-The executable theorem in `HexBerlekampZassenhaus.Basic` returns an exact
+The executable theorem in `HexBerlekampZassenhaus` returns an exact
 `some (candidate :: restFactors)` value.  This wrapper exposes the pieces that
 Mathlib-side coverage proofs need without requiring downstream statements to
 mention the internals of `firstSome`: the returned list, head membership,

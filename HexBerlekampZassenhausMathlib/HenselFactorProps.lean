@@ -281,7 +281,7 @@ internal `QuadraticMultifactorLiftInvariant` themselves.
 
 The upstream wrapper
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData`
-(in `HexBerlekampZassenhaus/Basic.lean`) packages the per-factor monicness,
+(in `HexBerlekampZassenhaus`) packages the per-factor monicness,
 mod-`p` product congruence, sequential split coprimality, and nonempty witness
 into the abstract invariant; this wrapper then feeds it into the abstract-
 invariant version `henselLiftData_liftedFactor_monic` above.

@@ -16,7 +16,7 @@ Small-mod singleton Berlekamp irreducibility wrapper.
 
 This module composes the modular Berlekamp soundness chain from
 `HexBerlekamp.RabinSoundness` with the executable prime-selection data
-maintained by `HexBerlekampZassenhaus.Basic` to expose a Mathlib-free
+maintained by `HexBerlekampZassenhaus` to expose a Mathlib-free
 `Hex.FpPoly.Irreducible` witness for the monic modular image of a
 `choosePrimeData?` selection whose Berlekamp factor count is at most one.
 

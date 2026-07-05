@@ -959,7 +959,7 @@ sign-normalised polynomial equals either the original or its `-1` scaling,
 and `-1` is a `ZPoly` unit, so the no-proper-factorization predicate
 transfers. Mathlib-free counterpart of the Mathlib-side
 `zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible`
-(`HexBerlekampZassenhausMathlib/Basic.lean:12543`).  Consumed by the
+(`HexBerlekampZassenhausMathlib`).  Consumed by the
 Mathlib-free `factor_factors_irreducible` assembly (#4825). -/
 theorem zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
     {f : ZPoly} (hirr : ZPoly.Irreducible f) :
