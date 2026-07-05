@@ -6,7 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyFp.Basic
+public import HexPolyFp.Field
+public import HexPolyFp.Ring
+public import HexPolyFp.Degree
 public import HexPolyFp.Packed
 public import HexPolyFp.PrimeField
 public import HexPolyFp.Compose

@@ -5,11 +5,11 @@ Authors: Kim Morrison
 -/
 
 module
-public meta import HexPolyFp.Basic
+public meta import HexPolyFp.Degree
 public meta import HexModArith.Ring
 
 public import HexModArith.Prime
-public import HexPolyFp.Basic
+public import HexPolyFp.Degree
 
 public section
 
