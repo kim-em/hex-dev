@@ -36,11 +36,8 @@ Mathlib dependency.
 
 Operations are stated as semantic contracts on the canonical
 representative. `mul` and `pow` carry mandatory `@[extern]` runtime
-paths; `add`/`sub` are one-line `ofNat` specifications the kernel
-reduces as a single `Nat` addition and mod, with the division-free
-branchy `UInt64` bodies in `addImpl`/`subImpl` registered via proved
-`@[csimp]` equalities (design principle 11,
-`SPEC/design-principles.md`), and `inv` routes through the
+paths; `add`/`sub`/`zero`/`one` lower to native `UInt64` arithmetic
+in pure Lean already, and `inv` routes through the
 `@[extern "lean_hex_mpz_gcdext"]`-bearing `extGcd` declared in
 `HexArith.Int` (see "Extern contract: `mpz_gcdext`" in
 `SPEC/Libraries/hex-arith.md`). **`inv` must NOT call
@@ -54,8 +51,8 @@ blob per recursive step (the same regression class as omitting
 ```lean
 @[extern "lean_hex_zmod64_mul"]
 def ZMod64.mul (a b : ZMod64 p) : ZMod64 p := ...   -- contract below
-def ZMod64.add (a b : ZMod64 p) : ZMod64 p          -- spec: ofNat; runtime: addImpl (@[csimp])
-def ZMod64.sub (a b : ZMod64 p) : ZMod64 p          -- spec: ofNat; runtime: subImpl (@[csimp])
+def ZMod64.add (a b : ZMod64 p) : ZMod64 p          -- pure Lean: native add + cond. sub
+def ZMod64.sub (a b : ZMod64 p) : ZMod64 p          -- pure Lean
 def ZMod64.zero : ZMod64 p
 def ZMod64.one  : ZMod64 p                          -- equals zero when p = 1
 def ZMod64.inv  (a : ZMod64 p) : ZMod64 p           -- via Hex.Int.extGcd

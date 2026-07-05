@@ -179,23 +179,6 @@
     its backing store, so a later switch (e.g. to a flat
     `Vector R (n*m)`) stays invisible.
 
-11. **Kernel-facing specification, `@[csimp]` runtime implementation.**
-    Always-on cross-checks discharge concrete arithmetic identities
-    with `decide`, so the kernel reduces the executable definitions on
-    every CI build. A definition on that path must reduce cheaply: no
-    `dite` branch plumbing on the value path, no per-access `Array`
-    list traversal inside a loop. When the fast executable shape
-    conflicts with cheap kernel reduction, split the definition: the
-    public name carries the kernel-friendly specification, and the
-    optimized body moves to a `*Impl` twin registered with a proved
-    `@[csimp]` equality (never `@[implemented_by]`, which is
-    unverified). Compiled code then runs the optimized body while
-    `decide` and `rfl` walk the specification, and characterising
-    lemmas keep their statements on the public name. Precedents:
-    `DensePoly.trimTrailingZeros`/`trimTrailingZerosImpl`,
-    `DensePoly.mul`/`mulImpl`, `ZMod64.add`/`addImpl`,
-    `ZMod64.sub`/`subImpl`.
-
 ## Lakefile
 
 Use `precompileModules := true` only on libraries that export
