@@ -119,7 +119,7 @@ private theorem vector_modify_get_ne {α : Type*} {n : Nat}
 /-- Inner foldl in `swapStep`'s `setPrefixFrom`: setting positions `0..km1-1` of a
 row to `source[·]`. -/
 private def setPrefix (source row : Vector Int n) (km1 : Fin n) : Vector Int n :=
-  (List.finRange km1.val).foldl
+  Fin.foldl km1.val
     (fun row j =>
       let jFin : Fin n := ⟨j.val, Nat.lt_trans j.isLt km1.isLt⟩
       row.set jFin (source.get jFin))
@@ -201,14 +201,16 @@ private theorem setPrefix_get_lt {source row : Vector Int n} {km1 : Fin n}
     (l : Fin n) (hl : l.val < km1.val) :
     (setPrefix source row km1).get l = source.get l := by
   unfold setPrefix
-  rw [foldl_setSource_get_eq (Nat.le_of_lt km1.isLt) source row l]
+  rw [Fin.foldl_eq_finRange_foldl,
+    foldl_setSource_get_eq (Nat.le_of_lt km1.isLt) source row l]
   simp [hl]
 
 private theorem setPrefix_get_ge {source row : Vector Int n} {km1 : Fin n}
     (l : Fin n) (hl : km1.val ≤ l.val) :
     (setPrefix source row km1).get l = row.get l := by
   unfold setPrefix
-  rw [foldl_setSource_get_eq (Nat.le_of_lt km1.isLt) source row l]
+  rw [Fin.foldl_eq_finRange_foldl,
+    foldl_setSource_get_eq (Nat.le_of_lt km1.isLt) source row l]
   simp [Nat.not_lt.mpr hl]
 
 /-- Outer foldl in `swapStep` over rows above `k`. The update applied to row `i`
@@ -384,17 +386,19 @@ private theorem swapStep_valid (s : LLLState n m) (k : Nat)
             (setPrefix (s.ν.getRow km1) · km1) with hνRows_def
         set νPivot : Hex.Matrix Int n n := νRowsSwapped.modifyRow kFin.val (·.set km1 B)
           with hνPivot_def
-        -- Unfold the goal to expose the ν' foldl, then apply
-        -- `foldl_modify_rows_get`.
-        simp only [Fin.foldl_eq_finRange_foldl]
-        change
-          (((List.finRange n).foldl
+        -- Fold the goal's outer `ν'` loop over the opaque `νPivot` base, then
+        -- convert only that outer `Fin.foldl n` to `List.finRange` for
+        -- `foldl_modify_matrix_getRow`. The inner `setPrefix` folds live inside
+        -- `νPivot` and stay as `Fin.foldl`, matching its definition.
+        show
+          ((Fin.foldl n
               (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
                 if _ : k < i.val then
                   ν.modifyRow i.val (upd i)
                 else ν)
               νPivot).getRow iFin).get jFin =
             ((GramSchmidt.Int.scaledCoeffs b').getRow iFin).get jFin
+        rw [Fin.foldl_eq_finRange_foldl]
         have hν'_get :
             ((List.finRange n).foldl
                 (fun (ν : Hex.Matrix Int n n) (i : Fin n) =>
