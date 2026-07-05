@@ -225,22 +225,22 @@ input[type='search']:focus {
 .titlepage + p,
 .titlepage ~ p {
   max-width: 38rem;
-  margin-left: auto;
+  margin-left: 0;
   margin-right: auto;
-  text-align: center;
+  text-align: left;
   color: #444;
   line-height: 1.6;
 }
 
 /* Home page Contents heading */
 .titlepage ~ section > h2 {
-  text-align: center;
+  text-align: left;
   margin-top: 2rem;
 }
 .titlepage ~ section .section-toc {
   list-style: none;
   padding: 0;
-  text-align: center;
+  text-align: left;
 }
 .titlepage ~ section .section-toc li {
   padding: 0.4rem 0;
