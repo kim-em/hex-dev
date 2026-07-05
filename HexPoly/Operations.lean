@@ -269,7 +269,7 @@ cons-step per `(i, j)` coefficient pair instead of an O(size) list traversal
 per `Array` access. Compiled code instead runs the in-place `Array` loop
 `mulImpl`, registered by the `@[csimp]` proof `mul_eq_impl`. -/
 @[expose]
-def mul [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
+noncomputable def mul [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
   if p.isZero || q.isZero then 0 else
     let size := p.size + q.size - 1
     ofCoeffs (mulRows q.toArray.toList p.toArray.toList

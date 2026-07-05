@@ -52,7 +52,7 @@ and `dotProduct_eq_impl`. The native form will then kernel-reduce on its own, so
 the `memLattice` `decide` checks keep working without the `List.finRange`
 reference allocation. -/
 @[expose]
-def dotProduct [Mul R] [Add R] [OfNat R 0] (u v : Vector R n) : R :=
+noncomputable def dotProduct [Mul R] [Add R] [OfNat R 0] (u v : Vector R n) : R :=
   (List.finRange n).foldl (fun acc i => acc + u[i] * v[i]) 0
 
 /-- Allocation-free implementation of `dotProduct`: a `Fin.foldl` loop that never
@@ -335,7 +335,7 @@ rebuilt for every row of `M`.
 We intend to provide Strassen-Winograd with a customizable algorithm for small sizes later.
 -/
 @[expose]
-def mul [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (N : Matrix R m k) :
+noncomputable def mul [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (N : Matrix R m k) :
     Matrix R n k :=
   ofFn fun i j => (row M i).dotProduct (col N j)
 
