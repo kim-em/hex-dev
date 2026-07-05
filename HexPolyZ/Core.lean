@@ -916,92 +916,6 @@ theorem coeff_mul_top (p q : ZPoly)
       p.coeff (p.size - 1) * q.coeff (q.size - 1) := by
   exact DensePoly.coeff_mul_top_int p q hp hq
 
-private theorem trimTrailingZerosList_length_le_int (coeffs : List Int) :
-    (DensePoly.trimTrailingZerosList coeffs).length ≤ coeffs.length := by
-  induction coeffs with
-  | nil =>
-      simp [DensePoly.trimTrailingZerosList]
-  | cons coeff coeffs ih =>
-      simp only [DensePoly.trimTrailingZerosList]
-      split
-      · simp
-      · simp
-        omega
-
-private theorem ofCoeffs_size_le_int (coeffs : Array Int) :
-    (DensePoly.ofCoeffs coeffs).size ≤ coeffs.size := by
-  unfold DensePoly.ofCoeffs DensePoly.size DensePoly.trimTrailingZeros
-  simpa using trimTrailingZerosList_length_le_int coeffs.toList
-
-private theorem isZero_false_of_size_pos (p : ZPoly) (hp : 0 < p.size) :
-    p.isZero = false := by
-  cases hzero : p.isZero
-  · rfl
-  · have hsize : p.size = 0 := by
-      simpa [DensePoly.isZero, DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hzero
-    omega
-
-private theorem mul_inner_array_size_int
-    (p q : ZPoly) (i : Nat) (xs : List Nat) (acc : Array Int) :
-    (xs.foldl
-        (fun acc j =>
-          let k := i + j
-          acc.set! k ((acc[k]?).getD (0 : Int) + p.coeff i * q.coeff j))
-        acc).size = acc.size := by
-  induction xs generalizing acc with
-  | nil =>
-      rfl
-  | cons j xs ih =>
-      simp only [List.foldl_cons]
-      rw [ih]
-      simp [Array.size_setIfInBounds]
-
-private theorem mul_outer_array_size_int
-    (p q : ZPoly) (xs : List Nat) (acc : Array Int) :
-    (xs.foldl
-        (fun acc i =>
-          (List.range q.size).foldl
-            (fun acc j =>
-              let k := i + j
-              acc.set! k ((acc[k]?).getD (0 : Int) + p.coeff i * q.coeff j))
-            acc)
-        acc).size = acc.size := by
-  induction xs generalizing acc with
-  | nil =>
-      rfl
-  | cons i xs ih =>
-      simp only [List.foldl_cons]
-      rw [ih]
-      exact mul_inner_array_size_int p q i (List.range q.size) acc
-
-private theorem mul_size_le_top_succ (p q : ZPoly)
-    (hp : 0 < p.size) (hq : 0 < q.size) :
-    (p * q).size ≤ p.size + q.size - 1 := by
-  change (DensePoly.mul p q).size ≤ p.size + q.size - 1
-  unfold DensePoly.mul
-  have hpzero : p.isZero = false := isZero_false_of_size_pos p hp
-  have hqzero : q.isZero = false := isZero_false_of_size_pos q hq
-  have hnot : ¬(p.isZero || q.isZero) := by
-    simp [hpzero, hqzero]
-  rw [if_neg hnot]
-  let size := p.size + q.size - 1
-  let coeffs :=
-    (List.range p.size).foldl
-      (fun acc i =>
-        (List.range q.size).foldl
-          (fun acc j =>
-            let k := i + j
-            acc.set! k ((acc[k]?).getD (0 : Int) + p.coeff i * q.coeff j))
-          acc)
-      (Array.replicate size (0 : Int))
-  have hcoeffs_size : coeffs.size = size := by
-    simpa [coeffs] using
-      mul_outer_array_size_int p q (List.range p.size) (Array.replicate size (0 : Int))
-  have hle : (DensePoly.ofCoeffs coeffs).size ≤ coeffs.size :=
-    ofCoeffs_size_le_int coeffs
-  rw [hcoeffs_size] at hle
-  exact hle
-
 /-- The size of a product of nonzero integer polynomials is one less than the
 sum of their sizes. -/
 theorem mul_size_eq_top_succ_of_nonzero (p q : ZPoly)
@@ -1025,7 +939,7 @@ theorem mul_size_eq_top_succ_of_nonzero (p q : ZPoly)
     rcases Nat.lt_or_ge (p.size - 1 + (q.size - 1)) (p * q).size with h | hle
     · exact h
     · exact False.elim (hcoeff_ne (DensePoly.coeff_eq_zero_of_size_le (p * q) hle))
-  have hle := mul_size_le_top_succ p q hp hq
+  have hle := DensePoly.size_mul_le p q
   omega
 
 /-- A nonzero integer polynomial has positive dense size. -/

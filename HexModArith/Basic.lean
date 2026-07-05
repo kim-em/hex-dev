@@ -446,11 +446,24 @@ private theorem sub_borrow_lt (a b : ZMod64 p) {hpLt : p < UInt64.word}
   omega
 
 /--
-Add two reduced residues using wrapped machine-word addition plus one
-correction step when `p < 2^64`.
+Add two reduced residues: the residue of the sum of canonical representatives.
+
+This is the kernel-reduction-friendly specification: reducing it unfolds to a
+single `Nat` addition and mod, so `decide`-style proofs walk a straight-line
+computation. Compiled code instead runs the branchy machine-word `addImpl`,
+registered by the `@[csimp]` proof `add_eq_impl`.
 -/
 @[expose]
-def add (a b : ZMod64 p) : ZMod64 p := by
+def add (a b : ZMod64 p) : ZMod64 p :=
+  ofNat p (a.toNat + b.toNat)
+
+/--
+Runtime implementation of `add`: wrapped machine-word addition plus one
+correction step when `p < 2^64`, avoiding any division. Value-equal to `add`
+(`add_eq_impl`, registered `@[csimp]`).
+-/
+@[expose]
+def addImpl (a b : ZMod64 p) : ZMod64 p := by
   by_cases hp : p = UInt64.word
   · refine ⟨a.val + b.val, ?_⟩
     simpa [hp, UInt64.size, UInt64.word] using (UInt64.toNat_lt_size (a.val + b.val))
@@ -465,11 +478,23 @@ def add (a b : ZMod64 p) : ZMod64 p := by
       · exact ⟨sum, by simpa [sum] using add_noCarry_noReduce_lt a b hcarry hreduce⟩
 
 /--
-Subtract two residues by adding the modular complement of the second and
-reducing mod `p`.
+Subtract two residues: the residue of `a.toNat + (p - b.toNat)`, the canonical
+representative of the modular difference.
+
+Like `add`, this is the kernel-reduction-friendly specification; compiled code
+runs the branchy machine-word `subImpl` via the `@[csimp]` proof `sub_eq_impl`.
 -/
 @[expose]
-def sub (a b : ZMod64 p) : ZMod64 p := by
+def sub (a b : ZMod64 p) : ZMod64 p :=
+  ofNat p (a.toNat + (p - b.toNat))
+
+/--
+Runtime implementation of `sub`: machine-word subtraction with one
+complement-word correction on borrow, avoiding any division. Value-equal to
+`sub` (`sub_eq_impl`, registered `@[csimp]`).
+-/
+@[expose]
+def subImpl (a b : ZMod64 p) : ZMod64 p := by
   by_cases hp : p = UInt64.word
   · refine ⟨a.val - b.val, ?_⟩
     simpa [hp, UInt64.size, UInt64.word] using (UInt64.toNat_lt_size (a.val - b.val))
@@ -554,8 +579,14 @@ instance : Inv (ZMod64 p) where
 
 /-- Addition agrees with addition of canonical representatives modulo `p`. -/
 @[simp, grind =] theorem toNat_add (a b : ZMod64 p) :
-    (add a b).toNat = (a.toNat + b.toNat) % p := by
-  unfold add
+    (add a b).toNat = (a.toNat + b.toNat) % p :=
+  toNat_ofNat (a.toNat + b.toNat)
+
+/-- The runtime `addImpl` also computes the residue of the representative sum;
+the branch analysis is delegated to the carry/reduce case lemmas. -/
+private theorem toNat_addImpl (a b : ZMod64 p) :
+    (addImpl a b).toNat = (a.toNat + b.toNat) % p := by
+  unfold addImpl
   by_cases hp : p = UInt64.word
   · rw [dif_pos hp]
     simp [toNat_eq_val, UInt64.toNat_add, hp, UInt64.word]
@@ -602,10 +633,17 @@ instance : Inv (ZMod64 p) where
           simpa [modulusWord, UInt64.toNat_ofNatLT, hsum_toNat] using hpSum
         rw [Nat.mod_eq_of_lt (by omega)]
 
+/-- The kernel-facing `add` and the runtime `addImpl` compute the same residue.
+Registered `@[csimp]`, so compiled code runs the division-free machine-word
+implementation while kernel reduction sees the one-line specification. -/
+@[csimp] theorem add_eq_impl : @add = @addImpl := by
+  funext p _ a b
+  exact ext_toNat (by rw [toNat_add, toNat_addImpl])
+
 /-- Addition is the residue built from the sum of canonical representatives. -/
 theorem add_eq_ofNat (a b : ZMod64 p) :
-    add a b = ofNat p (a.toNat + b.toNat) := by
-  rw [eq_iff_toNat_eq, toNat_add, toNat_ofNat]
+    add a b = ofNat p (a.toNat + b.toNat) :=
+  rfl
 
 /-- Operator-level form of `add_eq_ofNat`. -/
 theorem add_op_eq_ofNat (a b : ZMod64 p) :
@@ -614,8 +652,14 @@ theorem add_op_eq_ofNat (a b : ZMod64 p) :
 
 /-- Subtraction agrees with modular subtraction of canonical representatives. -/
 @[simp, grind =] theorem toNat_sub (a b : ZMod64 p) :
-    (sub a b).toNat = (a.toNat + (p - b.toNat)) % p := by
-  unfold sub
+    (sub a b).toNat = (a.toNat + (p - b.toNat)) % p :=
+  toNat_ofNat (a.toNat + (p - b.toNat))
+
+/-- The runtime `subImpl` also computes the canonical modular difference;
+the branch analysis is delegated to the borrow case lemmas. -/
+private theorem toNat_subImpl (a b : ZMod64 p) :
+    (subImpl a b).toNat = (a.toNat + (p - b.toNat)) % p := by
+  unfold subImpl
   by_cases hp : p = UInt64.word
   · rw [dif_pos hp]
     change (a.val - b.val).toNat = (a.toNat + (p - b.toNat)) % p
@@ -652,10 +696,17 @@ theorem add_op_eq_ofNat (a b : ZMod64 p) :
       rw [Nat.mod_eq_of_lt hlt]
       omega
 
+/-- The kernel-facing `sub` and the runtime `subImpl` compute the same residue.
+Registered `@[csimp]`, so compiled code runs the division-free machine-word
+implementation while kernel reduction sees the one-line specification. -/
+@[csimp] theorem sub_eq_impl : @sub = @subImpl := by
+  funext p _ a b
+  exact ext_toNat (by rw [toNat_sub, toNat_subImpl])
+
 /-- Subtraction is the residue built from the modular difference of representatives. -/
 theorem sub_eq_ofNat (a b : ZMod64 p) :
-    sub a b = ofNat p (a.toNat + (p - b.toNat)) := by
-  rw [eq_iff_toNat_eq, toNat_sub, toNat_ofNat]
+    sub a b = ofNat p (a.toNat + (p - b.toNat)) :=
+  rfl
 
 /-- Operator-level form of `sub_eq_ofNat`. -/
 theorem sub_op_eq_ofNat (a b : ZMod64 p) :
