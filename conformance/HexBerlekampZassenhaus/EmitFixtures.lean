@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import Hex.Conformance.Emit
-import HexBerlekampZassenhaus.Basic
+import HexBerlekampZassenhaus
 
 /-!
 JSONL emit driver for the `hex-berlekamp-zassenhaus` oracle.
@@ -97,7 +97,7 @@ of build time; the compiled emit executable covers it in seconds.
 Cross-checked operation
 -----------------------
 
-* `factor` — `Hex.factor` from `HexBerlekampZassenhaus.Basic` (the
+* `factor` — `Hex.factor` from `HexBerlekampZassenhaus` (the
   default-bound public entry point).  Lean serialises the resulting
   `Factorization` as `[scalar, [[coeffs, multiplicity], ...]]`;
   python-flint cross-checks each reported nonconstant component directly

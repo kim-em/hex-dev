@@ -7,7 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 import HexLLL.Basic
-import HexBerlekampZassenhaus.Basic
+import HexBerlekampZassenhaus
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

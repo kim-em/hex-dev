@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhaus.Basic
+import HexBerlekampZassenhaus
 import Hex.BenchOracle.Flint
 import Lean.Data.Json
 import LeanBench

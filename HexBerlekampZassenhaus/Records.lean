@@ -1,0 +1,458 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public meta import HexArith.Nat.Prime
+public meta import HexBerlekamp.Factor
+public meta import HexBerlekamp.Irreducibility
+public meta import HexHensel.Basic
+public meta import HexHensel.Multifactor
+public meta import HexHensel.QuadraticMultifactor
+public meta import HexMatrix.Basic
+public meta import HexPolyZ.Mignotte
+public meta import HexLLL.Basic
+public import HexArith.Nat.Prime
+public import HexBerlekamp.Factor
+public import HexBerlekamp.Irreducibility
+public import HexHensel.Multifactor
+public import HexHensel.QuadraticMultifactor
+public import HexLLL.Basic
+-- Needed so `decide`/`rfl` over `DensePoly`/`Array` equality reduces in the
+-- kernel: the core `Array.instDecidableEq` delegates its nonempty case to the
+-- non-`@[expose]` `Array.instDecidableEqImpl`, which is otherwise opaque under
+-- the module system. Drop once that impl is exposed upstream (lean4).
+import all Init.Data.Array.DecidableEq
+
+public import HexBerlekampZassenhaus.PrimeSelection
+public meta import HexBerlekampZassenhaus.PrimeSelection
+import all HexBerlekampZassenhaus.PrimeSelection
+
+public section
+set_option backward.proofsInPublic true
+set_option backward.privateInPublic true
+
+/-!
+This module collects the executable data records, `Factorization` product, and normalization-pipeline definitions.
+-/
+namespace Hex
+
+/-- `ZPoly.modP p` never increases the executable dense size: the
+coefficientwise reduction maps into a length-`f.size` coefficient list, which
+`FpPoly.ofCoeffs` then trims of trailing zeros. -/
+private theorem size_modP_le (p : Nat) [ZMod64.Bounds p] (f : ZPoly) :
+    (ZPoly.modP p f).size ≤ f.size := by
+  show (ZPoly.modP p f).coeffs.size ≤ f.size
+  unfold ZPoly.modP FpPoly.ofCoeffs
+  have h := DensePoly.size_ofCoeffs_le
+    (R := ZMod64 p)
+    ((List.range f.size).map
+      (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p))).toArray
+  have hlen : ((List.range f.size).map
+      (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p))).toArray.size =
+        f.size := by simp
+  simpa [DensePoly.size, hlen] using h
+
+/--
+Data produced by modular prime selection: the selected prime, the image of the
+input polynomial over that prime field, and its modular factors.
+-/
+structure PrimeChoiceData where
+  p : Nat
+  [bounds : ZMod64.Bounds p]
+  fModP : FpPoly p
+  factorsModP : Array (FpPoly p)
+
+instance : Inhabited PrimeChoiceData where
+  default :=
+    { p := 3
+      bounds := bounds_three
+      fModP := 0
+      factorsModP := #[] }
+
+/--
+Data produced by Hensel lifting and consumed by integer recombination: the
+prime, the requested lift precision, and the lifted integer factors.
+-/
+structure LiftData where
+  p : Nat
+  p_pos : 0 < p
+  k : Nat
+  liftedFactors : Array ZPoly
+
+/--
+Executable normalization data for the public integer factorization API.
+
+The public input is first split into its integer content, primitive part,
+initial `X` power, and primitive square-free core. The Berlekamp-Zassenhaus
+prime/lift/factorization pipeline runs on `squareFreeCore`; the other fields are
+reassembled around the resulting core factors.
+-/
+structure FactorNormalizationData where
+  content : Int
+  primitive : ZPoly
+  xPower : Nat
+  xFreePrimitive : ZPoly
+  squareFreeCore : ZPoly
+  repeatedPart : ZPoly
+
+namespace ZPoly
+
+/--
+Executable data for the integer scaling transform that sends a primitive
+positive-leading core to a monic integer polynomial with the same roots
+(scaled by the leading coefficient).
+
+If `core` has degree `n` and leading coefficient `c`, `monic` is the
+coefficientwise integer polynomial `c^(n-1) * core (X / c)`: lower coefficient
+`a_i` becomes `a_i * c^(n-1-i)` and the leading coefficient is normalised to
+`1`.
+-/
+structure ToMonicData where
+  core : ZPoly
+  leadingCoeff : Int
+  degree : Nat
+  monic : ZPoly
+
+namespace ToMonicData
+
+@[expose]
+private def transformedCoeffs (core : ZPoly) (degree : Nat) : Array Int :=
+  ((List.range degree).map fun i =>
+      core.coeff i * (DensePoly.leadingCoeff core) ^ (degree - 1 - i)).toArray.push 1
+
+@[expose]
+private def transformedCore (core : ZPoly) (degree : Nat) : ZPoly :=
+  { coeffs := transformedCoeffs core degree
+    normalized := by
+      right
+      change (transformedCoeffs core degree).back? ≠ some (0 : Int)
+      simp [transformedCoeffs] }
+
+@[simp, grind =] theorem transformedCoeffs_size (core : ZPoly) (degree : Nat) :
+    (transformedCoeffs core degree).size = degree + 1 := by
+  simp [transformedCoeffs]
+
+@[simp] theorem transformedCoeffs_getD_top (core : ZPoly) (degree : Nat) :
+    (transformedCoeffs core degree).getD degree 0 = 1 := by
+  simp [transformedCoeffs]
+
+@[simp, grind =] theorem transformedCore_size (core : ZPoly) (degree : Nat) :
+    (transformedCore core degree).size = degree + 1 := by
+  simp [transformedCore, DensePoly.size]
+
+theorem transformedCore_coeff_top (core : ZPoly) (degree : Nat) :
+    (transformedCore core degree).coeff degree = 1 := by
+  change (transformedCoeffs core degree).getD degree (0 : Int) = 1
+  exact transformedCoeffs_getD_top core degree
+
+theorem transformedCore_monic (core : ZPoly) (degree : Nat) :
+    DensePoly.Monic (transformedCore core degree) := by
+  unfold DensePoly.Monic DensePoly.leadingCoeff transformedCore
+  simp [transformedCoeffs]
+
+@[simp, grind =] theorem transformedCore_degree_getD (core : ZPoly) (degree : Nat) :
+    (transformedCore core degree).degree?.getD 0 = degree := by
+  unfold DensePoly.degree? transformedCore DensePoly.size
+  simp [transformedCoeffs]
+
+end ToMonicData
+
+/-- Build the `ToMonicData` packet for a core by the integer scaling transform. -/
+@[expose]
+def toMonic (core : ZPoly) : ToMonicData :=
+  let degree := core.degree?.getD 0
+  { core
+    leadingCoeff := DensePoly.leadingCoeff core
+    degree
+    monic :=
+      if DensePoly.leadingCoeff core = 1 then
+        core
+      else
+        ToMonicData.transformedCore core degree }
+
+@[simp, grind =] theorem toMonic_core (core : ZPoly) :
+    (toMonic core).core = core := rfl
+
+@[simp, grind =] theorem toMonic_leadingCoeff (core : ZPoly) :
+    (toMonic core).leadingCoeff = DensePoly.leadingCoeff core := rfl
+
+@[simp, grind =] theorem toMonic_degree (core : ZPoly) :
+    (toMonic core).degree = core.degree?.getD 0 := rfl
+
+/-- The `monic` field of `toMonic core` is monic once the source has positive
+degree. -/
+theorem toMonic_monic_isMonic_of_pos_degree
+    (core : ZPoly) (_hpos_lc : 0 < DensePoly.leadingCoeff core)
+    (_hdegree : 0 < (toMonic core).degree) :
+    DensePoly.Monic (toMonic core).monic := by
+  unfold toMonic
+  by_cases hmonic : DensePoly.leadingCoeff core = 1
+  · simp [hmonic, DensePoly.Monic]
+  · simp [hmonic, ToMonicData.transformedCore_monic]
+
+/-- The `monic` field preserves the recorded degree in nonconstant cases. -/
+theorem toMonic_monic_degree_eq_of_pos_degree
+    (core : ZPoly) (_hpos_lc : 0 < DensePoly.leadingCoeff core)
+    (_hdegree : 0 < (toMonic core).degree) :
+    (toMonic core).monic.degree?.getD 0 = (toMonic core).degree := by
+  unfold toMonic
+  by_cases hmonic : DensePoly.leadingCoeff core = 1
+  · simp [hmonic]
+  · simp [hmonic]
+
+/-- Applying `toMonic` to an already-monic core leaves its `monic` field equal
+to the original. -/
+theorem toMonic_monic_eq_core_of_leadingCoeff_eq_one
+    (core : ZPoly) (hmonic : DensePoly.leadingCoeff core = 1) :
+    (toMonic core).monic = core := by
+  simp [toMonic, hmonic]
+
+private def toMonicGuardMonic : ToMonicData :=
+  toMonic (DensePoly.ofCoeffs #[1, 3, 1])
+
+#guard toMonicGuardMonic.monic = toMonicGuardMonic.core
+
+private def toMonicGuardQuadratic : ToMonicData :=
+  toMonic (DensePoly.ofCoeffs #[1, 3, 2])
+
+#guard toMonicGuardQuadratic.degree = 2
+#guard toMonicGuardQuadratic.leadingCoeff = 2
+#guard toMonicGuardQuadratic.monic = DensePoly.ofCoeffs #[2, 3, 1]
+
+private def toMonicGuardZero : ToMonicData :=
+  toMonic 0
+
+#guard toMonicGuardZero.degree = 0
+#guard toMonicGuardZero.monic = DensePoly.ofCoeffs #[1]
+
+end ZPoly
+
+/--
+Public integer-polynomial factorization result.
+
+The scalar carries the input's signed content: for nonzero inputs this is
+`sign(lc f) * ZPoly.content f`, while zero inputs use scalar `0`. Polynomial
+factors are primitive, positive-leading-coefficient factors stored with
+explicit multiplicities; factor order remains operational, with the
+mathematical contract expressed through `Factorization.product`.
+-/
+structure Factorization where
+  /-- Signed scalar absorbing both sign and integer content. -/
+  scalar : Int
+  /-- Polynomial factors paired with explicit positive multiplicities. -/
+  factors : Array (ZPoly × Nat)
+deriving DecidableEq
+
+namespace Factorization
+
+@[expose]
+private def polyPow (f : ZPoly) : Nat → ZPoly
+  | 0 => 1
+  | n + 1 => polyPow f n * f
+
+/-- Public wrapper for the polynomial power used by `Factorization.product`. -/
+@[expose]
+def factorPower (f : ZPoly) (n : Nat) : ZPoly :=
+  polyPow f n
+
+@[simp, grind =] theorem factorPower_zero (f : ZPoly) :
+    factorPower f 0 = (1 : ZPoly) := rfl
+
+@[simp, grind =] theorem factorPower_succ (f : ZPoly) (n : Nat) :
+    factorPower f (n + 1) = factorPower f n * f := rfl
+
+/-- Expand multiplicity pairs into the ordered polynomial product. -/
+@[expose]
+def product (φ : Factorization) : ZPoly :=
+  φ.factors.foldl (fun acc factor => acc * polyPow factor.1 factor.2) (DensePoly.C φ.scalar)
+
+@[simp, grind =] theorem product_mk_empty (scalar : Int) :
+    product { scalar := scalar, factors := #[] } = DensePoly.C scalar := rfl
+
+/--
+Characterize `product` using the public `factorPower` wrapper instead of the
+private recursion used internally.
+-/
+theorem product_eq_foldl_factorPower (φ : Factorization) :
+    φ.product =
+      φ.factors.foldl
+        (fun acc factor => acc * factorPower factor.1 factor.2)
+        (DensePoly.C φ.scalar) := by
+  rfl
+
+end Factorization
+
+/-- Compute the normalization data required before the square-free pipeline. -/
+@[expose]
+def normalizeForFactor (f : ZPoly) : FactorNormalizationData :=
+  let primitive := ZPoly.primitivePart f
+  let xData := ZPoly.extractXPower primitive
+  let sqData := ZPoly.primitiveSquareFreeDecomposition xData.core
+  { content := ZPoly.content f
+    primitive
+    xPower := xData.power
+    xFreePrimitive := xData.core
+    squareFreeCore := sqData.squareFreeCore
+    repeatedPart := sqData.repeatedPart }
+
+private def contentFactorArray (content : Int) : Array ZPoly :=
+  if content = 1 then
+    #[]
+  else
+    #[DensePoly.C content]
+
+@[expose]
+private def xPowerFactorArray (power : Nat) : Array ZPoly :=
+  (List.replicate power ZPoly.X).toArray
+
+@[expose]
+private def repeatedPartFactorArray (repeatedPart : ZPoly) : Array ZPoly :=
+  if repeatedPart = 1 then
+    #[]
+  else
+    #[repeatedPart]
+
+@[expose]
+private def signedContentScalar (f : ZPoly) : Int :=
+  if f = 0 then
+    0
+  else if DensePoly.leadingCoeff f < 0 then
+    -ZPoly.content f
+  else
+    ZPoly.content f
+
+/-- Normalize a polynomial factor's sign by negating it whenever the leading
+coefficient is negative.  The result has nonnegative leading coefficient and is
+associated to the input over `ℤ`. -/
+@[expose]
+def normalizeFactorSign (f : ZPoly) : ZPoly :=
+  if DensePoly.leadingCoeff f < 0 then
+    DensePoly.scale (-1 : Int) f
+  else
+    f
+
+/-- A polynomial factor is recorded by the factorization routines only
+when it is not zero and not a unit (`±1`).  Exposed publicly so that
+Mathlib-side lemmas can transport the predicate into `¬ IsUnit` over
+`Polynomial ℤ`. -/
+@[expose]
+def shouldRecordPolynomialFactor (f : ZPoly) : Bool :=
+  f ≠ 0 && f ≠ 1 && f ≠ DensePoly.C (-1)
+
+private def bumpFactorMultiplicity (f : ZPoly) : List (ZPoly × Nat) → List (ZPoly × Nat)
+  | [] => [(f, 1)]
+  | entry :: entries =>
+      if entry.1 = f then
+        (entry.1, entry.2 + 1) :: entries
+      else
+        entry :: bumpFactorMultiplicity f entries
+
+@[expose]
+private def collectFactorMultiplicities (factors : Array ZPoly) : Array (ZPoly × Nat) :=
+  factors.toList.foldl
+    (fun acc factor =>
+      let factor := normalizeFactorSign factor
+      if shouldRecordPolynomialFactor factor then
+        bumpFactorMultiplicity factor acc
+      else
+        acc)
+    []
+  |>.reverse.toArray
+
+@[expose]
+private def polynomialNormalizationPrefixFactors (d : FactorNormalizationData) : Array ZPoly :=
+  xPowerFactorArray d.xPower ++ repeatedPartFactorArray d.repeatedPart
+
+/-- Factors that come from normalization before the square-free core is factored. -/
+def normalizationPrefixFactors (d : FactorNormalizationData) : Array ZPoly :=
+  contentFactorArray d.content ++
+    xPowerFactorArray d.xPower ++
+    repeatedPartFactorArray d.repeatedPart
+
+/-- Reassemble normalization factors around the factors of the square-free core. -/
+def reassembleNormalizedFactors
+    (d : FactorNormalizationData) (coreFactors : Array ZPoly) : Array ZPoly :=
+  normalizationPrefixFactors d ++ coreFactors
+
+/--
+Exact-division check on integer polynomials: returns the quotient when
+`quot * candidate = target` exactly, and rejects unit candidates so iterated
+calls cannot loop forever on `±1`.
+-/
+@[expose]
+def exactQuotient? (target candidate : ZPoly) : Option ZPoly :=
+  if candidate.isZero || candidate = 1 then
+    none
+  else
+    let qr := DensePoly.divMod target candidate
+    if qr.2 = 0 && qr.1 * candidate == target then
+      some qr.1
+    else
+      none
+
+/-- Successful exact-division extracts a multiplication witness:
+`exactQuotient? target candidate = some quotient` implies
+`quotient * candidate = target`. Forward companion of
+`exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree`. -/
+theorem exactQuotient?_product
+    {target candidate quotient : ZPoly}
+    (hquot : exactQuotient? target candidate = some quotient) :
+    quotient * candidate = target := by
+  unfold exactQuotient? at hquot
+  split at hquot
+  · contradiction
+  · rename_i hnontrivial
+    generalize hqr : DensePoly.divMod target candidate = qr at hquot
+    cases qr with
+    | mk q r =>
+        simp only at hquot
+        split at hquot
+        · rename_i hcheck
+          cases hquot
+          exact (by
+            simpa [Bool.and_eq_true, beq_iff_eq] using hcheck : r = 0 ∧ quotient * candidate = target).2
+        · contradiction
+
+/--
+Greedy peel of `candidate^?` out of `target` via repeated exact division.
+Returns `(residual, multiplicity)` with the invariant
+`candidate ^ multiplicity * residual = target`. The recursion is bounded by
+`fuel`, which the caller chooses based on the source degree.
+-/
+private def consumeExactPower (target candidate : ZPoly) : Nat → ZPoly × Nat
+  | 0 => (target, 0)
+  | fuel + 1 =>
+      match exactQuotient? target candidate with
+      | some quot =>
+          let (residual, m) := consumeExactPower quot candidate fuel
+          (residual, m + 1)
+      | none => (target, 0)
+
+/--
+Fold `consumeExactPower` over a list of candidate factors, accumulating
+emitted copies and tracking the residual that has not yet been factored.
+Invariant: `polyProduct emitted * residual = initialRepeatedPart`.
+-/
+private def expandRepeatedPartFactorsAux : List ZPoly → ZPoly → Nat → Array ZPoly × ZPoly
+  | [], rp, _ => (#[], rp)
+  | q :: qs, rp, fuel =>
+      let (rp', m) := consumeExactPower rp q fuel
+      let (rest, residual) := expandRepeatedPartFactorsAux qs rp' fuel
+      ((List.replicate m q).toArray ++ rest, residual)
+
+/--
+Compute `(emitted, residual)` where each candidate factor `q` from
+`coreFactors` appears in `emitted` to the maximum multiplicity such that
+`q^k` exactly divides the running repeated-part. The fuel is the source
+size, which dominates any irreducible's multiplicity in `repeatedPart`.
+-/
+@[expose]
+private def expandRepeatedPartFactorArray (rp : ZPoly) (coreFactors : Array ZPoly) :
+    Array ZPoly × ZPoly :=
+  expandRepeatedPartFactorsAux coreFactors.toList rp (rp.size + 1)
+
+end Hex

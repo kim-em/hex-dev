@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhausMathlib.Basic
+public import HexBerlekampZassenhausMathlib.ToMonicUniqueness
 public import HexBerlekampMathlib.Basic
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.RingTheory.Polynomial.Content
@@ -1134,7 +1134,7 @@ existing primitivity lemma
 
 This discharges the explicit `hcore_sqfree` hypothesis previously threaded
 through `liftedFactorSubsetPartition_outerBound_of_choosePrimeData`
-(`HexBerlekampZassenhausMathlib/Basic.lean`); the outer-bound
+(`HexBerlekampZassenhausMathlib`); the outer-bound
 specialisation is rewired to consume `f ≠ 0` directly. -/
 theorem normalizeForFactor_squareFreeCore_toPolynomial_squarefree
     (f : Hex.ZPoly) (hf : f ≠ 0) :
@@ -2310,7 +2310,7 @@ theorem reassemblyExpansionComplete_of_irreducible_squarefree_cover
 per-factor `Monic q` premise with `0 < leadingCoeff q`, delegating to the
 non-monic leaf base task
 `Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`
-(`HexBerlekampZassenhaus/Basic.lean`, landed in #4778). Mid-layer surface for
+(`HexBerlekampZassenhaus`, landed in #4778). Mid-layer surface for
 callers wanting to delegate to the assembler under a primitive + pos-lc
 precondition; the existing quadratic-arm caller
 `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero` (below)
@@ -2624,7 +2624,7 @@ non-monic primitive sibling (Mathlib-side).** Companion to the monic
 producing the same `Hex.reassemblyExpansionComplete` conclusion. The proof
 routes through the non-monic array-level public surface
 `Hex.expandRepeatedPartFactorArray_residual_eq_one_of_factorPower_decomposition_of_pos_lc`
-(`HexBerlekampZassenhaus/Basic.lean:11777`, #4778), with the
+(`HexBerlekampZassenhaus`, #4778), with the
 no-tail-divisibility precondition discharged by
 `factorPower_cover_not_dvd_tail_of_irreducible_squarefree` (#4807).
 The singleton-arm umbrella
@@ -2866,7 +2866,7 @@ theorem reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero
     exact HexPolyZMathlib.toPolynomial_zero
   -- Inline helper: any element of a list divides the foldl-mul product seeded
   -- at 1.  Mirrors the proof shape of `linearFactor_dvd_listFoldl_of_mem`
-  -- (`HexBerlekampZassenhaus/Basic.lean:9646`) for arbitrary ZPoly elements.
+  -- (`HexBerlekampZassenhaus`) for arbitrary ZPoly elements.
   have dvd_foldl_one_of_mem :
       ∀ (x : Hex.ZPoly) (xs : List Hex.ZPoly),
         x ∈ xs → x ∣ xs.foldl (· * ·) (1 : Hex.ZPoly) := by
@@ -3485,7 +3485,7 @@ theorem slowPathHenselSubstrate_of_toMonicPrimeData
 /-- **#4549 base task (HO-1), outer-bound specialisation, rewired for #4553.**
 
 Specialisation of `liftedFactorSubsetPartition_of_choosePrimeData`
-(`HexBerlekampZassenhausMathlib/Basic.lean`) at the precision count
+(`HexBerlekampZassenhausMathlib`) at the precision count
 actually consumed by the slow exhaustive branch of `Hex.factor f`.
 The resulting partition value has the exact `core` / `d` /
 `J = Finset.univ` / `target = core` shape expected by the `hpartition`
@@ -3709,7 +3709,7 @@ set_option maxHeartbeats 200000
 
 Specialises the Mathlib-free
 `Hex.exhaustiveIntegerTrialCoreFactorsWithBound_factor_irreducible`
-(`HexBerlekampZassenhaus/Basic.lean:13443`) to the normalized square-free
+(`HexBerlekampZassenhaus`) to the normalized square-free
 core of an `f ≠ 0` input, discharging the four core-shape hypotheses
 (`ne_zero`, `Primitive`, `0 < leadingCoeff`, `SquareFreeRat`) from `hf_ne`
 via the existing helpers:

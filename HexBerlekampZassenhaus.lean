@@ -6,7 +6,22 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhaus.Basic
+public import HexBerlekampZassenhaus.PrimeSelection
+public import HexBerlekampZassenhaus.Records
+public import HexBerlekampZassenhaus.Certificate
+public import HexBerlekampZassenhaus.ChoosePrimeData
+public import HexBerlekampZassenhaus.ReassemblyProofs
+public import HexBerlekampZassenhaus.Lattice
+public import HexBerlekampZassenhaus.BhksCandidates
+public import HexBerlekampZassenhaus.BhksRecover
+public import HexBerlekampZassenhaus.Recombination
+public import HexBerlekampZassenhaus.FactorEntryPoints
+public import HexBerlekampZassenhaus.IrreducibleCore
+public import HexBerlekampZassenhaus.RecombineProofs
+public import HexBerlekampZassenhaus.TrialProofs
+public import HexBerlekampZassenhaus.QuadraticRootProofs
+public import HexBerlekampZassenhaus.PrimitivityProofs
+public import HexBerlekampZassenhaus.ProductProofs
 public import HexBerlekampZassenhaus.CrossCheck
 public import HexBerlekampZassenhaus.SmallModSingleton
 
