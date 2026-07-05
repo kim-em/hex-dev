@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public meta import HexBerlekampZassenhausMathlib.CertReify
-public import HexBerlekampZassenhausMathlib.Basic
+public import HexBerlekampZassenhausMathlib.ToMonicUniqueness
 public import HexBerlekampZassenhausMathlib.CertReify
 
 public section

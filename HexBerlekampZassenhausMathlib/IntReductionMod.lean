@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhausMathlib.Basic
+public import HexBerlekampZassenhausMathlib.ToMonicUniqueness
 public import HexBerlekampMathlib.Basic
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.RingTheory.Polynomial.Content
