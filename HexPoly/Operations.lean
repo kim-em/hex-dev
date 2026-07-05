@@ -77,7 +77,7 @@ private theorem list_getD_replicate_append_zero (n k : Nat) (coeffs : List R) :
 omit [DecidableEq R] in
 /-- Default-indexed read of `(List.range size).map f`: index `n` reads `f n` when
 `n < size` and the default `0` otherwise. The workhorse indexing fact for the coefficient-
-list extensionality proofs (e.g. `toArray_toList_eq_coeff_range`). -/
+list extensionality proofs (e.g. `toList_eq_coeff_range`). -/
 private theorem list_getD_map_range (size n : Nat) (f : Nat → R) :
     ((List.range size).map f).getD n (Zero.zero : R) =
       if n < size then f n else (Zero.zero : R) := by
@@ -272,7 +272,7 @@ per `Array` access. Compiled code instead runs the in-place `Array` loop
 noncomputable def mul [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
   if p.isZero || q.isZero then 0 else
     let size := p.size + q.size - 1
-    ofCoeffs (mulRows q.toArray.toList p.toArray.toList
+    ofCoeffs (mulRows q.toList p.toList
       (List.replicate size (Zero.zero : R))).toArray
 
 /-- Runtime implementation of `mul`: the same schoolbook convolution computed
@@ -667,10 +667,11 @@ private theorem mulRows_getD [Add R] [Mul R] (qs ps acc : List R) (n : Nat)
                       Nat.add_sub_add_right, Nat.add_le_add_iff_right,
                       List.length_cons]
 
-/-- Reading a stored coefficient list with default zero agrees with `DensePoly.coeff`. -/
-theorem toArray_toList_getD_eq_coeff (p : DensePoly R) (n : Nat) :
-    p.toArray.toList.getD n (Zero.zero : R) = p.coeff n := by
-  unfold toArray coeff
+/-- Reading the spec-level coefficient list with default zero agrees with
+`DensePoly.coeff`. -/
+theorem toList_getD_eq_coeff (p : DensePoly R) (n : Nat) :
+    p.toList.getD n (Zero.zero : R) = p.coeff n := by
+  unfold toList toArray coeff
   rw [Array.getD_eq_getD_getElem?]
   change p.coeffs.toList[n]?.getD (Zero.zero : R) =
     p.coeffs[n]?.getD (Zero.zero : R)
@@ -703,10 +704,9 @@ private theorem coeff_mul_spec [Add R] [Mul R] (p q : DensePoly R) (n : Nat) :
     have hp_pos : 0 < p.size := (DensePoly.isZero_eq_false_iff p).1 hp_not
     have hq_pos : 0 < q.size := (DensePoly.isZero_eq_false_iff q).1 hq_not
     rw [coeff_ofCoeffs, toArray_getD_eq_getD, mulRows_getD, mulCoeffSum_eq_singleFold]
-    · simp only [toArray_toList_getD_eq_coeff, Array.length_toList, toArray_size,
-        list_getD_replicate]
+    · simp only [toList_getD_eq_coeff, length_toList, list_getD_replicate]
     · intro i hi j hj
-      simp only [Array.length_toList, toArray_size] at hi hj
+      simp only [length_toList] at hi hj
       simp only [List.length_replicate]
       omega
 
@@ -935,8 +935,8 @@ def composeScalarCoeffList [Add R] [Mul R] :
 when the caller supplies the algebraic step that commutes a Horner tail past `q`. -/
 theorem compose_eq_composeScalarCoeffList_of_step [Add R] [Mul R] (p q : DensePoly R)
     (hstep : ∀ acc c, acc * q + C c = C c + q * acc) :
-    compose p q = composeScalarCoeffList p.toArray.toList q := by
-  unfold compose
+    compose p q = composeScalarCoeffList p.toList q := by
+  unfold compose toList
   induction p.toArray.toList with
   | nil => rfl
   | cons c cs ih =>
@@ -988,7 +988,7 @@ theorem composeCoeffPowerSumFrom_range_eq_upTo [One R] [Add R] [Mul R]
 
 omit [DecidableEq R] in
 /-- List extensionality through default-indexed reads: two lists of equal length that agree
-under `getD` at every in-bounds index are equal. Used by `toArray_toList_eq_coeff_range` to
+under `getD` at every in-bounds index are equal. Used by `toList_eq_coeff_range` to
 identify the stored coefficient list with the range of coefficient reads. -/
 private theorem list_eq_of_length_eq_of_getD_eq
     {xs ys : List R}
@@ -1015,15 +1015,15 @@ private theorem list_eq_of_length_eq_of_getD_eq
             simpa using h
           rw [hhead, htail]
 
-/-- The stored coefficient list is the range of coefficient reads over `p.size`. -/
-theorem toArray_toList_eq_coeff_range (p : DensePoly R) :
-    p.toArray.toList = (List.range p.size).map (fun i => p.coeff i) := by
+/-- The spec-level coefficient list is the range of coefficient reads over `p.size`. -/
+theorem toList_eq_coeff_range (p : DensePoly R) :
+    p.toList = (List.range p.size).map (fun i => p.coeff i) := by
   apply list_eq_of_length_eq_of_getD_eq
-  · simp [toArray, size]
+  · simp [toList, toArray, size]
   · intro i hi
     have hi_size : i < p.size := by
-      simpa [toArray, size] using hi
-    rw [toArray_toList_getD_eq_coeff, list_getD_map_range]
+      simpa [toList, toArray, size] using hi
+    rw [toList_getD_eq_coeff, list_getD_map_range]
     simp [hi_size]
 
 /-- Formal derivative. The coefficient of `x^i` becomes `(i + 1) * a_(i+1)`. -/

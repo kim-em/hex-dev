@@ -165,15 +165,15 @@ private theorem composeScalarCoeffList_eq_powerSumFrom_zero (q : FpPoly p) :
 
 /-- `DensePoly.compose` agrees with the iterative power-sum form. -/
 private theorem compose_eq_powerSum (f q : FpPoly p) :
-    DensePoly.compose f q = composeCoeffPowerSumFrom f.toArray.toList 0 q := by
+    DensePoly.compose f q = composeCoeffPowerSumFrom f.toList 0 q := by
   rw [DensePoly.compose_eq_composeScalarCoeffList_of_step f q]
-  · exact composeScalarCoeffList_eq_powerSumFrom_zero q f.toArray.toList
+  · exact composeScalarCoeffList_eq_powerSumFrom_zero q f.toList
   · intro acc c
     rw [FpPoly.add_comm, FpPoly.mul_comm q acc]
 
 /-- `DensePoly.compose f q` agrees with the iterative Horner form. -/
 theorem compose_eq_composeScalarCoeffList (f q : FpPoly p) :
-    DensePoly.compose f q = DensePoly.composeScalarCoeffList f.toArray.toList q := by
+    DensePoly.compose f q = DensePoly.composeScalarCoeffList f.toList q := by
   apply DensePoly.compose_eq_composeScalarCoeffList_of_step
   intro acc c
   rw [FpPoly.add_comm, FpPoly.mul_comm q acc]
@@ -258,9 +258,9 @@ private theorem composeCoeffPowerSumFrom_replicate_zero_append_one
       congr 1
       omega
 
-private theorem monomial_one_toArray_toList_eq
+private theorem monomial_one_toList_eq
     [ZMod64.PrimeModulus p] (k : Nat) :
-    (DensePoly.monomial k (1 : ZMod64 p) : FpPoly p).toArray.toList =
+    (DensePoly.monomial k (1 : ZMod64 p) : FpPoly p).toList =
       List.replicate k (Zero.zero : ZMod64 p) ++ [(1 : ZMod64 p)] := by
   have h1 : (1 : ZMod64 p) ≠ (Zero.zero : ZMod64 p) := one_ne_zero_of_prime
   show ((DensePoly.monomial k (1 : ZMod64 p) : FpPoly p).coeffs.toList :
@@ -276,7 +276,7 @@ private theorem compose_monomial_k_one_eq
     DensePoly.compose
         ((DensePoly.monomial k (1 : ZMod64 p)) : FpPoly p) w =
       linearPow w k := by
-  rw [compose_eq_powerSum, monomial_one_toArray_toList_eq,
+  rw [compose_eq_powerSum, monomial_one_toList_eq,
     composeCoeffPowerSumFrom_replicate_zero_append_one]
   rw [Nat.zero_add]
 
@@ -361,7 +361,7 @@ extend-past-the-bound variant `compose_eq_coeff_power_sum_upTo_bound` follows. -
 private theorem compose_eq_coeff_power_sum_upTo_size (f w : FpPoly p) :
     DensePoly.compose f w =
       composeCoeffPowerSumUpTo (fun i => f.coeff i) f.size 0 w := by
-  rw [compose_eq_powerSum, DensePoly.toArray_toList_eq_coeff_range]
+  rw [compose_eq_powerSum, DensePoly.toList_eq_coeff_range]
   simpa using composeCoeffPowerSumFrom_range_eq_upTo (fun i => f.coeff i) w f.size 0
 
 /-- Single-step extension invariance: when the next coefficient
@@ -606,13 +606,13 @@ private theorem compose_ofCoeffs_eq_composeScalarCoeffList
     DensePoly.compose (DensePoly.ofCoeffs cs.toArray : FpPoly p) q =
       DensePoly.composeScalarCoeffList cs q := by
   rw [compose_eq_composeScalarCoeffList]
-  have htoArray :
-      (DensePoly.ofCoeffs cs.toArray : FpPoly p).toArray.toList =
+  have htoList :
+      (DensePoly.ofCoeffs cs.toArray : FpPoly p).toList =
         DensePoly.trimTrailingZerosList cs := by
     show (DensePoly.trimTrailingZeros cs.toArray).toList =
       DensePoly.trimTrailingZerosList cs
     simp [DensePoly.trimTrailingZeros]
-  rw [htoArray, composeScalarCoeffList_trim]
+  rw [htoList, composeScalarCoeffList_trim]
 
 /-- Generic add-comm-monoid rearrangement: `A + B + (C + D) = D + B + C + A`. -/
 private theorem fp_add_acm_rearrange
@@ -797,6 +797,7 @@ theorem compose_mul_X_sub_C [ZMod64.PrimeModulus p]
       DensePoly.compose a w * (w - FpPoly.C c) := by
   rw [mul_X_sub_C_eq_ofCoeffs_mulXSubCList, compose_ofCoeffs_eq_composeScalarCoeffList,
     composeScalarCoeffList_mulXSubCList, compose_eq_composeScalarCoeffList]
+  rfl
 
 /-! ### foldl transport for the prime-field linear product
 

@@ -678,6 +678,20 @@ coefficient function. -/
     p.toArray.getD n (Zero.zero : R) = p.coeff n := by
   rfl
 
+/-- Spec-level view of the stored coefficients as a list, lowest degree first.
+`noncomputable` by design: kernel-facing specifications, theorem statements,
+and proofs read coefficients through this list view, while runtime code stays
+on the `Array` API. A deliberate runtime list round-trip spells out
+`toArray.toList` explicitly. -/
+@[expose]
+noncomputable def toList (p : DensePoly R) : List R :=
+  p.toArray.toList
+
+/-- The spec-level coefficient list has one entry per stored coefficient. -/
+@[simp, grind =] theorem length_toList (p : DensePoly R) :
+    p.toList.length = p.size := by
+  simp [toList, toArray, size]
+
 /-- Normalizing the already-normalized coefficient array reconstructs the same polynomial. -/
 @[simp, grind =] theorem ofCoeffs_toArray (p : DensePoly R) :
     ofCoeffs p.toArray = p := by
@@ -686,10 +700,10 @@ coefficient function. -/
   rw [coeff_ofCoeffs]
   rfl
 
-/-- Building from the exposed normalized coefficient list reconstructs the same polynomial. -/
-@[simp, grind =] theorem ofList_toArray_toList (p : DensePoly R) :
-    ofList p.toArray.toList = p := by
-  simp [ofList]
+/-- Building from the spec-level coefficient list reconstructs the same polynomial. -/
+@[simp, grind =] theorem ofList_toList (p : DensePoly R) :
+    ofList p.toList = p := by
+  simp [toList, ofList]
 
 /-- Normalizing an empty coefficient array gives the zero polynomial. -/
 @[simp, grind =] theorem ofCoeffs_empty :
