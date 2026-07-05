@@ -22,7 +22,6 @@ public import HexBerlekampZassenhaus.TrialProofs
 public import HexBerlekampZassenhaus.QuadraticRootProofs
 public import HexBerlekampZassenhaus.PrimitivityProofs
 public import HexBerlekampZassenhaus.ProductProofs
-public import HexBerlekampZassenhaus.CrossCheck
 public import HexBerlekampZassenhaus.SmallModSingleton
 
 public section
@@ -33,7 +32,8 @@ Berlekamp-Zassenhaus factorization pipeline: normalization, good-prime
 selection, Hensel-lift packaging, LLL-based recombination, bounded/default
 factor entry points, and the integer irreducibility certificate checker.
 
-The library root also imports `HexBerlekampZassenhaus.Conformance` for
-Phase 3 core checks and `HexBerlekampZassenhaus.CrossCheck`, the
-SPEC-sanctioned LLL-vs-exhaustive recombination cross-check.
+The Phase 3 core checks (`HexBerlekampZassenhaus.Conformance`) and the
+SPEC-sanctioned LLL-vs-exhaustive recombination cross-check
+(`HexBerlekampZassenhaus.CrossCheck`) live under the `conformance/`
+sub-project, which builds in the same `lake build`.
 -/

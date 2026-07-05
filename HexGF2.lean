@@ -9,13 +9,11 @@ module
 public import HexGF2.Basic
 public import HexGF2.Clmul
 public import HexGF2.CommonIrreducibility
-public import HexGF2.CrossCheck
 public import HexGF2.Euclid
 public import HexGF2.Field
 public import HexGF2.Irreducibility
 public import HexGF2.Multiply
 public import HexGF2.RabinSoundness
-public import HexGF2.Smoke
 
 public section
 

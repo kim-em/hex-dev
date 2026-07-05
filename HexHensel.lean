@@ -11,7 +11,6 @@ public import HexHensel.Linear
 public import HexHensel.Multifactor
 public import HexHensel.Quadratic
 public import HexHensel.QuadraticMultifactor
-public import HexHensel.CrossCheck
 
 public section
 

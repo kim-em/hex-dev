@@ -188,11 +188,15 @@ lean_lib HexGF2BenchSupport where
   globs := #[`HexGF2.Bench]
 
 -- Conformance #guard drivers live under `conformance/` and are built by this
--- library (mirroring the released conformance sub-projects). EmitFixtures drivers
--- are the `*_emit_fixtures` exes below, carrying `srcDir := "conformance"`.
+-- library (mirroring the released conformance sub-projects). Alongside each
+-- library's `Conformance` core module, the heavier cross-check sweeps and
+-- extern-path fast checks (`CrossCheck` / `FastCheck`) also live here so the
+-- implementation-vs-testing boundary stays legible; they elaborate their
+-- `#guard`s in the same `lake build`. EmitFixtures drivers are the
+-- `*_emit_fixtures` exes below, carrying `srcDir := "conformance"`.
 lean_lib HexConformance where
   srcDir := "conformance"
-  globs := #[`HexArith.Conformance, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexConway.Conformance, `HexGF2.Conformance, `HexGFq.Conformance, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance]
+  globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance]
 
 lean_exe hexrowreduce_emit_fixtures where
   srcDir := "conformance"

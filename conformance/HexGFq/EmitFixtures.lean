@@ -25,7 +25,7 @@ because both `packed_*` and `generic_*` would mismatch.
 The `HexConway` Tier-1 table currently exposes a `Conway.SupportedEntry`
 plus `Conway.PackedGF2Entry` only at extension degree `(2, 1)`, which
 makes the committed correspondence trivial.  Following the
-`HexGFq/CrossCheck.lean` pattern, this driver exercises the correspondence
+`conformance/HexGFq/CrossCheck.lean` pattern, this driver exercises the correspondence
 at larger binary degrees by constructing ad-hoc moduli with local
 irreducibility witnesses; the operations themselves still execute and
 their outputs feed the python-flint cross-check.
@@ -213,7 +213,7 @@ private def fp2Coeffs (f : FpPoly 2) : List Int :=
 Each namespace fixes a known irreducible packed modulus, packages the
 matching generic `FpPoly 2` modulus via `Conway.packedGF2FpPoly`, and
 provides irreducibility plus positive-degree witnesses for both
-representations.  This mirrors `HexGFq/CrossCheck.lean`.
+representations.  This mirrors `conformance/HexGFq/CrossCheck.lean`.
 -/
 
 namespace N4
