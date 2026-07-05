@@ -267,9 +267,11 @@ This definition is the kernel-reduction-friendly specification: the accumulator
 is a plain list walked head-first, so reducing a concrete product costs one
 cons-step per `(i, j)` coefficient pair instead of an O(size) list traversal
 per `Array` access. Compiled code instead runs the in-place `Array` loop
-`mulImpl`, registered by the `@[csimp]` proof `mul_eq_impl`. -/
+`mulImpl`, registered by the `@[csimp]` proof `mul_eq_impl`. Marked
+`noncomputable` so the specification itself is never compiled; every runtime
+caller compiles against `mulImpl` through the `@[csimp]` equality. -/
 @[expose]
-def mul [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
+noncomputable def mul [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
   if p.isZero || q.isZero then 0 else
     let size := p.size + q.size - 1
     ofCoeffs (mulRows q.toArray.toList p.toArray.toList

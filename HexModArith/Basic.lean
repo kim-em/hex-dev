@@ -454,9 +454,11 @@ This is the kernel-reduction-friendly specification: reducing it unfolds to a
 single `Nat` addition and mod, so `decide`-style proofs walk a straight-line
 computation. Compiled code instead runs the branchy machine-word `addImpl`,
 registered by the `@[csimp]` proof `add_eq_impl`.
+Marked `noncomputable` so the specification itself is never compiled; every
+runtime caller compiles against the `@[csimp]`-registered implementation.
 -/
 @[expose]
-def add (a b : ZMod64 p) : ZMod64 p :=
+noncomputable def add (a b : ZMod64 p) : ZMod64 p :=
   ofNat p (a.toNat + b.toNat)
 
 /--
@@ -482,9 +484,11 @@ representative of the modular difference.
 
 Like `add`, this is the kernel-reduction-friendly specification; compiled code
 runs the branchy machine-word `subImpl` via the `@[csimp]` proof `sub_eq_impl`.
+Marked `noncomputable` so the specification itself is never compiled; every
+runtime caller compiles against the `@[csimp]`-registered implementation.
 -/
 @[expose]
-def sub (a b : ZMod64 p) : ZMod64 p :=
+noncomputable def sub (a b : ZMod64 p) : ZMod64 p :=
   ofNat p (a.toNat + (p - b.toNat))
 
 /--

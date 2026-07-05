@@ -148,9 +148,11 @@ private theorem trimTrailingZerosList_append_ne_zero (L : List R) {v : R}
 /-- Normalize a coefficient array by discarding all trailing zeros. The compiled runtime
 uses the value-equal `trimTrailingZerosImpl` (proved by `trimTrailingZeros_eq_impl`,
 registered `@[csimp]`), which pops trailing zeros off the array in place instead of
-round-tripping through `coeffs.toList`. -/
+round-tripping through `coeffs.toList`. Marked `noncomputable` so the
+specification itself is never compiled; every runtime caller compiles against
+`trimTrailingZerosImpl` through the `@[csimp]` equality. -/
 @[expose]
-def trimTrailingZeros (coeffs : Array R) : Array R :=
+noncomputable def trimTrailingZeros (coeffs : Array R) : Array R :=
   (trimTrailingZerosList coeffs.toList).toArray
 
 omit [Zero R] [DecidableEq R] in
