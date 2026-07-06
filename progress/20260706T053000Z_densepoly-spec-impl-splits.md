@@ -10,8 +10,16 @@ issue #8606 / #8618), stacked branches densepoly-arith-split -> horner-split
   neg via Array.map impl; derivative via derivList spec + ofFn impl;
   size_derivative_le; six external derivative body-unfolds migrated.
   Key incident: zipPad's first four-clause form compiled via well-founded
-  recursion (kernel-opaque, broke every downstream decide, e.g. HexConway
-  certificates); restructured to structural recursion on the first list.
+  recursion with an AUTO-DERIVED lexicographic measure
+  (invImage/Prod.instWellFoundedRelation), which does not kernel-reduce
+  (decide +kernel fails) and broke every downstream decide (HexConway
+  certificates). Corrected analysis after review: WF recursion is NOT
+  kernel-opaque in general -- with an explicit Nat measure the kernel
+  reduces it, and plain decide fails only because WF definitions are
+  @[irreducible] by default (unseal or decide +kernel unblocks;
+  @[semireducible] is warned ineffective for WF). Structural recursion
+  remains the right shape for kernel-facing specs: no per-site unseal at
+  the ~50 cross-check decides, ordinary defeq, cheaper reduction.
 - PR 2 (#8627, CI running): eval/compose noncomputable cons-walk specs
   (evalCoeffList public, new orientation-preserving composeCoeffList) with
   downward Array.foldr impls; composeModMonic same split
