@@ -209,11 +209,11 @@ rather than being passed through, so every output entry is literally
 reproduce with no algebraic laws on `R`. -/
 @[expose]
 def zipPad (f : R → R → R) : List R → List R → List R
-  | [], [] => []
-  | [], q :: qs => f (Zero.zero : R) q :: zipPad f [] qs
-  | p :: ps, [] => f p (Zero.zero : R) :: zipPad f ps []
-  | p :: ps, q :: qs => f p q :: zipPad f ps qs
+  | [], ys => ys.map (fun y => f (Zero.zero : R) y)
+  | x :: xs, [] => f x (Zero.zero : R) :: zipPad f xs []
+  | x :: xs, y :: ys => f x y :: zipPad f xs ys
 
+omit [DecidableEq R] in
 /-- Default-indexed read of a padded zip: inside the padded range the entry is
 `f` of the two default-indexed reads, outside it is the default. -/
 private theorem zipPad_getD (f : R → R → R) (xs ys : List R) (n : Nat) :
@@ -240,6 +240,7 @@ private theorem zipPad_getD (f : R → R → R) (xs ys : List R) (n : Nat) :
           | zero => simp [zipPad]
           | succ m => simpa [zipPad] using ihp qs m
 
+omit [DecidableEq R] in
 /-- Default-indexed read of `Array.ofFn`: the generator inside the range,
 the default outside. -/
 private theorem array_ofFn_getD {n : Nat} (f : Fin n → R) (i : Nat) :
@@ -252,6 +253,7 @@ private theorem array_ofFn_getD {n : Nat} (f : Fin n → R) (i : Nat) :
   · rw [dif_neg h, dif_neg h]
     rfl
 
+omit [DecidableEq R] in
 /-- Default-indexed read of `Array.map`: `g` of the entry inside the range,
 the default outside. -/
 private theorem array_map_getD (g : R → R) (a : Array R) (i : Nat) :
@@ -988,7 +990,7 @@ private theorem evalCoeffList_zipPad_add [Add R] [Mul R] (xs ys : List R) (x : R
       induction ys with
       | nil => simpa [zipPad, evalCoeffList] using hzero_add.symm
       | cons q qs ihq =>
-          simp only [zipPad, evalCoeffList] at ihq ⊢
+          simp only [zipPad, evalCoeffList, List.map_cons] at ihq ⊢
           rw [ihq, hstep, hzero_horner]
   | cons c cs ihp =>
       cases ys with
@@ -1013,7 +1015,7 @@ private theorem evalCoeffList_zipPad_sub [Sub R] [Add R] [Mul R] (xs ys : List R
       induction ys with
       | nil => simpa [zipPad, evalCoeffList] using hzero_sub.symm
       | cons q qs ihq =>
-          simp only [zipPad, evalCoeffList] at ihq ⊢
+          simp only [zipPad, evalCoeffList, List.map_cons] at ihq ⊢
           rw [ihq, hstep, hzero_horner]
   | cons c cs ihp =>
       cases ys with
@@ -1196,6 +1198,7 @@ def derivList [NatCast R] [Mul R] : Nat → List R → List R
   | _, [] => []
   | i, c :: cs => ((i + 1 : Nat) : R) * c :: derivList (i + 1) cs
 
+omit [DecidableEq R] in
 /-- Default-indexed read of the derivative walk. -/
 private theorem derivList_getD [NatCast R] [Mul R] (i : Nat) (cs : List R) (n : Nat) :
     (derivList i cs).getD n (Zero.zero : R) =
@@ -1265,6 +1268,7 @@ theorem derivative_eq_impl : @derivative = @derivativeImpl := by
   funext R _ _ _ _ p
   exact derivative_eq_derivativeImpl p
 
+omit [Zero R] [DecidableEq R] in
 /-- The derivative walk preserves list length. -/
 private theorem derivList_length [NatCast R] [Mul R] (i : Nat) (cs : List R) :
     (derivList i cs).length = cs.length := by

@@ -249,7 +249,7 @@ private theorem squareFreeAuxRevContribution_pthRoot_correct_pow
   exact hroot
 
 private theorem derivative_coeff_pred_of_pos_lt
-    (f : FpPoly p) {n : Nat} (hn0 : 0 < n) (hn : n < f.size) :
+    (f : FpPoly p) {n : Nat} (hn0 : 0 < n) (_hn : n < f.size) :
     (DensePoly.derivative f).coeff (n - 1) =
       ((n : Nat) : ZMod64 p) * f.coeff n := by
   have h := DensePoly.coeff_derivative f (n - 1) (Lean.Grind.Semiring.mul_zero _)
