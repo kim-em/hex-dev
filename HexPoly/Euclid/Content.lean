@@ -27,26 +27,83 @@ namespace Hex
 universe u
 
 namespace DensePoly
-/-- The nonnegative gcd of the coefficients of an integer polynomial. -/
+/-- The nonnegative gcd of the coefficients of an integer polynomial.
+
+Kernel-facing specification: one fold over the spec-level coefficient list.
+Compiled code runs the `Array.foldl` loop `contentNatImpl` via the `@[csimp]`
+proof `contentNat_eq_impl`. -/
 @[expose]
-def contentNat (p : DensePoly Int) : Nat :=
-  p.toArray.toList.foldl (fun acc coeff => Nat.gcd acc coeff.natAbs) 0
+noncomputable def contentNat (p : DensePoly Int) : Nat :=
+  p.toList.foldl (fun acc coeff => Nat.gcd acc coeff.natAbs) 0
+
+/-- Runtime implementation of `contentNat`: a direct `Array.foldl` with no
+intermediate list (value-equal to `contentNat` by `contentNat_eq_impl`,
+registered `@[csimp]`). -/
+@[expose]
+def contentNatImpl (p : DensePoly Int) : Nat :=
+  p.toArray.foldl (fun acc coeff => Nat.gcd acc coeff.natAbs) 0
+
+/-- The spec `contentNat` and the `Array.foldl` runtime loop agree. -/
+theorem contentNat_eq_contentNatImpl (p : DensePoly Int) :
+    contentNat p = contentNatImpl p := by
+  unfold contentNat contentNatImpl
+  rw [← Array.foldl_toList]
+  rfl
+
+/-- Register the `Array.foldl` loop as the compiled implementation of
+`contentNat`. -/
+@[csimp]
+theorem contentNat_eq_impl : @contentNat = @contentNatImpl :=
+  funext contentNat_eq_contentNatImpl
 
 /-- The integer content of a polynomial. This is always nonnegative. -/
 @[expose]
 def content (p : DensePoly Int) : Int :=
   Int.ofNat (contentNat p)
 
-/-- The primitive part obtained by dividing every coefficient by the content. -/
+/-- The primitive part obtained by dividing every coefficient by the content.
+
+Kernel-facing specification: one map over the spec-level coefficient list.
+Compiled code runs the `Array.map` pass `primitivePartImpl` via the `@[csimp]`
+proof `primitivePart_eq_impl`. -/
 @[expose]
-def primitivePart (p : DensePoly Int) : DensePoly Int :=
+noncomputable def primitivePart (p : DensePoly Int) : DensePoly Int :=
   let cNat := contentNat p
   if cNat = 0 then
     0
   else
     let c := Int.ofNat cNat
-    ofCoeffs <|
-      p.toArray.toList.map (fun coeff => coeff / c) |>.toArray
+    ofCoeffs (p.toList.map (fun coeff => coeff / c)).toArray
+
+/-- Runtime implementation of `primitivePart`: one `Array.map` pass over the
+stored coefficients (value-equal to `primitivePart` by
+`primitivePart_eq_impl`, registered `@[csimp]`). -/
+@[expose]
+def primitivePartImpl (p : DensePoly Int) : DensePoly Int :=
+  let cNat := contentNatImpl p
+  if cNat = 0 then
+    0
+  else
+    let c := Int.ofNat cNat
+    ofCoeffs (p.toArray.map (fun coeff => coeff / c))
+
+/-- The spec `primitivePart` and the `Array.map` runtime pass agree. -/
+theorem primitivePart_eq_primitivePartImpl (p : DensePoly Int) :
+    primitivePart p = primitivePartImpl p := by
+  simp only [primitivePart, primitivePartImpl, ← contentNat_eq_contentNatImpl]
+  by_cases h : contentNat p = 0
+  · rw [if_pos h, if_pos h]
+  · rw [if_neg h, if_neg h]
+    congr 1
+    show ((p.toArray.toList).map
+        (fun coeff => coeff / Int.ofNat (contentNat p))).toArray = _
+    rw [← Array.toList_map, Array.toArray_toList]
+
+/-- Register the `Array.map` pass as the compiled implementation of
+`primitivePart`. -/
+@[csimp]
+theorem primitivePart_eq_impl : @primitivePart = @primitivePartImpl :=
+  funext primitivePart_eq_primitivePartImpl
 
 /-- Folding `Nat.gcd` over `xs` starting from `acc` yields a divisor of the seed `acc`, the base step for showing `contentNat` divides each coefficient. -/
 private theorem foldl_gcd_dvd_acc (xs : List Nat) (acc : Nat) :
@@ -79,7 +136,7 @@ private theorem contentNat_dvd_coeff (p : DensePoly Int) (n : Nat) :
     (contentNat p : Int) ∣ p.coeff n := by
   by_cases hn : n < p.size
   · rw [Int.ofNat_dvd_left]
-    unfold contentNat coeff toArray
+    unfold contentNat coeff toList toArray
     have hmem : p.coeffs[n].natAbs ∈ p.coeffs.toList.map Int.natAbs := by
       apply List.mem_map.mpr
       refine ⟨p.coeffs[n], ?_, rfl⟩
@@ -129,9 +186,10 @@ private theorem dvd_contentNat_of_dvd_coeff (p : DensePoly Int) (d : Nat)
     rcases hcoeff with ⟨n, hn, hget⟩
     have hcoeff_eq : p.coeff n = coeff := by
       have hnArray : n < p.coeffs.size := by
-        simpa [toArray] using hn
+        rw [length_toList] at hn
+        exact hn
       have hgetArray : p.coeffs[n] = coeff := by
-        simpa [toArray, Array.getElem_toList] using hget
+        simpa [toList, toArray, Array.getElem_toList] using hget
       change p.coeffs.getD n (0 : Int) = coeff
       rw [← Array.getElem_eq_getD (0 : Int)]
       exact hgetArray
@@ -771,7 +829,7 @@ theorem content_mul_primitivePart (p : DensePoly Int) :
             (primitivePart p).coeff n = p.coeff n / content p := by
           unfold primitivePart content
           rw [if_neg hc, coeff_ofCoeffs_list, list_getD_map_ediv_zero]
-          unfold coeff toArray Array.getD
+          unfold coeff toList toArray Array.getD
           by_cases hn : n < p.coeffs.size
           · simp [hn]
           · simp [hn]
@@ -894,9 +952,9 @@ theorem content_scale_int (c : Int) (p : DensePoly Int) :
   -- Goal: contentNat (scale c p) = c.natAbs * contentNat p.
   unfold contentNat
   have hscale_coeffs :
-      (scale c p).toArray.toList =
+      (scale c p).toList =
         trimTrailingZerosList (p.toArray.toList.map (fun x => c * x)) := by
-    unfold scale ofCoeffs toArray trimTrailingZeros
+    unfold scale ofCoeffs toList toArray trimTrailingZeros
     simp
   rw [hscale_coeffs, foldl_gcd_natAbs_trim_eq, List.foldl_map]
   have h := foldl_gcd_natAbs_mul_const_int c p.toArray.toList 0
@@ -922,7 +980,7 @@ constant. -/
 @[simp, grind =]
 theorem content_C (c : Int) :
     content (C c) = Int.ofNat c.natAbs := by
-  unfold content contentNat toArray
+  unfold content contentNat toList toArray
   by_cases hc : c = 0
   · simp [hc]
   · rw [coeffs_C_of_ne_zero hc]
