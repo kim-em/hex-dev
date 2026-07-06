@@ -252,18 +252,9 @@ private theorem derivative_coeff_pred_of_pos_lt
     (f : FpPoly p) {n : Nat} (hn0 : 0 < n) (hn : n < f.size) :
     (DensePoly.derivative f).coeff (n - 1) =
       ((n : Nat) : ZMod64 p) * f.coeff n := by
-  unfold DensePoly.derivative
-  rw [DensePoly.coeff_ofCoeffs_list]
-  have hpred : n - 1 < f.size - 1 := by omega
-  have hget :
-      (((List.range (f.size - 1)).map
-          (fun i => (((i + 1 : Nat) : ZMod64 p) * f.coeff (i + 1)))).getD
-        (n - 1) (0 : ZMod64 p)) =
-          (((n - 1 + 1 : Nat) : ZMod64 p) * f.coeff (n - 1 + 1)) := by
-    simp [List.getD, hpred]
-  have hsucc : n - 1 + 1 = n := by omega
-  rw [hsucc] at hget
-  exact hget
+  have h := DensePoly.coeff_derivative f (n - 1) (Lean.Grind.Semiring.mul_zero _)
+  rw [show n - 1 + 1 = n by omega] at h
+  exact h
 
 private theorem zmod64_natCast_ne_zero_of_mod_ne_zero
     (n : Nat) (hn : n % p ≠ 0) :
@@ -364,9 +355,9 @@ private theorem squareFreeAuxRevContribution_one
           DensePoly.coeffs_C_of_ne_zero (zmod64_one_ne_zero_of_prime hp)
         have hsize : (1 : FpPoly p).size = 1 := by
           simpa [DensePoly.size] using congrArg Array.size hcoeffs
-        unfold DensePoly.derivative
-        simp [hsize, DensePoly.isZero, DensePoly.ofCoeffs, DensePoly.trimTrailingZeros]
-        rfl
+        rw [DensePoly.isZero_eq_true_iff]
+        have h := DensePoly.size_derivative_le (1 : FpPoly p)
+        omega
       simp [hone_ne]
       rw [hdf_one, pthRoot_one hp]
       exact ih (multiplicity * p)
@@ -375,9 +366,9 @@ private theorem squareFreeAuxRevContribution_one
 private theorem derivative_isZero_true_of_size_one
     (f : FpPoly p) (hsize : f.size = 1) :
     (DensePoly.derivative f).isZero = true := by
-  unfold DensePoly.derivative
-  simp [hsize, DensePoly.isZero, DensePoly.ofCoeffs, DensePoly.trimTrailingZeros]
-  rfl
+  rw [DensePoly.isZero_eq_true_iff]
+  have h := DensePoly.size_derivative_le f
+  omega
 
 /-- Square-free contribution correctness on `pthRoot 1`: it equals `pow (pthRoot 1) multiplicity`, the constant base case of the `pthRoot` branch. -/
 private theorem squareFreeAuxRevContribution_pthRoot_constant_correct

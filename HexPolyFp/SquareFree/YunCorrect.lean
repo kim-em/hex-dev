@@ -872,9 +872,9 @@ private theorem squareFreeAuxRevResidualSatisfied_one
           DensePoly.coeffs_C_of_ne_zero (zmod64_one_ne_zero_of_prime hp)
         have hsize : (1 : FpPoly p).size = 1 := by
           simpa [DensePoly.size] using congrArg Array.size hcoeffs
-        unfold DensePoly.derivative
-        simp [hsize, DensePoly.isZero, DensePoly.ofCoeffs, DensePoly.trimTrailingZeros]
-        rfl
+        rw [DensePoly.isZero_eq_true_iff]
+        have h := DensePoly.size_derivative_le (1 : FpPoly p)
+        omega
       rw [if_neg (by simp [hone_ne]), if_pos hdf_one, pthRoot_one hp]
       exact ih (m * p)
 

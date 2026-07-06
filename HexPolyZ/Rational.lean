@@ -303,20 +303,8 @@ private theorem rat_list_getD_map_range (size n : Nat) (f : Nat → Rat) :
 
 /-- The `n`-th coefficient of `DensePoly.derivative p` is `(n + 1) * p.coeff (n + 1)`. -/
 private theorem rat_coeff_derivative (p : DensePoly Rat) (n : Nat) :
-    (DensePoly.derivative p).coeff n = ((n + 1 : Nat) : Rat) * p.coeff (n + 1) := by
-  unfold DensePoly.derivative
-  rw [DensePoly.coeff_ofCoeffs_list]
-  change
-    ((List.range (p.size - 1)).map
-        (fun i => ((i + 1 : Nat) : Rat) * p.coeff (i + 1))).getD n 0 =
-      ((n + 1 : Nat) : Rat) * p.coeff (n + 1)
-  rw [rat_list_getD_map_range]
-  by_cases hn : n < p.size - 1
-  · simp [hn]
-  · have hp : p.size ≤ n + 1 := by omega
-    have hcoeff : p.coeff (n + 1) = 0 :=
-      DensePoly.coeff_eq_zero_of_size_le p hp
-    simp [hn, hcoeff]
+    (DensePoly.derivative p).coeff n = ((n + 1 : Nat) : Rat) * p.coeff (n + 1) :=
+  DensePoly.coeff_derivative p n (Rat.mul_zero _)
 
 /-- Differentiation commutes with scaling a rational dense polynomial by a unit `u`. -/
 private theorem rat_derivative_scale (u : Rat) (p : DensePoly Rat) :
@@ -1615,17 +1603,8 @@ private theorem size_le_one_of_toRatPoly_derivative_zero (p : ZPoly)
   simpa [size_toRatPoly p] using hrat
 
 private theorem rat_derivative_size_le_pred (p : DensePoly Rat) :
-    (DensePoly.derivative p).size ≤ p.size - 1 := by
-  unfold DensePoly.derivative
-  have hle := DensePoly.size_ofCoeffs_le
-    ((List.range (p.size - 1)).map
-      (fun i => ((i + 1 : Nat) : Rat) * p.coeff (i + 1))).toArray
-  have hlen :
-      ((List.range (p.size - 1)).map
-        (fun i => ((i + 1 : Nat) : Rat) * p.coeff (i + 1))).toArray.size =
-      p.size - 1 := by
-    simp
-  omega
+    (DensePoly.derivative p).size ≤ p.size - 1 :=
+  DensePoly.size_derivative_le p
 
 private theorem rat_derivative_zero_of_size_le_one (p : DensePoly Rat)
     (hp : p.size ≤ 1) :
