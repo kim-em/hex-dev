@@ -261,6 +261,20 @@ build with `run_in_background: true`, then wait for its completion
 notification (or one `until grep -q "Built <target>" log; do sleep N; done`
 waiter) before starting another. Do not stack build + waiter loops.
 
+**`compiled configuration is invalid; run with '-R' to reconfigure` is NOT
+spurious.** When `lake build` ends with only that message and no `Built …`
+lines, the build did *nothing* — it served stale `.olean`s and reported a
+false green. In a fresh worktree this silently masks real errors (a proof that
+depends on beta-reduction or a fragile `simp` can "pass" locally and then fail
+in CI, which compiles from scratch). Fix it once with `lake build -R <target>`
+to reconfigure. **Caution:** `-R` may re-clone `mathlib` and wipe its cached
+oleans, after which a full build recompiles mathlib from source (hours). If you
+see it start building `Mathlib.*`, stop and run `lake exe cache get` to restore
+the oleans (download, never rebuild — see the global CLAUDE.md), then build only
+Hex targets. After reconfiguring once, plain `lake build` is a real incremental
+build again. Always confirm a green build shows `Build completed successfully
+(N jobs)` with `N` matching a real compile, not just the absence of `error:`.
+
 **Commit early, create PRs early.** Sessions can terminate at any time.
 Pushed-but-not-PR'd work is effectively lost — nobody will find it.
 
