@@ -221,7 +221,7 @@ generic nullspace, and `Int`-extgcd fallbacks for modular inverses: the
 whole path runs boxed, typeclass-generic arithmetic. `HexPolyFp/Packed.lean`
 already provides the fix pattern (packed `Array UInt64` kernels with
 correspondence theorems; its documented `@[csimp]` swap for
-`FpPoly.modByMonic` has not landed yet). Filed as a separate perf issue;
+`FpPoly.modByMonic` has not landed yet). Filed as https://github.com/kim-em/hex-dev/issues/8630;
 this is the largest single lever on the classical tier's fast cases and is
 paid once per input by every tier.
 
