@@ -103,7 +103,7 @@ case to `eval_C` for reasoning about the evaluation map. -/
 @[simp, grind =]
 theorem eval_X [ZMod64.PrimeModulus p] (x : ZMod64 p) :
     DensePoly.eval (FpPoly.X : FpPoly p) x = x := by
-  unfold FpPoly.X DensePoly.eval DensePoly.toArray DensePoly.monomial
+  unfold FpPoly.X DensePoly.eval DensePoly.toList DensePoly.toArray DensePoly.monomial
   have h1 : (1 : ZMod64 p) ≠ (Zero.zero : ZMod64 p) := by
     intro h
     have h2 : 2 ≤ p := (ZMod64.PrimeModulus.prime (p := p)).two_le
@@ -114,47 +114,14 @@ theorem eval_X [ZMod64.PrimeModulus p] (x : ZMod64 p) :
         Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
     exact absurd htoNat (by omega)
   rw [dif_neg h1]
-  simp
   change (((0 : ZMod64 p) * x + 1) * x + 0 = x)
   rw [zmod_zero_mul, zmod_zero_add, zmod_one_mul, zmod_add_zero]
-
-private theorem foldl_eval_replicate_zero (x : ZMod64 p) :
-    ∀ n acc,
-      (List.replicate n (0 : ZMod64 p)).foldl
-          (fun acc coeff => acc * x + coeff) acc =
-        acc * x ^ n := by
-  intro n
-  induction n with
-  | zero =>
-      intro acc
-      rw [Lean.Grind.Semiring.pow_zero]
-      exact (zmod_mul_one acc).symm
-  | succ n ih =>
-      intro acc
-      simp only [List.replicate_succ, List.foldl_cons]
-      rw [zmod_add_zero, ih (acc * x), Lean.Grind.Semiring.pow_succ x n,
-        Lean.Grind.Semiring.mul_assoc acc x (x ^ n), Lean.Grind.CommSemiring.mul_comm x (x ^ n)]
 
 /-- Evaluating a monomial gives the coefficient times the corresponding power. -/
 @[simp, grind =]
 theorem eval_monomial (n : Nat) (c x : ZMod64 p) :
-    DensePoly.eval (DensePoly.monomial n c : FpPoly p) x = c * x ^ n := by
-  by_cases hc : c = 0
-  · subst c
-    unfold DensePoly.monomial
-    rw [dif_pos (show (0 : ZMod64 p) = Zero.zero from rfl)]
-    exact (zmod_zero_mul (x ^ n)).symm
-  · unfold DensePoly.eval DensePoly.toArray DensePoly.monomial
-    have hc0 : ¬ c = (Zero.zero : ZMod64 p) := hc
-    rw [dif_neg hc0]
-    simp only [Array.toList_push, Array.toList_replicate, List.reverse_append,
-      List.reverse_cons, List.reverse_nil, List.nil_append, List.singleton_append,
-      List.foldl_cons]
-    change (List.replicate n (0 : ZMod64 p)).reverse.foldl
-        (fun acc coeff => acc * x + coeff) ((0 : ZMod64 p) * x + c) =
-      c * x ^ n
-    rw [zmod_zero_mul, zmod_zero_add, List.reverse_replicate]
-    exact foldl_eval_replicate_zero x n c
+    DensePoly.eval (DensePoly.monomial n c : FpPoly p) x = c * x ^ n :=
+  DensePoly.eval_monomial_semiring n c x
 
 /-- Coefficients of the constant polynomial wrapper are constant at degree zero and zero elsewhere. -/
 @[simp, grind =] theorem coeff_C (c : ZMod64 p) (n : Nat) :
@@ -227,28 +194,26 @@ private theorem evalScalarCoeffList_eq_powerSumFrom_zero
         mul_evalCoeffPowerSumFrom_eq_succ x coeffs 0]
       grind
 
-/-- The Horner-step left fold over the reversed coefficient list equals
-`evalScalarCoeffList`. -/
-private theorem foldl_eval_reverse_eq_evalScalarCoeffList
+/-- The generic low-to-high Horner walk equals `evalScalarCoeffList`; the two
+recursions differ only by the commutations `acc * x = x * acc` and
+`acc + c = c + acc`. -/
+private theorem evalCoeffList_eq_evalScalarCoeffList
     (x : ZMod64 p) :
     ∀ coeffs,
-      coeffs.reverse.foldl (fun acc coeff => acc * x + coeff) (Zero.zero : ZMod64 p) =
-        evalScalarCoeffList coeffs x
-  | [] => by
-      rfl
+      DensePoly.evalCoeffList coeffs x = evalScalarCoeffList coeffs x
+  | [] => rfl
   | coeff :: coeffs => by
-      rw [List.reverse_cons, List.foldl_append]
-      simp only [List.foldl_cons, List.foldl_nil]
-      rw [foldl_eval_reverse_eq_evalScalarCoeffList x coeffs, Lean.Grind.CommSemiring.mul_comm,
+      show DensePoly.evalCoeffList coeffs x * x + coeff =
+        coeff + x * evalScalarCoeffList coeffs x
+      rw [evalCoeffList_eq_evalScalarCoeffList x coeffs, Lean.Grind.CommSemiring.mul_comm,
         Lean.Grind.Semiring.add_comm]
-      rfl
 
 /-- `DensePoly.eval f x` equals the power sum of `f`'s coefficient list based at
 exponent zero. -/
 private theorem eval_eq_coeff_power_sum (f : FpPoly p) (x : ZMod64 p) :
     DensePoly.eval f x = evalCoeffPowerSumFrom f.toArray.toList 0 x := by
-  unfold DensePoly.eval
-  rw [foldl_eval_reverse_eq_evalScalarCoeffList x f.toArray.toList]
+  show DensePoly.evalCoeffList f.toArray.toList x = _
+  rw [evalCoeffList_eq_evalScalarCoeffList x f.toArray.toList]
   exact evalScalarCoeffList_eq_powerSumFrom_zero x f.toArray.toList
 
 /-- Indexing `f`'s coefficient list with default zero recovers `f.coeff n`. -/

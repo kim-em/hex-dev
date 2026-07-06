@@ -908,35 +908,60 @@ theorem size_mul_le [Add R] [Mul R] (p q : DensePoly R) :
     refine Nat.le_trans (size_ofCoeffs_le _) ?_
     simp [mulRows_length]
 
-/-- Evaluate a polynomial using Horner's method. -/
-@[expose]
-def eval [Add R] [Mul R] (p : DensePoly R) (x : R) : R :=
-  p.toArray.toList.reverse.foldl (fun acc coeff => acc * x + coeff) (Zero.zero : R)
-
 omit [DecidableEq R] in
-/-- List-level Horner evaluation, reading coefficients from low to high degree. -/
-private def evalCoeffList [Add R] [Mul R] :
+/-- List-level Horner evaluation, reading coefficients from low to high degree.
+The body of the `eval` specification. -/
+@[expose]
+def evalCoeffList [Add R] [Mul R] :
     List R → R → R
   | [], _ => Zero.zero
   | c :: cs, x => evalCoeffList cs x * x + c
 
+/-- Evaluate a polynomial using Horner's method.
+
+Kernel-facing specification: one cons walk of the coefficient list, highest
+degree innermost. Compiled code runs the downward `Array.foldr` loop
+`evalImpl` (no intermediate list or reverse allocation) via the `@[csimp]`
+proof `eval_eq_impl`. -/
+@[expose]
+noncomputable def eval [Add R] [Mul R] (p : DensePoly R) (x : R) : R :=
+  evalCoeffList p.toList x
+
+/-- Runtime implementation of `eval`: a downward `Array.foldr` Horner loop over
+the stored coefficients, with no intermediate coefficient-list or reverse
+allocation (value-equal to `eval` by `eval_eq_impl`, registered `@[csimp]`). -/
+@[expose]
+def evalImpl [Add R] [Mul R] (p : DensePoly R) (x : R) : R :=
+  p.toArray.foldr (fun coeff acc => acc * x + coeff) (Zero.zero : R)
+
 omit [DecidableEq R] in
-private theorem reverse_foldl_evalCoeffList [Add R] [Mul R] (coeffs : List R) (x : R) :
-    coeffs.reverse.foldl (fun acc coeff => acc * x + coeff) (Zero.zero : R) =
-      evalCoeffList coeffs x := by
+/-- `evalCoeffList` is the `List.foldr` of the Horner step. -/
+private theorem evalCoeffList_eq_foldr [Add R] [Mul R] (coeffs : List R) (x : R) :
+    evalCoeffList coeffs x =
+      coeffs.foldr (fun coeff acc => acc * x + coeff) (Zero.zero : R) := by
   induction coeffs with
-  | nil =>
-      rfl
+  | nil => rfl
   | cons c cs ih =>
-      rw [List.reverse_cons, List.foldl_append]
-      simp only [List.foldl_cons, List.foldl_nil, evalCoeffList]
+      simp only [evalCoeffList, List.foldr_cons]
       rw [ih]
+
+/-- The spec `eval` and the `Array.foldr` runtime loop compute the same value. -/
+theorem eval_eq_evalImpl [Add R] [Mul R] (p : DensePoly R) (x : R) :
+    eval p x = evalImpl p x := by
+  unfold eval evalImpl
+  rw [← Array.foldr_toList, ← evalCoeffList_eq_foldr]
+  rfl
+
+/-- Register the `Array.foldr` loop as the compiled implementation of `eval`. -/
+@[csimp]
+theorem eval_eq_impl : @eval = @evalImpl := by
+  funext R _ _ _ _ p x
+  exact eval_eq_evalImpl p x
 
 /-- Horner evaluation agrees with the list-level Horner form over stored coefficients. -/
 private theorem eval_eq_evalCoeffList [Add R] [Mul R] (p : DensePoly R) (x : R) :
-    eval p x = evalCoeffList p.toArray.toList x := by
-  unfold eval
-  exact reverse_foldl_evalCoeffList p.toArray.toList x
+    eval p x = evalCoeffList p.toArray.toList x :=
+  rfl
 
 private theorem evalCoeffList_trimTrailingZerosList [Add R] [Mul R] (coeffs : List R) (x : R)
     (hzero : (Zero.zero : R) * x + (Zero.zero : R) = (Zero.zero : R)) :
@@ -1027,10 +1052,53 @@ private theorem evalCoeffList_zipPad_sub [Sub R] [Add R] [Mul R] (xs ys : List R
           simp only [zipPad, evalCoeffList]
           rw [ihp qs, hstep]
 
-/-- Compose polynomials using Horner's method. -/
+/-- List-level Horner composition, reading coefficients from low to high
+degree and preserving the `acc * q + C c` step orientation (for generic `R`
+this differs from `composeScalarCoeffList`'s `C c + q * acc`). -/
 @[expose]
-def compose [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
-  p.toArray.toList.reverse.foldl (fun acc coeff => acc * q + C coeff) (0 : DensePoly R)
+def composeCoeffList [Add R] [Mul R] : List R → DensePoly R → DensePoly R
+  | [], _ => 0
+  | c :: cs, q => composeCoeffList cs q * q + C c
+
+/-- Compose polynomials using Horner's method.
+
+Kernel-facing specification: one cons walk of the coefficient list. Compiled
+code runs the downward `Array.foldr` loop `composeImpl` via the `@[csimp]`
+proof `compose_eq_impl`. -/
+@[expose]
+noncomputable def compose [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
+  composeCoeffList p.toList q
+
+/-- Runtime implementation of `compose`: a downward `Array.foldr` Horner loop
+(value-equal to `compose` by `compose_eq_impl`, registered `@[csimp]`). -/
+@[expose]
+def composeImpl [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
+  p.toArray.foldr (fun coeff acc => acc * q + C coeff) (0 : DensePoly R)
+
+/-- `composeCoeffList` is the `List.foldr` of the polynomial Horner step. -/
+private theorem composeCoeffList_eq_foldr [Add R] [Mul R] (coeffs : List R) (q : DensePoly R) :
+    composeCoeffList coeffs q =
+      coeffs.foldr (fun coeff acc => acc * q + C coeff) (0 : DensePoly R) := by
+  induction coeffs with
+  | nil => rfl
+  | cons c cs ih =>
+      simp only [composeCoeffList, List.foldr_cons]
+      rw [ih]
+
+/-- The spec `compose` and the `Array.foldr` runtime loop compute the same
+polynomial. -/
+theorem compose_eq_composeImpl [Add R] [Mul R] (p q : DensePoly R) :
+    compose p q = composeImpl p q := by
+  unfold compose composeImpl
+  rw [← Array.foldr_toList, ← composeCoeffList_eq_foldr]
+  rfl
+
+/-- Register the `Array.foldr` loop as the compiled implementation of
+`compose`. -/
+@[csimp]
+theorem compose_eq_impl : @compose = @composeImpl := by
+  funext R _ _ _ _ p q
+  exact compose_eq_composeImpl p q
 
 /-- Left-composition by the zero polynomial is zero. -/
 @[simp, grind =] theorem compose_zero_left [Add R] [Mul R] (q : DensePoly R) :
@@ -1045,7 +1113,7 @@ theorem compose_C [Add R] [Mul R] (c : R) (q : DensePoly R)
   by_cases hc : c = (0 : R)
   · rw [hc]
     change compose (C (Zero.zero : R)) q = (C (Zero.zero : R))
-    unfold compose toArray
+    unfold compose toList toArray
     rw [show (C (Zero.zero : R)).coeffs = #[] by
       change (C (0 : R)).coeffs = #[]
       exact coeffs_C_zero]
@@ -1059,7 +1127,7 @@ theorem compose_C [Add R] [Mul R] (c : R) (q : DensePoly R)
     · simp [hn]
     · simp [hn]
   · change c ≠ Zero.zero at hc
-    unfold compose toArray
+    unfold compose toList toArray
     rw [coeffs_C_of_ne_zero hc]
     change (0 : DensePoly R) * q + C c = C c
     rw [show (0 : DensePoly R) * q = 0 by rfl]
@@ -1100,12 +1168,11 @@ when the caller supplies the algebraic step that commutes a Horner tail past `q`
 theorem compose_eq_composeScalarCoeffList_of_step [Add R] [Mul R] (p q : DensePoly R)
     (hstep : ∀ acc c, acc * q + C c = C c + q * acc) :
     compose p q = composeScalarCoeffList p.toList q := by
-  unfold compose toList
-  induction p.toArray.toList with
+  unfold compose
+  induction p.toList with
   | nil => rfl
   | cons c cs ih =>
-      rw [List.reverse_cons, List.foldl_append]
-      simp only [List.foldl_cons, List.foldl_nil]
+      simp only [composeCoeffList, composeScalarCoeffList]
       rw [ih]
       exact hstep (composeScalarCoeffList cs q) c
 
@@ -1492,13 +1559,14 @@ theorem eval_C [Add R] [Mul R] (c x : R)
   by_cases hc : c = (0 : R)
   · rw [hc]
     change eval (C (Zero.zero : R)) x = (Zero.zero : R)
-    unfold eval toArray
+    unfold eval toList toArray
     rw [show (C (Zero.zero : R)).coeffs = #[] by
       change (C (0 : R)).coeffs = #[]
       exact coeffs_C_zero]
     rfl
   · change c ≠ Zero.zero at hc
-    simp [eval, toArray, coeffs_C_of_ne_zero hc, hzero_mul, hzero_add]
+    simp [eval, toList, toArray, evalCoeffList, coeffs_C_of_ne_zero hc,
+      hzero_mul, hzero_add]
 
 /-- Semiring-specialized evaluation law for constants. This packages the
 zero-multiplication and zero-addition laws needed by the generic `eval_C`. -/
@@ -1524,17 +1592,21 @@ private theorem semiring_mul_pow_left {S : Type u} [Lean.Grind.Semiring S]
         _ = x ^ (n + 1 + 1) := by
           exact (Lean.Grind.Semiring.pow_succ x (n + 1)).symm
 
-private theorem eval_replicate_zero_semiring {S : Type u} [Lean.Grind.Semiring S]
-    (n : Nat) (c x : S) :
-    (List.replicate n (0 : S)).foldl (fun acc coeff => acc * x + coeff) c =
-      c * x ^ n := by
-  induction n generalizing c with
+private theorem evalCoeffList_replicate_zero_semiring {S : Type u}
+    [Lean.Grind.Semiring S] [DecidableEq S] (n : Nat) (c x : S) :
+    evalCoeffList (List.replicate n (0 : S) ++ [c]) x = c * x ^ n := by
+  induction n with
   | zero =>
-      simp [Lean.Grind.Semiring.pow_zero, Lean.Grind.Semiring.mul_one]
+      show (0 : S) * x + c = c * x ^ 0
+      rw [Lean.Grind.Semiring.zero_mul, Lean.Grind.Semiring.pow_zero,
+        Lean.Grind.Semiring.mul_one]
+      grind
   | succ n ih =>
-      rw [List.replicate_succ, List.foldl_cons, ih]
-      simp [Lean.Grind.Semiring.add_zero, Lean.Grind.Semiring.mul_assoc,
-        semiring_mul_pow_left]
+      rw [List.replicate_succ, List.cons_append]
+      show evalCoeffList (List.replicate n (0 : S) ++ [c]) x * x + (0 : S) =
+        c * x ^ (n + 1)
+      rw [ih, Lean.Grind.Semiring.add_zero, Lean.Grind.Semiring.mul_assoc,
+        ← Lean.Grind.Semiring.pow_succ]
 
 /-- Semiring-specialized evaluation law for monomials. -/
 @[simp, grind =] theorem eval_monomial_semiring {S : Type u}
@@ -1544,16 +1616,11 @@ private theorem eval_replicate_zero_semiring {S : Type u} [Lean.Grind.Semiring S
   by_cases hc : c = (0 : S)
   · rw [hc, monomial_zero, eval_zero]
     simp [Lean.Grind.Semiring.zero_mul]
-  · unfold eval toArray monomial
+  · unfold eval toList toArray monomial
     change c ≠ Zero.zero at hc
     rw [dif_neg hc]
-    simp [Array.toList_push]
-    have hinit : (Zero.zero : S) * x + c = c := by
-      change (0 : S) * x + c = c
-      rw [Lean.Grind.Semiring.zero_mul]
-      grind
-    rw [hinit]
-    exact eval_replicate_zero_semiring n c x
+    simp only [Array.toList_push, Array.toList_replicate]
+    exact evalCoeffList_replicate_zero_semiring n c x
 
 /-- The formal derivative of the zero polynomial is zero. -/
 @[simp, grind =] theorem derivative_zero [NatCast R] [Mul R] :

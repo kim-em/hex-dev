@@ -243,8 +243,9 @@ project-side evaluation layer for root-counting arguments over
 quotient representation.
 -/
 @[expose]
-def eval (f : FpPoly p) (β : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
-  f.toArray.toList.reverse.foldl
+noncomputable def eval (f : FpPoly p) (β : Quotient g hmonic hg_pos) :
+    Quotient g hmonic hg_pos :=
+  f.toList.reverse.foldl
     (fun acc coeff =>
       acc * β + reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
         (DensePoly.C coeff))
@@ -253,8 +254,9 @@ def eval (f : FpPoly p) (β : Quotient g hmonic hg_pos) : Quotient g hmonic hg_p
 /-- Stored `FpPoly` coefficients embedded as quotient constants, in low-to-high
 coefficient order. -/
 @[expose]
-def evalQuotientCoeffs (f : FpPoly p) : List (Quotient g hmonic hg_pos) :=
-  f.toArray.toList.map
+noncomputable def evalQuotientCoeffs (f : FpPoly p) :
+    List (Quotient g hmonic hg_pos) :=
+  f.toList.map
     (fun coeff =>
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C coeff))
 
@@ -274,18 +276,18 @@ class. -/
         (DensePoly.C (0 : ZMod64 p)) β =
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
         (DensePoly.C (0 : ZMod64 p))
-    unfold eval DensePoly.toArray
+    unfold eval DensePoly.toList DensePoly.toArray
     rw [show (DensePoly.C (0 : ZMod64 p)).coeffs = #[] by
       exact DensePoly.coeffs_C_zero]
     rfl
-  · simp [eval, DensePoly.toArray, DensePoly.coeffs_C_of_ne_zero hc]
+  · simp [eval, DensePoly.toList, DensePoly.toArray, DensePoly.coeffs_C_of_ne_zero hc]
 
 /-- Evaluating the polynomial indeterminate gives the input quotient element. -/
 @[simp, grind =] theorem eval_X (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (FpPoly.X (p := p)) β = β := by
   change eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
       (DensePoly.monomial 1 (1 : ZMod64 p)) β = β
-  unfold eval DensePoly.toArray DensePoly.monomial
+  unfold eval DensePoly.toList DensePoly.toArray DensePoly.monomial
   split
   · exact False.elim (zmod64_one_ne_zero ‹(1 : ZMod64 p) = 0›)
   · have hC1 : reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
@@ -454,7 +456,7 @@ theorem eval_eq_evalCoeffList (f : FpPoly p) (β : Quotient g hmonic hg_pos) :
     eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β =
       evalCoeffList
         (evalQuotientCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f) β := by
-  unfold eval evalQuotientCoeffs
+  unfold eval evalQuotientCoeffs DensePoly.toList
   rw [foldl_eval_reverse_eq_evalScalarCoeffList
     (g := g) (hmonic := hmonic) (hg_pos := hg_pos) β f.toArray.toList]
   exact (evalCoeffList_map_reduce_C_eq_evalScalarCoeffList
@@ -463,7 +465,7 @@ theorem eval_eq_evalCoeffList (f : FpPoly p) (β : Quotient g hmonic hg_pos) :
 /-- `FpPoly`-specific divided-difference quotient evaluated between `α` and
 `β`, using the existing executable coefficient representation. -/
 @[expose]
-def evalDividedDifference (f : FpPoly p)
+noncomputable def evalDividedDifference (f : FpPoly p)
     (α β : Quotient g hmonic hg_pos) : Quotient g hmonic hg_pos :=
   dividedDifference
     (evalQuotientCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f) α β
@@ -471,7 +473,7 @@ def evalDividedDifference (f : FpPoly p)
 /-- Synthetic quotient coefficients for the `FpPoly` divided difference at
 `α`. -/
 @[expose]
-def evalDividedDifferenceCoeffs (f : FpPoly p)
+noncomputable def evalDividedDifferenceCoeffs (f : FpPoly p)
     (α : Quotient g hmonic hg_pos) : List (Quotient g hmonic hg_pos) :=
   dividedDifferenceCoeffs
     (evalQuotientCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f) α
@@ -550,7 +552,7 @@ private theorem eval_eq_coeff_power_sum (f : FpPoly p)
       evalCoeffPowerSumFrom
         (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
         f.toArray.toList 0 β := by
-  unfold eval
+  unfold eval DensePoly.toList
   rw [foldl_eval_reverse_eq_evalScalarCoeffList
     (g := g) (hmonic := hmonic) (hg_pos := hg_pos) β f.toArray.toList]
   exact evalScalarCoeffList_eq_powerSumFrom_zero
@@ -1074,7 +1076,7 @@ private theorem eval_monomial_core (n : Nat) (c : ZMod64 p)
         β ^ n
     unfold DensePoly.monomial
     rw [dif_pos (show (0 : ZMod64 p) = Zero.zero from rfl), eval_zero, reduce_C_zero, zero_mul]
-  · unfold eval DensePoly.toArray DensePoly.monomial
+  · unfold eval DensePoly.toList DensePoly.toArray DensePoly.monomial
     have hc0 : ¬ c = (Zero.zero : ZMod64 p) := hc
     rw [dif_neg hc0]
     simp only [Array.toList_push, Array.toList_replicate, List.reverse_append,
@@ -1432,7 +1434,7 @@ theorem evalCoeffList_rootsIn_elements_length_le_degree
 private theorem evalQuotientCoeffs_length (f : FpPoly p) :
     (evalQuotientCoeffs (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f).length =
       f.size := by
-  simp [evalQuotientCoeffs, DensePoly.toArray, DensePoly.size]
+  simp [evalQuotientCoeffs, DensePoly.toList, DensePoly.toArray, DensePoly.size]
 
 omit [ZMod64.PrimeModulus p] in
 private theorem fpPoly_eq_zero_of_size_eq_zero {f : FpPoly p} (hsize : f.size = 0) :
@@ -1472,7 +1474,7 @@ private theorem evalQuotientCoeffs_topNonzero_of_ne_zero
   let topQuot :=
     reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C topCoeff)
   refine ⟨topQuot, ?_, ?_⟩
-  · unfold evalQuotientCoeffs topQuot topCoeff DensePoly.toArray DensePoly.coeff
+  · unfold evalQuotientCoeffs topQuot topCoeff DensePoly.toList DensePoly.toArray DensePoly.coeff
     rw [List.getLast?_map, List.getLast?_eq_getElem?, Array.getElem?_toList]
     rw [Array.getElem?_eq_getElem
       (by simpa [DensePoly.size] using Nat.sub_one_lt_of_lt hsize_pos)]
@@ -1485,7 +1487,7 @@ private theorem evalQuotientCoeffs_topNonzero_of_ne_zero
 /-- Roots of an `FpPoly` quotient evaluation inside the canonical quotient
 enumeration. -/
 @[expose]
-def rootsOfFpPoly (f : FpPoly p) : List (Quotient g hmonic hg_pos) :=
+noncomputable def rootsOfFpPoly (f : FpPoly p) : List (Quotient g hmonic hg_pos) :=
   (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).filter
     (fun β => decide (eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β = 0))
 
