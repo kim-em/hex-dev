@@ -471,6 +471,43 @@ def main : IO Unit := do
     else if arm == "sameprime" then
       timePhase "profile same-prime" 30 inputs
         (fun f => factorChecksum (recursiveFactorSamePrime f))
+    else if arm == "prime" then
+      -- Prime-selection cost breakdown: full choosePrimeData? across degrees
+      -- and families, plus the marginal cost of one isGoodPrime check at the
+      -- already-selected prime (the walk repeats that per candidate prime).
+      for n in [8, 12, 16, 20, 24] do
+        let fam := (Array.range 8).map (linearProductShift n)
+        timePhase s!"choosePrimeData? split deg{n}" 50 fam (fun f =>
+          match choosePrimeData? f with
+          | none => 0
+          | some pd => UInt64.ofNat pd.p + UInt64.ofNat pd.factorsModP.size)
+      let phiFam := (Array.range 8).map (fun s => shiftPoly phi15 (Int.ofNat s))
+      timePhase "choosePrimeData? phi15 (deg 8)" 50 phiFam (fun f =>
+        match choosePrimeData? f with
+        | none => 0
+        | some pd => UInt64.ofNat pd.p + UInt64.ofNat pd.factorsModP.size)
+      let sd4Fam := (Array.range 4).map (fun s => shiftPoly advSD4 (Int.ofNat s))
+      timePhase "choosePrimeData? SD4 (deg 16)" 20 sd4Fam (fun f =>
+        match choosePrimeData? f with
+        | none => 0
+        | some pd => UInt64.ofNat pd.p + UInt64.ofNat pd.factorsModP.size)
+      -- marginal isGoodPrime cost at the selected prime, deg 24
+      let prepared := (Array.range 8).filterMap (fun s =>
+        let f := linearProductShift 24 s
+        (choosePrimeData? f).map (fun pd => (f, pd)))
+      let out ← IO.getStdout
+      let t0 ← IO.monoNanosNow
+      let mut acc : UInt64 := 0
+      let reps := 400
+      for i in [0:reps] do
+        let (f, pd) := prepared[i % prepared.size]!
+        let good := letI := pd.bounds; isGoodPrime f pd.p
+        acc := acc + (if good then 1 else 0) + UInt64.ofNat i
+      let t1 ← IO.monoNanosNow
+      IO.println s!"  isGoodPrime@selected deg24: {(t1 - t0).toFloat / reps.toFloat / 1000.0} us/call (sink={acc})"
+      for (f, pd) in prepared do
+        IO.println s!"    deg {f.degree?.getD 0}: selected p={pd.p} r={pd.factorsModP.size}"
+      out.flush
     else if arm == "phases" then
       -- Per-phase breakdown of one recursive node level on the deg-24 split
       -- input: prime selection, the k=1 lift, and the k=1 recombination scan.

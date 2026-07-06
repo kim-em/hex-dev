@@ -205,6 +205,26 @@ structural facts fall out:
   singleton peels are cheap successes, and the failed tail drops from
   `C(r', r'/2)` to `O(r')` (cap1) or `O(r'^2)` (cap2) per rung.
 
+### Prime selection breakdown (follow-up measurement)
+
+`RELIFT_PROFILE=prime` isolates `choosePrimeData?` (us/call, split shift
+families): deg 8: 818; deg 12: 2113; deg 16: 5372; deg 20: 10414; deg 24:
+18666 (roughly cubic in degree); phi15: 484; SD4: 8417. A SINGLE
+`isGoodPrime` check on a deg-24 input costs 424 us — one `modP` plus one
+generic `DensePoly.gcd` that should be sub-microsecond word arithmetic —
+so the ~9 failing candidate primes account for ~4 ms and the Berlekamp
+factorization (`fixedSpaceKernel` matrix + nullspace + the `c = 0..p-1`
+constant sweep of `DensePoly.gcd f (witness - C c)`) for the remaining
+~15 ms. perf attributes the time to closure dispatch (`lean_apply_1/2`
+~12%), allocator traffic (~15%), box/unbox shims on `ZMod64` values, the
+generic nullspace, and `Int`-extgcd fallbacks for modular inverses: the
+whole path runs boxed, typeclass-generic arithmetic. `HexPolyFp/Packed.lean`
+already provides the fix pattern (packed `Array UInt64` kernels with
+correspondence theorems; its documented `@[csimp]` swap for
+`FpPoly.modByMonic` has not landed yet). Filed as a separate perf issue;
+this is the largest single lever on the classical tier's fast cases and is
+paid once per input by every tier.
+
 ## Win/loss geography
 
 * **Wins (robust, ~2x end to end with same-prime + cap2):** composite cores
