@@ -920,15 +920,16 @@ def evalCoeffList [Add R] [Mul R] :
 /-- Evaluate a polynomial using Horner's method.
 
 Kernel-facing specification: one cons walk of the coefficient list, highest
-degree innermost. Compiled code runs the zero-allocation downward `Array.foldr`
-loop `evalImpl` via the `@[csimp]` proof `eval_eq_impl`. -/
+degree innermost. Compiled code runs the downward `Array.foldr` loop
+`evalImpl` (no intermediate list or reverse allocation) via the `@[csimp]`
+proof `eval_eq_impl`. -/
 @[expose]
 noncomputable def eval [Add R] [Mul R] (p : DensePoly R) (x : R) : R :=
   evalCoeffList p.toList x
 
 /-- Runtime implementation of `eval`: a downward `Array.foldr` Horner loop over
-the stored coefficients with no intermediate allocation (value-equal to `eval`
-by `eval_eq_impl`, registered `@[csimp]`). -/
+the stored coefficients, with no intermediate coefficient-list or reverse
+allocation (value-equal to `eval` by `eval_eq_impl`, registered `@[csimp]`). -/
 @[expose]
 def evalImpl [Add R] [Mul R] (p : DensePoly R) (x : R) : R :=
   p.toArray.foldr (fun coeff acc => acc * x + coeff) (Zero.zero : R)
