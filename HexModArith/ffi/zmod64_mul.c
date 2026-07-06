@@ -110,3 +110,38 @@ LEAN_EXPORT uint64_t lean_hex_zmod64_pow(b_lean_obj_arg p, uint64_t a, b_lean_ob
 
     return lean_hex_pow_mod_big_nat(base, n, modulus);
 }
+
+/* Lazy-reduction schoolbook convolution over F_p, backing `FpPoly.fpConvolve`.
+   Inputs are two `Array UInt64` of reduced residues (< p < 2^31); the whole
+   inner accumulation runs natively in `__uint128_t`, so each output coefficient
+   pays exactly one 64-bit reduction instead of one per product term, with no
+   per-term FFI boundary or boxed-residue traffic. Value-identical to the Lean
+   fallback body (`FpPoly.mulPacked_eq` proves the packed multiply equals `*`). */
+LEAN_EXPORT lean_obj_res lean_hex_fp_convolve(b_lean_obj_arg a_arr,
+        b_lean_obj_arg b_arr, uint64_t modulus) {
+    size_t na = lean_array_size(a_arr);
+    size_t nb = lean_array_size(b_arr);
+    if (na == 0 || nb == 0) {
+        return lean_alloc_array(0, 0);
+    }
+    size_t nk = na + nb - 1;
+    lean_object* out = lean_alloc_array(nk, nk);
+    for (size_t k = 0; k < nk; ++k) {
+        __uint128_t acc = 0;
+        size_t i_lo = (k + 1 > nb) ? (k + 1 - nb) : 0;
+        size_t i_hi = (k < na) ? k : (na - 1);
+        for (size_t i = i_lo; i <= i_hi; ++i) {
+            uint64_t ai = lean_unbox_uint64(lean_array_get_core(a_arr, i));
+            uint64_t bj = lean_unbox_uint64(lean_array_get_core(b_arr, k - i));
+            acc += (__uint128_t)ai * (__uint128_t)bj;
+        }
+        /* modulus == 0 would be division-by-zero UB; the pure-Lean fallback
+           computes `sum % 0 = sum` reduced into a `UInt64`, i.e. the low 64 bits
+           of the (128-bit-truncated) accumulator, so match it here. The real
+           callers (`FpPoly.mulPacked`) always pass `0 < modulus < 2^31` with
+           reduced word inputs, under which no truncation occurs. */
+        uint64_t r = modulus ? (uint64_t)(acc % modulus) : (uint64_t)acc;
+        lean_array_set_core(out, k, lean_box_uint64(r));
+    }
+    return out;
+}

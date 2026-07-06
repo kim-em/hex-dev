@@ -10,6 +10,7 @@ public import HexPolyFp.Field
 public import HexPolyFp.Ring
 public import HexPolyFp.Degree
 public import HexPolyFp.Packed
+public import HexPolyFp.PackedMul
 public import HexPolyFp.PrimeField
 public import HexPolyFp.Compose
 public import HexPolyFp.Enumeration
