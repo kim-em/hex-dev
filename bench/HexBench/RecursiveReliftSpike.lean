@@ -141,23 +141,26 @@ partial def findDivisorPairs
 
 /-- Peel integer factors off `target` one at a time, each paired with its base
 mod-p factors; when no proper subset (size `1..r/2`) divides, the whole
-remaining target is pushed unsplit with all remaining base factors. -/
+remaining target is pushed unsplit with all remaining base factors. `qbound`
+is a Mignotte factor bound for the ORIGINAL node target, computed once by the
+caller (every peeled cofactor is a factor of it, so the bound stays sound down
+the peel chain; recomputing per quotient is expensive big-int work). -/
 partial def recombPairs
-    (target : ZPoly) (remaining : List LiftedPair) (modulus : Nat)
+    (target : ZPoly) (remaining : List LiftedPair) (modulus qbound hiCap : Nat)
     (acc : Array (ZPoly × List ZPoly)) : Array (ZPoly × List ZPoly) :=
   let r := remaining.length
   if r == 0 then acc
   else
-    let qbound := ZPoly.defaultFactorCoeffBound target
-    match findDivisorPairs target remaining modulus qbound 1 (r / 2) with
+    match findDivisorPairs target remaining modulus qbound 1 (min hiCap (r / 2)) with
     | some (cand, candBase, quotient, rest) =>
-        recombPairs quotient rest modulus (acc.push (cand, candBase))
+        recombPairs quotient rest modulus qbound hiCap (acc.push (cand, candBase))
     | none => acc.push (target, remaining.map (·.2))
 
 /-- Base-factor-blind wrapper (pairs each lifted factor with itself). -/
-def recombInt (target : ZPoly) (factors : List ZPoly) (modulus : Nat) :
+def recombInt (target : ZPoly) (factors : List ZPoly) (modulus qbound : Nat) :
     Array ZPoly :=
-  (recombPairs target (factors.map fun g => (g, g)) modulus #[]).map (·.1)
+  (recombPairs target (factors.map fun g => (g, g)) modulus qbound
+    factors.length #[]).map (·.1)
 
 /-! ### The recursive per-remainder certification -/
 
@@ -181,17 +184,19 @@ recombine. Returns `(kStop, rungs, pieces)`; a singleton `pieces` means `g`
 never split, so the final rung was the floor and `g` is certified irreducible
 by fresh coverage. -/
 partial def reliftLadder
-    (g : ZPoly) (pd : PrimeChoiceData) (floorK k rungs : Nat) :
+    (g : ZPoly) (pd : PrimeChoiceData) (singletonSubFloor : Bool)
+    (qbound floorK k rungs : Nat) :
     Nat × Nat × Array (ZPoly × List ZPoly) :=
   let kk := min k floorK
   let ld := henselLiftData g kk pd
   letI := pd.bounds
   let base := pd.factorsModP.toList.map FpPoly.liftToZ
   let pairs := ld.liftedFactors.toList.zip base
-  let pieces := recombPairs g pairs (pd.p ^ kk) #[]
+  let hiCap := if singletonSubFloor && kk != floorK then 1 else pairs.length
+  let pieces := recombPairs g pairs (pd.p ^ kk) qbound hiCap #[]
   if pieces.size ≥ 2 then (kk, rungs + 1, pieces)
   else if kk == floorK then (kk, rungs + 1, #[(g, base)])
-  else reliftLadder g pd floorK (k * 2) (rungs + 1)
+  else reliftLadder g pd singletonSubFloor qbound floorK (k * 2) (rungs + 1)
 
 /-- Fresh-prime recursion: certify `g` (monic, squarefree) against a fresh
 prime selection and lift of its own, recursing on any split pieces. Returns
@@ -213,10 +218,9 @@ partial def certifyAux (g : ZPoly) (recs : Array NodeRec) :
           (#[g], recs.push { deg, p := pd.p, r, floorK := 0, kStop := 0, rungs := 0,
                              outcome := "modp-irreducible" })
         else
-          let floorK :=
-            precisionForCoeffBound
-              (ZPoly.defaultFactorCoeffBound (ZPoly.toMonic g).monic) pd.p
-          let (kStop, rungs, pieces) := reliftLadder g pd floorK 1 0
+          let qbound := ZPoly.defaultFactorCoeffBound (ZPoly.toMonic g).monic
+          let floorK := precisionForCoeffBound qbound pd.p
+          let (kStop, rungs, pieces) := reliftLadder g pd false qbound floorK 1 0
           if pieces.size == 1 then
             (#[g], recs.push { deg, p := pd.p, r, floorK, kStop, rungs,
                                outcome := "floor-certified" })
@@ -234,22 +238,26 @@ def recursiveFactorInt (core : ZPoly) : Array ZPoly :=
 /-- Escalation ladder for one remainder at the PARENT's prime, re-lifting the
 remainder's own base mod-p factors to the remainder's own floor. -/
 partial def reliftLadderSamePrime
-    (pd : PrimeChoiceData) (g : ZPoly) (baseFactors : List ZPoly)
-    (floorK k rungs : Nat) : Nat × Nat × Array (ZPoly × List ZPoly) :=
+    (pd : PrimeChoiceData) (subFloorCap : Nat) (g : ZPoly)
+    (baseFactors : List ZPoly)
+    (qbound floorK k rungs : Nat) : Nat × Nat × Array (ZPoly × List ZPoly) :=
   letI := pd.bounds
   let kk := min k floorK
   let lifted := ZPoly.multifactorLiftQuadratic pd.p kk g baseFactors.toArray
   let pairs := lifted.toList.zip baseFactors
-  let pieces := recombPairs g pairs (pd.p ^ kk) #[]
+  let hiCap := if kk != floorK then min subFloorCap pairs.length else pairs.length
+  let pieces := recombPairs g pairs (pd.p ^ kk) qbound hiCap #[]
   if pieces.size ≥ 2 then (kk, rungs + 1, pieces)
   else if kk == floorK then (kk, rungs + 1, #[(g, baseFactors)])
-  else reliftLadderSamePrime pd g baseFactors floorK (k * 2) (rungs + 1)
+  else reliftLadderSamePrime pd subFloorCap g baseFactors qbound floorK
+    (k * 2) (rungs + 1)
 
 /-- Same-prime recursion: certify `g` against a fresh lift of its OWN base
 mod-p factors (inherited from the parent's split) at the parent's prime, to
 `g`'s own floor. No per-node prime walk or Berlekamp. -/
 partial def certifySamePrimeAux
-    (pd : PrimeChoiceData) (g : ZPoly) (baseFactors : List ZPoly)
+    (pd : PrimeChoiceData) (subFloorCap : Nat) (g : ZPoly)
+    (baseFactors : List ZPoly)
     (recs : Array NodeRec) : Array ZPoly × Array NodeRec :=
   let deg := g.degree?.getD 0
   let r := baseFactors.length
@@ -260,10 +268,10 @@ partial def certifySamePrimeAux
     (#[g], recs.push { deg, p := pd.p, r, floorK := 0, kStop := 0, rungs := 0,
                        outcome := "modp-irreducible" })
   else
-    let floorK :=
-      precisionForCoeffBound
-        (ZPoly.defaultFactorCoeffBound (ZPoly.toMonic g).monic) pd.p
-    let (kStop, rungs, pieces) := reliftLadderSamePrime pd g baseFactors floorK 1 0
+    let qbound := ZPoly.defaultFactorCoeffBound (ZPoly.toMonic g).monic
+    let floorK := precisionForCoeffBound qbound pd.p
+    let (kStop, rungs, pieces) :=
+      reliftLadderSamePrime pd subFloorCap g baseFactors qbound floorK 1 0
     if pieces.size == 1 then
       (#[g], recs.push { deg, p := pd.p, r, floorK, kStop, rungs,
                          outcome := "floor-certified" })
@@ -271,22 +279,38 @@ partial def certifySamePrimeAux
       let recs := recs.push { deg, p := pd.p, r, floorK, kStop, rungs,
                               outcome := "split" }
       pieces.foldl (init := (#[], recs)) fun st piece =>
-        let (fs, rs) := certifySamePrimeAux pd piece.1 piece.2 st.2
+        let (fs, rs) := certifySamePrimeAux pd subFloorCap piece.1 piece.2 st.2
         (st.1 ++ fs, rs)
 
-/-- Same-prime recursion entry point. -/
-def certifySamePrime (core : ZPoly) : Array ZPoly × Array NodeRec :=
+/-- Same-prime recursion entry point. `subFloorCap` caps the subset size the
+recombination scan tries at rungs BELOW the floor (the floor rung always runs
+the full scan). Sub-floor rungs necessarily fail on every candidate the rung
+cannot yet recover, and the failed tail costs one bounded division per
+candidate, so the cap trades sub-floor discovery of multi-local-factor splits
+(`cap >= 2`, e.g. the mignotte_swell quartics) against a failed tail that
+grows like `C(r, cap)` per rung. -/
+def certifySamePrime (core : ZPoly) (subFloorCap : Nat) :
+    Array ZPoly × Array NodeRec :=
   match choosePrimeData? core with
   | none =>
       (#[core], #[{ deg := core.degree?.getD 0, p := 0, r := 0, floorK := 0,
                     kStop := 0, rungs := 0, outcome := "NO-PRIME" }])
   | some pd =>
       letI := pd.bounds
-      certifySamePrimeAux pd core (pd.factorsModP.toList.map FpPoly.liftToZ) #[]
+      certifySamePrimeAux pd subFloorCap core
+        (pd.factorsModP.toList.map FpPoly.liftToZ) #[]
 
-/-- Factor-only wrapper for wallclock timing (same-prime variant). -/
+/-- Wallclock wrapper: same-prime, full scan at every rung. -/
 def recursiveFactorSamePrime (core : ZPoly) : Array ZPoly :=
-  (certifySamePrime core).1
+  (certifySamePrime core 1000000).1
+
+/-- Wallclock wrapper: same-prime, singleton-only sub-floor rungs. -/
+def recursiveFactorSamePrimeCap1 (core : ZPoly) : Array ZPoly :=
+  (certifySamePrime core 1).1
+
+/-- Wallclock wrapper: same-prime, sub-floor rungs capped at size-2 subsets. -/
+def recursiveFactorSamePrimeCap2 (core : ZPoly) : Array ZPoly :=
+  (certifySamePrime core 2).1
 
 /-- Today's single-lift classical run on a monic squarefree `core`, at the
 production precision for caller bound `B` (`exhaustiveLiftBound core B`). -/
@@ -294,9 +318,10 @@ def classicalFactorTodayWithB (core : ZPoly) (B : Nat) : Array ZPoly :=
   match ZPoly.toMonicPrimeData? core with
   | none => #[]
   | some pd =>
-      let k := precisionForCoeffBound (ZPoly.exhaustiveLiftBound core B) pd.p
+      let qbound := ZPoly.exhaustiveLiftBound core B
+      let k := precisionForCoeffBound qbound pd.p
       let ld := henselLiftData core k pd
-      recombInt core ld.liftedFactors.toList (pd.p ^ k)
+      recombInt core ld.liftedFactors.toList (pd.p ^ k) qbound
 
 /-! ### Inputs -/
 
@@ -381,8 +406,10 @@ def reportCase (name : String) (f core : ZPoly) : IO Unit := do
           (max (ZPoly.defaultFactorCoeffBound core)
             (ZPoly.defaultFactorCoeffBound (ZPoly.toMonic core).monic)) pd.p
       IO.println s!"{name} (deg {degC}, p {pd.p}): k_today={kToday} (work {degC * degC * kToday})  k_corelocal={kLocal} (work {degC * degC * kLocal})"
-      variantSummary "fresh-prime" core (certifyAux core #[])
-      variantSummary "same-prime " core (certifySamePrime core)
+      variantSummary "fresh-prime    " core (certifyAux core #[])
+      variantSummary "same-prime-full" core (certifySamePrime core 1000000)
+      variantSummary "same-prime-cap1" core (certifySamePrime core 1)
+      variantSummary "same-prime-cap2" core (certifySamePrime core 2)
   (← IO.getStdout).flush
 
 /-- Checksum the actual factor coefficients so the optimizer cannot drop the
@@ -414,6 +441,10 @@ def timeArms (reps : Nat) (inputs : Array ZPoly) (coreOf : ZPoly → ZPoly)
     (fun f => factorChecksum (recursiveFactorInt (coreOf f)))
   timePhase "same-prime " reps inputs
     (fun f => factorChecksum (recursiveFactorSamePrime (coreOf f)))
+  timePhase "same-p-cap1" reps inputs
+    (fun f => factorChecksum (recursiveFactorSamePrimeCap1 (coreOf f)))
+  timePhase "same-p-cap2" reps inputs
+    (fun f => factorChecksum (recursiveFactorSamePrimeCap2 (coreOf f)))
 
 def main : IO Unit := do
   -- Focused profile mode: `RELIFT_PROFILE=today|recursive|sameprime|phases`
@@ -443,7 +474,9 @@ def main : IO Unit := do
         | none => 0
         | some pd =>
             let ld := henselLiftData f 1 pd
-            factorChecksum (recombInt f ld.liftedFactors.toList (pd.p ^ 1)))
+            factorChecksum
+              (recombInt f ld.liftedFactors.toList (pd.p ^ 1)
+                (ZPoly.defaultFactorCoeffBound f)))
     else
       timePhase "profile today" 30 inputs
         (fun f => factorChecksum (classicalFactorTodayWithB f (ZPoly.defaultFactorCoeffBound f)))
