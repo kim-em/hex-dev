@@ -796,9 +796,12 @@ private theorem list_getD_replicate (k n : Nat) :
       | zero => rfl
       | succ m => simpa [List.replicate_succ] using ih m
 
-/-- `mulCoeffSum` collapsed to a single fold over the row index, with each
-row's inner fold replaced by its closed form from `foldl_mulCoeffStep_range`. -/
-private theorem mulCoeffSum_eq_singleFold [Add R] [Mul R]
+/-- `mulCoeffSum` collapsed to a single fold over the row index `i`, each row
+contributing `p.coeff i * q.coeff (n - i)` when `i ≤ n` and `n - i` is in range
+(closed form from `foldl_mulCoeffStep_range`). Public so lazy-reduction
+convolution kernels can relate their per-coefficient `Nat` sums to the reference
+product coefficient. -/
+theorem mulCoeffSum_eq_singleFold [Add R] [Mul R]
     (p q : DensePoly R) (n : Nat) :
     mulCoeffSum p q n =
       (List.range p.size).foldl
