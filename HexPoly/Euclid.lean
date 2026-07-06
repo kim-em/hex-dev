@@ -17,7 +17,6 @@ import all HexPoly.Euclid.Content
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Executable Euclidean-algorithm operations for dense array-backed

@@ -110,7 +110,8 @@ namespace HexGramSchmidtChapter
 
 -- A 3×3 integer matrix with rows
 --   (1,1,0), (1,0,1), (0,1,1).
-private def m : Hex.Matrix Int 3 3 := #m[1, 1, 0; 1, 0, 1; 0, 1, 1]
+private def m : Hex.Matrix Int 3 3 :=
+  #m[1, 1, 0; 1, 0, 1; 0, 1, 1]
 
 -- Leading Gram determinants d_0 .. d_3. The empty
 -- prefix is 1 by convention; d_k is the determinant

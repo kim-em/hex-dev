@@ -25,7 +25,6 @@ import all HexBerlekampZassenhausMathlib.RecombinationSplit
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects `recombinationCandidate` and the candidate-equals-factor lemmas.

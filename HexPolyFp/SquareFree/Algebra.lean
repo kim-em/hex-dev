@@ -13,7 +13,6 @@ public import HexPolyFp.Degree
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Scalar-multiple and characteristic-`p` algebra foundations for the Yun

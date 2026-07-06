@@ -29,7 +29,6 @@ import all HexBerlekampZassenhausMathlib.ForwardHenselTransport
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects monicness/squarefreeness of the recombination candidate and the degree cover.
@@ -347,7 +346,7 @@ theorem exists_mem_representedSubset_of_degree_cover_of_primitive_pos_lc_core_of
       ∀ i, 0 < (HexPolyZMathlib.toPolynomial (liftedFactor d i)).natDegree)
     (hprecision : 2 * B' < d.p ^ d.k)
     (hpartition : LiftedFactorSubsetPartition core d J target)
-    (htarget_dvd_core : target ∣ core)
+    (_htarget_dvd_core : target ∣ core)
     (_hTJ : T ⊆ J)
     (gs : Finset Hex.ZPoly)
     (S_of : Hex.ZPoly → LiftedFactorSubset d)

@@ -11,7 +11,6 @@ public import HexBerlekampZassenhausMathlib.SignatureClasses
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Executable class-count semantics for the BHKS equivalence-class indicators

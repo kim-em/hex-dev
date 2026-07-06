@@ -16,7 +16,6 @@ import all HexPoly.Euclid.Reconstruction
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Integer content and primitive part for `DensePoly Int`, with the
@@ -29,7 +28,8 @@ universe u
 
 namespace DensePoly
 /-- The nonnegative gcd of the coefficients of an integer polynomial. -/
-private def contentNat (p : DensePoly Int) : Nat :=
+@[expose]
+def contentNat (p : DensePoly Int) : Nat :=
   p.toArray.toList.foldl (fun acc coeff => Nat.gcd acc coeff.natAbs) 0
 
 /-- The integer content of a polynomial. This is always nonnegative. -/

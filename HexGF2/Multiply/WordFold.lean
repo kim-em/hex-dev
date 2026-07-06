@@ -13,7 +13,6 @@ import all HexGF2.Multiply.WordBits
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 The `foldl_xorClmulAt` / `foldl_mulWords` monomial fold lemmas over word

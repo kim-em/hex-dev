@@ -30,7 +30,6 @@ import all Init.Data.Array.DecidableEq
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects X/xPower extraction, good-prime predicates, small-prime primality certificates, prime candidates, the monic mod-p image, and prime scoring/`choosePrime`.
@@ -517,7 +516,7 @@ structure PrimeCandidateScore where
   factorCount : Nat
 
 /-- The default list of small primes (`3` through `71`) used for Berlekamp-Zassenhaus trial division. -/
-private def smallPrimeCandidates : List SmallPrimeCandidate :=
+def smallPrimeCandidates : List SmallPrimeCandidate :=
   [ smallPrimeCandidateOfTrial 3 (by decide) (by decide),
     smallPrimeCandidateOfTrial 5 (by decide) (by decide),
     smallPrimeCandidateOfTrial 7 (by decide) (by decide),
@@ -540,7 +539,7 @@ private def smallPrimeCandidates : List SmallPrimeCandidate :=
 
 set_option maxRecDepth 10000 in
 /-- The extended list of larger small-prime candidates, tried when `smallPrimeCandidates` is exhausted. -/
-private def extendedSmallPrimeCandidates : List SmallPrimeCandidate :=
+def extendedSmallPrimeCandidates : List SmallPrimeCandidate :=
   [ smallPrimeCandidateOfTrial 73 (by decide) (by decide),
     smallPrimeCandidateOfTrial 79 (by decide) (by decide),
     smallPrimeCandidateOfTrial 83 (by decide) (by decide),

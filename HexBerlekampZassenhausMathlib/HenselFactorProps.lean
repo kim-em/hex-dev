@@ -26,7 +26,6 @@ import all HexBerlekampZassenhausMathlib.RecombinationCandidate
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the monic-primitive helpers, `henselLiftData` properties, and Berlekamp-form `factorsModP`.
@@ -45,7 +44,7 @@ private theorem zpoly_size_pos_of_monic {f : Hex.ZPoly}
   rcases Nat.eq_zero_or_pos f.coeffs.size with hcs_zero | hcs_pos
   · exfalso
     have hlc_zero : Hex.DensePoly.leadingCoeff f = (0 : Int) := by
-      simp [Hex.DensePoly.leadingCoeff, hcs_zero, Array.getD] <;> rfl
+      simp [Hex.DensePoly.leadingCoeff, hcs_zero, Array.getD]; rfl
     rw [hlc_zero] at hlead
     exact absurd hlead (by decide)
   · exact hcs_pos
@@ -844,7 +843,7 @@ theorem factorsModP_nodup_of_factorsModPBerlekampForm
       -- Hence `g₁ = g₂` (both equal to the unique factor), contradicting `hne`.
       have hsize_le_one : (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).size ≤ 1 := by
         by_contra h
-        push_neg at h
+        push Not at h
         apply hpos_image
         have hsize_ne : (Hex.monicModularImage (Hex.ZPoly.modP data.p f)).size ≠ 0 := by
           omega
@@ -1491,11 +1490,6 @@ private theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
           refine ⟨?_, ?_⟩
           · -- `xgcd.gcd = 1` for the head split.
             -- Unfold `normalizedXGCD` and identify the raw EEA gcd.
-            change
-              (Hex.ZPoly.normalizedXGCD p (Hex.FpPoly.liftToZ g)
-                (Array.polyProduct
-                  (((h :: tail).map Hex.FpPoly.liftToZ).toArray))).gcd =
-                (1 : Hex.FpPoly p)
             -- Reduce both `modP`-arguments to `FpPoly p` shape.
             have hmodP_g : Hex.ZPoly.modP p (Hex.FpPoly.liftToZ g) = g :=
               Hex.FpPoly.modP_liftToZ g

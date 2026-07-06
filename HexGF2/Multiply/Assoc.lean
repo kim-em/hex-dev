@@ -17,7 +17,6 @@ import all HexGF2.Multiply.SourceTriple
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 The associativity/commutativity collapse lemmas for

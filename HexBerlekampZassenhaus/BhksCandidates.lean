@@ -38,7 +38,6 @@ import all HexBerlekampZassenhaus.Lattice
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects `bhksIndicatorCandidates?`, the dilate lemmas, and candidate-correctness proofs.
@@ -155,7 +154,8 @@ def bhksProjectedRowsAsRatMatrix
   Matrix.ofFn fun i j =>
     ((rows.getD i.val #[]).getD j.val (0 : Int) : Rat)
 
-private def bhksColumnSignature
+@[expose]
+def bhksColumnSignature
     (echelonRows : Array (Array Rat)) (j : Nat) : Array Rat :=
   echelonRows.map (·.getD j 0)
 
@@ -168,7 +168,8 @@ def bhksInsertSignatureClass
       if s = sig then (s, members ++ [j]) :: rest
       else (s, members) :: bhksInsertSignatureClass sig j rest
 
-private def bhksClassIndicator (r : Nat) (members : List Nat) : Array Int :=
+@[expose]
+def bhksClassIndicator (r : Nat) (members : List Nat) : Array Int :=
   ((List.range r).map (fun i => if i ∈ members then (1 : Int) else 0)).toArray
 
 /--

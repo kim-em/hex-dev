@@ -14,7 +14,6 @@ import all HexGF2.Multiply.WordFold
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Raw packed-word multiplication `mulWords` and its `coeffWords_mulWords`

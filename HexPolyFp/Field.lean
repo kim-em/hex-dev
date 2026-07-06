@@ -13,7 +13,6 @@ public import Init.Data.List.Perm
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 The `ZMod64 p` coefficient field for executable prime-field polynomials:

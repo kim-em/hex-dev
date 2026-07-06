@@ -16,7 +16,6 @@ import all HexGF2.Multiply.Coeff
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Source-pair and source-triple coefficient definitions and the low-word

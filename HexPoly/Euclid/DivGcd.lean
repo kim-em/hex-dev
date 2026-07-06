@@ -12,7 +12,6 @@ public import HexPoly.Operations
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Field-based long division, `modByMonic`, and the derived `gcd`/`xgcd`
@@ -85,7 +84,7 @@ theorem monic_iff_leadingCoeff_eq_one [One R] {p : DensePoly R} :
 
 /-- For a nonzero normalized dense polynomial, `leadingCoeff` is the coefficient
 at the last stored index. -/
-theorem leadingCoeff_eq_coeff_last (p : DensePoly R) (hpos : 0 < p.size) :
+theorem leadingCoeff_eq_coeff_last (p : DensePoly R) (_hpos : 0 < p.size) :
     p.leadingCoeff = p.coeff (p.size - 1) := by
   simp only [leadingCoeff, coeff, size]
 
@@ -552,7 +551,7 @@ private def divModArrayAuxImplGo [Sub R] [Mul R]
 /-- Runtime implementation of `divModArrayAux`. Seeds the scan ceiling at `rem.size`, so
 the first iteration is identical to the reference's `arrayDegree? rem`; thereafter the
 ceiling tracks the working degree (see `divModArrayAuxImplGo`). -/
-private def divModArrayAuxImpl [Sub R] [Mul R]
+def divModArrayAuxImpl [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R)
     (fuel : Nat) (quot rem : Array R) : Array R × Array R :=
   divModArrayAuxImplGo q qDegree scaleLead fuel rem.size quot rem
@@ -1089,7 +1088,8 @@ structure XGCDResult (R : Type u) [Zero R] [DecidableEq R] where
   right : DensePoly R
 
 /-- Tail-recursive extended Euclidean algorithm. -/
-private def xgcdAux [One R] [Add R] [Sub R] [Mul R] [Div R]
+@[expose]
+def xgcdAux [One R] [Add R] [Sub R] [Mul R] [Div R]
     (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly R) (fuel : Nat) : XGCDResult R :=
   match fuel with
   | 0 => { gcd := r₀, left := s₀, right := t₀ }
@@ -1115,7 +1115,8 @@ step on polynomials whose degree grows through the run — that is `O(deg³)` wo
 and pure waste when only the gcd value is wanted (the common case: the square-free
 / separability test `gcd(f, f') = 1`). `gcdAux` keeps only the remainders and is
 `O(deg²)`. -/
-private def gcdAux [One R] [Add R] [Sub R] [Mul R] [Div R]
+@[expose]
+def gcdAux [One R] [Add R] [Sub R] [Mul R] [Div R]
     (r₀ r₁ : DensePoly R) (fuel : Nat) : DensePoly R :=
   match fuel with
   | 0 => r₀

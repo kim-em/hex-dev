@@ -34,7 +34,6 @@ import all HexBerlekampZassenhausMathlib.SearchAssembly
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the `ZPoly` scale/dilate helpers and the forward monic correspondent.

@@ -11,7 +11,6 @@ public import HexGF2.Clmul
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Bit-level carry-less multiplication over packed `UInt64` words:

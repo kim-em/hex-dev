@@ -15,7 +15,6 @@ import all HexPolyFp.SquareFree.Algebra
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Yun-loop definitions (`yunFactorsWithLevel`, `yunFactors`,

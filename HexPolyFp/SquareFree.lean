@@ -19,7 +19,6 @@ import all HexPolyFp.SquareFree.YunCorrect
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Executable Yun-style square-free decomposition for `F_p[x]`. The algebra

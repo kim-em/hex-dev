@@ -15,7 +15,6 @@ import all HexPoly.Euclid.MulRing
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Division-reconstruction identities, divisibility lemmas, the concrete

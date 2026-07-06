@@ -15,7 +15,6 @@ public import Mathlib.RingTheory.Polynomial.UniqueFactorization
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Abstract UFD partition-cardinality bound used by the BHKS Group B

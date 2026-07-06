@@ -16,7 +16,6 @@ import all HexPolyFp.Ring
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Scalar scaling, degree and leading-coefficient lemmas, size/divisibility/
@@ -297,7 +296,7 @@ theorem scale_degree?_getD_eq_of_ne_zero [ZMod64.PrimeModulus p]
 top index `size - 1`. Gives callers a concrete index for the leading
 coefficient when they need to compute or rewrite it. -/
 theorem leadingCoeff_eq_coeff_pred
-    (f : FpPoly p) (hpos : 0 < f.size) :
+    (f : FpPoly p) (_hpos : 0 < f.size) :
     DensePoly.leadingCoeff f = f.coeff (f.size - 1) := by
   simp [DensePoly.leadingCoeff, DensePoly.coeff, DensePoly.size]
 

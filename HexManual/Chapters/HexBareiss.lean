@@ -125,7 +125,8 @@ open Hex Hex.Matrix
 namespace HexBareissChapterExample
 
 -- A = [[2, 0, 1], [1, 3, 2], [0, 1, 1]], det = 3.
-private def A : Hex.Matrix Int 3 3 := #m[2, 0, 1; 1, 3, 2; 0, 1, 1]
+private def A : Hex.Matrix Int 3 3 :=
+  #m[2, 0, 1; 1, 3, 2; 0, 1, 1]
 
 -- The Bareiss determinant is 3, agreeing with Leibniz.
 #guard bareiss A = 3

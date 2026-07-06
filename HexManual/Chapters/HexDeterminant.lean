@@ -146,7 +146,8 @@ open Hex Hex.Matrix
 namespace HexDeterminantChapterExample
 
 -- A = [[2, 0, 1], [1, 3, 2], [0, 1, 1]], det = 3.
-private def A : Hex.Matrix Int 3 3 := #m[2, 0, 1; 1, 3, 2; 0, 1, 1]
+private def A : Hex.Matrix Int 3 3 :=
+  #m[2, 0, 1; 1, 3, 2; 0, 1, 1]
 
 -- The Leibniz determinant evaluates to 3.
 #guard det A = 3

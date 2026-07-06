@@ -34,7 +34,6 @@ import all HexBerlekampZassenhaus.Records
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the irreducibility-certificate structures, their checkers, and `certifyIrreducible?`.
@@ -50,7 +49,8 @@ for higher-multiplicity inputs. Falls back to the un-expanded
 fully consume `repeatedPart` (e.g. when the BZ pipeline emitted the raw
 square-free core as a single core factor).
 -/
-private def reassemblePolynomialFactors
+@[expose]
+def reassemblePolynomialFactors
     (d : FactorNormalizationData) (coreFactors : Array ZPoly) : Array ZPoly :=
   let (expanded, residual) := expandRepeatedPartFactorArray d.repeatedPart coreFactors
   if residual = 1 then
@@ -58,7 +58,8 @@ private def reassemblePolynomialFactors
   else
     polynomialNormalizationPrefixFactors d ++ coreFactors
 
-private def factorizationOfFactors (f : ZPoly) (factors : Array ZPoly) : Factorization :=
+@[expose]
+def factorizationOfFactors (f : ZPoly) (factors : Array ZPoly) : Factorization :=
   { scalar := signedContentScalar f
     factors := collectFactorMultiplicities factors }
 

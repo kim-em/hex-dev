@@ -12,7 +12,6 @@ import all HexPolyZ.Core
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Rational-coefficient machinery for the primitive-square-free pipeline:

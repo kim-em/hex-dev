@@ -42,7 +42,6 @@ import all HexBerlekampZassenhaus.FactorEntryPoints
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the `Irreducible` class, the constant/linear/size-two arms, and the main mod-p theorem.
@@ -187,7 +186,7 @@ by the greedy expansion helper. -/
 def Associated (a b : ZPoly) : Prop :=
   ∃ u : ZPoly, ZPoly.IsUnit u ∧ b = a * u
 
-private def isNatPrime (n : Nat) : Bool :=
+def isNatPrime (n : Nat) : Bool :=
   2 ≤ n && !((List.range n).any fun d => 2 ≤ d && d * d ≤ n && n % d == 0)
 
 /--

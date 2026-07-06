@@ -15,7 +15,6 @@ import all HexGF2.Multiply.MulWords
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Coefficient-level scaffolding: `clmulCoeffAt`, `xorBoolList`,

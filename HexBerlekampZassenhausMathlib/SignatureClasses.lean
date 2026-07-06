@@ -12,7 +12,6 @@ public import HexRowReduceMathlib.RankSpanNullspace
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Partition semantics for the executable `bhksInsertSignatureClass` fold.

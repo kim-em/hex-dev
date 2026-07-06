@@ -17,7 +17,6 @@ import all HexPolyFp.SquareFree.YunReduce
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Derivative-active reachability, the level-measure decrease lemmas, and

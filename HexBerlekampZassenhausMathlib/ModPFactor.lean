@@ -21,7 +21,6 @@ import all HexBerlekampZassenhausMathlib.PublicSurface
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects `modPFactor`/`monicModPImage` and `ModPSubsetPartitionHypotheses`.
@@ -215,7 +214,8 @@ theorem modP_mul
   have hmod := Hex.ZPoly.modP_eq_of_congr p
     (Hex.FpPoly.liftToZ (Hex.ZPoly.modP p f * Hex.ZPoly.modP p g))
     (f * g) hprod
-  simpa [Hex.FpPoly.modP_liftToZ] using hmod.symm
+  simp only [Hex.FpPoly.modP_liftToZ] at hmod
+  exact hmod.symm
 
 theorem modP_dvd_modP_of_dvd
     (p : Nat) [Hex.ZMod64.Bounds p] {factor core : Hex.ZPoly}
@@ -495,7 +495,7 @@ theorem mem_modPSubset_of_dvd
     simpa [F] using hdvd
   have hi_prime : Prime (F i) := by
     simpa [F] using (hpart.factors_irreducible i).prime
-  rcases (Prime.dvd_finset_prod_iff hi_prime F).mp hdvd_prod with ⟨j, hjS, hdvd_ij⟩
+  rcases (Prime.dvd_finsetProd_iff hi_prime F).mp hdvd_prod with ⟨j, hjS, hdvd_ij⟩
   have hij_poly : F i = F j := by
     have hassoc : Associated (F i) (F j) := by
       exact (hpart.factors_irreducible i).associated_of_dvd

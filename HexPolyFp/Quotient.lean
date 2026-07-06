@@ -12,7 +12,6 @@ import all HexPolyFp.Quotient.Ring
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Project-side quotient API for `F_p[X] / (g)`. The ring/field construction

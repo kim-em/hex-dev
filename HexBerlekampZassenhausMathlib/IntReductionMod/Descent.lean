@@ -20,7 +20,6 @@ public import Mathlib.RingTheory.Polynomial.GaussLemma
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Reduction-mod-`p` irreducibility descent for primitive integer

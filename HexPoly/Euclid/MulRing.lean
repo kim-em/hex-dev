@@ -14,7 +14,6 @@ import all HexPoly.Euclid.DivGcd
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Diagonal multiplication-coefficient convolution and the commutative-ring

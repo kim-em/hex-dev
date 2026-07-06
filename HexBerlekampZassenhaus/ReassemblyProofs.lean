@@ -36,7 +36,6 @@ import all HexBerlekampZassenhaus.ChoosePrimeData
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the BHKS bounds and reassembly-correctness theorems.
@@ -130,7 +129,7 @@ def bhksCoeffBound (f : ZPoly) (j : Nat) : Nat :=
   let n := f.degree?.getD 0
   Nat.choose (n - 1) j * n * ZPoly.coeffL2NormBound f
 
-private def ceilLogPAux (p target : Nat) : Nat → Nat → Nat → Nat
+def ceilLogPAux (p target : Nat) : Nat → Nat → Nat → Nat
   | 0, ell, _ => ell
   | fuel + 1, ell, power =>
       if target ≤ power then

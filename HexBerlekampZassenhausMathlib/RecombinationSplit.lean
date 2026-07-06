@@ -24,7 +24,6 @@ import all HexBerlekampZassenhausMathlib.M1Recovery
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the mask/list combinatorics bridging `Finset` subsets to executable enumeration.
@@ -247,7 +246,7 @@ private theorem finRange_filter_mem_perm_toList
   · exact (List.nodup_finRange n).filter _
   · exact S.nodup_toList
   · simp [List.toFinset_filter, List.toFinset_finRange,
-      Finset.filter_univ_mem, Finset.toList_toFinset]
+      Finset.toList_toFinset]
 
 /-- The rejected list has the dual `filter`/`map` characterisation: it is the
 order-preserving filter of the universe of lifted-factor indices by

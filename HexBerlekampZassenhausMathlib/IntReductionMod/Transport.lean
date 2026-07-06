@@ -22,7 +22,6 @@ import all HexBerlekampZassenhausMathlib.IntReductionMod.Descent
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Rational repeatedPart-divides-squareFreeCore-power transport, factorPower

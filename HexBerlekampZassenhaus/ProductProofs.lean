@@ -47,7 +47,6 @@ import all HexBerlekampZassenhaus.PrimitivityProofs
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects `factorTrial_product`, `factor_product`, and the `checkIrreducibleCert_*` proofs.

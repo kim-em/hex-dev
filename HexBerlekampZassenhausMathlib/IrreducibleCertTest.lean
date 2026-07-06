@@ -33,7 +33,6 @@ import all Init.Data.Array.DecidableEq
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 End-to-end tests for certificate reification and the `irreducible_cert`

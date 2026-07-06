@@ -28,7 +28,6 @@ import all HexBerlekampZassenhausMathlib.SubsetCoprimality
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the forward Hensel transport for the canonical lifted subset.
@@ -1222,7 +1221,7 @@ private theorem zpoly_size_pos_of_pos_lc {f : Hex.ZPoly}
   rcases Nat.eq_zero_or_pos f.coeffs.size with hcs_zero | hcs_pos
   · exfalso
     have hlc_zero : Hex.DensePoly.leadingCoeff f = (0 : Int) := by
-      simp [Hex.DensePoly.leadingCoeff, hcs_zero, Array.getD] <;> rfl
+      simp [Hex.DensePoly.leadingCoeff, hcs_zero, Array.getD]; rfl
     rw [hlc_zero] at hpos
     omega
   · exact hcs_pos

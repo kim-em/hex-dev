@@ -18,7 +18,6 @@ import all HexBerlekamp.RabinSoundness.RabinShape
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Distinct-degree saturation and square-free kernel-witness

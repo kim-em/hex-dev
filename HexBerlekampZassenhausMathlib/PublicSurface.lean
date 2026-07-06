@@ -19,7 +19,6 @@ public import Mathlib.RingTheory.PrincipalIdealDomain
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the transport bounds, `factor_product`, `factor_unique`, and `checkIrreducibleCert_sound`.

@@ -44,7 +44,6 @@ import all HexBerlekampZassenhaus.RecombineProofs
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the trial-division and integer-root correctness proofs.
