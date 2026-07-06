@@ -39,7 +39,6 @@ import all HexBerlekampZassenhaus.BhksCandidates
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects `bhksRecover?`/`coreRecover?` and the core-recovery correctness proofs.

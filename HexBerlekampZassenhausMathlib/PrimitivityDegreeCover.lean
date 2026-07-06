@@ -30,7 +30,6 @@ import all HexBerlekampZassenhausMathlib.RecombinationMonic
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects primitivity, leading coefficient, and `normalizeFactorSign`.
@@ -266,7 +265,7 @@ private theorem leadingCoeff_primitivePart_pos
               (Hex.ZPoly.content q) (Hex.ZPoly.primitivePart q) hcontent_ne]
       _ = Hex.DensePoly.leadingCoeff q := by rw [h]
   by_contra hle
-  push_neg at hle
+  push Not at hle
   have hnonpos :
       Hex.ZPoly.content q *
           Hex.DensePoly.leadingCoeff (Hex.ZPoly.primitivePart q) ≤ 0 :=

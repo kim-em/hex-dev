@@ -10,7 +10,6 @@ public import HexPolyFp.Enumeration
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Quotient ring/field construction for `F_p[X] / (g)`: the `Quotient`

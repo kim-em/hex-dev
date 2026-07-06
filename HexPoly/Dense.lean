@@ -10,7 +10,6 @@ public import Std
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Dense array-backed polynomials with the invariant that the stored coefficient array has no
@@ -195,7 +194,8 @@ private theorem trimTrailingZeros_pop (coeffs : Array R)
 /-- Runtime loop for `trimTrailingZeros`: pop trailing zeros off the array, up to `n` of
 them. With `n = coeffs.size` it pops the whole trailing-zero run, reusing the input
 storage in place when it is uniquely referenced rather than allocating a list. -/
-private def trimTrailingZerosGo (coeffs : Array R) : Nat → Array R
+@[expose]
+def trimTrailingZerosGo (coeffs : Array R) : Nat → Array R
   | 0 => coeffs
   | n + 1 =>
       if coeffs.back? = some (Zero.zero : R) then trimTrailingZerosGo coeffs.pop n else coeffs

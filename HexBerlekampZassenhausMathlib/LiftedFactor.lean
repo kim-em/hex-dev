@@ -22,7 +22,6 @@ import all HexBerlekampZassenhausMathlib.ModPFactor
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the lifted-factor infrastructure, candidate definitions, and Hensel-subset correspondence.
@@ -70,7 +69,6 @@ def modPIndexToLiftedEmbedding
   inj' := by
     intro i j hij
     apply Fin.ext
-    change i.val = j.val
     have hval :=
       congrArg (fun x : LiftedFactorIndex d => x.val) hij
     simpa [liftedIndexOfModPIndex] using hval
@@ -847,7 +845,7 @@ The mod-`p` partition plus Hensel transport produces the existing
 use the stable lifted-factor API without depending on the intermediate
 mod-`p` vocabulary.
 -/
-def henselSubsetCorrespondence_of_modPSubsetPartition
+theorem henselSubsetCorrespondence_of_modPSubsetPartition
     {core : Hex.ZPoly} {B : Nat} {primeData : Hex.PrimeChoiceData}
     {d : Hex.LiftData}
     {admissiblePrime squareFreeReduction successfulLift coprimeLift : Prop}

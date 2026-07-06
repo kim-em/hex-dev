@@ -481,7 +481,6 @@ def zero : GF2n n irr hn hn64 hirr :=
     show 0 < 2 ^ n
     exact Nat.pow_pos (by decide : 0 < 2)⟩
 
-@[expose]
 instance : Zero (GF2n n irr hn hn64 hirr) where
   zero := zero
 
@@ -496,7 +495,6 @@ instance : One (GF2n n irr hn hn64 hirr) where
 instance : NatCast (GF2n n irr hn hn64 hirr) where
   natCast := natCast
 
-@[expose]
 instance (k : Nat) : OfNat (GF2n n irr hn hn64 hirr) k where
   ofNat := natCast k
 
@@ -629,7 +627,7 @@ instance : HPow (GF2n n irr hn hn64 hirr) Int (GF2n n irr hn hn64 hirr) where
 inversion total). -/
 @[simp, grind =] theorem inv_zero : (0 : GF2n n irr hn hn64 hirr)⁻¹ = 0 := by
   have hzeroVal : (0 : GF2n n irr hn hn64 hirr).val = 0 := by
-    simp [OfNat.ofNat, natCast, zero]
+    simp [OfNat.ofNat, natCast]
   apply eq_of_val_eq
   simp [Inv.inv, inv, hzeroVal]
 
@@ -904,7 +902,6 @@ private theorem dvd_of_mod_eq_zero {p f : GF2Poly} (h : p % f = 0) :
 def zero : GF2nPoly f hirr :=
   ⟨0, zero_reduced (f := f)⟩
 
-@[expose]
 instance : Zero (GF2nPoly f hirr) where
   zero := zero
 
@@ -1158,7 +1155,6 @@ def natCast (k : Nat) : GF2nPoly f hirr :=
 instance : NatCast (GF2nPoly f hirr) where
   natCast := natCast
 
-@[expose]
 instance (k : Nat) : OfNat (GF2nPoly f hirr) k where
   ofNat := natCast k
 
@@ -1653,7 +1649,7 @@ def dividedDifference
 /-- The divided difference of an empty coefficient list is zero. -/
 @[simp, grind =] theorem dividedDifference_nil (α β : GF2nPoly f hirr) :
     dividedDifference ([] : List (GF2nPoly f hirr)) α β = 0 := by
-  simp [dividedDifference, dividedDifferenceCoeffs, evalCoeffList]
+  simp [dividedDifference, dividedDifferenceCoeffs]
 
 /-- The divided difference of a nonconstant list satisfies the synthetic
 recurrence used by the root-count induction. -/

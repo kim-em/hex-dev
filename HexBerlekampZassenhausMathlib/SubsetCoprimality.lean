@@ -27,7 +27,6 @@ import all HexBerlekampZassenhausMathlib.HenselFactorProps
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects `choosePrimeData` degree/injectivity plus subset/complement coprimality.

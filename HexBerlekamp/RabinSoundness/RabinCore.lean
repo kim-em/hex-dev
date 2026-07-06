@@ -15,7 +15,6 @@ public import HexArith.Nat.Pow
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 CRT candidate constructions (`xPowSubX`, `primeFieldLinearProduct`,

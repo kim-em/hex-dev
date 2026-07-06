@@ -35,7 +35,6 @@ import all HexBerlekampZassenhausMathlib.MonicCorrespondent
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the non-circular lift-stage subset-uniqueness core (#7474).
@@ -669,7 +668,7 @@ theorem toMonicLiftData_liftedRecoveryCandidate_eq
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)
-    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (_hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
     (hbound :
       2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
         primeData.p ^ Hex.precisionForCoeffBound B primeData.p)

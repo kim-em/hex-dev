@@ -30,7 +30,6 @@ namespace GF2Poly
 /-- Decidable equality on packed `GF(2)` polynomials, derived from the
 underlying `Array UInt64` representation. The `wf` field is a `Prop`, so
 its proofs are irrelevant for the structural comparison. -/
-@[expose]
 instance instDecidableEq : DecidableEq GF2Poly := fun p q =>
   match decEq p.words.toList q.words.toList with
   | isTrue hw =>
@@ -47,7 +46,6 @@ instance instDecidableEq : DecidableEq GF2Poly := fun p q =>
 
 /-- Boolean equality on packed `GF(2)` polynomials, computed by `decide`
 on the decidable propositional equality. -/
-@[expose]
 instance instBEq : BEq GF2Poly where
   beq p q := decide (p = q)
 

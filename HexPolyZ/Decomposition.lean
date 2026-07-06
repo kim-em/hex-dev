@@ -13,7 +13,6 @@ import all HexPolyZ.Rational
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Integer primitive-square-free decomposition correctness: reassembly over

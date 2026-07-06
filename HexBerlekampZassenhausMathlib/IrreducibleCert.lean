@@ -12,7 +12,6 @@ public import HexBerlekampZassenhausMathlib.CertReify
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 The `irreducible_cert` tactic: certifying irreducibility for integer

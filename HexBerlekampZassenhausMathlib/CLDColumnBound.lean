@@ -17,7 +17,6 @@ public import Mathlib.Data.Nat.Choose.Bounds
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 BHKS CLD-column coefficient bounds (van Hoeij `W ⊆ L'` analytics, #8519).

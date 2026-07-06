@@ -16,7 +16,6 @@ import all HexPolyFp.SquareFree.YunContribution
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 The `squareFreeAuxRev` / `squareFreeAux` recursion and its reconstruction

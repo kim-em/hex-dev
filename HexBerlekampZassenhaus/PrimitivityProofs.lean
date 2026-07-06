@@ -46,7 +46,6 @@ import all HexBerlekampZassenhaus.QuadraticRootProofs
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects `squareFreeCore`/`expandRepeatedPart`/reassembly primitivity.

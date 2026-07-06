@@ -32,7 +32,6 @@ import all HexBerlekampZassenhausMathlib.ScaledSearchCoverage
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects size-ordered coverage, both mutual blocks, and `RecoveredSmartSearch`.

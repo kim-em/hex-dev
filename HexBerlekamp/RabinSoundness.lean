@@ -19,7 +19,6 @@ import all HexBerlekamp.RabinSoundness.KernelWitness
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Project-side soundness of `Berlekamp.rabinTest` against

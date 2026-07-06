@@ -15,7 +15,6 @@ public import HexLLLMathlib.ShortVector
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 # Irreducibility of the van Hoeij / CLD lattice tier (#8417)

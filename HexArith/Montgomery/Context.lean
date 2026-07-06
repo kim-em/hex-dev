@@ -10,7 +10,6 @@ public import HexArith.Montgomery.Redc
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 set_option maxHeartbeats 1000000
 
 /-!
@@ -32,7 +31,7 @@ private def doubleMod (p acc : UInt64) : UInt64 :=
     acc + acc
 
 /-- Compute `R^2 mod p` by repeated doubling in native-word arithmetic. -/
-private def r2Loop (p : UInt64) : Nat → UInt64 → UInt64
+def r2Loop (p : UInt64) : Nat → UInt64 → UInt64
   | 0, acc => acc
   | n + 1, acc => r2Loop p n (doubleMod p acc)
 
@@ -124,7 +123,7 @@ private theorem toNat_r2Loop (p : UInt64) :
               ac_rfl
 
 /-- The executable `r2OfModulus` computes `R^2 mod p` for positive moduli. -/
-private theorem toNat_r2OfModulus (p : UInt64) (hp_pos : 0 < p.toNat) :
+theorem toNat_r2OfModulus (p : UInt64) (hp_pos : 0 < p.toNat) :
     (r2OfModulus p).toNat = (UInt64.word * UInt64.word) % p.toNat := by
   have hp_lt_word : p.toNat < UInt64.word := by
     simpa [UInt64.word, UInt64.size] using UInt64.toNat_lt_size p
@@ -639,7 +638,7 @@ end MontCtx
 namespace HexArith
 
 /-- Number of binary digits in a natural number. -/
-private def bitLength (n : Nat) : Nat :=
+def bitLength (n : Nat) : Nat :=
   if n = 0 then 0 else n.log2 + 1
 
 private theorem lt_two_pow_bitLength (n : Nat) : n < 2 ^ bitLength n := by
@@ -668,7 +667,7 @@ private def powMontBitsGo (ctx : MontCtx p) (k : Nat) :
       powMontBitsGo ctx k remaining (bit + 1) acc' base'
 
 /-- Exponentiate a Montgomery-form base by repeated squaring. -/
-private def powMont (ctx : MontCtx p) (base : UInt64) (n : Nat) : UInt64 :=
+def powMont (ctx : MontCtx p) (base : UInt64) (n : Nat) : UInt64 :=
   powMontBitsGo ctx n (bitLength n) 0 (ctx.toMont (UInt64.ofNat (1 % p.toNat))) base
 
 /-- Word-sized odd-modulus modular exponentiation via Montgomery arithmetic. -/
@@ -679,7 +678,7 @@ def powModWordOdd (a n : Nat) (p : UInt64) (hp : p % 2 = 1) : Nat :=
   (ctx.fromMont (powMont ctx base n)).toNat
 
 /-- Tail-recursive Nat fallback for modular exponentiation. -/
-private def powModNatGo (n p : Nat) : Nat → Nat → Nat → Nat → Nat
+def powModNatGo (n p : Nat) : Nat → Nat → Nat → Nat → Nat
   | 0, _, acc, _ => acc
   | remaining + 1, bit, acc, base =>
       let acc' := if n.testBit bit then (acc * base) % p else acc

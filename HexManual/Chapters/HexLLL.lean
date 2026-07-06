@@ -344,7 +344,8 @@ private theorem hhi : (3 / 4 : Rat) ≤ 1 := by grind
 #guard lllNative B (3 / 4) hlo hhi (by decide) = R
 
 -- Its first row is a shortest lattice vector.
-#guard (lllNative B (3 / 4) hlo hhi (by decide)).row ⟨0, by decide⟩ = #v[0, 1]
+#guard (lllNative B (3 / 4) hlo hhi (by decide)).row
+    ⟨0, by decide⟩ = #v[0, 1]
 
 -- The verified checker rejects the input basis
 -- (not size-reduced) and accepts the output.
@@ -395,7 +396,8 @@ private theorem hhi : (3 / 4 : Rat) ≤ 1 := by grind
 -- (a₀, a₁, a₂, a₃, a₄) = (-1, -1, 0, 0, 1) with a zero
 -- last coordinate: the relation -1 - α + α⁴ = 0, i.e.
 -- the minimal polynomial x⁴ - x - 1.
-#guard (lllNative L (3 / 4) hlo hhi (by decide)).row ⟨0, by decide⟩ = #v[-1, -1, 0, 0, 1, 0]
+#guard (lllNative L (3 / 4) hlo hhi (by decide)).row
+    ⟨0, by decide⟩ = #v[-1, -1, 0, 0, 1, 0]
 
 end HexLLLMinPoly
 ```

@@ -18,7 +18,6 @@ import all HexGF2.Multiply.Assoc
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Packed `GF2Poly` multiplication. The word-level machinery lives in the

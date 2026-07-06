@@ -23,7 +23,6 @@ import all HexBerlekampZassenhausMathlib.LiftedFactor
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects M1 recovery, the Hensel-lift invariant, and `LiftedFactorSubsetPartition`.
@@ -415,7 +414,7 @@ theorem existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence_
     (hdvd : factor ∣ core)
     (hprecision : 2 * B' < d.p ^ d.k) :
     ∃! S : LiftedFactorSubset d,
-      ∃ hrec : RecoveredAtLift core d factor S,
+      ∃ _hrec : RecoveredAtLift core d factor S,
         liftedRecoveryCandidate core d S = factor := by
   rcases h.exists_subset hfactor_norm hirr hdvd with ⟨S, hS⟩
   rcases hS with ⟨hrecS⟩
@@ -459,7 +458,7 @@ theorem existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence
     (hdvd : factor ∣ core)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
     ∃! S : LiftedFactorSubset d,
-      ∃ hrec : RecoveredAtLift core d factor S,
+      ∃ _hrec : RecoveredAtLift core d factor S,
         liftedRecoveryCandidate core d S = factor :=
   existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence_of_bound
     h (Hex.ZPoly.defaultFactorCoeffBound core)
@@ -488,7 +487,7 @@ theorem existsUnique_recoveringLiftedFactorSubset_at_defaultPrecision
     (hdvd : factor ∣ core)
     (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
     ∃! S : LiftedFactorSubset d,
-      ∃ hrec : RecoveredAtLift core d factor S,
+      ∃ _hrec : RecoveredAtLift core d factor S,
         liftedRecoveryCandidate core d S = factor :=
   existsUnique_recoveringLiftedFactorSubset_of_henselSubsetCorrespondence
     h hvalid hfactor_norm hirr hdvd hprecision

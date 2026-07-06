@@ -33,7 +33,6 @@ import all HexBerlekampZassenhausMathlib.SmartSearchCoverage
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the associated-factor lemmas and `choosePrimeData` partition assembly.
@@ -130,7 +129,7 @@ theorem recombinationSearchModAux_some_factor_associated_of_liftedFactorSubsetPa
     {core target factor : Hex.ZPoly} {d : Hex.LiftData}
     {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly} {fuel : Nat}
     (B' : Nat)
-    (hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
+    (_hcore_lc_le : (Hex.DensePoly.leadingCoeff core).natAbs ≤ B')
     (hvalid : ∀ g : Hex.ZPoly, g ∣ core → ∀ i, (g.coeff i).natAbs ≤ B')
     (hcore_ne : core ≠ 0)
     (hcore_monic : Hex.DensePoly.Monic core)
@@ -1006,7 +1005,7 @@ branch of the integer-irreducible → mod-`p` representing-subset existence
 and uniqueness statement. -/
 theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
     (core : Hex.ZPoly) {factor : Hex.ZPoly}
-    (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
+    (_hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ core)
     (hcore_ne : core ≠ 0)
     (hcore_pos : 0 < core.degree?.getD 0)

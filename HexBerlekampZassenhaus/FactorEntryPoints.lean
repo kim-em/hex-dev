@@ -41,7 +41,6 @@ import all HexBerlekampZassenhaus.Recombination
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects `factorClassical`/`Trial`/`Lattice`/`factor` and the `factor_scalar` theorems.

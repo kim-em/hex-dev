@@ -33,7 +33,6 @@ import all HexBerlekampZassenhaus.PrimeSelection
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the executable data records, `Factorization` product, and normalization-pipeline definitions.
@@ -119,11 +118,13 @@ structure ToMonicData where
 
 namespace ToMonicData
 
-private def transformedCoeffs (core : ZPoly) (degree : Nat) : Array Int :=
+@[expose]
+def transformedCoeffs (core : ZPoly) (degree : Nat) : Array Int :=
   ((List.range degree).map fun i =>
       core.coeff i * (DensePoly.leadingCoeff core) ^ (degree - 1 - i)).toArray.push 1
 
-private def transformedCore (core : ZPoly) (degree : Nat) : ZPoly :=
+@[expose]
+def transformedCore (core : ZPoly) (degree : Nat) : ZPoly :=
   { coeffs := transformedCoeffs core degree
     normalized := by
       right
@@ -247,7 +248,8 @@ deriving DecidableEq
 
 namespace Factorization
 
-private def polyPow (f : ZPoly) : Nat → ZPoly
+@[expose]
+def polyPow (f : ZPoly) : Nat → ZPoly
   | 0 => 1
   | n + 1 => polyPow f n * f
 
@@ -302,16 +304,19 @@ private def contentFactorArray (content : Int) : Array ZPoly :=
   else
     #[DensePoly.C content]
 
-private def xPowerFactorArray (power : Nat) : Array ZPoly :=
+@[expose]
+def xPowerFactorArray (power : Nat) : Array ZPoly :=
   (List.replicate power ZPoly.X).toArray
 
-private def repeatedPartFactorArray (repeatedPart : ZPoly) : Array ZPoly :=
+@[expose]
+def repeatedPartFactorArray (repeatedPart : ZPoly) : Array ZPoly :=
   if repeatedPart = 1 then
     #[]
   else
     #[repeatedPart]
 
-private def signedContentScalar (f : ZPoly) : Int :=
+@[expose]
+def signedContentScalar (f : ZPoly) : Int :=
   if f = 0 then
     0
   else if DensePoly.leadingCoeff f < 0 then
@@ -337,7 +342,8 @@ Mathlib-side lemmas can transport the predicate into `¬ IsUnit` over
 def shouldRecordPolynomialFactor (f : ZPoly) : Bool :=
   f ≠ 0 && f ≠ 1 && f ≠ DensePoly.C (-1)
 
-private def bumpFactorMultiplicity (f : ZPoly) : List (ZPoly × Nat) → List (ZPoly × Nat)
+@[expose]
+def bumpFactorMultiplicity (f : ZPoly) : List (ZPoly × Nat) → List (ZPoly × Nat)
   | [] => [(f, 1)]
   | entry :: entries =>
       if entry.1 = f then
@@ -345,7 +351,8 @@ private def bumpFactorMultiplicity (f : ZPoly) : List (ZPoly × Nat) → List (Z
       else
         entry :: bumpFactorMultiplicity f entries
 
-private def collectFactorMultiplicities (factors : Array ZPoly) : Array (ZPoly × Nat) :=
+@[expose]
+def collectFactorMultiplicities (factors : Array ZPoly) : Array (ZPoly × Nat) :=
   factors.toList.foldl
     (fun acc factor =>
       let factor := normalizeFactorSign factor
@@ -356,7 +363,8 @@ private def collectFactorMultiplicities (factors : Array ZPoly) : Array (ZPoly �
     []
   |>.reverse.toArray
 
-private def polynomialNormalizationPrefixFactors (d : FactorNormalizationData) : Array ZPoly :=
+@[expose]
+def polynomialNormalizationPrefixFactors (d : FactorNormalizationData) : Array ZPoly :=
   xPowerFactorArray d.xPower ++ repeatedPartFactorArray d.repeatedPart
 
 /-- Factors that come from normalization before the square-free core is factored. -/
@@ -415,7 +423,8 @@ Returns `(residual, multiplicity)` with the invariant
 `candidate ^ multiplicity * residual = target`. The recursion is bounded by
 `fuel`, which the caller chooses based on the source degree.
 -/
-private def consumeExactPower (target candidate : ZPoly) : Nat → ZPoly × Nat
+@[expose]
+def consumeExactPower (target candidate : ZPoly) : Nat → ZPoly × Nat
   | 0 => (target, 0)
   | fuel + 1 =>
       match exactQuotient? target candidate with
@@ -429,7 +438,8 @@ Fold `consumeExactPower` over a list of candidate factors, accumulating
 emitted copies and tracking the residual that has not yet been factored.
 Invariant: `polyProduct emitted * residual = initialRepeatedPart`.
 -/
-private def expandRepeatedPartFactorsAux : List ZPoly → ZPoly → Nat → Array ZPoly × ZPoly
+@[expose]
+def expandRepeatedPartFactorsAux : List ZPoly → ZPoly → Nat → Array ZPoly × ZPoly
   | [], rp, _ => (#[], rp)
   | q :: qs, rp, fuel =>
       let (rp', m) := consumeExactPower rp q fuel
@@ -442,7 +452,8 @@ Compute `(emitted, residual)` where each candidate factor `q` from
 `q^k` exactly divides the running repeated-part. The fuel is the source
 size, which dominates any irreducible's multiplicity in `repeatedPart`.
 -/
-private def expandRepeatedPartFactorArray (rp : ZPoly) (coreFactors : Array ZPoly) :
+@[expose]
+def expandRepeatedPartFactorArray (rp : ZPoly) (coreFactors : Array ZPoly) :
     Array ZPoly × ZPoly :=
   expandRepeatedPartFactorsAux coreFactors.toList rp (rp.size + 1)
 

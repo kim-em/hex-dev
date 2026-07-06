@@ -12,7 +12,6 @@ public import HexLLLMathlib.ShortVector
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 BHKS lattice-side objects for the van Hoeij `W ⊆ L'` adequacy (#8519).
@@ -871,7 +870,7 @@ survivor-span lemma only needs lattice membership plus the tight cut-radius
 bound, and the final projection only needs the first block to be the support
 indicator.
 -/
-def cutProjectionHypotheses_of_shortVectors
+theorem cutProjectionHypotheses_of_shortVectors
     (L : Hex.BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth)
     (hbasis : L.basis.independent)
     (trueSupports : Set (Set (Fin (Hex.bhksProjectedRows L hrows).factorCount)))

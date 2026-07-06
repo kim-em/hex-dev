@@ -37,7 +37,6 @@ import all HexBerlekampZassenhaus.ReassemblyProofs
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the trial/root candidate definitions, centred-lift/CLD helpers, and the BHKS lattice basis.
@@ -87,12 +86,12 @@ theorem exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq
 private def positiveDivisors (n : Nat) : List Nat :=
   (List.range (n + 1)).filter fun d => d != 0 && n % d == 0
 
-private def integerRootCandidates (f : ZPoly) : List Int :=
+def integerRootCandidates (f : ZPoly) : List Int :=
   (positiveDivisors (f.coeff 0).natAbs).flatMap fun d =>
     let r : Int := Int.ofNat d
     [r, -r]
 
-private def linearFactorForRoot (r : Int) : ZPoly :=
+def linearFactorForRoot (r : Int) : ZPoly :=
   DensePoly.ofCoeffs #[-r, 1]
 
 private theorem leadingCoeff_linearFactorForRoot (r : Int) :
@@ -148,7 +147,7 @@ private theorem shouldRecordPolynomialFactor_linearFactorForRoot (r : Int) :
   simp [linearFactorForRoot_ne_zero, linearFactorForRoot_ne_one,
     linearFactorForRoot_ne_C_neg_one]
 
-private def splitIntegerRootFactorsAux :
+def splitIntegerRootFactorsAux :
     ZPoly → List Int → Nat → Array ZPoly × ZPoly
   | target, _roots, 0 => (#[], target)
   | target, [], _fuel + 1 => (#[], target)

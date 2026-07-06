@@ -43,7 +43,6 @@ import all HexBerlekampZassenhaus.IrreducibleCore
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the recombination and `bhksRecover*` correctness proofs and core-factors specifications.

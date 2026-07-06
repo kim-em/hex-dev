@@ -31,7 +31,6 @@ import all HexBerlekampZassenhausMathlib.PrimitivityDegreeCover
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects the scaled-tier search coverage and `RecoveredScaledSearch`.

@@ -11,7 +11,6 @@ public import HexBerlekampZassenhausMathlib.ToMonicUniqueness
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Support-partition counting for the BHKS class-count lower bound (#8519).

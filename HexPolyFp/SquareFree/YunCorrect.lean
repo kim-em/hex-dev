@@ -18,7 +18,6 @@ import all HexPolyFp.SquareFree.YunMeasure
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Terminal Yun-engine correctness: the contribution pow obligations,

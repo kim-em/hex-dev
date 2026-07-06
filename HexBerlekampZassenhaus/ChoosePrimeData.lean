@@ -35,7 +35,6 @@ import all HexBerlekampZassenhaus.Certificate
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 This module collects `choosePrimeData?`/`Walk?`/`Score` with their correctness lemmas and `henselLiftData`.
@@ -88,7 +87,7 @@ def certifyIrreducible? (f : ZPoly) : Option ZPolyIrreducibilityCertificate :=
       { perPrime := perPrime, degreeObstructions := obstructions' }
     if checkIrreducibleCert f cert then some cert else none
 
-private structure PrimeChoiceDataScore where
+structure PrimeChoiceDataScore where
   data : PrimeChoiceData
   factorCount : Nat
 
@@ -111,7 +110,7 @@ private def betterPrimeChoiceDataScore
   else
     old
 
-private def choosePrimeDataScoreStep
+def choosePrimeDataScoreStep
     (f : ZPoly) (best : Option PrimeChoiceDataScore) (c : SmallPrimeCandidate) :
     Option PrimeChoiceDataScore :=
   -- First-suitable selection (matching the verified Isabelle/AFP

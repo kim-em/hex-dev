@@ -15,7 +15,6 @@ import all HexPolyFp.Field
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 Core `FpPoly` definitions (constructors, evaluation), the additive

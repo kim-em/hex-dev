@@ -17,7 +17,6 @@ import all HexBerlekamp.RabinSoundness.RabinCore
 
 public section
 set_option backward.proofsInPublic true
-set_option backward.privateInPublic true
 
 /-!
 The prime-field product identity and `xPowSubX 1` shape, the structural
