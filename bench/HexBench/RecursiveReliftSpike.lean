@@ -95,6 +95,7 @@ def boundedExactQuotientMonic? (target cand : ZPoly) (qbound : Nat) :
   let n := target.size
   let m := cand.size
   if m < 2 || m > n then return none
+  if cand.coeff (m - 1) != 1 then return none
   let mut rem := target.toArray
   let dq := n - m
   let mut q : Array Int := Array.replicate (dq + 1) 0
@@ -359,8 +360,9 @@ def advHighMultiplicity : ZPoly :=
   DensePoly.ofCoeffs #[9, -6, 28, -18, 30, -18, 12, -6, 1]
 
 /-- Taylor shift `g(x+s)` by Horner over polynomial arithmetic: distinct-input
-families from a single adversarial fixture (defeats hoisting; preserves degree,
-irreducibility, and the mod-p splitting pattern). -/
+families from a single adversarial fixture (defeats hoisting; preserves degree
+and irreducibility over `Z`, though the selected prime and modular split may
+differ per shift). -/
 def shiftPoly (g : ZPoly) (s : Int) : ZPoly :=
   let xps : ZPoly := DensePoly.ofCoeffs #[s, 1]
   g.toArray.foldr (fun c acc => acc * xps + DensePoly.C c) (0 : ZPoly)
@@ -432,9 +434,20 @@ def timePhase (label : String) (reps : Nat) (inputs : Array ZPoly)
   IO.println s!"  {label}: {(t1 - t0).toFloat / reps.toFloat / 1000.0} us/call (reps={reps}, sink={acc})"
   out.flush
 
-/-- Wallclock triple: today vs both recursion variants on one family. -/
+/-- Production classical tier on the core (`classicalCoreFactorsWithBound`:
+`toMonicLiftData` + `scaledRecombinationSmart` with its own residue filters and
+subset budget). Anchors the shared-scan baseline against real production
+recombination; `none` (declined, budget exhausted) checksums as empty. -/
+def classicalFactorProduction (core : ZPoly) (B : Nat) : Array ZPoly :=
+  match ZPoly.toMonicPrimeData? core with
+  | none => #[]
+  | some pd => (classicalCoreFactorsWithBound core B pd).getD #[]
+
+/-- Wallclock arms: production, shared-scan baseline, recursion variants. -/
 def timeArms (reps : Nat) (inputs : Array ZPoly) (coreOf : ZPoly → ZPoly)
     (bOf : ZPoly → Nat) : IO Unit := do
+  timePhase "production " reps inputs
+    (fun f => factorChecksum (classicalFactorProduction (coreOf f) (bOf f)))
   timePhase "today      " reps inputs
     (fun f => factorChecksum (classicalFactorTodayWithB (coreOf f) (bOf f)))
   timePhase "fresh-prime" reps inputs

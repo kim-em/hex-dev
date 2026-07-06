@@ -153,8 +153,14 @@ lifts run on deg-4 targets; swell is a wash at best, by either metric.
 
 ## Wallclock (end to end, distinct-input families)
 
-us/call; "today" = single production-precision lift + recombination with
-the same scan filters. same-prime cap2 is the recommended policy.
+us/call. "today" is a **shared-scan baseline**, not production runtime: it
+runs today's single lift at production precision but recombines with the
+prototype's scan (same filters as every other arm), so lift-strategy
+differences are isolated from scan-implementation differences.
+"production" anchors that baseline: it is the real
+`classicalCoreFactorsWithBound` (`toMonicLiftData` +
+`scaledRecombinationSmart`, with its own residue filters and subset
+budget) at the same `B`. same-prime cap2 is the recommended policy.
 
 | family | today | fresh-prime | same-prime full | cap1 | cap2 | cap2 vs today |
 |---|---|---|---|---|---|---|
@@ -221,10 +227,18 @@ What the proven same-prime implementation needs, mirroring the issue text:
 * a fresh initial-partition producer keyed to a REMAINDER target at the
   same prime and a new precision (`LiftedFactorSubsetPartition remainder d'
   Finset.univ remainder` with `d'` the remainder's own `LiftData`), fed by
-  re-lifting the remainder's own local factors -- the remainder's mod-p
-  image is the product of a known sub-multiset of the core's Berlekamp
-  factors, so the squarefree/coprimality side conditions transport from the
-  core's;
+  re-lifting the remainder's own local factors. The concrete obligations,
+  not just "transport": (i) for every factor the recombination returns --
+  including the pushed-unsplit remainder -- its mod-p image equals the
+  product of its tracked base factors (for accepted divisors this is the
+  recovery congruence; for the final remainder it follows by dividing the
+  core congruence by the peeled ones, all monic); (ii) the tracked
+  sub-multiset inherits the Berlekamp-form invariants the lift needs
+  (irreducible, pairwise coprime, squarefree product mod p) from the
+  core's `factorsModPBerlekampForm`, which holds for any sublist; (iii)
+  `multifactorLiftQuadratic` applied to the remainder and its sublist at
+  the new precision yields the lifted-factor congruences the partition
+  producer consumes;
 * the ladder loop spec ("split found" or "floor reached with fresh
   coverage witness"), consumed by a per-remainder irreducibility lemma
   analogous to `classicalCoreFactorsWithBound_factor_irreducible_of_validBound`;
