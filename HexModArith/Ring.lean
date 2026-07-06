@@ -83,7 +83,7 @@ private theorem neg_nonzero_lt (a : ZMod64 p) {hpLt : p < UInt64.word}
 /-- The additive inverse represented by the complementary residue mod `p`. -/
 @[expose]
 def neg (a : ZMod64 p) : ZMod64 p := by
-  have hpLt : p < UInt64.word := Bounds.pLtR (p := p)
+  have hpLt : p < UInt64.word := Bounds.pLtWord p
   let c64 := complementWord p hpLt
   by_cases hzero : a.val = 0
   · refine ⟨0, ?_⟩
@@ -166,7 +166,7 @@ theorem natCast_op_eq_ofNat (n : Nat) :
 /-- Negation takes the complementary representative modulo `p`. -/
 @[simp, grind =] theorem toNat_neg (a : ZMod64 p) : (neg a).toNat = (p - a.toNat) % p := by
   unfold neg
-  have hpLt : p < UInt64.word := Bounds.pLtR (p := p)
+  have hpLt : p < UInt64.word := Bounds.pLtWord p
   by_cases hzero : a.val = 0
   · rw [dif_pos hzero]
     change (0 : UInt64).toNat = (p - a.toNat) % p

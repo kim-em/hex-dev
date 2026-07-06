@@ -49,7 +49,7 @@ check. The reifier emits `boundsOfDecide p (Eq.refl true)` in every reified
 instance slot, so the kernel discharges both bounds by reduction.
 -/
 theorem boundsOfDecide (p : Nat)
-    (h : (decide (0 < p) && decide (p < UInt64.word)) = true) :
+    (h : (decide (0 < p) && decide (p < 2 ^ 31)) = true) :
     Hex.ZMod64.Bounds p := by
   rw [Bool.and_eq_true] at h
   exact ⟨of_decide_eq_true h.1, of_decide_eq_true h.2⟩

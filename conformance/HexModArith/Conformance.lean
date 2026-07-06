@@ -38,14 +38,15 @@ Covered edge cases:
 - power-of-two modulus `16`
 - small Barrett-friendly moduli `2`, `7`, and `65535`
 - odd Montgomery-friendly moduli `3`, `7`, and `65537`
-- large word-sized modulus `2^63 + 29`
+- large small-modulus prime `2^31 - 1` (the Mersenne prime `M31`, the largest
+  admissible modulus under the `p < 2^31` bound)
 - zero operands, wraparound operands, and negative integer representatives
 -/
 
 namespace Hex
 namespace ZMod64
 
-private abbrev LargeMod : Nat := 2 ^ 63 + 29
+private abbrev LargeMod : Nat := 2 ^ 31 - 1
 private abbrev BarrettWideMod : Nat := 65535
 private abbrev MontWideMod : Nat := 65537
 
@@ -127,8 +128,8 @@ private def barrettWideA : ZMod64 BarrettWideMod := ofNat BarrettWideMod 65534
 private def barrettWideB : ZMod64 BarrettWideMod := ofNat BarrettWideMod 32769
 private def montWideA : ZMod64 MontWideMod := ofNat MontWideMod 65536
 private def montWideB : ZMod64 MontWideMod := ofNat MontWideMod 32771
-private def wideA : ZMod64 LargeMod := ofNat LargeMod (2 ^ 63 + 1)
-private def wideB : ZMod64 LargeMod := ofNat LargeMod (2 ^ 63 - 17)
+private def wideA : ZMod64 LargeMod := ofNat LargeMod (2 ^ 31 - 2)
+private def wideB : ZMod64 LargeMod := ofNat LargeMod (2 ^ 31 - 17)
 
 private def barrettCtx2 : Hex.BarrettCtx 2 :=
   Hex.BarrettCtx.ofModulus (p := 2) (by decide) (by decide)
