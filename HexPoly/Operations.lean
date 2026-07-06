@@ -27,16 +27,71 @@ namespace DensePoly
 
 variable {R : Type u} [Zero R] [DecidableEq R]
 
-/-- Multiply every coefficient by `c`. -/
-@[expose]
-def scale [Mul R] (c : R) (p : DensePoly R) : DensePoly R :=
-  ofCoeffs <| p.toArray.toList.map (fun a => c * a) |>.toArray
+/-- Multiply every coefficient by `c`.
 
-/-- Multiply by `x^n`. -/
+Kernel-facing specification: one map over the spec-level coefficient list.
+Compiled code runs the `Array.map` pass `scaleImpl` via the `@[csimp]` proof
+`scale_eq_impl`. -/
 @[expose]
-def shift (n : Nat) (p : DensePoly R) : DensePoly R :=
+noncomputable def scale [Mul R] (c : R) (p : DensePoly R) : DensePoly R :=
+  ofCoeffs (p.toList.map (fun a => c * a)).toArray
+
+/-- Runtime implementation of `scale`: one `Array.map` pass over the stored
+coefficients (value-equal to `scale` by `scale_eq_impl`, registered
+`@[csimp]`). -/
+@[expose]
+def scaleImpl [Mul R] (c : R) (p : DensePoly R) : DensePoly R :=
+  ofCoeffs (p.toArray.map (fun a => c * a))
+
+/-- The spec `scale` and the `Array.map` runtime pass compute the same
+polynomial. -/
+theorem scale_eq_scaleImpl [Mul R] (c : R) (p : DensePoly R) :
+    scale c p = scaleImpl c p := by
+  unfold scale scaleImpl
+  congr 1
+  show ((p.toArray.toList).map (fun a => c * a)).toArray = _
+  rw [← Array.toList_map, Array.toArray_toList]
+
+/-- Register the `Array.map` pass as the compiled implementation of `scale`. -/
+@[csimp]
+theorem scale_eq_impl : @scale = @scaleImpl := by
+  funext R _ _ _ c p
+  exact scale_eq_scaleImpl c p
+
+/-- Multiply by `x^n`.
+
+Kernel-facing specification: one replicate-append of the spec-level
+coefficient list. Compiled code runs the `Array` append `shiftImpl` via the
+`@[csimp]` proof `shift_eq_impl`. -/
+@[expose]
+noncomputable def shift (n : Nat) (p : DensePoly R) : DensePoly R :=
   if p.isZero then 0 else
-    ofCoeffs <| ((List.replicate n (Zero.zero : R)) ++ p.toArray.toList).toArray
+    ofCoeffs ((List.replicate n (Zero.zero : R)) ++ p.toList).toArray
+
+/-- Runtime implementation of `shift`: one `Array` append with no intermediate
+list (value-equal to `shift` by `shift_eq_impl`, registered `@[csimp]`). -/
+@[expose]
+def shiftImpl (n : Nat) (p : DensePoly R) : DensePoly R :=
+  if p.isZero then 0 else
+    ofCoeffs (Array.replicate n (Zero.zero : R) ++ p.toArray)
+
+/-- The spec `shift` and the `Array` append compute the same polynomial. -/
+theorem shift_eq_shiftImpl (n : Nat) (p : DensePoly R) :
+    shift n p = shiftImpl n p := by
+  unfold shift shiftImpl
+  by_cases hz : p.isZero
+  · rw [if_pos hz, if_pos hz]
+  · rw [if_neg hz, if_neg hz]
+    congr 1
+    show ((List.replicate n (Zero.zero : R)) ++ p.toArray.toList).toArray = _
+    apply Array.ext'
+    simp
+
+/-- Register the `Array` append as the compiled implementation of `shift`. -/
+@[csimp]
+theorem shift_eq_impl : @shift = @shiftImpl := by
+  funext R _ _ n p
+  exact shift_eq_shiftImpl n p
 
 omit [DecidableEq R] in
 /-- Scaling a list by `c` commutes with default-indexed reads: the `n`-th `getD` of
@@ -92,14 +147,15 @@ theorem coeff_scale [Mul R] (c : R) (p : DensePoly R) (n : Nat)
     (scale c p).coeff n = c * p.coeff n := by
   unfold scale
   rw [coeff_ofCoeffs_list]
-  simpa [coeff, toArray] using list_getD_map_mul_zero (R := R) c p.toArray.toList n hzero
+  simpa [coeff, toList, toArray] using
+    list_getD_map_mul_zero (R := R) c p.toList n hzero
 
 /-- Scaling the zero polynomial yields the zero polynomial: `scale c 0 = 0`.
 A `simp`/`grind` normal form, so callers need no `c * 0 = 0` hypothesis to
 discharge the scaled-zero case. -/
 @[simp, grind =] theorem scale_zero_right [Mul R] (c : R) :
     scale c (0 : DensePoly R) = 0 := by
-  unfold scale toArray
+  unfold scale toList toArray
   rfl
 
 /-- Semiring-specialized coefficient law for scalar multiplication, registered as a normalizing
@@ -143,7 +199,8 @@ coefficients are read from the original polynomial with the index shifted down. 
       exact coeff_eq_zero_of_size_le (0 : DensePoly R) (by simp)
   · rw [if_neg hp]
     rw [coeff_ofCoeffs_list]
-    simpa [coeff, toArray] using list_getD_replicate_append_zero (R := R) n k p.toArray.toList
+    simpa [coeff, toList, toArray] using
+      list_getD_replicate_append_zero (R := R) n k p.toList
 
 /-- Shifting the zero polynomial by any power leaves it zero: `shift n 0 = 0`.
 A `simp`/`grind` normal form for the degenerate input to `shift`. -/
