@@ -21,14 +21,14 @@ private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexGF2" / "ffi" / "clmul.o"
   let srcTarget ← inputTextFile <| pkg.dir / "HexGF2" / "ffi" / "clmul.c"
   buildFileAfterDep oFile srcTarget fun srcFile => do
-    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
+    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3"]
     compileO oFile srcFile flags
 
 private def zmod64MulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexModArith" / "ffi" / "zmod64_mul.o"
   let srcTarget ← inputTextFile <| pkg.dir / "HexModArith" / "ffi" / "zmod64_mul.c"
   buildFileAfterDep oFile srcTarget fun srcFile => do
-    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
+    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3"]
     compileO oFile srcFile flags
 
 extern_lib hexgf2ffi (pkg) := do
@@ -41,7 +41,7 @@ private def hexArithOTarget (pkg : Package) (src : String) : FetchM (Job FilePat
   let oFile := pkg.dir / defaultBuildDir / "HexArith" / "ffi" / s!"{stem}.o"
   let srcTarget ← inputTextFile <| pkg.dir / "HexArith" / "ffi" / src
   buildFileAfterDep oFile srcTarget fun srcFile => do
-    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
+    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3"]
     compileO oFile srcFile flags
 
 extern_lib hexarithffi (pkg) := do
@@ -58,7 +58,7 @@ private def hexlllProviderOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexLLL" / "ffi" / "lean_hexlll_provider.o"
   let srcTarget ← inputTextFile <| pkg.dir / "HexLLL" / "ffi" / "lean_hexlll_provider.c"
   buildFileAfterDep oFile srcTarget fun srcFile => do
-    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
+    let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3"]
     compileO oFile srcFile flags
 
 extern_lib hexlllffi (pkg) := do
