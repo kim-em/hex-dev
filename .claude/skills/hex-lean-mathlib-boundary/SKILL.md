@@ -1477,3 +1477,22 @@ lemma proved by the destructure pattern the namespace already uses
 `RecoveredLift.p_eq`/`precision_eq`/`cutThresholds_eq` — then consume it with
 `:=` or `simp only [hLp]` (simp rewrites the *projection term* fine; only the
 `rw [D.basis_eq]` whole-`L` abstraction fails).
+
+### Kernel-facing recursive specs: structural recursion only
+
+Definitions that cross-check `decide`s must kernel-reduce (design principle
+11). Two traps, verified on v4.32.0-rc1:
+
+- A multi-clause recursion whose clauses decrease *different* arguments (the
+  padded-zip shape) gets an **auto-derived lexicographic measure**
+  (`invImage`/`Prod.instWellFoundedRelation`), which does **not**
+  kernel-reduce — even `decide +kernel` sticks. Restructure so one argument
+  decreases in every clause (fold the asymmetric clause into a `List.map`,
+  as in `DensePoly.zipPad`).
+- Well-founded recursion with an explicit Nat measure
+  (`termination_by xs.length + ys.length`) *does* kernel-reduce, but the
+  definition is `@[irreducible]` by default, so plain `decide` still fails
+  at every use site until you add `unseal foo in` or switch to
+  `decide +kernel` (`@[semireducible]` is warned ineffective for WF
+  definitions). For a spec with many downstream `decide` sites, structural
+  recursion avoids all per-site annotations.
