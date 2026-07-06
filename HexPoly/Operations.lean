@@ -471,7 +471,7 @@ def mulImpl [Add R] [Mul R] (p q : DensePoly R) : DensePoly R :=
           (List.range q.size).foldl
             (fun acc j =>
               let k := i + j
-              acc.set! k ((acc[k]?).getD (Zero.zero : R) + pi * q.coeff j))
+              acc.set! k (acc.getD k (Zero.zero : R) + pi * q.coeff j))
             acc)
         (Array.replicate size (Zero.zero : R))
     ofCoeffs coeffs
@@ -494,7 +494,7 @@ in-bounds index `k` changes only the `k`-th coefficient, leaving every other `ge
 unchanged. Used by `mul_inner_array_coeff_fold` to unfold the inner multiplication fold. -/
 private theorem array_getD_set!_schoolbook [Add R] [Mul R]
     (acc : Array R) (n k : Nat) (term : R) (hk : k < acc.size) :
-    (acc.set! k (acc[k]?.getD (Zero.zero : R) + term)).getD n (Zero.zero : R) =
+    (acc.set! k (acc.getD k (Zero.zero : R) + term)).getD n (Zero.zero : R) =
       if k = n then acc.getD n (Zero.zero : R) + term else acc.getD n (Zero.zero : R) := by
   by_cases hkn : k = n
   · subst n
@@ -512,7 +512,7 @@ private theorem mul_inner_array_coeff_fold [Add R] [Mul R]
     (xs.foldl
         (fun acc j =>
           let k := i + j
-          acc.set! k ((acc[k]?).getD (Zero.zero : R) + p.coeff i * q.coeff j))
+          acc.set! k (acc.getD k (Zero.zero : R) + p.coeff i * q.coeff j))
         acc).getD n (Zero.zero : R) =
       xs.foldl (mulCoeffStep p q n i) (acc.getD n (Zero.zero : R)) := by
   induction xs generalizing acc with
@@ -535,7 +535,7 @@ private theorem mul_inner_array_size [Add R] [Mul R]
     (xs.foldl
         (fun acc j =>
           let k := i + j
-          acc.set! k ((acc[k]?).getD (Zero.zero : R) + p.coeff i * q.coeff j))
+          acc.set! k (acc.getD k (Zero.zero : R) + p.coeff i * q.coeff j))
         acc).size = acc.size := by
   induction xs generalizing acc with
   | nil =>
@@ -554,7 +554,7 @@ private theorem mul_array_coeff_fold [Add R] [Mul R]
           (List.range q.size).foldl
             (fun acc j =>
               let k := i + j
-              acc.set! k ((acc[k]?).getD (Zero.zero : R) + p.coeff i * q.coeff j))
+              acc.set! k (acc.getD k (Zero.zero : R) + p.coeff i * q.coeff j))
             acc)
         acc).getD n (Zero.zero : R) =
       xs.foldl (fun coeff i => (List.range q.size).foldl (mulCoeffStep p q n i) coeff)
@@ -568,7 +568,7 @@ private theorem mul_array_coeff_fold [Add R] [Mul R]
           ((List.range q.size).foldl
               (fun acc j =>
                 let k := i + j
-                acc.set! k ((acc[k]?).getD (Zero.zero : R) + p.coeff i * q.coeff j))
+                acc.set! k (acc.getD k (Zero.zero : R) + p.coeff i * q.coeff j))
               acc).getD n (Zero.zero : R) =
             (List.range q.size).foldl (mulCoeffStep p q n i)
               (acc.getD n (Zero.zero : R)) := by
