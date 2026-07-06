@@ -535,19 +535,8 @@ private theorem pow_C_form
 
 private theorem coeff_derivative (f : FpPoly p) (n : Nat) :
     (DensePoly.derivative f).coeff n =
-      ((n + 1 : Nat) : ZMod64 p) * f.coeff (n + 1) := by
-  unfold DensePoly.derivative
-  rw [DensePoly.coeff_ofCoeffs_list]
-  change
-    ((List.range (f.size - 1)).map
-        (fun i => ((i + 1 : Nat) : ZMod64 p) * f.coeff (i + 1))).getD n 0 =
-      ((n + 1 : Nat) : ZMod64 p) * f.coeff (n + 1)
-  by_cases hn : n < f.size - 1
-  · simp [hn, List.getD]
-  · have hf : f.size ≤ n + 1 := by omega
-    have hcoeff : f.coeff (n + 1) = 0 :=
-      DensePoly.coeff_eq_zero_of_size_le f hf
-    simp [hn, List.getD, hcoeff]
+      ((n + 1 : Nat) : ZMod64 p) * f.coeff (n + 1) :=
+  DensePoly.coeff_derivative f n (Lean.Grind.Semiring.mul_zero _)
 
 private theorem derivative_degree?_lt_self_of_ne_zero
     (f : FpPoly p) (hder_ne : DensePoly.derivative f ≠ 0) :

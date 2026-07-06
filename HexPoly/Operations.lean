@@ -180,28 +180,203 @@ for the common algebraic setting. -/
       if k < i then (Zero.zero : S) else c * p.coeff (k - i) :=
   coeff_shift_scale i c p k (Lean.Grind.Semiring.mul_zero c)
 
-/-- Add two dense polynomials coefficientwise. -/
+omit [DecidableEq R] in
+/-- Default-indexed reads agree across `List.toArray`. -/
+private theorem toArray_getD_eq_getD (l : List R) (n : Nat) :
+    l.toArray.getD n (Zero.zero : R) = l.getD n (Zero.zero : R) := by
+  rw [Array.getD_eq_getD_getElem?, List.getElem?_toArray]
+  rfl
+
+/-- Reading the spec-level coefficient list with default zero agrees with
+`DensePoly.coeff`. -/
+theorem toList_getD_eq_coeff (p : DensePoly R) (n : Nat) :
+    p.toList.getD n (Zero.zero : R) = p.coeff n := by
+  unfold toList toArray coeff
+  rw [Array.getD_eq_getD_getElem?]
+  change p.coeffs.toList[n]?.getD (Zero.zero : R) =
+    p.coeffs[n]?.getD (Zero.zero : R)
+  rw [Array.getElem?_toList]
+
+/-- The zero polynomial has coefficient `0` at every index. -/
+@[simp, grind =] theorem coeff_zero (n : Nat) :
+    (0 : DensePoly R).coeff n = (0 : R) := by
+  exact coeff_eq_zero_of_size_le (0 : DensePoly R) (by simp)
+
+/-- Zip two coefficient lists with `f`, padding the shorter list with literal
+`Zero.zero` arguments: overhang entries become `f p Zero.zero` / `f Zero.zero q`
+rather than being passed through, so every output entry is literally
+`f (xs.getD i) (ys.getD i)` — the value the `Array.ofFn` runtime impls
+reproduce with no algebraic laws on `R`. -/
 @[expose]
-def add [Add R] (p q : DensePoly R) : DensePoly R :=
-  let size := max p.size q.size
-  ofCoeffs <| (List.range size).map (fun i => p.coeff i + q.coeff i) |>.toArray
+def zipPad (f : R → R → R) : List R → List R → List R
+  | [], ys => ys.map (fun y => f (Zero.zero : R) y)
+  | x :: xs, [] => f x (Zero.zero : R) :: zipPad f xs []
+  | x :: xs, y :: ys => f x y :: zipPad f xs ys
+
+omit [DecidableEq R] in
+/-- Default-indexed read of a padded zip: inside the padded range the entry is
+`f` of the two default-indexed reads, outside it is the default. -/
+private theorem zipPad_getD (f : R → R → R) (xs ys : List R) (n : Nat) :
+    (zipPad f xs ys).getD n (Zero.zero : R) =
+      if n < max xs.length ys.length
+      then f (xs.getD n (Zero.zero : R)) (ys.getD n (Zero.zero : R))
+      else (Zero.zero : R) := by
+  induction xs generalizing ys n with
+  | nil =>
+      induction ys generalizing n with
+      | nil => simp [zipPad]
+      | cons q qs ihq =>
+          cases n with
+          | zero => simp [zipPad]
+          | succ m => simpa [zipPad] using ihq m
+  | cons p ps ihp =>
+      cases ys with
+      | nil =>
+          cases n with
+          | zero => simp [zipPad]
+          | succ m => simpa [zipPad] using ihp [] m
+      | cons q qs =>
+          cases n with
+          | zero => simp [zipPad]
+          | succ m => simpa [zipPad] using ihp qs m
+
+omit [DecidableEq R] in
+/-- Default-indexed read of `Array.ofFn`: the generator inside the range,
+the default outside. -/
+private theorem array_ofFn_getD {n : Nat} (f : Fin n → R) (i : Nat) :
+    (Array.ofFn f).getD i (Zero.zero : R) =
+      if h : i < n then f ⟨i, h⟩ else (Zero.zero : R) := by
+  rw [Array.getD_eq_getD_getElem?, Array.getElem?_ofFn]
+  by_cases h : i < n
+  · rw [dif_pos h, dif_pos h]
+    rfl
+  · rw [dif_neg h, dif_neg h]
+    rfl
+
+omit [DecidableEq R] in
+/-- Default-indexed read of `Array.map`: `g` of the entry inside the range,
+the default outside. -/
+private theorem array_map_getD (g : R → R) (a : Array R) (i : Nat) :
+    (a.map g).getD i (Zero.zero : R) =
+      if h : i < a.size then g a[i] else (Zero.zero : R) := by
+  rw [Array.getD_eq_getD_getElem?, Array.getElem?_map]
+  by_cases h : i < a.size
+  · rw [Array.getElem?_eq_getElem h, dif_pos h]
+    rfl
+  · rw [Array.getElem?_eq_none (Nat.le_of_not_gt h), dif_neg h]
+    rfl
+
+/-- Add two dense polynomials coefficientwise.
+
+Kernel-facing specification: a single padded walk of the two coefficient
+lists. Compiled code runs the one-allocation `Array.ofFn` loop `addImpl`
+via the `@[csimp]` proof `add_eq_impl`. -/
+@[expose]
+noncomputable def add [Add R] (p q : DensePoly R) : DensePoly R :=
+  ofCoeffs (zipPad (· + ·) p.toList q.toList).toArray
+
+/-- Runtime implementation of `add`: one `Array.ofFn` allocation over the
+padded index range (value-equal to `add` by `add_eq_impl`, registered
+`@[csimp]`). -/
+@[expose]
+def addImpl [Add R] (p q : DensePoly R) : DensePoly R :=
+  ofCoeffs (Array.ofFn (n := max p.size q.size) fun i => p.coeff i + q.coeff i)
+
+/-- The spec `add` and the `Array.ofFn` runtime loop compute the same
+polynomial: each output coefficient is literally `p.coeff i + q.coeff i` on
+both sides, so no algebraic laws on `R` are needed. -/
+theorem add_eq_addImpl [Add R] (p q : DensePoly R) : add p q = addImpl p q := by
+  apply ext_coeff
+  intro n
+  unfold add addImpl
+  rw [coeff_ofCoeffs, coeff_ofCoeffs, toArray_getD_eq_getD, zipPad_getD, array_ofFn_getD]
+  simp only [length_toList, toList_getD_eq_coeff]
+  by_cases hn : n < max p.size q.size
+  · rw [if_pos hn, dif_pos hn]
+  · rw [if_neg hn, dif_neg hn]
+
+/-- Register the `Array.ofFn` loop as the compiled implementation of `add`. -/
+@[csimp]
+theorem add_eq_impl : @add = @addImpl := by
+  funext R _ _ _ p q
+  exact add_eq_addImpl p q
 
 instance [Add R] : Add (DensePoly R) where
   add := add
 
-/-- Subtract two dense polynomials coefficientwise. -/
+/-- Subtract two dense polynomials coefficientwise.
+
+Kernel-facing specification; compiled code runs the `Array.ofFn` loop
+`subImpl` via the `@[csimp]` proof `sub_eq_impl`. -/
 @[expose]
-def sub [Sub R] (p q : DensePoly R) : DensePoly R :=
-  let size := max p.size q.size
-  ofCoeffs <| (List.range size).map (fun i => p.coeff i - q.coeff i) |>.toArray
+noncomputable def sub [Sub R] (p q : DensePoly R) : DensePoly R :=
+  ofCoeffs (zipPad (· - ·) p.toList q.toList).toArray
+
+/-- Runtime implementation of `sub` (value-equal to `sub` by `sub_eq_impl`,
+registered `@[csimp]`). -/
+@[expose]
+def subImpl [Sub R] (p q : DensePoly R) : DensePoly R :=
+  ofCoeffs (Array.ofFn (n := max p.size q.size) fun i => p.coeff i - q.coeff i)
+
+/-- The spec `sub` and the `Array.ofFn` runtime loop compute the same
+polynomial. -/
+theorem sub_eq_subImpl [Sub R] (p q : DensePoly R) : sub p q = subImpl p q := by
+  apply ext_coeff
+  intro n
+  unfold sub subImpl
+  rw [coeff_ofCoeffs, coeff_ofCoeffs, toArray_getD_eq_getD, zipPad_getD, array_ofFn_getD]
+  simp only [length_toList, toList_getD_eq_coeff]
+  by_cases hn : n < max p.size q.size
+  · rw [if_pos hn, dif_pos hn]
+  · rw [if_neg hn, dif_neg hn]
+
+/-- Register the `Array.ofFn` loop as the compiled implementation of `sub`. -/
+@[csimp]
+theorem sub_eq_impl : @sub = @subImpl := by
+  funext R _ _ _ p q
+  exact sub_eq_subImpl p q
 
 instance [Sub R] : Sub (DensePoly R) where
   sub := sub
 
-/-- Coefficientwise additive inverse, expressed through executable subtraction. -/
+/-- Coefficientwise additive inverse, expressed through executable subtraction.
+
+Kernel-facing specification (one `sub` against the zero polynomial); compiled
+code runs the single `Array.map` pass `negImpl` via the `@[csimp]` proof
+`neg_eq_impl`. -/
 @[expose]
-def neg [Sub R] (p : DensePoly R) : DensePoly R :=
+noncomputable def neg [Sub R] (p : DensePoly R) : DensePoly R :=
   0 - p
+
+/-- Runtime implementation of `neg`: one `Array.map` pass over the stored
+coefficients (value-equal to `neg` by `neg_eq_impl`, registered `@[csimp]`). -/
+@[expose]
+def negImpl [Sub R] (p : DensePoly R) : DensePoly R :=
+  ofCoeffs (p.toArray.map (fun a => (Zero.zero : R) - a))
+
+/-- The spec `neg` and the `Array.map` runtime pass compute the same
+polynomial: each coefficient is literally `Zero.zero - p.coeff i` on both
+sides. -/
+theorem neg_eq_negImpl [Sub R] (p : DensePoly R) : neg p = negImpl p := by
+  apply ext_coeff
+  intro n
+  show (sub 0 p).coeff n = (negImpl p).coeff n
+  rw [sub_eq_subImpl]
+  unfold subImpl negImpl
+  rw [coeff_ofCoeffs, coeff_ofCoeffs, array_ofFn_getD, array_map_getD]
+  simp only [size_zero, Nat.zero_max, toArray_size, coeff_zero]
+  by_cases hn : n < p.size
+  · rw [dif_pos hn, dif_pos hn,
+      show p.toArray[n] = p.coeff n by
+        rw [Array.getElem_eq_getD (Zero.zero : R), toArray_getD]]
+    rfl
+  · rw [dif_neg hn, dif_neg hn]
+
+/-- Register the `Array.map` pass as the compiled implementation of `neg`. -/
+@[csimp]
+theorem neg_eq_impl : @neg = @negImpl := by
+  funext R _ _ _ p
+  exact neg_eq_negImpl p
 
 instance [Sub R] : Neg (DensePoly R) where
   neg := neg
@@ -564,13 +739,6 @@ private theorem list_getD_replicate (k n : Nat) :
       | zero => rfl
       | succ m => simpa [List.replicate_succ] using ih m
 
-omit [DecidableEq R] in
-/-- Default-indexed reads agree across `List.toArray`. -/
-private theorem toArray_getD_eq_getD (l : List R) (n : Nat) :
-    l.toArray.getD n (Zero.zero : R) = l.getD n (Zero.zero : R) := by
-  rw [Array.getD_eq_getD_getElem?, List.getElem?_toArray]
-  rfl
-
 /-- `mulCoeffSum` collapsed to a single fold over the row index, with each
 row's inner fold replaced by its closed form from `foldl_mulCoeffStep_range`. -/
 private theorem mulCoeffSum_eq_singleFold [Add R] [Mul R]
@@ -666,16 +834,6 @@ private theorem mulRows_getD [Add R] [Mul R] (qs ps acc : List R) (n : Nat)
                     simp only [Nat.succ_eq_add_one, List.getD_cons_succ,
                       Nat.add_sub_add_right, Nat.add_le_add_iff_right,
                       List.length_cons]
-
-/-- Reading the spec-level coefficient list with default zero agrees with
-`DensePoly.coeff`. -/
-theorem toList_getD_eq_coeff (p : DensePoly R) (n : Nat) :
-    p.toList.getD n (Zero.zero : R) = p.coeff n := by
-  unfold toList toArray coeff
-  rw [Array.getD_eq_getD_getElem?]
-  change p.coeffs.toList[n]?.getD (Zero.zero : R) =
-    p.coeffs[n]?.getD (Zero.zero : R)
-  rw [Array.getElem?_toList]
 
 /-- The list-walking specification `mul` satisfies the same coefficient law as
 the `Array` loop: both fold the schoolbook terms into each output coefficient
@@ -819,52 +977,55 @@ private theorem ofList_coeff_range_eq (p : DensePoly R) {n : Nat} (hn : p.size �
     simp [hi, coeff_eq_zero_of_size_le p hp]
 
 omit [DecidableEq R] in
-private theorem evalCoeffList_zipWith_add [Add R] [Mul R] (xs ys : List R) (x : R)
-    (hlen : xs.length = ys.length)
-    (hzero : (Zero.zero : R) + (Zero.zero : R) = (Zero.zero : R))
+/-- Horner evaluation distributes over the padded coefficientwise sum, given
+the zero-preservation and one-step distributivity laws. -/
+private theorem evalCoeffList_zipPad_add [Add R] [Mul R] (xs ys : List R) (x : R)
+    (hzero_add : (Zero.zero : R) + (Zero.zero : R) = (Zero.zero : R))
+    (hzero_horner : (Zero.zero : R) * x + (Zero.zero : R) = (Zero.zero : R))
     (hstep : ∀ a b c d : R, (a + b) * x + (c + d) = (a * x + c) + (b * x + d)) :
-    evalCoeffList (List.zipWith (fun a b => a + b) xs ys) x =
+    evalCoeffList (zipPad (· + ·) xs ys) x =
       evalCoeffList xs x + evalCoeffList ys x := by
   induction xs generalizing ys with
   | nil =>
+      induction ys with
+      | nil => simpa [zipPad, evalCoeffList] using hzero_add.symm
+      | cons q qs ihq =>
+          simp only [zipPad, evalCoeffList, List.map_cons] at ihq ⊢
+          rw [ihq, hstep, hzero_horner]
+  | cons c cs ihp =>
       cases ys with
       | nil =>
-          simpa [evalCoeffList] using hzero.symm
-      | cons _ _ =>
-          simp at hlen
-  | cons c cs ih =>
-      cases ys with
-      | nil =>
-          simp at hlen
-      | cons d ds =>
-          have htail : cs.length = ds.length := Nat.succ.inj hlen
-          simp only [List.zipWith, evalCoeffList]
-          rw [ih ds htail]
-          exact hstep (evalCoeffList cs x) (evalCoeffList ds x) c d
+          simp only [zipPad, evalCoeffList] at ihp ⊢
+          rw [ihp [], hstep]
+          simp only [evalCoeffList, hzero_horner]
+      | cons q qs =>
+          simp only [zipPad, evalCoeffList]
+          rw [ihp qs, hstep]
 
 omit [DecidableEq R] in
-private theorem evalCoeffList_zipWith_sub [Sub R] [Mul R] [Add R] (xs ys : List R) (x : R)
-    (hlen : xs.length = ys.length)
-    (hzero : (Zero.zero : R) - (Zero.zero : R) = (Zero.zero : R))
+/-- Horner evaluation distributes over the padded coefficientwise difference. -/
+private theorem evalCoeffList_zipPad_sub [Sub R] [Add R] [Mul R] (xs ys : List R) (x : R)
+    (hzero_sub : (Zero.zero : R) - (Zero.zero : R) = (Zero.zero : R))
+    (hzero_horner : (Zero.zero : R) * x + (Zero.zero : R) = (Zero.zero : R))
     (hstep : ∀ a b c d : R, (a - b) * x + (c - d) = (a * x + c) - (b * x + d)) :
-    evalCoeffList (List.zipWith (fun a b => a - b) xs ys) x =
+    evalCoeffList (zipPad (· - ·) xs ys) x =
       evalCoeffList xs x - evalCoeffList ys x := by
   induction xs generalizing ys with
   | nil =>
+      induction ys with
+      | nil => simpa [zipPad, evalCoeffList] using hzero_sub.symm
+      | cons q qs ihq =>
+          simp only [zipPad, evalCoeffList, List.map_cons] at ihq ⊢
+          rw [ihq, hstep, hzero_horner]
+  | cons c cs ihp =>
       cases ys with
       | nil =>
-          simpa [evalCoeffList] using hzero.symm
-      | cons _ _ =>
-          simp at hlen
-  | cons c cs ih =>
-      cases ys with
-      | nil =>
-          simp at hlen
-      | cons d ds =>
-          have htail : cs.length = ds.length := Nat.succ.inj hlen
-          simp only [List.zipWith, evalCoeffList]
-          rw [ih ds htail]
-          exact hstep (evalCoeffList cs x) (evalCoeffList ds x) c d
+          simp only [zipPad, evalCoeffList] at ihp ⊢
+          rw [ihp [], hstep]
+          simp only [evalCoeffList, hzero_horner]
+      | cons q qs =>
+          simp only [zipPad, evalCoeffList]
+          rw [ihp qs, hstep]
 
 /-- Compose polynomials using Horner's method. -/
 @[expose]
@@ -906,15 +1067,18 @@ theorem compose_C [Add R] [Mul R] (c : R) (q : DensePoly R)
     intro n
     change (add (0 : DensePoly R) (C c)).coeff n = (C c).coeff n
     unfold add
-    rw [coeff_ofCoeffs_list]
-    have hzero_coeff : ∀ i, (0 : DensePoly R).coeff i = (Zero.zero : R) := by
-      intro i
-      exact coeff_eq_zero_of_size_le (0 : DensePoly R) (by simp)
-    cases n with
-    | zero =>
-        simp [size_C_of_ne_zero hc, hzero_coeff, hzero_add]
-    | succ n =>
-        simp [size_C_of_ne_zero hc, hzero_coeff]
+    rw [coeff_ofCoeffs, toArray_getD_eq_getD, zipPad_getD]
+    simp only [length_toList, toList_getD_eq_coeff, size_zero, Nat.zero_max, coeff_zero]
+    by_cases hn : n < (C c).size
+    · rw [if_pos hn]
+      have hn0 : n = 0 := by
+        have h1 := size_C_of_ne_zero (c := c) hc
+        omega
+      subst hn0
+      rw [coeff_C, if_pos rfl]
+      exact hzero_add
+    · rw [if_neg hn,
+        coeff_eq_zero_of_size_le (C c) (Nat.le_of_not_gt hn)]
 
 /-- Semiring-specialized composition law for constants. This packages the zero-addition
 law needed by the generic `compose_C`. -/
@@ -1026,11 +1190,98 @@ theorem toList_eq_coeff_range (p : DensePoly R) :
     rw [toList_getD_eq_coeff, list_getD_map_range]
     simp [hi_size]
 
-/-- Formal derivative. The coefficient of `x^i` becomes `(i + 1) * a_(i+1)`. -/
+/-- Index-carrying derivative walk: entry `j` of `derivList i cs` is
+`((i + j + 1 : Nat) : R) * cs[j]`. Applied at `i = 0` to the coefficient
+tail, it produces the formal-derivative coefficients in one cons walk. -/
 @[expose]
-def derivative [NatCast R] [Mul R] (p : DensePoly R) : DensePoly R :=
-  ofCoeffs <|
-    (List.range (p.size - 1)).map (fun i => ((i + 1 : Nat) : R) * p.coeff (i + 1)) |>.toArray
+def derivList [NatCast R] [Mul R] : Nat → List R → List R
+  | _, [] => []
+  | i, c :: cs => ((i + 1 : Nat) : R) * c :: derivList (i + 1) cs
+
+omit [DecidableEq R] in
+/-- Default-indexed read of the derivative walk. -/
+private theorem derivList_getD [NatCast R] [Mul R] (i : Nat) (cs : List R) (n : Nat) :
+    (derivList i cs).getD n (Zero.zero : R) =
+      if n < cs.length
+      then ((i + n + 1 : Nat) : R) * cs.getD n (Zero.zero : R)
+      else (Zero.zero : R) := by
+  induction cs generalizing i n with
+  | nil => simp [derivList]
+  | cons c cs ih =>
+      cases n with
+      | zero => simp [derivList]
+      | succ m =>
+          simp only [derivList, List.getD_cons_succ, List.length_cons,
+            Nat.add_lt_add_iff_right]
+          rw [ih]
+          have harith : i + 1 + m + 1 = i + (m + 1) + 1 := by omega
+          rw [harith]
+
+/-- Formal derivative. The coefficient of `x^i` becomes `(i + 1) * a_(i+1)`.
+
+Kernel-facing specification: one cons walk of the coefficient tail. Compiled
+code runs the `Array.ofFn` loop `derivativeImpl` via the `@[csimp]` proof
+`derivative_eq_impl`. -/
+@[expose]
+noncomputable def derivative [NatCast R] [Mul R] (p : DensePoly R) : DensePoly R :=
+  ofCoeffs (derivList 0 (p.toList.drop 1)).toArray
+
+/-- Runtime implementation of `derivative`: one `Array.ofFn` allocation
+(value-equal to `derivative` by `derivative_eq_impl`, registered `@[csimp]`). -/
+@[expose]
+def derivativeImpl [NatCast R] [Mul R] (p : DensePoly R) : DensePoly R :=
+  ofCoeffs (Array.ofFn (n := p.size - 1) fun i => ((i.1 + 1 : Nat) : R) * p.coeff (i.1 + 1))
+
+/-- Default-indexed read of the spec derivative coefficients. -/
+private theorem derivative_coeffs_getD [NatCast R] [Mul R] (p : DensePoly R) (n : Nat) :
+    (derivList 0 (p.toList.drop 1)).getD n (Zero.zero : R) =
+      if n < p.size - 1
+      then ((n + 1 : Nat) : R) * p.coeff (n + 1)
+      else (Zero.zero : R) := by
+  rw [derivList_getD]
+  simp only [List.length_drop, length_toList, Nat.zero_add]
+  by_cases hn : n < p.size - 1
+  · rw [if_pos hn, if_pos hn]
+    have hdrop : (p.toList.drop 1).getD n (Zero.zero : R) =
+        p.toList.getD (1 + n) (Zero.zero : R) := by
+      rw [List.getD_eq_getElem?_getD, List.getElem?_drop, ← List.getD_eq_getElem?_getD]
+    rw [hdrop, Nat.add_comm 1 n, toList_getD_eq_coeff]
+  · rw [if_neg hn, if_neg hn]
+
+/-- The spec `derivative` and the `Array.ofFn` runtime loop compute the same
+polynomial. -/
+theorem derivative_eq_derivativeImpl [NatCast R] [Mul R] (p : DensePoly R) :
+    derivative p = derivativeImpl p := by
+  apply ext_coeff
+  intro n
+  unfold derivative derivativeImpl
+  rw [coeff_ofCoeffs, coeff_ofCoeffs, toArray_getD_eq_getD,
+    derivative_coeffs_getD, array_ofFn_getD]
+  by_cases hn : n < p.size - 1
+  · rw [if_pos hn, dif_pos hn]
+  · rw [if_neg hn, dif_neg hn]
+
+/-- Register the `Array.ofFn` loop as the compiled implementation of
+`derivative`. -/
+@[csimp]
+theorem derivative_eq_impl : @derivative = @derivativeImpl := by
+  funext R _ _ _ _ p
+  exact derivative_eq_derivativeImpl p
+
+omit [Zero R] [DecidableEq R] in
+/-- The derivative walk preserves list length. -/
+private theorem derivList_length [NatCast R] [Mul R] (i : Nat) (cs : List R) :
+    (derivList i cs).length = cs.length := by
+  induction cs generalizing i with
+  | nil => rfl
+  | cons c cs ih => simpa [derivList] using ih (i + 1)
+
+/-- The derivative stores at most one fewer coefficient than its input. -/
+theorem size_derivative_le [NatCast R] [Mul R] (p : DensePoly R) :
+    (derivative p).size ≤ p.size - 1 := by
+  unfold derivative
+  refine Nat.le_trans (size_ofCoeffs_le _) ?_
+  simp [derivList_length]
 
 /-- Coefficient law for addition. The explicit zero law is needed because the generic
 `Add`/`Zero` interface does not imply `0 + 0 = 0`. -/
@@ -1039,13 +1290,14 @@ theorem coeff_add [Add R] (p q : DensePoly R) (n : Nat)
     (p + q).coeff n = (p.coeff n + q.coeff n) := by
   change (add p q).coeff n = (p.coeff n + q.coeff n)
   unfold add
-  rw [coeff_ofCoeffs_list, list_getD_map_range]
+  rw [coeff_ofCoeffs, toArray_getD_eq_getD, zipPad_getD]
+  simp only [length_toList, toList_getD_eq_coeff]
   by_cases hn : n < max p.size q.size
-  · simp [hn]
+  · rw [if_pos hn]
   · have hmax : max p.size q.size ≤ n := Nat.le_of_not_gt hn
     have hp : p.size ≤ n := Nat.le_trans (Nat.le_max_left p.size q.size) hmax
     have hq : q.size ≤ n := Nat.le_trans (Nat.le_max_right p.size q.size) hmax
-    simp [hn, coeff_eq_zero_of_size_le p hp, coeff_eq_zero_of_size_le q hq, hzero]
+    rw [if_neg hn, coeff_eq_zero_of_size_le p hp, coeff_eq_zero_of_size_le q hq, hzero]
 
 /-- Semiring-specialized coefficient law for addition. -/
 @[simp, grind =] theorem coeff_add_semiring {S : Type u}
@@ -1062,13 +1314,14 @@ theorem coeff_sub [Sub R] (p q : DensePoly R) (n : Nat)
     (p - q).coeff n = (p.coeff n - q.coeff n) := by
   change (sub p q).coeff n = (p.coeff n - q.coeff n)
   unfold sub
-  rw [coeff_ofCoeffs_list, list_getD_map_range]
+  rw [coeff_ofCoeffs, toArray_getD_eq_getD, zipPad_getD]
+  simp only [length_toList, toList_getD_eq_coeff]
   by_cases hn : n < max p.size q.size
-  · simp [hn]
+  · rw [if_pos hn]
   · have hmax : max p.size q.size ≤ n := Nat.le_of_not_gt hn
     have hp : p.size ≤ n := Nat.le_trans (Nat.le_max_left p.size q.size) hmax
     have hq : q.size ≤ n := Nat.le_trans (Nat.le_max_right p.size q.size) hmax
-    simp [hn, coeff_eq_zero_of_size_le p hp, coeff_eq_zero_of_size_le q hq, hzero]
+    rw [if_neg hn, coeff_eq_zero_of_size_le p hp, coeff_eq_zero_of_size_le q hq, hzero]
 
 /-- Ring-specialized coefficient law for subtraction. -/
 @[simp, grind =] theorem coeff_sub_ring {S : Type u}
@@ -1077,11 +1330,6 @@ theorem coeff_sub [Sub R] (p q : DensePoly R) (n : Nat)
     (hzero : SubZeroLaw S := by infer_instance) :
     (p - q).coeff n = p.coeff n - q.coeff n :=
   coeff_sub p q n hzero.sub_zero_zero
-
-/-- The zero polynomial has coefficient `0` at every index. -/
-@[simp, grind =] theorem coeff_zero (n : Nat) :
-    (0 : DensePoly R).coeff n = (0 : R) := by
-  exact coeff_eq_zero_of_size_le (0 : DensePoly R) (by simp)
 
 /-- Coefficient law for negation, expressed through subtraction from zero. The explicit zero law
 is inherited from the generic subtraction coefficient theorem. -/
@@ -1163,40 +1411,13 @@ theorem eval_add [Add R] [Mul R] (p q : DensePoly R) (x : R)
     (hzero_horner : (Zero.zero : R) * x + (Zero.zero : R) = (Zero.zero : R))
     (hstep : ∀ a b c d : R, (a + b) * x + (c + d) = (a * x + c) + (b * x + d)) :
     eval (p + q) x = eval p x + eval q x := by
-  let n := max p.size q.size
-  have hzip :
-      List.zipWith (fun a b : R => a + b)
-          ((List.range n).map (fun i => p.coeff i))
-          ((List.range n).map (fun i => q.coeff i)) =
-        (List.range n).map (fun i => p.coeff i + q.coeff i) := by
-    generalize List.range n = xs
-    induction xs with
-    | nil =>
-        rfl
-    | cons i is ih =>
-        simp [ih]
-  rw [show eval (p + q) x =
-      evalCoeffList ((List.range n).map (fun i => p.coeff i + q.coeff i)) x by
-    change eval (add p q) x =
-      evalCoeffList ((List.range n).map (fun i => p.coeff i + q.coeff i)) x
-    unfold add n
-    exact eval_ofList_eq_evalCoeffList ((List.range (max p.size q.size)).map
-      (fun i => p.coeff i + q.coeff i)) x hzero_horner]
-  rw [show eval p x = evalCoeffList ((List.range n).map (fun i => p.coeff i)) x by
-    rw [← eval_ofList_eq_evalCoeffList ((List.range n).map (fun i => p.coeff i)) x
-      hzero_horner]
-    rw [ofList_coeff_range_eq p (Nat.le_max_left p.size q.size)]
-  ]
-  rw [show eval q x = evalCoeffList ((List.range n).map (fun i => q.coeff i)) x by
-    rw [← eval_ofList_eq_evalCoeffList ((List.range n).map (fun i => q.coeff i)) x
-      hzero_horner]
-    rw [ofList_coeff_range_eq q (Nat.le_max_right p.size q.size)]
-  ]
-  rw [← evalCoeffList_zipWith_add
-    ((List.range n).map (fun i => p.coeff i))
-    ((List.range n).map (fun i => q.coeff i)) x (by simp)
-    hzero_add hstep]
-  rw [hzip]
+  have hadd : eval (p + q) x =
+      evalCoeffList (zipPad (· + ·) p.toList q.toList) x := by
+    change eval (add p q) x = _
+    unfold add
+    exact eval_ofList_eq_evalCoeffList _ x hzero_horner
+  rw [hadd, eval_eq_evalCoeffList, eval_eq_evalCoeffList]
+  exact evalCoeffList_zipPad_add p.toList q.toList x hzero_add hzero_horner hstep
 
 /-- Semiring-specialized evaluation law for addition. -/
 @[simp, grind =] theorem eval_add_semiring {S : Type u}
@@ -1217,40 +1438,13 @@ theorem eval_sub [Sub R] [Add R] [Mul R] (p q : DensePoly R) (x : R)
     (hzero_horner : (Zero.zero : R) * x + (Zero.zero : R) = (Zero.zero : R))
     (hstep : ∀ a b c d : R, (a - b) * x + (c - d) = (a * x + c) - (b * x + d)) :
     eval (p - q) x = eval p x - eval q x := by
-  let n := max p.size q.size
-  have hzip :
-      List.zipWith (fun a b : R => a - b)
-          ((List.range n).map (fun i => p.coeff i))
-          ((List.range n).map (fun i => q.coeff i)) =
-        (List.range n).map (fun i => p.coeff i - q.coeff i) := by
-    generalize List.range n = xs
-    induction xs with
-    | nil =>
-        rfl
-    | cons i is ih =>
-        simp [ih]
-  rw [show eval (p - q) x =
-      evalCoeffList ((List.range n).map (fun i => p.coeff i - q.coeff i)) x by
-    change eval (sub p q) x =
-      evalCoeffList ((List.range n).map (fun i => p.coeff i - q.coeff i)) x
-    unfold sub n
-    exact eval_ofList_eq_evalCoeffList ((List.range (max p.size q.size)).map
-      (fun i => p.coeff i - q.coeff i)) x hzero_horner]
-  rw [show eval p x = evalCoeffList ((List.range n).map (fun i => p.coeff i)) x by
-    rw [← eval_ofList_eq_evalCoeffList ((List.range n).map (fun i => p.coeff i)) x
-      hzero_horner]
-    rw [ofList_coeff_range_eq p (Nat.le_max_left p.size q.size)]
-  ]
-  rw [show eval q x = evalCoeffList ((List.range n).map (fun i => q.coeff i)) x by
-    rw [← eval_ofList_eq_evalCoeffList ((List.range n).map (fun i => q.coeff i)) x
-      hzero_horner]
-    rw [ofList_coeff_range_eq q (Nat.le_max_right p.size q.size)]
-  ]
-  rw [← evalCoeffList_zipWith_sub
-    ((List.range n).map (fun i => p.coeff i))
-    ((List.range n).map (fun i => q.coeff i)) x (by simp)
-    hzero_sub hstep]
-  rw [hzip]
+  have hsub : eval (p - q) x =
+      evalCoeffList (zipPad (· - ·) p.toList q.toList) x := by
+    change eval (sub p q) x = _
+    unfold sub
+    exact eval_ofList_eq_evalCoeffList _ x hzero_horner
+  rw [hsub, eval_eq_evalCoeffList, eval_eq_evalCoeffList]
+  exact evalCoeffList_zipPad_sub p.toList q.toList x hzero_sub hzero_horner hstep
 
 /-- Ring-specialized evaluation law for subtraction. -/
 @[simp, grind =] theorem eval_sub_ring {S : Type u}
@@ -1374,11 +1568,11 @@ theorem coeff_derivative [NatCast R] [Mul R] (p : DensePoly R) (n : Nat)
     (hzero : ((n + 1 : Nat) : R) * (Zero.zero : R) = (Zero.zero : R)) :
     (derivative p).coeff n = ((n + 1 : Nat) : R) * p.coeff (n + 1) := by
   unfold derivative
-  rw [coeff_ofCoeffs_list, list_getD_map_range]
+  rw [coeff_ofCoeffs, toArray_getD_eq_getD, derivative_coeffs_getD]
   by_cases hn : n < p.size - 1
-  · simp [hn]
+  · rw [if_pos hn]
   · have hp : p.size ≤ n + 1 := by omega
-    rw [coeff_eq_zero_of_size_le p hp, if_neg hn, hzero]
+    rw [if_neg hn, coeff_eq_zero_of_size_le p hp, hzero]
 
 attribute [local instance 1100] Lean.Grind.Semiring.natCast
 

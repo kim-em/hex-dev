@@ -884,19 +884,8 @@ private theorem rat_weighted_diagonal_fold
     rw [hidx])
 
 private theorem rat_coeff_derivative_generic (p : DensePoly Rat) (n : Nat) :
-    (derivative p).coeff n = ((n + 1 : Nat) : Rat) * p.coeff (n + 1) := by
-  unfold derivative
-  rw [coeff_ofCoeffs_list]
-  change
-    ((List.range (p.size - 1)).map
-        (fun i => ((i + 1 : Nat) : Rat) * p.coeff (i + 1))).getD n 0 =
-      ((n + 1 : Nat) : Rat) * p.coeff (n + 1)
-  by_cases hn : n < p.size - 1
-  · simp [hn, List.getD]
-  · have hp : p.size ≤ n + 1 := by omega
-    have hcoeff : p.coeff (n + 1) = 0 :=
-      coeff_eq_zero_of_size_le p hp
-    simp [hn, List.getD, hcoeff]
+    (derivative p).coeff n = ((n + 1 : Nat) : Rat) * p.coeff (n + 1) :=
+  coeff_derivative p n (Rat.mul_zero _)
 
 /-- Rational-coefficient specialization of `mulCoeffSum_derivative_product_rule`:
 the `(n+1)` scaling factor is cast into `Rat`. -/
