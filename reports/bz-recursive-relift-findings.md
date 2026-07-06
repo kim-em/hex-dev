@@ -33,8 +33,8 @@ today's single core-floor lift, and what the recursion costs end to end.
    (same-prime variant, no per-node prime walk or Berlekamp) and capping
    sub-floor rung scans at small subset sizes turns the recursion into a
    robust ~2x end-to-end WIN on every split family measured (deg 24:
-   62.9 ms -> 30.1 ms) and 1.6x on `adv/high_multiplicity`, at a bounded
-   1.16-1.27x overhead on the irreducible adversarial inputs (Phi15, SD3,
+   61.4 ms -> 30.0 ms) and 1.6x on `adv/high_multiplicity`, at a bounded
+   1.17-1.25x overhead on the irreducible adversarial inputs (Phi15, SD3,
    SD4). The sub-floor scan cap must be >= 2 for `adv/mignotte_swell` (its
    sub-floor split is a pair of size-2 subsets; singleton-only sub-floor
    rungs push its certification back to the floor and lose 2x, vs 1.3x
@@ -162,18 +162,24 @@ differences are isolated from scan-implementation differences.
 `scaledRecombinationSmart`, with its own residue filters and subset
 budget) at the same `B`. same-prime cap2 is the recommended policy.
 
-| family | today | fresh-prime | same-prime full | cap1 | cap2 | cap2 vs today |
-|---|---|---|---|---|---|---|
-| split deg12 | 6065 | 6655 | 5888 | 3363 | 3432 | **1.77x win** |
-| split deg16 | 18283 | 46618 | 44689 | 8891 | 9094 | **2.01x win** |
-| split deg20 | 36409 | 113195 | 111453 | 16972 | 17252 | **2.11x win** |
-| split deg24 | 62912 | 239067 | 236889 | 29743 | 30071 | **2.09x win** |
-| adv/high_multiplicity | 129 | 97 | 80 | 80 | 80 | **1.62x win** |
-| adv/mignotte_swell | 998 | 1476 | 1307 | 1977 | 1312 | 1.32x loss |
-| phi15 | 686 | 796 | 795 | 792 | 795 | 1.16x loss |
-| SD3 | 1151 | 1460 | 1457 | 1446 | 1458 | 1.27x loss |
-| SD4 | 12507 | 16347 | 16321 | 15398 | 15519 | 1.24x loss |
-| (x-1)*SD3 | 1879 | 2841 | 2039 | 2024 | 2040 | 1.09x loss |
+| family | production | today | fresh-prime | same-prime full | cap1 | cap2 | cap2 vs today |
+|---|---|---|---|---|---|---|---|
+| split deg12 | 5844 | 5838 | 6468 | 5733 | 3275 | 3362 | **1.74x win** |
+| split deg16 | 17741 | 17718 | 46146 | 44058 | 8636 | 8946 | **1.98x win** |
+| split deg20 | 35661 | 35569 | 111782 | 108933 | 16492 | 16909 | **2.10x win** |
+| split deg24 | 61491 | 61425 | 240357 | 241262 | 29361 | 29955 | **2.05x win** |
+| adv/high_multiplicity | 126 | 124 | 96 | 79 | 79 | 79 | **1.57x win** |
+| adv/mignotte_swell | 969 | 968 | 1453 | 1284 | 1938 | 1279 | 1.32x loss |
+| phi15 | 678 | 673 | 786 | 784 | 784 | 784 | 1.17x loss |
+| SD3 | 1138 | 1145 | 1512 | 1438 | 1429 | 1435 | 1.25x loss |
+| SD4 | 11754 | 12399 | 16302 | 16277 | 15372 | 15476 | 1.25x loss |
+| (x-1)*SD3 | 1871 | 1859 | 2836 | 2030 | 2018 | 2030 | 1.09x loss |
+
+The production column matches the shared-scan baseline within noise on
+every family (identical factor checksums except ordering on (x-1)*SD3),
+so the shared-scan normalization neither flatters nor penalizes either
+side on this corpus. Production declined nothing here (its subset budget
+was never exhausted).
 
 ## Where the recursion's time actually goes
 
