@@ -60,18 +60,10 @@ private theorem C_zero_eq_zero :
     rw [C_zero_eq_zero]
     exact (C_zero_eq_zero (p := p)).symm
   · change c ≠ (Zero.zero : ZMod64 p) at hc
-    unfold DensePoly.compose DensePoly.toArray FpPoly.C
+    unfold DensePoly.compose DensePoly.toList DensePoly.toArray FpPoly.C
     rw [DensePoly.coeffs_C_of_ne_zero hc]
-    show (#[c].toList.reverse.foldl
-        (fun acc coeff => acc * q + DensePoly.C coeff) (0 : FpPoly p)) = DensePoly.C c
-    have hlist : #[c].toList = [c] := rfl
-    rw [hlist]
-    have hrev : ([c] : List (ZMod64 p)).reverse = [c] := rfl
-    rw [hrev]
-    simp only [List.foldl_cons, List.foldl_nil]
-    have : (0 : FpPoly p) * q + DensePoly.C c = DensePoly.C c := by
-      rw [FpPoly.zero_mul, FpPoly.zero_add]
-    exact this
+    show (0 : FpPoly p) * q + DensePoly.C c = DensePoly.C c
+    rw [FpPoly.zero_mul, FpPoly.zero_add]
 
 private theorem one_ne_zero_of_prime [ZMod64.PrimeModulus p] :
     (1 : ZMod64 p) ≠ (Zero.zero : ZMod64 p) := by
@@ -88,25 +80,17 @@ private theorem one_ne_zero_of_prime [ZMod64.PrimeModulus p] :
 composition. -/
 @[simp, grind =] theorem compose_X [ZMod64.PrimeModulus p] (q : FpPoly p) :
     DensePoly.compose (FpPoly.X : FpPoly p) q = q := by
-  unfold DensePoly.compose DensePoly.toArray FpPoly.X DensePoly.monomial
+  unfold DensePoly.compose DensePoly.toList DensePoly.toArray FpPoly.X DensePoly.monomial
   have h1 : (1 : ZMod64 p) ≠ (Zero.zero : ZMod64 p) := one_ne_zero_of_prime
   rw [dif_neg h1]
-  show ((((Array.replicate 1 (Zero.zero : ZMod64 p)).push 1).toList).reverse.foldl
-      (fun acc coeff => acc * q + DensePoly.C coeff) 0) = q
-  have hlist :
-      ((Array.replicate 1 (Zero.zero : ZMod64 p)).push 1).toList =
-        [(Zero.zero : ZMod64 p), 1] := rfl
-  rw [hlist]
-  have hrev : ([(Zero.zero : ZMod64 p), 1] : List (ZMod64 p)).reverse =
-      [(1 : ZMod64 p), Zero.zero] := rfl
-  rw [hrev]
-  simp only [List.foldl_cons, List.foldl_nil]
+  show ((0 : FpPoly p) * q + DensePoly.C (1 : ZMod64 p)) * q +
+      DensePoly.C (Zero.zero : ZMod64 p) = q
   have hstep1 : ((0 : FpPoly p) * q + DensePoly.C (1 : ZMod64 p)) = (1 : FpPoly p) := by
     rw [FpPoly.zero_mul, FpPoly.zero_add]
     rfl
-  rw [hstep1, FpPoly.one_mul]
-  show q + DensePoly.C (Zero.zero : ZMod64 p) = q
-  rw [show (DensePoly.C (Zero.zero : ZMod64 p) : FpPoly p) = 0 from C_zero_eq_zero, FpPoly.add_zero]
+  rw [hstep1, FpPoly.one_mul,
+    show (DensePoly.C (Zero.zero : ZMod64 p) : FpPoly p) = 0 from C_zero_eq_zero,
+    FpPoly.add_zero]
 
 /-- Composing the constant polynomial `1` with any `q` yields `1`: the
 multiplicative identity of `FpPoly` is fixed by substitution. This is the
