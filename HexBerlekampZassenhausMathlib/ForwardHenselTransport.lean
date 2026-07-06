@@ -1354,8 +1354,8 @@ private theorem size_scale_eq_of_monic_of_ne_zero
     rw [hg_def]
     unfold Hex.DensePoly.scale
     have h := Hex.DensePoly.size_ofCoeffs_le
-      ((f.toArray.toList.map fun a => c * a).toArray)
-    rw [List.size_toArray, List.length_map] at h
+      ((f.toList.map fun a => c * a).toArray)
+    rw [List.size_toArray, List.length_map, Hex.DensePoly.length_toList] at h
     simpa [Hex.DensePoly.size] using h
   exact le_antisymm hg_size_le hg_size_ge
 
