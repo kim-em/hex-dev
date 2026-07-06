@@ -20,13 +20,13 @@ operation. The packed kernel below mirrors the reference array long-division
 loop (`HexPoly/Euclid.lean`) over a bare `Array UInt64`, eliminating the boxing
 on the monic-division / Frobenius hot path.
 
-The arithmetic stays overflow-safe: `ZMod64.Bounds p` only gives `p < 2^64`, so
-`p` may exceed `2^32` and naive `UInt64` `(a*b) % p` would wrap mod `2^64`. The
-word helpers `ZMod64.mulWord` / `ZMod64.subWord` reconstruct residues and reuse
-`ZMod64.mul` / `ZMod64.sub` (the former extern-backed by a `__uint128_t`
-widening multiply, the latter compiled to the multi-branch division-free
-`subImpl` via `@[csimp]`), so the packed kernel equals the reference for
-*every* `Bounds p`.
+The arithmetic reuses the reference residue ops rather than doing raw-word
+arithmetic directly. The word helpers `ZMod64.mulWord` / `ZMod64.subWord`
+reconstruct residues and delegate to `ZMod64.mul` / `ZMod64.sub` (the former
+extern-backed by a single-word `a * b % p`, safe because `Bounds p` gives
+`p < 2^31` so the product stays below `2^62`; the latter compiled to the
+division-free sign-test `subImpl` via `@[csimp]`), so the packed kernel equals
+the reference for *every* `Bounds p`.
 
 `modByMonicPacked_eq` is the value-correspondence theorem; a later `@[csimp]`
 swap of `FpPoly.modByMonic` for `modByMonicPacked` is therefore

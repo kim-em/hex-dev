@@ -17,16 +17,17 @@ extern void __gmpz_clear(mpz_t);
 extern void* __gmpz_export(void*, size_t*, int, size_t, int, size_t, const mpz_t);
 extern void lean_extract_mpz_value(lean_object*, mpz_t);
 
-/* `ZMod64.Bounds p` guarantees `0 < p < 2^64` (`Bounds.pLtR`), so the modulus
-   always fits in a `uint64_t` and the former `p = 2^64` "word modulus" case is
-   impossible. Reading the modulus with `lean_uint64_of_nat` therefore needs no
-   width check and, in particular, avoids the per-call bignum allocation
-   (`lean_uint64_to_nat(UINT64_MAX)`) the old width check paid on every call. */
+/* `ZMod64.Bounds p` guarantees `0 < p < 2^31` (`Bounds.pLtR`), so the modulus
+   fits in a `uint64_t` and reading it needs no width check. Because both inputs
+   are reduced residues `< p < 2^31`, their product is `< 2^62` and fits in a
+   single `uint64_t`: no `__uint128_t` is needed, and the reduction is a plain
+   64/64 division rather than a 128/64 one. The result is byte-identical to the
+   pure Lean fallback `ofNat p (a * b)`. */
 
 LEAN_EXPORT uint64_t lean_hex_zmod64_mul(b_lean_obj_arg p, uint64_t a, uint64_t b) {
     uint64_t modulus = lean_uint64_of_nat(p);
-    __uint128_t product = (__uint128_t)a * (__uint128_t)b;
-    return (uint64_t)(product % modulus);
+    uint64_t product = a * b;
+    return product % modulus;
 }
 
 static uint64_t lean_hex_mul_mod_word(uint64_t a, uint64_t b, uint64_t modulus) {

@@ -314,15 +314,15 @@ private theorem choosePrimeDataScore_fold_isGoodPrime
 
 /--
 Build a `SmallPrimeCandidate` from an arbitrary natural number `p` if
-`p` passes the executable trial-division primality test and fits in one
-machine word. Used by the post-prefix prime walk to produce candidates beyond
+`p` passes the executable trial-division primality test and satisfies the
+small-modulus bound `p < 2^31`. Used by the post-prefix prime walk to produce candidates beyond
 the fixed `smallPrimeCandidates` list with explicit primality and
 `ZMod64.Bounds` evidence.
 -/
 private def mkExtendedSmallPrimeCandidate? (p : Nat) :
     Option SmallPrimeCandidate :=
   if hprime : Hex.Nat.isPrimeTrial p = true then
-    if hbound : p < UInt64.word then
+    if hbound : p < 2 ^ 31 then
       let prime := Hex.Nat.isPrimeTrial_isPrime hprime
       let bounds : ZMod64.Bounds p := { pPos := prime.pos, pLtR := hbound }
       some { p, bounds, prime }

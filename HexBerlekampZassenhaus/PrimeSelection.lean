@@ -501,9 +501,10 @@ structure SmallPrimeCandidate where
   [bounds : ZMod64.Bounds p]
   prime : Nat.Prime p
 
-/-- Build a `SmallPrimeCandidate` from a trial-division primality witness and a word-size bound on `p`. -/
+/-- Build a `SmallPrimeCandidate` from a trial-division primality witness and the
+small-modulus bound `p < 2^31` on `p`. -/
 private def smallPrimeCandidateOfTrial (p : Nat)
-    (hprime : Hex.Nat.isPrimeTrial p = true) (hbound : p < UInt64.word) :
+    (hprime : Hex.Nat.isPrimeTrial p = true) (hbound : p < 2 ^ 31) :
     SmallPrimeCandidate :=
   let prime := Hex.Nat.isPrimeTrial_isPrime hprime
   { p, bounds := { pPos := prime.pos, pLtR := hbound }, prime }

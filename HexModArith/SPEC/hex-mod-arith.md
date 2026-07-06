@@ -10,10 +10,13 @@ types.
 
 ```lean
 /-- Project-local bounds class: `ZMod64 p` is a faithful model of
-`Z/pZ` only when `p` is positive and fits in a single machine word. -/
+`Z/pZ` only when `p` is positive and strictly below `2^31`. -/
 class ZMod64.Bounds (p : Nat) : Prop where
   pPos : 0 < p
-  pLtR : p < UInt64.word        -- = 2^64
+  pLtR : p < 2 ^ 31
+
+/-- Derived machine-word bound `p < UInt64.word` (= `2^64`). -/
+theorem ZMod64.Bounds.pLtWord (p : Nat) [Bounds p] : p < UInt64.word
 
 structure ZMod64 (p : Nat) [Bounds p] where
   val  : UInt64
@@ -23,11 +26,16 @@ structure ZMod64 (p : Nat) [Bounds p] where
 The bounds live in a typeclass that callers provide once per
 modulus, e.g. `instance : ZMod64.Bounds 7 := ⟨by decide, by decide⟩`.
 Every operation takes `[Bounds p]` implicitly; nothing is threaded
-through call sites. `p ≥ 2^64` is rejected at the type boundary
-because no `Bounds p` instance exists for it — a `UInt64` cannot hold
-the modulus itself, let alone residues above it, and excluding the
-word modulus `2^64` keeps `add`/`sub`/`neg` free of a per-call
-special case.
+through call sites. The `p < 2^31` bound is owner-blessed: every
+current and anticipated application (Berlekamp-Zassenhaus, LLL,
+matrix work) uses small primes. It is tight enough that `p`, every
+residue, and the *sum* of two residues all fit in a `UInt64` with no
+carry, and the *product* of two residues stays below `2^62` (one
+word, no `__uint128_t`). This keeps `add`/`sub`/`neg` free of any
+carry/borrow correction (`add` is a single conditional subtract of
+the modulus word, `sub` a single sign test) and the modular multiply
+a single-word product plus one `%`. Code that still needs the raw
+machine-word bound goes through the derived `Bounds.pLtWord`.
 
 Mathlib's `Fact` is unavailable to `hex-mod-arith` (it is a
 computational library, not a Mathlib bridge). The project-local
@@ -87,17 +95,18 @@ The runtime implementation is supplied by `lean_hex_zmod64_mul` in
 `HexModArith/ffi/zmod64_mul.c`. Acceptable runtime strategies for
 the C body, in order of simplicity:
 
-1. **Direct 128/64 modular reduction**, e.g. `__uint128_t` on
-   compilers that support it (the portable C reference shape).
-   Note: not every target has a single-instruction 128/64 divide —
-   x86_64 does (`divq`); AArch64 does not. Compilers may lower
-   `__uint128_t %` to a runtime helper. Acceptable as the Phase-1
-   default; later phases may swap to a faster strategy without
-   changing the extern symbol.
+1. **Single-word 64/64 modular reduction** (the current body). Under
+   the `p < 2^31` bound both residues are below `2^31`, so their
+   product is below `2^62` and fits in one `uint64_t`; the extern is
+   `uint64_t product = a * b; return product % modulus;` — a plain
+   64/64 divide with no `__uint128_t`. (Before the bound was
+   tightened this had to widen to `__uint128_t` for a 128/64 reduce.)
 
 2. **Barrett reduction** — precompute `pinv = ⌊2^64 / p⌋` once per
    modulus (lifted from `BarrettCtx` in `hex-arith`) when
-   `p < 2^32`. ~10 cycles per multiply.
+   `p < 2^32`. ~10 cycles per multiply. This needs a reused per-
+   modulus context, so it belongs in convolution kernels (poly/matrix
+   products), not the contextless `ZMod64.mul`.
 
 3. **Montgomery reduction** — precompute `p'` and `R^2 mod p` once
    per modulus (lifted from `MontCtx` in `hex-arith`) when
