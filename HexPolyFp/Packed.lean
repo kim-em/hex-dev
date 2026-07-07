@@ -14,11 +14,9 @@ public section
 Packed `Array UInt64` monic-division kernel for `FpPoly` and its
 value-correspondence with the reference `FpPoly.modByMonic`.
 
-`FpPoly p = DensePoly (ZMod64 p)` stores coefficients as `Array (ZMod64 p)`,
-which boxes every element (`lean_ctor` per coefficient) and allocates per
-operation. The packed kernel below mirrors the reference array long-division
-loop (`HexPoly/Euclid.lean`) over a bare `Array UInt64`, eliminating the boxing
-on the monic-division / Frobenius hot path.
+`FpPoly p = DensePoly (ZMod64 p)` stores coefficients as `Array (ZMod64 p)`.
+The packed kernel below mirrors the reference array long-division loop
+(`HexPoly/Euclid.lean`) over a bare `Array UInt64`.
 
 The arithmetic reuses the reference residue ops rather than doing raw-word
 arithmetic directly. The word helpers `ZMod64.mulWord` / `ZMod64.subWord`
@@ -26,11 +24,35 @@ reconstruct residues and delegate to `ZMod64.mul` / `ZMod64.sub` (the former
 extern-backed by a single-word `a * b % p`, safe because `Bounds p` gives
 `p < 2^31` so the product stays below `2^62`; the latter compiled to the
 division-free sign-test `subImpl` via `@[csimp]`), so the packed kernel equals
-the reference for *every* `Bounds p`.
+the reference for *every* `Bounds p`. `modByMonicPacked_eq` is the
+value-correspondence theorem.
 
-`modByMonicPacked_eq` is the value-correspondence theorem; a later `@[csimp]`
-swap of `FpPoly.modByMonic` for `modByMonicPacked` is therefore
-behaviour-preserving.
+**Status: dormant, measured neutral — intentionally not wired.** This kernel
+was built to test the hypothesis (issue #8642) that `FpPoly` is *reduction*-
+bound and that a packed `modByMonic` on backing words is the speedup lever, the
+way `FpPoly.mulPacked` (`PackedMul.lean`) was the multiply analogue. It is not.
+Two facts kill the premise:
+
+* `Array UInt64` is **not** an unboxed word buffer: Lean boxes every element
+  (`lean_box_uint64` / `lean_unbox_uint64`, visible in the `lean_hex_fp_convolve`
+  extern), exactly as `Array (ZMod64 p)` boxes its trivially-wrapped `UInt64`
+  coefficients. Packing to words saves no boxing; it only adds two copy passes,
+  so a `@[csimp]` swap for the pure-Lean kernel here measures ~3% *slower* on the
+  `powModMonic` / Frobenius hot path.
+* Even a native C long-division extern that removes *all* boxing, per-term FFI
+  (`lean_hex_zmod64_mul` per coefficient) and Lean `foldl` overhead measures only
+  ~1% faster on the reduction in isolation and flat end-to-end. `modByMonic` is
+  bound by its intrinsic `O(n²)` modular-reduction `% p` divisions, which the
+  reference and any per-term packed kernel perform identically — not by boxing.
+
+The only representation that cuts the *division count* is lazy `__uint128_t`
+accumulation (one reduction per output coefficient). That works for the
+convolution `mulPacked` but not for long division, whose sequential
+pivot dependency forces each pivot to be reduced before use; a genuinely lazy
+long-division kernel (wider deferred-normalization accumulators) is a different,
+much larger piece, and given `mulPacked`'s null end-to-end result is unlikely to
+pay off. So this kernel is kept as proven, tested infrastructure but is **not**
+registered as the compiled implementation of `FpPoly.modByMonic`.
 -/
 
 namespace Hex
@@ -193,8 +215,9 @@ def divModArrayAuxPacked (p : Nat) [ZMod64.Bounds p]
             let rem := subtractScaledShiftPacked p rem q shift coeff
             divModArrayAuxPacked p q qDegree scaleLead fuel quot rem
 
-/-- Packed monic division remainder, identical in signature to
-`FpPoly.modByMonic` (csimp requirement). Packs both operand arrays, runs the
+/-- Packed monic division remainder, sharing the signature of `FpPoly.modByMonic`
+(so a `@[csimp]` swap would be well-typed, though it is intentionally not
+registered — see the module docstring). Packs both operand arrays, runs the
 packed loop with `scaleLead = id` (the divisor is monic), and reconstructs the
 remainder. -/
 @[expose]
