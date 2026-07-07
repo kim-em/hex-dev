@@ -94,7 +94,7 @@ theorem lll_short_vector (b : Matrix Int n m) (δ : Rat)
     (hn : 1 ≤ n) (hli : b.independent)
     (v : Vector Int m) :
     b.memLattice v → v ≠ 0 →
-    (lll b δ hδ hδ' hn hli).row 0 |>.normSq ≤ (1/(δ - 121/400))^(n-1) * v.normSq
+    (lll b δ hδ hδ' hn).row 0 |>.normSq ≤ (1/(δ - 121/400))^(n-1) * v.normSq
 
 theorem lllNative_short_vector (b : Matrix Int n m) (δ : Rat)
     (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hli : b.independent)
@@ -249,9 +249,19 @@ def LLLState.ofBasis (b : Matrix Int n m) :
     d_eq := by … } -- from gramDetVec_eq_gramDet
 
 def lll (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) : Matrix Int n m :=
-  lllAux (LLLState.ofBasis b) 1 δ hδ hδ' (by omega) (by omega)
+    (hδ : 121/400 < δ := by grind) (hδ' : δ ≤ 1 := by grind)
+    (hn : 1 ≤ n := by grind) : Matrix Int n m :=
+  -- dispatch: certified external candidate, else the exact `lllNative`
+  ...
 ```
+
+`lll` does **not** take a `b.independent` argument: independence is a
+precondition of the *theorems* about the output (`lll_short_vector`,
+`lll_independent`, …), not of the *computation*, so — exactly as with
+`lllNative` — the reducer runs on any input and callers who only want the
+reduced rows need not discharge it. The three proof arguments are
+`autoParam`s (`:= by grind`), so at a concrete `δ`/`n` a call is just
+`lll b δ`.
 
 The `ν_eq` and `d_eq` fields are discharged from the `hex-gram-schmidt`
 lemmas `GramSchmidt.Int.scaledCoeffs_eq` and
@@ -301,16 +311,18 @@ that consumer is:
     LLL guarantee). Marked as the canonical short-vector entry point
     for downstream consumers such as hex-berlekamp-zassenhaus. -/
 def lll.firstShortVector (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
+    (hδ : 121/400 < δ := by grind) (hδ' : δ ≤ 1 := by grind)
+    (hn : 1 ≤ n := by grind) :
     Vector Int m :=
-  (lll b δ hδ hδ' hn hind)[0]
+  (lll b δ hδ hδ' hn)[0]
 
 /-- The full reduced basis viewed as an ordered list of candidate
     short vectors. -/
 def lll.shortVectors (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) (hind : b.independent) :
+    (hδ : 121/400 < δ := by grind) (hδ' : δ ≤ 1 := by grind)
+    (hn : 1 ≤ n := by grind) :
     Array (Vector Int m) :=
-  (lll b δ hδ hδ' hn hind).toArray
+  (lll b δ hδ hδ' hn).toArray
 ```
 
 Both entry points are Phase 1 deliverables; conformance must exercise

@@ -31,8 +31,8 @@ exact `lllNative` runs. Both paths satisfy the identical post-condition
 so dispatch is invisible to callers and to proofs. -/
 @[expose]
 def lll (b : Matrix Int n m) (δ : Rat)
-    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
-    (_hind : b.independent) :
+    (hδ : (121 / 400 : Rat) < δ := by grind) (hδ' : δ ≤ 1 := by grind)
+    (hn : 1 ≤ n := by grind) :
     Matrix Int n m :=
   match LLLProvider.dispatch b δ with
   | some B' => B'
@@ -73,7 +73,7 @@ the exact native path. It never consults an external provider and takes no
 short-vector guarantee is `lllNative_first_row_norm_sq_le` at `η = 1/2`. -/
 @[expose]
 def lllNative.firstShortVector (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
+    (hδ : 1/4 < δ := by grind) (hδ' : δ ≤ 1 := by grind) (hn : 1 ≤ n := by grind) :
     Vector Int m :=
   (lllNative b δ hδ hδ' hn).getRow ⟨0, hn⟩
 
@@ -84,17 +84,17 @@ vector. Canonical short-vector entry point for downstream callers such as
 `hex-berlekamp-zassenhaus` recombination. -/
 @[expose]
 def lll.firstShortVector (b : Matrix Int n m) (δ : Rat)
-    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
-    (hind : b.independent) :
+    (hδ : (121 / 400 : Rat) < δ := by grind) (hδ' : δ ≤ 1 := by grind)
+    (hn : 1 ≤ n := by grind) :
     Vector Int m :=
-  (lll b δ hδ hδ' hn hind).getRow ⟨0, hn⟩
+  (lll b δ hδ hδ' hn).getRow ⟨0, hn⟩
 
 /-- Full `lllNative` output as an ordered array of candidate short vectors: the
 `lll.shortVectors` counterpart on the exact native path, forgoing the external
 provider and the `b.independent` hypothesis. -/
 @[expose]
 def lllNative.shortVectors (b : Matrix Int n m) (δ : Rat)
-    (hδ : 1/4 < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n) :
+    (hδ : 1/4 < δ := by grind) (hδ' : δ ≤ 1 := by grind) (hn : 1 ≤ n := by grind) :
     Array (Vector Int m) :=
   (lllNative b δ hδ hδ' hn).rows.toArray
 
@@ -102,9 +102,9 @@ def lllNative.shortVectors (b : Matrix Int n m) (δ : Rat)
 vectors. -/
 @[expose]
 def lll.shortVectors (b : Matrix Int n m) (δ : Rat)
-    (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
-    (hind : b.independent) :
+    (hδ : (121 / 400 : Rat) < δ := by grind) (hδ' : δ ≤ 1 := by grind)
+    (hn : 1 ≤ n := by grind) :
     Array (Vector Int m) :=
-  (lll b δ hδ hδ' hn hind).rows.toArray
+  (lll b δ hδ hδ' hn).rows.toArray
 
 end Hex

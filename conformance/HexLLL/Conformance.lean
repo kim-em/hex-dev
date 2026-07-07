@@ -390,16 +390,22 @@ private def typicalState : LLLState 8 8 := stateOf typical8
 #guard (Matrix.row bzStyleBasis f1_3).get f3_4 = -1
 #guard (Matrix.row bzStyleBasis f2_3).get f3_4 = 2
 
-example (hδ : (121 / 400 : Rat) < 3 / 4) (hδ' : (3 / 4 : Rat) ≤ 1)
-    (hind : bzStyleBasis.independent) :
-    lll.firstShortVector bzStyleBasis (3 / 4) hδ hδ' (by decide) hind =
-      Matrix.row (lll bzStyleBasis (3 / 4) hδ hδ' (by decide) hind) f0_3 := by
+example (hδ : (121 / 400 : Rat) < 3 / 4) (hδ' : (3 / 4 : Rat) ≤ 1) :
+    lll.firstShortVector bzStyleBasis (3 / 4) hδ hδ' (by decide) =
+      Matrix.row (lll bzStyleBasis (3 / 4) hδ hδ' (by decide)) f0_3 := by
   rfl
 
-example (hδ : (121 / 400 : Rat) < 3 / 4) (hδ' : (3 / 4 : Rat) ≤ 1)
-    (hind : bzStyleBasis.independent) :
-    lll.shortVectors bzStyleBasis (3 / 4) hδ hδ' (by decide) hind =
-      (lll bzStyleBasis (3 / 4) hδ hδ' (by decide) hind).rows.toArray := by
+example (hδ : (121 / 400 : Rat) < 3 / 4) (hδ' : (3 / 4 : Rat) ≤ 1) :
+    lll.shortVectors bzStyleBasis (3 / 4) hδ hδ' (by decide) =
+      (lll bzStyleBasis (3 / 4) hδ hδ' (by decide)).rows.toArray := by
+  rfl
+
+-- The three proof arguments are `autoParam`s (`:= by grind`), so at a concrete
+-- `δ`/`n` the public entry points take no proof arguments at all.
+example : lll.firstShortVector bzStyleBasis (3 / 4) = Matrix.row (lll bzStyleBasis (3 / 4)) f0_3 := by
+  rfl
+
+example : lll.shortVectors bzStyleBasis (3 / 4) = (lll bzStyleBasis (3 / 4)).rows.toArray := by
   rfl
 
 example :

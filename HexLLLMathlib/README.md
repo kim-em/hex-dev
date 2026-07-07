@@ -58,7 +58,7 @@ theorem lll_first_row_norm_sq_le
     (hind : b.independent)
     (x : Fin m → ℤ) (hx : x ∈ latticeSubmodule b) (hx0 : x ≠ 0) :
     ‖intRowToEuclidean
-        (Hex.Matrix.row (Hex.lll b δ hδ hδ' hn hind)
+        (Hex.Matrix.row (Hex.lll b δ hδ hδ' hn)
           ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩)‖ ^ 2 ≤
       (((1 / (δ - 121 / 400)) ^ (n - 1) : Rat) : ℝ) *
         ‖intVectorToEuclidean x‖ ^ 2
@@ -88,7 +88,7 @@ theorem lll_mem_latticeSubmodule_iff
     (b : Hex.Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent) (x : Fin m → ℤ) :
-    x ∈ latticeSubmodule (Hex.lll b δ hδ hδ' hn hind) ↔ x ∈ latticeSubmodule b
+    x ∈ latticeSubmodule (Hex.lll b δ hδ hδ' hn) ↔ x ∈ latticeSubmodule b
 ```
 
 # Functionality
