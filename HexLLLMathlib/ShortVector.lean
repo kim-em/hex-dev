@@ -44,12 +44,12 @@ theorem lll_mem_latticeSubmodule_iff
     (b : Hex.Matrix Int n m) (δ : Rat)
     (hδ : (121 / 400 : Rat) < δ) (hδ' : δ ≤ 1) (hn : 1 ≤ n)
     (hind : b.independent) (x : Fin m → ℤ) :
-    x ∈ latticeSubmodule (Hex.lll b δ hδ hδ' hn hind) ↔ x ∈ latticeSubmodule b := by
+    x ∈ latticeSubmodule (Hex.lll b δ hδ hδ' hn) ↔ x ∈ latticeSubmodule b := by
   let v := HexMatrixMathlib.vectorEquiv.symm x
   have hxv : x = HexMatrixMathlib.vectorEquiv v :=
     (Equiv.apply_symm_apply _ x).symm
   rw [hxv]
-  rw [mem_latticeSubmodule_iff (Hex.lll b δ hδ hδ' hn hind) v,
+  rw [mem_latticeSubmodule_iff (Hex.lll b δ hδ hδ' hn) v,
       mem_latticeSubmodule_iff b v]
   exact Hex.lll_memLattice_iff b δ hδ hδ' hn hind v
 
@@ -91,21 +91,21 @@ theorem lll_first_row_norm_sq_le
     (hind : b.independent)
     (x : Fin m → ℤ) (hx : x ∈ latticeSubmodule b) (hx0 : x ≠ 0) :
     ‖intRowToEuclidean
-        (Hex.Matrix.row (Hex.lll b δ hδ hδ' hn hind)
+        (Hex.Matrix.row (Hex.lll b δ hδ hδ' hn)
           ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩)‖ ^ 2 ≤
       (((1 / (δ - 121 / 400)) ^ (n - 1) : Rat) : ℝ) *
         ‖intVectorToEuclidean x‖ ^ 2 := by
-  have hred : Hex.isLLLReduced (Hex.lll b δ hδ hδ' hn hind) δ (11 / 20) :=
+  have hred : Hex.isLLLReduced (Hex.lll b δ hδ hδ' hn) δ (11 / 20) :=
     Hex.lll_isLLLReduced b δ hδ hδ' hn hind
-  have hind' : (Hex.lll b δ hδ hδ' hn hind).independent :=
+  have hind' : (Hex.lll b δ hδ hδ' hn).independent :=
     Hex.lll_independent b δ hδ hδ' hn hind
-  have hx_lll : x ∈ latticeSubmodule (Hex.lll b δ hδ hδ' hn hind) :=
+  have hx_lll : x ∈ latticeSubmodule (Hex.lll b δ hδ hδ' hn) :=
     (lll_mem_latticeSubmodule_iff b δ hδ hδ' hn hind x).mpr hx
   have hδη : (11 / 20 : Rat) * (11 / 20) < δ := by
     have : (11 / 20 : Rat) * (11 / 20) = 121 / 400 := by grind
     grind
   have hbnd := reduced_first_row_norm_sq_le
-    (Hex.lll b δ hδ hδ' hn hind) δ (11 / 20) (by grind) hδη hδ' hn hind'
+    (Hex.lll b δ hδ hδ' hn) δ (11 / 20) (by grind) hδη hδ' hn hind'
     hred x hx_lll hx0
   have hηη : (11 / 20 : Rat) * (11 / 20) = 121 / 400 := by grind
   simpa [hηη] using hbnd
