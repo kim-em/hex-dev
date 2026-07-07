@@ -23,6 +23,14 @@ committed baseline it was last measured in.
 Run (default: merge every committed record, newest per system):
 ``python3 scripts/plots/hexbz-cactus.py``
 or pin explicit records: ``python3 scripts/plots/hexbz-cactus.py --sweep a.json b.json``.
+
+Before/after mode: pass ``--baseline before.json`` alongside ``--sweep after.json``
+to overlay each system's *before* curve as a dotted, hollow-marker line (labelled
+"… — before") under its solid *after* curve. Both sides must cover the same corpus
+(matching ``corpus_sha256``). This is the reproducible form of a one-off A/B — e.g.
+record the same hex-only sweep on ``main`` and on a change branch, then::
+
+    python3 scripts/plots/hexbz-cactus.py --sweep after.json --baseline before.json
 """
 
 from __future__ import annotations
@@ -110,23 +118,36 @@ def _finalize(fig, ax, output, title, xlabel, ylabel, subtitle=None):
                       encoding="utf-8")
 
 
-def plot_cactus(results, systems, names, output, title, subtitle):
+def _cumulative(times):
+    xs = list(range(1, len(times) + 1))
+    cumulative, acc = [], 0.0
+    for t in times:
+        acc += t
+        cumulative.append(acc)
+    return xs, cumulative
+
+
+def plot_cactus(results, systems, names, output, title, subtitle, baseline_results=None):
     fig, ax = plt.subplots(figsize=(7.2, 4.8))
     drew = False
     for system in systems:
-        times = solved_series(results, system, names)
-        if not times:
-            continue
         color, marker, label = STYLE.get(system, ("#333333", ".", system))
-        xs = list(range(1, len(times) + 1))
-        cumulative = []
-        acc = 0.0
-        for t in times:
-            acc += t
-            cumulative.append(acc)
-        ax.plot(xs, cumulative, marker=marker, color=color, markersize=4,
-                linewidth=1.2, label=f"{label} ({len(times)})")
-        drew = True
+        # before: dotted, hollow markers, drawn first so the solid after sits on top.
+        if baseline_results is not None:
+            btimes = solved_series(baseline_results, system, names)
+            if btimes:
+                bxs, bcum = _cumulative(btimes)
+                ax.plot(bxs, bcum, marker=marker, color=color, markersize=3,
+                        markerfacecolor="none", linewidth=1.0, linestyle=":",
+                        alpha=0.85, label=f"{label} — before ({len(btimes)})")
+                drew = True
+        # after: solid.
+        times = solved_series(results, system, names)
+        if times:
+            xs, cumulative = _cumulative(times)
+            ax.plot(xs, cumulative, marker=marker, color=color, markersize=4,
+                    linewidth=1.2, label=f"{label} ({len(times)})")
+            drew = True
     if not drew:
         plt.close(fig)
         return False
@@ -135,19 +156,26 @@ def plot_cactus(results, systems, names, output, title, subtitle):
     return True
 
 
-def plot_runtime_degree(results, systems, names, corpus, output, title, subtitle):
+def plot_runtime_degree(results, systems, names, corpus, output, title, subtitle,
+                        baseline_results=None):
     fig, ax = plt.subplots(figsize=(7.2, 4.8))
     drew = False
     for system in systems:
-        pts = degree_series(results, system, names, corpus)
-        if not pts:
-            continue
         color, marker, label = STYLE.get(system, ("#333333", ".", system))
-        xs = [p[0] for p in pts]
-        ys = [p[1] for p in pts]
-        ax.plot(xs, ys, marker=marker, color=color, markersize=4, linewidth=1.0,
-                linestyle="-", label=label)
-        drew = True
+        if baseline_results is not None:
+            bpts = degree_series(baseline_results, system, names, corpus)
+            if bpts:
+                ax.plot([p[0] for p in bpts], [p[1] for p in bpts], marker=marker,
+                        color=color, markersize=3, markerfacecolor="none",
+                        linewidth=0.9, linestyle=":", alpha=0.85,
+                        label=f"{label} — before")
+                drew = True
+        pts = degree_series(results, system, names, corpus)
+        if pts:
+            ax.plot([p[0] for p in pts], [p[1] for p in pts], marker=marker,
+                    color=color, markersize=4, linewidth=1.0, linestyle="-",
+                    label=label)
+            drew = True
     if not drew:
         plt.close(fig)
         return False
@@ -204,6 +232,10 @@ def main():
                    help="one or more sweep JSONs; when several are given (or by "
                         "default, all committed records), the newest measurement "
                         "of each system wins")
+    p.add_argument("--baseline", type=Path, nargs="+", default=None,
+                   help="one or more sweep JSONs measured BEFORE a change; each "
+                        "system's before curve is overlaid as a dotted, hollow "
+                        "line. Must cover the same corpus as --sweep.")
     p.add_argument("--outdir", type=Path, default=FIGURES)
     args = p.parse_args()
 
@@ -211,6 +243,18 @@ def main():
     if not paths:
         raise SystemExit("no sweep records found")
     results, systems, provenance, cutoffs = merge_reports(paths)
+
+    baseline_results = None
+    if args.baseline:
+        baseline_results, _, base_prov, base_cutoffs = merge_reports(args.baseline)
+        after_sha = {json.loads(p.read_text())["config"]["corpus_sha256"] for p in paths}
+        before_sha = {json.loads(p.read_text())["config"]["corpus_sha256"] for p in args.baseline}
+        if after_sha != before_sha:
+            raise SystemExit(
+                "refusing to overlay a baseline measured over a different corpus "
+                "(corpus_sha256 mismatch between --sweep and --baseline)")
+        cutoffs = cutoffs | base_cutoffs
+
     corpus = load_corpus()
     cutoff_str = (f"{next(iter(cutoffs))}s" if len(cutoffs) == 1
                   else "mixed " + "/".join(f"{c}s" for c in sorted(cutoffs)))
@@ -218,6 +262,8 @@ def main():
         src = paths[0].name
     else:
         src = f"newest-per-system across {len(paths)} records"
+    if baseline_results is not None:
+        src += "; before = dotted (" + "/".join(p.name for p in args.baseline) + ")"
     subtitle = (f"cutoff {cutoff_str}; source {src}; "
                 f"declines and timeouts count as unsolved")
 
@@ -227,17 +273,18 @@ def main():
         names = {n for n, i in corpus.items() if i["family"] == family}
         cactus = args.outdir / f"hexbz-cactus-{family}.svg"
         if plot_cactus(results, systems, names, cactus,
-                       f"Cactus plot -- {family}", subtitle):
+                       f"Cactus plot -- {family}", subtitle, baseline_results):
             written.append(cactus)
         rvd = args.outdir / f"hexbz-runtime-degree-{family}.svg"
         if plot_runtime_degree(results, systems, names, corpus, rvd,
-                               f"Runtime vs degree -- {family}", subtitle):
+                               f"Runtime vs degree -- {family}", subtitle, baseline_results):
             written.append(rvd)
 
     combined_names = {n for n, i in corpus.items() if i["combined"]}
     combined = args.outdir / "hexbz-cactus-combined.svg"
     if plot_cactus(results, systems, combined_names, combined,
-                   "Cactus plot -- combined mixture (balanced across families)", subtitle):
+                   "Cactus plot -- combined mixture (balanced across families)", subtitle,
+                   baseline_results):
         written.append(combined)
 
     for path in written:
