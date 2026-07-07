@@ -181,6 +181,37 @@ so the shared-scan normalization neither flatters nor penalizes either
 side on this corpus. Production declined nothing here (its subset budget
 was never exhausted).
 
+### Re-measurement on current main (post #8633 / #8638 / #8641)
+
+The ZMod64 arithmetic speedups that came out of
+https://github.com/kim-em/hex-dev/issues/8630 (dead per-multiply bignum
+allocation removed, `p < 2^31` bounds tightening, `-O3` externs) shifted
+the absolute numbers; the geography is unchanged and the recursion's win
+cases improved slightly (us/call, same arms as above):
+
+| family | production | today | cap1 | cap2 | cap2 vs today |
+|---|---|---|---|---|---|
+| split deg12 | 5189 | 5159 | 2482 | 2580 | **2.00x win** |
+| split deg16 | 16152 | 16167 | 6735 | 7019 | **2.30x win** |
+| split deg20 | 33057 | 33062 | 13439 | 13745 | **2.41x win** |
+| split deg24 | 56502 | 56548 | 23824 | 25790 | **2.19x win** |
+| adv/high_multiplicity | 105 | 102 | 58 | 58 | **1.76x win** |
+| adv/mignotte_swell | 1019 | 760 | 1606 | 983 | 1.29x loss |
+| phi15 | 349 | 344 | 435 | 439 | 1.27x loss |
+| SD3 | 655 | 650 | 887 | 896 | 1.38x loss |
+| SD4 | 6677 | 7279 | 9934 | 9990 | 1.37x loss |
+| (x-1)*SD3 | 1059 | 1048 | 1139 | 1151 | 1.10x loss |
+
+Prime selection after the same changes: deg-24 split 18.7 -> 13.8 ms,
+phi15 484 -> 183 us, SD4 8.4 -> 3.2 ms, single deg-24 `isGoodPrime`
+424 -> 299 us — still boxing/reduction-bound, consistent with
+https://github.com/kim-em/hex-dev/issues/8642 (packed `modByMonic` is the
+remaining lever there). The irreducible-core loss ratios worsened slightly
+(their baseline is exactly the gcd/Berlekamp/mod-p work that got faster,
+while the ladder's repeated scans did not), which strengthens the
+sequencing recommendation: re-measure after #8642 and #8621 before
+committing to deliverable 2.
+
 ## Where the recursion's time actually goes
 
 Per-phase breakdown on the deg-24 split family (fresh-prime, before the
