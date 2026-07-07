@@ -52,6 +52,246 @@ reallocated every entry to change one column.
 The determinant of a row operation (`det_rowSwap`, `det_rowScale`,
 `det_rowAdd`) is stated in `hex-determinant`, where `det` is defined.
 
+## Strassen-Winograd multiplication
+
+The naive product `mul` does `n^3` coefficient multiplications for an
+`n × n` product. Strassen's algorithm (V. Strassen, "Gaussian elimination is
+not optimal", Numerische Mathematik 13, 1969) computes a 2×2 block product
+with **seven** recursive block multiplications instead of eight, which gives
+`Θ(n^{log₂ 7}) = Θ(n^{2.807…})`. Winograd's schedule for the same seven
+products uses **fifteen** block additions and subtractions, the fewest known
+for a seven-multiplication scheme, against Strassen's eighteen. `hex-matrix`
+specifies the Winograd schedule under the name `mulStrassen`.
+
+The matrix coefficients used across the project are `Int`, `Rat`, `ZMod64`,
+and the `Fp` finite-field types. All are exact, so the Strassen identity holds
+exactly and there is no numerical-stability cost: the only question is the
+crossover size below which the naive product is faster. For exact integer and
+rational coefficients a coefficient multiplication (a multi-limb GMP multiply)
+costs much more than a coefficient addition, so the crossover is lower than the
+floating-point figures quoted in the numerical-analysis literature.
+
+### Coefficient-ring requirement
+
+`mul` runs for any `R` with `[Mul R] [Add R] [OfNat R 0]`. Winograd's schedule
+subtracts blocks, so the executable `mulStrassen` needs subtraction on `R`,
+stated as the extra operation `[Sub R]`. The *correctness proof* needs more than
+the bare operations: it uses additive associativity and commutativity,
+distributivity, and the identity `a - b = a + (-b)`. Those laws come from the
+project's ring class `Lean.Grind.Ring R` (the class `mul_assoc`, `identity_mul`,
+and the other laws in `HexMatrix/MatrixAlgebra.lean` are already stated over).
+So the split is: `mulStrassen` is *defined* over `[Mul R] [Add R] [Sub R]
+[OfNat R 0]`, and `mulStrassen_eq_mul` is *proved* over `[Lean.Grind.Ring R]`,
+which supplies both the operations and the laws.
+
+A `@[csimp]` replacement must preserve the declaration's type, so Strassen
+**cannot** be registered as a type-preserving `@[csimp]` replacement of the
+generic `mul`: `mul` has no `[Sub R]`. This is a correction to the issue's
+literal wording "just use it by default in matrix multiplication at runtime".
+The generic-semiring `*` on `Matrix R n n` keeps the naive `mul` as its
+universal, type-correct fallback. Every coefficient type the project actually
+multiplies (`Int`, `Rat`, `ZMod64`, `Fp`) is a ring, so `mulStrassen` covers
+every real caller (`hex-determinant`, `hex-bareiss`, `hex-row-reduce`,
+`hex-lll`).
+
+Making Strassen "the default at runtime" therefore has a concrete, stated
+mechanism, not an implicit one:
+
+1. `mulStrassen` is the ring-level entry point. Its own kernel-facing reference
+   form carries the specification; a proved `@[csimp]` swaps its recursive body
+   in for compiled code (design principle 11), never `@[implemented_by]`.
+2. The hot ring-typed callers listed above are switched to call `mulStrassen`
+   instead of `*`. That caller switch is mechanical follow-up work, tracked
+   separately, not part of this SPEC.
+3. Widening `mul` itself to require `[Sub R]`, or redirecting the
+   `Mul (Matrix R n n)` instance once the coefficient algebra is known to be a
+   ring, are possible later API changes. Both are out of scope here and neither
+   is needed for the callers above.
+
+### The Winograd schedule
+
+Partition each square operand into 2×2 blocks
+`A = [[A₁₁, A₁₂], [A₂₁, A₂₂]]` and `B = [[B₁₁, B₁₂], [B₂₁, B₂₂]]`, with the
+product `C = [[C₁₁, C₁₂], [C₂₁, C₂₂]]`. The memory-efficient Winograd schedule
+(B. Boyer, J.-G. Dumas, C. Pernet, W. Zhou, "Memory efficient scheduling of
+Strassen-Winograd matrix multiplication algorithm", ISSAC 2009) is:
+
+    S₁ = A₂₁ + A₂₂    T₁ = B₁₂ − B₁₁
+    S₂ = S₁ − A₁₁     T₂ = B₂₂ − T₁
+    S₃ = A₁₁ − A₂₁    T₃ = B₂₂ − B₁₂
+    S₄ = A₁₂ − S₂     T₄ = T₂ − B₂₁
+
+    P₁ = A₁₁ · B₁₁    P₅ = S₁ · T₁
+    P₂ = A₁₂ · B₂₁    P₆ = S₂ · T₂
+    P₃ = S₄ · B₂₂     P₇ = S₃ · T₃
+    P₄ = A₂₂ · T₄
+
+    U₁ = P₁ + P₂      U₅ = U₄ + P₃
+    U₂ = P₁ + P₆      U₆ = U₃ − P₄
+    U₃ = U₂ + P₇      U₇ = U₃ + P₅
+    U₄ = U₂ + P₅
+
+    C₁₁ = U₁   C₁₂ = U₅   C₂₁ = U₆   C₂₂ = U₇
+
+That is four operand sums `S₁…S₄`, four operand sums `T₁…T₄`, seven recursive
+products `P₁…P₇`, and seven result sums `U₁…U₇`, for seven multiplications and
+fifteen additions per level. The schedule is a hypothesis the implementation
+must **prove**, not trust: the correctness obligation below states it as an
+equality against `mul`.
+
+### Recursion, base case, and the customizable backend
+
+`mulStrassen` recurses on the runtime dimensions. When any of `n`, `m`, `k` is
+below a `cutoff` it materializes the current blocks and calls a **base kernel**;
+otherwise it splits and recurses. The cutoff and the base kernel live in a
+data-only configuration record:
+
+    structure StrassenConfig (R : Type u) [Mul R] [Add R] [OfNat R 0] where
+      cutoff  : Nat
+      baseMul : {n m k : Nat} → Matrix R n m → Matrix R m k → Matrix R n k
+
+A configuration is **valid** when its base kernel agrees with `mul`:
+
+    def StrassenConfig.Valid (cfg : StrassenConfig R) : Prop :=
+      ∀ {n m k} (X : Matrix R n m) (Y : Matrix R m k), cfg.baseMul X Y = mul X Y
+
+Keeping the proof out of the data record (rather than a `baseMul_eq` field) lets
+`StrassenConfig` stay a plain value and states the correctness theorem under an
+explicit `cfg.Valid` hypothesis. The **default** configuration `strassenDefault`
+uses the naive `mulImpl` as its base kernel and a benchmarked `cutoff` (see
+Benchmarks); `strassenDefault_valid : strassenDefault.Valid` is proved from
+`mul_eq_mulImpl`. This is the config the runtime uses. The pluggable `baseMul`
+is the "not used by default" backend the issue asks for: a caller supplies a
+hand-tuned small-matrix kernel (for example a fixed 3×3 or 4×4 scheme) without
+touching the recursion, and proves `cfg.Valid` for it.
+
+**Even dimensions are required to split; odd dimensions are padded.** The
+balanced 2×2 schedule needs the two column-blocks of `A` (and the two
+row-blocks of `B`) to have matching shapes, so `S₁ = A₂₁ + A₂₂` and the other
+operand sums type-check. That forces the split of each of `n`, `m`, `k` to be
+exactly in half, which needs each of them to be even. An earlier draft claimed a
+`⌊n/2⌋` / `⌈n/2⌉` split makes unequal quadrants work; that is wrong, because
+`A₂₁ + A₂₂` would then add an `(n−h)×h` block to an `(n−h)×(m−h)` block.
+
+The recommended handling is **pad each odd dimension up to even at each level**:
+where `n`, `m`, or `k` is odd, border that axis with one zero row or column,
+split the now-even dimension in half, and recurse on the rectangular even
+half-blocks (the products `Pᵢ` are themselves rectangular sub-multiplications).
+The border entries are zero, so the true `n × k` product is the top-left block
+of the padded product, which is what makes the padding provably correct. The
+overhead is at most one extra row or column per axis per level, a bounded
+constant factor. The simplest-to-prove alternative is one static pad of each
+axis to a power of two at the top; it can nearly double a dimension, so it is
+the fallback if per-level padding proves awkward to formalize first. Dynamic
+peeling (handle the odd fringe with rank-updates rather than a zero border) has
+the lowest overhead and is the option to adopt if benchmarks justify the extra
+proof work. Recursion terminates because each padded dimension is at least 2 and
+halving strictly decreases it; well-founded recursion on `n + m + k` discharges
+termination.
+
+### Avoiding sub-block copies
+
+The four quadrants of `A`, `B`, and `C` are **views**, not freshly materialized
+matrices: a view is a backing matrix together with a row offset, a column
+offset, and the two block dimensions. Reading a quadrant entry adds the offset
+and indexes the backing store. The recursive splitting therefore allocates
+nothing for the quadrants themselves. The internal recursion is stated over this
+view type, not over `Matrix`. Only when a block drops below the cutoff does the
+recursion **materialize** that small view into a `Matrix` and hand it to
+`cfg.baseMul`, which is why the public `baseMul` keeps the clean
+`Matrix R n m → Matrix R m k → Matrix R n k` type: views inside the recursion,
+a materialized `Matrix` at each leaf.
+
+The `Sᵢ` and `Tᵢ` operand sums are genuinely new values, so the *logical*
+schedule names fifteen sums. The *storage* schedule is separate: Boyer-Dumas-
+Pernet-Zhou show the product needs only two auxiliary `(n/2)²` buffers beyond
+the recursion, reusing them across the `Sᵢ`/`Tᵢ`/`Pᵢ` steps and adding the `Uᵢ`
+results directly into the `C` quadrant views so the output assembles in place
+with no quadrant copy-back. The first correct implementation may use the naive
+storage (one buffer per sum) and the storage schedule is a later refinement; the
+logical schedule and the correctness proof do not depend on which storage
+schedule is used.
+
+A fully copy-free schedule needs a **flat** backing representation
+`Vector R (n*m)`, where a block view is offset-and-stride arithmetic into one
+shared buffer. `Hex.Matrix` is deliberately an opaque one-field structure
+(design principle 10) precisely so this switch stays invisible to consumers. The
+current `Vector (Vector R m) n` row-of-rows backing supports row-contiguous
+views cheaply but not column-contiguous ones, so until the flat backing lands an
+interim implementation may materialize quadrant views by `principalSubmatrix`-
+style slicing, accepting some copying while keeping the recursion and the
+correctness proof identical. The flat-backing switch is tracked as separate
+follow-up work; it is a representation change to `hex-matrix`, not a change to
+this algorithm.
+
+### Correctness
+
+The public reference stays `mul` (naive, kernel-reducible, `noncomputable`). The
+obligation is
+
+    theorem mulStrassen_eq_mul [Lean.Grind.Ring R]
+        (cfg : StrassenConfig R) (h : cfg.Valid)
+        (M : Matrix R n m) (N : Matrix R m k) :
+        mulStrassen cfg M N = mul M N
+
+for every valid configuration, so a correct base kernel and any cutoff give the
+naive answer. The `[Lean.Grind.Ring R]` instance carries the algebraic laws the
+proof uses. Following "push sorries earlier" (design principle notes), decompose
+it into named lemmas:
+
+- a **padding** lemma: bordering an operand with a zero row or column and taking
+  the top-left block of the product returns the unpadded product;
+- a **block-decomposition** lemma: `mul` of a matrix with each of `n`, `m`, `k`
+  even equals the assembly of the four quadrant products, which reduces to
+  splitting a length-`m` dot product into its first-half and second-half parts;
+- the **Winograd identity**: the seven-product, fifteen-addition schedule above
+  equals the 2×2 block product `[[A₁₁B₁₁ + A₁₂B₂₁, …], …]`, proved entrywise
+  through `getElem` and the ring laws on `R`.
+
+No `native_decide` and no `axiom` (project policy). Termination is well-founded
+on `n + m + k`, which strictly decreases at each recursive call because every
+padded dimension is at least 2 and is halved.
+
+### Benchmarks
+
+The crossover `cutoff` is a **measured** constant, not a guessed one (design
+principle 9: conformance and benchmarking establish behaviour first). The bench
+target
+`bench/HexMatrix/Bench.lean` gains a Strassen driver alongside the existing
+`runSquareMulChecksum`, sweeping the dimension `n` and the cutoff `τ` on the same
+deterministic integer fixtures, and the shipped `strassenDefault.cutoff` is set
+where `mulStrassen` first beats `mul` on `Int` coefficients with GMP arithmetic.
+The literature expectation for exact integer coefficients is a crossover of
+order tens of rows, well below the floating-point figures, but the SPEC requires
+the number to be re-measured on this project's coefficient types rather than
+assumed. The Strassen driver declares the cost model `n^{log₂ 7}` to the bench
+harness (the naive driver declares `n * n * n`), so regression tracking uses the
+sub-cubic exponent. The driver stays Mathlib-free and under the wallclock cap
+(`SPEC/benchmarking.md` and `SPEC/CI.md`), and it extends the existing single
+bench job rather than adding a new one (`SPEC/CI.md`).
+
+### Conformance
+
+`conformance/HexMatrix/Conformance.lean` gains `#guard` checks that
+`mulStrassen cfg A B = mul A B` on committed fixtures spanning even, odd, and
+prime dimensions, the empty and 1×1 matrices, and a dimension straddling the
+cutoff, with both `strassenDefault` and a non-default custom base kernel. Because
+correctness is a theorem, this differential check is a cross-check that the
+compiled `@[csimp]` path agrees with the reference on concrete inputs. Oracle:
+none; the surface is structural-layer exact arithmetic, as for the existing
+multiplication guards.
+
+### New public names
+
+`Matrix.StrassenConfig`, `Matrix.StrassenConfig.Valid`, `Matrix.strassenDefault`,
+`Matrix.strassenDefault_valid`, `Matrix.mulStrassen`, and the correctness theorem
+`Matrix.mulStrassen_eq_mul`, with the padding, block-decomposition, and
+Winograd-identity lemmas it decomposes into. Names stay short verb-noun forms
+with qualifiers in the `Hex.Matrix` namespace. Prior art for a verified Strassen
+is CoqEAL's refinement-based implementation (`SPEC/prior-art.md`); `hex-matrix`
+instead proves the executable schedule equal to the naive reference directly and
+swaps it in with `@[csimp]`.
+
 ## External comparators
 
 The dense base surfaces (matrix multiplication, row operations, transposition,
@@ -61,6 +301,12 @@ slicing) have **no** external comparator named. They declare absence with the
 those surfaces are GMP-backed `Int` arithmetic on `Vector` / `Array`
 primitives. The determinant comparator (FLINT `fmpz_mat_det`) covers the
 determinant surface and lives in `hex-bareiss`.
+
+The Strassen bench driver declares the same **structural-layer** absence: it
+measures the multiplication surface already covered above, and its baseline is
+the internal naive `mul`, not an external tool. Its deliverable is the measured
+crossover cutoff and the speedup at the largest benched dimension, recorded in
+the headline report.
 
 Structured metadata in the project's
 [`libraries.yml`](https://github.com/kim-em/hex-dev/blob/main/libraries.yml)
