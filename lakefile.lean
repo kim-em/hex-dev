@@ -72,19 +72,21 @@ lean_lib HexBasic where
 
 lean_lib HexArith where
   precompileModules := true
-  moreLinkArgs := #[
-    s!"{(defaultBuildDir / "lib" / nameToStaticLib "hexarithffi").toString}",
-    "-lgmp"
-  ]
+  -- The `hexarithffi` extern_lib is linked into this precompiled library's
+  -- dynlib automatically (as with `hexgf2ffi` and `HexGF2`); we only need to
+  -- add the system GMP library. Passing the static lib by an explicit path
+  -- broke consumers: that path was relative to the *root* package's build dir,
+  -- so when hex is a dependency it resolved against the wrong project and the
+  -- dynlink failed.
+  moreLinkArgs := #["-lgmp"]
 
 lean_lib HexPoly where
 
 lean_lib HexModArith where
   precompileModules := true
-  moreLinkArgs := #[
-    s!"{(defaultBuildDir / "lib" / nameToStaticLib "hexmodarithffi").toString}",
-    "-lgmp"
-  ]
+  -- See `HexArith`: the `hexmodarithffi` extern_lib links in automatically, so
+  -- we pass only the system GMP library rather than an explicit static-lib path.
+  moreLinkArgs := #["-lgmp"]
 
 lean_lib HexGF2 where
   precompileModules := true
