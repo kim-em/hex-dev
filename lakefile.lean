@@ -253,6 +253,10 @@ lean_exe hex_lattice_spike where
   srcDir := "bench"
   root := `HexBench.LatticeSpike
 
+lean_exe hex_recursive_relift_spike where
+  srcDir := "bench"
+  root := `HexBench.RecursiveReliftSpike
+
 lean_exe hexbz_factor_service where
   srcDir := "bench"
   root := `HexBench.FactorService
