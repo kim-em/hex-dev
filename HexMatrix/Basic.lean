@@ -333,10 +333,12 @@ reason about. Compiled code runs `mulImpl`, which transposes `N` once (via the
 rebuilt for every row of `M`.
 
 Strassen-Winograd multiplication, with a customizable base kernel for small
-sizes, is specified in `HexMatrix/SPEC/hex-matrix.md` under "Strassen-Winograd
-multiplication" as `mulStrassen`. It is a separate ring-level entry point (it
-needs `[Sub R]`, which this `mul` does not), proved equal to `mul` and swapped
-in for compiled code by `@[csimp]`. It is not yet implemented.
+sizes, is implemented as `mulStrassen` in `HexMatrix/Strassen.lean` and proved
+equal to this `mul` by `mulStrassen_eq_mul`. It is a separate ring-level entry
+point rather than a `@[csimp]` replacement of `mul`: the Winograd schedule
+subtracts blocks, so `mulStrassen` needs `[Sub R]`, which this `mul` does not
+have, and a `@[csimp]` replacement must preserve the declaration's type. Callers
+over a ring opt into it explicitly.
 -/
 @[expose]
 noncomputable def mul [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (N : Matrix R m k) :
