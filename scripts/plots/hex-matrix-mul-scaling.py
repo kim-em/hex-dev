@@ -56,9 +56,10 @@ STRASSEN_FN = "runSquareMulStrassenChecksum"
 
 # The shipped `strassenDefault.cutoff` (HexMatrix/Strassen.lean). Below it the
 # default-config `mulStrassen` IS the naive base kernel (identical work, series
-# tied), so the measured crossover of the two series is this boundary: the
-# recursion first fires — and, per the committed cutoff sweep, first wins — at
-# `n >= cutoff`. Marked on the figure when the fitted-line meet extrapolates
+# tied), so this boundary is where the recursion first fires. The measured rungs
+# show a tie at n=64 and a Strassen win from the first splitting rung n=128;
+# no rung sits in between, so the boundary is the *configured* threshold, not a
+# measured intersection. Marked on the figure when the fitted-line meet extrapolates
 # below the measured range (the fits are windowed to the asymptotic rungs, so
 # their intersection point is an extrapolation, not a measurement).
 DEFAULT_CUTOFF = 96
@@ -205,10 +206,10 @@ def report(naive: dict[int, float], strassen: dict[int, float],
     if xover is not None:
         out.append(
             f"The fitted lines meet at n ≈ {xover:.0f} — an extrapolation below "
-            f"the fit window. The *measured* crossover is the cutoff boundary "
-            f"n = {DEFAULT_CUTOFF}: below it the default config runs the naive "
-            "base kernel (series tied), and from the first splitting rung the "
-            "Strassen series is strictly faster."
+            f"the fit window. On the measured rungs the series tie at n = 64 and "
+            f"Strassen wins from the first splitting rung n = 128; the marked "
+            f"boundary n = {DEFAULT_CUTOFF} is the configured cutoff (identical "
+            "computations below it), not a measured intersection."
         )
     return "\n".join(out)
 
@@ -242,13 +243,13 @@ def plot(naive: dict[int, float], strassen: dict[int, float],
                     xytext=(6, 8), textcoords="offset points",
                     fontsize=8, color="0.35")
     else:
-        # The fitted meet extrapolates below the measured range; the honest
-        # measured crossover is the cutoff boundary — below it the two series
-        # are the same computation.
+        # The fitted meet extrapolates below the measured range; mark the
+        # configured recursion boundary instead — below it the two series
+        # are the same computation (tie at n=64, Strassen wins from n=128).
         yv = math.exp(logc_n) * DEFAULT_CUTOFF ** p_n
         ax.axvline(DEFAULT_CUTOFF, color="0.5", linestyle="--", linewidth=1.0,
                    alpha=0.7)
-        ax.annotate(f"crossover = cutoff = {DEFAULT_CUTOFF}\n(identical below)",
+        ax.annotate(f"recursion boundary = cutoff = {DEFAULT_CUTOFF}\n(identical below)",
                     xy=(DEFAULT_CUTOFF, yv), xytext=(8, -34),
                     textcoords="offset points", fontsize=8, color="0.35")
 

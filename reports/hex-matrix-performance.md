@@ -79,9 +79,11 @@ confirm within noise. Recursing one level deeper (`Cut64`, `32×32` leaves)
 loses ~10% at `n ≥ 256`; a `16×16` leaf (`Cut32`) loses to plain naive at
 small `n`. Stopping a level earlier (`Cut256`, `128×128` leaves) is
 essentially tied at `n ≥ 256` (marginally ahead at `n = 512`, behind at
-`n = 128` where it never splits). `96` is the shipped value: `64×64` naive
-leaves on power-of-two blocks, with Strassen coverage extending to
-non-power-of-two blocks in `[96, 128)`. The crossover is
+`n = 128` where it never splits). `96` ships as the representative of the
+`64×64`-leaf class — the class that wins from the first splitting dimension
+and stays within ~4% of the `128×128`-leaf class at `n = 512` (where that
+class edges ahead) — with Strassen coverage extending to non-power-of-two
+blocks in `[96, 128)`. The crossover is
 representation-dependent (row-of-rows backing pays quadrant materialization
 and stride/cache overhead); the flat-backing follow-up re-measures it on this
 same bench.
@@ -106,11 +108,11 @@ offer):
 exponent `2.94` is visibly shallower than the naive `3.01` but sits above
 `log₂ 7 ≈ 2.807`, as the SPEC anticipates for the row-of-rows backing at
 these sizes (crossover transient near the cutoff plus locality overhead);
-the exponent is a diagnostic, not an acceptance condition. The measured
-crossover of the two series is the cutoff boundary `n = 96`: below it the
-default config runs the naive base kernel (the `n = 64` rungs are tied), and
-from the first splitting rung (`n = 128`) the Strassen series is strictly
-faster.
+the exponent is a diagnostic, not an acceptance condition. On the measured
+rungs the two series tie at `n = 64` (identical computation below the cutoff)
+and Strassen wins from the first splitting rung `n = 128`; the boundary
+`n = 96` marked on the figure is the configured cutoff, not a measured
+intersection (no rung sits between `64` and `128`).
 
 ## Profile
 

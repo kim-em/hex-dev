@@ -79,8 +79,10 @@ level below a `64×64` block loses to the naive base kernel (its coefficient-
 multiplication saving is swamped by quadrant materialization and stride/cache
 overhead), while a `128×128` block splits profitably (one Strassen level:
 `≈ 90 ms` vs naive `≈ 97 ms`). Any cutoff in `(64, 128]` therefore recurses down
-to a `64×64` naive leaf, the in-context optimum; `96` is the shipped value,
-extending Strassen to non-power-of-two blocks in `[96, 128)` as well. Per
+to a `64×64` naive leaf; that leaf class wins from the first splitting dimension
+(`n = 128`) and stays within ~4% of the `128×128`-leaf class at `n = 512` (which
+edges ahead there), so `96` is shipped as its representative, extending Strassen
+to non-power-of-two blocks in `[96, 128)` as well. Per
 `HexMatrix/SPEC/hex-matrix.md` § "Benchmarks" this crossover is representation-
 dependent — the flat `Vector R (n*m)` backing (#8652) is expected to lower it and
 will re-measure it against this same bench. -/

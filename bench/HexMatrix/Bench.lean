@@ -24,10 +24,12 @@ Scientific registration:
   `7 ^ Nat.log2 n` equals `n^{log₂ 7}` exactly (`7 ^ log₂ n = n^{log₂ 7}`).
 * `runStrassenCut32` / `Cut64` / `Cut96` / `Cut128` / `Cut256`: the cutoff
   sweep — the same Strassen recursion at fixed cutoffs `τ ∈ {32, 64, 96, 128,
-  256}`, a `compare` group over the shared rungs. The cutoff `τ` minimising time
-  across the swept dimensions is the measured block-size crossover shipped as
-  `strassenDefault.cutoff = 96` (SPEC/hex-matrix.md §Benchmarks). This is a local
-  / scheduled-hardware sweep, not a merge-gating CI activity.
+  256}`, a `compare` group over the shared rungs. The sweep locates the
+  best-measured leaf class (64×64 naive leaves, i.e. cutoffs in `(64, 128]`, which
+  win from the first splitting rung and stay within ~4% of the 128-leaf class at
+  `n = 512`); `strassenDefault.cutoff = 96` ships as that class's representative
+  (SPEC/hex-matrix.md §Benchmarks). This is a local / scheduled-hardware sweep,
+  not a merge-gating CI activity.
 
 The two scaling series (`runSquareMulChecksum`, `runSquareMulStrassenChecksum`)
 back `reports/figures/hex-matrix-mul-scaling.svg` via
@@ -112,7 +114,7 @@ def runStrassenAt (cutoff : Nat) (input : MulInput) : Int :=
   checksum (Hex.Matrix.mulStrassen (strassenAt cutoff) lhs rhs)
 
 /-- Benchmark target: default-config Strassen-Winograd multiplication. This is
-the shipped `strassenDefault` (its `cutoff` is the measured crossover), so this
+the shipped `strassenDefault` (its `cutoff` is the measured value), so this
 target tracks the constant automatically. -/
 def runSquareMulStrassenChecksum (input : MulInput) : Int :=
   let lhs : Hex.Matrix Int input.n input.n := matrixOfFlat input.n input.lhs
@@ -123,7 +125,7 @@ def runSquareMulStrassenChecksum (input : MulInput) : Int :=
 shipped `strassenDefault.cutoff = 96`. On power-of-two rungs the recursion tree
 depends only on the leaf-block class, so these five span the distinguishable
 classes: `Cut32` (leaf 16), `Cut64` (leaf 32), `Cut96`/`Cut128` (leaf 64, the
-in-context optimum, identical on powers of two), and `Cut256` (leaf 128). -/
+shipped class, identical on powers of two), and `Cut256` (leaf 128). -/
 def runStrassenCut32 (input : MulInput) : Int := runStrassenAt 32 input
 def runStrassenCut64 (input : MulInput) : Int := runStrassenAt 64 input
 def runStrassenCut96 (input : MulInput) : Int := runStrassenAt 96 input
@@ -149,7 +151,10 @@ recursive block products per 2×2 level down to the cutoff, one fewer than the
 eight of the naive block product, giving `Θ(n^{log₂ 7})` coefficient
 multiplications. Since `n^{log₂ 7} = 7^{log₂ n}`, the exact `Nat`-valued model
 on power-of-two rungs is `7 ^ Nat.log2 n`. The declared model tracks the
-sub-cubic exponent so regression tracking uses `log₂ 7`, not `3`. -/
+sub-cubic exponent so regression tracking uses `log₂ 7`, not `3`. The model is
+exact only on the pinned power-of-two schedule: `Nat.log2` truncates, so on a
+non-power rung (a CLI schedule override) it understates the padded recursion
+depth — keep the schedules power-of-two. -/
 setup_benchmark runSquareMulStrassenChecksum n => 7 ^ Nat.log2 n
   with prep := prepMulInput
   where {
