@@ -244,9 +244,12 @@ theorem slowPathHenselSubstrate_of_choosePrimeData_success_descent
       modulus := ?_
       precision := ?_ }
   · exact henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
-      core B primeData hcore_pos hchoose hdescent hlifted_of_modP
+      core B primeData (zpoly_primitive_of_monic hcore_monic)
+      (zpoly_lc_pos_of_monic hcore_monic) hcore_pos hchoose hdescent hlifted_of_modP
   · exact liftedFactorSubsetPartition_of_choosePrimeData_success_descent
-      core B primeData hcore_pos hchoose hcore_sqfree hdescent hlifted_of_modP hinitial
+      core B primeData (zpoly_primitive_of_monic hcore_monic)
+      (zpoly_lc_pos_of_monic hcore_monic) hcore_pos hchoose hcore_sqfree hdescent
+      hlifted_of_modP hinitial
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
       core B primeData hcore_lc_pos hcore_pos hselected hprec_pos
   · exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
@@ -981,8 +984,10 @@ theorem representsModP_correspondent
   have hmonic_pos : 0 < (Hex.ZPoly.toMonic core).monic.degree?.getD 0 := by
     rw [Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree core hcore_lc_pos hcore_pos]
     exact hcore_pos
-  exact (modPSubsetPartitionHypotheses_of_choosePrimeData
-    (Hex.ZPoly.toMonic core).monic primeData hmonic_pos hchoose).exists_subset hg_irr hg_dvd
+  exact (modPSubsetPartitionHypotheses_of_modPFactorization
+    (Hex.ZPoly.toMonic core).monic primeData hmonic_pos
+    (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos
+      hcore_pos)).exists_subset hg_irr hg_dvd
 
 /-- **Irreducibility iff across the recovery dilation.**
 

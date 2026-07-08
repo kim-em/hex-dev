@@ -214,7 +214,9 @@ theorem liftedFactorSubsetPartition_outerBound_of_choosePrimeData
       (Hex.ZPoly.exhaustiveLiftBound
         (Hex.normalizeForFactor f).squareFreeCore
         (Hex.ZPoly.defaultFactorCoeffBound f))
-      primeData hcore_pos hchoose
+      primeData (Hex.squareFreeCore_primitive_of_ne_zero f hf)
+      (Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf)
+      hcore_pos hchoose
       (IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree f hf)
       hdescent hlifted_of_modP hinitial
 

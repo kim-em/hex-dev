@@ -829,7 +829,7 @@ private lemma map_filter_eq_of_le_map_val
 mod-`p` image is divisible by that indexed factor. -/
 theorem exists_factor_of_modPIndex
     (core : Hex.ZPoly) (hcore_ne : core ≠ 0)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (_hcore_pos : 0 < core.degree?.getD 0)
     (primeData : Hex.PrimeChoiceData)
     (hval : ModPFactorization core primeData)
     (i : ModPFactorIndex primeData) :
@@ -1009,7 +1009,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
     (_hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ core)
     (hcore_ne : core ≠ 0)
-    (hcore_pos : 0 < core.degree?.getD 0)
+    (_hcore_pos : 0 < core.degree?.getD 0)
     (primeData : Hex.PrimeChoiceData)
     (hval : ModPFactorization core primeData) :
     ∃! S : ModPFactorSubset primeData,

@@ -1729,7 +1729,8 @@ theorem initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData
         (Hex.ZPoly.toMonicLiftData core B primeData) hsize j = i := by
       apply Fin.ext; rfl
     obtain ⟨g, S₀, hg_irr, hg_dvd, hjS₀, hgrep⟩ :=
-      modPFactor_index_cover (Hex.ZPoly.toMonic core).monic primeData hmonicM_pos hchooseM j
+      modPFactor_index_cover (Hex.ZPoly.toMonic core).monic primeData hmonicM_pos
+        (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos) j
     set gm := Hex.normalizeFactorSign g with hgm_def
     have hassoc_gm : Associated (HexPolyZMathlib.toPolynomial gm)
         (HexPolyZMathlib.toPolynomial g) := toPolynomial_normalizeFactorSign_associated g
@@ -1800,7 +1801,9 @@ theorem initialLiftedFactorSubsetPartitionEvidence_of_toMonicChoosePrimeData
       exact hnotassoc (associated_of_associated_monicCorrespondent (ne_of_gt hcore_lc_pos)
         hgf_ne hgg_ne hrecf hrecg h)
     have hdisj0 : Disjoint S₀ T₀ :=
-      modPFactorSubset_disjoint_of_choosePrimeData hchooseM hmonicM_pos hgf_irr hgf_dvd hgg_irr hgg_dvd
+      modPFactorSubset_disjoint_of_modPFactorization
+        (modPFactorization_of_toMonicPrimeData hselected hcore_lc_pos hcore_pos)
+        hmonicM_pos hgf_irr hgf_dvd hgg_irr hgg_dvd
         hS₀ hT₀ hnotassoc'
     rw [hSeq, hTeq]
     exact (liftedSubsetOfModPSubset_disjoint_iff primeData
