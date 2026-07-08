@@ -69,7 +69,10 @@ structure ModPFactorization (f : Hex.ZPoly) (data : Hex.PrimeChoiceData) : Prop 
   product :
     letI := data.bounds
     Hex.ZPoly.congr
-      (Array.polyProduct (data.factorsModP.map Hex.FpPoly.liftToZ)) f data.p
+      (Array.polyProduct (data.factorsModP.map Hex.FpPoly.liftToZ))
+      (Hex.FpPoly.liftToZ
+        (Hex.monicModularImage (Hex.ZPoly.modP data.p f)))
+      data.p
   natDegree_pos :
     letI := data.bounds
     ∀ g ∈ data.factorsModP,
@@ -82,7 +85,8 @@ positive degree (which `(toMonic core).monic` always is at the use sites). -/
 theorem modPFactorization_of_choosePrimeData
     {f : Hex.ZPoly} {data : Hex.PrimeChoiceData}
     (hchoose : Hex.choosePrimeData? f = some data)
-    (hmonic : Hex.DensePoly.Monic f)
+    (hprim : Hex.ZPoly.Primitive f)
+    (hlc_pos : 0 < Hex.DensePoly.leadingCoeff f)
     (hpos : 0 < f.degree?.getD 0) :
     ModPFactorization f data := by
   have hprime := Hex.choosePrimeData?_prime f data hchoose
@@ -101,13 +105,52 @@ theorem modPFactorization_of_choosePrimeData
       coprime := factorsModP_coprime_of_factorsModPBerlekampForm f data hform hgood
       irreducible :=
         factors_irreducible_of_factorsModPBerlekampForm f data hform hgood hpos
-      product :=
-        factorsModP_polyProduct_congr_of_factorsModPBerlekampForm f data
-          hmonic hform hgood
+      product := ?_
       natDegree_pos :=
         factorsModP_natDegree_pos_of_factorsModPBerlekampForm f data hform
           hgood hpos }
-  exact Hex.choosePrimeData?_fModP_eq f data hchoose
+  · exact Hex.choosePrimeData?_fModP_eq f data hchoose
+  · exact
+      factorsModP_polyProduct_congr_of_factorsModPBerlekampForm_of_primitive_pos_lc_core
+        f data hprim hlc_pos hform hgood
+
+/-- Monic-target form of the bundle producer: primitivity and the positive
+leading coefficient come from monicity. -/
+theorem modPFactorization_of_choosePrimeData_of_monic
+    {f : Hex.ZPoly} {data : Hex.PrimeChoiceData}
+    (hchoose : Hex.choosePrimeData? f = some data)
+    (hmonic : Hex.DensePoly.Monic f)
+    (hpos : 0 < f.degree?.getD 0) :
+    ModPFactorization f data :=
+  modPFactorization_of_choosePrimeData hchoose
+    (zpoly_primitive_of_monic hmonic)
+    (by rw [show Hex.DensePoly.leadingCoeff f = 1 from hmonic]; exact Int.one_pos)
+    hpos
+
+/-- Plain-form product congruence for a monic lift target: the
+`monicModularImage` layer collapses, landing at `≡ f (mod p)` (the shape the
+`QuadraticMultifactorLiftInvariant` boundary hypotheses consume). -/
+theorem ModPFactorization.product_congr_target
+    {f : Hex.ZPoly} {data : Hex.PrimeChoiceData}
+    (h : ModPFactorization f data)
+    (hmonic : Hex.DensePoly.Monic f) :
+    letI := data.bounds
+    Hex.ZPoly.congr
+      (Array.polyProduct (data.factorsModP.map Hex.FpPoly.liftToZ)) f data.p := by
+  letI := data.bounds
+  letI : Hex.ZMod64.PrimeModulus data.p :=
+    Hex.ZMod64.primeModulusOfPrime h.prime
+  have hp : 1 < data.p := by have := h.prime.two_le; omega
+  have hzero : (Hex.ZPoly.modP data.p f).isZero = false :=
+    Hex.isGoodPrime_modP_isZero_false f data.p h.good
+  have hcollapse :
+      Hex.monicModularImage (Hex.ZPoly.modP data.p f) =
+        Hex.ZPoly.modP data.p f :=
+    monicModularImage_modP_eq_of_monic f hmonic h.prime hp hzero
+  have hprod := h.product
+  rw [hcollapse] at hprod
+  exact Hex.ZPoly.congr_trans _ _ _ data.p hprod
+    (Hex.FpPoly.congr_liftToZ_modP f)
 
 /-- The `toMonicPrimeData?` form of the bundle producer. -/
 theorem modPFactorization_of_toMonicPrimeData
@@ -116,11 +159,11 @@ theorem modPFactorization_of_toMonicPrimeData
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0) :
     ModPFactorization (Hex.ZPoly.toMonic core).monic data := by
-  have hmonic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
-    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
   have hpos : 0 < (Hex.ZPoly.toMonic core).monic.degree?.getD 0 := by
     rw [Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree core hcore_lc_pos hcore_pos]
     exact hcore_pos
-  exact modPFactorization_of_choosePrimeData hselected hmonic hpos
+  have hmonic : Hex.DensePoly.Monic (Hex.ZPoly.toMonic core).monic :=
+    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree core hcore_lc_pos hcore_pos
+  exact modPFactorization_of_choosePrimeData_of_monic hselected hmonic hpos
 
 end HexBerlekampZassenhausMathlib

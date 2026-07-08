@@ -9,6 +9,7 @@ module
 public import HexBerlekampZassenhaus
 public import HexBerlekampMathlib.Basic
 public import HexBerlekampZassenhausMathlib.UFDPartition
+public import HexBerlekampZassenhausMathlib.ModPFactorization
 public import HexHenselMathlib.Correctness
 public import HexPolyZMathlib.Basic
 public import HexPolyZMathlib.Mignotte
@@ -30,6 +31,7 @@ import all HexBerlekampZassenhausMathlib.RecombinationMonic
 import all HexBerlekampZassenhausMathlib.PrimitivityDegreeCover
 import all HexBerlekampZassenhausMathlib.ScaledSearchCoverage
 import all HexBerlekampZassenhausMathlib.SmartSearchCoverage
+import all HexBerlekampZassenhausMathlib.ModPFactorization
 
 public section
 set_option backward.proofsInPublic true
@@ -711,10 +713,31 @@ in the `choosePrimeData? core = some primeData` branch. The wrapper
 exposes the caller-facing shape under the same `hsome` hypothesis. -/
 
 /-- `factorsModP.toList` mapped to Mathlib polynomials has product equal to the
-Mathlib transport of `monicModularImage (modP p core)`. -/
+Mathlib transport of `monicModularImage (modP p core)`. Re-keyed (#8625) from
+the literal Berlekamp-output form to the semantic bundle: the bundle's
+`product` congruence over `ℤ` descends to an `FpPoly` product equality via
+`modP_eq_of_congr` and the `modP`/`liftToZ` roundtrip, and the monic-image
+layer collapses on the monic lift target. -/
+private lemma modP_polyProduct_map_liftToZ {p : Nat} [Hex.ZMod64.Bounds p]
+    (arr : Array (Hex.FpPoly p)) :
+    Hex.ZPoly.modP p (Array.polyProduct (arr.map Hex.FpPoly.liftToZ)) =
+      arr.toList.foldl (· * ·) 1 := by
+  cases arr with
+  | mk l =>
+      suffices h : ∀ acc : Hex.ZPoly,
+          Hex.ZPoly.modP p ((l.map Hex.FpPoly.liftToZ).foldl (· * ·) acc) =
+            l.foldl (· * ·) (Hex.ZPoly.modP p acc) by
+        simpa [Array.polyProduct, Hex.ZPoly.modP_one] using h 1
+      intro acc
+      induction l generalizing acc with
+      | nil => simp
+      | cons x xs ih =>
+          simp only [List.map_cons, List.foldl_cons]
+          rw [ih, modP_mul, Hex.FpPoly.modP_liftToZ]
+
 private lemma toMathlibPolynomial_factorsModP_product_eq_monicModularImage
     {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
-    (hsome : Hex.choosePrimeData? core = some primeData) :
+    (hval : ModPFactorization core primeData) :
     letI := primeData.bounds
     ((primeData.factorsModP.toList : Multiset _).map
         HexBerlekampMathlib.toMathlibPolynomial).prod =
@@ -722,48 +745,27 @@ private lemma toMathlibPolynomial_factorsModP_product_eq_monicModularImage
         (Hex.monicModularImage
           (@Hex.ZPoly.modP primeData.p primeData.bounds core)) := by
   letI := primeData.bounds
-  have hprime : Hex.Nat.Prime primeData.p :=
-    Hex.choosePrimeData?_prime core primeData hsome
+  have hprime : Hex.Nat.Prime primeData.p := hval.prime
   letI : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
-  obtain ⟨hzero, hfactors_eq⟩ :=
-    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hsome
-  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
-    (Hex.ZMod64.primeModulusOfPrime hprime)
-  letI := hfield
-  set raw :=
-      (@Hex.Berlekamp.berlekampFactor primeData.p primeData.bounds
-        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-        (Hex.monicModularImage_monic hprime _ hzero)
-        hfield).factors with hraw_def
-  have hraw_ne : ∀ g ∈ raw, g ≠ 0 :=
-    Hex.Berlekamp.berlekampFactor_factors_ne_zero
-      (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core))
-      (Hex.monicModularImage_monic hprime _ hzero)
-  have hmonic_image_monic :
-      Hex.DensePoly.Monic
-        (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) :=
-    Hex.monicModularImage_monic hprime _ hzero
-  have hprod_raw :
-      Hex.Berlekamp.factorProduct raw =
-        Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) :=
-    Hex.Berlekamp.factorProduct_berlekampFactor _ _
-  have hprod_mapped :
-      Hex.Berlekamp.factorProduct (raw.map Hex.monicModularImage) =
+  have hp : 1 < primeData.p := by have := hprime.two_le; omega
+  -- Descend the bundle's `ℤ` congruence to an `FpPoly` product equality;
+  -- the `modP`/`liftToZ` roundtrip collapses the right-hand side.
+  have hmod :
+      Hex.ZPoly.modP primeData.p
+          (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ)) =
         Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) := by
-    rw [Hex.factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct
-        hprime raw hraw_ne, hprod_raw]
-    exact Hex.monicModularImage_eq_self_of_monic hprime _ hmonic_image_monic
-  have hlist : primeData.factorsModP.toList = raw.map Hex.monicModularImage := by
-    rw [hfactors_eq]
+    have h := Hex.ZPoly.modP_eq_of_congr primeData.p _ _ hval.product
+    rwa [Hex.FpPoly.modP_liftToZ] at h
+  rw [← hmod]
   have hbridge :
-      (primeData.factorsModP.toList.map HexBerlekampMathlib.toMathlibPolynomial).prod =
+      (primeData.factorsModP.toList.map
+          HexBerlekampMathlib.toMathlibPolynomial).prod =
         HexBerlekampMathlib.toMathlibPolynomial
-          (Hex.monicModularImage (Hex.ZPoly.modP primeData.p core)) := by
-    rw [hlist, ← toMathlibPolynomial_listFoldlMul_one (raw.map Hex.monicModularImage)]
-    show HexBerlekampMathlib.toMathlibPolynomial
-        (Hex.Berlekamp.factorProduct (raw.map Hex.monicModularImage)) = _
-    rw [hprod_mapped]
+          (Hex.ZPoly.modP primeData.p
+            (Array.polyProduct
+              (primeData.factorsModP.map Hex.FpPoly.liftToZ))) := by
+    rw [modP_polyProduct_map_liftToZ, toMathlibPolynomial_listFoldlMul_one]
   rw [← hbridge]
   exact Multiset.prod_coe _
 
@@ -829,7 +831,7 @@ theorem exists_factor_of_modPIndex
     (core : Hex.ZPoly) (hcore_ne : core ≠ 0)
     (hcore_pos : 0 < core.degree?.getD 0)
     (primeData : Hex.PrimeChoiceData)
-    (hsome : Hex.choosePrimeData? core = some primeData)
+    (hval : ModPFactorization core primeData)
     (i : ModPFactorIndex primeData) :
     letI := primeData.bounds
     ∃ g : Hex.ZPoly,
@@ -840,8 +842,7 @@ theorem exists_factor_of_modPIndex
           (monicModPImage (Hex.ZPoly.modP primeData.p g)) := by
   classical
   letI := primeData.bounds
-  have hprime : Hex.Nat.Prime primeData.p :=
-    Hex.choosePrimeData?_prime core primeData hsome
+  have hprime : Hex.Nat.Prime primeData.p := hval.prime
   letI : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   have hprime_root : _root_.Nat.Prime primeData.p := by
@@ -852,7 +853,7 @@ theorem exists_factor_of_modPIndex
     · exact absurd h (Nat.ne_of_lt hmlt)
   haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime_root⟩
   have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
-    Hex.choosePrimeData?_isGoodPrime core primeData hsome
+    hval.good
   have hcore_modP_iszero :
       (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
     Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
@@ -864,7 +865,7 @@ theorem exists_factor_of_modPIndex
       with hf_def
   have hirr_i : Irreducible (f i) := by
     rw [hf_def]
-    exact factors_irreducible_of_choosePrimeData_of_some core primeData hsome hcore_pos i
+    exact hval.irreducible i
   have hprime_i : Prime (f i) :=
     UniqueFactorizationMonoid.irreducible_iff_prime.mp hirr_i
   have hfi_dvd_monic_core :
@@ -872,7 +873,7 @@ theorem exists_factor_of_modPIndex
         HexBerlekampMathlib.toMathlibPolynomial
           (Hex.monicModularImage
             (@Hex.ZPoly.modP primeData.p primeData.bounds core)) := by
-    rw [← toMathlibPolynomial_factorsModP_product_eq_monicModularImage hsome,
+    rw [← toMathlibPolynomial_factorsModP_product_eq_monicModularImage hval,
       ← univ_val_map_modPFactor_eq_factorsModP_map primeData]
     exact Multiset.dvd_prod (by
       rw [Multiset.mem_map]
@@ -1010,13 +1011,12 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
     (hcore_ne : core ≠ 0)
     (hcore_pos : 0 < core.degree?.getD 0)
     (primeData : Hex.PrimeChoiceData)
-    (hsome : Hex.choosePrimeData? core = some primeData) :
+    (hval : ModPFactorization core primeData) :
     ∃! S : ModPFactorSubset primeData,
       RepresentsIntegerFactorModP primeData factor S := by
   classical
   letI := primeData.bounds
-  have hprime : Hex.Nat.Prime primeData.p :=
-    Hex.choosePrimeData?_prime core primeData hsome
+  have hprime : Hex.Nat.Prime primeData.p := hval.prime
   letI : Hex.ZMod64.PrimeModulus primeData.p :=
     Hex.ZMod64.primeModulusOfPrime hprime
   have hprime_root : _root_.Nat.Prime primeData.p := by
@@ -1026,14 +1026,11 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
     · exact h
     · exact absurd h (Nat.ne_of_lt hmlt)
   haveI : Fact (_root_.Nat.Prime primeData.p) := ⟨hprime_root⟩
-  obtain ⟨hzero, hfactors_eq⟩ :=
-    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hsome
-  have hform : Hex.factorsModPBerlekampForm core primeData :=
-    ⟨hprime, hzero, hfactors_eq⟩
   have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
-    Hex.choosePrimeData?_isGoodPrime core primeData hsome
-  have hnodup : primeData.factorsModP.toList.Nodup :=
-    factorsModP_nodup_of_factorsModPBerlekampForm core primeData hform hgood
+    hval.good
+  have hzero : (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
+    Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
+  have hnodup : primeData.factorsModP.toList.Nodup := hval.nodup
   let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
     (Hex.ZMod64.primeModulusOfPrime hprime)
   letI := hfield
@@ -1096,7 +1093,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
       have hget : primeData.factorsModP.toList.get i = g := hi
       simpa [List.get_eq_getElem] using hget
     rw [← hg_eq, ← hi_eq]
-    exact factors_irreducible_of_choosePrimeData_of_some core primeData hsome hcore_pos _
+    exact hval.irreducible _
   -- Each q in factorsM is monic, hence normalize-fixed.
   have hmonic_each : ∀ q ∈ factorsM, q.Monic := by
     intro q hq
@@ -1104,8 +1101,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
     obtain ⟨g, hg_mem, hg_eq⟩ := hq
     rw [Multiset.mem_coe] at hg_mem
     have hg_monic : Hex.DensePoly.Monic g :=
-      factorsModP_monic_of_factorsModPBerlekampForm core primeData hform g
-        (Array.mem_toList_iff.mp hg_mem)
+      hval.monic g (Array.mem_toList_iff.mp hg_mem)
     rw [← hg_eq]
     exact HexBerlekampMathlib.toMathlibPolynomial_monic g hg_monic
   have hnorm_each : ∀ q ∈ factorsM, normalize q = q := fun q hq =>
@@ -1136,10 +1132,10 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
           (@Hex.ZPoly.modP primeData.p primeData.bounds factor) ∣
         Hex.monicModularImage
           (@Hex.ZPoly.modP primeData.p primeData.bounds core) :=
-    monicModPImage_dvd_monicModularImage_of_dvd_of_choosePrimeData?_some
-      hdvd hcore_ne hsome
+    monicModPImage_dvd_monicModularImage_of_dvd_of_goodPrime
+      hdvd hcore_ne hprime hgood
   have hmathD_dvd : mathD ∣ factorsM.prod := by
-    rw [hfactorsM_def, toMathlibPolynomial_factorsModP_product_eq_monicModularImage hsome,
+    rw [hfactorsM_def, toMathlibPolynomial_factorsModP_product_eq_monicModularImage hval,
       hmathD_def]
     rcases hbridge_dvd with ⟨c, hc⟩
     refine ⟨HexBerlekampMathlib.toMathlibPolynomial c, ?_⟩
@@ -1189,13 +1185,13 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData_of_some
 `ModPSubsetPartitionHypotheses` constructor. The explicit `hchoose` witness
 excludes the `none` branch where the mod-`p` factorisation invariant is
 unavailable. -/
-theorem existsUnique_modPFactorSubset_of_choosePrimeData
+theorem existsUnique_modPFactorSubset_of_modPFactorization
     (core : Hex.ZPoly) {factor : Hex.ZPoly}
     (primeData : Hex.PrimeChoiceData)
     (hirr : Irreducible (HexPolyZMathlib.toPolynomial factor))
     (hdvd : factor ∣ core)
     (hcore_pos : 0 < core.degree?.getD 0)
-    (hchoose : Hex.choosePrimeData? core = some primeData) :
+    (hval : ModPFactorization core primeData) :
     ∃! S : ModPFactorSubset primeData,
       RepresentsIntegerFactorModP primeData factor S := by
   letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
@@ -1203,7 +1199,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData
   have hcore_ne : core ≠ 0 := by
     intro hcore_zero
     have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
-      Hex.choosePrimeData?_isGoodPrime core primeData hchoose
+      hval.good
     have hcore_modP_iszero :
         (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
       Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
@@ -1215,7 +1211,7 @@ theorem existsUnique_modPFactorSubset_of_choosePrimeData
     rw [hcore_zero, hzero_modP] at hcore_modP_iszero
     exact Bool.noConfusion hcore_modP_iszero
   exact existsUnique_modPFactorSubset_of_choosePrimeData_of_some core
-    hirr hdvd hcore_ne hcore_pos primeData hchoose
+    hirr hdvd hcore_ne hcore_pos primeData hval
 
 /-- **HO-1 supporting lemma (#4688).**
 
@@ -1235,11 +1231,11 @@ The `hchoose` hypothesis is an explicit `choosePrimeData? = some` witness,
 so the `none` branch (where the mod-`p` factorisation invariant is
 unavailable) is excluded; downstream callers discharge it from the same
 `choosePrimeData?` chain that supplies the other partition fields. -/
-theorem modPSubsetPartitionHypotheses_of_choosePrimeData
+theorem modPSubsetPartitionHypotheses_of_modPFactorization
     (core : Hex.ZPoly)
     (primeData : Hex.PrimeChoiceData)
     (hcore_pos : 0 < core.degree?.getD 0)
-    (hchoose : Hex.choosePrimeData? core = some primeData) :
+    (hval : ModPFactorization core primeData) :
     ModPSubsetPartitionHypotheses core primeData True True := by
   refine
     { fModP_eq := ?_
@@ -1248,26 +1244,26 @@ theorem modPSubsetPartitionHypotheses_of_choosePrimeData
       factors_irreducible := ?_
       exists_subset := ?_
       unique_subset := ?_ }
-  · exact Hex.choosePrimeData?_fModP_eq core primeData hchoose
-  · exact factors_irreducible_of_choosePrimeData_of_some core primeData hchoose hcore_pos
+  · exact hval.fModP_eq
+  · exact hval.irreducible
   · intro factor hirr hdvd
-    exact (existsUnique_modPFactorSubset_of_choosePrimeData core primeData hirr hdvd hcore_pos hchoose).exists
+    exact (existsUnique_modPFactorSubset_of_modPFactorization core primeData hirr hdvd hcore_pos hval).exists
   · intro factor S T hirr hdvd hS hT
-    rcases existsUnique_modPFactorSubset_of_choosePrimeData core primeData hirr hdvd hcore_pos hchoose with
+    rcases existsUnique_modPFactorSubset_of_modPFactorization core primeData hirr hdvd hcore_pos hval with
       ⟨_, _, huniq⟩
     exact (huniq S hS).trans (huniq T hT).symm
 
 /-- A successful `choosePrimeData?` run forces a nonzero core: the selected
 prime is `isGoodPrime`, which keeps `(modP p core)` nonzero, whereas
 `modP p 0 = 0`. -/
-theorem core_ne_zero_of_choosePrimeData
+theorem core_ne_zero_of_modPFactorization
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
-    (hchoose : Hex.choosePrimeData? core = some primeData) :
+    (hval : ModPFactorization core primeData) :
     core ≠ 0 := by
   letI : Hex.ZMod64.Bounds primeData.p := primeData.bounds
   intro hcore_zero
   have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
-    Hex.choosePrimeData?_isGoodPrime core primeData hchoose
+    hval.good
   have hcore_modP_iszero :
       (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
     Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
@@ -1281,22 +1277,14 @@ theorem core_ne_zero_of_choosePrimeData
 
 /-- The Mathlib images of the selected modular factors are distinct: `choosePrimeData?`
 guarantees `factorsModP.toList.Nodup`, and `toMathlibPolynomial` is injective. -/
-theorem toMathlibPolynomial_modPFactor_injective_of_choosePrimeData
+theorem toMathlibPolynomial_modPFactor_injective_of_modPFactorization
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
-    (hchoose : Hex.choosePrimeData? core = some primeData) :
+    (hval : ModPFactorization core primeData) :
     letI := primeData.bounds
     Function.Injective (fun i : ModPFactorIndex primeData =>
       HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)) := by
   letI := primeData.bounds
-  have hprime : Hex.Nat.Prime primeData.p :=
-    Hex.choosePrimeData?_prime core primeData hchoose
-  obtain ⟨hzero, hfactors_eq⟩ :=
-    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hchoose
-  have hform : Hex.factorsModPBerlekampForm core primeData := ⟨hprime, hzero, hfactors_eq⟩
-  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
-    Hex.choosePrimeData?_isGoodPrime core primeData hchoose
-  have hnodup : primeData.factorsModP.toList.Nodup :=
-    factorsModP_nodup_of_factorsModPBerlekampForm core primeData hform hgood
+  have hnodup : primeData.factorsModP.toList.Nodup := hval.nodup
   have hinjPoly : Function.Injective
       (HexBerlekampMathlib.toMathlibPolynomial : Hex.FpPoly primeData.p → _) :=
     HexBerlekampMathlib.fpPolyEquiv.injective
@@ -1306,19 +1294,14 @@ theorem toMathlibPolynomial_modPFactor_injective_of_choosePrimeData
 
 /-- The Mathlib images of the selected modular factors are monic: `choosePrimeData?`
 guarantees each `factorsModP` entry is monic, preserved by `toMathlibPolynomial`. -/
-theorem toMathlibPolynomial_modPFactor_monic_of_choosePrimeData
+theorem toMathlibPolynomial_modPFactor_monic_of_modPFactorization
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
-    (hchoose : Hex.choosePrimeData? core = some primeData) :
+    (hval : ModPFactorization core primeData) :
     letI := primeData.bounds
     ∀ i : ModPFactorIndex primeData,
       (HexBerlekampMathlib.toMathlibPolynomial (modPFactor primeData i)).Monic := by
   letI := primeData.bounds
-  have hprime : Hex.Nat.Prime primeData.p :=
-    Hex.choosePrimeData?_prime core primeData hchoose
-  obtain ⟨hzero, hfactors_eq⟩ :=
-    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hchoose
-  have hform : Hex.factorsModPBerlekampForm core primeData := ⟨hprime, hzero, hfactors_eq⟩
-  have hmonic := factorsModP_monic_of_factorsModPBerlekampForm core primeData hform
+  have hmonic := hval.monic
   intro i
   exact HexBerlekampMathlib.toMathlibPolynomial_monic _ (hmonic _ (Array.getElem_mem _))
 
@@ -1332,7 +1315,7 @@ existence projection (a representing subset `S` for `g`), and
 theorem modPFactor_index_cover
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
     (hcore_pos : 0 < core.degree?.getD 0)
-    (hchoose : Hex.choosePrimeData? core = some primeData)
+    (hval : ModPFactorization core primeData)
     (i : ModPFactorIndex primeData) :
     ∃ (g : Hex.ZPoly) (S : ModPFactorSubset primeData),
       Irreducible (HexPolyZMathlib.toPolynomial g) ∧
@@ -1340,19 +1323,19 @@ theorem modPFactor_index_cover
       i ∈ S ∧
       RepresentsIntegerFactorModP primeData g S := by
   letI := primeData.bounds
-  have hcore_ne : core ≠ 0 := core_ne_zero_of_choosePrimeData core primeData hchoose
+  have hcore_ne : core ≠ 0 := core_ne_zero_of_modPFactorization core primeData hval
   obtain ⟨g, hirr, hdvd, hfi_dvd⟩ :=
-    exists_factor_of_modPIndex core hcore_ne hcore_pos primeData hchoose i
+    exists_factor_of_modPIndex core hcore_ne hcore_pos primeData hval i
   have hpart : ModPSubsetPartitionHypotheses core primeData True True :=
-    modPSubsetPartitionHypotheses_of_choosePrimeData core primeData hcore_pos hchoose
+    modPSubsetPartitionHypotheses_of_modPFactorization core primeData hcore_pos hval
   obtain ⟨S, hS⟩ :=
     exists_modPFactorSubset_of_modPSubsetPartition hpart hirr hdvd
   have hprime : _root_.Nat.Prime primeData.p :=
-    natPrime_of_hexNatPrime (Hex.choosePrimeData?_prime core primeData hchoose)
+    natPrime_of_hexNatPrime hval.prime
   have hf_inj :=
-    toMathlibPolynomial_modPFactor_injective_of_choosePrimeData core primeData hchoose
+    toMathlibPolynomial_modPFactor_injective_of_modPFactorization core primeData hval
   have hmonic :=
-    toMathlibPolynomial_modPFactor_monic_of_choosePrimeData core primeData hchoose
+    toMathlibPolynomial_modPFactor_monic_of_modPFactorization core primeData hval
   have hiS : i ∈ S := mem_modPSubset_of_dvd hprime hpart hf_inj hmonic hS hfi_dvd
   exact ⟨g, S, hirr, hdvd, hiS, hS⟩
 
@@ -1467,6 +1450,8 @@ an arbitrary-prime correspondence assumption. -/
 theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)
     (hchoose : Hex.choosePrimeData? core = some primeData)
     (hlift :
@@ -1478,7 +1463,9 @@ theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success
   intro d
   exact
     henselSubsetCorrespondence_of_modPSubsetPartition
-      (modPSubsetPartitionHypotheses_of_choosePrimeData core primeData hcore_pos hchoose)
+      (modPSubsetPartitionHypotheses_of_modPFactorization core primeData hcore_pos
+        (modPFactorization_of_choosePrimeData hchoose hcore_prim hcore_lc_pos
+          hcore_pos))
       hlift
 
 /-- **#5689 supporting lemma (HO-1 successful branch).**
@@ -1490,6 +1477,8 @@ descent package and explicit forward Hensel transport to obtain the standard
 theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)
     (hchoose : Hex.choosePrimeData? core = some primeData)
     (hdescent :
@@ -1510,7 +1499,7 @@ theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
   intro d
   exact
     henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success core B primeData
-      hcore_pos hchoose
+      hcore_prim hcore_lc_pos hcore_pos hchoose
       (henselSubsetLiftHypotheses_of_choosePrimeData_henselLiftData_descent
         core B primeData hchoose hdescent hlifted_of_modP)
 
@@ -1520,7 +1509,7 @@ Successful-descent specialisation of
 `henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent` at the
 precision count consumed by the slow exhaustive branch of `Hex.ZPoly.factorize f`. -/
 theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
-    (f : Hex.ZPoly)
+    (f : Hex.ZPoly) (hf0 : f ≠ 0)
     (primeData : Hex.PrimeChoiceData)
     (hcore_pos :
       0 < (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0)
@@ -1553,8 +1542,13 @@ theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
       primeData
     HenselSubsetCorrespondenceHypotheses core (Hex.ZPoly.exhaustiveLiftBound core B)
       primeData d True True :=
-  henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
-    _ _ primeData hcore_pos hchoose hdescent hlifted_of_modP
+  by
+    exact
+      henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
+        _ _ primeData
+        (Hex.squareFreeCore_primitive_of_ne_zero f hf0)
+        (Hex.squareFreeCore_leadingCoeff_pos_of_ne_zero f hf0)
+        hcore_pos hchoose hdescent hlifted_of_modP
 
 /-- **#6354 supporting lemma (HO-1 successful branch).**
 
@@ -1565,6 +1559,8 @@ non-circular descent/forward-transport path. -/
 theorem liftedFactorSubsetPartition_of_choosePrimeData_success_descent
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
+    (hcore_prim : Hex.ZPoly.Primitive core)
+    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)
     (hchoose : Hex.choosePrimeData? core = some primeData)
     (hcore_sqfree : Squarefree (HexPolyZMathlib.toPolynomial core))
@@ -1592,7 +1588,8 @@ theorem liftedFactorSubsetPartition_of_choosePrimeData_success_descent
       { toHenselSubsetCorrespondenceRest :=
           henselSubsetCorrespondenceRest_initial
             (henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
-              core B primeData hcore_pos hchoose hdescent hlifted_of_modP)
+              core B primeData hcore_prim hcore_lc_pos hcore_pos hchoose hdescent
+              hlifted_of_modP)
         target_squarefree := hcore_sqfree
         cover := by
           intro i hi
