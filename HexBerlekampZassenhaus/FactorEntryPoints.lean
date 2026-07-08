@@ -231,16 +231,14 @@ def piecePrimeData? {q : Nat} [ZMod64.Bounds q]
            fModP := ZPoly.modP q (ZPoly.toMonic piece).monic
            factorsModP := (seeds.map (FpPoly.monicDilate c⁻¹)).toArray }
 
-/-- Exact division over `ℤ` with early abort, for the sub-floor peel: the
-division loop aborts as soon as a quotient coefficient would exceed `qbound`
-in magnitude or the candidate's leading coefficient does not divide the
-running top coefficient, and a success re-verifies `q * cand = target` by one
-multiplication (so soundness reads off the guard, as for `exactQuotient?`,
-while failed candidates — the hot path of a sub-floor rung — never pay a full
-generic `divMod` plus re-multiplication). Rejects constant and oversize
-candidates; a `none` misses a peel at this rung only, so no completeness
-obligation attaches. -/
-def boundedExactQuotient? (target cand : ZPoly) (qbound : Nat) :
+/-- Division-loop core of `boundedExactQuotient?`: synthetic division from the
+top, aborting as soon as a quotient coefficient would exceed `qbound` in
+magnitude or the candidate's leading coefficient does not divide the running
+top coefficient (with a fast path skipping the exact-divisibility divisions
+for monic candidates). Produces an UNVERIFIED quotient: only the wrapper's
+re-multiplication guard confers soundness, so this loop carries no proof
+obligations. -/
+def boundedExactQuotientDiv (target cand : ZPoly) (qbound : Nat) :
     Option ZPoly := Id.run do
   let n := target.size
   let m := cand.size
@@ -265,11 +263,52 @@ def boundedExactQuotient? (target cand : ZPoly) (qbound : Nat) :
         rem := rem.set! (i + j) (rem[i + j]! - cq * cand.coeff j)
   for j in [0:m - 1] do
     if rem[j]! != 0 then return none
-  let quotient := DensePoly.ofCoeffs q
-  if quotient * cand == target then
-    return some quotient
+  return some (DensePoly.ofCoeffs q)
+
+/-- Exact division over `ℤ` with early abort, for the sub-floor peel: the
+division loop (`boundedExactQuotientDiv`) rejects failing candidates cheaply,
+and a success is verified by one re-multiplication, so soundness
+(`boundedExactQuotient?_product`) reads off the guard exactly as for
+`exactQuotient?` while failed candidates — the hot path of a sub-floor rung —
+never pay a full generic `divMod` plus re-multiplication. Rejects constant
+candidates; a `none` misses a peel at this rung only, so no completeness
+obligation attaches. -/
+@[expose]
+def boundedExactQuotient? (target cand : ZPoly) (qbound : Nat) : Option ZPoly :=
+  if 2 ≤ cand.size then
+    (boundedExactQuotientDiv target cand qbound).bind fun quotient =>
+      if quotient * cand == target then some quotient else none
   else
-    return none
+    none
+
+/-- Successful bounded exact division extracts a multiplication witness. -/
+theorem boundedExactQuotient?_product
+    {target cand quotient : ZPoly} {qbound : Nat}
+    (h : boundedExactQuotient? target cand qbound = some quotient) :
+    quotient * cand = target := by
+  unfold boundedExactQuotient? at h
+  split at h
+  · cases hdiv : boundedExactQuotientDiv target cand qbound with
+    | none => rw [hdiv] at h; simp at h
+    | some q' =>
+        rw [hdiv] at h
+        simp only [Option.bind_some] at h
+        split at h
+        · rename_i hcheck
+          cases h
+          exact beq_iff_eq.mp hcheck
+        · simp at h
+  · simp at h
+
+/-- Successful bounded exact division certifies a nonconstant candidate. -/
+theorem boundedExactQuotient?_cand_size
+    {target cand quotient : ZPoly} {qbound : Nat}
+    (h : boundedExactQuotient? target cand qbound = some quotient) :
+    2 ≤ cand.size := by
+  unfold boundedExactQuotient? at h
+  split at h
+  · assumption
+  · simp at h
 
 /-- Coefficientwise reduction mod `m` (plain residues; the candidate pipeline
 centers afterwards via `centeredLiftPoly`). -/
@@ -303,7 +342,7 @@ def subFloorPeelSize {q : Nat} [ZMod64.Bounds q]
         subFloorPeelSize coreLc target modulus qbound rest
       else
         let candidate :=
-          if DensePoly.leadingCoeff raw == 1 then raw
+          if coreLc == 1 && DensePoly.leadingCoeff raw == 1 then raw
           else
             normalizeFactorSign <| ZPoly.primitivePart <| ZPoly.dilate coreLc raw
         if shouldRecordPolynomialFactor candidate then
@@ -370,6 +409,134 @@ def reliftLadder (pd : PrimeChoiceData) (cap : Nat) (g : ZPoly)
         if pieces.size ≥ 2 then some pieces
         else reliftLadder pd cap g floorK qbound (2 * k) fuel
       else none
+
+/-! ### Product soundness for the sub-floor peel
+
+Every piece array the sub-floor machinery emits multiplies back to the node
+target. Peels are gated by `boundedExactQuotient?`'s re-multiplication guard,
+so these lemmas are structural inductions with no division reasoning. -/
+
+private theorem polyProduct_push_factor (factors : Array ZPoly) (factor : ZPoly) :
+    Array.polyProduct (factors.push factor) =
+      Array.polyProduct factors * factor := by
+  cases factors with
+  | mk xs =>
+      induction xs generalizing factor with
+      | nil => simp [Array.polyProduct, ZPoly.one_mul_zpoly]
+      | cons x xs ih => simp [Array.polyProduct, List.foldl_cons] at ih ⊢
+
+/-- A successful single-level peel multiplies back to the target. -/
+theorem subFloorPeelSize_product {p : Nat} [ZMod64.Bounds p]
+    (coreLc : Int) (target : ZPoly) (modulus qbound : Nat)
+    (l : List (List (ZPoly × FpPoly p) × List (ZPoly × FpPoly p)))
+    {cand : ZPoly} {seeds : List (FpPoly p)} {quot : ZPoly}
+    {rest : List (ZPoly × FpPoly p)}
+    (h : subFloorPeelSize coreLc target modulus qbound l =
+      some (cand, seeds, quot, rest)) :
+    quot * cand = target := by
+  induction l with
+  | nil => simp [subFloorPeelSize] at h
+  | cons sc tail ih =>
+      simp only [subFloorPeelSize] at h
+      split at h
+      · exact ih h
+      · -- candidate fast path / scaled path, then shouldRecord, then the match
+        split at h
+        · split at h
+          · split at h
+            · rename_i quotient hq
+              simp only [Option.some.injEq, Prod.mk.injEq] at h
+              obtain ⟨hcand, -, hquot, -⟩ := h
+              subst hcand
+              subst hquot
+              exact boundedExactQuotient?_product hq
+            · exact ih h
+          · exact ih h
+        · split at h
+          · split at h
+            · rename_i quotient hq
+              simp only [Option.some.injEq, Prod.mk.injEq] at h
+              obtain ⟨hcand, -, hquot, -⟩ := h
+              subst hcand
+              subst hquot
+              exact boundedExactQuotient?_product hq
+            · exact ih h
+          · exact ih h
+
+/-- A successful multi-level peel multiplies back to the target. -/
+theorem subFloorPeel?_product {p : Nat} [ZMod64.Bounds p]
+    (coreLc : Int) (target : ZPoly) (modulus qbound : Nat)
+    (pairs : List (ZPoly × FpPoly p)) (sizes : List Nat)
+    {cand : ZPoly} {seeds : List (FpPoly p)} {quot : ZPoly}
+    {rest : List (ZPoly × FpPoly p)}
+    (h : subFloorPeel? coreLc target modulus qbound pairs sizes =
+      some (cand, seeds, quot, rest)) :
+    quot * cand = target := by
+  induction sizes with
+  | nil => simp [subFloorPeel?] at h
+  | cons d ds ih =>
+      simp only [subFloorPeel?] at h
+      generalize hlev : subFloorPeelSize coreLc target modulus qbound
+        (subsetsOfSizeWithComplement pairs d) = res at h
+      cases res with
+      | none => exact ih h
+      | some r =>
+          cases h
+          exact subFloorPeelSize_product coreLc target modulus qbound _ hlev
+
+/-- The greedy per-rung peel's pieces multiply back to `acc`'s product times
+the target. -/
+theorem subFloorScan_polyProduct {p : Nat} [ZMod64.Bounds p]
+    (coreLc : Int) (modulus cap qbound : Nat) :
+    ∀ (fuel : Nat) (target : ZPoly) (pairs : List (ZPoly × FpPoly p))
+      (acc : Array (ZPoly × List (FpPoly p))),
+      Array.polyProduct
+          ((subFloorScan coreLc modulus cap qbound fuel target pairs acc).map (·.1)) =
+        Array.polyProduct (acc.map (·.1)) * target
+  | 0, target, pairs, acc => by
+      simp only [subFloorScan, Array.map_push, polyProduct_push_factor]
+  | fuel + 1, target, pairs, acc => by
+      simp only [subFloorScan]
+      generalize hpeel : subFloorPeel? coreLc target modulus qbound pairs
+        ((List.range (min cap (pairs.length / 2))).map (· + 1)) = res
+      cases res with
+      | none =>
+          simp only [Array.map_push, polyProduct_push_factor]
+      | some r =>
+          obtain ⟨cand, seeds, quot, rest⟩ := r
+          rw [subFloorScan_polyProduct coreLc modulus cap qbound fuel quot rest
+            (acc.push (cand, seeds)),
+            Array.map_push, polyProduct_push_factor, DensePoly.mul_assoc_poly]
+          have hpq : quot * cand = target :=
+            subFloorPeel?_product coreLc target modulus qbound pairs _ hpeel
+          rw [show (cand, seeds).fst * quot = target from by
+            rw [DensePoly.mul_comm_poly (S := Int)]; exact hpq]
+
+/-- The ladder's split pieces multiply back to the node target. -/
+theorem reliftLadder_polyProduct
+    (pd : PrimeChoiceData) (cap : Nat) (g : ZPoly) (floorK qbound : Nat) :
+    ∀ (k fuel : Nat) {pieces},
+      reliftLadder pd cap g floorK qbound k fuel = some pieces →
+      Array.polyProduct (pieces.map (·.1)) = g
+  | k, 0, pieces, h => by simp [reliftLadder] at h
+  | k, fuel + 1, pieces, h => by
+      letI := pd.bounds
+      simp only [reliftLadder] at h
+      split at h
+      · split at h
+        · cases h
+          rename_i hval
+          have := subFloorScan_polyProduct (p := pd.p)
+            (DensePoly.leadingCoeff g) (pd.p ^ k) cap qbound
+            (((ZPoly.multifactorLiftQuadratic pd.p k (ZPoly.toMonic g).monic
+                (pd.factorsModP.map FpPoly.liftToZ)).toList.zip
+              pd.factorsModP.toList).length + 1) g
+            ((ZPoly.multifactorLiftQuadratic pd.p k (ZPoly.toMonic g).monic
+                (pd.factorsModP.map FpPoly.liftToZ)).toList.zip
+              pd.factorsModP.toList) #[]
+          simpa [Array.polyProduct, ZPoly.one_mul_zpoly] using this
+        · exact reliftLadder_polyProduct pd cap g floorK qbound (2 * k) fuel h
+      · simp at h
 
 /-- Sub-floor scan-size cap for the recursive re-lift, per the #8625
 measurement: cap 1 misses the pair splits of the Mignotte-swell family, and
