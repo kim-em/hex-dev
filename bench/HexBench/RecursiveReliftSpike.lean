@@ -313,6 +313,78 @@ def recursiveFactorSamePrimeCap1 (core : ZPoly) : Array ZPoly :=
 def recursiveFactorSamePrimeCap2 (core : ZPoly) : Array ZPoly :=
   (certifySamePrime core 2).1
 
+/-- Per-node base factors for the re-Berlekamp variant: keep the parent's
+prime but RE-FACTOR the remainder mod p (`isGoodPrime` check plus one
+Berlekamp run, no prime walk) instead of tracking the split's base sublist.
+This prices the proof-simplest production form of deliverable 2, where each
+node is exactly today's single-node pipeline at its own floor and the fresh
+partition producer applies verbatim. `none` when `p` is not good for `g`
+(production would fall back to a fresh prime walk there). -/
+def reBerlekampBase (pd : PrimeChoiceData) (g : ZPoly) : Option (List ZPoly) :=
+  letI := pd.bounds
+  if hp : Nat.isPrimeTrial pd.p then
+    letI : ZMod64.PrimeModulus pd.p :=
+      ZMod64.primeModulusOfPrime (Nat.isPrimeTrial_isPrime hp)
+    if isGoodPrime g pd.p then
+      let gModP := ZPoly.modP pd.p g
+      if hzero : gModP.isZero = false then
+        some (((Berlekamp.berlekampFactor (monicModularImage gModP)
+          (monicModularImage_monic (Nat.isPrimeTrial_isPrime hp) gModP hzero)).factors.map
+            monicModularImage).map FpPoly.liftToZ)
+      else none
+    else none
+  else none
+
+/-- Re-Berlekamp recursion: certify `g` against a fresh Berlekamp
+factorization of its own image at the parent's prime, re-lifted to `g`'s own
+floor. Same ladder and scan policy as `certifySamePrimeAux`; only the source
+of the per-node base factors differs. -/
+partial def certifyReBerlekampAux
+    (pd : PrimeChoiceData) (subFloorCap : Nat) (g : ZPoly)
+    (recs : Array NodeRec) : Array ZPoly × Array NodeRec :=
+  let deg := g.degree?.getD 0
+  if deg ≤ 1 then
+    (#[g], recs.push { deg, p := pd.p, r := 0, floorK := 0, kStop := 0, rungs := 0,
+                       outcome := "deg<=1" })
+  else
+    match reBerlekampBase pd g with
+    | none =>
+        (#[g], recs.push { deg, p := pd.p, r := 0, floorK := 0, kStop := 0, rungs := 0,
+                           outcome := "REBERLEKAMP-FAIL" })
+    | some baseFactors =>
+        let r := baseFactors.length
+        if r ≤ 1 then
+          (#[g], recs.push { deg, p := pd.p, r, floorK := 0, kStop := 0, rungs := 0,
+                             outcome := "modp-irreducible" })
+        else
+          let qbound := ZPoly.defaultFactorCoeffBound (ZPoly.toMonic g).monic
+          let floorK := precisionForCoeffBound qbound pd.p
+          let (kStop, rungs, pieces) :=
+            reliftLadderSamePrime pd subFloorCap g baseFactors qbound floorK 1 0
+          if pieces.size == 1 then
+            (#[g], recs.push { deg, p := pd.p, r, floorK, kStop, rungs,
+                               outcome := "floor-certified" })
+          else
+            let recs := recs.push { deg, p := pd.p, r, floorK, kStop, rungs,
+                                    outcome := "split" }
+            pieces.foldl (init := (#[], recs)) fun st piece =>
+              let (fs, rs) := certifyReBerlekampAux pd subFloorCap piece.1 st.2
+              (st.1 ++ fs, rs)
+
+/-- Re-Berlekamp recursion entry point (parent prime from one walk at the
+root, then per-node Berlekamp re-runs). -/
+def certifyReBerlekamp (core : ZPoly) (subFloorCap : Nat) :
+    Array ZPoly × Array NodeRec :=
+  match choosePrimeData? core with
+  | none =>
+      (#[core], #[{ deg := core.degree?.getD 0, p := 0, r := 0, floorK := 0,
+                    kStop := 0, rungs := 0, outcome := "NO-PRIME" }])
+  | some pd => certifyReBerlekampAux pd subFloorCap core #[]
+
+/-- Wallclock wrapper: re-Berlekamp, sub-floor rungs capped at size-2 subsets. -/
+def recursiveFactorReBerlekampCap2 (core : ZPoly) : Array ZPoly :=
+  (certifyReBerlekamp core 2).1
+
 /-- Today's single-lift classical run on a monic squarefree `core`, at the
 production precision for caller bound `B` (`exhaustiveLiftBound core B`). -/
 def classicalFactorTodayWithB (core : ZPoly) (B : Nat) : Array ZPoly :=
@@ -412,6 +484,7 @@ def reportCase (name : String) (f core : ZPoly) : IO Unit := do
       variantSummary "same-prime-full" core (certifySamePrime core 1000000)
       variantSummary "same-prime-cap1" core (certifySamePrime core 1)
       variantSummary "same-prime-cap2" core (certifySamePrime core 2)
+      variantSummary "reberlekamp-cap2" core (certifyReBerlekamp core 2)
   (← IO.getStdout).flush
 
 /-- Checksum the actual factor coefficients so the optimizer cannot drop the
@@ -458,6 +531,8 @@ def timeArms (reps : Nat) (inputs : Array ZPoly) (coreOf : ZPoly → ZPoly)
     (fun f => factorChecksum (recursiveFactorSamePrimeCap1 (coreOf f)))
   timePhase "same-p-cap2" reps inputs
     (fun f => factorChecksum (recursiveFactorSamePrimeCap2 (coreOf f)))
+  timePhase "reB-cap2   " reps inputs
+    (fun f => factorChecksum (recursiveFactorReBerlekampCap2 (coreOf f)))
 
 def main : IO Unit := do
   -- Focused profile mode: `RELIFT_PROFILE=today|recursive|sameprime|phases`
