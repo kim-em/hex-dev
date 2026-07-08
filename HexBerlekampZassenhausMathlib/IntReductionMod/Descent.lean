@@ -798,7 +798,7 @@ The two lemmas below feed `squareFreeCore_irreducible_of_small_mod_singleton`
 its `hprim` and `hlc_map_ne` side-conditions from the executable invariants
 that `normalizeForFactor` and `choosePrimeData?` already maintain. They
 form the base lemmas for the small-mod singleton arm of the HO-1 capstone
-`factor_irreducible_of_nonUnit` (issue #4170, decomposed in #4544).
+`factorize_irreducible_of_nonUnit` (issue #4170, decomposed in #4544).
 -/
 
 /--

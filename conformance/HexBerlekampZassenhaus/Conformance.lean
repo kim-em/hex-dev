@@ -99,7 +99,7 @@ private def sameFactorCoeffSet (actual expected : List (List Int × Nat)) : Bool
 
 /-- Product preservation guard for the public default `factor` entry point. -/
 private def factorPreservesProduct (f : ZPoly) : Bool :=
-  Factorization.product (factor f) = f
+  Factorization.product (ZPoly.factorize f) = f
 
 private def sameCoeffSet (actual expected : List (List Int)) : Bool :=
   actual.length == expected.length &&
@@ -334,7 +334,7 @@ private def factorizationEdgeCases : List FactorizationCase :=
 /-- Edge-case table guard: expected signed scalar/multiplicity buckets and
 exact product preservation must both hold for the public `factor` output. -/
 private def factorizationCaseMatches (c : FactorizationCase) : Bool :=
-  let φ := factor c.input
+  let φ := ZPoly.factorize c.input
   φ == c.expected && Factorization.product φ == c.input
 
 #guard
@@ -544,30 +544,30 @@ recovered true factor.
             (coeffs, 1))
   | none => false
 #guard
-  let factors := factor monomialWithContent
+  let factors := ZPoly.factorize monomialWithContent
   Factorization.product factors = monomialWithContent
 #guard
-  let φ := factor monomialWithContent
+  let φ := ZPoly.factorize monomialWithContent
   φ.scalar = 6 && φ.factors == #[(ZPoly.X, 2)]
 #guard
-  let φ := factor negativeMonomial
+  let φ := ZPoly.factorize negativeMonomial
   φ.scalar = -1 && φ.factors == #[(ZPoly.X, 1)]
 #guard
-  let φ := factor repeatedRootPoly
+  let φ := ZPoly.factorize repeatedRootPoly
   φ.scalar = 1 && φ.factors == #[(linear 1, 2)]
 #guard
-  let φ := factor negativeRepeatedRootWithContent
+  let φ := ZPoly.factorize negativeRepeatedRootWithContent
   φ.scalar = -2 && φ.factors == #[(linear 1, 2)] &&
     Factorization.product φ = negativeRepeatedRootWithContent
 #guard
   factorPreservesProduct cubicLinear123
 #guard
-  let factors := factor cyclo11Times22
+  let factors := ZPoly.factorize cyclo11Times22
   factorPreservesProduct cyclo11Times22 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[phi11, phi22] |>.map fun coeffs => (coeffs, 1))
 #guard
-  let factors := factor quadSqrt2Sqrt3
+  let factors := ZPoly.factorize quadSqrt2Sqrt3
   factorPreservesProduct quadSqrt2Sqrt3 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[zpoly #[-3, 0, 1], zpoly #[-2, 0, 1]] |>.map fun coeffs =>
@@ -576,7 +576,7 @@ recovered true factor.
 -- irreducible over `ℤ`, so the fast recombination "misses" and the public
 -- `factor` falls back to returning the single irreducible input.
 #guard
-  let factors := factor x4Plus1
+  let factors := ZPoly.factorize x4Plus1
   factorPreservesProduct x4Plus1 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[x4Plus1] |>.map fun coeffs => (coeffs, 1))
@@ -596,7 +596,7 @@ recovered true factor.
           (factorCoeffSummary #[swinnertonDyerSD3] |>.map fun coeffs => (coeffs, 1))
   | none => false
 #guard
-  let factors := factor swinnertonDyerSD3
+  let factors := ZPoly.factorize swinnertonDyerSD3
   factorPreservesProduct swinnertonDyerSD3 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[swinnertonDyerSD3] |>.map fun coeffs => (coeffs, 1))
@@ -608,7 +608,7 @@ recovered true factor.
           (factorCoeffSummary #[phi15] |>.map fun coeffs => (coeffs, 1))
   | none => false
 #guard
-  let factors := factor phi15
+  let factors := ZPoly.factorize phi15
   factorPreservesProduct phi15 &&
     sameFactorCoeffSet (factorizationCoeffSummary factors)
       (factorCoeffSummary #[phi15] |>.map fun coeffs => (coeffs, 1))

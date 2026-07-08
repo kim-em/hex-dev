@@ -100,7 +100,7 @@ reverse. We have thrashed too often bending the implementation to ease proofs.
   multiplicities, per-factor irreducibility) plus metamorphic relations
   (`f` vs `−f` vs `content·f` vs `f(X+k)`; multiply-then-factor; different-prime →
   same result).
-- **Performance (merge-blocking):** a counter + wall-clock gate. `factor` exposes
+- **Performance (merge-blocking):** a counter + wall-clock gate. `ZPoly.factorize` exposes
   a `FactorTrace` (chosen tier, prime, `r`, Hensel precision, subset count,
   lattice dimension, **fallback-used**). The gate asserts on the *counters*, not
   just elapsed time — a pure timing gate is gameable (a regression can "pass" by
@@ -130,7 +130,7 @@ reverse. We have thrashed too often bending the implementation to ease proofs.
 | Optimize the easy regime (arithmetic constants) | #8382 | — | ⏸️ deferred — sound part overlaps #8395 (see below) |
 | Prove output factors irreducible (the headline) | #8384 | #8412/#8413/#8517 | ✅ **DONE — `factor_headline` axiom-clean, zero sorries** |
 
-The public `factor` now **is** the cost-based hybrid (since #8404): the
+The public `ZPoly.factorize` (renamed from `factor` in #8651) now **is** the cost-based hybrid (since #8404): the
 exponential-on-easy-inputs blow-up is gone (deg-22 reducible: 781.8 ms → 82.75 ms),
 product preservation holds over the hybrid, and the unconditional per-factor
 contracts (normalization, primitivity from `f ≠ 0`, pairwise-distinct, scalar)
@@ -306,7 +306,7 @@ Never bend the implementation to a future proof. Never introduce an `axiom`.
 
 ## End state
 
-Public `factor` is the cost-based hybrid (since #8404): it reaches **parity** with
+Public `ZPoly.factorize` is the cost-based hybrid (since #8404): it reaches **parity** with
 the verified Isabelle reference on every input the classical tier covers —
 everything up to the classical subset budget, including the Swinnerton-Dyer ladder
 up to SD5; the verified-LLL lattice tier handles the extreme-`r` tail (SD6+) where

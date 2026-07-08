@@ -97,7 +97,7 @@ of build time; the compiled emit executable covers it in seconds.
 Cross-checked operation
 -----------------------
 
-* `factor` — `Hex.factor` from `HexBerlekampZassenhaus` (the
+* `factor` — `Hex.ZPoly.factorize` from `HexBerlekampZassenhaus` (the
   default-bound public entry point).  Lean serialises the resulting
   `Factorization` as `[scalar, [[coeffs, multiplicity], ...]]`;
   python-flint cross-checks each reported nonconstant component directly
@@ -176,7 +176,7 @@ private def emitClassicalResult (case : String) (f : ZPoly) : IO Unit := do
 /-- Emit one fixture record plus the `factor` and `classicalFactor` result records. -/
 private def emitFactorCase (case : String) (f : ZPoly) : IO Unit := do
   emitPolyFixture lib case (liftCoeffs f) none
-  emitResult lib case "factor" (factorValue (factor f))
+  emitResult lib case "factor" (factorValue (ZPoly.factorize f))
   emitClassicalResult case f
 
 /-- One fixture whose result is emitted by running the public Lean `factor`. -/
@@ -402,8 +402,8 @@ private def cases_adversarial : List Case :=
 /-! ## Lattice-tier merge requirement
 
 See the module docstring §"Lattice-tier merge requirement".  The cases are
-emitted through the public `factor` path (`factorTraced`, whose `.1`
-is `factor`) so the pinned trace catches dispatch regressions, not just
+emitted through the public `factorize` path (`factorTraced`, whose `.1`
+is `factorize`) so the pinned trace catches dispatch regressions, not just
 lattice ones. -/
 
 /-- The two lattice-only cases, one per lattice answer arm:
@@ -516,13 +516,13 @@ private def emitExpectedCase (c : ExpectedCase) : IO Unit := do
 private def emitPinnedCase (c : PinnedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
   emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
-  emitResult lib c.id "factor" (factorValue (factor f))
+  emitResult lib c.id "factor" (factorValue (ZPoly.factorize f))
   emitClassicalResult c.id f
 
 /-- Emit one lattice-sentinel fixture through the *hybrid* traced path: a
-single `factorTraced` run supplies the `factor` result (its `.1` is the
-public `factor`) **and** the trace, so the committed trace pins the tier
-`factor` actually used.  The helper is sentinel-only: it errors out unless the
+single `factorTraced` run supplies the `factorize` result (its `.1` is the
+public `factorize`) **and** the trace, so the committed trace pins the tier
+`factorize` actually used.  The helper is sentinel-only: it errors out unless the
 classical tier declined and the lattice tier answered, which is the case's
 whole point — a case that stops routing to the lattice arm must not emit
 quietly.  (The merge still fails either way: a tier change also breaks the

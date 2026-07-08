@@ -6,10 +6,10 @@ with the Mignotte bound from hex-poly-z-mathlib, giving unconditional
 results. All statements use the `Factorization` record from
 `hex-berlekamp-zassenhaus.md`'s output-convention section.
 
-The headline theorems below hold over the **cost-based hybrid `factor`**
+The headline theorems below hold over the **cost-based hybrid `factorize`**
 (the `factorClassical` / `factorLattice` / `factorTrial` tiers). By the
 tier-result-equivalence and dispatch-soundness contracts (main spec
-§*Invariant contracts and dispatch soundness*), `factor`'s output is
+§*Invariant contracts and dispatch soundness*), `factorize`'s output is
 independent of which tier the dispatcher selects, so these theorems
 reduce to the per-tier correctness — Group A for the classical tier,
 Group B for the lattice tier, Group C for the combinator. Per the
@@ -18,13 +18,13 @@ proofs adapt to the committed executable tiers; the implementation is
 not reshaped to ease them.
 
 ```lean
-theorem factor_product (f : ZPoly) :
-    Factorization.product (factor f) = f
+theorem factorize_product (f : ZPoly) :
+    Factorization.product (ZPoly.factorize f) = f
 
-theorem factor_irreducible_of_nonUnit (f : ZPoly) :
-    ∀ (g, m) ∈ (factor f).factors, Hex.ZPoly.Irreducible g
+theorem factorize_irreducible_of_nonUnit (f : ZPoly) :
+    ∀ (g, m) ∈ (ZPoly.factorize f).factors, Hex.ZPoly.Irreducible g
 
-theorem factor_unique (f : ZPoly) (φ ψ : Factorization) :
+theorem factorize_unique (f : ZPoly) (φ ψ : Factorization) :
     Factorization.product φ = f →
     Factorization.product ψ = f →
     (∀ (g, m) ∈ φ.factors, Hex.ZPoly.Irreducible g) →
@@ -44,7 +44,7 @@ theorem checkIrreducibleCert_sound
     checkIrreducibleCert f cert = true → Irreducible f
 ```
 
-`factor_irreducible_of_nonUnit` is the corrected form of the old
+`factorize_irreducible_of_nonUnit` is the corrected form of the old
 `factor_irreducible` (which incorrectly claimed *every* element of
 the old `Array ZPoly` output was irreducible — false for content
 factors like `[C 6, ...]` since `C 6 = C 2 · C 3` is reducible in
@@ -71,7 +71,7 @@ rewrites `IsUnit` and `(· * ·)` through `toPolynomial`.
 **Correctness of the executable checker.** The biconditional linking
 the Mathlib-free `isIrreducible` *checker* to the `Irreducible`
 *class* lives here, not in `hex-berlekamp-zassenhaus`, because it is
-equivalent to the full forward correctness of `factor` (Group C; see
+equivalent to the full forward correctness of `factorize` (Group C; see
 that library's §`Mathlib-free Hex.ZPoly.Irreducible class` for why a
 Mathlib-free file cannot state it):
 
@@ -83,9 +83,9 @@ instance (f : ZPoly) : Decidable (Hex.ZPoly.Irreducible f) :=
   decidable_of_iff _ (Hex.ZPoly.isIrreducible_iff f)
 ```
 
-The forward direction follows from C1 (`factor f` is the irreducible
+The forward direction follows from C1 (`factorize f` is the irreducible
 factorisation): a single primitive unit-scalar factor of multiplicity
-one is `f` itself up to a unit, and completeness of `factor` rules out
+one is `f` itself up to a unit, and completeness of `factorize` rules out
 any finer decomposition. The backward direction is the converse. The
 constant case reduces to `Nat.Prime` decidability. This is the only
 route to `decide`-ing `Hex.ZPoly.Irreducible` for concrete inputs;
