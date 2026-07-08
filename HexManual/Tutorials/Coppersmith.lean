@@ -105,25 +105,20 @@ open Hex
 namespace TutorialCoppersmith
 
 -- Public data the attacker starts from.
-private def N : Int := 10_000_004_400_000_259
-private def X : Int := 100
+private def N : Nat := 10_000_004_400_000_259
+private def X : Nat := 100
 private def a : Int := 55_555_500
 private def c : Int := 3_100_253_145_270_284
 
--- Least residue of z modulo n, in (-n/2, n/2].
-private def centerMod (n z : Int) : Int :=
-  let r := ((z % n) + n) % n
-  if 2 * r > n then r - n else r
-
--- Coefficients of f(x) = (a + x)^3 - c, reduced mod N.
-private def a0 : Int := centerMod N (a ^ 3 - c)
-private def a1 : Int := centerMod N (3 * a ^ 2)
-private def a2 : Int := centerMod N (3 * a)
+-- Coefficients of f(x) = (a + x)^3 - c, balanced mod N.
+private def a0 : Int := Int.bmod (a ^ 3 - c) N
+private def a1 : Int := Int.bmod (3 * a ^ 2) N
+private def a2 : Int := Int.bmod (3 * a) N
 
 -- The Coppersmith lattice, one polynomial per row,
 -- degree-j column scaled by X^j.
 private def B : Matrix Int 4 4 :=
-  #m[N,   0,      0,          0;
+  #m[(N : Int), 0,      0,          0;
      0,   N * X,  0,          0;
      0,   0,      N * X * X,  0;
      a0,  a1 * X, a2 * X * X, X * X * X]
@@ -153,13 +148,12 @@ private def recover : Option Int := Id.run do
     | none => pure ()
     | some g =>
       for x in [0:100] do
-        let xi : Int := (x : Int)
-        if evalPoly g xi == 0 && (a + xi) ^ 3 % N == c then
-          return some xi
+        if evalPoly g x == 0 && (a + x) ^ 3 % N == c then
+          return some x
   return none
 
 -- LLL actually reduced the basis.
-#guard lllReducedInt reduced (3 / 4) (1 / 2) == true
+#guard lllReduced reduced (3 / 4) (1 / 2) == true
 
 -- The recovered code is 42.
 #guard recover == some 42
@@ -199,21 +193,17 @@ namespace TutorialCoppersmithFactor
 
 -- A 2048-bit RSA modulus N = p * q, with p and q the primes
 -- just below 2^1024. Exponent e = 3, no padding.
-private def p : Int := 2 ^ 1024 - 105
-private def q : Int := 2 ^ 1024 - 179
-private def N : Int := p * q
+private def p : Nat := 2 ^ 1024 - 105
+private def q : Nat := 2 ^ 1024 - 179
+private def N : Nat := p * q
 
 -- The known 1202-bit template a and unknown 400-bit secret
 -- x0 give c = (a + x0)^3 mod N. The attacker sees only the
 -- public data N, a, c, and the bound X.
 private def a  : Int := 3 ^ 758
 private def x0 : Int := 2 ^ 399 + 271828182
-private def X  : Int := 2 ^ 400
+private def X  : Nat := 2 ^ 400
 private def c  : Int := (a + x0) ^ 3 % N
-
-private def centerMod (n z : Int) : Int :=
-  let r := ((z % n) + n) % n
-  if 2 * r > n then r - n else r
 
 -- Little-endian polynomials: coefficient k is the x^k term.
 private abbrev Poly := Array Int
@@ -236,10 +226,10 @@ private def pow (u : Poly) : Nat → Poly
   | 0 => #[1]
   | n + 1 => mul (pow u n) u
 
--- f(x) = (a + x)^3 - c, reduced mod N to small coeffs.
+-- f(x) = (a + x)^3 - c, balanced mod N with `Int.bmod`.
 private def f : Poly :=
-  #[centerMod N (a ^ 3 - c), centerMod N (3 * a ^ 2),
-    centerMod N (3 * a), 1]
+  #[Int.bmod (a ^ 3 - c) N, Int.bmod (3 * a ^ 2) N,
+    Int.bmod (3 * a) N, 1]
 
 -- Nine rows N^(2-j) * x^i * f(x)^j (j, i in 0,1,2), col k
 -- scaled by X^k. Each vanishes at x0 mod N^2; added shift
@@ -250,7 +240,7 @@ private def rows : Array Poly := Id.run do
   for j in [0:3] do
     let fj := pow f j
     for i in [0:3] do
-      let row := scale (N ^ (2 - j)) (shift i fj)
+      let row := scale ((N : Int) ^ (2 - j)) (shift i fj)
       rs := rs.push
         ((Array.range 9).map fun k => row.getD k 0 * X ^ k)
   return rs
@@ -284,14 +274,14 @@ private def g : Poly := Id.run do
 -- X ~ 2^400 is hopeless; factoring degree-8 g is instant.
 private def recovered : Option Int := Id.run do
   for (fac, _) in (factor (DensePoly.ofCoeffs g)).factors do
-    let cs := fac.toArray
-    if cs.size == 2 then
-      let c0 := cs.getD 0 0
-      let c1 := cs.getD 1 0
-      if c1 != 0 && c0 % c1 == 0 then
-        let r := -c0 / c1
+    -- Linear factor `p·x + q` has root `-q/p` when `p ∣ q`.
+    match fac.toArray with
+    | #[q, p] =>
+      if p != 0 && q % p == 0 then
+        let r := -q / p
         if 0 ≤ r && r < X && (a + r) ^ 3 % N == c then
           return some r
+    | _ => pure ()
   return none
 
 -- The modulus is 2048 bits; the secret is about 400 bits.
@@ -299,7 +289,7 @@ private def recovered : Option Int := Id.run do
 #guard x0 > 2 ^ 399
 
 -- LLL reduces the basis; factoring g gives back x0.
-#guard lllReducedInt reduced (3 / 4) (1 / 2) == true
+#guard lllReduced reduced (3 / 4) (1 / 2) == true
 #guard recovered == some x0
 
 end TutorialCoppersmithFactor

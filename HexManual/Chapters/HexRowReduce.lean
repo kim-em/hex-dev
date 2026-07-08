@@ -128,11 +128,13 @@ tag := "hex-row-reduce-recipe-kernel"
 %%%
 
 You have a matrix over a field and want a basis for its kernel: the
-vectors `x` with `M * x = 0`. {name}`Hex.Matrix.nullspaceBasisMatrix`
-returns the basis as the columns of a matrix, one column per free
-(non-pivot) column of `M`.
+vectors `x` with `M * x = 0`. {name}`Hex.Matrix.nullspace` returns that
+basis as a length-indexed vector of basis vectors, one per free
+(non-pivot) column of `M`; the recipe reads it back with `.toList`.
+({name}`Hex.Matrix.nullspaceBasisMatrix` returns the same vectors as the
+columns of a matrix.)
 
-```lean (name := kernelBasis)
+```lean
 open Hex Hex.Matrix
 
 namespace HexRowReduceKernelRecipe
@@ -143,22 +145,14 @@ def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
 -- The reduction reports rank 1, so nullity is 3 - 1 = 2.
 #guard (Matrix.rowReduce M).rank = 1
 
--- The kernel basis, as the columns of a matrix.
-#eval Matrix.nullspaceBasisMatrix M
-
--- The nullity is m - rank = 3 - 1 = 2.
-#guard (Matrix.nullspace M).toArray.size = 2
+-- The nullity-2 kernel basis, one vector per free column.
+#guard (nullspace M).toList = [#v[-2, 1, 0], #v[-3, 0, 1]]
 
 end HexRowReduceKernelRecipe
 ```
-```leanOutput kernelBasis
-#m[-2, -3;
-    1,  0;
-    0,  1]
-```
 
-Each column is a basis vector: the kernel is spanned by `(-2, 1, 0)` and
-`(-3, 0, 1)`. It is a genuine basis, not just a spanning set:
+The two vectors `(-2, 1, 0)` and `(-3, 0, 1)` span the kernel. It is a
+genuine basis, not just a spanning set:
 {name}`Hex.Matrix.nullspace_sound` says each vector is annihilated by
 `M`, and {name}`Hex.Matrix.nullspace_complete` that every `x` with
 `M * x = 0` is a combination of them.
@@ -222,8 +216,8 @@ namespace HexRowReduceSpanRecipe
 
 def M : Matrix Rat 2 3 := #m[1, 2, 3; 2, 4, 6]
 
--- (1, 2, 3) is the first row, so it is in the row span.
-#eval Matrix.spanContains M #v[1, 2, 3]
+-- (3, 6, 9) = 3·(1, 2, 3) is in the row span.
+#eval Matrix.spanContains M #v[3, 6, 9]
 
 -- A vector off the rows' line is not.
 #guard Matrix.spanContains M #v[1, 0, 0] = false
