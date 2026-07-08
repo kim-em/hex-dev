@@ -332,7 +332,11 @@ reason about. Compiled code runs `mulImpl`, which transposes `N` once (via the
 `@[csimp]` below) so each column is materialized a single time instead of being
 rebuilt for every row of `M`.
 
-We intend to provide Strassen-Winograd with a customizable algorithm for small sizes later.
+Strassen-Winograd multiplication, with a customizable base kernel for small
+sizes, is specified in `HexMatrix/SPEC/hex-matrix.md` under "Strassen-Winograd
+multiplication" as `mulStrassen`. It is a separate ring-level entry point (it
+needs `[Sub R]`, which this `mul` does not), proved equal to `mul` and swapped
+in for compiled code by `@[csimp]`. It is not yet implemented.
 -/
 @[expose]
 noncomputable def mul [Mul R] [Add R] [OfNat R 0] (M : Matrix R n m) (N : Matrix R m k) :
