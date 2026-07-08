@@ -17,7 +17,7 @@ Quadratic multifactor Hensel lifting.
 This module exposes `multifactorLiftQuadratic`, the production multifactor
 Hensel lifter named on equal footing with `multifactorLift` in
 `hex-hensel`. The implementation reuses the per-step quadratic primitive
-`quadraticHenselStep` inside a sequential split tree that mirrors
+`quadraticHenselStep` inside a balanced product tree that mirrors
 `multifactorLift`. Iteration to the requested precision `p^k` is handled
 by a doubling loop on the Bezout-witnessed `QuadraticLiftResult`.
 
@@ -879,7 +879,7 @@ monic. The quadratic doubling loop preserves `Monic acc.g` via
 
 Consumed (alongside `henselLiftQuadratic_h_monic`) by
 `multifactorLiftQuadratic_each_monic` to discharge per-output monicness inside
-the sequential split tree. -/
+the balanced split tree. -/
 theorem henselLiftQuadratic_g_monic
     (p k : Nat) [ZMod64.Bounds p]
     (f g h s t : ZPoly)
@@ -909,7 +909,7 @@ when `f` is monic. Derived from the cofactor monic lemma
 
 Consumed (alongside `henselLiftQuadratic_g_monic`) by
 `multifactorLiftQuadratic_each_monic` to discharge per-output monicness inside
-the sequential split tree. -/
+the balanced split tree. -/
 theorem henselLiftQuadratic_h_monic
     (p k : Nat) [ZMod64.Bounds p]
     (f g h s t : ZPoly)

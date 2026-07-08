@@ -1640,7 +1640,7 @@ set_option maxHeartbeats 400000 in
 `Hex.ZPoly.QuadraticMultifactorLiftInvariant_of_choosePrimeData`: given the
 `factorsModPBerlekampForm` invariant (which records that `primeData.factorsModP`
 is the Berlekamp factor array of the monic modular image of the input)
-together with a successful `isGoodPrime` check, the recursive sequential-split
+together with a successful `isGoodPrime` check, the recursive balanced-split
 coprime predicate `QuadraticMultifactorCoprimeSplits` holds on the stored
 factor list.
 
