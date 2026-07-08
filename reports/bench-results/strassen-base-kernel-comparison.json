@@ -1,0 +1,13 @@
+{
+  "prime": 2147483647,
+  "cutoff": 64,
+  "metric": "best_of_iters_wall_nanos",
+  "results": [
+    {"n": 64, "default_ns": 1611730, "delayed_ns": 14404894},
+    {"n": 96, "default_ns": 4396721, "delayed_ns": 46940608},
+    {"n": 128, "default_ns": 13689643, "delayed_ns": 104293918},
+    {"n": 160, "default_ns": 23481946, "delayed_ns": 197138316},
+    {"n": 192, "default_ns": 36125548, "delayed_ns": 336515807},
+    {"n": 256, "default_ns": 107963350, "delayed_ns": 757175076}
+  ]
+}
