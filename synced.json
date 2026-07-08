@@ -1,0 +1,18 @@
+{
+  "_comment": "Per-repo `main` HEAD that this monorepo's content corresponds to. The publish sync (sync_released.py) refuses to overwrite a released repo whose main has moved off this baseline (an uncoordinated commit). After a real sync the workflow uploads the advanced baseline as an artifact; commit it via a normal PR (main is a protected branch).",
+  "hex-test-kit": "610207eec0ca214928eec42a6dd2084d859bf94d",
+  "hex-matrix": "d45bf749d6283726b8df43b5be9e6dde350666d6",
+  "hex-matrix-mathlib": "be15f40e4942fe78ed28f037c9407a94bc3c10ce",
+  "hex-gram-schmidt": "6bae0c6ed6c19c44956dc69eb31487fc3596f01d",
+  "hex-gram-schmidt-mathlib": "06acf34175d105ef322e24a60efeba1b0d8460bf",
+  "hex-lll": "a73f188bbd7ea48c4a1bb1e6d608b4f131026512",
+  "hex-lll-mathlib": "c10d6681dee9a4f963c1035bcbe34fc3eb60a769",
+  "hex-determinant": "20f5785e9c85e9faa481d6b67c1382b6655b842e",
+  "hex-bareiss": "0317e62974acadbb68caf1f57defcc90cfe80b99",
+  "hex-row-reduce-mathlib": "942cae5488e05ddf293a7f0f3fd7ed095e34b64e",
+  "hex-determinant-mathlib": "e5d646df54cbe693a2c8deb094770dd977875a7b",
+  "hex-bareiss-mathlib": "2ef209e76b27450d272944609bc8ad85a756652e",
+  "hex-row-reduce": "a5b4db02cadc7a1e60e2ae7e085cb6facf415ee0",
+  "hex-basic": "f1580d28c2e9ff9e8d4d7cdef9dccbaa17780b03",
+  "hex": "3397fda68d175c76b2d09970b81b67cfb7b80736"
+}
