@@ -103,6 +103,8 @@ libraries:
       input_families:
         - name: dense-square-multiplication
           description: Deterministic dense square integer matrices for textbook cubic matrix multiplication.
+        - name: strassen-crossover-scaling
+          description: Deterministic dense square integer matrices swept over dimension n and Strassen cutoff tau, for the naive-vs-mulStrassen log-log scaling figure and the measured crossover cutoff shipped as strassenDefault.cutoff.
   HexRowReduce:
     deps: [HexMatrix]
     mathlib: false
