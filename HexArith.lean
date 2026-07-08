@@ -12,6 +12,7 @@ public import HexArith.Nat.Prime
 public import HexArith.Barrett.ReduceNat
 public import HexArith.Barrett.Reduce
 public import HexArith.Barrett.Context
+public import HexArith.Barrett.Accumulator
 public import HexArith.ExtGcd
 public import HexArith.Montgomery.Context
 public import HexArith.Montgomery.InvNat
