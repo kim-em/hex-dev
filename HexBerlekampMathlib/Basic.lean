@@ -1215,11 +1215,6 @@ theorem checkIrreducibilityCertificate_irreducible
   exact rabinTest_true_irreducible f hmonic
     (Hex.Berlekamp.checkIrreducibilityCertificate_rabinTest f hmonic cert hcheck)
 
-/-- Mathlib irreducibility over `Polynomial (ZMod p)` is classically decidable. -/
-instance irreducibleDecidablePred (p : Nat) [Fact (Nat.Prime p)] :
-    DecidablePred (fun f : Polynomial (ZMod p) => Irreducible f) :=
-  Classical.decPred _
-
 end
 
 /-!
@@ -1339,6 +1334,28 @@ instance instDecidableIrreducibleToMathlibPolynomial
     [Fact (Nat.Prime p)] (f : Hex.FpPoly p) :
     Decidable (Irreducible (toMathlibPolynomial f)) :=
   decidable_of_iff _ (fpIsIrreducible_iff f)
+
+/-- Transporting a Mathlib polynomial to its executable `FpPoly p` preimage and
+back is the identity: `polynomialToFpPoly = fpPolyEquiv.symm` and
+`toMathlibPolynomial = fpPolyEquiv`, so this is `RingEquiv.apply_symm_apply`. -/
+theorem toMathlibPolynomial_polynomialToFpPoly (g : Polynomial (ZMod p)) :
+    toMathlibPolynomial (polynomialToFpPoly g) = g := by
+  rw [← fpPolyEquiv_symm_apply, ← fpPolyEquiv_apply, RingEquiv.apply_symm_apply]
+
+/-- Mathlib irreducibility over `Polynomial (ZMod p)` is decidable, by rebuilding
+the executable `FpPoly p` preimage and deciding irreducibility of its transport
+(which equals the original by `toMathlibPolynomial_polynomialToFpPoly`).
+
+This wraps `instDecidableIrreducibleToMathlibPolynomial`. Unlike that
+`FpPoly`-image instance, it is *not* meant for `decide +kernel`: Mathlib's
+`Polynomial` is `Finsupp`-based and does not reduce in the kernel, so the
+`FpPoly`-image instance remains the load-bearing one for kernel evaluation. This
+instance replaces the former `Classical.decPred _` with a genuinely computable
+decision. -/
+instance irreducibleDecidablePred [Fact (Nat.Prime p)] :
+    DecidablePred (fun g : Polynomial (ZMod p) => Irreducible g) := fun g =>
+  decidable_of_iff (Irreducible (toMathlibPolynomial (polynomialToFpPoly g)))
+    (by rw [toMathlibPolynomial_polynomialToFpPoly])
 
 /-- `X² + X + 1` is irreducible over `F₂`, certified by kernel reduction of
 `fpIsIrreducible` through `instDecidableIrreducibleToMathlibPolynomial`, using
