@@ -242,4 +242,165 @@ theorem accReduce_lt (ctx : BarrettCtx p) (cR lo hi : UInt64)
   rw [UInt64.lt_iff_toNat_lt, toNat_accReduce ctx cR lo hi hcR]
   exact Nat.mod_lt _ (Nat.lt_trans (by decide : 0 < 1) ctx.p_gt)
 
+/-! ### The radix residue as a context-level constant
+
+`accReduce` needs the constant `2^64 % p`; storing it on the context (rather than
+threading a `cR` word plus its `hcR` proof through every caller) keeps the
+delayed-reduction fold below free of that plumbing. -/
+
+/-- `2^32 < 2^64`, the radix headroom that keeps a reduced residue and the
+window inside a single machine word. -/
+private theorem two_pow_32_lt_word : (2 : Nat) ^ 32 < UInt64.word := by
+  rw [UInt64.word]; exact Nat.pow_lt_pow_right (by decide) (by decide)
+
+/-- The radix residue `2^64 % p`, stored as a context-level constant so callers
+of `accReduce`/`foldReduce` need not carry the word and its correctness proof.
+Computed with a `Nat` reduction of the `2^64` radix (done once per context), so
+no `128`-bit machine literal is required. -/
+@[expose]
+def radixResidue (_ctx : BarrettCtx p) : UInt64 :=
+  UInt64.ofNat (UInt64.word % p.toNat)
+
+/-- `radixResidue` stores exactly `2^64 % p`, the `hcR` side condition every
+`accReduce`/`foldReduce` lemma needs. -/
+@[grind =]
+theorem toNat_radixResidue (ctx : BarrettCtx p) :
+    (radixResidue ctx).toNat = UInt64.word % p.toNat := by
+  have hp0 : 0 < p.toNat := Nat.lt_trans (by decide : 0 < 1) ctx.p_gt
+  have hlt : UInt64.word % p.toNat < p.toNat := Nat.mod_lt _ hp0
+  have hpw : p.toNat < UInt64.word := Nat.lt_trans ctx.p_lt two_pow_32_lt_word
+  have hb : UInt64.word % p.toNat < UInt64.size := by
+    simpa [UInt64.size, UInt64.word] using Nat.lt_trans hlt hpw
+  rw [radixResidue, UInt64.toNat_ofNat_of_lt' hb]
+
+/-! ### Periodic-reduction fold
+
+A delayed-reduction dot product accumulates one-word products into the two-word
+accumulator and flushes through `accReduce` every `barrettWindow` additions. The
+window is fixed and independent of the inner dimension, so a run of any length
+stays below `2^128`: each add grows the high word by at most one, and a flush
+resets it, so the high word never reaches the wraparound boundary
+(`accFold_spec`, the per-window no-overflow invariant). This is why periodic
+reduction is correct for *every* inner length, where a single end reduction is
+not. -/
+
+/-- Number of one-word products accumulated between reductions. Any value below
+`2^64` keeps the two-word accumulator's high word from overflowing (the add
+grows it by at most one per step); `2^32` sits comfortably above every realistic
+inner dimension, so a base-kernel dot product reduces exactly once. -/
+@[irreducible]
+def barrettWindow : Nat := 2 ^ 32
+
+theorem barrettWindow_pos : 0 < barrettWindow := by
+  unfold barrettWindow; exact Nat.two_pow_pos 32
+
+theorem barrettWindow_lt_word : barrettWindow < UInt64.word := by
+  unfold barrettWindow; exact two_pow_32_lt_word
+
+/-- One delayed-reduction step: add the product word `q` into the accumulator
+`(lo, hi)`, and when the window count reaches `barrettWindow` flush the two-word
+value through `accReduce` back to a single reduced word, resetting the count.
+
+Deliberately *not* `@[expose]`: leaving the body opaque to the kernel keeps
+reductions of `foldl accStep …` from unfolding the `accReduce`/`barrettReduce`
+machinery (which mentions the `2^64` radix) during defeq checks; all reasoning
+goes through `accFold_spec`, never kernel reduction of `accStep`. -/
+def accStep (ctx : BarrettCtx p) : UInt64 × UInt64 × Nat → UInt64 → UInt64 × UInt64 × Nat
+  | (lo, hi, count), q =>
+    let r := accAddWord lo hi q
+    if count + 1 = barrettWindow then
+      (accReduce ctx (radixResidue ctx) r.1 r.2, 0, 0)
+    else
+      (r.1, r.2, count + 1)
+
+/-- Sum of the `Nat` values of a list of accumulator product words. -/
+@[expose]
+def wordsSum (ws : List UInt64) : Nat :=
+  ws.foldr (fun w a => w.toNat + a) 0
+
+@[simp] theorem wordsSum_nil : wordsSum [] = 0 := rfl
+
+@[simp] theorem wordsSum_cons (q : UInt64) (ws : List UInt64) :
+    wordsSum (q :: ws) = q.toNat + wordsSum ws := rfl
+
+/-- **Per-window no-overflow invariant** for the delayed-reduction fold. From any
+in-window start state (`hi ≤ count < barrettWindow`), folding `accStep` over a
+list of product words keeps the state in-window (`hi ≤ count < barrettWindow`,
+so the next add cannot overflow the high word) and preserves the residue: the
+accumulator's value modulo `p` equals the starting value plus the sum of the
+added words modulo `p`. -/
+theorem accFold_spec (ctx : BarrettCtx p) (ws : List UInt64) :
+    ∀ (lo hi : UInt64) (count : Nat), hi.toNat ≤ count → count < barrettWindow →
+      (ws.foldl (accStep ctx) (lo, hi, count)).2.1.toNat ≤
+          (ws.foldl (accStep ctx) (lo, hi, count)).2.2 ∧
+        (ws.foldl (accStep ctx) (lo, hi, count)).2.2 < barrettWindow ∧
+        accVal (ws.foldl (accStep ctx) (lo, hi, count)).1
+            (ws.foldl (accStep ctx) (lo, hi, count)).2.1 % p.toNat =
+          (accVal lo hi + wordsSum ws) % p.toNat := by
+  induction ws with
+  | nil =>
+    intro lo hi count h1 h2
+    refine ⟨h1, h2, ?_⟩
+    rw [List.foldl_nil, wordsSum_nil, Nat.add_zero]
+  | cons q rest ih =>
+    intro lo hi count h1 h2
+    -- The next add cannot overflow the high word.
+    have hnw : hi.toNat + 1 < UInt64.word := by
+      have := barrettWindow_lt_word
+      omega
+    -- The add's exact value and its bounded high-word growth.
+    have hval : accVal (accAddWord lo hi q).1 (accAddWord lo hi q).2 =
+        accVal lo hi + q.toNat := accVal_accAddWord lo hi q hnw
+    have hgrow : (accAddWord lo hi q).2.toNat ≤ hi.toNat + 1 := by
+      dsimp [accAddWord]
+      by_cases hc : (UInt64.addCarry lo q false).2 = true
+      · rw [if_pos hc]
+        have hh : (hi + 1).toNat = hi.toNat + 1 := by
+          rw [UInt64.toNat_add]; simp only [UInt64.toNat_one]
+          exact Nat.mod_eq_of_lt hnw
+        omega
+      · rw [if_neg hc]; omega
+    rw [List.foldl_cons]
+    by_cases hcase : count + 1 = barrettWindow
+    · have hstep : accStep ctx (lo, hi, count) q =
+          (accReduce ctx (radixResidue ctx) (accAddWord lo hi q).1 (accAddWord lo hi q).2,
+            0, 0) := by
+        simp only [accStep]; rw [if_pos hcase]
+      rw [hstep]
+      have hres := ih (accReduce ctx (radixResidue ctx) (accAddWord lo hi q).1
+        (accAddWord lo hi q).2) 0 0 (Nat.le_of_eq UInt64.toNat_zero) barrettWindow_pos
+      refine ⟨hres.1, hres.2.1, ?_⟩
+      rw [hres.2.2]
+      have hR : accVal (accReduce ctx (radixResidue ctx) (accAddWord lo hi q).1
+          (accAddWord lo hi q).2) 0 = (accVal lo hi + q.toNat) % p.toNat := by
+        rw [accVal]
+        simp only [UInt64.toNat_zero, Nat.zero_mul, Nat.add_zero]
+        rw [toNat_accReduce ctx _ _ _ (toNat_radixResidue ctx), hval]
+      rw [hR, wordsSum_cons, Nat.mod_add_mod, Nat.add_assoc]
+    · have hstep : accStep ctx (lo, hi, count) q =
+          ((accAddWord lo hi q).1, (accAddWord lo hi q).2, count + 1) := by
+        simp only [accStep]; rw [if_neg hcase]
+      rw [hstep]
+      have hcount : count + 1 < barrettWindow := by omega
+      have hhi : (accAddWord lo hi q).2.toNat ≤ count + 1 := by omega
+      have hres := ih (accAddWord lo hi q).1 (accAddWord lo hi q).2 (count + 1) hhi hcount
+      refine ⟨hres.1, hres.2.1, ?_⟩
+      rw [hres.2.2, hval, wordsSum_cons, Nat.add_assoc]
+
+/-- Reduce a list of product words modulo `p` with periodic reduction: fold
+`accStep` from an empty accumulator and flush the final partial window. -/
+@[expose]
+def foldReduce (ctx : BarrettCtx p) (ws : List UInt64) : UInt64 :=
+  let s := ws.foldl (accStep ctx) (0, 0, 0)
+  accReduce ctx (radixResidue ctx) s.1 s.2.1
+
+/-- `foldReduce` computes `(Σ words) % p`: the delayed-reduction fold is exact for
+a run of any length, matching the residue of the fully-accumulated sum. -/
+@[grind =]
+theorem toNat_foldReduce (ctx : BarrettCtx p) (ws : List UInt64) :
+    (foldReduce ctx ws).toNat = wordsSum ws % p.toNat := by
+  have hspec := accFold_spec ctx ws 0 0 0 (by decide) barrettWindow_pos
+  rw [foldReduce, toNat_accReduce ctx _ _ _ (toNat_radixResidue ctx), hspec.2.2]
+  simp [accVal]
+
 end BarrettCtx

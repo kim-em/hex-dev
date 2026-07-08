@@ -357,6 +357,12 @@ lean_exe hexberlekamp_bench where
   srcDir := "bench"
   root := `HexBerlekamp.Bench
 
+-- Local (non-CI, non-LeanBench) comparison driver for the Strassen base-kernel
+-- measurement; emits JSON for `scripts/plots/strassen-base-kernel-comparison.py`.
+lean_exe hexstrassen_compare where
+  srcDir := "bench"
+  root := `HexStrassen.Compare
+
 lean_exe hexconway_bench where
   srcDir := "bench"
   root := `HexConway.Bench

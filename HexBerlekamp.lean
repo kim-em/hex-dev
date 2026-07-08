@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekamp.Basic
+public import HexBerlekamp.DelayedKernel
 public import HexBerlekamp.DistinctDegree
 public import HexBerlekamp.Factor
 public import HexBerlekamp.Irreducibility
