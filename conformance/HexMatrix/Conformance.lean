@@ -17,12 +17,20 @@ Covered operations:
 - dense matrix constructors and accessors (`ofFn`, `row`, `col`, `transpose`, `principalSubmatrix`)
 - vector and matrix arithmetic (`dotProduct`, ``.normSq, `mulVec`, `mul`, `gramMatrix`)
 - elementary row operations (`rowSwap`, `rowScale`, `rowAdd`)
+- Strassen-Winograd multiplication (`mulStrassen`) under the default and a custom
+  base-kernel configuration
 Covered properties:
 - transpose is involutive on committed fixtures
 - identity matrices act as left and right multiplicative identities
 - `rowSwap` is involutive
+- `mulStrassen cfg A B = mul A B` (the reference product) on committed fixtures for
+  `strassenDefault`, a custom naive-kernel config (`cutoff := 4`), and a
+  deep-recursion config (`cutoff := 0`)
 Covered edge cases:
 - zero matrices and zero vectors, identity matrices, 2×2 and 6×6 dimension bands
+- Strassen fixtures spanning even, odd, and prime dimensions, distinct-`n`,`m`,`k`
+  rectangles, a zero contraction axis (empty product), 1×1, and a square past the
+  default cutoff so the recursion fires under `strassenDefault`
 
 The determinant, Bareiss, and row-reduction conformance guards live in the
 `HexDeterminant`, `HexBareiss`, and `HexRowReduce` Conformance modules.
@@ -144,5 +152,79 @@ private def bigInt : Matrix Int 6 6 :=
 
 #guard Matrix.transpose (Matrix.transpose bigInt) = bigInt
 #guard (Matrix.identity (R := Int) 6) * bigInt = bigInt
+
+/-!
+Strassen-Winograd (`mulStrassen`) differential guards. Each check asserts
+`mulStrassen cfg A B = A * B`, where `A * B` is the reference `mul` — the same
+product `mulStrassen_eq_mul` proves it equal to. This is a compiled-evaluator
+cross-check (`mul` is `noncomputable` with a `@[csimp]` twin, and `mulStrassen`
+is well-founded recursion), not a kernel `decide`.
+
+The custom configs pin an **explicit** cutoff rather than the provisional
+`strassenDefault.cutoff` of 64, so a later re-measurement of that constant cannot
+silently turn a recursion test into a base-kernel test. `cfgNaive` (`cutoff := 4`)
+forces one-or-two recursion levels on the small square/rectangular fixtures with a
+deliberately different — but valid — textbook triple-loop base kernel; `cfgDeep`
+(`cutoff := 0`) drives the recursion down to the config-independent `≤ 1` base
+condition (the 1×1 and empty fixtures exercise exactly that terminating case). The
+single `strassenDefault` recursion test derives its dimension from
+`strassenDefault.cutoff` itself, so it keeps firing the recursion whatever value a
+future re-measurement assigns to that constant.
+-/
+
+/-- Deterministic Int fixture generator; `seed` distinguishes the two operands so
+the product is not accidentally symmetric. Entries are kept small to keep the
+cutoff-derived default-config guard in the millisecond range. -/
+private def genInt (seed n m : Nat) : Matrix Int n m :=
+  Matrix.ofFn fun i j => (((i.val + 1) * (j.val + 2) + seed * (i.val + j.val) : Int) % 13) - 6
+
+/-- A deliberately different — but valid — base kernel: the textbook triple-loop
+naive product, computed entrywise with `Fin.foldl`. It agrees with `mul` (both sum
+`∑ₜ X[i,t]·Y[t,j]`), so plugging it in cross-checks the recursion, the block
+assembly, and the kernel itself against the reference `mul`. -/
+private def naiveKernel {n m k : Nat} (X : Matrix Int n m) (Y : Matrix Int m k) :
+    Matrix Int n k :=
+  Matrix.ofFn fun i j => Fin.foldl m (fun acc t => acc + X[(i, t)] * Y[(t, j)]) (0 : Int)
+
+/-- Custom-kernel config with an explicit small cutoff: recursion fires on the
+small fixtures while the base leaves hit `naiveKernel`. -/
+private def cfgNaive : StrassenConfig Int := { cutoff := 4, baseMul := naiveKernel }
+
+/-- Deep-recursion config: `cutoff := 0` splits until a dimension reaches the
+config-independent `≤ 1` base condition. -/
+private def cfgDeep : StrassenConfig Int := { cutoff := 0, baseMul := naiveKernel }
+
+-- Even, odd, and prime square dimensions under both custom configs.
+#guard let A := genInt 0 8 8; let B := genInt 1 8 8; mulStrassen cfgNaive A B = A * B
+#guard let A := genInt 0 8 8; let B := genInt 1 8 8; mulStrassen cfgDeep A B = A * B
+#guard let A := genInt 0 9 9; let B := genInt 1 9 9; mulStrassen cfgNaive A B = A * B
+#guard let A := genInt 0 9 9; let B := genInt 1 9 9; mulStrassen cfgDeep A B = A * B
+#guard let A := genInt 0 5 5; let B := genInt 1 5 5; mulStrassen cfgNaive A B = A * B
+#guard let A := genInt 0 5 5; let B := genInt 1 5 5; mulStrassen cfgDeep A B = A * B
+
+-- Rectangular with distinct `n`, `m`, `k` (each ≥ 4 so `cfgNaive` recurses).
+#guard let A := genInt 0 5 7; let B := genInt 1 7 9; mulStrassen cfgNaive A B = A * B
+#guard let A := genInt 0 5 7; let B := genInt 1 7 9; mulStrassen cfgDeep A B = A * B
+
+-- Zero contraction axis (empty product) and a zero output axis, under `cfgDeep`
+-- (hits the `m ≤ 1` / `n ≤ 1` base immediately) and `strassenDefault`.
+#guard let A := genInt 0 3 0; let B := genInt 1 0 3
+  mulStrassen cfgDeep A B = A * B
+#guard let A := genInt 0 3 0; let B := genInt 1 0 3
+  mulStrassen (strassenDefault (R := Int)) A B = A * B
+#guard let A := genInt 0 0 3; let B := genInt 1 3 2
+  mulStrassen cfgDeep A B = A * B
+
+-- 1×1: the config-independent `≤ 1` base condition, under both `cfgDeep` and default.
+#guard let A := genInt 0 1 1; let B := genInt 1 1 1
+  mulStrassen cfgDeep A B = A * B
+#guard let A := genInt 0 1 1; let B := genInt 1 1 1
+  mulStrassen (strassenDefault (R := Int)) A B = A * B
+
+-- A square one past the default cutoff (at least 2), so `strassenDefault`
+-- actually recurses whatever the measured cutoff value is.
+#guard let d := max 2 ((strassenDefault (R := Int)).cutoff + 1)
+  let A := genInt 0 d d; let B := genInt 1 d d
+  mulStrassen (strassenDefault (R := Int)) A B = A * B
 
 end Matrix
