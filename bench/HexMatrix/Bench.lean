@@ -17,14 +17,29 @@ fixture construction.
 
 Scientific registration:
 
-* `runSquareMulChecksum`: dense square multiplication, `O(n^3)`.
+* `runSquareMulChecksum`: naive dense square multiplication, `O(n^3)`.
+* `runSquareMulStrassenChecksum`: default-config Strassen-Winograd
+  multiplication (`mulStrassen strassenDefault`), `Θ(n^{log₂ 7})`. On the
+  power-of-two rungs both drivers share, the declared `Nat`-valued model
+  `7 ^ Nat.log2 n` equals `n^{log₂ 7}` exactly (`7 ^ log₂ n = n^{log₂ 7}`).
+* `runStrassenCut32` / `Cut64` / `Cut96` / `Cut128` / `Cut256`: the cutoff
+  sweep — the same Strassen recursion at fixed cutoffs `τ ∈ {32, 64, 96, 128,
+  256}`, a `compare` group over the shared rungs. The cutoff `τ` minimising time
+  across the swept dimensions is the measured block-size crossover shipped as
+  `strassenDefault.cutoff = 96` (SPEC/hex-matrix.md §Benchmarks). This is a local
+  / scheduled-hardware sweep, not a merge-gating CI activity.
+
+The two scaling series (`runSquareMulChecksum`, `runSquareMulStrassenChecksum`)
+back `reports/figures/hex-matrix-mul-scaling.svg` via
+`scripts/plots/hex-matrix-mul-scaling.py`.
 
 The dense base surfaces (multiplication, row operations on the structural
 `Vector` / `Array` primitives) have no named external comparator (declared
 absence with the `structural-layer` reason per
-`SPEC/Libraries/hex-matrix.md §"External comparators"`). Determinant
-benchmarks live in `hex-determinant` (Leibniz) and `hex-bareiss` (Bareiss,
-with the FLINT comparator).
+`SPEC/Libraries/hex-matrix.md §"External comparators"`). The Strassen driver
+declares the same structural-layer absence: its baseline is the internal naive
+`mul`, not an external tool. Determinant benchmarks live in `hex-determinant`
+(Leibniz) and `hex-bareiss` (Bareiss, with the FLINT comparator).
 -/
 
 namespace Hex.MatrixBench
@@ -75,24 +90,123 @@ def checksum (M : Hex.Matrix Int n n) : Int :=
       (List.finRange n).foldl (fun rowAcc j => rowAcc + M[(i, j)]) acc)
     0
 
-/-- Benchmark target: multiply the prepared matrices and checksum the
-result. The timed work remains cubic in the matrix dimension. -/
+/-- Benchmark target: multiply the prepared matrices with the naive `mul` and
+checksum the result. The timed work remains cubic in the matrix dimension. -/
 def runSquareMulChecksum (input : MulInput) : Int :=
   let lhs : Hex.Matrix Int input.n input.n := matrixOfFlat input.n input.lhs
   let rhs : Hex.Matrix Int input.n input.n := matrixOfFlat input.n input.rhs
   checksum (lhs * rhs)
 
+/-- A Strassen configuration over `Int` at a chosen `cutoff`, with the naive
+`mulImpl` base kernel (exactly `strassenDefault` but with `cutoff` overridden).
+Used by the cutoff sweep. -/
+def strassenAt (cutoff : Nat) : Hex.Matrix.StrassenConfig Int where
+  cutoff := cutoff
+  baseMul := Hex.Matrix.mulImpl
+
+/-- Multiply the prepared matrices with `mulStrassen` at a given `cutoff` and
+checksum the result. -/
+def runStrassenAt (cutoff : Nat) (input : MulInput) : Int :=
+  let lhs : Hex.Matrix Int input.n input.n := matrixOfFlat input.n input.lhs
+  let rhs : Hex.Matrix Int input.n input.n := matrixOfFlat input.n input.rhs
+  checksum (Hex.Matrix.mulStrassen (strassenAt cutoff) lhs rhs)
+
+/-- Benchmark target: default-config Strassen-Winograd multiplication. This is
+the shipped `strassenDefault` (its `cutoff` is the measured crossover), so this
+target tracks the constant automatically. -/
+def runSquareMulStrassenChecksum (input : MulInput) : Int :=
+  let lhs : Hex.Matrix Int input.n input.n := matrixOfFlat input.n input.lhs
+  let rhs : Hex.Matrix Int input.n input.n := matrixOfFlat input.n input.rhs
+  checksum (Hex.Matrix.mulStrassen Hex.Matrix.strassenDefault lhs rhs)
+
+/-- Cutoff-sweep targets: the Strassen recursion at fixed cutoffs bracketing the
+shipped `strassenDefault.cutoff = 96`. On power-of-two rungs the recursion tree
+depends only on the leaf-block class, so these five span the distinguishable
+classes: `Cut32` (leaf 16), `Cut64` (leaf 32), `Cut96`/`Cut128` (leaf 64, the
+in-context optimum, identical on powers of two), and `Cut256` (leaf 128). -/
+def runStrassenCut32 (input : MulInput) : Int := runStrassenAt 32 input
+def runStrassenCut64 (input : MulInput) : Int := runStrassenAt 64 input
+def runStrassenCut96 (input : MulInput) : Int := runStrassenAt 96 input
+def runStrassenCut128 (input : MulInput) : Int := runStrassenAt 128 input
+def runStrassenCut256 (input : MulInput) : Int := runStrassenAt 256 input
+
 /-! `runSquareMulChecksum` cost model: textbook dense square multiplication is
 `n` dot products per output row over `n` rows, each dot product `O(n)`, so the
-declared model is the cubic `n * n * n`. -/
+declared model is the cubic `n * n * n`. The power-of-two rungs are shared with
+the Strassen series so the two scaling curves overlay cleanly. -/
 setup_benchmark runSquareMulChecksum n => n * n * n
   with prep := prepMulInput
   where {
-    paramFloor := 160
-    paramCeiling := 256
-    paramSchedule := .custom #[160, 192, 224, 256]
-    maxSecondsPerCall := 3.0
-    targetInnerNanos := 200000000
+    paramFloor := 64
+    paramCeiling := 1024
+    paramSchedule := .custom #[64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 90.0
+    targetInnerNanos := 500000000
+  }
+
+/-! `runSquareMulStrassenChecksum` cost model: Strassen-Winograd does **seven**
+recursive block products per 2×2 level down to the cutoff, one fewer than the
+eight of the naive block product, giving `Θ(n^{log₂ 7})` coefficient
+multiplications. Since `n^{log₂ 7} = 7^{log₂ n}`, the exact `Nat`-valued model
+on power-of-two rungs is `7 ^ Nat.log2 n`. The declared model tracks the
+sub-cubic exponent so regression tracking uses `log₂ 7`, not `3`. -/
+setup_benchmark runSquareMulStrassenChecksum n => 7 ^ Nat.log2 n
+  with prep := prepMulInput
+  where {
+    paramFloor := 64
+    paramCeiling := 1024
+    paramSchedule := .custom #[64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 90.0
+    targetInnerNanos := 500000000
+  }
+
+/-! Cutoff-sweep registrations. Same Strassen model as the default target; they
+differ only in the fixed cutoff. The `compare` group over these targets locates
+the block-size crossover. -/
+setup_benchmark runStrassenCut32 n => 7 ^ Nat.log2 n
+  with prep := prepMulInput
+  where {
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 128, 256, 512]
+    maxSecondsPerCall := 40.0
+    targetInnerNanos := 500000000
+  }
+setup_benchmark runStrassenCut64 n => 7 ^ Nat.log2 n
+  with prep := prepMulInput
+  where {
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 128, 256, 512]
+    maxSecondsPerCall := 40.0
+    targetInnerNanos := 500000000
+  }
+setup_benchmark runStrassenCut128 n => 7 ^ Nat.log2 n
+  with prep := prepMulInput
+  where {
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 128, 256, 512]
+    maxSecondsPerCall := 40.0
+    targetInnerNanos := 500000000
+  }
+setup_benchmark runStrassenCut96 n => 7 ^ Nat.log2 n
+  with prep := prepMulInput
+  where {
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 128, 256, 512]
+    maxSecondsPerCall := 40.0
+    targetInnerNanos := 500000000
+  }
+setup_benchmark runStrassenCut256 n => 7 ^ Nat.log2 n
+  with prep := prepMulInput
+  where {
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 128, 256, 512]
+    maxSecondsPerCall := 40.0
+    targetInnerNanos := 500000000
   }
 
 end Hex.MatrixBench

@@ -68,16 +68,25 @@ this hypothesis, keeping the proof out of the `StrassenConfig` data record. -/
 def StrassenConfig.Valid [Mul R] [Add R] [OfNat R 0] (cfg : StrassenConfig R) : Prop :=
   ∀ {n m k} (X : Matrix R n m) (Y : Matrix R m k), cfg.baseMul X Y = mul X Y
 
-/-- The default configuration: naive `mulImpl` as the base kernel and a cutoff of
-`64`.
+/-- The default configuration: naive `mulImpl` as the base kernel and a **measured**
+cutoff of `96`.
 
-The cutoff is **provisional**. Per `HexMatrix/SPEC/hex-matrix.md` § "Benchmarks"
-the real crossover is a measured constant, established by the wave-3 Strassen
-bench driver on this project's coefficient types; `64` is a placeholder until that
-measurement lands. -/
+Measured by the Strassen bench driver (`bench/HexMatrix/Bench.lean`) on `Int`
+coefficients with GMP arithmetic, sweeping the cutoff `τ` against dimension `n`
+on host `chungus2` (AMD EPYC 9455), Lean toolchain `4.32.0-rc1`, on the current
+row-of-rows `Vector (Vector R m) n` backing. On that backing an extra Strassen
+level below a `64×64` block loses to the naive base kernel (its coefficient-
+multiplication saving is swamped by quadrant materialization and stride/cache
+overhead), while a `128×128` block splits profitably (one Strassen level:
+`≈ 90 ms` vs naive `≈ 97 ms`). Any cutoff in `(64, 128]` therefore recurses down
+to a `64×64` naive leaf, the in-context optimum; `96` is the shipped value,
+extending Strassen to non-power-of-two blocks in `[96, 128)` as well. Per
+`HexMatrix/SPEC/hex-matrix.md` § "Benchmarks" this crossover is representation-
+dependent — the flat `Vector R (n*m)` backing (#8652) is expected to lower it and
+will re-measure it against this same bench. -/
 @[expose]
 def strassenDefault [Mul R] [Add R] [OfNat R 0] : StrassenConfig R where
-  cutoff := 64
+  cutoff := 96
   baseMul := mulImpl
 
 /-- The default configuration is valid: its base kernel `mulImpl` equals `mul` by

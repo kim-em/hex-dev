@@ -205,7 +205,7 @@ jobs:
             hexpolyfp_bench hexmodarith_bench \
             hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench \
             hexhensel_bench hexberlekamp_bench hexbz_bench \
-            hexconway_bench hexdeterminant_bench
+            hexconway_bench hexdeterminant_bench hexmatrix_bench
           touch "$RUNNER_TEMP/bench.ok"
       - name: Conformance oracles + BZ gates
         id: conformance
