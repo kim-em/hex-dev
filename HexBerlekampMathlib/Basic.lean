@@ -1222,4 +1222,137 @@ instance irreducibleDecidablePred (p : Nat) [Fact (Nat.Prime p)] :
 
 end
 
+/-!
+### Computable, kernel-reducible irreducibility over `F_p`
+
+The instance above is classical, so `decide +kernel` gets stuck on it. This
+block gives a *computable* `Bool`-valued irreducibility test backed by
+`Berlekamp.rabinTest`, proves it agrees with Mathlib irreducibility of the
+transported polynomial, and packages the agreement as a `Decidable` instance
+that `decide +kernel` reduces entirely in the kernel (never trusting compiled
+code).
+
+The block lives outside the file's `noncomputable section`, so `fpIsIrreducible`
+is genuinely computable (`rabinTest` is `@[expose]` and kernel-reducible; the
+`scale` used by `normalizeMonic` is `noncomputable` but carries a `@[csimp]`
+runtime implementation).
+-/
+
+section Computable
+
+open Polynomial
+
+variable {p : Nat} [Hex.ZMod64.Bounds p]
+
+/-- Monicity of an executable finite-field polynomial is decidable: `Monic m` is
+the equality `leadingCoeff m = 1`, and `ZMod64 p` has decidable equality. This is
+the instance that lets the `Bool`-valued `fpIsIrreducible` branch on monicity and
+still reduce in the kernel (obstacle 1 of the SPEC requirement). -/
+instance instDecidableMonic (m : Hex.FpPoly p) :
+    Decidable (Hex.DensePoly.Monic m) :=
+  inferInstanceAs (Decidable (Hex.DensePoly.leadingCoeff m = 1))
+
+/-- Computable, kernel-reducible irreducibility test for finite-field
+polynomials, backed by `Berlekamp.rabinTest` on the monic normalization.
+
+Zero inputs are rejected; every nonzero `f` normalizes to a monic polynomial
+`(normalizeMonic f).2` whose Rabin test decides irreducibility. `decide +kernel`
+reduces this test in the kernel, so via `fpIsIrreducible_iff` and
+`instDecidableIrreducibleToMathlibPolynomial` it certifies
+`Irreducible (toMathlibPolynomial f)` using only the kernel. -/
+def fpIsIrreducible (f : Hex.FpPoly p) : Bool :=
+  if f.isZero then false
+  else if hm : Hex.DensePoly.Monic (Hex.FpPoly.normalizeMonic f).2 then
+    Hex.Berlekamp.rabinTest (Hex.FpPoly.normalizeMonic f).2 hm
+  else false
+
+/-- The computable Rabin-backed test agrees with Mathlib irreducibility of the
+transported polynomial over `ZMod p`.
+
+For nonzero `f` the monic normalization `m = (normalizeMonic f).2` is a unit
+multiple of `f` (`f = leadingCoeff f • m` up to `C`), so irreducibility of
+`toMathlibPolynomial m` and of `toMathlibPolynomial f` coincide; `rabin_irreducible`
+supplies the former for the monic `m` (also in the constant case, where both the
+Rabin test and Mathlib irreducibility are `false`). -/
+theorem fpIsIrreducible_iff [Fact (Nat.Prime p)] (f : Hex.FpPoly p) :
+    fpIsIrreducible f = true ↔ Irreducible (toMathlibPolynomial f) := by
+  haveI hPM : Hex.ZMod64.PrimeModulus p := primeModulus_of_fact p
+  have hprime : Hex.Nat.Prime p := hPM.prime
+  by_cases hz : f.isZero = true
+  · -- Zero input: the test is `false` and the transported polynomial is `0`.
+    have hsize0 : f.size = 0 := (Hex.DensePoly.isZero_eq_true_iff f).mp hz
+    have hf0 : f = 0 := by
+      apply Hex.DensePoly.ext_coeff
+      intro n
+      rw [Hex.DensePoly.coeff_zero]
+      exact Hex.DensePoly.coeff_eq_zero_of_size_le f (by omega)
+    have hpoly0 : toMathlibPolynomial f = 0 := by
+      apply Polynomial.ext
+      intro n
+      rw [coeff_toMathlibPolynomial, hf0, Hex.DensePoly.coeff_zero, Polynomial.coeff_zero]
+      exact HexModArithMathlib.ZMod64.toZMod_zero
+    rw [fpIsIrreducible, if_pos hz, hpoly0]
+    simp only [Bool.false_eq_true, false_iff]
+    exact not_irreducible_zero
+  · -- Nonzero input: normalize to the monic `m` and bridge across the unit `C c⁻¹`.
+    have hzf : f.isZero = false := Bool.eq_false_iff.mpr hz
+    set c := Hex.DensePoly.leadingCoeff f with hc
+    have hc_ne : c ≠ 0 := Hex.FpPoly.fpPoly_leadingCoeff_ne_zero_of_isZero_false f hzf
+    have hinv_mul : c⁻¹ * c = (1 : Hex.ZMod64 p) :=
+      Hex.ZMod64.inv_mul_eq_one_of_prime hprime hc_ne
+    have hinv_ne : c⁻¹ ≠ (0 : Hex.ZMod64 p) := by
+      intro hinv
+      rw [hinv] at hinv_mul
+      have hzero : (0 : Hex.ZMod64 p) * c = 0 := by grind
+      rw [hzero] at hinv_mul
+      exact Hex.ZMod64.one_ne_zero_of_prime hprime hinv_mul.symm
+    have hnm2 : (Hex.FpPoly.normalizeMonic f).2 = Hex.DensePoly.scale c⁻¹ f := by
+      simp only [Hex.FpPoly.normalizeMonic, hzf, Bool.false_eq_true, if_false, ← hc]
+    have hm_monic : Hex.DensePoly.Monic (Hex.FpPoly.normalizeMonic f).2 := by
+      rw [hnm2]
+      unfold Hex.DensePoly.Monic
+      rw [Hex.FpPoly.leadingCoeff_scale_of_ne_zero_of_nonzero hinv_ne f
+        (Nat.pos_iff_ne_zero.mp ((Hex.DensePoly.isZero_eq_false_iff f).mp hzf)), ← hc]
+      exact hinv_mul
+    rw [fpIsIrreducible, if_neg hz, dif_pos hm_monic,
+      rabin_irreducible (Hex.FpPoly.normalizeMonic f).2 hm_monic
+        (Hex.Berlekamp.basisSize (Hex.FpPoly.normalizeMonic f).2) rfl]
+    -- `toMathlibPolynomial m = C (toZMod c⁻¹) * toMathlibPolynomial f`.
+    have hbridge : toMathlibPolynomial (Hex.FpPoly.normalizeMonic f).2
+        = Polynomial.C (HexModArithMathlib.ZMod64.toZMod c⁻¹) * toMathlibPolynomial f := by
+      rw [hnm2, ← Hex.FpPoly.C_mul_eq_scale, toMathlibPolynomial_mul, toMathlibPolynomial_C]
+    rw [hbridge]
+    have htoinv_ne : HexModArithMathlib.ZMod64.toZMod c⁻¹ ≠ 0 := by
+      intro h0
+      apply hinv_ne
+      have hround := congrArg HexModArithMathlib.ZMod64.ofZMod h0
+      rwa [HexModArithMathlib.ZMod64.ofZMod_toZMod, HexModArithMathlib.ZMod64.ofZMod_zero]
+        at hround
+    have hunit : IsUnit (Polynomial.C (HexModArithMathlib.ZMod64.toZMod c⁻¹)) :=
+      Polynomial.isUnit_C.mpr (isUnit_iff_ne_zero.mpr htoinv_ne)
+    exact irreducible_isUnit_mul hunit
+
+/-- Mathlib irreducibility of a transported finite-field polynomial is decidable
+by a kernel-reducible computation: `decide +kernel` runs `fpIsIrreducible` (hence
+`Berlekamp.rabinTest`) in the kernel and reads off the verdict. -/
+instance instDecidableIrreducibleToMathlibPolynomial
+    [Fact (Nat.Prime p)] (f : Hex.FpPoly p) :
+    Decidable (Irreducible (toMathlibPolynomial f)) :=
+  decidable_of_iff _ (fpIsIrreducible_iff f)
+
+/-- `X² + X + 1` is irreducible over `F₂`, certified by kernel reduction of
+`fpIsIrreducible` through `instDecidableIrreducibleToMathlibPolynomial`, using
+only the trusted kernel. -/
+example :
+    Irreducible (toMathlibPolynomial (Hex.DensePoly.ofCoeffs #[1, 1, 1] : Hex.FpPoly 2)) := by
+  decide +kernel
+
+/-- `X² + 1 = (X + 1)²` is reducible over `F₂`; the same kernel-reducible
+instance rejects it. -/
+example :
+    ¬ Irreducible (toMathlibPolynomial (Hex.DensePoly.ofCoeffs #[1, 0, 1] : Hex.FpPoly 2)) := by
+  decide +kernel
+
+end Computable
+
 end HexBerlekampMathlib
