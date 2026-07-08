@@ -664,6 +664,10 @@ private theorem smartSizeLoop_none_budget_zero
           by_cases hd_eq : dsize = S_cov.card - 1
           · -- at `S_cov`'s size: CandLoop completeness forces `cb = 0`, then budget-zero
             subst hd_eq
+            -- The size loop feeds the candidate loop only the budget-bounded prefix of the
+            -- size level; realign `hcand` to the full enumeration (value-preserving, #8648).
+            rw [subsetsOfSizeWithComplementTake_eq, List.map_take,
+              scaledRecombinationSmartCandLoop_take _ _ _ _ _ _ budget (le_refl budget)] at hcand
             have hcb : cb = 0 :=
               smartCandLoop_none_budget_zero B' hcore_lc_le hvalid hcore_ne
                 hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic
@@ -1091,6 +1095,9 @@ private theorem smartSizeLoop_covers_of_bound
           simp only [Prod.mk.injEq, Option.some.injEq] at h
           obtain ⟨hres, _⟩ := h
           subst hres
+          -- Realign `hcand` from the budget-bounded prefix to the full size level (#8648).
+          rw [subsetsOfSizeWithComplementTake_eq, List.map_take,
+            scaledRecombinationSmartCandLoop_take _ _ _ _ _ _ budget (le_refl budget)] at hcand
           have hk_le : dsize ≤ S_cov.card - 1 := by
             rcases List.mem_cons.mp hcontains with hh | ht
             · omega
@@ -1106,6 +1113,8 @@ private theorem smartSizeLoop_covers_of_bound
           have hcb_le := Hex.scaledRecombinationSmartCandLoop_budget_le _ _ _ _ _ _ _ _ hcand
           by_cases hd_eq : dsize = S_cov.card - 1
           · subst hd_eq
+            rw [subsetsOfSizeWithComplementTake_eq, List.map_take,
+              scaledRecombinationSmartCandLoop_take _ _ _ _ _ _ budget (le_refl budget)] at hcand
             have hcb : cb = 0 :=
               smartCandLoop_none_budget_zero B' hcore_lc_le hvalid hcore_ne
                 hcore_primitive hcore_lc_pos hd_modulus hd_liftedFactor_monic

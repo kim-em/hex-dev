@@ -124,6 +124,95 @@ theorem subsetsOfSizeWithComplement_mem_subsetSplits
             obtain ⟨rfl, rfl⟩ := heq
             exact Hex.subsetSplits_cons_right_mem (ih hmem)
 
+/-- The budget-bounded generator materialises exactly the length-`n` prefix of the
+full size-`k` enumeration.  The size-ordered classical search feeds it the running
+candidate `budget`, so the size level above the budget is never realised while the
+candidate list the loop iterates stays a prefix of the full enumeration. -/
+theorem subsetsOfSizeWithComplementTake_eq {α : Type} (xs : List α) (k n : Nat) :
+    Hex.subsetsOfSizeWithComplementTake xs k n
+      = (Hex.subsetsOfSizeWithComplement xs k).take n := by
+  induction xs generalizing k n with
+  | nil =>
+      match k, n with
+      | _, 0 => simp [Hex.subsetsOfSizeWithComplementTake]
+      | 0, _ + 1 => simp [Hex.subsetsOfSizeWithComplementTake, Hex.subsetsOfSizeWithComplement]
+      | _ + 1, _ + 1 => simp [Hex.subsetsOfSizeWithComplementTake, Hex.subsetsOfSizeWithComplement]
+  | cons x xs ih =>
+      match k, n with
+      | _, 0 => simp [Hex.subsetsOfSizeWithComplementTake]
+      | 0, _ + 1 => simp [Hex.subsetsOfSizeWithComplementTake, Hex.subsetsOfSizeWithComplement]
+      | j + 1, m + 1 =>
+          rw [show Hex.subsetsOfSizeWithComplement (x :: xs) (j + 1) =
+              (Hex.subsetsOfSizeWithComplement xs j).map (fun sc => (x :: sc.1, sc.2)) ++
+                (Hex.subsetsOfSizeWithComplement xs (j + 1)).map (fun sc => (sc.1, x :: sc.2))
+            from rfl]
+          simp only [Hex.subsetsOfSizeWithComplementTake, ih, List.map_take, List.take_append,
+            List.length_take, List.length_map]
+          congr 2
+          omega
+
+/-- The budget-bounded generator returns at most `n` splits: the size level above
+the running budget is never enumerated. -/
+theorem subsetsOfSizeWithComplementTake_length_le {α : Type} (xs : List α) (k n : Nat) :
+    (Hex.subsetsOfSizeWithComplementTake xs k n).length ≤ n := by
+  rw [subsetsOfSizeWithComplementTake_eq, List.length_take]
+  omega
+
+/-- The candidate loop consumes at most `budget` splits before its `budget = 0`
+guard fires, so replacing the split list by any prefix of length `≥ budget` leaves
+the result unchanged.  Fed exactly `budget` splits by the budget-bounded generator,
+the bounded size-ordered search is therefore identical to the full one — the fix is
+value-preserving (no decline-boundary shift, no trace regeneration). -/
+theorem scaledRecombinationSmartCandLoop_take
+    (coreLc : Int) (target : Hex.ZPoly) (modulus : Nat)
+    (splits : List (List Hex.ZPoly × List Hex.ZPoly)) (budget fuel n : Nat)
+    (hn : budget ≤ n) :
+    Hex.scaledRecombinationSmartCandLoop coreLc target modulus (splits.take n) budget fuel
+      = Hex.scaledRecombinationSmartCandLoop coreLc target modulus splits budget fuel := by
+  induction splits generalizing budget fuel n with
+  | nil => simp
+  | cons split rest ih =>
+    match n, hn with
+    | 0, hn =>
+      obtain rfl : budget = 0 := Nat.le_zero.mp hn
+      rw [List.take_zero, Hex.scaledRecombinationSmartCandLoop_budget_zero,
+        Hex.scaledRecombinationSmartCandLoop_budget_zero]
+    | m + 1, hn =>
+      rw [List.take_succ_cons]
+      by_cases hb : budget = 0
+      · rw [hb, Hex.scaledRecombinationSmartCandLoop_budget_zero,
+          Hex.scaledRecombinationSmartCandLoop_budget_zero]
+      · conv_lhs => rw [Hex.scaledRecombinationSmartCandLoop.eq_def]
+        conv_rhs => rw [Hex.scaledRecombinationSmartCandLoop.eq_def]
+        simp only [if_neg hb]
+        cases fuel with
+        | zero => rfl
+        | succ fuel' =>
+          simp only []
+          by_cases hpre : Hex.scaledCandidatePrefilter coreLc target modulus split.1 = true
+          · simp only [if_pos hpre]
+            by_cases hrec : Hex.shouldRecordPolynomialFactor
+                (Hex.normalizeFactorSign (Hex.ZPoly.primitivePart (Hex.ZPoly.dilate coreLc
+                  (Hex.centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) = true
+            · simp only [if_pos hrec]
+              cases hquot : Hex.exactQuotient? target
+                  (Hex.normalizeFactorSign (Hex.ZPoly.primitivePart (Hex.ZPoly.dilate coreLc
+                    (Hex.centeredLiftPoly (Array.polyProduct split.1.toArray) modulus)))) with
+              | none => simp only []; exact ih (budget - 1) fuel' m (by omega)
+              | some quotient =>
+                simp only []
+                cases haux : Hex.scaledRecombinationSmartAux coreLc quotient modulus split.2
+                    (budget - 1) fuel' with
+                | mk ores ob =>
+                  cases ores with
+                  | none =>
+                    simp only []
+                    exact ih ob fuel' m (le_trans
+                      (Hex.scaledRecombinationSmartAux_budget_le _ _ _ _ _ _ _ _ haux) (by omega))
+                  | some sub => simp only []
+            · simp only [if_neg hrec]; exact ih (budget - 1) fuel' m (by omega)
+          · simp only [if_neg hpre]; exact ih (budget - 1) fuel' m (by omega)
+
 /-- The head-forced size-ordered split lies in `subsetSplitsWithFirst`: this is
 the executable enumeration shape the size-ordered search actually iterates (the
 head lifted factor forced into the selected component, the tail partitioned by

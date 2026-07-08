@@ -260,6 +260,46 @@ def subsetsOfSizeWithComplement {α : Type} : List α → Nat → List (List α 
       (subsetsOfSizeWithComplement xs k).map (fun sc => (x :: sc.1, sc.2)) ++
       (subsetsOfSizeWithComplement xs (k + 1)).map (fun sc => (sc.1, x :: sc.2))
 
+/-- Budget-bounded prefix of `subsetsOfSizeWithComplement xs k`: it produces the
+first `n` size-`k` sublists (with complements), in the same order, and stops as
+soon as that prefix is full. It returns at most `n` splits
+(`subsetsOfSizeWithComplementTake_length_le`) and, crucially, does not build the
+whole `C(xs.length, k)` level before taking the prefix — a subtree asked for `0`
+more splits returns immediately (the `n = 0` arm), so the level above `n` is
+never enumerated. Equal to `(subsetsOfSizeWithComplement xs k).take n`
+(`subsetsOfSizeWithComplementTake_eq`).
+
+The size-ordered classical search feeds this the running candidate `budget`. The
+candidate loop consumes at most `budget` subsets before its `budget = 0` guard
+fires, so building only the first `budget` of a size level is value-preserving
+while keeping the whole level from being realised when the running budget is not
+aligned to the level boundary (a quotient sub-search after a peel, or a
+non-default caller budget) — the surviving cases from #8535/#8537. -/
+@[expose]
+def subsetsOfSizeWithComplementTake {α : Type} :
+    List α → Nat → Nat → List (List α × List α)
+  | _, _, 0 => []
+  | xs, 0, _ + 1 => [([], xs)]
+  | [], _ + 1, _ + 1 => []
+  | x :: xs, k + 1, n + 1 =>
+      let withHead :=
+        (subsetsOfSizeWithComplementTake xs k (n + 1)).map (fun sc => (x :: sc.1, sc.2))
+      withHead ++
+        (subsetsOfSizeWithComplementTake xs (k + 1) (n + 1 - withHead.length)).map
+          (fun sc => (sc.1, x :: sc.2))
+
+-- The bounded generator agrees with the plain prefix; the level above the budget
+-- is never built (the `n = 0` base case returns immediately).
+#guard subsetsOfSizeWithComplementTake [1, 2, 3, 4] 2 3
+  = (subsetsOfSizeWithComplement [1, 2, 3, 4] 2).take 3
+#guard subsetsOfSizeWithComplementTake [1, 2, 3, 4] 2 100
+  = subsetsOfSizeWithComplement [1, 2, 3, 4] 2
+#guard subsetsOfSizeWithComplementTake [1, 2, 3] 0 5
+  = (subsetsOfSizeWithComplement [1, 2, 3] 0).take 5
+#guard subsetsOfSizeWithComplementTake ([] : List Nat) 2 5 = []
+#guard subsetsOfSizeWithComplementTake [1, 2, 3, 4, 5] 3 4
+  = (subsetsOfSizeWithComplement [1, 2, 3, 4, 5] 3).take 4
+
 /-- Sum of the degrees of a selected local-factor subset — the degree of the
 subset product whenever the leading coefficients do not cancel mod the lift
 modulus. -/
@@ -345,7 +385,8 @@ def scaledRecombinationSmartSizeLoop
       else match fuel with
         | 0 => (none, budget)
         | fuel + 1 =>
-            let splits := (subsetsOfSizeWithComplement tail d).map fun sc => (head :: sc.1, sc.2)
+            let splits :=
+              (subsetsOfSizeWithComplementTake tail d budget).map fun sc => (head :: sc.1, sc.2)
             match scaledRecombinationSmartCandLoop coreLc target modulus splits budget fuel with
             | (some res, b) => (some res, b)
             | (none, b) =>
@@ -407,10 +448,13 @@ The cap is applied once, at the `scaledRecombinationSmart` wrapper, from the
 top-level `r`. A recursive quotient search after a successful factor
 extraction inherits the remaining budget unaligned to its own (smaller) level
 boundaries, so a decline after at least one peel can still end mid-level —
-harmless for correctness (any exhaustion declines to the lattice tier) and
-bounded by the already-tightened top-level cap; re-aligning per recursion
-would churn `scaledRecombinationSmartAux` and its proof set for no verdict
-change. -/
+harmless for correctness (any exhaustion declines to the lattice tier). This
+mid-level decline is intentional and value-preserving, so this cap is not
+re-aligned per recursion; the orthogonal *materialisation* cost of a mid-level
+budget (building all `C(r-1, d)` splits of a level the sub-search cannot
+finish) is bounded separately by `subsetsOfSizeWithComplementTake`, which the
+size loop feeds the running budget so it never builds more than `budget` splits
+of a level (#8648). -/
 def levelAwareSubsetBudget (r budget : Nat) : Nat :=
   go r 0 1 0
 where
