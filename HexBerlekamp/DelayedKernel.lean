@@ -181,7 +181,9 @@ theorem barrettBaseMul_eq_mul (ctx : Hex.BarrettCtx p) {n m k : Nat}
 
 /-- The **demonstration non-default `StrassenConfig`**: the delayed-reduction
 Barrett base kernel over the prime field `ZMod64 p`, taking the `Hex.BarrettCtx`.
-Its cutoff matches the default (`64`); only the base kernel differs. -/
+Its cutoff is pinned at `64`, the value the committed comparison was measured at
+(the default cutoff is measured separately and may move); only the base kernel
+differs from the default config. -/
 @[expose]
 def strassenBarrett (ctx : Hex.BarrettCtx p) : Matrix.StrassenConfig (ZMod64 p) where
   cutoff := 64
