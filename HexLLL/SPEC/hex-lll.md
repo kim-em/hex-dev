@@ -437,7 +437,7 @@ classification below is mirrored as structured metadata in
   architectural asymmetries the comparison is read against — the Isabelle path
   spawns the `fplll` binary per call (this library uses in-process `fplll-ffi`)
   and re-runs the full verified LLL to confirm reducedness (this library runs
-  the `lllReducedExact` integer check).
+  the `lllReduced` integer check).
 - **`verified Isabelle LLL`** — `gating`. The Bottesch–Divasón–
   Haslbeck–Joosten–Thiemann–Yamada formalisation in the Archive of
   Formal Proofs (entry `LLL_Basis_Reduction`) is the only other

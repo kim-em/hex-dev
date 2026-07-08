@@ -111,7 +111,7 @@ algebra:
   `lllNative_first_row_norm_sq_le`, and the lattice-preservation
   transfer lemmas `lll_mem_latticeSubmodule_iff` and
   `lllNative_mem_latticeSubmodule_iff`.
-- the checker soundness theorems `lllReducedExact_sound`,
+- the checker soundness theorems `lllReduced_sound`,
   `lllReducedInterval_sound`, `lllReducedCheck_sound`, and `certCheck_sound`,
   which entail the rational `Hex.isLLLReduced` predicate and the same-lattice
   property from acceptance of the executable Bool checkers.

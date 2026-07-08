@@ -16,7 +16,7 @@ public section
 
 /-!
 Soundness of the executable reducedness checkers: acceptance of the exact
-`lllReducedExact`, the dispatched `lllReducedCheck`, and the bundled
+`lllReduced`, the dispatched `lllReducedCheck`, and the bundled
 `certCheck` entails the rational `Hex.isLLLReduced` predicate, independence,
 and the same-lattice property. The interval branch consumes
 `lllReducedInterval_sound`.
@@ -26,10 +26,10 @@ namespace HexLLLMathlib
 
 /-! ### Soundness of the integer reducedness checker
 
-`Hex.lllReducedExact b δ η` accepts iff three integer-only inequalities hold over
+`Hex.lllReduced b δ η` accepts iff three integer-only inequalities hold over
 `Hex.GramSchmidt.Int.data b`. This section bridges those integer inequalities
 to the rational predicate `Hex.isLLLReduced b δ η` and to `b.independent`, the
-last theorem (`Hex.lllReducedExact_sound`) being the D2 deliverable used by the
+last theorem (`Hex.lllReduced_sound`) being the D2 deliverable used by the
 combined `certCheck_sound` of `hex-lll` §"Certified external dispatch". -/
 
 /-- Independence from the executable checker's `d`-positivity pass.
@@ -363,12 +363,12 @@ both `b.independent` and the rational `isLLLReduced b δ η` predicate.
 This is one of the two soundness ingredients feeding the combined
 `certCheck_sound` of `hex-lll` §"Certified external dispatch". The
 companion same-lattice piece is `Hex.Matrix.sameLatticeCert_sound`. -/
-theorem lllReducedExact_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
-    Hex.lllReducedExact b δ η = true →
+theorem lllReduced_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
+    Hex.lllReduced b δ η = true →
       Hex.isLLLReduced b δ η ∧ Hex.Matrix.independent b := by
   intro hcheck
   -- Unfold the three pieces of the Bool check.
-  unfold Hex.lllReducedExact at hcheck
+  unfold Hex.lllReduced at hcheck
   simp only [Bool.and_eq_true, List.all_eq_true, List.mem_finRange,
     decide_eq_true_eq, forall_true_left] at hcheck
   obtain ⟨⟨hdPos, hsize⟩, hlovasz_raw⟩ := hcheck
@@ -413,7 +413,7 @@ theorem lllReducedExact_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
 whichever side decided — the fixed-precision interval checker
 (`HexLLLMathlib.lllReducedInterval_sound`), the exact integer checker
 chosen by the size predictor, or the exact fallback after interval
-indecision (both via `lllReducedExact_sound` above) — acceptance entails
+indecision (both via `lllReduced_sound` above) — acceptance entails
 the rational `isLLLReduced` predicate and independence. The predictor
 `Hex.Internal.intervalWins` only selects between sound checkers, so no hypothesis
 about it is needed. -/
@@ -428,9 +428,9 @@ theorem lllReducedCheck_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
     by_cases hint : Hex.lllReducedInterval b δ η = true
     · exact HexLLLMathlib.lllReducedInterval_sound b δ η hint
     · rw [if_neg (by simpa using hint)] at hcheck
-      exact lllReducedExact_sound b δ η hcheck
+      exact lllReduced_sound b δ η hcheck
   · rw [if_neg (by simpa using hwin)] at hcheck
-    exact lllReducedExact_sound b δ η hcheck
+    exact lllReduced_sound b δ η hcheck
 
 /-- Soundness of the certified-dispatch checker `Hex.certCheck`: an accepted
 certificate `(B', U, V)` proves that `B` and `B'` generate the same integer row
