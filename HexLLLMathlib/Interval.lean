@@ -895,7 +895,7 @@ private theorem independent_of_nrm_pos (b : Hex.Matrix Int n m)
 /-- Acceptance by the fixed-precision interval checker entails the exact
 rational reducedness predicate and independence. This is the trusted
 statement consumed by `lllReducedCheck_sound` / `certCheck_sound`; the
-exact-integer fallback path is covered by `lllReducedExact_sound`. -/
+exact-integer fallback path is covered by `lllReduced_sound`. -/
 theorem lllReducedInterval_sound (b : Hex.Matrix Int n m) (δ η : Rat) :
     Hex.lllReducedInterval b δ η = true →
       Hex.isLLLReduced b δ η ∧ Hex.Matrix.independent b := by

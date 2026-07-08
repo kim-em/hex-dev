@@ -66,7 +66,7 @@ def B : Matrix Int 3 3 := Matrix.ofFn fun i j =>
 #eval lllNative.shortVectors B (3 / 4)
 
 -- The executable integer reducedness oracle.
-#eval lllReducedExact (Matrix.identity 3) (3 / 4) (1 / 2)   -- true
+#eval lllReduced (Matrix.identity 3) (3 / 4) (1 / 2)   -- true
 ```
 
 # Functionality
@@ -100,7 +100,7 @@ The surface, by group:
   guarantee.
 - `lllNative.firstShortVector` and `lllNative.shortVectors`: proof-free
   variants of the entry points for callers without an independence proof.
-- `lllReducedExact`, `lllReducedInterval`, and `lllReducedCheck`: the exact,
+- `lllReduced`, `lllReducedInterval`, and `lllReducedCheck`: the exact,
   fixed-precision, and dispatched reducedness oracles; `certCheck` is the
   integer certificate checker for an external reducer's output.
 - `Matrix.memLattice`, `Matrix.independent`, and `Vector.normSq` for stating

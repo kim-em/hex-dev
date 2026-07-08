@@ -316,12 +316,12 @@ private def independentCheck (b : Matrix Int n m) : Bool :=
 #guard !independentCheck zero8
 #guard !independentCheck dependent8x4
 
--- `lllReducedExact` is the executable reducedness oracle over
+-- `lllReduced` is the executable reducedness oracle over
 -- `GramSchmidt.Int.data`: identity is fully (3/4, 1/2)-reduced, while zero
 -- and dependent bases fail independence.
-#guard lllReducedExact identity8 (3/4 : Rat) (1/2 : Rat)
-#guard !lllReducedExact zero8 (3/4 : Rat) (1/2 : Rat)
-#guard !lllReducedExact dependent8x4 (3/4 : Rat) (1/2 : Rat)
+#guard lllReduced identity8 (3/4 : Rat) (1/2 : Rat)
+#guard !lllReduced zero8 (3/4 : Rat) (1/2 : Rat)
+#guard !lllReduced dependent8x4 (3/4 : Rat) (1/2 : Rat)
 
 #guard Matrix.row certReduced2 f0_2 = Matrix.row certInput2 f1_2
 #guard Matrix.row certReduced2 f1_2 =
