@@ -108,7 +108,7 @@ leading Gram determinants `d` and the integer scaled coefficients `ν`),
 so a `Bool` answer needs only exact integer comparisons. The base checker
 clears denominators in both the size-reduced and Lovász clauses.
 
-{docstring Hex.lllReducedInt}
+{docstring Hex.lllReduced}
 
 The exact integer checker is complete, but its operands grow with the
 input. For larger inputs an unverified fixed-precision interval pass over
@@ -349,8 +349,8 @@ private theorem hhi : (3 / 4 : Rat) ≤ 1 := by grind
 
 -- The verified checker rejects the input basis
 -- (not size-reduced) and accepts the output.
-#guard lllReducedInt B (3 / 4) (11 / 20) = false
-#guard lllReducedInt R (3 / 4) (11 / 20) = true
+#guard lllReduced B (3 / 4) (11 / 20) = false
+#guard lllReduced R (3 / 4) (11 / 20) = true
 
 -- U, V certify that B and R share a lattice, and
 -- certCheck combines that with reducedness of R.
@@ -423,7 +423,7 @@ proofs in `HexLLLMathlib`:
   {ref "hex-lll-checkers"}[integer checkers] are defined. Through it,
   `HexLLL` rests transitively on the fraction-free integer determinant
   libraries `HexBareiss`, `HexDeterminant`, and `HexRowReduce`.
-* `HexLLLMathlib` carries the soundness theorems. `lllReducedInt_sound`
+* `HexLLLMathlib` carries the soundness theorems. `lllReduced_sound`
   and `lllReducedCheck_sound` relate the integer checkers to
   {name}`Hex.isLLLReduced`, and `certCheck_sound` combines those with
   {name}`Hex.Matrix.sameLatticeCert_sound` into the property triple (same

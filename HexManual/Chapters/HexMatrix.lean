@@ -83,6 +83,42 @@ the Bareiss recurrence:
 
 {docstring Hex.Matrix.principalSubmatrix}
 
+# Arithmetic worked example
+%%%
+tag := "hex-matrix-arithmetic"
+%%%
+
+A compact tour of the core arithmetic: {name}`Hex.Matrix.getRow` reads a
+row and `M[(i, j)]` reads a single entry, {name}`Hex.Matrix.mulVec`
+multiplies by a vector, and `+`, `•`, and {name}`Hex.Matrix.identity` are
+the entrywise sum, scalar action, and identity.
+
+```lean
+open Hex
+
+namespace HexMatrixArithmetic
+
+def M : Matrix Int 2 2 := #m[1, 2; 3, 4]
+def v : Vector Int 2 := #v[5, 6]
+
+-- A single entry, read with M[(row, col)].
+def corner : Int := M[(1, 1)]
+
+-- getRow reads a whole row; `corner` holds one entry.
+#guard M.getRow 1 = #v[3, 4]
+#guard corner = 4
+
+-- Matrix-vector product, entrywise sum, scalar action.
+#guard M.mulVec v = #v[17, 39]
+#guard M + M = #m[2, 4; 6, 8]
+#guard (2 : Int) • M = #m[2, 4; 6, 8]
+
+-- The identity fixes every vector.
+#guard (Matrix.identity (R := Int) 2).mulVec v = v
+
+end HexMatrixArithmetic
+```
+
 # Entry, row, and column lemmas
 %%%
 tag := "hex-matrix-lemmas"
