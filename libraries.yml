@@ -182,7 +182,7 @@ libraries:
         - name: packed-vs-generic-comparison
           description: Shared deterministic GF(2) coefficient fixtures for cross-library comparisons of packed `GF2Poly` versus generic `FpPoly 2` polynomial gcd and Berlekamp-style Frobenius-column construction.
   HexPolyZ:
-    deps: [HexPoly, HexBasic]
+    deps: [HexPoly, HexArith, HexBasic]
     mathlib: false
     done_through: 7
     status: active
