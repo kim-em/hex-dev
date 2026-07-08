@@ -283,6 +283,17 @@ lowers the asymptotic order, not merely the constant factor. A speedup table
 that fits both exponents by ordinary least squares over the asymptotic window,
 as `hex-lll-scaling.py` does, accompanies the figure.
 
+The measured crossover is representation-dependent, so the bench records which
+backing it ran on. On the current `Vector (Vector R m) n` row-of-rows backing the
+recursion materializes quadrant views (a copy), which taxes `mulStrassen` and
+raises the crossover, so a poor crossover measured here is a representation
+artifact rather than a verdict on the algorithm. A flat `Vector R (n*m)` backing
+(see "Avoiding sub-block copies") is expected to lower the crossover, and it
+shifts the naive baseline too, because it changes allocation and cache behaviour
+and how the transpose step is expressed. That switch is a separate `hex-matrix`
+change, tracked in its own issue and measured there as a before/after overlay on
+this same multiply bench, not folded into the Strassen crossover reported here.
+
 ### A demonstration non-default config
 
 The pluggable base kernel is only credible if at least one non-default config is
