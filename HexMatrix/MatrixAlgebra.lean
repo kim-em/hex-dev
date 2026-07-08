@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexMatrix.Basic
+public import HexMatrix.DotProduct
 
 public section
 
@@ -254,6 +255,82 @@ theorem mul_assoc [Lean.Grind.Ring R]
 theorem sub_identity_mulVec [Lean.Grind.Ring R] (Q : Matrix R n n) (v : Vector R n) :
     (Q - Matrix.identity n) * v = Q * v - v := by
   rw [sub_mulVec, identity_mulVec]
+
+/-- The `i`-th row of a matrix sum is the sum of the rows. -/
+@[simp, grind =] theorem row_add [Add R] (A B : Matrix R n m) (i : Fin n) :
+    row (A + B) i = row A i + row B i := by
+  ext j hj
+  rw [Vector.getElem_add]
+  show (row (A + B) i)[(⟨j, hj⟩ : Fin m)] = (row A i)[(⟨j, hj⟩ : Fin m)] + (row B i)[(⟨j, hj⟩ : Fin m)]
+  rw [getElem_row, getElem_row, getElem_row, getElem_add]
+
+/-- The `i`-th row of a matrix difference is the difference of the rows. -/
+@[simp, grind =] theorem row_sub [Sub R] (A B : Matrix R n m) (i : Fin n) :
+    row (A - B) i = row A i - row B i := by
+  ext j hj
+  rw [Vector.getElem_sub]
+  show (row (A - B) i)[(⟨j, hj⟩ : Fin m)] = (row A i)[(⟨j, hj⟩ : Fin m)] - (row B i)[(⟨j, hj⟩ : Fin m)]
+  rw [getElem_row, getElem_row, getElem_row, getElem_sub]
+
+/-- The `j`-th column of a matrix sum is the sum of the columns. -/
+@[simp, grind =] theorem col_add [Add R] (A B : Matrix R n m) (j : Fin m) :
+    col (A + B) j = col A j + col B j := by
+  ext i hi
+  rw [Vector.getElem_add]
+  show (col (A + B) j)[(⟨i, hi⟩ : Fin n)] = (col A j)[(⟨i, hi⟩ : Fin n)] + (col B j)[(⟨i, hi⟩ : Fin n)]
+  rw [getElem_col, getElem_col, getElem_col, getElem_add]
+
+/-- The `j`-th column of a matrix difference is the difference of the columns. -/
+@[simp, grind =] theorem col_sub [Sub R] (A B : Matrix R n m) (j : Fin m) :
+    col (A - B) j = col A j - col B j := by
+  ext i hi
+  rw [Vector.getElem_sub]
+  show (col (A - B) j)[(⟨i, hi⟩ : Fin n)] = (col A j)[(⟨i, hi⟩ : Fin n)] - (col B j)[(⟨i, hi⟩ : Fin n)]
+  rw [getElem_col, getElem_col, getElem_col, getElem_sub]
+
+/-- Matrix multiplication distributes over addition on the left. -/
+@[grind =] theorem add_mul [Lean.Grind.Ring R]
+    (A B : Matrix R n m) (C : Matrix R m k) :
+    (A + B) * C = A * C + B * C := by
+  ext i hi j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin k := ⟨j, hj⟩
+  change ((A + B) * C)[ii][jj] = (A * C + B * C)[ii][jj]
+  rw [getElem_add, getElem_mul, getElem_mul, getElem_mul, row_add,
+    Vector.dotProduct_add_left]
+
+/-- Matrix multiplication distributes over addition on the right. -/
+@[grind =] theorem mul_add [Lean.Grind.Ring R]
+    (A : Matrix R n m) (B C : Matrix R m k) :
+    A * (B + C) = A * B + A * C := by
+  ext i hi j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin k := ⟨j, hj⟩
+  change (A * (B + C))[ii][jj] = (A * B + A * C)[ii][jj]
+  rw [getElem_add, getElem_mul, getElem_mul, getElem_mul, col_add,
+    Vector.dotProduct_add_right]
+
+/-- Matrix multiplication distributes over subtraction on the left. -/
+@[grind =] theorem sub_mul [Lean.Grind.Ring R]
+    (A B : Matrix R n m) (C : Matrix R m k) :
+    (A - B) * C = A * C - B * C := by
+  ext i hi j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin k := ⟨j, hj⟩
+  change ((A - B) * C)[ii][jj] = (A * C - B * C)[ii][jj]
+  rw [getElem_sub, getElem_mul, getElem_mul, getElem_mul, row_sub,
+    Vector.dotProduct_sub_left]
+
+/-- Matrix multiplication distributes over subtraction on the right. -/
+@[grind =] theorem mul_sub [Lean.Grind.Ring R]
+    (A : Matrix R n m) (B C : Matrix R m k) :
+    A * (B - C) = A * B - A * C := by
+  ext i hi j hj
+  let ii : Fin n := ⟨i, hi⟩
+  let jj : Fin k := ⟨j, hj⟩
+  change (A * (B - C))[ii][jj] = (A * B - A * C)[ii][jj]
+  rw [getElem_sub, getElem_mul, getElem_mul, getElem_mul, col_sub,
+    Vector.dotProduct_sub_right]
 
 end Matrix
 

@@ -11,6 +11,7 @@ public import HexMatrix.Notation
 public import HexMatrix.Vector.Insert
 public import HexMatrix.DotProduct
 public import HexMatrix.MatrixAlgebra
+public import HexMatrix.Winograd
 public import HexMatrix.Elementary
 public import HexMatrix.Submatrix
 public import HexMatrix.Gram
