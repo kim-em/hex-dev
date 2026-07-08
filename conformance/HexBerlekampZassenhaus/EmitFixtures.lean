@@ -402,8 +402,8 @@ private def cases_adversarial : List Case :=
 /-! ## Lattice-tier merge requirement
 
 See the module docstring §"Lattice-tier merge requirement".  The cases are
-emitted through the public `factor` path (`factorTraced`, whose `.1`
-is `factor`) so the pinned trace catches dispatch regressions, not just
+emitted through the public `factorize` path (`factorTraced`, whose `.1`
+is `factorize`) so the pinned trace catches dispatch regressions, not just
 lattice ones. -/
 
 /-- The two lattice-only cases, one per lattice answer arm:
@@ -520,9 +520,9 @@ private def emitPinnedCase (c : PinnedCase) : IO Unit := do
   emitClassicalResult c.id f
 
 /-- Emit one lattice-sentinel fixture through the *hybrid* traced path: a
-single `factorTraced` run supplies the `factor` result (its `.1` is the
-public `factor`) **and** the trace, so the committed trace pins the tier
-`factor` actually used.  The helper is sentinel-only: it errors out unless the
+single `factorTraced` run supplies the `factorize` result (its `.1` is the
+public `factorize`) **and** the trace, so the committed trace pins the tier
+`factorize` actually used.  The helper is sentinel-only: it errors out unless the
 classical tier declined and the lattice tier answered, which is the case's
 whole point — a case that stops routing to the lattice arm must not emit
 quietly.  (The merge still fails either way: a tier change also breaks the

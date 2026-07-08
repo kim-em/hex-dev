@@ -445,7 +445,7 @@ the regime handed to `factorLattice`.
 The Mignotte coefficient bound `defaultFactorCoeffBound f` and the
 Hensel precision exponent `a` are different quantities and **must
 not be conflated**. The coefficient bound is a magnitude in ℤ — a
-number like 1008 — describing how large any factorize's coefficient
+number like 1008 — describing how large any factor's coefficient
 can be. The precision exponent `a` is the small integer with
 `p^a > 2·(coefficient bound)` — typically a single-digit number.
 Setting `a := defaultFactorCoeffBound f` makes `p^a` astronomically
@@ -460,7 +460,7 @@ Argument:
 
 1. **Hensel correspondence.** Every irreducible integer factor `g | f` over ℤ corresponds to a unique subset `S ⊆ {1, …, r}` such that `g ≡ ∏_{i ∈ S} g_i (mod p^a)`. Mathlib has `hensels_lemma` in `Mathlib.NumberTheory.Padics.Hensel`; the explicit subset-correspondence form may need a small wrapper lemma but follows directly.
 2. **Mignotte recoverability.** At precision `a` such that `p^a > 2 · defaultFactorCoeffBound f`, the centred-residue lift in `(−p^a/2, p^a/2]` of `(∏_{i ∈ S} g_i mod p^a)` exactly recovers `g`'s integer coefficients. Mathlib has `Polynomial.mahlerMeasure_le_sqrt_sum_sq_coeff` (Landau); the repo wraps it as `mignotte_bound` in [HexPolyZMathlib/Mignotte.lean](../../HexPolyZMathlib/Mignotte.lean).
-3. **Exhaustive search soundness.** The search enumerates all `2^r` subsets, accepts only those whose product reconstructs to a true integer factorize (verified by exact division). By (1) and (2) every irreducible factor is found.
+3. **Exhaustive search soundness.** The search enumerates all `2^r` subsets, accepts only those whose product reconstructs to a true integer factor (verified by exact division). By (1) and (2) every irreducible factor is found.
 4. **Uniqueness.** ℤ[x] is a UFD (Mathlib: `Polynomial.UniqueFactorizationMonoid` over `Int`). The output array contains exactly one representative of each associate class.
 
 No BHKS termination theorem is needed: the loop is finite by subset enumeration, and correctness is by Hensel + Mignotte + UFD.
