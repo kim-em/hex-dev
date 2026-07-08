@@ -13,6 +13,7 @@ public import HexMatrix.DotProduct
 public import HexMatrix.MatrixAlgebra
 public import HexMatrix.Elementary
 public import HexMatrix.Submatrix
+public import HexMatrix.Pad
 public import HexMatrix.Gram
 
 public section
