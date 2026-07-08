@@ -107,6 +107,14 @@ Gram-Schmidt theorem surface, stated over the Mathlib-free executable
 def independent (b : Matrix Int n m) : Prop :=
   ∀ k : Fin n, 0 < gramDet b (k.val + 1) (Nat.succ_le_of_lt k.isLt)
 
+/-- `independent` is decidable: it is a bounded conjunction of `Nat` positivity
+tests on the leading Gram determinants. When *evaluated* (compiled) this is
+efficient — each determinant is computed fraction-free (Bareiss) in cubic time.
+Note it is not reducible by `decide` in the kernel, since `gramDet` runs through
+Bareiss's well-founded recursion; use it for runtime tests, not kernel proofs. -/
+instance (b : Matrix Int n m) : Decidable (independent b) := by
+  unfold independent; infer_instance
+
 /-- Product of the squared Gram-Schmidt basis norms along the first `k` rows. -/
 @[expose]
 noncomputable def gramSchmidtNormProduct (b : Matrix Int n m) (k : Nat) (hk : k ≤ n) :

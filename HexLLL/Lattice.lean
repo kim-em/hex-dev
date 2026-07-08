@@ -74,6 +74,11 @@ executable leading Gram determinant. -/
 def independent (b : Matrix Int n m) : Prop :=
   GramSchmidt.Int.independent b
 
+/-- Independence is decidable (via `GramSchmidt.Int.independent`), so it can be
+tested at runtime. -/
+instance (b : Matrix Int n m) : Decidable (independent b) :=
+  inferInstanceAs (Decidable (GramSchmidt.Int.independent b))
+
 end Matrix
 
 namespace Internal
