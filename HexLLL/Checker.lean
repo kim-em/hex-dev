@@ -47,7 +47,7 @@ the exact checker `lllReduced`, which keeps completeness structural.
 Soundness (`lllReducedInterval_sound`, HexLLLMathlib) entails
 `b.independent ∧ isLLLReduced b δ η` at the exact rational parameters. -/
 @[expose]
-def lllReducedInterval (b : Matrix Int n m) (δ η : Rat) : Bool :=
+def lllReducedInterval (b : Matrix Int n m) (δ : Rat := 3/4) (η : Rat := 1/2) : Bool :=
   let S : Int := (2 : Int) ^ intervalPrec
   let g := (Matrix.gramMatrix b).rows.toArray.map Vector.toArray
   match IntervalGS.pass S g n with
@@ -72,9 +72,11 @@ incompatible with a positive `d[j+1]` and the size-reduced bound, so the
 checker simply returns `false`. Soundness
 (`lllReduced_sound`, HexLLLMathlib) bridges to the rational predicate
 `isLLLReduced` via the integer correspondence
-(`Hex.GramSchmidt.Int.scaledCoeffs_eq`, `basis_normSq`, `gramDet_pos`). -/
+(`Hex.GramSchmidt.Int.scaledCoeffs_eq`, `basis_normSq`, `gramDet_pos`).
+`δ` and `η` default to the classical `3/4` and `1/2`, so `lllReduced b` tests
+textbook LLL-reducedness (the bound `lllNative` achieves). -/
 @[expose]
-def lllReduced (b : Matrix Int n m) (δ η : Rat) : Bool :=
+def lllReduced (b : Matrix Int n m) (δ : Rat := 3/4) (η : Rat := 1/2) : Bool :=
   let gs := GramSchmidt.Int.data b
   let d := gs.d
   let ν := gs.ν
@@ -218,7 +220,7 @@ when the interval pass is indecisive it falls back to the exact checker,
 so completeness stays structural rather than numerical. Records each
 decision in the checker tally, distinguishing all three outcomes. -/
 @[expose]
-def lllReducedCheck (b : Matrix Int n m) (δ η : Rat) : Bool :=
+def lllReducedCheck (b : Matrix Int n m) (δ : Rat := 3/4) (η : Rat := 1/2) : Bool :=
   if intervalWins b then
     if lllReducedInterval b δ η then
       withRecordCheckerOutcome .interval true
