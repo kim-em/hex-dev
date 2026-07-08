@@ -174,6 +174,256 @@ def classicalCoreFactorsWithBound
       | some factors => some (if factors.isEmpty then #[core] else factors.toArray)
       | none => some #[core]
 
+/-! ### Recursive per-remainder re-lift (#8625, deliverable 2)
+
+The classical tier's irreducibility certificate for an unsplit remainder is
+gated at the monic-core Mignotte floor of the WHOLE core (#8620): the
+transported partition cannot certify below it. The only sound sub-floor
+route is a fresh lift/partition/coverage stack per remainder, at the
+remainder's OWN monic floor, reusing the parent's prime and per-remainder
+tracked mod-p factors (re-running the prime walk or Berlekamp per remainder
+was measured and rejected; see `reports/bz-recursive-relift-findings.md`
+and the #8625 thread).
+
+Structure: an escalation ladder lifts each node's tracked factors to
+`k = 1, 2, 4, ...` strictly below the node's floor exponent, scanning
+subsets of size at most `reliftSubFloorCap` for an early split (peels are
+self-certifying via `exactQuotient?`, so the sub-floor scan carries no
+coverage obligation); peeled pieces recurse with tracked data derived by
+monic-dilation transport plus a mod-p divisibility filter. A node that
+reaches its floor unsplit runs today's full budgeted scan
+(`classicalCoreFactorsWithBound`) at its own floor, whose coverage
+certifies irreducibility. Each rung re-lifts from the mod-p seeds
+(incremental rung-to-rung lifting is a later optimization). -/
+
+namespace FpPoly
+
+/-- Monic dilation over `F_p`: scale coefficient `i` of `u` by
+`c ^ (deg u - i)`, i.e. `(monicDilate c u)(x) = c ^ (deg u) * u (x / c)` for a
+unit `c`. Monic polynomials map to monic polynomials, `monicDilate 1 = id`,
+and `monicDilate c⁻¹` inverts `monicDilate c`. Transport for the recursive
+re-lift: a peel `t = g * h` satisfies, coefficientwise over `ℤ`,
+`(toMonic t).monic = D_{lc h} ((ZPoly.toMonic g).monic) * D_{lc g} ((toMonic h).monic)`
+where `D` is this dilation, so the mod-p factors of a piece's monic transform
+are the undilated tracked factors of the parent's. -/
+@[expose]
+def monicDilate {p : Nat} [ZMod64.Bounds p] (c : ZMod64 p) (u : FpPoly p) :
+    FpPoly p :=
+  FpPoly.ofCoeffs ((Array.range u.size).map fun i => u.coeff i * c ^ (u.size - 1 - i))
+
+end FpPoly
+
+/-- Tracked per-piece prime data for the recursive re-lift: the mod-p factors
+of `(ZPoly.toMonic piece).monic` are the piece's tracked seed factors (the
+mod-p side of the lifted pairs its peel consumed) undilated by the cofactor's
+leading coefficient. `none` when the undilation is degenerate (the cofactor's
+leading coefficient vanishes mod `p`) — impossible for pieces of degree at
+least 2 at a good prime (the parent image would not be squarefree mod `p`),
+and treated as a decline by the caller. -/
+def piecePrimeData? {q : Nat} [ZMod64.Bounds q]
+    (piece : ZPoly) (cofactorLc : Int) (seeds : List (FpPoly q)) :
+    Option PrimeChoiceData :=
+  let c := ZMod64.ofNat q (ZPoly.intModNat cofactorLc q)
+  if c = 0 then
+    none
+  else
+    some { p := q
+           fModP := ZPoly.modP q (ZPoly.toMonic piece).monic
+           factorsModP := (seeds.map (FpPoly.monicDilate c⁻¹)).toArray }
+
+/-- Exact division over `ℤ` with early abort, for the sub-floor peel: the
+division loop aborts as soon as a quotient coefficient would exceed `qbound`
+in magnitude or the candidate's leading coefficient does not divide the
+running top coefficient, and a success re-verifies `q * cand = target` by one
+multiplication (so soundness reads off the guard, as for `exactQuotient?`,
+while failed candidates — the hot path of a sub-floor rung — never pay a full
+generic `divMod` plus re-multiplication). Rejects constant and oversize
+candidates; a `none` misses a peel at this rung only, so no completeness
+obligation attaches. -/
+def boundedExactQuotient? (target cand : ZPoly) (qbound : Nat) :
+    Option ZPoly := Id.run do
+  let n := target.size
+  let m := cand.size
+  if m < 2 || m > n then return none
+  let lc := cand.coeff (m - 1)
+  if lc == 0 then return none
+  let mut rem := target.toArray
+  let dq := n - m
+  let mut q : Array Int := Array.replicate (dq + 1) 0
+  let monic := lc == 1
+  for step in [0:dq + 1] do
+    let i := dq - step
+    let c := rem[i + m - 1]!
+    let cq ← if monic then pure c
+      else
+        if c % lc != 0 then return none
+        else pure (c / lc)
+    if cq.natAbs > qbound then return none
+    if cq != 0 then
+      q := q.set! i cq
+      for j in [0:m] do
+        rem := rem.set! (i + j) (rem[i + j]! - cq * cand.coeff j)
+  for j in [0:m - 1] do
+    if rem[j]! != 0 then return none
+  let quotient := DensePoly.ofCoeffs q
+  if quotient * cand == target then
+    return some quotient
+  else
+    return none
+
+/-- Coefficientwise reduction mod `m` (plain residues; the candidate pipeline
+centers afterwards via `centeredLiftPoly`). -/
+def reduceModInt (g : ZPoly) (m : Nat) : ZPoly :=
+  DensePoly.ofCoeffs (g.toArray.map (fun c => Int.emod c (Int.ofNat m)))
+
+/-- Product of a subset of lifted factors, reduced mod `m` after each
+multiply, so no intermediate coefficient grows beyond `m`. -/
+def productModInt (s : List ZPoly) (m : Nat) : ZPoly :=
+  s.foldl (fun acc g => reduceModInt (acc * g) m) (1 : ZPoly)
+
+/-- First verified peel among the scaled candidates of one subset-size level
+of `(lifted factor, mod-p seed)` pairs: returns the peeled factor, the seeds
+its subset consumed, its quotient, and the unused complement. Peels are
+self-certifying (`boundedExactQuotient?` re-verifies the product over `ℤ`),
+so a miss certifies nothing — which keeps this loop free to be lean: a
+plain trailing-coefficient divisibility test instead of the full floor-scan
+prefilter, a modular subset product, and the monic fast path that skips the
+dilate/primitive-part/sign normalisation (a product of monic lifted factors
+under a monic transform is already primitive with positive leading
+coefficient). -/
+def subFloorPeelSize {q : Nat} [ZMod64.Bounds q]
+    (coreLc : Int) (target : ZPoly) (modulus qbound : Nat) :
+    List (List (ZPoly × FpPoly q) × List (ZPoly × FpPoly q)) →
+      Option (ZPoly × List (FpPoly q) × ZPoly × List (ZPoly × FpPoly q))
+  | [] => none
+  | sc :: rest =>
+      let raw := centeredLiftPoly (productModInt (sc.1.map (·.1)) modulus) modulus
+      let c0 := raw.coeff 0
+      if c0 != 0 && Int.emod (coreLc ^ (raw.size - 1) * target.coeff 0) c0 != 0 then
+        subFloorPeelSize coreLc target modulus qbound rest
+      else
+        let candidate :=
+          if DensePoly.leadingCoeff raw == 1 then raw
+          else
+            normalizeFactorSign <| ZPoly.primitivePart <| ZPoly.dilate coreLc raw
+        if shouldRecordPolynomialFactor candidate then
+          match boundedExactQuotient? target candidate qbound with
+          | some quotient => some (candidate, sc.1.map (·.2), quotient, sc.2)
+          | none => subFloorPeelSize coreLc target modulus qbound rest
+        else subFloorPeelSize coreLc target modulus qbound rest
+
+/-- First verified peel across the subset-size levels in `sizes`, in order. -/
+def subFloorPeel? {q : Nat} [ZMod64.Bounds q]
+    (coreLc : Int) (target : ZPoly) (modulus qbound : Nat)
+    (pairs : List (ZPoly × FpPoly q)) :
+    (sizes : List Nat) →
+      Option (ZPoly × List (FpPoly q) × ZPoly × List (ZPoly × FpPoly q))
+  | [] => none
+  | d :: ds =>
+      match subFloorPeelSize coreLc target modulus qbound
+          (subsetsOfSizeWithComplement pairs d) with
+      | some res => some res
+      | none => subFloorPeel? coreLc target modulus qbound pairs ds
+
+/-- Greedy per-rung peel: repeatedly peel verified factors off `target`,
+threading the complement of the lifted pairs (one lift serves the whole
+rung), until no subset of size at most `min cap (r / 2)` divides; the final
+remainder is then pushed unsplit with the leftover seeds. Any 2-way split
+has a side covering at most half the local factors, so the `r / 2` clamp
+loses no splits, and it also keeps the peel loop from consuming the whole
+factor list (the remainder always retains at least one local factor).
+`coreLc` stays the ORIGINAL node's leading coefficient down the peel chain,
+matching the scaled-candidate construction of `scaledRecombinationSmartAux`
+(the lifted factors belong to the node's monic transform). -/
+def subFloorScan {q : Nat} [ZMod64.Bounds q]
+    (coreLc : Int) (modulus cap qbound : Nat) :
+    Nat → ZPoly → List (ZPoly × FpPoly q) →
+      Array (ZPoly × List (FpPoly q)) → Array (ZPoly × List (FpPoly q))
+  | 0, target, pairs, acc => acc.push (target, pairs.map (·.2))
+  | fuel + 1, target, pairs, acc =>
+      let hi := min cap (pairs.length / 2)
+      match subFloorPeel? coreLc target modulus qbound pairs
+          ((List.range hi).map (· + 1)) with
+      | some (candidate, seeds, quotient, rest) =>
+          subFloorScan coreLc modulus cap qbound fuel quotient rest
+            (acc.push (candidate, seeds))
+      | none => acc.push (target, pairs.map (·.2))
+
+/-- Sub-floor escalation ladder for one node: lift the node's tracked mod-p
+factors to `k = 1, 2, 4, ...` strictly below the node's floor exponent and
+run the greedy capped peel at each rung. `some pieces` (at least two, each
+paired with its tracked seeds) is the first rung's split; `none` means no
+sub-floor split was found and the caller runs the full floor scan. -/
+def reliftLadder (pd : PrimeChoiceData) (cap : Nat) (g : ZPoly)
+    (floorK qbound : Nat) :
+    (k fuel : Nat) →
+      Option (Array (ZPoly × List (@FpPoly pd.p pd.bounds)))
+  | _, 0 => none
+  | k, fuel + 1 =>
+      letI := pd.bounds
+      if k < floorK then
+        let lifted := ZPoly.multifactorLiftQuadratic pd.p k (ZPoly.toMonic g).monic
+          (pd.factorsModP.map FpPoly.liftToZ)
+        let pairs := lifted.toList.zip pd.factorsModP.toList
+        let pieces := subFloorScan (DensePoly.leadingCoeff g) (pd.p ^ k) cap qbound
+          (pairs.length + 1) g pairs #[]
+        if pieces.size ≥ 2 then some pieces
+        else reliftLadder pd cap g floorK qbound (2 * k) fuel
+      else none
+
+/-- Sub-floor scan-size cap for the recursive re-lift, per the #8625
+measurement: cap 1 misses the pair splits of the Mignotte-swell family, and
+larger caps grow the failed sub-floor scan tails combinatorially. -/
+def reliftSubFloorCap : Nat := 2
+
+/-- Recursive per-remainder classical certification (#8625): sub-floor ladder
+plus recursion on peels, falling back to today's full floor scan
+(`classicalCoreFactorsWithBound`) for nodes that never split early. Pieces
+are certified at their OWN monic-core Mignotte floor — below the parent's
+whenever the piece is a proper factor, which is the sub-floor win. `none`
+declines to the lattice tier exactly as today (budget exhaustion in a floor
+scan, or a tracked-data derivation failure the certification proof shows
+unreachable). `fuel` dominates the split depth (every peel has positive
+degree, so depth is at most the degree). -/
+def classicalCoreFactorsRecursiveAux (cap : Nat) :
+    Nat → ZPoly → Option Nat → PrimeChoiceData → Option (Array ZPoly)
+  | 0, _, _, _ => none
+  | fuel + 1, g, B?, pd =>
+      if g.degree?.getD 0 ≤ 1 then
+        some #[g]
+      else if pd.factorsModP.size == 1 then
+        some #[g]
+      else
+        let monicBound := ZPoly.defaultFactorCoeffBound (ZPoly.toMonic g).monic
+        let floorK := precisionForCoeffBound
+          (match B? with | some B => max B monicBound | none => monicBound) pd.p
+        match reliftLadder pd cap g floorK monicBound 1 (floorK + 1) with
+        | some pieces =>
+            letI := pd.bounds
+            let lcg := DensePoly.leadingCoeff g
+            pieces.foldl (init := some #[]) fun acc? piece =>
+              acc?.bind fun acc =>
+                (piecePrimeData? piece.1 (lcg / DensePoly.leadingCoeff piece.1)
+                    piece.2).bind fun pdPiece =>
+                  (classicalCoreFactorsRecursiveAux cap fuel piece.1
+                    none pdPiece).map (acc ++ ·)
+        | none =>
+            classicalCoreFactorsWithBound g
+              (B?.getD (ZPoly.defaultFactorCoeffBound g)) pd
+
+/-- Entry point for the recursive classical tier: same signature and decline
+semantics as `classicalCoreFactorsWithBound`, with sub-floor per-remainder
+certification. Not yet wired into `factorClassicalFactorsWithBound`; the
+switch lands with the certification re-key. -/
+@[expose]
+def classicalCoreFactorsRecursive
+    (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) : Option (Array ZPoly) :=
+  if B = 0 then
+    some #[core]
+  else
+    classicalCoreFactorsRecursiveAux reliftSubFloorCap
+      (core.degree?.getD 0 + 1) core (some B) primeData
+
 /-- Raw factor array for the classical small-`r` tier. Declines (`none`) on no
 admissible prime or subset-budget exhaustion. -/
 @[expose]

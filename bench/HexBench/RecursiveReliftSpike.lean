@@ -77,12 +77,12 @@ def firstSomeList {α β : Type} : List α → (α → Option β) → Option β
   | x :: xs, f => match f x with | some y => some y | none => firstSomeList xs f
 
 /-- Reduce every coefficient of `g` into `[0, m)`. -/
-def reduceModInt (g : ZPoly) (m : Nat) : ZPoly :=
+def spikeReduceModInt (g : ZPoly) (m : Nat) : ZPoly :=
   DensePoly.ofCoeffs (g.toArray.map (fun c => Int.emod c (Int.ofNat m)))
 
 /-- Product of a subset of lifted factors, reduced mod `m` after each multiply. -/
-def productModInt (s : List ZPoly) (m : Nat) : ZPoly :=
-  s.foldl (fun acc g => reduceModInt (acc * g) m) (1 : ZPoly)
+def spikeProductModInt (s : List ZPoly) (m : Nat) : ZPoly :=
+  s.foldl (fun acc g => spikeReduceModInt (acc * g) m) (1 : ZPoly)
 
 /-- Exact division of `target` by a MONIC `cand` of degree >= 1, aborting as
 soon as a quotient coefficient exceeds `qbound` in absolute value — a true
@@ -129,7 +129,7 @@ partial def findDivisorPairs
   else
     let t0 := target.coeff 0
     let scan := firstSomeList (chooseWithComplement remaining size) fun sc =>
-      let cand := centeredLiftPoly (productModInt (sc.1.map (·.1)) modulus) modulus
+      let cand := centeredLiftPoly (spikeProductModInt (sc.1.map (·.1)) modulus) modulus
       let c0 := cand.coeff 0
       if c0 != 0 && Int.emod t0 c0 != 0 then none
       else
@@ -439,6 +439,14 @@ def shiftPoly (g : ZPoly) (s : Int) : ZPoly :=
   let xps : ZPoly := DensePoly.ofCoeffs #[s, 1]
   g.toArray.foldr (fun c acc => acc * xps + DensePoly.C c) (0 : ZPoly)
 
+/-- The PRODUCTION recursive re-lift (`classicalCoreFactorsRecursive`,
+deliverable-2 build on branch issue-8625-d2), for A/B against the spike
+prototypes and the production floor scan. -/
+def classicalFactorProductionRec (core : ZPoly) (B : Nat) : Array ZPoly :=
+  match ZPoly.toMonicPrimeData? core with
+  | none => #[]
+  | some pd => (classicalCoreFactorsRecursive core B pd).getD #[]
+
 /-! ### Reporting -/
 
 /-- Sorted multiset of factor degrees, for a quick correctness signature. -/
@@ -485,6 +493,9 @@ def reportCase (name : String) (f core : ZPoly) : IO Unit := do
       variantSummary "same-prime-cap1" core (certifySamePrime core 1)
       variantSummary "same-prime-cap2" core (certifySamePrime core 2)
       variantSummary "reberlekamp-cap2" core (certifyReBerlekamp core 2)
+      let prodRec := classicalFactorProductionRec core (ZPoly.defaultFactorCoeffBound f)
+      let prodOk := (Array.polyProduct prodRec).toArray == core.toArray
+      IO.println s!"    prod-recursive : factors={degreeSignature prodRec} product_ok={prodOk}"
   (← IO.getStdout).flush
 
 /-- Checksum the actual factor coefficients so the optimizer cannot drop the
@@ -516,6 +527,7 @@ def classicalFactorProduction (core : ZPoly) (B : Nat) : Array ZPoly :=
   | none => #[]
   | some pd => (classicalCoreFactorsWithBound core B pd).getD #[]
 
+
 /-- Wallclock arms: production, shared-scan baseline, recursion variants. -/
 def timeArms (reps : Nat) (inputs : Array ZPoly) (coreOf : ZPoly → ZPoly)
     (bOf : ZPoly → Nat) : IO Unit := do
@@ -533,6 +545,8 @@ def timeArms (reps : Nat) (inputs : Array ZPoly) (coreOf : ZPoly → ZPoly)
     (fun f => factorChecksum (recursiveFactorSamePrimeCap2 (coreOf f)))
   timePhase "reB-cap2   " reps inputs
     (fun f => factorChecksum (recursiveFactorReBerlekampCap2 (coreOf f)))
+  timePhase "prod-rec   " reps inputs
+    (fun f => factorChecksum (classicalFactorProductionRec (coreOf f) (bOf f)))
 
 def main : IO Unit := do
   -- Focused profile mode: `RELIFT_PROFILE=today|recursive|sameprime|phases`
@@ -546,6 +560,123 @@ def main : IO Unit := do
     else if arm == "sameprime" then
       timePhase "profile same-prime" 30 inputs
         (fun f => factorChecksum (recursiveFactorSamePrime f))
+    else if arm == "prodrec" then
+      timePhase "profile prod-rec" 60 inputs
+        (fun f => factorChecksum (classicalFactorProductionRec f (ZPoly.defaultFactorCoeffBound f)))
+    else if arm == "cap2" then
+      timePhase "profile same-p-cap2" 60 inputs
+        (fun f => factorChecksum (recursiveFactorSamePrimeCap2 f))
+    else if arm == "prodrecsteps" then
+      -- Decompose the production recursion's cost on the deg-24 family:
+      -- prime selection, the root k=1 lift, the root rung (greedy peel), and
+      -- the full recursion.
+      let prepared := (Array.range 8).filterMap (fun s =>
+        let f := linearProductShift 24 s
+        (ZPoly.toMonicPrimeData? f).map (fun pd => (f, pd)))
+      let inputsP := prepared.map (·.1)
+      timePhase "1 prime only     " 60 inputsP (fun f =>
+        match ZPoly.toMonicPrimeData? f with
+        | none => 0
+        | some pd => UInt64.ofNat pd.p)
+      let stepLift := fun (f : ZPoly) =>
+        match ZPoly.toMonicPrimeData? f with
+        | none => (0 : UInt64)
+        | some pd =>
+            letI := pd.bounds
+            factorChecksum (ZPoly.multifactorLiftQuadratic pd.p 1
+              (ZPoly.toMonic f).monic (pd.factorsModP.map FpPoly.liftToZ))
+      timePhase "2 prime+lift1    " 60 inputsP stepLift
+      let stepRung := fun (f : ZPoly) =>
+        match ZPoly.toMonicPrimeData? f with
+        | none => (0 : UInt64)
+        | some pd =>
+            letI := pd.bounds
+            let monicBound := ZPoly.defaultFactorCoeffBound (ZPoly.toMonic f).monic
+            let lifted := ZPoly.multifactorLiftQuadratic pd.p 1
+              (ZPoly.toMonic f).monic (pd.factorsModP.map FpPoly.liftToZ)
+            let pairs := lifted.toList.zip pd.factorsModP.toList
+            let pieces := subFloorScan (DensePoly.leadingCoeff f) (pd.p ^ 1) 2
+              monicBound (pairs.length + 1) f pairs #[]
+            factorChecksum (pieces.map (·.1))
+      timePhase "3 prime+lift+rung" 60 inputsP stepRung
+      let stepRungSpike := fun (f : ZPoly) =>
+        match ZPoly.toMonicPrimeData? f with
+        | none => (0 : UInt64)
+        | some pd =>
+            letI := pd.bounds
+            let monicBound := ZPoly.defaultFactorCoeffBound (ZPoly.toMonic f).monic
+            let lifted := ZPoly.multifactorLiftQuadratic pd.p 1
+              (ZPoly.toMonic f).monic (pd.factorsModP.map FpPoly.liftToZ)
+            let base := pd.factorsModP.toList.map FpPoly.liftToZ
+            let pairs := lifted.toList.zip base
+            let pieces := recombPairs f pairs (pd.p ^ 1) monicBound 2 #[]
+            factorChecksum (pieces.map (·.1))
+      timePhase "3s spike rung    " 60 inputsP stepRungSpike
+      timePhase "4 full recursion " 60 inputsP
+        (fun f => factorChecksum (classicalFactorProductionRec f (ZPoly.defaultFactorCoeffBound f)))
+      timePhase "0 caller mignotte" 60 inputsP
+        (fun f => UInt64.ofNat (ZPoly.defaultFactorCoeffBound f % 1000003))
+      let preparedB := inputsP.map (fun f => (f, ZPoly.defaultFactorCoeffBound f))
+      let inputsIdx := Array.range preparedB.size
+      let out ← IO.getStdout
+      let t0 ← IO.monoNanosNow
+      let mut acc : UInt64 := 0
+      for i in [0:60] do
+        let (f, b) := preparedB[i % preparedB.size]!
+        acc := acc + factorChecksum (classicalFactorProductionRec f b)
+      let t1 ← IO.monoNanosNow
+      IO.println s!"  4p full, B precomputed: {(t1 - t0).toFloat / 60.0 / 1000.0} us/call (sink={acc + UInt64.ofNat inputsIdx.size})"
+      out.flush
+      -- Isolate the remainder-node recursion: run the root rung, take the
+      -- highest-degree piece, and recurse on it alone (prime data derived as
+      -- the recursion would).
+      let remainderOf := fun (f : ZPoly) =>
+        (ZPoly.toMonicPrimeData? f).bind fun pd =>
+          letI := pd.bounds
+          let monicBound := ZPoly.defaultFactorCoeffBound (ZPoly.toMonic f).monic
+          let lifted := ZPoly.multifactorLiftQuadratic pd.p 1
+            (ZPoly.toMonic f).monic (pd.factorsModP.map FpPoly.liftToZ)
+          let pairs := lifted.toList.zip pd.factorsModP.toList
+          let pieces := subFloorScan (DensePoly.leadingCoeff f) (pd.p ^ 1) 2
+            monicBound (pairs.length + 1) f pairs #[]
+          let big := pieces.foldl (init := (DensePoly.C 1, ([] : List _))) fun best pc =>
+            if pc.1.degree?.getD 0 > best.1.degree?.getD 0 then pc else best
+          (piecePrimeData? big.1
+            (DensePoly.leadingCoeff f / DensePoly.leadingCoeff big.1) big.2).map
+            fun pdR => (big.1, pdR)
+      timePhase "5 remainder node " 60 inputsP (fun f =>
+        match remainderOf f with
+        | none => 0
+        | some (g, pdR) =>
+            match classicalCoreFactorsRecursiveAux 2 30 g none pdR with
+            | some fs => factorChecksum fs
+            | none => 0)
+      timePhase "5a rem-node setup" 60 inputsP (fun f =>
+        match remainderOf f with
+        | none => 0
+        | some (g, pdR) => factorChecksum #[g] + UInt64.ofNat pdR.p)
+      -- Per-piece handling cost: run the root rung, then the piece fold
+      -- exactly as the aux does, but WITHOUT recursing into any piece
+      -- (deg <= 1 pieces take the shortcut anyway; the remainder is replaced
+      -- by a no-op) — isolates piecePrimeData? + fold overhead.
+      timePhase "6 fold, no recurse" 60 inputsP (fun f =>
+        match ZPoly.toMonicPrimeData? f with
+        | none => 0
+        | some pd =>
+            letI := pd.bounds
+            let monicBound := ZPoly.defaultFactorCoeffBound (ZPoly.toMonic f).monic
+            let lifted := ZPoly.multifactorLiftQuadratic pd.p 1
+              (ZPoly.toMonic f).monic (pd.factorsModP.map FpPoly.liftToZ)
+            let pairs := lifted.toList.zip pd.factorsModP.toList
+            let pieces := subFloorScan (DensePoly.leadingCoeff f) (pd.p ^ 1) 2
+              monicBound (pairs.length + 1) f pairs #[]
+            let lcg := DensePoly.leadingCoeff f
+            let out := pieces.foldl (init := (0 : UInt64)) fun acc piece =>
+              match piecePrimeData? piece.1
+                  (lcg / DensePoly.leadingCoeff piece.1) piece.2 with
+              | some pdP => acc + UInt64.ofNat pdP.factorsModP.size
+              | none => acc
+            out)
     else if arm == "prime" then
       -- Prime-selection cost breakdown: full choosePrimeData? across degrees
       -- and families, plus the marginal cost of one isGoodPrime check at the
