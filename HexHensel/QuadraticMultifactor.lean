@@ -983,11 +983,11 @@ theorem henselLiftQuadratic_h_monic
   rw [hh_eq]; exact hmonic_reduce
 
 /-- The constant polynomial `1` is monic. -/
-private theorem monic_one : DensePoly.Monic (1 : ZPoly) := by
+theorem monic_one : DensePoly.Monic (1 : ZPoly) := by
   unfold DensePoly.Monic; simp
 
 /-- A product of monic integer polynomials is monic. -/
-private theorem monic_mul {a b : ZPoly}
+theorem monic_mul {a b : ZPoly}
     (ha : DensePoly.Monic a) (hb : DensePoly.Monic b) :
     DensePoly.Monic (a * b) := by
   have ha0 : a ≠ 0 := by
@@ -1001,7 +1001,7 @@ private theorem monic_mul {a b : ZPoly}
 Needed because a balanced split multiplies a whole half of the factor list into
 each side of the binary Hensel step, so the leading factor is a product rather
 than a single input factor. -/
-private theorem monic_polyProduct_toArray (l : List ZPoly)
+theorem monic_polyProduct_toArray (l : List ZPoly)
     (h : ∀ g ∈ l, DensePoly.Monic g) :
     DensePoly.Monic (Array.polyProduct l.toArray) := by
   induction l with
@@ -1014,7 +1014,7 @@ private theorem monic_polyProduct_toArray (l : List ZPoly)
 lifted products of two halves equals the lifted product of the concatenation.
 This is the algebraic content that lets a balanced split's two sub-products
 recombine to the whole modular product. -/
-private theorem polyProduct_map_liftToZ_append
+theorem polyProduct_map_liftToZ_append
     (p : Nat) [ZMod64.Bounds p] (L R : List (FpPoly p)) :
     Array.polyProduct ((L.map FpPoly.liftToZ).toArray) *
       Array.polyProduct ((R.map FpPoly.liftToZ).toArray) =

@@ -1458,17 +1458,37 @@ theorem factorsModP_ne_nil_of_factorsModPBerlekampForm
   rw [heq]
   simpa [List.map_eq_nil_iff] using hbl_ne
 
+/-- The Berlekamp factor product is multiplicative over list concatenation.
+Local restatement of the (private) `Hex.Berlekamp.factorProduct_append`, needed
+to relate the balanced-split halves `L`, `R` back to the whole list. -/
+private theorem factorProduct_append
+    {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
+    (xs ys : List (Hex.FpPoly p)) :
+    Hex.Berlekamp.factorProduct (xs ++ ys) =
+      Hex.Berlekamp.factorProduct xs * Hex.Berlekamp.factorProduct ys := by
+  induction xs with
+  | nil =>
+      rw [List.nil_append, Hex.Berlekamp.factorProduct_nil, Hex.FpPoly.one_mul]
+  | cons x rest ih =>
+      rw [List.cons_append, Hex.Berlekamp.factorProduct_cons,
+        Hex.Berlekamp.factorProduct_cons, ih]
+      exact (Hex.DensePoly.mul_assoc_poly x _ _).symm
+
 /-- Generalized inductive helper for the `factorsModP_coprime` discharger.
 
 For any list of factors in `FpPoly p` whose `factorProduct` divides a
 nonzero polynomial `X` with no positive-degree squared divisor, the
 recursive predicate `Hex.ZPoly.QuadraticMultifactorCoprimeSplits` holds.
 
-The recursion peels one head factor `g` off at a time:
-* `xgcd.gcd = 1` follows from the pairwise-coprime view of `g` against
-  `factorProduct rest`, identified via `modP_polyProduct_liftToZ_eq_factorProduct`.
-* The recursive tail satisfies the same divisibility-into-`X` invariant via
-  `factorProduct rest ∣ factorProduct (g :: rest) ∣ X`. -/
+The recursion follows the balanced product tree: at each non-singleton node the
+list splits into `L := take half` and `R := drop half`, and
+* `xgcd.gcd = 1` follows from the coprime view of `factorProduct L` against
+  `factorProduct R`, identified via `modP_polyProduct_liftToZ_eq_factorProduct`:
+  their `DensePoly.gcd` squares into `factorProduct (L ++ R) = factorProduct xs`,
+  hence into `X`, so the no-squared invariant forces it constant;
+* each half satisfies the same divisibility-into-`X` invariant via
+  `factorProduct L ∣ factorProduct xs ∣ X` (and symmetrically for `R`),
+  using `factorProduct_append`. -/
 private theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
     {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
     [Lean.Grind.Field (Hex.ZMod64 p)]
@@ -1479,145 +1499,141 @@ private theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
     (xs : List (Hex.FpPoly p))
     (h_dvd : Hex.Berlekamp.factorProduct xs ∣ X) :
     Hex.ZPoly.QuadraticMultifactorCoprimeSplits p xs := by
-  induction xs with
-  | nil => exact True.intro
-  | cons g rest ih =>
-      cases rest with
-      | nil => exact True.intro
-      | cons h tail =>
-          -- The recursive predicate at `g :: h :: tail` expects
-          -- `xgcd.gcd = 1` and `QuadraticMultifactorCoprimeSplits p (h :: tail)`.
-          refine ⟨?_, ?_⟩
-          · -- `xgcd.gcd = 1` for the head split.
-            -- Unfold `normalizedXGCD` and identify the raw EEA gcd.
-            -- Reduce both `modP`-arguments to `FpPoly p` shape.
-            have hmodP_g : Hex.ZPoly.modP p (Hex.FpPoly.liftToZ g) = g :=
-              Hex.FpPoly.modP_liftToZ g
-            have hmodP_tail :
-                Hex.ZPoly.modP p
-                    (Array.polyProduct
-                      (((h :: tail).map Hex.FpPoly.liftToZ).toArray)) =
-                  Hex.Berlekamp.factorProduct (h :: tail) :=
-              modP_polyProduct_liftToZ_eq_factorProduct (h :: tail)
-            -- The raw EEA gcd is `DensePoly.gcd g (factorProduct (h :: tail))`.
-            set rawGcd : Hex.FpPoly p :=
-              Hex.DensePoly.gcd g (Hex.Berlekamp.factorProduct (h :: tail))
-              with hrawGcd_def
-            -- `normalizedXGCD.gcd = scale (lc⁻¹) rawGcd`.
-            have hnorm_def :
-                (Hex.ZPoly.normalizedXGCD p (Hex.FpPoly.liftToZ g)
-                  (Array.polyProduct
-                    (((h :: tail).map Hex.FpPoly.liftToZ).toArray))).gcd =
-                  Hex.DensePoly.scale
-                    (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ rawGcd := by
-              show Hex.DensePoly.scale
-                  (Hex.DensePoly.leadingCoeff
-                    (Hex.DensePoly.xgcd
-                      (Hex.ZPoly.modP p (Hex.FpPoly.liftToZ g))
-                      (Hex.ZPoly.modP p
-                        (Array.polyProduct
-                          (((h :: tail).map Hex.FpPoly.liftToZ).toArray)))).gcd)⁻¹
-                  (Hex.DensePoly.xgcd
-                    (Hex.ZPoly.modP p (Hex.FpPoly.liftToZ g))
-                    (Hex.ZPoly.modP p
-                      (Array.polyProduct
-                        (((h :: tail).map Hex.FpPoly.liftToZ).toArray)))).gcd =
-                Hex.DensePoly.scale
-                  (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ rawGcd
-              rw [hmodP_g, hmodP_tail, hrawGcd_def, Hex.DensePoly.gcd_eq_xgcd_gcd]
-            rw [hnorm_def]
-            -- The rest: show `scale (lc rawGcd)⁻¹ rawGcd = 1`.  This needs
-            -- `rawGcd` to be a nonzero constant in `FpPoly p`.
-            -- Step 1: `rawGcd² ∣ X`.
-            have hrawGcd_dvd_g : rawGcd ∣ g :=
-              Hex.DensePoly.gcd_dvd_left g (Hex.Berlekamp.factorProduct (h :: tail))
-            have hrawGcd_dvd_tail :
-                rawGcd ∣ Hex.Berlekamp.factorProduct (h :: tail) :=
-              Hex.DensePoly.gcd_dvd_right g (Hex.Berlekamp.factorProduct (h :: tail))
-            have hrawGcd_sq_dvd_prod :
-                rawGcd * rawGcd ∣ g * Hex.Berlekamp.factorProduct (h :: tail) :=
-              fpPoly_mul_dvd_mul hrawGcd_dvd_g hrawGcd_dvd_tail
-            have hcons_prod :
-                g * Hex.Berlekamp.factorProduct (h :: tail) =
-                  Hex.Berlekamp.factorProduct (g :: h :: tail) :=
-              (Hex.Berlekamp.factorProduct_cons g (h :: tail)).symm
-            have hrawGcd_sq_dvd_X : rawGcd * rawGcd ∣ X := by
-              rw [hcons_prod] at hrawGcd_sq_dvd_prod
-              exact fpPoly_dvd_trans hrawGcd_sq_dvd_prod h_dvd
-            -- Step 2: rawGcd has degree ≤ 0 by no-squared on X.
-            have hrawGcd_not_pos :
-                ¬ (0 < rawGcd.degree?.getD 0) :=
-              h_no_squared rawGcd hrawGcd_sq_dvd_X
-            -- Step 3: rawGcd ≠ 0 (via `rawGcd * rawGcd ∣ X` with `X ≠ 0`).
-            have hrawGcd_ne : rawGcd ≠ 0 := by
-              intro hraw
-              apply hX_ne
-              rcases hrawGcd_sq_dvd_X with ⟨k, hk⟩
-              rw [hraw, Hex.FpPoly.zero_mul, Hex.FpPoly.zero_mul] at hk
-              exact hk
-            -- Step 4: rawGcd.size = 1.
-            have hrawGcd_size_pos : 0 < rawGcd.size := by
-              apply Nat.pos_of_ne_zero
-              intro hsize
-              apply hrawGcd_ne
-              apply Hex.DensePoly.ext_coeff
-              intro i
-              rw [Hex.DensePoly.coeff_zero]
-              exact Hex.DensePoly.coeff_eq_zero_of_size_le rawGcd (by omega)
-            have hrawGcd_size_one : rawGcd.size = 1 := by
-              by_contra hsize_ne
-              apply hrawGcd_not_pos
-              have hsize_ge_two : 2 ≤ rawGcd.size := by omega
-              have hdeg_form : rawGcd.degree? = some (rawGcd.size - 1) := by
-                unfold Hex.DensePoly.degree?
-                have hne : rawGcd.size ≠ 0 := Nat.pos_iff_ne_zero.mp hrawGcd_size_pos
-                simp [hne]
-              rw [hdeg_form]; simp; omega
-            -- Step 5: lc rawGcd ≠ 0.
-            have hlc_ne :
-                Hex.DensePoly.leadingCoeff rawGcd ≠ (0 : Hex.ZMod64 p) :=
-              fpPoly_leadingCoeff_ne_zero_of_size_pos rawGcd hrawGcd_size_pos
-            -- Step 6: rawGcd.coeff 0 = lc rawGcd.
-            have hrawGcd_coeff_zero :
-                rawGcd.coeff 0 = Hex.DensePoly.leadingCoeff rawGcd := by
-              rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred rawGcd hrawGcd_size_pos]
-              congr 1; omega
-            -- Step 7: scale lc⁻¹ rawGcd = 1.
-            apply Hex.DensePoly.ext_coeff
-            intro n
-            have hzero_mul :
-                (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ * (0 : Hex.ZMod64 p) = 0 :=
-              Lean.Grind.Semiring.mul_zero _
-            rw [Hex.DensePoly.coeff_scale
-              (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ rawGcd n hzero_mul]
-            change (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ * rawGcd.coeff n =
-              (Hex.DensePoly.C (1 : Hex.ZMod64 p)).coeff n
-            rw [Hex.DensePoly.coeff_C]
-            cases n with
-            | zero =>
-                rw [hrawGcd_coeff_zero]
-                simp
-                exact Hex.ZMod64.inv_mul_eq_one_of_prime
-                  (Hex.ZMod64.PrimeModulus.prime (p := p)) hlc_ne
-            | succ k =>
-                have hcoeff_zero : rawGcd.coeff (k + 1) = (0 : Hex.ZMod64 p) :=
-                  Hex.DensePoly.coeff_eq_zero_of_size_le rawGcd (by omega)
-                rw [hcoeff_zero, if_neg (Nat.succ_ne_zero k)]
-                exact hzero_mul
-          · -- Inductive call on `h :: tail`.
-            have hrest_dvd :
-                Hex.Berlekamp.factorProduct (h :: tail) ∣ X := by
-              have hcons_eq :
-                  Hex.Berlekamp.factorProduct (g :: h :: tail) =
-                    g * Hex.Berlekamp.factorProduct (h :: tail) :=
-                Hex.Berlekamp.factorProduct_cons g (h :: tail)
-              have htail_dvd_cons :
-                  Hex.Berlekamp.factorProduct (h :: tail) ∣
-                    Hex.Berlekamp.factorProduct (g :: h :: tail) := by
-                refine ⟨g, ?_⟩
-                rw [hcons_eq]; exact Hex.DensePoly.mul_comm_poly _ _
-              exact fpPoly_dvd_trans htail_dvd_cons h_dvd
-            exact ih hrest_dvd
+  revert h_dvd
+  induction xs using Hex.ZPoly.QuadraticMultifactorCoprimeSplits.induct (p := p) with
+  | case1 => intro _; simp only [Hex.ZPoly.QuadraticMultifactorCoprimeSplits]
+  | case2 _g => intro _; simp only [Hex.ZPoly.QuadraticMultifactorCoprimeSplits]
+  | case3 g₀ g₁ rest gs half L R ihL ihR =>
+      intro h_dvd
+      -- Balanced split of `g₀ :: g₁ :: rest` into `L ++ R` (the induct binders).
+      have happend : L ++ R = g₀ :: g₁ :: rest := List.take_append_drop half gs
+      have hfp_split :
+          Hex.Berlekamp.factorProduct (g₀ :: g₁ :: rest) =
+            Hex.Berlekamp.factorProduct L * Hex.Berlekamp.factorProduct R := by
+        conv_lhs => rw [← happend]
+        rw [factorProduct_append]
+      -- Each half's product divides `factorProduct (g₀ :: g₁ :: rest)`, hence `X`.
+      have hprod_dvd_X :
+          Hex.Berlekamp.factorProduct L * Hex.Berlekamp.factorProduct R ∣ X := by
+        rw [← hfp_split]; exact h_dvd
+      have hL_dvd_X : Hex.Berlekamp.factorProduct L ∣ X :=
+        fpPoly_dvd_trans ⟨Hex.Berlekamp.factorProduct R, hfp_split⟩ h_dvd
+      have hR_dvd_X : Hex.Berlekamp.factorProduct R ∣ X :=
+        fpPoly_dvd_trans
+          ⟨Hex.Berlekamp.factorProduct L,
+            by rw [hfp_split]; exact Hex.DensePoly.mul_comm_poly _ _⟩
+          h_dvd
+      -- Both `modP`-arguments of the split reduce to `factorProduct` shape.
+      have hmodP_L :
+          Hex.ZPoly.modP p (Array.polyProduct ((L.map Hex.FpPoly.liftToZ).toArray)) =
+            Hex.Berlekamp.factorProduct L :=
+        modP_polyProduct_liftToZ_eq_factorProduct L
+      have hmodP_R :
+          Hex.ZPoly.modP p (Array.polyProduct ((R.map Hex.FpPoly.liftToZ).toArray)) =
+            Hex.Berlekamp.factorProduct R :=
+        modP_polyProduct_liftToZ_eq_factorProduct R
+      -- The split gcd is `1`: proved for abstract `a`, `b` reducing mod `p` to
+      -- `factorProduct L`, `factorProduct R`, so `exact` matches by defeq.
+      have hgcd :
+          ∀ a b : Hex.ZPoly,
+            Hex.ZPoly.modP p a = Hex.Berlekamp.factorProduct L →
+            Hex.ZPoly.modP p b = Hex.Berlekamp.factorProduct R →
+            (Hex.ZPoly.normalizedXGCD p a b).gcd = (1 : Hex.FpPoly p) := by
+        intro a b hma hmb
+        -- The raw EEA gcd is `DensePoly.gcd (factorProduct L) (factorProduct R)`.
+        set rawGcd : Hex.FpPoly p :=
+          Hex.DensePoly.gcd (Hex.Berlekamp.factorProduct L) (Hex.Berlekamp.factorProduct R)
+          with hrawGcd_def
+        -- `normalizedXGCD.gcd = scale (lc⁻¹) rawGcd`.
+        have hnorm_def :
+            (Hex.ZPoly.normalizedXGCD p a b).gcd =
+              Hex.DensePoly.scale
+                (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ rawGcd := by
+          show Hex.DensePoly.scale
+              (Hex.DensePoly.leadingCoeff
+                (Hex.DensePoly.xgcd
+                  (Hex.ZPoly.modP p a) (Hex.ZPoly.modP p b)).gcd)⁻¹
+              (Hex.DensePoly.xgcd
+                (Hex.ZPoly.modP p a) (Hex.ZPoly.modP p b)).gcd =
+            Hex.DensePoly.scale
+              (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ rawGcd
+          rw [hma, hmb, hrawGcd_def, Hex.DensePoly.gcd_eq_xgcd_gcd]
+        rw [hnorm_def]
+        -- The rest: show `scale (lc rawGcd)⁻¹ rawGcd = 1`.  This needs
+        -- `rawGcd` to be a nonzero constant in `FpPoly p`.
+        -- Step 1: `rawGcd² ∣ X`.
+        have hrawGcd_dvd_L : rawGcd ∣ Hex.Berlekamp.factorProduct L :=
+          Hex.DensePoly.gcd_dvd_left _ _
+        have hrawGcd_dvd_R : rawGcd ∣ Hex.Berlekamp.factorProduct R :=
+          Hex.DensePoly.gcd_dvd_right _ _
+        have hrawGcd_sq_dvd_prod :
+            rawGcd * rawGcd ∣
+              Hex.Berlekamp.factorProduct L * Hex.Berlekamp.factorProduct R :=
+          fpPoly_mul_dvd_mul hrawGcd_dvd_L hrawGcd_dvd_R
+        have hrawGcd_sq_dvd_X : rawGcd * rawGcd ∣ X :=
+          fpPoly_dvd_trans hrawGcd_sq_dvd_prod hprod_dvd_X
+        -- Step 2: rawGcd has degree ≤ 0 by no-squared on X.
+        have hrawGcd_not_pos :
+            ¬ (0 < rawGcd.degree?.getD 0) :=
+          h_no_squared rawGcd hrawGcd_sq_dvd_X
+        -- Step 3: rawGcd ≠ 0 (via `rawGcd * rawGcd ∣ X` with `X ≠ 0`).
+        have hrawGcd_ne : rawGcd ≠ 0 := by
+          intro hraw
+          apply hX_ne
+          rcases hrawGcd_sq_dvd_X with ⟨k, hk⟩
+          rw [hraw, Hex.FpPoly.zero_mul, Hex.FpPoly.zero_mul] at hk
+          exact hk
+        -- Step 4: rawGcd.size = 1.
+        have hrawGcd_size_pos : 0 < rawGcd.size := by
+          apply Nat.pos_of_ne_zero
+          intro hsize
+          apply hrawGcd_ne
+          apply Hex.DensePoly.ext_coeff
+          intro i
+          rw [Hex.DensePoly.coeff_zero]
+          exact Hex.DensePoly.coeff_eq_zero_of_size_le rawGcd (by omega)
+        have hrawGcd_size_one : rawGcd.size = 1 := by
+          by_contra hsize_ne
+          apply hrawGcd_not_pos
+          have hsize_ge_two : 2 ≤ rawGcd.size := by omega
+          have hdeg_form : rawGcd.degree? = some (rawGcd.size - 1) := by
+            unfold Hex.DensePoly.degree?
+            have hne : rawGcd.size ≠ 0 := Nat.pos_iff_ne_zero.mp hrawGcd_size_pos
+            simp [hne]
+          rw [hdeg_form]; simp; omega
+        -- Step 5: lc rawGcd ≠ 0.
+        have hlc_ne :
+            Hex.DensePoly.leadingCoeff rawGcd ≠ (0 : Hex.ZMod64 p) :=
+          fpPoly_leadingCoeff_ne_zero_of_size_pos rawGcd hrawGcd_size_pos
+        -- Step 6: rawGcd.coeff 0 = lc rawGcd.
+        have hrawGcd_coeff_zero :
+            rawGcd.coeff 0 = Hex.DensePoly.leadingCoeff rawGcd := by
+          rw [Hex.FpPoly.leadingCoeff_eq_coeff_pred rawGcd hrawGcd_size_pos]
+          congr 1; omega
+        -- Step 7: scale lc⁻¹ rawGcd = 1.
+        apply Hex.DensePoly.ext_coeff
+        intro n
+        have hzero_mul :
+            (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ * (0 : Hex.ZMod64 p) = 0 :=
+          Lean.Grind.Semiring.mul_zero _
+        rw [Hex.DensePoly.coeff_scale
+          (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ rawGcd n hzero_mul]
+        change (Hex.DensePoly.leadingCoeff rawGcd)⁻¹ * rawGcd.coeff n =
+          (Hex.DensePoly.C (1 : Hex.ZMod64 p)).coeff n
+        rw [Hex.DensePoly.coeff_C]
+        cases n with
+        | zero =>
+            rw [hrawGcd_coeff_zero]
+            simp
+            exact Hex.ZMod64.inv_mul_eq_one_of_prime
+              (Hex.ZMod64.PrimeModulus.prime (p := p)) hlc_ne
+        | succ k =>
+            have hcoeff_zero : rawGcd.coeff (k + 1) = (0 : Hex.ZMod64 p) :=
+              Hex.DensePoly.coeff_eq_zero_of_size_le rawGcd (by omega)
+            rw [hcoeff_zero, if_neg (Nat.succ_ne_zero k)]
+            exact hzero_mul
+      rw [Hex.ZPoly.QuadraticMultifactorCoprimeSplits]
+      exact ⟨hgcd _ _ hmodP_L hmodP_R, ihL hL_dvd_X, ihR hR_dvd_X⟩
 
 set_option maxHeartbeats 400000 in
 /-- Discharge of the coprime-splits boundary premise on
