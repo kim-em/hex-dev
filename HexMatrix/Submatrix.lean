@@ -82,6 +82,13 @@ restricted to the first `k` rows. -/
   rw [getElem_col, getElem_principalSubmatrix]
   simp
 
+/-- The first `k` columns of a matrix, retaining all source rows. -/
+@[expose]
+def takeCols (M : Matrix R n m) (k : Nat) (hk : k ≤ m) : Matrix R n k :=
+  ofFn fun i j =>
+    let jj : Fin m := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
+    M[(i, jj)]
+
 /-- Entry formula for the first-`k`-rows slice. -/
 @[grind =] theorem getElem_takeRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n)
     (i : Fin k) (j : Fin m) :
@@ -89,6 +96,14 @@ restricted to the first `k` rows. -/
       (let ii : Fin n := ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩
        M[ii][j]) := by
   simp [takeRows, ofFn]
+
+/-- Entry formula for the first-`k`-columns slice. -/
+@[grind =] theorem getElem_takeCols (M : Matrix R n m) (k : Nat) (hk : k ≤ m)
+    (i : Fin n) (j : Fin k) :
+    (takeCols M k hk)[i][j] =
+      (let jj : Fin m := ⟨j.val, Nat.lt_of_lt_of_le j.isLt hk⟩
+       M[i][jj]) := by
+  simp [takeCols, ofFn]
 
 /-- The leading principal `k × k` submatrix of the identity is the identity. -/
 @[simp, grind =] theorem principalSubmatrix_identity {R : Type u} [OfNat R 0] [OfNat R 1] {n : Nat}
