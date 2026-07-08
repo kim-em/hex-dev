@@ -551,9 +551,10 @@ open Hex.Internal
 integer state via `LLLState.ofBasis` and dispatches to `lllAux`.
 This is the body the public `lll` runs by default; its output achieves the
 classical size-reduction bound `|μ| ≤ 1/2` (η = 1/2), so its short-vector
-guarantee uses `α = 1/(δ − 1/4)` with the classical precondition `1/4 < δ`. -/
+guarantee uses `α = 1/(δ − 1/4)` with the classical precondition `1/4 < δ`.
+`δ` defaults to the classical `3/4`, so `lllNative b` reduces at that parameter. -/
 @[expose]
-def lllNative (b : Matrix Int n m) (δ : Rat)
+def lllNative (b : Matrix Int n m) (δ : Rat := 3/4)
     (hδ : 1/4 < δ := by grind) (hδ' : δ ≤ 1 := by grind) (hn : 1 ≤ n := by grind) :
     Matrix Int n m :=
   lllAux (LLLState.ofBasis b) 1 δ hδ hδ' (Nat.le_refl 1) hn

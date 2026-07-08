@@ -28,9 +28,10 @@ if `LLLProvider.providerAvailable ()` is true and the candidate passes
 `certCheck B B' U V δ (11/20)`, the certified `B'` is returned; otherwise the
 exact `lllNative` runs. Both paths satisfy the identical post-condition
 (`isLLLReduced (lll …) δ (11/20)`, same lattice, the public short-vector bound),
-so dispatch is invisible to callers and to proofs. -/
+so dispatch is invisible to callers and to proofs. `δ` defaults to the
+classical LLL parameter `3/4`, so a call can be as short as `lll b`. -/
 @[expose]
-def lll (b : Matrix Int n m) (δ : Rat)
+def lll (b : Matrix Int n m) (δ : Rat := 3/4)
     (hδ : (121 / 400 : Rat) < δ := by grind) (hδ' : δ ≤ 1 := by grind)
     (hn : 1 ≤ n := by grind) :
     Matrix Int n m :=
@@ -72,7 +73,7 @@ the exact native path. It never consults an external provider and takes no
 `b.independent` hypothesis, so Mathlib-free callers can use it directly; its
 short-vector guarantee is `lllNative_first_row_norm_sq_le` at `η = 1/2`. -/
 @[expose]
-def lllNative.firstShortVector (b : Matrix Int n m) (δ : Rat)
+def lllNative.firstShortVector (b : Matrix Int n m) (δ : Rat := 3/4)
     (hδ : 1/4 < δ := by grind) (hδ' : δ ≤ 1 := by grind) (hn : 1 ≤ n := by grind) :
     Vector Int m :=
   (lllNative b δ hδ hδ' hn).getRow ⟨0, hn⟩
@@ -83,7 +84,7 @@ LLL approximation factor relative to any nonzero lattice vector (see
 vector. Canonical short-vector entry point for downstream callers such as
 `hex-berlekamp-zassenhaus` recombination. -/
 @[expose]
-def lll.firstShortVector (b : Matrix Int n m) (δ : Rat)
+def lll.firstShortVector (b : Matrix Int n m) (δ : Rat := 3/4)
     (hδ : (121 / 400 : Rat) < δ := by grind) (hδ' : δ ≤ 1 := by grind)
     (hn : 1 ≤ n := by grind) :
     Vector Int m :=
@@ -93,7 +94,7 @@ def lll.firstShortVector (b : Matrix Int n m) (δ : Rat)
 `lll.shortVectors` counterpart on the exact native path, forgoing the external
 provider and the `b.independent` hypothesis. -/
 @[expose]
-def lllNative.shortVectors (b : Matrix Int n m) (δ : Rat)
+def lllNative.shortVectors (b : Matrix Int n m) (δ : Rat := 3/4)
     (hδ : 1/4 < δ := by grind) (hδ' : δ ≤ 1 := by grind) (hn : 1 ≤ n := by grind) :
     Array (Vector Int m) :=
   (lllNative b δ hδ hδ' hn).rows.toArray
@@ -101,7 +102,7 @@ def lllNative.shortVectors (b : Matrix Int n m) (δ : Rat)
 /-- The full reduced basis viewed as an ordered array of candidate short
 vectors. -/
 @[expose]
-def lll.shortVectors (b : Matrix Int n m) (δ : Rat)
+def lll.shortVectors (b : Matrix Int n m) (δ : Rat := 3/4)
     (hδ : (121 / 400 : Rat) < δ := by grind) (hδ' : δ ≤ 1 := by grind)
     (hn : 1 ≤ n := by grind) :
     Array (Vector Int m) :=

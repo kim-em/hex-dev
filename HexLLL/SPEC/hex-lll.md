@@ -248,7 +248,7 @@ def LLLState.ofBasis (b : Matrix Int n m) :
     ν_eq := by …   -- from scaledCoeffs_eq and gramDetVec_eq_gramDet
     d_eq := by … } -- from gramDetVec_eq_gramDet
 
-def lll (b : Matrix Int n m) (δ : Rat)
+def lll (b : Matrix Int n m) (δ : Rat := 3/4)
     (hδ : 121/400 < δ := by grind) (hδ' : δ ≤ 1 := by grind)
     (hn : 1 ≤ n := by grind) : Matrix Int n m :=
   -- dispatch: certified external candidate, else the exact `lllNative`
@@ -260,8 +260,12 @@ precondition of the *theorems* about the output (`lll_short_vector`,
 `lll_independent`, …), not of the *computation*, so — exactly as with
 `lllNative` — the reducer runs on any input and callers who only want the
 reduced rows need not discharge it. The three proof arguments are
-`autoParam`s (`:= by grind`), so at a concrete `δ`/`n` a call is just
-`lll b δ`.
+`autoParam`s (`:= by grind`), and `δ` defaults to the classical `3/4`, so at a
+concrete `n` a call is just `lll b` (or `lll b δ` to pick another parameter).
+The reducedness checkers (`lllReduced`, `lllReducedInterval`, `lllReducedCheck`)
+default `δ` to `3/4` and `η` to the classical `1/2`, so `lllReduced b` tests
+textbook LLL-reducedness — the bound `lllNative` achieves. (The public `lll`
+lands at `η = 11/20`; check its output with `lllReduced (lll b) (3/4) (11/20)`.)
 
 The `ν_eq` and `d_eq` fields are discharged from the `hex-gram-schmidt`
 lemmas `GramSchmidt.Int.scaledCoeffs_eq` and
@@ -310,7 +314,7 @@ that consumer is:
 /-- The first row of the reduced basis (shortest vector under the
     LLL guarantee). Marked as the canonical short-vector entry point
     for downstream consumers such as hex-berlekamp-zassenhaus. -/
-def lll.firstShortVector (b : Matrix Int n m) (δ : Rat)
+def lll.firstShortVector (b : Matrix Int n m) (δ : Rat := 3/4)
     (hδ : 121/400 < δ := by grind) (hδ' : δ ≤ 1 := by grind)
     (hn : 1 ≤ n := by grind) :
     Vector Int m :=
@@ -318,7 +322,7 @@ def lll.firstShortVector (b : Matrix Int n m) (δ : Rat)
 
 /-- The full reduced basis viewed as an ordered list of candidate
     short vectors. -/
-def lll.shortVectors (b : Matrix Int n m) (δ : Rat)
+def lll.shortVectors (b : Matrix Int n m) (δ : Rat := 3/4)
     (hδ : 121/400 < δ := by grind) (hδ' : δ ≤ 1 := by grind)
     (hn : 1 ≤ n := by grind) :
     Array (Vector Int m) :=
