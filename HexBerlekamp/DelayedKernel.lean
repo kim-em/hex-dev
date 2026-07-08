@@ -179,8 +179,10 @@ theorem barrettBaseMul_eq_mul (ctx : Hex.BarrettCtx p) {n m k : Nat}
     exact (Matrix.getElem_mul M N i j).symm
   · rw [Matrix.mul_eq_mulImpl]
 
-/-- The **demonstration non-default `StrassenConfig`**: the delayed-reduction
+/-- The **verified delayed-reduction candidate config**: the delayed-reduction
 Barrett base kernel over the prime field `ZMod64 p`, taking the `Hex.BarrettCtx`.
+Not the shipped demonstration (see `strassenDemo` and the measured outcome in the
+module docstring); kept as verified non-default code for the follow-up work.
 Its cutoff is pinned at `64`, the value the committed comparison was measured at
 (the default cutoff is measured separately and may move); only the base kernel
 differs from the default config. -/

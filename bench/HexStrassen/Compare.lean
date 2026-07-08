@@ -54,20 +54,23 @@ def cmpRun (delayed : Bool) (n salt : Nat) : Nat :=
   if delayed then cmpChecksum (mulStrassen (strassenBarrett cmpCtx) a b)
   else cmpChecksum (mulStrassen strassenDefault a b)
 
-/-- Best-of-`iters` wall time in nanoseconds. The branch on `r` forces the full
-`Nat` result before the clock is read, so the timed region includes the whole
-computation rather than a lazy thunk. -/
+/-- Best-of-`iters` wall time in nanoseconds. The checksums are accumulated into
+`sink` and printed outside the timed region, so the `cmpRun` results are live and
+the timed region includes the whole computation rather than a lazy thunk. -/
 def cmpBest (delayed : Bool) (n iters : Nat) : IO Nat := do
   let _ := cmpRun delayed n 5
   let mut best : Nat := 0
   let mut first := true
+  let mut sink : Nat := 0
   for k in [0:iters] do
     let salt := 1000 + k * 13
     let t0 ← IO.monoNanosNow
     let r := cmpRun delayed n salt
-    let t1 ← if r == 123456789 then IO.monoNanosNow else IO.monoNanosNow
+    let t1 ← IO.monoNanosNow
+    sink := sink + r
     let dt := t1 - t0
     if first || dt < best then best := dt; first := false
+  IO.eprintln s!"  (checksum sink n={n} delayed={delayed}: {sink % 1000000007})"
   return best
 
 def main : IO Unit := do
