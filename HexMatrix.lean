@@ -10,6 +10,7 @@ public import HexMatrix.Basic
 public import HexMatrix.Notation
 public import HexMatrix.Vector.Insert
 public import HexMatrix.DotProduct
+public import HexMatrix.Block
 public import HexMatrix.MatrixAlgebra
 public import HexMatrix.Winograd
 public import HexMatrix.Elementary
