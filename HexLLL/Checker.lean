@@ -12,7 +12,7 @@ public import HexLLL.Interval
 public section
 
 /-!
-Executable reducedness checkers: the exact integer `lllReducedInt`, the
+Executable reducedness checkers: the exact integer `lllReducedExact`, the
 fixed-precision `lllReducedInterval`, their cost-predicted dispatch
 `lllReducedCheck`, and the bundled external-candidate checker `certCheck`.
 -/
@@ -43,7 +43,7 @@ the Gram-Schmidt data of `b` from its exact integer Gram matrix and accepts
 only when every independence, size-reduction, and Lovász inequality is
 decided with the enclosure strictly on the correct side. `false` means
 "not reduced or indecisive at this precision": callers must fall back to
-the exact checker `lllReducedInt`, which keeps completeness structural.
+the exact checker `lllReducedExact`, which keeps completeness structural.
 Soundness (`lllReducedInterval_sound`, HexLLLMathlib) entails
 `b.independent ∧ isLLLReduced b δ η` at the exact rational parameters. -/
 @[expose]
@@ -70,11 +70,11 @@ Verifies, over integer arithmetic only:
 No validity hypothesis on `η` is required: a malformed `η` (e.g. negative) is
 incompatible with a positive `d[j+1]` and the size-reduced bound, so the
 checker simply returns `false`. Soundness
-(`lllReducedInt_sound`, HexLLLMathlib) bridges to the rational predicate
+(`lllReducedExact_sound`, HexLLLMathlib) bridges to the rational predicate
 `isLLLReduced` via the integer correspondence
 (`Hex.GramSchmidt.Int.scaledCoeffs_eq`, `basis_normSq`, `gramDet_pos`). -/
 @[expose]
-def lllReducedInt (b : Matrix Int n m) (δ η : Rat) : Bool :=
+def lllReducedExact (b : Matrix Int n m) (δ η : Rat) : Bool :=
   let gs := GramSchmidt.Int.data b
   let d := gs.d
   let ν := gs.ν
@@ -212,7 +212,7 @@ end Internal
 
 /-- Reducedness clause of the certified dispatch. On the same integer
 `d`/`ν` data, two checkers can decide reducedness: the exact integer
-checker `lllReducedInt`, always complete, and a faster fixed-precision
+checker `lllReducedExact`, always complete, and a faster fixed-precision
 interval pass. The size predictor `intervalWins` picks which to run first;
 when the interval pass is indecisive it falls back to the exact checker,
 so completeness stays structural rather than numerical. Records each
@@ -223,16 +223,16 @@ def lllReducedCheck (b : Matrix Int n m) (δ η : Rat) : Bool :=
     if lllReducedInterval b δ η then
       withRecordCheckerOutcome .interval true
     else
-      withRecordCheckerOutcome .exactFallback (lllReducedInt b δ η)
+      withRecordCheckerOutcome .exactFallback (lllReducedExact b δ η)
   else
-    withRecordCheckerOutcome .exactPrimary (lllReducedInt b δ η)
+    withRecordCheckerOutcome .exactPrimary (lllReducedExact b δ η)
 
 /-- Executable certified-dispatch checker: verifies that `(B', U, V)` is a valid
 external candidate for reducing `B`, i.e. `B` and `B'` generate the same integer
 row lattice (witnessed by `U`, `V`) and `B'` is `(δ, η)`-reduced.
 
 Composes the Mathlib-free Bool checkers `Matrix.sameLatticeCert` and
-`lllReducedCheck` (interval decision with exact `lllReducedInt` fallback).
+`lllReducedCheck` (interval decision with exact `lllReducedExact` fallback).
 Soundness (`certCheck_sound`, HexLLLMathlib) entails the property triple
 `(same lattice, B' independent, isLLLReduced B' δ η)` and is the single
 trusted bridge that the certified-dispatch path of `lll` depends on. -/
