@@ -168,6 +168,9 @@ setup_benchmark runSquareMulStrassenChecksum n => 7 ^ Nat.log2 n
 /-! Cutoff-sweep registrations. Same Strassen model as the default target; they
 differ only in the fixed cutoff. The `compare` group over these targets locates
 the block-size crossover. -/
+-- Cost model: the same Θ(n^log₂ 7) Strassen derivation as the default target
+-- (seven recursive products per 2×2 level, declared model `7 ^ Nat.log2 n`);
+-- only the fixed cutoff differs (16×16 naive leaves on power-of-two rungs).
 setup_benchmark runStrassenCut32 n => 7 ^ Nat.log2 n
   with prep := prepMulInput
   where {
@@ -177,6 +180,9 @@ setup_benchmark runStrassenCut32 n => 7 ^ Nat.log2 n
     maxSecondsPerCall := 40.0
     targetInnerNanos := 500000000
   }
+-- Cost model: the same Θ(n^log₂ 7) Strassen derivation as the default target
+-- (seven recursive products per 2×2 level, declared model `7 ^ Nat.log2 n`);
+-- only the fixed cutoff differs (32×32 naive leaves on power-of-two rungs).
 setup_benchmark runStrassenCut64 n => 7 ^ Nat.log2 n
   with prep := prepMulInput
   where {
@@ -186,6 +192,9 @@ setup_benchmark runStrassenCut64 n => 7 ^ Nat.log2 n
     maxSecondsPerCall := 40.0
     targetInnerNanos := 500000000
   }
+-- Cost model: the same Θ(n^log₂ 7) Strassen derivation as the default target
+-- (seven recursive products per 2×2 level, declared model `7 ^ Nat.log2 n`);
+-- only the fixed cutoff differs (64×64 naive leaves on power-of-two rungs).
 setup_benchmark runStrassenCut128 n => 7 ^ Nat.log2 n
   with prep := prepMulInput
   where {
@@ -195,6 +204,9 @@ setup_benchmark runStrassenCut128 n => 7 ^ Nat.log2 n
     maxSecondsPerCall := 40.0
     targetInnerNanos := 500000000
   }
+-- Cost model: the same Θ(n^log₂ 7) Strassen derivation as the default target
+-- (seven recursive products per 2×2 level, declared model `7 ^ Nat.log2 n`);
+-- only the fixed cutoff differs (64×64 naive leaves on power-of-two rungs).
 setup_benchmark runStrassenCut96 n => 7 ^ Nat.log2 n
   with prep := prepMulInput
   where {
@@ -204,6 +216,9 @@ setup_benchmark runStrassenCut96 n => 7 ^ Nat.log2 n
     maxSecondsPerCall := 40.0
     targetInnerNanos := 500000000
   }
+-- Cost model: the same Θ(n^log₂ 7) Strassen derivation as the default target
+-- (seven recursive products per 2×2 level, declared model `7 ^ Nat.log2 n`);
+-- only the fixed cutoff differs (128×128 naive leaves on power-of-two rungs).
 setup_benchmark runStrassenCut256 n => 7 ^ Nat.log2 n
   with prep := prepMulInput
   where {
