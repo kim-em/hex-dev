@@ -167,13 +167,14 @@ forces one-or-two recursion levels on the small square/rectangular fixtures with
 deliberately different — but valid — textbook triple-loop base kernel; `cfgDeep`
 (`cutoff := 0`) drives the recursion down to the config-independent `≤ 1` base
 condition (the 1×1 and empty fixtures exercise exactly that terminating case). The
-single `strassenDefault` recursion test uses a 96×96 square, comfortably above any
-plausible measured crossover so it keeps firing the recursion regardless of #8680.
+single `strassenDefault` recursion test derives its dimension from
+`strassenDefault.cutoff` itself, so it keeps firing the recursion whatever value a
+future re-measurement assigns to that constant.
 -/
 
 /-- Deterministic Int fixture generator; `seed` distinguishes the two operands so
 the product is not accidentally symmetric. Entries are kept small to keep the
-96×96 default-config guard in the millisecond range. -/
+cutoff-derived default-config guard in the millisecond range. -/
 private def genInt (seed n m : Nat) : Matrix Int n m :=
   Matrix.ofFn fun i j => (((i.val + 1) * (j.val + 2) + seed * (i.val + j.val) : Int) % 13) - 6
 
@@ -220,8 +221,10 @@ private def cfgDeep : StrassenConfig Int := { cutoff := 0, baseMul := naiveKerne
 #guard let A := genInt 0 1 1; let B := genInt 1 1 1
   mulStrassen (strassenDefault (R := Int)) A B = A * B
 
--- A square past the default cutoff so `strassenDefault` actually recurses.
-#guard let A := genInt 0 96 96; let B := genInt 1 96 96
+-- A square one past the default cutoff (at least 2), so `strassenDefault`
+-- actually recurses whatever the measured cutoff value is.
+#guard let d := max 2 ((strassenDefault (R := Int)).cutoff + 1)
+  let A := genInt 0 d d; let B := genInt 1 d d
   mulStrassen (strassenDefault (R := Int)) A B = A * B
 
 end Matrix
