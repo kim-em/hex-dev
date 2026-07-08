@@ -555,6 +555,19 @@ def bhksSingleAllOnesPartition (f : ZPoly) (d : LiftData) : Bool :=
   else
     false
 
+/-- The fused recovery step's all-ones flag equals `bhksSingleAllOnesPartition`:
+both read the single-all-ones signature off the same CLD lattice / RREF indicator
+partition, so the lattice tier reads it off the one lattice build the classifier
+already ran (#8543). -/
+private theorem bhksRecoverClassifiedWithAllOnes_snd (f : ZPoly) (d : LiftData) :
+    (bhksRecoverClassifiedWithAllOnes f d).2 = bhksSingleAllOnesPartition f d := by
+  rw [bhksRecoverClassifiedWithAllOnes, bhksSingleAllOnesPartition]
+  by_cases hrows :
+      1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
+        (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth
+  · simp only [dif_pos hrows]
+  · simp only [dif_neg hrows]
+
 /-- Lattice-tier recombination loop: `bhksRecoveryLoop` plus certificate-backed
 early termination (#8395).  The split path is byte-identical to the fast loop —
 below `floor` every step is skipped, and at/above `floor` a classified recovery
@@ -583,7 +596,12 @@ private def latticeCoreLoop
         else
           latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
       else
-        match bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
+        -- Build the CLD lattice once per step and read both the classification
+        -- and the single-all-ones certificate off it (#8543): the `.degenerate`
+        -- arm below no longer re-runs `bhksSingleAllOnesPartition`, which would
+        -- rebuild the whole Hensel-lift/CLD/LLL/indicator pipeline.
+        let step := bhksRecoverClassifiedWithAllOnes core (ZPoly.toMonicLiftData core k primeData)
+        match step.1 with
         | .success factors =>
           some factors
         | .candidateFailure =>
@@ -597,7 +615,7 @@ private def latticeCoreLoop
           else
             latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
         | .degenerate =>
-          if bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core k primeData) then
+          if step.2 then
             some #[core]
           else if k ≥ B then
             none
@@ -612,6 +630,40 @@ def latticeCoreWithBound
     (core : ZPoly) (B : Nat) (primeData : PrimeChoiceData) (k fuel : Nat) :
     Option (Array ZPoly) :=
   latticeCoreLoop core B (bhksRecoveryFloorGate core) primeData k fuel
+
+/-- Behavioural unfolding for the lattice-tier loop: the fused-step body is
+propositionally equal to the two-call form (`bhksRecoverClassified` for the
+classification, `bhksSingleAllOnesPartition` for the certificate).  The fused step
+only shares the one lattice build across the classification and the all-ones flag
+(#8543); `bhksRecoverClassifiedWithAllOnes_fst`/`_snd` pin the two projections to
+those surfaces, so the loop's spec reasons about it exactly as before. -/
+private theorem latticeCoreLoop_unfold
+    (core : ZPoly) (B floor : Nat) (primeData : PrimeChoiceData) (k fuel : Nat) :
+    latticeCoreLoop core B floor primeData k (fuel + 1) =
+      (if k < floor then
+        if k ≥ B then
+          none
+        else
+          latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
+      else
+        match bhksRecoverClassified core (ZPoly.toMonicLiftData core k primeData) with
+        | .success factors => some factors
+        | .candidateFailure =>
+          if k ≥ B then none
+          else latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
+        | .productMismatch _ =>
+          if k ≥ B then none
+          else latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel
+        | .degenerate =>
+          if bhksSingleAllOnesPartition core (ZPoly.toMonicLiftData core k primeData) then
+            some #[core]
+          else if k ≥ B then none
+          else latticeCoreLoop core B floor primeData (nextHenselPrecision k B) fuel) := by
+  rw [latticeCoreLoop]
+  by_cases hfl : k < floor
+  · rw [if_pos hfl, if_pos hfl]
+  · rw [if_neg hfl, if_neg hfl]
+    simp only [bhksRecoverClassifiedWithAllOnes_fst, bhksRecoverClassifiedWithAllOnes_snd]
 
 /-- Structural spec for the lattice-tier loop: every success is either a fast-loop
 success (the split path is untouched) or the certificate-backed early stop — the
@@ -632,7 +684,7 @@ private theorem latticeCoreLoop_some_spec
       simp [latticeCoreLoop] at h
   | succ fuel ih =>
       intro k cf h
-      rw [latticeCoreLoop] at h
+      rw [latticeCoreLoop_unfold] at h
       rw [bhksRecoveryLoop]
       by_cases hfl : k < floor
       · rw [if_pos hfl] at h ⊢

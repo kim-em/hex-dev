@@ -152,6 +152,11 @@ This executable glue builds the CLD lattice for the lifted factors, runs LLL
 plus the Gram-Schmidt cut, extracts BHKS Lemma 3.3 equivalence-class
 indicators by RREF, reconstructs every indicated candidate by centred lifting,
 and accepts only when the verified candidates multiply back to `f`.
+
+The lattice tier runs the fused `bhksRecoverClassifiedWithAllOnes` instead (one
+lattice build for both the classification and the all-ones certificate, #8543);
+keep the two bodies in sync — `bhksRecoverClassifiedWithAllOnes_fst` fails to
+build if they drift.
 -/
 private def bhksRecoverClassified (f : ZPoly) (d : LiftData) : BhksRecoveryResult :=
   -- The CLD lattice runs in the monic (`M2`, `x ↦ x/ℓf`) coordinate: `d` is a
@@ -179,6 +184,54 @@ private def bhksRecoverClassified (f : ZPoly) (d : LiftData) : BhksRecoveryResul
 
 def bhksRecover? (f : ZPoly) (d : LiftData) : Option (Array ZPoly) :=
   (bhksRecoverClassified f d).toOption
+
+/--
+Fused BHKS recovery step: run the CLD lattice / LLL / RREF-indicator pipeline
+**once** and return both the `bhksRecoverClassified` classification and the
+single-all-ones partition flag.
+
+The lattice tier's `.degenerate` arm needs the all-ones flag to certify
+irreducibility, but recomputing it through `bhksSingleAllOnesPartition` rebuilds
+the whole Hensel-lift/CLD-lattice/LLL/indicator pipeline that the classifier
+already ran (~1.5–2× on the step that dominates irreducible inputs, #8543).  This
+def shares that pass: `bhksRecoverClassifiedWithAllOnes_fst` pins `.1` to
+`bhksRecoverClassified` and `bhksRecoverClassifiedWithAllOnes_snd` (in
+`FactorEntryPoints`) pins `.2` to `bhksSingleAllOnesPartition`, so the loop reads
+both off one lattice build with no change to either public surface.
+-/
+private def bhksRecoverClassifiedWithAllOnes (f : ZPoly) (d : LiftData) :
+    BhksRecoveryResult × Bool :=
+  let L := bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors
+  if hrows : 1 ≤ L.factorCount + L.coeffWidth then
+    let projected := bhksProjectedRows L hrows
+    let indicators := bhksEquivalenceClassIndicators projected
+    let allOnes := !indicators.isEmpty && !projected.projectedRows.isEmpty &&
+      indicators.size == 1 && bhksIndicatorAllOnes projected.factorCount (indicators.getD 0 #[])
+    let result :=
+      if bhksDegenerateIndicatorPartition projected indicators then
+        BhksRecoveryResult.degenerate
+      else
+        match bhksIndicatorCandidates? f d indicators with
+        | none => .candidateFailure
+        | some candidates =>
+            if Array.polyProduct candidates == f then
+              .success candidates
+            else
+              .productMismatch candidates
+    (result, allOnes)
+  else
+    (.degenerate, false)
+
+/-- The fused recovery step's classification equals the standalone classifier:
+the control flow is identical, only the paired all-ones flag is extra (#8543). -/
+private theorem bhksRecoverClassifiedWithAllOnes_fst (f : ZPoly) (d : LiftData) :
+    (bhksRecoverClassifiedWithAllOnes f d).1 = bhksRecoverClassified f d := by
+  rw [bhksRecoverClassifiedWithAllOnes, bhksRecoverClassified]
+  by_cases hrows :
+      1 ≤ (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).factorCount +
+        (bhksLatticeBasis (ZPoly.toMonic f).monic d.p d.k d.liftedFactors).coeffWidth
+  · simp only [dif_pos hrows]
+  · simp only [dif_neg hrows]
 
 /--
 If the executable BHKS recovery guards all pass, `bhksRecover?` returns the
