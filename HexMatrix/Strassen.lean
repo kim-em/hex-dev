@@ -64,6 +64,7 @@ structure StrassenConfig (R : Type u) where
 /-- A configuration is **valid** when its base kernel agrees with the reference
 `mul` on every input. The correctness theorem `mulStrassen_eq_mul` is stated under
 this hypothesis, keeping the proof out of the `StrassenConfig` data record. -/
+@[expose]
 def StrassenConfig.Valid [Mul R] [Add R] [OfNat R 0] (cfg : StrassenConfig R) : Prop :=
   ∀ {n m k} (X : Matrix R n m) (Y : Matrix R m k), cfg.baseMul X Y = mul X Y
 
