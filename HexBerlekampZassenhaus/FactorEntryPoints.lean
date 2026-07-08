@@ -43,7 +43,7 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-This module collects `factorClassical`/`Trial`/`Lattice`/`factor` and the `factor_scalar` theorems.
+This module collects `factorClassical`/`Trial`/`Lattice`/`factorize` and the `factorize_scalar` theorems.
 -/
 namespace Hex
 
@@ -198,7 +198,7 @@ no admissible prime is available or the subset budget is exceeded. -/
 def factorClassical (f : ZPoly) : Option Factorization :=
   factorClassicalWithBound f (ZPoly.defaultFactorCoeffBound f)
 
-/-- Per-`factor` diagnostic trace, consumed by the merge-blocking performance gate.
+/-- Per-`factorize` diagnostic trace, consumed by the merge-blocking performance gate.
 `tier` records which path produced the answer (`constant` / `quadratic` /
 `classical` / `noPrime`); `declined = true` marks an untrustworthy result (no
 admissible prime, or subset-budget exhaustion) that the dispatcher routes onward.
@@ -269,7 +269,7 @@ supplied `budget` is used directly instead of `levelAwareSubsetBudget r budget`,
 so the search runs to the full budget rather than stopping at the last completable
 subset-size level. Reuses the same proven size/candidate loops; used only by the
 benchmark `factorClassicalNoDecline` entry to expose the classical exponential
-wall. Production `factor` (via `scaledRecombinationSmart`) is untouched. -/
+wall. Production `factorize` (via `scaledRecombinationSmart`) is untouched. -/
 def scaledRecombinationFull
     (coreLc : Int) (f : ZPoly) (modulus : Nat) (localFactors : List ZPoly)
     (budget : Nat) : Option (List ZPoly) × RecombStats :=
@@ -321,7 +321,7 @@ aware early decline disabled. The `hexbz_factor_service --entry
 factorClassicalNoDecline` line uses this to make the classical exponential wall
 visible on the cross-system cactus charts: it runs the full subset enumeration
 (so its answers are correct where it terminates) instead of declining high-`r`
-cores to the lattice tier. Production `factor`/`factorClassical` are untouched. -/
+cores to the lattice tier. Production `factorize`/`factorClassical` are untouched. -/
 def factorClassicalNoDecline (f : ZPoly) : Option Factorization :=
   factorClassicalNoDeclineWithBound f (ZPoly.defaultFactorCoeffBound f)
 
@@ -356,7 +356,7 @@ Handles the deg-0 core and integer-root cases up front via the same
 constant/quadratic-root short-circuits as the classical tier; the residual
 exhaustive branch dispatches to the standalone integer trial-division core
 (`exhaustiveIntegerTrialCoreFactorsWithBound`). This is the trial-division
-tier of the three-tier `factor` combinator (SPEC PR #6580). -/
+tier of the three-tier `factorize` combinator (SPEC PR #6580). -/
 @[expose]
 def factorTrialFactorsWithBound (f : ZPoly) (B : Nat) : Array ZPoly :=
   let normalized := normalizeForFactor f
@@ -387,7 +387,7 @@ theorem factorTrialWithBound_eq_factorizationOfFactors
 /--
 Factor using the integer trial-division path at the default Mignotte
 coefficient bound. This is the trial-division tier of the three-tier
-`factor` combinator (SPEC PR #6580).
+`factorize` combinator (SPEC PR #6580).
 -/
 def factorTrial (f : ZPoly) : Factorization :=
   factorTrialWithBound f (ZPoly.defaultFactorCoeffBound f)
@@ -788,7 +788,7 @@ a fallback was taken (the merge gate asserts this never happens unexpectedly).
 **Self-certifying.** Each non-backstop tier's `Factorization` is accepted only
 when it reconstructs the input (`Factorization.product φ = f`, decidable on
 `ZPoly`); on the (corpus-never) miss it falls through to the proven
-`factorTrial` backstop. This makes `Factorization.product (factor f) = f`
+`factorTrial` backstop. This makes `Factorization.product (ZPoly.factorize f) = f`
 provable unconditionally without yet proving the classical recombination loop
 reconstructs (that, with per-factor irreducibility, is the separate re-proof
 step). The classical tier is correct on the whole conformance corpus, so the
@@ -813,22 +813,31 @@ its answer is accepted only when the packed product reconstructs `f`; on decline
 (budget exhaustion or no admissible prime) the CLD lattice tier runs at the
 lattice precision cap under the same self-certifying acceptance check; and any
 residual falls through to the `factorTrial` totality backstop, which is
-`choosePrimeData?`-independent and so makes `factor` unconditionally correct on
-every `ZPoly`. Total.
+`choosePrimeData?`-independent and so makes `factorize` unconditionally correct
+on every `ZPoly`. Total.
+
+Lives in the `ZPoly` namespace so the public surface is dot-notation on a
+polynomial: `f.factorize`.
 -/
 @[expose]
-def factor (f : ZPoly) : Factorization :=
+def ZPoly.factorize (f : ZPoly) : Factorization :=
   (factorTraced f).1
+
+/-- The irreducible factors of `f` with their multiplicities: the `factors`
+field of the full factorisation `f.factorize`. -/
+@[expose]
+def ZPoly.factors (f : ZPoly) : Array (ZPoly × Nat) :=
+  (ZPoly.factorize f).factors
 
 -- classical answers the corpus, including small/medium-r Swinnerton-Dyer / cyclotomic
 -- irreducibles, so no fallback is taken (the lattice/trial arms cover only the
 -- budget-exceeding tail and the no-prime case).
-#guard Factorization.product (factor (DensePoly.ofCoeffs #[6, 0, -5, 0, 1]))
+#guard Factorization.product (ZPoly.factorize (DensePoly.ofCoeffs #[6, 0, -5, 0, 1]))
   = DensePoly.ofCoeffs #[6, 0, -5, 0, 1]                                      -- reducible
 #guard (factorTraced (DensePoly.ofCoeffs #[6, 0, -5, 0, 1])).2.tier = "classical"
-#guard Factorization.product (factor (DensePoly.ofCoeffs #[1, 0, -10, 0, 1]))
+#guard Factorization.product (ZPoly.factorize (DensePoly.ofCoeffs #[1, 0, -10, 0, 1]))
   = DensePoly.ofCoeffs #[1, 0, -10, 0, 1]                                     -- SD2, irreducible
-#guard ((factor (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).factors.size) = 1
+#guard ((ZPoly.factorize (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).factors.size) = 1
 #guard (factorTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.tier = "classical"
 #guard (factorTraced (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).2.declined = false
 
@@ -887,8 +896,8 @@ Each non-backstop tier (`factorClassicalFactorsWithBound` / lattice) is accepted
 only when its `factorizationOfFactors`-packed answer reconstructs `f` (the
 self-certifying guard mirrored here), and every fallback is the proven
 `factorTrial` backstop's raw array. The headline contract
-`factor f = factorizationOfFactors f (factorFactors f)` is
-`factor_eq_factorizationOfFactors`. -/
+`ZPoly.factorize f = factorizationOfFactors f (factorFactors f)` is
+`factorize_eq_factorizationOfFactors`. -/
 def factorFactors (f : ZPoly) : Array ZPoly :=
   match factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f) with
   | some cf =>
@@ -905,14 +914,14 @@ def factorFactors (f : ZPoly) : Array ZPoly :=
 form of its raw factor array `factorFactors`. Every tier (classical /
 lattice / trial) assembles via `factorizationOfFactors f`, so this bridge lets
 the structural `factorizationOfFactors_entry_*` lemmas re-point every
-`factor`-level entry contract onto the hybrid. -/
-theorem factor_eq_factorizationOfFactors (f : ZPoly) :
-    factor f = factorizationOfFactors f (factorFactors f) := by
+`factorize`-level entry contract onto the hybrid. -/
+theorem factorize_eq_factorizationOfFactors (f : ZPoly) :
+    ZPoly.factorize f = factorizationOfFactors f (factorFactors f) := by
   have htrial : factorTrial f =
       factorizationOfFactors f
         (factorTrialFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)) := by
     rw [factorTrial, factorTrialWithBound_eq_factorizationOfFactors]
-  unfold factor factorTraced factorFactors
+  unfold ZPoly.factorize factorTraced factorFactors
   have hclassical :
       (factorClassicalTraced f).1 =
         (factorClassicalFactorsWithBound f (ZPoly.defaultFactorCoeffBound f)).map
@@ -946,7 +955,7 @@ theorem factor_eq_factorizationOfFactors (f : ZPoly) :
 /-- Every raw factor of the cost-based hybrid comes from one of its three
 dispatch branches: the classical tier's certified output, the CLD lattice
 tier's certified output, or the `factorTrial` totality backstop. It
-exposes the branch source (mirroring `factor_entry_mem_raw_source` for the
+exposes the branch source (mirroring `factorize_entry_mem_raw_source` for the
 raw hybrid array) without leaking the private `factorizationOfFactors` guard, so
 the Mathlib-side irreducibility assembly can case-split over the branches. -/
 theorem factorFactors_mem_source (f : ZPoly) {raw : ZPoly}
@@ -1110,63 +1119,61 @@ theorem factorizationOfFactors_scalar_eq_zero_iff
   exact signedContentScalarContract_eq_zero_iff f
 
 /-- Scalar contract for the default public factorization entry point. -/
-theorem factor_scalar (f : ZPoly) :
-    (factor f).scalar =
+theorem factorize_scalar (f : ZPoly) :
+    (ZPoly.factorize f).scalar =
       if f = 0 then
         0
       else if DensePoly.leadingCoeff f < 0 then
         -ZPoly.content f
       else
         ZPoly.content f := by
-  rw [factor_eq_factorizationOfFactors]
+  rw [factorize_eq_factorizationOfFactors]
   exact factorizationOfFactors_scalar f (factorFactors f)
 
-@[simp, grind =] theorem factor_scalar_zero :
-    (factor 0).scalar = 0 := by
-  rw [factor_eq_factorizationOfFactors]
+@[simp, grind =] theorem factorize_scalar_zero :
+    (ZPoly.factorize 0).scalar = 0 := by
+  rw [factorize_eq_factorizationOfFactors]
   exact factorizationOfFactors_scalar_zero (factorFactors 0)
 
 /-- The default factorization of `0` records no polynomial factors: the
 square-free core of `0` is the unit `1`, so every reassembled raw factor is
 dropped by the `shouldRecordPolynomialFactor` filter.  This lets the capstone
-`factor_irreducible_of_nonUnit` discharge the degenerate `f = 0` case
+`factorize_irreducible_of_nonUnit` discharge the degenerate `f = 0` case
 vacuously, without a nonzero hypothesis. -/
-theorem factor_zero_factors : (factor (0 : ZPoly)).factors = #[] := by
+theorem factorize_zero_factors : (ZPoly.factorize (0 : ZPoly)).factors = #[] := by
   decide
 
-theorem factor_scalar_of_leadingCoeff_neg
+theorem factorize_scalar_of_leadingCoeff_neg
     {f : ZPoly} (hf : f ≠ 0) (hneg : DensePoly.leadingCoeff f < 0) :
-    (factor f).scalar = -ZPoly.content f := by
-  rw [factor_eq_factorizationOfFactors]
+    (ZPoly.factorize f).scalar = -ZPoly.content f := by
+  rw [factorize_eq_factorizationOfFactors]
   exact factorizationOfFactors_scalar_of_leadingCoeff_neg (factorFactors f) hf hneg
 
-theorem factor_scalar_of_leadingCoeff_pos
+theorem factorize_scalar_of_leadingCoeff_pos
     {f : ZPoly} (hf : f ≠ 0) (hpos : 0 < DensePoly.leadingCoeff f) :
-    (factor f).scalar = ZPoly.content f := by
-  rw [factor_eq_factorizationOfFactors]
+    (ZPoly.factorize f).scalar = ZPoly.content f := by
+  rw [factorize_eq_factorizationOfFactors]
   exact factorizationOfFactors_scalar_of_leadingCoeff_pos (factorFactors f) hf hpos
 
-theorem factor_scalar_eq_zero_iff (f : ZPoly) :
-    (factor f).scalar = 0 ↔ f = 0 := by
-  rw [factor_eq_factorizationOfFactors]
+theorem factorize_scalar_eq_zero_iff (f : ZPoly) :
+    (ZPoly.factorize f).scalar = 0 ↔ f = 0 := by
+  rw [factorize_eq_factorizationOfFactors]
   exact factorizationOfFactors_scalar_eq_zero_iff f (factorFactors f)
 
 /-- Every recorded entry of the default public factorization has positive
 multiplicity. -/
-theorem factor_entry_multiplicity_pos
+theorem factorize_entry_multiplicity_pos
     (f : ZPoly) (entry : ZPoly × Nat)
-    (hmem : entry ∈ (factor f).factors.toList) :
+    (hmem : entry ∈ (ZPoly.factorize f).factors.toList) :
     0 < entry.2 := by
-  rw [factor_eq_factorizationOfFactors] at hmem
+  rw [factorize_eq_factorizationOfFactors] at hmem
   exact factorizationOfFactors_entry_multiplicity_pos f (factorFactors f) entry hmem
 
 /-- Every recorded entry of the default public factorization is fixed by
 `normalizeFactorSign`. -/
-theorem factor_entry_normalizeFactorSign_id
+theorem factorize_entry_normalizeFactorSign_id
     (f : ZPoly) (entry : ZPoly × Nat)
-    (hmem : entry ∈ (factor f).factors.toList) :
+    (hmem : entry ∈ (ZPoly.factorize f).factors.toList) :
     normalizeFactorSign entry.1 = entry.1 := by
-  rw [factor_eq_factorizationOfFactors] at hmem
+  rw [factorize_eq_factorizationOfFactors] at hmem
   exact factorizationOfFactors_entry_normalizeFactorSign_id f (factorFactors f) entry hmem
-
-end Hex

@@ -27,7 +27,7 @@ factors:
   modular reduction; the unconditional totality backstop, reached only
   when no admissible prime exists.
 
-The public combinator `factor` runs `factorClassical` first under a
+The public combinator `factorize` runs `factorClassical` first under a
 budget read off the modular factorisation, `factorLattice` when the
 classical tier declines (large `r`), and `factorTrial` as the final
 backstop. All three return canonical factorisations; the tiers
@@ -56,20 +56,26 @@ of that order.
 def factorClassical (f : ZPoly) : Option Factorization
 def factorLattice   (f : ZPoly) : Option Factorization
 def factorTrial     (f : ZPoly) : Factorization
-def factor          (f : ZPoly) : Factorization
+def ZPoly.factorize (f : ZPoly) : Factorization
+def ZPoly.factors   (f : ZPoly) : Array (ZPoly × Nat)
 ```
+
+`ZPoly.factorize` lives in the `ZPoly` namespace so the public surface is
+dot-notation on a polynomial: `f.factorize`. `ZPoly.factors f :=
+(f.factorize).factors` is the convenience accessor for the irreducible
+factors with their multiplicities (`f.factors`).
 
 `factorClassical` and `factorLattice` are the two recombination tiers,
 both `Option`-valued because both require an admissible prime;
-`factorTrial` is the total trial-division backstop; `factor` is the
+`factorTrial` is the total trial-division backstop; `factorize` is the
 public hybrid combinator. Each tier also exposes a bounded variant
 `…WithBound f B` parameterised by a Mignotte coefficient bound `B`
-(used by the precision/conformance tests); `factor` runs the classical
+(used by the precision/conformance tests); `factorize` runs the classical
 tier at `ZPoly.defaultFactorCoeffBound f` and the lattice tier at its
 own precision cap (see *Precision schedule*).
 
 The dispatch is **classical-first with budgeted decline, not a
-precision-cap race** (see *Hybrid dispatch* below). `factor` runs
+precision-cap race** (see *Hybrid dispatch* below). `factorize` runs
 `factorClassical` under a level-aware subset budget read off the
 modular factorisation (the lifted-factor count `r` and the degree
 distribution of the modular factors). Exhausting the budget is an
@@ -97,7 +103,7 @@ def Factorization.product (φ : Factorization) : ZPoly :=
   φ.factors.foldl (fun acc ⟨g, m⟩ => acc * g^m) (DensePoly.C φ.scalar)
 ```
 
-For `f : ZPoly`, `factor f` returns a `Factorization` such that:
+For `f : ZPoly`, `factorize f` returns a `Factorization` such that:
 
 1. `scalar = sign(lc(f)) · ZPoly.content(f)`. Zero iff `f = 0`.
 2. Each `(g, m) ∈ factors` has:
@@ -107,11 +113,11 @@ For `f : ZPoly`, `factor f` returns a `Factorization` such that:
    - `m > 0`.
 3. **No duplicate polynomial factors**: distinct entries in `factors`
    have distinct first components.
-4. **Product preservation**: `Factorization.product (factor f) = f`.
+4. **Product preservation**: `Factorization.product (factorize f) = f`.
 5. Factor order is operationally array order; the mathematical
    contract is product + membership (an array of pairs as a multiset).
 
-**Convention: don't break content into primes.** `factor 6 = ⟨6, #[]⟩`,
+**Convention: don't break content into primes.** `factorize 6 = ⟨6, #[]⟩`,
 not `⟨1, #[(C 2, 1), (C 3, 1)]⟩`. The `factors` field carries
 *polynomial* factors of `primitivePart(f)`; the integer
 factorisation of the content lives in the `scalar` field as a single
@@ -119,7 +125,7 @@ signed integer. This matches FLINT and SymPy.
 
 ### Edge cases
 
-| Input `f` | `factor f` |
+| Input `f` | `factorize f` |
 |---|---|
 | `0` | `⟨0, #[]⟩` |
 | `1` | `⟨1, #[]⟩` |
@@ -142,7 +148,7 @@ a constant element?** Two reasons:
    `Array ZPoly`, sign would have to be encoded as a constant-
    polynomial factor or as a separately-tracked `Int`, neither
    ergonomic. The Mathlib-bridge product theorem
-   `Factorization.product (factor f) = f` then becomes provably
+   `Factorization.product (factorize f) = f` then becomes provably
    exact (no "up to sign" caveat).
 2. Multiplicity is explicit, matching how mature CAS systems
    (FLINT's `fmpz_poly_factor_t`, SageMath's `Factorization`,
@@ -188,10 +194,10 @@ def isIrreducible (f : ZPoly) : Bool :=
     let k := (f.coeff 0).natAbs
     1 < k && k.Prime
   else
-    -- Polynomial case: irreducible iff `factor f` returns a
+    -- Polynomial case: irreducible iff `factorize f` returns a
     -- `Factorization` whose scalar is a unit (±1) and whose
     -- factors array has exactly one entry with multiplicity 1.
-    let φ := factor f
+    let φ := factorize f
     decide (φ.scalar.natAbs = 1) &&
     φ.factors.size == 1 &&
     decide ((φ.factors.get! 0).snd = 1)
@@ -206,8 +212,8 @@ This library provides the `Irreducible` *class* and the executable
 
 The reason is a library-layering fact, not an oversight: that
 biconditional is logically equivalent to the full forward
-correctness of `factor` (its forward direction asserts the checker's
-single-factor verdict implies genuine irreducibility — i.e. `factor`
+correctness of `factorize` (its forward direction asserts the checker's
+single-factor verdict implies genuine irreducibility — i.e. `factorize`
 found *every* factor; its backward direction asserts an irreducible
 input yields exactly one factor). That correctness is the Group A/B/C
 capstone, and the SPEC assigns those proofs to the Mathlib bridge
@@ -336,13 +342,13 @@ holding a non-ZMod64-backed `PrimeChoiceData`).
 ### Hybrid dispatch: classical-first with budgeted decline
 
 **Load-bearing invariant: the dispatch always terminates in a
-`choosePrimeData?`-independent backstop.** This is what makes `factor`
+`choosePrimeData?`-independent backstop.** This is what makes `factorize`
 unconditionally correct on every `ZPoly`. The combinator runs the
 classical tier first, accepts a tier's answer only when it reconstructs
 `f`, and falls through on decline:
 
 ```lean
-def factor (f : ZPoly) : Factorization :=
+def ZPoly.factorize (f : ZPoly) : Factorization :=
   match factorClassical f with   -- level-aware subset budget inside
   | some φ => if φ.product = f then φ else factorTrial f
   | none =>                      -- classical declined (budget) or no admissible prime
@@ -382,7 +388,7 @@ and the CLD lattice tier does the work.
   by D2 below means `|lc(f)·disc(f)| ≥ ∏ HotPathCandidates`.
 
 **Dispatch must be observable, and the merge gate asserts on it
-(not just on wall-clock).** `factor` records a `FactorTrace` —
+(not just on wall-clock).** `factorize` records a `FactorTrace` —
 chosen tier, prime `p`, `r`, Hensel precision, subset candidates
 tried, lattice dimension, and **whether the trial backstop ran**.
 A pure timing gate is gameable (a regression can "pass" by silently
@@ -411,12 +417,12 @@ Three recombination tiers, all with full Mathlib-bridge proofs:
 - **`factorClassical : ZPoly → Option Factorization`.** Size-ordered subset recombination with factor removal, under a hard subset budget. Same algorithm class as the verified reference. **Unconditional correctness when it returns `some`:** the output is the irreducible factorisation of `f`. Returns `none` only on budget exhaustion or no admissible prime.
 - **`factorLattice : ZPoly → Option Factorization`.** Van Hoeij CLD at the full BHKS precision cap (`max (bhksBound core) (defaultFactorCoeffBound f)` where `core := (normalizeForFactor f).squareFreeCore`; the BHKS component is keyed on the square-free core the CLD pipeline actually lifts, not on `f` — a core can have larger coefficient norm than `f`, e.g. `f = (x¹⁸−1)(x¹⁹−1)`, so `bhksBound f` can undershoot the core's separation threshold). **Conditional correctness:** `factorLattice f = some φ ⟹ φ is the irreducible factorisation of f`. May return `none`.
 - **`factorTrial : ZPoly → Factorization`.** Exhaustive integer trial division. **Unconditional correctness:** `factorTrial f = irreducibleFactorisationOf f`.
-- **`factor : ZPoly → Factorization`.** The hybrid combinator (above): classical first, lattice on decline, `factorTrial` as the total backstop. Unconditionally correct.
+- **`ZPoly.factorize : ZPoly → Factorization`.** The hybrid combinator (above): classical first, lattice on decline, `factorTrial` as the total backstop. Unconditionally correct.
 
 No axioms. BHKS Theorem 5.2 ("for precision exceeding a paper-stated
 bound, `factorLattice` always returns `some`") is a leaf theorem of
 this development: it is in the project's requirements (Group D
-obligation D1 below) but no `Decidable` instance, no `factor`
+obligation D1 below) but no `Decidable` instance, no `factorize`
 correctness theorem, and no public-API contract depends on it.
 
 ## Classical recombination (small r)
@@ -439,7 +445,7 @@ the regime handed to `factorLattice`.
 The Mignotte coefficient bound `defaultFactorCoeffBound f` and the
 Hensel precision exponent `a` are different quantities and **must
 not be conflated**. The coefficient bound is a magnitude in ℤ — a
-number like 1008 — describing how large any factor's coefficient
+number like 1008 — describing how large any factorize's coefficient
 can be. The precision exponent `a` is the small integer with
 `p^a > 2·(coefficient bound)` — typically a single-digit number.
 Setting `a := defaultFactorCoeffBound f` makes `p^a` astronomically
@@ -454,7 +460,7 @@ Argument:
 
 1. **Hensel correspondence.** Every irreducible integer factor `g | f` over ℤ corresponds to a unique subset `S ⊆ {1, …, r}` such that `g ≡ ∏_{i ∈ S} g_i (mod p^a)`. Mathlib has `hensels_lemma` in `Mathlib.NumberTheory.Padics.Hensel`; the explicit subset-correspondence form may need a small wrapper lemma but follows directly.
 2. **Mignotte recoverability.** At precision `a` such that `p^a > 2 · defaultFactorCoeffBound f`, the centred-residue lift in `(−p^a/2, p^a/2]` of `(∏_{i ∈ S} g_i mod p^a)` exactly recovers `g`'s integer coefficients. Mathlib has `Polynomial.mahlerMeasure_le_sqrt_sum_sq_coeff` (Landau); the repo wraps it as `mignotte_bound` in [HexPolyZMathlib/Mignotte.lean](../../HexPolyZMathlib/Mignotte.lean).
-3. **Exhaustive search soundness.** The search enumerates all `2^r` subsets, accepts only those whose product reconstructs to a true integer factor (verified by exact division). By (1) and (2) every irreducible factor is found.
+3. **Exhaustive search soundness.** The search enumerates all `2^r` subsets, accepts only those whose product reconstructs to a true integer factorize (verified by exact division). By (1) and (2) every irreducible factor is found.
 4. **Uniqueness.** ℤ[x] is a UFD (Mathlib: `Polynomial.UniqueFactorizationMonoid` over `Int`). The output array contains exactly one representative of each associate class.
 
 No BHKS termination theorem is needed: the loop is finite by subset enumeration, and correctness is by Hensel + Mignotte + UFD.
@@ -538,7 +544,7 @@ The `bhksBound : ZPoly → Nat` helper is SPEC-pinned. A safe explicit choice (s
 Termination of the doubling loop:
 
 - If the loop reaches a state where every equivalence-class candidate verifies via exact division and `∏ candidates = f` (up to `lc(f)` and content), the CLD tier returns `some gs`. This is the success path; conditional correctness applies. **In practice, the BHKS algorithm exits via this `L' = W` certificate at precision much lower than the BHKS-bound cap** (BHKS §4.4 explicitly: "a practical implementation should not use the precision bound … because the equations could already be sufficient for smaller values of `ℓ`"); the cap is a theoretical guarantee, not a usual exit condition.
-- If the loop reaches the precision cap without satisfying that condition, the CLD tier returns `none`. The hybrid combinator `factor` then falls through to the `factorTrial` backstop. **A recombination-exit `some` makes no irreducibility claim on its own**; verified irreducibility is the property of `factor` (via the combinator), the cap-precision certificate exit, or the unconditional trial backstop. D1 will prove the `none` branch is unreachable given a good prime, but the existence of the branch makes `factor` correct without needing D1 first.
+- If the loop reaches the precision cap without satisfying that condition, the CLD tier returns `none`. The hybrid combinator `factorize` then falls through to the `factorTrial` backstop. **A recombination-exit `some` makes no irreducibility claim on its own**; verified irreducibility is the property of `factorize` (via the combinator), the cap-precision certificate exit, or the unconditional trial backstop. D1 will prove the `none` branch is unreachable given a good prime, but the existence of the branch makes `factorize` correct without needing D1 first.
 
 An additive-coefficient lattice that decodes short vectors as `Σ λ_i g_i (mod p^a)` candidate polynomials is *not* van Hoeij and is not admissible.
 
@@ -561,7 +567,7 @@ Four groups. Group A gives the exhaustive-recombination mathematics
 (Hensel + Mignotte + UFD) backing `factorClassical`'s `some`-case
 correctness and, via direct divisor enumeration, the unconditional
 `factorTrial` backstop; Group B gives `factorLattice`'s conditional
-correctness; Group C gives `factor`'s correctness via the combinator
+correctness; Group C gives `factorize`'s correctness via the combinator
 (and the tier-equivalence / dispatch-soundness contracts above);
 Group D is the non-blocking leaf performance theorem. No axioms.
 
@@ -578,7 +584,7 @@ A3. **Exhaustive search soundness and completeness (squarefree case).** The exha
 
 A4. **Squarefree-core correctness.** For squarefree primitive `f`, a completed exhaustive subset recombination returns `irreducibleFactorisationOf f`. Follows from A1+A2+A3. A `factorClassical` search that completes within budget *is* an exhaustive search, so this gives the classical tier's `some`-case correctness; `factorTrial` reaches the same conclusion unconditionally by direct Mignotte-bounded divisor enumeration (no Hensel machinery; UFD gives uniqueness).
 
-A5. **Normalisation + reassembly extend A4 to arbitrary input.** `factor` handles non-squarefree, non-primitive inputs by routing through `normalizeForFactor` and `reassembleNormalizedFactors`. The reassembly obligations `normalizeForFactor_reassembles`, `reassembleNormalizedFactors_product`, `normalizedConstantFactors_product` combine with A4 to yield `irreducibleFactorisationOf f` for arbitrary `f`.
+A5. **Normalisation + reassembly extend A4 to arbitrary input.** `factorize` handles non-squarefree, non-primitive inputs by routing through `normalizeForFactor` and `reassembleNormalizedFactors`. The reassembly obligations `normalizeForFactor_reassembles`, `reassembleNormalizedFactors_product`, `normalizedConstantFactors_product` combine with A4 to yield `irreducibleFactorisationOf f` for arbitrary `f`.
     *Sketch:* `normalizeForFactor` decomposes `f = content · X^k · h · h_repeated` where `h` is squarefree primitive. Each piece's irreducible factorisation is either standard (constants, X-powers) or given by A4 (squarefree primitive `h`); reassembly is multiplicative bookkeeping. Mathlib has `Polynomial.UniqueFactorizationMonoid` over `Int`; the GCD-based squarefree-core extraction is standard.
 
 ### Group B — lattice-tier conditional correctness (`factorLattice f = some gs ⟹ gs is the irreducible factorisation of f`)
@@ -609,10 +615,10 @@ B8. **Verification certifies `L' = W` (BHKS Lemma 3.4) — the load-bearing obli
 B9. **Conditional correctness of `factorLattice`.** `factorLattice f = some gs ⟹ gs is the irreducible factorisation of f` (up to associates and ordering).
     *Sketch:* the tier has two `some` exits. Recombination exit: `some gs` is returned only when (i) every candidate verified via exact division and (ii) `∏ gs = f`; by B8, (i) + (ii) together imply `L' = W` and `gs = irreducible factors of f`. Certificate exit: at cap precision the single all-ones equivalence class certifies the core irreducible (the forward count bound B6-side plus the class partition give exactly one factor), so `some #[core]` is correct. This is the tier's headline theorem; the proof is one application of B8 per exit.
 
-### Group C — combined `factor` correctness (drives the public API)
+### Group C — combined `factorize` correctness (drives the public API)
 
-C1. **`factor` unconditional correctness.** `factor f = irreducibleFactorisationOf f`.
-    *Sketch:* `factor` dispatches classical-first: try `factorClassical` at the default Mignotte bound; on its decline try `factorLattice` at the lattice precision cap; otherwise the `factorTrial` backstop. Case analysis on the three branches, using each tier's correctness from *Recombination tiers* above — a product-checked `some` from `factorClassical` (Group A) or `factorLattice` (Group B) is the irreducible factorisation, and the `factorTrial` branch is unconditionally the irreducible factorisation (Group A, via A4/A5). Each tier is entered at its own precision, so no single bound drives the whole combinator. This is the headline correctness theorem, assembled over the hybrid's three branches.
+C1. **`factorize` unconditional correctness.** `factorize f = irreducibleFactorisationOf f`.
+    *Sketch:* `factorize` dispatches classical-first: try `factorClassical` at the default Mignotte bound; on its decline try `factorLattice` at the lattice precision cap; otherwise the `factorTrial` backstop. Case analysis on the three branches, using each tier's correctness from *Recombination tiers* above — a product-checked `some` from `factorClassical` (Group A) or `factorLattice` (Group B) is the irreducible factorisation, and the `factorTrial` branch is unconditionally the irreducible factorisation (Group A, via A4/A5). Each tier is entered at its own precision, so no single bound drives the whole combinator. This is the headline correctness theorem, assembled over the hybrid's three branches.
 
 C2. **Public-API contracts** (`checkIrreducibleCert_sound`, `Hex.ZPoly.isIrreducible_iff`, and the `Decidable (Hex.ZPoly.Irreducible f)` instance it backs) follow from C1. Like C1 itself, these are bridge-side and are stated in `hex-berlekamp-zassenhaus-mathlib` (the Mathlib-free library provides only the `Irreducible` class and the `isIrreducible` checker — see the §`Mathlib-free Hex.ZPoly.Irreducible class`). Product preservation needs no separate bound-aware contract: it is clause 1 of the headline theorem, and the dispatch's acceptance guard makes it self-certifying per tier.
 
@@ -663,7 +669,7 @@ D2. **Tight characterisation of trial-backstop inputs.** Statement shape:
 
 `HexBerlekampZassenhausMathlib` must carry, and the `done_through ≥ 4` bump is blocked on, an end-to-end theorem with the following **semantic shape**:
 
-> For every nonzero `f : Hex.ZPoly`, the public-API output `φ := Hex.factor f : Hex.Factorization` satisfies all five clauses:
+> For every nonzero `f : Hex.ZPoly`, the public-API output `φ := Hex.factorize f : Hex.Factorization` satisfies all five clauses:
 >
 > 1. **Product preservation.** `Hex.Factorization.product φ = f`.
 > 2. **Primitive irreducibility.** Every `entry ∈ φ.factors` is primitive and `Polynomial.Irreducible (HexPolyZMathlib.toPolynomial entry.1)` holds in the Mathlib sense.
@@ -694,7 +700,7 @@ that there is no clean theorem boundary):
   (when `some`), and `factorTrial f` all return the *same* canonical
   factorisation; the cost-based dispatch therefore cannot change the
   result, only the cost.
-- **Dispatch soundness.** `factor f` equals the canonical factorisation
+- **Dispatch soundness.** `factorize f` equals the canonical factorisation
   for every `f`, independent of which tier answers and of
   any fallback taken.
 - **Fallback semantics.** The trial backstop is a *correctness* backstop,
@@ -752,8 +758,8 @@ and the JSONL fixtures, not in this spec):
 - seeded random differential cases vs FLINT;
 - the boundary cases (`0`, `±1`, constants, `X^k`, linears).
 
-**Metamorphic relations** (no external oracle): `factor f` vs
-`factor (−f)` vs `factor (content · f)` vs `factor (f(X + k))` agree up to
+**Metamorphic relations** (no external oracle): `factorize f` vs
+`factorize (−f)` vs `factorize (content · f)` vs `factorize (f(X + k))` agree up to
 the documented scalar/shift bookkeeping; multiply known factors then
 re-factor → same canonical multiset; re-run with a different admissible
 prime → identical result.
@@ -806,7 +812,7 @@ into the committed SVGs under `reports/figures/hexbz-*.svg` (auto-published on
 the Verso manual). This is a re-runnable comparator sweep, **not CI** (see
 [SPEC/benchmarking.md § Cross-system comparator sweeps](../../SPEC/benchmarking.md)).
 
-**Standing expectation for any change to a public factor entry** (`factor`,
+**Standing expectation for any change to a public factor entry** (`factorize`,
 `factorLattice`, `factorClassicalNoDecline`, or the tiers beneath
 them) that could move performance: re-measure the hex entries and refresh the
 charts, then **show the updated charts to the requester**. The external
@@ -878,7 +884,7 @@ Soundness split:
   checker data flow and degree-obstruction computation.
 - `hex-berlekamp-zassenhaus-mathlib` proves
   `checkIrreducibleCert f cert = true → Irreducible f`. This follows
-  from C1 (`factor` correctness) plus the certificate's per-prime
+  from C1 (`factorize` correctness) plus the certificate's per-prime
   degree-obstruction soundness.
 
 ### Kernel-checked irreducibility MUST be certificate-verifying
@@ -891,20 +897,20 @@ The certificate is prepared by *compiled* code; the kernel checks only
 - `checkIrreducibleCert g cert = true` for each factor `g`, against the
   soundness theorem `checkIrreducibleCert f cert = true → Irreducible f`.
 
-`factor` / `factorLattice` and the certificate construction MUST NOT run in
+`factorize` / `factorLattice` and the certificate construction MUST NOT run in
 the kernel — that is compiled preparation. (Pratt certificates for
 irreducibility: the witness is expensive to find, cheap to check.)
 
 Why (`native_decide` is banned): kernel reduction of the recombination is
-exponential, so kernel-running `factor` terminates only up to small degree.
-Any decision whose Boolean predicate calls `factor` inherits that wall and
+exponential, so kernel-running `factorize` terminates only up to small degree.
+Any decision whose Boolean predicate calls `factorize` inherits that wall and
 is at most a small-degree fallback — in particular a plain `Decidable`
 instance consumed by `decide` cannot satisfy this requirement, since
 `decide` reduces the instance in the kernel. The certifying path is
 therefore a tactic (or other elaboration-time preparation) that runs
-compiled `factor` + certificate generation, reifies the certificate, and
+compiled `factorize` + certificate generation, reifies the certificate, and
 emits the kernel check. A re-runnable benchmark SHOULD measure the frontier
-— the degree at which kernel `decide` on `factor` stops terminating within
+— the degree at which kernel `decide` on `factorize` stops terminating within
 a fixed budget. Downstream specs that kernel-check `Irreducible` /
 `IsIrreducible` obligations (`SPEC/Libraries/hex-roots.md`,
 `SPEC/Libraries/hex-number-field.md`) depend on this.

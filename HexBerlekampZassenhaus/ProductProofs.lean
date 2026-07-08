@@ -49,7 +49,7 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-This module collects `factorTrial_product`, `factor_product`, and the `checkIrreducibleCert_*` proofs.
+This module collects `factorTrial_product`, `factorize_product`, and the `checkIrreducibleCert_*` proofs.
 -/
 namespace Hex
 
@@ -357,9 +357,9 @@ reconstructs `f` (the self-certifying guard in `factorTraced`), and every
 fallback is the proven `factorTrial` backstop. Established without proving the
 classical recombination loop reconstructs (that, with per-factor irreducibility,
 is the still-blocked re-proof capstone #8384). -/
-theorem factor_product (f : ZPoly) :
-    Factorization.product (factor f) = f := by
-  unfold factor factorTraced
+theorem factorize_product (f : ZPoly) :
+    Factorization.product (ZPoly.factorize f) = f := by
+  unfold ZPoly.factorize factorTraced
   rcases hcl : factorClassicalTraced f with ⟨cres, trace⟩
   cases cres with
   | some φ =>
@@ -377,20 +377,20 @@ theorem factor_product (f : ZPoly) :
 /-- Every recorded entry of the default factorization of a nonzero `f` is
 primitive, with no raw-source hypothesis. The hybrid's `factorizationOfFactors`
 packing certifies the *filtered* product reconstructs `f`
-(`factor_product` + `factorizationOfFactors_product`), so that product is
+(`factorize_product` + `factorizationOfFactors_product`), so that product is
 primitive and hence so is every recorded (filtered) entry. -/
-theorem factor_entries_primitive_of_ne_zero
+theorem factorize_entries_primitive_of_ne_zero
     (f : ZPoly) (hf : f ≠ 0) :
-    ∀ entry ∈ (factor f).factors, ZPoly.Primitive entry.1 := by
+    ∀ entry ∈ (ZPoly.factorize f).factors, ZPoly.Primitive entry.1 := by
   intro entry hentry
-  have hmem : entry ∈ (factor f).factors.toList := Array.mem_toList_iff.mpr hentry
+  have hmem : entry ∈ (ZPoly.factorize f).factors.toList := Array.mem_toList_iff.mpr hentry
   -- The filtered product reconstructs `f`, hence is primitive.
   have hfiltered_prod :
       DensePoly.C (signedContentScalar f) *
         Array.polyProduct
           (filteredNormalizedFactors (factorFactors f).toList).toArray = f := by
-    have hp := factor_product f
-    rw [factor_eq_factorizationOfFactors, factorizationOfFactors_product] at hp
+    have hp := factorize_product f
+    rw [factorize_eq_factorizationOfFactors, factorizationOfFactors_product] at hp
     exact hp
   have hprim :
       ZPoly.Primitive
@@ -403,9 +403,9 @@ theorem factor_entries_primitive_of_ne_zero
     polyProduct_mem_primitive_of_primitive _ hprim
   -- The entry lies in the filtered list (it equals a sign-normalized raw factor
   -- and passes the recording filter).
-  obtain ⟨raw, hraw_mem, hentry_eq⟩ := factor_entry_mem_raw_source f entry hmem
+  obtain ⟨raw, hraw_mem, hentry_eq⟩ := factorize_entry_mem_raw_source f entry hmem
   have hrecord : shouldRecordPolynomialFactor (normalizeFactorSign raw) = true := by
-    have := factor_entry_shouldRecord f entry hmem
+    have := factorize_entry_shouldRecord f entry hmem
     rwa [hentry_eq] at this
   have hentry_in :
       entry.1 ∈ (filteredNormalizedFactors (factorFactors f).toList).toArray.toList := by

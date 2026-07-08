@@ -1344,7 +1344,7 @@ theorem normalizeFactorSign_one :
 
 /-- The `shouldRecordPolynomialFactor` filter rejects the unit `1`.  Exposed
 publicly so Mathlib-side per-branch umbrellas can contradict
-`factor_entry_shouldRecord` directly when an entry collapses to a
+`factorize_entry_shouldRecord` directly when an entry collapses to a
 unit (in particular the fast-path constant arm, where the singleton
 square-free core is `1`). -/
 theorem shouldRecordPolynomialFactor_one :

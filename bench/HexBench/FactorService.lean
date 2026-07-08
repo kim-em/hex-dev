@@ -24,7 +24,7 @@ Isabelle comparator `scripts/oracle/bz-isabelle/Main.hs`):
 
 The `--entry` flag selects which library entry answers each request:
 
-* `factor` — the production cost-based hybrid (`Hex.factor`); never declines.
+* `factor` — the production cost-based hybrid (`Hex.ZPoly.factorize`); never declines.
 * `factorLattice` — the van Hoeij CLD lattice tier (`Hex.factorLattice`).
 * `factorClassicalNoDecline` — classical recombination run to completion or
   cutoff (`Hex.factorClassicalNoDecline`), exposing the classical exponential
@@ -56,7 +56,7 @@ def Entry.ofString? : String → Option Entry
 /-- Dispatch to the selected entry. `none` means the entry declined; the
 production `factor` never declines (it wraps its total `Factorization`). -/
 def Entry.run : Entry → ZPoly → Option Factorization
-  | .factor, f => some (Hex.factor f)
+  | .factor, f => some (Hex.ZPoly.factorize f)
   | .factorLattice, f => Hex.factorLattice f
   | .factorClassicalNoDecline, f => Hex.factorClassicalNoDecline f
 

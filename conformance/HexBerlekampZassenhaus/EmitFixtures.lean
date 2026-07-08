@@ -97,7 +97,7 @@ of build time; the compiled emit executable covers it in seconds.
 Cross-checked operation
 -----------------------
 
-* `factor` — `Hex.factor` from `HexBerlekampZassenhaus` (the
+* `factor` — `Hex.ZPoly.factorize` from `HexBerlekampZassenhaus` (the
   default-bound public entry point).  Lean serialises the resulting
   `Factorization` as `[scalar, [[coeffs, multiplicity], ...]]`;
   python-flint cross-checks each reported nonconstant component directly
@@ -176,7 +176,7 @@ private def emitClassicalResult (case : String) (f : ZPoly) : IO Unit := do
 /-- Emit one fixture record plus the `factor` and `classicalFactor` result records. -/
 private def emitFactorCase (case : String) (f : ZPoly) : IO Unit := do
   emitPolyFixture lib case (liftCoeffs f) none
-  emitResult lib case "factor" (factorValue (factor f))
+  emitResult lib case "factor" (factorValue (ZPoly.factorize f))
   emitClassicalResult case f
 
 /-- One fixture whose result is emitted by running the public Lean `factor`. -/
@@ -516,7 +516,7 @@ private def emitExpectedCase (c : ExpectedCase) : IO Unit := do
 private def emitPinnedCase (c : PinnedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
   emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
-  emitResult lib c.id "factor" (factorValue (factor f))
+  emitResult lib c.id "factor" (factorValue (ZPoly.factorize f))
   emitClassicalResult c.id f
 
 /-- Emit one lattice-sentinel fixture through the *hybrid* traced path: a

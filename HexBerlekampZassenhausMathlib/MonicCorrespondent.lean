@@ -48,7 +48,7 @@ open Polynomial
 /-- **#5214 supporting bundle (HO-1 slow-path substrate).**
 
 Bundled substrate package for the slow-path arm of the HO-1 capstone
-`factor_irreducible_of_nonUnit` (#4170).  The seven fields are exactly the
+`factorize_irreducible_of_nonUnit` (#4170).  The seven fields are exactly the
 hypothesis set on the lifted-Hensel side consumed by the slow-path
 exhaustive-branch irreducibility reasoning,
 packaged so the capstone can obtain all of them from a single

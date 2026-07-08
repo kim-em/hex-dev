@@ -21,7 +21,7 @@ public section
 set_option backward.proofsInPublic true
 
 /-!
-This module collects the transport bounds, `factor_product`, `factor_unique`, and `checkIrreducibleCert_sound`.
+This module collects the transport bounds, `factorize_product`, `factorize_unique`, and `checkIrreducibleCert_sound`.
 -/
 
 namespace HexBerlekampZassenhausMathlib
@@ -166,9 +166,9 @@ def irreducibleByFactorization (f : Polynomial ℤ) : Bool :=
 
 /-- The default executable factorization multiplies back to the input. -/
 @[simp, grind =]
-theorem factor_product (f : Hex.ZPoly) :
-    Hex.Factorization.product (Hex.factor f) = f :=
-  Hex.factor_product f
+theorem factorize_product (f : Hex.ZPoly) :
+    Hex.Factorization.product (Hex.ZPoly.factorize f) = f :=
+  Hex.factorize_product f
 
 /--
 The Mathlib-free executable irreducibility predicate agrees with Mathlib's
@@ -269,10 +269,10 @@ nonzero input is primitive. The public path is the self-certifying hybrid
 (#8383), so primitivity is discharged from `f ≠ 0` alone (the filtered product
 reconstructs `f`); no raw-source hypothesis is needed.
 -/
-theorem factor_entries_primitive_of_chosen_raw_primitive
+theorem factorize_entries_primitive_of_chosen_raw_primitive
     (f : Hex.ZPoly) (hf : f ≠ 0) :
-    ∀ entry ∈ (Hex.factor f).factors, Hex.ZPoly.Primitive entry.1 :=
-  Hex.factor_entries_primitive_of_ne_zero f hf
+    ∀ entry ∈ (Hex.ZPoly.factorize f).factors, Hex.ZPoly.Primitive entry.1 :=
+  Hex.factorize_entries_primitive_of_ne_zero f hf
 
 private theorem toPolynomial_foldl_mul (lst : List Hex.ZPoly) (init : Hex.ZPoly) :
     HexPolyZMathlib.toPolynomial (lst.foldl (· * ·) init) =
@@ -464,22 +464,22 @@ Recorded entries of the default executable factorization of a nonzero input are
 pairwise non-associated after transport to `Polynomial ℤ`. Primitivity is
 discharged from `f ≠ 0` (the self-certifying hybrid, #8383).
 -/
-theorem factor_entries_not_associated
+theorem factorize_entries_not_associated
     (f : Hex.ZPoly) (hf : f ≠ 0) :
     List.Pairwise
       (fun a b : Hex.ZPoly × Nat =>
         ¬ Associated (HexPolyZMathlib.toPolynomial a.1)
           (HexPolyZMathlib.toPolynomial b.1))
-      (Hex.factor f).factors.toList := by
+      (Hex.ZPoly.factorize f).factors.toList := by
   exact List.Pairwise.imp_of_mem
     (fun {a b} ha hb hab =>
       zpoly_not_associated_of_ne_of_primitive_pos_leading
-        (Hex.factor_entries_primitive_of_ne_zero f hf a (Array.mem_toList_iff.mp ha))
-        (Hex.factor_entries_primitive_of_ne_zero f hf b (Array.mem_toList_iff.mp hb))
-        (Hex.factor_entry_leadingCoeff_pos f a ha)
-        (Hex.factor_entry_leadingCoeff_pos f b hb)
+        (Hex.factorize_entries_primitive_of_ne_zero f hf a (Array.mem_toList_iff.mp ha))
+        (Hex.factorize_entries_primitive_of_ne_zero f hf b (Array.mem_toList_iff.mp hb))
+        (Hex.factorize_entry_leadingCoeff_pos f a ha)
+        (Hex.factorize_entry_leadingCoeff_pos f b hb)
         hab)
-    (Hex.factor_pairwise_first f)
+    (Hex.factorize_pairwise_first f)
 
 private theorem mem_factorizationFlattenedFactors_iff
     {φ : Hex.Factorization} {f : Hex.ZPoly} :
@@ -520,7 +520,7 @@ constrain factor sign, multiplicity packing, or constant factors. The
 `normalizeFactorSign` and `nonconst` hypotheses rule out the corresponding
 counterexamples.
 -/
-theorem factor_unique
+theorem factorize_unique
     (φ ψ : Hex.Factorization)
     (hφ_norm : ∀ entry ∈ φ.factors, Hex.normalizeFactorSign entry.1 = entry.1)
     (hψ_norm : ∀ entry ∈ ψ.factors, Hex.normalizeFactorSign entry.1 = entry.1)

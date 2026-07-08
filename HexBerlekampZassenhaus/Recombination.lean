@@ -434,7 +434,7 @@ where
 #guard levelAwareSubsetBudget 64 defaultSubsetBudget = 41728
 
 /-- Diagnostic counters for one classical recombination search. Consumed by the
-performance-conformance gate (the wider `FactorTrace` carries the per-`factor`
+performance-conformance gate (the wider `FactorTrace` carries the per-`factorize`
 counters).
 
 `budgetExhausted` distinguishes the two ways the search returns no

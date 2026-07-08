@@ -18,13 +18,13 @@ proofs adapt to the committed executable tiers; the implementation is
 not reshaped to ease them.
 
 ```lean
-theorem factor_product (f : ZPoly) :
+theorem factorize_product (f : ZPoly) :
     Factorization.product (factor f) = f
 
-theorem factor_irreducible_of_nonUnit (f : ZPoly) :
+theorem factorize_irreducible_of_nonUnit (f : ZPoly) :
     ∀ (g, m) ∈ (factor f).factors, Hex.ZPoly.Irreducible g
 
-theorem factor_unique (f : ZPoly) (φ ψ : Factorization) :
+theorem factorize_unique (f : ZPoly) (φ ψ : Factorization) :
     Factorization.product φ = f →
     Factorization.product ψ = f →
     (∀ (g, m) ∈ φ.factors, Hex.ZPoly.Irreducible g) →
@@ -44,7 +44,7 @@ theorem checkIrreducibleCert_sound
     checkIrreducibleCert f cert = true → Irreducible f
 ```
 
-`factor_irreducible_of_nonUnit` is the corrected form of the old
+`factorize_irreducible_of_nonUnit` is the corrected form of the old
 `factor_irreducible` (which incorrectly claimed *every* element of
 the old `Array ZPoly` output was irreducible — false for content
 factors like `[C 6, ...]` since `C 6 = C 2 · C 3` is reducible in

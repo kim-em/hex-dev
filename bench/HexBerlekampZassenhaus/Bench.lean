@@ -395,7 +395,7 @@ def checksumFastPathSetup (f : ZPoly) (p : Nat) : UInt64 :=
 
 /-- Benchmark target: public fast-with-slow-fallback factorization. -/
 def runFactorChecksum (f : ZPoly) : UInt64 :=
-  checksumFactorization (factor f)
+  checksumFactorization (ZPoly.factorize f)
 
 /-- Benchmark target: public factorization on explicit fallback-prime probes. -/
 @[noinline]
@@ -408,7 +408,7 @@ def runFactorSlowChecksum (f : ZPoly) : UInt64 :=
 
 /-- Shared-domain compare target: public factorization on deterministic splits. -/
 def runFactorCompareChecksum (f : ZPoly) : UInt64 :=
-  checksumFactorization (factor f)
+  checksumFactorization (ZPoly.factorize f)
 
 /-- Shared-domain compare target: exhaustive slow factorization on deterministic splits. -/
 def runFactorSlowCompareChecksum (f : ZPoly) : UInt64 :=
@@ -494,7 +494,7 @@ def prepAdvPhi15 (_ : Nat) : ZPoly :=
 
 /-- Benchmark target: public combinator over the degree/height matrix. -/
 def runFactorDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
-  checksumFactorization (factor input.poly)
+  checksumFactorization (ZPoly.factorize input.poly)
 
 /-- Benchmark target: bounded slow-path diagnostic over small degree/height cases. -/
 def runFactorSlowDegreeHeightChecksum (input : DegreeHeightInput) : UInt64 :=
@@ -635,7 +635,7 @@ def ensureIsabelleBZCrossCheck : IO Unit := do
   if (← isabelleBZCrossCheckRef.get) then
     return ()
   for f in isabelleFixtureInputs do
-    let leanChecksum := checksumCanonicalLeanFactorization (factor f)
+    let leanChecksum := checksumCanonicalLeanFactorization (ZPoly.factorize f)
     let (scalar, factors) ← requestIsabelleBZFactorizationRaw f
     let isabelleChecksum := checksumCanonicalFactorization scalar factors
     if leanChecksum != isabelleChecksum then
@@ -650,7 +650,7 @@ def requestIsabelleBZFactorization (f : ZPoly) : IO (Int × Array (List Int × N
 
 /-- Fixed Lean-side target matching the Isabelle comparator's canonical input. -/
 def runFactorIsabelleDomainChecksum : Unit → IO UInt64 := fun _ => do
-  return checksumCanonicalLeanFactorization (factor advQuadSqrt2Sqrt3)
+  return checksumCanonicalLeanFactorization (ZPoly.factorize advQuadSqrt2Sqrt3)
 
 /-- Fixed verified-Isabelle BZ comparator target on the same canonical input. -/
 def runIsabelleFactorChecksum : Unit → IO UInt64 := fun _ => do
@@ -766,7 +766,7 @@ list of `n` distinct monic linears; this is the canonical-truth comparator the
 match on these rungs.
 
 `expectedHash` is left as `none` rather than computing
-`checksumCanonicalLeanFactorization (factor (prepFallbackProbeInput n))` at
+`checksumCanonicalLeanFactorization (ZPoly.factorize (prepFallbackProbeInput n))` at
 elaboration time, because that compile-time call would invoke the same cascade
 the post-mortem documents (200×–2,400× slower than Isabelle plus reducible
 factor entries on these inputs), inflating compile time. Bench-time multiset
@@ -1158,14 +1158,14 @@ the verified-to-verified ratio. -/
 setup_fixed_benchmark runFactorIsabelleDomainChecksum where {
     repeats := 3
     maxSecondsPerCall := 20.0
-    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization (factor advQuadSqrt2Sqrt3)))
+    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize advQuadSqrt2Sqrt3)))
     tags := #[scheduledHardwareTag]
   }
 
 setup_fixed_benchmark runIsabelleFactorChecksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
-    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization (factor advQuadSqrt2Sqrt3)))
+    expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize advQuadSqrt2Sqrt3)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1186,7 +1186,7 @@ setup_fixed_benchmark runIsabelleSplitN2Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash :=
-      some (Hashable.hash (checksumCanonicalLeanFactorization (factor (smokeInput 2))))
+      some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize (smokeInput 2))))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1194,7 +1194,7 @@ setup_fixed_benchmark runIsabelleSplitN3Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash :=
-      some (Hashable.hash (checksumCanonicalLeanFactorization (factor (smokeInput 3))))
+      some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize (smokeInput 3))))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1202,7 +1202,7 @@ setup_fixed_benchmark runIsabelleSplitN4Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash :=
-      some (Hashable.hash (checksumCanonicalLeanFactorization (factor (smokeInput 4))))
+      some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize (smokeInput 4))))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1210,7 +1210,7 @@ setup_fixed_benchmark runIsabelleSplitN5Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash :=
-      some (Hashable.hash (checksumCanonicalLeanFactorization (factor (smokeInput 5))))
+      some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize (smokeInput 5))))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1224,7 +1224,7 @@ setup_fixed_benchmark runIsabelleDegreeHeight3x2Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 3 2)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 3 2)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1232,7 +1232,7 @@ setup_fixed_benchmark runIsabelleDegreeHeight4x2Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 4 2)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 4 2)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1240,7 +1240,7 @@ setup_fixed_benchmark runIsabelleDegreeHeight4x8Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 4 8)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 4 8)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1248,7 +1248,7 @@ setup_fixed_benchmark runIsabelleDegreeHeight5x8Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 5 8)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 5 8)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1256,7 +1256,7 @@ setup_fixed_benchmark runIsabelleDegreeHeight6x32Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 6 32)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 6 32)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1264,7 +1264,7 @@ setup_fixed_benchmark runIsabelleDegreeHeight1x2Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 1 2)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 1 2)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1272,7 +1272,7 @@ setup_fixed_benchmark runIsabelleDegreeHeight2x2Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 2 2)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 2 2)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1280,7 +1280,7 @@ setup_fixed_benchmark runIsabelleDegreeHeight3x8Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash := some (Hashable.hash (checksumCanonicalLeanFactorization
-      (factor (prepDegreeHeightInput (encodeDegreeHeightParam 3 8)).poly)))
+      (ZPoly.factorize (prepDegreeHeightInput (encodeDegreeHeightParam 3 8)).poly)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1297,7 +1297,7 @@ setup_fixed_benchmark runIsabelleAdvX4Plus1Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash :=
-      some (Hashable.hash (checksumCanonicalLeanFactorization (factor advX4Plus1)))
+      some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize advX4Plus1)))
     tags := #[scheduledHardwareTag]
   }
 
@@ -1305,7 +1305,7 @@ setup_fixed_benchmark runIsabelleAdvPhi15Checksum where {
     repeats := 3
     maxSecondsPerCall := 60.0
     expectedHash :=
-      some (Hashable.hash (checksumCanonicalLeanFactorization (factor advPhi15)))
+      some (Hashable.hash (checksumCanonicalLeanFactorization (ZPoly.factorize advPhi15)))
     tags := #[scheduledHardwareTag]
   }
 

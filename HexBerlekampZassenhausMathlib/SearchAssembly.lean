@@ -1518,7 +1518,7 @@ theorem henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent
 
 Successful-descent specialisation of
 `henselSubsetCorrespondenceHypotheses_of_choosePrimeData_success_descent` at the
-precision count consumed by the slow exhaustive branch of `Hex.factor f`. -/
+precision count consumed by the slow exhaustive branch of `Hex.ZPoly.factorize f`. -/
 theorem henselSubsetCorrespondenceHypotheses_outerBound_of_choosePrimeData
     (f : Hex.ZPoly)
     (primeData : Hex.PrimeChoiceData)

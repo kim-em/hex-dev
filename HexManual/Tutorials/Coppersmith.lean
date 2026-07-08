@@ -180,9 +180,10 @@ about `N^(1/6)` toward `N^(1/3)`, comfortably covering the 400-bit secret.
 Second, the root search changes. The reduced short vector is again a
 polynomial `g` with `x₀` as an integer root, but `x₀` is now a 120-digit
 number and `g` has degree eight; no bounded scan can find the root.
-Instead we factor `g` over the integers with {name}`Hex.factor`, the
-project's Berlekamp-Zassenhaus factorizer, and read the secret straight
-off the linear factor `x - x₀`. Factoring a degree-eight integer
+Instead we factor `g` over the integers with {name}`Hex.ZPoly.factorize`
+(via the `.factors` accessor), the project's Berlekamp-Zassenhaus
+factorizer, and read the secret straight off the linear factor `x - x₀`.
+Factoring a degree-eight integer
 polynomial, even with its very large coefficients, is instant; the lattice
 reduction is the only real cost.
 
@@ -273,7 +274,8 @@ private def g : Poly := Id.run do
 -- the root of its linear factor x - x0. Scanning x below
 -- X ~ 2^400 is hopeless; factoring degree-8 g is instant.
 private def recovered : Option Int := Id.run do
-  for (fac, _) in (factor (DensePoly.ofCoeffs g)).factors do
+  let gz : ZPoly := DensePoly.ofCoeffs g
+  for (fac, _) in gz.factors do
     -- Linear factor `p·x + q` has root `-q/p` when `p ∣ q`.
     match fac.toArray with
     | #[q, p] =>

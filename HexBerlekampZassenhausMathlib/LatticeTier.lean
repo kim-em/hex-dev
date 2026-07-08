@@ -885,7 +885,7 @@ theorem latticeCoreFactorsWithBound_squareFreeCore_factor_zpolyIrreducible
 `factorLatticeFactorsWithBound_factor_irreducible` was a forward `sorry` in
 `IntReductionMod` (it cannot import the LLL machinery); it is filled here and,
 with its assembly `factorFactors_factor_irreducible`, moved into this file
-where the `LatticeTier` core lemma is available.  `factor_irreducible_of_nonUnit`
+where the `LatticeTier` core lemma is available.  `factorize_irreducible_of_nonUnit`
 (FactorSoundness) consumes `factorFactors_factor_irreducible`.
 -/
 

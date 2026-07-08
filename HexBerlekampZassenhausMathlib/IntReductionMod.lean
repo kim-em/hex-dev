@@ -144,7 +144,7 @@ theorem slowPathHenselSubstrate_of_toMonicPrimeData
 
 Specialisation of `liftedFactorSubsetPartition_of_choosePrimeData`
 (`HexBerlekampZassenhausMathlib`) at the precision count
-actually consumed by the slow exhaustive branch of `Hex.factor f`.
+actually consumed by the slow exhaustive branch of `Hex.ZPoly.factorize f`.
 The resulting partition value has the exact `core` / `d` /
 `J = Finset.univ` / `target = core` shape expected by the `hpartition`
 hypothesis of the slow-path exhaustive-branch irreducibility wrapper

@@ -50,74 +50,74 @@ namespace Hex
 
 /-- Every recorded entry of the default public factorization has positive
 leading coefficient. -/
-theorem factor_entry_leadingCoeff_pos
+theorem factorize_entry_leadingCoeff_pos
     (f : ZPoly) (entry : ZPoly × Nat)
-    (hmem : entry ∈ (factor f).factors.toList) :
+    (hmem : entry ∈ (ZPoly.factorize f).factors.toList) :
     0 < DensePoly.leadingCoeff entry.1 := by
-  rw [factor_eq_factorizationOfFactors] at hmem
+  rw [factorize_eq_factorizationOfFactors] at hmem
   exact factorizationOfFactors_entry_leadingCoeff_pos f (factorFactors f) entry hmem
 
 /-- Every recorded entry of the default public factorization passes the
 `shouldRecordPolynomialFactor` filter. -/
-theorem factor_entry_shouldRecord
+theorem factorize_entry_shouldRecord
     (f : ZPoly) (entry : ZPoly × Nat)
-    (hmem : entry ∈ (factor f).factors.toList) :
+    (hmem : entry ∈ (ZPoly.factorize f).factors.toList) :
     shouldRecordPolynomialFactor entry.1 = true := by
-  rw [factor_eq_factorizationOfFactors] at hmem
+  rw [factorize_eq_factorizationOfFactors] at hmem
   have hmem' : entry ∈ (collectFactorMultiplicities (factorFactors f)).toList := by
     simpa only [factorizationOfFactors] using hmem
   exact collectFactorMultiplicities_entry_shouldRecord (factorFactors f) entry hmem'
 
 /-- Any recorded entry of the default public factorization comes from the
 hybrid's raw factor array `factorFactors`, up to sign normalization. -/
-theorem factor_entry_mem_raw_source
+theorem factorize_entry_mem_raw_source
     (f : ZPoly) (entry : ZPoly × Nat)
-    (hmem : entry ∈ (factor f).factors.toList) :
+    (hmem : entry ∈ (ZPoly.factorize f).factors.toList) :
     ∃ raw ∈ (factorFactors f).toList, entry.1 = normalizeFactorSign raw := by
-  rw [factor_eq_factorizationOfFactors] at hmem
+  rw [factorize_eq_factorizationOfFactors] at hmem
   exact factorizationOfFactors_entry_mem_normalized_raw f (factorFactors f) entry hmem
 
 /-- Every recorded entry of the default public factorization is primitive once
 every raw factor in the hybrid's raw factor array is primitive. -/
-theorem factor_entry_primitive_of_chosen_raw_primitive
+theorem factorize_entry_primitive_of_chosen_raw_primitive
     {f : ZPoly} {entry : ZPoly × Nat}
-    (hmem : entry ∈ (factor f).factors.toList)
+    (hmem : entry ∈ (ZPoly.factorize f).factors.toList)
     (h_raw : ∀ raw ∈ (factorFactors f).toList, ZPoly.Primitive raw) :
     ZPoly.Primitive entry.1 := by
-  obtain ⟨raw, hraw_mem, hentry_eq⟩ := factor_entry_mem_raw_source f entry hmem
+  obtain ⟨raw, hraw_mem, hentry_eq⟩ := factorize_entry_mem_raw_source f entry hmem
   rw [hentry_eq]
   exact normalizeFactorSign_primitive _ (h_raw raw hraw_mem)
 
 /-- Public-entry specialisation: every recorded entry is primitive once the
 hybrid's raw factor array is primitive entrywise. -/
-theorem factor_entries_primitive
+theorem factorize_entries_primitive
     (f : ZPoly)
     (h_raw : ∀ raw ∈ (factorFactors f).toList, ZPoly.Primitive raw) :
-    ∀ entry ∈ (factor f).factors, ZPoly.Primitive entry.1 := by
+    ∀ entry ∈ (ZPoly.factorize f).factors, ZPoly.Primitive entry.1 := by
   intro entry hentry
-  exact factor_entry_primitive_of_chosen_raw_primitive
+  exact factorize_entry_primitive_of_chosen_raw_primitive
     (Array.mem_toList_iff.mpr hentry) h_raw
 
 /-- The default public factorization has no duplicate polynomial keys. -/
-theorem factor_pairwise_first
+theorem factorize_pairwise_first
     (f : ZPoly) :
     List.Pairwise (fun a b : ZPoly × Nat => a.1 ≠ b.1)
-      (factor f).factors.toList := by
-  rw [factor_eq_factorizationOfFactors]
+      (ZPoly.factorize f).factors.toList := by
+  rw [factorize_eq_factorizationOfFactors]
   exact factorizationOfFactors_pairwise_first f (factorFactors f)
 
 private def quadraticSquareRegression : ZPoly :=
   let q : ZPoly := DensePoly.ofCoeffs #[-1, 0, 1]
   q * q
 
-#guard (factor quadraticSquareRegression).factors =
+#guard (ZPoly.factorize quadraticSquareRegression).factors =
   #[(linearFactorForRoot (-1), 2), (linearFactorForRoot 1, 2)]
 
 private def quadraticCubeRegression : ZPoly :=
   let q : ZPoly := DensePoly.ofCoeffs #[-1, 0, 1]
   q * q * q
 
-#guard (factor quadraticCubeRegression).factors =
+#guard (ZPoly.factorize quadraticCubeRegression).factors =
   #[(linearFactorForRoot (-1), 3), (linearFactorForRoot 1, 3)]
 
 /-- Soundness regression for issue #6799: the primitive non-monic cubic
@@ -129,16 +129,16 @@ fell back to `#[core]`. -/
 private def nonMonicCubicRegression : ZPoly :=
   DensePoly.ofCoeffs #[3, 10, 9, 2]
 
-#guard (factor nonMonicCubicRegression).factors.size = 3
-#guard Factorization.product (factor nonMonicCubicRegression) = nonMonicCubicRegression
+#guard (ZPoly.factorize nonMonicCubicRegression).factors.size = 3
+#guard Factorization.product (ZPoly.factorize nonMonicCubicRegression) = nonMonicCubicRegression
 
 /-- Non-monic quadratic with two integer roots, `2(X-1)(X+1) = 2X²-2`:
-content `2`, primitive part `(X-1)(X+1)`, so `factor` records two factors. -/
+content `2`, primitive part `(X-1)(X+1)`, so `factorize` records two factors. -/
 private def nonMonicQuadraticTwoRoots : ZPoly :=
   DensePoly.ofCoeffs #[-2, 0, 2]
 
-#guard (factor nonMonicQuadraticTwoRoots).factors.size = 2
-#guard Factorization.product (factor nonMonicQuadraticTwoRoots) = nonMonicQuadraticTwoRoots
+#guard (ZPoly.factorize nonMonicQuadraticTwoRoots).factors.size = 2
+#guard Factorization.product (ZPoly.factorize nonMonicQuadraticTwoRoots) = nonMonicQuadraticTwoRoots
 
 /-- Non-monic quartic `(2X+1)(X+1)(X²+1)`, primitive with leading coefficient
 `2` and a mix of non-monic linear, monic linear, and irreducible quadratic
@@ -147,18 +147,18 @@ private def nonMonicQuarticRegression : ZPoly :=
   DensePoly.ofCoeffs #[1, 2] * DensePoly.ofCoeffs #[1, 1] *
     DensePoly.ofCoeffs #[1, 0, 1]
 
-#guard (factor nonMonicQuarticRegression).factors.size = 3
-#guard Factorization.product (factor nonMonicQuarticRegression) = nonMonicQuarticRegression
+#guard (ZPoly.factorize nonMonicQuarticRegression).factors.size = 3
+#guard Factorization.product (ZPoly.factorize nonMonicQuarticRegression) = nonMonicQuarticRegression
 
 /-- Non-monic core carrying nontrivial content, `6(X-1)(X+1) = 6X²-6`: the signed
 content scalar is `6` and the primitive factors are the two integer roots. -/
 private def nonMonicWithContentRegression : ZPoly :=
   DensePoly.ofCoeffs #[-6, 0, 6]
 
-#guard (factor nonMonicWithContentRegression).factors.size = 2
-#guard Factorization.product (factor nonMonicWithContentRegression) =
+#guard (ZPoly.factorize nonMonicWithContentRegression).factors.size = 2
+#guard Factorization.product (ZPoly.factorize nonMonicWithContentRegression) =
   nonMonicWithContentRegression
-#guard (factor nonMonicWithContentRegression).scalar = 6
+#guard (ZPoly.factorize nonMonicWithContentRegression).scalar = 6
 
 namespace ZPoly
 
@@ -204,7 +204,7 @@ def isIrreducible (f : ZPoly) : Bool :=
     let k := (f.coeff 0).natAbs
     isNatPrime k
   else
-    let φ := factor f
+    let φ := ZPoly.factorize f
     decide (φ.scalar.natAbs = 1) &&
       φ.factors.size == 1 &&
       match φ.factors.toList with
