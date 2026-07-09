@@ -18,7 +18,7 @@ Covered operations:
 - Bezout-style modular coprimality via `ZPoly.coprimeModP`
 - `content`, `primitivePart`, `Primitive`, and primitive square-free
   decomposition
-- Mignotte helpers: `binom`, `floorSqrt`, `ceilSqrt`, `coeffNormSq`,
+- Mignotte helpers: `Nat.binom`, `floorSqrt`, `ceilSqrt`, `coeffNormSq`,
   `coeffL2NormBound`, and `mignotteCoeffBound`
 Covered properties:
 - normalized `ZPoly` values erase trailing zero coefficients while preserving
@@ -31,7 +31,7 @@ Covered properties:
 - primitive-part fixtures with nonzero content have content `1`
 - primitive square-free decomposition removes repeated rational factors after
   primitive-part extraction
-- Mignotte coefficient bounds equal `binom k j * coeffL2NormBound f`
+- Mignotte coefficient bounds equal `Nat.binom k j * coeffL2NormBound f`
 Covered edge cases:
 - zero polynomials and all-zero coefficient arrays
 - trailing-zero and internal-zero polynomial representations
@@ -213,11 +213,11 @@ example : Primitive (primitivePart contentPrimitive) := by
   change content (primitivePart contentPrimitive) = 1
   decide
 
--- `binom 12 5 = 792`: typical-degree request near the SPEC ceiling for the
+-- `Nat.binom 12 5 = 792`: typical-degree request near the SPEC ceiling for the
 -- core polynomial-degree band.
-#guard binom 12 5 = 792
-#guard binom 10 0 = 1
-#guard binom 7 12 = 0
+#guard Nat.binom 12 5 = 792
+#guard Nat.binom 10 0 = 1
+#guard Nat.binom 7 12 = 0
 
 -- `1000 = floorSqrt (10^6)`; `9999 = floorSqrt (10^8 - 1)` since
 -- `9999^2 = 99_980_001 < 99_999_999 < 100_000_000 = 10000^2`.
@@ -239,15 +239,15 @@ example : Primitive (primitivePart contentPrimitive) := by
 #guard coeffL2NormBound (0 : ZPoly) = 0
 #guard coeffL2NormBound (DensePoly.ofCoeffs #[-6, 0, 8, 0, 0, 0, 0, 0, 0, 0, 24]) = 26
 
--- Typical Mignotte: `binom 8 4 · 13 = 70 · 13 = 910`.
+-- Typical Mignotte: `Nat.binom 8 4 · 13 = 70 · 13 = 910`.
 #guard mignotteCoeffBound (DensePoly.ofCoeffs #[3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 12]) 8 4 = 910
 #guard mignotteCoeffBound (0 : ZPoly) 8 4 = 0
--- Adversarial Mignotte: `binom 12 6 · 26 = 924 · 26 = 24024`.
+-- Adversarial Mignotte: `Nat.binom 12 6 · 26 = 924 · 26 = 24024`.
 #guard mignotteCoeffBound
     (DensePoly.ofCoeffs #[-6, 0, 8, 0, 0, 0, 0, 0, 0, 0, 24]) 12 6 = 24024
 #guard mignotteCoeffBound
     (DensePoly.ofCoeffs #[-6, 0, 8, 0, 0, 0, 0, 0, 0, 0, 24]) 12 6 =
-  binom 12 6 *
+  Nat.binom 12 6 *
     coeffL2NormBound (DensePoly.ofCoeffs #[-6, 0, 8, 0, 0, 0, 0, 0, 0, 0, 24])
 
 end ZPoly

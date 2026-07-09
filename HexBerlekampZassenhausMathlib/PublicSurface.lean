@@ -109,7 +109,7 @@ theorem defaultFactorCoeffBound_valid
       hmignotte.trans (mul_le_mul_of_nonneg_left hl2 hchoose_nonneg)
     have hbinom :
         (Nat.choose (HexPolyZMathlib.toPolynomial g).natDegree i : ℝ) =
-          (Hex.ZPoly.binom (HexPolyZMathlib.toPolynomial g).natDegree i : ℝ) := by
+          (Hex.Nat.binom (HexPolyZMathlib.toPolynomial g).natDegree i : ℝ) := by
       rw [HexPolyZMathlib.binom_eq_choose]
     rw [hbinom] at hstep
     have huniform_nat :=
@@ -118,11 +118,11 @@ theorem defaultFactorCoeffBound_valid
     have hmig_eq :
         Hex.ZPoly.mignotteCoeffBound f
             (HexPolyZMathlib.toPolynomial g).natDegree i =
-          Hex.ZPoly.binom (HexPolyZMathlib.toPolynomial g).natDegree i *
+          Hex.Nat.binom (HexPolyZMathlib.toPolynomial g).natDegree i *
             Hex.ZPoly.coeffL2NormBound f :=
       Hex.ZPoly.mignotteCoeffBound_eq f _ _
     have huniform_real :
-        (Hex.ZPoly.binom (HexPolyZMathlib.toPolynomial g).natDegree i : ℝ) *
+        (Hex.Nat.binom (HexPolyZMathlib.toPolynomial g).natDegree i : ℝ) *
           (Hex.ZPoly.coeffL2NormBound f : ℝ) ≤
           (Hex.ZPoly.defaultFactorCoeffBound f : ℝ) := by
       have := huniform_nat

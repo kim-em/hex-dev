@@ -171,7 +171,7 @@ private theorem choose_succ_mul_eq (n k : Nat) :
 
 /-- Within-row multiplicative recurrence `(k+1) · choose n (k+1) = (n - k) · choose n k`.
 Reading it left to right computes one Pascal row in a single linear pass, which is
-what `chooseFast` exploits. -/
+what `binom` exploits. -/
 theorem succ_mul_choose_succ (n k : Nat) :
     (k + 1) * choose n (k + 1) = (n - k) * choose n k := by
   have hcross := choose_succ_mul_eq n k
@@ -188,47 +188,90 @@ theorem succ_mul_choose_succ (n k : Nat) :
     rw [hsplit] at hcross
     omega
 
+/-- Pascal's triangle is symmetric across each row: `choose n (n - k) = choose n k`
+for `k ≤ n`. This is the symmetry the min-optimized `binom` fold exploits to walk
+the shorter half of the row. -/
+theorem choose_symm : ∀ {n k : Nat}, k ≤ n → choose n (n - k) = choose n k := by
+  intro n
+  induction n with
+  | zero =>
+      intro k hk
+      have : k = 0 := Nat.le_zero.mp hk
+      subst this; rfl
+  | succ n ih =>
+      intro k hk
+      cases k with
+      | zero => rw [Nat.sub_zero, choose_self, choose_zero_right]
+      | succ j =>
+          have hj : j ≤ n := Nat.le_of_succ_le_succ hk
+          rw [Nat.succ_sub_succ]
+          rcases Nat.lt_or_ge j n with hlt | hge
+          · have hnj : n - j = (n - (j + 1)) + 1 := by omega
+            rw [hnj]
+            simp only [choose_succ_succ]
+            have e : (n - (j + 1)) + 1 = n - j := by omega
+            rw [ih hlt, e, ih hj, Nat.add_comm]
+          · have hjn : j = n := Nat.le_antisymm hj hge
+            subst hjn
+            rw [Nat.sub_self, choose_zero_right, choose_self]
+
 /--
 Linear-time binomial coefficient.
 
-`chooseFast n k` walks a single Pascal row from `choose n 0 = 1` using the
-multiplicative recurrence `succ_mul_choose_succ`, so it costs `O(k)` natural-number
-operations.  The proof-facing `choose` is the exponential Pascal double recursion
-(`choose n k` spawns `Θ(choose n k)` calls); `chooseFast` is proven equal to it and
-registered `@[csimp]`, so every compiled caller of `choose` runs this instead.
--/
+`binom n k` walks a single Pascal row from `choose n 0 = 1` using the
+multiplicative recurrence `succ_mul_choose_succ`, folding over the shorter half
+`min k (n - k)` of the row (the row is symmetric, `choose_symm`), so it costs
+`O(min k (n - k))` natural-number operations.  The proof-facing `choose` is the
+exponential Pascal double recursion (`choose n k` spawns `Θ(choose n k)` calls);
+`binom` is proven equal to it (`binom_eq_choose`) and registered `@[csimp]`, so
+every compiled caller of `choose` runs this instead. -/
 @[expose]
-def chooseFast (n k : Nat) : Nat :=
+def binom (n k : Nat) : Nat :=
   if n < k then 0
-  else (List.range k).foldl (fun acc j => acc * (n - j) / (j + 1)) 1
+  else (List.range (min k (n - k))).foldl (fun acc i => acc * (n - i) / (i + 1)) 1
 
-/-- The single-row multiplicative fold `acc * (n - j) / (j + 1)` over
-`List.range k` computes the Pascal `choose n k` for `k ≤ n`. This is the shared
-kernel behind `chooseFast` and any other executable single-row binomial. -/
-theorem chooseFast_foldl (n : Nat) :
-    ∀ k, k ≤ n →
-      (List.range k).foldl (fun acc j => acc * (n - j) / (j + 1)) 1 = choose n k := by
-  intro k
-  induction k with
+/-- The multiplicative fold over `List.range m` computes `choose n m` for `m ≤ n`. -/
+private theorem binom_foldl (n : Nat) :
+    ∀ m, m ≤ n →
+      (List.range m).foldl (fun acc i => acc * (n - i) / (i + 1)) 1 = choose n m := by
+  intro m
+  induction m with
   | zero => intro _; simp
-  | succ k ih =>
-      intro hk
-      rw [List.range_succ, List.foldl_append, ih (Nat.le_of_succ_le hk)]
+  | succ m ih =>
+      intro hm
+      rw [List.range_succ, List.foldl_append, ih (Nat.le_of_succ_le hm)]
       simp only [List.foldl_cons, List.foldl_nil]
-      have hid : choose n k * (n - k) = (k + 1) * choose n (k + 1) := by
+      have hid : choose n m * (n - m) = (m + 1) * choose n (m + 1) := by
         rw [Nat.mul_comm, succ_mul_choose_succ]
-      rw [hid, Nat.mul_div_cancel_left _ (Nat.succ_pos k)]
+      rw [hid, Nat.mul_div_cancel_left _ (Nat.succ_pos m)]
 
-/-- `chooseFast` agrees with the proof-facing Pascal `choose`. -/
-theorem chooseFast_eq (n k : Nat) : chooseFast n k = choose n k := by
-  unfold chooseFast
+/-- The min-optimized `binom` fold agrees with the proof-facing Pascal `choose`. -/
+theorem binom_eq_choose (n k : Nat) : binom n k = choose n k := by
+  unfold binom
   by_cases h : n < k
   · rw [if_pos h]; exact (choose_eq_zero_of_lt h).symm
-  · rw [if_neg h]; exact chooseFast_foldl n k (Nat.le_of_not_lt h)
+  · rw [if_neg h]
+    have hkn : k ≤ n := Nat.le_of_not_lt h
+    rcases Nat.le_total k (n - k) with hle | hle
+    · rw [Nat.min_eq_left hle]; exact binom_foldl n k hkn
+    · rw [Nat.min_eq_right hle, binom_foldl n (n - k) (Nat.sub_le n k)]
+      exact choose_symm hkn
 
-@[csimp] theorem choose_eq_chooseFast : @choose = @chooseFast := by
+@[csimp] theorem choose_eq_binom : @choose = @binom := by
   funext n k
-  exact (chooseFast_eq n k).symm
+  exact (binom_eq_choose n k).symm
+
+/-- Choosing `0` elements always gives `1`. -/
+@[simp, grind =] theorem binom_zero_right (n : Nat) : binom n 0 = 1 := by
+  simp [binom]
+
+/-- Choosing `k + 1` elements from `0` is impossible. -/
+@[simp, grind =] theorem binom_zero_succ (k : Nat) : binom 0 (k + 1) = 0 := by
+  simp [binom]
+
+/-- The binomial coefficient `binom n k` vanishes when `n < k`. -/
+theorem binom_eq_zero_of_lt {n k : Nat} (h : n < k) : binom n k = 0 := by
+  simp [binom, h]
 
 /-- The row of Pascal's triangle increases up to its centre: `choose k j ≤
 choose k (j + 1)` while `2 * (j + 1) ≤ k`. -/

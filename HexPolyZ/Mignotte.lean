@@ -25,15 +25,6 @@ namespace Hex
 
 namespace ZPoly
 
-/-- Executable binomial coefficients for the Mignotte bound. -/
-@[expose]
-def binom (n k : Nat) : Nat :=
-  if n < k then
-    0
-  else
-    let kk := min k (n - k)
-    (List.range kk).foldl (fun acc i => acc * (n - i) / (i + 1)) 1
-
 /-- One Newton step for the natural-number square-root iteration. -/
 private def sqrtStep (n x : Nat) : Nat :=
   (x + n / x) / 2
@@ -414,7 +405,7 @@ def coeffL2NormBound (f : ZPoly) : Nat :=
 factor of `f`, using the conservative `coeffL2NormBound`. -/
 @[expose]
 def mignotteCoeffBound (f : ZPoly) (k j : Nat) : Nat :=
-  binom k j * coeffL2NormBound f
+  Nat.binom k j * coeffL2NormBound f
 
 /--
 Uniform executable coefficient bound used by the default integer
@@ -438,20 +429,6 @@ noncomputable def defaultFactorCoeffBound (f : ZPoly) : Nat :=
         (fun acc j => max acc (mignotteCoeffBound f k j))
         acc)
     0
-
-/-- Base case of `binom`: choosing `0` elements always gives `1`, so the empty
-`foldl` over `List.range 0` normalizes `binom n 0` to `1`. -/
-@[simp, grind =] theorem binom_zero_right (n : Nat) : binom n 0 = 1 := by
-  simp [binom]
-
-/-- Base case of `binom`: choosing `k + 1` elements from `0` is impossible, so
-the `n < k` guard fires and normalizes `binom 0 (k + 1)` to `0`. -/
-@[simp, grind =] theorem binom_zero_succ (k : Nat) : binom 0 (k + 1) = 0 := by
-  simp [binom]
-
-/-- The executable binomial coefficient `binom n k` vanishes when `n < k`. -/
-theorem binom_eq_zero_of_lt {n k : Nat} (h : n < k) : binom n k = 0 := by
-  simp [binom, h]
 
 /-- Base case of `floorSqrt`: the `n = 0` guard fires before the Newton
 iteration, so `floorSqrt 0` normalizes to `0`. -/
@@ -545,7 +522,7 @@ theorem coeffL2NormBound_sq_le_two_mul_coeffNormSq (f : ZPoly) :
 /-- `mignotteCoeffBound f k j` equals the product `binom k j * coeffL2NormBound f`
 of the binomial coefficient and the conservative coefficient-norm bound. -/
 theorem mignotteCoeffBound_eq (f : ZPoly) (k j : Nat) :
-    mignotteCoeffBound f k j = binom k j * coeffL2NormBound f := rfl
+    mignotteCoeffBound f k j = Nat.binom k j * coeffL2NormBound f := rfl
 
 /-- Restates `defaultFactorCoeffBound f` as the nested `foldl` taking the maximum of
 `mignotteCoeffBound f k j` over factor degrees `k` up to `f.degree?.getD 0` and
@@ -616,7 +593,7 @@ normalizes to `0`. -/
 the coefficient index `j` exceeds the factor degree `k`. -/
 theorem mignotteCoeffBound_eq_zero_of_lt (f : ZPoly) (k j : Nat) (h : k < j) :
     mignotteCoeffBound f k j = 0 := by
-  simp [mignotteCoeffBound, binom_eq_zero_of_lt h]
+  simp [mignotteCoeffBound, Nat.binom_eq_zero_of_lt h]
 
 /-- The inner `max`-fold over `j ∈ range (k+1)` dominates each
 `mignotteCoeffBound f k j` at an in-range index, by `le_foldl_max_of_mem`. -/
@@ -809,39 +786,22 @@ supplies the monotonicity needed to prove the collapse; the compiled runtime
 then runs the closed form via a `@[csimp]` swap.
 -/
 
-/-- `binom` is symmetric: `binom n k = binom n (n - k)` for `k ≤ n`. This is
-definitional (the underlying fold's length `min k (n - k)` is symmetric). -/
-private theorem binom_symm {n k : Nat} (h : k ≤ n) : binom n k = binom n (n - k) := by
-  unfold binom
-  rw [if_neg (Nat.not_lt.mpr h), if_neg (Nat.not_lt.mpr (Nat.sub_le n k)),
-    Nat.sub_sub_self h, Nat.min_comm (n - k) k]
-
-/-- On the left half of a row (`k ≤ n - k`), `binom n k` agrees with the Pascal
-`Hex.Nat.choose n k`. -/
-private theorem binom_eq_choose_left {n k : Nat} (hk : k ≤ n) (hhalf : k ≤ n - k) :
-    binom n k = Hex.Nat.choose n k := by
-  unfold binom
-  rw [if_neg (Nat.not_lt.mpr hk), Nat.min_eq_left hhalf]
-  exact Hex.Nat.chooseFast_foldl n k hk
-
-/-- The executable binomial coefficient over the factor rectangle `j ≤ k ≤ n`
-is dominated by the central binomial of the top row: `binom k j ≤ binom n (n / 2)`.
-This is the monotonicity that collapses the `defaultFactorCoeffBound` double max. -/
+/-- The binomial coefficient over the factor rectangle `j ≤ k ≤ n` is dominated
+by the central binomial of the top row: `binom k j ≤ binom n (n / 2)`. This is the
+monotonicity that collapses the `defaultFactorCoeffBound` double max. -/
 theorem binom_le_central {n k j : Nat} (hjk : j ≤ k) (hkn : k ≤ n) :
-    binom k j ≤ binom n (n / 2) := by
+    Nat.binom k j ≤ Nat.binom n (n / 2) := by
+  rw [Nat.binom_eq_choose, Nat.binom_eq_choose]
   -- reduce `j` to the left-half index `j' = min j (k - j)`
-  have hbjk : binom k j = Hex.Nat.choose k (min j (k - j)) := by
+  have hbjk : Hex.Nat.choose k j = Hex.Nat.choose k (min j (k - j)) := by
     rcases Nat.le_total j (k - j) with hle | hle
-    · rw [Nat.min_eq_left hle]; exact binom_eq_choose_left hjk hle
-    · rw [Nat.min_eq_right hle, binom_symm hjk]
-      exact binom_eq_choose_left (Nat.sub_le k j) (by omega)
+    · rw [Nat.min_eq_left hle]
+    · rw [Nat.min_eq_right hle]; exact (Hex.Nat.choose_symm hjk).symm
   have h2j' : 2 * min j (k - j) ≤ k := by
     rcases Nat.le_total j (k - j) with hle | hle
     · rw [Nat.min_eq_left hle]; omega
     · rw [Nat.min_eq_right hle]; omega
-  have hn : binom n (n / 2) = Hex.Nat.choose n (n / 2) :=
-    binom_eq_choose_left (Nat.div_le_self n 2) (by omega)
-  rw [hbjk, hn]
+  rw [hbjk]
   exact Nat.le_trans
     (Hex.Nat.choose_le_center k (k / 2) (min j (k - j)) (Nat.sub_le _ _) h2j')
     (Hex.Nat.centralChoose_mono hkn)
@@ -851,7 +811,7 @@ binomial times the single loop-invariant norm. -/
 @[expose]
 def defaultFactorCoeffBoundImpl (f : ZPoly) : Nat :=
   let n := f.degree?.getD 0
-  binom n (n / 2) * coeffL2NormBound f
+  Nat.binom n (n / 2) * coeffL2NormBound f
 
 /-- Register the value-equal closed form `defaultFactorCoeffBoundImpl` as the
 compiled implementation of `defaultFactorCoeffBound`. The `@[csimp]` swap is

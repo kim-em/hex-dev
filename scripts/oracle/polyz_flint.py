@@ -94,7 +94,7 @@ def _ceil_sqrt(n: int) -> int:
 
 
 def _binom(n: int, k: int) -> int:
-    """Match `Hex.ZPoly.binom`: zero when `k > n`, otherwise the
+    """Match `Hex.Nat.binom`: zero when `k > n`, otherwise the
     standard symmetric formula."""
     if k > n:
         return 0

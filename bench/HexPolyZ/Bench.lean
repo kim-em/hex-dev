@@ -188,7 +188,7 @@ def runPrimitivePartChecksum (input : ContentInput) : UInt64 :=
 
 /-- Benchmark target: compute a central binomial coefficient. -/
 def runBinom (n : Nat) : Nat :=
-  ZPoly.binom (2 * n) n
+  Nat.binom (2 * n) n
 
 /-- Benchmark target: compute floor square roots over a prepared batch. -/
 def runFloorSqrtChecksum (input : SqrtInput) : UInt64 :=
@@ -255,7 +255,7 @@ setup_benchmark runPrimitivePartChecksum n => n
   }
 
 /-
-`ZPoly.binom (2*n) n` folds across `min n n = n` multiplicative terms.
+`Nat.binom (2*n) n` folds across `min n n = n` multiplicative terms.
 For this central-binomial fixture the accumulator reaches linear bit width.
 Each compiled `Nat` multiply/divide step therefore scales with the accumulator
 limb count, so the scientific declaration models bit-cost growth rather than
