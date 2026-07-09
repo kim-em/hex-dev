@@ -327,8 +327,12 @@ Multiplication by `word` is injective on residues modulo `p`: since `p` is odd
 it is coprime to `word = 2 ^ 64`, so two reduced values `x, y < p` with
 `x * word ≡ y * word (mod p)` are equal. This is what lets the
 representative-mod-word characterisation pin down a unique `mulMont` value.
+
+Public because any word-modular residue layer built on this context (for
+example a Montgomery-form residue ring) needs the same cancellation to prove
+that its additive operations preserve the represented value.
 -/
-private theorem cancel_word_mod_of_lt (ctx : MontCtx p) {x y : Nat}
+theorem cancel_word_mod_of_lt (ctx : MontCtx p) {x y : Nat}
     (hx : x < p.toNat) (hy : y < p.toNat)
     (h : x * UInt64.word % p.toNat = y * UInt64.word % p.toNat) :
     x = y := by
