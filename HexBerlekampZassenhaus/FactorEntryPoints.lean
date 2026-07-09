@@ -809,7 +809,7 @@ def factorClassicalFactorsWithBound (f : ZPoly) (B : Nat) : Option (Array ZPoly)
     | some coreFactors => some (reassemblePolynomialFactors normalized coreFactors)
     | none =>
         (ZPoly.toMonicPrimeData? normalized.squareFreeCore).bind fun primeData =>
-          (classicalCoreFactorsWithBound normalized.squareFreeCore B primeData).map fun coreFactors =>
+          (classicalCoreFactorsRecursive normalized.squareFreeCore B primeData).map fun coreFactors =>
             reassemblePolynomialFactors normalized coreFactors
 
 def factorClassicalWithBound (f : ZPoly) (B : Nat) : Option Factorization :=
@@ -860,21 +860,17 @@ def factorClassicalTracedWithBound (f : ZPoly) (B : Nat) : Option Factorization 
                 { tier := "classical", prime := primeData.p, liftedFactorCount := 0, subsetCandidates := 0, declined := false })
             else
               let core := normalized.squareFreeCore
-              let liftData := ZPoly.toMonicLiftData core (ZPoly.exhaustiveLiftBound core B) primeData
-              let (res, stats) :=
-                scaledRecombinationSmart (DensePoly.leadingCoeff core) core
-                  (liftModulus liftData) liftData.liftedFactors.toList
-              let r := liftData.liftedFactors.size
+              let res := classicalCoreFactorsRecursiveAux reliftSubFloorCap
+                (core.degree?.getD 0 + 1) core (some B) primeData
               let trace : FactorTrace :=
-                { tier := "classical", prime := primeData.p, liftedFactorCount := r,
-                  subsetCandidates := stats.candidatesTried, declined := stats.budgetExhausted }
-              if stats.budgetExhausted then
-                (none, trace)
-              else
-                let coreFactors := match res with
-                  | some factors => if factors.isEmpty then #[core] else factors.toArray
-                  | none => #[core]
-                (some (factorizationOfFactors f (reassemblePolynomialFactors normalized coreFactors)), trace)
+                { tier := "classical", prime := primeData.p,
+                  liftedFactorCount := primeData.factorsModP.size,
+                  subsetCandidates := 0, declined := res.isNone }
+              match res with
+              | none => (none, trace)
+              | some coreFactors =>
+                  (some (factorizationOfFactors f
+                    (reassemblePolynomialFactors normalized coreFactors)), trace)
 
 /-- Classical-tier factorisation with trace, at the default Mignotte bound. -/
 @[expose]
@@ -1524,7 +1520,7 @@ theorem factorClassicalTracedWithBound_fst (f : ZPoly) (B : Nat) :
     (factorClassicalTracedWithBound f B).1 =
       (factorClassicalFactorsWithBound f B).map (factorizationOfFactors f) := by
   unfold factorClassicalTracedWithBound factorClassicalFactorsWithBound
-    classicalCoreFactorsWithBound
+    classicalCoreFactorsRecursive
   by_cases hdeg : (normalizeForFactor f).squareFreeCore.degree?.getD 0 = 0
   · simp only [hdeg, if_true, Option.map_some]
   · simp only [hdeg, if_false]
@@ -1538,24 +1534,11 @@ theorem factorClassicalTracedWithBound_fst (f : ZPoly) (B : Nat) :
             by_cases hB : B = 0
             · simp only [hB, if_true, Option.map_some]
             · simp only [hB, if_false]
-              generalize
-                scaledRecombinationSmart
-                  (DensePoly.leadingCoeff (normalizeForFactor f).squareFreeCore)
-                  (normalizeForFactor f).squareFreeCore
-                  (liftModulus
-                    (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
-                      (ZPoly.exhaustiveLiftBound (normalizeForFactor f).squareFreeCore B)
-                      primeData))
-                  (ZPoly.toMonicLiftData (normalizeForFactor f).squareFreeCore
-                      (ZPoly.exhaustiveLiftBound (normalizeForFactor f).squareFreeCore B)
-                      primeData).liftedFactors.toList = rs
-              obtain ⟨res, stats⟩ := rs
-              by_cases hbudget : stats.budgetExhausted = true
-              · rw [if_pos hbudget, if_pos hbudget]; rfl
-              · rw [if_neg hbudget, if_neg hbudget]
-                cases res with
-                | some factors => simp only [Option.map_some]
-                | none => simp only [Option.map_some]
+              cases classicalCoreFactorsRecursiveAux reliftSubFloorCap
+                  ((normalizeForFactor f).squareFreeCore.degree?.getD 0 + 1)
+                  (normalizeForFactor f).squareFreeCore (some B) primeData with
+              | none => rfl
+              | some coreFactors => rfl
 
 /-- The CLD lattice tier's `Factorization` is the raw lattice factor array packed
 through `factorizationOfFactors f`. -/

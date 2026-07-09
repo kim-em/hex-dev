@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhausMathlib.IntReductionMod
+public import HexBerlekampZassenhausMathlib.Relift
 public import HexBerlekampZassenhausMathlib.CLDColumnBound
 public import HexBerlekampZassenhausMathlib.Recovery
 public import HexBerlekampZassenhausMathlib.PartitionRefinement
