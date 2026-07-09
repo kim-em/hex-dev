@@ -202,7 +202,10 @@ def chooseFast (n k : Nat) : Nat :=
   if n < k then 0
   else (List.range k).foldl (fun acc j => acc * (n - j) / (j + 1)) 1
 
-private theorem chooseFast_foldl (n : Nat) :
+/-- The single-row multiplicative fold `acc * (n - j) / (j + 1)` over
+`List.range k` computes the Pascal `choose n k` for `k ≤ n`. This is the shared
+kernel behind `chooseFast` and any other executable single-row binomial. -/
+theorem chooseFast_foldl (n : Nat) :
     ∀ k, k ≤ n →
       (List.range k).foldl (fun acc j => acc * (n - j) / (j + 1)) 1 = choose n k := by
   intro k
@@ -226,6 +229,81 @@ theorem chooseFast_eq (n k : Nat) : chooseFast n k = choose n k := by
 @[csimp] theorem choose_eq_chooseFast : @choose = @chooseFast := by
   funext n k
   exact (chooseFast_eq n k).symm
+
+/-- The row of Pascal's triangle increases up to its centre: `choose k j ≤
+choose k (j + 1)` while `2 * (j + 1) ≤ k`. -/
+theorem choose_le_succ_left {k j : Nat} (h : 2 * (j + 1) ≤ k) :
+    choose k j ≤ choose k (j + 1) := by
+  refine Nat.le_of_mul_le_mul_left ?_ (Nat.succ_pos j)
+  rw [succ_mul_choose_succ k j]
+  exact Nat.mul_le_mul_right (choose k j) (by omega)
+
+/-- Everything on the left half of a row is at most the central entry:
+`choose k j ≤ choose k (k / 2)` for `2 * j ≤ k`. -/
+theorem choose_le_center (k : Nat) :
+    ∀ (fuel j : Nat), k / 2 - j ≤ fuel → 2 * j ≤ k →
+      choose k j ≤ choose k (k / 2) := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro j hfuel hj
+      have : j = k / 2 := by omega
+      subst this; exact Nat.le_refl _
+  | succ fuel ih =>
+      intro j hfuel hj
+      by_cases hjc : j = k / 2
+      · subst hjc; exact Nat.le_refl _
+      · exact Nat.le_trans (choose_le_succ_left (by omega))
+          (ih (j + 1) (by omega) (by omega))
+
+/-- Even-row step for central-binomial monotonicity:
+`choose (2t) t ≤ choose (2t+1) t`. -/
+private theorem central_even (t : Nat) :
+    choose (2 * t) t ≤ choose (2 * t + 1) t := by
+  cases t with
+  | zero => simp
+  | succ s =>
+      rw [choose_succ_succ (2 * (s + 1)) s]
+      exact Nat.le_add_left _ _
+
+/-- Odd-row step for central-binomial monotonicity:
+`choose (2t+1) t ≤ choose (2t+2) (t+1)`. -/
+private theorem central_odd (t : Nat) :
+    choose (2 * t + 1) t ≤ choose (2 * t + 2) (t + 1) := by
+  rw [show 2 * t + 2 = 2 * t + 1 + 1 from rfl, choose_succ_succ (2 * t + 1) t]
+  exact Nat.le_add_right _ _
+
+/-- The central binomial coefficient increases by one row at a time. -/
+theorem centralChoose_le_succ (m : Nat) :
+    choose m (m / 2) ≤ choose (m + 1) ((m + 1) / 2) := by
+  rcases (by omega : m = 2 * (m / 2) ∨ m = 2 * (m / 2) + 1) with he | ho
+  · have e2 : m + 1 = 2 * (m / 2) + 1 := by omega
+    have e3 : (m + 1) / 2 = m / 2 := by omega
+    rw [e3]
+    calc choose m (m / 2)
+        = choose (2 * (m / 2)) (m / 2) := by rw [← he]
+      _ ≤ choose (2 * (m / 2) + 1) (m / 2) := central_even (m / 2)
+      _ = choose (m + 1) (m / 2) := by rw [← e2]
+  · have o2 : m + 1 = 2 * (m / 2) + 2 := by omega
+    have o3 : (m + 1) / 2 = m / 2 + 1 := by omega
+    rw [o3]
+    calc choose m (m / 2)
+        = choose (2 * (m / 2) + 1) (m / 2) := by rw [← ho]
+      _ ≤ choose (2 * (m / 2) + 2) (m / 2 + 1) := central_odd (m / 2)
+      _ = choose (m + 1) (m / 2 + 1) := by rw [← o2]
+
+/-- The central binomial coefficient is monotone in the row index. -/
+theorem centralChoose_mono {k n : Nat} (h : k ≤ n) :
+    choose k (k / 2) ≤ choose n (n / 2) := by
+  induction n with
+  | zero =>
+      have : k = 0 := Nat.le_zero.mp h
+      subst this; exact Nat.le_refl _
+  | succ m ih =>
+      rcases Nat.lt_or_ge k (m + 1) with hlt | hge
+      · exact Nat.le_trans (ih (Nat.le_of_lt_succ hlt)) (centralChoose_le_succ m)
+      · have : k = m + 1 := Nat.le_antisymm h hge
+        subst this; exact Nat.le_refl _
 
 /-- Euclid-step bridge turning the multiplicative Pascal identity into `p ∣ choose p k`. -/
 private theorem choose_prime_dvd_from_mul_identity {p k : Nat} (hp : Prime p)

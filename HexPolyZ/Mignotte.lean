@@ -809,23 +809,6 @@ supplies the monotonicity needed to prove the collapse; the compiled runtime
 then runs the closed form via a `@[csimp]` swap.
 -/
 
-/-- The fold underlying `binom n m` (over `List.range m`) equals the Pascal
-`Hex.Nat.choose n m` for `m ≤ n`. -/
-private theorem foldl_choose (n : Nat) :
-    ∀ m, m ≤ n →
-      (List.range m).foldl (fun acc i => acc * (n - i) / (i + 1)) 1
-        = Hex.Nat.choose n m := by
-  intro m
-  induction m with
-  | zero => intro _; simp
-  | succ m ih =>
-      intro hm
-      rw [List.range_succ, List.foldl_append, ih (Nat.le_of_succ_le hm)]
-      simp only [List.foldl_cons, List.foldl_nil]
-      have hid : Hex.Nat.choose n m * (n - m) = (m + 1) * Hex.Nat.choose n (m + 1) := by
-        rw [Nat.mul_comm]; exact (Hex.Nat.succ_mul_choose_succ n m).symm
-      rw [hid, Nat.mul_div_cancel_left _ (Nat.succ_pos m)]
-
 /-- `binom` is symmetric: `binom n k = binom n (n - k)` for `k ≤ n`. This is
 definitional (the underlying fold's length `min k (n - k)` is symmetric). -/
 private theorem binom_symm {n k : Nat} (h : k ≤ n) : binom n k = binom n (n - k) := by
@@ -839,80 +822,7 @@ private theorem binom_eq_choose_left {n k : Nat} (hk : k ≤ n) (hhalf : k ≤ n
     binom n k = Hex.Nat.choose n k := by
   unfold binom
   rw [if_neg (Nat.not_lt.mpr hk), Nat.min_eq_left hhalf]
-  exact foldl_choose n k hk
-
-/-- The row of Pascal's triangle increases up to its centre: `choose k j ≤
-choose k (j + 1)` while `2 * (j + 1) ≤ k`. -/
-private theorem choose_le_succ_left {k j : Nat} (h : 2 * (j + 1) ≤ k) :
-    Hex.Nat.choose k j ≤ Hex.Nat.choose k (j + 1) := by
-  refine Nat.le_of_mul_le_mul_left ?_ (Nat.succ_pos j)
-  rw [Hex.Nat.succ_mul_choose_succ k j]
-  exact Nat.mul_le_mul_right (Hex.Nat.choose k j) (by omega)
-
-/-- Everything on the left half of a row is at most the central entry:
-`choose k j ≤ choose k (k / 2)` for `2 * j ≤ k`. -/
-private theorem choose_le_center (k : Nat) :
-    ∀ (fuel j : Nat), k / 2 - j ≤ fuel → 2 * j ≤ k →
-      Hex.Nat.choose k j ≤ Hex.Nat.choose k (k / 2) := by
-  intro fuel
-  induction fuel with
-  | zero =>
-      intro j hfuel hj
-      have : j = k / 2 := by omega
-      subst this; exact Nat.le_refl _
-  | succ fuel ih =>
-      intro j hfuel hj
-      by_cases hjc : j = k / 2
-      · subst hjc; exact Nat.le_refl _
-      · exact Nat.le_trans (choose_le_succ_left (by omega))
-          (ih (j + 1) (by omega) (by omega))
-
-/-- Even-row step for central-binomial monotonicity: `choose (2t) t ≤ choose (2t+1) t`. -/
-private theorem central_even (t : Nat) :
-    Hex.Nat.choose (2 * t) t ≤ Hex.Nat.choose (2 * t + 1) t := by
-  cases t with
-  | zero => simp
-  | succ s =>
-      rw [Hex.Nat.choose_succ_succ (2 * (s + 1)) s]
-      exact Nat.le_add_left _ _
-
-/-- Odd-row step for central-binomial monotonicity: `choose (2t+1) t ≤ choose (2t+2) (t+1)`. -/
-private theorem central_odd (t : Nat) :
-    Hex.Nat.choose (2 * t + 1) t ≤ Hex.Nat.choose (2 * t + 2) (t + 1) := by
-  rw [show 2 * t + 2 = 2 * t + 1 + 1 from rfl, Hex.Nat.choose_succ_succ (2 * t + 1) t]
-  exact Nat.le_add_right _ _
-
-/-- The central binomial coefficient increases by one row at a time. -/
-private theorem centralChoose_le_succ (m : Nat) :
-    Hex.Nat.choose m (m / 2) ≤ Hex.Nat.choose (m + 1) ((m + 1) / 2) := by
-  rcases (by omega : m = 2 * (m / 2) ∨ m = 2 * (m / 2) + 1) with he | ho
-  · have e2 : m + 1 = 2 * (m / 2) + 1 := by omega
-    have e3 : (m + 1) / 2 = m / 2 := by omega
-    rw [e3]
-    calc Hex.Nat.choose m (m / 2)
-        = Hex.Nat.choose (2 * (m / 2)) (m / 2) := by rw [← he]
-      _ ≤ Hex.Nat.choose (2 * (m / 2) + 1) (m / 2) := central_even (m / 2)
-      _ = Hex.Nat.choose (m + 1) (m / 2) := by rw [← e2]
-  · have o2 : m + 1 = 2 * (m / 2) + 2 := by omega
-    have o3 : (m + 1) / 2 = m / 2 + 1 := by omega
-    rw [o3]
-    calc Hex.Nat.choose m (m / 2)
-        = Hex.Nat.choose (2 * (m / 2) + 1) (m / 2) := by rw [← ho]
-      _ ≤ Hex.Nat.choose (2 * (m / 2) + 2) (m / 2 + 1) := central_odd (m / 2)
-      _ = Hex.Nat.choose (m + 1) (m / 2 + 1) := by rw [← o2]
-
-/-- The central binomial coefficient is monotone in the row index. -/
-private theorem centralChoose_mono {k n : Nat} (h : k ≤ n) :
-    Hex.Nat.choose k (k / 2) ≤ Hex.Nat.choose n (n / 2) := by
-  induction n with
-  | zero =>
-      have : k = 0 := Nat.le_zero.mp h
-      subst this; exact Nat.le_refl _
-  | succ m ih =>
-      rcases Nat.lt_or_ge k (m + 1) with hlt | hge
-      · exact Nat.le_trans (ih (Nat.le_of_lt_succ hlt)) (centralChoose_le_succ m)
-      · have : k = m + 1 := Nat.le_antisymm h hge
-        subst this; exact Nat.le_refl _
+  exact Hex.Nat.chooseFast_foldl n k hk
 
 /-- The executable binomial coefficient over the factor rectangle `j ≤ k ≤ n`
 is dominated by the central binomial of the top row: `binom k j ≤ binom n (n / 2)`.
@@ -933,8 +843,8 @@ theorem binom_le_central {n k j : Nat} (hjk : j ≤ k) (hkn : k ≤ n) :
     binom_eq_choose_left (Nat.div_le_self n 2) (by omega)
   rw [hbjk, hn]
   exact Nat.le_trans
-    (choose_le_center k (k / 2) (min j (k - j)) (Nat.sub_le _ _) h2j')
-    (centralChoose_mono hkn)
+    (Hex.Nat.choose_le_center k (k / 2) (min j (k - j)) (Nat.sub_le _ _) h2j')
+    (Hex.Nat.centralChoose_mono hkn)
 
 /-- Runtime implementation of `defaultFactorCoeffBound`: the closed-form central
 binomial times the single loop-invariant norm. -/
