@@ -728,5 +728,19 @@ private def zCertRoundTripsLinear (f : ZPoly) : Bool :=
 #guard (certifyIrreducible? swinnertonDyerSD3).isNone
 #guard (certifyIrreducible? phi15).isNone
 
+-- Issue #8691: the word-sized Montgomery CLD kernel `cldQuotientModWord?` is
+-- byte-identical to the bignum `cldQuotientMod` whenever its guard
+-- (`Odd (p^a) ∧ p^a < 2^64`) holds, and declines (returns `none`) otherwise.
+-- `g` is monic (leading coefficient `1`), as the lifted local factors are.
+private def cldTestDivisor : ZPoly := DensePoly.ofCoeffs #[3, 1]
+#guard cldQuotientModWord? swinnertonDyerSD3 cldTestDivisor 7 5
+        = some (cldQuotientMod swinnertonDyerSD3 cldTestDivisor 7 5)
+#guard cldQuotientModWord? swinnertonDyerSD3 cldTestDivisor 11 13
+        = some (cldQuotientMod swinnertonDyerSD3 cldTestDivisor 11 13)
+#guard cldQuotientModWord? quadSqrt2Sqrt3 cldTestDivisor 5 9
+        = some (cldQuotientMod quadSqrt2Sqrt3 cldTestDivisor 5 9)
+-- Guard declines when `p^a` overflows the word.
+#guard (cldQuotientModWord? swinnertonDyerSD3 cldTestDivisor 11 400).isNone
+
 end BZConformance
 end Hex

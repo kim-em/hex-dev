@@ -235,6 +235,16 @@ theorem toNat_mul_word (a : WordMod ctx) :
 
 instance : Zero (WordMod ctx) := ⟨ofNat 0⟩
 instance : One (WordMod ctx) := ⟨ofNat 1⟩
+instance : NatCast (WordMod ctx) := ⟨ofNat⟩
+
+/-- Division, defined only where it is used: by the leading coefficient of a
+monic divisor, which is `1`. Dividing by `1` is the identity (`div_one`);
+other divisors return `0` and are never exercised by monic `divMod`. -/
+@[inline] def div (a b : WordMod ctx) : WordMod ctx := if b = 1 then a else 0
+
+instance : Div (WordMod ctx) := ⟨div⟩
+
+@[simp] theorem div_one (a : WordMod ctx) : a / 1 = a := if_pos rfl
 
 @[simp] theorem toNat_zero : (0 : WordMod ctx).toNat = 0 := by
   show (ofNat (ctx := ctx) 0).toNat = 0
