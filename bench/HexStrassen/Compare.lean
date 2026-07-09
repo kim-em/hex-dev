@@ -46,13 +46,26 @@ def cmpChecksum {n : Nat} (M : Matrix (ZMod64 cmpPrime) n n) : Nat :=
   (List.finRange n).foldl
     (fun acc i => (List.finRange n).foldl (fun a j => (a + M[(i, j)].toNat) % cmpPrime) acc) 0
 
-/-- One product+checksum, dispatched on the base kernel and keyed by salt. -/
+instance : Inhabited (Matrix.StrassenConfig (ZMod64 cmpPrime)) :=
+  ⟨strassenDefault⟩
+
+/-- The four measured configs: the two shipped configs (each at its own measured
+cutoff) and the two matched-cutoff controls that isolate the base-kernel effect
+from the cutoff tuning. -/
+def cmpConfigs : Array (String × Matrix.StrassenConfig (ZMod64 cmpPrime)) :=
+  let defCut := (strassenDefault (R := ZMod64 cmpPrime)).cutoff
+  let barCut := (strassenBarrett cmpCtx).cutoff
+  #[("default_ns", strassenDefault),
+    ("delayed_ns", strassenBarrett cmpCtx),
+    ("delayed_at_default_cutoff_ns", { strassenBarrett cmpCtx with cutoff := defCut }),
+    ("default_at_barrett_cutoff_ns", { (strassenDefault : Matrix.StrassenConfig (ZMod64 cmpPrime)) with cutoff := barCut })]
+
+/-- One product+checksum, dispatched on the config index and keyed by salt. -/
 @[noinline]
-def cmpRun (delayed : Bool) (n salt : Nat) : Nat :=
+def cmpRun (which : Nat) (n salt : Nat) : Nat :=
   let a := cmpMat n salt
   let b := cmpMat n (salt + 7)
-  if delayed then cmpChecksum (mulStrassen (strassenBarrett cmpCtx) a b)
-  else cmpChecksum (mulStrassen strassenDefault a b)
+  cmpChecksum (mulStrassen (cmpConfigs[which]!.2) a b)
 
 /-- IO-sequenced identity, used to force a pure computation *inside* the timed
 region. A plain `let r := cmpRun …` between the two timestamps is floated by the
@@ -68,20 +81,20 @@ def cmpForce (x : Nat) : IO Nat :=
 through the IO sink `cmpForce` between the two timestamps (see its docstring),
 accumulated, and printed outside the timed region, so the results are live and
 the timed region includes the whole computation rather than a lazy thunk. -/
-def cmpBest (delayed : Bool) (n iters : Nat) : IO Nat := do
-  let _ ← cmpForce (cmpRun delayed n 5)
+def cmpBest (which : Nat) (n iters : Nat) : IO Nat := do
+  let _ ← cmpForce (cmpRun which n 5)
   let mut best : Nat := 0
   let mut first := true
   let mut sink : Nat := 0
   for k in [0:iters] do
     let salt := 1000 + k * 13
     let t0 ← IO.monoNanosNow
-    let r ← cmpForce (cmpRun delayed n salt)
+    let r ← cmpForce (cmpRun which n salt)
     let t1 ← IO.monoNanosNow
     sink := sink + r
     let dt := t1 - t0
     if first || dt < best then best := dt; first := false
-  IO.eprintln s!"  (checksum sink n={n} delayed={delayed}: {sink % 1000000007})"
+  IO.eprintln s!"  (checksum sink n={n} config={cmpConfigs[which]!.1}: {sink % 1000000007})"
   return best
 
 def main : IO Unit := do
@@ -89,12 +102,14 @@ def main : IO Unit := do
   let mut rows : Array String := #[]
   for n in dims do
     let iters := if n ≤ 128 then 11 else 7
-    let d ← cmpBest false n iters
-    let b ← cmpBest true n iters
-    IO.eprintln s!"n={n}  default={(d.toFloat / 1e6)}ms  delayed={(b.toFloat / 1e6)}ms  speedup(default/delayed)={d.toFloat / b.toFloat}"
+    let mut fields : Array String := #[]
+    for which in [0:cmpConfigs.size] do
+      let t ← cmpBest which n iters
+      fields := fields.push ("\"" ++ cmpConfigs[which]!.1 ++ "\": " ++ toString t)
+    IO.eprintln s!"n={n}  {String.intercalate "  " (fields.toList)}"
     rows := rows.push
-      ("    " ++ "{" ++ "\"n\": " ++ toString n ++ ", \"default_ns\": " ++ toString d ++
-        ", \"delayed_ns\": " ++ toString b ++ "}")
+      ("    " ++ "{" ++ "\"n\": " ++ toString n ++ ", " ++
+        String.intercalate ", " fields.toList ++ "}")
   IO.println "{"
   IO.println ("  \"prime\": " ++ toString cmpPrime ++ ",")
   IO.println ("  \"default_cutoff\": " ++

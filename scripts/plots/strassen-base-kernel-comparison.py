@@ -6,17 +6,20 @@ Reads the committed local measurement
 ``hexstrassen_compare`` driver, ``bench/HexStrassen/Compare.lean``) and writes
 ``reports/figures/strassen-base-kernel-comparison.svg``.
 
-The two series are the same recursive ``mulStrassen`` differing only in the
-pluggable base kernel on the prime field ``ZMod64 p``: ``strassenDefault`` (naive
-``mulImpl``, one Barrett reduction per multiply-add) versus ``strassenBarrett``
-(the delayed-reduction two-word accumulator, reducing once per window). A base
-kernel fires only below the cutoff, so it moves the constant factor and the
-crossover, **never the asymptotic slope** -- hence this is a per-dimension
-constant-factor comparison (log-y runtime and the speedup ratio), not a scaling
-slope. The committed measurement shows the delayed kernel beating the default
-at every measured dimension, so it ships as the performance demonstration
-config (SPEC honesty constraint (b) satisfied in the affirmative). Each config
-carries its own measured cutoff, recorded in the JSON.
+The two solid series compare the **shipped configs** on the prime field
+``ZMod64 p``: ``strassenDefault`` (naive ``mulImpl`` base, one Barrett reduction
+per multiply-add, measured cutoff 96) versus ``strassenBarrett`` (the
+delayed-reduction two-word accumulator base, reducing once per window, measured
+cutoff 128). The cutoff is part of each tuned config, so this is a
+config-vs-config comparison; the dashed **matched-cutoff controls** (each base
+kernel at the other config's cutoff, recorded in the same JSON) isolate the
+base-kernel effect from the cutoff tuning. A base kernel fires only below the
+cutoff, so it moves the constant factor and the crossover, **never the
+asymptotic slope** -- hence per-dimension constants (log-y runtime and the
+speedup ratio), not a scaling slope. The committed measurement shows the
+delayed kernel beating the default both as shipped and at matched cutoffs, so
+it ships as the performance demonstration config (SPEC honesty constraint (b)
+satisfied in the affirmative).
 
 Run: ``python3 scripts/plots/strassen-base-kernel-comparison.py``
 """
@@ -45,6 +48,9 @@ def main() -> None:
     default_ms = [r["default_ns"] / 1e6 for r in results]
     delayed_ms = [r["delayed_ns"] / 1e6 for r in results]
     ratios = [r["default_ns"] / r["delayed_ns"] for r in results]
+    ctrl_delayed = [r.get("delayed_at_default_cutoff_ns") for r in results]
+    ctrl_default = [r.get("default_at_barrett_cutoff_ns") for r in results]
+    have_controls = all(v is not None for v in ctrl_delayed + ctrl_default)
 
     fig, (ax, axr) = plt.subplots(
         1, 2, figsize=(9.5, 4.0), gridspec_kw={"width_ratios": [3, 2]}
@@ -54,6 +60,13 @@ def main() -> None:
             label="default base (naive mulImpl)")
     ax.plot(dims, delayed_ms, color="#d62728", marker="s",
             label="delayed-reduction base (strassenBarrett)")
+    if have_controls:
+        ax.plot(dims, [v / 1e6 for v in ctrl_delayed], color="#d62728",
+                linestyle="--", linewidth=1.0, alpha=0.6,
+                label="delayed base @ default cutoff (control)")
+        ax.plot(dims, [v / 1e6 for v in ctrl_default], color="#1f77b4",
+                linestyle="--", linewidth=1.0, alpha=0.6,
+                label="default base @ barrett cutoff (control)")
     ax.set_yscale("log")
     ax.set_xlabel("matrix dimension n (n x n over ZMod64 p)")
     ax.set_ylabel("best wall time (ms, log)")
