@@ -1233,7 +1233,7 @@ private theorem zpoly_eq_one_of_toPolynomial_isUnit_of_pos_lc
     change 0 < Hex.DensePoly.leadingCoeff (Hex.DensePoly.C (-1 : Int)) at hpos
     simp [Hex.DensePoly.leadingCoeff, Hex.DensePoly.coeffs_C_of_ne_zero] at hpos
 
-private theorem zpoly_primitive_of_dvd_primitive_basic
+theorem zpoly_primitive_of_dvd_primitive_basic
     {factor target : Hex.ZPoly}
     (htarget_primitive : Hex.ZPoly.Primitive target)
     (hfactor_dvd_target : factor ∣ target) :
