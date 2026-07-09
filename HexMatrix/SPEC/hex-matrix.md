@@ -93,9 +93,8 @@ generic `mul`: `mul` has no `[Sub R]`. This is a correction to the issue's
 literal wording "just use it by default in matrix multiplication at runtime".
 The generic-semiring `*` on `Matrix R n n` keeps the naive `mul` as its
 universal, type-correct fallback. Every coefficient type the project actually
-multiplies (`Int`, `Rat`, `ZMod64`, `Fp`) is a ring, so `mulStrassen` covers
-every real caller (`hex-determinant`, `hex-bareiss`, `hex-row-reduce`,
-`hex-lll`).
+multiplies (`Int`, `Rat`, `ZMod64`, `Fp`) is a ring, so `mulStrassen` is
+available to every ring-typed caller.
 
 Making Strassen "the default at runtime" therefore has a concrete, stated
 mechanism, not an implicit one:
@@ -109,13 +108,22 @@ mechanism, not an implicit one:
    kernel, add a `mulStrassenImpl` twin with a proved
    `@[csimp] mulStrassen_eq_impl`, mirroring `mul` / `mulImpl` /
    `mul_eq_mulImpl`, never `@[implemented_by]`.
-2. The hot ring-typed callers listed above are switched to call `mulStrassen`
-   instead of `*`. That caller switch is mechanical follow-up work, tracked
-   separately, not part of this SPEC.
+2. Ring-typed callers with genuine matrix-matrix products opt in by calling
+   `mulStrassen` at their own call sites. A survey of the tree found no such
+   caller: the dense consumers (`hex-determinant`, `hex-bareiss`,
+   `hex-row-reduce`, `hex-lll`, and the `hex-berlekamp` nullspace) are
+   elimination-based — row operations, not products; the Gram matrices are
+   built entrywise as dot products and exploit a symmetry a materialized
+   product would forfeit; and the LLL same-lattice certificate checks product
+   equality through packed dot products cheaper than any materialized product.
+   So no caller switch exists to perform, and `mulStrassen` is the entry point
+   a future product-shaped caller (for example matrix powering) adopts
+   directly.
 3. Widening `mul` itself to require `[Sub R]`, or redirecting the
    `Mul (Matrix R n n)` instance once the coefficient algebra is known to be a
-   ring, are possible later API changes. Both are out of scope here and neither
-   is needed for the callers above.
+   ring, are possible later API changes. Both are out of scope here and
+   neither is needed today, since no executable caller multiplies through the
+   instance.
 
 ### The Winograd schedule
 
