@@ -253,6 +253,7 @@ top coefficient (with a fast path skipping the exact-divisibility divisions
 for monic candidates). Produces an UNVERIFIED quotient: only the wrapper's
 re-multiplication guard confers soundness, so this loop carries no proof
 obligations. -/
+@[expose]
 def boundedExactQuotientDiv (target cand : ZPoly) (qbound : Nat) :
     Option ZPoly := Id.run do
   let n := target.size
@@ -345,6 +346,7 @@ prefilter, a modular subset product, and the monic fast path that skips the
 dilate/primitive-part/sign normalisation (a product of monic lifted factors
 under a monic transform is already primitive with positive leading
 coefficient). -/
+@[expose]
 def subFloorPeelSize {q : Nat} [ZMod64.Bounds q]
     (coreLc : Int) (target : ZPoly) (modulus qbound : Nat) :
     List (List (ZPoly × FpPoly q) × List (ZPoly × FpPoly q)) →
@@ -367,6 +369,7 @@ def subFloorPeelSize {q : Nat} [ZMod64.Bounds q]
         else subFloorPeelSize coreLc target modulus qbound rest
 
 /-- First verified peel across the subset-size levels in `sizes`, in order. -/
+@[expose]
 def subFloorPeel? {q : Nat} [ZMod64.Bounds q]
     (coreLc : Int) (target : ZPoly) (modulus qbound : Nat)
     (pairs : List (ZPoly × FpPoly q)) :
@@ -389,6 +392,7 @@ factor list (the remainder always retains at least one local factor).
 `coreLc` stays the ORIGINAL node's leading coefficient down the peel chain,
 matching the scaled-candidate construction of `scaledRecombinationSmartAux`
 (the lifted factors belong to the node's monic transform). -/
+@[expose]
 def subFloorScan {q : Nat} [ZMod64.Bounds q]
     (coreLc : Int) (modulus cap qbound : Nat) :
     Nat → ZPoly → List (ZPoly × FpPoly q) →
@@ -408,6 +412,7 @@ factors to `k = 1, 2, 4, ...` strictly below the node's floor exponent and
 run the greedy capped peel at each rung. `some pieces` (at least two, each
 paired with its tracked seeds) is the first rung's split; `none` means no
 sub-floor split was found and the caller runs the full floor scan. -/
+@[expose]
 def reliftLadder (pd : PrimeChoiceData) (cap : Nat) (g : ZPoly)
     (floorK qbound : Nat) :
     (k fuel : Nat) →
@@ -553,6 +558,187 @@ theorem reliftLadder_polyProduct
         · exact reliftLadder_polyProduct pd cap g floorK qbound (2 * k) fuel h
       · simp at h
 
+/-! ### Membership soundness for the sub-floor peel
+
+Every seed a peel consumes, and every pair it threads onward, comes from the
+rung's original pair list — so tracked seeds are always members of the
+node's `factorsModP` (the fact the per-piece bundle producer consumes). -/
+
+theorem subsetsOfSizeWithComplement_mem {α : Type} :
+    ∀ (l : List α) (d : Nat) (sc : List α × List α),
+      sc ∈ subsetsOfSizeWithComplement l d →
+      (∀ x ∈ sc.1, x ∈ l) ∧ (∀ x ∈ sc.2, x ∈ l)
+  | l, 0, sc, h => by
+      simp only [subsetsOfSizeWithComplement, List.mem_singleton] at h
+      subst h
+      exact ⟨by simp, fun x hx => hx⟩
+  | [], d + 1, sc, h => by
+      simp [subsetsOfSizeWithComplement] at h
+  | a :: l, d + 1, sc, h => by
+      simp only [subsetsOfSizeWithComplement, List.mem_append,
+        List.mem_map] at h
+      rcases h with ⟨sc', hsc', rfl⟩ | ⟨sc', hsc', rfl⟩
+      · obtain ⟨h1, h2⟩ := subsetsOfSizeWithComplement_mem l d sc' hsc'
+        refine ⟨?_, ?_⟩
+        · intro x hx
+          rcases List.mem_cons.mp hx with rfl | hx
+          · exact List.mem_cons_self
+          · exact List.mem_cons_of_mem a (h1 x hx)
+        · intro x hx
+          exact List.mem_cons_of_mem a (h2 x hx)
+      · obtain ⟨h1, h2⟩ := subsetsOfSizeWithComplement_mem l (d + 1) sc' hsc'
+        refine ⟨?_, ?_⟩
+        · intro x hx
+          exact List.mem_cons_of_mem a (h1 x hx)
+        · intro x hx
+          rcases List.mem_cons.mp hx with rfl | hx
+          · exact List.mem_cons_self
+          · exact List.mem_cons_of_mem a (h2 x hx)
+
+theorem subFloorPeelSize_mem {p : Nat} [ZMod64.Bounds p]
+    (coreLc : Int) (target : ZPoly) (modulus qbound : Nat)
+    (P : ZPoly × FpPoly p → Prop) :
+    ∀ (l : List (List (ZPoly × FpPoly p) × List (ZPoly × FpPoly p)))
+      {cand : ZPoly} {seeds : List (FpPoly p)} {quot : ZPoly}
+      {rest : List (ZPoly × FpPoly p)},
+      subFloorPeelSize coreLc target modulus qbound l =
+        some (cand, seeds, quot, rest) →
+      (∀ sc ∈ l, (∀ x ∈ sc.1, P x) ∧ (∀ x ∈ sc.2, P x)) →
+      (∀ u ∈ seeds, ∃ x, P x ∧ x.2 = u) ∧ (∀ x ∈ rest, P x)
+  | [], _, _, _, _, h, _ => by simp [subFloorPeelSize] at h
+  | sc :: tail, cand, seeds, quot, rest, h, hl => by
+      have hsc := hl sc List.mem_cons_self
+      have htail : ∀ sc' ∈ tail, (∀ x ∈ sc'.1, P x) ∧ (∀ x ∈ sc'.2, P x) :=
+        fun sc' hsc' => hl sc' (List.mem_cons_of_mem sc hsc')
+      simp only [subFloorPeelSize] at h
+      split at h
+      · exact subFloorPeelSize_mem coreLc target modulus qbound P tail h htail
+      · split at h
+        · split at h
+          · split at h
+            · rename_i quotient hq
+              simp only [Option.some.injEq, Prod.mk.injEq] at h
+              obtain ⟨-, hseeds, -, hrest⟩ := h
+              subst hseeds
+              subst hrest
+              refine ⟨?_, hsc.2⟩
+              intro u hu
+              obtain ⟨x, hx_mem, hx_eq⟩ := List.mem_map.mp hu
+              exact ⟨x, hsc.1 x hx_mem, hx_eq⟩
+            · exact subFloorPeelSize_mem coreLc target modulus qbound P tail h htail
+          · exact subFloorPeelSize_mem coreLc target modulus qbound P tail h htail
+        · split at h
+          · split at h
+            · rename_i quotient hq
+              simp only [Option.some.injEq, Prod.mk.injEq] at h
+              obtain ⟨-, hseeds, -, hrest⟩ := h
+              subst hseeds
+              subst hrest
+              refine ⟨?_, hsc.2⟩
+              intro u hu
+              obtain ⟨x, hx_mem, hx_eq⟩ := List.mem_map.mp hu
+              exact ⟨x, hsc.1 x hx_mem, hx_eq⟩
+            · exact subFloorPeelSize_mem coreLc target modulus qbound P tail h htail
+          · exact subFloorPeelSize_mem coreLc target modulus qbound P tail h htail
+
+theorem subFloorPeel?_mem {p : Nat} [ZMod64.Bounds p]
+    (coreLc : Int) (target : ZPoly) (modulus qbound : Nat)
+    (pairs : List (ZPoly × FpPoly p)) :
+    ∀ (sizes : List Nat)
+      {cand : ZPoly} {seeds : List (FpPoly p)} {quot : ZPoly}
+      {rest : List (ZPoly × FpPoly p)},
+      subFloorPeel? coreLc target modulus qbound pairs sizes =
+        some (cand, seeds, quot, rest) →
+      (∀ u ∈ seeds, ∃ x ∈ pairs, x.2 = u) ∧ (∀ x ∈ rest, x ∈ pairs)
+  | [], _, _, _, _, h => by simp [subFloorPeel?] at h
+  | d :: ds, cand, seeds, quot, rest, h => by
+      simp only [subFloorPeel?] at h
+      generalize hlev : subFloorPeelSize coreLc target modulus qbound
+        (subsetsOfSizeWithComplement pairs d) = res at h
+      cases res with
+      | none => exact subFloorPeel?_mem coreLc target modulus qbound pairs ds h
+      | some r =>
+          cases h
+          have := subFloorPeelSize_mem coreLc target modulus qbound
+            (· ∈ pairs) _ hlev
+            (fun sc hsc => subsetsOfSizeWithComplement_mem pairs d sc hsc)
+          exact ⟨fun u hu => by
+              obtain ⟨x, hx, hxe⟩ := this.1 u hu
+              exact ⟨x, hx, hxe⟩,
+            this.2⟩
+
+theorem subFloorScan_mem {p : Nat} [ZMod64.Bounds p]
+    (coreLc : Int) (modulus cap qbound : Nat) (Q : FpPoly p → Prop) :
+    ∀ (fuel : Nat) (target : ZPoly) (pairs : List (ZPoly × FpPoly p))
+      (acc : Array (ZPoly × List (FpPoly p)))
+      {piece : ZPoly} {seeds : List (FpPoly p)},
+      (piece, seeds) ∈ subFloorScan coreLc modulus cap qbound fuel target pairs acc →
+      (∀ pc ∈ acc, ∀ u ∈ pc.2, Q u) →
+      (∀ x ∈ pairs, Q x.2) →
+      ∀ u ∈ seeds, Q u
+  | 0, target, pairs, acc, piece, seeds, hmem, hacc, hpairs => by
+      simp only [subFloorScan] at hmem
+      rcases Array.mem_push.mp hmem with hmem | hmem
+      · exact hacc _ hmem
+      · intro u hu
+        have hseeds : seeds = pairs.map (·.2) := congrArg Prod.snd hmem
+        rw [hseeds] at hu
+        obtain ⟨x, hx_mem, hx_eq⟩ := List.mem_map.mp hu
+        exact hx_eq ▸ hpairs x hx_mem
+  | fuel + 1, target, pairs, acc, piece, seeds, hmem, hacc, hpairs => by
+      simp only [subFloorScan] at hmem
+      generalize hpeel : subFloorPeel? coreLc target modulus qbound pairs
+        ((List.range (min cap (pairs.length / 2))).map (· + 1)) = res at hmem
+      cases res with
+      | none =>
+          rcases Array.mem_push.mp hmem with hmem | hmem
+          · exact hacc _ hmem
+          · intro u hu
+            have hseeds : seeds = pairs.map (·.2) := congrArg Prod.snd hmem
+            rw [hseeds] at hu
+            obtain ⟨x, hx_mem, hx_eq⟩ := List.mem_map.mp hu
+            exact hx_eq ▸ hpairs x hx_mem
+      | some r =>
+          obtain ⟨cand, cseeds, quot, rest⟩ := r
+          have hspec := subFloorPeel?_mem coreLc target modulus qbound pairs _ hpeel
+          refine subFloorScan_mem coreLc modulus cap qbound Q fuel quot rest
+            (acc.push (cand, cseeds)) hmem ?_ ?_
+          · intro pc hpc u hu
+            rcases Array.mem_push.mp hpc with hpc | hpc
+            · exact hacc _ hpc u hu
+            · have hpc2 : pc.2 = cseeds := congrArg Prod.snd hpc
+              rw [hpc2] at hu
+              obtain ⟨x, hx_mem, hx_eq⟩ := hspec.1 u hu
+              exact hx_eq ▸ hpairs x hx_mem
+          · intro x hx
+            exact hpairs x (hspec.2 x hx)
+
+/-- Every seed tracked with a ladder piece is one of the node's mod-p
+factors. -/
+theorem reliftLadder_seeds_mem
+    (pd : PrimeChoiceData) (cap : Nat) (g : ZPoly) (floorK qbound : Nat) :
+    ∀ (k fuel : Nat) {pieces} {piece : ZPoly}
+      {seeds :
+        letI := pd.bounds
+        List (FpPoly pd.p)},
+      reliftLadder pd cap g floorK qbound k fuel = some pieces →
+      (piece, seeds) ∈ pieces →
+      ∀ u ∈ seeds, u ∈ pd.factorsModP
+  | k, 0, pieces, piece, seeds, h, _, _, _ => by simp [reliftLadder] at h
+  | k, fuel + 1, pieces, piece, seeds, h, hmem, u, hu => by
+      letI := pd.bounds
+      simp only [reliftLadder] at h
+      split at h
+      · split at h
+        · cases h
+          refine subFloorScan_mem (DensePoly.leadingCoeff g) (pd.p ^ k) cap qbound
+            (· ∈ pd.factorsModP) _ g _ #[] hmem (by simp) ?_ u hu
+          intro x hx
+          have := List.of_mem_zip hx
+          exact Array.mem_toList_iff.mp this.2
+        · exact reliftLadder_seeds_mem pd cap g floorK qbound (2 * k) fuel h hmem u hu
+      · simp at h
+
 /-- Sub-floor scan-size cap for the recursive re-lift, per the #8625
 measurement: cap 1 misses the pair splits of the Mignotte-swell family, and
 larger caps grow the failed sub-floor scan tails combinatorially. -/
@@ -567,6 +753,7 @@ declines to the lattice tier exactly as today (budget exhaustion in a floor
 scan, or a tracked-data derivation failure the certification proof shows
 unreachable). `fuel` dominates the split depth (every peel has positive
 degree, so depth is at most the degree). -/
+@[expose]
 def classicalCoreFactorsRecursiveAux (cap : Nat) :
     Nat → ZPoly → Option Nat → PrimeChoiceData → Option (Array ZPoly)
   | 0, _, _, _ => none
