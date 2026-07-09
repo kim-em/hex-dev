@@ -1,6 +1,13 @@
 # Issue 8625 D2: piece producer complete; task-4 induction underway
 
-## Accomplished (this session)
+## Accomplished (this session, updated)
+
+- Membership soundness proved: `subsetsOfSizeWithComplement_mem`,
+  `subFloorPeelSize_mem`, `subFloorPeel?_mem`, `subFloorScan_mem`,
+  `reliftLadder_seeds_mem` (FactorEntryPoints) — every tracked seed is one
+  of the node's factorsModP. Sub-floor defs `@[expose]`d for the
+  Mathlib-side induction. Degree-0 pieces decline.
+
 
 - Phase-2 re-key COMPLETE: the entire certification cone accepts
   `ModPFactorization` (SubsetCoprimality leaves, ForwardHenselTransport,
@@ -27,11 +34,18 @@ The per-remainder irreducibility induction
 invariant: g ≠ 0, primitive, lc pos, squarefree (toPolynomial), pos degree,
 `hval : ModPFactorization (toMonic g).monic pd`. Branches:
 - deg = 0: returns none — vacuous.
-- deg = 1: `some #[g]` — need "primitive positive-lc linear is irreducible"
-  (look near TrialProofs / IntReductionMod linear lemmas).
-- r = 1: `some #[g]` — mod-q irreducibility of the monic transform (bundle:
-  singleton factor list + product congruence) descends to ℤ; use the
-  descent core (`IntReductionMod/Descent`) +
+- deg = 1: `some #[g]` — "primitive positive-lc linear is irreducible":
+  no existing lemma found; prove Mathlib-side (~25 lines: a factor of a
+  linear is linear-times-constant, the constant divides the unit content),
+  close with `ZPoly.Irreducible_iff_polynomialIrreducible`.
+- r = 1: `some #[g]` — READY-MADE:
+  `ZPoly.Irreducible_of_modP_irreducible_of_primitive_of_admissible`
+  (IrreducibleCore.lean:787; used by the SmallModSingleton chain, see
+  SmallModSingleton.lean:281 for the discharge pattern incl.
+  `leadingCoeffAdmissible`). Bundle gives modP-irreducibility of the MONIC
+  TRANSFORM (singleton factor + product congruence + FpPoly.Irreducible
+  from the Mathlib-side `irreducible` field transported back through
+  fpPolyEquiv); descend transform→core via
   `zpolyIrreducible_of_toMonicMonic_irreducible` (IntReductionMod:~225).
 - ladder-split: per piece, `piecePrimeData? = some` (else none — vacuous);
   child bundle := `modPFactorization_of_piecePrimeData`; child invariant:
