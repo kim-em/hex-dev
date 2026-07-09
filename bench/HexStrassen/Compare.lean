@@ -54,18 +54,29 @@ def cmpRun (delayed : Bool) (n salt : Nat) : Nat :=
   if delayed then cmpChecksum (mulStrassen (strassenBarrett cmpCtx) a b)
   else cmpChecksum (mulStrassen strassenDefault a b)
 
-/-- Best-of-`iters` wall time in nanoseconds. The checksums are accumulated into
-`sink` and printed outside the timed region, so the `cmpRun` results are live and
+/-- IO-sequenced identity, used to force a pure computation *inside* the timed
+region. A plain `let r := cmpRun …` between the two timestamps is floated by the
+compiler down to `r`'s first use after `t1` (verified in the generated C: the two
+`lean_io_mono_nanos_now()` calls end up adjacent), which silently times nothing.
+Passing the computation as the argument of a `@[noinline]` IO action pins its
+evaluation between the surrounding IO timestamps. -/
+@[noinline]
+def cmpForce (x : Nat) : IO Nat :=
+  pure x
+
+/-- Best-of-`iters` wall time in nanoseconds. Each `cmpRun` result is forced
+through the IO sink `cmpForce` between the two timestamps (see its docstring),
+accumulated, and printed outside the timed region, so the results are live and
 the timed region includes the whole computation rather than a lazy thunk. -/
 def cmpBest (delayed : Bool) (n iters : Nat) : IO Nat := do
-  let _ := cmpRun delayed n 5
+  let _ ← cmpForce (cmpRun delayed n 5)
   let mut best : Nat := 0
   let mut first := true
   let mut sink : Nat := 0
   for k in [0:iters] do
     let salt := 1000 + k * 13
     let t0 ← IO.monoNanosNow
-    let r := cmpRun delayed n salt
+    let r ← cmpForce (cmpRun delayed n salt)
     let t1 ← IO.monoNanosNow
     sink := sink + r
     let dt := t1 - t0
@@ -86,7 +97,9 @@ def main : IO Unit := do
         ", \"delayed_ns\": " ++ toString b ++ "}")
   IO.println "{"
   IO.println ("  \"prime\": " ++ toString cmpPrime ++ ",")
-  IO.println "  \"cutoff\": 64,"
+  IO.println ("  \"default_cutoff\": " ++
+    toString (strassenDefault (R := ZMod64 cmpPrime)).cutoff ++ ",")
+  IO.println ("  \"barrett_cutoff\": " ++ toString (strassenBarrett cmpCtx).cutoff ++ ",")
   IO.println "  \"metric\": \"best_of_iters_wall_nanos\","
   IO.println "  \"results\": ["
   IO.println (String.intercalate ",\n" rows.toList)

@@ -1,13 +1,14 @@
 {
   "prime": 2147483647,
-  "cutoff": 64,
+  "default_cutoff": 96,
+  "barrett_cutoff": 128,
   "metric": "best_of_iters_wall_nanos",
   "results": [
-    {"n": 64, "default_ns": 1611730, "delayed_ns": 14404894},
-    {"n": 96, "default_ns": 4396721, "delayed_ns": 46940608},
-    {"n": 128, "default_ns": 13689643, "delayed_ns": 104293918},
-    {"n": 160, "default_ns": 23481946, "delayed_ns": 197138316},
-    {"n": 192, "default_ns": 36125548, "delayed_ns": 336515807},
-    {"n": 256, "default_ns": 107963350, "delayed_ns": 757175076}
+    {"n": 64, "default_ns": 884341, "delayed_ns": 469466},
+    {"n": 96, "default_ns": 4042563, "delayed_ns": 1253709},
+    {"n": 128, "default_ns": 8272304, "delayed_ns": 5350172},
+    {"n": 160, "default_ns": 14629829, "delayed_ns": 8740960},
+    {"n": 192, "default_ns": 33910945, "delayed_ns": 13723005},
+    {"n": 256, "default_ns": 69044413, "delayed_ns": 47983950}
   ]
 }

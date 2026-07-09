@@ -13,9 +13,10 @@ pluggable base kernel on the prime field ``ZMod64 p``: ``strassenDefault`` (naiv
 kernel fires only below the cutoff, so it moves the constant factor and the
 crossover, **never the asymptotic slope** -- hence this is a per-dimension
 constant-factor comparison (log-y runtime and the speedup ratio), not a scaling
-slope. The committed measurement is the honest negative: the delayed kernel is
-verified correct but is ~7-10x slower here, so it does not ship as the
-performance demonstration (SPEC honesty constraint (b)).
+slope. The committed measurement shows the delayed kernel beating the default
+at every measured dimension, so it ships as the performance demonstration
+config (SPEC honesty constraint (b) satisfied in the affirmative). Each config
+carries its own measured cutoff, recorded in the JSON.
 
 Run: ``python3 scripts/plots/strassen-base-kernel-comparison.py``
 """
@@ -43,7 +44,7 @@ def main() -> None:
     dims = [r["n"] for r in results]
     default_ms = [r["default_ns"] / 1e6 for r in results]
     delayed_ms = [r["delayed_ns"] / 1e6 for r in results]
-    ratios = [r["delayed_ns"] / r["default_ns"] for r in results]
+    ratios = [r["default_ns"] / r["delayed_ns"] for r in results]
 
     fig, (ax, axr) = plt.subplots(
         1, 2, figsize=(9.5, 4.0), gridspec_kw={"width_ratios": [3, 2]}
@@ -63,16 +64,24 @@ def main() -> None:
     axr.plot(dims, ratios, color="#d62728", marker="s")
     axr.axhline(1.0, color="#555555", linewidth=0.8, linestyle="--")
     axr.set_xlabel("matrix dimension n")
-    axr.set_ylabel("delayed / default  (>1 = slower)")
-    axr.set_title("slowdown factor", fontsize=11)
+    axr.set_ylabel("default / delayed  (>1 = delayed faster)")
+    axr.set_title("speedup factor", fontsize=11)
     axr.grid(True, which="both", linewidth=0.3, alpha=0.5)
     axr.set_ylim(bottom=0)
 
-    worst = max(ratios)
-    best = min(ratios)
+    hi = max(ratios)
+    lo = min(ratios)
+    if lo >= 1.0:
+        verdict = f"delayed kernel is {lo:.1f}-{hi:.1f}x FASTER"
+    elif hi <= 1.0:
+        verdict = f"delayed kernel is {1 / hi:.1f}-{1 / lo:.1f}x SLOWER"
+    else:
+        verdict = f"delayed/default speedup ranges {lo:.1f}-{hi:.1f}x"
     subtitle = (
-        f"prime p = {record['prime']}, cutoff = {record.get('cutoff', '?')}; "
-        f"delayed kernel is {best:.1f}-{worst:.1f}x SLOWER (honest negative). "
+        f"prime p = {record['prime']}, cutoffs: default = "
+        f"{record.get('default_cutoff', '?')}, barrett = "
+        f"{record.get('barrett_cutoff', '?')}; "
+        f"{verdict}. "
         "A base kernel moves constants/crossover, never the asymptotic slope."
     )
     fig.text(0.5, 0.005, subtitle, ha="center", fontsize=7, color="#555555")

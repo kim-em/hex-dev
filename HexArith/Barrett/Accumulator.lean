@@ -161,6 +161,38 @@ theorem accVal_accAddWord (lo hi q : UInt64) (hhi : hi.toNat + 1 < UInt64.word) 
     rw [hcarry0]
     grind
 
+/-- `accAddWord` in inline-carry form: the wrapped word add, with the carry read
+off the wraparound compare (`lo + q < lo`) and added to the high word as a bit.
+This is the shape the delayed-reduction kernel's scalar loop computes per term
+(no `addCarry` extern call); the equality identifies that loop's step with
+`accStep` below. -/
+theorem accAddWord_eq_inline (lo hi q : UInt64) :
+    accAddWord lo hi q = (lo + q, hi + (if lo + q < lo then 1 else 0)) := by
+  have hfst := UInt64.toNat_addCarry_fst lo q false
+  simp only [Bool.toNat_false, Nat.add_zero] at hfst
+  have hlo : (UInt64.addCarry lo q false).1 = lo + q := by
+    apply UInt64.toNat_inj.mp
+    rw [hfst, UInt64.toNat_add, UInt64.word]
+  have hlt : lo + q < lo ↔ UInt64.word ≤ lo.toNat + q.toNat := by
+    rw [UInt64.lt_iff_toNat_lt, UInt64.toNat_add]
+    have hq := UInt64.toNat_lt_word q
+    rw [UInt64.word] at hq ⊢
+    omega
+  dsimp [accAddWord]
+  rw [hlo]
+  by_cases hc : (UInt64.addCarry lo q false).2 = true
+  · have hover : UInt64.word ≤ lo.toNat + q.toNat := by
+      have h := (UInt64.addCarry_snd_eq_true lo q false).mp hc
+      simpa using h
+    rw [hc, if_pos rfl, if_pos (hlt.mpr hover)]
+  · have hc' : (UInt64.addCarry lo q false).2 = false := by
+      simpa using hc
+    have hnover : ¬ UInt64.word ≤ lo.toNat + q.toNat := by
+      intro h
+      exact hc ((UInt64.addCarry_snd_eq_true lo q false).mpr (by simpa using h))
+    rw [hc', if_neg Bool.false_ne_true, if_neg (fun h => hnover (hlt.mp h)),
+      UInt64.add_zero]
+
 /-! ### Two-word reduction -/
 
 /-- Reduce the two-word accumulator `(lo, hi)` modulo `p`, using the precomputed
@@ -255,11 +287,14 @@ private theorem two_pow_32_lt_word : (2 : Nat) ^ 32 < UInt64.word := by
 
 /-- The radix residue `2^64 % p`, stored as a context-level constant so callers
 of `accReduce`/`foldReduce` need not carry the word and its correctness proof.
-Computed with a `Nat` reduction of the `2^64` radix (done once per context), so
-no `128`-bit machine literal is required. -/
+Computed entirely in machine words: `0 - p` wraps to `2^64 - p ≡ 2^64 (mod p)`,
+so one word-level reduction yields `2^64 % p` with no `128`-bit literal and no
+bignum `Nat` reduction of the radix (the former `Nat`-level computation cost a
+bignum `mod` on every call, which the delayed-reduction kernel pays once per
+dot product). -/
 @[expose]
 def radixResidue (_ctx : BarrettCtx p) : UInt64 :=
-  UInt64.ofNat (UInt64.word % p.toNat)
+  (0 - p) % p
 
 /-- `radixResidue` stores exactly `2^64 % p`, the `hcR` side condition every
 `accReduce`/`foldReduce` lemma needs. -/
@@ -267,11 +302,16 @@ def radixResidue (_ctx : BarrettCtx p) : UInt64 :=
 theorem toNat_radixResidue (ctx : BarrettCtx p) :
     (radixResidue ctx).toNat = UInt64.word % p.toNat := by
   have hp0 : 0 < p.toNat := Nat.lt_trans (by decide : 0 < 1) ctx.p_gt
-  have hlt : UInt64.word % p.toNat < p.toNat := Nat.mod_lt _ hp0
   have hpw : p.toNat < UInt64.word := Nat.lt_trans ctx.p_lt two_pow_32_lt_word
-  have hb : UInt64.word % p.toNat < UInt64.size := by
-    simpa [UInt64.size, UInt64.word] using Nat.lt_trans hlt hpw
-  rw [radixResidue, UInt64.toNat_ofNat_of_lt' hb]
+  have hneg : (0 - p).toNat = UInt64.word - p.toNat := by
+    rw [UInt64.toNat_sub, UInt64.toNat_zero]
+    rw [UInt64.word] at hpw ⊢
+    omega
+  have hsub : (UInt64.word - p.toNat) % p.toNat = UInt64.word % p.toNat :=
+    calc (UInt64.word - p.toNat) % p.toNat
+        = (UInt64.word - p.toNat + p.toNat) % p.toNat := (Nat.add_mod_right _ _).symm
+      _ = UInt64.word % p.toNat := by rw [Nat.sub_add_cancel (Nat.le_of_lt hpw)]
+  rw [radixResidue, UInt64.toNat_mod, hneg, hsub]
 
 /-! ### Periodic-reduction fold
 
@@ -312,6 +352,18 @@ def accStep (ctx : BarrettCtx p) : UInt64 × UInt64 × Nat → UInt64 → UInt64
       (accReduce ctx (radixResidue ctx) r.1 r.2, 0, 0)
     else
       (r.1, r.2, count + 1)
+
+/-- `accStep` in inline-carry scalar form: the state transition the delayed-
+reduction kernel's scalar loops compute per term. This is the exported equation
+for identifying an unfolded scalar loop with the (deliberately opaque) `accStep`
+fold step. -/
+theorem accStep_eq_inline (ctx : BarrettCtx p) (lo hi : UInt64) (count : Nat) (q : UInt64) :
+    accStep ctx (lo, hi, count) q =
+      (if count + 1 = barrettWindow then
+        (accReduce ctx (radixResidue ctx) (lo + q) (hi + (if lo + q < lo then 1 else 0)), 0, 0)
+      else
+        (lo + q, hi + (if lo + q < lo then 1 else 0), count + 1)) := by
+  simp only [accStep, accAddWord_eq_inline]
 
 /-- Sum of the `Nat` values of a list of accumulator product words. -/
 @[expose]
