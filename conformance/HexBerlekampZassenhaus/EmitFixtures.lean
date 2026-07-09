@@ -86,9 +86,11 @@ van Hoeij CLD lattice arm.  Both cases emit the
 making the tier a merge requirement three ways: the emit helper itself
 errors unless the lattice tier answered, the committed-fixture
 byte-diff pins the exact trace (`tier = "lattice"`, `declined = true`,
-the prime, `r = 32`, `subsetCandidates = 206368`), and the
-`bz_trace_gate.py` baseline pins tier/decline and upper-bounds the
-candidate count.  A dispatch change, a lattice regression, or a
+the prime, `r = 32`; since the recursive per-remainder re-lift (#8625)
+the classical trace no longer reports scan candidate counts, so
+`subsetCandidates = 0` and the recombination-blow-up tripwire lives in
+the wallclock bench gate), and the `bz_trace_gate.py` baseline pins
+tier/decline and upper-bounds the candidate count.  A dispatch change, a lattice regression, or a
 precision-cap change that silently loses the tier fails the merge.
 There is deliberately no `#guard` twin in `Conformance.lean` —
 elaboration-time interpretation of the lattice run would cost minutes
