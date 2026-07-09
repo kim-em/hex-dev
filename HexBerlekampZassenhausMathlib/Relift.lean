@@ -375,4 +375,123 @@ theorem subFloorScan_piece_facts {p : Nat} [Hex.ZMod64.Bounds p]
             rw [h1]
             exact ⟨⟨hcand_lc, hcand_prim⟩, hcand_ne, hcand_dvd⟩
 
+/-- Ladder-level piece facts: every piece of a successful sub-floor split is
+nonzero, primitive, has positive leading coefficient, and divides the node
+target. -/
+theorem reliftLadder_piece_facts
+    (pd : Hex.PrimeChoiceData) (cap : Nat) (g : Hex.ZPoly)
+    (floorK qbound : Nat)
+    (hg_lc : 0 < Hex.DensePoly.leadingCoeff g)
+    (hg_prim : Hex.ZPoly.Primitive g)
+    (hg_ne : g ≠ 0) :
+    ∀ (k fuel : Nat) {pieces} {piece : Hex.ZPoly}
+      {seeds :
+        letI := pd.bounds
+        List (Hex.FpPoly pd.p)},
+      Hex.reliftLadder pd cap g floorK qbound k fuel = some pieces →
+      (piece, seeds) ∈ pieces →
+      (0 < Hex.DensePoly.leadingCoeff piece ∧ Hex.ZPoly.Primitive piece) ∧
+        piece ≠ 0 ∧ piece ∣ g
+  | k, 0, pieces, piece, seeds, h, _ => by simp [Hex.reliftLadder] at h
+  | k, fuel + 1, pieces, piece, seeds, h, hmem => by
+      letI := pd.bounds
+      simp only [Hex.reliftLadder] at h
+      split at h
+      · split at h
+        · cases h
+          exact subFloorScan_piece_facts (Hex.DensePoly.leadingCoeff g)
+            (pd.p ^ k) cap qbound g _ g _ #[] hmem (by simp) hg_lc hg_prim
+            hg_ne (Hex.DensePoly.dvd_refl_poly g)
+        · exact reliftLadder_piece_facts pd cap g floorK qbound hg_lc hg_prim
+            hg_ne (2 * k) fuel h hmem
+      · simp at h
+
+/-- The r = 1 leaf: a node whose bundle records a single mod-p factor is
+irreducible — the monic transform is irreducible mod `p`, hence over `ℤ`,
+hence so is the node. -/
+theorem node_irreducible_of_singleton_factor
+    {g : Hex.ZPoly} {pd : Hex.PrimeChoiceData}
+    (hval : ModPFactorization (Hex.ZPoly.toMonic g).monic pd)
+    (hsize : pd.factorsModP.size = 1)
+    (hg_lc : 0 < Hex.DensePoly.leadingCoeff g)
+    (hg_prim : Hex.ZPoly.Primitive g)
+    (hg_deg : 2 ≤ g.degree?.getD 0) :
+    Irreducible (HexPolyZMathlib.toPolynomial g) := by
+  letI := pd.bounds
+  haveI : Fact (_root_.Nat.Prime pd.p) := ⟨natPrime_of_hexNatPrime hval.prime⟩
+  have hp1 : 1 < pd.p := by have := hval.prime.two_le; omega
+  set f := (Hex.ZPoly.toMonic g).monic with hf_def
+  have hg_pos : 0 < g.degree?.getD 0 := by omega
+  have hmonicT : Hex.DensePoly.Monic f :=
+    Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree g hg_lc hg_pos
+  -- The single factor equals the modular image of the monic transform.
+  set u := pd.factorsModP[0]'(by omega) with hu_def
+  have harr : pd.factorsModP = #[u] := by
+    apply Array.ext
+    · simp [hsize]
+    · intro i hi₁ hi₂
+      simp at hi₂
+      subst hi₂
+      rfl
+  have hcongr := hval.product_congr_target hmonicT
+  rw [harr] at hcongr
+  have hprod_eq :
+      Array.polyProduct ((#[u] : Array _).map Hex.FpPoly.liftToZ) =
+        Hex.FpPoly.liftToZ u := by
+    rw [show (#[u] : Array _).map Hex.FpPoly.liftToZ =
+        #[Hex.FpPoly.liftToZ u] by simp]
+    exact Hex.ZPoly.polyProduct_singleton _
+  rw [hprod_eq] at hcongr
+  have hu_eq : u = Hex.ZPoly.modP pd.p f := by
+    have hmod := Hex.ZPoly.modP_eq_of_congr pd.p _ _ hcongr
+    rwa [Hex.FpPoly.modP_liftToZ] at hmod
+  -- Mathlib irreducibility of the factor, transported to the executable side.
+  have hirr_u : Irreducible
+      (HexBerlekampMathlib.toMathlibPolynomial u) := by
+    have := hval.irreducible ⟨0, by omega⟩
+    simpa [modPFactor, hu_def] using this
+  have hirr_fp : Hex.FpPoly.Irreducible (Hex.ZPoly.modP pd.p f) := by
+    rw [← hu_eq]
+    exact fpPolyIrreducible_of_irreducible_toMathlibPolynomial hirr_u
+  -- Descend to `ℤ`-irreducibility of the transform, then of the node.
+  have hf_deg : f.degree?.getD 0 = g.degree?.getD 0 := by
+    rw [hf_def]
+    simpa [Hex.ZPoly.toMonic_degree] using
+      Hex.ZPoly.toMonic_monic_degree_eq_of_pos_degree g hg_lc hg_pos
+  have hf_size : 1 < f.size := by
+    have hne : f.size ≠ 0 := by
+      intro h0
+      have : f.degree?.getD 0 = 0 := by
+        unfold Hex.DensePoly.degree?
+        rw [dif_pos h0]
+        rfl
+      omega
+    have : f.degree?.getD 0 = f.size - 1 := by
+      unfold Hex.DensePoly.degree?
+      rw [dif_neg hne]
+      rfl
+    omega
+  have hadm : Hex.leadingCoeffAdmissible f pd.p := by
+    show Hex.ZPoly.leadingCoeffModP f pd.p ≠ 0
+    unfold Hex.ZPoly.leadingCoeffModP
+    rw [show Hex.DensePoly.leadingCoeff f = 1 from hmonicT]
+    intro h0
+    have hnat := congrArg Hex.ZMod64.toNat h0
+    have hint : Hex.ZPoly.intModNat (1 : Int) pd.p = 1 := by
+      show Int.toNat ((1 : Int) % Int.ofNat pd.p) = 1
+      have : (1 : Int) % Int.ofNat pd.p = 1 :=
+        Int.emod_eq_of_lt (by decide) (Int.ofNat_lt.mpr hp1)
+      rw [this]
+      rfl
+    rw [Hex.ZMod64.toNat_ofNat, hint,
+      show (0 : Hex.ZMod64 pd.p) = Hex.ZMod64.zero from rfl,
+      Hex.ZMod64.toNat_zero, Nat.mod_eq_of_lt hp1] at hnat
+    exact one_ne_zero hnat
+  have hf_irr : Hex.ZPoly.Irreducible f :=
+    Hex.ZPoly.Irreducible_of_modP_irreducible_of_primitive_of_admissible
+      f pd.p hval.prime (zpoly_primitive_of_monic hmonicT) hadm hf_size hirr_fp
+  have hg_irr : Hex.ZPoly.Irreducible g :=
+    zpolyIrreducible_of_toMonicMonic_irreducible g hg_lc hg_pos hg_prim hf_irr
+  exact (Hex.ZPoly.Irreducible_iff_polynomialIrreducible g).mp hg_irr
+
 end HexBerlekampZassenhausMathlib
