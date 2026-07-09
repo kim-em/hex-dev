@@ -17,6 +17,7 @@ public import Mathlib.RingTheory.Polynomial.UniqueFactorization
 public import Mathlib.RingTheory.PrincipalIdealDomain
 
 public import HexBerlekampZassenhausMathlib.HenselFactorProps
+public import HexBerlekampZassenhausMathlib.ModPFactorization
 import all HexBerlekampZassenhausMathlib.PublicSurface
 import all HexBerlekampZassenhausMathlib.ModPFactor
 import all HexBerlekampZassenhausMathlib.LiftedFactor
@@ -24,6 +25,7 @@ import all HexBerlekampZassenhausMathlib.M1Recovery
 import all HexBerlekampZassenhausMathlib.RecombinationSplit
 import all HexBerlekampZassenhausMathlib.RecombinationCandidate
 import all HexBerlekampZassenhausMathlib.HenselFactorProps
+import all HexBerlekampZassenhausMathlib.ModPFactorization
 
 public section
 set_option backward.proofsInPublic true
@@ -493,7 +495,7 @@ theorem Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)
-    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hval : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p) :
     ∀ i : Fin (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors.size,
       Hex.DensePoly.Monic
@@ -504,38 +506,27 @@ theorem Hex.ZPoly.toMonicLiftData_liftedFactor_monic_of_monicPrimeData
     dsimp [monicCore]
     exact Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree
       core hcore_lc_pos hcore_pos
-  have hform : Hex.factorsModPBerlekampForm monicCore primeData := by
-    dsimp [monicCore]
-    exact Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form
-      core primeData hselected
-  have hgood :
-      letI := primeData.bounds
-      Hex.isGoodPrime monicCore primeData.p = true := by
-    dsimp [monicCore]
-    exact Hex.ZPoly.toMonicPrimeData?_isGoodPrime core primeData hselected
-  have hp_prime : Hex.Nat.Prime primeData.p :=
-    Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+  have hp_prime : Hex.Nat.Prime primeData.p := hval.prime
   have hp : 1 < primeData.p := by
     have := hp_prime.two_le
     omega
   have hfactors_monic :
       letI := primeData.bounds
       ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g :=
-    factorsModP_monic_of_factorsModPBerlekampForm monicCore primeData hform
+    hval.monic
   have hproduct_mod_p :
       letI := primeData.bounds
       Hex.ZPoly.congr
         (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
         monicCore primeData.p :=
-    factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
-      monicCore primeData hmonicCore_monic hform hgood
+    hval.product_congr_target hmonicCore_monic
   have hcoprime :
       letI := primeData.bounds
       Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
         primeData.factorsModP.toList :=
-    factorsModP_coprime_of_factorsModPBerlekampForm monicCore primeData hform hgood
+    hval.coprime
   have hnonempty : primeData.factorsModP.toList ≠ [] :=
-    factorsModP_ne_nil_of_factorsModPBerlekampForm monicCore primeData hform
+    hval.ne_nil
   have hinv :
       letI := primeData.bounds
       Hex.ZPoly.QuadraticMultifactorLiftInvariant
@@ -557,7 +548,7 @@ theorem Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)
-    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hval : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p) :
     ∀ i : Fin (Hex.ZPoly.toMonicLiftData core B primeData).liftedFactors.size,
       0 < (HexPolyZMathlib.toPolynomial
@@ -577,38 +568,27 @@ theorem Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
   have hmonicCore_pos : 0 < monicCore.degree?.getD 0 := by
     rw [hmonicCore_degree]
     exact hcore_pos
-  have hform : Hex.factorsModPBerlekampForm monicCore primeData := by
-    dsimp [monicCore]
-    exact Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form
-      core primeData hselected
-  have hgood :
-      letI := primeData.bounds
-      Hex.isGoodPrime monicCore primeData.p = true := by
-    dsimp [monicCore]
-    exact Hex.ZPoly.toMonicPrimeData?_isGoodPrime core primeData hselected
-  have hp_prime : Hex.Nat.Prime primeData.p :=
-    Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+  have hp_prime : Hex.Nat.Prime primeData.p := hval.prime
   have hp : 1 < primeData.p := by
     have := hp_prime.two_le
     omega
   have hfactors_monic :
       letI := primeData.bounds
       ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g :=
-    factorsModP_monic_of_factorsModPBerlekampForm monicCore primeData hform
+    hval.monic
   have hproduct_mod_p :
       letI := primeData.bounds
       Hex.ZPoly.congr
         (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
         monicCore primeData.p :=
-    factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
-      monicCore primeData hmonicCore_monic hform hgood
+    hval.product_congr_target hmonicCore_monic
   have hcoprime :
       letI := primeData.bounds
       Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
         primeData.factorsModP.toList :=
-    factorsModP_coprime_of_factorsModPBerlekampForm monicCore primeData hform hgood
+    hval.coprime
   have hnonempty : primeData.factorsModP.toList ≠ [] :=
-    factorsModP_ne_nil_of_factorsModPBerlekampForm monicCore primeData hform
+    hval.ne_nil
   have hinv :
       letI := primeData.bounds
       Hex.ZPoly.QuadraticMultifactorLiftInvariant
@@ -623,8 +603,7 @@ theorem Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos_of_monicPrimeData
       letI := primeData.bounds
       ∀ g ∈ primeData.factorsModP,
         0 < (HexPolyZMathlib.toPolynomial (Hex.FpPoly.liftToZ g)).natDegree :=
-    factorsModP_natDegree_pos_of_factorsModPBerlekampForm
-      monicCore primeData hform hgood hmonicCore_pos
+    hval.natDegree_pos
   exact Hex.ZPoly.toMonicLiftData_liftedFactor_natDegree_pos
     core B primeData hmonicCore_monic hinv hp hprecision
     hfactors_monic hproduct_mod_p hfactors_natDegree_pos
@@ -637,7 +616,7 @@ theorem Hex.ZPoly.toMonicLiftData_liftedFactor_injective_of_monicPrimeData
     (core : Hex.ZPoly) (B : Nat) (primeData : Hex.PrimeChoiceData)
     (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
     (hcore_pos : 0 < core.degree?.getD 0)
-    (hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (hval : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData)
     (hprecision : 1 ≤ Hex.precisionForCoeffBound B primeData.p) :
     Function.Injective
       (liftedFactor (Hex.ZPoly.toMonicLiftData core B primeData)) := by
@@ -647,38 +626,27 @@ theorem Hex.ZPoly.toMonicLiftData_liftedFactor_injective_of_monicPrimeData
     dsimp [monicCore]
     exact Hex.ZPoly.toMonic_monic_isMonic_of_pos_degree
       core hcore_lc_pos hcore_pos
-  have hform : Hex.factorsModPBerlekampForm monicCore primeData := by
-    dsimp [monicCore]
-    exact Hex.ZPoly.toMonicPrimeData?_factorsModP_berlekamp_form
-      core primeData hselected
-  have hgood :
-      letI := primeData.bounds
-      Hex.isGoodPrime monicCore primeData.p = true := by
-    dsimp [monicCore]
-    exact Hex.ZPoly.toMonicPrimeData?_isGoodPrime core primeData hselected
-  have hp_prime : Hex.Nat.Prime primeData.p :=
-    Hex.ZPoly.toMonicPrimeData?_prime core primeData hselected
+  have hp_prime : Hex.Nat.Prime primeData.p := hval.prime
   have hp : 1 < primeData.p := by
     have := hp_prime.two_le
     omega
   have hfactors_monic :
       letI := primeData.bounds
       ∀ g ∈ primeData.factorsModP, Hex.DensePoly.Monic g :=
-    factorsModP_monic_of_factorsModPBerlekampForm monicCore primeData hform
+    hval.monic
   have hproduct_mod_p :
       letI := primeData.bounds
       Hex.ZPoly.congr
         (Array.polyProduct (primeData.factorsModP.map Hex.FpPoly.liftToZ))
         monicCore primeData.p :=
-    factorsModP_polyProduct_congr_of_factorsModPBerlekampForm
-      monicCore primeData hmonicCore_monic hform hgood
+    hval.product_congr_target hmonicCore_monic
   have hcoprime :
       letI := primeData.bounds
       Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
         primeData.factorsModP.toList :=
-    factorsModP_coprime_of_factorsModPBerlekampForm monicCore primeData hform hgood
+    hval.coprime
   have hnonempty : primeData.factorsModP.toList ≠ [] :=
-    factorsModP_ne_nil_of_factorsModPBerlekampForm monicCore primeData hform
+    hval.ne_nil
   have hinv :
       letI := primeData.bounds
       Hex.ZPoly.QuadraticMultifactorLiftInvariant
@@ -689,8 +657,7 @@ theorem Hex.ZPoly.toMonicLiftData_liftedFactor_injective_of_monicPrimeData
       monicCore (Hex.precisionForCoeffBound B primeData.p) primeData
       hp_prime hp hprecision hmonicCore_monic hfactors_monic
       hproduct_mod_p hcoprime hnonempty
-  have hfactorsModP_nodup : primeData.factorsModP.toList.Nodup :=
-    factorsModP_nodup_of_factorsModPBerlekampForm monicCore primeData hform hgood
+  have hfactorsModP_nodup : primeData.factorsModP.toList.Nodup := hval.nodup
   exact Hex.ZPoly.toMonicLiftData_liftedFactor_injective
     core B primeData hmonicCore_monic hinv hp hprecision
     hfactors_monic hproduct_mod_p hfactorsModP_nodup

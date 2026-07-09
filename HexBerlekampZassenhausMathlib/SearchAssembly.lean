@@ -654,7 +654,7 @@ The embedded Hensel correspondence is supplied explicitly as `hcorr`. -/
 theorem liftedFactorSubsetPartition_of_toMonicPrimeData
     (core : Hex.ZPoly) (B : Nat)
     (primeData : Hex.PrimeChoiceData)
-    (_hselected : Hex.ZPoly.toMonicPrimeData? core = some primeData)
+    (_hval : ModPFactorization (Hex.ZPoly.toMonic core).monic primeData)
     (hcorr :
       HenselSubsetCorrespondenceHypotheses core B primeData
         (Hex.ZPoly.toMonicLiftData core B primeData) True True)
