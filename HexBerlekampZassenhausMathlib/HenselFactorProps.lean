@@ -596,7 +596,7 @@ theorem henselLiftData_liftedFactor_modP_eq_modPFactor
     Hex.ZPoly.modP_eq_of_congr primeData.p _ _ hcongr_i
   simpa [modPFactor, Hex.FpPoly.modP_liftToZ] using hmodP
 
-private theorem squareFree_common_of_squareFreeModP
+theorem squareFree_common_of_squareFreeModP
     {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
     (f : Hex.ZPoly)
     (hsf : Hex.squareFreeModP f p) :
@@ -1489,7 +1489,7 @@ list splits into `L := take half` and `R := drop half`, and
 * each half satisfies the same divisibility-into-`X` invariant via
   `factorProduct L ∣ factorProduct xs ∣ X` (and symmetrically for `R`),
   using `factorProduct_append`. -/
-private theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
+theorem quadraticMultifactorCoprimeSplits_of_factorProduct_no_squared
     {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
     [Lean.Grind.Field (Hex.ZMod64 p)]
     (X : Hex.FpPoly p)

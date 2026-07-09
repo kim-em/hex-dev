@@ -209,27 +209,41 @@ are the undilated tracked factors of the parent's. -/
 @[expose]
 def monicDilate {p : Nat} [ZMod64.Bounds p] (c : ZMod64 p) (u : FpPoly p) :
     FpPoly p :=
-  FpPoly.ofCoeffs ((Array.range u.size).map fun i => u.coeff i * c ^ (u.size - 1 - i))
+  FpPoly.ofCoeffs <|
+    ((List.range u.size).map fun i => u.coeff i * c ^ (u.size - 1 - i)).toArray
 
 end FpPoly
 
 /-- Tracked per-piece prime data for the recursive re-lift: the mod-p factors
 of `(ZPoly.toMonic piece).monic` are the piece's tracked seed factors (the
 mod-p side of the lifted pairs its peel consumed) undilated by the cofactor's
-leading coefficient. `none` when the undilation is degenerate (the cofactor's
-leading coefficient vanishes mod `p`) — impossible for pieces of degree at
-least 2 at a good prime (the parent image would not be squarefree mod `p`),
-and treated as a decline by the caller. -/
+leading coefficient. The result is SELF-VERIFYING: `none` unless the
+undilation is non-degenerate (the cofactor's leading coefficient is a unit
+mod `p`), the seed list is nonempty with monic undilates, their product
+equals the piece's monic image, and `p` is still a good prime for the
+piece's monic transform — so the certification bundle reads its `good`,
+`fModP_eq`, `monic`, `ne_nil`, and `product` fields off these guards, and a
+tracking defect declines to the floor path instead of certifying. All the
+guards are provably satisfied for genuine peels; the checks are one small
+`FpPoly` product, one gcd, and a scan per piece. -/
 def piecePrimeData? {q : Nat} [ZMod64.Bounds q]
     (piece : ZPoly) (cofactorLc : Int) (seeds : List (FpPoly q)) :
     Option PrimeChoiceData :=
   let c := ZMod64.ofNat q (ZPoly.intModNat cofactorLc q)
-  if c = 0 then
+  if c⁻¹ * c != 1 || seeds.isEmpty then
     none
   else
-    some { p := q
-           fModP := ZPoly.modP q (ZPoly.toMonic piece).monic
-           factorsModP := (seeds.map (FpPoly.monicDilate c⁻¹)).toArray }
+    let factors := seeds.map (FpPoly.monicDilate c⁻¹)
+    let mg := ZPoly.modP q (ZPoly.toMonic piece).monic
+    if factors.all (fun v =>
+          DensePoly.leadingCoeff v == 1 && decide (1 ≤ v.degree?.getD 0)) &&
+        factors.foldl (· * ·) 1 == mg &&
+        isGoodPrime (ZPoly.toMonic piece).monic q then
+      some { p := q
+             fModP := mg
+             factorsModP := factors.toArray }
+    else
+      none
 
 /-- Division-loop core of `boundedExactQuotient?`: synthetic division from the
 top, aborting as soon as a quotient coefficient would exceed `qbound` in

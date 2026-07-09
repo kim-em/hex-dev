@@ -718,23 +718,6 @@ the literal Berlekamp-output form to the semantic bundle: the bundle's
 `product` congruence over `ℤ` descends to an `FpPoly` product equality via
 `modP_eq_of_congr` and the `modP`/`liftToZ` roundtrip, and the monic-image
 layer collapses on the monic lift target. -/
-private lemma modP_polyProduct_map_liftToZ {p : Nat} [Hex.ZMod64.Bounds p]
-    (arr : Array (Hex.FpPoly p)) :
-    Hex.ZPoly.modP p (Array.polyProduct (arr.map Hex.FpPoly.liftToZ)) =
-      arr.toList.foldl (· * ·) 1 := by
-  cases arr with
-  | mk l =>
-      suffices h : ∀ acc : Hex.ZPoly,
-          Hex.ZPoly.modP p ((l.map Hex.FpPoly.liftToZ).foldl (· * ·) acc) =
-            l.foldl (· * ·) (Hex.ZPoly.modP p acc) by
-        simpa [Array.polyProduct, Hex.ZPoly.modP_one] using h 1
-      intro acc
-      induction l generalizing acc with
-      | nil => simp
-      | cons x xs ih =>
-          simp only [List.map_cons, List.foldl_cons]
-          rw [ih, modP_mul, Hex.FpPoly.modP_liftToZ]
-
 private lemma toMathlibPolynomial_factorsModP_product_eq_monicModularImage
     {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
     (hval : ModPFactorization core primeData) :
